@@ -209,33 +209,33 @@ void sls_fun_good_8() {
 
 void sls_fun_bad_1() {
   sls_mu.Unlock(); // \
-    // expected-warning{{unlocking 'sls_mu' that was not locked}}
+    // expected-warning{{releasing mutex 'sls_mu' that was not held}}
 }
 
 void sls_fun_bad_2() {
   sls_mu.Lock();
   sls_mu.Lock(); // \
-    // expected-warning{{locking 'sls_mu' that is already locked}}
+    // expected-warning{{acquiring mutex 'sls_mu' that is already held}}
   sls_mu.Unlock();
 }
 
 void sls_fun_bad_3() {
   sls_mu.Lock(); // expected-note {{mutex acquired here}}
-} // expected-warning{{mutex 'sls_mu' is still locked at the end of function}}
+} // expected-warning{{mutex 'sls_mu' is still held at the end of function}}
 
 void sls_fun_bad_4() {
   if (getBool())
     sls_mu.Lock();  // expected-note{{mutex acquired here}}
   else
     sls_mu2.Lock(); // expected-note{{mutex acquired here}}
-} // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}  \
-  // expected-warning{{mutex 'sls_mu2' is not locked on every path through here}}
+} // expected-warning{{mutex 'sls_mu' is not held on every path through here}}  \
+  // expected-warning{{mutex 'sls_mu2' is not held on every path through here}}
 
 void sls_fun_bad_5() {
   sls_mu.Lock(); // expected-note {{mutex acquired here}}
   if (getBool())
     sls_mu.Unlock();
-} // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}
+} // expected-warning{{mutex 'sls_mu' is not held on every path through here}}
 
 void sls_fun_bad_6() {
   if (getBool()) {
@@ -248,8 +248,8 @@ void sls_fun_bad_6() {
     }
   }
   sls_mu.Unlock(); // \
-    expected-warning{{mutex 'sls_mu' is not locked on every path through here}}\
-    expected-warning{{unlocking 'sls_mu' that was not locked}}
+    expected-warning{{mutex 'sls_mu' is not held on every path through here}}\
+    expected-warning{{releasing mutex 'sls_mu' that was not held}}
 }
 
 void sls_fun_bad_7() {
@@ -259,7 +259,7 @@ void sls_fun_bad_7() {
     if (getBool()) {
       if (getBool()) {
         continue; // \
-        expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+        expected-warning{{expecting mutex 'sls_mu' to be held at start of each loop}}
       }
     }
     sls_mu.Lock(); // expected-note {{mutex acquired here}}
@@ -271,14 +271,14 @@ void sls_fun_bad_8() {
   sls_mu.Lock(); // expected-note{{mutex acquired here}}
 
   do {
-    sls_mu.Unlock(); // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+    sls_mu.Unlock(); // expected-warning{{expecting mutex 'sls_mu' to be held at start of each loop}}
   } while (getBool());
 }
 
 void sls_fun_bad_9() {
   do {
     sls_mu.Lock();  // \
-      // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}} \
+      // expected-warning{{expecting mutex 'sls_mu' to be held at start of each loop}} \
       // expected-note{{mutex acquired here}}
   } while (getBool());
   sls_mu.Unlock();
@@ -286,18 +286,18 @@ void sls_fun_bad_9() {
 
 void sls_fun_bad_10() {
   sls_mu.Lock();  // expected-note 2{{mutex acquired here}}
-  while(getBool()) {  // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+  while(getBool()) {  // expected-warning{{expecting mutex 'sls_mu' to be held at start of each loop}}
     sls_mu.Unlock();
   }
-} // expected-warning{{mutex 'sls_mu' is still locked at the end of function}}
+} // expected-warning{{mutex 'sls_mu' is still held at the end of function}}
 
 void sls_fun_bad_11() {
   while (getBool()) { // \
-      expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+      expected-warning{{expecting mutex 'sls_mu' to be held at start of each loop}}
     sls_mu.Lock(); // expected-note {{mutex acquired here}}
   }
   sls_mu.Unlock(); // \
-    // expected-warning{{unlocking 'sls_mu' that was not locked}}
+    // expected-warning{{releasing mutex 'sls_mu' that was not held}}
 }
 
 void sls_fun_bad_12() {
@@ -306,7 +306,7 @@ void sls_fun_bad_12() {
     sls_mu.Unlock();
     if (getBool()) {
       if (getBool()) {
-        break; // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}
+        break; // expected-warning{{mutex 'sls_mu' is not held on every path through here}}
       }
     }
     sls_mu.Lock();

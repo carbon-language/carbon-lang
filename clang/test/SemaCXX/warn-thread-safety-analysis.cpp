@@ -208,33 +208,33 @@ void sls_fun_good_8() {
 
 void sls_fun_bad_1() {
   sls_mu.Unlock(); // \
-    // expected-warning{{unlocking 'sls_mu' that was not locked}}
+    // expected-warning{{releasing mutex 'sls_mu' that was not held}}
 }
 
 void sls_fun_bad_2() {
   sls_mu.Lock();
   sls_mu.Lock(); // \
-    // expected-warning{{locking 'sls_mu' that is already locked}}
+    // expected-warning{{acquiring mutex 'sls_mu' that is already held}}
   sls_mu.Unlock();
 }
 
 void sls_fun_bad_3() {
   sls_mu.Lock(); // expected-note {{mutex acquired here}}
-} // expected-warning{{mutex 'sls_mu' is still locked at the end of function}}
+} // expected-warning{{mutex 'sls_mu' is still held at the end of function}}
 
 void sls_fun_bad_4() {
   if (getBool())
     sls_mu.Lock();  // expected-note{{mutex acquired here}}
   else
     sls_mu2.Lock(); // expected-note{{mutex acquired here}}
-} // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}  \
-  // expected-warning{{mutex 'sls_mu2' is not locked on every path through here}}
+} // expected-warning{{mutex 'sls_mu' is not held on every path through here}}  \
+  // expected-warning{{mutex 'sls_mu2' is not held on every path through here}}
 
 void sls_fun_bad_5() {
   sls_mu.Lock(); // expected-note {{mutex acquired here}}
   if (getBool())
     sls_mu.Unlock();
-} // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}
+} // expected-warning{{mutex 'sls_mu' is not held on every path through here}}
 
 void sls_fun_bad_6() {
   if (getBool()) {
@@ -247,8 +247,8 @@ void sls_fun_bad_6() {
     }
   }
   sls_mu.Unlock(); // \
-    expected-warning{{mutex 'sls_mu' is not locked on every path through here}}\
-    expected-warning{{unlocking 'sls_mu' that was not locked}}
+    expected-warning{{mutex 'sls_mu' is not held on every path through here}}\
+    expected-warning{{releasing mutex 'sls_mu' that was not held}}
 }
 
 void sls_fun_bad_7() {
@@ -258,7 +258,7 @@ void sls_fun_bad_7() {
     if (getBool()) {
       if (getBool()) {
         continue; // \
-        expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+        expected-warning{{expecting mutex 'sls_mu' to be held at start of each loop}}
       }
     }
     sls_mu.Lock(); // expected-note {{mutex acquired here}}
@@ -270,14 +270,14 @@ void sls_fun_bad_8() {
   sls_mu.Lock(); // expected-note{{mutex acquired here}}
 
   do {
-    sls_mu.Unlock(); // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+    sls_mu.Unlock(); // expected-warning{{expecting mutex 'sls_mu' to be held at start of each loop}}
   } while (getBool());
 }
 
 void sls_fun_bad_9() {
   do {
     sls_mu.Lock();  // \
-      // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}} \
+      // expected-warning{{expecting mutex 'sls_mu' to be held at start of each loop}} \
       // expected-note{{mutex acquired here}}
   } while (getBool());
   sls_mu.Unlock();
@@ -285,18 +285,18 @@ void sls_fun_bad_9() {
 
 void sls_fun_bad_10() {
   sls_mu.Lock();  // expected-note 2{{mutex acquired here}}
-  while(getBool()) {  // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+  while(getBool()) {  // expected-warning{{expecting mutex 'sls_mu' to be held at start of each loop}}
     sls_mu.Unlock();
   }
-} // expected-warning{{mutex 'sls_mu' is still locked at the end of function}}
+} // expected-warning{{mutex 'sls_mu' is still held at the end of function}}
 
 void sls_fun_bad_11() {
   while (getBool()) { // \
-      expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+      expected-warning{{expecting mutex 'sls_mu' to be held at start of each loop}}
     sls_mu.Lock(); // expected-note {{mutex acquired here}}
   }
   sls_mu.Unlock(); // \
-    // expected-warning{{unlocking 'sls_mu' that was not locked}}
+    // expected-warning{{releasing mutex 'sls_mu' that was not held}}
 }
 
 void sls_fun_bad_12() {
@@ -305,7 +305,7 @@ void sls_fun_bad_12() {
     sls_mu.Unlock();
     if (getBool()) {
       if (getBool()) {
-        break; // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}
+        break; // expected-warning{{mutex 'sls_mu' is not held on every path through here}}
       }
     }
     sls_mu.Lock();
@@ -334,19 +334,19 @@ void aa_fun_1() {
 
 void aa_fun_bad_1() {
   glock.globalUnlock(); // \
-    // expected-warning{{unlocking 'aa_mu' that was not locked}}
+    // expected-warning{{releasing mutex 'aa_mu' that was not held}}
 }
 
 void aa_fun_bad_2() {
   glock.globalLock();
   glock.globalLock(); // \
-    // expected-warning{{locking 'aa_mu' that is already locked}}
+    // expected-warning{{acquiring mutex 'aa_mu' that is already held}}
   glock.globalUnlock();
 }
 
 void aa_fun_bad_3() {
   glock.globalLock(); // expected-note{{mutex acquired here}}
-} // expected-warning{{mutex 'aa_mu' is still locked at the end of function}}
+} // expected-warning{{mutex 'aa_mu' is still held at the end of function}}
 
 //--------------------------------------------------//
 // Regression tests for unusual method names
@@ -359,17 +359,17 @@ class WeirdMethods {
   // FIXME: can't currently check inside constructors and destructors.
   WeirdMethods() {
     wmu.Lock(); // EXPECTED-NOTE {{mutex acquired here}}
-  } // EXPECTED-WARNING {{mutex 'wmu' is still locked at the end of function}}
+  } // EXPECTED-WARNING {{mutex 'wmu' is still held at the end of function}}
   ~WeirdMethods() {
     wmu.Lock(); // EXPECTED-NOTE {{mutex acquired here}}
-  } // EXPECTED-WARNING {{mutex 'wmu' is still locked at the end of function}}
+  } // EXPECTED-WARNING {{mutex 'wmu' is still held at the end of function}}
   void operator++() {
     wmu.Lock(); // expected-note {{mutex acquired here}}
-  } // expected-warning {{mutex 'wmu' is still locked at the end of function}}
+  } // expected-warning {{mutex 'wmu' is still held at the end of function}}
   operator int*() {
     wmu.Lock(); // expected-note {{mutex acquired here}}
     return 0;
-  } // expected-warning {{mutex 'wmu' is still locked at the end of function}}
+  } // expected-warning {{mutex 'wmu' is still held at the end of function}}
 };
 
 //-----------------------------------------------//
@@ -386,13 +386,13 @@ class PGBFoo {
                  __attribute__((pt_guarded_by(sls_mu)));
   void testFoo() {
     pgb_field = &x; // \
-      // expected-warning {{writing variable 'pgb_field' requires locking 'sls_mu2' exclusively}}
-    *pgb_field = x; // expected-warning {{reading variable 'pgb_field' requires locking 'sls_mu2'}} \
-      // expected-warning {{writing the value pointed to by 'pgb_field' requires locking 'sls_mu' exclusively}}
-    x = *pgb_field; // expected-warning {{reading variable 'pgb_field' requires locking 'sls_mu2'}} \
-      // expected-warning {{reading the value pointed to by 'pgb_field' requires locking 'sls_mu'}}
-    (*pgb_field)++; // expected-warning {{reading variable 'pgb_field' requires locking 'sls_mu2'}} \
-      // expected-warning {{writing the value pointed to by 'pgb_field' requires locking 'sls_mu' exclusively}}
+      // expected-warning {{writing variable 'pgb_field' requires holding mutex 'sls_mu2' exclusively}}
+    *pgb_field = x; // expected-warning {{reading variable 'pgb_field' requires holding mutex 'sls_mu2'}} \
+      // expected-warning {{writing the value pointed to by 'pgb_field' requires holding mutex 'sls_mu' exclusively}}
+    x = *pgb_field; // expected-warning {{reading variable 'pgb_field' requires holding mutex 'sls_mu2'}} \
+      // expected-warning {{reading the value pointed to by 'pgb_field' requires holding mutex 'sls_mu'}}
+    (*pgb_field)++; // expected-warning {{reading variable 'pgb_field' requires holding mutex 'sls_mu2'}} \
+      // expected-warning {{writing the value pointed to by 'pgb_field' requires holding mutex 'sls_mu' exclusively}}
   }
 };
 
@@ -402,7 +402,7 @@ class GBFoo {
 
   void testFoo() {
     gb_field = 0; // \
-      // expected-warning {{writing variable 'gb_field' requires locking 'sls_mu' exclusively}}
+      // expected-warning {{writing variable 'gb_field' requires holding mutex 'sls_mu' exclusively}}
   }
 
   void testNoAnal() __attribute__((no_thread_safety_analysis)) {
@@ -435,59 +435,59 @@ void gb_fun_3() {
 
 void gb_bad_0() {
   sls_guard_var = 1; // \
-    // expected-warning{{writing variable 'sls_guard_var' requires locking any mutex exclusively}}
+    // expected-warning{{writing variable 'sls_guard_var' requires holding any mutex exclusively}}
 }
 
 void gb_bad_1() {
   int x = sls_guard_var; // \
-    // expected-warning{{reading variable 'sls_guard_var' requires locking any mutex}}
+    // expected-warning{{reading variable 'sls_guard_var' requires holding any mutex}}
 }
 
 void gb_bad_2() {
   sls_guardby_var = 1; // \
-    // expected-warning {{writing variable 'sls_guardby_var' requires locking 'sls_mu' exclusively}}
+    // expected-warning {{writing variable 'sls_guardby_var' requires holding mutex 'sls_mu' exclusively}}
 }
 
 void gb_bad_3() {
   int x = sls_guardby_var; // \
-    // expected-warning {{reading variable 'sls_guardby_var' requires locking 'sls_mu'}}
+    // expected-warning {{reading variable 'sls_guardby_var' requires holding mutex 'sls_mu'}}
 }
 
 void gb_bad_4() {
   *pgb_gvar = 1; // \
-    // expected-warning {{writing the value pointed to by 'pgb_gvar' requires locking any mutex exclusively}}
+    // expected-warning {{writing the value pointed to by 'pgb_gvar' requires holding any mutex exclusively}}
 }
 
 void gb_bad_5() {
   int x = *pgb_gvar; // \
-    // expected-warning {{reading the value pointed to by 'pgb_gvar' requires locking any mutex}}
+    // expected-warning {{reading the value pointed to by 'pgb_gvar' requires holding any mutex}}
 }
 
 void gb_bad_6() {
   *pgb_var = 1; // \
-    // expected-warning {{writing the value pointed to by 'pgb_var' requires locking 'sls_mu' exclusively}}
+    // expected-warning {{writing the value pointed to by 'pgb_var' requires holding mutex 'sls_mu' exclusively}}
 }
 
 void gb_bad_7() {
   int x = *pgb_var; // \
-    // expected-warning {{reading the value pointed to by 'pgb_var' requires locking 'sls_mu'}}
+    // expected-warning {{reading the value pointed to by 'pgb_var' requires holding mutex 'sls_mu'}}
 }
 
 void gb_bad_8() {
   GBFoo G;
   G.gb_field = 0; // \
-    // expected-warning {{writing variable 'gb_field' requires locking 'sls_mu'}}
+    // expected-warning {{writing variable 'gb_field' requires holding mutex 'sls_mu'}}
 }
 
 void gb_bad_9() {
   sls_guard_var++; // \
-    // expected-warning{{writing variable 'sls_guard_var' requires locking any mutex exclusively}}
+    // expected-warning{{writing variable 'sls_guard_var' requires holding any mutex exclusively}}
   sls_guard_var--; // \
-    // expected-warning{{writing variable 'sls_guard_var' requires locking any mutex exclusively}}
+    // expected-warning{{writing variable 'sls_guard_var' requires holding any mutex exclusively}}
   ++sls_guard_var; // \
-    // expected-warning{{writing variable 'sls_guard_var' requires locking any mutex exclusively}}
+    // expected-warning{{writing variable 'sls_guard_var' requires holding any mutex exclusively}}
   --sls_guard_var;// \
-    // expected-warning{{writing variable 'sls_guard_var' requires locking any mutex exclusively}}
+    // expected-warning{{writing variable 'sls_guard_var' requires holding any mutex exclusively}}
 }
 
 //-----------------------------------------------//
@@ -503,11 +503,11 @@ public:
 
   void test() {
     a = 0; // \
-      // expected-warning{{writing variable 'a' requires locking 'mu' exclusively}}
+      // expected-warning{{writing variable 'a' requires holding mutex 'mu' exclusively}}
     b = a; // \
-      // expected-warning {{reading variable 'a' requires locking 'mu'}}
+      // expected-warning {{reading variable 'a' requires holding mutex 'mu'}}
     c = 0; // \
-      // expected-warning {{writing variable 'c' requires locking 'mu' exclusively}}
+      // expected-warning {{writing variable 'c' requires holding mutex 'mu' exclusively}}
   }
 
   int c __attribute__((guarded_by(mu)));
@@ -549,7 +549,7 @@ void late_bad_0() {
   LateFoo fooB;
   fooA.mu.Lock();
   fooB.a = 5; // \
-    // expected-warning{{writing variable 'a' requires locking 'fooB.mu' exclusively}} \
+    // expected-warning{{writing variable 'a' requires holding mutex 'fooB.mu' exclusively}} \
     // expected-note{{found near match 'fooA.mu'}}
   fooA.mu.Unlock();
 }
@@ -560,7 +560,7 @@ void late_bad_1() {
   b1.mu1_.Lock();
   int res = b1.a_ + b3->b_;
   b3->b_ = *b1.q; // \
-    // expected-warning{{reading the value pointed to by 'q' requires locking 'b1.mu'}}
+    // expected-warning{{reading the value pointed to by 'q' requires holding mutex 'b1.mu'}}
   b1.mu1_.Unlock();
   b1.b_ = res;
   mu.Unlock();
@@ -570,7 +570,7 @@ void late_bad_2() {
   LateBar BarA;
   BarA.FooPointer->mu.Lock();
   BarA.Foo.a = 2; // \
-    // expected-warning{{writing variable 'a' requires locking 'BarA.Foo.mu' exclusively}} \
+    // expected-warning{{writing variable 'a' requires holding mutex 'BarA.Foo.mu' exclusively}} \
     // expected-note{{found near match 'BarA.FooPointer->mu'}}
   BarA.FooPointer->mu.Unlock();
 }
@@ -579,7 +579,7 @@ void late_bad_3() {
   LateBar BarA;
   BarA.Foo.mu.Lock();
   BarA.FooPointer->a = 2; // \
-    // expected-warning{{writing variable 'a' requires locking 'BarA.FooPointer->mu' exclusively}} \
+    // expected-warning{{writing variable 'a' requires holding mutex 'BarA.FooPointer->mu' exclusively}} \
     // expected-note{{found near match 'BarA.Foo.mu'}}
   BarA.Foo.mu.Unlock();
 }
@@ -588,7 +588,7 @@ void late_bad_4() {
   LateBar BarA;
   BarA.Foo.mu.Lock();
   BarA.Foo2.a = 2; // \
-    // expected-warning{{writing variable 'a' requires locking 'BarA.Foo2.mu' exclusively}} \
+    // expected-warning{{writing variable 'a' requires holding mutex 'BarA.Foo2.mu' exclusively}} \
     // expected-note{{found near match 'BarA.Foo.mu'}}
   BarA.Foo.mu.Unlock();
 }
@@ -608,11 +608,11 @@ void shared_fun_0() {
 
 void shared_fun_1() {
   sls_mu.ReaderLock(); // \
-    // expected-warning {{mutex 'sls_mu' is locked exclusively and shared in the same scope}}
+    // expected-warning {{mutex 'sls_mu' is acquired exclusively and shared in the same scope}}
   do {
     sls_mu.Unlock();
     sls_mu.Lock();  // \
-      // expected-note {{the other lock of mutex 'sls_mu' is here}}
+      // expected-note {{the other acquisition of mutex 'sls_mu' is here}}
   } while (getBool());
   sls_mu.Unlock();
 }
@@ -638,20 +638,20 @@ void shared_fun_4() {
 void shared_fun_8() {
   if (getBool())
     sls_mu.Lock(); // \
-      // expected-warning {{mutex 'sls_mu' is locked exclusively and shared in the same scope}}
+      // expected-warning {{mutex 'sls_mu' is acquired exclusively and shared in the same scope}}
   else
     sls_mu.ReaderLock(); // \
-      // expected-note {{the other lock of mutex 'sls_mu' is here}}
+      // expected-note {{the other acquisition of mutex 'sls_mu' is here}}
   sls_mu.Unlock();
 }
 
 void shared_bad_0() {
   sls_mu.Lock();  // \
-    // expected-warning {{mutex 'sls_mu' is locked exclusively and shared in the same scope}}
+    // expected-warning {{mutex 'sls_mu' is acquired exclusively and shared in the same scope}}
   do {
     sls_mu.Unlock();
     sls_mu.ReaderLock();  // \
-      // expected-note {{the other lock of mutex 'sls_mu' is here}}
+      // expected-note {{the other acquisition of mutex 'sls_mu' is here}}
   } while (getBool());
   sls_mu.Unlock();
 }
@@ -659,10 +659,10 @@ void shared_bad_0() {
 void shared_bad_1() {
   if (getBool())
     sls_mu.Lock(); // \
-      // expected-warning {{mutex 'sls_mu' is locked exclusively and shared in the same scope}}
+      // expected-warning {{mutex 'sls_mu' is acquired exclusively and shared in the same scope}}
   else
     sls_mu.ReaderLock(); // \
-      // expected-note {{the other lock of mutex 'sls_mu' is here}}
+      // expected-note {{the other acquisition of mutex 'sls_mu' is here}}
   *pgb_var = 1;
   sls_mu.Unlock();
 }
@@ -670,10 +670,10 @@ void shared_bad_1() {
 void shared_bad_2() {
   if (getBool())
     sls_mu.ReaderLock(); // \
-      // expected-warning {{mutex 'sls_mu' is locked exclusively and shared in the same scope}}
+      // expected-warning {{mutex 'sls_mu' is acquired exclusively and shared in the same scope}}
   else
     sls_mu.Lock(); // \
-      // expected-note {{the other lock of mutex 'sls_mu' is here}}
+      // expected-note {{the other acquisition of mutex 'sls_mu' is here}}
   *pgb_var = 1;
   sls_mu.Unlock();
 }
@@ -762,49 +762,49 @@ void es_fun_10() {
 
 void es_bad_0() {
   Bar.aa_elr_fun(); // \
-    // expected-warning {{calling function 'aa_elr_fun' requires exclusive lock on 'aa_mu'}}
+    // expected-warning {{calling function 'aa_elr_fun' requires holding mutex 'aa_mu' exclusively}}
 }
 
 void es_bad_1() {
   aa_mu.ReaderLock();
   Bar.aa_elr_fun(); // \
-    // expected-warning {{calling function 'aa_elr_fun' requires exclusive lock on 'aa_mu'}}
+    // expected-warning {{calling function 'aa_elr_fun' requires holding mutex 'aa_mu' exclusively}}
   aa_mu.Unlock();
 }
 
 void es_bad_2() {
   Bar.aa_elr_fun_s(); // \
-    // expected-warning {{calling function 'aa_elr_fun_s' requires shared lock on 'aa_mu'}}
+    // expected-warning {{calling function 'aa_elr_fun_s' requires holding mutex 'aa_mu'}}
 }
 
 void es_bad_3() {
   MyLRFoo.test(); // \
-    // expected-warning {{calling function 'test' requires exclusive lock on 'sls_mu'}}
+    // expected-warning {{calling function 'test' requires holding mutex 'sls_mu' exclusively}}
 }
 
 void es_bad_4() {
   MyLRFoo.testShared(); // \
-    // expected-warning {{calling function 'testShared' requires shared lock on 'sls_mu2'}}
+    // expected-warning {{calling function 'testShared' requires holding mutex 'sls_mu2'}}
 }
 
 void es_bad_5() {
   sls_mu.ReaderLock();
   MyLRFoo.test(); // \
-    // expected-warning {{calling function 'test' requires exclusive lock on 'sls_mu'}}
+    // expected-warning {{calling function 'test' requires holding mutex 'sls_mu' exclusively}}
   sls_mu.Unlock();
 }
 
 void es_bad_6() {
   sls_mu.Lock();
   Bar.le_fun(); // \
-    // expected-warning {{cannot call function 'le_fun' while mutex 'sls_mu' is locked}}
+    // expected-warning {{cannot call function 'le_fun' while mutex 'sls_mu' is held}}
   sls_mu.Unlock();
 }
 
 void es_bad_7() {
   sls_mu.ReaderLock();
   Bar.le_fun(); // \
-    // expected-warning {{cannot call function 'le_fun' while mutex 'sls_mu' is locked}}
+    // expected-warning {{cannot call function 'le_fun' while mutex 'sls_mu' is held}}
   sls_mu.Unlock();
 }
 
@@ -1209,7 +1209,7 @@ void Foo::bar()
 {
   int x;
   mu_.Lock();
-  x = foo(); // expected-warning {{calling function 'foo' requires exclusive lock on 'mu2'}}
+  x = foo(); // expected-warning {{calling function 'foo' requires holding mutex 'mu2' exclusively}}
   a_ = x + 1;
   mu_.Unlock();
   if (x > 5) {
@@ -1223,13 +1223,13 @@ void main()
 {
   Foo f1, *f2;
   f1.mu_.Lock();
-  f1.bar(); // expected-warning {{cannot call function 'bar' while mutex 'f1.mu_' is locked}}
+  f1.bar(); // expected-warning {{cannot call function 'bar' while mutex 'f1.mu_' is held}}
   mu2.Lock();
   f1.foo();
   mu2.Unlock();
   f1.mu_.Unlock();
   f2->mu_.Lock();
-  f2->bar(); // expected-warning {{cannot call function 'bar' while mutex 'f2->mu_' is locked}}
+  f2->bar(); // expected-warning {{cannot call function 'bar' while mutex 'f2->mu_' is held}}
   f2->mu_.Unlock();
   mu2.Lock();
   w = 2;
@@ -1258,7 +1258,7 @@ void func()
   b1->MyLock();
   b1->a_ = 5;
   b2->a_ = 3; // \
-    // expected-warning {{writing variable 'a_' requires locking 'b2->mu1_' exclusively}} \
+    // expected-warning {{writing variable 'a_' requires holding mutex 'b2->mu1_' exclusively}} \
     // expected-note {{found near match 'b1->mu1_'}}
   b2->MyLock();
   b2->MyUnlock();
@@ -1288,18 +1288,18 @@ int func(int i)
 {
   int x;
   b3->mu1_.Lock();
-  res = b1.a_ + b3->b_; // expected-warning {{reading variable 'a_' requires locking 'b1.mu1_'}} \
-    // expected-warning {{writing variable 'res' requires locking 'mu' exclusively}} \
+  res = b1.a_ + b3->b_; // expected-warning {{reading variable 'a_' requires holding mutex 'b1.mu1_'}} \
+    // expected-warning {{writing variable 'res' requires holding mutex 'mu' exclusively}} \
     // expected-note {{found near match 'b3->mu1_'}}
-  *p = i; // expected-warning {{reading variable 'p' requires locking 'mu'}} \
-    // expected-warning {{writing the value pointed to by 'p' requires locking 'mu' exclusively}}
-  b1.a_ = res + b3->b_; // expected-warning {{reading variable 'res' requires locking 'mu'}} \
-    // expected-warning {{writing variable 'a_' requires locking 'b1.mu1_' exclusively}} \
+  *p = i; // expected-warning {{reading variable 'p' requires holding mutex 'mu'}} \
+    // expected-warning {{writing the value pointed to by 'p' requires holding mutex 'mu' exclusively}}
+  b1.a_ = res + b3->b_; // expected-warning {{reading variable 'res' requires holding mutex 'mu'}} \
+    // expected-warning {{writing variable 'a_' requires holding mutex 'b1.mu1_' exclusively}} \
     // expected-note {{found near match 'b3->mu1_'}}
-  b3->b_ = *b1.q; // expected-warning {{reading the value pointed to by 'q' requires locking 'mu'}}
+  b3->b_ = *b1.q; // expected-warning {{reading the value pointed to by 'q' requires holding mutex 'mu'}}
   b3->mu1_.Unlock();
-  b1.b_ = res; // expected-warning {{reading variable 'res' requires locking 'mu'}}
-  x = res; // expected-warning {{reading variable 'res' requires locking 'mu'}}
+  b1.b_ = res; // expected-warning {{reading variable 'res' requires holding mutex 'mu'}}
+  x = res; // expected-warning {{reading variable 'res' requires holding mutex 'mu'}}
   return x;
 }
 } // end namespace thread_annot_lock_21
@@ -1321,10 +1321,10 @@ class Foo {
      child->Func(new_foo); // There shouldn't be any warning here as the
                            // acquired lock is not in child.
      child->bar(7); // \
-       // expected-warning {{calling function 'bar' requires exclusive lock on 'child->lock_'}} \
+       // expected-warning {{calling function 'bar' requires holding mutex 'child->lock_' exclusively}} \
        // expected-note {{found near match 'lock_'}}
      child->a_ = 5; // \
-       // expected-warning {{writing variable 'a_' requires locking 'child->lock_' exclusively}} \
+       // expected-warning {{writing variable 'a_' requires holding mutex 'child->lock_' exclusively}} \
        // expected-note {{found near match 'lock_'}}
      lock_.Unlock();
   }
@@ -1362,7 +1362,7 @@ void Foo::Func(Foo* child) {
   lock_.Lock();
 
   child->lock_.Lock();
-  child->Func(new_foo); // expected-warning {{cannot call function 'Func' while mutex 'child->lock_' is locked}}
+  child->Func(new_foo); // expected-warning {{cannot call function 'Func' while mutex 'child->lock_' is held}}
   child->bar(7);
   child->a_ = 5;
   child->lock_.Unlock();
@@ -1401,8 +1401,8 @@ class Foo {
  public:
   void f1() EXCLUSIVE_LOCKS_REQUIRED(mu2) EXCLUSIVE_LOCKS_REQUIRED(mu1) {
     x = 5;
-    f2(); // expected-warning {{cannot call function 'f2' while mutex 'mu1' is locked}} \
-      // expected-warning {{cannot call function 'f2' while mutex 'mu2' is locked}}
+    f2(); // expected-warning {{cannot call function 'f2' while mutex 'mu1' is held}} \
+      // expected-warning {{cannot call function 'f2' while mutex 'mu2' is held}}
   }
 };
 
@@ -1410,8 +1410,8 @@ Foo *foo;
 
 void func()
 {
-  foo->f1(); // expected-warning {{calling function 'f1' requires exclusive lock on 'foo->mu2'}} \
-             // expected-warning {{calling function 'f1' requires exclusive lock on 'foo->mu1'}}
+  foo->f1(); // expected-warning {{calling function 'f1' requires holding mutex 'foo->mu2' exclusively}} \
+             // expected-warning {{calling function 'f1' requires holding mutex 'foo->mu1' exclusively}}
 }
 } // end namespace thread_annot_lock_42
 
@@ -1434,14 +1434,14 @@ void main() {
   Child *c;
   Base *b = c;
 
-  b->func1(); // expected-warning {{calling function 'func1' requires exclusive lock on 'b->mu_'}}
+  b->func1(); // expected-warning {{calling function 'func1' requires holding mutex 'b->mu_' exclusively}}
   b->mu_.Lock();
-  b->func2(); // expected-warning {{cannot call function 'func2' while mutex 'b->mu_' is locked}}
+  b->func2(); // expected-warning {{cannot call function 'func2' while mutex 'b->mu_' is held}}
   b->mu_.Unlock();
 
-  c->func1(); // expected-warning {{calling function 'func1' requires exclusive lock on 'c->mu_'}}
+  c->func1(); // expected-warning {{calling function 'func1' requires holding mutex 'c->mu_' exclusively}}
   c->mu_.Lock();
-  c->func2(); // expected-warning {{cannot call function 'func2' while mutex 'c->mu_' is locked}}
+  c->func2(); // expected-warning {{cannot call function 'func2' while mutex 'c->mu_' is held}}
   c->mu_.Unlock();
 }
 } // end namespace thread_annot_lock_46
@@ -1468,10 +1468,10 @@ int Foo::method1(int i) {
 void main()
 {
   Foo a;
-  a.method1(1); // expected-warning {{calling function 'method1' requires shared lock on 'a.mu1'}} \
-    // expected-warning {{calling function 'method1' requires shared lock on 'mu'}} \
-    // expected-warning {{calling function 'method1' requires shared lock on 'a.mu2'}} \
-    // expected-warning {{calling function 'method1' requires shared lock on 'mu3'}}
+  a.method1(1); // expected-warning {{calling function 'method1' requires holding mutex 'a.mu1'}} \
+    // expected-warning {{calling function 'method1' requires holding mutex 'mu'}} \
+    // expected-warning {{calling function 'method1' requires holding mutex 'a.mu2'}} \
+    // expected-warning {{calling function 'method1' requires holding mutex 'mu3'}}
 }
 } // end namespace thread_annot_lock_67_modified
 
@@ -1516,14 +1516,14 @@ namespace substitution_test {
       DataLocker dlr;
       dlr.lockData(d1);   // expected-note {{mutex acquired here}}
       dlr.unlockData(d2); // \
-        // expected-warning {{unlocking 'd2->mu' that was not locked}}
-    } // expected-warning {{mutex 'd1->mu' is still locked at the end of function}}
+        // expected-warning {{releasing mutex 'd2->mu' that was not held}}
+    } // expected-warning {{mutex 'd1->mu' is still held at the end of function}}
 
     void bar4(MyData* d1, MyData* d2) {
       DataLocker dlr;
       dlr.lockData(d1);
       foo(d2); // \
-        // expected-warning {{calling function 'foo' requires exclusive lock on 'd2->mu'}} \
+        // expected-warning {{calling function 'foo' requires holding mutex 'd2->mu' exclusively}} \
         // expected-note {{found near match 'd1->mu'}}
       dlr.unlockData(d1);
     }
@@ -1566,8 +1566,8 @@ namespace template_member_test {
   template<typename U>
   struct IndirectLock {
     int DoNaughtyThings(T *t) {
-      u->n = 0; // expected-warning {{reading variable 'u' requires locking 'm'}}
-      return t->s->n; // expected-warning {{reading variable 's' requires locking 't->m'}}
+      u->n = 0; // expected-warning {{reading variable 'u' requires holding mutex 'm'}}
+      return t->s->n; // expected-warning {{reading variable 's' requires holding mutex 't->m'}}
     }
   };
 
@@ -1583,7 +1583,7 @@ namespace template_member_test {
   template<typename U> struct W {
     V v;
     void f(U u) {
-      v.p->f(u); // expected-warning {{reading variable 'p' requires locking 'v.m'}}
+      v.p->f(u); // expected-warning {{reading variable 'p' requires holding mutex 'v.m'}}
     }
   };
   template struct W<int>; // expected-note {{here}}
@@ -1620,7 +1620,7 @@ struct TestScopedLockable {
   void foo3() {
     MutexLock mulock_a(&mu1);
     MutexLock mulock_b(&mu1); // \
-      // expected-warning {{locking 'mu1' that is already locked}}
+      // expected-warning {{acquiring mutex 'mu1' that is already held}}
   }
 
   void foo4() {
@@ -1646,7 +1646,7 @@ Foo fooObj;
 void foo() EXCLUSIVE_LOCKS_REQUIRED(fooObj.mu_);
 
 void bar() {
-  foo();  // expected-warning {{calling function 'foo' requires exclusive lock on 'fooObj.mu_'}}
+  foo();  // expected-warning {{calling function 'foo' requires holding mutex 'fooObj.mu_' exclusively}}
   fooObj.mu_.Lock();
   foo();
   fooObj.mu_.Unlock();
@@ -1722,7 +1722,7 @@ struct TestTryLock {
     if (cond)
       b = true;
     if (b) {    // b should be unknown at this point, because of the join point
-      a = 8;    // expected-warning {{writing variable 'a' requires locking 'mu' exclusively}}
+      a = 8;    // expected-warning {{writing variable 'a' requires holding mutex 'mu' exclusively}}
     }
     if (b2) {   // b2 should be known at this point.
       a = 8;
@@ -1748,7 +1748,7 @@ struct TestTryLock {
 
     while (cond) {
       if (b) {   // b should be uknown at this point b/c of the loop
-        a = 10;  // expected-warning {{writing variable 'a' requires locking 'mu' exclusively}}
+        a = 10;  // expected-warning {{writing variable 'a' requires holding mutex 'mu' exclusively}}
       }
       b = !b;
     }
@@ -1876,7 +1876,7 @@ void test() {
 
   f1.mu_.Unlock();
   bt.barTD(&f1);  // \
-    // expected-warning {{calling function 'barTD' requires exclusive lock on 'f1.mu_'}} \
+    // expected-warning {{calling function 'barTD' requires holding mutex 'f1.mu_' exclusively}} \
     // expected-note {{found near match 'bt.fooBase.mu_'}}
 
   bt.fooBase.mu_.Unlock();
@@ -1885,7 +1885,7 @@ void test() {
 
   Cell<int> cell;
   cell.data = 0; // \
-    // expected-warning {{writing variable 'data' requires locking 'cell.mu_' exclusively}}
+    // expected-warning {{writing variable 'data' requires holding mutex 'cell.mu_' exclusively}}
   cell.foo();
   cell.mu_.Lock();
   cell.fooEx();
@@ -1954,7 +1954,7 @@ void Foo::foo1(Foo *f_defined) {
 void test() {
   Foo myfoo;
   myfoo.foo1(&myfoo);  // \
-    // expected-warning {{calling function 'foo1' requires exclusive lock on 'myfoo.mu_'}}
+    // expected-warning {{calling function 'foo1' requires holding mutex 'myfoo.mu_' exclusively}}
   myfoo.mu_.Lock();
   myfoo.foo1(&myfoo);
   myfoo.mu_.Unlock();
@@ -1980,7 +1980,7 @@ namespace GoingNative {
       if (bar()) {
         // ...
         if (foo())
-          continue; // expected-warning {{expecting mutex 'm' to be locked at start of each loop}}
+          continue; // expected-warning {{expecting mutex 'm' to be held at start of each loop}}
         //...
       }
       // ...
@@ -2069,21 +2069,21 @@ void test() {
   Foo myFoo;
 
   myFoo.foo2();        // \
-    // expected-warning {{calling function 'foo2' requires exclusive lock on 'myFoo.mu_'}}
+    // expected-warning {{calling function 'foo2' requires holding mutex 'myFoo.mu_' exclusively}}
   myFoo.foo3(&myFoo);  // \
-    // expected-warning {{calling function 'foo3' requires exclusive lock on 'myFoo.mu_'}}
+    // expected-warning {{calling function 'foo3' requires holding mutex 'myFoo.mu_' exclusively}}
   myFoo.fooT1(dummy);  // \
-    // expected-warning {{calling function 'fooT1' requires exclusive lock on 'myFoo.mu_'}}
+    // expected-warning {{calling function 'fooT1' requires holding mutex 'myFoo.mu_' exclusively}}
 
   myFoo.fooT2(dummy);  // \
-    // expected-warning {{calling function 'fooT2' requires exclusive lock on 'myFoo.mu_'}}
+    // expected-warning {{calling function 'fooT2' requires holding mutex 'myFoo.mu_' exclusively}}
 
   fooF1(&myFoo);  // \
-    // expected-warning {{calling function 'fooF1' requires exclusive lock on 'myFoo.mu_'}}
+    // expected-warning {{calling function 'fooF1' requires holding mutex 'myFoo.mu_' exclusively}}
   fooF2(&myFoo);  // \
-    // expected-warning {{calling function 'fooF2' requires exclusive lock on 'myFoo.mu_'}}
+    // expected-warning {{calling function 'fooF2' requires holding mutex 'myFoo.mu_' exclusively}}
   fooF3(&myFoo);  // \
-    // expected-warning {{calling function 'fooF3' requires exclusive lock on 'myFoo.mu_'}}
+    // expected-warning {{calling function 'fooF3' requires holding mutex 'myFoo.mu_' exclusively}}
 
   myFoo.mu_.Lock();
   myFoo.foo2();
@@ -2099,7 +2099,7 @@ void test() {
 
   FooT<int> myFooT;
   myFooT.foo();  // \
-    // expected-warning {{calling function 'foo' requires exclusive lock on 'myFooT.mu_'}}
+    // expected-warning {{calling function 'foo' requires holding mutex 'myFooT.mu_' exclusively}}
 }
 
 } // end namespace FunctionDefinitionTest
@@ -2127,7 +2127,7 @@ public:
 
   void test() {
     foo = 2;  // \
-      // expected-warning {{writing variable 'foo' requires locking 'this' exclusively}}
+      // expected-warning {{writing variable 'foo' requires holding mutex 'this' exclusively}}
   }
 };
 
@@ -2192,11 +2192,11 @@ public:
 
   void foo() {
     a = 0; // \
-      // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+      // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
     b = 0; // \
-      // expected-warning {{writing variable 'b' requires locking 'mu_' exclusively}}
+      // expected-warning {{writing variable 'b' requires holding mutex 'mu_' exclusively}}
     c = 0; // \
-      // expected-warning {{writing variable 'c' requires locking 'mu_' exclusively}}
+      // expected-warning {{writing variable 'c' requires holding mutex 'mu_' exclusively}}
   }
 
 private:
@@ -2283,31 +2283,31 @@ void test() {
 
   bar.getFoo().mu_.Lock();
   bar.getFooey().a = 0; // \
-    // expected-warning {{writing variable 'a' requires locking 'bar.getFooey().mu_' exclusively}} \
+    // expected-warning {{writing variable 'a' requires holding mutex 'bar.getFooey().mu_' exclusively}} \
     // expected-note {{found near match 'bar.getFoo().mu_'}}
   bar.getFoo().mu_.Unlock();
 
   bar.getFoo2(a).mu_.Lock();
   bar.getFoo2(b).a = 0; // \
-    // expected-warning {{writing variable 'a' requires locking 'bar.getFoo2(b).mu_' exclusively}} \
+    // expected-warning {{writing variable 'a' requires holding mutex 'bar.getFoo2(b).mu_' exclusively}} \
     // expected-note {{found near match 'bar.getFoo2(a).mu_'}}
   bar.getFoo2(a).mu_.Unlock();
 
   bar.getFoo3(a, b).mu_.Lock();
   bar.getFoo3(a, c).a = 0;  // \
-    // expected-warning {{writing variable 'a' requires locking 'bar.getFoo3(a,c).mu_' exclusively}} \
+    // expected-warning {{writing variable 'a' requires holding mutex 'bar.getFoo3(a,c).mu_' exclusively}} \
     // expected-note {{'bar.getFoo3(a,b).mu_'}}
   bar.getFoo3(a, b).mu_.Unlock();
 
   getBarFoo(bar, a).mu_.Lock();
   getBarFoo(bar, b).a = 0;  // \
-    // expected-warning {{writing variable 'a' requires locking 'getBarFoo(bar,b).mu_' exclusively}} \
+    // expected-warning {{writing variable 'a' requires holding mutex 'getBarFoo(bar,b).mu_' exclusively}} \
     // expected-note {{'getBarFoo(bar,a).mu_'}}
   getBarFoo(bar, a).mu_.Unlock();
 
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Lock();
   (a > 0 ? fooArray[b] : fooArray[c]).a = 0; // \
-    // expected-warning {{writing variable 'a' requires locking '((a#_)#_#fooArray[b]).mu_' exclusively}} \
+    // expected-warning {{writing variable 'a' requires holding mutex '((a#_)#_#fooArray[b]).mu_' exclusively}} \
     // expected-note {{'((a#_)#_#fooArray[_]).mu_'}}
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Unlock();
 }
@@ -2356,19 +2356,19 @@ public:
 
 // Calls getMu() directly to lock and unlock
 void test1(Foo* f1, Foo* f2) {
-  f1->a = 0;       // expected-warning {{writing variable 'a' requires locking 'f1->mu_' exclusively}}
-  f1->foo();       // expected-warning {{calling function 'foo' requires exclusive lock on 'f1->mu_'}}
+  f1->a = 0;       // expected-warning {{writing variable 'a' requires holding mutex 'f1->mu_' exclusively}}
+  f1->foo();       // expected-warning {{calling function 'foo' requires holding mutex 'f1->mu_' exclusively}}
 
-  f1->foo2(f2);    // expected-warning {{calling function 'foo2' requires exclusive lock on 'f1->mu_'}} \
-                   // expected-warning {{calling function 'foo2' requires exclusive lock on 'f2->mu_'}}
-  Foo::sfoo(f1);   // expected-warning {{calling function 'sfoo' requires exclusive lock on 'f1->mu_'}}
+  f1->foo2(f2);    // expected-warning {{calling function 'foo2' requires holding mutex 'f1->mu_' exclusively}} \
+                   // expected-warning {{calling function 'foo2' requires holding mutex 'f2->mu_' exclusively}}
+  Foo::sfoo(f1);   // expected-warning {{calling function 'sfoo' requires holding mutex 'f1->mu_' exclusively}}
 
   f1->getMu()->Lock();
 
   f1->a = 0;
   f1->foo();
   f1->foo2(f2); // \
-    // expected-warning {{calling function 'foo2' requires exclusive lock on 'f2->mu_'}} \
+    // expected-warning {{calling function 'foo2' requires holding mutex 'f2->mu_' exclusively}} \
     // expected-note {{found near match 'f1->mu_'}}
 
   Foo::getMu(f2)->Lock();
@@ -2398,19 +2398,19 @@ public:
 // Use getMu() within other attributes.
 // This requires at lest levels of substitution, more in the case of
 void test2(Bar* b1, Bar* b2) {
-  b1->b = 0;       // expected-warning {{writing variable 'b' requires locking 'b1->mu_' exclusively}}
-  b1->bar();       // expected-warning {{calling function 'bar' requires exclusive lock on 'b1->mu_'}}
-  b1->bar2(b2);    // expected-warning {{calling function 'bar2' requires exclusive lock on 'b1->mu_'}} \
-                   // expected-warning {{calling function 'bar2' requires exclusive lock on 'b2->mu_'}}
-  Bar::sbar(b1);   // expected-warning {{calling function 'sbar' requires exclusive lock on 'b1->mu_'}}
-  Bar::sbar2(b1);  // expected-warning {{calling function 'sbar2' requires exclusive lock on 'b1->mu_'}}
+  b1->b = 0;       // expected-warning {{writing variable 'b' requires holding mutex 'b1->mu_' exclusively}}
+  b1->bar();       // expected-warning {{calling function 'bar' requires holding mutex 'b1->mu_' exclusively}}
+  b1->bar2(b2);    // expected-warning {{calling function 'bar2' requires holding mutex 'b1->mu_' exclusively}} \
+                   // expected-warning {{calling function 'bar2' requires holding mutex 'b2->mu_' exclusively}}
+  Bar::sbar(b1);   // expected-warning {{calling function 'sbar' requires holding mutex 'b1->mu_' exclusively}}
+  Bar::sbar2(b1);  // expected-warning {{calling function 'sbar2' requires holding mutex 'b1->mu_' exclusively}}
 
   b1->getMu()->Lock();
 
   b1->b = 0;
   b1->bar();
   b1->bar2(b2);  // \
-    // expected-warning {{calling function 'bar2' requires exclusive lock on 'b2->mu_'}} \
+    // expected-warning {{calling function 'bar2' requires holding mutex 'b2->mu_' exclusively}} \
     // // expected-note {{found near match 'b1->mu_'}}
 
   b2->getMu()->Lock();
@@ -2476,13 +2476,13 @@ void Foo::test3() {
   ReleasableMutexLock rlock(&mu_);
   a = 0;
   rlock.Release();
-  a = 1;  // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+  a = 1;  // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
 }
 
 void Foo::test4() {
   ReleasableMutexLock rlock(&mu_);
   rlock.Release();
-  rlock.Release();  // expected-warning {{unlocking 'mu_' that was not locked}}
+  rlock.Release();  // expected-warning {{releasing mutex 'mu_' that was not held}}
 }
 
 void Foo::test5() {
@@ -2491,7 +2491,7 @@ void Foo::test5() {
     rlock.Release();
   }
   // no warning on join point for managed lock.
-  rlock.Release();  // expected-warning {{unlocking 'mu_' that was not locked}}
+  rlock.Release();  // expected-warning {{releasing mutex 'mu_' that was not held}}
 }
 
 
@@ -2560,12 +2560,12 @@ public:
 
   void foo1() EXCLUSIVE_LOCKS_REQUIRED(mutex_) {  // expected-note {{mutex acquired here}}
     mutex_.Unlock();
-  }  // expected-warning {{expecting mutex 'mutex_' to be locked at the end of function}}
+  }  // expected-warning {{expecting mutex 'mutex_' to be held at the end of function}}
 
 
   void foo2() SHARED_LOCKS_REQUIRED(mutex_) {   // expected-note {{mutex acquired here}}
     mutex_.Unlock();
-  }  // expected-warning {{expecting mutex 'mutex_' to be locked at the end of function}}
+  }  // expected-warning {{expecting mutex 'mutex_' to be held at the end of function}}
 };
 
 } // end namespace UnlockBug
@@ -2599,7 +2599,7 @@ class Foo {
 
   void test2() {
     WTF_ScopedLockable wtf(&mu_);  // expected-note {{mutex acquired here}}
-  }  // expected-warning {{mutex 'mu_' is still locked at the end of function}}
+  }  // expected-warning {{mutex 'mu_' is still held at the end of function}}
 
   void test3() {
     if (c) {
@@ -2622,7 +2622,7 @@ class Foo {
     if (c) {
       WTF_ScopedLockable wtf(&mu_);  // expected-note {{mutex acquired here}}
     }
-  } // expected-warning {{mutex 'mu_' is not locked on every path through here}}
+  } // expected-warning {{mutex 'mu_' is not held on every path through here}}
 
   void test6() {
     if (c) {
@@ -2631,7 +2631,7 @@ class Foo {
     else {
       WTF_ScopedLockable wtf(&mu_);  // expected-note {{mutex acquired here}}
     }
-  } // expected-warning {{mutex 'mu_' is not locked on every path through here}}
+  } // expected-warning {{mutex 'mu_' is not held on every path through here}}
 };
 
 
@@ -2655,7 +2655,7 @@ void Foo::test() {
     ReaderMutexLock lock(getMutexPtr().get());
     int b = a;
   }
-  int b = a;  // expected-warning {{reading variable 'a' requires locking 'getMutexPtr()'}}
+  int b = a;  // expected-warning {{reading variable 'a' requires holding mutex 'getMutexPtr()'}}
 }
 
 } // end namespace TemporaryCleanupExpr
@@ -2686,9 +2686,9 @@ public:
 };
 
 void Foo::test0() {
-  a = 0;  // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
-  b = 0;  // expected-warning {{writing variable 'b' requires locking 'mu_' exclusively}}
-  c = 0;  // expected-warning {{writing variable 'c' requires locking 'mu_' exclusively}}
+  a = 0;  // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
+  b = 0;  // expected-warning {{writing variable 'b' requires holding mutex 'mu_' exclusively}}
+  c = 0;  // expected-warning {{writing variable 'c' requires holding mutex 'mu_' exclusively}}
 }
 
 void Foo::test1() {
@@ -2772,10 +2772,10 @@ void Foo::test7() {
 
 void Foo::test8() {
   mu_->Lock();
-  mu_.get()->Lock();    // expected-warning {{locking 'mu_' that is already locked}}
-  (*mu_).Lock();        // expected-warning {{locking 'mu_' that is already locked}}
+  mu_.get()->Lock();    // expected-warning {{acquiring mutex 'mu_' that is already held}}
+  (*mu_).Lock();        // expected-warning {{acquiring mutex 'mu_' that is already held}}
   mu_.get()->Unlock();
-  Unlock();             // expected-warning {{unlocking 'mu_' that was not locked}}
+  Unlock();             // expected-warning {{releasing mutex 'mu_' that was not held}}
 }
 
 
@@ -2790,9 +2790,9 @@ class Bar {
 
 
 void Bar::test0() {
-  foo->a = 0;         // expected-warning {{writing variable 'a' requires locking 'foo->mu_' exclusively}}
-  (*foo).b = 0;       // expected-warning {{writing variable 'b' requires locking 'foo->mu_' exclusively}}
-  foo.get()->c = 0;   // expected-warning {{writing variable 'c' requires locking 'foo->mu_' exclusively}}
+  foo->a = 0;         // expected-warning {{writing variable 'a' requires holding mutex 'foo->mu_' exclusively}}
+  (*foo).b = 0;       // expected-warning {{writing variable 'b' requires holding mutex 'foo->mu_' exclusively}}
+  foo.get()->c = 0;   // expected-warning {{writing variable 'c' requires holding mutex 'foo->mu_' exclusively}}
 }
 
 
@@ -2906,9 +2906,9 @@ void test0() {
   foo.unlock();
 
   foo.lock();
-  foo.lock();     // expected-warning {{locking 'foo' that is already locked}}
+  foo.lock();     // expected-warning {{acquiring mutex 'foo' that is already held}}
   foo.unlock();
-  foo.unlock();   // expected-warning {{unlocking 'foo' that was not locked}}
+  foo.unlock();   // expected-warning {{releasing mutex 'foo' that was not held}}
 }
 
 
@@ -2919,10 +2919,10 @@ void test1() {
   foo.unlock1();
 
   foo.lock1();
-  foo.lock1();    // expected-warning {{locking 'foo.mu1_' that is already locked}}
+  foo.lock1();    // expected-warning {{acquiring mutex 'foo.mu1_' that is already held}}
   foo.a = 0;
   foo.unlock1();
-  foo.unlock1();  // expected-warning {{unlocking 'foo.mu1_' that was not locked}}
+  foo.unlock1();  // expected-warning {{releasing mutex 'foo.mu1_' that was not held}}
 }
 
 
@@ -2933,10 +2933,10 @@ int test2() {
   foo.unlock1();
 
   foo.slock1();
-  foo.slock1();    // expected-warning {{locking 'foo.mu1_' that is already locked}}
+  foo.slock1();    // expected-warning {{acquiring mutex 'foo.mu1_' that is already held}}
   int d2 = foo.a;
   foo.unlock1();
-  foo.unlock1();   // expected-warning {{unlocking 'foo.mu1_' that was not locked}}
+  foo.unlock1();   // expected-warning {{releasing mutex 'foo.mu1_' that was not held}}
   return d1 + d2;
 }
 
@@ -2951,17 +2951,17 @@ void test3() {
 
   foo.lock3();
   foo.lock3(); // \
-    // expected-warning {{locking 'foo.mu1_' that is already locked}} \
-    // expected-warning {{locking 'foo.mu2_' that is already locked}} \
-    // expected-warning {{locking 'foo.mu3_' that is already locked}}
+    // expected-warning {{acquiring mutex 'foo.mu1_' that is already held}} \
+    // expected-warning {{acquiring mutex 'foo.mu2_' that is already held}} \
+    // expected-warning {{acquiring mutex 'foo.mu3_' that is already held}}
   foo.a = 0;
   foo.b = 0;
   foo.c = 0;
   foo.unlock3();
   foo.unlock3(); // \
-    // expected-warning {{unlocking 'foo.mu1_' that was not locked}} \
-    // expected-warning {{unlocking 'foo.mu2_' that was not locked}} \
-    // expected-warning {{unlocking 'foo.mu3_' that was not locked}}
+    // expected-warning {{releasing mutex 'foo.mu1_' that was not held}} \
+    // expected-warning {{releasing mutex 'foo.mu2_' that was not held}} \
+    // expected-warning {{releasing mutex 'foo.mu3_' that was not held}}
 }
 
 
@@ -2975,17 +2975,17 @@ void testlots() {
 
   foo.locklots();
   foo.locklots(); // \
-    // expected-warning {{locking 'foo.mu1_' that is already locked}} \
-    // expected-warning {{locking 'foo.mu2_' that is already locked}} \
-    // expected-warning {{locking 'foo.mu3_' that is already locked}}
+    // expected-warning {{acquiring mutex 'foo.mu1_' that is already held}} \
+    // expected-warning {{acquiring mutex 'foo.mu2_' that is already held}} \
+    // expected-warning {{acquiring mutex 'foo.mu3_' that is already held}}
   foo.a = 0;
   foo.b = 0;
   foo.c = 0;
   foo.unlocklots();
   foo.unlocklots(); // \
-    // expected-warning {{unlocking 'foo.mu1_' that was not locked}} \
-    // expected-warning {{unlocking 'foo.mu2_' that was not locked}} \
-    // expected-warning {{unlocking 'foo.mu3_' that was not locked}}
+    // expected-warning {{releasing mutex 'foo.mu1_' that was not held}} \
+    // expected-warning {{releasing mutex 'foo.mu2_' that was not held}} \
+    // expected-warning {{releasing mutex 'foo.mu3_' that was not held}}
 }
 
 }  // end namespace DuplicateAttributeTest
@@ -3010,7 +3010,7 @@ class Foo {
 
 void Foo::test1() {
   if (tryLockMutexP() == 0) {
-    a = 0;  // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    a = 0;  // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
     return;
   }
   a = 0;
@@ -3032,14 +3032,14 @@ void Foo::test1() {
   }
 
   if (tryLockMutexI() == 0) {
-    a = 0;   // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    a = 0;   // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
     return;
   }
   a = 0;
   unlock();
 
   if (0 == tryLockMutexI()) {
-    a = 0;   // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    a = 0;   // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
     return;
   }
   a = 0;
@@ -3051,7 +3051,7 @@ void Foo::test1() {
   }
 
   if (mu_.TryLock() == false) {
-    a = 0;   // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    a = 0;   // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
     return;
   }
   a = 0;
@@ -3062,12 +3062,12 @@ void Foo::test1() {
     unlock();
   }
   else {
-    a = 0;  // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    a = 0;  // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
   }
 
 #if __has_feature(cxx_nullptr)
   if (tryLockMutexP() == nullptr) {
-    a = 0;  // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    a = 0;  // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
     return;
   }
   a = 0;
@@ -3103,26 +3103,26 @@ void test() {
   Graph g2;
   Node n1;
 
-  n1.a = 0;   // expected-warning {{writing variable 'a' requires locking '&ExistentialPatternMatching::Graph::mu_' exclusively}}
-  n1.foo();   // expected-warning {{calling function 'foo' requires exclusive lock on '&ExistentialPatternMatching::Graph::mu_'}}
+  n1.a = 0;   // expected-warning {{writing variable 'a' requires holding mutex '&ExistentialPatternMatching::Graph::mu_' exclusively}}
+  n1.foo();   // expected-warning {{calling function 'foo' requires holding mutex '&ExistentialPatternMatching::Graph::mu_' exclusively}}
   n1.foo2();
 
   g1.mu_.Lock();
   n1.a = 0;
   n1.foo();
-  n1.foo2();  // expected-warning {{cannot call function 'foo2' while mutex '&ExistentialPatternMatching::Graph::mu_' is locked}}
+  n1.foo2();  // expected-warning {{cannot call function 'foo2' while mutex '&ExistentialPatternMatching::Graph::mu_' is held}}
   g1.mu_.Unlock();
 
   g2.mu_.Lock();
   n1.a = 0;
   n1.foo();
-  n1.foo2();  // expected-warning {{cannot call function 'foo2' while mutex '&ExistentialPatternMatching::Graph::mu_' is locked}}
+  n1.foo2();  // expected-warning {{cannot call function 'foo2' while mutex '&ExistentialPatternMatching::Graph::mu_' is held}}
   g2.mu_.Unlock();
 
   LockAllGraphs();
   n1.a = 0;
   n1.foo();
-  n1.foo2();  // expected-warning {{cannot call function 'foo2' while mutex '&ExistentialPatternMatching::Graph::mu_' is locked}}
+  n1.foo2();  // expected-warning {{cannot call function 'foo2' while mutex '&ExistentialPatternMatching::Graph::mu_' is held}}
   UnlockAllGraphs();
 
   LockAllGraphs();
@@ -3132,7 +3132,7 @@ void test() {
   g2.mu_.Unlock();
 
   LockAllGraphs();
-  g1.mu_.Lock();  // expected-warning {{locking 'g1.mu_' that is already locked}}
+  g1.mu_.Lock();  // expected-warning {{acquiring mutex 'g1.mu_' that is already held}}
   g1.mu_.Unlock();
 }
 
@@ -3260,9 +3260,9 @@ class Foo {
       beginNoWarnOnWrites();
     }
     a = 0; // \
-      // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+      // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
     endNoWarnOnWrites();  // \
-      // expected-warning {{unlocking '*' that was not locked}}
+      // expected-warning {{releasing mutex '*' that was not held}}
   }
 
 
@@ -3390,17 +3390,17 @@ public:
 
 
 void test1() {
-  Foo f;           // expected-warning {{calling function 'Foo' requires exclusive lock on 'mu_'}}
-  int a = f[0];    // expected-warning {{calling function 'operator[]' requires exclusive lock on 'mu_'}}
-}                  // expected-warning {{calling function '~Foo' requires exclusive lock on 'mu_'}}
+  Foo f;           // expected-warning {{calling function 'Foo' requires holding mutex 'mu_' exclusively}}
+  int a = f[0];    // expected-warning {{calling function 'operator[]' requires holding mutex 'mu_' exclusively}}
+}                  // expected-warning {{calling function '~Foo' requires holding mutex 'mu_' exclusively}}
 
 
 void test2() {
   Bar::mu_.Lock();
   {
-    Bar b;         // expected-warning {{cannot call function 'Bar' while mutex 'mu_' is locked}}
-    int a = b[0];  // expected-warning {{cannot call function 'operator[]' while mutex 'mu_' is locked}}
-  }                // expected-warning {{cannot call function '~Bar' while mutex 'mu_' is locked}}
+    Bar b;         // expected-warning {{cannot call function 'Bar' while mutex 'mu_' is held}}
+    int a = b[0];  // expected-warning {{cannot call function 'operator[]' while mutex 'mu_' is held}}
+  }                // expected-warning {{cannot call function '~Bar' while mutex 'mu_' is held}}
   Bar::mu_.Unlock();
 }
 
@@ -3499,7 +3499,7 @@ void Foo::elr(Cell<T>* c1) { }
 void Foo::test() {
   Cell<int> cell;
   elr(&cell); // \
-    // expected-warning {{calling function 'elr' requires exclusive lock on 'cell.mu_'}}
+    // expected-warning {{calling function 'elr' requires holding mutex 'cell.mu_' exclusively}}
 }
 
 
@@ -3512,7 +3512,7 @@ void globalELR(Cell<T>* c1) { }
 void globalTest() {
   Cell<int> cell;
   globalELR(&cell); // \
-    // expected-warning {{calling function 'globalELR' requires exclusive lock on 'cell.mu_'}}
+    // expected-warning {{calling function 'globalELR' requires holding mutex 'cell.mu_' exclusively}}
 }
 
 
@@ -3533,7 +3533,7 @@ void globalELR2(Cell<T>* c4);
 void globalTest2() {
   Cell<int> cell;
   globalELR2(&cell); // \
-    // expected-warning {{calling function 'globalELR2' requires exclusive lock on 'cell.mu_'}}
+    // expected-warning {{calling function 'globalELR2' requires holding mutex 'cell.mu_' exclusively}}
 }
 
 
@@ -3550,7 +3550,7 @@ void testFooT() {
   Cell<int> cell;
   FooT<int> foo;
   foo.elr(&cell); // \
-    // expected-warning {{calling function 'elr' requires exclusive lock on 'cell.mu_'}}
+    // expected-warning {{calling function 'elr' requires holding mutex 'cell.mu_' exclusively}}
 }
 
 }  // end namespace TemplateFunctionParamRemapTest
@@ -3738,24 +3738,24 @@ public:
   // method call tests
   void test() {
     data_.setValue(0);         // FIXME -- should be writing \
-      // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+      // expected-warning {{reading variable 'data_' requires holding mutex 'mu_'}}
     int a = data_.getValue();  // \
-      // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+      // expected-warning {{reading variable 'data_' requires holding mutex 'mu_'}}
 
     datap1_->setValue(0);      // FIXME -- should be writing \
-      // expected-warning {{reading variable 'datap1_' requires locking 'mu_'}}
+      // expected-warning {{reading variable 'datap1_' requires holding mutex 'mu_'}}
     a = datap1_->getValue();   // \
-      // expected-warning {{reading variable 'datap1_' requires locking 'mu_'}}
+      // expected-warning {{reading variable 'datap1_' requires holding mutex 'mu_'}}
 
     datap2_->setValue(0);      // FIXME -- should be writing \
-      // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+      // expected-warning {{reading the value pointed to by 'datap2_' requires holding mutex 'mu_'}}
     a = datap2_->getValue();   // \
-      // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+      // expected-warning {{reading the value pointed to by 'datap2_' requires holding mutex 'mu_'}}
 
     (*datap2_).setValue(0);    // FIXME -- should be writing \
-      // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+      // expected-warning {{reading the value pointed to by 'datap2_' requires holding mutex 'mu_'}}
     a = (*datap2_).getValue(); // \
-      // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+      // expected-warning {{reading the value pointed to by 'datap2_' requires holding mutex 'mu_'}}
 
     mu_.Lock();
     data_.setValue(1);
@@ -3773,31 +3773,31 @@ public:
 
   // operator tests
   void test2() {
-    data_    = Data(1);   // expected-warning {{writing variable 'data_' requires locking 'mu_' exclusively}}
-    *datap1_ = data_;     // expected-warning {{reading variable 'datap1_' requires locking 'mu_'}} \
-                          // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
-    *datap2_ = data_;     // expected-warning {{writing the value pointed to by 'datap2_' requires locking 'mu_' exclusively}} \
-                          // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
-    data_ = *datap1_;     // expected-warning {{writing variable 'data_' requires locking 'mu_' exclusively}} \
-                          // expected-warning {{reading variable 'datap1_' requires locking 'mu_'}}
-    data_ = *datap2_;     // expected-warning {{writing variable 'data_' requires locking 'mu_' exclusively}} \
-                          // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+    data_    = Data(1);   // expected-warning {{writing variable 'data_' requires holding mutex 'mu_' exclusively}}
+    *datap1_ = data_;     // expected-warning {{reading variable 'datap1_' requires holding mutex 'mu_'}} \
+                          // expected-warning {{reading variable 'data_' requires holding mutex 'mu_'}}
+    *datap2_ = data_;     // expected-warning {{writing the value pointed to by 'datap2_' requires holding mutex 'mu_' exclusively}} \
+                          // expected-warning {{reading variable 'data_' requires holding mutex 'mu_'}}
+    data_ = *datap1_;     // expected-warning {{writing variable 'data_' requires holding mutex 'mu_' exclusively}} \
+                          // expected-warning {{reading variable 'datap1_' requires holding mutex 'mu_'}}
+    data_ = *datap2_;     // expected-warning {{writing variable 'data_' requires holding mutex 'mu_' exclusively}} \
+                          // expected-warning {{reading the value pointed to by 'datap2_' requires holding mutex 'mu_'}}
 
-    data_[0] = 0;         // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
-    (*datap2_)[0] = 0;    // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+    data_[0] = 0;         // expected-warning {{reading variable 'data_' requires holding mutex 'mu_'}}
+    (*datap2_)[0] = 0;    // expected-warning {{reading the value pointed to by 'datap2_' requires holding mutex 'mu_'}}
 
-    data_();              // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+    data_();              // expected-warning {{reading variable 'data_' requires holding mutex 'mu_'}}
   }
 
   // const operator tests
   void test3() const {
-    Data mydat(data_);      // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+    Data mydat(data_);      // expected-warning {{reading variable 'data_' requires holding mutex 'mu_'}}
 
     //FIXME
-    //showDataCell(data_);    // xpected-warning {{reading variable 'data_' requires locking 'mu_'}}
-    //showDataCell(*datap2_); // xpected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+    //showDataCell(data_);    // xpected-warning {{reading variable 'data_' requires holding mutex 'mu_'}}
+    //showDataCell(*datap2_); // xpected-warning {{reading the value pointed to by 'datap2_' requires holding mutex 'mu_'}}
 
-    int a = data_[0];       // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+    int a = data_[0];       // expected-warning {{reading variable 'data_' requires holding mutex 'mu_'}}
   }
 
 private:
@@ -3841,31 +3841,31 @@ private:
   Foo* foop PT_GUARDED_BY(mu_);
 
   void test() {
-    foo.myMethod();      // expected-warning {{reading variable 'foo' requires locking 'mu_'}}
+    foo.myMethod();      // expected-warning {{reading variable 'foo' requires holding mutex 'mu_'}}
 
-    int fa = foo.a;      // expected-warning {{reading variable 'foo' requires locking 'mu_'}}
-    foo.a  = fa;         // expected-warning {{writing variable 'foo' requires locking 'mu_' exclusively}}
+    int fa = foo.a;      // expected-warning {{reading variable 'foo' requires holding mutex 'mu_'}}
+    foo.a  = fa;         // expected-warning {{writing variable 'foo' requires holding mutex 'mu_' exclusively}}
 
-    fa = foop->a;        // expected-warning {{reading the value pointed to by 'foop' requires locking 'mu_'}}
-    foop->a = fa;        // expected-warning {{writing the value pointed to by 'foop' requires locking 'mu_' exclusively}}
+    fa = foop->a;        // expected-warning {{reading the value pointed to by 'foop' requires holding mutex 'mu_'}}
+    foop->a = fa;        // expected-warning {{writing the value pointed to by 'foop' requires holding mutex 'mu_' exclusively}}
 
-    fa = (*foop).a;      // expected-warning {{reading the value pointed to by 'foop' requires locking 'mu_'}}
-    (*foop).a = fa;      // expected-warning {{writing the value pointed to by 'foop' requires locking 'mu_' exclusively}}
+    fa = (*foop).a;      // expected-warning {{reading the value pointed to by 'foop' requires holding mutex 'mu_'}}
+    (*foop).a = fa;      // expected-warning {{writing the value pointed to by 'foop' requires holding mutex 'mu_' exclusively}}
 
-    foo.c  = Cell(0);    // expected-warning {{writing variable 'foo' requires locking 'mu_'}} \
-                         // expected-warning {{writing variable 'c' requires locking 'foo.cell_mu_' exclusively}}
-    foo.c.cellMethod();  // expected-warning {{reading variable 'foo' requires locking 'mu_'}} \
-                         // expected-warning {{reading variable 'c' requires locking 'foo.cell_mu_'}}
+    foo.c  = Cell(0);    // expected-warning {{writing variable 'foo' requires holding mutex 'mu_'}} \
+                         // expected-warning {{writing variable 'c' requires holding mutex 'foo.cell_mu_' exclusively}}
+    foo.c.cellMethod();  // expected-warning {{reading variable 'foo' requires holding mutex 'mu_'}} \
+                         // expected-warning {{reading variable 'c' requires holding mutex 'foo.cell_mu_'}}
 
-    foop->c  = Cell(0);    // expected-warning {{writing the value pointed to by 'foop' requires locking 'mu_'}} \
-                           // expected-warning {{writing variable 'c' requires locking 'foop->cell_mu_' exclusively}}
-    foop->c.cellMethod();  // expected-warning {{reading the value pointed to by 'foop' requires locking 'mu_'}} \
-                           // expected-warning {{reading variable 'c' requires locking 'foop->cell_mu_'}}
+    foop->c  = Cell(0);    // expected-warning {{writing the value pointed to by 'foop' requires holding mutex 'mu_'}} \
+                           // expected-warning {{writing variable 'c' requires holding mutex 'foop->cell_mu_' exclusively}}
+    foop->c.cellMethod();  // expected-warning {{reading the value pointed to by 'foop' requires holding mutex 'mu_'}} \
+                           // expected-warning {{reading variable 'c' requires holding mutex 'foop->cell_mu_'}}
 
-    (*foop).c  = Cell(0);    // expected-warning {{writing the value pointed to by 'foop' requires locking 'mu_'}} \
-                             // expected-warning {{writing variable 'c' requires locking 'foop->cell_mu_' exclusively}}
-    (*foop).c.cellMethod();  // expected-warning {{reading the value pointed to by 'foop' requires locking 'mu_'}} \
-                             // expected-warning {{reading variable 'c' requires locking 'foop->cell_mu_'}}
+    (*foop).c  = Cell(0);    // expected-warning {{writing the value pointed to by 'foop' requires holding mutex 'mu_'}} \
+                             // expected-warning {{writing variable 'c' requires holding mutex 'foop->cell_mu_' exclusively}}
+    (*foop).c.cellMethod();  // expected-warning {{reading the value pointed to by 'foop' requires holding mutex 'mu_'}} \
+                             // expected-warning {{reading variable 'c' requires holding mutex 'foop->cell_mu_'}}
   };
 };
 
@@ -3938,34 +3938,34 @@ public:
   void lockBad() EXCLUSIVE_LOCK_FUNCTION(mu_) {    // expected-note {{mutex acquired here}}
     mu2_.Lock();
     mu2_.Unlock();
-  }  // expected-warning {{expecting mutex 'mu_' to be locked at the end of function}}
+  }  // expected-warning {{expecting mutex 'mu_' to be held at the end of function}}
 
   void readerLockBad() SHARED_LOCK_FUNCTION(mu_) {  // expected-note {{mutex acquired here}}
     mu2_.Lock();
     mu2_.Unlock();
-  }  // expected-warning {{expecting mutex 'mu_' to be locked at the end of function}}
+  }  // expected-warning {{expecting mutex 'mu_' to be held at the end of function}}
 
   void unlockBad() UNLOCK_FUNCTION(mu_) {  // expected-note {{mutex acquired here}}
     mu2_.Lock();
     mu2_.Unlock();
-  }  // expected-warning {{mutex 'mu_' is still locked at the end of function}}
+  }  // expected-warning {{mutex 'mu_' is still held at the end of function}}
 
   // Check locking the wrong thing.
   void lockBad2() EXCLUSIVE_LOCK_FUNCTION(mu_) {   // expected-note {{mutex acquired here}}
     mu2_.Lock();            // expected-note {{mutex acquired here}}
-  } // expected-warning {{expecting mutex 'mu_' to be locked at the end of function}} \
-    // expected-warning {{mutex 'mu2_' is still locked at the end of function}}
+  } // expected-warning {{expecting mutex 'mu_' to be held at the end of function}} \
+    // expected-warning {{mutex 'mu2_' is still held at the end of function}}
 
 
   void readerLockBad2() SHARED_LOCK_FUNCTION(mu_) {   // expected-note {{mutex acquired here}}
     mu2_.ReaderLock();      // expected-note {{mutex acquired here}}
-  } // expected-warning {{expecting mutex 'mu_' to be locked at the end of function}} \
-    // expected-warning {{mutex 'mu2_' is still locked at the end of function}}
+  } // expected-warning {{expecting mutex 'mu_' to be held at the end of function}} \
+    // expected-warning {{mutex 'mu2_' is still held at the end of function}}
 
 
   void unlockBad2() UNLOCK_FUNCTION(mu_) {  // expected-note {{mutex acquired here}}
-    mu2_.Unlock();  // expected-warning {{unlocking 'mu2_' that was not locked}}
-  }  // expected-warning {{mutex 'mu_' is still locked at the end of function}}
+    mu2_.Unlock();  // expected-warning {{releasing mutex 'mu2_' that was not held}}
+  }  // expected-warning {{mutex 'mu_' is still held at the end of function}}
 
 private:
   Mutex mu_;
@@ -3992,7 +3992,7 @@ public:
   void test2() {
     mu_.AssertReaderHeld();
     int b = a;
-    a = 0;   // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    a = 0;   // expected-warning {{writing variable 'a' requires holding mutex 'mu_' exclusively}}
   }
 
   void test3() {
@@ -4053,7 +4053,7 @@ public:
     else {
       mu_.Lock();  // expected-note {{mutex acquired here}}
     }
-  }  // expected-warning {{mutex 'mu_' is still locked at the end of function}}
+  }  // expected-warning {{mutex 'mu_' is still held at the end of function}}
 
   void test10() {
     if (c) {
@@ -4062,7 +4062,7 @@ public:
     else {
       mu_.AssertHeld();
     }
-  }  // expected-warning {{mutex 'mu_' is still locked at the end of function}}
+  }  // expected-warning {{mutex 'mu_' is still held at the end of function}}
 
   void assertMu() ASSERT_EXCLUSIVE_LOCK(mu_);
 
@@ -4199,52 +4199,52 @@ class PtGuardedBySanityTest {
 
   void test2() {
     mu1.ReaderLock();
-    if (*a == 0) doSomething();      // expected-warning {{reading the value pointed to by 'a' requires locking 'mu2'}}
-    *a = 0;                          // expected-warning {{writing the value pointed to by 'a' requires locking 'mu2' exclusively}}
+    if (*a == 0) doSomething();      // expected-warning {{reading the value pointed to by 'a' requires holding mutex 'mu2'}}
+    *a = 0;                          // expected-warning {{writing the value pointed to by 'a' requires holding mutex 'mu2' exclusively}}
 
-    if (c->a == 0) doSomething();    // expected-warning {{reading the value pointed to by 'c' requires locking 'mu2'}}
-    c->a = 0;                        // expected-warning {{writing the value pointed to by 'c' requires locking 'mu2' exclusively}}
+    if (c->a == 0) doSomething();    // expected-warning {{reading the value pointed to by 'c' requires holding mutex 'mu2'}}
+    c->a = 0;                        // expected-warning {{writing the value pointed to by 'c' requires holding mutex 'mu2' exclusively}}
 
-    if ((*c).a == 0) doSomething();  // expected-warning {{reading the value pointed to by 'c' requires locking 'mu2'}}
-    (*c).a = 0;                      // expected-warning {{writing the value pointed to by 'c' requires locking 'mu2' exclusively}}
+    if ((*c).a == 0) doSomething();  // expected-warning {{reading the value pointed to by 'c' requires holding mutex 'mu2'}}
+    (*c).a = 0;                      // expected-warning {{writing the value pointed to by 'c' requires holding mutex 'mu2' exclusively}}
 
-    if (a[0] == 42) doSomething();     // expected-warning {{reading the value pointed to by 'a' requires locking 'mu2'}}
-    a[0] = 57;                         // expected-warning {{writing the value pointed to by 'a' requires locking 'mu2' exclusively}}
-    if (c[0].a == 42) doSomething();   // expected-warning {{reading the value pointed to by 'c' requires locking 'mu2'}}
-    c[0].a = 57;                       // expected-warning {{writing the value pointed to by 'c' requires locking 'mu2' exclusively}}
+    if (a[0] == 42) doSomething();     // expected-warning {{reading the value pointed to by 'a' requires holding mutex 'mu2'}}
+    a[0] = 57;                         // expected-warning {{writing the value pointed to by 'a' requires holding mutex 'mu2' exclusively}}
+    if (c[0].a == 42) doSomething();   // expected-warning {{reading the value pointed to by 'c' requires holding mutex 'mu2'}}
+    c[0].a = 57;                       // expected-warning {{writing the value pointed to by 'c' requires holding mutex 'mu2' exclusively}}
     mu1.Unlock();
   }
 
   void test3() {
     mu2.Lock();
-    if (*a == 0) doSomething();      // expected-warning {{reading variable 'a' requires locking 'mu1'}}
-    *a = 0;                          // expected-warning {{reading variable 'a' requires locking 'mu1'}}
+    if (*a == 0) doSomething();      // expected-warning {{reading variable 'a' requires holding mutex 'mu1'}}
+    *a = 0;                          // expected-warning {{reading variable 'a' requires holding mutex 'mu1'}}
 
-    if (c->a == 0) doSomething();    // expected-warning {{reading variable 'c' requires locking 'mu1'}}
-    c->a = 0;                        // expected-warning {{reading variable 'c' requires locking 'mu1'}}
+    if (c->a == 0) doSomething();    // expected-warning {{reading variable 'c' requires holding mutex 'mu1'}}
+    c->a = 0;                        // expected-warning {{reading variable 'c' requires holding mutex 'mu1'}}
 
-    if ((*c).a == 0) doSomething();  // expected-warning {{reading variable 'c' requires locking 'mu1'}}
-    (*c).a = 0;                      // expected-warning {{reading variable 'c' requires locking 'mu1'}}
+    if ((*c).a == 0) doSomething();  // expected-warning {{reading variable 'c' requires holding mutex 'mu1'}}
+    (*c).a = 0;                      // expected-warning {{reading variable 'c' requires holding mutex 'mu1'}}
 
-    if (a[0] == 42) doSomething();     // expected-warning {{reading variable 'a' requires locking 'mu1'}}
-    a[0] = 57;                         // expected-warning {{reading variable 'a' requires locking 'mu1'}}
-    if (c[0].a == 42) doSomething();   // expected-warning {{reading variable 'c' requires locking 'mu1'}}
-    c[0].a = 57;                       // expected-warning {{reading variable 'c' requires locking 'mu1'}}
+    if (a[0] == 42) doSomething();     // expected-warning {{reading variable 'a' requires holding mutex 'mu1'}}
+    a[0] = 57;                         // expected-warning {{reading variable 'a' requires holding mutex 'mu1'}}
+    if (c[0].a == 42) doSomething();   // expected-warning {{reading variable 'c' requires holding mutex 'mu1'}}
+    c[0].a = 57;                       // expected-warning {{reading variable 'c' requires holding mutex 'mu1'}}
     mu2.Unlock();
   }
 
   void test4() {  // Literal arrays
-    if (sa[0] == 42) doSomething();     // expected-warning {{reading variable 'sa' requires locking 'mu1'}}
-    sa[0] = 57;                         // expected-warning {{writing variable 'sa' requires locking 'mu1' exclusively}}
-    if (sc[0].a == 42) doSomething();   // expected-warning {{reading variable 'sc' requires locking 'mu1'}}
-    sc[0].a = 57;                       // expected-warning {{writing variable 'sc' requires locking 'mu1' exclusively}}
+    if (sa[0] == 42) doSomething();     // expected-warning {{reading variable 'sa' requires holding mutex 'mu1'}}
+    sa[0] = 57;                         // expected-warning {{writing variable 'sa' requires holding mutex 'mu1' exclusively}}
+    if (sc[0].a == 42) doSomething();   // expected-warning {{reading variable 'sc' requires holding mutex 'mu1'}}
+    sc[0].a = 57;                       // expected-warning {{writing variable 'sc' requires holding mutex 'mu1' exclusively}}
 
-    if (*sa == 42) doSomething();       // expected-warning {{reading variable 'sa' requires locking 'mu1'}}
-    *sa = 57;                           // expected-warning {{writing variable 'sa' requires locking 'mu1' exclusively}}
-    if ((*sc).a == 42) doSomething();   // expected-warning {{reading variable 'sc' requires locking 'mu1'}}
-    (*sc).a = 57;                       // expected-warning {{writing variable 'sc' requires locking 'mu1' exclusively}}
-    if (sc->a == 42) doSomething();     // expected-warning {{reading variable 'sc' requires locking 'mu1'}}
-    sc->a = 57;                         // expected-warning {{writing variable 'sc' requires locking 'mu1' exclusively}}
+    if (*sa == 42) doSomething();       // expected-warning {{reading variable 'sa' requires holding mutex 'mu1'}}
+    *sa = 57;                           // expected-warning {{writing variable 'sa' requires holding mutex 'mu1' exclusively}}
+    if ((*sc).a == 42) doSomething();   // expected-warning {{reading variable 'sc' requires holding mutex 'mu1'}}
+    (*sc).a = 57;                       // expected-warning {{writing variable 'sc' requires holding mutex 'mu1' exclusively}}
+    if (sc->a == 42) doSomething();     // expected-warning {{reading variable 'sc' requires holding mutex 'mu1'}}
+    sc->a = 57;                         // expected-warning {{writing variable 'sc' requires holding mutex 'mu1' exclusively}}
   }
 
   void test5() {
@@ -4289,15 +4289,15 @@ class SmartPtr_PtGuardedBy_Test {
   void test2() {
     mu2.Lock();
 
-    sp.get();                      // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
-    if (*sp == 0) doSomething();   // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
-    *sp = 0;                       // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
-    sq->a = 0;                     // expected-warning {{reading variable 'sq' requires locking 'mu1'}}
+    sp.get();                      // expected-warning {{reading variable 'sp' requires holding mutex 'mu1'}}
+    if (*sp == 0) doSomething();   // expected-warning {{reading variable 'sp' requires holding mutex 'mu1'}}
+    *sp = 0;                       // expected-warning {{reading variable 'sp' requires holding mutex 'mu1'}}
+    sq->a = 0;                     // expected-warning {{reading variable 'sq' requires holding mutex 'mu1'}}
 
-    if (sp[0] == 0) doSomething();   // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
-    sp[0] = 0;                       // expected-warning {{reading variable 'sp' requires locking 'mu1'}}
-    if (sq[0].a == 0) doSomething(); // expected-warning {{reading variable 'sq' requires locking 'mu1'}}
-    sq[0].a = 0;                     // expected-warning {{reading variable 'sq' requires locking 'mu1'}}
+    if (sp[0] == 0) doSomething();   // expected-warning {{reading variable 'sp' requires holding mutex 'mu1'}}
+    sp[0] = 0;                       // expected-warning {{reading variable 'sp' requires holding mutex 'mu1'}}
+    if (sq[0].a == 0) doSomething(); // expected-warning {{reading variable 'sq' requires holding mutex 'mu1'}}
+    sq[0].a = 0;                     // expected-warning {{reading variable 'sq' requires holding mutex 'mu1'}}
 
     mu2.Unlock();
   }
@@ -4306,14 +4306,14 @@ class SmartPtr_PtGuardedBy_Test {
     mu1.Lock();
 
     sp.get();
-    if (*sp == 0) doSomething();   // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
-    *sp = 0;                       // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
-    sq->a = 0;                     // expected-warning {{reading the value pointed to by 'sq' requires locking 'mu2'}}
+    if (*sp == 0) doSomething();   // expected-warning {{reading the value pointed to by 'sp' requires holding mutex 'mu2'}}
+    *sp = 0;                       // expected-warning {{reading the value pointed to by 'sp' requires holding mutex 'mu2'}}
+    sq->a = 0;                     // expected-warning {{reading the value pointed to by 'sq' requires holding mutex 'mu2'}}
 
-    if (sp[0] == 0) doSomething();   // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
-    sp[0] = 0;                       // expected-warning {{reading the value pointed to by 'sp' requires locking 'mu2'}}
-    if (sq[0].a == 0) doSomething(); // expected-warning {{reading the value pointed to by 'sq' requires locking 'mu2'}}
-    sq[0].a = 0;                     // expected-warning {{reading the value pointed to by 'sq' requires locking 'mu2'}}
+    if (sp[0] == 0) doSomething();   // expected-warning {{reading the value pointed to by 'sp' requires holding mutex 'mu2'}}
+    sp[0] = 0;                       // expected-warning {{reading the value pointed to by 'sp' requires holding mutex 'mu2'}}
+    if (sq[0].a == 0) doSomething(); // expected-warning {{reading the value pointed to by 'sq' requires holding mutex 'mu2'}}
+    sq[0].a = 0;                     // expected-warning {{reading the value pointed to by 'sq' requires holding mutex 'mu2'}}
 
     mu1.Unlock();
   }
@@ -4326,7 +4326,7 @@ namespace NonMemberCalleeICETest {
 
 class A {
   void Run() {
-  (RunHelper)();  // expected-warning {{calling function 'RunHelper' requires exclusive lock on 'M'}}
+  (RunHelper)();  // expected-warning {{calling function 'RunHelper' requires holding mutex 'M' exclusively}}
  }
 
  void RunHelper() __attribute__((exclusive_locks_required(M)));
@@ -4370,7 +4370,7 @@ class Foo {
       mu_.Lock();
     };
 
-    func1();  // expected-warning {{calling function 'operator()' requires exclusive lock on 'mu_'}}
+    func1();  // expected-warning {{calling function 'operator()' requires holding mutex 'mu_' exclusively}}
     func2();
     func3();
     mu_.Unlock();

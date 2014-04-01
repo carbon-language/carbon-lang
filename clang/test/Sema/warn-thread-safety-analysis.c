@@ -74,14 +74,14 @@ int get_value(int *p) SHARED_LOCKS_REQUIRED(foo_.mu_){
 
 int main() {
 
-  Foo_fun1(1); // expected-warning{{calling function 'Foo_fun1' requires shared lock on 'mu2'}} \
-                  expected-warning{{calling function 'Foo_fun1' requires exclusive lock on 'mu1'}}
+  Foo_fun1(1); // expected-warning{{calling function 'Foo_fun1' requires holding mutex 'mu2'}} \
+                  expected-warning{{calling function 'Foo_fun1' requires holding mutex 'mu1' exclusively}}
 
   mutex_exclusive_lock(&mu1);
   mutex_shared_lock(&mu2);
   Foo_fun1(1);
 
-  mutex_shared_lock(&mu1); // expected-warning{{locking 'mu1' that is already locked}}
+  mutex_shared_lock(&mu1); // expected-warning{{acquiring mutex 'mu1' that is already held}}
   mutex_unlock(&mu1);
   mutex_unlock(&mu2);
   mutex_shared_lock(&mu1);
@@ -95,13 +95,13 @@ int main() {
   mutex_unlock(&mu1);
 
   mutex_exclusive_lock(&mu1);
-  Foo_func3(4);  // expected-warning{{cannot call function 'Foo_func3' while mutex 'mu1' is locked}}
+  Foo_func3(4);  // expected-warning{{cannot call function 'Foo_func3' while mutex 'mu1' is held}}
   mutex_unlock(&mu1);
 
   Foo_func3(5);
 
-  set_value(&a_, 0); // expected-warning{{calling function 'set_value' requires exclusive lock on 'foo_.mu_'}}
-  get_value(b_); // expected-warning{{calling function 'get_value' requires shared lock on 'foo_.mu_'}}
+  set_value(&a_, 0); // expected-warning{{calling function 'set_value' requires holding mutex 'foo_.mu_' exclusively}}
+  get_value(b_); // expected-warning{{calling function 'get_value' requires holding mutex 'foo_.mu_'}}
   mutex_exclusive_lock(foo_.mu_);
   set_value(&a_, 1);
   mutex_unlock(foo_.mu_);
@@ -109,19 +109,19 @@ int main() {
   (void)(get_value(b_) == 1);
   mutex_unlock(foo_.mu_);
 
-  c_ = 0; // expected-warning{{writing variable 'c_' requires locking any mutex exclusively}}
-  (void)(*d_ == 0); // expected-warning{{reading the value pointed to by 'd_' requires locking any mutex}}
+  c_ = 0; // expected-warning{{writing variable 'c_' requires holding any mutex exclusively}}
+  (void)(*d_ == 0); // expected-warning{{reading the value pointed to by 'd_' requires holding any mutex}}
   mutex_exclusive_lock(foo_.mu_);
   c_ = 1;
   (void)(*d_ == 1);
   mutex_unlock(foo_.mu_);
 
   mutex_exclusive_lock(&mu1);
-  mutex_shared_unlock(&mu1); // expected-warning {{unlocking 'mu1' using shared access, expected exclusive access}}
+  mutex_shared_unlock(&mu1); // expected-warning {{releasing mutex 'mu1' using shared access, expected exclusive access}}
   mutex_exclusive_unlock(&mu1);
 
   mutex_shared_lock(&mu1);
-  mutex_exclusive_unlock(&mu1); // expected-warning {{unlocking 'mu1' using exclusive access, expected shared access}}
+  mutex_exclusive_unlock(&mu1); // expected-warning {{releasing mutex 'mu1' using exclusive access, expected shared access}}
   mutex_shared_unlock(&mu1);
 
   return 0;
