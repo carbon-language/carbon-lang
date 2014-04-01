@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <new>
 
 #ifndef LockType
 #define LockType PthreadMutex
@@ -25,11 +26,14 @@ static int iter_count = 100000;
 class PthreadMutex {
  public:
   explicit PthreadMutex(bool recursive = false) {
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    if (recursive)
+    if (recursive) {
+      pthread_mutexattr_t attr;
+      pthread_mutexattr_init(&attr);
       pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    assert(0 == pthread_mutex_init(&mu_, &attr));
+      assert(0 == pthread_mutex_init(&mu_, &attr));
+    } else {
+      assert(0 == pthread_mutex_init(&mu_, 0));
+    }
   }
   ~PthreadMutex() {
     assert(0 == pthread_mutex_destroy(&mu_));
@@ -477,6 +481,26 @@ class LockTest {
   __attribute__((noinline)) void Acquire_1_then_2() { Acquire1(); Acquire2(); }
   __attribute__((noinline)) void Acquire_2_then_0() { Acquire2(); Acquire0(); }
 
+  // This test creates, locks, unlocks and destroys lots of mutexes.
+  void Test18() {
+    if (test_number > 0 && test_number != 18) return;
+    fprintf(stderr, "Starting Test18: create, lock and destroy 4 locks; all in "
+                    "4 threads in a loop\n");
+    RunThreads(&LockTest::Test18_Thread, &LockTest::Test18_Thread,
+               &LockTest::Test18_Thread, &LockTest::Test18_Thread);
+  }
+
+  void Test18_Thread() {
+    LockType *l = new LockType[4];
+    for (size_t i = 0; i < iter_count / 100; i++) {
+      for (int i = 0; i < 4; i++) l[i].lock();
+      for (int i = 0; i < 4; i++) l[i].unlock();
+      for (int i = 0; i < 4; i++) l[i].~LockType();
+      for (int i = 0; i < 4; i++) new ((void*)&l[i]) LockType();
+    }
+    delete [] l;
+  }
+
  private:
   void Lock2(size_t l1, size_t l2) { L(l1); L(l2); U(l2); U(l1); }
   void Lock_0_1() { Lock2(0, 1); }
@@ -566,6 +590,7 @@ int main(int argc, char **argv) {
   LockTest().Test15();
   LockTest().Test16();
   LockTest().Test17();
+  LockTest().Test18();
   fprintf(stderr, "ALL-DONE\n");
   // CHECK: ALL-DONE
 }
