@@ -279,7 +279,7 @@ namespace __sanitizer {
     char *pw_passwd;
     int pw_uid;
     int pw_gid;
-#if SANITIZER_MAC
+#if SANITIZER_MAC || SANITIZER_FREEBSD
     long pw_change;
     char *pw_class;
 #endif
@@ -288,8 +288,11 @@ namespace __sanitizer {
 #endif
     char *pw_dir;
     char *pw_shell;
-#if SANITIZER_MAC
+#if SANITIZER_MAC || SANITIZER_FREEBSD
     long pw_expire;
+#endif
+#if SANITIZER_FREEBSD
+    int pw_fields;
 #endif
   };
 
