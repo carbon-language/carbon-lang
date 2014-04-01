@@ -1401,6 +1401,14 @@ class Base(unittest2.TestCase):
     # Build methods supported through a plugin interface
     # ==================================================
 
+    def getstdlibFlag(self):
+        """ Returns the proper -stdlib flag, or empty if not required."""
+        if sys.platform.startswith("darwin") or sys.platform.startswith("freebsd"):
+            stdlibflag = "-stdlib=libc++"
+        else:
+            stdlibflag = ""
+        return stdlibflag
+
     def getstdFlag(self):
         """ Returns the proper stdflag. """
         if "gcc" in self.getCompiler() and "4.6" in self.getCompilerVersion():
@@ -1415,19 +1423,20 @@ class Base(unittest2.TestCase):
         """
 
         stdflag = self.getstdFlag()
+        stdlibflag = self.getstdlibFlag()
 
         if sys.platform.startswith("darwin"):
             dsym = os.path.join(self.lib_dir, 'LLDB.framework', 'LLDB')
             d = {'CXX_SOURCES' : sources,
                  'EXE' : exe_name,
-                 'CFLAGS_EXTRAS' : "%s -stdlib=libc++" % stdflag,
+                 'CFLAGS_EXTRAS' : "%s %s" % (stdflag, stdlibflag),
                  'FRAMEWORK_INCLUDES' : "-F%s" % self.lib_dir,
                  'LD_EXTRAS' : "%s -Wl,-rpath,%s" % (dsym, self.lib_dir),
                 }
         elif sys.platform.startswith('freebsd') or sys.platform.startswith("linux") or os.environ.get('LLDB_BUILD_TYPE') == 'Makefile':
             d = {'CXX_SOURCES' : sources, 
                  'EXE' : exe_name,
-                 'CFLAGS_EXTRAS' : "%s -I%s" % (stdflag, os.path.join(os.environ["LLDB_SRC"], "include")),
+                 'CFLAGS_EXTRAS' : "%s %s -I%s" % (stdflag, stdlibflag, os.path.join(os.environ["LLDB_SRC"], "include")),
                  'LD_EXTRAS' : "-L%s -llldb" % self.lib_dir}
         if self.TraceOn():
             print "Building LLDB Driver (%s) from sources %s" % (exe_name, sources)
