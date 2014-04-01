@@ -1,6 +1,11 @@
 // REQUIRES: aarch64-registered-target
+// REQUIRES: arm64-registered-target
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
-// RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck %s
+// RUN:  -ffp-contract=fast -S -O3 -o - %s | FileCheck %s --check-prefix=CHECK \
+// RUN:  --check-prefix=CHECK-AARCH64
+// RUN: %clang_cc1 -triple arm64-none-linux-gnu \
+// RUN:  -ffp-contract=fast -S -O3 -o - %s | FileCheck %s --check-prefix=CHECK \
+// RUN:  --check-prefix=CHECK-ARM64
 
 // Test new aarch64 intrinsics with poly128
 // FIXME: Currently, poly128_t equals to uint128, which will be spilt into
@@ -14,22 +19,29 @@
 void test_vstrq_p128(poly128_t * ptr, poly128_t val) {
   // CHECK-LABEL: test_vstrq_p128
   vstrq_p128(ptr, val);
-	// CHECK: str	{{x[0-9]+}}, [{{x[0-9]+}}, #8]
-	// CHECK-NEXT: str	 {{x[0-9]+}}, [{{x[0-9]+}}]
+// CHECK-AARCH64: str {{x[0-9]+}}, [{{x[0-9]+}}, #8]
+// CHECK-AARCH64-NEXT: str  {{x[0-9]+}}, [{{x[0-9]+}}]
+
+  // CHECK-ARM64: stp {{x[0-9]+}}, {{x[0-9]+}}, [x0]
 }
 
 poly128_t test_vldrq_p128(poly128_t * ptr) {
   // CHECK-LABEL: test_vldrq_p128
   return vldrq_p128(ptr);
-	// CHECK: ldr	{{x[0-9]+}}, [{{x[0-9]+}}]
-	// CHECK-NEXT: ldr	{{x[0-9]+}}, [{{x[0-9]+}}, #8]
+  // CHECK-AARCH64: ldr {{x[0-9]+}}, [{{x[0-9]+}}]
+  // CHECK-AARCH64-NEXT: ldr {{x[0-9]+}}, [{{x[0-9]+}}, #8]
+
+  // CHECK-ARM64: ldp {{x[0-9]+}}, {{x[0-9]+}}, [x0]
 }
 
 void test_ld_st_p128(poly128_t * ptr) {
   // CHECK-LABEL: test_ld_st_p128
    vstrq_p128(ptr+1, vldrq_p128(ptr));
-	// CHECK: ldr {{q[0-9]+}}, [{{x[0-9]+}}]
-	// CHECK-NEXT: str	{{q[0-9]+}}, [{{x[0-9]+}}, #16]
+ // CHECK-AARCH64: ldr {{q[0-9]+}}, [{{x[0-9]+}}]
+ // CHECK-AARCH64-NEXT: str {{q[0-9]+}}, [{{x[0-9]+}}, #16]
+
+ // CHECK-ARM64: ldp [[PLO:x[0-9]+]], [[PHI:x[0-9]+]], [{{x[0-9]+}}]
+ // CHECK-ARM64-NEXT: stp [[PLO]], [[PHI]], [{{x[0-9]+}}, #16]
 }
 
 poly128_t test_vmull_p64(poly64_t a, poly64_t b) {

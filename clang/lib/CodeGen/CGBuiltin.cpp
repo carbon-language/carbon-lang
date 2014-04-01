@@ -2608,6 +2608,7 @@ static NeonIntrinsicInfo ARM64SISDIntrinsicMap[] = {
   NEONMAP1(vminvq_f64, arm64_neon_fminv, AddRetType | Add1ArgType),
   NEONMAP1(vminvq_s32, arm64_neon_sminv, AddRetType | Add1ArgType),
   NEONMAP1(vminvq_u32, arm64_neon_uminv, AddRetType | Add1ArgType),
+  NEONMAP1(vmull_p64, arm64_neon_pmull64, 0),
   NEONMAP1(vmulxd_f64, arm64_neon_fmulx, Add1ArgType),
   NEONMAP1(vmulxs_f32, arm64_neon_fmulx, Add1ArgType),
   NEONMAP1(vpaddd_s64, arm64_neon_uaddv, AddRetType | Add1ArgType),
@@ -5190,6 +5191,16 @@ Value *CodeGenFunction::EmitARM64BuiltinExpr(unsigned BuiltinID,
   // Handle non-overloaded intrinsics first.
   switch (BuiltinID) {
   default: break;
+  case NEON::BI__builtin_neon_vldrq_p128: {
+    llvm::Type *Int128PTy = llvm::Type::getIntNPtrTy(getLLVMContext(), 128);
+    Value *Ptr = Builder.CreateBitCast(EmitScalarExpr(E->getArg(0)), Int128PTy);
+    return Builder.CreateLoad(Ptr);
+  }
+  case NEON::BI__builtin_neon_vstrq_p128: {
+    llvm::Type *Int128PTy = llvm::Type::getIntNPtrTy(getLLVMContext(), 128);
+    Value *Ptr = Builder.CreateBitCast(Ops[0], Int128PTy);
+    return Builder.CreateStore(EmitScalarExpr(E->getArg(1)), Ptr);
+  }
   case NEON::BI__builtin_neon_vcvts_u32_f32:
   case NEON::BI__builtin_neon_vcvtd_u64_f64:
     usgn = true;
