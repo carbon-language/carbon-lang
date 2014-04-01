@@ -402,6 +402,7 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
             g_supports_32 = true;
             break;
 
+        case llvm::Triple::mips64:
         case llvm::Triple::sparcv9:
         case llvm::Triple::ppc64:
             g_host_arch_64.SetTriple(triple);
