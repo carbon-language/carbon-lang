@@ -1710,9 +1710,10 @@ bool MipsAsmParser::searchSymbolAlias(
       if (DefSymbol.startswith("$")) {
         OperandMatchResultTy ResTy =
             MatchAnyRegisterNameWithoutDollar(Operands, DefSymbol.substr(1), S);
-        if (ResTy == MatchOperand_Success)
+        if (ResTy == MatchOperand_Success) {
+          Parser.Lex();
           return true;
-        else if (ResTy == MatchOperand_ParseFail)
+        } else if (ResTy == MatchOperand_ParseFail)
           llvm_unreachable("Should never ParseFail");
         return false;
       }
@@ -1734,7 +1735,6 @@ MipsAsmParser::MatchAnyRegisterNameWithoutDollar(
     SMLoc S) {
   int Index = matchCPURegisterName(Identifier);
   if (Index != -1) {
-    Parser.Lex();
     Operands.push_back(MipsOperand::CreateGPRReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
@@ -1742,7 +1742,6 @@ MipsAsmParser::MatchAnyRegisterNameWithoutDollar(
 
   Index = matchFPURegisterName(Identifier);
   if (Index != -1) {
-    Parser.Lex();
     Operands.push_back(MipsOperand::CreateFGRReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
@@ -1750,7 +1749,6 @@ MipsAsmParser::MatchAnyRegisterNameWithoutDollar(
 
   Index = matchFCCRegisterName(Identifier);
   if (Index != -1) {
-    Parser.Lex();
     Operands.push_back(MipsOperand::CreateFCCReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
@@ -1758,7 +1756,6 @@ MipsAsmParser::MatchAnyRegisterNameWithoutDollar(
 
   Index = matchACRegisterName(Identifier);
   if (Index != -1) {
-    Parser.Lex();
     Operands.push_back(MipsOperand::CreateACCReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
@@ -1766,7 +1763,6 @@ MipsAsmParser::MatchAnyRegisterNameWithoutDollar(
 
   Index = matchMSA128RegisterName(Identifier);
   if (Index != -1) {
-    Parser.Lex();
     Operands.push_back(MipsOperand::CreateMSA128Reg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
@@ -1774,7 +1770,6 @@ MipsAsmParser::MatchAnyRegisterNameWithoutDollar(
 
   Index = matchMSA128CtrlRegisterName(Identifier);
   if (Index != -1) {
-    Parser.Lex();
     Operands.push_back(MipsOperand::CreateMSACtrlReg(
         Index, getContext().getRegisterInfo(), S, getLexer().getLoc(), *this));
     return MatchOperand_Success;
@@ -1791,7 +1786,11 @@ MipsAsmParser::ParseAnyRegisterWithoutDollar(
   if (Token.is(AsmToken::Identifier)) {
     DEBUG(dbgs() << ".. identifier\n");
     StringRef Identifier = Token.getIdentifier();
-    return MatchAnyRegisterNameWithoutDollar(Operands, Identifier, S);
+    OperandMatchResultTy ResTy =
+        MatchAnyRegisterNameWithoutDollar(Operands, Identifier, S);
+    if (ResTy == MatchOperand_Success)
+      Parser.Lex();
+    return ResTy;
   } else if (Token.is(AsmToken::Integer)) {
     DEBUG(dbgs() << ".. integer\n");
     Operands.push_back(MipsOperand::CreateNumericReg(
