@@ -74,8 +74,7 @@ let TargetPrefix = "arm64" in {  // All intrinsics start with "llvm.arm64.".
                 [IntrNoMem]>;
   class AdvSIMD_2VectorArg_Long_Intrinsic
     : Intrinsic<[llvm_anyvector_ty],
-                [LLVMTruncatedType<0>,
-                 LLVMTruncatedType<0>],
+                [LLVMTruncatedType<0>, LLVMTruncatedType<0>],
                 [IntrNoMem]>;
   class AdvSIMD_2VectorArg_Wide_Intrinsic
     : Intrinsic<[llvm_anyvector_ty],
@@ -177,6 +176,11 @@ let Properties = [IntrNoMem] in {
   def int_arm64_neon_smull : AdvSIMD_2VectorArg_Long_Intrinsic;
   def int_arm64_neon_umull : AdvSIMD_2VectorArg_Long_Intrinsic;
   def int_arm64_neon_pmull : AdvSIMD_2VectorArg_Long_Intrinsic;
+
+  // 64-bit polynomial multiply really returns an i128, which is not legal. Fake
+  // it with a v16i8.
+  def int_arm64_neon_pmull64 :
+        Intrinsic<[llvm_v16i8_ty], [llvm_i64_ty, llvm_i64_ty], [IntrNoMem]>;
 
   // Vector Extending Multiply
   def int_arm64_neon_fmulx : AdvSIMD_2FloatArg_Intrinsic;

@@ -2726,6 +2726,13 @@ defm USUBL   : SIMDLongThreeVectorBHS<1, 0b0010, "usubl",
 defm USUBW   : SIMDWideThreeVectorBHS<   1, 0b0011, "usubw",
                  BinOpFrag<(sub node:$LHS, (zext node:$RHS))>>;
 
+// Patterns for 64-bit pmull
+def : Pat<(int_arm64_neon_pmull64 V64:$Rn, V64:$Rm),
+          (PMULLv1i64 V64:$Rn, V64:$Rm)>;
+def : Pat<(int_arm64_neon_pmull64 (vector_extract (v2i64 V128:$Rn), (i64 1)),
+                                  (vector_extract (v2i64 V128:$Rm), (i64 1))),
+          (PMULLv2i64 V128:$Rn, V128:$Rm)>;
+
 // CodeGen patterns for addhn and subhn instructions, which can actually be
 // written in LLVM IR without too much difficulty.
 

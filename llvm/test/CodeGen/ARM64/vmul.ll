@@ -1983,3 +1983,21 @@ define i64 @sqdmlsl_d(i32 %A, i32 %B, i64 %C) nounwind {
   %tmp5 = call i64 @llvm.arm64.neon.sqsub.i64(i64 %C, i64 %tmp4)
   ret i64 %tmp5
 }
+
+define <16 x i8> @test_pmull_64(i64 %l, i64 %r) nounwind {
+; CHECK-LABEL: test_pmull_64:
+; CHECK: pmull.1q
+  %val = call <16 x i8> @llvm.arm64.neon.pmull64(i64 %l, i64 %r)
+  ret <16 x i8> %val
+}
+
+define <16 x i8> @test_pmull_high_64(<2 x i64> %l, <2 x i64> %r) nounwind {
+; CHECK-LABEL: test_pmull_high_64:
+; CHECK: pmull2.1q
+  %l_hi = extractelement <2 x i64> %l, i32 1
+  %r_hi = extractelement <2 x i64> %r, i32 1
+  %val = call <16 x i8> @llvm.arm64.neon.pmull64(i64 %l_hi, i64 %r_hi)
+  ret <16 x i8> %val
+}
+
+declare <16 x i8> @llvm.arm64.neon.pmull64(i64, i64)
