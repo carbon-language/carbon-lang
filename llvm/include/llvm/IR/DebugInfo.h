@@ -612,7 +612,6 @@ class DIGlobalVariable : public DIDescriptor {
 public:
   explicit DIGlobalVariable(const MDNode *N = 0) : DIDescriptor(N) {}
 
-  // FIXME: use DIScopeRef for LTO type uniqueing.
   DIScope getContext() const { return getFieldAs<DIScope>(2); }
   StringRef getName() const { return getStringField(3); }
   StringRef getDisplayName() const { return getStringField(4); }
@@ -646,7 +645,6 @@ class DIVariable : public DIDescriptor {
 public:
   explicit DIVariable(const MDNode *N = 0) : DIDescriptor(N) {}
 
-  // FIXME: use DIScopeRef for LTO type uniqueing.
   DIScope getContext() const { return getFieldAs<DIScope>(1); }
   StringRef getName() const { return getStringField(2); }
   DIFile getFile() const { return getFieldAs<DIFile>(3); }
