@@ -429,8 +429,10 @@ static bool fieldIsTypeRef(const MDNode *DbgNode, unsigned Elt) {
 /// Check if a value can be a ScopeRef.
 static bool isScopeRef(const Value *Val) {
   return !Val ||
-         (isa<MDString>(Val) && !cast<MDString>(Val)->getString().empty()) ||
-         isa<MDNode>(Val);
+    (isa<MDString>(Val) && !cast<MDString>(Val)->getString().empty()) ||
+    // Not checking for Val->isScope() here, because it would work
+    // only for lexical scopes and not all subclasses of DIScope.
+    isa<MDNode>(Val);
 }
 
 /// Check if a field at position Elt of a MDNode can be a ScopeRef.
