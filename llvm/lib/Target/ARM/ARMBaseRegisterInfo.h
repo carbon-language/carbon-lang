@@ -150,8 +150,8 @@ public:
   void materializeFrameBaseRegister(MachineBasicBlock *MBB,
                                     unsigned BaseReg, int FrameIdx,
                                     int64_t Offset) const override;
-  void resolveFrameIndex(MachineBasicBlock::iterator I,
-                         unsigned BaseReg, int64_t Offset) const override;
+  void resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
+                         int64_t Offset) const override;
   bool isFrameOffsetLegal(const MachineInstr *MI,
                           int64_t Offset) const override;
 

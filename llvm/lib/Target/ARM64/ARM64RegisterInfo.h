@@ -78,7 +78,7 @@ public:
   void materializeFrameBaseRegister(MachineBasicBlock *MBB, unsigned BaseReg,
                                     int FrameIdx,
                                     int64_t Offset) const override;
-  void resolveFrameIndex(MachineBasicBlock::iterator I, unsigned BaseReg,
+  void resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
                          int64_t Offset) const override;
   void eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                            unsigned FIOperandNum,

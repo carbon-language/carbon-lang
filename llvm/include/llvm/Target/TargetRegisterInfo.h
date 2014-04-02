@@ -770,8 +770,8 @@ public:
 
   /// resolveFrameIndex - Resolve a frame index operand of an instruction
   /// to reference the indicated base register plus offset instead.
-  virtual void resolveFrameIndex(MachineBasicBlock::iterator I,
-                                 unsigned BaseReg, int64_t Offset) const {
+  virtual void resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
+                                 int64_t Offset) const {
     llvm_unreachable("resolveFrameIndex does not exist on this target");
   }
 

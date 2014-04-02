@@ -482,10 +482,8 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
   return Offset == 0;
 }
 
-void
-Thumb1RegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
-                                      unsigned BaseReg, int64_t Offset) const {
-  MachineInstr &MI = *I;
+void Thumb1RegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
+                                           int64_t Offset) const {
   const ARMBaseInstrInfo &TII =
     *static_cast<const ARMBaseInstrInfo*>(
       MI.getParent()->getParent()->getTarget().getInstrInfo());

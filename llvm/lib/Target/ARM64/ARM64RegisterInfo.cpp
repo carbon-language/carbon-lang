@@ -299,10 +299,8 @@ void ARM64RegisterInfo::materializeFrameBaseRegister(MachineBasicBlock *MBB,
       .addImm(Shifter);
 }
 
-void ARM64RegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
-                                          unsigned BaseReg,
+void ARM64RegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
                                           int64_t Offset) const {
-  MachineInstr &MI = *I;
   int Off = Offset; // ARM doesn't need the general 64-bit offsets
   unsigned i = 0;
 

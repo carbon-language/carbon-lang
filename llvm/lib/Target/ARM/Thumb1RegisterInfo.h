@@ -47,8 +47,8 @@ public:
   bool rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
                          unsigned FrameReg, int &Offset,
                          const ARMBaseInstrInfo &TII) const;
-  void resolveFrameIndex(MachineBasicBlock::iterator I,
-                         unsigned BaseReg, int64_t Offset) const override;
+  void resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
+                         int64_t Offset) const override;
   bool saveScavengerRegister(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator I,
                              MachineBasicBlock::iterator &UseMI,

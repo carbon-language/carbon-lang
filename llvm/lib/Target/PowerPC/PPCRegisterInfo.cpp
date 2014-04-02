@@ -959,11 +959,8 @@ materializeFrameBaseRegister(MachineBasicBlock *MBB,
     .addFrameIndex(FrameIdx).addImm(Offset);
 }
 
-void
-PPCRegisterInfo::resolveFrameIndex(MachineBasicBlock::iterator I,
-                                   unsigned BaseReg, int64_t Offset) const {
-  MachineInstr &MI = *I;
-
+void PPCRegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
+                                        int64_t Offset) const {
   unsigned FIOperandNum = 0;
   while (!MI.getOperand(FIOperandNum).isFI()) {
     ++FIOperandNum;
