@@ -18,13 +18,14 @@
 ///
 /// \code
 /// Grammar for the expressions supported:
-/// <Expression>        := <Literal> | <MatcherExpression>
+/// <Expression>        := <Literal> | <NamedValue> | <MatcherExpression>
 /// <Literal>           := <StringLiteral> | <Unsigned>
 /// <StringLiteral>     := "quoted string"
 /// <Unsigned>          := [0-9]+
-/// <MatcherExpression> := <MatcherName>(<ArgumentList>) |
-///                        <MatcherName>(<ArgumentList>).bind(<StringLiteral>)
-/// <MatcherName>       := [a-zA-Z]+
+/// <NamedValue>        := <Identifier>
+/// <MatcherExpression> := <Identifier>(<ArgumentList>) |
+///                        <Identifier>(<ArgumentList>).bind(<StringLiteral>)
+/// <Identifier>        := [a-zA-Z]+
 /// <ArgumentList>      := <Expression> | <Expression>,<ArgumentList>
 /// \endcode
 ///
@@ -62,6 +63,19 @@ public:
   public:
     virtual ~Sema();
 
+    /// \brief Lookup a value by name.
+    ///
+    /// This can be used in the Sema layer to declare known constants or to
+    /// allow to split an expression in pieces.
+    ///
+    /// \param Name The name of the value to lookup.
+    ///
+    /// \return The named value. It could be any type that VariantValue
+    ///   supports. A 'nothing' value means that the name is not recognized.
+    virtual VariantValue getNamedValue(StringRef Name) {
+      return VariantValue();
+    }
+
     /// \brief Process a matcher expression.
     ///
     /// All the arguments passed here have already been processed.
@@ -98,6 +112,21 @@ public:
     virtual llvm::Optional<MatcherCtor>
     lookupMatcherCtor(StringRef MatcherName, const SourceRange &NameRange,
                       Diagnostics *Error) = 0;
+  };
+
+  /// \brief Sema implementation that uses the matcher registry to process the
+  ///   tokens.
+  class RegistrySema : public Parser::Sema {
+   public:
+    virtual ~RegistrySema();
+    llvm::Optional<MatcherCtor> lookupMatcherCtor(StringRef MatcherName,
+                                                  const SourceRange &NameRange,
+                                                  Diagnostics *Error) override;
+    VariantMatcher actOnMatcherExpression(MatcherCtor Ctor,
+                                          const SourceRange &NameRange,
+                                          StringRef BindID,
+                                          ArrayRef<ParserValue> Args,
+                                          Diagnostics *Error) override;
   };
 
   /// \brief Parse a matcher expression, creating matchers from the registry.

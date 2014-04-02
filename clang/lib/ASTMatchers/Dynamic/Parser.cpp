@@ -424,8 +424,18 @@ bool Parser::parseExpressionImpl(VariantValue *Value) {
     *Value = Tokenizer->consumeNextToken().Value;
     return true;
 
-  case TokenInfo::TK_Ident:
+  case TokenInfo::TK_Ident: {
+    // Identifier could be a name known by Sema as a named value.
+    const VariantValue NamedValue =
+        S->getNamedValue(Tokenizer->peekNextToken().Text);
+    if (!NamedValue.isNothing()) {
+      Tokenizer->consumeNextToken();  // Actually consume it.
+      *Value = NamedValue;
+      return true;
+    }
+    // Fallback to full matcher parsing.
     return parseMatcherExpressionImpl(Value);
+  }
 
   case TokenInfo::TK_CodeCompletion:
     addExpressionCompletions();
@@ -457,27 +467,23 @@ Parser::Parser(CodeTokenizer *Tokenizer, Sema *S,
                Diagnostics *Error)
     : Tokenizer(Tokenizer), S(S), Error(Error) {}
 
-class RegistrySema : public Parser::Sema {
-public:
-  virtual ~RegistrySema() {}
-  llvm::Optional<MatcherCtor> lookupMatcherCtor(StringRef MatcherName,
-                                                const SourceRange &NameRange,
-                                                Diagnostics *Error) {
-    return Registry::lookupMatcherCtor(MatcherName, NameRange, Error);
+Parser::RegistrySema::~RegistrySema() {}
+
+llvm::Optional<MatcherCtor> Parser::RegistrySema::lookupMatcherCtor(
+    StringRef MatcherName, const SourceRange &NameRange, Diagnostics *Error) {
+  return Registry::lookupMatcherCtor(MatcherName, NameRange, Error);
+}
+
+VariantMatcher Parser::RegistrySema::actOnMatcherExpression(
+    MatcherCtor Ctor, const SourceRange &NameRange, StringRef BindID,
+    ArrayRef<ParserValue> Args, Diagnostics *Error) {
+  if (BindID.empty()) {
+    return Registry::constructMatcher(Ctor, NameRange, Args, Error);
+  } else {
+    return Registry::constructBoundMatcher(Ctor, NameRange, BindID, Args,
+                                           Error);
   }
-  VariantMatcher actOnMatcherExpression(MatcherCtor Ctor,
-                                        const SourceRange &NameRange,
-                                        StringRef BindID,
-                                        ArrayRef<ParserValue> Args,
-                                        Diagnostics *Error) {
-    if (BindID.empty()) {
-      return Registry::constructMatcher(Ctor, NameRange, Args, Error);
-    } else {
-      return Registry::constructBoundMatcher(Ctor, NameRange, BindID, Args,
-                                             Error);
-    }
-  }
-};
+}
 
 bool Parser::parseExpression(StringRef Code, VariantValue *Value,
                              Diagnostics *Error) {
