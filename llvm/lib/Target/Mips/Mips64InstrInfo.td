@@ -234,28 +234,44 @@ let Predicates = [HasCnMips] in {
 
 class Count1s<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-         [(set RO:$rd, (ctpop RO:$rs))], II_POP, FrmR, opstr>;
+         [(set RO:$rd, (ctpop RO:$rs))], II_POP, FrmR, opstr> {
+  let TwoOperandAliasConstraint = "$rd = $rs";
+}
+
+class ExtsCins<string opstr, SDPatternOperator Op = null_frag>:
+  InstSE<(outs GPR64Opnd:$rt), (ins GPR64Opnd:$rs, uimm5:$pos, uimm5:$lenm1),
+         !strconcat(opstr, " $rt, $rs, $pos, $lenm1"),
+         [(set GPR64Opnd:$rt, (Op GPR64Opnd:$rs, imm:$pos, imm:$lenm1))],
+         NoItinerary, FrmR, opstr> {
+  let TwoOperandAliasConstraint = "$rt = $rs";
+}
 
 class SetCC64_R<string opstr, PatFrag cond_op> :
   InstSE<(outs GPR64Opnd:$rd), (ins GPR64Opnd:$rs, GPR64Opnd:$rt),
          !strconcat(opstr, "\t$rd, $rs, $rt"),
          [(set GPR64Opnd:$rd, (cond_op GPR64Opnd:$rs, GPR64Opnd:$rt))],
-         II_SEQ_SNE, FrmR, opstr>;
+         II_SEQ_SNE, FrmR, opstr> {
+  let TwoOperandAliasConstraint = "$rd = $rs";
+}
 
 // Unsigned Byte Add
-def BADDu  : InstSE<(outs GPR64Opnd:$rd), (ins GPR64Opnd:$rs, GPR64Opnd:$rt),
-                    "baddu\t$rd, $rs, $rt",
-                    [(set GPR64Opnd:$rd, (and (add GPR64Opnd:$rs,
-                                                   GPR64Opnd:$rt), 255))],
-                    II_BADDU, FrmR, "baddu">, ADD_FM<0x1c, 0x28> {
-  let isCommutable = 1;
-  let isReMaterializable = 1;
-}
+let Pattern = [(set GPR64Opnd:$rd,
+                    (and (add GPR64Opnd:$rs, GPR64Opnd:$rt), 255))] in
+def BADDu  : ArithLogicR<"baddu", GPR64Opnd, 1, II_BADDU>,
+                              ADD_FM<0x1c, 0x28>;
 
 // Multiply Doubleword to GPR
 let Defs = [HI0, LO0, P0, P1, P2] in
 def DMUL  : ArithLogicR<"dmul", GPR64Opnd, 1, II_DMUL, mul>,
                               ADD_FM<0x1c, 0x03>;
+
+// Extract a signed bit field /+32
+def EXTS  : ExtsCins<"exts">, EXTS_FM<0x3a>;
+def EXTS32: ExtsCins<"exts32">, EXTS_FM<0x3b>;
+
+// Clear and insert a bit field /+32
+def CINS  : ExtsCins<"cins">, EXTS_FM<0x32>;
+def CINS32: ExtsCins<"cins32">, EXTS_FM<0x33>;
 
 // Move to multiplier/product register
 def MTM0   : MoveToLOHI<"mtm0", GPR64Opnd, [MPL0, P0, P1, P2]>, MTMR_FM<0x08>;
@@ -275,6 +291,7 @@ def SNE   : SetCC64_R<"sne", setne>, SEQ_FM<0x2b>;
 }
 
 }
+
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//
