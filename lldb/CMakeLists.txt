@@ -133,6 +133,12 @@ if (CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 endif ()
 
+check_cxx_compiler_flag("-Wno-unknown-pragmas"
+                        CXX_SUPPORTS_NO_UNKNOWN_PRAGMAS)
+if (CXX_SUPPORTS_NO_UNKNOWN_PRAGMAS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
+endif ()
+
 # Disable Clang warnings
 check_cxx_compiler_flag("-Wno-deprecated-register"
                         CXX_SUPPORTS_NO_DEPRECATED_REGISTER)
