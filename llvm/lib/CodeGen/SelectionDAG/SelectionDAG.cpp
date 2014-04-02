@@ -2535,7 +2535,11 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT) {
 
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
                               EVT VT, SDValue Operand) {
-  // Constant fold unary operations with an integer constant operand.
+  // Constant fold unary operations with an integer constant operand. Even
+  // opaque constant will be folded, because the folding of unary operations
+  // doesn't create new constants with different values. Nevertheless, the
+  // opaque flag is preserved during folding to prevent future folding with
+  // other constants.
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand.getNode())) {
     const APInt &Val = C->getAPIntValue();
     switch (Opcode) {
