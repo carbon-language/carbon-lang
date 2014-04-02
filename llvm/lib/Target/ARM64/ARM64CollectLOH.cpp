@@ -11,7 +11,42 @@
 // This pass should be run at the very end of the compilation flow, just before
 // assembly printer.
 // To be useful for the linker, the LOH must be printed into the assembly file.
-// Currently supported LOH are:
+//
+// A LOH describes a sequence of instructions that may be optimized by the
+// linker.
+// This same sequence cannot be optimized by the compiler because some of
+// the information will be known at link time.
+// For instance, consider the following sequence:
+//     L1: adrp xA, sym@PAGE
+//     L2: add xB, xA, sym@PAGEOFF
+//     L3: ldr xC, [xB, #imm]
+// This sequence can be turned into:
+// A literal load if sym@PAGE + sym@PAGEOFF + #imm - address(L3) is < 1MB:
+//     L3: ldr xC, sym+#imm
+// It may also be turned into either the following more efficient
+// code sequences:
+// - If sym@PAGEOFF + #imm fits the encoding space of L3.
+//     L1: adrp xA, sym@PAGE
+//     L3: ldr xC, [xB, sym@PAGEOFF + #imm]
+// - If sym@PAGE + sym@PAGEOFF - address(L1) < 1MB:
+//     L1: adr xA, sym
+//     L3: ldr xC, [xB, #imm]
+//
+// To be valid a LOH must meet all the requirements needed by all the related
+// possible linker transformations.
+// For instance, using the running example, the constraints to emit
+// ".loh AdrpAddLdr" are:
+// - L1, L2, and L3 instructions are of the expected type, i.e.,
+//   respectively ADRP, ADD (immediate), and LD.
+// - The result of L1 is used only by L2.
+// - The register argument (xA) used in the ADD instruction is defined
+//   only by L1.
+// - The result of L2 is used only by L3.
+// - The base address (xB) in L3 is defined only L2.
+// - The ADRP in L1 and the ADD in L2 must reference the same symbol using
+//   @PAGE/@PAGEOFF with no additional constants
+//
+// Currently supported LOHs are:
 // * So called non-ADRP-related:
 //   - .loh AdrpAddLdr L1, L2, L3:
 //     L1: adrp xA, sym@PAGE
@@ -39,12 +74,28 @@
 //   L1 result is used only by L2 and L2 result by L3.
 //   L3 LOH-related argument is defined only by L2 and L2 LOH-related argument
 //   by L1.
+// All these LOHs aim at using more efficient load/store patterns by folding
+// some instructions used to compute the address directly into the load/store.
 //
 // * So called ADRP-related:
 //  - .loh AdrpAdrp L2, L1:
 //    L2: ADRP xA, sym1@PAGE
 //    L1: ADRP xA, sym2@PAGE
 //    L2 dominates L1 and xA is not redifined between L2 and L1
+// This LOH aims at getting rid of redundant ADRP instructions.
+//
+// The overall design for emitting the LOHs is:
+// 1. ARM64CollectLOH (this pass) records the LOHs in the ARM64FunctionInfo.
+// 2. ARM64AsmPrinter reads the LOHs from ARM64FunctionInfo and it:
+//     1. Associates them a label.
+//     2. Emits them in a MCStreamer (EmitLOHDirective).
+//         - The MCMachOStreamer records them into the MCAssembler.
+//         - The MCAsmStreamer prints them.
+//         - Other MCStreamers ignore them.
+//     3. Closes the MCStreamer:
+//         - The MachObjectWriter gets them from the MCAssembler and writes
+//           them in the object file.
+//         - Other ObjectWriters ignore them.
 //
 // More information are available in the design document attached to
 // rdar://11956674

@@ -14,6 +14,14 @@
 
 using namespace llvm;
 
+// Each LOH is composed by, in this order (each field is encoded using ULEB128):
+// - Its kind.
+// - Its number of arguments (let say N).
+// - Its arg1.
+// - ...
+// - Its argN.
+// <arg1> to <argN> are absolute addresses in the object file, i.e.,
+// relative addresses from the beginning of the object file.
 void MCLOHDirective::Emit_impl(raw_ostream &OutStream,
                                const MachObjectWriter &ObjWriter,
                                const MCAsmLayout &Layout) const {
