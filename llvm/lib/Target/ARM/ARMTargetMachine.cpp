@@ -296,6 +296,7 @@ bool ARMPassConfig::addPreEmitPass() {
     addPass(&UnpackMachineBundlesID);
   }
 
+  addPass(createARMOptimizeBarriersPass());
   addPass(createARMConstantIslandPass());
 
   return true;

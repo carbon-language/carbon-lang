@@ -34,6 +34,7 @@ add_llvm_target(ARMCodeGen
   ARMMCInstLower.cpp
   ARMMachineFunctionInfo.cpp
   ARMRegisterInfo.cpp
+  ARMOptimizeBarriersPass.cpp
   ARMSelectionDAGInfo.cpp
   ARMSubtarget.cpp
   ARMTargetMachine.cpp

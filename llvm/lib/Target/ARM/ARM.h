@@ -42,6 +42,7 @@ FunctionPass *createARMGlobalMergePass(const TargetLowering* tli);
 FunctionPass *createARMConstantIslandPass();
 FunctionPass *createMLxExpansionPass();
 FunctionPass *createThumb2ITBlockPass();
+FunctionPass *createARMOptimizeBarriersPass();
 FunctionPass *createThumb2SizeReductionPass();
 
 /// \brief Creates an ARM-specific Target Transformation Info pass.
