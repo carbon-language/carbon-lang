@@ -16,7 +16,6 @@
 #include <string.h>
 
 // C++ Includes
-#include "llvm/Support/MachO.h"
 
 // Other libraries and framework includes
 #include "lldb/Core/DataBufferHeap.h"

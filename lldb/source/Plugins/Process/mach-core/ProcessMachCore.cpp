@@ -12,7 +12,6 @@
 #include <stdlib.h>
 
 // C++ Includes
-#include "llvm/Support/MachO.h"
 #include "llvm/Support/MathExtras.h"
 
 // Other libraries and framework includes
@@ -33,6 +32,8 @@
 #include "StopInfoMachException.h"
 
 // Needed for the plug-in names for the dynamic loaders.
+#include "lldb/Utility/SafeMachO.h"
+
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
 #include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"

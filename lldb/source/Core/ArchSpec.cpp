@@ -17,7 +17,7 @@
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Host.h"
-#include "llvm/Support/MachO.h"
+#include "lldb/Utility/SafeMachO.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"

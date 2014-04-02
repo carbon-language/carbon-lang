@@ -12,7 +12,7 @@
 // C Includes
 #include <dirent.h>
 #include <pwd.h>
-#include "llvm/Support/MachO.h"
+#include "lldb/Utility/SafeMachO.h"
 
 // C++ Includes
 // Other libraries and framework includes

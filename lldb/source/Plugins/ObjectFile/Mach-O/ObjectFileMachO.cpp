@@ -7,10 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/StringRef.h"
-#include "llvm/Support/MachO.h"
-
-#include "ObjectFileMachO.h"
+#include "llvm/ADT/StringRef.h" 
 
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/ArchSpec.h"
@@ -40,6 +37,10 @@
 #include "Plugins/Process/Utility/RegisterContextDarwin_arm64.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_i386.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_x86_64.h"
+
+#include "lldb/Utility/SafeMachO.h"
+
+#include "ObjectFileMachO.h"
 
 #if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
 // GetLLDBSharedCacheUUID() needs to call dlsym()

@@ -13,7 +13,7 @@
 #include "lldb/Symbol/ObjectContainer.h"
 #include "lldb/Host/FileSpec.h"
 
-#include "llvm/Support/MachO.h"
+#include "lldb/Utility/SafeMachO.h"
 
 class ObjectContainerUniversalMachO :
     public lldb_private::ObjectContainer

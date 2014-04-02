@@ -11,7 +11,6 @@
 #include "AppleObjCTrampolineHandler.h"
 #include "AppleObjCTypeVendor.h"
 
-#include "llvm/Support/MachO.h"
 #include "clang/AST/Type.h"
 
 #include "lldb/Breakpoint/BreakpointLocation.h"

@@ -10,7 +10,7 @@
 #ifndef liblldb_ObjectFileMachO_h_
 #define liblldb_ObjectFileMachO_h_
 
-#include "llvm/Support/MachO.h"
+#include "lldb/Utility/SafeMachO.h"
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/RangeMap.h"

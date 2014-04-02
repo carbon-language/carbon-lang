@@ -9,7 +9,7 @@
 
 #include "lldb/lldb-python.h"
 
-#include "llvm/Support/MachO.h"
+#include "lldb/Utility/SafeMachO.h"
 
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/DataBuffer.h"

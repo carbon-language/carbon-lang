@@ -10,7 +10,7 @@
 
 #include "ThreadMachCore.h"
 
-#include "llvm/Support/MachO.h"
+#include "lldb/Utility/SafeMachO.h"
 
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataExtractor.h"

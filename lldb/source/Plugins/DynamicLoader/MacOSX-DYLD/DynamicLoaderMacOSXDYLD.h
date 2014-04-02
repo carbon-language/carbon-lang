@@ -16,14 +16,14 @@
 #include <vector>
 #include <string>
 
-// Other libraries and framework includes
-#include "llvm/Support/MachO.h"
-
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/Process.h"
+
+// Other libraries and framework includes
+#include "lldb/Utility/SafeMachO.h"
 
 class DynamicLoaderMacOSXDYLD : public lldb_private::DynamicLoader
 {
