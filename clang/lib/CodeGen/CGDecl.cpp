@@ -1655,8 +1655,11 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
   CharUnits Align = getContext().getDeclAlign(&D);
   // If we already have a pointer to the argument, reuse the input pointer.
   if (ArgIsPointer) {
-    assert(isa<llvm::PointerType>(Arg->getType()));
-    DeclPtr = Arg;
+    // If we have a prettier pointer type at this point, bitcast to that.
+    unsigned AS = cast<llvm::PointerType>(Arg->getType())->getAddressSpace();
+    llvm::Type *IRTy = ConvertTypeForMem(Ty)->getPointerTo(AS);
+    DeclPtr = Arg->getType() == IRTy ? Arg : Builder.CreateBitCast(Arg, IRTy,
+                                                                   D.getName());
     // Push a destructor cleanup for this parameter if the ABI requires it.
     if (!IsScalar &&
         getTarget().getCXXABI().areArgsDestroyedLeftToRightInCallee()) {
