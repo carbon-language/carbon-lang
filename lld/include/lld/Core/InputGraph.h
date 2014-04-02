@@ -247,9 +247,6 @@ public:
     return make_range(_files.begin(), _files.end());
   }
 
-  /// \brief number of files.
-  size_t numFiles() const { return _files.size(); }
-
   /// \brief add a file to the list of files
   virtual void addFiles(InputGraph::FileVectorT files) {
     for (auto &ai : files)
