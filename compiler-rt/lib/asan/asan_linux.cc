@@ -76,7 +76,11 @@ void *AsanDoesNotSupportStaticLinkage() {
   return &_DYNAMIC;  // defined in link.h
 }
 
-#if !SANITIZER_ANDROID
+#if SANITIZER_ANDROID
+// FIXME: should we do anything for Android?
+void AsanCheckDynamicRTPrereqs() {}
+void AsanCheckIncompatibleRT() {}
+#else
 static int FindFirstDSOCallback(struct dl_phdr_info *info, size_t size,
                                 void *data) {
   // Continue until the first dynamic library is found
@@ -86,7 +90,6 @@ static int FindFirstDSOCallback(struct dl_phdr_info *info, size_t size,
   *(const char **)data = info->dlpi_name;
   return 1;
 }
-#endif
 
 static bool IsDynamicRTName(const char *libname) {
   return internal_strstr(libname, "libclang_rt.asan") ||
@@ -94,8 +97,6 @@ static bool IsDynamicRTName(const char *libname) {
 }
 
 void AsanCheckDynamicRTPrereqs() {
-  // FIXME: can we do something like this for Android?
-#if !SANITIZER_ANDROID
   // Ensure that dynamic RT is the first DSO in the list
   const char *first_dso_name = 0;
   dl_iterate_phdr(FindFirstDSOCallback, &first_dso_name);
@@ -105,11 +106,9 @@ void AsanCheckDynamicRTPrereqs() {
            "manually preload it with LD_PRELOAD.\n");
     Die();
   }
-#endif
 }
 
 void AsanCheckIncompatibleRT() {
-#if !SANITIZER_ANDROID
   if (ASAN_DYNAMIC) {
     if (__asan_rt_version == ASAN_RT_VERSION_UNDEFINED) {
       __asan_rt_version = ASAN_RT_VERSION_DYNAMIC;
@@ -136,8 +135,8 @@ void AsanCheckIncompatibleRT() {
     CHECK_NE(__asan_rt_version, ASAN_RT_VERSION_DYNAMIC);
     __asan_rt_version = ASAN_RT_VERSION_STATIC;
   }
-#endif
 }
+#endif  // SANITIZER_ANDROID
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
 #if defined(__arm__)
