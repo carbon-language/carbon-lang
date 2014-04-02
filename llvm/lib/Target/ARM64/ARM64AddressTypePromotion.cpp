@@ -371,10 +371,8 @@ ARM64AddressTypePromotion::propagateSignExtension(Instructions &SExtInsts) {
     mergeSExts(ValToSExtendedUses, ToRemove);
 
   // Remove all instructions marked as ToRemove.
-  for (SetOfInstructions::iterator ToRemoveIt = ToRemove.begin(),
-                                   EndToRemoveIt = ToRemove.end();
-       ToRemoveIt != EndToRemoveIt; ++ToRemoveIt)
-    (*ToRemoveIt)->eraseFromParent();
+  for (auto I: ToRemove)
+    I->eraseFromParent();
   return LocalChange;
 }
 
@@ -382,42 +380,37 @@ void ARM64AddressTypePromotion::mergeSExts(ValueToInsts &ValToSExtendedUses,
                                            SetOfInstructions &ToRemove) {
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
-  for (ValueToInsts::iterator It = ValToSExtendedUses.begin(),
-                              EndIt = ValToSExtendedUses.end();
-       It != EndIt; ++It) {
-    Instructions &Insts = It->second;
+  for (auto &Entry: ValToSExtendedUses) {
+    Instructions &Insts = Entry.second;
     Instructions CurPts;
-    for (Instructions::iterator IIt = Insts.begin(), EndIIt = Insts.end();
-         IIt != EndIIt; ++IIt) {
-      if (ToRemove.count(*IIt))
+    for (auto Inst : Insts) {
+      if (ToRemove.count(Inst))
         continue;
       bool inserted = false;
-      for (Instructions::iterator CurPtsIt = CurPts.begin(),
-                                  EndCurPtsIt = CurPts.end();
-           CurPtsIt != EndCurPtsIt; ++CurPtsIt) {
-        if (DT.dominates(*IIt, *CurPtsIt)) {
-          DEBUG(dbgs() << "Replace all uses of:\n" << **CurPtsIt << "\nwith:\n"
-                       << **IIt << '\n');
-          (*CurPtsIt)->replaceAllUsesWith(*IIt);
-          ToRemove.insert(*CurPtsIt);
-          *CurPtsIt = *IIt;
+      for (auto Pt : CurPts) {
+        if (DT.dominates(Inst, Pt)) {
+          DEBUG(dbgs() << "Replace all uses of:\n" << *Pt << "\nwith:\n"
+                       << *Inst << '\n');
+          (Pt)->replaceAllUsesWith(Inst);
+          ToRemove.insert(Pt);
+          Pt = Inst;
           inserted = true;
           break;
         }
-        if (!DT.dominates(*CurPtsIt, *IIt))
+        if (!DT.dominates(Pt, Inst))
           // Give up if we need to merge in a common dominator as the
           // expermients show it is not profitable.
           continue;
 
-        DEBUG(dbgs() << "Replace all uses of:\n" << **IIt << "\nwith:\n"
-                     << **CurPtsIt << '\n');
-        (*IIt)->replaceAllUsesWith(*CurPtsIt);
-        ToRemove.insert(*IIt);
+        DEBUG(dbgs() << "Replace all uses of:\n" << *Inst << "\nwith:\n"
+                     << *Pt << '\n');
+        Inst->replaceAllUsesWith(Pt);
+        ToRemove.insert(Inst);
         inserted = true;
         break;
       }
       if (!inserted)
-        CurPts.push_back(*IIt);
+        CurPts.push_back(Inst);
     }
   }
 }
@@ -427,17 +420,15 @@ void ARM64AddressTypePromotion::analyzeSExtension(Instructions &SExtInsts) {
 
   DenseMap<Value *, Instruction *> SeenChains;
 
-  for (Function::iterator IBB = Func->begin(), IEndBB = Func->end();
-       IBB != IEndBB; ++IBB) {
-    for (BasicBlock::iterator II = IBB->begin(), IEndI = IBB->end();
-         II != IEndI; ++II) {
+  for (auto &BB : *Func) {
+    for (auto &II: BB) {
+      Instruction *SExt = &II;
 
       // Collect all sext operation per type.
-      if (!isa<SExtInst>(II) || !shouldConsiderSExt(II))
+      if (!isa<SExtInst>(SExt) || !shouldConsiderSExt(SExt))
         continue;
-      Instruction *SExt = II;
 
-      DEBUG(dbgs() << "Found:\n" << (*II) << '\n');
+      DEBUG(dbgs() << "Found:\n" << (*SExt) << '\n');
 
       // Cases where we actually perform the optimization:
       // 1. SExt is used in a getelementptr with more than 2 operand =>
@@ -477,7 +468,7 @@ void ARM64AddressTypePromotion::analyzeSExtension(Instructions &SExtInsts) {
           SeenChains.find(Last);
       if (insert || AlreadySeen != SeenChains.end()) {
         DEBUG(dbgs() << "Insert\n");
-        SExtInsts.push_back(II);
+        SExtInsts.push_back(SExt);
         if (AlreadySeen != SeenChains.end() && AlreadySeen->second != NULL) {
           DEBUG(dbgs() << "Insert chain member\n");
           SExtInsts.push_back(AlreadySeen->second);
