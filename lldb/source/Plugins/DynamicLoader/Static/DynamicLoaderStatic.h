@@ -17,8 +17,6 @@
 #include <string>
 
 // Other libraries and framework includes
-#include "llvm/Support/MachO.h"
-
 #include "lldb/Target/DynamicLoader.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Core/UUID.h"
