@@ -37,8 +37,7 @@ public:
   };
 
   Resolver(LinkingContext &context)
-      : _context(context), _symbolTable(context), _result(new MergedFile()),
-        _addToFinalSection(false) {}
+      : _context(context), _symbolTable(context), _result(new MergedFile()) {}
 
   // InputFiles::Handler methods
   void doDefinedAtom(const DefinedAtom&);
@@ -114,10 +113,8 @@ private:
   SymbolTable _symbolTable;
   std::vector<const Atom *>     _atoms;
   std::set<const Atom *>        _deadStripRoots;
-  std::vector<const Atom *>     _atomsWithUnresolvedReferences;
   llvm::DenseSet<const Atom *>  _liveAtoms;
-  std::unique_ptr<MergedFile> _result;
-  bool _addToFinalSection;
+  std::unique_ptr<MergedFile>   _result;
 };
 
 } // namespace lld
