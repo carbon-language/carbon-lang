@@ -71,7 +71,7 @@ private:
 void Resolver::handleFile(const File &file) {
   uint32_t resolverState = Resolver::StateNoChange;
   const SharedLibraryFile *sharedLibraryFile =
-      llvm::dyn_cast<SharedLibraryFile>(&file);
+      dyn_cast<SharedLibraryFile>(&file);
 
   for (const DefinedAtom *atom : file.defined()) {
     doDefinedAtom(*atom);
@@ -189,7 +189,7 @@ bool Resolver::maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom) {
     if (_context.getAllowDuplicates())
       return true;
     const DefinedAtom *prevGroup =
-        llvm::dyn_cast<DefinedAtom>(_symbolTable.findGroup(atom.name()));
+        dyn_cast<DefinedAtom>(_symbolTable.findGroup(atom.name()));
     assert(prevGroup &&
            "Internal Error: The group atom could only be a defined atom");
     // The atoms should be of the same content type, reject invalid group
@@ -202,7 +202,7 @@ bool Resolver::maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom) {
   for (const Reference *r : atom) {
     if ((r->kindNamespace() == lld::Reference::KindNamespace::all) &&
         (r->kindValue() == lld::Reference::kindGroupChild)) {
-      const DefinedAtom *target = llvm::dyn_cast<DefinedAtom>(r->target());
+      const DefinedAtom *target = dyn_cast<DefinedAtom>(r->target());
       assert(target && "Internal Error: kindGroupChild references need to "
                        "be associated with Defined Atoms only");
       _atoms.push_back(target);

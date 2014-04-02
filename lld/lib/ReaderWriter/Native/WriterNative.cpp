@@ -46,8 +46,7 @@ public:
           if (r->kindNamespace() != lld::Reference::KindNamespace::all)
             continue;
           if (r->kindValue() == lld::Reference::kindGroupChild) {
-            const DefinedAtom *target =
-                llvm::dyn_cast<DefinedAtom>(r->target());
+            const DefinedAtom *target = dyn_cast<DefinedAtom>(r->target());
             assert(target && "Internal Error: kindGroupChild references need "
                              "to be associated with Defined Atoms only");
             this->addIVarsForDefinedAtom(*target);

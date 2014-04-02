@@ -37,7 +37,6 @@
 
 using llvm::StringRef;
 using llvm::error_code;
-using llvm::dyn_cast;
 using namespace llvm::yaml;
 using namespace llvm::MachO;
 using namespace lld::mach_o::normalized;

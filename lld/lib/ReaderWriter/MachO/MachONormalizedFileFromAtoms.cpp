@@ -38,7 +38,6 @@
 #include <map>
 
 using llvm::StringRef;
-using llvm::dyn_cast;
 using llvm::isa;
 using namespace llvm::MachO;
 using namespace lld::mach_o::normalized;
