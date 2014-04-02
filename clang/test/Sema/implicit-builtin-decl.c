@@ -63,6 +63,6 @@ extern float fmaxf(float, float);
 struct __jmp_buf_tag {};
 void sigsetjmp(struct __jmp_buf_tag[1], int); // expected-warning{{declaration of built-in function 'sigsetjmp' requires inclusion of the header <setjmp.h>}}
 
-// CHECK:     FunctionDecl {{.*}} <line:[[@LINE-2]]:1, col:44> sigsetjmp '
+// CHECK:     FunctionDecl {{.*}} <line:[[@LINE-2]]:1, col:44> col:6 sigsetjmp '
 // CHECK-NOT: FunctionDecl
 // CHECK:     ReturnsTwiceAttr {{.*}} <{{.*}}> Implicit

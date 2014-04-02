@@ -792,6 +792,8 @@ void ASTDumper::dumpDecl(const Decl *D) {
     OS << " parent " << cast<Decl>(D->getDeclContext());
   dumpPreviousDecl(OS, D);
   dumpSourceRange(D->getSourceRange());
+  OS << ' ';
+  dumpLocation(D->getLocation());
   if (Module *M = D->getOwningModule())
     OS << " in " << M->getFullModuleName();
   if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))

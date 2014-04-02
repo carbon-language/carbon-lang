@@ -2,7 +2,7 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -ast-dump %s | FileCheck -check-prefix CHECK-TU -strict-whitespace %s
 
 int TestLocation;
-// CHECK: VarDecl 0x{{[^ ]*}} <{{.*}}:4:1, col:5> TestLocation
+// CHECK: VarDecl 0x{{[^ ]*}} <{{.*}}:4:1, col:5> col:5 TestLocation
 
 struct TestIndent {
   int x;
@@ -47,7 +47,7 @@ struct TestEnumDeclAnon {
   } e;
 };
 // CHECK:      RecordDecl{{.*}} TestEnumDeclAnon
-// CHECK-NEXT:   EnumDecl{{.*>$}}
+// CHECK-NEXT:   EnumDecl{{.*> .*$}}
 
 enum TestEnumDeclForward;
 // CHECK:      EnumDecl{{.*}} TestEnumDeclForward

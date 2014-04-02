@@ -143,7 +143,7 @@ namespace TestStaticAssertDecl {
   static_assert(true, "msg");
 }
 // CHECK:      NamespaceDecl{{.*}} TestStaticAssertDecl
-// CHECK-NEXT:   StaticAssertDecl{{.*>$}}
+// CHECK-NEXT:   StaticAssertDecl{{.*> .*$}}
 // CHECK-NEXT:     CXXBoolLiteralExpr
 // CHECK-NEXT:     StringLiteral
 
@@ -445,7 +445,7 @@ namespace TestFileScopeAsmDecl {
   asm("ret");
 }
 // CHECK:      NamespaceDecl{{.*}} TestFileScopeAsmDecl{{$}}
-// CHECK:        FileScopeAsmDecl{{.*>$}}
+// CHECK:        FileScopeAsmDecl{{.*> .*$}}
 // CHECK-NEXT:     StringLiteral
 
 namespace TestFriendDecl2 {
@@ -454,12 +454,12 @@ namespace TestFriendDecl2 {
     friend void f();
   };
 }
-// CHECK: NamespaceDecl [[TestFriendDecl2:0x.*]] <{{.*}}> TestFriendDecl2
-// CHECK: |-FunctionDecl [[TestFriendDecl2_f:0x.*]] <{{.*}}> f 'void (void)'
+// CHECK: NamespaceDecl [[TestFriendDecl2:0x.*]] <{{.*}}> {{.*}} TestFriendDecl2
+// CHECK: |-FunctionDecl [[TestFriendDecl2_f:0x.*]] <{{.*}}> {{.*}} f 'void (void)'
 // CHECK: `-CXXRecordDecl {{.*}} struct S
 // CHECK:   |-CXXRecordDecl {{.*}} struct S
 // CHECK:   `-FriendDecl
-// CHECK:     `-FunctionDecl {{.*}} parent [[TestFriendDecl2]] prev [[TestFriendDecl2_f]] <{{.*}}> f 'void (void)'
+// CHECK:     `-FunctionDecl {{.*}} parent [[TestFriendDecl2]] prev [[TestFriendDecl2_f]] <{{.*}}> {{.*}} f 'void (void)'
 
 namespace Comment {
   extern int Test;
