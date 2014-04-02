@@ -5,7 +5,7 @@
 
 // CHECK:      Relocations [
 // CHECK-NEXT:   Section (2) .rel.text {
-// CHECK-NEXT:     0x2          R_386_GOTOFF     .rodata.str1.16 0x0
+// CHECK-NEXT:     0x2          R_386_GOTOFF     .Lfoo 0x0
 // CHECK-NEXT:     0x{{[^ ]+}}  R_386_PLT32      bar2 0x0
 // CHECK-NEXT:     0x{{[^ ]+}}  R_386_GOTPC      _GLOBAL_OFFSET_TABLE_ 0x0
 // Relocation 3 (bar3@GOTOFF) is done with symbol 7 (bss)
