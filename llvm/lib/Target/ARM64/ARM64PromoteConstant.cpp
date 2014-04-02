@@ -93,9 +93,8 @@ public:
   bool runOnModule(Module &M) {
     DEBUG(dbgs() << getPassName() << '\n');
     bool Changed = false;
-    for (Module::iterator IFn = M.begin(), IEndFn = M.end(); IFn != IEndFn;
-         ++IFn) {
-      Changed |= runOnFunction(*IFn);
+    for (auto &MF: M) {
+      Changed |= runOnFunction(MF);
     }
     return Changed;
   }
@@ -566,15 +565,13 @@ bool ARM64PromoteConstant::runOnFunction(Function &F) {
   bool LocalChange = false;
   SmallSet<Constant *, 8> AlreadyChecked;
 
-  for (Function::iterator IBB = F.begin(), IEndBB = F.end(); IBB != IEndBB;
-       ++IBB) {
-    for (BasicBlock::iterator II = IBB->begin(), IEndI = IBB->end();
-         II != IEndI; ++II) {
+  for (auto &MBB : F) {
+    for (auto &MI: MBB) {
       // Traverse the operand, looking for constant vectors
       // Replace them by a load of a global variable of type constant vector
-      for (unsigned OpIdx = 0, EndOpIdx = II->getNumOperands();
+      for (unsigned OpIdx = 0, EndOpIdx = MI.getNumOperands();
            OpIdx != EndOpIdx; ++OpIdx) {
-        Constant *Cst = dyn_cast<Constant>(II->getOperand(OpIdx));
+        Constant *Cst = dyn_cast<Constant>(MI.getOperand(OpIdx));
         // There is no point is promoting global value, they are already global.
         // Do not promote constant expression, as they may require some code
         // expansion.
