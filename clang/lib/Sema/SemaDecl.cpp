@@ -1204,7 +1204,8 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
   if (D->isInvalidDecl() || D->isUsed() || D->hasAttr<UnusedAttr>())
     return false;
 
-  // Ignore class templates.
+  // Ignore all entities declared within templates, and out-of-line definitions
+  // of members of class templates.
   if (D->getDeclContext()->isDependentContext() ||
       D->getLexicalDeclContext()->isDependentContext())
     return false;
@@ -9044,7 +9045,8 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   if (DC->getRedeclContext()->isFileContext() && VD->isExternallyVisible())
     AddPushedVisibilityAttribute(VD);
 
-  if (VD->isFileVarDecl())
+  // FIXME: Warn on unused templates.
+  if (VD->isFileVarDecl() && !VD->getDescribedVarTemplate())
     MarkUnusedFileScopedDecl(VD);
 
   // Now we have parsed the initializer and can update the table of magic
