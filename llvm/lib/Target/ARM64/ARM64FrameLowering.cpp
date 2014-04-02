@@ -161,11 +161,9 @@ ARM64FrameLowering::emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
   // Calculate offsets.
   int64_t saveAreaOffset = (HasFP ? 2 : 1) * stackGrowth;
   unsigned TotalSkipped = 0;
-  for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
-                                                    E = CSI.end();
-       I != E; ++I) {
-    unsigned Reg = I->getReg();
-    int64_t Offset = MFI->getObjectOffset(I->getFrameIdx()) -
+  for (const auto &Info : CSI) {
+    unsigned Reg = Info.getReg();
+    int64_t Offset = MFI->getObjectOffset(Info.getFrameIdx()) -
                      getOffsetOfLocalArea() + saveAreaOffset;
 
     // Don't output a new CFI directive if we're re-saving the frame pointer or
