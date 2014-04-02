@@ -355,5 +355,8 @@ void AsmPrinter::emitCFIInstruction(const MCCFIInstruction &Inst) const {
   case MCCFIInstruction::OpWindowSave:
     OutStreamer.EmitCFIWindowSave();
     break;
+  case MCCFIInstruction::OpSameValue:
+    OutStreamer.EmitCFISameValue(Inst.getRegister());
+    break;
   }
 }

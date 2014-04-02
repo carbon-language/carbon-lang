@@ -57,6 +57,8 @@ public:
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS) const override;
 
+  void adjustForSegmentedStacks(MachineFunction &MF) const;
+
  private:
   void emitPushInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                     const std::vector<CalleeSavedInfo> &CSI, unsigned StmOpc,

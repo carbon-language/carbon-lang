@@ -114,6 +114,10 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// relocation models.
   unsigned GlobalBaseReg;
 
+  /// ArgumentStackSize - amount of bytes on stack consumed by the arguments
+  /// being passed on the stack
+  unsigned ArgumentStackSize;
+
 public:
   ARMFunctionInfo() :
     isThumb(false),
@@ -181,6 +185,9 @@ public:
   void setGPRCalleeSavedArea1Size(unsigned s) { GPRCS1Size = s; }
   void setGPRCalleeSavedArea2Size(unsigned s) { GPRCS2Size = s; }
   void setDPRCalleeSavedAreaSize(unsigned s)  { DPRCSSize = s; }
+
+  unsigned getArgumentStackSize() const { return ArgumentStackSize; }
+  void setArgumentStackSize(unsigned size) { ArgumentStackSize = size; }
 
   unsigned createJumpTableUId() {
     return JumpTableUId++;

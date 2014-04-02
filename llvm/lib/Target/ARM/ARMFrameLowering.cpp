@@ -14,6 +14,7 @@
 #include "ARMFrameLowering.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
+#include "ARMConstantPoolValue.h"
 #include "ARMMachineFunctionInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -1612,3 +1613,366 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   MBB.erase(I);
 }
 
+/// Get the minimum constant for ARM that is greater than or equal to the
+/// argument. In ARM, constants can have any value that can be produced by
+/// rotating an 8-bit value to the right by an even number of bits within a
+/// 32-bit word.
+static uint32_t alignToARMConstant(uint32_t Value) {
+  unsigned Shifted = 0;
+
+  if (Value == 0)
+      return 0;
+
+  while (!(Value & 0xC0000000)) {
+      Value = Value << 2;
+      Shifted += 2;
+  }
+
+  bool Carry = (Value & 0x00FFFFFF);
+  Value = ((Value & 0xFF000000) >> 24) + Carry;
+
+  if (Value & 0x0000100)
+      Value = Value & 0x000001FC;
+
+  if (Shifted > 24)
+      Value = Value >> (Shifted - 24);
+  else
+      Value = Value << (24 - Shifted);
+
+  return Value;
+}
+
+// The stack limit in the TCB is set to this many bytes above the actual
+// stack limit.
+static const uint64_t kSplitStackAvailable = 256;
+
+// Adjust the function prologue to enable split stacks. This currently only
+// supports android and linux.
+//
+// The ABI of the segmented stack prologue is a little arbitrarily chosen, but
+// must be well defined in order to allow for consistent implementations of the
+// __morestack helper function. The ABI is also not a normal ABI in that it
+// doesn't follow the normal calling conventions because this allows the
+// prologue of each function to be optimized further.
+//
+// Currently, the ABI looks like (when calling __morestack)
+//
+//  * r4 holds the minimum stack size requested for this function call
+//  * r5 holds the stack size of the arguments to the function
+//  * the beginning of the function is 3 instructions after the call to
+//    __morestack
+//
+// Implementations of __morestack should use r4 to allocate a new stack, r5 to
+// place the arguments on to the new stack, and the 3-instruction knowledge to
+// jump directly to the body of the function when working on the new stack.
+//
+// An old (and possibly no longer compatible) implementation of __morestack for
+// ARM can be found at [1].
+//
+// [1] - https://github.com/mozilla/rust/blob/86efd9/src/rt/arch/arm/morestack.S
+void ARMFrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
+  unsigned Opcode;
+  unsigned CFIIndex;
+  const ARMSubtarget *ST = &MF.getTarget().getSubtarget<ARMSubtarget>();
+  bool Thumb = ST->isThumb();
+
+  // Sadly, this currently doesn't support varargs, platforms other than
+  // android/linux. Note that thumb1/thumb2 are support for android/linux.
+  if (MF.getFunction()->isVarArg())
+    report_fatal_error("Segmented stacks do not support vararg functions.");
+  if (!ST->isTargetAndroid() && !ST->isTargetLinux())
+    report_fatal_error("Segmented stacks not supported on this platfrom.");
+
+  MachineBasicBlock &prologueMBB = MF.front();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  MachineModuleInfo &MMI = MF.getMMI();
+  MCContext &Context = MMI.getContext();
+  const MCRegisterInfo *MRI = Context.getRegisterInfo();
+  const ARMBaseInstrInfo &TII =
+      *static_cast<const ARMBaseInstrInfo*>(MF.getTarget().getInstrInfo());
+  ARMFunctionInfo *ARMFI = MF.getInfo<ARMFunctionInfo>();
+  DebugLoc DL;
+
+  // Use R4 and R5 as scratch registers.
+  // We save R4 and R5 before use and restore them before leaving the function.
+  unsigned ScratchReg0 = ARM::R4;
+  unsigned ScratchReg1 = ARM::R5;
+  uint64_t AlignedStackSize;
+
+  MachineBasicBlock *PrevStackMBB = MF.CreateMachineBasicBlock();
+  MachineBasicBlock *PostStackMBB = MF.CreateMachineBasicBlock();
+  MachineBasicBlock *AllocMBB = MF.CreateMachineBasicBlock();
+  MachineBasicBlock *GetMBB = MF.CreateMachineBasicBlock();
+  MachineBasicBlock *McrMBB = MF.CreateMachineBasicBlock();
+
+  for (MachineBasicBlock::livein_iterator i = prologueMBB.livein_begin(),
+                                          e = prologueMBB.livein_end();
+       i != e; ++i) {
+    AllocMBB->addLiveIn(*i);
+    GetMBB->addLiveIn(*i);
+    McrMBB->addLiveIn(*i);
+    PrevStackMBB->addLiveIn(*i);
+    PostStackMBB->addLiveIn(*i);
+  }
+
+  MF.push_front(PostStackMBB);
+  MF.push_front(AllocMBB);
+  MF.push_front(GetMBB);
+  MF.push_front(McrMBB);
+  MF.push_front(PrevStackMBB);
+
+  // The required stack size that is aligned to ARM constant criterion.
+  uint64_t StackSize = MFI->getStackSize();
+
+  AlignedStackSize = alignToARMConstant(StackSize);
+
+  // When the frame size is less than 256 we just compare the stack
+  // boundary directly to the value of the stack pointer, per gcc.
+  bool CompareStackPointer = AlignedStackSize < kSplitStackAvailable;
+
+  // We will use two of the callee save registers as scratch registers so we
+  // need to save those registers onto the stack.
+  // We will use SR0 to hold stack limit and SR1 to hold the stack size
+  // requested and arguments for __morestack().
+  // SR0: Scratch Register #0
+  // SR1: Scratch Register #1
+  // push {SR0, SR1}
+  if (Thumb) {
+    AddDefaultPred(BuildMI(PrevStackMBB, DL, TII.get(ARM::tPUSH)))
+        .addReg(ScratchReg0).addReg(ScratchReg1);
+  } else {
+    AddDefaultPred(BuildMI(PrevStackMBB, DL, TII.get(ARM::STMDB_UPD))
+                   .addReg(ARM::SP, RegState::Define).addReg(ARM::SP))
+        .addReg(ScratchReg0).addReg(ScratchReg1);
+  }
+
+  // Emit the relevant DWARF information about the change in stack pointer as
+  // well as where to find both r4 and r5 (the callee-save registers)
+  CFIIndex =
+      MMI.addFrameInst(MCCFIInstruction::createDefCfaOffset(nullptr, -8));
+  BuildMI(PrevStackMBB, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
+  CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
+      nullptr, MRI->getDwarfRegNum(ScratchReg1, true), -4));
+  BuildMI(PrevStackMBB, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
+  CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
+      nullptr, MRI->getDwarfRegNum(ScratchReg0, true), -8));
+  BuildMI(PrevStackMBB, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
+
+  // mov SR1, sp
+  if (Thumb) {
+    AddDefaultPred(BuildMI(McrMBB, DL, TII.get(ARM::tMOVr), ScratchReg1)
+                      .addReg(ARM::SP));
+  } else if (CompareStackPointer) {
+    AddDefaultPred(BuildMI(McrMBB, DL, TII.get(ARM::MOVr), ScratchReg1)
+                      .addReg(ARM::SP)).addReg(0);
+  }
+
+  // sub SR1, sp, #StackSize
+  if (!CompareStackPointer && Thumb) {
+    AddDefaultPred(
+        AddDefaultCC(BuildMI(McrMBB, DL, TII.get(ARM::tSUBi8), ScratchReg1))
+            .addReg(ScratchReg1).addImm(AlignedStackSize));
+  } else if (!CompareStackPointer) {
+    AddDefaultPred(BuildMI(McrMBB, DL, TII.get(ARM::SUBri), ScratchReg1)
+                      .addReg(ARM::SP).addImm(AlignedStackSize)).addReg(0);
+  }
+
+  if (Thumb && ST->isThumb1Only()) {
+    unsigned PCLabelId = ARMFI->createPICLabelUId();
+    ARMConstantPoolValue *NewCPV = ARMConstantPoolSymbol::Create(
+        MF.getFunction()->getContext(), "STACK_LIMIT", PCLabelId, 0);
+    MachineConstantPool *MCP = MF.getConstantPool();
+    unsigned CPI = MCP->getConstantPoolIndex(NewCPV, MF.getAlignment());
+
+    // ldr SR0, [pc, offset(STACK_LIMIT)]
+    AddDefaultPred(BuildMI(GetMBB, DL, TII.get(ARM::tLDRpci), ScratchReg0)
+                      .addConstantPoolIndex(CPI));
+
+    // ldr SR0, [SR0]
+    AddDefaultPred(BuildMI(GetMBB, DL, TII.get(ARM::tLDRi), ScratchReg0)
+                      .addReg(ScratchReg0).addImm(0));
+  } else {
+    // Get TLS base address from the coprocessor
+    // mrc p15, #0, SR0, c13, c0, #3
+    AddDefaultPred(BuildMI(McrMBB, DL, TII.get(ARM::MRC), ScratchReg0)
+                     .addImm(15)
+                     .addImm(0)
+                     .addImm(13)
+                     .addImm(0)
+                     .addImm(3));
+
+    // Use the last tls slot on android and a private field of the TCP on linux.
+    assert(ST->isTargetAndroid() || ST->isTargetLinux());
+    unsigned TlsOffset = ST->isTargetAndroid() ? 63 : 1;
+
+    // Get the stack limit from the right offset
+    // ldr SR0, [sr0, #4 * TlsOffset]
+    AddDefaultPred(BuildMI(GetMBB, DL, TII.get(ARM::LDRi12), ScratchReg0)
+                      .addReg(ScratchReg0).addImm(4 * TlsOffset));
+  }
+
+  // Compare stack limit with stack size requested.
+  // cmp SR0, SR1
+  Opcode = Thumb ? ARM::tCMPr : ARM::CMPrr;
+  AddDefaultPred(BuildMI(GetMBB, DL, TII.get(Opcode))
+                    .addReg(ScratchReg0)
+                    .addReg(ScratchReg1));
+
+  // This jump is taken if StackLimit < SP - stack required.
+  Opcode = Thumb ? ARM::tBcc : ARM::Bcc;
+  BuildMI(GetMBB, DL, TII.get(Opcode)).addMBB(PostStackMBB)
+       .addImm(ARMCC::LO)
+       .addReg(ARM::CPSR);
+
+
+  // Calling __morestack(StackSize, Size of stack arguments).
+  // __morestack knows that the stack size requested is in SR0(r4)
+  // and amount size of stack arguments is in SR1(r5).
+
+  // Pass first argument for the __morestack by Scratch Register #0.
+  //   The amount size of stack required
+  if (Thumb) {
+    AddDefaultPred(AddDefaultCC(BuildMI(AllocMBB, DL, TII.get(ARM::tMOVi8),
+                                        ScratchReg0)).addImm(AlignedStackSize));
+  } else {
+    AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::MOVi), ScratchReg0)
+                      .addImm(AlignedStackSize)).addReg(0);
+  }
+  // Pass second argument for the __morestack by Scratch Register #1.
+  //   The amount size of stack consumed to save function arguments.
+  if (Thumb) {
+    AddDefaultPred(
+        AddDefaultCC(BuildMI(AllocMBB, DL, TII.get(ARM::tMOVi8), ScratchReg1))
+            .addImm(alignToARMConstant(ARMFI->getArgumentStackSize())));
+  } else {
+    AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::MOVi), ScratchReg1)
+                   .addImm(alignToARMConstant(ARMFI->getArgumentStackSize())))
+                   .addReg(0);
+  }
+
+  // push {lr} - Save return address of this function.
+  if (Thumb) {
+    AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::tPUSH)))
+        .addReg(ARM::LR);
+  } else {
+    AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::STMDB_UPD))
+                   .addReg(ARM::SP, RegState::Define)
+                   .addReg(ARM::SP))
+        .addReg(ARM::LR);
+  }
+
+  // Emit the DWARF info about the change in stack as well as where to find the
+  // previous link register
+  CFIIndex =
+      MMI.addFrameInst(MCCFIInstruction::createDefCfaOffset(nullptr, -12));
+  BuildMI(AllocMBB, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
+  CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
+        nullptr, MRI->getDwarfRegNum(ARM::LR, true), -12));
+  BuildMI(AllocMBB, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
+
+  // Call __morestack().
+  if (Thumb) {
+    AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::tBL)))
+        .addExternalSymbol("__morestack");
+  } else {
+    BuildMI(AllocMBB, DL, TII.get(ARM::BL))
+        .addExternalSymbol("__morestack");
+  }
+
+  // pop {lr} - Restore return address of this original function.
+  if (Thumb) {
+    if (ST->isThumb1Only()) {
+      AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::tPOP)))
+                     .addReg(ScratchReg0);
+      AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::tMOVr), ARM::LR)
+                     .addReg(ScratchReg0));
+    } else {
+      AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::t2LDR_POST))
+                     .addReg(ARM::LR, RegState::Define)
+                     .addReg(ARM::SP, RegState::Define)
+                     .addReg(ARM::SP)
+                     .addImm(4));
+    }
+  } else {
+    AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::LDMIA_UPD))
+                   .addReg(ARM::SP, RegState::Define)
+                   .addReg(ARM::SP))
+      .addReg(ARM::LR);
+  }
+
+  // Restore SR0 and SR1 in case of __morestack() was called.
+  // __morestack() will skip PostStackMBB block so we need to restore
+  // scratch registers from here.
+  // pop {SR0, SR1}
+  if (Thumb) {
+    AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::tPOP)))
+      .addReg(ScratchReg0)
+      .addReg(ScratchReg1);
+  } else {
+    AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(ARM::LDMIA_UPD))
+                   .addReg(ARM::SP, RegState::Define)
+                   .addReg(ARM::SP))
+      .addReg(ScratchReg0)
+      .addReg(ScratchReg1);
+  }
+
+  // Update the CFA offset now that we've popped
+  CFIIndex = MMI.addFrameInst(MCCFIInstruction::createDefCfaOffset(nullptr, 0));
+  BuildMI(AllocMBB, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
+
+  // bx lr - Return from this function.
+  Opcode = Thumb ? ARM::tBX_RET : ARM::BX_RET;
+  AddDefaultPred(BuildMI(AllocMBB, DL, TII.get(Opcode)));
+
+  // Restore SR0 and SR1 in case of __morestack() was not called.
+  // pop {SR0, SR1}
+  if (Thumb) {
+    AddDefaultPred(BuildMI(PostStackMBB, DL, TII.get(ARM::tPOP)))
+      .addReg(ScratchReg0)
+      .addReg(ScratchReg1);
+  } else {
+    AddDefaultPred(BuildMI(PostStackMBB, DL, TII.get(ARM::LDMIA_UPD))
+                   .addReg(ARM::SP, RegState::Define)
+                   .addReg(ARM::SP))
+      .addReg(ScratchReg0)
+      .addReg(ScratchReg1);
+  }
+
+  // Update the CFA offset now that we've popped
+  CFIIndex = MMI.addFrameInst(MCCFIInstruction::createDefCfaOffset(nullptr, 0));
+  BuildMI(PostStackMBB, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
+
+  // Tell debuggers that r4 and r5 are now the same as they were in the
+  // previous function, that they're the "Same Value".
+  CFIIndex = MMI.addFrameInst(MCCFIInstruction::createSameValue(
+      nullptr, MRI->getDwarfRegNum(ScratchReg0, true)));
+  BuildMI(PostStackMBB, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
+  CFIIndex = MMI.addFrameInst(MCCFIInstruction::createSameValue(
+      nullptr, MRI->getDwarfRegNum(ScratchReg1, true)));
+  BuildMI(PostStackMBB, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
+
+  // Organizing MBB lists
+  PostStackMBB->addSuccessor(&prologueMBB);
+
+  AllocMBB->addSuccessor(PostStackMBB);
+
+  GetMBB->addSuccessor(PostStackMBB);
+  GetMBB->addSuccessor(AllocMBB);
+
+  McrMBB->addSuccessor(GetMBB);
+
+  PrevStackMBB->addSuccessor(McrMBB);
+
+#ifdef XDEBUG
+  MF.verify();
+#endif
+}
