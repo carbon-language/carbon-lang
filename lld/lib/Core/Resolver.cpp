@@ -69,19 +69,19 @@ private:
 } // namespace
 
 void Resolver::handleFile(const File &file) {
-  uint32_t resolverState = Resolver::StateNoChange;
   const SharedLibraryFile *sharedLibraryFile =
       dyn_cast<SharedLibraryFile>(&file);
 
-  for (const DefinedAtom *atom : file.defined()) {
+  for (const DefinedAtom *atom : file.defined())
     doDefinedAtom(*atom);
-    resolverState |= StateNewDefinedAtoms;
-  }
+  bool progress = false;
+
   if (!sharedLibraryFile ||
       _context.addUndefinedAtomsFromSharedLibrary(sharedLibraryFile)) {
+    progress = (file.undefined().size() > 0);
+
     for (const UndefinedAtom *undefAtom : file.undefined()) {
       doUndefinedAtom(*undefAtom);
-      resolverState |= StateNewUndefinedAtoms;
       // If the undefined symbol has an alternative name, try to resolve the
       // symbol with the name to give it a second chance. This feature is used
       // for COFF "weak external" symbol.
@@ -93,15 +93,19 @@ void Resolver::handleFile(const File &file) {
       }
     }
   }
-  for (const SharedLibraryAtom *shlibAtom : file.sharedLibrary()) {
+  for (const SharedLibraryAtom *shlibAtom : file.sharedLibrary())
     doSharedLibraryAtom(*shlibAtom);
-    resolverState |= StateNewSharedLibraryAtoms;
-  }
-  for (const AbsoluteAtom *absAtom : file.absolute()) {
+
+  for (const AbsoluteAtom *absAtom : file.absolute())
     doAbsoluteAtom(*absAtom);
-    resolverState |= StateNewAbsoluteAtoms;
+
+  // If we make some progress on linking, notify that fact to the input file
+  // manager, because it may want to know that for --start-group/end-group.
+  progress = progress || file.sharedLibrary().size() ||
+             file.absolute().size() || file.defined().size();
+  if (progress) {
+    _context.inputGraph().notifyProgress();
   }
-  _context.inputGraph().setResolverState(resolverState);
 }
 
 void Resolver::forEachUndefines(UndefCallback callback,
@@ -302,7 +306,6 @@ bool Resolver::resolveUndefines() {
 
   for (;;) {
     ErrorOr<File &> file = _context.inputGraph().nextFile();
-    _context.inputGraph().setResolverState(Resolver::StateNoChange);
     error_code ec = file.getError();
     if (ec == InputGraphError::no_more_files)
       return true;

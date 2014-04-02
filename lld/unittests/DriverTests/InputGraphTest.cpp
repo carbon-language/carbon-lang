@@ -315,7 +315,7 @@ TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
   EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
   EXPECT_EQ("group_objfile2", (*objfile).path());
 
-  group->setResolveState(Resolver::StateNewDefinedAtoms);
+  group->notifyProgress();
 
   objfile = group->getNextFile();
   EXPECT_NE(InputGraphError::no_more_files, objfile.getError());

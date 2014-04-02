@@ -89,7 +89,6 @@ public:
         (_files[0]->kind() == File::kindSharedLibrary)) {
       _nextFileIndex = 0;
     }
-    setResolveState(Resolver::StateNoChange);
   }
 
   /// \brief Return the file that has to be processed by the resolver
@@ -144,14 +143,6 @@ public:
   /// Return the elements that we would want to expand with.
   range<InputGraph::InputElementIterT> expandElements() override {
     return make_range(_expandElements.begin(), _expandElements.end());
-  }
-
-  void setResolveState(uint32_t) override {
-    llvm_unreachable("cannot use this function: setResolveState");
-  }
-
-  uint32_t getResolveState() const override {
-    llvm_unreachable("cannot use this function: getResolveState");
   }
 
   // Do nothing here.

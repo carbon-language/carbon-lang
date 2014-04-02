@@ -47,9 +47,7 @@ ErrorOr<File &> InputGraph::nextFile() {
   }
 }
 
-void InputGraph::setResolverState(uint32_t state) {
-  _currentInputElement->setResolveState(state);
-}
+void InputGraph::notifyProgress() { _currentInputElement->notifyProgress(); }
 
 bool InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {
   _inputArgs.push_back(std::move(ie));
@@ -123,7 +121,7 @@ InputElement::InputElement(Kind type, int64_t ordinal)
 /// FileNode
 FileNode::FileNode(StringRef path, int64_t ordinal)
     : InputElement(InputElement::Kind::File, ordinal), _path(path),
-      _resolveState(Resolver::StateNoChange), _nextFileIndex(0) {}
+      _nextFileIndex(0) {}
 
 /// \brief Read the file into _buffer.
 error_code FileNode::getBuffer(StringRef filePath) {
@@ -133,33 +131,6 @@ error_code FileNode::getBuffer(StringRef filePath) {
     return ec;
   _buffer = std::move(mb);
   return error_code::success();
-}
-
-// Reset the next file that would be be processed by the resolver.
-// Reset the resolve state too.
-void FileNode::resetNextIndex() {
-  _nextFileIndex = 0;
-  setResolveState(Resolver::StateNoChange);
-}
-
-/// ControlNode
-
-/// \brief Get the resolver State. The return value of the resolve
-/// state for a control node is the or'ed value of the resolve states
-/// contained in it.
-uint32_t Group::getResolveState() const {
-  uint32_t resolveState = Resolver::StateNoChange;
-  for (auto &elem : _elements)
-    resolveState |= elem->getResolveState();
-  return resolveState;
-}
-
-/// \brief Set the resolve state for the current element
-/// thats processed by the resolver.
-void Group::setResolveState(uint32_t resolveState) {
-  if (_elements.empty())
-    return;
-  _elements[_currentElementIndex]->setResolveState(resolveState);
 }
 
 /// Group
@@ -173,14 +144,15 @@ ErrorOr<File &> Group::getNextFile() {
     return make_error_code(InputGraphError::no_more_files);
 
   for (;;) {
-    // If we have processed all the elements as part of this node
-    // check the resolver status for each input element and if the status
-    // has not changed, move onto the next file.
+    // If we have processed all the elements, and have made no progress on
+    // linking, we cannot resolve any symbol from this group. Continue to the
+    // next one by returning no_more_files.
     if (_nextElementIndex == _elements.size()) {
-      if (getResolveState() == Resolver::StateNoChange)
+      if (!_madeProgress)
         return make_error_code(InputGraphError::no_more_files);
       resetNextIndex();
     }
+
     _currentElementIndex = _nextElementIndex;
     auto file = _elements[_nextElementIndex]->getNextFile();
     // Move on to the next element if we have finished processing all

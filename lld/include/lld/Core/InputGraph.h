@@ -62,12 +62,11 @@ public:
   /// resolved.
   ErrorOr<File &> nextFile();
 
-  /// Set the resolver state for the current Input element. This is used by the
-  /// InputGraph to decide the next file that needs to be processed for various
-  /// types of nodes in the InputGraph. The resolver state is nothing but a
-  /// bitmask of various types of states that the resolver handles when adding
-  /// atoms.
-  void setResolverState(uint32_t resolverState);
+  /// Notifies the current input element of Resolver made some progress on
+  /// resolving undefined symbols using the current file. Group (representing
+  /// --start-group and --end-group) uses that notification to make a decision
+  /// whether it should iterate over again or terminate or not.
+  void notifyProgress();
 
   /// \brief Adds a node into the InputGraph
   bool addInputElement(std::unique_ptr<InputElement>);
@@ -153,11 +152,9 @@ public:
   /// Get the next file to be processed by the resolver
   virtual ErrorOr<File &> getNextFile() = 0;
 
-  /// \brief Set the resolve state for the element
-  virtual void setResolveState(uint32_t state) = 0;
-
-  /// \brief Get the resolve state for the element
-  virtual uint32_t getResolveState() const = 0;
+  /// Refer InputGraph::notifyProgress(). By default, it does nothing. Only
+  /// Group is interested in this message.
+  virtual void notifyProgress() {};
 
   /// \brief Reset the next index
   virtual void resetNextIndex() = 0;
@@ -183,7 +180,7 @@ class Group : public InputElement {
 public:
   Group(int64_t ordinal)
       : InputElement(InputElement::Kind::Group, ordinal),
-        _currentElementIndex(0), _nextElementIndex(0) {}
+        _currentElementIndex(0), _nextElementIndex(0), _madeProgress(false) {}
 
   static inline bool classof(const InputElement *a) {
     return a->kind() == InputElement::Kind::Group;
@@ -200,7 +197,9 @@ public:
   }
 
   void resetNextIndex() override {
-    _currentElementIndex = _nextElementIndex = 0;
+    _madeProgress = false;
+    _currentElementIndex = 0;
+    _nextElementIndex = 0;
     for (auto &elem : _elements)
       elem->resetNextIndex();
   }
@@ -213,14 +212,21 @@ public:
     return error_code::success();
   }
 
-  uint32_t getResolveState() const override;
-  void setResolveState(uint32_t) override;
+  /// If Resolver made a progress using the current file, it's ok to revisit
+  /// files in this group in future.
+  void notifyProgress() override {
+    for (auto &elem : _elements)
+      elem->notifyProgress();
+    _madeProgress = true;
+  }
+
   ErrorOr<File &> getNextFile() override;
 
 protected:
   InputGraph::InputElementVectorT _elements;
   uint32_t _currentElementIndex;
   uint32_t _nextElementIndex;
+  bool _madeProgress;
 };
 
 /// \brief Represents an Input file in the graph
@@ -267,15 +273,7 @@ public:
 
   /// \brief Reset the file index if the resolver needs to process
   /// the node again.
-  void resetNextIndex() override;
-
-  /// \brief Set the resolve state for the FileNode.
-  void setResolveState(uint32_t resolveState) override {
-    _resolveState = resolveState;
-  }
-
-  /// \brief Retrieve the resolve state of the FileNode.
-  uint32_t getResolveState() const override { return _resolveState; }
+  void resetNextIndex() override { _nextFileIndex = 0; }
 
 protected:
   /// \brief Read the file into _buffer.

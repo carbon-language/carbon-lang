@@ -28,14 +28,6 @@ class LinkingContext;
 /// and producing a merged graph.
 class Resolver {
 public:
-  enum ResolverState {
-    StateNoChange = 0,              // The default resolver state
-    StateNewDefinedAtoms = 1,       // New defined atoms were added
-    StateNewUndefinedAtoms = 2,     // New undefined atoms were added
-    StateNewSharedLibraryAtoms = 4, // New shared library atoms were added
-    StateNewAbsoluteAtoms = 8       // New absolute atoms were added
-  };
-
   Resolver(LinkingContext &context)
       : _context(context), _symbolTable(context), _result(new MergedFile()) {}
 
