@@ -20,6 +20,37 @@ static bool sortInputElements(const std::unique_ptr<InputElement> &a,
   return a->getOrdinal() < b->getOrdinal();
 }
 
+ErrorOr<File &> InputGraph::nextFile() {
+  // When nextFile() is called for the first time, _currentInputElement is not
+  // initialized. Initialize it with the first element of the input graph.
+  if (_currentInputElement == nullptr) {
+    ErrorOr<InputElement *> elem = getNextInputElement();
+    if (elem.getError() == InputGraphError::no_more_elements)
+      return make_error_code(InputGraphError::no_more_files);
+    _currentInputElement = *elem;
+  }
+
+  // Otherwise, try to get the next file of _currentInputElement. If the current
+  // input element points to an archive file, and there's a file left in the
+  // archive, it will succeed. If not, try to get the next file in the input
+  // graph.
+  for (;;) {
+    ErrorOr<File &> nextFile = _currentInputElement->getNextFile();
+    if (nextFile.getError() != InputGraphError::no_more_files)
+      return std::move(nextFile);
+
+    ErrorOr<InputElement *> elem = getNextInputElement();
+    if (elem.getError() == InputGraphError::no_more_elements ||
+        *elem == nullptr)
+      return make_error_code(InputGraphError::no_more_files);
+    _currentInputElement = *elem;
+  }
+}
+
+void InputGraph::setResolverState(uint32_t state) {
+  _currentInputElement->setResolveState(state);
+}
+
 bool InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {
   _inputArgs.push_back(std::move(ie));
   return true;

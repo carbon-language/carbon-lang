@@ -52,7 +52,22 @@ public:
   enum Position : uint8_t { BEGIN, END };
 
   /// \brief Initialize the inputgraph
-  InputGraph() : _ordinal(0), _nextElementIndex(0) {}
+  InputGraph()
+      : _ordinal(0), _nextElementIndex(0), _currentInputElement(nullptr) {}
+
+  /// nextFile returns the next file that needs to be processed by the resolver.
+  /// When there are no more files to be processed, an appropriate
+  /// InputGraphError is returned. Ordinals are assigned to files returned by
+  /// nextFile, which means ordinals would be assigned in the way files are
+  /// resolved.
+  ErrorOr<File &> nextFile();
+
+  /// Set the resolver state for the current Input element. This is used by the
+  /// InputGraph to decide the next file that needs to be processed for various
+  /// types of nodes in the InputGraph. The resolver state is nothing but a
+  /// bitmask of various types of states that the resolver handles when adding
+  /// atoms.
+  void setResolverState(uint32_t resolverState);
 
   /// \brief Adds a node into the InputGraph
   bool addInputElement(std::unique_ptr<InputElement>);
@@ -74,7 +89,7 @@ public:
     return make_range(_inputArgs.begin(), _inputArgs.end());
   }
 
-  // \brief Does the inputGraph contain any elements
+  // \brief Returns the number of input files.
   size_t size() const { return _inputArgs.size(); }
 
   /// \brief Dump the input Graph
@@ -87,7 +102,7 @@ public:
   /// \brief Insert an element into the input graph at position.
   void insertElementAt(std::unique_ptr<InputElement>, Position position);
 
-  /// \brief Helper functions for the resolver
+  /// \brief Helper functions for the resolver. Exposed for unit tests.
   ErrorOr<InputElement *> getNextInputElement();
 
 protected:
@@ -97,6 +112,7 @@ protected:
   int64_t _ordinal;
   // Index of the next element to be processed
   uint32_t _nextElementIndex;
+  InputElement *_currentInputElement;
 };
 
 /// \brief This describes each element in the InputGraph. The Kind

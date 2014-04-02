@@ -105,7 +105,7 @@ void Resolver::handleFile(const File &file) {
     doAbsoluteAtom(*absAtom);
     resolverState |= StateNewAbsoluteAtoms;
   }
-  _context.setResolverState(resolverState);
+  _context.inputGraph().setResolverState(resolverState);
 }
 
 void Resolver::forEachUndefines(UndefCallback callback,
@@ -305,8 +305,8 @@ bool Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
 
   for (;;) {
-    ErrorOr<File &> file = _context.nextFile();
-    _context.setResolverState(Resolver::StateNoChange);
+    ErrorOr<File &> file = _context.inputGraph().nextFile();
+    _context.inputGraph().setResolverState(Resolver::StateNoChange);
     error_code ec = file.getError();
     if (ec == InputGraphError::no_more_files)
       return true;

@@ -218,10 +218,11 @@ public:
   bool getAllowDuplicates() const { return _allowDuplicates; }
 
   void appendLLVMOption(const char *opt) { _llvmOptions.push_back(opt); }
-  virtual void setInputGraph(std::unique_ptr<InputGraph> inputGraph) {
+
+  void setInputGraph(std::unique_ptr<InputGraph> inputGraph) {
     _inputGraph = std::move(inputGraph);
   }
-  virtual InputGraph &inputGraph() const { return *_inputGraph; }
+  InputGraph &inputGraph() const { return *_inputGraph; }
 
   /// This method adds undefined symbols specified by the -u option to the to
   /// the list of undefined symbols known to the linker. This option essentially
@@ -300,21 +301,6 @@ public:
   /// \param linkedFile This is the merged/linked graph of all input file Atoms.
   virtual error_code writeFile(const File &linkedFile) const;
 
-  /// nextFile returns the next file that needs to be processed by the resolver.
-  /// The LinkingContext's can override the default behavior to change the way
-  /// the resolver operates. This uses the currentInputElement. When there are
-  /// no more files to be processed an appropriate InputGraphError is
-  /// returned. Ordinals are assigned to files returned by nextFile, which means
-  /// ordinals would be assigned in the way files are resolved.
-  virtual ErrorOr<File &> nextFile();
-
-  /// Set the resolver state for the current Input element This is used by the
-  /// InputGraph to decide the next file that needs to be processed for various
-  /// types of nodes in the InputGraph. The resolver state is nothing but a
-  /// bitmask of various types of states that the resolver handles when adding
-  /// atoms.
-  virtual void setResolverState(uint32_t resolverState);
-
   /// Return the next ordinal and Increment it.
   virtual uint64_t getNextOrdinalAndIncrement() const { return _nextOrdinal++; }
 
@@ -353,7 +339,6 @@ protected:
   StringRefVector _initialUndefinedSymbols;
   std::unique_ptr<InputGraph> _inputGraph;
   mutable llvm::BumpPtrAllocator _allocator;
-  InputElement *_currentInputElement;
   mutable uint64_t _nextOrdinal;
   Registry _registry;
 
