@@ -1832,19 +1832,6 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
     break;
   }
 
-  case ISD::FP16_TO_FP32: {
-    assert(Node->getOperand(0).getValueType() == MVT::i32 && "vector convert?");
-    EVT VT = Node->getValueType(0);
-    SDLoc DL(Node);
-    SDValue FPR32Id =
-        CurDAG->getTargetConstant(ARM64::FPR32RegClass.getID(), MVT::i32);
-    SDNode *Res =
-        CurDAG->getMachineNode(TargetOpcode::COPY_TO_REGCLASS, DL, MVT::i32,
-                               Node->getOperand(0), FPR32Id);
-    SDValue FPR16Reg =
-        CurDAG->getTargetExtractSubreg(ARM64::hsub, DL, VT, SDValue(Res, 0));
-    return CurDAG->getMachineNode(ARM64::FCVTSHr, DL, VT, FPR16Reg);
-  }
   case ISD::SRL:
   case ISD::AND:
   case ISD::SRA:

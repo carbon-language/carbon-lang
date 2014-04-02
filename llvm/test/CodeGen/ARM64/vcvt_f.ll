@@ -1,4 +1,5 @@
 ; RUN: llc < %s -march=arm64 -arm64-neon-syntax=apple | FileCheck %s
+; RUN: llc < %s -O0 -march=arm64 -arm64-neon-syntax=apple | FileCheck %s
 
 define <2 x double> @test_vcvt_f64_f32(<2 x float> %x) nounwind readnone ssp {
 ; CHECK-LABEL: test_vcvt_f64_f32:
@@ -64,8 +65,7 @@ declare <2 x float> @llvm.arm64.neon.fcvtxn.v2f32.v2f64(<2 x double>) nounwind r
 define i16 @to_half(float %in) {
 ; CHECK-LABEL: to_half:
 ; CHECK: fcvt h[[HALFVAL:[0-9]+]], s0
-; CHECK: fmov w0, s[[HALFVAL]]
-
+; CHECK: fmov {{w[0-9]+}}, {{s[0-9]+}}
   %res = call i16 @llvm.convert.to.fp16(float %in)
   ret i16 %res
 }

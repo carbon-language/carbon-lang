@@ -1927,6 +1927,8 @@ def : Pat<(f32_to_f16 FPR32:$Rn),
                    (f32 (SUBREG_TO_REG (i32 0), (FCVTHSr FPR32:$Rn), hsub)),
                    GPR32))>;
 
+def FCVTSHpseudo : Pseudo<(outs FPR32:$Rd), (ins FPR32:$Rn),
+                          [(set (f32 FPR32:$Rd), (f16_to_f32 i32:$Rn))]>;
 
 //===----------------------------------------------------------------------===//
 // Floating point single operand instructions.
