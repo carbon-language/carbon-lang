@@ -14,6 +14,7 @@
 #ifndef LLVM_ARMTARGETASMINFO_H
 #define LLVM_ARMTARGETASMINFO_H
 
+#include "llvm/MC/MCAsmInfoCOFF.h"
 #include "llvm/MC/MCAsmInfoDarwin.h"
 #include "llvm/MC/MCAsmInfoELF.h"
 
@@ -31,6 +32,18 @@ namespace llvm {
     explicit ARMELFMCAsmInfo(StringRef TT);
 
     void setUseIntegratedAssembler(bool Value) override;
+  };
+
+  class ARMCOFFMCAsmInfoMicrosoft : public MCAsmInfoMicrosoft {
+    void anchor();
+  public:
+    explicit ARMCOFFMCAsmInfoMicrosoft();
+  };
+
+  class ARMCOFFMCAsmInfoGNU : public MCAsmInfoGNUCOFF {
+    void anchor();
+  public:
+    explicit ARMCOFFMCAsmInfoGNU();
   };
 
 } // namespace llvm

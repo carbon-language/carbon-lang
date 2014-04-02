@@ -155,10 +155,9 @@ DataLayout::InvalidPointerElem = { 0U, 0U, 0U, ~0U };
 const char *DataLayout::getManglingComponent(const Triple &T) {
   if (T.isOSBinFormatMachO())
     return "-m:o";
-  if (T.isOSBinFormatELF() || T.isArch64Bit())
-    return "-m:e";
-  assert(T.isOSBinFormatCOFF());
-  return "-m:w";
+  if (T.isOSWindows() && T.getArch() == Triple::x86 && T.isOSBinFormatCOFF())
+    return "-m:w";
+  return "-m:e";
 }
 
 static const LayoutAlignElem DefaultAlignments[] = {

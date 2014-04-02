@@ -212,6 +212,12 @@ void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
     }
   }
 
+  // FIXME: this is invalid for WindowsCE
+  if (isTargetWindows()) {
+    TargetABI = ARM_ABI_AAPCS;
+    NoARM = true;
+  }
+
   if (isAAPCS_ABI())
     stackAlignment = 8;
   if (isTargetNaCl())

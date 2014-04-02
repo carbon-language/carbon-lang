@@ -76,3 +76,31 @@ void ARMELFMCAsmInfo::setUseIntegratedAssembler(bool Value) {
     DwarfRegNumForCFI = true;
   }
 }
+
+void ARMCOFFMCAsmInfoMicrosoft::anchor() { }
+
+ARMCOFFMCAsmInfoMicrosoft::ARMCOFFMCAsmInfoMicrosoft() {
+  AlignmentIsInBytes = false;
+
+  PrivateGlobalPrefix = "$M";
+}
+
+void ARMCOFFMCAsmInfoGNU::anchor() { }
+
+ARMCOFFMCAsmInfoGNU::ARMCOFFMCAsmInfoGNU() {
+  AlignmentIsInBytes = false;
+
+  CommentString = "@";
+  Code16Directive = ".code\t16";
+  Code32Directive = ".code\t32";
+  PrivateGlobalPrefix = ".L";
+
+  HasLEB128 = true;
+  SupportsDebugInformation = true;
+  ExceptionsType = ExceptionHandling::None;
+  UseParensForSymbolVariant = true;
+
+  UseIntegratedAssembler = false;
+  DwarfRegNumForCFI = true;
+}
+

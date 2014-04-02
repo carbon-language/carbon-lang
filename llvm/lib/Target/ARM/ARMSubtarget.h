@@ -317,14 +317,14 @@ public:
 
   const Triple &getTargetTriple() const { return TargetTriple; }
 
-  bool isTargetIOS() const { return TargetTriple.isiOS(); }
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
-  bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
+  bool isTargetIOS() const { return TargetTriple.isiOS(); }
   bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
-  bool isTargetNetBSD() const {
-    return TargetTriple.getOS() == Triple::NetBSD;
-  }
+  bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
+  bool isTargetNetBSD() const { return TargetTriple.getOS() == Triple::NetBSD; }
+  bool isTargetWindows() const { return TargetTriple.isOSWindows(); }
 
+  bool isTargetCOFF() const { return TargetTriple.isOSBinFormatCOFF(); }
   bool isTargetELF() const { return TargetTriple.isOSBinFormatELF(); }
   bool isTargetMachO() const { return TargetTriple.isOSBinFormatMachO(); }
 
@@ -338,7 +338,7 @@ public:
   bool isTargetAEABI() const {
     return (TargetTriple.getEnvironment() == Triple::EABI ||
             TargetTriple.getEnvironment() == Triple::EABIHF) &&
-           !isTargetDarwin();
+           !isTargetDarwin() && !isTargetWindows();
   }
 
   // ARM Targets that support EHABI exception handling standard
@@ -349,12 +349,14 @@ public:
             TargetTriple.getEnvironment() == Triple::EABIHF ||
             TargetTriple.getEnvironment() == Triple::GNUEABIHF ||
             TargetTriple.getEnvironment() == Triple::Android) &&
-           !isTargetDarwin();
+           !isTargetDarwin() && !isTargetWindows();
   }
 
   bool isTargetHardFloat() const {
+    // FIXME: this is invalid for WindowsCE
     return TargetTriple.getEnvironment() == Triple::GNUEABIHF ||
-           TargetTriple.getEnvironment() == Triple::EABIHF;
+           TargetTriple.getEnvironment() == Triple::EABIHF ||
+           isTargetWindows();
   }
   bool isTargetAndroid() const {
     return TargetTriple.getEnvironment() == Triple::Android;
