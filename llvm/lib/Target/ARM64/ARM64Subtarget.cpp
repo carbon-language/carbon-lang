@@ -50,16 +50,33 @@ ARM64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
   if (GV->isDeclaration() && !GV->isMaterializable())
     isDecl = true;
 
-  // If symbol visibility is hidden, the extra load is not needed if
-  // the symbol is definitely defined in the current translation unit.
-  if (TM.getRelocationModel() != Reloc::Static && GV->hasDefaultVisibility() &&
-      (isDecl || GV->isWeakForLinker()))
-    return ARM64II::MO_GOT;
-
+  // MachO large model always goes via a GOT, simply to get a single 8-byte
+  // absolute relocation on all global addresses.
   if (TM.getCodeModel() == CodeModel::Large && isTargetMachO())
     return ARM64II::MO_GOT;
 
-  // FIXME: this will fail on static ELF for weak symbols.
+  // The small code mode's direct accesses use ADRP, which cannot necessarily
+  // produce the value 0 (if the code is above 4GB). Therefore they must use the
+  // GOT.
+  if (TM.getCodeModel() == CodeModel::Small && GV->isWeakForLinker() && isDecl)
+    return ARM64II::MO_GOT;
+
+  // If symbol visibility is hidden, the extra load is not needed if
+  // the symbol is definitely defined in the current translation unit.
+
+  // The handling of non-hidden symbols in PIC mode is rather target-dependent:
+  //   + On MachO, if the symbol is defined in this module the GOT can be
+  //     skipped.
+  //   + On ELF, the R_AARCH64_COPY relocation means that even symbols actually
+  //     defined could end up in unexpected places. Use a GOT.
+  if (TM.getRelocationModel() != Reloc::Static && GV->hasDefaultVisibility()) {
+    if (isTargetMachO())
+      return (isDecl || GV->isWeakForLinker()) ? ARM64II::MO_GOT
+                                               : ARM64II::MO_NO_FLAG;
+    else
+      return ARM64II::MO_GOT;
+  }
+
   return ARM64II::MO_NO_FLAG;
 }
 
