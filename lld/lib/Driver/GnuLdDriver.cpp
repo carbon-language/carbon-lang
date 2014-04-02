@@ -485,8 +485,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         inputNode = new ELFGNULdScript(*ctx, resolvedInputPath, index++);
         ec = inputNode->parse(*ctx, diagnostics);
         if (ec) {
-          diagnostics << userPath << ": Error parsing linker script"
-                      << "\n";
+          diagnostics << userPath << ": Error parsing linker script\n";
           return false;
         }
       }
