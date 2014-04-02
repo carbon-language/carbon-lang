@@ -1,10 +1,15 @@
 ; RUN: llc < %s -march=arm64 -arm64-neon-syntax=apple | FileCheck %s
+; RUN: llc < %s -march=arm64 -arm64-neon-syntax=apple -O0 | FileCheck %s --check-prefix=CHECK-FAST
 
 define <16 x i8> @foo(<16 x i8> %a) nounwind optsize readnone ssp {
-; CHECK: uaddlv.16b	h0, v0
-; CHECK: rshrn.8b	v0, v0, #4
-; CHECK: dup.16b	v0, v0[0]
+; CHECK: uaddlv.16b h0, v0
+; CHECK: rshrn.8b v0, v0, #4
+; CHECK: dup.16b v0, v0[0]
 ; CHECK: ret
+
+; CHECK-FAST: uaddlv.16b
+; CHECK-FAST: rshrn.8b
+; CHECK-FAST: dup.16b
   %tmp = tail call i32 @llvm.arm64.neon.uaddlv.i32.v16i8(<16 x i8> %a) nounwind
   %tmp1 = trunc i32 %tmp to i16
   %tmp2 = insertelement <8 x i16> undef, i16 %tmp1, i32 0

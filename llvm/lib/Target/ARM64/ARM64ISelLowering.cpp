@@ -5615,7 +5615,7 @@ SDValue ARM64TargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op,
   }
   MachineSDNode *N =
       DAG.getMachineNode(TargetOpcode::INSERT_SUBREG, SDLoc(Op),
-                         Op.getValueType(), DAG.getUNDEF(Op0.getValueType()),
+                         Op.getValueType(), DAG.getUNDEF(Op.getValueType()),
                          Op0, DAG.getTargetConstant(SubIdx, MVT::i32));
   return SDValue(N, 0);
 }
