@@ -504,16 +504,10 @@ protected:
                             m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
                                                                                                 m_options.m_one_liner.c_str());
                         }
-                        // Special handling for using a Python function by name
-                        // instead of extending the breakpoint callback data structures, we just automatize
-                        // what the user would do manually: make their breakpoint command be a function call
                         else if (m_options.m_function_name.size())
                         {
-                            std::string oneliner("return ");
-                            oneliner += m_options.m_function_name;
-                            oneliner += "(frame, bp_loc, internal_dict)";
-                            m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
-                                                                                                oneliner.c_str());
+                            m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallbackFunction (bp_options,
+                                                                                                        m_options.m_function_name.c_str());
                         }
                         else
                         {

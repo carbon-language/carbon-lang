@@ -254,7 +254,7 @@ ScriptInterpreterPython::IOHandlerInputComplete (IOHandler &io_handler, std::str
             {
                 data_ap->user_source.SplitIntoLines(data);
                 
-                if (GenerateBreakpointCommandCallbackData (data_ap->user_source, data_ap->script_source))
+                if (GenerateBreakpointCommandCallbackData (data_ap->user_source, data_ap->script_source).Success())
                 {
                     BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
                     bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
@@ -1083,27 +1083,39 @@ ScriptInterpreterPython::CollectDataForWatchpointCommandCallback (WatchpointOpti
     m_interpreter.GetPythonCommandsFromIOHandler ("    ", *this, true, wp_options);
 }
 
-// Set a Python one-liner as the callback for the breakpoint.
 void
+ScriptInterpreterPython::SetBreakpointCommandCallbackFunction (BreakpointOptions *bp_options,
+                                                               const char *function_name)
+{
+    // For now just cons up a oneliner that calls the provided function.
+    std::string oneliner("return ");
+    oneliner += function_name;
+    oneliner += "(frame, bp_loc, internal_dict)";
+    m_interpreter.GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
+                                                                        oneliner.c_str());
+}
+
+// Set a Python one-liner as the callback for the breakpoint.
+Error
 ScriptInterpreterPython::SetBreakpointCommandCallback (BreakpointOptions *bp_options,
-                                                       const char *oneliner)
+                                                       const char *command_body_text)
 {
     std::unique_ptr<BreakpointOptions::CommandData> data_ap(new BreakpointOptions::CommandData());
 
-    // It's necessary to set both user_source and script_source to the oneliner.
-    // The former is used to generate callback description (as in breakpoint command list)
-    // while the latter is used for Python to interpret during the actual callback.
-
-    data_ap->user_source.AppendString (oneliner);
-    data_ap->script_source.assign (oneliner);
-
-    if (GenerateBreakpointCommandCallbackData (data_ap->user_source, data_ap->script_source))
+    // Split the command_body_text into lines, and pass that to GenerateBreakpointCommandCallbackData.  That will
+    // wrap the body in an auto-generated function, and return the function name in script_source.  That is what
+    // the callback will actually invoke.
+    
+    data_ap->user_source.SplitIntoLines(command_body_text);
+    Error error = GenerateBreakpointCommandCallbackData (data_ap->user_source, data_ap->script_source);
+    if (error.Success())
     {
         BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
         bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
+        return error;
     }
-    
-    return;
+    else
+        return error;
 }
 
 // Set a Python one-liner as the callback for the watchpoint.
@@ -1129,24 +1141,32 @@ ScriptInterpreterPython::SetWatchpointCommandCallback (WatchpointOptions *wp_opt
     return;
 }
 
-bool
+Error
 ScriptInterpreterPython::ExportFunctionDefinitionToInterpreter (StringList &function_def)
 {
     // Convert StringList to one long, newline delimited, const char *.
     std::string function_def_string(function_def.CopyList());
 
-    return ExecuteMultipleLines (function_def_string.c_str(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false)).Success();
+    Error error = ExecuteMultipleLines (function_def_string.c_str(), ScriptInterpreter::ExecuteScriptOptions().SetEnableIO(false));
+    return error;
 }
 
-bool
+Error
 ScriptInterpreterPython::GenerateFunction(const char *signature, const StringList &input)
 {
+    Error error;
     int num_lines = input.GetSize ();
     if (num_lines == 0)
-        return false;
+    {
+        error.SetErrorString ("No input data.");
+        return error;
+    }
     
     if (!signature || *signature == 0)
-        return false;
+    {
+        error.SetErrorString("No output function name.");
+        return error;
+    }
 
     StreamString sstr;
     StringList auto_generated_function;
@@ -1173,11 +1193,9 @@ ScriptInterpreterPython::GenerateFunction(const char *signature, const StringLis
     
     // Verify that the results are valid Python.
     
-    if (!ExportFunctionDefinitionToInterpreter (auto_generated_function))
-        return false;
+    error = ExportFunctionDefinitionToInterpreter (auto_generated_function);
     
-    return true;
-
+    return error;
 }
 
 bool
@@ -1197,7 +1215,7 @@ ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, std
     std::string auto_generated_function_name(GenerateUniqueName("lldb_autogen_python_type_print_func", num_created_functions, name_token));
     sstr.Printf ("def %s (valobj, internal_dict):", auto_generated_function_name.c_str());
     
-    if (!GenerateFunction(sstr.GetData(), user_input))
+    if (!GenerateFunction(sstr.GetData(), user_input).Success())
         return false;
 
     // Store the name of the auto-generated function to be called.
@@ -1220,7 +1238,7 @@ ScriptInterpreterPython::GenerateScriptAliasFunction (StringList &user_input, st
 
     sstr.Printf ("def %s (debugger, args, result, internal_dict):", auto_generated_function_name.c_str());
     
-    if (!GenerateFunction(sstr.GetData(),user_input))
+    if (!GenerateFunction(sstr.GetData(),user_input).Success())
         return false;
     
     // Store the name of the auto-generated function to be called.
@@ -1266,7 +1284,7 @@ ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, std::st
     // Verify that the results are valid Python.
     // (even though the method is ExportFunctionDefinitionToInterpreter, a class will actually be exported)
     // (TODO: rename that method to ExportDefinitionToInterpreter)
-    if (!ExportFunctionDefinitionToInterpreter (auto_generated_class))
+    if (!ExportFunctionDefinitionToInterpreter (auto_generated_class).Success())
         return false;
     
     // Store the name of the auto-generated class
@@ -1668,25 +1686,29 @@ ScriptInterpreterPython::GenerateTypeSynthClass (const char* oneliner, std::stri
 }
 
 
-bool
+Error
 ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user_input, std::string& output)
 {
     static uint32_t num_created_functions = 0;
     user_input.RemoveBlankLines ();
     StreamString sstr;
-
+    Error error;
     if (user_input.GetSize() == 0)
-        return false;
+    {
+        error.SetErrorString("No input data.");
+        return error;
+    }
 
     std::string auto_generated_function_name(GenerateUniqueName("lldb_autogen_python_bp_callback_func_",num_created_functions));
     sstr.Printf ("def %s (frame, bp_loc, internal_dict):", auto_generated_function_name.c_str());
     
-    if (!GenerateFunction(sstr.GetData(), user_input))
-        return false;
+    error = GenerateFunction(sstr.GetData(), user_input);
+    if (!error.Success())
+        return error;
     
     // Store the name of the auto-generated function to be called.
     output.assign(auto_generated_function_name);
-    return true;
+    return error;
 }
 
 bool
@@ -1702,7 +1724,7 @@ ScriptInterpreterPython::GenerateWatchpointCommandCallbackData (StringList &user
     std::string auto_generated_function_name(GenerateUniqueName("lldb_autogen_python_wp_callback_func_",num_created_functions));
     sstr.Printf ("def %s (frame, wp, internal_dict):", auto_generated_function_name.c_str());
     
-    if (!GenerateFunction(sstr.GetData(), user_input))
+    if (!GenerateFunction(sstr.GetData(), user_input).Success())
         return false;
     
     // Store the name of the auto-generated function to be called.

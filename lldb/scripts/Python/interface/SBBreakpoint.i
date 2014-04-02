@@ -177,9 +177,29 @@ public:
     const char *
     GetQueueName () const;
 
+    %feature("docstring", "
+    //------------------------------------------------------------------
+    /// Set the name of the script function to be called when the breakpoint is hit.
+    //------------------------------------------------------------------
+    ") SetScriptCallbackFunction;
     void
-    SetCallback (BreakpointHitCallback callback, void *baton);
+    SetScriptCallbackFunction (const char *callback_function_name);
 
+    %feature("docstring", "
+    //------------------------------------------------------------------
+    /// Provide the body for the script function to be called when the breakpoint is hit.
+    /// The body will be wrapped in a function, which be passed two arguments:
+    /// 'frame' - which holds the bottom-most SBFrame of the thread that hit the breakpoint
+    /// 'bpno'  - which is the SBBreakpointLocation to which the callback was attached.
+    ///
+    /// The error parameter is currently ignored, but will at some point hold the Python
+    /// compilation diagnostics.
+    /// Returns true if the body compiles successfully, false if not.
+    //------------------------------------------------------------------
+    ") SetScriptCallbackBody;
+    SBError
+    SetScriptCallbackBody (const char *script_body_text);
+    
     size_t
     GetNumResolvedLocations() const;
 

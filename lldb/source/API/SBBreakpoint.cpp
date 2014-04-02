@@ -19,9 +19,12 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/Address.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
@@ -579,6 +582,45 @@ SBBreakpoint::SetCallback (BreakpointHitCallback callback, void *baton)
     }
 }
 
+void
+SBBreakpoint::SetScriptCallbackFunction (const char *callback_function_name)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::SetScriptCallbackFunction (callback=%s)", m_opaque_sp.get(), callback_function_name);
+
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        BreakpointOptions *bp_options = m_opaque_sp->GetOptions();
+        m_opaque_sp->GetTarget().GetDebugger().GetCommandInterpreter().GetScriptInterpreter()->SetBreakpointCommandCallbackFunction (bp_options,
+                                                                                                                                                   callback_function_name);
+    }
+}
+
+SBError
+SBBreakpoint::SetScriptCallbackBody (const char *callback_body_text)
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    if (log)
+        log->Printf ("SBBreakpoint(%p)::SetScriptCallbackBody: callback body:\n%s)", m_opaque_sp.get(), callback_body_text);
+
+    SBError sb_error;
+    if (m_opaque_sp)
+    {
+        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        BreakpointOptions *bp_options = m_opaque_sp->GetOptions();
+        Error error =  m_opaque_sp->GetTarget().GetDebugger().GetCommandInterpreter().GetScriptInterpreter()->SetBreakpointCommandCallback (bp_options,
+                                                                                                                                    callback_body_text);
+        sb_error.SetError(error);
+    }
+    else
+        sb_error.SetErrorString("invalid breakpoint");
+    
+    return sb_error;
+}
 
 lldb_private::Breakpoint *
 SBBreakpoint::operator->() const

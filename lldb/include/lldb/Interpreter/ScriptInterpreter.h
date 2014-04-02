@@ -254,16 +254,20 @@ public:
         return error;
     }
 
-    virtual bool
+    virtual Error
     ExportFunctionDefinitionToInterpreter (StringList &function_def)
     {
-        return false;
+        Error error;
+        error.SetErrorString("not implemented");
+        return error;
     }
 
-    virtual bool
+    virtual Error
     GenerateBreakpointCommandCallbackData (StringList &input, std::string& output)
     {
-        return false;
+        Error error;
+        error.SetErrorString("not implemented");
+        return error;
     }
     
     virtual bool
@@ -359,10 +363,12 @@ public:
         return lldb::ScriptInterpreterObjectSP();
     }
 
-    virtual bool
+    virtual Error
     GenerateFunction(const char *signature, const StringList &input)
     {
-        return false;
+        Error error;
+        error.SetErrorString("unimplemented");
+        return error;
     }
 
     virtual void 
@@ -373,10 +379,20 @@ public:
     CollectDataForWatchpointCommandCallback (WatchpointOptions *wp_options,
                                              CommandReturnObject &result);
 
+    /// Set the specified text as the callback for the breakpoint.
+    virtual Error
+    SetBreakpointCommandCallback (BreakpointOptions *bp_options,
+                                  const char *callback_text)
+    {
+        Error error;
+        error.SetErrorString("unimplemented");
+        return error;
+    }
+    
     /// Set a one-liner as the callback for the breakpoint.
     virtual void 
-    SetBreakpointCommandCallback (BreakpointOptions *bp_options,
-                                  const char *oneliner)
+    SetBreakpointCommandCallbackFunction (BreakpointOptions *bp_options,
+                                  const char *function_name)
     {
         return;
     }

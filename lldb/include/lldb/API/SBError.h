@@ -77,6 +77,8 @@ protected:
     friend class SBTarget;
     friend class SBValue;
     friend class SBWatchpoint;
+    friend class SBBreakpoint;
+    friend class SBBreakpointLocation;
 
     lldb_private::Error *
     get();

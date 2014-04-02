@@ -56,7 +56,7 @@ public:
     ExecuteMultipleLines (const char *in_string,
                           const ExecuteScriptOptions &options = ExecuteScriptOptions());
 
-    bool
+    Error
     ExportFunctionDefinitionToInterpreter (StringList &function_def);
 
     bool
@@ -130,10 +130,10 @@ public:
                           lldb_private::CommandReturnObject& cmd_retobj,
                           Error& error);
     
-    bool
+    Error
     GenerateFunction(const char *signature, const StringList &input);
     
-    bool
+    Error
     GenerateBreakpointCommandCallbackData (StringList &input, std::string& output);
 
     bool
@@ -227,10 +227,14 @@ public:
     CollectDataForWatchpointCommandCallback (WatchpointOptions *wp_options,
                                              CommandReturnObject &result);
 
-    /// Set a Python one-liner as the callback for the breakpoint.
-    void 
+    /// Set the callback body text into the callback for the breakpoint.
+    Error
     SetBreakpointCommandCallback (BreakpointOptions *bp_options,
-                                  const char *oneliner);
+                                  const char *callback_body);
+
+    void 
+    SetBreakpointCommandCallbackFunction (BreakpointOptions *bp_options,
+                                          const char *function_name);
 
     /// Set a one-liner as the callback for the watchpoint.
     void 
