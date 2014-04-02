@@ -12,8 +12,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include <stdarg.h>
-
 #include "gtest/gtest.h"
 
 #include "lld/Core/InputGraph.h"
