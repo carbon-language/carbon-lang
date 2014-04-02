@@ -154,13 +154,6 @@ class ScopDetection : public FunctionPass {
   /// @return True if the call instruction is valid, false otherwise.
   static bool isValidCallInst(CallInst &CI);
 
-  /// @brief Format the invalid alias message.
-  ///
-  /// @param AS The alias set.
-  ///
-  /// @return The failure message why the alias is invalid.
-  std::string formatInvalidAlias(AliasSet &AS) const;
-
   /// @brief Check if a value is invariant in the region Reg.
   ///
   /// @param Val Value to check for invariance.
@@ -232,6 +225,15 @@ class ScopDetection : public FunctionPass {
 
   /// @brief Print the locations of all detected scops.
   void printLocations(llvm::Function &F);
+
+  /// @brief Track diagnostics for invalid scops.
+  ///
+  /// @param Context The context of scop detection.
+  /// @param Assert Throw an assert in verify mode or not.
+  /// @param Args Argument list that gets passed to the constructor of RR.
+  template <class RR, typename... Args>
+  inline bool invalid(DetectionContext &Context, bool Assert,
+                      Args &&... Arguments) const;
 
 public:
   static char ID;
