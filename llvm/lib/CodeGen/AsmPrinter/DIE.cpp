@@ -560,7 +560,7 @@ unsigned DIELocList::SizeOf(AsmPrinter *AP, dwarf::Form Form) const {
 ///
 void DIELocList::EmitValue(AsmPrinter *AP, dwarf::Form Form) const {
   DwarfDebug *DD = AP->getDwarfDebug();
-  MCSymbol *Label = AP->GetTempSymbol("debug_loc", Index);
+  MCSymbol *Label = DD->getDebugLocEntries()[Index].Label;
 
   if (AP->MAI->doesDwarfUseRelocationsAcrossSections() && !DD->useSplitDwarf())
     AP->EmitSectionOffset(Label, DD->getDebugLocSym());

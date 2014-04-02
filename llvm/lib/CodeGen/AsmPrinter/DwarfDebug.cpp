@@ -1271,7 +1271,11 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     // Handle multiple DBG_VALUE instructions describing one variable.
     RegVar->setDotDebugLocOffset(DotDebugLocEntries.size());
 
-    SmallVector<DebugLocEntry, 4> DebugLoc;
+    DotDebugLocEntries.resize(DotDebugLocEntries.size() + 1);
+    DebugLocList &LocList = DotDebugLocEntries.back();
+    LocList.Label =
+        Asm->GetTempSymbol("debug_loc", DotDebugLocEntries.size() - 1);
+    SmallVector<DebugLocEntry, 4> &DebugLoc = LocList.List;
     for (SmallVectorImpl<const MachineInstr *>::const_iterator
              HI = History.begin(),
              HE = History.end();
@@ -1313,7 +1317,6 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
       if (DebugLoc.empty() || !DebugLoc.back().Merge(Loc))
         DebugLoc.push_back(std::move(Loc));
     }
-    DotDebugLocEntries.push_back(std::move(DebugLoc));
   }
 
   // Collect info for variables that were optimized out.
@@ -2406,10 +2409,9 @@ void DwarfDebug::emitDebugLoc() {
       useSplitDwarf() ? Asm->getObjFileLowering().getDwarfLocDWOSection()
                       : Asm->getObjFileLowering().getDwarfLocSection());
   unsigned char Size = Asm->getDataLayout().getPointerSize();
-  unsigned index = 0;
   for (const auto &DebugLoc : DotDebugLocEntries) {
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", index));
-    for (const auto &Entry : DebugLoc) {
+    Asm->OutStreamer.EmitLabel(DebugLoc.Label);
+    for (const auto &Entry : DebugLoc.List) {
       // Set up the range. This range is relative to the entry point of the
       // compile unit. This is a hard coded 0 for low_pc when we're emitting
       // ranges, or the DW_AT_low_pc on the compile unit otherwise.
@@ -2440,7 +2442,6 @@ void DwarfDebug::emitDebugLoc() {
       Asm->OutStreamer.EmitIntValue(0, Size);
       Asm->OutStreamer.EmitIntValue(0, Size);
     }
-    ++index;
   }
 }
 

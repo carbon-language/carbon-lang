@@ -17,6 +17,7 @@
 #include "AsmPrinterHandler.h"
 #include "DIE.h"
 #include "DebugLocEntry.h"
+#include "DebugLocList.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -288,8 +289,9 @@ class DwarfDebug : public AsmPrinterHandler {
   // Collection of abstract variables.
   DenseMap<const MDNode *, DbgVariable *> AbstractVariables;
 
-  // Collection of DebugLocEntry.
-  SmallVector<SmallVector<DebugLocEntry, 4>, 4> DotDebugLocEntries;
+  // Collection of DebugLocEntry. Stored in a linked list so that DIELocLists
+  // can refer to them in spite of insertions into this list.
+  SmallVector<DebugLocList, 4> DotDebugLocEntries;
 
   // Collection of subprogram DIEs that are marked (at the end of the module)
   // as DW_AT_inline.
@@ -686,7 +688,7 @@ public:
   const DwarfCompileUnit *getPrevCU() const { return PrevCU; }
 
   /// Returns the entries for the .debug_loc section.
-  const SmallVectorImpl<SmallVector<DebugLocEntry, 4>> &
+  const SmallVectorImpl<DebugLocList> &
   getDebugLocEntries() const {
     return DotDebugLocEntries;
   }
