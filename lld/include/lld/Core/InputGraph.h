@@ -90,10 +90,6 @@ public:
   /// \brief Helper functions for the resolver
   ErrorOr<InputElement *> getNextInputElement();
 
-  /// \brief Reset the inputGraph for the inputGraph to start processing
-  /// files from the beginning
-  void reset() { _nextElementIndex = 0; }
-
 protected:
   // Input arguments
   InputElementVectorT _inputArgs;
