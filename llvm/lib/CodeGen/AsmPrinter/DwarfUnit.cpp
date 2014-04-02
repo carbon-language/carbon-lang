@@ -2040,7 +2040,7 @@ void DwarfUnit::emitHeader(const MCSymbol *ASectionSym) const {
   if (ASectionSym)
     Asm->EmitSectionOffset(ASectionSym, ASectionSym);
   else
-    // Use a constant value in the dwo file, to avoid relocations
+    // Use a constant value when no symbol is provided.
     Asm->EmitInt32(0);
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
