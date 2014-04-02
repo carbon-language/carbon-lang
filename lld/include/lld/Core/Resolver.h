@@ -40,23 +40,21 @@ public:
       : _context(context), _symbolTable(context), _result(new MergedFile()),
         _haveLLVMObjs(false), _addToFinalSection(false) {}
 
-  virtual ~Resolver() {}
-
   // InputFiles::Handler methods
-  virtual void doDefinedAtom(const DefinedAtom&);
-  virtual void doUndefinedAtom(const UndefinedAtom&);
-  virtual void doSharedLibraryAtom(const SharedLibraryAtom &);
-  virtual void doAbsoluteAtom(const AbsoluteAtom &);
+  void doDefinedAtom(const DefinedAtom&);
+  void doUndefinedAtom(const UndefinedAtom&);
+  void doSharedLibraryAtom(const SharedLibraryAtom &);
+  void doAbsoluteAtom(const AbsoluteAtom &);
 
   // Handle files, this adds atoms from the current file thats
   // being processed by the resolver
-  virtual void handleFile(const File &);
+  void handleFile(const File &);
 
   // Handle an archive library file.
-  virtual void handleArchiveFile(const File &);
+  void handleArchiveFile(const File &);
 
   // Handle a shared library file.
-  virtual void handleSharedLibrary(const File &);
+  void handleSharedLibrary(const File &);
 
   /// @brief do work of merging and resolving and return list
   bool resolve();
