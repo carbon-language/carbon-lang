@@ -96,7 +96,8 @@ public:
 
   /// \brief Attempt to merge this DebugLocEntry with Next and return
   /// true if the merge was successful. Entries can be merged if they
-  /// share the same Loc/Constant and their ranges are adjacent.
+  /// share the same Loc/Constant and if Next immediately follows this
+  /// Entry.
   bool Merge(const DebugLocEntry &Next) {
     if (End == Next.Begin && hasSameValueOrLocation(Next)) {
       End = Next.End;
