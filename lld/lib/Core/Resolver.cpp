@@ -453,10 +453,6 @@ void Resolver::removeCoalescedAwayAtoms() {
                _atoms.end());
 }
 
-void Resolver::linkTimeOptimize() {
-  // FIX ME
-}
-
 bool Resolver::resolve() {
   if (!this->resolveUndefines())
     return false;
@@ -466,7 +462,6 @@ bool Resolver::resolve() {
     if (!_context.allowRemainingUndefines())
       return false;
   this->removeCoalescedAwayAtoms();
-  this->linkTimeOptimize();
   this->_result->addAtoms(_atoms);
   return true;
 }
