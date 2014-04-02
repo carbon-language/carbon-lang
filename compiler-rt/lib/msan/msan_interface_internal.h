@@ -100,8 +100,6 @@ void __msan_set_expect_umr(int expect_umr);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_print_shadow(const void *x, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
-void __msan_print_param_shadow();
-SANITIZER_INTERFACE_ATTRIBUTE
 int  __msan_has_dynamic_component();
 
 // Returns x such that %fs:x is the first byte of __msan_retval_tls.

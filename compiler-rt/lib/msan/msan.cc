@@ -367,13 +367,6 @@ void __msan_print_shadow(const void *x, uptr size) {
   }
 }
 
-void __msan_print_param_shadow() {
-  for (int i = 0; i < 16; i++) {
-    Printf("#%d:%zx ", i, __msan_param_tls[i]);
-  }
-  Printf("\n");
-}
-
 sptr __msan_test_shadow(const void *x, uptr size) {
   if (!MEM_IS_APP(x)) return -1;
   unsigned char *s = (unsigned char *)MEM_TO_SHADOW((uptr)x);

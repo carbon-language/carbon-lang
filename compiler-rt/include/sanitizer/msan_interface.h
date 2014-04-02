@@ -78,10 +78,6 @@ extern "C" {
      format. */
   void __msan_print_shadow(const volatile void *x, size_t size);
 
-  /* Print current function arguments shadow and origin to stderr in a
-     human-readable format. */
-  void __msan_print_param_shadow();
-
   /* Returns true if running under a dynamic tool (DynamoRio-based). */
   int  __msan_has_dynamic_component();
 
