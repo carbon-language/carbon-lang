@@ -2251,6 +2251,8 @@ static bool isEndOfBlockCommentWithEscapedNewLine(const char *CurPtr,
 
 #ifdef __SSE2__
 #include <emmintrin.h>
+#elif __AVX2__
+#include <avx2intrin.h>
 #elif __ALTIVEC__
 #include <altivec.h>
 #undef bool
@@ -2306,17 +2308,33 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr,
         // If there is a code-completion point avoid the fast scan because it
         // doesn't check for '\0'.
         !(PP && PP->getCodeCompletionFileLoc() == FileLoc)) {
+#ifndef __AVX2__
       // While not aligned to a 16-byte boundary.
       while (C != '/' && ((intptr_t)CurPtr & 0x0F) != 0)
         C = *CurPtr++;
+#endif
 
       if (C == '/') goto FoundSlash;
 
 #ifdef __SSE2__
-      __m128i Slashes = _mm_set1_epi8('/');
-      while (CurPtr+16 <= BufferEnd) {
-        int cmp = _mm_movemask_epi8(_mm_cmpeq_epi8(*(const __m128i*)CurPtr,
-                                    Slashes));
+#define VECTOR_TYPE             __m128i
+#define SET1_EPI8(v)            _mm_set1_epi8(v)
+#define CMPEQ_EPI8(v1,v2)       _mm_cmpeq_epi8(v1,v2)
+#define MOVEMASK_EPI8(v)        _mm_movemask_epi8(v)
+#define STEP                    16
+#elif __AVX2__
+#define VECTOR_TYPE             __m256i
+#define SET1_EPI8(v)            _mm256_set1_epi8(v)
+#define CMPEQ_EPI8(v1,v2)       _mm256_cmpeq_epi8(v1,v2)
+#define MOVEMASK_EPI8(v)        _mm256_movemask_epi8(v)
+#define STEP                    32
+#endif
+
+#if defined(__SSE2__) || defined(__AVX2__)
+      VECTOR_TYPE Slashes = SET1_EPI8('/');
+      while (CurPtr+STEP <= BufferEnd) {
+        int cmp = MOVEMASK_EPI8(CMPEQ_EPI8(*(const VECTOR_TYPE*)CurPtr,
+                                Slashes));
         if (cmp != 0) {
           // Adjust the pointer to point directly after the first slash. It's
           // not necessary to set C here, it will be overwritten at the end of
@@ -2324,8 +2342,13 @@ bool Lexer::SkipBlockComment(Token &Result, const char *CurPtr,
           CurPtr += llvm::countTrailingZeros<unsigned>(cmp) + 1;
           goto FoundSlash;
         }
-        CurPtr += 16;
+        CurPtr += STEP;
       }
+#undef VECTOR_TYPE
+#undef SET1_EPI8
+#undef CMPEQ_EPI8
+#undef MOVEMASK_EPI8
+#undef STEP
 #elif __ALTIVEC__
       __vector unsigned char Slashes = {
         '/', '/', '/', '/',  '/', '/', '/', '/',
