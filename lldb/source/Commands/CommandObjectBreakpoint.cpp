@@ -1843,7 +1843,7 @@ CommandObjectMultiwordBreakpoint::VerifyBreakpointIDs (Args &args, Target *targe
             if (breakpoint != NULL)
             {
                 const size_t num_locations = breakpoint->GetNumLocations();
-                if (cur_bp_id.GetLocationID() > num_locations)
+                if (static_cast<size_t>(cur_bp_id.GetLocationID()) > num_locations)
                 {
                     StreamString id_str;
                     BreakpointID::GetCanonicalReference (&id_str, 

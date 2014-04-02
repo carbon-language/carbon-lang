@@ -642,7 +642,7 @@ IRInterpreter::Interpret (llvm::Module &module,
          ai != ae;
          ++ai, ++arg_index)
     {
-        if (args.size() < arg_index)
+        if (args.size() < static_cast<size_t>(arg_index))
         {
             error.SetErrorString ("Not enough arguments passed in to function");
             return false;

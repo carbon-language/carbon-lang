@@ -1363,7 +1363,7 @@ CommandInterpreter::BuildAliasResult (const char *alias_name,
                         int index = GetOptionArgumentPosition (value.c_str());
                         if (index == 0)
                             result_str.Printf ("%s", value.c_str());
-                        else if (index >= cmd_args.GetArgumentCount())
+                        else if (static_cast<size_t>(index) >= cmd_args.GetArgumentCount())
                         {
                             
                             result.AppendErrorWithFormat
@@ -2254,7 +2254,7 @@ CommandInterpreter::BuildAliasCommandArgs (CommandObject *alias_cmd_obj,
                         }
 
                     }
-                    else if (index >= cmd_args.GetArgumentCount())
+                    else if (static_cast<size_t>(index) >= cmd_args.GetArgumentCount())
                     {
                         result.AppendErrorWithFormat
                                     ("Not enough arguments provided; you need at least %d arguments to use this alias.\n",

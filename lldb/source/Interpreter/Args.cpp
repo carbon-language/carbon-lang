@@ -1516,11 +1516,11 @@ Args::ParseArgsForCompletion
             // were passed.  This will be useful when we come to restricting completions based on what other
             // options we've seen on the line.
 
-            if (OptionParser::GetOptionIndex() < dummy_vec.size() - 1
+            if (static_cast<size_t>(OptionParser::GetOptionIndex()) < dummy_vec.size() - 1
                 && (strcmp (dummy_vec[OptionParser::GetOptionIndex()-1], "--") == 0))
             {
                 dash_dash_pos = OptionParser::GetOptionIndex() - 1;
-                if (OptionParser::GetOptionIndex() - 1 == cursor_index)
+                if (static_cast<size_t>(OptionParser::GetOptionIndex() - 1) == cursor_index)
                 {
                     option_element_vector.push_back (OptionArgElement (OptionArgElement::eBareDoubleDash, OptionParser::GetOptionIndex() - 1,
                                                                    OptionArgElement::eBareDoubleDash));
@@ -1630,7 +1630,7 @@ Args::ParseArgsForCompletion
     // the option_element_vector, but only if it is not after the "--".  But it turns out that OptionParser::Parse just ignores
     // an isolated "-".  So we have to look it up by hand here.  We only care if it is AT the cursor position.
     
-    if ((dash_dash_pos == -1 || cursor_index < dash_dash_pos)
+    if ((static_cast<int32_t>(dash_dash_pos) == -1 || cursor_index < dash_dash_pos)
          && strcmp (GetArgumentAtIndex(cursor_index), "-") == 0)
     {
         option_element_vector.push_back (OptionArgElement (OptionArgElement::eBareDash, cursor_index, 

@@ -53,7 +53,7 @@ CommandObjectQuit::ShouldAskForConfirmation (bool& is_a_detach)
             continue;
         const TargetList& target_list(debugger_sp->GetTargetList());
         for (uint32_t target_idx = 0;
-             target_idx < target_list.GetNumTargets();
+             target_idx < static_cast<uint32_t>(target_list.GetNumTargets());
              target_idx++)
         {
             TargetSP target_sp(target_list.GetTargetAtIndex(target_idx));

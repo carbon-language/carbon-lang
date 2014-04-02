@@ -176,7 +176,8 @@ SBCommandInterpreter::HandleCompletion (const char *current_line,
         return 0;
         
     size_t current_line_size = strlen (current_line);
-    if (cursor - current_line > current_line_size || last_char - current_line > current_line_size)
+    if (cursor - current_line > static_cast<ptrdiff_t>(current_line_size) ||
+        last_char - current_line > static_cast<ptrdiff_t>(current_line_size))
         return 0;
         
     if (log)

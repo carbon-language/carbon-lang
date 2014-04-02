@@ -477,7 +477,7 @@ CommandObject::GetNumArgumentEntries  ()
 CommandObject::CommandArgumentEntry *
 CommandObject::GetArgumentEntryAtIndex (int idx)
 {
-    if (idx < m_arguments.size())
+    if (static_cast<size_t>(idx) < m_arguments.size())
         return &(m_arguments[idx]);
 
     return NULL;

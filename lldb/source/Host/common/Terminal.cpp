@@ -250,7 +250,7 @@ TerminalState::TTYStateIsValid() const
 bool
 TerminalState::ProcessGroupIsValid() const
 {
-    return m_process_group != -1;
+    return static_cast<int32_t>(m_process_group) != -1;
 }
 
 //------------------------------------------------------------------

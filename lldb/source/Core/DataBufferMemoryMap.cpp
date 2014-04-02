@@ -240,7 +240,8 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
         struct stat stat;
         if (::fstat(fd, &stat) == 0)
         {
-            if (S_ISREG(stat.st_mode) && (stat.st_size > offset))
+            if (S_ISREG(stat.st_mode) &&
+                (stat.st_size > static_cast<off_t>(offset)))
             {
                 const size_t max_bytes_available = stat.st_size - offset;
                 if (length == SIZE_MAX)

@@ -4646,7 +4646,7 @@ ObjectFileMachO::GetProcessSharedCacheUUID (Process *process)
 
         Error err;
         uint32_t version_or_magic = process->ReadUnsignedIntegerFromMemory (all_image_infos, 4, -1, err);
-        if (version_or_magic != -1 
+        if (version_or_magic != static_cast<uint32_t>(-1)
             && version_or_magic != MH_MAGIC
             && version_or_magic != MH_CIGAM
             && version_or_magic != MH_MAGIC_64

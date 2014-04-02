@@ -1142,7 +1142,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     if (envp == NULL || envp[0] == NULL)
         envp = const_cast<const char **>(environ);
 
-    if ((pid = terminal.Fork(err_str, err_len)) == -1)
+    if ((pid = terminal.Fork(err_str, err_len)) == static_cast<lldb::pid_t>(-1))
     {
         args->m_error.SetErrorToGenericError();
         args->m_error.SetErrorString("Process fork failed.");
@@ -1203,7 +1203,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     }
 
     // Wait for the child process to to trap on its call to execve.
-    pid_t wpid;
+    lldb::pid_t wpid;
     int status;
     if ((wpid = waitpid(pid, &status, 0)) < 0)
     {
@@ -1746,7 +1746,7 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
         if (log)
             log->Printf ("ProcessMonitor::%s(bp) waitpid, pid = %" PRIu64 ", status = %d", __FUNCTION__, wait_pid, status);
 
-        if (wait_pid == -1)
+        if (wait_pid == static_cast<lldb::pid_t>(-1))
         {
             // If we got interrupted by a signal (in our process, not the
             // inferior) try again.

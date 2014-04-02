@@ -620,7 +620,8 @@ SystemRuntimeMacOSX::GetPendingItemRefsForQueue (lldb::addr_t queue)
                         pending_item_refs.new_style = true;
                         uint32_t item_size = extractor.GetU32(&offset);
                         uint32_t start_of_array_offset = offset;
-                        while (offset < pending_items_pointer.items_buffer_size && i < pending_items_pointer.count)
+                        while (offset < pending_items_pointer.items_buffer_size &&
+                               static_cast<size_t>(i) < pending_items_pointer.count)
                         {
                             offset = start_of_array_offset + (i * item_size);
                             ItemRefAndCodeAddress item;
@@ -634,7 +635,8 @@ SystemRuntimeMacOSX::GetPendingItemRefsForQueue (lldb::addr_t queue)
                     {
                         offset = 0;
                         pending_item_refs.new_style = false;
-                        while (offset < pending_items_pointer.items_buffer_size && i < pending_items_pointer.count)
+                        while (offset < pending_items_pointer.items_buffer_size &&
+                               static_cast<size_t>(i) < pending_items_pointer.count)
                         {
                             ItemRefAndCodeAddress item;
                             item.item_ref = extractor.GetPointer (&offset);

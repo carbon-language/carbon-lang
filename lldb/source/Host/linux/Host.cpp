@@ -520,7 +520,7 @@ Host::GetDistributionId ()
             "/usr/bin/lsb_release"
         };
 
-        for (int exe_index = 0;
+        for (size_t exe_index = 0;
              exe_index < sizeof (exe_paths) / sizeof (exe_paths[0]);
              ++exe_index)
         {

@@ -1786,8 +1786,8 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
         cpu_type_t cpu = arch_spec.GetMachOCPUType();
         cpu_type_t sub = arch_spec.GetMachOCPUSubType();
         if (cpu != 0 &&
-            cpu != UINT32_MAX &&
-            cpu != LLDB_INVALID_CPUTYPE &&
+            cpu != static_cast<cpu_type_t>(UINT32_MAX) &&
+            cpu != static_cast<cpu_type_t>(LLDB_INVALID_CPUTYPE) &&
             !(cpu == 0x01000007 && sub == 8)) // If haswell is specified, don't try to set the CPU type or we will fail 
         {
             size_t ocount = 0;
@@ -2306,7 +2306,7 @@ Host::Readlink (const char *path, char *buf, size_t buf_len)
     ssize_t count = ::readlink(path, buf, buf_len);
     if (count < 0)
         error.SetErrorToErrno();
-    else if (count < (buf_len-1))
+    else if (static_cast<size_t>(count) < (buf_len-1))
         buf[count] = '\0'; // Success
     else
         error.SetErrorString("'buf' buffer is too small to contain link contents");
@@ -2391,7 +2391,8 @@ Host::WriteFile (lldb::user_id_t fd, uint64_t offset, const void* src, uint64_t 
         error.SetErrorString ("invalid host backing file");
         return UINT64_MAX;
     }
-    if (file_sp->SeekFromStart(offset, &error) != offset || error.Fail())
+    if (static_cast<uint64_t>(file_sp->SeekFromStart(offset, &error)) != offset ||
+        error.Fail())
         return UINT64_MAX;
     size_t bytes_written = src_len;
     error = file_sp->Write(src, bytes_written);
@@ -2421,7 +2422,8 @@ Host::ReadFile (lldb::user_id_t fd, uint64_t offset, void* dst, uint64_t dst_len
         error.SetErrorString ("invalid host backing file");
         return UINT64_MAX;
     }
-    if (file_sp->SeekFromStart(offset, &error) != offset || error.Fail())
+    if (static_cast<uint64_t>(file_sp->SeekFromStart(offset, &error)) != offset ||
+        error.Fail())
         return UINT64_MAX;
     size_t bytes_read = dst_len;
     error = file_sp->Read(dst ,bytes_read);

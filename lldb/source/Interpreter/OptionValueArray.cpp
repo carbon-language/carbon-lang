@@ -222,7 +222,8 @@ OptionValueArray::SetArgs (const Args &args, VarSetOperationType op)
             size_t i;
             for (i=0; i<argc; ++i)
             {
-                const int idx = Args::StringToSInt32(args.GetArgumentAtIndex(i), INT32_MAX);
+                const size_t idx =
+                  Args::StringToSInt32(args.GetArgumentAtIndex(i), INT32_MAX);
                 if (idx >= size)
                 {
                     all_indexes_valid = false;

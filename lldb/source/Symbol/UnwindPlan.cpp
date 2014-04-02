@@ -326,7 +326,7 @@ UnwindPlan::GetRowForFunctionOffset (int offset) const
             collection::const_iterator pos, end = m_row_list.end();
             for (pos = m_row_list.begin(); pos != end; ++pos)
             {
-                if ((*pos)->GetOffset() <= offset)
+                if ((*pos)->GetOffset() <= static_cast<lldb::offset_t>(offset))
                     row = *pos;
                 else
                     break;

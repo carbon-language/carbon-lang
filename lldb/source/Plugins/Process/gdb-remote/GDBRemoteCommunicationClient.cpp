@@ -3106,7 +3106,7 @@ GDBRemoteCommunicationClient::GetFilePermissions(const char *path, uint32_t &fil
         else
         {
             const uint32_t mode = response.GetS32(-1);
-            if (mode == -1)
+            if (static_cast<int32_t>(mode) == -1)
             {
                 if (response.GetChar() == ',')
                 {

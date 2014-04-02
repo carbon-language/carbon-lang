@@ -2121,7 +2121,8 @@ Thread::IsStillAtLastBreakpointHit ()
             {
                 lldb::addr_t pc = reg_ctx_sp->GetPC();
                 BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
-                if (bp_site_sp && value == bp_site_sp->GetID())
+                if (bp_site_sp &&
+                    static_cast<break_id_t>(value) == bp_site_sp->GetID())
                     return true;
             }
         }

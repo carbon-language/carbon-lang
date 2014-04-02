@@ -3268,7 +3268,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                     // Setting this to UINT32_MAX to make sure we don't compute it twice...
                                     bit_offset = UINT32_MAX;
                                     
-                                    if (child_byte_offset == LLDB_INVALID_IVAR_OFFSET)
+                                    if (child_byte_offset == static_cast<int32_t>(LLDB_INVALID_IVAR_OFFSET))
                                     {
                                         bit_offset = interface_layout.getFieldOffset (child_idx - superclass_idx);
                                         child_byte_offset = bit_offset / 8;

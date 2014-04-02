@@ -861,7 +861,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                                                             valobj_sp->GetTypeName().AsCString("<invalid type>"),
                                                                             var_expr_path_strm.GetString().c_str());
                                         }
-                                        else if (child_index >= synthetic->GetNumChildren() /* synthetic does not have that many values */)
+                                        else if (static_cast<uint32_t>(child_index) >= synthetic->GetNumChildren() /* synthetic does not have that many values */)
                                         {
                                             valobj_sp->GetExpressionPath (var_expr_path_strm, false);
                                             error.SetErrorStringWithFormat ("array index %ld is not valid for \"(%s) %s\"", 
@@ -937,7 +937,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                                                         valobj_sp->GetTypeName().AsCString("<invalid type>"),
                                                                         var_expr_path_strm.GetString().c_str());
                                     }
-                                    else if (child_index >= synthetic->GetNumChildren() /* synthetic does not have that many values */)
+                                    else if (static_cast<uint32_t>(child_index) >= synthetic->GetNumChildren() /* synthetic does not have that many values */)
                                     {
                                         valobj_sp->GetExpressionPath (var_expr_path_strm, false);
                                         error.SetErrorStringWithFormat ("array index %ld is not valid for \"(%s) %s\"", 

@@ -347,7 +347,7 @@ bool
 UnwindLLDB::SearchForSavedLocationForRegister (uint32_t lldb_regnum, lldb_private::UnwindLLDB::RegisterLocation &regloc, uint32_t starting_frame_num, bool pc_reg)
 {
     int64_t frame_num = starting_frame_num;
-    if (frame_num >= m_frames.size())
+    if (static_cast<size_t>(frame_num) >= m_frames.size())
         return false;
 
     // Never interrogate more than one level while looking for the saved pc value.  If the value

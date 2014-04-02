@@ -100,7 +100,7 @@ public:
 static bool
 WarnOnPotentialUnquotedUnsignedType (Args& command, CommandReturnObject &result)
 {
-    for (int idx = 0; idx < command.GetArgumentCount(); idx++)
+    for (unsigned idx = 0; idx < command.GetArgumentCount(); idx++)
     {
         const char* arg = command.GetArgumentAtIndex(idx);
         if (idx+1 < command.GetArgumentCount())

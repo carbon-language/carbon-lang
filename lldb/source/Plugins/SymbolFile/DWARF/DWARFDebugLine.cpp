@@ -795,7 +795,7 @@ DWARFDebugLine::ParseStatementTable
                 // as a multiple of LEB128 operands for each opcode.
                 {
                     uint8_t i;
-                    assert (opcode - 1 < prologue->standard_opcode_lengths.size());
+                    assert (static_cast<size_t>(opcode - 1) < prologue->standard_opcode_lengths.size());
                     const uint8_t opcode_length = prologue->standard_opcode_lengths[opcode - 1];
                     for (i=0; i<opcode_length; ++i)
                         debug_line_data.Skip_LEB128(offset_ptr);

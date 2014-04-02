@@ -297,7 +297,8 @@ lldb_private::GetVersion ()
         
         size_t version_len = sizeof(g_version_string);
         
-        if (newline_loc && (newline_loc - version_string < version_len))
+        if (newline_loc &&
+            (newline_loc - version_string < static_cast<ptrdiff_t>(version_len)))
             version_len = newline_loc - version_string;
         
         ::strncpy(g_version_string, version_string, version_len);

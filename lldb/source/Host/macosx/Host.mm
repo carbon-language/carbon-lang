@@ -1171,7 +1171,7 @@ GetMacOSXProcessArgs (const ProcessInstanceInfoMatch *match_info_ptr,
                     }
                     // Now extract all arguments
                     Args &proc_args = process_info.GetArguments();
-                    for (int i=0; i<argc; ++i)
+                    for (int i=0; i<static_cast<int>(argc); ++i)
                     {
                         cstr = data.GetCStr(&offset);
                         if (cstr)
@@ -1248,7 +1248,7 @@ Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstance
     bool all_users = match_info.GetMatchAllUsers();
     const lldb::pid_t our_pid = getpid();
     const uid_t our_uid = getuid();
-    for (int i = 0; i < actual_pid_count; i++)
+    for (size_t i = 0; i < actual_pid_count; i++)
     {
         const struct kinfo_proc &kinfo = kinfos[i];
         
@@ -1263,7 +1263,7 @@ Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstance
           kinfo_user_matches = true;
 
         if (kinfo_user_matches == false         || // Make sure the user is acceptable
-            kinfo.kp_proc.p_pid == our_pid      || // Skip this process
+            static_cast<lldb::pid_t>(kinfo.kp_proc.p_pid) == our_pid || // Skip this process
             kinfo.kp_proc.p_pid == 0            || // Skip kernel (kernel pid is zero)
             kinfo.kp_proc.p_stat == SZOMB       || // Zombies are bad, they like brains...
             kinfo.kp_proc.p_flag & P_TRACED     || // Being debugged?
@@ -1327,9 +1327,9 @@ PackageXPCArguments (xpc_object_t message, const char *prefix, const Args& args)
     memset(buf, 0, 50);
     sprintf(buf, "%sCount", prefix);
 	xpc_dictionary_set_int64(message, buf, count);
-    for (int i=0; i<count; i++) {
+    for (size_t i=0; i<count; i++) {
         memset(buf, 0, 50);
-        sprintf(buf, "%s%i", prefix, i);
+        sprintf(buf, "%s%zi", prefix, i);
         xpc_dictionary_set_string(message, buf, args.GetArgumentAtIndex(i));
     }
 }

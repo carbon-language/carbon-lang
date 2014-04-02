@@ -329,7 +329,7 @@ ObjectFileJIT::ReadSectionData (const lldb_private::Section *section,
                                 size_t dst_len) const
 {
     lldb::offset_t file_size = section->GetFileSize();
-    if (section_offset < file_size)
+    if (section_offset < static_cast<off_t>(file_size))
     {
         uint64_t src_len = file_size - section_offset;
         if (src_len > dst_len)

@@ -1332,7 +1332,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                     const size_t max_length = help_delegate_ap->GetMaxLineLength();
                     Rect bounds = GetBounds();
                     bounds.Inset(1, 1);
-                    if (max_length + 4 < bounds.size.width)
+                    if (max_length + 4 < static_cast<size_t>(bounds.size.width))
                     {
                         bounds.origin.x += (bounds.size.width - max_length + 4)/2;
                         bounds.size.width = max_length + 4;
@@ -1347,7 +1347,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                         }
                     }
                     
-                    if (num_lines + 2 < bounds.size.height)
+                    if (num_lines + 2 < static_cast<size_t>(bounds.size.height))
                     {
                         bounds.origin.y += (bounds.size.height - num_lines + 2)/2;
                         bounds.size.height = num_lines + 2;
@@ -1845,9 +1845,9 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
         for (size_t i=0; i<num_submenus; ++i)
         {
             Menu *submenu = submenus[i].get();
-            if (m_max_submenu_name_length < submenu->m_name.size())
+            if (static_cast<size_t>(m_max_submenu_name_length) < submenu->m_name.size())
                 m_max_submenu_name_length = submenu->m_name.size();
-            if (m_max_submenu_key_name_length < submenu->m_key_name.size())
+            if (static_cast<size_t>(m_max_submenu_key_name_length) < submenu->m_key_name.size())
                 m_max_submenu_key_name_length = submenu->m_key_name.size();
         }
     }
@@ -1856,9 +1856,9 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
     Menu::AddSubmenu (const MenuSP &menu_sp)
     {
         menu_sp->m_parent = this;
-        if (m_max_submenu_name_length < menu_sp->m_name.size())
+        if (static_cast<size_t>(m_max_submenu_name_length) < menu_sp->m_name.size())
             m_max_submenu_name_length = menu_sp->m_name.size();
-        if (m_max_submenu_key_name_length < menu_sp->m_key_name.size())
+        if (static_cast<size_t>(m_max_submenu_key_name_length) < menu_sp->m_key_name.size())
             m_max_submenu_key_name_length = menu_sp->m_key_name.size();
         m_submenus.push_back(menu_sp);
     }
@@ -1874,7 +1874,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
             if (width > 2)
             {
                 width -= 2;
-                for (size_t i=0; i< width; ++i)
+                for (int i=0; i< width; ++i)
                     window.PutChar(ACS_HLINE);
             }
             window.PutChar(ACS_RTEE);
@@ -1975,7 +1975,8 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                 window.Box();
                 for (size_t i=0; i<num_submenus; ++i)
                 {
-                    const bool is_selected = i == selected_idx;
+                    const bool is_selected =
+                      (i == static_cast<size_t>(selected_idx));
                     window.MoveCursor(x, y + i);
                     if (is_selected)
                     {
@@ -2014,7 +2015,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                 case KEY_DOWN:
                 case KEY_UP:
                     // Show last menu or first menu
-                    if (selected_idx < num_submenus)
+                    if (selected_idx < static_cast<int>(num_submenus))
                         run_menu_sp = submenus[selected_idx];
                     else if (!submenus.empty())
                         run_menu_sp = submenus.front();
@@ -2024,9 +2025,9 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                 case KEY_RIGHT:
                 {
                     ++m_selected;
-                    if (m_selected >= num_submenus)
+                    if (m_selected >= static_cast<int>(num_submenus))
                         m_selected = 0;
-                    if (m_selected < num_submenus)
+                    if (m_selected < static_cast<int>(num_submenus))
                         run_menu_sp = submenus[m_selected];
                     else if (!submenus.empty())
                         run_menu_sp = submenus.front();
@@ -2039,7 +2040,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                     --m_selected;
                     if (m_selected < 0)
                         m_selected = num_submenus - 1;
-                    if (m_selected < num_submenus)
+                    if (m_selected < static_cast<int>(num_submenus))
                         run_menu_sp = submenus[m_selected];
                     else if (!submenus.empty())
                         run_menu_sp = submenus.front();
@@ -2093,7 +2094,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                         const int start_select = m_selected;
                         while (++m_selected != start_select)
                         {
-                            if (m_selected >= num_submenus)
+                            if (static_cast<size_t>(m_selected) >= num_submenus)
                                 m_selected = 0;
                             if (m_submenus[m_selected]->GetType() == Type::Separator)
                                 continue;
@@ -2110,7 +2111,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                         const int start_select = m_selected;
                         while (--m_selected != start_select)
                         {
-                            if (m_selected < 0)
+                            if (m_selected < static_cast<int>(0))
                                 m_selected = num_submenus - 1;
                             if (m_submenus[m_selected]->GetType() == Type::Separator)
                                 continue;
@@ -2122,7 +2123,7 @@ type summary add -s "${var.origin%S} ${var.size%S}" curses::Rect
                     break;
                     
                 case KEY_RETURN:
-                    if (selected_idx < num_submenus)
+                    if (static_cast<size_t>(selected_idx) < num_submenus)
                     {
                         if (submenus[selected_idx]->Action() == MenuActionResult::Quit)
                             return eQuitApplication;
@@ -2679,7 +2680,8 @@ public:
                 window.PutChar (ACS_DIAMOND);
                 window.PutChar (ACS_HLINE);
             }
-            bool highlight = (selected_row_idx == m_row_idx) && window.IsActive();
+            bool highlight =
+              (selected_row_idx == static_cast<size_t>(m_row_idx)) && window.IsActive();
 
             if (highlight)
                 window.AttributeOn(A_REVERSE);
@@ -2746,11 +2748,11 @@ public:
     TreeItem *
     GetItemForRowIndex (uint32_t row_idx)
     {
-        if (m_row_idx == row_idx)
+        if (static_cast<uint32_t>(m_row_idx) == row_idx)
             return this;
         if (m_children.empty())
             return NULL;
-        if (m_children.back().m_row_idx < row_idx)
+        if (static_cast<uint32_t>(m_children.back().m_row_idx) < row_idx)
             return NULL;
         if (IsExpanded())
         {
@@ -3459,7 +3461,7 @@ public:
                 // Page up key
                 if (m_first_visible_row > 0)
                 {
-                    if (m_first_visible_row > m_max_y)
+                    if (static_cast<int>(m_first_visible_row) > m_max_y)
                         m_first_visible_row -= m_max_y;
                     else
                         m_first_visible_row = 0;
@@ -3470,7 +3472,7 @@ public:
             case '.':
             case KEY_NPAGE:
                 // Page down key
-                if (m_num_rows > m_max_y)
+                if (m_num_rows > static_cast<size_t>(m_max_y))
                 {
                     if (m_first_visible_row + m_max_y < m_num_rows)
                     {
@@ -3637,7 +3639,7 @@ protected:
             // Save the row index in each Row structure
             row.row_idx = m_num_rows;
             if ((m_num_rows >= m_first_visible_row) &&
-                ((m_num_rows - m_first_visible_row) < NumVisibleRows()))
+                ((m_num_rows - m_first_visible_row) < static_cast<size_t>(NumVisibleRows())))
             {
                 row.x = m_min_x;
                 row.y = m_num_rows - m_first_visible_row + 1;
@@ -4009,7 +4011,7 @@ HelpDialogDelegate::WindowDelegateDraw (Window &window, bool force)
     int y = 1;
     const int min_y = y;
     const int max_y = window_height - 1 - y;
-    const int num_visible_lines = max_y - min_y + 1;
+    const size_t num_visible_lines = max_y - min_y + 1;
     const size_t num_lines = m_text.GetSize();
     const char *bottom_message;
     if (num_lines <= num_visible_lines)
@@ -4057,7 +4059,7 @@ HelpDialogDelegate::WindowDelegateHandleChar (Window &window, int key)
             case ',':
                 if (m_first_visible_line > 0)
                 {
-                    if (m_first_visible_line >= num_visible_lines)
+                    if (static_cast<size_t>(m_first_visible_line) >= num_visible_lines)
                         m_first_visible_line -= num_visible_lines;
                     else
                         m_first_visible_line = 0;
@@ -4068,7 +4070,7 @@ HelpDialogDelegate::WindowDelegateHandleChar (Window &window, int key)
                 if (m_first_visible_line + num_visible_lines < num_lines)
                 {
                     m_first_visible_line += num_visible_lines;
-                    if (m_first_visible_line > num_lines)
+                    if (static_cast<size_t>(m_first_visible_line) > num_lines)
                         m_first_visible_line = num_lines - num_visible_lines;
                 }
                 break;
@@ -4681,7 +4683,7 @@ public:
                     {
                         // Same file, nothing to do, we should either have the
                         // lines or not (source file missing)
-                        if (m_selected_line >= m_first_visible_line)
+                        if (m_selected_line >= static_cast<size_t>(m_first_visible_line))
                         {
                             if (m_selected_line >= m_first_visible_line + num_visible_lines)
                                 m_first_visible_line = m_selected_line - 10;
@@ -4825,7 +4827,7 @@ public:
             const attr_t selected_highlight_attr = A_REVERSE;
             const attr_t pc_highlight_attr = COLOR_PAIR(1);
 
-            for (int i=0; i<num_visible_lines; ++i)
+            for (size_t i=0; i<num_visible_lines; ++i)
             {
                 const uint32_t curr_line = m_first_visible_line + i;
                 if (curr_line < num_source_lines)
@@ -4947,12 +4949,12 @@ public:
                 }
 
                 const uint32_t non_visible_pc_offset = (num_visible_lines / 5);
-                if (m_first_visible_line >= num_disassembly_lines)
+                if (static_cast<size_t>(m_first_visible_line) >= num_disassembly_lines)
                     m_first_visible_line = 0;
 
                 if (pc_idx < num_disassembly_lines)
                 {
-                    if (pc_idx < m_first_visible_line ||
+                    if (pc_idx < static_cast<uint32_t>(m_first_visible_line) ||
                         pc_idx >= m_first_visible_line + num_visible_lines)
                         m_first_visible_line = pc_idx - non_visible_pc_offset;
                 }
@@ -5087,7 +5089,7 @@ public:
             case ',':
             case KEY_PPAGE:
                 // Page up key
-                if (m_first_visible_line > num_visible_lines)
+                if (static_cast<uint32_t>(m_first_visible_line) > num_visible_lines)
                     m_first_visible_line -= num_visible_lines;
                 else
                     m_first_visible_line = 0;
@@ -5112,7 +5114,7 @@ public:
                 if (m_selected_line > 0)
                 {
                     m_selected_line--;
-                    if (m_first_visible_line > m_selected_line)
+                    if (static_cast<size_t>(m_first_visible_line) > m_selected_line)
                         m_first_visible_line = m_selected_line;
                 }
                 return eKeyHandled;

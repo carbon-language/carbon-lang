@@ -127,7 +127,7 @@ ConnectionMachPort::BootstrapCheckIn (const char *port, Error *error_ptr)
     {
         name_t port_name;
         int len = snprintf(port_name, sizeof(port_name), "%s", port);
-        if (len < sizeof(port_name))
+        if (static_cast<size_t>(len) < sizeof(port_name))
         {
             kret = ::bootstrap_check_in (bootstrap_port, 
                                          port_name, 
@@ -160,7 +160,7 @@ ConnectionMachPort::BootstrapLookup (const char *port,
 
     if (port && port[0])
     {
-        if (::snprintf (port_name, sizeof (port_name), "%s", port) >= sizeof (port_name))
+        if (static_cast<size_t>(::snprintf (port_name, sizeof (port_name), "%s", port)) >= sizeof (port_name))
         {
             if (error_ptr)
                 error_ptr->SetErrorString ("port netname is too long");

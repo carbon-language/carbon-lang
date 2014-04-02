@@ -486,7 +486,7 @@ ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void 
     else
     {
         const uint64_t section_file_size = section->GetFileSize();
-        if (section_offset < section_file_size)
+        if (section_offset < static_cast<off_t>(section_file_size))
         {
             const uint64_t section_bytes_left = section_file_size - section_offset;
             uint64_t section_dst_len = dst_len;

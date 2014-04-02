@@ -344,7 +344,7 @@ Options::OutputFormattedUsageText
 
     // Will it all fit on one line?
 
-    if ((len + strm.GetIndentLevel()) < output_max_columns)
+    if (static_cast<uint32_t>(len + strm.GetIndentLevel()) < output_max_columns)
     {
         // Output it as a single line.
         strm.Indent (text);

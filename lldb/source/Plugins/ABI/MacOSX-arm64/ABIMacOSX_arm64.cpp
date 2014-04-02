@@ -237,10 +237,10 @@ ABIMacOSX_arm64::PrepareTrivialCall (Thread &thread,
 {
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
-        return false;    
-    
+        return false;
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
+
     if (log)
     {
         StreamString s;
@@ -249,8 +249,8 @@ ABIMacOSX_arm64::PrepareTrivialCall (Thread &thread,
                  (uint64_t)sp,
                  (uint64_t)func_addr,
                  (uint64_t)return_addr);
-        
-        for (int i = 0; i < args.size(); ++i)
+
+        for (size_t i = 0; i < args.size(); ++i)
             s.Printf (", arg%d = 0x%" PRIx64, i + 1, args[i]);
         s.PutCString (")");
         log->PutCString(s.GetString().c_str());
@@ -259,12 +259,12 @@ ABIMacOSX_arm64::PrepareTrivialCall (Thread &thread,
     const uint32_t pc_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
     const uint32_t sp_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_SP);
     const uint32_t ra_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_RA);
-    
+
     // x0 - x7 contain first 8 simple args
     if (args.size() > 8) // TODO handle more than 6 arguments
         return false;
-    
-    for (int i = 0; i < args.size(); ++i)
+
+    for (size_t i = 0; i < args.size(); ++i)
     {
         const RegisterInfo *reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1 + i);
         if (log)
@@ -276,15 +276,15 @@ ABIMacOSX_arm64::PrepareTrivialCall (Thread &thread,
     // Set "lr" to the return address
     if (!reg_ctx->WriteRegisterFromUnsigned (reg_ctx->GetRegisterInfoAtIndex (ra_reg_num), return_addr))
         return false;
-    
+
     // Set "sp" to the requested value
     if (!reg_ctx->WriteRegisterFromUnsigned (reg_ctx->GetRegisterInfoAtIndex (sp_reg_num), sp))
         return false;
-    
+
     // Set "pc" to the address requested
     if (!reg_ctx->WriteRegisterFromUnsigned (reg_ctx->GetRegisterInfoAtIndex (pc_reg_num), func_addr))
         return false;
-    
+
     return true;
 }
 

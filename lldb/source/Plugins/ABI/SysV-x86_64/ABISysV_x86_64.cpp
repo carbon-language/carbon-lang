@@ -316,8 +316,8 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
                     (uint64_t)func_addr,
                     (uint64_t)return_addr);
 
-        for (int i = 0; i < args.size(); ++i)
-            s.Printf (", arg%d = 0x%" PRIx64, i + 1, args[i]);
+        for (size_t i = 0; i < args.size(); ++i)
+            s.Printf (", arg%zd = 0x%" PRIx64, i + 1, args[i]);
         s.PutCString (")");
         log->PutCString(s.GetString().c_str());
     }
@@ -331,11 +331,11 @@ ABISysV_x86_64::PrepareTrivialCall (Thread &thread,
     if (args.size() > 6) // TODO handle more than 6 arguments
         return false;
     
-    for (int i = 0; i < args.size(); ++i)
+    for (size_t i = 0; i < args.size(); ++i)
     {
         reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1 + i);
         if (log)
-            log->Printf("About to write arg%d (0x%" PRIx64 ") into %s", i + 1, args[i], reg_info->name);
+            log->Printf("About to write arg%zd (0x%" PRIx64 ") into %s", i + 1, args[i], reg_info->name);
         if (!reg_ctx->WriteRegisterFromUnsigned(reg_info, args[i]))
             return false;
     }

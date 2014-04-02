@@ -134,7 +134,7 @@ PathMappingList::Replace (const ConstString &path,
 bool
 PathMappingList::Remove (off_t index, bool notify)
 {
-    if (index >= m_pairs.size())
+    if (static_cast<size_t>(index) >= m_pairs.size())
         return false;
 
     ++m_mod_id;
@@ -161,7 +161,7 @@ PathMappingList::Dump (Stream *s, int pair_index)
     }
     else
     {
-        if (pair_index < numPairs)
+        if (static_cast<unsigned int>(pair_index) < numPairs)
             s->Printf("%s -> %s",
                       m_pairs[pair_index].first.GetCString(), m_pairs[pair_index].second.GetCString());
     }

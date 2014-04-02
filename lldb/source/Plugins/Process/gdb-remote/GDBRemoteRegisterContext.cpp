@@ -689,23 +689,23 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                             size_including_slice_registers += reg_info->byte_size;
                             if (reg_info->value_regs == NULL)
                                 size_not_including_slice_registers += reg_info->byte_size;
-                            if (reg_info->byte_offset >= size_by_highest_offset)
+                            if (static_cast<off_t>(reg_info->byte_offset) >= size_by_highest_offset)
                                 size_by_highest_offset = reg_info->byte_offset + reg_info->byte_size;
                         }
 
                         bool use_byte_offset_into_buffer;
-                        if (size_by_highest_offset == restore_data.GetByteSize())
+                        if (static_cast<size_t>(size_by_highest_offset) == restore_data.GetByteSize())
                         {
                             // The size of the packet agrees with the highest offset: + size in the register file
                             use_byte_offset_into_buffer = true;
                         }
-                        else if (size_not_including_slice_registers == restore_data.GetByteSize())
+                        else if (static_cast<size_t>(size_not_including_slice_registers) == restore_data.GetByteSize())
                         {
                             // The size of the packet is the same as concenating all of the registers sequentially,
                             // skipping the slice registers
                             use_byte_offset_into_buffer = true;
                         }
-                        else if (size_including_slice_registers == restore_data.GetByteSize())
+                        else if (static_cast<size_t>(size_including_slice_registers) == restore_data.GetByteSize())
                         {
                             // The slice registers are present in the packet (when they shouldn't be).
                             // Don't try to use the RegisterInfo byte_offset into the restore_data, it will

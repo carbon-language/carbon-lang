@@ -204,7 +204,7 @@ protected:
             
             if (m_options.relative_frame_offset < 0)
             {
-                if (frame_idx >= -m_options.relative_frame_offset)
+                if (static_cast<int32_t>(frame_idx) >= -m_options.relative_frame_offset)
                     frame_idx += m_options.relative_frame_offset;
                 else
                 {
@@ -224,7 +224,7 @@ protected:
                 // I don't want "up 20" where "20" takes you past the top of the stack to produce
                 // an error, but rather to just go to the top.  So I have to count the stack here...
                 const uint32_t num_frames = thread->GetStackFrameCount();
-                if (num_frames - frame_idx > m_options.relative_frame_offset)
+                if (static_cast<int32_t>(num_frames - frame_idx) > m_options.relative_frame_offset)
                     frame_idx += m_options.relative_frame_offset;
                 else
                 {

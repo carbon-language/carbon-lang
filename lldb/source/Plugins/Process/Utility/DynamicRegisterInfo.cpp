@@ -323,7 +323,7 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                     reg_info.encoding = (Encoding)reg_info_dict.GetItemForKeyAsInteger (encoding_pystr, eEncodingUint);
 
                 const int64_t set = reg_info_dict.GetItemForKeyAsInteger(set_pystr, -1);
-                if (set >= m_sets.size())
+                if (static_cast<size_t>(set) >= m_sets.size())
                 {
                     Clear();
                     return 0;
@@ -379,7 +379,7 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                                 if (invalidate_reg_num)
                                 {
                                     const int64_t r = invalidate_reg_num.GetInteger();
-                                    if (r != UINT64_MAX)
+                                    if (r != static_cast<int64_t>(UINT64_MAX))
                                         m_invalidate_regs_map[i].push_back(r);
                                     else
                                         printf("error: 'invalidate-regs' list value wasn't a valid integer\n");
