@@ -29,6 +29,10 @@ N: Evan Cheng
 E: evan.cheng@apple.com
 D: ARM target, parts of code generator not covered by someone else
 
+N: Renato Golin
+E: renato.golin@linaro.org
+D: ARM Linux support
+
 N: Eric Christopher
 E: echristo@gmail.com
 D: Debug Information, autotools/configure/make build, inline assembly
