@@ -290,6 +290,9 @@ def note_using_decl_constructor_ellipsis : Note<
   "constructor declared with ellipsis here">;
 def err_using_decl_can_not_refer_to_class_member : Error<
   "using declaration cannot refer to class member">;
+def note_using_decl_class_member_workaround : Note<
+  "use %select{an alias declaration|a typedef declaration|a reference}0 "
+  "instead">;
 def err_using_decl_can_not_refer_to_namespace : Error<
   "using declaration cannot refer to namespace">;
 def err_using_decl_constructor : Error<
