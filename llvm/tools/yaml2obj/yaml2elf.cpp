@@ -134,32 +134,36 @@ static void zero(T &Obj) {
   memset(&Obj, 0, sizeof(Obj));
 }
 
-/// \brief Create a string table in `SHeader`, which we assume is already
-/// zero'd.
-template <class Elf_Shdr>
-static void createStringTableSectionHeader(Elf_Shdr &SHeader,
-                                           StringTableBuilder &STB,
-                                           ContiguousBlobAccumulator &CBA) {
-  SHeader.sh_type = ELF::SHT_STRTAB;
-  STB.writeToStream(CBA.getOSAndAlignedOffset(SHeader.sh_offset));
-  SHeader.sh_size = STB.size();
-  SHeader.sh_addralign = 1;
-}
-
 namespace {
 /// \brief "Single point of truth" for the ELF file construction.
 /// TODO: This class still has a ways to go before it is truly a "single
 /// point of truth".
 template <class ELFT>
 class ELFState {
+  typedef typename object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
+  typedef typename object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+
   /// \brief The future ".strtab" section.
   StringTableBuilder DotStrtab;
+
+  /// \brief The future ".shstrtab" section.
+  StringTableBuilder DotShStrtab;
 
   SectionNameToIdxMap SN2I;
   const ELFYAML::Object &Doc;
 
-public:
-  ELFState(const ELFYAML::Object &D) : Doc(D) {}
+  bool buildSectionIndex();
+  void initELFHeader(Elf_Ehdr &Header);
+  bool initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
+                          ContiguousBlobAccumulator &CBA);
+  void initSymtabSectionHeader(Elf_Shdr &SHeader,
+                               ContiguousBlobAccumulator &CBA);
+  void initStrtabSectionHeader(Elf_Shdr &SHeader, StringRef Name,
+                               StringTableBuilder &STB,
+                               ContiguousBlobAccumulator &CBA);
+  void addSymbols(const std::vector<ELFYAML::Symbol> &Symbols,
+                  std::vector<Elf_Sym> &Syms, unsigned SymbolBinding);
 
   // - SHT_NULL entry (placed first, i.e. 0'th entry)
   // - symbol table (.symtab) (placed third to last)
@@ -170,48 +174,128 @@ public:
   unsigned getDotShStrTabSecNo() const { return Doc.Sections.size() + 3; }
   unsigned getSectionCount() const { return Doc.Sections.size() + 4; }
 
-  StringTableBuilder &getStringTable() { return DotStrtab; }
-  SectionNameToIdxMap &getSN2I() { return SN2I; }
+  ELFState(const ELFYAML::Object &D) : Doc(D) {}
 
-  bool buildSectionIndex() {
-    SN2I.addName(".symtab", getDotSymTabSecNo());
-    SN2I.addName(".strtab", getDotStrTabSecNo());
-    SN2I.addName(".shstrtab", getDotShStrTabSecNo());
-
-    for (unsigned i = 0, e = Doc.Sections.size(); i != e; ++i) {
-      StringRef Name = Doc.Sections[i].Name;
-      if (Name.empty())
-        continue;
-      // "+ 1" to take into account the SHT_NULL entry.
-      if (SN2I.addName(Name, i + 1)) {
-        errs() << "error: Repeated section name: '" << Name
-               << "' at YAML section number " << i << ".\n";
-        return false;
-      }
-    }
-    return true;
-  }
+public:
+  static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc);
 };
 } // end anonymous namespace
 
-// FIXME: At this point it is fairly clear that we need to refactor these
-// static functions into methods of a class sharing some typedefs. These
-// ELF type names are insane.
 template <class ELFT>
-static void
-addSymbols(const std::vector<ELFYAML::Symbol> &Symbols, ELFState<ELFT> &State,
-           std::vector<typename object::ELFFile<ELFT>::Elf_Sym> &Syms,
-           unsigned SymbolBinding) {
-  typedef typename object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+void ELFState<ELFT>::initELFHeader(Elf_Ehdr &Header) {
+  using namespace llvm::ELF;
+  zero(Header);
+  Header.e_ident[EI_MAG0] = 0x7f;
+  Header.e_ident[EI_MAG1] = 'E';
+  Header.e_ident[EI_MAG2] = 'L';
+  Header.e_ident[EI_MAG3] = 'F';
+  Header.e_ident[EI_CLASS] = ELFT::Is64Bits ? ELFCLASS64 : ELFCLASS32;
+  bool IsLittleEndian = ELFT::TargetEndianness == support::little;
+  Header.e_ident[EI_DATA] = IsLittleEndian ? ELFDATA2LSB : ELFDATA2MSB;
+  Header.e_ident[EI_VERSION] = EV_CURRENT;
+  Header.e_ident[EI_OSABI] = Doc.Header.OSABI;
+  Header.e_ident[EI_ABIVERSION] = 0;
+  Header.e_type = Doc.Header.Type;
+  Header.e_machine = Doc.Header.Machine;
+  Header.e_version = EV_CURRENT;
+  Header.e_entry = Doc.Header.Entry;
+  Header.e_flags = Doc.Header.Flags;
+  Header.e_ehsize = sizeof(Elf_Ehdr);
+  Header.e_shentsize = sizeof(Elf_Shdr);
+  // Immediately following the ELF header.
+  Header.e_shoff = sizeof(Header);
+  Header.e_shnum = getSectionCount();
+  Header.e_shstrndx = getDotShStrTabSecNo();
+}
+
+template <class ELFT>
+bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
+                                        ContiguousBlobAccumulator &CBA) {
+  // Ensure SHN_UNDEF entry is present. An all-zero section header is a
+  // valid SHN_UNDEF entry since SHT_NULL == 0.
+  Elf_Shdr SHeader;
+  zero(SHeader);
+  SHeaders.push_back(SHeader);
+
+  for (const auto &Sec : Doc.Sections) {
+    zero(SHeader);
+    SHeader.sh_name = DotShStrtab.addString(Sec.Name);
+    SHeader.sh_type = Sec.Type;
+    SHeader.sh_flags = Sec.Flags;
+    SHeader.sh_addr = Sec.Address;
+
+    Sec.Content.writeAsBinary(CBA.getOSAndAlignedOffset(SHeader.sh_offset));
+    SHeader.sh_size = Sec.Content.binary_size();
+
+    if (!Sec.Link.empty()) {
+      unsigned Index;
+      if (SN2I.lookupSection(Sec.Link, Index)) {
+        errs() << "error: Unknown section referenced: '" << Sec.Link
+               << "' at YAML section '" << Sec.Name << "'.\n";
+        return false;;
+      }
+      SHeader.sh_link = Index;
+    }
+    SHeader.sh_info = 0;
+    SHeader.sh_addralign = Sec.AddressAlign;
+    SHeader.sh_entsize = 0;
+    SHeaders.push_back(SHeader);
+  }
+  return true;
+}
+
+template <class ELFT>
+void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
+                                             ContiguousBlobAccumulator &CBA) {
+  zero(SHeader);
+  SHeader.sh_name = DotShStrtab.addString(StringRef(".symtab"));
+  SHeader.sh_type = ELF::SHT_SYMTAB;
+  SHeader.sh_link = getDotStrTabSecNo();
+  // One greater than symbol table index of the last local symbol.
+  SHeader.sh_info = Doc.Symbols.Local.size() + 1;
+  SHeader.sh_entsize = sizeof(Elf_Sym);
+
+  std::vector<Elf_Sym> Syms;
+  {
+    // Ensure STN_UNDEF is present
+    Elf_Sym Sym;
+    zero(Sym);
+    Syms.push_back(Sym);
+  }
+  addSymbols(Doc.Symbols.Local, Syms, ELF::STB_LOCAL);
+  addSymbols(Doc.Symbols.Global, Syms, ELF::STB_GLOBAL);
+  addSymbols(Doc.Symbols.Weak, Syms, ELF::STB_WEAK);
+
+  writeArrayData(CBA.getOSAndAlignedOffset(SHeader.sh_offset),
+                 makeArrayRef(Syms));
+  SHeader.sh_size = arrayDataSize(makeArrayRef(Syms));
+}
+
+template <class ELFT>
+void ELFState<ELFT>::initStrtabSectionHeader(Elf_Shdr &SHeader, StringRef Name,
+                                             StringTableBuilder &STB,
+                                             ContiguousBlobAccumulator &CBA) {
+  zero(SHeader);
+  SHeader.sh_name = DotShStrtab.addString(Name);
+  SHeader.sh_type = ELF::SHT_STRTAB;
+  STB.writeToStream(CBA.getOSAndAlignedOffset(SHeader.sh_offset));
+  SHeader.sh_size = STB.size();
+  SHeader.sh_addralign = 1;
+}
+
+template <class ELFT>
+void ELFState<ELFT>::addSymbols(const std::vector<ELFYAML::Symbol> &Symbols,
+                                std::vector<Elf_Sym> &Syms,
+                                unsigned SymbolBinding) {
   for (const auto &Sym : Symbols) {
     Elf_Sym Symbol;
     zero(Symbol);
     if (!Sym.Name.empty())
-      Symbol.st_name = State.getStringTable().addString(Sym.Name);
+      Symbol.st_name = DotStrtab.addString(Sym.Name);
     Symbol.setBindingAndType(SymbolBinding, Sym.Type);
     if (!Sym.Section.empty()) {
       unsigned Index;
-      if (State.getSN2I().lookupSection(Sym.Section, Index)) {
+      if (SN2I.lookupSection(Sym.Section, Index)) {
         errs() << "error: Unknown section referenced: '" << Sym.Section
                << "' by YAML symbol " << Sym.Name << ".\n";
         exit(1);
@@ -224,75 +308,36 @@ addSymbols(const std::vector<ELFYAML::Symbol> &Symbols, ELFState<ELFT> &State,
   }
 }
 
-template <class ELFT>
-static void
-handleSymtabSectionHeader(const ELFYAML::LocalGlobalWeakSymbols &Symbols,
-                          ELFState<ELFT> &State,
-                          typename object::ELFFile<ELFT>::Elf_Shdr &SHeader,
-                          ContiguousBlobAccumulator &CBA) {
+template <class ELFT> bool ELFState<ELFT>::buildSectionIndex() {
+  SN2I.addName(".symtab", getDotSymTabSecNo());
+  SN2I.addName(".strtab", getDotStrTabSecNo());
+  SN2I.addName(".shstrtab", getDotShStrTabSecNo());
 
-  typedef typename object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
-  SHeader.sh_type = ELF::SHT_SYMTAB;
-  SHeader.sh_link = State.getDotStrTabSecNo();
-  // One greater than symbol table index of the last local symbol.
-  SHeader.sh_info = Symbols.Local.size() + 1;
-  SHeader.sh_entsize = sizeof(Elf_Sym);
-
-  std::vector<Elf_Sym> Syms;
-  {
-    // Ensure STN_UNDEF is present
-    Elf_Sym Sym;
-    zero(Sym);
-    Syms.push_back(Sym);
+  for (unsigned i = 0, e = Doc.Sections.size(); i != e; ++i) {
+    StringRef Name = Doc.Sections[i].Name;
+    if (Name.empty())
+      continue;
+    // "+ 1" to take into account the SHT_NULL entry.
+    if (SN2I.addName(Name, i + 1)) {
+      errs() << "error: Repeated section name: '" << Name
+             << "' at YAML section number " << i << ".\n";
+      return false;
+    }
   }
-  addSymbols(Symbols.Local, State, Syms, ELF::STB_LOCAL);
-  addSymbols(Symbols.Global, State, Syms, ELF::STB_GLOBAL);
-  addSymbols(Symbols.Weak, State, Syms, ELF::STB_WEAK);
-
-  writeArrayData(CBA.getOSAndAlignedOffset(SHeader.sh_offset),
-                 makeArrayRef(Syms));
-  SHeader.sh_size = arrayDataSize(makeArrayRef(Syms));
+  return true;
 }
 
 template <class ELFT>
-static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
-  using namespace llvm::ELF;
-  typedef typename object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
-  typedef typename object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
-
+int ELFState<ELFT>::writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   ELFState<ELFT> State(Doc);
   if (!State.buildSectionIndex())
     return 1;
 
-  const ELFYAML::FileHeader &Hdr = Doc.Header;
-
   Elf_Ehdr Header;
-  zero(Header);
-  Header.e_ident[EI_MAG0] = 0x7f;
-  Header.e_ident[EI_MAG1] = 'E';
-  Header.e_ident[EI_MAG2] = 'L';
-  Header.e_ident[EI_MAG3] = 'F';
-  Header.e_ident[EI_CLASS] = ELFT::Is64Bits ? ELFCLASS64 : ELFCLASS32;
-  bool IsLittleEndian = ELFT::TargetEndianness == support::little;
-  Header.e_ident[EI_DATA] = IsLittleEndian ? ELFDATA2LSB : ELFDATA2MSB;
-  Header.e_ident[EI_VERSION] = EV_CURRENT;
-  Header.e_ident[EI_OSABI] = Hdr.OSABI;
-  Header.e_ident[EI_ABIVERSION] = 0;
-  Header.e_type = Hdr.Type;
-  Header.e_machine = Hdr.Machine;
-  Header.e_version = EV_CURRENT;
-  Header.e_entry = Hdr.Entry;
-  Header.e_flags = Hdr.Flags;
-  Header.e_ehsize = sizeof(Elf_Ehdr);
+  State.initELFHeader(Header);
 
   // TODO: Flesh out section header support.
   // TODO: Program headers.
-
-  Header.e_shentsize = sizeof(Elf_Shdr);
-  // Immediately following the ELF header.
-  Header.e_shoff = sizeof(Header);
-  Header.e_shnum = State.getSectionCount();
-  Header.e_shstrndx = State.getDotShStrTabSecNo();
 
   // XXX: This offset is tightly coupled with the order that we write
   // things to `OS`.
@@ -300,61 +345,26 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
       Header.e_ehsize + Header.e_shentsize * Header.e_shnum;
   ContiguousBlobAccumulator CBA(SectionContentBeginOffset);
 
-  StringTableBuilder SHStrTab;
   std::vector<Elf_Shdr> SHeaders;
-  {
-    // Ensure SHN_UNDEF entry is present. An all-zero section header is a
-    // valid SHN_UNDEF entry since SHT_NULL == 0.
-    Elf_Shdr SHdr;
-    zero(SHdr);
-    SHeaders.push_back(SHdr);
-  }
-  for (const auto &Sec : Doc.Sections) {
-    Elf_Shdr SHeader;
-    zero(SHeader);
-    SHeader.sh_name = SHStrTab.addString(Sec.Name);
-    SHeader.sh_type = Sec.Type;
-    SHeader.sh_flags = Sec.Flags;
-    SHeader.sh_addr = Sec.Address;
-
-    Sec.Content.writeAsBinary(CBA.getOSAndAlignedOffset(SHeader.sh_offset));
-    SHeader.sh_size = Sec.Content.binary_size();
-
-    if (!Sec.Link.empty()) {
-      unsigned Index;
-      if (State.getSN2I().lookupSection(Sec.Link, Index)) {
-        errs() << "error: Unknown section referenced: '" << Sec.Link
-               << "' at YAML section '" << Sec.Name << "'.\n";
-        return 1;
-      }
-      SHeader.sh_link = Index;
-    }
-    SHeader.sh_info = 0;
-    SHeader.sh_addralign = Sec.AddressAlign;
-    SHeader.sh_entsize = 0;
-    SHeaders.push_back(SHeader);
-  }
+  if(!State.initSectionHeaders(SHeaders, CBA))
+    return 1;
 
   // .symtab section.
   Elf_Shdr SymtabSHeader;
-  zero(SymtabSHeader);
-  SymtabSHeader.sh_name = SHStrTab.addString(StringRef(".symtab"));
-  handleSymtabSectionHeader<ELFT>(Doc.Symbols, State, SymtabSHeader, CBA);
+  State.initSymtabSectionHeader(SymtabSHeader, CBA);
   SHeaders.push_back(SymtabSHeader);
 
   // .strtab string table header.
   Elf_Shdr DotStrTabSHeader;
-  zero(DotStrTabSHeader);
-  DotStrTabSHeader.sh_name = SHStrTab.addString(StringRef(".strtab"));
-  createStringTableSectionHeader(DotStrTabSHeader, State.getStringTable(), CBA);
+  State.initStrtabSectionHeader(DotStrTabSHeader, ".strtab", State.DotStrtab,
+                                CBA);
   SHeaders.push_back(DotStrTabSHeader);
 
-  // Section header string table header.
-  Elf_Shdr SHStrTabSHeader;
-  zero(SHStrTabSHeader);
-  SHStrTabSHeader.sh_name = SHStrTab.addString(StringRef(".shstrtab"));
-  createStringTableSectionHeader(SHStrTabSHeader, SHStrTab, CBA);
-  SHeaders.push_back(SHStrTabSHeader);
+  // .shstrtab string table header.
+  Elf_Shdr ShStrTabSHeader;
+  State.initStrtabSectionHeader(ShStrTabSHeader, ".shstrtab", State.DotShStrtab,
+                                CBA);
+  SHeaders.push_back(ShStrTabSHeader);
 
   OS.write((const char *)&Header, sizeof(Header));
   writeArrayData(OS, makeArrayRef(SHeaders));
@@ -385,13 +395,13 @@ int yaml2elf(llvm::raw_ostream &Out, llvm::MemoryBuffer *Buf) {
   typedef ELFType<support::big, 4, false> BE32;
   if (is64Bit(Doc)) {
     if (isLittleEndian(Doc))
-      return writeELF<LE64>(outs(), Doc);
+      return ELFState<LE64>::writeELF(outs(), Doc);
     else
-      return writeELF<BE64>(outs(), Doc);
+      return ELFState<BE64>::writeELF(outs(), Doc);
   } else {
     if (isLittleEndian(Doc))
-      return writeELF<LE32>(outs(), Doc);
+      return ELFState<LE32>::writeELF(outs(), Doc);
     else
-      return writeELF<BE32>(outs(), Doc);
+      return ELFState<BE32>::writeELF(outs(), Doc);
   }
 }
