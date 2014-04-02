@@ -169,7 +169,7 @@ MonitorChildProcessThreadFunction (void *arg)
     const bool monitor_signals = info->monitor_signals;
 
     assert (info->pid <= UINT32_MAX);
-    const ::pid_t pid = monitor_signals ? -1 * info->pid : info->pid;
+    const ::pid_t pid = monitor_signals ? -1 * getpgid(info->pid) : info->pid;
 
     delete info;
 

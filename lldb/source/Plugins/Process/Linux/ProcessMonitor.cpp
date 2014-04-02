@@ -1742,7 +1742,7 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
         int status = -1;
         if (log)
             log->Printf ("ProcessMonitor::%s(bp) waitpid...", __FUNCTION__);
-        lldb::pid_t wait_pid = ::waitpid (-1*m_pid, &status, __WALL);
+        lldb::pid_t wait_pid = ::waitpid (-1*getpgid(m_pid), &status, __WALL);
         if (log)
             log->Printf ("ProcessMonitor::%s(bp) waitpid, pid = %" PRIu64 ", status = %d", __FUNCTION__, wait_pid, status);
 

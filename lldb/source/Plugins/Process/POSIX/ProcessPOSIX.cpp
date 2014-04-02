@@ -379,6 +379,8 @@ ProcessPOSIX::DoDidExec()
 void
 ProcessPOSIX::SendMessage(const ProcessMessage &message)
 {
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
+
     Mutex::Locker lock(m_message_mutex);
 
     Mutex::Locker thread_lock(m_thread_list.GetMutex());
@@ -420,8 +422,14 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
         break;
 
     case ProcessMessage::eExitMessage:
-        assert(thread);
-        thread->SetState(eStateExited);
+        if (thread != nullptr)
+            thread->SetState(eStateExited);
+        else
+        {
+            if (log)
+                log->Warning ("ProcessPOSIX::%s eExitMessage for TID %" PRIu64 " failed to find a thread to mark as eStateExited, ignoring", __FUNCTION__, message.GetTID ());
+        }
+
         // FIXME: I'm not sure we need to do this.
         if (message.GetTID() == GetID())
         {
