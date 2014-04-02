@@ -38,7 +38,7 @@ public:
 
   Resolver(LinkingContext &context)
       : _context(context), _symbolTable(context), _result(new MergedFile()),
-        _haveLLVMObjs(false), _addToFinalSection(false) {}
+        _addToFinalSection(false) {}
 
   // InputFiles::Handler methods
   void doDefinedAtom(const DefinedAtom&);
@@ -71,7 +71,7 @@ private:
   bool resolveUndefines();
   void updateReferences();
   void deadStripOptimize();
-  bool checkUndefines(bool isFinal);
+  bool checkUndefines();
   void removeCoalescedAwayAtoms();
   void checkDylibSymbolCollisions();
   void linkTimeOptimize();
@@ -117,7 +117,6 @@ private:
   std::vector<const Atom *>     _atomsWithUnresolvedReferences;
   llvm::DenseSet<const Atom *>  _liveAtoms;
   std::unique_ptr<MergedFile> _result;
-  bool                          _haveLLVMObjs;
   bool _addToFinalSection;
 };
 

@@ -397,11 +397,7 @@ void Resolver::deadStripOptimize() {
 }
 
 // error out if some undefines remain
-bool Resolver::checkUndefines(bool isFinal) {
-  // when using LTO, undefines are checked after bitcode is optimized
-  if (_haveLLVMObjs && !isFinal)
-    return false;
-
+bool Resolver::checkUndefines() {
   // build vector of remaining undefined symbols
   std::vector<const UndefinedAtom *> undefinedAtoms;
   _symbolTable.undefines(undefinedAtoms);
@@ -466,7 +462,7 @@ bool Resolver::resolve() {
     return false;
   this->updateReferences();
   this->deadStripOptimize();
-  if (this->checkUndefines(false))
+  if (this->checkUndefines())
     if (!_context.allowRemainingUndefines())
       return false;
   this->removeCoalescedAwayAtoms();
