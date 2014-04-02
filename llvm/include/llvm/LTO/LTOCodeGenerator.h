@@ -71,7 +71,6 @@ struct LTOCodeGenerator {
   void setTargetOptions(llvm::TargetOptions options);
   void setDebugInfo(lto_debug_model);
   void setCodePICModel(lto_codegen_model);
-  void setInternalizeStrategy(lto_internalize_strategy);
 
   void setCpu(const char *mCpu) { MCpu = mCpu; }
 
@@ -118,14 +117,6 @@ struct LTOCodeGenerator {
 
   void setDiagnosticHandler(lto_diagnostic_handler_t, void *);
 
-  bool shouldInternalize() const {
-    return InternalizeStrategy != LTO_INTERNALIZE_NONE;
-  }
-
-  bool shouldOnlyInternalizeHidden() const {
-    return InternalizeStrategy == LTO_INTERNALIZE_HIDDEN;
-  }
-
 private:
   void initializeLTOPasses();
 
@@ -154,7 +145,6 @@ private:
   bool EmitDwarfDebugInfo;
   bool ScopeRestrictionsDone;
   lto_codegen_model CodeModel;
-  lto_internalize_strategy InternalizeStrategy;
   StringSet MustPreserveSymbols;
   StringSet AsmUndefinedRefs;
   llvm::MemoryBuffer *NativeObjectFile;
