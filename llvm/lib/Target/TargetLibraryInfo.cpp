@@ -378,7 +378,16 @@ static void initialize(TargetLibraryInfo &TLI, const Triple &T,
       llvm_unreachable("TargetLibraryInfo function names must be sorted");
   }
 #endif // !NDEBUG
-  
+
+  // There are no library implementations of mempcy and memset for r600 and
+  // these can be difficult to lower in the backend.
+  if (T.getArch() == Triple::r600) {
+    TLI.setUnavailable(LibFunc::memcpy);
+    TLI.setUnavailable(LibFunc::memset);
+    TLI.setUnavailable(LibFunc::memset_pattern16);
+    return;
+  }
+
   // memset_pattern16 is only available on iOS 3.0 and Mac OS X 10.5 and later.
   if (T.isMacOSX()) {
     if (T.isMacOSXVersionLT(10, 5))
