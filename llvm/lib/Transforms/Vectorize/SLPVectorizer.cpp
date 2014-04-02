@@ -955,11 +955,11 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
         return;
       }
 
-      Intrinsic::ID ID = II->getIntrinsicID();
+      Function *Int = II->getCalledFunction();
 
       for (unsigned i = 1, e = VL.size(); i != e; ++i) {
         IntrinsicInst *II2 = dyn_cast<IntrinsicInst>(VL[i]);
-        if (!II2 || II2->getIntrinsicID() != ID) {
+        if (!II2 || II2->getCalledFunction() != Int) {
           newTreeEntry(VL, false);
           DEBUG(dbgs() << "SLP: mismatched calls:" << *II << "!=" << *VL[i]
                        << "\n");
