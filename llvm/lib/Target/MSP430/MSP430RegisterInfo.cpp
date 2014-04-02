@@ -88,8 +88,10 @@ BitVector MSP430RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(MSP430::CGW);
 
   // Mark frame pointer as reserved if needed.
-  if (TFI->hasFP(MF))
+  if (TFI->hasFP(MF)) {
+    Reserved.set(MSP430::FPB);
     Reserved.set(MSP430::FPW);
+  }
 
   return Reserved;
 }
