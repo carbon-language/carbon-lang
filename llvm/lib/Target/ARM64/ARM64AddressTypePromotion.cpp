@@ -371,7 +371,7 @@ ARM64AddressTypePromotion::propagateSignExtension(Instructions &SExtInsts) {
     mergeSExts(ValToSExtendedUses, ToRemove);
 
   // Remove all instructions marked as ToRemove.
-  for (auto I: ToRemove)
+  for (Instruction *I: ToRemove)
     I->eraseFromParent();
   return LocalChange;
 }
@@ -383,7 +383,7 @@ void ARM64AddressTypePromotion::mergeSExts(ValueToInsts &ValToSExtendedUses,
   for (auto &Entry: ValToSExtendedUses) {
     Instructions &Insts = Entry.second;
     Instructions CurPts;
-    for (auto Inst : Insts) {
+    for (Instruction *Inst : Insts) {
       if (ToRemove.count(Inst))
         continue;
       bool inserted = false;

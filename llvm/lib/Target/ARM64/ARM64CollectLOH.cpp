@@ -420,7 +420,7 @@ static void reachingDefAlgorithm(MachineFunction *MF,
           BBInSet.insert(PredOutSet.begin(), PredOutSet.end());
         }
         //   insert reachableUses[bb][color] in each in[bb][color] op.reachedses
-        for (const auto MI: BBInSet) {
+        for (const MachineInstr *MI: BBInSet) {
           SetOfMachineInstr &OpReachedUses =
               getUses(ColorOpToReachedUses, CurReg, MI);
           OpReachedUses.insert(BBReachableUses.begin(), BBReachableUses.end());
@@ -635,7 +635,7 @@ static void reachedUsesToDefs(InstrToInstrs &UseToReachingDefs,
       }
     }
   }
-  for (const auto Elem : NotCandidate) {
+  for (const MachineInstr *Elem : NotCandidate) {
     DEBUG(dbgs() << "Too many reaching defs: " << *Elem << "\n");
     // It would have been better if we could just remove the entry
     // from the map.  Because of that, we have to filter the garbage
@@ -916,7 +916,7 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
       if (DefsOfPotentialCandidates.empty()) {
         // lazy init
         DefsOfPotentialCandidates = PotentialCandidates;
-        for (const auto Candidate : PotentialCandidates) {
+        for (const MachineInstr *Candidate : PotentialCandidates) {
           if (!UseToDefs.find(Candidate)->second.empty())
             DefsOfPotentialCandidates.insert(
                 *UseToDefs.find(Candidate)->second.begin());
@@ -1030,7 +1030,7 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
   }
 
   // Now, we grabbed all the big patterns, check ADR opportunities.
-  for (const auto Candidate: PotentialADROpportunities)
+  for (const MachineInstr *Candidate: PotentialADROpportunities)
     registerADRCandidate(Candidate, UseToDefs, DefsPerColorToUses, ARM64FI,
                          InvolvedInLOHs, RegToId);
 }
