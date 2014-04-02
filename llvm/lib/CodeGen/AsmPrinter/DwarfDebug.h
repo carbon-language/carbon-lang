@@ -520,6 +520,9 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Emit visible names into a debug loc section.
   void emitDebugLoc();
 
+  /// \brief Emit visible names into a debug loc dwo section.
+  void emitDebugLocDWO();
+
   /// \brief Emit visible names into a debug aranges section.
   void emitDebugARanges();
 
