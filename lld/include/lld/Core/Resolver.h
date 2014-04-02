@@ -74,7 +74,6 @@ private:
   void removeCoalescedAwayAtoms();
   void checkDylibSymbolCollisions();
   void linkTimeOptimize();
-  void tweakAtoms();
   void forEachUndefines(UndefCallback callback, bool searchForOverrides);
 
   void markLive(const Atom &atom);
