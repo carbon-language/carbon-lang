@@ -1812,7 +1812,12 @@ SDValue ARM64TargetLowering::LowerFP_TO_INT(SDValue Op,
   else
     LC = RTLIB::getFPTOUINT(Op.getOperand(0).getValueType(), Op.getValueType());
 
-  return LowerF128Call(Op, DAG, LC);
+  SmallVector<SDValue, 2> Ops;
+  for (unsigned i = 0, e = Op->getNumOperands(); i != e; ++i)
+    Ops.push_back(Op.getOperand(i));
+
+  return makeLibCall(DAG, LC, Op.getValueType(), &Ops[0], Ops.size(), false,
+                     SDLoc(Op)).first;
 }
 
 static SDValue LowerVectorINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
