@@ -297,7 +297,8 @@ unsigned BasicTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
     return 0;
 
   // If the cast is marked as legal (or promote) then assume low cost.
-  if (TLI->isOperationLegalOrPromote(ISD, DstLT.second))
+  if (SrcLT.first == DstLT.first &&
+      TLI->isOperationLegalOrPromote(ISD, DstLT.second))
     return 1;
 
   // Handle scalar conversions.
