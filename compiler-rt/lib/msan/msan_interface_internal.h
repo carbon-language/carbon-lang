@@ -65,6 +65,9 @@ SANITIZER_INTERFACE_ATTRIBUTE
 sptr __msan_test_shadow(const void *x, uptr size);
 
 SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_check_mem_is_initialized(const void *x, uptr size);
+
+SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_set_origin(const void *a, uptr size, u32 origin);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_set_alloca_origin(void *a, uptr size, const char *descr);

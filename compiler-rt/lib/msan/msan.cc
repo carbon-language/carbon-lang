@@ -383,6 +383,22 @@ sptr __msan_test_shadow(const void *x, uptr size) {
   return -1;
 }
 
+void __msan_check_mem_is_initialized(const void *x, uptr size) {
+  if (!__msan::flags()->report_umrs) return;
+  sptr offset = __msan_test_shadow(x, size) < 0;
+  if (offset < 0)
+    return;
+
+  GET_CALLER_PC_BP_SP;
+  (void)sp;
+  __msan::PrintWarningWithOrigin(pc, bp,
+                                 __msan_get_origin(((char *)x) + offset));
+  if (__msan::flags()->halt_on_error) {
+    Printf("Exiting\n");
+    Die();
+  }
+}
+
 int __msan_set_poison_in_malloc(int do_poison) {
   int old = flags()->poison_in_malloc;
   flags()->poison_in_malloc = do_poison;
