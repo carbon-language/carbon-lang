@@ -5018,6 +5018,8 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
       S += ",C";
     if (PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_retain)
       S += ",&";
+    if (PD->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_weak)
+      S += ",W";
   } else {
     switch (PD->getSetterKind()) {
     case ObjCPropertyDecl::Assign: break;

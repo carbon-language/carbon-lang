@@ -54,3 +54,12 @@
 @implementation UnsafePerson @end
 // CHECK-LP64: L_OBJC_CLASS_NAME_20:
 // CHECK-LP64-NEXT: .asciz      "!"
+
+// rdar://16136439
+@interface rdar16136439
+    @property (nonatomic, readonly, weak) id first;
+@end
+
+@implementation rdar16136439 @end
+// CHECK-LP64: L_OBJC_PROP_NAME_ATTR_29:
+// CHECK-LP64-NEXT: .asciz  "T@,R,W,N,V_first"
