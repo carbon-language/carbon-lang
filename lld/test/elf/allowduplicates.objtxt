@@ -1,8 +1,11 @@
-# RUN: lld -flavor gnu -target x86_64 --allow-multiple-definition -r %s \
-# RUN:     --output-filetype=yaml | FileCheck %s
+# RUN: lld -flavor gnu -target x86_64 --allow-multiple-definition %s \
+# RUN:     --output-filetype=yaml --noinhibit-exec | FileCheck %s
 #
-# RUN: not lld -flavor gnu -target x86_64 -r %s --output-filetype=yaml 2>&1 \
-# RUN:   | FileCheck -check-prefix=ERROR %s
+# RUN: not lld -flavor gnu -target x86_64 %s --output-filetype=yaml \
+# RUN: --noinhibit-exec 2>&1 | FileCheck -check-prefix=ERROR %s
+#
+# RUN: lld -flavor gnu -target x86_64 -z muldefs %s \
+# RUN: --noinhibit-exec --output-filetype=yaml | FileCheck %s
 
 ---
 defined-atoms:

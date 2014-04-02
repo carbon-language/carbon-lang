@@ -440,6 +440,16 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       groupStack.pop();
       break;
 
+    case OPT_z: {
+      StringRef extOpt = inputArg->getValue();
+      if (extOpt == "muldefs")
+        ctx->setAllowDuplicates(true);
+      else
+        diagnostics << "warning: ignoring unknown argument for -z: " << extOpt
+                    << "\n";
+      break;
+    }
+
     case OPT_INPUT:
     case OPT_l: {
       bool isDashlPrefix = (inputArg->getOption().getID() == OPT_l);
