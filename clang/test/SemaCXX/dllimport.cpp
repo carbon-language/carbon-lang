@@ -80,7 +80,7 @@ __declspec(dllimport) extern int GlobalRedecl4; // expected-error{{redeclaration
 // External linkage is required.
 __declspec(dllimport) static int StaticGlobal; // expected-error{{'StaticGlobal' must have external linkage when declared 'dllimport'}}
 __declspec(dllimport) Internal InternalTypeGlobal; // expected-error{{'InternalTypeGlobal' must have external linkage when declared 'dllimport'}}
-namespace    { __declspec(dllimport) int InternalGlobal; } // expected-error{{'<anonymous namespace>::InternalGlobal' must have external linkage when declared 'dllimport'}}
+namespace    { __declspec(dllimport) int InternalGlobal; } // expected-error{{'(anonymous namespace)::InternalGlobal' must have external linkage when declared 'dllimport'}}
 namespace ns { __declspec(dllimport) int ExternalGlobal; }
 
 __declspec(dllimport) auto InternalAutoTypeGlobal = Internal(); // expected-error{{'InternalAutoTypeGlobal' must have external linkage when declared 'dllimport'}}
@@ -158,7 +158,7 @@ __declspec(dllimport) void* operator new(__SIZE_TYPE__ n);
 // External linkage is required.
 __declspec(dllimport) static int staticFunc(); // expected-error{{'staticFunc' must have external linkage when declared 'dllimport'}}
 __declspec(dllimport) Internal internalRetFunc(); // expected-error{{'internalRetFunc' must have external linkage when declared 'dllimport'}}
-namespace    { __declspec(dllimport) void internalFunc(); } // expected-error{{'<anonymous namespace>::internalFunc' must have external linkage when declared 'dllimport'}}
+namespace    { __declspec(dllimport) void internalFunc(); } // expected-error{{'(anonymous namespace)::internalFunc' must have external linkage when declared 'dllimport'}}
 namespace ns { __declspec(dllimport) void externalFunc(); }
 
 
@@ -199,7 +199,7 @@ template<typename T> __declspec(dllimport) void funcTmplFriend4(); // expected-e
 // External linkage is required.
 template<typename T> __declspec(dllimport) static int staticFuncTmpl(); // expected-error{{'staticFuncTmpl' must have external linkage when declared 'dllimport'}}
 template<typename T> __declspec(dllimport) Internal internalRetFuncTmpl(); // expected-error{{'internalRetFuncTmpl' must have external linkage when declared 'dllimport'}}
-namespace    { template<typename T> __declspec(dllimport) void internalFuncTmpl(); } // expected-error{{'<anonymous namespace>::internalFuncTmpl' must have external linkage when declared 'dllimport'}}
+namespace    { template<typename T> __declspec(dllimport) void internalFuncTmpl(); } // expected-error{{'(anonymous namespace)::internalFuncTmpl' must have external linkage when declared 'dllimport'}}
 namespace ns { template<typename T> __declspec(dllimport) void externalFuncTmpl(); }
 
 
