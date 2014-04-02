@@ -2943,6 +2943,15 @@ TEST(DeclarationStatement, MatchesVariableDeclarationStatements) {
   EXPECT_TRUE(matches("void x() { int a; }", declStmt()));
 }
 
+TEST(ExprWithCleanups, MatchesExprWithCleanups) {
+  EXPECT_TRUE(matches("struct Foo { ~Foo(); };"
+                      "const Foo f = Foo();",
+                      varDecl(hasInitializer(exprWithCleanups()))));
+  EXPECT_FALSE(matches("struct Foo { };"
+                      "const Foo f = Foo();",
+                      varDecl(hasInitializer(exprWithCleanups()))));
+}
+
 TEST(InitListExpression, MatchesInitListExpression) {
   EXPECT_TRUE(matches("int a[] = { 1, 2 };",
                       initListExpr(hasType(asString("int [2]")))));

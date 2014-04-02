@@ -662,6 +662,16 @@ const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   CXXMemberCallExpr> memberCallExpr;
 
+/// \brief Matches expressions that introduce cleanups to be run at the end
+/// of the sub-expression's evaluation.
+///
+/// Example matches std::string()
+/// \code
+///   const std::string str = std::string();
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<Stmt, ExprWithCleanups>
+exprWithCleanups;
+
 /// \brief Matches init list expressions.
 ///
 /// Given
