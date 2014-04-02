@@ -10,7 +10,7 @@
 // CHECK: private unnamed_addr constant [122 x i8] c"static void ClassWithTemplateTemplateParam<char, NS::ClassTemplate>::staticMember() [T = char, Param = NS::ClassTemplate]\00"
 // CHECK: private unnamed_addr constant [106 x i8] c"void OuterClass<int *>::MiddleClass::InnerClass<float>::memberFunction(T, U) const [T = int *, U = float]\00"
 // CHECK: private unnamed_addr constant [51 x i8] c"void functionTemplateWithCapturedStmt(T) [T = int]\00"
-// CHECK: private unnamed_addr constant [76 x i8] c"auto functionTemplateWithLambda(int)::<anonymous class>::operator()() const\00"
+// CHECK: private unnamed_addr constant [76 x i8] c"auto functionTemplateWithLambda(int)::(anonymous class)::operator()() const\00"
 // CHECK: private unnamed_addr constant [65 x i8] c"void functionTemplateWithUnnamedTemplateParameter(T) [T = float]\00"
 
 // CHECK: private unnamed_addr constant [60 x i8] c"void functionTemplateExplicitSpecialization(T) [T = double]\00"
@@ -28,13 +28,13 @@
 // CHECK: private unnamed_addr constant [46 x i8] c"void NS::Base::functionTemplate1(T) [T = int]\00"
 
 // CHECK: private unnamed_addr constant [23 x i8] c"anonymousUnionFunction\00"
-// CHECK: private unnamed_addr constant [83 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous union>::anonymousUnionFunction()\00"
+// CHECK: private unnamed_addr constant [83 x i8] c"void NS::ContainerForAnonymousRecords::(anonymous union)::anonymousUnionFunction()\00"
 
 // CHECK: private unnamed_addr constant [24 x i8] c"anonymousStructFunction\00"
-// CHECK: private unnamed_addr constant [85 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous struct>::anonymousStructFunction()\00"
+// CHECK: private unnamed_addr constant [85 x i8] c"void NS::ContainerForAnonymousRecords::(anonymous struct)::anonymousStructFunction()\00"
 
 // CHECK: private unnamed_addr constant [23 x i8] c"anonymousClassFunction\00"
-// CHECK: private unnamed_addr constant [83 x i8] c"void NS::ContainerForAnonymousRecords::<anonymous class>::anonymousClassFunction()\00"
+// CHECK: private unnamed_addr constant [83 x i8] c"void NS::ContainerForAnonymousRecords::(anonymous class)::anonymousClassFunction()\00"
 
 // CHECK: private unnamed_addr constant [12 x i8] c"~Destructor\00"
 // CHECK: private unnamed_addr constant [30 x i8] c"NS::Destructor::~Destructor()\00"
@@ -93,7 +93,7 @@
 // CHECK: private unnamed_addr constant [59 x i8] c"void ClassInTopLevelNamespace::topLevelNamespaceFunction()\00"
 
 // CHECK: private unnamed_addr constant [27 x i8] c"anonymousNamespaceFunction\00"
-// CHECK: private unnamed_addr constant [84 x i8] c"void <anonymous namespace>::ClassInAnonymousNamespace::anonymousNamespaceFunction()\00"
+// CHECK: private unnamed_addr constant [84 x i8] c"void (anonymous namespace)::ClassInAnonymousNamespace::anonymousNamespaceFunction()\00"
 
 // CHECK: private unnamed_addr constant [19 x i8] c"localClassFunction\00"
 // CHECK: private unnamed_addr constant [59 x i8] c"void NS::localClass(int)::LocalClass::localClassFunction()\00"

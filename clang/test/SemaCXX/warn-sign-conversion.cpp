@@ -25,23 +25,23 @@ namespace test1 {
     int c1 = 1 ? i : Foo<bool>::C;
     int c2 = 1 ? Foo<bool>::C : i;
 
-    int d1a = 1 ? i : Foo<bool>::D; // expected-warning {{test1::Foo<bool>::<anonymous enum at }}
-    int d1b = 1 ? i : Foo<bool>::D; // expected-warning {{warn-sign-conversion.cpp:13:5>' to 'int'}}
-    int d2a = 1 ? Foo<bool>::D : i; // expected-warning {{operand of ? changes signedness: 'test1::Foo<bool>::<anonymous enum at }}
-    int d2b = 1 ? Foo<bool>::D : i; // expected-warning {{warn-sign-conversion.cpp:13:5>' to 'int'}}
-    int d3a = 1 ? B : Foo<bool>::D; // expected-warning {{operand of ? changes signedness: 'test1::Foo<bool>::<anonymous enum at }}
-    int d3b = 1 ? B : Foo<bool>::D; // expected-warning {{warn-sign-conversion.cpp:13:5>' to 'int'}}
-    int d4a = 1 ? Foo<bool>::D : B; // expected-warning {{operand of ? changes signedness: 'test1::Foo<bool>::<anonymous enum at }}
-    int d4b = 1 ? Foo<bool>::D : B; // expected-warning {{warn-sign-conversion.cpp:13:5>' to 'int'}}
+    int d1a = 1 ? i : Foo<bool>::D; // expected-warning {{test1::Foo<bool>::(anonymous enum at }}
+    int d1b = 1 ? i : Foo<bool>::D; // expected-warning {{warn-sign-conversion.cpp:13:5)' to 'int'}}
+    int d2a = 1 ? Foo<bool>::D : i; // expected-warning {{operand of ? changes signedness: 'test1::Foo<bool>::(anonymous enum at }}
+    int d2b = 1 ? Foo<bool>::D : i; // expected-warning {{warn-sign-conversion.cpp:13:5)' to 'int'}}
+    int d3a = 1 ? B : Foo<bool>::D; // expected-warning {{operand of ? changes signedness: 'test1::Foo<bool>::(anonymous enum at }}
+    int d3b = 1 ? B : Foo<bool>::D; // expected-warning {{warn-sign-conversion.cpp:13:5)' to 'int'}}
+    int d4a = 1 ? Foo<bool>::D : B; // expected-warning {{operand of ? changes signedness: 'test1::Foo<bool>::(anonymous enum at }}
+    int d4b = 1 ? Foo<bool>::D : B; // expected-warning {{warn-sign-conversion.cpp:13:5)' to 'int'}}
 
-    int e1a = 1 ? i : E; // expected-warning {{operand of ? changes signedness: 'test1::<anonymous enum at }}
-    int e1b = 1 ? i : E; // expected-warning {{warn-sign-conversion.cpp:16:3>' to 'int'}}
-    int e2a = 1 ? E : i; // expected-warning {{operand of ? changes signedness: 'test1::<anonymous enum at }}
-    int e2b = 1 ? E : i; // expected-warning {{warn-sign-conversion.cpp:16:3>' to 'int'}}
-    int e3a = 1 ? E : B; // expected-warning {{operand of ? changes signedness: 'test1::<anonymous enum at }}
-    int e3b = 1 ? E : B; // expected-warning {{warn-sign-conversion.cpp:16:3>' to 'int'}}
-    int e4a = 1 ? B : E; // expected-warning {{operand of ? changes signedness: 'test1::<anonymous enum at }}
-    int e4b = 1 ? B : E; // expected-warning {{warn-sign-conversion.cpp:16:3>' to 'int'}}
+    int e1a = 1 ? i : E; // expected-warning {{operand of ? changes signedness: 'test1::(anonymous enum at }}
+    int e1b = 1 ? i : E; // expected-warning {{warn-sign-conversion.cpp:16:3)' to 'int'}}
+    int e2a = 1 ? E : i; // expected-warning {{operand of ? changes signedness: 'test1::(anonymous enum at }}
+    int e2b = 1 ? E : i; // expected-warning {{warn-sign-conversion.cpp:16:3)' to 'int'}}
+    int e3a = 1 ? E : B; // expected-warning {{operand of ? changes signedness: 'test1::(anonymous enum at }}
+    int e3b = 1 ? E : B; // expected-warning {{warn-sign-conversion.cpp:16:3)' to 'int'}}
+    int e4a = 1 ? B : E; // expected-warning {{operand of ? changes signedness: 'test1::(anonymous enum at }}
+    int e4b = 1 ? B : E; // expected-warning {{warn-sign-conversion.cpp:16:3)' to 'int'}}
   }
 }
 

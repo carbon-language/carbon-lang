@@ -345,7 +345,7 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
                              raw_ostream &Out) const {
   switch (getKind()) {
   case Null:
-    Out << "<no value>";
+    Out << "(no value)";
     break;
     
   case Type: {
@@ -362,7 +362,7 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
       // FIXME: distinguish between pointer and reference args?
       ND->printQualifiedName(Out);
     } else {
-      Out << "<anonymous>";
+      Out << "(anonymous)";
     }
     break;
   }

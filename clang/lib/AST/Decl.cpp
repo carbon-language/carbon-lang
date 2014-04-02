@@ -1303,12 +1303,12 @@ void NamedDecl::printQualifiedName(raw_ostream &OS,
                                                             P);
     } else if (const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(*I)) {
       if (ND->isAnonymousNamespace())
-        OS << "<anonymous namespace>";
+        OS << "(anonymous namespace)";
       else
         OS << *ND;
     } else if (const RecordDecl *RD = dyn_cast<RecordDecl>(*I)) {
       if (!RD->getIdentifier())
-        OS << "<anonymous " << RD->getKindName() << '>';
+        OS << "(anonymous " << RD->getKindName() << ')';
       else
         OS << *RD;
     } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(*I)) {
@@ -1341,7 +1341,7 @@ void NamedDecl::printQualifiedName(raw_ostream &OS,
   if (getDeclName())
     OS << *this;
   else
-    OS << "<anonymous>";
+    OS << "(anonymous)";
 }
 
 void NamedDecl::getNameForDiagnostic(raw_ostream &OS,

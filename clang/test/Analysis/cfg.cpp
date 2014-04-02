@@ -51,7 +51,7 @@ void checkWrap(int i) {
 // CHECK-NEXT: CXXConstructExpr
 // CHECK-NEXT:   9: struct standalone myStandalone;
 // CHECK-NEXT: CXXConstructExpr
-// CHECK-NEXT:  11: struct <anonymous struct at {{.*}}> myAnon;
+// CHECK-NEXT:  11: struct (anonymous struct at {{.*}}) myAnon;
 // CHECK-NEXT: CXXConstructExpr
 // CHECK-NEXT:  13: struct named myNamed;
 // CHECK-NEXT:   Preds (1): B2

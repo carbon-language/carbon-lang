@@ -22,7 +22,7 @@ using namespace xx;
 using namespace yy;
 
 void foo() {
-  int i; // expected-warning {{declaration shadows a variable in namespace '<anonymous>'}}
+  int i; // expected-warning {{declaration shadows a variable in namespace '(anonymous)'}}
   int j; // expected-warning {{declaration shadows a variable in namespace 'one::two'}}
   int m;
 }

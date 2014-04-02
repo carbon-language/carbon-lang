@@ -417,6 +417,6 @@ void *getA() {
   return (void*)new A();
 }
 // CHECK: define internal x86_thiscallcc void @"\01??_GA@?A@@UAEPAXI@Z"
-// CHECK:               (%"struct.<anonymous namespace>::A"* %this, i32 %should_call_delete)
+// CHECK:               (%"struct.(anonymous namespace)::A"* %this, i32 %should_call_delete)
 // CHECK: define internal x86_thiscallcc void @"\01??1A@?A@@UAE@XZ"
-// CHECK:               (%"struct.<anonymous namespace>::A"* %this)
+// CHECK:               (%"struct.(anonymous namespace)::A"* %this)

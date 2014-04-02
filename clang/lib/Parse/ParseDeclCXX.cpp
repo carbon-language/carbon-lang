@@ -2517,7 +2517,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
             << /*ErrorType=*/6
             << (isa<NamedDecl>(TagDecl)
                   ? cast<NamedDecl>(TagDecl)->getQualifiedNameAsString()
-                  : "<anonymous>");
+                  : "(anonymous)");
         }
         break;
       }

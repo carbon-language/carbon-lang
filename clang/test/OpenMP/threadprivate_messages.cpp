@@ -99,9 +99,9 @@ static __thread int t; // expected-note {{'t' defined here}}
 int o; // expected-note {{candidate found by name lookup is 'o'}}
 #pragma omp threadprivate (o)
 namespace {
-int o; // expected-note {{candidate found by name lookup is '<anonymous namespace>::o'}}
+int o; // expected-note {{candidate found by name lookup is '(anonymous namespace)::o'}}
 #pragma omp threadprivate (o)
-#pragma omp threadprivate (o) // expected-error {{'#pragma omp threadprivate' must precede all references to variable '<anonymous namespace>::o'}}
+#pragma omp threadprivate (o) // expected-error {{'#pragma omp threadprivate' must precede all references to variable '(anonymous namespace)::o'}}
 }
 #pragma omp threadprivate (o) // expected-error {{reference to 'o' is ambiguous}}
 #pragma omp threadprivate (::o) // expected-error {{'#pragma omp threadprivate' must precede all references to variable 'o'}}

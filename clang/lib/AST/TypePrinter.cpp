@@ -848,7 +848,7 @@ void TypePrinter::AppendScope(DeclContext *DC, raw_ostream &OS) {
     if (NS->getIdentifier())
       OS << NS->getName() << "::";
     else
-      OS << "<anonymous namespace>::";
+      OS << "(anonymous namespace)::";
   } else if (ClassTemplateSpecializationDecl *Spec
                = dyn_cast<ClassTemplateSpecializationDecl>(DC)) {
     IncludeStrongLifetimeRAII Strong(Policy);
@@ -900,13 +900,13 @@ void TypePrinter::printTag(TagDecl *D, raw_ostream &OS) {
     OS << Typedef->getIdentifier()->getName();
   } else {
     // Make an unambiguous representation for anonymous types, e.g.
-    //   <anonymous enum at /usr/include/string.h:120:9>
+    //   (anonymous enum at /usr/include/string.h:120:9)
     
     if (isa<CXXRecordDecl>(D) && cast<CXXRecordDecl>(D)->isLambda()) {
-      OS << "<lambda";
+      OS << "(lambda";
       HasKindDecoration = true;
     } else {
-      OS << "<anonymous";
+      OS << "(anonymous";
     }
     
     if (Policy.AnonymousTagLocations) {
@@ -925,7 +925,7 @@ void TypePrinter::printTag(TagDecl *D, raw_ostream &OS) {
       }
     }
     
-    OS << '>';
+    OS << ')';
   }
 
   // If this is a class template specialization, print the template

@@ -2515,7 +2515,7 @@ DeclResult Sema::ActOnVarTemplateSpecialization(
                 << Param->getDeclName();
           else
             Diag(Param->getLocation(), diag::note_partial_spec_unused_parameter)
-                << "<anonymous>";
+                << "(anonymous)";
         }
       }
     }
@@ -6115,7 +6115,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
           else
             Diag(Param->getLocation(),
                  diag::note_partial_spec_unused_parameter)
-              << "<anonymous>";
+              << "(anonymous)";
         }
       }
     }

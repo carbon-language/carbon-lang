@@ -381,7 +381,7 @@ namespace test10 {
 
 // Checks from test3:
 
-  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::<anonymous namespace>::D"* %this) unnamed_addr
+  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::(anonymous namespace)::D"* %this) unnamed_addr
   // CHECK: invoke void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW:#[0-9]+]]
   // CHECK: ret void
@@ -405,7 +405,7 @@ namespace test10 {
   // CHECK: call void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK: ret void
 
-  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
+  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD2Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
   // CHECK: invoke void @_ZN5test31BD2Ev(
   // CHECK: call void @_ZN5test31AD2Ev(
   // CHECK: ret void
@@ -413,7 +413,7 @@ namespace test10 {
   // CHECK: declare void @_ZN5test31BD2Ev(
   // CHECK: declare void @_ZN5test31AD2Ev(
 
-  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::<anonymous namespace>::C"* %this) unnamed_addr
+  // CHECK-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
   // CHECK: invoke void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK: ret void
