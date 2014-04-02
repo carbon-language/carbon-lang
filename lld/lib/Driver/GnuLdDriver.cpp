@@ -143,14 +143,14 @@ static bool parseDefsymOption(StringRef opt, StringRef &sym, uint64_t &addr) {
 }
 
 llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
-  if (!_isDashlPrefix)
+  if (!_attributes._isDashlPrefix)
     return _path;
   return _elfLinkingContext.searchLibrary(_path);
 }
 
 std::string ELFFileNode::errStr(error_code errc) {
   if (errc == llvm::errc::no_such_file_or_directory) {
-    if (_isDashlPrefix)
+    if (_attributes._isDashlPrefix)
       return (Twine("Unable to find library -l") + _path).str();
     return (Twine("Unable to find file ") + _path).str();
   }
@@ -268,12 +268,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   std::unique_ptr<InputGraph> inputGraph(new InputGraph());
   std::stack<Group *> groupStack;
 
-  // Positional options for an Input File
-  bool isWholeArchive = false;
-  bool asNeeded = false;
-  bool _outputOptionSet = false;
+  ELFFileNode::Attributes attributes;
 
   int index = 0;
+  bool _outputOptionSet = false;
 
   // Ignore unknown arguments.
   for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
@@ -403,19 +401,19 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
 
     case OPT_no_whole_archive:
-      isWholeArchive = false;
+      attributes.setWholeArchive(false);
       break;
 
     case OPT_whole_archive:
-      isWholeArchive = true;
+      attributes.setWholeArchive(true);
       break;
 
     case OPT_as_needed:
-      asNeeded = true;
+      attributes.setAsNeeded(true);
       break;
 
     case OPT_no_as_needed:
-      asNeeded = false;
+      attributes.setAsNeeded(false);
       break;
 
     case OPT_defsym: {
@@ -453,6 +451,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     case OPT_INPUT:
     case OPT_l: {
       bool isDashlPrefix = (inputArg->getOption().getID() == OPT_l);
+      attributes.setDashlPrefix(isDashlPrefix);
       bool isELFFileNode = true;
       StringRef userPath = inputArg->getValue();
       std::string resolvedInputPath = userPath;
@@ -481,8 +480,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
         isELFFileNode = false;
       FileNode *inputNode = nullptr;
       if (isELFFileNode)
-        inputNode = new ELFFileNode(*ctx, userPath, index++, isWholeArchive,
-                                    asNeeded, isDashlPrefix);
+        inputNode = new ELFFileNode(*ctx, userPath, index++, attributes);
       else {
         inputNode = new ELFGNULdScript(*ctx, resolvedInputPath, index++);
         ec = inputNode->parse(*ctx, diagnostics);

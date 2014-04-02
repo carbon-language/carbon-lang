@@ -28,12 +28,30 @@ namespace lld {
 /// \brief Represents a ELF File
 class ELFFileNode : public FileNode {
 public:
-  ELFFileNode(ELFLinkingContext &ctx, StringRef path, int64_t ordinal = -1,
-              bool isWholeArchive = false, bool asNeeded = false,
-              bool dashlPrefix = false)
+  /// \brief The attributes class provides a way for a input file to look into
+  /// all the positional attributes that were specified in the command line.
+  /// There are few positional operators and the number of arguments to the
+  /// ELFFileNode class keeps growing. This achieves code to be clean as well.
+  class Attributes {
+  public:
+    Attributes()
+        : _isWholeArchive(false), _asNeeded(false), _isDashlPrefix(false) {}
+    void setWholeArchive(bool isWholeArchive) {
+      _isWholeArchive = isWholeArchive;
+    }
+    void setAsNeeded(bool asNeeded) { _asNeeded = asNeeded; }
+    void setDashlPrefix(bool isDashlPrefix) { _isDashlPrefix = isDashlPrefix; }
+
+  public:
+    bool _isWholeArchive;
+    bool _asNeeded;
+    bool _isDashlPrefix;
+  };
+
+  ELFFileNode(ELFLinkingContext &ctx, StringRef path, int64_t ordinal,
+              Attributes &attributes)
       : FileNode(path, ordinal), _elfLinkingContext(ctx),
-        _isWholeArchive(isWholeArchive), _asNeeded(asNeeded),
-        _isDashlPrefix(dashlPrefix) {}
+        _attributes(attributes) {}
 
   ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
 
@@ -50,9 +68,9 @@ public:
                 << "Attributes : "
                 << "\n"
                 << "  - wholeArchive : "
-                << ((_isWholeArchive) ? "true" : "false") << "\n"
-                << "  - asNeeded : " << ((_asNeeded) ? "true" : "false")
-                << "\n";
+                << ((_attributes._isWholeArchive) ? "true" : "false") << "\n"
+                << "  - asNeeded : "
+                << ((_attributes._asNeeded) ? "true" : "false") << "\n";
     return true;
   }
 
@@ -66,7 +84,8 @@ public:
   /// reset the next file index to 0 only if the node is an archive library or
   /// a shared library
   void resetNextIndex() override {
-    if ((!_isWholeArchive && (_files[0]->kind() == File::kindArchiveLibrary)) ||
+    if ((!_attributes._isWholeArchive &&
+         (_files[0]->kind() == File::kindArchiveLibrary)) ||
         (_files[0]->kind() == File::kindSharedLibrary)) {
       _nextFileIndex = 0;
     }
@@ -86,10 +105,8 @@ public:
 private:
   llvm::BumpPtrAllocator _alloc;
   const ELFLinkingContext &_elfLinkingContext;
-  bool _isWholeArchive;
-  bool _asNeeded;
-  bool _isDashlPrefix;
   std::unique_ptr<const ArchiveLibraryFile> _archiveFile;
+  const Attributes _attributes;
 };
 
 /// \brief Parse GNU Linker scripts.

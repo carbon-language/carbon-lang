@@ -25,7 +25,7 @@ error_code ELFFileNode::parse(const LinkingContext &ctx,
   if (ctx.logInputFiles())
     diagnostics << *filePath << "\n";
 
-  if (_isWholeArchive) {
+  if (_attributes._isWholeArchive) {
     std::vector<std::unique_ptr<File>> parsedFiles;
     error_code ec = ctx.registry().parseFile(_buffer, parsedFiles);
     if (ec)
@@ -75,6 +75,7 @@ error_code GNULdScript::parse(const LinkingContext &ctx,
 error_code ELFGNULdScript::parse(const LinkingContext &ctx,
                                  raw_ostream &diagnostics) {
   int64_t index = 0;
+  ELFFileNode::Attributes attributes;
   if (error_code ec = GNULdScript::parse(ctx, diagnostics))
     return ec;
   for (const auto &c : _linkerScript->_commands) {
@@ -82,9 +83,10 @@ error_code ELFGNULdScript::parse(const LinkingContext &ctx,
       std::unique_ptr<Group> groupStart(new Group(index++));
       for (auto &path : group->getPaths()) {
         // TODO : Propagate Set WholeArchive/dashlPrefix
+        attributes.setAsNeeded(path._asNeeded);
         auto inputNode = new ELFFileNode(
             _elfLinkingContext, _elfLinkingContext.allocateString(path._path),
-            index++, false, path._asNeeded, false);
+            index++, attributes);
         std::unique_ptr<InputElement> inputFile(inputNode);
         cast<Group>(groupStart.get())->addFile(
             std::move(inputFile));
