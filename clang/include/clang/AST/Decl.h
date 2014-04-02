@@ -1930,6 +1930,8 @@ public:
 
   bool isInlineDefinitionExternallyVisible() const;
 
+  bool isMSExternInline() const;
+
   bool doesDeclarationForceExternallyVisibleDefinition() const;
 
   /// isOverloadedOperator - Whether this function declaration

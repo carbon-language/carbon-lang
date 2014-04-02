@@ -589,7 +589,7 @@ CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
   // explicit instantiations can occur in multiple translation units
   // and must all be equivalent. However, we are not allowed to
   // throw away these explicit instantiations.
-  if (Linkage == GVA_ExplicitTemplateInstantiation)
+  if (Linkage == GVA_StrongODR)
     return !Context.getLangOpts().AppleKext
              ? llvm::Function::WeakODRLinkage
              : llvm::Function::ExternalLinkage;
@@ -1948,8 +1948,7 @@ CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D, bool isConstant) {
       return llvm::GlobalVariable::WeakODRLinkage;
     else
       return llvm::GlobalVariable::WeakAnyLinkage;
-  } else if (Linkage == GVA_TemplateInstantiation ||
-             Linkage == GVA_ExplicitTemplateInstantiation)
+  } else if (Linkage == GVA_TemplateInstantiation || Linkage == GVA_StrongODR)
     return llvm::GlobalVariable::WeakODRLinkage;
   else if (!getLangOpts().CPlusPlus && 
            ((!CodeGenOpts.NoCommon && !D->hasAttr<NoCommonAttr>()) ||

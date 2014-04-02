@@ -63,7 +63,7 @@ enum GVALinkage {
   GVA_CXXInline,
   GVA_StrongExternal,
   GVA_TemplateInstantiation,
-  GVA_ExplicitTemplateInstantiation
+  GVA_StrongODR
 };
 
 inline bool isExternallyVisible(Linkage L) {

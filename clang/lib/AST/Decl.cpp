@@ -2546,6 +2546,37 @@ unsigned FunctionDecl::getMinRequiredArguments() const {
   return NumRequiredArgs;
 }
 
+/// \brief The combination of the extern and inline keywords under MSVC forces
+/// the function to be required.
+///
+/// Note: This function assumes that we will only get called when isInlined()
+/// would return true for this FunctionDecl.
+bool FunctionDecl::isMSExternInline() const {
+  assert(isInlined() && "expected to get called on an inlined function!");
+
+  const ASTContext &Context = getASTContext();
+  if (!Context.getLangOpts().MSVCCompat)
+    return false;
+
+  for (const FunctionDecl *FD = this; FD; FD = FD->getPreviousDecl())
+    if (FD->getStorageClass() == SC_Extern)
+      return true;
+
+  return false;
+}
+
+static bool redeclForcesDefMSVC(const FunctionDecl *Redecl) {
+  if (Redecl->getStorageClass() != SC_Extern)
+    return false;
+
+  for (const FunctionDecl *FD = Redecl->getPreviousDecl(); FD;
+       FD = FD->getPreviousDecl())
+    if (FD->getStorageClass() == SC_Extern)
+      return false;
+
+  return true;
+}
+
 static bool RedeclForcesDefC99(const FunctionDecl *Redecl) {
   // Only consider file-scope declarations in this test.
   if (!Redecl->getLexicalDeclContext()->isTranslationUnit())
@@ -2565,7 +2596,7 @@ static bool RedeclForcesDefC99(const FunctionDecl *Redecl) {
 /// \brief For a function declaration in C or C++, determine whether this
 /// declaration causes the definition to be externally visible.
 ///
-/// Specifically, this determines if adding the current declaration to the set
+/// For instance, this determines if adding the current declaration to the set
 /// of redeclarations of the given functions causes
 /// isInlineDefinitionExternallyVisible to change from false to true.
 bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
@@ -2573,6 +2604,13 @@ bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
          "Must have a declaration without a body.");
 
   ASTContext &Context = getASTContext();
+
+  if (Context.getLangOpts().MSVCCompat) {
+    const FunctionDecl *Definition;
+    if (hasBody(Definition) && Definition->isInlined() &&
+        redeclForcesDefMSVC(this))
+      return true;
+  }
 
   if (Context.getLangOpts().GNUInline || hasAttr<GNUInlineAttr>()) {
     // With GNU inlining, a declaration with 'inline' but not 'extern', forces

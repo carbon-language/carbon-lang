@@ -53,12 +53,13 @@
 
 // RUN: echo "MS C Mode tests:"
 // RUN: %clang_cc1 %s -triple i386-unknown-unknown -O1 -disable-llvm-optzns -emit-llvm -o - -std=c99 -fms-compatibility | FileCheck %s --check-prefix=CHECK4
+// CHECK4-LABEL: define weak_odr i32 @ei()
 // CHECK4-LABEL: define i32 @bar()
+// CHECK4-NOT: unreferenced1
+// CHECK4-LABEL: define weak_odr void @unreferenced2()
 // CHECK4-LABEL: define void @gnu_inline()
 // CHECK4-LABEL: define available_externally void @gnu_ei_inline()
 // CHECK4-LABEL: define linkonce_odr i32 @foo()
-// CHECK4-NOT: unreferenced
-// CHECK4-LABEL: define linkonce_odr i32 @ei()
 
 extern __inline int ei() { return 123; }
 
