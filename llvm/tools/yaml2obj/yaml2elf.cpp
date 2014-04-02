@@ -156,23 +156,16 @@ class ELFState {
   StringTableBuilder DotStrtab;
   /// \brief The section number of the ".strtab" section.
   unsigned DotStrtabSecNo;
-  /// \brief The accumulated contents of all sections so far.
-  ContiguousBlobAccumulator &SectionContentAccum;
   typedef typename object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
 
   SectionNameToIdxMap &SN2I;
 
 public:
-  ELFState(ContiguousBlobAccumulator &Accum, unsigned DotStrtabSecNo_,
-           SectionNameToIdxMap &SN2I_)
-      : DotStrtab(), DotStrtabSecNo(DotStrtabSecNo_),
-        SectionContentAccum(Accum), SN2I(SN2I_) {}
+  ELFState(unsigned DotStrtabSecNo_, SectionNameToIdxMap &SN2I_)
+      : DotStrtab(), DotStrtabSecNo(DotStrtabSecNo_), SN2I(SN2I_) {}
 
   unsigned getDotStrTabSecNo() const { return DotStrtabSecNo; }
   StringTableBuilder &getStringTable() { return DotStrtab; }
-  ContiguousBlobAccumulator &getSectionContentAccum() {
-    return SectionContentAccum;
-  }
   SectionNameToIdxMap &getSN2I() { return SN2I; }
 };
 } // end anonymous namespace
@@ -211,7 +204,8 @@ template <class ELFT>
 static void
 handleSymtabSectionHeader(const ELFYAML::LocalGlobalWeakSymbols &Symbols,
                           ELFState<ELFT> &State,
-                          typename object::ELFFile<ELFT>::Elf_Shdr &SHeader) {
+                          typename object::ELFFile<ELFT>::Elf_Shdr &SHeader,
+                          ContiguousBlobAccumulator &CBA) {
 
   typedef typename object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
   SHeader.sh_type = ELF::SHT_SYMTAB;
@@ -231,7 +225,6 @@ handleSymtabSectionHeader(const ELFYAML::LocalGlobalWeakSymbols &Symbols,
   addSymbols(Symbols.Global, State, Syms, ELF::STB_GLOBAL);
   addSymbols(Symbols.Weak, State, Syms, ELF::STB_WEAK);
 
-  ContiguousBlobAccumulator &CBA = State.getSectionContentAccum();
   writeArrayData(CBA.getOSAndAlignedOffset(SHeader.sh_offset),
                  makeArrayRef(Syms));
   SHeader.sh_size = arrayDataSize(makeArrayRef(Syms));
@@ -299,7 +292,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     }
   }
 
-  ELFState<ELFT> State(CBA, DotStrtabSecNo, SN2I);
+  ELFState<ELFT> State(DotStrtabSecNo, SN2I);
 
   StringTableBuilder SHStrTab;
   std::vector<Elf_Shdr> SHeaders;
@@ -340,7 +333,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   Elf_Shdr SymtabSHeader;
   zero(SymtabSHeader);
   SymtabSHeader.sh_name = SHStrTab.addString(StringRef(".symtab"));
-  handleSymtabSectionHeader<ELFT>(Doc.Symbols, State, SymtabSHeader);
+  handleSymtabSectionHeader<ELFT>(Doc.Symbols, State, SymtabSHeader, CBA);
   SHeaders.push_back(SymtabSHeader);
 
   // .strtab string table header.
