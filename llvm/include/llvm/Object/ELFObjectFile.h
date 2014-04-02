@@ -625,6 +625,9 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
 template <class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationAddress(DataRefImpl Rel,
                                                      uint64_t &Result) const {
+  assert((EF.getHeader()->e_type == ELF::ET_EXEC ||
+          EF.getHeader()->e_type == ELF::ET_DYN) &&
+         "Only executable and shared objects files have relocation addresses");
   Result = getROffset(Rel);
   return object_error::success;
 }
@@ -632,6 +635,8 @@ error_code ELFObjectFile<ELFT>::getRelocationAddress(DataRefImpl Rel,
 template <class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel,
                                                     uint64_t &Result) const {
+  assert(EF.getHeader()->e_type == ELF::ET_REL &&
+         "Only relocatable object files have relocation offsets");
   Result = getROffset(Rel);
   return object_error::success;
 }
