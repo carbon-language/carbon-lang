@@ -3343,34 +3343,35 @@ TEST(MemorySanitizer, VolatileBitfield) {
 TEST(MemorySanitizer, UnalignedLoad) {
   char x[32];
   U4 origin = __LINE__;
-  __msan_set_origin(&x, sizeof(x), origin);
+  for (unsigned i = 0; i < sizeof(x) / 4; ++i)
+    __msan_set_origin(x + 4 * i, 4, origin + i);
 
   memset(x + 8, 0, 16);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 6), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 7), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 6), origin + 1);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 7), origin + 1);
   EXPECT_NOT_POISONED(__sanitizer_unaligned_load16(x + 8));
   EXPECT_NOT_POISONED(__sanitizer_unaligned_load16(x + 9));
   EXPECT_NOT_POISONED(__sanitizer_unaligned_load16(x + 22));
-  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 23), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 24), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 23), origin + 6);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 24), origin + 6);
 
-  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 4), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 7), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 4), origin + 1);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 7), origin + 1);
   EXPECT_NOT_POISONED(__sanitizer_unaligned_load32(x + 8));
   EXPECT_NOT_POISONED(__sanitizer_unaligned_load32(x + 9));
   EXPECT_NOT_POISONED(__sanitizer_unaligned_load32(x + 20));
-  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 21), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 24), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 21), origin + 6);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 24), origin + 6);
 
   EXPECT_POISONED_O(__sanitizer_unaligned_load64(x), origin);
   EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 1), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 7), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 7), origin + 1);
   EXPECT_NOT_POISONED(__sanitizer_unaligned_load64(x + 8));
   EXPECT_NOT_POISONED(__sanitizer_unaligned_load64(x + 9));
   EXPECT_NOT_POISONED(__sanitizer_unaligned_load64(x + 16));
-  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 17), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 21), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 24), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 17), origin + 6);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 21), origin + 6);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 24), origin + 6);
 }
 
 TEST(MemorySanitizer, UnalignedStore16) {
@@ -3427,6 +3428,115 @@ TEST(MemorySanitizer, UnalignedStore64) {
   EXPECT_POISONED_O(x[9], origin);
   EXPECT_NOT_POISONED(x[10]);
   EXPECT_POISONED_O(x[11], origin);
+}
+
+TEST(MemorySanitizer, UnalignedStore16_precise) {
+  char x[8];
+  U2 y = 0;
+  U4 originx1 = __LINE__;
+  U4 originx2 = __LINE__;
+  U4 originy = __LINE__;
+  __msan_poison(x, sizeof(x));
+  __msan_set_origin(x, 4, originx1);
+  __msan_set_origin(x + 4, 4, originx2);
+  __msan_poison(((char *)&y) + 1, 1);
+  __msan_set_origin(&y, sizeof(y), originy);
+
+  __sanitizer_unaligned_store16(x + 3, y);
+  EXPECT_POISONED_O(x[0], originx1);
+  EXPECT_POISONED_O(x[1], originx1);
+  EXPECT_POISONED_O(x[2], originx1);
+  EXPECT_NOT_POISONED(x[3]);
+  EXPECT_POISONED_O(x[4], originy);
+  EXPECT_POISONED_O(x[5], originy);
+  EXPECT_POISONED_O(x[6], originy);
+  EXPECT_POISONED_O(x[7], originy);
+}
+
+TEST(MemorySanitizer, UnalignedStore16_precise2) {
+  char x[8];
+  U2 y = 0;
+  U4 originx1 = __LINE__;
+  U4 originx2 = __LINE__;
+  U4 originy = __LINE__;
+  __msan_poison(x, sizeof(x));
+  __msan_set_origin(x, 4, originx1);
+  __msan_set_origin(x + 4, 4, originx2);
+  __msan_poison(((char *)&y), 1);
+  __msan_set_origin(&y, sizeof(y), originy);
+
+  __sanitizer_unaligned_store16(x + 3, y);
+  EXPECT_POISONED_O(x[0], originy);
+  EXPECT_POISONED_O(x[1], originy);
+  EXPECT_POISONED_O(x[2], originy);
+  EXPECT_POISONED_O(x[3], originy);
+  EXPECT_NOT_POISONED(x[4]);
+  EXPECT_POISONED_O(x[5], originx2);
+  EXPECT_POISONED_O(x[6], originx2);
+  EXPECT_POISONED_O(x[7], originx2);
+}
+
+TEST(MemorySanitizer, UnalignedStore64_precise) {
+  char x[12];
+  U8 y = 0;
+  U4 originx1 = __LINE__;
+  U4 originx2 = __LINE__;
+  U4 originx3 = __LINE__;
+  U4 originy = __LINE__;
+  __msan_poison(x, sizeof(x));
+  __msan_set_origin(x, 4, originx1);
+  __msan_set_origin(x + 4, 4, originx2);
+  __msan_set_origin(x + 8, 4, originx3);
+  __msan_poison(((char *)&y) + 1, 1);
+  __msan_poison(((char *)&y) + 7, 1);
+  __msan_set_origin(&y, sizeof(y), originy);
+
+  __sanitizer_unaligned_store64(x + 2, y);
+  EXPECT_POISONED_O(x[0], originy);
+  EXPECT_POISONED_O(x[1], originy);
+  EXPECT_NOT_POISONED(x[2]);
+  EXPECT_POISONED_O(x[3], originy);
+
+  EXPECT_NOT_POISONED(x[4]);
+  EXPECT_NOT_POISONED(x[5]);
+  EXPECT_NOT_POISONED(x[6]);
+  EXPECT_NOT_POISONED(x[7]);
+
+  EXPECT_NOT_POISONED(x[8]);
+  EXPECT_POISONED_O(x[9], originy);
+  EXPECT_POISONED_O(x[10], originy);
+  EXPECT_POISONED_O(x[11], originy);
+}
+
+TEST(MemorySanitizer, UnalignedStore64_precise2) {
+  char x[12];
+  U8 y = 0;
+  U4 originx1 = __LINE__;
+  U4 originx2 = __LINE__;
+  U4 originx3 = __LINE__;
+  U4 originy = __LINE__;
+  __msan_poison(x, sizeof(x));
+  __msan_set_origin(x, 4, originx1);
+  __msan_set_origin(x + 4, 4, originx2);
+  __msan_set_origin(x + 8, 4, originx3);
+  __msan_poison(((char *)&y) + 3, 3);
+  __msan_set_origin(&y, sizeof(y), originy);
+
+  __sanitizer_unaligned_store64(x + 2, y);
+  EXPECT_POISONED_O(x[0], originx1);
+  EXPECT_POISONED_O(x[1], originx1);
+  EXPECT_NOT_POISONED(x[2]);
+  EXPECT_NOT_POISONED(x[3]);
+
+  EXPECT_NOT_POISONED(x[4]);
+  EXPECT_POISONED_O(x[5], originy);
+  EXPECT_POISONED_O(x[6], originy);
+  EXPECT_POISONED_O(x[7], originy);
+
+  EXPECT_NOT_POISONED(x[8]);
+  EXPECT_NOT_POISONED(x[9]);
+  EXPECT_POISONED_O(x[10], originx3);
+  EXPECT_POISONED_O(x[11], originx3);
 }
 
 namespace {

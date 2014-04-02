@@ -1367,14 +1367,6 @@ void __msan_clear_and_unpoison(void *a, uptr size) {
   PoisonShadow((uptr)a, size, 0);
 }
 
-u32 get_origin_if_poisoned(uptr a, uptr size) {
-  unsigned char *s = (unsigned char *)MEM_TO_SHADOW(a);
-  for (uptr i = 0; i < size; ++i)
-    if (s[i])
-      return *(u32 *)SHADOW_TO_ORIGIN((s + i) & ~3UL);
-  return 0;
-}
-
 void *__msan_memcpy(void *dest, const void *src, SIZE_T n) {
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
@@ -1405,6 +1397,24 @@ void __msan_unpoison_string(const char* s) {
 
 namespace __msan {
 
+u32 GetOriginIfPoisoned(uptr addr, uptr size) {
+  unsigned char *s = (unsigned char *)MEM_TO_SHADOW(addr);
+  for (uptr i = 0; i < size; ++i)
+    if (s[i])
+      return *(u32 *)SHADOW_TO_ORIGIN((s + i) & ~3UL);
+  return 0;
+}
+
+void SetOriginIfPoisoned(uptr addr, uptr src_shadow, uptr size,
+                         u32 src_origin) {
+  uptr dst_s = MEM_TO_SHADOW(addr);
+  uptr src_s = src_shadow;
+  uptr src_s_end = src_s + size;
+
+  for (; src_s < src_s_end; ++dst_s, ++src_s)
+    if (*(u8 *)src_s) *(u32 *)SHADOW_TO_ORIGIN(dst_s &~3UL) = src_origin;
+}
+
 void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {
   if (!__msan_get_track_origins()) return;
   if (!MEM_IS_APP(dst) || !MEM_IS_APP(src)) return;
@@ -1413,7 +1423,7 @@ void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {
   uptr beg = d & ~3UL;
   // Copy left unaligned origin if that memory is poisoned.
   if (beg < d) {
-    u32 o = get_origin_if_poisoned(beg, d - beg);
+    u32 o = GetOriginIfPoisoned(beg, d - beg);
     if (o) {
       if (__msan_get_track_origins() > 1) o = ChainOrigin(o, stack);
       *(u32 *)MEM_TO_ORIGIN(beg) = o;
@@ -1424,7 +1434,7 @@ void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {
   uptr end = (d + size + 3) & ~3UL;
   // Copy right unaligned origin if that memory is poisoned.
   if (end > d + size) {
-    u32 o = get_origin_if_poisoned(d + size, end - d - size);
+    u32 o = GetOriginIfPoisoned(d + size, end - d - size);
     if (o) {
       if (__msan_get_track_origins() > 1) o = ChainOrigin(o, stack);
       *(u32 *)MEM_TO_ORIGIN(end - 4) = o;
