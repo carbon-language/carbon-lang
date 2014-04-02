@@ -154,19 +154,44 @@ template <class ELFT>
 class ELFState {
   /// \brief The future ".strtab" section.
   StringTableBuilder DotStrtab;
-  /// \brief The section number of the ".strtab" section.
-  unsigned DotStrtabSecNo;
   typedef typename object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
 
-  SectionNameToIdxMap &SN2I;
+  SectionNameToIdxMap SN2I;
+  const ELFYAML::Object &Doc;
 
 public:
-  ELFState(unsigned DotStrtabSecNo_, SectionNameToIdxMap &SN2I_)
-      : DotStrtab(), DotStrtabSecNo(DotStrtabSecNo_), SN2I(SN2I_) {}
+  ELFState(const ELFYAML::Object &D) : Doc(D) {}
 
-  unsigned getDotStrTabSecNo() const { return DotStrtabSecNo; }
+  // - SHT_NULL entry (placed first, i.e. 0'th entry)
+  // - symbol table (.symtab) (placed third to last)
+  // - string table (.strtab) (placed second to last)
+  // - section header string table (.shstrtab) (placed last)
+  unsigned getDotSymTabSecNo() const { return Doc.Sections.size() + 1; }
+  unsigned getDotStrTabSecNo() const { return Doc.Sections.size() + 2; }
+  unsigned getDotShStrTabSecNo() const { return Doc.Sections.size() + 3; }
+  unsigned getSectionCount() const { return Doc.Sections.size() + 4; }
+
   StringTableBuilder &getStringTable() { return DotStrtab; }
   SectionNameToIdxMap &getSN2I() { return SN2I; }
+
+  bool buildSectionIndex() {
+    SN2I.addName(".symtab", getDotSymTabSecNo());
+    SN2I.addName(".strtab", getDotStrTabSecNo());
+    SN2I.addName(".shstrtab", getDotShStrTabSecNo());
+
+    for (unsigned i = 0, e = Doc.Sections.size(); i != e; ++i) {
+      StringRef Name = Doc.Sections[i].Name;
+      if (Name.empty())
+        continue;
+      // "+ 1" to take into account the SHT_NULL entry.
+      if (SN2I.addName(Name, i + 1)) {
+        errs() << "error: Repeated section name: '" << Name
+               << "' at YAML section number " << i << ".\n";
+        return false;
+      }
+    }
+    return true;
+  }
 };
 } // end anonymous namespace
 
@@ -236,6 +261,10 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   typedef typename object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
   typedef typename object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
 
+  ELFState<ELFT> State(Doc);
+  if (!State.buildSectionIndex())
+    return 1;
+
   const ELFYAML::FileHeader &Hdr = Doc.Header;
 
   Elf_Ehdr Header;
@@ -263,36 +292,14 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   Header.e_shentsize = sizeof(Elf_Shdr);
   // Immediately following the ELF header.
   Header.e_shoff = sizeof(Header);
-  const std::vector<ELFYAML::Section> &Sections = Doc.Sections;
-  // "+ 4" for
-  // - SHT_NULL entry (placed first, i.e. 0'th entry)
-  // - symbol table (.symtab) (placed third to last)
-  // - string table (.strtab) (placed second to last)
-  // - section header string table. (placed last)
-  Header.e_shnum = Sections.size() + 4;
-  // Place section header string table last.
-  Header.e_shstrndx = Header.e_shnum - 1;
-  const unsigned DotStrtabSecNo = Header.e_shnum - 2;
+  Header.e_shnum = State.getSectionCount();
+  Header.e_shstrndx = State.getDotShStrTabSecNo();
 
   // XXX: This offset is tightly coupled with the order that we write
   // things to `OS`.
   const size_t SectionContentBeginOffset =
       Header.e_ehsize + Header.e_shentsize * Header.e_shnum;
   ContiguousBlobAccumulator CBA(SectionContentBeginOffset);
-  SectionNameToIdxMap SN2I;
-  for (unsigned i = 0, e = Sections.size(); i != e; ++i) {
-    StringRef Name = Sections[i].Name;
-    if (Name.empty())
-      continue;
-    // "+ 1" to take into account the SHT_NULL entry.
-    if (SN2I.addName(Name, i + 1)) {
-      errs() << "error: Repeated section name: '" << Name
-             << "' at YAML section number " << i << ".\n";
-      return 1;
-    }
-  }
-
-  ELFState<ELFT> State(DotStrtabSecNo, SN2I);
 
   StringTableBuilder SHStrTab;
   std::vector<Elf_Shdr> SHeaders;
@@ -303,7 +310,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
     zero(SHdr);
     SHeaders.push_back(SHdr);
   }
-  for (const auto &Sec : Sections) {
+  for (const auto &Sec : Doc.Sections) {
     Elf_Shdr SHeader;
     zero(SHeader);
     SHeader.sh_name = SHStrTab.addString(Sec.Name);
@@ -316,7 +323,7 @@ static int writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
 
     if (!Sec.Link.empty()) {
       unsigned Index;
-      if (SN2I.lookupSection(Sec.Link, Index)) {
+      if (State.getSN2I().lookupSection(Sec.Link, Index)) {
         errs() << "error: Unknown section referenced: '" << Sec.Link
                << "' at YAML section '" << Sec.Name << "'.\n";
         return 1;
