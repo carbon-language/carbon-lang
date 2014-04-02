@@ -120,10 +120,9 @@ void ARM64BranchRelaxation::verify() {
 
 /// print block size and offset information - debugging
 void ARM64BranchRelaxation::dumpBBs() {
-  for (MachineFunction::iterator MBBI = MF->begin(), E = MF->end(); MBBI != E;
-       ++MBBI) {
-    const BasicBlockInfo &BBI = BlockInfo[MBBI->getNumber()];
-    dbgs() << format("BB#%u\toffset=%08x\t", MBBI->getNumber(), BBI.Offset)
+  for (auto &MBB: *MF) {
+    const BasicBlockInfo &BBI = BlockInfo[MBB.getNumber()];
+    dbgs() << format("BB#%u\toffset=%08x\t", MBB.getNumber(), BBI.Offset)
            << format("size=%#x\n", BBI.Size);
   }
 }
@@ -449,8 +448,8 @@ bool ARM64BranchRelaxation::relaxBranchInstructions() {
   bool Changed = false;
   // Relaxing branches involves creating new basic blocks, so re-eval
   // end() for termination.
-  for (MachineFunction::iterator I = MF->begin(); I != MF->end(); ++I) {
-    MachineInstr *MI = I->getFirstTerminator();
+  for (auto &MBB : *MF) {
+    MachineInstr *MI = MBB.getFirstTerminator();
     if (isConditionalBranch(MI->getOpcode()) &&
         !isBlockInRange(MI, getDestBlock(MI),
                         getBranchDisplacementBits(MI->getOpcode()))) {
