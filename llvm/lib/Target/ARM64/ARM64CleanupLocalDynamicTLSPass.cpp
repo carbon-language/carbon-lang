@@ -80,9 +80,8 @@ struct LDTLSCleanup : public MachineFunctionPass {
     }
 
     // Visit the children of this block in the dominator tree.
-    for (MachineDomTreeNode::iterator I = Node->begin(), E = Node->end();
-         I != E; ++I) {
-      Changed |= VisitNode(*I, TLSBaseAddrReg);
+    for (auto N : *Node) {
+      Changed |= VisitNode(N, TLSBaseAddrReg);
     }
 
     return Changed;
