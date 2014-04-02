@@ -2457,49 +2457,45 @@ X86InstrInfo::commuteInstruction(MachineInstr *MI, bool NewMI) const {
       NewMI = false;
     }
     MI->setDesc(get(Opc));
-    return TargetInstrInfo::commuteInstruction(MI, NewMI);
-  }
-  case X86::VFMADDPDr231r:
-  case X86::VFMADDPSr231r:
-  case X86::VFMADDSDr231r:
-  case X86::VFMADDSSr231r:
-  case X86::VFMSUBPDr231r:
-  case X86::VFMSUBPSr231r:
-  case X86::VFMSUBSDr231r:
-  case X86::VFMSUBSSr231r:
-  case X86::VFNMADDPDr231r:
-  case X86::VFNMADDPSr231r:
-  case X86::VFNMADDSDr231r:
-  case X86::VFNMADDSSr231r:
-  case X86::VFNMSUBPDr231r:
-  case X86::VFNMSUBPSr231r:
-  case X86::VFNMSUBSDr231r:
-  case X86::VFNMSUBSSr231r:
-  case X86::VFMADDPDr231rY:
-  case X86::VFMADDPSr231rY:
-  case X86::VFMSUBPDr231rY:
-  case X86::VFMSUBPSr231rY:
-  case X86::VFNMADDPDr231rY:
-  case X86::VFNMADDPSr231rY:
-  case X86::VFNMSUBPDr231rY:
-  case X86::VFNMSUBPSr231rY: {
-    MachineOperand &O2 = MI->getOperand(2);
-    MachineOperand &O3 = MI->getOperand(3);
-    assert(O2.isReg() && O3.isReg() &&
-           "Can't commute memory operands.");
-    unsigned O2Reg = O2.getReg();
-    unsigned O2SubReg = O2.getSubReg();
-    bool O2IsKill = O2.isKill();
-    O2.setReg(O3.getReg());
-    O2.setSubReg(O3.getSubReg());
-    O2.setIsKill(O3.isKill());
-    O3.setReg(O2Reg);
-    O3.setSubReg(O2SubReg);
-    O3.setIsKill(O2IsKill);
-    return MI;
+    // Fallthrough intended.
   }
   default:
     return TargetInstrInfo::commuteInstruction(MI, NewMI);
+  }
+}
+
+bool X86InstrInfo::findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
+                                         unsigned &SrcOpIdx2) const {
+  switch (MI->getOpcode()) {
+    case X86::VFMADDPDr231r:
+    case X86::VFMADDPSr231r:
+    case X86::VFMADDSDr231r:
+    case X86::VFMADDSSr231r:
+    case X86::VFMSUBPDr231r:
+    case X86::VFMSUBPSr231r:
+    case X86::VFMSUBSDr231r:
+    case X86::VFMSUBSSr231r:
+    case X86::VFNMADDPDr231r:
+    case X86::VFNMADDPSr231r:
+    case X86::VFNMADDSDr231r:
+    case X86::VFNMADDSSr231r:
+    case X86::VFNMSUBPDr231r:
+    case X86::VFNMSUBPSr231r:
+    case X86::VFNMSUBSDr231r:
+    case X86::VFNMSUBSSr231r:
+    case X86::VFMADDPDr231rY:
+    case X86::VFMADDPSr231rY:
+    case X86::VFMSUBPDr231rY:
+    case X86::VFMSUBPSr231rY:
+    case X86::VFNMADDPDr231rY:
+    case X86::VFNMADDPSr231rY:
+    case X86::VFNMSUBPDr231rY:
+    case X86::VFNMSUBPSr231rY:
+      SrcOpIdx1 = 2;
+      SrcOpIdx2 = 3;
+      return true;
+    default:
+      return TargetInstrInfo::findCommutedOpIndices(MI, SrcOpIdx1, SrcOpIdx2);
   }
 }
 

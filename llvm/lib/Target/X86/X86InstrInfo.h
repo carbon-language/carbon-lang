@@ -229,6 +229,9 @@ public:
   ///
   MachineInstr *commuteInstruction(MachineInstr *MI, bool NewMI) const override;
 
+  bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
+                             unsigned &SrcOpIdx2) const override;
+
   // Branch analysis.
   bool isUnpredicatedTerminator(const MachineInstr* MI) const override;
   bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
