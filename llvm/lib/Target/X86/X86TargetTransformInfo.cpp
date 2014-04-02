@@ -915,6 +915,9 @@ unsigned X86TTI::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
   switch (Opcode) {
   default: return TCC_Free;
   case Instruction::GetElementPtr:
+    // Always hoist the base address of a GetElementPtr. This prevents the
+    // creation of new constants for every base constant that gets constant
+    // folded with the offset.
     if (Idx == 0)
       return 2 * TCC_Basic;
     return TCC_Free;
