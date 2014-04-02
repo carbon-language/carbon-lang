@@ -95,7 +95,7 @@ public:
   bool dump(raw_ostream &diagnostics = llvm::errs());
 
   InputElement &operator[](size_t index) const {
-    return (*_inputArgs[index]);
+    return *_inputArgs[index];
   }
 
   /// \brief Insert an element into the input graph at position.
