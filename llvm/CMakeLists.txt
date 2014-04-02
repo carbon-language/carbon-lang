@@ -273,6 +273,8 @@ option(LLVM_INCLUDE_TOOLS "Generate build targets for the LLVM tools." ON)
 option(LLVM_BUILD_TOOLS
   "Build the LLVM tools. If OFF, just generate build targets." ON)
 
+option(LLVM_INCLUDE_UTILS "Generate build targets for the LLVM utils." ON)
+
 option(LLVM_BUILD_RUNTIME
   "Build the LLVM runtime libraries." ON)
 option(LLVM_BUILD_EXAMPLES
@@ -492,12 +494,19 @@ add_subdirectory(include/llvm)
 
 add_subdirectory(lib)
 
-add_subdirectory(utils/FileCheck)
-add_subdirectory(utils/FileUpdate)
-add_subdirectory(utils/count)
-add_subdirectory(utils/not)
-add_subdirectory(utils/llvm-lit)
-add_subdirectory(utils/yaml-bench)
+if( LLVM_INCLUDE_UTILS )
+  add_subdirectory(utils/FileCheck)
+  add_subdirectory(utils/FileUpdate)
+  add_subdirectory(utils/count)
+  add_subdirectory(utils/not)
+  add_subdirectory(utils/llvm-lit)
+  add_subdirectory(utils/yaml-bench)
+else()
+  if ( LLVM_INCLUDE_TESTS )
+    message(FATAL_ERROR "Including tests when not building utils will not work.
+    Either set LLVM_INCLUDE_UTILS to On, or set LLVM_INCLDE_TESTS to Off.")
+  endif()
+endif()
 
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(utils/unittest)
