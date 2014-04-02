@@ -3346,31 +3346,31 @@ TEST(MemorySanitizer, UnalignedLoad) {
   __msan_set_origin(&x, sizeof(x), origin);
 
   memset(x + 8, 0, 16);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x+6), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x+7), origin);
-  EXPECT_NOT_POISONED(__sanitizer_unaligned_load16(x+8));
-  EXPECT_NOT_POISONED(__sanitizer_unaligned_load16(x+9));
-  EXPECT_NOT_POISONED(__sanitizer_unaligned_load16(x+22));
-  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x+23), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x+24), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 6), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 7), origin);
+  EXPECT_NOT_POISONED(__sanitizer_unaligned_load16(x + 8));
+  EXPECT_NOT_POISONED(__sanitizer_unaligned_load16(x + 9));
+  EXPECT_NOT_POISONED(__sanitizer_unaligned_load16(x + 22));
+  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 23), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load16(x + 24), origin);
 
-  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x+4), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x+7), origin);
-  EXPECT_NOT_POISONED(__sanitizer_unaligned_load32(x+8));
-  EXPECT_NOT_POISONED(__sanitizer_unaligned_load32(x+9));
-  EXPECT_NOT_POISONED(__sanitizer_unaligned_load32(x+20));
-  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x+21), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x+24), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 4), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 7), origin);
+  EXPECT_NOT_POISONED(__sanitizer_unaligned_load32(x + 8));
+  EXPECT_NOT_POISONED(__sanitizer_unaligned_load32(x + 9));
+  EXPECT_NOT_POISONED(__sanitizer_unaligned_load32(x + 20));
+  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 21), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load32(x + 24), origin);
 
   EXPECT_POISONED_O(__sanitizer_unaligned_load64(x), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x+1), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x+7), origin);
-  EXPECT_NOT_POISONED(__sanitizer_unaligned_load64(x+8));
-  EXPECT_NOT_POISONED(__sanitizer_unaligned_load64(x+9));
-  EXPECT_NOT_POISONED(__sanitizer_unaligned_load64(x+16));
-  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x+17), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x+21), origin);
-  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x+24), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 1), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 7), origin);
+  EXPECT_NOT_POISONED(__sanitizer_unaligned_load64(x + 8));
+  EXPECT_NOT_POISONED(__sanitizer_unaligned_load64(x + 9));
+  EXPECT_NOT_POISONED(__sanitizer_unaligned_load64(x + 16));
+  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 17), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 21), origin);
+  EXPECT_POISONED_O(__sanitizer_unaligned_load64(x + 24), origin);
 }
 
 TEST(MemorySanitizer, UnalignedStore16) {
@@ -3395,7 +3395,7 @@ TEST(MemorySanitizer, UnalignedStore32) {
   __msan_poison(&y4, 2);
   __msan_set_origin(&y4, 2, origin);
 
-  __sanitizer_unaligned_store32(x+3, y4);
+  __sanitizer_unaligned_store32(x + 3, y4);
   EXPECT_POISONED_O(x[0], origin);
   EXPECT_POISONED_O(x[1], origin);
   EXPECT_POISONED_O(x[2], origin);
@@ -3414,7 +3414,7 @@ TEST(MemorySanitizer, UnalignedStore64) {
   __msan_poison(((char *)&y8) + sizeof(y8) - 2, 1);
   __msan_set_origin(&y8, 8, origin);
 
-  __sanitizer_unaligned_store64(x+3, y8);
+  __sanitizer_unaligned_store64(x + 3, y8);
   EXPECT_POISONED_O(x[0], origin);
   EXPECT_POISONED_O(x[1], origin);
   EXPECT_POISONED_O(x[2], origin);
