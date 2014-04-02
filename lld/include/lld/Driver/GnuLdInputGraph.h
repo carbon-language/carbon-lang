@@ -61,12 +61,9 @@ public:
   /// \brief Dump the Input Element
   bool dump(raw_ostream &diagnostics) override {
     diagnostics << "Name    : " << *getPath(_elfLinkingContext) << "\n"
-                << "Type    : "
-                << "ELF File"
-                << "\n"
+                << "Type    : ELF File\n"
                 << "Ordinal : " << getOrdinal() << "\n"
-                << "Attributes : "
-                << "\n"
+                << "Attributes :\n"
                 << "  - wholeArchive : "
                 << ((_attributes._isWholeArchive) ? "true" : "false") << "\n"
                 << "  - asNeeded : "
