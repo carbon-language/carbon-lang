@@ -3656,6 +3656,16 @@ void LoopVectorizationLegality::collectLoopUniforms() {
   // Start with the conditional branch and walk up the block.
   Worklist.push_back(Latch->getTerminator()->getOperand(0));
 
+  // Also add all consecutive pointer values; these values will be uniform
+  // after vectorization (and subsequent cleanup) and, until revectorization is
+  // supported, all dependencies must also be uniform.
+  for (Loop::block_iterator B = TheLoop->block_begin(),
+       BE = TheLoop->block_end(); B != BE; ++B)
+    for (BasicBlock::iterator I = (*B)->begin(), IE = (*B)->end();
+         I != IE; ++I)
+      if (I->getType()->isPointerTy() && isConsecutivePtr(I))
+        Worklist.insert(Worklist.end(), I->op_begin(), I->op_end());
+
   while (Worklist.size()) {
     Instruction *I = dyn_cast<Instruction>(Worklist.back());
     Worklist.pop_back();
