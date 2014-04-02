@@ -38,18 +38,18 @@ public:
   static char ID;
   ARM64StorePairSuppress() : MachineFunctionPass(ID) {}
 
-  virtual const char *getPassName() const {
+  virtual const char *getPassName() const override {
     return "ARM64 Store Pair Suppression";
   }
 
-  bool runOnMachineFunction(MachineFunction &F);
+  bool runOnMachineFunction(MachineFunction &F) override;
 
 private:
   bool shouldAddSTPToBlock(const MachineBasicBlock *BB);
 
-  bool isNarrowFPStore(const MachineInstr *MI);
+  bool isNarrowFPStore(const MachineInstr &MI);
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<MachineTraceMetrics>();
     AU.addPreserved<MachineTraceMetrics>();
@@ -103,8 +103,8 @@ bool ARM64StorePairSuppress::shouldAddSTPToBlock(const MachineBasicBlock *BB) {
 ///
 /// FIXME: We plan to develop a decent Target abstraction for simple loads and
 /// stores. Until then use a nasty switch similar to ARM64LoadStoreOptimizer.
-bool ARM64StorePairSuppress::isNarrowFPStore(const MachineInstr *MI) {
-  switch (MI->getOpcode()) {
+bool ARM64StorePairSuppress::isNarrowFPStore(const MachineInstr &MI) {
+  switch (MI.getOpcode()) {
   default:
     return false;
   case ARM64::STRSui:
@@ -138,25 +138,23 @@ bool ARM64StorePairSuppress::runOnMachineFunction(MachineFunction &mf) {
   // precisely determine whether a store pair can be formed. But we do want to
   // filter out most situations where we can't form store pairs to avoid
   // computing trace metrics in those cases.
-  for (MachineFunction::iterator BI = MF->begin(), BE = MF->end(); BI != BE;
-       ++BI) {
+  for (auto &MBB: *MF) {
     bool SuppressSTP = false;
     unsigned PrevBaseReg = 0;
-    for (MachineBasicBlock::iterator I = BI->begin(), E = BI->end(); I != E;
-         ++I) {
-      if (!isNarrowFPStore(I))
+    for (auto &MI: MBB) {
+      if (!isNarrowFPStore(MI))
         continue;
       unsigned BaseReg;
       unsigned Offset;
-      if (TII->getLdStBaseRegImmOfs(I, BaseReg, Offset, TRI)) {
+      if (TII->getLdStBaseRegImmOfs(&MI, BaseReg, Offset, TRI)) {
         if (PrevBaseReg == BaseReg) {
           // If this block can take STPs, skip ahead to the next block.
-          if (!SuppressSTP && shouldAddSTPToBlock(I->getParent()))
+          if (!SuppressSTP && shouldAddSTPToBlock(MI.getParent()))
             break;
           // Otherwise, continue unpairing the stores in this block.
-          DEBUG(dbgs() << "Unpairing store " << *I << "\n");
+          DEBUG(dbgs() << "Unpairing store " << MI << "\n");
           SuppressSTP = true;
-          TII->suppressLdStPair(I);
+          TII->suppressLdStPair(&MI);
         }
         PrevBaseReg = BaseReg;
       } else
