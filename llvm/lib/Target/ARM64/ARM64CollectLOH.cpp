@@ -334,13 +334,11 @@ static void initReachingDef(MachineFunction *MF,
         const uint32_t *PreservedRegs = IO->getRegMask();
 
         // Set generated regs.
-        for (MapRegToId::const_iterator ItRegId = RegToId.begin(),
-                                        EndIt = RegToId.end();
-             ItRegId != EndIt; ++ItRegId) {
-          unsigned Reg = ItRegId->second;
+        for (const auto Entry : RegToId) {
+          unsigned Reg = Entry.second;
           // Use the global register ID when querying APIs external to this
           // pass.
-          if (MachineOperand::clobbersPhysReg(PreservedRegs, ItRegId->first)) {
+          if (MachineOperand::clobbersPhysReg(PreservedRegs, Entry.first)) {
             // Do not register clobbered definition for no ADRP.
             // This definition is not used anyway (otherwise register
             // allocation is wrong).
@@ -422,11 +420,9 @@ static void reachingDefAlgorithm(MachineFunction *MF,
           BBInSet.insert(PredOutSet.begin(), PredOutSet.end());
         }
         //   insert reachableUses[bb][color] in each in[bb][color] op.reachedses
-        for (SetOfMachineInstr::const_iterator InstrIt = BBInSet.begin(),
-                                               EndInstrIt = BBInSet.end();
-             InstrIt != EndInstrIt; ++InstrIt) {
+        for (const auto MI: BBInSet) {
           SetOfMachineInstr &OpReachedUses =
-              getUses(ColorOpToReachedUses, CurReg, *InstrIt);
+              getUses(ColorOpToReachedUses, CurReg, MI);
           OpReachedUses.insert(BBReachableUses.begin(), BBReachableUses.end());
         }
         //           Out[bb] = Gen[bb] U (In[bb] - Kill[bb])
@@ -639,14 +635,12 @@ static void reachedUsesToDefs(InstrToInstrs &UseToReachingDefs,
       }
     }
   }
-  for (SetOfMachineInstr::const_iterator NotCandidateIt = NotCandidate.begin(),
-                                         NotCandidateItEnd = NotCandidate.end();
-       NotCandidateIt != NotCandidateItEnd; ++NotCandidateIt) {
-    DEBUG(dbgs() << "Too many reaching defs: " << **NotCandidateIt << "\n");
+  for (const auto Elem : NotCandidate) {
+    DEBUG(dbgs() << "Too many reaching defs: " << *Elem << "\n");
     // It would have been better if we could just remove the entry
     // from the map.  Because of that, we have to filter the garbage
     // (second.empty) in the subsequence analysis.
-    UseToReachingDefs[*NotCandidateIt].clear();
+    UseToReachingDefs[Elem].clear();
   }
 }
 
@@ -656,15 +650,13 @@ static void computeADRP(const InstrToInstrs &UseToDefs,
                         ARM64FunctionInfo &ARM64FI,
                         const MachineDominatorTree *MDT) {
   DEBUG(dbgs() << "*** Compute LOH for ADRP\n");
-  for (InstrToInstrs::const_iterator UseIt = UseToDefs.begin(),
-                                     EndUseIt = UseToDefs.end();
-       UseIt != EndUseIt; ++UseIt) {
-    unsigned Size = UseIt->second.size();
+  for (const auto &Entry: UseToDefs) {
+    unsigned Size = Entry.second.size();
     if (Size == 0)
       continue;
     if (Size == 1) {
-      const MachineInstr *L2 = *UseIt->second.begin();
-      const MachineInstr *L1 = UseIt->first;
+      const MachineInstr *L2 = *Entry.second.begin();
+      const MachineInstr *L1 = Entry.first;
       if (!MDT->dominates(L2, L1)) {
         DEBUG(dbgs() << "Dominance check failed:\n" << *L2 << '\n' << *L1
                      << '\n');
@@ -924,23 +916,21 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
       if (DefsOfPotentialCandidates.empty()) {
         // lazy init
         DefsOfPotentialCandidates = PotentialCandidates;
-        for (SetOfMachineInstr::const_iterator
-                 It = PotentialCandidates.begin(),
-                 EndIt = PotentialCandidates.end();
-             It != EndIt; ++It)
+        for (const auto Candidate : PotentialCandidates) {
           if (!UseToDefs.find(Candidate)->second.empty())
             DefsOfPotentialCandidates.insert(
                 *UseToDefs.find(Candidate)->second.begin());
+        }
       }
-      SetOfMachineInstr::const_iterator UseIt = Users->begin();
-      SetOfMachineInstr::const_iterator EndUseIt = Users->end();
-      for (; UseIt != EndUseIt; ++UseIt) {
-        if (!DefsOfPotentialCandidates.count(*UseIt)) {
+      bool Found = false;
+      for (auto &Use: *Users) {
+        if (!DefsOfPotentialCandidates.count(Use)) {
           ++NumTooCplxLvl1;
+          Found = true;
           break;
         }
       }
-      if (UseIt == EndUseIt)
+      if (!Found)
         ++NumCplxLvl1;
 #endif // DEBUG
       continue;
@@ -1040,11 +1030,8 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
   }
 
   // Now, we grabbed all the big patterns, check ADR opportunities.
-  for (SetOfMachineInstr::const_iterator
-           CandidateIt = PotentialADROpportunities.begin(),
-           EndCandidateIt = PotentialADROpportunities.end();
-       CandidateIt != EndCandidateIt; ++CandidateIt)
-    registerADRCandidate(*CandidateIt, UseToDefs, DefsPerColorToUses, ARM64FI,
+  for (const auto Candidate: PotentialADROpportunities)
+    registerADRCandidate(Candidate, UseToDefs, DefsPerColorToUses, ARM64FI,
                          InvolvedInLOHs, RegToId);
 }
 
