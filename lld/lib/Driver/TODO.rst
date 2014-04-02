@@ -16,11 +16,9 @@ Missing Options
 * -EL (We probably shouldn't support this)
 * -f,--auxiliary
 * -F,--filter
-* -fini
 * -G,--gpsize
 * -h
 * -i
-* -init
 * --library
 * -M
 * --print-map
@@ -43,7 +41,7 @@ Missing Options
 * -y,--trace-symbol
 * -z (keywords need to be implemented)
 * --accept-unknown-input-arch,--no-accept-unknown-input-arch
-* --add-needed,--no-add-needed
+* --as-needed,--no-as-needed
 * -Bdynamic,-dy,-call_shared
 * -Bgroup
 * -dn,-non_shared
@@ -57,7 +55,7 @@ Missing Options
 * --copy-dt-needed-entries,--no-copy-dt-needed-entires
 * --cref
 * --no-define-common
-* --defsym
+* --defsym (only absolute value supported now)
 * --demangle,--no-demangle
 * -I
 * --fatal-warnings,--no-fatal-warnings
@@ -69,14 +67,12 @@ Missing Options
 * -Map
 * --no-keep-memory
 * --no-undefined,-z defs
-* --allow-multiple-definition,-z muldefs
 * --allow-shlib-undefined,--no-alow-shlib-undefined
 * --no-undefined-version
 * --default-symver
 * --default-imported-symver
 * --no-warn-mismatch
 * --no-warn-search-mismatch
-* --no-whole-archive
 * --oformat
 * -pie,--pic-executable
 * --relax,--no-relax
