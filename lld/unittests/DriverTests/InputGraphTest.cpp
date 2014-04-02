@@ -62,23 +62,14 @@ private:
 class InputGraphTest : public testing::Test {
 public:
   InputGraphTest() {
-    _inputGraph.reset(new InputGraph());
-    _context.setInputGraph(std::move(_inputGraph));
+    _ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
   }
 
-  virtual LinkingContext &linkingContext() { return _context; }
-
-  InputElement &inputElement(unsigned index) {
-    return linkingContext().inputGraph()[index];
-  }
-
-  virtual InputGraph &inputGraph() { return linkingContext().inputGraph(); }
-
-  int inputFileCount() { return linkingContext().inputGraph().size(); }
+  InputGraph &inputGraph() { return _ctx.inputGraph(); }
+  int inputFileCount() { return _ctx.inputGraph().size(); }
 
 protected:
-  MyLinkingContext _context;
-  std::unique_ptr<InputGraph> _inputGraph;
+  MyLinkingContext _ctx;
 };
 
 } // end anonymous namespace
