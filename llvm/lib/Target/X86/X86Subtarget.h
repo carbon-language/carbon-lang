@@ -343,13 +343,23 @@ public:
   bool isTargetNaCl() const { return TargetTriple.isOSNaCl(); }
   bool isTargetNaCl32() const { return isTargetNaCl() && !is64Bit(); }
   bool isTargetNaCl64() const { return isTargetNaCl() && is64Bit(); }
+
+  bool isTargetWindowsMSVC() const {
+    return TargetTriple.isWindowsMSVCEnvironment();
+  }
+
   bool isTargetKnownWindowsMSVC() const {
     return TargetTriple.isKnownWindowsMSVCEnvironment();
   }
-  bool isTargetMingw() const { return TargetTriple.isWindowsGNUEnvironment(); }
-  bool isTargetCygwin() const {
+
+  bool isTargetWindowsCygwin() const {
     return TargetTriple.isWindowsCygwinEnvironment();
   }
+
+  bool isTargetWindowsGNU() const {
+    return TargetTriple.isWindowsGNUEnvironment();
+  }
+
   bool isTargetCygMing() const { return TargetTriple.isOSCygMing(); }
 
   bool isOSWindows() const { return TargetTriple.isOSWindows(); }

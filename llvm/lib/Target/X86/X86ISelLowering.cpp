@@ -275,7 +275,7 @@ void X86TargetLowering::resetOperationActions() {
     // Darwin should use _setjmp/_longjmp instead of setjmp/longjmp.
     setUseUnderscoreSetJmp(false);
     setUseUnderscoreLongJmp(false);
-  } else if (Subtarget->isTargetMingw()) {
+  } else if (Subtarget->isTargetWindowsGNU()) {
     // MS runtime is weird: it exports _setjmp, but longjmp!
     setUseUnderscoreSetJmp(true);
     setUseUnderscoreLongJmp(false);
@@ -8494,7 +8494,8 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
                               Chain.getValue(1));
   }
 
-  if (Subtarget->isTargetKnownWindowsMSVC() || Subtarget->isTargetMingw()) {
+  if (Subtarget->isTargetKnownWindowsMSVC() ||
+      Subtarget->isTargetWindowsGNU()) {
     // Just use the implicit TLS architecture
     // Need to generate someting similar to:
     //   mov     rdx, qword [gs:abs 58H]; Load pointer to ThreadLocalStorage
@@ -8522,13 +8523,16 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
                                         : Type::getInt32PtrTy(*DAG.getContext(),
                                                               257));
 
-    SDValue TlsArray = Subtarget->is64Bit() ? DAG.getIntPtrConstant(0x58) :
-      (Subtarget->isTargetMingw() ? DAG.getIntPtrConstant(0x2C) :
-        DAG.getExternalSymbol("_tls_array", getPointerTy()));
+    SDValue TlsArray =
+        Subtarget->is64Bit()
+            ? DAG.getIntPtrConstant(0x58)
+            : (Subtarget->isTargetWindowsGNU()
+                   ? DAG.getIntPtrConstant(0x2C)
+                   : DAG.getExternalSymbol("_tls_array", getPointerTy()));
 
-    SDValue ThreadPointer = DAG.getLoad(getPointerTy(), dl, Chain, TlsArray,
-                                        MachinePointerInfo(Ptr),
-                                        false, false, false, 0);
+    SDValue ThreadPointer =
+        DAG.getLoad(getPointerTy(), dl, Chain, TlsArray,
+                    MachinePointerInfo(Ptr), false, false, false, 0);
 
     // Load the _tls_index variable
     SDValue IDX = DAG.getExternalSymbol("_tls_index", getPointerTy());
