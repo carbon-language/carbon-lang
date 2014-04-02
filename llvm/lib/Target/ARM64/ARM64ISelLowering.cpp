@@ -4640,7 +4640,7 @@ static SDValue GenerateTBL(SDValue Op, ArrayRef<int> ShuffleMask,
   unsigned BytesPerElt = EltVT.getSizeInBits() / 8;
 
   SmallVector<SDValue, 8> TBLMask;
-  for (auto Val : ShuffleMask) {
+  for (int Val : ShuffleMask) {
     for (unsigned Byte = 0; Byte < BytesPerElt; ++Byte) {
       unsigned Offset = Byte + Val * BytesPerElt;
       TBLMask.push_back(DAG.getConstant(Offset, MVT::i32));
