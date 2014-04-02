@@ -137,7 +137,7 @@ void Resolver::forEachUndefines(UndefCallback callback,
 }
 
 void Resolver::handleArchiveFile(const File &file) {
-  const ArchiveLibraryFile *archiveFile = dyn_cast<ArchiveLibraryFile>(&file);
+  const ArchiveLibraryFile *archiveFile = cast<ArchiveLibraryFile>(&file);
   auto callback = [&](StringRef undefName, bool dataSymbolOnly) {
     if (const File *member = archiveFile->find(undefName, dataSymbolOnly)) {
       member->setOrdinal(_context.getNextOrdinalAndIncrement());
@@ -151,7 +151,7 @@ void Resolver::handleArchiveFile(const File &file) {
 
 void Resolver::handleSharedLibrary(const File &file) {
   // Add all the atoms from the shared library
-  const SharedLibraryFile *sharedLibrary = dyn_cast<SharedLibraryFile>(&file);
+  const SharedLibraryFile *sharedLibrary = cast<SharedLibraryFile>(&file);
   handleFile(*sharedLibrary);
 
   auto callback = [&](StringRef undefName, bool dataSymbolOnly) {
