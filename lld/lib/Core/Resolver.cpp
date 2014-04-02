@@ -68,15 +68,11 @@ private:
 
 } // namespace
 
-// called before the first atom in any file is added with doAtom()
-void Resolver::doFile(const File &file) {}
-
 void Resolver::handleFile(const File &file) {
   uint32_t resolverState = Resolver::StateNoChange;
   const SharedLibraryFile *sharedLibraryFile =
       llvm::dyn_cast<SharedLibraryFile>(&file);
 
-  doFile(file);
   for (const DefinedAtom *atom : file.defined()) {
     doDefinedAtom(*atom);
     resolverState |= StateNewDefinedAtoms;

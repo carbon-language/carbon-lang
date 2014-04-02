@@ -47,7 +47,6 @@ public:
   virtual void doUndefinedAtom(const UndefinedAtom&);
   virtual void doSharedLibraryAtom(const SharedLibraryAtom &);
   virtual void doAbsoluteAtom(const AbsoluteAtom &);
-  virtual void doFile(const File&);
 
   // Handle files, this adds atoms from the current file thats
   // being processed by the resolver
