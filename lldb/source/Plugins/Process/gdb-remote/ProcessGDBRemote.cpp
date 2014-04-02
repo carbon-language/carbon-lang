@@ -178,7 +178,7 @@ namespace {
 #define HIGH_PORT   (49151u)
 #endif
 
-#if defined(__APPLE__) && defined(__arm__)
+#if defined(__APPLE__) && (defined(__arm__) || defined(__arm64__))
 static bool rand_initialized = false;
 
 static inline uint16_t
