@@ -96,9 +96,6 @@
 //         - The MachObjectWriter gets them from the MCAssembler and writes
 //           them in the object file.
 //         - Other ObjectWriters ignore them.
-//
-// More information are available in the design document attached to
-// rdar://11956674
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "arm64-collect-loh"
