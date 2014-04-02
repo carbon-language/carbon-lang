@@ -14,6 +14,7 @@ class AttachResumeTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @expectedFailureFreeBSD('llvm.org/pr19310')
     @dwarf_test
     def test_attach_continue_interrupt_detach(self):
         """Test attach/continue/interrupt/detach"""
