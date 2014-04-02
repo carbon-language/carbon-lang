@@ -67,6 +67,7 @@ let neverHasSideEffects = 1 in {
   defm r132 : fma3p_rm<opc132,
                        !strconcat(OpcodeStr, "132", PackTy),
                        MemFrag128, MemFrag256, OpTy128, OpTy256>;
+  let isCommutable = 1 in
   defm r231 : fma3p_rm<opc231,
                        !strconcat(OpcodeStr, "231", PackTy),
                        MemFrag128, MemFrag256, OpTy128, OpTy256>;
@@ -146,6 +147,7 @@ multiclass fma3s_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
 let neverHasSideEffects = 1 in {
   defm r132 : fma3s_rm<opc132, !strconcat(OpStr, "132", PackTy),
                        x86memop, RC, OpVT, mem_frag>;
+  let isCommutable = 1 in
   defm r231 : fma3s_rm<opc231, !strconcat(OpStr, "231", PackTy),
                        x86memop, RC, OpVT, mem_frag>;
 }
