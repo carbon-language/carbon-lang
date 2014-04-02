@@ -55,22 +55,20 @@ public:
   InputGraph() : _ordinal(0), _nextElementIndex(0) {}
 
   /// \brief Adds a node into the InputGraph
-  virtual bool addInputElement(std::unique_ptr<InputElement>);
+  bool addInputElement(std::unique_ptr<InputElement>);
 
   /// \brief Set Ordinals for all the InputElements that form the InputGraph
-  virtual bool assignOrdinals();
+  bool assignOrdinals();
 
   /// Normalize the InputGraph. It visits all nodes in the tree to replace a
   /// node with its children if it's shouldExpand() returnst true.
-  virtual void normalize();
-
-  virtual ~InputGraph() {}
+  void normalize();
 
   /// \brief Do postprocessing of the InputGraph if there is a need for the
   /// to provide additional information to the user, also rearranges
   /// InputElements by their ordinals. If a user wants to place an input file
   /// at the desired position, the user can do that.
-  virtual void doPostProcess();
+  void doPostProcess();
 
   range<InputElementIterT> inputElements() {
     return make_range(_inputArgs.begin(), _inputArgs.end());
@@ -125,12 +123,12 @@ public:
   /// Return the Element Type for an Input Element
   virtual Kind kind() const { return _kind; }
 
-  virtual void setOrdinal(int64_t ordinal) {
+  void setOrdinal(int64_t ordinal) {
     if (_ordinal != -1)
       _ordinal = ordinal;
   }
 
-  virtual int64_t getOrdinal() const { return _ordinal; }
+  int64_t getOrdinal() const { return _ordinal; }
 
   /// \brief Dump the Input Element
   virtual bool dump(raw_ostream &diagnostics) { return true; }
@@ -151,8 +149,6 @@ public:
 
   /// \brief Reset the next index
   virtual void resetNextIndex() = 0;
-
-  /// Normalize functions
 
   /// Returns true if we want to replace this node with children.
   virtual bool shouldExpand() const { return false; }
