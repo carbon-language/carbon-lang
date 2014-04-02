@@ -5,7 +5,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 
 %T = type { i32, i32, i32, i32 }
 
-; Test if even cheap base addreses are hoisted.
+; Test if even cheap base addresses are hoisted.
 define i32 @test1() nounwind {
 ; CHECK-LABEL:  @test1
 ; CHECK:        %const = bitcast i32 12345678 to i32
