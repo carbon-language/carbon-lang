@@ -154,7 +154,6 @@ template <class ELFT>
 class ELFState {
   /// \brief The future ".strtab" section.
   StringTableBuilder DotStrtab;
-  typedef typename object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
 
   SectionNameToIdxMap SN2I;
   const ELFYAML::Object &Doc;
