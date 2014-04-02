@@ -726,9 +726,8 @@ bool ARM64ExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
   TII = static_cast<const ARM64InstrInfo *>(MF.getTarget().getInstrInfo());
 
   bool Modified = false;
-  for (MachineFunction::iterator MFI = MF.begin(), E = MF.end(); MFI != E;
-       ++MFI)
-    Modified |= expandMBB(*MFI);
+  for (auto &MBB : MF)
+    Modified |= expandMBB(MBB);
   return Modified;
 }
 
