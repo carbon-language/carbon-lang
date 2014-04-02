@@ -931,11 +931,8 @@ bool ARM64LoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   TRI = TM.getRegisterInfo();
 
   bool Modified = false;
-  for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
-       ++MFI) {
-    MachineBasicBlock &MBB = *MFI;
+  for (auto &MBB : Fn)
     Modified |= optimizeBlock(MBB);
-  }
 
   return Modified;
 }
