@@ -200,7 +200,7 @@ typedef DIRef<DIType> DITypeRef;
 ///
 /// Although, implementation-wise, DIScope is the parent class of most
 /// other DIxxx classes, including DIType and its descendants, most of
-/// DIScope’s descendants are not a substitutable subtype of
+/// DIScope's descendants are not a substitutable subtype of
 /// DIScope. The DIDescriptor::isScope() method only is true for
 /// DIScopes that are scopes in the strict lexical scope sense
 /// (DICompileUnit, DISubprogram, etc.), but not for, e.g., a DIType.
