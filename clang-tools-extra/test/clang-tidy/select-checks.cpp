@@ -1,5 +1,5 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: clang-tidy %t.cpp -fix -checks=^llvm-.* --
+// RUN: clang-tidy %t.cpp -fix -checks=^llvm-.* -disable-checks='' --
 // RUN: FileCheck -input-file=%t.cpp %s
 
 namespace i {

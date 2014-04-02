@@ -1,4 +1,4 @@
-// RUN: clang-tidy -checks=google-explicit-constructor %s -- | FileCheck %s
+// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' %s -- | FileCheck %s
 
 #define Q(name) class name { name(int i); }
 

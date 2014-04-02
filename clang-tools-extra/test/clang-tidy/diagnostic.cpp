@@ -1,6 +1,6 @@
-// RUN: clang-tidy %s.nonexistent.cpp -- | FileCheck -check-prefix=CHECK1 %s
-// RUN: clang-tidy %s -- -fan-unknown-option | FileCheck -check-prefix=CHECK2 %s
-// RUN: clang-tidy -checks='^(google-|clang-diagnostic-literal-conversion)' %s -- -fan-unknown-option | FileCheck -check-prefix=CHECK3 %s
+// RUN: clang-tidy -disable-checks='' %s.nonexistent.cpp -- | FileCheck -check-prefix=CHECK1 %s
+// RUN: clang-tidy -disable-checks='' %s -- -fan-unknown-option | FileCheck -check-prefix=CHECK2 %s
+// RUN: clang-tidy -checks='(google-explicit-constructor|clang-diagnostic-literal-conversion)' -disable-checks='' %s -- -fan-unknown-option | FileCheck -check-prefix=CHECK3 %s
 
 // CHECK1-NOT: warning
 // CHECK2-NOT: warning

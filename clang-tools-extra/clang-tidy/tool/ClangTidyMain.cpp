@@ -37,7 +37,7 @@ static cl::opt<std::string> DisableChecks(
     cl::init("(clang-analyzer-alpha.*" // To many false positives.
              "|llvm-include-order"     // Not implemented yet.
              "|llvm-namespace-comment" // Not complete.
-             "|google-.*"),            // Doesn't apply to LLVM.
+             "|google-.*)"),           // Doesn't apply to LLVM.
     cl::cat(ClangTidyCategory));
 static cl::opt<bool> Fix("fix", cl::desc("Fix detected errors if possible."),
                          cl::init(false), cl::cat(ClangTidyCategory));

@@ -1,4 +1,4 @@
-// RUN: clang-tidy -checks=google-explicit-constructor %s -- | FileCheck %s
+// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' %s -- | FileCheck %s
 
 class A { A(int i); };
 // CHECK: :[[@LINE-1]]:11: warning: Single-argument constructors must be explicit [google-explicit-constructor]

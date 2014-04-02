@@ -1,5 +1,5 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: clang-tidy %t.cpp -fix -- > %t.msg 2>&1
+// RUN: clang-tidy %t.cpp -checks='(google-explicit-constructor|llvm-namespace-comment)' -disable-checks='' -fix -- > %t.msg 2>&1
 // RUN: FileCheck -input-file=%t.cpp %s
 // RUN: FileCheck -input-file=%t.msg -check-prefix=CHECK-MESSAGES %s
 
