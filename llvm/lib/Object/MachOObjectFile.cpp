@@ -633,7 +633,8 @@ MachOObjectFile::getSymbolSection(DataRefImpl Symb,
 
 error_code MachOObjectFile::getSymbolValue(DataRefImpl Symb,
                                            uint64_t &Val) const {
-  report_fatal_error("getSymbolValue unimplemented in MachOObjectFile");
+  // In MachO both relocatable and non-relocatable objects have addresses.
+  return getSymbolAddress(Symb, Val);
 }
 
 void MachOObjectFile::moveSectionNext(DataRefImpl &Sec) const {

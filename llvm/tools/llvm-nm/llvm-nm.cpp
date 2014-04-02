@@ -95,7 +95,7 @@ cl::opt<bool> DebugSyms("debug-syms",
 cl::alias DebugSymsa("a", cl::desc("Alias for --debug-syms"),
                      cl::aliasopt(DebugSyms));
 
-cl::opt<bool> NumericSort("numeric-sort", cl::desc("Sort symbols by address"));
+cl::opt<bool> NumericSort("numeric-sort", cl::desc("Sort symbols by value"));
 cl::alias NumericSortn("n", cl::desc("Alias for --numeric-sort"),
                        cl::aliasopt(NumericSort));
 cl::alias NumericSortv("v", cl::desc("Alias for --numeric-sort"),
@@ -105,7 +105,7 @@ cl::opt<bool> NoSort("no-sort", cl::desc("Show symbols in order encountered"));
 cl::alias NoSortp("p", cl::desc("Alias for --no-sort"), cl::aliasopt(NoSort));
 
 cl::opt<bool> PrintSize("print-size",
-                        cl::desc("Show symbol size instead of address"));
+                        cl::desc("Show symbol size instead of value"));
 cl::alias PrintSizeS("S", cl::desc("Alias for --print-size"),
                      cl::aliasopt(PrintSize));
 
@@ -117,7 +117,7 @@ cl::opt<bool> WithoutAliases("without-aliases", cl::Hidden,
 cl::opt<bool> ArchiveMap("print-armap", cl::desc("Print the archive map"));
 cl::alias ArchiveMaps("s", cl::desc("Alias for --print-armap"),
                       cl::aliasopt(ArchiveMap));
-bool PrintAddress = true;
+bool PrintValue = true;
 
 bool MultipleFiles = false;
 
@@ -141,19 +141,19 @@ static bool error(error_code EC, Twine Path = Twine()) {
 
 namespace {
 struct NMSymbol {
-  uint64_t Address;
+  uint64_t Value;
   uint64_t Size;
   char TypeChar;
   StringRef Name;
 };
 }
 
-static bool compareSymbolAddress(const NMSymbol &A, const NMSymbol &B) {
-  if (A.Address < B.Address)
+static bool compareSymbolValue(const NMSymbol &A, const NMSymbol &B) {
+  if (A.Value < B.Value)
     return true;
-  else if (A.Address == B.Address && A.Name < B.Name)
+  else if (A.Value == B.Value && A.Name < B.Name)
     return true;
-  else if (A.Address == B.Address && A.Name == B.Name && A.Size < B.Size)
+  else if (A.Value == B.Value && A.Name == B.Name && A.Size < B.Size)
     return true;
   else
     return false;
@@ -164,7 +164,7 @@ static bool compareSymbolSize(const NMSymbol &A, const NMSymbol &B) {
     return true;
   else if (A.Size == B.Size && A.Name < B.Name)
     return true;
-  else if (A.Size == B.Size && A.Name == B.Name && A.Address < B.Address)
+  else if (A.Size == B.Size && A.Name == B.Name && A.Value < B.Value)
     return true;
   else
     return false;
@@ -175,7 +175,7 @@ static bool compareSymbolName(const NMSymbol &A, const NMSymbol &B) {
     return true;
   else if (A.Name == B.Name && A.Size < B.Size)
     return true;
-  else if (A.Name == B.Name && A.Size == B.Size && A.Address < B.Address)
+  else if (A.Name == B.Name && A.Size == B.Size && A.Value < B.Value)
     return true;
   else
     return false;
@@ -188,7 +188,7 @@ static SymbolListT SymbolList;
 static void sortAndPrintSymbolList() {
   if (!NoSort) {
     if (NumericSort)
-      std::sort(SymbolList.begin(), SymbolList.end(), compareSymbolAddress);
+      std::sort(SymbolList.begin(), SymbolList.end(), compareSymbolValue);
     else if (SizeSort)
       std::sort(SymbolList.begin(), SymbolList.end(), compareSymbolSize);
     else
@@ -211,29 +211,29 @@ static void sortAndPrintSymbolList() {
       continue;
     if ((I->TypeChar == 'U') && DefinedOnly)
       continue;
-    if (SizeSort && !PrintAddress && I->Size == UnknownAddressOrSize)
+    if (SizeSort && !PrintValue && I->Size == UnknownAddressOrSize)
       continue;
 
-    char SymbolAddrStr[10] = "";
+    char SymbolValueStr[10] = "";
     char SymbolSizeStr[10] = "";
 
-    if (OutputFormat == sysv || I->Address == UnknownAddressOrSize)
-      strcpy(SymbolAddrStr, "        ");
+    if (OutputFormat == sysv || I->Value == UnknownAddressOrSize)
+      strcpy(SymbolValueStr, "        ");
     if (OutputFormat == sysv)
       strcpy(SymbolSizeStr, "        ");
 
-    if (I->Address != UnknownAddressOrSize)
-      format("%08" PRIx64, I->Address)
-          .print(SymbolAddrStr, sizeof(SymbolAddrStr));
+    if (I->Value != UnknownAddressOrSize)
+      format("%08" PRIx64, I->Value)
+          .print(SymbolValueStr, sizeof(SymbolValueStr));
     if (I->Size != UnknownAddressOrSize)
       format("%08" PRIx64, I->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
 
     if (OutputFormat == posix) {
-      outs() << I->Name << " " << I->TypeChar << " " << SymbolAddrStr
+      outs() << I->Name << " " << I->TypeChar << " " << SymbolValueStr
              << SymbolSizeStr << "\n";
     } else if (OutputFormat == bsd) {
-      if (PrintAddress)
-        outs() << SymbolAddrStr << ' ';
+      if (PrintValue)
+        outs() << SymbolValueStr << ' ';
       if (PrintSize) {
         outs() << SymbolSizeStr;
         if (I->Size != UnknownAddressOrSize)
@@ -244,7 +244,7 @@ static void sortAndPrintSymbolList() {
       std::string PaddedName(I->Name);
       while (PaddedName.length() < 20)
         PaddedName += " ";
-      outs() << PaddedName << "|" << SymbolAddrStr << "|   " << I->TypeChar
+      outs() << PaddedName << "|" << SymbolValueStr << "|   " << I->TypeChar
              << "  |                  |" << SymbolSizeStr << "|     |\n";
     }
   }
@@ -490,14 +490,14 @@ static void dumpSymbolNamesFromObject(SymbolicFile *Obj) {
     }
     NMSymbol S;
     S.Size = UnknownAddressOrSize;
-    S.Address = UnknownAddressOrSize;
+    S.Value = UnknownAddressOrSize;
     if ((PrintSize || SizeSort) && isa<ObjectFile>(Obj)) {
       symbol_iterator SymI = I;
       if (error(SymI->getSize(S.Size)))
         break;
     }
-    if (PrintAddress && isa<ObjectFile>(Obj))
-      if (error(symbol_iterator(I)->getAddress(S.Address)))
+    if (PrintValue && isa<ObjectFile>(Obj))
+      if (error(symbol_iterator(I)->getValue(S.Value)))
         break;
     S.TypeChar = getNMTypeChar(Obj, I);
     if (error(I->printName(OS)))
@@ -602,9 +602,9 @@ int main(int argc, char **argv) {
 
   // The relative order of these is important. If you pass --size-sort it should
   // only print out the size. However, if you pass -S --size-sort, it should
-  // print out both the size and address.
+  // print out both the size and values.
   if (SizeSort && !PrintSize)
-    PrintAddress = false;
+    PrintValue = false;
   if (OutputFormat == sysv || SizeSort)
     PrintSize = true;
 
