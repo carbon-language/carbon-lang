@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm
+; RUN: llc -mtriple=arm-eabi %s -o /dev/null
 
 	%struct.hit_t = type { %struct.v_t, double }
 	%struct.node_t = type { %struct.hit_t, %struct.hit_t, i32 }

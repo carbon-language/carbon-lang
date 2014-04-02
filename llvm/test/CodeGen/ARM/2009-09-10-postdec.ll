@@ -1,4 +1,4 @@
-; RUN: llc -march=arm < %s | FileCheck %s
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
 ; Radar 7213850
 
 define i32 @test(i8* %d, i32 %x, i32 %y) nounwind {

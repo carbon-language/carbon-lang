@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2
+; RUN: llc -mtriple=arm-eabi -mattr=+v6,+vfp2 %s -o /dev/null
 
 define hidden i64 @__muldi3(i64 %u, i64 %v) nounwind {
 entry:

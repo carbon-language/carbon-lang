@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6 | not grep 255
+; RUN: llc -mtriple=arm-eabi -mattr=+v6 %s -o - | FileCheck %s
 
 define i32 @main(i32 %argc, i8** %argv) {
 entry:
@@ -12,3 +12,6 @@ bb2:		; preds = %bb1
 bb3:		; preds = %bb1
 	ret i32 0
 }
+
+; CHECK-NOT: 255
+

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | not grep "add.*#0"
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
 
 define i32 @foo() {
 entry:
@@ -10,3 +10,6 @@ entry:
 }
 
 declare i32 @bar(...)
+
+; CHECK-NOT: add{{.*}}#0
+

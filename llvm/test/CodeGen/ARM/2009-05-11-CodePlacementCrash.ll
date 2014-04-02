@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=arm
+; RUN: llc -mtriple=arm-eabi %s -o /dev/null
+
 	%struct.List = type { %struct.List*, i32 }
 @Node5 = external constant %struct.List		; <%struct.List*> [#uses=1]
 @"\01LC" = external constant [7 x i8]		; <[7 x i8]*> [#uses=1]

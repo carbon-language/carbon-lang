@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm
+; RUN: llc -mtriple=arm-eabi %s -o /dev/null
 ; PR3795
 
 define fastcc void @_D3foo3fooFAriZv({ i32, { double, double }* } %d_arg, i32 %x_arg) {
