@@ -9,6 +9,8 @@
 
 #include "lldb/lldb-python.h"
 
+#include "llvm/Support/MachO.h"
+
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataBufferHeap.h"
