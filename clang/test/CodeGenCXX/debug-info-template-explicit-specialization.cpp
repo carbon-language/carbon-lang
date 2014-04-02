@@ -84,3 +84,10 @@ template<> void i<int>::f();
 extern template class i<int>;
 i<int> ii;
 // CHECK: ; [ DW_TAG_structure_type ] [i<int>] {{.*}} [def]
+
+template <typename T1, typename T2 = T1>
+struct j {
+};
+extern template class j<int>;
+j<int> jj;
+// CHECK: ; [ DW_TAG_structure_type ] [j<int, int>]

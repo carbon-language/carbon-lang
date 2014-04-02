@@ -228,34 +228,20 @@ StringRef CGDebugInfo::getSelectorName(Selector S) {
 /// getClassName - Get class name including template argument list.
 StringRef
 CGDebugInfo::getClassName(const RecordDecl *RD) {
-  const ClassTemplateSpecializationDecl *Spec
-    = dyn_cast<ClassTemplateSpecializationDecl>(RD);
-  if (!Spec)
+  // quick optimization to avoid having to intern strings that are already
+  // stored reliably elsewhere
+  if (!isa<ClassTemplateSpecializationDecl>(RD))
     return RD->getName();
 
-  const TemplateArgument *Args;
-  unsigned NumArgs;
-  if (TypeSourceInfo *TAW = Spec->getTypeAsWritten()) {
-    const TemplateSpecializationType *TST =
-      cast<TemplateSpecializationType>(TAW->getType());
-    Args = TST->getArgs();
-    NumArgs = TST->getNumArgs();
-  } else {
-    const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
-    Args = TemplateArgs.data();
-    NumArgs = TemplateArgs.size();
-  }
-  StringRef Name = RD->getIdentifier()->getName();
-  PrintingPolicy Policy(CGM.getLangOpts());
-  SmallString<128> TemplateArgList;
+  SmallString<128> Name;
   {
-    llvm::raw_svector_ostream OS(TemplateArgList);
-    TemplateSpecializationType::PrintTemplateArgumentList(OS, Args, NumArgs,
-                                                          Policy);
+    llvm::raw_svector_ostream OS(Name);
+    RD->getNameForDiagnostic(OS, CGM.getContext().getPrintingPolicy(),
+                             /*Qualified*/ false);
   }
 
   // Copy this name on the side and use its reference.
-  return internString(Name, TemplateArgList);
+  return internString(Name);
 }
 
 /// getOrCreateFile - Get the file debug info descriptor for the input location.
