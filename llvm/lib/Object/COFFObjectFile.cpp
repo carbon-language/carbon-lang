@@ -389,11 +389,6 @@ relocation_iterator COFFObjectFile::section_rel_end(DataRefImpl Ref) const {
   return relocation_iterator(RelocationRef(Ret, this));
 }
 
-bool COFFObjectFile::section_rel_empty(DataRefImpl Ref) const {
-  const coff_section *Sec = toSec(Ref);
-  return Sec->NumberOfRelocations == 0;
-}
-
 // Initialize the pointer to the symbol table.
 error_code COFFObjectFile::initSymbolTablePtr() {
   if (error_code EC = getObject(

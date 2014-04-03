@@ -163,7 +163,10 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
     StubMap Stubs;
     section_iterator RelocatedSection = SI->getRelocatedSection();
 
-    if (SI->relocation_empty() && !ProcessAllSections)
+    relocation_iterator I = SI->relocation_begin();
+    relocation_iterator E = SI->relocation_end();
+
+    if (I == E && !ProcessAllSections)
       continue;
 
     bool IsCode = false;
@@ -172,8 +175,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
         findOrEmitSection(*Obj, *RelocatedSection, IsCode, LocalSections);
     DEBUG(dbgs() << "\tSectionID: " << SectionID << "\n");
 
-    for (relocation_iterator I = SI->relocation_begin(),
-         E = SI->relocation_end(); I != E;)
+    for (; I != E;)
       I = processRelocationRef(SectionID, I, *Obj, LocalSections, LocalSymbols,
                                Stubs);
   }
