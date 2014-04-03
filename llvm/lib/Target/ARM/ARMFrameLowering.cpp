@@ -1783,7 +1783,7 @@ void ARMFrameLowering::adjustForSegmentedStacks(MachineFunction &MF) const {
   if (Thumb && ST->isThumb1Only()) {
     unsigned PCLabelId = ARMFI->createPICLabelUId();
     ARMConstantPoolValue *NewCPV = ARMConstantPoolSymbol::Create(
-        MF.getFunction()->getContext(), "STACK_LIMIT", PCLabelId, 0);
+        MF.getFunction()->getContext(), "__STACK_LIMIT", PCLabelId, 0);
     MachineConstantPool *MCP = MF.getConstantPool();
     unsigned CPI = MCP->getConstantPoolIndex(NewCPV, MF.getAlignment());
 
