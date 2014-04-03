@@ -351,11 +351,16 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
 
   setOperationAction(ISD::PREFETCH, MVT::Other, Custom);
 
-  // For iOS, we don't want to the normal expansion of a libcall to
-  // sincos. We want to issue a libcall to __sincos_stret to avoid memory
-  // traffic.
-  setOperationAction(ISD::FSINCOS, MVT::f64, Custom);
-  setOperationAction(ISD::FSINCOS, MVT::f32, Custom);
+  if (Subtarget->isTargetMachO()) {
+    // For iOS, we don't want to the normal expansion of a libcall to
+    // sincos. We want to issue a libcall to __sincos_stret to avoid memory
+    // traffic.
+    setOperationAction(ISD::FSINCOS, MVT::f64, Custom);
+    setOperationAction(ISD::FSINCOS, MVT::f32, Custom);
+  } else {
+    setOperationAction(ISD::FSINCOS, MVT::f64, Expand);
+    setOperationAction(ISD::FSINCOS, MVT::f32, Expand);
+  }
 
   // ARM64 does not have floating-point extending loads, i1 sign-extending load,
   // floating-point truncating stores, or v2i32->v2i16 truncating store.
