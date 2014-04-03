@@ -138,7 +138,9 @@ public:
     return make_range(_expandElements.begin(), _expandElements.end());
   }
 
-  // Do nothing here.
+  // Linker Script will be expanded and replaced with other elements
+  // by InputGraph::normalize(), so at link time it does not exist in
+  // the tree. No need to handle this message.
   void resetNextIndex() override {}
 
 private:
