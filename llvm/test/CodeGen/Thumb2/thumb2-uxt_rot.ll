@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=thumb -mcpu=cortex-a8 | FileCheck %s --check-prefix=A8
-; RUN: llc < %s -march=thumb -mcpu=cortex-m3 | FileCheck %s --check-prefix=M3
+; RUN: llc -mtriple=thumb-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s --check-prefix=A8
+; RUN: llc -mtriple=thumb-eabi -mcpu=cortex-m3 %s -o - | FileCheck %s --check-prefix=M3
 ; rdar://11318438
 
 define zeroext i8 @test1(i32 %A.u)  {

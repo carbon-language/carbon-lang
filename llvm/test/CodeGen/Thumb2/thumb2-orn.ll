@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | FileCheck %s
-
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - | FileCheck %s
 
 define i32 @f1(i32 %a, i32 %b) {
     %tmp = xor i32 %b, 4294967295

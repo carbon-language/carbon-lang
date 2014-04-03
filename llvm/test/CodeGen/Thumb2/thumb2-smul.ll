@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2,+t2xtpk,+t2dsp |  FileCheck %s
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2,+t2xtpk,+t2dsp %s -o - |  FileCheck %s
 
 @x = weak global i16 0          ; <i16*> [#uses=1]
 @y = weak global i16 0          ; <i16*> [#uses=0]

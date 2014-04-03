@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - | FileCheck %s
 
 define i32 @t1(i32 %a, i32 %b, i32 %c) nounwind {
 ; CHECK: t1

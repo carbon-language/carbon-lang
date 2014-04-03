@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=thumb -mcpu=cortex-a8 | FileCheck %s -check-prefix=ARMv7A
-; RUN: llc < %s -march=thumb -mcpu=cortex-m3 | FileCheck %s -check-prefix=ARMv7M
+; RUN: llc -mtriple=thumb-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s -check-prefix=ARMv7A
+; RUN: llc -mtriple=thumb-eabi -mcpu=cortex-m3 %s -o - | FileCheck %s -check-prefix=ARMv7M
 
 define i32 @test1(i32 %x) {
 ; ARMv7A: test1

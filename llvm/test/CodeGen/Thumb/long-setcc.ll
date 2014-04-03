@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=thumb | grep cmp | count 1
-
+; RUN: llc -mtriple=thumb-eabi %s -o - | FileCheck %s
 
 define i1 @t1(i64 %x) {
 	%B = icmp slt i64 %x, 0
@@ -15,3 +14,9 @@ define i1 @t3(i32 %x) {
 	%tmp = icmp ugt i32 %x, -1
 	ret i1 %tmp
 }
+
+; CHECK: cmp
+; CHECK-NOT: cmp
+
+
+

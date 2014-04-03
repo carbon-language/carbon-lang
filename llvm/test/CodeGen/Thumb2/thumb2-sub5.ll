@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2,+32bit \
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2,+32bit %s -o - \
 ; RUN:  | FileCheck %s
 
 define i64 @f1(i64 %a, i64 %b) {

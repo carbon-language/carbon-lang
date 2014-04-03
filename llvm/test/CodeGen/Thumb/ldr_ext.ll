@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=thumb | FileCheck %s -check-prefix=V5
-; RUN: llc < %s -march=thumb -mattr=+v6 | FileCheck %s -check-prefix=V6
+; RUN: llc -mtriple=thumb-eabi %s -o - | FileCheck %s -check-prefix=V5
+; RUN: llc -mtriple=thumb-eabi -mattr=+v6 %s -o - | FileCheck %s -check-prefix=V6
 
 ; rdar://7176514
 

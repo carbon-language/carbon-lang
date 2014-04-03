@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb
+; RUN: llc -mtriple=thumb-eabi %s -o /dev/null
 
 define double @t(double %x, double %y) nounwind optsize {
 entry:

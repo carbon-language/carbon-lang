@@ -1,10 +1,10 @@
-; RUN: llc < %s -mtriple=thumb-apple-darwin -mcpu=arm1156t2-s -mattr=+thumb2 \
+; RUN: llc -mtriple=thumb-apple-darwin -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-THUMB
-; RUN: llc < %s -march=thumb -mcpu=cortex-m3 -mattr=+thumb2 \
+; RUN: llc -mtriple=thumb-apple-darwin -mcpu=cortex-m3 -mattr=+thumb2 %s -o - \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-THUMBV7M
-; RUN: llc < %s -march=thumb -mcpu=swift \
+; RUN: llc -mtriple=thumb-apple-darwin -mcpu=swift %s -o - \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-HWDIV
-; RUN: llc < %s -march=thumb -mcpu=cortex-r5 \
+; RUN: llc -mtriple=thumb-apple-darwin -mcpu=cortex-r5 %s -o - \
 ; RUN:    | FileCheck %s -check-prefix=CHECK-HWDIV
 
 define i32 @f1(i32 %a, i32 %b) {

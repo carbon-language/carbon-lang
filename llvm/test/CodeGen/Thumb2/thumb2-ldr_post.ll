@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - | FileCheck %s
 
 define i32 @test(i32 %a, i32 %b, i32 %c) {
         %tmp1 = mul i32 %a, %b          ; <i32> [#uses=2]

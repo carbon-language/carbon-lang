@@ -1,7 +1,4 @@
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | grep ldrb | count 1
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | grep ldrh | count 1
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | grep ldrsb | count 1
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | grep ldrsh | count 1
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - | FileCheck %s
 
 define i32 @test1(i8* %v.pntr.s0.u1) {
     %tmp.u = load i8* %v.pntr.s0.u1
@@ -26,3 +23,16 @@ define i32 @test4() {
     %tmp1.s = sext i16 %tmp.s to i32
     ret i32 %tmp1.s
 }
+
+; CHECK: ldrb
+; CHECK-NOT: ldrb
+
+; CHECK: ldrh
+; CHECK-NOT: ldrh
+
+; CHECK: ldrsb
+; CHECK-NOT: ldrsb
+
+; CHECK: ldrsh
+; CHECK-NOT: ldrsh
+

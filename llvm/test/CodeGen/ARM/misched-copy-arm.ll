@@ -1,5 +1,5 @@
 ; REQUIRES: asserts
-; RUN: llc < %s -march=thumb -mcpu=swift -pre-RA-sched=source -join-globalcopies -enable-misched -verify-misched -debug-only=misched -o - 2>&1 > /dev/null | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi -mcpu=swift -pre-RA-sched=source -join-globalcopies -enable-misched -verify-misched -debug-only=misched %s -o - 2>&1 | FileCheck %s
 ;
 ; Loop counter copies should be eliminated.
 ; There is also a MUL here, but we don't care where it is scheduled.

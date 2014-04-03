@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -no-integrated-as
+; RUN: llc -mtriple=thumb-eabi -no-integrated-as %s -o /dev/null
 
 ; Test Thumb-mode "I" constraint, for ADD immediate.
 define i32 @testI(i32 %x) {

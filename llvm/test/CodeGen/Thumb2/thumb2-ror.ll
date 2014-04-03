@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | FileCheck %s
-; RUN: llc < %s -march=thumb | FileCheck %s -check-prefix=THUMB1
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi %s -o - | FileCheck %s -check-prefix=THUMB1
 
 ; CHECK-LABEL: f1:
 ; CHECK: 	ror.w	r0, r0, #22

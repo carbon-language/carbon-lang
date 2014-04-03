@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi %s -o - | FileCheck %s
 ; rdar://7961298
 
 define void @t() nounwind {

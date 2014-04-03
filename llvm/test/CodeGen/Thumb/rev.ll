@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+v6 | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi -mattr=+v6 %s -o - | FileCheck %s
 
 define i32 @test1(i32 %X) nounwind {
 ; CHECK: test1

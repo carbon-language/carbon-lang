@@ -1,10 +1,5 @@
-; RUN: llc < %s -march=thumb | \
-; RUN:   grep mvn | count 1
-; RUN: llc < %s -march=thumb | \
-; RUN:   grep adc | count 1
-; RUN: llc < %s -march=thumb | \
-; RUN:   grep sbc | count 1
-; RUN: llc < %s -mtriple=thumb-apple-darwin | grep __muldi3
+; RUN: llc -mtriple=thumb-eabi %s -o - | FileCheck %s
+; RUN: llc -mtriple=thumb-apple-darwin %s -o - | FileCheck %s -check-prefix CHECK-DARWIN
 
 define i64 @f1() {
 entry:
@@ -73,4 +68,15 @@ entry:
         %retval = load i64* %a          ; <i64> [#uses=1]
         ret i64 %retval
 }
+
+; CHECK: mvn
+; CHECK-NOT: mvn
+
+; CHECK: adc
+; CHECK-NOT: adc
+
+; CHECK: sbc
+; CHECK-NOT: sbc
+
+; CHECK-DARWIN: __muldi3
 

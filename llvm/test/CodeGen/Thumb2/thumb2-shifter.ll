@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=thumb -mcpu=cortex-a8 | FileCheck %s --check-prefix=A8
-; RUN: llc < %s -march=thumb -mcpu=swift | FileCheck %s --check-prefix=SWIFT
+; RUN: llc -mtriple=thumb-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s --check-prefix=A8
+; RUN: llc -mtriple=thumb-eabi -mcpu=swift %s -o - | FileCheck %s --check-prefix=SWIFT
 
 ; rdar://12892707
 

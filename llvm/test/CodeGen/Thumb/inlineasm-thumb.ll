@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=thumb | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi %s -o - | FileCheck %s
+
 define i32 @t1(i32 %x, i32 %y) nounwind {
 entry:
   ; CHECK: mov r0, r12

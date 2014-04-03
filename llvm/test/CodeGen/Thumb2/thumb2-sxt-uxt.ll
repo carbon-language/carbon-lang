@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mcpu=cortex-m3 | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi -mcpu=cortex-m3 %s -o - | FileCheck %s
 
 define i32 @test1(i16 zeroext %z) nounwind {
 ; CHECK-LABEL: test1:

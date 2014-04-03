@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s
 ; rdar://7368193
 
 @a = common global float 0.000000e+00             ; <float*> [#uses=2]

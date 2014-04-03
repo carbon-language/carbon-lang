@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - | FileCheck %s
 ; Check generated signed and unsigned multiply accumulate long.
 
 define i64 @MACLongTest1(i32 %a, i32 %b, i64 %c) {

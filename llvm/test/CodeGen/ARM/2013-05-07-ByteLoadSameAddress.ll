@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mattr=+v7,+thumb2 | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi -mattr=+v7,+thumb2 %s -o - | FileCheck %s
 
 define i8 @f1(i8* %call1, i8* %call3, i32 %h, i32 %w, i32 %Width) {
 ; CHECK: f1:

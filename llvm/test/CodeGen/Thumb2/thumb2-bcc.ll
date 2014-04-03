@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - | FileCheck %s
 ; If-conversion defeats the purpose of this test, which is to check CBZ
 ; generation, so use memory barrier instruction to make sure it doesn't
 ; happen and we get actual branches.

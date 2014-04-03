@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=thumb
-; RUN: llc < %s -mtriple=thumb-linux | grep pop | count 2
-; RUN: llc < %s -mtriple=thumb-darwin | grep pop | count 2
+; RUN: llc -mtriple=thumb-eabi %s -o /dev/null
+; RUN: llc -mtriple=thumb-linux %s -o - | FileCheck %s
+; RUN: llc -mtriple=thumb-darwin %s -o - | FileCheck %s
 
 @str = internal constant [4 x i8] c"%d\0A\00"           ; <[4 x i8]*> [#uses=1]
 
@@ -34,3 +34,8 @@ declare void @llvm.va_start(i8*)
 declare i32 @printf(i8*, ...)
 
 declare void @llvm.va_end(i8*)
+
+; CHECK: pop
+; CHECK: pop
+; CHECK-NOT: pop
+
