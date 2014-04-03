@@ -31,27 +31,6 @@ namespace lld {
 
 namespace {
 
-/// This is used as a filter function to std::remove_if to dead strip atoms.
-class NotLive {
-public:
-  explicit NotLive(const llvm::DenseSet<const Atom *> &la) : _liveAtoms(la) {}
-
-  bool operator()(const Atom *atom) const {
-    // don't remove if live
-    if (_liveAtoms.count(atom))
-      return false;
-    // don't remove if marked never-dead-strip
-    if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom))
-      if (defAtom->deadStrip() == DefinedAtom::deadStripNever)
-        return false;
-    // do remove this atom
-    return true;
-  }
-
-private:
-  const llvm::DenseSet<const Atom *> &_liveAtoms;
-};
-
 /// This is used as a filter function to std::remove_if to coalesced atoms.
 class AtomCoalescedAway {
 public:
@@ -377,9 +356,10 @@ void Resolver::deadStripOptimize() {
     markLive(*dsrAtom);
 
   // now remove all non-live atoms from _atoms
-  _atoms.erase(
-      std::remove_if(_atoms.begin(), _atoms.end(), NotLive(_liveAtoms)),
-      _atoms.end());
+  _atoms.erase(std::remove_if(_atoms.begin(), _atoms.end(), [&](const Atom *a) {
+                 return _liveAtoms.count(a) == 0;
+               }),
+               _atoms.end());
 }
 
 // error out if some undefines remain
@@ -389,10 +369,10 @@ bool Resolver::checkUndefines() {
   _symbolTable.undefines(undefinedAtoms);
   if (_context.deadStrip()) {
     // When dead code stripping, we don't care if dead atoms are undefined.
-    undefinedAtoms.erase(std::remove_if(undefinedAtoms.begin(),
-                                        undefinedAtoms.end(),
-                                        NotLive(_liveAtoms)),
-                         undefinedAtoms.end());
+    undefinedAtoms.erase(
+        std::remove_if(undefinedAtoms.begin(), undefinedAtoms.end(),
+                       [&](const Atom *a) { return _liveAtoms.count(a) == 0; }),
+        undefinedAtoms.end());
   }
 
   // error message about missing symbols
