@@ -379,11 +379,13 @@ void SymbolTable::addReplacement(const Atom *replaced,
 }
 
 const Atom *SymbolTable::replacement(const Atom *atom) {
-  AtomToAtom::iterator pos = _replacedAtoms.find(atom);
-  if (pos == _replacedAtoms.end())
-    return atom;
-  // might be chain, recurse to end
-  return replacement(pos->second);
+  for (;;) {
+    AtomToAtom::iterator pos = _replacedAtoms.find(atom);
+    if (pos == _replacedAtoms.end())
+      return atom;
+    // might be chain, recurse to end
+    atom = pos->second;
+  }
 }
 
 unsigned int SymbolTable::size() {
