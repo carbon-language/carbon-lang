@@ -69,27 +69,15 @@ private:
 } // namespace
 
 void Resolver::handleFile(const File &file) {
-  bool isEmpty = file.defined().empty() && file.sharedLibrary().empty() &&
-                 file.absolute().empty() && file.undefined().empty();
+  bool isEmpty = file.defined().empty() && file.undefined().empty() &&
+                 file.sharedLibrary().empty() && file.absolute().empty();
   if (isEmpty)
     return;
 
   for (const DefinedAtom *atom : file.defined())
     doDefinedAtom(*atom);
-
-  for (const UndefinedAtom *undefAtom : file.undefined()) {
-    doUndefinedAtom(*undefAtom);
-    // If the undefined symbol has an alternative name, try to resolve the
-    // symbol with the name to give it a second chance. This feature is used
-    // for COFF "weak external" symbol.
-    if (!_symbolTable.isDefined(undefAtom->name())) {
-      if (const UndefinedAtom *fallbackAtom = undefAtom->fallback()) {
-        doUndefinedAtom(*fallbackAtom);
-        _symbolTable.addReplacement(undefAtom, fallbackAtom);
-      }
-    }
-  }
-
+  for (const UndefinedAtom *atom : file.undefined())
+    doUndefinedAtom(*atom);
   for (const SharedLibraryAtom *atom : file.sharedLibrary())
     doSharedLibraryAtom(*atom);
   for (const AbsoluteAtom *atom : file.absolute())
@@ -165,15 +153,23 @@ void Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
                     << "       UndefinedAtom: "
                     << llvm::format("0x%09lX", &atom)
-                    << ", name="
-                    << atom.name()
-                    << "\n");
+                    << ", name=" << atom.name() << "\n");
 
   // add to list of known atoms
   _atoms.push_back(&atom);
 
   // tell symbol table
   _symbolTable.add(atom);
+
+  // If the undefined symbol has an alternative name, try to resolve the
+  // symbol with the name to give it a second chance. This feature is used
+  // for COFF "weak external" symbol.
+  if (!_symbolTable.isDefined(atom.name())) {
+    if (const UndefinedAtom *fallbackAtom = atom.fallback()) {
+      doUndefinedAtom(*fallbackAtom);
+      _symbolTable.addReplacement(&atom, fallbackAtom);
+    }
+  }
 }
 
 /// \brief Add the section group and the group-child reference members.
