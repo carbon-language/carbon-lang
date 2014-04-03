@@ -350,7 +350,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
 
   // Breaking before the first "<<" is generally not desirable if the LHS is
   // short. Also always add the penalty if the LHS is split over mutliple lines
-  // to avoid unncessary line breaks that just work around this penalty.
+  // to avoid unnecessary line breaks that just work around this penalty.
   if (NextNonComment->is(tok::lessless) &&
       State.Stack.back().FirstLessLess == 0 &&
       (State.Column <= Style.ColumnLimit / 3 ||
