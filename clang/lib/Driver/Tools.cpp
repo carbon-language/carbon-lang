@@ -839,13 +839,13 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
                     true))
     CmdArgs.push_back("-no-implicit-float");
 
-    // llvm does not support reserving registers in general. There is support
-    // for reserving r9 on ARM though (defined as a platform-specific register
-    // in ARM EABI).
-    if (Args.hasArg(options::OPT_ffixed_r9)) {
-      CmdArgs.push_back("-backend-option");
-      CmdArgs.push_back("-arm-reserve-r9");
-    }
+  // llvm does not support reserving registers in general. There is support
+  // for reserving r9 on ARM though (defined as a platform-specific register
+  // in ARM EABI).
+  if (Args.hasArg(options::OPT_ffixed_r9)) {
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back("-arm-reserve-r9");
+  }
 }
 
 /// getARM64TargetCPU - Get the (LLVM) name of the ARM64 cpu we are targeting.
