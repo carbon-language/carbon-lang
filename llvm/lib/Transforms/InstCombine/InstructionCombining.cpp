@@ -1241,7 +1241,15 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           GetElementPtrInst *Res =
             GetElementPtrInst::Create(StrippedPtr, Idx, GEP.getName());
           Res->setIsInBounds(GEP.isInBounds());
-          return Res;
+          if (StrippedPtrTy->getAddressSpace() == GEP.getAddressSpace())
+            return Res;
+          // Insert Res, and create an addrspacecast.
+          // e.g.,
+          // GEP (addrspacecast i8 addrspace(1)* X to [0 x i8]*), i32 0, ...
+          // ->
+          // %0 = GEP i8 addrspace(1)* X, ...
+          // addrspacecast i8 addrspace(1)* %0 to i8*
+          return new AddrSpaceCastInst(Builder->Insert(Res), GEP.getType());
         }
 
         if (ArrayType *XATy =
@@ -1253,8 +1261,24 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             // to an array of the same type as the destination pointer
             // array.  Because the array type is never stepped over (there
             // is a leading zero) we can fold the cast into this GEP.
-            GEP.setOperand(0, StrippedPtr);
-            return &GEP;
+            if (StrippedPtrTy->getAddressSpace() == GEP.getAddressSpace()) {
+              GEP.setOperand(0, StrippedPtr);
+              return &GEP;
+            }
+            // Cannot replace the base pointer directly because StrippedPtr's
+            // address space is different. Instead, create a new GEP followed by
+            // an addrspacecast.
+            // e.g.,
+            // GEP (addrspacecast [10 x i8] addrspace(1)* X to [0 x i8]*),
+            //   i32 0, ...
+            // ->
+            // %0 = GEP [10 x i8] addrspace(1)* X, ...
+            // addrspacecast i8 addrspace(1)* %0 to i8*
+            SmallVector<Value*, 8> Idx(GEP.idx_begin(), GEP.idx_end());
+            Value *NewGEP = GEP.isInBounds() ?
+              Builder->CreateInBoundsGEP(StrippedPtr, Idx, GEP.getName()) :
+              Builder->CreateGEP(StrippedPtr, Idx, GEP.getName());
+            return new AddrSpaceCastInst(NewGEP, GEP.getType());
           }
         }
       }
