@@ -442,8 +442,8 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
                             return false;            
                         }
                         range.SetByteSize (m_options.end_addr - m_options.start_addr);
-                        ranges.push_back(range);
                     }
+                    ranges.push_back(range);
                 }
                 else
                 {
