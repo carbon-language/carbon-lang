@@ -1,11 +1,12 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
-; RUN: llc -march=r600 -mcpu=redwood -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=redwood -show-mc-encoding -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
 declare i32 @llvm.AMDGPU.bfe.i32(i32, i32, i32) nounwind readnone
 
 ; FUNC-LABEL: @bfe_i32_arg_arg_arg
 ; SI: V_BFE_I32
 ; EG: BFE_INT
+; EG: encoding: [{{[x0-9a-f]+,[x0-9a-f]+,[x0-9a-f]+,[x0-9a-f]+,[x0-9a-f]+}},0xac
 define void @bfe_i32_arg_arg_arg(i32 addrspace(1)* %out, i32 %src0, i32 %src1, i32 %src2) nounwind {
   %bfe_i32 = call i32 @llvm.AMDGPU.bfe.i32(i32 %src0, i32 %src1, i32 %src1) nounwind readnone
   store i32 %bfe_i32, i32 addrspace(1)* %out, align 4

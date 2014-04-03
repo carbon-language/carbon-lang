@@ -273,7 +273,7 @@ def BFE_UINT_eg : R600_3OP <0x4, "BFE_UINT",
   VecALU
 >;
 
-def BFE_INT_eg : R600_3OP <0x4, "BFE_INT",
+def BFE_INT_eg : R600_3OP <0x5, "BFE_INT",
   [(set i32:$dst, (AMDGPUbfe_i32 i32:$src0, i32:$src1, i32:$src2))],
   VecALU
 >;
