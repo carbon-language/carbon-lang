@@ -175,6 +175,8 @@ def stop_reason_to_str(enum):
         return "breakpoint"
     elif enum == lldb.eStopReasonWatchpoint:
         return "watchpoint"
+    elif enum == lldb.eStopReasonExec:
+        return "exec"
     elif enum == lldb.eStopReasonSignal:
         return "signal"
     elif enum == lldb.eStopReasonException:
