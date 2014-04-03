@@ -818,3 +818,14 @@ class CMov_F_F_FM<bits<5> fmt, bit tf> : StdArch {
   let Inst{10-6} = fd;
   let Inst{5-0} = 0x11;
 }
+
+class BARRIER_FM<bits<5> op> : StdArch {
+  bits<32> Inst;
+
+  let Inst{31-26} = 0; // SPECIAL
+  let Inst{25-21} = 0;
+  let Inst{20-16} = 0; // rt = 0
+  let Inst{15-11} = 0; // rd = 0
+  let Inst{10-6} = op; // Operation
+  let Inst{5-0} = 0;   // SLL
+}

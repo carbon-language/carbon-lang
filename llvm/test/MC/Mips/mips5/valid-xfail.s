@@ -58,7 +58,6 @@
 	cvt.ps.s	$f3,$f18,$f19
 	cvt.s.pl	$f30,$f1
 	cvt.s.pu	$f14,$f25
-	ehb
 	madd.d	$f18,$f19,$f26,$f20
 	madd.ps	$f22,$f3,$f14,$f3
 	madd.s	$f1,$f31,$f19,$f25
@@ -86,7 +85,6 @@
 	recip.s	$f3,$f30
 	rsqrt.d	$f3,$f28
 	rsqrt.s	$f4,$f8
-	ssnop
 	sub.ps	$f5,$f14,$f26
 	tlbp
 	tlbr

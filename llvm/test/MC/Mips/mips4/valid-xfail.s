@@ -36,7 +36,6 @@
 	c.ult.s	$fcc7,$f24,$f10
 	c.un.d	$fcc6,$f23,$f24
 	c.un.s	$fcc1,$f30,$f4
-	ehb
 	madd.d	$f18,$f19,$f26,$f20
 	madd.s	$f1,$f31,$f19,$f25
 	msub.d	$f10,$f1,$f31,$f18
@@ -49,7 +48,6 @@
 	recip.s	$f3,$f30
 	rsqrt.d	$f3,$f28
 	rsqrt.s	$f4,$f8
-	ssnop
 	tlbp
 	tlbr
 	tlbwi

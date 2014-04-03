@@ -116,7 +116,6 @@
 	dpsu.h.qbr	$ac2,$a1,$s6
 	dpsx.w.ph	$ac0,$s7,$gp
 	dvpe	$s6
-	ehb
 	emt	$t0
 	evpe	$v0
 	extpdpv	$s6,$ac0,$s8
@@ -225,7 +224,6 @@
 	nor.v	$w20,$w20,$w15
 	or.v	$w13,$w23,$w12
 	packrl.ph	$ra,$t8,$t6
-	pause
 	pcnt.b	$w30,$w15
 	pcnt.d	$w5,$w16
 	pcnt.h	$w20,$w24
@@ -280,7 +278,6 @@
 	shrav_r.w	$s7,$s4,$s6
 	shrlv.ph	$t6,$t2,$t1
 	shrlv.qb	$a2,$s2,$t3
-	ssnop
 	sub.ps	$f5,$f14,$f26
 	subq.ph	$ra,$t1,$s8
 	subq_s.ph	$t5,$s8,$s5

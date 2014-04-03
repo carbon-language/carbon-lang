@@ -28,6 +28,7 @@
 	div.d	$f29,$f20,$f27
 	div.s	$f4,$f5,$f15
 	divu	$zero,$t9,$t7
+	ehb                      # CHECK: ehb # encoding:  [0x00,0x00,0x00,0xc0]
 	lb	$t8,-14515($t2)
 	lbu	$t0,30195($v1)
 	lh	$t3,-8556($s5)
@@ -71,6 +72,7 @@
 	sltu	$s4,$s5,$t3
 	srav	$s1,$s7,$sp
 	srlv	$t9,$s4,$a0
+	ssnop                    # CHECK: ssnop # encoding:  [0x00,0x00,0x00,0x40]
 	sub	$s6,$s3,$t4
 	sub.d	$f18,$f3,$f17
 	sub.s	$f23,$f22,$f22

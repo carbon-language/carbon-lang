@@ -35,11 +35,9 @@
 	c.ult.s	$fcc7,$f24,$f10
 	c.un.d	$fcc6,$f23,$f24
 	c.un.s	$fcc1,$f30,$f4
-	ehb
 	ldc3	$29,-28645($s1)
 	rorv	$t5,$a3,$s5
 	sdc3	$12,5835($t2)
-	ssnop
 	tlbp
 	tlbr
 	tlbwi

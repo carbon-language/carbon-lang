@@ -35,6 +35,7 @@
 	div.d	$f29,$f20,$f27
 	div.s	$f4,$f5,$f15
 	divu	$zero,$t9,$t7
+	ehb                      # CHECK: ehb # encoding:  [0x00,0x00,0x00,0xc0]
 	ei	$t6
 	eret
 	floor.w.d	$f14,$f11
@@ -109,6 +110,7 @@
 	nop
 	nor	$a3,$zero,$a3
 	or	$t4,$s0,$sp
+	pause                    # CHECK: pause # encoding:  [0x00,0x00,0x01,0x40]
 	rdhwr	$sp,$11
 	round.w.d	$f6,$f4
 	round.w.s	$f27,$f28
@@ -129,6 +131,7 @@
 	sqrt.s	$f0,$f1
 	srav	$s1,$s7,$sp
 	srlv	$t9,$s4,$a0
+	ssnop                    # CHECK: ssnop # encoding:  [0x00,0x00,0x00,0x40]
 	sub	$s6,$s3,$t4
 	sub.d	$f18,$f3,$f17
 	sub.s	$f23,$f22,$f22

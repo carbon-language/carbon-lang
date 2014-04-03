@@ -50,6 +50,7 @@
 	dsrlv	$s3,$t6,$s4
 	dsub	$a3,$s6,$t0
 	dsubu	$a1,$a1,$k0
+	ehb                      # CHECK: ehb # encoding:  [0x00,0x00,0x00,0xc0]
 	eret
 	floor.l.d	$f26,$f7
 	floor.l.s	$f12,$f5
@@ -121,6 +122,7 @@
 	sqrt.s	$f0,$f1
 	srav	$s1,$s7,$sp
 	srlv	$t9,$s4,$a0
+	ssnop                    # CHECK: ssnop # encoding:  [0x00,0x00,0x00,0x40]
 	sub	$s6,$s3,$t4
 	sub.d	$f18,$f3,$f17
 	sub.s	$f23,$f22,$f22

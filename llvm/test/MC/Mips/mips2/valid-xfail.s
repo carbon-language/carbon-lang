@@ -8,11 +8,9 @@
 # XFAIL: *
 
 	.set noat
-	ehb
 	ldc3	$29,-28645($s1)
 	lwc3	$10,-32265($k0)
 	sdc3	$12,5835($t2)
-	ssnop
 	tlbp
 	tlbr
 	tlbwi

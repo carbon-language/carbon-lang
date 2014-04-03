@@ -30,6 +30,7 @@
 	div.d	$f29,$f20,$f27
 	div.s	$f4,$f5,$f15
 	divu	$zero,$t9,$t7
+	ehb                      # CHECK: ehb # encoding:  [0x00,0x00,0x00,0xc0]
 	floor.w.d	$f14,$f11
 	floor.w.s	$f8,$f9
 	lb	$t8,-14515($t2)
@@ -85,6 +86,7 @@
 	sqrt.s	$f0,$f1
 	srav	$s1,$s7,$sp
 	srlv	$t9,$s4,$a0
+	ssnop                    # CHECK: ssnop # encoding:  [0x00,0x00,0x00,0x40]
 	sub	$s6,$s3,$t4
 	sub.d	$f18,$f3,$f17
 	sub.s	$f23,$f22,$f22

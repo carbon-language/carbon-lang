@@ -8,9 +8,7 @@
 # XFAIL: *
 
 	.set noat
-	ehb
 	lwc3	$10,-32265($k0)
-	ssnop
 	tlbp
 	tlbr
 	tlbwi

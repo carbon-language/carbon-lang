@@ -1161,6 +1161,12 @@ def MTC0 : MFC3OP<"mtc0", GPR32Opnd>, MFC3OP_FM<0x10, 4>;
 def MFC2 : MFC3OP<"mfc2", GPR32Opnd>, MFC3OP_FM<0x12, 0>;
 def MTC2 : MFC3OP<"mtc2", GPR32Opnd>, MFC3OP_FM<0x12, 4>;
 
+class Barrier<string asmstr> : InstSE<(outs), (ins), asmstr, [], NoItinerary,
+                                      FrmOther>;
+def SSNOP : Barrier<"ssnop">, BARRIER_FM<1>;
+def EHB : Barrier<"ehb">, BARRIER_FM<3>;
+def PAUSE : Barrier<"pause">, BARRIER_FM<5>, Requires<[HasMips32r2]>;
+
 //===----------------------------------------------------------------------===//
 // Instruction aliases
 //===----------------------------------------------------------------------===//
