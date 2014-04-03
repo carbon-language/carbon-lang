@@ -1028,7 +1028,8 @@ SBThread::Resume ()
         Process::StopLocker stop_locker;
         if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
         {
-            exe_ctx.GetThreadPtr()->SetResumeState (eStateRunning);
+            const bool override_suspend = true;
+            exe_ctx.GetThreadPtr()->SetResumeState (eStateRunning, override_suspend);
             result = true;
         }
         else

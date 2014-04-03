@@ -33,7 +33,7 @@ class TestObjCIvarStripped(TestBase):
         self.assertTrue(target, VALID_TARGET)
 
         breakpoint = target.BreakpointCreateByLocation(self.main_source, self.stop_line)
-        self.assertTrue(breakpoint, VALID_BREAKPOINT)
+        self.assertTrue(breakpoint.IsValid() and breakpoint.GetNumLocations() > 0, VALID_BREAKPOINT)
 
         process = target.LaunchSimple (None, None, self.get_process_working_directory())
         self.assertTrue (process, "Created a process.")

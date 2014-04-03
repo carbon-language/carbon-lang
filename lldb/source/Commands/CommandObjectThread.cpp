@@ -794,8 +794,9 @@ public:
                                 result.AppendMessageWithFormat ("%u, ", thread->GetIndexID());
                             else
                                 result.AppendMessageWithFormat ("%u ", thread->GetIndexID());
-
-                            thread->SetResumeState (eStateRunning);
+                            
+                            const bool override_suspend = true;
+                            thread->SetResumeState (eStateRunning, override_suspend);
                         }
                         else
                         {
@@ -826,7 +827,8 @@ public:
                     if (thread == current_thread)
                     {
                         result.AppendMessageWithFormat ("Resuming thread 0x%4.4" PRIx64 " in process %" PRIu64 "\n", thread->GetID(), process->GetID());
-                        thread->SetResumeState (eStateRunning);
+                        const bool override_suspend = true;
+                        thread->SetResumeState (eStateRunning, override_suspend);
                     }
                     else
                     {

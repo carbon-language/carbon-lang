@@ -209,10 +209,22 @@ public:
     {
         return m_resume_state;
     }
-
+    
+    // This sets the "external resume state" of the thread.  If the thread is suspended here, it should never
+    // get scheduled.  Note that just because a thread is marked as "running" does not mean we will let it run in
+    // a given bit of process control.  For instance "step" tries to stay on the selected thread it was issued on,
+    // which may involve suspending other threads temporarily.  This temporary suspension is NOT reflected in the
+    // state set here and reported in GetResumeState.
+    //
+    // If you are just preparing all threads to run, you should not override the threads that are
+    // marked as suspended by the debugger.  In that case, pass override_suspend = false.  If you want
+    // to force the thread to run (e.g. the "thread continue" command, or are resetting the state
+    // (e.g. in SBThread::Resume()), then pass true to override_suspend.
     void
-    SetResumeState (lldb::StateType state)
+    SetResumeState (lldb::StateType state, bool override_suspend = false)
     {
+        if (m_resume_state == lldb::eStateSuspended && !override_suspend)
+            return;
         m_resume_state = state;
     }
 

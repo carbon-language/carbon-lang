@@ -176,7 +176,8 @@ class TestCStepping(TestBase):
         thread.StepOver()
 
         # See that we are still in b:
-        self.assertTrue (thread.GetFrameAtIndex(0).GetFunctionName() == "b")
+        func_name = thread.GetFrameAtIndex(0).GetFunctionName()
+        self.assertTrue (func_name == "b", "Should be in 'b', were in %s"%(func_name))
 
         # Okay, now if we continue, we will finish off our function call and we should end up back in "a" as if nothing had happened:
         process.Continue ()

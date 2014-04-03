@@ -1904,6 +1904,8 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                         }
                     }
                 }
+                else
+                    error = expr_error;
             }
         }
     }

@@ -758,7 +758,8 @@ protected:
                 // Set the actions that the threads should each take when resuming
                 for (uint32_t idx=0; idx<num_threads; ++idx)
                 {
-                    process->GetThreadList().GetThreadAtIndex(idx)->SetResumeState (eStateRunning);
+                    const bool override_suspend = false;
+                    process->GetThreadList().GetThreadAtIndex(idx)->SetResumeState (eStateRunning, override_suspend);
                 }
             }
             
