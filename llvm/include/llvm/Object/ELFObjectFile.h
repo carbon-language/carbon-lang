@@ -256,8 +256,7 @@ error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
   Result = ESym->st_value;
 
   // Clear the ARM/Thumb indicator flag.
-  if (EF.getHeader()->e_machine == ELF::EM_ARM &&
-      ESym->getType() == ELF::STT_FUNC)
+  if (Header->e_machine == ELF::EM_ARM && ESym->getType() == ELF::STT_FUNC)
     Result &= ~1;
 
   if (Header->e_type == ELF::ET_REL)
