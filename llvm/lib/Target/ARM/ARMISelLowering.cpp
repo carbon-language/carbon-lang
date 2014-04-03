@@ -850,7 +850,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
       setOperationAction(ISD::FP32_TO_FP16, MVT::i32, Expand);
     }
   }
-      
+
   // Combine sin / cos into one node or libcall if possible.
   if (Subtarget->hasSinCos()) {
     setLibcallName(RTLIB::SINCOS_F32, "sincosf");
@@ -8470,7 +8470,7 @@ PerformARMBUILD_VECTORCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI) {
       // Fold obvious case.
       V = V.getOperand(0);
     else {
-      V = DAG.getNode(ISD::BITCAST, SDLoc(V), MVT::i32, V); 
+      V = DAG.getNode(ISD::BITCAST, SDLoc(V), MVT::i32, V);
       // Make the DAGCombiner fold the bitcasts.
       DCI.AddToWorklist(V.getNode());
     }

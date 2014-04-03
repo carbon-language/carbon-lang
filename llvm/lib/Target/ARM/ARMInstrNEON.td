@@ -5617,22 +5617,22 @@ def VCVTxu2fq : N2VCvtQ<1, 1, 0b1110, 0, 1, "vcvt", "f32.u32",
                         v4f32, v4i32, int_arm_neon_vcvtfxu2fp>;
 }
 
-def : NEONInstAlias<"vcvt${p}.s32.f32 $Dd, $Dm, #0", 
+def : NEONInstAlias<"vcvt${p}.s32.f32 $Dd, $Dm, #0",
                     (VCVTf2sd DPR:$Dd, DPR:$Dm, pred:$p)>;
-def : NEONInstAlias<"vcvt${p}.u32.f32 $Dd, $Dm, #0", 
+def : NEONInstAlias<"vcvt${p}.u32.f32 $Dd, $Dm, #0",
                     (VCVTf2ud DPR:$Dd, DPR:$Dm, pred:$p)>;
-def : NEONInstAlias<"vcvt${p}.f32.s32 $Dd, $Dm, #0", 
+def : NEONInstAlias<"vcvt${p}.f32.s32 $Dd, $Dm, #0",
                     (VCVTs2fd DPR:$Dd, DPR:$Dm, pred:$p)>;
-def : NEONInstAlias<"vcvt${p}.f32.u32 $Dd, $Dm, #0", 
+def : NEONInstAlias<"vcvt${p}.f32.u32 $Dd, $Dm, #0",
                     (VCVTu2fd DPR:$Dd, DPR:$Dm, pred:$p)>;
 
-def : NEONInstAlias<"vcvt${p}.s32.f32 $Qd, $Qm, #0", 
+def : NEONInstAlias<"vcvt${p}.s32.f32 $Qd, $Qm, #0",
                     (VCVTf2sq QPR:$Qd, QPR:$Qm, pred:$p)>;
-def : NEONInstAlias<"vcvt${p}.u32.f32 $Qd, $Qm, #0", 
+def : NEONInstAlias<"vcvt${p}.u32.f32 $Qd, $Qm, #0",
                     (VCVTf2uq QPR:$Qd, QPR:$Qm, pred:$p)>;
-def : NEONInstAlias<"vcvt${p}.f32.s32 $Qd, $Qm, #0", 
+def : NEONInstAlias<"vcvt${p}.f32.s32 $Qd, $Qm, #0",
                     (VCVTs2fq QPR:$Qd, QPR:$Qm, pred:$p)>;
-def : NEONInstAlias<"vcvt${p}.f32.u32 $Qd, $Qm, #0", 
+def : NEONInstAlias<"vcvt${p}.f32.u32 $Qd, $Qm, #0",
                     (VCVTu2fq QPR:$Qd, QPR:$Qm, pred:$p)>;
 
 
@@ -6120,7 +6120,7 @@ def : Pat<(f32 (bitconvert (i32 (extractelt (v2i32 DPR:$src), imm:$lane)))),
 // Vector lengthening move with load, matching extending loads.
 
 // extload, zextload and sextload for a standard lengthening load. Example:
-// Lengthen_Single<"8", "i16", "8"> = 
+// Lengthen_Single<"8", "i16", "8"> =
 //     Pat<(v8i16 (extloadvi8 addrmode6:$addr))
 //         (VMOVLuv8i16 (VLD1d8 addrmode6:$addr,
 //                              (f64 (IMPLICIT_DEF)), (i32 0)))>;
@@ -6147,7 +6147,7 @@ multiclass Lengthen_Single<string DestLanes, string DestTy, string SrcTy> {
 // half the lanes available. Example:
 // Lengthen_HalfSingle<"4", "i16", "8", "i16", "i8"> =
 //     Pat<(v4i16 (extloadvi8 addrmode6oneL32:$addr)),
-//         (EXTRACT_SUBREG (VMOVLuv8i16 (VLD1LNd32 addrmode6oneL32:$addr, 
+//         (EXTRACT_SUBREG (VMOVLuv8i16 (VLD1LNd32 addrmode6oneL32:$addr,
 //                                      (f64 (IMPLICIT_DEF)), (i32 0))),
 //                         dsub_0)>;
 multiclass Lengthen_HalfSingle<string DestLanes, string DestTy, string SrcTy,
@@ -6257,7 +6257,7 @@ defm : Lengthen_Double<"2", "i64", "i16", "4", "i32", "2", "i64">;
 // Triple lengthening - v2i8 -> v2i16 -> v2i32 -> v2i64
 def : Pat<(v2i64 (extloadvi8 addrmode6:$addr)),
       (VMOVLuv2i64 (EXTRACT_SUBREG (VMOVLuv4i32 (EXTRACT_SUBREG (VMOVLuv8i16
-         (VLD1LNd16 addrmode6:$addr, 
+         (VLD1LNd16 addrmode6:$addr,
                     (f64 (IMPLICIT_DEF)), (i32 0))), dsub_0)), dsub_0))>;
 def : Pat<(v2i64 (zextloadvi8 addrmode6:$addr)),
       (VMOVLuv2i64 (EXTRACT_SUBREG (VMOVLuv4i32 (EXTRACT_SUBREG (VMOVLuv8i16

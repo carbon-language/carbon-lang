@@ -116,13 +116,13 @@ def D15 : ARMReg<15, "d15", [S30, S31]>, DwarfRegNum<[271]>;
 }
 
 // VFP3 defines 16 additional double registers
-def D16 : ARMFReg<16, "d16">, DwarfRegNum<[272]>; 
+def D16 : ARMFReg<16, "d16">, DwarfRegNum<[272]>;
 def D17 : ARMFReg<17, "d17">, DwarfRegNum<[273]>;
 def D18 : ARMFReg<18, "d18">, DwarfRegNum<[274]>;
 def D19 : ARMFReg<19, "d19">, DwarfRegNum<[275]>;
 def D20 : ARMFReg<20, "d20">, DwarfRegNum<[276]>;
 def D21 : ARMFReg<21, "d21">, DwarfRegNum<[277]>;
-def D22 : ARMFReg<22, "d22">, DwarfRegNum<[278]>; 
+def D22 : ARMFReg<22, "d22">, DwarfRegNum<[278]>;
 def D23 : ARMFReg<23, "d23">, DwarfRegNum<[279]>;
 def D24 : ARMFReg<24, "d24">, DwarfRegNum<[280]>;
 def D25 : ARMFReg<25, "d25">, DwarfRegNum<[281]>;
@@ -158,11 +158,11 @@ def Q15 : ARMReg<15, "q15", [D30, D31]>;
 // Current Program Status Register.
 // We model fpscr with two registers: FPSCR models the control bits and will be
 // reserved. FPSCR_NZCV models the flag bits and will be unreserved. APSR_NZCV
-// models the APSR when it's accessed by some special instructions. In such cases 
+// models the APSR when it's accessed by some special instructions. In such cases
 // it has the same encoding as PC.
 def CPSR       : ARMReg<0,  "cpsr">;
 def APSR       : ARMReg<1,  "apsr">;
-def APSR_NZCV  : ARMReg<15, "apsr_nzcv">; 
+def APSR_NZCV  : ARMReg<15, "apsr_nzcv">;
 def SPSR       : ARMReg<2,  "spsr">;
 def FPSCR      : ARMReg<3,  "fpscr">;
 def FPSCR_NZCV : ARMReg<3,  "fpscr_nzcv"> {

@@ -397,7 +397,7 @@ void ARMDAGToDAGISel::PreprocessISelDAG() {
     N1 = CurDAG->getNode(ISD::SHL, SDLoc(N1), MVT::i32,
                          N1, CurDAG->getConstant(TZ, MVT::i32));
     CurDAG->UpdateNodeOperands(N, N0, N1);
-  }  
+  }
 }
 
 /// hasNoVMLxHazardUse - Return true if it's desirable to select a FP MLA / MLS
@@ -1699,10 +1699,10 @@ static bool isVSTfixed(unsigned Opc)
   case ARM::VST1d16wb_fixed : return true;
   case ARM::VST1d32wb_fixed : return true;
   case ARM::VST1d64wb_fixed : return true;
-  case ARM::VST1q8wb_fixed : return true; 
-  case ARM::VST1q16wb_fixed : return true; 
-  case ARM::VST1q32wb_fixed : return true; 
-  case ARM::VST1q64wb_fixed : return true; 
+  case ARM::VST1q8wb_fixed : return true;
+  case ARM::VST1q16wb_fixed : return true;
+  case ARM::VST1q32wb_fixed : return true;
+  case ARM::VST1q64wb_fixed : return true;
   case ARM::VST1d64TPseudoWB_fixed : return true;
   case ARM::VST1d64QPseudoWB_fixed : return true;
   case ARM::VST2d8wb_fixed : return true;

@@ -85,7 +85,7 @@ void ARMAsmPrinter::EmitXXStructor(const Constant *CV) {
                                              ? MCSymbolRefExpr::VK_ARM_TARGET1
                                              : MCSymbolRefExpr::VK_None),
                                             OutContext);
-  
+
   OutStreamer.EmitValue(E, Size);
 }
 
@@ -575,7 +575,7 @@ void ARMAsmPrinter::emitAttributes() {
                     getArchForCPU(CPUString, Subtarget));
 
   // Tag_CPU_arch_profile must have the default value of 0 when "Architecture
-  // profile is not applicable (e.g. pre v7, or cross-profile code)". 
+  // profile is not applicable (e.g. pre v7, or cross-profile code)".
   if (Subtarget->hasV7Ops()) {
     if (Subtarget->isAClass()) {
       ATS.emitAttribute(ARMBuildAttrs::CPU_arch_profile,

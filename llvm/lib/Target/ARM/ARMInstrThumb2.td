@@ -1676,7 +1676,7 @@ defm t2PLI    : T2Ipl<0, 1, "pli">,  Requires<[IsThumb2,HasV7]>;
 // pci variant is very similar to i12, but supports negative offsets
 // from the PC. Only PLD and PLI have pci variants (not PLDW)
 class T2Iplpci<bits<1> inst, string opc> : T2Iso<(outs), (ins t2ldrlabel:$addr),
-               IIC_Preload, opc, "\t$addr", 
+               IIC_Preload, opc, "\t$addr",
                [(ARMPreload (ARMWrapper tconstpool:$addr),
                 (i32 0), (i32 inst))]>, Sched<[WritePreLd]> {
   let Inst{31-25} = 0b1111100;
@@ -1918,7 +1918,7 @@ def t2MOVi16 : T2I<(outs rGPR:$Rd), (ins imm0_65535_expr:$imm), IIC_iMOVi,
   let DecoderMethod = "DecodeT2MOVTWInstruction";
 }
 
-def : t2InstAlias<"mov${p} $Rd, $imm", 
+def : t2InstAlias<"mov${p} $Rd, $imm",
                   (t2MOVi16 rGPR:$Rd, imm256_65535_expr:$imm, pred:$p)>;
 
 def t2MOVi16_ga_pcrel : PseudoInst<(outs rGPR:$Rd),
@@ -3495,8 +3495,8 @@ def t2B   : T2I<(outs), (ins uncondbrtarget:$target), IIC_Br,
   let Inst{25-16} = target{20-11};
   let Inst{10-0} = target{10-0};
   let DecoderMethod = "DecodeT2BInstruction";
-  let AsmMatchConverter = "cvtThumbBranches"; 
-} 
+  let AsmMatchConverter = "cvtThumbBranches";
+}
 
 let isNotDuplicable = 1, isIndirectBranch = 1 in {
 def t2BR_JT : t2PseudoInst<(outs),
@@ -3698,7 +3698,7 @@ def t2DBG : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "dbg", "\t$opt", []> {
 
 // Secure Monitor Call is a system instruction.
 // Option = Inst{19-16}
-def t2SMC : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt", 
+def t2SMC : T2I<(outs), (ins imm0_15:$opt), NoItinerary, "smc", "\t$opt",
                 []>, Requires<[IsThumb2, HasTrustZone]> {
   let Inst{31-27} = 0b11110;
   let Inst{26-20} = 0b1111111;
@@ -4278,7 +4278,7 @@ def : t2InstAlias<"sbc${s}${p} $Rd, $Rn, $ShiftedRm",
 
 // Aliases for ADD without the ".w" optional width specifier.
 def : t2InstAlias<"add${s}${p} $Rd, $Rn, $imm",
-        (t2ADDri GPRnopc:$Rd, GPRnopc:$Rn, t2_so_imm:$imm, pred:$p, 
+        (t2ADDri GPRnopc:$Rd, GPRnopc:$Rn, t2_so_imm:$imm, pred:$p,
          cc_out:$s)>;
 def : t2InstAlias<"add${p} $Rd, $Rn, $imm",
            (t2ADDri12 GPRnopc:$Rd, GPR:$Rn, imm0_4095:$imm, pred:$p)>;

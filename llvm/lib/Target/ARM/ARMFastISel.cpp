@@ -1400,7 +1400,7 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
       const APInt &CIVal = ConstInt->getValue();
       Imm = (isZExt) ? (int)CIVal.getZExtValue() : (int)CIVal.getSExtValue();
       // For INT_MIN/LONG_MIN (i.e., 0x80000000) we need to use a cmp, rather
-      // then a cmn, because there is no way to represent 2147483648 as a 
+      // then a cmn, because there is no way to represent 2147483648 as a
       // signed 32-bit int.
       if (Imm < 0 && Imm != (int)0x80000000) {
         isNegativeImm = true;

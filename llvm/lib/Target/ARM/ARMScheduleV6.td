@@ -93,7 +93,7 @@ def ARMV6Itineraries : ProcessorItineraries<
   InstrItinData<IIC_iMAC32   , [InstrStage<2, [V6_Pipe]>], [5, 1, 1, 2]>,
   InstrItinData<IIC_iMUL64   , [InstrStage<3, [V6_Pipe]>], [6, 1, 1]>,
   InstrItinData<IIC_iMAC64   , [InstrStage<3, [V6_Pipe]>], [6, 1, 1, 2]>,
-  
+
   // Integer load pipeline
   //
   // Immediate offset
@@ -181,7 +181,7 @@ def ARMV6Itineraries : ProcessorItineraries<
   //
   // Store multiple + update
   InstrItinData<IIC_iStore_mu , [InstrStage<3, [V6_Pipe]>], [2]>,
-  
+
   // Branch
   //
   // no delay slots, so the latency of a branch is unimportant

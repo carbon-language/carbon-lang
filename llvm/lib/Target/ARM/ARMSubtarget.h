@@ -31,7 +31,7 @@ class TargetOptions;
 class ARMSubtarget : public ARMGenSubtargetInfo {
 protected:
   enum ARMProcFamilyEnum {
-    Others, CortexA5, CortexA7, CortexA8, CortexA9, CortexA12, CortexA15, 
+    Others, CortexA5, CortexA7, CortexA8, CortexA9, CortexA12, CortexA15,
     CortexR5, Swift, CortexA53, CortexA57, Krait
   };
   enum ARMProcClassEnum {
@@ -393,7 +393,7 @@ public:
   bool isLittle() const { return IsLittle; }
 
   unsigned getMispredictionPenalty() const;
-  
+
   /// This function returns true if the target has sincos() routine in its
   /// compiler runtime or math libraries.
   bool hasSinCos() const;
