@@ -31,15 +31,14 @@ public:
 
 class MyFileNode : public SimpleFileNode {
 public:
-  MyFileNode(StringRef path, int64_t ordinal) : SimpleFileNode(path, ordinal) {}
+  MyFileNode(StringRef path) : SimpleFileNode(path) {}
 
   void resetNextIndex() override { FileNode::resetNextIndex(); }
 };
 
 class MyExpandFileNode : public SimpleFileNode {
 public:
-  MyExpandFileNode(StringRef path, int64_t ordinal)
-      : SimpleFileNode(path, ordinal) {}
+  MyExpandFileNode(StringRef path) : SimpleFileNode(path) {}
 
   /// \brief How do we want to expand the current node ?
   bool shouldExpand() const override { return true; }
@@ -81,7 +80,7 @@ TEST_F(InputGraphTest, Basic) {
 }
 
 TEST_F(InputGraphTest, AddAFile) {
-  std::unique_ptr<MyFileNode> myfile(new MyFileNode("file1", 0));
+  std::unique_ptr<MyFileNode> myfile(new MyFileNode("file1"));
   EXPECT_EQ(true, inputGraph().addInputElement(std::move(myfile)));
   EXPECT_EQ(1, inputFileCount());
   ErrorOr<InputElement *> nextElement = inputGraph().getNextInputElement();
@@ -94,8 +93,8 @@ TEST_F(InputGraphTest, AddAFile) {
 }
 
 TEST_F(InputGraphTest, AddAFileWithLLDFiles) {
-  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files", 0));
-  std::vector<std::unique_ptr<File> > objfiles;
+  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files"));
+  std::vector<std::unique_ptr<File>> objfiles;
   std::unique_ptr<SimpleFile> obj1(new SimpleFile("objfile1"));
   std::unique_ptr<SimpleFile> obj2(new SimpleFile("objfile2"));
   objfiles.push_back(std::move(obj1));
@@ -132,8 +131,8 @@ TEST_F(InputGraphTest, AddAFileWithLLDFiles) {
 }
 
 TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
-  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files1", 0));
-  std::vector<std::unique_ptr<File> > objfiles;
+  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files1"));
+  std::vector<std::unique_ptr<File>> objfiles;
   std::unique_ptr<SimpleFile> obj1(new SimpleFile("objfile1"));
   std::unique_ptr<SimpleFile> obj2(new SimpleFile("objfile2"));
   objfiles.push_back(std::move(obj1));
@@ -144,9 +143,9 @@ TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
   // Create a group node with two elements
   // an file node which looks like an archive and
   // two file nodes
-  std::unique_ptr<Group> mygroup(new Group(1));
-  std::unique_ptr<MyFileNode> myarchive(new MyFileNode("archive_file", 2));
-  std::vector<std::unique_ptr<File> > objfiles_group;
+  std::unique_ptr<Group> mygroup(new Group());
+  std::unique_ptr<MyFileNode> myarchive(new MyFileNode("archive_file"));
+  std::vector<std::unique_ptr<File>> objfiles_group;
   std::unique_ptr<SimpleFile> obj_1(new SimpleFile("objfile_1"));
   std::unique_ptr<SimpleFile> obj_2(new SimpleFile("objfile_2"));
   objfiles_group.push_back(std::move(obj_1));
@@ -155,19 +154,17 @@ TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
   EXPECT_EQ(true, mygroup->addFile(std::move(myarchive)));
 
   std::unique_ptr<MyFileNode> mygroupobjfile_1(
-      new MyFileNode("group_objfile1", 3));
-  std::vector<std::unique_ptr<File> > objfiles_group1;
-  std::unique_ptr<SimpleFile> mygroupobj1(
-      new SimpleFile("group_objfile1"));
+      new MyFileNode("group_objfile1"));
+  std::vector<std::unique_ptr<File>> objfiles_group1;
+  std::unique_ptr<SimpleFile> mygroupobj1(new SimpleFile("group_objfile1"));
   objfiles_group1.push_back(std::move(mygroupobj1));
   mygroupobjfile_1->addFiles(std::move(objfiles_group1));
   EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_1)));
 
   std::unique_ptr<MyFileNode> mygroupobjfile_2(
-      new MyFileNode("group_objfile2", 4));
-  std::vector<std::unique_ptr<File> > objfiles_group2;
-  std::unique_ptr<SimpleFile> mygroupobj2(
-      new SimpleFile("group_objfile2"));
+      new MyFileNode("group_objfile2"));
+  std::vector<std::unique_ptr<File>> objfiles_group2;
+  std::unique_ptr<SimpleFile> mygroupobj2(new SimpleFile("group_objfile2"));
   objfiles_group2.push_back(std::move(mygroupobj2));
   mygroupobjfile_2->addFiles(std::move(objfiles_group2));
   EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_2)));
@@ -221,8 +218,8 @@ TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
 
 // Iterate through the group
 TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
-  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files1", 0));
-  std::vector<std::unique_ptr<File> > objfiles;
+  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files1"));
+  std::vector<std::unique_ptr<File>> objfiles;
   std::unique_ptr<SimpleFile> obj1(new SimpleFile("objfile1"));
   std::unique_ptr<SimpleFile> obj2(new SimpleFile("objfile2"));
   objfiles.push_back(std::move(obj1));
@@ -233,9 +230,9 @@ TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
   // Create a group node with two elements
   // an file node which looks like an archive and
   // two file nodes
-  std::unique_ptr<Group> mygroup(new Group(1));
-  std::unique_ptr<MyFileNode> myarchive(new MyFileNode("archive_file", 2));
-  std::vector<std::unique_ptr<File> > objfiles_group;
+  std::unique_ptr<Group> mygroup(new Group());
+  std::unique_ptr<MyFileNode> myarchive(new MyFileNode("archive_file"));
+  std::vector<std::unique_ptr<File>> objfiles_group;
   std::unique_ptr<SimpleFile> obj_1(new SimpleFile("objfile_1"));
   std::unique_ptr<SimpleFile> obj_2(new SimpleFile("objfile_2"));
   objfiles_group.push_back(std::move(obj_1));
@@ -244,19 +241,17 @@ TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
   EXPECT_EQ(true, mygroup->addFile(std::move(myarchive)));
 
   std::unique_ptr<MyFileNode> mygroupobjfile_1(
-      new MyFileNode("group_objfile1", 3));
-  std::vector<std::unique_ptr<File> > objfiles_group1;
-  std::unique_ptr<SimpleFile> mygroupobj1(
-      new SimpleFile("group_objfile1"));
+      new MyFileNode("group_objfile1"));
+  std::vector<std::unique_ptr<File>> objfiles_group1;
+  std::unique_ptr<SimpleFile> mygroupobj1(new SimpleFile("group_objfile1"));
   objfiles_group1.push_back(std::move(mygroupobj1));
   mygroupobjfile_1->addFiles(std::move(objfiles_group1));
   EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_1)));
 
   std::unique_ptr<MyFileNode> mygroupobjfile_2(
-      new MyFileNode("group_objfile2", 4));
-  std::vector<std::unique_ptr<File> > objfiles_group2;
-  std::unique_ptr<SimpleFile> mygroupobj2(
-      new SimpleFile("group_objfile2"));
+      new MyFileNode("group_objfile2"));
+  std::vector<std::unique_ptr<File>> objfiles_group2;
+  std::unique_ptr<SimpleFile> mygroupobj2(new SimpleFile("group_objfile2"));
   objfiles_group2.push_back(std::move(mygroupobj2));
   mygroupobjfile_2->addFiles(std::move(objfiles_group2));
   EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_2)));
@@ -325,8 +320,8 @@ TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
 
 // Node expansion tests.
 TEST_F(InputGraphTest, ExpandAndReplaceInputGraphNode) {
-  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files1", 0));
-  std::vector<std::unique_ptr<File> > objfiles;
+  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files1"));
+  std::vector<std::unique_ptr<File>> objfiles;
   std::unique_ptr<SimpleFile> obj1(new SimpleFile("objfile1"));
   std::unique_ptr<SimpleFile> obj2(new SimpleFile("objfile2"));
   objfiles.push_back(std::move(obj1));
@@ -335,17 +330,17 @@ TEST_F(InputGraphTest, ExpandAndReplaceInputGraphNode) {
   EXPECT_EQ(true, inputGraph().addInputElement(std::move(myfile)));
   objfiles.clear();
 
-  std::unique_ptr<MyExpandFileNode> expandFile(new MyExpandFileNode(
-      "expand_node", 1));
+  std::unique_ptr<MyExpandFileNode> expandFile(
+      new MyExpandFileNode("expand_node"));
 
-  std::unique_ptr<MyFileNode> filenode1(new MyFileNode("expand_file1", 2));
+  std::unique_ptr<MyFileNode> filenode1(new MyFileNode("expand_file1"));
   std::unique_ptr<SimpleFile> obj3(new SimpleFile("objfile3"));
   objfiles.push_back(std::move(obj3));
   filenode1->addFiles(std::move(objfiles));
   expandFile->addElement(std::move(filenode1));
   objfiles.clear();
 
-  std::unique_ptr<MyFileNode> filenode2(new MyFileNode("expand_file2", 3));
+  std::unique_ptr<MyFileNode> filenode2(new MyFileNode("expand_file2"));
   std::unique_ptr<SimpleFile> obj4(new SimpleFile("objfile4"));
   objfiles.push_back(std::move(obj4));
   filenode2->addFiles(std::move(objfiles));
@@ -355,7 +350,7 @@ TEST_F(InputGraphTest, ExpandAndReplaceInputGraphNode) {
   // Add expand file to InputGraph
   EXPECT_EQ(true, inputGraph().addInputElement(std::move(expandFile)));
 
-  std::unique_ptr<MyFileNode> filenode3(new MyFileNode("obj_after_expand", 4));
+  std::unique_ptr<MyFileNode> filenode3(new MyFileNode("obj_after_expand"));
   std::unique_ptr<SimpleFile> obj5(new SimpleFile("objfile5"));
   std::unique_ptr<SimpleFile> obj6(new SimpleFile("objfile6"));
   objfiles.push_back(std::move(obj5));

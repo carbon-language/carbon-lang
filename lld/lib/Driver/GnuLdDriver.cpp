@@ -270,7 +270,6 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   ELFFileNode::Attributes attributes;
 
-  int index = 0;
   bool _outputOptionSet = false;
 
   // Ignore unknown arguments.
@@ -428,7 +427,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
     }
 
     case OPT_start_group: {
-      std::unique_ptr<Group> group(new Group(index++));
+      std::unique_ptr<Group> group(new Group());
       groupStack.push(group.get());
       inputGraph->addInputElement(std::move(group));
       break;
@@ -479,10 +478,10 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
           magic == llvm::sys::fs::file_magic::unknown)
         isELFFileNode = false;
       FileNode *inputNode = nullptr;
-      if (isELFFileNode)
-        inputNode = new ELFFileNode(*ctx, userPath, index++, attributes);
-      else {
-        inputNode = new ELFGNULdScript(*ctx, resolvedInputPath, index++);
+      if (isELFFileNode) {
+        inputNode = new ELFFileNode(*ctx, userPath, attributes);
+      } else {
+        inputNode = new ELFGNULdScript(*ctx, resolvedInputPath);
         ec = inputNode->parse(*ctx, diagnostics);
         if (ec) {
           diagnostics << userPath << ": Error parsing linker script\n";

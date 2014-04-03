@@ -48,10 +48,8 @@ public:
     bool _isDashlPrefix;
   };
 
-  ELFFileNode(ELFLinkingContext &ctx, StringRef path, int64_t ordinal,
-              Attributes &attributes)
-      : FileNode(path, ordinal), _elfLinkingContext(ctx),
-        _attributes(attributes) {}
+  ELFFileNode(ELFLinkingContext &ctx, StringRef path, Attributes &attributes)
+      : FileNode(path), _elfLinkingContext(ctx), _attributes(attributes) {}
 
   ErrorOr<StringRef> getPath(const LinkingContext &ctx) const override;
 
@@ -62,7 +60,6 @@ public:
   bool dump(raw_ostream &diagnostics) override {
     diagnostics << "Name    : " << *getPath(_elfLinkingContext) << "\n"
                 << "Type    : ELF File\n"
-                << "Ordinal : " << getOrdinal() << "\n"
                 << "Attributes :\n"
                 << "  - wholeArchive : "
                 << ((_attributes._isWholeArchive) ? "true" : "false") << "\n"
@@ -108,9 +105,8 @@ private:
 /// \brief Parse GNU Linker scripts.
 class GNULdScript : public FileNode {
 public:
-  GNULdScript(ELFLinkingContext &ctx, StringRef userPath, int64_t ordinal)
-      : FileNode(userPath, ordinal), _elfLinkingContext(ctx),
-        _linkerScript(nullptr) {}
+  GNULdScript(ELFLinkingContext &ctx, StringRef userPath)
+      : FileNode(userPath), _elfLinkingContext(ctx), _linkerScript(nullptr) {}
 
   /// \brief Parse the linker script.
   error_code parse(const LinkingContext &, raw_ostream &) override;
@@ -125,8 +121,8 @@ protected:
 /// \brief Handle ELF style with GNU Linker scripts.
 class ELFGNULdScript : public GNULdScript {
 public:
-  ELFGNULdScript(ELFLinkingContext &ctx, StringRef userPath, int64_t ordinal)
-      : GNULdScript(ctx, userPath, ordinal) {}
+  ELFGNULdScript(ELFLinkingContext &ctx, StringRef userPath)
+      : GNULdScript(ctx, userPath) {}
 
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override;
 

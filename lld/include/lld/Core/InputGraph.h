@@ -52,8 +52,7 @@ public:
   enum Position : uint8_t { BEGIN, END };
 
   /// \brief Initialize the inputgraph
-  InputGraph()
-      : _ordinal(0), _nextElementIndex(0), _currentInputElement(nullptr) {}
+  InputGraph() : _nextElementIndex(0), _currentInputElement(nullptr) {}
 
   /// nextFile returns the next file that needs to be processed by the resolver.
   /// When there are no more files to be processed, an appropriate
@@ -71,18 +70,9 @@ public:
   /// \brief Adds a node into the InputGraph
   bool addInputElement(std::unique_ptr<InputElement>);
 
-  /// \brief Set Ordinals for all the InputElements that form the InputGraph
-  bool assignOrdinals();
-
   /// Normalize the InputGraph. It visits all nodes in the tree to replace a
   /// node with its children if it's shouldExpand() returnst true.
   void normalize();
-
-  /// \brief Do postprocessing of the InputGraph if there is a need for the
-  /// to provide additional information to the user, also rearranges
-  /// InputElements by their ordinals. If a user wants to place an input file
-  /// at the desired position, the user can do that.
-  void doPostProcess();
 
   range<InputElementIterT> inputElements() {
     return make_range(_inputArgs.begin(), _inputArgs.end());
@@ -107,8 +97,6 @@ public:
 protected:
   // Input arguments
   InputElementVectorT _inputArgs;
-  // Ordinals
-  int64_t _ordinal;
   // Index of the next element to be processed
   uint32_t _nextElementIndex;
   InputElement *_currentInputElement;
@@ -124,22 +112,11 @@ public:
     File        // Represents a type associated with File Nodes
   };
 
-  /// \brief Initialize the Input Element, The ordinal value of an input Element
-  /// is initially set to -1, if the user wants to override its ordinal,
-  /// let the user do it
-  InputElement(Kind type, int64_t ordinal = -1);
-
+  InputElement(Kind type) : _kind(type) {}
   virtual ~InputElement() {}
 
   /// Return the Element Type for an Input Element
   virtual Kind kind() const { return _kind; }
-
-  void setOrdinal(int64_t ordinal) {
-    if (_ordinal != -1)
-      _ordinal = ordinal;
-  }
-
-  int64_t getOrdinal() const { return _ordinal; }
 
   /// \brief Dump the Input Element
   virtual bool dump(raw_ostream &diagnostics) { return true; }
@@ -168,8 +145,7 @@ public:
   }
 
 protected:
-  Kind _kind;              // The type of the Element
-  int64_t _ordinal;        // The ordinal value
+  Kind _kind; // The type of the Element
 };
 
 /// \brief A Control node which contains a group of InputElements
@@ -178,9 +154,9 @@ protected:
 /// follow the group
 class Group : public InputElement {
 public:
-  Group(int64_t ordinal)
-      : InputElement(InputElement::Kind::Group, ordinal),
-        _currentElementIndex(0), _nextElementIndex(0), _madeProgress(false) {}
+  Group()
+      : InputElement(InputElement::Kind::Group), _currentElementIndex(0),
+        _nextElementIndex(0), _madeProgress(false) {}
 
   static inline bool classof(const InputElement *a) {
     return a->kind() == InputElement::Kind::Group;
@@ -236,7 +212,9 @@ protected:
 /// directly.
 class FileNode : public InputElement {
 public:
-  FileNode(StringRef path, int64_t ordinal = -1);
+  FileNode(StringRef path)
+      : InputElement(InputElement::Kind::File), _path(path), _nextFileIndex(0) {
+  }
 
   virtual ErrorOr<StringRef> getPath(const LinkingContext &) const {
     return _path;
@@ -291,8 +269,7 @@ protected:
 /// \brief Represents Internal Input files
 class SimpleFileNode : public FileNode {
 public:
-  SimpleFileNode(StringRef path, int64_t ordinal = -1)
-      : FileNode(path, ordinal) {}
+  SimpleFileNode(StringRef path) : FileNode(path) {}
 
   virtual ~SimpleFileNode() {}
 

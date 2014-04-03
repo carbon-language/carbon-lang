@@ -15,11 +15,6 @@
 
 using namespace lld;
 
-static bool sortInputElements(const std::unique_ptr<InputElement> &a,
-                              const std::unique_ptr<InputElement> &b) {
-  return a->getOrdinal() < b->getOrdinal();
-}
-
 ErrorOr<File &> InputGraph::nextFile() {
   // When nextFile() is called for the first time, _currentInputElement is not
   // initialized. Initialize it with the first element of the input graph.
@@ -52,16 +47,6 @@ void InputGraph::notifyProgress() { _currentInputElement->notifyProgress(); }
 bool InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {
   _inputArgs.push_back(std::move(ie));
   return true;
-}
-
-bool InputGraph::assignOrdinals() {
-  for (auto &ie : _inputArgs)
-    ie->setOrdinal(++_ordinal);
-  return true;
-}
-
-void InputGraph::doPostProcess() {
-  std::stable_sort(_inputArgs.begin(), _inputArgs.end(), sortInputElements);
 }
 
 bool InputGraph::dump(raw_ostream &diagnostics) {
@@ -110,19 +95,6 @@ void InputGraph::normalize() {
   _inputArgs = std::move(_workInputArgs);
 }
 
-/// InputElement
-
-/// \brief Initialize the Input Element, The ordinal value of an input Element
-/// is initially set to -1, if the user wants to override its ordinal,
-/// let the user do it
-InputElement::InputElement(Kind type, int64_t ordinal)
-    : _kind(type), _ordinal(ordinal) {}
-
-/// FileNode
-FileNode::FileNode(StringRef path, int64_t ordinal)
-    : InputElement(InputElement::Kind::File, ordinal), _path(path),
-      _nextFileIndex(0) {}
-
 /// \brief Read the file into _buffer.
 error_code FileNode::getBuffer(StringRef filePath) {
   // Create a memory buffer
@@ -132,8 +104,6 @@ error_code FileNode::getBuffer(StringRef filePath) {
   _buffer = std::move(mb);
   return error_code::success();
 }
-
-/// Group
 
 /// \brief Return the next file that need to be processed by the resolver.
 /// This also processes input elements depending on the resolve status

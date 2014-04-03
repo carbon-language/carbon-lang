@@ -74,19 +74,18 @@ error_code GNULdScript::parse(const LinkingContext &ctx,
 /// \brief Handle GnuLD script for ELF.
 error_code ELFGNULdScript::parse(const LinkingContext &ctx,
                                  raw_ostream &diagnostics) {
-  int64_t index = 0;
   ELFFileNode::Attributes attributes;
   if (error_code ec = GNULdScript::parse(ctx, diagnostics))
     return ec;
   for (const auto &c : _linkerScript->_commands) {
     if (auto group = dyn_cast<script::Group>(c)) {
-      std::unique_ptr<Group> groupStart(new Group(index++));
+      std::unique_ptr<Group> groupStart(new Group());
       for (auto &path : group->getPaths()) {
         // TODO : Propagate Set WholeArchive/dashlPrefix
         attributes.setAsNeeded(path._asNeeded);
         auto inputNode = new ELFFileNode(
             _elfLinkingContext, _elfLinkingContext.allocateString(path._path),
-            index++, attributes);
+            attributes);
         std::unique_ptr<InputElement> inputFile(inputNode);
         cast<Group>(groupStart.get())->addFile(
             std::move(inputFile));

@@ -58,7 +58,7 @@ public:
 /// \brief Represents a ELF control node
 class PECOFFGroup : public Group {
 public:
-  PECOFFGroup(PECOFFLinkingContext &ctx) : Group(0), _ctx(ctx) {}
+  PECOFFGroup(PECOFFLinkingContext &ctx) : Group(), _ctx(ctx) {}
 
   /// \brief Parse the group members.
   error_code parse(const LinkingContext &ctx, raw_ostream &diag) override {
