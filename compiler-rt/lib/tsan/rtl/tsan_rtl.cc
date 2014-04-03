@@ -765,7 +765,7 @@ void ThreadIgnoreSyncEnd(ThreadState *thr, uptr pc) {
   CHECK_GE(thr->ignore_sync, 0);
 #ifndef TSAN_GO
   if (thr->ignore_sync == 0)
-    thr->mop_ignore_set.Reset();
+    thr->sync_ignore_set.Reset();
 #endif
 }
 
