@@ -230,7 +230,8 @@ bool ARMAtomicExpandPass::expandAtomicRMW(AtomicRMWInst *AI) {
 }
 
 bool ARMAtomicExpandPass::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
-  AtomicOrdering Order = CI->getSuccessOrdering();
+  AtomicOrdering SuccessOrder = CI->getSuccessOrdering();
+  AtomicOrdering FailureOrder = CI->getFailureOrdering();
   Value *Addr = CI->getPointerOperand();
   BasicBlock *BB = CI->getParent();
   Function *F = BB->getParent();
@@ -238,24 +239,27 @@ bool ARMAtomicExpandPass::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
 
   // Given: cmpxchg some_op iN* %addr, iN %desired, iN %new success_ord fail_ord
   //
-  // The standard expansion we produce is:
+  // The full expansion we produce is:
   //     [...]
   //     fence?
   // cmpxchg.start:
   //     %loaded = @load.linked(%addr)
   //     %should_store = icmp eq %loaded, %desired
-  //     br i1 %should_store, label %cmpxchg.trystore, label %cmpxchg.end
+  //     br i1 %should_store, label %cmpxchg.trystore,
+  //                          label %cmpxchg.end/%cmpxchg.barrier
   // cmpxchg.trystore:
   //     %stored = @store_conditional(%new, %addr)
   //     %try_again = icmp i32 ne %stored, 0
   //     br i1 %try_again, label %loop, label %cmpxchg.end
-  // cmpxchg.end:
+  // cmpxchg.barrier:
   //     fence?
+  //     br label %cmpxchg.end
+  // cmpxchg.end:
   //     [...]
   BasicBlock *ExitBB = BB->splitBasicBlock(CI, "cmpxchg.end");
-  BasicBlock *TryStoreBB =
-      BasicBlock::Create(Ctx, "cmpxchg.trystore", F, ExitBB);
-  BasicBlock *LoopBB = BasicBlock::Create(Ctx, "cmpxchg.start", F, TryStoreBB);
+  auto BarrierBB = BasicBlock::Create(Ctx, "cmpxchg.trystore", F, ExitBB);
+  auto TryStoreBB = BasicBlock::Create(Ctx, "cmpxchg.barrier", F, BarrierBB);
+  auto LoopBB = BasicBlock::Create(Ctx, "cmpxchg.start", F, TryStoreBB);
 
   // This grabs the DebugLoc from CI
   IRBuilder<> Builder(CI);
@@ -265,7 +269,7 @@ bool ARMAtomicExpandPass::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   // the branch entirely.
   std::prev(BB->end())->eraseFromParent();
   Builder.SetInsertPoint(BB);
-  AtomicOrdering MemOpOrder = insertLeadingFence(Builder, Order);
+  AtomicOrdering MemOpOrder = insertLeadingFence(Builder, SuccessOrder);
   Builder.CreateBr(LoopBB);
 
   // Start the main loop block now that we've taken care of the preliminaries.
@@ -273,19 +277,24 @@ bool ARMAtomicExpandPass::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   Value *Loaded = loadLinked(Builder, Addr, MemOpOrder);
   Value *ShouldStore =
       Builder.CreateICmpEQ(Loaded, CI->getCompareOperand(), "should_store");
-  Builder.CreateCondBr(ShouldStore, TryStoreBB, ExitBB);
+
+  // If the the cmpxchg doesn't actually need any ordering when it fails, we can
+  // jump straight past that fence instruction (if it exists).
+  BasicBlock *FailureBB = FailureOrder == Monotonic ? ExitBB : BarrierBB;
+  Builder.CreateCondBr(ShouldStore, TryStoreBB, FailureBB);
 
   Builder.SetInsertPoint(TryStoreBB);
   Value *StoreSuccess =
       storeConditional(Builder, CI->getNewValOperand(), Addr, MemOpOrder);
   Value *TryAgain = Builder.CreateICmpNE(
       StoreSuccess, ConstantInt::get(Type::getInt32Ty(Ctx), 0), "success");
-  Builder.CreateCondBr(TryAgain, LoopBB, ExitBB);
+  Builder.CreateCondBr(TryAgain, LoopBB, BarrierBB);
 
   // Finally, make sure later instructions don't get reordered with a fence if
   // necessary.
-  Builder.SetInsertPoint(ExitBB, ExitBB->begin());
-  insertTrailingFence(Builder, Order);
+  Builder.SetInsertPoint(BarrierBB);
+  insertTrailingFence(Builder, SuccessOrder);
+  Builder.CreateBr(ExitBB);
 
   CI->replaceAllUsesWith(Loaded);
   CI->eraseFromParent();

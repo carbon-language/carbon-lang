@@ -1075,9 +1075,10 @@ define i16 @test_atomic_cmpxchg_i16(i16 zeroext %wanted, i16 zeroext %new) nounw
    ret i16 %old
 }
 
-define i32 @test_atomic_cmpxchg_i32(i32 %wanted, i32 %new) nounwind {
+define void @test_atomic_cmpxchg_i32(i32 %wanted, i32 %new) nounwind {
 ; CHECK-LABEL: test_atomic_cmpxchg_i32:
    %old = cmpxchg i32* @var32, i32 %wanted, i32 %new release monotonic
+   store i32 %old, i32* @var32
 ; CHECK-NOT: dmb
 ; CHECK-NOT: mcr
 ; CHECK: movw r[[ADDR:[0-9]+]], :lower16:var32
@@ -1097,8 +1098,8 @@ define i32 @test_atomic_cmpxchg_i32(i32 %wanted, i32 %new) nounwind {
 ; CHECK-NOT: dmb
 ; CHECK-NOT: mcr
 
-; CHECK: mov r0, r[[OLD]]
-   ret i32 %old
+; CHECK: str{{(.w)?}} r[[OLD]],
+   ret void
 }
 
 define void @test_atomic_cmpxchg_i64(i64 %wanted, i64 %new) nounwind {

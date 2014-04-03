@@ -194,3 +194,40 @@ entry:
   %0 = atomicrmw add i32* %p, i32 1 monotonic
   ret i32 %0
 }
+
+define i32 @test_cmpxchg_fail_order(i32 *%addr, i32 %desired, i32 %new) {
+; CHECK-LABEL: test_cmpxchg_fail_order:
+
+  %oldval = cmpxchg i32* %addr, i32 %desired, i32 %new seq_cst monotonic
+; CHECK:     dmb ish
+; CHECK: [[LOOP_BB:\.?LBB[0-9]+_1]]:
+; CHECK:     ldrex   [[OLDVAL:r[0-9]+]], [r[[ADDR:[0-9]+]]]
+; CHECK:     cmp     [[OLDVAL]], r1
+; CHECK:     bxne    lr
+; CHECK:     strex   [[SUCCESS:r[0-9]+]], r2, [r[[ADDR]]]
+; CHECK:     cmp     [[SUCCESS]], #0
+; CHECK:     bne     [[LOOP_BB]]
+; CHECK:     dmb     ish
+; CHECK:     bx      lr
+
+  ret i32 %oldval
+}
+
+define i32 @test_cmpxchg_fail_order1(i32 *%addr, i32 %desired, i32 %new) {
+; CHECK-LABEL: test_cmpxchg_fail_order1:
+
+  %oldval = cmpxchg i32* %addr, i32 %desired, i32 %new acquire acquire
+; CHECK-NOT:     dmb ish
+; CHECK: [[LOOP_BB:\.?LBB[0-9]+_1]]:
+; CHECK:     ldrex   [[OLDVAL:r[0-9]+]], [r[[ADDR:[0-9]+]]]
+; CHECK:     cmp     [[OLDVAL]], r1
+; CHECK:     bne     [[END_BB:\.?LBB[0-9]+_[0-9]+]]
+; CHECK:     strex   [[SUCCESS:r[0-9]+]], r2, [r[[ADDR]]]
+; CHECK:     cmp     [[SUCCESS]], #0
+; CHECK:     bne     [[LOOP_BB]]
+; CHECK: [[END_BB]]:
+; CHECK:     dmb     ish
+; CHECK:     bx      lr
+
+  ret i32 %oldval
+}
