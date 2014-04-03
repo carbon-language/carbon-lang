@@ -148,6 +148,14 @@ directory of libisl/libcloog, i.e. ${CLOOG_INSTALL}/lib, to LD_LIBRARY_PATH by:
 
 <pre>export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${CLOOG_INSTALL}/lib</pre>
 
+<p>If you get an error in one of the python files, your system probably uses python3
+as default python interpreter. This is the case, for instance, under Arch Linux.
+To solve this issue, run <code>cmake</code> again, but with the added argument:
+<code>-DPYTHON_EXECUTABLE=/usr/bin/python2</code> (replace <code>/usr/bin/python2</code>
+with the location of the python2 interpreter under your system).
+
+<pre>cmake -DCMAKE_PREFIX_PATH=${CLOOG_INSTALL} -DPYTHON_EXECUTABLE=/usr/bin/python2 ${LLVM_SRC}</pre>
+
 <h2> Optional Features </h2>
 
 <h3> Pocc </h3>
