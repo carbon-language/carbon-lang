@@ -4,6 +4,9 @@
 ; RUN: %llc_dwarf -fast-isel=false -O0 -filetype=obj %s -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
+; This isn't working on windows dwarf platforms, fail on those.
+; XFAIL: mingw, cygwin
+
 ; CHECK: {{0x[0-9a-f]+}}      1      0      1   0             0  is_stmt
 ; CHECK: {{0x[0-9a-f]+}}      2      0      1   0             0  is_stmt
 ; CHECK: {{0x[0-9a-f]+}}      4      0      1   0             0  is_stmt
