@@ -117,8 +117,7 @@ def mubuf_vaddr_offset : PatFrag<
 >;
 
 class InlineImm <ValueType vt> : PatLeaf <(vt imm), [{
-  return
-    (*(const SITargetLowering *)getTargetLowering()).analyzeImmediate(N) == 0;
+  return isInlineImmediate(N);
 }]>;
 
 class SGPRImm <dag frag> : PatLeaf<frag, [{

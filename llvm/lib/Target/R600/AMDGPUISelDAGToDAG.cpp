@@ -48,6 +48,7 @@ public:
   virtual void PostprocessISelDAG();
 
 private:
+  bool isInlineImmediate(SDNode *N) const;
   inline SDValue getSmallIPtrImm(unsigned Imm);
   bool FoldOperand(SDValue &Src, SDValue &Sel, SDValue &Neg, SDValue &Abs,
                    const R600InstrInfo *TII);
@@ -101,6 +102,12 @@ AMDGPUDAGToDAGISel::AMDGPUDAGToDAGISel(TargetMachine &TM)
 }
 
 AMDGPUDAGToDAGISel::~AMDGPUDAGToDAGISel() {
+}
+
+bool AMDGPUDAGToDAGISel::isInlineImmediate(SDNode *N) const {
+  const SITargetLowering *TL
+      = static_cast<const SITargetLowering *>(getTargetLowering());
+  return TL->analyzeImmediate(N) == 0;
 }
 
 /// \brief Determine the register class for \p OpNo
@@ -357,6 +364,37 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE,
                                   SDLoc(N), N->getValueType(0), Ops);
   }
+
+  case ISD::Constant:
+  case ISD::ConstantFP: {
+    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
+    if (ST.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS ||
+        N->getValueType(0).getSizeInBits() != 64 || isInlineImmediate(N))
+      break;
+
+    uint64_t Imm;
+    if (ConstantFPSDNode *FP = dyn_cast<ConstantFPSDNode>(N))
+      Imm = FP->getValueAPF().bitcastToAPInt().getZExtValue();
+    else {
+      ConstantSDNode *C = dyn_cast<ConstantSDNode>(N);
+      assert(C);
+      Imm = C->getZExtValue();
+    }
+
+    SDNode *Lo = CurDAG->getMachineNode(AMDGPU::S_MOV_B32, SDLoc(N), MVT::i32,
+                                CurDAG->getConstant(Imm & 0xFFFFFFFF, MVT::i32));
+    SDNode *Hi = CurDAG->getMachineNode(AMDGPU::S_MOV_B32, SDLoc(N), MVT::i32,
+                                CurDAG->getConstant(Imm >> 32, MVT::i32));
+    const SDValue Ops[] = {
+      CurDAG->getTargetConstant(AMDGPU::SReg_64RegClassID, MVT::i32),
+      SDValue(Lo, 0), CurDAG->getTargetConstant(AMDGPU::sub0, MVT::i32),
+      SDValue(Hi, 0), CurDAG->getTargetConstant(AMDGPU::sub1, MVT::i32)
+    };
+
+    return CurDAG->getMachineNode(TargetOpcode::REG_SEQUENCE, SDLoc(N),
+                                  N->getValueType(0), Ops);
+  }
+
   case AMDGPUISD::REGISTER_LOAD: {
     const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
     if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
