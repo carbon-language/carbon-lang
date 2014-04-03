@@ -27,6 +27,8 @@ STATISTIC(NumDeadDefsReplaced, "Number of dead definitions replaced");
 namespace {
 class ARM64DeadRegisterDefinitions : public MachineFunctionPass {
 private:
+  const TargetRegisterInfo *TRI;
+  bool implicitlyDefinesSubReg(unsigned Reg, const MachineInstr *MI);
   bool processMachineBasicBlock(MachineBasicBlock *MBB);
 
 public:
@@ -45,6 +47,19 @@ public:
 char ARM64DeadRegisterDefinitions::ID = 0;
 } // end anonymous namespace
 
+bool ARM64DeadRegisterDefinitions::implicitlyDefinesSubReg(
+                                                       unsigned Reg,
+                                                       const MachineInstr *MI) {
+  for (unsigned i = MI->getNumExplicitOperands(), e = MI->getNumOperands();
+       i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.isDef())
+      if (TRI->isSubRegister(Reg, MO.getReg()))
+        return true;
+  }
+  return false;
+}
+
 bool
 ARM64DeadRegisterDefinitions::processMachineBasicBlock(MachineBasicBlock *MBB) {
   bool Changed = false;
@@ -60,6 +75,11 @@ ARM64DeadRegisterDefinitions::processMachineBasicBlock(MachineBasicBlock *MBB) {
         // Be careful not to change the register if it's a tied operand.
         if (MI->isRegTiedToUseOperand(i)) {
           DEBUG(dbgs() << "    Ignoring, def is tied operand.\n");
+          continue;
+        }
+        // Don't change the register if there's an implicit def of a subreg.
+        if (implicitlyDefinesSubReg(MO.getReg(), MI)) {
+          DEBUG(dbgs() << "    Ignoring, implicitly defines subregister.\n");
           continue;
         }
         // Make sure the instruction take a register class that contains
@@ -90,6 +110,7 @@ ARM64DeadRegisterDefinitions::processMachineBasicBlock(MachineBasicBlock *MBB) {
 // register. Replace that register with the zero register when possible.
 bool ARM64DeadRegisterDefinitions::runOnMachineFunction(MachineFunction &mf) {
   MachineFunction *MF = &mf;
+  TRI = MF->getTarget().getRegisterInfo();
   bool Changed = false;
   DEBUG(dbgs() << "***** ARM64DeadRegisterDefinitions *****\n");
 
