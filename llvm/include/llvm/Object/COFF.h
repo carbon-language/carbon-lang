@@ -371,7 +371,6 @@ protected:
                            SymbolRef::Type &Res) const override;
   error_code getSymbolSection(DataRefImpl Symb,
                               section_iterator &Res) const override;
-  error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const override;
   void moveSectionNext(DataRefImpl &Sec) const override;
   error_code getSectionName(DataRefImpl Sec, StringRef &Res) const override;
   error_code getSectionAddress(DataRefImpl Sec, uint64_t &Res) const override;

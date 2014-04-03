@@ -252,11 +252,6 @@ error_code COFFObjectFile::getSymbolSection(DataRefImpl Ref,
   return object_error::success;
 }
 
-error_code COFFObjectFile::getSymbolValue(DataRefImpl Ref,
-                                          uint64_t &Val) const {
-  report_fatal_error("getSymbolValue unimplemented in COFFObjectFile");
-}
-
 void COFFObjectFile::moveSectionNext(DataRefImpl &Ref) const {
   const coff_section *Sec = toSec(Ref);
   Sec += 1;

@@ -156,9 +156,6 @@ public:
   /// end_sections() if it is undefined or is an absolute symbol.
   error_code getSection(section_iterator &Result) const;
 
-  /// @brief Get value of the symbol in the symbol table.
-  error_code getValue(uint64_t &Val) const;
-
   const ObjectFile *getObject() const;
 };
 
@@ -238,7 +235,6 @@ protected:
                                    SymbolRef::Type &Res) const = 0;
   virtual error_code getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const = 0;
-  virtual error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const = 0;
 
   // Same as above for SectionRef.
   friend class SectionRef;
@@ -373,10 +369,6 @@ inline error_code SymbolRef::getSection(section_iterator &Result) const {
 
 inline error_code SymbolRef::getType(SymbolRef::Type &Result) const {
   return getObject()->getSymbolType(getRawDataRefImpl(), Result);
-}
-
-inline error_code SymbolRef::getValue(uint64_t &Val) const {
-  return getObject()->getSymbolValue(getRawDataRefImpl(), Val);
 }
 
 inline const ObjectFile *SymbolRef::getObject() const {

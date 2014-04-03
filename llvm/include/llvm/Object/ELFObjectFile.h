@@ -68,7 +68,6 @@ protected:
                            SymbolRef::Type &Res) const override;
   error_code getSymbolSection(DataRefImpl Symb,
                               section_iterator &Res) const override;
-  error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const override;
 
   error_code getLibraryNext(DataRefImpl Data,
                             LibraryRef &Result) const override;
@@ -392,14 +391,6 @@ error_code ELFObjectFile<ELFT>::getSymbolSection(DataRefImpl Symb,
     Sec.p = reinterpret_cast<intptr_t>(ESec);
     Res = section_iterator(SectionRef(Sec, this));
   }
-  return object_error::success;
-}
-
-template <class ELFT>
-error_code ELFObjectFile<ELFT>::getSymbolValue(DataRefImpl Symb,
-                                               uint64_t &Val) const {
-  const Elf_Sym *ESym = getSymbol(Symb);
-  Val = ESym->st_value;
   return object_error::success;
 }
 
