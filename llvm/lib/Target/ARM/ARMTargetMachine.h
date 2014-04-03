@@ -182,8 +182,8 @@ public:
 class ThumbBETargetMachine : public ThumbTargetMachine {
   virtual void anchor();
 public:
-  ThumbBETargetMachine(const Target &T, StringRef TT,
-                       StringRef CPU, StringRef FS, const TargetOptions &Options,
+  ThumbBETargetMachine(const Target &T, StringRef TT, StringRef CPU,
+                       StringRef FS, const TargetOptions &Options,
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
 };

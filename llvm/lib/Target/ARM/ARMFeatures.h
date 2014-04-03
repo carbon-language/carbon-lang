@@ -1,4 +1,4 @@
-//===-- ARMFeatures.h - Checks for ARM instruction features ------*- C++ -*-===//
+//===-- ARMFeatures.h - Checks for ARM instruction features -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
