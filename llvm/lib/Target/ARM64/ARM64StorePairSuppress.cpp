@@ -138,10 +138,10 @@ bool ARM64StorePairSuppress::runOnMachineFunction(MachineFunction &mf) {
   // precisely determine whether a store pair can be formed. But we do want to
   // filter out most situations where we can't form store pairs to avoid
   // computing trace metrics in those cases.
-  for (auto &MBB: *MF) {
+  for (auto &MBB : *MF) {
     bool SuppressSTP = false;
     unsigned PrevBaseReg = 0;
-    for (auto &MI: MBB) {
+    for (auto &MI : MBB) {
       if (!isNarrowFPStore(MI))
         continue;
       unsigned BaseReg;

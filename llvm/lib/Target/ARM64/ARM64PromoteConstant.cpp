@@ -93,7 +93,7 @@ public:
   bool runOnModule(Module &M) {
     DEBUG(dbgs() << getPassName() << '\n');
     bool Changed = false;
-    for (auto &MF: M) {
+    for (auto &MF : M) {
       Changed |= runOnFunction(MF);
     }
     return Changed;
@@ -566,7 +566,7 @@ bool ARM64PromoteConstant::runOnFunction(Function &F) {
   SmallSet<Constant *, 8> AlreadyChecked;
 
   for (auto &MBB : F) {
-    for (auto &MI: MBB) {
+    for (auto &MI : MBB) {
       // Traverse the operand, looking for constant vectors
       // Replace them by a load of a global variable of type constant vector
       for (unsigned OpIdx = 0, EndOpIdx = MI.getNumOperands();

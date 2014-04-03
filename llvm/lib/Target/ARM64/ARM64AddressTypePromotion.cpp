@@ -380,7 +380,7 @@ void ARM64AddressTypePromotion::mergeSExts(ValueToInsts &ValToSExtendedUses,
                                            SetOfInstructions &ToRemove) {
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
-  for (auto &Entry: ValToSExtendedUses) {
+  for (auto &Entry : ValToSExtendedUses) {
     Instructions &Insts = Entry.second;
     Instructions CurPts;
     for (Instruction *Inst : Insts) {
@@ -421,7 +421,7 @@ void ARM64AddressTypePromotion::analyzeSExtension(Instructions &SExtInsts) {
   DenseMap<Value *, Instruction *> SeenChains;
 
   for (auto &BB : *Func) {
-    for (auto &II: BB) {
+    for (auto &II : BB) {
       Instruction *SExt = &II;
 
       // Collect all sext operation per type.

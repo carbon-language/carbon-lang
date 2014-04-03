@@ -650,7 +650,7 @@ static void computeADRP(const InstrToInstrs &UseToDefs,
                         ARM64FunctionInfo &ARM64FI,
                         const MachineDominatorTree *MDT) {
   DEBUG(dbgs() << "*** Compute LOH for ADRP\n");
-  for (const auto &Entry: UseToDefs) {
+  for (const auto &Entry : UseToDefs) {
     unsigned Size = Entry.second.size();
     if (Size == 0)
       continue;
@@ -923,7 +923,7 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
         }
       }
       bool Found = false;
-      for (auto &Use: *Users) {
+      for (auto &Use : *Users) {
         if (!DefsOfPotentialCandidates.count(Use)) {
           ++NumTooCplxLvl1;
           Found = true;

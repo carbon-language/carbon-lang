@@ -120,7 +120,7 @@ void ARM64BranchRelaxation::verify() {
 
 /// print block size and offset information - debugging
 void ARM64BranchRelaxation::dumpBBs() {
-  for (auto &MBB: *MF) {
+  for (auto &MBB : *MF) {
     const BasicBlockInfo &BBI = BlockInfo[MBB.getNumber()];
     dbgs() << format("BB#%u\toffset=%08x\t", MBB.getNumber(), BBI.Offset)
            << format("size=%#x\n", BBI.Size);
