@@ -2,7 +2,7 @@
 
 int j;
 void test1() { // expected-warning {{function 'test1' could be declared with attribute 'noreturn'}}
-  ^ (void) { while (1) { } }(); // expected-warning {{block could be declared with attribute 'noreturn'}}
+  ^ (void) { while (1) { } }();
   ^ (void) { if (j) while (1) { } }();
   while (1) { }
 }
@@ -40,3 +40,13 @@ test4() {
 _Noreturn void test5() {
   test2_positive();
 }
+
+// rdar://16274746
+void test6()
+{
+    (void)^{ 
+       for(;;)
+        ;
+     };
+}
+
