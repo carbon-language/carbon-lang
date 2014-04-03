@@ -135,22 +135,6 @@ error_code COFFObjectFile::getSymbolName(DataRefImpl Ref,
   return getSymbolName(Symb, Result);
 }
 
-error_code COFFObjectFile::getSymbolFileOffset(DataRefImpl Ref,
-                                            uint64_t &Result) const {
-  const coff_symbol *Symb = toSymb(Ref);
-  const coff_section *Section = NULL;
-  if (error_code EC = getSection(Symb->SectionNumber, Section))
-    return EC;
-
-  if (Symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED)
-    Result = UnknownAddressOrSize;
-  else if (Section)
-    Result = Section->PointerToRawData + Symb->Value;
-  else
-    Result = Symb->Value;
-  return object_error::success;
-}
-
 error_code COFFObjectFile::getSymbolAddress(DataRefImpl Ref,
                                             uint64_t &Result) const {
   const coff_symbol *Symb = toSymb(Ref);

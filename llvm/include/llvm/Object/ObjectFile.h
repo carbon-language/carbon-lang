@@ -228,7 +228,6 @@ protected:
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const = 0;
   error_code printSymbolName(raw_ostream &OS, DataRefImpl Symb) const override;
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const = 0;
-  virtual error_code getSymbolFileOffset(DataRefImpl Symb, uint64_t &Res)const=0;
   virtual error_code getSymbolAlignment(DataRefImpl Symb, uint32_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const = 0;
   virtual error_code getSymbolType(DataRefImpl Symb,
@@ -352,7 +351,30 @@ inline error_code SymbolRef::getAddress(uint64_t &Result) const {
 }
 
 inline error_code SymbolRef::getFileOffset(uint64_t &Result) const {
-  return getObject()->getSymbolFileOffset(getRawDataRefImpl(), Result);
+  uint64_t Address;
+  if (error_code EC = getAddress(Address))
+    return EC;
+
+  const ObjectFile *Obj = getObject();
+  section_iterator SecI(Obj->section_begin());
+  if (error_code EC = getSection(SecI))
+    return EC;
+
+  uint64_t SectionAddress;
+  if (error_code EC = SecI->getAddress(SectionAddress))
+    return EC;
+
+  uint64_t OffsetInSection = Address - SectionAddress;
+
+  StringRef SecContents;
+  if (error_code EC = SecI->getContents(SecContents))
+    return EC;
+
+  // FIXME: this is a hack.
+  uint64_t SectionOffset = (uint64_t)SecContents.data() - (uint64_t)Obj->base();
+
+  Result = SectionOffset + OffsetInSection;
+  return object_error::success;
 }
 
 inline error_code SymbolRef::getAlignment(uint32_t &Result) const {

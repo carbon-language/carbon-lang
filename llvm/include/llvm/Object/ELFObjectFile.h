@@ -58,8 +58,6 @@ protected:
 
   void moveSymbolNext(DataRefImpl &Symb) const override;
   error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const override;
-  error_code getSymbolFileOffset(DataRefImpl Symb,
-                                 uint64_t &Res) const override;
   error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const override;
   error_code getSymbolAlignment(DataRefImpl Symb, uint32_t &Res) const override;
   error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const override;
@@ -236,39 +234,6 @@ error_code ELFObjectFile<ELFT>::getSymbolVersion(SymbolRef SymRef,
     return Ver.getError();
   Version = *Ver;
   return object_error::success;
-}
-
-template <class ELFT>
-error_code ELFObjectFile<ELFT>::getSymbolFileOffset(DataRefImpl Symb,
-                                                    uint64_t &Result) const {
-  const Elf_Sym *ESym = getSymbol(Symb);
-  const Elf_Shdr *ESec;
-  switch (EF.getSymbolTableIndex(ESym)) {
-  case ELF::SHN_COMMON:
-  // Unintialized symbols have no offset in the object file
-  case ELF::SHN_UNDEF:
-    Result = UnknownAddressOrSize;
-    return object_error::success;
-  case ELF::SHN_ABS:
-    Result = ESym->st_value;
-    return object_error::success;
-  default:
-    ESec = EF.getSection(ESym);
-  }
-
-  switch (ESym->getType()) {
-  case ELF::STT_SECTION:
-    Result = ESec ? ESec->sh_offset : UnknownAddressOrSize;
-    return object_error::success;
-  case ELF::STT_FUNC:
-  case ELF::STT_OBJECT:
-  case ELF::STT_NOTYPE:
-    Result = ESym->st_value + (ESec ? ESec->sh_offset : 0);
-    return object_error::success;
-  default:
-    Result = UnknownAddressOrSize;
-    return object_error::success;
-  }
 }
 
 template <class ELFT>

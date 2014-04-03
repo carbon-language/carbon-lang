@@ -363,8 +363,6 @@ protected:
   void moveSymbolNext(DataRefImpl &Symb) const override;
   error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const override;
   error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const override;
-  error_code getSymbolFileOffset(DataRefImpl Symb,
-                                 uint64_t &Res) const override;
   error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
   error_code getSymbolType(DataRefImpl Symb,
