@@ -46,3 +46,23 @@ MACHO-STUBS-x86-64:     1faa:       e8 09 00 00 00                              
 MACHO-STUBS-x86-64:     1faf:       8b 44 24 04                                     movl    4(%rsp), %eax
 MACHO-STUBS-x86-64:     1fb3:       48 83 c4 08                                     addq    $8, %rsp
 MACHO-STUBS-x86-64:     1fb7:       c3                                              ret
+
+
+RUN: llvm-objdump -d -symbolize %p/../Inputs/relocation-relocatable.elf-i386 \
+RUN:              | FileCheck %s -check-prefix ELF-i386-REL
+
+ELF-i386-REL: Disassembly of section .text:
+ELF-i386-REL-NEXT: f:
+ELF-i386-REL-NEXT:       0:	e9 fc ff ff ff                	jmp	h
+ELF-i386-REL:      g:
+ELF-i386-REL-NEXT:       5:	e9 fc ff ff ff                 	jmp	f
+
+
+RUN: llvm-objdump -d -symbolize %p/../Inputs/relocation-dynamic.elf-i386 \
+RUN:              | FileCheck %s -check-prefix ELF-i386-DYN
+
+ELF-i386-DYN: Disassembly of section .text:
+ELF-i386-DYN-NEXT: f:
+ELF-i386-DYN-NEXT:      1a4:	e9 fc ff ff ff                 	jmp	h
+ELF-i386-DYN:      g:
+ELF-i386-DYN-NEXT:      1a9:	e9 fc ff ff ff                 	jmp	f

@@ -555,10 +555,17 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
 template <class ELFT>
 error_code ELFObjectFile<ELFT>::getRelocationAddress(DataRefImpl Rel,
                                                      uint64_t &Result) const {
-  assert((EF.getHeader()->e_type == ELF::ET_EXEC ||
-          EF.getHeader()->e_type == ELF::ET_DYN) &&
-         "Only executable and shared objects files have relocation addresses");
-  Result = getROffset(Rel);
+  uint64_t ROffset = getROffset(Rel);
+  const Elf_Ehdr *Header = EF.getHeader();
+
+  if (Header->e_type == ELF::ET_REL) {
+    const Elf_Shdr *RelocationSec = getRelSection(Rel);
+    const Elf_Shdr *RelocatedSec = EF.getSection(RelocationSec->sh_info);
+    Result = ROffset + RelocatedSec->sh_addr;
+  } else {
+    Result = ROffset;
+  }
+
   return object_error::success;
 }
 

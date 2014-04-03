@@ -784,7 +784,15 @@ void MachOObjectFile::moveRelocationNext(DataRefImpl &Rel) const {
 
 error_code
 MachOObjectFile::getRelocationAddress(DataRefImpl Rel, uint64_t &Res) const {
-  report_fatal_error("getRelocationAddress not implemented in MachOObjectFile");
+  MachO::any_relocation_info RE = getRelocation(Rel);
+  uint64_t Offset = getAnyRelocationAddress(RE);
+
+  DataRefImpl Sec;
+  Sec.d.a = Rel.d.a;
+  uint64_t SecAddress;
+  getSectionAddress(Sec, SecAddress);
+  Res = SecAddress + Offset;
+  return object_error::success;
 }
 
 error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
