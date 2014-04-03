@@ -20,8 +20,10 @@ class MipsMCExpr : public MCTargetExpr {
 public:
   enum VariantKind {
     VK_Mips_None,
-    VK_Mips_ABS_LO,
-    VK_Mips_ABS_HI
+    VK_Mips_LO,
+    VK_Mips_HI,
+    VK_Mips_HIGHER,
+    VK_Mips_HIGHEST
   };
 
 private:
@@ -32,16 +34,11 @@ private:
     : Kind(Kind), Expr(Expr) {}
 
 public:
-  static const MipsMCExpr *Create(VariantKind Kind, const MCExpr *Expr,
-                                  MCContext &Ctx);
+  static bool isSupportedBinaryExpr(MCSymbolRefExpr::VariantKind VK,
+                                    const MCBinaryExpr *BE);
 
-  static const MipsMCExpr *CreateLo(const MCExpr *Expr, MCContext &Ctx) {
-    return Create(VK_Mips_ABS_LO, Expr, Ctx);
-  }
-
-  static const MipsMCExpr *CreateHi(const MCExpr *Expr, MCContext &Ctx) {
-    return Create(VK_Mips_ABS_HI, Expr, Ctx);
-  }
+  static const MipsMCExpr *Create(MCSymbolRefExpr::VariantKind VK,
+                                  const MCExpr *Expr, MCContext &Ctx);
 
   /// getOpcode - Get the kind of this expression.
   VariantKind getKind() const { return Kind; }

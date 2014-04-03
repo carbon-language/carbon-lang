@@ -1448,23 +1448,30 @@ const MCExpr *MipsAsmParser::evaluateRelocExpr(const MCExpr *Expr,
   const MCExpr *Res;
   // Check the type of the expression.
   if (const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(Expr)) {
-    // It's a constant, evaluate lo or hi value.
-    if (RelocStr == "lo") {
-      short Val = MCE->getValue();
-      Res = MCConstantExpr::Create(Val, getContext());
-    } else if (RelocStr == "hi") {
-      int Val = MCE->getValue();
-      int LoSign = Val & 0x8000;
-      Val = (Val & 0xffff0000) >> 16;
-      // Lower part is treated as a signed int, so if it is negative
-      // we must add 1 to the hi part to compensate.
-      if (LoSign)
-        Val++;
-      Res = MCConstantExpr::Create(Val, getContext());
-    } else {
-      llvm_unreachable("Invalid RelocStr value");
+    // It's a constant, evaluate reloc value.
+    int16_t Val;
+    switch (getVariantKind(RelocStr)) {
+    case MCSymbolRefExpr::VK_Mips_ABS_LO:
+      // Get the 1st 16-bits.
+      Val = MCE->getValue() & 0xffff;
+      break;
+    case MCSymbolRefExpr::VK_Mips_ABS_HI:
+      // Get the 2nd 16-bits. Also add 1 if bit 15 is 1, to compensate for low
+      // 16 bits being negative.
+      Val = ((MCE->getValue() + 0x8000) >> 16) & 0xffff;
+      break;
+    case MCSymbolRefExpr::VK_Mips_HIGHER:
+      // Get the 3rd 16-bits.
+      Val = ((MCE->getValue() + 0x80008000LL) >> 32) & 0xffff;
+      break;
+    case MCSymbolRefExpr::VK_Mips_HIGHEST:
+      // Get the 4th 16-bits.
+      Val = ((MCE->getValue() + 0x800080008000LL) >> 48) & 0xffff;
+      break;
+    default:
+      report_fatal_error("Unsupported reloc value!");
     }
-    return Res;
+    return MCConstantExpr::Create(Val, getContext());
   }
 
   if (const MCSymbolRefExpr *MSRE = dyn_cast<MCSymbolRefExpr>(Expr)) {
@@ -1478,15 +1485,9 @@ const MCExpr *MipsAsmParser::evaluateRelocExpr(const MCExpr *Expr,
   if (const MCBinaryExpr *BE = dyn_cast<MCBinaryExpr>(Expr)) {
     MCSymbolRefExpr::VariantKind VK = getVariantKind(RelocStr);
 
-    // Check for %hi(sym1-sym2) and %lo(sym1-sym2) expressions.
-    if (isa<MCSymbolRefExpr>(BE->getLHS()) && isa<MCSymbolRefExpr>(BE->getRHS())
-        && (VK == MCSymbolRefExpr::VK_Mips_ABS_HI
-            || VK == MCSymbolRefExpr::VK_Mips_ABS_LO)) {
-      // Create target expression for %hi(sym1-sym2) and %lo(sym1-sym2).
-      if (VK == MCSymbolRefExpr::VK_Mips_ABS_HI)
-        return MipsMCExpr::CreateHi(Expr, getContext());
-      return MipsMCExpr::CreateLo(Expr, getContext());
-    }
+    // Try to create target expression.
+    if (MipsMCExpr::isSupportedBinaryExpr(VK, BE))
+      return MipsMCExpr::Create(VK, Expr, getContext());
 
     const MCExpr *LExp = evaluateRelocExpr(BE->getLHS(), RelocStr);
     const MCExpr *RExp = evaluateRelocExpr(BE->getRHS(), RelocStr);
