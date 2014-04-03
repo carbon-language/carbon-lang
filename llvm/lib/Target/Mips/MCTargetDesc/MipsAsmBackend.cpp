@@ -112,6 +112,22 @@ MCObjectWriter *MipsAsmBackend::createObjectWriter(raw_ostream &OS) const {
     MCELFObjectTargetWriter::getOSABI(OSType), IsLittle, Is64Bit);
 }
 
+// Little-endian fixup data byte ordering:
+//   mips32r2:   a | b | x | x
+//   microMIPS:  x | x | a | b
+
+static bool needsMMLEByteOrder(unsigned Kind) {
+  return Kind >= Mips::fixup_MICROMIPS_26_S1 &&
+         Kind < Mips::LastTargetFixupKind;
+}
+
+// Calculate index for microMIPS specific little endian byte order
+static unsigned calculateMMLEIndex(unsigned i) {
+  assert(i <= 3 && "Index out of range!");
+
+  return (1 - i / 2) * 2 + i % 2;
+}
+
 /// ApplyFixup - Apply the \p Value for given \p Fixup into the provided
 /// data fragment, at the offset specified by the fixup and following the
 /// fixup kind as appropriate.
@@ -149,8 +165,12 @@ void MipsAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
   // Grab current value, if any, from bits.
   uint64_t CurVal = 0;
 
+  bool microMipsLEByteOrder = needsMMLEByteOrder((unsigned) Kind);
+
   for (unsigned i = 0; i != NumBytes; ++i) {
-    unsigned Idx = IsLittle ? i : (FullSize - 1 - i);
+    unsigned Idx = IsLittle ? (microMipsLEByteOrder ? calculateMMLEIndex(i)
+                                                    : i)
+                            : (FullSize - 1 - i);
     CurVal |= (uint64_t)((uint8_t)Data[Offset + Idx]) << (i*8);
   }
 
@@ -160,7 +180,9 @@ void MipsAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
 
   // Write out the fixed up bytes back to the code/data bits.
   for (unsigned i = 0; i != NumBytes; ++i) {
-    unsigned Idx = IsLittle ? i : (FullSize - 1 - i);
+    unsigned Idx = IsLittle ? (microMipsLEByteOrder ? calculateMMLEIndex(i)
+                                                    : i)
+                            : (FullSize - 1 - i);
     Data[Offset + Idx] = (uint8_t)((CurVal >> (i*8)) & 0xff);
   }
 }
