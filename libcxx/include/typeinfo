@@ -116,7 +116,7 @@ public:
         {return *reinterpret_cast<const size_t*>(&__type_name);}
 #else
         {if (!(__type_name & _LIBCPP_NONUNIQUE_RTTI_BIT)) return __type_name;
-         const char *__ptr = __name_for_load();
+         const char *__ptr = name();
          size_t __hash = 5381;
          while (unsigned char __c = static_cast<unsigned char>(*__ptr++))
            __hash = (__hash * 33) ^ __c;
@@ -141,15 +141,7 @@ public:
   private:
     _LIBCPP_INLINE_VISIBILITY
     int __compare_nonunique_names(const type_info &__arg) const _NOEXCEPT
-        {return __builtin_strcmp(__name_for_load(), __arg.__name_for_load());}
-
-    _LIBCPP_INLINE_VISIBILITY
-    const char *__name_for_load() const _NOEXCEPT
-        {uintptr_t __data = __type_name;
-#if 1
-         __data &= ~_LIBCPP_NONUNIQUE_RTTI_BIT;
-#endif
-         return reinterpret_cast<const char*>(__data);}
+        {return __builtin_strcmp(name(), __arg.name());}
 #endif
 };
 
