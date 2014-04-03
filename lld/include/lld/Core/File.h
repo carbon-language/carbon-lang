@@ -164,29 +164,29 @@ protected:
   template <typename T>
   class atom_collection_vector : public atom_collection<T> {
   public:
-    virtual atom_iterator<T> begin() const {
+    atom_iterator<T> begin() const override {
       auto *it = _atoms.empty() ? nullptr
                                 : reinterpret_cast<const void *>(_atoms.data());
       return atom_iterator<T>(*this, it);
     }
 
-    virtual atom_iterator<T> end() const{
+    atom_iterator<T> end() const override {
       auto *it = _atoms.empty() ? nullptr : reinterpret_cast<const void *>(
                                                 _atoms.data() + _atoms.size());
       return atom_iterator<T>(*this, it);
     }
 
-    virtual const T *deref(const void *it) const {
-      return *reinterpret_cast<const T* const*>(it);
+    const T *deref(const void *it) const override {
+      return *reinterpret_cast<const T *const *>(it);
     }
 
-    virtual void next(const void *&it) const {
-      const T *const *p = reinterpret_cast<const T *const*>(it);
+    void next(const void *&it) const override {
+      const T *const *p = reinterpret_cast<const T *const *>(it);
       ++p;
       it = reinterpret_cast<const void*>(p);
     }
 
-    virtual uint64_t size() const { return _atoms.size(); }
+    uint64_t size() const override { return _atoms.size(); }
 
     std::vector<const T *> _atoms;
   };
@@ -196,21 +196,17 @@ protected:
   template <typename T>
   class atom_collection_empty : public atom_collection<T> {
   public:
-    virtual atom_iterator<T> begin() const {
+    atom_iterator<T> begin() const override {
       return atom_iterator<T>(*this, nullptr);
     }
-    virtual atom_iterator<T> end() const{
+    atom_iterator<T> end() const override {
       return atom_iterator<T>(*this, nullptr);
     }
-    virtual const T *deref(const void *it) const {
+    const T *deref(const void *it) const override {
       llvm_unreachable("empty collection should never be accessed");
     }
-    virtual void next(const void *&it) const {
-    }
-    virtual void push_back(const T *element) {
-      llvm_unreachable("empty collection should never be grown");
-    }
-    virtual uint64_t size() const { return 0; }
+    void next(const void *&it) const override {}
+    uint64_t size() const override { return 0; }
   };
 
   static atom_collection_empty<DefinedAtom>       _noDefinedAtoms;
