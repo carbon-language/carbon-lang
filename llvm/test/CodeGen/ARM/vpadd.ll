@@ -152,6 +152,17 @@ define void @addCombineToVPADDL() nounwind ssp {
   ret void
 }
 
+; Legalization produces a EXTRACT_VECTOR_ELT DAG node which performs an extend from
+; i16 to i32. In this case the input for the formed VPADDL needs to be a vector of i16s.
+define <2 x i16> @fromExtendingExtractVectorElt(<4 x i16> %in) {
+;CHECK-LABEL: fromExtendingExtractVectorElt:
+;CHECK: vpaddl.s16
+  %tmp1 = shufflevector <4 x i16> %in, <4 x i16> undef, <2 x i32> <i32 0, i32 2>
+  %tmp2 = shufflevector <4 x i16> %in, <4 x i16> undef, <2 x i32> <i32 1, i32 3>
+  %x = add <2 x i16> %tmp2, %tmp1
+  ret <2 x i16> %x
+}
+
 declare <4 x i16> @llvm.arm.neon.vpaddls.v4i16.v8i8(<8 x i8>) nounwind readnone
 declare <2 x i32> @llvm.arm.neon.vpaddls.v2i32.v4i16(<4 x i16>) nounwind readnone
 declare <1 x i64> @llvm.arm.neon.vpaddls.v1i64.v2i32(<2 x i32>) nounwind readnone
