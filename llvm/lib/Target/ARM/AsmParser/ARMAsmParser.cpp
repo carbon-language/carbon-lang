@@ -5408,11 +5408,16 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
       Operands.size() == 4) {
     ARMOperand *Op = static_cast<ARMOperand *>(Operands[2]);
     assert(Op->isReg() && "expected register argument");
-    assert(MRI->getMatchingSuperReg(Op->getReg(), ARM::gsub_0,
-                                    &MRI->getRegClass(ARM::GPRPairRegClassID))
-           && "expected register pair");
+
+    unsigned SuperReg = MRI->getMatchingSuperReg(
+        Op->getReg(), ARM::gsub_0, &MRI->getRegClass(ARM::GPRPairRegClassID));
+
+    assert(SuperReg && "expected register pair");
+
+    unsigned PairedReg = MRI->getSubReg(SuperReg, ARM::gsub_1);
+
     Operands.insert(Operands.begin() + 3,
-                    ARMOperand::CreateReg(Op->getReg() + 1, Op->getStartLoc(),
+                    ARMOperand::CreateReg(PairedReg, Op->getStartLoc(),
                                           Op->getEndLoc()));
   }
 
