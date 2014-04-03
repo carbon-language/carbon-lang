@@ -70,7 +70,7 @@ struct ARM64LoadStoreOpt : public MachineFunctionPass {
   // Merge the two instructions indicated into a single pair-wise instruction.
   // If mergeForward is true, erase the first instruction and fold its
   // operation into the second. If false, the reverse. Return the instruction
-  // following the first instruction (which may change during proecessing).
+  // following the first instruction (which may change during processing).
   MachineBasicBlock::iterator
   mergePairedInsns(MachineBasicBlock::iterator I,
                    MachineBasicBlock::iterator Paired, bool mergeForward);
