@@ -34,17 +34,21 @@ declare i32 @llvm.arm.stlexd(i32, i32, i8*) nounwind
 ; CHECK-LABEL: test_load_i8:
 ; CHECK: ldaexb r0, [r0]
 ; CHECK-NOT: uxtb
-define i32 @test_load_i8(i8* %addr) {
+; CHECK-NOT: and
+define zeroext i8 @test_load_i8(i8* %addr) {
   %val = call i32 @llvm.arm.ldaex.p0i8(i8* %addr)
-  ret i32 %val
+  %val8 = trunc i32 %val to i8
+  ret i8 %val8
 }
 
 ; CHECK-LABEL: test_load_i16:
 ; CHECK: ldaexh r0, [r0]
 ; CHECK-NOT: uxth
-define i32 @test_load_i16(i16* %addr) {
+; CHECK-NOT: and
+define zeroext i16 @test_load_i16(i16* %addr) {
   %val = call i32 @llvm.arm.ldaex.p0i16(i16* %addr)
-  ret i32 %val
+  %val16 = trunc i32 %val to i16
+  ret i16 %val16
 }
 
 ; CHECK-LABEL: test_load_i32:

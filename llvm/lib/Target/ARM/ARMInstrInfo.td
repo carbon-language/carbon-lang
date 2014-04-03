@@ -4476,19 +4476,11 @@ def CLREX : AXI<(outs), (ins), MiscFrm, NoItinerary, "clrex",
   let Inst{31-0} = 0b11110101011111111111000000011111;
 }
 
-def : ARMPat<(and (ldrex_1 addr_offset_none:$addr), 0xff),
-             (LDREXB addr_offset_none:$addr)>;
-def : ARMPat<(and (ldrex_2 addr_offset_none:$addr), 0xffff),
-             (LDREXH addr_offset_none:$addr)>;
 def : ARMPat<(strex_1 (and GPR:$Rt, 0xff), addr_offset_none:$addr),
              (STREXB GPR:$Rt, addr_offset_none:$addr)>;
 def : ARMPat<(strex_2 (and GPR:$Rt, 0xffff), addr_offset_none:$addr),
              (STREXH GPR:$Rt, addr_offset_none:$addr)>;
 
-def : ARMPat<(and (ldaex_1 addr_offset_none:$addr), 0xff),
-             (LDAEXB addr_offset_none:$addr)>;
-def : ARMPat<(and (ldaex_2 addr_offset_none:$addr), 0xffff),
-             (LDAEXH addr_offset_none:$addr)>;
 def : ARMPat<(stlex_1 (and GPR:$Rt, 0xff), addr_offset_none:$addr),
              (STLEXB GPR:$Rt, addr_offset_none:$addr)>;
 def : ARMPat<(stlex_2 (and GPR:$Rt, 0xffff), addr_offset_none:$addr),

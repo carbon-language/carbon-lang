@@ -805,8 +805,8 @@ define i8 @test_atomic_load_umin_i8(i8 zeroext %offset) nounwind {
 ; CHECK: ldrexb r[[OLD:[0-9]+]], {{.*}}[[ADDR]]
   ; r0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
-; CHECK-NEXT: uxtb r[[OLDX]], r[[OLD]]
-; CHECK-NEXT: cmp r[[OLDX]], r0
+; CHECK-NEXT: mov r[[NEW:[0-9]+]], r0
+; CHECK-NEXT: cmp r[[OLD]], r0
 ; Thumb mode: it ls
 ; CHECK:      movls r[[NEW]], r[[OLD]]
 ; CHECK-NEXT: strexb [[STATUS:r[0-9]+]], r[[NEW]], {{.*}}[[ADDR]]
@@ -831,8 +831,8 @@ define i16 @test_atomic_load_umin_i16(i16 zeroext %offset) nounwind {
 ; CHECK: ldaexh r[[OLD:[0-9]+]], {{.*}}[[ADDR]]
   ; r0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
-; CHECK-NEXT: uxth r[[OLDX]], r[[OLD]]
-; CHECK-NEXT: cmp r[[OLDX]], r0
+; CHECK-NEXT: mov r[[NEW:[0-9]+]], r0
+; CHECK-NEXT: cmp r[[OLD]], r0
 ; Thumb mode: it ls
 ; CHECK:      movls r[[NEW]], r[[OLD]]
 ; CHECK-NEXT: strexh [[STATUS:r[0-9]+]], r[[NEW]], {{.*}}[[ADDR]]
@@ -919,8 +919,8 @@ define i8 @test_atomic_load_umax_i8(i8 zeroext %offset) nounwind {
 ; CHECK: ldaexb r[[OLD:[0-9]+]], {{.*}}[[ADDR]]
   ; r0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
-; CHECK-NEXT: uxtb r[[OLDX:[0-9]+]], r[[OLD]]
-; CHECK-NEXT: cmp r[[OLDX]], r0
+; CHECK-NEXT: mov r[[NEW:[0-9]+]], r0
+; CHECK-NEXT: cmp r[[OLD]], r0
 ; Thumb mode: it hi
 ; CHECK:      movhi r[[NEW]], r[[OLD]]
 ; CHECK-NEXT: stlexb [[STATUS:r[0-9]+]], r[[NEW]], {{.*}}[[ADDR]]
@@ -945,8 +945,8 @@ define i16 @test_atomic_load_umax_i16(i16 zeroext %offset) nounwind {
 ; CHECK: ldrexh r[[OLD:[0-9]+]], {{.*}}[[ADDR]]
   ; r0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
-; CHECK-NEXT: uxth r[[OLDX:[0-9]+]], r[[OLD]]
-; CHECK-NEXT: cmp r[[OLDX]], r0
+; CHECK-NEXT: mov r[[NEW:[0-9]+]], r0
+; CHECK-NEXT: cmp r[[OLD]], r0
 ; Thumb mode: it hi
 ; CHECK:      movhi r[[NEW]], r[[OLD]]
 ; CHECK-NEXT: strexh [[STATUS:r[0-9]+]], r[[NEW]], {{.*}}[[ADDR]]
@@ -1033,8 +1033,7 @@ define i8 @test_atomic_cmpxchg_i8(i8 zeroext %wanted, i8 zeroext %new) nounwind 
 ; CHECK: ldaexb r[[OLD:[0-9]+]], [r[[ADDR]]]
   ; r0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
-; CHECK-NEXT: uxtb r[[OLDX:[0-9]+]], r[[OLD]]
-; CHECK-NEXT: cmp r[[OLDX]], r0
+; CHECK-NEXT: cmp r[[OLD]], r0
 ; CHECK-NEXT: bne .LBB{{[0-9]+}}_3
 ; CHECK-NEXT: BB#2:
   ; As above, r1 is a reasonable guess.
@@ -1060,8 +1059,7 @@ define i16 @test_atomic_cmpxchg_i16(i16 zeroext %wanted, i16 zeroext %new) nounw
 ; CHECK: ldaexh r[[OLD:[0-9]+]], [r[[ADDR]]]
   ; r0 below is a reasonable guess but could change: it certainly comes into the
   ;  function there.
-; CHECK-NEXT: uxth r[[OLDX:[0-9]+]], r[[OLD]]
-; CHECK-NEXT: cmp r[[OLDX]], r0
+; CHECK-NEXT: cmp r[[OLD]], r0
 ; CHECK-NEXT: bne .LBB{{[0-9]+}}_3
 ; CHECK-NEXT: BB#2:
   ; As above, r1 is a reasonable guess.
