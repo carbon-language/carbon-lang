@@ -429,7 +429,7 @@ public:
     _virtualAddr = addr;
   }
 
-  // Is the section loadable ?
+  // Is the section loadable?
   inline bool isLoadableSection() const { return _isLoadableSection; }
 
   // Set section Loadable

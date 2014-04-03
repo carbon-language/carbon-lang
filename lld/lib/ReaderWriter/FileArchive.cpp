@@ -67,7 +67,7 @@ public:
     return result[0].release();
   }
 
-  /// \brief Load all members of the archive ?
+  /// \brief Load all members of the archive?
   virtual bool isWholeArchive() const { return _isWholeArchive; }
 
   /// \brief parse each member

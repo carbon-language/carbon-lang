@@ -73,7 +73,7 @@ public:
   // Memory size of the chunk
   uint64_t memSize() const { return _msize; }
   void setMemSize(uint64_t msize) { _msize = msize; }
-  // Whats the contentType of the chunk ?
+  // Whats the contentType of the chunk?
   virtual int getContentType() const = 0;
   // Writer the chunk
   virtual void write(ELFWriter *writer, TargetLayout<ELFT> &layout,

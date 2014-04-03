@@ -178,7 +178,7 @@ void Resolver::doUndefinedAtom(const UndefinedAtom &atom) {
 
 /// \brief Add the section group and the group-child reference members.
 bool Resolver::maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom) {
-  // First time adding a group ?
+  // First time adding a group?
   bool isFirstTime = _symbolTable.addGroup(atom);
 
   if (!isFirstTime) {

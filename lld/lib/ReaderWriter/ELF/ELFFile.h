@@ -605,7 +605,7 @@ template <class ELFT> error_code ELFFile<ELFT>::createAtoms() {
   for (auto &i : _sectionSymbols) {
     const Elf_Shdr *section = i.first;
 
-    // Check if need to create atoms for this section ?
+    // Check if need to create atoms for this section?
     if ((ignoreCreateAtomsForSection(section)))
       continue;
 

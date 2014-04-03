@@ -600,7 +600,7 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
   ScopedTask task(getDefaultDomain(), "assignSectionsToSegments");
   ELFLinkingContext::OutputMagic outputMagic = _context.getOutputMagic();
     // TODO: Do we want to give a chance for the targetHandlers
-    // to sort segments in an arbitrary order ?
+    // to sort segments in an arbitrary order?
   // sort the sections by their order as defined by the layout
   std::stable_sort(_sections.begin(), _sections.end(),
                    [](Chunk<ELFT> *A, Chunk<ELFT> *B) {
@@ -702,7 +702,7 @@ template <class ELFT> void DefaultLayout<ELFT>::assignSectionsToSegments() {
 
 template <class ELFT> void DefaultLayout<ELFT>::assignFileOffsets() {
   // TODO: Do we want to give a chance for the targetHandlers
-  // to sort segments in an arbitrary order ?
+  // to sort segments in an arbitrary order?
   std::sort(_segments.begin(), _segments.end(), Segment<ELFT>::compareSegments);
   int ordinal = 0;
   // Compute the number of segments that might be needed, so that the

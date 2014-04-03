@@ -40,7 +40,7 @@ class MyExpandFileNode : public SimpleFileNode {
 public:
   MyExpandFileNode(StringRef path) : SimpleFileNode(path) {}
 
-  /// \brief How do we want to expand the current node ?
+  /// \brief How do we want to expand the current node?
   bool shouldExpand() const override { return true; }
 
   /// \brief Get the elements that we want to expand with.

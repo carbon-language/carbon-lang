@@ -88,7 +88,7 @@ public:
   }
   bool validateImpl(raw_ostream &diagnostics) override;
 
-  /// \brief Does the linker allow dynamic libraries to be linked with ?
+  /// \brief Does the linker allow dynamic libraries to be linked with?
   /// This is true when the output mode of the executable is set to be
   /// having NMAGIC/OMAGIC
   virtual bool allowLinkWithDynamicLibraries() const {
@@ -129,7 +129,7 @@ public:
   /// \brief Does the output have dynamic sections.
   virtual bool isDynamic() const;
 
-  /// \brief Are we creating a shared library ?
+  /// \brief Are we creating a shared library?
   virtual bool isDynamicLibrary() const {
     return _outputELFType == llvm::ELF::ET_DYN;
   }
