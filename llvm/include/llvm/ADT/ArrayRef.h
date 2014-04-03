@@ -77,7 +77,7 @@ namespace llvm {
     /// Construct an ArrayRef from a std::vector.
     template<typename A>
     /*implicit*/ ArrayRef(const std::vector<T, A> &Vec)
-      : Data(Vec.empty() ? (T*)0 : &Vec[0]), Length(Vec.size()) {}
+      : Data(Vec.data()), Length(Vec.size()) {}
 
     /// Construct an ArrayRef from a C array.
     template <size_t N>
