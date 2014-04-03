@@ -296,7 +296,7 @@ void Resolver::doAbsoluteAtom(const AbsoluteAtom &atom) {
 // utility to add a vector of atoms
 void Resolver::addAtoms(const std::vector<const DefinedAtom *> &newAtoms) {
   for (const DefinedAtom *newAtom : newAtoms)
-    this->doDefinedAtom(*newAtom);
+    doDefinedAtom(*newAtom);
 }
 
 // Keep adding atoms until _context.nextFile() returns an error. This function
@@ -360,7 +360,7 @@ void Resolver::markLive(const Atom &atom) {
   if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
     for (const Reference *ref : *defAtom)
       if (const Atom *target = ref->target())
-        this->markLive(*target);
+        markLive(*target);
 }
 
 // remove all atoms not actually used
@@ -391,7 +391,7 @@ void Resolver::deadStripOptimize() {
 
   // mark all roots as live, and recursively all atoms they reference
   for (const Atom *dsrAtom : _deadStripRoots)
-    this->markLive(*dsrAtom);
+    markLive(*dsrAtom);
 
   // now remove all non-live atoms from _atoms
   _atoms.erase(
@@ -457,15 +457,15 @@ void Resolver::removeCoalescedAwayAtoms() {
 }
 
 bool Resolver::resolve() {
-  if (!this->resolveUndefines())
+  if (!resolveUndefines())
     return false;
-  this->updateReferences();
-  this->deadStripOptimize();
-  if (this->checkUndefines())
+  updateReferences();
+  deadStripOptimize();
+  if (checkUndefines())
     if (!_context.allowRemainingUndefines())
       return false;
-  this->removeCoalescedAwayAtoms();
-  this->_result->addAtoms(_atoms);
+  removeCoalescedAwayAtoms();
+  _result->addAtoms(_atoms);
   return true;
 }
 
@@ -497,7 +497,7 @@ void Resolver::MergedFile::addAtoms(std::vector<const Atom *> &all) {
                     << ", name="
                     << atom->name()
                     << "\n");
-    this->addAtom(*atom);
+    addAtom(*atom);
   }
 }
 
