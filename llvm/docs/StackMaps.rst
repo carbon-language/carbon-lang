@@ -400,6 +400,11 @@ immediately after compiling a module and encode the information in its
 own format. Since the runtime controls the allocation of sections, it
 can reuse the same stack map space for multiple modules.
 
+..
+   Stackmap support is currently only implemented for 64-bit
+   platforms. However, a 32-bit implementation should be able to use
+   the same format with an insignificant amount of wasted space.
+
 .. _stackmap-section:
 
 Stack Map Section
@@ -454,10 +459,11 @@ program could crash before the runtime could take back control.
 
 To enforce these semantics, stackmap and patchpoint intrinsics are
 considered to potentially read and write all memory. This may limit
-optimization more than some clients desire. To address this problem
-meta-data could be added to the intrinsic call to express aliasing,
-thereby allowing optimizations to hoist certain loads above stack
-maps.
+optimization more than some clients desire. This limitation may be
+avoided by marking the call site as "readonly". In the future we may
+also allow meta-data to be added to the intrinsic call to express
+aliasing, thereby allowing optimizations to hoist certain loads above
+stack maps.
 
 Direct Stack Map Entries
 ^^^^^^^^^^^^^^^^^^^^^^^^
