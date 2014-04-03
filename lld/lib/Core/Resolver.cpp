@@ -363,15 +363,11 @@ void Resolver::deadStripOptimize() {
   assert(_liveAtoms.empty());
 
   // By default, shared libraries are built with all globals as dead strip roots
-  if (_context.globalsAreDeadStripRoots()) {
-    for (const Atom *atom : _atoms) {
-      const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom);
-      if (defAtom == nullptr)
-        continue;
-      if (defAtom->scope() == DefinedAtom::scopeGlobal)
-        _deadStripRoots.insert(defAtom);
-    }
-  }
+  if (_context.globalsAreDeadStripRoots())
+    for (const Atom *atom : _atoms)
+      if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom))
+        if (defAtom->scope() == DefinedAtom::scopeGlobal)
+          _deadStripRoots.insert(defAtom);
 
   // Or, use list of names that are dead strip roots.
   for (const StringRef &name : _context.deadStripRoots()) {
