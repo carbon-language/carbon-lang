@@ -354,11 +354,20 @@ inline error_code SymbolRef::getFileOffset(uint64_t &Result) const {
   uint64_t Address;
   if (error_code EC = getAddress(Address))
     return EC;
+  if (Address == UnknownAddressOrSize) {
+    Result = UnknownAddressOrSize;
+    return object_error::success;
+  }
 
   const ObjectFile *Obj = getObject();
   section_iterator SecI(Obj->section_begin());
   if (error_code EC = getSection(SecI))
     return EC;
+
+  if (SecI == Obj->section_end()) {
+    Result = UnknownAddressOrSize;
+    return object_error::success;
+  }
 
   uint64_t SectionAddress;
   if (error_code EC = SecI->getAddress(SectionAddress))
