@@ -1719,10 +1719,8 @@ void OMPClauseWriter::VisitOMPSharedClause(OMPSharedClause *C) {
 void OMPClauseWriter::VisitOMPCopyinClause(OMPCopyinClause *C) {
   Record.push_back(C->varlist_size());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
-  for (OMPCopyinClause::varlist_iterator I = C->varlist_begin(),
-                                         E = C->varlist_end();
-       I != E; ++I)
-    Writer->Writer.AddStmt(*I);
+  for (auto *I : C->varlists())
+    Writer->Writer.AddStmt(I);
 }
 
 //===----------------------------------------------------------------------===//
