@@ -124,6 +124,12 @@ struct PragmaMSVtorDisp : public PragmaHandler {
                     Token &FirstToken) override;
 };
 
+struct PragmaMSInitSeg : public PragmaHandler {
+  explicit PragmaMSInitSeg() : PragmaHandler("init_seg") {}
+  void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                    Token &FirstToken) override;
+};
+
 }  // end namespace
 
 void Parser::initializePragmaHandlers() {
@@ -175,6 +181,8 @@ void Parser::initializePragmaHandlers() {
     PP.AddPragmaHandler(MSPointersToMembers.get());
     MSVtorDisp.reset(new PragmaMSVtorDisp());
     PP.AddPragmaHandler(MSVtorDisp.get());
+    MSInitSeg.reset(new PragmaMSInitSeg());
+    PP.AddPragmaHandler(MSInitSeg.get());
   }
 }
 
@@ -214,6 +222,8 @@ void Parser::resetPragmaHandlers() {
     MSPointersToMembers.reset();
     PP.RemovePragmaHandler(MSVtorDisp.get());
     MSVtorDisp.reset();
+    PP.RemovePragmaHandler(MSInitSeg.get());
+    MSInitSeg.reset();
   }
 
   PP.RemovePragmaHandler("STDC", FPContractHandler.get());
@@ -1202,6 +1212,14 @@ void PragmaMSVtorDisp::HandlePragma(Preprocessor &PP,
   AnnotTok.setAnnotationValue(reinterpret_cast<void *>(
       static_cast<uintptr_t>((Kind << 16) | (Value & 0xFFFF))));
   PP.EnterToken(AnnotTok);
+}
+
+void PragmaMSInitSeg::HandlePragma(Preprocessor &PP,
+                                   PragmaIntroducerKind Introducer,
+                                   Token &Tok) {
+  unsigned ID = PP.getDiagnostics().getCustomDiagID(
+      DiagnosticsEngine::Error, "'#pragma init_seg' not implemented");
+  PP.Diag(Tok.getLocation(), ID);
 }
 
 /// \brief Handle the Microsoft \#pragma detect_mismatch extension.

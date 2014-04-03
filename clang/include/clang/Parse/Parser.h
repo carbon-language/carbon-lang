@@ -154,6 +154,7 @@ class Parser : public CodeCompletionHandler {
   std::unique_ptr<PragmaHandler> MSDetectMismatchHandler;
   std::unique_ptr<PragmaHandler> MSPointersToMembers;
   std::unique_ptr<PragmaHandler> MSVtorDisp;
+  std::unique_ptr<PragmaHandler> MSInitSeg;
 
   std::unique_ptr<CommentHandler> CommentSemaHandler;
 
