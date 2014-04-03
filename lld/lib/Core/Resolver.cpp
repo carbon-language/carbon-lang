@@ -198,14 +198,9 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
                     << "\n");
 
   // Verify on zero-size atoms are pinned to start or end of section.
-  switch (atom.sectionPosition()) {
-  case DefinedAtom::sectionPositionStart:
-  case DefinedAtom::sectionPositionEnd:
+  if (atom.sectionPosition() == DefinedAtom::sectionPositionStart ||
+      atom.sectionPosition() == DefinedAtom::sectionPositionEnd) {
     assert(atom.size() == 0);
-    break;
-  case DefinedAtom::sectionPositionEarly:
-  case DefinedAtom::sectionPositionAny:
-    break;
   }
 
   // add to list of known atoms

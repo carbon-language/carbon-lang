@@ -367,10 +367,9 @@ const Atom *SymbolTable::findByName(StringRef sym) {
 }
 
 bool SymbolTable::isDefined(StringRef sym) {
-  const Atom *atom = findByName(sym);
-  if (atom == nullptr)
-    return false;
-  return atom->definition() != Atom::definitionUndefined;
+  if (const Atom *atom = findByName(sym))
+    return atom->definition() != Atom::definitionUndefined;
+  return false;
 }
 
 void SymbolTable::addReplacement(const Atom *replaced,
