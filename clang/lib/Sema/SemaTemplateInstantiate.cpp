@@ -837,8 +837,6 @@ namespace {
                               OldCallOperator->getDescribedFunctionTemplate();
         NewCallOperatorTemplate->setInstantiatedFromMemberTemplate(
                                                      OldCallOperatorTemplate);
-        // Mark the NewCallOperatorTemplate a specialization.  
-        NewCallOperatorTemplate->setMemberSpecialization();
       } else 
         // For a non-generic lambda we set the NewCallOperator to 
         // be an instantiation of the OldCallOperator.
