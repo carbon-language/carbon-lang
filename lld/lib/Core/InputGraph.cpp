@@ -50,7 +50,7 @@ bool InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {
 }
 
 bool InputGraph::dump(raw_ostream &diagnostics) {
-  for (auto &ie : _inputArgs)
+  for (std::unique_ptr<InputElement> &ie : _inputArgs)
     if (!ie->dump(diagnostics))
       return false;
   return true;

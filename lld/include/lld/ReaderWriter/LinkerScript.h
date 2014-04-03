@@ -165,7 +165,7 @@ public:
   void dump(raw_ostream &os) const override {
     os << "GROUP(";
     bool first = true;
-    for (const auto &path : getPaths()) {
+    for (const Path &path : getPaths()) {
       if (!first)
         os << " ";
       else
@@ -209,7 +209,7 @@ private:
 class LinkerScript {
 public:
   void dump(raw_ostream &os) const {
-    for (const auto &c : _commands)
+    for (const Command *c : _commands)
       c->dump(os);
   }
 

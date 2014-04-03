@@ -1237,7 +1237,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Add the input files to the input graph.
   if (!ctx.hasInputGraph())
     ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
-  for (auto &file : files) {
+  for (std::unique_ptr<FileNode> &file : files) {
     if (isReadingDirectiveSection)
       if (file->parse(ctx, diag))
         return false;

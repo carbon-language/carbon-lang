@@ -176,13 +176,13 @@ public:
     _madeProgress = false;
     _currentElementIndex = 0;
     _nextElementIndex = 0;
-    for (auto &elem : _elements)
+    for (std::unique_ptr<InputElement> &elem : _elements)
       elem->resetNextIndex();
   }
 
   /// \brief Parse the group members.
   error_code parse(const LinkingContext &ctx, raw_ostream &diag) override {
-    for (auto &ei : _elements)
+    for (std::unique_ptr<InputElement> &ei : _elements)
       if (error_code ec = ei->parse(ctx, diag))
         return ec;
     return error_code::success();
@@ -191,7 +191,7 @@ public:
   /// If Resolver made a progress using the current file, it's ok to revisit
   /// files in this group in future.
   void notifyProgress() override {
-    for (auto &elem : _elements)
+    for (std::unique_ptr<InputElement> &elem : _elements)
       elem->notifyProgress();
     _madeProgress = true;
   }
@@ -245,7 +245,7 @@ public:
 
   /// \brief add a file to the list of files
   virtual void addFiles(InputGraph::FileVectorT files) {
-    for (auto &ai : files)
+    for (std::unique_ptr<File> &ai : files)
       _files.push_back(std::move(ai));
   }
 
