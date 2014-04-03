@@ -118,6 +118,7 @@
 	msub	$s7,$k1
 	msub.s	$f12,$f19,$f10,$f16
 	msubu	$t7,$a1
+	mtc0	$t1,$29,3
 	mtc1	$s8,$f9
 	mthc1	$zero,$f16
 	mthi	$s1
