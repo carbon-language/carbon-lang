@@ -316,6 +316,7 @@ void _unw_remove_dynamic_fde(unw_word_t fde) {
 
 // Add logging hooks in Debug builds only
 #ifndef NDEBUG
+#include <stdlib.h>
 
 _LIBUNWIND_HIDDEN
 bool logAPIs() {
