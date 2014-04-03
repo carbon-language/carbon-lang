@@ -417,15 +417,7 @@ template <class ELFT>
 error_code ELFObjectFile<ELFT>::getSymbolValue(DataRefImpl Symb,
                                                uint64_t &Val) const {
   const Elf_Sym *ESym = getSymbol(Symb);
-  switch (EF.getSymbolTableIndex(ESym)) {
-  default:
-    Val = ESym->st_value;
-    break;
-  case ELF::SHN_COMMON:
-  case ELF::SHN_UNDEF:
-    Val = UnknownAddressOrSize;
-    break;
-  }
+  Val = ESym->st_value;
   return object_error::success;
 }
 

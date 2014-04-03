@@ -253,15 +253,8 @@ error_code COFFObjectFile::getSymbolSection(DataRefImpl Ref,
 }
 
 error_code COFFObjectFile::getSymbolValue(DataRefImpl Ref,
-                                          uint64_t &Result) const {
-  const coff_symbol *Symb = toSymb(Ref);
-
-  if (Symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED)
-    Result = UnknownAddressOrSize;
-  else
-    Result = Symb->Value;
-
-  return object_error::success;
+                                          uint64_t &Val) const {
+  report_fatal_error("getSymbolValue unimplemented in COFFObjectFile");
 }
 
 void COFFObjectFile::moveSectionNext(DataRefImpl &Ref) const {
