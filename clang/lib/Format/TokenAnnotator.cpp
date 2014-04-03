@@ -196,7 +196,7 @@ private:
           !CurrentToken->Next->HasUnescapedNewline &&
           !CurrentToken->Next->isTrailingComment())
         HasMultipleParametersOnALine = true;
-      if (CurrentToken->is(tok::kw_const) ||
+      if (CurrentToken->isOneOf(tok::kw_const, tok::kw_auto) ||
           CurrentToken->isSimpleTypeSpecifier())
         Contexts.back().IsExpression = false;
       if (!consumeToken())

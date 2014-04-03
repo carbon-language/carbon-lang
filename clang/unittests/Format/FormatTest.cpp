@@ -4554,6 +4554,12 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("foo<b && false>();");
   verifyFormat("foo<b & 1>();");
 
+  verifyIndependentOfContext("MACRO(int *i);");
+  verifyIndependentOfContext("MACRO(auto *a);");
+  verifyIndependentOfContext("MACRO(const A *a);");
+  // FIXME: Is there a way to make this work?
+  // verifyIndependentOfContext("MACRO(A *a);");
+
   // FIXME: We cannot handle this case yet; we might be able to figure out that
   // foo<x> d > v; doesn't make sense.
   verifyFormat("foo<a < b && c> d > v;");
