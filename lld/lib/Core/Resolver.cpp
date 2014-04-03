@@ -69,6 +69,11 @@ private:
 } // namespace
 
 void Resolver::handleFile(const File &file) {
+  bool isEmpty = file.defined().empty() && file.sharedLibrary().empty() &&
+                 file.absolute().empty() && file.undefined().empty();
+  if (isEmpty)
+    return;
+
   for (const DefinedAtom *atom : file.defined())
     doDefinedAtom(*atom);
 
@@ -90,13 +95,10 @@ void Resolver::handleFile(const File &file) {
   for (const AbsoluteAtom *atom : file.absolute())
     doAbsoluteAtom(*atom);
 
-  // If we make some progress on linking, notify that fact to the input file
-  // manager, because it may want to know that for --start-group/end-group.
-  bool progress = !file.defined().empty() || !file.sharedLibrary().empty() ||
-      !file.absolute().empty() || !file.undefined().empty();
-  if (progress) {
-    _context.inputGraph().notifyProgress();
-  }
+  // Notify the input file manager of the fact that we have made some progress
+  // on linking using the current input file. It may want to know the fact for
+  // --start-group/--end-group.
+  _context.inputGraph().notifyProgress();
 }
 
 void Resolver::forEachUndefines(UndefCallback callback,
