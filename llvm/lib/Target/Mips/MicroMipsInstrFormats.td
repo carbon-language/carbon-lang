@@ -62,6 +62,16 @@ class JALR_FM_MM16<bits<5> op> {
   let Inst{4-0}   = rs;
 }
 
+class MFHILO_FM_MM16<bits<5> funct> {
+  bits<5> rd;
+
+  bits<16> Inst;
+
+  let Inst{15-10} = 0x11;
+  let Inst{9-5}   = funct;
+  let Inst{4-0}   = rd;
+}
+
 //===----------------------------------------------------------------------===//
 // MicroMIPS 32-bit Instruction Formats
 //===----------------------------------------------------------------------===//
