@@ -1766,12 +1766,12 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
   // as different languages may have different sizes for indexes.
   DIE *IdxTy = getIndexTyDie();
   if (!IdxTy) {
-    // Construct an anonymous type for index type.
+    // Construct an integer type to use for indexes.
     IdxTy = createAndAddDIE(dwarf::DW_TAG_base_type, *UnitDie);
-    addString(IdxTy, dwarf::DW_AT_name, "int");
-    addUInt(IdxTy, dwarf::DW_AT_byte_size, None, sizeof(int32_t));
+    addString(IdxTy, dwarf::DW_AT_name, "sizetype");
+    addUInt(IdxTy, dwarf::DW_AT_byte_size, None, sizeof(int64_t));
     addUInt(IdxTy, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
-            dwarf::DW_ATE_signed);
+            dwarf::DW_ATE_unsigned);
     setIndexTyDie(IdxTy);
   }
 
