@@ -107,7 +107,7 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                 if (symbol != NULL)
                 {
                     const char *name = symbol->GetMangled().GetDemangledName().AsCString();
-                    if (strstr(name, vtable_demangled_prefix) == name)
+                    if (name && strstr(name, vtable_demangled_prefix) == name)
                     {
                         Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
                         if (log)
