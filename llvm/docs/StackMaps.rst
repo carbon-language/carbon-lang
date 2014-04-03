@@ -400,10 +400,9 @@ immediately after compiling a module and encode the information in its
 own format. Since the runtime controls the allocation of sections, it
 can reuse the same stack map space for multiple modules.
 
-..
-   Stackmap support is currently only implemented for 64-bit
-   platforms. However, a 32-bit implementation should be able to use
-   the same format with an insignificant amount of wasted space.
+Stackmap support is currently only implemented for 64-bit
+platforms. However, a 32-bit implementation should be able to use the
+same format with an insignificant amount of wasted space.
 
 .. _stackmap-section:
 
