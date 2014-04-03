@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm
+; RUN: llc -mtriple=arm-eabi %s -o /dev/null
 
 define void @"java.lang.String::getChars"([84 x i8]* %method, i32 %base_pc, [788 x i8]* %thread) {
   %1 = sub i32 undef, 48                          ; <i32> [#uses=1]

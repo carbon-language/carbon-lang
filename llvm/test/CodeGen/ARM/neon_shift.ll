@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
 
 ; <rdar://problem/9055897>
 define <4 x i16> @t1(<4 x i32> %a) nounwind {

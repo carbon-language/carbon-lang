@@ -1,4 +1,4 @@
-; RUN: llc %s -o - -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
 
 ; This test checks that when inserting one (integer) element into a vector,
 ; the vector is not spuriously copied. "vorr dX, dY, dY" is the way of moving

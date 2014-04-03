@@ -1,5 +1,5 @@
 ; REQUIRES: asserts
-; RUN: llc < %s -march=arm -stats 2>&1 | grep asm-printer | grep 4
+; RUN: llc -mtriple=arm-eabi -stats %s -o - 2>&1 | FileCheck %s
 
 define i32 @t1(i32 %a) {
 	%b = mul i32 %a, 9
@@ -14,3 +14,6 @@ define i32 @t2(i32 %a) {
         %d = load i32* %c
 	ret i32 %d
 }
+
+; CHECK: 4 asm-printer
+

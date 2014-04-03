@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm
-; RUN: llc < %s -mtriple=arm-linux
+; RUN: llc -mtriple=arm-eabi %s -o /dev/null
+; RUN: llc -mtriple=arm-linux %s -o /dev/null
 
 define void @foo(<8 x float>* %f, <8 x float>* %g, <4 x i64>* %y)
 {

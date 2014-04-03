@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | \
-; RUN:   grep vcmpe.f32
+; RUN: llc -mtriple=arm-eabi -mattr=+v6,+vfp2 %s -o - | FileCheck %s
 
 define void @test3(float* %glob, i32 %X) {
 entry:
@@ -18,3 +17,6 @@ UnifiedReturnBlock:             ; preds = %entry
 }
 
 declare i32 @bar(...)
+
+; CHECK: vcmpe.f32
+

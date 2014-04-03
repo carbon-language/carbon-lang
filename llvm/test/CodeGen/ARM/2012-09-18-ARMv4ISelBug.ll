@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mcpu=arm7tdmi | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=arm7tdmi %s -o - | FileCheck %s
 
 ; movw is only legal for V6T2 and later.
 ; rdar://12300648

@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm -mcpu=generic
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=generic %s -o /dev/null
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s
 
 @x = weak global i16 0          ; <i16*> [#uses=1]
 @y = weak global i16 0          ; <i16*> [#uses=0]

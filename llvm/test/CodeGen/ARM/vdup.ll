@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=arm -float-abi=soft -mattr=+neon -verify-machineinstrs | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -float-abi=soft -mattr=+neon -verify-machineinstrs %s -o - \
+; RUN:	| FileCheck %s
 
 define <8 x i8> @v_dup8(i8 %A) nounwind {
 ;CHECK-LABEL: v_dup8:

@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s --check-prefix=CHECK-VFP
-; RUN: llc < %s -mtriple=arm-apple-darwin | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+vfp2 %s -o - | FileCheck %s --check-prefix=CHECK-VFP
+; RUN: llc -mtriple=arm-apple-darwin %s -o - | FileCheck %s
 
 define float @f1(double %x) {
 ;CHECK-VFP-LABEL: f1:

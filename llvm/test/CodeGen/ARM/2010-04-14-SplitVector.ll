@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mcpu=arm1136jf-s
+; RUN: llc -mtriple=arm-eabi -mcpu=arm1136jf-s %s -o /dev/null
 ; Radar 7854640
 
 define void @test() nounwind {

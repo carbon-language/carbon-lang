@@ -1,5 +1,5 @@
 ; Tests for the two-address instruction pass.
-; RUN: llc -march=arm -mcpu=cortex-a9 < %s | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a9 %s -o - | FileCheck %s
 
 define void @PR13378() nounwind {
 ; This was orriginally a crasher trying to schedule the instructions.

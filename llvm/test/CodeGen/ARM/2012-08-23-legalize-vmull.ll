@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
 
 ; PR12281
 ; Test generataion of code for vmull instruction when multiplying 128-bit

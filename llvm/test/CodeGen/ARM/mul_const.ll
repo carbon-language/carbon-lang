@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | FileCheck %s
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
 
 define i32 @t9(i32 %v) nounwind readnone {
 entry:

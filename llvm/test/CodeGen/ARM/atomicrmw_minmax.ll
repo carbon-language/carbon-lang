@@ -1,4 +1,4 @@
-;  RUN: llc -march=arm -mcpu=cortex-a9 < %s | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a9 %s -o - | FileCheck %s
 
 ;  CHECK-LABEL: max:
 define i32 @max(i8 %ctx, i32* %ptr, i32 %val)

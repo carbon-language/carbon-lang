@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
 ; PR11319
 
 @i8_res  = global <2 x i8> <i8 0, i8 0>

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6t2 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+v6t2 %s -o - | FileCheck %s
 
 ; 4278190095 = 0xff00000f
 define i32 @f1(i32 %a) {

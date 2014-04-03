@@ -1,6 +1,10 @@
-; RUN: llc < %s -mtriple=arm-apple-darwin | FileCheck %s
-; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s --check-prefix=CHECK-VFP
-; RUN: llc < %s -mattr=+neon,+thumb2 -mtriple=thumbv7-apple-darwin | FileCheck %s --check-prefix=CHECK-NEON
+; RUN: llc -mtriple=arm-apple-darwin %s -o - | FileCheck %s
+
+; RUN: llc -mtriple=arm-eabi -mattr=+vfp2 %s -o - \
+; RUN:	| FileCheck %s --check-prefix=CHECK-VFP
+
+; RUN: llc -mtriple=thumbv7-apple-darwin -mattr=+neon,+thumb2 %s -o - \
+; RUN:	| FileCheck %s --check-prefix=CHECK-NEON
 
 define i32 @f1(i32 %a.s) {
 ;CHECK-LABEL: f1:

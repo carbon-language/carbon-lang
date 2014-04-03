@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6t2 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+v6t2 %s -o - | FileCheck %s
 
 declare i32 @llvm.cttz.i32(i32, i1)
 

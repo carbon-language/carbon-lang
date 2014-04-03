@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
-; RUN: llc < %s -march=arm -mattr=+neon -regalloc=basic | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon -regalloc=basic %s -o - | FileCheck %s
 
 define <8 x i8> @vcgts8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vcgts8:

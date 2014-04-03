@@ -1,4 +1,4 @@
-// RUN: not llvm-mc -arch arm -mattr=+v5te %s 2>&1 | FileCheck %s
+// RUN: not llvm-mc -triple arm-eabi -mattr=+v5te %s -o /dev/null 2>&1 | FileCheck %s
 //
 // rdar://14479793
 

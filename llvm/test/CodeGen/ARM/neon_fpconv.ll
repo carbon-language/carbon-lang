@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
 
 ; PR12540: ARM backend lowering of FP_ROUND v2f64 to v2f32.
 define <2 x float> @vtrunc(<2 x double> %a) {

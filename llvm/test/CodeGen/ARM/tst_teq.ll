@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=arm | grep tst
-; RUN: llc < %s -march=arm | grep teq
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
 
 define i32 @f(i32 %a) {
 entry:
@@ -16,3 +15,7 @@ entry:
 	%retval = select i1 %0, i32 20, i32 10		; <i32> [#uses=1]
 	ret i32 %retval
 }
+
+; CHECK: tst
+; CHECK: teq
+

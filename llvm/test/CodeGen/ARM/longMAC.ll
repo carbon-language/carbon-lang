@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm | FileCheck %s
-; RUN: llc < %s -mtriple=armv7 | FileCheck %s --check-prefix=CHECK-V7
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
+; RUN: llc -mtriple=armv7-eabi %s -o - | FileCheck %s --check-prefix=CHECK-V7
 ; Check generated signed and unsigned multiply accumulate long.
 
 define i64 @MACLongTest1(i32 %a, i32 %b, i64 %c) {

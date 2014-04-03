@@ -1,5 +1,8 @@
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 | grep vnmul.f64
-; RUN: llc < %s -march=arm -mattr=+v6,+vfp2 -enable-sign-dependent-rounding-fp-math | grep vmul.f64
+; RUN: llc -mtriple=arm-eabi -mattr=+v6,+vfp2 %s -o - | FileCheck %s
+
+; RUN: llc -mtriple=arm-eabi -mattr=+v6,+vfp2 -enable-sign-dependent-rounding-fp-math %s -o - \
+; RUN:  | FileCheck %s -check-prefix CHECK-ROUNDING
+
 
 
 define double @t1(double %a, double %b) {
@@ -8,4 +11,7 @@ entry:
         %tmp4 = fmul double %tmp2, %b            ; <double> [#uses=1]
         ret double %tmp4
 }
+
+; CHECK: vnmul.f64
+; CHECK-ROUNDING: vmul.f64
 

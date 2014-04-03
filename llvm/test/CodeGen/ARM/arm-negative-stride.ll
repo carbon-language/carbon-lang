@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | FileCheck %s
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
 
 ; This loop is rewritten with an indvar which counts down, which
 ; frees up a register from holding the trip count.

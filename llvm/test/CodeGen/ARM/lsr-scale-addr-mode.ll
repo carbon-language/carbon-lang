@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | grep lsl | grep -F "lsl #2]"
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
 ; Should use scaled addressing mode.
 
 define void @sintzero(i32* %a) nounwind {
@@ -17,3 +17,6 @@ cond_next:		; preds = %cond_next, %entry
 return:		; preds = %cond_next
 	ret void
 }
+
+; CHECK: lsl{{.*}}#2]
+

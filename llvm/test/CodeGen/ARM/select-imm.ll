@@ -1,8 +1,10 @@
-; RUN: llc < %s -march=arm                  | FileCheck %s --check-prefix=ARM
-; RUN: llc < %s -march=arm -mcpu=arm1156t2-s -mattr=+thumb2   | \
-; RUN:  FileCheck %s --check-prefix=ARMT2
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 | \
-; RUN:  FileCheck %s --check-prefix=THUMB2
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s --check-prefix=ARM
+
+; RUN: llc -mtriple=arm-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - \
+; RUN:  | FileCheck %s --check-prefix=ARMT2
+
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - \
+; RUN:  | FileCheck %s --check-prefix=THUMB2
 
 define i32 @t1(i32 %c) nounwind readnone {
 entry:

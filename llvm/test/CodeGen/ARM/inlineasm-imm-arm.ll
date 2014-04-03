@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -no-integrated-as
+; RUN: llc -mtriple=arm-eabi -no-integrated-as %s -o /dev/null
 
 ; Test ARM-mode "I" constraint, for any Data Processing immediate.
 define i32 @testI(i32 %x) {

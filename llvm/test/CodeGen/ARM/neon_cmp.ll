@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a9 %s -o - | FileCheck %s
+
 ; bug 15283
 ; radar://13191881
 ; CHECK: vfcmp

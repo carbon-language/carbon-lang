@@ -1,8 +1,8 @@
-; RUN: llc < %s -march=arm | FileCheck -check-prefix=ARM %s
-; RUN: llc < %s -march=thumb | FileCheck -check-prefix=THUMB %s
-; RUN: llc < %s -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 \
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck -check-prefix=ARM %s
+; RUN: llc -mtriple=thumb-eabi %s -o - | FileCheck -check-prefix=THUMB %s
+; RUN: llc -mtriple=thumb-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - \
 ; RUN:   | FileCheck -check-prefix=T2 %s
-; RUN: llc < %s -mtriple=thumbv8 | FileCheck -check-prefix=V8 %s
+; RUN: llc -mtriple=thumbv8-eabi %s -o - | FileCheck -check-prefix=V8 %s
 
 ; FIXME: The -march=thumb test doesn't change if -disable-peephole is specified.
 

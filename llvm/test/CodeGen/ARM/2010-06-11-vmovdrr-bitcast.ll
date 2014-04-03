@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+neon
-; Radar 8084742
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o /dev/null
+; rdar://8084742
 
 %struct.__int8x8x2_t = type { [2 x <8 x i8>] }
 

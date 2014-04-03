@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6
+; RUN: llc -mtriple=arm-eabi -mattr=+v6 %s -o /dev/null
 
 define i32 @test1(i32 %tmp54) {
 	%tmp56 = tail call i32 asm "uxtb16 $0,$1", "=r,r"( i32 %tmp54 )		; <i32> [#uses=1]

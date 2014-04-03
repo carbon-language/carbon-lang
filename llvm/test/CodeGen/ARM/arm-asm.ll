@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm
+; RUN: llc -mtriple=arm-eabi %s -o /dev/null
 
 define void @frame_dummy() {
 entry:

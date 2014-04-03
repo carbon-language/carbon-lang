@@ -1,5 +1,6 @@
-@ RUN: llvm-mc -arch arm %s
+@ RUN: llvm-mc -triple arm-eabi %s -o - | FileCheck %s
+
 @ CHECK: test:
-@ CHECK: br r1
+@ CHECK: bl r1
 test:
   bl r1

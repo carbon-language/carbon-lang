@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -float-abi=soft -mcpu=cortex-a9 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -float-abi=soft -mcpu=cortex-a9 %s -o - | FileCheck %s
 
 @A = global <4 x float> <float 0., float 1., float 2., float 3.>
 

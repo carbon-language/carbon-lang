@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+vfp3 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+vfp3 %s -o - | FileCheck %s
 
 define float @t1(float %x) nounwind readnone optsize {
 entry:

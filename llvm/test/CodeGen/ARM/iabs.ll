@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v4t | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+v4t %s -o - | FileCheck %s
 
 ;; Integer absolute value, should produce something as good as: ARM:
 ;;   movs r0, r0

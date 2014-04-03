@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v4t | not grep mov
+; RUN: llc -mtriple=arm-eabi -mattr=+v4t %s -o - | FileCheck %s
 
 define i32 @f1() {
 	%buf = alloca [32 x i32], align 4
@@ -29,3 +29,6 @@ define i32 @f4() {
         %tmp2 = zext i8 %tmp1 to i32
 	ret i32 %tmp2
 }
+
+; CHECK-NOT: mov
+

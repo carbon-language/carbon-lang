@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=arm | \
-; RUN:   grep "str.*\!" | count 2
+; RUN: llc -mtriple=arm-eabi %s -o -  | FileCheck %s
 
 define void @test1(i32* %X, i32* %A, i32** %dest) {
         %B = load i32* %A               ; <i32> [#uses=1]
@@ -16,3 +15,8 @@ define i16* @test2(i16* %X, i32* %A) {
         store i16 %tmp, i16* %Y
         ret i16* %Y
 }
+
+; CHECK: str{{.*}}!
+; CHECK: str{{.*}}!
+; CHECK-NOT: str{{.*}}!
+

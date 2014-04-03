@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
 
 define <4 x i32> @test1(<4 x i32> %a) nounwind {
 ; CHECK-LABEL: test1:

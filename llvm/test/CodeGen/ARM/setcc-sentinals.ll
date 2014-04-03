@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=cortex-a8 -march=arm -asm-verbose=false | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 -asm-verbose=false %s -o - | FileCheck %s
 
 define zeroext i1 @test0(i32 %x) nounwind {
 ; CHECK-LABEL: test0:

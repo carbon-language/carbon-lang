@@ -1,6 +1,11 @@
-; RUN: llc < %s -march=arm -pre-RA-sched=source | FileCheck %s -check-prefix=EXPANDED
-; RUN: llc < %s -mtriple=armv6-apple-darwin -mcpu=cortex-a8 -mattr=-neon -arm-strict-align -pre-RA-sched=source | FileCheck %s -check-prefix=EXPANDED
-; RUN: llc < %s -mtriple=armv6-apple-darwin -mcpu=cortex-a8 | FileCheck %s -check-prefix=UNALIGNED
+; RUN: llc -mtriple=arm-eabi -pre-RA-sched=source %s -o - \
+; RUN:	| FileCheck %s -check-prefix=EXPANDED
+
+; RUN: llc -mtriple=armv6-apple-darwin -mcpu=cortex-a8 -mattr=-neon -arm-strict-align -pre-RA-sched=source %s -o - \
+; RUN:	| FileCheck %s -check-prefix=EXPANDED
+
+; RUN: llc -mtriple=armv6-apple-darwin -mcpu=cortex-a8 %s -o - \
+; RUN:	| FileCheck %s -check-prefix=UNALIGNED
 
 ; rdar://7113725
 ; rdar://12091029

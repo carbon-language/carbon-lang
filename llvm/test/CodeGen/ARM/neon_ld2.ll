@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm -float-abi=soft -mattr=+neon | FileCheck %s
-; RUN: llc < %s -march=arm -float-abi=soft -mcpu=swift | FileCheck %s --check-prefix=SWIFT
+; RUN: llc -mtriple=arm-eabi -float-abi=soft -mattr=+neon %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -float-abi=soft -mcpu=swift %s -o - | FileCheck %s --check-prefix=SWIFT
 
 ; CHECK: t1
 ; CHECK: vld1.64

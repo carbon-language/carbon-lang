@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon,+fp16 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon,+fp16 %s -o - | FileCheck %s
 
 define <2 x i32> @vcvt_f32tos32(<2 x float>* %A) nounwind {
 ;CHECK-LABEL: vcvt_f32tos32:

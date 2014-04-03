@@ -1,4 +1,4 @@
-;RUN: llc < %s -march=arm -mattr=+v7 -mattr=+neon | FileCheck %s
+;RUN: llc -mtriple=arm-eabi -mattr=+v7 -mattr=+neon %s -o - | FileCheck %s
 
 ;ALIGN = 1
 ;SIZE  = 64

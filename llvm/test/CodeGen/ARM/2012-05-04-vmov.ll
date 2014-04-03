@@ -1,5 +1,9 @@
-; RUN: llc -O1 -march=arm -mcpu=cortex-a9 < %s | FileCheck -check-prefix=A9-CHECK %s
-; RUN: llc -O1 -march=arm -mcpu=swift < %s | FileCheck -check-prefix=SWIFT-CHECK %s
+; RUN: llc -O1 -mtriple=arm-eabi -mcpu=cortex-a9 %s -o - \
+; RUN:  | FileCheck -check-prefix=A9-CHECK %s
+
+; RUN: llc -O1 -mtriple=arm-eabi -mcpu=swift %s -o - \
+; RUN:  | FileCheck -check-prefix=SWIFT-CHECK %s
+
 ; Check that swift doesn't use vmov.32. <rdar://problem/10453003>.
 
 define <2 x i32> @testuvec(<2 x i32> %A, <2 x i32> %B) nounwind {

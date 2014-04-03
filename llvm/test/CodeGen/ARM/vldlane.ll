@@ -1,5 +1,7 @@
-; RUN: llc < %s -march=arm -float-abi=soft -mattr=+neon | FileCheck %s
-; RUN: llc < %s -march=arm -float-abi=soft -mattr=+neon -regalloc=basic | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -float-abi=soft -mattr=+neon %s -o - | FileCheck %s
+
+; RUN: llc -mtriple=arm-eabi -float-abi=soft -mattr=+neon -regalloc=basic %s -o - \
+; RUN:	| FileCheck %s
 
 define <8 x i8> @vld1lanei8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vld1lanei8:

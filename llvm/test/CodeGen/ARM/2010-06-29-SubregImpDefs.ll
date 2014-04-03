@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o /dev/null
 
 @.str271 = external constant [21 x i8], align 4   ; <[21 x i8]*> [#uses=1]
 @llvm.used = appending global [1 x i8*] [i8* bitcast (i32 (i32, i8**)* @main to i8*)], section "llvm.metadata" ; <[1 x i8*]*> [#uses=0]

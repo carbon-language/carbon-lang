@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm
+; RUN: llc -mtriple=arm-eabi %s -o /dev/null
 
 ; Check that codegen for an addrspace cast succeeds without error.
 define <4 x i32 addrspace(1)*> @f (<4 x i32*> %x) {

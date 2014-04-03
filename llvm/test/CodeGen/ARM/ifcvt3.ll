@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
-; RUN: llc < %s -march=arm -mattr=+v4t | grep cmpne | count 1
-; RUN: llc < %s -march=arm -mattr=+v4t | grep bx | count 2
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+v4t %s -o - | FileCheck %s -check-prefix CHECK-V4-CMP
+; RUN: llc -mtriple=arm-eabi -mattr=+v4t %s -o - | FileCheck %s -check-prefix CHECK-V4-BX
 
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) {
 ; CHECK-LABEL: t1:
@@ -22,3 +22,11 @@ cond_next:
 	%tmp15 = add i32 %b, %a
 	ret i32 %tmp15
 }
+
+; CHECK-V4-CMP: cmpne
+; CHECK-V4-CMP-NOT: cmpne
+
+; CHECK-V4-BX: bx
+; CHECK-V4-BX: bx
+; CHECK-V4-BX-NOT: bx
+

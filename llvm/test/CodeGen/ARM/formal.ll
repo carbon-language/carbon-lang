@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2
+; RUN: llc -mtriple=arm-eabi -mattr=+vfp2 %s -o /dev/null
 
 declare void @bar(i64 %x, i64 %y)
 

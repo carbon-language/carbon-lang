@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+neon -print-before=post-RA-sched  > %t 2>&1 && FileCheck < %t %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon -print-before=post-RA-sched %s -o - 2>&1 \
+; RUN:  | FileCheck %s
 
 define void @vst(i8* %m, [4 x i64] %v) {
 entry:

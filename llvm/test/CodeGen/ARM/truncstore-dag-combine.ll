@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v4t | not grep orr
-; RUN: llc < %s -march=arm -mattr=+v4t | not grep mov
+; RUN: llc -mtriple=arm-eabi -mattr=+v4t %s -o - | FileCheck %s
 
 define void @bar(i8* %P, i16* %Q) {
 entry:
@@ -16,3 +15,7 @@ entry:
 	store i32 %tmp, i32* %P1, align 1
 	ret void
 }
+
+; CHECK-NOT: orr
+; CHECK-NOT: mov
+

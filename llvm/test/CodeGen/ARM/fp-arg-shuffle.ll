@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon -float-abi=soft | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon -float-abi=soft %s -o - | FileCheck %s
 
 ; CHECK: function1
 ; CHECK-NOT: vmov

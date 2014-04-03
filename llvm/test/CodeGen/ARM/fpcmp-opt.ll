@@ -1,4 +1,6 @@
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 -mattr=+vfp2 -enable-unsafe-fp-math | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 -mattr=+vfp2 -enable-unsafe-fp-math %s -o - \
+; RUN:  | FileCheck %s
+
 ; rdar://7461510
 ; rdar://10964603
 

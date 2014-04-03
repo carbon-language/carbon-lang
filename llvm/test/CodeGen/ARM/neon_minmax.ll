@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mcpu=swift | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=swift %s -o - | FileCheck %s
 
 define float @fmin_ole(float %x) nounwind {
 ;CHECK-LABEL: fmin_ole:

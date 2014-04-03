@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
 ; NB: this tests vcnt, vclz, and vcls
 
 define <8 x i8> @vcnt8(<8 x i8>* %A) nounwind {

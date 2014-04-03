@@ -1,4 +1,5 @@
-; RUN: llc < %s  -march=arm -float-abi=hard -mcpu=cortex-a15 -mattr=+neon,+neonfp | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -float-abi=hard -mcpu=cortex-a15 -mattr=+neon,+neonfp %s -o - \
+; RUN:  | FileCheck %s
 
 ; This test checks that the VMLxForwarting feature is disabled for A15.
 ; CHECK: fun_a:

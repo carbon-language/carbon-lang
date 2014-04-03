@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+v6 %s -o - | FileCheck %s
 
 ; CHECK: test1
 ; CHECK: pkhbt   r0, r0, r1, lsl #16

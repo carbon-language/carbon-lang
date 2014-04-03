@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
 
 define void @vst1i8(i8* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: vst1i8:

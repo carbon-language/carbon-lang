@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon -mcpu=cortex-a9
+; RUN: llc -mtriple=arm-eabi -mattr=+neon -mcpu=cortex-a9 %s -o /dev/null
 
 define arm_aapcs_vfpcc <4 x float> @foo(i8* nocapture %pBuffer, i32 %numItems) nounwind {
   %1 = ptrtoint i8* %pBuffer to i32

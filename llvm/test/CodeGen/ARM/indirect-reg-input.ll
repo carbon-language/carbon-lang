@@ -1,4 +1,4 @@
-; RUN: not llc < %s -march=arm -mcpu=cortex-a8 2>&1 | FileCheck %s
+; RUN: not llc -mtriple=arm-eabi -mcpu=cortex-a8 %s -o - 2>&1 | FileCheck %s
 
 ; Check for error message:
 ; CHECK: error: inline asm not supported yet: don't know how to handle tied indirect register inputs

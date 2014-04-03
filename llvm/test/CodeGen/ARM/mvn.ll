@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | grep mvn | count 9
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
 
 define i32 @f1() {
 entry:
@@ -72,3 +72,16 @@ entry:
 	%tmp102 = icmp eq i32 -2, %a		; <i1> [#uses=1]
 	ret i1 %tmp102
 }
+
+; CHECK-LABEL: f1
+; CHECK: mvn
+; CHECK: mvn
+; CHECK: mvn
+; CHECK: mvn
+; CHECK: mvn
+; CHECK: mvn
+; CHECK: mvn
+; CHECK: mvn
+; CHECK: mvn
+; CHECK-NOT: mvn
+

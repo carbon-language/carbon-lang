@@ -1,4 +1,6 @@
-; RUN: llc < %s -march=arm -print-machineinstrs=tailduplication -tail-dup-size=100 -enable-tail-merge=false -disable-cgp -o /dev/null 2>&1 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -print-machineinstrs=tailduplication -tail-dup-size=100 \
+; RUN:      -enable-tail-merge=false -disable-cgp %s -o /dev/null 2>&1 \
+; RUN:	| FileCheck %s
 
 ; CHECK: Machine code for function test0:
 ; CHECK: Successors according to CFG: BB#1(4) BB#2(124)

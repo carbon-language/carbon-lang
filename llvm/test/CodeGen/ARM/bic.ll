@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | FileCheck %s
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
 
 define i32 @f1(i32 %a, i32 %b) {
     %tmp = xor i32 %b, 4294967295

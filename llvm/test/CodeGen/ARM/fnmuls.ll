@@ -1,7 +1,7 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
-; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+vfp2 %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a9 %s -o - | FileCheck %s
 
 define arm_aapcs_vfpcc float @test1(float %a, float %b) nounwind {
 ; CHECK: vnmul.f32 s0, s0, s1 

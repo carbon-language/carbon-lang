@@ -1,7 +1,11 @@
-; RUN: llc < %s -march=arm -mattr=+v4t | FileCheck %s -check-prefix=CHECKV4
-; RUN: llc < %s -march=arm -mattr=+v5t | FileCheck %s -check-prefix=CHECKV5
-; RUN: llc < %s -mtriple=armv6-linux-gnueabi\
-; RUN:   -relocation-model=pic | FileCheck %s -check-prefix=CHECKELF
+; RUN: llc -mtriple=arm-eabi -mattr=+v4t %s -o - \
+; RUN:   | FileCheck %s -check-prefix=CHECKV4
+
+; RUN: llc -mtriple=arm-eabi -mattr=+v5t %s -o - \
+; RUN:   | FileCheck %s -check-prefix=CHECKV5
+
+; RUN: llc -mtriple=armv6-linux-gnueabi -relocation-model=pic %s -o - \
+; RUN:   | FileCheck %s -check-prefix=CHECKELF
 
 @t = weak global i32 ()* null           ; <i32 ()**> [#uses=1]
 

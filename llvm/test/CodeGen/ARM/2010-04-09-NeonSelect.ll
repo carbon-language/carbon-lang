@@ -1,5 +1,5 @@
-; RUN: llc -march=arm -mattr=+neon < %s
-; Radar 7770501: Don't crash on SELECT and SELECT_CC with NEON vector values.
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o /dev/null
+; rdar://7770501 : Don't crash on SELECT and SELECT_CC with NEON vector values.
 
 define void @vDSP_FFT16_copv(float* nocapture %O, float* nocapture %I, i32 %Direction) nounwind {
 entry:

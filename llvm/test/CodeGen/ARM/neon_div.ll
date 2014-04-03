@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+neon -pre-RA-sched=source -disable-post-ra | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon -pre-RA-sched=source -disable-post-ra %s -o - \
+; RUN:  | FileCheck %s
 
 define <8 x i8> @sdivi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vrecpe.f32

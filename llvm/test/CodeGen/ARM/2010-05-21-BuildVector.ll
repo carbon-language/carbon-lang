@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s
 ; Radar 7872877
 
 define void @test(float* %fltp, i32 %packedValue, float* %table) nounwind {

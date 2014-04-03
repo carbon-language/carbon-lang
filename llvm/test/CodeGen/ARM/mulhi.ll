@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=arm -mattr=+v6 | FileCheck %s -check-prefix=V6
-; RUN: llc < %s -march=arm | FileCheck %s -check-prefix=V4
-; RUN: llc < %s -march=thumb -mcpu=cortex-m3 | FileCheck %s -check-prefix=M3
+; RUN: llc -mtriple=arm-eabi -mattr=+v6 %s -o - | FileCheck %s -check-prefix=V6
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s -check-prefix=V4
+; RUN: llc -mtriple=thumb-eabi -mcpu=cortex-m3 %s -o - | FileCheck %s -check-prefix=M3
 
 define i32 @smulhi(i32 %x, i32 %y) nounwind {
 ; V6-LABEL: smulhi:

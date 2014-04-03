@@ -1,6 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+v6
-; RUN: llc < %s -mtriple=arm-apple-ios -mattr=+v6 |\
-; RUN:   grep mov | count 3
+; RUN: llc -mtriple=arm-eabi -mattr=+v6 %s -o /dev/null
+; RUN: llc -mtriple=arm-apple-ios -mattr=+v6 %s -o - | FileCheck %s
 
 define i32 @test(i32 %x) {
         %tmp = trunc i32 %x to i16              ; <i16> [#uses=1]
@@ -9,3 +8,9 @@ define i32 @test(i32 %x) {
 }
 
 declare i32 @f(i32, i16)
+
+; CHECK: mov
+; CHECK: mov
+; CHECK: mov
+; CHECK-NOT: mov
+

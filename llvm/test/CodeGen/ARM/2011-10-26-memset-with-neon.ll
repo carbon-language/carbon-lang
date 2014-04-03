@@ -1,4 +1,4 @@
-; RUN: llc -march=arm -mcpu=cortex-a8 < %s | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s
 
 ; Trigger multiple NEON stores.
 ; CHECK: vst1.64

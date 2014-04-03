@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
+; RUN: llc -mtriple=arm -mattr=+neon %s -o - | FileCheck %s
 
 ; This tests icmp operations that do not map directly to NEON instructions.
 ; Not-equal (ne) operations are implemented by VCEQ/VMVN.  Less-than (lt/ult)

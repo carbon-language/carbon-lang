@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s
-; RUN: llc < %s -march=arm -mattr=+neon -regalloc=basic | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o -| FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon -regalloc=basic %s -o - | FileCheck %s
 
 %struct.__neon_int8x8x3_t = type { <8 x i8>,  <8 x i8>,  <8 x i8> }
 %struct.__neon_int16x4x3_t = type { <4 x i16>, <4 x i16>, <4 x i16> }

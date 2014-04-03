@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+v6 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+v6 %s -o - | FileCheck %s
 
 define i32 @test0(i8 %A) {
 ; CHECK: test0

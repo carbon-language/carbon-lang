@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mattr=+neon -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+neon -mcpu=cortex-a8 %s -o - | FileCheck %s
 
 define <8 x i8> @v_andi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK-LABEL: v_andi8:

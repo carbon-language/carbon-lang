@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 %s -o - | FileCheck %s
 ; rdar://12771555
 
 define void @foo(i16* %ptr, i32 %a) nounwind {

@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm | FileCheck %s
-; RUN: llc < %s -march=arm -mcpu=swift | FileCheck %s
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=swift %s -o - | FileCheck %s
 
 ; CHECK-LABEL: test1:
 ; CHECK: ldr {{.*!}}

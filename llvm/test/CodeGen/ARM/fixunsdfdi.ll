@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2
-; RUN: llc < %s -march=arm -mattr=vfp2 | not grep vstr.64
+; RUN: llc -mtriple=arm-eabi -mattr=+vfp2 %s -o /dev/null
+; RUN: llc -mtriple=arm-eabi -mattr=vfp2 %s -o - | FileCheck %s
 
 define hidden i64 @__fixunsdfdi(double %x) nounwind readnone {
 entry:
@@ -27,3 +27,6 @@ bb7:		; preds = %bb3
 bb10:		; preds = %entry
 	ret i64 0
 }
+
+; CHECK-NOT: vstr.64
+

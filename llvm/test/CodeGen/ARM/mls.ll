@@ -1,5 +1,6 @@
-; RUN: llc < %s -march=arm -mattr=+v6t2 | FileCheck %s
-; RUN: llc < %s -march=arm -mattr=+v6t2 -arm-use-mulops=false | FileCheck %s -check-prefix=NO_MULOPS
+; RUN: llc -mtriple=arm-eabi -mattr=+v6t2 %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mattr=+v6t2 -arm-use-mulops=false %s -o - \
+; RUN:  | FileCheck %s -check-prefix=NO_MULOPS
 
 define i32 @f1(i32 %a, i32 %b, i32 %c) {
     %tmp1 = mul i32 %a, %b

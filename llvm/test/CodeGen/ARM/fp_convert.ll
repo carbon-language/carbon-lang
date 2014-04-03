@@ -1,9 +1,20 @@
-; RUN: llc < %s -march=arm -mattr=+vfp2 | FileCheck %s -check-prefix=VFP2
-; RUN: llc < %s -march=arm -mattr=+neon | FileCheck %s -check-prefix=VFP2
-; RUN: llc < %s -mtriple=arm-eabi -mcpu=cortex-a8 | FileCheck %s -check-prefix=VFP2
-; RUN: llc < %s -mtriple=arm-eabi -mcpu=cortex-a8 --enable-unsafe-fp-math | FileCheck %s -check-prefix=NEON
-; RUN: llc < %s -mtriple=arm-darwin -mcpu=cortex-a8 | FileCheck %s -check-prefix=NEON
-; RUN: llc < %s -march=arm -mcpu=cortex-a9 | FileCheck %s -check-prefix=VFP2
+; RUN: llc -mtriple=arm-eabi -mattr=+vfp2 %s -o - \
+; RUN:  | FileCheck %s -check-prefix=VFP2
+
+; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - \
+; RUN:  | FileCheck %s -check-prefix=VFP2
+
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 %s -o - \
+; RUN: | FileCheck %s -check-prefix=VFP2
+
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 --enable-unsafe-fp-math %s -o - \
+; RUN:  | FileCheck %s -check-prefix=NEON
+
+; RUN: llc -mtriple=arm-darwin -mcpu=cortex-a8 %s -o - \
+; RUN:  | FileCheck %s -check-prefix=NEON
+
+; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a9 %s -o - \
+; RUN:  | FileCheck %s -check-prefix=VFP2
 
 define i32 @test1(float %a, float %b) {
 ; VFP2-LABEL: test1:
