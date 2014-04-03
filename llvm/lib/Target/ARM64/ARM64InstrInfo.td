@@ -643,7 +643,7 @@ defm CLS    : OneOperandData<0b101, "cls">;
 defm CLZ    : OneOperandData<0b100, "clz", ctlz>;
 defm RBIT   : OneOperandData<0b000, "rbit">;
 def  REV16Wr : OneWRegData<0b001, "rev16",
-                                  UnOpFrag<(rotr (bswap node:$LHS), (i32 16))>>;
+                                  UnOpFrag<(rotr (bswap node:$LHS), (i64 16))>>;
 def  REV16Xr : OneXRegData<0b001, "rev16",
                                   UnOpFrag<(rotr (bswap node:$LHS), (i64 16))>>;
 
@@ -670,7 +670,7 @@ def : InstAlias<"ror $dst, $src, $shift",
 def : InstAlias<"ror $dst, $src, $shift",
             (EXTRXrri GPR64:$dst, GPR64:$src, GPR64:$src, imm0_63:$shift)>;
 
-def : Pat<(rotr GPR32:$Rn, (i32 imm0_31:$imm)),
+def : Pat<(rotr GPR32:$Rn, (i64 imm0_31:$imm)),
           (EXTRWrri GPR32:$Rn, GPR32:$Rn, imm0_31:$imm)>;
 def : Pat<(rotr GPR64:$Rn, (i64 imm0_63:$imm)),
           (EXTRXrri GPR64:$Rn, GPR64:$Rn, imm0_63:$imm)>;
@@ -684,28 +684,28 @@ defm SBFM : BitfieldImm<0b00, "sbfm">;
 defm UBFM : BitfieldImm<0b10, "ubfm">;
 }
 
-def i32shift_a : Operand<i32>, SDNodeXForm<imm, [{
+def i32shift_a : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = (32 - N->getZExtValue()) & 0x1f;
-  return CurDAG->getTargetConstant(enc, MVT::i32);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
-def i32shift_b : Operand<i32>, SDNodeXForm<imm, [{
+def i32shift_b : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = 31 - N->getZExtValue();
-  return CurDAG->getTargetConstant(enc, MVT::i32);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 // min(7, 31 - shift_amt)
-def i32shift_sext_i8 : Operand<i32>, SDNodeXForm<imm, [{
+def i32shift_sext_i8 : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = 31 - N->getZExtValue();
   enc = enc > 7 ? 7 : enc;
-  return CurDAG->getTargetConstant(enc, MVT::i32);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 // min(15, 31 - shift_amt)
-def i32shift_sext_i16 : Operand<i32>, SDNodeXForm<imm, [{
+def i32shift_sext_i16 : Operand<i64>, SDNodeXForm<imm, [{
   uint64_t enc = 31 - N->getZExtValue();
   enc = enc > 15 ? 15 : enc;
-  return CurDAG->getTargetConstant(enc, MVT::i32);
+  return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
 def i64shift_a : Operand<i64>, SDNodeXForm<imm, [{
@@ -739,15 +739,15 @@ def i64shift_sext_i32 : Operand<i64>, SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(enc, MVT::i64);
 }]>;
 
-def : Pat<(shl GPR32:$Rn, (i32 imm0_31:$imm)),
-          (UBFMWri GPR32:$Rn, (i32 (i32shift_a imm0_31:$imm)),
-                              (i32 (i32shift_b imm0_31:$imm)))>;
+def : Pat<(shl GPR32:$Rn, (i64 imm0_31:$imm)),
+          (UBFMWri GPR32:$Rn, (i64 (i32shift_a imm0_31:$imm)),
+                              (i64 (i32shift_b imm0_31:$imm)))>;
 def : Pat<(shl GPR64:$Rn, (i64 imm0_63:$imm)),
           (UBFMXri GPR64:$Rn, (i64 (i64shift_a imm0_63:$imm)),
                               (i64 (i64shift_b imm0_63:$imm)))>;
 
 let AddedComplexity = 10 in {
-def : Pat<(sra GPR32:$Rn, (i32 imm0_31:$imm)),
+def : Pat<(sra GPR32:$Rn, (i64 imm0_31:$imm)),
           (SBFMWri GPR32:$Rn, imm0_31:$imm, 31)>;
 def : Pat<(sra GPR64:$Rn, (i64 imm0_63:$imm)),
           (SBFMXri GPR64:$Rn, imm0_63:$imm, 63)>;
@@ -763,7 +763,7 @@ def : InstAlias<"sxth $dst, $src", (SBFMWri GPR32:$dst, GPR32:$src, 0, 15)>;
 def : InstAlias<"sxth $dst, $src", (SBFMXri GPR64:$dst, GPR64:$src, 0, 15)>;
 def : InstAlias<"sxtw $dst, $src", (SBFMXri GPR64:$dst, GPR64:$src, 0, 31)>;
 
-def : Pat<(srl GPR32:$Rn, (i32 imm0_31:$imm)),
+def : Pat<(srl GPR32:$Rn, (i64 imm0_31:$imm)),
           (UBFMWri GPR32:$Rn, imm0_31:$imm, 31)>;
 def : Pat<(srl GPR64:$Rn, (i64 imm0_63:$imm)),
           (UBFMXri GPR64:$Rn, imm0_63:$imm, 63)>;
@@ -4247,16 +4247,16 @@ def : Pat<(i32 (sext_inreg GPR32:$src, i16)), (SBFMWri GPR32:$src, 0, 15)>;
 def : Pat<(i32 (sext_inreg GPR32:$src, i8)),  (SBFMWri GPR32:$src, 0, 7)>;
 def : Pat<(i32 (sext_inreg GPR32:$src, i1)),  (SBFMWri GPR32:$src, 0, 0)>;
 
-def : Pat<(shl (sext_inreg GPR32:$Rn, i8), (i32 imm0_31:$imm)),
-          (SBFMWri GPR32:$Rn, (i32 (i32shift_a       imm0_31:$imm)),
-                              (i32 (i32shift_sext_i8 imm0_31:$imm)))>;
+def : Pat<(shl (sext_inreg GPR32:$Rn, i8), (i64 imm0_31:$imm)),
+          (SBFMWri GPR32:$Rn, (i64 (i32shift_a       imm0_31:$imm)),
+                              (i64 (i32shift_sext_i8 imm0_31:$imm)))>;
 def : Pat<(shl (sext_inreg GPR64:$Rn, i8), (i64 imm0_63:$imm)),
           (SBFMXri GPR64:$Rn, (i64 (i64shift_a imm0_63:$imm)),
                               (i64 (i64shift_sext_i8 imm0_63:$imm)))>;
 
-def : Pat<(shl (sext_inreg GPR32:$Rn, i16), (i32 imm0_31:$imm)),
-          (SBFMWri GPR32:$Rn, (i32 (i32shift_a        imm0_31:$imm)),
-                              (i32 (i32shift_sext_i16 imm0_31:$imm)))>;
+def : Pat<(shl (sext_inreg GPR32:$Rn, i16), (i64 imm0_31:$imm)),
+          (SBFMWri GPR32:$Rn, (i64 (i32shift_a        imm0_31:$imm)),
+                              (i64 (i32shift_sext_i16 imm0_31:$imm)))>;
 def : Pat<(shl (sext_inreg GPR64:$Rn, i16), (i64 imm0_63:$imm)),
           (SBFMXri GPR64:$Rn, (i64 (i64shift_a        imm0_63:$imm)),
                               (i64 (i64shift_sext_i16 imm0_63:$imm)))>;
@@ -4273,19 +4273,19 @@ let AddedComplexity = 20 in {
 // We support all sext + sra combinations which preserve at least one bit of the
 // original value which is to be sign extended. E.g. we support shifts up to
 // bitwidth-1 bits.
-def : Pat<(sra (sext_inreg GPR32:$Rn, i8), (i32 imm0_7:$imm)),
-          (SBFMWri GPR32:$Rn, (i32 imm0_7:$imm), 7)>;
-def : Pat<(sra (sext_inreg GPR64:$Rn, i8), (i64 imm0_7x:$imm)),
-          (SBFMXri GPR64:$Rn, (i64 imm0_7x:$imm), 7)>;
+def : Pat<(sra (sext_inreg GPR32:$Rn, i8), (i64 imm0_7:$imm)),
+          (SBFMWri GPR32:$Rn, (i64 imm0_7:$imm), 7)>;
+def : Pat<(sra (sext_inreg GPR64:$Rn, i8), (i64 imm0_7:$imm)),
+          (SBFMXri GPR64:$Rn, (i64 imm0_7:$imm), 7)>;
 
-def : Pat<(sra (sext_inreg GPR32:$Rn, i16), (i32 imm0_15:$imm)),
-          (SBFMWri GPR32:$Rn, (i32 imm0_15:$imm), 15)>;
-def : Pat<(sra (sext_inreg GPR64:$Rn, i16), (i64 imm0_15x:$imm)),
-          (SBFMXri GPR64:$Rn, (i64 imm0_15x:$imm), 15)>;
+def : Pat<(sra (sext_inreg GPR32:$Rn, i16), (i64 imm0_15:$imm)),
+          (SBFMWri GPR32:$Rn, (i64 imm0_15:$imm), 15)>;
+def : Pat<(sra (sext_inreg GPR64:$Rn, i16), (i64 imm0_15:$imm)),
+          (SBFMXri GPR64:$Rn, (i64 imm0_15:$imm), 15)>;
 
-def : Pat<(sra (i64 (sext GPR32:$Rn)), (i64 imm0_31x:$imm)),
+def : Pat<(sra (i64 (sext GPR32:$Rn)), (i64 imm0_31:$imm)),
           (SBFMXri (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GPR32:$Rn, sub_32),
-                   (i64 imm0_31x:$imm), 31)>;
+                   (i64 imm0_31:$imm), 31)>;
 } // AddedComplexity = 20
 
 // To truncate, we can simply extract from a subregister.

@@ -440,57 +440,33 @@ def imm0_127 : Operand<i32>, ImmLeaf<i32, [{
   let ParserMatchClass = Imm0_127Operand;
 }
 
+// NOTE: These imm0_N operands have to be of type i64 because i64 is the size
+// for all shift-amounts.
+
 // imm0_63 predicate - True if the immediate is in the range [0,63]
-// NOTE: This has to be of type i64 because i64 is the shift-amount-size
-// for X registers.
 def imm0_63 : Operand<i64>, ImmLeaf<i64, [{
   return ((uint64_t)Imm) < 64;
 }]> {
   let ParserMatchClass = Imm0_63Operand;
 }
 
-// imm0_31x predicate - True if the immediate is in the range [0,31]
-// NOTE: This has to be of type i64 because i64 is the shift-amount-size
-// for X registers.
-def imm0_31x : Operand<i64>, ImmLeaf<i64, [{
+// imm0_31 predicate - True if the immediate is in the range [0,31]
+def imm0_31 : Operand<i64>, ImmLeaf<i64, [{
   return ((uint64_t)Imm) < 32;
 }]> {
   let ParserMatchClass = Imm0_31Operand;
 }
 
-// imm0_15x predicate - True if the immediate is in the range [0,15]
-def imm0_15x : Operand<i64>, ImmLeaf<i64, [{
+// imm0_15 predicate - True if the immediate is in the range [0,15]
+def imm0_15 : Operand<i64>, ImmLeaf<i64, [{
   return ((uint64_t)Imm) < 16;
 }]> {
   let ParserMatchClass = Imm0_15Operand;
 }
 
-// imm0_7x predicate - True if the immediate is in the range [0,7]
-def imm0_7x : Operand<i64>, ImmLeaf<i64, [{
-  return ((uint64_t)Imm) < 8;
-}]> {
-  let ParserMatchClass = Imm0_7Operand;
-}
-
-// imm0_31 predicate - True if the immediate is in the range [0,31]
-// NOTE: This has to be of type i32 because i32 is the shift-amount-size
-// for W registers.
-def imm0_31 : Operand<i32>, ImmLeaf<i32, [{
-  return ((uint32_t)Imm) < 32;
-}]> {
-  let ParserMatchClass = Imm0_31Operand;
-}
-
-// imm0_15 predicate - True if the immediate is in the range [0,15]
-def imm0_15 : Operand<i32>, ImmLeaf<i32, [{
-  return ((uint32_t)Imm) < 16;
-}]> {
-  let ParserMatchClass = Imm0_15Operand;
-}
-
 // imm0_7 predicate - True if the immediate is in the range [0,7]
-def imm0_7 : Operand<i32>, ImmLeaf<i32, [{
-  return ((uint32_t)Imm) < 8;
+def imm0_7 : Operand<i64>, ImmLeaf<i64, [{
+  return ((uint64_t)Imm) < 8;
 }]> {
   let ParserMatchClass = Imm0_7Operand;
 }
@@ -1127,21 +1103,34 @@ multiclass Div<bit isSigned, string asm, SDPatternOperator OpNode> {
   }
 }
 
-class BaseShift<bits<2> shift_type, RegisterClass regtype,
-                string asm, SDNode OpNode>
+class BaseShift<bits<2> shift_type, RegisterClass regtype, string asm,
+                SDPatternOperator OpNode = null_frag>
   : BaseTwoOperand<{1,0,?,?}, regtype, asm, OpNode>,
     Sched<[WriteIS]> {
   let Inst{11-10} = shift_type;
 }
 
 multiclass Shift<bits<2> shift_type, string asm, SDNode OpNode> {
-  def Wr : BaseShift<shift_type, GPR32, asm, OpNode> {
+  def Wr : BaseShift<shift_type, GPR32, asm> {
     let Inst{31} = 0;
   }
 
   def Xr : BaseShift<shift_type, GPR64, asm, OpNode> {
     let Inst{31} = 1;
   }
+
+  def : Pat<(i32 (OpNode GPR32:$Rn, i64:$Rm)),
+            (!cast<Instruction>(NAME # "Wr") GPR32:$Rn,
+                                             (EXTRACT_SUBREG i64:$Rm, sub_32))>;
+
+  def : Pat<(i32 (OpNode GPR32:$Rn, (i64 (zext GPR32:$Rm)))),
+            (!cast<Instruction>(NAME # "Wr") GPR32:$Rn, GPR32:$Rm)>;
+
+  def : Pat<(i32 (OpNode GPR32:$Rn, (i64 (anyext GPR32:$Rm)))),
+            (!cast<Instruction>(NAME # "Wr") GPR32:$Rn, GPR32:$Rm)>;
+
+  def : Pat<(i32 (OpNode GPR32:$Rn, (i64 (sext GPR32:$Rm)))),
+            (!cast<Instruction>(NAME # "Wr") GPR32:$Rn, GPR32:$Rm)>;
 }
 
 class ShiftAlias<string asm, Instruction inst, RegisterClass regtype>
@@ -1572,7 +1561,7 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode> {
 // Extract
 //---
 def SDTA64EXTR : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
-                                      SDTCisSameAs<0, 3>]>;
+                                      SDTCisPtrTy<3>]>;
 def ARM64Extr : SDNode<"ARM64ISD::EXTR", SDTA64EXTR>;
 
 class BaseExtractImm<RegisterClass regtype, Operand imm_type, string asm,

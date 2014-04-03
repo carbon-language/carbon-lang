@@ -573,11 +573,6 @@ void ARM64TargetLowering::computeMaskedBitsForTargetNode(
 }
 
 MVT ARM64TargetLowering::getScalarShiftAmountTy(EVT LHSTy) const {
-  if (!LHSTy.isSimple())
-    return MVT::i64;
-  MVT SimpleVT = LHSTy.getSimpleVT();
-  if (SimpleVT == MVT::i32)
-    return MVT::i32;
   return MVT::i64;
 }
 
@@ -1534,10 +1529,10 @@ getARM64XALUOOp(ARM64CC::CondCode &CC, SDValue Op, SelectionDAG &DAG) {
         // check we have to arithmetic shift right the 32nd bit of the result by
         // 31 bits. Then we compare the result to the upper 32 bits.
         SDValue UpperBits = DAG.getNode(ISD::SRL, DL, MVT::i64, Add,
-                                        DAG.getConstant(32, MVT::i32));
+                                        DAG.getConstant(32, MVT::i64));
         UpperBits = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, UpperBits);
         SDValue LowerBits = DAG.getNode(ISD::SRA, DL, MVT::i32, Value,
-                                        DAG.getConstant(31, MVT::i32));
+                                        DAG.getConstant(31, MVT::i64));
         // It is important that LowerBits is last, otherwise the arithmetic
         // shift will not be folded into the compare (SUBS).
         SDVTList VTs = DAG.getVTList(MVT::i32, MVT::i32);
@@ -1550,7 +1545,7 @@ getARM64XALUOOp(ARM64CC::CondCode &CC, SDValue Op, SelectionDAG &DAG) {
         // pattern:
         // (i64 ARM64ISD::SUBS i64 0, (i64 srl i64 %Mul, i64 32)
         SDValue UpperBits = DAG.getNode(ISD::SRL, DL, MVT::i64, Mul,
-                                        DAG.getConstant(32, MVT::i32));
+                                        DAG.getConstant(32, MVT::i64));
         SDVTList VTs = DAG.getVTList(MVT::i64, MVT::i32);
         Overflow =
             DAG.getNode(ARM64ISD::SUBS, DL, VTs, DAG.getConstant(0, MVT::i64),
@@ -1564,7 +1559,7 @@ getARM64XALUOOp(ARM64CC::CondCode &CC, SDValue Op, SelectionDAG &DAG) {
     if (IsSigned) {
       SDValue UpperBits = DAG.getNode(ISD::MULHS, DL, MVT::i64, LHS, RHS);
       SDValue LowerBits = DAG.getNode(ISD::SRA, DL, MVT::i64, Value,
-                                      DAG.getConstant(63, MVT::i32));
+                                      DAG.getConstant(63, MVT::i64));
       // It is important that LowerBits is last, otherwise the arithmetic
       // shift will not be folded into the compare (SUBS).
       SDVTList VTs = DAG.getVTList(MVT::i64, MVT::i32);
@@ -6330,16 +6325,18 @@ static SDValue performMulCombine(SDNode *N, SelectionDAG &DAG,
     if (VP1.isPowerOf2()) {
       // Multiplying by one less than a power of two, replace with a shift
       // and a subtract.
-      SDValue ShiftedVal = DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
-                                       DAG.getConstant(VP1.logBase2(), VT));
+      SDValue ShiftedVal =
+          DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
+                      DAG.getConstant(VP1.logBase2(), MVT::i64));
       return DAG.getNode(ISD::SUB, SDLoc(N), VT, ShiftedVal, N->getOperand(0));
     }
     APInt VM1 = Value - 1;
     if (VM1.isPowerOf2()) {
       // Multiplying by one more than a power of two, replace with a shift
       // and an add.
-      SDValue ShiftedVal = DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
-                                       DAG.getConstant(VM1.logBase2(), VT));
+      SDValue ShiftedVal =
+          DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
+                      DAG.getConstant(VM1.logBase2(), MVT::i64));
       return DAG.getNode(ISD::ADD, SDLoc(N), VT, ShiftedVal, N->getOperand(0));
     }
   }
