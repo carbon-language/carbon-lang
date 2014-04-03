@@ -175,29 +175,6 @@ TEST(ParserTest, FullParserTest) {
   EXPECT_TRUE(matches("void f(int a, int x);", M));
   EXPECT_FALSE(matches("void f(int x, int a);", M));
 
-  // Test named values.
-  struct NamedSema : public Parser::RegistrySema {
-   public:
-    virtual VariantValue getNamedValue(StringRef Name) {
-      if (Name == "nameX")
-        return std::string("x");
-      if (Name == "param0")
-        return VariantMatcher::SingleMatcher(hasParameter(0, hasName("a")));
-      return VariantValue();
-    }
-  };
-  NamedSema Sema;
-  llvm::Optional<DynTypedMatcher> HasParameterWithNamedValues(
-      Parser::parseMatcherExpression(
-          "functionDecl(param0, hasParameter(1, hasName(nameX)))", &Sema,
-          &Error));
-  EXPECT_EQ("", Error.toStringFull());
-  M = HasParameterWithNamedValues->unconditionalConvertTo<Decl>();
-
-  EXPECT_TRUE(matches("void f(int a, int x);", M));
-  EXPECT_FALSE(matches("void f(int x, int a);", M));
-
-
   EXPECT_TRUE(!Parser::parseMatcherExpression(
                    "hasInitializer(\n    binaryOperator(hasLHS(\"A\")))",
                    &Error).hasValue());

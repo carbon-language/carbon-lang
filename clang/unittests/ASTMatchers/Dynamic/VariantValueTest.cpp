@@ -26,7 +26,6 @@ TEST(VariantValueTest, Unsigned) {
   EXPECT_TRUE(Value.isUnsigned());
   EXPECT_EQ(kUnsigned, Value.getUnsigned());
 
-  EXPECT_FALSE(Value.isNothing());
   EXPECT_FALSE(Value.isString());
   EXPECT_FALSE(Value.isMatcher());
 }
@@ -39,7 +38,6 @@ TEST(VariantValueTest, String) {
   EXPECT_EQ(kString, Value.getString());
   EXPECT_EQ("String", Value.getTypeAsString());
 
-  EXPECT_FALSE(Value.isNothing());
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isMatcher());
 }
@@ -47,7 +45,6 @@ TEST(VariantValueTest, String) {
 TEST(VariantValueTest, DynTypedMatcher) {
   VariantValue Value = VariantMatcher::SingleMatcher(stmt());
 
-  EXPECT_FALSE(Value.isNothing());
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isString());
 
@@ -77,13 +74,11 @@ TEST(VariantValueTest, Assignment) {
   VariantValue Value = std::string("A");
   EXPECT_TRUE(Value.isString());
   EXPECT_EQ("A", Value.getString());
-  EXPECT_FALSE(Value.isNothing());
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isMatcher());
   EXPECT_EQ("String", Value.getTypeAsString());
 
   Value = VariantMatcher::SingleMatcher(recordDecl());
-  EXPECT_FALSE(Value.isNothing());
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isString());
   EXPECT_TRUE(Value.isMatcher());
@@ -94,12 +89,10 @@ TEST(VariantValueTest, Assignment) {
   Value = 17;
   EXPECT_TRUE(Value.isUnsigned());
   EXPECT_EQ(17U, Value.getUnsigned());
-  EXPECT_FALSE(Value.isNothing());
   EXPECT_FALSE(Value.isMatcher());
   EXPECT_FALSE(Value.isString());
 
   Value = VariantValue();
-  EXPECT_TRUE(Value.isNothing());
   EXPECT_FALSE(Value.isUnsigned());
   EXPECT_FALSE(Value.isString());
   EXPECT_FALSE(Value.isMatcher());
