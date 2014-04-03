@@ -63,10 +63,13 @@ def FeatureMips32r2    : SubtargetFeature<"mips32r2", "MipsArchVersion",
                                 "Mips32r2", "Mips32r2 ISA Support",
                                 [FeatureMips32, FeatureSEInReg, FeatureSwap,
                                  FeatureFPIdx]>;
+def FeatureMips4       : SubtargetFeature<"mips4", "MipsArchVersion",
+                                "Mips4", "MIPS IV ISA Support",
+                                [FeatureGP64Bit, FeatureFP64Bit,
+                                 FeatureCondMov]>;
 def FeatureMips64      : SubtargetFeature<"mips64", "MipsArchVersion",
                                 "Mips64", "Mips64 ISA Support",
-                                [FeatureGP64Bit, FeatureFP64Bit,
-                                 FeatureMips32, FeatureFPIdx]>;
+                                [FeatureMips4, FeatureMips32, FeatureFPIdx]>;
 def FeatureMips64r2    : SubtargetFeature<"mips64r2", "MipsArchVersion",
                                 "Mips64r2", "Mips64r2 ISA Support",
                                 [FeatureMips64, FeatureMips32r2]>;
@@ -96,6 +99,7 @@ class Proc<string Name, list<SubtargetFeature> Features>
 
 def : Proc<"mips32", [FeatureMips32, FeatureO32]>;
 def : Proc<"mips32r2", [FeatureMips32r2, FeatureO32]>;
+def : Proc<"mips4", [FeatureMips4, FeatureN64]>;
 def : Proc<"mips64", [FeatureMips64, FeatureN64]>;
 def : Proc<"mips64r2", [FeatureMips64r2, FeatureN64]>;
 def : Proc<"mips16", [FeatureMips16, FeatureO32]>;

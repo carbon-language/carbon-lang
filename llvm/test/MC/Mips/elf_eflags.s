@@ -28,6 +28,9 @@
 # RUN: llvm-mc -filetype=obj -triple mips64el-unknown-linux -mcpu=mips64r2 -mattr=-n64,o32 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPS64EL-MIPS64R2-O32 %s
 # MIPS64EL-MIPS64R2-O32: Flags [ (0x80001100)
 
+# RUN: llvm-mc -filetype=obj -triple mips64-unknown-linux -mcpu=mips4 %s -o -| llvm-readobj -h | FileCheck --check-prefix=MIPS4 %s
+# MIPS4: Flags [ (0x30000000)
+
 # RUN: llvm-mc -filetype=obj -triple mips64el-unknown-linux -mcpu=mips64 %s -mattr=-n64,o32 -o -| llvm-readobj -h | FileCheck --check-prefix=MIPS64EL-MIPS64-O32 %s
 # MIPS64EL-MIPS64-O32: Flags [ (0x60001100)
 	

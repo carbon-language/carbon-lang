@@ -156,6 +156,8 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
     EFlags |= ELF::EF_MIPS_ARCH_64R2;
   else if (Features & Mips::FeatureMips64)
     EFlags |= ELF::EF_MIPS_ARCH_64;
+  else if (Features & Mips::FeatureMips4)
+    EFlags |= ELF::EF_MIPS_ARCH_4;
   else if (Features & Mips::FeatureMips32r2)
     EFlags |= ELF::EF_MIPS_ARCH_32R2;
   else if (Features & Mips::FeatureMips32)
