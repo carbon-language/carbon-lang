@@ -9,8 +9,8 @@ entry:
 
 loopbody:
 ; CHECK: test_peephole_multi_fold:
-; CHECK: vfmadd231ps (%rdi),
-; CHECK: vfmadd231ps (%rsi),
+; CHECK: vfmadd231ps ({{%rdi|%rcx}}),
+; CHECK: vfmadd231ps ({{%rsi|%rdx}}),
   %vsum1 = phi <8 x float> [ %vsum1.next, %loopbody ], [ zeroinitializer, %entry ]
   %vsum2 = phi <8 x float> [ %vsum2.next, %loopbody ], [ zeroinitializer, %entry ]
   %m1 = load <8 x float>* %p1, align 1
