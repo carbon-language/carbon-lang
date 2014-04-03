@@ -755,46 +755,31 @@ MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb,
 }
 
 relocation_iterator MachOObjectFile::section_rel_begin(DataRefImpl Sec) const {
-  uint32_t Offset;
-  if (is64Bit()) {
-    MachO::section_64 Sect = getSection64(Sec);
-    Offset = Sect.reloff;
-  } else {
-    MachO::section Sect = getSection(Sec);
-    Offset = Sect.reloff;
-  }
-
   DataRefImpl Ret;
-  Ret.p = reinterpret_cast<uintptr_t>(getPtr(this, Offset));
+  Ret.d.a = Sec.d.a;
+  Ret.d.b = 0;
   return relocation_iterator(RelocationRef(Ret, this));
 }
 
 relocation_iterator
 MachOObjectFile::section_rel_end(DataRefImpl Sec) const {
-  uint32_t Offset;
   uint32_t Num;
   if (is64Bit()) {
     MachO::section_64 Sect = getSection64(Sec);
-    Offset = Sect.reloff;
     Num = Sect.nreloc;
   } else {
     MachO::section Sect = getSection(Sec);
-    Offset = Sect.reloff;
     Num = Sect.nreloc;
   }
 
-  const MachO::any_relocation_info *P =
-    reinterpret_cast<const MachO::any_relocation_info *>(getPtr(this, Offset));
-
   DataRefImpl Ret;
-  Ret.p = reinterpret_cast<uintptr_t>(P + Num);
+  Ret.d.a = Sec.d.a;
+  Ret.d.b = Num;
   return relocation_iterator(RelocationRef(Ret, this));
 }
 
 void MachOObjectFile::moveRelocationNext(DataRefImpl &Rel) const {
-  const MachO::any_relocation_info *P =
-    reinterpret_cast<const MachO::any_relocation_info *>(Rel.p);
-  Rel.p = reinterpret_cast<uintptr_t>(P + 1);
+  ++Rel.d.b;
 }
 
 error_code
@@ -1476,8 +1461,21 @@ MachOObjectFile::getVersionMinLoadCommand(const LoadCommandInfo &L) const {
 
 MachO::any_relocation_info
 MachOObjectFile::getRelocation(DataRefImpl Rel) const {
-  const char *P = reinterpret_cast<const char *>(Rel.p);
-  return getStruct<MachO::any_relocation_info>(this, P);
+  DataRefImpl Sec;
+  Sec.d.a = Rel.d.a;
+  uint32_t Offset;
+  if (is64Bit()) {
+    MachO::section_64 Sect = getSection64(Sec);
+    Offset = Sect.reloff;
+  } else {
+    MachO::section Sect = getSection(Sec);
+    Offset = Sect.reloff;
+  }
+
+  auto P = reinterpret_cast<const MachO::any_relocation_info *>(
+      getPtr(this, Offset)) + Rel.d.b;
+  return getStruct<MachO::any_relocation_info>(
+      this, reinterpret_cast<const char *>(P));
 }
 
 MachO::data_in_code_entry
