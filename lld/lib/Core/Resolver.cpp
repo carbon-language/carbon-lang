@@ -78,7 +78,7 @@ void Resolver::handleFile(const File &file) {
 
   if (!sharedLibraryFile ||
       _context.addUndefinedAtomsFromSharedLibrary(sharedLibraryFile)) {
-    progress = (file.undefined().size() > 0);
+    progress = !file.undefined().empty();
 
     for (const UndefinedAtom *undefAtom : file.undefined()) {
       doUndefinedAtom(*undefAtom);
@@ -101,8 +101,8 @@ void Resolver::handleFile(const File &file) {
 
   // If we make some progress on linking, notify that fact to the input file
   // manager, because it may want to know that for --start-group/end-group.
-  progress = progress || file.sharedLibrary().size() ||
-             file.absolute().size() || file.defined().size();
+  progress = progress || !file.sharedLibrary().empty() ||
+             !file.absolute().empty() || !file.defined().empty();
   if (progress) {
     _context.inputGraph().notifyProgress();
   }

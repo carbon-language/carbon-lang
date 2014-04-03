@@ -111,7 +111,7 @@ std::vector<ImportTableEntryAtom *> ImportDirectoryAtom::createImportTableAtoms(
 } // namespace idata
 
 void IdataPass::perform(std::unique_ptr<MutableFile> &file) {
-  if (file->sharedLibrary().size() == 0)
+  if (file->sharedLibrary().empty())
     return;
 
   idata::Context context(*file, _dummyFile);

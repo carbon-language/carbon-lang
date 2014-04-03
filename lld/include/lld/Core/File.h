@@ -105,6 +105,7 @@ public:
     virtual const T *deref(const void *it) const = 0;
     virtual void next(const void *&it) const = 0;
     virtual uint64_t size() const = 0;
+    bool empty() const { return size() == 0; }
   };
 
   /// \brief The class is the iterator type used to iterate through a File's
