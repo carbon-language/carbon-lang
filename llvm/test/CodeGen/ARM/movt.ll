@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mcpu=arm1156t2-s -mattr=+thumb2 | FileCheck %s
+; RUN: llc -mtriple=arm-eabi -mcpu=arm1156t2-s -mattr=+thumb2 %s -o - | FileCheck %s
 ; rdar://7317664
 
 define i32 @t(i32 %X) nounwind {
