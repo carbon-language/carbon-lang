@@ -6696,35 +6696,40 @@ QualType Sema::InvalidOperands(SourceLocation Loc, ExprResult &LHS,
   return QualType();
 }
 
-/// Try to convert a value of non-vector type to a vector type by
-/// promoting (and only promoting) the type to the element type of the
-/// vector and then performing a vector splat.
+/// Try to convert a value of non-vector type to a vector type by converting
+/// the type to the element type of the vector and then performing a splat.
+/// If the language is OpenCL, we only use conversions that promote scalar
+/// rank; for C, Obj-C, and C++ we allow any real scalar conversion except
+/// for float->int.
 ///
 /// \param scalar - if non-null, actually perform the conversions
 /// \return true if the operation fails (but without diagnosing the failure)
-static bool tryVectorPromoteAndSplat(Sema &S, ExprResult *scalar,
+static bool tryVectorConvertAndSplat(Sema &S, ExprResult *scalar,
                                      QualType scalarTy,
                                      QualType vectorEltTy,
                                      QualType vectorTy) {
   // The conversion to apply to the scalar before splatting it,
   // if necessary.
   CastKind scalarCast = CK_Invalid;
-
+  
   if (vectorEltTy->isIntegralType(S.Context)) {
-    if (!scalarTy->isIntegralType(S.Context)) return true;
-    int order = S.Context.getIntegerTypeOrder(vectorEltTy, scalarTy);
-    if (order < 0) return true;
-    if (order > 0) scalarCast = CK_IntegralCast;
+    if (!scalarTy->isIntegralType(S.Context))
+      return true;
+    if (S.getLangOpts().OpenCL &&
+        S.Context.getIntegerTypeOrder(vectorEltTy, scalarTy) < 0)
+      return true;
+    scalarCast = CK_IntegralCast;
   } else if (vectorEltTy->isRealFloatingType()) {
     if (scalarTy->isRealFloatingType()) {
-      int order = S.Context.getFloatingTypeOrder(vectorEltTy, scalarTy);
-      if (order < 0) return true;
-      if (order > 0) scalarCast = CK_FloatingCast;
-    } else if (scalarTy->isIntegralType(S.Context)) {
-      scalarCast = CK_IntegralToFloating;
-    } else {
-      return true;
+      if (S.getLangOpts().OpenCL &&
+          S.Context.getFloatingTypeOrder(vectorEltTy, scalarTy) < 0)
+        return true;
+      scalarCast = CK_FloatingCast;
     }
+    else if (scalarTy->isIntegralType(S.Context))
+      scalarCast = CK_IntegralToFloating;
+    else
+      return true;
   } else {
     return true;
   }
@@ -6732,7 +6737,7 @@ static bool tryVectorPromoteAndSplat(Sema &S, ExprResult *scalar,
   // Adjust scalar if desired.
   if (scalar) {
     if (scalarCast != CK_Invalid)
-       *scalar = S.ImpCastExprToType(scalar->take(), vectorEltTy, scalarCast);
+      *scalar = S.ImpCastExprToType(scalar->take(), vectorEltTy, scalarCast);
     *scalar = S.ImpCastExprToType(scalar->take(), vectorTy, CK_VectorSplat);
   }
   return false;
@@ -6775,6 +6780,19 @@ QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
     return RHSType;
   }
 
+  // If there's an ext-vector type and a scalar, try to convert the scalar to
+  // the vector element type and splat.
+  if (!RHSVecType && isa<ExtVectorType>(LHSVecType)) {
+    if (!tryVectorConvertAndSplat(*this, &RHS, RHSType,
+                                  LHSVecType->getElementType(), LHSType))
+      return LHSType;
+  }
+  if (!LHSVecType && isa<ExtVectorType>(RHSVecType)) {
+    if (!tryVectorConvertAndSplat(*this, (IsCompAssign ? 0 : &LHS), LHSType,
+                                  RHSVecType->getElementType(), RHSType))
+      return RHSType;
+  }
+
   // If we're allowing lax vector conversions, only the total (data) size
   // needs to be the same.
   // FIXME: Should we really be allowing this?
@@ -6783,19 +6801,6 @@ QualType Sema::CheckVectorOperands(ExprResult &LHS, ExprResult &RHS,
     QualType resultType = LHSType;
     RHS = ImpCastExprToType(RHS.take(), resultType, CK_BitCast);
     return resultType;
-  }
-
-  // If there's an ext-vector type and a scalar, try to promote (and
-  // only promote) and splat the scalar to the vector type.
-  if (!RHSVecType && isa<ExtVectorType>(LHSVecType)) {
-    if (!tryVectorPromoteAndSplat(*this, &RHS, RHSType,
-                                  LHSVecType->getElementType(), LHSType))
-      return LHSType;
-  }
-  if (!LHSVecType && isa<ExtVectorType>(RHSVecType)) {
-    if (!tryVectorPromoteAndSplat(*this, (IsCompAssign ? 0 : &LHS), LHSType,
-                                  RHSVecType->getElementType(), RHSType))
-      return RHSType;
   }
 
   // Okay, the expression is invalid.

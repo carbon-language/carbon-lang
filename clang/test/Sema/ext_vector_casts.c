@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-macos10.7.0 -fsyntax-only -verify -fno-lax-vector-conversions %s
+// RUN: %clang_cc1 -triple x86_64-apple-macos10.7.0 -fsyntax-only -verify -fno-lax-vector-conversions -Wconversion %s
 
 typedef __attribute__(( ext_vector_type(2) )) float float2;
 typedef __attribute__(( ext_vector_type(3) )) float float3;
@@ -38,9 +38,8 @@ static void test() {
     ivec4 = (int4)ptr; // expected-error {{invalid conversion between vector type 'int4' and scalar type 'int *'}}
     
     vec4 = (float4)vec2; // expected-error {{invalid conversion between ext-vector type 'float4' and 'float2'}}
-    
-    ish8 += 5; // expected-error {{can't convert between vector values of different size ('short8' and 'int')}}
-    ish8 += (short)5;
+  
+    ish8 += 5;
     ivec4 *= 5;
      vec4 /= 5.2f;
      vec4 %= 4; // expected-error {{invalid operands to binary expression ('float4' and 'int')}}
@@ -88,4 +87,38 @@ extern float32x4_t vabsq_f32(float32x4_t __a);
 
 C3DVector3 Func(const C3DVector3 a) {
     return (C3DVector3)vabsq_f32((float32x4_t)a); // expected-error {{invalid conversion between ext-vector type 'float32x4_t' and 'C3DVector3'}}
+}
+
+// rdar://16350802
+typedef double double2 __attribute__ ((ext_vector_type(2)));
+
+static void splats(int i, long l, __uint128_t t, float f, double d) {
+  short8 vs = 0;
+  int4 vi = i;
+  ulong2 vl = (unsigned long)l;
+  float2 vf = f;
+  double2 vd = d;
+  
+  vs = 65536 + vs; // expected-warning {{implicit conversion from 'int' to 'short8' changes value from 65536 to 0}}
+  vs = vs + i; // expected-warning {{implicit conversion loses integer precision}}
+  vs = vs + 1;
+  vs = vs + 1.f; // expected-error {{can't convert between vector values of different size}}
+  
+  vi = l + vi; // expected-warning {{implicit conversion loses integer precision}}
+  vi = 1 + vi;
+  vi = vi + 2.0; // expected-error {{can't convert between vector values of different size}}
+  vi = vi + 0xffffffff; // expected-warning {{implicit conversion changes signedness}}
+  
+  vl = l + vl; // expected-warning {{implicit conversion changes signedness}}
+  vl = vl + t; // expected-warning {{implicit conversion loses integer precision}}
+  
+  vf = 1 + vf;
+  vf = l + vf;
+  vf = 2.0 + vf;
+  vf = d + vf; // expected-warning {{implicit conversion loses floating-point precision}}
+  vf = vf + 0xffffffff;
+  vf = vf + 2.1; // expected-warning {{implicit conversion loses floating-point precision}}
+  
+  vd = l + vd;
+  vd = vd + t;
 }

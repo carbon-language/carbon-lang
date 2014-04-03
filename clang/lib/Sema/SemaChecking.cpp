@@ -5780,6 +5780,8 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
     Source = cast<VectorType>(Source)->getElementType().getTypePtr();
     Target = cast<VectorType>(Target)->getElementType().getTypePtr();
   }
+  if (auto VecTy = dyn_cast<VectorType>(Target))
+    Target = VecTy->getElementType().getTypePtr();
 
   // Strip complex types.
   if (isa<ComplexType>(Source)) {
