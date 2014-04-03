@@ -630,20 +630,22 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       // earlier load into MI.
       if (!isLoadFoldable(MI, FoldAsLoadDefCandidates) &&
           !FoldAsLoadDefCandidates.empty()) {
-        // We need to fold load after optimizeCmpInstr, since optimizeCmpInstr
-        // can enable folding by converting SUB to CMP.
-        // Save FoldAsLoadDefReg because optimizeLoadInstr() resets it and we
-        // need it for markUsesInDebugValueAsUndef().
         const MCInstrDesc &MIDesc = MI->getDesc();
         for (unsigned i = MIDesc.getNumDefs(); i != MIDesc.getNumOperands();
              ++i) {
           const MachineOperand &MOp = MI->getOperand(i);
           if (!MOp.isReg())
             continue;
-          unsigned TryFoldReg = MOp.getReg();
-          if (FoldAsLoadDefCandidates.count(TryFoldReg)) {
+          unsigned FoldAsLoadDefReg = MOp.getReg();
+          if (FoldAsLoadDefCandidates.count(FoldAsLoadDefReg)) {
+            // We need to fold load after optimizeCmpInstr, since
+            // optimizeCmpInstr can enable folding by converting SUB to CMP.
+            // Save FoldAsLoadDefReg because optimizeLoadInstr() resets it and
+            // we need it for markUsesInDebugValueAsUndef().
+            unsigned FoldedReg = FoldAsLoadDefReg;
             MachineInstr *DefMI = 0;
-            MachineInstr *FoldMI = TII->optimizeLoadInstr(MI, MRI, TryFoldReg,
+            MachineInstr *FoldMI = TII->optimizeLoadInstr(MI, MRI,
+                                                          FoldAsLoadDefReg,
                                                           DefMI);
             if (FoldMI) {
               // Update LocalMIs since we replaced MI with FoldMI and deleted
@@ -655,8 +657,8 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
               LocalMIs.insert(FoldMI);
               MI->eraseFromParent();
               DefMI->eraseFromParent();
-              MRI->markUsesInDebugValueAsUndef(TryFoldReg);
-              FoldAsLoadDefCandidates.erase(TryFoldReg);
+              MRI->markUsesInDebugValueAsUndef(FoldedReg);
+              FoldAsLoadDefCandidates.erase(FoldedReg);
               ++NumLoadFold;
               // MI is replaced with FoldMI.
               Changed = true;
