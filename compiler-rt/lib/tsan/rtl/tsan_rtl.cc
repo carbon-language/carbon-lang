@@ -734,7 +734,8 @@ void ThreadIgnoreBegin(ThreadState *thr, uptr pc) {
   CHECK_GT(thr->ignore_reads_and_writes, 0);
   thr->fast_state.SetIgnoreBit();
 #ifndef TSAN_GO
-  thr->mop_ignore_set.Add(CurrentStackId(thr, pc));
+  if (!ctx->after_multithreaded_fork)
+    thr->mop_ignore_set.Add(CurrentStackId(thr, pc));
 #endif
 }
 
@@ -755,7 +756,8 @@ void ThreadIgnoreSyncBegin(ThreadState *thr, uptr pc) {
   thr->ignore_sync++;
   CHECK_GT(thr->ignore_sync, 0);
 #ifndef TSAN_GO
-  thr->sync_ignore_set.Add(CurrentStackId(thr, pc));
+  if (!ctx->after_multithreaded_fork)
+    thr->sync_ignore_set.Add(CurrentStackId(thr, pc));
 #endif
 }
 
