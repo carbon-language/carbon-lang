@@ -44,6 +44,7 @@ public:
 
   typedef typename ELFFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
   typedef typename ELFFile<ELFT>::Elf_Rel Elf_Rel;
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   typedef typename ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
@@ -275,7 +276,6 @@ template <class ELFT>
 error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
                                                  uint64_t &Result) const {
   const Elf_Sym *ESym = getSymbol(Symb);
-  const Elf_Shdr *ESec;
   switch (EF.getSymbolTableIndex(ESym)) {
   case ELF::SHN_COMMON:
   case ELF::SHN_UNDEF:
@@ -285,39 +285,20 @@ error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
     Result = ESym->st_value;
     return object_error::success;
   default:
-    ESec = EF.getSection(ESym);
+    break;
   }
 
-  switch (ESym->getType()) {
-  case ELF::STT_SECTION:
-    Result = ESec ? ESec->sh_addr : UnknownAddressOrSize;
-    return object_error::success;
-  case ELF::STT_FUNC:
-  case ELF::STT_OBJECT:
-  case ELF::STT_NOTYPE:
-  case ELF::STT_TLS:
-    bool IsRelocatable;
-    switch (EF.getHeader()->e_type) {
-    case ELF::ET_EXEC:
-    case ELF::ET_DYN:
-      IsRelocatable = false;
-      break;
-    default:
-      IsRelocatable = true;
-    }
-    Result = ESym->st_value;
+  const Elf_Ehdr *Header = EF.getHeader();
+  Result = ESym->st_value;
 
-    // Clear the ARM/Thumb indicator flag.
-    if (EF.getHeader()->e_machine == ELF::EM_ARM)
-      Result &= ~1;
+  // Clear the ARM/Thumb indicator flag.
+  if (Header->e_machine == ELF::EM_ARM)
+    Result &= ~1;
 
-    if (IsRelocatable && ESec != 0)
-      Result += ESec->sh_addr;
-    return object_error::success;
-  default:
-    Result = UnknownAddressOrSize;
-    return object_error::success;
-  }
+  if (Header->e_type == ELF::ET_REL)
+    Result += EF.getSection(ESym)->sh_addr;
+
+  return object_error::success;
 }
 
 template <class ELFT>
