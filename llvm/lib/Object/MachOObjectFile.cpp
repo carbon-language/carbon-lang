@@ -976,7 +976,7 @@ MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
       }
       case MachO::X86_64_RELOC_SUBTRACTOR: {
         DataRefImpl RelNext = Rel;
-        RelNext.d.a++;
+        moveRelocationNext(RelNext);
         MachO::any_relocation_info RENext = getRelocation(RelNext);
 
         // X86_64_RELOC_SUBTRACTOR must be followed by a relocation of type
@@ -1024,7 +1024,7 @@ MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
         return object_error::success;
       case MachO::GENERIC_RELOC_SECTDIFF: {
         DataRefImpl RelNext = Rel;
-        RelNext.d.a++;
+        moveRelocationNext(RelNext);
         MachO::any_relocation_info RENext = getRelocation(RelNext);
 
         // X86 sect diff's must be followed by a relocation of type
@@ -1046,7 +1046,7 @@ MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
       switch (Type) {
         case MachO::GENERIC_RELOC_LOCAL_SECTDIFF: {
           DataRefImpl RelNext = Rel;
-          RelNext.d.a++;
+          moveRelocationNext(RelNext);
           MachO::any_relocation_info RENext = getRelocation(RelNext);
 
           // X86 sect diff's must be followed by a relocation of type
@@ -1085,7 +1085,7 @@ MachOObjectFile::getRelocationValueString(DataRefImpl Rel,
           printRelocationTargetName(this, RE, fmt);
 
           DataRefImpl RelNext = Rel;
-          RelNext.d.a++;
+          moveRelocationNext(RelNext);
           MachO::any_relocation_info RENext = getRelocation(RelNext);
 
           // ARM half relocs must be followed by a relocation of type
