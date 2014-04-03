@@ -609,6 +609,18 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
           std::max(std::max(State.Column, NewParenState.Indent),
                    State.Stack.back().LastSpace);
 
+    // Don't allow the RHS of an operator to be split over multiple lines unless
+    // there is a line-break right after the operator.
+    // Exclude relational operators, as there, it is always more desirable to
+    // have the LHS 'left' of the RHS.
+    // FIXME: Implement this for '<<' and BreakBeforeBinaryOperators.
+    if (!Newline && Previous && Previous->Type == TT_BinaryOperator &&
+        !Previous->isOneOf(tok::lessless, tok::question, tok::colon) &&
+        Previous->getPrecedence() > prec::Assignment &&
+        Previous->getPrecedence() != prec::Relational &&
+        !Style.BreakBeforeBinaryOperators)
+      NewParenState.NoLineBreak = true;
+
     // Do not indent relative to the fake parentheses inserted for "." or "->".
     // This is a special case to make the following to statements consistent:
     //   OuterFunction(InnerFunctionCall( // break

@@ -2889,8 +2889,9 @@ TEST_F(FormatTest, ExpressionIndentation) {
                "            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +\n"
                "        bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) {\n}");
   verifyFormat("if () {\n"
-               "} else if (aaaaa && bbbbb > // break\n"
-               "                        ccccc) {\n"
+               "} else if (aaaaa &&\n"
+               "           bbbbb > // break\n"
+               "               ccccc) {\n"
                "}");
 
   // Presence of a trailing comment used to change indentation of b.
