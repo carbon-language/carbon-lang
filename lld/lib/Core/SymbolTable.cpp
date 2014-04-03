@@ -378,11 +378,12 @@ void SymbolTable::addReplacement(const Atom *replaced,
 }
 
 const Atom *SymbolTable::replacement(const Atom *atom) {
+  // Find the replacement for a given atom. Atoms in _replacedAtoms
+  // may be chained, so find the last one.
   for (;;) {
     AtomToAtom::iterator pos = _replacedAtoms.find(atom);
     if (pos == _replacedAtoms.end())
       return atom;
-    // might be chain, recurse to end
     atom = pos->second;
   }
 }
