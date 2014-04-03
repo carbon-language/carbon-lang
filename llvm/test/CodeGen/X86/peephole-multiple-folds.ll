@@ -8,7 +8,7 @@ entry:
   br label %loopbody
 
 loopbody:
-; CHECK: _test_peephole_multi_fold:
+; CHECK: test_peephole_multi_fold:
 ; CHECK: vfmadd231ps (%rdi),
 ; CHECK: vfmadd231ps (%rsi),
   %vsum1 = phi <8 x float> [ %vsum1.next, %loopbody ], [ zeroinitializer, %entry ]
