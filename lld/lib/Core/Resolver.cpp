@@ -69,40 +69,31 @@ private:
 } // namespace
 
 void Resolver::handleFile(const File &file) {
-  const SharedLibraryFile *sharedLibraryFile =
-      dyn_cast<SharedLibraryFile>(&file);
-
   for (const DefinedAtom *atom : file.defined())
     doDefinedAtom(*atom);
-  bool progress = false;
 
-  if (!sharedLibraryFile ||
-      _context.addUndefinedAtomsFromSharedLibrary(sharedLibraryFile)) {
-    progress = !file.undefined().empty();
-
-    for (const UndefinedAtom *undefAtom : file.undefined()) {
-      doUndefinedAtom(*undefAtom);
-      // If the undefined symbol has an alternative name, try to resolve the
-      // symbol with the name to give it a second chance. This feature is used
-      // for COFF "weak external" symbol.
-      if (!_symbolTable.isDefined(undefAtom->name())) {
-        if (const UndefinedAtom *fallbackAtom = undefAtom->fallback()) {
-          doUndefinedAtom(*fallbackAtom);
-          _symbolTable.addReplacement(undefAtom, fallbackAtom);
-        }
+  for (const UndefinedAtom *undefAtom : file.undefined()) {
+    doUndefinedAtom(*undefAtom);
+    // If the undefined symbol has an alternative name, try to resolve the
+    // symbol with the name to give it a second chance. This feature is used
+    // for COFF "weak external" symbol.
+    if (!_symbolTable.isDefined(undefAtom->name())) {
+      if (const UndefinedAtom *fallbackAtom = undefAtom->fallback()) {
+        doUndefinedAtom(*fallbackAtom);
+        _symbolTable.addReplacement(undefAtom, fallbackAtom);
       }
     }
   }
-  for (const SharedLibraryAtom *shlibAtom : file.sharedLibrary())
-    doSharedLibraryAtom(*shlibAtom);
 
-  for (const AbsoluteAtom *absAtom : file.absolute())
-    doAbsoluteAtom(*absAtom);
+  for (const SharedLibraryAtom *atom : file.sharedLibrary())
+    doSharedLibraryAtom(*atom);
+  for (const AbsoluteAtom *atom : file.absolute())
+    doAbsoluteAtom(*atom);
 
   // If we make some progress on linking, notify that fact to the input file
   // manager, because it may want to know that for --start-group/end-group.
-  progress = progress || !file.sharedLibrary().empty() ||
-             !file.absolute().empty() || !file.defined().empty();
+  bool progress = !file.defined().empty() || !file.sharedLibrary().empty() ||
+      !file.absolute().empty() || !file.undefined().empty();
   if (progress) {
     _context.inputGraph().notifyProgress();
   }

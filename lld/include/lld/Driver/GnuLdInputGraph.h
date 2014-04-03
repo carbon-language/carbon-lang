@@ -74,13 +74,11 @@ public:
   /// \brief This is used by Group Nodes, when there is a need to reset the
   /// the file to be processed next. When handling a group node that contains
   /// Input elements, if the group node has to be reprocessed, the linker needs
-  /// to start processing files as part of the inputelement from beginning.
-  /// reset the next file index to 0 only if the node is an archive library or
-  /// a shared library
+  /// to start processing files as part of the input element from beginning.
+  /// Reset the next file index to 0 only if the node is an archive library.
   void resetNextIndex() override {
-    if ((!_attributes._isWholeArchive &&
-         (_files[0]->kind() == File::kindArchiveLibrary)) ||
-        (_files[0]->kind() == File::kindSharedLibrary)) {
+    if (_files[0]->kind() == File::kindArchiveLibrary &&
+        !_attributes._isWholeArchive) {
       _nextFileIndex = 0;
     }
   }

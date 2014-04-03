@@ -224,13 +224,6 @@ public:
     return _rpathLinkList;
   }
 
-  bool addUndefinedAtomsFromSharedLibrary(const SharedLibraryFile *s) override {
-    if (_undefinedAtomsFromFile.find(s) != _undefinedAtomsFromFile.end())
-      return false;
-    _undefinedAtomsFromFile[s] = true;
-    return true;
-  }
-
   const std::map<std::string, uint64_t> &getAbsoluteSymbols() const {
     return _absoluteSymbols;
   }
@@ -281,7 +274,6 @@ protected:
   StringRef _soname;
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
-  std::map<const SharedLibraryFile *, bool> _undefinedAtomsFromFile;
   std::map<std::string, uint64_t> _absoluteSymbols;
 };
 } // end namespace lld

@@ -158,11 +158,6 @@ public:
   /// to be an error.
   bool allowShlibUndefines() const { return _allowShlibUndefines; }
 
-  /// Add undefined symbols from shared libraries ?
-  virtual bool addUndefinedAtomsFromSharedLibrary(const SharedLibraryFile *) {
-    return true;
-  }
-
   /// If true, core linking will write the path to each input file to stdout
   /// (i.e. llvm::outs()) as it is used.  This is used to implement the -t
   /// linker option.
