@@ -247,11 +247,9 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
     _symbolTable.add(atom);
   }
 
-  if (_context.deadStrip()) {
-    // add to set of dead-strip-roots, all symbols that
-    // the compiler marks as don't strip
-    if (atom.deadStrip() == DefinedAtom::deadStripNever)
-      _deadStripRoots.insert(&atom);
+  // An atom that should never be dead-stripped is a dead-strip root.
+  if (_context.deadStrip() && atom.deadStrip() == DefinedAtom::deadStripNever) {
+    _deadStripRoots.insert(&atom);
   }
 }
 
