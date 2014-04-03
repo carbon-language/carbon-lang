@@ -17,6 +17,7 @@ add_public_tablegen_target(ARMCommonTableGen)
 add_llvm_target(ARMCodeGen
   A15SDOptimizer.cpp
   ARMAsmPrinter.cpp
+  ARMAtomicExpandPass.cpp
   ARMBaseInstrInfo.cpp
   ARMBaseRegisterInfo.cpp
   ARMCodeEmitter.cpp

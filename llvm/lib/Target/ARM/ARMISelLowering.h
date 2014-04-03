@@ -548,29 +548,6 @@ namespace llvm {
 
     SDValue OptimizeVFPBrcond(SDValue Op, SelectionDAG &DAG) const;
 
-    MachineBasicBlock *EmitAtomicCmpSwap(MachineInstr *MI,
-                                         MachineBasicBlock *BB,
-                                         unsigned Size) const;
-    MachineBasicBlock *EmitAtomicBinary(MachineInstr *MI,
-                                        MachineBasicBlock *BB,
-                                        unsigned Size,
-                                        unsigned BinOpcode) const;
-    MachineBasicBlock *EmitAtomicBinary64(MachineInstr *MI,
-                                          MachineBasicBlock *BB,
-                                          unsigned Op1,
-                                          unsigned Op2,
-                                          bool NeedsCarry = false,
-                                          bool IsCmpxchg = false,
-                                          bool IsMinMax = false,
-                                          ARMCC::CondCodes CC = ARMCC::AL) const;
-    MachineBasicBlock * EmitAtomicBinaryMinMax(MachineInstr *MI,
-                                               MachineBasicBlock *BB,
-                                               unsigned Size,
-                                               bool signExtend,
-                                               ARMCC::CondCodes Cond) const;
-    MachineBasicBlock *EmitAtomicLoad64(MachineInstr *MI,
-                                        MachineBasicBlock *BB) const;
-
     void SetupEntryBlockForSjLj(MachineInstr *MI,
                                 MachineBasicBlock *MBB,
                                 MachineBasicBlock *DispatchBB, int FI) const;

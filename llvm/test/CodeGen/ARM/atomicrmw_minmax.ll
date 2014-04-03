@@ -15,7 +15,7 @@ define i32 @min(i8 %ctx, i32* %ptr, i32 %val)
 {
 ;  CHECK: ldrex
 ;  CHECK: cmp [[old:r[0-9]*]], [[val:r[0-9]*]]
-;  CHECK: movlo {{r[0-9]*}}, [[old]]
+;  CHECK: movls {{r[0-9]*}}, [[old]]
   %old = atomicrmw umin i32* %ptr, i32 %val monotonic
   ret i32 %old
 }

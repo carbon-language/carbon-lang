@@ -226,6 +226,10 @@ TargetPassConfig *ARMBaseTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 bool ARMPassConfig::addPreISel() {
+  const ARMSubtarget *Subtarget = &getARMSubtarget();
+  if (Subtarget->hasAnyDataBarrier() && !Subtarget->isThumb1Only())
+    addPass(createARMAtomicExpandPass(TM));
+
   if (TM->getOptLevel() != CodeGenOpt::None)
     addPass(createGlobalMergePass(TM));
 
