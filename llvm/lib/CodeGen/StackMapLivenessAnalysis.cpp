@@ -99,7 +99,7 @@ bool StackMapLiveness::calculateLiveness() {
         HasStackMap = true;
         ++NumStackMaps;
       }
-      DEBUG(dbgs() << "   " << *I << "   " << LiveRegs);
+      DEBUG(dbgs() << "   " << LiveRegs << "   " << *I);
       LiveRegs.stepBackward(*I);
     }
     ++NumBBsVisited;
