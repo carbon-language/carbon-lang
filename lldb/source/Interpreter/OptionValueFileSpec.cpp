@@ -99,6 +99,7 @@ OptionValueFileSpec::SetValueFromCString (const char *value_cstr,
 
             m_value_was_set = true;
             m_current_value.SetFile(filepath.c_str(), true);
+            m_data_sp.reset();
         }
         else
         {
