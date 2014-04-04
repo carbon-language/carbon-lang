@@ -71,3 +71,13 @@ TEST_F(GnuLdParserTest, DefsymFail) {
   EXPECT_FALSE(
       parse("ld", "--start-group", "--end-group", "--defsym=sym=abc", nullptr));
 }
+
+TEST_F(GnuLdParserTest, DefsymMisssingSymbol) {
+  EXPECT_FALSE(
+      parse("ld", "--start-group", "--end-group", "--defsym==0", nullptr));
+}
+
+TEST_F(GnuLdParserTest, DefsymMisssingValue) {
+  EXPECT_FALSE(
+      parse("ld", "--start-group", "--end-group", "--defsym=sym=", nullptr));
+}

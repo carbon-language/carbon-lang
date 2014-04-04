@@ -134,7 +134,7 @@ static error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
 // aliases yet.
 static bool parseDefsymOption(StringRef opt, StringRef &sym, uint64_t &addr) {
   size_t equalPos = opt.find('=');
-  if (equalPos == StringRef::npos)
+  if (equalPos == 0 || equalPos == StringRef::npos)
     return false;
   sym = opt.substr(0, equalPos);
   if (opt.substr(equalPos + 1).getAsInteger(0, addr))
