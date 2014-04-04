@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "msan.h"
+#include "msan_thread.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
@@ -58,8 +59,6 @@ THREADLOCAL u64 __msan_va_arg_overflow_size_tls;
 
 SANITIZER_INTERFACE_ATTRIBUTE
 THREADLOCAL u32 __msan_origin_tls;
-
-THREADLOCAL MsanStackBounds msan_stack_bounds;
 
 static THREADLOCAL int is_in_symbolizer;
 static THREADLOCAL int is_in_loader;
@@ -154,14 +153,14 @@ static void InitializeFlags(Flags *f, const char *options) {
 
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp,
                    bool request_fast_unwind) {
-  if (!StackTrace::WillUseFastUnwind(request_fast_unwind)) {
+  MsanThread *t = GetCurrentThread();
+  if (!t || !StackTrace::WillUseFastUnwind(request_fast_unwind)) {
     // Block reports from our interceptors during _Unwind_Backtrace.
     SymbolizerScope sym_scope;
     return stack->Unwind(max_s, pc, bp, 0, 0, 0, request_fast_unwind);
   }
-  uptr stack_bottom = msan_stack_bounds.stack_addr;
-  uptr stack_top = stack_bottom + msan_stack_bounds.stack_size;
-  stack->Unwind(max_s, pc, bp, 0, stack_top, stack_bottom, request_fast_unwind);
+  stack->Unwind(max_s, pc, bp, 0, t->stack_top(), t->stack_bottom(),
+                request_fast_unwind);
 }
 
 void PrintWarning(uptr pc, uptr bp) {
@@ -315,10 +314,12 @@ void __msan_init() {
   Symbolizer::Init(common_flags()->external_symbolizer_path);
   Symbolizer::Get()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 
-  GetThreadStackAndTls(/* main */ true, &msan_stack_bounds.stack_addr,
-                       &msan_stack_bounds.stack_size,
-                       &msan_stack_bounds.tls_addr,
-                       &msan_stack_bounds.tls_size);
+  MsanTSDInit(MsanTSDDtor);
+
+  MsanThread *main_thread = MsanThread::Create(0, 0);
+  SetCurrentThread(main_thread);
+  main_thread->ThreadStart();
+
   VPrintf(1, "MemorySanitizer init done\n");
 
   msan_init_is_running = 0;

@@ -128,18 +128,16 @@ class ScopedThreadLocalStateBackup {
 
 extern void (*death_callback)(void);
 
+void MsanTSDInit(void (*destructor)(void *tsd));
+void *MsanTSDGet();
+void MsanTSDSet(void *tsd);
+void MsanTSDDtor(void *tsd);
+
 }  // namespace __msan
 
 #define MSAN_MALLOC_HOOK(ptr, size) \
   if (&__msan_malloc_hook) __msan_malloc_hook(ptr, size)
 #define MSAN_FREE_HOOK(ptr) \
   if (&__msan_free_hook) __msan_free_hook(ptr)
-
-struct MsanStackBounds {
-  uptr stack_addr, stack_size;
-  uptr tls_addr, tls_size;
-};
-
-extern THREADLOCAL MsanStackBounds msan_stack_bounds;
 
 #endif  // MSAN_H

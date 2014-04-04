@@ -1,0 +1,86 @@
+
+#include "msan.h"
+#include "msan_thread.h"
+#include "msan_interface_internal.h"
+
+namespace __msan {
+
+MsanThread *MsanThread::Create(thread_callback_t start_routine,
+                               void *arg) {
+  uptr PageSize = GetPageSizeCached();
+  uptr size = RoundUpTo(sizeof(MsanThread), PageSize);
+  MsanThread *thread = (MsanThread*)MmapOrDie(size, __func__);
+  thread->start_routine_ = start_routine;
+  thread->arg_ = arg;
+  thread->destructor_iterations_ = kPthreadDestructorIterations;
+
+  return thread;
+}
+
+void MsanThread::SetThreadStackAndTls() {
+  uptr tls_size = 0;
+  uptr stack_size = 0;
+  GetThreadStackAndTls(IsMainThread(), &stack_bottom_, &stack_size,
+                       &tls_begin_, &tls_size);
+  stack_top_ = stack_bottom_ + stack_size;
+  tls_end_ = tls_begin_ + tls_size;
+
+  int local;
+  CHECK(AddrIsInStack((uptr)&local));
+}
+
+void MsanThread::ClearShadowForThreadStackAndTLS() {
+  __msan_unpoison((void *)stack_bottom_, stack_top_ - stack_bottom_);
+  if (tls_begin_ != tls_end_)
+    __msan_unpoison((void *)tls_begin_, tls_end_ - tls_begin_);
+}
+
+void MsanThread::Init() {
+  SetThreadStackAndTls();
+  CHECK(MEM_IS_APP(stack_bottom_));
+  CHECK(MEM_IS_APP(stack_top_ - 1));
+  ClearShadowForThreadStackAndTLS();
+}
+
+void MsanThread::TSDDtor(void *tsd) {
+  MsanThread *t = (MsanThread*)tsd;
+  t->Destroy();
+}
+
+void MsanThread::Destroy() {
+  malloc_storage().CommitBack();
+  // We also clear the shadow on thread destruction because
+  // some code may still be executing in later TSD destructors
+  // and we don't want it to have any poisoned stack.
+  ClearShadowForThreadStackAndTLS();
+  uptr size = RoundUpTo(sizeof(MsanThread), GetPageSizeCached());
+  UnmapOrDie(this, size);
+}
+
+thread_return_t MsanThread::ThreadStart() {
+  Init();
+
+  if (!start_routine_) {
+    // start_routine_ == 0 if we're on the main thread or on one of the
+    // OS X libdispatch worker threads. But nobody is supposed to call
+    // ThreadStart() for the worker threads.
+    return 0;
+  }
+
+  thread_return_t res = IndirectExternCall(start_routine_)(arg_);
+
+  return res;
+}
+
+MsanThread *GetCurrentThread() {
+  return reinterpret_cast<MsanThread *>(MsanTSDGet());
+}
+
+void SetCurrentThread(MsanThread *t) {
+  // Make sure we do not reset the current MsanThread.
+  CHECK_EQ(0, MsanTSDGet());
+  MsanTSDSet(t);
+  CHECK_EQ(t, MsanTSDGet());
+}
+
+} // namespace __msan

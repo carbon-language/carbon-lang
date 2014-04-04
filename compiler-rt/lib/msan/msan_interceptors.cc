@@ -16,6 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "msan.h"
+#include "msan_thread.h"
 #include "sanitizer_common/sanitizer_platform_limits_posix.h"
 #include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
@@ -36,8 +37,6 @@ using __sanitizer::memory_order;
 using __sanitizer::atomic_load;
 using __sanitizer::atomic_store;
 using __sanitizer::atomic_uintptr_t;
-
-static unsigned g_thread_finalize_key;
 
 // True if this is a nested interceptor.
 static THREADLOCAL int in_interceptor_scope;
@@ -1038,48 +1037,11 @@ INTERCEPTOR(int, signal, int signo, uptr cb) {
 
 extern "C" int pthread_attr_init(void *attr);
 extern "C" int pthread_attr_destroy(void *attr);
-extern "C" int pthread_setspecific(unsigned key, const void *v);
-extern "C" int pthread_yield();
-
-static void thread_finalize(void *v) {
-  uptr iter = (uptr)v;
-  if (iter > 1) {
-    if (pthread_setspecific(g_thread_finalize_key, (void*)(iter - 1))) {
-      Printf("MemorySanitizer: failed to set thread key\n");
-      Die();
-    }
-    return;
-  }
-  MsanAllocatorThreadFinish();
-  __msan_unpoison((void *)msan_stack_bounds.stack_addr,
-                  msan_stack_bounds.stack_size);
-  if (msan_stack_bounds.tls_size)
-    __msan_unpoison((void *)msan_stack_bounds.tls_addr,
-                    msan_stack_bounds.tls_size);
-}
-
-struct ThreadParam {
-  void* (*callback)(void *arg);
-  void *param;
-  atomic_uintptr_t done;
-};
 
 static void *MsanThreadStartFunc(void *arg) {
-  ThreadParam *p = (ThreadParam *)arg;
-  void* (*callback)(void *arg) = p->callback;
-  void *param = p->param;
-  if (pthread_setspecific(g_thread_finalize_key,
-          (void *)kPthreadDestructorIterations)) {
-    Printf("MemorySanitizer: failed to set thread key\n");
-    Die();
-  }
-  atomic_store(&p->done, 1, memory_order_release);
-
-  GetThreadStackAndTls(/* main */ false, &msan_stack_bounds.stack_addr,
-                       &msan_stack_bounds.stack_size,
-                       &msan_stack_bounds.tls_addr,
-                       &msan_stack_bounds.tls_size);
-  return IndirectExternCall(callback)(param);
+  MsanThread *t = (MsanThread *)arg;
+  SetCurrentThread(t);
+  return t->ThreadStart();
 }
 
 INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
@@ -1093,16 +1055,9 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
 
   AdjustStackSize(attr);
 
-  ThreadParam p;
-  p.callback = callback;
-  p.param = param;
-  atomic_store(&p.done, 0, memory_order_relaxed);
+  MsanThread *t = MsanThread::Create(callback, param);
 
-  int res = REAL(pthread_create)(th, attr, MsanThreadStartFunc, (void *)&p);
-  if (res == 0) {
-    while (atomic_load(&p.done, memory_order_acquire) != 1)
-      pthread_yield();
-  }
+  int res = REAL(pthread_create)(th, attr, MsanThreadStartFunc, t);
 
   if (attr == &myattr)
     pthread_attr_destroy(&myattr);
@@ -1114,6 +1069,7 @@ INTERCEPTOR(int, pthread_create, void *th, void *attr, void *(*callback)(void*),
 
 INTERCEPTOR(int, pthread_key_create, __sanitizer_pthread_key_t *key,
             void (*dtor)(void *value)) {
+  if (msan_init_is_running) return REAL(pthread_key_create)(key, dtor);
   ENSURE_MSAN_INITED();
   int res = REAL(pthread_key_create)(key, dtor);
   if (!res && key)
@@ -1368,6 +1324,8 @@ void __msan_clear_and_unpoison(void *a, uptr size) {
 }
 
 void *__msan_memcpy(void *dest, const void *src, SIZE_T n) {
+  if (!msan_inited) return internal_memcpy(dest, src, n);
+  if (msan_init_is_running) return REAL(memcpy)(dest, src, n);
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
   void *res = fast_memcpy(dest, src, n);
@@ -1376,6 +1334,8 @@ void *__msan_memcpy(void *dest, const void *src, SIZE_T n) {
 }
 
 void *__msan_memset(void *s, int c, SIZE_T n) {
+  if (!msan_inited) return internal_memset(s, c, n);
+  if (msan_init_is_running) return REAL(memset)(s, c, n);
   ENSURE_MSAN_INITED();
   void *res = fast_memset(s, c, n);
   __msan_unpoison(s, n);
@@ -1383,6 +1343,8 @@ void *__msan_memset(void *s, int c, SIZE_T n) {
 }
 
 void *__msan_memmove(void *dest, const void *src, SIZE_T n) {
+  if (!msan_inited) return internal_memmove(dest, src, n);
+  if (msan_init_is_running) return REAL(memmove)(dest, src, n);
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
   void *res = REAL(memmove)(dest, src, n);
@@ -1602,11 +1564,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(tzset);
   INTERCEPT_FUNCTION(__cxa_atexit);
   INTERCEPT_FUNCTION(shmat);
-
-  if (REAL(pthread_key_create)(&g_thread_finalize_key, &thread_finalize)) {
-    Printf("MemorySanitizer: failed to create thread key\n");
-    Die();
-  }
 
   inited = 1;
 }

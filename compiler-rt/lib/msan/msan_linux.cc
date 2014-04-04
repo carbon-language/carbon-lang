@@ -16,9 +16,11 @@
 #if SANITIZER_LINUX
 
 #include "msan.h"
+#include "msan_thread.h"
 
 #include <elf.h>
 #include <link.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
@@ -95,6 +97,36 @@ static void MsanAtExit(void) {
 
 void InstallAtExitHandler() {
   atexit(MsanAtExit);
+}
+
+// ---------------------- TSD ---------------- {{{1
+
+static pthread_key_t tsd_key;
+static bool tsd_key_inited = false;
+void MsanTSDInit(void (*destructor)(void *tsd)) {
+  CHECK(!tsd_key_inited);
+  tsd_key_inited = true;
+  CHECK_EQ(0, pthread_key_create(&tsd_key, destructor));
+}
+
+void *MsanTSDGet() {
+  CHECK(tsd_key_inited);
+  return pthread_getspecific(tsd_key);
+}
+
+void MsanTSDSet(void *tsd) {
+  CHECK(tsd_key_inited);
+  pthread_setspecific(tsd_key, tsd);
+}
+
+void MsanTSDDtor(void *tsd) {
+  MsanThread *t = (MsanThread*)tsd;
+  if (t->destructor_iterations_ > 1) {
+    t->destructor_iterations_--;
+    CHECK_EQ(0, pthread_setspecific(tsd_key, tsd));
+    return;
+  }
+  MsanThread::TSDDtor(tsd);
 }
 
 }  // namespace __msan
