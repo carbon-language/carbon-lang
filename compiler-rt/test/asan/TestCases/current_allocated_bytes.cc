@@ -1,5 +1,5 @@
-// RUN: %clangxx_asan -O0 %s -o %t && %t
-// RUN: %clangxx_asan -O2 %s -o %t && %t
+// RUN: %clangxx_asan -O0 %s -lpthread -o %t && %t
+// RUN: %clangxx_asan -O2 %s -lpthread -o %t && %t
 
 #include <assert.h>
 #include <pthread.h>

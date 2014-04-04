@@ -1,18 +1,18 @@
 // Test ASan detection of stack-overflow condition.
 
-// RUN: %clangxx_asan -O0 %s -DSMALL_FRAME -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %s -DSMALL_FRAME -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O0 %s -DSAVE_ALL_THE_REGISTERS -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %s -DSAVE_ALL_THE_REGISTERS -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O0 %s -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %s -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -DSMALL_FRAME -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -DSMALL_FRAME -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -DSAVE_ALL_THE_REGISTERS -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -DSAVE_ALL_THE_REGISTERS -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
 
-// RUN: %clangxx_asan -O0 %s -DTHREAD -DSMALL_FRAME -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %s -DTHREAD -DSMALL_FRAME -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O0 %s -DTHREAD -DSAVE_ALL_THE_REGISTERS -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %s -DTHREAD -DSAVE_ALL_THE_REGISTERS -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O0 %s -DTHREAD -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %s -DTHREAD -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -DTHREAD -DSMALL_FRAME -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -DTHREAD -DSMALL_FRAME -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -DTHREAD -DSAVE_ALL_THE_REGISTERS -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -DTHREAD -DSAVE_ALL_THE_REGISTERS -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -DTHREAD -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -DTHREAD -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <stdlib.h>

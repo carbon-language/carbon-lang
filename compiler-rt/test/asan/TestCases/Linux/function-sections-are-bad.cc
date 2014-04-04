@@ -1,6 +1,6 @@
 // Check that --gc-sections does not throw away (or localize) parts of sanitizer
 // interface.
-// RUN: %clang_asan %s -Wl,--gc-sections -o %t
+// RUN: %clang_asan %s -Wl,--gc-sections -ldl -o %t
 // RUN: %clang_asan %s -DBUILD_SO -fPIC -o %t-so.so -shared
 // RUN: %t 2>&1
 
