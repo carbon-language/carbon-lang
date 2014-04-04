@@ -262,37 +262,43 @@ void SymbolTable::addByName(const Atom &newAtom) {
     break;
   }
   case NCR_DupShLib: {
-    const SharedLibraryAtom *curShLib = dyn_cast<SharedLibraryAtom>(existing);
-    const SharedLibraryAtom *newShLib = dyn_cast<SharedLibraryAtom>(&newAtom);
-    assert(curShLib != nullptr);
-    assert(newShLib != nullptr);
-    bool sameNullness =
-        (curShLib->canBeNullAtRuntime() == newShLib->canBeNullAtRuntime());
-    bool sameName = curShLib->loadName().equals(newShLib->loadName());
-    if (!sameName) {
-      useNew = false;
-      if (_context.warnIfCoalesableAtomsHaveDifferentLoadName()) {
-        // FIXME: need diagonstics interface for writing warning messages
-        llvm::errs() << "lld warning: shared library symbol "
-                     << curShLib->name() << " has different load path in "
-                     << curShLib->file().path() << " and in "
-                     << newShLib->file().path();
+      const SharedLibraryAtom* curShLib =
+        dyn_cast<SharedLibraryAtom>(existing);
+      const SharedLibraryAtom* newShLib =
+        dyn_cast<SharedLibraryAtom>(&newAtom);
+      assert(curShLib != nullptr);
+      assert(newShLib != nullptr);
+      bool sameNullness = (curShLib->canBeNullAtRuntime()
+                                      == newShLib->canBeNullAtRuntime());
+      bool sameName = curShLib->loadName().equals(newShLib->loadName());
+      if (!sameName) {
+        useNew = false;
+        if (_context.warnIfCoalesableAtomsHaveDifferentLoadName()) {
+          // FIXME: need diagonstics interface for writing warning messages
+          llvm::errs() << "lld warning: shared library symbol "
+                       << curShLib->name()
+                       << " has different load path in "
+                       << curShLib->file().path()
+                       << " and in "
+                       << newShLib->file().path();
+        }
+      } else if (!sameNullness) {
+        useNew = false;
+        if (_context.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
+          // FIXME: need diagonstics interface for writing warning messages
+          llvm::errs() << "lld warning: shared library symbol "
+                       << curShLib->name()
+                       << " has different weakness in "
+                       << curShLib->file().path()
+                       << " and in "
+                       << newShLib->file().path();
+        }
+      } else {
+        // Both shlib atoms are identical and can be coalesced.
+        useNew = false;
       }
-    } else if (!sameNullness) {
-      useNew = false;
-      if (_context.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
-        // FIXME: need diagonstics interface for writing warning messages
-        llvm::errs() << "lld warning: shared library symbol "
-                     << curShLib->name() << " has different weakness in "
-                     << curShLib->file().path() << " and in "
-                     << newShLib->file().path();
-      }
-    } else {
-      // Both shlib atoms are identical and can be coalesced.
-      useNew = false;
     }
     break;
-  }
   case NCR_Error:
     llvm::errs() << "SymbolTable: error while merging " << name << "\n";
     llvm::report_fatal_error("duplicate symbol error");
