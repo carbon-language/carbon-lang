@@ -394,6 +394,9 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
     case ISD::EXTRACT_VECTOR_ELT:
       Res = ScalarizeVecOp_EXTRACT_VECTOR_ELT(N);
       break;
+    case ISD::VSELECT:
+      Res = ScalarizeVecOp_VSELECT(N);
+      break;
     case ISD::STORE:
       Res = ScalarizeVecOp_STORE(cast<StoreSDNode>(N), OpNo);
       break;
@@ -460,6 +463,18 @@ SDValue DAGTypeLegalizer::ScalarizeVecOp_EXTRACT_VECTOR_ELT(SDNode *N) {
     Res = DAG.getNode(ISD::ANY_EXTEND, SDLoc(N), N->getValueType(0),
                       Res);
   return Res;
+}
+
+
+/// ScalarizeVecOp_VSELECT - If the input condition is a vector that needs to be
+/// scalarized, it must be <1 x i1>, so just convert to a normal ISD::SELECT
+/// (still with vector output type since that was acceptable if we got here).
+SDValue DAGTypeLegalizer::ScalarizeVecOp_VSELECT(SDNode *N) {
+  SDValue ScalarCond = GetScalarizedVector(N->getOperand(0));
+  EVT VT = N->getValueType(0);
+
+  return DAG.getNode(ISD::SELECT, SDLoc(N), VT, ScalarCond, N->getOperand(1),
+                     N->getOperand(2));
 }
 
 /// ScalarizeVecOp_STORE - If the value to store is a vector that needs to be
