@@ -225,10 +225,8 @@ void SymbolTable::addByName(const Atom &newAtom) {
     }
     break;
   case NCR_DupUndef: {
-    const UndefinedAtom* existingUndef = dyn_cast<UndefinedAtom>(existing);
-    const UndefinedAtom* newUndef = dyn_cast<UndefinedAtom>(&newAtom);
-    assert(existingUndef != nullptr);
-    assert(newUndef != nullptr);
+    const UndefinedAtom* existingUndef = cast<UndefinedAtom>(existing);
+    const UndefinedAtom* newUndef = cast<UndefinedAtom>(&newAtom);
 
     bool sameCanBeNull = (existingUndef->canBeNull() == newUndef->canBeNull());
     if (!sameCanBeNull &&
@@ -262,10 +260,8 @@ void SymbolTable::addByName(const Atom &newAtom) {
     break;
   }
   case NCR_DupShLib: {
-    const SharedLibraryAtom *curShLib = dyn_cast<SharedLibraryAtom>(existing);
-    const SharedLibraryAtom *newShLib = dyn_cast<SharedLibraryAtom>(&newAtom);
-    assert(curShLib != nullptr);
-    assert(newShLib != nullptr);
+    const SharedLibraryAtom *curShLib = cast<SharedLibraryAtom>(existing);
+    const SharedLibraryAtom *newShLib = cast<SharedLibraryAtom>(&newAtom);
     bool sameNullness =
         (curShLib->canBeNullAtRuntime() == newShLib->canBeNullAtRuntime());
     bool sameName = curShLib->loadName().equals(newShLib->loadName());
@@ -330,7 +326,6 @@ bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
     return false;
   if (r == getTombstoneKey())
     return false;
-
   if (l->contentType() != r->contentType())
     return false;
   if (l->size() != r->size())
