@@ -75,24 +75,17 @@ ErrorOr<InputElement *> InputGraph::getNextInputElement() {
 }
 
 void InputGraph::normalize() {
-  auto iterb = _inputArgs.begin();
-  auto itere = _inputArgs.end();
-  auto currentIter = _inputArgs.begin();
-
-  std::vector<std::unique_ptr<InputElement> > _workInputArgs;
-  while (iterb != itere) {
-    bool expand = (*iterb)->shouldExpand();
-    currentIter = iterb++;
-    if (expand) {
-      _workInputArgs.insert(
-          _workInputArgs.end(),
-          std::make_move_iterator((*currentIter)->expandElements().begin()),
-          std::make_move_iterator((*currentIter)->expandElements().end()));
-    } else {
-      _workInputArgs.push_back(std::move(*currentIter));
+  std::vector<std::unique_ptr<InputElement>> vec;
+  for (std::unique_ptr<InputElement> &ie : _inputArgs) {
+    if (!ie->shouldExpand()) {
+      vec.push_back(std::move(ie));
+      continue;
     }
+    range<InputElementIterT> expanded = ie->expandElements();
+    vec.insert(vec.end(), std::make_move_iterator(expanded.begin()),
+               std::make_move_iterator(expanded.end()));
   }
-  _inputArgs = std::move(_workInputArgs);
+  _inputArgs = std::move(vec);
 }
 
 /// \brief Read the file into _buffer.
