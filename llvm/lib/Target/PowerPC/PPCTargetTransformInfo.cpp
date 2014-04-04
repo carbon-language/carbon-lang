@@ -216,7 +216,9 @@ unsigned PPCTTI::getVectorInstrCost(unsigned Opcode, Type *Val,
   // experimentally as a minimum needed to prevent unprofitable
   // vectorization for the paq8p benchmark.  It may need to be
   // raised further if other unprofitable cases remain.
-  unsigned LHSPenalty = 12;
+  unsigned LHSPenalty = 2;
+  if (ISD == ISD::INSERT_VECTOR_ELT)
+    LHSPenalty += 7;
 
   // Vector element insert/extract with Altivec is very expensive,
   // because they require store and reload with the attendant
@@ -240,13 +242,31 @@ unsigned PPCTTI::getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
   unsigned Cost =
     TargetTransformInfo::getMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
 
-  // FIXME: Update this for VSX loads/stores that support unaligned access.
+  // VSX loads/stores support unaligned access.
+  if (ST->hasVSX()) {
+    if (LT.second == MVT::v2f64 || LT.second == MVT::v2i64)
+      return Cost;
+  }
+
+  bool UnalignedAltivec =
+    Src->isVectorTy() &&
+    Src->getPrimitiveSizeInBits() >= LT.second.getSizeInBits() &&
+    LT.second.getSizeInBits() == 128 &&
+    Opcode == Instruction::Load;
 
   // PPC in general does not support unaligned loads and stores. They'll need
   // to be decomposed based on the alignment factor.
   unsigned SrcBytes = LT.second.getStoreSize();
-  if (SrcBytes && Alignment && Alignment < SrcBytes)
+  if (SrcBytes && Alignment && Alignment < SrcBytes && !UnalignedAltivec) {
     Cost += LT.first*(SrcBytes/Alignment-1);
+
+    // For a vector type, there is also scalarization overhead (only for
+    // stores, loads are expanded using the vector-load + permutation sequence,
+    // which is much less expensive).
+    if (Src->isVectorTy() && Opcode == Instruction::Store)
+      for (int i = 0, e = Src->getVectorNumElements(); i < e; ++i)
+        Cost += getVectorInstrCost(Instruction::ExtractElement, Src, i);
+  }
 
   return Cost;
 }
