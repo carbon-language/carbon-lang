@@ -3559,12 +3559,28 @@ bool ASTContext::QIdProtocolsAdoptObjCObjectProtocols(QualType QT,
   CollectInheritedProtocols(IDecl, InheritedProtocols);
   if (InheritedProtocols.empty())
     return false;
-      
+  // Check that if every protocol in list of id<plist> conforms to a protcol
+  // of IDecl's, then bridge casting is ok.
+  bool Conforms = false;
+  for (auto *Proto : OPT->quals()) {
+    Conforms = false;
+    for (auto *PI : InheritedProtocols) {
+      if (ProtocolCompatibleWithProtocol(Proto, PI)) {
+        Conforms = true;
+        break;
+      }
+    }
+    if (!Conforms)
+      break;
+  }
+  if (Conforms)
+    return true;
+  
   for (auto *PI : InheritedProtocols) {
     // If both the right and left sides have qualifiers.
     bool Adopts = false;
     for (auto *Proto : OPT->quals()) {
-      // return 'true' if '*PI' is in the inheritance hierarchy of Proto
+      // return 'true' if 'PI' is in the inheritance hierarchy of Proto
       if ((Adopts = ProtocolCompatibleWithProtocol(PI, Proto)))
         break;
     }
