@@ -5334,90 +5334,182 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
   if (!S.ActiveTemplateInstantiations.empty())
     return;
 
+  // TODO: Investigate using GetExprRange() to get tighter bounds
+  // on the bit ranges.
+  QualType OtherT = Other->getType();
+  IntRange OtherRange = IntRange::forValueOfType(S.Context, OtherT);
+  unsigned OtherWidth = OtherRange.Width;
+
+  bool OtherIsBooleanType = Other->isKnownToHaveBooleanValue();
+
   // 0 values are handled later by CheckTrivialUnsignedComparison().
-  if (Value == 0)
+  if ((Value == 0) && (!OtherIsBooleanType))
     return;
 
   BinaryOperatorKind op = E->getOpcode();
-  QualType OtherT = Other->getType();
-  QualType ConstantT = Constant->getType();
-  QualType CommonT = E->getLHS()->getType();
-  if (S.Context.hasSameUnqualifiedType(OtherT, ConstantT))
-    return;
-  assert((OtherT->isIntegerType() && ConstantT->isIntegerType())
-         && "comparison with non-integer type");
+  bool IsTrue = true;
 
-  bool ConstantSigned = ConstantT->isSignedIntegerType();
-  bool CommonSigned = CommonT->isSignedIntegerType();
+  // Used for diagnostic printout.
+  enum {
+    LiteralConstant = 0,
+    CXXBoolLiteralTrue,
+    CXXBoolLiteralFalse
+  } LiteralOrBoolConstant = LiteralConstant;
 
-  bool EqualityOnly = false;
+  if (!OtherIsBooleanType) {
+    QualType ConstantT = Constant->getType();
+    QualType CommonT = E->getLHS()->getType();
 
-  // TODO: Investigate using GetExprRange() to get tighter bounds on
-  // on the bit ranges.
-  IntRange OtherRange = IntRange::forValueOfType(S.Context, OtherT);
-  unsigned OtherWidth = OtherRange.Width;
-  
-  if (CommonSigned) {
-    // The common type is signed, therefore no signed to unsigned conversion.
-    if (!OtherRange.NonNegative) {
-      // Check that the constant is representable in type OtherT.
-      if (ConstantSigned) {
-        if (OtherWidth >= Value.getMinSignedBits())
-          return;
-      } else { // !ConstantSigned
-        if (OtherWidth >= Value.getActiveBits() + 1)
-          return;
+    if (S.Context.hasSameUnqualifiedType(OtherT, ConstantT))
+      return;
+    assert((OtherT->isIntegerType() && ConstantT->isIntegerType()) &&
+           "comparison with non-integer type");
+
+    bool ConstantSigned = ConstantT->isSignedIntegerType();
+    bool CommonSigned = CommonT->isSignedIntegerType();
+
+    bool EqualityOnly = false;
+
+    if (CommonSigned) {
+      // The common type is signed, therefore no signed to unsigned conversion.
+      if (!OtherRange.NonNegative) {
+        // Check that the constant is representable in type OtherT.
+        if (ConstantSigned) {
+          if (OtherWidth >= Value.getMinSignedBits())
+            return;
+        } else { // !ConstantSigned
+          if (OtherWidth >= Value.getActiveBits() + 1)
+            return;
+        }
+      } else { // !OtherSigned
+               // Check that the constant is representable in type OtherT.
+        // Negative values are out of range.
+        if (ConstantSigned) {
+          if (Value.isNonNegative() && OtherWidth >= Value.getActiveBits())
+            return;
+        } else { // !ConstantSigned
+          if (OtherWidth >= Value.getActiveBits())
+            return;
+        }
       }
-    } else { // !OtherSigned
-      // Check that the constant is representable in type OtherT.
-      // Negative values are out of range.
-      if (ConstantSigned) {
-        if (Value.isNonNegative() && OtherWidth >= Value.getActiveBits())
-          return;
-      } else { // !ConstantSigned
+    } else { // !CommonSigned
+      if (OtherRange.NonNegative) {
         if (OtherWidth >= Value.getActiveBits())
           return;
+      } else if (!OtherRange.NonNegative && !ConstantSigned) {
+        // Check to see if the constant is representable in OtherT.
+        if (OtherWidth > Value.getActiveBits())
+          return;
+        // Check to see if the constant is equivalent to a negative value
+        // cast to CommonT.
+        if (S.Context.getIntWidth(ConstantT) ==
+                S.Context.getIntWidth(CommonT) &&
+            Value.isNegative() && Value.getMinSignedBits() <= OtherWidth)
+          return;
+        // The constant value rests between values that OtherT can represent
+        // after conversion.  Relational comparison still works, but equality
+        // comparisons will be tautological.
+        EqualityOnly = true;
+      } else { // OtherSigned && ConstantSigned
+        assert(0 && "Two signed types converted to unsigned types.");
       }
     }
-  } else {  // !CommonSigned
-    if (OtherRange.NonNegative) {
-      if (OtherWidth >= Value.getActiveBits())
-        return;
-    } else if (!OtherRange.NonNegative && !ConstantSigned) {
-      // Check to see if the constant is representable in OtherT.
-      if (OtherWidth > Value.getActiveBits())
-        return;
-      // Check to see if the constant is equivalent to a negative value
-      // cast to CommonT.
-      if (S.Context.getIntWidth(ConstantT) == S.Context.getIntWidth(CommonT) &&
-          Value.isNegative() && Value.getMinSignedBits() <= OtherWidth)
-        return;
-      // The constant value rests between values that OtherT can represent after
-      // conversion.  Relational comparison still works, but equality
-      // comparisons will be tautological.
-      EqualityOnly = true;
-    } else { // OtherSigned && ConstantSigned
-      assert(0 && "Two signed types converted to unsigned types.");
+
+    bool PositiveConstant = !ConstantSigned || Value.isNonNegative();
+
+    if (op == BO_EQ || op == BO_NE) {
+      IsTrue = op == BO_NE;
+    } else if (EqualityOnly) {
+      return;
+    } else if (RhsConstant) {
+      if (op == BO_GT || op == BO_GE)
+        IsTrue = !PositiveConstant;
+      else // op == BO_LT || op == BO_LE
+        IsTrue = PositiveConstant;
+    } else {
+      if (op == BO_LT || op == BO_LE)
+        IsTrue = !PositiveConstant;
+      else // op == BO_GT || op == BO_GE
+        IsTrue = PositiveConstant;
     }
-  }
-
-  bool PositiveConstant = !ConstantSigned || Value.isNonNegative();
-
-  bool IsTrue = true;
-  if (op == BO_EQ || op == BO_NE) {
-    IsTrue = op == BO_NE;
-  } else if (EqualityOnly) {
-    return;
-  } else if (RhsConstant) {
-    if (op == BO_GT || op == BO_GE)
-      IsTrue = !PositiveConstant;
-    else // op == BO_LT || op == BO_LE
-      IsTrue = PositiveConstant;
   } else {
-    if (op == BO_LT || op == BO_LE)
-      IsTrue = !PositiveConstant;
-    else // op == BO_GT || op == BO_GE
-      IsTrue = PositiveConstant;
+    // Other isKnownToHaveBooleanValue
+    enum CompareBoolWithConstantResult { AFals, ATrue, Unkwn };
+    enum ConstantValue { LT_Zero, Zero, One, GT_One, SizeOfConstVal };
+    enum ConstantSide { Lhs, Rhs, SizeOfConstSides };
+
+    static const struct LinkedConditions {
+      CompareBoolWithConstantResult BO_LT_OP[SizeOfConstSides][SizeOfConstVal];
+      CompareBoolWithConstantResult BO_GT_OP[SizeOfConstSides][SizeOfConstVal];
+      CompareBoolWithConstantResult BO_LE_OP[SizeOfConstSides][SizeOfConstVal];
+      CompareBoolWithConstantResult BO_GE_OP[SizeOfConstSides][SizeOfConstVal];
+      CompareBoolWithConstantResult BO_EQ_OP[SizeOfConstSides][SizeOfConstVal];
+      CompareBoolWithConstantResult BO_NE_OP[SizeOfConstSides][SizeOfConstVal];
+
+    } TruthTable = {
+        // Constant on LHS.              | Constant on RHS.              |
+        // LT_Zero| Zero  | One   |GT_One| LT_Zero| Zero  | One   |GT_One|
+        { { ATrue, Unkwn, AFals, AFals }, { AFals, AFals, Unkwn, ATrue } },
+        { { AFals, AFals, Unkwn, ATrue }, { ATrue, Unkwn, AFals, AFals } },
+        { { ATrue, ATrue, Unkwn, AFals }, { AFals, Unkwn, ATrue, ATrue } },
+        { { AFals, Unkwn, ATrue, ATrue }, { ATrue, ATrue, Unkwn, AFals } },
+        { { AFals, Unkwn, Unkwn, AFals }, { AFals, Unkwn, Unkwn, AFals } },
+        { { ATrue, Unkwn, Unkwn, ATrue }, { ATrue, Unkwn, Unkwn, ATrue } }
+      };
+
+    bool ConstantIsBoolLiteral = isa<CXXBoolLiteralExpr>(Constant);
+
+    enum ConstantValue ConstVal = Zero;
+    if (Value.isUnsigned() || Value.isNonNegative()) {
+      if (Value == 0) {
+        LiteralOrBoolConstant =
+            ConstantIsBoolLiteral ? CXXBoolLiteralFalse : LiteralConstant;
+        ConstVal = Zero;
+      } else if (Value == 1) {
+        LiteralOrBoolConstant =
+            ConstantIsBoolLiteral ? CXXBoolLiteralTrue : LiteralConstant;
+        ConstVal = One;
+      } else {
+        LiteralOrBoolConstant = LiteralConstant;
+        ConstVal = GT_One;
+      }
+    } else {
+      ConstVal = LT_Zero;
+    }
+
+    CompareBoolWithConstantResult CmpRes;
+
+    switch (op) {
+    case BO_LT:
+      CmpRes = TruthTable.BO_LT_OP[RhsConstant][ConstVal];
+      break;
+    case BO_GT:
+      CmpRes = TruthTable.BO_GT_OP[RhsConstant][ConstVal];
+      break;
+    case BO_LE:
+      CmpRes = TruthTable.BO_LE_OP[RhsConstant][ConstVal];
+      break;
+    case BO_GE:
+      CmpRes = TruthTable.BO_GE_OP[RhsConstant][ConstVal];
+      break;
+    case BO_EQ:
+      CmpRes = TruthTable.BO_EQ_OP[RhsConstant][ConstVal];
+      break;
+    case BO_NE:
+      CmpRes = TruthTable.BO_NE_OP[RhsConstant][ConstVal];
+      break;
+    default:
+      CmpRes = Unkwn;
+      break;
+    }
+
+    if (CmpRes == AFals) {
+      IsTrue = false;
+    } else if (CmpRes == ATrue) {
+      IsTrue = true;
+    } else {
+      return;
+    }
   }
 
   // If this is a comparison to an enum constant, include that
@@ -5433,11 +5525,12 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
   else
     OS << Value;
 
-  S.DiagRuntimeBehavior(E->getOperatorLoc(), E,
-                        S.PDiag(diag::warn_out_of_range_compare)
-                          << OS.str() << OtherT << IsTrue
-                          << E->getLHS()->getSourceRange()
-                          << E->getRHS()->getSourceRange());
+  S.DiagRuntimeBehavior(
+    E->getOperatorLoc(), E,
+    S.PDiag(diag::warn_out_of_range_compare)
+        << OS.str() << LiteralOrBoolConstant
+        << OtherT << (OtherIsBooleanType && !OtherT->isBooleanType()) << IsTrue
+        << E->getLHS()->getSourceRange() << E->getRHS()->getSourceRange());
 }
 
 /// Analyze the operands of the given comparison.  Implements the

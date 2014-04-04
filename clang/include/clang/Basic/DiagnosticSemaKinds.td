@@ -4728,8 +4728,9 @@ def warn_lunsigned_always_true_comparison : Warning<
   "comparison of unsigned%select{| enum}2 expression %0 is always %1">,
   InGroup<TautologicalCompare>;
 def warn_out_of_range_compare : Warning<
-  "comparison of constant %0 with expression of type %1 is always "
-  "%select{false|true}2">, InGroup<TautologicalOutOfRangeCompare>;
+  "comparison of %select{constant %0|true|false}1 with " 
+  "%select{expression of type %2|boolean expression}3 is always "
+  "%select{false|true}4">, InGroup<TautologicalOutOfRangeCompare>;
 def warn_runsigned_always_true_comparison : Warning<
   "comparison of %0 unsigned%select{| enum}2 expression is always %1">,
   InGroup<TautologicalCompare>;

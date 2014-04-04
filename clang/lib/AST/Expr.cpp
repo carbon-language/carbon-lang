@@ -121,6 +121,8 @@ bool Expr::isKnownToHaveBooleanValue() const {
     switch (UO->getOpcode()) {
     case UO_Plus:
       return UO->getSubExpr()->isKnownToHaveBooleanValue();
+    case UO_LNot:
+      return true;
     default:
       return false;
     }
