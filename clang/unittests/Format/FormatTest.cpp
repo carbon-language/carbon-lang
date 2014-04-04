@@ -511,6 +511,9 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "  f();\n"
                "  break;\n"
                "}\n"
+               "case 2: {\n"
+               "  break;\n"
+               "}\n"
                "}");
   verifyFormat("switch (x) {\n"
                "case 1: {\n"
