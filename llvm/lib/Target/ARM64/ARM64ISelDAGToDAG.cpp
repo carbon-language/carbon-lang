@@ -431,9 +431,9 @@ static bool checkV64LaneV128(SDValue Op0, SDValue Op1, SDValue &StdOp,
   return true;
 }
 
-/// SelectMLAV64LaneV128 - ARM64 supports 64-bit vector MLAs (v4i16 and v2i32)
-/// where one multiplicand is a lane in the upper half of a 128-bit vector.
-/// Recognize and select this so that we don't emit unnecessary lane extracts.
+/// SelectMLAV64LaneV128 - ARM64 supports vector MLAs where one multiplicand is
+/// a lane in the upper half of a 128-bit vector.  Recognize and select this so
+/// that we don't emit unnecessary lane extracts.
 SDNode *ARM64DAGToDAGISel::SelectMLAV64LaneV128(SDNode *N) {
   SDValue Op0 = N->getOperand(0);
   SDValue Op1 = N->getOperand(1);
@@ -463,8 +463,14 @@ SDNode *ARM64DAGToDAGISel::SelectMLAV64LaneV128(SDNode *N) {
   case MVT::v4i16:
     MLAOpc = ARM64::MLAv4i16_indexed;
     break;
+  case MVT::v8i16:
+    MLAOpc = ARM64::MLAv8i16_indexed;
+    break;
   case MVT::v2i32:
     MLAOpc = ARM64::MLAv2i32_indexed;
+    break;
+  case MVT::v4i32:
+    MLAOpc = ARM64::MLAv4i32_indexed;
     break;
   }
 

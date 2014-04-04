@@ -1598,6 +1598,32 @@ entry:
   ret <2 x i32> %add
 }
 
+define <8 x i16> @not_really_vmlaq_laneq_s16_test(<8 x i16> %a, <8 x i16> %b, <8 x i16> %c) nounwind readnone ssp {
+entry:
+; CHECK: not_really_vmlaq_laneq_s16_test
+; CHECK-NOT: ext
+; CHECK: mla.8h v0, v1, v2[5]
+; CHECK-NEXT: ret
+  %shuffle1 = shufflevector <8 x i16> %c, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %shuffle2 = shufflevector <4 x i16> %shuffle1, <4 x i16> undef, <8 x i32> <i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1>
+  %mul = mul <8 x i16> %shuffle2, %b
+  %add = add <8 x i16> %mul, %a
+  ret <8 x i16> %add
+}
+
+define <4 x i32> @not_really_vmlaq_laneq_s32_test(<4 x i32> %a, <4 x i32> %b, <4 x i32> %c) nounwind readnone ssp {
+entry:
+; CHECK: not_really_vmlaq_laneq_s32_test
+; CHECK-NOT: ext
+; CHECK: mla.4s v0, v1, v2[3]
+; CHECK-NEXT: ret
+  %shuffle1 = shufflevector <4 x i32> %c, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+  %shuffle2 = shufflevector <2 x i32> %shuffle1, <2 x i32> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 1>
+  %mul = mul <4 x i32> %shuffle2, %b
+  %add = add <4 x i32> %mul, %a
+  ret <4 x i32> %add
+}
+
 define <4 x i32> @vmull_laneq_s16_test(<4 x i16> %a, <8 x i16> %b) nounwind readnone ssp {
 entry:
 ; CHECK: vmull_laneq_s16_test
