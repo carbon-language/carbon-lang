@@ -256,7 +256,6 @@ public:
                                                          succ_reverse_iterator;
   typedef std::vector<MachineBasicBlock *>::const_reverse_iterator
                                                    const_succ_reverse_iterator;
-
   pred_iterator        pred_begin()       { return Predecessors.begin(); }
   const_pred_iterator  pred_begin() const { return Predecessors.begin(); }
   pred_iterator        pred_end()         { return Predecessors.end();   }
@@ -289,6 +288,19 @@ public:
     return (unsigned)Successors.size();
   }
   bool                 succ_empty() const { return Successors.empty();   }
+
+  inline iterator_range<pred_iterator> predecessors() {
+    return iterator_range<pred_iterator>(pred_begin(), pred_end());
+  }
+  inline iterator_range<const_pred_iterator> const_predecessors() const {
+    return iterator_range<const_pred_iterator>(pred_begin(), pred_end());
+  }
+  inline iterator_range<succ_iterator> succecessors() {
+    return iterator_range<succ_iterator>(succ_begin(), succ_end());
+  }
+  inline iterator_range<const_succ_iterator> const_succecessors() const {
+    return iterator_range<const_succ_iterator>(succ_begin(), succ_end());
+  }
 
   // LiveIn management methods.
 
