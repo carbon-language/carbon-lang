@@ -480,7 +480,6 @@ void ARM64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
 
   setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::INSERT_VECTOR_ELT, VT.getSimpleVT(), Custom);
-  setOperationAction(ISD::SCALAR_TO_VECTOR, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::BUILD_VECTOR, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::VECTOR_SHUFFLE, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::EXTRACT_SUBVECTOR, VT.getSimpleVT(), Custom);
@@ -1973,8 +1972,6 @@ SDValue ARM64TargetLowering::LowerOperation(SDValue Op,
     return LowerINSERT_VECTOR_ELT(Op, DAG);
   case ISD::EXTRACT_VECTOR_ELT:
     return LowerEXTRACT_VECTOR_ELT(Op, DAG);
-  case ISD::SCALAR_TO_VECTOR:
-    return LowerSCALAR_TO_VECTOR(Op, DAG);
   case ISD::BUILD_VECTOR:
     return LowerBUILD_VECTOR(Op, DAG);
   case ISD::VECTOR_SHUFFLE:
@@ -5575,53 +5572,6 @@ SDValue ARM64TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
   // For extractions, we just return the result directly.
   return DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, ExtrTy, WideVec,
                      Op.getOperand(1));
-}
-
-SDValue ARM64TargetLowering::LowerSCALAR_TO_VECTOR(SDValue Op,
-                                                   SelectionDAG &DAG) const {
-  assert(Op.getOpcode() == ISD::SCALAR_TO_VECTOR && "Unknown opcode!");
-  // Some AdvSIMD intrinsics leave their results in the scalar B/H/S/D
-  // registers. The default lowering will copy those to a GPR then back
-  // to a vector register. Instead, just recognize those cases and reference
-  // the vector register they're already a subreg of.
-  SDValue Op0 = Op->getOperand(0);
-  if (Op0->getOpcode() != ISD::INTRINSIC_WO_CHAIN)
-    return Op;
-  unsigned IID = getIntrinsicID(Op0.getNode());
-  // The below list of intrinsics isn't exhaustive. Add cases as-needed.
-  // FIXME: Even better would be if there were an attribute on the node
-  // that we could query and set in the intrinsics definition or something.
-  unsigned SubIdx;
-  switch (IID) {
-  default:
-    // Early exit if this isn't one of the intrinsics we handle.
-    return Op;
-  case Intrinsic::arm64_neon_uaddv:
-  case Intrinsic::arm64_neon_saddv:
-  case Intrinsic::arm64_neon_uaddlv:
-  case Intrinsic::arm64_neon_saddlv:
-    switch (Op0.getValueType().getSizeInBits()) {
-    default:
-      llvm_unreachable("Illegal result size from ARM64 vector intrinsic!");
-    case 8:
-      SubIdx = ARM64::bsub;
-      break;
-    case 16:
-      SubIdx = ARM64::hsub;
-      break;
-    case 32:
-      SubIdx = ARM64::ssub;
-      break;
-    case 64:
-      SubIdx = ARM64::dsub;
-      break;
-    }
-  }
-  MachineSDNode *N =
-      DAG.getMachineNode(TargetOpcode::INSERT_SUBREG, SDLoc(Op),
-                         Op.getValueType(), DAG.getUNDEF(Op.getValueType()),
-                         Op0, DAG.getTargetConstant(SubIdx, MVT::i32));
-  return SDValue(N, 0);
 }
 
 SDValue ARM64TargetLowering::LowerEXTRACT_SUBVECTOR(SDValue Op,

@@ -136,6 +136,18 @@ entry:
   ret i64 %vaddv.i
 }
 
+define <1 x i64> @test_vaddv_u64_to_vec(<2 x i64> %a1) {
+; CHECK-LABEL: test_vaddv_u64_to_vec:
+; CHECK: addp.2d d0, v0
+; CHECK-NOT: fmov
+; CHECK-NOT: ins
+; CHECK: ret
+entry:
+  %vaddv.i = tail call i64 @llvm.arm64.neon.uaddv.i64.v2i64(<2 x i64> %a1)
+  %vec = insertelement <1 x i64> undef, i64 %vaddv.i, i32 0
+  ret <1 x i64> %vec
+}
+
 define signext i8 @test_vaddvq_s8(<16 x i8> %a1) {
 ; CHECK-LABEL: test_vaddvq_s8:
 ; CHECK: addv.16b b[[REGNUM:[0-9]+]], v0

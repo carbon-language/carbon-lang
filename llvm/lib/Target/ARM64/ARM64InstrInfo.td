@@ -1890,31 +1890,39 @@ defm FMOV : UnscaledConversion<"fmov">;
 def : Pat<(f32 (fpimm0)), (FMOVWSr WZR)>, Requires<[NoZCZ]>;
 def : Pat<(f64 (fpimm0)), (FMOVXDr XZR)>, Requires<[NoZCZ]>;
 
-def : Pat<(v8i8  (bitconvert GPR64:$Xn)), (FMOVXDr GPR64:$Xn)>;
-def : Pat<(v4i16 (bitconvert GPR64:$Xn)), (FMOVXDr GPR64:$Xn)>;
-def : Pat<(v2i32 (bitconvert GPR64:$Xn)), (FMOVXDr GPR64:$Xn)>;
-def : Pat<(v1i64 (bitconvert GPR64:$Xn)), (FMOVXDr GPR64:$Xn)>;
-def : Pat<(v2f32 (bitconvert GPR64:$Xn)), (FMOVXDr GPR64:$Xn)>;
-def : Pat<(v1f64 (bitconvert GPR64:$Xn)), (FMOVXDr GPR64:$Xn)>;
-def : Pat<(v1i64 (scalar_to_vector GPR64:$Xn)), (FMOVXDr GPR64:$Xn)>;
-def : Pat<(v1f64 (scalar_to_vector GPR64:$Xn)), (FMOVXDr GPR64:$Xn)>;
+def : Pat<(v8i8  (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v4i16 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v2i32 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v1i64 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v2f32 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v1f64 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v1i64 (scalar_to_vector GPR64:$Xn)),
+          (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v1f64 (scalar_to_vector GPR64:$Xn)),
+          (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
 def : Pat<(v1f64 (scalar_to_vector (f64 FPR64:$Xn))), (v1f64 FPR64:$Xn)>;
 
-def : Pat<(i64 (bitconvert (v8i8  V64:$Vn))), (FMOVDXr V64:$Vn)>;
-def : Pat<(i64 (bitconvert (v4i16 V64:$Vn))), (FMOVDXr V64:$Vn)>;
-def : Pat<(i64 (bitconvert (v2i32 V64:$Vn))), (FMOVDXr V64:$Vn)>;
-def : Pat<(i64 (bitconvert (v1i64 V64:$Vn))), (FMOVDXr V64:$Vn)>;
-def : Pat<(i64 (bitconvert (v2f32 V64:$Vn))), (FMOVDXr V64:$Vn)>;
-def : Pat<(i64 (bitconvert (v1f64 V64:$Vn))), (FMOVDXr V64:$Vn)>;
+def : Pat<(i64 (bitconvert (v8i8  V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+def : Pat<(i64 (bitconvert (v4i16 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+def : Pat<(i64 (bitconvert (v2i32 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+def : Pat<(i64 (bitconvert (v1i64 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+def : Pat<(i64 (bitconvert (v2f32 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+def : Pat<(i64 (bitconvert (v1f64 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
 
-def : Pat<(f32 (bitconvert (i32 GPR32:$Xn))), (COPY_TO_REGCLASS GPR32:$Xn,
-                                                                FPR32)>;
-def : Pat<(i32 (bitconvert (f32 FPR32:$Xn))), (COPY_TO_REGCLASS FPR32:$Xn,
-                                                                GPR32)>;
-def : Pat<(f64 (bitconvert (i64 GPR64:$Xn))), (COPY_TO_REGCLASS GPR64:$Xn,
-                                                                FPR64)>;
-def : Pat<(i64 (bitconvert (f64 FPR64:$Xn))), (COPY_TO_REGCLASS FPR64:$Xn,
-                                                                GPR64)>;
+def : Pat<(f32 (bitconvert (i32 GPR32:$Xn))),
+          (COPY_TO_REGCLASS GPR32:$Xn, FPR32)>;
+def : Pat<(i32 (bitconvert (f32 FPR32:$Xn))),
+          (COPY_TO_REGCLASS FPR32:$Xn, GPR32)>;
+def : Pat<(f64 (bitconvert (i64 GPR64:$Xn))),
+          (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(i64 (bitconvert (f64 FPR64:$Xn))),
+          (COPY_TO_REGCLASS FPR64:$Xn, GPR64)>;
 
 //===----------------------------------------------------------------------===//
 // Floating point conversion instruction.
@@ -2971,16 +2979,18 @@ def : Pat<(and (vector_extract (v8i16 V128:$Rn), VectorIndexH:$idx),
 defm INS : SIMDIns;
 
 def : Pat<(v16i8 (scalar_to_vector GPR32:$Rn)),
-          (INSvi8gpr (v16i8 (IMPLICIT_DEF)), (i64 0), GPR32:$Rn)>;
+          (SUBREG_TO_REG (i32 0),
+                         (f32 (COPY_TO_REGCLASS GPR32:$Rn, FPR32)), ssub)>;
 def : Pat<(v8i8 (scalar_to_vector GPR32:$Rn)),
-          (EXTRACT_SUBREG
-            (INSvi8gpr (v16i8 (IMPLICIT_DEF)), (i64 0), GPR32:$Rn), dsub)>;
+          (SUBREG_TO_REG (i32 0),
+                         (f32 (COPY_TO_REGCLASS GPR32:$Rn, FPR32)), ssub)>;
 
 def : Pat<(v8i16 (scalar_to_vector GPR32:$Rn)),
-          (INSvi16gpr (v8i16 (IMPLICIT_DEF)), (i64 0), GPR32:$Rn)>;
+          (SUBREG_TO_REG (i32 0),
+                         (f32 (COPY_TO_REGCLASS GPR32:$Rn, FPR32)), ssub)>;
 def : Pat<(v4i16 (scalar_to_vector GPR32:$Rn)),
-          (EXTRACT_SUBREG
-            (INSvi16gpr (v8i16 (IMPLICIT_DEF)), (i64 0), GPR32:$Rn), dsub)>;
+          (SUBREG_TO_REG (i32 0),
+                         (f32 (COPY_TO_REGCLASS GPR32:$Rn, FPR32)), ssub)>;
 
 def : Pat<(v2i32 (scalar_to_vector (i32 FPR32:$Rn))),
             (v2i32 (INSERT_SUBREG (v2i32 (IMPLICIT_DEF)),
