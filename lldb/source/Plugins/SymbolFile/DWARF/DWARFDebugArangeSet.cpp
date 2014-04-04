@@ -188,38 +188,74 @@ DWARFDebugArangeSet::Extract(const DWARFDataExtractor &data, lldb::offset_t *off
         m_header.cu_offset  = data.GetDWARFOffset(offset_ptr);
         m_header.addr_size  = data.GetU8(offset_ptr);
         m_header.seg_size   = data.GetU8(offset_ptr);
-
-
-        // The first tuple following the header in each set begins at an offset
-        // that is a multiple of the size of a single tuple (that is, twice the
-        // size of an address). The header is padded, if necessary, to the
-        // appropriate boundary.
-        const uint32_t header_size = *offset_ptr - m_offset;
-        const uint32_t tuple_size = m_header.addr_size << 1;
-        uint32_t first_tuple_offset = 0;
-        while (first_tuple_offset < header_size)
-            first_tuple_offset += tuple_size;
-
-        *offset_ptr = m_offset + first_tuple_offset;
-
-        Descriptor arangeDescriptor;
-
-        assert(sizeof(arangeDescriptor.address) == sizeof(arangeDescriptor.length));
-        assert(sizeof(arangeDescriptor.address) >= m_header.addr_size);
-
-        while (data.ValidOffset(*offset_ptr))
+        
+        // Try to avoid reading invalid arange sets by making sure:
+        // 1 - the version looks good
+        // 2 - the address byte size looks plausible
+        // 3 - the length seems to make sense
+        // size looks plausible
+        if ((m_header.version >= 2 && m_header.version <= 5) &&
+            (m_header.addr_size == 4 || m_header.addr_size == 8) &&
+            (m_header.length > 0))
         {
-            arangeDescriptor.address    = data.GetMaxU64(offset_ptr, m_header.addr_size);
-            arangeDescriptor.length     = data.GetMaxU64(offset_ptr, m_header.addr_size);
-
-            // Each set of tuples is terminated by a 0 for the address and 0
-            // for the length.
-            if (arangeDescriptor.address || arangeDescriptor.length)
-                m_arange_descriptors.push_back(arangeDescriptor);
+            if (data.ValidOffset(m_offset + sizeof(m_header.length) + m_header.length - 1))
+            {
+                // The first tuple following the header in each set begins at an offset
+                // that is a multiple of the size of a single tuple (that is, twice the
+                // size of an address). The header is padded, if necessary, to the
+                // appropriate boundary.
+                const uint32_t header_size = *offset_ptr - m_offset;
+                const uint32_t tuple_size = m_header.addr_size << 1;
+                uint32_t first_tuple_offset = 0;
+                while (first_tuple_offset < header_size)
+                    first_tuple_offset += tuple_size;
+                
+                *offset_ptr = m_offset + first_tuple_offset;
+                
+                Descriptor arangeDescriptor;
+                
+                static_assert(sizeof(arangeDescriptor.address) == sizeof(arangeDescriptor.length),
+                              "DWARFDebugArangeSet::Descriptor.address and DWARFDebugArangeSet::Descriptor.length must have same size");
+                
+                while (data.ValidOffset(*offset_ptr))
+                {
+                    arangeDescriptor.address    = data.GetMaxU64(offset_ptr, m_header.addr_size);
+                    arangeDescriptor.length     = data.GetMaxU64(offset_ptr, m_header.addr_size);
+                    
+                    // Each set of tuples is terminated by a 0 for the address and 0
+                    // for the length.
+                    if (arangeDescriptor.address || arangeDescriptor.length)
+                        m_arange_descriptors.push_back(arangeDescriptor);
+                    else
+                        break;  // We are done if we get a zero address and length
+                }
+            }
+#if defined (LLDB_CONFIGURATION_DEBUG)
             else
-                break;  // We are done if we get a zero address and length
+            {
+                printf ("warning: .debug_arange set length is too large arange data at 0x%8.8x: length=0x%8.8x, version=0x%4.4x, cu_offset=0x%8.8x, addr_size=%u, seg_size=%u\n",
+                        m_offset,
+                        m_header.length,
+                        m_header.version,
+                        m_header.cu_offset,
+                        m_header.addr_size,
+                        m_header.seg_size);
+            }
+#endif
         }
-
+#if defined (LLDB_CONFIGURATION_DEBUG)
+        else
+        {
+            printf ("warning: .debug_arange set has bad header at 0x%8.8x: length=0x%8.8x, version=0x%4.4x, cu_offset=0x%8.8x, addr_size=%u, seg_size=%u\n",
+                    m_offset,
+                    m_header.length,
+                    m_header.version,
+                    m_header.cu_offset,
+                    m_header.addr_size,
+                    m_header.seg_size);
+        }
+#endif
+        
         return !m_arange_descriptors.empty();
     }
     return false;
