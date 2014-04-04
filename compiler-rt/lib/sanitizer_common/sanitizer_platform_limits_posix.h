@@ -274,6 +274,23 @@ namespace __sanitizer {
   typedef unsigned __sanitizer_pthread_key_t;
 #endif
 
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+  struct __sanitizer_XDR {
+    int x_op;
+    struct xdr_ops {
+      uptr fns[10];
+    } *x_ops;
+    uptr x_public;
+    uptr x_private;
+    uptr x_base;
+    unsigned x_handy;
+  };
+
+  const int __sanitizer_XDR_ENCODE = 0;
+  const int __sanitizer_XDR_DECODE = 1;
+  const int __sanitizer_XDR_FREE = 2;
+#endif
+
   struct __sanitizer_passwd {
     char *pw_name;
     char *pw_passwd;

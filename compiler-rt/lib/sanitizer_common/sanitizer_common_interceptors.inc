@@ -3707,6 +3707,141 @@ INTERCEPTOR(int, ftime, __sanitizer_timeb *tp) {
 #define INIT_FTIME
 #endif  // SANITIZER_INTERCEPT_FTIME
 
+#if SANITIZER_INTERCEPT_XDR
+INTERCEPTOR(void, xdrmem_create, __sanitizer_XDR *xdrs, uptr addr,
+            unsigned size, int op) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, xdrmem_create, xdrs, addr, size, op);
+  REAL(xdrmem_create)(xdrs, addr, size, op);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, xdrs, sizeof(*xdrs));
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, xdrs->x_ops, sizeof(*xdrs->x_ops));
+  if (op == __sanitizer_XDR_ENCODE) {
+    // It's not obvious how much data individual xdr_ routines write.
+    // Simply unpoison the entire target buffer in advance.
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, (void *)addr, size);
+  }
+}
+
+INTERCEPTOR(void, xdrstdio_create, __sanitizer_XDR *xdrs, void *file, int op) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, xdrstdio_create, xdrs, file, op);
+  REAL(xdrstdio_create)(xdrs, file, op);
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, xdrs, sizeof(*xdrs));
+  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, xdrs->x_ops, sizeof(*xdrs->x_ops));
+}
+
+#define XDR_INTERCEPTOR(F, T)                             \
+  INTERCEPTOR(int, F, __sanitizer_XDR *xdrs, T *p) {      \
+    void *ctx;                                            \
+    COMMON_INTERCEPTOR_ENTER(ctx, F, xdrs, p);            \
+    if (p && xdrs->x_op == __sanitizer_XDR_ENCODE)        \
+      COMMON_INTERCEPTOR_READ_RANGE(ctx, p, sizeof(*p));  \
+    int res = REAL(F)(xdrs, p);                           \
+    if (res && p && xdrs->x_op == __sanitizer_XDR_DECODE) \
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, sizeof(*p)); \
+    return res;                                           \
+  }
+
+XDR_INTERCEPTOR(xdr_short, short)
+XDR_INTERCEPTOR(xdr_u_short, unsigned short)
+XDR_INTERCEPTOR(xdr_int, int)
+XDR_INTERCEPTOR(xdr_u_int, unsigned)
+XDR_INTERCEPTOR(xdr_long, long)
+XDR_INTERCEPTOR(xdr_u_long, unsigned long)
+XDR_INTERCEPTOR(xdr_hyper, long long)
+XDR_INTERCEPTOR(xdr_u_hyper, unsigned long long)
+XDR_INTERCEPTOR(xdr_longlong_t, long long)
+XDR_INTERCEPTOR(xdr_u_longlong_t, unsigned long long)
+XDR_INTERCEPTOR(xdr_int8_t, u8)
+XDR_INTERCEPTOR(xdr_uint8_t, u8)
+XDR_INTERCEPTOR(xdr_int16_t, u16)
+XDR_INTERCEPTOR(xdr_uint16_t, u16)
+XDR_INTERCEPTOR(xdr_int32_t, u32)
+XDR_INTERCEPTOR(xdr_uint32_t, u32)
+XDR_INTERCEPTOR(xdr_int64_t, u64)
+XDR_INTERCEPTOR(xdr_uint64_t, u64)
+XDR_INTERCEPTOR(xdr_quad_t, long long)
+XDR_INTERCEPTOR(xdr_u_quad_t, unsigned long long)
+XDR_INTERCEPTOR(xdr_bool, bool)
+XDR_INTERCEPTOR(xdr_enum, int)
+XDR_INTERCEPTOR(xdr_char, char)
+XDR_INTERCEPTOR(xdr_u_char, unsigned char)
+XDR_INTERCEPTOR(xdr_float, float)
+XDR_INTERCEPTOR(xdr_double, double)
+
+// FIXME: intercept xdr_array, opaque, union, vector, reference, pointer,
+// wrapstring, sizeof
+
+INTERCEPTOR(int, xdr_bytes, __sanitizer_XDR *xdrs, char **p, unsigned *sizep,
+            unsigned maxsize) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, xdr_bytes, xdrs, p, sizep, maxsize);
+  if (p && sizep && xdrs->x_op == __sanitizer_XDR_ENCODE) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, p, sizeof(*p));
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, sizep, sizeof(*sizep));
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, *p, *sizep);
+  }
+  int res = REAL(xdr_bytes)(xdrs, p, sizep, maxsize);
+  if (p && sizep && xdrs->x_op == __sanitizer_XDR_DECODE) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, sizeof(*p));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, sizep, sizeof(*sizep));
+    if (res && *p && *sizep) COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *p, *sizep);
+  }
+  return res;
+}
+
+INTERCEPTOR(int, xdr_string, __sanitizer_XDR *xdrs, char **p,
+            unsigned maxsize) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, xdr_string, xdrs, p, maxsize);
+  if (p && xdrs->x_op == __sanitizer_XDR_ENCODE) {
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, p, sizeof(*p));
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, *p, REAL(strlen)(*p) + 1);
+  }
+  int res = REAL(xdr_string)(xdrs, p, maxsize);
+  if (p && xdrs->x_op == __sanitizer_XDR_DECODE) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, p, sizeof(*p));
+    if (res && *p)
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *p, REAL(strlen)(*p) + 1);
+  }
+  return res;
+}
+
+#define INIT_XDR                               \
+  COMMON_INTERCEPT_FUNCTION(xdrmem_create);    \
+  COMMON_INTERCEPT_FUNCTION(xdrstdio_create);  \
+  COMMON_INTERCEPT_FUNCTION(xdr_short);        \
+  COMMON_INTERCEPT_FUNCTION(xdr_u_short);      \
+  COMMON_INTERCEPT_FUNCTION(xdr_int);          \
+  COMMON_INTERCEPT_FUNCTION(xdr_u_int);        \
+  COMMON_INTERCEPT_FUNCTION(xdr_long);         \
+  COMMON_INTERCEPT_FUNCTION(xdr_u_long);       \
+  COMMON_INTERCEPT_FUNCTION(xdr_hyper);        \
+  COMMON_INTERCEPT_FUNCTION(xdr_u_hyper);      \
+  COMMON_INTERCEPT_FUNCTION(xdr_longlong_t);   \
+  COMMON_INTERCEPT_FUNCTION(xdr_u_longlong_t); \
+  COMMON_INTERCEPT_FUNCTION(xdr_int8_t);       \
+  COMMON_INTERCEPT_FUNCTION(xdr_uint8_t);      \
+  COMMON_INTERCEPT_FUNCTION(xdr_int16_t);      \
+  COMMON_INTERCEPT_FUNCTION(xdr_uint16_t);     \
+  COMMON_INTERCEPT_FUNCTION(xdr_int32_t);      \
+  COMMON_INTERCEPT_FUNCTION(xdr_uint32_t);     \
+  COMMON_INTERCEPT_FUNCTION(xdr_int64_t);      \
+  COMMON_INTERCEPT_FUNCTION(xdr_uint64_t);     \
+  COMMON_INTERCEPT_FUNCTION(xdr_quad_t);       \
+  COMMON_INTERCEPT_FUNCTION(xdr_u_quad_t);     \
+  COMMON_INTERCEPT_FUNCTION(xdr_bool);         \
+  COMMON_INTERCEPT_FUNCTION(xdr_enum);         \
+  COMMON_INTERCEPT_FUNCTION(xdr_char);         \
+  COMMON_INTERCEPT_FUNCTION(xdr_u_char);       \
+  COMMON_INTERCEPT_FUNCTION(xdr_float);        \
+  COMMON_INTERCEPT_FUNCTION(xdr_double);       \
+  COMMON_INTERCEPT_FUNCTION(xdr_bytes);        \
+  COMMON_INTERCEPT_FUNCTION(xdr_string);
+#else
+#define INIT_XDR
+#endif  // SANITIZER_INTERCEPT_XDR
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -3836,5 +3971,6 @@ INTERCEPTOR(int, ftime, __sanitizer_timeb *tp) {
   INIT_CAPGET;                             \
   INIT_AEABI_MEM;                          \
   INIT___BZERO;                            \
-  INIT_FTIME;
+  INIT_FTIME;                              \
+  INIT_XDR;
 /**/

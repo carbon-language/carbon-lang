@@ -120,6 +120,7 @@
 #include <netax25/ax25.h>
 #include <netipx/ipx.h>
 #include <netrom/netrom.h>
+#include <rpc/xdr.h>
 #include <scsi/scsi.h>
 #include <sys/mtio.h>
 #include <sys/kd.h>
@@ -1110,5 +1111,19 @@ CHECK_SIZE_AND_OFFSET(group, gr_name);
 CHECK_SIZE_AND_OFFSET(group, gr_passwd);
 CHECK_SIZE_AND_OFFSET(group, gr_gid);
 CHECK_SIZE_AND_OFFSET(group, gr_mem);
+
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+CHECK_TYPE_SIZE(XDR);
+CHECK_SIZE_AND_OFFSET(XDR, x_op);
+CHECK_SIZE_AND_OFFSET(XDR, x_ops);
+CHECK_SIZE_AND_OFFSET(XDR, x_public);
+CHECK_SIZE_AND_OFFSET(XDR, x_private);
+CHECK_SIZE_AND_OFFSET(XDR, x_base);
+CHECK_SIZE_AND_OFFSET(XDR, x_handy);
+CHECK_TYPE_SIZE(XDR::xdr_ops);
+COMPILER_CHECK(__sanitizer_XDR_ENCODE == XDR_ENCODE);
+COMPILER_CHECK(__sanitizer_XDR_DECODE == XDR_DECODE);
+COMPILER_CHECK(__sanitizer_XDR_FREE == XDR_FREE);
+#endif
 
 #endif  // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_MAC
