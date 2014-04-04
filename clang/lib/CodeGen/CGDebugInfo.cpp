@@ -3227,6 +3227,9 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
   // Do not use DIGlobalVariable for enums.
   if (Ty.getTag() == llvm::dwarf::DW_TAG_enumeration_type)
     return;
+  // Do not emit separate definitions for function local const/statics.
+  if (isa<FunctionDecl>(VD->getDeclContext()))
+    return;
   llvm::DIGlobalVariable GV = DBuilder.createStaticVariable(
       Unit, Name, Name, Unit, getLineNumber(VD->getLocation()), Ty, true, Init,
       getOrCreateStaticDataMemberDeclarationOrNull(cast<VarDecl>(VD)));

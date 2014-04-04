@@ -51,11 +51,6 @@ namespace VirtualBase {
   }
 }
 
-void foo() {
-  const wchar_t c = L'x';
-  wchar_t d = c;
-}
-
 namespace b5249287 {
 template <typename T> class A {
   struct B;
@@ -88,6 +83,13 @@ foo func(foo f) {
 // CHECK: [[FUNC:![0-9]*]] = {{.*}} metadata !"_ZN7pr147634funcENS_3fooE", i32 {{[0-9]*}}, metadata [[FUNC_TYPE:![0-9]*]], {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
 }
 
+void foo() {
+  const wchar_t c = L'x';
+  wchar_t d = c;
+}
+
+// CHECK-NOT: ; [ DW_TAG_variable ] [c]
+
 namespace pr9608 { // also pr9600
 struct incomplete;
 incomplete (*x)[3];
@@ -96,8 +98,10 @@ incomplete (*x)[3];
 // CHECK: [[INCARRAY]] = {{.*}}metadata !"_ZTSN6pr960810incompleteE", metadata {{![0-9]*}}, i32 0, null, null, null} ; [ DW_TAG_array_type ] [line 0, size 0, align 0, offset 0] [from _ZTSN6pr960810incompleteE]
 }
 
-// For some reason the argument for PR14763 ended up all the way down here
+// For some reason function arguments ended up down here
 // CHECK: = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], {{.*}}, metadata !"[[FOO]]", i32 8192, i32 0} ; [ DW_TAG_arg_variable ] [f]
+
+// CHECK: ; [ DW_TAG_auto_variable ] [c]
 
 namespace pr16214 {
 struct a {
