@@ -1004,9 +1004,13 @@ llvm::MDNode *CodeGenPGO::createBranchWeights(ArrayRef<uint64_t> Weights) {
   if (Weights.size() < 2)
     return nullptr;
 
+  // Check for empty weights.
+  uint64_t MaxWeight = *std::max_element(Weights.begin(), Weights.end());
+  if (MaxWeight == 0)
+    return nullptr;
+
   // Calculate how to scale down to 32-bits.
-  uint64_t Scale = calculateWeightScale(*std::max_element(Weights.begin(),
-                                                          Weights.end()));
+  uint64_t Scale = calculateWeightScale(MaxWeight);
 
   SmallVector<uint32_t, 16> ScaledWeights;
   ScaledWeights.reserve(Weights.size());
