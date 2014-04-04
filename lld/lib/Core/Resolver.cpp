@@ -71,7 +71,7 @@ void Resolver::handleFile(const File &file) {
 void Resolver::forEachUndefines(bool searchForOverrides,
                                 UndefCallback callback) {
   // Handle normal archives
-  int64_t undefineGenCount = 0;
+  unsigned undefineGenCount = 0;
   do {
     undefineGenCount = _symbolTable.size();
     for (const UndefinedAtom *undefAtom : _symbolTable.undefines()) {
