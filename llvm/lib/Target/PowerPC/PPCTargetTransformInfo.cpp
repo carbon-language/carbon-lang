@@ -37,10 +37,6 @@ class PPCTTI final : public ImmutablePass, public TargetTransformInfo {
   const PPCSubtarget *ST;
   const PPCTargetLowering *TLI;
 
-  /// Estimate the overhead of scalarizing an instruction. Insert and Extract
-  /// are set if the result needs to be inserted and/or extracted from vectors.
-  unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) const;
-
 public:
   PPCTTI() : ImmutablePass(ID), TM(0), ST(0), TLI(0) {
     llvm_unreachable("This pass cannot be directly constructed");
