@@ -3066,9 +3066,9 @@ public:
 namespace {
 
 // x86-32 Windows Visual Studio target
-class VisualStudioWindowsX86_32TargetInfo : public WindowsX86_32TargetInfo {
+class MicrosoftX86_32TargetInfo : public WindowsX86_32TargetInfo {
 public:
-  VisualStudioWindowsX86_32TargetInfo(const llvm::Triple &Triple)
+  MicrosoftX86_32TargetInfo(const llvm::Triple &Triple)
       : WindowsX86_32TargetInfo(Triple) {
     LongDoubleWidth = LongDoubleAlign = 64;
     LongDoubleFormat = &llvm::APFloat::IEEEdouble;
@@ -3300,9 +3300,9 @@ public:
 
 namespace {
 // x86-64 Windows Visual Studio target
-class VisualStudioWindowsX86_64TargetInfo : public WindowsX86_64TargetInfo {
+class MicrosoftX86_64TargetInfo : public WindowsX86_64TargetInfo {
 public:
-  VisualStudioWindowsX86_64TargetInfo(const llvm::Triple &Triple)
+  MicrosoftX86_64TargetInfo(const llvm::Triple &Triple)
       : WindowsX86_64TargetInfo(Triple) {
     LongDoubleWidth = LongDoubleAlign = 64;
     LongDoubleFormat = &llvm::APFloat::IEEEdouble;
@@ -6290,7 +6290,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       case llvm::Triple::GNU:
         return new MinGWX86_32TargetInfo(Triple);
       case llvm::Triple::MSVC:
-        return new VisualStudioWindowsX86_32TargetInfo(Triple);
+        return new MicrosoftX86_32TargetInfo(Triple);
       }
     }
     case llvm::Triple::Haiku:
@@ -6333,7 +6333,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       case llvm::Triple::GNU:
         return new MinGWX86_64TargetInfo(Triple);
       case llvm::Triple::MSVC:
-        return new VisualStudioWindowsX86_64TargetInfo(Triple);
+        return new MicrosoftX86_64TargetInfo(Triple);
       }
     }
     case llvm::Triple::NaCl:
