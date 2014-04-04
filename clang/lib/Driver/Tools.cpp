@@ -475,6 +475,10 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   case llvm::Triple::arm64:
   case llvm::Triple::arm:
   case llvm::Triple::armeb:
+    if (Triple.isOSDarwin() || Triple.isOSWindows())
+      return true;
+    return false;
+
   case llvm::Triple::ppc:
   case llvm::Triple::ppc64:
     if (Triple.isOSDarwin())
@@ -645,6 +649,11 @@ StringRef tools::arm::getARMFloatABI(const Driver &D, const ArgList &Args,
       break;
     }
 
+    // FIXME: this is invalid for WindowsCE
+    case llvm::Triple::Win32:
+      FloatABI = "hard";
+      break;
+
     case llvm::Triple::FreeBSD:
       switch(Triple.getEnvironment()) {
       case llvm::Triple::GNUEABIHF:
@@ -772,6 +781,9 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     } else {
       ABIName = "apcs-gnu";
     }
+  } else if (Triple.isOSWindows()) {
+    // FIXME: this is invalid for WindowsCE
+    ABIName = "aapcs";
   } else {
     // Select the default based on the platform.
     switch(Triple.getEnvironment()) {
@@ -2197,6 +2209,16 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-triple");
   std::string TripleStr = getToolChain().ComputeEffectiveClangTriple(Args);
   CmdArgs.push_back(Args.MakeArgString(TripleStr));
+
+  const llvm::Triple TT(TripleStr);
+  if (TT.isOSWindows() && (TT.getArch() == llvm::Triple::arm ||
+                           TT.getArch() == llvm::Triple::thumb)) {
+    unsigned Offset = TT.getArch() == llvm::Triple::arm ? 4 : 6;
+    unsigned Version;
+    TT.getArchName().substr(Offset).getAsInteger(10, Version);
+    if (Version < 7)
+      D.Diag(diag::err_target_unsupported_arch) << TT.getArchName() << TripleStr;
+  }
 
   // Push all default warning arguments that are specific to
   // the given target.  These come before user provided warning options
@@ -4835,9 +4857,16 @@ const char *arm::getARMCPUForMArch(const ArgList &Args,
     }
   }
 
-  if (Triple.getOS() == llvm::Triple::NetBSD) {
+  switch (Triple.getOS()) {
+  case llvm::Triple::NetBSD:
     if (MArch == "armv6")
       return "arm1176jzf-s";
+    break;
+  case llvm::Triple::Win32:
+    // FIXME: this is invalid for WindowsCE
+    return "cortex-a9";
+  default:
+    break;
   }
 
   const char *result = llvm::StringSwitch<const char *>(MArch)

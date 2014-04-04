@@ -82,6 +82,9 @@ def err_drv_invalid_libcxx_deployment : Error<
 def err_drv_malformed_sanitizer_blacklist : Error<
   "malformed sanitizer blacklist: '%0'">;
 
+def err_target_unsupported_arch
+  : Error<"the target architecture '%0' is not supported by the target '%1'">;
+
 def err_drv_I_dash_not_supported : Error<
   "'%0' not supported, please use -iquote instead">;
 def err_drv_unknown_argument : Error<"unknown argument: '%0'">;

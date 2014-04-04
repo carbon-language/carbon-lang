@@ -3708,6 +3708,9 @@ class ARMTargetInfo : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
 
   static bool shouldUseInlineAtomic(const llvm::Triple &T) {
+    if (T.isOSWindows())
+      return true;
+
     // On linux, binaries targeting old cpus call functions in libgcc to
     // perform atomic operations. The implementation in libgcc then calls into
     // the kernel which on armv6 and newer uses ldrex and strex. The net result
@@ -3774,19 +3777,30 @@ class ARMTargetInfo : public TargetInfo {
     if (IsThumb) {
       // Thumb1 add sp, #imm requires the immediate value be multiple of 4,
       // so set preferred for small types to 32.
-      if (T.isOSBinFormatMachO())
+      if (T.isOSBinFormatMachO()) {
         DescriptionString = BigEndian ?
                               "E-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
                               "v128:64:128-a:0:32-n32-S64" :
                               "e-m:o-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
                               "v128:64:128-a:0:32-n32-S64";
-      else
+      } else if (T.isOSWindows()) {
+        // FIXME: this is invalid for WindowsCE
+        assert(!BigEndian && "Windows on ARM does not support big endian");
+        DescriptionString = "e"
+                            "-m:e"
+                            "-p:32:32"
+                            "-i1:8:32-i8:8:32-i16:16:32-i64:64"
+                            "-v128:64:128"
+                            "-a:0:32"
+                            "-n32"
+                            "-S64";
+      } else {
         DescriptionString = BigEndian ?
                               "E-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
                               "v128:64:128-a:0:32-n32-S64" :
                               "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-"
                               "v128:64:128-a:0:32-n32-S64";
-
+      }
     } else {
       if (T.isOSBinFormatMachO())
         DescriptionString = BigEndian ?
@@ -4093,12 +4107,14 @@ public:
 
     // FIXME: It's more complicated than this and we don't really support
     // interworking.
-    if (5 <= CPUArchVer && CPUArchVer <= 8)
+    // Windows on ARM does not "support" interworking
+    if (5 <= CPUArchVer && CPUArchVer <= 8 && !getTriple().isOSWindows())
       Builder.defineMacro("__THUMB_INTERWORK__");
 
     if (ABI == "aapcs" || ABI == "aapcs-linux" || ABI == "aapcs-vfp") {
       // Embedded targets on Darwin follow AAPCS, but not EABI.
-      if (!getTriple().isOSDarwin())
+      // Windows on ARM follows AAPCS VFP, but does not conform to EABI.
+      if (!getTriple().isOSDarwin() && !getTriple().isOSWindows())
         Builder.defineMacro("__ARM_EABI__");
       Builder.defineMacro("__ARM_PCS", "1");
 
@@ -4369,6 +4385,72 @@ public:
   }
 };
 } // end anonymous namespace.
+
+namespace {
+class WindowsARMTargetInfo : public WindowsTargetInfo<ARMleTargetInfo> {
+  const llvm::Triple Triple;
+public:
+  WindowsARMTargetInfo(const llvm::Triple &Triple)
+    : WindowsTargetInfo<ARMleTargetInfo>(Triple), Triple(Triple) {
+    TLSSupported = false;
+    WCharType = UnsignedShort;
+    SizeType = UnsignedInt;
+    UserLabelPrefix = "";
+  }
+  void getVisualStudioDefines(const LangOptions &Opts,
+                              MacroBuilder &Builder) const {
+    WindowsTargetInfo<ARMleTargetInfo>::getVisualStudioDefines(Opts, Builder);
+
+    // FIXME: this is invalid for WindowsCE
+    Builder.defineMacro("_M_ARM_NT", "1");
+    Builder.defineMacro("_M_ARMT", "_M_ARM");
+    Builder.defineMacro("_M_THUMB", "_M_ARM");
+
+    assert((Triple.getArch() == llvm::Triple::arm ||
+            Triple.getArch() == llvm::Triple::thumb) &&
+           "invalid architecture for Windows ARM target info");
+    unsigned Offset = Triple.getArch() == llvm::Triple::arm ? 4 : 6;
+    Builder.defineMacro("_M_ARM", Triple.getArchName().substr(Offset));
+
+    // TODO map the complete set of values
+    // 31: VFPv3 40: VFPv4
+    Builder.defineMacro("_M_ARM_FP", "31");
+  }
+};
+
+// Windows ARM + Itanium C++ ABI Target
+class ItaniumWindowsARMleTargetInfo : public WindowsARMTargetInfo {
+public:
+  ItaniumWindowsARMleTargetInfo(const llvm::Triple &Triple)
+    : WindowsARMTargetInfo(Triple) {
+    TheCXXABI.set(TargetCXXABI::GenericARM);
+  }
+
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    WindowsARMTargetInfo::getTargetDefines(Opts, Builder);
+
+    if (Opts.MSVCCompat)
+      WindowsARMTargetInfo::getVisualStudioDefines(Opts, Builder);
+  }
+};
+
+// Windows ARM, MS (C++) ABI
+class MicrosoftARMleTargetInfo : public WindowsARMTargetInfo {
+public:
+  MicrosoftARMleTargetInfo(const llvm::Triple &Triple)
+    : WindowsARMTargetInfo(Triple) {
+    TheCXXABI.set(TargetCXXABI::Microsoft);
+  }
+
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    WindowsARMTargetInfo::getTargetDefines(Opts, Builder);
+    WindowsARMTargetInfo::getVisualStudioDefines(Opts, Builder);
+  }
+};
+}
+
 
 namespace {
 class DarwinARMTargetInfo :
@@ -6058,6 +6140,15 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new RTEMSTargetInfo<ARMleTargetInfo>(Triple);
     case llvm::Triple::NaCl:
       return new NaClTargetInfo<ARMleTargetInfo>(Triple);
+    case llvm::Triple::Win32:
+      switch (Triple.getEnvironment()) {
+      default:
+        return new ARMleTargetInfo(Triple);
+      case llvm::Triple::Itanium:
+        return new ItaniumWindowsARMleTargetInfo(Triple);
+      case llvm::Triple::MSVC:
+        return new MicrosoftARMleTargetInfo(Triple);
+      }
     default:
       return new ARMleTargetInfo(Triple);
     }

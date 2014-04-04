@@ -214,6 +214,9 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     bool ThumbDefault = Suffix.startswith("v6m") || Suffix.startswith("v7m") ||
       Suffix.startswith("v7em") ||
       (Suffix.startswith("v7") && getTriple().isOSBinFormatMachO());
+    // FIXME: this is invalid for WindowsCE
+    if (getTriple().isOSWindows())
+      ThumbDefault = true;
     std::string ArchName;
     if (IsBigEndian)
       ArchName = "armeb";
