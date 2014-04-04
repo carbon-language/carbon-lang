@@ -18,3 +18,11 @@ kernel void foo2(read_only image1d_t img1, image2d_t img2, write_only image2d_ar
 // CHECK: metadata !{metadata !"kernel_arg_type", metadata !"image1d_t", metadata !"image2d_t", metadata !"image2d_array_t"}
 // CHECK: metadata !{metadata !"kernel_arg_type_qual", metadata !"", metadata !"", metadata !""}
 // CHECK: metadata !{metadata !"kernel_arg_name", metadata !"img1", metadata !"img2", metadata !"img3"}
+
+kernel void foo3(__global half * X) {
+}
+// CHECK: metadata !{metadata !"kernel_arg_addr_space", i32 1}
+// CHECK: metadata !{metadata !"kernel_arg_access_qual", metadata !"none"}
+// CHECK: metadata !{metadata !"kernel_arg_type", metadata !"half*"}
+// CHECK: metadata !{metadata !"kernel_arg_type_qual", metadata !""}
+// CHECK: metadata !{metadata !"kernel_arg_name", metadata !"X"}
