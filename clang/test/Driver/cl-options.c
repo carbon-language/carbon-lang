@@ -129,6 +129,10 @@
 // WJoined: "-cc1"
 // WJoined: "-Wunused-pragmas"
 
+// For some warning ids, we can map from MSVC warning to Clang warning.
+// RUN: %clang_cl -wd4005 -### -- %s 2>&1 | FileCheck -check-prefix=wd4005 %s
+// wd4005: "-cc1"
+// wd4005: "-Wno-macro-redefined"
 
 // Ignored options. Check that we don't get "unused during compilation" errors.
 // (/Zs is for syntax-only)

@@ -121,6 +121,8 @@ def _SLASH_WX : CLFlag<"WX">, HelpText<"Treat warnings as errors">,
 def _SLASH_WX_ : CLFlag<"WX-">, HelpText<"Do not treat warnings as errors">,
   Alias<W_Joined>, AliasArgs<["no-error"]>;
 def _SLASH_w_flag : CLFlag<"w">, HelpText<"Disable all warnings">, Alias<w>;
+def _SLASH_wd4005 : CLFlag<"wd4005">, Alias<W_Joined>,
+  AliasArgs<["no-macro-redefined"]>;
 def _SLASH_vd : CLJoined<"vd">, HelpText<"Control vtordisp placement">,
   Alias<vtordisp_mode_EQ>;
 def _SLASH_Z7 : CLFlag<"Z7">, Alias<gline_tables_only>;
