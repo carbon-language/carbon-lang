@@ -68,8 +68,8 @@ void Resolver::handleFile(const File &file) {
   _context.getInputGraph().notifyProgress();
 }
 
-void Resolver::forEachUndefines(UndefCallback callback,
-                                bool searchForOverrides) {
+void Resolver::forEachUndefines(bool searchForOverrides,
+                                UndefCallback callback) {
   // Handle normal archives
   int64_t undefineGenCount = 0;
   do {
@@ -99,30 +99,29 @@ void Resolver::forEachUndefines(UndefCallback callback,
 
 void Resolver::handleArchiveFile(const File &file) {
   const ArchiveLibraryFile *archiveFile = cast<ArchiveLibraryFile>(&file);
-  auto callback = [&](StringRef undefName, bool dataSymbolOnly) {
+  bool searchForOverrides =
+      _context.searchArchivesToOverrideTentativeDefinitions();
+  forEachUndefines(searchForOverrides,
+                   [&](StringRef undefName, bool dataSymbolOnly) {
     if (const File *member = archiveFile->find(undefName, dataSymbolOnly)) {
       member->setOrdinal(_context.getNextOrdinalAndIncrement());
       handleFile(*member);
     }
-  };
-  bool searchForOverrides =
-      _context.searchArchivesToOverrideTentativeDefinitions();
-  forEachUndefines(callback, searchForOverrides);
+  });
 }
 
 void Resolver::handleSharedLibrary(const File &file) {
   // Add all the atoms from the shared library
   const SharedLibraryFile *sharedLibrary = cast<SharedLibraryFile>(&file);
   handleFile(*sharedLibrary);
-
-  auto callback = [&](StringRef undefName, bool dataSymbolOnly) {
-    if (const SharedLibraryAtom *shAtom =
-            sharedLibrary->exports(undefName, dataSymbolOnly))
-      doSharedLibraryAtom(*shAtom);
-  };
   bool searchForOverrides =
       _context.searchSharedLibrariesToOverrideTentativeDefinitions();
-  forEachUndefines(callback, searchForOverrides);
+  forEachUndefines(searchForOverrides,
+                   [&](StringRef undefName, bool dataSymbolOnly) {
+    if (const SharedLibraryAtom *atom =
+            sharedLibrary->exports(undefName, dataSymbolOnly))
+      doSharedLibraryAtom(*atom);
+  });
 }
 
 void Resolver::doUndefinedAtom(const UndefinedAtom &atom) {

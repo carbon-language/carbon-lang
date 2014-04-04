@@ -65,7 +65,7 @@ private:
   bool checkUndefines();
   void removeCoalescedAwayAtoms();
   void checkDylibSymbolCollisions();
-  void forEachUndefines(UndefCallback callback, bool searchForOverrides);
+  void forEachUndefines(bool searchForOverrides, UndefCallback callback);
 
   void markLive(const Atom &atom);
   void addAtoms(const std::vector<const DefinedAtom *>&);
