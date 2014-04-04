@@ -53,6 +53,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->clear_shadow_mmap_threshold = 64 * 1024;
   f->color = "auto";
   f->legacy_pthread_cond = false;
+  f->intercept_tls_get_addr = false;
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
@@ -115,6 +116,8 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
       "Colorize reports: (always|never|auto).");
   ParseFlag(str, &f->legacy_pthread_cond, "legacy_pthread_cond",
       "Enables support for dynamic libraries linked with libpthread 2.2.5.");
+  ParseFlag(str, &f->intercept_tls_get_addr, "intercept_tls_get_addr",
+            "Intercept __tls_get_addr.");
   ParseFlag(str, &f->help, "help", "Print the flag descriptions.");
 
   // Do a sanity check for certain flags.
