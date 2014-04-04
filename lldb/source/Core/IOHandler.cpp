@@ -409,7 +409,10 @@ IOHandlerEditline::GetLine (std::string &line)
             while (!done)
             {
                 if (fgets(buffer, sizeof(buffer), in) == NULL)
-                    done = true;
+                {
+                    if (feof(in))
+                        done = true;
+                }
                 else
                 {
                     got_line = true;
