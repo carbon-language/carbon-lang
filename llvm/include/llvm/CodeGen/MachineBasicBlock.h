@@ -295,10 +295,10 @@ public:
   inline iterator_range<const_pred_iterator> const_predecessors() const {
     return iterator_range<const_pred_iterator>(pred_begin(), pred_end());
   }
-  inline iterator_range<succ_iterator> succecessors() {
+  inline iterator_range<succ_iterator> successors() {
     return iterator_range<succ_iterator>(succ_begin(), succ_end());
   }
-  inline iterator_range<const_succ_iterator> const_succecessors() const {
+  inline iterator_range<const_succ_iterator> const_successors() const {
     return iterator_range<const_succ_iterator>(succ_begin(), succ_end());
   }
 
