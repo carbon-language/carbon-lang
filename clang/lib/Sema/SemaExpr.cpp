@@ -3974,8 +3974,8 @@ namespace {
 class FunctionCallCCC : public FunctionCallFilterCCC {
 public:
   FunctionCallCCC(Sema &SemaRef, const IdentifierInfo *FuncName,
-                  unsigned NumArgs, bool HasExplicitTemplateArgs)
-      : FunctionCallFilterCCC(SemaRef, NumArgs, HasExplicitTemplateArgs),
+                  unsigned NumArgs, MemberExpr *ME)
+      : FunctionCallFilterCCC(SemaRef, NumArgs, false, ME),
         FunctionName(FuncName) {}
 
   bool ValidateCandidate(const TypoCorrection &candidate) override {
@@ -3992,17 +3992,20 @@ private:
 };
 }
 
-static TypoCorrection TryTypoCorrectionForCall(Sema &S,
-                                               DeclarationNameInfo FuncName,
+static TypoCorrection TryTypoCorrectionForCall(Sema &S, Expr *Fn,
+                                               FunctionDecl *FDecl,
                                                ArrayRef<Expr *> Args) {
-  FunctionCallCCC CCC(S, FuncName.getName().getAsIdentifierInfo(),
-                      Args.size(), false);
-  if (TypoCorrection Corrected =
-          S.CorrectTypo(FuncName, Sema::LookupOrdinaryName,
-                        S.getScopeForContext(S.CurContext), NULL, CCC)) {
+  MemberExpr *ME = dyn_cast<MemberExpr>(Fn);
+  DeclarationName FuncName = FDecl->getDeclName();
+  SourceLocation NameLoc = ME ? ME->getMemberLoc() : Fn->getLocStart();
+  FunctionCallCCC CCC(S, FuncName.getAsIdentifierInfo(), Args.size(), ME);
+
+  if (TypoCorrection Corrected = S.CorrectTypo(
+          DeclarationNameInfo(FuncName, NameLoc), Sema::LookupOrdinaryName,
+          S.getScopeForContext(S.CurContext), NULL, CCC)) {
     if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
       if (Corrected.isOverloaded()) {
-        OverloadCandidateSet OCS(FuncName.getLoc());
+        OverloadCandidateSet OCS(NameLoc);
         OverloadCandidateSet::iterator Best;
         for (TypoCorrection::decl_iterator CD = Corrected.begin(),
                                            CDEnd = Corrected.end();
@@ -4011,7 +4014,7 @@ static TypoCorrection TryTypoCorrectionForCall(Sema &S,
             S.AddOverloadCandidate(FD, DeclAccessPair::make(FD, AS_none), Args,
                                    OCS);
         }
-        switch (OCS.BestViableFunction(S, FuncName.getLoc(), Best)) {
+        switch (OCS.BestViableFunction(S, NameLoc, Best)) {
         case OR_Success:
           ND = Best->Function;
           Corrected.setCorrectionDecl(ND);
@@ -4062,13 +4065,8 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   // arguments for the remaining parameters), don't make the call.
   if (Args.size() < NumParams) {
     if (Args.size() < MinArgs) {
-      MemberExpr *ME = dyn_cast<MemberExpr>(Fn);
       TypoCorrection TC;
-      if (FDecl && (TC = TryTypoCorrectionForCall(
-                        *this, DeclarationNameInfo(FDecl->getDeclName(),
-                                                   (ME ? ME->getMemberLoc()
-                                                       : Fn->getLocStart())),
-                        Args))) {
+      if (FDecl && (TC = TryTypoCorrectionForCall(*this, Fn, FDecl, Args))) {
         unsigned diag_id =
             MinArgs == NumParams && !Proto->isVariadic()
                 ? diag::err_typecheck_call_too_few_args_suggest
@@ -4103,13 +4101,8 @@ Sema::ConvertArgumentsForCall(CallExpr *Call, Expr *Fn,
   // them.
   if (Args.size() > NumParams) {
     if (!Proto->isVariadic()) {
-      MemberExpr *ME = dyn_cast<MemberExpr>(Fn);
       TypoCorrection TC;
-      if (FDecl && (TC = TryTypoCorrectionForCall(
-                        *this, DeclarationNameInfo(FDecl->getDeclName(),
-                                                   (ME ? ME->getMemberLoc()
-                                                       : Fn->getLocStart())),
-                        Args))) {
+      if (FDecl && (TC = TryTypoCorrectionForCall(*this, Fn, FDecl, Args))) {
         unsigned diag_id =
             MinArgs == NumParams && !Proto->isVariadic()
                 ? diag::err_typecheck_call_too_many_args_suggest

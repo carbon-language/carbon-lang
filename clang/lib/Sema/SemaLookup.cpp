@@ -4511,10 +4511,9 @@ bool CorrectionCandidateCallback::ValidateCandidate(const TypoCorrection &candid
 
 FunctionCallFilterCCC::FunctionCallFilterCCC(Sema &SemaRef, unsigned NumArgs,
                                              bool HasExplicitTemplateArgs,
-                                             bool AllowNonStaticMethods)
+                                             MemberExpr *ME)
     : NumArgs(NumArgs), HasExplicitTemplateArgs(HasExplicitTemplateArgs),
-      AllowNonStaticMethods(AllowNonStaticMethods),
-      CurContext(SemaRef.CurContext) {
+      CurContext(SemaRef.CurContext), MemberFn(ME) {
   WantTypeSpecifiers = SemaRef.getLangOpts().CPlusPlus;
   WantRemainingKeywords = false;
 }
@@ -4550,13 +4549,16 @@ bool FunctionCallFilterCCC::ValidateCandidate(const TypoCorrection &candidate) {
                  FD->getMinRequiredArguments() <= NumArgs))
       continue;
 
-    // If the current candidate is a non-static C++ method and non-static
-    // methods are being excluded, then skip the candidate unless the current
-    // DeclContext is a method in the same class or a descendent class of the
-    // candidate's parent class.
+    // If the current candidate is a non-static C++ method, skip the candidate
+    // unless the method being corrected--or the current DeclContext, if the
+    // function being corrected is not a method--is a method in the same class
+    // or a descendent class of the candidate's parent class.
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-      if (!AllowNonStaticMethods && !MD->isStatic()) {
-        CXXMethodDecl *CurMD = dyn_cast_or_null<CXXMethodDecl>(CurContext);
+      if (MemberFn || !MD->isStatic()) {
+        CXXMethodDecl *CurMD =
+            MemberFn
+                ? dyn_cast_or_null<CXXMethodDecl>(MemberFn->getMemberDecl())
+                : dyn_cast_or_null<CXXMethodDecl>(CurContext);
         CXXRecordDecl *CurRD =
             CurMD ? CurMD->getParent()->getCanonicalDecl() : 0;
         CXXRecordDecl *RD = MD->getParent()->getCanonicalDecl();

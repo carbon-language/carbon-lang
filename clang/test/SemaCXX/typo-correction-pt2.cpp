@@ -242,6 +242,28 @@ void func() {
   };
   bar();  // expected-error-re {{use of undeclared identifier 'bar'{{$}}}}
 }
+
+class Thread {
+ public:
+  void Start();
+  static void Stop();  // expected-note {{'Thread::Stop' declared here}}
+};
+
+class Manager {
+ public:
+  void Start(int);  // expected-note {{'Start' declared here}}
+  void Stop(int);  // expected-note {{'Stop' declared here}}
+};
+
+void test(Manager *m) {
+  // Don't suggest Thread::Start as a correction just because it has the same
+  // (unqualified) name and accepts the right number of args; this is a method
+  // call on an object in an unrelated class.
+  m->Start();  // expected-error-re {{too few arguments to function call, expected 1, have 0{{$}}}}
+  m->Stop();  // expected-error-re {{too few arguments to function call, expected 1, have 0{{$}}}}
+  Stop();  // expected-error {{use of undeclared identifier 'Stop'; did you mean 'Thread::Stop'?}}
+}
+
 }
 
 namespace std {

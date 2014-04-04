@@ -10383,7 +10383,8 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
   FunctionCallFilterCCC Validator(SemaRef, Args.size(),
-                                  ExplicitTemplateArgs != 0, false);
+                                  ExplicitTemplateArgs != 0,
+                                  dyn_cast<MemberExpr>(Fn));
   NoTypoCorrectionCCC RejectAll;
   CorrectionCandidateCallback *CCC = AllowTypoCorrection ?
       (CorrectionCandidateCallback*)&Validator :
