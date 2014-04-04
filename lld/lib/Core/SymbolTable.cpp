@@ -132,22 +132,25 @@ static MergeResolution mergeSelect(DefinedAtom::Merge first,
   return mergeCases[first][second];
 }
 
-static uint64_t getSizeFollowReferences(const DefinedAtom *atom, uint32_t kind) {
+static const DefinedAtom *followReference(const DefinedAtom *atom,
+                                          uint32_t kind) {
+  for (const Reference *r : *atom)
+    if (r->kindNamespace() == Reference::KindNamespace::all &&
+        r->kindArch() == Reference::KindArch::all &&
+        r->kindValue() == kind)
+      return cast<const DefinedAtom>(r->target());
+  return nullptr;
+}
+
+static uint64_t getSizeFollowReferences(const DefinedAtom *atom,
+                                        uint32_t kind) {
   uint64_t size = 0;
-redo:
-  while (atom) {
-    for (const Reference *r : *atom) {
-      if (r->kindNamespace() == Reference::KindNamespace::all &&
-          r->kindArch() == Reference::KindArch::all &&
-          r->kindValue() == kind) {
-        atom = cast<DefinedAtom>(r->target());
-        size += atom->size();
-        goto redo;
-      }
-    }
-    break;
+  for (;;) {
+    atom = followReference(atom, kind);
+    if (!atom)
+      return size;
+    size += atom->size();
   }
-  return size;
 }
 
 // Returns the size of the section containing the given atom. Atoms in the same
