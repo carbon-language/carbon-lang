@@ -5404,21 +5404,24 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   }
 
   // GNU Assembler extension (compatibility)
-  if ((Mnemonic == "ldrd" || Mnemonic == "strd") && !isThumb() &&
-      Operands.size() == 4) {
-    ARMOperand *Op = static_cast<ARMOperand *>(Operands[2]);
-    assert(Op->isReg() && "expected register argument");
+  if ((Mnemonic == "ldrd" || Mnemonic == "strd")) {
+    ARMOperand *Op2 = static_cast<ARMOperand *>(Operands[2]);
+    ARMOperand *Op3 = static_cast<ARMOperand *>(Operands[3]);
+    if (Op3->isMem()) {
+      assert(Op2->isReg() && "expected register argument");
 
-    unsigned SuperReg = MRI->getMatchingSuperReg(
-        Op->getReg(), ARM::gsub_0, &MRI->getRegClass(ARM::GPRPairRegClassID));
+      unsigned SuperReg = MRI->getMatchingSuperReg(
+          Op2->getReg(), ARM::gsub_0, &MRI->getRegClass(ARM::GPRPairRegClassID));
 
-    assert(SuperReg && "expected register pair");
+      assert(SuperReg && "expected register pair");
 
-    unsigned PairedReg = MRI->getSubReg(SuperReg, ARM::gsub_1);
+      unsigned PairedReg = MRI->getSubReg(SuperReg, ARM::gsub_1);
 
-    Operands.insert(Operands.begin() + 3,
-                    ARMOperand::CreateReg(PairedReg, Op->getStartLoc(),
-                                          Op->getEndLoc()));
+      Operands.insert(Operands.begin() + 3,
+                      ARMOperand::CreateReg(PairedReg,
+                                            Op2->getStartLoc(),
+                                            Op2->getEndLoc()));
+    }
   }
 
   // FIXME: As said above, this is all a pretty gross hack.  This instruction
