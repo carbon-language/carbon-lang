@@ -20,6 +20,9 @@ def uimm16_64      : Operand<i64> {
   let PrintMethod = "printUnsignedImm";
 }
 
+// Signed Operand
+def simm10_64 : Operand<i64>;
+
 // Transformation Function - get Imm - 32.
 def Subtract32 : SDNodeXForm<imm, [{
   return getImm(N, (unsigned)N->getZExtValue() - 32);
@@ -27,6 +30,11 @@ def Subtract32 : SDNodeXForm<imm, [{
 
 // shamt must fit in 6 bits.
 def immZExt6 : ImmLeaf<i32, [{return Imm == (Imm & 0x3f);}]>;
+
+// Node immediate fits as 10-bit sign extended on target immediate.
+// e.g. seqi, snei
+def immSExt10_64 : PatLeaf<(i64 imm),
+                           [{ return isInt<10>(N->getSExtValue()); }]>;
 
 //===----------------------------------------------------------------------===//
 // Instructions specific format
@@ -254,6 +262,14 @@ class SetCC64_R<string opstr, PatFrag cond_op> :
   let TwoOperandAliasConstraint = "$rd = $rs";
 }
 
+class SetCC64_I<string opstr, PatFrag cond_op>:
+  InstSE<(outs GPR64Opnd:$rt), (ins GPR64Opnd:$rs, simm10_64:$imm10),
+         !strconcat(opstr, "\t$rt, $rs, $imm10"),
+         [(set GPR64Opnd:$rt, (cond_op GPR64Opnd:$rs, immSExt10_64:$imm10))],
+         II_SEQI_SNEI, FrmI, opstr> {
+  let TwoOperandAliasConstraint = "$rt = $rs";
+}
+
 // Unsigned Byte Add
 let Pattern = [(set GPR64Opnd:$rd,
                     (and (add GPR64Opnd:$rs, GPR64Opnd:$rt), 255))] in
@@ -287,7 +303,25 @@ def DPOP  : Count1s<"dpop", GPR64Opnd>, POP_FM<0x2d>;
 
 // Set on equal/not equal
 def SEQ   : SetCC64_R<"seq", seteq>, SEQ_FM<0x2a>;
+def SEQi  : SetCC64_I<"seqi", seteq>, SEQI_FM<0x2e>;
 def SNE   : SetCC64_R<"sne", setne>, SEQ_FM<0x2b>;
+def SNEi  : SetCC64_I<"snei", setne>, SEQI_FM<0x2f>;
+
+// 192-bit × 64-bit Unsigned Multiply and Add
+let Defs = [P0, P1, P2] in
+def V3MULU: ArithLogicR<"v3mulu", GPR64Opnd, 0, II_DMUL>,
+                                  ADD_FM<0x1c, 0x11>;
+
+// 64-bit Unsigned Multiply and Add Move
+let Defs = [MPL0, P0, P1, P2] in
+def VMM0  : ArithLogicR<"vmm0", GPR64Opnd, 0, II_DMUL>,
+                                ADD_FM<0x1c, 0x10>;
+
+// 64-bit Unsigned Multiply and Add
+let Defs = [MPL1, MPL2, P0, P1, P2] in
+def VMULU : ArithLogicR<"vmulu", GPR64Opnd, 0, II_DMUL>,
+                                 ADD_FM<0x1c, 0x0f>;
+
 }
 
 }

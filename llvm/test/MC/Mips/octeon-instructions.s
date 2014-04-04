@@ -29,8 +29,18 @@
 # CHECK: pop   $2, $2                 # encoding: [0x70,0x40,0x10,0x2c]
 # CHECK: seq   $25, $23, $24          # encoding: [0x72,0xf8,0xc8,0x2a]
 # CHECK: seq   $6, $6, $24            # encoding: [0x70,0xd8,0x30,0x2a]
+# CHECK: seqi  $17, $15, -512         # encoding: [0x71,0xf1,0x80,0x2e]
+# CHECK: seqi  $16, $16, 38           # encoding: [0x72,0x10,0x09,0xae]
 # CHECK: sne   $25, $23, $24          # encoding: [0x72,0xf8,0xc8,0x2b]
 # CHECK: sne   $23, $23, $20          # encoding: [0x72,0xf4,0xb8,0x2b]
+# CHECK: snei  $4, $16, -313          # encoding: [0x72,0x04,0xb1,0xef]
+# CHECK: snei  $26, $26, 511          # encoding: [0x73,0x5a,0x7f,0xef]
+# CHECK: v3mulu $21, $10, $21         # encoding: [0x71,0x55,0xa8,0x11]
+# CHECK: v3mulu $20, $20, $10         # encoding: [0x72,0x8a,0xa0,0x11]
+# CHECK: vmm0  $3, $19, $16           # encoding: [0x72,0x70,0x18,0x10]
+# CHECK: vmm0  $ra, $ra, $9           # encoding: [0x73,0xe9,0xf8,0x10]
+# CHECK: vmulu $sp, $10, $17          # encoding: [0x71,0x51,0xe8,0x0f]
+# CHECK: vmulu $27, $27, $6           # encoding: [0x73,0x66,0xd8,0x0f]
 
   baddu $9, $6, $7
   baddu $17, $18, $19
@@ -61,5 +71,15 @@
   pop   $2
   seq   $25, $23, $24
   seq   $6, $24
+  seqi  $17, $15, -512
+  seqi  $16, 38
   sne   $25, $23, $24
   sne   $23, $20
+  snei  $4, $16, -313
+  snei  $26, 511
+  v3mulu $21, $10, $21
+  v3mulu $20, $10
+  vmm0  $3, $19, $16
+  vmm0  $31, $9
+  vmulu $29, $10, $17
+  vmulu $27, $6
