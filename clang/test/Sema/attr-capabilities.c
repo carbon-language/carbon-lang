@@ -51,3 +51,12 @@ void Func24(void) __attribute__((try_acquire_shared_capability(1, GUI))) {}
 
 void Func25(void) __attribute__((try_acquire_capability())) {} // expected-error {{'try_acquire_capability' attribute takes at least 1 argument}}
 void Func26(void) __attribute__((try_acquire_shared_capability())) {} // expected-error {{'try_acquire_shared_capability' attribute takes at least 1 argument}}
+
+// Test that boolean logic works with capability attributes
+void Func27(void) __attribute__((requires_capability(!GUI)));
+void Func28(void) __attribute__((requires_capability(GUI && Worker)));
+void Func29(void) __attribute__((requires_capability(GUI || Worker)));
+void Func30(void) __attribute__((requires_capability((Worker || Worker) && !GUI)));
+
+int AlsoNotACapability;
+void Func31(void) __attribute__((requires_capability(GUI && AlsoNotACapability))); // expected-warning {{'requires_capability' attribute requires arguments whose type is annotated with 'capability' attribute; type here is 'int'}}

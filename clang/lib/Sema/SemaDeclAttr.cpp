@@ -363,8 +363,7 @@ static const RecordType *getRecordType(QualType QT) {
   return 0;
 }
 
-static bool checkRecordTypeForCapability(Sema &S, const AttributeList &Attr,
-                                         QualType Ty) {
+static bool checkRecordTypeForCapability(Sema &S, QualType Ty) {
   const RecordType *RT = getRecordType(Ty);
 
   if (!RT)
@@ -397,8 +396,7 @@ static bool checkRecordTypeForCapability(Sema &S, const AttributeList &Attr,
   return false;
 }
 
-static bool checkTypedefTypeForCapability(Sema &S, const AttributeList &Attr,
-                                          QualType Ty) {
+static bool checkTypedefTypeForCapability(QualType Ty) {
   const auto *TD = Ty->getAs<TypedefType>();
   if (!TD)
     return false;
@@ -410,18 +408,40 @@ static bool checkTypedefTypeForCapability(Sema &S, const AttributeList &Attr,
   return TN->hasAttr<CapabilityAttr>();
 }
 
-/// \brief Checks that the passed in type is qualified as a capability. This
-/// type can either be a struct, or a typedef to a built-in type (such as int).
-static void checkForCapability(Sema &S, const AttributeList &Attr,
-                               QualType Ty) {
-  if (checkTypedefTypeForCapability(S, Attr, Ty))
-    return;
+static bool typeHasCapability(Sema &S, QualType Ty) {
+  if (checkTypedefTypeForCapability(Ty))
+    return true;
 
-  if (checkRecordTypeForCapability(S, Attr, Ty))
-    return;
+  if (checkRecordTypeForCapability(S, Ty))
+    return true;
 
-  S.Diag(Attr.getLoc(), diag::warn_thread_attribute_argument_not_lockable)
-    << Attr.getName() << Ty;
+  return false;
+}
+
+static bool isCapabilityExpr(Sema &S, const Expr *Ex) {
+  // Capability expressions are simple expressions involving the boolean logic
+  // operators &&, || or !, a simple DeclRefExpr, CastExpr or a ParenExpr. Once
+  // a DeclRefExpr is found, its type should be checked to determine whether it
+  // is a capability or not.
+
+  if (const auto *E = dyn_cast<DeclRefExpr>(Ex))
+    return typeHasCapability(S, E->getType());
+  else if (const auto *E = dyn_cast<CastExpr>(Ex))
+    return isCapabilityExpr(S, E->getSubExpr());
+  else if (const auto *E = dyn_cast<ParenExpr>(Ex))
+    return isCapabilityExpr(S, E->getSubExpr());
+  else if (const auto *E = dyn_cast<UnaryOperator>(Ex)) {
+    if (E->getOpcode() == UO_LNot)
+      return isCapabilityExpr(S, E->getSubExpr());
+    return false;
+  } else if (const auto *E = dyn_cast<BinaryOperator>(Ex)) {
+    if (E->getOpcode() == BO_LAnd || E->getOpcode() == BO_LOr)
+      return isCapabilityExpr(S, E->getLHS()) &&
+             isCapabilityExpr(S, E->getRHS());
+    return false;
+  }
+
+  return false;
 }
 
 /// \brief Checks that all attribute arguments, starting from Sidx, resolve to
@@ -491,7 +511,13 @@ static void checkAttrArgsAreCapabilityObjs(Sema &S, Decl *D,
       }
     }
 
-    checkForCapability(S, Attr, ArgTy);
+    // If the type does not have a capability, see if the components of the
+    // expression have capabilities. This allows for writing C code where the
+    // capability may be on the type, and the expression is a capability
+    // boolean logic expression. Eg) requires_capability(A || B && !C)
+    if (!typeHasCapability(S, ArgTy) && !isCapabilityExpr(S, ArgExp))
+      S.Diag(Attr.getLoc(), diag::warn_thread_attribute_argument_not_lockable)
+          << Attr.getName() << ArgTy;
 
     Args.push_back(ArgExp);
   }
