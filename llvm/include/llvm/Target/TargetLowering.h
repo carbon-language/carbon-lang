@@ -1905,6 +1905,7 @@ public:
   /// This method can be implemented by targets that want to expose additional
   /// information about sign bits to the DAG Combiner.
   virtual unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
+                                                   const SelectionDAG &DAG,
                                                    unsigned Depth = 0) const;
 
   struct DAGCombinerInfo {

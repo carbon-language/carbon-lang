@@ -626,6 +626,7 @@ namespace llvm {
     // ComputeNumSignBitsForTargetNode - Determine the number of bits in the
     // operation that are sign bits.
     unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
+                                             const SelectionDAG &DAG,
                                              unsigned Depth) const override;
 
     bool isGAPlusOffset(SDNode *N, const GlobalValue* &GA,
