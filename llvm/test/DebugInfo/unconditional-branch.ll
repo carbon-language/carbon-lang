@@ -1,8 +1,12 @@
 ; REQUIRES: object-emission
 ; PR 19261
 
-; FIXME: It is broken for targeting x86_64-cygming.
-; RUN: llc -mtriple=x86_64-unknown-unknown -fast-isel=false -O0 -filetype=obj %s -o %t
+; RUN: %llc_dwarf -fast-isel=false -O0 -filetype=obj %s -o %t
+; RUN: llvm-dwarfdump %t | FileCheck %s
+
+; FIXME: Investigating.
+; XFAIL: *
+; RUN: llc -mtriple=x86_64-mingw32 -fast-isel=false -O0 -filetype=obj %s -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
 ; CHECK: {{0x[0-9a-f]+}}      1      0      1   0             0  is_stmt
