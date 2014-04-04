@@ -265,28 +265,22 @@ void SymbolTable::addByName(const Atom &newAtom) {
     bool sameNullness =
         (curShLib->canBeNullAtRuntime() == newShLib->canBeNullAtRuntime());
     bool sameName = curShLib->loadName().equals(newShLib->loadName());
-    if (!sameName) {
-      useNew = false;
-      if (_context.warnIfCoalesableAtomsHaveDifferentLoadName()) {
-        // FIXME: need diagonstics interface for writing warning messages
-        llvm::errs() << "lld warning: shared library symbol "
-                     << curShLib->name() << " has different load path in "
-                     << curShLib->file().path() << " and in "
-                     << newShLib->file().path();
-      }
-    } else if (!sameNullness) {
-      useNew = false;
-      if (_context.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
-        // FIXME: need diagonstics interface for writing warning messages
-        llvm::errs() << "lld warning: shared library symbol "
-                     << curShLib->name() << " has different weakness in "
-                     << curShLib->file().path() << " and in "
-                     << newShLib->file().path();
-      }
-    } else {
-      // Both shlib atoms are identical and can be coalesced.
-      useNew = false;
+    if (sameName && !sameNullness &&
+        _context.warnIfCoalesableAtomsHaveDifferentCanBeNull()) {
+      // FIXME: need diagonstics interface for writing warning messages
+      llvm::errs() << "lld warning: shared library symbol "
+                   << curShLib->name() << " has different weakness in "
+                   << curShLib->file().path() << " and in "
+                   << newShLib->file().path();
     }
+    if (!sameName && _context.warnIfCoalesableAtomsHaveDifferentLoadName()) {
+      // FIXME: need diagonstics interface for writing warning messages
+      llvm::errs() << "lld warning: shared library symbol "
+                   << curShLib->name() << " has different load path in "
+                   << curShLib->file().path() << " and in "
+                   << newShLib->file().path();
+    }
+    useNew = false;
     break;
   }
   case NCR_Error:
