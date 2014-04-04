@@ -417,3 +417,15 @@ void test26(int si, long sl) {
   si = si / sl;
   si = sl / si; // expected-warning {{implicit conversion loses integer precision: 'long' to 'int'}}
 }
+
+// rdar://16502418
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+typedef __attribute__ ((ext_vector_type(16),__aligned__(32))) uint16_t ushort16;
+typedef __attribute__ ((ext_vector_type( 8),__aligned__( 32))) uint32_t uint8;
+
+void test27(ushort16 constants) {
+    uint8 pairedConstants = (uint8) constants;
+    ushort16 crCbScale = pairedConstants.s4; // expected-warning {{implicit conversion loses integer precision: 'uint32_t' (aka 'unsigned int') to 'unsigned short'}}
+    ushort16 brBias = pairedConstants.s6; // expected-warning {{implicit conversion loses integer precision: 'uint32_t' (aka 'unsigned int') to 'unsigned short'}}
+}
