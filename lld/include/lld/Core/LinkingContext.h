@@ -217,7 +217,7 @@ public:
   void setInputGraph(std::unique_ptr<InputGraph> inputGraph) {
     _inputGraph = std::move(inputGraph);
   }
-  InputGraph &inputGraph() const { return *_inputGraph; }
+  InputGraph &getInputGraph() const { return *_inputGraph; }
 
   /// This method adds undefined symbols specified by the -u option to the to
   /// the list of undefined symbols known to the linker. This option essentially

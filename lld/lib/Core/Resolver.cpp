@@ -65,7 +65,7 @@ void Resolver::handleFile(const File &file) {
   // Notify the input file manager of the fact that we have made some progress
   // on linking using the current input file. It may want to know the fact for
   // --start-group/--end-group.
-  _context.inputGraph().notifyProgress();
+  _context.getInputGraph().notifyProgress();
 }
 
 void Resolver::forEachUndefines(UndefCallback callback,
@@ -260,19 +260,18 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom *> &newAtoms) {
     doDefinedAtom(*newAtom);
 }
 
-// Keep adding atoms until _context.nextFile() returns an error. This function
-// is where undefined atoms are resolved.
+// Keep adding atoms until _context.getNextFile() returns an error. This
+// function is where undefined atoms are resolved.
 bool Resolver::resolveUndefines() {
   ScopedTask task(getDefaultDomain(), "resolveUndefines");
 
   for (;;) {
-    ErrorOr<File &> file = _context.inputGraph().nextFile();
+    ErrorOr<File &> file = _context.getInputGraph().getNextFile();
     error_code ec = file.getError();
     if (ec == InputGraphError::no_more_files)
       return true;
     if (!file) {
-      llvm::errs() << "Error occurred in nextFile: "
-                   << ec.message() << "\n";
+      llvm::errs() << "Error occurred in getNextFile: " << ec.message() << "\n";
       return false;
     }
 

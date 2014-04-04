@@ -531,7 +531,7 @@ static bool createManifest(PECOFFLinkingContext &ctx, raw_ostream &diag) {
       return false;
     std::unique_ptr<InputElement> inputElement(
         new PECOFFFileNode(ctx, ctx.allocate(resourceFilePath)));
-    ctx.inputGraph().addInputElement(std::move(inputElement));
+    ctx.getInputGraph().addInputElement(std::move(inputElement));
     return true;
   }
   return createSideBySideManifestFile(ctx, diag);
@@ -1241,14 +1241,14 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     if (isReadingDirectiveSection)
       if (file->parse(ctx, diag))
         return false;
-    ctx.inputGraph().addInputElement(std::move(file));
+    ctx.getInputGraph().addInputElement(std::move(file));
   }
 
   // Add the library group to the input graph.
   if (!isReadingDirectiveSection) {
     auto group = std::unique_ptr<Group>(new PECOFFGroup(ctx));
     ctx.setLibraryGroup(group.get());
-    ctx.inputGraph().addInputElement(std::move(group));
+    ctx.getInputGraph().addInputElement(std::move(group));
   }
 
   // Add the library files to the library group.

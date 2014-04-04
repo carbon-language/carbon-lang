@@ -54,12 +54,12 @@ public:
   /// \brief Initialize the inputgraph
   InputGraph() : _nextElementIndex(0), _currentInputElement(nullptr) {}
 
-  /// nextFile returns the next file that needs to be processed by the resolver.
-  /// When there are no more files to be processed, an appropriate
-  /// InputGraphError is returned. Ordinals are assigned to files returned by
-  /// nextFile, which means ordinals would be assigned in the way files are
-  /// resolved.
-  ErrorOr<File &> nextFile();
+  /// getNextFile returns the next file that needs to be processed by
+  /// the resolver. When there are no more files to be processed, an
+  /// appropriate InputGraphError is returned. Ordinals are assigned
+  /// to files returned by getNextFile, which means ordinals would be
+  /// assigned in the way files are resolved.
+  ErrorOr<File &> getNextFile();
 
   /// Notifies the current input element of Resolver made some progress on
   /// resolving undefined symbols using the current file. Group (representing

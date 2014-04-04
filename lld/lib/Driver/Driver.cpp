@@ -44,7 +44,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
     args[numArgs + 1] = 0;
     llvm::cl::ParseCommandLineOptions(numArgs + 1, args);
   }
-  InputGraph &inputGraph = context.inputGraph();
+  InputGraph &inputGraph = context.getInputGraph();
   if (!inputGraph.size())
     return false;
 
@@ -95,8 +95,8 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   context.createImplicitFiles(implicitFiles);
   if (implicitFiles.size())
     fileNode->addFiles(std::move(implicitFiles));
-  context.inputGraph().insertElementAt(std::move(fileNode),
-                                       InputGraph::Position::BEGIN);
+  context.getInputGraph().insertElementAt(std::move(fileNode),
+                                          InputGraph::Position::BEGIN);
 
   // Do core linking.
   ScopedTask resolveTask(getDefaultDomain(), "Resolve");

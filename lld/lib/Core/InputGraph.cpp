@@ -15,9 +15,9 @@
 
 using namespace lld;
 
-ErrorOr<File &> InputGraph::nextFile() {
-  // When nextFile() is called for the first time, _currentInputElement is not
-  // initialized. Initialize it with the first element of the input graph.
+ErrorOr<File &> InputGraph::getNextFile() {
+  // When getNextFile() is called for the first time, _currentInputElement is
+  // not initialized. Initialize it with the first element of the input graph.
   if (_currentInputElement == nullptr) {
     ErrorOr<InputElement *> elem = getNextInputElement();
     if (elem.getError() == InputGraphError::no_more_elements)
