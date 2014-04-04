@@ -258,8 +258,8 @@ public:
             return 0;
         }
 
-        llvm::SmallVector<const char *, 8> names;
-        llvm::SmallVector<clang::TemplateArgument, 8> args;        
+        llvm::SmallVector<const char *, 2> names;
+        llvm::SmallVector<clang::TemplateArgument, 2> args;
     };
 
     clang::FunctionTemplateDecl *

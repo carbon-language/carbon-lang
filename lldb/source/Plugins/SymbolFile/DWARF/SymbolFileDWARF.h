@@ -368,9 +368,10 @@ protected:
                                 lldb_private::TypeList* type_list,
                                 std::vector<lldb_private::ClangASTType>& function_args,
                                 std::vector<clang::ParmVarDecl*>& function_param_decls,
-                                unsigned &type_quals,
-                                lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos);
-
+                                unsigned &type_quals);
+                                // lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos); // not currently needed
+    
+    
     size_t                  ParseChildEnumerators(
                                 const lldb_private::SymbolContext& sc,
                                 lldb_private::ClangASTType &clang_type,
@@ -546,7 +547,7 @@ protected:
                                 const DWARFDebugInfoEntry *src_class_die,
                                 DWARFCompileUnit* dst_cu,
                                 const DWARFDebugInfoEntry *dst_class_die,
-                                llvm::SmallVectorImpl <const DWARFDebugInfoEntry *> &failures);
+                                DWARFDIECollection &failures);
 
     bool
     FixupAddress (lldb_private::Address &addr);
