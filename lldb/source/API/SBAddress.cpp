@@ -127,13 +127,15 @@ SBAddress::GetLoadAddress (const SBTarget &target) const
             addr = m_opaque_ap->GetLoadAddress (target_sp.get());
         }
     }
-    
+
     if (log)
     {
         if (addr == LLDB_INVALID_ADDRESS)
-            log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => LLDB_INVALID_ADDRESS", target_sp.get());
+            log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => LLDB_INVALID_ADDRESS",
+                         static_cast<void*>(target_sp.get()));
         else
-            log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => 0x%" PRIx64, target_sp.get(), addr);
+            log->Printf ("SBAddress::GetLoadAddress (SBTarget(%p)) => 0x%" PRIx64,
+                         static_cast<void*>(target_sp.get()), addr);
     }
 
     return addr;

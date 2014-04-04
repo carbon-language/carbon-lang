@@ -632,7 +632,8 @@ DynamicRegisterInfo::Dump () const
 {
     StreamFile s(stdout, false);
     const size_t num_regs = m_regs.size();
-    s.Printf("%p: DynamicRegisterInfo contains %" PRIu64 " registers:\n", this, (uint64_t)num_regs);
+    s.Printf("%p: DynamicRegisterInfo contains %" PRIu64 " registers:\n",
+             static_cast<const void*>(this), static_cast<uint64_t>(num_regs));
     for (size_t i=0; i<num_regs; ++i)
     {
         s.Printf("[%3" PRIu64 "] name = %-10s", (uint64_t)i, m_regs[i].name);
@@ -671,9 +672,10 @@ DynamicRegisterInfo::Dump () const
         }
         s.EOL();
     }
-    
+
     const size_t num_sets = m_sets.size();
-    s.Printf("%p: DynamicRegisterInfo contains %" PRIu64 " register sets:\n", this, (uint64_t)num_sets);
+    s.Printf("%p: DynamicRegisterInfo contains %" PRIu64 " register sets:\n",
+             static_cast<const void*>(this), static_cast<uint64_t>(num_sets));
     for (size_t i=0; i<num_sets; ++i)
     {
         s.Printf("set[%" PRIu64 "] name = %s, regs = [", (uint64_t)i, m_sets[i].name);

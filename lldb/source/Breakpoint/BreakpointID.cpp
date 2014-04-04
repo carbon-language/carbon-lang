@@ -71,7 +71,7 @@ void
 BreakpointID::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     if (level == eDescriptionLevelVerbose)
-        s->Printf("%p BreakpointID:", this);
+        s->Printf("%p BreakpointID:", static_cast<void*>(this));
 
     if (m_break_id == LLDB_INVALID_BREAK_ID)
         s->PutCString ("<invalid>");

@@ -72,7 +72,9 @@ SBFileSpec::Exists () const
     bool result = m_opaque_ap->Exists();
 
     if (log)
-        log->Printf ("SBFileSpec(%p)::Exists () => %s", m_opaque_ap.get(), (result ? "true" : "false"));
+        log->Printf ("SBFileSpec(%p)::Exists () => %s",
+                     static_cast<void*>(m_opaque_ap.get()),
+                     (result ? "true" : "false"));
 
     return result;
 }
@@ -98,9 +100,11 @@ SBFileSpec::GetFilename() const
     if (log)
     {
         if (s)
-            log->Printf ("SBFileSpec(%p)::GetFilename () => \"%s\"", m_opaque_ap.get(), s);
+            log->Printf ("SBFileSpec(%p)::GetFilename () => \"%s\"",
+                         static_cast<void*>(m_opaque_ap.get()), s);
         else
-            log->Printf ("SBFileSpec(%p)::GetFilename () => NULL", m_opaque_ap.get());
+            log->Printf ("SBFileSpec(%p)::GetFilename () => NULL",
+                         static_cast<void*>(m_opaque_ap.get()));
     }
 
     return s;
@@ -114,9 +118,11 @@ SBFileSpec::GetDirectory() const
     if (log)
     {
         if (s)
-            log->Printf ("SBFileSpec(%p)::GetDirectory () => \"%s\"", m_opaque_ap.get(), s);
+            log->Printf ("SBFileSpec(%p)::GetDirectory () => \"%s\"",
+                         static_cast<void*>(m_opaque_ap.get()), s);
         else
-            log->Printf ("SBFileSpec(%p)::GetDirectory () => NULL", m_opaque_ap.get());
+            log->Printf ("SBFileSpec(%p)::GetDirectory () => NULL",
+                         static_cast<void*>(m_opaque_ap.get()));
     }
     return s;
 }
@@ -148,7 +154,8 @@ SBFileSpec::GetPath (char *dst_path, size_t dst_len) const
 
     if (log)
         log->Printf ("SBFileSpec(%p)::GetPath (dst_path=\"%.*s\", dst_len=%" PRIu64 ") => %u",
-                     m_opaque_ap.get(), result, dst_path, (uint64_t)dst_len, result);
+                     static_cast<void*>(m_opaque_ap.get()), result, dst_path,
+                     static_cast<uint64_t>(dst_len), result);
 
     if (result == 0 && dst_path && dst_len > 0)
         *dst_path = '\0';

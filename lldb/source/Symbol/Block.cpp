@@ -83,9 +83,9 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
         }
     }
 
-    s->Printf("%p: ", this);
+    s->Printf("%p: ", static_cast<const void*>(this));
     s->Indent();
-    *s << "Block" << ((const UserID&)*this);
+    *s << "Block" << static_cast<const UserID&>(*this);
     const Block* parent_block = GetParent();
     if (parent_block)
     {
@@ -100,7 +100,7 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
     if (!m_ranges.IsEmpty())
     {
         *s << ", ranges =";
-        
+
         size_t num_ranges = m_ranges.GetSize();
         for (size_t i=0; i<num_ranges; ++i)
         {

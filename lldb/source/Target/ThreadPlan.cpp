@@ -161,16 +161,11 @@ ThreadPlan::WillResume (StateType resume_state, bool current_plan)
             addr_t fp = reg_ctx->GetFP();
             log->Printf("%s Thread #%u (0x%p): tid = 0x%4.4" PRIx64 ", pc = 0x%8.8" PRIx64 ", sp = 0x%8.8" PRIx64 ", fp = 0x%8.8" PRIx64 ", "
                         "plan = '%s', state = %s, stop others = %d", 
-                        __FUNCTION__,
-                        m_thread.GetIndexID(),
-                        &m_thread,
-                        m_thread.GetID(),  
-                        (uint64_t)pc,
-                        (uint64_t)sp,
-                        (uint64_t)fp,
-                        m_name.c_str(), 
-                        StateAsCString(resume_state), 
-                        StopOthers());
+                        __FUNCTION__, m_thread.GetIndexID(),
+                        static_cast<void*>(&m_thread), m_thread.GetID(),
+                        static_cast<uint64_t>(pc), static_cast<uint64_t>(sp),
+                        static_cast<uint64_t>(fp), m_name.c_str(),
+                        StateAsCString(resume_state), StopOthers());
         }
     }
     return DoWillResume (resume_state, current_plan);

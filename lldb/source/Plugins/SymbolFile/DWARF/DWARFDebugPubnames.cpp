@@ -66,11 +66,12 @@ DWARFDebugPubnames::GeneratePubnames(SymbolFileDWARF* dwarf2Data)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "DWARFDebugPubnames::GeneratePubnames (data = %p)",
-                        dwarf2Data);
+                        static_cast<void*>(dwarf2Data));
 
     Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_PUBNAMES));
     if (log)
-        log->Printf("DWARFDebugPubnames::GeneratePubnames (data = %p)", dwarf2Data);
+        log->Printf("DWARFDebugPubnames::GeneratePubnames (data = %p)",
+                    static_cast<void*>(dwarf2Data));
 
     m_sets.clear();
     DWARFDebugInfo* debug_info = dwarf2Data->DebugInfo();

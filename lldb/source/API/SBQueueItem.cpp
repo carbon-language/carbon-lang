@@ -49,7 +49,9 @@ SBQueueItem::IsValid() const
     bool is_valid = m_queue_item_sp.get() != NULL;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf("SBQueueItem(%p)::IsValid() == %s", m_queue_item_sp.get(), is_valid ? "true" : "false");
+        log->Printf("SBQueueItem(%p)::IsValid() == %s",
+                    static_cast<void*>(m_queue_item_sp.get()),
+                    is_valid ? "true" : "false");
     return is_valid;
 }
 
@@ -59,7 +61,8 @@ SBQueueItem::Clear ()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf("SBQueueItem(%p)::Clear()", m_queue_item_sp.get());
+        log->Printf("SBQueueItem(%p)::Clear()",
+                    static_cast<void*>(m_queue_item_sp.get()));
     m_queue_item_sp.reset();
 }
 
@@ -81,7 +84,9 @@ SBQueueItem::GetKind () const
         result = m_queue_item_sp->GetKind ();
     }
     if (log)
-        log->Printf("SBQueueItem(%p)::GetKind() == %d", m_queue_item_sp.get(), (int) result);
+        log->Printf("SBQueueItem(%p)::GetKind() == %d",
+                    static_cast<void*>(m_queue_item_sp.get()),
+                    static_cast<int>(result));
     return result;
 }
 
@@ -110,7 +115,8 @@ SBQueueItem::GetAddress () const
         if (addr)
             addr->Dump (&sstr, NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
         log->Printf ("SBQueueItem(%p)::GetAddress() == SBAddress(%p): %s",
-                     m_queue_item_sp.get(), result.get(), sstr.GetData());
+                     static_cast<void*>(m_queue_item_sp.get()),
+                     static_cast<void*>(result.get()), sstr.GetData());
     }
     return result;
 }
@@ -149,7 +155,11 @@ SBQueueItem::GetExtendedBacktraceThread (const char *type)
                     const char *queue_name = thread_sp->GetQueueName();
                     if (queue_name == NULL)
                         queue_name = "";
-                    log->Printf ("SBQueueItem(%p)::GetExtendedBacktraceThread() = new extended Thread created (%p) with queue_id 0x%" PRIx64 " queue name '%s'", m_queue_item_sp.get(), thread_sp.get(), (uint64_t) thread_sp->GetQueueID(), queue_name);
+                    log->Printf ("SBQueueItem(%p)::GetExtendedBacktraceThread() = new extended Thread created (%p) with queue_id 0x%" PRIx64 " queue name '%s'",
+                                 static_cast<void*>(m_queue_item_sp.get()),
+                                 static_cast<void*>(thread_sp.get()),
+                                 static_cast<uint64_t>(thread_sp->GetQueueID()),
+                                 queue_name);
                 }
             }
         }

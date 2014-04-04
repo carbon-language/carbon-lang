@@ -34,21 +34,23 @@ Listener::Listener(const char *name) :
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
-        log->Printf ("%p Listener::Listener('%s')", this, m_name.c_str());
+        log->Printf ("%p Listener::Listener('%s')",
+                     static_cast<void*>(this), m_name.c_str());
 }
 
 Listener::~Listener()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     Mutex::Locker locker (m_broadcasters_mutex);
-    
+
     size_t num_managers = m_broadcaster_managers.size();
-    
+
     for (size_t i = 0; i < num_managers; i++)
         m_broadcaster_managers[i]->RemoveListener(*this);
-        
+
     if (log)
-        log->Printf ("%p Listener::~Listener('%s')", this, m_name.c_str());
+        log->Printf ("%p Listener::~Listener('%s')",
+                     static_cast<void*>(this), m_name.c_str());
     Clear();
 }
 
@@ -87,11 +89,9 @@ Listener::StartListeningForEvents (Broadcaster* broadcaster, uint32_t event_mask
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
         if (log)
             log->Printf ("%p Listener::StartListeningForEvents (broadcaster = %p, mask = 0x%8.8x) acquired_mask = 0x%8.8x for %s",
-                         this,
-                         broadcaster,
-                         event_mask,
-                         acquired_mask,
-                         m_name.c_str());
+                         static_cast<void*>(this),
+                         static_cast<void*>(broadcaster), event_mask,
+                         acquired_mask, m_name.c_str());
 
         return acquired_mask;
 
@@ -115,8 +115,14 @@ Listener::StartListeningForEvents (Broadcaster* broadcaster, uint32_t event_mask
 
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
         if (log)
+        {
+            void **pointer = reinterpret_cast<void**>(&callback);
             log->Printf ("%p Listener::StartListeningForEvents (broadcaster = %p, mask = 0x%8.8x, callback = %p, user_data = %p) acquired_mask = 0x%8.8x for %s",
-                        this, broadcaster, event_mask, callback, callback_user_data, acquired_mask, m_name.c_str());
+                         static_cast<void*>(this),
+                         static_cast<void*>(broadcaster), event_mask, *pointer,
+                         static_cast<void*>(callback_user_data), acquired_mask,
+                         m_name.c_str());
+        }
 
         return acquired_mask;
     }
@@ -185,7 +191,9 @@ Listener::AddEvent (EventSP &event_sp)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS));
     if (log)
-        log->Printf ("%p Listener('%s')::AddEvent (event_sp = {%p})", this, m_name.c_str(), event_sp.get());
+        log->Printf ("%p Listener('%s')::AddEvent (event_sp = {%p})",
+                     static_cast<void*>(this), m_name.c_str(),
+                     static_cast<void*>(event_sp.get()));
 
     // Scope for "locker"
     {
@@ -292,17 +300,14 @@ Listener::FindNextEventInternal
     if (pos != m_events.end())
     {
         event_sp = *pos;
-        
+
         if (log)
             log->Printf ("%p '%s' Listener::FindNextEventInternal(broadcaster=%p, broadcaster_names=%p[%u], event_type_mask=0x%8.8x, remove=%i) event %p",
-                         this,
-                         GetName(),
-                         broadcaster,
-                         broadcaster_names,
-                         num_broadcaster_names,
-                         event_type_mask,
-                         remove,
-                         event_sp.get());
+                         static_cast<void*>(this), GetName(),
+                         static_cast<void*>(broadcaster),
+                         static_cast<const void*>(broadcaster_names),
+                         num_broadcaster_names, event_type_mask, remove,
+                         static_cast<void*>(event_sp.get()));
 
         if (remove)
         {
@@ -311,16 +316,16 @@ Listener::FindNextEventInternal
             if (m_events.empty())
                 m_cond_wait.SetValue (false, eBroadcastNever);
         }
-        
+
         // Unlock the event queue here.  We've removed this event and are about to return
         // it so it should be okay to get the next event off the queue here - and it might
         // be useful to do that in the "DoOnRemoval".
         lock.Unlock();
-        
+
         // Don't call DoOnRemoval if you aren't removing the event...
         if (remove)
             event_sp->DoOnRemoval();
-            
+
         return true;
     }
 
@@ -404,10 +409,9 @@ Listener::WaitForEventsInternal
     bool timed_out = false;
 
     if (log)
-    {
         log->Printf ("%p Listener::WaitForEventsInternal (timeout = { %p }) for %s",
-                    this, timeout, m_name.c_str());
-    }
+                     static_cast<void*>(this), static_cast<const void*>(timeout),
+                     m_name.c_str());
 
     while (1)
     {
@@ -421,7 +425,7 @@ Listener::WaitForEventsInternal
             // added that might meet our current filter
             // But first poll for any new event that might satisfy our condition, and if so consume it,
             // otherwise wait.
-            
+
             Mutex::Locker event_locker(m_events_mutex);
             const bool remove = false;
             if (FindNextEventInternal (broadcaster, broadcaster_names, num_broadcaster_names, event_type_mask, event_sp, remove))
@@ -437,14 +441,16 @@ Listener::WaitForEventsInternal
         {
             log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS);
             if (log)
-                log->Printf ("%p Listener::WaitForEventsInternal() timed out for %s", this, m_name.c_str());
+                log->Printf ("%p Listener::WaitForEventsInternal() timed out for %s",
+                             static_cast<void*>(this), m_name.c_str());
             break;
         }
         else
         {
             log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EVENTS);
             if (log)
-                log->Printf ("%p Listener::WaitForEventsInternal() unknown error for %s", this, m_name.c_str());
+                log->Printf ("%p Listener::WaitForEventsInternal() unknown error for %s",
+                             static_cast<void*>(this), m_name.c_str());
             break;
         }
     }

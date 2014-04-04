@@ -309,57 +309,56 @@ ClangExpressionDeclMap::AddValueToStruct
 {
     assert (m_struct_vars.get());
     assert (m_parser_vars.get());
-    
+
     bool is_persistent_variable = false;
-    
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
+
     m_struct_vars->m_struct_laid_out = false;
-    
+
     if (m_struct_members.GetVariable(decl, GetParserID()))
         return true;
-    
+
     ClangExpressionVariableSP var_sp (m_found_entities.GetVariable(decl, GetParserID()));
-    
+
     if (!var_sp)
     {
         var_sp = m_parser_vars->m_persistent_vars->GetVariable(decl, GetParserID());
         is_persistent_variable = true;
     }
-    
+
     if (!var_sp)
         return false;
-    
+
     if (log)
         log->Printf("Adding value for (NamedDecl*)%p [%s - %s] to the structure",
-                    decl,
-                    name.GetCString(),
+                    static_cast<const void*>(decl), name.GetCString(),
                     var_sp->GetName().GetCString());
-    
+
     // We know entity->m_parser_vars is valid because we used a parser variable
     // to find it
-    
+
     ClangExpressionVariable::ParserVars *parser_vars = var_sp->GetParserVars(GetParserID());
 
     parser_vars->m_llvm_value = value;
-    
+
     if (ClangExpressionVariable::JITVars *jit_vars = var_sp->GetJITVars(GetParserID()))
     {
         // We already laid this out; do not touch
-        
+
         if (log)
             log->Printf("Already placed at 0x%llx", (unsigned long long)jit_vars->m_offset);
     }
-    
+
     var_sp->EnableJITVars(GetParserID());
-    
+
     ClangExpressionVariable::JITVars *jit_vars = var_sp->GetJITVars(GetParserID());
 
     jit_vars->m_alignment = alignment;
     jit_vars->m_size = size;
-    
+
     m_struct_members.AddVariable(var_sp);
-    
+
     if (m_parser_vars->m_materializer)
     {
         uint32_t offset = 0;
@@ -379,16 +378,16 @@ ClangExpressionDeclMap::AddValueToStruct
             else if (parser_vars->m_lldb_var)
                 offset = m_parser_vars->m_materializer->AddVariable(parser_vars->m_lldb_var, err);
         }
-        
+
         if (!err.Success())
             return false;
-        
+
         if (log)
             log->Printf("Placed at 0x%llx", (unsigned long long)offset);
-        
+
         jit_vars->m_offset = offset; // TODO DoStructLayout() should not change this.
     }
-    
+
     return true;
 }
 
@@ -866,23 +865,23 @@ void
 ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
 {
     assert (m_ast_context);
-    
+
     ClangASTMetrics::RegisterVisibleQuery();
-    
+
     const ConstString name(context.m_decl_name.getAsString().c_str());
-    
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
+
     if (GetImportInProgress())
     {
         if (log && log->GetVerbose())
             log->Printf("Ignoring a query during an import");
         return;
     }
-    
+
     static unsigned int invocation_id = 0;
     unsigned int current_id = invocation_id++;
-    
+
     if (log)
     {
         if (!context.m_decl_context)
@@ -892,20 +891,19 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
         else
             log->Printf("ClangExpressionDeclMap::FindExternalVisibleDecls[%u] for '%s' in a '%s'", current_id, name.GetCString(), context.m_decl_context->getDeclKindName());
     }
-            
+
     if (const NamespaceDecl *namespace_context = dyn_cast<NamespaceDecl>(context.m_decl_context))
     {
         ClangASTImporter::NamespaceMapSP namespace_map = m_ast_importer->GetNamespaceMap(namespace_context);
-        
+
         if (log && log->GetVerbose())
             log->Printf("  CEDM::FEVD[%u] Inspecting (NamespaceMap*)%p (%d entries)", 
-                        current_id, 
-                        namespace_map.get(), 
+                        current_id, static_cast<void*>(namespace_map.get()),
                         (int)namespace_map->size());
-        
+
         if (!namespace_map)
             return;
-        
+
         for (ClangASTImporter::NamespaceMap::iterator i = namespace_map->begin(), e = namespace_map->end();
              i != e;
              ++i)
@@ -915,7 +913,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
                             current_id,
                             i->second.GetNamespaceDecl()->getNameAsString().c_str(),
                             i->first->GetFileSpec().GetFilename().GetCString());
-                
+
             FindExternalVisibleDecls(context,
                                      i->first,
                                      i->second,
@@ -925,16 +923,16 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context)
     else if (isa<TranslationUnitDecl>(context.m_decl_context))
     {
         ClangNamespaceDecl namespace_decl;
-        
+
         if (log)
             log->Printf("  CEDM::FEVD[%u] Searching the root namespace", current_id);
-        
+
         FindExternalVisibleDecls(context,
                                  lldb::ModuleSP(),
                                  namespace_decl,
                                  current_id);
     }
-    
+
     if (!context.m_found.variable)
         ClangASTSource::FindExternalVisibleDecls(context);
 }

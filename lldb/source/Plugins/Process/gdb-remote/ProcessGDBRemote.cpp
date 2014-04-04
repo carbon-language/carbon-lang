@@ -1458,8 +1458,7 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
                 if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
                     log->Printf(
                             "ProcessGDBRemote::%s Making new thread: %p for thread ID: 0x%" PRIx64 ".\n",
-                            __FUNCTION__,
-                            thread_sp.get(),
+                            __FUNCTION__, static_cast<void*>(thread_sp.get()),
                             thread_sp->GetID());
             }
             else
@@ -1467,8 +1466,7 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
                 if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
                     log->Printf(
                            "ProcessGDBRemote::%s Found old thread: %p for thread ID: 0x%" PRIx64 ".\n",
-                           __FUNCTION__,
-                           thread_sp.get(),
+                           __FUNCTION__, static_cast<void*>(thread_sp.get()),
                            thread_sp->GetID());
             }
             new_thread_list.AddThread(thread_sp);
@@ -1563,9 +1561,9 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
                             log->Printf ("ProcessGDBRemote::%s Adding new thread: %p for thread ID: 0x%" PRIx64 ".\n",
                                          __FUNCTION__,
-                                         thread_sp.get(),
+                                         static_cast<void*>(thread_sp.get()),
                                          thread_sp->GetID());
-                                         
+
                         m_thread_list_real.AddThread(thread_sp);
                     }
                     gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get());
@@ -1588,7 +1586,6 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         if (tid != LLDB_INVALID_THREAD_ID)
                             m_thread_ids.push_back (tid);
                         value.erase(0, comma_pos + 1);
-                            
                     }
                     tid = Args::StringToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
                     if (tid != LLDB_INVALID_THREAD_ID)
@@ -1715,7 +1712,6 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                                     thread_sp->SetStopInfo (invalid_stop_info_sp);
                                 }
                             }
-                            
                         }
                         else if (reason.compare("trap") == 0)
                         {
@@ -1740,7 +1736,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                             handled = true;
                         }
                     }
-                    
+
                     if (!handled && signo && did_exec == false)
                     {
                         if (signo == SIGTRAP)
@@ -1750,7 +1746,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                             handled = true;
                             addr_t pc = thread_sp->GetRegisterContext()->GetPC() + m_breakpoint_pc_offset;
                             lldb::BreakpointSiteSP bp_site_sp = thread_sp->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
-                            
+
                             if (bp_site_sp)
                             {
                                 // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
@@ -1782,7 +1778,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         if (!handled)
                             thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo));
                     }
-                    
+
                     if (!description.empty())
                     {
                         lldb::StopInfoSP stop_info_sp (thread_sp->GetStopInfo ());

@@ -29,7 +29,7 @@ public:
         m_type_vendor(type_vendor)
     {
     }
-    
+
     bool
     FindExternalVisibleDeclsByName (const clang::DeclContext *decl_ctx,
                                     clang::DeclarationName name)
@@ -43,34 +43,33 @@ public:
         {
             log->Printf("AppleObjCExternalASTSource::FindExternalVisibleDeclsByName[%u] on (ASTContext*)%p Looking for %s in (%sDecl*)%p",
                         current_id,
-                        &decl_ctx->getParentASTContext(),
-                        name.getAsString().c_str(),
-                        decl_ctx->getDeclKindName(),
-                        decl_ctx);
+                        static_cast<void*>(&decl_ctx->getParentASTContext()),
+                        name.getAsString().c_str(), decl_ctx->getDeclKindName(),
+                        static_cast<const void*>(decl_ctx));
         }
-        
+
         do
         {
             const clang::ObjCInterfaceDecl *interface_decl = llvm::dyn_cast<clang::ObjCInterfaceDecl>(decl_ctx);
-        
+
             if (!interface_decl)
                 break;
-            
+
             clang::ObjCInterfaceDecl *non_const_interface_decl = const_cast<clang::ObjCInterfaceDecl*>(interface_decl);
 
             if (!m_type_vendor.FinishDecl(non_const_interface_decl))
                 break;
-            
+
             clang::DeclContext::lookup_const_result result = non_const_interface_decl->lookup(name);
-            
+
             return (result.size() != 0);
         }
         while(0);
-        
+
         SetNoExternalVisibleDeclsForName(decl_ctx, name);
         return false;
     }
-    
+
     clang::ExternalLoadResult
     FindExternalLexicalDecls (const clang::DeclContext *DC,
                               bool (*isKindWeWant)(clang::Decl::Kind),
@@ -78,7 +77,7 @@ public:
     {
         return clang::ELR_Success;
     }
-    
+
     void
     CompleteType (clang::TagDecl *tag_decl)
     {
@@ -86,20 +85,20 @@ public:
         unsigned int current_id = invocation_id++;
 
         Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));  // FIXME - a more appropriate log channel?
-        
+
         if (log)
         {
             log->Printf("AppleObjCExternalASTSource::CompleteType[%u] on (ASTContext*)%p Completing (TagDecl*)%p named %s",
                         current_id,
-                        &tag_decl->getASTContext(),
-                        tag_decl,
+                        static_cast<void*>(&tag_decl->getASTContext()),
+                        static_cast<void*>(tag_decl),
                         tag_decl->getName().str().c_str());
-            
+
             log->Printf("  AOEAS::CT[%u] Before:", current_id);
             ASTDumper dumper((clang::Decl*)tag_decl);
             dumper.ToLog(log, "    [CT] ");
         }
-        
+
         if (log)
         {
             log->Printf("  AOEAS::CT[%u] After:", current_id);
@@ -108,30 +107,30 @@ public:
         }
         return;
     }
-    
+
     void
     CompleteType (clang::ObjCInterfaceDecl *interface_decl)
     {
         static unsigned int invocation_id = 0;
         unsigned int current_id = invocation_id++;
-        
+
         Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));  // FIXME - a more appropriate log channel?
-        
+
         if (log)
         {
             log->Printf("AppleObjCExternalASTSource::CompleteType[%u] on (ASTContext*)%p Completing (ObjCInterfaceDecl*)%p named %s",
                         current_id,
-                        &interface_decl->getASTContext(),
-                        interface_decl,
+                        static_cast<void*>(&interface_decl->getASTContext()),
+                        static_cast<void*>(interface_decl),
                         interface_decl->getName().str().c_str());
-            
+
             log->Printf("  AOEAS::CT[%u] Before:", current_id);
             ASTDumper dumper((clang::Decl*)interface_decl);
             dumper.ToLog(log, "    [CT] ");
         }
-        
+
         m_type_vendor.FinishDecl(interface_decl);
-                
+
         if (log)
         {
             log->Printf("  [CT] After:");
@@ -140,7 +139,7 @@ public:
         }
         return;
     }
-    
+
     bool
     layoutRecordType(const clang::RecordDecl *Record,
                      uint64_t &Size,
@@ -151,7 +150,7 @@ public:
     {
         return false;
     }
-    
+
     void StartTranslationUnit (clang::ASTConsumer *Consumer)
     {
         clang::TranslationUnitDecl *translation_unit_decl = m_type_vendor.m_ast_ctx.getASTContext()->getTranslationUnitDecl();

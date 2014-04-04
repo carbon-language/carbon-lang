@@ -46,7 +46,9 @@ SBBreakpointLocation::SBBreakpointLocation (const lldb::BreakpointLocationSP &br
         SBStream sstr;
         GetDescription (sstr, lldb::eDescriptionLevelBrief);
         log->Printf ("SBBreakpointLocation::SBBreakpointLocaiton (const lldb::BreakpointLocationsSP &break_loc_sp"
-                     "=%p)  => this.sp = %p (%s)", break_loc_sp.get(), m_opaque_sp.get(), sstr.GetData());
+                     "=%p)  => this.sp = %p (%s)",
+                     static_cast<void*>(break_loc_sp.get()),
+                     static_cast<void*>(m_opaque_sp.get()), sstr.GetData());
     }
 }
 
@@ -166,9 +168,11 @@ void
 SBBreakpointLocation::SetScriptCallbackFunction (const char *callback_function_name)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    
+
     if (log)
-        log->Printf ("SBBreakpointLocation(%p)::SetScriptCallbackFunction (callback=%s)", m_opaque_sp.get(), callback_function_name);
+        log->Printf ("SBBreakpointLocation(%p)::SetScriptCallbackFunction (callback=%s)",
+                     static_cast<void*>(m_opaque_sp.get()),
+                     callback_function_name);
 
     if (m_opaque_sp)
     {
@@ -176,7 +180,6 @@ SBBreakpointLocation::SetScriptCallbackFunction (const char *callback_function_n
         BreakpointOptions *bp_options = m_opaque_sp->GetLocationOptions();
         m_opaque_sp->GetBreakpoint().GetTarget().GetDebugger().GetCommandInterpreter().GetScriptInterpreter()->SetBreakpointCommandCallbackFunction (bp_options,
                                                                                                                                      callback_function_name);
-        
     }
 }
 
@@ -184,10 +187,11 @@ SBError
 SBBreakpointLocation::SetScriptCallbackBody (const char *callback_body_text)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    
+
     if (log)
-        log->Printf ("SBBreakpoint(%p)::SetScriptCallbackBody: callback body:\n%s)", m_opaque_sp.get(), callback_body_text);
-    
+        log->Printf ("SBBreakpoint(%p)::SetScriptCallbackBody: callback body:\n%s)",
+                     static_cast<void*>(m_opaque_sp.get()), callback_body_text);
+
     SBError sb_error;
     if (m_opaque_sp)
     {
@@ -199,7 +203,7 @@ SBBreakpointLocation::SetScriptCallbackBody (const char *callback_body_text)
     }
     else
         sb_error.SetErrorString("invalid breakpoint");
-    
+
     return sb_error;
 }
 
@@ -356,8 +360,9 @@ SBBreakpointLocation::GetBreakpoint ()
     {
         SBStream sstr;
         sb_bp.GetDescription (sstr);
-        log->Printf ("SBBreakpointLocation(%p)::GetBreakpoint () => SBBreakpoint(%p) %s", 
-                     m_opaque_sp.get(), sb_bp.get(), sstr.GetData());
+        log->Printf ("SBBreakpointLocation(%p)::GetBreakpoint () => SBBreakpoint(%p) %s",
+                     static_cast<void*>(m_opaque_sp.get()),
+                     static_cast<void*>(sb_bp.get()), sstr.GetData());
     }
     return sb_bp;
 }

@@ -1891,12 +1891,10 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
         if (error.Fail() || log)
         {
             error.PutToLog(log, "::posix_spawnp ( pid => %i, path = '%s', file_actions = %p, attr = %p, argv = %p, envp = %p )",
-                           pid,
-                           exe_path,
-                           &file_actions,
-                           &attr,
-                           argv,
-                           envp);
+                           pid, exe_path, static_cast<void*>(&file_actions),
+                           static_cast<void*>(&attr),
+                           reinterpret_cast<const void*>(argv),
+                           reinterpret_cast<const void*>(envp));
             if (log)
             {
                 for (int ii=0; argv[ii]; ++ii)
@@ -1918,11 +1916,9 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
         if (error.Fail() || log)
         {
             error.PutToLog(log, "::posix_spawnp ( pid => %i, path = '%s', file_actions = NULL, attr = %p, argv = %p, envp = %p )",
-                           pid,
-                           exe_path,
-                           &attr,
-                           argv,
-                           envp);
+                           pid, exe_path, static_cast<void*>(&attr),
+                           reinterpret_cast<const void*>(argv),
+                           reinterpret_cast<const void*>(envp));
             if (log)
             {
                 for (int ii=0; argv[ii]; ++ii)

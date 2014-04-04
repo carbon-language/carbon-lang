@@ -101,8 +101,9 @@ SBSymbolContext::GetModule ()
     {
         SBStream sstr;
         sb_module.GetDescription (sstr);
-        log->Printf ("SBSymbolContext(%p)::GetModule () => SBModule(%p): %s", 
-                     m_opaque_ap.get(), module_sp.get(), sstr.GetData());
+        log->Printf ("SBSymbolContext(%p)::GetModule () => SBModule(%p): %s",
+                     static_cast<void*>(m_opaque_ap.get()),
+                     static_cast<void*>(module_sp.get()), sstr.GetData());
     }
 
     return sb_module;
@@ -120,15 +121,16 @@ SBSymbolContext::GetFunction ()
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Function *function = NULL;
-    
+
     if (m_opaque_ap.get())
         function = m_opaque_ap->function;
 
     SBFunction sb_function (function);
 
     if (log)
-        log->Printf ("SBSymbolContext(%p)::GetFunction () => SBFunction(%p)", 
-                     m_opaque_ap.get(), function);
+        log->Printf ("SBSymbolContext(%p)::GetFunction () => SBFunction(%p)",
+                     static_cast<void*>(m_opaque_ap.get()),
+                     static_cast<void*>(function));
 
     return sb_function;
 }
@@ -150,8 +152,9 @@ SBSymbolContext::GetLineEntry ()
 
     if (log)
     {
-        log->Printf ("SBSymbolContext(%p)::GetLineEntry () => SBLineEntry(%p)", 
-                     m_opaque_ap.get(), sb_line_entry.get());
+        log->Printf ("SBSymbolContext(%p)::GetLineEntry () => SBLineEntry(%p)",
+                     static_cast<void*>(m_opaque_ap.get()),
+                     static_cast<void*>(sb_line_entry.get()));
     }
 
     return sb_line_entry;
@@ -163,19 +166,18 @@ SBSymbolContext::GetSymbol ()
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Symbol *symbol = NULL;
-    
+
     if (m_opaque_ap.get())
         symbol = m_opaque_ap->symbol;
 
     SBSymbol sb_symbol (symbol);
 
     if (log)
-    {
-        log->Printf ("SBSymbolContext(%p)::GetSymbol () => SBSymbol(%p)", 
-                     m_opaque_ap.get(), symbol);
-    }
+        log->Printf ("SBSymbolContext(%p)::GetSymbol () => SBSymbol(%p)",
+                     static_cast<void*>(m_opaque_ap.get()),
+                     static_cast<void*>(symbol));
 
-    return sb_symbol; 
+    return sb_symbol;
 }
 
 void

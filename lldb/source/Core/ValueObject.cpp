@@ -237,13 +237,12 @@ ValueObject::UpdateFormatsIfNeeded()
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
     if (log)
         log->Printf("[%s %p] checking for FormatManager revisions. ValueObject rev: %d - Global rev: %d",
-           GetName().GetCString(),
-           this,
-           m_last_format_mgr_revision,
-           DataVisualization::GetCurrentRevision());
-    
+                    GetName().GetCString(), static_cast<void*>(this),
+                    m_last_format_mgr_revision,
+                    DataVisualization::GetCurrentRevision());
+
     bool any_change = false;
-    
+
     if ( (m_last_format_mgr_revision != DataVisualization::GetCurrentRevision()))
     {
         SetValueFormat(DataVisualization::GetFormat (*this, eNoDynamicValues));
@@ -253,12 +252,11 @@ ValueObject::UpdateFormatsIfNeeded()
 #endif
 
         m_last_format_mgr_revision = DataVisualization::GetCurrentRevision();
-        
+
         any_change = true;
     }
-    
+
     return any_change;
-    
 }
 
 void

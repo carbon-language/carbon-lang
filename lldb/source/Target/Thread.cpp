@@ -295,7 +295,8 @@ Thread::Thread (Process &process, lldb::tid_t tid, bool use_invalid_index_id) :
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
-        log->Printf ("%p Thread::Thread(tid = 0x%4.4" PRIx64 ")", this, GetID());
+        log->Printf ("%p Thread::Thread(tid = 0x%4.4" PRIx64 ")",
+                     static_cast<void*>(this), GetID());
 
     CheckInWithManager();
     QueueFundamentalPlan(true);
@@ -306,7 +307,8 @@ Thread::~Thread()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
-        log->Printf ("%p Thread::~Thread(tid = 0x%4.4" PRIx64 ")", this, GetID());
+        log->Printf ("%p Thread::~Thread(tid = 0x%4.4" PRIx64 ")",
+                     static_cast<void*>(this), GetID());
     /// If you hit this assert, it means your derived class forgot to call DoDestroy in its destructor.
     assert (m_destroy_called);
 }
@@ -495,7 +497,10 @@ Thread::SetStopInfo (const lldb::StopInfoSP &stop_info_sp)
         m_stop_info_stop_id = UINT32_MAX;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
     if (log)
-        log->Printf("%p: tid = 0x%" PRIx64 ": stop info = %s (stop_id = %u)\n", this, GetID(), stop_info_sp ? stop_info_sp->GetDescription() : "<NULL>", m_stop_info_stop_id);
+        log->Printf("%p: tid = 0x%" PRIx64 ": stop info = %s (stop_id = %u)\n",
+                    static_cast<void*>(this), GetID(),
+                    stop_info_sp ? stop_info_sp->GetDescription() : "<NULL>",
+                    m_stop_info_stop_id);
 }
 
 void
@@ -743,31 +748,27 @@ bool
 Thread::ShouldStop (Event* event_ptr)
 {
     ThreadPlan *current_plan = GetCurrentPlan();
-    
+
     bool should_stop = true;
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    
+
     if (GetResumeState () == eStateSuspended)
     {
         if (log)
             log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 " 0x%4.4" PRIx64 ", should_stop = 0 (ignore since thread was suspended)",
-                         __FUNCTION__, 
-                         GetID (),
-                         GetProtocolID());
+                         __FUNCTION__, GetID (), GetProtocolID());
         return false;
     }
-    
+
     if (GetTemporaryResumeState () == eStateSuspended)
     {
         if (log)
             log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 " 0x%4.4" PRIx64 ", should_stop = 0 (ignore since thread was suspended)",
-                         __FUNCTION__, 
-                         GetID (),
-                         GetProtocolID());
+                         __FUNCTION__, GetID (), GetProtocolID());
         return false;
     }
-    
+
     // Based on the current thread plan and process stop info, check if this
     // thread caused the process to stop. NOTE: this must take place before
     // the plan is moved from the current plan stack to the completed plan
@@ -776,31 +777,29 @@ Thread::ShouldStop (Event* event_ptr)
     {
         if (log)
             log->Printf ("Thread::%s for tid = 0x%4.4" PRIx64 " 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64 ", should_stop = 0 (ignore since no stop reason)",
-                         __FUNCTION__, 
-                         GetID (),
-                         GetProtocolID(),
+                         __FUNCTION__, GetID (), GetProtocolID(),
                          GetRegisterContext() ? GetRegisterContext()->GetPC() : LLDB_INVALID_ADDRESS);
         return false;
     }
-    
+
     if (log)
     {
         log->Printf ("Thread::%s(%p) for tid = 0x%4.4" PRIx64 " 0x%4.4" PRIx64 ", pc = 0x%16.16" PRIx64,
-                     __FUNCTION__,
-                     this,
-                     GetID (),
+                     __FUNCTION__, static_cast<void*>(this), GetID (),
                      GetProtocolID (),
-                     GetRegisterContext() ? GetRegisterContext()->GetPC() : LLDB_INVALID_ADDRESS);
+                     GetRegisterContext()
+                        ? GetRegisterContext()->GetPC()
+                        : LLDB_INVALID_ADDRESS);
         log->Printf ("^^^^^^^^ Thread::ShouldStop Begin ^^^^^^^^");
         StreamString s;
         s.IndentMore();
         DumpThreadPlans(&s);
         log->Printf ("Plan stack initial state:\n%s", s.GetData());
     }
-    
+
     // The top most plan always gets to do the trace log...
     current_plan->DoTraceLog ();
-    
+
     // First query the stop info's ShouldStopSynchronous.  This handles "synchronous" stop reasons, for example the breakpoint
     // command on internal breakpoints.  If a synchronous stop reason says we should not stop, then we don't have to
     // do any more work on this stop.
@@ -843,15 +842,15 @@ Thread::ShouldStop (Event* event_ptr)
                 if (plan_ptr->PlanExplainsStop(event_ptr))
                 {
                     should_stop = plan_ptr->ShouldStop (event_ptr);
-                    
+
                     // plan_ptr explains the stop, next check whether plan_ptr is done, if so, then we should take it 
                     // and all the plans below it off the stack.
-                    
+
                     if (plan_ptr->MischiefManaged())
                     {
                         // We're going to pop the plans up to and including the plan that explains the stop.
                         ThreadPlan *prev_plan_ptr = GetPreviousPlan (plan_ptr);
-                        
+
                         do 
                         {
                             if (should_stop)
@@ -868,21 +867,22 @@ Thread::ShouldStop (Event* event_ptr)
                     }
                     else
                         done_processing_current_plan = true;
-                        
+
                     break;
                 }
 
             }
         }
     }
-    
+
     if (!done_processing_current_plan)
     {
         bool over_ride_stop = current_plan->ShouldAutoContinue(event_ptr);
-        
+
         if (log)
-            log->Printf("Plan %s explains stop, auto-continue %i.", current_plan->GetName(), over_ride_stop);
-            
+            log->Printf("Plan %s explains stop, auto-continue %i.",
+                        current_plan->GetName(), over_ride_stop);
+
         // We're starting from the base plan, so just let it decide;
         if (PlanIsBasePlan(current_plan))
         {
@@ -898,10 +898,11 @@ Thread::ShouldStop (Event* event_ptr)
             {
                 if (PlanIsBasePlan(current_plan))
                     break;
-                    
+
                 should_stop = current_plan->ShouldStop(event_ptr);
                 if (log)
-                    log->Printf("Plan %s should stop: %d.", current_plan->GetName(), should_stop);
+                    log->Printf("Plan %s should stop: %d.",
+                                current_plan->GetName(), should_stop);
                 if (current_plan->MischiefManaged())
                 {
                     if (should_stop)
@@ -933,7 +934,7 @@ Thread::ShouldStop (Event* event_ptr)
                 }
             }
         }
-        
+
         if (over_ride_stop)
             should_stop = false;
 
@@ -941,7 +942,7 @@ Thread::ShouldStop (Event* event_ptr)
         // by hitting a breakpoint during a step-over - then do some step/finish/etc operations that wind up
         // past the end point condition of the initial plan.  We don't want to strand the original plan on the stack,
         // This code clears stale plans off the stack.
-        
+
         if (should_stop)
         {
             ThreadPlan *plan_ptr = GetCurrentPlan();
@@ -950,16 +951,17 @@ Thread::ShouldStop (Event* event_ptr)
                 bool stale = plan_ptr->IsPlanStale ();
                 ThreadPlan *examined_plan = plan_ptr;
                 plan_ptr = GetPreviousPlan (examined_plan);
-                
+
                 if (stale)
                 {
                     if (log)
-                        log->Printf("Plan %s being discarded in cleanup, it says it is already done.", examined_plan->GetName());
+                        log->Printf("Plan %s being discarded in cleanup, it says it is already done.",
+                                    examined_plan->GetName());
                     DiscardThreadPlansUpToPlan(examined_plan);
                 }
             }
         }
-        
+
     }
 
     if (log)
@@ -1036,37 +1038,33 @@ Vote
 Thread::ShouldReportRun (Event* event_ptr)
 {
     StateType thread_state = GetResumeState ();
-    
+
     if (thread_state == eStateSuspended
             || thread_state == eStateInvalid)
     {
         return eVoteNoOpinion;
     }
-    
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (m_completed_plan_stack.size() > 0)
     {
         // Don't use GetCompletedPlan here, since that suppresses private plans.
         if (log)
             log->Printf ("Current Plan for thread %d(%p) (0x%4.4" PRIx64 ", %s): %s being asked whether we should report run.",
-                         GetIndexID(),
-                         this,
-                         GetID(),
+                         GetIndexID(), static_cast<void*>(this), GetID(),
                          StateAsCString(GetTemporaryResumeState()),
                          m_completed_plan_stack.back()->GetName());
-                         
+
         return m_completed_plan_stack.back()->ShouldReportRun (event_ptr);
     }
     else
     {
         if (log)
             log->Printf ("Current Plan for thread %d(%p) (0x%4.4" PRIx64 ", %s): %s being asked whether we should report run.",
-                         GetIndexID(),
-                         this,
-                         GetID(),
+                         GetIndexID(), static_cast<void*>(this), GetID(),
                          StateAsCString(GetTemporaryResumeState()),
                          GetCurrentPlan()->GetName());
-                         
+
         return GetCurrentPlan()->ShouldReportRun (event_ptr);
      }
 }
@@ -1089,7 +1087,7 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
         if (!thread_plan_sp->GetThreadPlanTracer())
             thread_plan_sp->SetThreadPlanTracer(m_plan_stack.back()->GetThreadPlanTracer());
         m_plan_stack.push_back (thread_plan_sp);
-            
+
         thread_plan_sp->DidPush();
 
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
@@ -1098,8 +1096,7 @@ Thread::PushPlan (ThreadPlanSP &thread_plan_sp)
             StreamString s;
             thread_plan_sp->GetDescription (&s, lldb::eDescriptionLevelFull);
             log->Printf("Thread::PushPlan(0x%p): \"%s\", tid = 0x%4.4" PRIx64 ".",
-                        this,
-                        s.GetData(),
+                        static_cast<void*>(this), s.GetData(),
                         thread_plan_sp->GetThread().GetID());
         }
     }
@@ -1285,15 +1282,14 @@ Thread::DiscardThreadPlansUpToPlan (ThreadPlan *up_to_plan_ptr)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (log)
-    {
-        log->Printf("Discarding thread plans for thread tid = 0x%4.4" PRIx64 ", up to %p", GetID(), up_to_plan_ptr);
-    }
+        log->Printf("Discarding thread plans for thread tid = 0x%4.4" PRIx64 ", up to %p",
+                    GetID(), static_cast<void*>(up_to_plan_ptr));
 
     int stack_size = m_plan_stack.size();
-    
+
     // If the input plan is NULL, discard all plans.  Otherwise make sure this plan is in the
     // stack, and if so discard up to and including it.
-    
+
     if (up_to_plan_ptr == NULL)
     {
         for (int i = stack_size - 1; i > 0; i--)

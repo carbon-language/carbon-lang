@@ -93,7 +93,7 @@ Variable::GetType()
 void
 Variable::Dump(Stream *s, bool show_context) const
 {
-    s->Printf("%p: ", this);
+    s->Printf("%p: ", static_cast<const void*>(this));
     s->Indent();
     *s << "Variable" << (const UserID&)*this;
 

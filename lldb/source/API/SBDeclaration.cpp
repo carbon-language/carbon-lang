@@ -74,19 +74,21 @@ SBFileSpec
 SBDeclaration::GetFileSpec () const
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    
+
     SBFileSpec sb_file_spec;
     if (m_opaque_ap.get() && m_opaque_ap->GetFile())
         sb_file_spec.SetFileSpec(m_opaque_ap->GetFile());
-    
+
     if (log)
     {
         SBStream sstr;
         sb_file_spec.GetDescription (sstr);
-        log->Printf ("SBLineEntry(%p)::GetFileSpec () => SBFileSpec(%p): %s", m_opaque_ap.get(),
-                     sb_file_spec.get(), sstr.GetData());
+        log->Printf ("SBLineEntry(%p)::GetFileSpec () => SBFileSpec(%p): %s",
+                     static_cast<void*>(m_opaque_ap.get()),
+                     static_cast<const void*>(sb_file_spec.get()),
+                     sstr.GetData());
     }
-    
+
     return sb_file_spec;
 }
 
@@ -94,14 +96,15 @@ uint32_t
 SBDeclaration::GetLine () const
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    
+
     uint32_t line = 0;
     if (m_opaque_ap.get())
         line = m_opaque_ap->GetLine();
-    
+
     if (log)
-        log->Printf ("SBLineEntry(%p)::GetLine () => %u", m_opaque_ap.get(), line);
-    
+        log->Printf ("SBLineEntry(%p)::GetLine () => %u",
+                     static_cast<void*>(m_opaque_ap.get()), line);
+
     return line;
 }
 

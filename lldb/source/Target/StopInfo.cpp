@@ -108,7 +108,6 @@ namespace lldb_private
 class StopInfoBreakpoint : public StopInfo
 {
 public:
-
     StopInfoBreakpoint (Thread &thread, break_id_t break_id) :
         StopInfo (thread, break_id),
         m_description(),
@@ -121,7 +120,7 @@ public:
     {
         StoreBPInfo();
     }
-    
+
     StopInfoBreakpoint (Thread &thread, break_id_t break_id, bool should_stop) :
         StopInfo (thread, break_id),
         m_description(),
@@ -161,7 +160,7 @@ public:
     virtual ~StopInfoBreakpoint ()
     {
     }
-    
+
     virtual StopReason
     GetStopReason () const
     {
@@ -199,7 +198,7 @@ public:
         }
         return false;
     }
-    
+
     virtual bool
     DoShouldNotify (Event *event_ptr)
     {
@@ -252,7 +251,7 @@ public:
                             }
                         }
                     }
-                    
+
                     strm.Printf("breakpoint ");
                     bp_site_sp->GetDescription(&strm, eDescriptionLevelBrief);
                     m_description.swap (strm.GetString());
@@ -290,7 +289,7 @@ public:
                         strm.Printf("breakpoint site %" PRIi64 " which has been deleted - unknown address", m_value);
                     else
                         strm.Printf("breakpoint site %" PRIi64 " which has been deleted - was at 0x%" PRIx64, m_value, m_address);
-                    
+
                     m_description.swap (strm.GetString());
                 }
             }
@@ -307,20 +306,20 @@ protected:
         assert (m_should_stop_is_valid);
         return m_should_stop;
     }
-    
+
     virtual void
     PerformAction (Event *event_ptr)
     {
         if (!m_should_perform_action)
             return;
         m_should_perform_action = false;
-        
+
         ThreadSP thread_sp (m_thread_wp.lock());
 
         if (thread_sp)
         {
             Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
-            
+
             if (!thread_sp->IsValid())
             {
                 // This shouldn't ever happen, but just in case, don't do more harm.
@@ -332,13 +331,13 @@ protected:
                 m_should_stop_is_valid = true;
                 return;
             }
-            
+
             BreakpointSiteSP bp_site_sp (thread_sp->GetProcess()->GetBreakpointSiteList().FindByID (m_value));
-            
+
             if (bp_site_sp)
             {
                 size_t num_owners = bp_site_sp->GetNumberOfOwners();
-                    
+
                 if (num_owners == 0)
                 {
                     m_should_stop = true;
@@ -354,7 +353,7 @@ protected:
                     // we're going to restart, without running the rest of the callbacks.  And in this case we will
                     // end up not stopping even if another location said we should stop.  But that's better than not
                     // running all the callbacks.
-                    
+
                     m_should_stop = false;
 
                     ExecutionContext exe_ctx (thread_sp->GetStackFrameAtIndex(0));
@@ -367,7 +366,7 @@ protected:
                         // TODO: We can keep a list of the breakpoints we've seen while running expressions in the nested
                         // PerformAction calls that can arise when the action runs a function that hits another breakpoint,
                         // and only stop running commands when we see the same breakpoint hit a second time.
-                        
+
                         m_should_stop_is_valid = true;
                         if (log)
                             log->Printf ("StopInfoBreakpoint::PerformAction - Hit a breakpoint while running an expression,"
@@ -398,12 +397,12 @@ protected:
                                                "running function, skipping commands and conditions to prevent recursion.");
                         return;
                     }
-                    
+
                     StoppointCallbackContext context (event_ptr, exe_ctx, false);
-                    
+
                     // Let's copy the breakpoint locations out of the site and store them in a local list.  That way if
                     // one of the breakpoint actions changes the site, then we won't be operating on a bad list.
-                    
+
                     BreakpointLocationCollection site_locations;
                     for (size_t j = 0; j < num_owners; j++)
                         site_locations.Add(bp_site_sp->GetOwnerAtIndex(j));
@@ -411,11 +410,11 @@ protected:
                     for (size_t j = 0; j < num_owners; j++)
                     {
                         lldb::BreakpointLocationSP bp_loc_sp = site_locations.GetByIndex(j);
-                        
+
                         // If another action disabled this breakpoint or its location, then don't run the actions.
                         if (!bp_loc_sp->IsEnabled() || !bp_loc_sp->GetBreakpoint().IsEnabled())
                             continue;
-                        
+
                         // The breakpoint site may have many locations associated with it, not all of them valid for
                         // this thread.  Skip the ones that aren't:
                         if (!bp_loc_sp->ValidForThisThread(thread_sp.get()))
@@ -424,18 +423,20 @@ protected:
                             {
                                 StreamString s;
                                 bp_loc_sp->GetDescription(&s, eDescriptionLevelBrief);
-                                log->Printf ("Breakpoint %s hit on thread 0x%llx but it was not for this thread, continuing.", s.GetData(), thread_sp->GetID());
+                                log->Printf ("Breakpoint %s hit on thread 0x%llx but it was not for this thread, continuing.",
+                                             s.GetData(),
+                                             static_cast<unsigned long long>(thread_sp->GetID()));
                             }
                             continue;
                         }
                         // First run the condition for the breakpoint.  If that says we should stop, then we'll run
                         // the callback for the breakpoint.  If the callback says we shouldn't stop that will win.                    
-                        
+
                         if (bp_loc_sp->GetConditionText() != NULL)
                         {
                             Error condition_error;
                             bool condition_says_stop = bp_loc_sp->ConditionSaysStop(exe_ctx, condition_error);
-                            
+
                             if (!condition_error.Success())
                             {
                                 Debugger &debugger = exe_ctx.GetTargetRef().GetDebugger();
@@ -448,7 +449,7 @@ protected:
                                 const char *err_str = condition_error.AsCString("<Unknown Error>");
                                 if (log)
                                     log->Printf("Error evaluating condition: \"%s\"\n", err_str);
-                                
+
                                 error_sp->PutCString (err_str);
                                 error_sp->EOL();
                                 error_sp->Flush();
@@ -459,36 +460,39 @@ protected:
                                 {
                                     StreamString s;
                                     bp_loc_sp->GetDescription(&s, eDescriptionLevelBrief);
-                                    log->Printf ("Condition evaluated for breakpoint %s on thread 0x%llx conditon_says_stop: %i.", s.GetData(), thread_sp->GetID(), condition_says_stop);
+                                    log->Printf ("Condition evaluated for breakpoint %s on thread 0x%llx conditon_says_stop: %i.",
+                                                 s.GetData(),
+                                                 static_cast<unsigned long long>(thread_sp->GetID()),
+                                                 condition_says_stop);
                                 }
                                 if (!condition_says_stop)
                                     continue;
                             }
                         }
-                                    
+
                         bool callback_says_stop;
-                        
+
                         // FIXME: For now the callbacks have to run in async mode - the first time we restart we need
                         // to get out of there.  So set it here.
                         // When we figure out how to nest breakpoint hits then this will change.
-                        
+
                         Debugger &debugger = thread_sp->CalculateTarget()->GetDebugger();
                         bool old_async = debugger.GetAsyncExecution();
                         debugger.SetAsyncExecution (true);
-                        
+
                         callback_says_stop = bp_loc_sp->InvokeCallback (&context);
-                        
+
                         debugger.SetAsyncExecution (old_async);
-                        
+
                         if (callback_says_stop)
                             m_should_stop = true;
-                        
+
                         // If we are going to stop for this breakpoint, then remove the breakpoint.
                         if (callback_says_stop && bp_loc_sp && bp_loc_sp->GetBreakpoint().IsOneShot())
                         {
                             thread_sp->GetProcess()->GetTarget().RemoveBreakpointByID (bp_loc_sp->GetBreakpoint().GetID());
                         }
-                            
+
                         // Also make sure that the callback hasn't continued the target.  
                         // If it did, when we'll set m_should_start to false and get out of here.
                         if (HasTargetRunSinceMe ())

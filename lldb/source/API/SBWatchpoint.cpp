@@ -42,7 +42,9 @@ SBWatchpoint::SBWatchpoint (const lldb::WatchpointSP &wp_sp) :
         SBStream sstr;
         GetDescription (sstr, lldb::eDescriptionLevelBrief);
         log->Printf ("SBWatchpoint::SBWatchpoint (const lldb::WatchpointSP &wp_sp"
-                     "=%p)  => this.sp = %p (%s)", wp_sp.get(), m_opaque_sp.get(), sstr.GetData());
+                     "=%p)  => this.sp = %p (%s)",
+                     static_cast<void*>(wp_sp.get()),
+                     static_cast<void*>(m_opaque_sp.get()), sstr.GetData());
     }
 }
 
@@ -77,9 +79,11 @@ SBWatchpoint::GetID ()
     if (log)
     {
         if (watch_id == LLDB_INVALID_WATCH_ID)
-            log->Printf ("SBWatchpoint(%p)::GetID () => LLDB_INVALID_WATCH_ID", watchpoint_sp.get());
+            log->Printf ("SBWatchpoint(%p)::GetID () => LLDB_INVALID_WATCH_ID",
+                         static_cast<void*>(watchpoint_sp.get()));
         else
-            log->Printf ("SBWatchpoint(%p)::GetID () => %u", watchpoint_sp.get(), watch_id);
+            log->Printf ("SBWatchpoint(%p)::GetID () => %u",
+                         static_cast<void*>(watchpoint_sp.get()), watch_id);
     }
 
     return watch_id;
@@ -185,7 +189,8 @@ SBWatchpoint::GetHitCount ()
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBWatchpoint(%p)::GetHitCount () => %u", watchpoint_sp.get(), count);
+        log->Printf ("SBWatchpoint(%p)::GetHitCount () => %u",
+                     static_cast<void*>(watchpoint_sp.get()), count);
 
     return count;
 }

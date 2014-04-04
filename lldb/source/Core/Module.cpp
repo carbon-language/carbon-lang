@@ -161,23 +161,23 @@ Module::Module (const ModuleSpec &module_spec) :
         Mutex::Locker locker (GetAllocationModuleCollectionMutex());
         GetModuleCollection().push_back(this);
     }
-    
+
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_OBJECT|LIBLLDB_LOG_MODULES));
     if (log)
         log->Printf ("%p Module::Module((%s) '%s%s%s%s')",
-                     this,
+                     static_cast<void*>(this),
                      module_spec.GetArchitecture().GetArchitectureName(),
                      module_spec.GetFileSpec().GetPath().c_str(),
                      module_spec.GetObjectName().IsEmpty() ? "" : "(",
                      module_spec.GetObjectName().IsEmpty() ? "" : module_spec.GetObjectName().AsCString(""),
                      module_spec.GetObjectName().IsEmpty() ? "" : ")");
-    
+
     // First extract all module specifications from the file using the local
     // file path. If there are no specifications, then don't fill anything in
     ModuleSpecList modules_specs;
     if (ObjectFile::GetModuleSpecifications(module_spec.GetFileSpec(), 0, 0, modules_specs) == 0)
         return;
-    
+
     // Now make sure that one of the module specifications matches what we just
     // extract. We might have a module specification that specifies a file "/usr/lib/dyld"
     // with UUID XXX, but we might have a local version of "/usr/lib/dyld" that has
@@ -239,15 +239,14 @@ Module::Module(const FileSpec& file_spec,
 
     if (object_name)
         m_object_name = *object_name;
-    
+
     if (object_mod_time_ptr)
         m_object_mod_time = *object_mod_time_ptr;
 
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_OBJECT|LIBLLDB_LOG_MODULES));
     if (log)
         log->Printf ("%p Module::Module((%s) '%s%s%s%s')",
-                     this,
-                     m_arch.GetArchitectureName(),
+                     static_cast<void*>(this), m_arch.GetArchitectureName(),
                      m_file.GetPath().c_str(),
                      m_object_name.IsEmpty() ? "" : "(",
                      m_object_name.IsEmpty() ? "" : m_object_name.AsCString(""),
@@ -300,7 +299,7 @@ Module::~Module()
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_OBJECT|LIBLLDB_LOG_MODULES));
     if (log)
         log->Printf ("%p Module::~Module((%s) '%s%s%s%s')",
-                     this,
+                     static_cast<void*>(this),
                      m_arch.GetArchitectureName(),
                      m_file.GetPath().c_str(),
                      m_object_name.IsEmpty() ? "" : "(",
@@ -473,14 +472,16 @@ Module::CalculateSymbolContextModule ()
 void
 Module::DumpSymbolContext(Stream *s)
 {
-    s->Printf(", Module{%p}", this);
+    s->Printf(", Module{%p}", static_cast<void*>(this));
 }
 
 size_t
 Module::GetNumCompileUnits()
 {
     Mutex::Locker locker (m_mutex);
-    Timer scoped_timer(__PRETTY_FUNCTION__, "Module::GetNumCompileUnits (module = %p)", this);
+    Timer scoped_timer(__PRETTY_FUNCTION__,
+                       "Module::GetNumCompileUnits (module = %p)",
+                       static_cast<void*>(this));
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
         return symbols->GetNumCompileUnits();

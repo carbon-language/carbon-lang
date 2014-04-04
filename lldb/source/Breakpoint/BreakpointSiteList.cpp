@@ -186,7 +186,7 @@ BreakpointSiteList::BreakpointSiteContainsBreakpoint (lldb::break_id_t bp_site_i
 void
 BreakpointSiteList::Dump (Stream *s) const
 {
-    s->Printf("%p: ", this);
+    s->Printf("%p: ", static_cast<const void*>(this));
     //s->Indent();
     s->Printf("BreakpointSiteList with %u BreakpointSites:\n", (uint32_t)m_bp_site_list.size());
     s->IndentMore();

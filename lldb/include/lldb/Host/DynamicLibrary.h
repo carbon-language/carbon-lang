@@ -21,31 +21,31 @@ public:
     DynamicLibrary (const FileSpec& spec, uint32_t options = Host::eDynamicLibraryOpenOptionLazy |
                                                              Host::eDynamicLibraryOpenOptionLocal |
                                                              Host::eDynamicLibraryOpenOptionLimitGetSymbol);
-    
+
     ~DynamicLibrary ();
-    
+
     template <typename T = void*>
     T GetSymbol (const char* name)
     {
         Error err;
         if (!m_handle)
-            return (T)NULL;
+            return static_cast<T>(NULL);
         void* symbol = Host::DynamicLibraryGetSymbol (m_handle, name, err);
         if (!symbol)
-            return (T)NULL;
-        return (T)symbol;
+            return static_cast<T>(NULL);
+        return *reinterpret_cast<T*>(&symbol);
     }
-    
+
     bool
     IsValid ();
-    
+
 private:
     lldb_private::FileSpec m_filespec;
     void* m_handle;
-    
+
     DISALLOW_COPY_AND_ASSIGN (DynamicLibrary);
 };
-    
+
 } // namespace lldb_private
 
 #endif  // liblldb_DynamicLibrary_h_

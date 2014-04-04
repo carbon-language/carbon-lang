@@ -335,7 +335,9 @@ ObjectContainerBSDArchive::CreateInstance
                 Timer scoped_timer (__PRETTY_FUNCTION__,
                                     "ObjectContainerBSDArchive::CreateInstance (module = %s, file = %p, file_offset = 0x%8.8" PRIx64 ", file_size = 0x%8.8" PRIx64 ")",
                                     module_sp->GetFileSpec().GetPath().c_str(),
-                                    file, (uint64_t) file_offset, (uint64_t) length);
+                                    static_cast<const void*>(file),
+                                    static_cast<uint64_t>(file_offset),
+                                    static_cast<uint64_t>(length));
 
                 // Map the entire .a file to be sure that we don't lose any data if the file
                 // gets updated by a new build while this .a file is being used for debugging
@@ -457,7 +459,7 @@ ObjectContainerBSDArchive::ParseHeader ()
 void
 ObjectContainerBSDArchive::Dump (Stream *s) const
 {
-    s->Printf("%p: ", this);
+    s->Printf("%p: ", static_cast<const void*>(this));
     s->Indent();
     const size_t num_archs = GetNumArchitectures();
     const size_t num_objects = GetNumObjects();

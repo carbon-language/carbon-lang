@@ -201,9 +201,9 @@ Type::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name)
 void
 Type::Dump (Stream *s, bool show_context)
 {
-    s->Printf("%p: ", this);
+    s->Printf("%p: ", static_cast<void*>(this));
     s->Indent();
-    *s << "Type" << (const UserID&)*this << ' ';
+    *s << "Type" << static_cast<const UserID&>(*this) << ' ';
     if (m_name)
         *s << ", name = \"" << m_name << "\"";
 

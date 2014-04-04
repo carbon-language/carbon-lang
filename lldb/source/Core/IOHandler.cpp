@@ -4536,31 +4536,30 @@ public:
         m_max_y (0)
     {
     }
-    
-    
+
     virtual
     ~SourceFileWindowDelegate()
     {
     }
-    
+
     void
     Update (const SymbolContext &sc)
     {
         m_sc = sc;
     }
-    
+
     uint32_t
     NumVisibleLines () const
     {
         return m_max_y - m_min_y;
     }
-    
+
     virtual const char *
     WindowDelegateGetHelpText ()
     {
         return "Source/Disassembly window keyboard shortcuts:";
     }
-    
+
     virtual KeyHelp *
     WindowDelegateGetKeyHelp ()
     {
@@ -4587,7 +4586,7 @@ public:
         };
         return g_source_view_key_help;
     }
-    
+
     virtual bool
     WindowDelegateDraw (Window &window, bool force)
     {
@@ -4605,20 +4604,18 @@ public:
                 update_location = true;
             }
         }
-        
+
         m_min_x = 1;
         m_min_y = 2;
         m_max_x = window.GetMaxX()-1;
         m_max_y = window.GetMaxY()-1;
-        
+
         const uint32_t num_visible_lines = NumVisibleLines();
         StackFrameSP frame_sp;
         bool set_selected_line_to_pc = false;
 
-        
         if (update_location)
         {
-            
             const bool process_alive = process ? process->IsAlive() : false;
             bool thread_changed = false;
             if (process_alive)
@@ -4665,9 +4662,9 @@ public:
                 frame_changed = m_frame_idx != UINT32_MAX;
                 m_frame_idx = UINT32_MAX;
             }
-            
+
             const bool context_changed = thread_changed || frame_changed || stop_id_changed;
-            
+
             if (process_alive)
             {
                 if (m_sc.line_entry.IsValid())
@@ -4707,7 +4704,7 @@ public:
                             int m_line_width = 1;
                             for (size_t n = num_lines; n >= 10; n = n / 10)
                                 ++m_line_width;
-                            
+
                             snprintf (m_line_format, sizeof(m_line_format), " %%%iu ", m_line_width);
                             if (num_lines < num_visible_lines || m_selected_line < num_visible_lines)
                                 m_first_visible_line = 0;
@@ -4720,7 +4717,7 @@ public:
                 {
                     m_file_sp.reset();
                 }
-                
+
                 if (!m_file_sp || m_file_sp->GetNumLines() == 0)
                 {
                     // Show disassembly
@@ -4775,8 +4772,7 @@ public:
                 m_pc_line = UINT32_MAX;
             }
         }
-        
-        
+
         const int window_width = window.GetWidth();
         window.Erase();
         window.DrawTitleBox ("Sources");
@@ -4822,8 +4818,7 @@ public:
                     }
                 }
             }
-            
-        
+
             const attr_t selected_highlight_attr = A_REVERSE;
             const attr_t pc_highlight_attr = COLOR_PAIR(1);
 
@@ -4844,13 +4839,13 @@ public:
                         highlight_attr = pc_highlight_attr;
                     else if (line_is_selected)
                         highlight_attr = selected_highlight_attr;
-                    
+
                     if (bp_lines.find(curr_line+1) != bp_lines.end())
                         bp_attr = COLOR_PAIR(2);
 
                     if (bp_attr)
                         window.AttributeOn(bp_attr);
-                    
+
                     window.Printf (m_line_format, curr_line + 1);
 
                     if (bp_attr)
@@ -4862,7 +4857,7 @@ public:
                         window.PutChar(ACS_DIAMOND);
                     else
                         window.PutChar(' ');
-                    
+
                     if (highlight_attr)
                         window.AttributeOn(highlight_attr);
                     const uint32_t line_len = m_file_sp->GetLineLength(curr_line + 1, false);
@@ -4930,16 +4925,15 @@ public:
                         }
                     }
                 }
-                
-                
+
                 const attr_t selected_highlight_attr = A_REVERSE;
                 const attr_t pc_highlight_attr = COLOR_PAIR(1);
-                
+
                 StreamString strm;
 
                 InstructionList &insts = m_disassembly_sp->GetInstructionList();
                 Address pc_address;
-                
+
                 if (frame_sp)
                     pc_address = frame_sp->GetFrameCodeAddress();
                 const uint32_t pc_idx = pc_address.IsValid() ? insts.GetIndexOfInstructionAtAddress (pc_address) : UINT32_MAX;
@@ -4965,7 +4959,7 @@ public:
                     Instruction *inst = insts.GetInstructionAtIndex(inst_idx).get();
                     if (!inst)
                         break;
-                    
+
                     const int line_y = m_min_y+i;
                     window.MoveCursor(1, line_y);
                     const bool is_pc_line = frame_sp && inst_idx == pc_idx;
@@ -4978,28 +4972,29 @@ public:
                         highlight_attr = pc_highlight_attr;
                     else if (line_is_selected)
                         highlight_attr = selected_highlight_attr;
-                    
+
                     if (bp_file_addrs.find(inst->GetAddress().GetFileAddress()) != bp_file_addrs.end())
                         bp_attr = COLOR_PAIR(2);
-                    
+
                     if (bp_attr)
                         window.AttributeOn(bp_attr);
-                    
-                    window.Printf (" 0x%16.16llx ", inst->GetAddress().GetLoadAddress(target));
-                        
+
+                    window.Printf (" 0x%16.16llx ",
+                                   static_cast<unsigned long long>(inst->GetAddress().GetLoadAddress(target)));
+
                     if (bp_attr)
                         window.AttributeOff(bp_attr);
-                        
+
                     window.PutChar(ACS_VLINE);
                     // Mark the line with the PC with a diamond
                     if (is_pc_line)
                         window.PutChar(ACS_DIAMOND);
                     else
                         window.PutChar(' ');
-                    
+
                     if (highlight_attr)
                         window.AttributeOn(highlight_attr);
-                    
+
                     const char *mnemonic = inst->GetMnemonic(&exe_ctx);
                     const char *operands = inst->GetOperands(&exe_ctx);
                     const char *comment = inst->GetComment(&exe_ctx);
@@ -5010,7 +5005,7 @@ public:
                         operands = NULL;
                     if (comment && comment[0] == '\0')
                         comment = NULL;
-                    
+
                     strm.Clear();
 
                     if (mnemonic && operands && comment)
@@ -5019,10 +5014,10 @@ public:
                         strm.Printf ("%-8s %s", mnemonic, operands);
                     else if (mnemonic)
                         strm.Printf ("%s", mnemonic);
-                    
+
                     int right_pad = 1;
                     window.PutCStringTruncated(strm.GetString().c_str(), right_pad);
-                    
+
                     if (is_pc_line && frame_sp && frame_sp->GetConcreteFrameIndex() == 0)
                     {
                         StopInfoSP stop_info_sp;
@@ -5053,7 +5048,7 @@ public:
         window.DeferredRefresh();
         return true; // Drawing handled
     }
-    
+
     size_t
     GetNumLines ()
     {
@@ -5062,7 +5057,7 @@ public:
             num_lines = GetNumDisassemblyLines();
         return num_lines;
     }
-    
+
     size_t
     GetNumSourceLines () const
     {
@@ -5095,7 +5090,7 @@ public:
                     m_first_visible_line = 0;
                 m_selected_line = m_first_visible_line;
                 return eKeyHandled;
-                
+
             case '.':
             case KEY_NPAGE:
                 // Page down key
@@ -5109,7 +5104,7 @@ public:
                     m_selected_line = m_first_visible_line;
                 }
                 return eKeyHandled;
-                
+
             case KEY_UP:
                 if (m_selected_line > 0)
                 {
@@ -5127,7 +5122,7 @@ public:
                         m_first_visible_line++;
                 }
                 return eKeyHandled;
-                
+
             case '\r':
             case '\n':
             case KEY_ENTER:
@@ -5221,7 +5216,7 @@ public:
                         exe_ctx.GetProcessRef().Resume();
                 }
                 return eKeyHandled;
-                
+
             case 'o':
                 // 'o' == step out
                 {
@@ -5254,7 +5249,7 @@ public:
                     }
                 }
                 return eKeyHandled;
-                
+
             case 'h':
                 window.CreateHelpSubwindow ();
                 return eKeyHandled;
@@ -5264,7 +5259,7 @@ public:
         }
         return eKeyNotHandled;
     }
-    
+
 protected:
     typedef std::set<uint32_t> BreakpointLines;
     typedef std::set<lldb::addr_t> BreakpointAddrs;

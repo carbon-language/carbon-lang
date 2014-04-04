@@ -931,7 +931,7 @@ ModuleList::GetSharedModule
             for (size_t module_idx = 0; module_idx < num_matching_modules; ++module_idx)
             {
                 module_sp = matching_module_list.GetModuleAtIndex(module_idx);
-                
+
                 // Make sure the file for the module hasn't been modified
                 if (module_sp->FileHasChanged())
                 {
@@ -940,7 +940,8 @@ ModuleList::GetSharedModule
 
                     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_MODULES));
                     if (log)
-                        log->Printf("module changed: %p, removing from global module list", module_sp.get());
+                        log->Printf("module changed: %p, removing from global module list",
+                                    static_cast<void*>(module_sp.get()));
 
                     shared_module_list.Remove (module_sp);
                     module_sp.reset();
@@ -975,7 +976,7 @@ ModuleList::GetSharedModule
                 {
                     if (did_create_ptr)
                         *did_create_ptr = true;
-                    
+
                     shared_module_list.ReplaceEquivalent(module_sp);
                     return error;
                 }

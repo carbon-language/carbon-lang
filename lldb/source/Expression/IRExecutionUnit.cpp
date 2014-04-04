@@ -481,9 +481,10 @@ IRExecutionUnit::MemoryManager::allocateStub(const llvm::GlobalValue* F,
     if (log)
     {
         log->Printf("IRExecutionUnit::allocateStub (F=%p, StubSize=%u, Alignment=%u) = %p",
-                    F, StubSize, Alignment, return_value);
+                    static_cast<const void*>(F), StubSize, Alignment,
+                    static_cast<void*>(return_value));
     }
-        
+
     return return_value;
 }
 

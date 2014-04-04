@@ -251,7 +251,7 @@ ABIMacOSX_arm64::PrepareTrivialCall (Thread &thread,
                  (uint64_t)return_addr);
 
         for (size_t i = 0; i < args.size(); ++i)
-            s.Printf (", arg%d = 0x%" PRIx64, i + 1, args[i]);
+            s.Printf (", arg%d = 0x%" PRIx64, static_cast<int>(i + 1), args[i]);
         s.PutCString (")");
         log->PutCString(s.GetString().c_str());
     }
@@ -268,7 +268,8 @@ ABIMacOSX_arm64::PrepareTrivialCall (Thread &thread,
     {
         const RegisterInfo *reg_info = reg_ctx->GetRegisterInfo(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_ARG1 + i);
         if (log)
-            log->Printf("About to write arg%d (0x%" PRIx64 ") into %s", i + 1, args[i], reg_info->name);
+            log->Printf("About to write arg%d (0x%" PRIx64 ") into %s",
+                        static_cast<int>(i + 1), args[i], reg_info->name);
         if (!reg_ctx->WriteRegisterFromUnsigned(reg_info, args[i]))
             return false;
     }

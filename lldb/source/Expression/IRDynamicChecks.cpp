@@ -427,12 +427,12 @@ public:
         m_objc_object_check_func(NULL)
     {
     }
-    
+
     virtual
     ~ObjcObjectChecker ()
     {
     }
-    
+
     enum msgSend_type
     {
         eMsgSend = 0,
@@ -441,25 +441,25 @@ public:
         eMsgSend_fpret,
         eMsgSend_stret
     };
-    
+
     std::map <llvm::Instruction *, msgSend_type> msgSend_types;
 
 private:
     bool InstrumentInstruction(llvm::Instruction *inst)
     {
         CallInst *call_inst = dyn_cast<CallInst>(inst);
-        
+
         if (!call_inst)
             return false; // call_inst really shouldn't be NULL, because otherwise InspectInstruction wouldn't have registered it
-        
+
         if (!m_objc_object_check_func)
             m_objc_object_check_func = BuildObjectCheckerFunc(m_checker_functions.m_objc_object_check->StartAddress());
-        
+
         // id objc_msgSend(id theReceiver, SEL theSelector, ...)
-        
+
         llvm::Value *target_object;
         llvm::Value *selector;
-        
+
         switch (msgSend_types[inst])
         {
         case eMsgSend:
@@ -475,119 +475,124 @@ private:
         case eMsgSendSuper_stret:
             return true;
         }
-            
+
         // These objects should always be valid according to Sean Calannan
         assert (target_object);
         assert (selector);
 
         // Insert an instruction to cast the receiver id to int8_t*
-        
+
         BitCastInst *bit_cast = new BitCastInst(target_object,
                                                 GetI8PtrTy(),
                                                 "",
                                                 inst);
-        
+
         // Insert an instruction to call the helper with the result
-        
+
         llvm::Value *arg_array[2];
-        
+
         arg_array[0] = bit_cast;
         arg_array[1] = selector;
-        
+
         ArrayRef<llvm::Value*> args(arg_array, 2);
-        
+
         CallInst::Create(m_objc_object_check_func, 
                          args,
                          "",
                          inst);
-        
+
         return true;
     }
-    
+
     bool InspectInstruction(llvm::Instruction &i)
     {
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
         CallInst *call_inst = dyn_cast<CallInst>(&i);
-        
+
         if (call_inst)
         {
             // This metadata is set by IRForTarget::MaybeHandleCall().
-            
+
             MDNode *metadata = call_inst->getMetadata("lldb.call.realName");
-                        
+
             if (!metadata)
                 return true;
-            
+
             if (metadata->getNumOperands() != 1)
             {
                 if (log)
-                    log->Printf("Function call metadata has %d operands for [%p] %s", metadata->getNumOperands(), call_inst, PrintValue(call_inst).c_str());
+                    log->Printf("Function call metadata has %d operands for [%p] %s",
+                                metadata->getNumOperands(),
+                                static_cast<void*>(call_inst),
+                                PrintValue(call_inst).c_str());
                 return false;
             }
-            
+
             MDString *real_name = dyn_cast<MDString>(metadata->getOperand(0));
-            
+
             if (!real_name)
             {
                 if (log)
-                    log->Printf("Function call metadata is not an MDString for [%p] %s", call_inst, PrintValue(call_inst).c_str());
+                    log->Printf("Function call metadata is not an MDString for [%p] %s",
+                                static_cast<void*>(call_inst),
+                                PrintValue(call_inst).c_str());
                 return false;
             }
 
             std::string name_str = real_name->getString();
             const char* name_cstr = name_str.c_str();
-            
+
             if (log)
                 log->Printf("Found call to %s: %s\n", name_cstr, PrintValue(call_inst).c_str());
-            
+
             if (name_str.find("objc_msgSend") == std::string::npos)
                 return true;
-            
+
             if (!strcmp(name_cstr, "objc_msgSend"))
             {
                 RegisterInstruction(i);
                 msgSend_types[&i] = eMsgSend;
                 return true;
             }
-            
+
             if (!strcmp(name_cstr, "objc_msgSend_stret"))
             {
                 RegisterInstruction(i);
                 msgSend_types[&i] = eMsgSend_stret;
                 return true;
             }
-            
+
             if (!strcmp(name_cstr, "objc_msgSend_fpret"))
             {
                 RegisterInstruction(i);
                 msgSend_types[&i] = eMsgSend_fpret;
                 return true;
             }
-            
+
             if (!strcmp(name_cstr, "objc_msgSendSuper"))
             {
                 RegisterInstruction(i);
                 msgSend_types[&i] = eMsgSendSuper;
                 return true;
             }
-            
+
             if (!strcmp(name_cstr, "objc_msgSendSuper_stret"))
             {
                 RegisterInstruction(i);
                 msgSend_types[&i] = eMsgSendSuper_stret;
                 return true;
             }
-            
+
             if (log)
                 log->Printf("Function name '%s' contains 'objc_msgSend' but is not handled", name_str.c_str());
-            
+
             return true;
         }
-        
+
         return true;
     }
-    
+
     llvm::Value         *m_objc_object_check_func;
 };
 

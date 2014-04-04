@@ -164,7 +164,7 @@ ObjectContainerUniversalMachO::ParseHeader (lldb_private::DataExtractor &data,
 void
 ObjectContainerUniversalMachO::Dump (Stream *s) const
 {
-    s->Printf("%p: ", this);
+    s->Printf("%p: ", static_cast<const void*>(this));
     s->Indent();
     const size_t num_archs = GetNumArchitectures();
     const size_t num_objects = GetNumObjects();

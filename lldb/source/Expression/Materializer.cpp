@@ -1352,43 +1352,44 @@ Materializer::DematerializerSP
 Materializer::Materialize (lldb::StackFrameSP &frame_sp, IRMemoryMap &map, lldb::addr_t process_address, Error &error)
 {
     ExecutionContextScope *exe_scope = frame_sp.get();
-        
+
     if (!exe_scope)
         exe_scope = map.GetBestExecutionContextScope();
-    
+
     DematerializerSP dematerializer_sp = m_dematerializer_wp.lock();
-    
+
     if (dematerializer_sp)
     {
         error.SetErrorToGenericError();
         error.SetErrorString("Couldn't materialize: already materialized");
     }
-    
+
     DematerializerSP ret(new Dematerializer(*this, frame_sp, map, process_address));
-    
+
     if (!exe_scope)
     {
         error.SetErrorToGenericError();
         error.SetErrorString("Couldn't materialize: target doesn't exist");
     }
-    
+
     for (EntityUP &entity_up : m_entities)
     {
         entity_up->Materialize(frame_sp, map, process_address, error);
-        
+
         if (!error.Success())
             return DematerializerSP();
     }
-    
+
     if (Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
     {
-        log->Printf("Materializer::Materialize (frame_sp = %p, process_address = 0x%" PRIx64 ") materialized:", frame_sp.get(), process_address);
+        log->Printf("Materializer::Materialize (frame_sp = %p, process_address = 0x%" PRIx64 ") materialized:",
+                    static_cast<void*>(frame_sp.get()), process_address);
         for (EntityUP &entity_up : m_entities)
             entity_up->DumpToLog(map, process_address, log);
     }
-    
+
     m_dematerializer_wp = ret;
-    
+
     return ret;
 }
 
@@ -1400,15 +1401,15 @@ Materializer::Dematerializer::Dematerialize (Error &error, lldb::ClangExpression
     lldb::ThreadSP thread_sp = m_thread_wp.lock();
     if (thread_sp)
         frame_sp = thread_sp->GetFrameWithStackID(m_stack_id);
-    
+
     ExecutionContextScope *exe_scope = m_map->GetBestExecutionContextScope();
-    
+
     if (!IsValid())
     {
         error.SetErrorToGenericError();
         error.SetErrorString("Couldn't dematerialize: invalid dematerializer");
     }
-    
+
     if (!exe_scope)
     {
         error.SetErrorToGenericError();
@@ -1418,11 +1419,12 @@ Materializer::Dematerializer::Dematerialize (Error &error, lldb::ClangExpression
     {
         if (Log *log =lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
         {
-            log->Printf("Materializer::Dematerialize (frame_sp = %p, process_address = 0x%" PRIx64 ") about to dematerialize:", frame_sp.get(), m_process_address);
+            log->Printf("Materializer::Dematerialize (frame_sp = %p, process_address = 0x%" PRIx64 ") about to dematerialize:",
+                        static_cast<void*>(frame_sp.get()), m_process_address);
             for (EntityUP &entity_up : m_materializer->m_entities)
                 entity_up->DumpToLog(*m_map, m_process_address, log);
         }
-        
+
         for (EntityUP &entity_up : m_materializer->m_entities)
         {
             if (entity_up.get() == m_materializer->m_result_entity)
@@ -1433,12 +1435,12 @@ Materializer::Dematerializer::Dematerialize (Error &error, lldb::ClangExpression
             {
                 entity_up->Dematerialize (frame_sp, *m_map, m_process_address, frame_top, frame_bottom, error);
             }
-                
+
             if (!error.Success())
                 break;
         }
     }
-    
+
     Wipe();
 }
 

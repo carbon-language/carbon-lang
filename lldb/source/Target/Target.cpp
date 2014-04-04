@@ -94,12 +94,12 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     SetEventName (eBroadcastBitModulesUnloaded, "modules-unloaded");
     SetEventName (eBroadcastBitWatchpointChanged, "watchpoint-changed");
     SetEventName (eBroadcastBitSymbolsLoaded, "symbols-loaded");
-    
+
     CheckInWithManager();
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
-        log->Printf ("%p Target::Target()", this);
+        log->Printf ("%p Target::Target()", static_cast<void*>(this));
     if (m_arch.IsValid())
     {
         LogIfAnyCategoriesSet(LIBLLDB_LOG_TARGET, "Target::Target created with architecture %s (%s)", m_arch.GetArchitectureName(), m_arch.GetTriple().getTriple().c_str());
@@ -113,7 +113,7 @@ Target::~Target()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
-        log->Printf ("%p Target::~Target()", this);
+        log->Printf ("%p Target::~Target()", static_cast<void*>(this));
     DeleteCurrentProcess ();
 }
 

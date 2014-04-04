@@ -1632,7 +1632,10 @@ struct TrieEntry
     void
     Dump () const
     {
-        printf ("0x%16.16llx 0x%16.16llx 0x%16.16llx \"%s\"", address, flags, other, name.GetCString());
+        printf ("0x%16.16llx 0x%16.16llx 0x%16.16llx \"%s\"",
+                static_cast<unsigned long long>(address),
+                static_cast<unsigned long long>(flags),
+                static_cast<unsigned long long>(other), name.GetCString());
         if (import_name)
             printf (" -> \"%s\"\n", import_name.GetCString());
         else
@@ -1649,17 +1652,18 @@ struct TrieEntryWithOffset
 {
 	lldb::offset_t nodeOffset;
 	TrieEntry entry;
-	
+
     TrieEntryWithOffset (lldb::offset_t offset) :
         nodeOffset (offset),
         entry()
     {
     }
-    
+
     void
     Dump (uint32_t idx) const
     {
-        printf ("[%3u] 0x%16.16llx: ", idx, nodeOffset);
+        printf ("[%3u] 0x%16.16llx: ", idx,
+                static_cast<unsigned long long>(nodeOffset));
         entry.Dump();
     }
 
@@ -4081,7 +4085,7 @@ ObjectFileMachO::Dump (Stream *s)
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
-        s->Printf("%p: ", this);
+        s->Printf("%p: ", static_cast<void*>(this));
         s->Indent();
         if (m_header.magic == MH_MAGIC_64 || m_header.magic == MH_CIGAM_64)
             s->PutCString("ObjectFileMachO64");

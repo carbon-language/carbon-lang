@@ -427,7 +427,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
         break;
 
     case DumpStyleSectionPointerOffset:
-        s->Printf("(Section *)%p + ", section_sp.get());
+        s->Printf("(Section *)%p + ", static_cast<void*>(section_sp.get()));
         s->Address(m_offset, addr_size);
         break;
 

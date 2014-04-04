@@ -55,7 +55,7 @@ void
 WatchpointList::DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const
 {
     Mutex::Locker locker (m_mutex);
-    s->Printf("%p: ", this);
+    s->Printf("%p: ", static_cast<const void*>(this));
     //s->Indent();
     s->Printf("WatchpointList with %" PRIu64 " Watchpoints:\n",
               (uint64_t)m_watchpoints.size());

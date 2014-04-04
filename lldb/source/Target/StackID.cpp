@@ -24,11 +24,12 @@ using namespace lldb_private;
 void
 StackID::Dump (Stream *s)
 {
-    s->Printf("StackID (pc = 0x%16.16" PRIx64 ", cfa = 0x%16.16" PRIx64 ", symbol_scope = %p", (uint64_t)m_pc, (uint64_t)m_cfa, m_symbol_scope);
+    s->Printf("StackID (pc = 0x%16.16" PRIx64 ", cfa = 0x%16.16" PRIx64 ", symbol_scope = %p",
+              m_pc, m_cfa, static_cast<void*>(m_symbol_scope));
     if (m_symbol_scope)
     {
         SymbolContext sc;
-    
+
         m_symbol_scope->CalculateSymbolContext (&sc);
         if (sc.block)
             s->Printf(" (Block {0x%8.8" PRIx64 "})", sc.block->GetID());

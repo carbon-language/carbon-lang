@@ -57,9 +57,9 @@ CXXSyntheticChildren::GetDescription()
                 Cascades() ? "" : " (not cascading)",
                 SkipsPointers() ? " (skip pointers)" : "",
                 SkipsReferences() ? " (skip references)" : "",
-                m_create_callback,
+                reinterpret_cast<void*>(m_create_callback),
                 m_description.c_str());
-    
+
     return sstr.GetString();
 }
 

@@ -75,14 +75,16 @@ SBCommandReturnObject::GetOutput ()
     if (m_opaque_ap.get())
     {
         if (log)
-            log->Printf ("SBCommandReturnObject(%p)::GetOutput () => \"%s\"", m_opaque_ap.get(), 
+            log->Printf ("SBCommandReturnObject(%p)::GetOutput () => \"%s\"",
+                         static_cast<void*>(m_opaque_ap.get()),
                          m_opaque_ap->GetOutputData());
 
         return m_opaque_ap->GetOutputData();
     }
 
     if (log)
-        log->Printf ("SBCommandReturnObject(%p)::GetOutput () => NULL", m_opaque_ap.get());
+        log->Printf ("SBCommandReturnObject(%p)::GetOutput () => NULL",
+                     static_cast<void*>(m_opaque_ap.get()));
 
     return NULL;
 }
@@ -95,14 +97,16 @@ SBCommandReturnObject::GetError ()
     if (m_opaque_ap.get())
     {
         if (log)
-            log->Printf ("SBCommandReturnObject(%p)::GetError () => \"%s\"", m_opaque_ap.get(),
+            log->Printf ("SBCommandReturnObject(%p)::GetError () => \"%s\"",
+                         static_cast<void*>(m_opaque_ap.get()),
                          m_opaque_ap->GetErrorData());
 
         return m_opaque_ap->GetErrorData();
     }
-    
+
     if (log)
-        log->Printf ("SBCommandReturnObject(%p)::GetError () => NULL", m_opaque_ap.get());
+        log->Printf ("SBCommandReturnObject(%p)::GetError () => NULL",
+                     static_cast<void*>(m_opaque_ap.get()));
 
     return NULL;
 }

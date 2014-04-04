@@ -66,7 +66,6 @@ SBLineEntry::~SBLineEntry ()
 SBAddress
 SBLineEntry::GetStartAddress () const
 {
-
     SBAddress sb_address;
     if (m_opaque_ap.get())
         sb_address.SetAddress(&m_opaque_ap->range.GetBaseAddress());
@@ -78,8 +77,9 @@ SBLineEntry::GetStartAddress () const
         const Address *addr = sb_address.get();
         if (addr)
             addr->Dump (&sstr, NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
-        log->Printf ("SBLineEntry(%p)::GetStartAddress () => SBAddress (%p): %s", 
-                     m_opaque_ap.get(), sb_address.get(), sstr.GetData());
+        log->Printf ("SBLineEntry(%p)::GetStartAddress () => SBAddress (%p): %s",
+                     static_cast<void*>(m_opaque_ap.get()),
+                     static_cast<void*>(sb_address.get()), sstr.GetData());
     }
 
     return sb_address;
@@ -101,8 +101,9 @@ SBLineEntry::GetEndAddress () const
         const Address *addr = sb_address.get();
         if (addr)
             addr->Dump (&sstr, NULL, Address::DumpStyleModuleWithFileAddress, Address::DumpStyleInvalid, 4);
-        log->Printf ("SBLineEntry(%p)::GetEndAddress () => SBAddress (%p): %s", 
-                     m_opaque_ap.get(), sb_address.get(), sstr.GetData());
+        log->Printf ("SBLineEntry(%p)::GetEndAddress () => SBAddress (%p): %s",
+                     static_cast<void*>(m_opaque_ap.get()),
+                     static_cast<void*>(sb_address.get()), sstr.GetData());
     }
     return sb_address;
 }
@@ -127,8 +128,10 @@ SBLineEntry::GetFileSpec () const
     {
         SBStream sstr;
         sb_file_spec.GetDescription (sstr);
-        log->Printf ("SBLineEntry(%p)::GetFileSpec () => SBFileSpec(%p): %s", m_opaque_ap.get(),
-                     sb_file_spec.get(), sstr.GetData());
+        log->Printf ("SBLineEntry(%p)::GetFileSpec () => SBFileSpec(%p): %s",
+                     static_cast<void*>(m_opaque_ap.get()),
+                     static_cast<const void*>(sb_file_spec.get()),
+                     sstr.GetData());
     }
 
     return sb_file_spec;
@@ -144,7 +147,8 @@ SBLineEntry::GetLine () const
         line = m_opaque_ap->line;
 
     if (log)
-        log->Printf ("SBLineEntry(%p)::GetLine () => %u", m_opaque_ap.get(), line);
+        log->Printf ("SBLineEntry(%p)::GetLine () => %u",
+                     static_cast<void*>(m_opaque_ap.get()), line);
 
     return line;
 }

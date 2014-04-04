@@ -152,7 +152,7 @@ BreakpointLocationList::FindByAddress (const Address &addr) const
 void
 BreakpointLocationList::Dump (Stream *s) const
 {
-    s->Printf("%p: ", this);
+    s->Printf("%p: ", static_cast<const void*>(this));
     //s->Indent();
     Mutex::Locker locker (m_mutex);
     s->Printf("BreakpointLocationList with %" PRIu64 " BreakpointLocations:\n", (uint64_t)m_locations.size());

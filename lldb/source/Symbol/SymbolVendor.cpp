@@ -382,7 +382,7 @@ SymbolVendor::Dump(Stream *s)
     {
         bool show_context = false;
 
-        s->Printf("%p: ", this);
+        s->Printf("%p: ", static_cast<void*>(this));
         s->Indent();
         s->PutCString("SymbolVendor");
         if (m_sym_file_ap.get())

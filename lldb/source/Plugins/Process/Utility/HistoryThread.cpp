@@ -42,7 +42,8 @@ HistoryThread::HistoryThread (lldb_private::Process &process,
     m_unwinder_ap.reset (new HistoryUnwind (*this, pcs, stop_id, stop_id_is_valid));
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
-        log->Printf ("%p HistoryThread::HistoryThread", this);
+        log->Printf ("%p HistoryThread::HistoryThread",
+                     static_cast<void*>(this));
 }
 
 //  Destructor
@@ -51,7 +52,8 @@ HistoryThread::~HistoryThread ()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
-        log->Printf ("%p HistoryThread::~HistoryThread (tid=0x%" PRIx64 ")", this, GetID());
+        log->Printf ("%p HistoryThread::~HistoryThread (tid=0x%" PRIx64 ")",
+                     static_cast<void*>(this), GetID());
     DestroyThread();
 }
 

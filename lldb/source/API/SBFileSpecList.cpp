@@ -38,7 +38,8 @@ SBFileSpecList::SBFileSpecList (const SBFileSpecList &rhs) :
     if (log)
     {
         log->Printf ("SBFileSpecList::SBFileSpecList (const SBFileSpecList rhs.ap=%p) => SBFileSpecList(%p)",
-                     rhs.m_opaque_ap.get(), m_opaque_ap.get());
+                     static_cast<void*>(rhs.m_opaque_ap.get()),
+                     static_cast<void*>(m_opaque_ap.get()));
     }
 }
 

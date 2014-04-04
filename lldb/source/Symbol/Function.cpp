@@ -354,20 +354,16 @@ Function::GetDescription(Stream *s, lldb::DescriptionLevel level, Target *target
 void
 Function::Dump(Stream *s, bool show_context) const
 {
-    s->Printf("%p: ", this);
+    s->Printf("%p: ", static_cast<const void*>(this));
     s->Indent();
-    *s << "Function" << (const UserID&)*this;
+    *s << "Function" << static_cast<const UserID&>(*this);
 
     m_mangled.Dump(s);
 
     if (m_type)
-    {
-        s->Printf(", type = %p", m_type);
-    }
+        s->Printf(", type = %p", static_cast<void*>(m_type));
     else if (m_type_uid != LLDB_INVALID_UID)
-    {
         s->Printf(", type_uid = 0x%8.8" PRIx64, m_type_uid);
-    }
 
     s->EOL();
     // Dump the root object

@@ -148,20 +148,17 @@ SBProcess::RemoteLaunch (char const **argv,
                          lldb::SBError& error)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    if (log) {
+    if (log)
         log->Printf ("SBProcess(%p)::RemoteLaunch (argv=%p, envp=%p, stdin=%s, stdout=%s, stderr=%s, working-dir=%s, launch_flags=0x%x, stop_at_entry=%i, &error (%p))...",
-                     m_opaque_wp.lock().get(),
-                     argv, 
-                     envp, 
-                     stdin_path ? stdin_path : "NULL", 
-                     stdout_path ? stdout_path : "NULL", 
-                     stderr_path ? stderr_path : "NULL", 
+                     static_cast<void*>(m_opaque_wp.lock().get()),
+                     static_cast<void*>(argv), static_cast<void*>(envp),
+                     stdin_path ? stdin_path : "NULL",
+                     stdout_path ? stdout_path : "NULL",
+                     stderr_path ? stderr_path : "NULL",
                      working_directory ? working_directory : "NULL",
-                     launch_flags, 
-                     stop_at_entry, 
-                     error.get());
-    }
-    
+                     launch_flags, stop_at_entry,
+                     static_cast<void*>(error.get()));
+
     ProcessSP process_sp(GetSP());
     if (process_sp)
     {
@@ -170,7 +167,7 @@ SBProcess::RemoteLaunch (char const **argv,
         {
             if (stop_at_entry)
                 launch_flags |= eLaunchFlagStopAtEntry;
-            ProcessLaunchInfo launch_info (stdin_path, 
+            ProcessLaunchInfo launch_info (stdin_path,
                                            stdout_path,
                                            stderr_path,
                                            working_directory,
@@ -193,13 +190,15 @@ SBProcess::RemoteLaunch (char const **argv,
     {
         error.SetErrorString ("unable to attach pid");
     }
-    
+
     if (log) {
         SBStream sstr;
         error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::RemoteLaunch (...) => SBError (%p): %s", process_sp.get(), error.get(), sstr.GetData());
+        log->Printf ("SBProcess(%p)::RemoteLaunch (...) => SBError (%p): %s",
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<void*>(error.get()), sstr.GetData());
     }
-    
+
     return error.Success();
 }
 
@@ -214,7 +213,7 @@ SBProcess::RemoteAttachToProcessWithID (lldb::pid_t pid, lldb::SBError& error)
         {
             ProcessAttachInfo attach_info;
             attach_info.SetProcessID (pid);
-            error.SetError (process_sp->Attach (attach_info));            
+            error.SetError (process_sp->Attach (attach_info));
         }
         else
         {
@@ -230,7 +229,9 @@ SBProcess::RemoteAttachToProcessWithID (lldb::pid_t pid, lldb::SBError& error)
     if (log) {
         SBStream sstr;
         error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::RemoteAttachToProcessWithID (%" PRIu64 ") => SBError (%p): %s", process_sp.get(), pid, error.get(), sstr.GetData());
+        log->Printf ("SBProcess(%p)::RemoteAttachToProcessWithID (%" PRIu64 ") => SBError (%p): %s",
+                     static_cast<void*>(process_sp.get()), pid,
+                     static_cast<void*>(error.get()), sstr.GetData());
     }
 
     return error.Success();
@@ -247,14 +248,15 @@ SBProcess::GetNumThreads ()
     if (process_sp)
     {
         Process::StopLocker stop_locker;
-        
+
         const bool can_update = stop_locker.TryLock(&process_sp->GetRunLock());
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
         num_threads = process_sp->GetThreadList().GetSize(can_update);
     }
 
     if (log)
-        log->Printf ("SBProcess(%p)::GetNumThreads () => %d", process_sp.get(), num_threads);
+        log->Printf ("SBProcess(%p)::GetNumThreads () => %d",
+                     static_cast<void*>(process_sp.get()), num_threads);
 
     return num_threads;
 }
@@ -275,9 +277,9 @@ SBProcess::GetSelectedThread () const
     }
 
     if (log)
-    {
-        log->Printf ("SBProcess(%p)::GetSelectedThread () => SBThread(%p)", process_sp.get(), thread_sp.get());
-    }
+        log->Printf ("SBProcess(%p)::GetSelectedThread () => SBThread(%p)",
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<void*>(thread_sp.get()));
 
     return sb_thread;
 }
@@ -286,7 +288,7 @@ SBThread
 SBProcess::CreateOSPluginThread (lldb::tid_t tid, lldb::addr_t context)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    
+
     SBThread sb_thread;
     ThreadSP thread_sp;
     ProcessSP process_sp(GetSP());
@@ -296,10 +298,12 @@ SBProcess::CreateOSPluginThread (lldb::tid_t tid, lldb::addr_t context)
         thread_sp = process_sp->CreateOSPluginThread(tid, context);
         sb_thread.SetThread (thread_sp);
     }
-    
+
     if (log)
-        log->Printf ("SBProcess(%p)::CreateOSPluginThread (tid=0x%" PRIx64 ", context=0x%" PRIx64 ") => SBThread(%p)", process_sp.get(), tid, context, thread_sp.get());
-    
+        log->Printf ("SBProcess(%p)::CreateOSPluginThread (tid=0x%" PRIx64 ", context=0x%" PRIx64 ") => SBThread(%p)",
+                     static_cast<void*>(process_sp.get()), tid, context,
+                     static_cast<void*>(thread_sp.get()));
+
     return sb_thread;
 }
 
@@ -316,9 +320,11 @@ SBProcess::GetTarget() const
         target_sp = process_sp->GetTarget().shared_from_this();
         sb_target.SetSP (target_sp);
     }
-    
+
     if (log)
-        log->Printf ("SBProcess(%p)::GetTarget () => SBTarget(%p)", process_sp.get(), target_sp.get());
+        log->Printf ("SBProcess(%p)::GetTarget () => SBTarget(%p)",
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<void*>(target_sp.get()));
 
     return sb_target;
 }
@@ -336,13 +342,12 @@ SBProcess::PutSTDIN (const char *src, size_t src_len)
         Error error;
         ret_val =  process_sp->PutSTDIN (src, src_len, error);
     }
-    
+
     if (log)
         log->Printf("SBProcess(%p)::PutSTDIN (src=\"%s\", src_len=%" PRIu64 ") => %" PRIu64,
-                     process_sp.get(), 
-                     src, 
-                     (uint64_t) src_len,
-                     (uint64_t) ret_val);
+                     static_cast<void*>(process_sp.get()), src,
+                     static_cast<uint64_t>(src_len),
+                     static_cast<uint64_t>(ret_val));
 
     return ret_val;
 }
@@ -357,15 +362,14 @@ SBProcess::GetSTDOUT (char *dst, size_t dst_len) const
         Error error;
         bytes_read = process_sp->GetSTDOUT (dst, dst_len, error);
     }
-    
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::GetSTDOUT (dst=\"%.*s\", dst_len=%" PRIu64 ") => %" PRIu64,
-                     process_sp.get(),
-                     (int) bytes_read,
-                     dst,
-                     (uint64_t)dst_len,
-                     (uint64_t)bytes_read);
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<int>(bytes_read), dst,
+                     static_cast<uint64_t>(dst_len),
+                     static_cast<uint64_t>(bytes_read));
 
     return bytes_read;
 }
@@ -384,11 +388,10 @@ SBProcess::GetSTDERR (char *dst, size_t dst_len) const
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::GetSTDERR (dst=\"%.*s\", dst_len=%" PRIu64 ") => %" PRIu64,
-                     process_sp.get(),
-                     (int) bytes_read,
-                     dst,
-                     (uint64_t)dst_len,
-                     (uint64_t)bytes_read);
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<int>(bytes_read), dst,
+                     static_cast<uint64_t>(dst_len),
+                     static_cast<uint64_t>(bytes_read));
 
     return bytes_read;
 }
@@ -403,16 +406,15 @@ SBProcess::GetAsyncProfileData(char *dst, size_t dst_len) const
         Error error;
         bytes_read = process_sp->GetAsyncProfileData (dst, dst_len, error);
     }
-    
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::GetProfileData (dst=\"%.*s\", dst_len=%" PRIu64 ") => %" PRIu64,
-                     process_sp.get(),
-                     (int) bytes_read,
-                     dst,
-                     (uint64_t)dst_len,
-                     (uint64_t)bytes_read);
-    
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<int>(bytes_read), dst,
+                     static_cast<uint64_t>(dst_len),
+                     static_cast<uint64_t>(bytes_read));
+
     return bytes_read;
 }
 
@@ -483,7 +485,8 @@ SBProcess::SetSelectedThreadByID (lldb::tid_t tid)
 
     if (log)
         log->Printf ("SBProcess(%p)::SetSelectedThreadByID (tid=0x%4.4" PRIx64 ") => %s",
-                     process_sp.get(), tid, (ret_val ? "true" : "false"));
+                     static_cast<void*>(process_sp.get()), tid,
+                     (ret_val ? "true" : "false"));
 
     return ret_val;
 }
@@ -502,8 +505,9 @@ SBProcess::SetSelectedThreadByIndexID (uint32_t index_id)
     }
 
     if (log)
-        log->Printf ("SBProcess(%p)::SetSelectedThreadByID (tid=0x%x) => %s", 
-                     process_sp.get(), index_id, (ret_val ? "true" : "false"));
+        log->Printf ("SBProcess(%p)::SetSelectedThreadByID (tid=0x%x) => %s",
+                     static_cast<void*>(process_sp.get()), index_id,
+                     (ret_val ? "true" : "false"));
 
     return ret_val;
 }
@@ -526,10 +530,10 @@ SBProcess::GetThreadAtIndex (size_t index)
     }
 
     if (log)
-    {
         log->Printf ("SBProcess(%p)::GetThreadAtIndex (index=%d) => SBThread(%p)",
-                     process_sp.get(), (uint32_t) index, thread_sp.get());
-    }
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<uint32_t>(index),
+                     static_cast<void*>(thread_sp.get()));
 
     return sb_thread;
 }
@@ -544,13 +548,14 @@ SBProcess::GetNumQueues ()
     if (process_sp)
     {
         Process::StopLocker stop_locker;
-        
+
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
         num_queues = process_sp->GetQueueList().GetSize();
     }
 
     if (log)
-        log->Printf ("SBProcess(%p)::GetNumQueues () => %d", process_sp.get(), num_queues);
+        log->Printf ("SBProcess(%p)::GetNumQueues () => %d",
+                     static_cast<void*>(process_sp.get()), num_queues);
 
     return num_queues;
 }
@@ -572,10 +577,10 @@ SBProcess::GetQueueAtIndex (size_t index)
     }
 
     if (log)
-    {
         log->Printf ("SBProcess(%p)::GetQueueAtIndex (index=%d) => SBQueue(%p)",
-                     process_sp.get(), (uint32_t) index, queue_sp.get());
-    }
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<uint32_t>(index),
+                     static_cast<void*>(queue_sp.get()));
 
     return sb_queue;
 }
@@ -610,8 +615,8 @@ SBProcess::GetState ()
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetState () => %s", 
-                     process_sp.get(),
+        log->Printf ("SBProcess(%p)::GetState () => %s",
+                     static_cast<void*>(process_sp.get()),
                      lldb_private::StateAsCString (ret_val));
 
     return ret_val;
@@ -630,8 +635,9 @@ SBProcess::GetExitStatus ()
     }
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetExitStatus () => %i (0x%8.8x)", 
-                     process_sp.get(), exit_status, exit_status);
+        log->Printf ("SBProcess(%p)::GetExitStatus () => %i (0x%8.8x)",
+                     static_cast<void*>(process_sp.get()), exit_status,
+                     exit_status);
 
     return exit_status;
 }
@@ -648,8 +654,8 @@ SBProcess::GetExitDescription ()
     }
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetExitDescription () => %s", 
-                     process_sp.get(), exit_desc);
+        log->Printf ("SBProcess(%p)::GetExitDescription () => %s",
+                     static_cast<void*>(process_sp.get()), exit_desc);
     return exit_desc;
 }
 
@@ -663,7 +669,8 @@ SBProcess::GetProcessID ()
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetProcessID () => %" PRIu64, process_sp.get(), ret_val);
+        log->Printf ("SBProcess(%p)::GetProcessID () => %" PRIu64,
+                     static_cast<void*>(process_sp.get()), ret_val);
 
     return ret_val;
 }
@@ -677,7 +684,8 @@ SBProcess::GetUniqueID()
         ret_val = process_sp->GetUniqueID();
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetUniqueID () => %" PRIu32, process_sp.get(), ret_val);
+        log->Printf ("SBProcess(%p)::GetUniqueID () => %" PRIu32,
+                     static_cast<void*>(process_sp.get()), ret_val);
     return ret_val;
 }
 
@@ -688,10 +696,11 @@ SBProcess::GetByteOrder () const
     ProcessSP process_sp(GetSP());
     if (process_sp)
         byteOrder = process_sp->GetTarget().GetArchitecture().GetByteOrder();
-    
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetByteOrder () => %d", process_sp.get(), byteOrder);
+        log->Printf ("SBProcess(%p)::GetByteOrder () => %d",
+                     static_cast<void*>(process_sp.get()), byteOrder);
 
     return byteOrder;
 }
@@ -706,7 +715,8 @@ SBProcess::GetAddressByteSize () const
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetAddressByteSize () => %d", process_sp.get(), size);
+        log->Printf ("SBProcess(%p)::GetAddressByteSize () => %d",
+                     static_cast<void*>(process_sp.get()), size);
 
     return size;
 }
@@ -715,24 +725,26 @@ SBError
 SBProcess::Continue ()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    
+
     SBError sb_error;
     ProcessSP process_sp(GetSP());
 
     if (log)
-        log->Printf ("SBProcess(%p)::Continue ()...", process_sp.get());
+        log->Printf ("SBProcess(%p)::Continue ()...",
+                     static_cast<void*>(process_sp.get()));
 
     if (process_sp)
     {
         Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
-        
+
         Error error (process_sp->Resume());
         if (error.Success())
         {
             if (process_sp->GetTarget().GetDebugger().GetAsyncExecution () == false)
             {
                 if (log)
-                    log->Printf ("SBProcess(%p)::Continue () waiting for process to stop...", process_sp.get());
+                    log->Printf ("SBProcess(%p)::Continue () waiting for process to stop...",
+                                 static_cast<void*>(process_sp.get()));
                 process_sp->WaitForProcessToStop (NULL);
             }
         }
@@ -745,7 +757,9 @@ SBProcess::Continue ()
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::Continue () => SBError (%p): %s", process_sp.get(), sb_error.get(), sstr.GetData());
+        log->Printf ("SBProcess(%p)::Continue () => SBError (%p): %s",
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<void*>(sb_error.get()), sstr.GetData());
     }
 
     return sb_error;
@@ -770,10 +784,9 @@ SBProcess::Destroy ()
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::Destroy () => SBError (%p): %s", 
-                     process_sp.get(), 
-                     sb_error.get(), 
-                     sstr.GetData());
+        log->Printf ("SBProcess(%p)::Destroy () => SBError (%p): %s",
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<void*>(sb_error.get()), sstr.GetData());
     }
 
     return sb_error;
@@ -792,16 +805,15 @@ SBProcess::Stop ()
     }
     else
         sb_error.SetErrorString ("SBProcess is invalid");
-    
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::Stop () => SBError (%p): %s", 
-                     process_sp.get(), 
-                     sb_error.get(),
-                     sstr.GetData());
+        log->Printf ("SBProcess(%p)::Stop () => SBError (%p): %s",
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<void*>(sb_error.get()), sstr.GetData());
     }
 
     return sb_error;
@@ -825,10 +837,9 @@ SBProcess::Kill ()
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::Kill () => SBError (%p): %s", 
-                     process_sp.get(), 
-                     sb_error.get(),
-                     sstr.GetData());
+        log->Printf ("SBProcess(%p)::Kill () => SBError (%p): %s",
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<void*>(sb_error.get()), sstr.GetData());
     }
 
     return sb_error;
@@ -869,17 +880,15 @@ SBProcess::Signal (int signo)
         sb_error.SetError (process_sp->Signal (signo));
     }
     else
-        sb_error.SetErrorString ("SBProcess is invalid");    
+        sb_error.SetErrorString ("SBProcess is invalid");
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::Signal (signo=%i) => SBError (%p): %s", 
-                     process_sp.get(), 
-                     signo,
-                     sb_error.get(),
-                     sstr.GetData());
+        log->Printf ("SBProcess(%p)::Signal (signo=%i) => SBError (%p): %s",
+                     static_cast<void*>(process_sp.get()), signo,
+                     static_cast<void*>(sb_error.get()), sstr.GetData());
     }
     return sb_error;
 }
@@ -911,12 +920,9 @@ SBProcess::GetThreadByID (tid_t tid)
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-    {
         log->Printf ("SBProcess(%p)::GetThreadByID (tid=0x%4.4" PRIx64 ") => SBThread (%p)",
-                     process_sp.get(), 
-                     tid,
-                     thread_sp.get());
-    }
+                     static_cast<void*>(process_sp.get()), tid,
+                     static_cast<void*>(thread_sp.get()));
 
     return sb_thread;
 }
@@ -938,12 +944,9 @@ SBProcess::GetThreadByIndexID (uint32_t index_id)
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-    {
-        log->Printf ("SBProcess(%p)::GetThreadByID (tid=0x%x) => SBThread (%p)", 
-                     process_sp.get(), 
-                     index_id,
-                     thread_sp.get());
-    }
+        log->Printf ("SBProcess(%p)::GetThreadByID (tid=0x%x) => SBThread (%p)",
+                     static_cast<void*>(process_sp.get()), index_id,
+                     static_cast<void*>(thread_sp.get()));
 
     return sb_thread;
 }
@@ -954,9 +957,10 @@ SBProcess::GetStateFromEvent (const SBEvent &event)
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     StateType ret_val = Process::ProcessEventData::GetStateFromEvent (event.get());
-    
+
     if (log)
-        log->Printf ("SBProcess::GetStateFromEvent (event.sp=%p) => %s", event.get(),
+        log->Printf ("SBProcess::GetStateFromEvent (event.sp=%p) => %s",
+                     static_cast<void*>(event.get()),
                      lldb_private::StateAsCString (ret_val));
 
     return ret_val;
@@ -1003,8 +1007,9 @@ SBProcess::GetBroadcaster () const
     SBBroadcaster broadcaster(process_sp.get(), false);
 
     if (log)
-        log->Printf ("SBProcess(%p)::GetBroadcaster () => SBBroadcaster (%p)",  process_sp.get(),
-                     broadcaster.get());
+        log->Printf ("SBProcess(%p)::GetBroadcaster () => SBBroadcaster (%p)",
+                     static_cast<void*>(process_sp.get()),
+                     static_cast<void*>(broadcaster.get()));
 
     return broadcaster;
 }
@@ -1025,15 +1030,11 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
     ProcessSP process_sp(GetSP());
 
     if (log)
-    {
         log->Printf ("SBProcess(%p)::ReadMemory (addr=0x%" PRIx64 ", dst=%p, dst_len=%" PRIu64 ", SBError (%p))...",
-                     process_sp.get(), 
-                     addr, 
-                     dst, 
-                     (uint64_t)dst_len,
-                     sb_error.get());
-    }
-    
+                     static_cast<void*>(process_sp.get()), addr,
+                     static_cast<void*>(dst), static_cast<uint64_t>(dst_len),
+                     static_cast<void*>(sb_error.get()));
+
     if (process_sp)
     {
         Process::StopLocker stop_locker;
@@ -1045,7 +1046,8 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
         else
         {
             if (log)
-                log->Printf ("SBProcess(%p)::ReadMemory() => error: process is running", process_sp.get());
+                log->Printf ("SBProcess(%p)::ReadMemory() => error: process is running",
+                             static_cast<void*>(process_sp.get()));
             sb_error.SetErrorString("process is running");
         }
     }
@@ -1059,13 +1061,10 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
         SBStream sstr;
         sb_error.GetDescription (sstr);
         log->Printf ("SBProcess(%p)::ReadMemory (addr=0x%" PRIx64 ", dst=%p, dst_len=%" PRIu64 ", SBError (%p): %s) => %" PRIu64,
-                     process_sp.get(), 
-                     addr, 
-                     dst, 
-                     (uint64_t)dst_len,
-                     sb_error.get(), 
-                     sstr.GetData(),
-                     (uint64_t)bytes_read);
+                     static_cast<void*>(process_sp.get()), addr,
+                     static_cast<void*>(dst), static_cast<uint64_t>(dst_len),
+                     static_cast<void*>(sb_error.get()), sstr.GetData(),
+                     static_cast<uint64_t>(bytes_read));
     }
 
     return bytes_read;
@@ -1088,7 +1087,8 @@ SBProcess::ReadCStringFromMemory (addr_t addr, void *buf, size_t size, lldb::SBE
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBProcess(%p)::ReadCStringFromMemory() => error: process is running", process_sp.get());
+                log->Printf ("SBProcess(%p)::ReadCStringFromMemory() => error: process is running",
+                             static_cast<void*>(process_sp.get()));
             sb_error.SetErrorString("process is running");
         }
     }
@@ -1116,7 +1116,8 @@ SBProcess::ReadUnsignedFromMemory (addr_t addr, uint32_t byte_size, lldb::SBErro
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBProcess(%p)::ReadUnsignedFromMemory() => error: process is running", process_sp.get());
+                log->Printf ("SBProcess(%p)::ReadUnsignedFromMemory() => error: process is running",
+                             static_cast<void*>(process_sp.get()));
             sb_error.SetErrorString("process is running");
         }
     }
@@ -1144,7 +1145,8 @@ SBProcess::ReadPointerFromMemory (addr_t addr, lldb::SBError &sb_error)
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBProcess(%p)::ReadPointerFromMemory() => error: process is running", process_sp.get());
+                log->Printf ("SBProcess(%p)::ReadPointerFromMemory() => error: process is running",
+                             static_cast<void*>(process_sp.get()));
             sb_error.SetErrorString("process is running");
         }
     }
@@ -1165,14 +1167,11 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
     ProcessSP process_sp(GetSP());
 
     if (log)
-    {
         log->Printf ("SBProcess(%p)::WriteMemory (addr=0x%" PRIx64 ", src=%p, src_len=%" PRIu64 ", SBError (%p))...",
-                     process_sp.get(), 
-                     addr, 
-                     src, 
-                     (uint64_t)src_len,
-                     sb_error.get());
-    }
+                     static_cast<void*>(process_sp.get()), addr,
+                     static_cast<const void*>(src),
+                     static_cast<uint64_t>(src_len),
+                     static_cast<void*>(sb_error.get()));
 
     if (process_sp)
     {
@@ -1185,7 +1184,8 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
         else
         {
             if (log)
-                log->Printf ("SBProcess(%p)::WriteMemory() => error: process is running", process_sp.get());
+                log->Printf ("SBProcess(%p)::WriteMemory() => error: process is running",
+                             static_cast<void*>(process_sp.get()));
             sb_error.SetErrorString("process is running");
         }
     }
@@ -1195,13 +1195,11 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
         SBStream sstr;
         sb_error.GetDescription (sstr);
         log->Printf ("SBProcess(%p)::WriteMemory (addr=0x%" PRIx64 ", src=%p, src_len=%" PRIu64 ", SBError (%p): %s) => %" PRIu64,
-                     process_sp.get(), 
-                     addr, 
-                     src, 
-                     (uint64_t)src_len, 
-                     sb_error.get(), 
-                     sstr.GetData(),
-                     (uint64_t)bytes_written);
+                     static_cast<void*>(process_sp.get()), addr,
+                     static_cast<const void*>(src),
+                     static_cast<uint64_t>(src_len),
+                     static_cast<void*>(sb_error.get()), sstr.GetData(),
+                     static_cast<uint64_t>(bytes_written));
     }
 
     return bytes_written;
@@ -1248,7 +1246,7 @@ SBProcess::GetNumSupportedHardwareWatchpoints (lldb::SBError &sb_error) const
         sb_error.SetError(process_sp->GetWatchpointSupportInfo (num));
         if (log)
             log->Printf ("SBProcess(%p)::GetNumSupportedHardwareWatchpoints () => %u",
-                         process_sp.get(), num);
+                         static_cast<void*>(process_sp.get()), num);
     }
     else
     {
@@ -1273,13 +1271,14 @@ SBProcess::LoadImage (lldb::SBFileSpec &sb_image_spec, lldb::SBError &sb_error)
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBProcess(%p)::LoadImage() => error: process is running", process_sp.get());
+                log->Printf ("SBProcess(%p)::LoadImage() => error: process is running",
+                             static_cast<void*>(process_sp.get()));
             sb_error.SetErrorString("process is running");
         }
     }
     return LLDB_INVALID_IMAGE_TOKEN;
 }
-    
+
 lldb::SBError
 SBProcess::UnloadImage (uint32_t image_token)
 {
@@ -1297,7 +1296,8 @@ SBProcess::UnloadImage (uint32_t image_token)
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBProcess(%p)::UnloadImage() => error: process is running", process_sp.get());
+                log->Printf ("SBProcess(%p)::UnloadImage() => error: process is running",
+                             static_cast<void*>(process_sp.get()));
             sb_error.SetErrorString("process is running");
         }
     }
@@ -1323,7 +1323,8 @@ SBProcess::SendEventData (const char *event_data)
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBProcess(%p)::SendEventData() => error: process is running", process_sp.get());
+                log->Printf ("SBProcess(%p)::SendEventData() => error: process is running",
+                             static_cast<void*>(process_sp.get()));
             sb_error.SetErrorString("process is running");
         }
     }
@@ -1360,7 +1361,8 @@ SBProcess::GetExtendedBacktraceTypeAtIndex (uint32_t idx)
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf("SBProcess(%p)::GetExtendedBacktraceTypeAtIndex() => error: requested extended backtrace name out of bounds", process_sp.get());
+                log->Printf("SBProcess(%p)::GetExtendedBacktraceTypeAtIndex() => error: requested extended backtrace name out of bounds",
+                            static_cast<void*>(process_sp.get()));
         }
     }
     return NULL;

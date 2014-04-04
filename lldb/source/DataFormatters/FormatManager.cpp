@@ -594,7 +594,9 @@ FormatManager::GetFormat (ValueObject& valobj,
     if (valobj_type)
     {
         if (log)
-            log->Printf("[FormatManager::GetFormat] Caching %p for type %s",retval.get(),valobj_type.AsCString("<invalid>"));
+            log->Printf("[FormatManager::GetFormat] Caching %p for type %s",
+                        static_cast<void*>(retval.get()),
+                        valobj_type.AsCString("<invalid>"));
         m_format_cache.SetFormat(valobj_type,retval);
     }
     if (log && log->GetDebug())
@@ -643,7 +645,9 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
     if (valobj_type)
     {
         if (log)
-            log->Printf("[FormatManager::GetSummaryFormat] Caching %p for type %s",retval.get(),valobj_type.AsCString("<invalid>"));
+            log->Printf("[FormatManager::GetSummaryFormat] Caching %p for type %s",
+                        static_cast<void*>(retval.get()),
+                        valobj_type.AsCString("<invalid>"));
         m_format_cache.SetSummary(valobj_type,retval);
     }
     if (log && log->GetDebug())
@@ -693,7 +697,9 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
     if (valobj_type)
     {
         if (log)
-            log->Printf("[FormatManager::GetSyntheticChildren] Caching %p for type %s",retval.get(),valobj_type.AsCString("<invalid>"));
+            log->Printf("[FormatManager::GetSyntheticChildren] Caching %p for type %s",
+                        static_cast<void*>(retval.get()),
+                        valobj_type.AsCString("<invalid>"));
         m_format_cache.SetSynthetic(valobj_type,retval);
     }
     if (log && log->GetDebug())

@@ -77,7 +77,8 @@ SBError::Fail () const
         ret_value = m_opaque_ap->Fail();
 
     if (log)
-        log->Printf ("SBError(%p)::Fail () => %i", m_opaque_ap.get(), ret_value);
+        log->Printf ("SBError(%p)::Fail () => %i",
+                     static_cast<void*>(m_opaque_ap.get()), ret_value);
 
     return ret_value;
 }
@@ -91,7 +92,8 @@ SBError::Success () const
         ret_value = m_opaque_ap->Success();
 
     if (log)
-        log->Printf ("SBError(%p)::Success () => %i", m_opaque_ap.get(), ret_value);
+        log->Printf ("SBError(%p)::Success () => %i",
+                     static_cast<void*>(m_opaque_ap.get()), ret_value);
 
     return ret_value;
 }
@@ -106,7 +108,8 @@ SBError::GetError () const
         err = m_opaque_ap->GetError();
 
     if (log)
-        log->Printf ("SBError(%p)::GetError () => 0x%8.8x", m_opaque_ap.get(), err);
+        log->Printf ("SBError(%p)::GetError () => 0x%8.8x",
+                     static_cast<void*>(m_opaque_ap.get()), err);
 
 
     return err;
@@ -121,7 +124,8 @@ SBError::GetType () const
         err_type = m_opaque_ap->GetType();
 
     if (log)
-        log->Printf ("SBError(%p)::GetType () => %i", m_opaque_ap.get(), err_type);
+        log->Printf ("SBError(%p)::GetType () => %i",
+                     static_cast<void*>(m_opaque_ap.get()), err_type);
 
     return err_type;
 }

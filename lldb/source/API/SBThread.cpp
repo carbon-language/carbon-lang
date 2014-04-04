@@ -120,12 +120,14 @@ SBThread::GetStopReason()
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetStopReason() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetStopReason() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
 
     if (log)
-        log->Printf ("SBThread(%p)::GetStopReason () => %s", exe_ctx.GetThreadPtr(), 
+        log->Printf ("SBThread(%p)::GetStopReason () => %s",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
                      Thread::StopReasonAsCString (reason));
 
     return reason;
@@ -183,7 +185,8 @@ SBThread::GetStopReasonDataCount ()
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBThread(%p)::GetStopReasonDataCount() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetStopReasonDataCount() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
     return 0;
@@ -257,7 +260,8 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBThread(%p)::GetStopReasonDataAtIndex() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetStopReasonDataAtIndex() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
     return 0;
@@ -284,8 +288,9 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
                 if (stop_desc)
                 {
                     if (log)
-                        log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => \"%s\"", 
-                                     exe_ctx.GetThreadPtr(), stop_desc);
+                        log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => \"%s\"",
+                                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                                     stop_desc);
                     if (dst)
                         return ::snprintf (dst, dst_len, "%s", stop_desc);
                     else
@@ -362,19 +367,20 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
                     default:
                         break;
                     }
-                    
+
                     if (stop_desc && stop_desc[0])
                     {
                         if (log)
-                            log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => '%s'", 
-                                         exe_ctx.GetThreadPtr(), stop_desc);
+                            log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => '%s'",
+                                         static_cast<void*>(exe_ctx.GetThreadPtr()),
+                                         stop_desc);
 
                         if (dst)
                             return ::snprintf (dst, dst_len, "%s", stop_desc) + 1; // Include the NULL byte
 
                         if (stop_desc_len == 0)
                             stop_desc_len = ::strlen (stop_desc) + 1; // Include the NULL byte
-                            
+
                         return stop_desc_len;
                     }
                 }
@@ -384,7 +390,8 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
         {
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBThread(%p)::GetStopDescription() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetStopDescription() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
     if (dst)
@@ -414,16 +421,18 @@ SBThread::GetStopReturnValue ()
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetStopReturnValue() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetStopReturnValue() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
-    
+
     if (log)
-        log->Printf ("SBThread(%p)::GetStopReturnValue () => %s", exe_ctx.GetThreadPtr(), 
-                                                                  return_valobj_sp.get() 
-                                                                      ? return_valobj_sp->GetValueAsCString() 
-                                                                        : "<no return value>");
-        
+        log->Printf ("SBThread(%p)::GetStopReturnValue () => %s",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                     return_valobj_sp.get()
+                        ? return_valobj_sp->GetValueAsCString()
+                        : "<no return value>");
+
     return SBValue (return_valobj_sp);
 }
 
@@ -469,12 +478,15 @@ SBThread::GetName () const
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetName() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetName() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
-    
+
     if (log)
-        log->Printf ("SBThread(%p)::GetName () => %s", exe_ctx.GetThreadPtr(), name ? name : "NULL");
+        log->Printf ("SBThread(%p)::GetName () => %s",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                     name ? name : "NULL");
 
     return name;
 }
@@ -497,12 +509,15 @@ SBThread::GetQueueName () const
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetQueueName() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetQueueName() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
-    
+
     if (log)
-        log->Printf ("SBThread(%p)::GetQueueName () => %s", exe_ctx.GetThreadPtr(), name ? name : "NULL");
+        log->Printf ("SBThread(%p)::GetQueueName () => %s",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                     name ? name : "NULL");
 
     return name;
 }
@@ -525,12 +540,14 @@ SBThread::GetQueueID () const
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetQueueID() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetQueueID() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
-    
+
     if (log)
-        log->Printf ("SBThread(%p)::GetQueueID () => 0x%" PRIx64, exe_ctx.GetThreadPtr(), id);
+        log->Printf ("SBThread(%p)::GetQueueID () => 0x%" PRIx64,
+                     static_cast<void*>(exe_ctx.GetThreadPtr()), id);
 
     return id;
 }
@@ -587,9 +604,10 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
 
 
     if (log)
-        log->Printf ("SBThread(%p)::StepOver (stop_other_threads='%s')", exe_ctx.GetThreadPtr(), 
+        log->Printf ("SBThread(%p)::StepOver (stop_other_threads='%s')",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
                      Thread::RunModeAsCString (stop_other_threads));
-    
+
     if (exe_ctx.HasThreadScope())
     {
         Thread *thread = exe_ctx.GetThreadPtr();
@@ -612,8 +630,8 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
             else
             {
                 new_plan_sp = thread->QueueThreadPlanForStepSingleInstruction (true,
-                                                                            abort_other_plans, 
-                                                                            stop_other_threads);
+                                                                               abort_other_plans,
+                                                                               stop_other_threads);
             }
         }
 
@@ -638,10 +656,10 @@ SBThread::StepInto (const char *target_name, lldb::RunMode stop_other_threads)
 
     if (log)
         log->Printf ("SBThread(%p)::StepInto (target_name='%s', stop_other_threads='%s')",
-                     exe_ctx.GetThreadPtr(),
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
                      target_name? target_name: "<NULL>",
                      Thread::RunModeAsCString (stop_other_threads));
-    
+
     if (exe_ctx.HasThreadScope())
     {
         bool abort_other_plans = false;
@@ -666,10 +684,10 @@ SBThread::StepInto (const char *target_name, lldb::RunMode stop_other_threads)
         else
         {
             new_plan_sp = thread->QueueThreadPlanForStepSingleInstruction (false,
-                                                                        abort_other_plans, 
-                                                                        stop_other_threads);
+                                                                           abort_other_plans,
+                                                                           stop_other_threads);
         }
-        
+
         // This returns an error, we should use it!
         ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
@@ -685,8 +703,9 @@ SBThread::StepOut ()
 
 
     if (log)
-        log->Printf ("SBThread(%p)::StepOut ()", exe_ctx.GetThreadPtr());
-    
+        log->Printf ("SBThread(%p)::StepOut ()",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()));
+
     if (exe_ctx.HasThreadScope())
     {
         bool abort_other_plans = false;
@@ -696,14 +715,14 @@ SBThread::StepOut ()
 
         const LazyBool avoid_no_debug = eLazyBoolCalculate;
         ThreadPlanSP new_plan_sp(thread->QueueThreadPlanForStepOut (abort_other_plans,
-                                                                  NULL, 
-                                                                  false, 
-                                                                  stop_other_threads, 
-                                                                  eVoteYes, 
-                                                                  eVoteNoOpinion,
-                                                                  0,
-                                                                  avoid_no_debug));
-                                                                  
+                                                                    NULL,
+                                                                    false,
+                                                                    stop_other_threads,
+                                                                    eVoteYes,
+                                                                    eVoteNoOpinion,
+                                                                    0,
+                                                                    avoid_no_debug));
+
         // This returns an error, we should use it!
         ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
@@ -722,7 +741,10 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
     {
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
-        log->Printf ("SBThread(%p)::StepOutOfFrame (frame = SBFrame(%p): %s)", exe_ctx.GetThreadPtr(), frame_sp.get(), frame_desc_strm.GetData());
+        log->Printf ("SBThread(%p)::StepOutOfFrame (frame = SBFrame(%p): %s)",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                     static_cast<void*>(frame_sp.get()),
+                     frame_desc_strm.GetData());
     }
 
     if (exe_ctx.HasThreadScope())
@@ -732,13 +754,13 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
         Thread *thread = exe_ctx.GetThreadPtr();
 
         ThreadPlanSP new_plan_sp(thread->QueueThreadPlanForStepOut (abort_other_plans,
-                                                                    NULL, 
-                                                                    false, 
-                                                                    stop_other_threads, 
-                                                                    eVoteYes, 
+                                                                    NULL,
+                                                                    false,
+                                                                    stop_other_threads,
+                                                                    eVoteYes,
                                                                     eVoteNoOpinion,
                                                                     frame_sp->GetFrameIndex()));
-                                                                    
+
         // This returns an error, we should use it!
         ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
@@ -755,13 +777,14 @@ SBThread::StepInstruction (bool step_over)
 
 
     if (log)
-        log->Printf ("SBThread(%p)::StepInstruction (step_over=%i)", exe_ctx.GetThreadPtr(), step_over);
-    
+        log->Printf ("SBThread(%p)::StepInstruction (step_over=%i)",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()), step_over);
+
     if (exe_ctx.HasThreadScope())
     {
         Thread *thread = exe_ctx.GetThreadPtr();
         ThreadPlanSP new_plan_sp(thread->QueueThreadPlanForStepSingleInstruction (step_over, true, true));
-        
+
         // This returns an error, we should use it!
         ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
@@ -777,8 +800,9 @@ SBThread::RunToAddress (lldb::addr_t addr)
 
 
     if (log)
-        log->Printf ("SBThread(%p)::RunToAddress (addr=0x%" PRIx64 ")", exe_ctx.GetThreadPtr(), addr);
-    
+        log->Printf ("SBThread(%p)::RunToAddress (addr=0x%" PRIx64 ")",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()), addr);
+
     if (exe_ctx.HasThreadScope())
     {
         bool abort_other_plans = false;
@@ -789,7 +813,7 @@ SBThread::RunToAddress (lldb::addr_t addr)
         Thread *thread = exe_ctx.GetThreadPtr();
 
         ThreadPlanSP new_plan_sp(thread->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads));
-        
+
         // This returns an error, we should use it!
         ResumeNewPlan (exe_ctx, new_plan_sp.get());
     }
@@ -803,7 +827,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
     SBError sb_error;
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     char path[PATH_MAX];
-    
+
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
@@ -814,11 +838,10 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
         sb_file_spec->GetPath (path, sizeof(path));
-        log->Printf ("SBThread(%p)::StepOverUntil (frame = SBFrame(%p): %s, file+line = %s:%u)", 
-                     exe_ctx.GetThreadPtr(), 
-                     frame_sp.get(), 
-                     frame_desc_strm.GetData(),
-                     path, line);
+        log->Printf ("SBThread(%p)::StepOverUntil (frame = SBFrame(%p): %s, file+line = %s:%u)",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                     static_cast<void*>(frame_sp.get()),
+                     frame_desc_strm.GetData(), path, line);
     }
 
     if (exe_ctx.HasThreadScope())
@@ -831,14 +854,14 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
             sb_error.SetErrorString("invalid line argument");
             return sb_error;
         }
-        
+
         if (!frame_sp)
         {
             frame_sp = thread->GetSelectedFrame ();
             if (!frame_sp)
                 frame_sp = thread->GetStackFrameAtIndex (0);
         }
-    
+
         SymbolContext frame_sc;
         if (!frame_sp)        
         {
@@ -851,13 +874,13 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
                                                eSymbolContextFunction  | 
                                                eSymbolContextLineEntry | 
                                                eSymbolContextSymbol    );
-                                               
+
         if (frame_sc.comp_unit == NULL)
         {
             sb_error.SetErrorStringWithFormat("frame %u doesn't have debug information", frame_sp->GetFrameIndex());
             return sb_error;
         }
-        
+
         FileSpec step_file_spec;
         if (sb_file_spec.IsValid())
         {
@@ -874,15 +897,15 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
                 return sb_error;
             }
         }
-    
+
         // Grab the current function, then we will make sure the "until" address is
         // within the function.  We discard addresses that are out of the current
         // function, and then if there are no addresses remaining, give an appropriate
         // error message.
-        
+
         bool all_in_function = true;
         AddressRange fun_range = frame_sc.function->GetAddressRange();
-        
+
         std::vector<addr_t> step_over_until_addrs;
         const bool abort_other_plans = false;
         const bool stop_other_threads = false;
@@ -914,7 +937,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
                 }
             }
         }
-        
+
         if (step_over_until_addrs.empty())
         {
             if (all_in_function)
@@ -953,7 +976,9 @@ SBThread::JumpToLine (lldb::SBFileSpec &file_spec, uint32_t line)
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
     if (log)
-        log->Printf ("SBThread(%p)::JumpToLine (file+line = %s:%u)", exe_ctx.GetThreadPtr(), file_spec->GetPath().c_str(), line);
+        log->Printf ("SBThread(%p)::JumpToLine (file+line = %s:%u)",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                     file_spec->GetPath().c_str(), line);
 
     if (!exe_ctx.HasThreadScope())
     {
@@ -972,7 +997,7 @@ SBError
 SBThread::ReturnFromFrame (SBFrame &frame, SBValue &return_value)
 {
     SBError sb_error;
-    
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Mutex::Locker api_locker;
@@ -980,14 +1005,16 @@ SBThread::ReturnFromFrame (SBFrame &frame, SBValue &return_value)
 
 
     if (log)
-        log->Printf ("SBThread(%p)::ReturnFromFrame (frame=%d)", exe_ctx.GetThreadPtr(), frame.GetFrameID());
-    
+        log->Printf ("SBThread(%p)::ReturnFromFrame (frame=%d)",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                     frame.GetFrameID());
+
     if (exe_ctx.HasThreadScope())
     {
         Thread *thread = exe_ctx.GetThreadPtr();
         sb_error.SetError (thread->ReturnFromFrame(frame.GetFrameSP(), return_value.GetSP()));
     }
-    
+
     return sb_error;
 }
 
@@ -1009,11 +1036,13 @@ SBThread::Suspend()
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::Suspend() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::Suspend() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
     if (log)
-        log->Printf ("SBThread(%p)::Suspend() => %i", exe_ctx.GetThreadPtr(), result);
+        log->Printf ("SBThread(%p)::Suspend() => %i",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()), result);
     return result;
 }
 
@@ -1035,11 +1064,13 @@ SBThread::Resume ()
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::Resume() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::Resume() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
     if (log)
-        log->Printf ("SBThread(%p)::Resume() => %i", exe_ctx.GetThreadPtr(), result);
+        log->Printf ("SBThread(%p)::Resume() => %i",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()), result);
     return result;
 }
 
@@ -1077,8 +1108,10 @@ SBThread::GetProcess ()
     {
         SBStream frame_desc_strm;
         sb_process.GetDescription (frame_desc_strm);
-        log->Printf ("SBThread(%p)::GetProcess () => SBProcess(%p): %s", exe_ctx.GetThreadPtr(),
-                     sb_process.GetSP().get(), frame_desc_strm.GetData());
+        log->Printf ("SBThread(%p)::GetProcess () => SBProcess(%p): %s",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                     static_cast<void*>(sb_process.GetSP().get()),
+                     frame_desc_strm.GetData());
     }
 
     return sb_process;
@@ -1103,12 +1136,14 @@ SBThread::GetNumFrames ()
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetNumFrames() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetNumFrames() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
 
     if (log)
-        log->Printf ("SBThread(%p)::GetNumFrames () => %u", exe_ctx.GetThreadPtr(), num_frames);
+        log->Printf ("SBThread(%p)::GetNumFrames () => %u",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()), num_frames);
 
     return num_frames;
 }
@@ -1134,7 +1169,8 @@ SBThread::GetFrameAtIndex (uint32_t idx)
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetFrameAtIndex() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetFrameAtIndex() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
 
@@ -1142,8 +1178,10 @@ SBThread::GetFrameAtIndex (uint32_t idx)
     {
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
-        log->Printf ("SBThread(%p)::GetFrameAtIndex (idx=%d) => SBFrame(%p): %s", 
-                     exe_ctx.GetThreadPtr(), idx, frame_sp.get(), frame_desc_strm.GetData());
+        log->Printf ("SBThread(%p)::GetFrameAtIndex (idx=%d) => SBFrame(%p): %s",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()), idx,
+                     static_cast<void*>(frame_sp.get()),
+                     frame_desc_strm.GetData());
     }
 
     return sb_frame;
@@ -1170,7 +1208,8 @@ SBThread::GetSelectedFrame ()
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetSelectedFrame() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetSelectedFrame() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
 
@@ -1178,8 +1217,10 @@ SBThread::GetSelectedFrame ()
     {
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
-        log->Printf ("SBThread(%p)::GetSelectedFrame () => SBFrame(%p): %s", 
-                     exe_ctx.GetThreadPtr(), frame_sp.get(), frame_desc_strm.GetData());
+        log->Printf ("SBThread(%p)::GetSelectedFrame () => SBFrame(%p): %s",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()),
+                     static_cast<void*>(frame_sp.get()),
+                     frame_desc_strm.GetData());
     }
 
     return sb_frame;
@@ -1211,7 +1252,8 @@ SBThread::SetSelectedFrame (uint32_t idx)
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::SetSelectedFrame() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::SetSelectedFrame() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
 
@@ -1219,8 +1261,10 @@ SBThread::SetSelectedFrame (uint32_t idx)
     {
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
-        log->Printf ("SBThread(%p)::SetSelectedFrame (idx=%u) => SBFrame(%p): %s", 
-                     exe_ctx.GetThreadPtr(), idx, frame_sp.get(), frame_desc_strm.GetData());
+        log->Printf ("SBThread(%p)::SetSelectedFrame (idx=%u) => SBFrame(%p): %s",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()), idx,
+                     static_cast<void*>(frame_sp.get()),
+                     frame_desc_strm.GetData());
     }
     return sb_frame;
 }
@@ -1323,7 +1367,11 @@ SBThread::GetExtendedBacktraceThread (const char *type)
                                 const char *queue_name = new_thread_sp->GetQueueName();
                                 if (queue_name == NULL)
                                     queue_name = "";
-                                log->Printf ("SBThread(%p)::GetExtendedBacktraceThread() => new extended Thread created (%p) with queue_id 0x%" PRIx64 " queue name '%s'", exe_ctx.GetThreadPtr(), new_thread_sp.get(), new_thread_sp->GetQueueID(), queue_name);
+                                log->Printf ("SBThread(%p)::GetExtendedBacktraceThread() => new extended Thread created (%p) with queue_id 0x%" PRIx64 " queue name '%s'",
+                                             static_cast<void*>(exe_ctx.GetThreadPtr()),
+                                             static_cast<void*>(new_thread_sp.get()),
+                                             new_thread_sp->GetQueueID(),
+                                             queue_name);
                             }
                         }
                     }
@@ -1333,14 +1381,14 @@ SBThread::GetExtendedBacktraceThread (const char *type)
         else
         {
             if (log)
-                log->Printf ("SBThread(%p)::GetExtendedBacktraceThread() => error: process is running", exe_ctx.GetThreadPtr());
+                log->Printf ("SBThread(%p)::GetExtendedBacktraceThread() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
         }
     }
 
     if (log && sb_origin_thread.IsValid() == false)
-    {
-        log->Printf("SBThread(%p)::GetExtendedBacktraceThread() is not returning a Valid thread", exe_ctx.GetThreadPtr());
-    }
+        log->Printf("SBThread(%p)::GetExtendedBacktraceThread() is not returning a Valid thread",
+                    static_cast<void*>(exe_ctx.GetThreadPtr()));
     return sb_origin_thread;
 }
 

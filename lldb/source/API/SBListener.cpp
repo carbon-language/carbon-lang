@@ -42,7 +42,7 @@ SBListener::SBListener (const char *name) :
 
     if (log)
         log->Printf ("SBListener::SBListener (name=\"%s\") => SBListener(%p)",
-                     name, m_opaque_ptr);
+                     name, static_cast<void*>(m_opaque_ptr));
 }
 
 
@@ -110,7 +110,7 @@ SBListener::StartListeningForEventClass (SBDebugger &debugger,
     else
         return 0;
 }
-                             
+
 bool
 SBListener::StopListeningForEventClass (SBDebugger &debugger,
                             const char *broadcaster_class,
@@ -127,7 +127,7 @@ SBListener::StopListeningForEventClass (SBDebugger &debugger,
     else
         return false;
 }
-    
+
 uint32_t
 SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t event_mask)
 {
@@ -136,23 +136,23 @@ SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t 
     {
         acquired_event_mask = m_opaque_ptr->StartListeningForEvents (broadcaster.get(), event_mask);
     }
-    
+
     Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
     if (log)
     {
         StreamString sstr_requested;
         StreamString sstr_acquired;
-        
+
         Broadcaster *lldb_broadcaster = broadcaster.get();
         if (lldb_broadcaster)
         {
             const bool got_requested_names = lldb_broadcaster->GetEventNames (sstr_requested, event_mask, false);
             const bool got_acquired_names = lldb_broadcaster->GetEventNames (sstr_acquired, acquired_event_mask, false);
             log->Printf ("SBListener(%p)::StartListeneingForEvents (SBBroadcaster(%p): %s, event_mask=0x%8.8x%s%s%s) => 0x%8.8x%s%s%s",
-                         m_opaque_ptr, 
-                         lldb_broadcaster, 
-                         lldb_broadcaster->GetBroadcasterName().GetCString(), 
-                         event_mask, 
+                         static_cast<void*>(m_opaque_ptr),
+                         static_cast<void*>(lldb_broadcaster),
+                         lldb_broadcaster->GetBroadcasterName().GetCString(),
+                         event_mask,
                          got_requested_names ? " (" : "",
                          sstr_requested.GetData(),
                          got_requested_names ? ")" : "",
@@ -163,12 +163,10 @@ SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t 
         }
         else
         {
-            log->Printf ("SBListener(%p)::StartListeneingForEvents (SBBroadcaster(%p), event_mask=0x%8.8x) => 0x%8.8x", 
-                         m_opaque_ptr, 
-                         lldb_broadcaster, 
-                         event_mask, 
+            log->Printf ("SBListener(%p)::StartListeneingForEvents (SBBroadcaster(%p), event_mask=0x%8.8x) => 0x%8.8x",
+                         static_cast<void*>(m_opaque_ptr),
+                         static_cast<void*>(lldb_broadcaster), event_mask,
                          acquired_event_mask);
-            
         }
     }
 
@@ -194,12 +192,14 @@ SBListener::WaitForEvent (uint32_t timeout_secs, SBEvent &event)
         if (timeout_secs == UINT32_MAX)
         {
             log->Printf ("SBListener(%p)::WaitForEvent (timeout_secs=INFINITE, SBEvent(%p))...",
-                         m_opaque_ptr, event.get());
+                         static_cast<void*>(m_opaque_ptr),
+                         static_cast<void*>(event.get()));
         }
         else
         {
             log->Printf ("SBListener(%p)::WaitForEvent (timeout_secs=%d, SBEvent(%p))...",
-                         m_opaque_ptr, timeout_secs, event.get());
+                         static_cast<void*>(m_opaque_ptr), timeout_secs,
+                         static_cast<void*>(event.get()));
         }
     }
     bool success = false;
@@ -226,12 +226,14 @@ SBListener::WaitForEvent (uint32_t timeout_secs, SBEvent &event)
         if (timeout_secs == UINT32_MAX)
         {
             log->Printf ("SBListener(%p)::WaitForEvent (timeout_secs=INFINITE, SBEvent(%p)) => %i",
-                         m_opaque_ptr, event.get(), success);
+                         static_cast<void*>(m_opaque_ptr),
+                         static_cast<void*>(event.get()), success);
         }
         else
         {
             log->Printf ("SBListener(%p)::WaitForEvent (timeout_secs=%d, SBEvent(%p)) => %i",
-                         m_opaque_ptr, timeout_secs, event.get(), success);
+                         static_cast<void*>(m_opaque_ptr), timeout_secs,
+                         static_cast<void*>(event.get()), success);
         }
     }
     if (!success)

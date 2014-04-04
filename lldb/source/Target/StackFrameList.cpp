@@ -491,7 +491,7 @@ StackFrameList::Dump (Stream *s)
     for (pos = begin; pos != end; ++pos)
     {
         StackFrame *frame = (*pos).get();
-        s->Printf("%p: ", frame);
+        s->Printf("%p: ", static_cast<void*>(frame));
         if (frame)
         {
             frame->GetStackID().Dump (s);

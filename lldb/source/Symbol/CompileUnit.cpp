@@ -99,11 +99,11 @@ CompileUnit::GetDescription(Stream *s, lldb::DescriptionLevel level) const
 void
 CompileUnit::Dump(Stream *s, bool show_context) const
 {
-    s->Printf("%p: ", this);
+    s->Printf("%p: ", static_cast<const void*>(this));
     s->Indent();
-    *s << "CompileUnit" << (const UserID&)*this
-        << ", language = \"" << (const Language&)*this
-        << "\", file = '" << (const FileSpec&)*this << "'\n";
+    *s << "CompileUnit" << static_cast<const UserID&>(*this)
+       << ", language = \"" << reinterpret_cast<const Language&>(*this)
+       << "\", file = '" << static_cast<const FileSpec&>(*this) << "'\n";
 
 //  m_types.Dump(s);
 

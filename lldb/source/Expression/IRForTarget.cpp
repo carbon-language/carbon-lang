@@ -1743,23 +1743,23 @@ bool
 IRForTarget::ResolveExternals (Function &llvm_function)
 {
     lldb_private::Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
+
     for (GlobalVariable &global_var : m_module->globals())
     {
         std::string global_name = global_var.getName().str();
-        
+
         if (log)
-            log->Printf("Examining %s, DeclForGlobalValue returns %p", 
+            log->Printf("Examining %s, DeclForGlobalValue returns %p",
                         global_name.c_str(),
-                        DeclForGlobal(&global_var));
-        
+                        static_cast<void*>(DeclForGlobal(&global_var)));
+
         if (global_name.find("OBJC_IVAR") == 0)
         {
             if (!HandleSymbol(&global_var))
             {
                 if (m_error_stream)
                     m_error_stream->Printf("Error [IRForTarget]: Couldn't find Objective-C indirect ivar symbol %s\n", global_name.c_str());
-                
+
                 return false;
             }
         }
@@ -1769,7 +1769,7 @@ IRForTarget::ResolveExternals (Function &llvm_function)
             {
                 if (m_error_stream)
                     m_error_stream->Printf("Error [IRForTarget]: Couldn't resolve the class for an Objective-C static method call\n");
-                
+
                 return false;
             }
         }
@@ -1779,7 +1779,7 @@ IRForTarget::ResolveExternals (Function &llvm_function)
             {
                 if (m_error_stream)
                     m_error_stream->Printf("Error [IRForTarget]: Couldn't resolve the class for an Objective-C static method call\n");
-                
+
                 return false;
             }
         }
@@ -1789,12 +1789,12 @@ IRForTarget::ResolveExternals (Function &llvm_function)
             {
                 if (m_error_stream)
                     m_error_stream->Printf("Internal error [IRForTarget]: Couldn't rewrite external variable %s\n", global_name.c_str());
-                
+
                 return false;
             }
         }
     }
-        
+
     return true;
 }
 

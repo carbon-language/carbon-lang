@@ -135,7 +135,7 @@ void
 DWARFDebugAranges::Sort (bool minimize)
 {    
     Timer scoped_timer(__PRETTY_FUNCTION__, "%s this = %p",
-                       __PRETTY_FUNCTION__, this);
+                       __PRETTY_FUNCTION__, static_cast<void*>(this));
 
     Log *log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_ARANGES));
     size_t orig_arange_size = 0;

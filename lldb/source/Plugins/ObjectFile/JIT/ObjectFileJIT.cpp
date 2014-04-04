@@ -202,16 +202,16 @@ ObjectFileJIT::Dump (Stream *s)
     if (module_sp)
     {
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
-        s->Printf("%p: ", this);
+        s->Printf("%p: ", static_cast<void*>(this));
         s->Indent();
         s->PutCString("ObjectFileJIT");
-        
+
         ArchSpec arch;
         if (GetArchitecture(arch))
             *s << ", arch = " << arch.GetArchitectureName();
-        
+
         s->EOL();
-        
+
         SectionList *sections = GetSectionList();
         if (sections)
             sections->Dump(s, NULL, true, UINT32_MAX);

@@ -261,7 +261,7 @@ Platform::Platform (bool is_host) :
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
-        log->Printf ("%p Platform::Platform()", this);
+        log->Printf ("%p Platform::Platform()", static_cast<void*>(this));
 }
 
 //------------------------------------------------------------------
@@ -274,7 +274,7 @@ Platform::~Platform()
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
-        log->Printf ("%p Platform::~Platform()", this);
+        log->Printf ("%p Platform::~Platform()", static_cast<void*>(this));
 }
 
 void

@@ -66,9 +66,11 @@ SBFunction::GetName() const
     if (log)
     {
         if (cstr)
-            log->Printf ("SBFunction(%p)::GetName () => \"%s\"", m_opaque_ptr, cstr);
+            log->Printf ("SBFunction(%p)::GetName () => \"%s\"",
+                         static_cast<void*>(m_opaque_ptr), cstr);
         else
-            log->Printf ("SBFunction(%p)::GetName () => NULL", m_opaque_ptr);
+            log->Printf ("SBFunction(%p)::GetName () => NULL",
+                         static_cast<void*>(m_opaque_ptr));
     }
     return cstr;
 }
@@ -83,9 +85,11 @@ SBFunction::GetMangledName () const
     if (log)
     {
         if (cstr)
-            log->Printf ("SBFunction(%p)::GetMangledName () => \"%s\"", m_opaque_ptr, cstr);
+            log->Printf ("SBFunction(%p)::GetMangledName () => \"%s\"",
+                         static_cast<void*>(m_opaque_ptr), cstr);
         else
-            log->Printf ("SBFunction(%p)::GetMangledName () => NULL", m_opaque_ptr);
+            log->Printf ("SBFunction(%p)::GetMangledName () => NULL",
+                         static_cast<void*>(m_opaque_ptr));
     }
     return cstr;
 }

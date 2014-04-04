@@ -33,7 +33,7 @@ SBBroadcaster::SBBroadcaster (const char *name) :
 
     if (log)
         log->Printf ("SBBroadcaster::SBBroadcaster (name=\"%s\") => SBBroadcaster(%p)",
-                     name, m_opaque_ptr);
+                     name, static_cast<void*>(m_opaque_ptr));
 }
 
 SBBroadcaster::SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns) :
@@ -43,8 +43,9 @@ SBBroadcaster::SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns)
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE));
 
     if (log)
-        log->Printf ("SBBroadcaster::SBBroadcaster (broadcaster=%p, bool owns=%i) => SBBroadcaster(%p)", 
-                     broadcaster, owns, m_opaque_ptr);
+        log->Printf ("SBBroadcaster::SBBroadcaster (broadcaster=%p, bool owns=%i) => SBBroadcaster(%p)",
+                     static_cast<void*>(broadcaster), owns,
+                     static_cast<void*>(m_opaque_ptr));
 }
 
 SBBroadcaster::SBBroadcaster (const SBBroadcaster &rhs) :
@@ -75,7 +76,8 @@ SBBroadcaster::BroadcastEventByType (uint32_t event_type, bool unique)
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
-        log->Printf ("SBBroadcaster(%p)::BroadcastEventByType (event_type=0x%8.8x, unique=%i)", m_opaque_ptr, event_type, unique);
+        log->Printf ("SBBroadcaster(%p)::BroadcastEventByType (event_type=0x%8.8x, unique=%i)",
+                     static_cast<void*>(m_opaque_ptr), event_type, unique);
 
     if (m_opaque_ptr == NULL)
         return;
@@ -92,7 +94,9 @@ SBBroadcaster::BroadcastEvent (const SBEvent &event, bool unique)
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
-        log->Printf ("SBBroadcaster(%p)::BroadcastEventByType (SBEvent(%p), unique=%i)", m_opaque_ptr, event.get(), unique);
+        log->Printf ("SBBroadcaster(%p)::BroadcastEventByType (SBEvent(%p), unique=%i)",
+                     static_cast<void*>(m_opaque_ptr),
+                     static_cast<void*>(event.get()), unique);
 
     if (m_opaque_ptr == NULL)
         return;
@@ -109,7 +113,9 @@ SBBroadcaster::AddInitialEventsToListener (const SBListener &listener, uint32_t 
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBBroadcaster(%p)::AddInitialEventsToListener (SBListener(%p), event_mask=0x%8.8x)", m_opaque_ptr, listener.get(), requested_events);
+        log->Printf ("SBBroadcaster(%p)::AddInitialEventsToListener (SBListener(%p), event_mask=0x%8.8x)",
+                     static_cast<void*>(m_opaque_ptr),
+                     static_cast<void*>(listener.get()), requested_events);
     if (m_opaque_ptr)
         m_opaque_ptr->AddInitialEventsToListener (listener.get(), requested_events);
 }

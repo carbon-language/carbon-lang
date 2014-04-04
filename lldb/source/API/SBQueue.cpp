@@ -98,7 +98,8 @@ namespace lldb_private
             }
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBQueue(%p)::GetQueueID () => 0x%" PRIx64, this, result);
+                log->Printf ("SBQueue(%p)::GetQueueID () => 0x%" PRIx64,
+                             static_cast<const void*>(this), result);
             return result;
         }
 
@@ -113,10 +114,11 @@ namespace lldb_private
             }
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBQueueImpl(%p)::GetIndexID () => %d", this, result);
+                log->Printf ("SBQueueImpl(%p)::GetIndexID () => %d",
+                             static_cast<const void*>(this), result);
             return result;
         }
-        
+
         const char *
         GetName () const
         {
@@ -126,14 +128,16 @@ namespace lldb_private
             {
                 name = queue_sp->GetName();
             }
-        
+
             Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
             if (log)
-                log->Printf ("SBQueueImpl(%p)::GetName () => %s", this, name ? name : "NULL");
-        
+                log->Printf ("SBQueueImpl(%p)::GetName () => %s",
+                             static_cast<const void*>(this),
+                             name ? name : "NULL");
+
             return name;
         }
-        
+
         void
         FetchThreads ()
         {
@@ -160,7 +164,7 @@ namespace lldb_private
                 }
             }
         }
-        
+
         void
         FetchItems ()
         {
@@ -187,12 +191,12 @@ namespace lldb_private
                 }
             }
         }
-        
+
         uint32_t
         GetNumThreads ()
         {
             uint32_t result = 0;
-        
+
             FetchThreads();
             if (m_thread_list_fetched)
             {
@@ -200,12 +204,12 @@ namespace lldb_private
             }
             return result;
         }
-        
+
         lldb::SBThread
         GetThreadAtIndex (uint32_t idx)
         {
             FetchThreads();
-        
+
             SBThread sb_thread;
             QueueSP queue_sp = m_queue_wp.lock();
             if (queue_sp && idx < m_threads.size())
@@ -261,7 +265,7 @@ namespace lldb_private
                 result = queue_sp->GetNumRunningWorkItems();
             return result;
         }
-        
+
         lldb::SBProcess
         GetProcess ()
         {

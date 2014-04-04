@@ -92,9 +92,11 @@ SBEvent::GetType () const
     {
         StreamString sstr;
         if (lldb_event && lldb_event->GetBroadcaster() && lldb_event->GetBroadcaster()->GetEventNames(sstr, event_type, true))
-            log->Printf ("SBEvent(%p)::GetType () => 0x%8.8x (%s)", get(), event_type, sstr.GetData());
+            log->Printf ("SBEvent(%p)::GetType () => 0x%8.8x (%s)",
+                         static_cast<void*>(get()), event_type, sstr.GetData());
         else
-            log->Printf ("SBEvent(%p)::GetType () => 0x%8.8x", get(), event_type);
+            log->Printf ("SBEvent(%p)::GetType () => 0x%8.8x",
+                         static_cast<void*>(get()), event_type);
 
     }
 
@@ -141,11 +143,10 @@ SBEvent::BroadcasterMatchesRef (const SBBroadcaster &broadcaster)
     // For logging, this gets a little chatty so only enable this when verbose logging is on
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API | LIBLLDB_LOG_VERBOSE));
     if (log)
-        log->Printf ("SBEvent(%p)::BroadcasterMatchesRef (SBBroadcaster(%p): %s) => %i", 
-                     get(),
-                     broadcaster.get(),
-                     broadcaster.GetName(),
-                     success);
+        log->Printf ("SBEvent(%p)::BroadcasterMatchesRef (SBBroadcaster(%p): %s) => %i",
+                     static_cast<void*>(get()),
+                     static_cast<void*>(broadcaster.get()),
+                     broadcaster.GetName(), success);
 
     return success;
 }
@@ -206,8 +207,8 @@ SBEvent::GetCStringFromEvent (const SBEvent &event)
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
-        log->Printf ("SBEvent(%p)::GetCStringFromEvent () => \"%s\"", 
-                     event.get(), 
+        log->Printf ("SBEvent(%p)::GetCStringFromEvent () => \"%s\"",
+                     static_cast<void*>(event.get()),
                      reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event.get())));
 
     return reinterpret_cast<const char *>(EventDataBytes::GetBytesFromEvent (event.get()));
