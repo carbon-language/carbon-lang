@@ -392,7 +392,8 @@ unsigned int SymbolTable::size() {
   return _nameTable.size();
 }
 
-void SymbolTable::undefines(std::vector<const UndefinedAtom *> &undefs) {
+std::vector<const UndefinedAtom *> SymbolTable::undefines() {
+  std::vector<const UndefinedAtom *> ret;
   for (auto it : _nameTable) {
     const Atom *atom = it.second;
     assert(atom != nullptr);
@@ -400,19 +401,23 @@ void SymbolTable::undefines(std::vector<const UndefinedAtom *> &undefs) {
       AtomToAtom::iterator pos = _replacedAtoms.find(undef);
       if (pos != _replacedAtoms.end())
         continue;
-      undefs.push_back(undef);
+      ret.push_back(undef);
     }
   }
+  return ret;
 }
 
-void SymbolTable::tentativeDefinitions(std::vector<StringRef> &names) {
+std::vector<StringRef> SymbolTable::tentativeDefinitions() {
+  std::vector<StringRef> ret;
   for (auto entry : _nameTable) {
     const Atom *atom = entry.second;
     StringRef name   = entry.first;
     assert(atom != nullptr);
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom))
       if (defAtom->merge() == DefinedAtom::mergeAsTentative)
-        names.push_back(name);
+        ret.push_back(name);
   }
+  return ret;
 }
+
 } // namespace lld

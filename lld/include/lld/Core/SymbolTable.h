@@ -58,10 +58,10 @@ public:
   const Atom *findByName(StringRef sym);
 
   /// @brief returns vector of remaining UndefinedAtoms
-  void undefines(std::vector<const UndefinedAtom *>&);
+  std::vector<const UndefinedAtom *> undefines();
 
   /// returns vector of tentative definitions
-  void tentativeDefinitions(std::vector<StringRef> &);
+  std::vector<StringRef> tentativeDefinitions();
 
   /// @brief count of by-name entries in symbol table
   unsigned int size();

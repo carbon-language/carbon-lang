@@ -74,19 +74,16 @@ void Resolver::forEachUndefines(UndefCallback callback,
   int64_t undefineGenCount = 0;
   do {
     undefineGenCount = _symbolTable.size();
-    std::vector<const UndefinedAtom *> undefines;
-    _symbolTable.undefines(undefines);
-    for (const UndefinedAtom *undefAtom : undefines) {
+    for (const UndefinedAtom *undefAtom : _symbolTable.undefines()) {
       StringRef undefName = undefAtom->name();
       // load for previous undefine may also have loaded this undefine
       if (!_symbolTable.isDefined(undefName))
         callback(undefName, false);
     }
+
     // search libraries for overrides of common symbols
     if (searchForOverrides) {
-      std::vector<StringRef> tentDefNames;
-      _symbolTable.tentativeDefinitions(tentDefNames);
-      for (StringRef tentDefName : tentDefNames) {
+      for (StringRef tentDefName : _symbolTable.tentativeDefinitions()) {
         // Load for previous tentative may also have loaded
         // something that overrode this tentative, so always check.
         const Atom *curAtom = _symbolTable.findByName(tentDefName);
@@ -359,8 +356,7 @@ void Resolver::deadStripOptimize() {
 // error out if some undefines remain
 bool Resolver::checkUndefines() {
   // build vector of remaining undefined symbols
-  std::vector<const UndefinedAtom *> undefinedAtoms;
-  _symbolTable.undefines(undefinedAtoms);
+  std::vector<const UndefinedAtom *> undefinedAtoms = _symbolTable.undefines();
   if (_context.deadStrip()) {
     // When dead code stripping, we don't care if dead atoms are undefined.
     undefinedAtoms.erase(
