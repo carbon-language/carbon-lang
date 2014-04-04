@@ -2805,6 +2805,9 @@ _func:
         strd r0, r1, [r2, #-0]
         strd r0, r1, [r2, #-0]!
         strd r0, r1, [r2], #-0
+        strd r0, r1, [r2, #256]
+        strd r0, r1, [r2, #256]!
+        strd r0, r1, [r2], #256
 
 @ CHECK: strd	r3, r5, [r6, #24]       @ encoding: [0xc6,0xe9,0x06,0x35]
 @ CHECK: strd	r3, r5, [r6, #24]!      @ encoding: [0xe6,0xe9,0x06,0x35]
@@ -2815,6 +2818,9 @@ _func:
 @ CHECK: strd   r0, r1, [r2, #-0]       @ encoding: [0x42,0xe9,0x00,0x01]
 @ CHECK: strd   r0, r1, [r2, #-0]!      @ encoding: [0x62,0xe9,0x00,0x01]
 @ CHECK: strd   r0, r1, [r2], #-0       @ encoding: [0x62,0xe8,0x00,0x01]
+@ CHECK: strd	r0, r1, [r2, #256]      @ encoding: [0xc2,0xe9,0x40,0x01]
+@ CHECK: strd	r0, r1, [r2, #256]!     @ encoding: [0xe2,0xe9,0x40,0x01]
+@ CHECK: strd	r0, r1, [r2], #256      @ encoding: [0xe2,0xe8,0x40,0x01]
 
 
 @------------------------------------------------------------------------------
