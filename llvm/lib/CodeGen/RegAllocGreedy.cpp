@@ -37,7 +37,6 @@
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/CodeGen/VirtRegMap.h"
-#include "llvm/IR/LLVMContext.h"
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -147,22 +146,6 @@ class RAGreedy : public MachineFunctionPass,
     /// if it can't be assigned.
     RS_Done
   };
-
-  // Enum CutOffStage to keep a track whether the register allocation failed
-  // because of the cutoffs encountered in last chance recoloring.
-  // Note: This is used as bitmask. New value should be next power of 2.
-  enum CutOffStage {
-    // No cutoffs encountered
-    CO_None = 0,
-
-    // lcr-max-depth cutoff encountered
-    CO_Depth = 1,
-
-    // lcr-max-interf cutoff encountered
-    CO_Interf = 2
-  };
-
-  uint8_t CutOffInfo;
 
 #ifndef NDEBUG
   static const char *const StageName[];
@@ -1929,7 +1912,6 @@ RAGreedy::mayRecolorAllInterferences(unsigned PhysReg, LiveInterval &VirtReg,
     if (Q.collectInterferingVRegs(LastChanceRecoloringMaxInterference) >=
         LastChanceRecoloringMaxInterference) {
       DEBUG(dbgs() << "Early abort: too many interferences.\n");
-      CutOffInfo |= CO_Interf;
       return false;
     }
     for (unsigned i = Q.interferingVRegs().size(); i; --i) {
@@ -2002,7 +1984,6 @@ unsigned RAGreedy::tryLastChanceRecoloring(LiveInterval &VirtReg,
   // Indeed, in that case we may want to cut the search space earlier.
   if (Depth >= LastChanceRecoloringMaxDepth) {
     DEBUG(dbgs() << "Abort because max depth has been reached.\n");
-    CutOffInfo |= CO_Depth;
     return ~0u;
   }
 
@@ -2127,23 +2108,8 @@ bool RAGreedy::tryRecoloringCandidates(PQueue &RecoloringQueue,
 
 unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<unsigned> &NewVRegs) {
-  CutOffInfo = CO_None;
-  LLVMContext &Ctx = MF->getFunction()->getContext();
   SmallVirtRegSet FixedRegisters;
-  unsigned Reg = selectOrSplitImpl(VirtReg, NewVRegs, FixedRegisters);
-  if (Reg == ~0U && (CutOffInfo != CO_None)) {
-    uint8_t CutOffEncountered = CutOffInfo & (CO_Depth | CO_Interf);
-    if (CutOffEncountered == CO_Depth)
-      Ctx.emitError(
-          "register allocation failed: maximum depth for recoloring reached");
-    else if (CutOffEncountered == CO_Interf)
-      Ctx.emitError("register allocation failed: maximum interference for "
-                    "recoloring reached");
-    else if (CutOffEncountered == (CO_Depth | CO_Interf))
-      Ctx.emitError("register allocation failed: maximum interference and "
-                    "depth for recoloring reached");
-  }
-  return Reg;
+  return selectOrSplitImpl(VirtReg, NewVRegs, FixedRegisters);
 }
 
 /// Using a CSR for the first time has a cost because it causes push|pop

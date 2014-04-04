@@ -2,12 +2,6 @@
 ; Without the last chance recoloring, this test fails with:
 ; "ran out of registers".
 
-; RUN: not llc -regalloc=greedy -relocation-model=pic -lcr-max-depth=0  < %s 2>&1 | FileCheck %s --check-prefix=CHECK-DEPTH
-; Test whether failure due to cutoff for depth is reported
-
-; RUN: not llc -regalloc=greedy -relocation-model=pic -lcr-max-interf=1  < %s 2>&1 | FileCheck %s --check-prefix=CHECK-INTERF
-; Test whether failure due to cutoff for interference is reported
-
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32-S128"
 target triple = "i386-apple-macosx"
 
@@ -18,8 +12,6 @@ target triple = "i386-apple-macosx"
 
 ; Function Attrs: nounwind ssp
 ; CHECK-NOT: ran out of registers during register allocation
-; CHECK-INTERF: error: register allocation failed: maximum interference for recoloring reached
-; CHECK-DEPTH: error: register allocation failed: maximum depth for recoloring reached
 define void @fp_dh_f870bf31fd8ffe068450366e3f05389a(i8* %arg) #0 {
 bb:
   indirectbr i8* undef, [label %bb85, label %bb206]
