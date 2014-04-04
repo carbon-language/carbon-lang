@@ -54,7 +54,6 @@ int main(int argc, char *argv[]) {
 }
 #else  // BUILD_SO
 __thread long huge_thread_local_array[1 << 17];
-extern "C"
 long *GetTls() {
   return &huge_thread_local_array[0];
 }
