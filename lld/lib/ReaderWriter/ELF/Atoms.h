@@ -747,10 +747,9 @@ public:
 
 #ifndef NDEBUG
   StringRef name() const override { return _name; }
-
   std::string _name;
 #else
-  virtual StringRef name() const { return ""; }
+  StringRef name() const override { return ""; }
 #endif
 };
 
@@ -781,10 +780,9 @@ public:
 
 #ifndef NDEBUG
   StringRef name() const override { return _name; }
-
   std::string _name;
 #else
-  virtual StringRef name() const { return ""; }
+  StringRef name() const override { return ""; }
 #endif
 };
 
@@ -899,10 +897,9 @@ public:
 
 #ifndef NDEBUG
   StringRef name() const override { return _name; }
-
   std::string _name;
 #else
-  virtual StringRef name() const { return ""; }
+  StringRef name() const override { return ""; }
 #endif
 };
 
