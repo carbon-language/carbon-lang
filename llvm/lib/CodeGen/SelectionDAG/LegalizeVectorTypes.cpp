@@ -331,11 +331,23 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_VSETCC(SDNode *N) {
   assert(N->getValueType(0).isVector() &&
          N->getOperand(0).getValueType().isVector() &&
          "Operand types must be vectors");
-
-  SDValue LHS = GetScalarizedVector(N->getOperand(0));
-  SDValue RHS = GetScalarizedVector(N->getOperand(1));
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+  EVT OpVT = LHS.getValueType();
   EVT NVT = N->getValueType(0).getVectorElementType();
   SDLoc DL(N);
+
+  // The result needs scalarizing, but it's not a given that the source does.
+  if (getTypeAction(OpVT) == TargetLowering::TypeScalarizeVector) {
+    LHS = GetScalarizedVector(LHS);
+    RHS = GetScalarizedVector(RHS);
+  } else {
+    EVT VT = OpVT.getVectorElementType();
+    LHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, VT, LHS,
+                      DAG.getConstant(0, TLI.getVectorIdxTy()));
+    RHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, VT, RHS,
+                      DAG.getConstant(0, TLI.getVectorIdxTy()));
+  }
 
   // Turn it into a scalar SETCC.
   SDValue Res = DAG.getNode(ISD::SETCC, DL, MVT::i1, LHS, RHS,

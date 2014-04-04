@@ -434,6 +434,8 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
 
   setTargetDAGCombine(ISD::MUL);
 
+  setTargetDAGCombine(ISD::VSELECT);
+
   MaxStoresPerMemset = MaxStoresPerMemsetOptSize = 8;
   MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = 4;
   MaxStoresPerMemmove = MaxStoresPerMemmoveOptSize = 4;
@@ -7227,6 +7229,36 @@ static SDValue performBRCONDCombine(SDNode *N,
   return SDValue();
 }
 
+// vselect (v1i1 setcc) ->
+//     vselect (v1iXX setcc)  (XX is the size of the compared operand type)
+// FIXME: Currently the type legalizer can't handle VSELECT having v1i1 as
+// condition. If it can legalize "VSELECT v1i1" correctly, no need to combine
+// such VSELECT.
+static SDValue performVSelectCombine(SDNode *N, SelectionDAG &DAG) {
+  SDValue N0 = N->getOperand(0);
+  EVT CCVT = N0.getValueType();
+
+  if (N0.getOpcode() != ISD::SETCC || CCVT.getVectorNumElements() != 1 ||
+      CCVT.getVectorElementType() != MVT::i1)
+    return SDValue();
+
+  EVT ResVT = N->getValueType(0);
+  EVT CmpVT = N0.getOperand(0).getValueType();
+  // Only combine when the result type is of the same size as the compared
+  // operands.
+  if (ResVT.getSizeInBits() != CmpVT.getSizeInBits())
+    return SDValue();
+
+  SDValue IfTrue = N->getOperand(1);
+  SDValue IfFalse = N->getOperand(2);
+  SDValue SetCC =
+      DAG.getSetCC(SDLoc(N), CmpVT.changeVectorElementTypeToInteger(),
+                   N0.getOperand(0), N0.getOperand(1),
+                   cast<CondCodeSDNode>(N0.getOperand(2))->get());
+  return DAG.getNode(ISD::VSELECT, SDLoc(N), ResVT, SetCC,
+                     IfTrue, IfFalse);
+}
+
 SDValue ARM64TargetLowering::PerformDAGCombine(SDNode *N,
                                                DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -7255,6 +7287,8 @@ SDValue ARM64TargetLowering::PerformDAGCombine(SDNode *N,
     return performBitcastCombine(N, DCI, DAG);
   case ISD::CONCAT_VECTORS:
     return performConcatVectorsCombine(N, DCI, DAG);
+  case ISD::VSELECT:
+    return performVSelectCombine(N, DCI.DAG);
   case ISD::STORE:
     return performSTORECombine(N, DCI, DAG, Subtarget);
   case ARM64ISD::BRCOND:

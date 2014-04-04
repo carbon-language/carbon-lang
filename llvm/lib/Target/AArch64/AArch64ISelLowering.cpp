@@ -538,7 +538,6 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
     setOperationAction(ISD::FPOW, MVT::v2f32, Expand);
   }
 
-  setTargetDAGCombine(ISD::SETCC);
   setTargetDAGCombine(ISD::SIGN_EXTEND);
   setTargetDAGCombine(ISD::VSELECT);
 }
@@ -4284,32 +4283,6 @@ static SDValue CombineVLDDUP(SDNode *N, TargetLowering::DAGCombinerInfo &DCI) {
   return SDValue(N, 0);
 }
 
-// v1i1 setcc ->
-//     v1i1 (bitcast (i1 setcc (extract_vector_elt, extract_vector_elt))
-// FIXME: Currently the type legalizer can't handle SETCC having v1i1 as result.
-// If it can legalize "v1i1 SETCC" correctly, no need to combine such SETCC.
-static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG) {
-  EVT ResVT = N->getValueType(0);
-
-  if (!ResVT.isVector() || ResVT.getVectorNumElements() != 1 ||
-      ResVT.getVectorElementType() != MVT::i1)
-    return SDValue();
-
-  SDValue LHS = N->getOperand(0);
-  SDValue RHS = N->getOperand(1);
-  EVT CmpVT = LHS.getValueType();
-  LHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N),
-                    CmpVT.getVectorElementType(), LHS,
-                    DAG.getConstant(0, MVT::i64));
-  RHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, SDLoc(N),
-                    CmpVT.getVectorElementType(), RHS,
-                    DAG.getConstant(0, MVT::i64));
-  SDValue SetCC =
-      DAG.getSetCC(SDLoc(N), MVT::i1, LHS, RHS,
-                   cast<CondCodeSDNode>(N->getOperand(2))->get());
-  return DAG.getNode(ISD::BITCAST, SDLoc(N), ResVT, SetCC);
-}
-
 // vselect (v1i1 setcc) ->
 //     vselect (v1iXX setcc)  (XX is the size of the compared operand type)
 // FIXME: Currently the type legalizer can't handle VSELECT having v1i1 as
@@ -4378,7 +4351,6 @@ AArch64TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SRA:
   case ISD::SRL:
     return PerformShiftCombine(N, DCI, getSubtarget());
-  case ISD::SETCC: return PerformSETCCCombine(N, DCI.DAG);
   case ISD::VSELECT: return PerformVSelectCombine(N, DCI.DAG);
   case ISD::SIGN_EXTEND: return PerformSignExtendCombine(N, DCI.DAG);
   case ISD::INTRINSIC_WO_CHAIN:
