@@ -130,7 +130,7 @@ TargetRegisterInfo::getMinimalPhysRegClass(unsigned reg, EVT VT) const {
 static void getAllocatableSetForRC(const MachineFunction &MF,
                                    const TargetRegisterClass *RC, BitVector &R){
   assert(RC->isAllocatable() && "invalid for nonallocatable sets");
-  ArrayRef<uint16_t> Order = RC->getRawAllocationOrder(MF);
+  ArrayRef<MCPhysReg> Order = RC->getRawAllocationOrder(MF);
   for (unsigned i = 0; i != Order.size(); ++i)
     R.set(Order[i]);
 }

@@ -1187,13 +1187,13 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-static const uint16_t AArch64FPRArgRegs[] = {
+static const MCPhysReg AArch64FPRArgRegs[] = {
   AArch64::Q0, AArch64::Q1, AArch64::Q2, AArch64::Q3,
   AArch64::Q4, AArch64::Q5, AArch64::Q6, AArch64::Q7
 };
 static const unsigned NumFPRArgRegs = llvm::array_lengthof(AArch64FPRArgRegs);
 
-static const uint16_t AArch64ArgRegs[] = {
+static const MCPhysReg AArch64ArgRegs[] = {
   AArch64::X0, AArch64::X1, AArch64::X2, AArch64::X3,
   AArch64::X4, AArch64::X5, AArch64::X6, AArch64::X7
 };

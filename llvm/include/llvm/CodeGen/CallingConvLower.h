@@ -279,7 +279,7 @@ public:
 
   /// getFirstUnallocated - Return the first unallocated register in the set, or
   /// NumRegs if they are all allocated.
-  unsigned getFirstUnallocated(const uint16_t *Regs, unsigned NumRegs) const {
+  unsigned getFirstUnallocated(const MCPhysReg *Regs, unsigned NumRegs) const {
     for (unsigned i = 0; i != NumRegs; ++i)
       if (!isAllocated(Regs[i]))
         return i;
@@ -306,7 +306,7 @@ public:
   /// AllocateReg - Attempt to allocate one of the specified registers.  If none
   /// are available, return zero.  Otherwise, return the first one available,
   /// marking it and any aliases as allocated.
-  unsigned AllocateReg(const uint16_t *Regs, unsigned NumRegs) {
+  unsigned AllocateReg(const MCPhysReg *Regs, unsigned NumRegs) {
     unsigned FirstUnalloc = getFirstUnallocated(Regs, NumRegs);
     if (FirstUnalloc == NumRegs)
       return 0;    // Didn't find the reg.
@@ -318,7 +318,7 @@ public:
   }
 
   /// Version of AllocateReg with list of registers to be shadowed.
-  unsigned AllocateReg(const uint16_t *Regs, const uint16_t *ShadowRegs,
+  unsigned AllocateReg(const MCPhysReg *Regs, const MCPhysReg *ShadowRegs,
                        unsigned NumRegs) {
     unsigned FirstUnalloc = getFirstUnallocated(Regs, NumRegs);
     if (FirstUnalloc == NumRegs)
@@ -351,7 +351,7 @@ public:
   /// Version of AllocateStack with list of extra registers to be shadowed.
   /// Note that, unlike AllocateReg, this shadows ALL of the shadow registers.
   unsigned AllocateStack(unsigned Size, unsigned Align,
-                         const uint16_t *ShadowRegs, unsigned NumShadowRegs) {
+                         const MCPhysReg *ShadowRegs, unsigned NumShadowRegs) {
     for (unsigned i = 0; i < NumShadowRegs; ++i)
       MarkAllocated(ShadowRegs[i]);
     return AllocateStack(Size, Align);

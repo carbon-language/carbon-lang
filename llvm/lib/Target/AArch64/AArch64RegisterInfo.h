@@ -27,7 +27,7 @@ class AArch64Subtarget;
 struct AArch64RegisterInfo : public AArch64GenRegisterInfo {
   AArch64RegisterInfo();
 
-  const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
+  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
   const uint32_t *getCallPreservedMask(CallingConv::ID) const;
 
   const uint32_t *getTLSDescCallPreservedMask() const;

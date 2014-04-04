@@ -96,7 +96,7 @@ PPCRegisterInfo::getPointerRegClass(const MachineFunction &MF, unsigned Kind)
   return &PPC::GPRCRegClass;
 }
 
-const uint16_t*
+const MCPhysReg*
 PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   if (Subtarget.isDarwinABI())
     return Subtarget.isPPC64() ? (Subtarget.hasAltivec() ?

@@ -49,7 +49,7 @@ public:
   bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const override {
     return true;
   }
-  const uint16_t *getCalleeSavedRegs(const MachineFunction *MF = 0) const
+  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF = 0) const
     override;
   BitVector getReservedRegs(const MachineFunction &MF) const override;
   void eliminateFrameIndex(MachineBasicBlock::iterator MI,

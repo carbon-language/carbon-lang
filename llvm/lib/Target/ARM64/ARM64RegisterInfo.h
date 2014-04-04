@@ -36,7 +36,7 @@ public:
   bool isReservedReg(const MachineFunction &MF, unsigned Reg) const;
 
   /// Code Generation virtual methods...
-  const uint16_t *
+  const MCPhysReg *
   getCalleeSavedRegs(const MachineFunction *MF = 0) const override;
   const uint32_t *getCallPreservedMask(CallingConv::ID) const override;
 

@@ -49,9 +49,9 @@ ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMSubtarget &sti)
     BasePtr(ARM::R6) {
 }
 
-const uint16_t*
+const MCPhysReg*
 ARMBaseRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  const uint16_t *RegList = (STI.isTargetIOS() && !STI.isAAPCS_ABI())
+  const MCPhysReg *RegList = (STI.isTargetIOS() && !STI.isAAPCS_ABI())
                                 ? CSR_iOS_SaveList
                                 : CSR_AAPCS_SaveList;
 

@@ -33,7 +33,7 @@ AArch64RegisterInfo::AArch64RegisterInfo()
   : AArch64GenRegisterInfo(AArch64::X30) {
 }
 
-const uint16_t *
+const MCPhysReg *
 AArch64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return CSR_PCS_SaveList;
 }

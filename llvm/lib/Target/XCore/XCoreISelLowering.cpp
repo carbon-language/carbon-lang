@@ -1384,7 +1384,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
   // 1b. CopyFromReg vararg registers.
   if (isVarArg) {
     // Argument registers
-    static const uint16_t ArgRegs[] = {
+    static const MCPhysReg ArgRegs[] = {
       XCore::R0, XCore::R1, XCore::R2, XCore::R3
     };
     XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();

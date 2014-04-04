@@ -831,7 +831,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit the table of register unit roots. Each regunit has one or two root
   // registers.
-  OS << "extern const uint16_t " << TargetName << "RegUnitRoots[][2] = {\n";
+  OS << "extern const MCPhysReg " << TargetName << "RegUnitRoots[][2] = {\n";
   for (unsigned i = 0, e = RegBank.getNumNativeRegUnits(); i != e; ++i) {
     ArrayRef<const CodeGenRegister*> Roots = RegBank.getRegUnit(i).getRoots();
     assert(!Roots.empty() && "All regunits must have a root register.");
@@ -858,7 +858,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
     // Emit the register list now.
     OS << "  // " << Name << " Register Class...\n"
-       << "  const uint16_t " << Name
+       << "  const MCPhysReg " << Name
        << "[] = {\n    ";
     for (unsigned i = 0, e = Order.size(); i != e; ++i) {
       Record *Reg = Order[i];
@@ -1267,7 +1267,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "extern const MCRegisterDesc " << TargetName << "RegDesc[];\n";
   OS << "extern const MCPhysReg " << TargetName << "RegDiffLists[];\n";
   OS << "extern const char " << TargetName << "RegStrings[];\n";
-  OS << "extern const uint16_t " << TargetName << "RegUnitRoots[][2];\n";
+  OS << "extern const MCPhysReg " << TargetName << "RegUnitRoots[][2];\n";
   OS << "extern const uint16_t " << TargetName << "SubRegIdxLists[];\n";
   OS << "extern const MCRegisterInfo::SubRegCoveredBits "
      << TargetName << "SubRegIdxRanges[];\n";

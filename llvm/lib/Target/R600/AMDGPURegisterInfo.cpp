@@ -27,10 +27,10 @@ AMDGPURegisterInfo::AMDGPURegisterInfo(TargetMachine &tm)
 // they are not supported at this time.
 //===----------------------------------------------------------------------===//
 
-const uint16_t AMDGPURegisterInfo::CalleeSavedReg = AMDGPU::NoRegister;
+const MCPhysReg AMDGPURegisterInfo::CalleeSavedReg = AMDGPU::NoRegister;
 
-const uint16_t* AMDGPURegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
-                                                                         const {
+const MCPhysReg*
+AMDGPURegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return &CalleeSavedReg;
 }
 

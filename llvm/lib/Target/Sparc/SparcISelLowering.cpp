@@ -53,7 +53,7 @@ static bool CC_Sparc_Assign_f64(unsigned &ValNo, MVT &ValVT,
                                 MVT &LocVT, CCValAssign::LocInfo &LocInfo,
                                 ISD::ArgFlagsTy &ArgFlags, CCState &State)
 {
-  static const uint16_t RegList[] = {
+  static const MCPhysReg RegList[] = {
     SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
   };
   // Try to get first reg.
@@ -493,11 +493,11 @@ LowerFormalArguments_32(SDValue Chain,
 
   // Store remaining ArgRegs to the stack if this is a varargs function.
   if (isVarArg) {
-    static const uint16_t ArgRegs[] = {
+    static const MCPhysReg ArgRegs[] = {
       SP::I0, SP::I1, SP::I2, SP::I3, SP::I4, SP::I5
     };
     unsigned NumAllocated = CCInfo.getFirstUnallocated(ArgRegs, 6);
-    const uint16_t *CurArgReg = ArgRegs+NumAllocated, *ArgRegEnd = ArgRegs+6;
+    const MCPhysReg *CurArgReg = ArgRegs+NumAllocated, *ArgRegEnd = ArgRegs+6;
     unsigned ArgOffset = CCInfo.getNextStackOffset();
     if (NumAllocated == 6)
       ArgOffset += StackOffset;

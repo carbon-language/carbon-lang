@@ -2016,7 +2016,7 @@ bool llvm::CC_PPC32_SVR4_Custom_AlignArgRegs(unsigned &ValNo, MVT &ValVT,
                                              CCValAssign::LocInfo &LocInfo,
                                              ISD::ArgFlagsTy &ArgFlags,
                                              CCState &State) {
-  static const uint16_t ArgRegs[] = {
+  static const MCPhysReg ArgRegs[] = {
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
   };
@@ -2043,7 +2043,7 @@ bool llvm::CC_PPC32_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
                                                CCValAssign::LocInfo &LocInfo,
                                                ISD::ArgFlagsTy &ArgFlags,
                                                CCState &State) {
-  static const uint16_t ArgRegs[] = {
+  static const MCPhysReg ArgRegs[] = {
     PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
     PPC::F8
   };
@@ -2067,8 +2067,8 @@ bool llvm::CC_PPC32_SVR4_Custom_AlignFPArgRegs(unsigned &ValNo, MVT &ValVT,
 
 /// GetFPR - Get the set of FP registers that should be allocated for arguments,
 /// on Darwin.
-static const uint16_t *GetFPR() {
-  static const uint16_t FPR[] = {
+static const MCPhysReg *GetFPR() {
+  static const MCPhysReg FPR[] = {
     PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
     PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
   };
@@ -2265,13 +2265,13 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (isVarArg) {
-    static const uint16_t GPArgRegs[] = {
+    static const MCPhysReg GPArgRegs[] = {
       PPC::R3, PPC::R4, PPC::R5, PPC::R6,
       PPC::R7, PPC::R8, PPC::R9, PPC::R10,
     };
     const unsigned NumGPArgRegs = array_lengthof(GPArgRegs);
 
-    static const uint16_t FPArgRegs[] = {
+    static const MCPhysReg FPArgRegs[] = {
       PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
       PPC::F8
     };
@@ -2405,18 +2405,18 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
   // Area that is at least reserved in caller of this function.
   unsigned MinReservedArea = ArgOffset;
 
-  static const uint16_t GPR[] = {
+  static const MCPhysReg GPR[] = {
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
 
-  static const uint16_t *FPR = GetFPR();
+  static const MCPhysReg *FPR = GetFPR();
 
-  static const uint16_t VR[] = {
+  static const MCPhysReg VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
-  static const uint16_t VSRH[] = {
+  static const MCPhysReg VSRH[] = {
     PPC::VSH2, PPC::VSH3, PPC::VSH4, PPC::VSH5, PPC::VSH6, PPC::VSH7, PPC::VSH8,
     PPC::VSH9, PPC::VSH10, PPC::VSH11, PPC::VSH12, PPC::VSH13
   };
@@ -2714,18 +2714,18 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
   // Area that is at least reserved in caller of this function.
   unsigned MinReservedArea = ArgOffset;
 
-  static const uint16_t GPR_32[] = {           // 32-bit registers.
+  static const MCPhysReg GPR_32[] = {           // 32-bit registers.
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
   };
-  static const uint16_t GPR_64[] = {           // 64-bit registers.
+  static const MCPhysReg GPR_64[] = {           // 64-bit registers.
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
 
-  static const uint16_t *FPR = GetFPR();
+  static const MCPhysReg *FPR = GetFPR();
 
-  static const uint16_t VR[] = {
+  static const MCPhysReg VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
@@ -2736,7 +2736,7 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
 
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
 
-  const uint16_t *GPR = isPPC64 ? GPR_64 : GPR_32;
+  const MCPhysReg *GPR = isPPC64 ? GPR_64 : GPR_32;
 
   // In 32-bit non-varargs functions, the stack space for vectors is after the
   // stack space for non-vectors.  We do not use this space unless we have
@@ -4044,17 +4044,17 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   unsigned ArgOffset = PPCFrameLowering::getLinkageSize(true, true);
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
 
-  static const uint16_t GPR[] = {
+  static const MCPhysReg GPR[] = {
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
-  static const uint16_t *FPR = GetFPR();
+  static const MCPhysReg *FPR = GetFPR();
 
-  static const uint16_t VR[] = {
+  static const MCPhysReg VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
-  static const uint16_t VSRH[] = {
+  static const MCPhysReg VSRH[] = {
     PPC::VSH2, PPC::VSH3, PPC::VSH4, PPC::VSH5, PPC::VSH6, PPC::VSH7, PPC::VSH8,
     PPC::VSH9, PPC::VSH10, PPC::VSH11, PPC::VSH12, PPC::VSH13
   };
@@ -4448,17 +4448,17 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   unsigned ArgOffset = PPCFrameLowering::getLinkageSize(isPPC64, true);
   unsigned GPR_idx = 0, FPR_idx = 0, VR_idx = 0;
 
-  static const uint16_t GPR_32[] = {           // 32-bit registers.
+  static const MCPhysReg GPR_32[] = {           // 32-bit registers.
     PPC::R3, PPC::R4, PPC::R5, PPC::R6,
     PPC::R7, PPC::R8, PPC::R9, PPC::R10,
   };
-  static const uint16_t GPR_64[] = {           // 64-bit registers.
+  static const MCPhysReg GPR_64[] = {           // 64-bit registers.
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
     PPC::X7, PPC::X8, PPC::X9, PPC::X10,
   };
-  static const uint16_t *FPR = GetFPR();
+  static const MCPhysReg *FPR = GetFPR();
 
-  static const uint16_t VR[] = {
+  static const MCPhysReg VR[] = {
     PPC::V2, PPC::V3, PPC::V4, PPC::V5, PPC::V6, PPC::V7, PPC::V8,
     PPC::V9, PPC::V10, PPC::V11, PPC::V12, PPC::V13
   };
@@ -4466,7 +4466,7 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   const unsigned NumFPRs = 13;
   const unsigned NumVRs  = array_lengthof(VR);
 
-  const uint16_t *GPR = isPPC64 ? GPR_64 : GPR_32;
+  const MCPhysReg *GPR = isPPC64 ? GPR_64 : GPR_32;
 
   SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPass;
   SmallVector<TailCallArgumentInfo, 8> TailCallArguments;

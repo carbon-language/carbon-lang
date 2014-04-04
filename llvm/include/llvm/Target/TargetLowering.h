@@ -31,6 +31,7 @@
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/InlineAsm.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Target/TargetCallingConv.h"
 #include "llvm/Target/TargetMachine.h"
 #include <climits>
@@ -2170,7 +2171,7 @@ public:
 
   /// Returns a 0 terminated array of registers that can be safely used as
   /// scratch registers.
-  virtual const uint16_t *getScratchRegisters(CallingConv::ID CC) const {
+  virtual const MCPhysReg *getScratchRegisters(CallingConv::ID CC) const {
     return NULL;
   }
 

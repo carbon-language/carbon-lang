@@ -38,8 +38,8 @@ SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st)
   : SparcGenRegisterInfo(SP::O7), Subtarget(st) {
 }
 
-const uint16_t* SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
-                                                                         const {
+const MCPhysReg*
+SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return CSR_SaveList;
 }
 

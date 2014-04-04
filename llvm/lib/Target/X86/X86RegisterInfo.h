@@ -100,7 +100,7 @@ public:
 
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.
-  const uint16_t *
+  const MCPhysReg *
   getCalleeSavedRegs(const MachineFunction* MF) const override;
   const uint32_t *getCallPreservedMask(CallingConv::ID) const override;
   const uint32_t *getNoPreservedMask() const;

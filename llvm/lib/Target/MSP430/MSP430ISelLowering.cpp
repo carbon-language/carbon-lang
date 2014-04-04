@@ -284,7 +284,7 @@ template<typename ArgT>
 static void AnalyzeArguments(CCState &State,
                              SmallVectorImpl<CCValAssign> &ArgLocs,
                              const SmallVectorImpl<ArgT> &Args) {
-  static const uint16_t RegList[] = {
+  static const MCPhysReg RegList[] = {
     MSP430::R15W, MSP430::R14W, MSP430::R13W, MSP430::R12W
   };
   static const unsigned NbRegs = array_lengthof(RegList);

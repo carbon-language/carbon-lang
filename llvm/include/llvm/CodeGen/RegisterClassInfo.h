@@ -54,7 +54,7 @@ class RegisterClassInfo {
 
   // Callee saved registers of last MF. Assumed to be valid until the next
   // runOnFunction() call.
-  const uint16_t *CalleeSaved;
+  const MCPhysReg *CalleeSaved;
 
   // Map register number to CalleeSaved index + 1;
   SmallVector<uint8_t, 4> CSRNum;

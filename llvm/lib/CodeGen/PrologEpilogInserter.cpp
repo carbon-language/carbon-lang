@@ -243,7 +243,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &F) {
   MachineFrameInfo *MFI = F.getFrameInfo();
 
   // Get the callee saved register list...
-  const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs(&F);
+  const MCPhysReg *CSRegs = RegInfo->getCalleeSavedRegs(&F);
 
   // These are used to keep track the callee-save area. Initialize them.
   MinCSFrameIndex = INT_MAX;

@@ -78,9 +78,9 @@ NVPTXRegisterInfo::NVPTXRegisterInfo(const NVPTXSubtarget &st)
 #include "NVPTXGenRegisterInfo.inc"
 
 /// NVPTX Callee Saved Registers
-const uint16_t *
+const MCPhysReg *
 NVPTXRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  static const uint16_t CalleeSavedRegs[] = { 0 };
+  static const MCPhysReg CalleeSavedRegs[] = { 0 };
   return CalleeSavedRegs;
 }
 

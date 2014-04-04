@@ -20,9 +20,9 @@ using namespace llvm;
 SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm)
   : SystemZGenRegisterInfo(SystemZ::R14D), TM(tm) {}
 
-const uint16_t*
+const MCPhysReg*
 SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  static const uint16_t CalleeSavedRegs[] = {
+  static const MCPhysReg CalleeSavedRegs[] = {
     SystemZ::R6D,  SystemZ::R7D,  SystemZ::R8D,  SystemZ::R9D,
     SystemZ::R10D, SystemZ::R11D, SystemZ::R12D, SystemZ::R13D,
     SystemZ::R14D, SystemZ::R15D,

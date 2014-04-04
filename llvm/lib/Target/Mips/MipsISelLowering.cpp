@@ -50,16 +50,16 @@ NoZeroDivCheck("mno-check-zero-division", cl::Hidden,
                cl::desc("MIPS: Don't trap on integer division by zero."),
                cl::init(false));
 
-static const uint16_t O32IntRegs[4] = {
+static const MCPhysReg O32IntRegs[4] = {
   Mips::A0, Mips::A1, Mips::A2, Mips::A3
 };
 
-static const uint16_t Mips64IntRegs[8] = {
+static const MCPhysReg Mips64IntRegs[8] = {
   Mips::A0_64, Mips::A1_64, Mips::A2_64, Mips::A3_64,
   Mips::T0_64, Mips::T1_64, Mips::T2_64, Mips::T3_64
 };
 
-static const uint16_t Mips64DPRegs[8] = {
+static const MCPhysReg Mips64DPRegs[8] = {
   Mips::D12_64, Mips::D13_64, Mips::D14_64, Mips::D15_64,
   Mips::D16_64, Mips::D17_64, Mips::D18_64, Mips::D19_64
 };
@@ -2177,12 +2177,12 @@ SDValue MipsTargetLowering::lowerFP_TO_SINT(SDValue Op,
 
 static bool CC_MipsO32(unsigned ValNo, MVT ValVT, MVT LocVT,
                        CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
-                       CCState &State, const uint16_t *F64Regs) {
+                       CCState &State, const MCPhysReg *F64Regs) {
 
   static const unsigned IntRegsSize = 4, FloatRegsSize = 2;
 
-  static const uint16_t IntRegs[] = { Mips::A0, Mips::A1, Mips::A2, Mips::A3 };
-  static const uint16_t F32Regs[] = { Mips::F12, Mips::F14 };
+  static const MCPhysReg IntRegs[] = { Mips::A0, Mips::A1, Mips::A2, Mips::A3 };
+  static const MCPhysReg F32Regs[] = { Mips::F12, Mips::F14 };
 
   // Do not process byval args here.
   if (ArgFlags.isByVal())
@@ -2254,7 +2254,7 @@ static bool CC_MipsO32(unsigned ValNo, MVT ValVT, MVT LocVT,
 static bool CC_MipsO32_FP32(unsigned ValNo, MVT ValVT,
                             MVT LocVT, CCValAssign::LocInfo LocInfo,
                             ISD::ArgFlagsTy ArgFlags, CCState &State) {
-  static const uint16_t F64Regs[] = { Mips::D6, Mips::D7 };
+  static const MCPhysReg F64Regs[] = { Mips::D6, Mips::D7 };
 
   return CC_MipsO32(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State, F64Regs);
 }
@@ -2262,7 +2262,7 @@ static bool CC_MipsO32_FP32(unsigned ValNo, MVT ValVT,
 static bool CC_MipsO32_FP64(unsigned ValNo, MVT ValVT,
                             MVT LocVT, CCValAssign::LocInfo LocInfo,
                             ISD::ArgFlagsTy ArgFlags, CCState &State) {
-  static const uint16_t F64Regs[] = { Mips::D12_64, Mips::D14_64 };
+  static const MCPhysReg F64Regs[] = { Mips::D12_64, Mips::D14_64 };
 
   return CC_MipsO32(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State, F64Regs);
 }
@@ -3426,7 +3426,7 @@ unsigned MipsTargetLowering::MipsCC::reservedArgArea() const {
   return (IsO32 && (CallConv != CallingConv::Fast)) ? 16 : 0;
 }
 
-const uint16_t *MipsTargetLowering::MipsCC::intArgRegs() const {
+const MCPhysReg *MipsTargetLowering::MipsCC::intArgRegs() const {
   return IsO32 ? O32IntRegs : Mips64IntRegs;
 }
 
@@ -3443,7 +3443,7 @@ llvm::CCAssignFn *MipsTargetLowering::MipsCC::varArgFn() const {
   return IsO32 ? (IsFP64 ? CC_MipsO32_FP64 : CC_MipsO32_FP32) : CC_MipsN_VarArg;
 }
 
-const uint16_t *MipsTargetLowering::MipsCC::shadowRegs() const {
+const MCPhysReg *MipsTargetLowering::MipsCC::shadowRegs() const {
   return IsO32 ? O32IntRegs : Mips64DPRegs;
 }
 
@@ -3451,7 +3451,7 @@ void MipsTargetLowering::MipsCC::allocateRegs(ByValArgInfo &ByVal,
                                               unsigned ByValSize,
                                               unsigned Align) {
   unsigned RegSize = regSize(), NumIntArgRegs = numIntArgRegs();
-  const uint16_t *IntArgRegs = intArgRegs(), *ShadowRegs = shadowRegs();
+  const MCPhysReg *IntArgRegs = intArgRegs(), *ShadowRegs = shadowRegs();
   assert(!(ByValSize % RegSize) && !(Align % RegSize) &&
          "Byval argument's size and alignment should be a multiple of"
          "RegSize.");
@@ -3543,7 +3543,7 @@ passByValArg(SDValue Chain, SDLoc DL,
   EVT PtrTy = getPointerTy(), RegTy = MVT::getIntegerVT(RegSize * 8);
 
   if (ByVal.NumRegs) {
-    const uint16_t *ArgRegs = CC.intArgRegs();
+    const MCPhysReg *ArgRegs = CC.intArgRegs();
     bool LeftoverBytes = (ByVal.NumRegs * RegSize > ByValSize);
     unsigned I = 0;
 
@@ -3628,7 +3628,7 @@ void MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
                                          const MipsCC &CC, SDValue Chain,
                                          SDLoc DL, SelectionDAG &DAG) const {
   unsigned NumRegs = CC.numIntArgRegs();
-  const uint16_t *ArgRegs = CC.intArgRegs();
+  const MCPhysReg *ArgRegs = CC.intArgRegs();
   const CCState &CCInfo = CC.getCCInfo();
   unsigned Idx = CCInfo.getFirstUnallocated(ArgRegs, NumRegs);
   unsigned RegSize = CC.regSize();

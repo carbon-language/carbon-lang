@@ -293,7 +293,7 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
     AFI->setShouldRestoreSPFromFP(true);
 }
 
-static bool isCSRestore(MachineInstr *MI, const uint16_t *CSRegs) {
+static bool isCSRestore(MachineInstr *MI, const MCPhysReg *CSRegs) {
   if (MI->getOpcode() == ARM::tLDRspi &&
       MI->getOperand(1).isFI() &&
       isCalleeSavedRegister(MI->getOperand(0).getReg(), CSRegs))
@@ -328,7 +328,7 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
   int NumBytes = (int)MFI->getStackSize();
   assert((unsigned)NumBytes >= ArgRegsSaveSize &&
          "ArgRegsSaveSize is included in NumBytes");
-  const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs();
+  const MCPhysReg *CSRegs = RegInfo->getCalleeSavedRegs();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
 
   if (!AFI->hasStackFrame()) {

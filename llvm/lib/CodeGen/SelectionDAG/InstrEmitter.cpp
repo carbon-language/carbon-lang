@@ -738,7 +738,7 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
   const MCInstrDesc &II = TII->get(Opc);
   unsigned NumResults = CountResults(Node);
   unsigned NumDefs = II.getNumDefs();
-  const uint16_t *ScratchRegs = NULL;
+  const MCPhysReg *ScratchRegs = NULL;
 
   // Handle STACKMAP and PATCHPOINT specially and then use the generic code.
   if (Opc == TargetOpcode::STACKMAP || Opc == TargetOpcode::PATCHPOINT) {

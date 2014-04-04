@@ -231,7 +231,7 @@ X86RegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   }
 }
 
-const uint16_t *
+const MCPhysReg *
 X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
   bool HasAVX512 = TM.getSubtarget<X86Subtarget>().hasAVX512();

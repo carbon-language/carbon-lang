@@ -93,7 +93,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // save and restore the stack pointer at the same time, via STMG and LMG.
   // This allows the deallocation to be done by the LMG, rather than needing
   // a separate %r15 addition.
-  const uint16_t *CSRegs = TRI->getCalleeSavedRegs(&MF);
+  const MCPhysReg *CSRegs = TRI->getCalleeSavedRegs(&MF);
   for (unsigned I = 0; CSRegs[I]; ++I) {
     unsigned Reg = CSRegs[I];
     if (SystemZ::GR64BitRegClass.contains(Reg) && MRI.isPhysRegUsed(Reg)) {

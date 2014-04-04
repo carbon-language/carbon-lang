@@ -42,7 +42,7 @@ public:
   //------------------------------------------------------
 
   // NVPTX callee saved registers
-  virtual const uint16_t *
+  virtual const MCPhysReg *
   getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
   // NVPTX callee saved register classes

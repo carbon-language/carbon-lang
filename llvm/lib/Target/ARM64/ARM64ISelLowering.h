@@ -291,7 +291,7 @@ public:
   /// expanded to fmul + fadd.
   bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
 
-  const uint16_t *getScratchRegisters(CallingConv::ID CC) const override;
+  const MCPhysReg *getScratchRegisters(CallingConv::ID CC) const override;
 
   bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                          Type *Ty) const override;

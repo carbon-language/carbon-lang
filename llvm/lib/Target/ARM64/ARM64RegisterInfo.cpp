@@ -36,7 +36,7 @@ ARM64RegisterInfo::ARM64RegisterInfo(const ARM64InstrInfo *tii,
                                      const ARM64Subtarget *sti)
     : ARM64GenRegisterInfo(ARM64::LR), TII(tii), STI(sti) {}
 
-const uint16_t *
+const MCPhysReg *
 ARM64RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   assert(MF && "Invalid MachineFunction pointer.");
   if (MF->getFunction()->getCallingConv() == CallingConv::AnyReg)

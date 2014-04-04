@@ -87,7 +87,7 @@ ARMFrameLowering::canSimplifyCallFramePseudos(const MachineFunction &MF) const {
 
 static bool isCSRestore(MachineInstr *MI,
                         const ARMBaseInstrInfo &TII,
-                        const uint16_t *CSRegs) {
+                        const MCPhysReg *CSRegs) {
   // Integer spill area is handled with "pop".
   if (isPopOpcode(MI->getOpcode())) {
     // The first two operands are predicates. The last two are
@@ -537,7 +537,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes - ArgRegsSaveSize);
   } else {
     // Unwind MBBI to point to first LDR / VLDRD.
-    const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs(&MF);
+    const MCPhysReg *CSRegs = RegInfo->getCalleeSavedRegs(&MF);
     if (MBBI != MBB.begin()) {
       do {
         --MBBI;
@@ -1368,7 +1368,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Don't spill FP if the frame can be eliminated. This is determined
   // by scanning the callee-save registers to see if any is used.
-  const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs(&MF);
+  const MCPhysReg *CSRegs = RegInfo->getCalleeSavedRegs(&MF);
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     bool Spilled = false;

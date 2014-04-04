@@ -2183,16 +2183,16 @@ void ARM64TargetLowering::saveVarArgRegisters(CCState &CCInfo,
 
   SmallVector<SDValue, 8> MemOps;
 
-  static const uint16_t GPRArgRegs[] = { ARM64::X0, ARM64::X1, ARM64::X2,
-                                         ARM64::X3, ARM64::X4, ARM64::X5,
-                                         ARM64::X6, ARM64::X7 };
+  static const MCPhysReg GPRArgRegs[] = { ARM64::X0, ARM64::X1, ARM64::X2,
+                                          ARM64::X3, ARM64::X4, ARM64::X5,
+                                          ARM64::X6, ARM64::X7 };
   static const unsigned NumGPRArgRegs = array_lengthof(GPRArgRegs);
   unsigned FirstVariadicGPR =
       CCInfo.getFirstUnallocated(GPRArgRegs, NumGPRArgRegs);
 
-  static const uint16_t FPRArgRegs[] = { ARM64::Q0, ARM64::Q1, ARM64::Q2,
-                                         ARM64::Q3, ARM64::Q4, ARM64::Q5,
-                                         ARM64::Q6, ARM64::Q7 };
+  static const MCPhysReg FPRArgRegs[] = { ARM64::Q0, ARM64::Q1, ARM64::Q2,
+                                          ARM64::Q3, ARM64::Q4, ARM64::Q5,
+                                          ARM64::Q6, ARM64::Q7 };
   static const unsigned NumFPRArgRegs = array_lengthof(FPRArgRegs);
   unsigned FirstVariadicFPR =
       CCInfo.getFirstUnallocated(FPRArgRegs, NumFPRArgRegs);
@@ -6235,12 +6235,12 @@ bool ARM64TargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
   return false;
 }
 
-const uint16_t *
+const MCPhysReg *
 ARM64TargetLowering::getScratchRegisters(CallingConv::ID) const {
   // LR is a callee-save register, but we must treat it as clobbered by any call
   // site. Hence we include LR in the scratch registers, which are in turn added
   // as implicit-defs for stackmaps and patchpoints.
-  static const uint16_t ScratchRegs[] = {
+  static const MCPhysReg ScratchRegs[] = {
     ARM64::X16, ARM64::X17, ARM64::LR, 0
   };
   return ScratchRegs;

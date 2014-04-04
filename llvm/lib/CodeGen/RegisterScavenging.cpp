@@ -91,7 +91,7 @@ void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
 
     // Create callee-saved registers bitvector.
     CalleeSavedRegs.resize(NumPhysRegs);
-    const uint16_t *CSRegs = TRI->getCalleeSavedRegs(&MF);
+    const MCPhysReg *CSRegs = TRI->getCalleeSavedRegs(&MF);
     if (CSRegs != NULL)
       for (unsigned i = 0; CSRegs[i]; ++i)
         CalleeSavedRegs.set(CSRegs[i]);

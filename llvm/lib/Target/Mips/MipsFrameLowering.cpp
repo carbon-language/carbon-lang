@@ -110,7 +110,7 @@ uint64_t MipsFrameLowering::estimateStackSize(const MachineFunction &MF) const {
     Offset = std::max(Offset, -MFI->getObjectOffset(I));
 
   // Conservatively assume all callee-saved registers will be saved.
-  for (const uint16_t *R = TRI.getCalleeSavedRegs(&MF); *R; ++R) {
+  for (const MCPhysReg *R = TRI.getCalleeSavedRegs(&MF); *R; ++R) {
     unsigned Size = TRI.getMinimalPhysRegClass(*R)->getSize();
     Offset = RoundUpToAlignment(Offset + Size, Size);
   }

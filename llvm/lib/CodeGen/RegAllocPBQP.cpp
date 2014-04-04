@@ -215,7 +215,7 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
     // Compute an initial allowed set for the current vreg.
     typedef std::vector<unsigned> VRAllowed;
     VRAllowed vrAllowed;
-    ArrayRef<uint16_t> rawOrder = trc->getRawAllocationOrder(*mf);
+    ArrayRef<MCPhysReg> rawOrder = trc->getRawAllocationOrder(*mf);
     for (unsigned i = 0; i != rawOrder.size(); ++i) {
       unsigned preg = rawOrder[i];
       if (mri->isReserved(preg))

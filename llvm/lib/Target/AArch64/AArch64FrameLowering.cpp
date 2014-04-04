@@ -369,8 +369,8 @@ AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // We certainly need some slack space for the scavenger, preferably an extra
   // register.
-  const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs();
-  uint16_t ExtraReg = AArch64::NoRegister;
+  const MCPhysReg *CSRegs = RegInfo->getCalleeSavedRegs();
+  MCPhysReg ExtraReg = AArch64::NoRegister;
 
   for (unsigned i = 0; CSRegs[i]; ++i) {
     if (AArch64::GPR64RegClass.contains(CSRegs[i]) &&

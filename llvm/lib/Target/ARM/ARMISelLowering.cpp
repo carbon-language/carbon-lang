@@ -79,7 +79,7 @@ namespace {
 }
 
 // The APCS parameter registers.
-static const uint16_t GPRArgRegs[] = {
+static const MCPhysReg GPRArgRegs[] = {
   ARM::R0, ARM::R1, ARM::R2, ARM::R3
 };
 
@@ -6558,7 +6558,7 @@ EmitSjLjDispatchBlock(MachineInstr *MI, MachineBasicBlock *MBB) const {
   }
 
   // N.B. the order the invoke BBs are processed in doesn't matter here.
-  const uint16_t *SavedRegs = RI.getCalleeSavedRegs(MF);
+  const MCPhysReg *SavedRegs = RI.getCalleeSavedRegs(MF);
   SmallVector<MachineBasicBlock*, 64> MBBLPads;
   for (SmallPtrSet<MachineBasicBlock*, 64>::iterator
          I = InvokeBBs.begin(), E = InvokeBBs.end(); I != E; ++I) {

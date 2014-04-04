@@ -936,7 +936,7 @@ namespace llvm {
                         const SmallVectorImpl<ISD::OutputArg> &Outs,
                         LLVMContext &Context) const override;
 
-    const uint16_t *getScratchRegisters(CallingConv::ID CC) const override;
+    const MCPhysReg *getScratchRegisters(CallingConv::ID CC) const override;
 
     /// Utility function to emit atomic-load-arith operations (and, or, xor,
     /// nand, max, min, umax, umin). It takes the corresponding instruction to
