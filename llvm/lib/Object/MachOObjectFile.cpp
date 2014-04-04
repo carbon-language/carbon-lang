@@ -784,8 +784,8 @@ void MachOObjectFile::moveRelocationNext(DataRefImpl &Rel) const {
 
 error_code
 MachOObjectFile::getRelocationAddress(DataRefImpl Rel, uint64_t &Res) const {
-  MachO::any_relocation_info RE = getRelocation(Rel);
-  uint64_t Offset = getAnyRelocationAddress(RE);
+  uint64_t Offset;
+  getRelocationOffset(Rel, Offset);
 
   DataRefImpl Sec;
   Sec.d.a = Rel.d.a;
@@ -797,6 +797,8 @@ MachOObjectFile::getRelocationAddress(DataRefImpl Rel, uint64_t &Res) const {
 
 error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
                                                 uint64_t &Res) const {
+  assert(getHeader().filetype == MachO::MH_OBJECT &&
+         "Only implemented for MH_OBJECT");
   MachO::any_relocation_info RE = getRelocation(Rel);
   Res = getAnyRelocationAddress(RE);
   return object_error::success;
