@@ -83,16 +83,9 @@ foo func(foo f) {
 // CHECK: [[FUNC:![0-9]*]] = {{.*}} metadata !"_ZN7pr147634funcENS_3fooE", i32 {{[0-9]*}}, metadata [[FUNC_TYPE:![0-9]*]], {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
 }
 
-namespace local_const {
-const wchar_t lc_c = L'x';
-}
-
-// CHECK: metadata [[LOCAL_CONST:![0-9]*]], metadata !"lc_c", {{.*}}; [ DW_TAG_variable ] [lc_c]
-// CHECK: [[LOCAL_CONST]] = {{.*}}; [ DW_TAG_namespace ] [local_const]
-
 void foo() {
   const wchar_t c = L'x';
-  wchar_t d = c + local_const::lc_c;
+  wchar_t d = c;
 }
 
 // CHECK-NOT: ; [ DW_TAG_variable ] [c]
