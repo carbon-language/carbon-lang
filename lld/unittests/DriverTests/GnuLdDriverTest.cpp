@@ -40,6 +40,26 @@ TEST_F(GnuLdParserTest, Empty) {
   EXPECT_EQ("No input files\n", errorMessage());
 }
 
+// --soname
+
+TEST_F(GnuLdParserTest, SOName) {
+  EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "--soname=foo",
+                    nullptr));
+  EXPECT_EQ("foo", _context->sharedObjectName());
+}
+
+TEST_F(GnuLdParserTest, SONameSingleDash) {
+  EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "-soname=foo",
+                    nullptr));
+  EXPECT_EQ("foo", _context->sharedObjectName());
+}
+
+TEST_F(GnuLdParserTest, SONameH) {
+  EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "-h", "foo",
+                    nullptr));
+  EXPECT_EQ("foo", _context->sharedObjectName());
+}
+
 // Tests for --defsym
 
 TEST_F(GnuLdParserTest, DefsymDecimal) {

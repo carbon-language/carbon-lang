@@ -145,9 +145,11 @@ def rpath_link : Separate<["-"], "rpath-link">,
 //===----------------------------------------------------------------------===//
 def grp_dynlib : OptionGroup<"opts">,
      HelpText<"DYNAMIC LIBRARY OPTIONS">;
-def soname : Separate<["-"], "soname">,
+def soname : Joined<["-", "--"], "soname=">,
      HelpText<"Set the internal DT_SONAME field to the specified name">,
      Group<grp_dynlib>;
+def soname_separate : Separate<["-", "--"], "soname">, Alias<soname>;
+def soname_h : Separate<["-"], "h">, Alias<soname>;
 
 //===----------------------------------------------------------------------===//
 /// Resolver Options
