@@ -56,7 +56,7 @@ mailing list</a> to notify other members of the community.</p>
     <li>Enhance CFG to model C++ temporaries properly.
     <p>There is an existing implementation of this, but it's not complete and
     is disabled in the analyzer.
-    <i>(Difficulty: Medium)</i></p>    
+    <i>(Difficulty: Medium; current contact: Alex McCarthy)</i></p>    
 
     <li>Enhance CFG to model exception-handling properly.
     <p>Currently exceptions are treated as "black holes", and exception-handling
@@ -70,7 +70,7 @@ mailing list</a> to notify other members of the community.</p>
     (<code>operator new</code>), then initialize the result with a constructor
     call. The problem is discussed at length in
     <a href="http://llvm.org/bugs/show_bug.cgi?id=12014">PR12014</a>.
-    <i>(Difficulty: Easy)</i></p>    
+    <i>(Difficulty: Easy; current contact: Karthik Bhat)</i></p>
 
     <li>Enhance CFG to model C++ <code>delete</code> more precisely.
     <p>Similarly, the representation of <code>delete</code> does not include
@@ -78,7 +78,14 @@ mailing list</a> to notify other members of the community.</p>
     function (<code>operator delete</code>). One particular issue 
     (<tt>noreturn</tt> destructors) is discussed in
     <a href="http://llvm.org/bugs/show_bug.cgi?id=15599">PR15599</a>
-    <i>(Difficulty: Easy)</i></p>    
+    <i>(Difficulty: Easy; current contact: Karthik Bhat)</i></p>    
+
+    <li>Implement a BitwiseConstraintManager to handle <a href="http://llvm.org/bugs/show_bug.cgi?id=3098">PR3098</a>.
+    <p>Constraints on the bits of an integer are not easily representable as
+    ranges. A bitwise constraint manager would model constraints such as "bit 32
+    is known to be 1". This would help code that made use of bitmasks</code>.
+    <i>(Difficulty: Medium)</i></p>
+    </li>
 
     <li>Track type info through casts more precisely.
     <p>The DynamicTypePropagation checker is in charge of inferring a region's
@@ -105,14 +112,6 @@ mailing list</a> to notify other members of the community.</p>
     <p>Currently <tt>scan-build</tt> output does not display reports that span 
     multiple files. The main problem is that we do not have a good format to
     display such paths in HTML output. <i>(Difficulty: Medium)</i> </p>
-    </li>
-    
-    <li>Relate bugs to checkers / "bug types"
-    <p>We need to come up with an API which will relate bug reports 
-    to the checkers that produce them and refactor the existing code to use the 
-    new API. This would allow us to identify the checker from the bug report,
-    which paves the way for selective control of certain checks.
-    <i>(Difficulty: Easy-Medium)</i></p>
     </li>
     
     <li>Refactor path diagnostic generation in <a href="http://clang.llvm.org/doxygen/BugReporter_8cpp_source.html">BugReporter.cpp</a>.
@@ -182,7 +181,7 @@ mailing list</a> to notify other members of the community.</p>
     <p>Take a look at the
     <a href="http://pages.cs.wisc.edu/~shanlu/paper/TSE-CPMiner.pdf">CP-Miner</a>
     paper for inspiration. 
-    <i>(Difficulty: Medium-Hard)</i></p>
+    <i>(Difficulty: Medium-Hard; current contacts: Per Viberg and Daniel Fahlgren)</i></p>
     </li>  
   </ul>
   </li>
