@@ -196,7 +196,7 @@ public:
 
   /// print - Implement operator<< on Value.
   ///
-  void print(raw_ostream &O, AssemblyAnnotationWriter *AAW = 0) const;
+  void print(raw_ostream &O) const;
 
   /// \brief Print the name of this Value out to the specified raw_ostream.
   /// This is useful when you just want to print 'int %reg126', not the

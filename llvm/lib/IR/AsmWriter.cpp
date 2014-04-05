@@ -2170,24 +2170,24 @@ void Type::print(raw_ostream &OS) const {
     }
 }
 
-void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
-  if (this == 0) {
+void Value::print(raw_ostream &ROS) const {
+  if (!this) {
     ROS << "printing a <null> value\n";
     return;
   }
   formatted_raw_ostream OS(ROS);
   if (const Instruction *I = dyn_cast<Instruction>(this)) {
-    const Function *F = I->getParent() ? I->getParent()->getParent() : 0;
+    const Function *F = I->getParent() ? I->getParent()->getParent() : nullptr;
     SlotTracker SlotTable(F);
-    AssemblyWriter W(OS, SlotTable, getModuleFromVal(I), AAW);
+    AssemblyWriter W(OS, SlotTable, getModuleFromVal(I), nullptr);
     W.printInstruction(*I);
   } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(this)) {
     SlotTracker SlotTable(BB->getParent());
-    AssemblyWriter W(OS, SlotTable, getModuleFromVal(BB), AAW);
+    AssemblyWriter W(OS, SlotTable, getModuleFromVal(BB), nullptr);
     W.printBasicBlock(BB);
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
     SlotTracker SlotTable(GV->getParent());
-    AssemblyWriter W(OS, SlotTable, GV->getParent(), AAW);
+    AssemblyWriter W(OS, SlotTable, GV->getParent(), nullptr);
     if (const GlobalVariable *V = dyn_cast<GlobalVariable>(GV))
       W.printGlobal(V);
     else if (const Function *F = dyn_cast<Function>(GV))
@@ -2197,13 +2197,13 @@ void Value::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   } else if (const MDNode *N = dyn_cast<MDNode>(this)) {
     const Function *F = N->getFunction();
     SlotTracker SlotTable(F);
-    AssemblyWriter W(OS, SlotTable, F ? F->getParent() : 0, AAW);
+    AssemblyWriter W(OS, SlotTable, F ? F->getParent() : nullptr, nullptr);
     W.printMDNodeBody(N);
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
     TypePrinting TypePrinter;
     TypePrinter.print(C->getType(), OS);
     OS << ' ';
-    WriteConstantInternal(OS, C, TypePrinter, 0, 0);
+    WriteConstantInternal(OS, C, TypePrinter, nullptr, nullptr);
   } else if (isa<InlineAsm>(this) || isa<MDString>(this) ||
              isa<Argument>(this)) {
     this->printAsOperand(OS);
