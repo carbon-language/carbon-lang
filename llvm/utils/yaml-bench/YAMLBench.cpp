@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This program executes the YAMLParser on differntly sized YAML texts and
+// This program executes the YAMLParser on differently sized YAML texts and
 // outputs the run time.
 //
 //===----------------------------------------------------------------------===//
