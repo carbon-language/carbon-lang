@@ -113,8 +113,16 @@ static const MemRegion *getRegionForConstructedObject(
   // See if we're constructing an existing region by looking at the next
   // element in the CFG.
   const CFGBlock *B = CurrBldrCtx.getBlock();
-  if (CurrStmtIdx + 1 < B->size()) {
-    CFGElement Next = (*B)[CurrStmtIdx+1];
+  unsigned int NextStmtIdx = CurrStmtIdx + 1;
+  if (NextStmtIdx < B->size()) {
+    CFGElement Next = (*B)[NextStmtIdx];
+
+    // Is this a destructor? If so, we might be in the middle of an assignment
+    // to a local or member: look ahead one more element to see what we find.
+    while (Next.getAs<CFGImplicitDtor>() && NextStmtIdx + 1 < B->size()) {
+      ++NextStmtIdx;
+      Next = (*B)[NextStmtIdx];
+    }
 
     // Is this a constructor for a local variable?
     if (Optional<CFGStmt> StmtElem = Next.getAs<CFGStmt>()) {
