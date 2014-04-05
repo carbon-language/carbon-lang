@@ -63,6 +63,10 @@ namespace llvm {
 
     bool Error(LocTy L, const Twine &Msg) const;
     bool Error(const Twine &Msg) const { return Error(getLoc(), Msg); }
+
+    void Warning(LocTy WarningLoc, const Twine &Msg) const;
+    void Warning(const Twine &Msg) const { return Warning(getLoc(), Msg); }
+
     std::string getFilename() const;
 
   private:

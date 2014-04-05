@@ -1312,6 +1312,8 @@ bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
 
   case lltok::kw_linker_private:
   case lltok::kw_linker_private_weak:
+    Lex.Warning("'" + Lex.getStrVal() + "' is deprecated, treating as"
+                " PrivateLinkage");
     Lex.Lex();
     // treat linker_private and linker_private_weak as PrivateLinkage
     Res = GlobalValue::PrivateLinkage;

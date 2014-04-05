@@ -34,6 +34,10 @@ bool LLLexer::Error(LocTy ErrorLoc, const Twine &Msg) const {
   return true;
 }
 
+void LLLexer::Warning(LocTy WarningLoc, const Twine &Msg) const {
+  SM.PrintMessage(WarningLoc, SourceMgr::DK_Warning, Msg);
+}
+
 //===----------------------------------------------------------------------===//
 // Helper functions.
 //===----------------------------------------------------------------------===//
