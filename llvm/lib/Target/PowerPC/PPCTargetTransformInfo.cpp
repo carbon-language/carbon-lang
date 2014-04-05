@@ -33,17 +33,16 @@ void initializePPCTTIPass(PassRegistry &);
 namespace {
 
 class PPCTTI final : public ImmutablePass, public TargetTransformInfo {
-  const PPCTargetMachine *TM;
   const PPCSubtarget *ST;
   const PPCTargetLowering *TLI;
 
 public:
-  PPCTTI() : ImmutablePass(ID), TM(0), ST(0), TLI(0) {
+  PPCTTI() : ImmutablePass(ID), ST(0), TLI(0) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 
   PPCTTI(const PPCTargetMachine *TM)
-      : ImmutablePass(ID), TM(TM), ST(TM->getSubtargetImpl()),
+      : ImmutablePass(ID), ST(TM->getSubtargetImpl()),
         TLI(TM->getTargetLowering()) {
     initializePPCTTIPass(*PassRegistry::getPassRegistry());
   }
