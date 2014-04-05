@@ -50,13 +50,10 @@ char ARM64DeadRegisterDefinitions::ID = 0;
 bool ARM64DeadRegisterDefinitions::implicitlyDefinesSubReg(
                                                        unsigned Reg,
                                                        const MachineInstr *MI) {
-  for (unsigned i = MI->getNumExplicitOperands(), e = MI->getNumOperands();
-       i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
+  for (const MachineOperand &MO : MI->implicit_operands())
     if (MO.isReg() && MO.isDef())
       if (TRI->isSubRegister(Reg, MO.getReg()))
         return true;
-  }
   return false;
 }
 

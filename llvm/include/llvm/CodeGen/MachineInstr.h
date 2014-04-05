@@ -293,6 +293,22 @@ public:
   iterator_range<const_mop_iterator> operands() const {
     return iterator_range<const_mop_iterator>(operands_begin(), operands_end());
   }
+  iterator_range<mop_iterator> explicit_operands() {
+    return iterator_range<mop_iterator>(
+        operands_begin(), operands_begin() + getNumExplicitOperands());
+  }
+  iterator_range<const_mop_iterator> explicit_operands() const {
+    return iterator_range<const_mop_iterator>(
+        operands_begin(), operands_begin() + getNumExplicitOperands());
+  }
+  iterator_range<mop_iterator> implicit_operands() {
+    return iterator_range<mop_iterator>(explicit_operands().end(),
+                                        operands_end());
+  }
+  iterator_range<const_mop_iterator> implicit_operands() const {
+    return iterator_range<const_mop_iterator>(explicit_operands().end(),
+                                              operands_end());
+  }
 
   /// Access to memory operands of the instruction
   mmo_iterator memoperands_begin() const { return MemRefs; }
