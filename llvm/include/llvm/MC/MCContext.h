@@ -304,14 +304,6 @@ namespace llvm {
 
     bool isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID = 0);
 
-    bool hasDwarfFiles() const {
-      // Traverse MCDwarfFilesCUMap and check whether each entry is empty.
-      for (const auto &FileTable : MCDwarfLineTablesCUMap)
-        if (!FileTable.second.getMCDwarfFiles().empty())
-           return true;
-      return false;
-    }
-
     const std::map<unsigned, MCDwarfLineTable> &getMCDwarfLineTables() const {
       return MCDwarfLineTablesCUMap;
     }
