@@ -13,8 +13,8 @@
 
 #include "llvm/Support/Compression.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Config/config.h"
-#include "llvm/Support/MemoryBuffer.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -24,19 +24,17 @@ namespace {
 #if LLVM_ENABLE_ZLIB == 1 && HAVE_LIBZ
 
 void TestZlibCompression(StringRef Input, zlib::CompressionLevel Level) {
-  std::unique_ptr<MemoryBuffer> Compressed;
+  SmallString<32> Compressed;
   SmallString<32> Uncompressed;
   EXPECT_EQ(zlib::StatusOK, zlib::compress(Input, Compressed, Level));
   // Check that uncompressed buffer is the same as original.
-  EXPECT_EQ(zlib::StatusOK, zlib::uncompress(Compressed->getBuffer(),
-                                             Uncompressed, Input.size()));
-  EXPECT_EQ(Input.size(), Uncompressed.size());
-  EXPECT_EQ(0, memcmp(Input.data(), Uncompressed.data(), Input.size()));
+  EXPECT_EQ(zlib::StatusOK,
+            zlib::uncompress(Compressed, Uncompressed, Input.size()));
+  EXPECT_EQ(Input, Uncompressed);
   if (Input.size() > 0) {
     // Uncompression fails if expected length is too short.
     EXPECT_EQ(zlib::StatusBufferTooShort,
-              zlib::uncompress(Compressed->getBuffer(), Uncompressed,
-                               Input.size() - 1));
+              zlib::uncompress(Compressed, Uncompressed, Input.size() - 1));
   }
 }
 

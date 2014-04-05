@@ -16,7 +16,6 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/MemoryBuffer.h"
 #if LLVM_ENABLE_ZLIB == 1 && HAVE_ZLIB_H
 #include <zlib.h>
 #endif
@@ -47,20 +46,15 @@ static zlib::Status encodeZlibReturnValue(int ReturnValue) {
 
 bool zlib::isAvailable() { return true; }
 zlib::Status zlib::compress(StringRef InputBuffer,
-                            std::unique_ptr<MemoryBuffer> &CompressedBuffer,
+                            SmallVectorImpl<char> &CompressedBuffer,
                             CompressionLevel Level) {
   unsigned long CompressedSize = ::compressBound(InputBuffer.size());
-  std::unique_ptr<char[]> TmpBuffer(new char[CompressedSize]);
+  CompressedBuffer.resize(CompressedSize);
   int CLevel = encodeZlibCompressionLevel(Level);
   Status Res = encodeZlibReturnValue(::compress2(
-      (Bytef *)TmpBuffer.get(), &CompressedSize,
+      (Bytef *)CompressedBuffer.data(), &CompressedSize,
       (const Bytef *)InputBuffer.data(), InputBuffer.size(), CLevel));
-  if (Res == StatusOK) {
-    CompressedBuffer.reset(MemoryBuffer::getMemBufferCopy(
-        StringRef(TmpBuffer.get(), CompressedSize)));
-    // Tell MSan that memory initialized by zlib is valid.
-    __msan_unpoison(CompressedBuffer->getBufferStart(), CompressedSize);
-  }
+  CompressedBuffer.resize(CompressedSize);
   return Res;
 }
 
@@ -82,12 +76,12 @@ uint32_t zlib::crc32(StringRef Buffer) {
 #else
 bool zlib::isAvailable() { return false; }
 zlib::Status zlib::compress(StringRef InputBuffer,
-                            std::unique_ptr<MemoryBuffer> &CompressedBuffer,
+                            SmallVectorImpl<char> &CompressedBuffer,
                             CompressionLevel Level) {
   return zlib::StatusUnsupported;
 }
 zlib::Status zlib::uncompress(StringRef InputBuffer,
-                              std::unique_ptr<MemoryBuffer> &UncompressedBuffer,
+                              SmallVectorImpl<char> &UncompressedBuffer,
                               size_t UncompressedSize) {
   return zlib::StatusUnsupported;
 }

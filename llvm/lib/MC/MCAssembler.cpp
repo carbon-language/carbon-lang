@@ -237,23 +237,23 @@ const SmallVectorImpl<char> &MCCompressedFragment::getCompressedContents() const
   assert(getParent()->size() == 1 &&
          "Only compress sections containing a single fragment");
   if (CompressedContents.empty()) {
-    std::unique_ptr<MemoryBuffer> CompressedSection;
+    // FIXME: could be more efficient if we let zlib::compress append to a
+    // buffer rather than always from the start.
     zlib::Status Success =
         zlib::compress(StringRef(getContents().data(), getContents().size()),
-                       CompressedSection);
+                       CompressedContents);
     (void)Success;
     assert(Success == zlib::StatusOK);
-    CompressedContents.push_back('Z');
-    CompressedContents.push_back('L');
-    CompressedContents.push_back('I');
-    CompressedContents.push_back('B');
+    static const StringRef Magic = "ZLIB";
     uint64_t Size = getContents().size();
     if (sys::IsLittleEndianHost)
       Size = sys::SwapByteOrder(Size);
-    CompressedContents.append(reinterpret_cast<char *>(&Size),
-                              reinterpret_cast<char *>(&Size + 1));
-    CompressedContents.append(CompressedSection->getBuffer().begin(),
-                              CompressedSection->getBuffer().end());
+    CompressedContents.insert(CompressedContents.begin(),
+                              Magic.size() + sizeof(Size));
+    std::copy(Magic.begin(), Magic.end(), CompressedContents.begin());
+    std::copy(reinterpret_cast<char *>(&Size),
+              reinterpret_cast<char *>(&Size + 1),
+              CompressedContents.begin() + Magic.size());
   }
   return CompressedContents;
 }

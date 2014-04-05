@@ -20,7 +20,6 @@
 
 namespace llvm {
 
-class MemoryBuffer;
 class StringRef;
 
 namespace zlib {
@@ -43,8 +42,7 @@ enum Status {
 
 bool isAvailable();
 
-Status compress(StringRef InputBuffer,
-                std::unique_ptr<MemoryBuffer> &CompressedBuffer,
+Status compress(StringRef InputBuffer, SmallVectorImpl<char> &CompressedBuffer,
                 CompressionLevel Level = DefaultCompression);
 
 Status uncompress(StringRef InputBuffer,
