@@ -39,6 +39,8 @@ namespace lltok {
 
     kw_private,
     kw_internal,
+    kw_linker_private,          // NOTE: deprecated, for parser compatibility
+    kw_linker_private_weak,     // NOTE: deprecated, for parser compatibility
     kw_linkonce, kw_linkonce_odr,
     kw_weak, kw_weak_odr, kw_appending,
     kw_dllimport, kw_dllexport, kw_common, kw_available_externally,
