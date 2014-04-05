@@ -60,7 +60,17 @@ TEST_F(GnuLdParserTest, SONameH) {
   EXPECT_EQ("foo", _context->sharedObjectName());
 }
 
-// Tests for --defsym
+// -rpath
+
+TEST_F(GnuLdParserTest, Rpath) {
+  EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "-rpath", "foo:bar",
+                    nullptr));
+  EXPECT_EQ(2, _context->getRpathList().size());
+  EXPECT_EQ("foo", _context->getRpathList()[0]);
+  EXPECT_EQ("bar", _context->getRpathList()[1]);
+}
+
+// --defsym
 
 TEST_F(GnuLdParserTest, DefsymDecimal) {
   EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "--defsym=sym=1000",
