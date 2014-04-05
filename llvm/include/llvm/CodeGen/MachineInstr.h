@@ -287,10 +287,10 @@ public:
   const_mop_iterator operands_begin() const { return Operands; }
   const_mop_iterator operands_end() const { return Operands + NumOperands; }
 
-  inline iterator_range<mop_iterator>  operands() {
+  iterator_range<mop_iterator> operands() {
     return iterator_range<mop_iterator>(operands_begin(), operands_end());
   }
-  inline iterator_range<const_mop_iterator> operands() const {
+  iterator_range<const_mop_iterator> operands() const {
     return iterator_range<const_mop_iterator>(operands_begin(), operands_end());
   }
 
@@ -299,10 +299,10 @@ public:
   mmo_iterator memoperands_end() const { return MemRefs + NumMemRefs; }
   bool memoperands_empty() const { return NumMemRefs == 0; }
 
-  inline iterator_range<mmo_iterator>  memoperands() {
+  iterator_range<mmo_iterator>  memoperands() {
     return iterator_range<mmo_iterator>(memoperands_begin(), memoperands_end());
   }
-  inline iterator_range<mmo_iterator> memoperands() const {
+  iterator_range<mmo_iterator> memoperands() const {
     return iterator_range<mmo_iterator>(memoperands_begin(), memoperands_end());
   }
 
