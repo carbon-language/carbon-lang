@@ -3230,10 +3230,14 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
   // Do not emit separate definitions for function local const/statics.
   if (isa<FunctionDecl>(VD->getDeclContext()))
     return;
+  VD = cast<ValueDecl>(VD->getCanonicalDecl());
+  auto pair = DeclCache.insert(std::make_pair(VD, llvm::WeakVH()));
+  if (!pair.second)
+    return;
   llvm::DIGlobalVariable GV = DBuilder.createStaticVariable(
       Unit, Name, Name, Unit, getLineNumber(VD->getLocation()), Ty, true, Init,
       getOrCreateStaticDataMemberDeclarationOrNull(cast<VarDecl>(VD)));
-  DeclCache.insert(std::make_pair(VD->getCanonicalDecl(), llvm::WeakVH(GV)));
+  pair.first->second = llvm::WeakVH(GV);
 }
 
 llvm::DIScope CGDebugInfo::getCurrentContextDescriptor(const Decl *D) {
