@@ -314,6 +314,34 @@ int foo(bool cond) {
 
 </table>
 
+<!-- =============================== POSIX ================================= -->
+<h3>POSIX</h3>
+<table class="checkers">
+<col class="namedescr"><col class="example"><col class="progress">
+<thead><tr><td>Name, Description</td><td>Example</td><td>Progress</td></tr></thead>
+
+<tr><td><span class="name">posix.Errno</span><br><br>
+Record that <code>errno</code> is non-zero when certain functions fail.
+</td><td><pre>
+#include &lt;stdlib.h&gt;
+
+int readWrapper(int fd, int *count) {
+  int lcount = read(fd, globalBuf, sizeof(globalBuf));
+  if (lcount &lt; 0)
+    return errno;
+  *count = lcount;
+  return 0;
+}
+
+void use(int fd) {
+  int count;
+  if (!readWrapper(fd))
+    print("%d", count); // should not warn
+}
+</pre></td><td class="aligned"><a href="http://llvm.org/bugs/show_bug.cgi?id=18701">PR18701</a></td></tr>
+
+</table>
+
 <!-- ========================= undefined behavior ========================== -->
 <h3>undefined behavior</h3>
 <table class="checkers">
