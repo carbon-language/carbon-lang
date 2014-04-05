@@ -3234,8 +3234,11 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
   auto pair = DeclCache.insert(std::make_pair(VD, llvm::WeakVH()));
   if (!pair.second)
     return;
+  llvm::DIDescriptor DContext =
+      getContextDescriptor(dyn_cast<Decl>(VD->getDeclContext()));
   llvm::DIGlobalVariable GV = DBuilder.createStaticVariable(
-      Unit, Name, Name, Unit, getLineNumber(VD->getLocation()), Ty, true, Init,
+      DContext, Name, StringRef(), Unit, getLineNumber(VD->getLocation()), Ty,
+      true, Init,
       getOrCreateStaticDataMemberDeclarationOrNull(cast<VarDecl>(VD)));
   pair.first->second = llvm::WeakVH(GV);
 }
