@@ -1,24 +1,29 @@
-@ RUN: not llvm-mc -n -triple armv7-apple-darwin10 %s -filetype=obj -o - 2> %t.err > %t
-@ RUN: FileCheck --check-prefix=CHECK-ERROR < %t.err %s
+@ RUN: not llvm-mc -n -triple armv7-apple-darwin10 %s -filetype asm -o /dev/null 2>&1 \
+@ RUN:  | FileCheck --check-prefix CHECK-ERROR %s
+
+@ RUN: not llvm-mc -n -triple armv7-apple-darwin10 %s -filetype obj -o /dev/null 2>&1 \
+@ RUN:  | FileCheck --check-prefix CHECK-ERROR %s
+
 @ rdar://16335232
 
 .eabi_attribute 8, 1
-@ CHECK-ERROR: error: .eabi_attribute directive not valid for Mach-O
+@ CHECK-ERROR: error: unknown directive
 
 .cpu
-@ CHECK-ERROR: error: .cpu directive not valid for Mach-O
+@ CHECK-ERROR: error: unknown directive
 
 .fpu neon
-@ CHECK-ERROR: error: .fpu directive not valid for Mach-O
+@ CHECK-ERROR: error: unknown directive
 
 .arch armv7
-@ CHECK-ERROR: error: .arch directive not valid for Mach-O
+@ CHECK-ERROR: error: unknown directive
 
 .fnstart
-@ CHECK-ERROR: error: .fnstart directive not valid for Mach-O
+@ CHECK-ERROR: error: unknown directive
 
 .tlsdescseq
-@ CHECK-ERROR: error: .tlsdescseq directive not valid for Mach-O
+@ CHECK-ERROR: error: unknown directive
 
 .object_arch armv7
-@ CHECK-ERROR: error: .object_arch directive not valid for Mach-O
+@ CHECK-ERROR: error: unknown directive
+

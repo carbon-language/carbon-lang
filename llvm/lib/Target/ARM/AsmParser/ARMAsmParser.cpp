@@ -7975,6 +7975,10 @@ MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
 /// parseDirective parses the arm specific directives
 bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
+  const MCObjectFileInfo::Environment Format =
+    getContext().getObjectFileInfo()->getObjectFileType();
+  bool IsMachO = Format == MCObjectFileInfo::IsMachO;
+
   StringRef IDVal = DirectiveID.getIdentifier();
   if (IDVal == ".word")
     return parseLiteralValues(4, DirectiveID.getLoc());
@@ -7992,16 +7996,6 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveSyntax(DirectiveID.getLoc());
   else if (IDVal == ".unreq")
     return parseDirectiveUnreq(DirectiveID.getLoc());
-  else if (IDVal == ".arch")
-    return parseDirectiveArch(DirectiveID.getLoc());
-  else if (IDVal == ".eabi_attribute")
-    return parseDirectiveEabiAttr(DirectiveID.getLoc());
-  else if (IDVal == ".cpu")
-    return parseDirectiveCPU(DirectiveID.getLoc());
-  else if (IDVal == ".fpu")
-    return parseDirectiveFPU(DirectiveID.getLoc());
-  else if (IDVal == ".fnstart")
-    return parseDirectiveFnStart(DirectiveID.getLoc());
   else if (IDVal == ".fnend")
     return parseDirectiveFnEnd(DirectiveID.getLoc());
   else if (IDVal == ".cantunwind")
@@ -8018,12 +8012,6 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveRegSave(DirectiveID.getLoc(), false);
   else if (IDVal == ".vsave")
     return parseDirectiveRegSave(DirectiveID.getLoc(), true);
-  else if (IDVal == ".inst")
-    return parseDirectiveInst(DirectiveID.getLoc());
-  else if (IDVal == ".inst.n")
-    return parseDirectiveInst(DirectiveID.getLoc(), 'n');
-  else if (IDVal == ".inst.w")
-    return parseDirectiveInst(DirectiveID.getLoc(), 'w');
   else if (IDVal == ".ltorg" || IDVal == ".pool")
     return parseDirectiveLtorg(DirectiveID.getLoc());
   else if (IDVal == ".even")
@@ -8032,18 +8020,38 @@ bool ARMAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectivePersonalityIndex(DirectiveID.getLoc());
   else if (IDVal == ".unwind_raw")
     return parseDirectiveUnwindRaw(DirectiveID.getLoc());
-  else if (IDVal == ".tlsdescseq")
-    return parseDirectiveTLSDescSeq(DirectiveID.getLoc());
   else if (IDVal == ".movsp")
     return parseDirectiveMovSP(DirectiveID.getLoc());
-  else if (IDVal == ".object_arch")
-    return parseDirectiveObjectArch(DirectiveID.getLoc());
   else if (IDVal == ".arch_extension")
     return parseDirectiveArchExtension(DirectiveID.getLoc());
   else if (IDVal == ".align")
     return parseDirectiveAlign(DirectiveID.getLoc());
   else if (IDVal == ".thumb_set")
     return parseDirectiveThumbSet(DirectiveID.getLoc());
+
+  if (!IsMachO) {
+    if (IDVal == ".arch")
+      return parseDirectiveArch(DirectiveID.getLoc());
+    else if (IDVal == ".cpu")
+      return parseDirectiveCPU(DirectiveID.getLoc());
+    else if (IDVal == ".eabi_attribute")
+      return parseDirectiveEabiAttr(DirectiveID.getLoc());
+    else if (IDVal == ".fpu")
+      return parseDirectiveFPU(DirectiveID.getLoc());
+    else if (IDVal == ".fnstart")
+      return parseDirectiveFnStart(DirectiveID.getLoc());
+    else if (IDVal == ".inst")
+      return parseDirectiveInst(DirectiveID.getLoc());
+    else if (IDVal == ".inst.n")
+      return parseDirectiveInst(DirectiveID.getLoc(), 'n');
+    else if (IDVal == ".inst.w")
+      return parseDirectiveInst(DirectiveID.getLoc(), 'w');
+    else if (IDVal == ".object_arch")
+      return parseDirectiveObjectArch(DirectiveID.getLoc());
+    else if (IDVal == ".tlsdescseq")
+      return parseDirectiveTLSDescSeq(DirectiveID.getLoc());
+  }
+
   return true;
 }
 
@@ -8306,14 +8314,6 @@ bool ARMAsmParser::parseDirectiveUnreq(SMLoc L) {
 /// parseDirectiveArch
 ///  ::= .arch token
 bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
-  const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
-  bool isMachO = MAI->hasSubsectionsViaSymbols();
-  if (isMachO) {
-    Error(L, ".arch directive not valid for Mach-O");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
-
   StringRef Arch = getParser().parseStringToEndOfStatement().trim();
 
   unsigned ID = StringSwitch<unsigned>(Arch)
@@ -8337,14 +8337,6 @@ bool ARMAsmParser::parseDirectiveArch(SMLoc L) {
 ///  ::= .eabi_attribute int, int [, "str"]
 ///  ::= .eabi_attribute Tag_name, int [, "str"]
 bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
-  const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
-  bool isMachO = MAI->hasSubsectionsViaSymbols();
-  if (isMachO) {
-    Error(L, ".eabi_attribute directive not valid for Mach-O");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
-
   int64_t Tag;
   SMLoc TagLoc;
   TagLoc = Parser.getTok().getLoc();
@@ -8450,14 +8442,6 @@ bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
 /// parseDirectiveCPU
 ///  ::= .cpu str
 bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
-  const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
-  bool isMachO = MAI->hasSubsectionsViaSymbols();
-  if (isMachO) {
-    Error(L, ".cpu directive not valid for Mach-O");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
-
   StringRef CPU = getParser().parseStringToEndOfStatement().trim();
   getTargetStreamer().emitTextAttribute(ARMBuildAttrs::CPU_name, CPU);
   return false;
@@ -8466,14 +8450,6 @@ bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
 /// parseDirectiveFPU
 ///  ::= .fpu str
 bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
-  const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
-  bool isMachO = MAI->hasSubsectionsViaSymbols();
-  if (isMachO) {
-    Error(L, ".fpu directive not valid for Mach-O");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
-
   StringRef FPU = getParser().parseStringToEndOfStatement().trim();
 
   unsigned ID = StringSwitch<unsigned>(FPU)
@@ -8493,14 +8469,6 @@ bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
 /// parseDirectiveFnStart
 ///  ::= .fnstart
 bool ARMAsmParser::parseDirectiveFnStart(SMLoc L) {
-  const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
-  bool isMachO = MAI->hasSubsectionsViaSymbols();
-  if (isMachO) {
-    Error(L, ".fnstart directive not valid for Mach-O");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
-
   if (UC.hasFnStart()) {
     Error(L, ".fnstart starts before the end of previous one");
     UC.emitFnStartLocNotes();
@@ -8780,14 +8748,6 @@ bool ARMAsmParser::parseDirectiveRegSave(SMLoc L, bool IsVector) {
 ///  ::= .inst.n opcode [, ...]
 ///  ::= .inst.w opcode [, ...]
 bool ARMAsmParser::parseDirectiveInst(SMLoc Loc, char Suffix) {
-  const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
-  bool isMachO = MAI->hasSubsectionsViaSymbols();
-  if (isMachO) {
-    Error(Loc, ".inst directive not valid for Mach-O");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
-
   int Width;
 
   if (isThumb()) {
@@ -9036,14 +8996,6 @@ bool ARMAsmParser::parseDirectiveUnwindRaw(SMLoc L) {
 /// parseDirectiveTLSDescSeq
 ///   ::= .tlsdescseq tls-variable
 bool ARMAsmParser::parseDirectiveTLSDescSeq(SMLoc L) {
-  const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
-  bool isMachO = MAI->hasSubsectionsViaSymbols();
-  if (isMachO) {
-    Error(L, ".tlsdescseq directive not valid for Mach-O");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
-
   if (getLexer().isNot(AsmToken::Identifier)) {
     TokError("expected variable after '.tlsdescseq' directive");
     Parser.eatToEndOfStatement();
@@ -9131,14 +9083,6 @@ bool ARMAsmParser::parseDirectiveMovSP(SMLoc L) {
 /// parseDirectiveObjectArch
 ///   ::= .object_arch name
 bool ARMAsmParser::parseDirectiveObjectArch(SMLoc L) {
-  const MCAsmInfo *MAI = getParser().getStreamer().getContext().getAsmInfo();
-  bool isMachO = MAI->hasSubsectionsViaSymbols();
-  if (isMachO) {
-    Error(L, ".object_arch directive not valid for Mach-O");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
-
   if (getLexer().isNot(AsmToken::Identifier)) {
     Error(getLexer().getLoc(), "unexpected token");
     Parser.eatToEndOfStatement();
