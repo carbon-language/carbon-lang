@@ -47,6 +47,7 @@ namespace clang {
   class CXXRecordDecl;
   class CXXDeleteExpr;
   class CXXNewExpr;
+  class BinaryOperator;
 
 /// CFGElement - Represents a top-level expression in a basic block.
 class CFGElement {
@@ -698,6 +699,15 @@ public:
   }
 };
 
+/// \brief CFGCallback defines methods that should be called when a logical
+/// operator error is found when building the CFG.
+class CFGCallback {
+public:
+  CFGCallback() {}
+  virtual void compareAlwaysTrue(const BinaryOperator *B, bool isAlwaysTrue) {}
+  virtual ~CFGCallback() {}
+};
+
 /// CFG - Represents a source-level, intra-procedural CFG that represents the
 ///  control-flow of a Stmt.  The Stmt can represent an entire function body,
 ///  or a single expression.  A CFG will always contain one empty block that
@@ -716,7 +726,7 @@ public:
   public:
     typedef llvm::DenseMap<const Stmt *, const CFGBlock*> ForcedBlkExprs;
     ForcedBlkExprs **forcedBlkExprs;
-
+    CFGCallback *Observer;
     bool PruneTriviallyFalseEdges;
     bool AddEHEdges;
     bool AddInitializers;
@@ -740,7 +750,7 @@ public:
     }
 
     BuildOptions()
-    : forcedBlkExprs(0), PruneTriviallyFalseEdges(true)
+    : forcedBlkExprs(0), Observer(0), PruneTriviallyFalseEdges(true)
       ,AddEHEdges(false)
       ,AddInitializers(false)
       ,AddImplicitDtors(false)

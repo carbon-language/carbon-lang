@@ -495,6 +495,215 @@ private:
                     cfg->getBumpVectorContext());
   }
 
+  /// \brief Find a relational comparison with an expression evaluating to a
+  /// boolean and a constant other than 0 and 1.
+  /// e.g. if ((x < y) == 10)
+  TryResult checkIncorrectRelationalOperator(const BinaryOperator *B) {
+    const Expr *LHSExpr = B->getLHS()->IgnoreParens();
+    const Expr *RHSExpr = B->getRHS()->IgnoreParens();
+
+    const IntegerLiteral *IntLiteral = dyn_cast<IntegerLiteral>(LHSExpr);
+    const Expr *BoolExpr = RHSExpr;
+    bool IntFirst = true;
+    if (!IntLiteral) {
+      IntLiteral = dyn_cast<IntegerLiteral>(RHSExpr);
+      BoolExpr = LHSExpr;
+      IntFirst = false;
+    }
+
+    if (!IntLiteral || !BoolExpr->isKnownToHaveBooleanValue())
+      return TryResult();
+
+    llvm::APInt IntValue = IntLiteral->getValue();
+    if ((IntValue == 1) || (IntValue == 0))
+      return TryResult();
+
+    bool IntLarger = IntLiteral->getType()->isUnsignedIntegerType() ||
+                     !IntValue.isNegative();
+
+    BinaryOperatorKind Bok = B->getOpcode();
+    if (Bok == BO_GT || Bok == BO_GE) {
+      // Always true for 10 > bool and bool > -1
+      // Always false for -1 > bool and bool > 10
+      return TryResult(IntFirst == IntLarger);
+    } else {
+      // Always true for -1 < bool and bool < 10
+      // Always false for 10 < bool and bool < -1
+      return TryResult(IntFirst != IntLarger);
+    }
+  }
+
+  /// Find a equality comparison with an expression evaluating to a boolean and
+  /// a constant other than 0 and 1.
+  /// e.g. if (!x == 10)
+  TryResult checkIncorrectEqualityOperator(const BinaryOperator *B) {
+    const Expr *LHSExpr = B->getLHS()->IgnoreParens();
+    const Expr *RHSExpr = B->getRHS()->IgnoreParens();
+
+    const IntegerLiteral *IntLiteral = dyn_cast<IntegerLiteral>(LHSExpr);
+    const Expr *BoolExpr = RHSExpr;
+
+    if (!IntLiteral) {
+      IntLiteral = dyn_cast<IntegerLiteral>(RHSExpr);
+      BoolExpr = LHSExpr;
+    }
+
+    if (!IntLiteral || !BoolExpr->isKnownToHaveBooleanValue())
+      return TryResult();
+
+    llvm::APInt IntValue = IntLiteral->getValue();
+    if ((IntValue == 1) || (IntValue == 0)) {
+      return TryResult();
+    }
+
+    return TryResult(B->getOpcode() != BO_EQ);
+  }
+
+  TryResult analyzeLogicOperatorCondition(BinaryOperatorKind Relation,
+                                          const llvm::APSInt &Value1,
+                                          const llvm::APSInt &Value2) {
+    assert(Value1.isSigned() == Value2.isSigned());
+    switch (Relation) {
+      default:
+        return TryResult();
+      case BO_EQ:
+        return TryResult(Value1 == Value2);
+      case BO_NE:
+        return TryResult(Value1 != Value2);
+      case BO_LT:
+        return TryResult(Value1 <  Value2);
+      case BO_LE:
+        return TryResult(Value1 <= Value2);
+      case BO_GT:
+        return TryResult(Value1 >  Value2);
+      case BO_GE:
+        return TryResult(Value1 >= Value2);
+    }
+  }
+
+  /// \brief Find a pair of comparison expressions with or without parentheses
+  /// with a shared variable and constants and a logical operator between them
+  /// that always evaluates to either true or false.
+  /// e.g. if (x != 3 || x != 4)
+  TryResult checkIncorrectLogicOperator(const BinaryOperator *B) {
+    assert(B->isLogicalOp());
+    const BinaryOperator *LHS =
+        dyn_cast<BinaryOperator>(B->getLHS()->IgnoreParens());
+    const BinaryOperator *RHS =
+        dyn_cast<BinaryOperator>(B->getRHS()->IgnoreParens());
+    if (!LHS || !RHS)
+      return TryResult();
+
+    if (!LHS->isComparisonOp() || !RHS->isComparisonOp())
+      return TryResult();
+
+    BinaryOperatorKind BO1 = LHS->getOpcode();
+    const DeclRefExpr *Decl1 =
+        dyn_cast<DeclRefExpr>(LHS->getLHS()->IgnoreParenImpCasts());
+    const IntegerLiteral *Literal1 =
+        dyn_cast<IntegerLiteral>(LHS->getRHS()->IgnoreParens());
+    if (!Decl1 && !Literal1) {
+      if (BO1 == BO_GT)
+        BO1 = BO_LT;
+      else if (BO1 == BO_GE)
+        BO1 = BO_LE;
+      else if (BO1 == BO_LT)
+        BO1 = BO_GT;
+      else if (BO1 == BO_LE)
+        BO1 = BO_GE;
+      Decl1 = dyn_cast<DeclRefExpr>(LHS->getRHS()->IgnoreParenImpCasts());
+      Literal1 = dyn_cast<IntegerLiteral>(LHS->getLHS()->IgnoreParens());
+    }
+
+    if (!Decl1 || !Literal1)
+      return TryResult();
+
+    BinaryOperatorKind BO2 = RHS->getOpcode();
+    const DeclRefExpr *Decl2 =
+        dyn_cast<DeclRefExpr>(RHS->getLHS()->IgnoreParenImpCasts());
+    const IntegerLiteral *Literal2 =
+        dyn_cast<IntegerLiteral>(RHS->getRHS()->IgnoreParens());
+    if (!Decl2 && !Literal2) {
+      if (BO2 == BO_GT)
+        BO2 = BO_LT;
+      else if (BO2 == BO_GE)
+        BO2 = BO_LE;
+      else if (BO2 == BO_LT)
+        BO2 = BO_GT;
+      else if (BO2 == BO_LE)
+        BO2 = BO_GE;
+      Decl2 = dyn_cast<DeclRefExpr>(RHS->getRHS()->IgnoreParenImpCasts());
+      Literal2 = dyn_cast<IntegerLiteral>(RHS->getLHS()->IgnoreParens());
+    }
+
+    if (!Decl2 || !Literal2)
+      return TryResult();
+
+    // Check that it is the same variable on both sides.
+    if (Decl1->getDecl() != Decl2->getDecl())
+      return TryResult();
+
+    llvm::APSInt L1, L2;
+
+    if (!Literal1->EvaluateAsInt(L1, *Context) ||
+        !Literal2->EvaluateAsInt(L2, *Context))
+      return TryResult();
+
+    // Can't compare signed with unsigned or with different bit width.
+    if (L1.isSigned() != L2.isSigned() || L1.getBitWidth() != L2.getBitWidth())
+      return TryResult();
+
+    // Values that will be used to determine if result of logical
+    // operator is always true/false
+    const llvm::APSInt Values[] = {
+      // Value less than both Value1 and Value2
+      llvm::APSInt::getMinValue(L1.getBitWidth(), L1.isUnsigned()),
+      // L1
+      L1,
+      // Value between Value1 and Value2
+      ((L1 < L2) ? L1 : L2) + llvm::APSInt(llvm::APInt(L1.getBitWidth(), 1),
+                              L1.isUnsigned()),
+      // L2
+      L2,
+      // Value greater than both Value1 and Value2
+      llvm::APSInt::getMaxValue(L1.getBitWidth(), L1.isUnsigned()),
+    };
+
+    // Check whether expression is always true/false by evaluating the following
+    // * variable x is less than the smallest literal.
+    // * variable x is equal to the smallest literal.
+    // * Variable x is between smallest and largest literal.
+    // * Variable x is equal to the largest literal.
+    // * Variable x is greater than largest literal.
+    bool AlwaysTrue = true, AlwaysFalse = true;
+    for (unsigned int ValueIndex = 0;
+         ValueIndex < sizeof(Values) / sizeof(Values[0]);
+         ++ValueIndex) {
+      llvm::APSInt Value = Values[ValueIndex];
+      TryResult Res1, Res2;
+      Res1 = analyzeLogicOperatorCondition(BO1, Value, L1);
+      Res2 = analyzeLogicOperatorCondition(BO2, Value, L2);
+
+      if (!Res1.isKnown() || !Res2.isKnown())
+        return TryResult();
+
+      if (B->getOpcode() == BO_LAnd) {
+        AlwaysTrue &= (Res1.isTrue() && Res2.isTrue());
+        AlwaysFalse &= !(Res1.isTrue() && Res2.isTrue());
+      } else {
+        AlwaysTrue &= (Res1.isTrue() || Res2.isTrue());
+        AlwaysFalse &= !(Res1.isTrue() || Res2.isTrue());
+      }
+    }
+
+    if (AlwaysTrue || AlwaysFalse) {
+      if (BuildOpts.Observer)
+        BuildOpts.Observer->compareAlwaysTrue(B, AlwaysTrue);
+      return TryResult(AlwaysTrue);
+    }
+    return TryResult();
+  }
+
   /// Try and evaluate an expression to an integer constant.
   bool tryEvaluate(Expr *S, Expr::EvalResult &outResult) {
     if (!BuildOpts.PruneTriviallyFalseEdges)
@@ -577,10 +786,22 @@ private:
             // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
             if (RHS.isTrue() == (Bop->getOpcode() == BO_LOr))
               return RHS.isTrue();
+          } else {
+            TryResult BopRes = checkIncorrectLogicOperator(Bop);
+            if (BopRes.isKnown())
+              return BopRes.isTrue();
           }
         }
 
         return TryResult();
+      } else if (Bop->isEqualityOp()) {
+          TryResult BopRes = checkIncorrectEqualityOperator(Bop);
+          if (BopRes.isKnown())
+            return BopRes.isTrue();
+      } else if (Bop->isRelationalOp()) {
+        TryResult BopRes = checkIncorrectRelationalOperator(Bop);
+        if (BopRes.isKnown())
+          return BopRes.isTrue();
       }
     }
 
@@ -1320,6 +1541,8 @@ CFGBuilder::VisitLogicalOperator(BinaryOperator *B,
     else {
       RHSBlock->setTerminator(Term);
       TryResult KnownVal = tryEvaluateBool(RHS);
+      if (!KnownVal.isKnown())
+        KnownVal = tryEvaluateBool(B);
       addSuccessor(RHSBlock, TrueBlock, !KnownVal.isFalse());
       addSuccessor(RHSBlock, FalseBlock, !KnownVal.isTrue());
     }
