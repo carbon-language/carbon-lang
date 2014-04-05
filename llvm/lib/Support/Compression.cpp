@@ -65,18 +65,13 @@ zlib::Status zlib::compress(StringRef InputBuffer,
 }
 
 zlib::Status zlib::uncompress(StringRef InputBuffer,
-                              std::unique_ptr<MemoryBuffer> &UncompressedBuffer,
+                              SmallVectorImpl<char> &UncompressedBuffer,
                               size_t UncompressedSize) {
-  std::unique_ptr<char[]> TmpBuffer(new char[UncompressedSize]);
-  Status Res = encodeZlibReturnValue(
-      ::uncompress((Bytef *)TmpBuffer.get(), (uLongf *)&UncompressedSize,
-                   (const Bytef *)InputBuffer.data(), InputBuffer.size()));
-  if (Res == StatusOK) {
-    UncompressedBuffer.reset(MemoryBuffer::getMemBufferCopy(
-        StringRef(TmpBuffer.get(), UncompressedSize)));
-    // Tell MSan that memory initialized by zlib is valid.
-    __msan_unpoison(UncompressedBuffer->getBufferStart(), UncompressedSize);
-  }
+  UncompressedBuffer.resize(UncompressedSize);
+  Status Res = encodeZlibReturnValue(::uncompress(
+      (Bytef *)UncompressedBuffer.data(), (uLongf *)&UncompressedSize,
+      (const Bytef *)InputBuffer.data(), InputBuffer.size()));
+  UncompressedBuffer.resize(UncompressedSize);
   return Res;
 }
 

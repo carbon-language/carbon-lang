@@ -242,7 +242,7 @@ class DWARFContextInMemory : public DWARFContext {
   StringRef RangeDWOSection;
   StringRef AddrSection;
 
-  SmallVector<std::unique_ptr<MemoryBuffer>, 4> UncompressedSections;
+  SmallVector<SmallString<32>, 4> UncompressedSections;
 
 public:
   DWARFContextInMemory(object::ObjectFile *);

@@ -637,14 +637,15 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj)
       if (!zlib::isAvailable() ||
           !consumeCompressedDebugSectionHeader(data, OriginalSize))
         continue;
-      std::unique_ptr<MemoryBuffer> UncompressedSection;
-      if (zlib::uncompress(data, UncompressedSection, OriginalSize) !=
-          zlib::StatusOK)
+      UncompressedSections.resize(UncompressedSections.size() + 1);
+      if (zlib::uncompress(data, UncompressedSections.back(), OriginalSize) !=
+          zlib::StatusOK) {
+        UncompressedSections.pop_back();
         continue;
+      }
       // Make data point to uncompressed section contents and save its contents.
       name = name.substr(1);
-      data = UncompressedSection->getBuffer();
-      UncompressedSections.push_back(std::move(UncompressedSection));
+      data = UncompressedSections.back();
     }
 
     StringRef *SectionData =

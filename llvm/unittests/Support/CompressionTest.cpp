@@ -25,14 +25,13 @@ namespace {
 
 void TestZlibCompression(StringRef Input, zlib::CompressionLevel Level) {
   std::unique_ptr<MemoryBuffer> Compressed;
-  std::unique_ptr<MemoryBuffer> Uncompressed;
+  SmallString<32> Uncompressed;
   EXPECT_EQ(zlib::StatusOK, zlib::compress(Input, Compressed, Level));
   // Check that uncompressed buffer is the same as original.
   EXPECT_EQ(zlib::StatusOK, zlib::uncompress(Compressed->getBuffer(),
                                              Uncompressed, Input.size()));
-  EXPECT_EQ(Input.size(), Uncompressed->getBufferSize());
-  EXPECT_EQ(0,
-            memcmp(Input.data(), Uncompressed->getBufferStart(), Input.size()));
+  EXPECT_EQ(Input.size(), Uncompressed.size());
+  EXPECT_EQ(0, memcmp(Input.data(), Uncompressed.data(), Input.size()));
   if (Input.size() > 0) {
     // Uncompression fails if expected length is too short.
     EXPECT_EQ(zlib::StatusBufferTooShort,
