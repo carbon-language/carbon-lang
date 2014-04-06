@@ -94,23 +94,23 @@ public:
 };
 } // end anonymous namespace
 
-// Used to keep track of section names, so that in the YAML file sections
-// can be referenced by name instead of by index.
+// Used to keep track of section and symbol names, so that in the YAML file
+// sections and symbols can be referenced by name instead of by index.
 namespace {
-class SectionNameToIdxMap {
+class NameToIdxMap {
   StringMap<int> Map;
 public:
   /// \returns true if name is already present in the map.
-  bool addName(StringRef SecName, unsigned i) {
-    StringMapEntry<int> &Entry = Map.GetOrCreateValue(SecName, -1);
+  bool addName(StringRef Name, unsigned i) {
+    StringMapEntry<int> &Entry = Map.GetOrCreateValue(Name, -1);
     if (Entry.getValue() != -1)
       return true;
     Entry.setValue((int)i);
     return false;
   }
   /// \returns true if name is not present in the map
-  bool lookupSection(StringRef SecName, unsigned &Idx) const {
-    StringMap<int>::const_iterator I = Map.find(SecName);
+  bool lookup(StringRef Name, unsigned &Idx) const {
+    StringMap<int>::const_iterator I = Map.find(Name);
     if (I == Map.end())
       return true;
     Idx = I->getValue();
@@ -150,7 +150,7 @@ class ELFState {
   /// \brief The future ".shstrtab" section.
   StringTableBuilder DotShStrtab;
 
-  SectionNameToIdxMap SN2I;
+  NameToIdxMap SN2I;
   const ELFYAML::Object &Doc;
 
   bool buildSectionIndex();
@@ -229,7 +229,7 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
 
     if (!Sec.Link.empty()) {
       unsigned Index;
-      if (SN2I.lookupSection(Sec.Link, Index)) {
+      if (SN2I.lookup(Sec.Link, Index)) {
         errs() << "error: Unknown section referenced: '" << Sec.Link
                << "' at YAML section '" << Sec.Name << "'.\n";
         return false;;
@@ -295,7 +295,7 @@ void ELFState<ELFT>::addSymbols(const std::vector<ELFYAML::Symbol> &Symbols,
     Symbol.setBindingAndType(SymbolBinding, Sym.Type);
     if (!Sym.Section.empty()) {
       unsigned Index;
-      if (SN2I.lookupSection(Sym.Section, Index)) {
+      if (SN2I.lookup(Sym.Section, Index)) {
         errs() << "error: Unknown section referenced: '" << Sym.Section
                << "' by YAML symbol " << Sym.Name << ".\n";
         exit(1);
