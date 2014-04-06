@@ -146,13 +146,13 @@ DICompileUnit DIBuilder::createCompileUnit(unsigned Lang, StringRef Filename,
 }
 
 static DIImportedEntity
-createImportedModule(LLVMContext &C, DIScope Context, DIDescriptor NS,
-                     unsigned Line, StringRef Name,
-                     SmallVectorImpl<TrackingVH<MDNode> > &AllImportedModules) {
+createImportedModule(LLVMContext &C, dwarf::Tag Tag, DIScope Context,
+                     Value *NS, unsigned Line, StringRef Name,
+                     SmallVectorImpl<TrackingVH<MDNode>> &AllImportedModules) {
   const MDNode *R;
   if (Name.empty()) {
     Value *Elts[] = {
-      GetTagConstant(C, dwarf::DW_TAG_imported_module),
+      GetTagConstant(C, Tag),
       Context,
       NS,
       ConstantInt::get(Type::getInt32Ty(C), Line),
@@ -160,7 +160,7 @@ createImportedModule(LLVMContext &C, DIScope Context, DIDescriptor NS,
     R = MDNode::get(C, Elts);
   } else {
     Value *Elts[] = {
-      GetTagConstant(C, dwarf::DW_TAG_imported_module),
+      GetTagConstant(C, Tag),
       Context,
       NS,
       ConstantInt::get(Type::getInt32Ty(C), Line),
@@ -175,33 +175,32 @@ createImportedModule(LLVMContext &C, DIScope Context, DIDescriptor NS,
 }
 
 DIImportedEntity DIBuilder::createImportedModule(DIScope Context,
-                                                 DINameSpace NS, unsigned Line,
-                                                 StringRef Name) {
-  return ::createImportedModule(VMContext, Context, NS, Line, Name,
-                                AllImportedModules);
+                                                 DINameSpace NS,
+                                                 unsigned Line) {
+  return ::createImportedModule(VMContext, dwarf::DW_TAG_imported_module,
+                                Context, NS, Line, StringRef(), AllImportedModules);
 }
 
 DIImportedEntity DIBuilder::createImportedModule(DIScope Context,
                                                  DIImportedEntity NS,
-                                                 unsigned Line,
-                                                 StringRef Name) {
-  return ::createImportedModule(VMContext, Context, NS, Line, Name,
-                                AllImportedModules);
+                                                 unsigned Line) {
+  return ::createImportedModule(VMContext, dwarf::DW_TAG_imported_module,
+                                Context, NS, Line, StringRef(), AllImportedModules);
 }
 
 DIImportedEntity DIBuilder::createImportedDeclaration(DIScope Context,
                                                       DIScope Decl,
-                                                      unsigned Line) {
-  Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_imported_declaration),
-    Context,
-    Decl.getRef(),
-    ConstantInt::get(Type::getInt32Ty(VMContext), Line),
-  };
-  DIImportedEntity M(MDNode::get(VMContext, Elts));
-  assert(M.Verify() && "Imported module should be valid");
-  AllImportedModules.push_back(TrackingVH<MDNode>(M));
-  return M;
+                                                      unsigned Line, StringRef Name) {
+  return ::createImportedModule(VMContext, dwarf::DW_TAG_imported_declaration,
+                                Context, Decl.getRef(), Line, Name,
+                                AllImportedModules);
+}
+
+DIImportedEntity DIBuilder::createImportedDeclaration(DIScope Context,
+                                                      DIImportedEntity Imp,
+                                                      unsigned Line, StringRef Name) {
+  return ::createImportedModule(VMContext, dwarf::DW_TAG_imported_declaration,
+                                Context, Imp, Line, Name, AllImportedModules);
 }
 
 /// createFile - Create a file descriptor to hold debugging information

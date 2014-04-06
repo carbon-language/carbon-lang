@@ -73,13 +73,13 @@
 ; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x16)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[I]]})
 ; CHECK-NOT: NULL
-; CHECK: [[X:0x[0-9a-f]*]]:{{ *}}DW_TAG_imported_module
+; CHECK: [[X:0x[0-9a-f]*]]:{{ *}}DW_TAG_imported_declaration
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
 ; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x18)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[NS1]]})
 ; CHECK-NEXT: DW_AT_name{{.*}}"X"
 ; CHECK-NOT: NULL
-; CHECK: DW_TAG_imported_module
+; CHECK: DW_TAG_imported_declaration
 ; CHECK-NEXT: DW_AT_decl_file{{.*}}(0x0[[F2]])
 ; CHECK-NEXT: DW_AT_decl_line{{.*}}(0x19)
 ; CHECK-NEXT: DW_AT_import{{.*}}=> {[[X]]})
@@ -236,8 +236,8 @@ attributes #1 = { nounwind readnone }
 !36 = metadata !{i32 786468}
 !37 = metadata !{i32 786440, metadata !14, metadata !10, i32 21} ; [ DW_TAG_imported_declaration ]
 !38 = metadata !{i32 786440, metadata !14, metadata !20, i32 22} ; [ DW_TAG_imported_declaration ]
-!39 = metadata !{i32 786490, metadata !14, metadata !7, i32 24, metadata !"X"} ; [ DW_TAG_imported_module ]
-!40 = metadata !{i32 786490, metadata !14, metadata !39, i32 25, metadata !"Y"} ; [ DW_TAG_imported_module ]
+!39 = metadata !{i32 786440, metadata !14, metadata !7, i32 24, metadata !"X"} ; [ DW_TAG_imported_declaration ]
+!40 = metadata !{i32 786440, metadata !14, metadata !39, i32 25, metadata !"Y"} ; [ DW_TAG_imported_declaration ]
 !41 = metadata !{i32 3, i32 0, metadata !4, null}
 !42 = metadata !{i32 786689, metadata !10, metadata !"", metadata !15, i32 16777220, metadata !13, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [line 4]
 !43 = metadata !{i32 4, i32 0, metadata !10, null}
