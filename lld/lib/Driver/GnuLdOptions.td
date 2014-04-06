@@ -7,12 +7,12 @@ include "llvm/Option/OptParser.td"
 multiclass smDash<string opt1, string opt2, string help> {
   // Option
   def "" : Separate<["-"], opt1>, HelpText<help>;
-  def opt1_eq : Separate<["-"], opt1#"=">,
+  def opt1_eq : Joined<["-"], opt1#"=">,
       Alias<!cast<Option>(opt1)>;
   // Compatibility aliases
   def opt2_dashdash : Separate<["--"], opt2>,
       Alias<!cast<Option>(opt1)>;
-  def opt2_dashdash_eq : Separate<["--"], opt2#"=">,
+  def opt2_dashdash_eq : Joined<["--"], opt2#"=">,
       Alias<!cast<Option>(opt1)>;
 }
 
@@ -21,7 +21,7 @@ multiclass dashEq<string opt1, string opt2, string help> {
   // Option
   def "" : Separate<["-"], opt1>, HelpText<help>;
   // Compatibility aliases
-  def opt2_eq : Separate<["-"], opt2#"=">,
+  def opt2_eq : Joined<["-"], opt2#"=">,
       Alias<!cast<Option>(opt1)>;
 }
 
