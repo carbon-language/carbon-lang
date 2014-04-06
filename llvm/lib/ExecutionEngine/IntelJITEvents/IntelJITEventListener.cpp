@@ -193,11 +193,10 @@ void IntelJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
   MethodAddressVector Functions;
 
   // Use symbol info to iterate functions in the object.
-  error_code ec;
   for (object::symbol_iterator I = Obj.begin_symbols(),
                                E = Obj.end_symbols();
-                        I != E && !ec;
-                        I.increment(ec)) {
+                        I != E;
+                        ++I) {
     std::vector<LineNumberInfo> LineInfo;
     std::string SourceFileName;
 
@@ -234,7 +233,7 @@ void IntelJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
           FunctionMessage.line_number_table = 0;
         } else {
           SourceFileName = Lines.front().second.getFileName();
-          FunctionMessage.source_file_name = (char *)SourceFileName.c_str();
+          FunctionMessage.source_file_name = const_cast<char *>(SourceFileName.c_str());
           FunctionMessage.line_number_size = LineInfo.size();
           FunctionMessage.line_number_table = &*LineInfo.begin();
         }

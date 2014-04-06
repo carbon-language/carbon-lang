@@ -83,7 +83,7 @@ public:
     EXPECT_TRUE(0 != MockWrapper);
 
     Listener.reset(JITEventListener::createIntelJITEventListener(
-      MockWrapper.take()));
+      MockWrapper.release()));
     EXPECT_TRUE(0 != Listener);
     EE->RegisterJITEventListener(Listener.get());
   }
