@@ -50,6 +50,8 @@ template <class ELFT> class ELFFile : public File {
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Iter Elf_Sym_Iter;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela_Iter Elf_Rela_Iter;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel_Iter Elf_Rel_Iter;
 
   // A Map is used to hold the atoms that have been divided up
   // after reading the section that contains Merge String attributes
@@ -333,15 +335,10 @@ protected:
   /// list of relocations references.  In ELF, if a section named, ".text" has
   /// relocations will also have a section named ".rel.text" or ".rela.text"
   /// which will hold the entries.
-  std::unordered_map<
-      StringRef,
-      range<typename llvm::object::ELFFile<ELFT>::Elf_Rela_Iter> >
+  std::unordered_map<StringRef, range<Elf_Rela_Iter>>
   _relocationAddendReferences;
   MergedSectionMapT _mergedSectionMap;
-  std::unordered_map<
-      StringRef,
-      range<typename llvm::object::ELFFile<ELFT>::Elf_Rel_Iter> >
-  _relocationReferences;
+  std::unordered_map<StringRef, range<Elf_Rel_Iter>> _relocationReferences;
   std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
 
