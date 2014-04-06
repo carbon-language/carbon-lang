@@ -770,31 +770,10 @@ static InputKind getSourceInputKindFromOptions(const LangOptions &LangOpts) {
 
 /// \brief Compile a module file for the given module, using the options 
 /// provided by the importing compiler instance.
-static void compileModule(CompilerInstance &ImportingInstance,
+static void compileModuleImpl(CompilerInstance &ImportingInstance,
                           SourceLocation ImportLoc,
                           Module *Module,
                           StringRef ModuleFileName) {
-  // FIXME: have LockFileManager return an error_code so that we can
-  // avoid the mkdir when the directory already exists.
-  StringRef Dir = llvm::sys::path::parent_path(ModuleFileName);
-  llvm::sys::fs::create_directories(Dir);
-
-  llvm::LockFileManager Locked(ModuleFileName);
-  switch (Locked) {
-  case llvm::LockFileManager::LFS_Error:
-    return;
-
-  case llvm::LockFileManager::LFS_Owned:
-    // We're responsible for building the module ourselves. Do so below.
-    break;
-
-  case llvm::LockFileManager::LFS_Shared:
-    // Someone else is responsible for building the module. Wait for them to
-    // finish.
-    Locked.waitForUnlock();
-    return;
-  }
-
   ModuleMap &ModMap 
     = ImportingInstance.getPreprocessor().getHeaderSearchInfo().getModuleMap();
     
@@ -911,6 +890,38 @@ static void compileModule(CompilerInstance &ImportingInstance,
   // module index, record that fact in the importing compiler instance.
   if (ImportingInstance.getFrontendOpts().GenerateGlobalModuleIndex) {
     ImportingInstance.setBuildGlobalModuleIndex(true);
+  }
+}
+
+static void compileModule(CompilerInstance &ImportingInstance,
+                          SourceLocation ImportLoc,
+                          Module *Module,
+                          StringRef ModuleFileName) {
+  // FIXME: have LockFileManager return an error_code so that we can
+  // avoid the mkdir when the directory already exists.
+  StringRef Dir = llvm::sys::path::parent_path(ModuleFileName);
+  llvm::sys::fs::create_directories(Dir);
+
+  while (1) {
+    llvm::LockFileManager Locked(ModuleFileName);
+    switch (Locked) {
+    case llvm::LockFileManager::LFS_Error:
+      return;
+
+    case llvm::LockFileManager::LFS_Owned:
+      // We're responsible for building the module ourselves. Do so below.
+      break;
+
+    case llvm::LockFileManager::LFS_Shared:
+      // Someone else is responsible for building the module. Wait for them to
+      // finish.
+      if (Locked.waitForUnlock() == llvm::LockFileManager::Res_OwnerDied)
+        continue; // try again to get the lock.
+      return;
+    }
+
+    return compileModuleImpl(ImportingInstance, ImportLoc, Module,
+                             ModuleFileName);
   }
 }
 
