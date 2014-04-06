@@ -133,8 +133,8 @@ def dynamic_linker : Joined<["--"], "dynamic-linker=">,
 // Executable options - compatibility aliases
 def dynamic_linker_alias : Separate<["-"], "dynamic-linker">,
     Alias<dynamic_linker>;
-def rpath : Separate<["-"], "rpath">,
-     HelpText<"Add a directory to the runtime library search path">,
+defm rpath : dashEq<"rpath", "rpath",
+     "Add a directory to the runtime library search path">,
      Group<grp_dynlibexec>;
 def rpath_link : Separate<["-"], "rpath-link">,
      HelpText<"Specifies the first set of directories to search">,

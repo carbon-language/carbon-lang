@@ -107,6 +107,13 @@ TEST_F(GnuLdParserTest, Rpath) {
   EXPECT_EQ("bar", _context->getRpathList()[1]);
 }
 
+TEST_F(GnuLdParserTest, RpathEq) {
+  EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "-rpath=foo",
+                    nullptr));
+  EXPECT_EQ(1, _context->getRpathList().size());
+  EXPECT_EQ("foo", _context->getRpathList()[0]);
+}
+
 // --defsym
 
 TEST_F(GnuLdParserTest, DefsymDecimal) {
