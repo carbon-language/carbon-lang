@@ -2,9 +2,11 @@
 ; some setups (e.g., Atom) from affecting the output.
 ; RUN: llc < %s -mcpu=core2 -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=WIN32
 ; RUN: llc < %s -mcpu=core2 -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=MINGW_X86
+; RUN: llc < %s -mcpu=core2 -mtriple=i686-pc-cygwin | FileCheck %s -check-prefix=CYGWIN
 ; RUN: llc < %s -mcpu=core2 -mtriple=i386-pc-linux | FileCheck %s -check-prefix=LINUX
 ; RUN: llc < %s -mcpu=core2 -O0 -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=WIN32
 ; RUN: llc < %s -mcpu=core2 -O0 -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=MINGW_X86
+; RUN: llc < %s -mcpu=core2 -O0 -mtriple=i686-pc-cygwin | FileCheck %s -check-prefix=CYGWIN
 ; RUN: llc < %s -mcpu=core2 -O0 -mtriple=i386-pc-linux | FileCheck %s -check-prefix=LINUX
 
 ; The SysV ABI used by most Unixes and Mingw on x86 specifies that an sret pointer
@@ -20,6 +22,9 @@ entry:
 
 ; MINGW_X86-LABEL:  _sret1:
 ; MINGW_X86:  {{retl$}}
+
+; CYGWIN-LABEL:     _sret1:
+; CYGWIN:     retl $4
 
 ; LINUX-LABEL:      sret1:
 ; LINUX:      retl $4
@@ -38,6 +43,9 @@ entry:
 ; MINGW_X86-LABEL:  _sret2:
 ; MINGW_X86:  {{retl$}}
 
+; CYGWIN-LABEL:     _sret2:
+; CYGWIN:     retl $4
+
 ; LINUX-LABEL:      sret2:
 ; LINUX:      retl $4
 
@@ -55,6 +63,9 @@ entry:
 
 ; MINGW_X86-LABEL:  _sret3:
 ; MINGW_X86:  {{retl$}}
+
+; CYGWIN-LABEL:     _sret3:
+; CYGWIN:     retl $4
 
 ; LINUX-LABEL:      sret3:
 ; LINUX:      retl $4
@@ -77,6 +88,9 @@ entry:
 ; MINGW_X86-LABEL: _sret4:
 ; MINGW_X86: {{retl$}}
 
+; CYGWIN-LABEL:    _sret4:
+; CYGWIN:    retl $4
+
 ; LINUX-LABEL:     sret4:
 ; LINUX:     retl $4
 
@@ -98,6 +112,7 @@ entry:
   ret void
 ; WIN32-LABEL:     {{^}}"?foo@C5@@QAE?AUS5@@XZ":
 ; MINGW_X86-LABEL: {{^}}"?foo@C5@@QAE?AUS5@@XZ":
+; CYGWIN-LABEL:    {{^}}"?foo@C5@@QAE?AUS5@@XZ":
 ; LINUX-LABEL:     {{^}}"?foo@C5@@QAE?AUS5@@XZ":
 
 ; The address of the return structure is passed as an implicit parameter.
@@ -115,6 +130,7 @@ entry:
   call x86_thiscallcc void @"\01?foo@C5@@QAE?AUS5@@XZ"(%struct.S5* sret %s, %class.C5* %c)
 ; WIN32-LABEL:      {{^}}_call_foo5:
 ; MINGW_X86-LABEL:  {{^}}_call_foo5:
+; CYGWIN-LABEL:     {{^}}_call_foo5:
 ; LINUX-LABEL:      {{^}}call_foo5:
 
 
@@ -135,6 +151,7 @@ entry:
 define void @test6_f(%struct.test6* %x) nounwind {
 ; WIN32-LABEL: _test6_f:
 ; MINGW_X86-LABEL: _test6_f:
+; CYGWIN-LABEL: _test6_f:
 ; LINUX-LABEL: test6_f:
 
 ; The %x argument is moved to %ecx. It will be the this pointer.
@@ -145,6 +162,9 @@ define void @test6_f(%struct.test6* %x) nounwind {
 ; MINGW_X86: movl    8(%ebp), %eax
 ; MINGW_X86: movl    %eax, (%e{{([a-d]x)|(sp)}})
 
+; CYGWIN: movl    8(%ebp), %eax
+; CYGWIN: movl    %eax, (%e{{([a-d]x)|(sp)}})
+
 ; The sret pointer is (%esp)
 ; WIN32:          leal    8(%esp), %[[REG:e[a-d]x]]
 ; WIN32-NEXT:     movl    %[[REG]], (%e{{([a-d]x)|(sp)}})
@@ -152,6 +172,9 @@ define void @test6_f(%struct.test6* %x) nounwind {
 ; The sret pointer is %ecx
 ; MINGW_X86-NEXT: leal    8(%esp), %ecx
 ; MINGW_X86-NEXT: calll   _test6_g
+
+; CYGWIN-NEXT: leal    8(%esp), %ecx
+; CYGWIN-NEXT: calll   _test6_g
 
   %tmp = alloca %struct.test6, align 4
   call x86_thiscallcc void @test6_g(%struct.test6* sret %tmp, %struct.test6* %x)

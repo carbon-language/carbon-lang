@@ -362,7 +362,7 @@ public:
 
   /// \brief Is this a "Windows" OS targeting a "MSVCRT.dll" environment.
   bool isOSMSVCRT() const {
-    return getOS() == Triple::Win32 || getOS() == Triple::MinGW32;
+    return isWindowsMSVCEnvironment() || isWindowsGNUEnvironment();
   }
 
   /// \brief Tests whether the OS is Windows.
