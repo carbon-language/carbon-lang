@@ -719,6 +719,32 @@ llvm::DIType CGDebugInfo::CreateType(const BlockPointerType *Ty,
   return BlockLiteralGeneric;
 }
 
+llvm::DIType CGDebugInfo::CreateType(const TemplateSpecializationType *Ty, llvm::DIFile Unit) {
+  assert(Ty->isTypeAlias());
+  llvm::DIType Src = getOrCreateType(Ty->getAliasedType(), Unit);
+  assert(Src);
+
+  SmallString<128> NS;
+  llvm::raw_svector_ostream OS(NS);
+  Ty->getTemplateName().print(OS, CGM.getContext().getPrintingPolicy(), /*qualified*/ false);
+
+  TemplateSpecializationType::PrintTemplateArgumentList(
+      OS, Ty->getArgs(), Ty->getNumArgs(),
+      CGM.getContext().getPrintingPolicy());
+
+  TypeAliasDecl *AliasDecl =
+      cast<TypeAliasTemplateDecl>(Ty->getTemplateName().getAsTemplateDecl())
+          ->getTemplatedDecl();
+
+  SourceLocation Loc = AliasDecl->getLocation();
+  llvm::DIFile File = getOrCreateFile(Loc);
+  unsigned Line = getLineNumber(Loc);
+
+  llvm::DIDescriptor Ctxt = getContextDescriptor(cast<Decl>(AliasDecl->getDeclContext()));
+
+  return DBuilder.createTypedef(Src, internString(OS.str()), File, Line, Ctxt);
+}
+
 llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty, llvm::DIFile Unit) {
   // Typedefs are derived from some other type.  If we have a typedef of a
   // typedef, make sure to emit the whole chain.
@@ -1932,9 +1958,12 @@ static QualType UnwrapTypeForDebugInfo(QualType T, const ASTContext &C) {
     switch (T->getTypeClass()) {
     default:
       return C.getQualifiedType(T.getTypePtr(), Quals);
-    case Type::TemplateSpecialization:
-      T = cast<TemplateSpecializationType>(T)->desugar();
-      break;
+    case Type::TemplateSpecialization: {
+      const auto *Spec = cast<TemplateSpecializationType>(T);
+      if (Spec->isTypeAlias())
+        return C.getQualifiedType(T.getTypePtr(), Quals);
+      T = Spec->desugar();
+      break; }
     case Type::TypeOfExpr:
       T = cast<TypeOfExprType>(T)->getUnderlyingExpr()->getType();
       break;
@@ -2191,8 +2220,10 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   case Type::Atomic:
     return CreateType(cast<AtomicType>(Ty), Unit);
 
-  case Type::Attributed:
   case Type::TemplateSpecialization:
+    return CreateType(cast<TemplateSpecializationType>(Ty), Unit);
+
+  case Type::Attributed:
   case Type::Elaborated:
   case Type::Paren:
   case Type::SubstTemplateTypeParm:

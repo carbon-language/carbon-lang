@@ -109,6 +109,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const ComplexType *Ty);
   llvm::DIType CreateQualifiedType(QualType Ty, llvm::DIFile Fg);
   llvm::DIType CreateType(const TypedefType *Ty, llvm::DIFile Fg);
+  llvm::DIType CreateType(const TemplateSpecializationType *Ty, llvm::DIFile Fg);
   llvm::DIType CreateType(const ObjCObjectPointerType *Ty,
                           llvm::DIFile F);
   llvm::DIType CreateType(const PointerType *Ty, llvm::DIFile F);
