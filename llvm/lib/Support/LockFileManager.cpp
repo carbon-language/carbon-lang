@@ -43,8 +43,11 @@ LockFileManager::readLockFile(StringRef LockFileName) {
   std::tie(Hostname, PIDStr) = getToken(MB->getBuffer(), " ");
   PIDStr = PIDStr.substr(PIDStr.find_first_not_of(" "));
   int PID;
-  if (!PIDStr.getAsInteger(10, PID))
-    return std::make_pair(std::string(Hostname), PID);
+  if (!PIDStr.getAsInteger(10, PID)) {
+    auto Owner = std::make_pair(std::string(Hostname), PID);
+    if (processStillExecuting(Owner.first, Owner.second))
+      return Owner;
+  }
 
   // Delete the lock file. It's invalid anyway.
   sys::fs::remove(LockFileName);
@@ -171,9 +174,9 @@ LockFileManager::~LockFileManager() {
   sys::fs::remove(UniqueLockFileName.str());
 }
 
-void LockFileManager::waitForUnlock() {
+LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
   if (getState() != LFS_Shared)
-    return;
+    return Res_Success;
 
 #if LLVM_ON_WIN32
   unsigned long Interval = 1;
@@ -211,7 +214,7 @@ void LockFileManager::waitForUnlock() {
     // available now.
     if (LockFileGone) {
       if (sys::fs::exists(FileName.str())) {
-        return;
+        return Res_Success;
       }
 
       // The lock file is gone, so now we're waiting for the original file to
@@ -234,7 +237,7 @@ void LockFileManager::waitForUnlock() {
     // owning the lock died without cleaning up, just bail out.
     if (!LockFileGone &&
         !processStillExecuting((*Owner).first, (*Owner).second)) {
-      return;
+      return Res_OwnerDied;
     }
 
     // Exponentially increase the time we wait for the lock to be removed.
@@ -257,4 +260,5 @@ void LockFileManager::waitForUnlock() {
            );
 
   // Give up.
+  return Res_Timeout;
 }

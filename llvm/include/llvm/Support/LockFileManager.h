@@ -40,6 +40,16 @@ public:
     LFS_Error
   };
 
+  /// \brief Describes the result of waiting for the owner to release the lock.
+  enum WaitForUnlockResult {
+    /// \brief The lock was released successfully.
+    Res_Success,
+    /// \brief Owner died while holding the lock.
+    Res_OwnerDied,
+    /// \brief Reached timeout while waiting for the owner to release the lock.
+    Res_Timeout
+  };
+
 private:
   SmallString<128> FileName;
   SmallString<128> LockFileName;
@@ -67,7 +77,7 @@ public:
   operator LockFileState() const { return getState(); }
 
   /// \brief For a shared lock, wait until the owner releases the lock.
-  void waitForUnlock();
+  WaitForUnlockResult waitForUnlock();
 };
 
 } // end namespace llvm
