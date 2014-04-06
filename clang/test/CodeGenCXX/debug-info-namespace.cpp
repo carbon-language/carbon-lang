@@ -57,7 +57,7 @@ using B::i;
 // CHECK: [[MODULES]] = metadata !{metadata [[M1:![0-9]*]], metadata [[M2:![0-9]*]], metadata [[M3:![0-9]*]], metadata [[M4:![0-9]*]], metadata [[M5:![0-9]*]], metadata [[M6:![0-9]*]], metadata [[M7:![0-9]*]], metadata [[M8:![0-9]*]], metadata [[M9:![0-9]*]], metadata [[M10:![0-9]*]], metadata [[M11:![0-9]*]], metadata [[M12:![0-9]*]], metadata [[M13:![0-9]*]]}
 // CHECK: [[M1]] = metadata !{i32 {{[0-9]*}}, metadata [[CTXT]], metadata [[NS]], i32 11} ; [ DW_TAG_imported_module ]
 // CHECK: [[M2]] = metadata !{i32 {{[0-9]*}}, metadata [[CU]], metadata [[CTXT]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_module ]
-// CHECK: [[M3]] = metadata !{i32 {{[0-9]*}}, metadata [[CU]], metadata [[CTXT]], i32 15, metadata !"E"} ; [ DW_TAG_imported_module ]
+// CHECK: [[M3]] = metadata !{i32 {{[0-9]*}}, metadata [[CU]], metadata [[CTXT]], i32 15, metadata !"E"} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M4]] = metadata !{i32 {{[0-9]*}}, metadata [[LEX2:![0-9]*]], metadata [[NS]], i32 19} ; [ DW_TAG_imported_module ]
 // CHECK: [[LEX2]] = metadata !{i32 {{[0-9]*}}, metadata [[FILE2]], metadata [[LEX1:![0-9]+]], i32 {{[0-9]*}}, i32 0, i32 {{.*}}} ; [ DW_TAG_lexical_block ]
 // CHECK: [[LEX1]] = metadata !{i32 {{[0-9]*}}, metadata [[FILE2]], metadata [[FUNC]], i32 {{[0-9]*}}, i32 0, i32 {{.*}}} ; [ DW_TAG_lexical_block ]
@@ -68,8 +68,8 @@ using B::i;
 // CHECK: [[M9]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[I]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M10]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[BAZ:![0-9]*]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[BAZ]] = metadata !{i32 {{[0-9]*}}, metadata [[FOOCPP]], metadata [[NS]], {{.*}}, metadata !"_ZTSN1A1B3barE"} ; [ DW_TAG_typedef ] [baz] {{.*}} [from _ZTSN1A1B3barE]
-// CHECK: [[M11]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[CTXT]], i32 {{[0-9]*}}, metadata !"X"} ; [ DW_TAG_imported_module ]
-// CHECK: [[M12]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[M11]], i32 {{[0-9]*}}, metadata !"Y"} ; [ DW_TAG_imported_module ]
+// CHECK: [[M11]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[CTXT]], i32 {{[0-9]*}}, metadata !"X"} ; [ DW_TAG_imported_declaration ]
+// CHECK: [[M12]] = metadata !{i32 {{[0-9]*}}, metadata [[FUNC]], metadata [[M11]], i32 {{[0-9]*}}, metadata !"Y"} ; [ DW_TAG_imported_declaration ]
 // CHECK: [[M13]] = metadata !{i32 {{[0-9]*}}, metadata [[CTXT]], metadata [[I]], i32 {{[0-9]*}}} ; [ DW_TAG_imported_declaration ]
 
 // CHECK-GMLT: [[CU:![0-9]*]] = {{.*}}[[MODULES:![0-9]*]], metadata !"", i32 2} ; [ DW_TAG_compile_unit ]
