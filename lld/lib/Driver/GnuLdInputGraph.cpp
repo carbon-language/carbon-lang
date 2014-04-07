@@ -77,20 +77,20 @@ error_code ELFGNULdScript::parse(const LinkingContext &ctx,
   if (error_code ec = GNULdScript::parse(ctx, diagnostics))
     return ec;
   for (const script::Command *c : _linkerScript->_commands) {
-    if (auto group = dyn_cast<script::Group>(c)) {
-      std::unique_ptr<Group> groupStart(new Group());
-      for (const script::Path &path : group->getPaths()) {
-        // TODO : Propagate Set WholeArchive/dashlPrefix
-        attributes.setAsNeeded(path._asNeeded);
-        auto inputNode = new ELFFileNode(
-            _elfLinkingContext, _elfLinkingContext.allocateString(path._path),
-            attributes);
-        std::unique_ptr<InputElement> inputFile(inputNode);
-        cast<Group>(groupStart.get())->addFile(
-            std::move(inputFile));
-      }
-      _expandElements.push_back(std::move(groupStart));
+    auto *group = dyn_cast<script::Group>(c);
+    if (!group)
+      continue;
+    std::unique_ptr<Group> groupStart(new Group());
+    for (const script::Path &path : group->getPaths()) {
+      // TODO : Propagate Set WholeArchive/dashlPrefix
+      attributes.setAsNeeded(path._asNeeded);
+      auto inputNode = new ELFFileNode(
+          _elfLinkingContext, _elfLinkingContext.allocateString(path._path),
+          attributes);
+      std::unique_ptr<InputElement> inputFile(inputNode);
+      cast<Group>(groupStart.get())->addFile(std::move(inputFile));
     }
+    _expandElements.push_back(std::move(groupStart));
   }
   return error_code::success();
 }
