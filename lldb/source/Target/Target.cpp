@@ -1701,6 +1701,8 @@ Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
                 else
                     m_images.Append(module_sp);
             }
+            else
+                module_sp.reset();
         }
     }
     if (error_ptr)

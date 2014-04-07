@@ -393,7 +393,8 @@ public:
                 return false;
             
         }
-        if (match_module_spec.GetSymbolFileSpecPtr())
+        // Only match the symbol file spec if there is one in this ModuleSpec
+        if (GetSymbolFileSpec() && match_module_spec.GetSymbolFileSpecPtr())
         {
             const FileSpec &fspec = match_module_spec.GetSymbolFileSpec();
             if (!FileSpec::Equal(fspec, GetSymbolFileSpec(), fspec.GetDirectory().IsEmpty() == false))

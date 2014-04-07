@@ -177,7 +177,8 @@ class CrashLog(symbolication.Symbolicator):
                             if 'DBGDSYMPath' in plist:
                                 self.symfile = os.path.realpath(plist['DBGDSYMPath'])
                             if 'DBGSymbolRichExecutable' in plist:
-                                self.resolved_path = os.path.expanduser (plist['DBGSymbolRichExecutable'])
+                                self.path = os.path.expanduser (plist['DBGSymbolRichExecutable'])
+                                self.resolved_path = self.path
             if not self.resolved_path and os.path.exists(self.path):
                 dwarfdump_cmd_output = commands.getoutput('dwarfdump --uuid "%s"' % self.path)
                 self_uuid = self.get_uuid()
