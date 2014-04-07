@@ -4254,12 +4254,6 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   if (!Args.hasArg(options::OPT_frtti, options::OPT_fno_rtti))
     CmdArgs.push_back("-fno-rtti");
 
-  // Let -ffunction-sections imply -fdata-sections.
-  if (Arg * A = Args.getLastArg(options::OPT_ffunction_sections,
-                                options::OPT_fno_function_sections))
-    if (A->getOption().matches(options::OPT_ffunction_sections))
-      CmdArgs.push_back("-fdata-sections");
-
   const Driver &D = getToolChain().getDriver();
   Arg *MostGeneralArg = Args.getLastArg(options::OPT__SLASH_vmg);
   Arg *BestCaseArg = Args.getLastArg(options::OPT__SLASH_vmb);
@@ -7538,6 +7532,11 @@ Command *visualstudio::Compile::GetCommand(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getOption().getID() == options::OPT_ffunction_sections
                           ? "/Gy"
                           : "/Gy-");
+  if (Arg *A = Args.getLastArg(options::OPT_fdata_sections,
+                               options::OPT_fno_data_sections))
+    CmdArgs.push_back(A->getOption().getID() == options::OPT_ffunction_sections
+                          ? "/Gw"
+                          : "/Gw-");
   if (Args.hasArg(options::OPT_fsyntax_only))
     CmdArgs.push_back("/Zs");
   if (Args.hasArg(options::OPT_g_Flag, options::OPT_gline_tables_only))

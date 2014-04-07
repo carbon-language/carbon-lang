@@ -66,6 +66,10 @@ def _SLASH_Gy : CLFlag<"Gy">, HelpText<"Put each function in its own section">,
   Alias<ffunction_sections>;
 def _SLASH_Gy_ : CLFlag<"Gy-">, HelpText<"Don't put each function in its own section">,
   Alias<fno_function_sections>;
+def _SLASH_Gw : CLFlag<"Gw">, HelpText<"Put each data item in its own section">,
+  Alias<fdata_sections>;
+def _SLASH_Gw_ : CLFlag<"Gw-">, HelpText<"Don't put each data item in its own section">,
+  Alias<fno_data_sections>;
 def _SLASH_help : CLFlag<"help">, Alias<help>,
   HelpText<"Display available options">;
 def _SLASH_HELP : CLFlag<"HELP">, Alias<help>;

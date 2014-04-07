@@ -5,7 +5,8 @@
 // command-line option, e.g. on Mac where %s is commonly under /Users.
 
 // RUN: %clang_cl /fallback /Dfoo=bar /Ubaz /Ifoo /O0 /Ox /GR /GR- /Gy /Gy- \
-// RUN:   /LD /LDd /MD /MDd /MTd /MT /FImyheader.h /Zi -### -- %s 2>&1 \
+// RUN:   /Gw /Gw- /LD /LDd /MD /MDd /MTd /MT /FImyheader.h /Zi \
+// RUN:   -### -- %s 2>&1 \
 // RUN:   | FileCheck %s
 // CHECK: "-fdiagnostics-format" "msvc-fallback"
 // CHECK: ||
@@ -19,6 +20,7 @@
 // CHECK: "/Ox"
 // CHECK: "/GR-"
 // CHECK: "/Gy-"
+// CHECK: "/Gw-"
 // CHECK: "/Z7"
 // CHECK: "/FImyheader.h"
 // CHECK: "/LD"

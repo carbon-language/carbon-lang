@@ -25,12 +25,16 @@
 // GR_: -fno-rtti
 
 // RUN: %clang_cl /Gy -### -- %s 2>&1 | FileCheck -check-prefix=Gy %s
-// Gy: -fdata-sections
 // Gy: -ffunction-sections
 
 // RUN: %clang_cl /Gy /Gy- -### -- %s 2>&1 | FileCheck -check-prefix=Gy_ %s
-// Gy_-NOT: -fdata-sections
 // Gy_-NOT: -ffunction-sections
+
+// RUN: %clang_cl /Gw -### -- %s 2>&1 | FileCheck -check-prefix=Gw %s
+// Gw: -fdata-sections
+
+// RUN: %clang_cl /Gw /Gw- -### -- %s 2>&1 | FileCheck -check-prefix=Gw_ %s
+// Gw_-NOT: -fdata-sections
 
 // RUN: %clang_cl /Imyincludedir -### -- %s 2>&1 | FileCheck -check-prefix=SLASH_I %s
 // RUN: %clang_cl /I myincludedir -### -- %s 2>&1 | FileCheck -check-prefix=SLASH_I %s
