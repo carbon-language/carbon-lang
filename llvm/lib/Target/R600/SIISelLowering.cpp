@@ -1281,9 +1281,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
            fitsRegClass(DAG, Ops[1], OtherRegClass))) {
 
         // Swap commutable operands
-        SDValue Tmp = Ops[1];
-        Ops[1] = Ops[0];
-        Ops[0] = Tmp;
+        std::swap(Ops[0], Ops[1]);
 
         Desc = DescRev;
         DescRev = 0;
