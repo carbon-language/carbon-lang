@@ -8,17 +8,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the ARM64PromoteConstant pass which promotes constant
-// to global variables when this is likely to be more efficient.
-// Currently only types related to constant vector (i.e., constant vector, array
-// of constant vectors, constant structure with a constant vector field, etc.)
-// are promoted to global variables.
-// Indeed, constant vector are likely to be lowered in target constant pool
-// during instruction selection.
-// Therefore, the access will remain the same (memory load), but the structures
-// types are not split into different constant pool accesses for each field.
-// The bonus side effect is that created globals may be merged by the global
-// merge pass.
+// This file implements the ARM64PromoteConstant pass which promotes constants
+// to global variables when this is likely to be more efficient. Currently only
+// types related to constant vector (i.e., constant vector, array of constant
+// vectors, constant structure with a constant vector field, etc.) are promoted
+// to global variables. Constant vectors are likely to be lowered in target
+// constant pool during instruction selection already; therefore, the access
+// will remain the same (memory load), but the structure types are not split
+// into different constant pool accesses for each field. A bonus side effect is
+// that created globals may be merged by the global merge pass.
 //
 // FIXME: This pass may be useful for other targets too.
 //===----------------------------------------------------------------------===//
