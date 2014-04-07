@@ -40,6 +40,22 @@ TEST_F(GnuLdParserTest, Empty) {
   EXPECT_EQ("No input files\n", errorMessage());
 }
 
+// -o
+
+TEST_F(GnuLdParserTest, Output) {
+  EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "-o", "foo",
+                    nullptr));
+  EXPECT_EQ("foo", _context->outputPath());
+}
+
+// --noinhibit-exec
+
+TEST_F(GnuLdParserTest, NoinhibitExec) {
+  EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "--noinhibit-exec",
+                    nullptr));
+  EXPECT_TRUE(_context->allowRemainingUndefines());
+}
+
 // --entry
 
 TEST_F(GnuLdParserTest, Entry) {
