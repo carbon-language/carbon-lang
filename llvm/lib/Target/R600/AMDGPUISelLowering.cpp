@@ -397,8 +397,8 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
       Chains.push_back(LowerConstantInitializer(Init->getAggregateElement(i),
                        GV, Ptr, Chain, DAG));
     }
-    return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, &Chains[0],
-                       Chains.size());
+    return DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
+                       Chains.data(), Chains.size());
   } else {
     Init->dump();
     llvm_unreachable("Unhandled constant initializer");
@@ -461,7 +461,7 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
       for (unsigned i = 1; i < (*I)->getNumOperands(); ++i) {
         Ops.push_back((*I)->getOperand(i));
       }
-      DAG.UpdateNodeOperands(*I, &Ops[0], Ops.size());
+      DAG.UpdateNodeOperands(*I, Ops.data(), Ops.size());
     }
     return DAG.getZExtOrTrunc(InitPtr, SDLoc(Op),
         getPointerTy(AMDGPUAS::CONSTANT_ADDRESS));
@@ -493,7 +493,7 @@ SDValue AMDGPUTargetLowering::LowerCONCAT_VECTORS(SDValue Op,
                         B.getValueType().getVectorNumElements());
 
   return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op), Op.getValueType(),
-                     &Args[0], Args.size());
+                     Args.data(), Args.size());
 }
 
 SDValue AMDGPUTargetLowering::LowerEXTRACT_SUBVECTOR(SDValue Op,
@@ -506,7 +506,7 @@ SDValue AMDGPUTargetLowering::LowerEXTRACT_SUBVECTOR(SDValue Op,
                         VT.getVectorNumElements());
 
   return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op), Op.getValueType(),
-                     &Args[0], Args.size());
+                     Args.data(), Args.size());
 }
 
 SDValue AMDGPUTargetLowering::LowerFrameIndex(SDValue Op,
@@ -766,7 +766,7 @@ SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
                          MemEltVT, Store->isVolatile(), Store->isNonTemporal(),
                          Store->getAlignment()));
   }
-  return DAG.getNode(ISD::TokenFactor, SL, MVT::Other, &Chains[0], NumElts);
+  return DAG.getNode(ISD::TokenFactor, SL, MVT::Other, Chains.data(), NumElts);
 }
 
 SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
@@ -985,9 +985,10 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
   // Rem = (Remainder_GE_Zero == 0 ? Remainder_A_Den : Rem)
   Rem = DAG.getSelectCC(DL, Remainder_GE_Zero, DAG.getConstant(0, VT),
                             Remainder_A_Den, Rem, ISD::SETEQ);
-  SDValue Ops[2];
-  Ops[0] = Div;
-  Ops[1] = Rem;
+  SDValue Ops[2] = {
+    Div,
+    Rem
+  };
   return DAG.getMergeValues(Ops, 2, DL);
 }
 
