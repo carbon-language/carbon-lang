@@ -1322,7 +1322,7 @@ Args::ParseAliasOptions (Options &options,
         if (val == 0)
             continue;
 
-        ((Options *) &options)->OptionSeen (val);
+        options.OptionSeen (val);
 
         // Look up the long option index
         if (long_options_index == -1)
