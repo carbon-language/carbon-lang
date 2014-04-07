@@ -350,21 +350,19 @@ bool ARM64PromoteConstant::isDominated(Instruction *NewPt,
 
   // Traverse all the existing insertion point and check if one is dominating
   // NewPt
-  for (InsertionPoints::iterator IPI = InsertPts.begin(),
-                                 EndIPI = InsertPts.end();
-       IPI != EndIPI; ++IPI) {
-    if (NewPt == IPI->first || DT.dominates(IPI->first, NewPt) ||
-        // When IPI->first is a terminator instruction, DT may think that
+  for (auto &IPI : InsertPts) {
+    if (NewPt == IPI.first || DT.dominates(IPI.first, NewPt) ||
+        // When IPI.first is a terminator instruction, DT may think that
         // the result is defined on the edge.
         // Here we are testing the insertion point, not the definition.
-        (IPI->first->getParent() != NewPt->getParent() &&
-         DT.dominates(IPI->first->getParent(), NewPt->getParent()))) {
+        (IPI.first->getParent() != NewPt->getParent() &&
+         DT.dominates(IPI.first->getParent(), NewPt->getParent()))) {
       // No need to insert this point
       // Record the dominated use
       DEBUG(dbgs() << "Insertion point dominated by:\n");
-      DEBUG(IPI->first->print(dbgs()));
+      DEBUG(IPI.first->print(dbgs()));
       DEBUG(dbgs() << '\n');
-      IPI->second.push_back(UseIt);
+      IPI.second.push_back(UseIt);
       return true;
     }
   }
