@@ -205,7 +205,7 @@ class ConcurrentEventsTestCase(TestBase):
     @dwarf_test
     @skipIfRemoteDueToDeadlock
     @expectedFailureLinux('llvm.org/pr16714')
-    def test_watchpoint_with_delay_waychpoint_threads_dwarf(self):
+    def test_watchpoint_with_delay_watchpoint_threads_dwarf(self):
         """Test two threads that trigger a watchpoint where one thread has a 1 second delay. """
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.do_thread_actions(num_watchpoint_threads=1,
