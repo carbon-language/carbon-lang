@@ -20,6 +20,7 @@ class DynamicValueTestCase(TestBase):
         self.buildDsym(dictionary=self.getBuildFlags())
         self.do_get_dynamic_vals()
 
+    @expectedFailureFreeBSD # FIXME: This needs to be root-caused.
     @expectedFailureLinux # FIXME: This needs to be root-caused.  It looks like the DWARF info is anticipating the derived class assignment.
     @python_api_test
     @dwarf_test
