@@ -72,12 +72,14 @@ namespace {
 ///   return ret;
 /// }
 ///
-/// The constants in that example are folded into the uses. Thus, 4 different
+/// The constants in this example are folded into the uses. Thus, 4 different
 /// constants are created.
+///
 /// As their type is vector the cheapest way to create them is to load them
 /// for the memory.
-/// Therefore the final assembly final has 4 different load.
-/// With this pass enabled, only one load is issued for the constants.
+///
+/// Therefore the final assembly final has 4 different loads. With this pass
+/// enabled, only one load is issued for the constants.
 class ARM64PromoteConstant : public ModulePass {
 
 public:
@@ -110,12 +112,12 @@ private:
     AU.addPreserved<DominatorTreeWrapperPass>();
   }
 
-  /// Type to store a list of User
+  /// Type to store a list of User.
   typedef SmallVector<Value::user_iterator, 4> Users;
   /// Map an insertion point to all the uses it dominates.
   typedef DenseMap<Instruction *, Users> InsertionPoints;
   /// Map a function to the required insertion point of load for a
-  /// global variable
+  /// global variable.
   typedef DenseMap<Function *, InsertionPoints> InsertionPointsPerFunc;
 
   /// Find the closest point that dominates the given Use.
@@ -185,14 +187,14 @@ private:
                                              Value::user_iterator &UseIt,
                                              InsertionPoints::iterator &IPI,
                                              InsertionPoints &InsertPts) {
-    // Record the dominated use
+    // Record the dominated use.
     IPI->second.push_back(UseIt);
     // Transfer the dominated uses of IPI to NewPt
     // Inserting into the DenseMap may invalidate existing iterator.
     // Keep a copy of the key to find the iterator to erase.
     Instruction *OldInstr = IPI->first;
     InsertPts.insert(InsertionPoints::value_type(NewPt, IPI->second));
-    // Erase IPI
+    // Erase IPI.
     IPI = InsertPts.find(OldInstr);
     InsertPts.erase(IPI);
   }
@@ -241,26 +243,26 @@ static bool shouldConvertUse(const Constant *Cst, const Instruction *Instr,
   if (isa<const ShuffleVectorInst>(Instr) && OpIdx == 2)
     return false;
 
-  // extractvalue instruction expects a const idx
+  // extractvalue instruction expects a const idx.
   if (isa<const ExtractValueInst>(Instr) && OpIdx > 0)
     return false;
 
-  // extractvalue instruction expects a const idx
+  // extractvalue instruction expects a const idx.
   if (isa<const InsertValueInst>(Instr) && OpIdx > 1)
     return false;
 
   if (isa<const AllocaInst>(Instr) && OpIdx > 0)
     return false;
 
-  // Alignment argument must be constant
+  // Alignment argument must be constant.
   if (isa<const LoadInst>(Instr) && OpIdx > 0)
     return false;
 
-  // Alignment argument must be constant
+  // Alignment argument must be constant.
   if (isa<const StoreInst>(Instr) && OpIdx > 1)
     return false;
 
-  // Index must be constant
+  // Index must be constant.
   if (isa<const GetElementPtrInst>(Instr) && OpIdx > 0)
     return false;
 
@@ -269,19 +271,19 @@ static bool shouldConvertUse(const Constant *Cst, const Instruction *Instr,
   if (isa<const LandingPadInst>(Instr))
     return false;
 
-  // switch instruction expects constants to compare to
+  // Switch instruction expects constants to compare to.
   if (isa<const SwitchInst>(Instr))
     return false;
 
-  // Expected address must be a constant
+  // Expected address must be a constant.
   if (isa<const IndirectBrInst>(Instr))
     return false;
 
-  // Do not mess with intrinsic
+  // Do not mess with intrinsics.
   if (isa<const IntrinsicInst>(Instr))
     return false;
 
-  // Do not mess with inline asm
+  // Do not mess with inline asm.
   const CallInst *CI = dyn_cast<const CallInst>(Instr);
   if (CI && isa<const InlineAsm>(CI->getCalledValue()))
     return false;
@@ -329,7 +331,7 @@ static bool shouldConvert(const Constant *Cst) {
 Instruction *
 ARM64PromoteConstant::findInsertionPoint(Value::user_iterator &Use) {
   // If this user is a phi, the insertion point is in the related
-  // incoming basic block
+  // incoming basic block.
   PHINode *PhiInst = dyn_cast<PHINode>(*Use);
   Instruction *InsertionPoint;
   if (PhiInst)
@@ -348,8 +350,8 @@ bool ARM64PromoteConstant::isDominated(Instruction *NewPt,
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>(
       *NewPt->getParent()->getParent()).getDomTree();
 
-  // Traverse all the existing insertion point and check if one is dominating
-  // NewPt
+  // Traverse all the existing insertion points and check if one is dominating
+  // NewPt. If it is, remember that.
   for (auto &IPI : InsertPts) {
     if (NewPt == IPI.first || DT.dominates(IPI.first, NewPt) ||
         // When IPI.first is a terminator instruction, DT may think that
@@ -357,8 +359,7 @@ bool ARM64PromoteConstant::isDominated(Instruction *NewPt,
         // Here we are testing the insertion point, not the definition.
         (IPI.first->getParent() != NewPt->getParent() &&
          DT.dominates(IPI.first->getParent(), NewPt->getParent()))) {
-      // No need to insert this point
-      // Record the dominated use
+      // No need to insert this point. Just record the dominated use.
       DEBUG(dbgs() << "Insertion point dominated by:\n");
       DEBUG(IPI.first->print(dbgs()));
       DEBUG(dbgs() << '\n');
@@ -378,7 +379,7 @@ bool ARM64PromoteConstant::tryAndMerge(Instruction *NewPt,
 
   // Traverse all the existing insertion point and check if one is dominated by
   // NewPt and thus useless or can be combined with NewPt into a common
-  // dominator
+  // dominator.
   for (InsertionPoints::iterator IPI = InsertPts.begin(),
                                  EndIPI = InsertPts.end();
        IPI != EndIPI; ++IPI) {
@@ -396,19 +397,19 @@ bool ARM64PromoteConstant::tryAndMerge(Instruction *NewPt,
 
     // Look for a common dominator
     BasicBlock *CommonDominator = DT.findNearestCommonDominator(NewBB, CurBB);
-    // If none exists, we cannot merge these two points
+    // If none exists, we cannot merge these two points.
     if (!CommonDominator)
       continue;
 
     if (CommonDominator != NewBB) {
-      // By construction, the CommonDominator cannot be CurBB
+      // By construction, the CommonDominator cannot be CurBB.
       assert(CommonDominator != CurBB &&
              "Instruction has not been rejected during isDominated check!");
       // Take the last instruction of the CommonDominator as insertion point
       NewPt = CommonDominator->getTerminator();
     }
     // else, CommonDominator is the block of NewBB, hence NewBB is the last
-    // possible insertion point in that block
+    // possible insertion point in that block.
     DEBUG(dbgs() << "Merge insertion point with:\n");
     DEBUG(IPI->first->print(dbgs()));
     DEBUG(dbgs() << '\n');
@@ -426,11 +427,11 @@ void ARM64PromoteConstant::computeInsertionPoints(
   for (Value::user_iterator UseIt = Val->user_begin(),
                             EndUseIt = Val->user_end();
        UseIt != EndUseIt; ++UseIt) {
-    // If the user is not an Instruction, we cannot modify it
+    // If the user is not an Instruction, we cannot modify it.
     if (!isa<Instruction>(*UseIt))
       continue;
 
-    // Filter out uses that should not be converted
+    // Filter out uses that should not be converted.
     if (!shouldConvertUse(Val, cast<Instruction>(*UseIt), UseIt.getOperandNo()))
       continue;
 
@@ -465,16 +466,16 @@ void ARM64PromoteConstant::computeInsertionPoints(
 bool
 ARM64PromoteConstant::insertDefinitions(Constant *Cst,
                                         InsertionPointsPerFunc &InsPtsPerFunc) {
-  // We will create one global variable per Module
+  // We will create one global variable per Module.
   DenseMap<Module *, GlobalVariable *> ModuleToMergedGV;
   bool HasChanged = false;
 
-  // Traverse all insertion points in all the function
+  // Traverse all insertion points in all the function.
   for (InsertionPointsPerFunc::iterator FctToInstPtsIt = InsPtsPerFunc.begin(),
                                         EndIt = InsPtsPerFunc.end();
        FctToInstPtsIt != EndIt; ++FctToInstPtsIt) {
     InsertionPoints &InsertPts = FctToInstPtsIt->second;
-// Do more check for debug purposes
+// Do more checking for debug purposes.
 #ifndef NDEBUG
     DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>(
         *FctToInstPtsIt->first).getDomTree();
@@ -503,7 +504,7 @@ ARM64PromoteConstant::insertDefinitions(Constant *Cst,
     for (InsertionPoints::iterator IPI = InsertPts.begin(),
                                    EndIPI = InsertPts.end();
          IPI != EndIPI; ++IPI) {
-      // Create the load of the global variable
+      // Create the load of the global variable.
       IRBuilder<> Builder(IPI->first->getParent(), IPI->first);
       LoadInst *LoadedCst = Builder.CreateLoad(PromotedGV);
       DEBUG(dbgs() << "**********\n");
@@ -511,7 +512,7 @@ ARM64PromoteConstant::insertDefinitions(Constant *Cst,
       DEBUG(LoadedCst->print(dbgs()));
       DEBUG(dbgs() << '\n');
 
-      // Update the dominated uses
+      // Update the dominated uses.
       Users &DominatedUsers = IPI->second;
       for (Users::iterator UseIt = DominatedUsers.begin(),
                            EndIt = DominatedUsers.end();
@@ -554,23 +555,22 @@ bool ARM64PromoteConstant::promoteConstant(Constant *Cst) {
 }
 
 bool ARM64PromoteConstant::runOnFunction(Function &F) {
-  // Look for instructions using constant vector
-  // Promote that constant to a global variable.
-  // Create as few load of this variable as possible and update the uses
-  // accordingly
+  // Look for instructions using constant vector. Promote that constant to a
+  // global variable. Create as few loads of this variable as possible and
+  // update the uses accordingly.
   bool LocalChange = false;
   SmallSet<Constant *, 8> AlreadyChecked;
 
   for (auto &MBB : F) {
     for (auto &MI : MBB) {
-      // Traverse the operand, looking for constant vectors
-      // Replace them by a load of a global variable of type constant vector
+      // Traverse the operand, looking for constant vectors. Replace them by a
+      // load of a global variable of constant vector type.
       for (unsigned OpIdx = 0, EndOpIdx = MI.getNumOperands();
            OpIdx != EndOpIdx; ++OpIdx) {
         Constant *Cst = dyn_cast<Constant>(MI.getOperand(OpIdx));
-        // There is no point is promoting global value, they are already global.
-        // Do not promote constant expression, as they may require some code
-        // expansion.
+        // There is no point in promoting global values as they are already
+        // global. Do not promote constant expressions either, as they may
+        // require some code expansion.
         if (Cst && !isa<GlobalValue>(Cst) && !isa<ConstantExpr>(Cst) &&
             AlreadyChecked.insert(Cst))
           LocalChange |= promoteConstant(Cst);
