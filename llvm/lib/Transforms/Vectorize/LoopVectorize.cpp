@@ -470,6 +470,8 @@ static void setDebugLocFromInst(IRBuilder<> &B, const Value *Ptr) {
   else
     B.SetCurrentDebugLocation(DebugLoc());
 }
+
+#ifndef NDEBUG
 /// \return string containing a file name and a line # for the given
 /// instruction.
 static format_object3<const char *, const char *, unsigned>
@@ -489,6 +491,8 @@ getDebugLocString(const Instruction *I) {
   const char *FileName = Loc.getFilename().data();
   return format("%s/%s:%u", DirName, FileName, LineNo);
 }
+#endif
+
 /// LoopVectorizationLegality checks if it is legal to vectorize a loop, and
 /// to what vectorization factor.
 /// This class does not look at the profitability of vectorization, only the
