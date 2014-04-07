@@ -426,11 +426,11 @@ namespace LifetimeExtension {
 
   // This case used to cause an unexpected "Undefined or garbage value returned
   // to caller" warning
-//  bool testNamedCustomDestructor() {
-//    if (CheckCustomDestructor c = CheckCustomDestructor())
-//      return true;
-//    return false;
-//  }
+  bool testNamedCustomDestructor() {
+    if (CheckCustomDestructor c = CheckCustomDestructor())
+      return true;
+    return false;
+  }
 
   bool testMultipleTemporariesCustomDestructor() {
     if (CheckCustomDestructor c = (CheckCustomDestructor(), CheckCustomDestructor()))
