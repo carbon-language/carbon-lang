@@ -173,3 +173,29 @@ define void @dynamic_insertelement_v16i8(<16 x i8> addrspace(1)* %out, <16 x i8>
   store <16 x i8> %vecins, <16 x i8> addrspace(1)* %out, align 16
   ret void
 }
+
+; This test requires handling INSERT_SUBREG in SIFixSGPRCopies.  Check that
+; the compiler doesn't crash.
+; SI-LABEL: @insert_split_bb
+define void @insert_split_bb(<2 x i32> addrspace(1)* %out, i32 addrspace(1)* %in, i32 %a, i32 %b) {
+entry:
+  %0 = insertelement <2 x i32> undef, i32 %a, i32 0
+  %1 = icmp eq i32 %a, 0
+  br i1 %1, label %if, label %else
+
+if:
+  %2 = load i32 addrspace(1)* %in
+  %3 = insertelement <2 x i32> %0, i32 %2, i32 1
+  br label %endif
+
+else:
+  %4 = getelementptr i32 addrspace(1)* %in, i32 1
+  %5 = load i32 addrspace(1)* %4
+  %6 = insertelement <2 x i32> %0, i32 %5, i32 1
+  br label %endif
+
+endif:
+  %7 = phi <2 x i32> [%3, %if], [%6, %else]
+  store <2 x i32> %7, <2 x i32> addrspace(1)* %out
+  ret void
+}
