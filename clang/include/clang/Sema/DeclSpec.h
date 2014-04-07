@@ -1414,8 +1414,8 @@ struct DeclaratorChunk {
 
   /// DeclaratorChunk::getFunction - Return a DeclaratorChunk for a function.
   /// "TheDeclarator" is the declarator that this will be added to.
-  static DeclaratorChunk getFunction(bool hasProto,
-                                     bool isAmbiguous,
+  static DeclaratorChunk getFunction(bool HasProto,
+                                     bool IsAmbiguous,
                                      SourceLocation LParenLoc,
                                      ParamInfo *Params, unsigned NumParams,
                                      SourceLocation EllipsisLoc,
