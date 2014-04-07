@@ -7534,9 +7534,8 @@ Command *visualstudio::Compile::GetCommand(Compilation &C, const JobAction &JA,
                           : "/Gy-");
   if (Arg *A = Args.getLastArg(options::OPT_fdata_sections,
                                options::OPT_fno_data_sections))
-    CmdArgs.push_back(A->getOption().getID() == options::OPT_ffunction_sections
-                          ? "/Gw"
-                          : "/Gw-");
+    CmdArgs.push_back(
+        A->getOption().getID() == options::OPT_fdata_sections ? "/Gw" : "/Gw-");
   if (Args.hasArg(options::OPT_fsyntax_only))
     CmdArgs.push_back("/Zs");
   if (Args.hasArg(options::OPT_g_Flag, options::OPT_gline_tables_only))
