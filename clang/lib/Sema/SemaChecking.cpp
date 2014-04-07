@@ -6113,21 +6113,12 @@ void CheckConditionalOperator(Sema &S, ConditionalOperator *E,
 /// implicit conversions in the given expression.  There are a couple
 /// of competing diagnostics here, -Wconversion and -Wsign-compare.
 void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
+  QualType T = OrigE->getType();
   Expr *E = OrigE->IgnoreParenImpCasts();
 
   if (E->isTypeDependent() || E->isValueDependent())
     return;
   
-  QualType T = OrigE->getType();
-  // Check for conversion from an arithmetic type to a vector of arithmetic
-  // type elements. Warn if this results in truncation of each vector element.
-  if (isa<ExtVectorElementExpr>(E)) {
-    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(OrigE))
-      if ((ICE->getCastKind() == CK_VectorSplat) &&
-          !T.isNull() && T->isExtVectorType())
-        T = cast<ExtVectorType>(T.getCanonicalType())->getElementType();
-  }
-
   // For conditional operators, we analyze the arguments as if they
   // were being fed directly into the output.
   if (isa<ConditionalOperator>(E)) {

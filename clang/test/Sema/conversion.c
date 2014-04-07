@@ -426,6 +426,6 @@ typedef __attribute__ ((ext_vector_type( 8),__aligned__( 32))) uint32_t uint8;
 
 void test27(ushort16 constants) {
     uint8 pairedConstants = (uint8) constants;
-    ushort16 crCbScale = pairedConstants.s4; // expected-warning {{implicit conversion loses integer precision: 'uint32_t' (aka 'unsigned int') to 'unsigned short'}}
-    ushort16 brBias = pairedConstants.s6; // expected-warning {{implicit conversion loses integer precision: 'uint32_t' (aka 'unsigned int') to 'unsigned short'}}
+    ushort16 crCbScale = pairedConstants.s4; // expected-warning {{implicit conversion loses integer precision: 'uint32_t' (aka 'unsigned int') to 'ushort16'}}
+    ushort16 brBias = pairedConstants.s6; // expected-warning {{implicit conversion loses integer precision: 'uint32_t' (aka 'unsigned int') to 'ushort16'}}
 }
