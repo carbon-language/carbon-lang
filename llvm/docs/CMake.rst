@@ -306,20 +306,21 @@ LLVM-specific variables
 
 **LLVM_DOXYGEN_QHP_NAMESPACE**:STRING
   Namespace under which the intermediate Qt Help Project file lives. See `Qt
-  Help Project <http://qt-project.org/doc/qt-4.8/qthelpproject.html#namespace>`_
+  Help Project`_
   for more information. Defaults to "org.llvm". This option is only useful in
   combination with ``-DLLVM_ENABLE_DOXYGEN_QT_HELP=ON``; otherwise
   this has no effect.
     
 **LLVM_DOXYGEN_QHP_CUST_FILTER_NAME**:STRING
-  See `Qt Help Project
-  <http://qt-project.org/doc/qt-4.8/qthelpproject.html#custom-filters>`_ for
+  See `Qt Help Project`_ for
   more information. Defaults to the CMake variable ``${PACKAGE_STRING}`` which
   is a combination of the package name and version string. This filter can then
   be used in Qt Creator to select only documentation from LLVM when browsing
   through all the help files that you might have loaded. This option is only
   useful in combination with ``-DLLVM_ENABLE_DOXYGEN_QT_HELP=ON``;
   otherwise this has no effect.
+
+.. _Qt Help Project: http://qt-project.org/doc/qt-4.8/qthelpproject.html#custom-filters
 
 **LLVM_DOXYGEN_QHELPGENERATOR_PATH**:STRING
   The path to the ``qhelpgenerator`` executable. Defaults to whatever CMake's

@@ -6968,7 +6968,7 @@ cache (e.g. ARM, MIPS), the intrinsic is lowered either to appropiate
 instructions or a system call, if cache flushing requires special
 privileges.
 
-The default behavior is to emit a call to ``__clear_cache'' from the run
+The default behavior is to emit a call to ``__clear_cache`` from the run
 time library.
 
 This instrinsic does *not* empty the instruction pipeline. Modifications
