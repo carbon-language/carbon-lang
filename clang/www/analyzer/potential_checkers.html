@@ -335,7 +335,7 @@ int readWrapper(int fd, int *count) {
 
 void use(int fd) {
   int count;
-  if (!readWrapper(fd))
+  if (!readWrapper(fd, &amp;count))
     print("%d", count); // should not warn
 }
 </pre></td><td class="aligned"><a href="http://llvm.org/bugs/show_bug.cgi?id=18701">PR18701</a></td></tr>
