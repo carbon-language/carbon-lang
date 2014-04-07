@@ -470,6 +470,9 @@ void MicrosoftCXXNameMangler::mangleMemberDataPointer(const CXXRecordDecl *RD,
 
   mangleNumber(FieldOffset);
 
+  // The C++ standard doesn't allow base-to-derived member pointer conversions
+  // in template parameter contexts, so the vbptr offset of data member pointers
+  // is always zero.
   if (MSInheritanceAttr::hasVBPtrOffsetField(IM))
     mangleNumber(0);
   if (MSInheritanceAttr::hasVBTableOffsetField(IM))
@@ -509,6 +512,7 @@ MicrosoftCXXNameMangler::mangleMemberFunctionPointer(const CXXRecordDecl *RD,
   // thunk.
   uint64_t NVOffset = 0;
   uint64_t VBTableOffset = 0;
+  uint64_t VBPtrOffset = 0;
   if (MD->isVirtual()) {
     MicrosoftVTableContext *VTContext =
         cast<MicrosoftVTableContext>(getASTContext().getVTableContext());
@@ -518,11 +522,8 @@ MicrosoftCXXNameMangler::mangleMemberFunctionPointer(const CXXRecordDecl *RD,
     NVOffset = ML.VFPtrOffset.getQuantity();
     VBTableOffset = ML.VBTableIndex * 4;
     if (ML.VBase) {
-      DiagnosticsEngine &Diags = Context.getDiags();
-      unsigned DiagID = Diags.getCustomDiagID(
-          DiagnosticsEngine::Error,
-          "cannot mangle pointers to member functions from virtual bases");
-      Diags.Report(MD->getLocation(), DiagID);
+      const ASTRecordLayout &Layout = getASTContext().getASTRecordLayout(RD);
+      VBPtrOffset = Layout.getVBPtrOffset().getQuantity();
     }
   } else {
     mangleName(MD);
@@ -532,7 +533,7 @@ MicrosoftCXXNameMangler::mangleMemberFunctionPointer(const CXXRecordDecl *RD,
   if (MSInheritanceAttr::hasNVOffsetField(/*IsMemberFunction=*/true, IM))
     mangleNumber(NVOffset);
   if (MSInheritanceAttr::hasVBPtrOffsetField(IM))
-    mangleNumber(0);
+    mangleNumber(VBPtrOffset);
   if (MSInheritanceAttr::hasVBTableOffsetField(IM))
     mangleNumber(VBTableOffset);
 }
