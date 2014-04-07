@@ -6403,6 +6403,16 @@ unsigned clang_CXXMethod_isPureVirtual(CXCursor C) {
   return (Method && Method->isVirtual() && Method->isPure()) ? 1 : 0;
 }
 
+unsigned clang_CXXMethod_isConst(CXCursor C) {
+  if (!clang_isDeclaration(C.kind))
+    return 0;
+
+  const Decl *D = cxcursor::getCursorDecl(C);
+  const CXXMethodDecl *Method =
+      D ? dyn_cast_or_null<CXXMethodDecl>(D->getAsFunction()) : 0;
+  return (Method && (Method->getTypeQualifiers() & Qualifiers::Const)) ? 1 : 0;
+}
+
 unsigned clang_CXXMethod_isStatic(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return 0;
