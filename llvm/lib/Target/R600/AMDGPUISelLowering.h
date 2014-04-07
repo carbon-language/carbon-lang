@@ -140,6 +140,8 @@ public:
   /// We don't want to shrink f64/f32 constants.
   bool ShouldShrinkFPConstant(EVT VT) const;
 
+  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+
 private:
   void InitAMDILLowering();
   SDValue LowerSREM(SDValue Op, SelectionDAG &DAG) const;
@@ -188,6 +190,8 @@ enum {
   BFE_I32, // Extract range of bits with sign extension to 32-bits.
   BFI, // (src0 & src1) | (~src0 & src2)
   BFM, // Insert a range of bits into a 32-bit word.
+  MUL_U24,
+  MUL_I24,
   TEXTURE_FETCH,
   EXPORT,
   CONST_ADDRESS,

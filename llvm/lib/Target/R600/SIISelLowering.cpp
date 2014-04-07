@@ -963,7 +963,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
   EVT VT = N->getValueType(0);
 
   switch (N->getOpcode()) {
-    default: break;
+    default: return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
     case ISD::SELECT_CC: {
       ConstantSDNode *True, *False;
       // i1 selectcc(l, r, -1, 0, cc) -> i1 setcc(l, r, cc)

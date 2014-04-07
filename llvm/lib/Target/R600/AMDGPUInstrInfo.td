@@ -92,3 +92,11 @@ def AMDGPUbfe_i32 : SDNode<"AMDGPUISD::BFE_I32", AMDGPUDTIntTernaryOp>;
 def AMDGPUbfi : SDNode<"AMDGPUISD::BFI", AMDGPUDTIntTernaryOp>;
 def AMDGPUbfm : SDNode<"AMDGPUISD::BFM", SDTIntBinOp>;
 
+// Signed and unsigned 24-bit mulitply.  The highest 8-bits are ignore when
+// performing the mulitply.  The result is a 32-bit value.
+def AMDGPUmul_u24 : SDNode<"AMDGPUISD::MUL_U24", SDTIntBinOp,
+  [SDNPCommutative]
+>;
+def AMDGPUmul_i24 : SDNode<"AMDGPUISD::MUL_I24", SDTIntBinOp,
+  [SDNPCommutative]
+>;

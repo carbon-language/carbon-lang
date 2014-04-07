@@ -59,9 +59,6 @@ private:
   bool SelectADDRParam(SDValue Addr, SDValue& R1, SDValue& R2);
   bool SelectADDR(SDValue N, SDValue &R1, SDValue &R2);
   bool SelectADDR64(SDValue N, SDValue &R1, SDValue &R2);
-  SDValue SimplifyI24(SDValue &Op);
-  bool SelectI24(SDValue Addr, SDValue &Op);
-  bool SelectU24(SDValue Addr, SDValue &Op);
 
   static bool checkType(const Value *ptr, unsigned int addrspace);
 
@@ -598,49 +595,6 @@ bool AMDGPUDAGToDAGISel::SelectADDRIndirect(SDValue Addr, SDValue &Base,
   }
 
   return true;
-}
-
-SDValue AMDGPUDAGToDAGISel::SimplifyI24(SDValue &Op) {
-  APInt Demanded = APInt(32, 0x00FFFFFF);
-  APInt KnownZero, KnownOne;
-  TargetLowering::TargetLoweringOpt TLO(*CurDAG, true, true);
-  const TargetLowering *TLI = getTargetLowering();
-  if (TLI->SimplifyDemandedBits(Op, Demanded, KnownZero, KnownOne, TLO)) {
-    CurDAG->ReplaceAllUsesWith(Op, TLO.New);
-    CurDAG->RepositionNode(Op.getNode(), TLO.New.getNode());
-    return SimplifyI24(TLO.New);
-  } else {
-    return  Op;
-  }
-}
-
-bool AMDGPUDAGToDAGISel::SelectI24(SDValue Op, SDValue &I24) {
-
-  assert(Op.getValueType() == MVT::i32);
-
-  if (CurDAG->ComputeNumSignBits(Op) == 9) {
-    I24 = SimplifyI24(Op);
-    return true;
-  }
-  return false;
-}
-
-bool AMDGPUDAGToDAGISel::SelectU24(SDValue Op, SDValue &U24) {
-  APInt KnownZero;
-  APInt KnownOne;
-  CurDAG->ComputeMaskedBits(Op, KnownZero, KnownOne);
-
-  assert (Op.getValueType() == MVT::i32);
-
-  // ANY_EXTEND and EXTLOAD operations can only be done on types smaller than
-  // i32.  These smaller types are legal to use with the i24 instructions.
-  if ((KnownZero & APInt(KnownZero.getBitWidth(), 0xFF000000)) == 0xFF000000 ||
-       Op.getOpcode() == ISD::ANY_EXTEND ||
-       ISD::isEXTLoad(Op.getNode())) {
-    U24 = SimplifyI24(Op);
-    return true;
-  }
-  return false;
 }
 
 void AMDGPUDAGToDAGISel::PostprocessISelDAG() {

@@ -1,12 +1,15 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=EG-CHECK
-; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s --check-prefix=CM-CHECK
-; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s --check-prefix=SI-CHECK
+; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=EG --check-prefix=FUNC
+; RUN: llc < %s -march=r600 -mcpu=cayman | FileCheck %s --check-prefix=CM --check-prefix=FUNC
+; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s --check-prefix=SI --check-prefix=FUNC
 
-; EG-CHECK: @i32_mad24
+; FUNC-LABEL: @i32_mad24
 ; Signed 24-bit multiply is not supported on pre-Cayman GPUs.
-; EG-CHECK: MULLO_INT
-; CM-CHECK: MULADD_INT24 {{[ *]*}}T{{[0-9].[XYZW]}}, KC0[2].Z, KC0[2].W, KC0[3].X
-; SI-CHECK: V_MAD_I32_I24
+; EG: MULLO_INT
+; Make sure we aren't masking the inputs.
+; CM-NOT: AND
+; CM: MULADD_INT24
+; SI-NOT: AND
+; SI: V_MAD_I32_I24
 define void @i32_mad24(i32 addrspace(1)* %out, i32 %a, i32 %b, i32 %c) {
 entry:
   %0 = shl i32 %a, 8

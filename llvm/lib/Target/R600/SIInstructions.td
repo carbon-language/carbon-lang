@@ -946,11 +946,11 @@ defm V_MUL_F32 : VOP2_32 <0x00000008, "V_MUL_F32",
 
 
 defm V_MUL_I32_I24 : VOP2_32 <0x00000009, "V_MUL_I32_I24",
-  [(set i32:$dst, (mul I24:$src0, I24:$src1))]
+  [(set i32:$dst, (AMDGPUmul_i24 i32:$src0, i32:$src1))]
 >;
 //defm V_MUL_HI_I32_I24 : VOP2_32 <0x0000000a, "V_MUL_HI_I32_I24", []>;
 defm V_MUL_U32_U24 : VOP2_32 <0x0000000b, "V_MUL_U32_U24",
-  [(set i32:$dst, (mul U24:$src0, U24:$src1))]
+  [(set i32:$dst, (AMDGPUmul_u24 i32:$src0, i32:$src1))]
 >;
 //defm V_MUL_HI_U32_U24 : VOP2_32 <0x0000000c, "V_MUL_HI_U32_U24", []>;
 
@@ -1046,10 +1046,10 @@ let neverHasSideEffects = 1 in {
 def V_MAD_LEGACY_F32 : VOP3_32 <0x00000140, "V_MAD_LEGACY_F32", []>;
 def V_MAD_F32 : VOP3_32 <0x00000141, "V_MAD_F32", []>;
 def V_MAD_I32_I24 : VOP3_32 <0x00000142, "V_MAD_I32_I24",
-  [(set i32:$dst, (add (mul I24:$src0, I24:$src1), i32:$src2))]
+  [(set i32:$dst, (add (AMDGPUmul_i24 i32:$src0, i32:$src1), i32:$src2))]
 >;
 def V_MAD_U32_U24 : VOP3_32 <0x00000143, "V_MAD_U32_U24",
-  [(set i32:$dst, (add (mul U24:$src0, U24:$src1), i32:$src2))]
+  [(set i32:$dst, (add (AMDGPUmul_u24 i32:$src0, i32:$src1), i32:$src2))]
 >;
 
 } // End neverHasSideEffects

@@ -294,7 +294,7 @@ def BFM_INT_eg : R600_2OP <0xA0, "BFM_INT",
 >;
 
 def MULADD_UINT24_eg : R600_3OP <0x10, "MULADD_UINT24",
-  [(set i32:$dst, (add (mul U24:$src0, U24:$src1), i32:$src2))], VecALU
+  [(set i32:$dst, (add (AMDGPUmul_u24 i32:$src0, i32:$src1), i32:$src2))], VecALU
 >;
 def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT", [], VecALU>;
 def : ROTRPattern <BIT_ALIGN_INT_eg>;
@@ -309,7 +309,7 @@ def CNDGE_eg : CNDGE_Common<0x1B>;
 def MUL_LIT_eg : MUL_LIT_Common<0x1F>;
 def LOG_CLAMPED_eg : LOG_CLAMPED_Common<0x82>;
 def MUL_UINT24_eg : R600_2OP <0xB5, "MUL_UINT24",
-  [(set i32:$dst, (mul U24:$src0, U24:$src1))], VecALU
+  [(set i32:$dst, (AMDGPUmul_u24 i32:$src0, i32:$src1))], VecALU
 >;
 def DOT4_eg : DOT4_Common<0xBE>;
 defm CUBE_eg : CUBE_Common<0xC0>;

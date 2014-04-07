@@ -77,6 +77,15 @@ public:
     return hasBFE();
   }
 
+  bool hasMulU24() const {
+    return (getGeneration() >= EVERGREEN);
+  }
+
+  bool hasMulI24() const {
+    return (getGeneration() >= SOUTHERN_ISLANDS ||
+            hasCaymanISA());
+  }
+
   bool IsIRStructurizerEnabled() const;
   bool isIfCvtEnabled() const;
   unsigned getWavefrontSize() const;

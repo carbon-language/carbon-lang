@@ -253,9 +253,6 @@ def FP_ONE : PatLeaf <
   [{return N->isExactlyValue(1.0);}]
 >;
 
-def U24 : ComplexPattern<i32, 1, "SelectU24", [], []>;
-def I24 : ComplexPattern<i32, 1, "SelectI24", [], []>;
-
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
 let usesCustomInserter = 1  in {
