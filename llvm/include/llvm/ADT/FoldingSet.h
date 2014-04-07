@@ -137,7 +137,7 @@ public:
 
   public:
 
-    Node() : NextInFoldingSetBucket(0) {}
+    Node() : NextInFoldingSetBucket(nullptr) {}
 
     // Accessors
     void *getNextInBucket() const { return NextInFoldingSetBucket; }
@@ -269,7 +269,7 @@ class FoldingSetNodeIDRef {
   const unsigned *Data;
   size_t Size;
 public:
-  FoldingSetNodeIDRef() : Data(0), Size(0) {}
+  FoldingSetNodeIDRef() : Data(nullptr), Size(0) {}
   FoldingSetNodeIDRef(const unsigned *D, size_t S) : Data(D), Size(S) {}
 
   /// ComputeHash - Compute a strong hash value for this FoldingSetNodeIDRef,

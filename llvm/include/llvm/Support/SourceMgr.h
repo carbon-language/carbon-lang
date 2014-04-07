@@ -71,7 +71,8 @@ private:
   SourceMgr(const SourceMgr&) LLVM_DELETED_FUNCTION;
   void operator=(const SourceMgr&) LLVM_DELETED_FUNCTION;
 public:
-  SourceMgr() : LineNoCache(0), DiagHandler(0), DiagContext(0) {}
+  SourceMgr()
+    : LineNoCache(nullptr), DiagHandler(nullptr), DiagContext(nullptr) {}
   ~SourceMgr();
 
   void setIncludeDirs(const std::vector<std::string> &Dirs) {
@@ -80,7 +81,7 @@ public:
 
   /// setDiagHandler - Specify a diagnostic handler to be invoked every time
   /// PrintMessage is called. Ctx is passed into the handler when it is invoked.
-  void setDiagHandler(DiagHandlerTy DH, void *Ctx = 0) {
+  void setDiagHandler(DiagHandlerTy DH, void *Ctx = nullptr) {
     DiagHandler = DH;
     DiagContext = Ctx;
   }
@@ -222,10 +223,10 @@ class SMDiagnostic {
 public:
   // Null diagnostic.
   SMDiagnostic()
-    : SM(0), LineNo(0), ColumnNo(0), Kind(SourceMgr::DK_Error) {}
+    : SM(nullptr), LineNo(0), ColumnNo(0), Kind(SourceMgr::DK_Error) {}
   // Diagnostic with no location (e.g. file not found, command line arg error).
   SMDiagnostic(StringRef filename, SourceMgr::DiagKind Knd, StringRef Msg)
-    : SM(0), Filename(filename), LineNo(-1), ColumnNo(-1), Kind(Knd),
+    : SM(nullptr), Filename(filename), LineNo(-1), ColumnNo(-1), Kind(Knd),
       Message(Msg) {}
 
   // Diagnostic with a location.

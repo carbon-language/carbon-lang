@@ -30,7 +30,7 @@ namespace llvm {
   int DiffFilesWithTolerance(StringRef FileA,
                              StringRef FileB,
                              double AbsTol, double RelTol,
-                             std::string *Error = 0);
+                             std::string *Error = nullptr);
 
 
   /// FileRemover - This class is a simple object meant to be stack allocated.

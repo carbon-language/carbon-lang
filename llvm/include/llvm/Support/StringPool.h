@@ -48,7 +48,7 @@ namespace llvm {
       unsigned Refcount; ///< Number of referencing PooledStringPtrs.
 
     public:
-      PooledString() : Pool(0), Refcount(0) { }
+      PooledString() : Pool(nullptr), Refcount(0) { }
     };
 
     friend class PooledStringPtr;
@@ -81,7 +81,7 @@ namespace llvm {
     entry_t *S;
 
   public:
-    PooledStringPtr() : S(0) {}
+    PooledStringPtr() : S(nullptr) {}
 
     explicit PooledStringPtr(entry_t *E) : S(E) {
       if (S) ++S->getValue().Refcount;
@@ -107,7 +107,7 @@ namespace llvm {
         S->getValue().Pool->InternTable.remove(S);
         S->Destroy();
       }
-      S = 0;
+      S = nullptr;
     }
 
     ~PooledStringPtr() { clear(); }
@@ -128,7 +128,7 @@ namespace llvm {
     }
 
     inline const char *operator*() const { return begin(); }
-    inline operator bool() const { return S != 0; }
+    inline operator bool() const { return S != nullptr; }
 
     inline bool operator==(const PooledStringPtr &That) { return S == That.S; }
     inline bool operator!=(const PooledStringPtr &That) { return S != That.S; }

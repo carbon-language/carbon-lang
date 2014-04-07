@@ -139,7 +139,7 @@ public:
   public:
     typedef T element_type;
 
-    explicit IntrusiveRefCntPtr() : Obj(0) {}
+    explicit IntrusiveRefCntPtr() : Obj(nullptr) {}
 
     IntrusiveRefCntPtr(T* obj) : Obj(obj) {
       retain();
@@ -150,7 +150,7 @@ public:
     }
 
     IntrusiveRefCntPtr(IntrusiveRefCntPtr&& S) : Obj(S.Obj) {
-      S.Obj = 0;
+      S.Obj = nullptr;
     }
 
     template <class X>
@@ -179,7 +179,7 @@ public:
 
     typedef T* (IntrusiveRefCntPtr::*unspecified_bool_type) () const;
     operator unspecified_bool_type() const {
-      return Obj == 0 ? 0 : &IntrusiveRefCntPtr::getPtr;
+      return Obj == nullptr ? nullptr : &IntrusiveRefCntPtr::getPtr;
     }
 
     void swap(IntrusiveRefCntPtr& other) {
@@ -190,7 +190,7 @@ public:
 
     void reset() {
       release();
-      Obj = 0;
+      Obj = nullptr;
     }
 
     void resetWithoutRelease() {

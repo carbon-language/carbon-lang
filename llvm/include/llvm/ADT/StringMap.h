@@ -50,7 +50,7 @@ protected:
 protected:
   explicit StringMapImpl(unsigned itemSize) : ItemSize(itemSize) {
     // Initialize the map with zero buckets to allocation.
-    TheTable = 0;
+    TheTable = nullptr;
     NumBuckets = 0;
     NumItems = 0;
     NumTombstones = 0;
@@ -330,7 +330,7 @@ public:
       if (Bucket && Bucket != getTombstoneVal()) {
         static_cast<MapEntryTy*>(Bucket)->Destroy(Allocator);
       }
-      Bucket = 0;
+      Bucket = nullptr;
     }
 
     NumItems = 0;
@@ -410,7 +410,7 @@ protected:
 public:
   typedef StringMapEntry<ValueTy> value_type;
 
-  StringMapConstIterator() : Ptr(0) { }
+  StringMapConstIterator() : Ptr(nullptr) { }
 
   explicit StringMapConstIterator(StringMapEntryBase **Bucket,
                                   bool NoAdvance = false)
@@ -443,7 +443,7 @@ public:
 
 private:
   void AdvancePastEmptyBuckets() {
-    while (*Ptr == 0 || *Ptr == StringMapImpl::getTombstoneVal())
+    while (*Ptr == nullptr || *Ptr == StringMapImpl::getTombstoneVal())
       ++Ptr;
   }
 };

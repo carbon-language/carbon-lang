@@ -116,7 +116,7 @@ public:
     // the memory doesn't go away/get reallocated, but it's
     // not currently necessary. Users that need the pointer don't stream.
     assert(0 && "getPointer in streaming memory objects not allowed");
-    return NULL;
+    return nullptr;
   }
   bool isValidAddress(uint64_t address) const override;
   bool isObjectEnd(uint64_t address) const override;

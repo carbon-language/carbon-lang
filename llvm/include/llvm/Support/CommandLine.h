@@ -41,14 +41,14 @@ namespace cl {
 // ParseCommandLineOptions - Command line option processing entry point.
 //
 void ParseCommandLineOptions(int argc, const char * const *argv,
-                             const char *Overview = 0);
+                             const char *Overview = nullptr);
 
 //===----------------------------------------------------------------------===//
 // ParseEnvironmentOptions - Environment variable option processing alternate
 //                           entry point.
 //
 void ParseEnvironmentOptions(const char *progName, const char *envvar,
-                             const char *Overview = 0);
+                             const char *Overview = nullptr);
 
 ///===---------------------------------------------------------------------===//
 /// SetVersionPrinter - Override the default (LLVM specific) version printer
@@ -146,7 +146,7 @@ private:
   const char *const Description;
   void registerCategory();
 public:
-  OptionCategory(const char *const Name, const char *const Description = 0)
+  OptionCategory(const char *const Name, const char *const Description = nullptr)
       : Name(Name), Description(Description) { registerCategory(); }
   const char *getName() const { return Name; }
   const char *getDescription() const { return Description; }
@@ -238,7 +238,7 @@ protected:
                   enum OptionHidden Hidden)
     : NumOccurrences(0), Occurrences(OccurrencesFlag), Value(0),
       HiddenFlag(Hidden), Formatting(NormalFormatting), Misc(0),
-      Position(0), AdditionalVals(0), NextRegistered(0),
+      Position(0), AdditionalVals(0), NextRegistered(nullptr),
       ArgStr(""), HelpStr(""), ValueStr(""), Category(&GeneralCategory) {
   }
 
@@ -763,7 +763,7 @@ public:
   }
 
   // getValueName - Do not print =<value> at all.
-  const char *getValueName() const override { return 0; }
+  const char *getValueName() const override { return nullptr; }
 
   void printOptionDiff(const Option &O, bool V, OptVal Default,
                        size_t GlobalWidth) const;
@@ -787,7 +787,7 @@ public:
   }
 
   // getValueName - Do not print =<value> at all.
-  const char *getValueName() const override { return 0; }
+  const char *getValueName() const override { return nullptr; }
 
   void printOptionDiff(const Option &O, boolOrDefault V, OptVal Default,
                        size_t GlobalWidth) const;
@@ -1068,7 +1068,7 @@ class opt_storage {
            "or cl::init specified before cl::location()!!");
   }
 public:
-  opt_storage() : Location(0) {}
+  opt_storage() : Location(nullptr) {}
 
   bool setLocation(Option &O, DataType &L) {
     if (Location)
@@ -1469,7 +1469,7 @@ class bits_storage {
   }
 
 public:
-  bits_storage() : Location(0) {}
+  bits_storage() : Location(nullptr) {}
 
   bool setLocation(Option &O, unsigned &L) {
     if (Location)
@@ -1664,7 +1664,7 @@ class alias : public Option {
   void done() {
     if (!hasArgStr())
       error("cl::alias must have argument name specified!");
-    if (AliasFor == 0)
+    if (AliasFor == nullptr)
       error("cl::alias must have an cl::aliasopt(option) specified!");
       addArgument();
   }
@@ -1677,27 +1677,28 @@ public:
 
   // One option...
   template<class M0t>
-  explicit alias(const M0t &M0) : Option(Optional, Hidden), AliasFor(0) {
+  explicit alias(const M0t &M0) : Option(Optional, Hidden), AliasFor(nullptr) {
     apply(M0, this);
     done();
   }
   // Two options...
   template<class M0t, class M1t>
-  alias(const M0t &M0, const M1t &M1) : Option(Optional, Hidden), AliasFor(0) {
+  alias(const M0t &M0, const M1t &M1)
+    : Option(Optional, Hidden), AliasFor(nullptr) {
     apply(M0, this); apply(M1, this);
     done();
   }
   // Three options...
   template<class M0t, class M1t, class M2t>
   alias(const M0t &M0, const M1t &M1, const M2t &M2)
-    : Option(Optional, Hidden), AliasFor(0) {
+    : Option(Optional, Hidden), AliasFor(nullptr) {
     apply(M0, this); apply(M1, this); apply(M2, this);
     done();
   }
   // Four options...
   template<class M0t, class M1t, class M2t, class M3t>
   alias(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3)
-    : Option(Optional, Hidden), AliasFor(0) {
+    : Option(Optional, Hidden), AliasFor(nullptr) {
     apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
     done();
   }

@@ -17,15 +17,15 @@
 #include <cassert>
 using namespace llvm;
 
-static const ManagedStaticBase *StaticList = 0;
+static const ManagedStaticBase *StaticList = nullptr;
 
 void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
                                               void (*Deleter)(void*)) const {
   if (llvm_is_multithreaded()) {
     llvm_acquire_global_lock();
 
-    if (Ptr == 0) {
-      void* tmp = Creator ? Creator() : 0;
+    if (Ptr == nullptr) {
+      void* tmp = Creator ? Creator() : nullptr;
 
       TsanHappensBefore(this);
       sys::MemoryFence();
@@ -47,7 +47,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
   } else {
     assert(Ptr == 0 && DeleterFn == 0 && Next == 0 &&
            "Partially initialized ManagedStatic!?");
-    Ptr = Creator ? Creator() : 0;
+    Ptr = Creator ? Creator() : nullptr;
     DeleterFn = Deleter;
   
     // Add to list of managed statics.
@@ -62,14 +62,14 @@ void ManagedStaticBase::destroy() const {
          "Not destroyed in reverse order of construction?");
   // Unlink from list.
   StaticList = Next;
-  Next = 0;
+  Next = nullptr;
 
   // Destroy memory.
   DeleterFn(Ptr);
   
   // Cleanup.
-  Ptr = 0;
-  DeleterFn = 0;
+  Ptr = nullptr;
+  DeleterFn = nullptr;
 }
 
 /// llvm_shutdown - Deallocate and destroy all ManagedStatic variables.

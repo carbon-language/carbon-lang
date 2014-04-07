@@ -28,7 +28,7 @@ MallocSlabAllocator::~MallocSlabAllocator() { }
 MemSlab *MallocSlabAllocator::Allocate(size_t Size) {
   MemSlab *Slab = (MemSlab*)Allocator.Allocate(Size, 0);
   Slab->Size = Size;
-  Slab->NextPtr = 0;
+  Slab->NextPtr = nullptr;
   return Slab;
 }
 
@@ -39,7 +39,7 @@ void MallocSlabAllocator::Deallocate(MemSlab *Slab) {
 void BumpPtrAllocatorBase::PrintStats() const {
   unsigned NumSlabs = 0;
   size_t TotalMemory = 0;
-  for (MemSlab *Slab = CurSlab; Slab != 0; Slab = Slab->NextPtr) {
+  for (MemSlab *Slab = CurSlab; Slab != nullptr; Slab = Slab->NextPtr) {
     TotalMemory += Slab->Size;
     ++NumSlabs;
   }
@@ -53,7 +53,7 @@ void BumpPtrAllocatorBase::PrintStats() const {
 
 size_t BumpPtrAllocatorBase::getTotalMemory() const {
   size_t TotalMemory = 0;
-  for (MemSlab *Slab = CurSlab; Slab != 0; Slab = Slab->NextPtr) {
+  for (MemSlab *Slab = CurSlab; Slab != nullptr; Slab = Slab->NextPtr) {
     TotalMemory += Slab->Size;
   }
   return TotalMemory;

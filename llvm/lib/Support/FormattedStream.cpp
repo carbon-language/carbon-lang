@@ -81,7 +81,7 @@ void formatted_raw_ostream::write_impl(const char *Ptr, size_t Size) {
   TheStream->write(Ptr, Size);
 
   // Reset the scanning pointer.
-  Scanned = 0;
+  Scanned = nullptr;
 }
 
 /// fouts() - This returns a reference to a formatted_raw_ostream for

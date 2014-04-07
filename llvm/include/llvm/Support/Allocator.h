@@ -106,7 +106,7 @@ protected:
   /// Used so that we can compute how much space was wasted.
   size_t BytesAllocated;
 
-  BumpPtrAllocatorBase() : CurSlab(0), BytesAllocated(0) {}
+  BumpPtrAllocatorBase() : CurSlab(nullptr), BytesAllocated(0) {}
 };
 
 /// \brief Allocate memory in an ever growing pool, as if by bump-pointer.
@@ -142,7 +142,7 @@ public:
     if (!CurSlab)
       return;
     DeallocateSlabs(CurSlab->NextPtr);
-    CurSlab->NextPtr = 0;
+    CurSlab->NextPtr = nullptr;
     CurPtr = (char *)(CurSlab + 1);
     End = ((char *)CurSlab) + CurSlab->Size;
     BytesAllocated = 0;

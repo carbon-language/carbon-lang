@@ -13,9 +13,10 @@
 using namespace llvm;
 
 line_iterator::line_iterator(const MemoryBuffer &Buffer, char CommentMarker)
-    : Buffer(Buffer.getBufferSize() ? &Buffer : 0),
+    : Buffer(Buffer.getBufferSize() ? &Buffer : nullptr),
       CommentMarker(CommentMarker), LineNumber(1),
-      CurrentLine(Buffer.getBufferSize() ? Buffer.getBufferStart() : 0, 0) {
+      CurrentLine(Buffer.getBufferSize() ? Buffer.getBufferStart() : nullptr,
+                  0) {
   // Ensure that if we are constructed on a non-empty memory buffer that it is
   // a null terminated buffer.
   if (Buffer.getBufferSize()) {
@@ -53,7 +54,7 @@ void line_iterator::advance() {
 
   if (*Pos == '\0') {
     // We've hit the end of the buffer, reset ourselves to the end state.
-    Buffer = 0;
+    Buffer = nullptr;
     CurrentLine = StringRef();
     return;
   }

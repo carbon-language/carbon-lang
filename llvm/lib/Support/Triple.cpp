@@ -57,7 +57,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
 const char *Triple::getArchTypePrefix(ArchType Kind) {
   switch (Kind) {
   default:
-    return 0;
+    return nullptr;
 
   case aarch64:
   case aarch64_be:  return "aarch64";
@@ -210,7 +210,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
 // Returns architecture name that is understood by the target assembler.
 const char *Triple::getArchNameForAssembler() {
   if (!isOSDarwin() && getVendor() != Triple::Apple)
-    return NULL;
+    return nullptr;
 
   return StringSwitch<const char*>(getArchName())
     .Case("i386", "i386")
@@ -232,7 +232,7 @@ const char *Triple::getArchNameForAssembler() {
     .Case("amdil", "amdil")
     .Case("spir", "spir")
     .Case("spir64", "spir64")
-    .Default(NULL);
+    .Default(nullptr);
 }
 
 static Triple::ArchType parseArch(StringRef ArchName) {

@@ -53,7 +53,7 @@ using namespace sys;
 ThreadLocalImpl::ThreadLocalImpl() : data() {
   static_assert(sizeof(pthread_key_t) <= sizeof(data), "size too big");
   pthread_key_t* key = reinterpret_cast<pthread_key_t*>(&data);
-  int errorcode = pthread_key_create(key, NULL);
+  int errorcode = pthread_key_create(key, nullptr);
   assert(errorcode == 0);
   (void) errorcode;
 }
@@ -78,7 +78,7 @@ const void* ThreadLocalImpl::getInstance() {
 }
 
 void ThreadLocalImpl::removeInstance() {
-  setInstance(0);
+  setInstance(nullptr);
 }
 
 }

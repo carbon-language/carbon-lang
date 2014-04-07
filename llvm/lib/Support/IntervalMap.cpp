@@ -58,7 +58,7 @@ void Path::moveLeft(unsigned Level) {
     }
   } else if (height() < Level)
     // end() may have created a height=0 path.
-    path.resize(Level + 1, Entry(0, 0, 0));
+    path.resize(Level + 1, Entry(nullptr, 0, 0));
 
   // NR is the subtree containing our left sibling.
   --path[l].offset;

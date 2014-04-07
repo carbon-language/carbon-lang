@@ -374,7 +374,7 @@ namespace llvm {
     static Twine utohexstr(const uint64_t &Val) {
       Child LHS, RHS;
       LHS.uHex = &Val;
-      RHS.twine = 0;
+      RHS.twine = nullptr;
       return Twine(LHS, UHexKind, RHS, EmptyKind);
     }
 

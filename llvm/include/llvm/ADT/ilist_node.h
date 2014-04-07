@@ -30,7 +30,7 @@ protected:
   NodeTy *getPrev() { return Prev; }
   const NodeTy *getPrev() const { return Prev; }
   void setPrev(NodeTy *P) { Prev = P; }
-  ilist_half_node() : Prev(0) {}
+  ilist_half_node() : Prev(nullptr) {}
 };
 
 template<typename NodeTy>
@@ -48,7 +48,7 @@ class ilist_node : private ilist_half_node<NodeTy> {
   const NodeTy *getNext() const { return Next; }
   void setNext(NodeTy *N) { Next = N; }
 protected:
-  ilist_node() : Next(0) {}
+  ilist_node() : Next(nullptr) {}
 
 public:
   /// @name Adjacent Node Accessors

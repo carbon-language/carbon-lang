@@ -28,7 +28,7 @@ namespace sys {
   /// @brief Memory block abstraction.
   class MemoryBlock {
   public:
-    MemoryBlock() : Address(0), Size(0) { }
+    MemoryBlock() : Address(nullptr), Size(0) { }
     MemoryBlock(void *addr, size_t size) : Address(addr), Size(size) { }
     void *base() const { return Address; }
     size_t size() const { return Size; }
@@ -120,7 +120,7 @@ namespace sys {
     /// @brief Allocate Read/Write/Execute memory.
     static MemoryBlock AllocateRWX(size_t NumBytes,
                                    const MemoryBlock *NearBlock,
-                                   std::string *ErrMsg = 0);
+                                   std::string *ErrMsg = nullptr);
 
     /// This method releases a block of Read/Write/Execute memory that was
     /// allocated with the AllocateRWX method. It should not be used to
@@ -129,7 +129,7 @@ namespace sys {
     /// On success, this returns false, otherwise it returns true and fills
     /// in *ErrMsg.
     /// @brief Release Read/Write/Execute memory.
-    static bool ReleaseRWX(MemoryBlock &block, std::string *ErrMsg = 0);
+    static bool ReleaseRWX(MemoryBlock &block, std::string *ErrMsg = nullptr);
 
 
     /// InvalidateInstructionCache - Before the JIT can run a block of code
@@ -140,12 +140,12 @@ namespace sys {
     /// setExecutable - Before the JIT can run a block of code, it has to be
     /// given read and executable privilege. Return true if it is already r-x
     /// or the system is able to change its previlege.
-    static bool setExecutable(MemoryBlock &M, std::string *ErrMsg = 0);
+    static bool setExecutable(MemoryBlock &M, std::string *ErrMsg = nullptr);
 
     /// setWritable - When adding to a block of code, the JIT may need
     /// to mark a block of code as RW since the protections are on page
     /// boundaries, and the JIT internal allocations are not page aligned.
-    static bool setWritable(MemoryBlock &M, std::string *ErrMsg = 0);
+    static bool setWritable(MemoryBlock &M, std::string *ErrMsg = nullptr);
 
     /// setRangeExecutable - Mark the page containing a range of addresses
     /// as executable.

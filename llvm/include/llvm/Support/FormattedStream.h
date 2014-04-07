@@ -85,12 +85,12 @@ public:
   /// underneath it.
   ///
   formatted_raw_ostream(raw_ostream &Stream, bool Delete = false) 
-    : raw_ostream(), TheStream(0), DeleteStream(false), Position(0, 0) {
+    : raw_ostream(), TheStream(nullptr), DeleteStream(false), Position(0, 0) {
     setStream(Stream, Delete);
   }
   explicit formatted_raw_ostream()
-    : raw_ostream(), TheStream(0), DeleteStream(false), Position(0, 0) {
-    Scanned = 0;
+    : raw_ostream(), TheStream(nullptr), DeleteStream(false), Position(0, 0) {
+    Scanned = nullptr;
   }
 
   ~formatted_raw_ostream() {
@@ -114,7 +114,7 @@ public:
       SetUnbuffered();
     TheStream->SetUnbuffered();
 
-    Scanned = 0;
+    Scanned = nullptr;
   }
 
   /// PadToColumn - Align the output to some column number.  If the current

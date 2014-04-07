@@ -196,7 +196,7 @@ LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
 #if LLVM_ON_WIN32
     Sleep(Interval);
 #else
-    nanosleep(&Interval, NULL);
+    nanosleep(&Interval, nullptr);
 #endif
     bool LockFileJustDisappeared = false;
 

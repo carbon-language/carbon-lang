@@ -83,7 +83,7 @@ DataStreamer *getDataFileStreamer(const std::string &Filename,
   if (error_code e = s->OpenFile(Filename)) {
     *StrError = std::string("Could not open ") + Filename + ": " +
         e.message() + "\n";
-    return NULL;
+    return nullptr;
   }
   return s;
 }

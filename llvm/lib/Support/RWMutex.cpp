@@ -44,7 +44,7 @@ using namespace sys;
 
 // Construct a RWMutex using pthread calls
 RWMutexImpl::RWMutexImpl()
-  : data_(0)
+  : data_(nullptr)
 {
   // Declare the pthread_rwlock data structures
   pthread_rwlock_t* rwlock =
@@ -56,7 +56,7 @@ RWMutexImpl::RWMutexImpl()
 #endif
 
   // Initialize the rwlock
-  int errorcode = pthread_rwlock_init(rwlock, NULL);
+  int errorcode = pthread_rwlock_init(rwlock, nullptr);
   (void)errorcode;
   assert(errorcode == 0);
 

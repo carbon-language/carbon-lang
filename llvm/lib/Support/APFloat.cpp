@@ -1679,7 +1679,7 @@ APFloat::multiply(const APFloat &rhs, roundingMode rounding_mode)
   fs = multiplySpecials(rhs);
 
   if (isFiniteNonZero()) {
-    lostFraction lost_fraction = multiplySignificand(rhs, 0);
+    lostFraction lost_fraction = multiplySignificand(rhs, nullptr);
     fs = normalize(rounding_mode, lost_fraction);
     if (lost_fraction != lfExactlyZero)
       fs = (opStatus) (fs | opInexact);
@@ -2439,7 +2439,7 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
 
     if (exp >= 0) {
       /* multiplySignificand leaves the precision-th bit set to 1.  */
-      calcLostFraction = decSig.multiplySignificand(pow5, NULL);
+      calcLostFraction = decSig.multiplySignificand(pow5, nullptr);
       powHUerr = powStatus != opOK;
     } else {
       calcLostFraction = decSig.divideSignificand(pow5);
@@ -3795,7 +3795,7 @@ APFloat::opStatus APFloat::next(bool nextDown) {
     if (isSignaling()) {
       result = opInvalidOp;
       // For consistency, propagate the sign of the sNaN to the qNaN.
-      makeNaN(false, isNegative(), 0);
+      makeNaN(false, isNegative(), nullptr);
     }
     break;
   case fcZero:

@@ -44,7 +44,7 @@ static T *getUs(uint32_t *offset_ptr, T *dst, uint32_t count,
     // success
     return dst;
   }
-  return NULL;
+  return nullptr;
 }
 
 uint8_t DataExtractor::getU8(uint32_t *offset_ptr) const {
@@ -125,7 +125,7 @@ const char *DataExtractor::getCStr(uint32_t *offset_ptr) const {
     *offset_ptr = pos + 1;
     return Data.data() + offset;
   }
-  return NULL;
+  return nullptr;
 }
 
 uint64_t DataExtractor::getULEB128(uint32_t *offset_ptr) const {

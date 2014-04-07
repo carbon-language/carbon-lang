@@ -706,7 +706,7 @@ public:
   static void unspecified_bool_true() {}
 
   operator unspecified_bool_type() const { // true if error
-    return _val_ == 0 ? 0 : unspecified_bool_true;
+    return _val_ == 0 ? nullptr : unspecified_bool_true;
   }
 };
 
@@ -771,7 +771,7 @@ public:
   static void unspecified_bool_true() {}
 
   operator unspecified_bool_type() const { // true if error
-    return _val_ == 0 ? 0 : unspecified_bool_true;
+    return _val_ == 0 ? nullptr : unspecified_bool_true;
   }
 };
 

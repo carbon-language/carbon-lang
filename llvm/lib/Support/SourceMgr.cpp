@@ -114,7 +114,7 @@ SourceMgr::getLineAndColumn(SMLoc Loc, int BufferID) const {
     if (*Ptr == '\n') ++LineNo;
 
   // Allocate the line number cache if it doesn't exist.
-  if (LineNoCache == 0)
+  if (LineNoCache == nullptr)
     LineNoCache = new LineNoCacheTy();
 
   // Update the line # cache.
@@ -228,7 +228,7 @@ void SourceMgr::PrintMessage(raw_ostream &OS, SMLoc Loc,
     PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
   }
 
-  Diagnostic.print(0, OS, ShowColors);
+  Diagnostic.print(nullptr, OS, ShowColors);
 }
 
 void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,

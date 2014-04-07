@@ -58,7 +58,7 @@ class CrashRecoveryContext {
   };
 
 public:
-  CrashRecoveryContext() : Impl(0), head(0) {}
+  CrashRecoveryContext() : Impl(nullptr), head(nullptr) {}
   ~CrashRecoveryContext();
   
   void registerCleanup(CrashRecoveryContextCleanup *cleanup);

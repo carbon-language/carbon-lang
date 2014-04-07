@@ -37,7 +37,7 @@ class line_iterator
 
 public:
   /// \brief Default construct an "end" iterator.
-  line_iterator() : Buffer(0) {}
+  line_iterator() : Buffer(nullptr) {}
 
   /// \brief Construct a new iterator around some memory buffer.
   explicit line_iterator(const MemoryBuffer &Buffer, char CommentMarker = '\0');

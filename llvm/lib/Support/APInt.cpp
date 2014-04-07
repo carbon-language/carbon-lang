@@ -1683,10 +1683,10 @@ void APInt::divide(const APInt LHS, unsigned lhsWords,
   // Allocate space for the temporary values we need either on the stack, if
   // it will fit, or on the heap if it won't.
   unsigned SPACE[128];
-  unsigned *U = 0;
-  unsigned *V = 0;
-  unsigned *Q = 0;
-  unsigned *R = 0;
+  unsigned *U = nullptr;
+  unsigned *V = nullptr;
+  unsigned *Q = nullptr;
+  unsigned *R = nullptr;
   if ((Remainder?4:3)*n+2*m+1 <= 128) {
     U = &SPACE[0];
     V = &SPACE[m+n+1];
@@ -1872,7 +1872,7 @@ APInt APInt::udiv(const APInt& RHS) const {
 
   // We have to compute it the hard way. Invoke the Knuth divide algorithm.
   APInt Quotient(1,0); // to hold result.
-  divide(*this, lhsWords, RHS, rhsWords, &Quotient, 0);
+  divide(*this, lhsWords, RHS, rhsWords, &Quotient, nullptr);
   return Quotient;
 }
 
@@ -1920,7 +1920,7 @@ APInt APInt::urem(const APInt& RHS) const {
 
   // We have to compute it the hard way. Invoke the Knuth divide algorithm.
   APInt Remainder(1,0);
-  divide(*this, lhsWords, RHS, rhsWords, 0, &Remainder);
+  divide(*this, lhsWords, RHS, rhsWords, nullptr, &Remainder);
   return Remainder;
 }
 

@@ -259,8 +259,8 @@ public:
 
   /// emitSimpleNode - Outputs a simple (non-record) node
   void emitSimpleNode(const void *ID, const std::string &Attr,
-                      const std::string &Label, unsigned NumEdgeSources = 0,
-                      const std::vector<std::string> *EdgeSourceLabels = 0) {
+                   const std::string &Label, unsigned NumEdgeSources = 0,
+                   const std::vector<std::string> *EdgeSourceLabels = nullptr) {
     O << "\tNode" << ID << "[ ";
     if (!Attr.empty())
       O << Attr << ",";

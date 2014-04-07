@@ -207,7 +207,8 @@ struct has_ScalarTraits
   static double test(...);
 
 public:
-  static bool const value = (sizeof(test<ScalarTraits<T> >(0,0)) == 1);
+  static bool const value =
+    (sizeof(test<ScalarTraits<T> >(nullptr,nullptr)) == 1);
 };
 
 
@@ -340,7 +341,7 @@ struct unvalidatedMappingTraits : public std::integral_constant<bool,
 class IO {
 public:
 
-  IO(void *Ctxt=NULL);
+  IO(void *Ctxt=nullptr);
   virtual ~IO();
 
   virtual bool outputting() = 0;
@@ -765,9 +766,9 @@ public:
   // user-data. The DiagHandler can be specified to provide
   // alternative error reporting.
   Input(StringRef InputContent,
-        void *Ctxt = NULL,
-        SourceMgr::DiagHandlerTy DiagHandler = NULL,
-        void *DiagHandlerCtxt = NULL);
+        void *Ctxt = nullptr,
+        SourceMgr::DiagHandlerTy DiagHandler = nullptr,
+        void *DiagHandlerCtxt = nullptr);
   ~Input();
 
   // Check if there was an syntax or semantic error during parsing.
@@ -896,7 +897,7 @@ private:
 ///
 class Output : public IO {
 public:
-  Output(llvm::raw_ostream &, void *Ctxt=NULL);
+  Output(llvm::raw_ostream &, void *Ctxt=nullptr);
   virtual ~Output();
 
   bool outputting() override;

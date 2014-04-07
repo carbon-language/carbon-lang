@@ -48,7 +48,7 @@ static void *DoSearch(const char* symbolName) {
 #endif
 
 #undef EXPLICIT_SYMBOL
-  return 0;
+  return nullptr;
 }
 
 namespace llvm {

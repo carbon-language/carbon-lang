@@ -70,7 +70,7 @@ namespace llvm {
     /// @{
 
     /// Construct an empty string ref.
-    /*implicit*/ StringRef() : Data(0), Length(0) {}
+    /*implicit*/ StringRef() : Data(nullptr), Length(0) {}
 
     /// Construct a string ref from a cstring.
     /*implicit*/ StringRef(const char *Str)
@@ -186,7 +186,7 @@ namespace llvm {
 
     /// str - Get the contents as an std::string.
     std::string str() const {
-      if (Data == 0) return std::string();
+      if (Data == nullptr) return std::string();
       return std::string(Data, Length);
     }
 

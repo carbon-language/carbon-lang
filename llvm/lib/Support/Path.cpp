@@ -577,7 +577,7 @@ void system_temp_directory(bool erasedOnReboot, SmallVectorImpl<char> &result) {
   // macros defined in <unistd.h> on darwin >= 9
   int ConfName = erasedOnReboot? _CS_DARWIN_USER_TEMP_DIR
                                : _CS_DARWIN_USER_CACHE_DIR;
-  size_t ConfLen = confstr(ConfName, 0, 0);
+  size_t ConfLen = confstr(ConfName, nullptr, 0);
   if (ConfLen > 0) {
     do {
       result.resize(ConfLen);

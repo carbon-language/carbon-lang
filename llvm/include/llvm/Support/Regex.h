@@ -55,7 +55,7 @@ namespace llvm {
     Regex(Regex &&regex) {
       preg = regex.preg;
       error = regex.error;
-      regex.preg = NULL;
+      regex.preg = nullptr;
     }
     ~Regex();
 
@@ -75,7 +75,7 @@ namespace llvm {
     /// the first group is always the entire pattern.
     ///
     /// This returns true on a successful match.
-    bool match(StringRef String, SmallVectorImpl<StringRef> *Matches = 0);
+    bool match(StringRef String, SmallVectorImpl<StringRef> *Matches = nullptr);
 
     /// sub - Return the result of replacing the first match of the regex in
     /// \p String with the \p Repl string. Backreferences like "\0" in the
@@ -87,7 +87,8 @@ namespace llvm {
     /// \param Error If non-null, any errors in the substitution (invalid
     /// backreferences, trailing backslashes) will be recorded as a non-empty
     /// string.
-    std::string sub(StringRef Repl, StringRef String, std::string *Error = 0);
+    std::string sub(StringRef Repl, StringRef String,
+                    std::string *Error = nullptr);
 
     /// \brief If this function returns true, ^Str$ is an extended regular
     /// expression that matches Str and only Str.

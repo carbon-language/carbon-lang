@@ -814,7 +814,7 @@ public:
   }
 
   /// Construct end iterator.
-  directory_iterator() : State(0) {}
+  directory_iterator() : State(nullptr) {}
 
   // No operator++ because we need error_code.
   directory_iterator &increment(error_code &ec) {
@@ -828,9 +828,9 @@ public:
   bool operator==(const directory_iterator &RHS) const {
     if (State == RHS.State)
       return true;
-    if (RHS.State == 0)
+    if (RHS.State == nullptr)
       return State->CurrentEntry == directory_entry();
-    if (State == 0)
+    if (State == nullptr)
       return RHS.State->CurrentEntry == directory_entry();
     return State->CurrentEntry == RHS.State->CurrentEntry;
   }

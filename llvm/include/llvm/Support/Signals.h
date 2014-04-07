@@ -28,7 +28,7 @@ namespace sys {
   /// This function registers signal handlers to ensure that if a signal gets
   /// delivered that the named file is removed.
   /// @brief Remove a file if a fatal signal occurs.
-  bool RemoveFileOnSignal(StringRef Filename, std::string* ErrMsg = 0);
+  bool RemoveFileOnSignal(StringRef Filename, std::string* ErrMsg = nullptr);
 
   /// This function removes a file from the list of files to be removed on
   /// signal delivery.

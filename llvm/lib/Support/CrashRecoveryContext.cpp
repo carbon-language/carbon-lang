@@ -89,16 +89,16 @@ CrashRecoveryContext::~CrashRecoveryContext() {
 }
 
 bool CrashRecoveryContext::isRecoveringFromCrash() {
-  return tlIsRecoveringFromCrash->get() != 0;
+  return tlIsRecoveringFromCrash->get() != nullptr;
 }
 
 CrashRecoveryContext *CrashRecoveryContext::GetCurrent() {
   if (!gCrashRecoveryEnabled)
-    return 0;
+    return nullptr;
 
   const CrashRecoveryContextImpl *CRCI = CurrentContext->get();
   if (!CRCI)
-    return 0;
+    return nullptr;
 
   return CRCI->CRC;
 }
@@ -120,7 +120,7 @@ CrashRecoveryContext::unregisterCleanup(CrashRecoveryContextCleanup *cleanup) {
   if (cleanup == head) {
     head = cleanup->next;
     if (head)
-      head->prev = 0;
+      head->prev = nullptr;
   }
   else {
     cleanup->prev->next = cleanup->next;
@@ -261,7 +261,7 @@ static void CrashRecoverySignalHandler(int Signal) {
   sigset_t SigMask;
   sigemptyset(&SigMask);
   sigaddset(&SigMask, Signal);
-  sigprocmask(SIG_UNBLOCK, &SigMask, 0);
+  sigprocmask(SIG_UNBLOCK, &SigMask, nullptr);
 
   if (CRCI)
     const_cast<CrashRecoveryContextImpl*>(CRCI)->HandleCrash();
@@ -296,7 +296,7 @@ void CrashRecoveryContext::Disable() {
 
   // Restore the previous signal handlers.
   for (unsigned i = 0; i != NumSignals; ++i)
-    sigaction(Signals[i], &PrevActions[i], 0);
+    sigaction(Signals[i], &PrevActions[i], nullptr);
 }
 
 #endif

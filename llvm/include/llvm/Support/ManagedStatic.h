@@ -47,7 +47,7 @@ protected:
   void RegisterManagedStatic(void *(*creator)(), void (*deleter)(void*)) const;
 public:
   /// isConstructed - Return true if this object has not been created yet.
-  bool isConstructed() const { return Ptr != 0; }
+  bool isConstructed() const { return Ptr != nullptr; }
 
   void destroy() const;
 };

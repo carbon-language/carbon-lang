@@ -27,7 +27,7 @@ StringMapImpl::StringMapImpl(unsigned InitSize, unsigned itemSize) {
   }
   
   // Otherwise, initialize it with zero buckets to avoid the allocation.
-  TheTable = 0;
+  TheTable = nullptr;
   NumBuckets = 0;
   NumItems = 0;
   NumTombstones = 0;
@@ -70,7 +70,7 @@ unsigned StringMapImpl::LookupBucketFor(StringRef Name) {
   while (1) {
     StringMapEntryBase *BucketItem = TheTable[BucketNo];
     // If we found an empty bucket, this key isn't in the table yet, return it.
-    if (LLVM_LIKELY(BucketItem == 0)) {
+    if (LLVM_LIKELY(BucketItem == nullptr)) {
       // If we found a tombstone, we want to reuse the tombstone instead of an
       // empty bucket.  This reduces probing.
       if (FirstTombstone != -1) {
@@ -124,7 +124,7 @@ int StringMapImpl::FindKey(StringRef Key) const {
   while (1) {
     StringMapEntryBase *BucketItem = TheTable[BucketNo];
     // If we found an empty bucket, this key isn't in the table yet, return.
-    if (LLVM_LIKELY(BucketItem == 0))
+    if (LLVM_LIKELY(BucketItem == nullptr))
       return -1;
     
     if (BucketItem == getTombstoneVal()) {
@@ -166,7 +166,7 @@ void StringMapImpl::RemoveKey(StringMapEntryBase *V) {
 /// table, returning it.  If the key is not in the table, this returns null.
 StringMapEntryBase *StringMapImpl::RemoveKey(StringRef Key) {
   int Bucket = FindKey(Key);
-  if (Bucket == -1) return 0;
+  if (Bucket == -1) return nullptr;
   
   StringMapEntryBase *Result = TheTable[Bucket];
   TheTable[Bucket] = getTombstoneVal();
@@ -212,7 +212,7 @@ void StringMapImpl::RehashTable() {
       // Fast case, bucket available.
       unsigned FullHash = HashTable[I];
       unsigned NewBucket = FullHash & (NewSize-1);
-      if (NewTableArray[NewBucket] == 0) {
+      if (NewTableArray[NewBucket] == nullptr) {
         NewTableArray[FullHash & (NewSize-1)] = Bucket;
         NewHashArray[FullHash & (NewSize-1)] = FullHash;
         continue;

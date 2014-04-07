@@ -34,8 +34,8 @@
 
 using namespace llvm;
 
-static fatal_error_handler_t ErrorHandler = 0;
-static void *ErrorHandlerUserData = 0;
+static fatal_error_handler_t ErrorHandler = nullptr;
+static void *ErrorHandlerUserData = nullptr;
 
 void llvm::install_fatal_error_handler(fatal_error_handler_t handler,
                                        void *user_data) {
@@ -47,7 +47,7 @@ void llvm::install_fatal_error_handler(fatal_error_handler_t handler,
 }
 
 void llvm::remove_fatal_error_handler() {
-  ErrorHandler = 0;
+  ErrorHandler = nullptr;
 }
 
 void llvm::report_fatal_error(const char *Reason, bool GenCrashDiag) {

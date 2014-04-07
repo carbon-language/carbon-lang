@@ -21,7 +21,7 @@ using namespace llvm;
 
 static bool multithreaded_mode = false;
 
-static sys::Mutex* global_lock = 0;
+static sys::Mutex* global_lock = nullptr;
 
 bool llvm::llvm_start_multithreaded() {
 #if LLVM_ENABLE_THREADS != 0
@@ -73,7 +73,7 @@ struct ThreadInfo {
 static void *ExecuteOnThread_Dispatch(void *Arg) {
   ThreadInfo *TI = reinterpret_cast<ThreadInfo*>(Arg);
   TI->UserFn(TI->UserData);
-  return 0;
+  return nullptr;
 }
 
 void llvm::llvm_execute_on_thread(void (*Fn)(void*), void *UserData,
@@ -97,7 +97,7 @@ void llvm::llvm_execute_on_thread(void (*Fn)(void*), void *UserData,
     goto error;
 
   // Wait for the thread and clean up.
-  ::pthread_join(Thread, 0);
+  ::pthread_join(Thread, nullptr);
 
  error:
   ::pthread_attr_destroy(&Attr);

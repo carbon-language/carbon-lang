@@ -103,7 +103,7 @@ const void * const *SmallPtrSetImplBase::FindBucketFor(const void *Ptr) const {
   unsigned ArraySize = CurArraySize;
   unsigned ProbeAmt = 1;
   const void *const *Array = CurArray;
-  const void *const *Tombstone = 0;
+  const void *const *Tombstone = nullptr;
   while (1) {
     // Found Ptr's bucket?
     if (Array[Bucket] == Ptr)

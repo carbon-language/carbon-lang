@@ -42,7 +42,7 @@ using namespace sys;
 
 // Construct a Mutex using pthread calls
 MutexImpl::MutexImpl( bool recursive)
-  : data_(0)
+  : data_(nullptr)
 {
   // Declare the pthread_mutex data structures
   pthread_mutex_t* mutex =

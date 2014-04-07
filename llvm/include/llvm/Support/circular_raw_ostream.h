@@ -109,10 +109,10 @@ namespace llvm
     circular_raw_ostream(raw_ostream &Stream, const char *Header,
                          size_t BuffSize = 0, bool Owns = REFERENCE_ONLY) 
         : raw_ostream(/*unbuffered*/true),
-            TheStream(0),
+            TheStream(nullptr),
             OwnsStream(Owns),
             BufferSize(BuffSize),
-            BufferArray(0),
+            BufferArray(nullptr),
             Filled(false),
             Banner(Header) {
       if (BufferSize != 0)
@@ -122,9 +122,9 @@ namespace llvm
     }
     explicit circular_raw_ostream()
         : raw_ostream(/*unbuffered*/true),
-            TheStream(0),
+            TheStream(nullptr),
             OwnsStream(REFERENCE_ONLY),
-            BufferArray(0),
+            BufferArray(nullptr),
             Filled(false),
             Banner("") {
       Cur = BufferArray;

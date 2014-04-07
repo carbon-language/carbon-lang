@@ -175,7 +175,7 @@ public:
 
   ilist_iterator(pointer NP) : NodePtr(NP) {}
   ilist_iterator(reference NR) : NodePtr(&NR) {}
-  ilist_iterator() : NodePtr(0) {}
+  ilist_iterator() : NodePtr(nullptr) {}
 
   // This is templated so that we can allow constructing a const iterator from
   // a nonconst iterator...
@@ -383,7 +383,7 @@ public:
   // Miscellaneous inspection routines.
   size_type max_size() const { return size_type(-1); }
   bool LLVM_ATTRIBUTE_UNUSED_RESULT empty() const {
-    return Head == 0 || Head == getTail();
+    return Head == nullptr || Head == getTail();
   }
 
   // Front and back accessor functions...
@@ -451,8 +451,8 @@ public:
     // an ilist (and potentially deleted) with iterators still pointing at it.
     // When those iterators are incremented or decremented, they will assert on
     // the null next/prev pointer instead of "usually working".
-    this->setNext(Node, 0);
-    this->setPrev(Node, 0);
+    this->setNext(Node, nullptr);
+    this->setPrev(Node, nullptr);
     return Node;
   }
 

@@ -117,7 +117,7 @@ MemoryBuffer *MemoryBuffer::getMemBuffer(StringRef InputData,
 MemoryBuffer *MemoryBuffer::getMemBufferCopy(StringRef InputData,
                                              StringRef BufferName) {
   MemoryBuffer *Buf = getNewUninitMemBuffer(InputData.size(), BufferName);
-  if (!Buf) return 0;
+  if (!Buf) return nullptr;
   memcpy(const_cast<char*>(Buf->getBufferStart()), InputData.data(),
          InputData.size());
   return Buf;
@@ -137,7 +137,7 @@ MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
       RoundUpToAlignment(sizeof(MemoryBufferMem) + BufferName.size() + 1, 16);
   size_t RealLen = AlignedStringLen + Size + 1;
   char *Mem = static_cast<char*>(operator new(RealLen, std::nothrow));
-  if (!Mem) return 0;
+  if (!Mem) return nullptr;
 
   // The name is stored after the class itself.
   CopyStringRef(Mem + sizeof(MemoryBufferMem), BufferName);
@@ -155,7 +155,7 @@ MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
 /// the MemoryBuffer object.
 MemoryBuffer *MemoryBuffer::getNewMemBuffer(size_t Size, StringRef BufferName) {
   MemoryBuffer *SB = getNewUninitMemBuffer(Size, BufferName);
-  if (!SB) return 0;
+  if (!SB) return nullptr;
   memset(const_cast<char*>(SB->getBufferStart()), 0, Size);
   return SB;
 }

@@ -236,19 +236,19 @@ public:
       APInt fill(64, type);
       return getQNaN(Sem, Negative, &fill);
     } else {
-      return getQNaN(Sem, Negative, 0);
+      return getQNaN(Sem, Negative, nullptr);
     }
   }
 
   /// Factory for QNaN values.
   static APFloat getQNaN(const fltSemantics &Sem, bool Negative = false,
-                         const APInt *payload = 0) {
+                         const APInt *payload = nullptr) {
     return makeNaN(Sem, false, Negative, payload);
   }
 
   /// Factory for SNaN values.
   static APFloat getSNaN(const fltSemantics &Sem, bool Negative = false,
-                         const APInt *payload = 0) {
+                         const APInt *payload = nullptr) {
     return makeNaN(Sem, true, Negative, payload);
   }
 
@@ -500,7 +500,8 @@ private:
 
   void makeLargest(bool Neg = false);
   void makeSmallest(bool Neg = false);
-  void makeNaN(bool SNaN = false, bool Neg = false, const APInt *fill = 0);
+  void makeNaN(bool SNaN = false, bool Neg = false,
+               const APInt *fill = nullptr);
   static APFloat makeNaN(const fltSemantics &Sem, bool SNaN, bool Negative,
                          const APInt *fill);
   void makeInf(bool Neg = false);

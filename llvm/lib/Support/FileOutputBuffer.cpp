@@ -97,7 +97,7 @@ error_code FileOutputBuffer::create(StringRef FilePath,
 
 error_code FileOutputBuffer::commit(int64_t NewSmallerSize) {
   // Unmap buffer, letting OS flush dirty pages to file on disk.
-  Region.reset(0);
+  Region.reset(nullptr);
 
   // If requested, resize file as part of commit.
   if ( NewSmallerSize != -1 ) {

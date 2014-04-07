@@ -47,7 +47,7 @@ Input::Input(StringRef InputContent,
              void *DiagHandlerCtxt)
   : IO(Ctxt),
     Strm(new Stream(InputContent, SrcMgr)),
-    CurrentNode(NULL) {
+    CurrentNode(nullptr) {
   if (DiagHandler)
     SrcMgr.setDiagHandler(DiagHandler, DiagHandlerCtxt);
   DocIterator = Strm->begin();
@@ -351,7 +351,7 @@ Input::HNode *Input::createHNodes(Node *N) {
     return new EmptyHNode(N);
   } else {
     setError(N, "unknown node kind");
-    return NULL;
+    return nullptr;
   }
 }
 

@@ -47,7 +47,7 @@ namespace llvm {
   /// \param user_data - An argument which will be passed to the install error
   /// handler.
   void install_fatal_error_handler(fatal_error_handler_t handler,
-                                   void *user_data = 0);
+                                   void *user_data = nullptr);
 
   /// Restores default error handling behaviour.
   /// This must not be called between llvm_start_multithreaded() and
@@ -59,7 +59,7 @@ namespace llvm {
   /// remove_fatal_error_handler in its destructor.
   struct ScopedFatalErrorHandler {
     explicit ScopedFatalErrorHandler(fatal_error_handler_t handler,
-                                     void *user_data = 0) {
+                                     void *user_data = nullptr) {
       install_fatal_error_handler(handler, user_data);
     }
 
@@ -86,9 +86,9 @@ namespace llvm {
   /// This function calls abort(), and prints the optional message to stderr.
   /// Use the llvm_unreachable macro (that adds location info), instead of
   /// calling this function directly.
-  LLVM_ATTRIBUTE_NORETURN void llvm_unreachable_internal(const char *msg=0,
-                                                         const char *file=0,
-                                                         unsigned line=0);
+  LLVM_ATTRIBUTE_NORETURN void
+  llvm_unreachable_internal(const char *msg=nullptr, const char *file=nullptr,
+                            unsigned line=0);
 }
 
 /// Marks that the current location is not supposed to be reachable.

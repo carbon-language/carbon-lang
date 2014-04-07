@@ -49,7 +49,7 @@ class StringSwitch {
 
 public:
   explicit StringSwitch(StringRef S)
-  : Str(S), Result(0) { }
+  : Str(S), Result(nullptr) { }
 
   template<unsigned N>
   StringSwitch& Case(const char (&S)[N], const T& Value) {

@@ -23,9 +23,9 @@ namespace llvm {
 class SMLoc {
   const char *Ptr;
 public:
-  SMLoc() : Ptr(0) {}
+  SMLoc() : Ptr(nullptr) {}
 
-  bool isValid() const { return Ptr != 0; }
+  bool isValid() const { return Ptr != nullptr; }
 
   bool operator==(const SMLoc &RHS) const { return RHS.Ptr == Ptr; }
   bool operator!=(const SMLoc &RHS) const { return RHS.Ptr != Ptr; }

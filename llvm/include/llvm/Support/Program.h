@@ -87,11 +87,11 @@ struct ProcessInfo {
       const char **args, ///< A vector of strings that are passed to the
       ///< program.  The first element should be the name of the program.
       ///< The list *must* be terminated by a null char* entry.
-      const char **env = 0, ///< An optional vector of strings to use for
+      const char **env = nullptr, ///< An optional vector of strings to use for
       ///< the program's environment. If not provided, the current program's
       ///< environment will be used.
-      const StringRef **redirects = 0, ///< An optional array of pointers to
-      ///< paths. If the array is null, no redirection is done. The array
+      const StringRef **redirects = nullptr, ///< An optional array of pointers
+      ///< to paths. If the array is null, no redirection is done. The array
       ///< should have a size of at least three. The inferior process's
       ///< stdin(0), stdout(1), and stderr(2) will be redirected to the
       ///< corresponding paths.
@@ -107,11 +107,11 @@ struct ProcessInfo {
       ///< of memory can be allocated by process. If memory usage will be
       ///< higher limit, the child is killed and this call returns. If zero
       ///< - no memory limit.
-      std::string *ErrMsg = 0, ///< If non-zero, provides a pointer to a string
-      ///< instance in which error messages will be returned. If the string
-      ///< is non-empty upon return an error occurred while invoking the
+      std::string *ErrMsg = nullptr, ///< If non-zero, provides a pointer to a
+      ///< string instance in which error messages will be returned. If the
+      ///< string is non-empty upon return an error occurred while invoking the
       ///< program.
-      bool *ExecutionFailed = 0);
+      bool *ExecutionFailed = nullptr);
 
   /// Similar to ExecuteAndWait, but returns immediately.
   /// @returns The \see ProcessInfo of the newly launced process.
@@ -119,9 +119,9 @@ struct ProcessInfo {
   /// Wait until the process finished execution or win32 CloseHandle() API on
   /// ProcessInfo.ProcessHandle to avoid memory leaks.
   ProcessInfo
-  ExecuteNoWait(StringRef Program, const char **args, const char **env = 0,
-                const StringRef **redirects = 0, unsigned memoryLimit = 0,
-                std::string *ErrMsg = 0, bool *ExecutionFailed = 0);
+  ExecuteNoWait(StringRef Program, const char **args, const char **env = nullptr,
+                const StringRef **redirects = nullptr, unsigned memoryLimit = 0,
+                std::string *ErrMsg = nullptr, bool *ExecutionFailed = nullptr);
 
   /// Return true if the given arguments fit within system-specific
   /// argument length limits.
@@ -142,9 +142,9 @@ struct ProcessInfo {
       ///< will perform a non-blocking wait on the child process.
       bool WaitUntilTerminates, ///< If true, ignores \p SecondsToWait and waits
       ///< until child has terminated.
-      std::string *ErrMsg = 0 ///< If non-zero, provides a pointer to a string
-      ///< instance in which error messages will be returned. If the string
-      ///< is non-empty upon return an error occurred while invoking the
+      std::string *ErrMsg = nullptr ///< If non-zero, provides a pointer to a
+      ///< string instance in which error messages will be returned. If the
+      ///< string is non-empty upon return an error occurred while invoking the
       ///< program.
       );
   }

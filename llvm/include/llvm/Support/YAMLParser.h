@@ -235,7 +235,8 @@ class KeyValueNode : public Node {
   void anchor() override;
 public:
   KeyValueNode(std::unique_ptr<Document> &D)
-      : Node(NK_KeyValue, D, StringRef(), StringRef()), Key(0), Value(0) {}
+    : Node(NK_KeyValue, D, StringRef(), StringRef()), Key(nullptr),
+      Value(nullptr) {}
 
   /// @brief Parse and return the key.
   ///
@@ -274,7 +275,7 @@ template <class BaseT, class ValueT>
 class basic_collection_iterator
   : public std::iterator<std::forward_iterator_tag, ValueT> {
 public:
-  basic_collection_iterator() : Base(0) {}
+  basic_collection_iterator() : Base(nullptr) {}
   basic_collection_iterator(BaseT *B) : Base(B) {}
 
   ValueT *operator ->() const {
@@ -304,8 +305,8 @@ public:
     assert(Base && "Attempted to advance iterator past end!");
     Base->increment();
     // Create an end iterator.
-    if (Base->CurrentEntry == 0)
-      Base = 0;
+    if (Base->CurrentEntry == nullptr)
+      Base = nullptr;
     return *this;
   }
 
@@ -352,7 +353,7 @@ public:
   MappingNode(std::unique_ptr<Document> &D, StringRef Anchor, StringRef Tag,
               MappingType MT)
       : Node(NK_Mapping, D, Anchor, Tag), Type(MT), IsAtBeginning(true),
-        IsAtEnd(false), CurrentEntry(0) {}
+        IsAtEnd(false), CurrentEntry(nullptr) {}
 
   friend class basic_collection_iterator<MappingNode, KeyValueNode>;
   typedef basic_collection_iterator<MappingNode, KeyValueNode> iterator;
@@ -411,7 +412,7 @@ public:
       : Node(NK_Sequence, D, Anchor, Tag), SeqType(ST), IsAtBeginning(true),
         IsAtEnd(false),
         WasPreviousTokenFlowEntry(true), // Start with an imaginary ','.
-        CurrentEntry(0) {}
+        CurrentEntry(nullptr) {}
 
   friend class basic_collection_iterator<SequenceNode, Node>;
   typedef basic_collection_iterator<SequenceNode, Node> iterator;
@@ -526,7 +527,7 @@ private:
 /// @brief Iterator abstraction for Documents over a Stream.
 class document_iterator {
 public:
-  document_iterator() : Doc(0) {}
+  document_iterator() : Doc(nullptr) {}
   document_iterator(std::unique_ptr<Document> &D) : Doc(&D) {}
 
   bool operator ==(const document_iterator &Other) {
@@ -542,7 +543,7 @@ public:
   document_iterator operator ++() {
     assert(Doc != 0 && "incrementing iterator past the end.");
     if (!(*Doc)->skip()) {
-      Doc->reset(0);
+      Doc->reset(nullptr);
     } else {
       Stream &S = (*Doc)->stream;
       Doc->reset(new Document(S));

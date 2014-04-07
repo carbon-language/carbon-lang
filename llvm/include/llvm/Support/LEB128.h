@@ -77,7 +77,7 @@ inline unsigned encodeULEB128(uint64_t Value, uint8_t *p,
 
 
 /// Utility function to decode a ULEB128 value.
-inline uint64_t decodeULEB128(const uint8_t *p, unsigned *n = 0) {
+inline uint64_t decodeULEB128(const uint8_t *p, unsigned *n = nullptr) {
   const uint8_t *orig_p = p;
   uint64_t Value = 0;
   unsigned Shift = 0;
