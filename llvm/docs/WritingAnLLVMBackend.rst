@@ -51,7 +51,7 @@ These essential documents must be read before reading this document:
   Formation, SSA-based Optimization, Register Allocation, Prolog/Epilog Code
   Insertion, Late Machine Code Optimizations, and Code Emission.
 
-* :doc:`TableGenFundamentals` --- a document that describes the TableGen
+* :doc:`TableGen/index` --- a document that describes the TableGen
   (``tblgen``) application that manages domain-specific information to support
   LLVM code generation.  TableGen processes input from a target description
   file (``.td`` suffix) and generates C++ code that can be used for code

@@ -15,7 +15,8 @@ users of LLVM will not need to use this program.  It is only for assisting with
 writing an LLVM target backend.
 
 The input and output of :program:`tblgen` is beyond the scope of this short
-introduction.  Please see :doc:`../TableGenFundamentals`.
+introduction; please see the :doc:`introduction to TableGen
+<../TableGen/index>`.
 
 The *filename* argument specifies the name of a Target Description (``.td``)
 file to read as input.
