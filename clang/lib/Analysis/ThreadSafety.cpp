@@ -10,18 +10,20 @@
 // A intra-procedural analysis for thread safety (e.g. deadlocks and race
 // conditions), based off of an annotation system.
 //
-// See http://clang.llvm.org/docs/LanguageExtensions.html#thread-safety-annotation-checking
+// See http://clang.llvm.org/docs/ThreadSafetyAnalysis.html
 // for more information.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/Analyses/ThreadSafety.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Analysis/Analyses/PostOrderCFGView.h"
+#include "clang/Analysis/Analyses/ThreadSafety.h"
+#include "clang/Analysis/Analyses/ThreadSafetyTIL.h"
+#include "clang/Analysis/Analyses/ThreadSafetyCommon.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CFGStmtMap.h"
@@ -2362,16 +2364,21 @@ inline bool neverReturns(const CFGBlock* B) {
 /// at the end of each block, and issue warnings for thread safety violations.
 /// Each block in the CFG is traversed exactly once.
 void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
-  CFG *CFGraph = AC.getCFG();
-  if (!CFGraph) return;
-  const NamedDecl *D = dyn_cast_or_null<NamedDecl>(AC.getDecl());
+  // TODO: this whole function needs be rewritten as a visitor for CFGWalker.
+  // For now, we just use the walker to set things up.
+  threadSafety::CFGWalker walker;
+  if (!walker.init(AC))
+    return;
 
   // AC.dumpCFG(true);
+  // threadSafety::printSCFG(walker);
 
-  if (!D)
-    return;  // Ignore anonymous functions for now.
+  CFG *CFGraph = walker.CFGraph;
+  const NamedDecl *D = walker.FDecl;
+
   if (D->hasAttr<NoThreadSafetyAnalysisAttr>())
     return;
+
   // FIXME: Do something a bit more intelligent inside constructor and
   // destructor code.  Constructors and destructors must assume unique access
   // to 'this', so checks on member variable access is disabled, but we should
@@ -2387,7 +2394,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   // We need to explore the CFG via a "topological" ordering.
   // That way, we will be guaranteed to have information about required
   // predecessor locksets when exploring a new block.
-  PostOrderCFGView *SortedGraph = AC.getAnalysis<PostOrderCFGView>();
+  PostOrderCFGView *SortedGraph = walker.SortedGraph;
   PostOrderCFGView::CFGBlockSet VisitedBlocks(CFGraph);
 
   // Mark entry block as reachable
