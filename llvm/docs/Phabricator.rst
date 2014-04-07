@@ -99,7 +99,7 @@ line:
   Differential Revision: <URL>
 
 where ``<URL>`` is the URL for the code review, starting with
-``http://llvm-reviews.chandlerc.com/``.
+``http://reviews.llvm.org/``.
 
 Note that Arcanist will add this automatically.
 
@@ -113,7 +113,7 @@ Status
 Currently, we're testing Phabricator for use with Clang/LLVM. Please let us
 know whether you like it and what could be improved!
 
-.. _LLVM's Phabricator: http://llvm-reviews.chandlerc.com
-.. _Code Repository Browser: http://llvm-reviews.chandlerc.com/diffusion/
+.. _LLVM's Phabricator: http://reviews.llvm.org
+.. _Code Repository Browser: http://reviews.llvm.org/diffusion/
 .. _Arcanist Quick Start: http://www.phabricator.com/docs/phabricator/article/Arcanist_Quick_Start.html
 .. _Arcanist User Guide: http://www.phabricator.com/docs/phabricator/article/Arcanist_User_Guide.html
