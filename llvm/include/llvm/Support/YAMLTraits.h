@@ -32,7 +32,7 @@ namespace yaml {
 /// This class should be specialized by any type that needs to be converted
 /// to/from a YAML mapping.  For example:
 ///
-///     struct ScalarBitSetTraits<MyStruct> {
+///     struct MappingTraits<MyStruct> {
 ///       static void mapping(IO &io, MyStruct &s) {
 ///         io.mapRequired("name", s.name);
 ///         io.mapRequired("size", s.size);
