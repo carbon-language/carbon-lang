@@ -294,7 +294,10 @@ JITLoaderGDB::GetPluginNameStatic()
 JITLoaderSP
 JITLoaderGDB::CreateInstance(Process *process, bool force)
 {
-    JITLoaderSP jit_loader_sp(new JITLoaderGDB(process));
+    JITLoaderSP jit_loader_sp;
+    ArchSpec arch (process->GetTarget().GetArchitecture());
+    if (arch.GetTriple().getVendor() != llvm::Triple::Apple)
+        jit_loader_sp.reset(new JITLoaderGDB(process));
     return jit_loader_sp;
 }
 
