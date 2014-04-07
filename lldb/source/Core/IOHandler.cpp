@@ -410,8 +410,14 @@ IOHandlerEditline::GetLine (std::string &line)
             {
                 if (fgets(buffer, sizeof(buffer), in) == NULL)
                 {
+                    const int saved_errno = errno;
                     if (feof(in))
                         done = true;
+                    else if (ferror(in))
+                    {
+                        if (saved_errno != EINTR)
+                            done = true;
+                    }
                 }
                 else
                 {
