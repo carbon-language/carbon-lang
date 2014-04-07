@@ -67,6 +67,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
@@ -84,6 +85,7 @@
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Scalar.h"
@@ -468,7 +470,25 @@ static void setDebugLocFromInst(IRBuilder<> &B, const Value *Ptr) {
   else
     B.SetCurrentDebugLocation(DebugLoc());
 }
-
+/// \return string containing a file name and a line # for the given
+/// instruction.
+static format_object3<const char *, const char *, unsigned>
+getDebugLocString(const Instruction *I) {
+  if (!I)
+    return format<const char *, const char *, unsigned>("", "", "", 0U);
+  MDNode *N = I->getMetadata("dbg");
+  if (!N) {
+    const StringRef ModuleName =
+        I->getParent()->getParent()->getParent()->getModuleIdentifier();
+    return format<const char *, const char *, unsigned>("%s", ModuleName.data(),
+                                                        "", 0U);
+  }
+  const DILocation Loc(N);
+  const unsigned LineNo = Loc.getLineNumber();
+  const char *DirName = Loc.getDirectory().data();
+  const char *FileName = Loc.getFilename().data();
+  return format("%s/%s:%u", DirName, FileName, LineNo);
+}
 /// LoopVectorizationLegality checks if it is legal to vectorize a loop, and
 /// to what vectorization factor.
 /// This class does not look at the profitability of vectorization, only the
@@ -1065,8 +1085,10 @@ struct LoopVectorize : public FunctionPass {
 
   bool processLoop(Loop *L) {
     assert(L->empty() && "Only process inner loops.");
-    DEBUG(dbgs() << "LV: Checking a loop in \"" <<
-          L->getHeader()->getParent()->getName() << "\"\n");
+    DEBUG(dbgs() << "LV: Checking a loop in \""
+                 << L->getHeader()->getParent()->getName() << "\" from "
+                 << getDebugLocString(L->getHeader()->getFirstNonPHIOrDbg())
+                 << "\n");
 
     LoopVectorizeHints Hints(L, DisableUnrolling);
 
@@ -1129,8 +1151,10 @@ struct LoopVectorize : public FunctionPass {
     unsigned UF = CM.selectUnrollFactor(OptForSize, Hints.Unroll, VF.Width,
                                         VF.Cost);
 
-    DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF.Width << ") in "<<
-          F->getParent()->getModuleIdentifier() << '\n');
+    DEBUG(dbgs() << "LV: Found a vectorizable loop ("
+                 << VF.Width << ") in "
+                 << getDebugLocString(L->getHeader()->getFirstNonPHIOrDbg())
+                 << '\n');
     DEBUG(dbgs() << "LV: Unroll Factor is " << UF << '\n');
 
     if (VF.Width == 1) {
