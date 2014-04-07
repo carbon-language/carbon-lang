@@ -76,8 +76,7 @@
 #include <cstdarg>
 using namespace llvm;
 
-static cl::opt<bool> DisableDebugInfoVerifier("disable-debug-info-verifier",
-                                              cl::init(true));
+static cl::opt<bool> VerifyDebugInfo("verify-debug-info", cl::init(false));
 
 namespace {
 class Verifier : public InstVisitor<Verifier> {
@@ -149,7 +148,7 @@ public:
     InstsInThisBlock.clear();
     PersonalityFn = 0;
 
-    if (!DisableDebugInfoVerifier)
+    if (VerifyDebugInfo)
       // Verify Debug Info.
       verifyDebugInfo();
 
@@ -187,7 +186,7 @@ public:
     visitModuleFlags(M);
     visitModuleIdents(M);
 
-    if (!DisableDebugInfoVerifier) {
+    if (VerifyDebugInfo) {
       Finder.reset();
       Finder.processModule(M);
       // Verify Debug Info.
@@ -2103,7 +2102,7 @@ void Verifier::visitInstruction(Instruction &I) {
   MDNode *MD = I.getMetadata(LLVMContext::MD_range);
   Assert1(!MD || isa<LoadInst>(I), "Ranges are only for loads!", &I);
 
-  if (!DisableDebugInfoVerifier) {
+  if (VerifyDebugInfo) {
     MD = I.getMetadata(LLVMContext::MD_dbg);
     Finder.processLocation(*M, DILocation(MD));
   }
@@ -2307,11 +2306,11 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     MDNode *MD = cast<MDNode>(CI.getArgOperand(0));
     Assert1(MD->getNumOperands() == 1,
                 "invalid llvm.dbg.declare intrinsic call 2", &CI);
-    if (!DisableDebugInfoVerifier)
+    if (VerifyDebugInfo)
       Finder.processDeclare(*M, cast<DbgDeclareInst>(&CI));
   } break;
   case Intrinsic::dbg_value: { //llvm.dbg.value
-    if (!DisableDebugInfoVerifier) {
+    if (VerifyDebugInfo) {
       Assert1(CI.getArgOperand(0) && isa<MDNode>(CI.getArgOperand(0)),
               "invalid llvm.dbg.value intrinsic call 1", &CI);
       Finder.processValue(*M, cast<DbgValueInst>(&CI));
@@ -2381,7 +2380,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 
 void Verifier::verifyDebugInfo() {
   // Verify Debug Info.
-  if (!DisableDebugInfoVerifier) {
+  if (VerifyDebugInfo) {
     for (DICompileUnit CU : Finder.compile_units()) {
       Assert1(CU.Verify(), "DICompileUnit does not Verify!", CU);
     }
