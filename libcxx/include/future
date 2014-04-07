@@ -1872,7 +1872,7 @@ template <class _Fp>
 __packaged_task_function<_Rp(_ArgTypes...)>::__packaged_task_function(_Fp&& __f)
     : __f_(nullptr)
 {
-    typedef typename remove_reference<_Fp>::type _FR;
+    typedef typename remove_reference<typename decay<_Fp>::type>::type _FR;
     typedef __packaged_task_func<_FR, allocator<_FR>, _Rp(_ArgTypes...)> _FF;
     if (sizeof(_FF) <= sizeof(__buf_))
     {
@@ -1897,7 +1897,7 @@ __packaged_task_function<_Rp(_ArgTypes...)>::__packaged_task_function(
     : __f_(nullptr)
 {
     typedef allocator_traits<_Alloc> __alloc_traits;
-    typedef typename remove_reference<_Fp>::type _FR;
+    typedef typename remove_reference<typename decay<_Fp>::type>::type _FR;
     typedef __packaged_task_func<_FR, _Alloc, _Rp(_ArgTypes...)> _FF;
     if (sizeof(_FF) <= sizeof(__buf_))
     {
