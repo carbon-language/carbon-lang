@@ -112,6 +112,16 @@ COFF-X86-64-NEXT:     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_S
 COFF-X86-64-NEXT:     Alignment: 1
 COFF-X86-64-NEXT:     SectionData: 48656C6C6F20576F726C642100
 
+COFF-X86-64:        - Name: '.CRT$XCU'
+COFF-X86-64-NEXT:     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ ]
+COFF-X86-64-NEXT:     Alignment: 8
+COFF-X86-64-NEXT:     SectionData:  0000000000000000
+
+COFF-X86-64:     Relocations:
+COFF-X86-64-NEXT:       - VirtualAddress: 0
+COFF-X86-64-NEXT:         SymbolName: '??__Ex@@YAXXZ'
+COFF-X86-64-NEXT:         Type: IMAGE_REL_AMD64_ADDR64
+
 COFF-X86-64: symbols:
 COFF-X86-64-NEXT:   - Name: .text
 COFF-X86-64-NEXT:     Value: 0
@@ -143,7 +153,7 @@ COFF-X86-64:        - Name: main
 COFF-X86-64-NEXT:     Value: 0
 COFF-X86-64-NEXT:     SectionNumber: 1
 COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL
-COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_NULL
+COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_FUNCTION
 COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_EXTERNAL
 
 COFF-X86-64:        - Name: L.str
@@ -166,4 +176,10 @@ COFF-X86-64-NEXT:     SectionNumber: 0
 COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL
 COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_NULL
 COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_EXTERNAL
-COFF-X86-64-NOT:      NumberOfAuxSymbols
+
+COFF-X86-64:        - Name: '??__Ex@@YAXXZ'
+COFF-X86-64-NEXT:     Value: 0
+COFF-X86-64-NEXT:     SectionNumber: 3
+COFF-X86-64-NEXT:     SimpleType: IMAGE_SYM_TYPE_NULL
+COFF-X86-64-NEXT:     ComplexType: IMAGE_SYM_DTYPE_FUNCTION
+COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_STATIC

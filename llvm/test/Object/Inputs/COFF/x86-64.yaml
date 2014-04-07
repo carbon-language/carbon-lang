@@ -30,6 +30,16 @@ sections:
     Characteristics: [IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE, ] # 0xc0100040
     SectionData:  !hex "48656C6C6F20576F726C642100" # |Hello World!.|
 
+  - !Section
+    Name: '.CRT$XCU'
+    Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ ]
+    Alignment: 8
+    SectionData:  !hex "0000000000000000"
+    Relocations:
+      - VirtualAddress: 0
+        SymbolName: '??__Ex@@YAXXZ'
+        Type: IMAGE_REL_AMD64_ADDR64
+
 symbols:
   - !Symbol
     Name: .text
@@ -91,3 +101,10 @@ symbols:
     ComplexType: IMAGE_SYM_DTYPE_NULL # (0)
     StorageClass: IMAGE_SYM_CLASS_EXTERNAL # (2)
 
+  - !Symbol
+    Name: '??__Ex@@YAXXZ'
+    Value: 0
+    SectionNumber: 3
+    SimpleType: IMAGE_SYM_TYPE_NULL # (0)
+    ComplexType: IMAGE_SYM_DTYPE_FUNCTION # (2)
+    StorageClass: IMAGE_SYM_CLASS_STATIC # (3)

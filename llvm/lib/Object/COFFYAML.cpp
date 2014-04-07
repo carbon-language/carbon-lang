@@ -132,8 +132,8 @@ void ScalarEnumerationTraits<COFF::SymbolComplexType>::enumeration(
   ECase(IMAGE_SYM_DTYPE_ARRAY);
 }
 
-void ScalarEnumerationTraits<COFF::RelocationTypeX86>::enumeration(
-    IO &IO, COFF::RelocationTypeX86 &Value) {
+void ScalarEnumerationTraits<COFF::RelocationTypeI386>::enumeration(
+    IO &IO, COFF::RelocationTypeI386 &Value) {
   ECase(IMAGE_REL_I386_ABSOLUTE);
   ECase(IMAGE_REL_I386_DIR16);
   ECase(IMAGE_REL_I386_REL16);
@@ -145,6 +145,10 @@ void ScalarEnumerationTraits<COFF::RelocationTypeX86>::enumeration(
   ECase(IMAGE_REL_I386_TOKEN);
   ECase(IMAGE_REL_I386_SECREL7);
   ECase(IMAGE_REL_I386_REL32);
+}
+
+void ScalarEnumerationTraits<COFF::RelocationTypeAMD64>::enumeration(
+    IO &IO, COFF::RelocationTypeAMD64 &Value) {
   ECase(IMAGE_REL_AMD64_ABSOLUTE);
   ECase(IMAGE_REL_AMD64_ADDR64);
   ECase(IMAGE_REL_AMD64_ADDR32);
@@ -272,22 +276,33 @@ struct NHeaderCharacteristics {
   COFF::Characteristics Characteristics;
 };
 
+template <typename RelocType>
 struct NType {
-  NType(IO &) : Type(COFF::RelocationTypeX86(0)) {}
-  NType(IO &, uint16_t T) : Type(COFF::RelocationTypeX86(T)) {}
+  NType(IO &) : Type(RelocType(0)) {}
+  NType(IO &, uint16_t T) : Type(RelocType(T)) {}
   uint16_t denormalize(IO &) { return Type; }
-  COFF::RelocationTypeX86 Type;
+  RelocType Type;
 };
 
 }
 
 void MappingTraits<COFFYAML::Relocation>::mapping(IO &IO,
                                                   COFFYAML::Relocation &Rel) {
-  MappingNormalization<NType, uint16_t> NT(IO, Rel.Type);
-
   IO.mapRequired("VirtualAddress", Rel.VirtualAddress);
   IO.mapRequired("SymbolName", Rel.SymbolName);
-  IO.mapRequired("Type", NT->Type);
+
+  COFF::header &H = *static_cast<COFF::header *>(IO.getContext());
+  if (H.Machine == COFF::IMAGE_FILE_MACHINE_I386) {
+    MappingNormalization<NType<COFF::RelocationTypeI386>, uint16_t> NT(
+        IO, Rel.Type);
+    IO.mapRequired("Type", NT->Type);
+  } else if (H.Machine == COFF::IMAGE_FILE_MACHINE_AMD64) {
+    MappingNormalization<NType<COFF::RelocationTypeAMD64>, uint16_t> NT(
+        IO, Rel.Type);
+    IO.mapRequired("Type", NT->Type);
+  } else {
+    IO.mapRequired("Type", Rel.Type);
+  }
 }
 
 void MappingTraits<COFF::header>::mapping(IO &IO, COFF::header &H) {
@@ -297,6 +312,7 @@ void MappingTraits<COFF::header>::mapping(IO &IO, COFF::header &H) {
 
   IO.mapRequired("Machine", NM->Machine);
   IO.mapOptional("Characteristics", NC->Characteristics);
+  IO.setContext(static_cast<void *>(&H));
 }
 
 void MappingTraits<COFF::AuxiliaryFunctionDefinition>::mapping(

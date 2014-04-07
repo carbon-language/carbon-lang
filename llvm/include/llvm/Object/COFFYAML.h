@@ -121,8 +121,13 @@ struct ScalarEnumerationTraits<COFF::SymbolComplexType> {
 };
 
 template <>
-struct ScalarEnumerationTraits<COFF::RelocationTypeX86> {
-  static void enumeration(IO &IO, COFF::RelocationTypeX86 &Value);
+struct ScalarEnumerationTraits<COFF::RelocationTypeI386> {
+  static void enumeration(IO &IO, COFF::RelocationTypeI386 &Value);
+};
+
+template <>
+struct ScalarEnumerationTraits<COFF::RelocationTypeAMD64> {
+  static void enumeration(IO &IO, COFF::RelocationTypeAMD64 &Value);
 };
 
 template <>

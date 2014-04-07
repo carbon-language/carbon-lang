@@ -275,7 +275,7 @@ namespace COFF {
     uint16_t Type;
   };
 
-  enum RelocationTypeX86 {
+  enum RelocationTypeI386 {
     IMAGE_REL_I386_ABSOLUTE = 0x0000,
     IMAGE_REL_I386_DIR16    = 0x0001,
     IMAGE_REL_I386_REL16    = 0x0002,
@@ -286,8 +286,10 @@ namespace COFF {
     IMAGE_REL_I386_SECREL   = 0x000B,
     IMAGE_REL_I386_TOKEN    = 0x000C,
     IMAGE_REL_I386_SECREL7  = 0x000D,
-    IMAGE_REL_I386_REL32    = 0x0014,
+    IMAGE_REL_I386_REL32    = 0x0014
+  };
 
+  enum RelocationTypeAMD64 {
     IMAGE_REL_AMD64_ABSOLUTE  = 0x0000,
     IMAGE_REL_AMD64_ADDR64    = 0x0001,
     IMAGE_REL_AMD64_ADDR32    = 0x0002,
