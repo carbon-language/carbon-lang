@@ -1,10 +1,3 @@
-; Check that madd.[ds], msub.[ds], nmadd.[ds], and nmsub.[ds] are supported
-; correctly.
-; The spec for nmadd.[ds], and nmsub.[ds] does not state that they obey the
-; the Has2008 and ABS2008 configuration bits which govern the conformance to
-; IEEE 754 (1985) and IEEE 754 (2008). These instructions are therefore only
-; available when -enable-no-nans-fp-math is given.
-
 ; RUN: llc < %s -march=mipsel -mcpu=mips32r2 -enable-no-nans-fp-math | FileCheck %s -check-prefix=32R2 -check-prefix=CHECK
 ; RUN: llc < %s -march=mips64el -mcpu=mips64r2 -mattr=n64 -enable-no-nans-fp-math | FileCheck %s -check-prefix=64R2 -check-prefix=CHECK
 ; RUN: llc < %s -march=mipsel -mcpu=mips32r2 | FileCheck %s -check-prefix=32R2NAN -check-prefix=CHECK
@@ -12,7 +5,6 @@
 
 define float @FOO0float(float %a, float %b, float %c) nounwind readnone {
 entry:
-; CHECK-LABEL: FOO0float:
 ; CHECK: madd.s 
   %mul = fmul float %a, %b
   %add = fadd float %mul, %c
@@ -22,7 +14,6 @@ entry:
 
 define float @FOO1float(float %a, float %b, float %c) nounwind readnone {
 entry:
-; CHECK-LABEL: FOO1float:
 ; CHECK: msub.s 
   %mul = fmul float %a, %b
   %sub = fsub float %mul, %c
@@ -32,7 +23,6 @@ entry:
 
 define float @FOO2float(float %a, float %b, float %c) nounwind readnone {
 entry:
-; CHECK-LABEL: FOO2float:
 ; 32R2: nmadd.s 
 ; 64R2: nmadd.s 
 ; 32R2NAN: madd.s 
@@ -45,7 +35,6 @@ entry:
 
 define float @FOO3float(float %a, float %b, float %c) nounwind readnone {
 entry:
-; CHECK-LABEL: FOO3float:
 ; 32R2: nmsub.s 
 ; 64R2: nmsub.s 
 ; 32R2NAN: msub.s 
@@ -58,7 +47,6 @@ entry:
 
 define double @FOO10double(double %a, double %b, double %c) nounwind readnone {
 entry:
-; CHECK-LABEL: FOO10double:
 ; CHECK: madd.d
   %mul = fmul double %a, %b
   %add = fadd double %mul, %c
@@ -68,7 +56,6 @@ entry:
 
 define double @FOO11double(double %a, double %b, double %c) nounwind readnone {
 entry:
-; CHECK-LABEL: FOO11double:
 ; CHECK: msub.d
   %mul = fmul double %a, %b
   %sub = fsub double %mul, %c
@@ -78,7 +65,6 @@ entry:
 
 define double @FOO12double(double %a, double %b, double %c) nounwind readnone {
 entry:
-; CHECK-LABEL: FOO12double:
 ; 32R2: nmadd.d 
 ; 64R2: nmadd.d 
 ; 32R2NAN: madd.d 
@@ -91,7 +77,6 @@ entry:
 
 define double @FOO13double(double %a, double %b, double %c) nounwind readnone {
 entry:
-; CHECK-LABEL: FOO13double:
 ; 32R2: nmsub.d 
 ; 64R2: nmsub.d 
 ; 32R2NAN: msub.d 

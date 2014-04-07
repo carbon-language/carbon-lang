@@ -1,20 +1,21 @@
-; Check that abs.[ds] is selected and does not depend on -enable-no-nans-fp-math
-; They obey the Has2008 and ABS2008 configuration bits which govern the
-; conformance to IEEE 754 (1985) and IEEE 754 (2008). When these bits are not
-; present, they confirm to 1985.
-; In 1985 mode, abs.[ds] are arithmetic (i.e. they raise invalid operation
-; exceptions when given NaN's). In 2008 mode, they are non-arithmetic (i.e.
-; they are copies and don't raise any exceptions).
-
-; RUN: llc  < %s -mtriple=mipsel-linux-gnu -mcpu=mips32 | FileCheck %s
-; RUN: llc  < %s -mtriple=mipsel-linux-gnu -mcpu=mips32r2 | FileCheck %s
-; RUN: llc  < %s -mtriple=mipsel-linux-gnu -mcpu=mips32 -enable-no-nans-fp-math | FileCheck %s
+; RUN: llc  < %s -mtriple=mipsel-linux-gnu -mcpu=mips32 | FileCheck %s -check-prefix=32
+; RUN: llc  < %s -mtriple=mipsel-linux-gnu -mcpu=mips32r2 | FileCheck %s -check-prefix=32R2
+; RUN: llc  < %s -mtriple=mips64el-linux-gnu -mcpu=mips64 -mattr=n64 | FileCheck %s -check-prefix=64
+; RUN: llc  < %s -mtriple=mips64el-linux-gnu -mcpu=mips64r2 -mattr=n64 | FileCheck %s -check-prefix=64R2
+; RUN: llc  < %s -mtriple=mipsel-linux-gnu -mcpu=mips32 -enable-no-nans-fp-math | FileCheck %s -check-prefix=NO-NAN
 
 define float @foo0(float %a) nounwind readnone {
 entry:
 
-; CHECK-LABEL: foo0
-; CHECK: abs.s
+; 32: lui  $[[T0:[0-9]+]], 32767
+; 32: ori  $[[MSK0:[0-9]+]], $[[T0]], 65535
+; 32: and  $[[AND:[0-9]+]], ${{[0-9]+}}, $[[MSK0]]
+; 32: mtc1 $[[AND]], $f0
+
+; 32R2: ins  $[[INS:[0-9]+]], $zero, 31, 1
+; 32R2: mtc1 $[[INS]], $f0
+
+; NO-NAN: abs.s
 
   %call = tail call float @fabsf(float %a) nounwind readnone
   ret float %call
@@ -25,8 +26,24 @@ declare float @fabsf(float) nounwind readnone
 define double @foo1(double %a) nounwind readnone {
 entry:
 
-; CHECK-LABEL: foo1:
-; CHECK: abs.d
+; 32: lui  $[[T0:[0-9]+]], 32767
+; 32: ori  $[[MSK0:[0-9]+]], $[[T0]], 65535
+; 32: and  $[[AND:[0-9]+]], ${{[0-9]+}}, $[[MSK0]]
+; 32: mtc1 $[[AND]], $f1
+
+; 32R2: ins  $[[INS:[0-9]+]], $zero, 31, 1
+; 32R2: mtc1 $[[INS]], $f1
+
+; 64: daddiu  $[[T0:[0-9]+]], $zero, 1
+; 64: dsll    $[[T1:[0-9]+]], ${{[0-9]+}}, 63
+; 64: daddiu  $[[MSK0:[0-9]+]], $[[T1]], -1
+; 64: and     $[[AND:[0-9]+]], ${{[0-9]+}}, $[[MSK0]]
+; 64: dmtc1   $[[AND]], $f0
+
+; 64R2: dins  $[[INS:[0-9]+]], $zero, 63, 1
+; 64R2: dmtc1 $[[INS]], $f0
+
+; NO-NAN: abs.d
 
   %call = tail call double @fabs(double %a) nounwind readnone
   ret double %call
