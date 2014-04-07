@@ -376,8 +376,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     if (ConstantFPSDNode *FP = dyn_cast<ConstantFPSDNode>(N))
       Imm = FP->getValueAPF().bitcastToAPInt().getZExtValue();
     else {
-      ConstantSDNode *C = dyn_cast<ConstantSDNode>(N);
-      assert(C);
+      ConstantSDNode *C = cast<ConstantSDNode>(N);
       Imm = C->getZExtValue();
     }
 
