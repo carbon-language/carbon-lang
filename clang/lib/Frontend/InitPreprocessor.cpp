@@ -508,10 +508,6 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   }
 
   if (LangOpts.MicrosoftExt) {
-    // Both __PRETTY_FUNCTION__ and __FUNCTION__ are GCC extensions, however
-    // VC++ appears to only like __FUNCTION__.
-    Builder.defineMacro("__PRETTY_FUNCTION__", "__FUNCTION__");
-    // Work around some issues with Visual C++ headers.
     if (LangOpts.WChar) {
       // wchar_t supported as a keyword.
       Builder.defineMacro("_WCHAR_T_DEFINED");
