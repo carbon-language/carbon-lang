@@ -312,26 +312,29 @@ til::SExpr *SExprBuilder::translateBinaryConditionalOperator(
 // Build a complete SCFG from a clang CFG.
 class SCFGBuilder : public CFGVisitor {
 public:
-  // return true if E should be included in the SCFG
-  bool includeExpr(til::SExpr* E) {
+  til::Variable *addStatement(til::SExpr* E, const Stmt *S) {
     if (!E)
-      return false;
-    if (E->opcode() == til::COP_Variable)
-      return false;
-    if (E->opcode() == til::COP_LiteralPtr)
-      return false;
-    return true;
+      return 0;
+    if (til::ThreadSafetyTIL::isTrivial(E))
+      return 0;
+
+    til::Variable *V = new (Arena) til::Variable(til::Variable::VK_Let, E);
+    V->setID(CurrentBlockID, CurrentVarID++);
+    CurrentBB->addInstr(V);
+    if (S)
+      BuildEx.insertStmt(S, V);
+    return V;
   }
 
   // Enter the CFG for Decl D, and perform any initial setup operations.
   void enterCFG(CFG *Cfg, const NamedDecl *D, const CFGBlock *First) {
-    Scfg = new til::SCFG(Arena, Cfg->getNumBlockIDs());
+    Scfg = new (Arena) til::SCFG(Arena, Cfg->getNumBlockIDs());
     CallCtx = new SExprBuilder::CallingContext(D);
   }
 
   // Enter a CFGBlock.
   void enterCFGBlock(const CFGBlock *B) {
-    CurrentBB = new til::BasicBlock(Arena, 0, B->size());
+    CurrentBB = new (Arena) til::BasicBlock(Arena, 0, B->size());
     CurrentBB->setBlockID(CurrentBlockID);
     CurrentVarID = 0;
     Scfg->add(CurrentBB);
@@ -340,16 +343,17 @@ public:
   // Process an ordinary statement.
   void handleStatement(const Stmt *S) {
     til::SExpr *E = BuildEx.translate(S, CallCtx);
-    if (includeExpr(E)) {
-      til::Variable *V = new til::Variable(til::Variable::VK_Let, E);
-      V->setID(CurrentBlockID, CurrentVarID++);
-      CurrentBB->addInstr(V);
-      BuildEx.insertStmt(S, V);
-    }
+    addStatement(E, S);
   }
 
   // Process a destructor call
-  void handleDestructorCall(const VarDecl *VD, const CXXDestructorDecl *DD) {}
+  void handleDestructorCall(const VarDecl *VD, const CXXDestructorDecl *DD) {
+    til::SExpr *Sf = new (Arena) til::LiteralPtr(VD);
+    til::SExpr *Dr = new (Arena) til::LiteralPtr(DD);
+    til::SExpr *Ap = new (Arena) til::Apply(Dr, Sf);
+    til::SExpr *E = new (Arena) til::Call(Ap, 0);
+    addStatement(E, nullptr);
+  }
 
   // Process a successor edge.
   void handleSuccessor(const CFGBlock *Succ) {}
@@ -364,12 +368,21 @@ public:
   }
 
   // Leave the CFG, and perform any final cleanup operations.
-  void exitCFG(const CFGBlock *Last) {}
+  void exitCFG(const CFGBlock *Last) {
+    if (CallCtx) {
+      delete CallCtx;
+      CallCtx = nullptr;
+    }
+  }
 
   SCFGBuilder(til::MemRegionRef A)
       : Arena(A), Scfg(0), CurrentBB(0), CurrentBlockID(0),
-        BuildEx(A, new SExprBuilder::StatementMap())
+        CallCtx(0), SMap(new SExprBuilder::StatementMap()),
+        BuildEx(A, SMap)
   { }
+  ~SCFGBuilder() {
+    delete SMap;
+  }
 
   til::SCFG *getCFG() const { return Scfg; }
 
@@ -380,8 +393,9 @@ private:
   unsigned CurrentBlockID;
   unsigned CurrentVarID;
 
-  SExprBuilder BuildEx;
   SExprBuilder::CallingContext *CallCtx;
+  SExprBuilder::StatementMap *SMap;
+  SExprBuilder BuildEx;
 };
 
 

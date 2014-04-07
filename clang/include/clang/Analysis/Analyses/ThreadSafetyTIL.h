@@ -71,7 +71,7 @@ private:
   };
 
 public:
-  MemRegionRef() : Allocator(0) {}
+  MemRegionRef() : Allocator(nullptr) {}
   MemRegionRef(llvm::BumpPtrAllocator *A) : Allocator(A) {}
 
   void *allocate(size_t Sz) {
@@ -110,14 +110,14 @@ using llvm::StringRef;
 // suitable for use with bump pointer allocation.
 template <class T> class SimpleArray {
 public:
-  SimpleArray() : Data(0), Size(0), Capacity(0) {}
+  SimpleArray() : Data(nullptr), Size(0), Capacity(0) {}
   SimpleArray(T *Dat, size_t Cp, size_t Sz = 0)
       : Data(Dat), Size(0), Capacity(Cp) {}
   SimpleArray(MemRegionRef A, size_t Cp)
       : Data(A.allocateT<T>(Cp)), Size(0), Capacity(Cp) {}
   SimpleArray(SimpleArray<T> &A, bool Steal)
       : Data(A.Data), Size(A.Size), Capacity(A.Capacity) {
-    A.Data = 0;
+    A.Data = nullptr;
     A.Size = 0;
     A.Capacity = 0;
   }
@@ -216,7 +216,43 @@ private:
   SExpr();
 };
 
-typedef SExpr* SExprRef;
+
+// Class for owning references to SExprs.
+// Includes attach/detach logic for counting variable references and lazy
+// rewriting strategies.
+class SExprRef {
+public:
+  SExprRef() : Ptr(nullptr) { }
+  SExprRef(std::nullptr_t P) : Ptr(nullptr) { }
+  SExprRef(SExprRef &&R) : Ptr(R.Ptr) { }
+
+  // Defined after Variable and Future, below.
+  inline SExprRef(SExpr *P);
+  inline ~SExprRef();
+
+  SExpr       *get()       { return Ptr; }
+  const SExpr *get() const { return Ptr; }
+
+  SExpr       *operator->()       { return get(); }
+  const SExpr *operator->() const { return get(); }
+
+  SExpr       &operator*()        { return *Ptr; }
+  const SExpr &operator*() const  { return *Ptr; }
+
+  bool operator==(const SExprRef& R) const { return Ptr == R.Ptr; }
+  bool operator==(const SExpr* P)    const { return Ptr == P; }
+  bool operator==(std::nullptr_t P)  const { return Ptr == nullptr; }
+
+  inline void reset(SExpr *E);
+
+private:
+  inline void attach();
+  inline void detach();
+
+  SExprRef(const SExprRef& R) : Ptr(R.Ptr) { }
+
+  SExpr *Ptr;
+};
 
 
 // Contains various helper functions for SExprs.
@@ -226,13 +262,92 @@ public:
 
   static inline bool isTrivial(SExpr *E) {
     unsigned Op = E->opcode();
-    return Op == COP_Variable || Op == COP_Literal;
+    return Op == COP_Variable || Op == COP_Literal || Op == COP_LiteralPtr;
   }
 
   static inline bool isLargeValue(SExpr *E) {
     unsigned Op = E->opcode();
     return (Op >= COP_Function && Op <= COP_Code);
   }
+};
+
+
+class Function;
+class SFunction;
+class BasicBlock;
+
+
+// A named variable, e.g. "x".
+//
+// There are two distinct places in which a Variable can appear in the AST.
+// A variable declaration introduces a new variable, and can occur in 3 places:
+//   Let-expressions:           (Let (x = t) u)
+//   Functions:                 (Function (x : t) u)
+//   Self-applicable functions  (SFunction (x) t)
+//
+// If a variable occurs in any other location, it is a reference to an existing
+// variable declaration -- e.g. 'x' in (x * y + z). To save space, we don't
+// allocate a separate AST node for variable references; a reference is just a
+// pointer to the original declaration.
+class Variable : public SExpr {
+public:
+  static bool classof(const SExpr *E) { return E->opcode() == COP_Variable; }
+
+  // Let-variable, function parameter, or self-variable
+  enum VariableKind {
+    VK_Let,
+    VK_Fun,
+    VK_SFun
+  };
+
+  // These are defined after SExprRef contructor, below
+  inline Variable(VariableKind K, SExpr *D = nullptr,
+                  const clang::ValueDecl *Cvd = nullptr);
+  inline Variable(const clang::ValueDecl *Cvd, SExpr *D = nullptr);
+  inline Variable(const Variable &Vd, SExpr *D);
+
+  VariableKind kind() const { return static_cast<VariableKind>(Flags); }
+
+  StringRef name() const { return Cvdecl ? Cvdecl->getName() : "_x"; }
+  const clang::ValueDecl *clangDecl() const { return Cvdecl; }
+
+  // Returns the definition (for let vars) or type (for parameter & self vars)
+  SExpr *definition() { return Definition.get(); }
+
+  void attachVar() const { ++NumUses; }
+  void detachVar() const { --NumUses; }
+
+  unsigned getID() { return Id; }
+  unsigned getBlockID() { return BlockID; }
+
+  void setID(unsigned Bid, unsigned I) {
+    BlockID = static_cast<unsigned short>(Bid);
+    Id = static_cast<unsigned short>(I);
+  }
+
+  template <class V> typename V::R_SExpr traverse(V &Visitor) {
+    // This routine is only called for variable references.
+    return Visitor.reduceVariableRef(this);
+  }
+
+  template <class C> typename C::CType compare(Variable* E, C& Cmp) {
+    return Cmp.compareVariableRefs(this, E);
+  }
+
+private:
+  friend class Function;
+  friend class SFunction;
+  friend class BasicBlock;
+
+  // Function, SFunction, and BasicBlock will reset the kind.
+  void setKind(VariableKind K) { Flags = K; }
+
+  SExprRef Definition;             // The TIL type or definition
+  const clang::ValueDecl *Cvdecl;  // The clang declaration for this variable.
+
+  unsigned short BlockID;
+  unsigned short Id;
+  mutable int NumUses;
 };
 
 
@@ -248,18 +363,20 @@ public:
     FS_done
   };
 
-  Future() : SExpr(COP_Future), Status(FS_pending), Result(0), Location(0) {}
+  Future() :
+    SExpr(COP_Future), Status(FS_pending), Result(nullptr), Location(nullptr)
+  {}
   virtual ~Future() {}
 
   // Registers the location in the AST where this future is stored.
   // Forcing the future will automatically update the AST.
-  static inline void registerLocation(SExpr **Member) {
-    if (Future *F = dyn_cast_or_null<Future>(*Member))
+  static inline void registerLocation(SExprRef *Member) {
+    if (Future *F = dyn_cast_or_null<Future>(Member->get()))
       F->Location = Member;
   }
 
   // A lazy rewriting strategy should subclass Future and override this method.
-  virtual SExpr *create() { return 0; }
+  virtual SExpr *create() { return nullptr; }
 
   // Return the result of this future if it exists, otherwise return null.
   SExpr *maybeGetResult() {
@@ -273,7 +390,7 @@ public:
       force();
       return Result;
     case FS_evaluating:
-      return 0; // infinite loop; illegal recursion.
+      return nullptr; // infinite loop; illegal recursion.
     case FS_done:
       return Result;
     }
@@ -292,20 +409,81 @@ public:
 
 private:
   // Force the future.
-  void force() {
-    Status = FS_evaluating;
-    SExpr *R = create();
-    Result = R;
-    if (Location) {
-      *Location = R;
-    }
-    Status = FS_done;
-  }
+  inline void force();
 
   FutureStatus Status;
   SExpr *Result;
-  SExpr **Location;
+  SExprRef *Location;
 };
+
+
+
+void SExprRef::attach() {
+  if (!Ptr)
+    return;
+
+  TIL_Opcode Op = Ptr->opcode();
+  if (Op == COP_Variable) {
+    cast<Variable>(Ptr)->attachVar();
+  }
+  else if (Op == COP_Future) {
+    cast<Future>(Ptr)->registerLocation(this);
+  }
+}
+
+void SExprRef::detach() {
+  if (Ptr && Ptr->opcode() == COP_Variable) {
+    cast<Variable>(Ptr)->detachVar();
+  }
+}
+
+SExprRef::SExprRef(SExpr *P) : Ptr(P) {
+  if (P)
+    attach();
+}
+
+SExprRef::~SExprRef() {
+  detach();
+}
+
+void SExprRef::reset(SExpr *P) {
+  if (Ptr)
+    detach();
+  Ptr = P;
+  if (P)
+    attach();
+}
+
+
+Variable::Variable(VariableKind K, SExpr *D, const clang::ValueDecl *Cvd)
+    : SExpr(COP_Variable), Definition(D), Cvdecl(Cvd),
+      BlockID(0), Id(0),  NumUses(0) {
+  Flags = K;
+}
+
+Variable::Variable(const clang::ValueDecl *Cvd, SExpr *D)
+    : SExpr(COP_Variable), Definition(D), Cvdecl(Cvd),
+      BlockID(0), Id(0),  NumUses(0) {
+  Flags = VK_Let;
+}
+
+Variable::Variable(const Variable &Vd, SExpr *D) // rewrite constructor
+    : SExpr(Vd), Definition(D), Cvdecl(Vd.Cvdecl),
+      BlockID(0), Id(0), NumUses(0) {
+  Flags = Vd.kind();
+}
+
+
+void Future::force() {
+  Status = FS_evaluating;
+  SExpr *R = create();
+  Result = R;
+  if (Location) {
+    Location->reset(R);
+  }
+  Status = FS_done;
+}
+
 
 
 // Placeholder for C++ expressions that cannot be represented in the TIL.
@@ -313,7 +491,7 @@ class Undefined : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Undefined; }
 
-  Undefined(const clang::Stmt *S = 0) : SExpr(COP_Undefined), Cstmt(S) {}
+  Undefined(const clang::Stmt *S = nullptr) : SExpr(COP_Undefined), Cstmt(S) {}
   Undefined(const Undefined &U) : SExpr(U), Cstmt(U.Cstmt) {}
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
@@ -397,91 +575,7 @@ private:
 };
 
 
-// A named variable, e.g. "x".
-//
-// There are two distinct places in which a Variable can appear in the AST.
-// A variable declaration introduces a new variable, and can occur in 3 places:
-//   Let-expressions:           (Let (x = t) u)
-//   Functions:                 (Function (x : t) u)
-//   Self-applicable functions  (SFunction (x) t)
-//
-// If a variable occurs in any other location, it is a reference to an existing
-// variable declaration -- e.g. 'x' in (x * y + z). To save space, we don't
-// allocate a separate AST node for variable references; a reference is just a
-// pointer to the original declaration.
-class Variable : public SExpr {
-public:
-  static bool classof(const SExpr *E) { return E->opcode() == COP_Variable; }
 
-  // Let-variable, function parameter, or self-variable
-  enum VariableKind {
-    VK_Let,
-    VK_Fun,
-    VK_SFun
-  };
-
-  Variable(VariableKind K, SExpr *D = 0, const clang::ValueDecl *Cvd = 0)
-      : SExpr(COP_Variable), Definition(D), Cvdecl(Cvd),
-        BlockID(0), Id(0),  NumUses(0) {
-    Flags = K;
-    Future::registerLocation(&Definition);
-  }
-  Variable(const clang::ValueDecl *Cvd, SExpr *D = 0)
-      : SExpr(COP_Variable), Definition(D), Cvdecl(Cvd),
-        BlockID(0), Id(0),  NumUses(0) {
-    Flags = VK_Let;
-    Future::registerLocation(&Definition);
-  }
-  Variable(const Variable &Vd, SExpr *D) // rewrite constructor
-      : SExpr(Vd), Definition(D), Cvdecl(Vd.Cvdecl),
-        BlockID(0), Id(0), NumUses(0) {
-    Flags = Vd.kind();
-    Future::registerLocation(&Definition);
-  }
-
-  VariableKind kind() const { return static_cast<VariableKind>(Flags); }
-
-  StringRef name() const { return Cvdecl ? Cvdecl->getName() : "_x"; }
-  const clang::ValueDecl *clangDecl() const { return Cvdecl; }
-
-  // Returns the definition (for let vars) or type (for parameter & self vars)
-  SExpr *definition() const { return Definition; }
-
-  void attachVar() const { ++NumUses; }
-  void detachVar() const { --NumUses; }
-
-  unsigned getID() { return Id; }
-  unsigned getBlockID() { return BlockID; }
-
-  void setID(unsigned Bid, unsigned I) {
-    BlockID = static_cast<unsigned short>(Bid);
-    Id = static_cast<unsigned short>(I);
-  }
-
-  template <class V> typename V::R_SExpr traverse(V &Visitor) {
-    // This routine is only called for variable references.
-    return Visitor.reduceVariableRef(this);
-  }
-
-  template <class C> typename C::CType compare(Variable* E, C& Cmp) {
-    return Cmp.compareVariableRefs(this, E);
-  }
-
-private:
-  friend class Function;
-  friend class SFunction;
-  friend class BasicBlock;
-
-  // Function, SFunction, and BasicBlock will reset the kind.
-  void setKind(VariableKind K) { Flags = K; }
-
-  SExpr *Definition;               // The TIL type or definition
-  const clang::ValueDecl *Cvdecl;  // The clang declaration for this variable.
-
-  unsigned short BlockID;
-  unsigned short Id;
-  mutable int NumUses;
-};
 
 
 // A function -- a.k.a. lambda abstraction.
@@ -500,8 +594,11 @@ public:
     Vd->setKind(Variable::VK_Fun);
   }
 
-  Variable *variableDecl() const { return VarDecl; }
-  SExpr *body() const { return Body; }
+  Variable *variableDecl()  { return VarDecl; }
+  const Variable *variableDecl() const { return VarDecl; }
+
+  SExpr *body() { return Body.get(); }
+  const SExpr *body() const { return Body.get(); }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     // This is a variable declaration, so traverse the definition.
@@ -518,15 +615,15 @@ public:
       Cmp.compare(VarDecl->definition(), E->VarDecl->definition());
     if (Cmp.notTrue(Ct))
       return Ct;
-    Cmp.enterScope(VarDecl, E->VarDecl);
-    Ct = Cmp.compare(Body, E->Body);
+    Cmp.enterScope(variableDecl(), E->variableDecl());
+    Ct = Cmp.compare(body(), E->body());
     Cmp.leaveScope();
     return Ct;
   }
 
 private:
   Variable *VarDecl;
-  SExpr *Body;
+  SExprRef Body;
 };
 
 
@@ -539,27 +636,30 @@ public:
 
   SFunction(Variable *Vd, SExpr *B)
       : SExpr(COP_SFunction), VarDecl(Vd), Body(B) {
-    assert(Vd->Definition == 0);
+    assert(Vd->Definition == nullptr);
     Vd->setKind(Variable::VK_SFun);
-    Vd->Definition = this;
+    Vd->Definition.reset(this);
   }
   SFunction(const SFunction &F, Variable *Vd, SExpr *B) // rewrite constructor
       : SExpr(F),
         VarDecl(Vd),
         Body(B) {
-    assert(Vd->Definition == 0);
+    assert(Vd->Definition == nullptr);
     Vd->setKind(Variable::VK_SFun);
-    Vd->Definition = this;
+    Vd->Definition.reset(this);
   }
 
-  Variable *variableDecl() const { return VarDecl; }
-  SExpr *body() const { return Body; }
+  Variable *variableDecl() { return VarDecl; }
+  const Variable *variableDecl() const { return VarDecl; }
+
+  SExpr *body() { return Body.get(); }
+  const SExpr *body() const { return Body.get(); }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     // A self-variable points to the SFunction itself.
     // A rewrite must introduce the variable with a null definition, and update
     // it after 'this' has been rewritten.
-    Variable *Nvd = Visitor.enterScope(*VarDecl, 0 /* def */);
+    Variable *Nvd = Visitor.enterScope(*VarDecl, nullptr /* def */);
     typename V::R_SExpr E1 = Visitor.traverse(Body);
     Visitor.exitScope(*VarDecl);
     // A rewrite operation will call SFun constructor to set Vvd->Definition.
@@ -567,15 +667,15 @@ public:
   }
 
   template <class C> typename C::CType compare(SFunction* E, C& Cmp) {
-    Cmp.enterScope(VarDecl, E->VarDecl);
-    typename C::CType Ct = Cmp.compare(Body, E->Body);
+    Cmp.enterScope(variableDecl(), E->variableDecl());
+    typename C::CType Ct = Cmp.compare(body(), E->body());
     Cmp.leaveScope();
     return Ct;
   }
 
 private:
   Variable *VarDecl;
-  SExpr *Body;
+  SExprRef Body;
 };
 
 
@@ -584,20 +684,15 @@ class Code : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Code; }
 
-  Code(SExpr *T, SExpr *B) : SExpr(COP_Code), ReturnType(T), Body(B) {
-    Future::registerLocation(&ReturnType);
-    Future::registerLocation(&Body);
-  }
+  Code(SExpr *T, SExpr *B) : SExpr(COP_Code), ReturnType(T), Body(B) {}
   Code(const Code &C, SExpr *T, SExpr *B) // rewrite constructor
-      : SExpr(C),
-        ReturnType(T),
-        Body(B) {
-    Future::registerLocation(&ReturnType);
-    Future::registerLocation(&Body);
-  }
+      : SExpr(C), ReturnType(T), Body(B) {}
 
-  SExpr *returnType() { return ReturnType; }
-  SExpr *body() { return Body; }
+  SExpr *returnType() { return ReturnType.get(); }
+  const SExpr *returnType() const { return ReturnType.get(); }
+
+  SExpr *body() { return Body.get(); }
+  const SExpr *body() const { return Body.get(); }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::R_SExpr Nt = Visitor.traverse(ReturnType, TRV_Lazy);
@@ -606,15 +701,15 @@ public:
   }
 
   template <class C> typename C::CType compare(Code* E, C& Cmp) {
-    typename C::CType Ct = Cmp.compare(ReturnType, E->ReturnType);
+    typename C::CType Ct = Cmp.compare(returnType(), E->returnType());
     if (Cmp.notTrue(Ct))
       return Ct;
-    return Cmp.compare(Body, E->Body);
+    return Cmp.compare(body(), E->body());
   }
 
 private:
-  SExpr *ReturnType;
-  SExpr *Body;
+  SExprRef ReturnType;
+  SExprRef Body;
 };
 
 
@@ -628,8 +723,11 @@ public:
       : SExpr(A), Fun(F), Arg(Ar)
   {}
 
-  SExpr *fun() const { return Fun; }
-  SExpr *arg() const { return Arg; }
+  SExpr *fun() { return Fun.get(); }
+  const SExpr *fun() const { return Fun.get(); }
+
+  SExpr *arg() { return Arg.get(); }
+  const SExpr *arg() const { return Arg.get(); }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::R_SExpr Nf = Visitor.traverse(Fun);
@@ -638,15 +736,15 @@ public:
   }
 
   template <class C> typename C::CType compare(Apply* E, C& Cmp) {
-    typename C::CType Ct = Cmp.compare(Fun, E->Fun);
+    typename C::CType Ct = Cmp.compare(fun(), E->fun());
     if (Cmp.notTrue(Ct))
       return Ct;
-    return Cmp.compare(Arg, E->Arg);
+    return Cmp.compare(arg(), E->arg());
   }
 
 private:
-  SExpr *Fun;
-  SExpr *Arg;
+  SExprRef Fun;
+  SExprRef Arg;
 };
 
 
@@ -655,32 +753,37 @@ class SApply : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_SApply; }
 
-  SApply(SExpr *Sf, SExpr *A = 0) : SExpr(COP_SApply), Sfun(Sf), Arg(A) {}
-  SApply(SApply &A, SExpr *Sf, SExpr *Ar = 0)  // rewrite constructor
+  SApply(SExpr *Sf, SExpr *A = nullptr)
+      : SExpr(COP_SApply), Sfun(Sf), Arg(A)
+  {}
+  SApply(SApply &A, SExpr *Sf, SExpr *Ar = nullptr)  // rewrite constructor
       : SExpr(A),  Sfun(Sf), Arg(Ar)
   {}
 
-  SExpr *sfun() const { return Sfun; }
-  SExpr *arg() const { return Arg ? Arg : Sfun; }
+  SExpr *sfun() { return Sfun.get(); }
+  const SExpr *sfun() const { return Sfun.get(); }
 
-  bool isDelegation() const { return Arg == 0; }
+  SExpr *arg() { return Arg.get() ? Arg.get() : Sfun.get(); }
+  const SExpr *arg() const { return Arg.get() ? Arg.get() : Sfun.get(); }
+
+  bool isDelegation() const { return Arg == nullptr; }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::R_SExpr Nf = Visitor.traverse(Sfun);
-    typename V::R_SExpr Na = Arg ? Visitor.traverse(Arg) : 0;
+    typename V::R_SExpr Na = Arg.get() ? Visitor.traverse(Arg) : nullptr;
     return Visitor.reduceSApply(*this, Nf, Na);
   }
 
   template <class C> typename C::CType compare(SApply* E, C& Cmp) {
-    typename C::CType Ct = Cmp.compare(Sfun, E->Sfun);
-    if (Cmp.notTrue(Ct) || (!Arg && !E->Arg))
+    typename C::CType Ct = Cmp.compare(sfun(), E->sfun());
+    if (Cmp.notTrue(Ct) || (!arg() && !E->arg()))
       return Ct;
     return Cmp.compare(arg(), E->arg());
   }
 
 private:
-  SExpr *Sfun;
-  SExpr *Arg;
+  SExprRef Sfun;
+  SExprRef Arg;
 };
 
 
@@ -693,8 +796,10 @@ public:
       : SExpr(COP_Project), Rec(R), Cvdecl(Cvd) {}
   Project(const Project &P, SExpr *R) : SExpr(P), Rec(R), Cvdecl(P.Cvdecl) {}
 
-  SExpr *record() const { return Rec; }
-  clang::ValueDecl *clangValueDecl() const { return Cvdecl; }
+  SExpr *record() { return Rec.get(); }
+  const SExpr *record() const { return Rec.get(); }
+
+  const clang::ValueDecl *clangValueDecl() const { return Cvdecl; }
 
   StringRef slotName() const { return Cvdecl->getName(); }
 
@@ -704,14 +809,14 @@ public:
   }
 
   template <class C> typename C::CType compare(Project* E, C& Cmp) {
-    typename C::CType Ct = Cmp.compare(Rec, E->Rec);
+    typename C::CType Ct = Cmp.compare(record(), E->record());
     if (Cmp.notTrue(Ct))
       return Ct;
     return Cmp.comparePointers(Cvdecl, E->Cvdecl);
   }
 
 private:
-  SExpr *Rec;
+  SExprRef Rec;
   clang::ValueDecl *Cvdecl;
 };
 
@@ -721,11 +826,13 @@ class Call : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Call; }
 
-  Call(SExpr *T, const clang::CallExpr *Ce = 0)
+  Call(SExpr *T, const clang::CallExpr *Ce = nullptr)
       : SExpr(COP_Call), Target(T), Cexpr(Ce) {}
   Call(const Call &C, SExpr *T) : SExpr(C), Target(T), Cexpr(C.Cexpr) {}
 
-  SExpr *target() const { return Target; }
+  SExpr *target() { return Target.get(); }
+  const SExpr *target() const { return Target.get(); }
+
   const clang::CallExpr *clangCallExpr() { return Cexpr; }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
@@ -734,11 +841,11 @@ public:
   }
 
   template <class C> typename C::CType compare(Call* E, C& Cmp) {
-    return Cmp.compare(Target, E->Target);
+    return Cmp.compare(target(), E->target());
   }
 
 private:
-  SExpr *Target;
+  SExprRef Target;
   const clang::CallExpr *Cexpr;
 };
 
@@ -761,7 +868,9 @@ public:
   }
 
   AllocKind kind() const { return static_cast<AllocKind>(Flags); }
-  SExpr*    dataType() const { return Dtype; }
+
+  SExpr* dataType() { return Dtype.get(); }
+  const SExpr* dataType() const { return Dtype.get(); }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::R_SExpr Nd = Visitor.traverse(Dtype);
@@ -772,11 +881,11 @@ public:
     typename C::CType Ct = Cmp.compareIntegers(kind(), E->kind());
     if (Cmp.notTrue(Ct))
       return Ct;
-    return Cmp.compare(Dtype, E->Dtype);
+    return Cmp.compare(dataType(), E->dataType());
   }
 
 private:
-  SExpr* Dtype;
+  SExprRef Dtype;
 };
 
 
@@ -788,7 +897,8 @@ public:
   Load(SExpr *P) : SExpr(COP_Load), Ptr(P) {}
   Load(const Load &L, SExpr *P) : SExpr(L), Ptr(P) {}
 
-  SExpr *pointer() { return Ptr; }
+  SExpr *pointer() { return Ptr.get(); }
+  const SExpr *pointer() const { return Ptr.get(); }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::R_SExpr Np = Visitor.traverse(Ptr);
@@ -796,11 +906,11 @@ public:
   }
 
   template <class C> typename C::CType compare(Load* E, C& Cmp) {
-    return Cmp.compare(Ptr, E->Ptr);
+    return Cmp.compare(pointer(), E->pointer());
   }
 
 private:
-  SExpr *Ptr;
+  SExprRef Ptr;
 };
 
 
@@ -809,27 +919,30 @@ class Store : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Store; }
 
-  Store(SExpr *P, SExpr *V) : SExpr(COP_Store), Ptr(P) {}
-  Store(const Store &S, SExpr *P, SExpr *V) : SExpr(S), Ptr(P) {}
+  Store(SExpr *P, SExpr *V) : SExpr(COP_Store), Dest(P), Source(V) {}
+  Store(const Store &S, SExpr *P, SExpr *V) : SExpr(S), Dest(P), Source(V) {}
 
-  SExpr *pointer() const { return Ptr; }
-  SExpr *value() const { return Value; }
+  SExpr *destination() { return Dest.get(); }  // Address to store to
+  const SExpr *destination() const { return Dest.get(); }
+
+  SExpr *source() { return Source.get(); }     // Value to store
+  const SExpr *source() const { return Source.get(); }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
-    typename V::R_SExpr Np = Visitor.traverse(Ptr);
-    typename V::R_SExpr Nv = Visitor.traverse(Value);
+    typename V::R_SExpr Np = Visitor.traverse(Dest);
+    typename V::R_SExpr Nv = Visitor.traverse(Source);
     return Visitor.reduceStore(*this, Np, Nv);
   }
 
   template <class C> typename C::CType compare(Store* E, C& Cmp) {
-    typename C::CType Ct = Cmp.compare(Ptr, E->Ptr);
+    typename C::CType Ct = Cmp.compare(destination(), E->destination());
     if (Cmp.notTrue(Ct))
       return Ct;
-    return Cmp.compare(Value, E->Value);
+    return Cmp.compare(source(), E->source());
   }
 
-  SExpr *Ptr;
-  SExpr *Value;
+  SExprRef Dest;
+  SExprRef Source;
 };
 
 
@@ -845,7 +958,8 @@ public:
 
   TIL_UnaryOpcode unaryOpcode() { return static_cast<TIL_UnaryOpcode>(Flags); }
 
-  SExpr *expr() const { return Expr0; }
+  SExpr *expr() { return Expr0.get(); }
+  const SExpr *expr() const { return Expr0.get(); }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::R_SExpr Ne = Visitor.traverse(Expr0);
@@ -857,11 +971,11 @@ public:
       Cmp.compareIntegers(unaryOpcode(), E->unaryOpcode());
     if (Cmp.notTrue(Ct))
       return Ct;
-    return Cmp.compare(Expr0, E->Expr0);
+    return Cmp.compare(expr(), E->expr());
   }
 
 private:
-  SExpr *Expr0;
+  SExprRef Expr0;
 };
 
 
@@ -883,8 +997,11 @@ public:
     return static_cast<TIL_BinaryOpcode>(Flags);
   }
 
-  SExpr *expr0() const { return Expr0; }
-  SExpr *expr1() const { return Expr1; }
+  SExpr *expr0() { return Expr0.get(); }
+  const SExpr *expr0() const { return Expr0.get(); }
+
+  SExpr *expr1() { return Expr1.get(); }
+  const SExpr *expr1() const { return Expr1.get(); }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::R_SExpr Ne0 = Visitor.traverse(Expr0);
@@ -897,15 +1014,15 @@ public:
       Cmp.compareIntegers(binaryOpcode(), E->binaryOpcode());
     if (Cmp.notTrue(Ct))
       return Ct;
-    Ct = Cmp.compare(Expr0, E->Expr0);
+    Ct = Cmp.compare(expr0(), E->expr0());
     if (Cmp.notTrue(Ct))
       return Ct;
-    return Cmp.compare(Expr1, E->Expr1);
+    return Cmp.compare(expr1(), E->expr1());
   }
 
 private:
-  SExpr *Expr0;
-  SExpr *Expr1;
+  SExprRef Expr0;
+  SExprRef Expr1;
 };
 
 
@@ -917,9 +1034,12 @@ public:
   Cast(TIL_CastOpcode Op, SExpr *E) : SExpr(COP_Cast), Expr0(E) { Flags = Op; }
   Cast(const Cast &C, SExpr *E) : SExpr(C), Expr0(E) { Flags = C.Flags; }
 
-  TIL_BinaryOpcode castOpcode() { return static_cast<TIL_BinaryOpcode>(Flags); }
+  TIL_BinaryOpcode castOpcode() {
+    return static_cast<TIL_BinaryOpcode>(Flags);
+  }
 
-  SExpr *expr() const { return Expr0; }
+  SExpr *expr() { return Expr0.get(); }
+  const SExpr *expr() const { return Expr0.get(); }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::R_SExpr Ne = Visitor.traverse(Expr0);
@@ -931,11 +1051,11 @@ public:
       Cmp.compareIntegers(castOpcode(), E->castOpcode());
     if (Cmp.notTrue(Ct))
       return Ct;
-    return Cmp.compare(Expr0, E->Expr0);
+    return Cmp.compare(expr(), E->expr());
   }
 
 private:
-  SExpr *Expr0;
+  SExprRef Expr0;
 };
 
 
@@ -954,12 +1074,13 @@ public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_SCFG; }
 
   SCFG(MemRegionRef A, unsigned Nblocks)
-      : SExpr(COP_SCFG), Blocks(A, Nblocks), Entry(0), Exit(0) {}
+      : SExpr(COP_SCFG), Blocks(A, Nblocks), Entry(nullptr), Exit(nullptr) {}
   SCFG(const SCFG &Cfg, BlockArray &Ba) // steals memory from ba
       : SExpr(COP_SCFG),
         Blocks(Ba, true),
-        Entry(0),
-        Exit(0) { /* TODO: set entry and exit! */
+        Entry(nullptr),
+        Exit(nullptr) {
+    // TODO: set entry and exit!
   }
 
   typedef BlockArray::iterator iterator;
@@ -1001,11 +1122,13 @@ class BasicBlock {
 public:
   typedef SimpleArray<Variable*> VarArray;
 
-  BasicBlock(MemRegionRef A, unsigned Nargs, unsigned Nins, SExpr *Term = 0)
-      : BlockID(0), Parent(0), Args(A, Nargs), Instrs(A, Nins),
+  BasicBlock(MemRegionRef A, unsigned Nargs, unsigned Nins,
+             SExpr *Term = nullptr)
+      : BlockID(0), Parent(nullptr), Args(A, Nargs), Instrs(A, Nins),
         Terminator(Term) {}
   BasicBlock(const BasicBlock &B, VarArray &As, VarArray &Is, SExpr *T)
-      : BlockID(0), Parent(0), Args(As, true), Instrs(Is, true), Terminator(T)
+      : BlockID(0), Parent(nullptr), Args(As, true), Instrs(Is, true),
+        Terminator(T)
   {}
 
   unsigned blockID() const { return BlockID; }
@@ -1017,12 +1140,12 @@ public:
   const VarArray &instructions() const { return Instrs; }
   VarArray &instructions() { return Instrs; }
 
-  const SExpr *terminator() const { return Terminator; }
-  SExpr *terminator() { return Terminator; }
+  const SExpr *terminator() const { return Terminator.get(); }
+  SExpr *terminator() { return Terminator.get(); }
 
   void setParent(BasicBlock *P) { Parent = P; }
   void setBlockID(unsigned i) { BlockID = i; }
-  void setTerminator(SExpr *E) { Terminator = E; }
+  void setTerminator(SExpr *E) { Terminator.reset(E); }
   void addArgument(Variable *V) { Args.push_back(V); }
   void addInstr(Variable *V) { Args.push_back(V); }
 
@@ -1063,7 +1186,7 @@ private:
                         // The parent dominates this block.
   VarArray Args;        // Phi nodes
   VarArray Instrs;
-  SExpr *Terminator;
+  SExprRef Terminator;
 };
 
 
@@ -1083,7 +1206,8 @@ typename V::R_SExpr SCFG::traverse(V &Visitor) {
 
 class Phi : public SExpr {
 public:
-  typedef SimpleArray<SExpr *> ValArray;
+  // TODO: change to SExprRef
+  typedef SimpleArray<SExpr*> ValArray;
 
   static bool classof(const SExpr *E) { return E->opcode() == COP_Phi; }
 
@@ -1097,7 +1221,8 @@ public:
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::template Container<typename V::R_SExpr> Nvs(Visitor,
                                                             Values.size());
-    for (ValArray::iterator I = Values.begin(), E = Values.end(); I != E; ++I) {
+    for (ValArray::iterator I = Values.begin(), E = Values.end();
+         I != E; ++I) {
       typename V::R_SExpr Nv = Visitor.traverse(*I);
       Nvs.push_back(Nv);
     }
@@ -1211,6 +1336,10 @@ public:
   //   TRV_Normal
   //   TRV_Lazy   -- e may need to be traversed lazily, using a Future.
   //   TRV_Tail   -- e occurs in a tail position
+  typename R::R_SExpr traverse(SExprRef &E, TIL_TraversalKind K = TRV_Normal) {
+    return traverse(E.get(), K);
+  }
+
   typename R::R_SExpr traverse(SExpr *E, TIL_TraversalKind K = TRV_Normal) {
     return traverseByCase(E);
   }
@@ -1268,7 +1397,7 @@ public:
 
 public:
   R_SExpr reduceNull() {
-    return 0;
+    return nullptr;
   }
   // R_SExpr reduceFuture(...)  is never used.
 
@@ -1319,7 +1448,7 @@ public:
     return new (Arena) Store(Orig, E0, E1);
   }
   R_SExpr reduceUnaryOp(UnaryOp &Orig, R_SExpr E0) {
-    return new (Arena) UnaryOp(Orig);
+    return new (Arena) UnaryOp(Orig, E0);
   }
   R_SExpr reduceBinaryOp(BinaryOp &Orig, R_SExpr E0, R_SExpr E1) {
     return new (Arena) BinaryOp(Orig, E0, E1);
@@ -1448,10 +1577,12 @@ public:
 
   BasicBlock *reduceBasicBlock(BasicBlock &Orig, Container<Variable *> &As,
                                Container<Variable *> &Is, R_SExpr T) {
-    return (As.Success && Is.Success && T) ? &Orig : 0;
+    return (As.Success && Is.Success && T) ? &Orig : nullptr;
   }
 
-  Variable *enterScope(Variable &Orig, R_SExpr E0) { return E0 ? &Orig : 0; }
+  Variable *enterScope(Variable &Orig, R_SExpr E0) {
+    return E0 ? &Orig : nullptr;
+  }
   void exitScope(const Variable &Orig) {}
 
   void enterCFG(SCFG &Cfg) {}
@@ -1739,9 +1870,9 @@ protected:
   }
 
   void printStore(Store *E, StreamType &SS) {
-    self()->printSExpr(E->pointer(), SS, Prec_Other-1);
+    self()->printSExpr(E->destination(), SS, Prec_Other-1);
     SS << " = ";
-    self()->printSExpr(E->value(), SS, Prec_Other-1);
+    self()->printSExpr(E->source(), SS, Prec_Other-1);
   }
 
   void printUnaryOp(UnaryOp *E, StreamType &SS) {

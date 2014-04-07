@@ -19,6 +19,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_THREAD_SAFETY_COMMON_H
+#define LLVM_CLANG_THREAD_SAFETY_COMMON_H
+
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprCXX.h"
@@ -242,3 +245,5 @@ void printSCFG(CFGWalker &walker);
 } // end namespace threadSafety
 
 } // end namespace clang
+
+#endif  // LLVM_CLANG_THREAD_SAFETY_COMMON_H
