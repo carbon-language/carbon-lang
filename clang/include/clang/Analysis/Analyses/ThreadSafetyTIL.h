@@ -1533,7 +1533,7 @@ public:
 
   static bool compareExprs(SExpr *E1, SExpr* E2) {
     TILEqualsComparator Eq;
-    return Eq.compareExprs(E1, E2);
+    return Eq.compare(E1, E2);
   }
 };
 
