@@ -38,11 +38,10 @@ error_code ELFFileNode::parse(const LinkingContext &ctx,
       f.release();
       // Add all members to _files vector
       return archive->parseAllMembers(_files);
-    } else {
-      // if --whole-archive is around non-archive, just use it as normal.
-      _files.push_back(std::move(f));
-      return error_code::success();
     }
+    // if --whole-archive is around non-archive, just use it as normal.
+    _files.push_back(std::move(f));
+    return error_code::success();
   }
   return ctx.registry().parseFile(_buffer, _files);
 }
