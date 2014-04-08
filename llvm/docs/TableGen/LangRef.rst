@@ -2,8 +2,6 @@
 TableGen Language Reference
 ===========================
 
-.. sectionauthor:: Sean Silva <silvas@purdue.edu>
-
 .. contents::
    :local:
 
