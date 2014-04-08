@@ -262,7 +262,7 @@ ThreadList::ShouldStop (Event *event_ptr)
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     // The ShouldStop method of the threads can do a whole lot of work,
-    // running breakpoint commands & conditions, etc.  So we don't want
+    // figuring out whether the thread plan conditions are met.  So we don't want
     // to keep the ThreadList locked the whole time we are doing this.
     // FIXME: It is possible that running code could cause new threads
     // to be created.  If that happens we will miss asking them whether
@@ -287,7 +287,16 @@ ThreadList::ShouldStop (Event *event_ptr)
     }
 
     bool did_anybody_stop_for_a_reason = false;
+    
+    // If the event is an Interrupt event, then we're going to stop no matter what.  Otherwise, presume we won't stop.
     bool should_stop = false;
+    if (Process::ProcessEventData::GetInterruptedFromEvent(event_ptr))
+    {
+        if (log)
+            log->Printf("ThreadList::%s handling interrupt event, should stop set to true", __FUNCTION__);
+        
+        should_stop = true;
+    }
     
     // Now we run through all the threads and get their stop info's.  We want to make sure to do this first before
     // we start running the ShouldStop, because one thread's ShouldStop could destroy information (like deleting a

@@ -333,6 +333,14 @@ ThreadPlanCallFunction::DoPlanExplainsStop (Event *event_ptr)
     if (stop_reason == eStopReasonBreakpoint && BreakpointsExplainStop())
         return true;
     
+    // One more quirk here.  If this event was from Halt interrupting the target, then we should not consider
+    // ourselves complete.  Return true to acknowledge the stop.
+    if (Process::ProcessEventData::GetInterruptedFromEvent(event_ptr))
+    {
+        if (log)
+            log->Printf ("ThreadPlanCallFunction::PlanExplainsStop: The event is an Interrupt, returning true.");
+        return true;
+    }
     // We control breakpoints separately from other "stop reasons."  So first,
     // check the case where we stopped for an internal breakpoint, in that case, continue on.
     // If it is not an internal breakpoint, consult m_ignore_breakpoints.

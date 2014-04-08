@@ -3901,6 +3901,9 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
                     log->Printf ("Process::ShouldBroadcastEvent (%p) stopped due to an interrupt, state: %s",
                                  static_cast<void*>(event_ptr),
                                  StateAsCString(state));
+                // Even though we know we are going to stop, we should let the threads have a look at the stop,
+                // so they can properly set their state.
+                m_thread_list.ShouldStop (event_ptr);
                 return_value = true;
             }
             else
@@ -4381,8 +4384,14 @@ Process::ProcessEventData::DoOnRemoval (Event *event_ptr)
         return;
     
     m_process_sp->SetPublicState (m_state, Process::ProcessEventData::GetRestartedFromEvent(event_ptr));
-        
-    // If we're stopped and haven't restarted, then do the breakpoint commands here:
+    
+    // If this is a halt event, even if the halt stopped with some reason other than a plain interrupt (e.g. we had
+    // already stopped for a breakpoint when the halt request came through) don't do the StopInfo actions, as they may
+    // end up restarting the process.
+    if (m_interrupted)
+        return;
+    
+    // If we're stopped and haven't restarted, then do the StopInfo actions here:
     if (m_state == eStateStopped && ! m_restarted)
     {        
         ThreadList &curr_thread_list = m_process_sp->GetThreadList();
@@ -5253,7 +5262,17 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 
         // This while loop must exit out the bottom, there's cleanup that we need to do when we are done.
         // So don't call return anywhere within it.
-
+        
+#ifdef LLDB_RUN_THREAD_HALT_WITH_EVENT
+        // It's pretty much impossible to write test cases for things like:
+        // One thread timeout expires, I go to halt, but the process already stopped
+        // on the function call stop breakpoint.  Turning on this define will make us not
+        // fetch the first event till after the halt.  So if you run a quick function, it will have
+        // completed, and the completion event will be waiting, when you interrupt for halt.
+        // The expression evaluation should still succeed.
+        bool miss_first_event = true;
+#endif
+        
         while (1)
         {
             // We usually want to resume the process if we get to the top of the loop.
@@ -5383,7 +5402,17 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     log->Printf ("Process::RunThreadPlan(): about to wait forever.");
                 }
             }
-
+            
+#ifdef LLDB_RUN_THREAD_HALT_WITH_EVENT
+            // See comment above...
+            if (miss_first_event)
+            {
+                usleep(1000);
+                miss_first_event = false;
+                got_event = false;
+            }
+            else
+#endif
             got_event = listener.WaitForEvent (timeout_ptr, event_sp);
 
             if (got_event)
