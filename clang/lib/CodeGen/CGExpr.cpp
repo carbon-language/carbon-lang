@@ -1953,33 +1953,27 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
   case PredefinedExpr::Function:
   case PredefinedExpr::LFunction:
   case PredefinedExpr::FuncDName:
+  case PredefinedExpr::FuncSig:
   case PredefinedExpr::PrettyFunction: {
     PredefinedExpr::IdentType IdentType = E->getIdentType();
-    std::string GlobalVarName;
+    std::string GVName;
 
+    // FIXME: We should use the string literal mangling for the Microsoft C++
+    // ABI so that strings get merged.
     switch (IdentType) {
     default: llvm_unreachable("Invalid type");
-    case PredefinedExpr::Func:
-      GlobalVarName = "__func__.";
-      break;
-    case PredefinedExpr::Function:
-      GlobalVarName = "__FUNCTION__.";
-      break;
-    case PredefinedExpr::FuncDName:
-      GlobalVarName = "__FUNCDNAME__.";
-      break;
-    case PredefinedExpr::LFunction:
-      GlobalVarName = "L__FUNCTION__.";
-      break;
-    case PredefinedExpr::PrettyFunction:
-      GlobalVarName = "__PRETTY_FUNCTION__.";
-      break;
+    case PredefinedExpr::Func:           GVName = "__func__."; break;
+    case PredefinedExpr::Function:       GVName = "__FUNCTION__."; break;
+    case PredefinedExpr::FuncDName:      GVName = "__FUNCDNAME__."; break;
+    case PredefinedExpr::FuncSig:        GVName = "__FUNCSIG__."; break;
+    case PredefinedExpr::LFunction:      GVName = "L__FUNCTION__."; break;
+    case PredefinedExpr::PrettyFunction: GVName = "__PRETTY_FUNCTION__."; break;
     }
 
     StringRef FnName = CurFn->getName();
     if (FnName.startswith("\01"))
       FnName = FnName.substr(1);
-    GlobalVarName += FnName;
+    GVName += FnName;
 
     // If this is outside of a function use the top level decl.
     const Decl *CurDecl = CurCodeDecl;
@@ -2010,15 +2004,13 @@ LValue CodeGenFunction::EmitPredefinedLValue(const PredefinedExpr *E) {
           getContext().getTypeSizeInChars(ElemType).getQuantity(),
           FunctionName, RawChars);
       C = GetAddrOfConstantWideString(RawChars,
-                                      GlobalVarName.c_str(),
+                                      GVName.c_str(),
                                       getContext(),
                                       E->getType(),
                                       E->getLocation(),
                                       CGM);
     } else {
-      C = CGM.GetAddrOfConstantCString(FunctionName,
-                                       GlobalVarName.c_str(),
-                                       1);
+      C = CGM.GetAddrOfConstantCString(FunctionName, GVName.c_str(), 1);
     }
     return MakeAddrLValue(C, E->getType());
   }
