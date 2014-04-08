@@ -997,23 +997,20 @@ __readmsr(unsigned long __register) {
   // undefined.
   unsigned long __edx;
   unsigned long __eax;
-  __asm__ ("rdmsr"
-          : "=d"(__edx), "=a"(__eax)
-          : "c"(__register)
-          : "%ecx", "%edx", "%eax");
+  __asm__ ("rdmsr" : "=d"(__edx), "=a"(__eax) : "c"(__register));
   return (((unsigned __int64)__edx) << 32) | (unsigned __int64)__eax;
 }
 
 static __inline__ unsigned long __attribute__((always_inline, __nodebug__))
 __readcr3(void) {
-  unsigned long value;
-  __asm__ __volatile__("mov %%cr3, %0" : "=q"(value));
-  return value;
+  unsigned long __cr3_val;
+  __asm__ __volatile__ ("mov %%cr3, %0" : "=q"(__cr3_val) : : "memory");
+  return __cr3_val;
 }
 
 static __inline__ void __attribute__((always_inline, __nodebug__))
-__writecr3(unsigned int Data) {
-  __asm__("mov %0, %%cr3" : : "q"(Data) : "memory");
+__writecr3(unsigned int __cr3_val) {
+  __asm__ ("mov %0, %%cr3" : : "q"(__cr3_val) : "memory");
 }
 
 #ifdef __cplusplus
