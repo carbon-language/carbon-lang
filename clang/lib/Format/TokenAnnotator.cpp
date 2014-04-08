@@ -245,7 +245,7 @@ private:
           StartsObjCMethodExpr = false;
           Left->Type = TT_Unknown;
         }
-        if (StartsObjCMethodExpr) {
+        if (StartsObjCMethodExpr && CurrentToken->Previous != Left) {
           CurrentToken->Type = TT_ObjCMethodExpr;
           // determineStarAmpUsage() thinks that '*' '[' is allocating an
           // array of pointers, but if '[' starts a selector then '*' is a
