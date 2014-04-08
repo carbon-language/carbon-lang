@@ -6962,10 +6962,12 @@ public:
     if (PartialGCD != One)
       return PartialGCD;
 
+    // Failed to find a PartialGCD: set the Remainder to the full expression,
+    // and return the GCD.
     Remainder = Expr;
     const SCEVMulExpr *Mul = dyn_cast<SCEVMulExpr>(GCD);
     if (!Mul)
-      return PartialGCD;
+      return GCD;
 
     // When the GCD is a multiply expression, try to decompose it:
     // this occurs when Step does not divide the Start expression
@@ -6979,7 +6981,7 @@ public:
       }
     }
 
-    return PartialGCD;
+    return GCD;
   }
 
   const SCEV *visitUDivExpr(const SCEVUDivExpr *Expr) {
