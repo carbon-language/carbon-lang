@@ -14,11 +14,13 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/Atomic.h"
 #include <string>
 
@@ -63,4 +65,30 @@ void DiagnosticInfoSampleProfile::print(DiagnosticPrinter &DP) const {
   else if (getFileName())
     DP << getFileName() << ": ";
   DP << getMsg();
+}
+
+bool DiagnosticInfoOptimizationRemark::isLocationAvailable() const {
+  return getFunction().getParent()->getNamedMetadata("llvm.dbg.cu") != 0;
+}
+
+void DiagnosticInfoOptimizationRemark::getLocation(StringRef *Filename,
+                                                   unsigned *Line,
+                                                   unsigned *Column) const {
+  DILocation DIL(getDebugLoc().getAsMDNode(getFunction().getContext()));
+  *Filename = DIL.getFilename();
+  *Line = DIL.getLineNumber();
+  *Column = DIL.getColumnNumber();
+}
+
+const StringRef DiagnosticInfoOptimizationRemark::getLocationStr() const {
+  StringRef Filename("<unknown>");
+  unsigned Line = 0;
+  unsigned Column = 0;
+  if (isLocationAvailable())
+    getLocation(&Filename, &Line, &Column);
+  return Twine(Filename + ":" + Twine(Line) + ":" + Twine(Column)).str();
+}
+
+void DiagnosticInfoOptimizationRemark::print(DiagnosticPrinter &DP) const {
+  DP << getLocationStr() << ": " << getMsg();
 }

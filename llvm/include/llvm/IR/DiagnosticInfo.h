@@ -26,6 +26,7 @@ class Function;
 class Instruction;
 class Twine;
 class Value;
+class DebugLoc;
 
 /// \brief Defines the different supported severity of a diagnostic.
 enum DiagnosticSeverity {
@@ -44,6 +45,7 @@ enum DiagnosticKind {
   DK_StackSize,
   DK_DebugMetadataVersion,
   DK_SampleProfile,
+  DK_OptimizationRemark,
   DK_FirstPluginKind
 };
 
@@ -230,6 +232,63 @@ private:
   /// Line number where the diagnostic occured. If 0, no line number will
   /// be emitted in the message.
   unsigned LineNum;
+
+  /// Message to report.
+  const Twine &Msg;
+};
+
+/// Diagnostic information for optimization remarks.
+class DiagnosticInfoOptimizationRemark : public DiagnosticInfo {
+public:
+  /// \p PassName is the name of the pass emitting this diagnostic. If
+  /// this name matches the regular expression given in -Rpass=, then the
+  /// diagnostic will be emitted. \p Fn is the function where the diagnostic
+  /// is being emitted. \p DLoc is the location information to use in the
+  /// diagnostic. If line table information is available, the diagnostic
+  /// will include the source code location. \p Msg is the message to show.
+  /// Note that this class does not copy this message, so this reference
+  /// must be valid for the whole life time of the diagnostic.
+  DiagnosticInfoOptimizationRemark(const char *PassName, const Function &Fn,
+                                   const DebugLoc &DLoc, const Twine &Msg)
+      : DiagnosticInfo(DK_OptimizationRemark, DS_Remark), PassName(PassName),
+        Fn(Fn), DLoc(DLoc), Msg(Msg) {}
+
+  /// \see DiagnosticInfo::print.
+  void print(DiagnosticPrinter &DP) const override;
+
+  /// Hand rolled RTTI.
+  static bool classof(const DiagnosticInfo *DI) {
+    return DI->getKind() == DK_OptimizationRemark;
+  }
+
+  /// Return true if location information is available for this diagnostic.
+  bool isLocationAvailable() const;
+
+  /// Return a string with the location information for this diagnostic
+  /// in the format "file:line:col". If location information is not available,
+  /// it returns "<unknown>:0:0".
+  const StringRef getLocationStr() const;
+
+  /// Return location information for this diagnostic in three parts:
+  /// the source file name, line number and column.
+  void getLocation(StringRef *Filename, unsigned *Line, unsigned *Column) const;
+
+  const char *getPassName() const { return PassName; }
+  const Function &getFunction() const { return Fn; }
+  const DebugLoc &getDebugLoc() const { return DLoc; }
+  const Twine &getMsg() const { return Msg; }
+
+private:
+  /// Name of the pass that triggers this report. If this matches the
+  /// regular expression given in -Rpass=regexp, then the remark will
+  /// be emitted.
+  const char *PassName;
+
+  /// Function where this diagnostic is triggered.
+  const Function &Fn;
+
+  /// Debug location where this diagnostic is triggered.
+  const DebugLoc &DLoc;
 
   /// Message to report.
   const Twine &Msg;

@@ -21,6 +21,7 @@
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
@@ -522,7 +523,12 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
                                   InlineHistoryID, InsertLifetime, DL))
           continue;
         ++NumInlined;
-        
+
+        // Report the inline decision.
+        Caller->getContext().emitOptimizationRemark(
+            DEBUG_TYPE, *Caller, CS.getInstruction()->getDebugLoc(),
+            Twine(Callee->getName() + " inlined into " + Caller->getName()));
+
         // If inlining this function gave us any new call sites, throw them
         // onto our worklist to process.  They are useful inline candidates.
         if (!InlineInfo.InlinedCalls.empty()) {

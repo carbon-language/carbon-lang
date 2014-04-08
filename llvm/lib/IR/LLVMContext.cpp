@@ -15,6 +15,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "LLVMContextImpl.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/Instruction.h"
@@ -153,6 +154,13 @@ void LLVMContext::diagnose(const DiagnosticInfo &DI) {
 
 void LLVMContext::emitError(unsigned LocCookie, const Twine &ErrorStr) {
   diagnose(DiagnosticInfoInlineAsm(LocCookie, ErrorStr));
+}
+
+void LLVMContext::emitOptimizationRemark(const char *PassName,
+                                         const Function &Fn,
+                                         const DebugLoc &DLoc,
+                                         const Twine &Msg) {
+  diagnose(DiagnosticInfoOptimizationRemark(PassName, Fn, DLoc, Msg));
 }
 
 //===----------------------------------------------------------------------===//
