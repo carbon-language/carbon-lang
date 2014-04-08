@@ -24,6 +24,22 @@ define <16 x i32> @fptoui00(<16 x float> %a) nounwind {
   ret <16 x i32> %b
 }
 
+; CHECK-LABEL: fptoui_256
+; CHECK: vcvttps2udq
+; CHECK: ret
+define <8 x i32> @fptoui_256(<8 x float> %a) nounwind {
+  %b = fptoui <8 x float> %a to <8 x i32>
+  ret <8 x i32> %b
+}
+
+; CHECK-LABEL: fptoui_128
+; CHECK: vcvttps2udq
+; CHECK: ret
+define <4 x i32> @fptoui_128(<4 x float> %a) nounwind {
+  %b = fptoui <4 x float> %a to <4 x i32>
+  ret <4 x i32> %b
+}
+
 ; CHECK-LABEL: fptoui01
 ; CHECK: vcvttpd2udq
 ; CHECK: ret
@@ -182,6 +198,22 @@ define <16 x double> @uitof64(<16 x i32> %a) nounwind {
 define <16 x float> @uitof32(<16 x i32> %a) nounwind {
   %b = uitofp <16 x i32> %a to <16 x float>
   ret <16 x float> %b
+}
+
+; CHECK-LABEL: uitof32_256
+; CHECK: vcvtudq2ps
+; CHECK: ret
+define <8 x float> @uitof32_256(<8 x i32> %a) nounwind {
+  %b = uitofp <8 x i32> %a to <8 x float>
+  ret <8 x float> %b
+}
+
+; CHECK-LABEL: uitof32_128
+; CHECK: vcvtudq2ps
+; CHECK: ret
+define <4 x float> @uitof32_128(<4 x i32> %a) nounwind {
+  %b = uitofp <4 x i32> %a to <4 x float>
+  ret <4 x float> %b
 }
 
 ; CHECK-LABEL: @fptosi02

@@ -3112,6 +3112,17 @@ def : Pat<(v8i32 (fp_to_uint (v8f32 VR256X:$src1))),
           (EXTRACT_SUBREG (v16i32 (VCVTTPS2UDQZrr 
            (v16f32 (SUBREG_TO_REG (i32 0), VR256X:$src1, sub_ymm)))), sub_ymm)>;
                                  
+def : Pat<(v4i32 (fp_to_uint (v4f32 VR128X:$src1))),
+          (EXTRACT_SUBREG (v16i32 (VCVTTPS2UDQZrr
+           (v16f32 (SUBREG_TO_REG (i32 0), VR128X:$src1, sub_xmm)))), sub_xmm)>;
+
+def : Pat<(v8f32 (uint_to_fp (v8i32 VR256X:$src1))),
+          (EXTRACT_SUBREG (v16f32 (VCVTUDQ2PSZrr
+           (v16i32 (SUBREG_TO_REG (i32 0), VR256X:$src1, sub_ymm)))), sub_ymm)>;
+           
+def : Pat<(v4f32 (uint_to_fp (v4i32 VR128X:$src1))),
+          (EXTRACT_SUBREG (v16f32 (VCVTUDQ2PSZrr
+           (v16i32 (SUBREG_TO_REG (i32 0), VR128X:$src1, sub_xmm)))), sub_xmm)>;
 
 def : Pat<(v16f32 (int_x86_avx512_mask_cvtdq2ps_512 (v16i32 VR512:$src),
                    (bc_v16f32 (v16i32 immAllZerosV)), (i16 -1), imm:$rc)),
