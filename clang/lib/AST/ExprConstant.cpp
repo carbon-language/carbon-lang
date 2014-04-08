@@ -968,7 +968,7 @@ namespace {
       // any object: we won't use such a designator for anything.
       if (!Info.getLangOpts().CPlusPlus11)
         Designator.setInvalid();
-      return checkNullPointer(Info, E, CSK) &&
+      return (CSK == CSK_ArrayToPointer || checkNullPointer(Info, E, CSK)) &&
              Designator.checkSubobject(Info, E, CSK);
     }
 
@@ -986,7 +986,7 @@ namespace {
         Designator.addComplexUnchecked(EltTy, Imag);
     }
     void adjustIndex(EvalInfo &Info, const Expr *E, uint64_t N) {
-      if (checkNullPointer(Info, E, CSK_ArrayIndex))
+      if (N && checkNullPointer(Info, E, CSK_ArrayIndex))
         Designator.adjustIndex(Info, E, N);
     }
   };
