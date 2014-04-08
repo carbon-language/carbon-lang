@@ -5162,7 +5162,7 @@ TEST_F(FormatTest, FormatsBracedListsInColumnLayout) {
 
 TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
   FormatStyle DoNotMerge = getLLVMStyle();
-  DoNotMerge.AllowShortFunctionsOnASingleLine = false;
+  DoNotMerge.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_None;
 
   verifyFormat("void f() { return 42; }");
   verifyFormat("void f() {\n"
@@ -5219,7 +5219,8 @@ TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
             format("A()\n:b(0)\n{\n}", NoColumnLimit));
 
   FormatStyle DoNotMergeNoColumnLimit = NoColumnLimit;
-  DoNotMergeNoColumnLimit.AllowShortFunctionsOnASingleLine = false;
+  DoNotMergeNoColumnLimit.AllowShortFunctionsOnASingleLine =
+      FormatStyle::SFS_None;
   EXPECT_EQ("A()\n"
             "    : b(0) {\n"
             "}",
@@ -5247,6 +5248,19 @@ TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
                "  void f() { int i; } \\\n"
                "  int j;",
                getLLVMStyleWithColumns(23));
+}
+
+TEST_F(FormatTest, PullInlineFunctionDefinitionsIntoSingleLine) {
+  FormatStyle MergeInlineOnly = getLLVMStyle();
+  MergeInlineOnly.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;
+  verifyFormat("class C {\n"
+               "  int f() { return 42; }\n"
+               "};",
+               MergeInlineOnly);
+  verifyFormat("int f() {\n"
+               "  return 42;\n"
+               "}",
+               MergeInlineOnly);
 }
 
 TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
@@ -7537,7 +7551,6 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(AlignEscapedNewlinesLeft);
   CHECK_PARSE_BOOL(AlignTrailingComments);
   CHECK_PARSE_BOOL(AllowAllParametersOfDeclarationOnNextLine);
-  CHECK_PARSE_BOOL(AllowShortFunctionsOnASingleLine);
   CHECK_PARSE_BOOL(AllowShortIfStatementsOnASingleLine);
   CHECK_PARSE_BOOL(AllowShortLoopsOnASingleLine);
   CHECK_PARSE_BOOL(AlwaysBreakTemplateDeclarations);
@@ -7589,6 +7602,18 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE("UseTab: Never", UseTab, FormatStyle::UT_Never);
   CHECK_PARSE("UseTab: ForIndentation", UseTab, FormatStyle::UT_ForIndentation);
   CHECK_PARSE("UseTab: Always", UseTab, FormatStyle::UT_Always);
+
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;
+  CHECK_PARSE("AllowShortFunctionsOnASingleLine: false",
+              AllowShortFunctionsOnASingleLine, FormatStyle::SFS_None);
+  CHECK_PARSE("AllowShortFunctionsOnASingleLine: true",
+              AllowShortFunctionsOnASingleLine, FormatStyle::SFS_All);
+  CHECK_PARSE("AllowShortFunctionsOnASingleLine: None",
+              AllowShortFunctionsOnASingleLine, FormatStyle::SFS_None);
+  CHECK_PARSE("AllowShortFunctionsOnASingleLine: Inline",
+              AllowShortFunctionsOnASingleLine, FormatStyle::SFS_Inline);
+  CHECK_PARSE("AllowShortFunctionsOnASingleLine: All",
+              AllowShortFunctionsOnASingleLine, FormatStyle::SFS_All);
 
   Style.SpaceBeforeParens = FormatStyle::SBPO_Always;
   CHECK_PARSE("SpaceBeforeParens: Never", SpaceBeforeParens,
@@ -7943,7 +7968,7 @@ TEST_F(FormatTest, ConstructorInitializerIndentWidth) {
                "}",
                Style);
 
-  Style.AllowShortFunctionsOnASingleLine = false;
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_None;
   verifyFormat("SomeClass::Constructor()\n"
                "    : a(a)\n"
                "    , b(b)\n"
@@ -7954,7 +7979,7 @@ TEST_F(FormatTest, ConstructorInitializerIndentWidth) {
                Style);
 
   Style.ColumnLimit = 80;
-  Style.AllowShortFunctionsOnASingleLine = true;
+  Style.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_All;
   Style.ConstructorInitializerIndentWidth = 2;
   verifyFormat("SomeClass::Constructor()\n"
                "  : a(a)\n"

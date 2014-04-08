@@ -65,6 +65,16 @@ template <> struct ScalarEnumerationTraits<FormatStyle::UseTabStyle> {
   }
 };
 
+template <> struct ScalarEnumerationTraits<FormatStyle::ShortFunctionStyle> {
+  static void enumeration(IO &IO, FormatStyle::ShortFunctionStyle &Value) {
+    IO.enumCase(Value, "None", FormatStyle::SFS_None);
+    IO.enumCase(Value, "false", FormatStyle::SFS_None);
+    IO.enumCase(Value, "All", FormatStyle::SFS_All);
+    IO.enumCase(Value, "true", FormatStyle::SFS_All);
+    IO.enumCase(Value, "Inline", FormatStyle::SFS_Inline);
+  }
+};
+
 template <> struct ScalarEnumerationTraits<FormatStyle::BraceBreakingStyle> {
   static void enumeration(IO &IO, FormatStyle::BraceBreakingStyle &Value) {
     IO.enumCase(Value, "Attach", FormatStyle::BS_Attach);
@@ -251,7 +261,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.AlignEscapedNewlinesLeft = false;
   LLVMStyle.AlignTrailingComments = true;
   LLVMStyle.AllowAllParametersOfDeclarationOnNextLine = true;
-  LLVMStyle.AllowShortFunctionsOnASingleLine = true;
+  LLVMStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_All;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.AllowShortLoopsOnASingleLine = false;
   LLVMStyle.AlwaysBreakBeforeMultilineStrings = false;
@@ -332,7 +342,7 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
     GoogleStyle.MaxEmptyLinesToKeep = 2;
     GoogleStyle.SpacesInContainerLiterals = false;
   } else if (Language == FormatStyle::LK_Proto) {
-    GoogleStyle.AllowShortFunctionsOnASingleLine = false;
+    GoogleStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_None;
   }
 
   return GoogleStyle;
@@ -341,6 +351,7 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
 FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
   FormatStyle ChromiumStyle = getGoogleStyle(Language);
   ChromiumStyle.AllowAllParametersOfDeclarationOnNextLine = false;
+  ChromiumStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;
   ChromiumStyle.AllowShortIfStatementsOnASingleLine = false;
   ChromiumStyle.AllowShortLoopsOnASingleLine = false;
   ChromiumStyle.BinPackParameters = false;
@@ -523,11 +534,16 @@ public:
     if (I + 1 == E || I[1]->Type == LT_Invalid)
       return 0;
 
+    // FIXME: TheLine->Level != 0 might or might not be the right check to do.
+    // If necessary, change to something smarter.
+    bool MergeShortFunctions =
+        Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_All ||
+        (Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_Inline &&
+         TheLine->Level != 0);
+
     if (TheLine->Last->Type == TT_FunctionLBrace &&
         TheLine->First != TheLine->Last) {
-      return Style.AllowShortFunctionsOnASingleLine
-                 ? tryMergeSimpleBlock(I, E, Limit)
-                 : 0;
+      return MergeShortFunctions ? tryMergeSimpleBlock(I, E, Limit) : 0;
     }
     if (TheLine->Last->is(tok::l_brace)) {
       return Style.BreakBeforeBraces == FormatStyle::BS_Attach
@@ -542,7 +558,7 @@ public:
       Limit -= 2;
 
       unsigned MergedLines = 0;
-      if (Style.AllowShortFunctionsOnASingleLine) {
+      if (MergeShortFunctions) {
         MergedLines = tryMergeSimpleBlock(I + 1, E, Limit);
         // If we managed to merge the block, count the function header, which is
         // on a separate line.

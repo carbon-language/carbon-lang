@@ -145,7 +145,7 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       getLengthToMatchingParen(Previous) + State.Column > getColumnLimit(State))
     return true;
   if (Current.Type == TT_CtorInitializerColon &&
-      (!Style.AllowShortFunctionsOnASingleLine ||
+      ((Style.AllowShortFunctionsOnASingleLine != FormatStyle::SFS_All) ||
        Style.BreakConstructorInitializersBeforeComma || Style.ColumnLimit != 0))
     return true;
 

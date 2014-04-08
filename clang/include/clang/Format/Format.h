@@ -163,9 +163,20 @@ struct FormatStyle {
   /// single line.
   bool AllowShortLoopsOnASingleLine;
 
-  /// \brief If \c true, <tt>int f() { return 0; }</tt> can be put on a single
-  /// line.
-  bool AllowShortFunctionsOnASingleLine;
+  /// \brief Different styles for merging short functions containing at most one
+  /// statement.
+  enum ShortFunctionStyle {
+    /// \brief Never merge functions into a single line.
+    SFS_None,
+    /// \brief Only merge functions defined inside a class.
+    SFS_Inline,
+    /// \brief Merge all functions fitting on a single line.
+    SFS_All,
+  };
+
+  /// \brief Dependent on the value, <tt>int f() { return 0; }</tt> can be put
+  /// on a single line.
+  ShortFunctionStyle AllowShortFunctionsOnASingleLine;
 
   /// \brief Add a space after \c @property in Objective-C, i.e. use
   /// <tt>@property (readonly)</tt> instead of <tt>@property(readonly)</tt>.
