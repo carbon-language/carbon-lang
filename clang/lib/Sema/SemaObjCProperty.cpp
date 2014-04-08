@@ -1969,8 +1969,9 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
         ObjCReturnsInnerPointerAttr::CreateImplicit(Context, Loc));
     
     if (const SectionAttr *SA = property->getAttr<SectionAttr>())
-      GetterMethod->addAttr(SectionAttr::CreateImplicit(Context, SA->getName(),
-                                                        Loc));
+      GetterMethod->addAttr(
+          SectionAttr::CreateImplicit(Context, SectionAttr::GNU_section,
+                                      SA->getName(), Loc));
 
     if (getLangOpts().ObjCAutoRefCount)
       CheckARCMethodDecl(GetterMethod);
@@ -2022,8 +2023,9 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
       if (lexicalDC)
         SetterMethod->setLexicalDeclContext(lexicalDC);
       if (const SectionAttr *SA = property->getAttr<SectionAttr>())
-        SetterMethod->addAttr(SectionAttr::CreateImplicit(Context,
-                                                          SA->getName(), Loc));
+        SetterMethod->addAttr(
+            SectionAttr::CreateImplicit(Context, SectionAttr::GNU_section,
+                                        SA->getName(), Loc));
       // It's possible for the user to have set a very odd custom
       // setter selector that causes it to have a method family.
       if (getLangOpts().ObjCAutoRefCount)

@@ -685,6 +685,11 @@ ANNOTATION(pragma_ms_pointers_to_members)
 // handles them.
 ANNOTATION(pragma_ms_vtordisp)
 
+// Annotation for all microsoft #pragmas...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_ms_pragma)
+
 // Annotation for #pragma OPENCL EXTENSION...
 // The lexer produces these so that they only take effect when the parser
 // handles them.

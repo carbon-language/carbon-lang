@@ -27,6 +27,14 @@ This page lists the attributes currently supported by Clang.
 }];
 }
 
+def SectionDocs : Documentation {
+  let Category = DocCatVariable;
+  let Content = [{
+The ``section`` attribute allows you to specify a specific section a
+global variable or function should be in after translation.
+  }];
+}
+
 def TLSModelDocs : Documentation {
   let Category = DocCatVariable;
   let Content = [{

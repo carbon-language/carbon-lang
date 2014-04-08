@@ -771,6 +771,15 @@ def warn_pragma_expected_rparen : Warning<
   "missing ')' after '#pragma %0' - ignoring">, InGroup<IgnoredPragmas>;
 def warn_pragma_expected_identifier : Warning<
   "expected identifier in '#pragma %0' - ignored">, InGroup<IgnoredPragmas>;
+def warn_pragma_expected_section_name : Warning<
+  "expected a string literal for the section name in '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_expected_section_push_pop_or_name : Warning<
+  "expected push, pop or a string literal for the section name in '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_expected_section_label_or_name : Warning<
+  "expected a stack label or a string literal for the section name in '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_expected_integer : Warning<
   "expected integer between %0 and %1 inclusive in '#pragma %2' - ignored">,
   InGroup<IgnoredPragmas>;
@@ -793,6 +802,15 @@ def warn_pragma_align_invalid_option : Warning<
   "invalid alignment option in '#pragma %select{align|options align}0' - ignored">,
   InGroup<IgnoredPragmas>;
 // - #pragma pack
+def warn_pragma_unsupported_action : Warning<
+  "known but unsupported action '%1' for '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_invalid_specific_action : Warning<
+  "unknown action '%1' for '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
+def warn_pragma_expected_action_or_r_paren : Warning<
+  "expected action or ')' in '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_invalid_action : Warning<
   "unknown action for '#pragma %0' - ignored">,
   InGroup<IgnoredPragmas>;

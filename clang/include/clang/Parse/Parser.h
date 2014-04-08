@@ -155,6 +155,11 @@ class Parser : public CodeCompletionHandler {
   std::unique_ptr<PragmaHandler> MSPointersToMembers;
   std::unique_ptr<PragmaHandler> MSVtorDisp;
   std::unique_ptr<PragmaHandler> MSInitSeg;
+  std::unique_ptr<PragmaHandler> MSDataSeg;
+  std::unique_ptr<PragmaHandler> MSBSSSeg;
+  std::unique_ptr<PragmaHandler> MSConstSeg;
+  std::unique_ptr<PragmaHandler> MSCodeSeg;
+  std::unique_ptr<PragmaHandler> MSSection;
 
   std::unique_ptr<CommentHandler> CommentSemaHandler;
 
@@ -475,6 +480,14 @@ private:
   void HandlePragmaMSPointersToMembers();
 
   void HandlePragmaMSVtorDisp();
+
+  void HandlePragmaMSPragma();
+  unsigned HandlePragmaMSSection(llvm::StringRef PragmaName,
+                                 SourceLocation PragmaLocation);
+  unsigned HandlePragmaMSSegment(llvm::StringRef PragmaName,
+                                 SourceLocation PragmaLocation);
+  unsigned HandlePragmaMSInitSeg(llvm::StringRef PragmaName,
+                                 SourceLocation PragmaLocation);
 
   /// \brief Handle the annotation token produced for
   /// #pragma align...

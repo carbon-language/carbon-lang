@@ -350,6 +350,10 @@ Retry:
     HandlePragmaMSPointersToMembers();
     return StmtEmpty();
 
+  case tok::annot_pragma_ms_pragma:
+    ProhibitAttributes(Attrs);
+    HandlePragmaMSPragma();
+    return StmtEmpty();
   }
 
   // If we reached this code, the statement must end in a semicolon.
@@ -827,6 +831,9 @@ void Parser::ParseCompoundStatementLeadingPragmas() {
       break;
     case tok::annot_pragma_ms_pointers_to_members:
       HandlePragmaMSPointersToMembers();
+      break;
+    case tok::annot_pragma_ms_pragma:
+      HandlePragmaMSPragma();
       break;
     default:
       checkForPragmas = false;

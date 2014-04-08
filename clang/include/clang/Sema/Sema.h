@@ -274,6 +274,15 @@ public:
     PVDK_Reset          ///< #pragma vtordisp()
   };
 
+  enum PragmaMsStackAction {
+    PSK_Reset,    // #pragma ()
+    PSK_Set,      // #pragma ("name")
+    PSK_Push,     // #pragma (push[, id])
+    PSK_Push_Set, // #pragma (push[, id], "name")
+    PSK_Pop,      // #pragma (pop[, id])
+    PSK_Pop_Set,  // #pragma (pop[, id], "name")
+  };
+
   /// \brief Whether to insert vtordisps prior to virtual bases in the Microsoft
   /// C++ ABI.  Possible values are 0, 1, and 2, which mean:
   ///
@@ -288,6 +297,35 @@ public:
 
   /// \brief Source location for newly created implicit MSInheritanceAttrs
   SourceLocation ImplicitMSInheritanceAttrLoc;
+
+  template<typename ValueType>
+  struct PragmaStack {
+    struct Slot {
+      llvm::StringRef StackSlotLabel;
+      ValueType Value;
+      SourceLocation PragmaLocation;
+      Slot(llvm::StringRef StackSlotLabel,
+           ValueType Value,
+           SourceLocation PragmaLocation)
+        : StackSlotLabel(StackSlotLabel), Value(Value),
+          PragmaLocation(PragmaLocation) {}
+    };
+    void Act(SourceLocation PragmaLocation,
+             PragmaMsStackAction Action,
+             llvm::StringRef StackSlotLabel,
+             ValueType Value);
+    explicit PragmaStack(const ValueType &Value)
+      : CurrentValue(Value) {}
+    SmallVector<Slot, 2> Stack;
+    ValueType CurrentValue;
+    SourceLocation CurrentPragmaLocation;
+  };
+  // FIXME: We should serialize / deserialize these if they occur in a PCH (but
+  // we shouldn't do so if they're in a module).
+  PragmaStack<StringLiteral *> DataSegStack;
+  PragmaStack<StringLiteral *> BSSSegStack;
+  PragmaStack<StringLiteral *> ConstSegStack;
+  PragmaStack<StringLiteral *> CodeSegStack;
 
   /// VisContext - Manages the stack for \#pragma GCC visibility.
   void *VisContext; // Really a "PragmaVisStack*"
@@ -7030,6 +7068,54 @@ public:
   /// \brief Called on well formed \#pragma vtordisp().
   void ActOnPragmaMSVtorDisp(PragmaVtorDispKind Kind, SourceLocation PragmaLoc,
                              MSVtorDispAttr::Mode Value);
+
+  enum PragmaSectionKind {
+    PSK_DataSeg,
+    PSK_BSSSeg,
+    PSK_ConstSeg,
+    PSK_CodeSeg,
+  };
+
+  enum PragmaSectionFlag {
+    PSF_None = 0,
+    PSF_Read = 0x1,
+    PSF_Write = 0x2,
+    PSF_Execute = 0x4,
+    PSF_Implicit = 0x8,
+    PSF_Invalid = 0x80000000,
+  };
+
+  struct SectionInfo {
+    DeclaratorDecl *Decl;
+    SourceLocation PragmaSectionLocation;
+    int SectionFlags;
+    SectionInfo() = default;
+    SectionInfo(DeclaratorDecl *Decl,
+                SourceLocation PragmaSectionLocation,
+                int SectionFlags)
+      : Decl(Decl),
+        PragmaSectionLocation(PragmaSectionLocation),
+        SectionFlags(SectionFlags) {}
+  };
+
+  llvm::StringMap<SectionInfo> SectionInfos;
+  bool UnifySection(const StringRef &SectionName, 
+                    int SectionFlags,
+                    DeclaratorDecl *TheDecl);
+  bool UnifySection(const StringRef &SectionName,
+                    int SectionFlags,
+                    SourceLocation PragmaSectionLocation);
+
+  /// \brief Called on well formed \#pragma bss_seg/data_seg/const_seg/code_seg.
+  void ActOnPragmaMSSeg(SourceLocation PragmaLocation,
+                        PragmaMsStackAction Action,
+                        llvm::StringRef StackSlotLabel,
+                        StringLiteral *SegmentName,
+                        llvm::StringRef PragmaName);
+
+  /// \brief Called on well formed \#pragma section().
+  void ActOnPragmaMSSection(SourceLocation PragmaLocation,
+                            int SectionFlags, StringLiteral *SegmentName);
 
   /// ActOnPragmaDetectMismatch - Call on well-formed \#pragma detect_mismatch
   void ActOnPragmaDetectMismatch(StringRef Name, StringRef Value);

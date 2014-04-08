@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "RAIIObjectsForParser.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
@@ -124,8 +125,8 @@ struct PragmaMSVtorDisp : public PragmaHandler {
                     Token &FirstToken) override;
 };
 
-struct PragmaMSInitSeg : public PragmaHandler {
-  explicit PragmaMSInitSeg() : PragmaHandler("init_seg") {}
+struct PragmaMSPragma : public PragmaHandler {
+  explicit PragmaMSPragma(const char *name) : PragmaHandler(name) {}
   void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
                     Token &FirstToken) override;
 };
@@ -181,8 +182,18 @@ void Parser::initializePragmaHandlers() {
     PP.AddPragmaHandler(MSPointersToMembers.get());
     MSVtorDisp.reset(new PragmaMSVtorDisp());
     PP.AddPragmaHandler(MSVtorDisp.get());
-    MSInitSeg.reset(new PragmaMSInitSeg());
+    MSInitSeg.reset(new PragmaMSPragma("init_seg"));
     PP.AddPragmaHandler(MSInitSeg.get());
+    MSDataSeg.reset(new PragmaMSPragma("data_seg"));
+    PP.AddPragmaHandler(MSDataSeg.get());
+    MSBSSSeg.reset(new PragmaMSPragma("bss_seg"));
+    PP.AddPragmaHandler(MSBSSSeg.get());
+    MSConstSeg.reset(new PragmaMSPragma("const_seg"));
+    PP.AddPragmaHandler(MSConstSeg.get());
+    MSCodeSeg.reset(new PragmaMSPragma("code_seg"));
+    PP.AddPragmaHandler(MSCodeSeg.get());
+    MSSection.reset(new PragmaMSPragma("section"));
+    PP.AddPragmaHandler(MSSection.get());
   }
 }
 
@@ -224,6 +235,16 @@ void Parser::resetPragmaHandlers() {
     MSVtorDisp.reset();
     PP.RemovePragmaHandler(MSInitSeg.get());
     MSInitSeg.reset();
+    PP.RemovePragmaHandler(MSDataSeg.get());
+    MSDataSeg.reset();
+    PP.RemovePragmaHandler(MSBSSSeg.get());
+    MSBSSSeg.reset();
+    PP.RemovePragmaHandler(MSConstSeg.get());
+    MSConstSeg.reset();
+    PP.RemovePragmaHandler(MSCodeSeg.get());
+    MSCodeSeg.reset();
+    PP.RemovePragmaHandler(MSSection.get());
+    MSSection.reset();
   }
 
   PP.RemovePragmaHandler("STDC", FPContractHandler.get());
@@ -408,6 +429,145 @@ void Parser::HandlePragmaMSVtorDisp() {
   MSVtorDispAttr::Mode Mode = MSVtorDispAttr::Mode(Value & 0xFFFF);
   SourceLocation PragmaLoc = ConsumeToken(); // The annotation token.
   Actions.ActOnPragmaMSVtorDisp(Kind, PragmaLoc, Mode);
+}
+
+void Parser::HandlePragmaMSPragma() {
+  assert(Tok.is(tok::annot_pragma_ms_pragma));
+  // Grab the tokens out of the annotation and enter them into the stream.
+  auto TheTokens = (std::pair<Token*, size_t> *)Tok.getAnnotationValue();
+  PP.EnterTokenStream(TheTokens->first, TheTokens->second, true, true);
+  SourceLocation PragmaLocation = ConsumeToken(); // The annotation token.
+  assert(Tok.isAnyIdentifier());
+  llvm::StringRef PragmaName = Tok.getIdentifierInfo()->getName();
+  PP.Lex(Tok); // pragma kind
+  // Figure out which #pragma we're dealing with.  The switch has no default
+  // because lex shouldn't emit the annotation token for unrecognized pragmas.
+  typedef unsigned (Parser::*PragmaHandler)(llvm::StringRef, SourceLocation);
+  PragmaHandler Handler = llvm::StringSwitch<PragmaHandler>(PragmaName)
+    .Case("data_seg", &Parser::HandlePragmaMSSegment)
+    .Case("bss_seg", &Parser::HandlePragmaMSSegment)
+    .Case("const_seg", &Parser::HandlePragmaMSSegment)
+    .Case("code_seg", &Parser::HandlePragmaMSSegment)
+    .Case("section", &Parser::HandlePragmaMSSection)
+    .Case("init_seg", &Parser::HandlePragmaMSInitSeg);
+  if (auto DiagID = (this->*Handler)(PragmaName, PragmaLocation)) {
+    PP.Diag(PragmaLocation, DiagID) << PragmaName;
+    while (Tok.isNot(tok::eof))
+      PP.Lex(Tok);
+    PP.Lex(Tok);
+  }
+}
+
+unsigned Parser::HandlePragmaMSSection(llvm::StringRef PragmaName,
+                                       SourceLocation PragmaLocation) {
+  if (Tok.isNot(tok::l_paren))
+    return diag::warn_pragma_expected_lparen;
+  PP.Lex(Tok); // (
+  // Parsing code for pragma section
+  if (Tok.isNot(tok::string_literal))
+    return diag::warn_pragma_expected_section_name;
+  StringLiteral *SegmentName =
+    cast<StringLiteral>(ParseStringLiteralExpression().get());
+  int SectionFlags = 0;
+  while (Tok.is(tok::comma)) {
+    PP.Lex(Tok); // ,
+    if (!Tok.isAnyIdentifier())
+      return diag::warn_pragma_expected_action_or_r_paren;
+    Sema::PragmaSectionFlag Flag =
+      llvm::StringSwitch<Sema::PragmaSectionFlag>(
+      Tok.getIdentifierInfo()->getName())
+      .Case("read", Sema::PSF_Read)
+      .Case("write", Sema::PSF_Write)
+      .Case("execute", Sema::PSF_Execute)
+      .Case("shared", Sema::PSF_Invalid)
+      .Case("nopage", Sema::PSF_Invalid)
+      .Case("nocache", Sema::PSF_Invalid)
+      .Case("discard", Sema::PSF_Invalid)
+      .Case("remove", Sema::PSF_Invalid)
+      .Default(Sema::PSF_None);
+    if (Flag == Sema::PSF_None || Flag == Sema::PSF_Invalid) {
+      PP.Diag(PragmaLocation, Flag == Sema::PSF_None ?
+                              diag::warn_pragma_invalid_specific_action :
+                              diag::warn_pragma_unsupported_action)
+          << PragmaName << Tok.getIdentifierInfo()->getName();
+      while (Tok.isNot(tok::eof))
+        PP.Lex(Tok);
+      PP.Lex(Tok);
+      return 0;
+    }
+    SectionFlags |= Flag;
+    PP.Lex(Tok); // Identifier
+  }
+  if (Tok.isNot(tok::r_paren))
+    return diag::warn_pragma_expected_rparen;
+  PP.Lex(Tok); // )
+  if (Tok.isNot(tok::eof))
+    return diag::warn_pragma_extra_tokens_at_eol;
+  PP.Lex(Tok); // eof
+  Actions.ActOnPragmaMSSection(PragmaLocation, SectionFlags, SegmentName);
+  return 0;
+}
+
+unsigned Parser::HandlePragmaMSSegment(llvm::StringRef PragmaName,
+                                      SourceLocation PragmaLocation) {
+  if (Tok.isNot(tok::l_paren))
+    return diag::warn_pragma_expected_lparen;
+  PP.Lex(Tok); // (
+  Sema::PragmaMsStackAction Action = Sema::PSK_Reset;
+  llvm::StringRef SlotLabel;
+  if (Tok.isAnyIdentifier()) {
+    llvm::StringRef PushPop = Tok.getIdentifierInfo()->getName();
+    if (PushPop == "push")
+      Action = Sema::PSK_Push;
+    else if (PushPop == "pop")
+      Action = Sema::PSK_Pop;
+    else
+      return diag::warn_pragma_expected_section_push_pop_or_name;
+    if (Action != Sema::PSK_Reset) {
+      PP.Lex(Tok); // push | pop
+      if (Tok.is(tok::comma)) {
+        PP.Lex(Tok); // ,
+        // If we've got a comma, we either need a label or a string.
+        if (Tok.isAnyIdentifier()) {
+          SlotLabel = Tok.getIdentifierInfo()->getName();
+          PP.Lex(Tok); // identifier
+          if (Tok.is(tok::comma))
+            PP.Lex(Tok);
+          else if (Tok.isNot(tok::r_paren))
+            return diag::warn_pragma_expected_punc;
+        }
+      } else if (Tok.isNot(tok::r_paren))
+        return diag::warn_pragma_expected_punc;
+    }
+  }
+  // Grab the string literal for our section name.
+  StringLiteral *SegmentName = nullptr;
+  if (Tok.isNot(tok::r_paren)) {
+    if (Tok.isNot(tok::string_literal))
+      return Action != Sema::PSK_Reset ? !SlotLabel.empty() ?
+          diag::warn_pragma_expected_section_name :
+          diag::warn_pragma_expected_section_label_or_name :
+          diag::warn_pragma_expected_section_push_pop_or_name;
+    SegmentName = cast<StringLiteral>(ParseStringLiteralExpression().get());
+    // Setting section "" has no effect
+    if (SegmentName->getLength())
+      Action = (Sema::PragmaMsStackAction)(Action | Sema::PSK_Set);
+  }
+  if (Tok.isNot(tok::r_paren))
+    return diag::warn_pragma_expected_rparen;
+  PP.Lex(Tok); // )
+  if (Tok.isNot(tok::eof))
+    return diag::warn_pragma_extra_tokens_at_eol;
+  PP.Lex(Tok); // eof
+  Actions.ActOnPragmaMSSeg(PragmaLocation, Action, SlotLabel,
+                           SegmentName, PragmaName);
+  return 0;
+}
+
+unsigned Parser::HandlePragmaMSInitSeg(llvm::StringRef PragmaName,
+                                       SourceLocation PragmaLocation) {
+  return PP.getDiagnostics().getCustomDiagID(
+      DiagnosticsEngine::Error, "'#pragma %0' not implemented.");
 }
 
 // #pragma GCC visibility comes in two variants:
@@ -1214,12 +1374,31 @@ void PragmaMSVtorDisp::HandlePragma(Preprocessor &PP,
   PP.EnterToken(AnnotTok);
 }
 
-void PragmaMSInitSeg::HandlePragma(Preprocessor &PP,
-                                   PragmaIntroducerKind Introducer,
-                                   Token &Tok) {
-  unsigned ID = PP.getDiagnostics().getCustomDiagID(
-      DiagnosticsEngine::Error, "'#pragma init_seg' not implemented");
-  PP.Diag(Tok.getLocation(), ID);
+/// \brief Handle all MS pragmas.  Simply forwards the tokens after inserting
+/// an annotation token.
+void PragmaMSPragma::HandlePragma(Preprocessor &PP,
+                                  PragmaIntroducerKind Introducer,
+                                  Token &Tok) {
+  Token EoF, AnnotTok;
+  EoF.startToken();
+  EoF.setKind(tok::eof);
+  AnnotTok.startToken();
+  AnnotTok.setKind(tok::annot_pragma_ms_pragma);
+  AnnotTok.setLocation(Tok.getLocation());
+  SmallVector<Token, 8> TokenVector;
+  // Suck up all of the tokens before the eod.
+  for (; Tok.isNot(tok::eod); PP.Lex(Tok))
+    TokenVector.push_back(Tok);
+  // Add a sentinal EoF token to the end of the list.
+  TokenVector.push_back(EoF);
+  // We must allocate this array with new because EnterTokenStream is going to
+  // delete it later.
+  Token *TokenArray = new Token[TokenVector.size()];
+  std::copy(TokenVector.begin(), TokenVector.end(), TokenArray);
+  auto Value = new (PP.getPreprocessorAllocator())
+      std::pair<Token*, size_t>(std::make_pair(TokenArray, TokenVector.size()));
+  AnnotTok.setAnnotationValue(Value);
+  PP.EnterToken(AnnotTok);
 }
 
 /// \brief Handle the Microsoft \#pragma detect_mismatch extension.
