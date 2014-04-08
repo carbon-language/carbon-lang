@@ -9,5 +9,5 @@
 ; CHECK: .lcomm	_a,1
 ; CHECK: .lcomm	_b,8,8
 ; .comm uses log2 alignment
-; CHECK: .comm	_c,1,0
-; CHECK: .comm	_d,8,3
+; CHECK: .comm	_c,1
+; CHECK: .comm	_d,8

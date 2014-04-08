@@ -45,9 +45,6 @@ public:
                   MCCodeEmitter &CE,
                   raw_ostream &OS);
 
-  void AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
-                       unsigned ByteAlignment, bool External);
-
   // MCStreamer interface
 
   void InitSections() override;
@@ -100,26 +97,6 @@ private:
 WinCOFFStreamer::WinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
                                  MCCodeEmitter &CE, raw_ostream &OS)
     : MCObjectStreamer(Context, MAB, OS, &CE), CurSymbol(NULL) {}
-
-void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
-                                      unsigned ByteAlignment, bool External) {
-  assert(!Symbol->isInSection() && "Symbol must not already have a section!");
-
-  const MCSection *Section = getContext().getObjectFileInfo()->getBSSSection();
-  MCSectionData &SectionData = getAssembler().getOrCreateSectionData(*Section);
-  if (SectionData.getAlignment() < ByteAlignment)
-    SectionData.setAlignment(ByteAlignment);
-
-  MCSymbolData &SymbolData = getAssembler().getOrCreateSymbolData(*Symbol);
-  SymbolData.setExternal(External);
-
-  AssignSection(Symbol, Section);
-
-  if (ByteAlignment != 1)
-      new MCAlignFragment(ByteAlignment, 0, 0, ByteAlignment, &SectionData);
-
-  SymbolData.setFragment(new MCFillFragment(0, 0, Size, &SectionData));
-}
 
 // MCStreamer interface
 
@@ -244,15 +221,38 @@ void WinCOFFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   assert((Symbol->isInSection()
          ? Symbol->getSection().getVariant() == MCSection::SV_COFF
          : true) && "Got non-COFF section in the COFF backend!");
-  AddCommonSymbol(Symbol, Size, ByteAlignment, true);
+
+  if (ByteAlignment > 32)
+    report_fatal_error(
+        "The linker won't align common symbols beyond 32 bytes.");
+
+  AssignSection(Symbol, NULL);
+
+  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  SD.setExternal(true);
+  SD.setCommon(Size, ByteAlignment);
 }
 
 void WinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                             unsigned ByteAlignment) {
-  assert((Symbol->isInSection()
-         ? Symbol->getSection().getVariant() == MCSection::SV_COFF
-         : true) && "Got non-COFF section in the COFF backend!");
-  AddCommonSymbol(Symbol, Size, ByteAlignment, false);
+  assert(!Symbol->isInSection() && "Symbol must not already have a section!");
+
+  const MCSection *Section = getContext().getObjectFileInfo()->getBSSSection();
+  MCSectionData &SectionData = getAssembler().getOrCreateSectionData(*Section);
+  if (SectionData.getAlignment() < ByteAlignment)
+    SectionData.setAlignment(ByteAlignment);
+
+  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  SD.setExternal(false);
+
+  AssignSection(Symbol, Section);
+
+  if (ByteAlignment != 1)
+    new MCAlignFragment(ByteAlignment, /*_Value=*/0, /*_ValueSize=*/0,
+                        ByteAlignment, &SectionData);
+
+  SD.setFragment(
+      new MCFillFragment(/*_Value=*/0, /*_ValueSize=*/0, Size, &SectionData));
 }
 
 void WinCOFFStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,

@@ -548,6 +548,10 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
 
 
 void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
+  // The object file format cannot represent common symbols with explicit
+  // alignments.
+  CommDirectiveSupportsAlignment = false;
+
   // COFF
   BSSSection =
     Ctx->getCOFFSection(".bss",

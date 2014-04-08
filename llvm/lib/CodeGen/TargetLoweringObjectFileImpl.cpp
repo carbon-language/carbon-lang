@@ -755,7 +755,7 @@ const MCSection *TargetLoweringObjectFileCOFF::getExplicitSectionGlobal(
 static const char *getCOFFSectionNameForUniqueGlobal(SectionKind Kind) {
   if (Kind.isText())
     return ".text";
-  if (Kind.isBSS ())
+  if (Kind.isBSS())
     return ".bss";
   if (Kind.isThreadLocal())
     return ".tls$";
@@ -781,7 +781,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // Section names depend on the name of the symbol which is not feasible if the
   // symbol has private linkage.
   if ((GV->isWeakForLinker() || EmitUniquedSection) &&
-      !GV->hasPrivateLinkage()) {
+      !GV->hasPrivateLinkage() && !Kind.isCommon()) {
     const char *Name = getCOFFSectionNameForUniqueGlobal(Kind);
     unsigned Characteristics = getCOFFSectionFlags(Kind);
 
@@ -802,7 +802,10 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   if (Kind.isReadOnly())
     return ReadOnlySection;
 
-  if (Kind.isBSS())
+  // Note: we claim that common symbols are put in BSSSection, but they are
+  // really emitted with the magic .comm directive, which creates a symbol table
+  // entry but not a section.
+  if (Kind.isBSS() || Kind.isCommon())
     return BSSSection;
 
   return DataSection;
