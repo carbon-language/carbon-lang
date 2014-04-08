@@ -38,7 +38,7 @@ int TEST2;
 //CHECK: @D = global i32 1
 //CHECK: @a = global i32 1, section ".data"
 //CHECK: @b = constant i32 1, section ".my_const"
-//CHECK: @[[MYSTR:.*]] = linkonce_odr unnamed_addr constant [11 x i8] c"my string!\00"
+//CHECK: @[[MYSTR:.*]] = {{.*}} unnamed_addr constant [11 x i8] c"my string!\00"
 //CHECK: @s = global i8* getelementptr inbounds ([11 x i8]* @[[MYSTR]], i32 0, i32 0), section ".data2"
 //CHECK: @c = global i32 1, section ".my_seg"
 //CHECK: @d = global i32 1, section ".data"
