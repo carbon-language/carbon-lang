@@ -53,6 +53,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <utility>
 
 namespace clang {
 namespace threadSafety {
@@ -115,7 +116,7 @@ public:
       : Data(Dat), Size(0), Capacity(Cp) {}
   SimpleArray(MemRegionRef A, size_t Cp)
       : Data(A.allocateT<T>(Cp)), Size(0), Capacity(Cp) {}
-  SimpleArray(SimpleArray<T> &A, bool Steal)
+  SimpleArray(SimpleArray<T> &&A)
       : Data(A.Data), Size(A.Size), Capacity(A.Capacity) {
     A.Data = nullptr;
     A.Size = 0;
@@ -159,6 +160,8 @@ public:
   }
 
 private:
+  SimpleArray(const SimpleArray<T> &A) { }
+
   T *Data;
   size_t Size;
   size_t Capacity;
@@ -178,7 +181,7 @@ typedef clang::UnaryOperatorKind TIL_UnaryOpcode;
 typedef clang::CastKind TIL_CastOpcode;
 
 
-enum TIL_TraversalKind {
+enum TraversalKind {
   TRV_Normal,
   TRV_Lazy, // subexpression may need to be traversed lazily
   TRV_Tail  // subexpression occurs in a tail position
@@ -315,7 +318,7 @@ public:
   SExpr *definition() { return Definition.get(); }
 
   void attachVar() const { ++NumUses; }
-  void detachVar() const { --NumUses; }
+  void detachVar() const { assert(NumUses > 0); --NumUses; }
 
   unsigned getID() { return Id; }
   unsigned getBlockID() { return BlockID; }
@@ -347,7 +350,7 @@ private:
 
   unsigned short BlockID;
   unsigned short Id;
-  mutable int NumUses;
+  mutable unsigned NumUses;
 };
 
 
@@ -1075,9 +1078,9 @@ public:
 
   SCFG(MemRegionRef A, unsigned Nblocks)
       : SExpr(COP_SCFG), Blocks(A, Nblocks), Entry(nullptr), Exit(nullptr) {}
-  SCFG(const SCFG &Cfg, BlockArray &Ba) // steals memory from ba
+  SCFG(const SCFG &Cfg, BlockArray &&Ba) // steals memory from Ba
       : SExpr(COP_SCFG),
-        Blocks(Ba, true),
+        Blocks(std::move(Ba)),
         Entry(nullptr),
         Exit(nullptr) {
     // TODO: set entry and exit!
@@ -1126,9 +1129,9 @@ public:
              SExpr *Term = nullptr)
       : BlockID(0), Parent(nullptr), Args(A, Nargs), Instrs(A, Nins),
         Terminator(Term) {}
-  BasicBlock(const BasicBlock &B, VarArray &As, VarArray &Is, SExpr *T)
-      : BlockID(0), Parent(nullptr), Args(As, true), Instrs(Is, true),
-        Terminator(T)
+  BasicBlock(const BasicBlock &B, VarArray &&As, VarArray &&Is, SExpr *T)
+      : BlockID(0), Parent(nullptr),
+        Args(std::move(As)), Instrs(std::move(Is)), Terminator(T)
   {}
 
   unsigned blockID() const { return BlockID; }
@@ -1153,18 +1156,19 @@ public:
     typename V::template Container<Variable*> Nas(Visitor, Args.size());
     typename V::template Container<Variable*> Nis(Visitor, Instrs.size());
 
-    for (unsigned I = 0; I < Args.size(); ++I) {
-      typename V::R_SExpr Ne = Visitor.traverse(Args[I]->Definition);
-      Variable *Nvd = Visitor.enterScope(*Args[I], Ne);
+    for (auto A : Args) {
+      typename V::R_SExpr Ne = Visitor.traverse(A->Definition);
+      Variable *Nvd = Visitor.enterScope(*A, Ne);
       Nas.push_back(Nvd);
     }
-    for (unsigned J = 0; J < Instrs.size(); ++J) {
-      typename V::R_SExpr Ne = Visitor.traverse(Instrs[J]->Definition);
-      Variable *Nvd = Visitor.enterScope(*Instrs[J], Ne);
+    for (auto I : Instrs) {
+      typename V::R_SExpr Ne = Visitor.traverse(I->Definition);
+      Variable *Nvd = Visitor.enterScope(*I, Ne);
       Nis.push_back(Nvd);
     }
     typename V::R_SExpr Nt = Visitor.traverse(Terminator);
 
+    // TODO: use reverse iterator
     for (unsigned J = 0, JN = Instrs.size(); J < JN; ++J)
       Visitor.exitScope(*Instrs[JN-J]);
     for (unsigned I = 0, IN = Instrs.size(); I < IN; ++I)
@@ -1174,7 +1178,7 @@ public:
   }
 
   template <class C> typename C::CType compare(BasicBlock* E, C& Cmp) {
-    // TODO -- implement CFG comparisons
+    // TODO: implement CFG comparisons
     return Cmp.comparePointers(this, E);
   }
 
@@ -1194,8 +1198,8 @@ template <class V>
 typename V::R_SExpr SCFG::traverse(V &Visitor) {
   Visitor.enterCFG(*this);
   typename V::template Container<BasicBlock *> Bbs(Visitor, Blocks.size());
-  for (unsigned I = 0; I < Blocks.size(); ++I) {
-    BasicBlock *Nbb = Blocks[I]->traverse(Visitor);
+  for (auto B : Blocks) {
+    BasicBlock *Nbb = B->traverse(Visitor);
     Bbs.push_back(Nbb);
   }
   Visitor.exitCFG(*this);
@@ -1211,9 +1215,12 @@ public:
 
   static bool classof(const SExpr *E) { return E->opcode() == COP_Phi; }
 
-  Phi(MemRegionRef A, unsigned Nvals) : SExpr(COP_Phi), Values(A, Nvals) {}
-  Phi(const Phi &P, ValArray &Vs)  // steals memory of vs
-      : SExpr(COP_Phi), Values(Vs, true) {}
+  Phi(MemRegionRef A, unsigned Nvals)
+      : SExpr(COP_Phi), Values(A, Nvals)
+  {}
+  Phi(const Phi &P, ValArray &&Vs)  // steals memory of Vs
+      : SExpr(COP_Phi), Values(std::move(Vs))
+  {}
 
   const ValArray &values() const { return Values; }
   ValArray &values() { return Values; }
@@ -1221,9 +1228,8 @@ public:
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::template Container<typename V::R_SExpr> Nvs(Visitor,
                                                             Values.size());
-    for (ValArray::iterator I = Values.begin(), E = Values.end();
-         I != E; ++I) {
-      typename V::R_SExpr Nv = Visitor.traverse(*I);
+    for (auto Val : Values) {
+      typename V::R_SExpr Nv = Visitor.traverse(Val);
       Nvs.push_back(Nv);
     }
     return Visitor.reducePhi(*this, Nvs);
@@ -1244,9 +1250,9 @@ public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Goto; }
 
   Goto(BasicBlock *B, unsigned Index)
-      : SExpr(COP_Goto), TargetBlock(B) {}
-  Goto(const Goto &G, BasicBlock *B, unsigned Index)
-      : SExpr(COP_Goto), TargetBlock(B) {}
+      : SExpr(COP_Goto), TargetBlock(B), Index(0) {}
+  Goto(const Goto &G, BasicBlock *B, unsigned I)
+      : SExpr(COP_Goto), TargetBlock(B), Index(I) {}
 
   BasicBlock *targetBlock() const { return TargetBlock; }
   unsigned index() const { return Index; }
@@ -1325,22 +1331,22 @@ private:
 // The reduceX methods control the kind of traversal (visitor, copy, etc.).
 // These are separated into a separate class R for the purpose of code reuse.
 // The full reducer interface also has methods to handle scopes
-template <class Self, class R> class TILTraversal : public R {
+template <class Self, class R> class Traversal : public R {
 public:
   Self *self() { return reinterpret_cast<Self *>(this); }
 
   // Traverse an expression -- returning a result of type R_SExpr.
   // Override this method to do something for every expression, regardless
-  // of which kind it is.  TIL_TraversalKind indicates the context in which
+  // of which kind it is.  TraversalKind indicates the context in which
   // the expression occurs, and can be:
   //   TRV_Normal
   //   TRV_Lazy   -- e may need to be traversed lazily, using a Future.
   //   TRV_Tail   -- e occurs in a tail position
-  typename R::R_SExpr traverse(SExprRef &E, TIL_TraversalKind K = TRV_Normal) {
+  typename R::R_SExpr traverse(SExprRef &E, TraversalKind K = TRV_Normal) {
     return traverse(E.get(), K);
   }
 
-  typename R::R_SExpr traverse(SExpr *E, TIL_TraversalKind K = TRV_Normal) {
+  typename R::R_SExpr traverse(SExpr *E, TraversalKind K = TRV_Normal) {
     return traverseByCase(E);
   }
 
@@ -1370,9 +1376,9 @@ public:
 // The default behavior of reduce##X(...) is to create a copy of the original.
 // Subclasses can override reduce##X to implement non-destructive rewriting
 // passes.
-class TILCopyReducer {
+class CopyReducer {
 public:
-  TILCopyReducer() {}
+  CopyReducer() {}
 
   void setArena(MemRegionRef A) { Arena = A; }
 
@@ -1385,13 +1391,13 @@ public:
   template <class T> class Container {
   public:
     // Allocate a new container with a capacity for n elements.
-    Container(TILCopyReducer &R, unsigned N) : Elems(R.Arena, N) {}
+    Container(CopyReducer &R, unsigned N) : Elems(R.Arena, N) {}
 
     // Push a new element onto the container.
     void push_back(T E) { Elems.push_back(E); }
 
   private:
-    friend class TILCopyReducer;
+    friend class CopyReducer;
     SimpleArray<T> Elems;
   };
 
@@ -1457,11 +1463,11 @@ public:
     return new (Arena) Cast(Orig, E0);
   }
 
-  R_SExpr reduceSCFG(SCFG &Orig, Container<BasicBlock *> Bbs) {
-    return new (Arena) SCFG(Orig, Bbs.Elems);
+  R_SExpr reduceSCFG(SCFG &Orig, Container<BasicBlock *> &Bbs) {
+    return new (Arena) SCFG(Orig, std::move(Bbs.Elems));
   }
-  R_SExpr reducePhi(Phi &Orig, Container<R_SExpr> As) {
-    return new (Arena) Phi(Orig, As.Elems);
+  R_SExpr reducePhi(Phi &Orig, Container<R_SExpr> &As) {
+    return new (Arena) Phi(Orig, std::move(As.Elems));
   }
   R_SExpr reduceGoto(Goto &Orig, BasicBlock *B, unsigned Index) {
     return new (Arena) Goto(Orig, B, Index);
@@ -1472,7 +1478,8 @@ public:
 
   BasicBlock *reduceBasicBlock(BasicBlock &Orig, Container<Variable *> &As,
                                Container<Variable *> &Is, R_SExpr T) {
-    return new (Arena) BasicBlock(Orig, As.Elems, Is.Elems, T);
+    return new (Arena) BasicBlock(Orig, std::move(As.Elems),
+                                        std::move(Is.Elems), T);
   }
 
   // Create a new variable from orig, and push it onto the lexical scope.
@@ -1496,7 +1503,7 @@ private:
 };
 
 
-class SExprCopier : public TILTraversal<SExprCopier, TILCopyReducer> {
+class SExprCopier : public Traversal<SExprCopier, CopyReducer> {
 public:
   SExprCopier(MemRegionRef A) { setArena(A); }
 
@@ -1510,9 +1517,9 @@ public:
 
 // Implements a Reducer that visits each subexpression, and returns either
 // true or false.
-class TILVisitReducer {
+class VisitReducer {
 public:
-  TILVisitReducer() {}
+  VisitReducer() {}
 
   // A visitor returns a bool, representing success or failure.
   typedef bool R_SExpr;
@@ -1520,11 +1527,11 @@ public:
   // A visitor "container" is a single bool, which accumulates success.
   template <class T> class Container {
   public:
-    Container(TILVisitReducer &R, unsigned N) : Success(true) {}
+    Container(VisitReducer &R, unsigned N) : Success(true) {}
     void push_back(bool E) { Success = Success && E; }
 
   private:
-    friend class TILVisitReducer;
+    friend class VisitReducer;
     bool Success;
   };
 
@@ -1565,11 +1572,11 @@ public:
   R_SExpr reduceSCFG(SCFG &Orig, Container<BasicBlock *> Bbs) {
     return Bbs.Success;
   }
-   R_SExpr reducePhi(Phi &Orig, Container<R_SExpr> As) {
+   R_SExpr reducePhi(Phi &Orig, Container<R_SExpr> &As) {
     return As.Success;
   }
-  R_SExpr reduceGoto(Goto &Orig, BasicBlock *B, Container<R_SExpr> As) {
-    return As.Success;
+  R_SExpr reduceGoto(Goto &Orig, BasicBlock *B, unsigned Index) {
+    return true;
   }
   R_SExpr reduceBranch(Branch &O, R_SExpr C, BasicBlock *B0, BasicBlock *B1) {
     return C;
@@ -1596,11 +1603,11 @@ public:
 
 // A visitor will visit each node, and halt if any reducer returns false.
 template <class Self>
-class SExprVisitor : public TILTraversal<Self, TILVisitReducer> {
+class SExprVisitor : public Traversal<Self, VisitReducer> {
 public:
   SExprVisitor() : Success(true) {}
 
-  bool traverse(SExpr *E, TIL_TraversalKind K = TRV_Normal) {
+  bool traverse(SExpr *E, TraversalKind K = TRV_Normal) {
     Success = Success && this->traverseByCase(E);
     return Success;
   }
@@ -1617,10 +1624,11 @@ private:
 
 // Basic class for comparison operations over expressions.
 template <typename Self>
-class TILComparator {
-public:
+class Comparator {
+protected:
   Self *self() { return reinterpret_cast<Self *>(this); }
 
+public:
   bool compareByCase(SExpr *E1, SExpr* E2) {
     switch (E1->opcode()) {
 #define TIL_OPCODE_DEF(X)                                                     \
@@ -1635,7 +1643,7 @@ public:
 };
 
 
-class TILEqualsComparator : public TILComparator<TILEqualsComparator> {
+class EqualsComparator : public Comparator<EqualsComparator> {
 public:
   // Result type for the comparison, e.g. bool for simple equality,
   // or int for lexigraphic comparison (-1, 0, 1).  Must have one value which
@@ -1663,7 +1671,7 @@ public:
   }
 
   static bool compareExprs(SExpr *E1, SExpr* E2) {
-    TILEqualsComparator Eq;
+    EqualsComparator Eq;
     return Eq.compare(E1, E2);
   }
 };
@@ -1671,7 +1679,7 @@ public:
 
 // Pretty printer for TIL expressions
 template <typename Self, typename StreamType>
-class TILPrettyPrinter {
+class PrettyPrinter {
 public:
   static void print(SExpr *E, StreamType &SS) {
     Self printer;
@@ -1895,11 +1903,11 @@ protected:
     for (auto BBI : *E) {
       SS << "BB_" << BBI->blockID() << ":";
       newline(SS);
-      for (auto I : BBI->arguments()) {
+      for (auto A : BBI->arguments()) {
         SS << "let ";
-        self()->printVariable(I, SS);
+        self()->printVariable(A, SS);
         SS << " = ";
-        self()->printSExpr(I->definition(), SS, Prec_MAX);
+        self()->printSExpr(A->definition(), SS, Prec_MAX);
         SS << ";";
         newline(SS);
       }
