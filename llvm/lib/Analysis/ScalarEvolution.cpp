@@ -7138,7 +7138,7 @@ public:
         const SCEV *Res = SCEVGCD::findGCD(SE, Expr->getOperand(i), GCD, &Rem);
         if (Rem == Zero) {
           PartialGCD = SE.getMulExpr(PartialGCD, Res);
-          Operands.push_back(divide(SE, Expr->getOperand(i), GCD));
+          Operands.push_back(divide(SE, Expr->getOperand(i), Res));
         } else {
           Operands.push_back(Expr->getOperand(i));
         }
