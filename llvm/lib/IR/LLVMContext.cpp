@@ -160,7 +160,8 @@ void LLVMContext::emitOptimizationRemark(const char *PassName,
                                          const Function &Fn,
                                          const DebugLoc &DLoc,
                                          const Twine &Msg) {
-  diagnose(DiagnosticInfoOptimizationRemark(PassName, Fn, DLoc, Msg));
+  if (pImpl->optimizationRemarksEnabledFor(PassName))
+    diagnose(DiagnosticInfoOptimizationRemark(PassName, Fn, DLoc, Msg));
 }
 
 //===----------------------------------------------------------------------===//

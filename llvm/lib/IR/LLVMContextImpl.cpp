@@ -15,6 +15,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Regex.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -41,6 +43,59 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
   DiagnosticContext = 0;
   NamedStructTypesUniqueID = 0;
 }
+
+namespace {
+
+/// \brief Regular expression corresponding to the value given in the
+/// command line flag -pass-remarks. Passes whose name matches this
+/// regexp will emit a diagnostic when calling
+/// LLVMContext::emitOptimizationRemark.
+static Regex *OptimizationRemarkPattern = 0;
+
+/// \brief String to hold all the values passed via -pass-remarks. Every
+/// instance of -pass-remarks on the command line will be concatenated
+/// to this string. Values are stored inside braces and concatenated with
+/// the '|' operator. This implements the expected semantics that multiple
+/// -pass-remarks are additive.
+static std::string OptimizationRemarkExpr;
+
+struct PassRemarksOpt {
+  void operator=(const std::string &Val) const {
+    // Create a regexp object to match pass names for emitOptimizationRemark.
+    if (!Val.empty()) {
+      if (!OptimizationRemarkExpr.empty())
+        OptimizationRemarkExpr += "|";
+      OptimizationRemarkExpr += "(" + Val + ")";
+      delete OptimizationRemarkPattern;
+      OptimizationRemarkPattern = new Regex(OptimizationRemarkExpr);
+      std::string RegexError;
+      if (!OptimizationRemarkPattern->isValid(RegexError))
+        report_fatal_error("Invalid regular expression '" + Val +
+                               "' in -pass-remarks: " + RegexError,
+                           false);
+    }
+  };
+};
+
+static PassRemarksOpt PassRemarksOptLoc;
+
+// -pass-remarks
+//    Command line flag to enable LLVMContext::emitOptimizationRemark()
+//    and LLVMContext::emitOptimizationNote() calls.
+static cl::opt<PassRemarksOpt, true, cl::parser<std::string>>
+PassRemarks("pass-remarks", cl::value_desc("pattern"),
+            cl::desc("Enable optimization remarks from passes whose name match "
+                     "the given regular expression"),
+            cl::Hidden, cl::location(PassRemarksOptLoc), cl::ValueRequired,
+            cl::ZeroOrMore);
+}
+
+bool
+LLVMContextImpl::optimizationRemarksEnabledFor(const char *PassName) const {
+  return OptimizationRemarkPattern &&
+         OptimizationRemarkPattern->match(PassName);
+}
+
 
 namespace {
 struct DropReferences {
