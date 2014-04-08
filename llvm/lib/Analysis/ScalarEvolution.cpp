@@ -7001,12 +7001,17 @@ public:
 
     const SCEV *Rem = Zero;
     const SCEV *Res = findGCD(SE, Expr->getOperand(0), GCD, &Rem);
+    if (Res == One || Res->isAllOnesValue()) {
+      Remainder = Expr;
+      return GCD;
+    }
+
     if (Rem != Zero)
       Remainder = SE.getAddExpr(Remainder, Rem);
 
     Rem = Zero;
     Res = findGCD(SE, Expr->getOperand(1), Res, &Rem);
-    if (Rem != Zero) {
+    if (Rem != Zero || Res == One || Res->isAllOnesValue()) {
       Remainder = Expr;
       return GCD;
     }
