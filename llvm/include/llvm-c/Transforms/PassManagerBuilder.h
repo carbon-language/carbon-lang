@@ -19,7 +19,6 @@
 typedef struct LLVMOpaquePassManagerBuilder *LLVMPassManagerBuilderRef;
 
 #ifdef __cplusplus
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 extern "C" {
 #endif
 
