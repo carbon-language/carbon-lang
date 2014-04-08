@@ -386,7 +386,7 @@ public:
             if (!FileSpec::Equal(fspec, GetFileSpec(), fspec.GetDirectory().IsEmpty() == false))
                 return false;
         }
-        if (match_module_spec.GetPlatformFileSpecPtr())
+        if (GetPlatformFileSpec() && match_module_spec.GetPlatformFileSpecPtr())
         {
             const FileSpec &fspec = match_module_spec.GetPlatformFileSpec();
             if (!FileSpec::Equal(fspec, GetPlatformFileSpec(), fspec.GetDirectory().IsEmpty() == false))
