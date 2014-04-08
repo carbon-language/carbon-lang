@@ -91,6 +91,7 @@ public:
         eCore_x86_32_i386,
         eCore_x86_32_i486,
         eCore_x86_32_i486sx,
+        eCore_x86_32_i686,
         
         eCore_x86_64_x86_64,
         eCore_x86_64_x86_64h, // Haswell enabled x86_64
@@ -124,7 +125,7 @@ public:
         kCore_ppc64_last    = eCore_ppc64_ppc970_64,
 
         kCore_x86_32_first  = eCore_x86_32_i386,
-        kCore_x86_32_last   = eCore_x86_32_i486sx,
+        kCore_x86_32_last   = eCore_x86_32_i686,
 
         kCore_hexagon_first  = eCore_hexagon_generic,
         kCore_hexagon_last   = eCore_hexagon_hexagonv5
