@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 %s -fms-extensions -fno-rtti -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple i686-pc-win32 %s -fms-extensions -fno-rtti -emit-llvm -o - | FileCheck %s
 
 // Similar to predefined-expr.cpp, but not as exhaustive, since it's basically
 // equivalent to __PRETTY_FUNCTION__.
