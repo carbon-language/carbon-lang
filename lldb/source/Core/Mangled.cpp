@@ -11,13 +11,7 @@
 // FreeBSD9-STABLE requires this to know about size_t in cxxabi.h
 #include <cstddef>
 #if defined(_MSC_VER) 
-#define LLDB_USE_BUILTIN_DEMANGLER
-// MSVC doesn't support constexpr, alignas, __attribute__ and noexcept yet
-#define constexpr
-#define alignas(X)
-#define __attribute__(X)
-#define noexcept
-#define snprintf _snprintf
+// Cannot enable the builtin demangler on msvc as it does not support the cpp11 within the implementation.
 #elif defined (__FreeBSD__)
 #define LLDB_USE_BUILTIN_DEMANGLER
 #else
@@ -179,30 +173,30 @@ struct float_data<float>
 {
     static const size_t mangled_size = 8;
     static const size_t max_demangled_size = 24;
-    static constexpr const char* spec;
+    static constexpr const char* spec = "%af";
 };
 
-constexpr const char* float_data<float>::spec = "%af";
+constexpr const char* float_data<float>::spec;
 
 template <>
 struct float_data<double>
 {
     static const size_t mangled_size = 16;
     static const size_t max_demangled_size = 32;
-    static constexpr const char* spec;
+    static constexpr const char* spec = "%a";
 };
 
-constexpr const char* float_data<double>::spec = "%a";
+constexpr const char* float_data<double>::spec;
 
 template <>
 struct float_data<long double>
 {
     static const size_t mangled_size = 20;  // May need to be adjusted to 16 or 24 on other platforms
     static const size_t max_demangled_size = 40;
-    static constexpr const char* spec;
+    static constexpr const char* spec = "%LaL";
 };
 
-constexpr const char* float_data<long double>::spec = "%LaL";
+constexpr const char* float_data<long double>::spec;
 
 template <class Float, class C>
 const char*
