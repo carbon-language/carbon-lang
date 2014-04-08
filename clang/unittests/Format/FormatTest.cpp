@@ -8249,6 +8249,12 @@ TEST_F(FormatTest, FormatsBlocks) {
                "        // ...\n"
                "        int i;\n"
                "    }];");
+  verifyFormat("[myObject doSomethingWith:arg1\n"
+               "               firstBlock:-1\n"
+               "              secondBlock:^(Bar *b) {\n"
+               "                  // ...\n"
+               "                  int i;\n"
+               "              }];");
 
   verifyFormat("f(^{\n"
                "    @autoreleasepool {\n"

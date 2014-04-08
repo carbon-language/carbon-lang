@@ -727,10 +727,9 @@ private:
                                   Contexts.back().InTemplateArgument);
       } else if (Current.isOneOf(tok::minus, tok::plus, tok::caret)) {
         Current.Type = determinePlusMinusCaretUsage(Current);
-        if (Current.Type == TT_UnaryOperator) {
+        if (Current.Type == TT_UnaryOperator && Current.is(tok::caret)) {
           ++Contexts.back().NumBlockParameters;
-          if (Current.is(tok::caret))
-            Contexts.back().CaretFound = true;
+          Contexts.back().CaretFound = true;
         }
       } else if (Current.isOneOf(tok::minusminus, tok::plusplus)) {
         Current.Type = determineIncrementUsage(Current);
