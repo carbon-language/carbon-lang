@@ -16,6 +16,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <dlfcn.h>
 
 #if __APPLE__
@@ -62,12 +63,36 @@ public:
   typedef uint32_t pint_t;
   typedef int32_t  sint_t;
 #endif
-  uint8_t         get8(pint_t addr)      { return *((uint8_t *)addr); }
-  uint16_t        get16(pint_t addr)     { return *((uint16_t *)addr); }
-  uint32_t        get32(pint_t addr)     { return *((uint32_t *)addr); }
-  uint64_t        get64(pint_t addr)     { return *((uint64_t *)addr); }
-  double          getDouble(pint_t addr) { return *((double *)addr); }
-  v128            getVector(pint_t addr) { return *((v128 *)addr); }
+  uint8_t         get8(pint_t addr) {
+    uint8_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
+  uint16_t         get16(pint_t addr) {
+    uint16_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
+  uint32_t         get32(pint_t addr) {
+    uint32_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
+  uint64_t         get64(pint_t addr) {
+    uint64_t val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
+  double           getDouble(pint_t addr) {
+    double val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
+  v128             getVector(pint_t addr) {
+    v128 val;
+    memcpy(&val, (void *)addr, sizeof(val));
+    return val;
+  }
   uintptr_t       getP(pint_t addr);
   static uint64_t getULEB128(pint_t &addr, pint_t end);
   static int64_t  getSLEB128(pint_t &addr, pint_t end);
@@ -80,7 +105,6 @@ public:
 
   static LocalAddressSpace sThisAddressSpace;
 };
-
 
 inline uintptr_t LocalAddressSpace::getP(pint_t addr) {
 #if __LP64__
