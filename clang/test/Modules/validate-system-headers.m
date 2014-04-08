@@ -20,6 +20,24 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -isysroot %t/Inputs -fmodules -fmodules-validate-system-headers -fmodules-cache-path=%t/ModuleCache -fdisable-module-hash -x objective-c-header -fsyntax-only %s
 // RUN: not diff %t/ModuleCache/Foo.pcm %t/Foo.pcm.saved
 
+
+////
+// This should override -fmodules-validate-once-per-build-session
+// RUN: cp %t/ModuleCache/Foo.pcm %t/Foo.pcm.saved
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -isysroot %t/Inputs -fmodules -fmodules-cache-path=%t/ModuleCache -fdisable-module-hash -x objective-c-header -fsyntax-only %s -fbuild-session-timestamp=1390000000 -fmodules-validate-once-per-build-session
+// RUN: diff %t/ModuleCache/Foo.pcm %t/Foo.pcm.saved
+
+// Modify the system header...
+// RUN: echo ' ' >> %t/Inputs/usr/include/foo.h
+
+// Don't recompile due to -fmodules-validate-once-per-build-session
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -isysroot %t/Inputs -fmodules -fmodules-cache-path=%t/ModuleCache -fdisable-module-hash -x objective-c-header -fsyntax-only %s -fbuild-session-timestamp=1390000000 -fmodules-validate-once-per-build-session
+// RUN: diff %t/ModuleCache/Foo.pcm %t/Foo.pcm.saved
+
+// Now add -fmodules-validate-system-headers and rebuild
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -isysroot %t/Inputs -fmodules -fmodules-validate-system-headers -fmodules-cache-path=%t/ModuleCache -fdisable-module-hash -x objective-c-header -fsyntax-only %s -fbuild-session-timestamp=1390000000 -fmodules-validate-once-per-build-session
+// RUN: not diff %t/ModuleCache/Foo.pcm %t/Foo.pcm.saved
+
 // REQUIRES: shell
 
 @import Foo;

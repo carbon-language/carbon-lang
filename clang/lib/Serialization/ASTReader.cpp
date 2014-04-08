@@ -2117,7 +2117,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       unsigned NumUserInputs = Record[1];
 
       if (!DisableValidation &&
-          (!HSOpts.ModulesValidateOncePerBuildSession ||
+          (ValidateSystemInputs || !HSOpts.ModulesValidateOncePerBuildSession ||
            F.InputFilesValidationTimestamp <= HSOpts.BuildSessionTimestamp)) {
         bool Complain = (ClientLoadCapabilities & ARR_OutOfDate) == 0;
 
