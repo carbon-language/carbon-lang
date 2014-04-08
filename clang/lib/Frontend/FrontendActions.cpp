@@ -213,7 +213,7 @@ collectModuleHeaderIncludes(const LangOptions &LangOpts, FileManager &FileMgr,
       // If this header is marked 'unavailable' in this module, don't include 
       // it.
       if (const FileEntry *Header = FileMgr.getFile(Dir->path())) {
-        if (ModMap.isHeaderInUnavailableModule(Header))
+        if (ModMap.isHeaderUnavailableInModule(Header, Module))
           continue;
         Module->addTopHeader(Header);
       }

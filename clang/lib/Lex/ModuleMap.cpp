@@ -396,30 +396,41 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
 }
 
 bool ModuleMap::isHeaderInUnavailableModule(const FileEntry *Header) const {
+  return isHeaderUnavailableInModule(Header, 0);
+}
+
+bool ModuleMap::isHeaderUnavailableInModule(const FileEntry *Header,
+                                            Module *RequestingModule) const {
   HeadersMap::const_iterator Known = Headers.find(Header);
   if (Known != Headers.end()) {
     for (SmallVectorImpl<KnownHeader>::const_iterator
              I = Known->second.begin(),
              E = Known->second.end();
          I != E; ++I) {
-      if (I->isAvailable())
+      if (I->isAvailable() && (!RequestingModule ||
+                               I->getModule()->isSubModuleOf(RequestingModule)))
         return false;
     }
     return true;
   }
-  
+
   const DirectoryEntry *Dir = Header->getDir();
   SmallVector<const DirectoryEntry *, 2> SkippedDirs;
   StringRef DirName = Dir->getName();
 
+  auto IsUnavailable = [&](const Module *M) {
+    return !M->isAvailable() && (!RequestingModule ||
+                                 M->isSubModuleOf(RequestingModule));
+  };
+
   // Keep walking up the directory hierarchy, looking for a directory with
   // an umbrella header.
-  do {    
+  do {
     llvm::DenseMap<const DirectoryEntry *, Module *>::const_iterator KnownDir
       = UmbrellaDirs.find(Dir);
     if (KnownDir != UmbrellaDirs.end()) {
       Module *Found = KnownDir->second;
-      if (!Found->isAvailable())
+      if (IsUnavailable(Found))
         return true;
 
       // Search up the module stack until we find a module with an umbrella
@@ -438,7 +449,7 @@ bool ModuleMap::isHeaderInUnavailableModule(const FileEntry *Header) const {
           Found = lookupModuleQualified(Name, Found);
           if (!Found)
             return false;
-          if (!Found->isAvailable())
+          if (IsUnavailable(Found))
             return true;
         }
         
@@ -452,7 +463,7 @@ bool ModuleMap::isHeaderInUnavailableModule(const FileEntry *Header) const {
           return false;
       }
 
-      return !Found->isAvailable();
+      return IsUnavailable(Found);
     }
     
     SkippedDirs.push_back(Dir);

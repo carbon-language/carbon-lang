@@ -242,6 +242,11 @@ public:
   /// marked 'unavailable'.
   bool isHeaderInUnavailableModule(const FileEntry *Header) const;
 
+  /// \brief Determine whether the given header is unavailable as part
+  /// of the specified module.
+  bool isHeaderUnavailableInModule(const FileEntry *Header,
+                                   Module *RequestingModule) const;
+
   /// \brief Retrieve a module with the given name.
   ///
   /// \param Name The name of the module to look up.
