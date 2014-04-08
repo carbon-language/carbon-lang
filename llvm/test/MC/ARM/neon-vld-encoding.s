@@ -367,7 +367,7 @@
 @ CHECK: vld3.16 {d16[], d17[], d18[]}, [r2]! @ encoding: [0x4d,0x0e,0xe2,0xf4]
 @ CHECK: vld3.32 {d16[], d17[], d18[]}, [r3]! @ encoding: [0x8d,0x0e,0xe3,0xf4]
 @ CHECK: vld3.8 {d17[], d18[], d19[]}, [r7]! @ encoding: [0x2d,0x1e,0xe7,0xf4]
-@ CHECK: vld3.16 {d17[], d18[], d19[]}, [r7]! @ encoding: [0x6d,0x1e,0xe7,0xf4]
+@ CHECK: vld3.16 {d17[], d19[], d21[]}, [r7]! @ encoding: [0x6d,0x1e,0xe7,0xf4]
 @ CHECK: vld3.32 {d16[], d18[], d20[]}, [r8]! @ encoding: [0xad,0x0e,0xe8,0xf4]
 @ CHECK: vld3.8 {d16[], d17[], d18[]}, [r1], r8 @ encoding: [0x08,0x0e,0xe1,0xf4]
 @ CHECK: vld3.16 {d16[], d17[], d18[]}, [r2], r7 @ encoding: [0x47,0x0e,0xe2,0xf4]
