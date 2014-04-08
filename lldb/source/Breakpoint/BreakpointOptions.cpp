@@ -154,7 +154,7 @@ BreakpointOptions::InvokeCallback (StoppointCallbackContext *context,
 }
 
 bool
-BreakpointOptions::HasCallback ()
+BreakpointOptions::HasCallback () const
 {
     return m_callback != BreakpointOptions::NullCallback;
 }
