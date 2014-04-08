@@ -929,7 +929,7 @@ bool PPC::isVMRGHShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
 /// amount, otherwise return -1.
 int PPC::isVSLDOIShuffleMask(SDNode *N, bool isUnary) {
   if (N->getValueType(0) != MVT::v16i8)
-    return false;
+    return -1;
 
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
 
