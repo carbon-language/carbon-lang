@@ -1657,6 +1657,8 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   assert((P->getPotentialPassManagerType() <
           RequiredPass->getPotentialPassManagerType()) &&
          "Unable to handle Pass that requires lower level Analysis pass");
+  if (!RequiredPass)
+    return;
 
   FunctionPassManagerImpl *FPP = OnTheFlyManagers[P];
   if (!FPP) {
@@ -1666,14 +1668,24 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
 
     OnTheFlyManagers[P] = FPP;
   }
-  FPP->add(RequiredPass);
+  const PassInfo * RequiredPassPI =
+    PassRegistry::getPassRegistry()->getPassInfo(RequiredPass->getPassID());
 
-  // Register P as the last user of RequiredPass.
-  if (RequiredPass) {
-    SmallVector<Pass *, 1> LU;
-    LU.push_back(RequiredPass);
-    FPP->setLastUser(LU,  P);
+  Pass *FoundPass = NULL;
+  if (RequiredPassPI && RequiredPassPI->isAnalysis()) {
+    FoundPass =
+      ((PMTopLevelManager*)FPP)->findAnalysisPass(RequiredPass->getPassID());
   }
+  if (!FoundPass) {
+    FoundPass = RequiredPass;
+    // This should be guaranteed to add RequiredPass to the passmanager given
+    // that we checked for an avaiable analysis above.
+    FPP->add(RequiredPass);
+  }
+  // Register P as the last user of FoundPass or RequiredPass.
+  SmallVector<Pass *, 1> LU;
+  LU.push_back(FoundPass);
+  FPP->setLastUser(LU,  P);
 }
 
 /// Return function pass corresponding to PassInfo PI, that is
