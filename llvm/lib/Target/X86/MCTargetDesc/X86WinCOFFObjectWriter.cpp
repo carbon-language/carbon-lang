@@ -23,10 +23,8 @@ namespace llvm {
 
 namespace {
   class X86WinCOFFObjectWriter : public MCWinCOFFObjectTargetWriter {
-    const bool Is64Bit;
-
   public:
-    X86WinCOFFObjectWriter(bool Is64Bit_);
+    X86WinCOFFObjectWriter(bool Is64Bit);
     virtual ~X86WinCOFFObjectWriter();
 
     unsigned getRelocType(const MCValue &Target, const MCFixup &Fixup,
@@ -34,10 +32,9 @@ namespace {
   };
 }
 
-X86WinCOFFObjectWriter::X86WinCOFFObjectWriter(bool Is64Bit_)
-  : MCWinCOFFObjectTargetWriter(Is64Bit_ ? COFF::IMAGE_FILE_MACHINE_AMD64 :
-                                COFF::IMAGE_FILE_MACHINE_I386),
-    Is64Bit(Is64Bit_) {}
+X86WinCOFFObjectWriter::X86WinCOFFObjectWriter(bool Is64Bit)
+    : MCWinCOFFObjectTargetWriter(Is64Bit ? COFF::IMAGE_FILE_MACHINE_AMD64
+                                          : COFF::IMAGE_FILE_MACHINE_I386) {}
 
 X86WinCOFFObjectWriter::~X86WinCOFFObjectWriter() {}
 
@@ -49,29 +46,46 @@ unsigned X86WinCOFFObjectWriter::getRelocType(const MCValue &Target,
   MCSymbolRefExpr::VariantKind Modifier = Target.isAbsolute() ?
     MCSymbolRefExpr::VK_None : Target.getSymA()->getKind();
 
-  switch (FixupKind) {
-  case FK_PCRel_4:
-  case X86::reloc_riprel_4byte:
-  case X86::reloc_riprel_4byte_movq_load:
-    return Is64Bit ? COFF::IMAGE_REL_AMD64_REL32 : COFF::IMAGE_REL_I386_REL32;
-  case FK_Data_4:
-  case X86::reloc_signed_4byte:
-    if (Modifier == MCSymbolRefExpr::VK_COFF_IMGREL32)
-      return Is64Bit ? COFF::IMAGE_REL_AMD64_ADDR32NB :
-                       COFF::IMAGE_REL_I386_DIR32NB;
-    return Is64Bit ? COFF::IMAGE_REL_AMD64_ADDR32 : COFF::IMAGE_REL_I386_DIR32;
-  case FK_Data_8:
-    if (Is64Bit)
+  if (getMachine() == COFF::IMAGE_FILE_MACHINE_AMD64) {
+    switch (FixupKind) {
+    case FK_PCRel_4:
+    case X86::reloc_riprel_4byte:
+    case X86::reloc_riprel_4byte_movq_load:
+      return COFF::IMAGE_REL_AMD64_REL32;
+    case FK_Data_4:
+    case X86::reloc_signed_4byte:
+      if (Modifier == MCSymbolRefExpr::VK_COFF_IMGREL32)
+        return COFF::IMAGE_REL_AMD64_ADDR32NB;
+      return COFF::IMAGE_REL_AMD64_ADDR32;
+    case FK_Data_8:
       return COFF::IMAGE_REL_AMD64_ADDR64;
-    llvm_unreachable("unsupported relocation type");
-  case FK_SecRel_2:
-    return Is64Bit ? COFF::IMAGE_REL_AMD64_SECTION
-                   : COFF::IMAGE_REL_I386_SECTION;
-  case FK_SecRel_4:
-    return Is64Bit ? COFF::IMAGE_REL_AMD64_SECREL : COFF::IMAGE_REL_I386_SECREL;
-  default:
-    llvm_unreachable("unsupported relocation type");
-  }
+    case FK_SecRel_2:
+      return COFF::IMAGE_REL_AMD64_SECTION;
+    case FK_SecRel_4:
+      return COFF::IMAGE_REL_AMD64_SECREL;
+    default:
+      llvm_unreachable("unsupported relocation type");
+    }
+  } else if (getMachine() == COFF::IMAGE_FILE_MACHINE_I386) {
+    switch (FixupKind) {
+    case FK_PCRel_4:
+    case X86::reloc_riprel_4byte:
+    case X86::reloc_riprel_4byte_movq_load:
+      return COFF::IMAGE_REL_I386_REL32;
+    case FK_Data_4:
+    case X86::reloc_signed_4byte:
+      if (Modifier == MCSymbolRefExpr::VK_COFF_IMGREL32)
+        return COFF::IMAGE_REL_I386_DIR32NB;
+      return COFF::IMAGE_REL_I386_DIR32;
+    case FK_SecRel_2:
+      return COFF::IMAGE_REL_I386_SECTION;
+    case FK_SecRel_4:
+      return COFF::IMAGE_REL_I386_SECREL;
+    default:
+      llvm_unreachable("unsupported relocation type");
+    }
+  } else
+    llvm_unreachable("Unsupported COFF machine type.");
 }
 
 MCObjectWriter *llvm::createX86WinCOFFObjectWriter(raw_ostream &OS,
