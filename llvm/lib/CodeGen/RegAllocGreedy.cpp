@@ -39,6 +39,7 @@
 #include "llvm/CodeGen/VirtRegMap.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/PassAnalysisSupport.h"
+#include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -275,6 +276,9 @@ class RAGreedy : public MachineFunctionPass,
   /// NoCand which indicates the stack interval.
   SmallVector<unsigned, 32> BundleCand;
 
+  /// Callee-save register cost, calculated once per machine function.
+  BlockFrequency CSRCost;
+
 public:
   RAGreedy();
 
@@ -343,6 +347,7 @@ private:
   unsigned tryAssignCSRFirstTime(LiveInterval &VirtReg, AllocationOrder &Order,
                                  unsigned PhysReg, unsigned &CostPerUseLimit,
                                  SmallVectorImpl<unsigned> &NewVRegs);
+  void initializeCSRCost();
   unsigned tryBlockSplit(LiveInterval&, AllocationOrder&,
                          SmallVectorImpl<unsigned>&);
   unsigned tryInstructionSplit(LiveInterval&, AllocationOrder&,
@@ -2157,10 +2162,6 @@ unsigned RAGreedy::tryAssignCSRFirstTime(LiveInterval &VirtReg,
                                          unsigned PhysReg,
                                          unsigned &CostPerUseLimit,
                                          SmallVectorImpl<unsigned> &NewVRegs) {
-  // We use the larger one out of the command-line option and the value report
-  // by TRI.
-  BlockFrequency CSRCost(std::max((unsigned)CSRFirstTimeCost,
-                                  TRI->getCSRFirstUseCost()));
   if (getStage(VirtReg) == RS_Spill && VirtReg.isSpillable()) {
     // We choose spill over using the CSR for the first time if the spill cost
     // is lower than CSRCost.
@@ -2178,9 +2179,9 @@ unsigned RAGreedy::tryAssignCSRFirstTime(LiveInterval &VirtReg,
     // the cost of splitting is lower than CSRCost.
     SA->analyze(&VirtReg);
     unsigned NumCands = 0;
-    unsigned BestCand =
-      calculateRegionSplitCost(VirtReg, Order, CSRCost, NumCands,
-                               true/*IgnoreCSR*/);
+    BlockFrequency BestCost = CSRCost; // Don't modify CSRCost.
+    unsigned BestCand = calculateRegionSplitCost(VirtReg, Order, BestCost,
+                                                 NumCands, true /*IgnoreCSR*/);
     if (BestCand == NoCand)
       // Use the CSR if we can't find a region split below CSRCost.
       return PhysReg;
@@ -2190,6 +2191,31 @@ unsigned RAGreedy::tryAssignCSRFirstTime(LiveInterval &VirtReg,
     return 0;
   }
   return PhysReg;
+}
+
+void RAGreedy::initializeCSRCost() {
+  // We use the larger one out of the command-line option and the value report
+  // by TRI.
+  CSRCost = BlockFrequency(
+      std::max((unsigned)CSRFirstTimeCost, TRI->getCSRFirstUseCost()));
+  if (!CSRCost.getFrequency())
+    return;
+
+  // Raw cost is relative to Entry == 2^14; scale it appropriately.
+  uint64_t ActualEntry = MBFI->getEntryFreq();
+  if (!ActualEntry) {
+    CSRCost = 0;
+    return;
+  }
+  uint64_t FixedEntry = 1 << 14;
+  if (ActualEntry < FixedEntry)
+    CSRCost *= BranchProbability(ActualEntry, FixedEntry);
+  else if (ActualEntry <= UINT32_MAX)
+    // Invert the fraction and divide.
+    CSRCost /= BranchProbability(FixedEntry, ActualEntry);
+  else
+    // Can't use BranchProbability in general, since it takes 32-bit numbers.
+    CSRCost = CSRCost.getFrequency() * (ActualEntry / FixedEntry);
 }
 
 unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
@@ -2209,8 +2235,7 @@ unsigned RAGreedy::selectOrSplitImpl(LiveInterval &VirtReg,
     // When NewVRegs is not empty, we may have made decisions such as evicting
     // a virtual register, go with the earlier decisions and use the physical
     // register.
-    if ((CSRFirstTimeCost || TRI->getCSRFirstUseCost()) &&
-        CSRFirstUse && NewVRegs.empty()) {
+    if (CSRCost.getFrequency() && CSRFirstUse && NewVRegs.empty()) {
       unsigned CSRReg = tryAssignCSRFirstTime(VirtReg, Order, PhysReg,
                                               CostPerUseLimit, NewVRegs);
       if (CSRReg || !NewVRegs.empty())
@@ -2291,6 +2316,8 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   Bundles = &getAnalysis<EdgeBundles>();
   SpillPlacer = &getAnalysis<SpillPlacement>();
   DebugVars = &getAnalysis<LiveDebugVariables>();
+
+  initializeCSRCost();
 
   calculateSpillWeightsAndHints(*LIS, mf, *Loops, *MBFI);
 

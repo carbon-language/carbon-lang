@@ -59,9 +59,26 @@ void SpillPlacement::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
+namespace {
+static BlockFrequency Threshold;
+}
+
 /// Decision threshold. A node gets the output value 0 if the weighted sum of
 /// its inputs falls in the open interval (-Threshold;Threshold).
-static const BlockFrequency Threshold = 2;
+static BlockFrequency getThreshold() { return Threshold; }
+
+/// \brief Set the threshold for a given entry frequency.
+///
+/// Set the threshold relative to \c Entry.  Since the threshold is used as a
+/// bound on the open interval (-Threshold;Threshold), 1 is the minimum
+/// threshold.
+static void setThreshold(const BlockFrequency &Entry) {
+  // Apparently 2 is a good threshold when Entry==2^14, but we need to scale
+  // it.  Divide by 2^13, rounding as appropriate.
+  uint64_t Freq = Entry.getFrequency();
+  uint64_t Scaled = (Freq >> 13) + bool(Freq & (1 << 12));
+  Threshold = std::max(UINT64_C(1), Scaled);
+}
 
 /// Node - Each edge bundle corresponds to a Hopfield node.
 ///
@@ -110,7 +127,7 @@ struct SpillPlacement::Node {
   // the CFG.
   void clear() {
     BiasN = BiasP = Value = 0;
-    SumLinkWeights = Threshold;
+    SumLinkWeights = getThreshold();
     Links.clear();
   }
 
@@ -168,9 +185,9 @@ struct SpillPlacement::Node {
     //  2. It helps tame rounding errors when the links nominally sum to 0.
     //
     bool Before = preferReg();
-    if (SumN >= SumP + Threshold)
+    if (SumN >= SumP + getThreshold())
       Value = -1;
-    else if (SumP >= SumN + Threshold)
+    else if (SumP >= SumN + getThreshold())
       Value = 1;
     else
       Value = 0;
@@ -189,6 +206,7 @@ bool SpillPlacement::runOnMachineFunction(MachineFunction &mf) {
   // Compute total ingoing and outgoing block frequencies for all bundles.
   BlockFrequencies.resize(mf.getNumBlockIDs());
   MBFI = &getAnalysis<MachineBlockFrequencyInfo>();
+  setThreshold(MBFI->getEntryFreq());
   for (MachineFunction::iterator I = mf.begin(), E = mf.end(); I != E; ++I) {
     unsigned Num = I->getNumber();
     BlockFrequencies[Num] = MBFI->getBlockFreq(I);
