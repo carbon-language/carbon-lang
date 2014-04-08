@@ -2009,11 +2009,14 @@ defm FNMSUB : ThreeOperandFPData<1, 1, "fnmsub",
 
 // The following def pats catch the case where the LHS of an FMA is negated.
 // The TriOpFrag above catches the case where the middle operand is negated.
-def : Pat<(f32 (fma (fneg FPR32:$Rn), FPR32:$Rm, FPR32:$Rd)),
-          (FMSUBSrrr FPR32:$Rd, FPR32:$Rn, FPR32:$Rm)>;
 
-def : Pat<(f64 (fma (fneg FPR64:$Rn), FPR64:$Rm, FPR64:$Rd)),
-          (FMSUBDrrr FPR64:$Rd, FPR64:$Rn, FPR64:$Rm)>;
+// N.b. FMSUB etc have the accumulator at the *end* of (outs), unlike
+// the NEON variant.
+def : Pat<(f32 (fma (fneg FPR32:$Rn), FPR32:$Rm, FPR32:$Ra)),
+          (FMSUBSrrr FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
+
+def : Pat<(f64 (fma (fneg FPR64:$Rn), FPR64:$Rm, FPR64:$Ra)),
+          (FMSUBDrrr FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
 
 //===----------------------------------------------------------------------===//
 // Floating point comparison instructions.
