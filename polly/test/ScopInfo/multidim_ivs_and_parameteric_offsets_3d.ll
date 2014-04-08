@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -analyze -polly-allow-nonaffine < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -analyze -polly-delinearize < %s | FileCheck %s
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
@@ -14,8 +14,20 @@ target triple = "x86_64-unknown-linux-gnu"
 ;    {{{((8 * ((((%m * %p) + %q) * %o) + %r)) + %A),+,(8 * %m * %o)}<%for.i>,+,
 ;        (8 * %o)}<%for.j>,+,8}<%for.k>
 ;
-; TODO: Recover the multi-dimensional array information to avoid the
-;       conservative approximation we are using today.
+; CHECK: p0: %n
+; CHECK: p1: %m
+; CHECK: p2: %o
+; CHECK: p3: %p
+; CHECK: p4: %q
+; CHECK: p5: %r
+; CHECK-NOT: p6
+;
+; CHECK: Domain
+; CHECK:   [n, m, o, p, q, r] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= -1 + n and i1 >= 0 and i1 <= -1 + m and i2 >= 0 and i2 <= -1 + o };
+; CHECK: Scattering
+; CHECK:   [n, m, o, p, q, r] -> { Stmt_for_k[i0, i1, i2] -> scattering[0, i0, 0, i1, 0, i2, 0] };
+; CHECK: MustWriteAccess
+; CHECK:   [n, m, o, p, q, r] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[p + i0, q + i1, r + i2] };
 
 define void @foo(i64 %n, i64 %m, i64 %o, double* %A, i64 %p, i64 %q, i64 %r) {
 entry:
@@ -60,15 +72,3 @@ for.i.inc:
 end:
   ret void
 }
-
-; CHECK: p0: %n
-; CHECK: p1: %m
-; CHECK: p2: %o
-; CHECK-NOT: p3
-
-; CHECK: Domain
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= -1 + n and i1 >= 0 and i1 <= -1 + m and i2 >= 0 and i2 <= -1 + o };
-; CHECK: Scattering
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> scattering[0, i0, 0, i1, 0, i2, 0] };
-; CHECK: MayWriteAccess
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[o0] };

@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -analyze -polly-delinearize < %s | FileCheck %s
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
@@ -19,10 +19,14 @@ target triple = "x86_64-unknown-linux-gnu"
 ;   {{{(136 + (8 * (-14 + (13 * %m)) * %o) + %A),+,(8 * %m * %o)}<%for.i>,+,
 ;      (8 * %o)}<%for.j>,+,8}<%for.k>
 ;
-; They should share the following parameters:
-;     p1: {0,+,(8 * %o)}<%for.j>
-;     p2: {0,+,(8 * %m * %o)}<%for.i>
+; CHECK: p0: %n
+; CHECK: p1: %m
+; CHECK: p2: %o
+; CHECK-NOT: p3
 ;
+; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[3 + i0, -4 + i1, 7 + i2] };
+; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[13 + i0, -14 + i1, 17 + i2] };
+
 
 define void @foo(i64 %n, i64 %m, i64 %o, double* %A) {
 entry:
@@ -79,14 +83,3 @@ for.i.inc:
 end:
   ret void
 }
-
-; CHECK: p0: %o
-; CHECK: p1: {0,+,(8 * %o)}<%for.j>
-; CHECK: p2: {0,+,(8 * %m * %o)}<%for.i>
-; CHECK: p3: (8 * (-4 + (3 * %m)) * %o)
-; CHECK: p4: (8 * (-14 + (13 * %m)) * %o)
-; CHECK-NOT: p4
-
-; CHECK:   [o, p_1, p_2, p_3, p_4] -> { Stmt_for_k[i0] -> MemRef_A[o0] : 8o0 = 56 + p_1 + p_2 + p_3 + 8i0 };
-; CHECK:   [o, p_1, p_2, p_3, p_4] -> { Stmt_for_k[i0] -> MemRef_A[o0] : 8o0 = 136 + p_1 + p_2 + p_4 + 8i0 };
-

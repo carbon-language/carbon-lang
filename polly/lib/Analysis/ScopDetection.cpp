@@ -117,6 +117,12 @@ TrackFailures("polly-detect-track-failures",
               cl::location(PollyTrackFailures), cl::Hidden, cl::ZeroOrMore,
               cl::init(false), cl::cat(PollyCategory));
 
+static cl::opt<bool, true>
+PollyDelinearizeX("polly-delinearize",
+                  cl::desc("Delinearize array access functions"),
+                  cl::location(PollyDelinearize), cl::Hidden, cl::ZeroOrMore,
+                  cl::init(false), cl::cat(PollyCategory));
+
 static cl::opt<bool>
 VerifyScops("polly-detect-verify",
             cl::desc("Verify the detected SCoPs after each transformation"),
@@ -124,6 +130,7 @@ VerifyScops("polly-detect-verify",
             cl::cat(PollyCategory));
 
 bool polly::PollyTrackFailures = false;
+bool polly::PollyDelinearize = false;
 
 //===----------------------------------------------------------------------===//
 // Statistics.
@@ -357,11 +364,25 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
     return invalid<ReportVariantBasePtr>(Context, /*Assert=*/false, BaseValue);
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
+  const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(AccessFunction);
 
-  if (!AllowNonAffine &&
-      !isAffineExpr(&Context.CurRegion, AccessFunction, *SE, BaseValue))
+  if (AllowNonAffine) {
+    // Do not check whether AccessFunction is affine.
+  } else if (PollyDelinearize && AF) {
+    // Try to delinearize AccessFunction.
+    SmallVector<const SCEV *, 4> Subscripts, Sizes;
+    AF->delinearize(*SE, Subscripts, Sizes);
+    int size = Subscripts.size();
+
+    for (int i = 0; i < size; ++i)
+      if (!isAffineExpr(&Context.CurRegion, Subscripts[i], *SE, BaseValue))
+        return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
+                                              AccessFunction);
+  } else if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE,
+                           BaseValue)) {
     return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
                                           AccessFunction);
+  }
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
   // created by IndependentBlocks Pass.

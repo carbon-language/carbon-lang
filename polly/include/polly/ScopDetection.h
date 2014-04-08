@@ -73,6 +73,7 @@ namespace polly {
 typedef std::set<const SCEV *> ParamSetType;
 
 extern bool PollyTrackFailures;
+extern bool PollyDelinearize;
 
 //===----------------------------------------------------------------------===//
 /// @brief Pass to detect the maximal static control parts (Scops) of a

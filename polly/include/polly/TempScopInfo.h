@@ -29,6 +29,8 @@ using namespace llvm;
 
 namespace polly {
 
+extern bool PollyDelinearize;
+
 //===---------------------------------------------------------------------===//
 /// @brief A memory access described by a SCEV expression and the access type.
 class IRAccess {
@@ -52,10 +54,14 @@ private:
   bool IsAffine;
 
 public:
+  SmallVector<const SCEV *, 4> Subscripts, Sizes;
+
   explicit IRAccess(TypeKind Type, const Value *BaseAddress, const SCEV *Offset,
-                    unsigned elemBytes, bool Affine)
+                    unsigned elemBytes, bool Affine,
+                    SmallVector<const SCEV *, 4> Subscripts,
+                    SmallVector<const SCEV *, 4> Sizes)
       : BaseAddress(BaseAddress), Offset(Offset), ElemBytes(elemBytes),
-        Type(Type), IsAffine(Affine) {}
+        Type(Type), IsAffine(Affine), Subscripts(Subscripts), Sizes(Sizes) {}
 
   enum TypeKind getType() const { return Type; }
 

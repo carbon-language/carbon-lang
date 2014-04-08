@@ -337,21 +337,37 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
 
   Type = Access.isRead() ? READ : MUST_WRITE;
 
-  isl_pw_aff *Affine = SCEVAffinator::getPwAff(Statement, Access.getOffset());
+  int Size = Access.Subscripts.size();
+  assert(Size > 0 && "access function with no subscripts");
+  AccessRelation = NULL;
 
-  // Divide the access function by the size of the elements in the array.
-  //
-  // A stride one array access in C expressed as A[i] is expressed in LLVM-IR
-  // as something like A[i * elementsize]. This hides the fact that two
-  // subsequent values of 'i' index two values that are stored next to each
-  // other in memory. By this division we make this characteristic obvious
-  // again.
-  isl_val *v;
-  v = isl_val_int_from_si(isl_pw_aff_get_ctx(Affine),
-                          Access.getElemSizeInBytes());
-  Affine = isl_pw_aff_scale_down_val(Affine, v);
+  for (int i = 0; i < Size; ++i) {
+    isl_pw_aff *Affine =
+        SCEVAffinator::getPwAff(Statement, Access.Subscripts[i]);
 
-  AccessRelation = isl_map_from_pw_aff(Affine);
+    if (i == Size - 1) {
+      // Divide the access function of the last subscript by the size of the
+      // elements in the array.
+      //
+      // A stride one array access in C expressed as A[i] is expressed in
+      // LLVM-IR as something like A[i * elementsize]. This hides the fact that
+      // two subsequent values of 'i' index two values that are stored next to
+      // each other in memory. By this division we make this characteristic
+      // obvious again.
+      isl_val *v;
+      v = isl_val_int_from_si(isl_pw_aff_get_ctx(Affine),
+                              Access.getElemSizeInBytes());
+      Affine = isl_pw_aff_scale_down_val(Affine, v);
+    }
+
+    isl_map *SubscriptMap = isl_map_from_pw_aff(Affine);
+
+    if (!AccessRelation)
+      AccessRelation = SubscriptMap;
+    else
+      AccessRelation = isl_map_flat_range_product(AccessRelation, SubscriptMap);
+  }
+
   isl_space *Space = Statement->getDomainSpace();
   AccessRelation = isl_map_set_tuple_id(
       AccessRelation, isl_dim_in, isl_space_get_tuple_id(Space, isl_dim_set));
