@@ -39,9 +39,10 @@ private:
   ClangTidyContext *Context;
 };
 
-template <typename T> std::string runCheckOnCode(StringRef Code) {
+template <typename T>
+std::string runCheckOnCode(StringRef Code,
+                           SmallVectorImpl<ClangTidyError> &Errors) {
   T Check;
-  SmallVector<ClangTidyError, 16> Errors;
   ClangTidyContext Context(&Errors, ".*", "");
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
   Check.setContext(&Context);
@@ -63,6 +64,11 @@ template <typename T> std::string runCheckOnCode(StringRef Code) {
        I != E; ++I)
     Fixes.insert(I->Fix.begin(), I->Fix.end());
   return tooling::applyAllReplacements(Code, Fixes);
+}
+
+template <typename T> std::string runCheckOnCode(StringRef Code) {
+  SmallVector<ClangTidyError, 16> Errors;
+  return runCheckOnCode<T>(Code, Errors);
 }
 
 } // namespace test

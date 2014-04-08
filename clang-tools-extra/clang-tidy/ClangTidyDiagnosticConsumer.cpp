@@ -239,10 +239,11 @@ void ClangTidyDiagnosticConsumer::finish() {
   finalizeLastError();
   std::set<const ClangTidyError*, LessClangTidyError> UniqueErrors;
   for (const ClangTidyError &Error : Errors) {
-    if (Context.getChecksFilter().isCheckEnabled(Error.CheckName) &&
-        UniqueErrors.insert(&Error).second)
-      Context.storeError(Error);
+    if (Context.getChecksFilter().isCheckEnabled(Error.CheckName))
+      UniqueErrors.insert(&Error);
   }
+  for (const ClangTidyError *Error : UniqueErrors)
+    Context.storeError(*Error);
   Errors.clear();
 }
 
