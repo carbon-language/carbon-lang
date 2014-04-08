@@ -105,6 +105,7 @@ unsigned __int64 __rdtsc(void);
 unsigned __int64 __rdtscp(unsigned int *);
 unsigned long __readcr0(void);
 unsigned long __readcr2(void);
+static __inline__
 unsigned long __readcr3(void);
 unsigned long __readcr4(void);
 unsigned long __readcr8(void);
@@ -119,6 +120,7 @@ unsigned __int64 __readfsqword(unsigned long);
 static __inline__
 unsigned short __readfsword(unsigned long);
 #endif
+static __inline__
 unsigned __int64 __readmsr(unsigned long);
 unsigned __int64 __readpmc(unsigned long);
 unsigned long __segmentlimit(unsigned long);
@@ -143,6 +145,7 @@ void __vmx_off(void);
 void __vmx_vmptrst(unsigned __int64 *);
 void __wbinvd(void);
 void __writecr0(unsigned int);
+static __inline__
 void __writecr3(unsigned int);
 void __writecr4(unsigned int);
 void __writecr8(unsigned int);
@@ -979,6 +982,38 @@ _xgetbv(unsigned int __xcr_no) {
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
 __halt(void) {
   __asm__ volatile ("hlt");
+}
+
+/*----------------------------------------------------------------------------*\
+|* Privileged intrinsics
+\*----------------------------------------------------------------------------*/
+static __inline__ unsigned __int64 __attribute__((__always_inline__, __nodebug__))
+__readmsr(unsigned long __register) {
+  // Loads the contents of a 64-bit model specific register (MSR) specified in
+  // the ECX register into registers EDX:EAX. The EDX register is loaded with
+  // the high-order 32 bits of the MSR and the EAX register is loaded with the
+  // low-order 32 bits. If less than 64 bits are implemented in the MSR being
+  // read, the values returned to EDX:EAX in unimplemented bit locations are
+  // undefined.
+  unsigned long __edx;
+  unsigned long __eax;
+  __asm__ ("rdmsr"
+          : "=d"(__edx), "=a"(__eax)
+          : "c"(__register)
+          : "%ecx", "%edx", "%eax");
+  return (((unsigned __int64)__edx) << 32) | (unsigned __int64)__eax;
+}
+
+static __inline__ unsigned long __attribute__((always_inline, __nodebug__))
+__readcr3(void) {
+  unsigned long value;
+  __asm__ __volatile__("mov %%cr3, %0" : "=q"(value));
+  return value;
+}
+
+static __inline__ void __attribute__((always_inline, __nodebug__))
+__writecr3(unsigned int Data) {
+  __asm__("mov %0, %%cr3" : : "q"(Data) : "memory");
 }
 
 #ifdef __cplusplus
