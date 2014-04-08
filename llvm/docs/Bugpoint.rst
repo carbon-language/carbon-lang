@@ -17,7 +17,7 @@ optimization (or combination of optimizations) that causes the crash, and reduce
 the file down to a small example which triggers the crash.
 
 For detailed case scenarios, such as debugging ``opt``, or one of the LLVM code
-generators, see `How To Submit a Bug Report document <HowToSubmitABug.html>`_.
+generators, see :doc:`HowToSubmitABug`.
 
 Design Philosophy
 =================

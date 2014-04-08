@@ -70,7 +70,7 @@ different pieces of this will be useful to you.  In any case, you should be
 familiar with the `target description`_ and `machine code representation`_
 classes.  If you want to add a backend for a new target, you will need to
 `implement the target description`_ classes for your new target and understand
-the `LLVM code representation <LangRef.html>`_.  If you are interested in
+the :doc:`LLVM code representation <LangRef>`.  If you are interested in
 implementing a new `code generation algorithm`_, it should only depend on the
 target-description and machine code representation classes, ensuring that it is
 portable.

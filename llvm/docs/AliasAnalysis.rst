@@ -51,7 +51,7 @@ starting address and size, and function calls are represented as the actual
 get mod/ref information for arbitrary instructions.
 
 All ``AliasAnalysis`` interfaces require that in queries involving multiple
-values, values which are not `constants <LangRef.html#constants>`_ are all
+values, values which are not :ref:`constants <constants>` are all
 defined within the same function.
 
 Representation of Pointers
@@ -111,7 +111,7 @@ returns MustAlias, PartialAlias, MayAlias, or NoAlias as appropriate.
 
 Like all ``AliasAnalysis`` interfaces, the ``alias`` method requires that either
 the two pointer values be defined within the same function, or at least one of
-the values is a `constant <LangRef.html#constants>`_.
+the values is a :ref:`constant <constants>`.
 
 .. _Must, May, or No:
 
@@ -126,7 +126,7 @@ used for reading memory. Another is when the memory is freed and reallocated
 between accesses through one pointer and accesses through the other --- in this
 case, there is a dependence, but it's mediated by the free and reallocation.
 
-As an exception to this is with the `noalias <LangRef.html#noalias>`_ keyword;
+As an exception to this is with the :ref:`noalias <noalias>` keyword;
 the "irrelevant" dependencies are ignored.
 
 The ``MayAlias`` response is used whenever the two pointers might refer to the

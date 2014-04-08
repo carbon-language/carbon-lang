@@ -34,7 +34,7 @@ Most of the tools build and work.  ``bugpoint`` does build, but does
 not work.
 
 Additional information about the LLVM directory structure and tool chain
-can be found on the main `Getting Started <GettingStarted.html>`_ page.
+can be found on the main :doc:`GettingStarted` page.
 
 
 Requirements
@@ -97,7 +97,7 @@ Here's the short story for getting up and running quickly with LLVM:
      using LLVM.  Another important option is ``LLVM_TARGETS_TO_BUILD``,
      which controls the LLVM target architectures that are included on the
      build.
-   * See the `LLVM CMake guide <CMake.html>`_ for detailed information about
+   * See the :doc:`LLVM CMake guide <CMake>` for detailed information about
      how to configure the LLVM build.
 
 6. Start Visual Studio
@@ -215,8 +215,8 @@ An Example Using the LLVM Tool Chain
 Common Problems
 ===============
 If you are having problems building or using LLVM, or if you have any other
-general questions about LLVM, please consult the `Frequently Asked Questions
-<FAQ.html>`_ page.
+general questions about LLVM, please consult the :doc:`Frequently Asked Questions
+<FAQ>` page.
 
 
 Links

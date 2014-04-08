@@ -76,10 +76,7 @@ implemented in the LLVM namespace following the expected standard interface.
 
 There are some exceptions such as the standard I/O streams library which are
 avoided. Also, there is much more detailed information on these subjects in the
-`Programmer's Manual`_.
-
-.. _Programmer's Manual:
-  http://llvm.org/docs/ProgrammersManual.html
+:doc:`ProgrammersManual`.
 
 Supported C++11 Language and Library Features
 ---------------------------------------------
@@ -605,7 +602,7 @@ is never used for a class.  Because of this, we turn them off globally in the
 code.
 
 That said, LLVM does make extensive use of a hand-rolled form of RTTI that use
-templates like `isa<>, cast<>, and dyn_cast<> <ProgrammersManual.html#isa>`_.
+templates like :ref:`isa\<>, cast\<>, and dyn_cast\<> <isa>`.
 This form of RTTI is opt-in and can be
 :doc:`added to any class <HowToSetUpLLVMStyleRTTI>`. It is also
 substantially more efficient than ``dynamic_cast<>``.

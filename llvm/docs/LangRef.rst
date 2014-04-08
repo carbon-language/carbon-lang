@@ -802,6 +802,9 @@ Currently, only the following parameter attributes are defined:
     not to trap and to be properly aligned. This may only be applied to
     the first parameter. This is not a valid attribute for return
     values.
+
+.. _noalias:
+
 ``noalias``
     This indicates that pointer values :ref:`based <pointeraliasing>` on
     the argument or return value do not alias pointer values which are
@@ -811,8 +814,8 @@ Currently, only the following parameter attributes are defined:
     "irrelevant" to the ``noalias`` keyword for the arguments and return
     value used in that call. The caller shares the responsibility with
     the callee for ensuring that these requirements are met. For further
-    details, please see the discussion of the NoAlias response in `alias
-    analysis <AliasAnalysis.html#MustMayNo>`_.
+    details, please see the discussion of the NoAlias response in :ref:`alias
+    analysis <Must, May, or No>`.
 
     Note that this definition of ``noalias`` is intentionally similar
     to the definition of ``restrict`` in C99 for function arguments,
@@ -1985,6 +1988,8 @@ notion of a forward declared structure.
 +--------------+-------------------+
 | ``opaque``   | An opaque type.   |
 +--------------+-------------------+
+
+.. _constants:
 
 Constants
 =========
