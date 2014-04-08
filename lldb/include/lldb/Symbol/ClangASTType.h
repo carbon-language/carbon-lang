@@ -312,7 +312,7 @@ public:
                        clang::DeclContext *decl_ctx) const;
     
     ClangASTType
-    GetArrayElementType (uint64_t& stride) const;
+    GetArrayElementType (uint64_t *stride = nullptr) const;
     
     ClangASTType
     GetCanonicalType () const;

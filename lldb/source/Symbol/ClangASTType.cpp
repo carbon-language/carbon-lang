@@ -1638,16 +1638,22 @@ ClangASTType::AddVolatileModifier () const
 }
 
 ClangASTType
-ClangASTType::GetArrayElementType (uint64_t& stride) const
+ClangASTType::GetArrayElementType (uint64_t *stride) const
 {
     if (IsValid())
     {
         QualType qual_type(GetCanonicalQualType());
         
-        ClangASTType element_type (m_ast, qual_type.getTypePtr()->getArrayElementTypeNoTypeQual()->getCanonicalTypeUnqualified());
+        const clang::Type *array_elem_type = qual_type.getTypePtr()->getArrayElementTypeNoTypeQual();
+        
+        if (!array_elem_type)
+            return ClangASTType();
+        
+        ClangASTType element_type (m_ast, array_elem_type->getCanonicalTypeUnqualified());
         
         // TODO: the real stride will be >= this value.. find the real one!
-        stride = element_type.GetByteSize();
+        if (stride)
+            *stride = element_type.GetByteSize();
         
         return element_type;
         
