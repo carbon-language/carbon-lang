@@ -191,6 +191,14 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
+  // ORN Wn, WZR, Wm{, lshift #imm} ==> MVN Wn, Wm{, lshift #imm}
+  // ORN Xn, XZR, Xm{, lshift #imm} ==> MVN Xn, Xm{, lshift #imm}
+  if ((Opcode == ARM64::ORNWrs && MI->getOperand(1).getReg() == ARM64::WZR) ||
+      (Opcode == ARM64::ORNXrs && MI->getOperand(1).getReg() == ARM64::XZR)) {
+    O << "\tmvn\t" << getRegisterName(MI->getOperand(0).getReg()) << ", ";
+    printShiftedRegister(MI, 2, O);
+    return;
+  }
   // SUBS WZR, Wn, #imm ==> CMP Wn, #imm
   // SUBS XZR, Xn, #imm ==> CMP Xn, #imm
   if ((Opcode == ARM64::SUBSWri && MI->getOperand(0).getReg() == ARM64::WZR) ||

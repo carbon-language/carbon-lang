@@ -624,6 +624,11 @@ def : InstAlias<"mvn $Wd, $Wm",
 def : InstAlias<"mvn $Xd, $Xm",
                 (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, 0)>;
 
+def : InstAlias<"mvn $Wd, $Wm, $sh",
+                (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, logical_shift:$sh)>;
+def : InstAlias<"mvn $Xd, $Xm, $sh",
+                (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, logical_shift:$sh)>;
+
 def : Pat<(not GPR32:$Wm), (ORNWrr WZR, GPR32:$Wm)>;
 def : Pat<(not GPR64:$Xm), (ORNXrr XZR, GPR64:$Xm)>;
 

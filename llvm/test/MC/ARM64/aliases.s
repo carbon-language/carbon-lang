@@ -159,6 +159,14 @@ foo:
 ; CHECK: mvn	x2, x3             ; encoding: [0xe2,0x03,0x23,0xaa]
 ; CHECK: mvn	w4, w9             ; encoding: [0xe4,0x03,0x29,0x2a]
 
+        mvn w4, w9, lsl #1
+        mvn x2, x3, lsl #1
+        orn w4, wzr, w9, lsl #1
+
+; CHECK: mvn	w4, w9, lsl #1     ; encoding: [0xe4,0x07,0x29,0x2a]
+; CHECK: mvn	x2, x3, lsl #1     ; encoding: [0xe2,0x07,0x23,0xaa]
+; CHECK: mvn	w4, w9, lsl #1     ; encoding: [0xe4,0x07,0x29,0x2a]
+
 ;-----------------------------------------------------------------------------
 ; Bitfield aliases
 ;-----------------------------------------------------------------------------
