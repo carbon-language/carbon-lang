@@ -774,22 +774,6 @@ def sys_cr_op : Operand<i32> {
   let ParserMatchClass = SysCRAsmOperand;
 }
 
-class SystemI<bit L, string asm>
-  : SimpleSystemI<L,
-                  (ins imm0_7:$op1, sys_cr_op:$Cn, sys_cr_op:$Cm, imm0_7:$op2),
-                   asm, "\t$op1, $Cn, $Cm, $op2">,
-    Sched<[WriteSys]> {
-  bits<3> op1;
-  bits<4> Cn;
-  bits<4> Cm;
-  bits<3> op2;
-  let Inst{20-19} = 0b01;
-  let Inst{18-16} = op1;
-  let Inst{15-12} = Cn;
-  let Inst{11-8}  = Cm;
-  let Inst{7-5}   = op2;
-}
-
 class SystemXtI<bit L, string asm>
   : RtSystemI<L, (outs),
        (ins imm0_7:$op1, sys_cr_op:$Cn, sys_cr_op:$Cm, imm0_7:$op2, GPR64:$Rt),

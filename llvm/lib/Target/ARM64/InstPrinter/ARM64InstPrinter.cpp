@@ -56,7 +56,7 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
 
   unsigned Opcode = MI->getOpcode();
 
-  if (Opcode == ARM64::SYS || Opcode == ARM64::SYSxt)
+  if (Opcode == ARM64::SYSxt)
     if (printSysAlias(MI, O)) {
       printAnnotation(O, Annot);
       return;
@@ -750,8 +750,7 @@ void ARM64AppleInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
 bool ARM64InstPrinter::printSysAlias(const MCInst *MI, raw_ostream &O) {
 #ifndef NDEBUG
   unsigned Opcode = MI->getOpcode();
-  assert((Opcode == ARM64::SYS || Opcode == ARM64::SYSxt) &&
-         "Invalid opcode for SYS alias!");
+  assert(Opcode == ARM64::SYSxt && "Invalid opcode for SYS alias!");
 #endif
 
   const char *Asm = 0;
@@ -961,9 +960,11 @@ bool ARM64InstPrinter::printSysAlias(const MCInst *MI, raw_ostream &O) {
   }
 
   if (Asm) {
+    unsigned Reg = MI->getOperand(4).getReg();
+
     O << '\t' << Asm;
-    if (MI->getNumOperands() == 5)
-      O << ", " << getRegisterName(MI->getOperand(4).getReg());
+    if (StringRef(Asm).lower().find("all") == StringRef::npos)
+      O << ", " << getRegisterName(Reg);
   }
 
   return Asm != 0;

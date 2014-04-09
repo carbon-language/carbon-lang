@@ -32,6 +32,8 @@
 # CHECK: dmb osh
   0x9f 0x37 0x03 0xd5
 # CHECK: dsb nsh
+  0x3f 0x76 0x08 0xd5
+# CHECK: dc ivac
 
 #-----------------------------------------------------------------------------
 # Generic system instructions

@@ -332,9 +332,12 @@ def MSRcpsr: MSRcpsrI;
 def : Pat<(ARM64threadpointer), (MRS 0xde82)>;
 
 // Generic system instructions
-def SYS    : SystemI<0, "sys">;
 def SYSxt  : SystemXtI<0, "sys">;
 def SYSLxt : SystemLXtI<1, "sysl">;
+
+def : InstAlias<"sys $op1, $Cn, $Cm, $op2",
+                (SYSxt imm0_7:$op1, sys_cr_op:$Cn,
+                 sys_cr_op:$Cm, imm0_7:$op2, XZR)>;
 
 //===----------------------------------------------------------------------===//
 // Move immediate instructions.
