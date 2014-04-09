@@ -220,10 +220,6 @@ protected:
   unsigned short Flags;
 
 private:
-  // Note, this cannot be explicitly deleted due to initializers automatically
-  // referencing destructor declarations. However, it does not need to be
-  // defined because that reference does not require an definition.
-  ~SExpr();
   SExpr() = delete;
 
   // SExpr objects must be created in an arena and cannot be deleted.
