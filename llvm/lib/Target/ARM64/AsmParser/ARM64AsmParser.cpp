@@ -2188,7 +2188,7 @@ ARM64AsmParser::tryParseFPImm(OperandVector &Operands) {
 
 /// parseCondCodeString - Parse a Condition Code string.
 unsigned ARM64AsmParser::parseCondCodeString(StringRef Cond) {
-  unsigned CC = StringSwitch<unsigned>(Cond)
+  unsigned CC = StringSwitch<unsigned>(Cond.lower())
                     .Case("eq", ARM64CC::EQ)
                     .Case("ne", ARM64CC::NE)
                     .Case("cs", ARM64CC::CS)
@@ -2206,25 +2206,8 @@ unsigned ARM64AsmParser::parseCondCodeString(StringRef Cond) {
                     .Case("gt", ARM64CC::GT)
                     .Case("le", ARM64CC::LE)
                     .Case("al", ARM64CC::AL)
-                // Upper case works too. Not mixed case, though.
-                    .Case("EQ", ARM64CC::EQ)
-                    .Case("NE", ARM64CC::NE)
-                    .Case("CS", ARM64CC::CS)
-                    .Case("HS", ARM64CC::CS)
-                    .Case("CC", ARM64CC::CC)
-                    .Case("LO", ARM64CC::CC)
-                    .Case("MI", ARM64CC::MI)
-                    .Case("PL", ARM64CC::PL)
-                    .Case("VS", ARM64CC::VS)
-                    .Case("VC", ARM64CC::VC)
-                    .Case("HI", ARM64CC::HI)
-                    .Case("LS", ARM64CC::LS)
-                    .Case("GE", ARM64CC::GE)
-                    .Case("LT", ARM64CC::LT)
-                    .Case("GT", ARM64CC::GT)
-                    .Case("LE", ARM64CC::LE)
-                    .Case("AL", ARM64CC::AL)
-                    .Default(~0U);
+                    .Case("nv", ARM64CC::NV)
+                    .Default(ARM64CC::Invalid);
   return CC;
 }
 
@@ -2237,7 +2220,7 @@ bool ARM64AsmParser::parseCondCode(OperandVector &Operands,
 
   StringRef Cond = Tok.getString();
   unsigned CC = parseCondCodeString(Cond);
-  if (CC == ~0U)
+  if (CC == ARM64CC::Invalid)
     return TokError("invalid condition code");
   Parser.Lex(); // Eat identifier token.
 
@@ -3566,7 +3549,7 @@ bool ARM64AsmParser::ParseInstruction(ParseInstructionInfo &Info,
     SMLoc SuffixLoc = SMLoc::getFromPointer(NameLoc.getPointer() +
                                             (Head.data() - Name.data()));
     unsigned CC = parseCondCodeString(Head);
-    if (CC == ~0U)
+    if (CC == ARM64CC::Invalid)
       return Error(SuffixLoc, "invalid condition code");
     const MCExpr *CCExpr = MCConstantExpr::Create(CC, getContext());
     Operands.push_back(

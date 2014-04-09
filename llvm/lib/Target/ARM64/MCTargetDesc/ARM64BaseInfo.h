@@ -200,14 +200,15 @@ enum CondCode {  // Meaning (integer)          Meaning (floating-point)
   LT = 0xb,      // Less than                  Less than, or unordered
   GT = 0xc,      // Greater than               Greater than
   LE = 0xd,      // Less than or equal         <, ==, or unordered
-  AL = 0xe       // Always (unconditional)     Always (unconditional)
+  AL = 0xe,      // Always (unconditional)     Always (unconditional)
+  NV = 0xf,      // Always (unconditional)     Always (unconditional)
+  // Note the NV exists purely to disassemble 0b1111. Execution is "always".
+  Invalid
 };
 
 inline static const char *getCondCodeName(CondCode Code) {
-  // cond<0> is ignored when cond<3:1> = 111, where 1110 is 0xe (aka AL).
-  if ((Code & AL) == AL)
-    Code = AL;
   switch (Code) {
+  default: llvm_unreachable("Unknown condition code");
   case EQ:  return "eq";
   case NE:  return "ne";
   case CS:  return "cs";
@@ -223,8 +224,8 @@ inline static const char *getCondCodeName(CondCode Code) {
   case GT:  return "gt";
   case LE:  return "le";
   case AL:  return "al";
+  case NV:  return "nv";
   }
-  llvm_unreachable("Unknown condition code");
 }
 
 inline static CondCode getInvertedCondCode(CondCode Code) {
