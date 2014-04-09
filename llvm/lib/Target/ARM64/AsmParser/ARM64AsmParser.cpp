@@ -999,13 +999,33 @@ public:
   bool isAdrpLabel() const {
     // Validation was handled during parsing, so we just sanity check that
     // something didn't go haywire.
-    return isImm();
+    if (!isImm())
+        return false;
+
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Imm.Val)) {
+      int64_t Val = CE->getValue();
+      int64_t Min = - (4096 * (1LL << (21 - 1)));
+      int64_t Max = 4096 * ((1LL << (21 - 1)) - 1);
+      return (Val % 4096) == 0 && Val >= Min && Val <= Max;
+    }
+
+    return true;
   }
 
   bool isAdrLabel() const {
     // Validation was handled during parsing, so we just sanity check that
     // something didn't go haywire.
-    return isImm();
+    if (!isImm())
+        return false;
+
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Imm.Val)) {
+      int64_t Val = CE->getValue();
+      int64_t Min = - (1LL << (21 - 1));
+      int64_t Max = ((1LL << (21 - 1)) - 1);
+      return Val >= Min && Val <= Max;
+    }
+
+    return true;
   }
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
@@ -1079,7 +1099,12 @@ public:
   }
 
   void addAdrpLabelOperands(MCInst &Inst, unsigned N) const {
-    addImmOperands(Inst, N);
+    assert(N == 1 && "Invalid number of operands!");
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
+    if (!MCE)
+      addExpr(Inst, getImm());
+    else
+      Inst.addOperand(MCOperand::CreateImm(MCE->getValue() >> 12));
   }
 
   void addAdrLabelOperands(MCInst &Inst, unsigned N) const {
@@ -2042,40 +2067,43 @@ ARM64AsmParser::OperandMatchResultTy
 ARM64AsmParser::tryParseAdrpLabel(OperandVector &Operands) {
   SMLoc S = getLoc();
   const MCExpr *Expr;
+
+  if (Parser.getTok().is(AsmToken::Hash)) {
+    Parser.Lex(); // Eat hash token.
+  }
+
   if (parseSymbolicImmVal(Expr))
     return MatchOperand_ParseFail;
 
   ARM64MCExpr::VariantKind ELFRefKind;
   MCSymbolRefExpr::VariantKind DarwinRefKind;
   const MCConstantExpr *Addend;
-  if (!classifySymbolRef(Expr, ELFRefKind, DarwinRefKind, Addend)) {
-    Error(S, "modified label reference + constant expected");
-    return MatchOperand_ParseFail;
+  if (classifySymbolRef(Expr, ELFRefKind, DarwinRefKind, Addend)) {
+    if (DarwinRefKind == MCSymbolRefExpr::VK_None &&
+        ELFRefKind == ARM64MCExpr::VK_INVALID) {
+      // No modifier was specified at all; this is the syntax for an ELF basic
+      // ADRP relocation (unfortunately).
+      Expr = ARM64MCExpr::Create(Expr, ARM64MCExpr::VK_ABS_PAGE, getContext());
+    } else if ((DarwinRefKind == MCSymbolRefExpr::VK_GOTPAGE ||
+                DarwinRefKind == MCSymbolRefExpr::VK_TLVPPAGE) &&
+               Addend != 0) {
+      Error(S, "gotpage label reference not allowed an addend");
+      return MatchOperand_ParseFail;
+    } else if (DarwinRefKind != MCSymbolRefExpr::VK_PAGE &&
+               DarwinRefKind != MCSymbolRefExpr::VK_GOTPAGE &&
+               DarwinRefKind != MCSymbolRefExpr::VK_TLVPPAGE &&
+               ELFRefKind != ARM64MCExpr::VK_GOT_PAGE &&
+               ELFRefKind != ARM64MCExpr::VK_GOTTPREL_PAGE &&
+               ELFRefKind != ARM64MCExpr::VK_TLSDESC_PAGE) {
+      // The operand must be an @page or @gotpage qualified symbolref.
+      Error(S, "page or gotpage label reference expected");
+      return MatchOperand_ParseFail;
+    }
   }
 
-  if (DarwinRefKind == MCSymbolRefExpr::VK_None &&
-      ELFRefKind == ARM64MCExpr::VK_INVALID) {
-    // No modifier was specified at all; this is the syntax for an ELF basic
-    // ADRP relocation (unfortunately).
-    Expr = ARM64MCExpr::Create(Expr, ARM64MCExpr::VK_ABS_PAGE, getContext());
-  } else if ((DarwinRefKind == MCSymbolRefExpr::VK_GOTPAGE ||
-              DarwinRefKind == MCSymbolRefExpr::VK_TLVPPAGE) &&
-             Addend != 0) {
-    Error(S, "gotpage label reference not allowed an addend");
-    return MatchOperand_ParseFail;
-  } else if (DarwinRefKind != MCSymbolRefExpr::VK_PAGE &&
-             DarwinRefKind != MCSymbolRefExpr::VK_GOTPAGE &&
-             DarwinRefKind != MCSymbolRefExpr::VK_TLVPPAGE &&
-             ELFRefKind != ARM64MCExpr::VK_GOT_PAGE &&
-             ELFRefKind != ARM64MCExpr::VK_GOTTPREL_PAGE &&
-             ELFRefKind != ARM64MCExpr::VK_TLSDESC_PAGE) {
-    // The operand must be an @page or @gotpage qualified symbolref.
-    Error(S, "page or gotpage label reference expected");
-    return MatchOperand_ParseFail;
-  }
-
-  // We have a label reference possibly with addend. The addend is a raw value
-  // here. The linker will adjust it to only reference the page.
+  // We have either a label reference possibly with addend or an immediate. The
+  // addend is a raw value here. The linker will adjust it to only reference the
+  // page.
   SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
   Operands.push_back(ARM64Operand::CreateImm(Expr, S, E, getContext()));
 
@@ -2088,19 +2116,13 @@ ARM64AsmParser::OperandMatchResultTy
 ARM64AsmParser::tryParseAdrLabel(OperandVector &Operands) {
   SMLoc S = getLoc();
   const MCExpr *Expr;
+
+  if (Parser.getTok().is(AsmToken::Hash)) {
+    Parser.Lex(); // Eat hash token.
+  }
+
   if (getParser().parseExpression(Expr))
     return MatchOperand_ParseFail;
-
-  // The operand must be an un-qualified assembler local symbolref.
-  // FIXME: wrong for ELF.
-  if (const MCSymbolRefExpr *SRE = dyn_cast<const MCSymbolRefExpr>(Expr)) {
-    // FIXME: Should reference the MachineAsmInfo to get the private prefix.
-    bool isTemporary = SRE->getSymbol().getName().startswith("L");
-    if (!isTemporary || SRE->getKind() != MCSymbolRefExpr::VK_None) {
-      Error(S, "unqualified, assembler-local label name expected");
-      return MatchOperand_ParseFail;
-    }
-  }
 
   SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
   Operands.push_back(ARM64Operand::CreateImm(Expr, S, E, getContext()));
@@ -3763,6 +3785,8 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
     return Error(Loc, "immediate must be an integer in range [1,32].");
   case Match_InvalidImm1_64:
     return Error(Loc, "immediate must be an integer in range [1,64].");
+  case Match_InvalidLabel:
+    return Error(Loc, "expected label or encodable integer pc offset");
   case Match_MnemonicFail:
     return Error(Loc, "unrecognized instruction mnemonic");
   default:
@@ -4238,7 +4262,8 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidImm1_8:
   case Match_InvalidImm1_16:
   case Match_InvalidImm1_32:
-  case Match_InvalidImm1_64: {
+  case Match_InvalidImm1_64:
+  case Match_InvalidLabel: {
     // Any time we get here, there's nothing fancy to do. Just get the
     // operand SMLoc and display the diagnostic.
     SMLoc ErrorLoc = ((ARM64Operand *)Operands[ErrorInfo])->getStartLoc();

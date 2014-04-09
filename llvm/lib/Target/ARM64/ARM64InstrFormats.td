@@ -156,6 +156,7 @@ def SIMDImmType10Operand : AsmOperandClass { let Name = "SIMDImmType10"; }
 def AdrpOperand : AsmOperandClass {
   let Name = "AdrpLabel";
   let ParserMethod = "tryParseAdrpLabel";
+  let DiagnosticType = "InvalidLabel";
 }
 def adrplabel : Operand<i64> {
   let EncoderMethod = "getAdrLabelOpValue";
@@ -166,6 +167,7 @@ def adrplabel : Operand<i64> {
 def AdrOperand : AsmOperandClass {
   let Name = "AdrLabel";
   let ParserMethod = "tryParseAdrLabel";
+  let DiagnosticType = "InvalidLabel";
 }
 def adrlabel : Operand<i64> {
   let EncoderMethod = "getAdrLabelOpValue";
