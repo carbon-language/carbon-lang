@@ -196,6 +196,7 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
             }
             break;
         case Intrinsic::dbg_declare:
+        case Intrinsic::dbg_value:
             return LookupResult::Ignore;
         }
         
