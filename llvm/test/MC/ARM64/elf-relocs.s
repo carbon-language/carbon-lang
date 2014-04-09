@@ -14,7 +14,7 @@
 // CHECK-OBJ: 8 R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC sym
 
    add x20, x30, #:tprel_lo12:sym
-// CHECK: add x20, lr, :tprel_lo12:sym
+// CHECK: add x20, x30, :tprel_lo12:sym
 // CHECK-OBJ: c R_AARCH64_TLSLE_ADD_TPREL_LO12 sym
 
    add x9, x12, #:tprel_lo12_nc:sym
@@ -38,7 +38,7 @@
 // CHECK-OBJ:20 R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC sym+2
 
    add x20, x30, #:tprel_lo12:sym+12
-// CHECK: add x20, lr, :tprel_lo12:sym+12
+// CHECK: add x20, x30, :tprel_lo12:sym+12
 // CHECK-OBJ: 24 R_AARCH64_TLSLE_ADD_TPREL_LO12 sym+12
 
    add x9, x12, #:tprel_lo12_nc:sym+54

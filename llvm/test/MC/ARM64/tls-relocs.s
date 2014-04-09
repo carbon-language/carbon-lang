@@ -119,7 +119,7 @@
 
         ldrb w29, [x30, #:tprel_lo12:var]
         ldrsb x29, [x28, #:tprel_lo12_nc:var]
-// CHECK: ldrb    w29, [lr, :tprel_lo12:var] // encoding: [0xdd,0bAAAAAA11,0b01AAAAAA,0x39]
+// CHECK: ldrb    w29, [x30, :tprel_lo12:var] // encoding: [0xdd,0bAAAAAA11,0b01AAAAAA,0x39]
 // CHECK-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12:var, kind: fixup_arm64_ldst_imm12_scale1
 // CHECK: ldrsb   x29, [x28, :tprel_lo12_nc:var] // encoding: [0x9d,0bAAAAAA11,0b10AAAAAA,0x39]
 // CHECK-NEXT:                                 //   fixup A - offset: 0, value: :tprel_lo12_nc:var, kind: fixup_arm64_ldst_imm12_scale1
@@ -243,7 +243,7 @@
 
         ldrb w29, [x30, #:dtprel_lo12:var]
         ldrsb x29, [x28, #:dtprel_lo12_nc:var]
-// CHECK: ldrb    w29, [lr, :dtprel_lo12:var] // encoding: [0xdd,0bAAAAAA11,0b01AAAAAA,0x39]
+// CHECK: ldrb    w29, [x30, :dtprel_lo12:var] // encoding: [0xdd,0bAAAAAA11,0b01AAAAAA,0x39]
 // CHECK-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12:var, kind: fixup_arm64_ldst_imm12_scale1
 // CHECK: ldrsb   x29, [x28, :dtprel_lo12_nc:var] // encoding: [0x9d,0bAAAAAA11,0b10AAAAAA,0x39]
 // CHECK-NEXT:                                 //   fixup A - offset: 0, value: :dtprel_lo12_nc:var, kind: fixup_arm64_ldst_imm12_scale1

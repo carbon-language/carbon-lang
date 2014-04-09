@@ -1872,7 +1872,7 @@ int ARM64AsmParser::tryParseRegister() {
   if (RegNum == 0)
     RegNum = StringSwitch<unsigned>(lowerCase)
                  .Case("fp",  ARM64::FP)
-                 .Case("x30", ARM64::LR)
+                 .Case("lr",  ARM64::LR)
                  .Case("x31", ARM64::XZR)
                  .Case("w31", ARM64::WZR)
                  .Default(0);

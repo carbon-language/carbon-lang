@@ -209,14 +209,14 @@ foo:
 ;-----------------------------------------------------------------------------
 
   ldr   x29, [x7, #8]!
-  ldr   lr, [x7, #8]!
+  ldr   x30, [x7, #8]!
   ldr   b5, [x0, #1]!
   ldr   h6, [x0, #2]!
   ldr   s7, [x0, #4]!
   ldr   d8, [x0, #8]!
   ldr   q9, [x0, #16]!
 
-  str   lr, [x7, #-8]!
+  str   x30, [x7, #-8]!
   str   x29, [x7, #-8]!
   str   b5, [x0, #-1]!
   str   h6, [x0, #-2]!
@@ -225,14 +225,14 @@ foo:
   str   q9, [x0, #-16]!
 
 ; CHECK: ldr  x29, [x7, #8]!             ; encoding: [0xfd,0x8c,0x40,0xf8]
-; CHECK: ldr  lr, [x7, #8]!             ; encoding: [0xfe,0x8c,0x40,0xf8]
+; CHECK: ldr  x30, [x7, #8]!             ; encoding: [0xfe,0x8c,0x40,0xf8]
 ; CHECK: ldr  b5, [x0, #1]!             ; encoding: [0x05,0x1c,0x40,0x3c]
 ; CHECK: ldr  h6, [x0, #2]!             ; encoding: [0x06,0x2c,0x40,0x7c]
 ; CHECK: ldr  s7, [x0, #4]!             ; encoding: [0x07,0x4c,0x40,0xbc]
 ; CHECK: ldr  d8, [x0, #8]!             ; encoding: [0x08,0x8c,0x40,0xfc]
 ; CHECK: ldr  q9, [x0, #16]!            ; encoding: [0x09,0x0c,0xc1,0x3c]
 
-; CHECK: str  lr, [x7, #-8]!            ; encoding: [0xfe,0x8c,0x1f,0xf8]
+; CHECK: str  x30, [x7, #-8]!            ; encoding: [0xfe,0x8c,0x1f,0xf8]
 ; CHECK: str  x29, [x7, #-8]!            ; encoding: [0xfd,0x8c,0x1f,0xf8]
 ; CHECK: str  b5, [x0, #-1]!            ; encoding: [0x05,0xfc,0x1f,0x3c]
 ; CHECK: str  h6, [x0, #-2]!            ; encoding: [0x06,0xec,0x1f,0x7c]
@@ -243,7 +243,7 @@ foo:
 ;-----------------------------------------------------------------------------
 ; post-indexed loads and stores
 ;-----------------------------------------------------------------------------
-  str lr, [x7], #-8
+  str x30, [x7], #-8
   str x29, [x7], #-8
   str b5, [x0], #-1
   str h6, [x0], #-2
@@ -252,14 +252,14 @@ foo:
   str q9, [x0], #-16
 
   ldr x29, [x7], #8
-  ldr lr, [x7], #8
+  ldr x30, [x7], #8
   ldr b5, [x0], #1
   ldr h6, [x0], #2
   ldr s7, [x0], #4
   ldr d8, [x0], #8
   ldr q9, [x0], #16
 
-; CHECK: str lr, [x7], #-8             ; encoding: [0xfe,0x84,0x1f,0xf8]
+; CHECK: str x30, [x7], #-8             ; encoding: [0xfe,0x84,0x1f,0xf8]
 ; CHECK: str x29, [x7], #-8             ; encoding: [0xfd,0x84,0x1f,0xf8]
 ; CHECK: str b5, [x0], #-1             ; encoding: [0x05,0xf4,0x1f,0x3c]
 ; CHECK: str h6, [x0], #-2             ; encoding: [0x06,0xe4,0x1f,0x7c]
@@ -268,7 +268,7 @@ foo:
 ; CHECK: str q9, [x0], #-16            ; encoding: [0x09,0x04,0x9f,0x3c]
 
 ; CHECK: ldr x29, [x7], #8              ; encoding: [0xfd,0x84,0x40,0xf8]
-; CHECK: ldr lr, [x7], #8              ; encoding: [0xfe,0x84,0x40,0xf8]
+; CHECK: ldr x30, [x7], #8              ; encoding: [0xfe,0x84,0x40,0xf8]
 ; CHECK: ldr b5, [x0], #1              ; encoding: [0x05,0x14,0x40,0x3c]
 ; CHECK: ldr h6, [x0], #2              ; encoding: [0x06,0x24,0x40,0x7c]
 ; CHECK: ldr s7, [x0], #4              ; encoding: [0x07,0x44,0x40,0xbc]

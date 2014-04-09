@@ -2,7 +2,7 @@
 ; RUN: llc < %s -mtriple=arm64-linux-gnu | FileCheck %s --check-prefix=CHECK-LINUX
 
 ; CHECK-LABEL: main:
-; CHECK:	stp	x29, lr, [sp, #-16]!
+; CHECK:	stp	x29, x30, [sp, #-16]!
 ; CHECK-NEXT:	mov	x29, sp
 ; CHECK-NEXT:	sub	sp, sp, #16
 ; CHECK-NEXT:	stur	wzr, [x29, #-4]
@@ -10,11 +10,11 @@
 ; CHECK:	add	x0, x0, L_.str@PAGEOFF
 ; CHECK-NEXT:	bl	_puts
 ; CHECK-NEXT:	mov	sp, x29
-; CHECK-NEXT:	ldp	x29, lr, [sp], #16
+; CHECK-NEXT:	ldp	x29, x30, [sp], #16
 ; CHECK-NEXT:	ret
 
 ; CHECK-LINUX-LABEL: main:
-; CHECK-LINUX:	stp	x29, lr, [sp, #-16]!
+; CHECK-LINUX:	stp	x29, x30, [sp, #-16]!
 ; CHECK-LINUX-NEXT:	mov	x29, sp
 ; CHECK-LINUX-NEXT:	sub	sp, sp, #16
 ; CHECK-LINUX-NEXT:	stur	wzr, [x29, #-4]
@@ -22,7 +22,7 @@
 ; CHECK-LINUX:	add	x0, x0, :lo12:.L.str
 ; CHECK-LINUX-NEXT:	bl	puts
 ; CHECK-LINUX-NEXT:	mov	sp, x29
-; CHECK-LINUX-NEXT:	ldp	x29, lr, [sp], #16
+; CHECK-LINUX-NEXT:	ldp	x29, x30, [sp], #16
 ; CHECK-LINUX-NEXT:	ret
 
 @.str = private unnamed_addr constant [7 x i8] c"hello\0A\00"
