@@ -38,6 +38,7 @@ void ScalarEnumerationTraits<COFFYAML::COMDATType>::enumeration(
 void
 ScalarEnumerationTraits<COFFYAML::WeakExternalCharacteristics>::enumeration(
     IO &IO, COFFYAML::WeakExternalCharacteristics &Value) {
+  IO.enumCase(Value, "0", 0);
   ECase(IMAGE_WEAK_EXTERN_SEARCH_NOLIBRARY);
   ECase(IMAGE_WEAK_EXTERN_SEARCH_LIBRARY);
   ECase(IMAGE_WEAK_EXTERN_SEARCH_ALIAS);
