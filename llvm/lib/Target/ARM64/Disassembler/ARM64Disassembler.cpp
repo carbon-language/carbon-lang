@@ -1417,10 +1417,14 @@ static DecodeStatus DecodeAddSubERegInstruction(llvm::MCInst &Inst,
     DecodeGPR32RegisterClass(Inst, Rm, Addr, Decoder);
     break;
   case ARM64::ADDXrx64:
-  case ARM64::ADDSXrx64:
   case ARM64::SUBXrx64:
-  case ARM64::SUBSXrx64:
     DecodeGPR64spRegisterClass(Inst, Rd, Addr, Decoder);
+    DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
+    DecodeGPR64RegisterClass(Inst, Rm, Addr, Decoder);
+    break;
+  case ARM64::SUBSXrx64:
+  case ARM64::ADDSXrx64:
+    DecodeGPR64RegisterClass(Inst, Rd, Addr, Decoder);
     DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
     DecodeGPR64RegisterClass(Inst, Rm, Addr, Decoder);
     break;
@@ -1439,13 +1443,19 @@ static DecodeStatus DecodeLogicalImmInstruction(llvm::MCInst &Inst,
   unsigned imm;
 
   if (Datasize) {
-    DecodeGPR64spRegisterClass(Inst, Rd, Addr, Decoder);
+    if (Inst.getOpcode() == ARM64::ANDSXri)
+      DecodeGPR64RegisterClass(Inst, Rd, Addr, Decoder);
+    else
+      DecodeGPR64spRegisterClass(Inst, Rd, Addr, Decoder);
     DecodeGPR64RegisterClass(Inst, Rn, Addr, Decoder);
     imm = fieldFromInstruction(insn, 10, 13);
     if (!ARM64_AM::isValidDecodeLogicalImmediate(imm, 64))
       return Fail;
   } else {
-    DecodeGPR32RegisterClass(Inst, Rd, Addr, Decoder);
+    if (Inst.getOpcode() == ARM64::ANDSWri)
+      DecodeGPR32RegisterClass(Inst, Rd, Addr, Decoder);
+    else
+      DecodeGPR32spRegisterClass(Inst, Rd, Addr, Decoder);
     DecodeGPR32RegisterClass(Inst, Rn, Addr, Decoder);
     imm = fieldFromInstruction(insn, 10, 12);
     if (!ARM64_AM::isValidDecodeLogicalImmediate(imm, 32))
