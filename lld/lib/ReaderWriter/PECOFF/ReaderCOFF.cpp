@@ -33,6 +33,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 
+#include <algorithm>
 #include <map>
 #include <set>
 #include <vector>
@@ -469,6 +470,13 @@ error_code FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
       auto *atom = new (_alloc)
           COFFBSSAtom(*this, name, getScope(sym), DefinedAtom::permRW_,
                       DefinedAtom::mergeAsWeakAndAddressUsed, size, _ordinal++);
+
+      // Common symbols should be aligned on natural boundaries with the maximum
+      // of 32 byte. It's not documented anywhere, but it's what MSVC link.exe
+      // seems to be doing.
+      uint64_t alignment = std::min((uint64_t)32, llvm::NextPowerOf2(size));
+      atom->setAlignment(
+          DefinedAtom::Alignment(llvm::countTrailingZeros(alignment)));
       result.push_back(atom);
       continue;
     }
