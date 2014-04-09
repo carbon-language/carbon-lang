@@ -91,6 +91,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "llvm/Transforms/Utils/VectorUtils.h"
 #include <algorithm>
 #include <map>
 
@@ -2266,32 +2267,12 @@ static Intrinsic::ID
 getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
   // If we have an intrinsic call, check if it is trivially vectorizable.
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI)) {
-    switch (II->getIntrinsicID()) {
-    case Intrinsic::sqrt:
-    case Intrinsic::sin:
-    case Intrinsic::cos:
-    case Intrinsic::exp:
-    case Intrinsic::exp2:
-    case Intrinsic::log:
-    case Intrinsic::log10:
-    case Intrinsic::log2:
-    case Intrinsic::fabs:
-    case Intrinsic::copysign:
-    case Intrinsic::floor:
-    case Intrinsic::ceil:
-    case Intrinsic::trunc:
-    case Intrinsic::rint:
-    case Intrinsic::nearbyint:
-    case Intrinsic::round:
-    case Intrinsic::pow:
-    case Intrinsic::fma:
-    case Intrinsic::fmuladd:
-    case Intrinsic::lifetime_start:
-    case Intrinsic::lifetime_end:
-      return II->getIntrinsicID();
-    default:
+    Intrinsic::ID ID = II->getIntrinsicID();
+    if (isTriviallyVectorizable(ID) || ID == Intrinsic::lifetime_start ||
+        ID == Intrinsic::lifetime_end)
+      return ID;
+    else
       return Intrinsic::not_intrinsic;
-    }
   }
 
   if (!TLI)
