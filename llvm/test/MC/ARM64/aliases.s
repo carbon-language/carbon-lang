@@ -103,7 +103,7 @@ foo:
 ; CHECK: cmp	wzr, w1                 ; encoding: [0xff,0x03,0x01,0x6b]
 ; CHECK: cmp	x8, w8, uxtw            ; encoding: [0x1f,0x41,0x28,0xeb]
 ; CHECK: cmp	w9, w8, uxtw            ; encoding: [0x3f,0x41,0x28,0x6b]
-; CHECK: cmp	wsp, w9                 ; encoding: [0xff,0x63,0x29,0x6b]
+; CHECK: cmp	wsp, w9                 ; encoding: [0xff,0x43,0x29,0x6b]
 
 
 ;-----------------------------------------------------------------------------

@@ -714,7 +714,7 @@ public:
   bool isPrefetch() const { return Kind == k_Prefetch; }
   bool isShifter() const { return Kind == k_Shifter; }
   bool isExtend() const {
-    // lsl is an alias for UXTX but will be a parsed as a k_Shifter operand.
+    // lsl is an alias for UXTW but will be a parsed as a k_Shifter operand.
     if (isShifter()) {
       ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
       return ST == ARM64_AM::LSL;
@@ -1346,10 +1346,10 @@ public:
 
   void addExtendOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    // lsl is an alias for UXTX but will be a parsed as a k_Shifter operand.
+    // lsl is an alias for UXTW but will be a parsed as a k_Shifter operand.
     if (isShifter()) {
       assert(ARM64_AM::getShiftType(getShifter()) == ARM64_AM::LSL);
-      unsigned imm = getArithExtendImm(ARM64_AM::UXTX,
+      unsigned imm = getArithExtendImm(ARM64_AM::UXTW,
                                        ARM64_AM::getShiftValue(getShifter()));
       Inst.addOperand(MCOperand::CreateImm(imm));
     } else

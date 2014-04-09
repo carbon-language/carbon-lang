@@ -223,7 +223,7 @@ foo:
 
 ; CHECK: add w1, wsp, w3             ; encoding: [0xe1,0x43,0x23,0x0b]
 ; CHECK: add w1, wsp, w3             ; encoding: [0xe1,0x43,0x23,0x0b]
-; CHECK: add w2, wsp, w3, lsl #1     ; encoding: [0xe2,0x67,0x23,0x0b]
+; CHECK: add w2, wsp, w3, lsl #1     ; encoding: [0xe2,0x47,0x23,0x0b]
 ; CHECK: add sp, x2, x3              ; encoding: [0x5f,0x60,0x23,0x8b]
 ; CHECK: add sp, x2, x3              ; encoding: [0x5f,0x60,0x23,0x8b]
 
@@ -313,7 +313,7 @@ foo:
 
 ; CHECK: adds w1, wsp, w3            ; encoding: [0xe1,0x43,0x23,0x2b]
 ; CHECK: adds w1, wsp, w3            ; encoding: [0xe1,0x43,0x23,0x2b]
-; CHECK: adds wzr, wsp, w3, lsl #4   ; encoding: [0xff,0x73,0x23,0x2b]
+; CHECK: adds wzr, wsp, w3, lsl #4   ; encoding: [0xff,0x53,0x23,0x2b]
 
   subs w1, w2, w3, uxtb
   subs w1, w2, w3, uxth
@@ -364,7 +364,7 @@ foo:
   cmp sp, w8, uxtw
   subs xzr, sp, w8, uxtw
 
-; CHECK: cmp wsp, w9                 ; encoding: [0xff,0x63,0x29,0x6b]
+; CHECK: cmp wsp, w9                 ; encoding: [0xff,0x43,0x29,0x6b]
 ; CHECK: subs x3, sp, x9, lsl #2     ; encoding: [0xe3,0x6b,0x29,0xeb]
 ; CHECK: cmp wsp, w8                 ; encoding: [0xff,0x43,0x28,0x6b]
 ; CHECK: cmp wsp, w8                 ; encoding: [0xff,0x43,0x28,0x6b]
