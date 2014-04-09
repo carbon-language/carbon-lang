@@ -38,7 +38,7 @@ Sections:
 #CFG:     Type:            Data
 
 ##    4:   06                      (bad)
-#CFG:     Content:         '06'
+#CFG:     Content:         06
 
 #CFG:   - StartAddress:    0x0000000000000005
 #CFG:     Size:            1
