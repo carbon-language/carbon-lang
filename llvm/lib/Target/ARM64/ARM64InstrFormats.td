@@ -304,12 +304,12 @@ def movk_symbol_g0 : Operand<i32> {
 
 def fixedpoint32 : Operand<i32> {
   let EncoderMethod = "getFixedPointScaleOpValue";
-  let DecoderMethod = "DecodeFixedPointScaleImm";
+  let DecoderMethod = "DecodeFixedPointScaleImm32";
   let ParserMatchClass = Imm1_32Operand;
 }
 def fixedpoint64 : Operand<i64> {
   let EncoderMethod = "getFixedPointScaleOpValue";
-  let DecoderMethod = "DecodeFixedPointScaleImm";
+  let DecoderMethod = "DecodeFixedPointScaleImm64";
   let ParserMatchClass = Imm1_64Operand;
 }
 
@@ -3117,6 +3117,7 @@ multiclass FPToIntegerScaled<bits<2> rmode, bits<3> opcode, string asm,
   def SWSri : BaseFPToInteger<0b00, rmode, opcode, FPR32, GPR32,
                               fixedpoint32, asm> {
     let Inst{31} = 0; // 32-bit GPR flag
+    let scale{5} = 1;
   }
 
   // Scaled single-precision to 64-bit
@@ -3129,6 +3130,7 @@ multiclass FPToIntegerScaled<bits<2> rmode, bits<3> opcode, string asm,
   def SWDri : BaseFPToInteger<0b01, rmode, opcode, FPR64, GPR32,
                               fixedpoint32, asm> {
     let Inst{31} = 0; // 32-bit GPR flag
+    let scale{5} = 1;
   }
 
   // Scaled double-precision to 64-bit
@@ -3203,11 +3205,13 @@ multiclass IntegerToFP<bit isUnsigned, string asm, SDNode node> {
   def SWSri: BaseIntegerToFP<isUnsigned, GPR32, FPR32, fixedpoint32, asm> {
     let Inst{31} = 0; // 32-bit GPR flag
     let Inst{22} = 0; // 32-bit FPR flag
+    let scale{5} = 1;
   }
 
   def SWDri: BaseIntegerToFP<isUnsigned, GPR32, FPR64, fixedpoint32, asm> {
     let Inst{31} = 0; // 32-bit GPR flag
     let Inst{22} = 1; // 64-bit FPR flag
+    let scale{5} = 1;
   }
 
   def SXSri: BaseIntegerToFP<isUnsigned, GPR64, FPR32, fixedpoint64, asm> {

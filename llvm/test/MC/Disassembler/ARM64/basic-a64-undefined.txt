@@ -23,4 +23,9 @@
 # EXT on vectors of i8 must have imm<3> = 0.
 # RUN: echo "0x00 0x40 0x00 0x2e" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
 
+# SCVTF on fixed point W-registers is undefined if scale<5> == 0.
+# Same with FCVTZS and FCVTZU.
+# RUN: echo "0x00 0x00 0x02 0x1e" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x00 0x00 0x18 0x1e" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
+
 # CHECK: invalid instruction encoding

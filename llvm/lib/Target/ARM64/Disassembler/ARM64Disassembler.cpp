@@ -82,9 +82,12 @@ static DecodeStatus DecodeDDDDRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                             uint64_t Address,
                                             const void *Decoder);
 
-static DecodeStatus DecodeFixedPointScaleImm(llvm::MCInst &Inst, unsigned Imm,
-                                             uint64_t Address,
-                                             const void *Decoder);
+static DecodeStatus DecodeFixedPointScaleImm32(llvm::MCInst &Inst, unsigned Imm,
+                                               uint64_t Address,
+                                               const void *Decoder);
+static DecodeStatus DecodeFixedPointScaleImm64(llvm::MCInst &Inst, unsigned Imm,
+                                               uint64_t Address,
+                                               const void *Decoder);
 static DecodeStatus DecodeCondBranchTarget(llvm::MCInst &Inst, unsigned Imm,
                                            uint64_t Address,
                                            const void *Decoder);
@@ -744,9 +747,18 @@ static DecodeStatus DecodeDDDDRegisterClass(MCInst &Inst, unsigned RegNo,
   return Success;
 }
 
-static DecodeStatus DecodeFixedPointScaleImm(llvm::MCInst &Inst, unsigned Imm,
-                                             uint64_t Addr,
-                                             const void *Decoder) {
+static DecodeStatus DecodeFixedPointScaleImm32(llvm::MCInst &Inst, unsigned Imm,
+                                               uint64_t Addr,
+                                               const void *Decoder) {
+  // scale{5} is asserted as 1 in tblgen.
+  Imm |= 0x20;  
+  Inst.addOperand(MCOperand::CreateImm(64 - Imm));
+  return Success;
+}
+
+static DecodeStatus DecodeFixedPointScaleImm64(llvm::MCInst &Inst, unsigned Imm,
+                                               uint64_t Addr,
+                                               const void *Decoder) {
   Inst.addOperand(MCOperand::CreateImm(64 - Imm));
   return Success;
 }
