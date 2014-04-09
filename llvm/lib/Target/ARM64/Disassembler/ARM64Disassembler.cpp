@@ -2001,7 +2001,7 @@ static DecodeStatus DecodeSIMDLdStSingle(llvm::MCInst &Inst, uint32_t insn,
     Inst.addOperand(MCOperand::CreateImm(index));
   }
 
-  DecodeGPR64RegisterClass(Inst, Rn, Addr, Decoder);
+  DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
 
   switch (Inst.getOpcode()) {
   case ARM64::ST1i8_POST:
@@ -2162,7 +2162,7 @@ static DecodeStatus DecodeSIMDLdStSingleTied(llvm::MCInst &Inst, uint32_t insn,
   }
 
   Inst.addOperand(MCOperand::CreateImm(index));
-  DecodeGPR64RegisterClass(Inst, Rn, Addr, Decoder);
+  DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
 
   switch (Inst.getOpcode()) {
   case ARM64::LD1i8_POST:
