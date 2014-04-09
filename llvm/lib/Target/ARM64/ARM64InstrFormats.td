@@ -3277,8 +3277,10 @@ class BaseUnscaledConversion<bits<2> rmode, bits<3> opcode,
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
 class BaseUnscaledConversionToHigh<bits<2> rmode, bits<3> opcode,
-                     RegisterClass srcType, RegisterOperand dstType, string asm>
-    : I<(outs dstType:$Rd), (ins srcType:$Rn), asm, "\t$Rd[1], $Rn", "", []>,
+                     RegisterClass srcType, RegisterOperand dstType, string asm,
+                     string kind>
+    : I<(outs dstType:$Rd), (ins srcType:$Rn), asm,
+        "{\t$Rd"#kind#"[1], $Rn|"#kind#"\t$Rd[1], $Rn}", "", []>,
       Sched<[WriteFCopy]> {
   bits<5> Rd;
   bits<5> Rn;
@@ -3293,8 +3295,10 @@ class BaseUnscaledConversionToHigh<bits<2> rmode, bits<3> opcode,
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
 class BaseUnscaledConversionFromHigh<bits<2> rmode, bits<3> opcode,
-                     RegisterOperand srcType, RegisterClass dstType, string asm>
-    : I<(outs dstType:$Rd), (ins srcType:$Rn), asm, "\t$Rd, $Rn[1]", "", []>,
+                     RegisterOperand srcType, RegisterClass dstType, string asm,
+                     string kind>
+    : I<(outs dstType:$Rd), (ins srcType:$Rn), asm,
+        "{\t$Rd, $Rn"#kind#"[1]|"#kind#"\t$Rd, $Rn[1]}", "", []>,
       Sched<[WriteFCopy]> {
   bits<5> Rd;
   bits<5> Rn;
@@ -3331,21 +3335,16 @@ multiclass UnscaledConversion<string asm> {
   }
 
   def XDHighr : BaseUnscaledConversionToHigh<0b01, 0b111, GPR64, V128,
-                                             asm#".d"> {
+                                             asm, ".d"> {
     let Inst{31} = 1;
     let Inst{22} = 0;
   }
 
   def DXHighr : BaseUnscaledConversionFromHigh<0b01, 0b110, V128, GPR64,
-                                               asm#".d"> {
+                                               asm, ".d"> {
     let Inst{31} = 1;
     let Inst{22} = 0;
   }
-
-  def : InstAlias<asm#"$Vd.d[1], $Rn",
-                  (!cast<Instruction>(NAME#XDHighr) V128:$Vd, GPR64:$Rn), 0>;
-  def : InstAlias<asm#"$Rd, $Vn.d[1]",
-                  (!cast<Instruction>(NAME#DXHighr) GPR64:$Rd, V128:$Vn), 0>;
 }
 
 //---
