@@ -1579,10 +1579,15 @@ static DecodeStatus DecodeSystemCPSRInstruction(llvm::MCInst &Inst,
   uint64_t op2 = fieldFromInstruction(insn, 5, 3);
   uint64_t crm = fieldFromInstruction(insn, 8, 4);
 
-  Inst.addOperand(MCOperand::CreateImm((op1 << 3) | op2));
+  uint64_t cpsr_field = (op1 << 3) | op2;
+
+  Inst.addOperand(MCOperand::CreateImm(cpsr_field));
   Inst.addOperand(MCOperand::CreateImm(crm));
 
-  return Success;
+  bool ValidNamed;
+  (void)ARM64PState::PStateMapper().toString(cpsr_field, ValidNamed);
+  
+  return ValidNamed ? Success : Fail;
 }
 
 static DecodeStatus DecodeTestAndBranch(llvm::MCInst &Inst, uint32_t insn,
