@@ -3044,7 +3044,7 @@ class BaseFPToIntegerUnscaled<bits<2> type, bits<2> rmode, bits<3> opcode,
       Sched<[WriteFCvt]> {
   bits<5> Rd;
   bits<5> Rn;
-  let Inst{30}    = 0;
+  let Inst{30-29} = 0b00;
   let Inst{28-24} = 0b11110;
   let Inst{23-22} = type;
   let Inst{21}    = 1;
@@ -3076,7 +3076,8 @@ class BaseFPToInteger<bits<2> type, bits<2> rmode, bits<3> opcode,
   let Inst{4-0}   = Rd;
 }
 
-multiclass FPToInteger<bits<2> rmode, bits<3> opcode, string asm, SDPatternOperator OpN> {
+multiclass FPToIntegerUnscaled<bits<2> rmode, bits<3> opcode, string asm,
+           SDPatternOperator OpN> {
   // Unscaled single-precision to 32-bit
   def UWSr : BaseFPToIntegerUnscaled<0b00, rmode, opcode, FPR32, GPR32, asm,
                                      [(set GPR32:$Rd, (OpN FPR32:$Rn))]> {
@@ -3100,7 +3101,10 @@ multiclass FPToInteger<bits<2> rmode, bits<3> opcode, string asm, SDPatternOpera
                                      [(set GPR64:$Rd, (OpN (f64 FPR64:$Rn)))]> {
     let Inst{31} = 1; // 64-bit GPR flag
   }
+}
 
+multiclass FPToIntegerScaled<bits<2> rmode, bits<3> opcode, string asm,
+           SDPatternOperator OpN> {
   // Scaled single-precision to 32-bit
   def SWSri : BaseFPToInteger<0b00, rmode, opcode, FPR32, GPR32,
                               fixedpoint32, asm> {

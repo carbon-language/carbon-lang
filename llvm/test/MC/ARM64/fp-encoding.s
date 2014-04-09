@@ -158,148 +158,84 @@ foo:
 ; CHECK: fcvt h1, s2                 ; encoding: [0x41,0xc0,0x23,0x1e]
 
   fcvtas w1, d2
-  fcvtas w1, d2, #1
   fcvtas x1, d2
-  fcvtas x1, d2, #1
   fcvtas w1, s2
-  fcvtas w1, s2, #1
   fcvtas x1, s2
-  fcvtas x1, s2, #1
 
 ; CHECK: fcvtas	w1, d2                  ; encoding: [0x41,0x00,0x64,0x1e]
-; CHECK: fcvtas	w1, d2, #1              ; encoding: [0x41,0xfc,0x44,0x1e]
 ; CHECK: fcvtas	x1, d2                  ; encoding: [0x41,0x00,0x64,0x9e]
-; CHECK: fcvtas	x1, d2, #1              ; encoding: [0x41,0xfc,0x44,0x9e]
 ; CHECK: fcvtas	w1, s2                  ; encoding: [0x41,0x00,0x24,0x1e]
-; CHECK: fcvtas	w1, s2, #1              ; encoding: [0x41,0xfc,0x04,0x1e]
 ; CHECK: fcvtas	x1, s2                  ; encoding: [0x41,0x00,0x24,0x9e]
-; CHECK: fcvtas	x1, s2, #1              ; encoding: [0x41,0xfc,0x04,0x9e]
 
   fcvtau w1, s2
-  fcvtau w1, s2, #1
   fcvtau w1, d2
-  fcvtau w1, d2, #1
   fcvtau x1, s2
-  fcvtau x1, s2, #1
   fcvtau x1, d2
-  fcvtau x1, d2, #1
 
 ; CHECK: fcvtau	w1, s2                  ; encoding: [0x41,0x00,0x25,0x1e]
-; CHECK: fcvtau	w1, s2, #1              ; encoding: [0x41,0xfc,0x05,0x1e]
 ; CHECK: fcvtau	w1, d2                  ; encoding: [0x41,0x00,0x65,0x1e]
-; CHECK: fcvtau	w1, d2, #1              ; encoding: [0x41,0xfc,0x45,0x1e]
 ; CHECK: fcvtau	x1, s2                  ; encoding: [0x41,0x00,0x25,0x9e]
-; CHECK: fcvtau	x1, s2, #1              ; encoding: [0x41,0xfc,0x05,0x9e]
 ; CHECK: fcvtau	x1, d2                  ; encoding: [0x41,0x00,0x65,0x9e]
-; CHECK: fcvtau	x1, d2, #1              ; encoding: [0x41,0xfc,0x45,0x9e]
 
   fcvtms w1, s2
-  fcvtms w1, s2, #1
   fcvtms w1, d2
-  fcvtms w1, d2, #1
   fcvtms x1, s2
-  fcvtms x1, s2, #1
   fcvtms x1, d2
-  fcvtms x1, d2, #1
 
 ; CHECK: fcvtms	w1, s2                  ; encoding: [0x41,0x00,0x30,0x1e]
-; CHECK: fcvtms	w1, s2, #1              ; encoding: [0x41,0xfc,0x10,0x1e]
 ; CHECK: fcvtms	w1, d2                  ; encoding: [0x41,0x00,0x70,0x1e]
-; CHECK: fcvtms	w1, d2, #1              ; encoding: [0x41,0xfc,0x50,0x1e]
 ; CHECK: fcvtms	x1, s2                  ; encoding: [0x41,0x00,0x30,0x9e]
-; CHECK: fcvtms	x1, s2, #1              ; encoding: [0x41,0xfc,0x10,0x9e]
 ; CHECK: fcvtms	x1, d2                  ; encoding: [0x41,0x00,0x70,0x9e]
-; CHECK: fcvtms	x1, d2, #1              ; encoding: [0x41,0xfc,0x50,0x9e]
 
   fcvtmu w1, s2
-  fcvtmu w1, s2, #1
   fcvtmu w1, d2
-  fcvtmu w1, d2, #1
   fcvtmu x1, s2
-  fcvtmu x1, s2, #1
   fcvtmu x1, d2
-  fcvtmu x1, d2, #1
 
 ; CHECK: fcvtmu	w1, s2                  ; encoding: [0x41,0x00,0x31,0x1e]
-; CHECK: fcvtmu	w1, s2, #1              ; encoding: [0x41,0xfc,0x11,0x1e]
 ; CHECK: fcvtmu	w1, d2                  ; encoding: [0x41,0x00,0x71,0x1e]
-; CHECK: fcvtmu	w1, d2, #1              ; encoding: [0x41,0xfc,0x51,0x1e]
 ; CHECK: fcvtmu	x1, s2                  ; encoding: [0x41,0x00,0x31,0x9e]
-; CHECK: fcvtmu	x1, s2, #1              ; encoding: [0x41,0xfc,0x11,0x9e]
 ; CHECK: fcvtmu	x1, d2                  ; encoding: [0x41,0x00,0x71,0x9e]
-; CHECK: fcvtmu	x1, d2, #1              ; encoding: [0x41,0xfc,0x51,0x9e]
 
   fcvtns w1, s2
-  fcvtns w1, s2, #1
   fcvtns w1, d2
-  fcvtns w1, d2, #1
   fcvtns x1, s2
-  fcvtns x1, s2, #1
   fcvtns x1, d2
-  fcvtns x1, d2, #1
 
 ; CHECK: fcvtns	w1, s2                  ; encoding: [0x41,0x00,0x20,0x1e]
-; CHECK: fcvtns	w1, s2, #1              ; encoding: [0x41,0xfc,0x00,0x1e]
 ; CHECK: fcvtns	w1, d2                  ; encoding: [0x41,0x00,0x60,0x1e]
-; CHECK: fcvtns	w1, d2, #1              ; encoding: [0x41,0xfc,0x40,0x1e]
 ; CHECK: fcvtns	x1, s2                  ; encoding: [0x41,0x00,0x20,0x9e]
-; CHECK: fcvtns	x1, s2, #1              ; encoding: [0x41,0xfc,0x00,0x9e]
 ; CHECK: fcvtns	x1, d2                  ; encoding: [0x41,0x00,0x60,0x9e]
-; CHECK: fcvtns	x1, d2, #1              ; encoding: [0x41,0xfc,0x40,0x9e]
 
   fcvtnu w1, s2
-  fcvtnu w1, s2, #1
   fcvtnu w1, d2
-  fcvtnu w1, d2, #1
   fcvtnu x1, s2
-  fcvtnu x1, s2, #1
   fcvtnu x1, d2
-  fcvtnu x1, d2, #1
 
 ; CHECK: fcvtnu	w1, s2                  ; encoding: [0x41,0x00,0x21,0x1e]
-; CHECK: fcvtnu	w1, s2, #1              ; encoding: [0x41,0xfc,0x01,0x1e]
 ; CHECK: fcvtnu	w1, d2                  ; encoding: [0x41,0x00,0x61,0x1e]
-; CHECK: fcvtnu	w1, d2, #1              ; encoding: [0x41,0xfc,0x41,0x1e]
 ; CHECK: fcvtnu	x1, s2                  ; encoding: [0x41,0x00,0x21,0x9e]
-; CHECK: fcvtnu	x1, s2, #1              ; encoding: [0x41,0xfc,0x01,0x9e]
 ; CHECK: fcvtnu	x1, d2                  ; encoding: [0x41,0x00,0x61,0x9e]
-; CHECK: fcvtnu	x1, d2, #1              ; encoding: [0x41,0xfc,0x41,0x9e]
 
   fcvtps w1, s2
-  fcvtps w1, s2, #1
   fcvtps w1, d2
-  fcvtps w1, d2, #1
   fcvtps x1, s2
-  fcvtps x1, s2, #1
   fcvtps x1, d2
-  fcvtps x1, d2, #1
 
 ; CHECK: fcvtps	w1, s2                  ; encoding: [0x41,0x00,0x28,0x1e]
-; CHECK: fcvtps	w1, s2, #1              ; encoding: [0x41,0xfc,0x08,0x1e]
 ; CHECK: fcvtps	w1, d2                  ; encoding: [0x41,0x00,0x68,0x1e]
-; CHECK: fcvtps	w1, d2, #1              ; encoding: [0x41,0xfc,0x48,0x1e]
 ; CHECK: fcvtps	x1, s2                  ; encoding: [0x41,0x00,0x28,0x9e]
-; CHECK: fcvtps	x1, s2, #1              ; encoding: [0x41,0xfc,0x08,0x9e]
 ; CHECK: fcvtps	x1, d2                  ; encoding: [0x41,0x00,0x68,0x9e]
-; CHECK: fcvtps	x1, d2, #1              ; encoding: [0x41,0xfc,0x48,0x9e]
 
   fcvtpu w1, s2
-  fcvtpu w1, s2, #1
   fcvtpu w1, d2
-  fcvtpu w1, d2, #1
   fcvtpu x1, s2
-  fcvtpu x1, s2, #1
   fcvtpu x1, d2
-  fcvtpu x1, d2, #1
 
 ; CHECK: fcvtpu	w1, s2                  ; encoding: [0x41,0x00,0x29,0x1e]
-; CHECK: fcvtpu	w1, s2, #1              ; encoding: [0x41,0xfc,0x09,0x1e]
 ; CHECK: fcvtpu	w1, d2                  ; encoding: [0x41,0x00,0x69,0x1e]
-; CHECK: fcvtpu	w1, d2, #1              ; encoding: [0x41,0xfc,0x49,0x1e]
 ; CHECK: fcvtpu	x1, s2                  ; encoding: [0x41,0x00,0x29,0x9e]
-; CHECK: fcvtpu	x1, s2, #1              ; encoding: [0x41,0xfc,0x09,0x9e]
 ; CHECK: fcvtpu	x1, d2                  ; encoding: [0x41,0x00,0x69,0x9e]
-; CHECK: fcvtpu	x1, d2, #1              ; encoding: [0x41,0xfc,0x49,0x9e]
 
   fcvtzs w1, s2
   fcvtzs w1, s2, #1

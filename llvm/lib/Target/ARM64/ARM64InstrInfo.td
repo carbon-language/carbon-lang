@@ -1859,19 +1859,23 @@ def STXPX  : StoreExclusivePair<0b11, 0, 0, 1, 0, GPR64, "stxp">;
 // Scaled floating point to integer conversion instructions.
 //===----------------------------------------------------------------------===//
 
-defm FCVTAS : FPToInteger<0b00, 0b100, "fcvtas", int_arm64_neon_fcvtas>;
-defm FCVTAU : FPToInteger<0b00, 0b101, "fcvtau", int_arm64_neon_fcvtau>;
-defm FCVTMS : FPToInteger<0b10, 0b000, "fcvtms", int_arm64_neon_fcvtms>;
-defm FCVTMU : FPToInteger<0b10, 0b001, "fcvtmu", int_arm64_neon_fcvtmu>;
-defm FCVTNS : FPToInteger<0b00, 0b000, "fcvtns", int_arm64_neon_fcvtns>;
-defm FCVTNU : FPToInteger<0b00, 0b001, "fcvtnu", int_arm64_neon_fcvtnu>;
-defm FCVTPS : FPToInteger<0b01, 0b000, "fcvtps", int_arm64_neon_fcvtps>;
-defm FCVTPU : FPToInteger<0b01, 0b001, "fcvtpu", int_arm64_neon_fcvtpu>;
-defm FCVTZS : FPToInteger<0b11, 0b000, "fcvtzs", fp_to_sint>;
-defm FCVTZU : FPToInteger<0b11, 0b001, "fcvtzu", fp_to_uint>;
+defm FCVTAS : FPToIntegerUnscaled<0b00, 0b100, "fcvtas", int_arm64_neon_fcvtas>;
+defm FCVTAU : FPToIntegerUnscaled<0b00, 0b101, "fcvtau", int_arm64_neon_fcvtau>;
+defm FCVTMS : FPToIntegerUnscaled<0b10, 0b000, "fcvtms", int_arm64_neon_fcvtms>;
+defm FCVTMU : FPToIntegerUnscaled<0b10, 0b001, "fcvtmu", int_arm64_neon_fcvtmu>;
+defm FCVTNS : FPToIntegerUnscaled<0b00, 0b000, "fcvtns", int_arm64_neon_fcvtns>;
+defm FCVTNU : FPToIntegerUnscaled<0b00, 0b001, "fcvtnu", int_arm64_neon_fcvtnu>;
+defm FCVTPS : FPToIntegerUnscaled<0b01, 0b000, "fcvtps", int_arm64_neon_fcvtps>;
+defm FCVTPU : FPToIntegerUnscaled<0b01, 0b001, "fcvtpu", int_arm64_neon_fcvtpu>;
+defm FCVTZS : FPToIntegerUnscaled<0b11, 0b000, "fcvtzs", fp_to_sint>;
+defm FCVTZU : FPToIntegerUnscaled<0b11, 0b001, "fcvtzu", fp_to_uint>;
+defm FCVTZS : FPToIntegerScaled<0b11, 0b000, "fcvtzs", fp_to_sint>;
+defm FCVTZU : FPToIntegerScaled<0b11, 0b001, "fcvtzu", fp_to_uint>;
 let isCodeGenOnly = 1 in {
-defm FCVTZS_Int : FPToInteger<0b11, 0b000, "fcvtzs", int_arm64_neon_fcvtzs>;
-defm FCVTZU_Int : FPToInteger<0b11, 0b001, "fcvtzu", int_arm64_neon_fcvtzu>;
+defm FCVTZS_Int : FPToIntegerUnscaled<0b11, 0b000, "fcvtzs", int_arm64_neon_fcvtzs>;
+defm FCVTZU_Int : FPToIntegerUnscaled<0b11, 0b001, "fcvtzu", int_arm64_neon_fcvtzu>;
+defm FCVTZS_Int : FPToIntegerScaled<0b11, 0b000, "fcvtzs", int_arm64_neon_fcvtzs>;
+defm FCVTZU_Int : FPToIntegerScaled<0b11, 0b001, "fcvtzu", int_arm64_neon_fcvtzu>;
 }
 
 //===----------------------------------------------------------------------===//
