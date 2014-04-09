@@ -1,22 +1,8 @@
-// RUN: clang-tidy --checks=misc-redundant-smartptr-get %s -- | FileCheck %s
+// RUN: $(dirname %s)/check_clang_tidy_output.sh %s misc-redundant-smartptr-get
 
 // CHECK-NOT: warning
 
-namespace std {
-
-template <typename T>
-struct MakeRef {
-  typedef T& type;
-};
-
-template <typename T>
-struct unique_ptr {
-  T* get();
-  T* operator->();
-  // This simulates libstdc++'s implementation of unique_ptr.
-  typename MakeRef<T>::type operator*();
-};
-}  // namespace std
+#include <memory>
 
 struct int_ptr {
   int* get();
@@ -65,6 +51,14 @@ void Positive() {
   int i = *ip.get();
   // CHECK: :[[@LINE-1]]:12: warning: Redundant get() call on smart pointer.
   // CHECK: int i = *ip.get();
+
+  bool bb = u.get() == nullptr;
+  // CHECK: :[[@LINE-1]]:13: warning: Redundant get() call on smart pointer.
+  // CHECK: u.get() == nullptr;
+  std::shared_ptr<double> *sp;
+  bb = nullptr != sp->get();
+  // CHECK: :[[@LINE-1]]:19: warning: Redundant get() call on smart pointer.
+  // CHECK: nullptr != sp->get();
 }
 
 // CHECK-NOT: warning
@@ -77,4 +71,9 @@ void Negative() {
   Fail2().get()->Do();
   const Bar& b = *Fail1().get();
   (*Fail2().get()).Do();
+
+  int_ptr ip;
+  bool bb = std::unique_ptr<int>().get() == NULL;
+  bb = ip.get() == nullptr;
+  bb = u->get() == NULL;
 }

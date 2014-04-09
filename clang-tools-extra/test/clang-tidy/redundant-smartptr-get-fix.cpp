@@ -1,6 +1,6 @@
-// RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
-// RUN: clang-tidy %t.cpp -fix -checks=misc-redundant-smartptr-get --
-// RUN: FileCheck -input-file=%t.cpp %s
+// RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-redundant-smartptr-get %t
+
+#include <memory>
 
 struct Bar {
   void Do();
@@ -39,4 +39,11 @@ void Positive() {
   int_ptr ip;
   int i = *ip.get();
   // CHECK: int i = *ip;
+
+  std::unique_ptr<int> uu;
+  std::shared_ptr<double> *ss;
+  bool bb = uu.get() == nullptr;
+  // CHECK: bool bb = uu == nullptr;
+  bb = nullptr != ss->get();
+  // CHECK: bb = nullptr != *ss;
 }
