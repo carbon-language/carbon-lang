@@ -1,6 +1,22 @@
 // RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-redundant-smartptr-get %t
 
-#include <memory>
+namespace std {
+
+template <typename T>
+class unique_ptr {
+  T& operator*() const;
+  T* operator->() const;
+  T* get() const;
+};
+
+template <typename T>
+class shared_ptr {
+  T& operator*() const;
+  T* operator->() const;
+  T* get() const;
+};
+
+}  // namespace std
 
 struct Bar {
   void Do();
