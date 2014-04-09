@@ -13,4 +13,9 @@
 # MOVK with sf == 0 and hw<1> == 1 is unallocated.
 # RUN: echo "0x00 0x00 0xc0 0x72" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
 
+# ADD/SUB (shifted register) are reserved if shift == '11' or sf == '0' and imm6<5> == '1'.
+# RUN: echo "0x00 0x00 0xc0 0xeb" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x00 0x80 0x80 0x6b" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
+
+
 # CHECK: invalid instruction encoding

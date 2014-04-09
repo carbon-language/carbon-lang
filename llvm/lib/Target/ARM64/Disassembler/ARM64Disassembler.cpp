@@ -854,6 +854,14 @@ static DecodeStatus DecodeThreeAddrSRegInstruction(llvm::MCInst &Inst,
   switch (Inst.getOpcode()) {
   default:
     return Fail;
+  case ARM64::ADDWrs:
+  case ARM64::ADDSWrs:
+  case ARM64::SUBWrs:
+  case ARM64::SUBSWrs:
+    // if shift == '11' then ReservedValue()
+    if (shiftHi == 0x3)
+      return Fail;
+    // Deliberate fallthrough
   case ARM64::ANDWrs:
   case ARM64::ANDSWrs:
   case ARM64::BICWrs:
@@ -861,16 +869,23 @@ static DecodeStatus DecodeThreeAddrSRegInstruction(llvm::MCInst &Inst,
   case ARM64::ORRWrs:
   case ARM64::ORNWrs:
   case ARM64::EORWrs:
-  case ARM64::EONWrs:
-  case ARM64::ADDWrs:
-  case ARM64::ADDSWrs:
-  case ARM64::SUBWrs:
-  case ARM64::SUBSWrs: {
+  case ARM64::EONWrs: {
+    // if sf == '0' and imm6<5> == '1' then ReservedValue()
+    if (shiftLo >> 5 == 1)
+      return Fail;
     DecodeGPR32RegisterClass(Inst, Rd, Addr, Decoder);
     DecodeGPR32RegisterClass(Inst, Rn, Addr, Decoder);
     DecodeGPR32RegisterClass(Inst, Rm, Addr, Decoder);
     break;
   }
+  case ARM64::ADDXrs:
+  case ARM64::ADDSXrs:
+  case ARM64::SUBXrs:
+  case ARM64::SUBSXrs:
+    // if shift == '11' then ReservedValue()
+    if (shiftHi == 0x3)
+      return Fail;
+    // Deliberate fallthrough
   case ARM64::ANDXrs:
   case ARM64::ANDSXrs:
   case ARM64::BICXrs:
@@ -879,10 +894,6 @@ static DecodeStatus DecodeThreeAddrSRegInstruction(llvm::MCInst &Inst,
   case ARM64::ORNXrs:
   case ARM64::EORXrs:
   case ARM64::EONXrs:
-  case ARM64::ADDXrs:
-  case ARM64::ADDSXrs:
-  case ARM64::SUBXrs:
-  case ARM64::SUBSXrs:
     DecodeGPR64RegisterClass(Inst, Rd, Addr, Decoder);
     DecodeGPR64RegisterClass(Inst, Rn, Addr, Decoder);
     DecodeGPR64RegisterClass(Inst, Rm, Addr, Decoder);
