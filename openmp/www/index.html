@@ -49,6 +49,18 @@
     keep the different sites in sync.
   </p>
 
+  <p>Support for the parts of the OpenMP 4.0 language that are not
+  associated with the "target" constructs are contained in the
+  "runtime" directory. Support for offloading computation via the
+  "target" directive is in the separate "offload" directory. That
+  builds a library that provides the interfaces for transferring code
+  and data to an attached computational device. Initial support here
+  is for the Intel&reg Xeon Phi&#0153 coprocessor, but work is
+  beginning to support other attached computing devices, and the
+  design is intended to be general. The README.txt in the "offload"
+  directory describes how to build the offload library.
+  </p>
+
   <p>We are, however, still missing test code. Any contributions in
     that area would be greatly appreciated!
   </p>
