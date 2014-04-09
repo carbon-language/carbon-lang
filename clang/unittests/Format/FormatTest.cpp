@@ -3270,7 +3270,13 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
                "    int someLongParameter) override {}",
                Style);
   verifyFormat("void someLongFunction(\n"
+               "    int someLongParameter) OVERRIDE {}",
+               Style);
+  verifyFormat("void someLongFunction(\n"
                "    int someLongParameter) final {}",
+               Style);
+  verifyFormat("void someLongFunction(\n"
+               "    int someLongParameter) FINAL {}",
                Style);
   verifyFormat("void someLongFunction(\n"
                "    int parameter) const override {}",

@@ -1279,11 +1279,9 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     // annotations (i.e. "const", "final" and "override") on the same line.
     // Use a slightly higher penalty after ")" so that annotations like
     // "const override" are kept together.
-    bool is_standard_annotation = Right.is(tok::kw_const) ||
-                                  Right.TokenText == "override" ||
-                                  Right.TokenText == "final";
+    bool is_short_annotation = Right.TokenText.size() < 10;
     return (Left.is(tok::r_paren) ? 100 : 120) +
-           (is_standard_annotation ? 50 : 0);
+           (is_short_annotation ? 50 : 0);
   }
 
   // In for-loops, prefer breaking at ',' and ';'.
