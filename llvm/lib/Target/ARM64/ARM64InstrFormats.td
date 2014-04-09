@@ -3071,7 +3071,7 @@ class BaseFPToInteger<bits<2> type, bits<2> rmode, bits<3> opcode,
   bits<5> Rd;
   bits<5> Rn;
   bits<6> scale;
-  let Inst{30}    = 0;
+  let Inst{30-29} = 0b00;
   let Inst{28-24} = 0b11110;
   let Inst{23-22} = type;
   let Inst{21}    = 0;
