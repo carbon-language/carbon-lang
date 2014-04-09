@@ -1546,14 +1546,16 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     return true;
   }
 
-  // If the last token before a '}' is a comma, the intention is to insert a
-  // line break after it in order to make shuffling around entries easier.
+  // If the last token before a '}' is a comma or a comment, the intention is to
+  // insert a line break after it in order to make shuffling around entries
+  // easier.
   const FormatToken *BeforeClosingBrace = nullptr;
   if (Left.is(tok::l_brace) && Left.MatchingParen)
-    BeforeClosingBrace = Left.MatchingParen->getPreviousNonComment();
+    BeforeClosingBrace = Left.MatchingParen->Previous;
   else if (Right.is(tok::r_brace))
-    BeforeClosingBrace = Right.getPreviousNonComment();
-  if (BeforeClosingBrace && BeforeClosingBrace->is(tok::comma))
+    BeforeClosingBrace = Right.Previous;
+  if (BeforeClosingBrace &&
+      BeforeClosingBrace->isOneOf(tok::comma, tok::comment))
     return true;
 
   return false;

@@ -4516,8 +4516,9 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
 
   verifyIndependentOfContext("f(b * /* confusing comment */ ++c);");
   verifyFormat(
-      "int *MyValues = {*A, // Operator detection might be confused by the '{'\n"
-      "                 *BB // Operator detection might be confused by previous comment\n"
+      "int *MyValues = {\n"
+      "    *A, // Operator detection might be confused by the '{'\n"
+      "    *BB // Operator detection might be confused by previous comment\n"
       "};");
 
   verifyIndependentOfContext("if (int *a = &b)");
@@ -5072,7 +5073,10 @@ TEST_F(FormatTest, LayoutCxx11ConstructorBraceInitializers) {
       "                                 bbbbbbbbbbbbbbbbbbbb, bbbbb };",
       ExtraSpaces);
   verifyFormat("DoSomethingWithVector({} /* No data */);", ExtraSpaces);
-  verifyFormat("DoSomethingWithVector({ {} /* No data */ }, { { 1, 2 } });",
+  verifyFormat("DoSomethingWithVector({\n"
+               "                        {} /* No data */\n"
+               "                      },\n"
+               "                      { { 1, 2 } });",
                ExtraSpaces);
   verifyFormat(
       "someFunction(OtherParam,\n"
