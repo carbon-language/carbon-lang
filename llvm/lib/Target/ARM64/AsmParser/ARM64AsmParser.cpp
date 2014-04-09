@@ -89,8 +89,7 @@ private:
   OperandMatchResultTy tryParseNoIndexMemory(OperandVector &Operands);
   OperandMatchResultTy tryParseBarrierOperand(OperandVector &Operands);
   OperandMatchResultTy tryParseMRSSystemRegister(OperandVector &Operands);
-  OperandMatchResultTy tryParseMSRSystemRegister(OperandVector &Operands);
-  OperandMatchResultTy tryParseCPSRField(OperandVector &Operands);
+  OperandMatchResultTy tryParseSysReg(OperandVector &Operands);
   OperandMatchResultTy tryParseSysCROperand(OperandVector &Operands);
   OperandMatchResultTy tryParsePrefetch(OperandVector &Operands);
   OperandMatchResultTy tryParseAdrpLabel(OperandVector &Operands);
@@ -142,14 +141,13 @@ private:
     k_VectorList,
     k_VectorIndex,
     k_Token,
+    k_SysReg,
     k_SysCR,
     k_Prefetch,
     k_Shifter,
     k_Extend,
     k_FPImm,
-    k_Barrier,
-    k_SystemRegister,
-    k_CPSRField
+    k_Barrier
   } Kind;
 
   SMLoc StartLoc, EndLoc, OffsetLoc;
@@ -188,14 +186,9 @@ private:
     unsigned Val; // Not the enum since not all values have names.
   };
 
-  struct SystemRegisterOp {
-    // 16-bit immediate, usually from the ARM64SysReg::SysRegValues enum
-    // but not limited to those values.
-    uint16_t Val;
-  };
-
-  struct CPSRFieldOp {
-    ARM64PState::PStateValues Field;
+  struct SysRegOp {
+    const char *Data;
+    unsigned Length;
   };
 
   struct SysCRImmOp {
@@ -232,8 +225,7 @@ private:
     struct ImmOp Imm;
     struct FPImmOp FPImm;
     struct BarrierOp Barrier;
-    struct SystemRegisterOp SystemRegister;
-    struct CPSRFieldOp CPSRField;
+    struct SysRegOp SysReg;
     struct SysCRImmOp SysCRImm;
     struct PrefetchOp Prefetch;
     struct ShifterOp Shifter;
@@ -266,12 +258,6 @@ public:
     case k_Barrier:
       Barrier = o.Barrier;
       break;
-    case k_SystemRegister:
-      SystemRegister = o.SystemRegister;
-      break;
-    case k_CPSRField:
-      CPSRField = o.CPSRField;
-      break;
     case k_Register:
       Reg = o.Reg;
       break;
@@ -280,6 +266,9 @@ public:
       break;
     case k_VectorIndex:
       VectorIndex = o.VectorIndex;
+      break;
+    case k_SysReg:
+      SysReg = o.SysReg;
       break;
     case k_SysCR:
       SysCRImm = o.SysCRImm;
@@ -331,16 +320,6 @@ public:
     return Barrier.Val;
   }
 
-  uint16_t getSystemRegister() const {
-    assert(Kind == k_SystemRegister && "Invalid access!");
-    return SystemRegister.Val;
-  }
-
-  ARM64PState::PStateValues getCPSRField() const {
-    assert(Kind == k_CPSRField && "Invalid access!");
-    return CPSRField.Field;
-  }
-
   unsigned getReg() const {
     assert(Kind == k_Register && "Invalid access!");
     return Reg.RegNum;
@@ -359,6 +338,11 @@ public:
   unsigned getVectorIndex() const {
     assert(Kind == k_VectorIndex && "Invalid access!");
     return VectorIndex.Val;
+  }
+
+  StringRef getSysReg() const {
+    assert(Kind == k_SysReg && "Invalid access!");
+    return StringRef(SysReg.Data, SysReg.Length);
   }
 
   unsigned getSysCR() const {
@@ -665,14 +649,31 @@ public:
 
   bool isFPImm() const { return Kind == k_FPImm; }
   bool isBarrier() const { return Kind == k_Barrier; }
-  bool isSystemRegister() const {
-    if (Kind == k_SystemRegister)
-      return true;
-    // SPSel is legal for both the system register and the CPSR-field
-    // variants of MSR, so special case that. Fugly.
-    return (Kind == k_CPSRField && getCPSRField() == ARM64PState::SPSel);
+  bool isSysReg() const { return Kind == k_SysReg; }
+  bool isMRSSystemRegister() const {
+    if (!isSysReg()) return false;
+
+    bool IsKnownRegister;
+    ARM64SysReg::MRSMapper().fromString(getSysReg(), IsKnownRegister);
+
+    return IsKnownRegister;
   }
-  bool isSystemCPSRField() const { return Kind == k_CPSRField; }
+  bool isMSRSystemRegister() const {
+    if (!isSysReg()) return false;
+
+    bool IsKnownRegister;
+    ARM64SysReg::MSRMapper().fromString(getSysReg(), IsKnownRegister);
+
+    return IsKnownRegister;
+  }
+  bool isSystemCPSRField() const {
+    if (!isSysReg()) return false;
+
+    bool IsKnownRegister;
+    ARM64PState::PStateMapper().fromString(getSysReg(), IsKnownRegister);
+
+    return IsKnownRegister;
+  }
   bool isReg() const { return Kind == k_Register && !Reg.isVector; }
   bool isVectorReg() const { return Kind == k_Register && Reg.isVector; }
 
@@ -1280,19 +1281,31 @@ public:
     Inst.addOperand(MCOperand::CreateImm(getBarrier()));
   }
 
-  void addSystemRegisterOperands(MCInst &Inst, unsigned N) const {
+  void addMRSSystemRegisterOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    if (Kind == k_SystemRegister)
-      Inst.addOperand(MCOperand::CreateImm(getSystemRegister()));
-    else {
-      assert(Kind == k_CPSRField && getCPSRField() == ARM64PState::SPSel);
-      Inst.addOperand(MCOperand::CreateImm(ARM64SysReg::SPSel));
-    }
+
+    bool Valid;
+    uint32_t Bits = ARM64SysReg::MRSMapper().fromString(getSysReg(), Valid);
+
+    Inst.addOperand(MCOperand::CreateImm(Bits));
+  }
+
+  void addMSRSystemRegisterOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    bool Valid;
+    uint32_t Bits = ARM64SysReg::MSRMapper().fromString(getSysReg(), Valid);
+
+    Inst.addOperand(MCOperand::CreateImm(Bits));
   }
 
   void addSystemCPSRFieldOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateImm(getCPSRField()));
+
+    bool Valid;
+    uint32_t Bits = ARM64PState::PStateMapper().fromString(getSysReg(), Valid);
+
+    Inst.addOperand(MCOperand::CreateImm(Bits));
   }
 
   void addSysCROperands(MCInst &Inst, unsigned N) const {
@@ -1606,19 +1619,10 @@ public:
     return Op;
   }
 
-  static ARM64Operand *CreateSystemRegister(uint16_t Val, SMLoc S,
-                                            MCContext &Ctx) {
-    ARM64Operand *Op = new ARM64Operand(k_SystemRegister, Ctx);
-    Op->SystemRegister.Val = Val;
-    Op->StartLoc = S;
-    Op->EndLoc = S;
-    return Op;
-  }
-
-  static ARM64Operand *CreateCPSRField(ARM64PState::PStateValues Field, SMLoc S,
-                                       MCContext &Ctx) {
-    ARM64Operand *Op = new ARM64Operand(k_CPSRField, Ctx);
-    Op->CPSRField.Field = Field;
+  static ARM64Operand *CreateSysReg(StringRef Str, SMLoc S, MCContext &Ctx) {
+    ARM64Operand *Op = new ARM64Operand(k_SysReg, Ctx);
+    Op->SysReg.Data = Str.data();
+    Op->SysReg.Length = Str.size();
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
@@ -1708,27 +1712,7 @@ void ARM64Operand::print(raw_ostream &OS) const {
     if (Valid)
       OS << "<barrier " << Name << ">";
     else
-      OS << "<barrier invalid #" << getCPSRField() << ">";
-    break;
-  }
-  case k_SystemRegister: {
-    bool Valid;
-    StringRef Name = ARM64SysReg::MRSMapper().toString(getSystemRegister(), Valid);
-    if (!Valid)
-      Name = ARM64SysReg::MSRMapper().toString(getSystemRegister(), Valid);
-    if (Valid)
-      OS << "<systemreg " << Name << ">";
-    else
-      OS << "<systemreg invalid #" << getSystemRegister() << ">";
-    break;
-  }
-  case k_CPSRField: {
-    bool Valid;
-    StringRef Name = ARM64PState::PStateMapper().toString(getCPSRField(), Valid);
-    if (Valid)
-      OS << "<cpsrfield " << Name << ">";
-    else
-      OS << "<cpsrfield invalid #" << getCPSRField() << ">";
+      OS << "<barrier invalid #" << getBarrier() << ">";
     break;
   }
   case k_Immediate:
@@ -1750,6 +1734,9 @@ void ARM64Operand::print(raw_ostream &OS) const {
   }
   case k_VectorIndex:
     OS << "<vectorindex " << getVectorIndex() << ">";
+    break;
+  case k_SysReg:
+    OS << "<sysreg: " << getSysReg() << '>';
     break;
   case k_Token:
     OS << "'" << getToken() << "'";
@@ -2612,65 +2599,15 @@ ARM64AsmParser::tryParseBarrierOperand(OperandVector &Operands) {
 }
 
 ARM64AsmParser::OperandMatchResultTy
-ARM64AsmParser::tryParseMRSSystemRegister(OperandVector &Operands) {
+ARM64AsmParser::tryParseSysReg(OperandVector &Operands) {
   const AsmToken &Tok = Parser.getTok();
 
   if (Tok.isNot(AsmToken::Identifier))
     return MatchOperand_NoMatch;
 
-  bool Valid;
-  auto Mapper = ARM64SysReg::MRSMapper();
-  uint32_t Reg = Mapper.fromString(Tok.getString(), Valid);
-  
-  if (Valid) {
-    Operands.push_back(
-      ARM64Operand::CreateSystemRegister((uint16_t)Reg, getLoc(),
-                                         getContext()));
-    Parser.Lex(); // Consume the register name.
-    return MatchOperand_Success;
-  }
-
-  return MatchOperand_NoMatch;
-}
-
-ARM64AsmParser::OperandMatchResultTy
-ARM64AsmParser::tryParseMSRSystemRegister(OperandVector &Operands) {
-  const AsmToken &Tok = Parser.getTok();
-
-  if (Tok.isNot(AsmToken::Identifier))
-    return MatchOperand_NoMatch;
-
-  bool Valid;
-  auto Mapper = ARM64SysReg::MSRMapper();
-  uint32_t Reg = Mapper.fromString(Tok.getString(), Valid);
-  
-  if (Valid) {
-    Operands.push_back(
-      ARM64Operand::CreateSystemRegister((uint16_t)Reg, getLoc(),
-                                         getContext()));
-    Parser.Lex(); // Consume the register name.
-    return MatchOperand_Success;
-  }
-
-  return MatchOperand_NoMatch;
-}
-
-ARM64AsmParser::OperandMatchResultTy
-ARM64AsmParser::tryParseCPSRField(OperandVector &Operands) {
-  const AsmToken &Tok = Parser.getTok();
-
-  if (Tok.isNot(AsmToken::Identifier))
-    return MatchOperand_NoMatch;
-
-  bool Valid;
-  ARM64PState::PStateValues Field = (ARM64PState::PStateValues)
-    ARM64PState::PStateMapper().fromString(Tok.getString(), Valid);
-
-  if (!Valid)
-    return MatchOperand_NoMatch;
-  Operands.push_back(
-      ARM64Operand::CreateCPSRField(Field, getLoc(), getContext()));
-  Parser.Lex(); // Consume the register name.
+  Operands.push_back(ARM64Operand::CreateSysReg(Tok.getString(), getLoc(),
+                     getContext()));
+  Parser.Lex(); // Eat identifier
 
   return MatchOperand_Success;
 }

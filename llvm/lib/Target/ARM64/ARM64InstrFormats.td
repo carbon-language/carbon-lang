@@ -701,9 +701,7 @@ class CRmSystemI<Operand crmtype, bits<3> opc, string asm>
 // a different subset of registers can be accessed through each instruction.
 def MRSSystemRegisterOperand : AsmOperandClass {
   let Name = "MRSSystemRegister";
-  let ParserMethod = "tryParseMRSSystemRegister";
-  let RenderMethod = "addSystemRegisterOperands";
-  let PredicateMethod = "isSystemRegister";
+  let ParserMethod = "tryParseSysReg";
 }
 // concatenation of 1, op0, op1, CRn, CRm, op2. 16-bit immediate.
 def mrs_sysreg_op : Operand<i32> {
@@ -714,9 +712,7 @@ def mrs_sysreg_op : Operand<i32> {
 
 def MSRSystemRegisterOperand : AsmOperandClass {
   let Name = "MSRSystemRegister";
-  let ParserMethod = "tryParseMSRSystemRegister";
-  let RenderMethod = "addSystemRegisterOperands";
-  let PredicateMethod = "isSystemRegister";
+  let ParserMethod = "tryParseSysReg";
 }
 def msr_sysreg_op : Operand<i32> {
   let ParserMatchClass = MSRSystemRegisterOperand;
@@ -743,7 +739,7 @@ class MSRI : RtSystemI<0, (outs), (ins msr_sysreg_op:$systemreg, GPR64:$Rt),
 
 def SystemCPSRFieldOperand : AsmOperandClass {
   let Name = "SystemCPSRField";
-  let ParserMethod = "tryParseCPSRField";
+  let ParserMethod = "tryParseSysReg";
 }
 def cpsrfield_op : Operand<i32> {
   let ParserMatchClass = SystemCPSRFieldOperand;
