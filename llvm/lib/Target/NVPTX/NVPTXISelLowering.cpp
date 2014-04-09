@@ -328,6 +328,116 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::StoreV2";
   case NVPTXISD::StoreV4:
     return "NVPTXISD::StoreV4";
+  case NVPTXISD::Tex1DFloatI32:        return "NVPTXISD::Tex1DFloatI32";
+  case NVPTXISD::Tex1DFloatFloat:      return "NVPTXISD::Tex1DFloatFloat";
+  case NVPTXISD::Tex1DFloatFloatLevel:
+    return "NVPTXISD::Tex1DFloatFloatLevel";
+  case NVPTXISD::Tex1DFloatFloatGrad:
+    return "NVPTXISD::Tex1DFloatFloatGrad";
+  case NVPTXISD::Tex1DI32I32:          return "NVPTXISD::Tex1DI32I32";
+  case NVPTXISD::Tex1DI32Float:        return "NVPTXISD::Tex1DI32Float";
+  case NVPTXISD::Tex1DI32FloatLevel:
+    return "NVPTXISD::Tex1DI32FloatLevel";
+  case NVPTXISD::Tex1DI32FloatGrad:
+    return "NVPTXISD::Tex1DI32FloatGrad";
+  case NVPTXISD::Tex1DArrayFloatI32:   return "NVPTXISD::Tex2DArrayFloatI32";
+  case NVPTXISD::Tex1DArrayFloatFloat: return "NVPTXISD::Tex2DArrayFloatFloat";
+  case NVPTXISD::Tex1DArrayFloatFloatLevel:
+    return "NVPTXISD::Tex2DArrayFloatFloatLevel";
+  case NVPTXISD::Tex1DArrayFloatFloatGrad:
+    return "NVPTXISD::Tex2DArrayFloatFloatGrad";
+  case NVPTXISD::Tex1DArrayI32I32:     return "NVPTXISD::Tex2DArrayI32I32";
+  case NVPTXISD::Tex1DArrayI32Float:   return "NVPTXISD::Tex2DArrayI32Float";
+  case NVPTXISD::Tex1DArrayI32FloatLevel:
+    return "NVPTXISD::Tex2DArrayI32FloatLevel";
+  case NVPTXISD::Tex1DArrayI32FloatGrad:
+    return "NVPTXISD::Tex2DArrayI32FloatGrad";
+  case NVPTXISD::Tex2DFloatI32:        return "NVPTXISD::Tex2DFloatI32";
+  case NVPTXISD::Tex2DFloatFloat:      return "NVPTXISD::Tex2DFloatFloat";
+  case NVPTXISD::Tex2DFloatFloatLevel:
+    return "NVPTXISD::Tex2DFloatFloatLevel";
+  case NVPTXISD::Tex2DFloatFloatGrad:
+    return "NVPTXISD::Tex2DFloatFloatGrad";
+  case NVPTXISD::Tex2DI32I32:          return "NVPTXISD::Tex2DI32I32";
+  case NVPTXISD::Tex2DI32Float:        return "NVPTXISD::Tex2DI32Float";
+  case NVPTXISD::Tex2DI32FloatLevel:
+    return "NVPTXISD::Tex2DI32FloatLevel";
+  case NVPTXISD::Tex2DI32FloatGrad:
+    return "NVPTXISD::Tex2DI32FloatGrad";
+  case NVPTXISD::Tex2DArrayFloatI32:   return "NVPTXISD::Tex2DArrayFloatI32";
+  case NVPTXISD::Tex2DArrayFloatFloat: return "NVPTXISD::Tex2DArrayFloatFloat";
+  case NVPTXISD::Tex2DArrayFloatFloatLevel:
+    return "NVPTXISD::Tex2DArrayFloatFloatLevel";
+  case NVPTXISD::Tex2DArrayFloatFloatGrad:
+    return "NVPTXISD::Tex2DArrayFloatFloatGrad";
+  case NVPTXISD::Tex2DArrayI32I32:     return "NVPTXISD::Tex2DArrayI32I32";
+  case NVPTXISD::Tex2DArrayI32Float:   return "NVPTXISD::Tex2DArrayI32Float";
+  case NVPTXISD::Tex2DArrayI32FloatLevel:
+    return "NVPTXISD::Tex2DArrayI32FloatLevel";
+  case NVPTXISD::Tex2DArrayI32FloatGrad:
+    return "NVPTXISD::Tex2DArrayI32FloatGrad";
+  case NVPTXISD::Tex3DFloatI32:        return "NVPTXISD::Tex3DFloatI32";
+  case NVPTXISD::Tex3DFloatFloat:      return "NVPTXISD::Tex3DFloatFloat";
+  case NVPTXISD::Tex3DFloatFloatLevel:
+    return "NVPTXISD::Tex3DFloatFloatLevel";
+  case NVPTXISD::Tex3DFloatFloatGrad:
+    return "NVPTXISD::Tex3DFloatFloatGrad";
+  case NVPTXISD::Tex3DI32I32:          return "NVPTXISD::Tex3DI32I32";
+  case NVPTXISD::Tex3DI32Float:        return "NVPTXISD::Tex3DI32Float";
+  case NVPTXISD::Tex3DI32FloatLevel:
+    return "NVPTXISD::Tex3DI32FloatLevel";
+  case NVPTXISD::Tex3DI32FloatGrad:
+    return "NVPTXISD::Tex3DI32FloatGrad";
+
+  case NVPTXISD::Suld1DI8Trap:          return "NVPTXISD::Suld1DI8Trap";
+  case NVPTXISD::Suld1DI16Trap:         return "NVPTXISD::Suld1DI16Trap";
+  case NVPTXISD::Suld1DI32Trap:         return "NVPTXISD::Suld1DI32Trap";
+  case NVPTXISD::Suld1DV2I8Trap:        return "NVPTXISD::Suld1DV2I8Trap";
+  case NVPTXISD::Suld1DV2I16Trap:       return "NVPTXISD::Suld1DV2I16Trap";
+  case NVPTXISD::Suld1DV2I32Trap:       return "NVPTXISD::Suld1DV2I32Trap";
+  case NVPTXISD::Suld1DV4I8Trap:        return "NVPTXISD::Suld1DV4I8Trap";
+  case NVPTXISD::Suld1DV4I16Trap:       return "NVPTXISD::Suld1DV4I16Trap";
+  case NVPTXISD::Suld1DV4I32Trap:       return "NVPTXISD::Suld1DV4I32Trap";
+
+  case NVPTXISD::Suld1DArrayI8Trap:     return "NVPTXISD::Suld1DArrayI8Trap";
+  case NVPTXISD::Suld1DArrayI16Trap:    return "NVPTXISD::Suld1DArrayI16Trap";
+  case NVPTXISD::Suld1DArrayI32Trap:    return "NVPTXISD::Suld1DArrayI32Trap";
+  case NVPTXISD::Suld1DArrayV2I8Trap:   return "NVPTXISD::Suld1DArrayV2I8Trap";
+  case NVPTXISD::Suld1DArrayV2I16Trap:  return "NVPTXISD::Suld1DArrayV2I16Trap";
+  case NVPTXISD::Suld1DArrayV2I32Trap:  return "NVPTXISD::Suld1DArrayV2I32Trap";
+  case NVPTXISD::Suld1DArrayV4I8Trap:   return "NVPTXISD::Suld1DArrayV4I8Trap";
+  case NVPTXISD::Suld1DArrayV4I16Trap:  return "NVPTXISD::Suld1DArrayV4I16Trap";
+  case NVPTXISD::Suld1DArrayV4I32Trap:  return "NVPTXISD::Suld1DArrayV4I32Trap";
+
+  case NVPTXISD::Suld2DI8Trap:          return "NVPTXISD::Suld2DI8Trap";
+  case NVPTXISD::Suld2DI16Trap:         return "NVPTXISD::Suld2DI16Trap";
+  case NVPTXISD::Suld2DI32Trap:         return "NVPTXISD::Suld2DI32Trap";
+  case NVPTXISD::Suld2DV2I8Trap:        return "NVPTXISD::Suld2DV2I8Trap";
+  case NVPTXISD::Suld2DV2I16Trap:       return "NVPTXISD::Suld2DV2I16Trap";
+  case NVPTXISD::Suld2DV2I32Trap:       return "NVPTXISD::Suld2DV2I32Trap";
+  case NVPTXISD::Suld2DV4I8Trap:        return "NVPTXISD::Suld2DV4I8Trap";
+  case NVPTXISD::Suld2DV4I16Trap:       return "NVPTXISD::Suld2DV4I16Trap";
+  case NVPTXISD::Suld2DV4I32Trap:       return "NVPTXISD::Suld2DV4I32Trap";
+
+  case NVPTXISD::Suld2DArrayI8Trap:     return "NVPTXISD::Suld2DArrayI8Trap";
+  case NVPTXISD::Suld2DArrayI16Trap:    return "NVPTXISD::Suld2DArrayI16Trap";
+  case NVPTXISD::Suld2DArrayI32Trap:    return "NVPTXISD::Suld2DArrayI32Trap";
+  case NVPTXISD::Suld2DArrayV2I8Trap:   return "NVPTXISD::Suld2DArrayV2I8Trap";
+  case NVPTXISD::Suld2DArrayV2I16Trap:  return "NVPTXISD::Suld2DArrayV2I16Trap";
+  case NVPTXISD::Suld2DArrayV2I32Trap:  return "NVPTXISD::Suld2DArrayV2I32Trap";
+  case NVPTXISD::Suld2DArrayV4I8Trap:   return "NVPTXISD::Suld2DArrayV4I8Trap";
+  case NVPTXISD::Suld2DArrayV4I16Trap:  return "NVPTXISD::Suld2DArrayV4I16Trap";
+  case NVPTXISD::Suld2DArrayV4I32Trap:  return "NVPTXISD::Suld2DArrayV4I32Trap";
+
+  case NVPTXISD::Suld3DI8Trap:          return "NVPTXISD::Suld3DI8Trap";
+  case NVPTXISD::Suld3DI16Trap:         return "NVPTXISD::Suld3DI16Trap";
+  case NVPTXISD::Suld3DI32Trap:         return "NVPTXISD::Suld3DI32Trap";
+  case NVPTXISD::Suld3DV2I8Trap:        return "NVPTXISD::Suld3DV2I8Trap";
+  case NVPTXISD::Suld3DV2I16Trap:       return "NVPTXISD::Suld3DV2I16Trap";
+  case NVPTXISD::Suld3DV2I32Trap:       return "NVPTXISD::Suld3DV2I32Trap";
+  case NVPTXISD::Suld3DV4I8Trap:        return "NVPTXISD::Suld3DV4I8Trap";
+  case NVPTXISD::Suld3DV4I16Trap:       return "NVPTXISD::Suld3DV4I16Trap";
+  case NVPTXISD::Suld3DV4I32Trap:       return "NVPTXISD::Suld3DV4I32Trap";
   }
 }
 
@@ -1891,6 +2001,195 @@ bool NVPTXTargetLowering::isTypeSupportedInIntrinsic(MVT VT) const {
   return false;
 }
 
+static unsigned getOpcForTextureInstr(unsigned Intrinsic) {
+  switch (Intrinsic) {
+  default:
+    return 0;
+
+  case Intrinsic::nvvm_tex_1d_v4f32_i32:
+    return NVPTXISD::Tex1DFloatI32;
+  case Intrinsic::nvvm_tex_1d_v4f32_f32:
+    return NVPTXISD::Tex1DFloatFloat;
+  case Intrinsic::nvvm_tex_1d_level_v4f32_f32:
+    return NVPTXISD::Tex1DFloatFloatLevel;
+  case Intrinsic::nvvm_tex_1d_grad_v4f32_f32:
+    return NVPTXISD::Tex1DFloatFloatGrad;
+  case Intrinsic::nvvm_tex_1d_v4i32_i32:
+    return NVPTXISD::Tex1DI32I32;
+  case Intrinsic::nvvm_tex_1d_v4i32_f32:
+    return NVPTXISD::Tex1DI32Float;
+  case Intrinsic::nvvm_tex_1d_level_v4i32_f32:
+    return NVPTXISD::Tex1DI32FloatLevel;
+  case Intrinsic::nvvm_tex_1d_grad_v4i32_f32:
+    return NVPTXISD::Tex1DI32FloatGrad;
+
+  case Intrinsic::nvvm_tex_1d_array_v4f32_i32:
+    return NVPTXISD::Tex1DArrayFloatI32;
+  case Intrinsic::nvvm_tex_1d_array_v4f32_f32:
+    return NVPTXISD::Tex1DArrayFloatFloat;
+  case Intrinsic::nvvm_tex_1d_array_level_v4f32_f32:
+    return NVPTXISD::Tex1DArrayFloatFloatLevel;
+  case Intrinsic::nvvm_tex_1d_array_grad_v4f32_f32:
+    return NVPTXISD::Tex1DArrayFloatFloatGrad;
+  case Intrinsic::nvvm_tex_1d_array_v4i32_i32:
+    return NVPTXISD::Tex1DArrayI32I32;
+  case Intrinsic::nvvm_tex_1d_array_v4i32_f32:
+    return NVPTXISD::Tex1DArrayI32Float;
+  case Intrinsic::nvvm_tex_1d_array_level_v4i32_f32:
+    return NVPTXISD::Tex1DArrayI32FloatLevel;
+  case Intrinsic::nvvm_tex_1d_array_grad_v4i32_f32:
+    return NVPTXISD::Tex1DArrayI32FloatGrad;
+
+  case Intrinsic::nvvm_tex_2d_v4f32_i32:
+    return NVPTXISD::Tex2DFloatI32;
+  case Intrinsic::nvvm_tex_2d_v4f32_f32:
+    return NVPTXISD::Tex2DFloatFloat;
+  case Intrinsic::nvvm_tex_2d_level_v4f32_f32:
+    return NVPTXISD::Tex2DFloatFloatLevel;
+  case Intrinsic::nvvm_tex_2d_grad_v4f32_f32:
+    return NVPTXISD::Tex2DFloatFloatGrad;
+  case Intrinsic::nvvm_tex_2d_v4i32_i32:
+    return NVPTXISD::Tex2DI32I32;
+  case Intrinsic::nvvm_tex_2d_v4i32_f32:
+    return NVPTXISD::Tex2DI32Float;
+  case Intrinsic::nvvm_tex_2d_level_v4i32_f32:
+    return NVPTXISD::Tex2DI32FloatLevel;
+  case Intrinsic::nvvm_tex_2d_grad_v4i32_f32:
+    return NVPTXISD::Tex2DI32FloatGrad;
+
+  case Intrinsic::nvvm_tex_2d_array_v4f32_i32:
+    return NVPTXISD::Tex2DArrayFloatI32;
+  case Intrinsic::nvvm_tex_2d_array_v4f32_f32:
+    return NVPTXISD::Tex2DArrayFloatFloat;
+  case Intrinsic::nvvm_tex_2d_array_level_v4f32_f32:
+    return NVPTXISD::Tex2DArrayFloatFloatLevel;
+  case Intrinsic::nvvm_tex_2d_array_grad_v4f32_f32:
+    return NVPTXISD::Tex2DArrayFloatFloatGrad;
+  case Intrinsic::nvvm_tex_2d_array_v4i32_i32:
+    return NVPTXISD::Tex2DArrayI32I32;
+  case Intrinsic::nvvm_tex_2d_array_v4i32_f32:
+    return NVPTXISD::Tex2DArrayI32Float;
+  case Intrinsic::nvvm_tex_2d_array_level_v4i32_f32:
+    return NVPTXISD::Tex2DArrayI32FloatLevel;
+  case Intrinsic::nvvm_tex_2d_array_grad_v4i32_f32:
+    return NVPTXISD::Tex2DArrayI32FloatGrad;
+
+  case Intrinsic::nvvm_tex_3d_v4f32_i32:
+    return NVPTXISD::Tex3DFloatI32;
+  case Intrinsic::nvvm_tex_3d_v4f32_f32:
+    return NVPTXISD::Tex3DFloatFloat;
+  case Intrinsic::nvvm_tex_3d_level_v4f32_f32:
+    return NVPTXISD::Tex3DFloatFloatLevel;
+  case Intrinsic::nvvm_tex_3d_grad_v4f32_f32:
+    return NVPTXISD::Tex3DFloatFloatGrad;
+  case Intrinsic::nvvm_tex_3d_v4i32_i32:
+    return NVPTXISD::Tex3DI32I32;
+  case Intrinsic::nvvm_tex_3d_v4i32_f32:
+    return NVPTXISD::Tex3DI32Float;
+  case Intrinsic::nvvm_tex_3d_level_v4i32_f32:
+    return NVPTXISD::Tex3DI32FloatLevel;
+  case Intrinsic::nvvm_tex_3d_grad_v4i32_f32:
+    return NVPTXISD::Tex3DI32FloatGrad;
+  }
+}
+
+static unsigned getOpcForSurfaceInstr(unsigned Intrinsic) {
+  switch (Intrinsic) {
+  default:
+    return 0;
+  case Intrinsic::nvvm_suld_1d_i8_trap:
+    return NVPTXISD::Suld1DI8Trap;
+  case Intrinsic::nvvm_suld_1d_i16_trap:
+    return NVPTXISD::Suld1DI16Trap;
+  case Intrinsic::nvvm_suld_1d_i32_trap:
+    return NVPTXISD::Suld1DI32Trap;
+  case Intrinsic::nvvm_suld_1d_v2i8_trap:
+    return NVPTXISD::Suld1DV2I8Trap;
+  case Intrinsic::nvvm_suld_1d_v2i16_trap:
+    return NVPTXISD::Suld1DV2I16Trap;
+  case Intrinsic::nvvm_suld_1d_v2i32_trap:
+    return NVPTXISD::Suld1DV2I32Trap;
+  case Intrinsic::nvvm_suld_1d_v4i8_trap:
+    return NVPTXISD::Suld1DV4I8Trap;
+  case Intrinsic::nvvm_suld_1d_v4i16_trap:
+    return NVPTXISD::Suld1DV4I16Trap;
+  case Intrinsic::nvvm_suld_1d_v4i32_trap:
+    return NVPTXISD::Suld1DV4I32Trap;
+  case Intrinsic::nvvm_suld_1d_array_i8_trap:
+    return NVPTXISD::Suld1DArrayI8Trap;
+  case Intrinsic::nvvm_suld_1d_array_i16_trap:
+    return NVPTXISD::Suld1DArrayI16Trap;
+  case Intrinsic::nvvm_suld_1d_array_i32_trap:
+    return NVPTXISD::Suld1DArrayI32Trap;
+  case Intrinsic::nvvm_suld_1d_array_v2i8_trap:
+    return NVPTXISD::Suld1DArrayV2I8Trap;
+  case Intrinsic::nvvm_suld_1d_array_v2i16_trap:
+    return NVPTXISD::Suld1DArrayV2I16Trap;
+  case Intrinsic::nvvm_suld_1d_array_v2i32_trap:
+    return NVPTXISD::Suld1DArrayV2I32Trap;
+  case Intrinsic::nvvm_suld_1d_array_v4i8_trap:
+    return NVPTXISD::Suld1DArrayV4I8Trap;
+  case Intrinsic::nvvm_suld_1d_array_v4i16_trap:
+    return NVPTXISD::Suld1DArrayV4I16Trap;
+  case Intrinsic::nvvm_suld_1d_array_v4i32_trap:
+    return NVPTXISD::Suld1DArrayV4I32Trap;
+  case Intrinsic::nvvm_suld_2d_i8_trap:
+    return NVPTXISD::Suld2DI8Trap;
+  case Intrinsic::nvvm_suld_2d_i16_trap:
+    return NVPTXISD::Suld2DI16Trap;
+  case Intrinsic::nvvm_suld_2d_i32_trap:
+    return NVPTXISD::Suld2DI32Trap;
+  case Intrinsic::nvvm_suld_2d_v2i8_trap:
+    return NVPTXISD::Suld2DV2I8Trap;
+  case Intrinsic::nvvm_suld_2d_v2i16_trap:
+    return NVPTXISD::Suld2DV2I16Trap;
+  case Intrinsic::nvvm_suld_2d_v2i32_trap:
+    return NVPTXISD::Suld2DV2I32Trap;
+  case Intrinsic::nvvm_suld_2d_v4i8_trap:
+    return NVPTXISD::Suld2DV4I8Trap;
+  case Intrinsic::nvvm_suld_2d_v4i16_trap:
+    return NVPTXISD::Suld2DV4I16Trap;
+  case Intrinsic::nvvm_suld_2d_v4i32_trap:
+    return NVPTXISD::Suld2DV4I32Trap;
+  case Intrinsic::nvvm_suld_2d_array_i8_trap:
+    return NVPTXISD::Suld2DArrayI8Trap;
+  case Intrinsic::nvvm_suld_2d_array_i16_trap:
+    return NVPTXISD::Suld2DArrayI16Trap;
+  case Intrinsic::nvvm_suld_2d_array_i32_trap:
+    return NVPTXISD::Suld2DArrayI32Trap;
+  case Intrinsic::nvvm_suld_2d_array_v2i8_trap:
+    return NVPTXISD::Suld2DArrayV2I8Trap;
+  case Intrinsic::nvvm_suld_2d_array_v2i16_trap:
+    return NVPTXISD::Suld2DArrayV2I16Trap;
+  case Intrinsic::nvvm_suld_2d_array_v2i32_trap:
+    return NVPTXISD::Suld2DArrayV2I32Trap;
+  case Intrinsic::nvvm_suld_2d_array_v4i8_trap:
+    return NVPTXISD::Suld2DArrayV4I8Trap;
+  case Intrinsic::nvvm_suld_2d_array_v4i16_trap:
+    return NVPTXISD::Suld2DArrayV4I16Trap;
+  case Intrinsic::nvvm_suld_2d_array_v4i32_trap:
+    return NVPTXISD::Suld2DArrayV4I32Trap;
+  case Intrinsic::nvvm_suld_3d_i8_trap:
+    return NVPTXISD::Suld3DI8Trap;
+  case Intrinsic::nvvm_suld_3d_i16_trap:
+    return NVPTXISD::Suld3DI16Trap;
+  case Intrinsic::nvvm_suld_3d_i32_trap:
+    return NVPTXISD::Suld3DI32Trap;
+  case Intrinsic::nvvm_suld_3d_v2i8_trap:
+    return NVPTXISD::Suld3DV2I8Trap;
+  case Intrinsic::nvvm_suld_3d_v2i16_trap:
+    return NVPTXISD::Suld3DV2I16Trap;
+  case Intrinsic::nvvm_suld_3d_v2i32_trap:
+    return NVPTXISD::Suld3DV2I32Trap;
+  case Intrinsic::nvvm_suld_3d_v4i8_trap:
+    return NVPTXISD::Suld3DV4I8Trap;
+  case Intrinsic::nvvm_suld_3d_v4i16_trap:
+    return NVPTXISD::Suld3DV4I16Trap;
+  case Intrinsic::nvvm_suld_3d_v4i32_trap:
+    return NVPTXISD::Suld3DV4I32Trap;
+  }
+}
+
 // llvm.ptx.memcpy.const and llvm.ptx.memmove.const need to be modeled as
 // TgtMemIntrinsic
 // because we need the information that is only available in the "Value" type
@@ -1943,6 +2242,142 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
     Info.writeMem = false;
     Info.align = 0;
     return true;
+
+  case Intrinsic::nvvm_tex_1d_v4f32_i32:
+  case Intrinsic::nvvm_tex_1d_v4f32_f32:
+  case Intrinsic::nvvm_tex_1d_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_1d_grad_v4f32_f32:
+  case Intrinsic::nvvm_tex_1d_array_v4f32_i32:
+  case Intrinsic::nvvm_tex_1d_array_v4f32_f32:
+  case Intrinsic::nvvm_tex_1d_array_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_1d_array_grad_v4f32_f32:
+  case Intrinsic::nvvm_tex_2d_v4f32_i32:
+  case Intrinsic::nvvm_tex_2d_v4f32_f32:
+  case Intrinsic::nvvm_tex_2d_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_2d_grad_v4f32_f32:
+  case Intrinsic::nvvm_tex_2d_array_v4f32_i32:
+  case Intrinsic::nvvm_tex_2d_array_v4f32_f32:
+  case Intrinsic::nvvm_tex_2d_array_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_2d_array_grad_v4f32_f32:
+  case Intrinsic::nvvm_tex_3d_v4f32_i32:
+  case Intrinsic::nvvm_tex_3d_v4f32_f32:
+  case Intrinsic::nvvm_tex_3d_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_3d_grad_v4f32_f32: {
+    Info.opc = getOpcForTextureInstr(Intrinsic);
+    Info.memVT = MVT::f32;
+    Info.ptrVal = NULL;
+    Info.offset = 0;
+    Info.vol = 0;
+    Info.readMem = true;
+    Info.writeMem = false;
+    Info.align = 16;
+    return true;
+  }
+  case Intrinsic::nvvm_tex_1d_v4i32_i32:
+  case Intrinsic::nvvm_tex_1d_v4i32_f32:
+  case Intrinsic::nvvm_tex_1d_level_v4i32_f32:
+  case Intrinsic::nvvm_tex_1d_grad_v4i32_f32:
+  case Intrinsic::nvvm_tex_1d_array_v4i32_i32:
+  case Intrinsic::nvvm_tex_1d_array_v4i32_f32:
+  case Intrinsic::nvvm_tex_1d_array_level_v4i32_f32:
+  case Intrinsic::nvvm_tex_1d_array_grad_v4i32_f32:
+  case Intrinsic::nvvm_tex_2d_v4i32_i32:
+  case Intrinsic::nvvm_tex_2d_v4i32_f32:
+  case Intrinsic::nvvm_tex_2d_level_v4i32_f32:
+  case Intrinsic::nvvm_tex_2d_grad_v4i32_f32:
+  case Intrinsic::nvvm_tex_2d_array_v4i32_i32:
+  case Intrinsic::nvvm_tex_2d_array_v4i32_f32:
+  case Intrinsic::nvvm_tex_2d_array_level_v4i32_f32:
+  case Intrinsic::nvvm_tex_2d_array_grad_v4i32_f32:
+  case Intrinsic::nvvm_tex_3d_v4i32_i32:
+  case Intrinsic::nvvm_tex_3d_v4i32_f32:
+  case Intrinsic::nvvm_tex_3d_level_v4i32_f32:
+  case Intrinsic::nvvm_tex_3d_grad_v4i32_f32: {
+    Info.opc = getOpcForTextureInstr(Intrinsic);
+    Info.memVT = MVT::i32;
+    Info.ptrVal = NULL;
+    Info.offset = 0;
+    Info.vol = 0;
+    Info.readMem = true;
+    Info.writeMem = false;
+    Info.align = 16;
+    return true;
+  }
+  case Intrinsic::nvvm_suld_1d_i8_trap:
+  case Intrinsic::nvvm_suld_1d_v2i8_trap:
+  case Intrinsic::nvvm_suld_1d_v4i8_trap:
+  case Intrinsic::nvvm_suld_1d_array_i8_trap:
+  case Intrinsic::nvvm_suld_1d_array_v2i8_trap:
+  case Intrinsic::nvvm_suld_1d_array_v4i8_trap:
+  case Intrinsic::nvvm_suld_2d_i8_trap:
+  case Intrinsic::nvvm_suld_2d_v2i8_trap:
+  case Intrinsic::nvvm_suld_2d_v4i8_trap:
+  case Intrinsic::nvvm_suld_2d_array_i8_trap:
+  case Intrinsic::nvvm_suld_2d_array_v2i8_trap:
+  case Intrinsic::nvvm_suld_2d_array_v4i8_trap:
+  case Intrinsic::nvvm_suld_3d_i8_trap:
+  case Intrinsic::nvvm_suld_3d_v2i8_trap:
+  case Intrinsic::nvvm_suld_3d_v4i8_trap: {
+    Info.opc = getOpcForSurfaceInstr(Intrinsic);
+    Info.memVT = MVT::i8;
+    Info.ptrVal = NULL;
+    Info.offset = 0;
+    Info.vol = 0;
+    Info.readMem = true;
+    Info.writeMem = false;
+    Info.align = 16;
+    return true;
+  }
+  case Intrinsic::nvvm_suld_1d_i16_trap:
+  case Intrinsic::nvvm_suld_1d_v2i16_trap:
+  case Intrinsic::nvvm_suld_1d_v4i16_trap:
+  case Intrinsic::nvvm_suld_1d_array_i16_trap:
+  case Intrinsic::nvvm_suld_1d_array_v2i16_trap:
+  case Intrinsic::nvvm_suld_1d_array_v4i16_trap:
+  case Intrinsic::nvvm_suld_2d_i16_trap:
+  case Intrinsic::nvvm_suld_2d_v2i16_trap:
+  case Intrinsic::nvvm_suld_2d_v4i16_trap:
+  case Intrinsic::nvvm_suld_2d_array_i16_trap:
+  case Intrinsic::nvvm_suld_2d_array_v2i16_trap:
+  case Intrinsic::nvvm_suld_2d_array_v4i16_trap:
+  case Intrinsic::nvvm_suld_3d_i16_trap:
+  case Intrinsic::nvvm_suld_3d_v2i16_trap:
+  case Intrinsic::nvvm_suld_3d_v4i16_trap: {
+    Info.opc = getOpcForSurfaceInstr(Intrinsic);
+    Info.memVT = MVT::i16;
+    Info.ptrVal = NULL;
+    Info.offset = 0;
+    Info.vol = 0;
+    Info.readMem = true;
+    Info.writeMem = false;
+    Info.align = 16;
+    return true;
+  }
+  case Intrinsic::nvvm_suld_1d_i32_trap:
+  case Intrinsic::nvvm_suld_1d_v2i32_trap:
+  case Intrinsic::nvvm_suld_1d_v4i32_trap:
+  case Intrinsic::nvvm_suld_1d_array_i32_trap:
+  case Intrinsic::nvvm_suld_1d_array_v2i32_trap:
+  case Intrinsic::nvvm_suld_1d_array_v4i32_trap:
+  case Intrinsic::nvvm_suld_2d_i32_trap:
+  case Intrinsic::nvvm_suld_2d_v2i32_trap:
+  case Intrinsic::nvvm_suld_2d_v4i32_trap:
+  case Intrinsic::nvvm_suld_2d_array_i32_trap:
+  case Intrinsic::nvvm_suld_2d_array_v2i32_trap:
+  case Intrinsic::nvvm_suld_2d_array_v4i32_trap:
+  case Intrinsic::nvvm_suld_3d_i32_trap:
+  case Intrinsic::nvvm_suld_3d_v2i32_trap:
+  case Intrinsic::nvvm_suld_3d_v4i32_trap: {
+    Info.opc = getOpcForSurfaceInstr(Intrinsic);
+    Info.memVT = MVT::i32;
+    Info.ptrVal = NULL;
+    Info.offset = 0;
+    Info.vol = 0;
+    Info.readMem = true;
+    Info.writeMem = false;
+    Info.align = 16;
+    return true;
+  }
 
   }
   return false;

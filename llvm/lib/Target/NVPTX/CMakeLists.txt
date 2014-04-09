@@ -27,6 +27,8 @@ set(NVPTXCodeGen_sources
   NVPTXAssignValidGlobalNames.cpp
   NVPTXPrologEpilogPass.cpp
   NVPTXMCExpr.cpp
+  NVPTXReplaceImageHandles.cpp
+  NVPTXImageOptimizer.cpp
   )
 
 add_llvm_target(NVPTXCodeGen ${NVPTXCodeGen_sources})

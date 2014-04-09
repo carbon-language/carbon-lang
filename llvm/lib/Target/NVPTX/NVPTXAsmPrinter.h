@@ -205,7 +205,7 @@ private:
   void EmitInstruction(const MachineInstr *);
   void lowerToMCInst(const MachineInstr *MI, MCInst &OutMI);
   bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp);
-  MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol);
+  MCOperand GetSymbolRef(const MCSymbol *Symbol);
   unsigned encodeVirtualRegister(unsigned Reg);
 
   void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const {}
@@ -286,6 +286,10 @@ private:
 
   static const char *getRegisterName(unsigned RegNo);
   void emitDemotedVars(const Function *, raw_ostream &);
+
+  bool lowerImageHandleOperand(const MachineInstr *MI, unsigned OpNo,
+                               MCOperand &MCOp);
+  void lowerImageHandleSymbol(unsigned Index, MCOperand &MCOp);
 
   LineReader *reader;
   LineReader *getReader(std::string);

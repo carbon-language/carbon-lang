@@ -17,6 +17,7 @@
 #include "MCTargetDesc/NVPTXMCAsmInfo.h"
 #include "NVPTX.h"
 #include "NVPTXInstrInfo.h"
+#include "NVPTXMachineFunctionInfo.h"
 #include "NVPTXMCExpr.h"
 #include "NVPTXRegisterInfo.h"
 #include "NVPTXTargetMachine.h"
@@ -325,13 +326,279 @@ void NVPTXAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   EmitToStreamer(OutStreamer, Inst);
 }
 
+// Handle symbol backtracking for targets that do not support image handles
+bool NVPTXAsmPrinter::lowerImageHandleOperand(const MachineInstr *MI,
+                                           unsigned OpNo, MCOperand &MCOp) {
+  const MachineOperand &MO = MI->getOperand(OpNo);
+
+  switch (MI->getOpcode()) {
+  default: return false;
+  case NVPTX::TEX_1D_F32_I32:
+  case NVPTX::TEX_1D_F32_F32:
+  case NVPTX::TEX_1D_F32_F32_LEVEL:
+  case NVPTX::TEX_1D_F32_F32_GRAD:
+  case NVPTX::TEX_1D_I32_I32:
+  case NVPTX::TEX_1D_I32_F32:
+  case NVPTX::TEX_1D_I32_F32_LEVEL:
+  case NVPTX::TEX_1D_I32_F32_GRAD:
+  case NVPTX::TEX_1D_ARRAY_F32_I32:
+  case NVPTX::TEX_1D_ARRAY_F32_F32:
+  case NVPTX::TEX_1D_ARRAY_F32_F32_LEVEL:
+  case NVPTX::TEX_1D_ARRAY_F32_F32_GRAD:
+  case NVPTX::TEX_1D_ARRAY_I32_I32:
+  case NVPTX::TEX_1D_ARRAY_I32_F32:
+  case NVPTX::TEX_1D_ARRAY_I32_F32_LEVEL:
+  case NVPTX::TEX_1D_ARRAY_I32_F32_GRAD:
+  case NVPTX::TEX_2D_F32_I32:
+  case NVPTX::TEX_2D_F32_F32:
+  case NVPTX::TEX_2D_F32_F32_LEVEL:
+  case NVPTX::TEX_2D_F32_F32_GRAD:
+  case NVPTX::TEX_2D_I32_I32:
+  case NVPTX::TEX_2D_I32_F32:
+  case NVPTX::TEX_2D_I32_F32_LEVEL:
+  case NVPTX::TEX_2D_I32_F32_GRAD:
+  case NVPTX::TEX_2D_ARRAY_F32_I32:
+  case NVPTX::TEX_2D_ARRAY_F32_F32:
+  case NVPTX::TEX_2D_ARRAY_F32_F32_LEVEL:
+  case NVPTX::TEX_2D_ARRAY_F32_F32_GRAD:
+  case NVPTX::TEX_2D_ARRAY_I32_I32:
+  case NVPTX::TEX_2D_ARRAY_I32_F32:
+  case NVPTX::TEX_2D_ARRAY_I32_F32_LEVEL:
+  case NVPTX::TEX_2D_ARRAY_I32_F32_GRAD:
+  case NVPTX::TEX_3D_F32_I32:
+  case NVPTX::TEX_3D_F32_F32:
+  case NVPTX::TEX_3D_F32_F32_LEVEL:
+  case NVPTX::TEX_3D_F32_F32_GRAD:
+  case NVPTX::TEX_3D_I32_I32:
+  case NVPTX::TEX_3D_I32_F32:
+  case NVPTX::TEX_3D_I32_F32_LEVEL:
+  case NVPTX::TEX_3D_I32_F32_GRAD:
+   {
+    // This is a texture fetch, so operand 4 is a texref and operand 5 is
+    // a samplerref
+    if (OpNo == 4) {
+      lowerImageHandleSymbol(MO.getImm(), MCOp);
+      return true;
+    }
+    if (OpNo == 5) {
+      lowerImageHandleSymbol(MO.getImm(), MCOp);
+      return true;
+    }
+
+    return false;
+  }
+  case NVPTX::SULD_1D_I8_TRAP:
+  case NVPTX::SULD_1D_I16_TRAP:
+  case NVPTX::SULD_1D_I32_TRAP:
+  case NVPTX::SULD_1D_ARRAY_I8_TRAP:
+  case NVPTX::SULD_1D_ARRAY_I16_TRAP:
+  case NVPTX::SULD_1D_ARRAY_I32_TRAP:
+  case NVPTX::SULD_2D_I8_TRAP:
+  case NVPTX::SULD_2D_I16_TRAP:
+  case NVPTX::SULD_2D_I32_TRAP:
+  case NVPTX::SULD_2D_ARRAY_I8_TRAP:
+  case NVPTX::SULD_2D_ARRAY_I16_TRAP:
+  case NVPTX::SULD_2D_ARRAY_I32_TRAP:
+  case NVPTX::SULD_3D_I8_TRAP:
+  case NVPTX::SULD_3D_I16_TRAP:
+  case NVPTX::SULD_3D_I32_TRAP: {
+    // This is a V1 surface load, so operand 1 is a surfref
+    if (OpNo == 1) {
+      lowerImageHandleSymbol(MO.getImm(), MCOp);
+      return true;
+    }
+
+    return false;
+  }
+  case NVPTX::SULD_1D_V2I8_TRAP:
+  case NVPTX::SULD_1D_V2I16_TRAP:
+  case NVPTX::SULD_1D_V2I32_TRAP:
+  case NVPTX::SULD_1D_ARRAY_V2I8_TRAP:
+  case NVPTX::SULD_1D_ARRAY_V2I16_TRAP:
+  case NVPTX::SULD_1D_ARRAY_V2I32_TRAP:
+  case NVPTX::SULD_2D_V2I8_TRAP:
+  case NVPTX::SULD_2D_V2I16_TRAP:
+  case NVPTX::SULD_2D_V2I32_TRAP:
+  case NVPTX::SULD_2D_ARRAY_V2I8_TRAP:
+  case NVPTX::SULD_2D_ARRAY_V2I16_TRAP:
+  case NVPTX::SULD_2D_ARRAY_V2I32_TRAP:
+  case NVPTX::SULD_3D_V2I8_TRAP:
+  case NVPTX::SULD_3D_V2I16_TRAP:
+  case NVPTX::SULD_3D_V2I32_TRAP: {
+    // This is a V2 surface load, so operand 2 is a surfref
+    if (OpNo == 2) {
+      lowerImageHandleSymbol(MO.getImm(), MCOp);
+      return true;
+    }
+
+    return false;
+  }
+  case NVPTX::SULD_1D_V4I8_TRAP:
+  case NVPTX::SULD_1D_V4I16_TRAP:
+  case NVPTX::SULD_1D_V4I32_TRAP:
+  case NVPTX::SULD_1D_ARRAY_V4I8_TRAP:
+  case NVPTX::SULD_1D_ARRAY_V4I16_TRAP:
+  case NVPTX::SULD_1D_ARRAY_V4I32_TRAP:
+  case NVPTX::SULD_2D_V4I8_TRAP:
+  case NVPTX::SULD_2D_V4I16_TRAP:
+  case NVPTX::SULD_2D_V4I32_TRAP:
+  case NVPTX::SULD_2D_ARRAY_V4I8_TRAP:
+  case NVPTX::SULD_2D_ARRAY_V4I16_TRAP:
+  case NVPTX::SULD_2D_ARRAY_V4I32_TRAP:
+  case NVPTX::SULD_3D_V4I8_TRAP:
+  case NVPTX::SULD_3D_V4I16_TRAP:
+  case NVPTX::SULD_3D_V4I32_TRAP: {
+    // This is a V4 surface load, so operand 4 is a surfref
+    if (OpNo == 4) {
+      lowerImageHandleSymbol(MO.getImm(), MCOp);
+      return true;
+    }
+
+    return false;
+  }
+  case NVPTX::SUST_B_1D_B8_TRAP:
+  case NVPTX::SUST_B_1D_B16_TRAP:
+  case NVPTX::SUST_B_1D_B32_TRAP:
+  case NVPTX::SUST_B_1D_V2B8_TRAP:
+  case NVPTX::SUST_B_1D_V2B16_TRAP:
+  case NVPTX::SUST_B_1D_V2B32_TRAP:
+  case NVPTX::SUST_B_1D_V4B8_TRAP:
+  case NVPTX::SUST_B_1D_V4B16_TRAP:
+  case NVPTX::SUST_B_1D_V4B32_TRAP:
+  case NVPTX::SUST_B_1D_ARRAY_B8_TRAP:
+  case NVPTX::SUST_B_1D_ARRAY_B16_TRAP:
+  case NVPTX::SUST_B_1D_ARRAY_B32_TRAP:
+  case NVPTX::SUST_B_1D_ARRAY_V2B8_TRAP:
+  case NVPTX::SUST_B_1D_ARRAY_V2B16_TRAP:
+  case NVPTX::SUST_B_1D_ARRAY_V2B32_TRAP:
+  case NVPTX::SUST_B_1D_ARRAY_V4B8_TRAP:
+  case NVPTX::SUST_B_1D_ARRAY_V4B16_TRAP:
+  case NVPTX::SUST_B_1D_ARRAY_V4B32_TRAP:
+  case NVPTX::SUST_B_2D_B8_TRAP:
+  case NVPTX::SUST_B_2D_B16_TRAP:
+  case NVPTX::SUST_B_2D_B32_TRAP:
+  case NVPTX::SUST_B_2D_V2B8_TRAP:
+  case NVPTX::SUST_B_2D_V2B16_TRAP:
+  case NVPTX::SUST_B_2D_V2B32_TRAP:
+  case NVPTX::SUST_B_2D_V4B8_TRAP:
+  case NVPTX::SUST_B_2D_V4B16_TRAP:
+  case NVPTX::SUST_B_2D_V4B32_TRAP:
+  case NVPTX::SUST_B_2D_ARRAY_B8_TRAP:
+  case NVPTX::SUST_B_2D_ARRAY_B16_TRAP:
+  case NVPTX::SUST_B_2D_ARRAY_B32_TRAP:
+  case NVPTX::SUST_B_2D_ARRAY_V2B8_TRAP:
+  case NVPTX::SUST_B_2D_ARRAY_V2B16_TRAP:
+  case NVPTX::SUST_B_2D_ARRAY_V2B32_TRAP:
+  case NVPTX::SUST_B_2D_ARRAY_V4B8_TRAP:
+  case NVPTX::SUST_B_2D_ARRAY_V4B16_TRAP:
+  case NVPTX::SUST_B_2D_ARRAY_V4B32_TRAP:
+  case NVPTX::SUST_B_3D_B8_TRAP:
+  case NVPTX::SUST_B_3D_B16_TRAP:
+  case NVPTX::SUST_B_3D_B32_TRAP:
+  case NVPTX::SUST_B_3D_V2B8_TRAP:
+  case NVPTX::SUST_B_3D_V2B16_TRAP:
+  case NVPTX::SUST_B_3D_V2B32_TRAP:
+  case NVPTX::SUST_B_3D_V4B8_TRAP:
+  case NVPTX::SUST_B_3D_V4B16_TRAP:
+  case NVPTX::SUST_B_3D_V4B32_TRAP:
+  case NVPTX::SUST_P_1D_B8_TRAP:
+  case NVPTX::SUST_P_1D_B16_TRAP:
+  case NVPTX::SUST_P_1D_B32_TRAP:
+  case NVPTX::SUST_P_1D_V2B8_TRAP:
+  case NVPTX::SUST_P_1D_V2B16_TRAP:
+  case NVPTX::SUST_P_1D_V2B32_TRAP:
+  case NVPTX::SUST_P_1D_V4B8_TRAP:
+  case NVPTX::SUST_P_1D_V4B16_TRAP:
+  case NVPTX::SUST_P_1D_V4B32_TRAP:
+  case NVPTX::SUST_P_1D_ARRAY_B8_TRAP:
+  case NVPTX::SUST_P_1D_ARRAY_B16_TRAP:
+  case NVPTX::SUST_P_1D_ARRAY_B32_TRAP:
+  case NVPTX::SUST_P_1D_ARRAY_V2B8_TRAP:
+  case NVPTX::SUST_P_1D_ARRAY_V2B16_TRAP:
+  case NVPTX::SUST_P_1D_ARRAY_V2B32_TRAP:
+  case NVPTX::SUST_P_1D_ARRAY_V4B8_TRAP:
+  case NVPTX::SUST_P_1D_ARRAY_V4B16_TRAP:
+  case NVPTX::SUST_P_1D_ARRAY_V4B32_TRAP:
+  case NVPTX::SUST_P_2D_B8_TRAP:
+  case NVPTX::SUST_P_2D_B16_TRAP:
+  case NVPTX::SUST_P_2D_B32_TRAP:
+  case NVPTX::SUST_P_2D_V2B8_TRAP:
+  case NVPTX::SUST_P_2D_V2B16_TRAP:
+  case NVPTX::SUST_P_2D_V2B32_TRAP:
+  case NVPTX::SUST_P_2D_V4B8_TRAP:
+  case NVPTX::SUST_P_2D_V4B16_TRAP:
+  case NVPTX::SUST_P_2D_V4B32_TRAP:
+  case NVPTX::SUST_P_2D_ARRAY_B8_TRAP:
+  case NVPTX::SUST_P_2D_ARRAY_B16_TRAP:
+  case NVPTX::SUST_P_2D_ARRAY_B32_TRAP:
+  case NVPTX::SUST_P_2D_ARRAY_V2B8_TRAP:
+  case NVPTX::SUST_P_2D_ARRAY_V2B16_TRAP:
+  case NVPTX::SUST_P_2D_ARRAY_V2B32_TRAP:
+  case NVPTX::SUST_P_2D_ARRAY_V4B8_TRAP:
+  case NVPTX::SUST_P_2D_ARRAY_V4B16_TRAP:
+  case NVPTX::SUST_P_2D_ARRAY_V4B32_TRAP:
+  case NVPTX::SUST_P_3D_B8_TRAP:
+  case NVPTX::SUST_P_3D_B16_TRAP:
+  case NVPTX::SUST_P_3D_B32_TRAP:
+  case NVPTX::SUST_P_3D_V2B8_TRAP:
+  case NVPTX::SUST_P_3D_V2B16_TRAP:
+  case NVPTX::SUST_P_3D_V2B32_TRAP:
+  case NVPTX::SUST_P_3D_V4B8_TRAP:
+  case NVPTX::SUST_P_3D_V4B16_TRAP:
+  case NVPTX::SUST_P_3D_V4B32_TRAP: {
+    // This is a surface store, so operand 0 is a surfref
+    if (OpNo == 0) {
+      lowerImageHandleSymbol(MO.getImm(), MCOp);
+      return true;
+    }
+
+    return false;
+  }
+  case NVPTX::TXQ_CHANNEL_ORDER:
+  case NVPTX::TXQ_CHANNEL_DATA_TYPE:
+  case NVPTX::TXQ_WIDTH:
+  case NVPTX::TXQ_HEIGHT:
+  case NVPTX::TXQ_DEPTH:
+  case NVPTX::TXQ_ARRAY_SIZE:
+  case NVPTX::TXQ_NUM_SAMPLES:
+  case NVPTX::TXQ_NUM_MIPMAP_LEVELS:
+  case NVPTX::SUQ_CHANNEL_ORDER:
+  case NVPTX::SUQ_CHANNEL_DATA_TYPE:
+  case NVPTX::SUQ_WIDTH:
+  case NVPTX::SUQ_HEIGHT:
+  case NVPTX::SUQ_DEPTH:
+  case NVPTX::SUQ_ARRAY_SIZE: {
+    // This is a query, so operand 1 is a surfref/texref
+    if (OpNo == 1) {
+      lowerImageHandleSymbol(MO.getImm(), MCOp);
+      return true;
+    }
+
+    return false;
+  }
+  }
+}
+
+void NVPTXAsmPrinter::lowerImageHandleSymbol(unsigned Index, MCOperand &MCOp) {
+  // Ewwww
+  TargetMachine &TM = const_cast<TargetMachine&>(MF->getTarget());
+  NVPTXTargetMachine &nvTM = static_cast<NVPTXTargetMachine&>(TM);
+  const NVPTXMachineFunctionInfo *MFI = MF->getInfo<NVPTXMachineFunctionInfo>();
+  const char *Sym = MFI->getImageHandleSymbol(Index);
+  std::string *SymNamePtr =
+    nvTM.getManagedStrPool()->getManagedString(Sym);
+  MCOp = GetSymbolRef(OutContext.GetOrCreateSymbol(
+    StringRef(SymNamePtr->c_str())));
+}
+
 void NVPTXAsmPrinter::lowerToMCInst(const MachineInstr *MI, MCInst &OutMI) {
   OutMI.setOpcode(MI->getOpcode());
+  const NVPTXSubtarget &ST = TM.getSubtarget<NVPTXSubtarget>();
 
   // Special: Do not mangle symbol operand of CALL_PROTOTYPE
   if (MI->getOpcode() == NVPTX::CALL_PROTOTYPE) {
     const MachineOperand &MO = MI->getOperand(0);
-    OutMI.addOperand(GetSymbolRef(MO,
+    OutMI.addOperand(GetSymbolRef(
       OutContext.GetOrCreateSymbol(Twine(MO.getSymbolName()))));
     return;
   }
@@ -340,6 +607,13 @@ void NVPTXAsmPrinter::lowerToMCInst(const MachineInstr *MI, MCInst &OutMI) {
     const MachineOperand &MO = MI->getOperand(i);
 
     MCOperand MCOp;
+    if (!ST.hasImageHandles()) {
+      if (lowerImageHandleOperand(MI, i, MCOp)) {
+        OutMI.addOperand(MCOp);
+        continue;
+      }
+    }
+
     if (lowerOperand(MO, MCOp))
       OutMI.addOperand(MCOp);
   }
@@ -360,10 +634,10 @@ bool NVPTXAsmPrinter::lowerOperand(const MachineOperand &MO,
         MO.getMBB()->getSymbol(), OutContext));
     break;
   case MachineOperand::MO_ExternalSymbol:
-    MCOp = GetSymbolRef(MO, GetExternalSymbolSymbol(MO.getSymbolName()));
+    MCOp = GetSymbolRef(GetExternalSymbolSymbol(MO.getSymbolName()));
     break;
   case MachineOperand::MO_GlobalAddress:
-    MCOp = GetSymbolRef(MO, getSymbol(MO.getGlobal()));
+    MCOp = GetSymbolRef(getSymbol(MO.getGlobal()));
     break;
   case MachineOperand::MO_FPImmediate: {
     const ConstantFP *Cnt = MO.getFPImm();
@@ -422,8 +696,7 @@ unsigned NVPTXAsmPrinter::encodeVirtualRegister(unsigned Reg) {
   }
 }
 
-MCOperand NVPTXAsmPrinter::GetSymbolRef(const MachineOperand &MO,
-                                        const MCSymbol *Symbol) {
+MCOperand NVPTXAsmPrinter::GetSymbolRef(const MCSymbol *Symbol) {
   const MCExpr *Expr;
   Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None,
                                  OutContext);
@@ -1512,19 +1785,33 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
     first = false;
 
     // Handle image/sampler parameters
-    if (llvm::isSampler(*I) || llvm::isImage(*I)) {
-      if (llvm::isImage(*I)) {
-        std::string sname = I->getName();
-        if (llvm::isImageWriteOnly(*I))
-          O << "\t.param .surfref " << *getSymbol(F) << "_param_"
-            << paramIndex;
-        else // Default image is read_only
-          O << "\t.param .texref " << *getSymbol(F) << "_param_"
-            << paramIndex;
-      } else // Should be llvm::isSampler(*I)
-        O << "\t.param .samplerref " << *getSymbol(F) << "_param_"
-          << paramIndex;
-      continue;
+    if (isKernelFunction(*F)) {
+      if (isSampler(*I) || isImage(*I)) {
+        if (isImage(*I)) {
+          std::string sname = I->getName();
+          if (isImageWriteOnly(*I) || isImageReadWrite(*I)) {
+            if (nvptxSubtarget.hasImageHandles())
+              O << "\t.param .u64 .ptr .surfref ";
+            else
+              O << "\t.param .surfref ";
+            O << *CurrentFnSym << "_param_" << paramIndex;
+          }
+          else { // Default image is read_only
+            if (nvptxSubtarget.hasImageHandles())
+              O << "\t.param .u64 .ptr .texref ";
+            else
+              O << "\t.param .texref ";
+            O << *CurrentFnSym << "_param_" << paramIndex;
+          }
+        } else {
+          if (nvptxSubtarget.hasImageHandles())
+            O << "\t.param .u64 .ptr .samplerref ";
+          else
+            O << "\t.param .samplerref ";
+          O << *CurrentFnSym << "_param_" << paramIndex;
+        }
+        continue;
+      }
     }
 
     if (PAL.hasAttribute(paramIndex + 1, Attribute::ByVal) == false) {
