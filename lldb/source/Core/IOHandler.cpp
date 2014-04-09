@@ -4495,9 +4495,13 @@ public:
 
             if (StateIsStoppedState(state, true))
             {
-                window.MoveCursor (40, 0);
-                if (thread)
-                    window.Printf ("Thread: 0x%4.4" PRIx64, thread->GetID());
+                StreamString strm;
+                const char *format = "Thread: ${thread.id%tid}";
+                if (thread && Debugger::FormatPrompt (format, NULL, &exe_ctx, NULL, strm))
+                {
+                    window.MoveCursor (40, 0);
+                    window.PutCStringTruncated(strm.GetString().c_str(), 1);
+                }
 
                 window.MoveCursor (60, 0);
                 if (frame)
