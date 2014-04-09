@@ -52,6 +52,16 @@ entry:
 ; CHECK: vpaddd  %ymm0, %ymm0, %ymm0
 ; CHECK: ret
 
+define <8 x i32> @test_vpslld_var(i32 %shift) {
+  %amt = insertelement <8 x i32> undef, i32 %shift, i32 0
+  %tmp = shl <8 x i32> <i32 192, i32 193, i32 194, i32 195, i32 196, i32 197, i32 198, i32 199>, %amt
+  ret <8 x i32> %tmp
+}
+
+; CHECK-LABEL: test_vpslld_var:
+; CHECK: vpslld %xmm0, %ymm1, %ymm0
+; CHECK: ret
+
 define <8 x i32> @test_slld_3(<8 x i32> %InVec) {
 entry:
   %shl = shl <8 x i32> %InVec, <i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31, i32 31>
