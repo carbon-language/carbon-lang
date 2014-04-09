@@ -139,9 +139,13 @@ foo:
 
   mov w0, #0xffffffff
   mov w0, #0xffffff00
+  mov wzr, #0xffffffff
+  mov wzr, #0xffffff00
 
 ; CHECK: movn   w0, #0
 ; CHECK: movn   w0, #255
+; CHECK: movn   wzr, #0
+; CHECK: movn   wzr, #255
 
 ;-----------------------------------------------------------------------------
 ; MVN aliases

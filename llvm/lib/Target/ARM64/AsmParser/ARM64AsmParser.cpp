@@ -3353,7 +3353,7 @@ static bool isGPR32Register(unsigned Reg) {
   case W7:  case W8:  case W9:  case W10:  case W11:  case W12:  case W13:
   case W14:  case W15:  case W16:  case W17:  case W18:  case W19:  case W20:
   case W21:  case W22:  case W23:  case W24:  case W25:  case W26:  case W27:
-  case W28:  case W29:  case W30:  case WSP:
+  case W28:  case W29:  case W30:  case WSP:  case WZR:
     return true;
   }
   return false;
@@ -3852,8 +3852,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     // Insert WZR or XZR as destination operand.
     ARM64Operand *RegOp = static_cast<ARM64Operand *>(Operands[1]);
     unsigned ZeroReg;
-    if (RegOp->isReg() &&
-        (isGPR32Register(RegOp->getReg()) || RegOp->getReg() == ARM64::WZR))
+    if (RegOp->isReg() && isGPR32Register(RegOp->getReg()))
       ZeroReg = ARM64::WZR;
     else
       ZeroReg = ARM64::XZR;
@@ -3962,7 +3961,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
           uint64_t Op3Val = Op3CE->getValue();
           uint64_t NewOp3Val = 0;
           uint64_t NewOp4Val = 0;
-          if (isGPR32Register(Op2->getReg()) || Op2->getReg() == ARM64::WZR) {
+          if (isGPR32Register(Op2->getReg())) {
             NewOp3Val = (32 - Op3Val) & 0x1f;
             NewOp4Val = 31 - Op3Val;
           } else {
