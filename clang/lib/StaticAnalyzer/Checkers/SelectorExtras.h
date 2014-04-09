@@ -11,6 +11,7 @@
 #define LLVM_CLANG_SA_CHECKERS_SELECTOREXTRAS
 
 #include "clang/AST/ASTContext.h"
+#include <cstdarg>
 
 namespace clang {
 namespace ento {
