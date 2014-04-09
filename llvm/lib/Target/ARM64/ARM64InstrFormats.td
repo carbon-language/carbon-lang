@@ -1603,6 +1603,8 @@ multiclass ExtractImm<string asm> {
                         (ARM64Extr GPR32:$Rn, GPR32:$Rm, imm0_31:$imm))]> {
     let Inst{31} = 0;
     let Inst{22} = 0;
+    // imm<5> must be zero.
+    let imm{5}   = 0;
   }
   def Xrri : BaseExtractImm<GPR64, imm0_63, asm,
                       [(set GPR64:$Rd,
@@ -4849,7 +4851,9 @@ class BaseSIMDBitwiseExtract<bit size, RegisterOperand regtype, ValueType vty,
 
 
 multiclass SIMDBitwiseExtract<string asm> {
-  def v8i8  : BaseSIMDBitwiseExtract<0, V64, v8i8, asm, ".8b">;
+  def v8i8  : BaseSIMDBitwiseExtract<0, V64, v8i8, asm, ".8b"> {
+    let imm{3} = 0;
+  }
   def v16i8 : BaseSIMDBitwiseExtract<1, V128, v16i8, asm, ".16b">;
 }
 

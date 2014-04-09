@@ -20,4 +20,7 @@
 # UBFM is undefined when s == 0 and imms<5> or immr<5> is 1.
 # RUN: echo "0x00 0x80 0x00 0x53" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
 
+# EXT on vectors of i8 must have imm<3> = 0.
+# RUN: echo "0x00 0x40 0x00 0x2e" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
+
 # CHECK: invalid instruction encoding
