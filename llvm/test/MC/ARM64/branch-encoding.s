@@ -72,7 +72,7 @@ foo:
 ; CHECK: b.le L1   ; encoding: [0bAAA01101,A,A,0x54]
 ; CHECK: fixup A - offset: 0, value: L1, kind: fixup_arm64_pcrel_imm19
   b.al  L1
-; CHECK: b L1      ; encoding: [0bAAA01110,A,A,0x54]
+; CHECK: b.al L1      ; encoding: [0bAAA01110,A,A,0x54]
 ; CHECK: fixup A - offset: 0, value: L1, kind: fixup_arm64_pcrel_imm19
 L1:
   b #28

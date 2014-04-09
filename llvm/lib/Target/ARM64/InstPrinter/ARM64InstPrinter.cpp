@@ -1156,8 +1156,7 @@ void ARM64InstPrinter::printExtend(const MCInst *MI, unsigned OpNum,
 void ARM64InstPrinter::printDotCondCode(const MCInst *MI, unsigned OpNum,
                                         raw_ostream &O) {
   ARM64CC::CondCode CC = (ARM64CC::CondCode)MI->getOperand(OpNum).getImm();
-  if (CC != ARM64CC::AL)
-    O << '.' << ARM64CC::getCondCodeName(CC);
+  O << '.' << ARM64CC::getCondCodeName(CC);
 }
 
 void ARM64InstPrinter::printCondCode(const MCInst *MI, unsigned OpNum,
