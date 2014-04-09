@@ -566,6 +566,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         Current.LastInChainOfCalls ? 0 : State.Column + Current.ColumnWidth;
   if (Current.Type == TT_ObjCSelectorName)
     State.Stack.back().ObjCSelectorNameFound = true;
+  if (Current.Type == TT_LambdaLSquare)
+    ++State.Stack.back().LambdasFound;
   if (Current.Type == TT_CtorInitializerColon) {
     // Indent 2 from the column, so:
     // SomeClass::SomeClass()
@@ -654,7 +656,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     bool BreakBeforeParameter = false;
     if (Current.is(tok::l_brace) ||
         Current.Type == TT_ArrayInitializerLSquare) {
-      if (Current.MatchingParen && Current.BlockKind == BK_Block) {
+      if (Current.MatchingParen && Current.BlockKind == BK_Block &&
+          State.Stack.back().LambdasFound <= 1) {
         // If this is an l_brace starting a nested block, we pretend (wrt. to
         // indentation) that we already consumed the corresponding r_brace.
         // Thus, we remove all ParenStates caused by fake parentheses that end
@@ -670,6 +673,10 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         //   SomeFunction(a, [] {
         //                     f();  // break
         //                   });
+        //
+        // If we have already found more than one lambda introducers on this
+        // level, we opt out of this because similarity between the lambdas is
+        // more important.
         for (unsigned i = 0; i != Current.MatchingParen->FakeRParens; ++i) {
           assert(State.Stack.size() > 1);
           if (State.Stack.size() == 1) {

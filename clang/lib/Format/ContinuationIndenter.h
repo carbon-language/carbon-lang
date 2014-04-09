@@ -139,7 +139,7 @@ struct ParenState {
         StartOfArraySubscripts(0), NestedNameSpecifierContinuation(0),
         CallContinuation(0), VariablePos(0), ContainsLineBreak(false),
         ContainsUnwrappedBuilder(0), AlignColons(true),
-        ObjCSelectorNameFound(false) {}
+        ObjCSelectorNameFound(false), LambdasFound(0) {}
 
   /// \brief The position to which a specific parenthesis level needs to be
   /// indented.
@@ -229,6 +229,12 @@ struct ParenState {
   /// Not considered for memoization as it will always have the same value at
   /// the same token.
   bool ObjCSelectorNameFound;
+
+  /// \brief Counts the number of lambda introducers found on this level.
+  ///
+  /// Not considered for memoization as it will always have the same value at
+  /// the same token.
+  unsigned LambdasFound;
 
   bool operator<(const ParenState &Other) const {
     if (Indent != Other.Indent)

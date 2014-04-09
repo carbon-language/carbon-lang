@@ -8171,6 +8171,16 @@ TEST_F(FormatTest, FormatsLambdas) {
                "  return fffffffffffffffffffffffffffffffffffffff(i * j);\n"
                "};");
 
+  // Multiple lambdas in the same parentheses change indentation rules.
+  verifyFormat("SomeFunction([]() {\n"
+               "               int i = 42;\n"
+               "               return i;\n"
+               "             },\n"
+               "             []() {\n"
+               "               int j = 43;\n"
+               "               return j;\n"
+               "             });");
+
   // Not lambdas.
   verifyFormat("constexpr char hello[]{\"hello\"};");
   verifyFormat("double &operator[](int i) { return 0; }\n"
