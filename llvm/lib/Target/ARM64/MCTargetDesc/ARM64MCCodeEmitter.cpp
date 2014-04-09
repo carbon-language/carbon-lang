@@ -176,6 +176,11 @@ public:
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const;
+
+  template<int hasRs, int hasRt2> unsigned
+  fixLoadStoreExclusive(const MCInst &MI, unsigned EncodedValue,
+                        const MCSubtargetInfo &STI) const;
+
 };
 
 } // end anonymous namespace
@@ -558,6 +563,16 @@ void ARM64MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   uint64_t Binary = getBinaryCodeForInstr(MI, Fixups, STI);
   EmitConstant(Binary, 4, OS);
   ++MCNumEmitted; // Keep track of the # of mi's emitted.
+}
+
+template<int hasRs, int hasRt2> unsigned
+ARM64MCCodeEmitter::fixLoadStoreExclusive(const MCInst &MI,
+                                          unsigned EncodedValue,
+                                          const MCSubtargetInfo &STI) const {
+  if (!hasRs) EncodedValue |= 0x001F0000;
+  if (!hasRt2) EncodedValue |= 0x00007C00;
+
+  return EncodedValue;
 }
 
 #include "ARM64GenMCCodeEmitter.inc"

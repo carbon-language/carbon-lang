@@ -2901,6 +2901,18 @@ class StorePairNoAlloc<bits<2> opc, bit V, RegisterClass regtype,
 // True exclusive operations write to and/or read from the system's exclusive
 // monitors, which as far as a compiler is concerned can be modelled as a
 // random shared memory address. Hence LoadExclusive mayStore.
+//
+// Since these instructions have the undefined register bits set to 1 in
+// their canonical form, we need a post encoder method to set those bits
+// to 1 when encoding these instructions. We do this using the
+// fixLoadStoreExclusive function. This function has template parameters:
+//
+// fixLoadStoreExclusive<int hasRs, int hasRt2>
+//
+// hasRs indicates that the instruction uses the Rs field, so we won't set
+// it to 1 (and the same for Rt2). We don't need template parameters for
+// the other register fields since Rt and Rn are always used.
+//
 let hasSideEffects = 1, mayLoad = 1, mayStore = 1 in
 class BaseLoadStoreExclusive<bits<2> sz, bit o2, bit L, bit o1, bit o0,
                              dag oops, dag iops, string asm, string operands>
@@ -2921,10 +2933,10 @@ class LoadStoreExclusiveSimple<bits<2> sz, bit o2, bit L, bit o1, bit o0,
     : BaseLoadStoreExclusive<sz, o2, L, o1, o0, oops, iops, asm, operands> {
   bits<5> reg;
   bits<5> base;
-  let Inst{20-16} = 0b11111;
-  let Inst{14-10} = 0b11111;
   let Inst{9-5} = base;
   let Inst{4-0} = reg;
+
+  let PostEncoderMethod = "fixLoadStoreExclusive<0,0>";
 }
 
 // Simple load acquires don't set the exclusive monitor
@@ -2951,10 +2963,11 @@ class LoadExclusivePair<bits<2> sz, bit o2, bit L, bit o1, bit o0,
   bits<5> dst1;
   bits<5> dst2;
   bits<5> base;
-  let Inst{20-16} = 0b11111;
   let Inst{14-10} = dst2;
   let Inst{9-5} = base;
   let Inst{4-0} = dst1;
+
+  let PostEncoderMethod = "fixLoadStoreExclusive<0,1>";
 }
 
 // Simple store release operations do not check the exclusive monitor.
@@ -2977,11 +2990,11 @@ class StoreExclusive<bits<2> sz, bit o2, bit L, bit o1, bit o0,
   bits<5> reg;
   bits<5> base;
   let Inst{20-16} = status;
-  let Inst{14-10} = 0b11111;
   let Inst{9-5} = base;
   let Inst{4-0} = reg;
 
   let Constraints = "@earlyclobber $Ws";
+  let PostEncoderMethod = "fixLoadStoreExclusive<1,0>";
 }
 
 class StoreExclusivePair<bits<2> sz, bit o2, bit L, bit o1, bit o0,

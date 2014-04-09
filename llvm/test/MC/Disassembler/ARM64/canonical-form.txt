@@ -1,0 +1,5 @@
+# RUN: llvm-mc -triple arm64-apple-darwin --disassemble < %s | FileCheck %s
+
+0x00 0x08 0x00 0xc8
+
+# CHECK: stxr	w0, x0, [x0]
