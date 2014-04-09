@@ -22,9 +22,9 @@
 #include <map>
 #include <string>
 #include <vector>
-//#include <iostream>
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/IR/InstIterator.h"
+#include "llvm/Support/MutexGuard.h"
 
 using namespace llvm;
 
@@ -33,8 +33,15 @@ typedef std::map<const GlobalValue *, key_val_pair_t> global_val_annot_t;
 typedef std::map<const Module *, global_val_annot_t> per_module_annot_t;
 
 ManagedStatic<per_module_annot_t> annotationCache;
+static sys::Mutex Lock;
+
+void llvm::clearAnnotationCache(const llvm::Module *Mod) {
+  MutexGuard Guard(Lock);
+  annotationCache->erase(Mod);
+}
 
 static void cacheAnnotationFromMD(const MDNode *md, key_val_pair_t &retval) {
+  MutexGuard Guard(Lock);
   assert(md && "Invalid mdnode for annotation");
   assert((md->getNumOperands() % 2) == 1 && "Invalid number of operands");
   // start index = 1, to skip the global variable key
@@ -60,6 +67,7 @@ static void cacheAnnotationFromMD(const MDNode *md, key_val_pair_t &retval) {
 }
 
 static void cacheAnnotationFromMD(const Module *m, const GlobalValue *gv) {
+  MutexGuard Guard(Lock);
   NamedMDNode *NMD = m->getNamedMetadata(llvm::NamedMDForAnnotations);
   if (!NMD)
     return;
@@ -92,6 +100,7 @@ static void cacheAnnotationFromMD(const Module *m, const GlobalValue *gv) {
 
 bool llvm::findOneNVVMAnnotation(const GlobalValue *gv, std::string prop,
                                  unsigned &retval) {
+  MutexGuard Guard(Lock);
   const Module *m = gv->getParent();
   if ((*annotationCache).find(m) == (*annotationCache).end())
     cacheAnnotationFromMD(m, gv);
@@ -105,6 +114,7 @@ bool llvm::findOneNVVMAnnotation(const GlobalValue *gv, std::string prop,
 
 bool llvm::findAllNVVMAnnotation(const GlobalValue *gv, std::string prop,
                                  std::vector<unsigned> &retval) {
+  MutexGuard Guard(Lock);
   const Module *m = gv->getParent();
   if ((*annotationCache).find(m) == (*annotationCache).end())
     cacheAnnotationFromMD(m, gv);
@@ -195,8 +205,37 @@ bool llvm::isImageWriteOnly(const llvm::Value &val) {
   return false;
 }
 
+bool llvm::isImageReadWrite(const llvm::Value &val) {
+  if (const Argument *arg = dyn_cast<Argument>(&val)) {
+    const Function *func = arg->getParent();
+    std::vector<unsigned> annot;
+    if (llvm::findAllNVVMAnnotation(func,
+                                    llvm::PropertyAnnotationNames[
+                                        llvm::PROPERTY_ISREADWRITE_IMAGE_PARAM],
+                                    annot)) {
+      if (std::find(annot.begin(), annot.end(), arg->getArgNo()) != annot.end())
+        return true;
+    }
+  }
+  return false;
+}
+
 bool llvm::isImage(const llvm::Value &val) {
-  return llvm::isImageReadOnly(val) || llvm::isImageWriteOnly(val);
+  return llvm::isImageReadOnly(val) || llvm::isImageWriteOnly(val) ||
+         llvm::isImageReadWrite(val);
+}
+
+bool llvm::isManaged(const llvm::Value &val) {
+  if(const GlobalValue *gv = dyn_cast<GlobalValue>(&val)) {
+    unsigned annot;
+    if(llvm::findOneNVVMAnnotation(gv,
+                          llvm::PropertyAnnotationNames[llvm::PROPERTY_MANAGED],
+                                   annot)) {
+      assert((annot == 1) && "Unexpected annotation on a managed symbol");
+      return true;
+    }
+  }
+  return false;
 }
 
 std::string llvm::getTextureName(const llvm::Value &val) {

@@ -1010,6 +1010,8 @@ bool NVPTXAsmPrinter::doFinalization(Module &M) {
   for (i = 0; i < n; i++)
     global_list.insert(global_list.end(), gv_array[i]);
 
+  clearAnnotationCache(&M);
+
   delete[] gv_array;
   return ret;
 

@@ -28,6 +28,8 @@ namespace llvm {
 #define NVCL_IMAGE2D_READONLY_FUNCNAME "__is_image2D_readonly"
 #define NVCL_IMAGE3D_READONLY_FUNCNAME "__is_image3D_readonly"
 
+void clearAnnotationCache(const llvm::Module *);
+
 bool findOneNVVMAnnotation(const llvm::GlobalValue *, std::string, unsigned &);
 bool findAllNVVMAnnotation(const llvm::GlobalValue *, std::string,
                            std::vector<unsigned> &);
@@ -38,6 +40,8 @@ bool isSampler(const llvm::Value &);
 bool isImage(const llvm::Value &);
 bool isImageReadOnly(const llvm::Value &);
 bool isImageWriteOnly(const llvm::Value &);
+bool isImageReadWrite(const llvm::Value &);
+bool isManaged(const llvm::Value &);
 
 std::string getTextureName(const llvm::Value &);
 std::string getSurfaceName(const llvm::Value &);
