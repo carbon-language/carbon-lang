@@ -18,6 +18,7 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/Analysis/Analyses/PostOrderCFGView.h"
 #include "clang/Analysis/Analyses/ThreadSafetyTIL.h"
+#include "clang/Analysis/Analyses/ThreadSafetyTraverse.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/Basic/OperatorKinds.h"
@@ -26,6 +27,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+
 #include <vector>
 
 
@@ -299,8 +301,14 @@ til::SExpr *SExprBuilder::translateBinaryConditionalOperator(
   return new (Arena) til::Undefined(C);
 }
 
+
+
 // Build a complete SCFG from a clang CFG.
 class SCFGBuilder {
+  class BBInfo {
+
+  };
+
   void addStatement(til::SExpr* E, const Stmt *S) {
     if (!E)
       return;

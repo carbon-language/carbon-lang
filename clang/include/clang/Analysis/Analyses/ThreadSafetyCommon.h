@@ -26,6 +26,7 @@
 #include "clang/Analysis/Analyses/ThreadSafetyTIL.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/OperatorKinds.h"
+
 #include <vector>
 
 
@@ -206,15 +207,16 @@ protected:
 
 public:
   SExprBuilder(til::MemRegionRef A, StatementMap *SM = nullptr)
-      : Arena(A), SMap(SM), SelfVar(nullptr) {
+      : Arena(A), SMap(SM), SelfVar(nullptr), CurrentBlock(nullptr) {
     // FIXME: we don't always have a self-variable.
     SelfVar = new (Arena) til::Variable(til::Variable::VK_SFun);
   }
 
 protected:
   til::MemRegionRef Arena;
-  StatementMap *SMap;       // Map from Stmt to TIL Variables
-  til::Variable *SelfVar;   // Variable to use for 'this'
+  StatementMap *SMap;             // Map from Stmt to TIL Variables
+  til::Variable *SelfVar;         // Variable to use for 'this'.  May be null.
+  til::BasicBlock* CurrentBlock;  // Current basic block.  May be null.
 };
 
 
