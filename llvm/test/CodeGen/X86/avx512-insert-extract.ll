@@ -158,3 +158,41 @@ define i64 @test14(<8 x i64>%a, <8 x i64>%b, i64 %a1, i64 %b1) {
   %res = select i1 %extract24vector_func.i, i64 %a1, i64 %b1
   ret i64 %res
 }
+
+;CHECK-LABEL: test15
+;CHECK: kshiftlw
+;CHECK: kmovw
+;CHECK: ret
+define i16 @test15(i1 *%addr) {
+  %x = load i1 * %addr, align 128
+  %x1 = insertelement <16 x i1> undef, i1 %x, i32 10
+  %x2 = bitcast <16 x i1>%x1 to i16
+  ret i16 %x2
+}
+
+;CHECK-LABEL: test16
+;CHECK: kshiftlw
+;CHECK: kshiftrw
+;CHECK: korw
+;CHECK: ret
+define i16 @test16(i1 *%addr, i16 %a) {
+  %x = load i1 * %addr, align 128
+  %a1 = bitcast i16 %a to <16 x i1>
+  %x1 = insertelement <16 x i1> %a1, i1 %x, i32 10
+  %x2 = bitcast <16 x i1>%x1 to i16
+  ret i16 %x2
+}
+
+;CHECK-LABEL: test17
+;CHECK: kshiftlw
+;CHECK: kshiftrw
+;CHECK: korw
+;CHECK: ret
+define i8 @test17(i1 *%addr, i8 %a) {
+  %x = load i1 * %addr, align 128
+  %a1 = bitcast i8 %a to <8 x i1>
+  %x1 = insertelement <8 x i1> %a1, i1 %x, i32 10
+  %x2 = bitcast <8 x i1>%x1 to i8
+  ret i8 %x2
+}
+

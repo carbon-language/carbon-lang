@@ -153,3 +153,12 @@ define void @test18(i8 * %addr, <8 x i64> %data) {
   ret void
 }
 
+; CHECK-LABEL: store_i1
+; CHECK: movb
+; CHECK: movb
+; CHECK: ret
+define void @store_i1() {
+  store i1 true, i1 addrspace(3)* undef, align 128
+  store i1 false, i1 addrspace(2)* undef, align 128
+  ret void
+}

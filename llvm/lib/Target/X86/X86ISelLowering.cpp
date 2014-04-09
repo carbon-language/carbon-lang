@@ -1394,6 +1394,8 @@ void X86TargetLowering::resetOperationActions() {
 
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v8i1,  Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v16i1, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v16i1, Custom);
+    setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v8i1, Custom);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v8i1, Custom);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v16i1, Custom);
     setOperationAction(ISD::SELECT,             MVT::v8f64, Custom);
@@ -5811,6 +5813,8 @@ X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
   uint64_t Immediate = 0;
   int NonConstIdx = -1;
   bool IsSplat = true;
+  unsigned NumNonConsts = 0;
+  unsigned NumConsts = 0;
   for (unsigned idx = 0, e = Op.getNumOperands(); idx < e; ++idx) {
     SDValue In = Op.getOperand(idx);
     if (In.getOpcode() == ISD::UNDEF)
@@ -5818,9 +5822,13 @@ X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
     if (!isa<ConstantSDNode>(In)) {
       AllContants = false;
       NonConstIdx = idx;
+      NumNonConsts++;
     }
-    else if (cast<ConstantSDNode>(In)->getZExtValue())
+    else {
+      NumConsts++;
+      if (cast<ConstantSDNode>(In)->getZExtValue())
       Immediate |= (1ULL << idx);
+    }
     if (In != Op.getOperand(0))
       IsSplat = false;
   }
@@ -5832,6 +5840,19 @@ X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
                        DAG.getIntPtrConstant(0));
   }
 
+  if (NumNonConsts == 1 && NonConstIdx != 0) {
+    SDValue DstVec;
+    if (NumConsts) {
+      SDValue VecAsImm = DAG.getConstant(Immediate,
+                                         MVT::getIntegerVT(VT.getSizeInBits()));
+      DstVec = DAG.getNode(ISD::BITCAST, dl, VT, VecAsImm);
+    }
+    else 
+      DstVec = DAG.getUNDEF(VT);
+    return DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, DstVec,
+                       Op.getOperand(NonConstIdx),
+                       DAG.getIntPtrConstant(NonConstIdx));
+  }
   if (!IsSplat && (NonConstIdx != 0))
     llvm_unreachable("Unsupported BUILD_VECTOR operation");
   MVT SelectVT = (VT == MVT::v16i1)? MVT::i16 : MVT::i8;
@@ -7948,10 +7969,47 @@ static SDValue LowerINSERT_VECTOR_ELT_SSE4(SDValue Op, SelectionDAG &DAG) {
   return SDValue();
 }
 
+/// Insert one bit to mask vector, like v16i1 or v8i1.
+/// AVX-512 feature.
+SDValue 
+X86TargetLowering::InsertBitToMaskVector(SDValue Op, SelectionDAG &DAG) const {
+  SDLoc dl(Op);
+  SDValue Vec = Op.getOperand(0);
+  SDValue Elt = Op.getOperand(1);
+  SDValue Idx = Op.getOperand(2);
+  MVT VecVT = Vec.getSimpleValueType();
+
+  if (!isa<ConstantSDNode>(Idx)) {
+    // Non constant index. Extend source and destination,
+    // insert element and then truncate the result.
+    MVT ExtVecVT = (VecVT == MVT::v8i1 ?  MVT::v8i64 : MVT::v16i32);
+    MVT ExtEltVT = (VecVT == MVT::v8i1 ?  MVT::i64 : MVT::i32);
+    SDValue ExtOp = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, ExtVecVT, 
+      DAG.getNode(ISD::ZERO_EXTEND, dl, ExtVecVT, Vec),
+      DAG.getNode(ISD::ZERO_EXTEND, dl, ExtEltVT, Elt), Idx);
+    return DAG.getNode(ISD::TRUNCATE, dl, VecVT, ExtOp);
+  }
+
+  unsigned IdxVal = cast<ConstantSDNode>(Idx)->getZExtValue();
+  SDValue EltInVec = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VecVT, Elt);
+  if (Vec.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(X86ISD::VSHLI, dl, VecVT, EltInVec,
+                       DAG.getConstant(IdxVal, MVT::i8));
+  const TargetRegisterClass* rc = getRegClassFor(VecVT);
+  unsigned MaxSift = rc->getSize()*8 - 1;
+  EltInVec = DAG.getNode(X86ISD::VSHLI, dl, VecVT, EltInVec,
+                    DAG.getConstant(MaxSift, MVT::i8));
+  EltInVec = DAG.getNode(X86ISD::VSRLI, dl, VecVT, EltInVec,
+                    DAG.getConstant(MaxSift - IdxVal, MVT::i8));
+  return DAG.getNode(ISD::OR, dl, VecVT, Vec, EltInVec);
+}
 SDValue
 X86TargetLowering::LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const {
   MVT VT = Op.getSimpleValueType();
   MVT EltVT = VT.getVectorElementType();
+  
+  if (EltVT == MVT::i1)
+    return InsertBitToMaskVector(Op, DAG);
 
   SDLoc dl(Op);
   SDValue N0 = Op.getOperand(0);

@@ -874,6 +874,8 @@ namespace llvm {
     SDValue LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
     SDValue ExtractBitFromMaskVector(SDValue Op, SelectionDAG &DAG) const;
+    SDValue InsertBitToMaskVector(SDValue Op, SelectionDAG &DAG) const;
+
     SDValue LowerINSERT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const;
