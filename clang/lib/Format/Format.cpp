@@ -1121,6 +1121,10 @@ private:
     if (Previous.Children.size() > 1)
       return false;
 
+    // Cannot merge into one line if this line ends on a comment.
+    if (Previous.is(tok::comment))
+      return false;
+
     // We can't put the closing "}" on a line with a trailing comment.
     if (Previous.Children[0]->Last->isTrailingComment())
       return false;

@@ -8161,6 +8161,9 @@ TEST_F(FormatTest, FormatsLambdas) {
                "        x.end(),   //\n"
                "        [&](int, int) { return 1; });\n"
                "}\n");
+  verifyFormat("SomeFunction([]() { // A cool function...\n"
+               "  return 43;\n"
+               "});");
 
   // Lambdas with return types.
   verifyFormat("int c = []() -> int { return 2; }();\n");
