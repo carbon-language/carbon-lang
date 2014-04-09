@@ -1368,10 +1368,10 @@ static DecodeStatus DecodeRegOffsetLdStInstruction(llvm::MCInst &Inst,
 
   DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
 
-  if (extendHi == 0x3)
+  if ((extendHi & 0x3) == 0x3)
     DecodeGPR64RegisterClass(Inst, Rm, Addr, Decoder);
   else
-    DecodeGPR64RegisterClass(Inst, Rm, Addr, Decoder);
+    DecodeGPR32RegisterClass(Inst, Rm, Addr, Decoder);
 
   Inst.addOperand(MCOperand::CreateImm(extend));
   return Success;

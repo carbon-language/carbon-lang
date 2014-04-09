@@ -83,6 +83,8 @@
   0x64 0x00 0x00 0x39
   0x85 0x50 0x00 0x39
   0xe2 0x43 0x00 0x79
+  0x00 0xe8 0x20 0x38
+  0x00 0x48 0x20 0x38
 
 # CHECK: str	x4, [x3]
 # CHECK: str	x2, [sp, #32]
@@ -95,6 +97,8 @@
 # CHECK: strb	w4, [x3]
 # CHECK: strb	w5, [x4, #20]
 # CHECK: strh	w2, [sp, #32]
+# CHECK: strb	w0, [x0, x0, sxtx]
+# CHECK: strb	w0, [x0, w0, uxtw]
 
 #-----------------------------------------------------------------------------
 # Unscaled immediate loads and stores
@@ -422,11 +426,11 @@
   0xe1 0x6b 0xa3 0x3c
   0xe1 0x5b 0xa3 0x3c
 
-# CHECK: str	h0, [x0, x0, uxtw]
+# CHECK: str	h0, [x0, w0, uxtw]
 # CHECK: str	d1, [sp, x3]
-# CHECK: str	d1, [sp, x3, uxtw #3]
+# CHECK: str	d1, [sp, w3, uxtw #3]
 # CHECK: str	q1, [sp, x3]
-# CHECK: str	q1, [sp, x3, uxtw #4]
+# CHECK: str	q1, [sp, w3, uxtw #4]
 
 #-----------------------------------------------------------------------------
 # Load/Store exclusive
