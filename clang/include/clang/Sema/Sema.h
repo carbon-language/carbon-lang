@@ -7089,7 +7089,7 @@ public:
     DeclaratorDecl *Decl;
     SourceLocation PragmaSectionLocation;
     int SectionFlags;
-    SectionInfo();
+    SectionInfo() {}
     SectionInfo(DeclaratorDecl *Decl,
                 SourceLocation PragmaSectionLocation,
                 int SectionFlags)
