@@ -58,7 +58,7 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
   SmartScopedLock<true> lock(*SymbolsMutex);
 
   void *handle = dlopen(filename, RTLD_LAZY|RTLD_GLOBAL);
-  if (handle == nullptr) {
+  if (!handle) {
     if (errMsg) *errMsg = dlerror();
     return DynamicLibrary();
   }
@@ -66,11 +66,11 @@ DynamicLibrary DynamicLibrary::getPermanentLibrary(const char *filename,
 #ifdef __CYGWIN__
   // Cygwin searches symbols only in the main
   // with the handle of dlopen(NULL, RTLD_GLOBAL).
-  if (filename == NULL)
+  if (!filename)
     handle = RTLD_DEFAULT;
 #endif
 
-  if (OpenedHandles == nullptr)
+  if (!OpenedHandles)
     OpenedHandles = new DenseSet<void *>();
 
   // If we've already loaded this library, dlclose() the handle in order to

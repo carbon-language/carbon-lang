@@ -114,7 +114,7 @@ SourceMgr::getLineAndColumn(SMLoc Loc, int BufferID) const {
     if (*Ptr == '\n') ++LineNo;
 
   // Allocate the line number cache if it doesn't exist.
-  if (LineNoCache == nullptr)
+  if (!LineNoCache)
     LineNoCache = new LineNoCacheTy();
 
   // Update the line # cache.

@@ -186,7 +186,7 @@ namespace llvm {
 
     /// str - Get the contents as an std::string.
     std::string str() const {
-      if (Data == nullptr) return std::string();
+      if (!Data) return std::string();
       return std::string(Data, Length);
     }
 

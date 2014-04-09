@@ -336,7 +336,7 @@ namespace PBQP {
     /// each node in the graph, and handleAddEdge for each edge, to give the
     /// solver an opportunity to set up any requried metadata.
     void setSolver(SolverT &S) {
-      assert(Solver == nullptr && "Solver already set. Call unsetSolver().");
+      assert(!Solver && "Solver already set. Call unsetSolver().");
       Solver = &S;
       for (auto NId : nodeIds())
         Solver->handleAddNode(NId);
@@ -346,7 +346,7 @@ namespace PBQP {
 
     /// \brief Release from solver instance.
     void unsetSolver() {
-      assert(Solver != nullptr && "Solver not set.");
+      assert(Solver && "Solver not set.");
       Solver = nullptr;
     }
 

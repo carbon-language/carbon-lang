@@ -179,7 +179,7 @@ public:
 
     typedef T* (IntrusiveRefCntPtr::*unspecified_bool_type) () const;
     operator unspecified_bool_type() const {
-      return Obj == nullptr ? nullptr : &IntrusiveRefCntPtr::getPtr;
+      return Obj ? &IntrusiveRefCntPtr::getPtr : nullptr;
     }
 
     void swap(IntrusiveRefCntPtr& other) {

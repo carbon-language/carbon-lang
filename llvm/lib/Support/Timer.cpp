@@ -264,7 +264,7 @@ TimerGroup::TimerGroup(StringRef name)
 TimerGroup::~TimerGroup() {
   // If the timer group is destroyed before the timers it owns, accumulate and
   // print the timing data.
-  while (FirstTimer != nullptr)
+  while (FirstTimer)
     removeTimer(*FirstTimer);
   
   // Remove the group from the TimerGroupList.
@@ -291,7 +291,7 @@ void TimerGroup::removeTimer(Timer &T) {
   
   // Print the report when all timers in this group are destroyed if some of
   // them were started.
-  if (FirstTimer != nullptr || TimersToPrint.empty())
+  if (FirstTimer || TimersToPrint.empty())
     return;
   
   raw_ostream *OutStream = CreateInfoOutputFile();

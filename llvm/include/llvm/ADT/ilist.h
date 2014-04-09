@@ -383,7 +383,7 @@ public:
   // Miscellaneous inspection routines.
   size_type max_size() const { return size_type(-1); }
   bool LLVM_ATTRIBUTE_UNUSED_RESULT empty() const {
-    return Head == nullptr || Head == getTail();
+    return !Head || Head == getTail();
   }
 
   // Front and back accessor functions...

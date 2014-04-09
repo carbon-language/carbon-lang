@@ -1664,7 +1664,7 @@ class alias : public Option {
   void done() {
     if (!hasArgStr())
       error("cl::alias must have argument name specified!");
-    if (AliasFor == nullptr)
+    if (!AliasFor)
       error("cl::alias must have an cl::aliasopt(option) specified!");
       addArgument();
   }

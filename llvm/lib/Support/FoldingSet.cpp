@@ -323,7 +323,7 @@ void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
   // If this is the first insertion into this bucket, its next pointer will be
   // null.  Pretend as if it pointed to itself, setting the low bit to indicate
   // that it is a pointer to the bucket.
-  if (Next == nullptr)
+  if (!Next)
     Next = reinterpret_cast<void*>(reinterpret_cast<intptr_t>(Bucket)|1);
 
   // Set the node's next pointer, and make the bucket point to the node.
@@ -337,7 +337,7 @@ bool FoldingSetImpl::RemoveNode(Node *N) {
   // Because each bucket is a circular list, we don't need to compute N's hash
   // to remove it.
   void *Ptr = N->getNextInBucket();
-  if (Ptr == nullptr) return false;  // Not in folding set.
+  if (!Ptr) return false;  // Not in folding set.
 
   --NumNodes;
   N->SetNextInBucket(nullptr);
@@ -390,7 +390,7 @@ FoldingSetImpl::Node *FoldingSetImpl::GetOrInsertNode(FoldingSetImpl::Node *N) {
 FoldingSetIteratorImpl::FoldingSetIteratorImpl(void **Bucket) {
   // Skip to the first non-null non-self-cycle bucket.
   while (*Bucket != reinterpret_cast<void*>(-1) &&
-         (*Bucket == nullptr || GetNextPtr(*Bucket) == nullptr))
+         (!*Bucket || !GetNextPtr(*Bucket)))
     ++Bucket;
   
   NodePtr = static_cast<FoldingSetNode*>(*Bucket);
@@ -410,7 +410,7 @@ void FoldingSetIteratorImpl::advance() {
     do {
       ++Bucket;
     } while (*Bucket != reinterpret_cast<void*>(-1) &&
-             (*Bucket == nullptr || GetNextPtr(*Bucket) == nullptr));
+             (!*Bucket || !GetNextPtr(*Bucket)));
     
     NodePtr = static_cast<FoldingSetNode*>(*Bucket);
   }
@@ -420,6 +420,5 @@ void FoldingSetIteratorImpl::advance() {
 // FoldingSetBucketIteratorImpl Implementation
 
 FoldingSetBucketIteratorImpl::FoldingSetBucketIteratorImpl(void **Bucket) {
-  Ptr = (*Bucket == nullptr || GetNextPtr(*Bucket) == nullptr) ? (void*) Bucket
-                                                               : *Bucket;
+  Ptr = (!*Bucket || !GetNextPtr(*Bucket)) ? (void*) Bucket : *Bucket;
 }

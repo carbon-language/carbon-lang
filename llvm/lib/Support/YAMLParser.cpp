@@ -1941,7 +1941,7 @@ void SequenceNode::increment() {
     case Token::TK_BlockEntry:
       getNext();
       CurrentEntry = parseBlockNode();
-      if (CurrentEntry == nullptr) { // An error occurred.
+      if (!CurrentEntry) { // An error occurred.
         IsAtEnd = true;
         CurrentEntry = nullptr;
       }
@@ -1963,7 +1963,7 @@ void SequenceNode::increment() {
     case Token::TK_BlockEntry:
       getNext();
       CurrentEntry = parseBlockNode();
-      if (CurrentEntry == nullptr) { // An error occurred.
+      if (!CurrentEntry) { // An error occurred.
         IsAtEnd = true;
         CurrentEntry = nullptr;
       }

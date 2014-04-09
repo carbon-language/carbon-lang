@@ -24,7 +24,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
   if (llvm_is_multithreaded()) {
     llvm_acquire_global_lock();
 
-    if (Ptr == nullptr) {
+    if (!Ptr) {
       void* tmp = Creator ? Creator() : nullptr;
 
       TsanHappensBefore(this);

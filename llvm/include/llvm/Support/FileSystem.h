@@ -828,9 +828,9 @@ public:
   bool operator==(const directory_iterator &RHS) const {
     if (State == RHS.State)
       return true;
-    if (RHS.State == nullptr)
+    if (!RHS.State)
       return State->CurrentEntry == directory_entry();
-    if (State == nullptr)
+    if (!State)
       return RHS.State->CurrentEntry == directory_entry();
     return State->CurrentEntry == RHS.State->CurrentEntry;
   }

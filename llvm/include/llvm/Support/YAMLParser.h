@@ -305,7 +305,7 @@ public:
     assert(Base && "Attempted to advance iterator past end!");
     Base->increment();
     // Create an end iterator.
-    if (Base->CurrentEntry == nullptr)
+    if (!Base->CurrentEntry)
       Base = nullptr;
     return *this;
   }

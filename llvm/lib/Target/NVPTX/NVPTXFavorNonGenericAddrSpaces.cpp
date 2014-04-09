@@ -111,7 +111,7 @@ static bool IsEliminableAddrSpaceCast(Operator *Cast) {
 bool NVPTXFavorNonGenericAddrSpaces::hoistAddrSpaceCastFromGEP(
     GEPOperator *GEP) {
   Operator *Cast = dyn_cast<Operator>(GEP->getPointerOperand());
-  if (Cast == nullptr)
+  if (!Cast)
     return false;
 
   if (!IsEliminableAddrSpaceCast(Cast))

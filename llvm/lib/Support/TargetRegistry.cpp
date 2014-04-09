@@ -53,7 +53,7 @@ const Target *TargetRegistry::lookupTarget(const std::string &ArchName,
     // Get the target specific parser.
     std::string TempError;
     TheTarget = TargetRegistry::lookupTarget(TheTriple.getTriple(), TempError);
-    if (TheTarget == nullptr) {
+    if (!TheTarget) {
       Error = ": error: unable to get target for '"
             + TheTriple.getTriple()
             + "', see --version and --triple.\n";

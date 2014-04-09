@@ -70,7 +70,7 @@ unsigned StringMapImpl::LookupBucketFor(StringRef Name) {
   while (1) {
     StringMapEntryBase *BucketItem = TheTable[BucketNo];
     // If we found an empty bucket, this key isn't in the table yet, return it.
-    if (LLVM_LIKELY(BucketItem == nullptr)) {
+    if (LLVM_LIKELY(!BucketItem)) {
       // If we found a tombstone, we want to reuse the tombstone instead of an
       // empty bucket.  This reduces probing.
       if (FirstTombstone != -1) {
@@ -124,7 +124,7 @@ int StringMapImpl::FindKey(StringRef Key) const {
   while (1) {
     StringMapEntryBase *BucketItem = TheTable[BucketNo];
     // If we found an empty bucket, this key isn't in the table yet, return.
-    if (LLVM_LIKELY(BucketItem == nullptr))
+    if (LLVM_LIKELY(!BucketItem))
       return -1;
     
     if (BucketItem == getTombstoneVal()) {
@@ -212,7 +212,7 @@ void StringMapImpl::RehashTable() {
       // Fast case, bucket available.
       unsigned FullHash = HashTable[I];
       unsigned NewBucket = FullHash & (NewSize-1);
-      if (NewTableArray[NewBucket] == nullptr) {
+      if (!NewTableArray[NewBucket]) {
         NewTableArray[FullHash & (NewSize-1)] = Bucket;
         NewHashArray[FullHash & (NewSize-1)] = FullHash;
         continue;

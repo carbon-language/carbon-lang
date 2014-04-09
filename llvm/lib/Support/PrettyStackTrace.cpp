@@ -46,7 +46,7 @@ static unsigned PrintStack(const PrettyStackTraceEntry *Entry, raw_ostream &OS){
 /// PrintCurStackTrace - Print the current stack trace to the specified stream.
 static void PrintCurStackTrace(raw_ostream &OS) {
   // Don't print an empty trace.
-  if (PrettyStackTraceHead->get() == nullptr) return;
+  if (!PrettyStackTraceHead->get()) return;
   
   // If there are pretty stack frames registered, walk and emit them.
   OS << "Stack dump:\n";
