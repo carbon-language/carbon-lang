@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "SelectorExtras.h"
 #include "clang/AST/Attr.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
@@ -28,6 +29,8 @@ namespace {
 
 class NoReturnFunctionChecker : public Checker< check::PostCall,
                                                 check::PostObjCMessage > {
+  mutable Selector HandleFailureInFunctionSel;
+  mutable Selector HandleFailureInMethodSel;
 public:
   void checkPostCall(const CallEvent &CE, CheckerContext &C) const;
   void checkPostObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
@@ -81,24 +84,6 @@ void NoReturnFunctionChecker::checkPostCall(const CallEvent &CE,
     C.generateSink();
 }
 
-static bool END_WITH_NULL isMultiArgSelector(const Selector *Sel, ...) {
-  va_list argp;
-  va_start(argp, Sel);
-
-  unsigned Slot = 0;
-  const char *Arg;
-  while ((Arg = va_arg(argp, const char *))) {
-    if (!Sel->getNameForSlot(Slot).equals(Arg))
-      break; // still need to va_end!
-    ++Slot;
-  }
-
-  va_end(argp);
-
-  // We only succeeded if we made it to the end of the argument list.
-  return (Arg == NULL);
-}
-
 void NoReturnFunctionChecker::checkPostObjCMessage(const ObjCMethodCall &Msg,
                                                    CheckerContext &C) const {
   // Check if the method is annotated with analyzer_noreturn.
@@ -135,13 +120,17 @@ void NoReturnFunctionChecker::checkPostObjCMessage(const ObjCMethodCall &Msg,
   default:
     return;
   case 4:
-    if (!isMultiArgSelector(&Sel, "handleFailureInFunction", "file",
-                            "lineNumber", "description", NULL))
+    lazyInitKeywordSelector(HandleFailureInFunctionSel, C.getASTContext(),
+                            "handleFailureInFunction", "file", "lineNumber",
+                            "description", nullptr);
+    if (Sel != HandleFailureInFunctionSel)
       return;
     break;
   case 5:
-    if (!isMultiArgSelector(&Sel, "handleFailureInMethod", "object", "file",
-                            "lineNumber", "description", NULL))
+    lazyInitKeywordSelector(HandleFailureInMethodSel, C.getASTContext(),
+                            "handleFailureInMethod", "object", "file",
+                            "lineNumber", "description", nullptr);
+    if (Sel != HandleFailureInMethodSel)
       return;
     break;
   }

@@ -14,6 +14,7 @@
 
 #include "ClangSACheckers.h"
 #include "AllocationDiagnostics.h"
+#include "SelectorExtras.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -675,18 +676,9 @@ private:
     ObjCMethodSummaries[ObjCSummaryKey(ClsII, S)]  = Summ;
   }
 
-  Selector generateSelector(va_list argp) {
-    SmallVector<IdentifierInfo*, 10> II;
-
-    while (const char* s = va_arg(argp, const char*))
-      II.push_back(&Ctx.Idents.get(s));
-
-    return Ctx.Selectors.getSelector(II.size(), &II[0]);
-  }
-
-  void addMethodSummary(IdentifierInfo *ClsII, ObjCMethodSummariesTy& Summaries,
-                        const RetainSummary * Summ, va_list argp) {
-    Selector S = generateSelector(argp);
+  void addMethodSummary(IdentifierInfo *ClsII, ObjCMethodSummariesTy &Summaries,
+                        const RetainSummary *Summ, va_list argp) {
+    Selector S = getKeywordSelector(Ctx, argp);
     Summaries[ObjCSummaryKey(ClsII, S)] = Summ;
   }
 

@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "SelectorExtras.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
@@ -96,6 +97,18 @@ namespace {
                                        check::PostStmt<ObjCDictionaryLiteral>,
                                        check::PostStmt<ObjCArrayLiteral> > {
     mutable std::unique_ptr<APIMisuse> BT;
+
+    mutable llvm::SmallDenseMap<Selector, unsigned, 16> StringSelectors;
+    mutable Selector ArrayWithObjectSel;
+    mutable Selector AddObjectSel;
+    mutable Selector InsertObjectAtIndexSel;
+    mutable Selector ReplaceObjectAtIndexWithObjectSel;
+    mutable Selector SetObjectAtIndexedSubscriptSel;
+    mutable Selector ArrayByAddingObjectSel;
+    mutable Selector DictionaryWithObjectForKeySel;
+    mutable Selector SetObjectForKeySel;
+    mutable Selector SetObjectForKeyedSubscriptSel;
+    mutable Selector RemoveObjectForKeySel;
 
     void warnIfNilExpr(const Expr *E,
                        const char *Msg,
@@ -214,50 +227,62 @@ void NilArgChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
   
   if (Class == FC_NSString) {
     Selector S = msg.getSelector();
-    
+
     if (S.isUnarySelector())
       return;
-    
-    // FIXME: This is going to be really slow doing these checks with
-    //  lexical comparisons.
-    
-    std::string NameStr = S.getAsString();
-    StringRef Name(NameStr);
-    assert(!Name.empty());
-    
-    // FIXME: Checking for initWithFormat: will not work in most cases
-    //  yet because [NSString alloc] returns id, not NSString*.  We will
-    //  need support for tracking expected-type information in the analyzer
-    //  to find these errors.
-    if (Name == "caseInsensitiveCompare:" ||
-        Name == "compare:" ||
-        Name == "compare:options:" ||
-        Name == "compare:options:range:" ||
-        Name == "compare:options:range:locale:" ||
-        Name == "componentsSeparatedByCharactersInSet:" ||
-        Name == "initWithFormat:") {
-      Arg = 0;
+
+    if (StringSelectors.empty()) {
+      ASTContext &Ctx = C.getASTContext();
+      Selector Sels[] = {
+        getKeywordSelector(Ctx, "caseInsensitiveCompare", nullptr),
+        getKeywordSelector(Ctx, "compare", nullptr),
+        getKeywordSelector(Ctx, "compare", "options", nullptr),
+        getKeywordSelector(Ctx, "compare", "options", "range", nullptr),
+        getKeywordSelector(Ctx, "compare", "options", "range", "locale",
+                           nullptr),
+        getKeywordSelector(Ctx, "componentsSeparatedByCharactersInSet",
+                           nullptr),
+        getKeywordSelector(Ctx, "initWithFormat",
+                           nullptr),
+        getKeywordSelector(Ctx, "localizedCaseInsensitiveCompare", nullptr),
+        getKeywordSelector(Ctx, "localizedCompare", nullptr),
+        getKeywordSelector(Ctx, "localizedStandardCompare", nullptr),
+      };
+      for (Selector KnownSel : Sels)
+        StringSelectors[KnownSel] = 0;
     }
+    auto I = StringSelectors.find(S);
+    if (I == StringSelectors.end())
+      return;
+    Arg = I->second;
   } else if (Class == FC_NSArray) {
     Selector S = msg.getSelector();
 
     if (S.isUnarySelector())
       return;
 
-    if (S.getNameForSlot(0).equals("addObject")) {
+    if (ArrayWithObjectSel.isNull()) {
+      ASTContext &Ctx = C.getASTContext();
+      ArrayWithObjectSel = getKeywordSelector(Ctx, "arrayWithObject", nullptr);
+      AddObjectSel = getKeywordSelector(Ctx, "addObject", nullptr);
+      InsertObjectAtIndexSel =
+        getKeywordSelector(Ctx, "insertObject", "atIndex", nullptr);
+      ReplaceObjectAtIndexWithObjectSel =
+        getKeywordSelector(Ctx, "replaceObjectAtIndex", "withObject", nullptr);
+      SetObjectAtIndexedSubscriptSel =
+        getKeywordSelector(Ctx, "setObject", "atIndexedSubscript", nullptr);
+      ArrayByAddingObjectSel =
+        getKeywordSelector(Ctx, "arrayByAddingObject", nullptr);
+    }
+
+    if (S == ArrayWithObjectSel || S == AddObjectSel ||
+        S == InsertObjectAtIndexSel || S == ArrayByAddingObjectSel) {
       Arg = 0;
-    } else if (S.getNameForSlot(0).equals("insertObject") &&
-               S.getNameForSlot(1).equals("atIndex")) {
-      Arg = 0;
-    } else if (S.getNameForSlot(0).equals("replaceObjectAtIndex") &&
-               S.getNameForSlot(1).equals("withObject")) {
-      Arg = 1;
-    } else if (S.getNameForSlot(0).equals("setObject") &&
-               S.getNameForSlot(1).equals("atIndexedSubscript")) {
+    } else if (S == SetObjectAtIndexedSubscriptSel) {
       Arg = 0;
       CanBeSubscript = true;
-    } else if (S.getNameForSlot(0).equals("arrayByAddingObject")) {
-      Arg = 0;
+    } else if (S == ReplaceObjectAtIndexWithObjectSel) {
+      Arg = 1;
     }
   } else if (Class == FC_NSDictionary) {
     Selector S = msg.getSelector();
@@ -265,20 +290,26 @@ void NilArgChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
     if (S.isUnarySelector())
       return;
 
-    if (S.getNameForSlot(0).equals("dictionaryWithObject") &&
-        S.getNameForSlot(1).equals("forKey")) {
+    if (DictionaryWithObjectForKeySel.isNull()) {
+      ASTContext &Ctx = C.getASTContext();
+      DictionaryWithObjectForKeySel =
+        getKeywordSelector(Ctx, "dictionaryWithObject", "forKey", nullptr);
+      SetObjectForKeySel =
+        getKeywordSelector(Ctx, "setObject", "forKey", nullptr);
+      SetObjectForKeyedSubscriptSel =
+        getKeywordSelector(Ctx, "setObject", "forKeyedSubscript", nullptr);
+      RemoveObjectForKeySel =
+        getKeywordSelector(Ctx, "removeObjectForKey", nullptr);
+    }
+
+    if (S == DictionaryWithObjectForKeySel || S == SetObjectForKeySel) {
       Arg = 0;
       warnIfNilArg(C, msg, /* Arg */1, Class);
-    } else if (S.getNameForSlot(0).equals("setObject") &&
-               S.getNameForSlot(1).equals("forKey")) {
-      Arg = 0;
-      warnIfNilArg(C, msg, /* Arg */1, Class);
-    } else if (S.getNameForSlot(0).equals("setObject") &&
-               S.getNameForSlot(1).equals("forKeyedSubscript")) {
+    } else if (S == SetObjectForKeyedSubscriptSel) {
       CanBeSubscript = true;
       Arg = 0;
       warnIfNilArg(C, msg, /* Arg */1, Class, CanBeSubscript);
-    } else if (S.getNameForSlot(0).equals("removeObjectForKey")) {
+    } else if (S == RemoveObjectForKeySel) {
       Arg = 0;
     }
   }
@@ -286,7 +317,6 @@ void NilArgChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
   // If argument is '0', report a warning.
   if ((Arg != InvalidArgIndex))
     warnIfNilArg(C, msg, Arg, Class, CanBeSubscript);
-
 }
 
 void NilArgChecker::checkPostStmt(const ObjCArrayLiteral *AL,

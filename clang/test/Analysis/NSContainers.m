@@ -284,3 +284,11 @@ void testLiteralsNonNil() {
   clang_analyzer_eval(!!@{}); // expected-warning{{TRUE}}
 }
 
+@interface NSMutableArray (MySafeAdd)
+- (void)addObject:(id)obj safe:(BOOL)safe;
+@end
+
+void testArrayCategory(NSMutableArray *arr) {
+  [arr addObject:0 safe:1]; // no-warning
+}
+
