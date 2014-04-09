@@ -106,9 +106,11 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
     unsigned SubVer = TT[Idx];
     if (SubVer == '8') {
       if (NoCPU)
-        // v8a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSPThumb2, FeatureMP,
-        //      FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone, FeatureT2XtPk, FeatureCrypto, FeatureCRC
-        ARMArchFeature = "+v8,+db,+fp-armv8,+neon,+t2dsp,+mp,+hwdiv,+hwdiv-arm,+trustzone,+t2xtpk,+crypto,+crc";
+        // v8a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSPThumb2,
+        //      FeatureMP, FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone,
+        //      FeatureT2XtPk, FeatureCrypto, FeatureCRC
+        ARMArchFeature = "+v8,+db,+fp-armv8,+neon,+t2dsp,+mp,+hwdiv,+hwdiv-arm,"
+                         "+trustzone,+t2xtpk,+crypto,+crc";
       else
         // Use CPU to figure out the exact features
         ARMArchFeature = "+v8";
