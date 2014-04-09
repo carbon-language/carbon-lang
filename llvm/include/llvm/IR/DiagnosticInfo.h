@@ -107,7 +107,7 @@ public:
   DiagnosticInfoInlineAsm(const Twine &MsgStr,
                           DiagnosticSeverity Severity = DS_Error)
       : DiagnosticInfo(DK_InlineAsm, Severity), LocCookie(0), MsgStr(MsgStr),
-        Instr(NULL) {}
+        Instr(nullptr) {}
 
   /// \p LocCookie if non-zero gives the line number for this report.
   /// \p MsgStr gives the message.
@@ -116,7 +116,7 @@ public:
   DiagnosticInfoInlineAsm(unsigned LocCookie, const Twine &MsgStr,
                           DiagnosticSeverity Severity = DS_Error)
       : DiagnosticInfo(DK_InlineAsm, Severity), LocCookie(LocCookie),
-        MsgStr(MsgStr), Instr(NULL) {}
+        MsgStr(MsgStr), Instr(nullptr) {}
 
   /// \p Instr gives the original instruction that triggered the diagnostic.
   /// \p MsgStr gives the message.
@@ -210,7 +210,7 @@ public:
         LineNum(0), Msg(Msg) {}
   DiagnosticInfoSampleProfile(const Twine &Msg,
                               DiagnosticSeverity Severity = DS_Error)
-      : DiagnosticInfo(DK_SampleProfile, Severity), FileName(NULL),
+      : DiagnosticInfo(DK_SampleProfile, Severity), FileName(nullptr),
         LineNum(0), Msg(Msg) {}
 
   /// \see DiagnosticInfo::print.

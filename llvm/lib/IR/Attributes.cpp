@@ -402,7 +402,7 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
 AttributeSetNode *AttributeSetNode::get(LLVMContext &C,
                                         ArrayRef<Attribute> Attrs) {
   if (Attrs.empty())
-    return 0;
+    return nullptr;
 
   // Otherwise, build a key to look up the existing attributes.
   LLVMContextImpl *pImpl = C.pImpl;
@@ -836,7 +836,7 @@ bool AttributeSet::hasAttributes(unsigned Index) const {
 /// \brief Return true if the specified attribute is set for at least one
 /// parameter or for the return value.
 bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
-  if (pImpl == 0) return false;
+  if (!pImpl) return false;
 
   for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I)
     for (AttributeSetImpl::iterator II = pImpl->begin(I),
@@ -877,14 +877,14 @@ std::string AttributeSet::getAsString(unsigned Index,
 
 /// \brief The attributes for the specified index are returned.
 AttributeSetNode *AttributeSet::getAttributes(unsigned Index) const {
-  if (!pImpl) return 0;
+  if (!pImpl) return nullptr;
 
   // Loop through to find the attribute node we want.
   for (unsigned I = 0, E = pImpl->getNumAttributes(); I != E; ++I)
     if (pImpl->getSlotIndex(I) == Index)
       return pImpl->getSlotNode(I);
 
-  return 0;
+  return nullptr;
 }
 
 AttributeSet::iterator AttributeSet::begin(unsigned Slot) const {

@@ -21,7 +21,7 @@
 using namespace llvm;
 
 LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
-  : TheTrueVal(0), TheFalseVal(0),
+  : TheTrueVal(nullptr), TheFalseVal(nullptr),
     VoidTy(C, Type::VoidTyID),
     LabelTy(C, Type::LabelTyID),
     HalfTy(C, Type::HalfTyID),
@@ -37,10 +37,10 @@ LLVMContextImpl::LLVMContextImpl(LLVMContext &C)
     Int16Ty(C, 16),
     Int32Ty(C, 32),
     Int64Ty(C, 64) {
-  InlineAsmDiagHandler = 0;
-  InlineAsmDiagContext = 0;
-  DiagnosticHandler = 0;
-  DiagnosticContext = 0;
+  InlineAsmDiagHandler = nullptr;
+  InlineAsmDiagContext = nullptr;
+  DiagnosticHandler = nullptr;
+  DiagnosticContext = nullptr;
   NamedStructTypesUniqueID = 0;
 }
 
@@ -50,7 +50,7 @@ namespace {
 /// command line flag -pass-remarks. Passes whose name matches this
 /// regexp will emit a diagnostic when calling
 /// LLVMContext::emitOptimizationRemark.
-static Regex *OptimizationRemarkPattern = 0;
+static Regex *OptimizationRemarkPattern = nullptr;
 
 /// \brief String to hold all the values passed via -pass-remarks. Every
 /// instance of -pass-remarks on the command line will be concatenated

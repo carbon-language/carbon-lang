@@ -188,7 +188,7 @@ class StructType : public CompositeType {
   StructType(const StructType &) LLVM_DELETED_FUNCTION;
   const StructType &operator=(const StructType &) LLVM_DELETED_FUNCTION;
   StructType(LLVMContext &C)
-    : CompositeType(C, StructTyID), SymbolTableEntry(0) {}
+    : CompositeType(C, StructTyID), SymbolTableEntry(nullptr) {}
   enum {
     /// This is the contents of the SubClassData field.
     SCDB_HasBody = 1,
@@ -249,10 +249,10 @@ public:
   bool isOpaque() const { return (getSubclassData() & SCDB_HasBody) == 0; }
 
   /// isSized - Return true if this is a sized type.
-  bool isSized(SmallPtrSet<const Type*, 4> *Visited = 0) const;
+  bool isSized(SmallPtrSet<const Type*, 4> *Visited = nullptr) const;
   
   /// hasName - Return true if this is a named struct that has a non-empty name.
-  bool hasName() const { return SymbolTableEntry != 0; }
+  bool hasName() const { return SymbolTableEntry != nullptr; }
   
   /// getName - Return the name for this struct type if it has an identity.
   /// This may return an empty string for an unnamed struct type.  Do not call

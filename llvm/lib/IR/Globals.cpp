@@ -96,7 +96,7 @@ GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
   : GlobalValue(PointerType::get(Ty, AddressSpace),
                 Value::GlobalVariableVal,
                 OperandTraits<GlobalVariable>::op_begin(this),
-                InitVal != 0, Link, Name),
+                InitVal != nullptr, Link, Name),
     isConstantGlobal(constant), threadLocalMode(TLMode),
     isExternallyInitializedConstant(isExternallyInitialized) {
   if (InitVal) {
@@ -117,7 +117,7 @@ GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
   : GlobalValue(PointerType::get(Ty, AddressSpace),
                 Value::GlobalVariableVal,
                 OperandTraits<GlobalVariable>::op_begin(this),
-                InitVal != 0, Link, Name),
+                InitVal != nullptr, Link, Name),
     isConstantGlobal(constant), threadLocalMode(TLMode),
     isExternallyInitializedConstant(isExternallyInitialized) {
   if (InitVal) {
@@ -171,9 +171,9 @@ void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
 }
 
 void GlobalVariable::setInitializer(Constant *InitVal) {
-  if (InitVal == 0) {
+  if (!InitVal) {
     if (hasInitializer()) {
-      Op<0>().set(0);
+      Op<0>().set(nullptr);
       NumOperands = 0;
     }
   } else {
@@ -260,7 +260,7 @@ GlobalValue *GlobalAlias::getAliasedGlobal() {
   for (;;) {
     GlobalValue *GV = getAliaseeGV(GA);
     if (!Visited.insert(GV))
-      return 0;
+      return nullptr;
 
     // Iterate over aliasing chain.
     GA = dyn_cast<GlobalAlias>(GV);

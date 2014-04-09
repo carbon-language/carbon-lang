@@ -186,9 +186,9 @@ class DominatorTreeBase : public DominatorBase<NodeT> {
     assert(isReachableFromEntry(A));
 
     const DomTreeNodeBase<NodeT> *IDom;
-    while ((IDom = B->getIDom()) != 0 && IDom != A && IDom != B)
+    while ((IDom = B->getIDom()) != nullptr && IDom != A && IDom != B)
       B = IDom;   // Walk up the tree
-    return IDom != 0;
+    return IDom != nullptr;
   }
 
 protected:
@@ -205,7 +205,7 @@ protected:
     unsigned Semi;
     NodeT *Label;
 
-    InfoRec() : DFSNum(0), Parent(0), Semi(0), Label(0) {}
+    InfoRec() : DFSNum(0), Parent(0), Semi(0), Label(nullptr) {}
   };
 
   DenseMap<NodeT*, NodeT*> IDoms;
@@ -224,7 +224,7 @@ protected:
     IDoms.clear();
     this->Roots.clear();
     Vertex.clear();
-    RootNode = 0;
+    RootNode = nullptr;
   }
 
   // NewBB is split and now it has one successor. Update dominator tree to
@@ -260,7 +260,7 @@ protected:
 
     // Find NewBB's immediate dominator and create new dominator tree node for
     // NewBB.
-    NodeT *NewBBIDom = 0;
+    NodeT *NewBBIDom = nullptr;
     unsigned i = 0;
     for (i = 0; i < PredBlocks.size(); ++i)
       if (DT.isReachableFromEntry(PredBlocks[i])) {
@@ -344,7 +344,7 @@ public:
   void getDescendants(NodeT *R, SmallVectorImpl<NodeT *> &Result) const {
     Result.clear();
     const DomTreeNodeBase<NodeT> *RN = getNode(R);
-    if (RN == NULL)
+    if (!RN)
       return; // If R is unreachable, it will not be present in the DOM tree.
     SmallVector<const DomTreeNodeBase<NodeT> *, 8> WL;
     WL.push_back(RN);
@@ -361,7 +361,7 @@ public:
   ///
   bool properlyDominates(const DomTreeNodeBase<NodeT> *A,
                          const DomTreeNodeBase<NodeT> *B) const {
-    if (A == 0 || B == 0)
+    if (!A || !B)
       return false;
     if (A == B)
       return false;
@@ -471,7 +471,7 @@ public:
       IDomB = IDomB->getIDom();
     }
 
-    return NULL;
+    return nullptr;
   }
 
   const NodeT *findNearestCommonDominator(const NodeT *A, const NodeT *B) {
@@ -659,14 +659,14 @@ public:
   void recalculate(FT& F) {
     typedef GraphTraits<FT*> TraitsTy;
     reset();
-    this->Vertex.push_back(0);
+    this->Vertex.push_back(nullptr);
 
     if (!this->IsPostDominators) {
       // Initialize root
       NodeT *entry = TraitsTy::getEntryNode(&F);
       this->Roots.push_back(entry);
-      this->IDoms[entry] = 0;
-      this->DomTreeNodes[entry] = 0;
+      this->IDoms[entry] = nullptr;
+      this->DomTreeNodes[entry] = nullptr;
 
       Calculate<FT, NodeT*>(*this, F);
     } else {
@@ -677,8 +677,8 @@ public:
           addRoot(I);
 
         // Prepopulate maps so that we don't get iterator invalidation issues later.
-        this->IDoms[I] = 0;
-        this->DomTreeNodes[I] = 0;
+        this->IDoms[I] = nullptr;
+        this->DomTreeNodes[I] = nullptr;
       }
 
       Calculate<FT, Inverse<NodeT*> >(*this, F);

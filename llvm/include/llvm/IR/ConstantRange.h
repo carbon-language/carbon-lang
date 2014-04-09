@@ -114,12 +114,12 @@ public:
   const APInt *getSingleElement() const {
     if (Upper == Lower + 1)
       return &Lower;
-    return 0;
+    return nullptr;
   }
 
   /// isSingleElement - Return true if this set contains exactly one member.
   ///
-  bool isSingleElement() const { return getSingleElement() != 0; }
+  bool isSingleElement() const { return getSingleElement() != nullptr; }
 
   /// getSetSize - Return the number of elements in this set.
   ///

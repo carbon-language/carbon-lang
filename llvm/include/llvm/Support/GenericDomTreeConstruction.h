@@ -156,11 +156,11 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   bool MultipleRoots = (DT.Roots.size() > 1);
   if (MultipleRoots) {
     typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &BBInfo =
-        DT.Info[NULL];
+        DT.Info[nullptr];
     BBInfo.DFSNum = BBInfo.Semi = ++N;
-    BBInfo.Label = NULL;
+    BBInfo.Label = nullptr;
 
-    DT.Vertex.push_back(NULL);       // Vertex[n] = V;
+    DT.Vertex.push_back(nullptr);       // Vertex[n] = V;
   }
 
   // Step #1: Number blocks in depth-first order and initialize variables used
@@ -249,10 +249,10 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   // one exit block, or it may be the virtual exit (denoted by (BasicBlock *)0)
   // which postdominates all real exits if there are multiple exit blocks, or
   // an infinite loop.
-  typename GraphT::NodeType* Root = !MultipleRoots ? DT.Roots[0] : 0;
+  typename GraphT::NodeType* Root = !MultipleRoots ? DT.Roots[0] : nullptr;
 
   DT.DomTreeNodes[Root] = DT.RootNode =
-                        new DomTreeNodeBase<typename GraphT::NodeType>(Root, 0);
+                  new DomTreeNodeBase<typename GraphT::NodeType>(Root, nullptr);
 
   // Loop over all of the reachable blocks in the function...
   for (unsigned i = 2; i <= N; ++i) {

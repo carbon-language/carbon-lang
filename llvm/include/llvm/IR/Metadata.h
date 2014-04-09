@@ -218,7 +218,7 @@ class NamedMDNode : public ilist_node<NamedMDNode> {
     friend class NamedMDNode;
 
   public:
-    op_iterator_impl() : Node(0), Idx(0) { }
+    op_iterator_impl() : Node(nullptr), Idx(0) { }
 
     bool operator==(const op_iterator_impl &o) const { return Idx == o.Idx; }
     bool operator!=(const op_iterator_impl &o) const { return Idx != o.Idx; }
@@ -272,7 +272,7 @@ public:
   StringRef getName() const;
 
   /// print - Implement operator<< on NamedMDNode.
-  void print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW = 0) const;
+  void print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW = nullptr) const;
 
   /// dump() - Allow printing of NamedMDNodes from the debugger.
   void dump() const;

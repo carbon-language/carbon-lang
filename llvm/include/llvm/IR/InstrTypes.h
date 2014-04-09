@@ -36,7 +36,7 @@ class TerminatorInst : public Instruction {
 protected:
   TerminatorInst(Type *Ty, Instruction::TermOps iType,
                  Use *Ops, unsigned NumOps,
-                 Instruction *InsertBefore = 0)
+                 Instruction *InsertBefore = nullptr)
     : Instruction(Ty, iType, Ops, NumOps, InsertBefore) {}
 
   TerminatorInst(Type *Ty, Instruction::TermOps iType,
@@ -91,7 +91,7 @@ class UnaryInstruction : public Instruction {
 
 protected:
   UnaryInstruction(Type *Ty, unsigned iType, Value *V,
-                   Instruction *IB = 0)
+                   Instruction *IB = nullptr)
     : Instruction(Ty, iType, &Op<0>(), 1, IB) {
     Op<0>() = V;
   }
@@ -160,7 +160,7 @@ public:
   ///
   static BinaryOperator *Create(BinaryOps Op, Value *S1, Value *S2,
                                 const Twine &Name = Twine(),
-                                Instruction *InsertBefore = 0);
+                                Instruction *InsertBefore = nullptr);
 
   /// Create() - Construct a binary instruction, given the opcode and the two
   /// operands.  Also automatically insert this instruction to the end of the
@@ -285,23 +285,23 @@ public:
   ///     instructions out of SUB and XOR instructions.
   ///
   static BinaryOperator *CreateNeg(Value *Op, const Twine &Name = "",
-                                   Instruction *InsertBefore = 0);
+                                   Instruction *InsertBefore = nullptr);
   static BinaryOperator *CreateNeg(Value *Op, const Twine &Name,
                                    BasicBlock *InsertAtEnd);
   static BinaryOperator *CreateNSWNeg(Value *Op, const Twine &Name = "",
-                                      Instruction *InsertBefore = 0);
+                                      Instruction *InsertBefore = nullptr);
   static BinaryOperator *CreateNSWNeg(Value *Op, const Twine &Name,
                                       BasicBlock *InsertAtEnd);
   static BinaryOperator *CreateNUWNeg(Value *Op, const Twine &Name = "",
-                                      Instruction *InsertBefore = 0);
+                                      Instruction *InsertBefore = nullptr);
   static BinaryOperator *CreateNUWNeg(Value *Op, const Twine &Name,
                                       BasicBlock *InsertAtEnd);
   static BinaryOperator *CreateFNeg(Value *Op, const Twine &Name = "",
-                                    Instruction *InsertBefore = 0);
+                                    Instruction *InsertBefore = nullptr);
   static BinaryOperator *CreateFNeg(Value *Op, const Twine &Name,
                                     BasicBlock *InsertAtEnd);
   static BinaryOperator *CreateNot(Value *Op, const Twine &Name = "",
-                                   Instruction *InsertBefore = 0);
+                                   Instruction *InsertBefore = nullptr);
   static BinaryOperator *CreateNot(Value *Op, const Twine &Name,
                                    BasicBlock *InsertAtEnd);
 
@@ -389,7 +389,7 @@ class CastInst : public UnaryInstruction {
 protected:
   /// @brief Constructor with insert-before-instruction semantics for subclasses
   CastInst(Type *Ty, unsigned iType, Value *S,
-           const Twine &NameStr = "", Instruction *InsertBefore = 0)
+           const Twine &NameStr = "", Instruction *InsertBefore = nullptr)
     : UnaryInstruction(Ty, iType, S, InsertBefore) {
     setName(NameStr);
   }
@@ -411,7 +411,7 @@ public:
     Value *S,                ///< The value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
     const Twine &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+    Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
   /// Provides a way to construct any of the CastInst subclasses using an
   /// opcode instead of the subclass's constructor. The opcode must be in the
@@ -432,7 +432,7 @@ public:
     Value *S,                ///< The value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
     const Twine &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+    Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
   /// @brief Create a ZExt or BitCast cast instruction
@@ -448,7 +448,7 @@ public:
     Value *S,                ///< The value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
     const Twine &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+    Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
   /// @brief Create a SExt or BitCast cast instruction
@@ -472,7 +472,7 @@ public:
     Value *S,                ///< The pointer value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
     const Twine &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+    Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
   /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
@@ -481,7 +481,7 @@ public:
     Type *Ty,          ///< The type to which cast should be made
     bool isSigned,           ///< Whether to regard S as signed or not
     const Twine &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+    Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
   /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
@@ -498,7 +498,7 @@ public:
     Value *S,                ///< The floating point value to be casted
     Type *Ty,          ///< The floating point type to cast to
     const Twine &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+    Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
   /// @brief Create an FPExt, BitCast, or FPTrunc for fp -> fp casts
@@ -514,7 +514,7 @@ public:
     Value *S,                ///< The value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
     const Twine &Name = "", ///< Name for the instruction
-    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+    Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
   /// @brief Create a Trunc or BitCast cast instruction
@@ -641,7 +641,7 @@ class CmpInst : public Instruction {
 protected:
   CmpInst(Type *ty, Instruction::OtherOps op, unsigned short pred,
           Value *LHS, Value *RHS, const Twine &Name = "",
-          Instruction *InsertBefore = 0);
+          Instruction *InsertBefore = nullptr);
 
   CmpInst(Type *ty, Instruction::OtherOps op, unsigned short pred,
           Value *LHS, Value *RHS, const Twine &Name,
@@ -701,7 +701,7 @@ public:
   static CmpInst *Create(OtherOps Op,
                          unsigned short predicate, Value *S1,
                          Value *S2, const Twine &Name = "",
-                         Instruction *InsertBefore = 0);
+                         Instruction *InsertBefore = nullptr);
 
   /// Construct a compare instruction, given the opcode, the predicate and the
   /// two operands.  Also automatically insert this instruction to the end of

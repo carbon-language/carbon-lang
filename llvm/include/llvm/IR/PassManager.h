@@ -480,7 +480,7 @@ public:
   ///
   /// This method should only be called for a single module as there is the
   /// expectation that the lifetime of a pass is bounded to that of a module.
-  PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM = 0);
+  PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM = nullptr);
 
   template <typename ModulePassT> void addPass(ModulePassT Pass) {
     Passes.emplace_back(new ModulePassModel<ModulePassT>(std::move(Pass)));
@@ -524,7 +524,7 @@ public:
     Passes.emplace_back(new FunctionPassModel<FunctionPassT>(std::move(Pass)));
   }
 
-  PreservedAnalyses run(Function *F, FunctionAnalysisManager *AM = 0);
+  PreservedAnalyses run(Function *F, FunctionAnalysisManager *AM = nullptr);
 
   static StringRef name() { return "FunctionPassManager"; }
 
@@ -987,7 +987,7 @@ public:
 
   /// \brief Runs the function pass across every function in the module.
   PreservedAnalyses run(Module *M, ModuleAnalysisManager *AM) {
-    FunctionAnalysisManager *FAM = 0;
+    FunctionAnalysisManager *FAM = nullptr;
     if (AM)
       // Setup the function analysis manager from its proxy.
       FAM = &AM->getResult<FunctionAnalysisManagerModuleProxy>(M).getManager();

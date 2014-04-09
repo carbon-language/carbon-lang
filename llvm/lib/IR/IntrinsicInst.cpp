@@ -35,7 +35,7 @@ static Value *CastOperand(Value *C) {
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
     if (CE->isCast())
       return CE->getOperand(0);
-  return NULL;
+  return nullptr;
 }
 
 Value *DbgInfoIntrinsic::StripCast(Value *C) {
@@ -57,7 +57,7 @@ Value *DbgDeclareInst::getAddress() const {
   if (MDNode* MD = cast_or_null<MDNode>(getArgOperand(0)))
     return MD->getOperand(0);
   else
-    return NULL;
+    return nullptr;
 }
 
 //===----------------------------------------------------------------------===//

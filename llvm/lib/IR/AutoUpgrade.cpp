@@ -115,7 +115,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
         Name == "x86.avx.movnt.ps.256" ||
         Name == "x86.sse42.crc32.64.8" ||
         (Name.startswith("x86.xop.vpcom") && F->arg_size() == 2)) {
-      NewFn = 0;
+      NewFn = nullptr;
       return true;
     }
     // SSE4.1 ptest functions may have an old signature.
@@ -158,7 +158,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
 }
 
 bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
-  NewFn = 0;
+  NewFn = nullptr;
   bool Upgraded = UpgradeIntrinsicFunction1(F, NewFn);
 
   // Upgrade intrinsic attributes.  This does not change the function.
@@ -453,9 +453,9 @@ void llvm::UpgradeInstWithTBAATag(Instruction *I) {
 Instruction *llvm::UpgradeBitCastInst(unsigned Opc, Value *V, Type *DestTy,
                                       Instruction *&Temp) {
   if (Opc != Instruction::BitCast)
-    return 0;
+    return nullptr;
 
-  Temp = 0;
+  Temp = nullptr;
   Type *SrcTy = V->getType();
   if (SrcTy->isPtrOrPtrVectorTy() && DestTy->isPtrOrPtrVectorTy() &&
       SrcTy->getPointerAddressSpace() != DestTy->getPointerAddressSpace()) {
@@ -469,12 +469,12 @@ Instruction *llvm::UpgradeBitCastInst(unsigned Opc, Value *V, Type *DestTy,
     return CastInst::Create(Instruction::IntToPtr, Temp, DestTy);
   }
 
-  return 0;
+  return nullptr;
 }
 
 Value *llvm::UpgradeBitCastExpr(unsigned Opc, Constant *C, Type *DestTy) {
   if (Opc != Instruction::BitCast)
-    return 0;
+    return nullptr;
 
   Type *SrcTy = C->getType();
   if (SrcTy->isPtrOrPtrVectorTy() && DestTy->isPtrOrPtrVectorTy() &&
@@ -489,7 +489,7 @@ Value *llvm::UpgradeBitCastExpr(unsigned Opc, Constant *C, Type *DestTy) {
                                      DestTy);
   }
 
-  return 0;
+  return nullptr;
 }
 
 /// Check the debug info version number, if it is out-dated, drop the debug

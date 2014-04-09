@@ -104,7 +104,7 @@ protected:
   void replaceFunctionField(unsigned Elt, Function *F);
 
 public:
-  explicit DIDescriptor(const MDNode *N = 0) : DbgNode(N) {}
+  explicit DIDescriptor(const MDNode *N = nullptr) : DbgNode(N) {}
 
   bool Verify() const;
 
@@ -116,7 +116,7 @@ public:
   // FIXME: This operator bool isn't actually protecting anything at the
   // moment due to the conversion operator above making DIDescriptor nodes
   // implicitly convertable to bool.
-  LLVM_EXPLICIT operator bool() const { return DbgNode != 0; }
+  LLVM_EXPLICIT operator bool() const { return DbgNode != nullptr; }
 
   bool operator==(DIDescriptor Other) const { return DbgNode == Other.DbgNode; }
   bool operator!=(DIDescriptor Other) const { return !operator==(Other); }
@@ -159,7 +159,7 @@ class DISubrange : public DIDescriptor {
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DISubrange(const MDNode *N = 0) : DIDescriptor(N) {}
+  explicit DISubrange(const MDNode *N = nullptr) : DIDescriptor(N) {}
 
   int64_t getLo() const { return getInt64Field(1); }
   int64_t getCount() const { return getInt64Field(2); }
@@ -169,7 +169,7 @@ public:
 /// DIArray - This descriptor holds an array of descriptors.
 class DIArray : public DIDescriptor {
 public:
-  explicit DIArray(const MDNode *N = 0) : DIDescriptor(N) {}
+  explicit DIArray(const MDNode *N = nullptr) : DIDescriptor(N) {}
 
   unsigned getNumElements() const;
   DIDescriptor getElement(unsigned Idx) const {
@@ -185,7 +185,7 @@ class DIEnumerator : public DIDescriptor {
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DIEnumerator(const MDNode *N = 0) : DIDescriptor(N) {}
+  explicit DIEnumerator(const MDNode *N = nullptr) : DIDescriptor(N) {}
 
   StringRef getName() const { return getStringField(1); }
   int64_t getEnumValue() const { return getInt64Field(2); }
@@ -210,7 +210,7 @@ protected:
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DIScope(const MDNode *N = 0) : DIDescriptor(N) {}
+  explicit DIScope(const MDNode *N = nullptr) : DIDescriptor(N) {}
 
   /// Gets the parent scope for this scope node or returns a
   /// default constructed scope.
@@ -292,7 +292,7 @@ protected:
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DIType(const MDNode *N = 0) : DIScope(N) {}
+  explicit DIType(const MDNode *N = nullptr) : DIScope(N) {}
   operator DITypeRef () const {
     assert(isType() &&
            "constructing DITypeRef from an MDNode that is not a type");
@@ -346,7 +346,7 @@ public:
 /// DIBasicType - A basic type, like 'int' or 'float'.
 class DIBasicType : public DIType {
 public:
-  explicit DIBasicType(const MDNode *N = 0) : DIType(N) {}
+  explicit DIBasicType(const MDNode *N = nullptr) : DIType(N) {}
 
   unsigned getEncoding() const { return getUnsignedField(9); }
 
@@ -362,7 +362,7 @@ class DIDerivedType : public DIType {
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DIDerivedType(const MDNode *N = 0) : DIType(N) {}
+  explicit DIDerivedType(const MDNode *N = nullptr) : DIType(N) {}
 
   DITypeRef getTypeDerivedFrom() const { return getFieldAs<DITypeRef>(9); }
 
@@ -395,7 +395,7 @@ class DICompositeType : public DIDerivedType {
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DICompositeType(const MDNode *N = 0) : DIDerivedType(N) {}
+  explicit DICompositeType(const MDNode *N = nullptr) : DIDerivedType(N) {}
 
   DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
   void setTypeArray(DIArray Elements, DIArray TParams = DIArray());
@@ -414,7 +414,7 @@ class DIFile : public DIScope {
   friend class DIDescriptor;
 
 public:
-  explicit DIFile(const MDNode *N = 0) : DIScope(N) {}
+  explicit DIFile(const MDNode *N = nullptr) : DIScope(N) {}
   MDNode *getFileNode() const;
   bool Verify() const;
 };
@@ -425,7 +425,7 @@ class DICompileUnit : public DIScope {
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DICompileUnit(const MDNode *N = 0) : DIScope(N) {}
+  explicit DICompileUnit(const MDNode *N = nullptr) : DIScope(N) {}
 
   unsigned getLanguage() const { return getUnsignedField(2); }
   StringRef getProducer() const { return getStringField(3); }
@@ -453,7 +453,7 @@ class DISubprogram : public DIScope {
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DISubprogram(const MDNode *N = 0) : DIScope(N) {}
+  explicit DISubprogram(const MDNode *N = nullptr) : DIScope(N) {}
 
   DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(2); }
   StringRef getName() const { return getStringField(3); }
@@ -532,7 +532,7 @@ public:
 /// DILexicalBlock - This is a wrapper for a lexical block.
 class DILexicalBlock : public DIScope {
 public:
-  explicit DILexicalBlock(const MDNode *N = 0) : DIScope(N) {}
+  explicit DILexicalBlock(const MDNode *N = nullptr) : DIScope(N) {}
   DIScope getContext() const { return getFieldAs<DIScope>(2); }
   unsigned getLineNumber() const { return getUnsignedField(3); }
   unsigned getColumnNumber() const { return getUnsignedField(4); }
@@ -544,7 +544,7 @@ public:
 /// a filename change.
 class DILexicalBlockFile : public DIScope {
 public:
-  explicit DILexicalBlockFile(const MDNode *N = 0) : DIScope(N) {}
+  explicit DILexicalBlockFile(const MDNode *N = nullptr) : DIScope(N) {}
   DIScope getContext() const {
     if (getScope().isSubprogram())
       return getScope();
@@ -562,7 +562,7 @@ class DINameSpace : public DIScope {
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DINameSpace(const MDNode *N = 0) : DIScope(N) {}
+  explicit DINameSpace(const MDNode *N = nullptr) : DIScope(N) {}
   DIScope getContext() const { return getFieldAs<DIScope>(2); }
   StringRef getName() const { return getStringField(3); }
   unsigned getLineNumber() const { return getUnsignedField(4); }
@@ -572,14 +572,16 @@ public:
 /// DIUnspecifiedParameter - This is a wrapper for unspecified parameters.
 class DIUnspecifiedParameter : public DIDescriptor {
 public:
-  explicit DIUnspecifiedParameter(const MDNode *N = 0) : DIDescriptor(N) {}
+  explicit DIUnspecifiedParameter(const MDNode *N = nullptr)
+    : DIDescriptor(N) {}
   bool Verify() const;
 };
 
 /// DITemplateTypeParameter - This is a wrapper for template type parameter.
 class DITemplateTypeParameter : public DIDescriptor {
 public:
-  explicit DITemplateTypeParameter(const MDNode *N = 0) : DIDescriptor(N) {}
+  explicit DITemplateTypeParameter(const MDNode *N = nullptr)
+    : DIDescriptor(N) {}
 
   DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(1); }
   StringRef getName() const { return getStringField(2); }
@@ -596,7 +598,8 @@ public:
 /// DITemplateValueParameter - This is a wrapper for template value parameter.
 class DITemplateValueParameter : public DIDescriptor {
 public:
-  explicit DITemplateValueParameter(const MDNode *N = 0) : DIDescriptor(N) {}
+  explicit DITemplateValueParameter(const MDNode *N = nullptr)
+    : DIDescriptor(N) {}
 
   DIScopeRef getContext() const { return getFieldAs<DIScopeRef>(1); }
   StringRef getName() const { return getStringField(2); }
@@ -617,7 +620,7 @@ class DIGlobalVariable : public DIDescriptor {
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DIGlobalVariable(const MDNode *N = 0) : DIDescriptor(N) {}
+  explicit DIGlobalVariable(const MDNode *N = nullptr) : DIDescriptor(N) {}
 
   DIScope getContext() const { return getFieldAs<DIScope>(2); }
   StringRef getName() const { return getStringField(3); }
@@ -650,7 +653,7 @@ class DIVariable : public DIDescriptor {
   void printInternal(raw_ostream &OS) const;
 
 public:
-  explicit DIVariable(const MDNode *N = 0) : DIDescriptor(N) {}
+  explicit DIVariable(const MDNode *N = nullptr) : DIDescriptor(N) {}
 
   DIScope getContext() const { return getFieldAs<DIScope>(1); }
   StringRef getName() const { return getStringField(2); }

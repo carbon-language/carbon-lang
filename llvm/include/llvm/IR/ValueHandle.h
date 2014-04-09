@@ -64,14 +64,14 @@ private:
   ValueHandleBase(const ValueHandleBase&) LLVM_DELETED_FUNCTION;
 public:
   explicit ValueHandleBase(HandleBaseKind Kind)
-    : PrevPair(0, Kind), Next(0), VP(0, 0) {}
+    : PrevPair(nullptr, Kind), Next(nullptr), VP(nullptr, 0) {}
   ValueHandleBase(HandleBaseKind Kind, Value *V)
-    : PrevPair(0, Kind), Next(0), VP(V, 0) {
+    : PrevPair(nullptr, Kind), Next(nullptr), VP(V, 0) {
     if (isValid(VP.getPointer()))
       AddToUseList();
   }
   ValueHandleBase(HandleBaseKind Kind, const ValueHandleBase &RHS)
-    : PrevPair(0, Kind), Next(0), VP(RHS.VP) {
+    : PrevPair(nullptr, Kind), Next(nullptr), VP(RHS.VP) {
     if (isValid(VP.getPointer()))
       AddToExistingUseList(RHS.getPrevPtr());
   }
@@ -366,7 +366,7 @@ public:
   ///
   /// All implementations must remove the reference from this object to the
   /// Value that's being destroyed.
-  virtual void deleted() { setValPtr(NULL); }
+  virtual void deleted() { setValPtr(nullptr); }
 
   /// Called when this->getValPtr()->replaceAllUsesWith(new_value) is called,
   /// _before_ any of the uses have actually been replaced.  If WeakVH were

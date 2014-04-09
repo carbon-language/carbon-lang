@@ -35,9 +35,9 @@ namespace llvm {
 
   public:
     EVT() : V((MVT::SimpleValueType)(MVT::INVALID_SIMPLE_VALUE_TYPE)),
-            LLVMTy(0) {}
-    EVT(MVT::SimpleValueType SVT) : V(SVT), LLVMTy(0) { }
-    EVT(MVT S) : V(S), LLVMTy(0) {}
+            LLVMTy(nullptr) {}
+    EVT(MVT::SimpleValueType SVT) : V(SVT), LLVMTy(nullptr) { }
+    EVT(MVT S) : V(S), LLVMTy(nullptr) {}
 
     bool operator==(EVT VT) const {
       return !(*this != VT);

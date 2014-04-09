@@ -81,14 +81,14 @@ PassRegistry::~PassRegistry() {
     delete *I;
   
   delete Impl;
-  pImpl = 0;
+  pImpl = nullptr;
 }
 
 const PassInfo *PassRegistry::getPassInfo(const void *TI) const {
   sys::SmartScopedReader<true> Guard(*Lock);
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   PassRegistryImpl::MapType::const_iterator I = Impl->PassInfoMap.find(TI);
-  return I != Impl->PassInfoMap.end() ? I->second : 0;
+  return I != Impl->PassInfoMap.end() ? I->second : nullptr;
 }
 
 const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
@@ -96,7 +96,7 @@ const PassInfo *PassRegistry::getPassInfo(StringRef Arg) const {
   PassRegistryImpl *Impl = static_cast<PassRegistryImpl*>(getImpl());
   PassRegistryImpl::StringMapType::const_iterator
     I = Impl->PassInfoStringMap.find(Arg);
-  return I != Impl->PassInfoStringMap.end() ? I->second : 0;
+  return I != Impl->PassInfoStringMap.end() ? I->second : nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -148,7 +148,7 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
                                          bool isDefault,
                                          bool ShouldFree) {
   PassInfo *InterfaceInfo =  const_cast<PassInfo*>(getPassInfo(InterfaceID));
-  if (InterfaceInfo == 0) {
+  if (!InterfaceInfo) {
     // First reference to Interface, register it now.
     registerPass(Registeree);
     InterfaceInfo = &Registeree;

@@ -129,7 +129,7 @@ public:
 
   // Find pass that is implementing PI.
   Pass *findImplPass(AnalysisID PI) {
-    Pass *ResultPass = 0;
+    Pass *ResultPass = nullptr;
     for (unsigned i = 0; i < AnalysisImpls.size() ; ++i) {
       if (AnalysisImpls[i].first == PI) {
         ResultPass = AnalysisImpls[i].second;
@@ -182,7 +182,7 @@ AnalysisType *Pass::getAnalysisIfAvailable() const {
   const void *PI = &AnalysisType::ID;
 
   Pass *ResultPass = Resolver->getAnalysisIfAvailable(PI, true);
-  if (ResultPass == 0) return 0;
+  if (!ResultPass) return 0;
 
   // Because the AnalysisType may not be a subclass of pass (for
   // AnalysisGroups), we use getAdjustedAnalysisPointer here to potentially

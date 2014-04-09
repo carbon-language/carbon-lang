@@ -88,7 +88,7 @@ private:
   enum PrevPtrTag { zeroDigitTag, oneDigitTag, stopTag, fullStopTag };
 
   /// Constructor
-  Use(PrevPtrTag tag) : Val(0) { Prev.setInt(tag); }
+  Use(PrevPtrTag tag) : Val(nullptr) { Prev.setInt(tag); }
 
 public:
   operator Value *() const { return Val; }

@@ -49,7 +49,7 @@ namespace llvm {
     /// @{
 
     /// Construct an empty ArrayRef.
-    /*implicit*/ ArrayRef() : Data(0), Length(0) {}
+    /*implicit*/ ArrayRef() : Data(nullptr), Length(0) {}
 
     /// Construct an empty ArrayRef from None.
     /*implicit*/ ArrayRef(NoneType) : Data(nullptr), Length(0) {}

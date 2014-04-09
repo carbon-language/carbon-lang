@@ -126,7 +126,7 @@ void LLVMContext::emitError(const Instruction *I, const Twine &ErrorStr) {
 
 void LLVMContext::diagnose(const DiagnosticInfo &DI) {
   // If there is a report handler, use it.
-  if (pImpl->DiagnosticHandler != 0) {
+  if (pImpl->DiagnosticHandler) {
     pImpl->DiagnosticHandler(DI, pImpl->DiagnosticContext);
     return;
   }

@@ -53,8 +53,8 @@ bool DIDescriptor::Verify() const {
 }
 
 static Value *getField(const MDNode *DbgNode, unsigned Elt) {
-  if (DbgNode == 0 || Elt >= DbgNode->getNumOperands())
-    return 0;
+  if (!DbgNode || Elt >= DbgNode->getNumOperands())
+    return nullptr;
   return DbgNode->getOperand(Elt);
 }
 
@@ -73,7 +73,7 @@ StringRef DIDescriptor::getStringField(unsigned Elt) const {
 }
 
 uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
-  if (DbgNode == 0)
+  if (!DbgNode)
     return 0;
 
   if (Elt < DbgNode->getNumOperands())
@@ -85,7 +85,7 @@ uint64_t DIDescriptor::getUInt64Field(unsigned Elt) const {
 }
 
 int64_t DIDescriptor::getInt64Field(unsigned Elt) const {
-  if (DbgNode == 0)
+  if (!DbgNode)
     return 0;
 
   if (Elt < DbgNode->getNumOperands())
@@ -102,34 +102,34 @@ DIDescriptor DIDescriptor::getDescriptorField(unsigned Elt) const {
 }
 
 GlobalVariable *DIDescriptor::getGlobalVariableField(unsigned Elt) const {
-  if (DbgNode == 0)
-    return 0;
+  if (!DbgNode)
+    return nullptr;
 
   if (Elt < DbgNode->getNumOperands())
     return dyn_cast_or_null<GlobalVariable>(DbgNode->getOperand(Elt));
-  return 0;
+  return nullptr;
 }
 
 Constant *DIDescriptor::getConstantField(unsigned Elt) const {
-  if (DbgNode == 0)
-    return 0;
+  if (!DbgNode)
+    return nullptr;
 
   if (Elt < DbgNode->getNumOperands())
     return dyn_cast_or_null<Constant>(DbgNode->getOperand(Elt));
-  return 0;
+  return nullptr;
 }
 
 Function *DIDescriptor::getFunctionField(unsigned Elt) const {
-  if (DbgNode == 0)
-    return 0;
+  if (!DbgNode)
+    return nullptr;
 
   if (Elt < DbgNode->getNumOperands())
     return dyn_cast_or_null<Function>(DbgNode->getOperand(Elt));
-  return 0;
+  return nullptr;
 }
 
 void DIDescriptor::replaceFunctionField(unsigned Elt, Function *F) {
-  if (DbgNode == 0)
+  if (!DbgNode)
     return;
 
   if (Elt < DbgNode->getNumOperands()) {
@@ -759,7 +759,7 @@ DIScopeRef DIScope::getContext() const {
     return DIScopeRef(DINameSpace(DbgNode).getContext());
 
   assert((isFile() || isCompileUnit()) && "Unhandled type of scope.");
-  return DIScopeRef(NULL);
+  return DIScopeRef(nullptr);
 }
 
 // If the scope node has a name, return that, else return an empty string.

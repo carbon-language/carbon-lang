@@ -174,14 +174,14 @@ private:
 
 public:
   /// Constructs a DataLayout from a specification string. See reset().
-  explicit DataLayout(StringRef LayoutDescription) : LayoutMap(0) {
+  explicit DataLayout(StringRef LayoutDescription) : LayoutMap(nullptr) {
     reset(LayoutDescription);
   }
 
   /// Initialize target data from properties stored in the module.
   explicit DataLayout(const Module *M);
 
-  DataLayout(const DataLayout &DL) : LayoutMap(0) { *this = DL; }
+  DataLayout(const DataLayout &DL) : LayoutMap(nullptr) { *this = DL; }
 
   DataLayout &operator=(const DataLayout &DL) {
     clear();
@@ -408,7 +408,7 @@ public:
   /// none are set.
   Type *getLargestLegalIntType(LLVMContext &C) const {
     unsigned LargestSize = getLargestLegalIntTypeSize();
-    return (LargestSize == 0) ? 0 : Type::getIntNTy(C, LargestSize);
+    return (LargestSize == 0) ? nullptr : Type::getIntNTy(C, LargestSize);
   }
 
   /// getLargestLegalIntType - Return the size of largest legal integer type

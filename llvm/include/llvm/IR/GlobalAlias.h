@@ -41,7 +41,7 @@ public:
   /// GlobalAlias ctor - If a parent module is specified, the alias is
   /// automatically inserted into the end of the specified module's alias list.
   GlobalAlias(Type *Ty, LinkageTypes Linkage, const Twine &Name = "",
-              Constant* Aliasee = 0, Module *Parent = 0);
+              Constant* Aliasee = nullptr, Module *Parent = nullptr);
 
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);

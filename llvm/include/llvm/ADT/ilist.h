@@ -494,9 +494,9 @@ private:
       // Note: we have to be careful about the case when we move the first node
       // in the list.  This node is the list sentinel node and we can't move it.
       NodeTy *ThisSentinel = getTail();
-      setTail(0);
+      setTail(nullptr);
       NodeTy *L2Sentinel = L2.getTail();
-      L2.setTail(0);
+      L2.setTail(nullptr);
 
       // Remove [first, last) from its old position.
       NodeTy *First = &*first, *Prev = this->getPrev(First);
@@ -537,7 +537,7 @@ public:
   //
 
   size_type LLVM_ATTRIBUTE_UNUSED_RESULT size() const {
-    if (Head == 0) return 0; // Don't require construction of sentinel if empty.
+    if (!Head) return 0; // Don't require construction of sentinel if empty.
     return std::distance(begin(), end());
   }
 

@@ -58,7 +58,7 @@ protected:
   FastMathFlags FMF;
 public:
 
-  IRBuilderBase(LLVMContext &context, MDNode *FPMathTag = 0)
+  IRBuilderBase(LLVMContext &context, MDNode *FPMathTag = nullptr)
     : Context(context), DefaultFPMathTag(FPMathTag), FMF() {
     ClearInsertionPoint();
   }
@@ -70,8 +70,8 @@ public:
   /// \brief Clear the insertion point: created instructions will not be
   /// inserted into a block.
   void ClearInsertionPoint() {
-    BB = 0;
-    InsertPt = 0;
+    BB = nullptr;
+    InsertPt = nullptr;
   }
 
   BasicBlock *GetInsertBlock() const { return BB; }
@@ -140,14 +140,14 @@ public:
 
   public:
     /// \brief Creates a new insertion point which doesn't point to anything.
-    InsertPoint() : Block(0) {}
+    InsertPoint() : Block(nullptr) {}
 
     /// \brief Creates a new insertion point at the given location.
     InsertPoint(BasicBlock *InsertBlock, BasicBlock::iterator InsertPoint)
       : Block(InsertBlock), Point(InsertPoint) {}
 
     /// \brief Returns true if this insert point is set.
-    bool isSet() const { return (Block != 0); }
+    bool isSet() const { return (Block != nullptr); }
 
     llvm::BasicBlock *getBlock() const { return Block; }
     llvm::BasicBlock::iterator getPoint() const { return Point; }
@@ -362,27 +362,27 @@ public:
   /// If the pointer isn't an i8*, it will be converted.  If a TBAA tag is
   /// specified, it will be added to the instruction.
   CallInst *CreateMemSet(Value *Ptr, Value *Val, uint64_t Size, unsigned Align,
-                         bool isVolatile = false, MDNode *TBAATag = 0) {
+                         bool isVolatile = false, MDNode *TBAATag = nullptr) {
     return CreateMemSet(Ptr, Val, getInt64(Size), Align, isVolatile, TBAATag);
   }
 
   CallInst *CreateMemSet(Value *Ptr, Value *Val, Value *Size, unsigned Align,
-                         bool isVolatile = false, MDNode *TBAATag = 0);
+                         bool isVolatile = false, MDNode *TBAATag = nullptr);
 
   /// \brief Create and insert a memcpy between the specified pointers.
   ///
   /// If the pointers aren't i8*, they will be converted.  If a TBAA tag is
   /// specified, it will be added to the instruction.
   CallInst *CreateMemCpy(Value *Dst, Value *Src, uint64_t Size, unsigned Align,
-                         bool isVolatile = false, MDNode *TBAATag = 0,
-                         MDNode *TBAAStructTag = 0) {
+                         bool isVolatile = false, MDNode *TBAATag = nullptr,
+                         MDNode *TBAAStructTag = nullptr) {
     return CreateMemCpy(Dst, Src, getInt64(Size), Align, isVolatile, TBAATag,
                         TBAAStructTag);
   }
 
   CallInst *CreateMemCpy(Value *Dst, Value *Src, Value *Size, unsigned Align,
-                         bool isVolatile = false, MDNode *TBAATag = 0,
-                         MDNode *TBAAStructTag = 0);
+                         bool isVolatile = false, MDNode *TBAATag = nullptr,
+                         MDNode *TBAAStructTag = nullptr);
 
   /// \brief Create and insert a memmove between the specified
   /// pointers.
@@ -390,22 +390,22 @@ public:
   /// If the pointers aren't i8*, they will be converted.  If a TBAA tag is
   /// specified, it will be added to the instruction.
   CallInst *CreateMemMove(Value *Dst, Value *Src, uint64_t Size, unsigned Align,
-                          bool isVolatile = false, MDNode *TBAATag = 0) {
+                          bool isVolatile = false, MDNode *TBAATag = nullptr) {
     return CreateMemMove(Dst, Src, getInt64(Size), Align, isVolatile, TBAATag);
   }
 
   CallInst *CreateMemMove(Value *Dst, Value *Src, Value *Size, unsigned Align,
-                          bool isVolatile = false, MDNode *TBAATag = 0);
+                          bool isVolatile = false, MDNode *TBAATag = nullptr);
 
   /// \brief Create a lifetime.start intrinsic.
   ///
   /// If the pointer isn't i8* it will be converted.
-  CallInst *CreateLifetimeStart(Value *Ptr, ConstantInt *Size = 0);
+  CallInst *CreateLifetimeStart(Value *Ptr, ConstantInt *Size = nullptr);
 
   /// \brief Create a lifetime.end intrinsic.
   ///
   /// If the pointer isn't i8* it will be converted.
-  CallInst *CreateLifetimeEnd(Value *Ptr, ConstantInt *Size = 0);
+  CallInst *CreateLifetimeEnd(Value *Ptr, ConstantInt *Size = nullptr);
 
 private:
   Value *getCastedInt8PtrValue(Value *Ptr);
@@ -433,43 +433,44 @@ class IRBuilder : public IRBuilderBase, public Inserter {
   T Folder;
 public:
   IRBuilder(LLVMContext &C, const T &F, const Inserter &I = Inserter(),
-            MDNode *FPMathTag = 0)
+            MDNode *FPMathTag = nullptr)
     : IRBuilderBase(C, FPMathTag), Inserter(I), Folder(F) {
   }
 
-  explicit IRBuilder(LLVMContext &C, MDNode *FPMathTag = 0)
+  explicit IRBuilder(LLVMContext &C, MDNode *FPMathTag = nullptr)
     : IRBuilderBase(C, FPMathTag), Folder() {
   }
 
-  explicit IRBuilder(BasicBlock *TheBB, const T &F, MDNode *FPMathTag = 0)
+  explicit IRBuilder(BasicBlock *TheBB, const T &F, MDNode *FPMathTag = nullptr)
     : IRBuilderBase(TheBB->getContext(), FPMathTag), Folder(F) {
     SetInsertPoint(TheBB);
   }
 
-  explicit IRBuilder(BasicBlock *TheBB, MDNode *FPMathTag = 0)
+  explicit IRBuilder(BasicBlock *TheBB, MDNode *FPMathTag = nullptr)
     : IRBuilderBase(TheBB->getContext(), FPMathTag), Folder() {
     SetInsertPoint(TheBB);
   }
 
-  explicit IRBuilder(Instruction *IP, MDNode *FPMathTag = 0)
+  explicit IRBuilder(Instruction *IP, MDNode *FPMathTag = nullptr)
     : IRBuilderBase(IP->getContext(), FPMathTag), Folder() {
     SetInsertPoint(IP);
     SetCurrentDebugLocation(IP->getDebugLoc());
   }
 
-  explicit IRBuilder(Use &U, MDNode *FPMathTag = 0)
+  explicit IRBuilder(Use &U, MDNode *FPMathTag = nullptr)
     : IRBuilderBase(U->getContext(), FPMathTag), Folder() {
     SetInsertPoint(U);
     SetCurrentDebugLocation(cast<Instruction>(U.getUser())->getDebugLoc());
   }
 
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F,
-            MDNode *FPMathTag = 0)
+            MDNode *FPMathTag = nullptr)
     : IRBuilderBase(TheBB->getContext(), FPMathTag), Folder(F) {
     SetInsertPoint(TheBB, IP);
   }
 
-  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, MDNode *FPMathTag = 0)
+  IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP,
+            MDNode *FPMathTag = nullptr)
     : IRBuilderBase(TheBB->getContext(), FPMathTag), Folder() {
     SetInsertPoint(TheBB, IP);
   }
@@ -541,7 +542,7 @@ public:
   /// \brief Create a conditional 'br Cond, TrueDest, FalseDest'
   /// instruction.
   BranchInst *CreateCondBr(Value *Cond, BasicBlock *True, BasicBlock *False,
-                           MDNode *BranchWeights = 0) {
+                           MDNode *BranchWeights = nullptr) {
     return Insert(addBranchWeights(BranchInst::Create(True, False, Cond),
                                    BranchWeights));
   }
@@ -550,7 +551,7 @@ public:
   /// and with a hint for the number of cases that will be added (for efficient
   /// allocation).
   SwitchInst *CreateSwitch(Value *V, BasicBlock *Dest, unsigned NumCases = 10,
-                           MDNode *BranchWeights = 0) {
+                           MDNode *BranchWeights = nullptr) {
     return Insert(addBranchWeights(SwitchInst::Create(V, Dest, NumCases),
                                    BranchWeights));
   }
@@ -638,7 +639,7 @@ public:
     return CreateAdd(LHS, RHS, Name, true, false);
   }
   Value *CreateFAdd(Value *LHS, Value *RHS, const Twine &Name = "",
-                    MDNode *FPMathTag = 0) {
+                    MDNode *FPMathTag = nullptr) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFAdd(LC, RC), Name);
@@ -660,7 +661,7 @@ public:
     return CreateSub(LHS, RHS, Name, true, false);
   }
   Value *CreateFSub(Value *LHS, Value *RHS, const Twine &Name = "",
-                    MDNode *FPMathTag = 0) {
+                    MDNode *FPMathTag = nullptr) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFSub(LC, RC), Name);
@@ -682,7 +683,7 @@ public:
     return CreateMul(LHS, RHS, Name, true, false);
   }
   Value *CreateFMul(Value *LHS, Value *RHS, const Twine &Name = "",
-                    MDNode *FPMathTag = 0) {
+                    MDNode *FPMathTag = nullptr) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFMul(LC, RC), Name);
@@ -714,7 +715,7 @@ public:
     return CreateSDiv(LHS, RHS, Name, true);
   }
   Value *CreateFDiv(Value *LHS, Value *RHS, const Twine &Name = "",
-                    MDNode *FPMathTag = 0) {
+                    MDNode *FPMathTag = nullptr) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFDiv(LC, RC), Name);
@@ -734,7 +735,7 @@ public:
     return Insert(BinaryOperator::CreateSRem(LHS, RHS), Name);
   }
   Value *CreateFRem(Value *LHS, Value *RHS, const Twine &Name = "",
-                    MDNode *FPMathTag = 0) {
+                    MDNode *FPMathTag = nullptr) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateFRem(LC, RC), Name);
@@ -844,7 +845,7 @@ public:
 
   Value *CreateBinOp(Instruction::BinaryOps Opc,
                      Value *LHS, Value *RHS, const Twine &Name = "",
-                     MDNode *FPMathTag = 0) {
+                     MDNode *FPMathTag = nullptr) {
     if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return Insert(Folder.CreateBinOp(Opc, LC, RC), Name);
@@ -869,7 +870,8 @@ public:
   Value *CreateNUWNeg(Value *V, const Twine &Name = "") {
     return CreateNeg(V, Name, true, false);
   }
-  Value *CreateFNeg(Value *V, const Twine &Name = "", MDNode *FPMathTag = 0) {
+  Value *CreateFNeg(Value *V, const Twine &Name = "",
+                    MDNode *FPMathTag = nullptr) {
     if (Constant *VC = dyn_cast<Constant>(V))
       return Insert(Folder.CreateFNeg(VC), Name);
     return Insert(AddFPMathAttributes(BinaryOperator::CreateFNeg(V),
@@ -885,7 +887,7 @@ public:
   // Instruction creation methods: Memory Instructions
   //===--------------------------------------------------------------------===//
 
-  AllocaInst *CreateAlloca(Type *Ty, Value *ArraySize = 0,
+  AllocaInst *CreateAlloca(Type *Ty, Value *ArraySize = nullptr,
                            const Twine &Name = "") {
     return Insert(new AllocaInst(Ty, ArraySize), Name);
   }
@@ -898,7 +900,7 @@ public:
     return Insert(new LoadInst(Ptr), Name);
   }
   LoadInst *CreateLoad(Value *Ptr, bool isVolatile, const Twine &Name = "") {
-    return Insert(new LoadInst(Ptr, 0, isVolatile), Name);
+    return Insert(new LoadInst(Ptr, nullptr, isVolatile), Name);
   }
   StoreInst *CreateStore(Value *Val, Value *Ptr, bool isVolatile = false) {
     return Insert(new StoreInst(Val, Ptr, isVolatile));

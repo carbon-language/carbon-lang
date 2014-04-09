@@ -59,7 +59,7 @@ public:
   /// through RegisterPass.
   PassInfo(const char *name, const char *arg, const void *pi,
            NormalCtor_t normal, bool isCFGOnly, bool is_analysis,
-           TargetMachineCtor_t machine = NULL)
+           TargetMachineCtor_t machine = nullptr)
     : PassName(name), PassArgument(arg), PassID(pi), 
       IsCFGOnlyPass(isCFGOnly), 
       IsAnalysis(is_analysis), IsAnalysisGroup(false), NormalCtor(normal),
@@ -70,8 +70,8 @@ public:
   PassInfo(const char *name, const void *pi)
     : PassName(name), PassArgument(""), PassID(pi), 
       IsCFGOnlyPass(false), 
-      IsAnalysis(false), IsAnalysisGroup(true), NormalCtor(0),
-      TargetMachineCtor(0) {}
+      IsAnalysis(false), IsAnalysisGroup(true), NormalCtor(nullptr),
+      TargetMachineCtor(nullptr) {}
 
   /// getPassName - Return the friendly name for the pass, never returns null
   ///
@@ -256,7 +256,7 @@ class RegisterAGBase : public PassInfo {
 public:
   RegisterAGBase(const char *Name,
                  const void *InterfaceID,
-                 const void *PassID = 0,
+                 const void *PassID = nullptr,
                  bool isDefault = false);
 };
 

@@ -120,11 +120,11 @@ class PassManagerPrettyStackEntry : public PrettyStackTraceEntry {
   Module *M;
 public:
   explicit PassManagerPrettyStackEntry(Pass *p)
-    : P(p), V(0), M(0) {}  // When P is releaseMemory'd.
+    : P(p), V(nullptr), M(nullptr) {}  // When P is releaseMemory'd.
   PassManagerPrettyStackEntry(Pass *p, Value &v)
-    : P(p), V(&v), M(0) {} // When P is run on V
+    : P(p), V(&v), M(nullptr) {} // When P is run on V
   PassManagerPrettyStackEntry(Pass *p, Module &m)
-    : P(p), V(0), M(&m) {} // When P is run on M
+    : P(p), V(nullptr), M(&m) {} // When P is run on M
 
   /// print - Emit information about this stack frame to OS.
   void print(raw_ostream &OS) const override;
@@ -263,7 +263,7 @@ private:
 class PMDataManager {
 public:
 
-  explicit PMDataManager() : TPM(NULL), Depth(0) {
+  explicit PMDataManager() : TPM(nullptr), Depth(0) {
     initializeAnalysisInfo();
   }
 
@@ -303,7 +303,7 @@ public:
   void initializeAnalysisInfo() {
     AvailableAnalysis.clear();
     for (unsigned i = 0; i < PMT_Last; ++i)
-      InheritedAnalysis[i] = NULL;
+      InheritedAnalysis[i] = nullptr;
   }
 
   // Return true if P preserves high level analysis used by other

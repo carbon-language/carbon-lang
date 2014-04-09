@@ -274,7 +274,7 @@ bool InlineAsm::Verify(FunctionType *Ty, StringRef ConstStr) {
     break;
   default:
     StructType *STy = dyn_cast<StructType>(Ty->getReturnType());
-    if (STy == 0 || STy->getNumElements() != NumOutputs)
+    if (!STy || STy->getNumElements() != NumOutputs)
       return false;
     break;
   }      

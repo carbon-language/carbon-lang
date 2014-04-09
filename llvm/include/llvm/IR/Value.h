@@ -203,7 +203,8 @@ public:
   /// instruction that generated it. If you specify a Module for context, then
   /// even constanst get pretty-printed; for example, the type of a null
   /// pointer is printed symbolically.
-  void printAsOperand(raw_ostream &O, bool PrintType = true, const Module *M = 0) const;
+  void printAsOperand(raw_ostream &O, bool PrintType = true,
+                      const Module *M = nullptr) const;
 
   /// All values are typed, get the type of this value.
   ///
@@ -213,7 +214,7 @@ public:
   LLVMContext &getContext() const;
 
   // All values can potentially be named.
-  bool hasName() const { return Name != 0 && SubclassID != MDStringVal; }
+  bool hasName() const { return Name != nullptr && SubclassID != MDStringVal; }
   ValueName *getValueName() const { return Name; }
   void setValueName(ValueName *VN) { Name = VN; }
   
@@ -242,7 +243,7 @@ public:
   //----------------------------------------------------------------------
   // Methods for handling the chain of uses of this Value.
   //
-  bool               use_empty() const { return UseList == 0; }
+  bool               use_empty() const { return UseList == nullptr; }
 
   typedef use_iterator_impl<Use>       use_iterator;
   typedef use_iterator_impl<const Use> const_use_iterator;

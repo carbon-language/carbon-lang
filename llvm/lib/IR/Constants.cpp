@@ -182,13 +182,13 @@ Constant *Constant::getAllOnesValue(Type *Ty) {
 /// 'this' is a constant expr.
 Constant *Constant::getAggregateElement(unsigned Elt) const {
   if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(this))
-    return Elt < CS->getNumOperands() ? CS->getOperand(Elt) : 0;
+    return Elt < CS->getNumOperands() ? CS->getOperand(Elt) : nullptr;
 
   if (const ConstantArray *CA = dyn_cast<ConstantArray>(this))
-    return Elt < CA->getNumOperands() ? CA->getOperand(Elt) : 0;
+    return Elt < CA->getNumOperands() ? CA->getOperand(Elt) : nullptr;
 
   if (const ConstantVector *CV = dyn_cast<ConstantVector>(this))
-    return Elt < CV->getNumOperands() ? CV->getOperand(Elt) : 0;
+    return Elt < CV->getNumOperands() ? CV->getOperand(Elt) : nullptr;
 
   if (const ConstantAggregateZero *CAZ =dyn_cast<ConstantAggregateZero>(this))
     return CAZ->getElementValue(Elt);
@@ -197,15 +197,16 @@ Constant *Constant::getAggregateElement(unsigned Elt) const {
     return UV->getElementValue(Elt);
 
   if (const ConstantDataSequential *CDS =dyn_cast<ConstantDataSequential>(this))
-    return Elt < CDS->getNumElements() ? CDS->getElementAsConstant(Elt) : 0;
-  return 0;
+    return Elt < CDS->getNumElements() ? CDS->getElementAsConstant(Elt)
+                                       : nullptr;
+  return nullptr;
 }
 
 Constant *Constant::getAggregateElement(Constant *Elt) const {
   assert(isa<IntegerType>(Elt->getType()) && "Index must be an integer");
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Elt))
     return getAggregateElement(CI->getZExtValue());
-  return 0;
+  return nullptr;
 }
 
 
@@ -309,7 +310,7 @@ bool Constant::isThreadDependent() const {
 bool Constant::isConstantUsed() const {
   for (const User *U : users()) {
     const Constant *UC = dyn_cast<Constant>(U);
-    if (UC == 0 || isa<GlobalValue>(UC))
+    if (!UC || isa<GlobalValue>(UC))
       return true;
 
     if (UC->isConstantUsed())
@@ -397,7 +398,7 @@ void Constant::removeDeadConstantUsers() const {
   Value::const_user_iterator LastNonDeadUser = E;
   while (I != E) {
     const Constant *User = dyn_cast<Constant>(*I);
-    if (User == 0) {
+    if (!User) {
       LastNonDeadUser = I;
       ++I;
       continue;
@@ -431,7 +432,7 @@ void Constant::removeDeadConstantUsers() const {
 void ConstantInt::anchor() { }
 
 ConstantInt::ConstantInt(IntegerType *Ty, const APInt& V)
-  : Constant(Ty, ConstantIntVal, 0, 0), Val(V) {
+  : Constant(Ty, ConstantIntVal, nullptr, 0), Val(V) {
   assert(V.getBitWidth() == Ty->getBitWidth() && "Invalid constant for type");
 }
 
@@ -644,7 +645,7 @@ Constant *ConstantFP::getInfinity(Type *Ty, bool Negative) {
 }
 
 ConstantFP::ConstantFP(Type *Ty, const APFloat& V)
-  : Constant(Ty, ConstantFPVal, 0, 0), Val(V) {
+  : Constant(Ty, ConstantFPVal, nullptr, 0), Val(V) {
   assert(&V.getSemantics() == TypeToFloatSemantics(Ty) &&
          "FP type Mismatch");
 }
@@ -1235,7 +1236,7 @@ ConstantAggregateZero *ConstantAggregateZero::get(Type *Ty) {
          "Cannot create an aggregate zero of non-aggregate type!");
   
   ConstantAggregateZero *&Entry = Ty->getContext().pImpl->CAZConstants[Ty];
-  if (Entry == 0)
+  if (!Entry)
     Entry = new ConstantAggregateZero(Ty);
 
   return Entry;
@@ -1283,7 +1284,7 @@ Constant *Constant::getSplatValue() const {
     return CV->getSplatValue();
   if (const ConstantVector *CV = dyn_cast<ConstantVector>(this))
     return CV->getSplatValue();
-  return 0;
+  return nullptr;
 }
 
 /// getSplatValue - If this is a splat constant, where all of the
@@ -1294,7 +1295,7 @@ Constant *ConstantVector::getSplatValue() const {
   // Then make sure all remaining elements point to the same value.
   for (unsigned I = 1, E = getNumOperands(); I < E; ++I)
     if (getOperand(I) != Elt)
-      return 0;
+      return nullptr;
   return Elt;
 }
 
@@ -1315,7 +1316,7 @@ const APInt &Constant::getUniqueInteger() const {
 
 ConstantPointerNull *ConstantPointerNull::get(PointerType *Ty) {
   ConstantPointerNull *&Entry = Ty->getContext().pImpl->CPNConstants[Ty];
-  if (Entry == 0)
+  if (!Entry)
     Entry = new ConstantPointerNull(Ty);
 
   return Entry;
@@ -1335,7 +1336,7 @@ void ConstantPointerNull::destroyConstant() {
 
 UndefValue *UndefValue::get(Type *Ty) {
   UndefValue *&Entry = Ty->getContext().pImpl->UVConstants[Ty];
-  if (Entry == 0)
+  if (!Entry)
     Entry = new UndefValue(Ty);
 
   return Entry;
@@ -1360,7 +1361,7 @@ BlockAddress *BlockAddress::get(BasicBlock *BB) {
 BlockAddress *BlockAddress::get(Function *F, BasicBlock *BB) {
   BlockAddress *&BA =
     F->getContext().pImpl->BlockAddresses[std::make_pair(F, BB)];
-  if (BA == 0)
+  if (!BA)
     BA = new BlockAddress(F, BB);
 
   assert(BA->getFunction() == F && "Basic block moved between functions");
@@ -1377,7 +1378,7 @@ BlockAddress::BlockAddress(Function *F, BasicBlock *BB)
 
 BlockAddress *BlockAddress::lookup(const BasicBlock *BB) {
   if (!BB->hasAddressTaken())
-    return 0;
+    return nullptr;
 
   const Function *F = BB->getParent();
   assert(F != 0 && "Block must have a parent");
@@ -1411,7 +1412,7 @@ void BlockAddress::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
   // and return early.
   BlockAddress *&NewBA =
     getContext().pImpl->BlockAddresses[std::make_pair(NewF, NewBB)];
-  if (NewBA == 0) {
+  if (!NewBA) {
     getBasicBlock()->AdjustBlockAddressRefCount(-1);
 
     // Remove the old entry, this can't cause the map to rehash (just a
@@ -2145,7 +2146,7 @@ Constant *ConstantExpr::getBinOpIdentity(unsigned Opcode, Type *Ty) {
   switch (Opcode) {
   default:
     // Doesn't have an identity.
-    return 0;
+    return nullptr;
 
   case Instruction::Add:
   case Instruction::Or:
@@ -2168,7 +2169,7 @@ Constant *ConstantExpr::getBinOpAbsorber(unsigned Opcode, Type *Ty) {
   switch (Opcode) {
   default:
     // Doesn't have an absorber.
-    return 0;
+    return nullptr;
 
   case Instruction::Or:
     return Constant::getAllOnesValue(Ty);
@@ -2285,7 +2286,7 @@ Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
   // of i8, or a 1-element array of i32.  They'll both end up in the same
   /// StringMap bucket, linked up by their Next pointers.  Walk the list.
   ConstantDataSequential **Entry = &Slot.getValue();
-  for (ConstantDataSequential *Node = *Entry; Node != 0;
+  for (ConstantDataSequential *Node = *Entry; Node;
        Entry = &Node->Next, Node = *Entry)
     if (Node->getType() == Ty)
       return Node;
@@ -2312,7 +2313,7 @@ void ConstantDataSequential::destroyConstant() {
   ConstantDataSequential **Entry = &Slot->getValue();
 
   // Remove the entry from the hash table.
-  if ((*Entry)->Next == 0) {
+  if (!(*Entry)->Next) {
     // If there is only one value in the bucket (common case) it must be this
     // entry, and removing the entry should remove the bucket completely.
     assert((*Entry) == this && "Hash mismatch in ConstantDataSequential");
@@ -2333,7 +2334,7 @@ void ConstantDataSequential::destroyConstant() {
 
   // If we were part of a list, make sure that we don't delete the list that is
   // still owned by the uniquing map.
-  Next = 0;
+  Next = nullptr;
 
   // Finally, actually delete it.
   destroyConstantImpl();
@@ -2561,7 +2562,7 @@ Constant *ConstantDataVector::getSplatValue() const {
   unsigned EltSize = getElementByteSize();
   for (unsigned i = 1, e = getNumElements(); i != e; ++i)
     if (memcmp(Base, Base+i*EltSize, EltSize))
-      return 0;
+      return nullptr;
 
   // If they're all the same, return the 0th one as a representative.
   return getElementAsConstant(0);
@@ -2609,7 +2610,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     AllSame &= Val == ToC;
   }
 
-  Constant *Replacement = 0;
+  Constant *Replacement = nullptr;
   if (AllSame && ToC->isNullValue()) {
     Replacement = ConstantAggregateZero::get(getType());
   } else if (AllSame && isa<UndefValue>(ToC)) {
@@ -2695,7 +2696,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
 
   LLVMContextImpl *pImpl = getContext().pImpl;
 
-  Constant *Replacement = 0;
+  Constant *Replacement = nullptr;
   if (isAllZeros) {
     Replacement = ConstantAggregateZero::get(getType());
   } else if (isAllUndef) {

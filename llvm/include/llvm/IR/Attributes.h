@@ -116,7 +116,7 @@ private:
   AttributeImpl *pImpl;
   Attribute(AttributeImpl *A) : pImpl(A) {}
 public:
-  Attribute() : pImpl(0) {}
+  Attribute() : pImpl(nullptr) {}
 
   //===--------------------------------------------------------------------===//
   // Attribute Construction
@@ -232,7 +232,7 @@ private:
 
   explicit AttributeSet(AttributeSetImpl *LI) : pImpl(LI) {}
 public:
-  AttributeSet() : pImpl(0) {}
+  AttributeSet() : pImpl(nullptr) {}
 
   //===--------------------------------------------------------------------===//
   // AttributeSet Construction and Mutation

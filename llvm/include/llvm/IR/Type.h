@@ -88,7 +88,7 @@ protected:
   friend class LLVMContextImpl;
   explicit Type(LLVMContext &C, TypeID tid)
     : Context(C), IDAndSubclassData(0),
-      NumContainedTys(0), ContainedTys(0) {
+      NumContainedTys(0), ContainedTys(nullptr) {
     setTypeID(tid);
   }
   ~Type() {}
@@ -265,7 +265,7 @@ public:
   /// get the actual size for a particular target, it is reasonable to use the
   /// DataLayout subsystem to do this.
   ///
-  bool isSized(SmallPtrSet<const Type*, 4> *Visited = 0) const {
+  bool isSized(SmallPtrSet<const Type*, 4> *Visited = nullptr) const {
     // If it's a primitive, it is always sized.
     if (getTypeID() == IntegerTyID || isFloatingPointTy() ||
         getTypeID() == PointerTyID ||
@@ -419,7 +419,7 @@ private:
   /// isSizedDerivedType - Derived types like structures and arrays are sized
   /// iff all of the members of the type are sized as well.  Since asking for
   /// their size is relatively uncommon, move this operation out of line.
-  bool isSizedDerivedType(SmallPtrSet<const Type*, 4> *Visited = 0) const;
+  bool isSizedDerivedType(SmallPtrSet<const Type*, 4> *Visited = nullptr) const;
 };
 
 // Printing of types.

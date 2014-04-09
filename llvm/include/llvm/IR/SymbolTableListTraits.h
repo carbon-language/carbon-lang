@@ -46,19 +46,19 @@ public:
   /// getListOwner - Return the object that owns this list.  If this is a list
   /// of instructions, it returns the BasicBlock that owns them.
   ItemParentClass *getListOwner() {
-    size_t Offset(size_t(&((ItemParentClass*)0->*ItemParentClass::
-                           getSublistAccess(static_cast<ValueSubClass*>(0)))));
+    size_t Offset(size_t(&((ItemParentClass*)nullptr->*ItemParentClass::
+                           getSublistAccess(static_cast<ValueSubClass*>(nullptr)))));
     iplist<ValueSubClass>* Anchor(static_cast<iplist<ValueSubClass>*>(this));
     return reinterpret_cast<ItemParentClass*>(reinterpret_cast<char*>(Anchor)-
                                               Offset);
   }
 
   static iplist<ValueSubClass> &getList(ItemParentClass *Par) {
-    return Par->*(Par->getSublistAccess((ValueSubClass*)0));
+    return Par->*(Par->getSublistAccess((ValueSubClass*)nullptr));
   }
 
   static ValueSymbolTable *getSymTab(ItemParentClass *Par) {
-    return Par ? toPtr(Par->getValueSymbolTable()) : 0;
+    return Par ? toPtr(Par->getValueSymbolTable()) : nullptr;
   }
 
   void addNodeToList(ValueSubClass *V);

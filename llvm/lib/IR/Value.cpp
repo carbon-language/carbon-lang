@@ -44,7 +44,7 @@ static inline Type *checkType(Type *Ty) {
 Value::Value(Type *ty, unsigned scid)
   : SubclassID(scid), HasValueHandle(0),
     SubclassOptionalData(0), SubclassData(0), VTy((Type*)checkType(ty)),
-    UseList(0), Name(0) {
+    UseList(nullptr), Name(nullptr) {
   // FIXME: Why isn't this in the subclass gunk??
   // Note, we cannot call isa<CallInst> before the CallInst has been
   // constructed.
@@ -141,7 +141,7 @@ unsigned Value::getNumUses() const {
 }
 
 static bool getSymTab(Value *V, ValueSymbolTable *&ST) {
-  ST = 0;
+  ST = nullptr;
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     if (BasicBlock *P = I->getParent())
       if (Function *PP = P->getParent())
@@ -203,7 +203,7 @@ void Value::setName(const Twine &NewName) {
     if (NameRef.empty()) {
       // Free the name for this value.
       Name->Destroy();
-      Name = 0;
+      Name = nullptr;
       return;
     }
 
@@ -225,7 +225,7 @@ void Value::setName(const Twine &NewName) {
     // Remove old name.
     ST->removeValueName(Name);
     Name->Destroy();
-    Name = 0;
+    Name = nullptr;
 
     if (NameRef.empty())
       return;
@@ -241,7 +241,7 @@ void Value::setName(const Twine &NewName) {
 void Value::takeName(Value *V) {
   assert(SubclassID != MDStringVal && "Cannot take the name of an MDString!");
 
-  ValueSymbolTable *ST = 0;
+  ValueSymbolTable *ST = nullptr;
   // If this value has a name, drop it.
   if (hasName()) {
     // Get the symtab this is in.
@@ -256,7 +256,7 @@ void Value::takeName(Value *V) {
     if (ST)
       ST->removeValueName(Name);
     Name->Destroy();
-    Name = 0;
+    Name = nullptr;
   }
 
   // Now we know that this has no name.
@@ -283,7 +283,7 @@ void Value::takeName(Value *V) {
   if (ST == VST) {
     // Take the name!
     Name = V->Name;
-    V->Name = 0;
+    V->Name = nullptr;
     Name->setValue(this);
     return;
   }
@@ -294,7 +294,7 @@ void Value::takeName(Value *V) {
   if (VST)
     VST->removeValueName(V->Name);
   Name = V->Name;
-  V->Name = 0;
+  V->Name = nullptr;
   Name->setValue(this);
 
   if (ST)
@@ -652,7 +652,7 @@ void ValueHandleBase::ValueIsDeleted(Value *V) {
       break;
     case Weak:
       // Weak just goes to null, which will unlink it from the list.
-      Entry->operator=(0);
+      Entry->operator=(nullptr);
       break;
     case Callback:
       // Forward to the subclass's implementation.

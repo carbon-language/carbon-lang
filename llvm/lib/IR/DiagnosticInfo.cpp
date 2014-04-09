@@ -68,7 +68,7 @@ void DiagnosticInfoSampleProfile::print(DiagnosticPrinter &DP) const {
 }
 
 bool DiagnosticInfoOptimizationRemark::isLocationAvailable() const {
-  return getFunction().getParent()->getNamedMetadata("llvm.dbg.cu") != 0;
+  return getFunction().getParent()->getNamedMetadata("llvm.dbg.cu") != nullptr;
 }
 
 void DiagnosticInfoOptimizationRemark::getLocation(StringRef *Filename,

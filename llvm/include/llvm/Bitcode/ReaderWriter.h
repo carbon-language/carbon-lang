@@ -39,7 +39,7 @@ namespace llvm {
   Module *getStreamedBitcodeModule(const std::string &name,
                                    DataStreamer *streamer,
                                    LLVMContext &Context,
-                                   std::string *ErrMsg = 0);
+                                   std::string *ErrMsg = nullptr);
 
   /// getBitcodeTargetTriple - Read the header of the specified bitcode
   /// buffer and extract just the triple information. If successful,
@@ -48,7 +48,7 @@ namespace llvm {
   /// if ErrMsg is non-null.
   std::string getBitcodeTargetTriple(MemoryBuffer *Buffer,
                                      LLVMContext &Context,
-                                     std::string *ErrMsg = 0);
+                                     std::string *ErrMsg = nullptr);
 
   /// Read the specified bitcode file, returning the module.
   /// This method *never* takes ownership of Buffer.

@@ -141,14 +141,14 @@ public:
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
   /// If the metadata is not found then return null.
   MDNode *getMetadata(unsigned KindID) const {
-    if (!hasMetadata()) return 0;
+    if (!hasMetadata()) return nullptr;
     return getMetadataImpl(KindID);
   }
 
   /// getMetadata - Get the metadata of given kind attached to this Instruction.
   /// If the metadata is not found then return null.
   MDNode *getMetadata(StringRef Kind) const {
-    if (!hasMetadata()) return 0;
+    if (!hasMetadata()) return nullptr;
     return getMetadataImpl(Kind);
   }
 
@@ -461,7 +461,7 @@ protected:
   }
 
   Instruction(Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
-              Instruction *InsertBefore = 0);
+              Instruction *InsertBefore = nullptr);
   Instruction(Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
               BasicBlock *InsertAtEnd);
   virtual Instruction *clone_impl() const = 0;

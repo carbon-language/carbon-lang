@@ -80,7 +80,7 @@ public:
   /// LLVMContext doesn't take ownership or interpret either of these
   /// pointers.
   void setInlineAsmDiagnosticHandler(InlineAsmDiagHandlerTy DiagHandler,
-                                     void *DiagContext = 0);
+                                     void *DiagContext = nullptr);
 
   /// getInlineAsmDiagnosticHandler - Return the diagnostic handler set by
   /// setInlineAsmDiagnosticHandler.
@@ -98,7 +98,7 @@ public:
   /// LLVMContext doesn't take ownership or interpret either of these
   /// pointers.
   void setDiagnosticHandler(DiagnosticHandlerTy DiagHandler,
-                            void *DiagContext = 0);
+                            void *DiagContext = nullptr);
 
   /// getDiagnosticHandler - Return the diagnostic handler set by
   /// setDiagnosticHandler.

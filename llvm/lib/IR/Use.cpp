@@ -27,14 +27,14 @@ void Use::swap(Use &RHS) {
     Val = RHS.Val;
     Val->addUse(*this);
   } else {
-    Val = 0;
+    Val = nullptr;
   }
 
   if (OldVal) {
     RHS.Val = OldVal;
     RHS.Val->addUse(RHS);
   } else {
-    RHS.Val = 0;
+    RHS.Val = nullptr;
   }
 }
 

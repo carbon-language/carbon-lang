@@ -56,7 +56,7 @@ void ValueSymbolTable::reinsertValue(Value* V) {
 
     // Try insert the vmap entry with this suffix.
     ValueName &NewName = vmap.GetOrCreateValue(UniqueName);
-    if (NewName.getValue() == 0) {
+    if (!NewName.getValue()) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
       V->Name = &NewName;
@@ -78,7 +78,7 @@ void ValueSymbolTable::removeValueName(ValueName *V) {
 ValueName *ValueSymbolTable::createValueName(StringRef Name, Value *V) {
   // In the common case, the name is not already in the symbol table.
   ValueName &Entry = vmap.GetOrCreateValue(Name);
-  if (Entry.getValue() == 0) {
+  if (!Entry.getValue()) {
     Entry.setValue(V);
     //DEBUG(dbgs() << " Inserted value: " << Entry.getKeyData() << ": "
     //           << *V << "\n");
@@ -95,7 +95,7 @@ ValueName *ValueSymbolTable::createValueName(StringRef Name, Value *V) {
     
     // Try insert the vmap entry with this suffix.
     ValueName &NewName = vmap.GetOrCreateValue(UniqueName);
-    if (NewName.getValue() == 0) {
+    if (!NewName.getValue()) {
       // Newly inserted name.  Success!
       NewName.setValue(V);
      //DEBUG(dbgs() << " Inserted value: " << UniqueName << ": " << *V << "\n");

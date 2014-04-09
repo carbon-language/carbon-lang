@@ -68,7 +68,7 @@ const char *SelectInst::areInvalidOperands(Value *Op0, Value *Op1, Value *Op2) {
     if (VT->getElementType() != Type::getInt1Ty(Op0->getContext()))
       return "vector select condition element type must be i1";
     VectorType *ET = dyn_cast<VectorType>(Op1->getType());
-    if (ET == 0)
+    if (!ET)
       return "selected values for vector select must be vectors";
     if (ET->getNumElements() != VT->getNumElements())
       return "vector select requires selected vectors to have "
@@ -76,7 +76,7 @@ const char *SelectInst::areInvalidOperands(Value *Op0, Value *Op1, Value *Op2) {
   } else if (Op0->getType() != Type::getInt1Ty(Op0->getContext())) {
     return "select condition must be i1 or <n x i1>";
   }
-  return 0;
+  return nullptr;
 }
 
 
@@ -123,7 +123,7 @@ Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
   std::copy(block_begin() + Idx + 1, block_end(), block_begin() + Idx);
 
   // Nuke the last value.
-  Op<-1>().set(0);
+  Op<-1>().set(nullptr);
   --NumOperands;
 
   // If the PHI node is dead, because it has zero entries, nuke it now.
@@ -164,7 +164,7 @@ Value *PHINode::hasConstantValue() const {
   for (unsigned i = 1, e = getNumIncomingValues(); i != e; ++i)
     if (getIncomingValue(i) != ConstantValue && getIncomingValue(i) != this) {
       if (ConstantValue != this)
-        return 0; // Incoming values not all the same.
+        return nullptr; // Incoming values not all the same.
        // The case where the first value is this PHI.
       ConstantValue = getIncomingValue(i);
     }
@@ -180,14 +180,14 @@ Value *PHINode::hasConstantValue() const {
 LandingPadInst::LandingPadInst(Type *RetTy, Value *PersonalityFn,
                                unsigned NumReservedValues, const Twine &NameStr,
                                Instruction *InsertBefore)
-  : Instruction(RetTy, Instruction::LandingPad, 0, 0, InsertBefore) {
+  : Instruction(RetTy, Instruction::LandingPad, nullptr, 0, InsertBefore) {
   init(PersonalityFn, 1 + NumReservedValues, NameStr);
 }
 
 LandingPadInst::LandingPadInst(Type *RetTy, Value *PersonalityFn,
                                unsigned NumReservedValues, const Twine &NameStr,
                                BasicBlock *InsertAtEnd)
-  : Instruction(RetTy, Instruction::LandingPad, 0, 0, InsertAtEnd) {
+  : Instruction(RetTy, Instruction::LandingPad, nullptr, 0, InsertAtEnd) {
   init(PersonalityFn, 1 + NumReservedValues, NameStr);
 }
 
@@ -420,8 +420,8 @@ static Instruction *createMalloc(Instruction *InsertBefore,
     // prototype malloc as "void *malloc(size_t)"
     MallocFunc = M->getOrInsertFunction("malloc", BPTy, IntPtrTy, NULL);
   PointerType *AllocPtrType = PointerType::getUnqual(AllocTy);
-  CallInst *MCall = NULL;
-  Instruction *Result = NULL;
+  CallInst *MCall = nullptr;
+  Instruction *Result = nullptr;
   if (InsertBefore) {
     MCall = CallInst::Create(MallocFunc, AllocSize, "malloccall", InsertBefore);
     Result = MCall;
@@ -458,7 +458,7 @@ Instruction *CallInst::CreateMalloc(Instruction *InsertBefore,
                                     Value *AllocSize, Value *ArraySize,
                                     Function * MallocF,
                                     const Twine &Name) {
-  return createMalloc(InsertBefore, NULL, IntPtrTy, AllocTy, AllocSize,
+  return createMalloc(InsertBefore, nullptr, IntPtrTy, AllocTy, AllocSize,
                       ArraySize, MallocF, Name);
 }
 
@@ -474,7 +474,7 @@ Instruction *CallInst::CreateMalloc(BasicBlock *InsertAtEnd,
                                     Type *IntPtrTy, Type *AllocTy,
                                     Value *AllocSize, Value *ArraySize, 
                                     Function *MallocF, const Twine &Name) {
-  return createMalloc(NULL, InsertAtEnd, IntPtrTy, AllocTy, AllocSize,
+  return createMalloc(nullptr, InsertAtEnd, IntPtrTy, AllocTy, AllocSize,
                       ArraySize, MallocF, Name);
 }
 
@@ -492,7 +492,7 @@ static Instruction* createFree(Value* Source, Instruction *InsertBefore,
   Type *IntPtrTy = Type::getInt8PtrTy(M->getContext());
   // prototype free as "void free(void*)"
   Value *FreeFunc = M->getOrInsertFunction("free", VoidTy, IntPtrTy, NULL);
-  CallInst* Result = NULL;
+  CallInst* Result = nullptr;
   Value *PtrCast = Source;
   if (InsertBefore) {
     if (Source->getType() != IntPtrTy)
@@ -512,14 +512,14 @@ static Instruction* createFree(Value* Source, Instruction *InsertBefore,
 
 /// CreateFree - Generate the IR for a call to the builtin free function.
 Instruction * CallInst::CreateFree(Value* Source, Instruction *InsertBefore) {
-  return createFree(Source, InsertBefore, NULL);
+  return createFree(Source, InsertBefore, nullptr);
 }
 
 /// CreateFree - Generate the IR for a call to the builtin free function.
 /// Note: This function does not add the call to the basic block, that is the
 /// responsibility of the caller.
 Instruction* CallInst::CreateFree(Value* Source, BasicBlock *InsertAtEnd) {
-  Instruction* FreeCall = createFree(Source, NULL, InsertAtEnd);
+  Instruction* FreeCall = createFree(Source, nullptr, InsertAtEnd);
   assert(FreeCall && "CreateFree did not create a CallInst");
   return FreeCall;
 }
@@ -699,11 +699,11 @@ BasicBlock *ResumeInst::getSuccessorV(unsigned idx) const {
 UnreachableInst::UnreachableInst(LLVMContext &Context, 
                                  Instruction *InsertBefore)
   : TerminatorInst(Type::getVoidTy(Context), Instruction::Unreachable,
-                   0, 0, InsertBefore) {
+                   nullptr, 0, InsertBefore) {
 }
 UnreachableInst::UnreachableInst(LLVMContext &Context, BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::getVoidTy(Context), Instruction::Unreachable,
-                   0, 0, InsertAtEnd) {
+                   nullptr, 0, InsertAtEnd) {
 }
 
 unsigned UnreachableInst::getNumSuccessorsV() const {
@@ -852,7 +852,7 @@ AllocaInst::AllocaInst(Type *Ty, Value *ArraySize,
 AllocaInst::AllocaInst(Type *Ty, const Twine &Name,
                        Instruction *InsertBefore)
   : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
-                     getAISize(Ty->getContext(), 0), InsertBefore) {
+                     getAISize(Ty->getContext(), nullptr), InsertBefore) {
   setAlignment(0);
   assert(!Ty->isVoidTy() && "Cannot allocate void!");
   setName(Name);
@@ -861,7 +861,7 @@ AllocaInst::AllocaInst(Type *Ty, const Twine &Name,
 AllocaInst::AllocaInst(Type *Ty, const Twine &Name,
                        BasicBlock *InsertAtEnd)
   : UnaryInstruction(PointerType::getUnqual(Ty), Alloca,
-                     getAISize(Ty->getContext(), 0), InsertAtEnd) {
+                     getAISize(Ty->getContext(), nullptr), InsertAtEnd) {
   setAlignment(0);
   assert(!Ty->isVoidTy() && "Cannot allocate void!");
   setName(Name);
@@ -1323,7 +1323,7 @@ AtomicRMWInst::AtomicRMWInst(BinOp Operation, Value *Ptr, Value *Val,
 FenceInst::FenceInst(LLVMContext &C, AtomicOrdering Ordering, 
                      SynchronizationScope SynchScope,
                      Instruction *InsertBefore)
-  : Instruction(Type::getVoidTy(C), Fence, 0, 0, InsertBefore) {
+  : Instruction(Type::getVoidTy(C), Fence, nullptr, 0, InsertBefore) {
   setOrdering(Ordering);
   setSynchScope(SynchScope);
 }
@@ -1331,7 +1331,7 @@ FenceInst::FenceInst(LLVMContext &C, AtomicOrdering Ordering,
 FenceInst::FenceInst(LLVMContext &C, AtomicOrdering Ordering, 
                      SynchronizationScope SynchScope,
                      BasicBlock *InsertAtEnd)
-  : Instruction(Type::getVoidTy(C), Fence, 0, 0, InsertAtEnd) {
+  : Instruction(Type::getVoidTy(C), Fence, nullptr, 0, InsertAtEnd) {
   setOrdering(Ordering);
   setSynchScope(SynchScope);
 }
@@ -1369,7 +1369,7 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
 template <typename IndexTy>
 static Type *getIndexedTypeInternal(Type *Ptr, ArrayRef<IndexTy> IdxList) {
   PointerType *PTy = dyn_cast<PointerType>(Ptr->getScalarType());
-  if (!PTy) return 0;   // Type isn't a pointer type!
+  if (!PTy) return nullptr;   // Type isn't a pointer type!
   Type *Agg = PTy->getElementType();
 
   // Handle the special case of the empty set index set, which is always valid.
@@ -1379,17 +1379,17 @@ static Type *getIndexedTypeInternal(Type *Ptr, ArrayRef<IndexTy> IdxList) {
   // If there is at least one index, the top level type must be sized, otherwise
   // it cannot be 'stepped over'.
   if (!Agg->isSized())
-    return 0;
+    return nullptr;
 
   unsigned CurIdx = 1;
   for (; CurIdx != IdxList.size(); ++CurIdx) {
     CompositeType *CT = dyn_cast<CompositeType>(Agg);
-    if (!CT || CT->isPointerTy()) return 0;
+    if (!CT || CT->isPointerTy()) return nullptr;
     IndexTy Index = IdxList[CurIdx];
-    if (!CT->indexValid(Index)) return 0;
+    if (!CT->indexValid(Index)) return nullptr;
     Agg = CT->getTypeAtIndex(Index);
   }
-  return CurIdx == IdxList.size() ? Agg : 0;
+  return CurIdx == IdxList.size() ? Agg : nullptr;
 }
 
 Type *GetElementPtrInst::getIndexedType(Type *Ptr, ArrayRef<Value *> IdxList) {
@@ -1579,7 +1579,7 @@ bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
   
   // Mask must be vector of i32.
   VectorType *MaskTy = dyn_cast<VectorType>(Mask->getType());
-  if (MaskTy == 0 || !MaskTy->getElementType()->isIntegerTy(32))
+  if (!MaskTy || !MaskTy->getElementType()->isIntegerTy(32))
     return false;
 
   // Check to see if Mask is valid.
@@ -1721,13 +1721,13 @@ Type *ExtractValueInst::getIndexedType(Type *Agg,
     // as easy to check those manually as well.
     if (ArrayType *AT = dyn_cast<ArrayType>(Agg)) {
       if (Index >= AT->getNumElements())
-        return 0;
+        return nullptr;
     } else if (StructType *ST = dyn_cast<StructType>(Agg)) {
       if (Index >= ST->getNumElements())
-        return 0;
+        return nullptr;
     } else {
       // Not a valid type to index into.
-      return 0;
+      return nullptr;
     }
 
     Agg = cast<CompositeType>(Agg)->getTypeAtIndex(Index);
@@ -2130,7 +2130,7 @@ bool CastInst::isNoopCast(const DataLayout *DL) const {
     return isNoopCast(Type::getInt64Ty(getContext()));
   }
 
-  Type *PtrOpTy = 0;
+  Type *PtrOpTy = nullptr;
   if (getOpcode() == Instruction::PtrToInt)
     PtrOpTy = getOperand(0)->getType();
   else if (getOpcode() == Instruction::IntToPtr)
@@ -3361,7 +3361,7 @@ void SwitchInst::init(Value *Value, BasicBlock *Default, unsigned NumReserved) {
 SwitchInst::SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
                        Instruction *InsertBefore)
   : TerminatorInst(Type::getVoidTy(Value->getContext()), Instruction::Switch,
-                   0, 0, InsertBefore) {
+                   nullptr, 0, InsertBefore) {
   init(Value, Default, 2+NumCases*2);
 }
 
@@ -3372,12 +3372,12 @@ SwitchInst::SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
 SwitchInst::SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
                        BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::getVoidTy(Value->getContext()), Instruction::Switch,
-                   0, 0, InsertAtEnd) {
+                   nullptr, 0, InsertAtEnd) {
   init(Value, Default, 2+NumCases*2);
 }
 
 SwitchInst::SwitchInst(const SwitchInst &SI)
-  : TerminatorInst(SI.getType(), Instruction::Switch, 0, 0) {
+  : TerminatorInst(SI.getType(), Instruction::Switch, nullptr, 0) {
   init(SI.getCondition(), SI.getDefaultDest(), SI.getNumOperands());
   NumOperands = SI.getNumOperands();
   Use *OL = OperandList, *InOL = SI.OperandList;
@@ -3425,8 +3425,8 @@ void SwitchInst::removeCase(CaseIt i) {
   }
 
   // Nuke the last value.
-  OL[NumOps-2].set(0);
-  OL[NumOps-2+1].set(0);
+  OL[NumOps-2].set(nullptr);
+  OL[NumOps-2+1].set(nullptr);
   NumOperands = NumOps-2;
 }
 
@@ -3492,14 +3492,14 @@ void IndirectBrInst::growOperands() {
 IndirectBrInst::IndirectBrInst(Value *Address, unsigned NumCases,
                                Instruction *InsertBefore)
 : TerminatorInst(Type::getVoidTy(Address->getContext()),Instruction::IndirectBr,
-                 0, 0, InsertBefore) {
+                 nullptr, 0, InsertBefore) {
   init(Address, NumCases);
 }
 
 IndirectBrInst::IndirectBrInst(Value *Address, unsigned NumCases,
                                BasicBlock *InsertAtEnd)
 : TerminatorInst(Type::getVoidTy(Address->getContext()),Instruction::IndirectBr,
-                 0, 0, InsertAtEnd) {
+                 nullptr, 0, InsertAtEnd) {
   init(Address, NumCases);
 }
 
@@ -3541,7 +3541,7 @@ void IndirectBrInst::removeDestination(unsigned idx) {
   OL[idx+1] = OL[NumOps-1];
   
   // Nuke the last value.
-  OL[NumOps-1].set(0);
+  OL[NumOps-1].set(nullptr);
   NumOperands = NumOps-1;
 }
 

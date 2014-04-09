@@ -44,7 +44,7 @@ public:
   ///
   /// If \p F is specified, the argument is inserted at the end of the argument
   /// list for \p F.
-  explicit Argument(Type *Ty, const Twine &Name = "", Function *F = 0);
+  explicit Argument(Type *Ty, const Twine &Name = "", Function *F = nullptr);
 
   inline const Function *getParent() const { return Parent; }
   inline       Function *getParent()       { return Parent; }

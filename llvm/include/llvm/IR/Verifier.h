@@ -38,14 +38,14 @@ class raw_ostream;
 /// If there are no errors, the function returns false. If an error is found,
 /// a message describing the error is written to OS (if non-null) and true is
 /// returned.
-bool verifyFunction(const Function &F, raw_ostream *OS = 0);
+bool verifyFunction(const Function &F, raw_ostream *OS = nullptr);
 
 /// \brief Check a module for errors.
 ///
 /// If there are no errors, the function returns false. If an error is found,
 /// a message describing the error is written to OS (if non-null) and true is
 /// returned.
-bool verifyModule(const Module &M, raw_ostream *OS = 0);
+bool verifyModule(const Module &M, raw_ostream *OS = nullptr);
 
 /// \brief Create a verifier pass.
 ///

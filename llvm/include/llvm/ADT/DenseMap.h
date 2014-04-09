@@ -985,7 +985,7 @@ public:
 private:
   pointer Ptr, End;
 public:
-  DenseMapIterator() : Ptr(0), End(0) {}
+  DenseMapIterator() : Ptr(nullptr), End(nullptr) {}
 
   DenseMapIterator(pointer Pos, pointer E, bool NoAdvance = false)
     : Ptr(Pos), End(E) {

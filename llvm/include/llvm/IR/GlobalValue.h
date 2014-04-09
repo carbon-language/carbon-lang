@@ -63,7 +63,7 @@ protected:
               LinkageTypes linkage, const Twine &Name)
     : Constant(ty, vty, Ops, NumOps), Linkage(linkage),
       Visibility(DefaultVisibility), Alignment(0), UnnamedAddr(0),
-      DllStorageClass(DefaultStorageClass), Parent(0) {
+      DllStorageClass(DefaultStorageClass), Parent(nullptr) {
     setName(Name);
   }
 
@@ -251,7 +251,7 @@ public:
   /// Materialize - make sure this GlobalValue is fully read.  If the module is
   /// corrupt, this returns true and fills in the optional string with
   /// information about the problem.  If successful, this returns false.
-  bool Materialize(std::string *ErrInfo = 0);
+  bool Materialize(std::string *ErrInfo = nullptr);
 
   /// Dematerialize - If this GlobalValue is read in, and if the GVMaterializer
   /// supports it, release the memory for the function, and set it up to be

@@ -18,7 +18,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 MDNode *DebugLoc::getScope(const LLVMContext &Ctx) const {
-  if (ScopeIdx == 0) return 0;
+  if (ScopeIdx == 0) return nullptr;
   
   if (ScopeIdx > 0) {
     // Positive ScopeIdx is an index into ScopeRecords, which has no inlined-at
@@ -37,7 +37,7 @@ MDNode *DebugLoc::getScope(const LLVMContext &Ctx) const {
 MDNode *DebugLoc::getInlinedAt(const LLVMContext &Ctx) const {
   // Positive ScopeIdx is an index into ScopeRecords, which has no inlined-at
   // position specified.  Zero is invalid.
-  if (ScopeIdx >= 0) return 0;
+  if (ScopeIdx >= 0) return nullptr;
   
   // Otherwise, the index is in the ScopeInlinedAtRecords array.
   assert(unsigned(-ScopeIdx) <= Ctx.pImpl->ScopeInlinedAtRecords.size() &&
@@ -49,7 +49,7 @@ MDNode *DebugLoc::getInlinedAt(const LLVMContext &Ctx) const {
 void DebugLoc::getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA,
                                     const LLVMContext &Ctx) const {
   if (ScopeIdx == 0) {
-    Scope = IA = 0;
+    Scope = IA = nullptr;
     return;
   }
   
@@ -59,7 +59,7 @@ void DebugLoc::getScopeAndInlinedAt(MDNode *&Scope, MDNode *&IA,
     assert(unsigned(ScopeIdx) <= Ctx.pImpl->ScopeRecords.size() &&
            "Invalid ScopeIdx!");
     Scope = Ctx.pImpl->ScopeRecords[ScopeIdx-1].get();
-    IA = 0;
+    IA = nullptr;
     return;
   }
   
@@ -96,8 +96,8 @@ DebugLoc DebugLoc::get(unsigned Line, unsigned Col,
   DebugLoc Result;
   
   // If no scope is available, this is an unknown location.
-  if (Scope == 0) return Result;
-  
+  if (!Scope) return Result;
+
   // Saturate line and col to "unknown".
   if (Col > 255) Col = 0;
   if (Line >= (1 << 24)) Line = 0;
@@ -106,7 +106,7 @@ DebugLoc DebugLoc::get(unsigned Line, unsigned Col,
   LLVMContext &Ctx = Scope->getContext();
   
   // If there is no inlined-at location, use the ScopeRecords array.
-  if (InlinedAt == 0)
+  if (!InlinedAt)
     Result.ScopeIdx = Ctx.pImpl->getOrAddScopeRecordIdxEntry(Scope, 0);
   else
     Result.ScopeIdx = Ctx.pImpl->getOrAddScopeInlinedAtIdxEntry(Scope,
@@ -118,7 +118,7 @@ DebugLoc DebugLoc::get(unsigned Line, unsigned Col,
 /// getAsMDNode - This method converts the compressed DebugLoc node into a
 /// DILocation-compatible MDNode.
 MDNode *DebugLoc::getAsMDNode(const LLVMContext &Ctx) const {
-  if (isUnknown()) return 0;
+  if (isUnknown()) return nullptr;
   
   MDNode *Scope, *IA;
   getScopeAndInlinedAt(Scope, IA, Ctx);
@@ -137,7 +137,7 @@ MDNode *DebugLoc::getAsMDNode(const LLVMContext &Ctx) const {
 DebugLoc DebugLoc::getFromDILocation(MDNode *N) {
   DILocation Loc(N);
   MDNode *Scope = Loc.getScope();
-  if (Scope == 0) return DebugLoc();
+  if (!Scope) return DebugLoc();
   return get(Loc.getLineNumber(), Loc.getColumnNumber(), Scope,
              Loc.getOrigLocation());
 }
@@ -146,8 +146,9 @@ DebugLoc DebugLoc::getFromDILocation(MDNode *N) {
 DebugLoc DebugLoc::getFromDILexicalBlock(MDNode *N) {
   DILexicalBlock LexBlock(N);
   MDNode *Scope = LexBlock.getContext();
-  if (Scope == 0) return DebugLoc();
-  return get(LexBlock.getLineNumber(), LexBlock.getColumnNumber(), Scope, NULL);
+  if (!Scope) return DebugLoc();
+  return get(LexBlock.getLineNumber(), LexBlock.getColumnNumber(), Scope,
+             nullptr);
 }
 
 void DebugLoc::dump(const LLVMContext &Ctx) const {
@@ -234,7 +235,7 @@ void DebugRecVH::deleted() {
   // If this is a non-canonical reference, just drop the value to null, we know
   // it doesn't have a map entry.
   if (Idx == 0) {
-    setValPtr(0);
+    setValPtr(nullptr);
     return;
   }
     
@@ -245,7 +246,7 @@ void DebugRecVH::deleted() {
     assert(Ctx->ScopeRecordIdx[Cur] == Idx && "Mapping out of date!");
     Ctx->ScopeRecordIdx.erase(Cur);
     // Reset this VH to null and we're done.
-    setValPtr(0);
+    setValPtr(nullptr);
     Idx = 0;
     return;
   }
@@ -269,7 +270,7 @@ void DebugRecVH::deleted() {
   
   // Reset this VH to null.  Drop both 'Idx' values to null to indicate that
   // we're in non-canonical form now.
-  setValPtr(0);
+  setValPtr(nullptr);
   Entry.first.Idx = Entry.second.Idx = 0;
 }
 
@@ -277,8 +278,8 @@ void DebugRecVH::allUsesReplacedWith(Value *NewVa) {
   // If being replaced with a non-mdnode value (e.g. undef) handle this as if
   // the mdnode got deleted.
   MDNode *NewVal = dyn_cast<MDNode>(NewVa);
-  if (NewVal == 0) return deleted();
-  
+  if (!NewVal) return deleted();
+
   // If this is a non-canonical reference, just change it, we know it already
   // doesn't have a map entry.
   if (Idx == 0) {

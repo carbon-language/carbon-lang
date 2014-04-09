@@ -299,7 +299,7 @@ class ConstantAggregateZero : public Constant {
   ConstantAggregateZero(const ConstantAggregateZero &) LLVM_DELETED_FUNCTION;
 protected:
   explicit ConstantAggregateZero(Type *ty)
-    : Constant(ty, ConstantAggregateZeroVal, 0, 0) {}
+    : Constant(ty, ConstantAggregateZeroVal, nullptr, 0) {}
 protected:
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
@@ -486,7 +486,7 @@ class ConstantPointerNull : public Constant {
 protected:
   explicit ConstantPointerNull(PointerType *T)
     : Constant(T,
-               Value::ConstantPointerNullVal, 0, 0) {}
+               Value::ConstantPointerNullVal, nullptr, 0) {}
 
 protected:
   // allocate space for exactly zero operands
@@ -536,7 +536,7 @@ class ConstantDataSequential : public Constant {
   ConstantDataSequential(const ConstantDataSequential &) LLVM_DELETED_FUNCTION;
 protected:
   explicit ConstantDataSequential(Type *ty, ValueTy VT, const char *Data)
-    : Constant(ty, VT, 0, 0), DataElements(Data), Next(0) {}
+    : Constant(ty, VT, nullptr, 0), DataElements(Data), Next(nullptr) {}
   ~ConstantDataSequential() { delete Next; }
 
   static Constant *getImpl(StringRef Bytes, Type *Ty);
@@ -1136,7 +1136,7 @@ class UndefValue : public Constant {
   void *operator new(size_t, unsigned) LLVM_DELETED_FUNCTION;
   UndefValue(const UndefValue &) LLVM_DELETED_FUNCTION;
 protected:
-  explicit UndefValue(Type *T) : Constant(T, UndefValueVal, 0, 0) {}
+  explicit UndefValue(Type *T) : Constant(T, UndefValueVal, nullptr, 0) {}
 protected:
   // allocate space for exactly zero operands
   void *operator new(size_t s) {

@@ -38,7 +38,7 @@ namespace llvm {
     }
     static generic_gep_type_iterator end(ItTy It) {
       generic_gep_type_iterator I;
-      I.CurTy = 0;
+      I.CurTy = nullptr;
       I.OpIt = It;
       return I;
     }
@@ -69,7 +69,7 @@ namespace llvm {
       if (CompositeType *CT = dyn_cast<CompositeType>(CurTy)) {
         CurTy = CT->getTypeAtIndex(getOperand());
       } else {
-        CurTy = 0;
+        CurTy = nullptr;
       }
       ++OpIt;
       return *this;

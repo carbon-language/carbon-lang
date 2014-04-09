@@ -178,7 +178,7 @@ static const LayoutAlignElem DefaultAlignments[] = {
 void DataLayout::reset(StringRef Desc) {
   clear();
 
-  LayoutMap = 0;
+  LayoutMap = nullptr;
   LittleEndian = false;
   StackNaturalAlign = 0;
   ManglingMode = MM_None;
@@ -344,7 +344,7 @@ void DataLayout::parseSpecifier(StringRef Desc) {
   }
 }
 
-DataLayout::DataLayout(const Module *M) : LayoutMap(0) {
+DataLayout::DataLayout(const Module *M) : LayoutMap(nullptr) {
   const DataLayout *Other = M->getDataLayout();
   if (Other)
     *this = *Other;
@@ -488,7 +488,7 @@ void DataLayout::clear() {
   Alignments.clear();
   Pointers.clear();
   delete static_cast<StructLayoutMap *>(LayoutMap);
-  LayoutMap = 0;
+  LayoutMap = nullptr;
 }
 
 DataLayout::~DataLayout() {
@@ -687,7 +687,7 @@ unsigned DataLayout::getABITypeAlignment(Type *Ty) const {
 /// getABIIntegerTypeAlignment - Return the minimum ABI-required alignment for
 /// an integer type of the specified bitwidth.
 unsigned DataLayout::getABIIntegerTypeAlignment(unsigned BitWidth) const {
-  return getAlignmentInfo(INTEGER_ALIGN, BitWidth, true, 0);
+  return getAlignmentInfo(INTEGER_ALIGN, BitWidth, true, nullptr);
 }
 
 unsigned DataLayout::getPrefTypeAlignment(Type *Ty) const {
@@ -719,7 +719,7 @@ Type *DataLayout::getSmallestLegalIntType(LLVMContext &C, unsigned Width) const 
   for (unsigned LegalIntWidth : LegalIntWidths)
     if (Width <= LegalIntWidth)
       return Type::getIntNTy(C, LegalIntWidth);
-  return 0;
+  return nullptr;
 }
 
 unsigned DataLayout::getLargestLegalIntTypeSize() const {

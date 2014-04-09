@@ -123,11 +123,11 @@ private:
   /// the module.
   ///
   Function(FunctionType *Ty, LinkageTypes Linkage,
-           const Twine &N = "", Module *M = 0);
+           const Twine &N = "", Module *M = nullptr);
 
 public:
   static Function *Create(FunctionType *Ty, LinkageTypes Linkage,
-                          const Twine &N = "", Module *M = 0) {
+                          const Twine &N = "", Module *M = nullptr) {
     return new(0) Function(Ty, Linkage, N, M);
   }
 
@@ -483,7 +483,7 @@ public:
   /// other than direct calls or invokes to it, or blockaddress expressions.
   /// Optionally passes back an offending user for diagnostic purposes.
   ///
-  bool hasAddressTaken(const User** = 0) const;
+  bool hasAddressTaken(const User** = nullptr) const;
 
   /// isDefTriviallyDead - Return true if it is trivially safe to remove
   /// this function definition from the module (because it isn't externally
@@ -505,12 +505,12 @@ private:
 
 inline ValueSymbolTable *
 ilist_traits<BasicBlock>::getSymTab(Function *F) {
-  return F ? &F->getValueSymbolTable() : 0;
+  return F ? &F->getValueSymbolTable() : nullptr;
 }
 
 inline ValueSymbolTable *
 ilist_traits<Argument>::getSymTab(Function *F) {
-  return F ? &F->getValueSymbolTable() : 0;
+  return F ? &F->getValueSymbolTable() : nullptr;
 }
 
 } // End llvm namespace

@@ -182,7 +182,7 @@ public:
 
   void releaseMemory() override { DT.releaseMemory(); }
 
-  void print(raw_ostream &OS, const Module *M = 0) const override;
+  void print(raw_ostream &OS, const Module *M = nullptr) const override;
 };
 
 } // End llvm namespace

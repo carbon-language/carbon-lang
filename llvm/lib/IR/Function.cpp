@@ -44,7 +44,7 @@ void Argument::anchor() { }
 
 Argument::Argument(Type *Ty, const Twine &Name, Function *Par)
   : Value(Ty, Value::ArgumentVal) {
-  Parent = 0;
+  Parent = nullptr;
 
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);
@@ -210,7 +210,7 @@ void Function::eraseFromParent() {
 Function::Function(FunctionType *Ty, LinkageTypes Linkage,
                    const Twine &name, Module *ParentModule)
   : GlobalValue(PointerType::getUnqual(Ty),
-                Value::FunctionVal, 0, 0, Linkage, name) {
+                Value::FunctionVal, nullptr, 0, Linkage, name) {
   assert(FunctionType::isValidReturnType(getReturnType()) &&
          "invalid return type");
   SymTab = new ValueSymbolTable();
@@ -293,7 +293,7 @@ void Function::dropAllReferences() {
     BasicBlocks.begin()->eraseFromParent();
 
   // Prefix data is stored in a side table.
-  setPrefixData(0);
+  setPrefixData(nullptr);
 }
 
 void Function::addAttribute(unsigned i, Attribute::AttrKind attr) {
@@ -348,10 +348,10 @@ void Function::clearGC() {
     GCNames->erase(this);
     if (GCNames->empty()) {
       delete GCNames;
-      GCNames = 0;
+      GCNames = nullptr;
       if (GCNamePool->empty()) {
         delete GCNamePool;
-        GCNamePool = 0;
+        GCNamePool = nullptr;
       }
     }
   }
@@ -372,7 +372,7 @@ void Function::copyAttributesFrom(const GlobalValue *Src) {
   if (SrcF->hasPrefixData())
     setPrefixData(SrcF->getPrefixData());
   else
-    setPrefixData(0);
+    setPrefixData(nullptr);
 }
 
 /// getIntrinsicID - This method returns the ID number of the specified
