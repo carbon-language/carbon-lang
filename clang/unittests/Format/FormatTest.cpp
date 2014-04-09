@@ -3295,6 +3295,8 @@ TEST_F(FormatTest, BreaksFunctionDeclarationsWithTrailingTokens) {
                "    LOCKS_EXCLUDED(aaaaaaaaaaaaa);");
   verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"
                "    LOCKS_EXCLUDED(aaaaaaaaaaaaa) {}");
+  verifyGoogleFormat("void aaaaaaaaaaaaaa(aaaaaaaa aaa) override\n"
+                     "    AAAAAAAAAAAAAAAAAAAAAAAA(aaaaaaaaaaaaaaa);");
 
   verifyFormat(
       "void aaaaaaaaaaaaaaaaaa()\n"

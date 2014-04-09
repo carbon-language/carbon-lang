@@ -1623,11 +1623,11 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   if (Right.is(tok::r_brace))
     return Right.MatchingParen && Right.MatchingParen->BlockKind == BK_Block;
 
-  // Allow breaking after a trailing 'const', e.g. after a method declaration,
-  // unless it is follow by ';', '{' or '='.
-  if (Left.is(tok::kw_const) && Left.Previous != NULL &&
-      Left.Previous->is(tok::r_paren))
-    return !Right.isOneOf(tok::l_brace, tok::semi, tok::equal);
+  // Allow breaking after a trailing annotation, e.g. after a method
+  // declaration.
+  if (Left.Type == TT_TrailingAnnotation)
+    return !Right.isOneOf(tok::l_brace, tok::semi, tok::equal, tok::l_paren,
+                          tok::less, tok::coloncolon);
 
   if (Right.is(tok::kw___attribute))
     return true;
