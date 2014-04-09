@@ -2099,12 +2099,13 @@ static bool isMsLayout(const RecordDecl* D) {
 // * The ABI attempts to avoid aliasing of zero sized bases by adding padding
 //   between bases or vbases with specific properties.  The criteria for
 //   additional padding between two bases is that the first base is zero sized
-//   or has a zero sized subobject and the second base is zero sized or leads
-//   with a zero sized base (sharing of vfptrs can reorder the layout of the
-//   so the leading base is not always the first one declared).  The padding
-//   added for bases is 1 byte.  The padding added for vbases depends on the
-//   alignment of the object but is at least 4 bytes (in both 32 and 64 bit
-//   modes).
+//   or ends with a zero sized subobject and the second base is zero sized or
+//   leads with a zero sized base (sharing of vfptrs can reorder the layout of
+//   the so the leading base is not always the first one declared).  This rule
+//   is slightly buggy (conservative) because it doesn't take into account
+//   fields that are not records. The padding added for bases is 1 byte.  The
+//   padding added for vbases depends on the alignment of the object but is at
+//   least 4 bytes (in both 32 and 64 bit modes).
 // * There is no concept of non-virtual alignment or any distinction between
 //   data size and non-virtual size.
 // * __declspec(align) on bitfields has the effect of changing the bitfield's
@@ -2213,9 +2214,10 @@ public:
   bool HasVBPtr : 1;
   /// \brief Lets us know if we're in 64-bit mode
   bool Is64BitMode : 1;
-  /// \brief True if this class contains a zero sized member or base or a base
-  /// with a zero sized member or base.  Only used for MS-ABI.
-  bool HasZeroSizedSubObject : 1;
+  /// \brief True if the last sub-object within the type is zero sized or the
+  /// object itself is zero sized.  This *does not* count members that are not
+  /// records.  Only used for MS-ABI.
+  bool EndsWithZeroSizedObject : 1;
   /// \brief True if this class is zero sized or first base is zero sized or
   /// has this property.  Only used for MS-ABI.
   bool LeadsWithZeroSizedBase : 1;
@@ -2231,8 +2233,7 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
   if (!MaxFieldAlignment.isZero())
     Info.Alignment = std::min(Info.Alignment, MaxFieldAlignment);
   // Track zero-sized subobjects here where it's already available.
-  if (Layout.hasZeroSizedSubObject())
-    HasZeroSizedSubObject = true;
+  EndsWithZeroSizedObject = Layout.hasZeroSizedSubObject();
   // Respect required alignment, this is necessary because we may have adjusted
   // the alignment in the case of pragam pack.  Note that the required alignment
   // doesn't actually apply to the struct alignment at this point.
@@ -2339,7 +2340,7 @@ void MicrosoftRecordLayoutBuilder::initializeLayout(const RecordDecl *RD) {
 
 void
 MicrosoftRecordLayoutBuilder::initializeCXXLayout(const CXXRecordDecl *RD) {
-  HasZeroSizedSubObject = false;
+  EndsWithZeroSizedObject = false;
   LeadsWithZeroSizedBase = false;
   HasOwnVFPtr = false;
   HasVBPtr = false;
@@ -2617,7 +2618,6 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
     if (HasVtordisp)
       Size = Size.RoundUpToAlignment(VtorDispAlignment) + VtorDispSize;
     // Insert the virtual base.
-    HasZeroSizedSubObject = false;
     ElementInfo Info = getAdjustedElementInfo(BaseLayout);
     CharUnits BaseOffset = Size.RoundUpToAlignment(Info.Alignment);
     VBases.insert(std::make_pair(BaseDecl,
@@ -2637,7 +2637,7 @@ void MicrosoftRecordLayoutBuilder::finalizeLayout(const RecordDecl *RD) {
   }
   // Zero-sized structures have size equal to their alignment.
   if (Size.isZero()) {
-    HasZeroSizedSubObject = true;
+    EndsWithZeroSizedObject = true;
     LeadsWithZeroSizedBase = true;
     Size = Alignment;
   }
@@ -2750,7 +2750,7 @@ ASTContext::BuildMicrosoftASTRecordLayout(const RecordDecl *D) const {
         Builder.FieldOffsets.size(), Builder.NonVirtualSize,
         Builder.Alignment, CharUnits::Zero(), Builder.PrimaryBase,
         false, Builder.SharedVBPtrBase,
-        Builder.HasZeroSizedSubObject, Builder.LeadsWithZeroSizedBase,
+        Builder.EndsWithZeroSizedObject, Builder.LeadsWithZeroSizedBase,
         Builder.Bases, Builder.VBases);
   } else {
     Builder.layout(D);
@@ -3078,7 +3078,6 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
   PrintIndentNoOffset(OS, IndentLevel - 1);
   OS << " nvsize=" << Layout.getNonVirtualSize().getQuantity();
   OS << ", nvalign=" << Layout.getNonVirtualAlignment().getQuantity() << "]\n";
-  OS << '\n';
 }
 
 void ASTContext::DumpRecordLayout(const RecordDecl *RD,
