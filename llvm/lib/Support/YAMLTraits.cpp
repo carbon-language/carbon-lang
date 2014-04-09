@@ -561,8 +561,9 @@ void Output::scalarString(StringRef &S) {
     this->outputUpToEndOfLine("''");
     return;
   }
+  bool isOctalString = S.front() == '0' && S.size() > 2 && !S.startswith("0x");
   if (S.find_first_not_of(ScalarSafeChars) == StringRef::npos &&
-      !isspace(S.front()) && !isspace(S.back())) {
+      !isspace(S.front()) && !isspace(S.back()) && !isOctalString) {
     // If the string consists only of safe characters, print it out without
     // quotes.
     this->outputUpToEndOfLine(S);

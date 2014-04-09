@@ -302,11 +302,13 @@ struct StringTypes {
   llvm::StringRef str3;
   llvm::StringRef str4;
   llvm::StringRef str5;
+  llvm::StringRef str6;
   std::string stdstr1;
   std::string stdstr2;
   std::string stdstr3;
   std::string stdstr4;
   std::string stdstr5;
+  std::string stdstr6;
 };
 
 namespace llvm {
@@ -319,11 +321,13 @@ namespace yaml {
       io.mapRequired("str3",      st.str3);
       io.mapRequired("str4",      st.str4);
       io.mapRequired("str5",      st.str5);
+      io.mapRequired("str6",      st.str6);
       io.mapRequired("stdstr1",   st.stdstr1);
       io.mapRequired("stdstr2",   st.stdstr2);
       io.mapRequired("stdstr3",   st.stdstr3);
       io.mapRequired("stdstr4",   st.stdstr4);
       io.mapRequired("stdstr5",   st.stdstr5);
+      io.mapRequired("stdstr6",   st.stdstr6);
     }
   };
 }
@@ -338,11 +342,13 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
     map.str3 = "`ccc";
     map.str4 = "@ddd";
     map.str5 = "";
+    map.str6 = "0000000004000000";
     map.stdstr1 = "'eee";
     map.stdstr2 = "\"fff";
     map.stdstr3 = "`ggg";
     map.stdstr4 = "@hhh";
     map.stdstr5 = "";
+    map.stdstr6 = "0000000004000000";
 
     llvm::raw_string_ostream ostr(intermediate);
     Output yout(ostr);
@@ -355,11 +361,13 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("'`ccc'"));
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("'@ddd'"));
   EXPECT_NE(llvm::StringRef::npos, flowOut.find("''\n"));
+  EXPECT_NE(llvm::StringRef::npos, flowOut.find("'0000000004000000'\n"));
   EXPECT_NE(std::string::npos, flowOut.find("'''eee"));
   EXPECT_NE(std::string::npos, flowOut.find("'\"fff'"));
   EXPECT_NE(std::string::npos, flowOut.find("'`ggg'"));
   EXPECT_NE(std::string::npos, flowOut.find("'@hhh'"));
   EXPECT_NE(std::string::npos, flowOut.find("''\n"));
+  EXPECT_NE(std::string::npos, flowOut.find("'0000000004000000'\n"));
 
   {
     Input yin(intermediate);
@@ -372,11 +380,13 @@ TEST(YAMLIO, TestReadWriteStringTypes) {
     EXPECT_TRUE(map.str3.equals("`ccc"));
     EXPECT_TRUE(map.str4.equals("@ddd"));
     EXPECT_TRUE(map.str5.equals(""));
+    EXPECT_TRUE(map.str6.equals("0000000004000000"));
     EXPECT_TRUE(map.stdstr1 == "'eee");
     EXPECT_TRUE(map.stdstr2 == "\"fff");
     EXPECT_TRUE(map.stdstr3 == "`ggg");
     EXPECT_TRUE(map.stdstr4 == "@hhh");
     EXPECT_TRUE(map.stdstr5 == "");
+    EXPECT_TRUE(map.stdstr6 == "0000000004000000");
   }
 }
 
