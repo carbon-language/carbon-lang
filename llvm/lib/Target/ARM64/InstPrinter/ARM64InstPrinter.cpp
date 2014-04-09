@@ -1097,8 +1097,10 @@ void ARM64InstPrinter::printExtend(const MCInst *MI, unsigned OpNum,
   if (ExtType == ARM64_AM::UXTW || ExtType == ARM64_AM::UXTX) {
     unsigned Dest = MI->getOperand(0).getReg();
     unsigned Src1 = MI->getOperand(1).getReg();
-    if (Dest == ARM64::SP || Dest == ARM64::WSP || Src1 == ARM64::SP ||
-        Src1 == ARM64::WSP) {
+    if ( ((Dest == ARM64::SP || Src1 == ARM64::SP) &&
+          ExtType == ARM64_AM::UXTX) ||
+         ((Dest == ARM64::WSP || Src1 == ARM64::WSP) &&
+          ExtType == ARM64_AM::UXTW) ) {
       if (ShiftVal != 0)
         O << ", lsl #" << ShiftVal;
       return;

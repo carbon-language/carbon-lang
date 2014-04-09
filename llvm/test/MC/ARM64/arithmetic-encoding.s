@@ -368,8 +368,8 @@ foo:
 ; CHECK: subs x3, sp, x9, lsl #2     ; encoding: [0xe3,0x6b,0x29,0xeb]
 ; CHECK: cmp wsp, w8                 ; encoding: [0xff,0x43,0x28,0x6b]
 ; CHECK: cmp wsp, w8                 ; encoding: [0xff,0x43,0x28,0x6b]
-; CHECK: cmp sp, w8                  ; encoding: [0xff,0x43,0x28,0xeb]
-; CHECK: cmp sp, w8                  ; encoding: [0xff,0x43,0x28,0xeb]
+; CHECK: cmp sp, w8, uxtw            ; encoding: [0xff,0x43,0x28,0xeb]
+; CHECK: cmp sp, w8, uxtw            ; encoding: [0xff,0x43,0x28,0xeb]
 
   sub wsp, w9, w8, uxtw
   sub w1, wsp, w8, uxtw
@@ -383,11 +383,11 @@ foo:
 ; CHECK: sub wsp, w9, w8             ; encoding: [0x3f,0x41,0x28,0x4b]
 ; CHECK: sub w1, wsp, w8             ; encoding: [0xe1,0x43,0x28,0x4b]
 ; CHECK: sub wsp, wsp, w8            ; encoding: [0xff,0x43,0x28,0x4b]
-; CHECK: sub sp, x9, w8              ; encoding: [0x3f,0x41,0x28,0xcb]
-; CHECK: sub x1, sp, w8              ; encoding: [0xe1,0x43,0x28,0xcb]
-; CHECK: sub sp, sp, w8              ; encoding: [0xff,0x43,0x28,0xcb]
+; CHECK: sub sp, x9, w8, uxtw        ; encoding: [0x3f,0x41,0x28,0xcb]
+; CHECK: sub x1, sp, w8, uxtw        ; encoding: [0xe1,0x43,0x28,0xcb]
+; CHECK: sub sp, sp, w8, uxtw        ; encoding: [0xff,0x43,0x28,0xcb]
 ; CHECK: subs w1, wsp, w8            ; encoding: [0xe1,0x43,0x28,0x6b]
-; CHECK: subs x1, sp, w8             ; encoding: [0xe1,0x43,0x28,0xeb]
+; CHECK: subs x1, sp, w8, uxtw       ; encoding: [0xe1,0x43,0x28,0xeb]
 
 ;==---------------------------------------------------------------------------==
 ; Signed/Unsigned divide
