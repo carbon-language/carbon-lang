@@ -240,3 +240,103 @@ b.c #0x4
 ; CHECK-ERRORS: error: invalid condition code
 ; CHECK-ERRORS: b.c #0x4
 ; CHECK-ERRORS:   ^
+
+ic ialluis, x0
+; CHECK-ERRORS: error: specified ic op does not use a register
+ic iallu, x0
+; CHECK-ERRORS: error: specified ic op does not use a register
+ic ivau
+; CHECK-ERRORS: error: specified ic op requires a register
+
+dc zva
+; CHECK-ERRORS: error: specified dc op requires a register
+dc ivac
+; CHECK-ERRORS: error: specified dc op requires a register
+dc isw
+; CHECK-ERRORS: error: specified dc op requires a register
+dc cvac
+; CHECK-ERRORS: error: specified dc op requires a register
+dc csw
+; CHECK-ERRORS: error: specified dc op requires a register
+dc cvau
+; CHECK-ERRORS: error: specified dc op requires a register
+dc civac
+; CHECK-ERRORS: error: specified dc op requires a register
+dc cisw
+; CHECK-ERRORS: error: specified dc op requires a register
+
+at s1e1r
+; CHECK-ERRORS: error: specified at op requires a register
+at s1e2r
+; CHECK-ERRORS: error: specified at op requires a register
+at s1e3r
+; CHECK-ERRORS: error: specified at op requires a register
+at s1e1w
+; CHECK-ERRORS: error: specified at op requires a register
+at s1e2w
+; CHECK-ERRORS: error: specified at op requires a register
+at s1e3w
+; CHECK-ERRORS: error: specified at op requires a register
+at s1e0r
+; CHECK-ERRORS: error: specified at op requires a register
+at s1e0w
+; CHECK-ERRORS: error: specified at op requires a register
+at s12e1r
+; CHECK-ERRORS: error: specified at op requires a register
+at s12e1w
+; CHECK-ERRORS: error: specified at op requires a register
+at s12e0r
+; CHECK-ERRORS: error: specified at op requires a register
+at s12e0w
+; CHECK-ERRORS: error: specified at op requires a register
+
+tlbi vmalle1is, x0
+; CHECK-ERRORS: error: specified tlbi op does not use a register
+tlbi vmalle1, x0
+; CHECK-ERRORS: error: specified tlbi op does not use a register
+tlbi alle1is, x0
+; CHECK-ERRORS: error: specified tlbi op does not use a register
+tlbi alle2is, x0
+; CHECK-ERRORS: error: specified tlbi op does not use a register
+tlbi alle3is, x0
+; CHECK-ERRORS: error: specified tlbi op does not use a register
+tlbi alle1, x0
+; CHECK-ERRORS: error: specified tlbi op does not use a register
+tlbi alle2, x0
+; CHECK-ERRORS: error: specified tlbi op does not use a register
+tlbi alle3, x0
+; CHECK-ERRORS: error: specified tlbi op does not use a register
+tlbi vae1is
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vae2is
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vae3is
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi aside1is
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vaae1is
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vale1is
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vaale1is
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vale2is
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vale3is
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vae1
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vae2
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vae3
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi aside1
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vaae1
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vale1
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vale2
+; CHECK-ERRORS: error: specified tlbi op requires a register
+tlbi vale3
+; CHECK-ERRORS: error: specified tlbi op requires a register

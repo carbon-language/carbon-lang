@@ -412,120 +412,128 @@ foo:
 ; CHECK: tlbi ipas2e1
   sys #4, c8, c4, #5
 ; CHECK: tlbi ipas2le1
+  sys #4, c8, c0, #1
+; CHECK: tlbi ipas2e1is
+  sys #4, c8, c0, #5
+; CHECK: tlbi ipas2le1is
   sys #4, c8, c7, #6
 ; CHECK: tlbi vmalls12e1
   sys #4, c8, c3, #6
 ; CHECK: tlbi vmalls12e1is
 
   ic ialluis
-; CHECK: ic ialluis
+; CHECK: ic ialluis                 ; encoding: [0x1f,0x71,0x08,0xd5]
   ic iallu
-; CHECK: ic iallu
-  ic ivau
-; CHECK: ic ivau
+; CHECK: ic iallu                   ; encoding: [0x1f,0x75,0x08,0xd5]
+  ic ivau, x0
+; CHECK: ic ivau, x0                ; encoding: [0x20,0x75,0x0b,0xd5]
 
-  dc zva
-; CHECK: dc zva
-  dc ivac
-; CHECK: dc ivac
-  dc isw
-; CHECK: dc isw
-  dc cvac
-; CHECK: dc cvac
-  dc csw
-; CHECK: dc csw
-  dc cvau
-; CHECK: dc cvau
-  dc civac
-; CHECK: dc civac
-  dc cisw
-; CHECK: dc cisw
+  dc zva, x0
+; CHECK: dc zva, x0                 ; encoding: [0x20,0x74,0x0b,0xd5]
+  dc ivac, x0
+; CHECK: dc ivac, x0                ; encoding: [0x20,0x76,0x08,0xd5]
+  dc isw, x0
+; CHECK: dc isw, x0                 ; encoding: [0x40,0x76,0x08,0xd5]
+  dc cvac, x0
+; CHECK: dc cvac, x0                ; encoding: [0x20,0x7a,0x0b,0xd5]
+  dc csw, x0
+; CHECK: dc csw, x0                 ; encoding: [0x40,0x7a,0x08,0xd5]
+  dc cvau, x0
+; CHECK: dc cvau, x0                ; encoding: [0x20,0x7b,0x0b,0xd5]
+  dc civac, x0
+; CHECK: dc civac, x0               ; encoding: [0x20,0x7e,0x0b,0xd5]
+  dc cisw, x0
+; CHECK: dc cisw, x0                ; encoding: [0x40,0x7e,0x08,0xd5]
 
-  at s1e1r
-; CHECK: at s1e1r
-  at s1e2r
-; CHECK: at s1e2r
-  at s1e3r
-; CHECK: at s1e3r
-  at s1e1w
-; CHECK: at s1e1w
-  at s1e2w
-; CHECK: at s1e2w
-  at s1e3w
-; CHECK: at s1e3w
-  at s1e0r
-; CHECK: at s1e0r
-  at s1e0w
-; CHECK: at s1e0w
-  at s12e1r
-; CHECK: at s12e1r
-  at s12e1w
-; CHECK: at s12e1w
-  at s12e0r
-; CHECK: at s12e0r
-  at s12e0w
-; CHECK: at s12e0w
+  at s1e1r, x0
+; CHECK: at s1e1r, x0               ; encoding: [0x00,0x78,0x08,0xd5]
+  at s1e2r, x0
+; CHECK: at s1e2r, x0               ; encoding: [0x00,0x78,0x0c,0xd5]
+  at s1e3r, x0
+; CHECK: at s1e3r, x0               ; encoding: [0x00,0x78,0x0e,0xd5]
+  at s1e1w, x0
+; CHECK: at s1e1w, x0               ; encoding: [0x20,0x78,0x08,0xd5]
+  at s1e2w, x0
+; CHECK: at s1e2w, x0               ; encoding: [0x20,0x78,0x0c,0xd5]
+  at s1e3w, x0
+; CHECK: at s1e3w, x0               ; encoding: [0x20,0x78,0x0e,0xd5]
+  at s1e0r, x0
+; CHECK: at s1e0r, x0               ; encoding: [0x40,0x78,0x08,0xd5]
+  at s1e0w, x0
+; CHECK: at s1e0w, x0               ; encoding: [0x60,0x78,0x08,0xd5]
+  at s12e1r, x0
+; CHECK: at s12e1r, x0              ; encoding: [0x80,0x78,0x0c,0xd5]
+  at s12e1w, x0
+; CHECK: at s12e1w, x0              ; encoding: [0xa0,0x78,0x0c,0xd5]
+  at s12e0r, x0
+; CHECK: at s12e0r, x0              ; encoding: [0xc0,0x78,0x0c,0xd5]
+  at s12e0w, x0
+; CHECK: at s12e0w, x0              ; encoding: [0xe0,0x78,0x0c,0xd5]
 
   tlbi vmalle1is
-; CHECK: tlbi vmalle1is
+; CHECK: tlbi vmalle1is             ; encoding: [0x1f,0x83,0x08,0xd5]
   tlbi alle2is
-; CHECK: tlbi alle2is
+; CHECK: tlbi alle2is               ; encoding: [0x1f,0x83,0x0c,0xd5]
   tlbi alle3is
-; CHECK: tlbi alle3is
-  tlbi vae1is
-; CHECK: tlbi vae1is
-  tlbi vae2is
-; CHECK: tlbi vae2is
-  tlbi vae3is
-; CHECK: tlbi vae3is
-  tlbi aside1is
-; CHECK: tlbi aside1is
-  tlbi vaae1is
-; CHECK: tlbi vaae1is
+; CHECK: tlbi alle3is               ; encoding: [0x1f,0x83,0x0e,0xd5]
+  tlbi vae1is, x0
+; CHECK: tlbi vae1is, x0            ; encoding: [0x20,0x83,0x08,0xd5]
+  tlbi vae2is, x0
+; CHECK: tlbi vae2is, x0            ; encoding: [0x20,0x83,0x0c,0xd5]
+  tlbi vae3is, x0
+; CHECK: tlbi vae3is, x0            ; encoding: [0x20,0x83,0x0e,0xd5]
+  tlbi aside1is, x0
+; CHECK: tlbi aside1is, x0          ; encoding: [0x40,0x83,0x08,0xd5]
+  tlbi vaae1is, x0
+; CHECK: tlbi vaae1is, x0           ; encoding: [0x60,0x83,0x08,0xd5]
   tlbi alle1is
-; CHECK: tlbi alle1is
-  tlbi vale1is
-; CHECK: tlbi vale1is
-  tlbi vaale1is
-; CHECK: tlbi vaale1is
+; CHECK: tlbi alle1is               ; encoding: [0x9f,0x83,0x0c,0xd5]
+  tlbi vale1is, x0
+; CHECK: tlbi vale1is, x0           ; encoding: [0xa0,0x83,0x08,0xd5]
+  tlbi vaale1is, x0
+; CHECK: tlbi vaale1is, x0          ; encoding: [0xe0,0x83,0x08,0xd5]
   tlbi vmalle1
-; CHECK: tlbi vmalle1
+; CHECK: tlbi vmalle1               ; encoding: [0x1f,0x87,0x08,0xd5]
   tlbi alle2
-; CHECK: tlbi alle2
-  tlbi vale2is
-; CHECK: tlbi vale2is
-  tlbi vale3is
-; CHECK: tlbi vale3is
+; CHECK: tlbi alle2                 ; encoding: [0x1f,0x87,0x0c,0xd5]
+  tlbi vale2is, x0
+; CHECK: tlbi vale2is, x0           ; encoding: [0xa0,0x83,0x0c,0xd5]
+  tlbi vale3is, x0
+; CHECK: tlbi vale3is, x0           ; encoding: [0xa0,0x83,0x0e,0xd5]
   tlbi alle3
-; CHECK: tlbi alle3
-  tlbi vae1
-; CHECK: tlbi vae1
-  tlbi vae2
-; CHECK: tlbi vae2
-  tlbi vae3
-; CHECK: tlbi vae3
-  tlbi aside1
-; CHECK: tlbi aside1
-  tlbi vaae1
-; CHECK: tlbi vaae1
+; CHECK: tlbi alle3                 ; encoding: [0x1f,0x87,0x0e,0xd5]
+  tlbi vae1, x0
+; CHECK: tlbi vae1, x0              ; encoding: [0x20,0x87,0x08,0xd5]
+  tlbi vae2, x0
+; CHECK: tlbi vae2, x0              ; encoding: [0x20,0x87,0x0c,0xd5]
+  tlbi vae3, x0
+; CHECK: tlbi vae3, x0              ; encoding: [0x20,0x87,0x0e,0xd5]
+  tlbi aside1, x0
+; CHECK: tlbi aside1, x0            ; encoding: [0x40,0x87,0x08,0xd5]
+  tlbi vaae1, x0
+; CHECK: tlbi vaae1, x0             ; encoding: [0x60,0x87,0x08,0xd5]
   tlbi alle1
-; CHECK: tlbi alle1
-  tlbi vale1
-; CHECK: tlbi vale1
-  tlbi vale2
-; CHECK: tlbi vale2
-  tlbi vale3
-; CHECK: tlbi vale3
-  tlbi vaale1
-; CHECK: tlbi vaale1
-  tlbi ipas2e1, x10
-; CHECK: tlbi ipas2e1, x10
-  tlbi ipas2le1, x1
-; CHECK: tlbi ipas2le1, x1
+; CHECK: tlbi alle1                 ; encoding: [0x9f,0x87,0x0c,0xd5
+  tlbi vale1, x0
+; CHECK: tlbi vale1, x0             ; encoding: [0xa0,0x87,0x08,0xd5]
+  tlbi vale2, x0
+; CHECK: tlbi vale2, x0             ; encoding: [0xa0,0x87,0x0c,0xd5]
+  tlbi vale3, x0
+; CHECK: tlbi vale3, x0             ; encoding: [0xa0,0x87,0x0e,0xd5]
+  tlbi vaale1, x0
+; CHECK: tlbi vaale1, x0            ; encoding: [0xe0,0x87,0x08,0xd5]
+  tlbi ipas2e1, x0
+; CHECK: tlbi ipas2e1, x0           ; encoding: [0x20,0x84,0x0c,0xd5]
+  tlbi ipas2le1, x0
+; CHECK: tlbi ipas2le1, x0          ; encoding: [0xa0,0x84,0x0c,0xd5]
+  tlbi ipas2e1is, x0
+; CHECK: tlbi ipas2e1is, x0         ; encoding: [0x20,0x80,0x0c,0xd5]
+  tlbi ipas2le1is, x0
+; CHECK: tlbi ipas2le1is, x0        ; encoding: [0xa0,0x80,0x0c,0xd5]
   tlbi vmalls12e1
-; CHECK: tlbi vmalls12e1
+; CHECK: tlbi vmalls12e1            ; encoding: [0xdf,0x87,0x0c,0xd5]
   tlbi vmalls12e1is
-; CHECK: tlbi vmalls12e1is
+; CHECK: tlbi vmalls12e1is          ; encoding: [0xdf,0x83,0x0c,0xd5]
 
 ;-----------------------------------------------------------------------------
 ; 5.8.5 Vector Arithmetic aliases

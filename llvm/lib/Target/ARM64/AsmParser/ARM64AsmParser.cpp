@@ -2516,6 +2516,12 @@ bool ARM64AsmParser::parseSysAlias(StringRef Name, SMLoc NameLoc,
     } else if (!Op.compare_lower("ipas2le1")) {
       // SYS #4, C8, C4, #5
       SYS_ALIAS(4, 8, 4, 5);
+    } else if (!Op.compare_lower("ipas2e1is")) {
+      // SYS #4, C8, C4, #1
+      SYS_ALIAS(4, 8, 0, 1);
+    } else if (!Op.compare_lower("ipas2le1is")) {
+      // SYS #4, C8, C4, #5
+      SYS_ALIAS(4, 8, 0, 5);
     } else if (!Op.compare_lower("vmalls12e1")) {
       // SYS #4, C8, C7, #6
       SYS_ALIAS(4, 8, 7, 6);
@@ -2531,17 +2537,29 @@ bool ARM64AsmParser::parseSysAlias(StringRef Name, SMLoc NameLoc,
 
   Parser.Lex(); // Eat operand.
 
+  bool ExpectRegister = (Op.lower().find("all") == StringRef::npos);
+  bool HasRegister = false;
+
   // Check for the optional register operand.
   if (getLexer().is(AsmToken::Comma)) {
     Parser.Lex(); // Eat comma.
 
     if (Tok.isNot(AsmToken::Identifier) || parseRegister(Operands))
       return TokError("expected register operand");
+
+    HasRegister = true;
   }
 
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     Parser.eatToEndOfStatement();
     return TokError("unexpected token in argument list");
+  }
+
+  if (ExpectRegister && !HasRegister) {
+    return TokError("specified " + Mnemonic + " op requires a register");
+  }
+  else if (!ExpectRegister && HasRegister) {
+    return TokError("specified " + Mnemonic + " op does not use a register");
   }
 
   Parser.Lex(); // Consume the EndOfStatement

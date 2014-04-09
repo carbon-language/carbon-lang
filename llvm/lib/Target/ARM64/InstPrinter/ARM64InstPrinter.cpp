@@ -849,6 +849,20 @@ bool ARM64InstPrinter::printSysAlias(const MCInst *MI, raw_ostream &O) {
         break;
       }
       break;
+    case 0:
+      switch (Op1Val) {
+      default:
+        break;
+      case 4:
+        switch (Op2Val) {
+        default:
+          break;
+        case 1: Asm = "tlbi\tipas2e1is"; break;
+        case 5: Asm = "tlbi\tipas2le1is"; break;
+        }
+        break;
+      }
+      break;
     case 4:
       switch (Op1Val) {
       default:
