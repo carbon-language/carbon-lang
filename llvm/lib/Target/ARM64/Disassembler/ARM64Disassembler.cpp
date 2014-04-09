@@ -1297,9 +1297,11 @@ static DecodeStatus DecodeRegOffsetLdStInstruction(llvm::MCInst &Inst,
     DecodeFPR32RegisterClass(Inst, Rt, Addr, Decoder);
     break;
   case ARM64::LDRHro:
+  case ARM64::STRHro:
     DecodeFPR16RegisterClass(Inst, Rt, Addr, Decoder);
     break;
   case ARM64::LDRBro:
+  case ARM64::STRBro:
     DecodeFPR8RegisterClass(Inst, Rt, Addr, Decoder);
     break;
   case ARM64::LDRBBro:
