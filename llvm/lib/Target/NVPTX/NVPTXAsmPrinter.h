@@ -96,6 +96,7 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
     unsigned curpos;
     raw_ostream &O;
     NVPTXAsmPrinter &AP;
+    bool EmitGeneric;
 
   public:
     AggBuffer(unsigned _size, raw_ostream &_O, NVPTXAsmPrinter &_AP)
@@ -104,6 +105,7 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
       size = _size;
       curpos = 0;
       numSymbols = 0;
+      EmitGeneric = AP.EmitGeneric;
     }
     ~AggBuffer() { delete[] buffer; }
     unsigned addBytes(unsigned char *Ptr, int Num, int Bytes) {
@@ -155,7 +157,18 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
             const Value *v = Symbols[nSym];
             if (const GlobalValue *GVar = dyn_cast<GlobalValue>(v)) {
               MCSymbol *Name = AP.getSymbol(GVar);
-              O << *Name;
+              PointerType *PTy = dyn_cast<PointerType>(GVar->getType());
+              bool IsNonGenericPointer = false;
+              if (PTy && PTy->getAddressSpace() != 0) {
+                IsNonGenericPointer = true;
+              }
+              if (EmitGeneric && !isa<Function>(v) && !IsNonGenericPointer) {
+                O << "generic(";
+                O << *Name;
+                O << ")";
+              } else {
+                O << *Name;
+              }
             } else if (const ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(v)) {
               O << *nvptx::LowerConstant(Cexpr, AP);
             } else
@@ -276,12 +289,27 @@ private:
 
   LineReader *reader;
   LineReader *getReader(std::string);
+
+  // Used to control the need to emit .generic() in the initializer of
+  // module scope variables.
+  // Although ptx supports the hybrid mode like the following,
+  //    .global .u32 a;
+  //    .global .u32 b;
+  //    .global .u32 addr[] = {a, generic(b)}
+  // we have difficulty representing the difference in the NVVM IR.
+  //
+  // Since the address value should always be generic in CUDA C and always
+  // be specific in OpenCL, we use this simple control here.
+  //
+  bool EmitGeneric;
+
 public:
   NVPTXAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : AsmPrinter(TM, Streamer),
         nvptxSubtarget(TM.getSubtarget<NVPTXSubtarget>()) {
     CurrentBankselLabelInBasicBlock = "";
     reader = NULL;
+    EmitGeneric = (nvptxSubtarget.getDrvInterface() == NVPTX::CUDA);
   }
 
   ~NVPTXAsmPrinter() {

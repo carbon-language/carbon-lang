@@ -149,9 +149,24 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
       raw_string_ostream OS(S);
       OS << "Unsupported expression in static initializer: ";
       CE->printAsOperand(OS, /*PrintType=*/ false,
-                     !AP.MF ? 0 : AP.MF->getFunction()->getParent());
+                         !AP.MF ? 0 : AP.MF->getFunction()->getParent());
       report_fatal_error(OS.str());
     }
+  case Instruction::AddrSpaceCast: {
+    // Strip any addrspace(1)->addrspace(0) addrspace casts. These will be
+    // handled by the generic() logic in the MCExpr printer
+    PointerType *DstTy            = cast<PointerType>(CE->getType());
+    PointerType *SrcTy            = cast<PointerType>(CE->getOperand(0)->getType());
+    if (SrcTy->getAddressSpace() == 1 && DstTy->getAddressSpace() == 0) {
+      return LowerConstant(cast<const Constant>(CE->getOperand(0)), AP);
+    }
+    std::string S;
+    raw_string_ostream OS(S);
+    OS << "Unsupported expression in static initializer: ";
+    CE->printAsOperand(OS, /*PrintType=*/ false,
+                       !AP.MF ? 0 : AP.MF->getFunction()->getParent());
+    report_fatal_error(OS.str());
+  }
   case Instruction::GetElementPtr: {
     const DataLayout &TD = *AP.TM.getDataLayout();
     // Generate a symbolic expression for the byte address
@@ -1754,13 +1769,35 @@ void NVPTXAsmPrinter::printScalarConstant(const Constant *CPV, raw_ostream &O) {
     return;
   }
   if (const GlobalValue *GVar = dyn_cast<GlobalValue>(CPV)) {
-    O << *getSymbol(GVar);
+    PointerType *PTy = dyn_cast<PointerType>(GVar->getType());
+    bool IsNonGenericPointer = false;
+    if (PTy && PTy->getAddressSpace() != 0) {
+      IsNonGenericPointer = true;
+    }
+    if (EmitGeneric && !isa<Function>(CPV) && !IsNonGenericPointer) {
+      O << "generic(";
+      O << *getSymbol(GVar);
+      O << ")";
+    } else {
+      O << *getSymbol(GVar);
+    }
     return;
   }
   if (const ConstantExpr *Cexpr = dyn_cast<ConstantExpr>(CPV)) {
     const Value *v = Cexpr->stripPointerCasts();
+    PointerType *PTy = dyn_cast<PointerType>(Cexpr->getType());
+    bool IsNonGenericPointer = false;
+    if (PTy && PTy->getAddressSpace() != 0) {
+      IsNonGenericPointer = true;
+    }
     if (const GlobalValue *GVar = dyn_cast<GlobalValue>(v)) {
-      O << *getSymbol(GVar);
+      if (EmitGeneric && !isa<Function>(v) && !IsNonGenericPointer) {
+        O << "generic(";
+        O << *getSymbol(GVar);
+        O << ")";
+      } else {
+        O << *getSymbol(GVar);
+      }
       return;
     } else {
       O << *LowerConstant(CPV, *this);
