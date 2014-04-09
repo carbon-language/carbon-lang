@@ -22,20 +22,10 @@
 #ifndef LLVM_CLANG_THREAD_SAFETY_COMMON_H
 #define LLVM_CLANG_THREAD_SAFETY_COMMON_H
 
-#include "clang/AST/Attr.h"
-#include "clang/AST/DeclCXX.h"
-#include "clang/AST/ExprCXX.h"
-#include "clang/AST/StmtCXX.h"
 #include "clang/Analysis/Analyses/PostOrderCFGView.h"
 #include "clang/Analysis/Analyses/ThreadSafetyTIL.h"
 #include "clang/Analysis/AnalysisContext.h"
-#include "clang/Analysis/CFG.h"
 #include "clang/Basic/OperatorKinds.h"
-#include "clang/Basic/SourceLocation.h"
-#include "clang/Basic/SourceManager.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
 #include <vector>
 
 

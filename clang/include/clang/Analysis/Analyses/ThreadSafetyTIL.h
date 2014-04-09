@@ -43,11 +43,7 @@
 #ifndef LLVM_CLANG_THREAD_SAFETY_TIL_H
 #define LLVM_CLANG_THREAD_SAFETY_TIL_H
 
-#include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprCXX.h"
-#include "clang/AST/StmtCXX.h"
-#include "clang/AST/Type.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Allocator.h"
 
