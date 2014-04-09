@@ -30,7 +30,7 @@ TGLexer::TGLexer(SourceMgr &SM) : SrcMgr(SM) {
   CurBuffer = 0;
   CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
   CurPtr = CurBuf->getBufferStart();
-  TokStart = 0;
+  TokStart = nullptr;
 }
 
 SMLoc TGLexer::getLoc() const {
@@ -389,12 +389,12 @@ tgtok::TokKind TGLexer::LexNumber() {
         return ReturnError(TokStart, "Invalid hexadecimal number");
 
       errno = 0;
-      CurIntVal = strtoll(NumStart, 0, 16);
+      CurIntVal = strtoll(NumStart, nullptr, 16);
       if (errno == EINVAL)
         return ReturnError(TokStart, "Invalid hexadecimal number");
       if (errno == ERANGE) {
         errno = 0;
-        CurIntVal = (int64_t)strtoull(NumStart, 0, 16);
+        CurIntVal = (int64_t)strtoull(NumStart, nullptr, 16);
         if (errno == EINVAL)
           return ReturnError(TokStart, "Invalid hexadecimal number");
         if (errno == ERANGE)
@@ -410,7 +410,7 @@ tgtok::TokKind TGLexer::LexNumber() {
       // Requires at least one binary digit.
       if (CurPtr == NumStart)
         return ReturnError(CurPtr-2, "Invalid binary number");
-      CurIntVal = strtoll(NumStart, 0, 2);
+      CurIntVal = strtoll(NumStart, nullptr, 2);
       return tgtok::IntVal;
     }
   }
@@ -425,7 +425,7 @@ tgtok::TokKind TGLexer::LexNumber() {
   
   while (isdigit(CurPtr[0]))
     ++CurPtr;
-  CurIntVal = strtoll(TokStart, 0, 10);
+  CurIntVal = strtoll(TokStart, nullptr, 10);
   return tgtok::IntVal;
 }
 

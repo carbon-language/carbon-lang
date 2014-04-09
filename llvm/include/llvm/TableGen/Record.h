@@ -87,7 +87,7 @@ private:
 public:
   RecTyKind getRecTyKind() const { return Kind; }
 
-  RecTy(RecTyKind K) : Kind(K), ListTy(0) {}
+  RecTy(RecTyKind K) : Kind(K), ListTy(nullptr) {}
   virtual ~RecTy() {}
 
   virtual std::string getAsString() const = 0;
@@ -102,12 +102,12 @@ public:
   ListRecTy *getListTy();
 
 public:   // These methods should only be called from subclasses of Init
-  virtual Init *convertValue( UnsetInit *UI) { return 0; }
-  virtual Init *convertValue(   BitInit *BI) { return 0; }
-  virtual Init *convertValue(  BitsInit *BI) { return 0; }
-  virtual Init *convertValue(   IntInit *II) { return 0; }
-  virtual Init *convertValue(StringInit *SI) { return 0; }
-  virtual Init *convertValue(  ListInit *LI) { return 0; }
+  virtual Init *convertValue( UnsetInit *UI) { return nullptr; }
+  virtual Init *convertValue(   BitInit *BI) { return nullptr; }
+  virtual Init *convertValue(  BitsInit *BI) { return nullptr; }
+  virtual Init *convertValue(   IntInit *II) { return nullptr; }
+  virtual Init *convertValue(StringInit *SI) { return nullptr; }
+  virtual Init *convertValue(  ListInit *LI) { return nullptr; }
   virtual Init *convertValue( UnOpInit *UI) {
     return convertValue((TypedInit*)UI);
   }
@@ -117,10 +117,10 @@ public:   // These methods should only be called from subclasses of Init
   virtual Init *convertValue( TernOpInit *UI) {
     return convertValue((TypedInit*)UI);
   }
-  virtual Init *convertValue(VarBitInit *VB) { return 0; }
-  virtual Init *convertValue(   DefInit *DI) { return 0; }
-  virtual Init *convertValue(   DagInit *DI) { return 0; }
-  virtual Init *convertValue( TypedInit *TI) { return 0; }
+  virtual Init *convertValue(VarBitInit *VB) { return nullptr; }
+  virtual Init *convertValue(   DefInit *DI) { return nullptr; }
+  virtual Init *convertValue(   DagInit *DI) { return nullptr; }
+  virtual Init *convertValue( TypedInit *TI) { return nullptr; }
   virtual Init *convertValue(   VarInit *VI) {
     return convertValue((TypedInit*)VI);
   }
@@ -154,11 +154,11 @@ public:
   Init *convertValue(   BitInit *BI) override { return (Init*)BI; }
   Init *convertValue(  BitsInit *BI) override;
   Init *convertValue(   IntInit *II) override;
-  Init *convertValue(StringInit *SI) override { return 0; }
-  Init *convertValue(  ListInit *LI) override { return 0; }
+  Init *convertValue(StringInit *SI) override { return nullptr; }
+  Init *convertValue(  ListInit *LI) override { return nullptr; }
   Init *convertValue(VarBitInit *VB) override { return (Init*)VB; }
-  Init *convertValue(   DefInit *DI) override { return 0; }
-  Init *convertValue(   DagInit *DI) override { return 0; }
+  Init *convertValue(   DefInit *DI) override { return nullptr; }
+  Init *convertValue(   DagInit *DI) override { return nullptr; }
   Init *convertValue( UnOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( BinOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( TernOpInit *UI) override {return RecTy::convertValue(UI);}
@@ -193,11 +193,11 @@ public:
   Init *convertValue(   BitInit *UI) override;
   Init *convertValue(  BitsInit *BI) override;
   Init *convertValue(   IntInit *II) override;
-  Init *convertValue(StringInit *SI) override { return 0; }
-  Init *convertValue(  ListInit *LI) override { return 0; }
-  Init *convertValue(VarBitInit *VB) override { return 0; }
-  Init *convertValue(   DefInit *DI) override { return 0; }
-  Init *convertValue(   DagInit *DI) override { return 0; }
+  Init *convertValue(StringInit *SI) override { return nullptr; }
+  Init *convertValue(  ListInit *LI) override { return nullptr; }
+  Init *convertValue(VarBitInit *VB) override { return nullptr; }
+  Init *convertValue(   DefInit *DI) override { return nullptr; }
+  Init *convertValue(   DagInit *DI) override { return nullptr; }
   Init *convertValue( UnOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( BinOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( TernOpInit *UI) override {return RecTy::convertValue(UI);}
@@ -230,11 +230,11 @@ public:
   Init *convertValue(   BitInit *BI) override;
   Init *convertValue(  BitsInit *BI) override;
   Init *convertValue(   IntInit *II) override { return (Init*)II; }
-  Init *convertValue(StringInit *SI) override { return 0; }
-  Init *convertValue(  ListInit *LI) override { return 0; }
-  Init *convertValue(VarBitInit *VB) override { return 0; }
-  Init *convertValue(   DefInit *DI) override { return 0; }
-  Init *convertValue(   DagInit *DI) override { return 0; }
+  Init *convertValue(StringInit *SI) override { return nullptr; }
+  Init *convertValue(  ListInit *LI) override { return nullptr; }
+  Init *convertValue(VarBitInit *VB) override { return nullptr; }
+  Init *convertValue(   DefInit *DI) override { return nullptr; }
+  Init *convertValue(   DagInit *DI) override { return nullptr; }
   Init *convertValue( UnOpInit *UI)  override { return RecTy::convertValue(UI);}
   Init *convertValue( BinOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( TernOpInit *UI) override {return RecTy::convertValue(UI);}
@@ -264,18 +264,18 @@ public:
   static StringRecTy *get() { return &Shared; }
 
   Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(   BitInit *BI) override { return 0; }
-  Init *convertValue(  BitsInit *BI) override { return 0; }
-  Init *convertValue(   IntInit *II) override { return 0; }
+  Init *convertValue(   BitInit *BI) override { return nullptr; }
+  Init *convertValue(  BitsInit *BI) override { return nullptr; }
+  Init *convertValue(   IntInit *II) override { return nullptr; }
   Init *convertValue(StringInit *SI) override { return (Init*)SI; }
-  Init *convertValue(  ListInit *LI) override { return 0; }
+  Init *convertValue(  ListInit *LI) override { return nullptr; }
   Init *convertValue( UnOpInit *BO) override;
   Init *convertValue( BinOpInit *BO) override;
   Init *convertValue( TernOpInit *BO) override {return RecTy::convertValue(BO);}
 
-  Init *convertValue(VarBitInit *VB) override { return 0; }
-  Init *convertValue(   DefInit *DI) override { return 0; }
-  Init *convertValue(   DagInit *DI) override { return 0; }
+  Init *convertValue(VarBitInit *VB) override { return nullptr; }
+  Init *convertValue(   DefInit *DI) override { return nullptr; }
+  Init *convertValue(   DagInit *DI) override { return nullptr; }
   Init *convertValue( TypedInit *TI) override;
   Init *convertValue(   VarInit *VI) override { return RecTy::convertValue(VI);}
   Init *convertValue( FieldInit *FI) override { return RecTy::convertValue(FI);}
@@ -303,14 +303,14 @@ public:
   RecTy *getElementType() const { return Ty; }
 
   Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(   BitInit *BI) override { return 0; }
-  Init *convertValue(  BitsInit *BI) override { return 0; }
-  Init *convertValue(   IntInit *II) override { return 0; }
-  Init *convertValue(StringInit *SI) override { return 0; }
+  Init *convertValue(   BitInit *BI) override { return nullptr; }
+  Init *convertValue(  BitsInit *BI) override { return nullptr; }
+  Init *convertValue(   IntInit *II) override { return nullptr; }
+  Init *convertValue(StringInit *SI) override { return nullptr; }
   Init *convertValue(  ListInit *LI) override;
-  Init *convertValue(VarBitInit *VB) override { return 0; }
-  Init *convertValue(   DefInit *DI) override { return 0; }
-  Init *convertValue(   DagInit *DI) override { return 0; }
+  Init *convertValue(VarBitInit *VB) override { return nullptr; }
+  Init *convertValue(   DefInit *DI) override { return nullptr; }
+  Init *convertValue(   DagInit *DI) override { return nullptr; }
   Init *convertValue( UnOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( BinOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( TernOpInit *UI) override{ return RecTy::convertValue(UI);}
@@ -340,13 +340,13 @@ public:
   static DagRecTy *get() { return &Shared; }
 
   Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(   BitInit *BI) override { return 0; }
-  Init *convertValue(  BitsInit *BI) override { return 0; }
-  Init *convertValue(   IntInit *II) override { return 0; }
-  Init *convertValue(StringInit *SI) override { return 0; }
-  Init *convertValue(  ListInit *LI) override { return 0; }
-  Init *convertValue(VarBitInit *VB) override { return 0; }
-  Init *convertValue(   DefInit *DI) override { return 0; }
+  Init *convertValue(   BitInit *BI) override { return nullptr; }
+  Init *convertValue(  BitsInit *BI) override { return nullptr; }
+  Init *convertValue(   IntInit *II) override { return nullptr; }
+  Init *convertValue(StringInit *SI) override { return nullptr; }
+  Init *convertValue(  ListInit *LI) override { return nullptr; }
+  Init *convertValue(VarBitInit *VB) override { return nullptr; }
+  Init *convertValue(   DefInit *DI) override { return nullptr; }
   Init *convertValue( UnOpInit *BO) override;
   Init *convertValue( BinOpInit *BO) override;
   Init *convertValue( TernOpInit *BO) override {return RecTy::convertValue(BO);}
@@ -380,17 +380,17 @@ public:
   Record *getRecord() const { return Rec; }
 
   Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(   BitInit *BI) override { return 0; }
-  Init *convertValue(  BitsInit *BI) override { return 0; }
-  Init *convertValue(   IntInit *II) override { return 0; }
-  Init *convertValue(StringInit *SI) override { return 0; }
-  Init *convertValue(  ListInit *LI) override { return 0; }
-  Init *convertValue(VarBitInit *VB) override { return 0; }
+  Init *convertValue(   BitInit *BI) override { return nullptr; }
+  Init *convertValue(  BitsInit *BI) override { return nullptr; }
+  Init *convertValue(   IntInit *II) override { return nullptr; }
+  Init *convertValue(StringInit *SI) override { return nullptr; }
+  Init *convertValue(  ListInit *LI) override { return nullptr; }
+  Init *convertValue(VarBitInit *VB) override { return nullptr; }
   Init *convertValue( UnOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( BinOpInit *UI) override { return RecTy::convertValue(UI);}
   Init *convertValue( TernOpInit *UI) override {return RecTy::convertValue(UI);}
   Init *convertValue(   DefInit *DI) override;
-  Init *convertValue(   DagInit *DI) override { return 0; }
+  Init *convertValue(   DagInit *DI) override { return nullptr; }
   Init *convertValue( TypedInit *VI) override;
   Init *convertValue(   VarInit *VI) override { return RecTy::convertValue(VI);}
   Init *convertValue( FieldInit *FI) override { return RecTy::convertValue(FI);}
@@ -496,7 +496,7 @@ public:
   ///
   virtual Init *
   convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
-    return 0;
+    return nullptr;
   }
 
   /// convertInitListSlice - This method is used to implement the list slice
@@ -506,14 +506,16 @@ public:
   ///
   virtual Init *
   convertInitListSlice(const std::vector<unsigned> &Elements) const {
-    return 0;
+    return nullptr;
   }
 
   /// getFieldType - This method is used to implement the FieldInit class.
   /// Implementors of this method should return the type of the named field if
   /// they are of record type.
   ///
-  virtual RecTy *getFieldType(const std::string &FieldName) const { return 0; }
+  virtual RecTy *getFieldType(const std::string &FieldName) const {
+    return nullptr;
+  }
 
   /// getFieldInit - This method complements getFieldType to return the
   /// initializer for the specified field.  If getFieldType returns non-null
@@ -521,7 +523,7 @@ public:
   ///
   virtual Init *getFieldInit(Record &R, const RecordVal *RV,
                              const std::string &FieldName) const {
-    return 0;
+    return nullptr;
   }
 
   /// resolveReferences - This method is used by classes that refer to other
@@ -1356,9 +1358,9 @@ public:
   bool setValue(Init *V) {
     if (V) {
       Value = V->convertInitializerTo(Ty);
-      return Value == 0;
+      return Value == nullptr;
     }
-    Value = 0;
+    Value = nullptr;
     return false;
   }
 
@@ -1400,13 +1402,13 @@ public:
   explicit Record(const std::string &N, ArrayRef<SMLoc> locs,
                   RecordKeeper &records, bool Anonymous = false) :
     ID(LastID++), Name(StringInit::get(N)), Locs(locs.begin(), locs.end()),
-    TrackedRecords(records), TheInit(0), IsAnonymous(Anonymous) {
+    TrackedRecords(records), TheInit(nullptr), IsAnonymous(Anonymous) {
     init();
   }
   explicit Record(Init *N, ArrayRef<SMLoc> locs, RecordKeeper &records,
                   bool Anonymous = false) :
     ID(LastID++), Name(N), Locs(locs.begin(), locs.end()),
-    TrackedRecords(records), TheInit(0), IsAnonymous(Anonymous) {
+    TrackedRecords(records), TheInit(nullptr), IsAnonymous(Anonymous) {
     init();
   }
 
@@ -1461,7 +1463,7 @@ public:
   const RecordVal *getValue(const Init *Name) const {
     for (unsigned i = 0, e = Values.size(); i != e; ++i)
       if (Values[i].getNameInit() == Name) return &Values[i];
-    return 0;
+    return nullptr;
   }
   const RecordVal *getValue(StringRef Name) const {
     return getValue(StringInit::get(Name));
@@ -1469,7 +1471,7 @@ public:
   RecordVal *getValue(const Init *Name) {
     for (unsigned i = 0, e = Values.size(); i != e; ++i)
       if (Values[i].getNameInit() == Name) return &Values[i];
-    return 0;
+    return nullptr;
   }
   RecordVal *getValue(StringRef Name) {
     return getValue(StringInit::get(Name));
@@ -1531,7 +1533,7 @@ public:
   /// resolveReferences - If there are any field references that refer to fields
   /// that have been filled in, we can propagate the values now.
   ///
-  void resolveReferences() { resolveReferencesTo(0); }
+  void resolveReferences() { resolveReferencesTo(nullptr); }
 
   /// resolveReferencesTo - If anything in this record refers to RV, replace the
   /// reference to RV with the RHS of RV.  If RV is null, we resolve all
@@ -1660,11 +1662,11 @@ public:
 
   Record *getClass(const std::string &Name) const {
     std::map<std::string, Record*>::const_iterator I = Classes.find(Name);
-    return I == Classes.end() ? 0 : I->second;
+    return I == Classes.end() ? nullptr : I->second;
   }
   Record *getDef(const std::string &Name) const {
     std::map<std::string, Record*>::const_iterator I = Defs.find(Name);
-    return I == Defs.end() ? 0 : I->second;
+    return I == Defs.end() ? nullptr : I->second;
   }
   void addClass(Record *R) {
     bool Ins = Classes.insert(std::make_pair(R->getName(), R)).second;
