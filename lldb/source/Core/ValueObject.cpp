@@ -245,15 +245,14 @@ ValueObject::UpdateFormatsIfNeeded()
 
     if ( (m_last_format_mgr_revision != DataVisualization::GetCurrentRevision()))
     {
+        m_last_format_mgr_revision = DataVisualization::GetCurrentRevision();
+        any_change = true;
+        
         SetValueFormat(DataVisualization::GetFormat (*this, eNoDynamicValues));
         SetSummaryFormat(DataVisualization::GetSummaryFormat (*this, GetDynamicValueType()));
 #ifndef LLDB_DISABLE_PYTHON
         SetSyntheticChildren(DataVisualization::GetSyntheticChildren (*this, GetDynamicValueType()));
 #endif
-
-        m_last_format_mgr_revision = DataVisualization::GetCurrentRevision();
-
-        any_change = true;
     }
 
     return any_change;
