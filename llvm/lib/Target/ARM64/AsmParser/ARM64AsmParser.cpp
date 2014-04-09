@@ -55,7 +55,7 @@ private:
   unsigned parseCondCodeString(StringRef Cond);
   bool parseCondCode(OperandVector &Operands, bool invertCondCode);
   int tryParseRegister();
-  int tryMatchVectorRegister(StringRef &Kind);
+  int tryMatchVectorRegister(StringRef &Kind, bool expected);
   bool parseOptionalShift(OperandVector &Operands);
   bool parseOptionalExtend(OperandVector &Operands);
   bool parseRegister(OperandVector &Operands);
@@ -1895,7 +1895,7 @@ int ARM64AsmParser::tryParseRegister() {
 
 /// tryMatchVectorRegister - Try to parse a vector register name with optional
 /// kind specifier. If it is a register specifier, eat the token and return it.
-int ARM64AsmParser::tryMatchVectorRegister(StringRef &Kind) {
+int ARM64AsmParser::tryMatchVectorRegister(StringRef &Kind, bool expected) {
   if (Parser.getTok().isNot(AsmToken::Identifier)) {
     TokError("vector register expected");
     return -1;
@@ -1918,6 +1918,9 @@ int ARM64AsmParser::tryMatchVectorRegister(StringRef &Kind) {
     Parser.Lex(); // Eat the register token.
     return RegNum;
   }
+
+  if (expected)
+    TokError("vector register expected");
   return -1;
 }
 
@@ -3004,7 +3007,7 @@ bool ARM64AsmParser::tryParseVectorRegister(OperandVector &Operands) {
   SMLoc S = getLoc();
   // Check for a vector register specifier first.
   StringRef Kind;
-  int64_t Reg = tryMatchVectorRegister(Kind);
+  int64_t Reg = tryMatchVectorRegister(Kind, false);
   if (Reg == -1)
     return true;
   Operands.push_back(
@@ -3354,36 +3357,57 @@ bool ARM64AsmParser::parseVectorList(OperandVector &Operands) {
   SMLoc S = getLoc();
   Parser.Lex(); // Eat left bracket token.
   StringRef Kind;
-  int64_t FirstReg = tryMatchVectorRegister(Kind);
+  int64_t FirstReg = tryMatchVectorRegister(Kind, true);
   if (FirstReg == -1)
-    return Error(getLoc(), "vector register expected");
+    return true;
   int64_t PrevReg = FirstReg;
   unsigned Count = 1;
-  while (Parser.getTok().isNot(AsmToken::RCurly)) {
-    if (Parser.getTok().is(AsmToken::EndOfStatement))
-      Error(getLoc(), "'}' expected");
 
-    if (Parser.getTok().isNot(AsmToken::Comma))
-      return Error(getLoc(), "',' expected");
-    Parser.Lex(); // Eat the comma token.
+  if (Parser.getTok().is(AsmToken::Minus)) {
+    Parser.Lex(); // Eat the minus.
 
     SMLoc Loc = getLoc();
     StringRef NextKind;
-    int64_t Reg = tryMatchVectorRegister(NextKind);
+    int64_t Reg = tryMatchVectorRegister(NextKind, true);
     if (Reg == -1)
-      return Error(Loc, "vector register expected");
+      return true;
     // Any Kind suffices must match on all regs in the list.
     if (Kind != NextKind)
       return Error(Loc, "mismatched register size suffix");
 
-    // Registers must be incremental (with wraparound at 31)
-    if (getContext().getRegisterInfo()->getEncodingValue(Reg) !=
-        (getContext().getRegisterInfo()->getEncodingValue(PrevReg) + 1) % 32)
-      return Error(Loc, "registers must be sequential");
+    unsigned Space = (PrevReg < Reg) ? (Reg - PrevReg) : (Reg + 32 - PrevReg);
 
-    PrevReg = Reg;
-    ++Count;
+    if (Space == 0 || Space > 3) {
+      return Error(Loc, "invalid number of vectors");
+    }
+
+    Count += Space;
   }
+  else {
+    while (Parser.getTok().is(AsmToken::Comma)) {
+      Parser.Lex(); // Eat the comma token.
+
+      SMLoc Loc = getLoc();
+      StringRef NextKind;
+      int64_t Reg = tryMatchVectorRegister(NextKind, true);
+      if (Reg == -1)
+        return true;
+      // Any Kind suffices must match on all regs in the list.
+      if (Kind != NextKind)
+        return Error(Loc, "mismatched register size suffix");
+
+      // Registers must be incremental (with wraparound at 31)
+      if (getContext().getRegisterInfo()->getEncodingValue(Reg) !=
+          (getContext().getRegisterInfo()->getEncodingValue(PrevReg) + 1) % 32)
+       return Error(Loc, "registers must be sequential");
+
+      PrevReg = Reg;
+      ++Count;
+    }
+  }
+
+  if (Parser.getTok().is(AsmToken::EndOfStatement))
+    Error(getLoc(), "'}' expected");
   Parser.Lex(); // Eat the '}' token.
 
   unsigned NumElements = 0;
