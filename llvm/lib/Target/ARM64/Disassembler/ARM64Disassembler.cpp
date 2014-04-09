@@ -906,6 +906,8 @@ static DecodeStatus DecodeMoveImmInstruction(llvm::MCInst &Inst, uint32_t insn,
   case ARM64::MOVZWi:
   case ARM64::MOVNWi:
   case ARM64::MOVKWi:
+    if (shift & (1U << 5))
+      return Fail;
     DecodeGPR32RegisterClass(Inst, Rd, Addr, Decoder);
     break;
   case ARM64::MOVZXi:
@@ -1338,6 +1340,10 @@ static DecodeStatus DecodeAddSubERegInstruction(llvm::MCInst &Inst,
   unsigned Rn = fieldFromInstruction(insn, 5, 5);
   unsigned Rm = fieldFromInstruction(insn, 16, 5);
   unsigned extend = fieldFromInstruction(insn, 10, 6);
+
+  unsigned shift = extend & 0x7;
+  if (shift > 4)
+    return Fail;
 
   switch (Inst.getOpcode()) {
   default:

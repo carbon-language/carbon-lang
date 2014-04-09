@@ -2,6 +2,15 @@
 
 # LDR/STR: undefined if option field is 10x or 00x.
 # RUN: echo "0x00 0x08 0x20 0xf8" | llvm-mc -triple arm64 -disassemble 2>&1 | FileCheck %s
-# RUN: echo "0x00 0x88 0x00 0xf8" | llvm-mc -triple arm64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x00 0x88 0x20 0xf8" | llvm-mc -triple arm64 -disassemble 2>&1 | FileCheck %s
+
+# Instructions notionally in the add/sub (extended register) sheet, but with
+# invalid shift amount or "opt" field.
+# RUN: echo "0x00 0x10 0xa0 0x0b" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x00 0x10 0x60 0x0b" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
+# RUN: echo "0x00 0x14 0x20 0x0b" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
+
+# MOVK with sf == 0 and hw<1> == 1 is unallocated.
+# RUN: echo "0x00 0x00 0xc0 0x72" | llvm-mc -triple=arm64 -disassemble 2>&1 | FileCheck %s
 
 # CHECK: invalid instruction encoding
