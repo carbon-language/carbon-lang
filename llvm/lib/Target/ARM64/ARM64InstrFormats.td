@@ -1640,6 +1640,9 @@ multiclass BitfieldImm<bits<2> opc, string asm> {
   def Wri : BaseBitfieldImm<opc, GPR32, imm0_31, asm> {
     let Inst{31} = 0;
     let Inst{22} = 0;
+    // imms<5> and immr<5> must be zero, else ReservedValue().
+    let Inst{21} = 0;
+    let Inst{15} = 0;
   }
   def Xri : BaseBitfieldImm<opc, GPR64, imm0_63, asm> {
     let Inst{31} = 1;
@@ -1671,6 +1674,9 @@ multiclass BitfieldImmWith2RegArgs<bits<2> opc, string asm> {
   def Wri : BaseBitfieldImmWith2RegArgs<opc, GPR32, imm0_31, asm> {
     let Inst{31} = 0;
     let Inst{22} = 0;
+    // imms<5> and immr<5> must be zero, else ReservedValue().
+    let Inst{21} = 0;
+    let Inst{15} = 0;
   }
   def Xri : BaseBitfieldImmWith2RegArgs<opc, GPR64, imm0_63, asm> {
     let Inst{31} = 1;
