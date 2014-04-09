@@ -5389,3 +5389,39 @@ bool AArch64TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
     return false;
   return true;
 }
+
+// All 32-bit GPR operations implicitly zero the high-half of the corresponding
+// 64-bit GPR.
+bool AArch64TargetLowering::isZExtFree(Type *Ty1, Type *Ty2) const {
+  if (!Ty1->isIntegerTy() || !Ty2->isIntegerTy())
+    return false;
+  unsigned NumBits1 = Ty1->getPrimitiveSizeInBits();
+  unsigned NumBits2 = Ty2->getPrimitiveSizeInBits();
+  if (NumBits1 == 32 && NumBits2 == 64)
+    return true;
+  return false;
+}
+
+bool AArch64TargetLowering::isZExtFree(EVT VT1, EVT VT2) const {
+  if (!VT1.isInteger() || !VT2.isInteger())
+    return false;
+  unsigned NumBits1 = VT1.getSizeInBits();
+  unsigned NumBits2 = VT2.getSizeInBits();
+  if (NumBits1 == 32 && NumBits2 == 64)
+    return true;
+  return false;
+}
+
+bool AArch64TargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
+  EVT VT1 = Val.getValueType();
+  if (isZExtFree(VT1, VT2)) {
+    return true;
+  }
+
+  if (Val.getOpcode() != ISD::LOAD)
+    return false;
+
+  // 8-, 16-, and 32-bit integer loads all implicitly zero-extend.
+  return (VT1.isSimple() && VT1.isInteger() && VT2.isSimple() &&
+          VT2.isInteger() && VT1.getSizeInBits() <= 32);
+}

@@ -281,6 +281,10 @@ public:
   bool isTruncateFree(Type *Ty1, Type *Ty2) const override;
   bool isTruncateFree(EVT VT1, EVT VT2) const override;
 
+  bool isZExtFree(Type *Ty1, Type *Ty2) const override;
+  bool isZExtFree(EVT VT1, EVT VT2) const override;
+  bool isZExtFree(SDValue Val, EVT VT2) const override;
+
   SDValue getSelectableIntSetCC(SDValue LHS, SDValue RHS, ISD::CondCode CC,
                          SDValue &A64cc, SelectionDAG &DAG, SDLoc &dl) const;
 

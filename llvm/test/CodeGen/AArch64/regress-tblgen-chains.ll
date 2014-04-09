@@ -25,7 +25,7 @@ define i64 @test_chains() {
   %inc.4 = trunc i64 %inc.3 to i8
   store i8 %inc.4, i8* %locvar
 ; CHECK: ldrb {{w[0-9]+}}, [sp, [[LOCADDR:#[0-9]+]]]
-; CHECK: add {{x[0-9]+}}, {{x[0-9]+}}, #1
+; CHECK: add {{w[0-9]+}}, {{w[0-9]+}}, #1
 ; CHECK: strb {{w[0-9]+}}, [sp, [[LOCADDR]]]
 ; CHECK: ldrb {{w[0-9]+}}, [sp, [[LOCADDR]]]
 
