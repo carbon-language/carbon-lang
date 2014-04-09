@@ -2987,11 +2987,16 @@ static void AddMacroResults(Preprocessor &PP, ResultBuilder &Results,
   for (Preprocessor::macro_iterator M = PP.macro_begin(), 
                                  MEnd = PP.macro_end();
        M != MEnd; ++M) {
-    if (IncludeUndefined || M->first->hasMacroDefinition())
+    if (IncludeUndefined || M->first->hasMacroDefinition()) {
+      if (MacroInfo *MI = M->second->getMacroInfo())
+        if (MI->isUsedForHeaderGuard())
+          continue;
+
       Results.AddResult(Result(M->first,
                              getMacroUsagePriority(M->first->getName(),
                                                    PP.getLangOpts(),
                                                    TargetTypeIsPointer)));
+    }
   }
   
   Results.ExitScope();

@@ -29,7 +29,8 @@ MacroInfo::MacroInfo(SourceLocation DefLoc)
     IsUsed(false),
     IsAllowRedefinitionsWithoutWarning(false),
     IsWarnIfUnused(false),
-    FromASTFile(false) {
+    FromASTFile(false),
+    UsedForHeaderGuard(false) {
 }
 
 unsigned MacroInfo::getDefinitionLengthSlow(SourceManager &SM) const {

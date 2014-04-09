@@ -104,6 +104,9 @@ private:
   /// \brief Whether this macro info was loaded from an AST file.
   unsigned FromASTFile : 1;
 
+  /// \brief Whether this macro was used as header guard.
+  bool UsedForHeaderGuard : 1;
+
   ~MacroInfo() {
     assert(ArgumentList == 0 && "Didn't call destroy before dtor!");
   }
@@ -281,6 +284,11 @@ public:
   /// \brief Determine whether this macro info came from an AST file (such as
   /// a precompiled header or module) rather than having been parsed.
   bool isFromASTFile() const { return FromASTFile; }
+
+  /// \brief Determine whether this macro was used for a header guard.
+  bool isUsedForHeaderGuard() const { return UsedForHeaderGuard; }
+
+  void setUsedForHeaderGuard(bool Val) { UsedForHeaderGuard = Val; }
 
   /// \brief Retrieve the global ID of the module that owns this particular
   /// macro info.

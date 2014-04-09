@@ -2003,6 +2003,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
     AddSourceLocation(MI->getDefinitionLoc(), Record);
     AddSourceLocation(MI->getDefinitionEndLoc(), Record);
     Record.push_back(MI->isUsed());
+    Record.push_back(MI->isUsedForHeaderGuard());
     unsigned Code;
     if (MI->isObjectLike()) {
       Code = PP_MACRO_OBJECT_LIKE;
