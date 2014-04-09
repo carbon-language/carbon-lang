@@ -37,11 +37,11 @@ typedef SExprBuilder::CallingContext CallingContext;
 
 til::SExpr *SExprBuilder::lookupStmt(const Stmt *S) {
   if (!SMap)
-    return 0;
+    return nullptr;
   auto It = SMap->find(S);
   if (It != SMap->end())
     return It->second;
-  return 0;
+  return nullptr;
 }
 
 void SExprBuilder::insertStmt(const Stmt *S, til::Variable *V) {
@@ -160,8 +160,8 @@ til::SExpr *SExprBuilder::translateCallExpr(const CallExpr *CE,
                                             CallingContext *Ctx) {
   // TODO -- Lock returned
   til::SExpr *E = translate(CE->getCallee(), Ctx);
-  for (unsigned I = 0, N = CE->getNumArgs(); I < N; ++I) {
-    til::SExpr *A = translate(CE->getArg(I), Ctx);
+  for (const auto *Arg : CE->arguments()) {
+    til::SExpr *A = translate(Arg, Ctx);
     E = new (Arena) til::Apply(E, A);
   }
   return new (Arena) til::Call(E, CE);
@@ -200,10 +200,9 @@ til::SExpr *SExprBuilder::translateUnaryOperator(const UnaryOperator *UO,
   case UO_LNot:
   case UO_Real:
   case UO_Imag:
-  case UO_Extension: {
-    til::SExpr *E0 = translate(UO->getSubExpr(), Ctx);
-    return new (Arena) til::UnaryOp(UO->getOpcode(), E0);
-  }
+  case UO_Extension:
+    return new (Arena)
+        til::UnaryOp(UO->getOpcode(), translate(UO->getSubExpr(), Ctx));
   }
   return new (Arena) til::Undefined(UO);
 }
@@ -232,16 +231,15 @@ til::SExpr *SExprBuilder::translateBinaryOperator(const BinaryOperator *BO,
   case BO_Xor:
   case BO_Or:
   case BO_LAnd:
-  case BO_LOr: {
-    til::SExpr *E0 = translate(BO->getLHS(), Ctx);
-    til::SExpr *E1 = translate(BO->getRHS(), Ctx);
-    return new (Arena) til::BinaryOp(BO->getOpcode(), E0, E1);
-  }
-  case BO_Assign: {
-    til::SExpr *E0 = translate(BO->getLHS(), Ctx);
-    til::SExpr *E1 = translate(BO->getRHS(), Ctx);
-    return new (Arena) til::Store(E0, E1);
-  }
+  case BO_LOr:
+    return new (Arena)
+        til::BinaryOp(BO->getOpcode(), translate(BO->getLHS(), Ctx),
+                      translate(BO->getRHS(), Ctx));
+
+  case BO_Assign:
+    return new (Arena)
+        til::Store(translate(BO->getLHS(), Ctx), translate(BO->getRHS(), Ctx));
+
   case BO_MulAssign:
   case BO_DivAssign:
   case BO_RemAssign:
@@ -284,42 +282,39 @@ til::SExpr *SExprBuilder::translateCastExpr(const CastExpr *CE,
   }
 }
 
-
-til::SExpr *SExprBuilder::translateArraySubscriptExpr(
-    const ArraySubscriptExpr *E, CallingContext *Ctx) {
+til::SExpr *
+SExprBuilder::translateArraySubscriptExpr(const ArraySubscriptExpr *E,
+                                          CallingContext *Ctx) {
   return new (Arena) til::Undefined(E);
 }
 
-
-til::SExpr *SExprBuilder::translateConditionalOperator(
-    const ConditionalOperator *C,  CallingContext *Ctx) {
+til::SExpr *
+SExprBuilder::translateConditionalOperator(const ConditionalOperator *C,
+                                           CallingContext *Ctx) {
   return new (Arena) til::Undefined(C);
 }
-
 
 til::SExpr *SExprBuilder::translateBinaryConditionalOperator(
     const BinaryConditionalOperator *C, CallingContext *Ctx) {
   return new (Arena) til::Undefined(C);
 }
 
-
 // Build a complete SCFG from a clang CFG.
-class SCFGBuilder : public CFGVisitor {
-public:
-  til::Variable *addStatement(til::SExpr* E, const Stmt *S) {
+class SCFGBuilder {
+  void addStatement(til::SExpr* E, const Stmt *S) {
     if (!E)
-      return 0;
+      return;
     if (til::ThreadSafetyTIL::isTrivial(E))
-      return 0;
+      return;
 
     til::Variable *V = new (Arena) til::Variable(til::Variable::VK_Let, E);
     V->setID(CurrentBlockID, CurrentVarID++);
     CurrentBB->addInstr(V);
     if (S)
       BuildEx.insertStmt(S, V);
-    return V;
   }
 
+public:
   // Enter the CFG for Decl D, and perform any initial setup operations.
   void enterCFG(CFG *Cfg, const NamedDecl *D, const CFGBlock *First) {
     Scfg = new (Arena) til::SCFG(Arena, Cfg->getNumBlockIDs());
@@ -345,7 +340,7 @@ public:
     til::SExpr *Sf = new (Arena) til::LiteralPtr(VD);
     til::SExpr *Dr = new (Arena) til::LiteralPtr(DD);
     til::SExpr *Ap = new (Arena) til::Apply(Dr, Sf);
-    til::SExpr *E = new (Arena) til::Call(Ap, 0);
+    til::SExpr *E = new (Arena) til::Call(Ap);
     addStatement(E, nullptr);
   }
 
@@ -363,20 +358,15 @@ public:
 
   // Leave the CFG, and perform any final cleanup operations.
   void exitCFG(const CFGBlock *Last) {
-    if (CallCtx) {
-      delete CallCtx;
-      CallCtx = nullptr;
-    }
+    delete CallCtx;
+    CallCtx = nullptr;
   }
 
   SCFGBuilder(til::MemRegionRef A)
-      : Arena(A), Scfg(0), CurrentBB(0), CurrentBlockID(0),
-        CallCtx(0), SMap(new SExprBuilder::StatementMap()),
-        BuildEx(A, SMap)
-  { }
-  ~SCFGBuilder() {
-    delete SMap;
-  }
+      : Arena(A), Scfg(nullptr), CurrentBB(nullptr), CurrentBlockID(0),
+        CurrentVarID(0), CallCtx(nullptr),
+        SMap(new SExprBuilder::StatementMap()), BuildEx(A, SMap) {}
+  ~SCFGBuilder() { delete SMap; }
 
   til::SCFG *getCFG() const { return Scfg; }
 

@@ -42,35 +42,32 @@
 namespace clang {
 namespace threadSafety {
 
-
-// Simple Visitor class for traversing a clang CFG.
-class CFGVisitor {
-public:
-  // Enter the CFG for Decl D, and perform any initial setup operations.
-  void enterCFG(CFG *Cfg, const NamedDecl *D, const CFGBlock *First) {}
-
-  // Enter a CFGBlock.
-  void enterCFGBlock(const CFGBlock *B) {}
-
-  // Process an ordinary statement.
-  void handleStatement(const Stmt *S) {}
-
-  // Process a destructor call
-  void handleDestructorCall(const VarDecl *VD, const CXXDestructorDecl *DD) {}
-
-  // Process a successor edge.
-  void handleSuccessor(const CFGBlock *Succ) {}
-
-  // Process a successor back edge to a previously visited block.
-  void handleSuccessorBackEdge(const CFGBlock *Succ) {}
-
-  // Leave a CFGBlock.
-  void exitCFGBlock(const CFGBlock *B) {}
-
-  // Leave the CFG, and perform any final cleanup operations.
-  void exitCFG(const CFGBlock *Last) {}
-};
-
+// CFG traversal uses templates instead of virtual function dispatch. Visitors
+// must implement the following functions:
+//
+// Enter the CFG for Decl D, and perform any initial setup operations.
+// void enterCFG(CFG *Cfg, const NamedDecl *D, const CFGBlock *First) {}
+//
+// Enter a CFGBlock.
+// void enterCFGBlock(const CFGBlock *B) {}
+//
+// Process an ordinary statement.
+// void handleStatement(const Stmt *S) {}
+//
+// Process a destructor call
+// void handleDestructorCall(const VarDecl *VD, const CXXDestructorDecl *DD) {}
+//
+// Process a successor edge.
+// void handleSuccessor(const CFGBlock *Succ) {}
+//
+// Process a successor back edge to a previously visited block.
+// void handleSuccessorBackEdge(const CFGBlock *Succ) {}
+//
+// Leave a CFGBlock.
+// void exitCFGBlock(const CFGBlock *B) {}
+//
+// Leave the CFG, and perform any final cleanup operations.
+// void exitCFG(const CFGBlock *Last) {}
 
 // Walks the clang CFG, and invokes methods on a given CFGVisitor.
 class CFGWalker {
@@ -104,13 +101,13 @@ public:
 
     V.enterCFG(CFGraph, FDecl, &CFGraph->getEntry());
 
-    for (const CFGBlock* CurrBlock : *SortedGraph) {
+    for (const auto *CurrBlock : *SortedGraph) {
       VisitedBlocks.insert(CurrBlock);
 
       V.enterCFGBlock(CurrBlock);
 
       // Process statements
-      for (auto BI : *CurrBlock) {
+      for (const auto &BI : *CurrBlock) {
         switch (BI.getKind()) {
         case CFGElement::Statement: {
           V.handleStatement(BI.castAs<CFGStmt>().getStmt());

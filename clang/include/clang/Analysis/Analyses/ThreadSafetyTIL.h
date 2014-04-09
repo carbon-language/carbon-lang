@@ -207,6 +207,10 @@ public:
   //   compare all subexpressions, following the comparator interface
   // }
 
+  void *operator new(size_t S, clang::threadSafety::til::MemRegionRef &R) {
+    return ::operator new(S, R);
+  }
+
 protected:
   SExpr(TIL_Opcode Op) : Opcode(Op), Reserved(0), Flags(0) {}
   SExpr(const SExpr &E) : Opcode(E.Opcode), Reserved(0), Flags(E.Flags) {}
@@ -216,7 +220,15 @@ protected:
   unsigned short Flags;
 
 private:
-  SExpr();
+  // Note, this cannot be explicitly deleted due to initializers automatically
+  // referencing destructor declarations. However, it does not need to be
+  // defined because that reference does not require an definition.
+  ~SExpr();
+  SExpr() = delete;
+
+  // SExpr objects must be created in an arena and cannot be deleted.
+  void *operator new(size_t) = delete;
+  void operator delete(void *) = delete;
 };
 
 
@@ -227,7 +239,7 @@ class SExprRef {
 public:
   SExprRef() : Ptr(nullptr) { }
   SExprRef(std::nullptr_t P) : Ptr(nullptr) { }
-  SExprRef(SExprRef &&R) : Ptr(R.Ptr) { }
+  SExprRef(SExprRef &&R) : Ptr(R.Ptr) { R.Ptr = nullptr; }
 
   // Defined after Variable and Future, below.
   inline SExprRef(SExpr *P);
@@ -242,9 +254,12 @@ public:
   SExpr       &operator*()        { return *Ptr; }
   const SExpr &operator*() const  { return *Ptr; }
 
-  bool operator==(const SExprRef& R) const { return Ptr == R.Ptr; }
-  bool operator==(const SExpr* P)    const { return Ptr == P; }
-  bool operator==(std::nullptr_t P)  const { return Ptr == nullptr; }
+  bool operator==(const SExprRef &R) const { return Ptr == R.Ptr; }
+  bool operator!=(const SExprRef &R) const { return !operator==(R); }
+  bool operator==(const SExpr *P) const { return Ptr == P; }
+  bool operator!=(const SExpr *P) const { return !operator==(P); }
+  bool operator==(std::nullptr_t) const { return Ptr == nullptr; }
+  bool operator!=(std::nullptr_t) const { return Ptr != nullptr; }
 
   inline void reset(SExpr *E);
 
@@ -252,28 +267,17 @@ private:
   inline void attach();
   inline void detach();
 
-  SExprRef(const SExprRef& R) : Ptr(R.Ptr) { }
-
   SExpr *Ptr;
 };
 
 
 // Contains various helper functions for SExprs.
-class ThreadSafetyTIL {
-public:
-  static const int MaxOpcode = COP_MAX;
-
-  static inline bool isTrivial(SExpr *E) {
-    unsigned Op = E->opcode();
-    return Op == COP_Variable || Op == COP_Literal || Op == COP_LiteralPtr;
-  }
-
-  static inline bool isLargeValue(SExpr *E) {
-    unsigned Op = E->opcode();
-    return (Op >= COP_Function && Op <= COP_Code);
-  }
-};
-
+namespace ThreadSafetyTIL {
+static bool isTrivial(SExpr *E) {
+  unsigned Op = E->opcode();
+  return Op == COP_Variable || Op == COP_Literal || Op == COP_LiteralPtr;
+}
+}
 
 class Function;
 class SFunction;
@@ -311,7 +315,7 @@ public:
 
   VariableKind kind() const { return static_cast<VariableKind>(Flags); }
 
-  StringRef name() const { return Cvdecl ? Cvdecl->getName() : "_x"; }
+  const StringRef name() const { return Cvdecl ? Cvdecl->getName() : "_x"; }
   const clang::ValueDecl *clangDecl() const { return Cvdecl; }
 
   // Returns the definition (for let vars) or type (for parameter & self vars)
@@ -320,8 +324,8 @@ public:
   void attachVar() const { ++NumUses; }
   void detachVar() const { assert(NumUses > 0); --NumUses; }
 
-  unsigned getID() { return Id; }
-  unsigned getBlockID() { return BlockID; }
+  unsigned getID() const { return Id; }
+  unsigned getBlockID() const { return BlockID; }
 
   void setID(unsigned Bid, unsigned I) {
     BlockID = static_cast<unsigned short>(Bid);
@@ -369,7 +373,7 @@ public:
   Future() :
     SExpr(COP_Future), Status(FS_pending), Result(nullptr), Location(nullptr)
   {}
-  virtual ~Future() {}
+  virtual ~Future() = delete;
 
   // Registers the location in the AST where this future is stored.
   // Forcing the future will automatically update the AST.
