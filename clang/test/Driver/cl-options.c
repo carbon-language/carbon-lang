@@ -133,6 +133,14 @@
 // WJoined: "-cc1"
 // WJoined: "-Wunused-pragmas"
 
+// We recognize -f[no-]strict-aliasing.
+// RUN: %clang_cl -c -### -- %s 2>&1 | FileCheck -check-prefix=DEFAULTSTRICT %s
+// DEFAULTSTRICT: "-relaxed-aliasing"
+// RUN: %clang_cl -c -fstrict-aliasing -### -- %s 2>&1 | FileCheck -check-prefix=STRICT %s
+// STRICT-NOT: "-relaxed-aliasing"
+// RUN: %clang_cl -c -fno-strict-aliasing -### -- %s 2>&1 | FileCheck -check-prefix=NOSTRICT %s
+// NOSTRICT: "-relaxed-aliasing"
+
 // For some warning ids, we can map from MSVC warning to Clang warning.
 // RUN: %clang_cl -wd4005 -### -- %s 2>&1 | FileCheck -check-prefix=wd4005 %s
 // wd4005: "-cc1"
