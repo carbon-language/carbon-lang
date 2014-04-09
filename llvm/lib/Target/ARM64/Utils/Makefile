@@ -10,6 +10,6 @@ LEVEL = ../../../..
 LIBRARYNAME = LLVMARM64Utils
 
 # Hack: we need to include 'main' ARM64 target directory to grab private headers
-#CPP.Flags += -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
+CPP.Flags += -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
 include $(LEVEL)/Makefile.common
