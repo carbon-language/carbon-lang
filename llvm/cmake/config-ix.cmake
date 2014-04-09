@@ -17,6 +17,11 @@ if( UNIX AND NOT BEOS )
   # Used by check_symbol_exists:
   set(CMAKE_REQUIRED_LIBRARIES m)
 endif()
+# x86_64 FreeBSD 9.2 requires libcxxrt to be specified explicitly.
+if( CMAKE_SYSTEM MATCHES "FreeBSD-9.2-RELEASE" AND
+    CMAKE_SIZEOF_VOID_P EQUAL 8 )
+  list(APPEND CMAKE_REQUIRED_LIBRARIES "cxxrt")
+endif()
 
 # Helper macros and functions
 macro(add_cxx_include result files)
