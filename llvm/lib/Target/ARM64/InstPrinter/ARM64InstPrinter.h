@@ -73,27 +73,47 @@ protected:
                                 raw_ostream &O);
   void printAMIndexed(const MCInst *MI, unsigned OpNum, unsigned Scale,
                       raw_ostream &O);
+  void printAMIndexedWB(const MCInst *MI, unsigned OpNum, unsigned Scale,
+                        raw_ostream &O);
   void printAMIndexed128(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
     printAMIndexed(MI, OpNum, 16, O);
+  }
+  void printAMIndexed128WB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printAMIndexedWB(MI, OpNum, 16, O);
   }
 
   void printAMIndexed64(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
     printAMIndexed(MI, OpNum, 8, O);
   }
+  void printAMIndexed64WB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printAMIndexedWB(MI, OpNum, 8, O);
+  }
 
   void printAMIndexed32(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
     printAMIndexed(MI, OpNum, 4, O);
+  }
+  void printAMIndexed32WB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printAMIndexedWB(MI, OpNum, 4, O);
   }
 
   void printAMIndexed16(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
     printAMIndexed(MI, OpNum, 2, O);
   }
+  void printAMIndexed16WB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printAMIndexedWB(MI, OpNum, 2, O);
+  }
 
   void printAMIndexed8(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
     printAMIndexed(MI, OpNum, 1, O);
   }
+  void printAMIndexed8WB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printAMIndexedWB(MI, OpNum, 1, O);
+  }
   void printAMUnscaled(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
     printAMIndexed(MI, OpNum, 1, O);
+  }
+  void printAMUnscaledWB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printAMIndexedWB(MI, OpNum, 1, O);
   }
   void printAMNoIndex(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printImmScale4(const MCInst *MI, unsigned OpNum, raw_ostream &O);

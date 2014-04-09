@@ -1200,6 +1200,19 @@ void ARM64InstPrinter::printAMIndexed(const MCInst *MI, unsigned OpNum,
   O << ']';
 }
 
+void ARM64InstPrinter::printAMIndexedWB(const MCInst *MI, unsigned OpNum,
+                                        unsigned Scale, raw_ostream &O) {
+  const MCOperand MO1 = MI->getOperand(OpNum + 1);
+  O << '[' << getRegisterName(MI->getOperand(OpNum).getReg());
+  if (MO1.isImm()) {
+      O << ", #" << (MO1.getImm() * Scale);
+  } else {
+    assert(MO1.isExpr() && "Unexpected operand type!");
+    O << ", " << *MO1.getExpr();
+  }
+  O << ']';
+}
+
 void ARM64InstPrinter::printPrefetchOp(const MCInst *MI, unsigned OpNum,
                                        raw_ostream &O) {
   unsigned prfop = MI->getOperand(OpNum).getImm();

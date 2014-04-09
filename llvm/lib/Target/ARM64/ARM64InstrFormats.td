@@ -2431,7 +2431,13 @@ class am_unscaled_operand : Operand<i64> {
   let ParserMatchClass = MemoryUnscaledOperand;
   let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
 }
+class am_unscaled_wb_operand : Operand<i64> {
+  let PrintMethod = "printAMUnscaledWB";
+  let ParserMatchClass = MemoryUnscaledOperand;
+  let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
+}
 def am_unscaled   : am_unscaled_operand;
+def am_unscaled_wb: am_unscaled_wb_operand;
 def am_unscaled8  : am_unscaled_operand,
                     ComplexPattern<i64, 2, "SelectAddrModeUnscaled8", []>;
 def am_unscaled16 : am_unscaled_operand,
@@ -2569,7 +2575,7 @@ class LoadPreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
              string asm>
     : BaseLoadStorePreIdx<sz, V, opc,
                      (outs regtype:$Rt/*, GPR64sp:$wback*/),
-                     (ins am_unscaled:$addr), asm, ""/*"$addr.base = $wback"*/>,
+                     (ins am_unscaled_wb:$addr), asm, ""/*"$addr.base = $wback"*/>,
       Sched<[WriteLD, WriteAdr]>;
 
 let mayStore = 1, mayLoad = 0 in
@@ -2577,7 +2583,7 @@ class StorePreIdx<bits<2> sz, bit V, bits<2> opc, RegisterClass regtype,
              string asm>
     : BaseLoadStorePreIdx<sz, V, opc,
                       (outs/* GPR64sp:$wback*/),
-                      (ins regtype:$Rt, am_unscaled:$addr),
+                      (ins regtype:$Rt, am_unscaled_wb:$addr),
                        asm, ""/*"$addr.base = $wback"*/>,
       Sched<[WriteAdr, WriteST]>;
 } // hasSideEffects = 0
@@ -2752,6 +2758,11 @@ def am_indexed32simm7 : Operand<i32> { // ComplexPattern<...>
   let ParserMatchClass = MemoryIndexed32SImm7;
   let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
 }
+def am_indexed32simm7_wb : Operand<i32> { // ComplexPattern<...>
+  let PrintMethod = "printAMIndexed32WB";
+  let ParserMatchClass = MemoryIndexed32SImm7;
+  let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
+}
 
 def MemoryIndexed64SImm7 : AsmOperandClass {
   let Name = "MemoryIndexed64SImm7";
@@ -2762,6 +2773,11 @@ def am_indexed64simm7 : Operand<i32> { // ComplexPattern<...>
   let ParserMatchClass = MemoryIndexed64SImm7;
   let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
 }
+def am_indexed64simm7_wb : Operand<i32> { // ComplexPattern<...>
+  let PrintMethod = "printAMIndexed64WB";
+  let ParserMatchClass = MemoryIndexed64SImm7;
+  let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
+}
 
 def MemoryIndexed128SImm7 : AsmOperandClass {
   let Name = "MemoryIndexed128SImm7";
@@ -2769,6 +2785,11 @@ def MemoryIndexed128SImm7 : AsmOperandClass {
 }
 def am_indexed128simm7 : Operand<i32> { // ComplexPattern<...>
   let PrintMethod = "printAMIndexed128";
+  let ParserMatchClass = MemoryIndexed128SImm7;
+  let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
+}
+def am_indexed128simm7_wb : Operand<i32> { // ComplexPattern<...>
+  let PrintMethod = "printAMIndexed128WB";
   let ParserMatchClass = MemoryIndexed128SImm7;
   let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
 }

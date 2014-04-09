@@ -965,13 +965,13 @@ def LDPQi : LoadPairOffset<0b10, 1, FPR128, am_indexed128simm7, "ldp">;
 def LDPSWi : LoadPairOffset<0b01, 0, GPR64, am_indexed32simm7, "ldpsw">;
 
 // Pair (pre-indexed)
-def LDPWpre : LoadPairPreIdx<0b00, 0, GPR32, am_indexed32simm7, "ldp">;
-def LDPXpre : LoadPairPreIdx<0b10, 0, GPR64, am_indexed64simm7, "ldp">;
-def LDPSpre : LoadPairPreIdx<0b00, 1, FPR32, am_indexed32simm7, "ldp">;
-def LDPDpre : LoadPairPreIdx<0b01, 1, FPR64, am_indexed64simm7, "ldp">;
-def LDPQpre : LoadPairPreIdx<0b10, 1, FPR128, am_indexed128simm7, "ldp">;
+def LDPWpre : LoadPairPreIdx<0b00, 0, GPR32, am_indexed32simm7_wb, "ldp">;
+def LDPXpre : LoadPairPreIdx<0b10, 0, GPR64, am_indexed64simm7_wb, "ldp">;
+def LDPSpre : LoadPairPreIdx<0b00, 1, FPR32, am_indexed32simm7_wb, "ldp">;
+def LDPDpre : LoadPairPreIdx<0b01, 1, FPR64, am_indexed64simm7_wb, "ldp">;
+def LDPQpre : LoadPairPreIdx<0b10, 1, FPR128, am_indexed128simm7_wb, "ldp">;
 
-def LDPSWpre : LoadPairPreIdx<0b01, 0, GPR64, am_indexed32simm7, "ldpsw">;
+def LDPSWpre : LoadPairPreIdx<0b01, 0, GPR64, am_indexed32simm7_wb, "ldpsw">;
 
 // Pair (post-indexed)
 def LDPWpost : LoadPairPostIdx<0b00, 0, GPR32, simm7s4, "ldp">;
@@ -1514,11 +1514,11 @@ def STPDi : StorePairOffset<0b01, 1, FPR64, am_indexed64simm7, "stp">;
 def STPQi : StorePairOffset<0b10, 1, FPR128, am_indexed128simm7, "stp">;
 
 // Pair (pre-indexed)
-def STPWpre : StorePairPreIdx<0b00, 0, GPR32, am_indexed32simm7, "stp">;
-def STPXpre : StorePairPreIdx<0b10, 0, GPR64, am_indexed64simm7, "stp">;
-def STPSpre : StorePairPreIdx<0b00, 1, FPR32, am_indexed32simm7, "stp">;
-def STPDpre : StorePairPreIdx<0b01, 1, FPR64, am_indexed64simm7, "stp">;
-def STPQpre : StorePairPreIdx<0b10, 1, FPR128, am_indexed128simm7, "stp">;
+def STPWpre : StorePairPreIdx<0b00, 0, GPR32, am_indexed32simm7_wb, "stp">;
+def STPXpre : StorePairPreIdx<0b10, 0, GPR64, am_indexed64simm7_wb, "stp">;
+def STPSpre : StorePairPreIdx<0b00, 1, FPR32, am_indexed32simm7_wb, "stp">;
+def STPDpre : StorePairPreIdx<0b01, 1, FPR64, am_indexed64simm7_wb, "stp">;
+def STPQpre : StorePairPreIdx<0b10, 1, FPR128, am_indexed128simm7_wb, "stp">;
 
 // Pair (pre-indexed)
 def STPWpost : StorePairPostIdx<0b00, 0, GPR32, simm7s4, "stp">;
