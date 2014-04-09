@@ -96,7 +96,9 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
         AsmMnemonic = IsSigned ? "sxth" : "uxth";
         break;
       case 31:
-        AsmMnemonic = IsSigned ? "sxtw" : "uxtw";
+        // *xtw is only valid for 64-bit operations.
+        if (Opcode == ARM64::SBFMXri || Opcode == ARM64::UBFMXri)
+          AsmMnemonic = IsSigned ? "sxtw" : "uxtw";
         break;
       }
 
