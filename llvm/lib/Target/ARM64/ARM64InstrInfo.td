@@ -2150,6 +2150,7 @@ def : Pat<(ARM64not (v16i8 V128:$Rn)), (NOTv16i8 V128:$Rn)>;
 def : Pat<(ARM64not (v4i16 V64:$Rn)),  (NOTv8i8  V64:$Rn)>;
 def : Pat<(ARM64not (v8i16 V128:$Rn)), (NOTv16i8 V128:$Rn)>;
 def : Pat<(ARM64not (v2i32 V64:$Rn)),  (NOTv8i8  V64:$Rn)>;
+def : Pat<(ARM64not (v1i64 V64:$Rn)),  (NOTv8i8  V64:$Rn)>;
 def : Pat<(ARM64not (v4i32 V128:$Rn)), (NOTv16i8 V128:$Rn)>;
 def : Pat<(ARM64not (v2i64 V128:$Rn)), (NOTv16i8 V128:$Rn)>;
 
