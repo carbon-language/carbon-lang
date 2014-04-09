@@ -100,6 +100,10 @@ void Delinearization::print(raw_ostream &O, const Module *) const {
       if (!AR)
         break;
 
+      O << "\n";
+      O << "Inst:" << *Inst << "\n";
+      O << "In Loop with Header: " << L->getHeader()->getName() << "\n";
+
       O << "AddRec: " << *AR << "\n";
 
       SmallVector<const SCEV *, 3> Subscripts, Sizes;
