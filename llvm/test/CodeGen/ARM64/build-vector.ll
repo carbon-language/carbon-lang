@@ -6,7 +6,7 @@ define void @one_lane(i32* nocapture %out_int, i32 %skip0) nounwind {
 ; CHECK-LABEL: one_lane:
 ; CHECK: dup.16b v[[REG:[0-9]+]], wzr
 ; CHECK-NEXT: ins.b v[[REG]][0], w1
-; v and q are aliases, and str is prefered against st.16b when possible
+; v and q are aliases, and str is preferred against st.16b when possible
 ; rdar://11246289
 ; CHECK: str q[[REG]], [x0]
 ; CHECK: ret

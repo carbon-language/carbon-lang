@@ -76,7 +76,7 @@ ARM64RegisterInfo::getThisReturnPreservedMask(CallingConv::ID) const {
 BitVector ARM64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
-  // FIXME: avoid re-calculating this everytime.
+  // FIXME: avoid re-calculating this every time.
   BitVector Reserved(getNumRegs());
   Reserved.set(ARM64::SP);
   Reserved.set(ARM64::XZR);

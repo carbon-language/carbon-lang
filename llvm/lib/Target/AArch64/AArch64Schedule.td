@@ -59,7 +59,7 @@ def ReadFPALU : SchedRead;
 
 // Floating Point MAC, Mul, Div, Sqrt
 //   Most processors will simply send all of these down a dedicated pipe, but
-//   they're explicitly seperated here for flexibility of modeling later. May
+//   they're explicitly separated here for flexibility of modeling later. May
 //   consider consolidating them into a single WriteFPXXXX type in the future.
 def WriteFPMAC : SchedWrite;
 def WriteFPMul : SchedWrite;

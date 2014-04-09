@@ -147,7 +147,7 @@ public:
   /// else.
   MachineBasicBlock *Head;
 
-  /// The block containing cmp+br.cond with a sucessor shared with Head.
+  /// The block containing cmp+br.cond with a successor shared with Head.
   MachineBasicBlock *CmpBB;
 
   /// The common successor for Head and CmpBB.
@@ -420,7 +420,7 @@ bool SSACCmpConv::canSpeculateInstrs(MachineBasicBlock *MBB,
       return false;
     }
 
-    // Only CmpMI is alowed to clobber the flags.
+    // Only CmpMI is allowed to clobber the flags.
     if (&*I != CmpMI && I->modifiesRegister(ARM64::CPSR, TRI)) {
       DEBUG(dbgs() << "Clobbers flags: " << *I);
       return false;

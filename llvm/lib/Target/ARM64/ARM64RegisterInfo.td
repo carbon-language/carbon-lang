@@ -164,7 +164,7 @@ def tcGPR64 : RegisterClass<"ARM64", [i64], 64, (sub GPR64common, X19, X20, X21,
                                                      X22, X23, X24, X25, X26,
                                                      X27, X28)>;
 
-// GPR register classes for post increment ammount of vector load/store that
+// GPR register classes for post increment amount of vector load/store that
 // has alternate printing when Rm=31 and prints a constant immediate value
 // equal to the total number of bytes transferred.
 def GPR64pi1  : RegisterOperand<GPR64, "printPostIncOperand1">;

@@ -646,7 +646,7 @@ def simdimmtype10 : Operand<i32>,
 
 
 //---
-// Sytem management
+// System management
 //---
 
 // Base encoding for system instruction operands.

@@ -29,12 +29,12 @@ namespace PBQP {
     typedef unsigned NodeId;
     typedef unsigned EdgeId;
 
-    /// \brief Returns a value representing an invalid (non-existant) node.
+    /// \brief Returns a value representing an invalid (non-existent) node.
     static NodeId invalidNodeId() {
       return std::numeric_limits<NodeId>::max();
     }
 
-    /// \brief Returns a value representing an invalid (non-existant) edge.
+    /// \brief Returns a value representing an invalid (non-existent) edge.
     static EdgeId invalidEdgeId() {
       return std::numeric_limits<EdgeId>::max();
     }

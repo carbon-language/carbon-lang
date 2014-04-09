@@ -6969,7 +6969,7 @@ Semantics:
 
 On platforms with coherent instruction and data caches (e.g. x86), this
 intrinsic is a nop. On platforms with non-coherent instruction and data
-cache (e.g. ARM, MIPS), the intrinsic is lowered either to appropiate
+cache (e.g. ARM, MIPS), the intrinsic is lowered either to appropriate
 instructions or a system call, if cache flushing requires special
 privileges.
 

@@ -315,7 +315,7 @@ protected:
   /// \brief Name of the profile file to load.
   StringRef Filename;
 
-  /// \brief Flag indicating whether the profile input loaded succesfully.
+  /// \brief Flag indicating whether the profile input loaded successfully.
   bool ProfileIsValid;
 };
 }

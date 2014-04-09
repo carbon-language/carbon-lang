@@ -229,7 +229,7 @@ private:
   /// Name of the input file associated with this diagnostic.
   const char *FileName;
 
-  /// Line number where the diagnostic occured. If 0, no line number will
+  /// Line number where the diagnostic occurred. If 0, no line number will
   /// be emitted in the message.
   unsigned LineNum;
 

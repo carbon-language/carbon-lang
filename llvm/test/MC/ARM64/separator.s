@@ -1,6 +1,6 @@
 ; RUN: llvm-mc -triple arm64-apple-darwin -show-encoding < %s | FileCheck %s
 
-; ARM64 uses a multi-character statment separator, "%%". Check that we lex
+; ARM64 uses a multi-character statement separator, "%%". Check that we lex
 ; it properly and recognize the multiple assembly statements on the line.
 
 ; To make sure the output assembly correctly handled the instructions,

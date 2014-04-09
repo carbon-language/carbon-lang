@@ -49,7 +49,7 @@ unsigned Use::getOperandNo() const {
   return this - getUser()->op_begin();
 }
 
-// Sets up the waymarking algoritm's tags for a series of Uses. See the
+// Sets up the waymarking algorithm's tags for a series of Uses. See the
 // algorithm details here:
 //
 //   http://www.llvm.org/docs/ProgrammersManual.html#UserLayout

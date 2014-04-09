@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 // TODO: Graph based predicate heuristics.
 // Walking the instruction list linearly will get many, perhaps most, of
-// the cases, but to do a truly throrough job of this, we need a more
+// the cases, but to do a truly thorough job of this, we need a more
 // wholistic approach.
 //
 // This optimization is very similar in spirit to the register allocator's
@@ -74,7 +74,7 @@ private:
   // instruction. "add Xd, Xn, Xm" ==> "add Dd, Da, Db", for example.
   bool isProfitableToTransform(const MachineInstr *MI) const;
 
-  // tranformInstruction - Perform the transformation of an instruction
+  // transformInstruction - Perform the transformation of an instruction
   // to its equivalant AdvSIMD scalar instruction. Update inputs and outputs
   // to be the correct register class, minimizing cross-class copies.
   void transformInstruction(MachineInstr *MI);
@@ -252,7 +252,7 @@ bool ARM64AdvSIMDScalar::isProfitableToTransform(const MachineInstr *MI) const {
   if (AllUsesAreCopies)
     --NumNewCopies;
 
-  // If a tranform will not increase the number of cross-class copies required,
+  // If a transform will not increase the number of cross-class copies required,
   // return true.
   if (NumNewCopies <= NumRemovableCopies)
     return true;
@@ -273,7 +273,7 @@ static MachineInstr *insertCopy(const ARM64InstrInfo *TII, MachineInstr *MI,
   return MIB;
 }
 
-// tranformInstruction - Perform the transformation of an instruction
+// transformInstruction - Perform the transformation of an instruction
 // to its equivalant AdvSIMD scalar instruction. Update inputs and outputs
 // to be the correct register class, minimizing cross-class copies.
 void ARM64AdvSIMDScalar::transformInstruction(MachineInstr *MI) {

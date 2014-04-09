@@ -222,7 +222,7 @@ void ARM64MachObjectWriter::RecordRelocation(
                                   "difference");
 
     // ARM64 always uses external relocations. If there is no symbol to use as
-    // a base address (a local symbol with no preceeding non-local symbol),
+    // a base address (a local symbol with no preceding non-local symbol),
     // error out.
     //
     // FIXME: We should probably just synthesize an external symbol and use

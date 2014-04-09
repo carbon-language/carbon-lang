@@ -459,14 +459,14 @@ static void finitReachingDef(BlockToSetOfInstrsPerColor &In,
     delete[] IT->second;
 }
 
-/// Reaching definiton algorithm.
+/// Reaching definition algorithm.
 /// \param MF function on which the algorithm will operate.
 /// \param[out] ColorOpToReachedUses will contain the result of the reaching
 /// def algorithm.
 /// \param ADRPMode specify whether the reaching def algorithm should be tuned
 /// for ADRP optimization. \see initReachingDef for more details.
 /// \param DummyOp if not NULL, the algorithm will work at
-/// basic block scope and will set for every exposed defintion a use to
+/// basic block scope and will set for every exposed definition a use to
 /// @p DummyOp.
 /// \pre ColorOpToReachedUses is an array of at least number of registers of
 /// InstrToInstrs.
@@ -584,7 +584,7 @@ static bool isCandidateStore(const MachineInstr *Instr) {
   return false;
 }
 
-/// Given the result of a reaching defintion algorithm in ColorOpToReachedUses,
+/// Given the result of a reaching definition algorithm in ColorOpToReachedUses,
 /// Build the Use to Defs information and filter out obvious non-LOH candidates.
 /// In ADRPMode, non-LOH candidates are "uses" with non-ADRP definitions.
 /// In non-ADRPMode, non-LOH candidates are "uses" with several definition,

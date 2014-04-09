@@ -14,7 +14,7 @@
 ; }
 ;
 ; Test that we generate valid debug info for optimized code,
-; particularily variables that are described as constants and passed
+; particularly variables that are described as constants and passed
 ; by reference.
 ; rdar://problem/14874886
 ;

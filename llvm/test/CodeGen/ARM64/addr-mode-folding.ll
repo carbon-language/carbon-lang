@@ -6,7 +6,7 @@
 define i32 @fct(i32 %i1, i32 %i2) {
 ; CHECK: @fct
 ; Sign extension is used more than once, thus it should not be folded.
-; CodeGenPrepare is not sharing sext accross uses, thus this is folded because
+; CodeGenPrepare is not sharing sext across uses, thus this is folded because
 ; of that.
 ; _CHECK-NOT_: , sxtw]
 entry:

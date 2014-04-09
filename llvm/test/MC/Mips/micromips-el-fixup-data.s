@@ -2,7 +2,7 @@
 # RUN:   -mattr=+micromips 2>&1 -filetype=obj > %t.o
 # RUN: llvm-objdump %t.o -triple mipsel -mattr=+micromips -d | FileCheck %s
 
-# Check that fixup data is writen in the microMIPS specific little endian
+# Check that fixup data is written in the microMIPS specific little endian
 # byte order.
 
     .text
