@@ -177,6 +177,9 @@ public:
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const;
 
+  unsigned fixMulHigh(const MCInst &MI, unsigned EncodedValue,
+                      const MCSubtargetInfo &STI) const;
+
   template<int hasRs, int hasRt2> unsigned
   fixLoadStoreExclusive(const MCInst &MI, unsigned EncodedValue,
                         const MCSubtargetInfo &STI) const;
@@ -563,6 +566,16 @@ void ARM64MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   uint64_t Binary = getBinaryCodeForInstr(MI, Fixups, STI);
   EmitConstant(Binary, 4, OS);
   ++MCNumEmitted; // Keep track of the # of mi's emitted.
+}
+
+unsigned
+ARM64MCCodeEmitter::fixMulHigh(const MCInst &MI,
+                               unsigned EncodedValue,
+                               const MCSubtargetInfo &STI) const {
+  // The Ra field of SMULH and UMULH is unused: it should be assembled as 31
+  // (i.e. all bits 1) but is ignored by the processor.
+  EncodedValue |= 0x1f << 10;
+  return EncodedValue;
 }
 
 template<int hasRs, int hasRt2> unsigned

@@ -1200,9 +1200,13 @@ class MulHi<bits<3> opc, string asm, SDNode OpNode>
   let Inst{31-24} = 0b10011011;
   let Inst{23-21} = opc;
   let Inst{20-16} = Rm;
-  let Inst{15-10} = 0b011111;
+  let Inst{15}    = 0;
   let Inst{9-5}   = Rn;
   let Inst{4-0}   = Rd;
+
+  // The Ra field of SMULH and UMULH is unused: it should be assembled as 31
+  // (i.e. all bits 1) but is ignored by the processor.
+  let PostEncoderMethod = "fixMulHigh";
 }
 
 class MulAccumWAlias<string asm, Instruction inst>
