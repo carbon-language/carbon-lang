@@ -277,6 +277,10 @@ public:
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 
   bool isLegalICmpImmediate(int64_t Val) const;
+
+  bool isTruncateFree(Type *Ty1, Type *Ty2) const override;
+  bool isTruncateFree(EVT VT1, EVT VT2) const override;
+
   SDValue getSelectableIntSetCC(SDValue LHS, SDValue RHS, ISD::CondCode CC,
                          SDValue &A64cc, SelectionDAG &DAG, SDLoc &dl) const;
 

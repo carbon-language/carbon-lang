@@ -5368,3 +5368,24 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
 
   return false;
 }
+
+// Truncations from 64-bit GPR to 32-bit GPR is free.
+bool AArch64TargetLowering::isTruncateFree(Type *Ty1, Type *Ty2) const {
+  if (!Ty1->isIntegerTy() || !Ty2->isIntegerTy())
+    return false;
+  unsigned NumBits1 = Ty1->getPrimitiveSizeInBits();
+  unsigned NumBits2 = Ty2->getPrimitiveSizeInBits();
+  if (NumBits1 <= NumBits2)
+    return false;
+  return true;
+}
+
+bool AArch64TargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
+  if (!VT1.isInteger() || !VT2.isInteger())
+    return false;
+  unsigned NumBits1 = VT1.getSizeInBits();
+  unsigned NumBits2 = VT2.getSizeInBits();
+  if (NumBits1 <= NumBits2)
+    return false;
+  return true;
+}
