@@ -15,7 +15,7 @@
 #ifndef TARGET_ARM64_H
 #define TARGET_ARM64_H
 
-#include "MCTargetDesc/ARM64BaseInfo.h"
+#include "Utils/ARM64BaseInfo.h"
 #include "MCTargetDesc/ARM64MCTargetDesc.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/DataTypes.h"

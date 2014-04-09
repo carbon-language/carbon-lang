@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM64MCInstLower.h"
-#include "MCTargetDesc/ARM64BaseInfo.h"
 #include "MCTargetDesc/ARM64MCExpr.h"
+#include "Utils/ARM64BaseInfo.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"

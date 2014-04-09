@@ -17,7 +17,9 @@
 #ifndef ARM64BASEINFO_H
 #define ARM64BASEINFO_H
 
-#include "ARM64MCTargetDesc.h"
+// FIXME: Is it easiest to fix this layering violation by moving the .inc
+// #includes from ARM64MCTargetDesc.h to here?
+#include "MCTargetDesc/ARM64MCTargetDesc.h" // For ARM64::X0 and friends.
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"

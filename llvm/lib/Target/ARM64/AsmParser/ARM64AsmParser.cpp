@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/ARM64AddressingModes.h"
-#include "MCTargetDesc/ARM64BaseInfo.h"
 #include "MCTargetDesc/ARM64MCExpr.h"
+#include "Utils/ARM64BaseInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"

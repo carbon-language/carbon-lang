@@ -13,9 +13,9 @@
 
 #define DEBUG_TYPE "mccodeemitter"
 #include "MCTargetDesc/ARM64AddressingModes.h"
-#include "MCTargetDesc/ARM64BaseInfo.h"
 #include "MCTargetDesc/ARM64FixupKinds.h"
 #include "MCTargetDesc/ARM64MCExpr.h"
+#include "Utils/ARM64BaseInfo.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"

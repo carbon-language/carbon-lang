@@ -20,6 +20,6 @@ BUILT_SOURCES = ARM64GenRegisterInfo.inc ARM64GenInstrInfo.inc \
 		ARM64GenFastISel.inc ARM64GenDisassemblerTables.inc \
 		ARM64GenMCPseudoLowering.inc
 
-DIRS = TargetInfo InstPrinter AsmParser Disassembler MCTargetDesc
+DIRS = TargetInfo InstPrinter AsmParser Disassembler MCTargetDesc Utils
 
 include $(LEVEL)/Makefile.common

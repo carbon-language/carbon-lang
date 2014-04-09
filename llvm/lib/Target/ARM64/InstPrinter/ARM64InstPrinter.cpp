@@ -14,7 +14,7 @@
 #define DEBUG_TYPE "asm-printer"
 #include "ARM64InstPrinter.h"
 #include "MCTargetDesc/ARM64AddressingModes.h"
-#include "MCTargetDesc/ARM64BaseInfo.h"
+#include "Utils/ARM64BaseInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/MC/MCInst.h"

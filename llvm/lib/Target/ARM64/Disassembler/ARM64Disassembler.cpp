@@ -14,8 +14,8 @@
 
 #include "ARM64Disassembler.h"
 #include "ARM64Subtarget.h"
-#include "MCTargetDesc/ARM64BaseInfo.h"
 #include "MCTargetDesc/ARM64AddressingModes.h"
+#include "Utils/ARM64BaseInfo.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCContext.h"
