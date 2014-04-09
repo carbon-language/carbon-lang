@@ -72,7 +72,7 @@
 // CHECK-OBJ: 50 R_AARCH64_ADR_GOT_PAGE sym
 
    adrp x29, :gottprel:sym
-// CHECK: adrp fp, :gottprel:sym
+// CHECK: adrp x29, :gottprel:sym
 // CHECK-OBJ: 54 R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21 sym
 
    adrp x2, :tlsdesc:sym
@@ -105,7 +105,7 @@ trickQuestion:
    ldrsb w23, [x19, #:dtprel_lo12:sym]
    ldrsb x17, [x13, #:dtprel_lo12_nc:sym]
    ldr b11, [x7, #:dtprel_lo12:sym]
-// CHECK: ldrb w23, [fp, :dtprel_lo12_nc:sym]
+// CHECK: ldrb w23, [x29, :dtprel_lo12_nc:sym]
 // CHECK: ldrsb w23, [x19, :dtprel_lo12:sym]
 // CHECK: ldrsb x17, [x13, :dtprel_lo12_nc:sym]
 // CHECK: ldr b11, [x7, :dtprel_lo12:sym]
@@ -144,7 +144,7 @@ trickQuestion:
    ldrsh w23, [x19, #:dtprel_lo12:sym]
    ldrsh x17, [x13, #:dtprel_lo12_nc:sym]
    ldr h11, [x7, #:dtprel_lo12:sym]
-// CHECK: ldrh w23, [fp, :dtprel_lo12_nc:sym]
+// CHECK: ldrh w23, [x29, :dtprel_lo12_nc:sym]
 // CHECK: ldrsh w23, [x19, :dtprel_lo12:sym]
 // CHECK: ldrsh x17, [x13, :dtprel_lo12_nc:sym]
 // CHECK: ldr h11, [x7, :dtprel_lo12:sym]

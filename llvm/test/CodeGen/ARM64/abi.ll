@@ -77,6 +77,7 @@ entry:
 ; CHECK: fixed_4i
 ; CHECK: str [[REG_1:q[0-9]+]], [sp, #16]
 ; FAST: fixed_4i
+; FAST: sub sp, sp, #64
 ; FAST: mov x[[ADDR:[0-9]+]], sp
 ; FAST: str [[REG_1:q[0-9]+]], [x[[ADDR]], #16]
   %0 = load <4 x i32>* %in, align 16
@@ -130,6 +131,7 @@ entry:
 ; CHECK: test3
 ; CHECK: str [[REG_1:d[0-9]+]], [sp, #8]
 ; FAST: test3
+; FAST: sub sp, sp, #32
 ; FAST: mov x[[ADDR:[0-9]+]], sp
 ; FAST: str [[REG_1:d[0-9]+]], [x[[ADDR]], #8]
   %0 = load <2 x i32>* %in, align 8

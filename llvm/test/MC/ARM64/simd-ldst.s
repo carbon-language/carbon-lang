@@ -263,10 +263,10 @@ ld3st3_multiple:
 
 ; CHECK: ld3.8b { v9, v10, v11 }, [x9]  ; encoding: [0x29,0x41,0x40,0x0c]
 ; CHECK: ld3.16b { v14, v15, v16 }, [x19] ; encoding: [0x6e,0x42,0x40,0x4c]
-; CHECK: ld3.4h { v24, v25, v26 }, [fp] ; encoding: [0xb8,0x47,0x40,0x0c]
+; CHECK: ld3.4h { v24, v25, v26 }, [x29] ; encoding: [0xb8,0x47,0x40,0x0c]
 ; CHECK: ld3.8h { v30, v31, v0 }, [x9]  ; encoding: [0x3e,0x45,0x40,0x4c]
 ; CHECK: ld3.2s { v2, v3, v4 }, [x19]   ; encoding: [0x62,0x4a,0x40,0x0c]
-; CHECK: ld3.4s { v4, v5, v6 }, [fp]    ; encoding: [0xa4,0x4b,0x40,0x4c]
+; CHECK: ld3.4s { v4, v5, v6 }, [x29]    ; encoding: [0xa4,0x4b,0x40,0x4c]
 ; CHECK: ld3.2d { v7, v8, v9 }, [x9]    ; encoding: [0x27,0x4d,0x40,0x4c]
 
 ; CHECK: st3.8b { v4, v5, v6 }, [x19]   ; encoding: [0x64,0x42,0x00,0x0c]
@@ -279,10 +279,10 @@ ld3st3_multiple:
 
 ; CHECK: st3.8b { v10, v11, v12 }, [x9] ; encoding: [0x2a,0x41,0x00,0x0c]
 ; CHECK: st3.16b { v14, v15, v16 }, [x19] ; encoding: [0x6e,0x42,0x00,0x4c]
-; CHECK: st3.4h { v24, v25, v26 }, [fp] ; encoding: [0xb8,0x47,0x00,0x0c]
+; CHECK: st3.4h { v24, v25, v26 }, [x29] ; encoding: [0xb8,0x47,0x00,0x0c]
 ; CHECK: st3.8h { v30, v31, v0 }, [x9]  ; encoding: [0x3e,0x45,0x00,0x4c]
 ; CHECK: st3.2s { v2, v3, v4 }, [x19]   ; encoding: [0x62,0x4a,0x00,0x0c]
-; CHECK: st3.4s { v7, v8, v9 }, [fp]    ; encoding: [0xa7,0x4b,0x00,0x4c]
+; CHECK: st3.4s { v7, v8, v9 }, [x29]    ; encoding: [0xa7,0x4b,0x00,0x4c]
 ; CHECK: st3.2d { v4, v5, v6 }, [x9]    ; encoding: [0x24,0x4d,0x00,0x4c]
 
 ld4st4_multiple:

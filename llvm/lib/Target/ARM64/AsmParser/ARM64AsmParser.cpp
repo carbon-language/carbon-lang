@@ -1871,7 +1871,7 @@ int ARM64AsmParser::tryParseRegister() {
   // Also handle a few aliases of registers.
   if (RegNum == 0)
     RegNum = StringSwitch<unsigned>(lowerCase)
-                 .Case("x29", ARM64::FP)
+                 .Case("fp",  ARM64::FP)
                  .Case("x30", ARM64::LR)
                  .Case("x31", ARM64::XZR)
                  .Case("w31", ARM64::WZR)

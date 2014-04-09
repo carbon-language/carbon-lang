@@ -112,7 +112,7 @@ def X25   : ARM64Reg<25, "x25", [W25]>, DwarfRegAlias<W25>;
 def X26   : ARM64Reg<26, "x26", [W26]>, DwarfRegAlias<W26>;
 def X27   : ARM64Reg<27, "x27", [W27]>, DwarfRegAlias<W27>;
 def X28   : ARM64Reg<28, "x28", [W28]>, DwarfRegAlias<W28>;
-def FP    : ARM64Reg<29, "fp",  [W29]>, DwarfRegAlias<W29>;
+def FP    : ARM64Reg<29, "x29", [W29]>, DwarfRegAlias<W29>;
 def LR    : ARM64Reg<30, "lr",  [W30]>, DwarfRegAlias<W30>;
 def SP    : ARM64Reg<31, "sp",  [WSP]>, DwarfRegAlias<WSP>;
 def XZR   : ARM64Reg<31, "xzr", [WZR]>, DwarfRegAlias<WSP>;

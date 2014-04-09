@@ -24,8 +24,8 @@ entry:
 define i32 @foo1(i32 %a) nounwind {
 entry:
 ; CHECK: foo1
-; CHECK: stur w0, [fp, #-4]
-; CHECK-NEXT: ldur w0, [fp, #-4]
+; CHECK: stur w0, [x29, #-4]
+; CHECK-NEXT: ldur w0, [x29, #-4]
 ; CHECK-NEXT: bl _call1
   %a.addr = alloca i32, align 4
   store i32 %a, i32* %a.addr, align 4

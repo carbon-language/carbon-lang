@@ -14,6 +14,7 @@ entry:
 define void @main() nounwind {
 entry:
 ; CHECK: main
+; CHECK: mov x29, sp
 ; CHECK: mov x[[REG:[0-9]+]], sp
 ; CHECK-NEXT: orr x[[REG1:[0-9]+]], xzr, #0x8
 ; CHECK-NEXT: add x0, x[[REG]], x[[REG1]]

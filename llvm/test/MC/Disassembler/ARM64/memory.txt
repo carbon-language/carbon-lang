@@ -210,7 +210,7 @@
   0x08 0x8c 0x40 0xfc
   0x09 0x0c 0xc1 0x3c
 
-# CHECK: ldr	fp, [x7, #8]!
+# CHECK: ldr	x29, [x7, #8]!
 # CHECK: ldr	lr, [x7, #8]!
 # CHECK: ldr	b5, [x0, #1]!
 # CHECK: ldr	h6, [x0, #2]!
@@ -227,7 +227,7 @@
   0x09 0x0c 0x9f 0x3c
 
 # CHECK: str	lr, [x7, #-8]!
-# CHECK: str	fp, [x7, #-8]!
+# CHECK: str	x29, [x7, #-8]!
 # CHECK: str	b5, [x0, #-1]!
 # CHECK: str	h6, [x0, #-2]!
 # CHECK: str	s7, [x0, #-4]!
@@ -247,7 +247,7 @@
   0x09 0x04 0x9f 0x3c
 
 # CHECK: str	lr, [x7], #-8
-# CHECK: str	fp, [x7], #-8
+# CHECK: str	x29, [x7], #-8
 # CHECK: str	b5, [x0], #-1
 # CHECK: str	h6, [x0], #-2
 # CHECK: str	s7, [x0], #-4
@@ -262,7 +262,7 @@
   0x08 0x84 0x40 0xfc
   0x09 0x04 0xc1 0x3c
 
-# CHECK: ldr	fp, [x7], #8
+# CHECK: ldr	x29, [x7], #8
 # CHECK: ldr	lr, [x7], #8
 # CHECK: ldr	b5, [x0], #1
 # CHECK: ldr	h6, [x0], #2

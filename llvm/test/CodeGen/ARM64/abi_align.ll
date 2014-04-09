@@ -294,7 +294,7 @@ entry:
 ; FAST: sub sp, sp, #96
 ; Space for s1 is allocated at fp-24 = sp+72
 ; Space for s2 is allocated at sp+48
-; FAST: sub x[[A:[0-9]+]], fp, #24
+; FAST: sub x[[A:[0-9]+]], x29, #24
 ; FAST: add x[[A:[0-9]+]], sp, #48
 ; Call memcpy with size = 24 (0x18)
 ; FAST: orr {{x[0-9]+}}, xzr, #0x18
@@ -317,17 +317,17 @@ declare i32 @f42_stack(i32 %i, i32 %i2, i32 %i3, i32 %i4, i32 %i5, i32 %i6,
 define i32 @caller42_stack() #3 {
 entry:
 ; CHECK: caller42_stack
-; CHECK: mov fp, sp
+; CHECK: mov x29, sp
 ; CHECK: sub sp, sp, #96
-; CHECK: stur {{x[0-9]+}}, [fp, #-16]
-; CHECK: stur {{q[0-9]+}}, [fp, #-32]
+; CHECK: stur {{x[0-9]+}}, [x29, #-16]
+; CHECK: stur {{q[0-9]+}}, [x29, #-32]
 ; CHECK: str {{x[0-9]+}}, [sp, #48]
 ; CHECK: str {{q[0-9]+}}, [sp, #32]
-; Space for s1 is allocated at fp-32 = sp+64
+; Space for s1 is allocated at x29-32 = sp+64
 ; Space for s2 is allocated at sp+32
 ; CHECK: add x[[B:[0-9]+]], sp, #32
 ; CHECK: str x[[B]], [sp, #16]
-; CHECK: sub x[[A:[0-9]+]], fp, #32
+; CHECK: sub x[[A:[0-9]+]], x29, #32
 ; Address of s1 is passed on stack at sp+8
 ; CHECK: str x[[A]], [sp, #8]
 ; CHECK: movz w[[C:[0-9]+]], #9
@@ -336,8 +336,8 @@ entry:
 ; FAST: caller42_stack
 ; Space for s1 is allocated at fp-24
 ; Space for s2 is allocated at fp-48
-; FAST: sub x[[A:[0-9]+]], fp, #24
-; FAST: sub x[[B:[0-9]+]], fp, #48
+; FAST: sub x[[A:[0-9]+]], x29, #24
+; FAST: sub x[[B:[0-9]+]], x29, #48
 ; Call memcpy with size = 24 (0x18)
 ; FAST: orr {{x[0-9]+}}, xzr, #0x18
 ; FAST: str {{w[0-9]+}}, [sp]
@@ -399,7 +399,7 @@ entry:
 ; Space for s2 is allocated at sp
 
 ; FAST: caller43
-; FAST: mov fp, sp
+; FAST: mov x29, sp
 ; Space for s1 is allocated at sp+32
 ; Space for s2 is allocated at sp
 ; FAST: add x1, sp, #32
@@ -429,17 +429,17 @@ declare i32 @f43_stack(i32 %i, i32 %i2, i32 %i3, i32 %i4, i32 %i5, i32 %i6,
 define i32 @caller43_stack() #3 {
 entry:
 ; CHECK: caller43_stack
-; CHECK: mov fp, sp
+; CHECK: mov x29, sp
 ; CHECK: sub sp, sp, #96
-; CHECK: stur {{q[0-9]+}}, [fp, #-16]
-; CHECK: stur {{q[0-9]+}}, [fp, #-32]
+; CHECK: stur {{q[0-9]+}}, [x29, #-16]
+; CHECK: stur {{q[0-9]+}}, [x29, #-32]
 ; CHECK: str {{q[0-9]+}}, [sp, #48]
 ; CHECK: str {{q[0-9]+}}, [sp, #32]
-; Space for s1 is allocated at fp-32 = sp+64
+; Space for s1 is allocated at x29-32 = sp+64
 ; Space for s2 is allocated at sp+32
 ; CHECK: add x[[B:[0-9]+]], sp, #32
 ; CHECK: str x[[B]], [sp, #16]
-; CHECK: sub x[[A:[0-9]+]], fp, #32
+; CHECK: sub x[[A:[0-9]+]], x29, #32
 ; Address of s1 is passed on stack at sp+8
 ; CHECK: str x[[A]], [sp, #8]
 ; CHECK: movz w[[C:[0-9]+]], #9
@@ -449,12 +449,12 @@ entry:
 ; FAST: sub sp, sp, #96
 ; Space for s1 is allocated at fp-32 = sp+64
 ; Space for s2 is allocated at sp+32
-; FAST: sub x[[A:[0-9]+]], fp, #32
+; FAST: sub x[[A:[0-9]+]], x29, #32
 ; FAST: add x[[B:[0-9]+]], sp, #32
-; FAST: stur {{x[0-9]+}}, [fp, #-32]
-; FAST: stur {{x[0-9]+}}, [fp, #-24]
-; FAST: stur {{x[0-9]+}}, [fp, #-16]
-; FAST: stur {{x[0-9]+}}, [fp, #-8]
+; FAST: stur {{x[0-9]+}}, [x29, #-32]
+; FAST: stur {{x[0-9]+}}, [x29, #-24]
+; FAST: stur {{x[0-9]+}}, [x29, #-16]
+; FAST: stur {{x[0-9]+}}, [x29, #-8]
 ; FAST: str {{x[0-9]+}}, [sp, #32]
 ; FAST: str {{x[0-9]+}}, [sp, #40]
 ; FAST: str {{x[0-9]+}}, [sp, #48]
@@ -487,6 +487,7 @@ entry:
 ; CHECK: str {{w[0-9]+}}, [sp, #16]
 ; CHECK: stp {{x[0-9]+}}, {{x[0-9]+}}, [sp]
 ; FAST: i128_split
+; FAST: sub sp, sp, #48
 ; FAST: mov x[[ADDR:[0-9]+]], sp
 ; FAST: str {{w[0-9]+}}, [x[[ADDR]], #16]
 ; FAST: stp {{x[0-9]+}}, {{x[0-9]+}}, [x[[ADDR]]]
