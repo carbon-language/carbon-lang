@@ -1757,14 +1757,15 @@ void ARM64Operand::print(raw_ostream &OS) const {
   case k_SysCR:
     OS << "c" << getSysCR();
     break;
-  case k_Prefetch:
-    OS << "<prfop ";
-    if (ARM64_AM::isNamedPrefetchOp(getPrefetch()))
-      OS << ARM64_AM::getPrefetchOpName((ARM64_AM::PrefetchOp)getPrefetch());
+  case k_Prefetch: {
+    bool Valid;
+    StringRef Name = ARM64PRFM::PRFMMapper().toString(getPrefetch(), Valid);
+    if (Valid)
+      OS << "<prfop " << Name << ">";
     else
-      OS << "#" << getPrefetch();
-    OS << ">";
+      OS << "<prfop invalid #" << getPrefetch() << ">";
     break;
+  }
   case k_Shifter: {
     unsigned Val = getShifter();
     OS << "<" << ARM64_AM::getShiftName(ARM64_AM::getShiftType(Val)) << " #"
@@ -2036,21 +2037,9 @@ ARM64AsmParser::tryParsePrefetch(OperandVector &Operands) {
     return MatchOperand_ParseFail;
   }
 
-  unsigned prfop = StringSwitch<unsigned>(Tok.getString())
-                       .Case("pldl1keep", ARM64_AM::PLDL1KEEP)
-                       .Case("pldl1strm", ARM64_AM::PLDL1STRM)
-                       .Case("pldl2keep", ARM64_AM::PLDL2KEEP)
-                       .Case("pldl2strm", ARM64_AM::PLDL2STRM)
-                       .Case("pldl3keep", ARM64_AM::PLDL3KEEP)
-                       .Case("pldl3strm", ARM64_AM::PLDL3STRM)
-                       .Case("pstl1keep", ARM64_AM::PSTL1KEEP)
-                       .Case("pstl1strm", ARM64_AM::PSTL1STRM)
-                       .Case("pstl2keep", ARM64_AM::PSTL2KEEP)
-                       .Case("pstl2strm", ARM64_AM::PSTL2STRM)
-                       .Case("pstl3keep", ARM64_AM::PSTL3KEEP)
-                       .Case("pstl3strm", ARM64_AM::PSTL3STRM)
-                       .Default(0xff);
-  if (prfop == 0xff) {
+  bool Valid;
+  unsigned prfop = ARM64PRFM::PRFMMapper().fromString(Tok.getString(), Valid);
+  if (!Valid) {
     TokError("pre-fetch hint expected");
     return MatchOperand_ParseFail;
   }

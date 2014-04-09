@@ -164,64 +164,6 @@ static inline unsigned getMemExtendImm(ARM64_AM::ExtendType ET, bool DoShift) {
   return (unsigned(ET) << 1) | unsigned(DoShift);
 }
 
-//===----------------------------------------------------------------------===//
-// Prefetch
-//
-
-/// Pre-fetch operator names.
-/// The enum values match the encoding values:
-///   prfop<4:3> 00=preload data, 10=prepare for store
-///   prfop<2:1> 00=target L1 cache, 01=target L2 cache, 10=target L3 cache,
-///   prfop<0> 0=non-streaming (temporal), 1=streaming (non-temporal)
-enum PrefetchOp {
-  InvalidPrefetchOp = -1,
-  PLDL1KEEP = 0x00,
-  PLDL1STRM = 0x01,
-  PLDL2KEEP = 0x02,
-  PLDL2STRM = 0x03,
-  PLDL3KEEP = 0x04,
-  PLDL3STRM = 0x05,
-  PSTL1KEEP = 0x10,
-  PSTL1STRM = 0x11,
-  PSTL2KEEP = 0x12,
-  PSTL2STRM = 0x13,
-  PSTL3KEEP = 0x14,
-  PSTL3STRM = 0x15
-};
-
-/// isNamedPrefetchOp - Check if the prefetch-op 5-bit value has a name.
-static inline bool isNamedPrefetchOp(unsigned prfop) {
-  switch (prfop) {
-  default: return false;
-  case ARM64_AM::PLDL1KEEP: case ARM64_AM::PLDL1STRM: case ARM64_AM::PLDL2KEEP:
-  case ARM64_AM::PLDL2STRM: case ARM64_AM::PLDL3KEEP: case ARM64_AM::PLDL3STRM:
-  case ARM64_AM::PSTL1KEEP: case ARM64_AM::PSTL1STRM: case ARM64_AM::PSTL2KEEP:
-  case ARM64_AM::PSTL2STRM: case ARM64_AM::PSTL3KEEP: case ARM64_AM::PSTL3STRM:
-    return true;
-  }
-}
-
-
-/// getPrefetchOpName - Get the string encoding for the prefetch operator.
-static inline const char *getPrefetchOpName(ARM64_AM::PrefetchOp prfop) {
-  switch (prfop) {
-  default: assert(false && "unhandled prefetch-op type!");
-  case ARM64_AM::PLDL1KEEP: return "pldl1keep";
-  case ARM64_AM::PLDL1STRM: return "pldl1strm";
-  case ARM64_AM::PLDL2KEEP: return "pldl2keep";
-  case ARM64_AM::PLDL2STRM: return "pldl2strm";
-  case ARM64_AM::PLDL3KEEP: return "pldl3keep";
-  case ARM64_AM::PLDL3STRM: return "pldl3strm";
-  case ARM64_AM::PSTL1KEEP: return "pstl1keep";
-  case ARM64_AM::PSTL1STRM: return "pstl1strm";
-  case ARM64_AM::PSTL2KEEP: return "pstl2keep";
-  case ARM64_AM::PSTL2STRM: return "pstl2strm";
-  case ARM64_AM::PSTL3KEEP: return "pstl3keep";
-  case ARM64_AM::PSTL3STRM: return "pstl3strm";
-  }
-  return 0;
-}
-
 static inline uint64_t ror(uint64_t elt, unsigned size) {
   return ((elt & 1) << (size-1)) | (elt >> 1);
 }

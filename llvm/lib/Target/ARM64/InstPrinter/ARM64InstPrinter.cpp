@@ -1145,8 +1145,10 @@ void ARM64InstPrinter::printAMIndexed(const MCInst *MI, unsigned OpNum,
 void ARM64InstPrinter::printPrefetchOp(const MCInst *MI, unsigned OpNum,
                                        raw_ostream &O) {
   unsigned prfop = MI->getOperand(OpNum).getImm();
-  if (ARM64_AM::isNamedPrefetchOp(prfop))
-    O << ARM64_AM::getPrefetchOpName((ARM64_AM::PrefetchOp)prfop);
+  bool Valid;
+  StringRef Name = ARM64PRFM::PRFMMapper().toString(prfop, Valid);
+  if (Valid)
+    O << Name;
   else
     O << '#' << prfop;
 }
