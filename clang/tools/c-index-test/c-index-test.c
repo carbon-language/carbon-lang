@@ -1295,6 +1295,13 @@ static enum CXChildVisitResult PrintType(CXCursor cursor, CXCursor p,
     }
     /* Print if this is a non-POD type. */
     printf(" [isPOD=%d]", clang_isPODType(T));
+    /* Print the pointee type. */
+    {
+      CXType PT = clang_getPointeeType(T);
+      if (PT.kind != CXType_Invalid) {
+        PrintTypeAndTypeKind(PT, " [pointeetype=%s] [pointeekind=%s]");
+      }
+    }
 
     printf("\n");
   }
