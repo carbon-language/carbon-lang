@@ -1459,9 +1459,14 @@ void ARM64InstPrinter::printAdrpLabel(const MCInst *MI, unsigned OpNum,
 void ARM64InstPrinter::printBarrierOption(const MCInst *MI, unsigned OpNo,
                                           raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNo).getImm();
+  unsigned Opcode = MI->getOpcode();
 
   bool Valid;
-  StringRef Name = ARM64DB::DBarrierMapper().toString(Val, Valid);
+  StringRef Name;
+  if (Opcode == ARM64::ISB)
+    Name = ARM64ISB::ISBMapper().toString(Val, Valid);
+  else
+    Name = ARM64DB::DBarrierMapper().toString(Val, Valid);
   if (Valid)
     O << Name;
   else
