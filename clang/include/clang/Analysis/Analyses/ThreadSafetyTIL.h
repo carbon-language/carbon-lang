@@ -264,12 +264,12 @@ private:
 
 
 // Contains various helper functions for SExprs.
-struct ThreadSafetyTIL {
-  static bool isTrivial(SExpr *E) {
+namespace ThreadSafetyTIL {
+  inline bool isTrivial(SExpr *E) {
     unsigned Op = E->opcode();
     return Op == COP_Variable || Op == COP_Literal || Op == COP_LiteralPtr;
   }
-};
+}
 
 class Function;
 class SFunction;
