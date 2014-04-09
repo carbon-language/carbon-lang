@@ -714,7 +714,7 @@ ClangASTType::IsReferenceType (ClangASTType *pointee_type) const
                 return true;
             case clang::Type::RValueReference:
                 if (pointee_type)
-                    pointee_type->SetClangType(m_ast, cast<LValueReferenceType>(qual_type)->desugar());
+                    pointee_type->SetClangType(m_ast, cast<RValueReferenceType>(qual_type)->desugar());
                 return true;
             case clang::Type::Typedef:
                 return ClangASTType(m_ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType()).IsReferenceType(pointee_type);
