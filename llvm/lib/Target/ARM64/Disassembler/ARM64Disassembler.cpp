@@ -88,8 +88,10 @@ static DecodeStatus DecodeFixedPointScaleImm(llvm::MCInst &Inst, unsigned Imm,
 static DecodeStatus DecodeCondBranchTarget(llvm::MCInst &Inst, unsigned Imm,
                                            uint64_t Address,
                                            const void *Decoder);
-static DecodeStatus DecodeSystemRegister(llvm::MCInst &Inst, unsigned Imm,
-                                         uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeMRSSystemRegister(llvm::MCInst &Inst, unsigned Imm,
+                                            uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeMSRSystemRegister(llvm::MCInst &Inst, unsigned Imm,
+                                            uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeThreeAddrSRegInstruction(llvm::MCInst &Inst,
                                                    uint32_t insn,
                                                    uint64_t Address,
@@ -765,11 +767,28 @@ static DecodeStatus DecodeCondBranchTarget(llvm::MCInst &Inst, unsigned Imm,
   return Success;
 }
 
-static DecodeStatus DecodeSystemRegister(llvm::MCInst &Inst, unsigned Imm,
-                                         uint64_t Address,
-                                         const void *Decoder) {
-  Inst.addOperand(MCOperand::CreateImm(Imm | 0x8000));
-  return Success;
+static DecodeStatus DecodeMRSSystemRegister(llvm::MCInst &Inst, unsigned Imm,
+                                            uint64_t Address,
+                                            const void *Decoder) {
+  Imm |= 0x8000;
+  Inst.addOperand(MCOperand::CreateImm(Imm));
+
+  bool ValidNamed;
+  (void)ARM64SysReg::MRSMapper().toString(Imm, ValidNamed);
+
+  return ValidNamed ? Success : Fail;
+}
+
+static DecodeStatus DecodeMSRSystemRegister(llvm::MCInst &Inst, unsigned Imm,
+                                            uint64_t Address,
+                                            const void *Decoder) {
+  Imm |= 0x8000;
+  Inst.addOperand(MCOperand::CreateImm(Imm));
+
+  bool ValidNamed;
+  (void)ARM64SysReg::MSRMapper().toString(Imm, ValidNamed);
+
+  return ValidNamed ? Success : Fail;
 }
 
 static DecodeStatus DecodeVecShiftRImm(llvm::MCInst &Inst, unsigned Imm,

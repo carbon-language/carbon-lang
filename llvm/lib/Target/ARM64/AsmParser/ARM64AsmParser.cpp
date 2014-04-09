@@ -88,7 +88,8 @@ private:
 
   OperandMatchResultTy tryParseNoIndexMemory(OperandVector &Operands);
   OperandMatchResultTy tryParseBarrierOperand(OperandVector &Operands);
-  OperandMatchResultTy tryParseSystemRegister(OperandVector &Operands);
+  OperandMatchResultTy tryParseMRSSystemRegister(OperandVector &Operands);
+  OperandMatchResultTy tryParseMSRSystemRegister(OperandVector &Operands);
   OperandMatchResultTy tryParseCPSRField(OperandVector &Operands);
   OperandMatchResultTy tryParseSysCROperand(OperandVector &Operands);
   OperandMatchResultTy tryParsePrefetch(OperandVector &Operands);
@@ -2632,332 +2633,47 @@ ARM64AsmParser::tryParseBarrierOperand(OperandVector &Operands) {
 }
 
 ARM64AsmParser::OperandMatchResultTy
-ARM64AsmParser::tryParseSystemRegister(OperandVector &Operands) {
+ARM64AsmParser::tryParseMRSSystemRegister(OperandVector &Operands) {
   const AsmToken &Tok = Parser.getTok();
 
-  // It can be specified as a symbolic name.
   if (Tok.isNot(AsmToken::Identifier))
     return MatchOperand_NoMatch;
 
-  auto ID = Tok.getString().lower();
-  ARM64SYS::SystemRegister Reg =
-      StringSwitch<ARM64SYS::SystemRegister>(ID)
-          .Case("spsr_el1", ARM64SYS::SPSR_svc)
-          .Case("spsr_svc", ARM64SYS::SPSR_svc)
-          .Case("elr_el1", ARM64SYS::ELR_EL1)
-          .Case("sp_el0", ARM64SYS::SP_EL0)
-          .Case("spsel", ARM64SYS::SPSel)
-          .Case("daif", ARM64SYS::DAIF)
-          .Case("currentel", ARM64SYS::CurrentEL)
-          .Case("nzcv", ARM64SYS::NZCV)
-          .Case("fpcr", ARM64SYS::FPCR)
-          .Case("fpsr", ARM64SYS::FPSR)
-          .Case("dspsr", ARM64SYS::DSPSR)
-          .Case("dlr", ARM64SYS::DLR)
-          .Case("spsr_el2", ARM64SYS::SPSR_hyp)
-          .Case("spsr_hyp", ARM64SYS::SPSR_hyp)
-          .Case("elr_el2", ARM64SYS::ELR_EL2)
-          .Case("sp_el1", ARM64SYS::SP_EL1)
-          .Case("spsr_irq", ARM64SYS::SPSR_irq)
-          .Case("spsr_abt", ARM64SYS::SPSR_abt)
-          .Case("spsr_und", ARM64SYS::SPSR_und)
-          .Case("spsr_fiq", ARM64SYS::SPSR_fiq)
-          .Case("spsr_el3", ARM64SYS::SPSR_EL3)
-          .Case("elr_el3", ARM64SYS::ELR_EL3)
-          .Case("sp_el2", ARM64SYS::SP_EL2)
-          .Case("midr_el1", ARM64SYS::MIDR_EL1)
-          .Case("ctr_el0", ARM64SYS::CTR_EL0)
-          .Case("mpidr_el1", ARM64SYS::MPIDR_EL1)
-          .Case("ecoidr_el1", ARM64SYS::ECOIDR_EL1)
-          .Case("dczid_el0", ARM64SYS::DCZID_EL0)
-          .Case("mvfr0_el1", ARM64SYS::MVFR0_EL1)
-          .Case("mvfr1_el1", ARM64SYS::MVFR1_EL1)
-          .Case("id_aa64pfr0_el1", ARM64SYS::ID_AA64PFR0_EL1)
-          .Case("id_aa64pfr1_el1", ARM64SYS::ID_AA64PFR1_EL1)
-          .Case("id_aa64dfr0_el1", ARM64SYS::ID_AA64DFR0_EL1)
-          .Case("id_aa64dfr1_el1", ARM64SYS::ID_AA64DFR1_EL1)
-          .Case("id_aa64isar0_el1", ARM64SYS::ID_AA64ISAR0_EL1)
-          .Case("id_aa64isar1_el1", ARM64SYS::ID_AA64ISAR1_EL1)
-          .Case("id_aa64mmfr0_el1", ARM64SYS::ID_AA64MMFR0_EL1)
-          .Case("id_aa64mmfr1_el1", ARM64SYS::ID_AA64MMFR1_EL1)
-          .Case("ccsidr_el1", ARM64SYS::CCSIDR_EL1)
-          .Case("clidr_el1", ARM64SYS::CLIDR_EL1)
-          .Case("aidr_el1", ARM64SYS::AIDR_EL1)
-          .Case("csselr_el1", ARM64SYS::CSSELR_EL1)
-          .Case("vpidr_el2", ARM64SYS::VPIDR_EL2)
-          .Case("vmpidr_el2", ARM64SYS::VMPIDR_EL2)
-          .Case("sctlr_el1", ARM64SYS::SCTLR_EL1)
-          .Case("sctlr_el2", ARM64SYS::SCTLR_EL2)
-          .Case("sctlr_el3", ARM64SYS::SCTLR_EL3)
-          .Case("actlr_el1", ARM64SYS::ACTLR_EL1)
-          .Case("actlr_el2", ARM64SYS::ACTLR_EL2)
-          .Case("actlr_el3", ARM64SYS::ACTLR_EL3)
-          .Case("cpacr_el1", ARM64SYS::CPACR_EL1)
-          .Case("cptr_el2", ARM64SYS::CPTR_EL2)
-          .Case("cptr_el3", ARM64SYS::CPTR_EL3)
-          .Case("scr_el3", ARM64SYS::SCR_EL3)
-          .Case("hcr_el2", ARM64SYS::HCR_EL2)
-          .Case("mdcr_el2", ARM64SYS::MDCR_EL2)
-          .Case("mdcr_el3", ARM64SYS::MDCR_EL3)
-          .Case("hstr_el2", ARM64SYS::HSTR_EL2)
-          .Case("hacr_el2", ARM64SYS::HACR_EL2)
-          .Case("ttbr0_el1", ARM64SYS::TTBR0_EL1)
-          .Case("ttbr1_el1", ARM64SYS::TTBR1_EL1)
-          .Case("ttbr0_el2", ARM64SYS::TTBR0_EL2)
-          .Case("ttbr0_el3", ARM64SYS::TTBR0_EL3)
-          .Case("vttbr_el2", ARM64SYS::VTTBR_EL2)
-          .Case("tcr_el1", ARM64SYS::TCR_EL1)
-          .Case("tcr_el2", ARM64SYS::TCR_EL2)
-          .Case("tcr_el3", ARM64SYS::TCR_EL3)
-          .Case("vtcr_el2", ARM64SYS::VTCR_EL2)
-          .Case("adfsr_el1", ARM64SYS::ADFSR_EL1)
-          .Case("aifsr_el1", ARM64SYS::AIFSR_EL1)
-          .Case("adfsr_el2", ARM64SYS::ADFSR_EL2)
-          .Case("aifsr_el2", ARM64SYS::AIFSR_EL2)
-          .Case("adfsr_el3", ARM64SYS::ADFSR_EL3)
-          .Case("aifsr_el3", ARM64SYS::AIFSR_EL3)
-          .Case("esr_el1", ARM64SYS::ESR_EL1)
-          .Case("esr_el2", ARM64SYS::ESR_EL2)
-          .Case("esr_el3", ARM64SYS::ESR_EL3)
-          .Case("far_el1", ARM64SYS::FAR_EL1)
-          .Case("far_el2", ARM64SYS::FAR_EL2)
-          .Case("far_el3", ARM64SYS::FAR_EL3)
-          .Case("hpfar_el2", ARM64SYS::HPFAR_EL2)
-          .Case("par_el1", ARM64SYS::PAR_EL1)
-          .Case("mair_el1", ARM64SYS::MAIR_EL1)
-          .Case("mair_el2", ARM64SYS::MAIR_EL2)
-          .Case("mair_el3", ARM64SYS::MAIR_EL3)
-          .Case("amair_el1", ARM64SYS::AMAIR_EL1)
-          .Case("amair_el2", ARM64SYS::AMAIR_EL2)
-          .Case("amair_el3", ARM64SYS::AMAIR_EL3)
-          .Case("vbar_el1", ARM64SYS::VBAR_EL1)
-          .Case("vbar_el2", ARM64SYS::VBAR_EL2)
-          .Case("vbar_el3", ARM64SYS::VBAR_EL3)
-          .Case("rvbar_el1", ARM64SYS::RVBAR_EL1)
-          .Case("rvbar_el2", ARM64SYS::RVBAR_EL2)
-          .Case("rvbar_el3", ARM64SYS::RVBAR_EL3)
-          .Case("isr_el1", ARM64SYS::ISR_EL1)
-          .Case("contextidr_el1", ARM64SYS::CONTEXTIDR_EL1)
-          .Case("tpidr_el0", ARM64SYS::TPIDR_EL0)
-          .Case("tpidrro_el0", ARM64SYS::TPIDRRO_EL0)
-          .Case("tpidr_el1", ARM64SYS::TPIDR_EL1)
-          .Case("tpidr_el2", ARM64SYS::TPIDR_EL2)
-          .Case("tpidr_el3", ARM64SYS::TPIDR_EL3)
-          .Case("teecr32_el1", ARM64SYS::TEECR32_EL1)
-          .Case("cntfrq_el0", ARM64SYS::CNTFRQ_EL0)
-          .Case("cntpct_el0", ARM64SYS::CNTPCT_EL0)
-          .Case("cntvct_el0", ARM64SYS::CNTVCT_EL0)
-          .Case("cntvoff_el2", ARM64SYS::CNTVOFF_EL2)
-          .Case("cntkctl_el1", ARM64SYS::CNTKCTL_EL1)
-          .Case("cnthctl_el2", ARM64SYS::CNTHCTL_EL2)
-          .Case("cntp_tval_el0", ARM64SYS::CNTP_TVAL_EL0)
-          .Case("cntp_ctl_el0", ARM64SYS::CNTP_CTL_EL0)
-          .Case("cntp_cval_el0", ARM64SYS::CNTP_CVAL_EL0)
-          .Case("cntv_tval_el0", ARM64SYS::CNTV_TVAL_EL0)
-          .Case("cntv_ctl_el0", ARM64SYS::CNTV_CTL_EL0)
-          .Case("cntv_cval_el0", ARM64SYS::CNTV_CVAL_EL0)
-          .Case("cnthp_tval_el2", ARM64SYS::CNTHP_TVAL_EL2)
-          .Case("cnthp_ctl_el2", ARM64SYS::CNTHP_CTL_EL2)
-          .Case("cnthp_cval_el2", ARM64SYS::CNTHP_CVAL_EL2)
-          .Case("cntps_tval_el1", ARM64SYS::CNTPS_TVAL_EL1)
-          .Case("cntps_ctl_el1", ARM64SYS::CNTPS_CTL_EL1)
-          .Case("cntps_cval_el1", ARM64SYS::CNTPS_CVAL_EL1)
-          .Case("dacr32_el2", ARM64SYS::DACR32_EL2)
-          .Case("ifsr32_el2", ARM64SYS::IFSR32_EL2)
-          .Case("teehbr32_el1", ARM64SYS::TEEHBR32_EL1)
-          .Case("sder32_el3", ARM64SYS::SDER32_EL3)
-          .Case("fpexc32_el2", ARM64SYS::FPEXC32_EL2)
-          .Case("current_el", ARM64SYS::CurrentEL)
-          .Case("pmevcntr0_el0", ARM64SYS::PMEVCNTR0_EL0)
-          .Case("pmevcntr1_el0", ARM64SYS::PMEVCNTR1_EL0)
-          .Case("pmevcntr2_el0", ARM64SYS::PMEVCNTR2_EL0)
-          .Case("pmevcntr3_el0", ARM64SYS::PMEVCNTR3_EL0)
-          .Case("pmevcntr4_el0", ARM64SYS::PMEVCNTR4_EL0)
-          .Case("pmevcntr5_el0", ARM64SYS::PMEVCNTR5_EL0)
-          .Case("pmevcntr6_el0", ARM64SYS::PMEVCNTR6_EL0)
-          .Case("pmevcntr7_el0", ARM64SYS::PMEVCNTR7_EL0)
-          .Case("pmevcntr8_el0", ARM64SYS::PMEVCNTR8_EL0)
-          .Case("pmevcntr9_el0", ARM64SYS::PMEVCNTR9_EL0)
-          .Case("pmevcntr10_el0", ARM64SYS::PMEVCNTR10_EL0)
-          .Case("pmevcntr11_el0", ARM64SYS::PMEVCNTR11_EL0)
-          .Case("pmevcntr12_el0", ARM64SYS::PMEVCNTR12_EL0)
-          .Case("pmevcntr13_el0", ARM64SYS::PMEVCNTR13_EL0)
-          .Case("pmevcntr14_el0", ARM64SYS::PMEVCNTR14_EL0)
-          .Case("pmevcntr15_el0", ARM64SYS::PMEVCNTR15_EL0)
-          .Case("pmevcntr16_el0", ARM64SYS::PMEVCNTR16_EL0)
-          .Case("pmevcntr17_el0", ARM64SYS::PMEVCNTR17_EL0)
-          .Case("pmevcntr18_el0", ARM64SYS::PMEVCNTR18_EL0)
-          .Case("pmevcntr19_el0", ARM64SYS::PMEVCNTR19_EL0)
-          .Case("pmevcntr20_el0", ARM64SYS::PMEVCNTR20_EL0)
-          .Case("pmevcntr21_el0", ARM64SYS::PMEVCNTR21_EL0)
-          .Case("pmevcntr22_el0", ARM64SYS::PMEVCNTR22_EL0)
-          .Case("pmevcntr23_el0", ARM64SYS::PMEVCNTR23_EL0)
-          .Case("pmevcntr24_el0", ARM64SYS::PMEVCNTR24_EL0)
-          .Case("pmevcntr25_el0", ARM64SYS::PMEVCNTR25_EL0)
-          .Case("pmevcntr26_el0", ARM64SYS::PMEVCNTR26_EL0)
-          .Case("pmevcntr27_el0", ARM64SYS::PMEVCNTR27_EL0)
-          .Case("pmevcntr28_el0", ARM64SYS::PMEVCNTR28_EL0)
-          .Case("pmevcntr29_el0", ARM64SYS::PMEVCNTR29_EL0)
-          .Case("pmevcntr30_el0", ARM64SYS::PMEVCNTR30_EL0)
-          .Case("pmevtyper0_el0", ARM64SYS::PMEVTYPER0_EL0)
-          .Case("pmevtyper1_el0", ARM64SYS::PMEVTYPER1_EL0)
-          .Case("pmevtyper2_el0", ARM64SYS::PMEVTYPER2_EL0)
-          .Case("pmevtyper3_el0", ARM64SYS::PMEVTYPER3_EL0)
-          .Case("pmevtyper4_el0", ARM64SYS::PMEVTYPER4_EL0)
-          .Case("pmevtyper5_el0", ARM64SYS::PMEVTYPER5_EL0)
-          .Case("pmevtyper6_el0", ARM64SYS::PMEVTYPER6_EL0)
-          .Case("pmevtyper7_el0", ARM64SYS::PMEVTYPER7_EL0)
-          .Case("pmevtyper8_el0", ARM64SYS::PMEVTYPER8_EL0)
-          .Case("pmevtyper9_el0", ARM64SYS::PMEVTYPER9_EL0)
-          .Case("pmevtyper10_el0", ARM64SYS::PMEVTYPER10_EL0)
-          .Case("pmevtyper11_el0", ARM64SYS::PMEVTYPER11_EL0)
-          .Case("pmevtyper12_el0", ARM64SYS::PMEVTYPER12_EL0)
-          .Case("pmevtyper13_el0", ARM64SYS::PMEVTYPER13_EL0)
-          .Case("pmevtyper14_el0", ARM64SYS::PMEVTYPER14_EL0)
-          .Case("pmevtyper15_el0", ARM64SYS::PMEVTYPER15_EL0)
-          .Case("pmevtyper16_el0", ARM64SYS::PMEVTYPER16_EL0)
-          .Case("pmevtyper17_el0", ARM64SYS::PMEVTYPER17_EL0)
-          .Case("pmevtyper18_el0", ARM64SYS::PMEVTYPER18_EL0)
-          .Case("pmevtyper19_el0", ARM64SYS::PMEVTYPER19_EL0)
-          .Case("pmevtyper20_el0", ARM64SYS::PMEVTYPER20_EL0)
-          .Case("pmevtyper21_el0", ARM64SYS::PMEVTYPER21_EL0)
-          .Case("pmevtyper22_el0", ARM64SYS::PMEVTYPER22_EL0)
-          .Case("pmevtyper23_el0", ARM64SYS::PMEVTYPER23_EL0)
-          .Case("pmevtyper24_el0", ARM64SYS::PMEVTYPER24_EL0)
-          .Case("pmevtyper25_el0", ARM64SYS::PMEVTYPER25_EL0)
-          .Case("pmevtyper26_el0", ARM64SYS::PMEVTYPER26_EL0)
-          .Case("pmevtyper27_el0", ARM64SYS::PMEVTYPER27_EL0)
-          .Case("pmevtyper28_el0", ARM64SYS::PMEVTYPER28_EL0)
-          .Case("pmevtyper29_el0", ARM64SYS::PMEVTYPER29_EL0)
-          .Case("pmevtyper30_el0", ARM64SYS::PMEVTYPER30_EL0)
-          .Case("pmccfiltr_el0", ARM64SYS::PMCCFILTR_EL0)
-          .Case("rmr_el3", ARM64SYS::RMR_EL3)
-          .Case("rmr_el2", ARM64SYS::RMR_EL2)
-          .Case("rmr_el1", ARM64SYS::RMR_EL1)
-          .Case("cpm_ioacc_ctl_el3", ARM64SYS::CPM_IOACC_CTL_EL3)
-          .Case("mdccsr_el0", ARM64SYS::MDCCSR_EL0)
-          .Case("mdccint_el1", ARM64SYS::MDCCINT_EL1)
-          .Case("dbgdtr_el0", ARM64SYS::DBGDTR_EL0)
-          .Case("dbgdtrrx_el0", ARM64SYS::DBGDTRRX_EL0)
-          .Case("dbgdtrtx_el0", ARM64SYS::DBGDTRTX_EL0)
-          .Case("dbgvcr32_el2", ARM64SYS::DBGVCR32_EL2)
-          .Case("osdtrrx_el1", ARM64SYS::OSDTRRX_EL1)
-          .Case("mdscr_el1", ARM64SYS::MDSCR_EL1)
-          .Case("osdtrtx_el1", ARM64SYS::OSDTRTX_EL1)
-          .Case("oseccr_el11", ARM64SYS::OSECCR_EL11)
-          .Case("dbgbvr0_el1", ARM64SYS::DBGBVR0_EL1)
-          .Case("dbgbvr1_el1", ARM64SYS::DBGBVR1_EL1)
-          .Case("dbgbvr2_el1", ARM64SYS::DBGBVR2_EL1)
-          .Case("dbgbvr3_el1", ARM64SYS::DBGBVR3_EL1)
-          .Case("dbgbvr4_el1", ARM64SYS::DBGBVR4_EL1)
-          .Case("dbgbvr5_el1", ARM64SYS::DBGBVR5_EL1)
-          .Case("dbgbvr6_el1", ARM64SYS::DBGBVR6_EL1)
-          .Case("dbgbvr7_el1", ARM64SYS::DBGBVR7_EL1)
-          .Case("dbgbvr8_el1", ARM64SYS::DBGBVR8_EL1)
-          .Case("dbgbvr9_el1", ARM64SYS::DBGBVR9_EL1)
-          .Case("dbgbvr10_el1", ARM64SYS::DBGBVR10_EL1)
-          .Case("dbgbvr11_el1", ARM64SYS::DBGBVR11_EL1)
-          .Case("dbgbvr12_el1", ARM64SYS::DBGBVR12_EL1)
-          .Case("dbgbvr13_el1", ARM64SYS::DBGBVR13_EL1)
-          .Case("dbgbvr14_el1", ARM64SYS::DBGBVR14_EL1)
-          .Case("dbgbvr15_el1", ARM64SYS::DBGBVR15_EL1)
-          .Case("dbgbcr0_el1", ARM64SYS::DBGBCR0_EL1)
-          .Case("dbgbcr1_el1", ARM64SYS::DBGBCR1_EL1)
-          .Case("dbgbcr2_el1", ARM64SYS::DBGBCR2_EL1)
-          .Case("dbgbcr3_el1", ARM64SYS::DBGBCR3_EL1)
-          .Case("dbgbcr4_el1", ARM64SYS::DBGBCR4_EL1)
-          .Case("dbgbcr5_el1", ARM64SYS::DBGBCR5_EL1)
-          .Case("dbgbcr6_el1", ARM64SYS::DBGBCR6_EL1)
-          .Case("dbgbcr7_el1", ARM64SYS::DBGBCR7_EL1)
-          .Case("dbgbcr8_el1", ARM64SYS::DBGBCR8_EL1)
-          .Case("dbgbcr9_el1", ARM64SYS::DBGBCR9_EL1)
-          .Case("dbgbcr10_el1", ARM64SYS::DBGBCR10_EL1)
-          .Case("dbgbcr11_el1", ARM64SYS::DBGBCR11_EL1)
-          .Case("dbgbcr12_el1", ARM64SYS::DBGBCR12_EL1)
-          .Case("dbgbcr13_el1", ARM64SYS::DBGBCR13_EL1)
-          .Case("dbgbcr14_el1", ARM64SYS::DBGBCR14_EL1)
-          .Case("dbgbcr15_el1", ARM64SYS::DBGBCR15_EL1)
-          .Case("dbgwvr0_el1", ARM64SYS::DBGWVR0_EL1)
-          .Case("dbgwvr1_el1", ARM64SYS::DBGWVR1_EL1)
-          .Case("dbgwvr2_el1", ARM64SYS::DBGWVR2_EL1)
-          .Case("dbgwvr3_el1", ARM64SYS::DBGWVR3_EL1)
-          .Case("dbgwvr4_el1", ARM64SYS::DBGWVR4_EL1)
-          .Case("dbgwvr5_el1", ARM64SYS::DBGWVR5_EL1)
-          .Case("dbgwvr6_el1", ARM64SYS::DBGWVR6_EL1)
-          .Case("dbgwvr7_el1", ARM64SYS::DBGWVR7_EL1)
-          .Case("dbgwvr8_el1", ARM64SYS::DBGWVR8_EL1)
-          .Case("dbgwvr9_el1", ARM64SYS::DBGWVR9_EL1)
-          .Case("dbgwvr10_el1", ARM64SYS::DBGWVR10_EL1)
-          .Case("dbgwvr11_el1", ARM64SYS::DBGWVR11_EL1)
-          .Case("dbgwvr12_el1", ARM64SYS::DBGWVR12_EL1)
-          .Case("dbgwvr13_el1", ARM64SYS::DBGWVR13_EL1)
-          .Case("dbgwvr14_el1", ARM64SYS::DBGWVR14_EL1)
-          .Case("dbgwvr15_el1", ARM64SYS::DBGWVR15_EL1)
-          .Case("dbgwcr0_el1", ARM64SYS::DBGWCR0_EL1)
-          .Case("dbgwcr1_el1", ARM64SYS::DBGWCR1_EL1)
-          .Case("dbgwcr2_el1", ARM64SYS::DBGWCR2_EL1)
-          .Case("dbgwcr3_el1", ARM64SYS::DBGWCR3_EL1)
-          .Case("dbgwcr4_el1", ARM64SYS::DBGWCR4_EL1)
-          .Case("dbgwcr5_el1", ARM64SYS::DBGWCR5_EL1)
-          .Case("dbgwcr6_el1", ARM64SYS::DBGWCR6_EL1)
-          .Case("dbgwcr7_el1", ARM64SYS::DBGWCR7_EL1)
-          .Case("dbgwcr8_el1", ARM64SYS::DBGWCR8_EL1)
-          .Case("dbgwcr9_el1", ARM64SYS::DBGWCR9_EL1)
-          .Case("dbgwcr10_el1", ARM64SYS::DBGWCR10_EL1)
-          .Case("dbgwcr11_el1", ARM64SYS::DBGWCR11_EL1)
-          .Case("dbgwcr12_el1", ARM64SYS::DBGWCR12_EL1)
-          .Case("dbgwcr13_el1", ARM64SYS::DBGWCR13_EL1)
-          .Case("dbgwcr14_el1", ARM64SYS::DBGWCR14_EL1)
-          .Case("dbgwcr15_el1", ARM64SYS::DBGWCR15_EL1)
-          .Case("mdrar_el1", ARM64SYS::MDRAR_EL1)
-          .Case("oslar_el1", ARM64SYS::OSLAR_EL1)
-          .Case("oslsr_el1", ARM64SYS::OSLSR_EL1)
-          .Case("osdlr_el1", ARM64SYS::OSDLR_EL1)
-          .Case("dbgprcr_el1", ARM64SYS::DBGPRCR_EL1)
-          .Case("dbgclaimset_el1", ARM64SYS::DBGCLAIMSET_EL1)
-          .Case("dbgclaimclr_el1", ARM64SYS::DBGCLAIMCLR_EL1)
-          .Case("dbgauthstatus_el1", ARM64SYS::DBGAUTHSTATUS_EL1)
-          .Case("dbgdevid2", ARM64SYS::DBGDEVID2)
-          .Case("dbgdevid1", ARM64SYS::DBGDEVID1)
-          .Case("dbgdevid0", ARM64SYS::DBGDEVID0)
-          .Case("id_pfr0_el1", ARM64SYS::ID_PFR0_EL1)
-          .Case("id_pfr1_el1", ARM64SYS::ID_PFR1_EL1)
-          .Case("id_dfr0_el1", ARM64SYS::ID_DFR0_EL1)
-          .Case("id_afr0_el1", ARM64SYS::ID_AFR0_EL1)
-          .Case("id_isar0_el1", ARM64SYS::ID_ISAR0_EL1)
-          .Case("id_isar1_el1", ARM64SYS::ID_ISAR1_EL1)
-          .Case("id_isar2_el1", ARM64SYS::ID_ISAR2_EL1)
-          .Case("id_isar3_el1", ARM64SYS::ID_ISAR3_EL1)
-          .Case("id_isar4_el1", ARM64SYS::ID_ISAR4_EL1)
-          .Case("id_isar5_el1", ARM64SYS::ID_ISAR5_EL1)
-          .Case("afsr1_el1", ARM64SYS::AFSR1_EL1)
-          .Case("afsr0_el1", ARM64SYS::AFSR0_EL1)
-          .Case("revidr_el1", ARM64SYS::REVIDR_EL1)
-          .Default(ARM64SYS::InvalidSystemReg);
-  if (Reg != ARM64SYS::InvalidSystemReg) {
-    // We matched a reg name, so create the operand.
+  bool Valid;
+  auto Mapper = ARM64SysReg::MRSMapper();
+  uint32_t Reg = Mapper.fromString(Tok.getString(), Valid);
+  
+  if (Valid) {
     Operands.push_back(
-        ARM64Operand::CreateSystemRegister(Reg, getLoc(), getContext()));
+      ARM64Operand::CreateSystemRegister((uint16_t)Reg, getLoc(),
+                                         getContext()));
     Parser.Lex(); // Consume the register name.
     return MatchOperand_Success;
   }
 
-  // Or we may have an identifier that encodes the sub-operands.
-  // For example, s3_2_c15_c0_0.
-  unsigned op0, op1, CRn, CRm, op2;
-  std::string Desc = ID;
-  if (std::sscanf(Desc.c_str(), "s%u_%u_c%u_c%u_%u", &op0, &op1, &CRn, &CRm,
-                  &op2) != 5)
-    return MatchOperand_NoMatch;
-  if ((op0 != 2 && op0 != 3) || op1 > 7 || CRn > 15 || CRm > 15 || op2 > 7)
+  return MatchOperand_NoMatch;
+}
+
+ARM64AsmParser::OperandMatchResultTy
+ARM64AsmParser::tryParseMSRSystemRegister(OperandVector &Operands) {
+  const AsmToken &Tok = Parser.getTok();
+
+  if (Tok.isNot(AsmToken::Identifier))
     return MatchOperand_NoMatch;
 
-  unsigned Val = op0 << 14 | op1 << 11 | CRn << 7 | CRm << 3 | op2;
-  Operands.push_back(
-      ARM64Operand::CreateSystemRegister(Val, getLoc(), getContext()));
-  Parser.Lex(); // Consume the register name.
+  bool Valid;
+  auto Mapper = ARM64SysReg::MSRMapper();
+  uint32_t Reg = Mapper.fromString(Tok.getString(), Valid);
+  
+  if (Valid) {
+    Operands.push_back(
+      ARM64Operand::CreateSystemRegister((uint16_t)Reg, getLoc(),
+                                         getContext()));
+    Parser.Lex(); // Consume the register name.
+    return MatchOperand_Success;
+  }
 
-  return MatchOperand_Success;
+  return MatchOperand_NoMatch;
 }
 
 ARM64AsmParser::OperandMatchResultTy

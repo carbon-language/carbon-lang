@@ -697,19 +697,34 @@ class CRmSystemI<Operand crmtype, bits<3> opc, string asm>
   let Inst{7-5} = opc;
 }
 
-// MRS/MSR system instructions.
-def SystemRegisterOperand : AsmOperandClass {
-  let Name = "SystemRegister";
-  let ParserMethod = "tryParseSystemRegister";
+// MRS/MSR system instructions. These have different operand classes because
+// a different subset of registers can be accessed through each instruction.
+def MRSSystemRegisterOperand : AsmOperandClass {
+  let Name = "MRSSystemRegister";
+  let ParserMethod = "tryParseMRSSystemRegister";
+  let RenderMethod = "addSystemRegisterOperands";
+  let PredicateMethod = "isSystemRegister";
 }
 // concatenation of 1, op0, op1, CRn, CRm, op2. 16-bit immediate.
-def sysreg_op : Operand<i32> {
-  let ParserMatchClass = SystemRegisterOperand;
-  let DecoderMethod = "DecodeSystemRegister";
-  let PrintMethod = "printSystemRegister";
+def mrs_sysreg_op : Operand<i32> {
+  let ParserMatchClass = MRSSystemRegisterOperand;
+  let DecoderMethod = "DecodeMRSSystemRegister";
+  let PrintMethod = "printMRSSystemRegister";
 }
 
-class MRSI : RtSystemI<1, (outs GPR64:$Rt), (ins sysreg_op:$systemreg),
+def MSRSystemRegisterOperand : AsmOperandClass {
+  let Name = "MSRSystemRegister";
+  let ParserMethod = "tryParseMSRSystemRegister";
+  let RenderMethod = "addSystemRegisterOperands";
+  let PredicateMethod = "isSystemRegister";
+}
+def msr_sysreg_op : Operand<i32> {
+  let ParserMatchClass = MSRSystemRegisterOperand;
+  let DecoderMethod = "DecodeMSRSystemRegister";
+  let PrintMethod = "printMSRSystemRegister";
+}
+
+class MRSI : RtSystemI<1, (outs GPR64:$Rt), (ins mrs_sysreg_op:$systemreg),
                        "mrs", "\t$Rt, $systemreg"> {
   bits<15> systemreg;
   let Inst{20} = 1;
@@ -719,7 +734,7 @@ class MRSI : RtSystemI<1, (outs GPR64:$Rt), (ins sysreg_op:$systemreg),
 // FIXME: Some of these def CPSR, others don't. Best way to model that?
 // Explicitly modeling each of the system register as a register class
 // would do it, but feels like overkill at this point.
-class MSRI : RtSystemI<0, (outs), (ins sysreg_op:$systemreg, GPR64:$Rt),
+class MSRI : RtSystemI<0, (outs), (ins msr_sysreg_op:$systemreg, GPR64:$Rt),
                        "msr", "\t$systemreg, $Rt"> {
   bits<15> systemreg;
   let Inst{20} = 1;

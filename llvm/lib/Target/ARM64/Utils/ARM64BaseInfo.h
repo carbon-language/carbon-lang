@@ -1800,7 +1800,10 @@ namespace ARM64SysReg {
     ICH_LR12_EL2      = 0xe66c, // 11  100  1100  1101  100
     ICH_LR13_EL2      = 0xe66d, // 11  100  1100  1101  101
     ICH_LR14_EL2      = 0xe66e, // 11  100  1100  1101  110
-    ICH_LR15_EL2      = 0xe66f  // 11  100  1100  1101  111
+    ICH_LR15_EL2      = 0xe66f, // 11  100  1100  1101  111
+
+    // Cyclone specific system registers
+    CPM_IOACC_CTL_EL3 = 0xff90
   };
 
   // Note that these do not inherit from ARM64NamedImmMapper. This class is

@@ -1394,23 +1394,28 @@ void ARM64InstPrinter::printBarrierOption(const MCInst *MI, unsigned OpNo,
     O << "#" << Val;
 }
 
-void ARM64InstPrinter::printSystemRegister(const MCInst *MI, unsigned OpNo,
+void ARM64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
                                            raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNo).getImm();
-  const char *Name =
-      ARM64SYS::getSystemRegisterName((ARM64SYS::SystemRegister)Val);
-  if (Name) {
-    O << Name;
-    return;
-  }
 
-  unsigned Op0 = 2 | ((Val >> 14) & 1);
-  unsigned Op1 = (Val >> 11) & 7;
-  unsigned CRn = (Val >> 7) & 0xf;
-  unsigned CRm = (Val >> 3) & 0xf;
-  unsigned Op2 = Val & 7;
+  bool Valid;
+  auto Mapper = ARM64SysReg::MRSMapper();
+  StringRef Name = Mapper.toString(Val, Valid);
 
-  O << 'S' << Op0 << '_' << Op1 << "_C" << CRn << "_C" << CRm << '_' << Op2;
+  if (Valid)
+    O << StringRef(Name.str()).upper();
+}
+
+void ARM64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
+                                           raw_ostream &O) {
+  unsigned Val = MI->getOperand(OpNo).getImm();
+
+  bool Valid;
+  auto Mapper = ARM64SysReg::MSRMapper();
+  StringRef Name = Mapper.toString(Val, Valid);
+
+  if (Valid)
+    O << StringRef(Name.str()).upper();
 }
 
 void ARM64InstPrinter::printSystemCPSRField(const MCInst *MI, unsigned OpNo,

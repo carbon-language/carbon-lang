@@ -750,7 +750,8 @@ const ARM64NamedImmMapper::Mapping ARM64SysReg::SysRegMapper::SysRegPairs[] = {
   {"ich_lr12_el2", ICH_LR12_EL2},
   {"ich_lr13_el2", ICH_LR13_EL2},
   {"ich_lr14_el2", ICH_LR14_EL2},
-  {"ich_lr15_el2", ICH_LR15_EL2}
+  {"ich_lr15_el2", ICH_LR15_EL2},
+  {"cpm_ioacc_ctl_el3", CPM_IOACC_CTL_EL3}
 };
 
 uint32_t
