@@ -173,6 +173,8 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   setOperationAction(ISD::UINT_TO_FP, MVT::v1i64, Expand);
   setOperationAction(ISD::FP_ROUND, MVT::v1f64, Expand);
 
+  setOperationAction(ISD::MUL, MVT::v1i64, Expand);
+
   // Custom lowering hooks are needed for XOR
   // to fold it into CSINC/CSINV.
   setOperationAction(ISD::XOR, MVT::i32, Custom);

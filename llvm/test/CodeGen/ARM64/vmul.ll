@@ -2027,3 +2027,10 @@ define <16 x i8> @test_pmull_high_64(<2 x i64> %l, <2 x i64> %r) nounwind {
 }
 
 declare <16 x i8> @llvm.arm64.neon.pmull64(i64, i64)
+
+define <1 x i64> @test_mul_v1i64(<1 x i64> %lhs, <1 x i64> %rhs) nounwind {
+; CHECK-LABEL: test_mul_v1i64:
+; CHECK: mul
+  %prod = mul <1 x i64> %lhs, %rhs
+  ret <1 x i64> %prod
+}
