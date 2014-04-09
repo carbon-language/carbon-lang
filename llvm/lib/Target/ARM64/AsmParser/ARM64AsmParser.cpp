@@ -3732,9 +3732,9 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
   }
 }
 
-static void rewriteMOV(ARM64AsmParser::OperandVector &Operands,
-                       StringRef mnemonic, uint64_t imm, unsigned shift,
-                       MCContext &Context) {
+static void rewriteMOVI(ARM64AsmParser::OperandVector &Operands,
+                        StringRef mnemonic, uint64_t imm, unsigned shift,
+                        MCContext &Context) {
   ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[0]);
   ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
   Operands[0] =
@@ -3747,6 +3747,43 @@ static void rewriteMOV(ARM64AsmParser::OperandVector &Operands,
   Operands.push_back(ARM64Operand::CreateShifter(
       ARM64_AM::LSL, shift, Op2->getStartLoc(), Op2->getEndLoc(), Context));
   delete Op2;
+  delete Op;
+}
+
+static void rewriteMOVRSP(ARM64AsmParser::OperandVector &Operands,
+                        MCContext &Context) {
+  ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[0]);
+  ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
+  Operands[0] =
+    ARM64Operand::CreateToken("add", false, Op->getStartLoc(), Context);
+
+  const MCExpr *Imm = MCConstantExpr::Create(0, Context);
+  Operands.push_back(ARM64Operand::CreateImm(Imm, Op2->getStartLoc(),
+                                             Op2->getEndLoc(), Context));
+  Operands.push_back(ARM64Operand::CreateShifter(
+      ARM64_AM::LSL, 0, Op2->getStartLoc(), Op2->getEndLoc(), Context));
+
+  delete Op;
+}
+
+static void rewriteMOVR(ARM64AsmParser::OperandVector &Operands,
+                        MCContext &Context) {
+  ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[0]);
+  ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
+  Operands[0] =
+    ARM64Operand::CreateToken("orr", false, Op->getStartLoc(), Context);
+
+  // Operands[2] becomes Operands[3].
+  Operands.push_back(Operands[2]);
+  // And Operands[2] becomes ZR.
+  unsigned ZeroReg = ARM64::XZR;
+  if (isGPR32Register(Operands[2]->getReg()))
+    ZeroReg = ARM64::WZR;
+
+  Operands[2] =
+    ARM64Operand::CreateReg(ZeroReg, false, Op2->getStartLoc(),
+                            Op2->getEndLoc(), Context);
+
   delete Op;
 }
 
@@ -3840,6 +3877,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     // FIXME: Catching this here is a total hack, and we should use tblgen
     // support to implement this instead as soon as it is available.
 
+    ARM64Operand *Op1 = static_cast<ARM64Operand *>(Operands[1]);
     ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
     if (Op2->isImm()) {
       if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op2->getImm())) {
@@ -3856,36 +3894,47 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
         // MOVK Rd, imm << 0
         if ((Val & 0xFFFF) == Val)
-          rewriteMOV(Operands, "movz", Val, 0, getContext());
+          rewriteMOVI(Operands, "movz", Val, 0, getContext());
 
         // MOVK Rd, imm << 16
         else if ((Val & 0xFFFF0000ULL) == Val)
-          rewriteMOV(Operands, "movz", Val, 16, getContext());
+          rewriteMOVI(Operands, "movz", Val, 16, getContext());
 
         // MOVK Rd, imm << 32
         else if ((Val & 0xFFFF00000000ULL) == Val)
-          rewriteMOV(Operands, "movz", Val, 32, getContext());
+          rewriteMOVI(Operands, "movz", Val, 32, getContext());
 
         // MOVK Rd, imm << 48
         else if ((Val & 0xFFFF000000000000ULL) == Val)
-          rewriteMOV(Operands, "movz", Val, 48, getContext());
+          rewriteMOVI(Operands, "movz", Val, 48, getContext());
 
         // MOVN Rd, (~imm << 0)
         else if ((NVal & 0xFFFFULL) == NVal)
-          rewriteMOV(Operands, "movn", NVal, 0, getContext());
+          rewriteMOVI(Operands, "movn", NVal, 0, getContext());
 
         // MOVN Rd, ~(imm << 16)
         else if ((NVal & 0xFFFF0000ULL) == NVal)
-          rewriteMOV(Operands, "movn", NVal, 16, getContext());
+          rewriteMOVI(Operands, "movn", NVal, 16, getContext());
 
         // MOVN Rd, ~(imm << 32)
         else if ((NVal & 0xFFFF00000000ULL) == NVal)
-          rewriteMOV(Operands, "movn", NVal, 32, getContext());
+          rewriteMOVI(Operands, "movn", NVal, 32, getContext());
 
         // MOVN Rd, ~(imm << 48)
         else if ((NVal & 0xFFFF000000000000ULL) == NVal)
-          rewriteMOV(Operands, "movn", NVal, 48, getContext());
+          rewriteMOVI(Operands, "movn", NVal, 48, getContext());
       }
+    } else if (Op1->isReg() && Op2->isReg()) {
+      // reg->reg move.
+      unsigned Reg1 = Op1->getReg();
+      unsigned Reg2 = Op2->getReg();
+      if ((Reg1 == ARM64::SP && isGPR64Reg(Reg2)) ||
+          (Reg2 == ARM64::SP && isGPR64Reg(Reg1)) ||
+          (Reg1 == ARM64::WSP && isGPR32Register(Reg2)) ||
+          (Reg2 == ARM64::WSP && isGPR32Register(Reg1)))
+        rewriteMOVRSP(Operands, getContext());
+      else
+        rewriteMOVR(Operands, getContext());
     }
   } else if (NumOperands == 4) {
     if (Tok == "add" || Tok == "adds" || Tok == "sub" || Tok == "subs") {
