@@ -189,13 +189,13 @@ private:
   };
 
   struct SystemRegisterOp {
-    // 16-bit immediate, usually from the ARM64SYS::SystermRegister enum,
+    // 16-bit immediate, usually from the ARM64SysReg::SysRegValues enum
     // but not limited to those values.
     uint16_t Val;
   };
 
   struct CPSRFieldOp {
-    ARM64SYS::CPSRField Field;
+    ARM64PState::PStateValues Field;
   };
 
   struct SysCRImmOp {
@@ -336,7 +336,7 @@ public:
     return SystemRegister.Val;
   }
 
-  ARM64SYS::CPSRField getCPSRField() const {
+  ARM64PState::PStateValues getCPSRField() const {
     assert(Kind == k_CPSRField && "Invalid access!");
     return CPSRField.Field;
   }
@@ -670,7 +670,7 @@ public:
       return true;
     // SPSel is legal for both the system register and the CPSR-field
     // variants of MSR, so special case that. Fugly.
-    return (Kind == k_CPSRField && getCPSRField() == ARM64SYS::cpsr_SPSel);
+    return (Kind == k_CPSRField && getCPSRField() == ARM64PState::SPSel);
   }
   bool isSystemCPSRField() const { return Kind == k_CPSRField; }
   bool isReg() const { return Kind == k_Register && !Reg.isVector; }
@@ -1285,8 +1285,8 @@ public:
     if (Kind == k_SystemRegister)
       Inst.addOperand(MCOperand::CreateImm(getSystemRegister()));
     else {
-      assert(Kind == k_CPSRField && getCPSRField() == ARM64SYS::cpsr_SPSel);
-      Inst.addOperand(MCOperand::CreateImm(ARM64SYS::SPSel));
+      assert(Kind == k_CPSRField && getCPSRField() == ARM64PState::SPSel);
+      Inst.addOperand(MCOperand::CreateImm(ARM64SysReg::SPSel));
     }
   }
 
@@ -1615,7 +1615,7 @@ public:
     return Op;
   }
 
-  static ARM64Operand *CreateCPSRField(ARM64SYS::CPSRField Field, SMLoc S,
+  static ARM64Operand *CreateCPSRField(ARM64PState::PStateValues Field, SMLoc S,
                                        MCContext &Ctx) {
     ARM64Operand *Op = new ARM64Operand(k_CPSRField, Ctx);
     Op->CPSRField.Field = Field;
@@ -1703,30 +1703,32 @@ void ARM64Operand::print(raw_ostream &OS) const {
        << ") >";
     break;
   case k_Barrier: {
-    const char *Name =
-        ARM64SYS::getBarrierOptName((ARM64SYS::BarrierOption)getBarrier());
-    OS << "<barrier ";
-    if (Name)
-      OS << Name;
+    bool Valid;
+    StringRef Name = ARM64DB::DBarrierMapper().toString(getBarrier(), Valid);
+    if (Valid)
+      OS << "<barrier " << Name << ">";
     else
-      OS << getBarrier();
-    OS << ">";
+      OS << "<barrier invalid #" << getCPSRField() << ">";
     break;
   }
   case k_SystemRegister: {
-    const char *Name = ARM64SYS::getSystemRegisterName(
-        (ARM64SYS::SystemRegister)getSystemRegister());
-    OS << "<systemreg ";
-    if (Name)
-      OS << Name;
+    bool Valid;
+    StringRef Name = ARM64SysReg::MRSMapper().toString(getSystemRegister(), Valid);
+    if (!Valid)
+      Name = ARM64SysReg::MSRMapper().toString(getSystemRegister(), Valid);
+    if (Valid)
+      OS << "<systemreg " << Name << ">";
     else
-      OS << "#" << getSystemRegister();
-    OS << ">";
+      OS << "<systemreg invalid #" << getSystemRegister() << ">";
     break;
   }
   case k_CPSRField: {
-    const char *Name = ARM64SYS::getCPSRFieldName(getCPSRField());
-    OS << "<cpsrfield " << Name << ">";
+    bool Valid;
+    StringRef Name = ARM64PState::PStateMapper().toString(getCPSRField(), Valid);
+    if (Valid)
+      OS << "<cpsrfield " << Name << ">";
+    else
+      OS << "<cpsrfield invalid #" << getCPSRField() << ">";
     break;
   }
   case k_Immediate:
@@ -2601,27 +2603,15 @@ ARM64AsmParser::tryParseBarrierOperand(OperandVector &Operands) {
     return MatchOperand_ParseFail;
   }
 
-  unsigned Opt = StringSwitch<unsigned>(Tok.getString())
-                     .Case("oshld", ARM64SYS::OSHLD)
-                     .Case("oshst", ARM64SYS::OSHST)
-                     .Case("osh", ARM64SYS::OSH)
-                     .Case("nshld", ARM64SYS::NSHLD)
-                     .Case("nshst", ARM64SYS::NSHST)
-                     .Case("nsh", ARM64SYS::NSH)
-                     .Case("ishld", ARM64SYS::ISHLD)
-                     .Case("ishst", ARM64SYS::ISHST)
-                     .Case("ish", ARM64SYS::ISH)
-                     .Case("ld", ARM64SYS::LD)
-                     .Case("st", ARM64SYS::ST)
-                     .Case("sy", ARM64SYS::SY)
-                     .Default(ARM64SYS::InvalidBarrier);
-  if (Opt == ARM64SYS::InvalidBarrier) {
+  bool Valid;
+  unsigned Opt = ARM64DB::DBarrierMapper().fromString(Tok.getString(), Valid);
+  if (!Valid) {
     TokError("invalid barrier option name");
     return MatchOperand_ParseFail;
   }
 
   // The only valid named option for ISB is 'sy'
-  if (Mnemonic == "isb" && Opt != ARM64SYS::SY) {
+  if (Mnemonic == "isb" && Opt != ARM64DB::SY) {
     TokError("'sy' or #imm operand expected");
     return MatchOperand_ParseFail;
   }
@@ -2683,13 +2673,11 @@ ARM64AsmParser::tryParseCPSRField(OperandVector &Operands) {
   if (Tok.isNot(AsmToken::Identifier))
     return MatchOperand_NoMatch;
 
-  ARM64SYS::CPSRField Field =
-      StringSwitch<ARM64SYS::CPSRField>(Tok.getString().lower())
-          .Case("spsel", ARM64SYS::cpsr_SPSel)
-          .Case("daifset", ARM64SYS::cpsr_DAIFSet)
-          .Case("daifclr", ARM64SYS::cpsr_DAIFClr)
-          .Default(ARM64SYS::InvalidCPSRField);
-  if (Field == ARM64SYS::InvalidCPSRField)
+  bool Valid;
+  ARM64PState::PStateValues Field = (ARM64PState::PStateValues)
+    ARM64PState::PStateMapper().fromString(Tok.getString(), Valid);
+
+  if (!Valid)
     return MatchOperand_NoMatch;
   Operands.push_back(
       ARM64Operand::CreateCPSRField(Field, getLoc(), getContext()));

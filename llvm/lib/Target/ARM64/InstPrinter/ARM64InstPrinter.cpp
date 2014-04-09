@@ -1387,8 +1387,10 @@ void ARM64InstPrinter::printAdrpLabel(const MCInst *MI, unsigned OpNum,
 void ARM64InstPrinter::printBarrierOption(const MCInst *MI, unsigned OpNo,
                                           raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNo).getImm();
-  const char *Name = ARM64SYS::getBarrierOptName((ARM64SYS::BarrierOption)Val);
-  if (Name)
+
+  bool Valid;
+  StringRef Name = ARM64DB::DBarrierMapper().toString(Val, Valid);
+  if (Valid)
     O << Name;
   else
     O << "#" << Val;
@@ -1421,8 +1423,13 @@ void ARM64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
 void ARM64InstPrinter::printSystemCPSRField(const MCInst *MI, unsigned OpNo,
                                             raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNo).getImm();
-  const char *Name = ARM64SYS::getCPSRFieldName((ARM64SYS::CPSRField)Val);
-  O << Name;
+
+  bool Valid;
+  StringRef Name = ARM64PState::PStateMapper().toString(Val, Valid);
+  if (Valid)
+    O << StringRef(Name.str()).upper();
+  else
+    O << "#" << Val;
 }
 
 void ARM64InstPrinter::printSIMDType10Operand(const MCInst *MI, unsigned OpNo,
