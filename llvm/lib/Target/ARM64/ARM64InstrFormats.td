@@ -3502,11 +3502,13 @@ class BaseOneOperandFPComparison<bit signalAllNans,
   let Inst{31-23} = 0b000111100;
   let Inst{21}    = 1;
 
-  let Inst{20-16} = 0b00000;
   let Inst{15-10} = 0b001000;
   let Inst{9-5}   = Rn;
   let Inst{4}     = signalAllNans;
   let Inst{3-0}   = 0b1000;
+
+  // Rm should be 0b00000 canonically, but we need to accept any value.
+  let PostEncoderMethod = "fixOneOperandFPComparison";
 }
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in

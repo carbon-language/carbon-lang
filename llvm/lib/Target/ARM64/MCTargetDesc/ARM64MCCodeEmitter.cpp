@@ -184,6 +184,8 @@ public:
   fixLoadStoreExclusive(const MCInst &MI, unsigned EncodedValue,
                         const MCSubtargetInfo &STI) const;
 
+  unsigned fixOneOperandFPComparison(const MCInst &MI, unsigned EncodedValue,
+                                     const MCSubtargetInfo &STI) const;
 };
 
 } // end anonymous namespace
@@ -585,6 +587,16 @@ ARM64MCCodeEmitter::fixLoadStoreExclusive(const MCInst &MI,
   if (!hasRs) EncodedValue |= 0x001F0000;
   if (!hasRt2) EncodedValue |= 0x00007C00;
 
+  return EncodedValue;
+}
+
+unsigned
+ARM64MCCodeEmitter::fixOneOperandFPComparison(const MCInst &MI,
+                                              unsigned EncodedValue,
+                                              const MCSubtargetInfo &STI) const {
+  // The Rm field of FCMP and friends is unused - it should be assembled
+  // as 0, but is ignored by the processor.
+  EncodedValue &= ~(0x1f << 16);
   return EncodedValue;
 }
 
