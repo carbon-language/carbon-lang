@@ -33,7 +33,11 @@
 #include <unistd.h>
 #include <unwind.h>
 
-#if SANITIZER_ANDROID
+#if SANITIZER_FREEBSD
+#include <sys/link_elf.h>
+#endif
+
+#if SANITIZER_ANDROID || SANITIZER_FREEBSD
 #include <ucontext.h>
 extern "C" void* _DYNAMIC;
 #else
