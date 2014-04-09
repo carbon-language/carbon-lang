@@ -68,7 +68,7 @@ int Blob::*member_pointer;
 // CHECK: FieldDecl=p:20:8 (Definition) [type=int *] [typekind=Pointer] [isPOD=1] [pointeetype=int] [pointeekind=Int]
 // CHECK: CXXMethod=f:21:8 (Definition) [type=int *(int *, char *, FooType){{.*}}] [typekind=FunctionProto] [canonicaltype=int *(int *, char *, int){{.*}}] [canonicaltypekind=FunctionProto] [resulttype=int *] [resulttypekind=Pointer] [args= [int *] [Pointer] [char *] [Pointer] [FooType] [Typedef]] [isPOD=0]
 // CHECK: ParmDecl=p:21:15 (Definition) [type=int *] [typekind=Pointer] [isPOD=1] [pointeetype=int] [pointeekind=Int]
-// CHECK: ParmDecl=x:21:24 (Definition) [type=char *] [typekind=Pointer] [isPOD=1] [pointeetype=char] [pointeekind=Char_S]
+// CHECK: ParmDecl=x:21:24 (Definition) [type=char *] [typekind=Pointer] [isPOD=1] [pointeetype=char] [pointeekind=Char_{{[US]}}]
 // CHECK: ParmDecl=z:21:35 (Definition) [type=FooType] [typekind=Typedef] [canonicaltype=int] [canonicaltypekind=Int] [isPOD=1]
 // CHECK: TypeRef=FooType:19:15 [type=FooType] [typekind=Typedef] [canonicaltype=int] [canonicaltypekind=Int] [isPOD=1]
 // CHECK: CompoundStmt= [type=] [typekind=Invalid] [isPOD=0]
