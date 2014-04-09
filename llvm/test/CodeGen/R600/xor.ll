@@ -72,3 +72,21 @@ define void @scalar_xor_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) {
   store i32 %result, i32 addrspace(1)* %out
   ret void
 }
+
+; SI-CHECK-LABEL: @scalar_not_i32
+; SI-CHECK: S_NOT_B32
+define void @scalar_not_i32(i32 addrspace(1)* %out, i32 %a) {
+  %result = xor i32 %a, -1
+  store i32 %result, i32 addrspace(1)* %out
+  ret void
+}
+
+; SI-CHECK-LABEL: @vector_not_i32
+; SI-CHECK: V_NOT_B32
+define void @vector_not_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %in0, i32 addrspace(1)* %in1) {
+  %a = load i32 addrspace(1)* %in0
+  %b = load i32 addrspace(1)* %in1
+  %result = xor i32 %a, -1
+  store i32 %result, i32 addrspace(1)* %out
+  ret void
+}

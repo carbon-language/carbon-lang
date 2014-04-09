@@ -537,6 +537,7 @@ unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   case AMDGPU::S_LSHL_B64: return AMDGPU::V_LSHL_B64;
   case AMDGPU::S_LSHR_B32: return AMDGPU::V_LSHR_B32_e32;
   case AMDGPU::S_LSHR_B64: return AMDGPU::V_LSHR_B64;
+  case AMDGPU::S_NOT_B32: return AMDGPU::V_NOT_B32_e32;
   }
 }
 

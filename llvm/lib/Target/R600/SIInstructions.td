@@ -45,7 +45,10 @@ def S_CMOV_B32 : SOP1_32 <0x00000005, "S_CMOV_B32", []>;
 def S_CMOV_B64 : SOP1_64 <0x00000006, "S_CMOV_B64", []>;
 } // End isMoveImm = 1
 
-def S_NOT_B32 : SOP1_32 <0x00000007, "S_NOT_B32", []>;
+def S_NOT_B32 : SOP1_32 <0x00000007, "S_NOT_B32",
+  [(set i32:$dst, (not i32:$src0))]
+>;
+
 def S_NOT_B64 : SOP1_64 <0x00000008, "S_NOT_B64", []>;
 def S_WQM_B32 : SOP1_32 <0x00000009, "S_WQM_B32", []>;
 def S_WQM_B64 : SOP1_64 <0x0000000a, "S_WQM_B64", []>;
