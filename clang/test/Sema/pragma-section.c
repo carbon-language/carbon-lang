@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fms-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fms-extensions %s -triple x86_64-pc-win32
 
 #pragma const_seg(".my_const") // expected-note 2 {{#pragma entered here}}
 extern const int a;
