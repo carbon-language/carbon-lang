@@ -1546,14 +1546,18 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
              Style.Language == FormatStyle::LK_Proto) {
     // Don't enums onto single lines in protocol buffers.
     return true;
-  } else if ((Left.is(tok::l_brace) && Left.MatchingParen &&
-              Left.MatchingParen->Previous &&
-              Left.MatchingParen->Previous->is(tok::comma)) ||
-             (Right.is(tok::r_brace) && Left.is(tok::comma))) {
-    // If the last token before a '}' is a comma, the intention is to insert a
-    // line break after it in order to make shuffling around entries easier.
-    return true;
   }
+
+  // If the last token before a '}' is a comma, the intention is to insert a
+  // line break after it in order to make shuffling around entries easier.
+  const FormatToken *BeforeClosingBrace = nullptr;
+  if (Left.is(tok::l_brace) && Left.MatchingParen)
+    BeforeClosingBrace = Left.MatchingParen->getPreviousNonComment();
+  else if (Right.is(tok::r_brace))
+    BeforeClosingBrace = Right.getPreviousNonComment();
+  if (BeforeClosingBrace && BeforeClosingBrace->is(tok::comma))
+    return true;
+
   return false;
 }
 
