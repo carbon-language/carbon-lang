@@ -246,9 +246,10 @@ public:
 
   /// getDebugVariable() - Return the debug variable referenced by
   /// this DBG_VALUE instruction.
-  const MDNode *getDebugVariable() const {
+  DIVariable getDebugVariable() const {
     assert(isDebugValue() && "not a DBG_VALUE");
-    return getOperand(getNumOperands() - 1).getMetadata();
+    const MDNode *Var = getOperand(getNumOperands() - 1).getMetadata();
+    return DIVariable(Var);
   }
 
   /// emitError - Emit an error referring to the source location of this
