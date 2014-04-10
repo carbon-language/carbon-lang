@@ -132,13 +132,11 @@ bool TempScopInfo::buildScalarDependences(Instruction *Inst, Region *R) {
     assert(!isa<PHINode>(UI) && "Non synthesizable PHINode found in a SCoP!");
 
     SmallVector<const SCEV *, 4> Subscripts, Sizes;
-    Subscripts.push_back(SE->getConstant(ZeroOffset->getType(), 0));
-    Sizes.push_back(SE->getConstant(ZeroOffset->getType(), 1));
 
     // Use the def instruction as base address of the IRAccess, so that it will
     // become the name of the scalar access in the polyhedral form.
-    IRAccess ScalarAccess(IRAccess::SCALARREAD, Inst, ZeroOffset, 1, true,
-                          Subscripts, Sizes);
+    IRAccess ScalarAccess(IRAccess::READ, Inst, ZeroOffset, 1, true, Subscripts,
+                          Sizes);
     AccFuncMap[UseParent].push_back(std::make_pair(ScalarAccess, UI));
   }
 
@@ -212,9 +210,7 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB) {
       // If the Instruction is used outside the statement, we need to build the
       // write access.
       SmallVector<const SCEV *, 4> Subscripts, Sizes;
-      Subscripts.push_back(SE->getConstant(ZeroOffset->getType(), 0));
-      Sizes.push_back(SE->getConstant(ZeroOffset->getType(), 1));
-      IRAccess ScalarAccess(IRAccess::SCALARWRITE, Inst, ZeroOffset, 1, true,
+      IRAccess ScalarAccess(IRAccess::WRITE, Inst, ZeroOffset, 1, true,
                             Subscripts, Sizes);
       Functions.push_back(std::make_pair(ScalarAccess, Inst));
     }

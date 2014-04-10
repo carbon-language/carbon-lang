@@ -172,6 +172,9 @@ public:
   /// statement.
   bool isStrideZero(__isl_take const isl_map *Schedule) const;
 
+  /// @brief Check if this is a scalar memory access.
+  bool isScalar() const;
+
   /// @brief Get the statement that contains this memory access.
   ScopStmt *getStatement() const { return Statement; }
 

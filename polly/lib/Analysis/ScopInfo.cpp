@@ -335,11 +335,11 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
 
   Type = Access.isRead() ? READ : MUST_WRITE;
 
-  int Size = Access.Subscripts.size();
-  assert(Size > 0 && "access function with no subscripts");
-  AccessRelation = NULL;
+  isl_space *Space = isl_space_alloc(Statement->getIslCtx(), 0,
+                                     Statement->getNumIterators(), 0);
+  AccessRelation = isl_map_universe(Space);
 
-  for (int i = 0; i < Size; ++i) {
+  for (int i = 0, Size = Access.Subscripts.size(); i < Size; ++i) {
     isl_pw_aff *Affine =
         SCEVAffinator::getPwAff(Statement, Access.Subscripts[i]);
 
@@ -360,13 +360,10 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
 
     isl_map *SubscriptMap = isl_map_from_pw_aff(Affine);
 
-    if (!AccessRelation)
-      AccessRelation = SubscriptMap;
-    else
-      AccessRelation = isl_map_flat_range_product(AccessRelation, SubscriptMap);
+    AccessRelation = isl_map_flat_range_product(AccessRelation, SubscriptMap);
   }
 
-  isl_space *Space = Statement->getDomainSpace();
+  Space = Statement->getDomainSpace();
   AccessRelation = isl_map_set_tuple_id(
       AccessRelation, isl_dim_in, isl_space_get_tuple_id(Space, isl_dim_set));
   isl_space_free(Space);
@@ -488,6 +485,10 @@ bool MemoryAccess::isStrideX(__isl_take const isl_map *Schedule,
 
 bool MemoryAccess::isStrideZero(const isl_map *Schedule) const {
   return isStrideX(Schedule, 0);
+}
+
+bool MemoryAccess::isScalar() const {
+  return isl_map_n_out(AccessRelation) == 0;
 }
 
 bool MemoryAccess::isStrideOne(const isl_map *Schedule) const {

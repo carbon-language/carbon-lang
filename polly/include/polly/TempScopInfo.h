@@ -43,9 +43,6 @@ public:
   enum TypeKind {
     READ = 0x1,
     WRITE = 0x2,
-    SCALAR = 0x4,
-    SCALARREAD = SCALAR | READ,
-    SCALARWRITE = SCALAR | WRITE
   };
 
 private:
@@ -73,11 +70,11 @@ public:
 
   bool isAffine() const { return IsAffine; }
 
-  bool isRead() const { return Type & READ; }
+  bool isRead() const { return Type == READ; }
 
-  bool isWrite() const { return Type & WRITE; }
+  bool isWrite() const { return Type == WRITE; }
 
-  bool isScalar() const { return Type & SCALAR; }
+  bool isScalar() const { return Subscripts.size() == 0; }
 
   void print(raw_ostream &OS) const;
 };
