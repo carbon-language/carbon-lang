@@ -680,7 +680,7 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
   // we've been asked for it.  This, when linked with a runtime with support
   // for segmented stacks (libgcc is one), will result in allocating stack
   // space in small chunks instead of one large contiguous block.
-  if (Fn.getTarget().Options.EnableSegmentedStacks)
+  if (Fn.shouldSplitStack())
     TFI.adjustForSegmentedStacks(Fn);
 
   // Emit additional code that is required to explicitly handle the stack in

@@ -1,15 +1,15 @@
-; RUN: llc < %s -mtriple=arm-linux-androideabi -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=ARM-android
-; RUN: llc < %s -mtriple=arm-linux-unknown-gnueabi -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=ARM-linux
+; RUN: llc < %s -mtriple=arm-linux-androideabi -verify-machineinstrs | FileCheck %s -check-prefix=ARM-android
+; RUN: llc < %s -mtriple=arm-linux-unknown-gnueabi -verify-machineinstrs | FileCheck %s -check-prefix=ARM-linux
 
 ; We used to crash with filetype=obj
-; RUN: llc < %s -mtriple=arm-linux-androideabi -segmented-stacks -filetype=obj
-; RUN: llc < %s -mtriple=arm-linux-unknown-gnueabi -segmented-stacks -filetype=obj
+; RUN: llc < %s -mtriple=arm-linux-androideabi -filetype=obj
+; RUN: llc < %s -mtriple=arm-linux-unknown-gnueabi -filetype=obj
 
 
 ; Just to prevent the alloca from being optimized away
 declare void @dummy_use(i32*, i32)
 
-define void @test_basic() {
+define void @test_basic() #0 {
         %mem = alloca i32, i32 10
         call void @dummy_use (i32* %mem, i32 10)
 	ret void
@@ -54,7 +54,7 @@ define void @test_basic() {
 
 }
 
-define i32 @test_nested(i32 * nest %closure, i32 %other) {
+define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
        %addend = load i32 * %closure
        %result = add i32 %other, %addend
        ret i32 %result
@@ -99,7 +99,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) {
 
 }
 
-define void @test_large() {
+define void @test_large() #0 {
         %mem = alloca i32, i32 10000
         call void @dummy_use (i32* %mem, i32 0)
         ret void
@@ -144,7 +144,7 @@ define void @test_large() {
 
 }
 
-define fastcc void @test_fastcc() {
+define fastcc void @test_fastcc() #0 {
         %mem = alloca i32, i32 10
         call void @dummy_use (i32* %mem, i32 10)
         ret void
@@ -189,7 +189,7 @@ define fastcc void @test_fastcc() {
 
 }
 
-define fastcc void @test_fastcc_large() {
+define fastcc void @test_fastcc_large() #0 {
         %mem = alloca i32, i32 10000
         call void @dummy_use (i32* %mem, i32 0)
         ret void
@@ -233,3 +233,5 @@ define fastcc void @test_fastcc_large() {
 ; ARM-android:      pop     {r4, r5}
 
 }
+
+attributes #0 = { "split-stack" }

@@ -1,23 +1,23 @@
-; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X32-Linux
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux  -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64-Linux
-; RUN: llc < %s -mcpu=generic -mtriple=i686-darwin -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X32-Darwin
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-darwin -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64-Darwin
-; RUN: llc < %s -mcpu=generic -mtriple=i686-mingw32 -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X32-MinGW
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-freebsd -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64-FreeBSD
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-mingw32 -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64-MinGW
+; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -verify-machineinstrs | FileCheck %s -check-prefix=X32-Linux
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux  -verify-machineinstrs | FileCheck %s -check-prefix=X64-Linux
+; RUN: llc < %s -mcpu=generic -mtriple=i686-darwin -verify-machineinstrs | FileCheck %s -check-prefix=X32-Darwin
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-darwin -verify-machineinstrs | FileCheck %s -check-prefix=X64-Darwin
+; RUN: llc < %s -mcpu=generic -mtriple=i686-mingw32 -verify-machineinstrs | FileCheck %s -check-prefix=X32-MinGW
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-freebsd -verify-machineinstrs | FileCheck %s -check-prefix=X64-FreeBSD
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-mingw32 -verify-machineinstrs | FileCheck %s -check-prefix=X64-MinGW
 
 ; We used to crash with filetype=obj
-; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -segmented-stacks -filetype=obj
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux -segmented-stacks -filetype=obj
-; RUN: llc < %s -mcpu=generic -mtriple=i686-darwin -segmented-stacks -filetype=obj
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-darwin -segmented-stacks -filetype=obj
-; RUN: llc < %s -mcpu=generic -mtriple=i686-mingw32 -segmented-stacks -filetype=obj
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-freebsd -segmented-stacks -filetype=obj
-; RUN: llc < %s -mcpu=generic -mtriple=x86_64-mingw32 -segmented-stacks -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=i686-darwin -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-darwin -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=i686-mingw32 -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-freebsd -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-mingw32 -filetype=obj
 
-; RUN: not llc < %s -mcpu=generic -mtriple=x86_64-solaris -segmented-stacks 2> %t.log
+; RUN: not llc < %s -mcpu=generic -mtriple=x86_64-solaris 2> %t.log
 ; RUN: FileCheck %s -input-file=%t.log -check-prefix=X64-Solaris
-; RUN: not llc < %s -mcpu=generic -mtriple=i686-freebsd -segmented-stacks 2> %t.log
+; RUN: not llc < %s -mcpu=generic -mtriple=i686-freebsd 2> %t.log
 ; RUN: FileCheck %s -input-file=%t.log -check-prefix=X32-FreeBSD
 
 ; X64-Solaris: Segmented stacks not supported on this platform
@@ -26,7 +26,7 @@
 ; Just to prevent the alloca from being optimized away
 declare void @dummy_use(i32*, i32)
 
-define void @test_basic() {
+define void @test_basic() #0 {
         %mem = alloca i32, i32 10
         call void @dummy_use (i32* %mem, i32 10)
 	ret void
@@ -104,7 +104,7 @@ define void @test_basic() {
 
 }
 
-define i32 @test_nested(i32 * nest %closure, i32 %other) {
+define i32 @test_nested(i32 * nest %closure, i32 %other) #0 {
        %addend = load i32 * %closure
        %result = add i32 %other, %addend
        ret i32 %result
@@ -177,7 +177,7 @@ define i32 @test_nested(i32 * nest %closure, i32 %other) {
 
 }
 
-define void @test_large() {
+define void @test_large() #0 {
         %mem = alloca i32, i32 10000
         call void @dummy_use (i32* %mem, i32 0)
         ret void
@@ -249,7 +249,7 @@ define void @test_large() {
 
 }
 
-define fastcc void @test_fastcc() {
+define fastcc void @test_fastcc() #0 {
         %mem = alloca i32, i32 10
         call void @dummy_use (i32* %mem, i32 10)
         ret void
@@ -327,7 +327,7 @@ define fastcc void @test_fastcc() {
 
 }
 
-define fastcc void @test_fastcc_large() {
+define fastcc void @test_fastcc_large() #0 {
         %mem = alloca i32, i32 10000
         call void @dummy_use (i32* %mem, i32 0)
         ret void
@@ -412,7 +412,7 @@ define fastcc void @test_fastcc_large() {
 
 }
 
-define fastcc void @test_fastcc_large_with_ecx_arg(i32 %a) {
+define fastcc void @test_fastcc_large_with_ecx_arg(i32 %a) #0 {
         %mem = alloca i32, i32 10000
         call void @dummy_use (i32* %mem, i32 %a)
         ret void
@@ -434,3 +434,5 @@ define fastcc void @test_fastcc_large_with_ecx_arg(i32 %a) {
 ; X32-Darwin-NEXT: ret
 
 }
+
+attributes #0 = { "split-stack" }

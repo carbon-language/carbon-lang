@@ -1,11 +1,11 @@
-; RUN: llc < %s -mtriple=arm-linux-unknown-gnueabi -segmented-stacks -verify-machineinstrs -filetype=asm | FileCheck %s -check-prefix=ARM-linux
-; RUN: llc < %s -mtriple=arm-linux-unknown-gnueabi -segmented-stacks -filetype=obj
+; RUN: llc < %s -mtriple=arm-linux-unknown-gnueabi -verify-machineinstrs -filetype=asm | FileCheck %s -check-prefix=ARM-linux
+; RUN: llc < %s -mtriple=arm-linux-unknown-gnueabi -filetype=obj
 
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!9, !10}
 !llvm.ident = !{!11}
 
-define void @test_basic() {
+define void @test_basic() #0 {
         %mem = alloca i32, i32 10
         call void @dummy_use (i32* %mem, i32 10)
 	ret void
@@ -78,3 +78,5 @@ define void @test_basic() {
 
 ; Just to prevent the alloca from being optimized away
 declare void @dummy_use(i32*, i32)
+
+attributes #0 = { "split-stack" }

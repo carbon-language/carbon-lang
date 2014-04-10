@@ -259,6 +259,9 @@ public:
     return MBBNumbering[N];
   }
 
+  /// Should we be emitting segmented stack stuff for the function
+  bool shouldSplitStack();
+
   /// getNumBlockIDs - Return the number of MBB ID's allocated.
   ///
   unsigned getNumBlockIDs() const { return (unsigned)MBBNumbering.size(); }

@@ -49,7 +49,7 @@ namespace llvm {
           JITEmitDebugInfoToDisk(false), GuaranteedTailCallOpt(false),
           DisableTailCalls(false), StackAlignmentOverride(0),
           EnableFastISel(false), PositionIndependentExecutable(false),
-          EnableSegmentedStacks(false), UseInitArray(false),
+          UseInitArray(false),
           DisableIntegratedAS(false), CompressDebugSections(false),
           TrapFuncName(""), FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard) {}
@@ -152,8 +152,6 @@ namespace llvm {
     /// if the relocation model is anything other than PIC.
     unsigned PositionIndependentExecutable : 1;
 
-    unsigned EnableSegmentedStacks : 1;
-
     /// UseInitArray - Use .init_array instead of .ctors for static
     /// constructors.
     unsigned UseInitArray : 1;
@@ -217,7 +215,6 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(StackAlignmentOverride) &&
     ARE_EQUAL(EnableFastISel) &&
     ARE_EQUAL(PositionIndependentExecutable) &&
-    ARE_EQUAL(EnableSegmentedStacks) &&
     ARE_EQUAL(UseInitArray) &&
     ARE_EQUAL(TrapFuncName) &&
     ARE_EQUAL(FloatABIType) &&

@@ -446,7 +446,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       !MFI->adjustsStack() &&                           // No calls.
       !IsWin64 &&                                       // Win64 has no Red Zone
       !usesTheStack(MF) &&                              // Don't push and pop.
-      !MF.getTarget().Options.EnableSegmentedStacks) {  // Regular stack
+      !MF.shouldSplitStack()) {                         // Regular stack
     uint64_t MinSize = X86FI->getCalleeSavedFrameSize();
     if (HasFP) MinSize += SlotSize;
     StackSize = std::max(MinSize, StackSize > 128 ? StackSize - 128 : 0);

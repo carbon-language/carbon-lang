@@ -123,6 +123,11 @@ getOrCreateJumpTableInfo(unsigned EntryKind) {
   return JumpTableInfo;
 }
 
+/// Should we be emitting segmented stack stuff for the function
+bool MachineFunction::shouldSplitStack() {
+  return getFunction()->hasFnAttribute("split-stack");
+}
+
 /// RenumberBlocks - This discards all of the MachineBasicBlock numbers and
 /// recomputes them.  This guarantees that the MBB numbers are sequential,
 /// dense, and match the ordering of the blocks within the function.  If a

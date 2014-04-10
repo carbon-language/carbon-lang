@@ -635,15 +635,8 @@ void X86TargetLowering::resetOperationActions() {
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
 
-  if (Subtarget->isOSWindows() && !Subtarget->isTargetMacho())
-    setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
-                       MVT::i64 : MVT::i32, Custom);
-  else if (TM.Options.EnableSegmentedStacks)
-    setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
-                       MVT::i64 : MVT::i32, Custom);
-  else
-    setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
-                       MVT::i64 : MVT::i32, Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
+                     MVT::i64 : MVT::i32, Custom);
 
   if (!TM.Options.UseSoftFloat && X86ScalarSSEf64) {
     // f32 and f64 use SSE.
@@ -11102,12 +11095,49 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
 SDValue
 X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                            SelectionDAG &DAG) const {
-  assert((Subtarget->isOSWindows() ||
-          getTargetMachine().Options.EnableSegmentedStacks) &&
-         "This should be used only on Windows targets or when segmented stacks "
-         "are being used");
-  assert(!Subtarget->isTargetMacho() && "Not implemented");
+  MachineFunction &MF = DAG.getMachineFunction();
+  bool SplitStack = MF.shouldSplitStack();
+  bool Lower = (Subtarget->isOSWindows() && !Subtarget->isTargetMacho()) ||
+               SplitStack;
   SDLoc dl(Op);
+
+  if (!Lower) {
+    const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+    SDNode* Node = Op.getNode();
+
+    unsigned SPReg = TLI.getStackPointerRegisterToSaveRestore();
+    assert(SPReg && "Target cannot require DYNAMIC_STACKALLOC expansion and"
+        " not tell us which reg is the stack pointer!");
+    EVT VT = Node->getValueType(0);
+    SDValue Tmp1 = SDValue(Node, 0);
+    SDValue Tmp2 = SDValue(Node, 1);
+    SDValue Tmp3 = Node->getOperand(2);
+    SDValue Chain = Tmp1.getOperand(0);
+
+    // Chain the dynamic stack allocation so that it doesn't modify the stack
+    // pointer when other instructions are using the stack.
+    Chain = DAG.getCALLSEQ_START(Chain, DAG.getIntPtrConstant(0, true),
+        SDLoc(Node));
+
+    SDValue Size = Tmp2.getOperand(1);
+    SDValue SP = DAG.getCopyFromReg(Chain, dl, SPReg, VT);
+    Chain = SP.getValue(1);
+    unsigned Align = cast<ConstantSDNode>(Tmp3)->getZExtValue();
+    const TargetFrameLowering &TFI = *getTargetMachine().getFrameLowering();
+    unsigned StackAlign = TFI.getStackAlignment();
+    Tmp1 = DAG.getNode(ISD::SUB, dl, VT, SP, Size); // Value
+    if (Align > StackAlign)
+      Tmp1 = DAG.getNode(ISD::AND, dl, VT, Tmp1,
+          DAG.getConstant(-(uint64_t)Align, VT));
+    Chain = DAG.getCopyToReg(Chain, dl, SPReg, Tmp1); // Output chain
+
+    Tmp2 = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(0, true),
+        DAG.getIntPtrConstant(0, true), SDValue(),
+        SDLoc(Node));
+
+    SDValue Ops[2] = { Tmp1, Tmp2 };
+    return DAG.getMergeValues(Ops, 2, dl);
+  }
 
   // Get the inputs.
   SDValue Chain = Op.getOperand(0);
@@ -11118,8 +11148,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   bool Is64Bit = Subtarget->is64Bit();
   EVT SPTy = Is64Bit ? MVT::i64 : MVT::i32;
 
-  if (getTargetMachine().Options.EnableSegmentedStacks) {
-    MachineFunction &MF = DAG.getMachineFunction();
+  if (SplitStack) {
     MachineRegisterInfo &MRI = MF.getRegInfo();
 
     if (Is64Bit) {
@@ -15796,7 +15825,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
   MachineFunction *MF = BB->getParent();
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
 
-  assert(getTargetMachine().Options.EnableSegmentedStacks);
+  assert(MF->shouldSplitStack());
 
   unsigned TlsReg = Is64Bit ? X86::FS : X86::GS;
   unsigned TlsOffset = Is64Bit ? 0x70 : 0x30;

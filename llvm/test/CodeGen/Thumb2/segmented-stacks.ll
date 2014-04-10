@@ -1,11 +1,11 @@
-; RUN: llc < %s -mtriple=thumb-linux-androideabi -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=Thumb-android
-; RUN: llc < %s -mtriple=thumb-linux-androideabi -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 -segmented-stacks -filetype=obj
+; RUN: llc < %s -mtriple=thumb-linux-androideabi -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 -verify-machineinstrs | FileCheck %s -check-prefix=Thumb-android
+; RUN: llc < %s -mtriple=thumb-linux-androideabi -march=thumb -mcpu=arm1156t2-s -mattr=+thumb2 -filetype=obj
 
 
 ; Just to prevent the alloca from being optimized away
 declare void @dummy_use(i32*, i32)
 
-define void @test_basic() {
+define void @test_basic() #0 {
         %mem = alloca i32, i32 10
         call void @dummy_use (i32* %mem, i32 10)
 	ret void
@@ -30,3 +30,5 @@ define void @test_basic() {
 ; Thumb-android:      pop     {r4, r5}
 
 }
+
+attributes #0 = { "split-stack" }

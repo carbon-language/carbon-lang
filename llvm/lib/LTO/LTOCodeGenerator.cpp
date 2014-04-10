@@ -140,7 +140,6 @@ void LTOCodeGenerator::setTargetOptions(TargetOptions options) {
   Options.StackAlignmentOverride = options.StackAlignmentOverride;
   Options.TrapFuncName = options.TrapFuncName;
   Options.PositionIndependentExecutable = options.PositionIndependentExecutable;
-  Options.EnableSegmentedStacks = options.EnableSegmentedStacks;
   Options.UseInitArray = options.UseInitArray;
 }
 
