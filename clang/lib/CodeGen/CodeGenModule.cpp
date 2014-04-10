@@ -1928,6 +1928,34 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       DI->EmitGlobalVariable(GV, D);
 }
 
+static bool isVarDeclStrongDefinition(const VarDecl *D, bool NoCommon) {
+  // Don't give variables common linkage if -fno-common was specified unless it
+  // was overridden by a NoCommon attribute.
+  if ((NoCommon || D->hasAttr<NoCommonAttr>()) && !D->hasAttr<CommonAttr>())
+    return true;
+
+  // C11 6.9.2/2:
+  //   A declaration of an identifier for an object that has file scope without
+  //   an initializer, and without a storage-class specifier or with the
+  //   storage-class specifier static, constitutes a tentative definition.
+  if (D->getInit() || D->hasExternalStorage())
+    return true;
+
+  // A variable cannot be both common and exist in a section.
+  if (D->hasAttr<SectionAttr>())
+    return true;
+
+  // Thread local vars aren't considered common linkage.
+  if (D->getTLSKind())
+    return true;
+
+  // Tentative definitions marked with WeakImportAttr are true definitions.
+  if (D->hasAttr<WeakImportAttr>())
+    return true;
+
+  return false;
+}
+
 llvm::GlobalValue::LinkageTypes
 CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D, bool isConstant) {
   GVALinkage Linkage = getContext().GetGVALinkageForVariable(D);
@@ -1950,21 +1978,18 @@ CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D, bool isConstant) {
       return llvm::GlobalVariable::WeakAnyLinkage;
   } else if (Linkage == GVA_TemplateInstantiation || Linkage == GVA_StrongODR)
     return llvm::GlobalVariable::WeakODRLinkage;
-  else if (!getLangOpts().CPlusPlus && 
-           ((!CodeGenOpts.NoCommon && !D->hasAttr<NoCommonAttr>()) ||
-             D->hasAttr<CommonAttr>()) &&
-           !D->hasExternalStorage() && !D->getInit() &&
-           !D->hasAttr<SectionAttr>() && !D->getTLSKind() &&
-           !D->hasAttr<WeakImportAttr>()) {
-    // Thread local vars aren't considered common linkage.
-    return llvm::GlobalVariable::CommonLinkage;
-  } else if (D->getTLSKind() == VarDecl::TLS_Dynamic &&
-             getTarget().getTriple().isMacOSX())
+  else if (D->getTLSKind() == VarDecl::TLS_Dynamic &&
+           getTarget().getTriple().isMacOSX())
     // On Darwin, the backing variable for a C++11 thread_local variable always
     // has internal linkage; all accesses should just be calls to the
     // Itanium-specified entry point, which has the normal linkage of the
     // variable.
     return llvm::GlobalValue::InternalLinkage;
+  // C++ doesn't have tentative definitions and thus cannot have common linkage.
+  else if (!getLangOpts().CPlusPlus &&
+           !isVarDeclStrongDefinition(D, CodeGenOpts.NoCommon))
+    return llvm::GlobalVariable::CommonLinkage;
+
   return llvm::GlobalVariable::ExternalLinkage;
 }
 
