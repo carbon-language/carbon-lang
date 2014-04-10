@@ -132,6 +132,7 @@ W: http://www-src.lip6.fr/homepages/Nicolas.Geoffray/
 D: PPC backend fixes for Linux
 
 N: Louis Gerbarg
+E: lgg@apple.com
 D: Portions of the PowerPC backend
 
 N: Saem Ghani
