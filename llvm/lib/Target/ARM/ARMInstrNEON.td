@@ -617,37 +617,37 @@ class VLDQQQQWBPseudo<InstrItinClass itin>
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 
 //   VLD1     : Vector Load (multiple single elements)
-class VLD1D<bits<4> op7_4, string Dt, Operand AddrMode>
+class VLD1D<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0111,op7_4, (outs VecListOneD:$Vd),
-          (ins AddrMode:$Rn), IIC_VLD1,
+          (ins addrmode6:$Rn), IIC_VLD1,
           "vld1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLDST1Instruction";
 }
-class VLD1Q<bits<4> op7_4, string Dt, Operand AddrMode>
+class VLD1Q<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b1010,op7_4, (outs VecListDPair:$Vd),
-          (ins AddrMode:$Rn), IIC_VLD1x2,
+          (ins addrmode6:$Rn), IIC_VLD1x2,
           "vld1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDST1Instruction";
 }
 
-def  VLD1d8   : VLD1D<{0,0,0,?}, "8",  addrmode6align64>;
-def  VLD1d16  : VLD1D<{0,1,0,?}, "16", addrmode6align64>;
-def  VLD1d32  : VLD1D<{1,0,0,?}, "32", addrmode6align64>;
-def  VLD1d64  : VLD1D<{1,1,0,?}, "64", addrmode6align64>;
+def  VLD1d8   : VLD1D<{0,0,0,?}, "8">;
+def  VLD1d16  : VLD1D<{0,1,0,?}, "16">;
+def  VLD1d32  : VLD1D<{1,0,0,?}, "32">;
+def  VLD1d64  : VLD1D<{1,1,0,?}, "64">;
 
-def  VLD1q8   : VLD1Q<{0,0,?,?}, "8",  addrmode6align64or128>;
-def  VLD1q16  : VLD1Q<{0,1,?,?}, "16", addrmode6align64or128>;
-def  VLD1q32  : VLD1Q<{1,0,?,?}, "32", addrmode6align64or128>;
-def  VLD1q64  : VLD1Q<{1,1,?,?}, "64", addrmode6align64or128>;
+def  VLD1q8   : VLD1Q<{0,0,?,?}, "8">;
+def  VLD1q16  : VLD1Q<{0,1,?,?}, "16">;
+def  VLD1q32  : VLD1Q<{1,0,?,?}, "32">;
+def  VLD1q64  : VLD1Q<{1,1,?,?}, "64">;
 
 // ...with address register writeback:
-multiclass VLD1DWB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VLD1DWB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b10, 0b0111,op7_4, (outs VecListOneD:$Vd, GPR:$wb),
-                     (ins AddrMode:$Rn), IIC_VLD1u,
+                     (ins addrmode6:$Rn), IIC_VLD1u,
                      "vld1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -655,16 +655,16 @@ multiclass VLD1DWB<bits<4> op7_4, string Dt, Operand AddrMode> {
     let DecoderMethod = "DecodeVLDST1Instruction";
   }
   def _register : NLdSt<0,0b10,0b0111,op7_4, (outs VecListOneD:$Vd, GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm), IIC_VLD1u,
+                        (ins addrmode6:$Rn, rGPR:$Rm), IIC_VLD1u,
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{4} = Rn{4};
     let DecoderMethod = "DecodeVLDST1Instruction";
   }
 }
-multiclass VLD1QWB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VLD1QWB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b10,0b1010,op7_4, (outs VecListDPair:$Vd, GPR:$wb),
-                    (ins AddrMode:$Rn), IIC_VLD1x2u,
+                    (ins addrmode6:$Rn), IIC_VLD1x2u,
                      "vld1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -672,7 +672,7 @@ multiclass VLD1QWB<bits<4> op7_4, string Dt, Operand AddrMode> {
     let DecoderMethod = "DecodeVLDST1Instruction";
   }
   def _register : NLdSt<0,0b10,0b1010,op7_4, (outs VecListDPair:$Vd, GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm), IIC_VLD1x2u,
+                        (ins addrmode6:$Rn, rGPR:$Rm), IIC_VLD1x2u,
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
@@ -680,27 +680,27 @@ multiclass VLD1QWB<bits<4> op7_4, string Dt, Operand AddrMode> {
   }
 }
 
-defm VLD1d8wb  : VLD1DWB<{0,0,0,?}, "8",  addrmode6align64>;
-defm VLD1d16wb : VLD1DWB<{0,1,0,?}, "16", addrmode6align64>;
-defm VLD1d32wb : VLD1DWB<{1,0,0,?}, "32", addrmode6align64>;
-defm VLD1d64wb : VLD1DWB<{1,1,0,?}, "64", addrmode6align64>;
-defm VLD1q8wb  : VLD1QWB<{0,0,?,?}, "8",  addrmode6align64or128>;
-defm VLD1q16wb : VLD1QWB<{0,1,?,?}, "16", addrmode6align64or128>;
-defm VLD1q32wb : VLD1QWB<{1,0,?,?}, "32", addrmode6align64or128>;
-defm VLD1q64wb : VLD1QWB<{1,1,?,?}, "64", addrmode6align64or128>;
+defm VLD1d8wb  : VLD1DWB<{0,0,0,?}, "8">;
+defm VLD1d16wb : VLD1DWB<{0,1,0,?}, "16">;
+defm VLD1d32wb : VLD1DWB<{1,0,0,?}, "32">;
+defm VLD1d64wb : VLD1DWB<{1,1,0,?}, "64">;
+defm VLD1q8wb  : VLD1QWB<{0,0,?,?}, "8">;
+defm VLD1q16wb : VLD1QWB<{0,1,?,?}, "16">;
+defm VLD1q32wb : VLD1QWB<{1,0,?,?}, "32">;
+defm VLD1q64wb : VLD1QWB<{1,1,?,?}, "64">;
 
 // ...with 3 registers
-class VLD1D3<bits<4> op7_4, string Dt, Operand AddrMode>
+class VLD1D3<bits<4> op7_4, string Dt>
   : NLdSt<0,0b10,0b0110,op7_4, (outs VecListThreeD:$Vd),
-          (ins AddrMode:$Rn), IIC_VLD1x3, "vld1", Dt,
+          (ins addrmode6:$Rn), IIC_VLD1x3, "vld1", Dt,
           "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLDST1Instruction";
 }
-multiclass VLD1D3WB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VLD1D3WB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b10,0b0110, op7_4, (outs VecListThreeD:$Vd, GPR:$wb),
-                    (ins AddrMode:$Rn), IIC_VLD1x2u,
+                    (ins addrmode6:$Rn), IIC_VLD1x2u,
                      "vld1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -708,7 +708,7 @@ multiclass VLD1D3WB<bits<4> op7_4, string Dt, Operand AddrMode> {
     let DecoderMethod = "DecodeVLDST1Instruction";
   }
   def _register : NLdSt<0,0b10,0b0110,op7_4, (outs VecListThreeD:$Vd, GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm), IIC_VLD1x2u,
+                        (ins addrmode6:$Rn, rGPR:$Rm), IIC_VLD1x2u,
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{4} = Rn{4};
@@ -716,32 +716,32 @@ multiclass VLD1D3WB<bits<4> op7_4, string Dt, Operand AddrMode> {
   }
 }
 
-def VLD1d8T      : VLD1D3<{0,0,0,?}, "8",  addrmode6align64>;
-def VLD1d16T     : VLD1D3<{0,1,0,?}, "16", addrmode6align64>;
-def VLD1d32T     : VLD1D3<{1,0,0,?}, "32", addrmode6align64>;
-def VLD1d64T     : VLD1D3<{1,1,0,?}, "64", addrmode6align64>;
+def VLD1d8T      : VLD1D3<{0,0,0,?}, "8">;
+def VLD1d16T     : VLD1D3<{0,1,0,?}, "16">;
+def VLD1d32T     : VLD1D3<{1,0,0,?}, "32">;
+def VLD1d64T     : VLD1D3<{1,1,0,?}, "64">;
 
-defm VLD1d8Twb  : VLD1D3WB<{0,0,0,?}, "8",  addrmode6align64>;
-defm VLD1d16Twb : VLD1D3WB<{0,1,0,?}, "16", addrmode6align64>;
-defm VLD1d32Twb : VLD1D3WB<{1,0,0,?}, "32", addrmode6align64>;
-defm VLD1d64Twb : VLD1D3WB<{1,1,0,?}, "64", addrmode6align64>;
+defm VLD1d8Twb  : VLD1D3WB<{0,0,0,?}, "8">;
+defm VLD1d16Twb : VLD1D3WB<{0,1,0,?}, "16">;
+defm VLD1d32Twb : VLD1D3WB<{1,0,0,?}, "32">;
+defm VLD1d64Twb : VLD1D3WB<{1,1,0,?}, "64">;
 
 def VLD1d64TPseudo : VLDQQPseudo<IIC_VLD1x3>;
 def VLD1d64TPseudoWB_fixed : VLDQQWBfixedPseudo<IIC_VLD1x3>;
 def VLD1d64TPseudoWB_register : VLDQQWBregisterPseudo<IIC_VLD1x3>;
 
 // ...with 4 registers
-class VLD1D4<bits<4> op7_4, string Dt, Operand AddrMode>
+class VLD1D4<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b10, 0b0010, op7_4, (outs VecListFourD:$Vd),
-          (ins AddrMode:$Rn), IIC_VLD1x4, "vld1", Dt,
+          (ins addrmode6:$Rn), IIC_VLD1x4, "vld1", Dt,
           "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDST1Instruction";
 }
-multiclass VLD1D4WB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VLD1D4WB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b10,0b0010, op7_4, (outs VecListFourD:$Vd, GPR:$wb),
-                    (ins AddrMode:$Rn), IIC_VLD1x2u,
+                    (ins addrmode6:$Rn), IIC_VLD1x2u,
                      "vld1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -749,7 +749,7 @@ multiclass VLD1D4WB<bits<4> op7_4, string Dt, Operand AddrMode> {
     let DecoderMethod = "DecodeVLDST1Instruction";
   }
   def _register : NLdSt<0,0b10,0b0010,op7_4, (outs VecListFourD:$Vd, GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm), IIC_VLD1x2u,
+                        (ins addrmode6:$Rn, rGPR:$Rm), IIC_VLD1x2u,
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
@@ -757,15 +757,15 @@ multiclass VLD1D4WB<bits<4> op7_4, string Dt, Operand AddrMode> {
   }
 }
 
-def VLD1d8Q      : VLD1D4<{0,0,?,?}, "8",  addrmode6align64or128or256>;
-def VLD1d16Q     : VLD1D4<{0,1,?,?}, "16", addrmode6align64or128or256>;
-def VLD1d32Q     : VLD1D4<{1,0,?,?}, "32", addrmode6align64or128or256>;
-def VLD1d64Q     : VLD1D4<{1,1,?,?}, "64", addrmode6align64or128or256>;
+def VLD1d8Q      : VLD1D4<{0,0,?,?}, "8">;
+def VLD1d16Q     : VLD1D4<{0,1,?,?}, "16">;
+def VLD1d32Q     : VLD1D4<{1,0,?,?}, "32">;
+def VLD1d64Q     : VLD1D4<{1,1,?,?}, "64">;
 
-defm VLD1d8Qwb   : VLD1D4WB<{0,0,?,?}, "8",  addrmode6align64or128or256>;
-defm VLD1d16Qwb  : VLD1D4WB<{0,1,?,?}, "16", addrmode6align64or128or256>;
-defm VLD1d32Qwb  : VLD1D4WB<{1,0,?,?}, "32", addrmode6align64or128or256>;
-defm VLD1d64Qwb  : VLD1D4WB<{1,1,?,?}, "64", addrmode6align64or128or256>;
+defm VLD1d8Qwb   : VLD1D4WB<{0,0,?,?}, "8">;
+defm VLD1d16Qwb  : VLD1D4WB<{0,1,?,?}, "16">;
+defm VLD1d32Qwb  : VLD1D4WB<{1,0,?,?}, "32">;
+defm VLD1d64Qwb  : VLD1D4WB<{1,1,?,?}, "64">;
 
 def VLD1d64QPseudo : VLDQQPseudo<IIC_VLD1x4>;
 def VLD1d64QPseudoWB_fixed : VLDQQWBfixedPseudo<IIC_VLD1x4>;
@@ -773,28 +773,22 @@ def VLD1d64QPseudoWB_register : VLDQQWBregisterPseudo<IIC_VLD1x4>;
 
 //   VLD2     : Vector Load (multiple 2-element structures)
 class VLD2<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy,
-           InstrItinClass itin, Operand AddrMode>
+           InstrItinClass itin>
   : NLdSt<0, 0b10, op11_8, op7_4, (outs VdTy:$Vd),
-          (ins AddrMode:$Rn), itin,
+          (ins addrmode6:$Rn), itin,
           "vld2", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDST2Instruction";
 }
 
-def  VLD2d8   : VLD2<0b1000, {0,0,?,?}, "8", VecListDPair, IIC_VLD2,
-                     addrmode6align64or128>;
-def  VLD2d16  : VLD2<0b1000, {0,1,?,?}, "16", VecListDPair, IIC_VLD2,
-                     addrmode6align64or128>;
-def  VLD2d32  : VLD2<0b1000, {1,0,?,?}, "32", VecListDPair, IIC_VLD2,
-                     addrmode6align64or128>;
+def  VLD2d8   : VLD2<0b1000, {0,0,?,?}, "8", VecListDPair, IIC_VLD2>;
+def  VLD2d16  : VLD2<0b1000, {0,1,?,?}, "16", VecListDPair, IIC_VLD2>;
+def  VLD2d32  : VLD2<0b1000, {1,0,?,?}, "32", VecListDPair, IIC_VLD2>;
 
-def  VLD2q8   : VLD2<0b0011, {0,0,?,?}, "8", VecListFourD, IIC_VLD2x2,
-                     addrmode6align64or128or256>;
-def  VLD2q16  : VLD2<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VLD2x2,
-                     addrmode6align64or128or256>;
-def  VLD2q32  : VLD2<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VLD2x2,
-                     addrmode6align64or128or256>;
+def  VLD2q8   : VLD2<0b0011, {0,0,?,?}, "8", VecListFourD, IIC_VLD2x2>;
+def  VLD2q16  : VLD2<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VLD2x2>;
+def  VLD2q32  : VLD2<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VLD2x2>;
 
 def  VLD2q8Pseudo  : VLDQQPseudo<IIC_VLD2x2>;
 def  VLD2q16Pseudo : VLDQQPseudo<IIC_VLD2x2>;
@@ -802,9 +796,9 @@ def  VLD2q32Pseudo : VLDQQPseudo<IIC_VLD2x2>;
 
 // ...with address register writeback:
 multiclass VLD2WB<bits<4> op11_8, bits<4> op7_4, string Dt,
-                  RegisterOperand VdTy, InstrItinClass itin, Operand AddrMode> {
+                  RegisterOperand VdTy, InstrItinClass itin> {
   def _fixed : NLdSt<0, 0b10, op11_8, op7_4, (outs VdTy:$Vd, GPR:$wb),
-                     (ins AddrMode:$Rn), itin,
+                     (ins addrmode6:$Rn), itin,
                      "vld2", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -812,7 +806,7 @@ multiclass VLD2WB<bits<4> op11_8, bits<4> op7_4, string Dt,
     let DecoderMethod = "DecodeVLDST2Instruction";
   }
   def _register : NLdSt<0, 0b10, op11_8, op7_4, (outs VdTy:$Vd, GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm), itin,
+                        (ins addrmode6:$Rn, rGPR:$Rm), itin,
                         "vld2", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
@@ -820,19 +814,13 @@ multiclass VLD2WB<bits<4> op11_8, bits<4> op7_4, string Dt,
   }
 }
 
-defm VLD2d8wb  : VLD2WB<0b1000, {0,0,?,?}, "8", VecListDPair, IIC_VLD2u,
-                        addrmode6align64or128>;
-defm VLD2d16wb : VLD2WB<0b1000, {0,1,?,?}, "16", VecListDPair, IIC_VLD2u,
-                        addrmode6align64or128>;
-defm VLD2d32wb : VLD2WB<0b1000, {1,0,?,?}, "32", VecListDPair, IIC_VLD2u,
-                        addrmode6align64or128>;
+defm VLD2d8wb  : VLD2WB<0b1000, {0,0,?,?}, "8", VecListDPair, IIC_VLD2u>;
+defm VLD2d16wb : VLD2WB<0b1000, {0,1,?,?}, "16", VecListDPair, IIC_VLD2u>;
+defm VLD2d32wb : VLD2WB<0b1000, {1,0,?,?}, "32", VecListDPair, IIC_VLD2u>;
 
-defm VLD2q8wb  : VLD2WB<0b0011, {0,0,?,?}, "8", VecListFourD, IIC_VLD2x2u,
-                        addrmode6align64or128or256>;
-defm VLD2q16wb : VLD2WB<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VLD2x2u,
-                        addrmode6align64or128or256>;
-defm VLD2q32wb : VLD2WB<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VLD2x2u,
-                        addrmode6align64or128or256>;
+defm VLD2q8wb  : VLD2WB<0b0011, {0,0,?,?}, "8", VecListFourD, IIC_VLD2x2u>;
+defm VLD2q16wb : VLD2WB<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VLD2x2u>;
+defm VLD2q32wb : VLD2WB<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VLD2x2u>;
 
 def VLD2q8PseudoWB_fixed     : VLDQQWBfixedPseudo<IIC_VLD2x2u>;
 def VLD2q16PseudoWB_fixed    : VLDQQWBfixedPseudo<IIC_VLD2x2u>;
@@ -842,18 +830,12 @@ def VLD2q16PseudoWB_register : VLDQQWBregisterPseudo<IIC_VLD2x2u>;
 def VLD2q32PseudoWB_register : VLDQQWBregisterPseudo<IIC_VLD2x2u>;
 
 // ...with double-spaced registers
-def  VLD2b8    : VLD2<0b1001, {0,0,?,?}, "8", VecListDPairSpaced, IIC_VLD2,
-                      addrmode6align64or128>;
-def  VLD2b16   : VLD2<0b1001, {0,1,?,?}, "16", VecListDPairSpaced, IIC_VLD2,
-                      addrmode6align64or128>;
-def  VLD2b32   : VLD2<0b1001, {1,0,?,?}, "32", VecListDPairSpaced, IIC_VLD2,
-                      addrmode6align64or128>;
-defm VLD2b8wb  : VLD2WB<0b1001, {0,0,?,?}, "8", VecListDPairSpaced, IIC_VLD2u,
-                        addrmode6align64or128>;
-defm VLD2b16wb : VLD2WB<0b1001, {0,1,?,?}, "16", VecListDPairSpaced, IIC_VLD2u,
-                        addrmode6align64or128>;
-defm VLD2b32wb : VLD2WB<0b1001, {1,0,?,?}, "32", VecListDPairSpaced, IIC_VLD2u,
-                        addrmode6align64or128>;
+def  VLD2b8    : VLD2<0b1001, {0,0,?,?}, "8", VecListDPairSpaced, IIC_VLD2>;
+def  VLD2b16   : VLD2<0b1001, {0,1,?,?}, "16", VecListDPairSpaced, IIC_VLD2>;
+def  VLD2b32   : VLD2<0b1001, {1,0,?,?}, "32", VecListDPairSpaced, IIC_VLD2>;
+defm VLD2b8wb  : VLD2WB<0b1001, {0,0,?,?}, "8", VecListDPairSpaced, IIC_VLD2u>;
+defm VLD2b16wb : VLD2WB<0b1001, {0,1,?,?}, "16", VecListDPairSpaced, IIC_VLD2u>;
+defm VLD2b32wb : VLD2WB<0b1001, {1,0,?,?}, "32", VecListDPairSpaced, IIC_VLD2u>;
 
 //   VLD3     : Vector Load (multiple 3-element structures)
 class VLD3D<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -1311,55 +1293,47 @@ def VLD4LNq32Pseudo_UPD : VLDQQQQLNWBPseudo<IIC_VLD4lnu>;
 } // mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1
 
 //   VLD1DUP  : Vector Load (single element to all lanes)
-class VLD1DUP<bits<4> op7_4, string Dt, ValueType Ty, PatFrag LoadOp,
-              Operand AddrMode>
+class VLD1DUP<bits<4> op7_4, string Dt, ValueType Ty, PatFrag LoadOp>
   : NLdSt<1, 0b10, 0b1100, op7_4, (outs VecListOneDAllLanes:$Vd),
-          (ins AddrMode:$Rn),
+          (ins addrmode6dup:$Rn),
           IIC_VLD1dup, "vld1", Dt, "$Vd, $Rn", "",
           [(set VecListOneDAllLanes:$Vd,
-                (Ty (NEONvdup (i32 (LoadOp AddrMode:$Rn)))))]> {
+                (Ty (NEONvdup (i32 (LoadOp addrmode6dup:$Rn)))))]> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLD1DupInstruction";
 }
-def VLD1DUPd8  : VLD1DUP<{0,0,0,?}, "8", v8i8, extloadi8,
-                         addrmode6dupalignNone>;
-def VLD1DUPd16 : VLD1DUP<{0,1,0,?}, "16", v4i16, extloadi16,
-                         addrmode6dupalign16>;
-def VLD1DUPd32 : VLD1DUP<{1,0,0,?}, "32", v2i32, load,
-                         addrmode6dupalign32>;
+def VLD1DUPd8  : VLD1DUP<{0,0,0,?}, "8", v8i8, extloadi8>;
+def VLD1DUPd16 : VLD1DUP<{0,1,0,?}, "16", v4i16, extloadi16>;
+def VLD1DUPd32 : VLD1DUP<{1,0,0,?}, "32", v2i32, load>;
 
 def : Pat<(v2f32 (NEONvdup (f32 (load addrmode6dup:$addr)))),
           (VLD1DUPd32 addrmode6:$addr)>;
 
-class VLD1QDUP<bits<4> op7_4, string Dt, ValueType Ty, PatFrag LoadOp,
-               Operand AddrMode>
+class VLD1QDUP<bits<4> op7_4, string Dt, ValueType Ty, PatFrag LoadOp>
   : NLdSt<1, 0b10, 0b1100, op7_4, (outs VecListDPairAllLanes:$Vd),
-          (ins AddrMode:$Rn), IIC_VLD1dup,
+          (ins addrmode6dup:$Rn), IIC_VLD1dup,
           "vld1", Dt, "$Vd, $Rn", "",
           [(set VecListDPairAllLanes:$Vd,
-                (Ty (NEONvdup (i32 (LoadOp AddrMode:$Rn)))))]> {
+                (Ty (NEONvdup (i32 (LoadOp addrmode6dup:$Rn)))))]> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLD1DupInstruction";
 }
 
-def VLD1DUPq8  : VLD1QDUP<{0,0,1,0}, "8", v16i8, extloadi8,
-                          addrmode6dupalignNone>;
-def VLD1DUPq16 : VLD1QDUP<{0,1,1,?}, "16", v8i16, extloadi16,
-                          addrmode6dupalign16>;
-def VLD1DUPq32 : VLD1QDUP<{1,0,1,?}, "32", v4i32, load,
-                          addrmode6dupalign32>;
+def VLD1DUPq8  : VLD1QDUP<{0,0,1,0}, "8", v16i8, extloadi8>;
+def VLD1DUPq16 : VLD1QDUP<{0,1,1,?}, "16", v8i16, extloadi16>;
+def VLD1DUPq32 : VLD1QDUP<{1,0,1,?}, "32", v4i32, load>;
 
 def : Pat<(v4f32 (NEONvdup (f32 (load addrmode6dup:$addr)))),
           (VLD1DUPq32 addrmode6:$addr)>;
 
 let mayLoad = 1, neverHasSideEffects = 1, hasExtraDefRegAllocReq = 1 in {
 // ...with address register writeback:
-multiclass VLD1DUPWB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VLD1DUPWB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<1, 0b10, 0b1100, op7_4,
                      (outs VecListOneDAllLanes:$Vd, GPR:$wb),
-                     (ins AddrMode:$Rn), IIC_VLD1dupu,
+                     (ins addrmode6dup:$Rn), IIC_VLD1dupu,
                      "vld1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -1368,17 +1342,17 @@ multiclass VLD1DUPWB<bits<4> op7_4, string Dt, Operand AddrMode> {
   }
   def _register : NLdSt<1, 0b10, 0b1100, op7_4,
                         (outs VecListOneDAllLanes:$Vd, GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm), IIC_VLD1dupu,
+                        (ins addrmode6dup:$Rn, rGPR:$Rm), IIC_VLD1dupu,
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{4} = Rn{4};
     let DecoderMethod = "DecodeVLD1DupInstruction";
   }
 }
-multiclass VLD1QDUPWB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VLD1QDUPWB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<1, 0b10, 0b1100, op7_4,
                      (outs VecListDPairAllLanes:$Vd, GPR:$wb),
-                     (ins AddrMode:$Rn), IIC_VLD1dupu,
+                     (ins addrmode6dup:$Rn), IIC_VLD1dupu,
                      "vld1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -1387,7 +1361,7 @@ multiclass VLD1QDUPWB<bits<4> op7_4, string Dt, Operand AddrMode> {
   }
   def _register : NLdSt<1, 0b10, 0b1100, op7_4,
                         (outs VecListDPairAllLanes:$Vd, GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm), IIC_VLD1dupu,
+                        (ins addrmode6dup:$Rn, rGPR:$Rm), IIC_VLD1dupu,
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{4} = Rn{4};
@@ -1395,47 +1369,38 @@ multiclass VLD1QDUPWB<bits<4> op7_4, string Dt, Operand AddrMode> {
   }
 }
 
-defm VLD1DUPd8wb  : VLD1DUPWB<{0,0,0,0}, "8", addrmode6dupalignNone>;
-defm VLD1DUPd16wb : VLD1DUPWB<{0,1,0,?}, "16", addrmode6dupalign16>;
-defm VLD1DUPd32wb : VLD1DUPWB<{1,0,0,?}, "32", addrmode6dupalign32>;
+defm VLD1DUPd8wb  : VLD1DUPWB<{0,0,0,0}, "8">;
+defm VLD1DUPd16wb : VLD1DUPWB<{0,1,0,?}, "16">;
+defm VLD1DUPd32wb : VLD1DUPWB<{1,0,0,?}, "32">;
 
-defm VLD1DUPq8wb  : VLD1QDUPWB<{0,0,1,0}, "8", addrmode6dupalignNone>;
-defm VLD1DUPq16wb : VLD1QDUPWB<{0,1,1,?}, "16", addrmode6dupalign16>;
-defm VLD1DUPq32wb : VLD1QDUPWB<{1,0,1,?}, "32", addrmode6dupalign32>;
+defm VLD1DUPq8wb  : VLD1QDUPWB<{0,0,1,0}, "8">;
+defm VLD1DUPq16wb : VLD1QDUPWB<{0,1,1,?}, "16">;
+defm VLD1DUPq32wb : VLD1QDUPWB<{1,0,1,?}, "32">;
 
 //   VLD2DUP  : Vector Load (single 2-element structure to all lanes)
-class VLD2DUP<bits<4> op7_4, string Dt, RegisterOperand VdTy, Operand AddrMode>
+class VLD2DUP<bits<4> op7_4, string Dt, RegisterOperand VdTy>
   : NLdSt<1, 0b10, 0b1101, op7_4, (outs VdTy:$Vd),
-          (ins AddrMode:$Rn), IIC_VLD2dup,
+          (ins addrmode6dup:$Rn), IIC_VLD2dup,
           "vld2", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLD2DupInstruction";
 }
 
-def VLD2DUPd8  : VLD2DUP<{0,0,0,?}, "8",  VecListDPairAllLanes,
-                         addrmode6dupalign16>;
-def VLD2DUPd16 : VLD2DUP<{0,1,0,?}, "16", VecListDPairAllLanes,
-                         addrmode6dupalign32>;
-def VLD2DUPd32 : VLD2DUP<{1,0,0,?}, "32", VecListDPairAllLanes,
-                         addrmode6dupalign64>;
+def VLD2DUPd8  : VLD2DUP<{0,0,0,?}, "8",  VecListDPairAllLanes>;
+def VLD2DUPd16 : VLD2DUP<{0,1,0,?}, "16", VecListDPairAllLanes>;
+def VLD2DUPd32 : VLD2DUP<{1,0,0,?}, "32", VecListDPairAllLanes>;
 
-// HACK this one, VLD2DUPd8x2 must be changed at the same time with VLD2b8 or
-// "vld2.8 {d0[], d2[]}, [r4:32]" will become "vld2.8 {d0, d2}, [r4:32]".
 // ...with double-spaced registers
-def VLD2DUPd8x2  : VLD2DUP<{0,0,1,?}, "8",  VecListDPairSpacedAllLanes,
-                           addrmode6dupalign16>;
-def VLD2DUPd16x2 : VLD2DUP<{0,1,1,?}, "16", VecListDPairSpacedAllLanes,
-                           addrmode6dupalign32>;
-def VLD2DUPd32x2 : VLD2DUP<{1,0,1,?}, "32", VecListDPairSpacedAllLanes,
-                           addrmode6dupalign64>;
+def VLD2DUPd8x2  : VLD2DUP<{0,0,1,?}, "8",  VecListDPairSpacedAllLanes>;
+def VLD2DUPd16x2 : VLD2DUP<{0,1,1,?}, "16", VecListDPairSpacedAllLanes>;
+def VLD2DUPd32x2 : VLD2DUP<{1,0,1,?}, "32", VecListDPairSpacedAllLanes>;
 
 // ...with address register writeback:
-multiclass VLD2DUPWB<bits<4> op7_4, string Dt, RegisterOperand VdTy,
-                     Operand AddrMode> {
+multiclass VLD2DUPWB<bits<4> op7_4, string Dt, RegisterOperand VdTy> {
   def _fixed : NLdSt<1, 0b10, 0b1101, op7_4,
                      (outs VdTy:$Vd, GPR:$wb),
-                     (ins AddrMode:$Rn), IIC_VLD2dupu,
+                     (ins addrmode6dup:$Rn), IIC_VLD2dupu,
                      "vld2", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -1444,7 +1409,7 @@ multiclass VLD2DUPWB<bits<4> op7_4, string Dt, RegisterOperand VdTy,
   }
   def _register : NLdSt<1, 0b10, 0b1101, op7_4,
                         (outs VdTy:$Vd, GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm), IIC_VLD2dupu,
+                        (ins addrmode6dup:$Rn, rGPR:$Rm), IIC_VLD2dupu,
                         "vld2", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{4} = Rn{4};
@@ -1452,19 +1417,13 @@ multiclass VLD2DUPWB<bits<4> op7_4, string Dt, RegisterOperand VdTy,
   }
 }
 
-defm VLD2DUPd8wb    : VLD2DUPWB<{0,0,0,0}, "8",  VecListDPairAllLanes,
-                                addrmode6dupalign16>;
-defm VLD2DUPd16wb   : VLD2DUPWB<{0,1,0,?}, "16", VecListDPairAllLanes,
-                                addrmode6dupalign32>;
-defm VLD2DUPd32wb   : VLD2DUPWB<{1,0,0,?}, "32", VecListDPairAllLanes,
-                                addrmode6dupalign64>;
+defm VLD2DUPd8wb    : VLD2DUPWB<{0,0,0,0}, "8",  VecListDPairAllLanes>;
+defm VLD2DUPd16wb   : VLD2DUPWB<{0,1,0,?}, "16", VecListDPairAllLanes>;
+defm VLD2DUPd32wb   : VLD2DUPWB<{1,0,0,?}, "32", VecListDPairAllLanes>;
 
-defm VLD2DUPd8x2wb  : VLD2DUPWB<{0,0,1,0}, "8",  VecListDPairSpacedAllLanes,
-                                addrmode6dupalign16>;
-defm VLD2DUPd16x2wb : VLD2DUPWB<{0,1,1,?}, "16", VecListDPairSpacedAllLanes,
-                                addrmode6dupalign32>;
-defm VLD2DUPd32x2wb : VLD2DUPWB<{1,0,1,?}, "32", VecListDPairSpacedAllLanes,
-                                addrmode6dupalign64>;
+defm VLD2DUPd8x2wb  : VLD2DUPWB<{0,0,1,0}, "8",  VecListDPairSpacedAllLanes>;
+defm VLD2DUPd16x2wb : VLD2DUPWB<{0,1,1,?}, "16", VecListDPairSpacedAllLanes>;
+defm VLD2DUPd32x2wb : VLD2DUPWB<{1,0,1,?}, "32", VecListDPairSpacedAllLanes>;
 
 //   VLD3DUP  : Vector Load (single 3-element structure to all lanes)
 class VLD3DUP<bits<4> op7_4, string Dt>
@@ -1490,22 +1449,22 @@ def VLD3DUPq16 : VLD3DUP<{0,1,1,?}, "16">;
 def VLD3DUPq32 : VLD3DUP<{1,0,1,?}, "32">;
 
 // ...with address register writeback:
-class VLD3DUPWB<bits<4> op7_4, string Dt, Operand AddrMode>
+class VLD3DUPWB<bits<4> op7_4, string Dt>
   : NLdSt<1, 0b10, 0b1110, op7_4, (outs DPR:$Vd, DPR:$dst2, DPR:$dst3, GPR:$wb),
-          (ins AddrMode:$Rn, am6offset:$Rm), IIC_VLD3dupu,
+          (ins addrmode6dup:$Rn, am6offset:$Rm), IIC_VLD3dupu,
           "vld3", Dt, "\\{$Vd[], $dst2[], $dst3[]\\}, $Rn$Rm",
           "$Rn.addr = $wb", []> {
   let Inst{4} = 0;
   let DecoderMethod = "DecodeVLD3DupInstruction";
 }
 
-def VLD3DUPd8_UPD  : VLD3DUPWB<{0,0,0,0}, "8",  addrmode6dupalign64>;
-def VLD3DUPd16_UPD : VLD3DUPWB<{0,1,0,?}, "16", addrmode6dupalign64>;
-def VLD3DUPd32_UPD : VLD3DUPWB<{1,0,0,?}, "32", addrmode6dupalign64>;
+def VLD3DUPd8_UPD  : VLD3DUPWB<{0,0,0,0}, "8">;
+def VLD3DUPd16_UPD : VLD3DUPWB<{0,1,0,?}, "16">;
+def VLD3DUPd32_UPD : VLD3DUPWB<{1,0,0,?}, "32">;
 
-def VLD3DUPq8_UPD  : VLD3DUPWB<{0,0,1,0}, "8",  addrmode6dupalign64>;
-def VLD3DUPq16_UPD : VLD3DUPWB<{0,1,1,?}, "16", addrmode6dupalign64>;
-def VLD3DUPq32_UPD : VLD3DUPWB<{1,0,1,?}, "32", addrmode6dupalign64>;
+def VLD3DUPq8_UPD  : VLD3DUPWB<{0,0,1,0}, "8">;
+def VLD3DUPq16_UPD : VLD3DUPWB<{0,1,1,?}, "16">;
+def VLD3DUPq32_UPD : VLD3DUPWB<{1,0,1,?}, "32">;
 
 def VLD3DUPd8Pseudo_UPD  : VLDQQWBPseudo<IIC_VLD3dupu>;
 def VLD3DUPd16Pseudo_UPD : VLDQQWBPseudo<IIC_VLD3dupu>;
@@ -1601,35 +1560,35 @@ class VSTQQQQWBPseudo<InstrItinClass itin>
                 "$addr.addr = $wb">;
 
 //   VST1     : Vector Store (multiple single elements)
-class VST1D<bits<4> op7_4, string Dt, Operand AddrMode>
-  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins AddrMode:$Rn, VecListOneD:$Vd),
+class VST1D<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b00,0b0111,op7_4, (outs), (ins addrmode6:$Rn, VecListOneD:$Vd),
           IIC_VST1, "vst1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLDST1Instruction";
 }
-class VST1Q<bits<4> op7_4, string Dt, Operand AddrMode>
-  : NLdSt<0,0b00,0b1010,op7_4, (outs), (ins AddrMode:$Rn, VecListDPair:$Vd),
+class VST1Q<bits<4> op7_4, string Dt>
+  : NLdSt<0,0b00,0b1010,op7_4, (outs), (ins addrmode6:$Rn, VecListDPair:$Vd),
           IIC_VST1x2, "vst1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDST1Instruction";
 }
 
-def  VST1d8   : VST1D<{0,0,0,?}, "8",  addrmode6align64>;
-def  VST1d16  : VST1D<{0,1,0,?}, "16", addrmode6align64>;
-def  VST1d32  : VST1D<{1,0,0,?}, "32", addrmode6align64>;
-def  VST1d64  : VST1D<{1,1,0,?}, "64", addrmode6align64>;
+def  VST1d8   : VST1D<{0,0,0,?}, "8">;
+def  VST1d16  : VST1D<{0,1,0,?}, "16">;
+def  VST1d32  : VST1D<{1,0,0,?}, "32">;
+def  VST1d64  : VST1D<{1,1,0,?}, "64">;
 
-def  VST1q8   : VST1Q<{0,0,?,?}, "8",  addrmode6align64or128>;
-def  VST1q16  : VST1Q<{0,1,?,?}, "16", addrmode6align64or128>;
-def  VST1q32  : VST1Q<{1,0,?,?}, "32", addrmode6align64or128>;
-def  VST1q64  : VST1Q<{1,1,?,?}, "64", addrmode6align64or128>;
+def  VST1q8   : VST1Q<{0,0,?,?}, "8">;
+def  VST1q16  : VST1Q<{0,1,?,?}, "16">;
+def  VST1q32  : VST1Q<{1,0,?,?}, "32">;
+def  VST1q64  : VST1Q<{1,1,?,?}, "64">;
 
 // ...with address register writeback:
-multiclass VST1DWB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VST1DWB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b00, 0b0111,op7_4, (outs GPR:$wb),
-                     (ins AddrMode:$Rn, VecListOneD:$Vd), IIC_VLD1u,
+                     (ins addrmode6:$Rn, VecListOneD:$Vd), IIC_VLD1u,
                      "vst1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -1637,7 +1596,7 @@ multiclass VST1DWB<bits<4> op7_4, string Dt, Operand AddrMode> {
     let DecoderMethod = "DecodeVLDST1Instruction";
   }
   def _register : NLdSt<0,0b00,0b0111,op7_4, (outs GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm, VecListOneD:$Vd),
+                        (ins addrmode6:$Rn, rGPR:$Rm, VecListOneD:$Vd),
                         IIC_VLD1u,
                         "vst1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
@@ -1645,9 +1604,9 @@ multiclass VST1DWB<bits<4> op7_4, string Dt, Operand AddrMode> {
     let DecoderMethod = "DecodeVLDST1Instruction";
   }
 }
-multiclass VST1QWB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VST1QWB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b00,0b1010,op7_4, (outs GPR:$wb),
-                    (ins AddrMode:$Rn, VecListDPair:$Vd), IIC_VLD1x2u,
+                    (ins addrmode6:$Rn, VecListDPair:$Vd), IIC_VLD1x2u,
                      "vst1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -1655,7 +1614,7 @@ multiclass VST1QWB<bits<4> op7_4, string Dt, Operand AddrMode> {
     let DecoderMethod = "DecodeVLDST1Instruction";
   }
   def _register : NLdSt<0,0b00,0b1010,op7_4, (outs GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm, VecListDPair:$Vd),
+                        (ins addrmode6:$Rn, rGPR:$Rm, VecListDPair:$Vd),
                         IIC_VLD1x2u,
                         "vst1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
@@ -1664,28 +1623,28 @@ multiclass VST1QWB<bits<4> op7_4, string Dt, Operand AddrMode> {
   }
 }
 
-defm VST1d8wb  : VST1DWB<{0,0,0,?}, "8",  addrmode6align64>;
-defm VST1d16wb : VST1DWB<{0,1,0,?}, "16", addrmode6align64>;
-defm VST1d32wb : VST1DWB<{1,0,0,?}, "32", addrmode6align64>;
-defm VST1d64wb : VST1DWB<{1,1,0,?}, "64", addrmode6align64>;
+defm VST1d8wb  : VST1DWB<{0,0,0,?}, "8">;
+defm VST1d16wb : VST1DWB<{0,1,0,?}, "16">;
+defm VST1d32wb : VST1DWB<{1,0,0,?}, "32">;
+defm VST1d64wb : VST1DWB<{1,1,0,?}, "64">;
 
-defm VST1q8wb  : VST1QWB<{0,0,?,?}, "8",  addrmode6align64or128>;
-defm VST1q16wb : VST1QWB<{0,1,?,?}, "16", addrmode6align64or128>;
-defm VST1q32wb : VST1QWB<{1,0,?,?}, "32", addrmode6align64or128>;
-defm VST1q64wb : VST1QWB<{1,1,?,?}, "64", addrmode6align64or128>;
+defm VST1q8wb  : VST1QWB<{0,0,?,?}, "8">;
+defm VST1q16wb : VST1QWB<{0,1,?,?}, "16">;
+defm VST1q32wb : VST1QWB<{1,0,?,?}, "32">;
+defm VST1q64wb : VST1QWB<{1,1,?,?}, "64">;
 
 // ...with 3 registers
-class VST1D3<bits<4> op7_4, string Dt, Operand AddrMode>
+class VST1D3<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0110, op7_4, (outs),
-          (ins AddrMode:$Rn, VecListThreeD:$Vd),
+          (ins addrmode6:$Rn, VecListThreeD:$Vd),
           IIC_VST1x3, "vst1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{4} = Rn{4};
   let DecoderMethod = "DecodeVLDST1Instruction";
 }
-multiclass VST1D3WB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VST1D3WB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b00,0b0110,op7_4, (outs GPR:$wb),
-                    (ins AddrMode:$Rn, VecListThreeD:$Vd), IIC_VLD1x3u,
+                    (ins addrmode6:$Rn, VecListThreeD:$Vd), IIC_VLD1x3u,
                      "vst1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -1693,7 +1652,7 @@ multiclass VST1D3WB<bits<4> op7_4, string Dt, Operand AddrMode> {
     let DecoderMethod = "DecodeVLDST1Instruction";
   }
   def _register : NLdSt<0,0b00,0b0110,op7_4, (outs GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm, VecListThreeD:$Vd),
+                        (ins addrmode6:$Rn, rGPR:$Rm, VecListThreeD:$Vd),
                         IIC_VLD1x3u,
                         "vst1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
@@ -1702,33 +1661,33 @@ multiclass VST1D3WB<bits<4> op7_4, string Dt, Operand AddrMode> {
   }
 }
 
-def VST1d8T     : VST1D3<{0,0,0,?}, "8",  addrmode6align64>;
-def VST1d16T    : VST1D3<{0,1,0,?}, "16", addrmode6align64>;
-def VST1d32T    : VST1D3<{1,0,0,?}, "32", addrmode6align64>;
-def VST1d64T    : VST1D3<{1,1,0,?}, "64", addrmode6align64>;
+def VST1d8T     : VST1D3<{0,0,0,?}, "8">;
+def VST1d16T    : VST1D3<{0,1,0,?}, "16">;
+def VST1d32T    : VST1D3<{1,0,0,?}, "32">;
+def VST1d64T    : VST1D3<{1,1,0,?}, "64">;
 
-defm VST1d8Twb  : VST1D3WB<{0,0,0,?}, "8",  addrmode6align64>;
-defm VST1d16Twb : VST1D3WB<{0,1,0,?}, "16", addrmode6align64>;
-defm VST1d32Twb : VST1D3WB<{1,0,0,?}, "32", addrmode6align64>;
-defm VST1d64Twb : VST1D3WB<{1,1,0,?}, "64", addrmode6align64>;
+defm VST1d8Twb  : VST1D3WB<{0,0,0,?}, "8">;
+defm VST1d16Twb : VST1D3WB<{0,1,0,?}, "16">;
+defm VST1d32Twb : VST1D3WB<{1,0,0,?}, "32">;
+defm VST1d64Twb : VST1D3WB<{1,1,0,?}, "64">;
 
 def VST1d64TPseudo            : VSTQQPseudo<IIC_VST1x3>;
 def VST1d64TPseudoWB_fixed    : VSTQQWBfixedPseudo<IIC_VST1x3u>;
 def VST1d64TPseudoWB_register : VSTQQWBPseudo<IIC_VST1x3u>;
 
 // ...with 4 registers
-class VST1D4<bits<4> op7_4, string Dt, Operand AddrMode>
+class VST1D4<bits<4> op7_4, string Dt>
   : NLdSt<0, 0b00, 0b0010, op7_4, (outs),
-          (ins AddrMode:$Rn, VecListFourD:$Vd),
+          (ins addrmode6:$Rn, VecListFourD:$Vd),
           IIC_VST1x4, "vst1", Dt, "$Vd, $Rn", "",
           []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDST1Instruction";
 }
-multiclass VST1D4WB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VST1D4WB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b00,0b0010,op7_4, (outs GPR:$wb),
-                    (ins AddrMode:$Rn, VecListFourD:$Vd), IIC_VLD1x4u,
+                    (ins addrmode6:$Rn, VecListFourD:$Vd), IIC_VLD1x4u,
                      "vst1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -1736,7 +1695,7 @@ multiclass VST1D4WB<bits<4> op7_4, string Dt, Operand AddrMode> {
     let DecoderMethod = "DecodeVLDST1Instruction";
   }
   def _register : NLdSt<0,0b00,0b0010,op7_4, (outs GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm, VecListFourD:$Vd),
+                        (ins addrmode6:$Rn, rGPR:$Rm, VecListFourD:$Vd),
                         IIC_VLD1x4u,
                         "vst1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
@@ -1745,15 +1704,15 @@ multiclass VST1D4WB<bits<4> op7_4, string Dt, Operand AddrMode> {
   }
 }
 
-def VST1d8Q     : VST1D4<{0,0,?,?}, "8",  addrmode6align64or128or256>;
-def VST1d16Q    : VST1D4<{0,1,?,?}, "16", addrmode6align64or128or256>;
-def VST1d32Q    : VST1D4<{1,0,?,?}, "32", addrmode6align64or128or256>;
-def VST1d64Q    : VST1D4<{1,1,?,?}, "64", addrmode6align64or128or256>;
+def VST1d8Q     : VST1D4<{0,0,?,?}, "8">;
+def VST1d16Q    : VST1D4<{0,1,?,?}, "16">;
+def VST1d32Q    : VST1D4<{1,0,?,?}, "32">;
+def VST1d64Q    : VST1D4<{1,1,?,?}, "64">;
 
-defm VST1d8Qwb  : VST1D4WB<{0,0,?,?}, "8",  addrmode6align64or128or256>;
-defm VST1d16Qwb : VST1D4WB<{0,1,?,?}, "16", addrmode6align64or128or256>;
-defm VST1d32Qwb : VST1D4WB<{1,0,?,?}, "32", addrmode6align64or128or256>;
-defm VST1d64Qwb : VST1D4WB<{1,1,?,?}, "64", addrmode6align64or128or256>;
+defm VST1d8Qwb  : VST1D4WB<{0,0,?,?}, "8">;
+defm VST1d16Qwb : VST1D4WB<{0,1,?,?}, "16">;
+defm VST1d32Qwb : VST1D4WB<{1,0,?,?}, "32">;
+defm VST1d64Qwb : VST1D4WB<{1,1,?,?}, "64">;
 
 def VST1d64QPseudo            : VSTQQPseudo<IIC_VST1x4>;
 def VST1d64QPseudoWB_fixed    : VSTQQWBfixedPseudo<IIC_VST1x4u>;
@@ -1761,27 +1720,21 @@ def VST1d64QPseudoWB_register : VSTQQWBPseudo<IIC_VST1x4u>;
 
 //   VST2     : Vector Store (multiple 2-element structures)
 class VST2<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy,
-            InstrItinClass itin, Operand AddrMode>
-  : NLdSt<0, 0b00, op11_8, op7_4, (outs), (ins AddrMode:$Rn, VdTy:$Vd),
+            InstrItinClass itin>
+  : NLdSt<0, 0b00, op11_8, op7_4, (outs), (ins addrmode6:$Rn, VdTy:$Vd),
           itin, "vst2", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
   let DecoderMethod = "DecodeVLDST2Instruction";
 }
 
-def  VST2d8   : VST2<0b1000, {0,0,?,?}, "8",  VecListDPair, IIC_VST2,
-                     addrmode6align64or128>;
-def  VST2d16  : VST2<0b1000, {0,1,?,?}, "16", VecListDPair, IIC_VST2,
-                     addrmode6align64or128>;
-def  VST2d32  : VST2<0b1000, {1,0,?,?}, "32", VecListDPair, IIC_VST2,
-                     addrmode6align64or128>;
+def  VST2d8   : VST2<0b1000, {0,0,?,?}, "8",  VecListDPair, IIC_VST2>;
+def  VST2d16  : VST2<0b1000, {0,1,?,?}, "16", VecListDPair, IIC_VST2>;
+def  VST2d32  : VST2<0b1000, {1,0,?,?}, "32", VecListDPair, IIC_VST2>;
 
-def  VST2q8   : VST2<0b0011, {0,0,?,?}, "8",  VecListFourD, IIC_VST2x2,
-                     addrmode6align64or128or256>;
-def  VST2q16  : VST2<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VST2x2,
-                     addrmode6align64or128or256>;
-def  VST2q32  : VST2<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VST2x2,
-                     addrmode6align64or128or256>;
+def  VST2q8   : VST2<0b0011, {0,0,?,?}, "8",  VecListFourD, IIC_VST2x2>;
+def  VST2q16  : VST2<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VST2x2>;
+def  VST2q32  : VST2<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VST2x2>;
 
 def  VST2q8Pseudo  : VSTQQPseudo<IIC_VST2x2>;
 def  VST2q16Pseudo : VSTQQPseudo<IIC_VST2x2>;
@@ -1789,9 +1742,9 @@ def  VST2q32Pseudo : VSTQQPseudo<IIC_VST2x2>;
 
 // ...with address register writeback:
 multiclass VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt,
-                   RegisterOperand VdTy, Operand AddrMode> {
+                   RegisterOperand VdTy> {
   def _fixed : NLdSt<0, 0b00, op11_8, op7_4, (outs GPR:$wb),
-                     (ins AddrMode:$Rn, VdTy:$Vd), IIC_VLD1u,
+                     (ins addrmode6:$Rn, VdTy:$Vd), IIC_VLD1u,
                      "vst2", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -1799,16 +1752,16 @@ multiclass VST2DWB<bits<4> op11_8, bits<4> op7_4, string Dt,
     let DecoderMethod = "DecodeVLDST2Instruction";
   }
   def _register : NLdSt<0, 0b00, op11_8, op7_4, (outs GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm, VdTy:$Vd), IIC_VLD1u,
+                        (ins addrmode6:$Rn, rGPR:$Rm, VdTy:$Vd), IIC_VLD1u,
                         "vst2", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
     let Inst{5-4} = Rn{5-4};
     let DecoderMethod = "DecodeVLDST2Instruction";
   }
 }
-multiclass VST2QWB<bits<4> op7_4, string Dt, Operand AddrMode> {
+multiclass VST2QWB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0, 0b00, 0b0011, op7_4, (outs GPR:$wb),
-                     (ins AddrMode:$Rn, VecListFourD:$Vd), IIC_VLD1u,
+                     (ins addrmode6:$Rn, VecListFourD:$Vd), IIC_VLD1u,
                      "vst2", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -1816,7 +1769,7 @@ multiclass VST2QWB<bits<4> op7_4, string Dt, Operand AddrMode> {
     let DecoderMethod = "DecodeVLDST2Instruction";
   }
   def _register : NLdSt<0, 0b00, 0b0011, op7_4, (outs GPR:$wb),
-                        (ins AddrMode:$Rn, rGPR:$Rm, VecListFourD:$Vd),
+                        (ins addrmode6:$Rn, rGPR:$Rm, VecListFourD:$Vd),
                         IIC_VLD1u,
                         "vst2", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
@@ -1825,16 +1778,13 @@ multiclass VST2QWB<bits<4> op7_4, string Dt, Operand AddrMode> {
   }
 }
 
-defm VST2d8wb    : VST2DWB<0b1000, {0,0,?,?}, "8",  VecListDPair,
-                           addrmode6align64or128>;
-defm VST2d16wb   : VST2DWB<0b1000, {0,1,?,?}, "16", VecListDPair,
-                           addrmode6align64or128>;
-defm VST2d32wb   : VST2DWB<0b1000, {1,0,?,?}, "32", VecListDPair,
-                           addrmode6align64or128>;
+defm VST2d8wb    : VST2DWB<0b1000, {0,0,?,?}, "8",  VecListDPair>;
+defm VST2d16wb   : VST2DWB<0b1000, {0,1,?,?}, "16", VecListDPair>;
+defm VST2d32wb   : VST2DWB<0b1000, {1,0,?,?}, "32", VecListDPair>;
 
-defm VST2q8wb    : VST2QWB<{0,0,?,?}, "8", addrmode6align64or128or256>;
-defm VST2q16wb   : VST2QWB<{0,1,?,?}, "16", addrmode6align64or128or256>;
-defm VST2q32wb   : VST2QWB<{1,0,?,?}, "32", addrmode6align64or128or256>;
+defm VST2q8wb    : VST2QWB<{0,0,?,?}, "8">;
+defm VST2q16wb   : VST2QWB<{0,1,?,?}, "16">;
+defm VST2q32wb   : VST2QWB<{1,0,?,?}, "32">;
 
 def VST2q8PseudoWB_fixed     : VSTQQWBfixedPseudo<IIC_VST2x2u>;
 def VST2q16PseudoWB_fixed    : VSTQQWBfixedPseudo<IIC_VST2x2u>;
@@ -1844,18 +1794,12 @@ def VST2q16PseudoWB_register : VSTQQWBregisterPseudo<IIC_VST2x2u>;
 def VST2q32PseudoWB_register : VSTQQWBregisterPseudo<IIC_VST2x2u>;
 
 // ...with double-spaced registers
-def VST2b8      : VST2<0b1001, {0,0,?,?}, "8",  VecListDPairSpaced, IIC_VST2,
-                      addrmode6align64or128>;
-def VST2b16     : VST2<0b1001, {0,1,?,?}, "16", VecListDPairSpaced, IIC_VST2,
-                      addrmode6align64or128>;
-def VST2b32     : VST2<0b1001, {1,0,?,?}, "32", VecListDPairSpaced, IIC_VST2,
-                      addrmode6align64or128>;
-defm VST2b8wb   : VST2DWB<0b1001, {0,0,?,?}, "8",  VecListDPairSpaced,
-                          addrmode6align64or128>;
-defm VST2b16wb  : VST2DWB<0b1001, {0,1,?,?}, "16", VecListDPairSpaced,
-                          addrmode6align64or128>;
-defm VST2b32wb  : VST2DWB<0b1001, {1,0,?,?}, "32", VecListDPairSpaced,
-                          addrmode6align64or128>;
+def VST2b8      : VST2<0b1001, {0,0,?,?}, "8",  VecListDPairSpaced, IIC_VST2>;
+def VST2b16     : VST2<0b1001, {0,1,?,?}, "16", VecListDPairSpaced, IIC_VST2>;
+def VST2b32     : VST2<0b1001, {1,0,?,?}, "32", VecListDPairSpaced, IIC_VST2>;
+defm VST2b8wb   : VST2DWB<0b1001, {0,0,?,?}, "8",  VecListDPairSpaced>;
+defm VST2b16wb  : VST2DWB<0b1001, {0,1,?,?}, "16", VecListDPairSpaced>;
+defm VST2b32wb  : VST2DWB<0b1001, {1,0,?,?}, "32", VecListDPairSpaced>;
 
 //   VST3     : Vector Store (multiple 3-element structures)
 class VST3D<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -6367,442 +6311,379 @@ defm : NEONDTAnyInstAlias<"vorr${p}", "$Vdn, $Vm",
 // VLD1 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 def VLD1LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vld1${p}", ".8", "$list, $addr",
-                 (ins VecListOneDByteIndexed:$list, addrmode6alignNone:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD1LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vld1${p}", ".16", "$list, $addr",
-                 (ins VecListOneDHWordIndexed:$list, addrmode6align16:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD1LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vld1${p}", ".32", "$list, $addr",
-                 (ins VecListOneDWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 def VLD1LNdWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld1${p}", ".8", "$list, $addr!",
-                 (ins VecListOneDByteIndexed:$list, addrmode6alignNone:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD1LNdWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld1${p}", ".16", "$list, $addr!",
-                 (ins VecListOneDHWordIndexed:$list, addrmode6align16:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD1LNdWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld1${p}", ".32", "$list, $addr!",
-                 (ins VecListOneDWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD1LNdWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld1${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListOneDByteIndexed:$list, addrmode6alignNone:$addr,
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD1LNdWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld1${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListOneDHWordIndexed:$list, addrmode6align16:$addr,
+                  (ins VecListOneDHWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD1LNdWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld1${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListOneDWordIndexed:$list, addrmode6align32:$addr,
+                  (ins VecListOneDWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 
 // VST1 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 def VST1LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vst1${p}", ".8", "$list, $addr",
-                 (ins VecListOneDByteIndexed:$list, addrmode6alignNone:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST1LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vst1${p}", ".16", "$list, $addr",
-                 (ins VecListOneDHWordIndexed:$list, addrmode6align16:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST1LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vst1${p}", ".32", "$list, $addr",
-                 (ins VecListOneDWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 def VST1LNdWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst1${p}", ".8", "$list, $addr!",
-                 (ins VecListOneDByteIndexed:$list, addrmode6alignNone:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST1LNdWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst1${p}", ".16", "$list, $addr!",
-                 (ins VecListOneDHWordIndexed:$list, addrmode6align16:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST1LNdWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst1${p}", ".32", "$list, $addr!",
-                 (ins VecListOneDWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListOneDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST1LNdWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst1${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListOneDByteIndexed:$list, addrmode6alignNone:$addr,
+                  (ins VecListOneDByteIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST1LNdWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst1${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListOneDHWordIndexed:$list, addrmode6align16:$addr,
+                  (ins VecListOneDHWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST1LNdWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst1${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListOneDWordIndexed:$list, addrmode6align32:$addr,
+                  (ins VecListOneDWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 // VLD2 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 def VLD2LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vld2${p}", ".8", "$list, $addr",
-                 (ins VecListTwoDByteIndexed:$list, addrmode6align16:$addr,
-                  pred:$p)>;
+                 (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD2LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vld2${p}", ".16", "$list, $addr",
-                 (ins VecListTwoDHWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD2LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vld2${p}", ".32", "$list, $addr",
-                 (ins VecListTwoDWordIndexed:$list, addrmode6align64:$addr, pred:$p)>;
+                 (ins VecListTwoDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD2LNqAsm_16 : NEONDataTypeAsmPseudoInst<"vld2${p}", ".16", "$list, $addr",
-                 (ins VecListTwoQHWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD2LNqAsm_32 : NEONDataTypeAsmPseudoInst<"vld2${p}", ".32", "$list, $addr",
-                 (ins VecListTwoQWordIndexed:$list, addrmode6align64:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 def VLD2LNdWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld2${p}", ".8", "$list, $addr!",
-                 (ins VecListTwoDByteIndexed:$list, addrmode6align16:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD2LNdWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld2${p}", ".16", "$list, $addr!",
-                 (ins VecListTwoDHWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD2LNdWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld2${p}", ".32", "$list, $addr!",
-                 (ins VecListTwoDWordIndexed:$list, addrmode6align64:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD2LNqWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld2${p}", ".16", "$list, $addr!",
-                 (ins VecListTwoQHWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD2LNqWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld2${p}", ".32", "$list, $addr!",
-                 (ins VecListTwoQWordIndexed:$list, addrmode6align64:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD2LNdWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld2${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListTwoDByteIndexed:$list, addrmode6align16:$addr,
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD2LNdWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld2${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListTwoDHWordIndexed:$list, addrmode6align32:$addr,
+                  (ins VecListTwoDHWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD2LNdWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld2${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListTwoDWordIndexed:$list, addrmode6align64:$addr,
+                  (ins VecListTwoDWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD2LNqWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld2${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListTwoQHWordIndexed:$list, addrmode6align32:$addr,
+                  (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD2LNqWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld2${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListTwoQWordIndexed:$list, addrmode6align64:$addr,
+                  (ins VecListTwoQWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 
 // VST2 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 def VST2LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vst2${p}", ".8", "$list, $addr",
-                 (ins VecListTwoDByteIndexed:$list, addrmode6align16:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST2LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vst2${p}", ".16", "$list, $addr",
-                 (ins VecListTwoDHWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST2LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vst2${p}", ".32", "$list, $addr",
-                 (ins VecListTwoDWordIndexed:$list, addrmode6align64:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST2LNqAsm_16 : NEONDataTypeAsmPseudoInst<"vst2${p}", ".16", "$list, $addr",
-                 (ins VecListTwoQHWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST2LNqAsm_32 : NEONDataTypeAsmPseudoInst<"vst2${p}", ".32", "$list, $addr",
-                 (ins VecListTwoQWordIndexed:$list, addrmode6align64:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 def VST2LNdWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".8", "$list, $addr!",
-                 (ins VecListTwoDByteIndexed:$list, addrmode6align16:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST2LNdWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".16", "$list, $addr!",
-                 (ins VecListTwoDHWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST2LNdWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".32", "$list, $addr!",
-                 (ins VecListTwoDWordIndexed:$list, addrmode6align64:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST2LNqWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".16", "$list, $addr!",
-                 (ins VecListTwoQHWordIndexed:$list, addrmode6align32:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST2LNqWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".32", "$list, $addr!",
-                 (ins VecListTwoQWordIndexed:$list, addrmode6align64:$addr,
-                      pred:$p)>;
+                 (ins VecListTwoQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST2LNdWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListTwoDByteIndexed:$list, addrmode6align16:$addr,
+                  (ins VecListTwoDByteIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST2LNdWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".16","$list, $addr, $Rm",
-                  (ins VecListTwoDHWordIndexed:$list, addrmode6align32:$addr,
+                  (ins VecListTwoDHWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST2LNdWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListTwoDWordIndexed:$list, addrmode6align64:$addr,
+                  (ins VecListTwoDWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST2LNqWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".16","$list, $addr, $Rm",
-                  (ins VecListTwoQHWordIndexed:$list, addrmode6align32:$addr,
+                  (ins VecListTwoQHWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST2LNqWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst2${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListTwoQWordIndexed:$list, addrmode6align64:$addr,
+                  (ins VecListTwoQWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 // VLD3 all-lanes pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 def VLD3DUPdAsm_8 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr",
-               (ins VecListThreeDAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPdAsm_16: NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr",
-               (ins VecListThreeDAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPdAsm_32: NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr",
-               (ins VecListThreeDAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPqAsm_8 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr",
-               (ins VecListThreeQAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPqAsm_16: NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr",
-               (ins VecListThreeQAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPqAsm_32: NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr",
-               (ins VecListThreeQAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 
 def VLD3DUPdWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr!",
-               (ins VecListThreeDAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPdWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr!",
-               (ins VecListThreeDAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPdWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr!",
-               (ins VecListThreeDAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPqWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr!",
-               (ins VecListThreeQAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPqWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr!",
-               (ins VecListThreeQAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPqWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr!",
-               (ins VecListThreeQAllLanes:$list, addrmode6dupalignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD3DUPdWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListThreeDAllLanes:$list, addrmode6dupalignNone:$addr,
+                  (ins VecListThreeDAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3DUPdWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListThreeDAllLanes:$list, addrmode6dupalignNone:$addr,
+                  (ins VecListThreeDAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3DUPdWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListThreeDAllLanes:$list, addrmode6dupalignNone:$addr,
+                  (ins VecListThreeDAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3DUPqWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListThreeQAllLanes:$list, addrmode6dupalignNone:$addr,
+                  (ins VecListThreeQAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3DUPqWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListThreeQAllLanes:$list, addrmode6dupalignNone:$addr,
+                  (ins VecListThreeQAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3DUPqWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListThreeQAllLanes:$list, addrmode6dupalignNone:$addr,
+                  (ins VecListThreeQAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 
 // VLD3 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 def VLD3LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr",
-               (ins VecListThreeDByteIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD3LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr",
-               (ins VecListThreeDHWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD3LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr",
-               (ins VecListThreeDWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD3LNqAsm_16 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr",
-               (ins VecListThreeQHWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD3LNqAsm_32 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr",
-               (ins VecListThreeQWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 def VLD3LNdWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr!",
-               (ins VecListThreeDByteIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD3LNdWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr!",
-               (ins VecListThreeDHWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD3LNdWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr!",
-               (ins VecListThreeDWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD3LNqWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr!",
-               (ins VecListThreeQHWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD3LNqWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr!",
-               (ins VecListThreeQWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD3LNdWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListThreeDByteIndexed:$list, addrmode6alignNone:$addr,
+                  (ins VecListThreeDByteIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3LNdWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListThreeDHWordIndexed:$list,
-                       addrmode6alignNone:$addr, rGPR:$Rm, pred:$p)>;
+                  (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 def VLD3LNdWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListThreeDWordIndexed:$list, addrmode6alignNone:$addr,
+                  (ins VecListThreeDWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3LNqWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListThreeQHWordIndexed:$list,
-                       addrmode6alignNone:$addr, rGPR:$Rm, pred:$p)>;
+                  (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 def VLD3LNqWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListThreeQWordIndexed:$list, addrmode6alignNone:$addr,
+                  (ins VecListThreeQWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 // VLD3 multiple structure pseudo-instructions. These need special handling for
 // the vector operands that the normal instructions don't yet model.
 // FIXME: Remove these when the register classes and instructions are updated.
 def VLD3dAsm_8 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VLD3dAsm_16 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VLD3dAsm_32 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VLD3qAsm_8 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 def VLD3qAsm_16 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 def VLD3qAsm_32 : NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 
 def VLD3dWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr!",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VLD3dWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr!",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VLD3dWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr!",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VLD3qWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr!",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 def VLD3qWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr!",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 def VLD3qWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr!",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 def VLD3dWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListThreeD:$list, addrmode6align64:$addr,
+                  (ins VecListThreeD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3dWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListThreeD:$list, addrmode6align64:$addr,
+                  (ins VecListThreeD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3dWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListThreeD:$list, addrmode6align64:$addr,
+                  (ins VecListThreeD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3qWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListThreeQ:$list, addrmode6align64:$addr,
+                  (ins VecListThreeQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3qWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListThreeQ:$list, addrmode6align64:$addr,
+                  (ins VecListThreeQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD3qWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld3${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListThreeQ:$list, addrmode6align64:$addr,
+                  (ins VecListThreeQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 // VST3 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 def VST3LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr",
-               (ins VecListThreeDByteIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST3LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr",
-               (ins VecListThreeDHWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST3LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr",
-               (ins VecListThreeDWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST3LNqAsm_16 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr",
-               (ins VecListThreeQHWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST3LNqAsm_32 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr",
-               (ins VecListThreeQWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 def VST3LNdWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr!",
-               (ins VecListThreeDByteIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST3LNdWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr!",
-               (ins VecListThreeDHWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST3LNdWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr!",
-               (ins VecListThreeDWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST3LNqWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr!",
-               (ins VecListThreeQHWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST3LNqWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr!",
-               (ins VecListThreeQWordIndexed:$list, addrmode6alignNone:$addr,
-                    pred:$p)>;
+               (ins VecListThreeQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST3LNdWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListThreeDByteIndexed:$list, addrmode6alignNone:$addr,
+                  (ins VecListThreeDByteIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST3LNdWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListThreeDHWordIndexed:$list,
-                       addrmode6alignNone:$addr, rGPR:$Rm, pred:$p)>;
+                  (ins VecListThreeDHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 def VST3LNdWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListThreeDWordIndexed:$list, addrmode6alignNone:$addr,
+                  (ins VecListThreeDWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST3LNqWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListThreeQHWordIndexed:$list,
-                       addrmode6alignNone:$addr, rGPR:$Rm, pred:$p)>;
+                  (ins VecListThreeQHWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 def VST3LNqWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListThreeQWordIndexed:$list, addrmode6alignNone:$addr,
+                  (ins VecListThreeQWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 
@@ -6810,190 +6691,168 @@ def VST3LNqWB_register_Asm_32 :
 // the vector operands that the normal instructions don't yet model.
 // FIXME: Remove these when the register classes and instructions are updated.
 def VST3dAsm_8 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VST3dAsm_16 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VST3dAsm_32 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VST3qAsm_8 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 def VST3qAsm_16 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 def VST3qAsm_32 : NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 
 def VST3dWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr!",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VST3dWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr!",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VST3dWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr!",
-               (ins VecListThreeD:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeD:$list, addrmode6:$addr, pred:$p)>;
 def VST3qWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr!",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 def VST3qWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr!",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 def VST3qWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr!",
-               (ins VecListThreeQ:$list, addrmode6align64:$addr, pred:$p)>;
+               (ins VecListThreeQ:$list, addrmode6:$addr, pred:$p)>;
 def VST3dWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListThreeD:$list, addrmode6align64:$addr,
+                  (ins VecListThreeD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST3dWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListThreeD:$list, addrmode6align64:$addr,
+                  (ins VecListThreeD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST3dWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListThreeD:$list, addrmode6align64:$addr,
+                  (ins VecListThreeD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST3qWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListThreeQ:$list, addrmode6align64:$addr,
+                  (ins VecListThreeQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST3qWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListThreeQ:$list, addrmode6align64:$addr,
+                  (ins VecListThreeQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST3qWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListThreeQ:$list, addrmode6align64:$addr,
+                  (ins VecListThreeQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 // VLD4 all-lanes pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 def VLD4DUPdAsm_8 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr",
-               (ins VecListFourDAllLanes:$list, addrmode6dupalign32:$addr,
-                    pred:$p)>;
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPdAsm_16: NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr",
-               (ins VecListFourDAllLanes:$list, addrmode6dupalign64:$addr,
-                    pred:$p)>;
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPdAsm_32: NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr",
-               (ins VecListFourDAllLanes:$list, addrmode6dupalign64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPqAsm_8 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr",
-               (ins VecListFourQAllLanes:$list, addrmode6dupalign32:$addr,
-                    pred:$p)>;
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPqAsm_16: NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr",
-               (ins VecListFourQAllLanes:$list, addrmode6dupalign64:$addr,
-                    pred:$p)>;
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPqAsm_32: NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr",
-               (ins VecListFourQAllLanes:$list, addrmode6dupalign64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 
 def VLD4DUPdWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr!",
-               (ins VecListFourDAllLanes:$list, addrmode6dupalign32:$addr,
-                    pred:$p)>;
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPdWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr!",
-               (ins VecListFourDAllLanes:$list, addrmode6dupalign64:$addr,
-                    pred:$p)>;
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPdWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr!",
-               (ins VecListFourDAllLanes:$list, addrmode6dupalign64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPqWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr!",
-               (ins VecListFourQAllLanes:$list, addrmode6dupalign32:$addr,
-                    pred:$p)>;
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPqWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr!",
-               (ins VecListFourQAllLanes:$list, addrmode6dupalign64:$addr,
-                    pred:$p)>;
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPqWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr!",
-               (ins VecListFourQAllLanes:$list, addrmode6dupalign64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
 def VLD4DUPdWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListFourDAllLanes:$list, addrmode6dupalign32:$addr,
+                  (ins VecListFourDAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4DUPdWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListFourDAllLanes:$list, addrmode6dupalign64:$addr,
+                  (ins VecListFourDAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4DUPdWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListFourDAllLanes:$list,
-                       addrmode6dupalign64or128:$addr, rGPR:$Rm, pred:$p)>;
+                  (ins VecListFourDAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 def VLD4DUPqWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListFourQAllLanes:$list, addrmode6dupalign32:$addr,
+                  (ins VecListFourQAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4DUPqWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListFourQAllLanes:$list, addrmode6dupalign64:$addr,
+                  (ins VecListFourQAllLanes:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4DUPqWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListFourQAllLanes:$list,
-                       addrmode6dupalign64or128:$addr, rGPR:$Rm, pred:$p)>;
+                  (ins VecListFourQAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 
 
 // VLD4 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 def VLD4LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr",
-               (ins VecListFourDByteIndexed:$list, addrmode6align32:$addr,
-                    pred:$p)>;
+               (ins VecListFourDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD4LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr",
-               (ins VecListFourDHWordIndexed:$list, addrmode6align64:$addr,
-                    pred:$p)>;
+               (ins VecListFourDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD4LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr",
-               (ins VecListFourDWordIndexed:$list, addrmode6align64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD4LNqAsm_16 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr",
-               (ins VecListFourQHWordIndexed:$list, addrmode6align64:$addr,
-                    pred:$p)>;
+               (ins VecListFourQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD4LNqAsm_32 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr",
-               (ins VecListFourQWordIndexed:$list, addrmode6align64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 def VLD4LNdWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr!",
-               (ins VecListFourDByteIndexed:$list, addrmode6align32:$addr,
-                    pred:$p)>;
+               (ins VecListFourDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD4LNdWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr!",
-               (ins VecListFourDHWordIndexed:$list, addrmode6align64:$addr,
-                    pred:$p)>;
+               (ins VecListFourDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD4LNdWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr!",
-               (ins VecListFourDWordIndexed:$list, addrmode6align64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD4LNqWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr!",
-               (ins VecListFourQHWordIndexed:$list, addrmode6align64:$addr,
-                    pred:$p)>;
+               (ins VecListFourQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD4LNqWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr!",
-               (ins VecListFourQWordIndexed:$list, addrmode6align64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VLD4LNdWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListFourDByteIndexed:$list, addrmode6align32:$addr,
+                  (ins VecListFourDByteIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4LNdWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListFourDHWordIndexed:$list, addrmode6align64:$addr,
+                  (ins VecListFourDHWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4LNdWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListFourDWordIndexed:$list,
-                       addrmode6align64or128:$addr, rGPR:$Rm, pred:$p)>;
+                  (ins VecListFourDWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 def VLD4LNqWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListFourQHWordIndexed:$list, addrmode6align64:$addr,
+                  (ins VecListFourQHWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4LNqWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListFourQWordIndexed:$list,
-                       addrmode6align64or128:$addr, rGPR:$Rm, pred:$p)>;
+                  (ins VecListFourQWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 
 
 
@@ -7001,202 +6860,168 @@ def VLD4LNqWB_register_Asm_32 :
 // the vector operands that the normal instructions don't yet model.
 // FIXME: Remove these when the register classes and instructions are updated.
 def VLD4dAsm_8 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VLD4dAsm_16 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VLD4dAsm_32 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VLD4qAsm_8 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 def VLD4qAsm_16 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 def VLD4qAsm_32 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 
 def VLD4dWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr!",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VLD4dWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr!",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VLD4dWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr!",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VLD4qWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr!",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 def VLD4qWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr!",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 def VLD4qWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr!",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 def VLD4dWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4dWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4dWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4qWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4qWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VLD4qWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 // VST4 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
 def VST4LNdAsm_8 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr",
-               (ins VecListFourDByteIndexed:$list, addrmode6align32:$addr,
-                    pred:$p)>;
+               (ins VecListFourDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST4LNdAsm_16 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr",
-               (ins VecListFourDHWordIndexed:$list, addrmode6align64:$addr,
-                    pred:$p)>;
+               (ins VecListFourDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST4LNdAsm_32 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr",
-               (ins VecListFourDWordIndexed:$list, addrmode6align64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST4LNqAsm_16 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr",
-               (ins VecListFourQHWordIndexed:$list, addrmode6align64:$addr,
-                    pred:$p)>;
+               (ins VecListFourQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST4LNqAsm_32 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr",
-               (ins VecListFourQWordIndexed:$list, addrmode6align64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 
 def VST4LNdWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr!",
-               (ins VecListFourDByteIndexed:$list, addrmode6align32:$addr,
-                    pred:$p)>;
+               (ins VecListFourDByteIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST4LNdWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr!",
-               (ins VecListFourDHWordIndexed:$list, addrmode6align64:$addr,
-                    pred:$p)>;
+               (ins VecListFourDHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST4LNdWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr!",
-               (ins VecListFourDWordIndexed:$list, addrmode6align64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourDWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST4LNqWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr!",
-               (ins VecListFourQHWordIndexed:$list, addrmode6align64:$addr,
-                    pred:$p)>;
+               (ins VecListFourQHWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST4LNqWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr!",
-               (ins VecListFourQWordIndexed:$list, addrmode6align64or128:$addr,
-                    pred:$p)>;
+               (ins VecListFourQWordIndexed:$list, addrmode6:$addr, pred:$p)>;
 def VST4LNdWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListFourDByteIndexed:$list, addrmode6align32:$addr,
+                  (ins VecListFourDByteIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST4LNdWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListFourDHWordIndexed:$list, addrmode6align64:$addr,
+                  (ins VecListFourDHWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST4LNdWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListFourDWordIndexed:$list,
-                       addrmode6align64or128:$addr, rGPR:$Rm, pred:$p)>;
+                  (ins VecListFourDWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 def VST4LNqWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListFourQHWordIndexed:$list, addrmode6align64:$addr,
+                  (ins VecListFourQHWordIndexed:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST4LNqWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListFourQWordIndexed:$list,
-                       addrmode6align64or128:$addr, rGPR:$Rm, pred:$p)>;
+                  (ins VecListFourQWordIndexed:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
 
 
 // VST4 multiple structure pseudo-instructions. These need special handling for
 // the vector operands that the normal instructions don't yet model.
 // FIXME: Remove these when the register classes and instructions are updated.
 def VST4dAsm_8 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VST4dAsm_16 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VST4dAsm_32 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VST4qAsm_8 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 def VST4qAsm_16 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 def VST4qAsm_32 : NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 
 def VST4dWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr!",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VST4dWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr!",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VST4dWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr!",
-               (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourD:$list, addrmode6:$addr, pred:$p)>;
 def VST4qWB_fixed_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr!",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 def VST4qWB_fixed_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr!",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 def VST4qWB_fixed_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr!",
-               (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
-                    pred:$p)>;
+               (ins VecListFourQ:$list, addrmode6:$addr, pred:$p)>;
 def VST4dWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST4dWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST4dWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListFourD:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourD:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST4qWB_register_Asm_8 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".8", "$list, $addr, $Rm",
-                  (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST4qWB_register_Asm_16 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".16", "$list, $addr, $Rm",
-                  (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 def VST4qWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst4${p}", ".32", "$list, $addr, $Rm",
-                  (ins VecListFourQ:$list, addrmode6align64or128or256:$addr,
+                  (ins VecListFourQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
 
 // VMOV/VMVN takes an optional datatype suffix
