@@ -53,6 +53,8 @@ private:
     : MCSection(SV_ELF, K), SectionName(Section), Type(type), Flags(flags),
       EntrySize(entrySize), Group(group) {}
   ~MCSectionELF();
+
+  void setSectionName(StringRef Name) { SectionName = Name; }
 public:
 
   /// ShouldOmitSectionDirective - Decides whether a '.section' directive

@@ -251,6 +251,21 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   return getELFSection(Section, Type, Flags, Kind, 0, "");
 }
 
+void MCContext::renameELFSection(const MCSectionELF *Section, StringRef Name) {
+  if (ELFUniquingMap == 0)
+    ELFUniquingMap = new ELFUniqueMapTy();
+  ELFUniqueMapTy &Map = *(ELFUniqueMapTy*)ELFUniquingMap;
+
+  StringRef GroupName;
+  if (const MCSymbol *Group = Section->getGroup())
+    GroupName = Group->getName();
+
+  Map.erase(SectionGroupPair(Section->getSectionName(), GroupName));
+  auto I = Map.insert(std::make_pair(SectionGroupPair(Name, GroupName),
+                                     Section)).first;
+  const_cast<MCSectionELF*>(Section)->setSectionName(I->first.first);
+}
+
 const MCSectionELF *MCContext::
 getELFSection(StringRef Section, unsigned Type, unsigned Flags,
               SectionKind Kind, unsigned EntrySize, StringRef Group) {

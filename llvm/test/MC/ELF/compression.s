@@ -1,25 +1,35 @@
-// RUN: llvm-mc -filetype=obj -compress-debug-sections -triple x86_64-pc-linux-gnu %s -o - | llvm-objdump -s - | FileCheck %s
-
-// XFAIL: *
+// RUN: llvm-mc -filetype=obj -compress-debug-sections -triple x86_64-pc-linux-gnu %s -o %t
+// RUN: llvm-objdump -s %t | FileCheck %s
+// RUN: llvm-dwarfdump -debug-dump=abbrev %t | FileCheck --check-prefix=ABBREV %s
 
 // REQUIRES: zlib
 
-// CHECK: Contents of section .debug_line:
-// FIXME: Figure out how to handle debug_line that currently uses multiple section fragments
+// CHECK: Contents of section .zdebug_line:
+// Check for the 'ZLIB' file magic at the start of the section only
+// CHECK-NEXT: ZLIB
 // CHECK-NOT: ZLIB
+// CHECK: Contents of
 
 // CHECK: Contents of section .zdebug_abbrev:
-// Check for the 'ZLIB' file magic at the start of the section
 // CHECK-NEXT: ZLIB
 
-// We shouldn't compress the debug_frame section, since it can be relaxed
-// CHECK: Contents of section .debug_frame
+// FIXME: Handle compressing alignment fragments to support compressing debug_frame
+// CHECK: Contents of section .debug_frame:
 // CHECK-NOT: ZLIB
+// CHECK: Contents of
+
+// Decompress one valid dwarf section just to check that this roundtrips
+// ABBREV: Abbrev table for offset: 0x00000000
+// ABBREV: [1] DW_TAG_compile_unit DW_CHILDREN_no
 
 	.section	.debug_line,"",@progbits
 
 	.section	.debug_abbrev,"",@progbits
 	.byte	1                       # Abbreviation Code
+	.byte	17                      # DW_TAG_compile_unit
+	.byte	0                       # DW_CHILDREN_no
+	.byte	0                       # EOM(1)
+	.byte	0                       # EOM(2)
 	.text
 foo:
 	.cfi_startproc
