@@ -798,11 +798,9 @@ bool ARM64InstrInfo::optimizeCompareInstr(
   // If CPSR is not killed nor re-defined, we should check whether it is
   // live-out. If it is live-out, do not optimize.
   if (!IsSafe) {
-    MachineBasicBlock *MBB = CmpInstr->getParent();
-    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-                                          SE = MBB->succ_end();
-         SI != SE; ++SI)
-      if ((*SI)->isLiveIn(ARM64::CPSR))
+    MachineBasicBlock *ParentBlock = CmpInstr->getParent();
+    for (auto *MBB : ParentBlock->successors())
+      if (MBB->isLiveIn(ARM64::CPSR))
         return false;
   }
 
@@ -976,11 +974,8 @@ bool ARM64InstrInfo::isScaledAddr(const MachineInstr *MI) const {
 bool ARM64InstrInfo::isLdStPairSuppressed(const MachineInstr *MI) const {
   assert(MOSuppressPair < (1 << MachineMemOperand::MOTargetNumBits) &&
          "Too many target MO flags");
-  for (MachineInstr::mmo_iterator MM = MI->memoperands_begin(),
-                                  E = MI->memoperands_end();
-       MM != E; ++MM) {
-
-    if ((*MM)->getFlags() &
+  for (auto *MM : MI->memoperands()) {
+    if (MM->getFlags() &
         (MOSuppressPair << MachineMemOperand::MOTargetStartBit)) {
       return true;
     }
