@@ -1,4 +1,5 @@
 // RUN: $(dirname %s)/check_clang_tidy_output.sh %s misc-redundant-smartptr-get
+// REQUIRES: shell
 
 // CHECK-NOT: warning
 

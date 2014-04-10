@@ -1,4 +1,5 @@
 // RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-redundant-smartptr-get %t
+// REQUIRES: shell
 
 namespace std {
 
