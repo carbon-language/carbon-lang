@@ -16,9 +16,9 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK-NOT: p1
 
 ; CHECK: ReadAccess
-; CHECK:   [p_0] -> { Stmt_for_body3[i0] -> MemRef_input[p_0, 1 + i0] };
+; CHECK:   [p_0] -> { Stmt_for_body3[i0] -> MemRef_input[o0] : 4o0 = 4 + p_0 + 4i0 };
 ; CHECK: MustWriteAccess
-; CHECK:   [p_0] -> { Stmt_for_body3[i0] -> MemRef_input[p_0, i0] };
+; CHECK:   [p_0] -> { Stmt_for_body3[i0] -> MemRef_input[o0] : 4o0 = p_0 + 4i0 };
 
 define void @foo(float* nocapture %input) {
 entry:

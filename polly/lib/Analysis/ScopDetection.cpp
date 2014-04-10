@@ -364,12 +364,19 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
     return invalid<ReportVariantBasePtr>(Context, /*Assert=*/false, BaseValue);
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
-  const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(AccessFunction);
 
   if (AllowNonAffine) {
     // Do not check whether AccessFunction is affine.
-  } else if (PollyDelinearize && AF) {
-    // Try to delinearize AccessFunction.
+  } else if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE,
+                           BaseValue)) {
+    const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(AccessFunction);
+    if (!PollyDelinearize || !AF)
+      return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
+                                            AccessFunction);
+
+    // Try to delinearize AccessFunction only when the expression is known to
+    // not be affine: as all affine functions can be represented without
+    // problems in Polly, we do not have to delinearize them.
     SmallVector<const SCEV *, 4> Subscripts, Sizes;
     AF->delinearize(*SE, Subscripts, Sizes);
     int size = Subscripts.size();
@@ -378,10 +385,6 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
       if (!isAffineExpr(&Context.CurRegion, Subscripts[i], *SE, BaseValue))
         return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
                                               AccessFunction);
-  } else if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE,
-                           BaseValue)) {
-    return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
-                                          AccessFunction);
   }
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
