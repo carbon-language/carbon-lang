@@ -2364,13 +2364,13 @@ void CXXNameMangler::mangleType(const DependentNameType *T) {
   // Proposal by cxx-abi-dev, 2014-03-26
   // <class-enum-type> ::= <name>    # non-dependent or dependent type name or
   //                                 # dependent elaborated type specifier using
-  //                                 # ‘typename'
+  //                                 # 'typename'
   //                   ::= Ts <name> # dependent elaborated type specifier using
-  //                                 # ‘struct’ or ‘class'
+  //                                 # 'struct' or 'class'
   //                   ::= Tu <name> # dependent elaborated type specifier using
-  //                                 # ‘union'
+  //                                 # 'union'
   //                   ::= Te <name> # dependent elaborated type specifier using
-  //                                 # ‘enum’
+  //                                 # 'enum'
   switch (T->getKeyword()) {
     case ETK_Typename:
       break;
