@@ -15,7 +15,7 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
-#include "llvm/Config/config.h" // for strtoull()/strtoll() define
+#include "llvm/Config/config.h" // for strtoull()/strtoul() define
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/Support/FileSystem.h"
 
@@ -69,7 +69,7 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
 
     // Read the number of counters.
     char *EndPtr;
-    unsigned NumCounters = strtol(++CurPtr, &EndPtr, 10);
+    unsigned NumCounters = strtoul(++CurPtr, &EndPtr, 10);
     if (EndPtr == CurPtr || *EndPtr != '\n' || NumCounters <= 0) {
       ReportBadPGOData(CGM, "pgo data file has unexpected number of counters");
       return;
@@ -77,7 +77,7 @@ PGOProfileData::PGOProfileData(CodeGenModule &CGM, std::string Path)
     CurPtr = EndPtr;
 
     // Read function count.
-    uint64_t Count = strtoll(CurPtr, &EndPtr, 10);
+    uint64_t Count = strtoull(CurPtr, &EndPtr, 10);
     if (EndPtr == CurPtr || *EndPtr != '\n') {
       ReportBadPGOData(CGM, "pgo-data file has bad count value");
       return;
@@ -119,13 +119,13 @@ bool PGOProfileData::getFunctionCounts(StringRef FuncName, uint64_t &FuncHash,
 
   char *EndPtr;
   // Read the function hash.
-  FuncHash = strtoll(++CurPtr, &EndPtr, 10);
+  FuncHash = strtoull(++CurPtr, &EndPtr, 10);
   assert(EndPtr != CurPtr && *EndPtr == '\n' &&
          "pgo-data file has corrupted function hash");
   CurPtr = EndPtr;
 
   // Read the number of counters.
-  unsigned NumCounters = strtol(++CurPtr, &EndPtr, 10);
+  unsigned NumCounters = strtoul(++CurPtr, &EndPtr, 10);
   assert(EndPtr != CurPtr && *EndPtr == '\n' && NumCounters > 0 &&
          "pgo-data file has corrupted number of counters");
   CurPtr = EndPtr;
@@ -134,7 +134,7 @@ bool PGOProfileData::getFunctionCounts(StringRef FuncName, uint64_t &FuncHash,
 
   for (unsigned N = 0; N < NumCounters; ++N) {
     // Read the count value.
-    uint64_t Count = strtoll(CurPtr, &EndPtr, 10);
+    uint64_t Count = strtoull(CurPtr, &EndPtr, 10);
     if (EndPtr == CurPtr || *EndPtr != '\n') {
       ReportBadPGOData(CGM, "pgo-data file has bad count value");
       return true;
