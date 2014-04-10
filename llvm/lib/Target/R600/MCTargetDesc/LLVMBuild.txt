@@ -1,4 +1,4 @@
-;===- ./lib/Target/R600/MCTargetDesc/LLVMBuild.txt ------------*- Conf -*--===;
+;===- ./lib/Target/R600/MCTargetDesc/LLVMBuild.txt -------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -19,5 +19,5 @@
 type = Library
 name = R600Desc
 parent = R600
-required_libraries = R600AsmPrinter R600Info MC
+required_libraries = MC R600AsmPrinter R600Info
 add_to_library_groups = R600

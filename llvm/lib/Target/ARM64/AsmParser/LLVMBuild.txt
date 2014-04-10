@@ -21,4 +21,3 @@ name = ARM64AsmParser
 parent = ARM64
 required_libraries = ARM64Desc ARM64Info MC MCParser Support
 add_to_library_groups = ARM64
-

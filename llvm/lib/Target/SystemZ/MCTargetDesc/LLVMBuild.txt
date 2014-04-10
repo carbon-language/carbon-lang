@@ -19,5 +19,5 @@
 type = Library
 name = SystemZDesc
 parent = SystemZ
-required_libraries = MC SystemZAsmPrinter SystemZInfo Support
+required_libraries = MC Support SystemZAsmPrinter SystemZInfo
 add_to_library_groups = SystemZ

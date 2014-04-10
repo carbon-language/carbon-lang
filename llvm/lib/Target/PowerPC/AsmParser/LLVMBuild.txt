@@ -1,4 +1,4 @@
-;===- ./lib/Target/PowerPC/AsmParser/LLVMBuild.txt --------------*- Conf -*--===;
+;===- ./lib/Target/PowerPC/AsmParser/LLVMBuild.txt -------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -19,5 +19,5 @@
 type = Library
 name = PowerPCAsmParser
 parent = PowerPC
-required_libraries = PowerPCDesc PowerPCInfo MC MCParser Support
+required_libraries = MC MCParser PowerPCDesc PowerPCInfo Support
 add_to_library_groups = PowerPC
