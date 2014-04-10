@@ -166,7 +166,7 @@ unsigned ARM64TTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
   // chunk.
   unsigned Cost = 0;
   for (unsigned ShiftVal = 0; ShiftVal < BitSize; ShiftVal += 64) {
-    APInt Tmp = ImmVal.ashr(ShiftVal).getLoBits(64);
+    APInt Tmp = ImmVal.ashr(ShiftVal).sextOrTrunc(64);
     int64_t Val = Tmp.getSExtValue();
     Cost += getIntImmCost(Val);
   }
