@@ -5120,107 +5120,107 @@ public:
 } // end anonymous namespace.
 
 namespace {
-  class SystemZTargetInfo : public TargetInfo {
-    static const char *const GCCRegNames[];
+class SystemZTargetInfo : public TargetInfo {
+  static const char *const GCCRegNames[];
 
-  public:
-    SystemZTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
-      TLSSupported = true;
-      IntWidth = IntAlign = 32;
-      LongWidth = LongLongWidth = LongAlign = LongLongAlign = 64;
-      PointerWidth = PointerAlign = 64;
-      LongDoubleWidth = 128;
-      LongDoubleAlign = 64;
-      LongDoubleFormat = &llvm::APFloat::IEEEquad;
-      MinGlobalAlign = 16;
-      DescriptionString = "E-m:e-i1:8:16-i8:8:16-i64:64-f128:64-a:8:16-n32:64";
-      MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
-    }
-    void getTargetDefines(const LangOptions &Opts,
-                          MacroBuilder &Builder) const override {
-      Builder.defineMacro("__s390__");
-      Builder.defineMacro("__s390x__");
-      Builder.defineMacro("__zarch__");
-      Builder.defineMacro("__LONG_DOUBLE_128__");
-    }
-    void getTargetBuiltins(const Builtin::Info *&Records,
-                           unsigned &NumRecords) const override {
-      // FIXME: Implement.
-      Records = 0;
-      NumRecords = 0;
-    }
-
-    void getGCCRegNames(const char *const *&Names,
-                        unsigned &NumNames) const override;
-    void getGCCRegAliases(const GCCRegAlias *&Aliases,
-                          unsigned &NumAliases) const override {
-      // No aliases.
-      Aliases = 0;
-      NumAliases = 0;
-    }
-    bool validateAsmConstraint(const char *&Name,
-                               TargetInfo::ConstraintInfo &info) const override;
-    const char *getClobbers() const override {
-      // FIXME: Is this really right?
-      return "";
-    }
-    BuiltinVaListKind getBuiltinVaListKind() const override {
-      return TargetInfo::SystemZBuiltinVaList;
-    }
-    bool setCPU(const std::string &Name) override {
-      bool CPUKnown = llvm::StringSwitch<bool>(Name)
-        .Case("z10", true)
-        .Case("z196", true)
-        .Case("zEC12", true)
-        .Default(false);
-
-      // No need to store the CPU yet.  There aren't any CPU-specific
-      // macros to define.
-      return CPUKnown;
-    }
-  };
-
-  const char *const SystemZTargetInfo::GCCRegNames[] = {
-    "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
-    "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15",
-    "f0",  "f2",  "f4",  "f6",  "f1",  "f3",  "f5",  "f7",
-    "f8",  "f10", "f12", "f14", "f9",  "f11", "f13", "f15"
-  };
-
-  void SystemZTargetInfo::getGCCRegNames(const char *const *&Names,
-                                         unsigned &NumNames) const {
-    Names = GCCRegNames;
-    NumNames = llvm::array_lengthof(GCCRegNames);
+public:
+  SystemZTargetInfo(const llvm::Triple &Triple) : TargetInfo(Triple) {
+    TLSSupported = true;
+    IntWidth = IntAlign = 32;
+    LongWidth = LongLongWidth = LongAlign = LongLongAlign = 64;
+    PointerWidth = PointerAlign = 64;
+    LongDoubleWidth = 128;
+    LongDoubleAlign = 64;
+    LongDoubleFormat = &llvm::APFloat::IEEEquad;
+    MinGlobalAlign = 16;
+    DescriptionString = "E-m:e-i1:8:16-i8:8:16-i64:64-f128:64-a:8:16-n32:64";
+    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
+  }
+  void getTargetDefines(const LangOptions &Opts,
+                        MacroBuilder &Builder) const override {
+    Builder.defineMacro("__s390__");
+    Builder.defineMacro("__s390x__");
+    Builder.defineMacro("__zarch__");
+    Builder.defineMacro("__LONG_DOUBLE_128__");
+  }
+  void getTargetBuiltins(const Builtin::Info *&Records,
+                         unsigned &NumRecords) const override {
+    // FIXME: Implement.
+    Records = 0;
+    NumRecords = 0;
   }
 
-  bool SystemZTargetInfo::
-  validateAsmConstraint(const char *&Name,
-                        TargetInfo::ConstraintInfo &Info) const {
-    switch (*Name) {
-    default:
-      return false;
-
-    case 'a': // Address register
-    case 'd': // Data register (equivalent to 'r')
-    case 'f': // Floating-point register
-      Info.setAllowsRegister();
-      return true;
-
-    case 'I': // Unsigned 8-bit constant
-    case 'J': // Unsigned 12-bit constant
-    case 'K': // Signed 16-bit constant
-    case 'L': // Signed 20-bit displacement (on all targets we support)
-    case 'M': // 0x7fffffff
-      return true;
-
-    case 'Q': // Memory with base and unsigned 12-bit displacement
-    case 'R': // Likewise, plus an index
-    case 'S': // Memory with base and signed 20-bit displacement
-    case 'T': // Likewise, plus an index
-      Info.setAllowsMemory();
-      return true;
-    }
+  void getGCCRegNames(const char *const *&Names,
+                      unsigned &NumNames) const override;
+  void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                        unsigned &NumAliases) const override {
+    // No aliases.
+    Aliases = 0;
+    NumAliases = 0;
   }
+  bool validateAsmConstraint(const char *&Name,
+                             TargetInfo::ConstraintInfo &info) const override;
+  const char *getClobbers() const override {
+    // FIXME: Is this really right?
+    return "";
+  }
+  BuiltinVaListKind getBuiltinVaListKind() const override {
+    return TargetInfo::SystemZBuiltinVaList;
+  }
+  bool setCPU(const std::string &Name) override {
+    bool CPUKnown = llvm::StringSwitch<bool>(Name)
+      .Case("z10", true)
+      .Case("z196", true)
+      .Case("zEC12", true)
+      .Default(false);
+
+    // No need to store the CPU yet.  There aren't any CPU-specific
+    // macros to define.
+    return CPUKnown;
+  }
+};
+
+const char *const SystemZTargetInfo::GCCRegNames[] = {
+  "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
+  "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15",
+  "f0",  "f2",  "f4",  "f6",  "f1",  "f3",  "f5",  "f7",
+  "f8",  "f10", "f12", "f14", "f9",  "f11", "f13", "f15"
+};
+
+void SystemZTargetInfo::getGCCRegNames(const char *const *&Names,
+                                       unsigned &NumNames) const {
+  Names = GCCRegNames;
+  NumNames = llvm::array_lengthof(GCCRegNames);
+}
+
+bool SystemZTargetInfo::
+validateAsmConstraint(const char *&Name,
+                      TargetInfo::ConstraintInfo &Info) const {
+  switch (*Name) {
+  default:
+    return false;
+
+  case 'a': // Address register
+  case 'd': // Data register (equivalent to 'r')
+  case 'f': // Floating-point register
+    Info.setAllowsRegister();
+    return true;
+
+  case 'I': // Unsigned 8-bit constant
+  case 'J': // Unsigned 12-bit constant
+  case 'K': // Signed 16-bit constant
+  case 'L': // Signed 20-bit displacement (on all targets we support)
+  case 'M': // 0x7fffffff
+    return true;
+
+  case 'Q': // Memory with base and unsigned 12-bit displacement
+  case 'R': // Likewise, plus an index
+  case 'S': // Memory with base and signed 20-bit displacement
+  case 'T': // Likewise, plus an index
+    Info.setAllowsMemory();
+    return true;
+  }
+}
 }
 
 namespace {
