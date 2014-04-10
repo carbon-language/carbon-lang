@@ -170,6 +170,38 @@ ModuleMap::findKnownHeader(const FileEntry *File) {
   return Known;
 }
 
+ModuleMap::KnownHeader
+ModuleMap::findHeaderInUmbrellaDirs(const FileEntry *File,
+                    SmallVectorImpl<const DirectoryEntry *> &IntermediateDirs) {
+  const DirectoryEntry *Dir = File->getDir();
+  assert(Dir && "file in no directory");
+
+  // Note: as an egregious but useful hack we use the real path here, because
+  // frameworks moving from top-level frameworks to embedded frameworks tend
+  // to be symlinked from the top-level location to the embedded location,
+  // and we need to resolve lookups as if we had found the embedded location.
+  StringRef DirName = SourceMgr.getFileManager().getCanonicalName(Dir);
+
+  // Keep walking up the directory hierarchy, looking for a directory with
+  // an umbrella header.
+  do {
+    auto KnownDir = UmbrellaDirs.find(Dir);
+    if (KnownDir != UmbrellaDirs.end())
+      return KnownHeader(KnownDir->second, NormalHeader);
+
+    IntermediateDirs.push_back(Dir);
+
+    // Retrieve our parent path.
+    DirName = llvm::sys::path::parent_path(DirName);
+    if (DirName.empty())
+      break;
+
+    // Resolve the parent path to a directory entry.
+    Dir = SourceMgr.getFileManager().getDirectory(DirName);
+  } while (Dir);
+  return KnownHeader();
+}
+
 // Returns 'true' if 'RequestingModule directly uses 'RequestedModule'.
 static bool directlyUses(const Module *RequestingModule,
                          const Module *RequestedModule) {
@@ -305,92 +337,68 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
     return Result;
   }
 
-  const DirectoryEntry *Dir = File->getDir();
   SmallVector<const DirectoryEntry *, 2> SkippedDirs;
+  KnownHeader H = findHeaderInUmbrellaDirs(File, SkippedDirs);
+  if (H) {
+    Module *Result = H.getModule();
 
-  // Note: as an egregious but useful hack we use the real path here, because
-  // frameworks moving from top-level frameworks to embedded frameworks tend
-  // to be symlinked from the top-level location to the embedded location,
-  // and we need to resolve lookups as if we had found the embedded location.
-  StringRef DirName = SourceMgr.getFileManager().getCanonicalName(Dir);
+    // Search up the module stack until we find a module with an umbrella
+    // directory.
+    Module *UmbrellaModule = Result;
+    while (!UmbrellaModule->getUmbrellaDir() && UmbrellaModule->Parent)
+      UmbrellaModule = UmbrellaModule->Parent;
 
-  // Keep walking up the directory hierarchy, looking for a directory with
-  // an umbrella header.
-  do {    
-    llvm::DenseMap<const DirectoryEntry *, Module *>::iterator KnownDir
-      = UmbrellaDirs.find(Dir);
-    if (KnownDir != UmbrellaDirs.end()) {
-      Module *Result = KnownDir->second;
-      
-      // Search up the module stack until we find a module with an umbrella
-      // directory.
-      Module *UmbrellaModule = Result;
-      while (!UmbrellaModule->getUmbrellaDir() && UmbrellaModule->Parent)
-        UmbrellaModule = UmbrellaModule->Parent;
+    if (UmbrellaModule->InferSubmodules) {
+      // Infer submodules for each of the directories we found between
+      // the directory of the umbrella header and the directory where
+      // the actual header is located.
+      bool Explicit = UmbrellaModule->InferExplicitSubmodules;
 
-      if (UmbrellaModule->InferSubmodules) {
-        // Infer submodules for each of the directories we found between
-        // the directory of the umbrella header and the directory where 
-        // the actual header is located.
-        bool Explicit = UmbrellaModule->InferExplicitSubmodules;
-        
-        for (unsigned I = SkippedDirs.size(); I != 0; --I) {
-          // Find or create the module that corresponds to this directory name.
-          SmallString<32> NameBuf;
-          StringRef Name = sanitizeFilenameAsIdentifier(
-                             llvm::sys::path::stem(SkippedDirs[I-1]->getName()),
-                             NameBuf);
-          Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
-                                      Explicit).first;
-          
-          // Associate the module and the directory.
-          UmbrellaDirs[SkippedDirs[I-1]] = Result;
-
-          // If inferred submodules export everything they import, add a 
-          // wildcard to the set of exports.
-          if (UmbrellaModule->InferExportWildcard && Result->Exports.empty())
-            Result->Exports.push_back(Module::ExportDecl(0, true));
-        }
-        
-        // Infer a submodule with the same name as this header file.
+      for (unsigned I = SkippedDirs.size(); I != 0; --I) {
+        // Find or create the module that corresponds to this directory name.
         SmallString<32> NameBuf;
         StringRef Name = sanitizeFilenameAsIdentifier(
-                           llvm::sys::path::stem(File->getName()), NameBuf);
+            llvm::sys::path::stem(SkippedDirs[I-1]->getName()), NameBuf);
         Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
                                     Explicit).first;
-        Result->addTopHeader(File);
-        
-        // If inferred submodules export everything they import, add a 
+
+        // Associate the module and the directory.
+        UmbrellaDirs[SkippedDirs[I-1]] = Result;
+
+        // If inferred submodules export everything they import, add a
         // wildcard to the set of exports.
         if (UmbrellaModule->InferExportWildcard && Result->Exports.empty())
           Result->Exports.push_back(Module::ExportDecl(0, true));
-      } else {
-        // Record each of the directories we stepped through as being part of
-        // the module we found, since the umbrella header covers them all.
-        for (unsigned I = 0, N = SkippedDirs.size(); I != N; ++I)
-          UmbrellaDirs[SkippedDirs[I]] = Result;
       }
-      
-      Headers[File].push_back(KnownHeader(Result, NormalHeader));
 
-      // If a header corresponds to an unavailable module, don't report
-      // that it maps to anything.
-      if (!Result->isAvailable())
-        return KnownHeader();
+      // Infer a submodule with the same name as this header file.
+      SmallString<32> NameBuf;
+      StringRef Name = sanitizeFilenameAsIdentifier(
+                                                    llvm::sys::path::stem(File->getName()), NameBuf);
+      Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
+                                  Explicit).first;
+      Result->addTopHeader(File);
 
-      return Headers[File].back();
+      // If inferred submodules export everything they import, add a
+      // wildcard to the set of exports.
+      if (UmbrellaModule->InferExportWildcard && Result->Exports.empty())
+        Result->Exports.push_back(Module::ExportDecl(0, true));
+    } else {
+      // Record each of the directories we stepped through as being part of
+      // the module we found, since the umbrella header covers them all.
+      for (unsigned I = 0, N = SkippedDirs.size(); I != N; ++I)
+        UmbrellaDirs[SkippedDirs[I]] = Result;
     }
-    
-    SkippedDirs.push_back(Dir);
-    
-    // Retrieve our parent path.
-    DirName = llvm::sys::path::parent_path(DirName);
-    if (DirName.empty())
-      break;
-    
-    // Resolve the parent path to a directory entry.
-    Dir = SourceMgr.getFileManager().getDirectory(DirName);
-  } while (Dir);
+
+    Headers[File].push_back(KnownHeader(Result, NormalHeader));
+
+    // If a header corresponds to an unavailable module, don't report
+    // that it maps to anything.
+    if (!Result->isAvailable())
+      return KnownHeader();
+
+    return Headers[File].back();
+  }
   
   return KnownHeader();
 }

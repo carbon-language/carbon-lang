@@ -182,6 +182,15 @@ private:
   /// associated with a specific module (e.g. in /usr/include).
   HeadersMap::iterator findKnownHeader(const FileEntry *File);
 
+  /// \brief Searches for a module whose umbrella directory contains \p File.
+  ///
+  /// \param File The header to search for.
+  ///
+  /// \param IntermediateDirs On success, contains the set of directories
+  /// searched before finding \p File.
+  KnownHeader findHeaderInUmbrellaDirs(const FileEntry *File,
+                    SmallVectorImpl<const DirectoryEntry *> &IntermediateDirs);
+
 public:
   /// \brief Construct a new module map.
   ///
