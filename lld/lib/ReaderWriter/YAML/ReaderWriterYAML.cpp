@@ -340,6 +340,8 @@ template <> struct ScalarTraits<RefKind> {
       return StringRef();
     return StringRef("unknown reference kind");
   }
+
+  static bool mustQuote(StringRef) { return false; }
 };
 
 template <> struct ScalarEnumerationTraits<lld::File::Kind> {
@@ -548,6 +550,8 @@ template <> struct ScalarTraits<lld::DefinedAtom::Alignment> {
     }
     return StringRef(); // returning empty string means success
   }
+
+  static bool mustQuote(StringRef) { return false; }
 };
 
 template <> struct ScalarEnumerationTraits<FileKinds> {
@@ -594,6 +598,8 @@ template <> struct ScalarTraits<ImplicitHex8> {
     val = n;
     return StringRef(); // returning empty string means success
   }
+
+  static bool mustQuote(StringRef) { return false; }
 };
 
 // YAML conversion for std::vector<const lld::File*>

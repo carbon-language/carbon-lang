@@ -453,6 +453,7 @@ struct ScalarTraits<VMProtect> {
     // Return the empty string on success,
     return StringRef();
   }
+  static bool mustQuote(StringRef) { return false; }
 };
 
 
