@@ -766,6 +766,45 @@ struct C2 : public C1, public C0 {};
 // CHECK-X64-NEXT:      | [sizeof=8, align=4
 // CHECK-X64-NEXT:      |  nvsize=8, nvalign=4]
 
+struct JA { char a; };
+struct JB {
+  char a;
+  virtual void f() {}
+};
+struct JC { char a; };
+struct JD : JA, JB, virtual JC {};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct JD
+// CHECK-NEXT:    0 |   struct JB (primary base)
+// CHECK-NEXT:    0 |     (JB vftable pointer)
+// CHECK-NEXT:    4 |     char a
+// CHECK-NEXT:   12 |   struct JA (base)
+// CHECK-NEXT:   12 |     char a
+// CHECK-NEXT:    8 |   (JD vbtable pointer)
+// CHECK-NEXT:   16 |   struct JC (virtual base)
+// CHECK-NEXT:   16 |     char a
+// CHECK-NEXT:      | [sizeof=17, align=4
+// CHECK-NEXT:      |  nvsize=16, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct JD
+// CHECK-X64-NEXT:    0 |   struct JB (primary base)
+// CHECK-X64-NEXT:    0 |     (JB vftable pointer)
+// CHECK-X64-NEXT:    8 |     char a
+// CHECK-X64-NEXT:   24 |   struct JA (base)
+// CHECK-X64-NEXT:   24 |     char a
+// CHECK-X64-NEXT:   16 |   (JD vbtable pointer)
+// CHECK-X64-NEXT:   32 |   struct JC (virtual base)
+// CHECK-X64-NEXT:   32 |     char a
+// CHECK-X64-NEXT:      | [sizeof=40, align=8
+// CHECK-X64-NEXT:      |  nvsize=32, nvalign=8]
+
 int a[
 sizeof(AA)+
 sizeof(AB)+
@@ -793,4 +832,6 @@ sizeof(AX)+
 sizeof(BX)+
 sizeof(CX)+
 sizeof(DX)+
-sizeof(C2)];
+sizeof(C2)+
+sizeof(JD)+
+0];

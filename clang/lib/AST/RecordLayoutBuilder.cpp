@@ -2211,8 +2211,6 @@ public:
   bool HasOwnVFPtr : 1;
   /// \brief True if the class has a vbtable pointer.
   bool HasVBPtr : 1;
-  /// \brief Lets us know if we're in 64-bit mode
-  bool Is64BitMode : 1;
   /// \brief True if the last sub-object within the type is zero sized or the
   /// object itself is zero sized.  This *does not* count members that are not
   /// records.  Only used for MS-ABI.
@@ -2310,13 +2308,13 @@ void MicrosoftRecordLayoutBuilder::cxxLayout(const CXXRecordDecl *RD) {
 
 void MicrosoftRecordLayoutBuilder::initializeLayout(const RecordDecl *RD) {
   IsUnion = RD->isUnion();
-  Is64BitMode = Context.getTargetInfo().getPointerWidth(0) == 64;
   Size = CharUnits::Zero();
   Alignment = CharUnits::One();
   // In 64-bit mode we always perform an alignment step after laying out vbases.
   // In 32-bit mode we do not.  The check to see if we need to perform alignment
   // checks the RequiredAlignment field and performs alignment if it isn't 0.
-  RequiredAlignment = Is64BitMode ? CharUnits::One() : CharUnits::Zero();
+  RequiredAlignment = Context.getTargetInfo().getPointerWidth(0) == 64 ?
+                      CharUnits::One() : CharUnits::Zero();
   // Compute the maximum field alignment.
   MaxFieldAlignment = CharUnits::Zero();
   // Honor the default struct packing maximum alignment flag.
@@ -2402,8 +2400,10 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBases(const CXXRecordDecl *RD) {
     const CXXRecordDecl *BaseDecl = I.getType()->getAsCXXRecordDecl();
     const ASTRecordLayout &BaseLayout = Context.getASTRecordLayout(BaseDecl);
     // Only lay out bases without extendable VFPtrs on the second pass.
-    if (BaseLayout.hasExtendableVFPtr())
+    if (BaseLayout.hasExtendableVFPtr()) {
+      VBPtrOffset = Bases[BaseDecl] + BaseLayout.getNonVirtualSize();
       continue;
+    }
     // If this is the first layout, check to see if it leads with a zero sized
     // object.  If it does, so do we.
     if (CheckLeadingLayout) {
@@ -2412,6 +2412,7 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBases(const CXXRecordDecl *RD) {
     }
     // Lay out the base.
     layoutNonVirtualBase(BaseDecl, BaseLayout, PreviousBaseLayout);
+    VBPtrOffset = Bases[BaseDecl] + BaseLayout.getNonVirtualSize();
   }
   // Set our VBPtroffset if we know it at this point.
   if (!HasVBPtr)
@@ -2437,7 +2438,6 @@ void MicrosoftRecordLayoutBuilder::layoutNonVirtualBase(
   Bases.insert(std::make_pair(BaseDecl, BaseOffset));
   Size = BaseOffset + BaseLayout.getNonVirtualSize();
   PreviousBaseLayout = &BaseLayout;
-  VBPtrOffset = Size;
 }
 
 void MicrosoftRecordLayoutBuilder::layoutFields(const RecordDecl *RD) {
@@ -2542,8 +2542,8 @@ void MicrosoftRecordLayoutBuilder::injectVBPtr(const CXXRecordDecl *RD) {
     *i += Context.toBits(Offset);
   for (BaseOffsetsMapTy::iterator i = Bases.begin(), e = Bases.end();
        i != e; ++i)
-       if (i->second >= InjectionSite)
-         i->second += Offset;
+    if (i->second >= InjectionSite)
+      i->second += Offset;
 }
 
 void MicrosoftRecordLayoutBuilder::injectVFPtr(const CXXRecordDecl *RD) {
