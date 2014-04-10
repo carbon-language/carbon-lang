@@ -1090,6 +1090,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     FuncAttrs.addAttribute(llvm::Attribute::NoRedZone);
   if (CodeGenOpts.NoImplicitFloat)
     FuncAttrs.addAttribute(llvm::Attribute::NoImplicitFloat);
+  if (CodeGenOpts.EnableSegmentedStacks)
+    FuncAttrs.addAttribute("split-stack");
 
   if (AttrOnCallSite) {
     // Attributes that should go on the call site only.
