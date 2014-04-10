@@ -1862,18 +1862,24 @@ static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
     }
   }
 
-  // Handle pseudo-target flags '-EL' and '-EB'.
-  if (Arg *A = Args.getLastArg(options::OPT_EL, options::OPT_EB)) {
-    if (A->getOption().matches(options::OPT_EL)) {
+  // Handle pseudo-target flags '-mlittle-endian'/'-EL' and
+  // '-mbig-endian'/'-EB'.
+  if (Arg *A = Args.getLastArg(options::OPT_mlittle_endian,
+                               options::OPT_mbig_endian)) {
+    if (A->getOption().matches(options::OPT_mlittle_endian)) {
       if (Target.getArch() == llvm::Triple::mips)
         Target.setArch(llvm::Triple::mipsel);
       else if (Target.getArch() == llvm::Triple::mips64)
         Target.setArch(llvm::Triple::mips64el);
+      else if (Target.getArch() == llvm::Triple::aarch64_be)
+        Target.setArch(llvm::Triple::aarch64);
     } else {
       if (Target.getArch() == llvm::Triple::mipsel)
         Target.setArch(llvm::Triple::mips);
       else if (Target.getArch() == llvm::Triple::mips64el)
         Target.setArch(llvm::Triple::mips64);
+      else if (Target.getArch() == llvm::Triple::aarch64)
+        Target.setArch(llvm::Triple::aarch64_be);
     }
   }
 
