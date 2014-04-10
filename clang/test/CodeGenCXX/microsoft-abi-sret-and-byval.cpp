@@ -49,7 +49,7 @@ struct Big {
 
 // WIN32: declare void @"{{.*take_bools_and_chars.*}}"
 // WIN32:       (<{ i8, [3 x i8], i8, [3 x i8], %struct.SmallWithDtor,
-// WIN32:           i8, [3 x i8], i8, [3 x i8], i32, i8 }>* inalloca)
+// WIN32:           i8, [3 x i8], i8, [3 x i8], i32, i8, [3 x i8] }>* inalloca)
 void take_bools_and_chars(char a, char b, SmallWithDtor c, char d, bool e, int f, bool g);
 void call_bools_and_chars() {
   take_bools_and_chars('A', 'B', SmallWithDtor(), 'D', true, 13, false);
@@ -223,7 +223,7 @@ struct X {
 };
 void g(X) {
 }
-// WIN32: define void @"\01?g@@YAXUX@@@Z"(<{ %struct.X }>* inalloca) {{.*}} {
+// WIN32: define void @"\01?g@@YAXUX@@@Z"(<{ %struct.X, [3 x i8] }>* inalloca) {{.*}} {
 // WIN32:   call x86_thiscallcc void @"\01??1X@@QAE@XZ"(%struct.X* {{.*}})
 // WIN32: }
 void f() {
@@ -261,6 +261,20 @@ void bar() {
 // WIN32:   call i32 @"\01?foo@test2@@YAHUNonTrivial@1@UPOD@1@@Z"([[argmem_ty]]* inalloca %argmem)
 // WIN32:   ret void
 // WIN32: }
+
+}
+
+namespace test3 {
+
+// Check that we padded the inalloca struct to a multiple of 4.
+struct NonTrivial {
+  NonTrivial();
+  NonTrivial(const NonTrivial &o);
+  ~NonTrivial();
+  int a;
+};
+void foo(NonTrivial a, bool b) { }
+// WIN32-LABEL: define void @"\01?foo@test3@@YAXUNonTrivial@1@_N@Z"(<{ %"struct.test3::NonTrivial", i8, [3 x i8] }>* inalloca)
 
 }
 

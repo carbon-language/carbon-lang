@@ -1013,24 +1013,22 @@ void
 X86_32ABIInfo::addFieldToArgStruct(SmallVector<llvm::Type *, 6> &FrameFields,
                                    unsigned &StackOffset,
                                    ABIArgInfo &Info, QualType Type) const {
+  assert(StackOffset % 4U == 0 && "unaligned inalloca struct");
+  Info = ABIArgInfo::getInAlloca(FrameFields.size());
+  FrameFields.push_back(CGT.ConvertTypeForMem(Type));
+  StackOffset += getContext().getTypeSizeInChars(Type).getQuantity();
+
   // Insert padding bytes to respect alignment.  For x86_32, each argument is 4
   // byte aligned.
-  unsigned Align = 4U;
-  if (Info.getKind() == ABIArgInfo::Indirect && Info.getIndirectByVal())
-    Align = std::max(Align, Info.getIndirectAlign());
-  if (StackOffset & (Align - 1)) {
+  if (StackOffset % 4U) {
     unsigned OldOffset = StackOffset;
-    StackOffset = llvm::RoundUpToAlignment(StackOffset, Align);
+    StackOffset = llvm::RoundUpToAlignment(StackOffset, 4U);
     unsigned NumBytes = StackOffset - OldOffset;
     assert(NumBytes);
     llvm::Type *Ty = llvm::Type::getInt8Ty(getVMContext());
     Ty = llvm::ArrayType::get(Ty, NumBytes);
     FrameFields.push_back(Ty);
   }
-
-  Info = ABIArgInfo::getInAlloca(FrameFields.size());
-  FrameFields.push_back(CGT.ConvertTypeForMem(Type));
-  StackOffset += getContext().getTypeSizeInChars(Type).getQuantity();
 }
 
 void X86_32ABIInfo::rewriteWithInAlloca(CGFunctionInfo &FI) const {
