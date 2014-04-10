@@ -19,5 +19,5 @@
 type = Library
 name = R600Desc
 parent = R600
-required_libraries = MC R600AsmPrinter R600Info
+required_libraries = MC R600AsmPrinter R600Info Support
 add_to_library_groups = R600
