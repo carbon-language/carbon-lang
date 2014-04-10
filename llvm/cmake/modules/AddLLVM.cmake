@@ -276,6 +276,11 @@ function(llvm_add_library name)
   endif()
 
   if(ARG_SHARED)
+    if(WIN32)
+      set_target_properties(${name} PROPERTIES
+        PREFIX ""
+        )
+    endif()
     if (MSVC)
       set_target_properties(${name}
         PROPERTIES
