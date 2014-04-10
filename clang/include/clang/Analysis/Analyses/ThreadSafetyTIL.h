@@ -46,6 +46,7 @@
 #include "clang/Analysis/Analyses/ThreadSafetyUtil.h"
 #include "clang/AST/ExprCXX.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Compiler.h"
 
 #include <cassert>
 #include <cstddef>
@@ -112,11 +113,11 @@ protected:
   unsigned short Flags;
 
 private:
-  SExpr() = delete;
+  SExpr() LLVM_DELETED_FUNCTION;
 
   // SExpr objects must be created in an arena and cannot be deleted.
-  void *operator new(size_t) = delete;
-  void operator delete(void *) = delete;
+  void *operator new(size_t) LLVM_DELETED_FUNCTION;
+  void operator delete(void *) LLVM_DELETED_FUNCTION;
 };
 
 
@@ -261,7 +262,9 @@ public:
   Future() :
     SExpr(COP_Future), Status(FS_pending), Result(nullptr), Location(nullptr)
   {}
-  virtual ~Future() = delete;
+private:
+  virtual ~Future() LLVM_DELETED_FUNCTION;
+public:
 
   // Registers the location in the AST where this future is stored.
   // Forcing the future will automatically update the AST.
