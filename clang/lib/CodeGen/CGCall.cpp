@@ -2546,8 +2546,14 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // FIXME: Do this earlier rather than hacking it in here!
   llvm::Value *ArgMemory = 0;
   if (llvm::StructType *ArgStruct = CallInfo.getArgStruct()) {
-    llvm::AllocaInst *AI = new llvm::AllocaInst(
-        ArgStruct, "argmem", CallArgs.getStackBase()->getNextNode());
+    llvm::Instruction *IP = CallArgs.getStackBase();
+    llvm::AllocaInst *AI;
+    if (IP) {
+      IP = IP->getNextNode();
+      AI = new llvm::AllocaInst(ArgStruct, "argmem", IP);
+    } else {
+      AI = Builder.CreateAlloca(ArgStruct, nullptr, "argmem");
+    }
     AI->setUsedWithInAlloca(true);
     assert(AI->isUsedWithInAlloca() && !AI->isStaticAlloca());
     ArgMemory = AI;
