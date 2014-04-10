@@ -45,8 +45,8 @@ public:
 ///
 /// This provides a bit of syntactic sugar to make using sub-ranges
 /// in for loops a bit easier. Analogous to std::make_pair().
-template<class T> iterator_range<T> make_range(const T &x, const T &y) {
-  return (iterator_range<T>(x, y));
+template <class T> iterator_range<T> make_range(T x, T y) {
+  return iterator_range<T>(std::move(x), std::move(y));
 }
 }
 
