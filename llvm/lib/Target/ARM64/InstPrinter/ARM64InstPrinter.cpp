@@ -1480,10 +1480,10 @@ void ARM64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
 
   bool Valid;
   auto Mapper = ARM64SysReg::MRSMapper();
-  StringRef Name = Mapper.toString(Val, Valid);
+  std::string Name = Mapper.toString(Val, Valid);
 
   if (Valid)
-    O << StringRef(Name.str()).upper();
+    O << StringRef(Name).upper();
 }
 
 void ARM64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
@@ -1492,10 +1492,10 @@ void ARM64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
 
   bool Valid;
   auto Mapper = ARM64SysReg::MSRMapper();
-  StringRef Name = Mapper.toString(Val, Valid);
+  std::string Name = Mapper.toString(Val, Valid);
 
   if (Valid)
-    O << StringRef(Name.str()).upper();
+    O << StringRef(Name).upper();
 }
 
 void ARM64InstPrinter::printSystemCPSRField(const MCInst *MI, unsigned OpNo,
