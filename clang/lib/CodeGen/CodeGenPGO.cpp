@@ -339,17 +339,17 @@ namespace {
     void VisitStmt(const Stmt *S) { VisitChildren(S); }
 
     /// Assign a counter to track entry to the function body.
-    void VisitFunctionDecl(const FunctionDecl *S) {
-      CounterMap[S->getBody()] = NextCounter++;
-      Visit(S->getBody());
+    void VisitFunctionDecl(const FunctionDecl *D) {
+      CounterMap[D->getBody()] = NextCounter++;
+      Visit(D->getBody());
     }
-    void VisitObjCMethodDecl(const ObjCMethodDecl *S) {
-      CounterMap[S->getBody()] = NextCounter++;
-      Visit(S->getBody());
+    void VisitObjCMethodDecl(const ObjCMethodDecl *D) {
+      CounterMap[D->getBody()] = NextCounter++;
+      Visit(D->getBody());
     }
-    void VisitBlockDecl(const BlockDecl *S) {
-      CounterMap[S->getBody()] = NextCounter++;
-      Visit(S->getBody());
+    void VisitBlockDecl(const BlockDecl *D) {
+      CounterMap[D->getBody()] = NextCounter++;
+      Visit(D->getBody());
     }
     /// Assign a counter to track the block following a label.
     void VisitLabelStmt(const LabelStmt *S) {
@@ -502,25 +502,25 @@ namespace {
       }
     }
 
-    void VisitFunctionDecl(const FunctionDecl *S) {
-      RegionCounter Cnt(PGO, S->getBody());
+    void VisitFunctionDecl(const FunctionDecl *D) {
+      RegionCounter Cnt(PGO, D->getBody());
       Cnt.beginRegion();
-      CountMap[S->getBody()] = PGO.getCurrentRegionCount();
-      Visit(S->getBody());
+      CountMap[D->getBody()] = PGO.getCurrentRegionCount();
+      Visit(D->getBody());
     }
 
-    void VisitObjCMethodDecl(const ObjCMethodDecl *S) {
-      RegionCounter Cnt(PGO, S->getBody());
+    void VisitObjCMethodDecl(const ObjCMethodDecl *D) {
+      RegionCounter Cnt(PGO, D->getBody());
       Cnt.beginRegion();
-      CountMap[S->getBody()] = PGO.getCurrentRegionCount();
-      Visit(S->getBody());
+      CountMap[D->getBody()] = PGO.getCurrentRegionCount();
+      Visit(D->getBody());
     }
 
-    void VisitBlockDecl(const BlockDecl *S) {
-      RegionCounter Cnt(PGO, S->getBody());
+    void VisitBlockDecl(const BlockDecl *D) {
+      RegionCounter Cnt(PGO, D->getBody());
       Cnt.beginRegion();
-      CountMap[S->getBody()] = PGO.getCurrentRegionCount();
-      Visit(S->getBody());
+      CountMap[D->getBody()] = PGO.getCurrentRegionCount();
+      Visit(D->getBody());
     }
 
     void VisitReturnStmt(const ReturnStmt *S) {
