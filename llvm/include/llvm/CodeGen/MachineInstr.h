@@ -24,6 +24,7 @@
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/CodeGen/MachineOperand.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -242,6 +243,14 @@ public:
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
   ///
   DebugLoc getDebugLoc() const { return debugLoc; }
+
+  /// getDebugVariable() - Return the debug variable referenced by
+  /// this DBG_VALUE instruction.
+  DIVariable getDebugVariable() const {
+    assert(isDebugValue() && "not a DBG_VALUE");
+    const MDNode *Var = getOperand(getNumOperands() - 1).getMetadata();
+    return DIVariable(Var);
+  }
 
   /// emitError - Emit an error referring to the source location of this
   /// instruction. This should only be used for inline assembly that is somehow

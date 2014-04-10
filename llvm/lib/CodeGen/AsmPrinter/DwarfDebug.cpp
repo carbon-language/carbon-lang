@@ -1198,7 +1198,7 @@ static DebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
                                       const MCSymbol *SLabel,
                                       const MachineInstr *MI,
                                       DwarfCompileUnit *Unit) {
-  const MDNode *Var = MI->getOperand(MI->getNumOperands() - 1).getMetadata();
+  const MDNode *Var = MI->getDebugVariable();
 
   assert(MI->getNumOperands() == 3);
   if (MI->getOperand(0).isReg()) {
@@ -1493,8 +1493,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
         assert(MI->getNumOperands() > 1 && "Invalid machine instruction!");
 
         // Keep track of user variables.
-        const MDNode *Var =
-            MI->getOperand(MI->getNumOperands() - 1).getMetadata();
+        const MDNode *Var = MI->getDebugVariable();
 
         // Variable is in a register, we need to check for clobbers.
         if (isDbgValueInDefinedReg(MI))
