@@ -951,3 +951,43 @@ namespace test44 {
   }
   // CHECK-LABEL: define linkonce_odr void @_ZN6test443foo3barEv(%"struct.test44::foo"* %this)
 }
+
+namespace test45 {
+  struct S {
+    enum e {};
+  };
+  template <typename T>
+  void f(enum T::e *) {}
+  template void f<S>(S::e *);
+  // CHECK-LABEL: define weak_odr void @_ZN6test451fINS_1SEEEvPNTeT_1eE(i32*)
+}
+
+namespace test46 {
+  struct S {
+    struct s {};
+  };
+  template <typename T>
+  void f(struct T::s *) {}
+  template void f<S>(S::s *);
+  // CHECK-LABEL: define weak_odr void @_ZN6test461fINS_1SEEEvPNTsT_1sE(%"struct.test46::S::s"*)
+}
+
+namespace test47 {
+  struct S {
+    class c {};
+  };
+  template <typename T>
+  void f(class T::c *) {}
+  template void f<S>(S::c *);
+  // CHECK-LABEL: define weak_odr void @_ZN6test471fINS_1SEEEvPNTsT_1cE(%"class.test47::S::c"*)
+}
+
+namespace test48 {
+  struct S {
+    union u {};
+  };
+  template <typename T>
+  void f(union T::u *) {}
+  template void f<S>(S::u *);
+  // CHECK-LABEL: define weak_odr void @_ZN6test481fINS_1SEEEvPNTuT_1uE(%"union.test48::S::u"*)
+}

@@ -2361,8 +2361,35 @@ void CXXNameMangler::mangleType(const TemplateSpecializationType *T) {
 void CXXNameMangler::mangleType(const DependentNameType *T) {
   // Typename types are always nested
   Out << 'N';
+  // Proposal by cxx-abi-dev, 2014-03-26
+  // <class-enum-type> ::= <name>    # non-dependent or dependent type name or
+  //                                 # dependent elaborated type specifier using
+  //                                 # ‘typename'
+  //                   ::= Ts <name> # dependent elaborated type specifier using
+  //                                 # ‘struct’ or ‘class'
+  //                   ::= Tu <name> # dependent elaborated type specifier using
+  //                                 # ‘union'
+  //                   ::= Te <name> # dependent elaborated type specifier using
+  //                                 # ‘enum’
+  switch (T->getKeyword()) {
+    case ETK_Typename:
+      break;
+    case ETK_Struct:
+    case ETK_Class:
+    case ETK_Interface:
+      Out << "Ts";
+      break;
+    case ETK_Union:
+      Out << "Tu";
+      break;
+    case ETK_Enum:
+      Out << "Te";
+      break;
+    default:
+      llvm_unreachable("unexpected keyword for dependent type name");
+  }
   manglePrefix(T->getQualifier());
-  mangleSourceName(T->getIdentifier());    
+  mangleSourceName(T->getIdentifier());
   Out << 'E';
 }
 
