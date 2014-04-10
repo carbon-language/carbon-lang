@@ -258,11 +258,6 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
     ELFUniquingMap = new ELFUniqueMapTy();
   ELFUniqueMapTy &Map = *(ELFUniqueMapTy*)ELFUniquingMap;
 
-  SmallString<32> ZDebugName;
-  if (MAI->compressDebugSections() && Section.startswith(".debug_") &&
-      Section != ".debug_frame" && Section != ".debug_line")
-    Section = (".z" + Section.drop_front(1)).toStringRef(ZDebugName);
-
   // Do the lookup, if we have a hit, return it.
   std::pair<ELFUniqueMapTy::iterator, bool> Entry = Map.insert(
       std::make_pair(SectionGroupPair(Section, Group), (MCSectionELF *)0));

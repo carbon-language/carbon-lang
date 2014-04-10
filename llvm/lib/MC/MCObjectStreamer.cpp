@@ -20,7 +20,6 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/MC/MCSectionELF.h"
 using namespace llvm;
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
@@ -64,11 +63,7 @@ MCDataFragment *MCObjectStreamer::getOrCreateDataFragment() const {
   // When bundling is enabled, we don't want to add data to a fragment that
   // already has instructions (see MCELFStreamer::EmitInstToData for details)
   if (!F || (Assembler->isBundlingEnabled() && F->hasInstructions())) {
-    const auto *Sec = dyn_cast<MCSectionELF>(&getCurrentSectionData()->getSection());
-    if (Sec && Sec->getSectionName().startswith(".zdebug_"))
-      F = new MCCompressedFragment();
-    else
-      F = new MCDataFragment();
+    F = new MCDataFragment();
     insert(F);
   }
   return F;

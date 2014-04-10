@@ -28,9 +28,6 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Compression.h"
-#include "llvm/Support/Host.h"
 
 using namespace llvm;
 
@@ -229,39 +226,6 @@ MCEncodedFragment::~MCEncodedFragment() {
 /* *** */
 
 MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
-}
-
-/* *** */
-
-const SmallVectorImpl<char> &MCCompressedFragment::getCompressedContents() const {
-  assert(getParent()->size() == 1 &&
-         "Only compress sections containing a single fragment");
-  if (CompressedContents.empty()) {
-    // FIXME: could be more efficient if we let zlib::compress append to a
-    // buffer rather than always from the start.
-    zlib::Status Success =
-        zlib::compress(StringRef(getContents().data(), getContents().size()),
-                       CompressedContents);
-    (void)Success;
-    assert(Success == zlib::StatusOK);
-    static const StringRef Magic = "ZLIB";
-    uint64_t Size = getContents().size();
-    if (sys::IsLittleEndianHost)
-      Size = sys::SwapByteOrder(Size);
-    CompressedContents.insert(CompressedContents.begin(),
-                              Magic.size() + sizeof(Size));
-    std::copy(Magic.begin(), Magic.end(), CompressedContents.begin());
-    std::copy(reinterpret_cast<char *>(&Size),
-              reinterpret_cast<char *>(&Size + 1),
-              CompressedContents.begin() + Magic.size());
-  }
-  return CompressedContents;
-}
-
-SmallVectorImpl<char> &MCCompressedFragment::getContents() {
-  assert(CompressedContents.empty() &&
-         "Fragment contents should not be altered after compression");
-  return MCDataFragment::getContents();
 }
 
 /* *** */
@@ -467,8 +431,6 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
   case MCFragment::FT_Relaxable:
   case MCFragment::FT_CompactEncodedInst:
     return cast<MCEncodedFragment>(F).getContents().size();
-  case MCFragment::FT_Compressed:
-    return cast<MCCompressedFragment>(F).getCompressedContents().size();
   case MCFragment::FT_Fill:
     return cast<MCFillFragment>(F).getSize();
 
@@ -657,11 +619,6 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     break;
   }
 
-  case MCFragment::FT_Compressed:
-    ++stats::EmittedDataFragments;
-    OW->WriteBytes(cast<MCCompressedFragment>(F).getCompressedContents());
-    break;
-
   case MCFragment::FT_Data: 
     ++stats::EmittedDataFragments;
     writeFragmentContents(F, OW);
@@ -738,7 +695,6 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
            ie = SD->end(); it != ie; ++it) {
       switch (it->getKind()) {
       default: llvm_unreachable("Invalid fragment in virtual section!");
-      case MCFragment::FT_Compressed:
       case MCFragment::FT_Data: {
         // Check that we aren't trying to write a non-zero contents (or fixups)
         // into a virtual section. This is to support clients which use standard
@@ -1070,8 +1026,6 @@ void MCFragment::dump() {
   switch (getKind()) {
   case MCFragment::FT_Align: OS << "MCAlignFragment"; break;
   case MCFragment::FT_Data:  OS << "MCDataFragment"; break;
-  case MCFragment::FT_Compressed:
-    OS << "MCCompressedFragment"; break;
   case MCFragment::FT_CompactEncodedInst:
     OS << "MCCompactEncodedInstFragment"; break;
   case MCFragment::FT_Fill:  OS << "MCFillFragment"; break;
@@ -1098,7 +1052,6 @@ void MCFragment::dump() {
        << " MaxBytesToEmit:" << AF->getMaxBytesToEmit() << ">";
     break;
   }
-  case MCFragment::FT_Compressed:
   case MCFragment::FT_Data:  {
     const MCDataFragment *DF = cast<MCDataFragment>(this);
     OS << "\n       ";

@@ -1,5 +1,7 @@
 // RUN: llvm-mc -filetype=obj -compress-debug-sections -triple x86_64-pc-linux-gnu %s -o - | llvm-objdump -s - | FileCheck %s
 
+// XFAIL: *
+
 // REQUIRES: zlib
 
 // CHECK: Contents of section .debug_line:

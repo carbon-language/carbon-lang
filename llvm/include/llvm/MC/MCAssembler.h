@@ -52,7 +52,6 @@ public:
   enum FragmentType {
     FT_Align,
     FT_Data,
-    FT_Compressed,
     FT_CompactEncodedInst,
     FT_Fill,
     FT_Relaxable,
@@ -162,7 +161,6 @@ public:
         return false;
       case MCFragment::FT_Relaxable:
       case MCFragment::FT_CompactEncodedInst:
-      case MCFragment::FT_Compressed:
       case MCFragment::FT_Data:
         return true;
     }
@@ -197,8 +195,7 @@ public:
 
   static bool classof(const MCFragment *F) {
     MCFragment::FragmentType Kind = F->getKind();
-    return Kind == MCFragment::FT_Relaxable || Kind == MCFragment::FT_Data ||
-           Kind == MCFragment::FT_Compressed;
+    return Kind == MCFragment::FT_Relaxable || Kind == MCFragment::FT_Data;
   }
 };
 
@@ -217,11 +214,6 @@ class MCDataFragment : public MCEncodedFragmentWithFixups {
 
   /// Fixups - The list of fixups in this fragment.
   SmallVector<MCFixup, 4> Fixups;
-protected:
-  MCDataFragment(MCFragment::FragmentType FType, MCSectionData *SD = 0)
-      : MCEncodedFragmentWithFixups(FType, SD), HasInstructions(false),
-        AlignToBundleEnd(false) {}
-
 public:
   MCDataFragment(MCSectionData *SD = 0)
     : MCEncodedFragmentWithFixups(FT_Data, SD),
@@ -255,19 +247,8 @@ public:
   const_fixup_iterator fixup_end() const override {return Fixups.end();}
 
   static bool classof(const MCFragment *F) {
-    return F->getKind() == MCFragment::FT_Data ||
-           F->getKind() == MCFragment::FT_Compressed;
+    return F->getKind() == MCFragment::FT_Data;
   }
-};
-
-class MCCompressedFragment: public MCDataFragment {
-  mutable SmallVector<char, 32> CompressedContents;
-public:
-  MCCompressedFragment(MCSectionData *SD = nullptr)
-      : MCDataFragment(FT_Compressed, SD) {}
-  const SmallVectorImpl<char> &getCompressedContents() const;
-  using MCDataFragment::getContents;
-  SmallVectorImpl<char> &getContents() override;
 };
 
 /// This is a compact (memory-size-wise) fragment for holding an encoded
