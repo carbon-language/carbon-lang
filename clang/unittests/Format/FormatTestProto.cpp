@@ -92,5 +92,13 @@ TEST_F(FormatTestProto, FormatsOptions) {
   verifyFormat("option (my_custom_option) = \"abc\";");
 }
 
+TEST_F(FormatTestProto, FormatsService) {
+  verifyFormat("service SearchService {\n"
+               "  rpc Search(SearchRequest) returns (SearchResponse) {\n"
+               "    option foo = true;\n"
+               "  }\n"
+               "};");
+}
+
 } // end namespace tooling
 } // end namespace clang

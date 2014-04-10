@@ -335,18 +335,25 @@ void UnwrappedLineParser::calculateBraceTypes() {
     case tok::r_brace:
       if (!LBraceStack.empty()) {
         if (LBraceStack.back()->BlockKind == BK_Unknown) {
-          // If there is a comma, semicolon or right paren after the closing
-          // brace, we assume this is a braced initializer list.  Note that
-          // regardless how we mark inner braces here, we will overwrite the
-          // BlockKind later if we parse a braced list (where all blocks inside
-          // are by default braced lists), or when we explicitly detect blocks
-          // (for example while parsing lambdas).
-          //
-          // We exclude + and - as they can be ObjC visibility modifiers.
-          if (NextTok->isOneOf(tok::comma, tok::semi, tok::r_paren, tok::period,
-                               tok::r_square, tok::l_brace, tok::colon) ||
-              (NextTok->isBinaryOperator() &&
-               !NextTok->isOneOf(tok::plus, tok::minus))) {
+          bool ProbablyBracedList = false;
+          if (Style.Language == FormatStyle::LK_Proto) {
+            ProbablyBracedList = NextTok->isOneOf(tok::comma, tok::r_square);
+          } else {
+            // If there is a comma, semicolon or right paren after the closing
+            // brace, we assume this is a braced initializer list.  Note that
+            // regardless how we mark inner braces here, we will overwrite the
+            // BlockKind later if we parse a braced list (where all blocks
+            // inside are by default braced lists), or when we explicitly detect
+            // blocks (for example while parsing lambdas).
+            //
+            // We exclude + and - as they can be ObjC visibility modifiers.
+            ProbablyBracedList =
+                NextTok->isOneOf(tok::comma, tok::semi, tok::period, tok::colon,
+                                 tok::r_paren, tok::r_square, tok::l_brace) ||
+                (NextTok->isBinaryOperator() &&
+                 !NextTok->isOneOf(tok::plus, tok::minus));
+          }
+          if (ProbablyBracedList) {
             Tok->BlockKind = BK_BracedInit;
             LBraceStack.back()->BlockKind = BK_BracedInit;
           } else {
