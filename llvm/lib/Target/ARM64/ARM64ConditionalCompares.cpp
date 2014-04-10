@@ -212,13 +212,14 @@ public:
 // Check that all PHIs in Tail are selecting the same value from Head and CmpBB.
 // This means that no if-conversion is required when merging CmpBB into Head.
 bool SSACCmpConv::trivialTailPHIs() {
-  for (MachineBasicBlock::iterator I = Tail->begin(), E = Tail->end();
-       I != E && I->isPHI(); ++I) {
+  for (auto &I : *Tail) {
+    if (!I.isPHI())
+      break;
     unsigned HeadReg = 0, CmpBBReg = 0;
     // PHI operands come in (VReg, MBB) pairs.
-    for (unsigned oi = 1, oe = I->getNumOperands(); oi != oe; oi += 2) {
-      MachineBasicBlock *MBB = I->getOperand(oi + 1).getMBB();
-      unsigned Reg = I->getOperand(oi).getReg();
+    for (unsigned oi = 1, oe = I.getNumOperands(); oi != oe; oi += 2) {
+      MachineBasicBlock *MBB = I.getOperand(oi + 1).getMBB();
+      unsigned Reg = I.getOperand(oi).getReg();
       if (MBB == Head) {
         assert((!HeadReg || HeadReg == Reg) && "Inconsistent PHI operands");
         HeadReg = Reg;
@@ -237,14 +238,15 @@ bool SSACCmpConv::trivialTailPHIs() {
 // Assuming that trivialTailPHIs() is true, update the Tail PHIs by simply
 // removing the CmpBB operands. The Head operands will be identical.
 void SSACCmpConv::updateTailPHIs() {
-  for (MachineBasicBlock::iterator I = Tail->begin(), E = Tail->end();
-       I != E && I->isPHI(); ++I) {
+  for (auto &I : *Tail) {
+    if (!I.isPHI())
+      break;
     // I is a PHI. It can have multiple entries for CmpBB.
-    for (unsigned oi = I->getNumOperands(); oi > 2; oi -= 2) {
+    for (unsigned oi = I.getNumOperands(); oi > 2; oi -= 2) {
       // PHI operands are (Reg, MBB) at (oi-2, oi-1).
-      if (I->getOperand(oi - 1).getMBB() == CmpBB) {
-        I->RemoveOperand(oi - 1);
-        I->RemoveOperand(oi - 2);
+      if (I.getOperand(oi - 1).getMBB() == CmpBB) {
+        I.RemoveOperand(oi - 1);
+        I.RemoveOperand(oi - 2);
       }
     }
   }
@@ -387,10 +389,8 @@ bool SSACCmpConv::canSpeculateInstrs(MachineBasicBlock *MBB,
 
   // Check all instructions, except the terminators. It is assumed that
   // terminators never have side effects or define any used register values.
-  for (MachineBasicBlock::iterator I = MBB->begin(),
-                                   E = MBB->getFirstTerminator();
-       I != E; ++I) {
-    if (I->isDebugValue())
+  for (auto &I : make_range(MBB->begin(), MBB->getFirstTerminator())) {
+    if (I.isDebugValue())
       continue;
 
     if (++InstrCount > BlockInstrLimit && !Stress) {
@@ -400,29 +400,29 @@ bool SSACCmpConv::canSpeculateInstrs(MachineBasicBlock *MBB,
     }
 
     // There shouldn't normally be any phis in a single-predecessor block.
-    if (I->isPHI()) {
-      DEBUG(dbgs() << "Can't hoist: " << *I);
+    if (I.isPHI()) {
+      DEBUG(dbgs() << "Can't hoist: " << I);
       return false;
     }
 
     // Don't speculate loads. Note that it may be possible and desirable to
     // speculate GOT or constant pool loads that are guaranteed not to trap,
     // but we don't support that for now.
-    if (I->mayLoad()) {
-      DEBUG(dbgs() << "Won't speculate load: " << *I);
+    if (I.mayLoad()) {
+      DEBUG(dbgs() << "Won't speculate load: " << I);
       return false;
     }
 
     // We never speculate stores, so an AA pointer isn't necessary.
     bool DontMoveAcrossStore = true;
-    if (!I->isSafeToMove(TII, 0, DontMoveAcrossStore)) {
-      DEBUG(dbgs() << "Can't speculate: " << *I);
+    if (!I.isSafeToMove(TII, 0, DontMoveAcrossStore)) {
+      DEBUG(dbgs() << "Can't speculate: " << I);
       return false;
     }
 
     // Only CmpMI is allowed to clobber the flags.
-    if (&*I != CmpMI && I->modifiesRegister(ARM64::CPSR, TRI)) {
-      DEBUG(dbgs() << "Clobbers flags: " << *I);
+    if (&I != CmpMI && I.modifiesRegister(ARM64::CPSR, TRI)) {
+      DEBUG(dbgs() << "Clobbers flags: " << I);
       return false;
     }
   }
@@ -906,11 +906,9 @@ bool ARM64ConditionalCompares::runOnMachineFunction(MachineFunction &MF) {
   // Visit blocks in dominator tree pre-order. The pre-order enables multiple
   // cmp-conversions from the same head block.
   // Note that updateDomTree() modifies the children of the DomTree node
-  // currently being visited. The df_iterator supports that, it doesn't look at
+  // currently being visited. The df_iterator supports that; it doesn't look at
   // child_begin() / child_end() until after a node has been visited.
-  for (df_iterator<MachineDominatorTree *> I = df_begin(DomTree),
-                                           E = df_end(DomTree);
-       I != E; ++I)
+  for (auto *I : make_range(df_begin(DomTree), df_end(DomTree)))
     if (tryConvert(I->getBlock()))
       Changed = true;
 
