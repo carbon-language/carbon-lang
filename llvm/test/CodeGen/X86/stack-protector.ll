@@ -22,7 +22,7 @@
 ; test1a: array of [16 x i8] 
 ;         no ssp attribute
 ; Requires no protector.
-define void @test1a(i8* %a) nounwind uwtable {
+define void @test1a(i8* %a) {
 entry:
 ; LINUX-I386-LABEL: test1a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -53,7 +53,8 @@ entry:
 ; test1b: array of [16 x i8] 
 ;         ssp attribute
 ; Requires protector.
-define void @test1b(i8* %a) nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test1b(i8* %a) #0 {
 entry:
 ; LINUX-I386-LABEL: test1b:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -88,7 +89,8 @@ entry:
 ; test1c: array of [16 x i8] 
 ;         sspstrong attribute
 ; Requires protector.
-define void @test1c(i8* %a) nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test1c(i8* %a) #1 {
 entry:
 ; LINUX-I386-LABEL: test1c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -119,7 +121,8 @@ entry:
 ; test1d: array of [16 x i8] 
 ;         sspreq attribute
 ; Requires protector.
-define void @test1d(i8* %a) nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test1d(i8* %a) #2 {
 entry:
 ; LINUX-I386-LABEL: test1d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -150,7 +153,7 @@ entry:
 ; test2a: struct { [16 x i8] }
 ;         no ssp attribute
 ; Requires no protector.
-define void @test2a(i8* %a) nounwind uwtable {
+define void @test2a(i8* %a) {
 entry:
 ; LINUX-I386-LABEL: test2a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -183,7 +186,8 @@ entry:
 ; test2b: struct { [16 x i8] }
 ;          ssp attribute
 ; Requires protector.
-define void @test2b(i8* %a) nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test2b(i8* %a) #0 {
 entry:
 ; LINUX-I386-LABEL: test2b:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -216,7 +220,8 @@ entry:
 ; test2c: struct { [16 x i8] }
 ;          sspstrong attribute
 ; Requires protector.
-define void @test2c(i8* %a) nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test2c(i8* %a) #1 {
 entry:
 ; LINUX-I386-LABEL: test2c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -249,7 +254,8 @@ entry:
 ; test2d: struct { [16 x i8] }
 ;          sspreq attribute
 ; Requires protector.
-define void @test2d(i8* %a) nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test2d(i8* %a) #2 {
 entry:
 ; LINUX-I386-LABEL: test2d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -282,7 +288,7 @@ entry:
 ; test3a:  array of [4 x i8]
 ;          no ssp attribute
 ; Requires no protector.
-define void @test3a(i8* %a) nounwind uwtable {
+define void @test3a(i8* %a) {
 entry:
 ; LINUX-I386-LABEL: test3a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -313,7 +319,8 @@ entry:
 ; test3b:  array [4 x i8]
 ;          ssp attribute
 ; Requires no protector.
-define void @test3b(i8* %a) nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test3b(i8* %a) #0 {
 entry:
 ; LINUX-I386-LABEL: test3b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -344,7 +351,8 @@ entry:
 ; test3c:  array of [4 x i8]
 ;          sspstrong attribute
 ; Requires protector.
-define void @test3c(i8* %a) nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test3c(i8* %a) #1 {
 entry:
 ; LINUX-I386-LABEL: test3c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -375,7 +383,8 @@ entry:
 ; test3d:  array of [4 x i8]
 ;          sspreq attribute
 ; Requires protector.
-define void @test3d(i8* %a) nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test3d(i8* %a) #2 {
 entry:
 ; LINUX-I386-LABEL: test3d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -406,7 +415,7 @@ entry:
 ; test4a:  struct { [4 x i8] }
 ;          no ssp attribute
 ; Requires no protector.
-define void @test4a(i8* %a) nounwind uwtable {
+define void @test4a(i8* %a) {
 entry:
 ; LINUX-I386-LABEL: test4a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -439,7 +448,8 @@ entry:
 ; test4b:  struct { [4 x i8] }
 ;          ssp attribute
 ; Requires no protector.
-define void @test4b(i8* %a) nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test4b(i8* %a) #0 {
 entry:
 ; LINUX-I386-LABEL: test4b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -472,7 +482,8 @@ entry:
 ; test4c:  struct { [4 x i8] }
 ;          sspstrong attribute
 ; Requires protector.
-define void @test4c(i8* %a) nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test4c(i8* %a) #1 {
 entry:
 ; LINUX-I386-LABEL: test4c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -505,7 +516,8 @@ entry:
 ; test4d:  struct { [4 x i8] }
 ;          sspreq attribute
 ; Requires protector.
-define void @test4d(i8* %a) nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test4d(i8* %a) #2 {
 entry:
 ; LINUX-I386-LABEL: test4d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -538,7 +550,7 @@ entry:
 ; test5a:  no arrays / no nested arrays
 ;          no ssp attribute
 ; Requires no protector.
-define void @test5a(i8* %a) nounwind uwtable {
+define void @test5a(i8* %a) {
 entry:
 ; LINUX-I386-LABEL: test5a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -565,7 +577,8 @@ entry:
 ; test5b:  no arrays / no nested arrays
 ;          ssp attribute
 ; Requires no protector.
-define void @test5b(i8* %a) nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test5b(i8* %a) #0 {
 entry:
 ; LINUX-I386-LABEL: test5b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -592,7 +605,8 @@ entry:
 ; test5c:  no arrays / no nested arrays
 ;          sspstrong attribute
 ; Requires no protector.
-define void @test5c(i8* %a) nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test5c(i8* %a) #1 {
 entry:
 ; LINUX-I386-LABEL: test5c:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -619,7 +633,8 @@ entry:
 ; test5d:  no arrays / no nested arrays
 ;          sspreq attribute
 ; Requires protector.
-define void @test5d(i8* %a) nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test5d(i8* %a) #2 {
 entry:
 ; LINUX-I386-LABEL: test5d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -646,7 +661,7 @@ entry:
 ; test6a:  Address-of local taken (j = &a)
 ;          no ssp attribute
 ; Requires no protector.
-define void @test6a() nounwind uwtable {
+define void @test6a() {
 entry:
 ; LINUX-I386-LABEL: test6a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -677,7 +692,8 @@ entry:
 ; test6b:  Address-of local taken (j = &a)
 ;          ssp attribute
 ; Requires no protector.
-define void @test6b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test6b() #0 {
 entry:
 ; LINUX-I386-LABEL: test6b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -708,7 +724,8 @@ entry:
 ; test6c:  Address-of local taken (j = &a)
 ;          sspstrong attribute
 ; Requires protector.
-define void @test6c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test6c() #1 {
 entry:
 ; LINUX-I386-LABEL: test6c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -739,7 +756,8 @@ entry:
 ; test6d:  Address-of local taken (j = &a)
 ;          sspreq attribute
 ; Requires protector.
-define void @test6d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test6d() #2 {
 entry:
 ; LINUX-I386-LABEL: test6d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -770,7 +788,7 @@ entry:
 ; test7a:  PtrToInt Cast
 ;          no ssp attribute
 ; Requires no protector.
-define void @test7a() nounwind uwtable readnone {
+define void @test7a()  {
 entry:
 ; LINUX-I386-LABEL: test7a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -796,7 +814,8 @@ entry:
 ; test7b:  PtrToInt Cast
 ;          ssp attribute
 ; Requires no protector.
-define void @test7b() nounwind uwtable readnone ssp {
+; Function Attrs: ssp 
+define void @test7b() #0 {
 entry:
 ; LINUX-I386-LABEL: test7b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -822,7 +841,8 @@ entry:
 ; test7c:  PtrToInt Cast
 ;          sspstrong attribute
 ; Requires protector.
-define void @test7c() nounwind uwtable readnone sspstrong {
+; Function Attrs: sspstrong 
+define void @test7c() #1 {
 entry:
 ; LINUX-I386-LABEL: test7c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -848,7 +868,8 @@ entry:
 ; test7d:  PtrToInt Cast
 ;          sspreq attribute
 ; Requires protector.
-define void @test7d() nounwind uwtable readnone sspreq {
+; Function Attrs: sspreq 
+define void @test7d() #2 {
 entry:
 ; LINUX-I386-LABEL: test7d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -874,7 +895,7 @@ entry:
 ; test8a:  Passing addr-of to function call
 ;          no ssp attribute
 ; Requires no protector.
-define void @test8a() nounwind uwtable {
+define void @test8a() {
 entry:
 ; LINUX-I386-LABEL: test8a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -892,14 +913,15 @@ entry:
 ; DARWIN-X64-NOT: callq ___stack_chk_fail
 ; DARWIN-X64: .cfi_endproc
   %b = alloca i32, align 4
-  call void @funcall(i32* %b) nounwind
+  call void @funcall(i32* %b)
   ret void
 }
 
 ; test8b:  Passing addr-of to function call
 ;          ssp attribute
 ; Requires no protector.
-define void @test8b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test8b() #0 {
 entry:
 ; LINUX-I386-LABEL: test8b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -917,14 +939,15 @@ entry:
 ; DARWIN-X64-NOT: callq ___stack_chk_fail
 ; DARWIN-X64: .cfi_endproc
   %b = alloca i32, align 4
-  call void @funcall(i32* %b) nounwind
+  call void @funcall(i32* %b)
   ret void
 }
 
 ; test8c:  Passing addr-of to function call
 ;          sspstrong attribute
 ; Requires protector.
-define void @test8c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test8c() #1 {
 entry:
 ; LINUX-I386-LABEL: test8c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -942,14 +965,15 @@ entry:
 ; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
 ; DARWIN-X64: callq ___stack_chk_fail
   %b = alloca i32, align 4
-  call void @funcall(i32* %b) nounwind
+  call void @funcall(i32* %b)
   ret void
 }
 
 ; test8d:  Passing addr-of to function call
 ;          sspreq attribute
 ; Requires protector.
-define void @test8d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test8d() #2 {
 entry:
 ; LINUX-I386-LABEL: test8d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -967,14 +991,14 @@ entry:
 ; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
 ; DARWIN-X64: callq ___stack_chk_fail
   %b = alloca i32, align 4
-  call void @funcall(i32* %b) nounwind
+  call void @funcall(i32* %b)
   ret void
 }
 
 ; test9a:  Addr-of in select instruction
 ;          no ssp attribute
 ; Requires no protector.
-define void @test9a() nounwind uwtable {
+define void @test9a() {
 entry:
 ; LINUX-I386-LABEL: test9a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -992,7 +1016,7 @@ entry:
 ; DARWIN-X64-NOT: callq ___stack_chk_fail
 ; DARWIN-X64: .cfi_endproc
   %x = alloca double, align 8
-  %call = call double @testi_aux() nounwind
+  %call = call double @testi_aux()
   store double %call, double* %x, align 8
   %cmp2 = fcmp ogt double %call, 0.000000e+00
   %y.1 = select i1 %cmp2, double* %x, double* null
@@ -1003,7 +1027,8 @@ entry:
 ; test9b:  Addr-of in select instruction
 ;          ssp attribute
 ; Requires no protector.
-define void @test9b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test9b() #0 {
 entry:
 ; LINUX-I386-LABEL: test9b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1021,7 +1046,7 @@ entry:
 ; DARWIN-X64-NOT: callq ___stack_chk_fail
 ; DARWIN-X64: .cfi_endproc
   %x = alloca double, align 8
-  %call = call double @testi_aux() nounwind
+  %call = call double @testi_aux()
   store double %call, double* %x, align 8
   %cmp2 = fcmp ogt double %call, 0.000000e+00
   %y.1 = select i1 %cmp2, double* %x, double* null
@@ -1032,7 +1057,8 @@ entry:
 ; test9c:  Addr-of in select instruction
 ;          sspstrong attribute
 ; Requires protector.
-define void @test9c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test9c() #1 {
 entry:
 ; LINUX-I386-LABEL: test9c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1050,7 +1076,7 @@ entry:
 ; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
 ; DARWIN-X64: callq ___stack_chk_fail
   %x = alloca double, align 8
-  %call = call double @testi_aux() nounwind
+  %call = call double @testi_aux()
   store double %call, double* %x, align 8
   %cmp2 = fcmp ogt double %call, 0.000000e+00
   %y.1 = select i1 %cmp2, double* %x, double* null
@@ -1061,7 +1087,8 @@ entry:
 ; test9d:  Addr-of in select instruction
 ;          sspreq attribute
 ; Requires protector.
-define void @test9d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test9d() #2 {
 entry:
 ; LINUX-I386-LABEL: test9d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1079,7 +1106,7 @@ entry:
 ; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
 ; DARWIN-X64: callq ___stack_chk_fail
   %x = alloca double, align 8
-  %call = call double @testi_aux() nounwind
+  %call = call double @testi_aux()
   store double %call, double* %x, align 8
   %cmp2 = fcmp ogt double %call, 0.000000e+00
   %y.1 = select i1 %cmp2, double* %x, double* null
@@ -1090,7 +1117,7 @@ entry:
 ; test10a: Addr-of in phi instruction
 ;          no ssp attribute
 ; Requires no protector.
-define void @test10a() nounwind uwtable {
+define void @test10a() {
 entry:
 ; LINUX-I386-LABEL: test10a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1108,13 +1135,13 @@ entry:
 ; DARWIN-X64-NOT: callq ___stack_chk_fail
 ; DARWIN-X64: .cfi_endproc
   %x = alloca double, align 8
-  %call = call double @testi_aux() nounwind
+  %call = call double @testi_aux()
   store double %call, double* %x, align 8
   %cmp = fcmp ogt double %call, 3.140000e+00
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  %call1 = call double @testi_aux() nounwind
+  %call1 = call double @testi_aux()
   store double %call1, double* %x, align 8
   br label %if.end4
 
@@ -1127,14 +1154,15 @@ if.then3:                                         ; preds = %if.else
 
 if.end4:                                          ; preds = %if.else, %if.then3, %if.then
   %y.0 = phi double* [ null, %if.then ], [ %x, %if.then3 ], [ null, %if.else ]
-  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0) nounwind
+  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0)
   ret void
 }
 
 ; test10b: Addr-of in phi instruction
 ;          ssp attribute
 ; Requires no protector.
-define void @test10b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test10b() #0 {
 entry:
 ; LINUX-I386-LABEL: test10b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1152,13 +1180,13 @@ entry:
 ; DARWIN-X64-NOT: callq ___stack_chk_fail
 ; DARWIN-X64: .cfi_endproc
   %x = alloca double, align 8
-  %call = call double @testi_aux() nounwind
+  %call = call double @testi_aux()
   store double %call, double* %x, align 8
   %cmp = fcmp ogt double %call, 3.140000e+00
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  %call1 = call double @testi_aux() nounwind
+  %call1 = call double @testi_aux()
   store double %call1, double* %x, align 8
   br label %if.end4
 
@@ -1171,14 +1199,15 @@ if.then3:                                         ; preds = %if.else
 
 if.end4:                                          ; preds = %if.else, %if.then3, %if.then
   %y.0 = phi double* [ null, %if.then ], [ %x, %if.then3 ], [ null, %if.else ]
-  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0) nounwind
+  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0)
   ret void
 }
 
 ; test10c: Addr-of in phi instruction
 ;          sspstrong attribute
 ; Requires protector.
-define void @test10c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test10c() #1 {
 entry:
 ; LINUX-I386-LABEL: test10c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1196,13 +1225,13 @@ entry:
 ; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
 ; DARWIN-X64: callq ___stack_chk_fail
   %x = alloca double, align 8
-  %call = call double @testi_aux() nounwind
+  %call = call double @testi_aux()
   store double %call, double* %x, align 8
   %cmp = fcmp ogt double %call, 3.140000e+00
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  %call1 = call double @testi_aux() nounwind
+  %call1 = call double @testi_aux()
   store double %call1, double* %x, align 8
   br label %if.end4
 
@@ -1215,14 +1244,15 @@ if.then3:                                         ; preds = %if.else
 
 if.end4:                                          ; preds = %if.else, %if.then3, %if.then
   %y.0 = phi double* [ null, %if.then ], [ %x, %if.then3 ], [ null, %if.else ]
-  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0) nounwind
+  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0)
   ret void
 }
 
 ; test10d: Addr-of in phi instruction
 ;          sspreq attribute
 ; Requires protector.
-define void @test10d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test10d() #2 {
 entry:
 ; LINUX-I386-LABEL: test10d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1240,13 +1270,13 @@ entry:
 ; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
 ; DARWIN-X64: callq ___stack_chk_fail
   %x = alloca double, align 8
-  %call = call double @testi_aux() nounwind
+  %call = call double @testi_aux()
   store double %call, double* %x, align 8
   %cmp = fcmp ogt double %call, 3.140000e+00
   br i1 %cmp, label %if.then, label %if.else
 
 if.then:                                          ; preds = %entry
-  %call1 = call double @testi_aux() nounwind
+  %call1 = call double @testi_aux()
   store double %call1, double* %x, align 8
   br label %if.end4
 
@@ -1259,14 +1289,14 @@ if.then3:                                         ; preds = %if.else
 
 if.end4:                                          ; preds = %if.else, %if.then3, %if.then
   %y.0 = phi double* [ null, %if.then ], [ %x, %if.then3 ], [ null, %if.else ]
-  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0) nounwind
+  %call5 = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), double* %y.0)
   ret void
 }
 
 ; test11a: Addr-of struct element. (GEP followed by store).
 ;          no ssp attribute
 ; Requires no protector.
-define void @test11a() nounwind uwtable {
+define void @test11a() {
 entry:
 ; LINUX-I386-LABEL: test11a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1295,7 +1325,8 @@ entry:
 ; test11b: Addr-of struct element. (GEP followed by store).
 ;          ssp attribute
 ; Requires no protector.
-define void @test11b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test11b() #0 {
 entry:
 ; LINUX-I386-LABEL: test11b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1324,7 +1355,8 @@ entry:
 ; test11c: Addr-of struct element. (GEP followed by store).
 ;          sspstrong attribute
 ; Requires protector.
-define void @test11c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test11c() #1 {
 entry:
 ; LINUX-I386-LABEL: test11c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1353,7 +1385,8 @@ entry:
 ; test11d: Addr-of struct element. (GEP followed by store).
 ;          sspreq attribute
 ; Requires protector.
-define void @test11d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test11d() #2 {
 entry:
 ; LINUX-I386-LABEL: test11d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1382,7 +1415,7 @@ entry:
 ; test12a: Addr-of struct element, GEP followed by ptrtoint.
 ;          no ssp attribute
 ; Requires no protector.
-define void @test12a() nounwind uwtable {
+define void @test12a() {
 entry:
 ; LINUX-I386-LABEL: test12a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1410,7 +1443,8 @@ entry:
 ; test12b: Addr-of struct element, GEP followed by ptrtoint.
 ;          ssp attribute
 ; Requires no protector.
-define void @test12b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test12b() #0 {
 entry:
 ; LINUX-I386-LABEL: test12b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1437,8 +1471,8 @@ entry:
 
 ; test12c: Addr-of struct element, GEP followed by ptrtoint.
 ;          sspstrong attribute
-; Requires protector.
-define void @test12c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test12c() #1 {
 entry:
 ; LINUX-I386-LABEL: test12c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1466,7 +1500,8 @@ entry:
 ; test12d: Addr-of struct element, GEP followed by ptrtoint.
 ;          sspreq attribute
 ; Requires protector.
-define void @test12d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test12d() #2 {
 entry:
 ; LINUX-I386-LABEL: test12d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1494,7 +1529,7 @@ entry:
 ; test13a: Addr-of struct element, GEP followed by callinst.
 ;          no ssp attribute
 ; Requires no protector.
-define void @test13a() nounwind uwtable {
+define void @test13a() {
 entry:
 ; LINUX-I386-LABEL: test13a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1513,14 +1548,15 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %c = alloca %struct.pair, align 4
   %y = getelementptr inbounds %struct.pair* %c, i64 0, i32 1
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y)
   ret void
 }
 
 ; test13b: Addr-of struct element, GEP followed by callinst.
 ;          ssp attribute
 ; Requires no protector.
-define void @test13b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test13b() #0 {
 entry:
 ; LINUX-I386-LABEL: test13b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1539,14 +1575,15 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %c = alloca %struct.pair, align 4
   %y = getelementptr inbounds %struct.pair* %c, i64 0, i32 1
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y)
   ret void
 }
 
 ; test13c: Addr-of struct element, GEP followed by callinst.
 ;          sspstrong attribute
 ; Requires protector.
-define void @test13c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test13c() #1 {
 entry:
 ; LINUX-I386-LABEL: test13c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1565,14 +1602,15 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %c = alloca %struct.pair, align 4
   %y = getelementptr inbounds %struct.pair* %c, i64 0, i32 1
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y)
   ret void
 }
 
 ; test13d: Addr-of struct element, GEP followed by callinst.
 ;          sspreq attribute
 ; Requires protector.
-define void @test13d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test13d() #2 {
 entry:
 ; LINUX-I386-LABEL: test13d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1591,14 +1629,14 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %c = alloca %struct.pair, align 4
   %y = getelementptr inbounds %struct.pair* %c, i64 0, i32 1
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %y)
   ret void
 }
 
 ; test14a: Addr-of a local, optimized into a GEP (e.g., &a - 12)
 ;          no ssp attribute
 ; Requires no protector.
-define void @test14a() nounwind uwtable {
+define void @test14a() {
 entry:
 ; LINUX-I386-LABEL: test14a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1617,14 +1655,15 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %a = alloca i32, align 4
   %add.ptr5 = getelementptr inbounds i32* %a, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
   ret void
 }
 
 ; test14b: Addr-of a local, optimized into a GEP (e.g., &a - 12)
 ;          ssp attribute
 ; Requires no protector.
-define void @test14b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test14b() #0 {
 entry:
 ; LINUX-I386-LABEL: test14b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1643,14 +1682,15 @@ entry:
 ; DARWIN-X64: .cfi_endproc
   %a = alloca i32, align 4
   %add.ptr5 = getelementptr inbounds i32* %a, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
   ret void
 }
 
 ; test14c: Addr-of a local, optimized into a GEP (e.g., &a - 12)
 ;          sspstrong attribute
 ; Requires protector.
-define void @test14c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test14c() #1 {
 entry:
 ; LINUX-I386-LABEL: test14c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1669,14 +1709,15 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %a = alloca i32, align 4
   %add.ptr5 = getelementptr inbounds i32* %a, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
   ret void
 }
 
 ; test14d: Addr-of a local, optimized into a GEP (e.g., &a - 12)
 ;          sspreq  attribute
 ; Requires protector.
-define void @test14d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test14d() #2 {
 entry:
 ; LINUX-I386-LABEL: test14d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1695,7 +1736,7 @@ entry:
 ; DARWIN-X64: callq ___stack_chk_fail
   %a = alloca i32, align 4
   %add.ptr5 = getelementptr inbounds i32* %a, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), i32* %add.ptr5)
   ret void
 }
 
@@ -1703,7 +1744,7 @@ entry:
 ;           (e.g., int a; ... ; float *b = &a;)
 ;          no ssp attribute
 ; Requires no protector.
-define void @test15a() nounwind uwtable {
+define void @test15a() {
 entry:
 ; LINUX-I386-LABEL: test15a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1734,7 +1775,8 @@ entry:
 ;           (e.g., int a; ... ; float *b = &a;)
 ;          ssp attribute
 ; Requires no protector.
-define void @test15b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test15b() #0 {
 entry:
 ; LINUX-I386-LABEL: test15b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1765,7 +1807,8 @@ entry:
 ;           (e.g., int a; ... ; float *b = &a;)
 ;          sspstrong attribute
 ; Requires protector.
-define void @test15c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test15c() #1 {
 entry:
 ; LINUX-I386-LABEL: test15c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1796,7 +1839,8 @@ entry:
 ;           (e.g., int a; ... ; float *b = &a;)
 ;          sspreq attribute
 ; Requires protector.
-define void @test15d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test15d() #2 {
 entry:
 ; LINUX-I386-LABEL: test15d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1827,7 +1871,7 @@ entry:
 ;           (e.g., int a; ... ; float *b = &a;)
 ;          no ssp attribute
 ; Requires no protector.
-define void @test16a() nounwind uwtable {
+define void @test16a() {
 entry:
 ; LINUX-I386-LABEL: test16a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1847,7 +1891,7 @@ entry:
   %a = alloca i32, align 4
   store i32 0, i32* %a, align 4
   %0 = bitcast i32* %a to float*
-  call void @funfloat(float* %0) nounwind
+  call void @funfloat(float* %0)
   ret void
 }
 
@@ -1855,7 +1899,8 @@ entry:
 ;           (e.g., int a; ... ; float *b = &a;)
 ;          ssp attribute
 ; Requires no protector.
-define void @test16b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test16b() #0 {
 entry:
 ; LINUX-I386-LABEL: test16b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1875,7 +1920,7 @@ entry:
   %a = alloca i32, align 4
   store i32 0, i32* %a, align 4
   %0 = bitcast i32* %a to float*
-  call void @funfloat(float* %0) nounwind
+  call void @funfloat(float* %0)
   ret void
 }
 
@@ -1883,7 +1928,8 @@ entry:
 ;           (e.g., int a; ... ; float *b = &a;)
 ;          sspstrong attribute
 ; Requires protector.
-define void @test16c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test16c() #1 {
 entry:
 ; LINUX-I386-LABEL: test16c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1903,7 +1949,7 @@ entry:
   %a = alloca i32, align 4
   store i32 0, i32* %a, align 4
   %0 = bitcast i32* %a to float*
-  call void @funfloat(float* %0) nounwind
+  call void @funfloat(float* %0)
   ret void
 }
 
@@ -1911,7 +1957,8 @@ entry:
 ;           (e.g., int a; ... ; float *b = &a;)
 ;          sspreq attribute
 ; Requires protector.
-define void @test16d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test16d() #2 {
 entry:
 ; LINUX-I386-LABEL: test16d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -1931,14 +1978,14 @@ entry:
   %a = alloca i32, align 4
   store i32 0, i32* %a, align 4
   %0 = bitcast i32* %a to float*
-  call void @funfloat(float* %0) nounwind
+  call void @funfloat(float* %0)
   ret void
 }
 
 ; test17a: Addr-of a vector nested in a struct
 ;          no ssp attribute
 ; Requires no protector.
-define void @test17a() nounwind uwtable {
+define void @test17a() {
 entry:
 ; LINUX-I386-LABEL: test17a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1958,14 +2005,15 @@ entry:
   %c = alloca %struct.vec, align 16
   %y = getelementptr inbounds %struct.vec* %c, i64 0, i32 0
   %add.ptr = getelementptr inbounds <4 x i32>* %y, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
   ret void
 }
 
 ; test17b: Addr-of a vector nested in a struct
 ;          ssp attribute
 ; Requires no protector.
-define void @test17b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test17b() #0 {
 entry:
 ; LINUX-I386-LABEL: test17b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -1985,14 +2033,15 @@ entry:
   %c = alloca %struct.vec, align 16
   %y = getelementptr inbounds %struct.vec* %c, i64 0, i32 0
   %add.ptr = getelementptr inbounds <4 x i32>* %y, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
   ret void
 }
 
 ; test17c: Addr-of a vector nested in a struct
 ;          sspstrong attribute
 ; Requires protector.
-define void @test17c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test17c() #1 {
 entry:
 ; LINUX-I386-LABEL: test17c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2012,14 +2061,15 @@ entry:
   %c = alloca %struct.vec, align 16
   %y = getelementptr inbounds %struct.vec* %c, i64 0, i32 0
   %add.ptr = getelementptr inbounds <4 x i32>* %y, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
   ret void
 }
 
 ; test17d: Addr-of a vector nested in a struct
 ;          sspreq attribute
 ; Requires protector.
-define void @test17d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test17d() #2 {
 entry:
 ; LINUX-I386-LABEL: test17d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2039,14 +2089,14 @@ entry:
   %c = alloca %struct.vec, align 16
   %y = getelementptr inbounds %struct.vec* %c, i64 0, i32 0
   %add.ptr = getelementptr inbounds <4 x i32>* %y, i64 -12
-  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr) nounwind
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i64 0, i64 0), <4 x i32>* %add.ptr)
   ret void
 }
 
 ; test18a: Addr-of a variable passed into an invoke instruction.
 ;          no ssp attribute
 ; Requires no protector.
-define i32 @test18a() uwtable {
+define i32 @test18a()  {
 entry:
 ; LINUX-I386-LABEL: test18a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2082,7 +2132,8 @@ lpad:
 ; test18b: Addr-of a variable passed into an invoke instruction.
 ;          ssp attribute
 ; Requires no protector.
-define i32 @test18b() uwtable ssp {
+; Function Attrs: ssp 
+define i32 @test18b() #0 {
 entry:
 ; LINUX-I386-LABEL: test18b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2118,7 +2169,8 @@ lpad:
 ; test18c: Addr-of a variable passed into an invoke instruction.
 ;          sspstrong attribute
 ; Requires protector.
-define i32 @test18c() uwtable sspstrong {
+; Function Attrs: sspstrong 
+define i32 @test18c() #1 {
 entry:
 ; LINUX-I386-LABEL: test18c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2154,7 +2206,8 @@ lpad:
 ; test18d: Addr-of a variable passed into an invoke instruction.
 ;          sspreq attribute
 ; Requires protector.
-define i32 @test18d() uwtable sspreq {
+; Function Attrs: sspreq 
+define i32 @test18d() #2 {
 entry:
 ; LINUX-I386-LABEL: test18d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2186,12 +2239,11 @@ lpad:
           catch i8* null
   ret i32 0
 }
-
 ; test19a: Addr-of a struct element passed into an invoke instruction.
 ;           (GEP followed by an invoke)
 ;          no ssp attribute
 ; Requires no protector.
-define i32 @test19a() uwtable {
+define i32 @test19a()  {
 entry:
 ; LINUX-I386-LABEL: test19a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2230,7 +2282,8 @@ lpad:
 ;           (GEP followed by an invoke)
 ;          ssp attribute
 ; Requires no protector.
-define i32 @test19b() uwtable ssp {
+; Function Attrs: ssp 
+define i32 @test19b() #0 {
 entry:
 ; LINUX-I386-LABEL: test19b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2269,7 +2322,8 @@ lpad:
 ;           (GEP followed by an invoke)
 ;          sspstrong attribute
 ; Requires protector.
-define i32 @test19c() uwtable sspstrong {
+; Function Attrs: sspstrong 
+define i32 @test19c() #1 {
 entry:
 ; LINUX-I386-LABEL: test19c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2308,7 +2362,8 @@ lpad:
 ;           (GEP followed by an invoke)
 ;          sspreq attribute
 ; Requires protector.
-define i32 @test19d() uwtable sspreq {
+; Function Attrs: sspreq 
+define i32 @test19d() #2 {
 entry:
 ; LINUX-I386-LABEL: test19d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2350,7 +2405,7 @@ lpad:
 ; test20a: Addr-of a pointer
 ;          no ssp attribute
 ; Requires no protector.
-define void @test20a() nounwind uwtable {
+define void @test20a() {
 entry:
 ; LINUX-I386-LABEL: test20a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2380,7 +2435,8 @@ entry:
 ; test20b: Addr-of a pointer
 ;          ssp attribute
 ; Requires no protector.
-define void @test20b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test20b() #0 {
 entry:
 ; LINUX-I386-LABEL: test20b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2410,7 +2466,8 @@ entry:
 ; test20c: Addr-of a pointer
 ;          sspstrong attribute
 ; Requires protector.
-define void @test20c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test20c() #1 {
 entry:
 ; LINUX-I386-LABEL: test20c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2440,7 +2497,8 @@ entry:
 ; test20d: Addr-of a pointer
 ;          sspreq attribute
 ; Requires protector.
-define void @test20d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test20d() #2 {
 entry:
 ; LINUX-I386-LABEL: test20d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2470,7 +2528,7 @@ entry:
 ; test21a: Addr-of a casted pointer
 ;          no ssp attribute
 ; Requires no protector.
-define void @test21a() nounwind uwtable {
+define void @test21a() {
 entry:
 ; LINUX-I386-LABEL: test21a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2501,7 +2559,8 @@ entry:
 ; test21b: Addr-of a casted pointer
 ;          ssp attribute
 ; Requires no protector.
-define void @test21b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test21b() #0 {
 entry:
 ; LINUX-I386-LABEL: test21b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2532,7 +2591,8 @@ entry:
 ; test21c: Addr-of a casted pointer
 ;          sspstrong attribute
 ; Requires protector.
-define void @test21c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test21c() #1 {
 entry:
 ; LINUX-I386-LABEL: test21c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2563,7 +2623,8 @@ entry:
 ; test21d: Addr-of a casted pointer
 ;          sspreq attribute
 ; Requires protector.
-define void @test21d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define void @test21d() #2 {
 entry:
 ; LINUX-I386-LABEL: test21d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2594,7 +2655,7 @@ entry:
 ; test22a: [2 x i8] in a class
 ;          no ssp attribute
 ; Requires no protector.
-define signext i8 @test22a() nounwind uwtable {
+define signext i8 @test22a() {
 entry:
 ; LINUX-I386-LABEL: test22a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2621,7 +2682,8 @@ entry:
 ; test22b: [2 x i8] in a class
 ;          ssp attribute
 ; Requires no protector.
-define signext i8 @test22b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define signext i8 @test22b() #0 {
 entry:
 ; LINUX-I386-LABEL: test22b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2648,7 +2710,8 @@ entry:
 ; test22c: [2 x i8] in a class
 ;          sspstrong attribute
 ; Requires protector.
-define signext i8 @test22c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define signext i8 @test22c() #1 {
 entry:
 ; LINUX-I386-LABEL: test22c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2675,7 +2738,8 @@ entry:
 ; test22d: [2 x i8] in a class
 ;          sspreq attribute
 ; Requires protector.
-define signext i8 @test22d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define signext i8 @test22d() #2 {
 entry:
 ; LINUX-I386-LABEL: test22d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2702,7 +2766,7 @@ entry:
 ; test23a: [2 x i8] nested in several layers of structs and unions
 ;          no ssp attribute
 ; Requires no protector.
-define signext i8 @test23a() nounwind uwtable {
+define signext i8 @test23a() {
 entry:
 ; LINUX-I386-LABEL: test23a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2733,7 +2797,8 @@ entry:
 ; test23b: [2 x i8] nested in several layers of structs and unions
 ;          ssp attribute
 ; Requires no protector.
-define signext i8 @test23b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define signext i8 @test23b() #0 {
 entry:
 ; LINUX-I386-LABEL: test23b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2764,7 +2829,8 @@ entry:
 ; test23c: [2 x i8] nested in several layers of structs and unions
 ;          sspstrong attribute
 ; Requires protector.
-define signext i8 @test23c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define signext i8 @test23c() #1 {
 entry:
 ; LINUX-I386-LABEL: test23c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2795,7 +2861,8 @@ entry:
 ; test23d: [2 x i8] nested in several layers of structs and unions
 ;          sspreq attribute
 ; Requires protector.
-define signext i8 @test23d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define signext i8 @test23d() #2 {
 entry:
 ; LINUX-I386-LABEL: test23d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2826,7 +2893,7 @@ entry:
 ; test24a: Variable sized alloca
 ;          no ssp attribute
 ; Requires no protector.
-define void @test24a(i32 %n) nounwind uwtable {
+define void @test24a(i32 %n) {
 entry:
 ; LINUX-I386-LABEL: test24a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2857,7 +2924,8 @@ entry:
 ; test24b: Variable sized alloca
 ;          ssp attribute
 ; Requires protector.
-define void @test24b(i32 %n) nounwind uwtable ssp {
+; Function Attrs: ssp
+define void @test24b(i32 %n) #0 {
 entry:
 ; LINUX-I386-LABEL: test24b:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2888,7 +2956,8 @@ entry:
 ; test24c: Variable sized alloca
 ;          sspstrong attribute
 ; Requires protector.
-define void @test24c(i32 %n) nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test24c(i32 %n) #1 {
 entry:
 ; LINUX-I386-LABEL: test24c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2919,7 +2988,8 @@ entry:
 ; test24d: Variable sized alloca
 ;          sspreq attribute
 ; Requires protector.
-define void @test24d(i32 %n) nounwind uwtable sspreq  {
+; Function Attrs: sspreq 
+define void @test24d(i32 %n) #2 {
 entry:
 ; LINUX-I386-LABEL: test24d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2950,7 +3020,7 @@ entry:
 ; test25a: array of [4 x i32]
 ;          no ssp attribute
 ; Requires no protector.
-define i32 @test25a() nounwind uwtable {
+define i32 @test25a() {
 entry:
 ; LINUX-I386-LABEL: test25a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2976,7 +3046,8 @@ entry:
 ; test25b: array of [4 x i32]
 ;          ssp attribute
 ; Requires no protector, except for Darwin which _does_ require a protector.
-define i32 @test25b() nounwind uwtable ssp {
+; Function Attrs: ssp
+define i32 @test25b() #0 {
 entry:
 ; LINUX-I386-LABEL: test25b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -3002,7 +3073,8 @@ entry:
 ; test25c: array of [4 x i32]
 ;          sspstrong attribute
 ; Requires protector.
-define i32 @test25c() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define i32 @test25c() #1 {
 entry:
 ; LINUX-I386-LABEL: test25c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -3028,7 +3100,8 @@ entry:
 ; test25d: array of [4 x i32]
 ;          sspreq attribute
 ; Requires protector.
-define i32 @test25d() nounwind uwtable sspreq {
+; Function Attrs: sspreq 
+define i32 @test25d() #2 {
 entry:
 ; LINUX-I386-LABEL: test25d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -3056,7 +3129,8 @@ entry:
 ;         a stack protector.
 ;         ssptrong attribute
 ; Requires no protector.
-define void @test26() nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define void @test26() #1 {
 entry:
 ; LINUX-I386-LABEL: test26:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -3087,7 +3161,8 @@ entry:
 ;         Verify that the address-of analysis does not get stuck in infinite
 ;         recursion when chasing the alloca through the PHI nodes.
 ; Requires protector.
-define i32 @test27(i32 %arg) nounwind uwtable sspstrong {
+; Function Attrs: sspstrong 
+define i32 @test27(i32 %arg) #1 {
 bb:
 ; LINUX-I386-LABEL: test27:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -3105,7 +3180,7 @@ bb:
 ; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
 ; DARWIN-X64: callq ___stack_chk_fail
   %tmp = alloca %struct.small*, align 8
-  %tmp1 = call i32 (...)* @dummy(%struct.small** %tmp) nounwind
+  %tmp1 = call i32 (...)* @dummy(%struct.small** %tmp)
   %tmp2 = load %struct.small** %tmp, align 8
   %tmp3 = ptrtoint %struct.small* %tmp2 to i64
   %tmp4 = trunc i64 %tmp3 to i32
@@ -3133,7 +3208,7 @@ bb17:                                             ; preds = %bb6
 
 bb21:                                             ; preds = %bb6, %bb
   %tmp22 = phi i32 [ %tmp1, %bb ], [ %tmp14, %bb6 ]
-  %tmp23 = call i32 (...)* @dummy(i32 %tmp22) nounwind
+  %tmp23 = call i32 (...)* @dummy(i32 %tmp22)
   ret i32 undef
 }
 
@@ -3148,3 +3223,7 @@ declare void @_Z3exceptPi(i32*)
 declare i32 @__gxx_personality_v0(...)
 declare i32* @getp()
 declare i32 @dummy(...)
+
+attributes #0 = { ssp }
+attributes #1 = { sspstrong }
+attributes #2 = { sspreq }
