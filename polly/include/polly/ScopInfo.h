@@ -95,7 +95,7 @@ private:
   std::string BaseName;
   isl_basic_map *createBasicAccessMap(ScopStmt *Statement);
   void setBaseName();
-  ScopStmt *statement;
+  ScopStmt *Statement;
 
   const Instruction *Inst;
 
@@ -173,7 +173,7 @@ public:
   bool isStrideZero(__isl_take const isl_map *Schedule) const;
 
   /// @brief Get the statement that contains this memory access.
-  ScopStmt *getStatement() const { return statement; }
+  ScopStmt *getStatement() const { return Statement; }
 
   /// @brief Set the updated access relation read from JSCOP file.
   void setNewAccessRelation(isl_map *newAccessRelation);

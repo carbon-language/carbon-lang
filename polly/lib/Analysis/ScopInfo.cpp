@@ -318,9 +318,7 @@ isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
 
 MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
                            ScopStmt *Statement)
-    : Inst(AccInst) {
-  newAccessRelation = NULL;
-  statement = Statement;
+    : Statement(Statement), Inst(AccInst), newAccessRelation(NULL) {
 
   BaseAddr = Access.getBase();
   setBaseName();
@@ -377,15 +375,13 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
 }
 
 void MemoryAccess::realignParams() {
-  isl_space *ParamSpace = statement->getParent()->getParamSpace();
+  isl_space *ParamSpace = Statement->getParent()->getParamSpace();
   AccessRelation = isl_map_align_params(AccessRelation, ParamSpace);
 }
 
-MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement) {
-  newAccessRelation = NULL;
-  BaseAddr = BaseAddress;
-  Type = READ;
-  statement = Statement;
+MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement)
+    : Type(READ), BaseAddr(BaseAddress), Statement(Statement),
+      newAccessRelation(nullptr) {
 
   isl_basic_map *BasicAccessMap = createBasicAccessMap(Statement);
   AccessRelation = isl_map_from_basic_map(BasicAccessMap);
