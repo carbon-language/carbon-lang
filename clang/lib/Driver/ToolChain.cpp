@@ -205,6 +205,16 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     bool IsBigEndian = getTriple().getArch() == llvm::Triple::armeb ||
                        getTriple().getArch() == llvm::Triple::thumbeb;
 
+    // Handle pseudo-target flags '-mlittle-endian'/'-EL' and
+    // '-mbig-endian'/'-EB'.
+    if (Arg *A = Args.getLastArg(options::OPT_mlittle_endian,
+                                 options::OPT_mbig_endian)) {
+      if (A->getOption().matches(options::OPT_mlittle_endian))
+        IsBigEndian = false;
+      else
+        IsBigEndian = true;
+    }
+
     // Thumb2 is the default for V7 on Darwin.
     //
     // FIXME: Thumb should just be another -target-feaure, not in the triple.
