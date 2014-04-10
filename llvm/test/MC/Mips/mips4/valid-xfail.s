@@ -2,8 +2,7 @@
 # they aren't implemented yet).
 # This test is set up to XPASS if any instruction generates an encoding.
 #
-# FIXME: Test MIPS-IV instead of MIPS64
-# RUN: not llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips64   | not FileCheck %s
+# RUN: not llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips4 | not FileCheck %s
 # CHECK-NOT: encoding
 # XFAIL: *
 

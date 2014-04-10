@@ -1,10 +1,10 @@
 # Instructions that are valid
 #
-# FIXME: Test MIPS-III instead of MIPS64
-# RUN: llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips64   | FileCheck %s
+# FIXME: Test MIPS-III instead of MIPS-IV
+# RUN: llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips4 | FileCheck %s
 
 	.set noat
-	abs.d	$f7,$f25 # CHECK:encoding
+	abs.d	$f7,$f25 # CHECK: encoding
 	abs.s	$f9,$f16
 	add	$s7,$s2,$a1
 	add.d	$f1,$f7,$f29
