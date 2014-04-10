@@ -2151,8 +2151,7 @@ public:
   void finalizeLayout(const RecordDecl *RD);
   /// \brief Gets the size and alignment of a base taking pragma pack and
   /// __declspec(align) into account.
-  ElementInfo getAdjustedElementInfo(const ASTRecordLayout &Layout,
-                                     bool AsBase = true);
+  ElementInfo getAdjustedElementInfo(const ASTRecordLayout &Layout);
   /// \brief Gets the size and alignment of a field taking pragma  pack and
   /// __declspec(align) into account.  It also updates RequiredAlignment as a
   /// side effect because it is most convenient to do so here.
@@ -2226,7 +2225,7 @@ public:
 
 MicrosoftRecordLayoutBuilder::ElementInfo
 MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
-    const ASTRecordLayout &Layout, bool AsBase) {
+    const ASTRecordLayout &Layout) {
   ElementInfo Info;
   Info.Alignment = Layout.getAlignment();
   // Respect pragma pack.
@@ -2238,8 +2237,9 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
   // the alignment in the case of pragam pack.  Note that the required alignment
   // doesn't actually apply to the struct alignment at this point.
   Alignment = std::max(Alignment, Info.Alignment);
+  RequiredAlignment = std::max(RequiredAlignment, Layout.getRequiredAlignment());
   Info.Alignment = std::max(Info.Alignment, Layout.getRequiredAlignment());
-  Info.Size = AsBase ? Layout.getNonVirtualSize() : Layout.getSize();
+  Info.Size = Layout.getNonVirtualSize();
   return Info;
 }
 
@@ -2253,37 +2253,30 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
   CharUnits FieldRequiredAlignment = 
       Context.toCharUnitsFromBits(FD->getMaxAlignment());
   // Respect attributes applied to subobjects of the field.
-  if (const RecordType *RT =
-      FD->getType()->getBaseElementTypeUnsafe()->getAs<RecordType>()) {
-    const ASTRecordLayout &Layout = Context.getASTRecordLayout(RT->getDecl());
-    // Get the element info for a layout, respecting pack.
-    Info.Alignment = getAdjustedElementInfo(Layout, false).Alignment;
-    // Capture required alignment as a side-effect.
-    RequiredAlignment = std::max(RequiredAlignment,
-                                 Layout.getRequiredAlignment());
-  } else {
-    if (FD->isBitField() && FD->getMaxAlignment() != 0)
-      Info.Alignment = std::max(Info.Alignment, FieldRequiredAlignment);
-    // Respect pragma pack.
-    if (!MaxFieldAlignment.isZero())
-      Info.Alignment = std::min(Info.Alignment, MaxFieldAlignment);
-  }
-  // Respect packed field attribute.
-  if (FD->hasAttr<PackedAttr>())
-    Info.Alignment = CharUnits::One();
-  // Take required alignment into account.  __declspec(align) on bitfields
-  // impacts the alignment rather than the required alignment.
-  if (!FD->isBitField()) {
+  if (FD->isBitField())
+    // For some reason __declspec align impacts alignment rather than required
+    // alignment when it is applied to bitfields.
     Info.Alignment = std::max(Info.Alignment, FieldRequiredAlignment);
+  else {
+    if (auto RT =
+            FD->getType()->getBaseElementTypeUnsafe()->getAs<RecordType>()) {
+      auto const &Layout = Context.getASTRecordLayout(RT->getDecl());
+      EndsWithZeroSizedObject = Layout.hasZeroSizedSubObject();
+      FieldRequiredAlignment = std::max(FieldRequiredAlignment,
+                                        Layout.getRequiredAlignment());
+    }
     // Capture required alignment as a side-effect.
     RequiredAlignment = std::max(RequiredAlignment, FieldRequiredAlignment);
   }
+  // Respect pragma pack, attribute pack and declspec align
+  if (!MaxFieldAlignment.isZero())
+    Info.Alignment = std::min(Info.Alignment, MaxFieldAlignment);
+  if (FD->hasAttr<PackedAttr>())
+    Info.Alignment = CharUnits::One();
+  Info.Alignment = std::max(Info.Alignment, FieldRequiredAlignment);
   // TODO: Add a Sema warning that MS ignores bitfield alignment in unions.
-  if (!(FD->isBitField() && IsUnion)) {
+  if (!(FD->isBitField() && IsUnion))
     Alignment = std::max(Alignment, Info.Alignment);
-    if (!MaxFieldAlignment.isZero())
-      Alignment = std::min(Alignment, MaxFieldAlignment);
-  }
   return Info;
 }
 
@@ -2305,7 +2298,10 @@ void MicrosoftRecordLayoutBuilder::cxxLayout(const CXXRecordDecl *RD) {
   injectVFPtr(RD);
   if (HasOwnVFPtr || (HasVBPtr && !SharedVBPtrBase))
     Alignment = std::max(Alignment, PointerInfo.Alignment);
-  NonVirtualSize = Size = Size.RoundUpToAlignment(Alignment);
+  auto RoundingAlignment = Alignment;
+  if (!MaxFieldAlignment.isZero())
+    RoundingAlignment = std::min(RoundingAlignment, MaxFieldAlignment);
+  NonVirtualSize = Size = Size.RoundUpToAlignment(RoundingAlignment);
   RequiredAlignment = std::max(
       RequiredAlignment, Context.toCharUnitsFromBits(RD->getMaxAlignment()));
   layoutVirtualBases(RD);
@@ -2374,9 +2370,6 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBases(const CXXRecordDecl *RD) {
       HasVBPtr = true;
       continue;
     }
-    // Track RequiredAlignment for all bases in this pass.
-    RequiredAlignment = std::max(RequiredAlignment,
-                                 BaseLayout.getRequiredAlignment());
     // Check fo a base to share a VBPtr with.
     if (!SharedVBPtrBase && BaseLayout.hasVBPtr()) {
       SharedVBPtrBase = BaseDecl;
@@ -2633,7 +2626,11 @@ void MicrosoftRecordLayoutBuilder::finalizeLayout(const RecordDecl *RD) {
   DataSize = Size;
   if (!RequiredAlignment.isZero()) {
     Alignment = std::max(Alignment, RequiredAlignment);
-    Size = Size.RoundUpToAlignment(Alignment);
+    auto RoundingAlignment = Alignment;
+    if (!MaxFieldAlignment.isZero())
+      RoundingAlignment = std::min(RoundingAlignment, MaxFieldAlignment);
+    RoundingAlignment = std::max(RoundingAlignment, RequiredAlignment);
+    Size = Size.RoundUpToAlignment(RoundingAlignment);
   }
   // Zero-sized structures have size equal to their alignment.
   if (Size.isZero()) {
