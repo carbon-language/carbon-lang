@@ -680,7 +680,7 @@ ClangASTType::IsPointerOrReferenceType (ClangASTType *pointee_type) const
                 return true;
             case clang::Type::RValueReference:
                 if (pointee_type)
-                    pointee_type->SetClangType(m_ast, cast<LValueReferenceType>(qual_type)->desugar());
+                    pointee_type->SetClangType(m_ast, cast<RValueReferenceType>(qual_type)->desugar());
                 return true;
             case clang::Type::Typedef:
                 return ClangASTType (m_ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType()).IsPointerOrReferenceType(pointee_type);
@@ -699,7 +699,7 @@ ClangASTType::IsPointerOrReferenceType (ClangASTType *pointee_type) const
 
 
 bool
-ClangASTType::IsReferenceType (ClangASTType *pointee_type) const
+ClangASTType::IsReferenceType (ClangASTType *pointee_type, bool* is_rvalue) const
 {
     if (IsValid())
     {
@@ -711,17 +711,21 @@ ClangASTType::IsReferenceType (ClangASTType *pointee_type) const
             case clang::Type::LValueReference:
                 if (pointee_type)
                     pointee_type->SetClangType(m_ast, cast<LValueReferenceType>(qual_type)->desugar());
+                if (is_rvalue)
+                    *is_rvalue = false;
                 return true;
             case clang::Type::RValueReference:
                 if (pointee_type)
                     pointee_type->SetClangType(m_ast, cast<RValueReferenceType>(qual_type)->desugar());
+                if (is_rvalue)
+                    *is_rvalue = true;
                 return true;
             case clang::Type::Typedef:
-                return ClangASTType(m_ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType()).IsReferenceType(pointee_type);
+                return ClangASTType(m_ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType()).IsReferenceType(pointee_type, is_rvalue);
             case clang::Type::Elaborated:
-                return ClangASTType(m_ast, cast<ElaboratedType>(qual_type)->getNamedType()).IsReferenceType(pointee_type);
+                return ClangASTType(m_ast, cast<ElaboratedType>(qual_type)->getNamedType()).IsReferenceType(pointee_type, is_rvalue);
             case clang::Type::Paren:
-                return ClangASTType(m_ast, cast<clang::ParenType>(qual_type)->desugar()).IsReferenceType(pointee_type);
+                return ClangASTType(m_ast, cast<clang::ParenType>(qual_type)->desugar()).IsReferenceType(pointee_type, is_rvalue);
                 
             default:
                 break;

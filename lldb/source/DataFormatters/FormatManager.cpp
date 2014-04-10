@@ -185,8 +185,8 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
         reason |= lldb_private::eFormatterChoiceCriterionStrippedBitField;
     }
     entries.push_back({type_name,reason,did_strip_ptr,did_strip_ref,did_strip_typedef});
-
-    if (clang_type.IsReferenceType())
+    
+    for (bool is_rvalue_ref = true, j = true; j && clang_type.IsReferenceType(nullptr, &is_rvalue_ref); j = false)
     {
         ClangASTType non_ref_type = clang_type.GetNonReferenceType();
         GetPossibleMatches(valobj,
@@ -197,8 +197,22 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
                            did_strip_ptr,
                            true,
                            did_strip_typedef);
+        if (non_ref_type.IsTypedefType())
+        {
+            ClangASTType deffed_referenced_type = non_ref_type.GetTypedefedType();
+            deffed_referenced_type = is_rvalue_ref ? deffed_referenced_type.GetRValueReferenceType() : deffed_referenced_type.GetLValueReferenceType();
+            GetPossibleMatches(valobj,
+                               deffed_referenced_type,
+                               reason | lldb_private::eFormatterChoiceCriterionNavigatedTypedefs,
+                               use_dynamic,
+                               entries,
+                               did_strip_ptr,
+                               did_strip_ref,
+                               true); // this is not exactly the usual meaning of stripping typedefs
+        }
     }
-    else if (clang_type.IsPointerType())
+    
+    if (clang_type.IsPointerType())
     {
         ClangASTType non_ptr_type = clang_type.GetPointeeType();
         GetPossibleMatches(valobj,
@@ -209,6 +223,18 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
                            true,
                            did_strip_ref,
                            did_strip_typedef);
+        if (non_ptr_type.IsTypedefType())
+        {
+            ClangASTType deffed_pointed_type = non_ptr_type.GetTypedefedType().GetPointerType();
+            GetPossibleMatches(valobj,
+                               deffed_pointed_type,
+                               reason | lldb_private::eFormatterChoiceCriterionNavigatedTypedefs,
+                               use_dynamic,
+                               entries,
+                               did_strip_ptr,
+                               did_strip_ref,
+                               true); // this is not exactly the usual meaning of stripping typedefs
+        }
     }
     bool canBeObjCDynamic = clang_type.IsPossibleDynamicType (NULL,
                                                               false, // no C

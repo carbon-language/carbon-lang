@@ -213,7 +213,7 @@ public:
     IsPointerOrReferenceType (ClangASTType *pointee_type = NULL) const;
     
     bool
-    IsReferenceType (ClangASTType *pointee_type = NULL) const;
+    IsReferenceType (ClangASTType *pointee_type = nullptr, bool* is_rvalue = nullptr) const;
     
     bool
     IsScalarType () const;
