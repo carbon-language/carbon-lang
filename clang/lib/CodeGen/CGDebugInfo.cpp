@@ -2504,7 +2504,10 @@ llvm::DICompositeType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
 }
 
 /// EmitFunctionStart - Constructs the debug code for entering a function.
-void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
+void CGDebugInfo::EmitFunctionStart(GlobalDecl GD,
+                                    SourceLocation Loc,
+                                    SourceLocation ScopeLoc,
+                                    QualType FnType,
                                     llvm::Function *Fn,
                                     CGBuilderTy &Builder) {
 
@@ -2514,24 +2517,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   FnBeginRegionCount.push_back(LexicalBlockStack.size());
 
   const Decl *D = GD.getDecl();
-
-  // Use the location of the start of the function to determine where
-  // the function definition is located. By default use the location
-  // of the declaration as the location for the subprogram. A function
-  // may lack a declaration in the source code if it is created by code
-  // gen. (examples: _GLOBAL__I_a, __cxx_global_array_dtor, thunk).
   bool HasDecl = (D != 0);
-  SourceLocation Loc;
-  if (HasDecl) {
-    Loc = D->getLocation();
-
-    // If this is a function specialization then use the pattern body
-    // as the location for the function.
-    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-      if (const FunctionDecl *SpecDecl = FD->getTemplateInstantiationPattern())
-        if (SpecDecl->hasBody(SpecDecl))
-          Loc = SpecDecl->getLocation();
-  }
 
   unsigned Flags = 0;
   llvm::DIFile Unit = getOrCreateFile(Loc);
@@ -2591,9 +2577,14 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
   if (!Name.empty() && Name[0] == '\01')
     Name = Name.substr(1);
 
-  unsigned LineNo = getLineNumber(Loc);
-  if (!HasDecl || D->isImplicit())
+  if (!HasDecl || D->isImplicit()) {
     Flags |= llvm::DIDescriptor::FlagArtificial;
+    // Artificial functions without a location should not silently reuse CurLoc.
+    if (Loc.isInvalid())
+      CurLoc = SourceLocation();
+  }
+  unsigned LineNo = getLineNumber(Loc);
+  unsigned ScopeLine = getLineNumber(ScopeLoc);
 
   // FIXME: The function declaration we're constructing here is mostly reusing
   // declarations from CXXMethodDecl and not constructing new ones for arbitrary
@@ -2604,7 +2595,7 @@ void CGDebugInfo::EmitFunctionStart(GlobalDecl GD, QualType FnType,
       DBuilder.createFunction(FDContext, Name, LinkageName, Unit, LineNo,
                               getOrCreateFunctionType(D, FnType, Unit),
                               Fn->hasInternalLinkage(), true /*definition*/,
-                              getLineNumber(CurLoc), Flags,
+                              ScopeLine, Flags,
                               CGM.getLangOpts().Optimize, Fn, TParamsArray,
                               getFunctionDeclaration(D));
   if (HasDecl)

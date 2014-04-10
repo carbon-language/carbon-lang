@@ -179,7 +179,7 @@ static llvm::Constant *createAtExitStub(CodeGenModule &CGM, const VarDecl &VD,
 
   CGF.StartFunction(&VD, CGM.getContext().VoidTy, fn,
                     CGM.getTypes().arrangeNullaryFunction(), FunctionArgList(),
-                    SourceLocation());
+                    SourceLocation(), SourceLocation());
 
   llvm::CallInst *call = CGF.Builder.CreateCall(dtor, addr);
  
@@ -412,7 +412,8 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
 
   StartFunction(GlobalDecl(D), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
-                FunctionArgList(), D->getInit()->getExprLoc());
+                FunctionArgList(), D->getLocation(),
+                D->getInit()->getExprLoc());
 
   // Use guarded initialization if the global variable is weak. This
   // occurs for, e.g., instantiated static data members and
@@ -433,7 +434,7 @@ CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                            llvm::GlobalVariable *Guard) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
-                FunctionArgList(), SourceLocation());
+                FunctionArgList(), SourceLocation(), SourceLocation());
 
   llvm::BasicBlock *ExitBlock = 0;
   if (Guard) {
@@ -479,7 +480,7 @@ void CodeGenFunction::GenerateCXXGlobalDtorsFunc(llvm::Function *Fn,
                                                 &DtorsAndObjects) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
-                FunctionArgList(), SourceLocation());
+                FunctionArgList(), SourceLocation(), SourceLocation());
 
   // Emit the dtors, in reverse order from construction.
   for (unsigned i = 0, e = DtorsAndObjects.size(); i != e; ++i) {
@@ -509,7 +510,8 @@ llvm::Function *CodeGenFunction::generateDestroyHelper(
   llvm::Function *fn = 
     CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");
 
-  StartFunction(VD, getContext().VoidTy, fn, FI, args, SourceLocation());
+  StartFunction(VD, getContext().VoidTy, fn, FI, args,
+                SourceLocation(), SourceLocation());
 
   emitDestroy(addr, type, destroyer, useEHCleanupForArray);
   

@@ -481,7 +481,8 @@ void CodeGenFunction::StartObjCMethod(const ObjCMethodDecl *OMD,
 
   CurGD = OMD;
 
-  StartFunction(OMD, OMD->getReturnType(), Fn, FI, args, StartLoc);
+  StartFunction(OMD, OMD->getReturnType(), Fn, FI, args,
+                OMD->getLocation(), StartLoc);
 
   // In ARC, certain methods get an extra cleanup.
   if (CGM.getLangOpts().ObjCAutoRefCount &&
@@ -2915,7 +2916,7 @@ CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
                            "__assign_helper_atomic_property_",
                            &CGM.getModule());
   
-  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
+  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation(), SourceLocation());
   
   DeclRefExpr DstExpr(&dstDecl, false, DestTy,
                       VK_RValue, SourceLocation());
@@ -2993,7 +2994,7 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
   llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
                          "__copy_helper_atomic_property_", &CGM.getModule());
   
-  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
+  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation(), SourceLocation());
   
   DeclRefExpr SrcExpr(&srcDecl, false, SrcTy,
                       VK_RValue, SourceLocation());

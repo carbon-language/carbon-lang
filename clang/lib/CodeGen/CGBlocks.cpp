@@ -1135,6 +1135,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
 
   // Begin generating the function.
   StartFunction(blockDecl, fnType->getReturnType(), fn, fnInfo, args,
+                blockDecl->getLocation(),
                 blockInfo.getBlockExpr()->getBody()->getLocStart());
 
   // Okay.  Undo some of what StartFunction did.
@@ -1306,7 +1307,7 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
                                           false);
   // Create a scope with an artificial location for the body of this function.
   ArtificialLocation AL(*this, Builder);
-  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
+  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation(), SourceLocation());
   AL.Emit();
 
   llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
@@ -1476,7 +1477,7 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
                                           false, false);
   // Create a scope with an artificial location for the body of this function.
   ArtificialLocation AL(*this, Builder);
-  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation());
+  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation(), SourceLocation());
   AL.Emit();
 
   llvm::Type *structPtrTy = blockInfo.StructureType->getPointerTo();
@@ -1765,7 +1766,7 @@ generateByrefCopyHelper(CodeGenFunction &CGF,
                                           SC_Static,
                                           false, false);
 
-  CGF.StartFunction(FD, R, Fn, FI, args, SourceLocation());
+  CGF.StartFunction(FD, R, Fn, FI, args, SourceLocation(), SourceLocation());
 
   if (byrefInfo.needsCopy()) {
     llvm::Type *byrefPtrType = byrefType.getPointerTo(0);
@@ -1834,7 +1835,7 @@ generateByrefDisposeHelper(CodeGenFunction &CGF,
                                           SourceLocation(), II, R, 0,
                                           SC_Static,
                                           false, false);
-  CGF.StartFunction(FD, R, Fn, FI, args, SourceLocation());
+  CGF.StartFunction(FD, R, Fn, FI, args, SourceLocation(), SourceLocation());
 
   if (byrefInfo.needsDispose()) {
     llvm::Value *V = CGF.GetAddrOfLocalVar(&src);

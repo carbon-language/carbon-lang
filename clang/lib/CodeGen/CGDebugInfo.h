@@ -220,8 +220,12 @@ public:
 
   /// EmitFunctionStart - Emit a call to llvm.dbg.function.start to indicate
   /// start of a new function.
-  void EmitFunctionStart(GlobalDecl GD, QualType FnType,
-                         llvm::Function *Fn, CGBuilderTy &Builder);
+  /// \param Loc       The location of the function header.
+  /// \param ScopeLoc  The location of the function body.
+  void EmitFunctionStart(GlobalDecl GD,
+                         SourceLocation Loc, SourceLocation ScopeLoc,
+                         QualType FnType, llvm::Function *Fn,
+                         CGBuilderTy &Builder);
 
   /// EmitFunctionEnd - Constructs the debug code for exiting a function.
   void EmitFunctionEnd(CGBuilderTy &Builder);
