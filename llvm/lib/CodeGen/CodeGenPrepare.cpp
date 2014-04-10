@@ -2459,8 +2459,9 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
         // the original IR value was tossed in favor of a constant back when
         // the AddrMode was created we need to bail out gracefully if widths
         // do not match instead of extending it.
-        if (Result != AddrMode.BaseReg)
-            cast<Instruction>(Result)->eraseFromParent();
+        Instruction *I = dyn_cast<Instruction>(Result);
+        if (I && (Result != AddrMode.BaseReg))
+          I->eraseFromParent();
         return false;
       }
       if (AddrMode.Scale != 1)
