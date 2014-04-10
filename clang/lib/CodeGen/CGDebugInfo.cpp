@@ -3180,6 +3180,37 @@ CGDebugInfo::getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D) {
   return T;
 }
 
+/// Recursively collect all of the member fields of a global anonymous decl and
+/// create static variables for them. The first time this is called it needs
+/// to be on a union and then from there we can have additional unnamed fields.
+llvm::DIGlobalVariable
+CGDebugInfo::CollectAnonRecordDecls(const RecordDecl *RD, llvm::DIFile Unit,
+                                    unsigned LineNo, StringRef LinkageName,
+                                    llvm::GlobalVariable *Var,
+                                    llvm::DIDescriptor DContext) {
+  llvm::DIGlobalVariable GV;
+
+  for (const auto *Field : RD->fields()) {
+    llvm::DIType FieldTy = getOrCreateType(Field->getType(), Unit);
+    StringRef FieldName = Field->getName();
+
+    // Ignore unnamed fields, but recurse into anonymous records.
+    if (FieldName.empty()) {
+      const RecordType *RT = dyn_cast<RecordType>(Field->getType());
+      if (RT)
+        GV = CollectAnonRecordDecls(RT->getDecl(), Unit, LineNo, LinkageName,
+                                    Var, DContext);
+      continue;
+    }
+    // Use VarDecl's Tag, Scope and Line number.
+    GV = DBuilder.createStaticVariable(DContext, FieldName, LinkageName, Unit,
+                                       LineNo, FieldTy,
+                                       Var->hasInternalLinkage(), Var,
+                                       llvm::DIDerivedType());
+  }
+  return GV;
+}
+
 /// EmitGlobalVariable - Emit information about a global variable.
 void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                      const VarDecl *D) {
@@ -3200,19 +3231,35 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
     T = CGM.getContext().getConstantArrayType(ET, ConstVal,
                                               ArrayType::Normal, 0);
   }
+
   StringRef DeclName = D->getName();
   StringRef LinkageName;
-  if (D->getDeclContext() && !isa<FunctionDecl>(D->getDeclContext())
-      && !isa<ObjCMethodDecl>(D->getDeclContext()))
+  if (D->getDeclContext() && !isa<FunctionDecl>(D->getDeclContext()) &&
+      !isa<ObjCMethodDecl>(D->getDeclContext()))
     LinkageName = Var->getName();
   if (LinkageName == DeclName)
     LinkageName = StringRef();
+
   llvm::DIDescriptor DContext =
     getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()));
-  llvm::DIGlobalVariable GV = DBuilder.createStaticVariable(
-      DContext, DeclName, LinkageName, Unit, LineNo, getOrCreateType(T, Unit),
-      Var->hasInternalLinkage(), Var,
-      getOrCreateStaticDataMemberDeclarationOrNull(D));
+
+  // Attempt to store one global variable for the declaration - even if we
+  // emit a lot of fields.
+  llvm::DIGlobalVariable GV;
+
+  // If this is an anonymous union then we'll want to emit a global
+  // variable for each member of the anonymous union so that it's possible
+  // to find the name of any field in the union.
+  if (T->isUnionType() && DeclName.empty()) {
+    const RecordDecl *RD = cast<RecordType>(T)->getDecl();
+    assert(RD->isAnonymousStructOrUnion() && "unnamed non-anonymous struct or union?");
+    GV = CollectAnonRecordDecls(RD, Unit, LineNo, LinkageName, Var, DContext);
+  } else {
+      GV = DBuilder.createStaticVariable(
+        DContext, DeclName, LinkageName, Unit, LineNo, getOrCreateType(T, Unit),
+        Var->hasInternalLinkage(), Var,
+        getOrCreateStaticDataMemberDeclarationOrNull(D));
+  }
   DeclCache.insert(std::make_pair(D->getCanonicalDecl(), llvm::WeakVH(GV)));
 }
 

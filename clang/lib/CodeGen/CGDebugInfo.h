@@ -358,6 +358,13 @@ private:
   llvm::DIDerivedType
   getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D);
 
+  /// Return a global variable that represents one of the collection of
+  /// global variables created for an anonmyous union.
+  llvm::DIGlobalVariable
+  CollectAnonRecordDecls(const RecordDecl *RD, llvm::DIFile Unit, unsigned LineNo,
+                         StringRef LinkageName, llvm::GlobalVariable *Var,
+                         llvm::DIDescriptor DContext);
+
   /// getFunctionName - Get function name for the given FunctionDecl. If the
   /// name is constructed on demand (e.g. C++ destructor) then the name
   /// is stored on the side.
