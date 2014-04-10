@@ -14,6 +14,9 @@
         },
         { 'name': 'SomeFramework.framework/Headers/public_header.h', 'type': 'file',
           'external-contents': 'INPUT_DIR/public_header.h'
+        },
+        { 'name': 'Foo.framework/Headers/Foo.h', 'type': 'file',
+          'external-contents': 'INPUT_DIR/Foo.h'
         }
       ]
     }
