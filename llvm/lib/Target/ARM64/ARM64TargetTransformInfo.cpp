@@ -227,7 +227,8 @@ unsigned ARM64TTI::getIntImmCost(unsigned Opcode, unsigned Idx,
   if (Idx == ImmIdx) {
     unsigned NumConstants = (BitSize + 63) / 64;
     unsigned Cost = ARM64TTI::getIntImmCost(Imm, Ty);
-    return (Cost <= NumConstants * TCC_Basic) ? TCC_Free : Cost;
+    return (Cost <= NumConstants * TCC_Basic)
+      ? static_cast<unsigned>(TCC_Free) : Cost;
   }
   return ARM64TTI::getIntImmCost(Imm, Ty);
 }
@@ -252,7 +253,8 @@ unsigned ARM64TTI::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
     if (Idx == 1) {
       unsigned NumConstants = (BitSize + 63) / 64;
       unsigned Cost = ARM64TTI::getIntImmCost(Imm, Ty);
-      return (Cost <= NumConstants * TCC_Basic) ? TCC_Free : Cost;
+      return (Cost <= NumConstants * TCC_Basic)
+        ? static_cast<unsigned>(TCC_Free) : Cost;
     }
     break;
   case Intrinsic::experimental_stackmap:
