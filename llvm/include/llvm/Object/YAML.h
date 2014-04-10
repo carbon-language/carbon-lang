@@ -108,6 +108,7 @@ template <> struct ScalarTraits<object::yaml::BinaryRef> {
   static void output(const object::yaml::BinaryRef &, void *,
                      llvm::raw_ostream &);
   static StringRef input(StringRef, void *, object::yaml::BinaryRef &);
+  static bool mustQuote(StringRef S) { return needsQuotes(S); }
 };
 }
 

@@ -285,7 +285,7 @@ void Input::endBitSetScalar() {
   }
 }
 
-void Input::scalarString(StringRef &S) {
+void Input::scalarString(StringRef &S, bool) {
   if (ScalarHNode *SN = dyn_cast<ScalarHNode>(CurrentNode)) {
     S = SN->value();
   } else {
@@ -541,10 +541,7 @@ void Output::endBitSetScalar() {
   this->outputUpToEndOfLine(" ]");
 }
 
-void Output::scalarString(StringRef &S) {
-  const char ScalarSafeChars[] = "abcdefghijklmnopqrstuvwxyz"
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-/^., \t";
-
+void Output::scalarString(StringRef &S, bool MustQuote) {
   this->newLineCheck();
   if (S.empty()) {
     // Print '' for the empty string because leaving the field empty is not
@@ -552,11 +549,8 @@ void Output::scalarString(StringRef &S) {
     this->outputUpToEndOfLine("''");
     return;
   }
-  bool isOctalString = S.front() == '0' && S.size() > 2 && !S.startswith("0x");
-  if (S.find_first_not_of(ScalarSafeChars) == StringRef::npos &&
-      !isspace(S.front()) && !isspace(S.back()) && !isOctalString) {
-    // If the string consists only of safe characters, print it out without
-    // quotes.
+  if (!MustQuote) {
+    // Only quote if we must.
     this->outputUpToEndOfLine(S);
     return;
   }

@@ -162,12 +162,14 @@ template <> struct ScalarTraits<MCModuleYAML::Operand> {
   static void output(const MCModuleYAML::Operand &, void *,
                      llvm::raw_ostream &);
   static StringRef input(StringRef, void *, MCModuleYAML::Operand &);
+  static bool mustQuote(StringRef) { return false; }
 };
 
 template <> struct ScalarTraits<MCModuleYAML::OpcodeEnum> {
   static void output(const MCModuleYAML::OpcodeEnum &, void *,
                      llvm::raw_ostream &);
   static StringRef input(StringRef, void *, MCModuleYAML::OpcodeEnum &);
+  static bool mustQuote(StringRef) { return false; }
 };
 
 void ScalarEnumerationTraits<MCAtom::AtomKind>::enumeration(

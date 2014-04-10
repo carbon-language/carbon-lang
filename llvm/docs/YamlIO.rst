@@ -426,8 +426,10 @@ looks like:
       static StringRef input(StringRef scalar, T &value) {
         // do custom parsing here.  Return the empty string on success,
         // or an error message on failure.
-        return StringRef(); 
+        return StringRef();
       }
+      // Determine if this scalar needs quotes.
+      static bool mustQuote(StringRef) { return true; }
     };
     
 
