@@ -1,6 +1,6 @@
-@ RUN: not llvm-mc -triple=thumbv7-apple-darwin -show-encoding < %s > %t 2> %e
+@ RUN: not llvm-mc -triple=thumbv7-apple-darwin -show-encoding < %s > %t 2> %t.err
 @ RUN: FileCheck < %t %s
-@ RUN: FileCheck --check-prefix=CHECK-ERRORS < %e %s
+@ RUN: FileCheck --check-prefix=CHECK-ERRORS < %t.err %s
 
 	vld1.8	{d0}, [r4]
 	vld1.8	{d0}, [r4:16]
