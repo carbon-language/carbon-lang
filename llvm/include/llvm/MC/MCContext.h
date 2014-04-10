@@ -155,7 +155,11 @@ namespace llvm {
     /// The Compile Unit ID that we are currently processing.
     unsigned DwarfCompileUnitID;
 
-    void *MachOUniquingMap, *ELFUniquingMap, *COFFUniquingMap;
+    typedef std::pair<std::string, std::string> SectionGroupPair;
+
+    StringMap<const MCSectionMachO*> MachOUniquingMap;
+    std::map<SectionGroupPair, const MCSectionELF *> ELFUniquingMap;
+    std::map<SectionGroupPair, const MCSectionCOFF *> COFFUniquingMap;
 
     /// Do automatic reset in destructor
     bool AutoReset;
