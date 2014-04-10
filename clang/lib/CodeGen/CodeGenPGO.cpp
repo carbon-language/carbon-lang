@@ -294,9 +294,8 @@ llvm::Function *CodeGenPGO::emitInitialization(CodeGenModule &CGM) {
   if (!CGM.getCodeGenOpts().ProfileInstrGenerate)
     return nullptr;
 
-  // Only need to create this once per module.
-  if (CGM.getModule().getFunction("__llvm_profile_init"))
-    return nullptr;
+  assert(CGM.getModule().getFunction("__llvm_profile_init") == nullptr &&
+         "profile initialization already emitted");
 
   // Get the function to call at initialization.
   llvm::Constant *RegisterF = getRegisterFunc(CGM);

@@ -283,6 +283,9 @@ void CodeGenModule::Release() {
   if (ObjCRuntime)
     if (llvm::Function *ObjCInitFunction = ObjCRuntime->ModuleInitFunction())
       AddGlobalCtor(ObjCInitFunction);
+  if (getCodeGenOpts().ProfileInstrGenerate)
+    if (llvm::Function *PGOInit = CodeGenPGO::emitInitialization(*this))
+      AddGlobalCtor(PGOInit, 0);
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitGlobalAnnotations();
@@ -2218,10 +2221,6 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
     AddGlobalDtor(Fn, DA->getPriority());
   if (D->hasAttr<AnnotateAttr>())
     AddGlobalAnnotations(D, Fn);
-
-  llvm::Function *PGOInit = CodeGenPGO::emitInitialization(*this);
-  if (PGOInit)
-    AddGlobalCtor(PGOInit, 0);
 }
 
 void CodeGenModule::EmitAliasDefinition(GlobalDecl GD) {
