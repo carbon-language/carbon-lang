@@ -162,8 +162,10 @@ def HasMips32r2  :    Predicate<"Subtarget.hasMips32r2()">,
                       AssemblerPredicate<"FeatureMips32r2">;
 def HasMips64    :    Predicate<"Subtarget.hasMips64()">,
                       AssemblerPredicate<"FeatureMips64">;
-def NotMips64    :    Predicate<"!Subtarget.hasMips64()">,
-                      AssemblerPredicate<"!FeatureMips64">;
+def IsGP32       :    Predicate<"!Subtarget.isGP64()">,
+                      AssemblerPredicate<"!FeatureGP64Bit">;
+def IsGP64       :    Predicate<"Subtarget.isGP64()">,
+                      AssemblerPredicate<"FeatureGP64Bit">;
 def HasMips64r2  :    Predicate<"Subtarget.hasMips64r2()">,
                       AssemblerPredicate<"FeatureMips64r2">;
 def IsN64       :     Predicate<"Subtarget.isABI_N64()">,
@@ -1171,7 +1173,7 @@ def PAUSE : Barrier<"pause">, BARRIER_FM<5>, Requires<[HasMips32r2]>;
 //===----------------------------------------------------------------------===//
 def : InstAlias<"move $dst, $src",
                 (ADDu GPR32Opnd:$dst, GPR32Opnd:$src,ZERO), 1>,
-      Requires<[NotMips64, NotInMicroMips]>;
+      Requires<[IsGP32, NotInMicroMips]>;
 def : InstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 0>;
 def : InstAlias<"addu $rs, $rt, $imm",
                 (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
