@@ -158,10 +158,9 @@ void Input::endMapping() {
   MapHNode *MN = dyn_cast_or_null<MapHNode>(CurrentNode);
   if (!MN)
     return;
-  for (MapHNode::NameToNode::iterator i = MN->Mapping.begin(),
-       End = MN->Mapping.end(); i != End; ++i) {
-    if (!MN->isValidKey(i->first())) {
-      setError(i->second, Twine("unknown key '") + i->first() + "'");
+  for (const auto &NN : MN->Mapping) {
+    if (!MN->isValidKey(NN.first())) {
+      setError(NN.second, Twine("unknown key '") + NN.first() + "'");
       break;
     }
   }
@@ -255,9 +254,8 @@ bool Input::bitSetMatch(const char *Str, bool) {
     return false;
   if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     unsigned Index = 0;
-    for (std::vector<HNode *>::iterator i = SQ->Entries.begin(),
-         End = SQ->Entries.end(); i != End; ++i) {
-      if (ScalarHNode *SN = dyn_cast<ScalarHNode>(*i)) {
+    for (HNode *N : SQ->Entries) {
+      if (ScalarHNode *SN = dyn_cast<ScalarHNode>(N)) {
         if (SN->value().equals(Str)) {
           BitValuesUsed[Index] = true;
           return true;
@@ -319,9 +317,8 @@ Input::HNode *Input::createHNodes(Node *N) {
     return new ScalarHNode(N, KeyStr);
   } else if (SequenceNode *SQ = dyn_cast<SequenceNode>(N)) {
     SequenceHNode *SQHNode = new SequenceHNode(N);
-    for (SequenceNode::iterator i = SQ->begin(), End = SQ->end(); i != End;
-         ++i) {
-      HNode *Entry = this->createHNodes(i);
+    for (Node &SN : *SQ) {
+      HNode *Entry = this->createHNodes(&SN);
       if (EC)
         break;
       SQHNode->Entries.push_back(Entry);
@@ -329,9 +326,8 @@ Input::HNode *Input::createHNodes(Node *N) {
     return SQHNode;
   } else if (MappingNode *Map = dyn_cast<MappingNode>(N)) {
     MapHNode *mapHNode = new MapHNode(N);
-    for (MappingNode::iterator i = Map->begin(), End = Map->end(); i != End;
-         ++i) {
-      ScalarNode *KeyScalar = dyn_cast<ScalarNode>(i->getKey());
+    for (KeyValueNode &KVN : *Map) {
+      ScalarNode *KeyScalar = dyn_cast<ScalarNode>(KVN.getKey());
       StringStorage.clear();
       StringRef KeyStr = KeyScalar->getValue(StringStorage);
       if (!StringStorage.empty()) {
@@ -341,7 +337,7 @@ Input::HNode *Input::createHNodes(Node *N) {
         memcpy(Buf, &StringStorage[0], Len);
         KeyStr = StringRef(Buf, Len);
       }
-      HNode *ValueHNode = this->createHNodes(i->getValue());
+      HNode *ValueHNode = this->createHNodes(KVN.getValue());
       if (EC)
         break;
       mapHNode->Mapping[KeyStr] = ValueHNode;
@@ -356,9 +352,8 @@ Input::HNode *Input::createHNodes(Node *N) {
 }
 
 bool Input::MapHNode::isValidKey(StringRef Key) {
-  for (SmallVectorImpl<const char *>::iterator i = ValidKeys.begin(),
-       End = ValidKeys.end(); i != End; ++i) {
-    if (Key.equals(*i))
+  for (const char *K : ValidKeys) {
+    if (Key.equals(K))
       return true;
   }
   return false;
@@ -373,17 +368,13 @@ bool Input::canElideEmptySequence() {
 }
 
 Input::MapHNode::~MapHNode() {
-  for (MapHNode::NameToNode::iterator i = Mapping.begin(), End = Mapping.end();
-                                                                i != End; ++i) {
-    delete i->second;
-  }
+  for (auto &N : Mapping)
+    delete N.second;
 }
 
 Input::SequenceHNode::~SequenceHNode() {
-  for (std::vector<HNode*>::iterator i = Entries.begin(), End = Entries.end();
-                                                                i != End; ++i) {
-    delete *i;
-  }
+  for (HNode *N : Entries)
+    delete N;
 }
 
 
