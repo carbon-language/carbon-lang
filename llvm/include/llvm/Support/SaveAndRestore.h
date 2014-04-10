@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-//  This file provides utility classes that uses RAII to save and restore
-//  values.
-//
+///
+/// \file
+/// This file provides utility classes that use RAII to save and restore
+/// values.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_SUPPORT_SAVEANDRESTORE_H
@@ -17,31 +18,32 @@
 
 namespace llvm {
 
-// SaveAndRestore - A utility class that uses RAII to save and restore
-//  the value of a variable.
-template<typename T>
-struct SaveAndRestore {
-  SaveAndRestore(T& x) : X(x), old_value(x) {}
-  SaveAndRestore(T& x, const T &new_value) : X(x), old_value(x) {
-    X = new_value;
+/// A utility class that uses RAII to save and restore the value of a variable.
+template <typename T> struct SaveAndRestore {
+  SaveAndRestore(T &X) : X(X), OldValue(X) {}
+  SaveAndRestore(T &X, const T &NewValue) : X(X), OldValue(X) {
+    X = NewValue;
   }
-  ~SaveAndRestore() { X = old_value; }
-  T get() { return old_value; }
+  ~SaveAndRestore() { X = OldValue; }
+  T get() { return OldValue; }
+
 private:
-  T& X;
-  T old_value;
+  T &X;
+  T OldValue;
 };
 
-// SaveOr - Similar to SaveAndRestore.  Operates only on bools; the old
-//  value of a variable is saved, and during the dstor the old value is
-//  or'ed with the new value.
+/// Similar to \c SaveAndRestore.  Operates only on bools; the old value of a
+/// variable is saved, and during the dstor the old value is or'ed with the new
+/// value.
 struct SaveOr {
-  SaveOr(bool& x) : X(x), old_value(x) { x = false; }
-  ~SaveOr() { X |= old_value; }
+  SaveOr(bool &X) : X(X), OldValue(X) { X = false; }
+  ~SaveOr() { X |= OldValue; }
+
 private:
-  bool& X;
-  const bool old_value;
+  bool &X;
+  const bool OldValue;
 };
 
-}
+} // namespace llvm
+
 #endif
