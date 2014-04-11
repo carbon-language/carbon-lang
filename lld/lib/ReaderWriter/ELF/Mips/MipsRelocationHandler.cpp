@@ -34,6 +34,12 @@ static void reloc32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   applyReloc(location, S + A, 0xffffffff);
 }
 
+/// \brief R_MIPS_PC32
+/// local/external: word32 S + A i- P (truncate)
+void relocpc32(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
+  applyReloc(location, S + A - P, 0xffffffff);
+}
+
 /// \brief R_MIPS_26
 /// local   : ((A | ((P + 4) & 0x3F000000)) + S) >> 2
 static void reloc26loc(uint8_t *location, uint64_t P, uint64_t S, int32_t A) {
@@ -153,6 +159,9 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     break;
   case R_MIPS_JUMP_SLOT:
     // Ignore runtime relocations.
+    break;
+  case R_MIPS_PC32:
+    relocpc32(location, relocVAddress, targetVAddress, ref.addend());
     break;
   case LLD_R_MIPS_GLOBAL_GOT:
     // Do nothing.

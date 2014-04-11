@@ -108,6 +108,7 @@ private:
     const uint8_t *ap = content.data() + ri.r_offset - symbol.st_value;
     switch (ri.getType(isMips64EL)) {
     case llvm::ELF::R_MIPS_32:
+    case llvm::ELF::R_MIPS_PC32:
       ref->setAddend(*(int32_t *)ap);
       break;
     case llvm::ELF::R_MIPS_26:

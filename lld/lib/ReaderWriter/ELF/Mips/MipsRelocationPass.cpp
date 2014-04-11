@@ -316,6 +316,7 @@ void RelocationPass<ELFT>::handleReference(Reference &ref) {
   assert(ref.kindArch() == Reference::KindArch::Mips);
   switch (ref.kindValue()) {
   case R_MIPS_32:
+  case R_MIPS_PC32:
   case R_MIPS_HI16:
   case R_MIPS_LO16:
     // FIXME (simon): Handle dynamic/static linking differently.
