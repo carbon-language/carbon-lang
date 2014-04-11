@@ -727,28 +727,24 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   // Third part: the list of label DIEs.
 
   // Loop on saved info for dwarf labels and create the DIEs for them.
-  const std::vector<const MCGenDwarfLabelEntry *> &Entries =
-    MCOS->getContext().getMCGenDwarfLabelEntries();
-  for (std::vector<const MCGenDwarfLabelEntry *>::const_iterator it =
-       Entries.begin(), ie = Entries.end(); it != ie;
-       ++it) {
-    const MCGenDwarfLabelEntry *Entry = *it;
-
+  const std::vector<MCGenDwarfLabelEntry> &Entries =
+      MCOS->getContext().getMCGenDwarfLabelEntries();
+  for (const auto &Entry : Entries) {
     // The DW_TAG_label DIE abbrev (2).
     MCOS->EmitULEB128IntValue(2);
 
     // AT_name, of the label without any leading underbar.
-    MCOS->EmitBytes(Entry->getName());
+    MCOS->EmitBytes(Entry.getName());
     MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
     // AT_decl_file, index into the file table.
-    MCOS->EmitIntValue(Entry->getFileNumber(), 4);
+    MCOS->EmitIntValue(Entry.getFileNumber(), 4);
 
     // AT_decl_line, source line number.
-    MCOS->EmitIntValue(Entry->getLineNumber(), 4);
+    MCOS->EmitIntValue(Entry.getLineNumber(), 4);
 
     // AT_low_pc, start address of the label.
-    const MCExpr *AT_low_pc = MCSymbolRefExpr::Create(Entry->getLabel(),
+    const MCExpr *AT_low_pc = MCSymbolRefExpr::Create(Entry.getLabel(),
                                              MCSymbolRefExpr::VK_None, context);
     MCOS->EmitValue(AT_low_pc, AddrSize);
 
@@ -760,14 +756,6 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
 
     // Add the NULL DIE terminating the DW_TAG_unspecified_parameters DIE's.
     MCOS->EmitIntValue(0, 1);
-  }
-  // Deallocate the MCGenDwarfLabelEntry classes that saved away the info
-  // for the dwarf labels.
-  for (std::vector<const MCGenDwarfLabelEntry *>::const_iterator it =
-       Entries.begin(), ie = Entries.end(); it != ie;
-       ++it) {
-    const MCGenDwarfLabelEntry *Entry = *it;
-    delete Entry;
   }
 
   // Add the NULL DIE terminating the Compile Unit DIE's.
@@ -856,9 +844,8 @@ void MCGenDwarfLabelEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
   MCOS->EmitLabel(Label);
 
   // Create and entry for the info and add it to the other entries.
-  MCGenDwarfLabelEntry *Entry =
-    new MCGenDwarfLabelEntry(Name, FileNumber, LineNumber, Label);
-  MCOS->getContext().addMCGenDwarfLabelEntry(Entry);
+  MCOS->getContext().addMCGenDwarfLabelEntry(
+      MCGenDwarfLabelEntry(Name, FileNumber, LineNumber, Label));
 }
 
 static int getDataAlignmentFactor(MCStreamer &streamer) {

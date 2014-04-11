@@ -137,7 +137,7 @@ namespace llvm {
 
     /// The information gathered from labels that will have dwarf label
     /// entries when generating dwarf assembly source files.
-    std::vector<const MCGenDwarfLabelEntry *> MCGenDwarfLabelEntries;
+    std::vector<MCGenDwarfLabelEntry> MCGenDwarfLabelEntries;
 
     /// The string to embed in the debug information for the compile unit, if
     /// non-empty.
@@ -383,11 +383,10 @@ namespace llvm {
     void setGenDwarfSectionEndSym(MCSymbol *Sym) {
       GenDwarfSectionEndSym = Sym;
     }
-    const std::vector<const MCGenDwarfLabelEntry *>
-      &getMCGenDwarfLabelEntries() const {
+    const std::vector<MCGenDwarfLabelEntry> &getMCGenDwarfLabelEntries() const {
       return MCGenDwarfLabelEntries;
     }
-    void addMCGenDwarfLabelEntry(const MCGenDwarfLabelEntry *E) {
+    void addMCGenDwarfLabelEntry(const MCGenDwarfLabelEntry &E) {
       MCGenDwarfLabelEntries.push_back(E);
     }
 
