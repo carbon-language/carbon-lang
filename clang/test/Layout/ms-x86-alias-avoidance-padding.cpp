@@ -547,7 +547,37 @@ struct RZ8 : RX8, RY {};
 // CHECK-X64-NEXT:      | [sizeof=16, align=8
 // CHECK-X64-NEXT:      |  nvsize=8, nvalign=8]
 
+struct JA {};
+struct JB {};
+struct JC : JA { virtual void f() {} };
+struct JD : virtual JB, virtual JC { virtual void f() {} JD() {} };
 
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct JD
+// CHECK-NEXT:    0 |   (JD vbtable pointer)
+// CHECK-NEXT:    4 |   struct JB (virtual base) (empty)
+// CHECK-NEXT:    4 |   (vtordisp for vbase JC)
+// CHECK-NEXT:    8 |   struct JC (virtual base)
+// CHECK-NEXT:    8 |     (JC vftable pointer)
+// CHECK-NEXT:   12 |     struct JA (base) (empty)
+// CHECK-NEXT:      | [sizeof=12, align=4
+// CHECK-NEXT:      |  nvsize=4, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct JD
+// CHECK-X64-NEXT:    0 |   (JD vbtable pointer)
+// CHECK-X64-NEXT:    8 |   struct JB (virtual base) (empty)
+// CHECK-X64-NEXT:   12 |   (vtordisp for vbase JC)
+// CHECK-X64-NEXT:   16 |   struct JC (virtual base)
+// CHECK-X64-NEXT:   16 |     (JC vftable pointer)
+// CHECK-X64-NEXT:   24 |     struct JA (base) (empty)
+// CHECK-X64-NEXT:      | [sizeof=24, align=8
+// CHECK-X64-NEXT:      |  nvsize=8, nvalign=8]
 
 int a[
 sizeof(AT3) +
@@ -565,4 +595,5 @@ sizeof(RZ5) +
 sizeof(RZ6) +
 sizeof(RZ7) +
 sizeof(RZ8) +
+sizeof(JD) +
 0];
