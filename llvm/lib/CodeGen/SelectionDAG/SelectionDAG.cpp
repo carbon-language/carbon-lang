@@ -6511,6 +6511,22 @@ SelectionDAG::SplitVector(const SDValue &N, const SDLoc &DL, const EVT &LoVT,
   return std::make_pair(Lo, Hi);
 }
 
+void SelectionDAG::ExtractVectorElements(SDValue Op,
+                                         SmallVectorImpl<SDValue> &Args,
+                                         unsigned Start, unsigned Count) {
+  EVT VT = Op.getValueType();
+  if (Count == 0)
+    Count = VT.getVectorNumElements();
+
+  EVT EltVT = VT.getVectorElementType();
+  EVT IdxTy = TLI->getVectorIdxTy();
+  SDLoc SL(Op);
+  for (unsigned i = Start, e = Start + Count; i != e; ++i) {
+    Args.push_back(getNode(ISD::EXTRACT_VECTOR_ELT, SL, EltVT,
+                           Op, getConstant(i, IdxTy)));
+  }
+}
+
 // getAddressSpace - Return the address space this GlobalAddress belongs to.
 unsigned GlobalAddressSDNode::getAddressSpace() const {
   return getGlobal()->getType()->getAddressSpace();

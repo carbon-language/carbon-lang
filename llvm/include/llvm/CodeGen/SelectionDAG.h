@@ -1160,6 +1160,12 @@ public:
     return SplitVector(N->getOperand(OpNo), SDLoc(N));
   }
 
+  /// ExtractVectorElements - Append the extracted elements from Start to Count
+  /// out of the vector Op in Args. If Count is 0, all of the elements will be
+  /// extracted.
+  void ExtractVectorElements(SDValue Op, SmallVectorImpl<SDValue> &Args,
+                             unsigned Start = 0, unsigned Count = 0);
+
 private:
   bool RemoveNodeFromCSEMaps(SDNode *N);
   void AddModifiedNodeToCSEMaps(SDNode *N);

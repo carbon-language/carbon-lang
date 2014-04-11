@@ -29,9 +29,6 @@ protected:
   const AMDGPUSubtarget *Subtarget;
 
 private:
-  void ExtractVectorElements(SDValue Op, SelectionDAG &DAG,
-                             SmallVectorImpl<SDValue> &Args,
-                             unsigned Start, unsigned Count) const;
   SDValue LowerConstantInitializer(const Constant* Init, const GlobalValue *GV,
                                    const SDValue &InitPtr,
                                    SDValue Chain,
