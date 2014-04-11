@@ -720,8 +720,7 @@ bool ARM64DAGToDAGISel::SelectAddrModeRO(SDValue N, unsigned Size,
   // operation.  If yes, do not try to fold this node into the address
   // computation, since the computation will be kept.
   const SDNode *Node = N.getNode();
-  for (SDNode::use_iterator UI = Node->use_begin(), UE = Node->use_end();
-       UI != UE; ++UI) {
+  for (SDNode *UI : Node->uses()) {
     if (!isa<MemSDNode>(*UI))
       return false;
   }
@@ -1573,12 +1572,10 @@ static void getUsefulBits(SDValue Op, APInt &UsefulBits, unsigned Depth) {
   }
   APInt UsersUsefulBits(UsefulBits.getBitWidth(), 0);
 
-  for (SDNode::use_iterator UseIt = Op.getNode()->use_begin(),
-                            UseEnd = Op.getNode()->use_end();
-       UseIt != UseEnd; ++UseIt) {
+  for (SDNode *Node : Op.getNode()->uses()) {
     // A use cannot produce useful bits
     APInt UsefulBitsForUse = APInt(UsefulBits);
-    getUsefulBitsForUse(*UseIt, UsefulBitsForUse, Op, Depth);
+    getUsefulBitsForUse(Node, UsefulBitsForUse, Op, Depth);
     UsersUsefulBits |= UsefulBitsForUse;
   }
   // UsefulBits contains the produced bits that are meaningful for the
