@@ -201,7 +201,7 @@ protected:
   /// section that have no symbols.
   virtual ELFDefinedAtom<ELFT> *createSectionAtom(const Elf_Shdr *section,
                                                   StringRef sectionName,
-                                                  StringRef sectionContents);
+                                                  ArrayRef<uint8_t> contents);
 
   /// Return the default reloc addend for references.
   virtual int64_t defaultRelocAddend(const Reference &) const;
@@ -621,12 +621,9 @@ template <class ELFT> error_code ELFFile<ELFT>::createAtoms() {
     if (error_code ec = sectionContents.getError())
       return ec;
 
-    StringRef secCont(reinterpret_cast<const char *>(sectionContents->begin()),
-                      sectionContents->size());
-
     if (handleSectionWithNoSymbols(section, symbols)) {
       ELFDefinedAtom<ELFT> *newAtom =
-          createSectionAtom(section, *sectionName, secCont);
+          createSectionAtom(section, *sectionName, *sectionContents);
       _definedAtoms._atoms.push_back(newAtom);
       newAtom->setOrdinal(++_ordinal);
       continue;
@@ -879,7 +876,7 @@ bool ELFFile<ELFT>::isMergeableStringSection(const Elf_Shdr *section) {
 template <class ELFT>
 ELFDefinedAtom<ELFT> *
 ELFFile<ELFT>::createSectionAtom(const Elf_Shdr *section, StringRef sectionName,
-                                 StringRef sectionContents) {
+                                 ArrayRef<uint8_t> content) {
   Elf_Sym *sym = new (_readerStorage) Elf_Sym;
   sym->st_name = 0;
   sym->setBindingAndType(llvm::ELF::STB_LOCAL, llvm::ELF::STT_SECTION);
@@ -887,8 +884,6 @@ ELFFile<ELFT>::createSectionAtom(const Elf_Shdr *section, StringRef sectionName,
   sym->st_shndx = 0;
   sym->st_value = 0;
   sym->st_size = 0;
-  ArrayRef<uint8_t> content((const uint8_t *)sectionContents.data(),
-                            sectionContents.size());
   auto *newAtom = new (_readerStorage) ELFDefinedAtom<ELFT>(
       *this, "", sectionName, sym, section, content, 0, 0, _references);
   newAtom->setOrdinal(++_ordinal);
