@@ -5,7 +5,6 @@
 # RUN: not llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips64r2 | not FileCheck %s
 # CHECK-NOT: encoding
 # XFAIL: *
-# REQUIRES: asserts
 
 	.set noat
 	abs.ps	$f22,$f8
