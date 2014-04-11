@@ -2056,7 +2056,7 @@ static bool isMsLayout(const RecordDecl* D) {
 }
 
 // This section contains an implementation of struct layout that is, up to the
-// included tests, compatible with cl.exe (2012).  The layout produced is
+// included tests, compatible with cl.exe (2013).  The layout produced is
 // significantly different than those produced by the Itanium ABI.  Here we note
 // the most important differences.
 //
@@ -2064,50 +2064,86 @@ static bool isMsLayout(const RecordDecl* D) {
 //   alignment of the union.
 // * The existence of zero-width bitfield that occurs after anything other than
 //   a non-zero length bitfield is ignored.
+// * There is no explicit primary base for the purposes of layout.  All bases
+//   with vfptrs are laid out first, followed by all bases without vfptrs.
 // * The Itanium equivalent vtable pointers are split into a vfptr (virtual
 //   function pointer) and a vbptr (virtual base pointer).  They can each be
 //   shared with a, non-virtual bases. These bases need not be the same.  vfptrs
-//   always occur at offset 0.  vbptrs can occur at an
-//   arbitrary offset and are placed after non-virtual bases but before fields.
+//   always occur at offset 0.  vbptrs can occur at an arbitrary offset and are
+//   placed after the lexiographically last non-virtual base.  This placement
+//   is always before fields but can be in the middle of the non-virtual bases
+//   due to the two-pass layout scheme for non-virtual-bases.
 // * Virtual bases sometimes require a 'vtordisp' field that is laid out before
 //   the virtual base and is used in conjunction with virtual overrides during
-//   construction and destruction.
-// * vfptrs are allocated in a block of memory equal to the alignment of the
-//   fields and non-virtual bases at offset 0 in 32 bit mode and in a pointer
-//   sized block of memory in 64 bit mode.
-// * vbptrs are allocated in a block of memory equal to the alignment of the
-//   fields and non-virtual bases.  This block is at a potentially unaligned
-//   offset.  If the allocation slot is unaligned and the alignment is less than
-//   or equal to the pointer size, additional space is allocated so that the
-//   pointer can be aligned properly.  This causes very strange effects on the
-//   placement of objects after the allocated block. (see the code).
+//   construction and destruction.  This is always a 4 byte value and is used as
+//   an alternative to constructor vtables.
 // * vtordisps are allocated in a block of memory with size and alignment equal
 //   to the alignment of the completed structure (before applying __declspec(
 //   align())).  The vtordisp always occur at the end of the allocation block,
 //   immediately prior to the virtual base.
-// * The last zero sized non-virtual base is allocated after the placement of
-//   vbptr if one exists and can be placed at the end of the struct, potentially
-//   aliasing either the first member or another struct allocated after this
-//   one.
-// * The last zero size virtual base may be placed at the end of the struct.
-//   and can potentially alias a zero sized type in the next struct.
-// * When laying out empty non-virtual bases, an extra byte of padding is added
-//   if the non-virtual base before the empty non-virtual base has a vbptr.
+// * vfptrs are injected after all bases and fields have been laid out.  In
+//   order to guarantee proper alignment of all fields, the vfptr injection
+//   pushes all bases and fields back by the alignment imposed by those bases
+//   and fields.  This can potentially add a significant amount of padding.
+//   vfptrs are always injected at offset 0.
+// * vbptrs are injected after all bases and fields have been laid out.  In
+//   order to guarantee proper alignment of all fields, the vfptr injection
+//   pushes all bases and fields back by the alignment imposed by those bases
+//   and fields.  This can potentially add a significant amount of padding.
+//   vbptrs are injected immediately after the last non-virtual base as
+//   lexiographically ordered in the code.  If this site isn't pointer aligned
+//   the vbptr is placed at the next properly aligned location.  Enough padding
+//   is added to guarantee a fit.
+// * The last zero sized non-virtual base can be placed at the end of the
+//   struct (potentially aliasing another object), or may alias with the first
+//   field, even if they are of the same type.
+// * The last zero size virtual base may be placed at the end of the struct
+//   potentially aliasing another object.
 // * The ABI attempts to avoid aliasing of zero sized bases by adding padding
 //   between bases or vbases with specific properties.  The criteria for
 //   additional padding between two bases is that the first base is zero sized
 //   or ends with a zero sized subobject and the second base is zero sized or
-//   leads with a zero sized base (sharing of vfptrs can reorder the layout of
-//   the so the leading base is not always the first one declared).  This rule
-//   is slightly buggy (conservative) because it doesn't take into account
-//   fields that are not records. The padding added for bases is 1 byte.  The
-//   padding added for vbases depends on the alignment of the object but is at
-//   least 4 bytes (in both 32 and 64 bit modes).
-// * There is no concept of non-virtual alignment or any distinction between
-//   data size and non-virtual size.
+//   trails with a zero sized base or field (sharing of vfptrs can reorder the
+//   layout of the so the leading base is not always the first one declared).
+//   This rule does take into account fields that are not records, so padding
+//   will occur even if the last field is, e.g. an int. The padding added for
+//   bases is 1 byte.  The padding added between vbases depends on the alignment
+//   of the object but is at least 4 bytes (in both 32 and 64 bit modes).
+// * There is no concept of non-virtual alignment, non-virtual alignment and
+//   alignment are always identical.
+// * There is a distinction between alignment and required alignment.
+//   __declspec(align) changes the required alignment of a struct.  This
+//   alignment is _always_ obeyed, even in the presence of #pragma pack. A
+//   record inherites required alignment from all of its fields an bases.
 // * __declspec(align) on bitfields has the effect of changing the bitfield's
-//   alignment instead of its required alignment.  This has implications on how
-//   it interacts with pragam pack.
+//   alignment instead of its required alignment.  This is the only known way
+//   to make the alignment of a struct bigger than 8.  Interestingly enough
+//   this alignment is also immune to the effects of #pragma pack and can be
+//   used to create structures with large alignment under #pragma pack.
+//   However, because it does not impact required alignment, such a structure,
+//   when used as a field or base, will not be aligned if #pragma pack is
+//   still active at the time of use.
+//
+// Known incompatiblities:
+// * all: #pragma pack between fields in a record
+// * 2010 and back: If the last field in a record is a bitfield, every object
+//   laid out after the record will have extra padding inserted before it.  The
+//   extra padding will have size equal to the size of the storage class of the
+//   bitfield.  0 sized bitfields don't exhibit this behavior and the extra
+//   padding can be avoided by adding a 0 sized bitfield after the non-zero-
+//   sized bitfield.
+// * 2012 and back: In 64-bit mode, if the alignment of a record is 16 or
+//   greater due to __declspec(align()) then a second layout phase occurs after
+//   The locations of the vf and vb pointers are known.  This layout phase
+//   suffers from the "last field is a bitfield" bug in 2010 and results in
+//   _every_ field getting padding put in front of it, potentially including the
+//   vfptr, leaving the vfprt at a non-zero location which results in a fault if
+//   anything tries to read the vftbl.  The second layout phase also treats
+//   bitfields as seperate entities and gives them each storage rather than
+//   packing them.  Additionally, because this phase appears to perform a
+//   (an unstable) sort on the members before laying them out and because merged
+//   bitfields have the same address, the bitfields end up in whatever order
+//   the sort left them in, a behavior we could never hope to replicate.
 
 namespace {
 struct MicrosoftRecordLayoutBuilder {
