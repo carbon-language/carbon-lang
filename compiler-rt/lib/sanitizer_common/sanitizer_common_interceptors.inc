@@ -3714,7 +3714,7 @@ INTERCEPTOR(void, xdrmem_create, __sanitizer_XDR *xdrs, uptr addr,
   COMMON_INTERCEPTOR_ENTER(ctx, xdrmem_create, xdrs, addr, size, op);
   REAL(xdrmem_create)(xdrs, addr, size, op);
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, xdrs, sizeof(*xdrs));
-  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, xdrs->x_ops, sizeof(*xdrs->x_ops));
+  COMMON_INTERCEPTOR_INITIALIZE_RANGE(xdrs->x_ops, sizeof(*xdrs->x_ops));
   if (op == __sanitizer_XDR_ENCODE) {
     // It's not obvious how much data individual xdr_ routines write.
     // Simply unpoison the entire target buffer in advance.
@@ -3727,7 +3727,7 @@ INTERCEPTOR(void, xdrstdio_create, __sanitizer_XDR *xdrs, void *file, int op) {
   COMMON_INTERCEPTOR_ENTER(ctx, xdrstdio_create, xdrs, file, op);
   REAL(xdrstdio_create)(xdrs, file, op);
   COMMON_INTERCEPTOR_WRITE_RANGE(ctx, xdrs, sizeof(*xdrs));
-  COMMON_INTERCEPTOR_WRITE_RANGE(ctx, xdrs->x_ops, sizeof(*xdrs->x_ops));
+  COMMON_INTERCEPTOR_INITIALIZE_RANGE(xdrs->x_ops, sizeof(*xdrs->x_ops));
 }
 
 #define XDR_INTERCEPTOR(F, T)                             \
