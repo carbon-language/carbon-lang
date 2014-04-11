@@ -813,6 +813,13 @@ bool ELFObjectWriter::shouldRelocateWithSymbol(const MCSymbolRefExpr *RefA,
   if (Flags & ELF::SHF_TLS)
     return true;
 
+  // If the symbol is a thumb function the final relocation must set the lowest
+  // bit. With a symbol that is done by just having the symbol have that bit
+  // set, so we would lose the bit if we relocated with the section.
+  // FIXME: We could use the section but add the bit to the relocation value.
+  if (SD->getFlags() & ELF_Other_ThumbFunc)
+    return true;
+
   if (TargetObjectWriter->needsRelocateWithSymbol(Type))
     return true;
   return false;
