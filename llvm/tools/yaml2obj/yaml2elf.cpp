@@ -143,6 +143,8 @@ class ELFState {
   typedef typename object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
   typedef typename object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
   typedef typename object::ELFFile<ELFT>::Elf_Sym Elf_Sym;
+  typedef typename object::ELFFile<ELFT>::Elf_Rel Elf_Rel;
+  typedef typename object::ELFFile<ELFT>::Elf_Rela Elf_Rela;
 
   /// \brief The future ".strtab" section.
   StringTableBuilder DotStrtab;
@@ -151,9 +153,12 @@ class ELFState {
   StringTableBuilder DotShStrtab;
 
   NameToIdxMap SN2I;
+  NameToIdxMap SymN2I;
   const ELFYAML::Object &Doc;
 
   bool buildSectionIndex();
+  bool buildSymbolIndex(std::size_t &StartIndex,
+                        const std::vector<ELFYAML::Symbol> &Symbols);
   void initELFHeader(Elf_Ehdr &Header);
   bool initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
                           ContiguousBlobAccumulator &CBA);
@@ -164,6 +169,12 @@ class ELFState {
                                ContiguousBlobAccumulator &CBA);
   void addSymbols(const std::vector<ELFYAML::Symbol> &Symbols,
                   std::vector<Elf_Sym> &Syms, unsigned SymbolBinding);
+  void writeSectionContent(Elf_Shdr &SHeader,
+                           const ELFYAML::RawContentSection &Section,
+                           ContiguousBlobAccumulator &CBA);
+  bool writeSectionContent(Elf_Shdr &SHeader,
+                           const ELFYAML::RelocationSection &Section,
+                           ContiguousBlobAccumulator &CBA);
 
   // - SHT_NULL entry (placed first, i.e. 0'th entry)
   // - symbol table (.symtab) (placed third to last)
@@ -219,26 +230,42 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
 
   for (const auto &Sec : Doc.Sections) {
     zero(SHeader);
-    SHeader.sh_name = DotShStrtab.addString(Sec.Name);
-    SHeader.sh_type = Sec.Type;
-    SHeader.sh_flags = Sec.Flags;
-    SHeader.sh_addr = Sec.Address;
+    SHeader.sh_name = DotShStrtab.addString(Sec->Name);
+    SHeader.sh_type = Sec->Type;
+    SHeader.sh_flags = Sec->Flags;
+    SHeader.sh_addr = Sec->Address;
+    SHeader.sh_addralign = Sec->AddressAlign;
 
-    Sec.Content.writeAsBinary(CBA.getOSAndAlignedOffset(SHeader.sh_offset));
-    SHeader.sh_size = Sec.Content.binary_size();
-
-    if (!Sec.Link.empty()) {
+    if (!Sec->Link.empty()) {
       unsigned Index;
-      if (SN2I.lookup(Sec.Link, Index)) {
-        errs() << "error: Unknown section referenced: '" << Sec.Link
-               << "' at YAML section '" << Sec.Name << "'.\n";
-        return false;;
+      if (SN2I.lookup(Sec->Link, Index)) {
+        errs() << "error: Unknown section referenced: '" << Sec->Link
+               << "' at YAML section '" << Sec->Name << "'.\n";
+        return false;
       }
       SHeader.sh_link = Index;
     }
-    SHeader.sh_info = 0;
-    SHeader.sh_addralign = Sec.AddressAlign;
-    SHeader.sh_entsize = 0;
+
+    if (auto S = dyn_cast<ELFYAML::RawContentSection>(Sec.get()))
+      writeSectionContent(SHeader, *S, CBA);
+    else if (auto S = dyn_cast<ELFYAML::RelocationSection>(Sec.get())) {
+      if (S->Link.empty())
+        // For relocation section set link to .symtab by default.
+        SHeader.sh_link = getDotSymTabSecNo();
+
+      unsigned Index;
+      if (SN2I.lookup(S->Info, Index)) {
+        errs() << "error: Unknown section referenced: '" << S->Info
+               << "' at YAML section '" << S->Name << "'.\n";
+        return false;
+      }
+      SHeader.sh_info = Index;
+
+      if (!writeSectionContent(SHeader, *S, CBA))
+        return false;
+    } else
+      llvm_unreachable("Unknown section type");
+
     SHeaders.push_back(SHeader);
   }
   return true;
@@ -308,13 +335,66 @@ void ELFState<ELFT>::addSymbols(const std::vector<ELFYAML::Symbol> &Symbols,
   }
 }
 
+template <class ELFT>
+void
+ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
+                                    const ELFYAML::RawContentSection &Section,
+                                    ContiguousBlobAccumulator &CBA) {
+  Section.Content.writeAsBinary(CBA.getOSAndAlignedOffset(SHeader.sh_offset));
+  SHeader.sh_entsize = 0;
+  SHeader.sh_size = Section.Content.binary_size();
+}
+
+template <class ELFT>
+bool
+ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
+                                    const ELFYAML::RelocationSection &Section,
+                                    ContiguousBlobAccumulator &CBA) {
+  if (Section.Type != llvm::ELF::SHT_REL &&
+      Section.Type != llvm::ELF::SHT_RELA) {
+    errs() << "error: Invalid relocation section type.\n";
+    return false;
+  }
+
+  bool IsRela = Section.Type == llvm::ELF::SHT_RELA;
+  SHeader.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
+  SHeader.sh_size = SHeader.sh_entsize * Section.Relocations.size();
+
+  auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset);
+
+  for (const auto &Rel : Section.Relocations) {
+    unsigned SymIdx;
+    if (SymN2I.lookup(Rel.Symbol, SymIdx)) {
+      errs() << "error: Unknown symbol referenced: '" << Rel.Symbol
+             << "' at YAML relocation.\n";
+      return false;
+    }
+
+    if (IsRela) {
+      Elf_Rela REntry;
+      zero(REntry);
+      REntry.r_offset = Rel.Offset;
+      REntry.r_addend = Rel.Addend;
+      REntry.setSymbolAndType(SymIdx, Rel.Type);
+      OS.write((const char *)&REntry, sizeof(REntry));
+    } else {
+      Elf_Rel REntry;
+      zero(REntry);
+      REntry.r_offset = Rel.Offset;
+      REntry.setSymbolAndType(SymIdx, Rel.Type);
+      OS.write((const char *)&REntry, sizeof(REntry));
+    }
+  }
+  return true;
+}
+
 template <class ELFT> bool ELFState<ELFT>::buildSectionIndex() {
   SN2I.addName(".symtab", getDotSymTabSecNo());
   SN2I.addName(".strtab", getDotStrTabSecNo());
   SN2I.addName(".shstrtab", getDotShStrTabSecNo());
 
   for (unsigned i = 0, e = Doc.Sections.size(); i != e; ++i) {
-    StringRef Name = Doc.Sections[i].Name;
+    StringRef Name = Doc.Sections[i]->Name;
     if (Name.empty())
       continue;
     // "+ 1" to take into account the SHT_NULL entry.
@@ -328,9 +408,31 @@ template <class ELFT> bool ELFState<ELFT>::buildSectionIndex() {
 }
 
 template <class ELFT>
+bool
+ELFState<ELFT>::buildSymbolIndex(std::size_t &StartIndex,
+                                 const std::vector<ELFYAML::Symbol> &Symbols) {
+  for (const auto &Sym : Symbols) {
+    ++StartIndex;
+    if (Sym.Name.empty())
+      continue;
+    if (SymN2I.addName(Sym.Name, StartIndex)) {
+      errs() << "error: Repeated symbol name: '" << Sym.Name << "'.\n";
+      return false;
+    }
+  }
+  return true;
+}
+
+template <class ELFT>
 int ELFState<ELFT>::writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   ELFState<ELFT> State(Doc);
   if (!State.buildSectionIndex())
+    return 1;
+
+  std::size_t StartSymIndex = 0;
+  if (!State.buildSymbolIndex(StartSymIndex, Doc.Symbols.Local) ||
+      !State.buildSymbolIndex(StartSymIndex, Doc.Symbols.Global) ||
+      !State.buildSymbolIndex(StartSymIndex, Doc.Symbols.Weak))
     return 1;
 
   Elf_Ehdr Header;
