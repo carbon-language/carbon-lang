@@ -5,8 +5,9 @@
 // with any source location.
 //
 // CHECK: define internal void @_GLOBAL__I_a
-// CHECK-NOT: !dbg
+// CHECK: !dbg ![[DBG:.*]]
 // CHECK: "_GLOBAL__I_a", i32 0, {{.*}}, i32 0} ; [ DW_TAG_subprogram ] [line 0] [local] [def]
+// CHECK: ![[DBG]] = metadata !{i32 0, i32 0,
 # 99 "someheader.h"
 class A {
 public:
