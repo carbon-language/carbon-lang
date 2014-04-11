@@ -73,6 +73,11 @@ static cl::opt<unsigned> LastChanceRecoloringMaxInterference(
              " interference at a time"),
     cl::init(8));
 
+static cl::opt<bool>
+ExhaustiveSearch("fexhaustive-register-search", cl::NotHidden,
+                 cl::desc("Exhaustive Search for registers bypassing the depth "
+                          "and interference cutoffs of last chance recoloring"));
+
 // FIXME: Find a good default for this flag and remove the flag.
 static cl::opt<unsigned>
 CSRFirstTimeCost("regalloc-csr-first-time-cost",
@@ -1932,7 +1937,7 @@ RAGreedy::mayRecolorAllInterferences(unsigned PhysReg, LiveInterval &VirtReg,
     // If there is LastChanceRecoloringMaxInterference or more interferences,
     // chances are one would not be recolorable.
     if (Q.collectInterferingVRegs(LastChanceRecoloringMaxInterference) >=
-        LastChanceRecoloringMaxInterference) {
+        LastChanceRecoloringMaxInterference && !ExhaustiveSearch) {
       DEBUG(dbgs() << "Early abort: too many interferences.\n");
       CutOffInfo |= CO_Interf;
       return false;
@@ -2005,7 +2010,7 @@ unsigned RAGreedy::tryLastChanceRecoloring(LiveInterval &VirtReg,
   // We may want to reconsider that if we end up with a too large search space
   // for target with hundreds of registers.
   // Indeed, in that case we may want to cut the search space earlier.
-  if (Depth >= LastChanceRecoloringMaxDepth) {
+  if (Depth >= LastChanceRecoloringMaxDepth && !ExhaustiveSearch) {
     DEBUG(dbgs() << "Abort because max depth has been reached.\n");
     CutOffInfo |= CO_Depth;
     return ~0u;
@@ -2139,14 +2144,17 @@ unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
   if (Reg == ~0U && (CutOffInfo != CO_None)) {
     uint8_t CutOffEncountered = CutOffInfo & (CO_Depth | CO_Interf);
     if (CutOffEncountered == CO_Depth)
-      Ctx.emitError(
-          "register allocation failed: maximum depth for recoloring reached");
+      Ctx.emitError("register allocation failed: maximum depth for recoloring "
+                    "reached. Use -fexhaustive-register-search to skip "
+                    "cutoffs");
     else if (CutOffEncountered == CO_Interf)
       Ctx.emitError("register allocation failed: maximum interference for "
-                    "recoloring reached");
+                    "recoloring reached. Use -fexhaustive-register-search "
+                    "to skip cutoffs");
     else if (CutOffEncountered == (CO_Depth | CO_Interf))
       Ctx.emitError("register allocation failed: maximum interference and "
-                    "depth for recoloring reached");
+                    "depth for recoloring reached. Use "
+                    "-fexhaustive-register-search to skip cutoffs");
   }
   return Reg;
 }
