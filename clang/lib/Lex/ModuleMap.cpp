@@ -243,8 +243,12 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
     resolveUses(RequestingModule, /*Complain=*/false);
 
   HeadersMap::iterator Known = findKnownHeader(File);
-  if (Known == Headers.end())
+  if (Known == Headers.end()) {
+    if (LangOpts.ModulesStrictDeclUse)
+      Diags.Report(FilenameLoc, diag::error_undeclared_use_of_module)
+          << RequestingModule->getFullModuleName() << Filename;
     return;
+  }
 
   Module *Private = NULL;
   Module *NotUsed = NULL;

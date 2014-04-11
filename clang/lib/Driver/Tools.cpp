@@ -3469,6 +3469,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fmodules-decluse");
   }
 
+  // -fmodules-strict-decluse is like -fmodule-decluse, but also checks that
+  // all #included headers are part of modules.
+  if (Args.hasFlag(options::OPT_fmodules_strict_decluse,
+                   options::OPT_fno_modules_strict_decluse,
+                   false)) {
+    CmdArgs.push_back("-fmodules-strict-decluse");
+  }
+
   // -fmodule-name specifies the module that is currently being built (or
   // used for header checking by -fmodule-maps).
   if (Arg *A = Args.getLastArg(options::OPT_fmodule_name)) {
