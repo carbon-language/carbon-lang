@@ -241,7 +241,8 @@ void MCContext::renameELFSection(const MCSectionELF *Section, StringRef Name) {
   auto I =
       ELFUniquingMap.insert(std::make_pair(SectionGroupPair(Name, GroupName),
                                            Section)).first;
-  const_cast<MCSectionELF*>(Section)->setSectionName(I->first.first);
+  StringRef CachedName = I->first.first;
+  const_cast<MCSectionELF*>(Section)->setSectionName(CachedName);
 }
 
 const MCSectionELF *MCContext::
@@ -262,8 +263,9 @@ getELFSection(StringRef Section, unsigned Type, unsigned Flags,
   if (!Group.empty())
     GroupSym = GetOrCreateSymbol(Group);
 
-  MCSectionELF *Result = new (*this) MCSectionELF(
-      Entry.first.first, Type, Flags, Kind, EntrySize, GroupSym);
+  StringRef CachedName = Entry.first.first;
+  MCSectionELF *Result = new (*this)
+      MCSectionELF(CachedName, Type, Flags, Kind, EntrySize, GroupSym);
   Entry.second = Result;
   return Result;
 }
@@ -291,9 +293,9 @@ MCContext::getCOFFSection(StringRef Section, unsigned Characteristics,
   if (!COMDATSymName.empty())
     COMDATSymbol = GetOrCreateSymbol(COMDATSymName);
 
-  MCSectionCOFF *Result =
-      new (*this) MCSectionCOFF(Iter->first.first, Characteristics,
-                                COMDATSymbol, Selection, Assoc, Kind);
+  StringRef CachedName = Iter->first.first;
+  MCSectionCOFF *Result = new (*this) MCSectionCOFF(
+      CachedName, Characteristics, COMDATSymbol, Selection, Assoc, Kind);
 
   Iter->second = Result;
   return Result;
