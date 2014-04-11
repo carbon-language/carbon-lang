@@ -913,6 +913,8 @@ private:
       Newlines = std::min(Newlines, 1u);
     if (Newlines == 0 && !RootToken.IsFirst)
       Newlines = 1;
+    if (RootToken.IsFirst && !RootToken.HasUnescapedNewline)
+      Newlines = 0;
 
     // Remove empty lines after "{".
     if (!Style.KeepEmptyLinesAtTheStartOfBlocks && PreviousLine &&
@@ -1329,7 +1331,7 @@ private:
     // FIXME: Add a more explicit test.
     while (FormatTok->TokenText.size() > 1 && FormatTok->TokenText[0] == '\\' &&
            FormatTok->TokenText[1] == '\n') {
-      // FIXME: ++FormatTok->NewlinesBefore is missing...
+      ++FormatTok->NewlinesBefore;
       WhitespaceLength += 2;
       Column = 0;
       FormatTok->TokenText = FormatTok->TokenText.substr(2);

@@ -1358,13 +1358,18 @@ void UnwrappedLineParser::addUnwrappedLine() {
 
 bool UnwrappedLineParser::eof() const { return FormatTok->Tok.is(tok::eof); }
 
+bool UnwrappedLineParser::isOnNewLine(const FormatToken& FormatTok) {
+  return (Line->InPPDirective || FormatTok.HasUnescapedNewline) &&
+         FormatTok.NewlinesBefore > 0;
+}
+
 void UnwrappedLineParser::flushComments(bool NewlineBeforeNext) {
   bool JustComments = Line->Tokens.empty();
   for (SmallVectorImpl<FormatToken *>::const_iterator
            I = CommentsBeforeNextToken.begin(),
            E = CommentsBeforeNextToken.end();
        I != E; ++I) {
-    if ((*I)->NewlinesBefore && JustComments) {
+    if (isOnNewLine(**I) && JustComments) {
       addUnwrappedLine();
     }
     pushToken(*I);
@@ -1378,7 +1383,7 @@ void UnwrappedLineParser::flushComments(bool NewlineBeforeNext) {
 void UnwrappedLineParser::nextToken() {
   if (eof())
     return;
-  flushComments(FormatTok->NewlinesBefore > 0);
+  flushComments(isOnNewLine(*FormatTok));
   pushToken(FormatTok);
   readToken();
 }
@@ -1398,7 +1403,7 @@ void UnwrappedLineParser::readToken() {
       // Comments stored before the preprocessor directive need to be output
       // before the preprocessor directive, at the same level as the
       // preprocessor directive, as we consider them to apply to the directive.
-      flushComments(FormatTok->NewlinesBefore > 0);
+      flushComments(isOnNewLine(*FormatTok));
       parsePPDirective();
     }
 
@@ -1409,7 +1414,7 @@ void UnwrappedLineParser::readToken() {
 
     if (!FormatTok->Tok.is(tok::comment))
       return;
-    if (FormatTok->NewlinesBefore > 0 || FormatTok->IsFirst) {
+    if (isOnNewLine(*FormatTok) || FormatTok->IsFirst) {
       CommentsInCurrentLine = false;
     }
     if (CommentsInCurrentLine) {
