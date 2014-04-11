@@ -331,9 +331,10 @@ namespace {
     MapRegionCounters(llvm::DenseMap<const Stmt *, unsigned> &CounterMap)
         : NextCounter(0), CounterMap(CounterMap) {}
 
-    // Do not traverse the BlockDecl inside a BlockExpr since each BlockDecl
-    // is handled as a separate function.
-    bool TraverseBlockExpr(BlockExpr *block) { return true; }
+    // Blocks and lambdas are handled as separate functions, so we need not
+    // traverse them in the parent context.
+    bool TraverseBlockExpr(BlockExpr *BE) { return true; }
+    bool TraverseLambdaBody(LambdaExpr *LE) { return true; }
 
     bool VisitDecl(const Decl *D) {
       switch (D->getKind()) {
@@ -430,6 +431,11 @@ namespace {
       CountMap[D->getBody()] = PGO.getCurrentRegionCount();
       Visit(D->getBody());
     }
+
+    // Skip lambda expressions. We visit these as FunctionDecls when we're
+    // generating them and aren't interested in the body when generating a
+    // parent context.
+    void VisitLambdaExpr(const LambdaExpr *LE) {}
 
     void VisitObjCMethodDecl(const ObjCMethodDecl *D) {
       // Counter tracks entry to the method body.
