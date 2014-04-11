@@ -299,9 +299,8 @@ void __msan_init() {
   __msan_clear_on_return();
   if (__msan_get_track_origins())
     VPrintf(1, "msan_track_origins\n");
-  if (!InitShadow(/* prot1 */ false, /* prot2 */ true, /* map_shadow */ true,
-                  __msan_get_track_origins())) {
-    // FIXME: prot1 = false is only required when running under DR.
+  if (!InitShadow(/* prot1 */ !msan_running_under_dr, /* prot2 */ true,
+                  /* map_shadow */ true, __msan_get_track_origins())) {
     Printf("FATAL: MemorySanitizer can not mmap the shadow memory.\n");
     Printf("FATAL: Make sure to compile with -fPIE and to link with -pie.\n");
     Printf("FATAL: Disabling ASLR is known to cause this error.\n");

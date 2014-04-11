@@ -39,7 +39,7 @@ static const uptr kMemBeg     = 0x600000000000;
 static const uptr kMemEnd     = 0x7fffffffffff;
 static const uptr kShadowBeg  = MEM_TO_SHADOW(kMemBeg);
 static const uptr kShadowEnd  = MEM_TO_SHADOW(kMemEnd);
-static const uptr kBad1Beg    = 0x100000000;  // 4G
+static const uptr kBad1Beg    = 0;
 static const uptr kBad1End    = kShadowBeg - 1;
 static const uptr kBad2Beg    = kShadowEnd + 1;
 static const uptr kBad2End    = kMemBeg - 1;
@@ -61,7 +61,9 @@ bool InitShadow(bool prot1, bool prot2, bool map_shadow, bool init_origins) {
   VPrintf(1, "Bad1     : %p %p\n", kBad1Beg, kBad1End);
 
   if (!MemoryRangeIsAvailable(kShadowBeg,
-                              init_origins ? kOriginsEnd : kShadowEnd)) {
+                              init_origins ? kOriginsEnd : kShadowEnd) ||
+      (prot1 && !MemoryRangeIsAvailable(kBad1Beg, kBad1End)) ||
+      (prot2 && !MemoryRangeIsAvailable(kBad2Beg, kBad2End))) {
     Printf("FATAL: Shadow memory range is not available.\n");
     return false;
   }
