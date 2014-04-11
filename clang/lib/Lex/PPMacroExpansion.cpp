@@ -115,6 +115,7 @@ void Preprocessor::RegisterBuiltinMacros() {
   Ident__has_include      = RegisterBuiltinMacro(*this, "__has_include");
   Ident__has_include_next = RegisterBuiltinMacro(*this, "__has_include_next");
   Ident__has_warning      = RegisterBuiltinMacro(*this, "__has_warning");
+  Ident__is_identifier    = RegisterBuiltinMacro(*this, "__is_identifier");
 
   // Modules.
   if (LangOpts.Modules) {
@@ -1359,6 +1360,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
   } else if (II == Ident__has_feature   ||
              II == Ident__has_extension ||
              II == Ident__has_builtin   ||
+             II == Ident__is_identifier ||
              II == Ident__has_attribute) {
     // The argument to these builtins should be a parenthesized identifier.
     SourceLocation StartLoc = Tok.getLocation();
@@ -1382,6 +1384,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     bool Value = false;
     if (!IsValid)
       Diag(StartLoc, diag::err_feature_check_malformed);
+    else if (II == Ident__is_identifier)
+      Value = FeatureII->getTokenID() == tok::identifier;
     else if (II == Ident__has_builtin) {
       // Check for a builtin is trivial.
       Value = FeatureII->getBuiltinID() != 0;
