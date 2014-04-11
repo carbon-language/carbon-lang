@@ -13,6 +13,7 @@
 #include "tsan_clock.h"
 #include "tsan_rtl.h"
 #include "gtest/gtest.h"
+#include <time.h>
 
 namespace __tsan {
 
@@ -61,6 +62,19 @@ TEST(Clock, AcquireRelease) {
   ASSERT_EQ(vector2.get(1), 0U);
   ASSERT_EQ(vector2.get(99), 0U);
   ASSERT_EQ(vector2.get(100), 1U);
+}
+
+TEST(Clock, RepeatedAcquire) {
+  ThreadClock thr1(1);
+  thr1.tick();
+  ThreadClock thr2(2);
+  thr2.tick();
+
+  SyncClock sync;
+  thr1.ReleaseStore(&sync);
+
+  thr2.acquire(&sync);
+  thr2.acquire(&sync);
 }
 
 TEST(Clock, ManyThreads) {
@@ -130,6 +144,10 @@ struct SimpleSyncClock {
   uptr size;
 
   SimpleSyncClock() {
+    Reset();
+  }
+
+  void Reset() {
     size = 0;
     for (uptr i = 0; i < kThreads; i++)
       clock[i] = 0;
@@ -211,9 +229,11 @@ static bool ClockFuzzer(bool printing) {
   // Create kThreads thread clocks.
   SimpleThreadClock *thr0[kThreads];
   ThreadClock *thr1[kThreads];
+  unsigned reused[kThreads];
   for (unsigned i = 0; i < kThreads; i++) {
+    reused[i] = 0;
     thr0[i] = new SimpleThreadClock(i);
-    thr1[i] = new ThreadClock(i);
+    thr1[i] = new ThreadClock(i, reused[i]);
   }
 
   // Create kClocks sync clocks.
@@ -232,7 +252,7 @@ static bool ClockFuzzer(bool printing) {
     thr0[tid]->tick();
     thr1[tid]->tick();
 
-    switch (rand() % 4) {
+    switch (rand() % 6) {
     case 0:
       if (printing)
         printf("acquire thr%d <- clk%d\n", tid, cid);
@@ -256,6 +276,24 @@ static bool ClockFuzzer(bool printing) {
         printf("rel_str thr%d >> clk%d\n", tid, cid);
       thr0[tid]->ReleaseStore(sync0[cid]);
       thr1[tid]->ReleaseStore(sync1[cid]);
+      break;
+    case 4:
+      if (printing)
+        printf("reset clk%d\n", cid);
+      sync0[cid]->Reset();
+      sync1[cid]->Reset();
+      break;
+    case 5:
+      if (printing)
+        printf("reset thr%d\n", tid);
+      u64 epoch = thr0[tid]->clock[tid] + 1;
+      reused[tid]++;
+      delete thr0[tid];
+      thr0[tid] = new SimpleThreadClock(tid);
+      thr0[tid]->clock[tid] = epoch;
+      delete thr1[tid];
+      thr1[tid] = new ThreadClock(tid, reused[tid]);
+      thr1[tid]->set(epoch);
       break;
     }
 
@@ -297,7 +335,9 @@ static bool ClockFuzzer(bool printing) {
 }
 
 TEST(Clock, Fuzzer) {
-  int seed = time(0);
+  timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  int seed = ts.tv_sec + ts.tv_nsec;
   printf("seed=%d\n", seed);
   srand(seed);
   if (!ClockFuzzer(false)) {

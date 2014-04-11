@@ -85,11 +85,10 @@ void StatOutput(u64 *stat) {
   name[StatClockReleaseResize]           = "  resize                          ";
   name[StatClockReleaseFast1]            = "  fast1                           ";
   name[StatClockReleaseFast2]            = "  fast2                           ";
-  name[StatClockReleaseFast3]            = "  fast3                           ";
+  name[StatClockReleaseSlow]             = "  dirty overflow (slow)           ";
   name[StatClockReleaseFull]             = "  full (slow)                     ";
   name[StatClockReleaseAcquired]         = "  was acquired                    ";
   name[StatClockReleaseClearTail]        = "  clear tail                      ";
-  name[StatClockReleaseLastOverflow]     = "  last overflow                   ";
   name[StatClockStore]                   = "Clock release store               ";
   name[StatClockStoreResize]             = "  resize                          ";
   name[StatClockStoreFast]               = "  fast                            ";

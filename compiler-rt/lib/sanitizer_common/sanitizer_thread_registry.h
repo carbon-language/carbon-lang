@@ -38,13 +38,13 @@ class ThreadContextBase {
 
   const u32 tid;  // Thread ID. Main thread should have tid = 0.
   u64 unique_id;  // Unique thread ID.
+  u32 reuse_count;  // Number of times this tid was reused.
   uptr os_id;     // PID (used for reporting).
   uptr user_id;   // Some opaque user thread id (e.g. pthread_t).
   char name[64];  // As annotated by user.
 
   ThreadStatus status;
   bool detached;
-  int reuse_count;
 
   u32 parent_tid;
   ThreadContextBase *next;  // For storing thread contexts in a list.
@@ -77,7 +77,7 @@ class ThreadRegistry {
   static const u32 kUnknownTid;
 
   ThreadRegistry(ThreadContextFactory factory, u32 max_threads,
-                 u32 thread_quarantine_size);
+                 u32 thread_quarantine_size, u32 max_reuse = 0);
   void GetNumberOfThreads(uptr *total = 0, uptr *running = 0, uptr *alive = 0);
   uptr GetMaxAliveThreads();
 
@@ -119,6 +119,7 @@ class ThreadRegistry {
   const ThreadContextFactory context_factory_;
   const u32 max_threads_;
   const u32 thread_quarantine_size_;
+  const u32 max_reuse_;
 
   BlockingMutex mtx_;
 

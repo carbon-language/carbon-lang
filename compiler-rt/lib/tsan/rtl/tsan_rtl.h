@@ -467,6 +467,7 @@ struct ThreadState {
   int nomalloc;
 
   explicit ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
+                       unsigned reuse_count,
                        uptr stk_addr, uptr stk_size,
                        uptr tls_addr, uptr tls_size);
 };

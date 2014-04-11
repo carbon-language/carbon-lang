@@ -85,8 +85,8 @@ void ThreadContext::OnStarted(void *arg) {
   // from different threads.
   epoch0 = RoundUp(epoch1 + 1, kTracePartSize);
   epoch1 = (u64)-1;
-  new(thr) ThreadState(ctx, tid, unique_id,
-      epoch0, args->stk_addr, args->stk_size, args->tls_addr, args->tls_size);
+  new(thr) ThreadState(ctx, tid, unique_id, epoch0, reuse_count,
+      args->stk_addr, args->stk_size, args->tls_addr, args->tls_size);
 #ifndef TSAN_GO
   thr->shadow_stack = &ThreadTrace(thr->tid)->shadow_stack[0];
   thr->shadow_stack_pos = thr->shadow_stack;

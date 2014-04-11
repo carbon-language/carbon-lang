@@ -41,6 +41,7 @@ const int kTidBits = 13;
 const unsigned kMaxTid = 1 << kTidBits;
 const unsigned kMaxTidInClock = kMaxTid * 2;  // This includes msb 'freed' bit.
 const int kClkBits = 42;
+const unsigned kMaxTidReuse = (1 << (64 - kClkBits)) - 1;
 const uptr kShadowStackSize = 64 * 1024;
 const uptr kTraceStackSize = 256;
 

@@ -82,11 +82,10 @@ enum StatType {
   StatClockReleaseResize,
   StatClockReleaseFast1,
   StatClockReleaseFast2,
-  StatClockReleaseFast3,
+  StatClockReleaseSlow,
   StatClockReleaseFull,
   StatClockReleaseAcquired,
   StatClockReleaseClearTail,
-  StatClockReleaseLastOverflow,
   // Clocks - release store.
   StatClockStore,
   StatClockStoreResize,

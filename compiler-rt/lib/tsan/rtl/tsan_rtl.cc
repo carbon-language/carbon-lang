@@ -75,7 +75,7 @@ Context::Context()
   , nreported()
   , nmissed_expected()
   , thread_registry(new(thread_registry_placeholder) ThreadRegistry(
-      CreateThreadContext, kMaxTid, kThreadQuarantineSize))
+      CreateThreadContext, kMaxTid, kThreadQuarantineSize, kMaxTidReuse))
   , racy_stacks(MBlockRacyStacks)
   , racy_addresses(MBlockRacyAddresses)
   , fired_suppressions(8) {
@@ -83,6 +83,7 @@ Context::Context()
 
 // The objects are allocated in TLS, so one may rely on zero-initialization.
 ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
+                         unsigned reuse_count,
                          uptr stk_addr, uptr stk_size,
                          uptr tls_addr, uptr tls_size)
   : fast_state(tid, epoch)
@@ -90,7 +91,7 @@ ThreadState::ThreadState(Context *ctx, int tid, int unique_id, u64 epoch,
   // they may be accessed before the ctor.
   // , ignore_reads_and_writes()
   // , ignore_interceptors()
-  , clock(tid)
+  , clock(tid, reuse_count)
 #ifndef TSAN_GO
   , jmp_bufs(MBlockJmpBuf)
 #endif
