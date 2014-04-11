@@ -1394,7 +1394,12 @@ SDValue R600TargetLowering::LowerFormalArguments(
 
     // The first 36 bytes of the input buffer contains information about
     // thread group and global sizes.
-    SDValue Arg = DAG.getExtLoad(ISD::SEXTLOAD, DL, VT, Chain,
+
+    // FIXME: This should really check the extload type, but the handling of
+    // extload vecto parameters seems to be broken.
+    //ISD::LoadExtType Ext = Ins[i].Flags.isSExt() ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
+    ISD::LoadExtType Ext = ISD::SEXTLOAD;
+    SDValue Arg = DAG.getExtLoad(Ext, DL, VT, Chain,
                                  DAG.getConstant(36 + VA.getLocMemOffset(), MVT::i32),
                                  MachinePointerInfo(UndefValue::get(PtrTy)),
                                  MemVT, false, false, 4);
