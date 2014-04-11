@@ -1212,11 +1212,13 @@ static DebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
     return DebugLocEntry(FLabel, SLabel, MLoc, Var, Unit);
   }
   if (MI->getOperand(0).isImm())
-    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getImm(), Unit);
+    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getImm(), Var, Unit);
   if (MI->getOperand(0).isFPImm())
-    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getFPImm(), Unit);
+    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getFPImm(),
+                         Var, Unit);
   if (MI->getOperand(0).isCImm())
-    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getCImm(), Unit);
+    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getCImm(),
+                         Var, Unit);
 
   llvm_unreachable("Unexpected 3 operand DBG_VALUE instruction!");
 }

@@ -76,20 +76,20 @@ public:
     EntryKind = E_Location;
   }
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, int64_t i,
-                const DwarfCompileUnit *U)
-      : Begin(B), End(E), Variable(0), Unit(U) {
+                const MDNode *V, const DwarfCompileUnit *U)
+      : Begin(B), End(E), Variable(V), Unit(U) {
     Constants.Int = i;
     EntryKind = E_Integer;
   }
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantFP *FPtr,
-                const DwarfCompileUnit *U)
-      : Begin(B), End(E), Variable(0), Unit(U) {
+                const MDNode *V, const DwarfCompileUnit *U)
+      : Begin(B), End(E), Variable(V), Unit(U) {
     Constants.CFP = FPtr;
     EntryKind = E_ConstantFP;
   }
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, const ConstantInt *IPtr,
-                const DwarfCompileUnit *U)
-      : Begin(B), End(E), Variable(0), Unit(U) {
+                const MDNode *V, const DwarfCompileUnit *U)
+      : Begin(B), End(E), Variable(V), Unit(U) {
     Constants.CIP = IPtr;
     EntryKind = E_ConstantInt;
   }

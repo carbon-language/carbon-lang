@@ -25,14 +25,14 @@
 ; CHECK:     DW_AT_location [DW_FORM_data4]	([[LOC:.*]])
 ; CHECK: .debug_loc contents:
 ; CHECK: [[LOC]]:
-;        constu 0x00000003
+;        consts 0x00000003
 ; CHECK: Beginning address offset: 0x0000000000000{{.*}}
 ; CHECK:    Ending address offset: [[C1:.*]]
-; CHECK:     Location description: 10 03
-;        constu 0x00000007
+; CHECK:     Location description: 11 03
+;        consts 0x00000007
 ; CHECK: Beginning address offset: [[C1]]
 ; CHECK:    Ending address offset: [[C2:.*]]
-; CHECK:     Location description: 10 07
+; CHECK:     Location description: 11 07
 ;        rax, piece 0x00000004
 ; CHECK: Beginning address offset: [[C2]]
 ; CHECK:    Ending address offset: [[R1:.*]]

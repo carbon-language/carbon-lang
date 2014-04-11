@@ -26,7 +26,7 @@
 
 ; CHECK: [[A]]: Beginning address index: 2
 ; CHECK-NEXT:                    Length: 199
-; CHECK-NEXT:      Location description: 10 00
+; CHECK-NEXT:      Location description: 11 00
 ; CHECK-NEXT: {{^$}}
 ; CHECK-NEXT:   Beginning address index: 3
 ; CHECK-NEXT:                    Length: 23

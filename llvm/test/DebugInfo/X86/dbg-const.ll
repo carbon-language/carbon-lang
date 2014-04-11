@@ -13,7 +13,7 @@
 
 target triple = "x86_64-apple-darwin10.0.0"
 
-;CHECK:        ## DW_OP_constu
+;CHECK:        ## DW_OP_consts
 ;CHECK-NEXT:  .byte	42
 define i32 @foobar() nounwind readonly noinline ssp {
 entry:
