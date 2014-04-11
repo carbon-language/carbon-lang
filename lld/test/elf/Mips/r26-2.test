@@ -1,39 +1,79 @@
 # Check reading addendum for R_MIPS_26 relocation.
-#
-# RUN: lld -flavor gnu -target mipsel -o %t-exe %S/Inputs/r26-2.o
+# RUN: yaml2obj -format=elf %s > %t-obj
+# RUN: lld -flavor gnu -target mipsel -o %t-exe %t-obj
 # RUN: llvm-objdump -t -disassemble %t-exe | FileCheck %s
 
 # CHECK: Disassembly of section .text:
 # CHECK-NEXT: __start:
+# CHECK-NEXT:   400120:  00 00 00 00  nop
+# CHECK-NEXT:   400124:  48 70 10 0c  jal  4309280
+#   0x107048 << 2 = 0x41C120 = _start  + (0x7000 << 2)
 # CHECK-NEXT:   400128:  00 00 00 00  nop
-
-# CHECK:      loc:
-# CHECK-NEXT:   40012c:  4a 00 50 0c  jal  20971816
+#
+# CHECK: loc:
+# CHECK-NEXT:   40012c:  4b 70 10 0c  jal  4309292
+#   0x10704B << 2 = 0x41C12C = loc  + (0x7000 << 2)
 # CHECK-NEXT:   400130:  00 00 00 00  nop
-# CHECK-NEXT:   400134:  4a 00 90 0c  jal  37749032
+# CHECK-NEXT:   400134:  47 00 10 0c  jal  4194588
+#   0x100047 << 2 = 0x40011C = _start - 4
 # CHECK-NEXT:   400138:  00 00 00 00  nop
-# CHECK-NEXT:   40013c:  46 00 10 0c  jal  4194584
+# CHECK-NEXT:   40013c:  4a 00 10 0c  jal  4194600
+#   0x10004A << 2 = 0x400128 = loc - 4
 # CHECK-NEXT:   400140:  00 00 00 00  nop
-# CHECK-NEXT:   400144:  4b 00 50 0c  jal  20971820
-# CHECK-NEXT:   400148:  00 00 00 00  nop
-# CHECK-NEXT:   40014c:  4b 00 90 0c  jal  37749036
-# CHECK-NEXT:   400150:  00 00 00 00  nop
-# CHECK-NEXT:   400154:  47 00 10 0c  jal  4194588
-# CHECK-NEXT:   400158:  00 00 00 00  nop
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 0040012c l F .text  00000030 loc
-# CHECK: 00400128 g F .text  00000004 __start
+# CHECK: 0040012c l  F .text  00000018 loc
+# CHECK: 00400120 g  F .text  0000000c __start
 
-    .global __start
-    .ent    __start
-__start:
-    nop
-loc:
-    jal     __start + 0x1000000
-    jal     __start + 0x2000000
-    jal     __start + (-0x10)
-    jal     loc + 0x1000000
-    jal     loc + 0x2000000
-    jal     loc + (-0x10)
-    .end    __start
+!ELF
+FileHeader: !FileHeader
+  Class: ELFCLASS32
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_MIPS
+
+Sections:
+- Name: .text
+  Type: SHT_PROGBITS
+# nop
+# jal __start + 0x1C000
+# nop
+# jal loc + 0x1C000
+# nop
+# jal __start - 1
+# nop
+# jal loc - 1
+# nop
+  Content:  "000000000070000C000000000070000C00000000FFFFFF0F00000000FFFFFF0F00000000"
+  AddressAlign: 16
+  Flags: [SHF_EXECINSTR, SHF_ALLOC]
+
+- Name: .rel.text
+  Type: SHT_REL
+  Info: .text
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x4
+      Symbol: __start
+      Type: R_MIPS_26
+    - Offset: 0xC
+      Symbol: loc
+      Type: R_MIPS_26
+    - Offset: 0x14
+      Symbol: __start
+      Type: R_MIPS_26
+    - Offset: 0x1C
+      Symbol: loc
+      Type: R_MIPS_26
+
+Symbols:
+  Global:
+    - Name: __start
+      Section: .text
+      Value: 0x0
+      Size: 4
+  Local:
+    - Name: loc
+      Section: .text
+      Value: 0xc
+      Size: 4
