@@ -1,4 +1,4 @@
-//====------ MachineBlockFrequencyInfo.cpp - MBB Frequency Analysis ------====//
+//===- MachineBlockFrequencyInfo.cpp - MBB Frequency Analysis -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
-#include "llvm/Analysis/BlockFrequencyImpl.h"
+#include "llvm/Analysis/BlockFrequencyInfoImpl.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/InitializePasses.h"

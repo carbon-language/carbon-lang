@@ -1,4 +1,4 @@
-//===-- BlockFrequencyImpl.h - Block Frequency Implementation --*- C++ -*--===//
+//==- BlockFrequencyInfoImpl.h - Block Frequency Implementation -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Shared implementation of BlockFrequency for IR and Machine Instructions.
+// Shared implementation of BlockFrequencyInfo for IR and Machine Instructions.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_BLOCKFREQUENCYIMPL_H
-#define LLVM_ANALYSIS_BLOCKFREQUENCYIMPL_H
+#ifndef LLVM_ANALYSIS_BLOCKFREQUENCYINFOIMPL_H
+#define LLVM_ANALYSIS_BLOCKFREQUENCYINFOIMPL_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
@@ -32,13 +32,13 @@ namespace llvm {
 class BlockFrequencyInfo;
 class MachineBlockFrequencyInfo;
 
-/// BlockFrequencyImpl implements block frequency algorithm for IR and
+/// BlockFrequencyInfoImpl implements block frequency algorithm for IR and
 /// Machine Instructions. Algorithm starts with value ENTRY_FREQ
 /// for the entry block and then propagates frequencies using branch weights
 /// from (Machine)BranchProbabilityInfo. LoopInfo is not required because
 /// algorithm can find "backedges" by itself.
 template<class BlockT, class FunctionT, class BlockProbInfoT>
-class BlockFrequencyImpl {
+class BlockFrequencyInfoImpl {
 
   DenseMap<const BlockT *, BlockFrequency> Freqs;
 
@@ -267,7 +267,7 @@ class BlockFrequencyImpl {
   friend class BlockFrequencyInfo;
   friend class MachineBlockFrequencyInfo;
 
-  BlockFrequencyImpl() { }
+  BlockFrequencyInfoImpl() { }
 
   void doFunction(FunctionT *fn, BlockProbInfoT *bpi) {
     Fn = fn;
