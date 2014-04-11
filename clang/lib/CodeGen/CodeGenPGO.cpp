@@ -442,7 +442,8 @@ namespace {
     }
     /// Assign a counter for the "true" part of a conditional operator. The
     /// count in the "false" part will be calculated from this counter.
-    void VisitConditionalOperator(const ConditionalOperator *E) {
+    void VisitAbstractConditionalOperator(
+        const AbstractConditionalOperator *E) {
       CounterMap[E] = NextCounter++;
       Visit(E->getCond());
       Visit(E->getTrueExpr());
@@ -768,7 +769,8 @@ namespace {
       Visit(S->getHandlerBlock());
     }
 
-    void VisitConditionalOperator(const ConditionalOperator *E) {
+    void VisitAbstractConditionalOperator(
+        const AbstractConditionalOperator *E) {
       RecordStmtCount(E);
       RegionCounter Cnt(PGO, E);
       Visit(E->getCond());

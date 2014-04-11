@@ -11,6 +11,7 @@
 // PGOGEN: @[[BSC:__llvm_profile_counters_big_switch]] = global [17 x i64] zeroinitializer
 // PGOGEN: @[[BOC:__llvm_profile_counters_boolean_operators]] = global [8 x i64] zeroinitializer
 // PGOGEN: @[[BLC:__llvm_profile_counters_boolop_loops]] = global [9 x i64] zeroinitializer
+// PGOGEN: @[[COC:__llvm_profile_counters_conditional_operator]] = global [3 x i64] zeroinitializer
 // PGOGEN: @[[MAC:__llvm_profile_counters_main]] = global [1 x i64] zeroinitializer
 // PGOGEN: @[[STC:__llvm_profile_counters_static_func]] = internal global [2 x i64] zeroinitializer
 
@@ -412,6 +413,24 @@ void boolop_loops() {
   // PGOUSE-NOT: br {{.*}} !prof ![0-9]+
 }
 
+// PGOGEN-LABEL: @conditional_operator()
+// PGOUSE-LABEL: @conditional_operator()
+// PGOGEN: store {{.*}} @[[COC]], i64 0, i64 0
+void conditional_operator() {
+  int i = 100;
+
+  // PGOGEN: store {{.*}} @[[COC]], i64 0, i64 1
+  // PGOUSE: br {{.*}} !prof ![[CO1:[0-9]+]]
+  int j = i < 50 ? i : 1;
+
+  // PGOGEN: store {{.*}} @[[COC]], i64 0, i64 2
+  // PGOUSE: br {{.*}} !prof ![[CO2:[0-9]+]]
+  int k = i ?: 0;
+
+  // PGOGEN-NOT: store {{.*}} @[[COC]],
+  // PGOUSE-NOT: br {{.*}} !prof ![0-9]+
+}
+
 void do_fallthrough() {
   for (int i = 0; i < 10; ++i) {
     int j = 0;
@@ -503,6 +522,8 @@ static void static_func() {
 // PGOUSE-DAG: ![[BL6]] = metadata !{metadata !"branch_weights", i32 51, i32 2}
 // PGOUSE-DAG: ![[BL7]] = metadata !{metadata !"branch_weights", i32 26, i32 27}
 // PGOUSE-DAG: ![[BL8]] = metadata !{metadata !"branch_weights", i32 51, i32 2}
+// PGOUSE-DAG: ![[CO1]] = metadata !{metadata !"branch_weights", i32 1, i32 2}
+// PGOUSE-DAG: ![[CO2]] = metadata !{metadata !"branch_weights", i32 2, i32 1}
 // PGOUSE-DAG: ![[ST1]] = metadata !{metadata !"branch_weights", i32 11, i32 2}
 
 int main(int argc, const char *argv[]) {
@@ -514,6 +535,7 @@ int main(int argc, const char *argv[]) {
   big_switch();
   boolean_operators();
   boolop_loops();
+  conditional_operator();
   do_fallthrough();
   static_func();
   return 0;
