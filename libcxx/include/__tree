@@ -1980,9 +1980,9 @@ __tree<_Tp, _Compare, _Allocator>::erase(const_iterator __p)
         __begin_node() = __r.__ptr_;
     --size();
     __node_allocator& __na = __node_alloc();
-    __node_traits::destroy(__na, const_cast<value_type*>(_VSTD::addressof(*__p)));
     __tree_remove(__end_node()->__left_,
                   static_cast<__node_base_pointer>(__np));
+    __node_traits::destroy(__na, const_cast<value_type*>(_VSTD::addressof(*__p)));
     __node_traits::deallocate(__na, __np, 1);
     return __r;
 }
