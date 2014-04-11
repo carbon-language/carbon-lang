@@ -215,6 +215,7 @@ For API clients and LLVM developers.
 
    AliasAnalysis
    BitCodeFormat
+   BlockFrequencyTerminology
    BranchWeightMetadata
    Bugpoint
    CodeGenerator
@@ -297,6 +298,10 @@ For API clients and LLVM developers.
 
 :doc:`BranchWeightMetadata`
    Provides information about Branch Prediction Information.
+
+:doc:`BlockFrequencyTerminology`
+   Provides information about terminology used in the ``BlockFrequencyInfo``
+   analysis pass.
 
 :doc:`SegmentedStacks`
    This document describes segmented stacks and how they are used in LLVM.
