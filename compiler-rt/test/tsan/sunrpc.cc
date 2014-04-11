@@ -1,7 +1,8 @@
-// RUN: %clang_tsan -O1 %s -o %t && %t
+// RUN: %clang_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
 
 #include <pthread.h>
 #include <rpc/xdr.h>
+#include <stdio.h>
 
 void *thr(void *p) {
   XDR xdrs;
@@ -17,5 +18,7 @@ int main(int argc, char *argv[]) {
   pthread_create(&th[1], 0, thr, 0);
   pthread_join(th[0], 0);
   pthread_join(th[1], 0);
+  printf("DONE\n");
+  // CHECK: DONE
   return 0;
 }
