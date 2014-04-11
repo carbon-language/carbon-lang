@@ -55,6 +55,7 @@ private:
   ~MCSectionELF();
 
   void setSectionName(StringRef Name) { SectionName = Name; }
+
 public:
 
   /// ShouldOmitSectionDirective - Decides whether a '.section' directive

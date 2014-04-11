@@ -1179,7 +1179,9 @@ void ELFObjectWriter::CreateRelocationSections(MCAssembler &Asm,
   }
 }
 
-static SmallVector<char, 128> getUncompressedData(MCAsmLayout &Layout, MCSectionData::FragmentListType &Fragments) {
+static SmallVector<char, 128>
+getUncompressedData(MCAsmLayout &Layout,
+                    MCSectionData::FragmentListType &Fragments) {
   SmallVector<char, 128> UncompressedData;
   for (const MCFragment &F : Fragments) {
     const SmallVectorImpl<char> *Contents;
@@ -1205,7 +1207,9 @@ static SmallVector<char, 128> getUncompressedData(MCAsmLayout &Layout, MCSection
 // Include the debug info compression header:
 // "ZLIB" followed by 8 bytes representing the uncompressed size of the section,
 // useful for consumers to preallocate a buffer to decompress into.
-static void prependCompressionHeader(uint64_t Size, SmallVectorImpl<char> &CompressedContents) {
+static void
+prependCompressionHeader(uint64_t Size,
+                         SmallVectorImpl<char> &CompressedContents) {
   static const StringRef Magic = "ZLIB";
   if (sys::IsLittleEndianHost)
     Size = sys::SwapByteOrder(Size);
@@ -1219,7 +1223,9 @@ static void prependCompressionHeader(uint64_t Size, SmallVectorImpl<char> &Compr
 
 // Return a single fragment containing the compressed contents of the whole
 // section. Null if the section was not compressed for any reason.
-static std::unique_ptr<MCDataFragment> getCompressedFragment(MCAsmLayout &Layout, MCSectionData::FragmentListType &Fragments) {
+static std::unique_ptr<MCDataFragment>
+getCompressedFragment(MCAsmLayout &Layout,
+                      MCSectionData::FragmentListType &Fragments) {
   std::unique_ptr<MCDataFragment> CompressedFragment(new MCDataFragment());
 
   // Gather the uncompressed data from all the fragments, recording the
@@ -1274,7 +1280,8 @@ void ELFObjectWriter::CompressDebugSections(MCAssembler &Asm,
     return;
 
   for (MCSectionData &SD : Asm) {
-    const MCSectionELF &Section = static_cast<const MCSectionELF&>(SD.getSection());
+    const MCSectionELF &Section =
+        static_cast<const MCSectionELF &>(SD.getSection());
     StringRef SectionName = Section.getSectionName();
 
     // Compressing debug_frame requires handling alignment fragments which is
@@ -1771,7 +1778,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
 
   unsigned NumUserSections = Asm.size();
 
-  CompressDebugSections(Asm, const_cast<MCAsmLayout&>(Layout));
+  CompressDebugSections(Asm, const_cast<MCAsmLayout &>(Layout));
 
   DenseMap<const MCSectionELF*, const MCSectionELF*> RelMap;
   CreateRelocationSections(Asm, const_cast<MCAsmLayout&>(Layout), RelMap);
