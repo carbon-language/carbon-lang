@@ -2381,7 +2381,7 @@ public:
 
   /// Expand a MUL into two nodes.  One that computes the high bits of
   /// the result and one that computes the low bits.
-  /// \param VT The value type to use for the Lo and Hi nodes.
+  /// \param HiLoVT The value type to use for the Lo and Hi nodes.
   /// \param LL Low bits of the LHS of the MUL.  You can use this parameter
   ///        if you want to control how low bits are extracted from the LHS.
   /// \param LH High bits of the LHS of the MUL.  See LL for meaning.
