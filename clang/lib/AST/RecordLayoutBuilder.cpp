@@ -2655,16 +2655,20 @@ void MicrosoftRecordLayoutBuilder::finalizeLayout(const RecordDecl *RD) {
   }
 }
 
-static bool
-RequiresVtordisp(const llvm::SmallPtrSet<const CXXRecordDecl *, 2> &HasVtordisp,
-                 const CXXRecordDecl *RD) {
-  if (HasVtordisp.count(RD))
+// Recursively walks the non-virtual bases of a class and determines if any of
+// them are in the bases with overridden methods set.
+static bool RequiresVtordisp(
+    const llvm::SmallPtrSet<const CXXRecordDecl *, 2> &
+        BasesWithOverriddenMethods,
+    const CXXRecordDecl *RD) {
+  if (BasesWithOverriddenMethods.count(RD))
     return true;
   // If any of a virtual bases non-virtual bases (recursively) requires a
   // vtordisp than so does this virtual base.
   for (const auto &I : RD->bases())
     if (!I.isVirtual() &&
-        RequiresVtordisp(HasVtordisp, I.getType()->getAsCXXRecordDecl()))
+        RequiresVtordisp(BasesWithOverriddenMethods,
+                         I.getType()->getAsCXXRecordDecl()))
       return true;
   return false;
 }
@@ -2703,38 +2707,38 @@ MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
       if (bi.second.hasVtorDisp())
         HasVtordispSet.insert(bi.first);
   }
-  // If we define a constructor or destructor and override a function that is
-  // defined in a virtual base's vtable, that virtual bases need a vtordisp.
-  // Here we collect a list of classes with vtables for which our virtual bases
-  // actually live.  The virtual bases with this property will require
-  // vtordisps.  In addition, virtual bases that contain non-virtual bases that
-  // define functions we override also require vtordisps, this case is checked
-  // explicitly below.
-  if (RD->hasUserDeclaredConstructor() || RD->hasUserDeclaredDestructor()) {
-    llvm::SmallPtrSet<const CXXMethodDecl *, 8> Work;
-    // Seed the working set with our non-destructor virtual methods.
-    for (const auto *I : RD->methods())
-      if (I->isVirtual() && !isa<CXXDestructorDecl>(I))
-        Work.insert(I);
-    while (!Work.empty()) {
-      const CXXMethodDecl *MD = *Work.begin();
-      CXXMethodDecl::method_iterator i = MD->begin_overridden_methods(),
-                                     e = MD->end_overridden_methods();
-      if (i == e)
-        // If a virtual method has no-overrides it lives in its parent's vtable.
-        HasVtordispSet.insert(MD->getParent());
-      else
-        Work.insert(i, e);
-      // We've finished processing this element, remove it from the working set.
-      Work.erase(MD);
-    }
+  // If we do not have a user declared constructor or destructor then we don't
+  // introduce any additional vtordisps.
+  if (!RD->hasUserDeclaredConstructor() && !RD->hasUserDeclaredDestructor())
+    return HasVtordispSet;
+  // Compute a set of base classes which define methods we override.  A virtual
+  // base in this set will require a vtordisp.  A virtual base that transitively
+  // contains one of these bases as a non-virtual base will also require a
+  // vtordisp.
+  llvm::SmallPtrSet<const CXXMethodDecl *, 8> Work;
+  llvm::SmallPtrSet<const CXXRecordDecl *, 2> BasesWithOverriddenMethods;
+  // Seed the working set with our non-destructor virtual methods.
+  for (const auto *I : RD->methods())
+    if (I->isVirtual() && !isa<CXXDestructorDecl>(I))
+      Work.insert(I);
+  while (!Work.empty()) {
+    const CXXMethodDecl *MD = *Work.begin();
+    CXXMethodDecl::method_iterator i = MD->begin_overridden_methods(),
+                                   e = MD->end_overridden_methods();
+    // If a virtual method has no-overrides it lives in its parent's vtable.
+    if (i == e)
+      BasesWithOverriddenMethods.insert(MD->getParent());
+    else
+      Work.insert(i, e);
+    // We've finished processing this element, remove it from the working set.
+    Work.erase(MD);
   }
-  // Re-check all of our vbases for vtordisp requirements (in case their
-  // non-virtual bases have vtordisp requirements).
+  // For each of our virtual bases, check if it is in the set of overridden
+  // bases or if it transitively contains a non-virtual base that is.
   for (const auto &I : RD->vbases()) {
     const CXXRecordDecl *BaseDecl =  I.getType()->getAsCXXRecordDecl();
     if (!HasVtordispSet.count(BaseDecl) &&
-        RequiresVtordisp(HasVtordispSet, BaseDecl))
+        RequiresVtordisp(BasesWithOverriddenMethods, BaseDecl))
       HasVtordispSet.insert(BaseDecl);
   }
   return HasVtordispSet;
