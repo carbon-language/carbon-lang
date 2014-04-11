@@ -39,6 +39,7 @@ static void PrintStackTrace(Thread *thr, u32 stk) {
 static void ReportDeadlock(Thread *thr, DDReport *rep) {
   if (rep == 0)
     return;
+  BlockingMutexLock lock(&ctx->report_mutex);
   Printf("==============================\n");
   Printf("WARNING: lock-order-inversion (potential deadlock)\n");
   for (int i = 0; i < rep->n; i++) {
@@ -52,7 +53,6 @@ static void ReportDeadlock(Thread *thr, DDReport *rep) {
     }
   }
   Printf("==============================\n");
-  Die();
 }
 
 Callback::Callback(Thread *thr)
