@@ -214,10 +214,8 @@ ARM64AddressTypePromotion::shouldConsiderSExt(const Instruction *SExt) const {
   if (SExt->getType() != ConsideredSExtType)
     return false;
 
-  for (Value::const_use_iterator UseIt = SExt->use_begin(),
-                                 EndUseIt = SExt->use_end();
-       UseIt != EndUseIt; ++UseIt) {
-    if (isa<GetElementPtrInst>(*UseIt))
+  for (const Use &U : SExt->uses()) {
+    if (isa<GetElementPtrInst>(*U))
       return true;
   }
 
@@ -438,10 +436,8 @@ void ARM64AddressTypePromotion::analyzeSExtension(Instructions &SExtInsts) {
 
       bool insert = false;
       // #1.
-      for (Value::use_iterator UseIt = SExt->use_begin(),
-                               EndUseIt = SExt->use_end();
-           UseIt != EndUseIt; ++UseIt) {
-        const Instruction *Inst = dyn_cast<GetElementPtrInst>(*UseIt);
+      for (const Use &U : SExt->uses()) {
+        const Instruction *Inst = dyn_cast<GetElementPtrInst>(U);
         if (Inst && Inst->getNumOperands() > 2) {
           DEBUG(dbgs() << "Interesting use in GetElementPtrInst\n" << *Inst
                        << '\n');
