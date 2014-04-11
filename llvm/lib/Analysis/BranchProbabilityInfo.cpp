@@ -594,11 +594,9 @@ getEdgeWeight(const BasicBlock *Src, unsigned IndexInSuccessors) const {
   return DEFAULT_WEIGHT;
 }
 
-uint32_t
-BranchProbabilityInfo::
-getEdgeWeight(const BasicBlock *Src, succ_const_iterator Dst) const {
-  size_t index = std::distance(succ_begin(Src), Dst);
-  return getEdgeWeight(Src, index);
+uint32_t BranchProbabilityInfo::getEdgeWeight(const BasicBlock *Src,
+                                              succ_const_iterator Dst) const {
+  return getEdgeWeight(Src, Dst.getSuccessorIndex());
 }
 
 /// Get the raw edge weight calculated for the block pair. This returns the sum
