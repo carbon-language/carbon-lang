@@ -19,6 +19,7 @@
 #ifndef LLVM_CODEGEN_SELECTIONDAGNODES_H
 #define LLVM_CODEGEN_SELECTIONDAGNODES_H
 
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/STLExtras.h"
@@ -507,6 +508,12 @@ public:
 
   static use_iterator use_end() { return use_iterator(0); }
 
+  inline iterator_range<use_iterator> uses() {
+    return iterator_range<use_iterator>(use_begin(), use_end());
+  }
+  inline iterator_range<use_iterator> uses() const {
+    return iterator_range<use_iterator>(use_begin(), use_end());
+  }
 
   /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
   /// indicated value.  This method ignores uses of other values defined by this
