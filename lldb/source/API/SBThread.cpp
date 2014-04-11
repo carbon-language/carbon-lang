@@ -229,7 +229,7 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
                             BreakpointLocationSP bp_loc_sp (bp_site_sp->GetOwnerAtIndex (bp_index));
                             if (bp_loc_sp)
                             {
-                                if (bp_index & 1)
+                                if (idx & 1)
                                 {
                                     // Odd idx, return the breakpoint location ID
                                     return bp_loc_sp->GetID();
