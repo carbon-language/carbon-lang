@@ -2421,10 +2421,7 @@ bool GVN::processBlock(BasicBlock *BB) {
 bool GVN::performPRE(Function &F) {
   bool Changed = false;
   SmallVector<std::pair<Value*, BasicBlock*>, 8> predMap;
-  for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
-       DE = df_end(&F.getEntryBlock()); DI != DE; ++DI) {
-    BasicBlock *CurrentBlock = *DI;
-
+  for (BasicBlock *CurrentBlock : depth_first(&F.getEntryBlock())) {
     // Nothing to PRE in the entry block.
     if (CurrentBlock == &F.getEntryBlock()) continue;
 
@@ -2637,9 +2634,8 @@ bool GVN::iterateOnFunction(Function &F) {
   //
   std::vector<BasicBlock *> BBVect;
   BBVect.reserve(256);
-  for (df_iterator<DomTreeNode*> DI = df_begin(DT->getRootNode()),
-       DE = df_end(DT->getRootNode()); DI != DE; ++DI)
-    BBVect.push_back(DI->getBlock());
+  for (DomTreeNode *x : depth_first(DT->getRootNode()))
+    BBVect.push_back(x->getBlock());
 
   for (std::vector<BasicBlock *>::iterator I = BBVect.begin(), E = BBVect.end();
        I != E; I++)

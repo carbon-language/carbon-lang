@@ -270,11 +270,10 @@ void LoopBase<BlockT, LoopT>::verifyLoop() const {
       // though it is permitted if the predecessor is not itself actually
       // reachable.
       BlockT *EntryBB = BB->getParent()->begin();
-        for (df_iterator<BlockT *> NI = df_begin(EntryBB),
-               NE = df_end(EntryBB); NI != NE; ++NI)
-          for (unsigned i = 0, e = OutsideLoopPreds.size(); i != e; ++i)
-            assert(*NI != OutsideLoopPreds[i] &&
-                   "Loop has multiple entry points!");
+      for (BlockT *CB : depth_first(EntryBB))
+        for (unsigned i = 0, e = OutsideLoopPreds.size(); i != e; ++i)
+          assert(CB != OutsideLoopPreds[i] &&
+                 "Loop has multiple entry points!");
     }
     assert(HasInsideLoopPreds && "Loop block has no in-loop predecessors!");
     assert(HasInsideLoopSuccs && "Loop block has no in-loop successors!");

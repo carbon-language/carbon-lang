@@ -443,11 +443,9 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   bool runOnFunction() {
     if (!ClStack) return false;
     // Collect alloca, ret, lifetime instructions etc.
-    for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
-         DE = df_end(&F.getEntryBlock()); DI != DE; ++DI) {
-      BasicBlock *BB = *DI;
+    for (BasicBlock *BB : depth_first(&F.getEntryBlock()))
       visit(*BB);
-    }
+
     if (AllocaVec.empty()) return false;
 
     initializeCallbacks(*F.getParent());

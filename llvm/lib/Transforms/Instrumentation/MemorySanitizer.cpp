@@ -662,11 +662,9 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     // Iterate all BBs in depth-first order and create shadow instructions
     // for all instructions (where applicable).
     // For PHI nodes we create dummy shadow PHIs which will be finalized later.
-    for (df_iterator<BasicBlock*> DI = df_begin(&F.getEntryBlock()),
-         DE = df_end(&F.getEntryBlock()); DI != DE; ++DI) {
-      BasicBlock *BB = *DI;
+    for (BasicBlock *BB : depth_first(&F.getEntryBlock()))
       visit(*BB);
-    }
+
 
     // Finalize PHI nodes.
     for (size_t i = 0, n = ShadowPHINodes.size(); i < n; i++) {

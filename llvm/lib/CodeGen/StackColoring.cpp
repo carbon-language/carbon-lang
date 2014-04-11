@@ -193,12 +193,11 @@ void StackColoring::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void StackColoring::dump() const {
-  for (df_iterator<MachineFunction*> FI = df_begin(MF), FE = df_end(MF);
-       FI != FE; ++FI) {
-    DEBUG(dbgs()<<"Inspecting block #"<<BasicBlocks.lookup(*FI)<<
-          " ["<<FI->getName()<<"]\n");
+  for (MachineBasicBlock *MBB : depth_first(MF)) {
+    DEBUG(dbgs() << "Inspecting block #" << BasicBlocks.lookup(MBB) << " ["
+                 << MBB->getName() << "]\n");
 
-    LivenessMap::const_iterator BI = BlockLiveness.find(*FI);
+    LivenessMap::const_iterator BI = BlockLiveness.find(MBB);
     assert(BI != BlockLiveness.end() && "Block not found");
     const BlockLifetimeInfo &BlockInfo = BI->second;
 
@@ -231,20 +230,19 @@ unsigned StackColoring::collectMarkers(unsigned NumSlot) {
   // NOTE: We use the a reverse-post-order iteration to ensure that we obtain a
   // deterministic numbering, and because we'll need a post-order iteration
   // later for solving the liveness dataflow problem.
-  for (df_iterator<MachineFunction*> FI = df_begin(MF), FE = df_end(MF);
-       FI != FE; ++FI) {
+  for (MachineBasicBlock *MBB : depth_first(MF)) {
 
     // Assign a serial number to this basic block.
-    BasicBlocks[*FI] = BasicBlockNumbering.size();
-    BasicBlockNumbering.push_back(*FI);
+    BasicBlocks[MBB] = BasicBlockNumbering.size();
+    BasicBlockNumbering.push_back(MBB);
 
     // Keep a reference to avoid repeated lookups.
-    BlockLifetimeInfo &BlockInfo = BlockLiveness[*FI];
+    BlockLifetimeInfo &BlockInfo = BlockLiveness[MBB];
 
     BlockInfo.Begin.resize(NumSlot);
     BlockInfo.End.resize(NumSlot);
 
-    for (MachineInstr &MI : **FI) {
+    for (MachineInstr &MI : *MBB) {
       if (MI.getOpcode() != TargetOpcode::LIFETIME_START &&
           MI.getOpcode() != TargetOpcode::LIFETIME_END)
         continue;

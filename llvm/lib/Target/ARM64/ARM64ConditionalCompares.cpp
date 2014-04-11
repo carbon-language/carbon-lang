@@ -908,7 +908,7 @@ bool ARM64ConditionalCompares::runOnMachineFunction(MachineFunction &MF) {
   // Note that updateDomTree() modifies the children of the DomTree node
   // currently being visited. The df_iterator supports that; it doesn't look at
   // child_begin() / child_end() until after a node has been visited.
-  for (auto *I : make_range(df_begin(DomTree), df_end(DomTree)))
+  for (auto *I : depth_first(DomTree))
     if (tryConvert(I->getBlock()))
       Changed = true;
 
