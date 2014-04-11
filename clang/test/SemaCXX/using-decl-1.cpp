@@ -160,3 +160,37 @@ namespace M { }
 }
 using N::M::FFF; // expected-error {{no member named 'FFF' in namespace 'using_suggestion_val_dropped_nested_specifier::N::M'; did you mean 'N::FFF'?}}
 }
+
+namespace UsingDeclVsHiddenName {
+  namespace A {
+    enum HiddenTag1 {}; // expected-note {{previous use is here}}
+    enum HiddenTag2 {}; // expected-note {{target}}
+    int HiddenFn1; // expected-note {{target}}
+    int HiddenFn2; // expected-note {{target}}
+    int HiddenLocalExtern1;
+    int HiddenLocalExtern2;
+  }
+
+  namespace B {
+    using A::HiddenTag1;
+    using A::HiddenFn1; // expected-note {{using declaration}}
+    using A::HiddenLocalExtern1;
+
+    struct S {
+      friend struct HiddenTag1; // expected-error {{tag type that does not match previous}}
+      friend struct HiddenTag2; // expected-note {{conflicting declaration}}
+      friend void HiddenFn1(); // expected-error {{cannot befriend target of using declaration}}
+      friend void HiddenFn2(); // expected-note {{conflicting declaration}}
+      void f() {
+        // OK, these are not in the scope of namespace B, even though they're
+        // members of the namespace.
+        void HiddenLocalExtern1();
+        void HiddenLocalExtern2();
+      }
+    };
+
+    using A::HiddenTag2; // expected-error {{conflicts with declaration already in scope}}
+    using A::HiddenFn2; // expected-error {{conflicts with declaration already in scope}}
+    using A::HiddenLocalExtern2;
+  }
+}

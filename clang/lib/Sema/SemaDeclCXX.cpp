@@ -7379,6 +7379,13 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
       NamedDecl *D = F.next();
       if (!isDeclInScope(D, CurContext, S))
         F.erase();
+      // If we found a local extern declaration that's not ordinarily visible,
+      // and this declaration is being added to a non-block scope, ignore it.
+      // We're only checking for scope conflicts here, not also for violations
+      // of the linkage rules.
+      else if (!CurContext->isFunctionOrMethod() && D->isLocalExternDecl() &&
+               !(D->getIdentifierNamespace() & Decl::IDNS_Ordinary))
+        F.erase();
     }
     F.done();
   } else {

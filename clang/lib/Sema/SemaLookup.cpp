@@ -244,10 +244,11 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
       IDNS = Decl::IDNS_Tag;
     }
     break;
+
   case Sema::LookupLabel:
     IDNS = Decl::IDNS_Label;
     break;
-      
+
   case Sema::LookupMemberName:
     IDNS = Decl::IDNS_Member;
     if (CPlusPlus)
@@ -263,8 +264,10 @@ static inline unsigned getIDNS(Sema::LookupNameKind NameKind,
     break;
 
   case Sema::LookupUsingDeclName:
-    IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Tag
-         | Decl::IDNS_Member | Decl::IDNS_Using;
+    assert(Redeclaration && "should only be used for redecl lookup");
+    IDNS = Decl::IDNS_Ordinary | Decl::IDNS_Tag | Decl::IDNS_Member |
+           Decl::IDNS_Using | Decl::IDNS_TagFriend | Decl::IDNS_OrdinaryFriend |
+           Decl::IDNS_LocalExtern;
     break;
 
   case Sema::LookupObjCProtocolName:
