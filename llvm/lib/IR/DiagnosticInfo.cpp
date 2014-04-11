@@ -80,7 +80,7 @@ void DiagnosticInfoOptimizationRemark::getLocation(StringRef *Filename,
   *Column = DIL.getColumnNumber();
 }
 
-const StringRef DiagnosticInfoOptimizationRemark::getLocationStr() const {
+const std::string DiagnosticInfoOptimizationRemark::getLocationStr() const {
   StringRef Filename("<unknown>");
   unsigned Line = 0;
   unsigned Column = 0;
