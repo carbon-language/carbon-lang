@@ -7322,9 +7322,8 @@ bool ARM64TargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
     return false;
 
   bool HasRet = false;
-  for (SDNode::use_iterator UI = Copy->use_begin(), UE = Copy->use_end();
-       UI != UE; ++UI) {
-    if (UI->getOpcode() != ARM64ISD::RET_FLAG)
+  for (SDNode *Node : Copy->uses()) {
+    if (Node->getOpcode() != ARM64ISD::RET_FLAG)
       return false;
     HasRet = true;
   }
