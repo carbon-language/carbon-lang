@@ -57,8 +57,7 @@ public:
 
   /// Constructor     - Performs initial setup for the disassembler.
   MCDisassembler(const MCSubtargetInfo &STI)
-      : GetOpInfo(0), SymbolLookUp(0), DisInfo(0), Ctx(0), STI(STI),
-        Symbolizer(), CommentStream(0) {}
+      : STI(STI), Symbolizer(), CommentStream(0) {}
 
   virtual ~MCDisassembler();
 
@@ -84,19 +83,6 @@ public:
                                        uint64_t address,
                                        raw_ostream &vStream,
                                        raw_ostream &cStream) const = 0;
-private:
-  //
-  // Hooks for symbolic disassembly via the public 'C' interface.
-  //
-  // The function to get the symbolic information for operands.
-  LLVMOpInfoCallback GetOpInfo;
-  // The function to lookup a symbol name.
-  LLVMSymbolLookupCallback SymbolLookUp;
-  // The pointer to the block of symbolic information for above call back.
-  void *DisInfo;
-  // The assembly context for creating symbols and MCExprs in place of
-  // immediate operands when there is symbolic information.
-  MCContext *Ctx;
 
 protected:
   // Subtarget information, for instruction decoding predicates if required.
@@ -115,20 +101,6 @@ public:
   /// Set \p Symzer as the current symbolizer.
   /// This takes ownership of \p Symzer, and deletes the previously set one.
   void setSymbolizer(std::unique_ptr<MCSymbolizer> Symzer);
-
-  /// Sets up an external symbolizer that uses the C API callbacks.
-  void setupForSymbolicDisassembly(LLVMOpInfoCallback GetOpInfo,
-                                   LLVMSymbolLookupCallback SymbolLookUp,
-                                   void *DisInfo,
-                                   MCContext *Ctx,
-                                   std::unique_ptr<MCRelocationInfo> &RelInfo);
-
-  LLVMOpInfoCallback getLLVMOpInfoCallback() const { return GetOpInfo; }
-  LLVMSymbolLookupCallback getLLVMSymbolLookupCallback() const {
-    return SymbolLookUp;
-  }
-  void *getDisInfoBlock() const { return DisInfo; }
-  MCContext *getMCContext() const { return Ctx; }
 
   const MCSubtargetInfo& getSubtargetInfo() const { return STI; }
 

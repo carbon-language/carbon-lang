@@ -33,20 +33,6 @@ public:
                                               uint64_t address,
                                               raw_ostream &vStream,
                                               raw_ostream &cStream) const;
-
-  /// tryAddingSymbolicOperand - tryAddingSymbolicOperand trys to add a symbolic
-  /// operand in place of the immediate Value in the MCInst.  The immediate
-  /// Value has not had any PC adjustment made by the caller. If the instruction
-  /// adds the PC to the immediate Value then InstsAddsAddressToValue is true,
-  /// else false.  If the getOpInfo() function was set as part of the
-  /// setupForSymbolicDisassembly() call then that function is called to get any
-  /// symbolic information at the Address for this instrution.  If that returns
-  /// non-zero then the symbolic information it returns is used to create an
-  /// MCExpr and that is added as an operand to the MCInst.  This function
-  /// returns true if it adds an operand to the MCInst and false otherwise.
-  bool tryAddingSymbolicOperand(uint64_t Address, int Value,
-                                bool InstsAddsAddressToValue, uint64_t InstSize,
-                                MCInst &MI, uint32_t insn = 0) const;
 };
 
 } // namespace llvm

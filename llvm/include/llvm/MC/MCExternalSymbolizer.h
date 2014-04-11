@@ -26,7 +26,7 @@ namespace llvm {
 ///
 /// See llvm-c/Disassembler.h.
 class MCExternalSymbolizer : public MCSymbolizer {
-
+protected:
   /// \name Hooks for symbolic disassembly via the public 'C' interface.
   /// @{
   /// The function to get the symbolic information for operands.
