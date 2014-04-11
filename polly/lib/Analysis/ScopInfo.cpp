@@ -813,7 +813,8 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
   if (ParameterName == "" || ParameterName.substr(0, 2) == "p_")
     ParameterName = "p_" + utostr_32(IdIter->second);
 
-  return isl_id_alloc(getIslCtx(), ParameterName.c_str(), (void *)Parameter);
+  return isl_id_alloc(getIslCtx(), ParameterName.c_str(),
+                      const_cast<void *>((const void *)Parameter));
 }
 
 void Scop::buildContext() {

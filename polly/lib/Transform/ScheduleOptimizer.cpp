@@ -183,7 +183,9 @@ private:
 
   static isl_union_map *getScheduleMap(isl_schedule *Schedule);
 
-  bool doFinalization() {
+  using llvm::Pass::doFinalization;
+
+  virtual bool doFinalization() {
     isl_schedule_free(LastSchedule);
     LastSchedule = NULL;
     return true;
