@@ -498,9 +498,9 @@ ScopLib::~ScopLib() {
 
   scoplib_scop_free(scoplib);
 }
-/// @brief Create an isl constraint from a row of OpenScop integers.
+/// @brief Create an isl constraint from a row of ScopLib integers.
 ///
-/// @param row An array of isl/OpenScop integers.
+/// @param row An array of isl/ScopLib integers.
 /// @param Space An isl space object, describing how to spilt the dimensions.
 ///
 /// @return An isl constraint representing this integer array.
@@ -538,10 +538,10 @@ isl_constraint *constraintFromMatrixRow(mpz_t *row,
   return c;
 }
 
-/// @brief Create an isl map from a OpenScop matrix.
+/// @brief Create an isl map from a ScopLib matrix.
 ///
-/// @param m The OpenScop matrix to translate.
-/// @param Space The dimensions that are contained in the OpenScop matrix.
+/// @param m The ScopLib matrix to translate.
+/// @param Space The dimensions that are contained in the ScopLib matrix.
 ///
 /// @return An isl map representing m.
 isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space,
@@ -566,9 +566,9 @@ isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space,
 
   return isl_map_from_basic_map(bmap);
 }
-/// @brief Create an isl constraint from a row of OpenScop integers.
+/// @brief Create an isl constraint from a row of ScopLib integers.
 ///
-/// @param row An array of isl/OpenScop integers.
+/// @param row An array of isl/ScopLib integers.
 /// @param Space An isl space object, describing how to spilt the dimensions.
 ///
 /// @return An isl constraint representing this integer array.
@@ -613,10 +613,10 @@ isl_constraint *constraintFromMatrixRowFull(mpz_t *row,
   return c;
 }
 
-/// @brief Create an isl map from a OpenScop matrix.
+/// @brief Create an isl map from a ScopLib matrix.
 ///
-/// @param m The OpenScop matrix to translate.
-/// @param Space The dimensions that are contained in the OpenScop matrix.
+/// @param m The ScopLib matrix to translate.
+/// @param Space The dimensions that are contained in the ScopLib matrix.
 ///
 /// @return An isl map representing m.
 isl_map *mapFromMatrix(scoplib_matrix_p m, __isl_take isl_space *Space) {
@@ -718,7 +718,7 @@ StatementToIslMapTy *readScattering(Scop *S, scoplib_scop_p OScop) {
 
   for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI) {
     if (!stmt) {
-      errs() << "Not enough statements available in OpenScop file\n";
+      errs() << "Not enough statements available in ScopLib file\n";
       freeStmtToIslMap(&NewScattering);
       return NULL;
     }
@@ -729,7 +729,7 @@ StatementToIslMapTy *readScattering(Scop *S, scoplib_scop_p OScop) {
   }
 
   if (stmt) {
-    errs() << "Too many statements in OpenScop file\n";
+    errs() << "Too many statements in ScopLib file\n";
     freeStmtToIslMap(&NewScattering);
     return NULL;
   }
@@ -750,7 +750,7 @@ bool ScopLib::updateScattering() {
 
   if (!D->isValidScattering(NewScattering)) {
     freeStmtToIslMap(NewScattering);
-    errs() << "OpenScop file contains a scattering that changes the "
+    errs() << "ScopLib file contains a scattering that changes the "
            << "dependences. Use -disable-polly-legality to continue anyways\n";
     return false;
   }

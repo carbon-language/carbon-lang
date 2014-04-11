@@ -25,12 +25,6 @@ if (GPU_CODEGEN)
        CodeGen/PTXGenerator.cpp)
 endif (GPU_CODEGEN)
 
-if (OPENSCOP_FOUND)
-  set(POLLY_OPENSCOP_FILES
-      Exchange/OpenScopImporter.cpp
-      Exchange/OpenScopExporter.cpp)
-endif (OPENSCOP_FOUND)
-
 if (SCOPLIB_FOUND)
   set(POLLY_SCOPLIB_FILES
       Transform/Pocc.cpp
@@ -60,7 +54,6 @@ add_polly_library(Polly
   Support/RegisterPasses.cpp
   Support/ScopHelper.cpp
   ${POLLY_JSON_FILES}
-  ${POLLY_OPENSCOP_FILES}
   Transform/Canonicalization.cpp
   Transform/CodePreparation.cpp
   Transform/DeadCodeElimination.cpp

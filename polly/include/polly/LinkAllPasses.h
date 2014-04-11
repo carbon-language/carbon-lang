@@ -53,11 +53,6 @@ llvm::Pass *createIslCodeGenerationPass();
 llvm::Pass *createIslScheduleOptimizerPass();
 llvm::Pass *createTempScopInfoPass();
 
-#ifdef OPENSCOP_FOUND
-llvm::Pass *createScopExporterPass();
-llvm::Pass *createScopImporterPass();
-#endif
-
 #ifdef SCOPLIB_FOUND
 llvm::Pass *createPoccPass();
 llvm::Pass *createScopLibExporterPass();
@@ -107,10 +102,6 @@ struct PollyForcePassLinking {
     createIslScheduleOptimizerPass();
     createTempScopInfoPass();
 
-#ifdef OPENSCOP_FOUND
-    createScopExporterPass();
-    createScopImporterPass();
-#endif
 #ifdef SCOPLIB_FOUND
     createPoccPass();
     createScopLibExporterPass();

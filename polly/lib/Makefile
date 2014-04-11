@@ -31,11 +31,6 @@ ifeq ($(PLUTO_FOUND), yes)
 POLLY_PLUTO_FILES= Transform/Pluto.cpp
 endif
 
-ifeq ($(OPENSCOP_FOUND), yes)
-POLLY_OPENSCOP_FILES= Exchange/OpenScopImporter.cpp \
-                      Exchange/OpenScopExporter.cpp
-endif
-
 ifeq ($(SCOPLIB_FOUND), yes)
 POLLY_SCOPLIB_FILES= Exchange/ScopLib.cpp \
                      Exchange/ScopLibExporter.cpp \
@@ -76,7 +71,6 @@ SOURCES= Polly.cpp \
 	 ${ISL_CODEGEN_FILES} \
          ${CLOOG_FILES} \
 	 ${POLLY_JSON_FILES} \
-	 ${POLLY_OPENSCOP_FILES} \
 	 ${POLLY_PLUTO_FILES} \
 	 ${POLLY_SCOPLIB_FILES}
 

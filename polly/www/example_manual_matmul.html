@@ -359,8 +359,8 @@ for (c2=0;c2&lt;=1535;c2+=64) {
 <li><h4>Codegenerate the SCoPs</h4>
 <p>
 This generates new code for the SCoPs detected by polly.
-If -polly-import is present, transformations specified in the imported openscop
-files will be applied.</p>
+If -polly-import-jscop is present, transformations specified in the imported
+jscop files will be applied.</p>
 <pre class="code">opt matmul.preopt.ll | opt -O3 &gt; matmul.normalopt.ll</pre>
 <pre class="code">
 opt -basicaa \

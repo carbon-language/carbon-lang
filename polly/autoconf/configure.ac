@@ -99,11 +99,6 @@ CXXFLAGS=$saved_CXXFLAGS
 AS_IF([test "x$pluto_found" = "xyes"],
   [AC_DEFINE([PLUTO_FOUND],[1],[Define if pluto found])])
 
-dnl Check that we have openscop.
-find_lib_and_headers([openscop], [openscop/scop.h], [openscop])
-AS_IF([test "x$openscop_found" = "xyes"],
-  [AC_DEFINE([OPENSCOP_FOUND],[1],[Define if openscop found])])
-
 dnl Check that we have scoplib.
 find_lib_and_headers([scoplib], [scoplib/scop.h], [scoplib])
 AS_IF([test "x$scoplib_found" = "xyes"],

@@ -12,9 +12,6 @@
 /* Define if gpu codegen is enabled */
 #undef GPU_CODEGEN
 
-/* Define if openscop found */
-#undef OPENSCOP_FOUND
-
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
