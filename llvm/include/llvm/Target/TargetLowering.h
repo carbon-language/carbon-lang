@@ -2376,6 +2376,24 @@ public:
                       std::vector<SDNode*> *Created) const;
 
   //===--------------------------------------------------------------------===//
+  // Legalization utility functions
+  //
+
+  /// Expand a MUL into two nodes.  One that computes the high bits of
+  /// the result and one that computes the low bits.
+  /// \param VT The value type to use for the Lo and Hi nodes.
+  /// \param LL Low bits of the LHS of the MUL.  You can use this parameter
+  ///        if you want to control how low bits are extracted from the LHS.
+  /// \param LH High bits of the LHS of the MUL.  See LL for meaning.
+  /// \param RL Low bits of the RHS of the MUL.  See LL for meaning
+  /// \param RH High bits of the RHS of the MUL.  See LL for meaning.
+  /// \returns true if the node has been expanded. false if it has not
+  bool expandMUL(SDNode *N, SDValue &Lo, SDValue &Hi, EVT HiLoVT,
+                 SelectionDAG &DAG, SDValue LL = SDValue(),
+		 SDValue LH = SDValue(), SDValue RL = SDValue(),
+		 SDValue RH = SDValue()) const;
+
+  //===--------------------------------------------------------------------===//
   // Instruction Emitting Hooks
   //
 

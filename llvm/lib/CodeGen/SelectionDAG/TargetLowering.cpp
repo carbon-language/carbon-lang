@@ -2739,3 +2739,110 @@ verifyReturnAddressArgumentIsConstant(SDValue Op, SelectionDAG &DAG) const {
 
   return false;
 }
+
+//===----------------------------------------------------------------------===//
+// Legalization Utilities
+//===----------------------------------------------------------------------===//
+
+bool TargetLowering::expandMUL(SDNode *N, SDValue &Lo, SDValue &Hi, EVT HiLoVT,
+                               SelectionDAG &DAG, SDValue LL, SDValue LH,
+			       SDValue RL, SDValue RH) const {
+  EVT VT = N->getValueType(0);
+  SDLoc dl(N);
+
+  bool HasMULHS = isOperationLegalOrCustom(ISD::MULHS, HiLoVT);
+  bool HasMULHU = isOperationLegalOrCustom(ISD::MULHU, HiLoVT);
+  bool HasSMUL_LOHI = isOperationLegalOrCustom(ISD::SMUL_LOHI, HiLoVT);
+  bool HasUMUL_LOHI = isOperationLegalOrCustom(ISD::UMUL_LOHI, HiLoVT);
+  if (HasMULHU || HasMULHS || HasUMUL_LOHI || HasSMUL_LOHI) {
+    unsigned OuterBitSize = VT.getSizeInBits();
+    unsigned InnerBitSize = HiLoVT.getSizeInBits();
+    unsigned LHSSB = DAG.ComputeNumSignBits(N->getOperand(0));
+    unsigned RHSSB = DAG.ComputeNumSignBits(N->getOperand(1));
+
+    // LL, LH, RL, and RH must be either all NULL or all set to a value.
+    assert((LL.getNode() && LH.getNode() && RL.getNode() && RH.getNode()) ||
+           (!LL.getNode() && !LH.getNode() && !RL.getNode() && !RH.getNode()));
+
+    if (!LL.getNode() && !RL.getNode() &&
+        isOperationLegalOrCustom(ISD::TRUNCATE, HiLoVT)) {
+      LL = DAG.getNode(ISD::TRUNCATE, dl, HiLoVT, N->getOperand(0));
+      RL = DAG.getNode(ISD::TRUNCATE, dl, HiLoVT, N->getOperand(1));
+    }
+
+    if (!LL.getNode())
+      return false;
+
+    APInt HighMask = APInt::getHighBitsSet(OuterBitSize, InnerBitSize);
+    if (DAG.MaskedValueIsZero(N->getOperand(0), HighMask) &&
+        DAG.MaskedValueIsZero(N->getOperand(1), HighMask)) {
+      // The inputs are both zero-extended.
+      if (HasUMUL_LOHI) {
+        // We can emit a umul_lohi.
+        Lo = DAG.getNode(ISD::UMUL_LOHI, dl,
+	                 DAG.getVTList(HiLoVT, HiLoVT), LL, RL);
+        Hi = SDValue(Lo.getNode(), 1);
+        return true;
+      }
+      if (HasMULHU) {
+        // We can emit a mulhu+mul.
+        Lo = DAG.getNode(ISD::MUL, dl, HiLoVT, LL, RL);
+        Hi = DAG.getNode(ISD::MULHU, dl, HiLoVT, LL, RL);
+        return true;
+      }
+    }
+    if (LHSSB > InnerBitSize && RHSSB > InnerBitSize) {
+      // The input values are both sign-extended.
+      if (HasSMUL_LOHI) {
+        // We can emit a smul_lohi.
+        Lo = DAG.getNode(ISD::SMUL_LOHI, dl,
+	                 DAG.getVTList(HiLoVT, HiLoVT), LL, RL);
+        Hi = SDValue(Lo.getNode(), 1);
+        return true;
+      }
+      if (HasMULHS) {
+        // We can emit a mulhs+mul.
+        Lo = DAG.getNode(ISD::MUL, dl, HiLoVT, LL, RL);
+        Hi = DAG.getNode(ISD::MULHS, dl, HiLoVT, LL, RL);
+        return true;
+      }
+    }
+
+    if (!LH.getNode() && !RH.getNode() &&
+        isOperationLegalOrCustom(ISD::SRL, VT) &&
+        isOperationLegalOrCustom(ISD::TRUNCATE, HiLoVT)) {
+      unsigned ShiftAmt = VT.getSizeInBits() - HiLoVT.getSizeInBits();
+      SDValue Shift = DAG.getConstant(ShiftAmt, getShiftAmountTy(VT));
+      LH = DAG.getNode(ISD::SRL, dl, VT, N->getOperand(0), Shift);
+      LH = DAG.getNode(ISD::TRUNCATE, dl, HiLoVT, LH);
+      RH = DAG.getNode(ISD::SRL, dl, VT, N->getOperand(1), Shift);
+      RH = DAG.getNode(ISD::TRUNCATE, dl, HiLoVT, RH);
+    }
+
+    if (!LH.getNode())
+      return false;
+
+    if (HasUMUL_LOHI) {
+      // Lo,Hi = umul LHS, RHS.
+      SDValue UMulLOHI = DAG.getNode(ISD::UMUL_LOHI, dl,
+                                     DAG.getVTList(HiLoVT, HiLoVT), LL, RL);
+      Lo = UMulLOHI;
+      Hi = UMulLOHI.getValue(1);
+      RH = DAG.getNode(ISD::MUL, dl, HiLoVT, LL, RH);
+      LH = DAG.getNode(ISD::MUL, dl, HiLoVT, LH, RL);
+      Hi = DAG.getNode(ISD::ADD, dl, HiLoVT, Hi, RH);
+      Hi = DAG.getNode(ISD::ADD, dl, HiLoVT, Hi, LH);
+      return true;
+    }
+    if (HasMULHU) {
+      Lo = DAG.getNode(ISD::MUL, dl, HiLoVT, LL, RL);
+      Hi = DAG.getNode(ISD::MULHU, dl, HiLoVT, LL, RL);
+      RH = DAG.getNode(ISD::MUL, dl, HiLoVT, LL, RH);
+      LH = DAG.getNode(ISD::MUL, dl, HiLoVT, LH, RL);
+      Hi = DAG.getNode(ISD::ADD, dl, HiLoVT, Hi, RH);
+      Hi = DAG.getNode(ISD::ADD, dl, HiLoVT, Hi, LH);
+      return true;
+    }
+  }
+  return false;
+}
