@@ -39,12 +39,12 @@ template <class BlockT> struct TypeMap {};
 template <> struct TypeMap<BasicBlock> {
   typedef BasicBlock BlockT;
   typedef Function FunctionT;
-  typedef BranchProbabilityInfo BlockProbInfoT;
+  typedef BranchProbabilityInfo BranchProbabilityInfoT;
 };
 template <> struct TypeMap<MachineBasicBlock> {
   typedef MachineBasicBlock BlockT;
   typedef MachineFunction FunctionT;
-  typedef MachineBranchProbabilityInfo BlockProbInfoT;
+  typedef MachineBranchProbabilityInfo BranchProbabilityInfoT;
 };
 }
 
@@ -57,11 +57,12 @@ template <class BT>
 class BlockFrequencyInfoImpl {
   typedef typename bfi_detail::TypeMap<BT>::BlockT BlockT;
   typedef typename bfi_detail::TypeMap<BT>::FunctionT FunctionT;
-  typedef typename bfi_detail::TypeMap<BT>::BlockProbInfoT BlockProbInfoT;
+  typedef typename bfi_detail::TypeMap<BT>::BranchProbabilityInfoT
+  BranchProbabilityInfoT;
 
   DenseMap<const BlockT *, BlockFrequency> Freqs;
 
-  BlockProbInfoT *BPI;
+  BranchProbabilityInfoT *BPI;
 
   FunctionT *Fn;
 
@@ -288,7 +289,7 @@ class BlockFrequencyInfoImpl {
 
   BlockFrequencyInfoImpl() { }
 
-  void doFunction(FunctionT *fn, BlockProbInfoT *bpi) {
+  void doFunction(FunctionT *fn, BranchProbabilityInfoT *bpi) {
     Fn = fn;
     BPI = bpi;
 
