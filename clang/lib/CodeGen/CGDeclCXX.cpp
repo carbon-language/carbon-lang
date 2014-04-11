@@ -178,8 +178,7 @@ static llvm::Constant *createAtExitStub(CodeGenModule &CGM, const VarDecl &VD,
   CodeGenFunction CGF(CGM);
 
   CGF.StartFunction(&VD, CGM.getContext().VoidTy, fn,
-                    CGM.getTypes().arrangeNullaryFunction(), FunctionArgList(),
-                    SourceLocation(), SourceLocation());
+                    CGM.getTypes().arrangeNullaryFunction(), FunctionArgList());
 
   llvm::CallInst *call = CGF.Builder.CreateCall(dtor, addr);
  
@@ -433,8 +432,7 @@ CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                            ArrayRef<llvm::Constant *> Decls,
                                            llvm::GlobalVariable *Guard) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
-                getTypes().arrangeNullaryFunction(),
-                FunctionArgList(), SourceLocation(), SourceLocation());
+                getTypes().arrangeNullaryFunction(), FunctionArgList());
 
   llvm::BasicBlock *ExitBlock = 0;
   if (Guard) {
@@ -479,8 +477,7 @@ void CodeGenFunction::GenerateCXXGlobalDtorsFunc(llvm::Function *Fn,
                   const std::vector<std::pair<llvm::WeakVH, llvm::Constant*> >
                                                 &DtorsAndObjects) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
-                getTypes().arrangeNullaryFunction(),
-                FunctionArgList(), SourceLocation(), SourceLocation());
+                getTypes().arrangeNullaryFunction(), FunctionArgList());
 
   // Emit the dtors, in reverse order from construction.
   for (unsigned i = 0, e = DtorsAndObjects.size(); i != e; ++i) {
@@ -510,8 +507,7 @@ llvm::Function *CodeGenFunction::generateDestroyHelper(
   llvm::Function *fn = 
     CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");
 
-  StartFunction(VD, getContext().VoidTy, fn, FI, args,
-                SourceLocation(), SourceLocation());
+  StartFunction(VD, getContext().VoidTy, fn, FI, args);
 
   emitDestroy(addr, type, destroyer, useEHCleanupForArray);
   

@@ -2916,7 +2916,7 @@ CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
                            "__assign_helper_atomic_property_",
                            &CGM.getModule());
   
-  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation(), SourceLocation());
+  StartFunction(FD, C.VoidTy, Fn, FI, args);
   
   DeclRefExpr DstExpr(&dstDecl, false, DestTy,
                       VK_RValue, SourceLocation());
@@ -2994,7 +2994,7 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
   llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
                          "__copy_helper_atomic_property_", &CGM.getModule());
   
-  StartFunction(FD, C.VoidTy, Fn, FI, args, SourceLocation(), SourceLocation());
+  StartFunction(FD, C.VoidTy, Fn, FI, args);
   
   DeclRefExpr SrcExpr(&srcDecl, false, SrcTy,
                       VK_RValue, SourceLocation());
