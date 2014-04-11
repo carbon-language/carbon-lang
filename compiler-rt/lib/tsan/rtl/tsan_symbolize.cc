@@ -26,12 +26,14 @@ void EnterSymbolizer() {
   ThreadState *thr = cur_thread();
   CHECK(!thr->in_symbolizer);
   thr->in_symbolizer = true;
+  thr->ignore_interceptors++;
 }
 
 void ExitSymbolizer() {
   ThreadState *thr = cur_thread();
   CHECK(thr->in_symbolizer);
   thr->in_symbolizer = false;
+  thr->ignore_interceptors--;
 }
 
 ReportStack *NewReportStackEntry(uptr addr) {
