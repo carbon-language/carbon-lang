@@ -29,16 +29,35 @@
 namespace llvm {
 
 
+class BranchProbabilityInfo;
 class BlockFrequencyInfo;
+class MachineBranchProbabilityInfo;
 class MachineBlockFrequencyInfo;
+
+namespace bfi_detail {
+template <class BlockT> struct TypeMap {};
+template <> struct TypeMap<BasicBlock> {
+  typedef BasicBlock BlockT;
+  typedef Function FunctionT;
+  typedef BranchProbabilityInfo BlockProbInfoT;
+};
+template <> struct TypeMap<MachineBasicBlock> {
+  typedef MachineBasicBlock BlockT;
+  typedef MachineFunction FunctionT;
+  typedef MachineBranchProbabilityInfo BlockProbInfoT;
+};
+}
 
 /// BlockFrequencyInfoImpl implements block frequency algorithm for IR and
 /// Machine Instructions. Algorithm starts with value ENTRY_FREQ
 /// for the entry block and then propagates frequencies using branch weights
 /// from (Machine)BranchProbabilityInfo. LoopInfo is not required because
 /// algorithm can find "backedges" by itself.
-template<class BlockT, class FunctionT, class BlockProbInfoT>
+template <class BT>
 class BlockFrequencyInfoImpl {
+  typedef typename bfi_detail::TypeMap<BT>::BlockT BlockT;
+  typedef typename bfi_detail::TypeMap<BT>::FunctionT FunctionT;
+  typedef typename bfi_detail::TypeMap<BT>::BlockProbInfoT BlockProbInfoT;
 
   DenseMap<const BlockT *, BlockFrequency> Freqs;
 

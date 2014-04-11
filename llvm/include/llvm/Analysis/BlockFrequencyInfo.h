@@ -21,14 +21,12 @@
 namespace llvm {
 
 class BranchProbabilityInfo;
-template <class BlockT, class FunctionT, class BranchProbInfoT>
-class BlockFrequencyInfoImpl;
+template <class BlockT> class BlockFrequencyInfoImpl;
 
 /// BlockFrequencyInfo pass uses BlockFrequencyInfoImpl implementation to
 /// estimate IR basic block frequencies.
 class BlockFrequencyInfo : public FunctionPass {
-  typedef BlockFrequencyInfoImpl<BasicBlock, Function, BranchProbabilityInfo>
-  ImplType;
+  typedef BlockFrequencyInfoImpl<BasicBlock> ImplType;
   std::unique_ptr<ImplType> BFI;
 
 public:

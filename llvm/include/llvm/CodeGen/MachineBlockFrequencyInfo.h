@@ -22,14 +22,12 @@ namespace llvm {
 
 class MachineBasicBlock;
 class MachineBranchProbabilityInfo;
-template <class BlockT, class FunctionT, class BranchProbInfoT>
-class BlockFrequencyInfoImpl;
+template <class BlockT> class BlockFrequencyInfoImpl;
 
 /// MachineBlockFrequencyInfo pass uses BlockFrequencyInfoImpl implementation
 /// to estimate machine basic block frequencies.
 class MachineBlockFrequencyInfo : public MachineFunctionPass {
-  typedef BlockFrequencyInfoImpl<MachineBasicBlock, MachineFunction,
-                                 MachineBranchProbabilityInfo> ImplType;
+  typedef BlockFrequencyInfoImpl<MachineBasicBlock> ImplType;
   std::unique_ptr<ImplType> MBFI;
 
 public:
