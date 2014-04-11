@@ -844,6 +844,27 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
                                                 true  /*IsDef*/,
                                                 true  /*IsImp*/,
                                                 false /*IsKill*/));
+    // Record small dead def live-ranges for all the subregisters
+    // of the destination register.
+    // Otherwise, variables that live through may miss some
+    // interferences, thus creating invalid allocation.
+    // E.g., i386 code:
+    // vreg1 = somedef ; vreg1 GR8
+    // vreg2 = remat ; vreg2 GR32
+    // CL = COPY vreg2.sub_8bit
+    // = somedef vreg1 ; vreg1 GR8
+    // =>
+    // vreg1 = somedef ; vreg1 GR8
+    // ECX<def, dead> = remat ; CL<imp-def>
+    // = somedef vreg1 ; vreg1 GR8
+    // vreg1 will see the inteferences with CL but not with CH since
+    // no live-ranges would have been created for ECX.
+    // Fix that!
+    SlotIndex NewMIIdx = LIS->getInstructionIndex(NewMI);
+    for (MCRegUnitIterator Units(NewMI->getOperand(0).getReg(), TRI);
+         Units.isValid(); ++Units)
+      if (LiveRange *LR = LIS->getCachedRegUnit(*Units))
+        LR->createDeadDef(NewMIIdx.getRegSlot(), LIS->getVNInfoAllocator());
   }
 
   if (NewMI->getOperand(0).getSubReg())
