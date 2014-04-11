@@ -3625,6 +3625,23 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                                     Node->getOperand(1)));
       break;
     }
+
+    SDValue Lo, Hi;
+    EVT HalfType = VT.getHalfSizedIntegerVT(*DAG.getContext());
+    if (TLI.isOperationLegalOrCustom(ISD::ZERO_EXTEND, VT) &&
+        TLI.isOperationLegalOrCustom(ISD::ANY_EXTEND, VT) &&
+        TLI.isOperationLegalOrCustom(ISD::SHL, VT) &&
+        TLI.isOperationLegalOrCustom(ISD::OR, VT) &&
+        TLI.expandMUL(Node, Lo, Hi, HalfType, DAG)) {
+      Lo = DAG.getNode(ISD::ZERO_EXTEND, dl, VT, Lo);
+      Hi = DAG.getNode(ISD::ANY_EXTEND, dl, VT, Hi);
+      SDValue Shift = DAG.getConstant(HalfType.getSizeInBits(),
+                                      TLI.getShiftAmountTy(HalfType));
+      Hi = DAG.getNode(ISD::SHL, dl, VT, Hi, Shift);
+      Results.push_back(DAG.getNode(ISD::OR, dl, VT, Lo, Hi));
+      break;
+    }
+
     Tmp1 = ExpandIntLibCall(Node, false,
                             RTLIB::MUL_I8,
                             RTLIB::MUL_I16, RTLIB::MUL_I32,
