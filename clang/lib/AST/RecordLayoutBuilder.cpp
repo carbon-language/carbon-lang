@@ -2091,9 +2091,6 @@ static bool isMsLayout(const RecordDecl* D) {
 //   one.
 // * The last zero size virtual base may be placed at the end of the struct.
 //   and can potentially alias a zero sized type in the next struct.
-// * If the last field is a non-zero length bitfield, all virtual bases will
-//   have extra padding added before them for no obvious reason.  The padding
-//   has the same number of bits as the type of the bitfield.
 // * When laying out empty non-virtual bases, an extra byte of padding is added
 //   if the non-virtual base before the empty non-virtual base has a vbptr.
 // * The ABI attempts to avoid aliasing of zero sized bases by adding padding
@@ -2595,10 +2592,6 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
     const CXXRecordDecl *BaseDecl = I.getType()->getAsCXXRecordDecl();
     const ASTRecordLayout &BaseLayout = Context.getASTRecordLayout(BaseDecl);
     bool HasVtordisp = HasVtordispSet.count(BaseDecl);
-    // If the last field we laid out was a non-zero length bitfield then add
-    // some extra padding for no obvious reason.
-    if (LastFieldIsNonZeroWidthBitfield)
-      Size += CurrentBitfieldSize;
     // Insert padding between two bases if the left first one is zero sized or
     // contains a zero sized subobject and the right is zero sized or one leads
     // with a zero sized base.  The padding between virtual bases is 4

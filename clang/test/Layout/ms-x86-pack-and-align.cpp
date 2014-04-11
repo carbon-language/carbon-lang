@@ -473,7 +473,7 @@ struct RE {
 // CHECK-NEXT:    0 | struct RB2
 // CHECK-NEXT:    0 |   (RB2 vbtable pointer)
 // CHECK-NEXT: 1024 |   int b
-// CHECK-NEXT: 1032 |   struct RA (virtual base) (empty)
+// CHECK-NEXT: 1028 |   struct RA (virtual base) (empty)
 // CHECK-NEXT:      | [sizeof=1032, align=1024
 // CHECK-NEXT:      |  nvsize=1028, nvalign=1024]
 // CHECK: *** Dumping AST Record Layout
@@ -481,7 +481,7 @@ struct RE {
 // CHECK-NEXT:    0 |   (RB3 vftable pointer)
 // CHECK-NEXT: 1024 |   (RB3 vbtable pointer)
 // CHECK-NEXT: 2048 |   int b
-// CHECK-NEXT: 2056 |   struct RA (virtual base) (empty)
+// CHECK-NEXT: 2052 |   struct RA (virtual base) (empty)
 // CHECK-NEXT:      | [sizeof=2056, align=1024
 // CHECK-NEXT:      |  nvsize=2052, nvalign=1024]
 // CHECK: *** Dumping AST Record Layout
@@ -516,7 +516,7 @@ struct RE {
 // CHECK-X64-NEXT:    0 | struct RB2
 // CHECK-X64-NEXT:    0 |   (RB2 vbtable pointer)
 // CHECK-X64-NEXT: 1024 |   int b
-// CHECK-X64-NEXT: 1032 |   struct RA (virtual base) (empty)
+// CHECK-X64-NEXT: 1028 |   struct RA (virtual base) (empty)
 // CHECK-X64-NEXT:      | [sizeof=1032, align=1024
 // CHECK-X64-NEXT:      |  nvsize=1028, nvalign=1024]
 // CHECK-X64: *** Dumping AST Record Layout
@@ -524,7 +524,7 @@ struct RE {
 // CHECK-X64-NEXT:    0 |   (RB3 vftable pointer)
 // CHECK-X64-NEXT: 1024 |   (RB3 vbtable pointer)
 // CHECK-X64-NEXT: 2048 |   int b
-// CHECK-X64-NEXT: 2056 |   struct RA (virtual base) (empty)
+// CHECK-X64-NEXT: 2052 |   struct RA (virtual base) (empty)
 // CHECK-X64-NEXT:      | [sizeof=2056, align=1024
 // CHECK-X64-NEXT:      |  nvsize=2052, nvalign=1024]
 // CHECK-X64: *** Dumping AST Record Layout
