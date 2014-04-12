@@ -302,15 +302,6 @@ standard error in a human-readable form.
 This pass, only available in ``opt``, printsthe SCCs of each function CFG to
 standard error in a human-readable fom.
 
-``-print-dbginfo``: Print debug info in human readable form
------------------------------------------------------------
-
-Pass that prints instructions, and associated debug info:
-
-#. source/line/col information
-#. original variable name
-#. original type name
-
 ``-print-dom-info``: Dominator Info Printer
 -------------------------------------------
 
