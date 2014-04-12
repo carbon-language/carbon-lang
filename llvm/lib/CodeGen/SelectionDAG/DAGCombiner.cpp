@@ -56,14 +56,8 @@ namespace {
     CombinerGlobalAA("combiner-global-alias-analysis", cl::Hidden,
                cl::desc("Enable DAG combiner's use of IR alias analysis"));
 
-// FIXME: Enable the use of TBAA. There are two known issues preventing this:
-//   1. Stack coloring does not update TBAA when merging allocas
-//   2. CGP inserts ptrtoint/inttoptr pairs when sinking address computations.
-//      Because BasicAA does not handle inttoptr, we'll often miss basic type
-//      punning idioms that we need to catch so we don't miscompile real-world
-//      code.
   static cl::opt<bool>
-    UseTBAA("combiner-use-tbaa", cl::Hidden, cl::init(false),
+    UseTBAA("combiner-use-tbaa", cl::Hidden, cl::init(true),
                cl::desc("Enable DAG combiner's use of TBAA"));
 
 #ifndef NDEBUG
