@@ -12,6 +12,7 @@
 
 #include "Error.h"
 #include "StreamWriter.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Object/ELF.h"
 #include "llvm/Object/ELFTypes.h"
 #include "llvm/Support/ARMEHABI.h"
@@ -19,13 +20,6 @@
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/type_traits.h"
-
-namespace {
-template <typename type_, size_t N>
-size_t countof(const type_ (&)[N]) {
-  return N;
-}
-}
 
 namespace llvm {
 namespace ARM {
@@ -296,7 +290,8 @@ void OpcodeDecoder::PrintRegisters(uint32_t VFPMask, StringRef Prefix) {
 void OpcodeDecoder::Decode(const uint8_t *Opcodes, off_t Offset, size_t Length) {
   for (unsigned OCI = Offset; OCI < Length + Offset; ) {
     bool Decoded = false;
-    for (unsigned REI = 0, REE = countof(Ring); REI != REE && !Decoded; ++REI) {
+    for (unsigned REI = 0, REE = array_lengthof(Ring);
+         REI != REE && !Decoded; ++REI) {
       if ((Opcodes[OCI ^ 3] & Ring[REI].Mask) == Ring[REI].Value) {
         (this->*Ring[REI].Routine)(Opcodes, OCI);
         Decoded = true;

@@ -9,6 +9,7 @@
 
 #include "ARMAttributeParser.h"
 #include "StreamWriter.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/LEB128.h"
 
@@ -21,11 +22,6 @@ static const EnumEntry<unsigned> TagNames[] = {
   { "Tag_Section", ARMBuildAttrs::Section },
   { "Tag_Symbol", ARMBuildAttrs::Symbol },
 };
-
-template <typename type_, size_t size_>
-size_t countof(const type_ (&)[size_]) {
-  return size_;
-}
 
 namespace llvm {
 #define ATTRIBUTE_HANDLER(Attr_)                                                \
@@ -129,7 +125,8 @@ void ARMAttributeParser::CPU_arch(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -155,7 +152,8 @@ void ARMAttributeParser::ARM_ISA_use(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Not Permitted", "Permitted" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -164,7 +162,8 @@ void ARMAttributeParser::THUMB_ISA_use(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Not Permitted", "Thumb-1", "Thumb-2" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -176,7 +175,8 @@ void ARMAttributeParser::FP_arch(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -185,7 +185,8 @@ void ARMAttributeParser::WMMX_arch(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Not Permitted", "WMMXv1", "WMMXv2" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -196,7 +197,8 @@ void ARMAttributeParser::Advanced_SIMD_arch(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -208,7 +210,8 @@ void ARMAttributeParser::PCS_config(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -217,7 +220,8 @@ void ARMAttributeParser::ABI_PCS_R9_use(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "v6", "Static Base", "TLS", "Unused" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -228,7 +232,8 @@ void ARMAttributeParser::ABI_PCS_RW_data(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -237,7 +242,8 @@ void ARMAttributeParser::ABI_PCS_RO_data(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Absolute", "PC-relative", "Not Permitted" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -246,7 +252,8 @@ void ARMAttributeParser::ABI_PCS_GOT_use(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Not Permitted", "Direct", "GOT-Indirect" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -257,7 +264,8 @@ void ARMAttributeParser::ABI_PCS_wchar_t(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -266,7 +274,8 @@ void ARMAttributeParser::ABI_FP_rounding(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "IEEE-754", "Runtime" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -275,7 +284,8 @@ void ARMAttributeParser::ABI_FP_denormal(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Unsupported", "IEEE-754", "Sign Only" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -284,7 +294,8 @@ void ARMAttributeParser::ABI_FP_exceptions(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Not Permitted", "IEEE-754" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -294,7 +305,8 @@ void ARMAttributeParser::ABI_FP_user_exceptions(AttrType Tag,
   static const char *Strings[] = { "Not Permitted", "IEEE-754" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -305,7 +317,8 @@ void ARMAttributeParser::ABI_FP_number_model(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -318,7 +331,7 @@ void ARMAttributeParser::ABI_align_needed(AttrType Tag, const uint8_t *Data,
   uint64_t Value = ParseInteger(Data, Offset);
 
   std::string Description;
-  if (Value < countof(Strings))
+  if (Value < array_lengthof(Strings))
     Description = std::string(Strings[Value]);
   else if (Value <= 12)
     Description = std::string("8-byte alignment, ") + utostr(1 << Value)
@@ -339,7 +352,7 @@ void ARMAttributeParser::ABI_align_preserved(AttrType Tag, const uint8_t *Data,
   uint64_t Value = ParseInteger(Data, Offset);
 
   std::string Description;
-  if (Value < countof(Strings))
+  if (Value < array_lengthof(Strings))
     Description = std::string(Strings[Value]);
   else if (Value <= 12)
     Description = std::string("8-byte stack alignment, ") + utostr(1 << Value)
@@ -357,7 +370,8 @@ void ARMAttributeParser::ABI_enum_size(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -368,7 +382,8 @@ void ARMAttributeParser::ABI_HardFP_use(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -379,7 +394,8 @@ void ARMAttributeParser::ABI_VFP_args(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -388,7 +404,8 @@ void ARMAttributeParser::ABI_WMMX_args(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "AAPCS", "iWMMX", "Custom" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -401,7 +418,8 @@ void ARMAttributeParser::ABI_optimization_goals(AttrType Tag,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -414,7 +432,8 @@ void ARMAttributeParser::ABI_FP_optimization_goals(AttrType Tag,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -445,7 +464,8 @@ void ARMAttributeParser::CPU_unaligned_access(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Not Permitted", "v6-style" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -454,7 +474,8 @@ void ARMAttributeParser::FP_HP_extension(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "If Available", "Permitted" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -463,7 +484,8 @@ void ARMAttributeParser::ABI_FP_16bit_format(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Not Permitted", "IEEE-754", "VFPv3" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -472,7 +494,8 @@ void ARMAttributeParser::MPextension_use(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Not Permitted", "Permitted" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -483,7 +506,8 @@ void ARMAttributeParser::DIV_use(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -492,7 +516,8 @@ void ARMAttributeParser::T2EE_use(AttrType Tag, const uint8_t *Data,
   static const char *Strings[] = { "Not Permitted", "Permitted" };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -504,7 +529,8 @@ void ARMAttributeParser::Virtualization_use(AttrType Tag, const uint8_t *Data,
   };
 
   uint64_t Value = ParseInteger(Data, Offset);
-  StringRef ValueDesc = (Value < countof(Strings)) ? Strings[Value] : NULL;
+  StringRef ValueDesc =
+    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -534,7 +560,7 @@ void ARMAttributeParser::ParseAttributeList(const uint8_t *Data,
     Offset += Length;
 
     bool Handled = false;
-    for (unsigned AHI = 0, AHE = countof(DisplayRoutines);
+    for (unsigned AHI = 0, AHE = array_lengthof(DisplayRoutines);
          AHI != AHE && !Handled; ++AHI) {
       if (DisplayRoutines[AHI].Attribute == Tag) {
         (this->*DisplayRoutines[AHI].Routine)(ARMBuildAttrs::AttrType(Tag),
