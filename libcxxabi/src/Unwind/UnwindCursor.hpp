@@ -151,10 +151,12 @@ void DwarfFDECache<A>::removeAllIn(pint_t mh) {
   _LIBUNWIND_LOG_NON_ZERO(::pthread_rwlock_unlock(&_lock));
 }
 
+#if __APPLE__
 template <typename A>
 void DwarfFDECache<A>::dyldUnloadHook(const struct mach_header *mh, intptr_t ) {
   removeAllIn((pint_t) mh);
 }
+#endif
 
 template <typename A>
 void DwarfFDECache<A>::iterateCacheEntries(void (*func)(
