@@ -16,10 +16,10 @@
 
 #include "MCTargetDesc/ARMMCTargetDesc.h"
 
+namespace llvm {
+
 template<typename InstrType> // could be MachineInstr or MCInst
 bool IsCPSRDead(InstrType *Instr);
-
-namespace llvm {
 
 template<typename InstrType> // could be MachineInstr or MCInst
 inline bool isV8EligibleForIT(InstrType *Instr) {

@@ -216,12 +216,11 @@ DecodeStatus ARM64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
   return Success;
 }
 
-MCSymbolizer *createARM64ExternalSymbolizer(
-                                          StringRef TT,
-                                          LLVMOpInfoCallback GetOpInfo,
-                                          LLVMSymbolLookupCallback SymbolLookUp,
-                                          void *DisInfo, MCContext *Ctx,
-                                          MCRelocationInfo *RelInfo) {
+static MCSymbolizer *
+createARM64ExternalSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
+                              LLVMSymbolLookupCallback SymbolLookUp,
+                              void *DisInfo, MCContext *Ctx,
+                              MCRelocationInfo *RelInfo) {
   return new llvm::ARM64ExternalSymbolizer(
                                      *Ctx,
                                      std::unique_ptr<MCRelocationInfo>(RelInfo),

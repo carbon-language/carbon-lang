@@ -7975,7 +7975,7 @@ unsigned ARMAsmParser::checkTargetMatchPredicate(MCInst &Inst) {
   return Match_Success;
 }
 
-template<> inline bool IsCPSRDead<MCInst>(MCInst* Instr) {
+template <> inline bool llvm::IsCPSRDead<MCInst>(MCInst *Instr) {
   return true; // In an assembly source, no need to second-guess
 }
 
