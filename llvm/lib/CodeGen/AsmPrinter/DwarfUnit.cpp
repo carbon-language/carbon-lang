@@ -985,6 +985,10 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   assert(Ty == resolve(Ty.getRef()) &&
          "type was not uniqued, possible ODR violation.");
 
+  // DW_TAG_restrict_type is not supported in DWARF2
+  if (Ty.getTag() == dwarf::DW_TAG_restrict_type && DD->getDwarfVersion() <= 2)
+    return getOrCreateTypeDIE(resolve(DIDerivedType(Ty).getTypeDerivedFrom()));
+
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
   DIScope Context = resolve(Ty.getContext());
