@@ -535,7 +535,8 @@ bool ARMBaseInstrInfo::isPredicable(MachineInstr *MI) const {
   return true;
 }
 
-template <> bool llvm::IsCPSRDead<MachineInstr>(MachineInstr *MI) {
+namespace llvm {
+template <> bool IsCPSRDead<MachineInstr>(MachineInstr *MI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg() || MO.isUndef() || MO.isUse())
@@ -547,6 +548,7 @@ template <> bool llvm::IsCPSRDead<MachineInstr>(MachineInstr *MI) {
   }
   // all definitions of CPSR are dead
   return true;
+}
 }
 
 /// FIXME: Works around a gcc miscompilation with -fstrict-aliasing.
