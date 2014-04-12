@@ -8,3 +8,11 @@ define i128 @test1(i128 %a) nounwind {
   ret i128 %2
 }
 
+; Check that we don't hoist large, but cheap constants
+define i512 @test2(i512 %a) nounwind {
+; CHECK-LABEL: test2
+; CHECK-NOT: %const = bitcast i512 7 to i512
+  %1 = and i512 %a, 7
+  %2 = or i512 %1, 7
+  ret i512 %2
+}
