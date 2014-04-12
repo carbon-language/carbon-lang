@@ -22,7 +22,7 @@ entry:
 ; CHECK: Relocations [
 ; CHECK:   Section (2) .rela.text {
 ; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_HA [[SYM2:[^ ]+]]
-; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM2]]
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO_DS [[SYM2]]
 ; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM2]]
 
 @gi = global i32 5, align 4
@@ -39,7 +39,7 @@ entry:
 ; accessing file-scope variable gi.
 ;
 ; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_HA [[SYM3:[^ ]+]]
-; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM3]]
+; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO_DS [[SYM3]]
 ; CHECK:     0x{{[0-9,A-F]+}} R_PPC64_TOC16_LO [[SYM3]]
 
 define double @test_double_const() nounwind {

@@ -447,6 +447,29 @@ namespace llvm {
     /// by AM is legal for this target, for a load/store of the specified type.
     virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty)const;
 
+    /// isLegalICmpImmediate - Return true if the specified immediate is legal
+    /// icmp immediate, that is the target has icmp instructions which can
+    /// compare a register against the immediate without having to materialize
+    /// the immediate into a register.
+    bool isLegalICmpImmediate(int64_t Imm) const override;
+
+    /// isLegalAddImmediate - Return true if the specified immediate is legal
+    /// add immediate, that is the target has add instructions which can
+    /// add a register and the immediate without having to materialize
+    /// the immediate into a register.
+    bool isLegalAddImmediate(int64_t Imm) const override;
+
+    /// isTruncateFree - Return true if it's free to truncate a value of
+    /// type Ty1 to type Ty2. e.g. On PPC it's free to truncate a i64 value in
+    /// register X1 to i32 by referencing its sub-register R1.
+    bool isTruncateFree(Type *Ty1, Type *Ty2) const override;
+    bool isTruncateFree(EVT VT1, EVT VT2) const override;
+
+    /// \brief Returns true if it is beneficial to convert a load of a constant
+    /// to just the constant itself.
+    bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
+                                           Type *Ty) const override;
+
     virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
 
     /// getOptimalMemOpType - Returns the target specific optimal type for load

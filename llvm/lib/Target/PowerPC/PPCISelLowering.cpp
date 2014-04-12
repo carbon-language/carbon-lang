@@ -8795,6 +8795,42 @@ EVT PPCTargetLowering::getOptimalMemOpType(uint64_t Size,
   }
 }
 
+/// \brief Returns true if it is beneficial to convert a load of a constant
+/// to just the constant itself.
+bool PPCTargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
+                                                          Type *Ty) const {
+  assert(Ty->isIntegerTy());
+
+  unsigned BitSize = Ty->getPrimitiveSizeInBits();
+  if (BitSize == 0 || BitSize > 64)
+    return false;
+  return true;
+}
+
+bool PPCTargetLowering::isTruncateFree(Type *Ty1, Type *Ty2) const {
+  if (!Ty1->isIntegerTy() || !Ty2->isIntegerTy())
+    return false;
+  unsigned NumBits1 = Ty1->getPrimitiveSizeInBits();
+  unsigned NumBits2 = Ty2->getPrimitiveSizeInBits();
+  return NumBits1 == 64 && NumBits2 == 32;
+}
+
+bool PPCTargetLowering::isTruncateFree(EVT VT1, EVT VT2) const {
+  if (!VT1.isInteger() || !VT2.isInteger())
+    return false;
+  unsigned NumBits1 = VT1.getSizeInBits();
+  unsigned NumBits2 = VT2.getSizeInBits();
+  return NumBits1 == 64 && NumBits2 == 32;
+}
+
+bool PPCTargetLowering::isLegalICmpImmediate(int64_t Imm) const {
+  return isInt<16>(Imm) || isUInt<16>(Imm);
+}
+
+bool PPCTargetLowering::isLegalAddImmediate(int64_t Imm) const {
+  return isInt<16>(Imm) || isUInt<16>(Imm);
+}
+
 bool PPCTargetLowering::allowsUnalignedMemoryAccesses(EVT VT,
                                                       unsigned,
                                                       bool *Fast) const {
