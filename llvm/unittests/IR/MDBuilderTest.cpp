@@ -9,6 +9,7 @@
 
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/IR/Operator.h"
 #include "gtest/gtest.h"
 
