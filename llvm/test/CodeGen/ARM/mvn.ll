@@ -73,7 +73,8 @@ entry:
 	ret i1 %tmp102
 }
 
-; CHECK-LABEL: f1
+; CHECK-LABEL: mvn.ll
+; CHECK-LABEL: @f1
 ; CHECK: mvn
 ; CHECK: mvn
 ; CHECK: mvn
