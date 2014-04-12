@@ -181,9 +181,6 @@ private:
   /// \brief Handle a specific reference.
   void handleReference(Reference &ref);
 
-  /// \brief Calculate AHL addendums for the atom's references.
-  void calculateAHLs(const DefinedAtom &atom);
-
   void handlePlain(Reference &ref);
   void handlePLT(Reference &ref);
   void handleGOT(Reference &ref);
@@ -210,11 +207,9 @@ RelocationPass<ELFT>::RelocationPass(MipsLinkingContext &context)
 template <typename ELFT>
 void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
   // Process all references.
-  for (const auto &atom : mf->defined()) {
-    calculateAHLs(*atom);
+  for (const auto &atom : mf->defined())
     for (const auto &ref : *atom)
       handleReference(const_cast<Reference &>(*ref));
-  }
 
   uint64_t ordinal = 0;
 
@@ -255,58 +250,6 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
     la25->setOrdinal(ordinal++);
     mf->addAtom(*la25);
   }
-}
-
-/// \brief Calculate AHL value combines addends from 'hi' and 'lo' relocations.
-inline int64_t calcAHL(int64_t AHI, int64_t ALO) {
-  AHI &= 0xffff;
-  ALO &= 0xffff;
-  return (AHI << 16) + (int16_t)ALO;
-}
-
-template <typename ELFT>
-void RelocationPass<ELFT>::calculateAHLs(const DefinedAtom &atom) {
-  std::vector<const Reference *> lo16Refs;
-  std::vector<Reference *> hi16Refs;
-  for (const auto &ref : atom) {
-    if (ref->kindNamespace() != lld::Reference::KindNamespace::ELF)
-      continue;
-    assert(ref->kindArch() == Reference::KindArch::Mips);
-    switch (ref->kindValue()) {
-    case R_MIPS_HI16:
-      hi16Refs.push_back(const_cast<Reference *>(ref));
-    case R_MIPS_LO16:
-      lo16Refs.push_back(ref);
-      break;
-    case R_MIPS_GOT16:
-      if (isLocal(ref->target()))
-        hi16Refs.push_back(const_cast<Reference *>(ref));
-      break;
-    }
-  }
-
-  std::sort(lo16Refs.begin(), lo16Refs.end(),
-            [](const Reference *a, const Reference *b) {
-    return a->offsetInAtom() < b->offsetInAtom();
-  });
-  std::sort(hi16Refs.begin(), hi16Refs.end(),
-            [](const Reference *a, const Reference *b) {
-    return a->offsetInAtom() < b->offsetInAtom();
-  });
-
-  // Iterate over R_MIPS_LO16 relocations sorted by theirs offsets in the atom.
-  // Calculate AHL addend for each R_MIPS_HI16 amd R_MIPS_GOT16 relocation
-  // precedes the current R_MIPS_LO16 one.
-
-  auto hic = hi16Refs.begin();
-  for (const auto &lo : lo16Refs) {
-    for (; hic != hi16Refs.end(); ++hic) {
-      if ((*hic)->offsetInAtom() > lo->offsetInAtom())
-        break;
-      (*hic)->setAddend(calcAHL((*hic)->addend(), lo->addend()));
-    }
-  }
-  assert(hic == hi16Refs.end());
 }
 
 template <typename ELFT>

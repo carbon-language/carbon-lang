@@ -87,6 +87,7 @@ private:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
+  typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel_Iter Elf_Rel_Iter;
 
   ErrorOr<ELFDefinedAtom<ELFT> *> handleDefinedSymbol(
       StringRef symName, StringRef sectionName, const Elf_Sym *sym,
@@ -98,21 +99,35 @@ private:
         referenceStart, referenceEnd, referenceList);
   }
 
-  ELFReference<ELFT> *
-  createRelocationReference(const Elf_Sym &symbol, const Elf_Rel &ri,
-                            ArrayRef<uint8_t> content) override {
-    bool isMips64EL = this->_objFile->isMips64EL();
-    auto *ref = new (this->_readerStorage)
-        ELFReference<ELFT>(&ri, ri.r_offset - symbol.st_value, this->kindArch(),
-                           ri.getType(isMips64EL), ri.getSymbol(isMips64EL));
-    ref->setAddend(readAddend(symbol, ri, content));
-    return ref;
+  void createRelocationReferences(const Elf_Sym &symbol,
+                                  ArrayRef<uint8_t> symContent,
+                                  ArrayRef<uint8_t> secContent,
+                                  range<Elf_Rel_Iter> rels) override {
+    for (Elf_Rel_Iter rit = rels.begin(), eit = rels.end(); rit != eit; ++rit) {
+      if (rit->r_offset < symbol.st_value ||
+          symbol.st_value + symContent.size() <= rit->r_offset)
+        continue;
+
+      this->_references.push_back(new (this->_readerStorage) ELFReference<ELFT>(
+          &*rit, rit->r_offset - symbol.st_value, this->kindArch(),
+          rit->getType(isMips64EL()), rit->getSymbol(isMips64EL())));
+
+      auto addend = readAddend(*rit, secContent);
+      if (needsMatchingRelocation(*rit)) {
+        auto mit = findMatchingRelocation(rit, eit);
+        // FIXME (simon): Handle this condition in a more user friendly way.
+        assert(mit != eit && "There is no paired R_MIPS_LO16 relocation");
+        auto matchingAddend = readAddend(*mit, secContent);
+        addend = (addend << 16) + int16_t(matchingAddend);
+      }
+      this->_references.back()->setAddend(addend);
+    }
   }
 
-  Reference::Addend readAddend(const Elf_Sym &symbol, const Elf_Rel &ri,
-                               ArrayRef<uint8_t> content) const {
-    const uint8_t *ap = content.data() + ri.r_offset - symbol.st_value;
-    switch (ri.getType(this->_objFile->isMips64EL())) {
+  Reference::Addend readAddend(const Elf_Rel &ri,
+                               const ArrayRef<uint8_t> content) const {
+    const uint8_t *ap = content.data() + ri.r_offset;
+    switch (ri.getType(isMips64EL())) {
     case llvm::ELF::R_MIPS_32:
     case llvm::ELF::R_MIPS_PC32:
       return *(int32_t *)ap;
@@ -126,6 +141,27 @@ private:
       return 0;
     }
   }
+
+  bool needsMatchingRelocation(const Elf_Rel &rel) {
+    auto rType = rel.getType(isMips64EL());
+    if (rType == llvm::ELF::R_MIPS_HI16)
+      return true;
+    if (rType == llvm::ELF::R_MIPS_GOT16) {
+      const Elf_Sym *symbol =
+          this->_objFile->getSymbol(rel.getSymbol(isMips64EL()));
+      return symbol->getBinding() == llvm::ELF::STB_LOCAL;
+    }
+    return false;
+  }
+
+  Elf_Rel_Iter findMatchingRelocation(Elf_Rel_Iter rit, Elf_Rel_Iter eit) {
+    return std::find_if(rit, eit, [&](const Elf_Rel &rel) {
+      return rel.getType(isMips64EL()) == llvm::ELF::R_MIPS_LO16 &&
+             rel.getSymbol(isMips64EL()) == rit->getSymbol(isMips64EL());
+    });
+  }
+
+  bool isMips64EL() const { return this->_objFile->isMips64EL(); }
 };
 
 } // elf
