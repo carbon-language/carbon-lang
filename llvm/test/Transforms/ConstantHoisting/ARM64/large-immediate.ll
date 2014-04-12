@@ -16,3 +16,12 @@ define i512 @test2(i512 %a) nounwind {
   %2 = or i512 %1, 7
   ret i512 %2
 }
+
+; Check that we don't hoist the shift value of a shift instruction.
+define i512 @test3(i512 %a) nounwind {
+; CHECK-LABEL: test3
+; CHECK-NOT: %const = bitcast i512 504 to i512
+  %1 = shl i512 %a, 504
+  %2 = ashr i512 %1, 504
+  ret i512 %2
+}
