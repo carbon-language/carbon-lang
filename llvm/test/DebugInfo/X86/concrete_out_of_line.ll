@@ -14,6 +14,7 @@
 
 ; CHECK: [[DTOR_OOL:0x........]]: DW_TAG_subprogram
 ; CHECK-NEXT:     DW_AT_specification {{.*}} {[[DTOR_DECL]]})
+; CHECK-NEXT:     DW_AT_{{.*}}linkage_name
 ; CHECK-NEXT:     DW_AT_inline
 
 
