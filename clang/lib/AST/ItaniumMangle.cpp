@@ -3455,7 +3455,7 @@ bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
 
     // <seq-id> is encoded in base-36, using digits and upper case letters.
     char Buffer[10];
-    char *BufferPtr = llvm::array_endof(Buffer);
+    char *BufferPtr = std::end(Buffer);
 
     if (SeqID == 0) *--BufferPtr = '0';
 
@@ -3468,9 +3468,7 @@ bool CXXNameMangler::mangleSubstitution(uintptr_t Ptr) {
       SeqID /= 36;
     }
 
-    Out << 'S'
-        << StringRef(BufferPtr, llvm::array_endof(Buffer)-BufferPtr)
-        << '_';
+    Out << 'S' << StringRef(BufferPtr, std::end(Buffer) - BufferPtr) << '_';
   }
 
   return true;
