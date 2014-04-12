@@ -2619,8 +2619,8 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
     // with a zero sized base.  The padding between virtual bases is 4
     // bytes (in both 32 and 64 bits modes) and always involves rounding up to
     // the required alignment, we don't know why.
-    if (PreviousBaseLayout && PreviousBaseLayout->hasZeroSizedSubObject() &&
-        BaseLayout.leadsWithZeroSizedBase() || HasVtordisp)
+    if ((PreviousBaseLayout && PreviousBaseLayout->hasZeroSizedSubObject() &&
+        BaseLayout.leadsWithZeroSizedBase()) || HasVtordisp)
       Size = Size.RoundUpToAlignment(VtorDispAlignment) + VtorDispSize;
     // Insert the virtual base.
     ElementInfo Info = getAdjustedElementInfo(BaseLayout);
