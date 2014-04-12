@@ -1,4 +1,5 @@
 ; RUN: llc -O3 < %s | FileCheck %s
+; RUN: llc -O3 -addr-sink-using-gep=1 < %s | FileCheck %s
 ; Test case for a DAG combiner bug where we combined an indexed load
 ; with an extension (sext, zext, or any) into a regular extended load,
 ; i.e., dropping the indexed value.

@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-pc-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-pc-linux -addr-sink-using-gep=1 | FileCheck %s
 
 ; Check that the CodeGenPrepare Pass
 ; does not wrongly rewrite the address computed by Instruction %4

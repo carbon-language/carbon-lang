@@ -39,6 +39,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/BypassSlowDivision.h"
@@ -69,6 +70,10 @@ static cl::opt<bool> DisableBranchOpts(
 static cl::opt<bool> DisableSelectToBranch(
   "disable-cgp-select2branch", cl::Hidden, cl::init(false),
   cl::desc("Disable select to branch conversion."));
+
+static cl::opt<bool> AddrSinkUsingGEPs(
+  "addr-sink-using-gep", cl::Hidden, cl::init(false),
+  cl::desc("Address sinking in CGP using GEPs."));
 
 static cl::opt<bool> EnableAndCmpSinking(
    "enable-andcmp-sinking", cl::Hidden, cl::init(true),
@@ -2423,6 +2428,127 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
                  << *MemoryInst);
     if (SunkAddr->getType() != Addr->getType())
       SunkAddr = Builder.CreateBitCast(SunkAddr, Addr->getType());
+  } else if (AddrSinkUsingGEPs || (!AddrSinkUsingGEPs.getNumOccurrences() &&
+               TM && TM->getSubtarget<TargetSubtargetInfo>().useAA())) {
+    // By default, we use the GEP-based method when AA is used later. This
+    // prevents new inttoptr/ptrtoint pairs from degrading AA capabilities.
+    DEBUG(dbgs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
+                 << *MemoryInst);
+    Type *IntPtrTy = TLI->getDataLayout()->getIntPtrType(Addr->getType());
+    Value *ResultPtr = 0, *ResultIndex = 0;
+
+    // First, find the pointer.
+    if (AddrMode.BaseReg && AddrMode.BaseReg->getType()->isPointerTy()) {
+      ResultPtr = AddrMode.BaseReg;
+      AddrMode.BaseReg = 0;
+    }
+
+    if (AddrMode.Scale && AddrMode.ScaledReg->getType()->isPointerTy()) {
+      // We can't add more than one pointer together, nor can we scale a
+      // pointer (both of which seem meaningless).
+      if (ResultPtr || AddrMode.Scale != 1)
+        return false;
+
+      ResultPtr = AddrMode.ScaledReg;
+      AddrMode.Scale = 0;
+    }
+
+    if (AddrMode.BaseGV) {
+      if (ResultPtr)
+        return false;
+
+      ResultPtr = AddrMode.BaseGV;
+    }
+
+    // If the real base value actually came from an inttoptr, then the matcher
+    // will look through it and provide only the integer value. In that case,
+    // use it here.
+    if (!ResultPtr && AddrMode.BaseReg) {
+      ResultPtr =
+        Builder.CreateIntToPtr(AddrMode.BaseReg, Addr->getType(), "sunkaddr");
+      AddrMode.BaseReg = 0;
+    } else if (!ResultPtr && AddrMode.Scale == 1) {
+      ResultPtr =
+        Builder.CreateIntToPtr(AddrMode.ScaledReg, Addr->getType(), "sunkaddr");
+      AddrMode.Scale = 0;
+    }
+
+    if (!ResultPtr &&
+        !AddrMode.BaseReg && !AddrMode.Scale && !AddrMode.BaseOffs) {
+      SunkAddr = Constant::getNullValue(Addr->getType());
+    } else if (!ResultPtr) {
+      return false;
+    } else {
+      Type *I8PtrTy =
+        Builder.getInt8PtrTy(Addr->getType()->getPointerAddressSpace());
+
+      // Start with the base register. Do this first so that subsequent address
+      // matching finds it last, which will prevent it from trying to match it
+      // as the scaled value in case it happens to be a mul. That would be
+      // problematic if we've sunk a different mul for the scale, because then
+      // we'd end up sinking both muls.
+      if (AddrMode.BaseReg) {
+        Value *V = AddrMode.BaseReg;
+        if (V->getType() != IntPtrTy)
+          V = Builder.CreateIntCast(V, IntPtrTy, /*isSigned=*/true, "sunkaddr");
+
+        ResultIndex = V;
+      }
+
+      // Add the scale value.
+      if (AddrMode.Scale) {
+        Value *V = AddrMode.ScaledReg;
+        if (V->getType() == IntPtrTy) {
+          // done.
+        } else if (cast<IntegerType>(IntPtrTy)->getBitWidth() <
+                   cast<IntegerType>(V->getType())->getBitWidth()) {
+          V = Builder.CreateTrunc(V, IntPtrTy, "sunkaddr");
+        } else {
+          // It is only safe to sign extend the BaseReg if we know that the math
+          // required to create it did not overflow before we extend it. Since
+          // the original IR value was tossed in favor of a constant back when
+          // the AddrMode was created we need to bail out gracefully if widths
+          // do not match instead of extending it.
+          Instruction *I = dyn_cast_or_null<Instruction>(ResultIndex);
+          if (I && (ResultIndex != AddrMode.BaseReg))
+            I->eraseFromParent();
+          return false;
+        }
+
+        if (AddrMode.Scale != 1)
+          V = Builder.CreateMul(V, ConstantInt::get(IntPtrTy, AddrMode.Scale),
+                                "sunkaddr");
+        if (ResultIndex)
+          ResultIndex = Builder.CreateAdd(ResultIndex, V, "sunkaddr");
+        else
+          ResultIndex = V;
+      }
+
+      // Add in the Base Offset if present.
+      if (AddrMode.BaseOffs) {
+        Value *V = ConstantInt::get(IntPtrTy, AddrMode.BaseOffs);
+        if (ResultIndex) {
+	  // We need to add this separately from the scale above to help with
+	  // SDAG consecutive load/store merging.
+          if (ResultPtr->getType() != I8PtrTy)
+            ResultPtr = Builder.CreateBitCast(ResultPtr, I8PtrTy);
+          ResultPtr = Builder.CreateGEP(ResultPtr, ResultIndex, "sunkaddr");
+        }
+
+        ResultIndex = V;
+      }
+
+      if (!ResultIndex) {
+        SunkAddr = ResultPtr;
+      } else {
+        if (ResultPtr->getType() != I8PtrTy)
+          ResultPtr = Builder.CreateBitCast(ResultPtr, I8PtrTy);
+        SunkAddr = Builder.CreateGEP(ResultPtr, ResultIndex, "sunkaddr");
+      }
+
+      if (SunkAddr->getType() != Addr->getType())
+        SunkAddr = Builder.CreateBitCast(SunkAddr, Addr->getType());
+    }
   } else {
     DEBUG(dbgs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst);

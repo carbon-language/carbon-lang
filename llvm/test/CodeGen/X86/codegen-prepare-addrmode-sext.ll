@@ -1,4 +1,5 @@
 ; RUN: opt -S -codegenprepare %s -o - | FileCheck %s
+; RUN: opt -S -codegenprepare -addr-sink-using-gep=1 %s -o - | FileCheck -check-prefix=CHECK-GEP %s
 ; This file tests the different cases what are involved when codegen prepare
 ; tries to get sign extension out of the way of addressing mode.
 ; This tests require an actual target as addressing mode decisions depends
@@ -281,6 +282,25 @@ define i8 @twoArgsNoPromotionRemove(i1 %arg1, i8 %arg2, i8* %base) {
 ; CHECK: [[ADDR2:%[a-zA-Z_0-9-]+]] = inttoptr i64 [[BASE2]] to i32*
 ; CHECK: load i32* [[ADDR2]]
 ; CHECK: ret
+; CHECK-GEP-LABEL: @checkProfitability
+; CHECK-GEP-NOT: {{%[a-zA-Z_0-9-]+}} = sext i32 %arg1 to i64
+; CHECK-GEP-NOT: {{%[a-zA-Z_0-9-]+}} = sext i32 %arg2 to i64
+; CHECK-GEP: [[SHL:%[a-zA-Z_0-9-]+]] = shl nsw i32 %arg1, 1
+; CHECK-GEP: [[ADD:%[a-zA-Z_0-9-]+]] = add nsw i32 [[SHL]], %arg2
+; CHECK-GEP: [[SEXTADD:%[a-zA-Z_0-9-]+]] = sext i32 [[ADD]] to i64
+; BB then
+; CHECK-GEP: [[BASE1:%[a-zA-Z_0-9-]+]] = inttoptr i64 [[SEXTADD]] to i32*
+; CHECK-GEP: [[BCC1:%[a-zA-Z_0-9-]+]] = bitcast i32* [[BASE1]] to i8*
+; CHECK-GEP: [[FULL1:%[a-zA-Z_0-9-]+]] = getelementptr i8* [[BCC1]], i64 48
+; CHECK-GEP: [[ADDR1:%[a-zA-Z_0-9-]+]] = bitcast i8* [[FULL1]] to i32*
+; CHECK-GEP: load i32* [[ADDR1]]
+; BB else
+; CHECK-GEP: [[BASE2:%[a-zA-Z_0-9-]+]] = inttoptr i64 [[SEXTADD]] to i32*
+; CHECK-GEP: [[BCC2:%[a-zA-Z_0-9-]+]] = bitcast i32* [[BASE2]] to i8*
+; CHECK-GEP: [[FULL2:%[a-zA-Z_0-9-]+]] = getelementptr i8* [[BCC2]], i64 48
+; CHECK-GEP: [[ADDR2:%[a-zA-Z_0-9-]+]] = bitcast i8* [[FULL2]] to i32*
+; CHECK-GEP: load i32* [[ADDR2]]
+; CHECK-GEP: ret
 define i32 @checkProfitability(i32 %arg1, i32 %arg2, i1 %test) {
   %shl = shl nsw i32 %arg1, 1
   %add1 = add nsw i32 %shl, %arg2
