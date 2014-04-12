@@ -42,7 +42,7 @@ static cl::opt<int>
 OptComputeOut("polly-dependences-computeout",
               cl::desc("Bound the dependence analysis by a maximal amount of "
                        "computational steps"),
-              cl::Hidden, cl::init(15000), cl::ZeroOrMore,
+              cl::Hidden, cl::init(250000), cl::ZeroOrMore,
               cl::cat(PollyCategory));
 
 static cl::opt<bool>
