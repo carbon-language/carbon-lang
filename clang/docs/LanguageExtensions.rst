@@ -134,6 +134,26 @@ The attribute name can also be specified with a preceding and following ``__``
 (double underscore) to avoid interference from a macro with the same name.  For
 instance, ``__always_inline__`` can be used instead of ``always_inline``.
 
+``__is_identifier``
+-------------------
+
+This function-like macro takes a single identifier argument that might be either
+a reserved word or a regular identifier. It evaluates to 1 if the argument is just
+a regular identifier and not a reserved word, in the sense that it can then be
+used as the name of a user-defined function or variable. Otherwise it evaluates
+to 0.  It can be used like this:
+
+.. code-block:: c++
+
+  ...
+  #ifdef __is_identifier          // Compatibility with non-clang compilers.
+    #if __is_identifier(__wchar_t)
+      typedef wchar_t __wchar_t;
+    #endif
+  #endif
+
+  __wchar_t WideCharacter;
+  ...
 
 Include File Checking Macros
 ============================
