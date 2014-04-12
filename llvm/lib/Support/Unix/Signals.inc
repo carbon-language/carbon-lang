@@ -55,7 +55,7 @@ static std::vector<std::pair<void(*)(void*), void*> > CallBacksToRun;
 static const int IntSigs[] = {
   SIGHUP, SIGINT, SIGPIPE, SIGTERM, SIGUSR1, SIGUSR2
 };
-static const int *const IntSigsEnd = array_endof(IntSigs);
+static const int *const IntSigsEnd = std::end(IntSigs);
 
 // KillSigs - Signals that represent that we have a bug, and our prompt
 // termination has been ordered.
@@ -74,7 +74,7 @@ static const int KillSigs[] = {
   , SIGEMT
 #endif
 };
-static const int *const KillSigsEnd = array_endof(KillSigs);
+static const int *const KillSigsEnd = std::end(KillSigs);
 
 static unsigned NumRegisteredSignals = 0;
 static struct {

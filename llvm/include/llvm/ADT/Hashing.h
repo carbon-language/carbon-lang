@@ -45,7 +45,6 @@
 #ifndef LLVM_ADT_HASHING_H
 #define LLVM_ADT_HASHING_H
 
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/SwapByteOrder.h"
@@ -412,7 +411,7 @@ template <typename InputIteratorT>
 hash_code hash_combine_range_impl(InputIteratorT first, InputIteratorT last) {
   const size_t seed = get_execution_seed();
   char buffer[64], *buffer_ptr = buffer;
-  char *const buffer_end = buffer_ptr + array_lengthof(buffer);
+  char *const buffer_end = std::end(buffer);
   while (first != last && store_and_advance(buffer_ptr, buffer_end,
                                             get_hashable_data(*first)))
     ++first;

@@ -38,7 +38,7 @@ INITIALIZE_PASS_END(MachineTraceMetrics,
 
 MachineTraceMetrics::MachineTraceMetrics()
   : MachineFunctionPass(ID), MF(0), TII(0), TRI(0), MRI(0), Loops(0) {
-  std::fill(Ensembles, array_endof(Ensembles), (Ensemble*)0);
+  std::fill(std::begin(Ensembles), std::end(Ensembles), nullptr);
 }
 
 void MachineTraceMetrics::getAnalysisUsage(AnalysisUsage &AU) const {

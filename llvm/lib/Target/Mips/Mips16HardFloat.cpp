@@ -354,9 +354,8 @@ static const char *IntrinsicInline[] =
   };
 
 static bool isIntrinsicInline(Function *F) {
-  return std::binary_search(
-    IntrinsicInline, array_endof(IntrinsicInline),
-    F->getName());
+  return std::binary_search(std::begin(IntrinsicInline),
+                            std::end(IntrinsicInline), F->getName());
 }
 //
 // Returns of float, double and complex need to be handled with a helper

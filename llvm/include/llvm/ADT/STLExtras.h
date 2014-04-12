@@ -165,17 +165,9 @@ struct less_second {
 //     Extra additions for arrays
 //===----------------------------------------------------------------------===//
 
-/// Find where an array ends (for ending iterators)
-/// This returns a pointer to the byte immediately
-/// after the end of an array.
-template<class T, std::size_t N>
-inline T *array_endof(T (&x)[N]) {
-  return x+N;
-}
-
 /// Find the length of an array.
-template<class T, std::size_t N>
-inline size_t array_lengthof(T (&)[N]) {
+template <class T, std::size_t N>
+LLVM_CONSTEXPR inline size_t array_lengthof(T (&)[N]) {
   return N;
 }
 

@@ -443,8 +443,8 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
     if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(CLI.Callee)) {
       Mips16Libcall Find = { RTLIB::UNKNOWN_LIBCALL, S->getSymbol() };
 
-      if (std::binary_search(HardFloatLibCalls, array_endof(HardFloatLibCalls),
-                             Find))
+      if (std::binary_search(std::begin(HardFloatLibCalls),
+                             std::end(HardFloatLibCalls), Find))
         LookupHelper = false;
       else {
         const char *Symbol = S->getSymbol();
@@ -471,13 +471,12 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
             FuncInfo->setSaveS2();
         }
         // one more look at list of intrinsics
-        if (std::binary_search(Mips16IntrinsicHelper,
-            array_endof(Mips16IntrinsicHelper),
-                                     IntrinsicFind)) {
-          const Mips16IntrinsicHelperType *h =(std::find(Mips16IntrinsicHelper,
-              array_endof(Mips16IntrinsicHelper),
-                                       IntrinsicFind));
-          Mips16HelperFunction = h->Helper;
+        const Mips16IntrinsicHelperType *Helper =
+            std::lower_bound(std::begin(Mips16IntrinsicHelper),
+                             std::end(Mips16IntrinsicHelper), IntrinsicFind);
+        if (Helper != std::end(Mips16IntrinsicHelper) &&
+            *Helper == IntrinsicFind) {
+          Mips16HelperFunction = Helper->Helper;
           NeedMips16Helper = true;
           LookupHelper = false;
         }
@@ -488,8 +487,8 @@ getOpndList(SmallVectorImpl<SDValue> &Ops,
       Mips16Libcall Find = { RTLIB::UNKNOWN_LIBCALL,
                              G->getGlobal()->getName().data() };
 
-      if (std::binary_search(HardFloatLibCalls, array_endof(HardFloatLibCalls),
-                             Find))
+      if (std::binary_search(std::begin(HardFloatLibCalls),
+                             std::end(HardFloatLibCalls), Find))
         LookupHelper = false;
     }
     if (LookupHelper) Mips16HelperFunction =

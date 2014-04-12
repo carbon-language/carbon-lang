@@ -333,7 +333,7 @@ public:
 
   public:
     ValueTypeActionImpl() {
-      std::fill(ValueTypeActions, array_endof(ValueTypeActions), 0);
+      std::fill(std::begin(ValueTypeActions), std::end(ValueTypeActions), 0);
     }
 
     LegalizeTypeAction getTypeAction(MVT VT) const {
