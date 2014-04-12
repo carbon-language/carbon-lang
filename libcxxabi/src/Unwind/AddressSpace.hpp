@@ -196,12 +196,14 @@ inline LocalAddressSpace::pint_t LocalAddressSpace::getEncodedP(pint_t &addr,
     result = (pint_t)getSLEB128(addr, end);
     break;
   case DW_EH_PE_sdata2:
-    result = (uint16_t)get16(addr);
+    // Sign extend from signed 16-bit value.
+    result = (int16_t)get16(addr);
     p += 2;
     addr = (pint_t) p;
     break;
   case DW_EH_PE_sdata4:
-    result = (uint32_t)get32(addr);
+    // Sign extend from signed 32-bit value.
+    result = (int32_t)get32(addr);
     p += 4;
     addr = (pint_t) p;
     break;
