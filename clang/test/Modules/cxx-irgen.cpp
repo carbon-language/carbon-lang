@@ -6,13 +6,13 @@
 @import cxx_irgen_left;
 @import cxx_irgen_right;
 
-// CHECK-DAG: define available_externally hidden i32 @_ZN1SIiE1gEv({{.*}} #[[ALWAYS_INLINE:.*]] align
+// CHECK-DAG: define available_externally hidden {{signext i32|i32}} @_ZN1SIiE1gEv({{.*}} #[[ALWAYS_INLINE:.*]] align
 int a = S<int>::g();
 
-// CHECK-DAG: define available_externally i32 @_ZN1SIiE1fEv({{.*}} #[[ALWAYS_INLINE]] align
+// CHECK-DAG: define available_externally {{signext i32|i32}} @_ZN1SIiE1fEv({{.*}} #[[ALWAYS_INLINE]] align
 int b = h();
 
-// CHECK-DAG: define linkonce_odr i32 @_Z3minIiET_S0_S0_(i32
+// CHECK-DAG: define linkonce_odr {{signext i32|i32}} @_Z3minIiET_S0_S0_(i32
 int c = min(1, 2);
 
 // CHECK: attributes #[[ALWAYS_INLINE]] = {{.*}} alwaysinline
