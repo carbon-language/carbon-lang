@@ -90,7 +90,7 @@ public:
   int getFrameIndex() const { return FrameIndex; }
   void setFrameIndex(int FI) { FrameIndex = FI; }
   // Translate tag to proper Dwarf tag.
-  uint16_t getTag() const {
+  dwarf::Tag getTag() const {
     if (Var.getTag() == dwarf::DW_TAG_arg_variable)
       return dwarf::DW_TAG_formal_parameter;
 

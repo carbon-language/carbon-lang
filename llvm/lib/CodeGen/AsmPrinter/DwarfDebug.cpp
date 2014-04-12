@@ -791,8 +791,7 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit *TheCU,
   assert(Module.Verify() &&
          "Use one of the MDNode * overloads to handle invalid metadata");
   assert(Context && "Should always have a context for an imported_module");
-  DIE *IMDie = new DIE(Module.getTag());
-  TheCU->insertDIE(Module, IMDie);
+  DIE *IMDie = TheCU->createAndAddDIE(Module.getTag(), *Context, Module);
   DIE *EntityDie;
   DIDescriptor Entity = resolve(Module.getEntity());
   if (Entity.isNameSpace())
@@ -810,7 +809,6 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit *TheCU,
   StringRef Name = Module.getName();
   if (!Name.empty())
     TheCU->addString(IMDie, dwarf::DW_AT_name, Name);
-  Context->addChild(IMDie);
 }
 
 // Emit all Dwarf sections that should come prior to the content. Create

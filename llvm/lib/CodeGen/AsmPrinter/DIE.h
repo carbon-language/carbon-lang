@@ -132,8 +132,13 @@ protected:
   ///
   SmallVector<DIEValue *, 12> Values;
 
+protected:
+  DIE()
+      : Offset(0), Size(0), Abbrev((dwarf::Tag)0, dwarf::DW_CHILDREN_no),
+        Parent(0) {}
+
 public:
-  explicit DIE(unsigned Tag)
+  explicit DIE(dwarf::Tag Tag)
       : Offset(0), Size(0), Abbrev((dwarf::Tag)Tag, dwarf::DW_CHILDREN_no),
         Parent(0) {}
   ~DIE();
@@ -464,7 +469,7 @@ public:
 class DIELoc : public DIEValue, public DIE {
   mutable unsigned Size; // Size in bytes excluding size header.
 public:
-  DIELoc() : DIEValue(isLoc), DIE(0), Size(0) {}
+  DIELoc() : DIEValue(isLoc), Size(0) {}
 
   /// ComputeSize - Calculate the size of the location expression.
   ///
@@ -507,7 +512,7 @@ public:
 class DIEBlock : public DIEValue, public DIE {
   mutable unsigned Size; // Size in bytes excluding size header.
 public:
-  DIEBlock() : DIEValue(isBlock), DIE(0), Size(0) {}
+  DIEBlock() : DIEValue(isBlock), Size(0) {}
 
   /// ComputeSize - Calculate the size of the location expression.
   ///

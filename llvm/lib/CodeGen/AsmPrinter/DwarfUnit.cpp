@@ -384,7 +384,9 @@ void DwarfUnit::addDIEEntry(DIE *Die, dwarf::Attribute Attribute,
 /// Create a DIE with the given Tag, add the DIE to its parent, and
 /// call insertDIE if MD is not null.
 DIE *DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, DIDescriptor N) {
-  DIE *Die = new DIE(Tag);
+  assert(Tag != dwarf::DW_TAG_auto_variable &&
+         Tag != dwarf::DW_TAG_arg_variable);
+  DIE *Die = new DIE((dwarf::Tag)Tag);
   Parent.addChild(Die);
   if (N)
     insertDIE(N, Die);
