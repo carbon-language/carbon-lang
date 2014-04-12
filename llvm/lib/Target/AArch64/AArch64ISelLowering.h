@@ -278,6 +278,17 @@ public:
 
   bool isLegalICmpImmediate(int64_t Val) const;
 
+  /// \brief Return true if the addressing mode represented by AM is legal for
+  /// this target, for a load/store of the specified type.
+  bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const override;
+
+  /// \brief Return the cost of the scaling factor used in the addressing
+  /// mode represented by AM for this target, for a load/store
+  /// of the specified type.
+  /// If the AM is supported, the return value must be >= 0.
+  /// If the AM is not supported, it returns a negative value.
+  int getScalingFactorCost(const AddrMode &AM, Type *Ty) const override;
+
   bool isTruncateFree(Type *Ty1, Type *Ty2) const override;
   bool isTruncateFree(EVT VT1, EVT VT2) const override;
 

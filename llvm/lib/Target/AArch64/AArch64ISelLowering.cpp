@@ -5425,3 +5425,69 @@ bool AArch64TargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
   return (VT1.isSimple() && VT1.isInteger() && VT2.isSimple() &&
           VT2.isInteger() && VT1.getSizeInBits() <= 32);
 }
+
+// isLegalAddressingMode - Return true if the addressing mode represented
+/// by AM is legal for this target, for a load/store of the specified type.
+bool AArch64TargetLowering::isLegalAddressingMode(const AddrMode &AM,
+                                                Type *Ty) const {
+  // AArch64 has five basic addressing modes:
+  //  reg
+  //  reg + 9-bit signed offset
+  //  reg + SIZE_IN_BYTES * 12-bit unsigned offset
+  //  reg1 + reg2
+  //  reg + SIZE_IN_BYTES * reg
+
+  // No global is ever allowed as a base.
+  if (AM.BaseGV)
+    return false;
+
+  // No reg+reg+imm addressing.
+  if (AM.HasBaseReg && AM.BaseOffs && AM.Scale)
+    return false;
+
+  // check reg + imm case:
+  // i.e., reg + 0, reg + imm9, reg + SIZE_IN_BYTES * uimm12
+  uint64_t NumBytes = 0;
+  if (Ty->isSized()) {
+    uint64_t NumBits = getDataLayout()->getTypeSizeInBits(Ty);
+    NumBytes = NumBits / 8;
+    if (!isPowerOf2_64(NumBits))
+      NumBytes = 0;
+  }
+
+  if (!AM.Scale) {
+    int64_t Offset = AM.BaseOffs;
+
+    // 9-bit signed offset
+    if (Offset >= -(1LL << 9) && Offset <= (1LL << 9) - 1)
+      return true;
+
+    // 12-bit unsigned offset
+    unsigned shift = Log2_64(NumBytes);
+    if (NumBytes && Offset > 0 && (Offset / NumBytes) <= (1LL << 12) - 1 &&
+        // Must be a multiple of NumBytes (NumBytes is a power of 2)
+        (Offset >> shift) << shift == Offset)
+      return true;
+    return false;
+  }
+  if (!AM.Scale || AM.Scale == 1 ||
+      (AM.Scale > 0 && (uint64_t)AM.Scale == NumBytes))
+    return true;
+  return false;
+}
+
+int AArch64TargetLowering::getScalingFactorCost(const AddrMode &AM,
+                                              Type *Ty) const {
+  // Scaling factors are not free at all.
+  // Operands                     | Rt Latency
+  // -------------------------------------------
+  // Rt, [Xn, Xm]                 | 4
+  // -------------------------------------------
+  // Rt, [Xn, Xm, lsl #imm]       | Rn: 4 Rm: 5
+  // Rt, [Xn, Wm, <extend> #imm]  |
+  if (isLegalAddressingMode(AM, Ty))
+    // Scale represents reg2 * scale, thus account for 1 if
+    // it is not equal to 0 or 1.
+    return AM.Scale != 0 && AM.Scale != 1;
+  return -1;
+}
