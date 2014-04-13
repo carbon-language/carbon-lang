@@ -686,6 +686,8 @@ namespace dr259 { // dr259: yes c++11
 #endif
 }
 
+// FIXME: When dr260 is resolved, also add tests for DR507.
+
 namespace dr261 { // dr261: no
 #pragma clang diagnostic push
 #pragma clang diagnostic warning "-Wused-but-marked-unused"
