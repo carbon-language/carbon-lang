@@ -18,10 +18,14 @@
 #include "PPC.h"
 #include "PPCTargetMachine.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
 using namespace llvm;
+
+static cl::opt<bool> DisablePPCConstHoist("disable-ppc-constant-hoisting",
+cl::desc("disable constant hoisting on PPC"), cl::init(false), cl::Hidden);
 
 // Declare the pass initialization routine locally as target-specific passes
 // don't havve a target-wide initialization entry point, and so we rely on the
@@ -67,6 +71,13 @@ public:
 
   /// \name Scalar TTI Implementations
   /// @{
+  unsigned getIntImmCost(const APInt &Imm, Type *Ty) const override;
+
+  unsigned getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
+                         Type *Ty) const override;
+  unsigned getIntImmCost(Intrinsic::ID IID, unsigned Idx, const APInt &Imm,
+                         Type *Ty) const override;
+
   virtual PopcntSupportKind
   getPopcntSupport(unsigned TyWidth) const override;
   virtual void getUnrollingPreferences(
@@ -121,6 +132,142 @@ PPCTTI::PopcntSupportKind PPCTTI::getPopcntSupport(unsigned TyWidth) const {
   if (ST->hasPOPCNTD() && TyWidth <= 64)
     return PSK_FastHardware;
   return PSK_Software;
+}
+
+unsigned PPCTTI::getIntImmCost(const APInt &Imm, Type *Ty) const {
+  if (DisablePPCConstHoist)
+    return TargetTransformInfo::getIntImmCost(Imm, Ty);
+
+  assert(Ty->isIntegerTy());
+
+  unsigned BitSize = Ty->getPrimitiveSizeInBits();
+  if (BitSize == 0)
+    return ~0U;
+
+  if (Imm == 0)
+    return TCC_Free;
+
+  if (Imm.getBitWidth() <= 64) {
+    if (isInt<16>(Imm.getSExtValue()))
+      return TCC_Basic;
+
+    if (isInt<32>(Imm.getSExtValue())) {
+      // A constant that can be materialized using lis.
+      if ((Imm.getZExtValue() & 0xFFFF) == 0)
+        return TCC_Basic;
+
+      return 2 * TCC_Basic;
+    }
+  }
+
+  return 4 * TCC_Basic;
+}
+
+unsigned PPCTTI::getIntImmCost(Intrinsic::ID IID, unsigned Idx,
+                               const APInt &Imm, Type *Ty) const {
+  if (DisablePPCConstHoist)
+    return TargetTransformInfo::getIntImmCost(IID, Idx, Imm, Ty);
+
+  assert(Ty->isIntegerTy());
+
+  unsigned BitSize = Ty->getPrimitiveSizeInBits();
+  if (BitSize == 0)
+    return ~0U;
+
+  switch (IID) {
+  default: return TCC_Free;
+  case Intrinsic::sadd_with_overflow:
+  case Intrinsic::uadd_with_overflow:
+  case Intrinsic::ssub_with_overflow:
+  case Intrinsic::usub_with_overflow:
+    if ((Idx == 1) && Imm.getBitWidth() <= 64 && isInt<16>(Imm.getSExtValue()))
+      return TCC_Free;
+    break;
+  }
+  return PPCTTI::getIntImmCost(Imm, Ty);
+}
+
+unsigned PPCTTI::getIntImmCost(unsigned Opcode, unsigned Idx, const APInt &Imm,
+                               Type *Ty) const {
+  if (DisablePPCConstHoist)
+    return TargetTransformInfo::getIntImmCost(Opcode, Idx, Imm, Ty);
+
+  assert(Ty->isIntegerTy());
+
+  unsigned BitSize = Ty->getPrimitiveSizeInBits();
+  if (BitSize == 0)
+    return ~0U;
+
+  unsigned ImmIdx = ~0U;
+  bool ShiftedFree = false, RunFree = false, UnsignedFree = false,
+       ZeroFree = false;
+  switch (Opcode) {
+  default: return TCC_Free;
+  case Instruction::GetElementPtr:
+    // Always hoist the base address of a GetElementPtr. This prevents the
+    // creation of new constants for every base constant that gets constant
+    // folded with the offset.
+    if (Idx == 0)
+      return 2 * TCC_Basic;
+    return TCC_Free;
+  case Instruction::And:
+    RunFree = true; // (for the rotate-and-mask instructions)
+    // Fallthrough...
+  case Instruction::Add:
+  case Instruction::Or:
+  case Instruction::Xor:
+    ShiftedFree = true;
+    // Fallthrough...
+  case Instruction::Sub:
+  case Instruction::Mul:
+  case Instruction::Shl:
+  case Instruction::LShr:
+  case Instruction::AShr:
+    ImmIdx = 1;
+    break;
+  case Instruction::ICmp:
+    UnsignedFree = true;
+    ImmIdx = 1;
+    // Fallthrough... (zero comparisons can use record-form instructions)
+  case Instruction::Select:
+    ZeroFree = true;
+    break;
+  case Instruction::PHI:
+  case Instruction::Call:
+  case Instruction::Ret:
+  case Instruction::Load:
+  case Instruction::Store:
+    break;
+  }
+
+  if (ZeroFree && Imm == 0)
+    return TCC_Free;
+
+  if (Idx == ImmIdx && Imm.getBitWidth() <= 64) {
+    if (isInt<16>(Imm.getSExtValue()))
+      return TCC_Free;
+
+    if (RunFree) {
+      if (Imm.getBitWidth() <= 32 &&
+          (isShiftedMask_32(Imm.getZExtValue()) ||
+           isShiftedMask_32(~Imm.getZExtValue())))
+        return TCC_Free;
+
+
+      if (ST->isPPC64() &&
+          (isShiftedMask_64(Imm.getZExtValue()) ||
+           isShiftedMask_64(~Imm.getZExtValue())))
+        return TCC_Free;
+    }
+
+    if (UnsignedFree && isUInt<16>(Imm.getZExtValue()))
+      return TCC_Free;
+
+    if (ShiftedFree && (Imm.getZExtValue() & 0xFFFF) == 0)
+      return TCC_Free;
+  }
+
+  return PPCTTI::getIntImmCost(Imm, Ty);
 }
 
 void PPCTTI::getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const {
