@@ -9636,10 +9636,8 @@ static SDValue LowerVectorAllZeroTest(SDValue Op, const X86Subtarget *Subtarget,
 
 /// Emit nodes that will be selected as "test Op0,Op0", or something
 /// equivalent.
-SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
+SDValue X86TargetLowering::EmitTest(SDLoc dl, SDValue Op, unsigned X86CC,
                                     SelectionDAG &DAG) const {
-  SDLoc dl(Op);
-
   if (Op.getValueType() == MVT::i1)
     // KORTEST instruction should be selected
     return DAG.getNode(X86ISD::CMP, dl, MVT::i32, Op,
@@ -9854,12 +9852,11 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC,
 
 /// Emit nodes that will be selected as "cmp Op0,Op1", or something
 /// equivalent.
-SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
-                                   SelectionDAG &DAG) const {
-  SDLoc dl(Op0);
+SDValue X86TargetLowering::EmitCmp(SDLoc dl, SDValue Op0, SDValue Op1,
+                                   unsigned X86CC, SelectionDAG &DAG) const {
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op1)) {
     if (C->getAPIntValue() == 0)
-      return EmitTest(Op0, X86CC, DAG);
+      return EmitTest(dl, Op0, X86CC, DAG);
 
      if (Op0.getValueType() == MVT::i1)
        llvm_unreachable("Unexpected comparison operation for MVT::i1 operands");
@@ -10107,7 +10104,7 @@ static SDValue LowerIntVSETCC_AVX512(SDValue Op, SelectionDAG &DAG,
 /// \brief Try to turn a VSETULT into a VSETULE by modifying its second
 /// operand \p Op1.  If non-trivial (for example because it's not constant)
 /// return an empty value.
-static SDValue ChangeVSETULTtoVSETULE(SDValue Op1, SelectionDAG &DAG)
+static SDValue ChangeVSETULTtoVSETULE(SDLoc dl, SDValue Op1, SelectionDAG &DAG)
 {
   BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(Op1.getNode());
   if (!BV)
@@ -10131,8 +10128,7 @@ static SDValue ChangeVSETULTtoVSETULE(SDValue Op1, SelectionDAG &DAG)
     ULTOp1.push_back(DAG.getConstant(Val - 1, EVT));
   }
 
-  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op1), VT, ULTOp1.data(),
-                     ULTOp1.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, ULTOp1.data(), ULTOp1.size());
 }
 
 static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
@@ -10257,7 +10253,7 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
       // Only do this pre-AVX since vpcmp* is no longer destructive.
       if (Subtarget->hasAVX())
         break;
-      SDValue ULEOp1 = ChangeVSETULTtoVSETULE(Op1, DAG);
+      SDValue ULEOp1 = ChangeVSETULTtoVSETULE(dl, Op1, DAG);
       if (ULEOp1.getNode()) {
         Op1 = ULEOp1;
         Subus = true; Invert = false; Swap = false;
@@ -10436,7 +10432,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   if (X86CC == X86::COND_INVALID)
     return SDValue();
 
-  SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, DAG);
+  SDValue EFLAGS = EmitCmp(dl, Op0, Op1, X86CC, DAG);
   EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
   SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
                               DAG.getConstant(X86CC, MVT::i8), EFLAGS);
@@ -10659,7 +10655,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
   if (addTest) {
     CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    Cond = EmitTest(Cond, X86::COND_NE, DAG);
+    Cond = EmitTest(DL, Cond, X86::COND_NE, DAG);
   }
 
   // a <  b ? -1 :  0 -> RES = ~setcc_carry
@@ -11080,7 +11076,7 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
 
   if (addTest) {
     CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    Cond = EmitTest(Cond, X86::COND_NE, DAG);
+    Cond = EmitTest(dl, Cond, X86::COND_NE, DAG);
   }
   Cond = ConvertCmpIfNecessary(Cond, DAG);
   return DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
