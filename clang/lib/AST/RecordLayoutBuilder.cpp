@@ -2674,10 +2674,6 @@ llvm::SmallPtrSet<const CXXRecordDecl *, 2>
 MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
   llvm::SmallPtrSet<const CXXRecordDecl *, 2> HasVtordispSet;
 
-  // /vd0 or #pragma vtordisp(0): Never use vtordisps when used as a vbase.
-  if (RD->getMSVtorDispMode() == MSVtorDispAttr::Never)
-    return HasVtordispSet;
-
   // /vd2 or #pragma vtordisp(2): Always use vtordisps for virtual bases with
   // vftables.
   if (RD->getMSVtorDispMode() == MSVtorDispAttr::ForVFTable) {
@@ -2690,11 +2686,6 @@ MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
     return HasVtordispSet;
   }
 
-  // /vd1 or #pragma vtordisp(1): Try to guess based on whether we think it's
-  // possible for a partially constructed object with virtual base overrides to
-  // escape a non-trivial constructor.
-  assert(RD->getMSVtorDispMode() == MSVtorDispAttr::ForVBaseOverride);
-
   // If any of our bases need a vtordisp for this type, so do we.  Check our
   // direct bases for vtordisp requirements.
   for (const auto &I : RD->bases()) {
@@ -2704,10 +2695,16 @@ MicrosoftRecordLayoutBuilder::computeVtorDispSet(const CXXRecordDecl *RD) {
       if (bi.second.hasVtorDisp())
         HasVtordispSet.insert(bi.first);
   }
-  // If we do not have a user declared constructor or destructor then we don't
-  // introduce any additional vtordisps.
-  if (!RD->hasUserDeclaredConstructor() && !RD->hasUserDeclaredDestructor())
+  // We don't introduce any additional vtordisps if either:
+  // * A user declared constructor or destructor aren't declared.
+  // * #pragma vtordisp(0) or the /vd0 flag are in use.
+  if ((!RD->hasUserDeclaredConstructor() && !RD->hasUserDeclaredDestructor()) ||
+      RD->getMSVtorDispMode() == MSVtorDispAttr::Never)
     return HasVtordispSet;
+  // /vd1 or #pragma vtordisp(1): Try to guess based on whether we think it's
+  // possible for a partially constructed object with virtual base overrides to
+  // escape a non-trivial constructor.
+  assert(RD->getMSVtorDispMode() == MSVtorDispAttr::ForVBaseOverride);
   // Compute a set of base classes which define methods we override.  A virtual
   // base in this set will require a vtordisp.  A virtual base that transitively
   // contains one of these bases as a non-virtual base will also require a
