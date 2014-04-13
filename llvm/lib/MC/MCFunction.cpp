@@ -35,7 +35,7 @@ MCBasicBlock *MCFunction::find(uint64_t StartAddr) {
   for (const_iterator I = begin(), E = end(); I != E; ++I)
     if ((*I)->getInsts()->getBeginAddr() == StartAddr)
       return *I;
-  return 0;
+  return nullptr;
 }
 
 const MCBasicBlock *MCFunction::find(uint64_t StartAddr) const {

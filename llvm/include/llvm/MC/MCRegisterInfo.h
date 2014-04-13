@@ -191,7 +191,7 @@ public:
 
   protected:
     /// Create an invalid iterator. Call init() to point to something useful.
-    DiffListIterator() : Val(0), List(0) {}
+    DiffListIterator() : Val(0), List(nullptr) {}
 
     /// init - Point the iterator to InitVal, decoding subsequent values from
     /// DiffList. The iterator will initially point to InitVal, sub-classes are
@@ -223,7 +223,7 @@ public:
     void operator++() {
       // The end of the list is encoded as a 0 differential.
       if (!advance())
-        List = 0;
+        List = nullptr;
     }
   };
 

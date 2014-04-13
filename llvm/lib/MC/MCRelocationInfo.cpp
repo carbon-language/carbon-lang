@@ -23,14 +23,14 @@ MCRelocationInfo::~MCRelocationInfo() {
 
 const MCExpr *
 MCRelocationInfo::createExprForRelocation(object::RelocationRef Rel) {
-  return 0;
+  return nullptr;
 }
 
 const MCExpr *
 MCRelocationInfo::createExprForCAPIVariantKind(const MCExpr *SubExpr,
                                                unsigned VariantKind) {
   if (VariantKind != LLVMDisassembler_VariantKind_None)
-    return 0;
+    return nullptr;
   return SubExpr;
 }
 

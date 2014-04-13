@@ -669,7 +669,7 @@ IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
   //   - addr(atom(B)) - offset(B)
   // and the offsets are not relocatable, so the fixup is fully resolved when
   //  addr(atom(A)) - addr(atom(B)) == 0.
-  const MCSymbolData *A_Base = 0, *B_Base = 0;
+  const MCSymbolData *A_Base = nullptr, *B_Base = nullptr;
 
   const MCSymbol &SA = DataA.getSymbol().AliasedSymbol();
   const MCSection &SecA = SA.getSection();

@@ -201,10 +201,9 @@ public:
                   LoadLatency(DefaultLoadLatency),
                   HighLatency(DefaultHighLatency),
                   MispredictPenalty(DefaultMispredictPenalty),
-                  CompleteModel(true),
-                  ProcID(0), ProcResourceTable(0), SchedClassTable(0),
-                  NumProcResourceKinds(0), NumSchedClasses(0),
-                  InstrItineraries(0) {
+                  CompleteModel(true), ProcID(0), ProcResourceTable(nullptr),
+                  SchedClassTable(nullptr), NumProcResourceKinds(0),
+                  NumSchedClasses(0), InstrItineraries(nullptr) {
     (void)NumProcResourceKinds;
     (void)NumSchedClasses;
   }

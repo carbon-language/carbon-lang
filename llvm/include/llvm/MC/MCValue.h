@@ -61,7 +61,8 @@ public:
   /// dump - Print the value to stderr.
   void dump() const;
 
-  static MCValue get(const MCSymbolRefExpr *SymA, const MCSymbolRefExpr *SymB=0,
+  static MCValue get(const MCSymbolRefExpr *SymA,
+                     const MCSymbolRefExpr *SymB = nullptr,
                      int64_t Val = 0, uint32_t RefKind = 0) {
     MCValue R;
     assert((!SymB || SymA) && "Invalid relocatable MCValue!");
@@ -75,8 +76,8 @@ public:
   static MCValue get(int64_t Val) {
     MCValue R;
     R.Cst = Val;
-    R.SymA = 0;
-    R.SymB = 0;
+    R.SymA = nullptr;
+    R.SymB = nullptr;
     R.RefKind = 0;
     return R;
   }

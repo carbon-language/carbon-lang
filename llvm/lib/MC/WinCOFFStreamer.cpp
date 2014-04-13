@@ -96,7 +96,7 @@ private:
 
 WinCOFFStreamer::WinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
                                  MCCodeEmitter &CE, raw_ostream &OS)
-    : MCObjectStreamer(Context, MAB, OS, &CE), CurSymbol(NULL) {}
+    : MCObjectStreamer(Context, MAB, OS, &CE), CurSymbol(nullptr) {}
 
 // MCStreamer interface
 
@@ -166,13 +166,13 @@ void WinCOFFStreamer::BeginCOFFSymbolDef(MCSymbol const *Symbol) {
   assert((Symbol->isInSection()
          ? Symbol->getSection().getVariant() == MCSection::SV_COFF
          : true) && "Got non-COFF section in the COFF backend!");
-  assert(CurSymbol == NULL && "EndCOFFSymbolDef must be called between calls "
-                              "to BeginCOFFSymbolDef!");
+  assert(!CurSymbol && "EndCOFFSymbolDef must be called between calls "
+                       "to BeginCOFFSymbolDef!");
   CurSymbol = Symbol;
 }
 
 void WinCOFFStreamer::EmitCOFFSymbolStorageClass(int StorageClass) {
-  assert(CurSymbol != NULL && "BeginCOFFSymbolDef must be called first!");
+  assert(CurSymbol && "BeginCOFFSymbolDef must be called first!");
   assert((StorageClass & ~0xFF) == 0 && "StorageClass must only have data in "
                                         "the first byte!");
 
@@ -182,7 +182,7 @@ void WinCOFFStreamer::EmitCOFFSymbolStorageClass(int StorageClass) {
 }
 
 void WinCOFFStreamer::EmitCOFFSymbolType(int Type) {
-  assert(CurSymbol != NULL && "BeginCOFFSymbolDef must be called first!");
+  assert(CurSymbol && "BeginCOFFSymbolDef must be called first!");
   assert((Type & ~0xFFFF) == 0 && "Type must only have data in the first 2 "
                                   "bytes");
 
@@ -192,8 +192,8 @@ void WinCOFFStreamer::EmitCOFFSymbolType(int Type) {
 }
 
 void WinCOFFStreamer::EndCOFFSymbolDef() {
-  assert(CurSymbol != NULL && "BeginCOFFSymbolDef must be called first!");
-  CurSymbol = NULL;
+  assert(CurSymbol && "BeginCOFFSymbolDef must be called first!");
+  CurSymbol = nullptr;
 }
 
 void WinCOFFStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
@@ -226,7 +226,7 @@ void WinCOFFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     report_fatal_error(
         "The linker won't align common symbols beyond 32 bytes.");
 
-  AssignSection(Symbol, NULL);
+  AssignSection(Symbol, nullptr);
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
   SD.setExternal(true);
@@ -284,7 +284,7 @@ void WinCOFFStreamer::EmitWin64EHHandlerData() {
 }
 
 void WinCOFFStreamer::FinishImpl() {
-  EmitFrames(NULL, true);
+  EmitFrames(nullptr, true);
   EmitW64Tables();
   MCObjectStreamer::FinishImpl();
 }

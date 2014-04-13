@@ -122,7 +122,7 @@ EmitDwarfLineTable(MCStreamer *MCOS, const MCSection *Section,
   unsigned Flags = DWARF2_LINE_DEFAULT_IS_STMT ? DWARF2_FLAG_IS_STMT : 0;
   unsigned Isa = 0;
   unsigned Discriminator = 0;
-  MCSymbol *LastLabel = NULL;
+  MCSymbol *LastLabel = nullptr;
 
   // Loop through each MCLineEntry and encode the dwarf line number table.
   for (auto it = LineEntries.begin(),
@@ -779,8 +779,8 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
   MCSymbol *LineSectionSymbol = nullptr;
   if (CreateDwarfSectionSymbols)
     LineSectionSymbol = MCOS->getDwarfLineTableSymbol(0);
-  MCSymbol *AbbrevSectionSymbol = NULL;
-  MCSymbol *InfoSectionSymbol = NULL;
+  MCSymbol *AbbrevSectionSymbol = nullptr;
+  MCSymbol *InfoSectionSymbol = nullptr;
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection());
   if (CreateDwarfSectionSymbols) {
     InfoSectionSymbol = context.CreateTempSymbol();
@@ -882,7 +882,7 @@ static unsigned getSizeForEncoding(MCStreamer &streamer,
 
 static void EmitFDESymbol(MCStreamer &streamer, const MCSymbol &symbol,
                        unsigned symbolEncoding, bool isEH,
-                       const char *comment = 0) {
+                       const char *comment = nullptr) {
   MCContext &context = streamer.getContext();
   const MCAsmInfo *asmInfo = context.getAsmInfo();
   const MCExpr *v = asmInfo->getExprForFDESymbol(&symbol,
@@ -917,7 +917,7 @@ namespace {
   public:
     FrameEmitterImpl(bool usingCFI, bool isEH)
       : CFAOffset(0), CIENum(0), UsingCFI(usingCFI), IsEH(isEH),
-        SectionStart(0) {}
+        SectionStart(nullptr) {}
 
     void setSectionStart(const MCSymbol *Label) { SectionStart = Label; }
 
@@ -1344,7 +1344,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   if (!IsSimple) {
     const std::vector<MCCFIInstruction> &Instructions =
         MAI->getInitialFrameState();
-    EmitCFIInstructions(streamer, Instructions, NULL);
+    EmitCFIInstructions(streamer, Instructions, nullptr);
   }
 
   // Padding
@@ -1431,8 +1431,12 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
 
 namespace {
   struct CIEKey {
-    static const CIEKey getEmptyKey() { return CIEKey(0, 0, -1, false, false); }
-    static const CIEKey getTombstoneKey() { return CIEKey(0, -1, 0, false, false); }
+    static const CIEKey getEmptyKey() {
+      return CIEKey(nullptr, 0, -1, false, false);
+    }
+    static const CIEKey getTombstoneKey() {
+      return CIEKey(nullptr, -1, 0, false, false);
+    }
 
     CIEKey(const MCSymbol* Personality_, unsigned PersonalityEncoding_,
            unsigned LsdaEncoding_, bool IsSignalFrame_, bool IsSimple_) :
@@ -1514,10 +1518,10 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
   Streamer.EmitLabel(SectionStart);
   Emitter.setSectionStart(SectionStart);
 
-  MCSymbol *FDEEnd = NULL;
+  MCSymbol *FDEEnd = nullptr;
   DenseMap<CIEKey, const MCSymbol*> CIEStarts;
 
-  const MCSymbol *DummyDebugKey = NULL;
+  const MCSymbol *DummyDebugKey = nullptr;
   NeedsEHFrameSection = !MOFI->getSupportsCompactUnwindWithoutEHFrame();
   for (unsigned i = 0, n = FrameArray.size(); i < n; ++i) {
     const MCDwarfFrameInfo &Frame = FrameArray[i];
@@ -1525,7 +1529,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
     // Emit the label from the previous iteration
     if (FDEEnd) {
       Streamer.EmitLabel(FDEEnd);
-      FDEEnd = NULL;
+      FDEEnd = nullptr;
     }
 
     if (!NeedsEHFrameSection && Frame.CompactUnwindEncoding !=

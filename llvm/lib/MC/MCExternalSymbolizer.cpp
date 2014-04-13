@@ -83,7 +83,7 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
       return false;
   }
 
-  const MCExpr *Add = NULL;
+  const MCExpr *Add = nullptr;
   if (SymbolicOp.AddSymbol.Present) {
     if (SymbolicOp.AddSymbol.Name) {
       StringRef Name(SymbolicOp.AddSymbol.Name);
@@ -94,7 +94,7 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
     }
   }
 
-  const MCExpr *Sub = NULL;
+  const MCExpr *Sub = nullptr;
   if (SymbolicOp.SubtractSymbol.Present) {
       if (SymbolicOp.SubtractSymbol.Name) {
       StringRef Name(SymbolicOp.SubtractSymbol.Name);
@@ -105,7 +105,7 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
     }
   }
 
-  const MCExpr *Off = NULL;
+  const MCExpr *Off = nullptr;
   if (SymbolicOp.Value != 0)
     Off = MCConstantExpr::Create(SymbolicOp.Value, Ctx);
 
@@ -116,17 +116,17 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
       LHS = MCBinaryExpr::CreateSub(Add, Sub, Ctx);
     else
       LHS = MCUnaryExpr::CreateMinus(Sub, Ctx);
-    if (Off != 0)
+    if (Off)
       Expr = MCBinaryExpr::CreateAdd(LHS, Off, Ctx);
     else
       Expr = LHS;
   } else if (Add) {
-    if (Off != 0)
+    if (Off)
       Expr = MCBinaryExpr::CreateAdd(Add, Off, Ctx);
     else
       Expr = Add;
   } else {
-    if (Off != 0)
+    if (Off)
       Expr = Off;
     else
       Expr = MCConstantExpr::Create(0, Ctx);
@@ -189,7 +189,7 @@ MCSymbolizer *createMCSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
                                  void *DisInfo,
                                  MCContext *Ctx,
                                  MCRelocationInfo *RelInfo) {
-  assert(Ctx != 0 && "No MCContext given for symbolic disassembly");
+  assert(Ctx && "No MCContext given for symbolic disassembly");
 
   return new MCExternalSymbolizer(*Ctx,
                                   std::unique_ptr<MCRelocationInfo>(RelInfo),

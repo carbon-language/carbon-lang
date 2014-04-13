@@ -31,7 +31,7 @@ class DiceRef {
   const ObjectFile *OwningObject;
 
 public:
-  DiceRef() : OwningObject(NULL) { }
+  DiceRef() : OwningObject(nullptr) { }
 
   DiceRef(DataRefImpl DiceP, const ObjectFile *Owner);
 

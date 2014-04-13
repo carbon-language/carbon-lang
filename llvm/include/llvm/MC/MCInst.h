@@ -184,18 +184,18 @@ public:
   /// \brief Dump the MCInst as prettily as possible using the additional MC
   /// structures, if given. Operators are separated by the \p Separator
   /// string.
-  void dump_pretty(raw_ostream &OS, const MCAsmInfo *MAI = 0,
-                   const MCInstPrinter *Printer = 0,
+  void dump_pretty(raw_ostream &OS, const MCAsmInfo *MAI = nullptr,
+                   const MCInstPrinter *Printer = nullptr,
                    StringRef Separator = " ") const;
 };
 
 inline raw_ostream& operator<<(raw_ostream &OS, const MCOperand &MO) {
-  MO.print(OS, 0);
+  MO.print(OS, nullptr);
   return OS;
 }
 
 inline raw_ostream& operator<<(raw_ostream &OS, const MCInst &MI) {
-  MI.print(OS, 0);
+  MI.print(OS, nullptr);
   return OS;
 }
 

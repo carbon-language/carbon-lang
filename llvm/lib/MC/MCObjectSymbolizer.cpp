@@ -215,11 +215,11 @@ const SectionRef *MCObjectSymbolizer::findSectionContaining(uint64_t Addr) {
     It = std::lower_bound(SortedSections.begin(), EndIt,
                           Addr, SectionStartsBefore);
   if (It == EndIt)
-    return 0;
+    return nullptr;
   uint64_t SAddr; It->getAddress(SAddr);
   uint64_t SSize; It->getSize(SSize);
   if (Addr >= SAddr + SSize)
-    return 0;
+    return nullptr;
   return &*It;
 }
 
@@ -229,7 +229,7 @@ const RelocationRef *MCObjectSymbolizer::findRelocationAt(uint64_t Addr) {
 
   AddrToRelocMap::const_iterator RI = AddrToReloc.find(Addr);
   if (RI == AddrToReloc.end())
-    return 0;
+    return nullptr;
   return &RI->second;
 }
 

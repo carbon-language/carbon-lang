@@ -44,7 +44,7 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
                            SectionKind::getDataRel());
 
   // BSSSection might not be expected initialized on msvc.
-  BSSSection = 0;
+  BSSSection = nullptr;
 
   TLSDataSection // .tdata
     = Ctx->getMachOSection("__DATA", "__thread_data",
@@ -147,7 +147,7 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   LSDASection = Ctx->getMachOSection("__TEXT", "__gcc_except_tab", 0,
                                      SectionKind::getReadOnlyWithRel());
 
-  COFFDebugSymbolsSection = 0;
+  COFFDebugSymbolsSection = nullptr;
 
   if ((T.isMacOSX() && !T.isMacOSXVersionLT(10, 6)) ||
       (T.isOSDarwin() && T.getArch() == Triple::arm64)) {
@@ -461,7 +461,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
                        ELF::SHF_ALLOC,
                        SectionKind::getReadOnly());
 
-  COFFDebugSymbolsSection = 0;
+  COFFDebugSymbolsSection = nullptr;
 
   // Debug Info Sections.
   DwarfAbbrevSection =
@@ -760,12 +760,12 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
 
   CompactUnwindDwarfEHFrameOnly = 0;
 
-  EHFrameSection = 0;             // Created on demand.
-  CompactUnwindSection = 0;       // Used only by selected targets.
-  DwarfAccelNamesSection = 0;     // Used only by selected targets.
-  DwarfAccelObjCSection = 0;      // Used only by selected targets.
-  DwarfAccelNamespaceSection = 0; // Used only by selected targets.
-  DwarfAccelTypesSection = 0;     // Used only by selected targets.
+  EHFrameSection = nullptr;             // Created on demand.
+  CompactUnwindSection = nullptr;       // Used only by selected targets.
+  DwarfAccelNamesSection = nullptr;     // Used only by selected targets.
+  DwarfAccelObjCSection = nullptr;      // Used only by selected targets.
+  DwarfAccelNamespaceSection = nullptr; // Used only by selected targets.
+  DwarfAccelTypesSection = nullptr;     // Used only by selected targets.
 
   Triple T(TT);
   Triple::ArchType Arch = T.getArch();

@@ -119,8 +119,8 @@ public:
   /// Ctors.
   ///
   InstrItineraryData() : SchedModel(&MCSchedModel::DefaultSchedModel),
-                         Stages(0), OperandCycles(0),
-                         Forwardings(0), Itineraries(0) {}
+                         Stages(nullptr), OperandCycles(nullptr),
+                         Forwardings(nullptr), Itineraries(nullptr) {}
 
   InstrItineraryData(const MCSchedModel *SM, const InstrStage *S,
                      const unsigned *OS, const unsigned *F)
@@ -129,7 +129,7 @@ public:
 
   /// isEmpty - Returns true if there are no itineraries.
   ///
-  bool isEmpty() const { return Itineraries == 0; }
+  bool isEmpty() const { return Itineraries == nullptr; }
 
   /// isEndMarker - Returns true if the index is for the end marker
   /// itinerary.

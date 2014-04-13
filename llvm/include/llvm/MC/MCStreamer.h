@@ -332,7 +332,8 @@ public:
   /// @p Section.  This is required to update CurSection.
   ///
   /// This corresponds to assembler directives like .section, .text, etc.
-  void SwitchSection(const MCSection *Section, const MCExpr *Subsection = 0) {
+  void SwitchSection(const MCSection *Section,
+                     const MCExpr *Subsection = nullptr) {
     assert(Section && "Cannot switch to a null section!");
     MCSectionSubPair curSection = SectionStack.back().first;
     SectionStack.back().second = curSection;
@@ -346,7 +347,7 @@ public:
   /// emitted to @p Section.  This is required to update CurSection. This
   /// version does not call ChangeSection.
   void SwitchSectionNoChange(const MCSection *Section,
-                             const MCExpr *Subsection = 0) {
+                             const MCExpr *Subsection = nullptr) {
     assert(Section && "Cannot switch to a null section!");
     MCSectionSubPair curSection = SectionStack.back().first;
     SectionStack.back().second = curSection;
@@ -495,8 +496,9 @@ public:
   /// @param Size - The size of the zerofill symbol.
   /// @param ByteAlignment - The alignment of the zerofill symbol if
   /// non-zero. This must be a power of 2 on some targets.
-  virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
-                            uint64_t Size = 0, unsigned ByteAlignment = 0) = 0;
+  virtual void EmitZerofill(const MCSection *Section,
+                            MCSymbol *Symbol = nullptr, uint64_t Size = 0,
+                            unsigned ByteAlignment = 0) = 0;
 
   /// EmitTBSSSymbol - Emit a thread local bss (.tbss) symbol.
   ///

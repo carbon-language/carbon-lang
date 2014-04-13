@@ -38,6 +38,6 @@ void MCValue::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void MCValue::dump() const {
-  print(dbgs(), 0);
+  print(dbgs(), nullptr);
 }
 #endif

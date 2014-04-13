@@ -90,7 +90,7 @@ public:
                                  // (e.g. section symbols)
   };
 
-  BasicSymbolRef() : OwningObject(NULL) { }
+  BasicSymbolRef() : OwningObject(nullptr) { }
   BasicSymbolRef(DataRefImpl SymbolP, const SymbolicFile *Owner);
 
   bool operator==(const BasicSymbolRef &Other) const;
@@ -147,7 +147,8 @@ public:
                                                     LLVMContext *Context);
 
   static ErrorOr<SymbolicFile *> createSymbolicFile(MemoryBuffer *Object) {
-    return createSymbolicFile(Object, true, sys::fs::file_magic::unknown, 0);
+    return createSymbolicFile(Object, true, sys::fs::file_magic::unknown,
+                              nullptr);
   }
   static ErrorOr<SymbolicFile *> createSymbolicFile(StringRef ObjectPath);
 

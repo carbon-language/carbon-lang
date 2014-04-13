@@ -89,7 +89,7 @@ public:
   }
   void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                              unsigned ByteAlignment) override;
-  void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
+  void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = nullptr,
                     uint64_t Size = 0, unsigned ByteAlignment = 0) override;
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                       uint64_t Size, unsigned ByteAlignment = 0) override;
@@ -172,7 +172,7 @@ void MCMachOStreamer::EmitDataRegion(DataRegionData::KindTy Kind) {
   MCSymbol *Start = getContext().CreateTempSymbol();
   EmitLabel(Start);
   // Record the region for the object writer to use.
-  DataRegionData Data = { Kind, Start, NULL };
+  DataRegionData Data = { Kind, Start, nullptr };
   std::vector<DataRegionData> &Regions = getAssembler().getDataRegions();
   Regions.push_back(Data);
 }
@@ -183,7 +183,7 @@ void MCMachOStreamer::EmitDataRegionEnd() {
   std::vector<DataRegionData> &Regions = getAssembler().getDataRegions();
   assert(Regions.size() && "Mismatched .end_data_region!");
   DataRegionData &Data = Regions.back();
-  assert(Data.End == NULL && "Mismatched .end_data_region!");
+  assert(!Data.End && "Mismatched .end_data_region!");
   // Create a temporary label to mark the end of the data region.
   Data.End = getContext().CreateTempSymbol();
   EmitLabel(Data.End);
@@ -352,7 +352,7 @@ void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   // FIXME: Darwin 'as' does appear to allow redef of a .comm by itself.
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
 
-  AssignSection(Symbol, NULL);
+  AssignSection(Symbol, nullptr);
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
   SD.setExternal(true);
@@ -444,7 +444,7 @@ void MCMachOStreamer::FinishImpl() {
   // symbol.
   for (MCAssembler::iterator it = getAssembler().begin(),
          ie = getAssembler().end(); it != ie; ++it) {
-    MCSymbolData *CurrentAtom = 0;
+    MCSymbolData *CurrentAtom = nullptr;
     for (MCSectionData::iterator it2 = it->begin(),
            ie2 = it->end(); it2 != ie2; ++it2) {
       if (MCSymbolData *SD = DefiningSymbolMap.lookup(it2))

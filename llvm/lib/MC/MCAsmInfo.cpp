@@ -61,8 +61,8 @@ MCAsmInfo::MCAsmInfo() {
   UsesELFSectionDirectiveForBSS = false;
   AlignmentIsInBytes = true;
   TextAlignFillValue = 0;
-  GPRel64Directive = 0;
-  GPRel32Directive = 0;
+  GPRel64Directive = nullptr;
+  GPRel32Directive = nullptr;
   GlobalDirective = "\t.globl\t";
   HasSetDirective = true;
   HasAggressiveSymbolFolding = true;
@@ -72,7 +72,7 @@ MCAsmInfo::MCAsmInfo() {
   HasSingleParameterDotFile = true;
   HasIdentDirective = false;
   HasNoDeadStrip = false;
-  WeakRefDirective = 0;
+  WeakRefDirective = nullptr;
   HasWeakDefDirective = false;
   HasWeakDefCanBeHiddenDirective = false;
   HasLinkOnceDirective = false;

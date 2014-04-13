@@ -57,8 +57,9 @@ protected:
 public:
   MCInstPrinter(const MCAsmInfo &mai, const MCInstrInfo &mii,
                 const MCRegisterInfo &mri)
-    : CommentStream(0), MAI(mai), MII(mii), MRI(mri), AvailableFeatures(0),
-      UseMarkup(0), PrintImmHex(0), PrintHexStyle(HexStyle::C) {}
+    : CommentStream(nullptr), MAI(mai), MII(mii), MRI(mri),
+      AvailableFeatures(0), UseMarkup(0), PrintImmHex(0),
+      PrintHexStyle(HexStyle::C) {}
 
   virtual ~MCInstPrinter();
 

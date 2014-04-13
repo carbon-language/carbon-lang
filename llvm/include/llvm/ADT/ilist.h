@@ -83,7 +83,7 @@ struct ilist_sentinel_traits {
   /// provideInitialHead - when constructing an ilist, provide a starting
   /// value for its Head
   /// @return null node to indicate that it needs to be allocated later
-  static NodeTy *provideInitialHead() { return 0; }
+  static NodeTy *provideInitialHead() { return nullptr; }
 
   /// ensureHead - make sure that Head is either already
   /// initialized or assigned a fresh sentinel
@@ -92,7 +92,7 @@ struct ilist_sentinel_traits {
     if (!Head) {
       Head = ilist_traits<NodeTy>::createSentinel();
       ilist_traits<NodeTy>::noteHead(Head, Head);
-      ilist_traits<NodeTy>::setNext(Head, 0);
+      ilist_traits<NodeTy>::setNext(Head, nullptr);
       return Head;
     }
     return ilist_traits<NodeTy>::getPrev(Head);

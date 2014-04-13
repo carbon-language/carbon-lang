@@ -81,7 +81,7 @@ struct COFFRelocation {
   COFF::relocation Data;
   COFFSymbol          *Symb;
 
-  COFFRelocation() : Symb(NULL) {}
+  COFFRelocation() : Symb(nullptr) {}
   static size_t size() { return COFF::RelocationSize; }
 };
 
@@ -192,10 +192,10 @@ static inline void write_uint32_le(void *Data, uint32_t const &Value) {
 
 COFFSymbol::COFFSymbol(StringRef name)
   : Name(name.begin(), name.end())
-  , Other(NULL)
-  , Section(NULL)
+  , Other(nullptr)
+  , Section(nullptr)
   , Relocations(0)
-  , MCData(NULL) {
+  , MCData(nullptr) {
   memset(&Data, 0, sizeof(Data));
 }
 
@@ -214,7 +214,7 @@ void COFFSymbol::set_name_offset(uint32_t Offset) {
 /// logic to decide if the symbol should be reported in the symbol table
 bool COFFSymbol::should_keep() const {
   // no section means its external, keep it
-  if (Section == NULL)
+  if (!Section)
     return true;
 
   // if it has relocations pointing at it, keep it
@@ -244,8 +244,8 @@ bool COFFSymbol::should_keep() const {
 
 COFFSection::COFFSection(StringRef name)
   : Name(name)
-  , MCData(NULL)
-  , Symbol(NULL) {
+  , MCData(nullptr)
+  , Symbol(nullptr) {
   memset(&Header, 0, sizeof(Header));
 }
 
@@ -452,7 +452,7 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
 
     // If no storage class was specified in the streamer, define it here.
     if (coff_symbol->Data.StorageClass == 0) {
-      bool external = ResSymData.isExternal() || (ResSymData.Fragment == NULL);
+      bool external = ResSymData.isExternal() || !ResSymData.Fragment;
 
       coff_symbol->Data.StorageClass =
        external ? COFF::IMAGE_SYM_CLASS_EXTERNAL : COFF::IMAGE_SYM_CLASS_STATIC;
@@ -460,7 +460,7 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
 
     if (Symbol.isAbsolute() || Symbol.AliasedSymbol().isVariable())
       coff_symbol->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
-    else if (ResSymData.Fragment != NULL)
+    else if (ResSymData.Fragment)
       coff_symbol->Section =
         SectionMap[&ResSymData.Fragment->getParent()->getSection()];
 
@@ -661,7 +661,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
                                            MCValue Target,
                                            bool &IsPCRel,
                                            uint64_t &FixedValue) {
-  assert(Target.getSymA() != NULL && "Relocation must reference a symbol!");
+  assert(Target.getSymA() && "Relocation must reference a symbol!");
 
   const MCSymbol &Symbol = Target.getSymA()->getSymbol();
   const MCSymbol &A = Symbol.AliasedSymbol();
@@ -770,8 +770,8 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     MCSymbolData const *SymbolData = coff_symbol->MCData;
 
     // Update section number & offset for symbols that have them.
-    if ((SymbolData != NULL) && (SymbolData->Fragment != NULL)) {
-      assert(coff_symbol->Section != NULL);
+    if (SymbolData && SymbolData->Fragment) {
+      assert(coff_symbol->Section != nullptr);
 
       coff_symbol->Data.SectionNumber = coff_symbol->Section->Number;
       coff_symbol->Data.Value = Layout.getFragmentOffset(SymbolData->Fragment)
@@ -791,7 +791,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
   // Fixup weak external references.
   for (symbols::iterator i = Symbols.begin(), e = Symbols.end(); i != e; i++) {
     COFFSymbol *coff_symbol = *i;
-    if (coff_symbol->Other != NULL) {
+    if (coff_symbol->Other) {
       assert(coff_symbol->Index != -1);
       assert(coff_symbol->Aux.size() == 1 &&
              "Symbol must contain one aux symbol!");

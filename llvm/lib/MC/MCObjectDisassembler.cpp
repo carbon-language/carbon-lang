@@ -34,7 +34,7 @@ using namespace object;
 MCObjectDisassembler::MCObjectDisassembler(const ObjectFile &Obj,
                                            const MCDisassembler &Dis,
                                            const MCInstrAnalysis &MIA)
-    : Obj(Obj), Dis(Dis), MIA(MIA), MOS(0) {}
+    : Obj(Obj), Dis(Dis), MIA(MIA), MOS(nullptr) {}
 
 uint64_t MCObjectDisassembler::getEntrypoint() {
   for (const SymbolRef &Symbol : Obj.symbols()) {
@@ -115,8 +115,8 @@ void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
     Section.getName(SecName);
 
     if (isText) {
-      MCTextAtom *Text = 0;
-      MCDataAtom *InvalidData = 0;
+      MCTextAtom *Text = nullptr;
+      MCDataAtom *InvalidData = nullptr;
 
       uint64_t InstSize;
       for (uint64_t Index = 0; Index < SecSize; Index += InstSize) {
@@ -129,11 +129,11 @@ void MCObjectDisassembler::buildSectionAtoms(MCModule *Module) {
             Text->setName(SecName);
           }
           Text->addInst(Inst, InstSize);
-          InvalidData = 0;
+          InvalidData = nullptr;
         } else {
           assert(InstSize && "getInstruction() consumed no bytes");
           if (!InvalidData) {
-            Text = 0;
+            Text = nullptr;
             InvalidData = Module->createDataAtom(CurAddr, CurAddr+InstSize - 1);
           }
           for (uint64_t I = 0; I < InstSize; ++I)
@@ -160,7 +160,7 @@ namespace {
     BBInfoSetTy Preds;
     MCObjectDisassembler::AddressSetTy SuccAddrs;
 
-    BBInfo() : Atom(0), BB(0) {}
+    BBInfo() : Atom(nullptr), BB(nullptr) {}
 
     void addSucc(BBInfo &Succ) {
       Succs.insert(&Succ);

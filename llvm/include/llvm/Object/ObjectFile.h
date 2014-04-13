@@ -38,7 +38,7 @@ class RelocationRef {
   const ObjectFile *OwningObject;
 
 public:
-  RelocationRef() : OwningObject(NULL) { }
+  RelocationRef() : OwningObject(nullptr) { }
 
   RelocationRef(DataRefImpl RelocationP, const ObjectFile *Owner);
 
@@ -82,7 +82,7 @@ class SectionRef {
   const ObjectFile *OwningObject;
 
 public:
-  SectionRef() : OwningObject(NULL) { }
+  SectionRef() : OwningObject(nullptr) { }
 
   SectionRef(DataRefImpl SectionP, const ObjectFile *Owner);
 
@@ -184,7 +184,7 @@ class LibraryRef {
   const ObjectFile *OwningObject;
 
 public:
-  LibraryRef() : OwningObject(NULL) { }
+  LibraryRef() : OwningObject(nullptr) { }
 
   LibraryRef(DataRefImpl LibraryP, const ObjectFile *Owner);
 

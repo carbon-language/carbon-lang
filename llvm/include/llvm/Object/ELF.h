@@ -65,7 +65,7 @@ public:
     typedef value_type *pointer;
 
     /// \brief Default construct iterator.
-    ELFEntityIterator() : EntitySize(0), Current(0) {}
+    ELFEntityIterator() : EntitySize(0), Current(nullptr) {}
     ELFEntityIterator(uintX_t EntSize, const char *Start)
         : EntitySize(EntSize), Current(Start) {}
 
@@ -249,7 +249,7 @@ private:
 
   /// \brief Represents a region described by entries in the .dynamic table.
   struct DynRegionInfo {
-    DynRegionInfo() : Addr(0), Size(0), EntSize(0) {}
+    DynRegionInfo() : Addr(nullptr), Size(0), EntSize(0) {}
     /// \brief Address in current address space.
     const void *Addr;
     /// \brief Size in bytes of the region.
@@ -273,19 +273,19 @@ private:
     public:
     // If the integer is 0, this is an Elf_Verdef*.
     // If the integer is 1, this is an Elf_Vernaux*.
-    VersionMapEntry() : PointerIntPair<const void*, 1>(NULL, 0) { }
+    VersionMapEntry() : PointerIntPair<const void*, 1>(nullptr, 0) { }
     VersionMapEntry(const Elf_Verdef *verdef)
         : PointerIntPair<const void*, 1>(verdef, 0) { }
     VersionMapEntry(const Elf_Vernaux *vernaux)
         : PointerIntPair<const void*, 1>(vernaux, 1) { }
-    bool isNull() const { return getPointer() == NULL; }
+    bool isNull() const { return getPointer() == nullptr; }
     bool isVerdef() const { return !isNull() && getInt() == 0; }
     bool isVernaux() const { return !isNull() && getInt() == 1; }
     const Elf_Verdef *getVerdef() const {
-      return isVerdef() ? (const Elf_Verdef*)getPointer() : NULL;
+      return isVerdef() ? (const Elf_Verdef*)getPointer() : nullptr;
     }
     const Elf_Vernaux *getVernaux() const {
-      return isVernaux() ? (const Elf_Vernaux*)getPointer() : NULL;
+      return isVernaux() ? (const Elf_Vernaux*)getPointer() : nullptr;
     }
   };
   mutable SmallVector<VersionMapEntry, 16> VersionMap;
@@ -338,7 +338,7 @@ public:
     if (DynSymRegion.Addr)
       return Elf_Sym_Iter(DynSymRegion.EntSize, (const char *)DynSymRegion.Addr,
                           true);
-    return Elf_Sym_Iter(0, 0, true);
+    return Elf_Sym_Iter(0, nullptr, true);
   }
 
   Elf_Sym_Iter end_dynamic_symbols() const {
@@ -346,7 +346,7 @@ public:
       return Elf_Sym_Iter(DynSymRegion.EntSize,
                           (const char *)DynSymRegion.Addr + DynSymRegion.Size,
                           true);
-    return Elf_Sym_Iter(0, 0, true);
+    return Elf_Sym_Iter(0, nullptr, true);
   }
 
   Elf_Rela_Iter begin_rela(const Elf_Shdr *sec) const {
@@ -478,7 +478,7 @@ void ELFFile<ELFT>::LoadVersionNeeds(const Elf_Shdr *sec) const {
 template <class ELFT>
 void ELFFile<ELFT>::LoadVersionMap() const {
   // If there is no dynamic symtab or version table, there is nothing to do.
-  if (DynSymRegion.Addr == NULL || dot_gnu_version_sec == NULL)
+  if (!DynSymRegion.Addr || !dot_gnu_version_sec)
     return;
 
   // Has the VersionMap already been loaded?
@@ -510,7 +510,7 @@ ELFFile<ELFT>::getSection(const Elf_Sym *symb) const {
   if (symb->st_shndx == ELF::SHN_XINDEX)
     return getSection(ExtendedSymbolTable.lookup(symb));
   if (symb->st_shndx >= ELF::SHN_LORESERVE)
-    return 0;
+    return nullptr;
   return getSection(symb->st_shndx);
 }
 
@@ -612,7 +612,7 @@ ELFFile<ELFT>::ELFFile(MemoryBuffer *Object, error_code &ec)
       dot_gnu_version_sec(0),
       dot_gnu_version_r_sec(0),
       dot_gnu_version_d_sec(0),
-      dt_soname(0) {
+      dt_soname(nullptr) {
   const uint64_t FileSize = Buf->getBufferSize();
 
   if (sizeof(Elf_Ehdr) > FileSize)
@@ -761,7 +761,7 @@ typename ELFFile<ELFT>::Elf_Shdr_Iter ELFFile<ELFT>::end_sections() const {
 template <class ELFT>
 typename ELFFile<ELFT>::Elf_Sym_Iter ELFFile<ELFT>::begin_symbols() const {
   if (!dot_symtab_sec)
-    return Elf_Sym_Iter(0, 0, false);
+    return Elf_Sym_Iter(0, nullptr, false);
   return Elf_Sym_Iter(dot_symtab_sec->sh_entsize,
                       (const char *)base() + dot_symtab_sec->sh_offset, false);
 }
@@ -842,7 +842,7 @@ template <class ELFT>
 const typename ELFFile<ELFT>::Elf_Shdr *
 ELFFile<ELFT>::getSection(uint32_t index) const {
   if (index == 0)
-    return 0;
+    return nullptr;
   if (!SectionHeaderTable || index >= getNumSections())
     // FIXME: Proper error handling.
     report_fatal_error("Invalid section index!");
@@ -871,7 +871,7 @@ const char *ELFFile<ELFT>::getString(const Elf_Shdr *section,
 template <class ELFT>
 const char *ELFFile<ELFT>::getDynamicString(uintX_t Offset) const {
   if (!DynStrRegion.Addr || Offset >= DynStrRegion.Size)
-    return 0;
+    return nullptr;
   return (const char *)DynStrRegion.Addr + Offset;
 }
 
@@ -913,7 +913,7 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
                                                    const Elf_Sym *symb,
                                                    bool &IsDefault) const {
   // Handle non-dynamic symbols.
-  if (section != DynSymRegion.Addr && section != 0) {
+  if (section != DynSymRegion.Addr && section != nullptr) {
     // Non-dynamic symbols can have versions in their names
     // A name of the form 'foo@V1' indicates version 'V1', non-default.
     // A name of the form 'foo@@V2' indicates version 'V2', default version.
@@ -937,7 +937,7 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
   }
 
   // This is a dynamic symbol. Look in the GNU symbol version table.
-  if (dot_gnu_version_sec == NULL) {
+  if (!dot_gnu_version_sec) {
     // No version table.
     IsDefault = false;
     return StringRef("");

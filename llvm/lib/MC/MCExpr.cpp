@@ -444,12 +444,12 @@ void MCTargetExpr::anchor() {}
 /* *** */
 
 bool MCExpr::EvaluateAsAbsolute(int64_t &Res) const {
-  return EvaluateAsAbsolute(Res, 0, 0, 0);
+  return EvaluateAsAbsolute(Res, nullptr, nullptr, nullptr);
 }
 
 bool MCExpr::EvaluateAsAbsolute(int64_t &Res,
                                 const MCAsmLayout &Layout) const {
-  return EvaluateAsAbsolute(Res, &Layout.getAssembler(), &Layout, 0);
+  return EvaluateAsAbsolute(Res, &Layout.getAssembler(), &Layout, nullptr);
 }
 
 bool MCExpr::EvaluateAsAbsolute(int64_t &Res,
@@ -459,7 +459,7 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res,
 }
 
 bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const {
-  return EvaluateAsAbsolute(Res, &Asm, 0, 0);
+  return EvaluateAsAbsolute(Res, &Asm, nullptr, nullptr);
 }
 
 bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
@@ -518,7 +518,7 @@ static void AttemptToFoldSymbolOffsetDifference(const MCAssembler *Asm,
 
     // Clear the symbol expr pointers to indicate we have folded these
     // operands.
-    A = B = 0;
+    A = B = nullptr;
     return;
   }
 
@@ -544,7 +544,7 @@ static void AttemptToFoldSymbolOffsetDifference(const MCAssembler *Asm,
 
   // Clear the symbol expr pointers to indicate we have folded these
   // operands.
-  A = B = 0;
+  A = B = nullptr;
 }
 
 /// \brief Evaluate the result of an add between (conceptually) two MCValues.
@@ -627,8 +627,8 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
 
 bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
                                    const MCAsmLayout *Layout) const {
-  MCAssembler *Assembler = Layout ? &Layout->getAssembler() : 0;
-  return EvaluateAsRelocatableImpl(Res, Assembler, Layout, 0, false);
+  MCAssembler *Assembler = Layout ? &Layout->getAssembler() : nullptr;
+  return EvaluateAsRelocatableImpl(Res, Assembler, Layout, nullptr, false);
 }
 
 bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
@@ -676,7 +676,7 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
       }
     }
 
-    Res = MCValue::get(SRE, 0, 0);
+    Res = MCValue::get(SRE, nullptr, 0);
     return true;
   }
 
@@ -795,7 +795,7 @@ const MCSection *MCExpr::FindAssociatedSection() const {
     if (Sym.isDefined())
       return &Sym.getSection();
 
-    return 0;
+    return nullptr;
   }
 
   case Unary:

@@ -126,7 +126,7 @@ static const SubtargetFeatureKV *Find(StringRef S, const SubtargetFeatureKV *A,
   // Binary search the array
   const SubtargetFeatureKV *F = std::lower_bound(A, Hi, S);
   // If not found then return NULL
-  if (F == Hi || StringRef(F->Key) != S) return NULL;
+  if (F == Hi || StringRef(F->Key) != S) return nullptr;
   // Return the found array item
   return F;
 }

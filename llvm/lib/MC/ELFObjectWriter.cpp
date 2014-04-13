@@ -509,8 +509,8 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
       Symbol = &A->getSymbol();
       Data = &Layout.getAssembler().getSymbolData(*Symbol);
     } else {
-      Symbol = 0;
-      Data = 0;
+      Symbol = nullptr;
+      Data = nullptr;
     }
   }
 

@@ -167,7 +167,7 @@ public:
   void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                              unsigned ByteAlignment) override;
 
-  void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
+  void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = nullptr,
                     uint64_t Size = 0, unsigned ByteAlignment = 0) override;
 
   void EmitTBSSSymbol (const MCSection *Section, MCSymbol *Symbol,
@@ -560,7 +560,7 @@ void MCAsmStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
 void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                      unsigned ByteAlignment) {
   // Common symbols do not belong to any actual section.
-  AssignSection(Symbol, NULL);
+  AssignSection(Symbol, nullptr);
 
   OS << "\t.comm\t" << *Symbol << ',' << Size;
   if (ByteAlignment != 0) {
@@ -579,7 +579,7 @@ void MCAsmStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 void MCAsmStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                           unsigned ByteAlign) {
   // Common symbols do not belong to any actual section.
-  AssignSection(Symbol, NULL);
+  AssignSection(Symbol, nullptr);
 
   OS << "\t.lcomm\t" << *Symbol << ',' << Size;
   if (ByteAlign > 1) {
@@ -610,7 +610,7 @@ void MCAsmStreamer::EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
   const MCSectionMachO *MOSection = ((const MCSectionMachO*)Section);
   OS << MOSection->getSegmentName() << "," << MOSection->getSectionName();
 
-  if (Symbol != NULL) {
+  if (Symbol) {
     OS << ',' << *Symbol << ',' << Size;
     if (ByteAlignment != 0)
       OS << ',' << Log2_32(ByteAlignment);
@@ -625,7 +625,7 @@ void MCAsmStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                                    uint64_t Size, unsigned ByteAlignment) {
   AssignSection(Symbol, Section);
 
-  assert(Symbol != NULL && "Symbol shouldn't be NULL!");
+  assert(Symbol && "Symbol shouldn't be NULL!");
   // Instead of using the Section we'll just use the shortcut.
   // This is a mach-o specific directive and section.
   OS << ".tbss " << *Symbol << ", " << Size;
@@ -706,7 +706,7 @@ void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size) {
   assert(Size <= 8 && "Invalid size");
   assert(getCurrentSection().first &&
          "Cannot emit contents before setting section!");
-  const char *Directive = 0;
+  const char *Directive = nullptr;
   switch (Size) {
   default: break;
   case 1: Directive = MAI->getData8bitsDirective();  break;
@@ -775,13 +775,13 @@ void MCAsmStreamer::EmitSLEB128Value(const MCExpr *Value) {
 }
 
 void MCAsmStreamer::EmitGPRel64Value(const MCExpr *Value) {
-  assert(MAI->getGPRel64Directive() != 0);
+  assert(MAI->getGPRel64Directive() != nullptr);
   OS << MAI->getGPRel64Directive() << *Value;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitGPRel32Value(const MCExpr *Value) {
-  assert(MAI->getGPRel32Directive() != 0);
+  assert(MAI->getGPRel32Directive() != nullptr);
   OS << MAI->getGPRel32Directive() << *Value;
   EmitEOL();
 }
@@ -1464,7 +1464,7 @@ MCSymbolData &MCAsmStreamer::getOrCreateSymbolData(const MCSymbol *Symbol) {
   MCSymbolData *&Entry = SymbolMap[Symbol];
 
   if (!Entry)
-    Entry = new MCSymbolData(*Symbol, 0, 0, 0);
+    Entry = new MCSymbolData(*Symbol, nullptr, 0, nullptr);
 
   return *Entry;
 }

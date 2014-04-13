@@ -537,7 +537,7 @@ void MCELFStreamer::Flush() {
 }
 
 void MCELFStreamer::FinishImpl() {
-  EmitFrames(NULL, true);
+  EmitFrames(nullptr, true);
 
   Flush();
 

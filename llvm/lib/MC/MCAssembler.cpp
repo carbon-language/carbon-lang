@@ -212,7 +212,7 @@ MCFragment::~MCFragment() {
 }
 
 MCFragment::MCFragment(FragmentType _Kind, MCSectionData *_Parent)
-  : Kind(_Kind), Parent(_Parent), Atom(0), Offset(~UINT64_C(0))
+  : Kind(_Kind), Parent(_Parent), Atom(nullptr), Offset(~UINT64_C(0))
 {
   if (Parent)
     Parent->getFragmentList().push_back(this);
@@ -230,7 +230,7 @@ MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
 
 /* *** */
 
-MCSectionData::MCSectionData() : Section(0) {}
+MCSectionData::MCSectionData() : Section(nullptr) {}
 
 MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
   : Section(&_Section),
@@ -250,7 +250,7 @@ MCSectionData::getSubsectionInsertionPoint(unsigned Subsection) {
 
   SmallVectorImpl<std::pair<unsigned, MCFragment *> >::iterator MI =
     std::lower_bound(SubsectionFragmentMap.begin(), SubsectionFragmentMap.end(),
-                     std::make_pair(Subsection, (MCFragment *)0));
+                     std::make_pair(Subsection, (MCFragment *)nullptr));
   bool ExactMatch = false;
   if (MI != SubsectionFragmentMap.end()) {
     ExactMatch = MI->first == Subsection;
@@ -275,13 +275,13 @@ MCSectionData::getSubsectionInsertionPoint(unsigned Subsection) {
 
 /* *** */
 
-MCSymbolData::MCSymbolData() : Symbol(0) {}
+MCSymbolData::MCSymbolData() : Symbol(nullptr) {}
 
 MCSymbolData::MCSymbolData(const MCSymbol &_Symbol, MCFragment *_Fragment,
                            uint64_t _Offset, MCAssembler *A)
   : Symbol(&_Symbol), Fragment(_Fragment), Offset(_Offset),
     IsExternal(false), IsPrivateExtern(false),
-    CommonSize(0), SymbolSize(0), CommonAlign(0),
+    CommonSize(0), SymbolSize(nullptr), CommonAlign(0),
     Flags(0), Index(0)
 {
   if (A)
@@ -342,13 +342,13 @@ const MCSymbolData *MCAssembler::getAtom(const MCSymbolData *SD) const {
 
   // Absolute and undefined symbols have no defining atom.
   if (!SD->getFragment())
-    return 0;
+    return nullptr;
 
   // Non-linker visible symbols in sections which can't be atomized have no
   // defining atom.
   if (!getBackend().isSectionAtomizable(
         SD->getFragment()->getParent()->getSection()))
-    return 0;
+    return nullptr;
 
   // Otherwise, return the atom for the containing fragment.
   return SD->getFragment()->getAtom();
@@ -948,7 +948,7 @@ bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD) {
   // remain NULL if none were relaxed.
   // When a fragment is relaxed, all the fragments following it should get
   // invalidated because their offset is going to change.
-  MCFragment *FirstRelaxedFragment = NULL;
+  MCFragment *FirstRelaxedFragment = nullptr;
 
   // Attempt to relax all the fragments in the section.
   for (MCSectionData::iterator I = SD.begin(), IE = SD.end(); I != IE; ++I) {

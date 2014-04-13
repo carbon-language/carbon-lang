@@ -60,7 +60,7 @@ namespace llvm {
     friend class MCExpr;
     friend class MCContext;
     MCSymbol(StringRef name, bool isTemporary)
-      : Name(name), Section(0), Value(0),
+      : Name(name), Section(nullptr), Value(nullptr),
         IsTemporary(isTemporary), IsUsed(false) {}
 
     MCSymbol(const MCSymbol&) LLVM_DELETED_FUNCTION;
@@ -87,7 +87,7 @@ namespace llvm {
     ///
     /// Defined symbols are either absolute or in some section.
     bool isDefined() const {
-      return Section != 0;
+      return Section != nullptr;
     }
 
     /// isInSection - Check if this symbol is defined in some section (i.e., it
@@ -118,7 +118,7 @@ namespace llvm {
 
     /// setUndefined - Mark the symbol as undefined.
     void setUndefined() {
-      Section = 0;
+      Section = nullptr;
     }
 
     /// setAbsolute - Mark the symbol as absolute.
@@ -130,7 +130,7 @@ namespace llvm {
 
     /// isVariable - Check if this is a variable symbol.
     bool isVariable() const {
-      return Value != 0;
+      return Value != nullptr;
     }
 
     /// getVariableValue() - Get the value for variable symbols.

@@ -77,7 +77,7 @@ const MCAtom *MCModule::findAtomContaining(uint64_t Addr) const {
                                                   Addr, AtomComp);
   if (I != atom_end() && (*I)->getBeginAddr() <= Addr)
     return *I;
-  return 0;
+  return nullptr;
 }
 
 MCAtom *MCModule::findAtomContaining(uint64_t Addr) {
@@ -90,7 +90,7 @@ const MCAtom *MCModule::findFirstAtomAfter(uint64_t Addr) const {
                                                   Addr, AtomCompInv);
   if (I != atom_end())
     return *I;
-  return 0;
+  return nullptr;
 }
 
 MCAtom *MCModule::findFirstAtomAfter(uint64_t Addr) {

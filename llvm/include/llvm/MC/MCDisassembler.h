@@ -57,7 +57,7 @@ public:
 
   /// Constructor     - Performs initial setup for the disassembler.
   MCDisassembler(const MCSubtargetInfo &STI)
-      : STI(STI), Symbolizer(), CommentStream(0) {}
+      : STI(STI), Symbolizer(), CommentStream(nullptr) {}
 
   virtual ~MCDisassembler();
 

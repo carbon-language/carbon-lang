@@ -541,7 +541,7 @@ public:
   }
 
   document_iterator operator ++() {
-    assert(Doc != 0 && "incrementing iterator past the end.");
+    assert(Doc && "incrementing iterator past the end.");
     if (!(*Doc)->skip()) {
       Doc->reset(nullptr);
     } else {

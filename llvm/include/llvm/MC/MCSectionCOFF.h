@@ -58,7 +58,7 @@ class MCSymbol;
       assert ((Characteristics & 0x00F00000) == 0 &&
         "alignment must not be set upon section creation");
       assert ((Selection == COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE) ==
-              (Assoc != 0) &&
+              (Assoc != nullptr) &&
         "associative COMDAT section must have an associated section");
     }
     ~MCSectionCOFF();
@@ -79,7 +79,8 @@ class MCSymbol;
     int getSelection() const { return Selection; }
     const MCSectionCOFF *getAssocSection() const { return Assoc; }
 
-    void setSelection(int Selection, const MCSectionCOFF *Assoc = 0) const;
+    void setSelection(int Selection,
+                      const MCSectionCOFF *Assoc = nullptr) const;
 
     void PrintSwitchToSection(const MCAsmInfo &MAI, raw_ostream &OS,
                               const MCExpr *Subsection) const override;

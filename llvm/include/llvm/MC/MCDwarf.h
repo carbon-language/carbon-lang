@@ -464,9 +464,9 @@ public:
 
 struct MCDwarfFrameInfo {
   MCDwarfFrameInfo()
-      : Begin(0), End(0), Personality(0), Lsda(0), Function(0), Instructions(),
-        PersonalityEncoding(), LsdaEncoding(0), CompactUnwindEncoding(0),
-        IsSignalFrame(false), IsSimple(false) {}
+    : Begin(nullptr), End(nullptr), Personality(nullptr), Lsda(nullptr),
+      Function(nullptr), Instructions(), PersonalityEncoding(), LsdaEncoding(0),
+      CompactUnwindEncoding(0), IsSignalFrame(false), IsSimple(false) {}
   MCSymbol *Begin;
   MCSymbol *End;
   const MCSymbol *Personality;
