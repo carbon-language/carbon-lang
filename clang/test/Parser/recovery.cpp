@@ -135,3 +135,70 @@ enum class EnumID {};
 template <typename> struct TempID;
 template <> struct TempID<BadType> : BadType, EnumID::Garbage; // expected-error{{use of undeclared identifier 'BadType'}}
 }
+
+namespace pr15133 {
+  namespace ns {
+    const int V1 = 1;   // expected-note {{declared here}}
+  }
+  struct C1 {
+    enum E1 { V2 = 2 }; // expected-note {{declared here}}
+    static const int V3 = 3; // expected-note {{declared here}}
+  };
+  enum E2 {
+    V4 = 4,   // expected-note {{declared here}}
+    V6        // expected-note {{declared here}}
+  };
+  enum class EC3 { V0 = 0, V5 = 5 }; // expected-note {{declared here}}
+  void func_3();
+
+  void func_1(int x) {
+    switch(x) {
+    case 0: break;
+    case ns::V1:: break; // expected-error{{'V1' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    case C1::V2:: break; // expected-error{{'V2' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    case C1::V3:: break; // expected-error{{'V3' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    case V4:: break; // expected-error{{'V4' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    case V6:: func_3();   // expected-error{{'V6' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    }
+  }
+  void func_2(EC3 x) {
+    switch(x) {
+    case EC3::V0:  break;
+    case EC3::V5:: break; // expected-error{{'V5' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+    }
+  }
+
+  template<class T> struct TS1 {
+    typedef int A;
+  };
+  template<class T> void func(int x) {
+    switch(x) {
+    case TS1<T>::A:: break;  // expected-error{{expected unqualified-id}}
+    }
+  };
+  void mainf() {
+    func<int>(1);
+  }
+
+  struct S {
+    static int n;  // expected-note{{declared here}}
+    int nn;        // expected-note 2 {{declared here}}
+  };
+
+  int func_3(int x) {
+    return x ? S::n :: 0;  // expected-error{{'n' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+  }
+  int func_4(int x, S &s) {
+    return x ? s.nn :: x;  // expected-error{{'nn' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+  }
+  int func_5(int x, S &s) {
+    return x ? s.nn :: S::n;  // expected-error{{'nn' cannot appear before '::' because it is not a class, namespace, or scoped enumeration; did you mean ':'?}}
+  }
+
+  struct S2 {
+    struct S3;
+  };
+
+  struct S2 :: S3 :: public S2 {  // expected-error{{'public' cannot be a part of nested name specifier; did you mean ':'?}}
+  };
+}

@@ -1161,6 +1161,7 @@ bool
 Parser::ParseTemplateArgumentList(TemplateArgList &TemplateArgs) {
   // Template argument lists are constant-evaluation contexts.
   EnterExpressionEvaluationContext EvalContext(Actions,Sema::ConstantEvaluated);
+  ColonProtectionRAIIObject ColonProtection(*this, false);
 
   do {
     ParsedTemplateArgument Arg = ParseTemplateArgument();

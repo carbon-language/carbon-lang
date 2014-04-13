@@ -8,13 +8,12 @@ namespace A {
     static int Ag1();
     static int Ag2();
   };
-  int ax;
+  int ax; // expected-note {{'ax' declared here}}
   void Af();
 }
 
 A:: ; // expected-error {{expected unqualified-id}}
-// FIXME: there is a member 'ax'; it's just not a class.
-::A::ax::undef ex3; // expected-error {{no member named 'ax'}}
+::A::ax::undef ex3; // expected-error {{'ax' is not a class, namespace, or scoped enumeration}}
 A::undef1::undef2 ex4; // expected-error {{no member named 'undef1'}}
 
 int A::C::Ag1() { return 0; }

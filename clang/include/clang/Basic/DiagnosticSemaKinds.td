@@ -1169,7 +1169,10 @@ def err_incomplete_type : Error<
 def warn_cxx98_compat_enum_nested_name_spec : Warning<
   "enumeration type in nested name specifier is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
-  
+def err_nested_name_spec_is_not_class : Error<
+  "%0 cannot appear before '::' because it is not a class"
+  "%select{ or namespace|, namespace, or scoped enumeration}1; did you mean ':'?">;
+
 // C++ class members
 def err_storageclass_invalid_for_member : Error<
   "storage class specified for a member declaration">;

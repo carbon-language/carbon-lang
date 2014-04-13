@@ -584,16 +584,15 @@ Sema::NameClassification Sema::ClassifyName(Scope *S,
                                             CorrectionCandidateCallback *CCC) {
   DeclarationNameInfo NameInfo(Name, NameLoc);
   ObjCMethodDecl *CurMethod = getCurMethodDecl();
-  
+
   if (NextToken.is(tok::coloncolon)) {
     BuildCXXNestedNameSpecifier(S, *Name, NameLoc, NextToken.getLocation(),
                                 QualType(), false, SS, 0, false);
-    
   }
-      
+
   LookupResult Result(*this, Name, NameLoc, LookupOrdinaryName);
   LookupParsedName(Result, S, &SS, !CurMethod);
-  
+
   // Perform lookup for Objective-C instance variables (including automatically 
   // synthesized instance variables), if we're in an Objective-C method.
   // FIXME: This lookup really, really needs to be folded in to the normal

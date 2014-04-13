@@ -365,15 +365,15 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
 
       // Consume the template-id token.
       ConsumeToken();
-      
+
       assert(Tok.is(tok::coloncolon) && "NextToken() not working properly!");
       SourceLocation CCLoc = ConsumeToken();
 
       HasScopeSpecifier = true;
-      
+
       ASTTemplateArgsPtr TemplateArgsPtr(TemplateId->getTemplateArgs(),
                                          TemplateId->NumArgs);
-      
+
       if (Actions.ActOnCXXNestedNameSpecifier(getCurScope(),
                                               SS,
                                               TemplateId->TemplateKWLoc,
@@ -392,7 +392,6 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
 
       continue;
     }
-
 
     // The rest of the nested-name-specifier possibilities start with
     // tok::identifier.
@@ -418,9 +417,8 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
           // error, but they probably meant something else strange so don't
           // recover like this.
           PP.LookAhead(1).is(tok::identifier)) {
-        Diag(Next, diag::err_unexected_colon_in_nested_name_spec)
+        Diag(Next, diag::err_unexpected_colon_in_nested_name_spec)
           << FixItHint::CreateReplacement(Next.getLocation(), "::");
-        
         // Recover as if the user wrote '::'.
         Next.setKind(tok::coloncolon);
       }
@@ -434,23 +432,52 @@ bool Parser::ParseOptionalCXXScopeSpecifier(CXXScopeSpec &SS,
         return false;
       }
 
+      if (ColonIsSacred) {
+        const Token &Next2 = GetLookAheadToken(2);
+        if (Next2.is(tok::kw_private) || Next2.is(tok::kw_protected) ||
+            Next2.is(tok::kw_public) || Next2.is(tok::kw_virtual)) {
+          Diag(Next2, diag::err_unexpected_token_in_nested_name_spec)
+              << Next2.getName()
+              << FixItHint::CreateReplacement(Next.getLocation(), ":");
+          Token ColonColon;
+          PP.Lex(ColonColon);
+          ColonColon.setKind(tok::colon);
+          PP.EnterToken(ColonColon);
+          break;
+        }
+      }
+
       if (LastII)
         *LastII = &II;
 
       // We have an identifier followed by a '::'. Lookup this name
       // as the name in a nested-name-specifier.
+      Token Identifier = Tok;
       SourceLocation IdLoc = ConsumeToken();
       assert((Tok.is(tok::coloncolon) || Tok.is(tok::colon)) &&
              "NextToken() not working properly!");
+      Token ColonColon = Tok;
       SourceLocation CCLoc = ConsumeToken();
 
       CheckForLParenAfterColonColon();
 
-      HasScopeSpecifier = true;
+      bool IsCorrectedToColon = false;
+      bool *CorrectionFlagPtr = ColonIsSacred ? &IsCorrectedToColon : 0;
       if (Actions.ActOnCXXNestedNameSpecifier(getCurScope(), II, IdLoc, CCLoc,
-                                              ObjectType, EnteringContext, SS))
+                                              ObjectType, EnteringContext, SS,
+                                              false, CorrectionFlagPtr)) {
+        // Identifier is not recognized as a nested name, but we can have
+        // mistyped '::' instead of ':'.
+        if (CorrectionFlagPtr && IsCorrectedToColon) {
+          ColonColon.setKind(tok::colon);
+          PP.EnterToken(Tok);
+          PP.EnterToken(ColonColon);
+          Tok = Identifier;
+          break;
+        }
         SS.SetInvalid(SourceRange(IdLoc, CCLoc));
-      
+      }
+      HasScopeSpecifier = true;
       continue;
     }
 
