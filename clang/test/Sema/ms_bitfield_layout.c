@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -fdump-record-layouts %s 2>/dev/null \
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple i686-pc-win32 -fms-extensions -fdump-record-layouts %s 2>/dev/null \
 // RUN:            | FileCheck %s
-// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple x86_64-pc-win32 -fdump-record-layouts %s 2>/dev/null \
+// RUN: %clang_cc1 -fno-rtti -emit-llvm-only -triple x86_64-pc-win32 -fms-extensions -fdump-record-layouts %s 2>/dev/null \
 // RUN:            | FileCheck %s
 
 typedef struct A {
@@ -110,6 +110,16 @@ typedef struct H {
 // CHECK:   Size:32
 // CHECK:   Alignment:16
 // CHECK:   FieldOffsets: [0, 16, 16, 16]>
+
+typedef struct I {
+	short : 8;
+	__declspec(align(16)) short : 8;
+} I;
+
+// CHECK: Type: struct I
+// CHECK:   Size:16
+// CHECK:   Alignment:16
+// CHECK:   FieldOffsets: [0, 8]
 
 #pragma pack(push, 1)
 
@@ -221,6 +231,16 @@ typedef struct H1 {
 // CHECK:   Alignment:8
 // CHECK:   FieldOffsets: [0, 32, 32, 32]>
 
+typedef struct I1 {
+	short : 8;
+	__declspec(align(16)) short : 8;
+} I1;
+
+// CHECK: Type: struct I1
+// CHECK:   Size:16
+// CHECK:   Alignment:8
+// CHECK:   FieldOffsets: [0, 8]
+
 #pragma pack(pop)
 
 int x[
@@ -232,6 +252,7 @@ sizeof(E ) +
 sizeof(F ) +
 sizeof(G ) +
 sizeof(H ) +
+sizeof(I ) +
 sizeof(A1) +
 sizeof(B1) +
 sizeof(C1) +
@@ -240,4 +261,5 @@ sizeof(E1) +
 sizeof(F1) +
 sizeof(G1) +
 sizeof(H1) +
+sizeof(I1) +
 0];
