@@ -287,6 +287,10 @@ struct coff_aux_weak_external {
   char Unused[10];
 };
 
+struct coff_aux_file {
+  char FileName[18];
+};
+
 struct coff_aux_section_definition {
   support::ulittle32_t Length;
   support::ulittle16_t NumberOfRelocations;
