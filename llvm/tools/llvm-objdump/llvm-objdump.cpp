@@ -695,14 +695,10 @@ static void PrintCOFFSymbolTable(const COFFObjectFile *coff) {
                          , unsigned(asd->Selection));
         break;
       case COFF::IMAGE_SYM_CLASS_FILE:
-        SmallString<261> FileName;
-        for (unsigned AI = i, AE = i + aux_count + 1; AI < AE; ++AI) {
-          const coff_aux_file *AF;
-          if (error(coff->getAuxSymbol<coff_aux_file>(AI, AF)))
-            return;
-          FileName.append(&AF->FileName[0], &AF->FileName[18]);
-        }
-        outs() << "AUX " << FileName << '\n';
+        const coff_aux_file *AF;
+        if (error(coff->getAuxSymbol<coff_aux_file>(i, AF)))
+          return;
+        outs() << "AUX " << StringRef(AF->FileName) << '\n';
         i = i + aux_count;
         aux_count = 0;
         break;
