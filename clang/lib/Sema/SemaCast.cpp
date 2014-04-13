@@ -2097,10 +2097,16 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
                                 DestType,
                                 /*Complain*/ true,
                                 Found);
-      
-      assert(!Fn && "cast failed but able to resolve overload expression!!");
-      (void)Fn;
-
+      if (Fn) {
+        // If DestType is a function type (not to be confused with the function
+        // pointer type), it will be possible to resolve the function address,
+        // but the type cast should be considered as failure.
+        OverloadExpr *OE = OverloadExpr::find(SrcExpr.get()).Expression;
+        Self.Diag(OpRange.getBegin(), diag::err_bad_cstyle_cast_overload)
+          << OE->getName() << DestType << OpRange
+          << OE->getQualifierLoc().getSourceRange();
+        Self.NoteAllOverloadCandidates(SrcExpr.get());
+      }
     } else {
       diagnoseBadCast(Self, msg, (FunctionalStyle ? CT_Functional : CT_CStyle),
                       OpRange, SrcExpr.get(), DestType, ListInitialization);
