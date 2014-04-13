@@ -739,8 +739,10 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   // FIXME: Can anyone explain what this does other than adjust for the size
   // of the offset?
-  if (Reloc.Data.Type == COFF::IMAGE_REL_AMD64_REL32 ||
-      Reloc.Data.Type == COFF::IMAGE_REL_I386_REL32)
+  if ((Header.Machine == COFF::IMAGE_FILE_MACHINE_AMD64 &&
+       Reloc.Data.Type == COFF::IMAGE_REL_AMD64_REL32) ||
+      (Header.Machine == COFF::IMAGE_FILE_MACHINE_I386 &&
+       Reloc.Data.Type == COFF::IMAGE_REL_I386_REL32))
     FixedValue += 4;
 
   coff_section->Relocations.push_back(Reloc);
