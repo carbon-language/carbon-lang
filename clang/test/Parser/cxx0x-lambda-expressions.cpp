@@ -2,6 +2,8 @@
 
 enum E { e };
 
+constexpr int id(int n) { return n; }
+
 class C {
 
   int f() {
@@ -34,12 +36,18 @@ class C {
     typedef int T; 
     const int b = 0; 
     const int c = 1;
+    int d;
     int a1[1] = {[b] (T()) {}}; // expected-error{{no viable conversion from '(lambda}}
     int a2[1] = {[b] = 1 };
-    int a3[1] = {[b,c] = 1 }; // expected-error{{expected body of lambda expression}}
+    int a3[1] = {[b,c] = 1 }; // expected-error{{expected ']'}} expected-note {{to match}}
     int a4[1] = {[&b] = 1 }; // expected-error{{integral constant expression must have integral or unscoped enumeration type, not 'const int *'}}
     int a5[3] = { []{return 0;}() };
     int a6[1] = {[this] = 1 }; // expected-error{{integral constant expression must have integral or unscoped enumeration type, not 'C *'}}
+    int a7[1] = {[d(0)] { return d; } ()}; // expected-warning{{extension}}
+    int a8[1] = {[d = 0] { return d; } ()}; // expected-warning{{extension}}
+    int a9[1] = {[d = 0] = 1}; // expected-error{{is not an integral constant expression}}
+    int a10[1] = {[id(0)] { return id; } ()}; // expected-warning{{extension}}
+    int a11[1] = {[id(0)] = 1};
   }
 
   void delete_lambda(int *p) {

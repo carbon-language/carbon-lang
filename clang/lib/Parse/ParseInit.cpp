@@ -66,45 +66,29 @@ bool Parser::MayBeDesignationStart() {
   }
   
   // Parse up to (at most) the token after the closing ']' to determine 
-  // whether this is a C99 designator or a lambda.
+  // whether this is a C99 designator or a lambda.
   TentativeParsingAction Tentative(*this);
-  ConsumeBracket();
-  while (true) {
-    switch (Tok.getKind()) {
-    case tok::equal:
-    case tok::amp:
-    case tok::identifier:
-    case tok::kw_this:
-      // These tokens can occur in a capture list or a constant-expression.
-      // Keep looking.
-      ConsumeToken();
-      continue;
-      
-    case tok::comma:
-      // Since a comma cannot occur in a constant-expression, this must
-      // be a lambda.
-      Tentative.Revert();
-      return false;
-      
-    case tok::r_square: {
-      // Once we hit the closing square bracket, we look at the next
-      // token. If it's an '=', this is a designator. Otherwise, it's a
-      // lambda expression. This decision favors lambdas over the older
-      // GNU designator syntax, which allows one to omit the '=', but is
-      // consistent with GCC.
-      ConsumeBracket();
-      tok::TokenKind Kind = Tok.getKind();
-      Tentative.Revert();
-      return Kind == tok::equal;
-    }
-      
-    default:
-      // Anything else cannot occur in a lambda capture list, so it
-      // must be a designator.
-      Tentative.Revert();
-      return true;
-    }
+
+  LambdaIntroducer Intro;
+  bool SkippedInits = false;
+  Optional<unsigned> DiagID(ParseLambdaIntroducer(Intro, &SkippedInits));
+
+  if (DiagID) {
+    // If this can't be a lambda capture list, it's a designator.
+    Tentative.Revert();
+    return true;
   }
+
+  // Once we hit the closing square bracket, we look at the next
+  // token. If it's an '=', this is a designator. Otherwise, it's a
+  // lambda expression. This decision favors lambdas over the older
+  // GNU designator syntax, which allows one to omit the '=', but is
+  // consistent with GCC.
+  tok::TokenKind Kind = Tok.getKind();
+  // FIXME: If we didn't skip any inits, parse the lambda from here
+  // rather than throwing away then reparsing the LambdaIntroducer.
+  Tentative.Revert();
+  return Kind == tok::equal;
 }
 
 static void CheckArrayDesignatorSyntax(Parser &P, SourceLocation Loc,

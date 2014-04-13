@@ -837,8 +837,8 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro,
           //   [..., x = expr
           //
           // We need to find the end of the following expression in order to
-          // determine whether this is an Obj-C message send's receiver, or a
-          // lambda init-capture.
+          // determine whether this is an Obj-C message send's receiver, a
+          // C99 designator, or a lambda init-capture.
           //
           // Parse the expression to find where it ends, and annotate it back
           // onto the tokens. We would have parsed this expression the same way
