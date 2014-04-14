@@ -107,7 +107,16 @@ private:
   void flushComments(bool NewlineBeforeNext);
   void pushToken(FormatToken *Tok);
   void calculateBraceTypes();
-  void pushPPConditional();
+
+  // Marks a conditional compilation edge (for example, an '#if', '#ifdef',
+  // '#else' or merge conflict marker). If 'Unreachable' is true, assumes
+  // this branch either cannot be taken (for example '#if false'), or should
+  // not be taken in this round.
+  void conditionalCompilationCondition(bool Unreachable);
+  void conditionalCompilationStart(bool Unreachable);
+  void conditionalCompilationAlternative();
+  void conditionalCompilationEnd();
+
   bool isOnNewLine(const FormatToken& FormatTok);
 
   // FIXME: We are constantly running into bugs where Line.Level is incorrectly

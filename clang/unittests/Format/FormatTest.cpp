@@ -8402,5 +8402,97 @@ TEST_F(FormatTest, HandleUnbalancedImplicitBracesAcrossPPBranches) {
   EXPECT_EQ(code, format(code));
 }
 
+TEST_F(FormatTest, HandleConflictMarkers) {
+  // Git/SVN conflict markers.
+  EXPECT_EQ("int a;\n"
+            "void f() {\n"
+            "  callme(some(parameter1,\n"
+            "<<<<<<< text by the vcs\n"
+            "              parameter2),\n"
+            "||||||| text by the vcs\n"
+            "              parameter2),\n"
+            "         parameter3,\n"
+            "======= text by the vcs\n"
+            "              parameter2, parameter3),\n"
+            ">>>>>>> text by the vcs\n"
+            "         otherparameter);\n",
+            format("int a;\n"
+                   "void f() {\n"
+                   "  callme(some(parameter1,\n"
+                   "<<<<<<< text by the vcs\n"
+                   "  parameter2),\n"
+                   "||||||| text by the vcs\n"
+                   "  parameter2),\n"
+                   "  parameter3,\n"
+                   "======= text by the vcs\n"
+                   "  parameter2,\n"
+                   "  parameter3),\n"
+                   ">>>>>>> text by the vcs\n"
+                   "  otherparameter);\n"));
+
+  // Perforce markers.
+  EXPECT_EQ("void f() {\n"
+            "  function(\n"
+            ">>>> text by the vcs\n"
+            "      parameter,\n"
+            "==== text by the vcs\n"
+            "      parameter,\n"
+            "==== text by the vcs\n"
+            "      parameter,\n"
+            "<<<< text by the vcs\n"
+            "      parameter);\n",
+            format("void f() {\n"
+                   "  function(\n"
+                   ">>>> text by the vcs\n"
+                   "  parameter,\n"
+                   "==== text by the vcs\n"
+                   "  parameter,\n"
+                   "==== text by the vcs\n"
+                   "  parameter,\n"
+                   "<<<< text by the vcs\n"
+                   "  parameter);\n"));
+
+  EXPECT_EQ("<<<<<<<\n"
+            "|||||||\n"
+            "=======\n"
+            ">>>>>>>",
+            format("<<<<<<<\n"
+                   "|||||||\n"
+                   "=======\n"
+                   ">>>>>>>"));
+
+  EXPECT_EQ("<<<<<<<\n"
+            "|||||||\n"
+            "int i;\n"
+            "=======\n"
+            ">>>>>>>",
+            format("<<<<<<<\n"
+                   "|||||||\n"
+                   "int i;\n"
+                   "=======\n"
+                   ">>>>>>>"));
+
+  // FIXME: Handle parsing of macros around conflict markers correctly:
+  EXPECT_EQ("#define Macro \\\n"
+            "<<<<<<<\n"
+            "Something \\\n"
+            "|||||||\n"
+            "Else \\\n"
+            "=======\n"
+            "Other \\\n"
+            ">>>>>>>\n"
+            "End int i;\n",
+            format("#define Macro \\\n"
+                   "<<<<<<<\n"
+                   "  Something \\\n"
+                   "|||||||\n"
+                   "  Else \\\n"
+                   "=======\n"
+                   "  Other \\\n"
+                   ">>>>>>>\n"
+                   "  End\n"
+                   "int i;\n"));
+}
+
 } // end namespace tooling
 } // end namespace clang
