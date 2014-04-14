@@ -67,7 +67,8 @@ class DeadlockDetectorTLS {
     CHECK_LT(n_all_locks_, ARRAY_SIZE(all_locks_with_contexts_));
     // lock_id < BV::kSize, can cast to a smaller int.
     u32 lock_id_short = static_cast<u32>(lock_id);
-    all_locks_with_contexts_[n_all_locks_++] = {lock_id_short, stk};
+    LockWithContext l = {lock_id_short, stk};
+    all_locks_with_contexts_[n_all_locks_++] = l;
     return true;
   }
 
@@ -244,10 +245,12 @@ class DeadlockDetector {
     uptr n_added_edges = g_.addEdges(dtls->getLocks(current_epoch_), cur_idx,
                                      added_edges, ARRAY_SIZE(added_edges));
     for (uptr i = 0; i < n_added_edges; i++) {
-      if (n_edges_ < ARRAY_SIZE(edges_))
-        edges_[n_edges_++] = {(u16)added_edges[i], (u16)cur_idx,
-                              dtls->findLockContext(added_edges[i]), stk,
-                              unique_tid};
+      if (n_edges_ < ARRAY_SIZE(edges_)) {
+        Edge e = {(u16)added_edges[i], (u16)cur_idx,
+                  dtls->findLockContext(added_edges[i]), stk,
+                  unique_tid};
+        edges_[n_edges_++] = e;
+      }
       // Printf("Edge%zd: %u %zd=>%zd in T%d\n",
       //        n_edges_, stk, added_edges[i], cur_idx, unique_tid);
     }
