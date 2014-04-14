@@ -352,6 +352,10 @@ namespace std {
   }
 }
 
+#if !defined(_LIBCPP_HAS_NO_ASAN) && !__has_feature(address_sanitizer)
+#define _LIBCPP_HAS_NO_ASAN
+#endif
+
 #elif defined(__GNUC__)
 
 #define _ALIGNAS(x) __attribute__((__aligned__(x)))
@@ -426,6 +430,10 @@ namespace _LIBCPP_NAMESPACE {
 using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 }
 
+#if !defined(_LIBCPP_HAS_NO_ASAN) && !defined(__SANITIZE_ADDRESS__)
+#define _LIBCPP_HAS_NO_ASAN
+#endif
+
 #elif defined(_LIBCPP_MSVC)
 
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
@@ -450,6 +458,8 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #  define _LIBCPP_WEAK
 namespace std {
 }
+
+#define _LIBCPP_HAS_NO_ASAN
 
 #elif defined(__IBMCPP__)
 
@@ -482,6 +492,8 @@ namespace std {
   inline namespace _LIBCPP_NAMESPACE {
   }
 }
+
+#define _LIBCPP_HAS_NO_ASAN
 
 #endif // __clang__ || __GNUC__ || _MSC_VER || __IBMCPP__
 
