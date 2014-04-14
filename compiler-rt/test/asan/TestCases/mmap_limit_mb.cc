@@ -22,8 +22,7 @@ int main(int argc, char **argv) {
   std::vector<char *> v;
   for (long total = total_mb << 20; total > 0; total -= allocation_size)
     v.push_back(new char[allocation_size]);
-  std::for_each(v.begin(), v.end(),
-                [](std::vector<char *>::reference ref) { delete[] ref; });
+  for (auto p : v) delete[] p;
   printf("PASS\n");
   // CHECK: AddressSanitizer CHECK failed{{.*}}total_mmaped{{.*}}mmap_limit_mb
   return 0;
