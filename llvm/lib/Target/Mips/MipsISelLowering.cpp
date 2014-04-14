@@ -1754,7 +1754,7 @@ static SDValue lowerFCOPYSIGN64(SDValue Op, SelectionDAG &DAG,
 
 SDValue
 MipsTargetLowering::lowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
-  if (Subtarget->hasMips64())
+  if (Subtarget->isGP64bit())
     return lowerFCOPYSIGN64(Op, DAG, Subtarget->hasExtractInsert());
 
   return lowerFCOPYSIGN32(Op, DAG, Subtarget->hasExtractInsert());
