@@ -322,6 +322,9 @@ bool BranchProbabilityInfo::calcLoopBranchHeuristics(BasicBlock *BB) {
       InEdges.push_back(I.getSuccessorIndex());
   }
 
+  if (BackEdges.empty() && ExitingEdges.empty())
+    return false;
+
   if (uint32_t numBackEdges = BackEdges.size()) {
     uint32_t backWeight = LBH_TAKEN_WEIGHT / numBackEdges;
     if (backWeight < NORMAL_WEIGHT)
