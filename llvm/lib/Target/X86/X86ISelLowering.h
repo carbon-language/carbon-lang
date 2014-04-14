@@ -990,12 +990,12 @@ namespace llvm {
 
     /// Emit nodes that will be selected as "test Op0,Op0", or something
     /// equivalent, for use with the given x86 condition code.
-    SDValue EmitTest(SDLoc dl, SDValue Op0, unsigned X86CC,
+    SDValue EmitTest(SDValue Op0, unsigned X86CC, SDLoc dl,
                      SelectionDAG &DAG) const;
 
     /// Emit nodes that will be selected as "cmp Op0,Op1", or something
     /// equivalent, for use with the given x86 condition code.
-    SDValue EmitCmp(SDLoc dl, SDValue Op0, SDValue Op1, unsigned X86CC,
+    SDValue EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC, SDLoc dl,
                     SelectionDAG &DAG) const;
 
     /// Convert a comparison if required by the subtarget.

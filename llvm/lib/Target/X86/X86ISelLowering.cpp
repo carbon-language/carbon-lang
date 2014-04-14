@@ -9636,7 +9636,7 @@ static SDValue LowerVectorAllZeroTest(SDValue Op, const X86Subtarget *Subtarget,
 
 /// Emit nodes that will be selected as "test Op0,Op0", or something
 /// equivalent.
-SDValue X86TargetLowering::EmitTest(SDLoc dl, SDValue Op, unsigned X86CC,
+SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
                                     SelectionDAG &DAG) const {
   if (Op.getValueType() == MVT::i1)
     // KORTEST instruction should be selected
@@ -9852,11 +9852,11 @@ SDValue X86TargetLowering::EmitTest(SDLoc dl, SDValue Op, unsigned X86CC,
 
 /// Emit nodes that will be selected as "cmp Op0,Op1", or something
 /// equivalent.
-SDValue X86TargetLowering::EmitCmp(SDLoc dl, SDValue Op0, SDValue Op1,
-                                   unsigned X86CC, SelectionDAG &DAG) const {
+SDValue X86TargetLowering::EmitCmp(SDValue Op0, SDValue Op1, unsigned X86CC,
+                                   SDLoc dl, SelectionDAG &DAG) const {
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op1)) {
     if (C->getAPIntValue() == 0)
-      return EmitTest(dl, Op0, X86CC, DAG);
+      return EmitTest(Op0, X86CC, dl, DAG);
 
      if (Op0.getValueType() == MVT::i1)
        llvm_unreachable("Unexpected comparison operation for MVT::i1 operands");
@@ -10432,7 +10432,7 @@ SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
   if (X86CC == X86::COND_INVALID)
     return SDValue();
 
-  SDValue EFLAGS = EmitCmp(dl, Op0, Op1, X86CC, DAG);
+  SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, dl, DAG);
   EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
   SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
                               DAG.getConstant(X86CC, MVT::i8), EFLAGS);
@@ -10655,7 +10655,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
   if (addTest) {
     CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    Cond = EmitTest(DL, Cond, X86::COND_NE, DAG);
+    Cond = EmitTest(Cond, X86::COND_NE, DL, DAG);
   }
 
   // a <  b ? -1 :  0 -> RES = ~setcc_carry
@@ -11076,7 +11076,7 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
 
   if (addTest) {
     CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    Cond = EmitTest(dl, Cond, X86::COND_NE, DAG);
+    Cond = EmitTest(Cond, X86::COND_NE, dl, DAG);
   }
   Cond = ConvertCmpIfNecessary(Cond, DAG);
   return DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
