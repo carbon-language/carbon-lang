@@ -669,17 +669,7 @@ static void PrintCOFFSymbolTable(const COFFObjectFile *coff) {
   const coff_symbol *symbol = 0;
   for (int i = 0, e = header->NumberOfSymbols; i != e; ++i) {
     if (aux_count--) {
-      switch (symbol->StorageClass) {
-      default: outs() << "AUX Unknown\n";
-      case COFF::IMAGE_SYM_CLASS_STATIC:
-        // Section definition.  Follows a symbol-table record that defines a
-        // section.  Such a record has a symbol name that is the name of a
-        // section and has storage class STATIC (3).
-        if (symbol->Value) {
-          errs() << "invalid entry in Symbol Table";
-          break;
-        }
-
+      if (symbol->isSectionDefinition()) {
         const coff_aux_section_definition *asd;
         if (error(coff->getAuxSymbol<coff_aux_section_definition>(i, asd)))
           return;
@@ -693,15 +683,17 @@ static void PrintCOFFSymbolTable(const COFFObjectFile *coff) {
                << format("assoc %d comdat %d\n"
                          , unsigned(asd->Number)
                          , unsigned(asd->Selection));
-        break;
-      case COFF::IMAGE_SYM_CLASS_FILE:
+      } else if (symbol->isFileRecord()) {
         const coff_aux_file *AF;
         if (error(coff->getAuxSymbol<coff_aux_file>(i, AF)))
           return;
-        outs() << "AUX " << StringRef(AF->FileName) << '\n';
+
+        StringRef Name(AF->FileName, (aux_count + 1) * COFF::SymbolSize);
+        outs() << "AUX " << Name.rtrim(StringRef("\0", 1))  << '\n';
         i = i + aux_count;
         aux_count = 0;
-        break;
+      } else {
+        outs() << "AUX Unknown\n";
       }
     } else {
       StringRef name;
