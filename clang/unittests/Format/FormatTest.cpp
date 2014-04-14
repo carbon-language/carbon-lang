@@ -8148,6 +8148,20 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
             format("#define aNumber \\\n"
                    " 10",
                    Style));
+
+  // Keep empty and one-element array literals on a single line.
+  verifyFormat("NSArray* a = [[NSArray alloc] initWithArray:@[]\n"
+               "                                  copyItems:YES];",
+               Style);
+  verifyFormat("NSArray* a = [[NSArray alloc] initWithArray:@[ @\"a\" ]\n"
+               "                                  copyItems:YES];",
+               Style);
+  verifyFormat("NSArray* a = [[NSArray alloc] initWithArray:@[\n"
+               "                                               @\"a\",\n"
+               "                                               @\"a\"\n"
+               "                                            ]\n"
+               "                                  copyItems:YES];",
+               Style);
 }
 
 TEST_F(FormatTest, FormatsLambdas) {
