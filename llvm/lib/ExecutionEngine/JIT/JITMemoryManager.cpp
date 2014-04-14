@@ -269,13 +269,12 @@ namespace {
 
   class DefaultJITMemoryManager;
 
-  class JITSlabAllocator : public SlabAllocator {
+  class JITSlabAllocator {
     DefaultJITMemoryManager &JMM;
   public:
     JITSlabAllocator(DefaultJITMemoryManager &jmm) : JMM(jmm) { }
-    virtual ~JITSlabAllocator() { }
-    void *Allocate(size_t Size) override;
-    void Deallocate(void *Slab, size_t Size) override;
+    void *Allocate(size_t Size);
+    void Deallocate(void *Slab, size_t Size);
   };
 
   /// DefaultJITMemoryManager - Manage memory for the JIT code generation.
@@ -313,9 +312,10 @@ namespace {
     // Memory slabs allocated by the JIT.  We refer to them as slabs so we don't
     // confuse them with the blocks of memory described above.
     std::vector<sys::MemoryBlock> CodeSlabs;
-    JITSlabAllocator BumpSlabAllocator;
-    BumpPtrAllocatorImpl<DefaultSlabSize, DefaultSizeThreshold> StubAllocator;
-    BumpPtrAllocatorImpl<DefaultSlabSize, DefaultSizeThreshold> DataAllocator;
+    BumpPtrAllocatorImpl<JITSlabAllocator, DefaultSlabSize,
+                         DefaultSizeThreshold> StubAllocator;
+    BumpPtrAllocatorImpl<JITSlabAllocator, DefaultSlabSize,
+                         DefaultSizeThreshold> DataAllocator;
 
     // Circular list of free blocks.
     FreeRangeHeader *FreeMemoryList;
@@ -579,16 +579,13 @@ void JITSlabAllocator::Deallocate(void *Slab, size_t Size) {
 }
 
 DefaultJITMemoryManager::DefaultJITMemoryManager()
-  :
+    :
 #ifdef NDEBUG
-    PoisonMemory(false),
+      PoisonMemory(false),
 #else
-    PoisonMemory(true),
+      PoisonMemory(true),
 #endif
-    LastSlab(0, 0),
-    BumpSlabAllocator(*this),
-    StubAllocator(BumpSlabAllocator),
-    DataAllocator(BumpSlabAllocator) {
+      LastSlab(0, 0), StubAllocator(*this), DataAllocator(*this) {
 
   // Allocate space for code.
   sys::MemoryBlock MemBlock = allocateNewSlab(DefaultCodeSlabSize);

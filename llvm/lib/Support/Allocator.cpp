@@ -21,18 +21,6 @@
 
 namespace llvm {
 
-SlabAllocator::~SlabAllocator() { }
-
-MallocSlabAllocator::~MallocSlabAllocator() { }
-
-void *MallocSlabAllocator::Allocate(size_t Size) {
-  return Allocator.Allocate(Size, 0);
-}
-
-void MallocSlabAllocator::Deallocate(void *Slab, size_t Size) {
-  Allocator.Deallocate(Slab);
-}
-
 void printBumpPtrAllocatorStats(unsigned NumSlabs, size_t BytesAllocated,
                                 size_t TotalMemory) {
   errs() << "\nNumber of memory regions: " << NumSlabs << '\n'

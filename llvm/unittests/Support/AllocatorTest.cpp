@@ -102,13 +102,13 @@ TEST(AllocatorTest, TestSmallSlabSize) {
 
 // Mock slab allocator that returns slabs aligned on 4096 bytes.  There is no
 // easy portable way to do this, so this is kind of a hack.
-class MockSlabAllocator : public SlabAllocator {
-  size_t LastSlabSize;
+class MockSlabAllocator {
+  static size_t LastSlabSize;
 
 public:
-  virtual ~MockSlabAllocator() { }
+  ~MockSlabAllocator() { }
 
-  virtual void *Allocate(size_t Size) {
+  void *Allocate(size_t Size) {
     // Allocate space for the alignment, the slab, and a void* that goes right
     // before the slab.
     size_t Alignment = 4096;
@@ -124,19 +124,20 @@ public:
     return Slab;
   }
 
-  virtual void Deallocate(void *Slab, size_t Size) {
+  void Deallocate(void *Slab, size_t Size) {
     free(((void**)Slab)[-1]);
   }
 
-  size_t GetLastSlabSize() { return LastSlabSize; }
+  static size_t GetLastSlabSize() { return LastSlabSize; }
 };
+
+size_t MockSlabAllocator::LastSlabSize = 0;
 
 // Allocate a large-ish block with a really large alignment so that the
 // allocator will think that it has space, but after it does the alignment it
 // will not.
 TEST(AllocatorTest, TestBigAlignment) {
-  MockSlabAllocator SlabAlloc;
-  BumpPtrAllocator Alloc(SlabAlloc);
+  BumpPtrAllocatorImpl<MockSlabAllocator> Alloc;
 
   // First allocate a tiny bit to ensure we have to re-align things.
   (void)Alloc.Allocate(1, 0);
@@ -146,7 +147,7 @@ TEST(AllocatorTest, TestBigAlignment) {
 
   // We test that the last slab size is not the default 4096 byte slab, but
   // rather a custom sized slab that is larger.
-  EXPECT_GT(SlabAlloc.GetLastSlabSize(), 4096u);
+  EXPECT_GT(MockSlabAllocator::GetLastSlabSize(), 4096u);
 }
 
 }  // anonymous namespace

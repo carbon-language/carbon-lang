@@ -54,31 +54,17 @@ public:
   void PrintStats() const {}
 };
 
-/// SlabAllocator - This class can be used to parameterize the underlying
-/// allocation strategy for the bump allocator.  In particular, this is used
-/// by the JIT to allocate contiguous swathes of executable memory.  The
-/// interface uses MemSlab's instead of void *'s so that the allocator
-/// doesn't have to remember the size of the pointer it allocated.
-class SlabAllocator {
-public:
-  virtual ~SlabAllocator();
-  virtual void *Allocate(size_t Size) = 0;
-  virtual void Deallocate(void *Slab, size_t Size) = 0;
-};
-
 /// MallocSlabAllocator - The default slab allocator for the bump allocator
 /// is an adapter class for MallocAllocator that just forwards the method
 /// calls and translates the arguments.
-class MallocSlabAllocator : public SlabAllocator {
+class MallocSlabAllocator {
   /// Allocator - The underlying allocator that we forward to.
   ///
   MallocAllocator Allocator;
 
 public:
-  MallocSlabAllocator() : Allocator() {}
-  virtual ~MallocSlabAllocator();
-  void *Allocate(size_t Size) override;
-  void Deallocate(void *Slab, size_t Size) override;
+  void *Allocate(size_t Size) { return Allocator.Allocate(Size, 0); }
+  void Deallocate(void *Slab, size_t Size) { Allocator.Deallocate(Slab); }
 };
 
 /// \brief Allocate memory in an ever growing pool, as if by bump-pointer.
@@ -91,7 +77,12 @@ public:
 ///
 /// Note that this also has a threshold for forcing allocations above a certain
 /// size into their own slab.
-template <size_t SlabSize = 4096, size_t SizeThreshold = SlabSize>
+///
+/// The BumpPtrAllocatorImpl template defaults to using a MallocSlabAllocator
+/// object, which wraps malloc, to allocate memory, but it can be changed to
+/// use a custom allocator.
+template <typename AllocatorT = MallocSlabAllocator, size_t SlabSize = 4096,
+          size_t SizeThreshold = SlabSize>
 class BumpPtrAllocatorImpl {
   BumpPtrAllocatorImpl(const BumpPtrAllocatorImpl &) LLVM_DELETED_FUNCTION;
   void operator=(const BumpPtrAllocatorImpl &) LLVM_DELETED_FUNCTION;
@@ -103,11 +94,11 @@ public:
                 "allocation.");
 
   BumpPtrAllocatorImpl()
+      : CurPtr(nullptr), End(nullptr), BytesAllocated(0), Allocator() {}
+  template <typename T>
+  BumpPtrAllocatorImpl(T &&Allocator)
       : CurPtr(nullptr), End(nullptr), BytesAllocated(0),
-        Allocator(DefaultSlabAllocator) {}
-  BumpPtrAllocatorImpl(SlabAllocator &Allocator)
-      : CurPtr(nullptr), End(nullptr), BytesAllocated(0), Allocator(Allocator) {
-  }
+        Allocator(std::forward<T &&>(Allocator)) {}
   ~BumpPtrAllocatorImpl() {
     DeallocateSlabs(Slabs.begin(), Slabs.end());
     DeallocateCustomSizedSlabs();
@@ -237,14 +228,8 @@ private:
   /// Used so that we can compute how much space was wasted.
   size_t BytesAllocated;
 
-  /// \brief The default allocator used if one is not provided.
-  MallocSlabAllocator DefaultSlabAllocator;
-
-  /// \brief The underlying allocator we use to get slabs of memory.
-  ///
-  /// This defaults to MallocSlabAllocator, which wraps malloc, but it could be
-  /// changed to use a custom allocator.
-  SlabAllocator &Allocator;
+  /// \brief The allocator instance we use to get slabs of memory.
+  AllocatorT Allocator;
 
   static size_t computeSlabSize(unsigned SlabIdx) {
     // Scale the actual allocated slab size based on the number of slabs
@@ -313,7 +298,6 @@ template <typename T> class SpecificBumpPtrAllocator {
 
 public:
   SpecificBumpPtrAllocator() : Allocator() {}
-  SpecificBumpPtrAllocator(SlabAllocator &allocator) : Allocator(allocator) {}
 
   ~SpecificBumpPtrAllocator() { DestroyAll(); }
 
@@ -355,10 +339,10 @@ private:
 
 }  // end namespace llvm
 
-template <size_t SlabSize, size_t SizeThreshold>
-void *
-operator new(size_t Size,
-             llvm::BumpPtrAllocatorImpl<SlabSize, SizeThreshold> &Allocator) {
+template <typename AllocatorT, size_t SlabSize, size_t SizeThreshold>
+void *operator new(size_t Size,
+                   llvm::BumpPtrAllocatorImpl<AllocatorT, SlabSize,
+                                              SizeThreshold> &Allocator) {
   struct S {
     char c;
     union {
@@ -372,8 +356,9 @@ operator new(size_t Size,
       Size, std::min((size_t)llvm::NextPowerOf2(Size), offsetof(S, x)));
 }
 
-template <size_t SlabSize, size_t SizeThreshold>
-void operator delete(void *,
-                     llvm::BumpPtrAllocatorImpl<SlabSize, SizeThreshold> &) {}
+template <typename AllocatorT, size_t SlabSize, size_t SizeThreshold>
+void operator delete(
+    void *, llvm::BumpPtrAllocatorImpl<AllocatorT, SlabSize, SizeThreshold> &) {
+}
 
 #endif // LLVM_SUPPORT_ALLOCATOR_H
