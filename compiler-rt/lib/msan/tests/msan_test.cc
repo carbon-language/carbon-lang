@@ -1859,6 +1859,17 @@ TEST(MemorySanitizer, mbrtowc) {
   EXPECT_NOT_POISONED(wx);
 }
 
+TEST(MemorySanitizer, wcsftime) {
+  wchar_t x[100];
+  time_t t = time(NULL);
+  struct tm tms;
+  struct tm *tmres = localtime_r(&t, &tms);
+  ASSERT_NE((void *)0, tmres);
+  size_t res = wcsftime(x, sizeof(x) / sizeof(x[0]), L"%Y-%m-%d", tmres);
+  EXPECT_GT(res, 0UL);
+  EXPECT_EQ(res, wcslen(x));
+}
+
 TEST(MemorySanitizer, gettimeofday) {
   struct timeval tv;
   struct timezone tz;

@@ -453,13 +453,43 @@ INTERCEPTOR(int, swprintf, void *str, uptr size, void *format, ...) {
   return res;
 }
 
-// SIZE_T strftime(char *s, SIZE_T max, const char *format,const struct tm *tm);
+#define INTERCEPTOR_STRFTIME_BODY(char_type, ret_type, func, s, ...) \
+  ENSURE_MSAN_INITED();                                              \
+  ret_type res = REAL(func)(s, __VA_ARGS__);                         \
+  if (s) __msan_unpoison(s, sizeof(char_type) * (res + 1));          \
+  return res;
+
 INTERCEPTOR(SIZE_T, strftime, char *s, SIZE_T max, const char *format,
             __sanitizer_tm *tm) {
-  ENSURE_MSAN_INITED();
-  SIZE_T res = REAL(strftime)(s, max, format, tm);
-  if (res) __msan_unpoison(s, res + 1);
-  return res;
+  INTERCEPTOR_STRFTIME_BODY(char, SIZE_T, strftime, s, max, format, tm);
+}
+
+INTERCEPTOR(SIZE_T, strftime_l, char *s, SIZE_T max, const char *format,
+            __sanitizer_tm *tm, void *loc) {
+  INTERCEPTOR_STRFTIME_BODY(char, SIZE_T, strftime_l, s, max, format, tm, loc);
+}
+
+INTERCEPTOR(SIZE_T, __strftime_l, char *s, SIZE_T max, const char *format,
+            __sanitizer_tm *tm, void *loc) {
+  INTERCEPTOR_STRFTIME_BODY(char, SIZE_T, __strftime_l, s, max, format, tm,
+                            loc);
+}
+
+INTERCEPTOR(SIZE_T, wcsftime, wchar_t *s, SIZE_T max, const wchar_t *format,
+            __sanitizer_tm *tm) {
+  INTERCEPTOR_STRFTIME_BODY(wchar_t, SIZE_T, wcsftime, s, max, format, tm);
+}
+
+INTERCEPTOR(SIZE_T, wcsftime_l, wchar_t *s, SIZE_T max, const wchar_t *format,
+            __sanitizer_tm *tm, void *loc) {
+  INTERCEPTOR_STRFTIME_BODY(wchar_t, SIZE_T, wcsftime_l, s, max, format, tm,
+                            loc);
+}
+
+INTERCEPTOR(SIZE_T, __wcsftime_l, wchar_t *s, SIZE_T max, const wchar_t *format,
+            __sanitizer_tm *tm, void *loc) {
+  INTERCEPTOR_STRFTIME_BODY(wchar_t, SIZE_T, __wcsftime_l, s, max, format, tm,
+                            loc);
 }
 
 INTERCEPTOR(int, mbtowc, wchar_t *dest, const char *src, SIZE_T n) {
@@ -1518,6 +1548,11 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(snprintf);
   INTERCEPT_FUNCTION(swprintf);
   INTERCEPT_FUNCTION(strftime);
+  INTERCEPT_FUNCTION(strftime_l);
+  INTERCEPT_FUNCTION(__strftime_l);
+  INTERCEPT_FUNCTION(wcsftime);
+  INTERCEPT_FUNCTION(wcsftime_l);
+  INTERCEPT_FUNCTION(__wcsftime_l);
   INTERCEPT_FUNCTION(mbtowc);
   INTERCEPT_FUNCTION(mbrtowc);
   INTERCEPT_FUNCTION(wcslen);
