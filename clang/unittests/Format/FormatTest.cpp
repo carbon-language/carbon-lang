@@ -8156,12 +8156,21 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
   verifyFormat("NSArray* a = [[NSArray alloc] initWithArray:@[ @\"a\" ]\n"
                "                                  copyItems:YES];",
                Style);
-  verifyFormat("NSArray* a = [[NSArray alloc] initWithArray:@[\n"
-               "                                               @\"a\",\n"
-               "                                               @\"a\"\n"
-               "                                            ]\n"
-               "                                  copyItems:YES];",
-               Style);
+  EXPECT_EQ("NSArray* a = [[NSArray alloc] initWithArray:@[\n"
+            "                                               @\"a\",\n"
+            "                                               @\"a\"\n"
+            "                                            ]\n"
+            "                                  copyItems:YES];",
+            format("NSArray* a = [[NSArray alloc] initWithArray:@[\n"
+                   "     @\"a\",\n"
+                   "     @\"a\"\n"
+                   "     ]\n"
+                   "       copyItems:YES];",
+                   Style));
+  verifyFormat(
+      "NSArray* a = [[NSArray alloc] initWithArray:@[ @\"a\", @\"a\" ]\n"
+      "                                  copyItems:YES];",
+      Style);
 }
 
 TEST_F(FormatTest, FormatsLambdas) {
