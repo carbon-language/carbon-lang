@@ -102,6 +102,12 @@ struct __declspec(frobble) S1 {};	/* expected-warning {{__declspec attribute 'fr
 struct __declspec(12) S2 {};	/* expected-error {{__declspec attributes must be an identifier or string literal}} */
 struct __declspec("testing") S3 {}; /* expected-warning {{__declspec attribute '"testing"' is not supported}} */
 
+/* declspecs with arguments cannot have an empty argument list, even if the
+   arguments are optional. */
+__declspec(deprecated()) void dep_func_test(void); /* expected-error {{attribute 'deprecated' requires a nonempty argument list}} */
+__declspec(deprecated) void dep_func_test2(void);
+__declspec(deprecated("")) void dep_func_test3(void);
+
 /* Ensure multiple declspec attributes are supported */
 struct __declspec(align(8) deprecated) S4 {};
 
