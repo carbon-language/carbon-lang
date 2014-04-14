@@ -26,12 +26,15 @@ using namespace llvm;
 
 ARM64Subtarget::ARM64Subtarget(const std::string &TT, const std::string &CPU,
                                const std::string &FS)
-    : ARM64GenSubtargetInfo(TT, CPU, FS), HasZeroCycleRegMove(false),
-      HasZeroCycleZeroing(false), CPUString(CPU), TargetTriple(TT) {
+    : ARM64GenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
+      HasFPARMv8(false), HasNEON(false), HasCrypto(false),
+      HasZeroCycleRegMove(false), HasZeroCycleZeroing(false),
+      CPUString(CPU), TargetTriple(TT) {
   // Determine default and user-specified characteristics
 
+  // FIXME: Make this darwin-only.
   if (CPUString.empty())
-    // We default to Cyclone for now.
+    // We default to Cyclone for now, on Darwin.
     CPUString = "cyclone";
 
   ParseSubtargetFeatures(CPUString, FS);

@@ -20,6 +20,15 @@ include "llvm/Target/Target.td"
 // ARM64 Subtarget features.
 //
 
+def FeatureFPARMv8 : SubtargetFeature<"fp-armv8", "HasFPARMv8", "true",
+  "Enable ARMv8 FP">;
+
+def FeatureNEON : SubtargetFeature<"neon", "HasNEON", "true",
+  "Enable Advanced SIMD instructions", [FeatureFPARMv8]>;
+
+def FeatureCrypto : SubtargetFeature<"crypto", "HasCrypto", "true",
+  "Enable cryptographic instructions">;
+
 /// Cyclone has register move instructions which are "free".
 def FeatureZCRegMove : SubtargetFeature<"zcm", "HasZeroCycleRegMove", "true",
                                         "Has zereo-cycle register moves">;
@@ -49,9 +58,31 @@ def ARM64InstrInfo : InstrInfo;
 //
 include "ARM64SchedCyclone.td"
 
-def : ProcessorModel<"arm64-generic", NoSchedModel, []>;
+def ProcA53     : SubtargetFeature<"a53", "ARMProcFamily", "CortexA53",
+                                   "Cortex-A53 ARM processors",
+                                   [FeatureFPARMv8,
+                                   FeatureNEON,
+                                   FeatureCrypto]>;
 
-def : ProcessorModel<"cyclone", CycloneModel, [FeatureZCRegMove, FeatureZCZeroing]>;
+def ProcA57     : SubtargetFeature<"a57", "ARMProcFamily", "CortexA57",
+                                   "Cortex-A57 ARM processors",
+                                   [FeatureFPARMv8,
+                                   FeatureNEON,
+                                   FeatureCrypto]>;
+
+def ProcCyclone : SubtargetFeature<"cyclone", "ARMProcFamily", "Cyclone",
+                                   "Cyclone",
+                                   [FeatureFPARMv8,
+                                   FeatureNEON,
+                                   FeatureCrypto,
+                                   FeatureZCRegMove, FeatureZCZeroing]>;
+
+def : ProcessorModel<"generic", NoSchedModel, [FeatureFPARMv8, FeatureNEON]>;
+
+def : ProcessorModel<"cortex-a53", NoSchedModel, [ProcA53]>;
+def : ProcessorModel<"cortex-a57", NoSchedModel, [ProcA57]>;
+
+def : ProcessorModel<"cyclone", CycloneModel, [ProcCyclone]>;
 
 //===----------------------------------------------------------------------===//
 // Assembly parser

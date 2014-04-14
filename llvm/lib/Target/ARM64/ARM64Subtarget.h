@@ -27,6 +27,15 @@ class StringRef;
 
 class ARM64Subtarget : public ARM64GenSubtargetInfo {
 protected:
+  enum ARMProcFamilyEnum {Others, CortexA53, CortexA57, Cyclone};
+
+  /// ARMProcFamily - ARM processor family: Cortex-A53, Cortex-A57, and others.
+  ARMProcFamilyEnum ARMProcFamily;
+
+  bool HasFPARMv8;
+  bool HasNEON;
+  bool HasCrypto;
+
   // HasZeroCycleRegMove - Has zero-cycle register mov instructions.
   bool HasZeroCycleRegMove;
 
@@ -50,6 +59,10 @@ public:
   bool hasZeroCycleRegMove() const { return HasZeroCycleRegMove; }
 
   bool hasZeroCycleZeroing() const { return HasZeroCycleZeroing; }
+
+  bool hasFPARMv8() const { return HasFPARMv8; }
+  bool hasNEON() const { return HasNEON; }
+  bool hasCrypto() const { return HasCrypto; }
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
 
