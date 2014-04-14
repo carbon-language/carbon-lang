@@ -37,6 +37,9 @@ define i32 @loads(i32 %arg) {
   ; CHECK: cost of 1 {{.*}} load
   load <4 x i32>* undef, align 4
 
+  ; CHECK: cost of 46 {{.*}} load
+  load <3 x float>* undef, align 1
+
   ret i32 undef
 }
 
