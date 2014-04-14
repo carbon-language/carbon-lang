@@ -199,7 +199,7 @@ option(LLVM_ENABLE_PIC "Build Position-Independent Code" ON)
 # MSVC has a gazillion warnings with this.
 if( MSVC )
   option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." OFF)
-else( MSVC )
+else()
   option(LLVM_ENABLE_WARNINGS "Enable compiler warnings." ON)
 endif()
 
