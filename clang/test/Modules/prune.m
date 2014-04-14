@@ -37,7 +37,7 @@
 // Set both timestamp and DependsOnModule.pcm back beyond the cutoff.
 // This should trigger pruning, which will remove DependsOnModule but not Module.
 // RUN: touch -m -a -t 201101010000 %t/modules.timestamp 
-// RUN: find %t -name DependsOnModule..pcm | xargs touch -a -t 201101010000
+// RUN: find %t -name DependsOnModule*.pcm | xargs touch -a -t 201101010000
 // RUN: %clang_cc1 -fmodules -F %S/Inputs -fmodules-cache-path=%t -fmodules -fmodules-prune-interval=172800 -fmodules-prune-after=345600 %s -verify
 // RUN: ls %t | grep modules.timestamp
 // RUN: ls -R %t | grep ^Module.*pcm
