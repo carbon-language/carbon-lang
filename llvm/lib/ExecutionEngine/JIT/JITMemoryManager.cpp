@@ -274,8 +274,8 @@ namespace {
   public:
     JITSlabAllocator(DefaultJITMemoryManager &jmm) : JMM(jmm) { }
     virtual ~JITSlabAllocator() { }
-    MemSlab *Allocate(size_t Size) override;
-    void Deallocate(MemSlab *Slab) override;
+    void *Allocate(size_t Size) override;
+    void Deallocate(void *Slab, size_t Size) override;
   };
 
   /// DefaultJITMemoryManager - Manage memory for the JIT code generation.
@@ -568,16 +568,13 @@ namespace {
   };
 }
 
-MemSlab *JITSlabAllocator::Allocate(size_t Size) {
+void *JITSlabAllocator::Allocate(size_t Size) {
   sys::MemoryBlock B = JMM.allocateNewSlab(Size);
-  MemSlab *Slab = (MemSlab*)B.base();
-  Slab->Size = B.size();
-  Slab->NextPtr = 0;
-  return Slab;
+  return B.base();
 }
 
-void JITSlabAllocator::Deallocate(MemSlab *Slab) {
-  sys::MemoryBlock B(Slab, Slab->Size);
+void JITSlabAllocator::Deallocate(void *Slab, size_t Size) {
+  sys::MemoryBlock B(Slab, Size);
   sys::Memory::ReleaseRWX(B);
 }
 

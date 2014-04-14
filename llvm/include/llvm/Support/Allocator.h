@@ -14,6 +14,7 @@
 #ifndef LLVM_SUPPORT_ALLOCATOR_H
 #define LLVM_SUPPORT_ALLOCATOR_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
@@ -53,14 +54,6 @@ public:
   void PrintStats() const {}
 };
 
-/// MemSlab - This structure lives at the beginning of every slab allocated by
-/// the bump allocator.
-class MemSlab {
-public:
-  size_t Size;
-  MemSlab *NextPtr;
-};
-
 /// SlabAllocator - This class can be used to parameterize the underlying
 /// allocation strategy for the bump allocator.  In particular, this is used
 /// by the JIT to allocate contiguous swathes of executable memory.  The
@@ -69,8 +62,8 @@ public:
 class SlabAllocator {
 public:
   virtual ~SlabAllocator();
-  virtual MemSlab *Allocate(size_t Size) = 0;
-  virtual void Deallocate(MemSlab *Slab) = 0;
+  virtual void *Allocate(size_t Size) = 0;
+  virtual void Deallocate(void *Slab, size_t Size) = 0;
 };
 
 /// MallocSlabAllocator - The default slab allocator for the bump allocator
@@ -84,29 +77,8 @@ class MallocSlabAllocator : public SlabAllocator {
 public:
   MallocSlabAllocator() : Allocator() {}
   virtual ~MallocSlabAllocator();
-  MemSlab *Allocate(size_t Size) override;
-  void Deallocate(MemSlab *Slab) override;
-};
-
-/// \brief Non-templated base class for the \c BumpPtrAllocatorImpl template.
-class BumpPtrAllocatorBase {
-public:
-  void Deallocate(const void * /*Ptr*/) {}
-  void PrintStats() const;
-
-  /// \brief Returns the total physical memory allocated by this allocator.
-  size_t getTotalMemory() const;
-
-protected:
-  /// \brief The slab that we are currently allocating into.
-  MemSlab *CurSlab;
-
-  /// \brief How many bytes we've allocated.
-  ///
-  /// Used so that we can compute how much space was wasted.
-  size_t BytesAllocated;
-
-  BumpPtrAllocatorBase() : CurSlab(nullptr), BytesAllocated(0) {}
+  void *Allocate(size_t Size) override;
+  void Deallocate(void *Slab, size_t Size) override;
 };
 
 /// \brief Allocate memory in an ever growing pool, as if by bump-pointer.
@@ -120,7 +92,7 @@ protected:
 /// Note that this also has a threshold for forcing allocations above a certain
 /// size into their own slab.
 template <size_t SlabSize = 4096, size_t SizeThreshold = SlabSize>
-class BumpPtrAllocatorImpl : public BumpPtrAllocatorBase {
+class BumpPtrAllocatorImpl {
   BumpPtrAllocatorImpl(const BumpPtrAllocatorImpl &) LLVM_DELETED_FUNCTION;
   void operator=(const BumpPtrAllocatorImpl &) LLVM_DELETED_FUNCTION;
 
@@ -131,26 +103,37 @@ public:
                 "allocation.");
 
   BumpPtrAllocatorImpl()
-      : Allocator(DefaultSlabAllocator), NumSlabs(0) {}
+      : CurPtr(nullptr), End(nullptr), BytesAllocated(0),
+        Allocator(DefaultSlabAllocator) {}
   BumpPtrAllocatorImpl(SlabAllocator &Allocator)
-      : Allocator(Allocator), NumSlabs(0) {}
-  ~BumpPtrAllocatorImpl() { DeallocateSlabs(CurSlab); }
+      : CurPtr(nullptr), End(nullptr), BytesAllocated(0), Allocator(Allocator) {
+  }
+  ~BumpPtrAllocatorImpl() {
+    DeallocateSlabs(Slabs.begin(), Slabs.end());
+    DeallocateCustomSizedSlabs();
+  }
 
   /// \brief Deallocate all but the current slab and reset the current pointer
   /// to the beginning of it, freeing all memory allocated so far.
   void Reset() {
-    if (!CurSlab)
+    if (Slabs.empty())
       return;
-    DeallocateSlabs(CurSlab->NextPtr);
-    CurSlab->NextPtr = nullptr;
-    CurPtr = (char *)(CurSlab + 1);
-    End = ((char *)CurSlab) + CurSlab->Size;
+
+    // Reset the state.
     BytesAllocated = 0;
+    CurPtr = (char *)Slabs.front();
+    End = CurPtr + SlabSize;
+
+    // Deallocate all but the first slab, and all custome sized slabs.
+    DeallocateSlabs(std::next(Slabs.begin()), Slabs.end());
+    Slabs.erase(std::next(Slabs.begin()), Slabs.end());
+    DeallocateCustomSizedSlabs();
+    CustomSizedSlabs.clear();
   }
 
   /// \brief Allocate space at the specified alignment.
   void *Allocate(size_t Size, size_t Alignment) {
-    if (!CurSlab) // Start a new slab if we haven't allocated one already.
+    if (!CurPtr) // Start a new slab if we haven't allocated one already.
       StartNewSlab();
 
     // Keep track of how many bytes we've allocated.
@@ -174,18 +157,13 @@ public:
     }
 
     // If Size is really big, allocate a separate slab for it.
-    size_t PaddedSize = Size + sizeof(MemSlab) + Alignment - 1;
+    size_t PaddedSize = Size + Alignment - 1;
     if (PaddedSize > SizeThreshold) {
-      ++NumSlabs;
-      MemSlab *NewSlab = Allocator.Allocate(PaddedSize);
+      void *NewSlab = Allocator.Allocate(PaddedSize);
+      CustomSizedSlabs.push_back(std::make_pair(NewSlab, PaddedSize));
 
-      // Put the new slab after the current slab, since we are not allocating
-      // into it.
-      NewSlab->NextPtr = CurSlab->NextPtr;
-      CurSlab->NextPtr = NewSlab;
-
-      Ptr = alignPtr((char *)(NewSlab + 1), Alignment);
-      assert((uintptr_t)Ptr + Size <= (uintptr_t)NewSlab + NewSlab->Size);
+      Ptr = alignPtr((char *)NewSlab, Alignment);
+      assert((uintptr_t)Ptr + Size <= (uintptr_t)NewSlab + PaddedSize);
       __msan_allocated_memory(Ptr, Size);
       return Ptr;
     }
@@ -217,9 +195,48 @@ public:
     return static_cast<T *>(Allocate(Num * EltSize, Alignment));
   }
 
-  size_t GetNumSlabs() const { return NumSlabs; }
+  void Deallocate(const void * /*Ptr*/) {}
+
+  size_t GetNumSlabs() const { return Slabs.size() + CustomSizedSlabs.size(); }
+
+  size_t getTotalMemory() const {
+    size_t TotalMemory = 0;
+    for (auto I = Slabs.begin(), E = Slabs.end(); I != E; ++I)
+      TotalMemory += computeSlabSize(std::distance(Slabs.begin(), I));
+    for (auto &PtrAndSize : CustomSizedSlabs)
+      TotalMemory += PtrAndSize.second;
+    return TotalMemory;
+  }
+
+  void PrintStats() const {
+    // We call out to an external function to actually print the message as the
+    // printing code uses Allocator.h in its implementation.
+    extern void printBumpPtrAllocatorStats(
+        unsigned NumSlabs, size_t BytesAllocated, size_t TotalMemory);
+
+    printBumpPtrAllocatorStats(Slabs.size(), BytesAllocated, getTotalMemory());
+  }
 
 private:
+  /// \brief The current pointer into the current slab.
+  ///
+  /// This points to the next free byte in the slab.
+  char *CurPtr;
+
+  /// \brief The end of the current slab.
+  char *End;
+
+  /// \brief The slabs allocated so far.
+  SmallVector<void *, 4> Slabs;
+
+  /// \brief Custom-sized slabs allocated for too-large allocation requests.
+  SmallVector<std::pair<void *, size_t>, 0> CustomSizedSlabs;
+
+  /// \brief How many bytes we've allocated.
+  ///
+  /// Used so that we can compute how much space was wasted.
+  size_t BytesAllocated;
+
   /// \brief The default allocator used if one is not provided.
   MallocSlabAllocator DefaultSlabAllocator;
 
@@ -229,54 +246,53 @@ private:
   /// changed to use a custom allocator.
   SlabAllocator &Allocator;
 
-  /// \brief The current pointer into the current slab.
-  ///
-  /// This points to the next free byte in the slab.
-  char *CurPtr;
-
-  /// \brief The end of the current slab.
-  char *End;
-
-  /// \brief How many slabs we've allocated.
-  ///
-  /// Used to scale the size of each slab and reduce the number of allocations
-  /// for extremely heavy memory use scenarios.
-  size_t NumSlabs;
-
-  /// \brief Allocate a new slab and move the bump pointers over into the new
-  /// slab, modifying CurPtr and End.
-  void StartNewSlab() {
-    ++NumSlabs;
+  static size_t computeSlabSize(unsigned SlabIdx) {
     // Scale the actual allocated slab size based on the number of slabs
     // allocated. Every 128 slabs allocated, we double the allocated size to
     // reduce allocation frequency, but saturate at multiplying the slab size by
     // 2^30.
-    // FIXME: Currently, this count includes special slabs for objects above the
-    // size threshold. That will be fixed in a subsequent commit to make the
-    // growth even more predictable.
-    size_t AllocatedSlabSize =
-        SlabSize * ((size_t)1 << std::min<size_t>(30, NumSlabs / 128));
-
-    MemSlab *NewSlab = Allocator.Allocate(AllocatedSlabSize);
-    NewSlab->NextPtr = CurSlab;
-    CurSlab = NewSlab;
-    CurPtr = (char *)(CurSlab + 1);
-    End = ((char *)CurSlab) + CurSlab->Size;
+    return SlabSize * ((size_t)1 << std::min<size_t>(30, SlabIdx / 128));
   }
 
-  /// \brief Deallocate all memory slabs after and including this one.
-  void DeallocateSlabs(MemSlab *Slab) {
-    while (Slab) {
-      MemSlab *NextSlab = Slab->NextPtr;
+  /// \brief Allocate a new slab and move the bump pointers over into the new
+  /// slab, modifying CurPtr and End.
+  void StartNewSlab() {
+    size_t AllocatedSlabSize = computeSlabSize(Slabs.size());
+
+    void *NewSlab = Allocator.Allocate(AllocatedSlabSize);
+    Slabs.push_back(NewSlab);
+    CurPtr = (char *)(NewSlab);
+    End = ((char *)NewSlab) + AllocatedSlabSize;
+  }
+
+  /// \brief Deallocate a sequence of slabs.
+  void DeallocateSlabs(SmallVectorImpl<void *>::iterator I,
+                       SmallVectorImpl<void *>::iterator E) {
+    for (; I != E; ++I) {
+      size_t AllocatedSlabSize =
+          computeSlabSize(std::distance(Slabs.begin(), I));
 #ifndef NDEBUG
       // Poison the memory so stale pointers crash sooner.  Note we must
       // preserve the Size and NextPtr fields at the beginning.
-      sys::Memory::setRangeWritable(Slab + 1, Slab->Size - sizeof(MemSlab));
-      memset(Slab + 1, 0xCD, Slab->Size - sizeof(MemSlab));
+      sys::Memory::setRangeWritable(*I, AllocatedSlabSize);
+      memset(*I, 0xCD, AllocatedSlabSize);
 #endif
-      Allocator.Deallocate(Slab);
-      Slab = NextSlab;
-      --NumSlabs;
+      Allocator.Deallocate(*I, AllocatedSlabSize);
+    }
+  }
+
+  /// \brief Deallocate all memory for custom sized slabs.
+  void DeallocateCustomSizedSlabs() {
+    for (auto &PtrAndSize : CustomSizedSlabs) {
+      void *Ptr = PtrAndSize.first;
+#ifndef NDEBUG
+      size_t Size = PtrAndSize.second;
+      // Poison the memory so stale pointers crash sooner.  Note we must
+      // preserve the Size and NextPtr fields at the beginning.
+      sys::Memory::setRangeWritable(Ptr, Size);
+      memset(Ptr, 0xCD, Size);
+#endif
+      Allocator.Deallocate(Ptr, Size);
     }
   }
 
@@ -305,22 +321,36 @@ public:
   /// current slab and reset the current pointer to the beginning of it, freeing
   /// all memory allocated so far.
   void DestroyAll() {
-    MemSlab *Slab = Allocator.CurSlab;
-    while (Slab) {
-      char *End = Slab == Allocator.CurSlab ? Allocator.CurPtr
-                                            : (char *)Slab + Slab->Size;
-      for (char *Ptr = (char *)(Slab + 1); Ptr < End; Ptr += sizeof(T)) {
-        Ptr = alignPtr(Ptr, alignOf<T>());
-        if (Ptr + sizeof(T) <= End)
-          reinterpret_cast<T *>(Ptr)->~T();
-      }
-      Slab = Slab->NextPtr;
+    auto DestroyElements = [](char *Begin, char *End) {
+      assert(Begin == alignPtr(Begin, alignOf<T>()));
+      for (char *Ptr = Begin; Ptr + sizeof(T) <= End; Ptr += sizeof(T))
+        reinterpret_cast<T *>(Ptr)->~T();
+    };
+
+    for (auto I = Allocator.Slabs.begin(), E = Allocator.Slabs.end(); I != E;
+         ++I) {
+      size_t AllocatedSlabSize = BumpPtrAllocator::computeSlabSize(
+          std::distance(Allocator.Slabs.begin(), I));
+      char *Begin = alignPtr((char *)*I, alignOf<T>());
+      char *End = *I == Allocator.Slabs.back() ? Allocator.CurPtr
+                                               : (char *)*I + AllocatedSlabSize;
+
+      DestroyElements(Begin, End);
     }
+
+    for (auto &PtrAndSize : Allocator.CustomSizedSlabs) {
+      void *Ptr = PtrAndSize.first;
+      size_t Size = PtrAndSize.second;
+      DestroyElements(alignPtr((char *)Ptr, alignOf<T>()), (char *)Ptr + Size);
+    }
+
     Allocator.Reset();
   }
 
   /// \brief Allocate space for an array of objects without constructing them.
   T *Allocate(size_t num = 1) { return Allocator.Allocate<T>(num); }
+
+private:
 };
 
 }  // end namespace llvm
