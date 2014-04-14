@@ -1473,20 +1473,25 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // Add function template parameters.
   addTemplateParams(*SPDie, SP.getTemplateParams());
 
-  // If this DIE is going to refer declaration info using AT_specification
-  // then there is no need to add other attributes.
-  if (DeclDie) {
+  if (DeclDie)
     // Refer function declaration directly.
     addDIEEntry(SPDie, dwarf::DW_AT_specification, DeclDie);
 
-    return SPDie;
+  // Add the linkage name if we have one and it isn't in the Decl.
+  StringRef LinkageName = SP.getLinkageName();
+  if (!LinkageName.empty()) {
+    if (SPDecl.isSubprogram() && !SPDecl.getLinkageName().empty())
+      assert(SPDecl.getLinkageName() == SP.getLinkageName() &&
+             "decl has a linkage name and it is different");
+    else
+      addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
+                GlobalValue::getRealLinkageName(LinkageName));
   }
 
-  // Add the linkage name if we have one.
-  StringRef LinkageName = SP.getLinkageName();
-  if (!LinkageName.empty())
-    addString(SPDie, dwarf::DW_AT_MIPS_linkage_name,
-              GlobalValue::getRealLinkageName(LinkageName));
+  // If this DIE is going to refer declaration info using AT_specification
+  // then there is no need to add other attributes.
+  if (DeclDie)
+    return SPDie;
 
   // Constructors and operators for anonymous aggregates do not have names.
   if (!SP.getName().empty())
