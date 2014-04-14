@@ -2149,7 +2149,7 @@ static Instruction *ProcessUMulZExtIdiom(ICmpInst &I, Value *MulVal,
     //   mulval = mul(zext A, zext B)
     //   cmp ule mulval, max + 1
     if (ConstantInt *CI = dyn_cast<ConstantInt>(OtherVal)) {
-      APInt MaxVal(CI->getBitWidth(), 1ULL << MulWidth);
+      APInt MaxVal = APInt::getOneBitSet(CI->getBitWidth(), MulWidth);
       if (MaxVal.eq(CI->getValue()))
         break; // Recognized
     }
@@ -2176,7 +2176,7 @@ static Instruction *ProcessUMulZExtIdiom(ICmpInst &I, Value *MulVal,
 
   // If there are uses of mul result other than the comparison, we know that
   // they are truncation or binary AND. Change them to use result of
-  // mul.with.overflow and ajust properly mask/size.
+  // mul.with.overflow and adjust properly mask/size.
   if (MulVal->hasNUsesOrMore(2)) {
     Value *Mul = Builder->CreateExtractValue(Call, 0, "umul.value");
     for (User *U : MulVal->users()) {
