@@ -1,4 +1,5 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s -check-prefix=32
+; RUN: llc -march=mips64el -mcpu=mips4 -mattr=n64 < %s | FileCheck %s -check-prefix=64
 ; RUN: llc -march=mips64el -mcpu=mips64 -mattr=n64 < %s | FileCheck %s -check-prefix=64
 
 define void @f0() nounwind {

@@ -1,3 +1,4 @@
+; RUN: llc  < %s -march=mips64el -mcpu=mips4 -mattr=n64 | FileCheck %s
 ; RUN: llc  < %s -march=mips64el -mcpu=mips64 -mattr=n64 | FileCheck %s
 
 @gl = global i64 1250999896321, align 8

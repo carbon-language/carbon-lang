@@ -1,4 +1,5 @@
-; RUN: llc  < %s -march=mips64el -mcpu=mips64 -mattr=n64 | FileCheck %s 
+; RUN: llc  < %s -march=mips64el -mcpu=mips4 -mattr=n64 | FileCheck %s
+; RUN: llc  < %s -march=mips64el -mcpu=mips64 -mattr=n64 | FileCheck %s
 
 define i64 @zext64_32(i32 %a) nounwind readnone {
 entry:

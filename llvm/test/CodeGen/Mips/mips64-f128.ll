@@ -1,5 +1,7 @@
+; RUN: llc -mtriple=mips64el-unknown-unknown -mcpu=mips4 -soft-float -O1 \
+; RUN:     -disable-mips-delay-filler < %s | FileCheck %s
 ; RUN: llc -mtriple=mips64el-unknown-unknown -mcpu=mips64 -soft-float -O1 \
-; RUN: -disable-mips-delay-filler < %s | FileCheck %s
+; RUN:     -disable-mips-delay-filler < %s | FileCheck %s
 
 @gld0 = external global fp128
 @gld1 = external global fp128

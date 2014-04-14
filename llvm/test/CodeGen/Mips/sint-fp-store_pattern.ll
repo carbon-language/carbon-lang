@@ -1,4 +1,5 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s -check-prefix=32
+; RUN: llc -march=mips64el -mcpu=mips4 < %s | FileCheck %s -check-prefix=64
 ; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s -check-prefix=64
 
 @gint_ = external global i32

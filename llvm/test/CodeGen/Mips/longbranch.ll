@@ -1,4 +1,5 @@
 ; RUN: llc -march=mipsel -force-mips-long-branch -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=O32
+; RUN: llc -march=mips64el -mcpu=mips4 -mattr=n64  -force-mips-long-branch -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=N64
 ; RUN: llc -march=mips64el -mcpu=mips64 -mattr=n64  -force-mips-long-branch -disable-mips-delay-filler < %s | FileCheck %s -check-prefix=N64
 
 @g0 = external global i32

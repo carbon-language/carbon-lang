@@ -1,4 +1,5 @@
 ; RUN: llc -march=mipsel < %s | FileCheck %s -check-prefix=32
+; RUN: llc -march=mips64el -mcpu=mips4 < %s | FileCheck %s -check-prefix=64
 ; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s -check-prefix=64
 
 @i1 = global [3 x i32] [i32 1, i32 2, i32 3], align 4

@@ -1,3 +1,5 @@
+; RUN: llc -march=mips64el -mcpu=mips4 -mattr=n64 < %s | FileCheck  -check-prefix=EL %s
+; RUN: llc -march=mips64 -mcpu=mips4 -mattr=n64 < %s | FileCheck  -check-prefix=EB %s
 ; RUN: llc -march=mips64el -mcpu=mips64 -mattr=n64 < %s | FileCheck  -check-prefix=EL %s
 ; RUN: llc -march=mips64 -mcpu=mips64 -mattr=n64 < %s | FileCheck  -check-prefix=EB %s
 
