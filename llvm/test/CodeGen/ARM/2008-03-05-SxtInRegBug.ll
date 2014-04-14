@@ -14,4 +14,6 @@ bb3:		; preds = %bb1
 }
 
 ; CHECK-NOT: 255
+; CHECK: .file{{.*}}SxtInRegBug.ll
+; CHECK-NOT: 255
 
