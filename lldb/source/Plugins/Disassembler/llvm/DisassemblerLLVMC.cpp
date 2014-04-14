@@ -13,6 +13,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
+#include "llvm/MC/MCExternalSymbolizer.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -454,11 +455,8 @@ DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, uns
             m_is_valid = false;
             return;
         }
-        m_disasm_ap->setupForSymbolicDisassembly(NULL,
-                                                 DisassemblerLLVMC::SymbolLookupCallback,
-                                                 (void *) &owner,
-                                                 m_context_ap.get(),
-                                                 RelInfo);
+        m_disasm_ap->setSymbolizer(std::unique_ptr<llvm::MCSymbolizer>(new llvm::MCExternalSymbolizer(*m_context_ap.get(),std::move(RelInfo),NULL,DisassemblerLLVMC::SymbolLookupCallback,(void *) &owner)));
+
         
         unsigned asm_printer_variant;
         if (flavor == ~0U)
