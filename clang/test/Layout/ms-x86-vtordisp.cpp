@@ -386,10 +386,10 @@ struct HA {
 };
 #pragma vtordisp(push, 2)
 struct HB : virtual HA {};
-#pragma vtordisp(pop, 2)
+#pragma vtordisp(pop)
 #pragma vtordisp(push, 0)
 struct HC : virtual HB {};
-#pragma vtordisp(pop, 0)
+#pragma vtordisp(pop)
 
 // CHECK: *** Dumping AST Record Layout
 // CHECK: *** Dumping AST Record Layout
