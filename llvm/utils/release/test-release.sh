@@ -223,7 +223,7 @@ function check_valid_urls() {
         echo "# Validating $proj SVN URL"
 
         if ! svn ls $Base_url/$proj/tags/RELEASE_$Release_no_dot/$RC > /dev/null 2>&1 ; then
-            echo "llvm $Release release candidate $RC doesn't exist!"
+            echo "$proj $Release release candidate $RC doesn't exist!"
             exit 1
         fi
     done
