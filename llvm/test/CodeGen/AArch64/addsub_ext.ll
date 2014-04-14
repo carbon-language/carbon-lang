@@ -1,11 +1,12 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs %s -o - -mtriple=arm64 | FileCheck %s
 
 @var8 = global i8 0
 @var16 = global i16 0
 @var32 = global i32 0
 @var64 = global i64 0
 
-define void @addsub_i8rhs() {
+define void @addsub_i8rhs() minsize {
 ; CHECK-LABEL: addsub_i8rhs:
     %val8_tmp = load i8* @var8
     %lhs32 = load i32* @var32
@@ -80,7 +81,7 @@ end:
     ret void
 }
 
-define void @addsub_i16rhs() {
+define void @addsub_i16rhs() minsize {
 ; CHECK-LABEL: addsub_i16rhs:
     %val16_tmp = load i16* @var16
     %lhs32 = load i32* @var32
@@ -158,7 +159,7 @@ end:
 ; N.b. we could probably check more here ("add w2, w3, w1, uxtw" for
 ; example), but the remaining instructions are probably not idiomatic
 ; in the face of "add/sub (shifted register)" so I don't intend to.
-define void @addsub_i32rhs() {
+define void @addsub_i32rhs() minsize {
 ; CHECK-LABEL: addsub_i32rhs:
     %val32_tmp = load i32* @var32
     %lhs64 = load i64* @var64

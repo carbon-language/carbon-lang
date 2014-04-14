@@ -532,7 +532,7 @@ bool ARM64DAGToDAGISel::SelectArithExtendedRegister(SDValue N, SDValue &Reg,
     if (!CSD)
       return false;
     ShiftVal = CSD->getZExtValue();
-    if ((ShiftVal & 0x3) != ShiftVal)
+    if (ShiftVal > 4)
       return false;
 
     Ext = getExtendTypeForNode(N.getOperand(0));
