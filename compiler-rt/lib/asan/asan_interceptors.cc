@@ -43,6 +43,10 @@ static inline bool QuickCheckForUnpoisonedRegion(uptr beg, uptr size) {
     uptr __offset = (uptr)(offset);                                     \
     uptr __size = (uptr)(size);                                         \
     uptr __bad = 0;                                                     \
+    if (__offset > __offset + __size) {                                 \
+      GET_STACK_TRACE_FATAL_HERE;                                       \
+      ReportStringFunctionSizeOverflow(__offset, __size, &stack);       \
+    }                                                                   \
     if (!QuickCheckForUnpoisonedRegion(__offset, __size) &&             \
         (__bad = __asan_region_is_poisoned(__offset, __size))) {        \
       GET_CURRENT_PC_BP_SP;                                             \

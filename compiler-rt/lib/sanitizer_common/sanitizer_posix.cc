@@ -52,7 +52,7 @@ uptr GetMaxVirtualAddress() {
 #if SANITIZER_WORDSIZE == 64
 # if defined(__powerpc64__)
   // On PowerPC64 we have two different address space layouts: 44- and 46-bit.
-  // We somehow need to figure our which one we are using now and choose
+  // We somehow need to figure out which one we are using now and choose
   // one of 0x00000fffffffffffUL and 0x00003fffffffffffUL.
   // Note that with 'ulimit -s unlimited' the stack is moved away from the top
   // of the address space, so simply checking the stack address is not enough.

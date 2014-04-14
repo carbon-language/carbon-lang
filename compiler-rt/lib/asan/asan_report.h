@@ -49,6 +49,8 @@ void NORETURN ReportStringFunctionMemoryRangesOverlap(
     const char *function, const char *offset1, uptr length1,
     const char *offset2, uptr length2, StackTrace *stack);
 void NORETURN
+ReportStringFunctionSizeOverflow(uptr offset, uptr size, StackTrace *stack);
+void NORETURN
 ReportBadParamsToAnnotateContiguousContainer(uptr beg, uptr end, uptr old_mid,
                                              uptr new_mid, StackTrace *stack);
 
