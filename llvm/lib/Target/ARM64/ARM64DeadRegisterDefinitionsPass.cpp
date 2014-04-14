@@ -30,7 +30,7 @@ private:
   const TargetRegisterInfo *TRI;
   bool implicitlyDefinesSubReg(unsigned Reg, const MachineInstr *MI);
   bool processMachineBasicBlock(MachineBasicBlock *MBB);
-
+  bool usesFrameIndex(const MachineInstr *MI);
 public:
   static char ID; // Pass identification, replacement for typeid.
   explicit ARM64DeadRegisterDefinitions() : MachineFunctionPass(ID) {}
@@ -57,12 +57,27 @@ bool ARM64DeadRegisterDefinitions::implicitlyDefinesSubReg(
   return false;
 }
 
+bool ARM64DeadRegisterDefinitions::usesFrameIndex(const MachineInstr *MI) {
+  for (int I = MI->getDesc().getNumDefs(), E = MI->getNumOperands(); I != E; ++I) {
+    if (MI->getOperand(I).isFI())
+      return true;
+  }
+  return false;
+}
+
 bool
 ARM64DeadRegisterDefinitions::processMachineBasicBlock(MachineBasicBlock *MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
        ++I) {
     MachineInstr *MI = I;
+    if (usesFrameIndex(MI)) {
+      // We need to skip this instruction because while it appears to have a
+      // dead def it uses a frame index which might expand into a multi
+      // instruction sequence during EPI
+      DEBUG(dbgs() << "    Ignoring, operand is frame index\n");
+      continue;
+    }
     for (int i = 0, e = MI->getDesc().getNumDefs(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (MO.isReg() && MO.isDead() && MO.isDef()) {
