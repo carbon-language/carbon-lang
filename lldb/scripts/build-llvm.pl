@@ -81,6 +81,7 @@ our @archive_files = (
     "$llvm_configuration/lib/libLLVMARM64Desc.a",
     "$llvm_configuration/lib/libLLVMARM64Disassembler.a",
     "$llvm_configuration/lib/libLLVMARM64Info.a",
+    "$llvm_configuration/lib/libLLVMARM64Utils.a",
     "$llvm_configuration/lib/libLLVMAsmParser.a",
     "$llvm_configuration/lib/libLLVMAsmPrinter.a",
     "$llvm_configuration/lib/libLLVMBitReader.a",
