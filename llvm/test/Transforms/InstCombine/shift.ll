@@ -40,11 +40,46 @@ define i32 @test5(i32 %A) {
         ret i32 %B
 }
 
+define <4 x i32> @test5_splat_vector(<4 x i32> %A) {
+; CHECK-LABEL: @test5_splat_vector(
+; CHECK: ret <4 x i32> undef
+  %B = lshr <4 x i32> %A, <i32 32, i32 32, i32 32, i32 32>     ;; shift all bits out
+  ret <4 x i32> %B
+}
+
+define <4 x i32> @test5_zero_vector(<4 x i32> %A) {
+; CHECK-LABEL: @test5_zero_vector(
+; CHECK-NEXT: ret <4 x i32> %A
+  %B = lshr <4 x i32> %A, zeroinitializer
+  ret <4 x i32> %B
+}
+
+define <4 x i32> @test5_non_splat_vector(<4 x i32> %A) {
+; CHECK-LABEL: @test5_non_splat_vector(
+; CHECK-NOT: ret <4 x i32> undef
+  %B = shl <4 x i32> %A, <i32 32, i32 1, i32 2, i32 3>
+  ret <4 x i32> %B
+}
+
 define i32 @test5a(i32 %A) {
 ; CHECK-LABEL: @test5a(
 ; CHECK: ret i32 undef
         %B = shl i32 %A, 32     ;; shift all bits out
         ret i32 %B
+}
+
+define <4 x i32> @test5a_splat_vector(<4 x i32> %A) {
+; CHECK-LABEL: @test5a_splat_vector(
+; CHECK: ret <4 x i32> undef
+  %B = shl <4 x i32> %A, <i32 32, i32 32, i32 32, i32 32>     ;; shift all bits out
+  ret <4 x i32> %B
+}
+
+define <4 x i32> @test5a_non_splat_vector(<4 x i32> %A) {
+; CHECK-LABEL: @test5a_non_splat_vector(
+; CHECK-NOT: ret <4 x i32> undef
+  %B = shl <4 x i32> %A, <i32 32, i32 1, i32 2, i32 3>
+  ret <4 x i32> %B
 }
 
 define i32 @test5b() {
@@ -342,6 +377,20 @@ define i32 @test25(i32 %tmp.2, i32 %AA) {
         %tmp.5 = add i32 %tmp.3, %x             ; <i32> [#uses=1]
         %tmp.6 = shl i32 %tmp.5, 17             ; <i32> [#uses=1]
         ret i32 %tmp.6
+}
+
+define <2 x i32> @test25_vector(<2 x i32> %tmp.2, <2 x i32> %AA) {
+; CHECK-LABEL: @test25_vector(
+; CHECK: %tmp.3 = lshr <2 x i32> %tmp.2, <i32 17, i32 17>
+; CHECK-NEXT: shl <2 x i32> %tmp.3, <i32 17, i32 17>
+; CHECK-NEXT: add <2 x i32> %tmp.51, %AA
+; CHECK-NEXT: and <2 x i32> %x2, <i32 -131072, i32 -131072>
+; CHECK-NEXT: ret <2 x i32>
+  %x = lshr <2 x i32> %AA, <i32 17, i32 17>
+  %tmp.3 = lshr <2 x i32> %tmp.2, <i32 17, i32 17>
+  %tmp.5 = add <2 x i32> %tmp.3, %x
+  %tmp.6 = shl <2 x i32> %tmp.5, <i32 17, i32 17>
+  ret <2 x i32> %tmp.6
 }
 
 ;; handle casts between shifts.
@@ -779,4 +828,33 @@ bb11:                                             ; preds = %bb8
 
 bb12:                                             ; preds = %bb11, %bb8, %bb
   ret void
+}
+
+define i32 @test64(i32 %a) {
+; CHECK-LABEL: @test64(
+; CHECK-NEXT: ret i32 undef
+  %b = ashr i32 %a, 32  ; shift all bits out
+  ret i32 %b
+}
+
+define <4 x i32> @test64_splat_vector(<4 x i32> %a) {
+; CHECK-LABEL: @test64_splat_vector
+; CHECK-NEXT: ret <4 x i32> undef
+  %b = ashr <4 x i32> %a, <i32 32, i32 32, i32 32, i32 32>  ; shift all bits out
+  ret <4 x i32> %b
+}
+
+define <4 x i32> @test64_non_splat_vector(<4 x i32> %a) {
+; CHECK-LABEL: @test64_non_splat_vector
+; CHECK-NOT: ret <4 x i32> undef
+  %b = ashr <4 x i32> %a, <i32 32, i32 0, i32 1, i32 2>  ; shift all bits out
+  ret <4 x i32> %b
+}
+
+define <2 x i65> @test_65(<2 x i64> %t) {
+; CHECK-LABEL: @test_65
+  %a = zext <2 x i64> %t to <2 x i65>
+  %sext = shl <2 x i65> %a, <i65 33, i65 33>
+  %b = ashr <2 x i65> %sext, <i65 33, i65 33>
+  ret <2 x i65> %b
 }
