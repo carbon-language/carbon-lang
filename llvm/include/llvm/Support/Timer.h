@@ -88,10 +88,10 @@ public:
   explicit Timer(StringRef N) : TG(nullptr) { init(N); }
   Timer(StringRef N, TimerGroup &tg) : TG(nullptr) { init(N, tg); }
   Timer(const Timer &RHS) : TG(nullptr) {
-    assert(RHS.TG == 0 && "Can only copy uninitialized timers");
+    assert(!RHS.TG && "Can only copy uninitialized timers");
   }
   const Timer &operator=(const Timer &T) {
-    assert(TG == 0 && T.TG == 0 && "Can only assign uninit timers");
+    assert(!TG && !T.TG && "Can only assign uninit timers");
     return *this;
   }
   ~Timer();

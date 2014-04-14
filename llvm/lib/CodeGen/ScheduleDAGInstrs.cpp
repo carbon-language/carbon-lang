@@ -56,7 +56,7 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      LiveIntervals *lis)
   : ScheduleDAG(mf), MLI(mli), MDT(mdt), MFI(mf.getFrameInfo()), LIS(lis),
     IsPostRA(IsPostRAFlag), RemoveKillFlags(RemoveKillFlags),
-    CanHandleTerminators(false), FirstDbgValue(0) {
+    CanHandleTerminators(false), FirstDbgValue(nullptr) {
   assert((IsPostRA || LIS) && "PreRA scheduling requires LiveIntervals");
   DbgValues.clear();
   assert(!(IsPostRA && MRI.getNumVirtRegs()) &&
@@ -177,7 +177,7 @@ void ScheduleDAGInstrs::startBlock(MachineBasicBlock *bb) {
 
 void ScheduleDAGInstrs::finishBlock() {
   // Subclasses should no longer refer to the old block.
-  BB = 0;
+  BB = nullptr;
 }
 
 /// Initialize the DAG and common scheduler state for the current scheduling
@@ -209,7 +209,7 @@ void ScheduleDAGInstrs::exitRegion() {
 /// are too high to be hidden by the branch or when the liveout registers
 /// used by instructions in the fallthrough block.
 void ScheduleDAGInstrs::addSchedBarrierDeps() {
-  MachineInstr *ExitMI = RegionEnd != BB->end() ? &*RegionEnd : 0;
+  MachineInstr *ExitMI = RegionEnd != BB->end() ? &*RegionEnd : nullptr;
   ExitSU.setInstr(ExitMI);
   bool AllDepKnown = ExitMI &&
     (ExitMI->isCall() || ExitMI->isBarrier());
@@ -266,7 +266,7 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
       // Adjust the dependence latency using operand def/use information,
       // then allow the target to perform its own adjustments.
       int UseOp = I->OpIdx;
-      MachineInstr *RegUse = 0;
+      MachineInstr *RegUse = nullptr;
       SDep Dep;
       if (UseOp < 0)
         Dep = SDep(SU, SDep::Artificial);
@@ -560,9 +560,9 @@ static bool MIsNeedChainEdge(AliasAnalysis *AA, const MachineFrameInfo *MFI,
 
   AliasAnalysis::AliasResult AAResult = AA->alias(
       AliasAnalysis::Location(MMOa->getValue(), Overlapa,
-                              UseTBAA ? MMOa->getTBAAInfo() : 0),
+                              UseTBAA ? MMOa->getTBAAInfo() : nullptr),
       AliasAnalysis::Location(MMOb->getValue(), Overlapb,
-                              UseTBAA ? MMOb->getTBAAInfo() : 0));
+                              UseTBAA ? MMOb->getTBAAInfo() : nullptr));
 
   return (AAResult != AliasAnalysis::NoAlias);
 }
@@ -730,7 +730,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
   bool UseAA = EnableAASchedMI.getNumOccurrences() > 0 ? EnableAASchedMI
                                                        : ST.useAA();
-  AliasAnalysis *AAForDep = UseAA ? AA : 0;
+  AliasAnalysis *AAForDep = UseAA ? AA : nullptr;
 
   MISUnitMap.clear();
   ScheduleDAG::clearDAG();
@@ -745,7 +745,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   // to top.
 
   // Remember where a generic side-effecting instruction is as we procede.
-  SUnit *BarrierChain = 0, *AliasChain = 0;
+  SUnit *BarrierChain = nullptr, *AliasChain = nullptr;
 
   // Memory references to specific known memory locations are tracked
   // so that they can be given more precise dependencies. We track
@@ -758,7 +758,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   // Remove any stale debug info; sometimes BuildSchedGraph is called again
   // without emitting the info from the previous call.
   DbgValues.clear();
-  FirstDbgValue = NULL;
+  FirstDbgValue = nullptr;
 
   assert(Defs.empty() && Uses.empty() &&
          "Only BuildGraph should update Defs/Uses");
@@ -775,13 +775,13 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
   addSchedBarrierDeps();
 
   // Walk the list of instructions, from bottom moving up.
-  MachineInstr *DbgMI = NULL;
+  MachineInstr *DbgMI = nullptr;
   for (MachineBasicBlock::iterator MII = RegionEnd, MIE = RegionBegin;
        MII != MIE; --MII) {
     MachineInstr *MI = std::prev(MII);
     if (MI && DbgMI) {
       DbgValues.push_back(std::make_pair(DbgMI, MI));
-      DbgMI = NULL;
+      DbgMI = nullptr;
     }
 
     if (MI->isDebugValue()) {
@@ -792,8 +792,8 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
     assert(SU && "No SUnit mapped to this MI");
 
     if (RPTracker) {
-      PressureDiff *PDiff = PDiffs ? &(*PDiffs)[SU->NodeNum] : 0;
-      RPTracker->recede(/*LiveUses=*/0, PDiff);
+      PressureDiff *PDiff = PDiffs ? &(*PDiffs)[SU->NodeNum] : nullptr;
+      RPTracker->recede(/*LiveUses=*/nullptr, PDiff);
       assert(RPTracker->getPos() == std::prev(MII) &&
              "RPTracker can't find MI");
     }
@@ -1423,7 +1423,7 @@ public:
 
   const SDep *backtrack() {
     DFSStack.pop_back();
-    return DFSStack.empty() ? 0 : std::prev(DFSStack.back().second);
+    return DFSStack.empty() ? nullptr : std::prev(DFSStack.back().second);
   }
 
   const SUnit *getCurr() const { return DFSStack.back().first; }

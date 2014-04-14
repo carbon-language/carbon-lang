@@ -177,7 +177,7 @@ namespace llvm {
     /// the specified stack slot
     void assignVirt2StackSlot(unsigned virtReg, int frameIndex);
 
-    void print(raw_ostream &OS, const Module* M = 0) const override;
+    void print(raw_ostream &OS, const Module* M = nullptr) const override;
     void dump() const;
   };
 

@@ -260,7 +260,7 @@ public:
     // Check for buffer overflow.
     if (Size >= (uintptr_t)(BufferEnd-CurBufferPtr)) {
       CurBufferPtr = BufferEnd;
-      Result = 0;
+      Result = nullptr;
     } else {
       // Allocate the space.
       Result = CurBufferPtr;
@@ -334,7 +334,9 @@ public:
 
   /// getLabelLocations - Return the label locations map of the label IDs to
   /// their address.
-  virtual DenseMap<MCSymbol*, uintptr_t> *getLabelLocations() { return 0; }
+  virtual DenseMap<MCSymbol*, uintptr_t> *getLabelLocations() {
+    return nullptr;
+  }
 };
 
 } // End llvm namespace

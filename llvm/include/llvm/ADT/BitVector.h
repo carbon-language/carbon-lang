@@ -72,7 +72,7 @@ public:
 
   /// BitVector default ctor - Creates an empty bitvector.
   BitVector() : Size(0), Capacity(0) {
-    Bits = 0;
+    Bits = nullptr;
   }
 
   /// BitVector ctor - Creates a bitvector of specified number of bits. All
@@ -88,7 +88,7 @@ public:
   /// BitVector copy ctor.
   BitVector(const BitVector &RHS) : Size(RHS.size()) {
     if (Size == 0) {
-      Bits = 0;
+      Bits = nullptr;
       Capacity = 0;
       return;
     }
@@ -100,7 +100,7 @@ public:
 
   BitVector(BitVector &&RHS)
     : Bits(RHS.Bits), Size(RHS.Size), Capacity(RHS.Capacity) {
-    RHS.Bits = 0;
+    RHS.Bits = nullptr;
   }
 
   ~BitVector() {
@@ -467,7 +467,7 @@ public:
     Size = RHS.Size;
     Capacity = RHS.Capacity;
 
-    RHS.Bits = 0;
+    RHS.Bits = nullptr;
 
     return *this;
   }

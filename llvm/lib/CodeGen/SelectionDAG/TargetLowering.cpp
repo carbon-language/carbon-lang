@@ -40,7 +40,7 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   : TargetLoweringBase(tm, tlof) {}
 
 const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
-  return NULL;
+  return nullptr;
 }
 
 /// Check whether a given call node is in tail position within its function. If
@@ -226,7 +226,7 @@ unsigned TargetLowering::getJumpTableEncoding() const {
     return MachineJumpTableInfo::EK_BlockAddress;
 
   // In PIC mode, if the target supports a GPRel32 directive, use it.
-  if (getTargetMachine().getMCAsmInfo()->getGPRel32Directive() != 0)
+  if (getTargetMachine().getMCAsmInfo()->getGPRel32Directive() != nullptr)
     return MachineJumpTableInfo::EK_GPRel32BlockAddress;
 
   // Otherwise, use a label difference.
@@ -2053,7 +2053,7 @@ const char *TargetLowering::LowerXConstraint(EVT ConstraintVT) const{
     return "r";
   if (ConstraintVT.isFloatingPoint())
     return "f";      // works for many targets
-  return 0;
+  return nullptr;
 }
 
 /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
@@ -2087,12 +2087,12 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
     if (Op.getOpcode() == ISD::ADD) {
       C = dyn_cast<ConstantSDNode>(Op.getOperand(1));
       GA = dyn_cast<GlobalAddressSDNode>(Op.getOperand(0));
-      if (C == 0 || GA == 0) {
+      if (!C || !GA) {
         C = dyn_cast<ConstantSDNode>(Op.getOperand(0));
         GA = dyn_cast<GlobalAddressSDNode>(Op.getOperand(1));
       }
-      if (C == 0 || GA == 0)
-        C = 0, GA = 0;
+      if (!C || !GA)
+        C = nullptr, GA = nullptr;
     }
 
     // If we find a valid operand, map to the TargetXXX version so that the
@@ -2127,14 +2127,14 @@ std::pair<unsigned, const TargetRegisterClass*> TargetLowering::
 getRegForInlineAsmConstraint(const std::string &Constraint,
                              MVT VT) const {
   if (Constraint.empty() || Constraint[0] != '{')
-    return std::make_pair(0u, static_cast<TargetRegisterClass*>(0));
+    return std::make_pair(0u, static_cast<TargetRegisterClass*>(nullptr));
   assert(*(Constraint.end()-1) == '}' && "Not a brace enclosed constraint?");
 
   // Remove the braces from around the name.
   StringRef RegName(Constraint.data()+1, Constraint.size()-2);
 
   std::pair<unsigned, const TargetRegisterClass*> R =
-    std::make_pair(0u, static_cast<const TargetRegisterClass*>(0));
+    std::make_pair(0u, static_cast<const TargetRegisterClass*>(nullptr));
 
   // Figure out which register class contains this reg.
   const TargetRegisterInfo *RI = getTargetMachine().getRegisterInfo();
@@ -2429,7 +2429,7 @@ TargetLowering::ConstraintWeight
   Value *CallOperandVal = info.CallOperandVal;
     // If we don't have a value, we can't do a match,
     // but allow it at the lowest weight.
-  if (CallOperandVal == NULL)
+  if (!CallOperandVal)
     return CW_Default;
   // Look at the constraint type.
   switch (*constraint) {

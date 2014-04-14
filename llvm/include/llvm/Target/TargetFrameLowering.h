@@ -105,7 +105,7 @@ public:
   virtual const SpillSlot *
   getCalleeSavedSpillSlots(unsigned &NumEntries) const {
     NumEntries = 0;
-    return 0;
+    return nullptr;
   }
 
   /// targetHandlesStackFrameRounding - Returns true if the target is
@@ -190,7 +190,7 @@ public:
   /// before PrologEpilogInserter scans the physical registers used to determine
   /// what callee saved registers should be spilled. This method is optional.
   virtual void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                                RegScavenger *RS = NULL) const {
+                                             RegScavenger *RS = nullptr) const {
 
   }
 
@@ -200,7 +200,7 @@ public:
   /// replaced with direct constants.  This method is optional.
   ///
   virtual void processFunctionBeforeFrameFinalized(MachineFunction &MF,
-                                               RegScavenger *RS = NULL) const {
+                                             RegScavenger *RS = nullptr) const {
   }
 
   /// eliminateCallFramePseudoInstr - This method is called during prolog/epilog

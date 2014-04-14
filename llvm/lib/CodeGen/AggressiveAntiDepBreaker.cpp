@@ -121,7 +121,7 @@ AggressiveAntiDepBreaker(MachineFunction& MFi,
   TII(MF.getTarget().getInstrInfo()),
   TRI(MF.getTarget().getRegisterInfo()),
   RegClassInfo(RCI),
-  State(NULL) {
+  State(nullptr) {
   /* Collect a bitset of all registers that are only broken if they
      are on the critical path. */
   for (unsigned i = 0, e = CriticalPathRCs.size(); i < e; ++i) {
@@ -144,7 +144,7 @@ AggressiveAntiDepBreaker::~AggressiveAntiDepBreaker() {
 }
 
 void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
-  assert(State == NULL);
+  assert(!State);
   State = new AggressiveAntiDepState(TRI->getNumRegs(), BB);
 
   bool IsReturnBlock = (!BB->empty() && BB->back().isReturn());
@@ -183,7 +183,7 @@ void AggressiveAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
 
 void AggressiveAntiDepBreaker::FinishBlock() {
   delete State;
-  State = NULL;
+  State = nullptr;
 }
 
 void AggressiveAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
@@ -230,13 +230,13 @@ bool AggressiveAntiDepBreaker::IsImplicitDefUse(MachineInstr *MI,
   if (Reg == 0)
     return false;
 
-  MachineOperand *Op = NULL;
+  MachineOperand *Op = nullptr;
   if (MO.isDef())
     Op = MI->findRegisterUseOperand(Reg, true);
   else
     Op = MI->findRegisterDefOperand(Reg);
 
-  return((Op != NULL) && Op->isImplicit());
+  return(Op && Op->isImplicit());
 }
 
 void AggressiveAntiDepBreaker::GetPassthruRegs(MachineInstr *MI,
@@ -273,10 +273,10 @@ static void AntiDepEdges(const SUnit *SU, std::vector<const SDep*>& Edges) {
 /// CriticalPathStep - Return the next SUnit after SU on the bottom-up
 /// critical path.
 static const SUnit *CriticalPathStep(const SUnit *SU) {
-  const SDep *Next = 0;
+  const SDep *Next = nullptr;
   unsigned NextDepth = 0;
   // Find the predecessor edge with the greatest depth.
-  if (SU != 0) {
+  if (SU) {
     for (SUnit::const_pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
          P != PE; ++P) {
       const SUnit *PredSU = P->getSUnit();
@@ -292,7 +292,7 @@ static const SUnit *CriticalPathStep(const SUnit *SU) {
     }
   }
 
-  return (Next) ? Next->getSUnit() : 0;
+  return (Next) ? Next->getSUnit() : nullptr;
 }
 
 void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
@@ -309,8 +309,8 @@ void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
     DefIndices[Reg] = ~0u;
     RegRefs.erase(Reg);
     State->LeaveGroup(Reg);
-    DEBUG(if (header != NULL) {
-        dbgs() << header << TRI->getName(Reg); header = NULL; });
+    DEBUG(if (header) {
+        dbgs() << header << TRI->getName(Reg); header = nullptr; });
     DEBUG(dbgs() << "->g" << State->GetGroup(Reg) << tag);
   }
   // Repeat for subregisters.
@@ -321,14 +321,14 @@ void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
       DefIndices[SubregReg] = ~0u;
       RegRefs.erase(SubregReg);
       State->LeaveGroup(SubregReg);
-      DEBUG(if (header != NULL) {
-          dbgs() << header << TRI->getName(Reg); header = NULL; });
+      DEBUG(if (header) {
+          dbgs() << header << TRI->getName(Reg); header = nullptr; });
       DEBUG(dbgs() << " " << TRI->getName(SubregReg) << "->g" <<
             State->GetGroup(SubregReg) << tag);
     }
   }
 
-  DEBUG(if ((header == NULL) && (footer != NULL)) dbgs() << footer);
+  DEBUG(if (!header && footer) dbgs() << footer);
 }
 
 void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
@@ -382,7 +382,7 @@ void AggressiveAntiDepBreaker::PrescanInstruction(MachineInstr *MI,
     }
 
     // Note register reference...
-    const TargetRegisterClass *RC = NULL;
+    const TargetRegisterClass *RC = nullptr;
     if (i < MI->getDesc().getNumOperands())
       RC = TII->getRegClass(MI->getDesc(), i, TRI, MF);
     AggressiveAntiDepState::RegisterReference RR = { &MO, RC };
@@ -466,7 +466,7 @@ void AggressiveAntiDepBreaker::ScanInstruction(MachineInstr *MI,
     }
 
     // Note register reference...
-    const TargetRegisterClass *RC = NULL;
+    const TargetRegisterClass *RC = nullptr;
     if (i < MI->getDesc().getNumOperands())
       RC = TII->getRegClass(MI->getDesc(), i, TRI, MF);
     AggressiveAntiDepState::RegisterReference RR = { &MO, RC };
@@ -516,7 +516,7 @@ BitVector AggressiveAntiDepBreaker::GetRenameRegisters(unsigned Reg) {
        AggressiveAntiDepState::RegisterReference>::iterator Q = Range.first,
        QE = Range.second; Q != QE; ++Q) {
     const TargetRegisterClass *RC = Q->second.RC;
-    if (RC == NULL) continue;
+    if (!RC) continue;
 
     BitVector RCBV = TRI->getAllocatableSet(MF, RC);
     if (first) {
@@ -734,8 +734,8 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
   // Track progress along the critical path through the SUnit graph as
   // we walk the instructions. This is needed for regclasses that only
   // break critical-path anti-dependencies.
-  const SUnit *CriticalPathSU = 0;
-  MachineInstr *CriticalPathMI = 0;
+  const SUnit *CriticalPathSU = nullptr;
+  MachineInstr *CriticalPathMI = nullptr;
   if (CriticalPathSet.any()) {
     for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
       const SUnit *SU = &SUnits[i];
@@ -788,10 +788,10 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
 
     // If MI is not on the critical path, then we don't rename
     // registers in the CriticalPathSet.
-    BitVector *ExcludeRegs = NULL;
+    BitVector *ExcludeRegs = nullptr;
     if (MI == CriticalPathMI) {
       CriticalPathSU = CriticalPathStep(CriticalPathSU);
-      CriticalPathMI = (CriticalPathSU) ? CriticalPathSU->getInstr() : 0;
+      CriticalPathMI = (CriticalPathSU) ? CriticalPathSU->getInstr() : nullptr;
     } else if (CriticalPathSet.any()) {
       ExcludeRegs = &CriticalPathSet;
     }
@@ -815,7 +815,7 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
           // Don't break anti-dependencies on non-allocatable registers.
           DEBUG(dbgs() << " (non-allocatable)\n");
           continue;
-        } else if ((ExcludeRegs != NULL) && ExcludeRegs->test(AntiDepReg)) {
+        } else if (ExcludeRegs && ExcludeRegs->test(AntiDepReg)) {
           // Don't break anti-dependencies for critical path registers
           // if not on the critical path
           DEBUG(dbgs() << " (not critical-path)\n");
@@ -829,9 +829,8 @@ unsigned AggressiveAntiDepBreaker::BreakAntiDependencies(
         } else {
           // No anti-dep breaking for implicit deps
           MachineOperand *AntiDepOp = MI->findRegisterDefOperand(AntiDepReg);
-          assert(AntiDepOp != NULL &&
-                 "Can't find index for defined register operand");
-          if ((AntiDepOp == NULL) || AntiDepOp->isImplicit()) {
+          assert(AntiDepOp && "Can't find index for defined register operand");
+          if (!AntiDepOp || AntiDepOp->isImplicit()) {
             DEBUG(dbgs() << " (implicit)\n");
             continue;
           }

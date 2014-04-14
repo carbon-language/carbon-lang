@@ -1177,7 +1177,7 @@ branchRoot(unsigned Position) {
   if (Nodes == 1)
     size[0] = rootSize;
   else
-    NewOffset = distribute(Nodes, rootSize, Leaf::Capacity,  NULL, size,
+    NewOffset = distribute(Nodes, rootSize, Leaf::Capacity,  nullptr, size,
                            Position, true);
 
   // Allocate new nodes.
@@ -1218,7 +1218,7 @@ splitRoot(unsigned Position) {
   if (Nodes == 1)
     Size[0] = rootSize;
   else
-    NewOffset = distribute(Nodes, rootSize, Leaf::Capacity,  NULL, Size,
+    NewOffset = distribute(Nodes, rootSize, Leaf::Capacity,  nullptr, Size,
                            Position, true);
 
   // Allocate new nodes.
@@ -1346,7 +1346,7 @@ protected:
 
 public:
   /// const_iterator - Create an iterator that isn't pointing anywhere.
-  const_iterator() : map(0) {}
+  const_iterator() : map(nullptr) {}
 
   /// setMap - Change the map iterated over. This call must be followed by a
   /// call to goToBegin(), goToEnd(), or find()

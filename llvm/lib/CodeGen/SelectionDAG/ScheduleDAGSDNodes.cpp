@@ -46,7 +46,7 @@ static cl::opt<int> HighLatencyCycles(
            "instructions take for targets with no itinerary"));
 
 ScheduleDAGSDNodes::ScheduleDAGSDNodes(MachineFunction &mf)
-  : ScheduleDAG(mf), BB(0), DAG(0),
+  : ScheduleDAG(mf), BB(nullptr), DAG(nullptr),
     InstrItins(mf.getTarget().getInstrItineraryData()) {}
 
 /// Run - perform scheduling.
@@ -67,12 +67,12 @@ void ScheduleDAGSDNodes::Run(SelectionDAG *dag, MachineBasicBlock *bb) {
 ///
 SUnit *ScheduleDAGSDNodes::newSUnit(SDNode *N) {
 #ifndef NDEBUG
-  const SUnit *Addr = 0;
+  const SUnit *Addr = nullptr;
   if (!SUnits.empty())
     Addr = &SUnits[0];
 #endif
   SUnits.push_back(SUnit(N, (unsigned)SUnits.size()));
-  assert((Addr == 0 || Addr == &SUnits[0]) &&
+  assert((Addr == nullptr || Addr == &SUnits[0]) &&
          "SUnits std::vector reallocated on the fly!");
   SUnits.back().OrigNode = &SUnits.back();
   SUnit *SU = &SUnits.back();
@@ -143,7 +143,7 @@ static void CloneNodeWithValues(SDNode *N, SelectionDAG *DAG,
     Ops.push_back(ExtraOper);
 
   SDVTList VTList = DAG->getVTList(&VTs[0], VTs.size());
-  MachineSDNode::mmo_iterator Begin = 0, End = 0;
+  MachineSDNode::mmo_iterator Begin = nullptr, End = nullptr;
   MachineSDNode *MN = dyn_cast<MachineSDNode>(N);
 
   // Store memory references.
@@ -205,7 +205,7 @@ static void RemoveUnusedGlue(SDNode *N, SelectionDAG *DAG) {
 /// outputs to ensure they are scheduled together and in order. This
 /// optimization may benefit some targets by improving cache locality.
 void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
-  SDNode *Chain = 0;
+  SDNode *Chain = nullptr;
   unsigned NumOps = Node->getNumOperands();
   if (Node->getOperand(NumOps-1).getValueType() == MVT::Other)
     Chain = Node->getOperand(NumOps-1).getNode();
@@ -271,7 +271,7 @@ void ScheduleDAGSDNodes::ClusterNeighboringLoads(SDNode *Node) {
   // Cluster loads by adding MVT::Glue outputs and inputs. This also
   // ensure they are scheduled in order of increasing addresses.
   SDNode *Lead = Loads[0];
-  SDValue InGlue = SDValue(0, 0);
+  SDValue InGlue = SDValue(nullptr, 0);
   if (AddGlue(Lead, InGlue, true, DAG))
     InGlue = SDValue(Lead, Lead->getNumValues() - 1);
   for (unsigned I = 1, E = Loads.size(); I != E; ++I) {
@@ -572,7 +572,7 @@ void ScheduleDAGSDNodes::RegDefIter::Advance() {
       return; // Found a normal regdef.
     }
     Node = Node->getGluedNode();
-    if (Node == NULL) {
+    if (!Node) {
       return; // No values left to visit.
     }
     InitNodeNumDefs();
@@ -745,7 +745,7 @@ ProcessSourceNode(SDNode *N, SelectionDAG *DAG, InstrEmitter &Emitter,
       // BB->back().isPHI() test will not fire when we want it to.
       std::prev(Emitter.getInsertPos())->isPHI()) {
     // Did not insert any instruction.
-    Orders.push_back(std::make_pair(Order, (MachineInstr*)0));
+    Orders.push_back(std::make_pair(Order, (MachineInstr*)nullptr));
     return;
   }
 

@@ -48,7 +48,7 @@ class LivePhysRegs {
   LivePhysRegs &operator=(const LivePhysRegs&) LLVM_DELETED_FUNCTION;
 public:
   /// \brief Constructs a new empty LivePhysRegs set.
-  LivePhysRegs() : TRI(0), LiveRegs() {}
+  LivePhysRegs() : TRI(nullptr), LiveRegs() {}
 
   /// \brief Constructs and initialize an empty LivePhysRegs set.
   LivePhysRegs(const TargetRegisterInfo *TRI) : TRI(TRI) {

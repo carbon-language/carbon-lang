@@ -23,7 +23,7 @@ using namespace llvm;
 void MachineRegisterInfo::Delegate::anchor() {}
 
 MachineRegisterInfo::MachineRegisterInfo(const TargetMachine &TM)
-  : TM(TM), TheDelegate(0), IsSSA(true), TracksLiveness(true) {
+  : TM(TM), TheDelegate(nullptr), IsSSA(true), TracksLiveness(true) {
   VRegInfo.reserve(256);
   RegAllocHints.reserve(256);
   UsedRegUnits.resize(getTargetRegisterInfo()->getNumRegUnits());
@@ -60,7 +60,7 @@ MachineRegisterInfo::constrainRegClass(unsigned Reg,
   if (!NewRC || NewRC == OldRC)
     return NewRC;
   if (NewRC->getNumRegs() < MinNumRegs)
-    return 0;
+    return nullptr;
   setRegClass(Reg, NewRC);
   return NewRC;
 }
@@ -182,7 +182,7 @@ void MachineRegisterInfo::addRegOperandToUseList(MachineOperand *MO) {
   // Head is NULL for an empty list.
   if (!Head) {
     MO->Contents.Reg.Prev = MO;
-    MO->Contents.Reg.Next = 0;
+    MO->Contents.Reg.Next = nullptr;
     HeadRef = MO;
     return;
   }
@@ -203,7 +203,7 @@ void MachineRegisterInfo::addRegOperandToUseList(MachineOperand *MO) {
     HeadRef = MO;
   } else {
     // Insert use at the end.
-    MO->Contents.Reg.Next = 0;
+    MO->Contents.Reg.Next = nullptr;
     Last->Contents.Reg.Next = MO;
   }
 }
@@ -227,8 +227,8 @@ void MachineRegisterInfo::removeRegOperandFromUseList(MachineOperand *MO) {
 
   (Next ? Next : Head)->Contents.Reg.Prev = Prev;
 
-  MO->Contents.Reg.Prev = 0;
-  MO->Contents.Reg.Next = 0;
+  MO->Contents.Reg.Prev = nullptr;
+  MO->Contents.Reg.Next = nullptr;
 }
 
 /// Move NumOps operands from Src to Dst, updating use-def lists as needed.
@@ -303,17 +303,17 @@ MachineInstr *MachineRegisterInfo::getVRegDef(unsigned Reg) const {
   def_instr_iterator I = def_instr_begin(Reg);
   assert((I.atEnd() || std::next(I) == def_instr_end()) &&
          "getVRegDef assumes a single definition or no definition");
-  return !I.atEnd() ? &*I : 0;
+  return !I.atEnd() ? &*I : nullptr;
 }
 
 /// getUniqueVRegDef - Return the unique machine instr that defines the
 /// specified virtual register or null if none is found.  If there are
 /// multiple definitions or no definition, return null.
 MachineInstr *MachineRegisterInfo::getUniqueVRegDef(unsigned Reg) const {
-  if (def_empty(Reg)) return 0;
+  if (def_empty(Reg)) return nullptr;
   def_instr_iterator I = def_instr_begin(Reg);
   if (std::next(I) != def_instr_end())
-    return 0;
+    return nullptr;
   return &*I;
 }
 

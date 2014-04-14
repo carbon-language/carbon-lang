@@ -140,7 +140,7 @@ private:
     uint64_t ID;
     LocationVec Locations;
     LiveOutVec LiveOuts;
-    CallsiteInfo() : CSOffsetExpr(0), ID(0) {}
+    CallsiteInfo() : CSOffsetExpr(nullptr), ID(0) {}
     CallsiteInfo(const MCExpr *CSOffsetExpr, uint64_t ID,
                  LocationVec &Locations, LiveOutVec &LiveOuts)
       : CSOffsetExpr(CSOffsetExpr), ID(ID), Locations(Locations),

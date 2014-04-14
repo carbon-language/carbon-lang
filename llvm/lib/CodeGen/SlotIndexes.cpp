@@ -66,7 +66,7 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
   MBBRanges.resize(mf->getNumBlockIDs());
   idx2MBBMap.reserve(mf->size());
 
-  indexList.push_back(createEntry(0, index));
+  indexList.push_back(createEntry(nullptr, index));
 
   // Iterate over the function.
   for (MachineFunction::iterator mbbItr = mf->begin(), mbbEnd = mf->end();
@@ -91,7 +91,7 @@ bool SlotIndexes::runOnMachineFunction(MachineFunction &fn) {
     }
 
     // We insert one blank instructions between basic blocks.
-    indexList.push_back(createEntry(0, index += SlotIndex::InstrDist));
+    indexList.push_back(createEntry(nullptr, index += SlotIndex::InstrDist));
 
     MBBRanges[mbb->getNumber()].first = blockStartIndex;
     MBBRanges[mbb->getNumber()].second = SlotIndex(&indexList.back(),
@@ -182,7 +182,7 @@ void SlotIndexes::repairIndexesInRange(MachineBasicBlock *MBB,
            "Decremented past the beginning of region to repair.");
 
     MachineInstr *SlotMI = ListI->getInstr();
-    MachineInstr *MI = (MBBI != MBB->end() && !pastStart) ? MBBI : 0;
+    MachineInstr *MI = (MBBI != MBB->end() && !pastStart) ? MBBI : nullptr;
     bool MBBIAtBegin = MBBI == Begin && (!includeStart || pastStart);
 
     if (SlotMI == MI && !MBBIAtBegin) {
@@ -219,7 +219,7 @@ void SlotIndexes::dump() const {
        itr != indexList.end(); ++itr) {
     dbgs() << itr->getIndex() << " ";
 
-    if (itr->getInstr() != 0) {
+    if (itr->getInstr()) {
       dbgs() << *itr->getInstr();
     } else {
       dbgs() << "\n";

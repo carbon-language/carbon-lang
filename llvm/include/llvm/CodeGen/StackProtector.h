@@ -105,11 +105,12 @@ private:
 
 public:
   static char ID; // Pass identification, replacement for typeid.
-  StackProtector() : FunctionPass(ID), TM(0), TLI(0), SSPBufferSize(0) {
+  StackProtector()
+      : FunctionPass(ID), TM(nullptr), TLI(nullptr), SSPBufferSize(0) {
     initializeStackProtectorPass(*PassRegistry::getPassRegistry());
   }
   StackProtector(const TargetMachine *TM)
-      : FunctionPass(ID), TM(TM), TLI(0), Trip(TM->getTargetTriple()),
+      : FunctionPass(ID), TM(TM), TLI(nullptr), Trip(TM->getTargetTriple()),
         SSPBufferSize(8) {
     initializeStackProtectorPass(*PassRegistry::getPassRegistry());
   }

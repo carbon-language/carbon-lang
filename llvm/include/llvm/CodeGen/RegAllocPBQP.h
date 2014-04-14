@@ -159,7 +159,7 @@ namespace llvm {
 
   FunctionPass *
   createPBQPRegisterAllocator(std::unique_ptr<PBQPBuilder> &builder,
-                              char *customPassID = 0);
+                              char *customPassID = nullptr);
 }
 
 #endif /* LLVM_CODEGEN_REGALLOCPBQP_H */

@@ -283,11 +283,11 @@ unsigned FunctionLoweringInfo::CreateRegs(Type *Ty) {
 const FunctionLoweringInfo::LiveOutInfo *
 FunctionLoweringInfo::GetLiveOutRegInfo(unsigned Reg, unsigned BitWidth) {
   if (!LiveOutRegInfo.inBounds(Reg))
-    return NULL;
+    return nullptr;
 
   LiveOutInfo *LOI = &LiveOutRegInfo[Reg];
   if (!LOI->IsValid)
-    return NULL;
+    return nullptr;
 
   if (BitWidth > LOI->KnownZero.getBitWidth()) {
     LOI->NumSignBits = 1;

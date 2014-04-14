@@ -398,7 +398,7 @@ bool StackSlotColoring::RemoveDeadStores(MachineBasicBlock* MBB) {
     ++NumDead;
     changed = true;
 
-    if (NextMI->findRegisterUseOperandIdx(LoadReg, true, 0) != -1) {
+    if (NextMI->findRegisterUseOperandIdx(LoadReg, true, nullptr) != -1) {
       ++NumDead;
       toErase.push_back(I);
     }

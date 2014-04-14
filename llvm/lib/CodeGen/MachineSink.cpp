@@ -332,16 +332,16 @@ MachineBasicBlock *MachineSinking::SplitCriticalEdge(MachineInstr *MI,
                                                      MachineBasicBlock *ToBB,
                                                      bool BreakPHIEdge) {
   if (!isWorthBreakingCriticalEdge(MI, FromBB, ToBB))
-    return 0;
+    return nullptr;
 
   // Avoid breaking back edge. From == To means backedge for single BB loop.
   if (!SplitEdges || FromBB == ToBB)
-    return 0;
+    return nullptr;
 
   // Check for backedges of more "complex" loops.
   if (LI->getLoopFor(FromBB) == LI->getLoopFor(ToBB) &&
       LI->isLoopHeader(ToBB))
-    return 0;
+    return nullptr;
 
   // It's not always legal to break critical edges and sink the computation
   // to the edge.
@@ -388,7 +388,7 @@ MachineBasicBlock *MachineSinking::SplitCriticalEdge(MachineInstr *MI,
       if (*PI == FromBB)
         continue;
       if (!DT->dominates(ToBB, *PI))
-        return 0;
+        return nullptr;
     }
   }
 
@@ -484,7 +484,7 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
 
   // SuccToSinkTo - This is the successor to sink this instruction to, once we
   // decide.
-  MachineBasicBlock *SuccToSinkTo = 0;
+  MachineBasicBlock *SuccToSinkTo = nullptr;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isReg()) continue;  // Ignore non-register operands.
@@ -498,10 +498,10 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
         // and we can freely move its uses. Alternatively, if it's allocatable,
         // it could get allocated to something with a def during allocation.
         if (!MRI->isConstantPhysReg(Reg, *MBB->getParent()))
-          return NULL;
+          return nullptr;
       } else if (!MO.isDead()) {
         // A def that isn't dead. We can't move it.
-        return NULL;
+        return nullptr;
       }
     } else {
       // Virtual register uses are always safe to sink.
@@ -509,7 +509,7 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
 
       // If it's not safe to move defs of the register class, then abort.
       if (!TII->isSafeToMoveRegClassDefs(MRI->getRegClass(Reg)))
-        return NULL;
+        return nullptr;
 
       // FIXME: This picks a successor to sink into based on having one
       // successor that dominates all the uses.  However, there are cases where
@@ -532,7 +532,7 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
         bool LocalUse = false;
         if (!AllUsesDominatedByBlock(Reg, SuccToSinkTo, MBB,
                                      BreakPHIEdge, LocalUse))
-          return NULL;
+          return nullptr;
 
         continue;
       }
@@ -558,26 +558,26 @@ MachineBasicBlock *MachineSinking::FindSuccToSinkTo(MachineInstr *MI,
         }
         if (LocalUse)
           // Def is used locally, it's never safe to move this def.
-          return NULL;
+          return nullptr;
       }
 
       // If we couldn't find a block to sink to, ignore this instruction.
-      if (SuccToSinkTo == 0)
-        return NULL;
-      else if (!isProfitableToSinkTo(Reg, MI, MBB, SuccToSinkTo))
-        return NULL;
+      if (!SuccToSinkTo)
+        return nullptr;
+      if (!isProfitableToSinkTo(Reg, MI, MBB, SuccToSinkTo))
+        return nullptr;
     }
   }
 
   // It is not possible to sink an instruction into its own block.  This can
   // happen with loops.
   if (MBB == SuccToSinkTo)
-    return NULL;
+    return nullptr;
 
   // It's not safe to sink instructions to EH landing pad. Control flow into
   // landing pad is implicitly defined.
   if (SuccToSinkTo && SuccToSinkTo->isLandingPad())
-    return NULL;
+    return nullptr;
 
   return SuccToSinkTo;
 }
@@ -607,7 +607,7 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   MachineBasicBlock *SuccToSinkTo = FindSuccToSinkTo(MI, ParentBlock, BreakPHIEdge);
 
   // If there are no outputs, it must have side-effects.
-  if (SuccToSinkTo == 0)
+  if (!SuccToSinkTo)
     return false;
 
 

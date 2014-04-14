@@ -33,7 +33,7 @@ CriticalAntiDepBreaker(MachineFunction& MFi, const RegisterClassInfo &RCI) :
   TII(MF.getTarget().getInstrInfo()),
   TRI(MF.getTarget().getRegisterInfo()),
   RegClassInfo(RCI),
-  Classes(TRI->getNumRegs(), static_cast<const TargetRegisterClass *>(0)),
+  Classes(TRI->getNumRegs(), nullptr),
   KillIndices(TRI->getNumRegs(), 0),
   DefIndices(TRI->getNumRegs(), 0),
   KeepRegs(TRI->getNumRegs(), false) {}
@@ -45,7 +45,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
   const unsigned BBSize = BB->size();
   for (unsigned i = 0, e = TRI->getNumRegs(); i != e; ++i) {
     // Clear out the register class data.
-    Classes[i] = static_cast<const TargetRegisterClass *>(0);
+    Classes[i] = nullptr;
 
     // Initialize the indices to indicate that no registers are live.
     KillIndices[i] = ~0u;
@@ -124,7 +124,7 @@ void CriticalAntiDepBreaker::Observe(MachineInstr *MI, unsigned Count,
 /// CriticalPathStep - Return the next SUnit after SU on the bottom-up
 /// critical path.
 static const SDep *CriticalPathStep(const SUnit *SU) {
-  const SDep *Next = 0;
+  const SDep *Next = nullptr;
   unsigned NextDepth = 0;
   // Find the predecessor edge with the greatest depth.
   for (SUnit::const_pred_iterator P = SU->Preds.begin(), PE = SU->Preds.end();
@@ -171,7 +171,7 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
     if (!MO.isReg()) continue;
     unsigned Reg = MO.getReg();
     if (Reg == 0) continue;
-    const TargetRegisterClass *NewRC = 0;
+    const TargetRegisterClass *NewRC = nullptr;
 
     if (i < MI->getDesc().getNumOperands())
       NewRC = TII->getRegClass(MI->getDesc(), i, TRI, MF);
@@ -227,7 +227,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
             DefIndices[i] = Count;
             KillIndices[i] = ~0u;
             KeepRegs.reset(i);
-            Classes[i] = 0;
+            Classes[i] = nullptr;
             RegRefs.erase(i);
           }
 
@@ -244,7 +244,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
               (DefIndices[Reg] == ~0u)) &&
              "Kill and Def maps aren't consistent for Reg!");
       KeepRegs.reset(Reg);
-      Classes[Reg] = 0;
+      Classes[Reg] = nullptr;
       RegRefs.erase(Reg);
       // Repeat, for all subregs.
       for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
@@ -252,7 +252,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
         DefIndices[SubregReg] = Count;
         KillIndices[SubregReg] = ~0u;
         KeepRegs.reset(SubregReg);
-        Classes[SubregReg] = 0;
+        Classes[SubregReg] = nullptr;
         RegRefs.erase(SubregReg);
       }
       // Conservatively mark super-registers as unusable.
@@ -267,7 +267,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
     if (Reg == 0) continue;
     if (!MO.isUse()) continue;
 
-    const TargetRegisterClass *NewRC = 0;
+    const TargetRegisterClass *NewRC = nullptr;
     if (i < MI->getDesc().getNumOperands())
       NewRC = TII->getRegClass(MI->getDesc(), i, TRI, MF);
 
@@ -419,7 +419,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
   DenseMap<MachineInstr*,const SUnit*> MISUnitMap;
 
   // Find the node at the bottom of the critical path.
-  const SUnit *Max = 0;
+  const SUnit *Max = nullptr;
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
     const SUnit *SU = &SUnits[i];
     MISUnitMap[SU->getInstr()] = SU;
@@ -551,8 +551,8 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
         CriticalPathMI = CriticalPathSU->getInstr();
       } else {
         // We've reached the end of the critical path.
-        CriticalPathSU = 0;
-        CriticalPathMI = 0;
+        CriticalPathSU = nullptr;
+        CriticalPathMI = nullptr;
       }
     }
 
@@ -589,8 +589,9 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
 
     // Determine AntiDepReg's register class, if it is live and is
     // consistently used within a single class.
-    const TargetRegisterClass *RC = AntiDepReg != 0 ? Classes[AntiDepReg] : 0;
-    assert((AntiDepReg == 0 || RC != NULL) &&
+    const TargetRegisterClass *RC = AntiDepReg != 0 ? Classes[AntiDepReg]
+                                                    : nullptr;
+    assert((AntiDepReg == 0 || RC != nullptr) &&
            "Register should be live if it's causing an anti-dependence!");
     if (RC == reinterpret_cast<TargetRegisterClass *>(-1))
       AntiDepReg = 0;
@@ -638,7 +639,7 @@ BreakAntiDependencies(const std::vector<SUnit>& SUnits,
                 (DefIndices[NewReg] == ~0u)) &&
              "Kill and Def maps aren't consistent for NewReg!");
 
-        Classes[AntiDepReg] = 0;
+        Classes[AntiDepReg] = nullptr;
         DefIndices[AntiDepReg] = KillIndices[AntiDepReg];
         KillIndices[AntiDepReg] = ~0u;
         assert(((KillIndices[AntiDepReg] == ~0u) !=

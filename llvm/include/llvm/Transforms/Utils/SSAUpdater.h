@@ -56,7 +56,7 @@ private:
 public:
   /// If InsertedPHIs is specified, it will be filled
   /// in with all PHI Nodes created by rewriting.
-  explicit SSAUpdater(SmallVectorImpl<PHINode*> *InsertedPHIs = 0);
+  explicit SSAUpdater(SmallVectorImpl<PHINode*> *InsertedPHIs = nullptr);
   ~SSAUpdater();
 
   /// \brief Reset this object to get ready for a new set of SSA updates with

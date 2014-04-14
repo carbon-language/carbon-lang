@@ -674,7 +674,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_BR_CC(SDNode *N) {
 
   // If softenSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
-  if (NewRHS.getNode() == 0) {
+  if (!NewRHS.getNode()) {
     NewRHS = DAG.getConstant(0, NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
@@ -720,7 +720,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_SELECT_CC(SDNode *N) {
 
   // If softenSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
-  if (NewRHS.getNode() == 0) {
+  if (!NewRHS.getNode()) {
     NewRHS = DAG.getConstant(0, NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
@@ -742,7 +742,7 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_SETCC(SDNode *N) {
   TLI.softenSetCCOperands(DAG, VT, NewLHS, NewRHS, CCCode, SDLoc(N));
 
   // If softenSetCCOperands returned a scalar, use it.
-  if (NewRHS.getNode() == 0) {
+  if (!NewRHS.getNode()) {
     assert(NewLHS.getValueType() == N->getValueType(0) &&
            "Unexpected setcc expansion!");
     return NewLHS;
@@ -1340,7 +1340,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_BR_CC(SDNode *N) {
 
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
-  if (NewRHS.getNode() == 0) {
+  if (!NewRHS.getNode()) {
     NewRHS = DAG.getConstant(0, NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
@@ -1433,7 +1433,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_SELECT_CC(SDNode *N) {
 
   // If ExpandSetCCOperands returned a scalar, we need to compare the result
   // against zero to select between true and false values.
-  if (NewRHS.getNode() == 0) {
+  if (!NewRHS.getNode()) {
     NewRHS = DAG.getConstant(0, NewLHS.getValueType());
     CCCode = ISD::SETNE;
   }
@@ -1450,7 +1450,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_SETCC(SDNode *N) {
   FloatExpandSetCCOperands(NewLHS, NewRHS, CCCode, SDLoc(N));
 
   // If ExpandSetCCOperands returned a scalar, use it.
-  if (NewRHS.getNode() == 0) {
+  if (!NewRHS.getNode()) {
     assert(NewLHS.getValueType() == N->getValueType(0) &&
            "Unexpected setcc expansion!");
     return NewLHS;

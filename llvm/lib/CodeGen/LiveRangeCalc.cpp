@@ -121,7 +121,7 @@ void LiveRangeCalc::updateLiveIns() {
       // The value is live-through, update LiveOut as well.
       // Defer the Domtree lookup until it is needed.
       assert(Seen.test(MBB->getNumber()));
-      LiveOut[MBB] = LiveOutPair(I->Value, (MachineDomTreeNode *)0);
+      LiveOut[MBB] = LiveOutPair(I->Value, (MachineDomTreeNode *)nullptr);
     }
     Updater.setDest(&I->LR);
     Updater.add(Start, End, I->Value);
@@ -174,7 +174,7 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
 
   // Remember if we have seen more than one value.
   bool UniqueVNI = true;
-  VNInfo *TheVNI = 0;
+  VNInfo *TheVNI = nullptr;
 
   // Using Seen as a visited set, perform a BFS for all reaching defs.
   for (unsigned i = 0; i != WorkList.size(); ++i) {
@@ -251,7 +251,7 @@ bool LiveRangeCalc::findReachingDefs(LiveRange &LR, MachineBasicBlock &KillMBB,
          End = Kill;
        else
          LiveOut[MF->getBlockNumbered(*I)] =
-           LiveOutPair(TheVNI, (MachineDomTreeNode *)0);
+           LiveOutPair(TheVNI, nullptr);
        Updater.add(Start, End, TheVNI);
     }
     return true;
@@ -345,7 +345,7 @@ void LiveRangeCalc::updateSSA() {
         VNInfo *VNI = LR.getNextValue(Start, *Alloc);
         I->Value = VNI;
         // This block is done, we know the final value.
-        I->DomNode = 0;
+        I->DomNode = nullptr;
 
         // Add liveness since updateLiveIns now skips this node.
         if (I->Kill.isValid())

@@ -370,7 +370,7 @@ bool DAGTypeLegalizer::ScalarizeVectorOperand(SDNode *N, unsigned OpNo) {
         dbgs() << "\n");
   SDValue Res = SDValue();
 
-  if (Res.getNode() == 0) {
+  if (!Res.getNode()) {
     switch (N->getOpcode()) {
     default:
 #ifndef NDEBUG
@@ -1127,7 +1127,7 @@ bool DAGTypeLegalizer::SplitVectorOperand(SDNode *N, unsigned OpNo) {
   if (CustomLowerNode(N, N->getOperand(OpNo).getValueType(), false))
     return false;
 
-  if (Res.getNode() == 0) {
+  if (!Res.getNode()) {
     switch (N->getOpcode()) {
     default:
 #ifndef NDEBUG

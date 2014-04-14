@@ -157,13 +157,13 @@ class BlockFrequencyInfoImpl {
       PE = GraphTraits< Inverse<BlockT *> >::child_end(BB);
 
     if (PI == PE)
-      return 0;
+      return nullptr;
 
     BlockT *Pred = *PI;
 
     ++PI;
     if (PI != PE)
-      return 0;
+      return nullptr;
 
     return Pred;
   }
@@ -313,7 +313,7 @@ class BlockFrequencyInfoImpl {
     // Travel over all blocks in postorder.
     for (pot_iterator I = pot_begin(), E = pot_end(); I != E; ++I) {
       BlockT *BB = *I;
-      BlockT *LastTail = 0;
+      BlockT *LastTail = nullptr;
       DEBUG(dbgs() << "POT: " << getBlockName(BB) << "\n");
 
       for (typename GT::ChildIteratorType

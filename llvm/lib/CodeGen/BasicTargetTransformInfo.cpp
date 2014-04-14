@@ -34,7 +34,7 @@ class BasicTTI final : public ImmutablePass, public TargetTransformInfo {
   const TargetLoweringBase *getTLI() const { return TM->getTargetLowering(); }
 
 public:
-  BasicTTI() : ImmutablePass(ID), TM(0) {
+  BasicTTI() : ImmutablePass(ID), TM(nullptr) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 

@@ -182,7 +182,7 @@ AnalysisType *Pass::getAnalysisIfAvailable() const {
   const void *PI = &AnalysisType::ID;
 
   Pass *ResultPass = Resolver->getAnalysisIfAvailable(PI, true);
-  if (!ResultPass) return 0;
+  if (!ResultPass) return nullptr;
 
   // Because the AnalysisType may not be a subclass of pass (for
   // AnalysisGroups), we use getAdjustedAnalysisPointer here to potentially

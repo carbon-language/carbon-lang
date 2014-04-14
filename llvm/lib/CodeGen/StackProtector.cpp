@@ -83,7 +83,7 @@ bool StackProtector::runOnFunction(Function &Fn) {
   M = F->getParent();
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  DT = DTWP ? &DTWP->getDomTree() : 0;
+  DT = DTWP ? &DTWP->getDomTree() : nullptr;
   TLI = TM->getTargetLowering();
 
   if (!RequiresStackProtector())
@@ -319,7 +319,7 @@ static CallInst *FindPotentialTailCall(BasicBlock *BB, ReturnInst *RI,
     SearchCounter++;
   }
 
-  return 0;
+  return nullptr;
 }
 
 /// Insert code into the entry block that stores the __stack_chk_guard
@@ -354,7 +354,7 @@ static bool CreatePrologue(Function *F, Module *M, ReturnInst *RI,
   }
 
   IRBuilder<> B(&F->getEntryBlock().front());
-  AI = B.CreateAlloca(PtrTy, 0, "StackGuardSlot");
+  AI = B.CreateAlloca(PtrTy, nullptr, "StackGuardSlot");
   LoadInst *LI = B.CreateLoad(StackGuardVar, "StackGuard");
   B.CreateCall2(Intrinsic::getDeclaration(M, Intrinsic::stackprotector), LI,
                 AI);
@@ -372,8 +372,8 @@ bool StackProtector::InsertStackProtectors() {
   bool HasPrologue = false;
   bool SupportsSelectionDAGSP =
       EnableSelectionDAGSP && !TM->Options.EnableFastISel;
-  AllocaInst *AI = 0;       // Place on stack that stores the stack guard.
-  Value *StackGuardVar = 0; // The stack guard variable.
+  AllocaInst *AI = nullptr;       // Place on stack that stores the stack guard.
+  Value *StackGuardVar = nullptr; // The stack guard variable.
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E;) {
     BasicBlock *BB = I++;
@@ -390,14 +390,14 @@ bool StackProtector::InsertStackProtectors() {
     if (SupportsSelectionDAGSP) {
       // Since we have a potential tail call, insert the special stack check
       // intrinsic.
-      Instruction *InsertionPt = 0;
+      Instruction *InsertionPt = nullptr;
       if (CallInst *CI = FindPotentialTailCall(BB, RI, TLI)) {
         InsertionPt = CI;
       } else {
         InsertionPt = RI;
         // At this point we know that BB has a return statement so it *DOES*
         // have a terminator.
-        assert(InsertionPt != 0 && "BB must have a terminator instruction at "
+        assert(InsertionPt != nullptr && "BB must have a terminator instruction at "
                                    "this point.");
       }
 

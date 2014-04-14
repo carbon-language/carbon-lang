@@ -43,7 +43,7 @@ TargetInstrInfo::getRegClass(const MCInstrDesc &MCID, unsigned OpNum,
                              const TargetRegisterInfo *TRI,
                              const MachineFunction &MF) const {
   if (OpNum >= MCID.getNumOperands())
-    return 0;
+    return nullptr;
 
   short RegClass = MCID.OpInfo[OpNum].RegClass;
   if (MCID.OpInfo[OpNum].isLookupPtrRegClass())
@@ -51,7 +51,7 @@ TargetInstrInfo::getRegClass(const MCInstrDesc &MCID, unsigned OpNum,
 
   // Instructions like INSERT_SUBREG do not have fixed register classes.
   if (RegClass < 0)
-    return 0;
+    return nullptr;
 
   // Otherwise just look it up normally.
   return TRI->getRegClass(RegClass);
@@ -111,7 +111,7 @@ TargetInstrInfo::ReplaceTailWithBranchTo(MachineBasicBlock::iterator Tail,
 
   // If MBB isn't immediately before MBB, insert a branch to it.
   if (++MachineFunction::iterator(MBB) != MachineFunction::iterator(NewDest))
-    InsertBranch(*MBB, NewDest, 0, SmallVector<MachineOperand, 0>(),
+    InsertBranch(*MBB, NewDest, nullptr, SmallVector<MachineOperand, 0>(),
                  Tail->getDebugLoc());
   MBB->addSuccessor(NewDest);
 }
@@ -124,7 +124,7 @@ MachineInstr *TargetInstrInfo::commuteInstruction(MachineInstr *MI,
   bool HasDef = MCID.getNumDefs();
   if (HasDef && !MI->getOperand(0).isReg())
     // No idea how to commute this instruction. Target should implement its own.
-    return 0;
+    return nullptr;
   unsigned Idx1, Idx2;
   if (!findCommutedOpIndices(MI, Idx1, Idx2)) {
     std::string msg;
@@ -340,14 +340,14 @@ static const TargetRegisterClass *canFoldCopy(const MachineInstr *MI,
                                               unsigned FoldIdx) {
   assert(MI->isCopy() && "MI must be a COPY instruction");
   if (MI->getNumOperands() != 2)
-    return 0;
+    return nullptr;
   assert(FoldIdx<2 && "FoldIdx refers no nonexistent operand");
 
   const MachineOperand &FoldOp = MI->getOperand(FoldIdx);
   const MachineOperand &LiveOp = MI->getOperand(1-FoldIdx);
 
   if (FoldOp.getSubReg() || LiveOp.getSubReg())
-    return 0;
+    return nullptr;
 
   unsigned FoldReg = FoldOp.getReg();
   unsigned LiveReg = LiveOp.getReg();
@@ -359,13 +359,13 @@ static const TargetRegisterClass *canFoldCopy(const MachineInstr *MI,
   const TargetRegisterClass *RC = MRI.getRegClass(FoldReg);
 
   if (TargetRegisterInfo::isPhysicalRegister(LiveOp.getReg()))
-    return RC->contains(LiveOp.getReg()) ? RC : 0;
+    return RC->contains(LiveOp.getReg()) ? RC : nullptr;
 
   if (RC->hasSubClassEq(MRI.getRegClass(LiveReg)))
     return RC;
 
   // FIXME: Allow folding when register classes are memory compatible.
-  return 0;
+  return nullptr;
 }
 
 bool TargetInstrInfo::
@@ -399,7 +399,7 @@ static MachineInstr* foldPatchpoint(MachineFunction &MF,
   for (SmallVectorImpl<unsigned>::const_iterator I = Ops.begin(), E = Ops.end();
        I != E; ++I) {
     if (*I < StartIdx)
-      return 0;
+      return nullptr;
   }
 
   MachineInstr *NewMI =
@@ -454,7 +454,7 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
   assert(MBB && "foldMemoryOperand needs an inserted instruction");
   MachineFunction &MF = *MBB->getParent();
 
-  MachineInstr *NewMI = 0;
+  MachineInstr *NewMI = nullptr;
 
   if (MI->getOpcode() == TargetOpcode::STACKMAP ||
       MI->getOpcode() == TargetOpcode::PATCHPOINT) {
@@ -488,11 +488,11 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
 
   // Straight COPY may fold as load/store.
   if (!MI->isCopy() || Ops.size() != 1)
-    return 0;
+    return nullptr;
 
   const TargetRegisterClass *RC = canFoldCopy(MI, Ops[0]);
   if (!RC)
-    return 0;
+    return nullptr;
 
   const MachineOperand &MO = MI->getOperand(1-Ops[0]);
   MachineBasicBlock::iterator Pos = MI;
@@ -521,7 +521,7 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
   MachineFunction &MF = *MBB.getParent();
 
   // Ask the target to do the actual folding.
-  MachineInstr *NewMI = 0;
+  MachineInstr *NewMI = nullptr;
   int FrameIndex = 0;
 
   if ((MI->getOpcode() == TargetOpcode::STACKMAP ||
@@ -534,7 +534,7 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
     NewMI = foldMemoryOperandImpl(MF, MI, Ops, LoadMI);
   }
 
-  if (!NewMI) return 0;
+  if (!NewMI) return nullptr;
 
   NewMI = MBB.insert(MI, NewMI);
 

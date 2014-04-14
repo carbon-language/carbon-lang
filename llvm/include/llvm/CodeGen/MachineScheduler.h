@@ -250,7 +250,7 @@ public:
     ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, IsPostRA,
                       /*RemoveKillFlags=*/IsPostRA, C->LIS),
     AA(C->AA), SchedImpl(S), Topo(SUnits, &ExitSU), CurrentTop(),
-    CurrentBottom(), NextClusterPred(NULL), NextClusterSucc(NULL) {
+    CurrentBottom(), NextClusterPred(nullptr), NextClusterSucc(nullptr) {
 #ifndef NDEBUG
     NumInstrsScheduled = 0;
 #endif
@@ -377,7 +377,7 @@ protected:
 public:
   ScheduleDAGMILive(MachineSchedContext *C, MachineSchedStrategy *S):
     ScheduleDAGMI(C, S, /*IsPostRA=*/false), RegClassInfo(C->RegClassInfo),
-    DFSResult(0), ShouldTrackPressure(false), RPTracker(RegPressure),
+    DFSResult(nullptr), ShouldTrackPressure(false), RPTracker(RegPressure),
     TopRPTracker(TopPressure), BotRPTracker(BotPressure)
   {}
 
@@ -628,9 +628,9 @@ public:
   /// Pending queues extend the ready queues with the same ID and the
   /// PendingFlag set.
   SchedBoundary(unsigned ID, const Twine &Name):
-    DAG(0), SchedModel(0), Rem(0), Available(ID, Name+".A"),
+    DAG(nullptr), SchedModel(nullptr), Rem(nullptr), Available(ID, Name+".A"),
     Pending(ID << LogMaxQID, Name+".P"),
-    HazardRec(0) {
+    HazardRec(nullptr) {
     reset();
   }
 

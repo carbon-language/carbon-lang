@@ -86,7 +86,7 @@ namespace PBQP {
                      ConservativelyAllocatable,
                      NotProvablyAllocatable } ReductionState;
 
-      NodeMetadata() : RS(Unprocessed), DeniedOpts(0), OptUnsafeEdges(0) {}
+      NodeMetadata() : RS(Unprocessed), DeniedOpts(0), OptUnsafeEdges(nullptr){}
       ~NodeMetadata() { delete[] OptUnsafeEdges; }
 
       void setup(const Vector& Costs) {

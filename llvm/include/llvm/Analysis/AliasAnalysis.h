@@ -75,7 +75,7 @@ protected:
 
 public:
   static char ID; // Class identification, replacement for typeinfo
-  AliasAnalysis() : DL(0), TLI(0), AA(0) {}
+  AliasAnalysis() : DL(nullptr), TLI(nullptr), AA(nullptr) {}
   virtual ~AliasAnalysis();  // We want to be subclassed
 
   /// UnknownSize - This is a special value which can be used with the
@@ -116,8 +116,8 @@ public:
     /// the location, or null if there is no known unique tag.
     const MDNode *TBAATag;
 
-    explicit Location(const Value *P = 0, uint64_t S = UnknownSize,
-                      const MDNode *N = 0)
+    explicit Location(const Value *P = nullptr, uint64_t S = UnknownSize,
+                      const MDNode *N = nullptr)
       : Ptr(P), Size(S), TBAATag(N) {}
 
     Location getWithNewPtr(const Value *NewPtr) const {
@@ -134,7 +134,7 @@ public:
 
     Location getWithoutTBAATag() const {
       Location Copy(*this);
-      Copy.TBAATag = 0;
+      Copy.TBAATag = nullptr;
       return Copy;
     }
   };
@@ -560,12 +560,12 @@ struct DenseMapInfo<AliasAnalysis::Location> {
   static inline AliasAnalysis::Location getEmptyKey() {
     return
       AliasAnalysis::Location(DenseMapInfo<const Value *>::getEmptyKey(),
-                              0, 0);
+                              0, nullptr);
   }
   static inline AliasAnalysis::Location getTombstoneKey() {
     return
       AliasAnalysis::Location(DenseMapInfo<const Value *>::getTombstoneKey(),
-                              0, 0);
+                              0, nullptr);
   }
   static unsigned getHashValue(const AliasAnalysis::Location &Val) {
     return DenseMapInfo<const Value *>::getHashValue(Val.Ptr) ^

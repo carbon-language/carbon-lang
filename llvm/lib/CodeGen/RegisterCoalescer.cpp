@@ -195,7 +195,7 @@ namespace {
     bool runOnMachineFunction(MachineFunction&) override;
 
     /// print - Implement the dump method.
-    void print(raw_ostream &O, const Module* = 0) const override;
+    void print(raw_ostream &O, const Module* = nullptr) const override;
   };
 } /// end anonymous namespace
 
@@ -251,7 +251,7 @@ static bool isSplitEdge(const MachineBasicBlock *MBB) {
 bool CoalescerPair::setRegisters(const MachineInstr *MI) {
   SrcReg = DstReg = 0;
   SrcIdx = DstIdx = 0;
-  NewRC = 0;
+  NewRC = nullptr;
   Flipped = CrossClass = false;
 
   unsigned Src, Dst, SrcSub, DstSub;
@@ -397,7 +397,8 @@ void RegisterCoalescer::getAnalysisUsage(AnalysisUsage &AU) const {
 
 void RegisterCoalescer::eliminateDeadDefs() {
   SmallVector<unsigned, 8> NewRegs;
-  LiveRangeEdit(0, NewRegs, *MF, *LIS, 0, this).eliminateDeadDefs(DeadDefs);
+  LiveRangeEdit(nullptr, NewRegs, *MF, *LIS,
+                nullptr, this).eliminateDeadDefs(DeadDefs);
 }
 
 // Callback from eliminateDeadDefs().
@@ -923,7 +924,7 @@ bool RegisterCoalescer::eliminateUndefCopy(MachineInstr *CopyMI,
   // No intervals are live-in to CopyMI - it is undef.
   if (CP.isFlipped())
     DstInt = SrcInt;
-  SrcInt = 0;
+  SrcInt = nullptr;
 
   VNInfo *DeadVNI = DstInt->getVNInfoAt(Idx.getRegSlot());
   assert(DeadVNI && "No value defined in DstInt");
@@ -952,7 +953,7 @@ void RegisterCoalescer::updateRegDefsUses(unsigned SrcReg,
                                           unsigned DstReg,
                                           unsigned SubIdx) {
   bool DstIsPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
-  LiveInterval *DstInt = DstIsPhys ? 0 : &LIS->getInterval(DstReg);
+  LiveInterval *DstInt = DstIsPhys ? nullptr : &LIS->getInterval(DstReg);
 
   SmallPtrSet<MachineInstr*, 8> Visited;
   for (MachineRegisterInfo::reg_instr_iterator
@@ -1376,7 +1377,7 @@ class JoinVals {
     bool PrunedComputed;
 
     Val() : Resolution(CR_Keep), WriteLanes(0), ValidLanes(0),
-            RedefVNI(0), OtherVNI(0), ErasableImplicitDef(false),
+            RedefVNI(nullptr), OtherVNI(nullptr), ErasableImplicitDef(false),
             Pruned(false), PrunedComputed(false) {}
 
     bool isAnalyzed() const { return WriteLanes != 0; }
@@ -1482,7 +1483,7 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
   }
 
   // Get the instruction defining this value, compute the lanes written.
-  const MachineInstr *DefMI = 0;
+  const MachineInstr *DefMI = nullptr;
   if (VNI->isPHIDef()) {
     // Conservatively assume that all lanes in a PHI are valid.
     V.ValidLanes = V.WriteLanes = TRI->getSubRegIndexLaneMask(SubIdx);
@@ -2106,14 +2107,14 @@ copyCoalesceWorkList(MutableArrayRef<MachineInstr*> CurrList) {
     // Skip instruction pointers that have already been erased, for example by
     // dead code elimination.
     if (ErasedInstrs.erase(CurrList[i])) {
-      CurrList[i] = 0;
+      CurrList[i] = nullptr;
       continue;
     }
     bool Again = false;
     bool Success = joinCopy(CurrList[i], Again);
     Progress |= Success;
     if (Success || !Again)
-      CurrList[i] = 0;
+      CurrList[i] = nullptr;
   }
   return Progress;
 }
@@ -2153,7 +2154,7 @@ RegisterCoalescer::copyCoalesceInMBB(MachineBasicBlock *MBB) {
     CurrList(WorkList.begin() + PrevSize, WorkList.end());
   if (copyCoalesceWorkList(CurrList))
     WorkList.erase(std::remove(WorkList.begin() + PrevSize, WorkList.end(),
-                               (MachineInstr*)0), WorkList.end());
+                               (MachineInstr*)nullptr), WorkList.end());
 }
 
 void RegisterCoalescer::coalesceLocals() {

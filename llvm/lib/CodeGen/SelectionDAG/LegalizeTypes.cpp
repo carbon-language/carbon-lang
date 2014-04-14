@@ -159,7 +159,7 @@ void DAGTypeLegalizer::PerformExpensiveChecks() {
         if (Mapped & 128)
           dbgs() << " WidenedVectors";
         dbgs() << "\n";
-        llvm_unreachable(0);
+        llvm_unreachable(nullptr);
       }
     }
   }
@@ -433,7 +433,7 @@ NodeDone:
 
     if (Failed) {
       I->dump(&DAG); dbgs() << "\n";
-      llvm_unreachable(0);
+      llvm_unreachable(nullptr);
     }
   }
 #endif
@@ -736,7 +736,7 @@ void DAGTypeLegalizer::SetPromotedInteger(SDValue Op, SDValue Result) {
   AnalyzeNewValue(Result);
 
   SDValue &OpEntry = PromotedIntegers[Op];
-  assert(OpEntry.getNode() == 0 && "Node is already promoted!");
+  assert(!OpEntry.getNode() && "Node is already promoted!");
   OpEntry = Result;
 }
 
@@ -747,7 +747,7 @@ void DAGTypeLegalizer::SetSoftenedFloat(SDValue Op, SDValue Result) {
   AnalyzeNewValue(Result);
 
   SDValue &OpEntry = SoftenedFloats[Op];
-  assert(OpEntry.getNode() == 0 && "Node is already converted to integer!");
+  assert(!OpEntry.getNode() && "Node is already converted to integer!");
   OpEntry = Result;
 }
 
@@ -761,7 +761,7 @@ void DAGTypeLegalizer::SetScalarizedVector(SDValue Op, SDValue Result) {
   AnalyzeNewValue(Result);
 
   SDValue &OpEntry = ScalarizedVectors[Op];
-  assert(OpEntry.getNode() == 0 && "Node is already scalarized!");
+  assert(!OpEntry.getNode() && "Node is already scalarized!");
   OpEntry = Result;
 }
 
@@ -787,7 +787,7 @@ void DAGTypeLegalizer::SetExpandedInteger(SDValue Op, SDValue Lo,
 
   // Remember that this is the result of the node.
   std::pair<SDValue, SDValue> &Entry = ExpandedIntegers[Op];
-  assert(Entry.first.getNode() == 0 && "Node already expanded");
+  assert(!Entry.first.getNode() && "Node already expanded");
   Entry.first = Lo;
   Entry.second = Hi;
 }
@@ -814,7 +814,7 @@ void DAGTypeLegalizer::SetExpandedFloat(SDValue Op, SDValue Lo,
 
   // Remember that this is the result of the node.
   std::pair<SDValue, SDValue> &Entry = ExpandedFloats[Op];
-  assert(Entry.first.getNode() == 0 && "Node already expanded");
+  assert(!Entry.first.getNode() && "Node already expanded");
   Entry.first = Lo;
   Entry.second = Hi;
 }
@@ -843,7 +843,7 @@ void DAGTypeLegalizer::SetSplitVector(SDValue Op, SDValue Lo,
 
   // Remember that this is the result of the node.
   std::pair<SDValue, SDValue> &Entry = SplitVectors[Op];
-  assert(Entry.first.getNode() == 0 && "Node already split");
+  assert(!Entry.first.getNode() && "Node already split");
   Entry.first = Lo;
   Entry.second = Hi;
 }
@@ -855,7 +855,7 @@ void DAGTypeLegalizer::SetWidenedVector(SDValue Op, SDValue Result) {
   AnalyzeNewValue(Result);
 
   SDValue &OpEntry = WidenedVectors[Op];
-  assert(OpEntry.getNode() == 0 && "Node already widened!");
+  assert(!OpEntry.getNode() && "Node already widened!");
   OpEntry = Result;
 }
 
@@ -1007,7 +1007,7 @@ SDValue DAGTypeLegalizer::LibCallify(RTLIB::Libcall LC, SDNode *N,
   unsigned NumOps = N->getNumOperands();
   SDLoc dl(N);
   if (NumOps == 0) {
-    return TLI.makeLibCall(DAG, LC, N->getValueType(0), 0, 0, isSigned,
+    return TLI.makeLibCall(DAG, LC, N->getValueType(0), nullptr, 0, isSigned,
                            dl).first;
   } else if (NumOps == 1) {
     SDValue Op = N->getOperand(0);

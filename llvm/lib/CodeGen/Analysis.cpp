@@ -46,7 +46,7 @@ unsigned llvm::ComputeLinearIndex(Type *Ty,
         EI != EE; ++EI) {
       if (Indices && *Indices == unsigned(EI - EB))
         return ComputeLinearIndex(*EI, Indices+1, IndicesEnd, CurIndex);
-      CurIndex = ComputeLinearIndex(*EI, 0, 0, CurIndex);
+      CurIndex = ComputeLinearIndex(*EI, nullptr, nullptr, CurIndex);
     }
     return CurIndex;
   }
@@ -56,7 +56,7 @@ unsigned llvm::ComputeLinearIndex(Type *Ty,
     for (unsigned i = 0, e = ATy->getNumElements(); i != e; ++i) {
       if (Indices && *Indices == i)
         return ComputeLinearIndex(EltTy, Indices+1, IndicesEnd, CurIndex);
-      CurIndex = ComputeLinearIndex(EltTy, 0, 0, CurIndex);
+      CurIndex = ComputeLinearIndex(EltTy, nullptr, nullptr, CurIndex);
     }
     return CurIndex;
   }
@@ -228,7 +228,7 @@ static const Value *getNoopInput(const Value *V,
     // through.
     const Instruction *I = dyn_cast<Instruction>(V);
     if (!I || I->getNumOperands() == 0) return V;
-    const Value *NoopInput = 0;
+    const Value *NoopInput = nullptr;
 
     Value *Op = I->getOperand(0);
     if (isa<BitCastInst>(I)) {

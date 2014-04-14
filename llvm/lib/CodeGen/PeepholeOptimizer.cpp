@@ -183,7 +183,7 @@ optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
   // If UseSrcSubIdx is Set, SubIdx also applies to SrcReg, and only uses of
   // SrcReg:SubIdx should be replaced.
   bool UseSrcSubIdx = TM->getRegisterInfo()->
-    getSubClassWithSubReg(MRI->getRegClass(SrcReg), SubIdx) != 0;
+    getSubClassWithSubReg(MRI->getRegClass(SrcReg), SubIdx) != nullptr;
 
   // The source has other uses. See if we can replace the other uses with use of
   // the result of the extension.
@@ -358,7 +358,7 @@ static bool shareSameRegisterFile(const TargetRegisterInfo &TRI,
   unsigned SrcIdx, DefIdx;
   if (SrcSubReg && DefSubReg)
     return TRI.getCommonSuperRegClass(SrcRC, SrcSubReg, DefRC, DefSubReg,
-                                      SrcIdx, DefIdx) != NULL;
+                                      SrcIdx, DefIdx) != nullptr;
   // At most one of the register is a sub register, make it Src to avoid
   // duplicating the test.
   if (!SrcSubReg) {
@@ -368,9 +368,9 @@ static bool shareSameRegisterFile(const TargetRegisterInfo &TRI,
 
   // One of the register is a sub register, check if we can get a superclass.
   if (SrcSubReg)
-    return TRI.getMatchingSuperRegClass(SrcRC, DefRC, SrcSubReg) != NULL;
+    return TRI.getMatchingSuperRegClass(SrcRC, DefRC, SrcSubReg) != nullptr;
   // Plain copy.
-  return TRI.getCommonSubClass(DefRC, SrcRC) != NULL;
+  return TRI.getCommonSubClass(DefRC, SrcRC) != nullptr;
 }
 
 /// \brief Get the index of the definition and source for \p Copy
@@ -568,7 +568,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
   TM  = &MF.getTarget();
   TII = TM->getInstrInfo();
   MRI = &MF.getRegInfo();
-  DT  = Aggressive ? &getAnalysis<MachineDominatorTree>() : 0;
+  DT  = Aggressive ? &getAnalysis<MachineDominatorTree>() : nullptr;
 
   bool Changed = false;
 
@@ -643,7 +643,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
             // Save FoldAsLoadDefReg because optimizeLoadInstr() resets it and
             // we need it for markUsesInDebugValueAsUndef().
             unsigned FoldedReg = FoldAsLoadDefReg;
-            MachineInstr *DefMI = 0;
+            MachineInstr *DefMI = nullptr;
             MachineInstr *FoldMI = TII->optimizeLoadInstr(MI, MRI,
                                                           FoldAsLoadDefReg,
                                                           DefMI);

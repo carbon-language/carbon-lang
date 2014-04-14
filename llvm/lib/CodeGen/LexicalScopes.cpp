@@ -30,8 +30,8 @@ LexicalScopes::~LexicalScopes() { reset(); }
 
 /// reset - Reset the instance so that it's prepared for another function.
 void LexicalScopes::reset() {
-  MF = NULL;
-  CurrentFnLexicalScope = NULL;
+  MF = nullptr;
+  CurrentFnLexicalScope = nullptr;
   DeleteContainerSeconds(LexicalScopeMap);
   DeleteContainerSeconds(AbstractScopeMap);
   InlinedLexicalScopeMap.clear();
@@ -60,8 +60,8 @@ void LexicalScopes::extractLexicalScopes(
   // Scan each instruction and create scopes. First build working set of scopes.
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
        ++I) {
-    const MachineInstr *RangeBeginMI = NULL;
-    const MachineInstr *PrevMI = NULL;
+    const MachineInstr *RangeBeginMI = nullptr;
+    const MachineInstr *PrevMI = nullptr;
     DebugLoc PrevDL;
     for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
          II != IE; ++II) {
@@ -113,11 +113,11 @@ void LexicalScopes::extractLexicalScopes(
 /// findLexicalScope - Find lexical scope, either regular or inlined, for the
 /// given DebugLoc. Return NULL if not found.
 LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
-  MDNode *Scope = NULL;
-  MDNode *IA = NULL;
+  MDNode *Scope = nullptr;
+  MDNode *IA = nullptr;
   DL.getScopeAndInlinedAt(Scope, IA, MF->getFunction()->getContext());
   if (!Scope)
-    return NULL;
+    return nullptr;
 
   // The scope that we were created with could have an extra file - which
   // isn't what we care about in this case.
@@ -133,8 +133,8 @@ LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
 /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
 /// not available then create new lexical scope.
 LexicalScope *LexicalScopes::getOrCreateLexicalScope(DebugLoc DL) {
-  MDNode *Scope = NULL;
-  MDNode *InlinedAt = NULL;
+  MDNode *Scope = nullptr;
+  MDNode *InlinedAt = nullptr;
   DL.getScopeAndInlinedAt(Scope, InlinedAt, MF->getFunction()->getContext());
 
   if (InlinedAt) {
@@ -159,10 +159,10 @@ LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
   if (WScope)
     return WScope;
 
-  LexicalScope *Parent = NULL;
+  LexicalScope *Parent = nullptr;
   if (D.isLexicalBlock())
     Parent = getOrCreateLexicalScope(DebugLoc::getFromDILexicalBlock(Scope));
-  WScope = new LexicalScope(Parent, DIDescriptor(Scope), NULL, false);
+  WScope = new LexicalScope(Parent, DIDescriptor(Scope), nullptr, false);
   LexicalScopeMap.insert(std::make_pair(Scope, WScope));
   if (!Parent && DIDescriptor(Scope).isSubprogram() &&
       DISubprogram(Scope).describes(MF->getFunction()))
@@ -197,13 +197,13 @@ LexicalScope *LexicalScopes::getOrCreateAbstractScope(const MDNode *N) {
   if (AScope)
     return AScope;
 
-  LexicalScope *Parent = NULL;
+  LexicalScope *Parent = nullptr;
   if (Scope.isLexicalBlock()) {
     DILexicalBlock DB(N);
     DIDescriptor ParentDesc = DB.getContext();
     Parent = getOrCreateAbstractScope(ParentDesc);
   }
-  AScope = new LexicalScope(Parent, DIDescriptor(N), NULL, true);
+  AScope = new LexicalScope(Parent, DIDescriptor(N), nullptr, true);
   AbstractScopeMap[N] = AScope;
   if (DIDescriptor(N).isSubprogram())
     AbstractScopesList.push_back(AScope);
@@ -244,7 +244,7 @@ void LexicalScopes::assignInstructionRanges(
     SmallVectorImpl<InsnRange> &MIRanges,
     DenseMap<const MachineInstr *, LexicalScope *> &MI2ScopeMap) {
 
-  LexicalScope *PrevLexicalScope = NULL;
+  LexicalScope *PrevLexicalScope = nullptr;
   for (SmallVectorImpl<InsnRange>::const_iterator RI = MIRanges.begin(),
                                                   RE = MIRanges.end();
        RI != RE; ++RI) {

@@ -54,7 +54,7 @@ public:
       entry->incRef();
     }
     PoolRef& operator=(const PoolRef &r) {
-      assert(entry != 0 && "entry should not be null.");
+      assert(entry != nullptr && "entry should not be null.");
       PoolEntry *temp = r.entry;
       temp->incRef();
       entry->decRef();

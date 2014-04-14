@@ -331,13 +331,13 @@ LiveRange::iterator LiveRange::addSegmentFrom(Segment S, iterator From) {
 /// the value. If there is no live range before Kill, return NULL.
 VNInfo *LiveRange::extendInBlock(SlotIndex StartIdx, SlotIndex Kill) {
   if (empty())
-    return 0;
+    return nullptr;
   iterator I = std::upper_bound(begin(), end(), Kill.getPrevSlot());
   if (I == begin())
-    return 0;
+    return nullptr;
   --I;
   if (I->end <= StartIdx)
-    return 0;
+    return nullptr;
   if (I->end < Kill)
     extendSegmentEndTo(I, Kill);
   return I->valno;
@@ -435,7 +435,7 @@ void LiveRange::join(LiveRange &Other,
     OutIt->valno = NewVNInfo[LHSValNoAssignments[OutIt->valno->id]];
     for (iterator I = std::next(OutIt), E = end(); I != E; ++I) {
       VNInfo* nextValNo = NewVNInfo[LHSValNoAssignments[I->valno->id]];
-      assert(nextValNo != 0 && "Huh?");
+      assert(nextValNo && "Huh?");
 
       // If this live range has the same value # as its immediate predecessor,
       // and if they are neighbors, remove one Segment.  This happens when we
@@ -638,7 +638,7 @@ void LiveRange::verify() const {
     assert(I->start.isValid());
     assert(I->end.isValid());
     assert(I->start < I->end);
-    assert(I->valno != 0);
+    assert(I->valno != nullptr);
     assert(I->valno->id < valnos.size());
     assert(I->valno == valnos[I->valno->id]);
     if (std::next(I) != E) {
@@ -857,7 +857,7 @@ unsigned ConnectedVNInfoEqClasses::Classify(const LiveInterval *LI) {
   EqClass.clear();
   EqClass.grow(LI->getNumValNums());
 
-  const VNInfo *used = 0, *unused = 0;
+  const VNInfo *used = nullptr, *unused = nullptr;
 
   // Determine connections.
   for (LiveInterval::const_vni_iterator I = LI->vni_begin(), E = LI->vni_end();

@@ -96,8 +96,8 @@ void
 VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
   MachineRegisterInfo &mri = MF.getRegInfo();
   const TargetRegisterInfo &tri = *MF.getTarget().getRegisterInfo();
-  MachineBasicBlock *mbb = 0;
-  MachineLoop *loop = 0;
+  MachineBasicBlock *mbb = nullptr;
+  MachineLoop *loop = nullptr;
   bool isExiting = false;
   float totalWeight = 0;
   SmallPtrSet<MachineInstr*, 8> visited;

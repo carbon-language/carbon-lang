@@ -44,10 +44,10 @@ class ArrayRecycler {
   // Return NULL if no entries are available.
   T *pop(unsigned Idx) {
     if (Idx >= Bucket.size())
-      return 0;
+      return nullptr;
     FreeList *Entry = Bucket[Idx];
     if (!Entry)
-      return 0;
+      return nullptr;
     Bucket[Idx] = Entry->Next;
     return reinterpret_cast<T*>(Entry);
   }

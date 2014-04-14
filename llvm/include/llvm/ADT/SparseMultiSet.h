@@ -187,7 +187,7 @@ public:
   typedef const ValueT *const_pointer;
 
   SparseMultiSet()
-    : Sparse(0), Universe(0), FreelistIdx(SMSNode::INVALID), NumFree(0) { }
+    : Sparse(nullptr), Universe(0), FreelistIdx(SMSNode::INVALID), NumFree(0) {}
 
   ~SparseMultiSet() { free(Sparse); }
 

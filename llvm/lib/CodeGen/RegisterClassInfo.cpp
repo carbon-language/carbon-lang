@@ -29,8 +29,8 @@ static cl::opt<unsigned>
 StressRA("stress-regalloc", cl::Hidden, cl::init(0), cl::value_desc("N"),
          cl::desc("Limit all regclasses to N registers"));
 
-RegisterClassInfo::RegisterClassInfo() : Tag(0), MF(0), TRI(0), CalleeSaved(0)
-{}
+RegisterClassInfo::RegisterClassInfo()
+  : Tag(0), MF(nullptr), TRI(nullptr), CalleeSaved(nullptr) {}
 
 void RegisterClassInfo::runOnMachineFunction(const MachineFunction &mf) {
   bool Update = false;
@@ -151,7 +151,7 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
 /// nonoverlapping reserved registers. However, computing the allocation order
 /// for all register classes would be too expensive.
 unsigned RegisterClassInfo::computePSetLimit(unsigned Idx) const {
-  const TargetRegisterClass *RC = 0;
+  const TargetRegisterClass *RC = nullptr;
   unsigned NumRCUnits = 0;
   for (TargetRegisterInfo::regclass_iterator
          RI = TRI->regclass_begin(), RE = TRI->regclass_end(); RI != RE; ++RI) {

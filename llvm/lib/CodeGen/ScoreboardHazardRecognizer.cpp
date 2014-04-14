@@ -126,7 +126,7 @@ ScoreboardHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
   // free FU's in the scoreboard at the appropriate future cycles.
 
   const MCInstrDesc *MCID = DAG->getInstrDesc(SU);
-  if (MCID == NULL) {
+  if (!MCID) {
     // Don't check hazards for non-machineinstr Nodes.
     return NoHazard;
   }

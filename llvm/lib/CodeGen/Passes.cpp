@@ -84,7 +84,7 @@ static cl::opt<bool> PrintGCInfo("print-gc", cl::Hidden,
     cl::desc("Dump garbage collector data"));
 static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
-    cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
+    cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=nullptr));
 static cl::opt<std::string>
 PrintMachineInstrs("print-machineinstrs", cl::ValueOptional,
                    cl::desc("Print machine instrs"),
@@ -126,7 +126,7 @@ static IdentifyingPassPtr applyOverride(IdentifyingPassPtr TargetID,
   case cl::BOU_TRUE:
     if (TargetID.isValid())
       return TargetID;
-    if (StandardID == 0)
+    if (StandardID == nullptr)
       report_fatal_error("Target cannot enable pass");
     return StandardID;
   case cl::BOU_FALSE:
@@ -232,8 +232,8 @@ TargetPassConfig::~TargetPassConfig() {
 // Out of line constructor provides default values for pass options and
 // registers all common codegen passes.
 TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
-  : ImmutablePass(ID), PM(&pm), StartAfter(0), StopAfter(0),
-    Started(true), Stopped(false), TM(tm), Impl(0), Initialized(false),
+  : ImmutablePass(ID), PM(&pm), StartAfter(nullptr), StopAfter(nullptr),
+    Started(true), Stopped(false), TM(tm), Impl(nullptr), Initialized(false),
     DisableVerify(false),
     EnableTailMerge(true) {
 
@@ -274,7 +274,7 @@ TargetPassConfig *LLVMTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 TargetPassConfig::TargetPassConfig()
-  : ImmutablePass(ID), PM(0) {
+  : ImmutablePass(ID), PM(nullptr) {
   llvm_unreachable("TargetPassConfig should not be constructed on-the-fly");
 }
 
@@ -332,7 +332,7 @@ AnalysisID TargetPassConfig::addPass(AnalysisID PassID) {
   IdentifyingPassPtr TargetID = getPassSubstitution(PassID);
   IdentifyingPassPtr FinalPtr = overridePass(PassID, TargetID);
   if (!FinalPtr.isValid())
-    return 0;
+    return nullptr;
 
   Pass *P;
   if (FinalPtr.isInstance())
@@ -620,7 +620,7 @@ MachinePassRegistry RegisterRegAlloc::Registry;
 
 /// A dummy default pass factory indicates whether the register allocator is
 /// overridden on the command line.
-static FunctionPass *useDefaultRegisterAllocator() { return 0; }
+static FunctionPass *useDefaultRegisterAllocator() { return nullptr; }
 static RegisterRegAlloc
 defaultRegAlloc("default",
                 "pick register allocator based on -O option",

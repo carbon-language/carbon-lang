@@ -41,7 +41,7 @@ class TargetSchedModel {
   unsigned MicroOpFactor; // Multiply to normalize microops to resource units.
   unsigned ResourceLCM;   // Resource units per cycle. Latency normalization factor.
 public:
-  TargetSchedModel(): STI(0), TII(0) {}
+  TargetSchedModel(): STI(nullptr), TII(nullptr) {}
 
   /// \brief Initialize the machine model for instruction scheduling.
   ///
@@ -75,7 +75,7 @@ public:
   const InstrItineraryData *getInstrItineraries() const {
     if (hasInstrItineraries())
       return &InstrItins;
-    return 0;
+    return nullptr;
   }
 
   /// \brief Identify the processor corresponding to the current subtarget.
@@ -86,7 +86,7 @@ public:
 
   /// \brief Return the number of issue slots required for this MI.
   unsigned getNumMicroOps(const MachineInstr *MI,
-                          const MCSchedClassDesc *SC = 0) const;
+                          const MCSchedClassDesc *SC = nullptr) const;
 
   /// \brief Get the number of kinds of resources for this target.
   unsigned getNumProcResourceKinds() const {

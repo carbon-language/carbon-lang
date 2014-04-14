@@ -62,7 +62,7 @@ namespace llvm {
     }
 
     void releaseState() override {
-      SUnits = 0;
+      SUnits = nullptr;
     }
 
     unsigned getLatency(unsigned NodeNum) const {

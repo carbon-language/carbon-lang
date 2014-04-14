@@ -116,13 +116,13 @@ namespace llvm {
     /// Return the value leaving the instruction, if any. This can be a
     /// live-through value, or a live def. A dead def returns NULL.
     VNInfo *valueOut() const {
-      return isDeadDef() ? 0 : LateVal;
+      return isDeadDef() ? nullptr : LateVal;
     }
 
     /// Return the value defined by this instruction, if any. This includes
     /// dead defs, it is the value created by the instruction's def operands.
     VNInfo *valueDefined() const {
-      return EarlyVal == LateVal ? 0 : LateVal;
+      return EarlyVal == LateVal ? nullptr : LateVal;
     }
 
     /// Return the end point of the last live range segment to interact with
@@ -154,7 +154,7 @@ namespace llvm {
       SlotIndex end;    // End point of the interval (exclusive)
       VNInfo *valno;    // identifier for the value contained in this segment.
 
-      Segment() : valno(0) {}
+      Segment() : valno(nullptr) {}
 
       Segment(SlotIndex S, SlotIndex E, VNInfo *V)
         : start(S), end(E), valno(V) {
@@ -336,20 +336,20 @@ namespace llvm {
     /// is none.
     const Segment *getSegmentContaining(SlotIndex Idx) const {
       const_iterator I = FindSegmentContaining(Idx);
-      return I == end() ? 0 : &*I;
+      return I == end() ? nullptr : &*I;
     }
 
     /// Return the live segment that contains the specified index, or null if
     /// there is none.
     Segment *getSegmentContaining(SlotIndex Idx) {
       iterator I = FindSegmentContaining(Idx);
-      return I == end() ? 0 : &*I;
+      return I == end() ? nullptr : &*I;
     }
 
     /// getVNInfoAt - Return the VNInfo that is live at Idx, or NULL.
     VNInfo *getVNInfoAt(SlotIndex Idx) const {
       const_iterator I = FindSegmentContaining(Idx);
-      return I == end() ? 0 : I->valno;
+      return I == end() ? nullptr : I->valno;
     }
 
     /// getVNInfoBefore - Return the VNInfo that is live up to but not
@@ -357,7 +357,7 @@ namespace llvm {
     /// used by an instruction at this SlotIndex position.
     VNInfo *getVNInfoBefore(SlotIndex Idx) const {
       const_iterator I = FindSegmentContaining(Idx.getPrevSlot());
-      return I == end() ? 0 : I->valno;
+      return I == end() ? nullptr : I->valno;
     }
 
     /// Return an iterator to the segment that contains the specified index, or
@@ -443,13 +443,13 @@ namespace llvm {
       const_iterator I = find(Idx.getBaseIndex());
       const_iterator E = end();
       if (I == E)
-        return LiveQueryResult(0, 0, SlotIndex(), false);
+        return LiveQueryResult(nullptr, nullptr, SlotIndex(), false);
 
       // Is this an instruction live-in segment?
       // If Idx is the start index of a basic block, include live-in segments
       // that start at Idx.getBaseIndex().
-      VNInfo *EarlyVal = 0;
-      VNInfo *LateVal  = 0;
+      VNInfo *EarlyVal = nullptr;
+      VNInfo *LateVal  = nullptr;
       SlotIndex EndPoint;
       bool Kill = false;
       if (I->start <= Idx.getBaseIndex()) {
@@ -466,7 +466,7 @@ namespace llvm {
         // predecessor.
         // Such a value is not live-in.
         if (EarlyVal->def == Idx.getBaseIndex())
-          EarlyVal = 0;
+          EarlyVal = nullptr;
       }
       // I now points to the segment that may be live-through, or defined by
       // this instr. Ignore segments starting after the current instr.
@@ -597,7 +597,7 @@ namespace llvm {
   public:
     /// Create a LiveRangeUpdater for adding segments to LR.
     /// LR will temporarily be in an invalid state until flush() is called.
-    LiveRangeUpdater(LiveRange *lr = 0) : LR(lr) {}
+    LiveRangeUpdater(LiveRange *lr = nullptr) : LR(lr) {}
 
     ~LiveRangeUpdater() { flush(); }
 

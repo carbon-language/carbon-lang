@@ -474,7 +474,7 @@ void RAGreedy::LRE_DidCloneVirtReg(unsigned New, unsigned Old) {
 }
 
 void RAGreedy::releaseMemory() {
-  SpillerInstance.reset(0);
+  SpillerInstance.reset(nullptr);
   ExtraRegInfo.clear();
   GlobalCand.clear();
 }
@@ -541,7 +541,7 @@ LiveInterval *RAGreedy::dequeue() { return dequeue(Queue); }
 
 LiveInterval *RAGreedy::dequeue(PQueue &CurQueue) {
   if (CurQueue.empty())
-    return 0;
+    return nullptr;
   LiveInterval *LI = &LIS->getInterval(~CurQueue.top().second);
   CurQueue.pop();
   return LI;

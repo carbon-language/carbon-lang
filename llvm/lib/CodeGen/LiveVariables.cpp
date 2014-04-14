@@ -61,7 +61,7 @@ LiveVariables::VarInfo::findKill(const MachineBasicBlock *MBB) const {
   for (unsigned i = 0, e = Kills.size(); i != e; ++i)
     if (Kills[i]->getParent() == MBB)
       return Kills[i];
-  return NULL;
+  return nullptr;
 }
 
 void LiveVariables::VarInfo::dump() const {
@@ -193,7 +193,7 @@ MachineInstr *LiveVariables::FindLastPartialDef(unsigned Reg,
                                             SmallSet<unsigned,4> &PartDefRegs) {
   unsigned LastDefReg = 0;
   unsigned LastDefDist = 0;
-  MachineInstr *LastDef = NULL;
+  MachineInstr *LastDef = nullptr;
   for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
     unsigned SubReg = *SubRegs;
     MachineInstr *Def = PhysRegDef[SubReg];
@@ -208,7 +208,7 @@ MachineInstr *LiveVariables::FindLastPartialDef(unsigned Reg,
   }
 
   if (!LastDef)
-    return 0;
+    return nullptr;
 
   PartDefRegs.insert(LastDefReg);
   for (unsigned i = 0, e = LastDef->getNumOperands(); i != e; ++i) {
@@ -282,7 +282,7 @@ MachineInstr *LiveVariables::FindLastRefOrPartRef(unsigned Reg) {
   MachineInstr *LastDef = PhysRegDef[Reg];
   MachineInstr *LastUse = PhysRegUse[Reg];
   if (!LastDef && !LastUse)
-    return 0;
+    return nullptr;
 
   MachineInstr *LastRefOrPartRef = LastUse ? LastUse : LastDef;
   unsigned LastRefOrPartRefDist = DistanceMap[LastRefOrPartRef];
@@ -333,7 +333,7 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
   // AX<dead> = AL<imp-def>
   //    = AL<kill>
   // AX =
-  MachineInstr *LastPartDef = 0;
+  MachineInstr *LastPartDef = nullptr;
   unsigned LastPartDefDist = 0;
   SmallSet<unsigned, 8> PartUses;
   for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs) {
@@ -436,7 +436,7 @@ void LiveVariables::HandleRegMask(const MachineOperand &MO) {
     for (MCSuperRegIterator SR(Reg, TRI); SR.isValid(); ++SR)
       if ((PhysRegDef[*SR] || PhysRegUse[*SR]) && MO.clobbersPhysReg(*SR))
         Super = *SR;
-    HandlePhysRegKill(Super, 0);
+    HandlePhysRegKill(Super, nullptr);
   }
 }
 
@@ -492,7 +492,7 @@ void LiveVariables::UpdatePhysRegDefs(MachineInstr *MI,
          SubRegs.isValid(); ++SubRegs) {
       unsigned SubReg = *SubRegs;
       PhysRegDef[SubReg]  = MI;
-      PhysRegUse[SubReg]  = NULL;
+      PhysRegUse[SubReg]  = nullptr;
     }
   }
 }
@@ -506,8 +506,8 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   PhysRegDef  = new MachineInstr*[NumRegs];
   PhysRegUse  = new MachineInstr*[NumRegs];
   PHIVarInfo = new SmallVector<unsigned, 4>[MF->getNumBlockIDs()];
-  std::fill(PhysRegDef,  PhysRegDef  + NumRegs, (MachineInstr*)0);
-  std::fill(PhysRegUse,  PhysRegUse  + NumRegs, (MachineInstr*)0);
+  std::fill(PhysRegDef,  PhysRegDef  + NumRegs, nullptr);
+  std::fill(PhysRegUse,  PhysRegUse  + NumRegs, nullptr);
   PHIJoins.clear();
 
   // FIXME: LiveIntervals will be updated to remove its dependence on
@@ -536,7 +536,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
            EE = MBB->livein_end(); II != EE; ++II) {
       assert(TargetRegisterInfo::isPhysicalRegister(*II) &&
              "Cannot have a live-in virtual register!");
-      HandlePhysRegDef(*II, 0, Defs);
+      HandlePhysRegDef(*II, nullptr, Defs);
     }
 
     // Loop over all of the instructions, processing them.
@@ -639,10 +639,10 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     // available at the end of the basic block.
     for (unsigned i = 0; i != NumRegs; ++i)
       if ((PhysRegDef[i] || PhysRegUse[i]) && !LiveOuts.count(i))
-        HandlePhysRegDef(i, 0, Defs);
+        HandlePhysRegDef(i, nullptr, Defs);
 
-    std::fill(PhysRegDef,  PhysRegDef  + NumRegs, (MachineInstr*)0);
-    std::fill(PhysRegUse,  PhysRegUse  + NumRegs, (MachineInstr*)0);
+    std::fill(PhysRegDef,  PhysRegDef  + NumRegs, nullptr);
+    std::fill(PhysRegUse,  PhysRegUse  + NumRegs, nullptr);
   }
 
   // Convert and transfer the dead / killed information we have gathered into

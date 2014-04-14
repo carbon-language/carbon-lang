@@ -47,7 +47,7 @@ class ScoreboardHazardRecognizer : public ScheduleHazardRecognizer {
     // Indices into the Scoreboard that represent the current cycle.
     size_t Head;
   public:
-    Scoreboard():Data(NULL), Depth(0), Head(0) { }
+    Scoreboard():Data(nullptr), Depth(0), Head(0) { }
     ~Scoreboard() {
       delete[] Data;
     }
@@ -62,7 +62,7 @@ class ScoreboardHazardRecognizer : public ScheduleHazardRecognizer {
     }
 
     void reset(size_t d = 1) {
-      if (Data == NULL) {
+      if (!Data) {
         Depth = d;
         Data = new unsigned[Depth];
       }

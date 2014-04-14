@@ -114,7 +114,7 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
 
   assert(!Fn.getRegInfo().getNumVirtRegs() && "Regalloc must assign all vregs");
 
-  RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
+  RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : nullptr;
   FrameIndexVirtualScavenging = TRI->requiresFrameIndexScavenging(Fn);
 
   // Calculate the MaxCallFrameSize and AdjustsStack variables for the
@@ -250,7 +250,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &F) {
   MaxCSFrameIndex = 0;
 
   // Early exit for targets which have no callee saved registers.
-  if (CSRegs == 0 || CSRegs[0] == 0)
+  if (!CSRegs || CSRegs[0] == 0)
     return;
 
   // In Naked functions we aren't going to save any registers.
@@ -805,7 +805,7 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
       // use that target machine register info object to eliminate
       // it.
       TRI.eliminateFrameIndex(MI, SPAdj, i,
-                              FrameIndexVirtualScavenging ?  NULL : RS);
+                              FrameIndexVirtualScavenging ?  nullptr : RS);
 
       // Reset the iterator if we were at the beginning of the BB.
       if (AtBeginning) {
@@ -813,7 +813,7 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
         DoIncr = false;
       }
 
-      MI = 0;
+      MI = nullptr;
       break;
     }
 
@@ -845,13 +845,14 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
       // We might end up here again with a NULL iterator if we scavenged a
       // register for which we inserted spill code for definition by what was
       // originally the first instruction in BB.
-      if (I == MachineBasicBlock::iterator(NULL))
+      if (I == MachineBasicBlock::iterator(nullptr))
         I = BB->begin();
 
       MachineInstr *MI = I;
       MachineBasicBlock::iterator J = std::next(I);
       MachineBasicBlock::iterator P =
-          I == BB->begin() ? MachineBasicBlock::iterator(NULL) : std::prev(I);
+                         I == BB->begin() ? MachineBasicBlock::iterator(nullptr)
+                                          : std::prev(I);
 
       // RS should process this instruction before we might scavenge at this
       // location. This is because we might be replacing a virtual register

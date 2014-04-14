@@ -121,7 +121,7 @@ DefaultVLIWScheduler::DefaultVLIWScheduler(
 
 void DefaultVLIWScheduler::schedule() {
   // Build the scheduling graph.
-  buildSchedGraph(0);
+  buildSchedGraph(nullptr);
 }
 
 // VLIWPacketizerList Ctor
@@ -129,7 +129,7 @@ VLIWPacketizerList::VLIWPacketizerList(
   MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
   bool IsPostRA) : TM(MF.getTarget()), MF(MF)  {
   TII = TM.getInstrInfo();
-  ResourceTracker = TII->CreateTargetScheduleState(&TM, 0);
+  ResourceTracker = TII->CreateTargetScheduleState(&TM, nullptr);
   VLIWScheduler = new DefaultVLIWScheduler(MF, MLI, MDT, IsPostRA);
 }
 

@@ -118,7 +118,7 @@ bool GCStrategy::performCustomLowering(Function &F) {
 
 bool GCStrategy::findCustomSafePoints(GCFunctionInfo& FI, MachineFunction &F) {
   dbgs() << "gc " << getName() << " must override findCustomSafePoints.\n";
-  llvm_unreachable(0);
+  llvm_unreachable(nullptr);
 }
 
 

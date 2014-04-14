@@ -110,7 +110,7 @@ void RegAllocBase::allocatePhysRegs() {
     if (AvailablePhysReg == ~0u) {
       // selectOrSplit failed to find a register!
       // Probably caused by an inline asm.
-      MachineInstr *MI = 0;
+      MachineInstr *MI = nullptr;
       for (MachineRegisterInfo::reg_instr_iterator
            I = MRI->reg_instr_begin(VirtReg->reg), E = MRI->reg_instr_end();
            I != E; ) {

@@ -137,7 +137,7 @@ namespace llvm {
     // Interval removal.
     void removeInterval(unsigned Reg) {
       delete VirtRegIntervals[Reg];
-      VirtRegIntervals[Reg] = 0;
+      VirtRegIntervals[Reg] = nullptr;
     }
 
     /// Given a register and an instruction, adds a live segment from that
@@ -153,7 +153,7 @@ namespace llvm {
     /// Return true if the interval may have been separated into multiple
     /// connected components.
     bool shrinkToUses(LiveInterval *li,
-                      SmallVectorImpl<MachineInstr*> *dead = 0);
+                      SmallVectorImpl<MachineInstr*> *dead = nullptr);
 
     /// extendToIndices - Extend the live range of LI to reach all points in
     /// Indices. The points in the Indices array must be jointly dominated by
@@ -262,7 +262,7 @@ namespace llvm {
     bool runOnMachineFunction(MachineFunction&) override;
 
     /// print - Implement the dump method.
-    void print(raw_ostream &O, const Module* = 0) const override;
+    void print(raw_ostream &O, const Module* = nullptr) const override;
 
     /// intervalIsInOneMBB - If LI is confined to a single basic block, return
     /// a pointer to that block.  If LI is live in to or out of any block,

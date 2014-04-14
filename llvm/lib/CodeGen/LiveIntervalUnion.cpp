@@ -138,7 +138,7 @@ collectInterferingVRegs(unsigned MaxInterferingRegs) {
   }
 
   LiveInterval::iterator VirtRegEnd = VirtReg->end();
-  LiveInterval *RecentReg = 0;
+  LiveInterval *RecentReg = nullptr;
   while (LiveUnionI.valid()) {
     assert(VirtRegI != VirtRegEnd && "Reached end of VirtReg");
 
@@ -200,5 +200,5 @@ void LiveIntervalUnion::Array::clear() {
     LIUs[i].~LiveIntervalUnion();
   free(LIUs);
   Size =  0;
-  LIUs = 0;
+  LIUs = nullptr;
 }

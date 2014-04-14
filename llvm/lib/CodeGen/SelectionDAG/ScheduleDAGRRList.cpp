@@ -163,7 +163,7 @@ public:
                     CodeGenOpt::Level OptLevel)
     : ScheduleDAGSDNodes(mf),
       NeedLatency(needlatency), AvailableQueue(availqueue), CurCycle(0),
-      Topo(SUnits, NULL) {
+      Topo(SUnits, nullptr) {
 
     const TargetMachine &tm = mf.getTarget();
     if (DisableSchedCycles || !NeedLatency)
@@ -327,13 +327,13 @@ void ScheduleDAGRRList::Schedule() {
   NumLiveRegs = 0;
   // Allocate slots for each physical register, plus one for a special register
   // to track the virtual resource of a calling sequence.
-  LiveRegDefs.resize(TRI->getNumRegs() + 1, NULL);
-  LiveRegGens.resize(TRI->getNumRegs() + 1, NULL);
+  LiveRegDefs.resize(TRI->getNumRegs() + 1, nullptr);
+  LiveRegGens.resize(TRI->getNumRegs() + 1, nullptr);
   CallSeqEndForStart.clear();
   assert(Interferences.empty() && LRegsMap.empty() && "stale Interferences");
 
   // Build the scheduling graph.
-  BuildSchedGraph(NULL);
+  BuildSchedGraph(nullptr);
 
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
@@ -369,7 +369,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *SU, const SDep *PredEdge) {
     dbgs() << "*** Scheduling failed! ***\n";
     PredSU->dump(this);
     dbgs() << " has been released too many times!\n";
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
   }
 #endif
   --PredSU->NumSuccsLeft;
@@ -461,7 +461,7 @@ FindCallSeqStart(SDNode *N, unsigned &NestLevel, unsigned &MaxNest,
     // to get to the CALLSEQ_BEGIN, but we need to find the path with the
     // most nesting in order to ensure that we find the corresponding match.
     if (N->getOpcode() == ISD::TokenFactor) {
-      SDNode *Best = 0;
+      SDNode *Best = nullptr;
       unsigned BestMaxNest = MaxNest;
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
         unsigned MyNestLevel = NestLevel;
@@ -497,10 +497,10 @@ FindCallSeqStart(SDNode *N, unsigned &NestLevel, unsigned &MaxNest,
         N = N->getOperand(i).getNode();
         goto found_chain_operand;
       }
-    return 0;
+    return nullptr;
   found_chain_operand:;
     if (N->getOpcode() == ISD::EntryToken)
-      return 0;
+      return nullptr;
   }
 }
 
@@ -742,8 +742,8 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
     if (I->isAssignedRegDep() && LiveRegDefs[I->getReg()] == SU) {
       assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
       --NumLiveRegs;
-      LiveRegDefs[I->getReg()] = NULL;
-      LiveRegGens[I->getReg()] = NULL;
+      LiveRegDefs[I->getReg()] = nullptr;
+      LiveRegGens[I->getReg()] = nullptr;
       releaseInterferences(I->getReg());
     }
   }
@@ -757,8 +757,8 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU) {
           SUNode->getMachineOpcode() == (unsigned)TII->getCallFrameSetupOpcode()) {
         assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
         --NumLiveRegs;
-        LiveRegDefs[CallResource] = NULL;
-        LiveRegGens[CallResource] = NULL;
+        LiveRegDefs[CallResource] = nullptr;
+        LiveRegGens[CallResource] = nullptr;
         releaseInterferences(CallResource);
       }
     }
@@ -813,8 +813,8 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
       assert(LiveRegDefs[I->getReg()] == I->getSUnit() &&
              "Physical register dependency violated?");
       --NumLiveRegs;
-      LiveRegDefs[I->getReg()] = NULL;
-      LiveRegGens[I->getReg()] = NULL;
+      LiveRegDefs[I->getReg()] = nullptr;
+      LiveRegGens[I->getReg()] = nullptr;
       releaseInterferences(I->getReg());
     }
   }
@@ -841,8 +841,8 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
           SUNode->getMachineOpcode() == (unsigned)TII->getCallFrameDestroyOpcode()) {
         assert(NumLiveRegs > 0 && "NumLiveRegs is already zero!");
         --NumLiveRegs;
-        LiveRegDefs[CallResource] = NULL;
-        LiveRegGens[CallResource] = NULL;
+        LiveRegDefs[CallResource] = nullptr;
+        LiveRegGens[CallResource] = nullptr;
         releaseInterferences(CallResource);
       }
     }
@@ -855,7 +855,7 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
       // This becomes the nearest def. Note that an earlier def may still be
       // pending if this is a two-address node.
       LiveRegDefs[I->getReg()] = SU;
-      if (LiveRegGens[I->getReg()] == NULL ||
+      if (LiveRegGens[I->getReg()] == nullptr ||
           I->getSUnit()->getHeight() < LiveRegGens[I->getReg()]->getHeight())
         LiveRegGens[I->getReg()] = I->getSUnit();
     }
@@ -936,17 +936,17 @@ static bool isOperandOf(const SUnit *SU, SDNode *N) {
 SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   SDNode *N = SU->getNode();
   if (!N)
-    return NULL;
+    return nullptr;
 
   if (SU->getNode()->getGluedNode())
-    return NULL;
+    return nullptr;
 
   SUnit *NewSU;
   bool TryUnfold = false;
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
     EVT VT = N->getValueType(i);
     if (VT == MVT::Glue)
-      return NULL;
+      return nullptr;
     else if (VT == MVT::Other)
       TryUnfold = true;
   }
@@ -954,18 +954,18 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     const SDValue &Op = N->getOperand(i);
     EVT VT = Op.getNode()->getValueType(Op.getResNo());
     if (VT == MVT::Glue)
-      return NULL;
+      return nullptr;
   }
 
   if (TryUnfold) {
     SmallVector<SDNode*, 2> NewNodes;
     if (!TII->unfoldMemoryOperand(*DAG, N, NewNodes))
-      return NULL;
+      return nullptr;
 
     // unfolding an x86 DEC64m operation results in store, dec, load which
     // can't be handled here so quit
     if (NewNodes.size() == 3)
-      return NULL;
+      return nullptr;
 
     DEBUG(dbgs() << "Unfolding SU #" << SU->NodeNum << "\n");
     assert(NewNodes.size() == 2 && "Expected a load folding node!");
@@ -1136,11 +1136,11 @@ void ScheduleDAGRRList::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
                                               const TargetRegisterClass *DestRC,
                                               const TargetRegisterClass *SrcRC,
                                               SmallVectorImpl<SUnit*> &Copies) {
-  SUnit *CopyFromSU = CreateNewSUnit(NULL);
+  SUnit *CopyFromSU = CreateNewSUnit(nullptr);
   CopyFromSU->CopySrcRC = SrcRC;
   CopyFromSU->CopyDstRC = DestRC;
 
-  SUnit *CopyToSU = CreateNewSUnit(NULL);
+  SUnit *CopyToSU = CreateNewSUnit(nullptr);
   CopyToSU->CopySrcRC = DestRC;
   CopyToSU->CopyDstRC = SrcRC;
 
@@ -1244,7 +1244,7 @@ static const uint32_t *getNodeRegMask(const SDNode *N) {
     if (const RegisterMaskSDNode *Op =
         dyn_cast<RegisterMaskSDNode>(N->getOperand(i).getNode()))
       return Op->getRegMask();
-  return NULL;
+  return nullptr;
 }
 
 /// DelayForLiveRegsBottomUp - Returns true if it is necessary to delay
@@ -1355,7 +1355,7 @@ void ScheduleDAGRRList::releaseInterferences(unsigned Reg) {
 /// (2) No Hazards: resources are available
 /// (3) No Interferences: may unschedule to break register interferences.
 SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
-  SUnit *CurSU = AvailableQueue->empty() ? 0 : AvailableQueue->pop();
+  SUnit *CurSU = AvailableQueue->empty() ? nullptr : AvailableQueue->pop();
   while (CurSU) {
     SmallVector<unsigned, 4> LRegs;
     if (!DelayForLiveRegsBottomUp(CurSU, LRegs))
@@ -1389,7 +1389,7 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
 
     // Try unscheduling up to the point where it's safe to schedule
     // this node.
-    SUnit *BtSU = NULL;
+    SUnit *BtSU = nullptr;
     unsigned LiveCycle = UINT_MAX;
     for (unsigned j = 0, ee = LRegs.size(); j != ee; ++j) {
       unsigned Reg = LRegs[j];
@@ -1449,7 +1449,7 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
     // expensive.
     // If cross copy register class is null, then it's not possible to copy
     // the value at all.
-    SUnit *NewDef = 0;
+    SUnit *NewDef = nullptr;
     if (DestRC != RC) {
       NewDef = CopyAndMoveSuccessors(LRDef);
       if (!DestRC && !NewDef)
@@ -1646,7 +1646,7 @@ public:
                      const TargetLowering *tli)
     : SchedulingPriorityQueue(hasReadyFilter),
       CurQueueId(0), TracksRegPressure(tracksrp), SrcOrder(srcorder),
-      MF(mf), TII(tii), TRI(tri), TLI(tli), scheduleDAG(NULL) {
+      MF(mf), TII(tii), TRI(tri), TLI(tli), scheduleDAG(nullptr) {
     if (TracksRegPressure) {
       unsigned NumRC = TRI->getNumRegClasses();
       RegLimit.resize(NumRC);
@@ -1674,7 +1674,7 @@ public:
   void updateNode(const SUnit *SU) override;
 
   void releaseState() override {
-    SUnits = 0;
+    SUnits = nullptr;
     SethiUllmanNumbers.clear();
     std::fill(RegPressure.begin(), RegPressure.end(), 0);
   }
@@ -1775,7 +1775,7 @@ public:
   }
 
   SUnit *pop() override {
-    if (Queue.empty()) return NULL;
+    if (Queue.empty()) return nullptr;
 
     SUnit *V = popFromQueue(Queue, Picker, scheduleDAG);
     V->NodeQueueId = 0;
@@ -2824,7 +2824,7 @@ void RegReductionPQBase::PrescheduleNodesWithMultipleUses() {
         continue;
 
     // Locate the single data predecessor.
-    SUnit *PredSU = 0;
+    SUnit *PredSU = nullptr;
     for (SUnit::const_pred_iterator II = SU->Preds.begin(),
          EE = SU->Preds.end(); II != EE; ++II)
       if (!II->isCtrl()) {
@@ -2980,7 +2980,7 @@ llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
 
   BURegReductionPriorityQueue *PQ =
-    new BURegReductionPriorityQueue(*IS->MF, false, false, TII, TRI, 0);
+    new BURegReductionPriorityQueue(*IS->MF, false, false, TII, TRI, nullptr);
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, false, PQ, OptLevel);
   PQ->setScheduleDAG(SD);
   return SD;
@@ -2994,7 +2994,7 @@ llvm::createSourceListDAGScheduler(SelectionDAGISel *IS,
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
 
   SrcRegReductionPriorityQueue *PQ =
-    new SrcRegReductionPriorityQueue(*IS->MF, false, true, TII, TRI, 0);
+    new SrcRegReductionPriorityQueue(*IS->MF, false, true, TII, TRI, nullptr);
   ScheduleDAGRRList *SD = new ScheduleDAGRRList(*IS->MF, false, PQ, OptLevel);
   PQ->setScheduleDAG(SD);
   return SD;

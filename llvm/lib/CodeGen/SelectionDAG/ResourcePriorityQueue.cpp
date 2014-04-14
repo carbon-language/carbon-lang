@@ -49,7 +49,7 @@ ResourcePriorityQueue::ResourcePriorityQueue(SelectionDAGISel *IS) :
    TLI = IS->getTargetLowering();
 
    const TargetMachine &tm = (*IS->MF).getTarget();
-   ResourcesModel = tm.getInstrInfo()->CreateTargetScheduleState(&tm,NULL);
+   ResourcesModel = tm.getInstrInfo()->CreateTargetScheduleState(&tm,nullptr);
    // This hard requirement could be relaxed, but for now
    // do not let it procede.
    assert (ResourcesModel && "Unimplemented CreateTargetScheduleState.");
@@ -214,7 +214,7 @@ bool resource_sort::operator()(const SUnit *LHS, const SUnit *RHS) const {
 /// getSingleUnscheduledPred - If there is exactly one unscheduled predecessor
 /// of SU, return it, otherwise return null.
 SUnit *ResourcePriorityQueue::getSingleUnscheduledPred(SUnit *SU) {
-  SUnit *OnlyAvailablePred = 0;
+  SUnit *OnlyAvailablePred = nullptr;
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     SUnit &Pred = *I->getSUnit();
@@ -222,7 +222,7 @@ SUnit *ResourcePriorityQueue::getSingleUnscheduledPred(SUnit *SU) {
       // We found an available, but not scheduled, predecessor.  If it's the
       // only one we have found, keep track of it... otherwise give up.
       if (OnlyAvailablePred && OnlyAvailablePred != &Pred)
-        return 0;
+        return nullptr;
       OnlyAvailablePred = &Pred;
     }
   }
@@ -581,7 +581,7 @@ void ResourcePriorityQueue::adjustPriorityOfUnscheduledPreds(SUnit *SU) {
   if (SU->isAvailable) return;  // All preds scheduled.
 
   SUnit *OnlyAvailablePred = getSingleUnscheduledPred(SU);
-  if (OnlyAvailablePred == 0 || !OnlyAvailablePred->isAvailable)
+  if (!OnlyAvailablePred || !OnlyAvailablePred->isAvailable)
     return;
 
   // Okay, we found a single predecessor that is available, but not scheduled.
@@ -598,7 +598,7 @@ void ResourcePriorityQueue::adjustPriorityOfUnscheduledPreds(SUnit *SU) {
 /// to be placed in scheduling sequence.
 SUnit *ResourcePriorityQueue::pop() {
   if (empty())
-    return 0;
+    return nullptr;
 
   std::vector<SUnit *>::iterator Best = Queue.begin();
   if (!DisableDFASched) {

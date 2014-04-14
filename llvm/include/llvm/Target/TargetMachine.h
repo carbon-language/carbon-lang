@@ -102,7 +102,9 @@ public:
 
   /// getSubtargetImpl - virtual method implemented by subclasses that returns
   /// a reference to that target's TargetSubtargetInfo-derived member variable.
-  virtual const TargetSubtargetInfo *getSubtargetImpl() const { return 0; }
+  virtual const TargetSubtargetInfo *getSubtargetImpl() const {
+    return nullptr;
+  }
 
   mutable TargetOptions Options;
 
@@ -118,11 +120,15 @@ public:
   //
   // N.B. These objects may change during compilation. It's not safe to cache
   // them between functions.
-  virtual const TargetInstrInfo         *getInstrInfo() const { return 0; }
-  virtual const TargetFrameLowering *getFrameLowering() const { return 0; }
-  virtual const TargetLowering    *getTargetLowering() const { return 0; }
-  virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const{ return 0; }
-  virtual const DataLayout             *getDataLayout() const { return 0; }
+  virtual const TargetInstrInfo  *getInstrInfo() const { return nullptr; }
+  virtual const TargetFrameLowering *getFrameLowering() const {
+    return nullptr;
+  }
+  virtual const TargetLowering *getTargetLowering() const { return nullptr; }
+  virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const {
+    return nullptr;
+  }
+  virtual const DataLayout *getDataLayout() const { return nullptr; }
 
   /// getMCAsmInfo - Return target specific asm information.
   ///
@@ -139,23 +145,23 @@ public:
   /// not, return null.  This is kept separate from RegInfo until RegInfo has
   /// details of graph coloring register allocation removed from it.
   ///
-  virtual const TargetRegisterInfo *getRegisterInfo() const { return 0; }
+  virtual const TargetRegisterInfo *getRegisterInfo() const { return nullptr; }
 
   /// getIntrinsicInfo - If intrinsic information is available, return it.  If
   /// not, return null.
   ///
-  virtual const TargetIntrinsicInfo *getIntrinsicInfo() const { return 0; }
+  virtual const TargetIntrinsicInfo *getIntrinsicInfo() const { return nullptr;}
 
   /// getJITInfo - If this target supports a JIT, return information for it,
   /// otherwise return null.
   ///
-  virtual TargetJITInfo *getJITInfo() { return 0; }
+  virtual TargetJITInfo *getJITInfo() { return nullptr; }
 
   /// getInstrItineraryData - Returns instruction itinerary data for the target
   /// or specific subtarget.
   ///
   virtual const InstrItineraryData *getInstrItineraryData() const {
-    return 0;
+    return nullptr;
   }
 
   bool requiresStructuredCFG() const { return RequireStructuredCFG; }
@@ -263,8 +269,8 @@ public:
                                    formatted_raw_ostream &,
                                    CodeGenFileType,
                                    bool /*DisableVerify*/ = true,
-                                   AnalysisID /*StartAfter*/ = 0,
-                                   AnalysisID /*StopAfter*/ = 0) {
+                                   AnalysisID /*StartAfter*/ = nullptr,
+                                   AnalysisID /*StopAfter*/ = nullptr) {
     return true;
   }
 
@@ -323,8 +329,8 @@ public:
   /// generation.
   bool addPassesToEmitFile(PassManagerBase &PM, formatted_raw_ostream &Out,
                            CodeGenFileType FileType, bool DisableVerify = true,
-                           AnalysisID StartAfter = 0,
-                           AnalysisID StopAfter = 0) override;
+                           AnalysisID StartAfter = nullptr,
+                           AnalysisID StopAfter = nullptr) override;
 
   /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
   /// get machine code emitted.  This uses a JITCodeEmitter object to handle

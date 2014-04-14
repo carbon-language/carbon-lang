@@ -56,9 +56,9 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
   if (TM.getRegisterInfo())
     RegInfo = new (Allocator) MachineRegisterInfo(TM);
   else
-    RegInfo = 0;
+    RegInfo = nullptr;
 
-  MFInfo = 0;
+  MFInfo = nullptr;
   FrameInfo =
     new (Allocator) MachineFrameInfo(TM,!F->hasFnAttribute("no-realign-stack"));
 
@@ -77,7 +77,7 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
                          TM.getTargetLowering()->getPrefFunctionAlignment());
 
   FunctionNumber = FunctionNum;
-  JumpTableInfo = 0;
+  JumpTableInfo = nullptr;
 }
 
 MachineFunction::~MachineFunction() {
@@ -136,7 +136,7 @@ bool MachineFunction::shouldSplitStack() {
 void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
   if (empty()) { MBBNumbering.clear(); return; }
   MachineFunction::iterator MBBI, E = end();
-  if (MBB == 0)
+  if (MBB == nullptr)
     MBBI = begin();
   else
     MBBI = MBB;
@@ -152,7 +152,7 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
       if (MBBI->getNumber() != -1) {
         assert(MBBNumbering[MBBI->getNumber()] == &*MBBI &&
                "MBB number mismatch!");
-        MBBNumbering[MBBI->getNumber()] = 0;
+        MBBNumbering[MBBI->getNumber()] = nullptr;
       }
 
       // If BlockNo is already taken, set that block's number to -1.
@@ -240,7 +240,7 @@ MachineFunction::getMachineMemOperand(const MachineMemOperand *MMO,
              MachineMemOperand(MachinePointerInfo(MMO->getValue(),
                                                   MMO->getOffset()+Offset),
                                MMO->getFlags(), Size,
-                               MMO->getBaseAlignment(), 0);
+                               MMO->getBaseAlignment(), nullptr);
 }
 
 MachineInstr::mmo_iterator
@@ -569,7 +569,7 @@ int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
                         Align, getFrameLowering()->getStackAlignment()); 
   Objects.insert(Objects.begin(), StackObject(Size, Align, SPOffset, Immutable,
                                               /*isSS*/   false,
-                                              /*Alloca*/ 0));
+                                              /*Alloca*/ nullptr));
   return -++NumFixedObjects;
 }
 

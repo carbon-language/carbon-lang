@@ -181,7 +181,7 @@ private:
   } Contents;
 
   explicit MachineOperand(MachineOperandType K)
-    : OpKind(K), SubReg_TargetFlags(0), ParentMI(0) {}
+    : OpKind(K), SubReg_TargetFlags(0), ParentMI(nullptr) {}
 public:
   /// getType - Returns the MachineOperandType for this operand.
   ///
@@ -215,9 +215,9 @@ public:
   ///
   /// Never call clearParent() on an operand in a MachineInstr.
   ///
-  void clearParent() { ParentMI = 0; }
+  void clearParent() { ParentMI = nullptr; }
 
-  void print(raw_ostream &os, const TargetMachine *TM = 0) const;
+  void print(raw_ostream &os, const TargetMachine *TM = nullptr) const;
 
   //===--------------------------------------------------------------------===//
   // Accessors that tell you what kind of MachineOperand you're looking at.
@@ -593,8 +593,8 @@ public:
     Op.TiedTo = 0;
     Op.IsDebug = isDebug;
     Op.SmallContents.RegNo = Reg;
-    Op.Contents.Reg.Prev = 0;
-    Op.Contents.Reg.Next = 0;
+    Op.Contents.Reg.Prev = nullptr;
+    Op.Contents.Reg.Next = nullptr;
     Op.setSubReg(SubReg);
     return Op;
   }
@@ -711,12 +711,12 @@ private:
   /// part of a machine instruction.
   bool isOnRegUseList() const {
     assert(isReg() && "Can only add reg operand to use lists");
-    return Contents.Reg.Prev != 0;
+    return Contents.Reg.Prev != nullptr;
   }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const MachineOperand& MO) {
-  MO.print(OS, 0);
+  MO.print(OS, nullptr);
   return OS;
 }
 

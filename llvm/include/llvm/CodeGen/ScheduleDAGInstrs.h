@@ -158,7 +158,7 @@ namespace llvm {
                                const MachineDominatorTree &mdt,
                                bool IsPostRAFlag,
                                bool RemoveKillFlags = false,
-                               LiveIntervals *LIS = 0);
+                               LiveIntervals *LIS = nullptr);
 
     virtual ~ScheduleDAGInstrs() {}
 
@@ -206,8 +206,9 @@ namespace llvm {
 
     /// buildSchedGraph - Build SUnits from the MachineBasicBlock that we are
     /// input.
-    void buildSchedGraph(AliasAnalysis *AA, RegPressureTracker *RPTracker = 0,
-                         PressureDiffs *PDiffs = 0);
+    void buildSchedGraph(AliasAnalysis *AA,
+                         RegPressureTracker *RPTracker = nullptr,
+                         PressureDiffs *PDiffs = nullptr);
 
     /// addSchedBarrierDeps - Add dependencies from instructions in the current
     /// list of instructions being scheduled to scheduling barrier. We want to
@@ -259,10 +260,10 @@ namespace llvm {
   /// newSUnit - Creates a new SUnit and return a ptr to it.
   inline SUnit *ScheduleDAGInstrs::newSUnit(MachineInstr *MI) {
 #ifndef NDEBUG
-    const SUnit *Addr = SUnits.empty() ? 0 : &SUnits[0];
+    const SUnit *Addr = SUnits.empty() ? nullptr : &SUnits[0];
 #endif
     SUnits.push_back(SUnit(MI, (unsigned)SUnits.size()));
-    assert((Addr == 0 || Addr == &SUnits[0]) &&
+    assert((Addr == nullptr || Addr == &SUnits[0]) &&
            "SUnits std::vector reallocated on the fly!");
     SUnits.back().OrigNode = &SUnits.back();
     return &SUnits.back();
@@ -272,7 +273,7 @@ namespace llvm {
   inline SUnit *ScheduleDAGInstrs::getSUnit(MachineInstr *MI) const {
     DenseMap<MachineInstr*, SUnit*>::const_iterator I = MISUnitMap.find(MI);
     if (I == MISUnitMap.end())
-      return 0;
+      return nullptr;
     return I->second;
   }
 } // namespace llvm

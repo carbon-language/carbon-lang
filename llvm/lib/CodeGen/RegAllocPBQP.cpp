@@ -87,7 +87,7 @@ public:
   static char ID;
 
   /// Construct a PBQP register allocator.
-  RegAllocPBQP(std::unique_ptr<PBQPBuilder> &b, char *cPassID=0)
+  RegAllocPBQP(std::unique_ptr<PBQPBuilder> &b, char *cPassID=nullptr)
       : MachineFunctionPass(ID), builder(b.release()), customPassID(cPassID) {
     initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
     initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());

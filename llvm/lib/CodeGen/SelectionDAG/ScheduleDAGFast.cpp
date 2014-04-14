@@ -54,7 +54,7 @@ namespace {
     }
 
     SUnit *pop() {
-      if (empty()) return NULL;
+      if (empty()) return nullptr;
       SUnit *V = Queue.back();
       Queue.pop_back();
       return V;
@@ -117,11 +117,11 @@ void ScheduleDAGFast::Schedule() {
   DEBUG(dbgs() << "********** List Scheduling **********\n");
 
   NumLiveRegs = 0;
-  LiveRegDefs.resize(TRI->getNumRegs(), NULL);
+  LiveRegDefs.resize(TRI->getNumRegs(), nullptr);
   LiveRegCycles.resize(TRI->getNumRegs(), 0);
 
   // Build the scheduling graph.
-  BuildSchedGraph(NULL);
+  BuildSchedGraph(nullptr);
 
   DEBUG(for (unsigned su = 0, e = SUnits.size(); su != e; ++su)
           SUnits[su].dumpAll(this));
@@ -144,7 +144,7 @@ void ScheduleDAGFast::ReleasePred(SUnit *SU, SDep *PredEdge) {
     dbgs() << "*** Scheduling failed! ***\n";
     PredSU->dump(this);
     dbgs() << " has been released too many times!\n";
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
   }
 #endif
   --PredSU->NumSuccsLeft;
@@ -198,7 +198,7 @@ void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
         assert(LiveRegDefs[I->getReg()] == SU &&
                "Physical register dependency violated?");
         --NumLiveRegs;
-        LiveRegDefs[I->getReg()] = NULL;
+        LiveRegDefs[I->getReg()] = nullptr;
         LiveRegCycles[I->getReg()] = 0;
       }
     }
@@ -211,18 +211,18 @@ void ScheduleDAGFast::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
 /// successors to the newly created node.
 SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
   if (SU->getNode()->getGluedNode())
-    return NULL;
+    return nullptr;
 
   SDNode *N = SU->getNode();
   if (!N)
-    return NULL;
+    return nullptr;
 
   SUnit *NewSU;
   bool TryUnfold = false;
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
     EVT VT = N->getValueType(i);
     if (VT == MVT::Glue)
-      return NULL;
+      return nullptr;
     else if (VT == MVT::Other)
       TryUnfold = true;
   }
@@ -230,13 +230,13 @@ SUnit *ScheduleDAGFast::CopyAndMoveSuccessors(SUnit *SU) {
     const SDValue &Op = N->getOperand(i);
     EVT VT = Op.getNode()->getValueType(Op.getResNo());
     if (VT == MVT::Glue)
-      return NULL;
+      return nullptr;
   }
 
   if (TryUnfold) {
     SmallVector<SDNode*, 2> NewNodes;
     if (!TII->unfoldMemoryOperand(*DAG, N, NewNodes))
-      return NULL;
+      return nullptr;
 
     DEBUG(dbgs() << "Unfolding SU # " << SU->NodeNum << "\n");
     assert(NewNodes.size() == 2 && "Expected a load folding node!");
@@ -388,11 +388,11 @@ void ScheduleDAGFast::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
                                               const TargetRegisterClass *DestRC,
                                               const TargetRegisterClass *SrcRC,
                                               SmallVectorImpl<SUnit*> &Copies) {
-  SUnit *CopyFromSU = newSUnit(static_cast<SDNode *>(NULL));
+  SUnit *CopyFromSU = newSUnit(static_cast<SDNode *>(nullptr));
   CopyFromSU->CopySrcRC = SrcRC;
   CopyFromSU->CopyDstRC = DestRC;
 
-  SUnit *CopyToSU = newSUnit(static_cast<SDNode *>(NULL));
+  SUnit *CopyToSU = newSUnit(static_cast<SDNode *>(nullptr));
   CopyToSU->CopySrcRC = DestRC;
   CopyToSU->CopyDstRC = SrcRC;
 
@@ -583,7 +583,7 @@ void ScheduleDAGFast::ListScheduleBottomUp() {
         // and it is expensive.
         // If cross copy register class is null, then it's not possible to copy
         // the value at all.
-        SUnit *NewDef = 0;
+        SUnit *NewDef = nullptr;
         if (DestRC != RC) {
           NewDef = CopyAndMoveSuccessors(LRDef);
           if (!DestRC && !NewDef)
@@ -661,7 +661,7 @@ private:
 
 void ScheduleDAGLinearize::ScheduleNode(SDNode *N) {
   if (N->getNodeId() != 0)
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   if (!N->isMachineOpcode() &&
       (N->getOpcode() == ISD::EntryToken || isPassiveNode(N)))
@@ -674,7 +674,7 @@ void ScheduleDAGLinearize::ScheduleNode(SDNode *N) {
 
   unsigned NumOps = N->getNumOperands();
   if (unsigned NumLeft = NumOps) {
-    SDNode *GluedOpN = 0;
+    SDNode *GluedOpN = nullptr;
     do {
       const SDValue &Op = N->getOperand(NumLeft-1);
       SDNode *OpN = Op.getNode();

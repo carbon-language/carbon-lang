@@ -76,7 +76,7 @@ CCState::AnalyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Ins,
       dbgs() << "Formal argument #" << i << " has unhandled type "
              << EVT(ArgVT).getEVTString() << '\n';
 #endif
-      llvm_unreachable(0);
+      llvm_unreachable(nullptr);
     }
   }
 }
@@ -108,7 +108,7 @@ void CCState::AnalyzeReturn(const SmallVectorImpl<ISD::OutputArg> &Outs,
       dbgs() << "Return operand #" << i << " has unhandled type "
              << EVT(VT).getEVTString() << '\n';
 #endif
-      llvm_unreachable(0);
+      llvm_unreachable(nullptr);
     }
   }
 }
@@ -126,7 +126,7 @@ void CCState::AnalyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Outs,
       dbgs() << "Call operand #" << i << " has unhandled type "
              << EVT(ArgVT).getEVTString() << '\n';
 #endif
-      llvm_unreachable(0);
+      llvm_unreachable(nullptr);
     }
   }
 }
@@ -145,7 +145,7 @@ void CCState::AnalyzeCallOperands(SmallVectorImpl<MVT> &ArgVTs,
       dbgs() << "Call operand #" << i << " has unhandled type "
              << EVT(ArgVT).getEVTString() << '\n';
 #endif
-      llvm_unreachable(0);
+      llvm_unreachable(nullptr);
     }
   }
 }
@@ -162,7 +162,7 @@ void CCState::AnalyzeCallResult(const SmallVectorImpl<ISD::InputArg> &Ins,
       dbgs() << "Call result #" << i << " has unhandled type "
              << EVT(VT).getEVTString() << '\n';
 #endif
-      llvm_unreachable(0);
+      llvm_unreachable(nullptr);
     }
   }
 }
@@ -175,6 +175,6 @@ void CCState::AnalyzeCallResult(MVT VT, CCAssignFn Fn) {
     dbgs() << "Call result has unhandled type "
            << EVT(VT).getEVTString() << '\n';
 #endif
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
   }
 }

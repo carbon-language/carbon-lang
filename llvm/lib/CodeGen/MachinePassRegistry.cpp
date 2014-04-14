@@ -20,7 +20,7 @@ void MachinePassRegistryListener::anchor() { }
 
 /// setDefault - Set the default constructor by name.
 void MachinePassRegistry::setDefault(StringRef Name) {
-  MachinePassCtor Ctor = 0;
+  MachinePassCtor Ctor = nullptr;
   for(MachinePassRegistryNode *R = getList(); R; R = R->getNext()) {
     if (R->getName() == Name) {
       Ctor = R->getCtor();

@@ -206,7 +206,7 @@ class MachineBlockPlacement : public MachineFunctionPass {
   void markChainSuccessors(BlockChain &Chain,
                            MachineBasicBlock *LoopHeaderBB,
                            SmallVectorImpl<MachineBasicBlock *> &BlockWorkList,
-                           const BlockFilterSet *BlockFilter = 0);
+                           const BlockFilterSet *BlockFilter = nullptr);
   MachineBasicBlock *selectBestSuccessor(MachineBasicBlock *BB,
                                          BlockChain &Chain,
                                          const BlockFilterSet *BlockFilter);
@@ -220,7 +220,7 @@ class MachineBlockPlacement : public MachineFunctionPass {
       const BlockFilterSet *BlockFilter);
   void buildChain(MachineBasicBlock *BB, BlockChain &Chain,
                   SmallVectorImpl<MachineBasicBlock *> &BlockWorkList,
-                  const BlockFilterSet *BlockFilter = 0);
+                  const BlockFilterSet *BlockFilter = nullptr);
   MachineBasicBlock *findBestLoopTop(MachineLoop &L,
                                      const BlockFilterSet &LoopBlockSet);
   MachineBasicBlock *findBestLoopExit(MachineFunction &F,
@@ -334,7 +334,7 @@ MachineBasicBlock *MachineBlockPlacement::selectBestSuccessor(
     const BlockFilterSet *BlockFilter) {
   const BranchProbability HotProb(4, 5); // 80%
 
-  MachineBasicBlock *BestSucc = 0;
+  MachineBasicBlock *BestSucc = nullptr;
   // FIXME: Due to the performance of the probability and weight routines in
   // the MBPI analysis, we manually compute probabilities using the edge
   // weights. This is suboptimal as it means that the somewhat subtle
@@ -432,7 +432,7 @@ MachineBasicBlock *MachineBlockPlacement::selectBestCandidateBlock(
                  }),
                  WorkList.end());
 
-  MachineBasicBlock *BestBlock = 0;
+  MachineBasicBlock *BestBlock = nullptr;
   BlockFrequency BestFreq;
   for (SmallVectorImpl<MachineBasicBlock *>::iterator WBI = WorkList.begin(),
                                                       WBE = WorkList.end();
@@ -479,7 +479,7 @@ MachineBasicBlock *MachineBlockPlacement::getFirstUnplacedBlock(
       return *BlockToChain[I]->begin();
     }
   }
-  return 0;
+  return nullptr;
 }
 
 void MachineBlockPlacement::buildChain(
@@ -560,7 +560,7 @@ MachineBlockPlacement::findBestLoopTop(MachineLoop &L,
                << getBlockName(L.getHeader()) << "\n");
 
   BlockFrequency BestPredFreq;
-  MachineBasicBlock *BestPred = 0;
+  MachineBasicBlock *BestPred = nullptr;
   for (MachineBasicBlock::pred_iterator PI = L.getHeader()->pred_begin(),
                                         PE = L.getHeader()->pred_end();
        PI != PE; ++PI) {
@@ -616,11 +616,11 @@ MachineBlockPlacement::findBestLoopExit(MachineFunction &F,
   // header and only rotate if safe.
   BlockChain &HeaderChain = *BlockToChain[L.getHeader()];
   if (!LoopBlockSet.count(*HeaderChain.begin()))
-    return 0;
+    return nullptr;
 
   BlockFrequency BestExitEdgeFreq;
   unsigned BestExitLoopDepth = 0;
-  MachineBasicBlock *ExitingBB = 0;
+  MachineBasicBlock *ExitingBB = nullptr;
   // If there are exits to outer loops, loop rotation can severely limit
   // fallthrough opportunites unless it selects such an exit. Keep a set of
   // blocks where rotating to exit with that block will reach an outer loop.
@@ -709,14 +709,14 @@ MachineBlockPlacement::findBestLoopExit(MachineFunction &F,
   // Without a candidate exiting block or with only a single block in the
   // loop, just use the loop header to layout the loop.
   if (!ExitingBB || L.getNumBlocks() == 1)
-    return 0;
+    return nullptr;
 
   // Also, if we have exit blocks which lead to outer loops but didn't select
   // one of them as the exiting block we are rotating toward, disable loop
   // rotation altogether.
   if (!BlocksExitingToOuterLoop.empty() &&
       !BlocksExitingToOuterLoop.count(ExitingBB))
-    return 0;
+    return nullptr;
 
   DEBUG(dbgs() << "  Best exiting block: " << getBlockName(ExitingBB) << "\n");
   return ExitingBB;
@@ -795,7 +795,7 @@ void MachineBlockPlacement::buildLoopChains(MachineFunction &F,
   // If we selected just the header for the loop top, look for a potentially
   // profitable exit block in the event that rotating the loop can eliminate
   // branches by placing an exit edge at the bottom.
-  MachineBasicBlock *ExitingBB = 0;
+  MachineBasicBlock *ExitingBB = nullptr;
   if (LoopTop == L.getHeader())
     ExitingBB = findBestLoopExit(F, L, LoopBlockSet);
 
@@ -883,7 +883,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     // the exact fallthrough behavior for.
     for (;;) {
       Cond.clear();
-      MachineBasicBlock *TBB = 0, *FBB = 0; // For AnalyzeBranch.
+      MachineBasicBlock *TBB = nullptr, *FBB = nullptr; // For AnalyzeBranch.
       if (!TII->AnalyzeBranch(*BB, TBB, FBB, Cond) || !FI->canFallThrough())
         break;
 
@@ -895,7 +895,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
       DEBUG(dbgs() << "Pre-merging due to unanalyzable fallthrough: "
                    << getBlockName(BB) << " -> " << getBlockName(NextBB)
                    << "\n");
-      Chain->merge(NextBB, 0);
+      Chain->merge(NextBB, nullptr);
       FI = NextFI;
       BB = NextBB;
     }
@@ -987,7 +987,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
     // than assert when the branch cannot be analyzed in order to remove this
     // boiler plate.
     Cond.clear();
-    MachineBasicBlock *TBB = 0, *FBB = 0; // For AnalyzeBranch.
+    MachineBasicBlock *TBB = nullptr, *FBB = nullptr; // For AnalyzeBranch.
     if (!TII->AnalyzeBranch(*PrevBB, TBB, FBB, Cond)) {
       // The "PrevBB" is not yet updated to reflect current code layout, so,
       //   o. it may fall-through to a block without explict "goto" instruction
@@ -1004,10 +1004,10 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
         PrevBB->updateTerminator();
         needUpdateBr = false;
         Cond.clear();
-        TBB = FBB = 0;
+        TBB = FBB = nullptr;
         if (TII->AnalyzeBranch(*PrevBB, TBB, FBB, Cond)) {
           // FIXME: This should never take place.
-          TBB = FBB = 0;
+          TBB = FBB = nullptr;
         }
       }
 
@@ -1032,7 +1032,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
 
   // Fixup the last block.
   Cond.clear();
-  MachineBasicBlock *TBB = 0, *FBB = 0; // For AnalyzeBranch.
+  MachineBasicBlock *TBB = nullptr, *FBB = nullptr; // For AnalyzeBranch.
   if (!TII->AnalyzeBranch(F.back(), TBB, FBB, Cond))
     F.back().updateTerminator();
 

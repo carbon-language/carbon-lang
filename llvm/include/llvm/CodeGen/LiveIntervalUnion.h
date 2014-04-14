@@ -122,8 +122,8 @@ public:
     {}
 
     void clear() {
-      LiveUnion = NULL;
-      VirtReg = NULL;
+      LiveUnion = nullptr;
+      VirtReg = nullptr;
       InterferingVRegs.clear();
       CheckedFirstInterference = false;
       SeenAllInterferences = false;
@@ -182,7 +182,7 @@ public:
     unsigned Size;
     LiveIntervalUnion *LIUs;
   public:
-    Array() : Size(0), LIUs(0) {}
+    Array() : Size(0), LIUs(nullptr) {}
     ~Array() { clear(); }
 
     // Initialize the array to have Size entries.

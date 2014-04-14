@@ -211,7 +211,7 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
   }
 
   // Find the instruction that kills SavedReg.
-  MachineInstr *KillMI = NULL;
+  MachineInstr *KillMI = nullptr;
   if (LIS) {
     LiveInterval &LI = LIS->getInterval(SavedReg);
     assert(LI.end() != LI.begin() &&
@@ -250,7 +250,7 @@ sink3AddrInstruction(MachineInstr *MI, unsigned SavedReg,
   // FIXME: This can be sped up if there is an easy way to query whether an
   // instruction is before or after another instruction. Then we can use
   // MachineRegisterInfo def / use instead.
-  MachineOperand *KillMO = NULL;
+  MachineOperand *KillMO = nullptr;
   MachineBasicBlock::iterator KillPos = KillMI;
   ++KillPos;
 
@@ -454,10 +454,10 @@ MachineInstr *findOnlyInterestingUse(unsigned Reg, MachineBasicBlock *MBB,
                                      unsigned &DstReg, bool &IsDstPhys) {
   if (!MRI->hasOneNonDBGUse(Reg))
     // None or more than one use.
-    return 0;
+    return nullptr;
   MachineInstr &UseMI = *MRI->use_instr_nodbg_begin(Reg);
   if (UseMI.getParent() != MBB)
-    return 0;
+    return nullptr;
   unsigned SrcReg;
   bool IsSrcPhys;
   if (isCopyToReg(UseMI, TII, SrcReg, DstReg, IsSrcPhys, IsDstPhys)) {
@@ -469,7 +469,7 @@ MachineInstr *findOnlyInterestingUse(unsigned Reg, MachineBasicBlock *MBB,
     IsDstPhys = TargetRegisterInfo::isPhysicalRegister(DstReg);
     return &UseMI;
   }
-  return 0;
+  return nullptr;
 }
 
 /// getMappedReg - Return the physical register the specified virtual register
@@ -576,7 +576,7 @@ commuteInstruction(MachineBasicBlock::iterator &mi,
   DEBUG(dbgs() << "2addr: COMMUTING  : " << *MI);
   MachineInstr *NewMI = TII->commuteInstruction(MI);
 
-  if (NewMI == 0) {
+  if (NewMI == nullptr) {
     DEBUG(dbgs() << "2addr: COMMUTING FAILED!\n");
     return false;
   }
@@ -755,7 +755,7 @@ rescheduleMIBelowKill(MachineBasicBlock::iterator &mi,
     // Must be created from unfolded load. Don't waste time trying this.
     return false;
 
-  MachineInstr *KillMI = 0;
+  MachineInstr *KillMI = nullptr;
   if (LIS) {
     LiveInterval &LI = LIS->getInterval(Reg);
     assert(LI.end() != LI.begin() &&
@@ -947,7 +947,7 @@ rescheduleKillAboveMI(MachineBasicBlock::iterator &mi,
     // Must be created from unfolded load. Don't waste time trying this.
     return false;
 
-  MachineInstr *KillMI = 0;
+  MachineInstr *KillMI = nullptr;
   if (LIS) {
     LiveInterval &LI = LIS->getInterval(Reg);
     assert(LI.end() != LI.begin() &&
@@ -1394,7 +1394,7 @@ TwoAddressInstructionPass::processTiedPairs(MachineInstr *MI,
                                              SubRegB) &&
                "tied subregister must be a truncation");
         // The superreg class will not be used to constrain the subreg class.
-        RC = 0;
+        RC = nullptr;
       }
       else {
         assert(TRI->getMatchingSuperReg(RegA, SubRegB, MRI->getRegClass(RegB))
@@ -1631,7 +1631,7 @@ eliminateRegSequence(MachineBasicBlock::iterator &MBBI) {
       TargetRegisterInfo::isPhysicalRegister(DstReg) ||
       !(MI->getNumOperands() & 1)) {
     DEBUG(dbgs() << "Illegal REG_SEQUENCE instruction:" << *MI);
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
   }
 
   SmallVector<unsigned, 4> OrigRegs;

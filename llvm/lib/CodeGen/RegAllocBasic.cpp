@@ -93,7 +93,7 @@ public:
 
   LiveInterval *dequeue() override {
     if (Queue.empty())
-      return 0;
+      return nullptr;
     LiveInterval *LI = Queue.top();
     Queue.pop();
     return LI;
@@ -156,7 +156,7 @@ void RABasic::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void RABasic::releaseMemory() {
-  SpillerInstance.reset(0);
+  SpillerInstance.reset(nullptr);
 }
 
 

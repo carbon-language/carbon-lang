@@ -42,7 +42,7 @@ class RegScavenger {
 
   /// Information on scavenged registers (held in a spill slot).
   struct ScavengedInfo {
-    ScavengedInfo(int FI = -1) : FrameIndex(FI), Reg(0), Restore(NULL) {}
+    ScavengedInfo(int FI = -1) : FrameIndex(FI), Reg(0), Restore(nullptr) {}
 
     /// A spill slot used for scavenging a register post register allocation.
     int FrameIndex;
@@ -73,7 +73,7 @@ class RegScavenger {
 
 public:
   RegScavenger()
-    : MBB(NULL), NumPhysRegs(0), Tracking(false) {}
+    : MBB(nullptr), NumPhysRegs(0), Tracking(false) {}
 
   /// enterBasicBlock - Start tracking liveness from the begin of the specific
   /// basic block.
@@ -104,7 +104,7 @@ public:
 
   /// skipTo - Move the internal MBB iterator but do not update register states.
   void skipTo(MachineBasicBlock::iterator I) {
-    if (I == MachineBasicBlock::iterator(NULL))
+    if (I == MachineBasicBlock::iterator(nullptr))
       Tracking = false;
     MBBI = I;
   }

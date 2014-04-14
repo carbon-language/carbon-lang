@@ -100,7 +100,7 @@ class SDValue {
   SDNode *Node;       // The node defining the value we are using.
   unsigned ResNo;     // Which return value of the node we are using.
 public:
-  SDValue() : Node(0), ResNo(0) {}
+  SDValue() : Node(nullptr), ResNo(0) {}
   SDValue(SDNode *node, unsigned resno) : Node(node), ResNo(resno) {}
 
   /// get the index which selects a specific result in the SDNode
@@ -234,7 +234,7 @@ class SDUse {
   void operator=(const SDUse &U) LLVM_DELETED_FUNCTION;
 
 public:
-  SDUse() : Val(), User(NULL), Prev(NULL), Next(NULL) {}
+  SDUse() : Val(), User(nullptr), Prev(nullptr), Next(nullptr) {}
 
   /// Normally SDUse will just implicitly convert to an SDValue that it holds.
   operator const SDValue&() const { return Val; }
@@ -408,7 +408,7 @@ public:
 
   /// use_empty - Return true if there are no uses of this node.
   ///
-  bool use_empty() const { return UseList == NULL; }
+  bool use_empty() const { return UseList == nullptr; }
 
   /// hasOneUse - Return true if there is exactly one use of this node.
   ///
@@ -458,7 +458,7 @@ public:
                           SDUse, ptrdiff_t>::pointer pointer;
 
     use_iterator(const use_iterator &I) : Op(I.Op) {}
-    use_iterator() : Op(0) {}
+    use_iterator() : Op(nullptr) {}
 
     bool operator==(const use_iterator &x) const {
       return Op == x.Op;
@@ -468,7 +468,7 @@ public:
     }
 
     /// atEnd - return true if this iterator is at the end of uses list.
-    bool atEnd() const { return Op == 0; }
+    bool atEnd() const { return Op == nullptr; }
 
     // Iterator traversal: forward iteration only.
     use_iterator &operator++() {          // Preincrement
@@ -506,7 +506,7 @@ public:
     return use_iterator(UseList);
   }
 
-  static use_iterator use_end() { return use_iterator(0); }
+  static use_iterator use_end() { return use_iterator(nullptr); }
 
   inline iterator_range<use_iterator> uses() {
     return iterator_range<use_iterator>(use_begin(), use_end());
@@ -586,7 +586,7 @@ public:
     if (getNumOperands() != 0 &&
       getOperand(getNumOperands()-1).getValueType() == MVT::Glue)
       return getOperand(getNumOperands()-1).getNode();
-    return 0;
+    return nullptr;
   }
 
   // If this is a pseudo op, like copyfromreg, look to see if there is a
@@ -611,7 +611,7 @@ public:
     for (use_iterator UI = use_begin(), UE = use_end(); UI != UE; ++UI)
       if (UI.getUse().get().getValueType() == MVT::Glue)
         return *UI;
-    return 0;
+    return nullptr;
   }
 
   /// getNumValues - Return the number of values defined/returned by this
@@ -644,12 +644,12 @@ public:
 
   /// getOperationName - Return the opcode of this operation for printing.
   ///
-  std::string getOperationName(const SelectionDAG *G = 0) const;
+  std::string getOperationName(const SelectionDAG *G = nullptr) const;
   static const char* getIndexedModeName(ISD::MemIndexedMode AM);
   void print_types(raw_ostream &OS, const SelectionDAG *G) const;
   void print_details(raw_ostream &OS, const SelectionDAG *G) const;
-  void print(raw_ostream &OS, const SelectionDAG *G = 0) const;
-  void printr(raw_ostream &OS, const SelectionDAG *G = 0) const;
+  void print(raw_ostream &OS, const SelectionDAG *G = nullptr) const;
+  void printr(raw_ostream &OS, const SelectionDAG *G = nullptr) const;
 
   /// printrFull - Print a SelectionDAG node and all children down to
   /// the leaves.  The given SelectionDAG allows target-specific nodes
@@ -657,7 +657,7 @@ public:
   /// print the whole DAG, including children that appear multiple
   /// times.
   ///
-  void printrFull(raw_ostream &O, const SelectionDAG *G = 0) const;
+  void printrFull(raw_ostream &O, const SelectionDAG *G = nullptr) const;
 
   /// printrWithDepth - Print a SelectionDAG node and children up to
   /// depth "depth."  The given SelectionDAG allows target-specific
@@ -665,7 +665,7 @@ public:
   /// will print children that appear multiple times wherever they are
   /// used.
   ///
-  void printrWithDepth(raw_ostream &O, const SelectionDAG *G = 0,
+  void printrWithDepth(raw_ostream &O, const SelectionDAG *G = nullptr,
                        unsigned depth = 100) const;
 
 
@@ -690,14 +690,15 @@ public:
   /// Unlike dumpr, this will print the whole DAG, including children
   /// that appear multiple times.
   ///
-  void dumprFull(const SelectionDAG *G = 0) const;
+  void dumprFull(const SelectionDAG *G = nullptr) const;
 
   /// dumprWithDepth - printrWithDepth to dbgs().  The given
   /// SelectionDAG allows target-specific nodes to be printed in
   /// human-readable form.  Unlike dumpr, this will print children
   /// that appear multiple times wherever they are used.
   ///
-  void dumprWithDepth(const SelectionDAG *G = 0, unsigned depth = 100) const;
+  void dumprWithDepth(const SelectionDAG *G = nullptr,
+                      unsigned depth = 100) const;
 
   /// Profile - Gather unique data for the node.
   ///
@@ -717,8 +718,8 @@ protected:
          const SDValue *Ops, unsigned NumOps)
     : NodeType(Opc), OperandsNeedDelete(true), HasDebugValue(false),
       SubclassData(0), NodeId(-1),
-      OperandList(NumOps ? new SDUse[NumOps] : 0),
-      ValueList(VTs.VTs), UseList(NULL),
+      OperandList(NumOps ? new SDUse[NumOps] : nullptr),
+      ValueList(VTs.VTs), UseList(nullptr),
       NumOperands(NumOps), NumValues(VTs.NumVTs),
       debugLoc(dl), IROrder(Order) {
     for (unsigned i = 0; i != NumOps; ++i) {
@@ -732,9 +733,9 @@ protected:
   /// set later with InitOperands.
   SDNode(unsigned Opc, unsigned Order, const DebugLoc dl, SDVTList VTs)
     : NodeType(Opc), OperandsNeedDelete(false), HasDebugValue(false),
-      SubclassData(0), NodeId(-1), OperandList(0),
-      ValueList(VTs.VTs), UseList(NULL), NumOperands(0), NumValues(VTs.NumVTs),
-      debugLoc(dl), IROrder(Order) {}
+      SubclassData(0), NodeId(-1), OperandList(nullptr), ValueList(VTs.VTs),
+      UseList(nullptr), NumOperands(0), NumValues(VTs.NumVTs), debugLoc(dl),
+      IROrder(Order) {}
 
   /// InitOperands - Initialize the operands list of this with 1 operand.
   void InitOperands(SDUse *Ops, const SDValue &Op0) {
@@ -819,7 +820,7 @@ private:
   int IROrder;
 
 public:
-  SDLoc() : Ptr(NULL), IROrder(0) {}
+  SDLoc() : Ptr(nullptr), IROrder(0) {}
   SDLoc(const SDNode *N) : Ptr(N), IROrder(-1) {
     assert(N && "null SDNode");
   }
@@ -830,14 +831,14 @@ public:
     assert(Order >= 0 && "bad IROrder");
   }
   unsigned getIROrder() {
-    if (IROrder >= 0 || Ptr == NULL) {
+    if (IROrder >= 0 || Ptr == nullptr) {
       return (unsigned)IROrder;
     }
     const SDNode *N = (const SDNode*)(Ptr);
     return N->getIROrder();
   }
   DebugLoc getDebugLoc() {
-    if (Ptr == NULL) {
+    if (!Ptr) {
       return DebugLoc();
     }
     if (IROrder >= 0) {
@@ -1834,7 +1835,7 @@ public:
 private:
   friend class SelectionDAG;
   MachineSDNode(unsigned Opc, unsigned Order, const DebugLoc DL, SDVTList VTs)
-    : SDNode(Opc, Order, DL, VTs), MemRefs(0), MemRefsEnd(0) {}
+    : SDNode(Opc, Order, DL, VTs), MemRefs(nullptr), MemRefsEnd(nullptr) {}
 
   /// LocalOperands - Operands for this instruction, if they fit here. If
   /// they don't, this field is unused.

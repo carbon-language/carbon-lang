@@ -111,7 +111,7 @@ class po_iterator : public std::iterator<std::forward_iterator_tag,
   }
 
   inline po_iterator(NodeType *BB) {
-    this->insertEdge((NodeType*)0, BB);
+    this->insertEdge((NodeType*)nullptr, BB);
     VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
     traverseChild();
   }
@@ -119,7 +119,7 @@ class po_iterator : public std::iterator<std::forward_iterator_tag,
 
   inline po_iterator(NodeType *BB, SetType &S) :
     po_iterator_storage<SetType, ExtStorage>(S) {
-    if (this->insertEdge((NodeType*)0, BB)) {
+    if (this->insertEdge((NodeType*)nullptr, BB)) {
       VisitStack.push_back(std::make_pair(BB, GT::child_begin(BB)));
       traverseChild();
     }

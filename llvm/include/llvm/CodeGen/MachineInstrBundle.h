@@ -196,7 +196,7 @@ public:
   ///            each operand referring to Reg.
   /// @returns A filled-in RegInfo struct.
   VirtRegInfo analyzeVirtReg(unsigned Reg,
-                 SmallVectorImpl<std::pair<MachineInstr*, unsigned> > *Ops = 0);
+           SmallVectorImpl<std::pair<MachineInstr*, unsigned> > *Ops = nullptr);
 
   /// analyzePhysReg - Analyze how the current instruction or bundle uses a
   /// physical register.  This function should not be called after operator++(),

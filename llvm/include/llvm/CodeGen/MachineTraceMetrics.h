@@ -154,7 +154,7 @@ public:
     unsigned InstrHeight;
 
     TraceBlockInfo() :
-      Pred(0), Succ(0),
+      Pred(nullptr), Succ(nullptr),
       InstrDepth(~0u), InstrHeight(~0u),
       HasValidInstrDepths(false), HasValidInstrHeights(false) {}
 

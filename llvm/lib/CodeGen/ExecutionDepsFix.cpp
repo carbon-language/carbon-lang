@@ -100,7 +100,7 @@ struct DomainValue {
   // Clear this DomainValue and point to next which has all its data.
   void clear() {
     AvailableDomains = 0;
-    Next = 0;
+    Next = nullptr;
     Instrs.clear();
   }
 };
@@ -275,7 +275,7 @@ void ExeDepsFix::kill(int rx) {
     return;
 
   release(LiveRegs[rx].Value);
-  LiveRegs[rx].Value = 0;
+  LiveRegs[rx].Value = nullptr;
 }
 
 /// Force register rx into domain.
@@ -360,7 +360,7 @@ void ExeDepsFix::enterBasicBlock(MachineBasicBlock *MBB) {
 
   // Default values are 'nothing happened a long time ago'.
   for (unsigned rx = 0; rx != NumRegs; ++rx) {
-    LiveRegs[rx].Value = 0;
+    LiveRegs[rx].Value = nullptr;
     LiveRegs[rx].Def = -(1 << 20);
   }
 
@@ -440,7 +440,7 @@ void ExeDepsFix::leaveBasicBlock(MachineBasicBlock *MBB) {
       release(LiveRegs[i].Value);
     delete[] LiveRegs;
   }
-  LiveRegs = 0;
+  LiveRegs = nullptr;
 }
 
 void ExeDepsFix::visitInstr(MachineInstr *MI) {
@@ -664,7 +664,7 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
 
   // doms are now sorted in order of appearance. Try to merge them all, giving
   // priority to the latest ones.
-  DomainValue *dv = 0;
+  DomainValue *dv = nullptr;
   while (!Regs.empty()) {
     if (!dv) {
       dv = Regs.pop_back_val().Value;
@@ -714,7 +714,7 @@ bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   TII = MF->getTarget().getInstrInfo();
   TRI = MF->getTarget().getRegisterInfo();
-  LiveRegs = 0;
+  LiveRegs = nullptr;
   assert(NumRegs == RC->getNumRegs() && "Bad regclass");
 
   DEBUG(dbgs() << "********** FIX EXECUTION DEPENDENCIES: "

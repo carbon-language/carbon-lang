@@ -101,7 +101,7 @@ TargetRegisterInfo::getAllocatableClass(const TargetRegisterClass *RC) const {
       Idx += Offset + 1;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 /// getMinimalPhysRegClass - Returns the Register Class of a physical
@@ -113,7 +113,7 @@ TargetRegisterInfo::getMinimalPhysRegClass(unsigned reg, EVT VT) const {
 
   // Pick the most sub register class of the right type that contains
   // this physreg.
-  const TargetRegisterClass* BestRC = 0;
+  const TargetRegisterClass* BestRC = nullptr;
   for (regclass_iterator I = regclass_begin(), E = regclass_end(); I != E; ++I){
     const TargetRegisterClass* RC = *I;
     if ((VT == MVT::Other || RC->hasType(VT)) && RC->contains(reg) &&
@@ -164,7 +164,7 @@ const TargetRegisterClass *firstCommonClass(const uint32_t *A,
   for (unsigned I = 0, E = TRI->getNumRegClasses(); I < E; I += 32)
     if (unsigned Common = *A++ & *B++)
       return TRI->getRegClass(I + countTrailingZeros(Common));
-  return 0;
+  return nullptr;
 }
 
 const TargetRegisterClass *
@@ -174,7 +174,7 @@ TargetRegisterInfo::getCommonSubClass(const TargetRegisterClass *A,
   if (A == B)
     return A;
   if (!A || !B)
-    return 0;
+    return nullptr;
 
   // Register classes are ordered topologically, so the largest common
   // sub-class it the common sub-class with the smallest ID.
@@ -194,7 +194,7 @@ TargetRegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
       // The bit mask contains all register classes that are projected into B
       // by Idx. Find a class that is also a sub-class of A.
       return firstCommonClass(RCI.getMask(), A->getSubClassMask(), this);
-  return 0;
+  return nullptr;
 }
 
 const TargetRegisterClass *TargetRegisterInfo::
@@ -215,7 +215,7 @@ getCommonSuperRegClass(const TargetRegisterClass *RCA, unsigned SubA,
   // Arrange for RCA to be the larger register so the answer will be found in
   // the first iteration. This makes the search linear for the most common
   // case.
-  const TargetRegisterClass *BestRC = 0;
+  const TargetRegisterClass *BestRC = nullptr;
   unsigned *BestPreA = &PreA;
   unsigned *BestPreB = &PreB;
   if (RCA->getSize() < RCB->getSize()) {

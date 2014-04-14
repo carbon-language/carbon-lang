@@ -159,10 +159,10 @@ private:
   void operator=(const ScopedHashTable&);  // NOT YET IMPLEMENTED
   friend class ScopedHashTableScope<K, V, KInfo, AllocatorTy>;
 public:
-  ScopedHashTable() : CurScope(0) {}
+  ScopedHashTable() : CurScope(nullptr) {}
   ScopedHashTable(AllocatorTy A) : CurScope(0), Allocator(A) {}
   ~ScopedHashTable() {
-    assert(CurScope == 0 && TopLevelMap.empty() && "Scope imbalance!");
+    assert(!CurScope && TopLevelMap.empty() && "Scope imbalance!");
   }
   
 
@@ -222,7 +222,7 @@ ScopedHashTableScope<K, V, KInfo, Allocator>::
   ScopedHashTableScope(ScopedHashTable<K, V, KInfo, Allocator> &ht) : HT(ht) {
   PrevScope = HT.CurScope;
   HT.CurScope = this;
-  LastValInScope = 0;
+  LastValInScope = nullptr;
 }
 
 template <typename K, typename V, typename KInfo, typename Allocator>
@@ -233,7 +233,7 @@ ScopedHashTableScope<K, V, KInfo, Allocator>::~ScopedHashTableScope() {
   // Pop and delete all values corresponding to this scope.
   while (ScopedHashTableVal<K, V> *ThisEntry = LastValInScope) {
     // Pop this value out of the TopLevelMap.
-    if (ThisEntry->getNextForKey() == 0) {
+    if (!ThisEntry->getNextForKey()) {
       assert(HT.TopLevelMap[ThisEntry->getKey()] == ThisEntry &&
              "Scope imbalance!");
       HT.TopLevelMap.erase(ThisEntry->getKey());

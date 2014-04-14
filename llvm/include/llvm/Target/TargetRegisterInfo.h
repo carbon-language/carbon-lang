@@ -174,7 +174,7 @@ public:
   /// isASubClass - return true if this TargetRegisterClass is a subset
   /// class of at least one other TargetRegisterClass.
   bool isASubClass() const {
-    return SuperClasses[0] != 0;
+    return SuperClasses[0] != nullptr;
   }
 
   /// getRawAllocationOrder - Returns the preferred order for allocating
@@ -317,7 +317,7 @@ public:
   /// indicating if a register is allocatable or not. If a register class is
   /// specified, returns the subset for the class.
   BitVector getAllocatableSet(const MachineFunction &MF,
-                              const TargetRegisterClass *RC = NULL) const;
+                              const TargetRegisterClass *RC = nullptr) const;
 
   /// getCostPerUse - Return the additional cost of using this register instead
   /// of other registers in its class.
@@ -420,8 +420,8 @@ public:
   /// order of desired callee-save stack frame offset. The first register is
   /// closest to the incoming stack pointer if stack grows down, and vice versa.
   ///
-  virtual const MCPhysReg* getCalleeSavedRegs(const MachineFunction *MF = 0)
-                                                                      const = 0;
+  virtual const MCPhysReg*
+  getCalleeSavedRegs(const MachineFunction *MF = nullptr) const = 0;
 
   /// getCallPreservedMask - Return a mask of call-preserved registers for the
   /// given calling convention on the current sub-target.  The mask should
@@ -443,7 +443,7 @@ public:
   ///
   virtual const uint32_t *getCallPreservedMask(CallingConv::ID) const {
     // The default mask clobbers everything.  All targets should override.
-    return 0;
+    return nullptr;
   }
 
   /// getReservedRegs - Returns a bitset indexed by physical register number
@@ -651,7 +651,7 @@ public:
                                      ArrayRef<MCPhysReg> Order,
                                      SmallVectorImpl<MCPhysReg> &Hints,
                                      const MachineFunction &MF,
-                                     const VirtRegMap *VRM = 0) const;
+                                     const VirtRegMap *VRM = nullptr) const;
 
   /// avoidWriteAfterWrite - Return true if the register allocator should avoid
   /// writing a register from RC in two consecutive instructions.
@@ -805,7 +805,7 @@ public:
   /// instruction.  FIOperandNum is the FI operand number.
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                                    int SPAdj, unsigned FIOperandNum,
-                                   RegScavenger *RS = NULL) const = 0;
+                                   RegScavenger *RS = nullptr) const = 0;
 
   //===--------------------------------------------------------------------===//
   /// Debug information queries.
@@ -874,7 +874,7 @@ public:
     Mask += RCMaskWords;
     SubReg = *Idx++;
     if (!SubReg)
-      Idx = 0;
+      Idx = nullptr;
   }
 };
 
@@ -902,7 +902,7 @@ class PrintReg {
   unsigned Reg;
   unsigned SubIdx;
 public:
-  explicit PrintReg(unsigned reg, const TargetRegisterInfo *tri = 0,
+  explicit PrintReg(unsigned reg, const TargetRegisterInfo *tri = nullptr,
                     unsigned subidx = 0)
     : TRI(tri), Reg(reg), SubIdx(subidx) {}
   void print(raw_ostream&) const;

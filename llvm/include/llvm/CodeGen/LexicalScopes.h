@@ -44,7 +44,7 @@ typedef std::pair<const MachineInstr *, const MachineInstr *> InsnRange;
 ///
 class LexicalScopes {
 public:
-  LexicalScopes() : MF(NULL), CurrentFnLexicalScope(NULL) {}
+  LexicalScopes() : MF(nullptr), CurrentFnLexicalScope(nullptr) {}
   ~LexicalScopes();
 
   /// initialize - Scan machine function and constuct lexical scope nest, resets
@@ -55,7 +55,7 @@ public:
   void reset();
 
   /// empty - Return true if there is any lexical scope information available.
-  bool empty() { return CurrentFnLexicalScope == NULL; }
+  bool empty() { return CurrentFnLexicalScope == nullptr; }
 
   /// isCurrentFunctionScope - Return true if given lexical scope represents
   /// current function.
@@ -160,8 +160,8 @@ class LexicalScope {
 
 public:
   LexicalScope(LexicalScope *P, const MDNode *D, const MDNode *I, bool A)
-      : Parent(P), Desc(D), InlinedAtLocation(I), AbstractScope(A), LastInsn(0),
-        FirstInsn(0), DFSIn(0), DFSOut(0) {
+      : Parent(P), Desc(D), InlinedAtLocation(I), AbstractScope(A),
+        LastInsn(nullptr), FirstInsn(nullptr), DFSIn(0), DFSOut(0) {
     if (Parent)
       Parent->addChild(this);
   }
@@ -199,11 +199,11 @@ public:
   /// closeInsnRange - Create a range based on FirstInsn and LastInsn collected
   /// until now. This is used when a new scope is encountered while walking
   /// machine instructions.
-  void closeInsnRange(LexicalScope *NewScope = NULL) {
+  void closeInsnRange(LexicalScope *NewScope = nullptr) {
     assert(LastInsn && "Last insn missing!");
     Ranges.push_back(InsnRange(FirstInsn, LastInsn));
-    FirstInsn = NULL;
-    LastInsn = NULL;
+    FirstInsn = nullptr;
+    LastInsn = nullptr;
     // If Parent dominates NewScope then do not close Parent's instruction
     // range.
     if (Parent && (!NewScope || !Parent->dominates(NewScope)))

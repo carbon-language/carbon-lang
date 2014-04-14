@@ -79,7 +79,7 @@ void FastISel::startNewBlock() {
   // Instructions are appended to FuncInfo.MBB. If the basic block already
   // contains labels or copies, use the last instruction as the last local
   // value.
-  EmitStartPt = 0;
+  EmitStartPt = nullptr;
   if (!FuncInfo.MBB->empty())
     EmitStartPt = &FuncInfo.MBB->back();
   LastLocalValue = EmitStartPt;
@@ -880,7 +880,7 @@ FastISel::FastEmitBranch(MachineBasicBlock *MSucc, DebugLoc DbgLoc) {
     // fall-through case, which needs no instructions.
   } else {
     // The unconditional branch case.
-    TII.InsertBranch(*FuncInfo.MBB, MSucc, NULL,
+    TII.InsertBranch(*FuncInfo.MBB, MSucc, nullptr,
                      SmallVector<MachineOperand, 0>(), DbgLoc);
   }
   FuncInfo.MBB->addSuccessor(MSucc);

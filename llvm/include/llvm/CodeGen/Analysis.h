@@ -54,7 +54,7 @@ inline unsigned ComputeLinearIndex(Type *Ty,
 ///
 void ComputeValueVTs(const TargetLowering &TLI, Type *Ty,
                      SmallVectorImpl<EVT> &ValueVTs,
-                     SmallVectorImpl<uint64_t> *Offsets = 0,
+                     SmallVectorImpl<uint64_t> *Offsets = nullptr,
                      uint64_t StartingOffset = 0);
 
 /// ExtractTypeInfo - Returns the type info, possibly bitcast, encoded in V.

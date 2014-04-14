@@ -88,7 +88,7 @@ namespace llvm {
       const entry& Val;
 
     public:
-      node(const entry& V) : Next(0), Val(V) {
+      node(const entry& V) : Next(nullptr), Val(V) {
         if (Tail)
           Tail->Next = this;
         else
@@ -116,7 +116,7 @@ namespace llvm {
     };
 
     static iterator begin() { return iterator(Head); }
-    static iterator end()   { return iterator(0); }
+    static iterator end()   { return iterator(nullptr); }
 
 
     /// Abstract base class for registry listeners, which are informed when new

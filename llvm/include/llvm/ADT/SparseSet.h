@@ -142,7 +142,7 @@ public:
   typedef ValueT *pointer;
   typedef const ValueT *const_pointer;
 
-  SparseSet() : Sparse(0), Universe(0) {}
+  SparseSet() : Sparse(nullptr), Universe(0) {}
   ~SparseSet() { free(Sparse); }
 
   /// setUniverse - Set the universe size which determines the largest key the

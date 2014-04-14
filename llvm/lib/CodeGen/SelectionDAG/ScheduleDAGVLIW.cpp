@@ -120,7 +120,7 @@ void ScheduleDAGVLIW::releaseSucc(SUnit *SU, const SDep &D) {
     dbgs() << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     dbgs() << " has been released too many times!\n";
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
   }
 #endif
   assert(!D.isWeak() && "unexpected artificial DAG edge");
@@ -204,12 +204,12 @@ void ScheduleDAGVLIW::listScheduleTopDown() {
     // don't advance the hazard recognizer.
     if (AvailableQueue->empty()) {
       // Reset DFA state.
-      AvailableQueue->scheduledNode(0);
+      AvailableQueue->scheduledNode(nullptr);
       ++CurCycle;
       continue;
     }
 
-    SUnit *FoundSUnit = 0;
+    SUnit *FoundSUnit = nullptr;
 
     bool HasNoopHazards = false;
     while (!AvailableQueue->empty()) {
@@ -256,7 +256,7 @@ void ScheduleDAGVLIW::listScheduleTopDown() {
       // processors without pipeline interlocks and other cases.
       DEBUG(dbgs() << "*** Emitting noop\n");
       HazardRec->EmitNoop();
-      Sequence.push_back(0);   // NULL here means noop
+      Sequence.push_back(nullptr);   // NULL here means noop
       ++NumNoops;
       ++CurCycle;
     }

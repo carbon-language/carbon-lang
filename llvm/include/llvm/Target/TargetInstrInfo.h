@@ -66,7 +66,7 @@ public:
   /// rematerializable, meaning it has no side effects and requires no operands
   /// that aren't always available.
   bool isTriviallyReMaterializable(const MachineInstr *MI,
-                                   AliasAnalysis *AA = 0) const {
+                                   AliasAnalysis *AA = nullptr) const {
     return MI->getOpcode() == TargetOpcode::IMPLICIT_DEF ||
            (MI->getDesc().isRematerializable() &&
             (isReallyTriviallyReMaterializable(MI, AA) ||
@@ -230,7 +230,7 @@ public:
   virtual MachineInstr *
   convertToThreeAddress(MachineFunction::iterator &MFI,
                    MachineBasicBlock::iterator &MBBI, LiveVariables *LV) const {
-    return 0;
+    return nullptr;
   }
 
   /// commuteInstruction - If a target has any instructions that are
@@ -257,7 +257,7 @@ public:
   /// aggressive checks.
   virtual bool produceSameValue(const MachineInstr *MI0,
                                 const MachineInstr *MI1,
-                                const MachineRegisterInfo *MRI = 0) const;
+                                const MachineRegisterInfo *MRI = nullptr) const;
 
   /// AnalyzeBranch - Analyze the branching code at the end of MBB, returning
   /// true if it cannot be understood (e.g. it's a switch dispatch or isn't
@@ -555,7 +555,7 @@ protected:
                                           MachineInstr* MI,
                                           const SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const {
-    return 0;
+    return nullptr;
   }
 
   /// foldMemoryOperandImpl - Target-dependent implementation for
@@ -565,7 +565,7 @@ protected:
                                               MachineInstr* MI,
                                           const SmallVectorImpl<unsigned> &Ops,
                                               MachineInstr* LoadMI) const {
-    return 0;
+    return nullptr;
   }
 
 public:
@@ -597,7 +597,7 @@ public:
   /// value.
   virtual unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
                                       bool UnfoldLoad, bool UnfoldStore,
-                                      unsigned *LoadRegIndex = 0) const {
+                                      unsigned *LoadRegIndex = nullptr) const {
     return 0;
   }
 
@@ -780,7 +780,7 @@ public:
                         const MachineRegisterInfo *MRI,
                         unsigned &FoldAsLoadDefReg,
                         MachineInstr *&DefMI) const {
-    return 0;
+    return nullptr;
   }
 
   /// FoldImmediate - 'Reg' is known to be defined by a move immediate
@@ -838,7 +838,7 @@ public:
   /// PredCost.
   virtual unsigned getInstrLatency(const InstrItineraryData *ItinData,
                                    const MachineInstr *MI,
-                                   unsigned *PredCost = 0) const;
+                                   unsigned *PredCost = nullptr) const;
 
   virtual unsigned getPredicationCost(const MachineInstr *MI) const;
 
@@ -1003,7 +1003,7 @@ public:
   /// Create machine specific model for scheduling.
   virtual DFAPacketizer*
     CreateTargetScheduleState(const TargetMachine*, const ScheduleDAG*) const {
-    return NULL;
+    return nullptr;
   }
 
 private:

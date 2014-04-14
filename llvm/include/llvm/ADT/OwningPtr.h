@@ -146,7 +146,7 @@ public:
 
   T *get() const { return Ptr; }
   LLVM_EXPLICIT operator bool() const { return Ptr != 0; }
-  bool operator!() const { return Ptr == 0; }
+  bool operator!() const { return Ptr == nullptr; }
 
   void swap(OwningArrayPtr &RHS) {
     T *Tmp = RHS.Ptr;

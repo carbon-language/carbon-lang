@@ -358,7 +358,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   SmallVector<MachineLoop *, 8> Worklist(MLI->begin(), MLI->end());
   while (!Worklist.empty()) {
     CurLoop = Worklist.pop_back_val();
-    CurPreheader = 0;
+    CurPreheader = nullptr;
     ExitBlocks.clear();
 
     // If this is done before regalloc, only visit outer-most preheader-sporting
@@ -700,7 +700,7 @@ void MachineLICM::HoistOutOfLoop(MachineDomTreeNode *HeaderN) {
   WorkList.push_back(HeaderN);
   do {
     MachineDomTreeNode *Node = WorkList.pop_back_val();
-    assert(Node != 0 && "Null dominator tree node?");
+    assert(Node && "Null dominator tree node?");
     MachineBasicBlock *BB = Node->getBlock();
 
     // If the header of the loop containing this basic block is a landing pad,
@@ -804,7 +804,7 @@ void MachineLICM::InitRegPressure(MachineBasicBlock *BB) {
   // defs as well. This happens whenever the preheader is created by splitting
   // the critical edge from the loop predecessor to the loop header.
   if (BB->pred_size() == 1) {
-    MachineBasicBlock *TBB = 0, *FBB = 0;
+    MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
     SmallVector<MachineOperand, 4> Cond;
     if (!TII->AnalyzeBranch(*BB, TBB, FBB, Cond, false) && Cond.empty())
       InitRegPressure(*BB->pred_begin());
@@ -1241,13 +1241,13 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
 MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   // Don't unfold simple loads.
   if (MI->canFoldAsLoad())
-    return 0;
+    return nullptr;
 
   // If not, we may be able to unfold a load and hoist that.
   // First test whether the instruction is loading from an amenable
   // memory location.
   if (!MI->isInvariantLoad(AA))
-    return 0;
+    return nullptr;
 
   // Next determine the register class for a temporary register.
   unsigned LoadRegIndex;
@@ -1256,9 +1256,9 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
                                     /*UnfoldLoad=*/true,
                                     /*UnfoldStore=*/false,
                                     &LoadRegIndex);
-  if (NewOpc == 0) return 0;
+  if (NewOpc == 0) return nullptr;
   const MCInstrDesc &MID = TII->get(NewOpc);
-  if (MID.getNumDefs() != 1) return 0;
+  if (MID.getNumDefs() != 1) return nullptr;
   MachineFunction &MF = *MI->getParent()->getParent();
   const TargetRegisterClass *RC = TII->getRegClass(MID, LoadRegIndex, TRI, MF);
   // Ok, we're unfolding. Create a temporary register and do the unfold.
@@ -1284,7 +1284,7 @@ MachineInstr *MachineLICM::ExtractHoistableLoad(MachineInstr *MI) {
   if (!IsLoopInvariantInst(*NewMIs[0]) || !IsProfitableToHoist(*NewMIs[0])) {
     NewMIs[0]->eraseFromParent();
     NewMIs[1]->eraseFromParent();
-    return 0;
+    return nullptr;
   }
 
   // Update register pressure for the unfolded instruction.
@@ -1316,10 +1316,10 @@ MachineLICM::LookForDuplicate(const MachineInstr *MI,
                               std::vector<const MachineInstr*> &PrevMIs) {
   for (unsigned i = 0, e = PrevMIs.size(); i != e; ++i) {
     const MachineInstr *PrevMI = PrevMIs[i];
-    if (TII->produceSameValue(MI, PrevMI, (PreRegAlloc ? MRI : 0)))
+    if (TII->produceSameValue(MI, PrevMI, (PreRegAlloc ? MRI : nullptr)))
       return PrevMI;
   }
-  return 0;
+  return nullptr;
 }
 
 bool MachineLICM::EliminateCSE(MachineInstr *MI,
@@ -1390,7 +1390,7 @@ bool MachineLICM::MayCSE(MachineInstr *MI) {
   if (CI == CSEMap.end() || MI->isImplicitDef())
     return false;
 
-  return LookForDuplicate(MI, CI->second) != 0;
+  return LookForDuplicate(MI, CI->second) != nullptr;
 }
 
 /// Hoist - When an instruction is found to use only loop invariant operands
@@ -1466,7 +1466,7 @@ MachineBasicBlock *MachineLICM::getCurPreheader() {
 
   // If we've tried to get a preheader and failed, don't try again.
   if (CurPreheader == reinterpret_cast<MachineBasicBlock *>(-1))
-    return 0;
+    return nullptr;
 
   if (!CurPreheader) {
     CurPreheader = CurLoop->getLoopPreheader();
@@ -1474,13 +1474,13 @@ MachineBasicBlock *MachineLICM::getCurPreheader() {
       MachineBasicBlock *Pred = CurLoop->getLoopPredecessor();
       if (!Pred) {
         CurPreheader = reinterpret_cast<MachineBasicBlock *>(-1);
-        return 0;
+        return nullptr;
       }
 
       CurPreheader = Pred->SplitCriticalEdge(CurLoop->getHeader(), this);
       if (!CurPreheader) {
         CurPreheader = reinterpret_cast<MachineBasicBlock *>(-1);
-        return 0;
+        return nullptr;
       }
     }
   }

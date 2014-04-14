@@ -75,7 +75,7 @@ namespace {
       bool Dirty;               // Register needs spill.
 
       explicit LiveReg(unsigned v)
-        : LastUse(0), VirtReg(v), PhysReg(0), LastOpNum(0), Dirty(false) {}
+        : LastUse(nullptr), VirtReg(v), PhysReg(0), LastOpNum(0), Dirty(false){}
 
       unsigned getSparseSetIndex() const {
         return TargetRegisterInfo::virtReg2Index(VirtReg);
@@ -319,7 +319,7 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
     // now.
     LRIDbgValues.clear();
     if (SpillKill)
-      LR.LastUse = 0; // Don't kill register again
+      LR.LastUse = nullptr; // Don't kill register again
   }
   killVirtReg(LRI);
 }

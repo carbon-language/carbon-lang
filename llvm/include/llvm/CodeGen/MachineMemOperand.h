@@ -38,11 +38,11 @@ struct MachinePointerInfo {
   /// Offset - This is an offset from the base Value*.
   int64_t Offset;
 
-  explicit MachinePointerInfo(const Value *v = 0, int64_t offset = 0)
+  explicit MachinePointerInfo(const Value *v = nullptr, int64_t offset = 0)
     : V(v), Offset(offset) {}
 
   MachinePointerInfo getWithOffset(int64_t O) const {
-    if (V == 0) return MachinePointerInfo(0, 0);
+    if (V == nullptr) return MachinePointerInfo(nullptr, 0);
     return MachinePointerInfo(V, Offset+O);
   }
 
@@ -109,8 +109,8 @@ public:
   /// MachineMemOperand - Construct an MachineMemOperand object with the
   /// specified PtrInfo, flags, size, and base alignment.
   MachineMemOperand(MachinePointerInfo PtrInfo, unsigned flags, uint64_t s,
-                    unsigned base_alignment, const MDNode *TBAAInfo = 0,
-                    const MDNode *Ranges = 0);
+                    unsigned base_alignment, const MDNode *TBAAInfo = nullptr,
+                    const MDNode *Ranges = nullptr);
 
   const MachinePointerInfo &getPointerInfo() const { return PtrInfo; }
 

@@ -154,8 +154,8 @@ const LiveRange *RegPressureTracker::getLiveRange(unsigned Reg) const {
 }
 
 void RegPressureTracker::reset() {
-  MBB = 0;
-  LIS = 0;
+  MBB = nullptr;
+  LIS = nullptr;
 
   CurrSetPressure.clear();
   LiveThruPressure.clear();

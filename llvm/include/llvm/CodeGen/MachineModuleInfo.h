@@ -71,7 +71,7 @@ struct LandingPadInfo {
   std::vector<int> TypeIds;              // List of type ids (filters negative)
 
   explicit LandingPadInfo(MachineBasicBlock *MBB)
-    : LandingPadBlock(MBB), LandingPadLabel(0), Personality(0) {}
+    : LandingPadBlock(MBB), LandingPadLabel(nullptr), Personality(nullptr) {}
 };
 
 //===----------------------------------------------------------------------===//
@@ -201,7 +201,7 @@ public:
   ///
   template<typename Ty>
   Ty &getObjFileInfo() {
-    if (ObjFileMMI == 0)
+    if (ObjFileMMI == nullptr)
       ObjFileMMI = new Ty(*this);
     return *static_cast<Ty*>(ObjFileMMI);
   }
@@ -334,7 +334,7 @@ public:
 
   /// TidyLandingPads - Remap landing pad labels and remove any deleted landing
   /// pads.
-  void TidyLandingPads(DenseMap<MCSymbol*, uintptr_t> *LPMap = 0);
+  void TidyLandingPads(DenseMap<MCSymbol*, uintptr_t> *LPMap = nullptr);
 
   /// getLandingPads - Return a reference to the landing pad info for the
   /// current function.

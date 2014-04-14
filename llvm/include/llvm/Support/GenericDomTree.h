@@ -489,7 +489,7 @@ public:
   /// creates a new node as a child of DomBB dominator node,linking it into
   /// the children list of the immediate dominator.
   DomTreeNodeBase<NodeT> *addNewBlock(NodeT *BB, NodeT *DomBB) {
-    assert(getNode(BB) == 0 && "Block already in dominator tree!");
+    assert(getNode(BB) == nullptr && "Block already in dominator tree!");
     DomTreeNodeBase<NodeT> *IDomNode = getNode(DomBB);
     assert(IDomNode && "Not immediate dominator specified for block!");
     DFSInfoValid = false;
@@ -636,7 +636,7 @@ protected:
     // immediate dominator.
     NodeT *IDom = getIDom(BB);
 
-    assert(IDom || this->DomTreeNodes[NULL]);
+    assert(IDom || this->DomTreeNodes[nullptr]);
     DomTreeNodeBase<NodeT> *IDomNode = getNodeForBlock(IDom);
 
     // Add a new tree node for this NodeT, and link it as a child of

@@ -92,7 +92,7 @@ namespace llvm {
     bool runOnMachineFunction(MachineFunction&) override;
 
     /// print - Implement the dump method.
-    void print(raw_ostream &O, const Module* = 0) const override;
+    void print(raw_ostream &O, const Module* = nullptr) const override;
   };
 }
 

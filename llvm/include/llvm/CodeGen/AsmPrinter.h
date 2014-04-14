@@ -247,7 +247,7 @@ namespace llvm {
     /// an explicit alignment requested, it will override the alignment request
     /// if required for correctness.
     ///
-    void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const;
+    void EmitAlignment(unsigned NumBits, const GlobalValue *GV = nullptr) const;
 
     /// EmitBasicBlockStart - This method prints the label for the specified
     /// MachineBasicBlock, an alignment (if present) and a comment describing
@@ -395,10 +395,10 @@ namespace llvm {
     //===------------------------------------------------------------------===//
 
     /// EmitSLEB128 - emit the specified signed leb128 value.
-    void EmitSLEB128(int64_t Value, const char *Desc = 0) const;
+    void EmitSLEB128(int64_t Value, const char *Desc = nullptr) const;
 
     /// EmitULEB128 - emit the specified unsigned leb128 value.
-    void EmitULEB128(uint64_t Value, const char *Desc = 0,
+    void EmitULEB128(uint64_t Value, const char *Desc = nullptr,
                      unsigned PadTo = 0) const;
 
     /// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.
@@ -408,7 +408,7 @@ namespace llvm {
     /// encoding.  If verbose assembly output is enabled, we output comments
     /// describing the encoding.  Desc is a string saying what the encoding is
     /// specifying (e.g. "LSDA").
-    void EmitEncodingByte(unsigned Val, const char *Desc = 0) const;
+    void EmitEncodingByte(unsigned Val, const char *Desc = nullptr) const;
 
     /// GetSizeOfEncodedValue - Return the size of the encoding in bytes.
     unsigned GetSizeOfEncodedValue(unsigned Encoding) const;
@@ -491,7 +491,7 @@ namespace llvm {
     mutable unsigned SetCounter;
 
     /// EmitInlineAsm - Emit a blob of inline asm to the output streamer.
-    void EmitInlineAsm(StringRef Str, const MDNode *LocMDNode = 0,
+    void EmitInlineAsm(StringRef Str, const MDNode *LocMDNode = nullptr,
                        InlineAsm::AsmDialect AsmDialect =
                            InlineAsm::AD_ATT) const;
 

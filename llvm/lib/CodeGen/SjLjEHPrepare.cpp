@@ -100,10 +100,10 @@ bool SjLjEHPrepare::doInitialization(Module &M) {
                                       NULL);
   RegisterFn = M.getOrInsertFunction(
       "_Unwind_SjLj_Register", Type::getVoidTy(M.getContext()),
-      PointerType::getUnqual(FunctionContextTy), (Type *)0);
+      PointerType::getUnqual(FunctionContextTy), (Type *)nullptr);
   UnregisterFn = M.getOrInsertFunction(
       "_Unwind_SjLj_Unregister", Type::getVoidTy(M.getContext()),
-      PointerType::getUnqual(FunctionContextTy), (Type *)0);
+      PointerType::getUnqual(FunctionContextTy), (Type *)nullptr);
   FrameAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::frameaddress);
   StackAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::stacksave);
   StackRestoreFn = Intrinsic::getDeclaration(&M, Intrinsic::stackrestore);
@@ -111,7 +111,7 @@ bool SjLjEHPrepare::doInitialization(Module &M) {
   LSDAAddrFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_lsda);
   CallSiteFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_callsite);
   FuncCtxFn = Intrinsic::getDeclaration(&M, Intrinsic::eh_sjlj_functioncontext);
-  PersonalityFn = 0;
+  PersonalityFn = nullptr;
 
   return true;
 }
@@ -192,7 +192,7 @@ Value *SjLjEHPrepare::setupFunctionContext(Function &F,
   const TargetLowering *TLI = TM->getTargetLowering();
   unsigned Align =
       TLI->getDataLayout()->getPrefTypeAlignment(FunctionContextTy);
-  FuncCtx = new AllocaInst(FunctionContextTy, 0, Align, "fn_context",
+  FuncCtx = new AllocaInst(FunctionContextTy, nullptr, Align, "fn_context",
                            EntryBB->begin());
 
   // Fill in the function context structure.

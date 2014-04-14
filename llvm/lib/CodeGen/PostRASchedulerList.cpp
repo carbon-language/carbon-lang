@@ -205,7 +205,7 @@ SchedulePostRATDList::SchedulePostRATDList(
     ((AntiDepMode == TargetSubtargetInfo::ANTIDEP_ALL) ?
      (AntiDepBreaker *)new AggressiveAntiDepBreaker(MF, RCI, CriticalPathRCs) :
      ((AntiDepMode == TargetSubtargetInfo::ANTIDEP_CRITICAL) ?
-      (AntiDepBreaker *)new CriticalAntiDepBreaker(MF, RCI) : NULL));
+      (AntiDepBreaker *)new CriticalAntiDepBreaker(MF, RCI) : nullptr));
 }
 
 SchedulePostRATDList::~SchedulePostRATDList() {
@@ -355,7 +355,7 @@ void SchedulePostRATDList::startBlock(MachineBasicBlock *BB) {
 
   // Reset the hazard recognizer and anti-dep breaker.
   HazardRec->Reset();
-  if (AntiDepBreak != NULL)
+  if (AntiDepBreak)
     AntiDepBreak->StartBlock(BB);
 }
 
@@ -365,7 +365,7 @@ void SchedulePostRATDList::schedule() {
   // Build the scheduling graph.
   buildSchedGraph(AA);
 
-  if (AntiDepBreak != NULL) {
+  if (AntiDepBreak) {
     unsigned Broken =
       AntiDepBreak->BreakAntiDependencies(SUnits, RegionBegin, RegionEnd,
                                           EndIndex, DbgValues);
@@ -397,14 +397,14 @@ void SchedulePostRATDList::schedule() {
 /// instruction, which will not be scheduled.
 ///
 void SchedulePostRATDList::Observe(MachineInstr *MI, unsigned Count) {
-  if (AntiDepBreak != NULL)
+  if (AntiDepBreak)
     AntiDepBreak->Observe(MI, Count, EndIndex);
 }
 
 /// FinishBlock - Clean up register live-range state.
 ///
 void SchedulePostRATDList::finishBlock() {
-  if (AntiDepBreak != NULL)
+  if (AntiDepBreak)
     AntiDepBreak->FinishBlock();
 
   // Call the superclass.
@@ -429,7 +429,7 @@ void SchedulePostRATDList::ReleaseSucc(SUnit *SU, SDep *SuccEdge) {
     dbgs() << "*** Scheduling failed! ***\n";
     SuccSU->dump(this);
     dbgs() << " has been released too many times!\n";
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
   }
 #endif
   --SuccSU->NumPredsLeft;
@@ -480,7 +480,7 @@ void SchedulePostRATDList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
 void SchedulePostRATDList::emitNoop(unsigned CurCycle) {
   DEBUG(dbgs() << "*** Emitting noop in cycle " << CurCycle << '\n');
   HazardRec->EmitNoop();
-  Sequence.push_back(0);   // NULL here means noop
+  Sequence.push_back(nullptr);   // NULL here means noop
   ++NumNoops;
 }
 
@@ -532,7 +532,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 
     DEBUG(dbgs() << "\n*** Examining Available\n"; AvailableQueue.dump(this));
 
-    SUnit *FoundSUnit = 0, *NotPreferredSUnit = 0;
+    SUnit *FoundSUnit = nullptr, *NotPreferredSUnit = nullptr;
     bool HasNoopHazards = false;
     while (!AvailableQueue.empty()) {
       SUnit *CurSUnit = AvailableQueue.pop();
@@ -572,7 +572,7 @@ void SchedulePostRATDList::ListScheduleTopDown() {
         AvailableQueue.push(NotPreferredSUnit);
       }
 
-      NotPreferredSUnit = 0;
+      NotPreferredSUnit = nullptr;
     }
 
     // Add the nodes that aren't ready back onto the available list.
@@ -662,5 +662,5 @@ void SchedulePostRATDList::EmitSchedule() {
     BB->splice(++OrigPrivMI, BB, DbgValue);
   }
   DbgValues.clear();
-  FirstDbgValue = NULL;
+  FirstDbgValue = nullptr;
 }

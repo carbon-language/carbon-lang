@@ -52,8 +52,8 @@ private:
     PhiT *PHITag;      // Marker for existing PHIs that match.
 
     BBInfo(BlkT *ThisBB, ValT V)
-      : BB(ThisBB), AvailableVal(V), DefBB(V ? this : 0), BlkNum(0), IDom(0),
-      NumPreds(0), Preds(0), PHITag(0) { }
+      : BB(ThisBB), AvailableVal(V), DefBB(V ? this : nullptr), BlkNum(0),
+        IDom(nullptr), NumPreds(0), Preds(nullptr), PHITag(nullptr) {}
   };
 
   typedef DenseMap<BlkT*, ValT> AvailableValsTy;
@@ -115,7 +115,7 @@ public:
       Traits::FindPredecessorBlocks(Info->BB, &Preds);
       Info->NumPreds = Preds.size();
       if (Info->NumPreds == 0)
-        Info->Preds = 0;
+        Info->Preds = nullptr;
       else
         Info->Preds = static_cast<BBInfo**>
           (Allocator.Allocate(Info->NumPreds * sizeof(BBInfo*),
@@ -148,7 +148,7 @@ public:
     // Now that we know what blocks are backwards-reachable from the starting
     // block, do a forward depth-first traversal to assign postorder numbers
     // to those blocks.
-    BBInfo *PseudoEntry = new (Allocator) BBInfo(0, 0);
+    BBInfo *PseudoEntry = new (Allocator) BBInfo(nullptr, 0);
     unsigned BlkNum = 1;
 
     // Initialize the worklist with the roots from the backward traversal.
@@ -231,7 +231,7 @@ public:
       for (typename BlockListTy::reverse_iterator I = BlockList->rbegin(),
              E = BlockList->rend(); I != E; ++I) {
         BBInfo *Info = *I;
-        BBInfo *NewIDom = 0;
+        BBInfo *NewIDom = nullptr;
 
         // Iterate through the block's predecessors.
         for (unsigned p = 0; p != Info->NumPreds; ++p) {
@@ -386,7 +386,7 @@ public:
       // Match failed: clear all the PHITag values.
       for (typename BlockListTy::iterator I = BlockList->begin(),
              E = BlockList->end(); I != E; ++I)
-        (*I)->PHITag = 0;
+        (*I)->PHITag = nullptr;
     }
   }
 

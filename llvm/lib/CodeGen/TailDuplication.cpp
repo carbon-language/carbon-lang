@@ -181,7 +181,7 @@ static void VerifyPHIs(MachineFunction &MF, bool CheckExtra) {
           dbgs() << "Malformed PHI in BB#" << MBB->getNumber() << ": " << *MI;
           dbgs() << "  missing input from predecessor BB#"
                  << PredBB->getNumber() << '\n';
-          llvm_unreachable(0);
+          llvm_unreachable(nullptr);
         }
       }
 
@@ -192,12 +192,12 @@ static void VerifyPHIs(MachineFunction &MF, bool CheckExtra) {
                  << ": " << *MI;
           dbgs() << "  extra input from predecessor BB#"
                  << PHIBB->getNumber() << '\n';
-          llvm_unreachable(0);
+          llvm_unreachable(nullptr);
         }
         if (PHIBB->getNumber() < 0) {
           dbgs() << "Malformed PHI in BB#" << MBB->getNumber() << ": " << *MI;
           dbgs() << "  non-existing BB#" << PHIBB->getNumber() << '\n';
-          llvm_unreachable(0);
+          llvm_unreachable(nullptr);
         }
       }
       ++MI;
@@ -247,7 +247,7 @@ TailDuplicatePass::TailDuplicateAndUpdate(MachineBasicBlock *MBB,
       // If the original definition is still around, add it as an available
       // value.
       MachineInstr *DefMI = MRI->getVRegDef(VReg);
-      MachineBasicBlock *DefBB = 0;
+      MachineBasicBlock *DefBB = nullptr;
       if (DefMI) {
         DefBB = DefMI->getParent();
         SSAUpdate.AddAvailableValue(DefBB, VReg);
@@ -656,7 +656,7 @@ TailDuplicatePass::canCompletelyDuplicateBB(MachineBasicBlock &BB) {
     if (PredBB->succ_size() > 1)
       return false;
 
-    MachineBasicBlock *PredTBB = NULL, *PredFBB = NULL;
+    MachineBasicBlock *PredTBB = nullptr, *PredFBB = nullptr;
     SmallVector<MachineOperand, 4> PredCond;
     if (TII->AnalyzeBranch(*PredBB, PredTBB, PredFBB, PredCond, true))
       return false;
@@ -687,7 +687,7 @@ TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
     if (bothUsedInPHI(*PredBB, Succs))
       continue;
 
-    MachineBasicBlock *PredTBB = NULL, *PredFBB = NULL;
+    MachineBasicBlock *PredTBB = nullptr, *PredFBB = nullptr;
     SmallVector<MachineOperand, 4> PredCond;
     if (TII->AnalyzeBranch(*PredBB, PredTBB, PredFBB, PredCond, true))
       continue;
@@ -718,14 +718,14 @@ TailDuplicatePass::duplicateSimpleBB(MachineBasicBlock *TailBB,
     // Make the branch unconditional if possible
     if (PredTBB == PredFBB) {
       PredCond.clear();
-      PredFBB = NULL;
+      PredFBB = nullptr;
     }
 
     // Avoid adding fall through branches.
     if (PredFBB == NextBB)
-      PredFBB = NULL;
-    if (PredTBB == NextBB && PredFBB == NULL)
-      PredTBB = NULL;
+      PredFBB = nullptr;
+    if (PredTBB == NextBB && PredFBB == nullptr)
+      PredTBB = nullptr;
 
     TII->RemoveBranch(*PredBB);
 
@@ -858,7 +858,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
   // block, which falls through unconditionally, move the contents of this
   // block into the prior block.
   MachineBasicBlock *PrevBB = std::prev(MachineFunction::iterator(TailBB));
-  MachineBasicBlock *PriorTBB = 0, *PriorFBB = 0;
+  MachineBasicBlock *PriorTBB = nullptr, *PriorFBB = nullptr;
   SmallVector<MachineOperand, 4> PriorCond;
   // This has to check PrevBB->succ_size() because EH edges are ignored by
   // AnalyzeBranch.

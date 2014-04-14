@@ -64,7 +64,7 @@ void LiveDebugVariables::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
-LiveDebugVariables::LiveDebugVariables() : MachineFunctionPass(ID), pImpl(0) {
+LiveDebugVariables::LiveDebugVariables() : MachineFunctionPass(ID), pImpl(nullptr) {
   initializeLiveDebugVariablesPass(*PassRegistry::getPassRegistry());
 }
 
@@ -139,7 +139,7 @@ public:
   UserValue(const MDNode *var, unsigned o, bool i, DebugLoc L,
             LocMap::Allocator &alloc)
     : variable(var), offset(o), IsIndirect(i), dl(L), leader(this),
-      next(0), locInts(alloc)
+      next(nullptr), locInts(alloc)
   {}
 
   /// getLeader - Get the leader of this value's equivalence class.
@@ -444,7 +444,7 @@ void LDVImpl::mapVirtReg(unsigned VirtReg, UserValue *EC) {
 UserValue *LDVImpl::lookupVirtReg(unsigned VirtReg) {
   if (UserValue *UV = virtRegToEqClass.lookup(VirtReg))
     return UV->getLeader();
-  return 0;
+  return nullptr;
 }
 
 bool LDVImpl::handleDebugValue(MachineInstr *MI, SlotIndex Idx) {
@@ -646,14 +646,14 @@ UserValue::computeIntervals(MachineRegisterInfo &MRI,
     const MachineOperand &Loc = locations[LocNo];
 
     if (!Loc.isReg()) {
-      extendDef(Idx, LocNo, 0, 0, 0, LIS, MDT, UVS);
+      extendDef(Idx, LocNo, nullptr, nullptr, nullptr, LIS, MDT, UVS);
       continue;
     }
 
     // Register locations are constrained to where the register value is live.
     if (TargetRegisterInfo::isVirtualRegister(Loc.getReg())) {
-      LiveInterval *LI = 0;
-      const VNInfo *VNI = 0;
+      LiveInterval *LI = nullptr;
+      const VNInfo *VNI = nullptr;
       if (LIS.hasInterval(Loc.getReg())) {
         LI = &LIS.getInterval(Loc.getReg());
         VNI = LI->getVNInfoAt(Idx);
@@ -670,7 +670,7 @@ UserValue::computeIntervals(MachineRegisterInfo &MRI,
     LiveRange *LR = &LIS.getRegUnit(Unit);
     const VNInfo *VNI = LR->getVNInfoAt(Idx);
     // Don't track copies from physregs, it is too expensive.
-    extendDef(Idx, LocNo, LR, VNI, 0, LIS, MDT, UVS);
+    extendDef(Idx, LocNo, LR, VNI, nullptr, LIS, MDT, UVS);
   }
 
   // Finally, erase all the undefs.
@@ -733,7 +733,7 @@ UserValue::splitLocation(unsigned OldLocNo, ArrayRef<unsigned> NewRegs,
                          LiveIntervals& LIS) {
   DEBUG({
     dbgs() << "Splitting Loc" << OldLocNo << '\t';
-    print(dbgs(), 0);
+    print(dbgs(), nullptr);
   });
   bool DidChange = false;
   LocMap::iterator LocMapI;
@@ -823,7 +823,7 @@ UserValue::splitLocation(unsigned OldLocNo, ArrayRef<unsigned> NewRegs,
     }
   }
 
-  DEBUG({dbgs() << "Split result: \t"; print(dbgs(), 0);});
+  DEBUG({dbgs() << "Split result: \t"; print(dbgs(), nullptr);});
   return DidChange;
 }
 

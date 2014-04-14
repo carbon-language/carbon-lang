@@ -37,7 +37,8 @@ INITIALIZE_PASS_END(MachineTraceMetrics,
                   "machine-trace-metrics", "Machine Trace Metrics", false, true)
 
 MachineTraceMetrics::MachineTraceMetrics()
-  : MachineFunctionPass(ID), MF(0), TII(0), TRI(0), MRI(0), Loops(0) {
+  : MachineFunctionPass(ID), MF(nullptr), TII(nullptr), TRI(nullptr),
+    MRI(nullptr), Loops(nullptr) {
   std::fill(std::begin(Ensembles), std::end(Ensembles), nullptr);
 }
 
@@ -64,11 +65,11 @@ bool MachineTraceMetrics::runOnMachineFunction(MachineFunction &Func) {
 }
 
 void MachineTraceMetrics::releaseMemory() {
-  MF = 0;
+  MF = nullptr;
   BlockInfo.clear();
   for (unsigned i = 0; i != TS_NumStrategies; ++i) {
     delete Ensembles[i];
-    Ensembles[i] = 0;
+    Ensembles[i] = nullptr;
   }
 }
 
@@ -233,7 +234,7 @@ const MachineTraceMetrics::TraceBlockInfo*
 MachineTraceMetrics::Ensemble::
 getDepthResources(const MachineBasicBlock *MBB) const {
   const TraceBlockInfo *TBI = &BlockInfo[MBB->getNumber()];
-  return TBI->hasValidDepth() ? TBI : 0;
+  return TBI->hasValidDepth() ? TBI : nullptr;
 }
 
 // Check if height resources for MBB are valid and return the TBI.
@@ -242,7 +243,7 @@ const MachineTraceMetrics::TraceBlockInfo*
 MachineTraceMetrics::Ensemble::
 getHeightResources(const MachineBasicBlock *MBB) const {
   const TraceBlockInfo *TBI = &BlockInfo[MBB->getNumber()];
-  return TBI->hasValidHeight() ? TBI : 0;
+  return TBI->hasValidHeight() ? TBI : nullptr;
 }
 
 /// Get an array of processor resource depths for MBB. Indexed by processor
@@ -316,13 +317,13 @@ public:
 const MachineBasicBlock*
 MinInstrCountEnsemble::pickTracePred(const MachineBasicBlock *MBB) {
   if (MBB->pred_empty())
-    return 0;
+    return nullptr;
   const MachineLoop *CurLoop = getLoopFor(MBB);
   // Don't leave loops, and never follow back-edges.
   if (CurLoop && MBB == CurLoop->getHeader())
-    return 0;
+    return nullptr;
   unsigned CurCount = MTM.getResources(MBB)->InstrCount;
-  const MachineBasicBlock *Best = 0;
+  const MachineBasicBlock *Best = nullptr;
   unsigned BestDepth = 0;
   for (MachineBasicBlock::const_pred_iterator
        I = MBB->pred_begin(), E = MBB->pred_end(); I != E; ++I) {
@@ -344,9 +345,9 @@ MinInstrCountEnsemble::pickTracePred(const MachineBasicBlock *MBB) {
 const MachineBasicBlock*
 MinInstrCountEnsemble::pickTraceSucc(const MachineBasicBlock *MBB) {
   if (MBB->pred_empty())
-    return 0;
+    return nullptr;
   const MachineLoop *CurLoop = getLoopFor(MBB);
-  const MachineBasicBlock *Best = 0;
+  const MachineBasicBlock *Best = nullptr;
   unsigned BestHeight = 0;
   for (MachineBasicBlock::const_succ_iterator
        I = MBB->succ_begin(), E = MBB->succ_end(); I != E; ++I) {
@@ -690,7 +691,7 @@ struct LiveRegUnit {
 
   unsigned getSparseSetIndex() const { return RegUnit; }
 
-  LiveRegUnit(unsigned RU) : RegUnit(RU), Cycle(0), MI(0), Op(0) {}
+  LiveRegUnit(unsigned RU) : RegUnit(RU), Cycle(0), MI(nullptr), Op(0) {}
 };
 }
 

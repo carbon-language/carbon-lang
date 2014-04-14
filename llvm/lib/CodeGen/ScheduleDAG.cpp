@@ -55,7 +55,7 @@ void ScheduleDAG::clearDAG() {
 
 /// getInstrDesc helper to handle SDNodes.
 const MCInstrDesc *ScheduleDAG::getNodeDesc(const SDNode *Node) const {
-  if (!Node || !Node->isMachineOpcode()) return NULL;
+  if (!Node || !Node->isMachineOpcode()) return nullptr;
   return &TII->get(Node->getMachineOpcode());
 }
 

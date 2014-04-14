@@ -67,7 +67,7 @@ struct ValueMapConfig {
   /// and onDelete) and not inside other ValueMap methods.  NULL means that no
   /// mutex is necessary.
   template<typename ExtraDataT>
-  static sys::Mutex *getMutex(const ExtraDataT &/*Data*/) { return NULL; }
+  static sys::Mutex *getMutex(const ExtraDataT &/*Data*/) { return nullptr; }
 };
 
 /// See the file comment.
@@ -253,10 +253,10 @@ struct DenseMapInfo<ValueMapCallbackVH<KeyT, ValueT, Config> > {
   typedef DenseMapInfo<KeyT> PointerInfo;
 
   static inline VH getEmptyKey() {
-    return VH(PointerInfo::getEmptyKey(), NULL);
+    return VH(PointerInfo::getEmptyKey(), nullptr);
   }
   static inline VH getTombstoneKey() {
-    return VH(PointerInfo::getTombstoneKey(), NULL);
+    return VH(PointerInfo::getTombstoneKey(), nullptr);
   }
   static unsigned getHashValue(const VH &Val) {
     return PointerInfo::getHashValue(Val.Unwrap());

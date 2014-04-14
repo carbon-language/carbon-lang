@@ -37,7 +37,7 @@ using namespace llvm;
 
 MachineBasicBlock::MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb)
   : BB(bb), Number(-1), xParent(&mf), Alignment(0), IsLandingPad(false),
-    AddressTaken(false), CachedMCSymbol(NULL) {
+    AddressTaken(false), CachedMCSymbol(nullptr) {
   Insts.Parent = this;
 }
 
@@ -98,7 +98,7 @@ void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock *N) {
 /// list, we update its parent pointer and add its operands from reg use/def
 /// lists if appropriate.
 void ilist_traits<MachineInstr>::addNodeToList(MachineInstr *N) {
-  assert(N->getParent() == 0 && "machine instruction already in a basic block");
+  assert(!N->getParent() && "machine instruction already in a basic block");
   N->setParent(Parent);
 
   // Add the instruction's register operands to their corresponding
@@ -113,13 +113,13 @@ void ilist_traits<MachineInstr>::addNodeToList(MachineInstr *N) {
 /// list, we update its parent pointer and remove its operands from reg use/def
 /// lists if appropriate.
 void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr *N) {
-  assert(N->getParent() != 0 && "machine instruction not in a basic block");
+  assert(N->getParent() && "machine instruction not in a basic block");
 
   // Remove from the use/def lists.
   if (MachineFunction *MF = N->getParent()->getParent())
     N->RemoveRegOperandsFromUseLists(MF->getRegInfo());
 
-  N->setParent(0);
+  N->setParent(nullptr);
 
   LeakDetector::addGarbageObject(N);
 }
@@ -229,11 +229,11 @@ MachineBasicBlock::getLastNonDebugInstr() const {
 const MachineBasicBlock *MachineBasicBlock::getLandingPadSuccessor() const {
   // A block with a landing pad successor only has one other successor.
   if (succ_size() > 2)
-    return 0;
+    return nullptr;
   for (const_succ_iterator I = succ_begin(), E = succ_end(); I != E; ++I)
     if ((*I)->isLandingPad())
       return *I;
-  return 0;
+  return nullptr;
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -392,7 +392,7 @@ void MachineBasicBlock::updateTerminator() {
   // A block with no successors has no concerns with fall-through edges.
   if (this->succ_empty()) return;
 
-  MachineBasicBlock *TBB = 0, *FBB = 0;
+  MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 4> Cond;
   DebugLoc dl;  // FIXME: this is nowhere
   bool B = TII->AnalyzeBranch(*this, TBB, FBB, Cond);
@@ -423,7 +423,7 @@ void MachineBasicBlock::updateTerminator() {
       // Finally update the unconditional successor to be reached via a branch
       // if it would not be reached by fallthrough.
       if (!isLayoutSuccessor(TBB))
-        TII->InsertBranch(*this, TBB, 0, Cond, dl);
+        TII->InsertBranch(*this, TBB, nullptr, Cond, dl);
     }
   } else {
     if (FBB) {
@@ -434,16 +434,16 @@ void MachineBasicBlock::updateTerminator() {
         if (TII->ReverseBranchCondition(Cond))
           return;
         TII->RemoveBranch(*this);
-        TII->InsertBranch(*this, FBB, 0, Cond, dl);
+        TII->InsertBranch(*this, FBB, nullptr, Cond, dl);
       } else if (isLayoutSuccessor(FBB)) {
         TII->RemoveBranch(*this);
-        TII->InsertBranch(*this, TBB, 0, Cond, dl);
+        TII->InsertBranch(*this, TBB, nullptr, Cond, dl);
       }
     } else {
       // Walk through the successors and find the successor which is not
       // a landing pad and is not the conditional branch destination (in TBB)
       // as the fallthrough successor.
-      MachineBasicBlock *FallthroughBB = 0;
+      MachineBasicBlock *FallthroughBB = nullptr;
       for (succ_iterator SI = succ_begin(), SE = succ_end(); SI != SE; ++SI) {
         if ((*SI)->isLandingPad() || *SI == TBB)
           continue;
@@ -461,7 +461,7 @@ void MachineBasicBlock::updateTerminator() {
         // Finally update the unconditional successor to be reached via a branch
         // if it would not be reached by fallthrough.
         if (!isLayoutSuccessor(TBB))
-          TII->InsertBranch(*this, TBB, 0, Cond, dl);
+          TII->InsertBranch(*this, TBB, nullptr, Cond, dl);
         return;
       }
 
@@ -470,11 +470,11 @@ void MachineBasicBlock::updateTerminator() {
         if (TII->ReverseBranchCondition(Cond)) {
           // We can't reverse the condition, add an unconditional branch.
           Cond.clear();
-          TII->InsertBranch(*this, FallthroughBB, 0, Cond, dl);
+          TII->InsertBranch(*this, FallthroughBB, nullptr, Cond, dl);
           return;
         }
         TII->RemoveBranch(*this);
-        TII->InsertBranch(*this, FallthroughBB, 0, Cond, dl);
+        TII->InsertBranch(*this, FallthroughBB, nullptr, Cond, dl);
       } else if (!isLayoutSuccessor(FallthroughBB)) {
         TII->RemoveBranch(*this);
         TII->InsertBranch(*this, TBB, FallthroughBB, Cond, dl);
@@ -641,7 +641,7 @@ bool MachineBasicBlock::canFallThrough() {
     return false;
 
   // Analyze the branches, if any, at the end of the block.
-  MachineBasicBlock *TBB = 0, *FBB = 0;
+  MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 4> Cond;
   const TargetInstrInfo *TII = getParent()->getTarget().getInstrInfo();
   if (TII->AnalyzeBranch(*this, TBB, FBB, Cond)) {
@@ -654,7 +654,7 @@ bool MachineBasicBlock::canFallThrough() {
   }
 
   // If there is no branch, control always falls through.
-  if (TBB == 0) return true;
+  if (!TBB) return true;
 
   // If there is some explicit branch to the fallthrough block, it can obviously
   // reach, even though the branch should get folded to fall through implicitly.
@@ -668,7 +668,7 @@ bool MachineBasicBlock::canFallThrough() {
 
   // Otherwise, if it is conditional and has no explicit false block, it falls
   // through.
-  return FBB == 0;
+  return FBB == nullptr;
 }
 
 MachineBasicBlock *
@@ -676,7 +676,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   // Splitting the critical edge to a landing pad block is non-trivial. Don't do
   // it in this generic function.
   if (Succ->isLandingPad())
-    return NULL;
+    return nullptr;
 
   MachineFunction *MF = getParent();
   DebugLoc dl;  // FIXME: this is nowhere
@@ -684,15 +684,15 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   // Performance might be harmed on HW that implements branching using exec mask
   // where both sides of the branches are always executed.
   if (MF->getTarget().requiresStructuredCFG())
-    return NULL;
+    return nullptr;
 
   // We may need to update this's terminator, but we can't do that if
   // AnalyzeBranch fails. If this uses a jump table, we won't touch it.
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
-  MachineBasicBlock *TBB = 0, *FBB = 0;
+  MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 4> Cond;
   if (TII->AnalyzeBranch(*this, TBB, FBB, Cond))
-    return NULL;
+    return nullptr;
 
   // Avoid bugpoint weirdness: A block may end with a conditional branch but
   // jumps to the same MBB is either case. We have duplicate CFG edges in that
@@ -701,7 +701,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   if (TBB && TBB == FBB) {
     DEBUG(dbgs() << "Won't split critical edge after degenerate BB#"
                  << getNumber() << '\n');
-    return NULL;
+    return nullptr;
   }
 
   MachineBasicBlock *NMBB = MF->CreateMachineBasicBlock();
@@ -793,7 +793,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   NMBB->addSuccessor(Succ);
   if (!NMBB->isLayoutSuccessor(Succ)) {
     Cond.clear();
-    MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, Succ, NULL, Cond, dl);
+    MF->getTarget().getInstrInfo()->InsertBranch(*NMBB, Succ, nullptr, Cond, dl);
 
     if (Indexes) {
       for (instr_iterator I = NMBB->instr_begin(), E = NMBB->instr_end();
@@ -1065,11 +1065,11 @@ bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
   MachineFunction::iterator FallThru =
     std::next(MachineFunction::iterator(this));
 
-  if (DestA == 0 && DestB == 0) {
+  if (!DestA && !DestB) {
     // Block falls through to successor.
     DestA = FallThru;
     DestB = FallThru;
-  } else if (DestA != 0 && DestB == 0) {
+  } else if (DestA && !DestB) {
     if (isCond)
       // Block ends in conditional jump that falls through to successor.
       DestB = FallThru;

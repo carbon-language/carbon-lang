@@ -84,7 +84,7 @@ GCStrategy *GCModuleInfo::getOrCreateStrategy(const Module *M,
   }
  
   dbgs() << "unsupported GC: " << Name << "\n";
-  llvm_unreachable(0);
+  llvm_unreachable(nullptr);
 }
 
 GCFunctionInfo &GCModuleInfo::getFunctionInfo(const Function &F) {

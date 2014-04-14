@@ -138,7 +138,7 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
 
   // Ask the target for an isel.
   if (PassConfig->addInstSelector())
-    return NULL;
+    return nullptr;
 
   PassConfig->addMachinePasses();
 
@@ -185,7 +185,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                       MII, MRI, STI);
 
     // Create a code emitter if asked to show the encoding.
-    MCCodeEmitter *MCE = 0;
+    MCCodeEmitter *MCE = nullptr;
     if (ShowMCEncoding)
       MCE = getTarget().createMCCodeEmitter(MII, MRI, STI, *Context);
 
@@ -208,7 +208,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                                          *Context);
     MCAsmBackend *MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(),
                                                        TargetCPU);
-    if (MCE == 0 || MAB == 0)
+    if (!MCE || !MAB)
       return true;
 
     AsmStreamer.reset(getTarget().createMCObjectStreamer(
@@ -225,7 +225,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 
   // Create the AsmPrinter, which takes ownership of AsmStreamer if successful.
   FunctionPass *Printer = getTarget().createAsmPrinter(*this, *AsmStreamer);
-  if (Printer == 0)
+  if (!Printer)
     return true;
 
   // If successful, createAsmPrinter took ownership of AsmStreamer.
@@ -246,7 +246,8 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
                                                    JITCodeEmitter &JCE,
                                                    bool DisableVerify) {
   // Add common CodeGen passes.
-  MCContext *Context = addPassesToGenerateCode(this, PM, DisableVerify, 0, 0);
+  MCContext *Context = addPassesToGenerateCode(this, PM, DisableVerify, nullptr,
+                                               nullptr);
   if (!Context)
     return true;
 
@@ -265,7 +266,7 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
                                           raw_ostream &Out,
                                           bool DisableVerify) {
   // Add common CodeGen passes.
-  Ctx = addPassesToGenerateCode(this, PM, DisableVerify, 0, 0);
+  Ctx = addPassesToGenerateCode(this, PM, DisableVerify, nullptr, nullptr);
   if (!Ctx)
     return true;
 
@@ -280,7 +281,7 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
                                                        STI, *Ctx);
   MCAsmBackend *MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(),
                                                      TargetCPU);
-  if (MCE == 0 || MAB == 0)
+  if (!MCE || !MAB)
     return true;
 
   std::unique_ptr<MCStreamer> AsmStreamer;
@@ -290,7 +291,7 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
 
   // Create the AsmPrinter, which takes ownership of AsmStreamer if successful.
   FunctionPass *Printer = getTarget().createAsmPrinter(*this, *AsmStreamer);
-  if (Printer == 0)
+  if (!Printer)
     return true;
 
   // If successful, createAsmPrinter took ownership of AsmStreamer.

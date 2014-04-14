@@ -263,7 +263,7 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
 
     typename GraphT::NodeType* ImmDom = DT.getIDom(W);
 
-    assert(ImmDom || DT.DomTreeNodes[NULL]);
+    assert(ImmDom || DT.DomTreeNodes[nullptr]);
 
     // Get or calculate the node for the immediate dominator
     DomTreeNodeBase<typename GraphT::NodeType> *IDomNode =

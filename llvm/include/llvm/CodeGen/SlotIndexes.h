@@ -147,11 +147,11 @@ namespace llvm {
     };
 
     /// Construct an invalid index.
-    SlotIndex() : lie(0, 0) {}
+    SlotIndex() : lie(nullptr, 0) {}
 
     // Construct a new slot index from the given one, and set the slot.
     SlotIndex(const SlotIndex &li, Slot s) : lie(li.listEntry(), unsigned(s)) {
-      assert(lie.getPointer() != 0 &&
+      assert(lie.getPointer() != nullptr &&
              "Attempt to construct index with 0 pointer.");
     }
 
@@ -421,7 +421,7 @@ namespace llvm {
     /// Returns the instruction for the given index, or null if the given
     /// index has no instruction associated with it.
     MachineInstr* getInstructionFromIndex(SlotIndex index) const {
-      return index.isValid() ? index.listEntry()->getInstr() : 0;
+      return index.isValid() ? index.listEntry()->getInstr() : nullptr;
     }
 
     /// Returns the next non-null index, if one exists.
@@ -551,14 +551,14 @@ namespace llvm {
 
       // Check that we don't cross the boundary into this block.
       if (itr->first < end)
-        return 0;
+        return nullptr;
 
       itr = std::prev(itr);
 
       if (itr->first <= start)
         return itr->second;
 
-      return 0;
+      return nullptr;
     }
 
     /// Insert the given machine instruction into the mapping. Returns the
@@ -574,7 +574,7 @@ namespace llvm {
       // affected by debug information.
       assert(!mi->isDebugValue() && "Cannot number DBG_VALUE instructions.");
 
-      assert(mi->getParent() != 0 && "Instr must be added to function.");
+      assert(mi->getParent() != nullptr && "Instr must be added to function.");
 
       // Get the entries where mi should be inserted.
       IndexList::iterator prevItr, nextItr;
@@ -615,7 +615,7 @@ namespace llvm {
         IndexListEntry *miEntry(mi2iItr->second.listEntry());
         assert(miEntry->getInstr() == mi && "Instruction indexes broken.");
         // FIXME: Eventually we want to actually delete these indexes.
-        miEntry->setInstr(0);
+        miEntry->setInstr(nullptr);
         mi2iMap.erase(mi2iItr);
       }
     }
@@ -640,15 +640,15 @@ namespace llvm {
       MachineFunction::iterator nextMBB =
         std::next(MachineFunction::iterator(mbb));
 
-      IndexListEntry *startEntry = 0;
-      IndexListEntry *endEntry = 0;
+      IndexListEntry *startEntry = nullptr;
+      IndexListEntry *endEntry = nullptr;
       IndexList::iterator newItr;
       if (nextMBB == mbb->getParent()->end()) {
         startEntry = &indexList.back();
-        endEntry = createEntry(0, 0);
+        endEntry = createEntry(nullptr, 0);
         newItr = indexList.insertAfter(startEntry, endEntry);
       } else {
-        startEntry = createEntry(0, 0);
+        startEntry = createEntry(nullptr, 0);
         endEntry = getMBBStartIdx(nextMBB).listEntry();
         newItr = indexList.insert(endEntry, startEntry);
       }

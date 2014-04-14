@@ -47,14 +47,14 @@ SplitAnalysis::SplitAnalysis(const VirtRegMap &vrm,
     LIS(lis),
     Loops(mli),
     TII(*MF.getTarget().getInstrInfo()),
-    CurLI(0),
+    CurLI(nullptr),
     LastSplitPoint(MF.getNumBlockIDs()) {}
 
 void SplitAnalysis::clear() {
   UseSlots.clear();
   UseBlocks.clear();
   ThroughBlocks.clear();
-  CurLI = 0;
+  CurLI = nullptr;
   DidRepairRange = false;
 }
 
@@ -331,7 +331,7 @@ SplitEditor::SplitEditor(SplitAnalysis &sa,
     TII(*vrm.getMachineFunction().getTarget().getInstrInfo()),
     TRI(*vrm.getMachineFunction().getTarget().getRegisterInfo()),
     MBFI(mbfi),
-    Edit(0),
+    Edit(nullptr),
     OpenIdx(0),
     SpillMode(SM_Partition),
     RegAssign(Allocator)
@@ -353,7 +353,7 @@ void SplitEditor::reset(LiveRangeEdit &LRE, ComplementSpillMode SM) {
 
   // We don't need an AliasAnalysis since we will only be performing
   // cheap-as-a-copy remats anyway.
-  Edit->anyRematerializable(0);
+  Edit->anyRematerializable(nullptr);
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -423,7 +423,7 @@ void SplitEditor::forceRecompute(unsigned RegIdx, const VNInfo *ParentVNI) {
   LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
   LI->addSegment(LiveInterval::Segment(Def, Def.getDeadSlot(), VNI));
   // Mark as complex mapped, forced.
-  VFP = ValueForcePair(0, true);
+  VFP = ValueForcePair(nullptr, true);
 }
 
 VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
@@ -431,7 +431,7 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
                                    SlotIndex UseIdx,
                                    MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I) {
-  MachineInstr *CopyMI = 0;
+  MachineInstr *CopyMI = nullptr;
   SlotIndex Def;
   LiveInterval *LI = &LIS.getInterval(Edit->get(RegIdx));
 
@@ -922,7 +922,7 @@ bool SplitEditor::transferValues() {
           else {
             // Live-through, and we don't know the value.
             LRC.addLiveInBlock(LR, MDT[MBB]);
-            LRC.setLiveOutValue(MBB, 0);
+            LRC.setLiveOutValue(MBB, nullptr);
           }
         }
         BlockStart = BlockEnd;

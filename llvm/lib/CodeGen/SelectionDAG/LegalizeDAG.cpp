@@ -705,7 +705,7 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
       }
     }
   }
-  return SDValue(0, 0);
+  return SDValue(nullptr, 0);
 }
 
 void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
@@ -2183,7 +2183,7 @@ static bool isDivRemLibcallAvailable(SDNode *Node, bool isSigned,
   case MVT::i128: LC= isSigned ? RTLIB::SDIVREM_I128:RTLIB::UDIVREM_I128; break;
   }
 
-  return TLI.getLibcallName(LC) != 0;
+  return TLI.getLibcallName(LC) != nullptr;
 }
 
 /// useDivRem - Only issue divrem libcall if both quotient and remainder are
@@ -2286,7 +2286,7 @@ static bool isSinCosLibcallAvailable(SDNode *Node, const TargetLowering &TLI) {
   case MVT::f128:    LC = RTLIB::SINCOS_F128; break;
   case MVT::ppcf128: LC = RTLIB::SINCOS_PPCF128; break;
   }
-  return TLI.getLibcallName(LC) != 0;
+  return TLI.getLibcallName(LC) != nullptr;
 }
 
 /// canCombineSinCosLibcall - Return true if sincos libcall is available and

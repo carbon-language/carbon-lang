@@ -262,7 +262,7 @@ public:
     // Check for buffer overflow.
     if (Size >= (uintptr_t)(BufferEnd-CurBufferPtr)) {
       CurBufferPtr = BufferEnd;
-      Result = 0;
+      Result = nullptr;
     } else {
       // Allocate the space.
       Result = CurBufferPtr;
