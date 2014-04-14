@@ -39,6 +39,14 @@ EnableCollectLOH("arm64-collect-loh", cl::Hidden,
                           " optimization hints (LOH)"),
                  cl::init(true));
 
+static cl::opt<bool>
+EnableDeadRegisterElimination("arm64-dead-def-elimination", cl::Hidden,
+                              cl::desc("Enable the pass that removes dead"
+                                       " definitons and replaces stores to"
+                                       " them with stores to the zero"
+                                       " register"),
+                              cl::init(true));
+
 extern "C" void LLVMInitializeARM64Target() {
   // Register the target.
   RegisterTargetMachine<ARM64TargetMachine> X(TheARM64Target);
@@ -135,7 +143,8 @@ bool ARM64PassConfig::addPreRegAlloc() {
 
 bool ARM64PassConfig::addPostRegAlloc() {
   // Change dead register definitions to refer to the zero register.
-  addPass(createARM64DeadRegisterDefinitions());
+  if (EnableDeadRegisterElimination)
+    addPass(createARM64DeadRegisterDefinitions());
   return true;
 }
 
