@@ -92,7 +92,7 @@ public:
     }
 
     Val = RHS.Val;
-    RHS.Val = nullptr;
+    RHS.Val = (EltTy)nullptr;
     return *this;
   }
 
@@ -195,7 +195,7 @@ public:
   void pop_back() {
     // If we have a single value, convert to empty.
     if (Val.template is<EltTy>())
-      Val = nullptr;
+      Val = (EltTy)nullptr;
     else if (VecTy *Vec = Val.template get<VecTy*>())
       Vec->pop_back();
   }
@@ -218,7 +218,7 @@ public:
     // If we have a single value, convert to empty.
     if (Val.template is<EltTy>()) {
       if (I == begin())
-        Val = nullptr;
+        Val = (EltTy)nullptr;
     } else if (VecTy *Vec = Val.template dyn_cast<VecTy*>()) {
       // multiple items in a vector; just do the erase, there is no
       // benefit to collapsing back to a pointer
@@ -234,7 +234,7 @@ public:
 
     if (Val.template is<EltTy>()) {
       if (S == begin() && S != E)
-        Val = nullptr;
+        Val = (EltTy)nullptr;
     } else if (VecTy *Vec = Val.template dyn_cast<VecTy*>()) {
       return Vec->erase(S, E);
     }
