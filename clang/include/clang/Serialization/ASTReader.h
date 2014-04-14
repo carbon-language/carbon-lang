@@ -109,6 +109,9 @@ public:
     return FullVersion != getClangFullRepositoryVersion();
   }
 
+  virtual void ReadModuleName(StringRef ModuleName) {}
+  virtual void ReadModuleMapFile(StringRef ModuleMapPath) {}
+
   /// \brief Receives the language options.
   ///
   /// \returns true to indicate the options are invalid or false otherwise.
@@ -203,6 +206,8 @@ public:
       : First(First), Second(Second) { }
 
   bool ReadFullVersionInformation(StringRef FullVersion) override;
+  void ReadModuleName(StringRef ModuleName) override;
+  void ReadModuleMapFile(StringRef ModuleMapPath) override;
   bool ReadLanguageOptions(const LangOptions &LangOpts, bool Complain) override;
   bool ReadTargetOptions(const TargetOptions &TargetOpts,
                          bool Complain) override;

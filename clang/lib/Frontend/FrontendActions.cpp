@@ -416,6 +416,13 @@ namespace {
       return ASTReaderListener::ReadFullVersionInformation(FullVersion);
     }
 
+    void ReadModuleName(StringRef ModuleName) override {
+      Out.indent(2) << "Module name: " << ModuleName << "\n";
+    }
+    void ReadModuleMapFile(StringRef ModuleMapPath) override {
+      Out.indent(2) << "Module map file: " << ModuleMapPath << "\n";
+    }
+
     bool ReadLanguageOptions(const LangOptions &LangOpts,
                              bool Complain) override {
       Out.indent(2) << "Language options:\n";

@@ -70,6 +70,14 @@ ChainedASTReaderListener::ReadFullVersionInformation(StringRef FullVersion) {
   return First->ReadFullVersionInformation(FullVersion) ||
          Second->ReadFullVersionInformation(FullVersion);
 }
+void ChainedASTReaderListener::ReadModuleName(StringRef ModuleName) {
+  First->ReadModuleName(ModuleName);
+  Second->ReadModuleName(ModuleName);
+}
+void ChainedASTReaderListener::ReadModuleMapFile(StringRef ModuleMapPath) {
+  First->ReadModuleMapFile(ModuleMapPath);
+  Second->ReadModuleMapFile(ModuleMapPath);
+}
 bool ChainedASTReaderListener::ReadLanguageOptions(const LangOptions &LangOpts,
                                                    bool Complain) {
   return First->ReadLanguageOptions(LangOpts, Complain) ||
@@ -2313,6 +2321,8 @@ ASTReader::ReadControlBlock(ModuleFile &F,
 
     case MODULE_NAME:
       F.ModuleName = Blob;
+      if (Listener)
+        Listener->ReadModuleName(F.ModuleName);
       break;
 
     case MODULE_MAP_FILE:
@@ -2347,6 +2357,9 @@ ASTReader::ReadControlBlock(ModuleFile &F,
           return OutOfDate;
         }
       }
+
+      if (Listener)
+        Listener->ReadModuleMapFile(F.ModuleMapPath);
       break;
 
     case INPUT_FILE_OFFSETS:
@@ -3952,6 +3965,12 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
       
       break;
     }
+    case MODULE_NAME:
+      Listener.ReadModuleName(Blob);
+      break;
+    case MODULE_MAP_FILE:
+      Listener.ReadModuleMapFile(Blob);
+      break;
     case LANGUAGE_OPTIONS:
       if (ParseLanguageOptions(Record, false, Listener))
         return true;
