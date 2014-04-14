@@ -807,4 +807,3 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
 
   return 0;
 }
-
