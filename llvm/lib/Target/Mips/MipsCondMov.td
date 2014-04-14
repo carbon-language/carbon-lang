@@ -139,7 +139,7 @@ def MOVN_I_S : MMRel, CMov_I_F_FT<"movn.s", GPR32Opnd, FGR32Opnd, II_MOVN_S>,
 
 let isCodeGenOnly = 1 in
 def MOVN_I64_S : CMov_I_F_FT<"movn.s", GPR64Opnd, FGR32Opnd, II_MOVN_S>,
-                 CMov_I_F_FM<19, 16>, Requires<[HasMips64, HasStdEnc]>;
+                 CMov_I_F_FM<19, 16>, Requires<[IsGP64bit, HasStdEnc]>;
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
   def MOVZ_I_D32 : MMRel, CMov_I_F_FT<"movz.d", GPR32Opnd, AFGR64Opnd,
@@ -166,14 +166,14 @@ def MOVT_I : MMRel, CMov_F_I_FT<"movt", GPR32Opnd, II_MOVT, MipsCMovFP_T>,
 
 let isCodeGenOnly = 1 in
 def MOVT_I64 : CMov_F_I_FT<"movt", GPR64Opnd, II_MOVT, MipsCMovFP_T>,
-               CMov_F_I_FM<1>, Requires<[HasMips64, HasStdEnc]>;
+               CMov_F_I_FM<1>, Requires<[IsGP64bit, HasStdEnc]>;
 
 def MOVF_I : MMRel, CMov_F_I_FT<"movf", GPR32Opnd, II_MOVF, MipsCMovFP_F>,
              CMov_F_I_FM<0>;
 
 let isCodeGenOnly = 1 in
 def MOVF_I64 : CMov_F_I_FT<"movf", GPR64Opnd, II_MOVF, MipsCMovFP_F>,
-               CMov_F_I_FM<0>, Requires<[HasMips64, HasStdEnc]>;
+               CMov_F_I_FM<0>, Requires<[IsGP64bit, HasStdEnc]>;
 
 def MOVT_S : MMRel, CMov_F_F_FT<"movt.s", FGR32Opnd, II_MOVT_S, MipsCMovFP_T>,
              CMov_F_F_FM<16, 1>;
@@ -198,7 +198,7 @@ let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
 defm : MovzPats0<GPR32, GPR32, MOVZ_I_I, SLT, SLTu, SLTi, SLTiu>;
 defm : MovzPats1<GPR32, GPR32, MOVZ_I_I, XOR>;
 defm : MovzPats2<GPR32, GPR32, MOVZ_I_I, XORi>;
-let Predicates = [HasMips64, HasStdEnc] in {
+let Predicates = [IsGP64bit, HasStdEnc] in {
   defm : MovzPats0<GPR32, GPR64, MOVZ_I_I64, SLT, SLTu, SLTi, SLTiu>;
   defm : MovzPats0<GPR64, GPR32, MOVZ_I_I, SLT64, SLTu64, SLTi64,
                    SLTiu64>;
@@ -213,7 +213,7 @@ let Predicates = [HasMips64, HasStdEnc] in {
 }
 
 defm : MovnPats<GPR32, GPR32, MOVN_I_I, XOR>;
-let Predicates = [HasMips64, HasStdEnc] in {
+let Predicates = [IsGP64bit, HasStdEnc] in {
   defm : MovnPats<GPR32, GPR64, MOVN_I_I64, XOR>;
   defm : MovnPats<GPR64, GPR32, MOVN_I64_I, XOR64>;
   defm : MovnPats<GPR64, GPR64, MOVN_I64_I64, XOR64>;
@@ -222,7 +222,7 @@ let Predicates = [HasMips64, HasStdEnc] in {
 defm : MovzPats0<GPR32, FGR32, MOVZ_I_S, SLT, SLTu, SLTi, SLTiu>;
 defm : MovzPats1<GPR32, FGR32, MOVZ_I_S, XOR>;
 defm : MovnPats<GPR32, FGR32, MOVN_I_S, XOR>;
-let Predicates = [HasMips64, HasStdEnc] in {
+let Predicates = [IsGP64bit, HasStdEnc] in {
   defm : MovzPats0<GPR64, FGR32, MOVZ_I_S, SLT64, SLTu64, SLTi64,
                    SLTiu64>;
   defm : MovzPats1<GPR64, FGR32, MOVZ_I64_S, XOR64>;

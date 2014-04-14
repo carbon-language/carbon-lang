@@ -119,10 +119,10 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
 
   if (Subtarget->hasCnMips())
     setOperationAction(ISD::MUL,              MVT::i64, Legal);
-  else if (hasMips64())
+  else if (isGP64bit())
     setOperationAction(ISD::MUL,              MVT::i64, Custom);
 
-  if (hasMips64()) {
+  if (isGP64bit()) {
     setOperationAction(ISD::MULHS,            MVT::i64, Custom);
     setOperationAction(ISD::MULHU,            MVT::i64, Custom);
   }

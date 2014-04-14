@@ -1,3 +1,4 @@
+; RUN: llc -march=mips64el -mcpu=mips4 < %s | FileCheck %s
 ; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s
 
 define i64 @m0(i64 %a0, i64 %a1) nounwind readnone {

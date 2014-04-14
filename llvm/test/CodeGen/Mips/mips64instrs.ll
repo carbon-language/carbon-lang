@@ -1,4 +1,5 @@
-; RUN: llc -march=mips64el -mcpu=mips64 -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -march=mips64el -mcpu=mips4 -verify-machineinstrs < %s | FileCheck -check-prefix=CHECK -check-prefix=MIPS4 %s
+; RUN: llc -march=mips64el -mcpu=mips64 -verify-machineinstrs < %s | FileCheck -check-prefix=CHECK -check-prefix=MIPS64 %s
 
 @gll0 = common global i64 0, align 8
 @gll1 = common global i64 0, align 8
@@ -135,14 +136,24 @@ declare i64 @llvm.ctlz.i64(i64, i1) nounwind readnone
 
 define i64 @f18(i64 %X) nounwind readnone {
 entry:
-; CHECK: dclz $2, $4
+; CHECK-LABEL: f18:
+
+; The MIPS4 version is too long to reasonably test. At least check we don't get dclz
+; MIPS4-NOT: dclz
+
+; MIPS64: dclz $2, $4
   %tmp1 = tail call i64 @llvm.ctlz.i64(i64 %X, i1 true)
   ret i64 %tmp1
 }
 
 define i64 @f19(i64 %X) nounwind readnone {
 entry:
-; CHECK: dclo $2, $4
+; CHECK-LABEL: f19:
+
+; The MIPS4 version is too long to reasonably test. At least check we don't get dclo
+; MIPS4-NOT: dclo
+
+; MIPS64: dclo $2, $4
   %neg = xor i64 %X, -1
   %tmp1 = tail call i64 @llvm.ctlz.i64(i64 %neg, i1 true)
   ret i64 %tmp1
@@ -150,6 +161,7 @@ entry:
 
 define i64 @f20(i64 %a, i64 %b) nounwind readnone {
 entry:
+; CHECK-LABEL: f20:
 ; CHECK: nor
   %or = or i64 %b, %a
   %neg = xor i64 %or, -1

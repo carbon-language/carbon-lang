@@ -1,6 +1,7 @@
 ; RUN: llc -march=mips < %s | FileCheck %s -check-prefix=O32
 ; RUN: llc -march=mips -regalloc=basic < %s | FileCheck %s -check-prefix=O32
 ; RUN: llc -march=mips64el -mcpu=mips64 -mattr=n64 < %s | FileCheck %s -check-prefix=N64
+; RUN: llc -march=mips64el -mcpu=mips4 -mattr=n64 < %s | FileCheck %s -check-prefix=N64
 
 @i1 = global [3 x i32] [i32 1, i32 2, i32 3], align 4
 @i3 = common global i32* null, align 4
