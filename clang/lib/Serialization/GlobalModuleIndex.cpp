@@ -114,7 +114,8 @@ public:
   }
 };
 
-typedef OnDiskChainedHashTable<IdentifierIndexReaderTrait> IdentifierIndexTable;
+typedef OnDiskIterableChainedHashTable<IdentifierIndexReaderTrait>
+    IdentifierIndexTable;
 
 }
 
@@ -210,9 +211,9 @@ GlobalModuleIndex::GlobalModuleIndex(llvm::MemoryBuffer *Buffer,
       // Wire up the identifier index.
       if (Record[0]) {
         IdentifierIndex = IdentifierIndexTable::Create(
-                            (const unsigned char *)Blob.data() + Record[0],
-                            (const unsigned char *)Blob.data(),
-                            IdentifierIndexReaderTrait());
+            (const unsigned char *)Blob.data() + Record[0],
+            (const unsigned char *)Blob.data() + sizeof(uint32_t),
+            (const unsigned char *)Blob.data(), IdentifierIndexReaderTrait());
       }
       break;
     }
@@ -591,11 +592,13 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
 
     // Handle the identifier table
     if (State == ASTBlock && Code == IDENTIFIER_TABLE && Record[0] > 0) {
-      typedef OnDiskChainedHashTable<InterestingASTIdentifierLookupTrait>
-        InterestingIdentifierTable;
+      typedef
+          OnDiskIterableChainedHashTable<InterestingASTIdentifierLookupTrait>
+          InterestingIdentifierTable;
       std::unique_ptr<InterestingIdentifierTable> Table(
           InterestingIdentifierTable::Create(
               (const unsigned char *)Blob.data() + Record[0],
+              (const unsigned char *)Blob.data() + sizeof(uint32_t),
               (const unsigned char *)Blob.data()));
       for (InterestingIdentifierTable::data_iterator D = Table->data_begin(),
                                                      DEnd = Table->data_end();

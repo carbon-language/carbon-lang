@@ -140,7 +140,7 @@ public:
   
 /// \brief The on-disk hash table used to contain information about
 /// all of the identifiers in the program.
-typedef OnDiskChainedHashTable<ASTIdentifierLookupTrait>
+typedef OnDiskIterableChainedHashTable<ASTIdentifierLookupTrait>
   ASTIdentifierLookupTable;
 
 /// \brief Class that performs lookup for a selector's entries in the global

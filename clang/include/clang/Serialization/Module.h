@@ -29,6 +29,7 @@ class FileEntry;
 class DeclContext;
 class Module;
 template<typename Info> class OnDiskChainedHashTable;
+template<typename Info> class OnDiskIterableChainedHashTable;
 
 namespace serialization {
 
@@ -49,7 +50,7 @@ struct DeclContextInfo {
   DeclContextInfo()
     : NameLookupTableData(), LexicalDecls(), NumLexicalDecls() {}
 
-  OnDiskChainedHashTable<reader::ASTDeclContextNameLookupTrait>
+  OnDiskIterableChainedHashTable<reader::ASTDeclContextNameLookupTrait>
     *NameLookupTableData; // an ASTDeclContextNameLookupTable.
   const KindDeclIDPair *LexicalDecls;
   unsigned NumLexicalDecls;

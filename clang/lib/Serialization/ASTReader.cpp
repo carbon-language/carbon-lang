@@ -851,11 +851,11 @@ bool ASTReader::ReadDeclContextStorage(ModuleFile &M,
       Error("Expected visible lookup table block");
       return true;
     }
-    Info.NameLookupTableData
-      = ASTDeclContextNameLookupTable::Create(
-                    (const unsigned char *)Blob.data() + Record[0],
-                    (const unsigned char *)Blob.data(),
-                    ASTDeclContextNameLookupTrait(*this, M));
+    Info.NameLookupTableData = ASTDeclContextNameLookupTable::Create(
+        (const unsigned char *)Blob.data() + Record[0],
+        (const unsigned char *)Blob.data() + sizeof(uint32_t),
+        (const unsigned char *)Blob.data(),
+        ASTDeclContextNameLookupTrait(*this, M));
   }
 
   return false;
@@ -2509,10 +2509,11 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       unsigned Idx = 0;
       serialization::DeclID ID = ReadDeclID(F, Record, Idx);
       ASTDeclContextNameLookupTable *Table =
-        ASTDeclContextNameLookupTable::Create(
-                        (const unsigned char *)Blob.data() + Record[Idx++],
-                        (const unsigned char *)Blob.data(),
-                        ASTDeclContextNameLookupTrait(*this, F));
+          ASTDeclContextNameLookupTable::Create(
+              (const unsigned char *)Blob.data() + Record[Idx++],
+              (const unsigned char *)Blob.data() + sizeof(uint32_t),
+              (const unsigned char *)Blob.data(),
+              ASTDeclContextNameLookupTrait(*this, F));
       if (ID == PREDEF_DECL_TRANSLATION_UNIT_ID) { // Is it the TU?
         DeclContext *TU = Context.getTranslationUnitDecl();
         F.DeclContextInfos[TU].NameLookupTableData = Table;
@@ -2531,11 +2532,11 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     case IDENTIFIER_TABLE:
       F.IdentifierTableData = Blob.data();
       if (Record[0]) {
-        F.IdentifierLookupTable
-          = ASTIdentifierLookupTable::Create(
-                       (const unsigned char *)F.IdentifierTableData + Record[0],
-                       (const unsigned char *)F.IdentifierTableData,
-                       ASTIdentifierLookupTrait(*this, F));
+        F.IdentifierLookupTable = ASTIdentifierLookupTable::Create(
+            (const unsigned char *)F.IdentifierTableData + Record[0],
+            (const unsigned char *)F.IdentifierTableData + sizeof(uint32_t),
+            (const unsigned char *)F.IdentifierTableData,
+            ASTIdentifierLookupTrait(*this, F));
         
         PP.getIdentifierTable().setExternalIdentifierLookup(this);
       }

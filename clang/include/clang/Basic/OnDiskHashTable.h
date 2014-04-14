@@ -266,6 +266,41 @@ public:
 
   iterator end() const { return iterator(); }
 
+  Info &getInfoObj() { return InfoObj; }
+
+  static OnDiskChainedHashTable* Create(const unsigned char* Buckets,
+                                        const unsigned char* const Base,
+                                        const Info &InfoObj = Info()) {
+    using namespace llvm::support;
+    assert(Buckets > Base);
+    assert((reinterpret_cast<uintptr_t>(Buckets) & 0x3) == 0 &&
+           "buckets should be 4-byte aligned.");
+
+    unsigned NumBuckets = endian::readNext<uint32_t, little, aligned>(Buckets);
+    unsigned NumEntries = endian::readNext<uint32_t, little, aligned>(Buckets);
+    return new OnDiskChainedHashTable<Info>(NumBuckets, NumEntries, Buckets,
+                                            Base, InfoObj);
+  }
+};
+
+template<typename Info>
+class OnDiskIterableChainedHashTable : public OnDiskChainedHashTable<Info> {
+  const unsigned char *Payload;
+
+public:
+  typedef OnDiskChainedHashTable<Info>          base_type;
+  typedef typename base_type::internal_key_type internal_key_type;
+  typedef typename base_type::external_key_type external_key_type;
+  typedef typename base_type::data_type         data_type;
+
+  OnDiskIterableChainedHashTable(unsigned NumBuckets, unsigned NumEntries,
+                                 const unsigned char *Buckets,
+                                 const unsigned char *Payload,
+                                 const unsigned char *Base,
+                                 const Info &InfoObj = Info())
+      : base_type(NumBuckets, NumEntries, Buckets, Base, InfoObj),
+        Payload(Payload) {}
+
   /// \brief Iterates over all of the keys in the table.
   class key_iterator {
     const unsigned char *Ptr;
@@ -329,7 +364,7 @@ public:
   };
 
   key_iterator key_begin() {
-    return key_iterator(Base + 4, getNumEntries(), &InfoObj);
+    return key_iterator(Payload, this->getNumEntries(), &this->getInfoObj());
   }
   key_iterator key_end() { return key_iterator(); }
 
@@ -396,15 +431,13 @@ public:
   };
 
   data_iterator data_begin() {
-    return data_iterator(Base + 4, getNumEntries(), &InfoObj);
+    return data_iterator(Payload, this->getNumEntries(), &this->getInfoObj());
   }
   data_iterator data_end() { return data_iterator(); }
 
-  Info &getInfoObj() { return InfoObj; }
-
-  static OnDiskChainedHashTable *Create(const unsigned char *Buckets,
-                                        const unsigned char *const Base,
-                                        const Info &InfoObj = Info()) {
+  static OnDiskIterableChainedHashTable *
+  Create(const unsigned char *Buckets, const unsigned char *const Payload,
+         const unsigned char *const Base, const Info &InfoObj = Info()) {
     using namespace llvm::support;
     assert(Buckets > Base);
     assert((reinterpret_cast<uintptr_t>(Buckets) & 0x3) == 0 &&
@@ -412,8 +445,8 @@ public:
 
     unsigned NumBuckets = endian::readNext<uint32_t, little, aligned>(Buckets);
     unsigned NumEntries = endian::readNext<uint32_t, little, aligned>(Buckets);
-    return new OnDiskChainedHashTable<Info>(NumBuckets, NumEntries, Buckets,
-                                            Base, InfoObj);
+    return new OnDiskIterableChainedHashTable<Info>(
+        NumBuckets, NumEntries, Buckets, Payload, Base, InfoObj);
   }
 };
 
