@@ -775,6 +775,8 @@ bool ARM64InstrInfo::optimizeCompareInstr(
       case ARM64::CSELXr:
       case ARM64::CSNEGWr:
       case ARM64::CSNEGXr:
+      case ARM64::FCSELSrrr:
+      case ARM64::FCSELDrrr:
         CC = (ARM64CC::CondCode)Instr.getOperand(IO - 1).getImm();
         break;
       }
