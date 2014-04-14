@@ -797,8 +797,8 @@ void ReportMacCfReallocUnknown(
 // --------------------------- Interface --------------------- {{{1
 using namespace __asan;  // NOLINT
 
-void __asan_report_error(uptr pc, uptr bp, uptr sp,
-                         uptr addr, bool is_write, uptr access_size) {
+void __asan_report_error(uptr pc, uptr bp, uptr sp, uptr addr, int is_write,
+                         uptr access_size) {
   ScopedInErrorReport in_report;
 
   // Determine the error type.

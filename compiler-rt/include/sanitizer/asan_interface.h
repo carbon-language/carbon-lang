@@ -50,9 +50,10 @@ extern "C" {
   ((void)(addr), (void)(size))
 #endif
 
-  // Returns true iff addr is poisoned (i.e. 1-byte read/write access to this
+  // Returns 1 if addr is poisoned (i.e. 1-byte read/write access to this
   // address will result in error report from AddressSanitizer).
-  bool __asan_address_is_poisoned(void const volatile *addr);
+  // Otherwise returns 0.
+  int __asan_address_is_poisoned(void const volatile *addr);
 
   // If at least on byte in [beg, beg+size) is poisoned, return the address
   // of the first such byte. Otherwise return 0.
@@ -65,7 +66,7 @@ extern "C" {
   // However it is still a part of the interface because users may want to
   // set a breakpoint on this function in a debugger.
   void __asan_report_error(void *pc, void *bp, void *sp,
-                           void *addr, bool is_write, size_t access_size);
+                           void *addr, int is_write, size_t access_size);
 
   // Sets the exit code to use when reporting an error.
   // Returns the old value.
@@ -87,9 +88,9 @@ extern "C" {
   // memory, returns the maximal possible allocation size, otherwise returns
   // "size".
   size_t __asan_get_estimated_allocated_size(size_t size);
-  // Returns true if p was returned by the ASan allocator and
-  // is not yet freed.
-  bool __asan_get_ownership(const void *p);
+  // Returns 1 if p was returned by the ASan allocator and is not yet freed.
+  // Otherwise returns 0.
+  int __asan_get_ownership(const void *p);
   // Returns the number of bytes reserved for the pointer p.
   // Requires (get_ownership(p) == true) or (p == 0).
   size_t __asan_get_allocated_size(const void *p);

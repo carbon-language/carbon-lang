@@ -77,7 +77,7 @@ extern "C" {
   void __asan_unpoison_memory_region(void const volatile *addr, uptr size);
 
   SANITIZER_INTERFACE_ATTRIBUTE
-  bool __asan_address_is_poisoned(void const volatile *addr);
+  int __asan_address_is_poisoned(void const volatile *addr);
 
   SANITIZER_INTERFACE_ATTRIBUTE
   uptr __asan_region_is_poisoned(uptr beg, uptr size);
@@ -87,7 +87,7 @@ extern "C" {
 
   SANITIZER_INTERFACE_ATTRIBUTE
   void __asan_report_error(uptr pc, uptr bp, uptr sp,
-                           uptr addr, bool is_write, uptr access_size);
+                           uptr addr, int is_write, uptr access_size);
 
   SANITIZER_INTERFACE_ATTRIBUTE
   int __asan_set_error_exit_code(int exit_code);
@@ -102,7 +102,7 @@ extern "C" {
   SANITIZER_INTERFACE_ATTRIBUTE
   uptr __asan_get_estimated_allocated_size(uptr size);
 
-  SANITIZER_INTERFACE_ATTRIBUTE bool __asan_get_ownership(const void *p);
+  SANITIZER_INTERFACE_ATTRIBUTE int __asan_get_ownership(const void *p);
   SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_get_allocated_size(const void *p);
   SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_get_current_allocated_bytes();
   SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_get_heap_size();

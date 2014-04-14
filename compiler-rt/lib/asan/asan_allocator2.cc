@@ -799,7 +799,7 @@ uptr __asan_get_estimated_allocated_size(uptr size) {
   return size;
 }
 
-bool __asan_get_ownership(const void *p) {
+int __asan_get_ownership(const void *p) {
   uptr ptr = reinterpret_cast<uptr>(p);
   return (AllocationSize(ptr) > 0);
 }
