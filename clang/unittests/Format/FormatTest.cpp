@@ -4647,6 +4647,7 @@ TEST_F(FormatTest, UnderstandsRvalueReferences) {
                "};");
   verifyGoogleFormat("#define IF(a, b, c) if (a && (b == c))");
   verifyGoogleFormat("#define WHILE(a, b, c) while (a && (b == c))");
+  verifyFormat("#define A(a, b) (a && b)");
 }
 
 TEST_F(FormatTest, FormatsBinaryOperatorsPrecedingEquals) {

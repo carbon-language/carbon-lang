@@ -110,6 +110,9 @@ private:
          Left->Previous->Type == TT_BinaryOperator)) {
       // static_assert, if and while usually contain expressions.
       Contexts.back().IsExpression = true;
+    } else if (Line.InPPDirective &&
+               (!Left->Previous || Left->Previous->isNot(tok::identifier))) {
+      Contexts.back().IsExpression = true;
     } else if (Left->Previous && Left->Previous->is(tok::r_square) &&
                Left->Previous->MatchingParen &&
                Left->Previous->MatchingParen->Type == TT_LambdaLSquare) {
