@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc < %s -mtriple=arm64 | FileCheck %s
 ; Test case related to <rdar://problem/15633429>.
 
 ; CHECK-LABEL: small

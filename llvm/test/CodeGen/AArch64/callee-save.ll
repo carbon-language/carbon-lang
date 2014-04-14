@@ -1,4 +1,5 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64 | FileCheck %s --check-prefix=CHECK-ARM64
 
 @var = global float 0.0
 
@@ -9,6 +10,11 @@ define void @foo() {
 ; CHECK: stp d12, d13, [sp
 ; CHECK: stp d10, d11, [sp
 ; CHECK: stp d8, d9, [sp
+
+; CHECK-ARM64: stp d15, d14, [sp
+; CHECK-ARM64: stp d13, d12, [sp
+; CHECK-ARM64: stp d11, d10, [sp
+; CHECK-ARM64: stp d9, d8, [sp
 
   ; Create lots of live variables to exhaust the supply of
   ; caller-saved registers
@@ -82,5 +88,10 @@ define void @foo() {
 ; CHECK: ldp     d10, d11, [sp
 ; CHECK: ldp     d12, d13, [sp
 ; CHECK: ldp     d14, d15, [sp
+
+; CHECK-ARM64: ldp     d9, d8, [sp
+; CHECK-ARM64: ldp     d11, d10, [sp
+; CHECK-ARM64: ldp     d13, d12, [sp
+; CHECK-ARM64: ldp     d15, d14, [sp
   ret void
 }

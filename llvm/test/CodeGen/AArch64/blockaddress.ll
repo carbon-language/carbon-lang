@@ -1,5 +1,7 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
 ; RUN: llc -code-model=large -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-LARGE %s
+; RUN: llc -mtriple=arm64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -code-model=large -mtriple=arm64-none-linux-gnu -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-LARGE %s
 
 @addr = global i8* null
 
@@ -9,7 +11,7 @@ define void @test_blockaddress() {
   %val = load volatile i8** @addr
   indirectbr i8* %val, [label %block]
 ; CHECK: adrp [[DEST_HI:x[0-9]+]], [[DEST_LBL:.Ltmp[0-9]+]]
-; CHECK: add [[DEST:x[0-9]+]], [[DEST_HI]], #:lo12:[[DEST_LBL]]
+; CHECK: add [[DEST:x[0-9]+]], [[DEST_HI]], {{#?}}:lo12:[[DEST_LBL]]
 ; CHECK: str [[DEST]],
 ; CHECK: ldr [[NEWDEST:x[0-9]+]]
 ; CHECK: br [[NEWDEST]]
