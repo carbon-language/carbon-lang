@@ -328,6 +328,7 @@ static void ReserveShadowMemoryRange(uptr beg, uptr end) {
   CHECK_EQ((beg % GetPageSizeCached()), 0);
   CHECK_EQ(((end + 1) % GetPageSizeCached()), 0);
   uptr size = end - beg + 1;
+  DecreaseTotalMmap(size);  // Don't count the shadow against mmap_limit_mb.
   void *res = MmapFixedNoReserve(beg, size);
   if (res != (void*)beg) {
     Report("ReserveShadowMemoryRange failed while trying to map 0x%zx bytes. "

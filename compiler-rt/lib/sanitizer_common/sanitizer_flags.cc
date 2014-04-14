@@ -119,6 +119,9 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->intercept_tls_get_addr, "intercept_tls_get_addr",
             "Intercept __tls_get_addr.");
   ParseFlag(str, &f->help, "help", "Print the flag descriptions.");
+  ParseFlag(str, &f->mmap_limit_mb, "mmap_limit_mb",
+            "Limit the amount of mmap-ed memory (excluding shadow) in Mb; "
+            "not a user-facing flag, used mosly for testing the tools");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)

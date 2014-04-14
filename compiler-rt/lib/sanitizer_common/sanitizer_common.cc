@@ -244,6 +244,24 @@ char *StripModuleName(const char *module) {
   return internal_strdup(short_module_name);
 }
 
+static atomic_uintptr_t g_total_mmaped;
+
+void IncreaseTotalMmap(uptr size) {
+  if (!common_flags()->mmap_limit_mb) return;
+  uptr total_mmaped =
+      atomic_fetch_add(&g_total_mmaped, size, memory_order_relaxed) + size;
+  if ((total_mmaped >> 20) > common_flags()->mmap_limit_mb) {
+    // Since for now mmap_limit_mb is not a user-facing flag, just CHECK.
+    common_flags()->mmap_limit_mb = 0;  // Allow mmap in CHECK.
+    CHECK_LT(total_mmaped >> 20, common_flags()->mmap_limit_mb);
+  }
+}
+
+void DecreaseTotalMmap(uptr size) {
+  if (!common_flags()->mmap_limit_mb) return;
+  atomic_fetch_sub(&g_total_mmaped, size, memory_order_relaxed);
+}
+
 }  // namespace __sanitizer
 
 using namespace __sanitizer;  // NOLINT

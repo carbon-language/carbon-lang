@@ -60,6 +60,8 @@ void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type);
 // Used to check if we can map shadow memory to a fixed location.
 bool MemoryRangeIsAvailable(uptr range_start, uptr range_end);
 void FlushUnneededShadowMemory(uptr addr, uptr size);
+void IncreaseTotalMmap(uptr size);
+void DecreaseTotalMmap(uptr size);
 
 // InternalScopedBuffer can be used instead of large stack arrays to
 // keep frame size low.
