@@ -83,7 +83,20 @@ int main(int argc, char **argv) {
 
   LTOCodeGenerator CodeGen;
 
-  CodeGen.setCodePICModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC);
+  switch (RelocModel) {
+  case Reloc::Static:
+    CodeGen.setCodePICModel(LTO_CODEGEN_PIC_MODEL_STATIC);
+    break;
+  case Reloc::PIC_:
+    CodeGen.setCodePICModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC);
+    break;
+  case Reloc::DynamicNoPIC:
+    CodeGen.setCodePICModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC);
+    break;
+  default:
+    CodeGen.setCodePICModel(LTO_CODEGEN_PIC_MODEL_DEFAULT);
+  }
+
   CodeGen.setDebugInfo(LTO_DEBUG_MODEL_DWARF);
   CodeGen.setTargetOptions(Options);
 

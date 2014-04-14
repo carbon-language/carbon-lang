@@ -65,7 +65,7 @@ const char* LTOCodeGenerator::getVersionString() {
 LTOCodeGenerator::LTOCodeGenerator()
     : Context(getGlobalContext()), Linker(new Module("ld-temp.o", Context)),
       TargetMach(NULL), EmitDwarfDebugInfo(false), ScopeRestrictionsDone(false),
-      CodeModel(LTO_CODEGEN_PIC_MODEL_DYNAMIC), NativeObjectFile(NULL),
+      CodeModel(LTO_CODEGEN_PIC_MODEL_DEFAULT), NativeObjectFile(NULL),
       DiagHandler(NULL), DiagContext(NULL) {
   initializeLTOPasses();
 }
@@ -161,6 +161,7 @@ void LTOCodeGenerator::setCodePICModel(lto_codegen_model model) {
   case LTO_CODEGEN_PIC_MODEL_STATIC:
   case LTO_CODEGEN_PIC_MODEL_DYNAMIC:
   case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
+  case LTO_CODEGEN_PIC_MODEL_DEFAULT:
     CodeModel = model;
     return;
   }
@@ -294,6 +295,9 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
     break;
   case LTO_CODEGEN_PIC_MODEL_DYNAMIC_NO_PIC:
     RelocModel = Reloc::DynamicNoPIC;
+    break;
+  case LTO_CODEGEN_PIC_MODEL_DEFAULT:
+    // RelocModel is already the default, so leave it that way.
     break;
   }
 
