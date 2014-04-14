@@ -4584,6 +4584,16 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   // FIXME: Is there a way to make this work?
   // verifyIndependentOfContext("MACRO(A *a);");
 
+  EXPECT_EQ("#define OP(x)                                    \\\n"
+            "  ostream &operator<<(ostream &s, const A &a) {  \\\n"
+            "    return s << a.DebugString();                 \\\n"
+            "  }",
+            format("#define OP(x) \\\n"
+                   "  ostream &operator<<(ostream &s, const A &a) { \\\n"
+                   "    return s << a.DebugString(); \\\n"
+                   "  }",
+                   getLLVMStyleWithColumns(50)));
+
   // FIXME: We cannot handle this case yet; we might be able to figure out that
   // foo<x> d > v; doesn't make sense.
   verifyFormat("foo<a < b && c> d > v;");

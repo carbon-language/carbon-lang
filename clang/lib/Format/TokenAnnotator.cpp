@@ -111,7 +111,9 @@ private:
       // static_assert, if and while usually contain expressions.
       Contexts.back().IsExpression = true;
     } else if (Line.InPPDirective &&
-               (!Left->Previous || Left->Previous->isNot(tok::identifier))) {
+               (!Left->Previous ||
+                (Left->Previous->isNot(tok::identifier) &&
+                 Left->Previous->Type != TT_OverloadedOperator))) {
       Contexts.back().IsExpression = true;
     } else if (Left->Previous && Left->Previous->is(tok::r_square) &&
                Left->Previous->MatchingParen &&
