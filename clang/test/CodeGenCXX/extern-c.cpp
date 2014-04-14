@@ -66,3 +66,10 @@ extern "C" {
   // CHECK-NOT: @unused
   // CHECK-NOT: @duplicate_internal
 }
+
+namespace PR19411 {
+  struct A { void f(); };
+  extern "C" void A::f() { void g(); g(); }
+  // CHECK-LABEL: @_ZN7PR194111A1fEv(
+  // CHECK: call void @g()
+}

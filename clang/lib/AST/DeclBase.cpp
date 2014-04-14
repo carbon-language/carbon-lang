@@ -837,7 +837,7 @@ static bool isLinkageSpecContext(const DeclContext *DC,
   while (DC->getDeclKind() != Decl::TranslationUnit) {
     if (DC->getDeclKind() == Decl::LinkageSpec)
       return cast<LinkageSpecDecl>(DC)->getLanguage() == ID;
-    DC = DC->getParent();
+    DC = DC->getLexicalParent();
   }
   return false;
 }
