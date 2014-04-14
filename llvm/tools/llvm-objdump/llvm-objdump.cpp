@@ -708,6 +708,9 @@ static void PrintCOFFSymbolTable(const COFFObjectFile *coff) {
         StringRef Name(AF->FileName,
                        Symbol->NumberOfAuxSymbols * COFF::SymbolSize);
         outs() << "AUX " << Name.rtrim(StringRef("\0", 1))  << '\n';
+
+        SI = SI + Symbol->NumberOfAuxSymbols;
+        break;
       } else {
         outs() << "AUX Unknown\n";
       }
