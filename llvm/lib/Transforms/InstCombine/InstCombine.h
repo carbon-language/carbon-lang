@@ -171,7 +171,7 @@ public:
                                 ICmpInst::Predicate Pred);
   Instruction *FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
                            ICmpInst::Predicate Cond, Instruction &I);
-  Instruction *FoldShiftByConstant(Value *Op0, Constant *Op1,
+  Instruction *FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
                                    BinaryOperator &I);
   Instruction *commonCastTransforms(CastInst &CI);
   Instruction *commonPointerCastTransforms(CastInst &CI);
