@@ -28,6 +28,8 @@ bar:
 	zed = foo +2
 	call zed@PLT
 
+        leaq    -1+foo(%rip), %r11
+
 // CHECK:        Section {
 // CHECK:          Name: .rela.text
 // CHECK:          Relocations [
@@ -53,6 +55,7 @@ bar:
 // CHECK-NEXT:       0x8D R_X86_64_PC16 foo 0x8D
 // CHECK-NEXT:       0x8F R_X86_64_PC8 foo 0x8F
 // CHECK-NEXT:       0x91 R_X86_64_PLT32 foo 0xFFFFFFFFFFFFFFFE
+// CHECK-NEXT:       0x98 R_X86_64_PC32 foo 0xFFFFFFFFFFFFFFFB
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }
 
