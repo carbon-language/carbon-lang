@@ -21,6 +21,8 @@
 
 namespace llvm {
 
+namespace detail {
+
 void printBumpPtrAllocatorStats(unsigned NumSlabs, size_t BytesAllocated,
                                 size_t TotalMemory) {
   errs() << "\nNumber of memory regions: " << NumSlabs << '\n'
@@ -29,6 +31,8 @@ void printBumpPtrAllocatorStats(unsigned NumSlabs, size_t BytesAllocated,
          << "Bytes wasted: " << (TotalMemory - BytesAllocated)
          << " (includes alignment, etc)\n";
 }
+
+} // End namespace detail.
 
 void PrintRecyclerStats(size_t Size,
                         size_t Align,

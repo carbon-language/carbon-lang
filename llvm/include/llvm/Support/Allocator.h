@@ -67,6 +67,14 @@ public:
   void Deallocate(void *Slab, size_t Size) { Allocator.Deallocate(Slab); }
 };
 
+namespace detail {
+
+// We call out to an external function to actually print the message as the
+// printing code uses Allocator.h in its implementation.
+void printBumpPtrAllocatorStats(unsigned NumSlabs, size_t BytesAllocated,
+                                size_t TotalMemory);
+} // End namespace detail.
+
 /// \brief Allocate memory in an ever growing pool, as if by bump-pointer.
 ///
 /// This isn't strictly a bump-pointer allocator as it uses backing slabs of
@@ -200,12 +208,8 @@ public:
   }
 
   void PrintStats() const {
-    // We call out to an external function to actually print the message as the
-    // printing code uses Allocator.h in its implementation.
-    extern void printBumpPtrAllocatorStats(
-        unsigned NumSlabs, size_t BytesAllocated, size_t TotalMemory);
-
-    printBumpPtrAllocatorStats(Slabs.size(), BytesAllocated, getTotalMemory());
+    detail::printBumpPtrAllocatorStats(Slabs.size(), BytesAllocated,
+                                       getTotalMemory());
   }
 
 private:
