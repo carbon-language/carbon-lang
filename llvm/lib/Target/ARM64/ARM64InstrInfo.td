@@ -645,8 +645,7 @@ defm CLZ    : OneOperandData<0b100, "clz", ctlz>;
 defm RBIT   : OneOperandData<0b000, "rbit">;
 def  REV16Wr : OneWRegData<0b001, "rev16",
                                   UnOpFrag<(rotr (bswap node:$LHS), (i64 16))>>;
-def  REV16Xr : OneXRegData<0b001, "rev16",
-                                  UnOpFrag<(rotr (bswap node:$LHS), (i64 16))>>;
+def  REV16Xr : OneXRegData<0b001, "rev16", null_frag>;
 
 def : Pat<(cttz GPR32:$Rn),
           (CLZWr (RBITWr GPR32:$Rn))>;
