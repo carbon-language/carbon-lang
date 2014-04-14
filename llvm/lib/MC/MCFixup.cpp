@@ -13,8 +13,8 @@ using namespace llvm;
 static MCSymbolRefExpr::VariantKind getAccessVariant(const MCExpr *Expr) {
   switch (Expr->getKind()) {
   case MCExpr::Unary: {
-    const MCUnaryExpr *UE = cast<MCUnaryExpr>(Expr);
-    assert(getAccessVariant(UE->getSubExpr()) == MCSymbolRefExpr::VK_None);
+    assert(getAccessVariant(cast<MCUnaryExpr>(Expr)->getSubExpr()) ==
+           MCSymbolRefExpr::VK_None);
     return MCSymbolRefExpr::VK_None;
   }
 
