@@ -124,7 +124,7 @@ protected:
 
   /// Children DIEs.
   ///
-  std::vector<DIE *> Children;
+  std::vector<std::unique_ptr<DIE>> Children;
 
   DIE *Parent;
 
@@ -141,7 +141,6 @@ public:
   explicit DIE(dwarf::Tag Tag)
       : Offset(0), Size(0), Abbrev((dwarf::Tag)Tag, dwarf::DW_CHILDREN_no),
         Parent(0) {}
-  ~DIE();
 
   // Accessors.
   DIEAbbrev &getAbbrev() { return Abbrev; }
@@ -150,7 +149,9 @@ public:
   dwarf::Tag getTag() const { return Abbrev.getTag(); }
   unsigned getOffset() const { return Offset; }
   unsigned getSize() const { return Size; }
-  const std::vector<DIE *> &getChildren() const { return Children; }
+  const std::vector<std::unique_ptr<DIE>> &getChildren() const {
+    return Children;
+  }
   const SmallVectorImpl<DIEValue *> &getValues() const { return Values; }
   DIE *getParent() const { return Parent; }
   /// Climb up the parent chain to get the compile or type unit DIE this DIE
@@ -174,7 +175,7 @@ public:
   void addChild(DIE *Child) {
     assert(!Child->getParent());
     Abbrev.setChildrenFlag(dwarf::DW_CHILDREN_yes);
-    Children.push_back(Child);
+    Children.push_back(std::unique_ptr<DIE>(Child));
     Child->Parent = this;
   }
 

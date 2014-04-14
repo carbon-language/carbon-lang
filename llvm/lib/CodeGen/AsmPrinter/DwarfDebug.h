@@ -178,7 +178,7 @@ public:
   const SmallVectorImpl<DwarfUnit *> &getUnits() { return CUs; }
 
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
-  unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
+  unsigned computeSizeAndOffset(DIE &Die, unsigned Offset);
 
   /// \brief Compute the size and offset of all the DIEs.
   void computeSizeAndOffsets();
@@ -666,7 +666,7 @@ public:
   }
 
   /// \brief Recursively Emits a debug information entry.
-  void emitDIE(DIE *Die);
+  void emitDIE(DIE &Die);
 
   // Experimental DWARF5 features.
 

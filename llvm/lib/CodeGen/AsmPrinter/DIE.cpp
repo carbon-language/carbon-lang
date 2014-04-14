@@ -104,15 +104,6 @@ void DIEAbbrev::print(raw_ostream &O) {
 void DIEAbbrev::dump() { print(dbgs()); }
 #endif
 
-//===----------------------------------------------------------------------===//
-// DIE Implementation
-//===----------------------------------------------------------------------===//
-
-DIE::~DIE() {
-  for (unsigned i = 0, N = Children.size(); i < N; ++i)
-    delete Children[i];
-}
-
 /// Climb up the parent chain to get the unit DIE to which this DIE
 /// belongs.
 const DIE *DIE::getUnit() const {
