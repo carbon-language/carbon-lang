@@ -1,6 +1,6 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-LE %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
-; RUN: llc -verify-machineinstrs < %s -mtriple=arm64 | FileCheck --check-prefix=CHECK --check-prefix=CHECK-LE %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-apple-ios7.0 | FileCheck --check-prefix=CHECK --check-prefix=CHECK-LE %s
 
 define i128 @test_simple(i128 %a, i128 %b, i128 %c) {
 ; CHECK-LABEL: test_simple:
