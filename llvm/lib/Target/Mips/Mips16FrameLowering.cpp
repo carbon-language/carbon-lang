@@ -71,7 +71,7 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   }
   if (hasFP(MF))
     BuildMI(MBB, MBBI, dl, TII.get(Mips::MoveR3216), Mips::S0)
-      .addReg(Mips::SP);
+      .addReg(Mips::SP).setMIFlag(MachineInstr::FrameSetup);
 
 }
 

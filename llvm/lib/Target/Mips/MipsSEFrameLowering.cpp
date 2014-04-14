@@ -375,7 +375,8 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
   // if framepointer enabled, set it to point to the stack pointer.
   if (hasFP(MF)) {
     // Insert instruction "move $fp, $sp" at this location.
-    BuildMI(MBB, MBBI, dl, TII.get(ADDu), FP).addReg(SP).addReg(ZERO);
+    BuildMI(MBB, MBBI, dl, TII.get(ADDu), FP).addReg(SP).addReg(ZERO)
+      .setMIFlag(MachineInstr::FrameSetup);
 
     // emit ".cfi_def_cfa_register $fp"
     unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createDefCfaRegister(
