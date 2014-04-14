@@ -428,13 +428,21 @@ static inline bool isImmU16(unsigned val) {
   return val < (1 << 16);
 }
 
+static bool isImmMskBitp(unsigned val) {
+  if (!isMask_32(val)) {
+    return false;
+  }
+  int N = Log2_32(val) + 1;
+  return (N >= 1 && N <= 8) || N == 16 || N == 24 || N == 32;
+}
+
 MachineBasicBlock::iterator XCoreInstrInfo::loadImmediate(
                                               MachineBasicBlock &MBB,
                                               MachineBasicBlock::iterator MI,
                                               unsigned Reg, uint64_t Value) const {
   DebugLoc dl;
   if (MI != MBB.end()) dl = MI->getDebugLoc();
-  if (isMask_32(Value)) {
+  if (isImmMskBitp(Value)) {
     int N = Log2_32(Value) + 1;
     return BuildMI(MBB, MI, dl, get(XCore::MKMSK_rus), Reg).addImm(N);
   }
