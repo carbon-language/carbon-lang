@@ -285,8 +285,8 @@ private:
   void DeallocateCustomSizedSlabs() {
     for (auto &PtrAndSize : CustomSizedSlabs) {
       void *Ptr = PtrAndSize.first;
-#ifndef NDEBUG
       size_t Size = PtrAndSize.second;
+#ifndef NDEBUG
       // Poison the memory so stale pointers crash sooner.  Note we must
       // preserve the Size and NextPtr fields at the beginning.
       sys::Memory::setRangeWritable(Ptr, Size);
