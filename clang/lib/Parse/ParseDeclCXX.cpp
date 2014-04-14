@@ -3194,6 +3194,7 @@ static bool IsBuiltInOrStandardCXX11Attribute(IdentifierInfo *AttrName,
   switch (AttributeList::getKind(AttrName, ScopeName,
                                  AttributeList::AS_CXX11)) {
   case AttributeList::AT_CarriesDependency:
+  case AttributeList::AT_Deprecated:
   case AttributeList::AT_FallThrough:
   case AttributeList::AT_CXX11NoReturn: {
     return true;
@@ -3225,6 +3226,7 @@ bool Parser::ParseCXX11AttributeArgs(IdentifierInfo *AttrName,
                                      IdentifierInfo *ScopeName,
                                      SourceLocation ScopeLoc) {
   assert(Tok.is(tok::l_paren) && "Not a C++11 attribute argument list");
+  SourceLocation LParenLoc = Tok.getLocation();
 
   // If the attribute isn't known, we will not attempt to parse any
   // arguments.
@@ -3241,9 +3243,32 @@ bool Parser::ParseCXX11AttributeArgs(IdentifierInfo *AttrName,
     // behaviors.
     ParseGNUAttributeArgs(AttrName, AttrNameLoc, Attrs, EndLoc, ScopeName,
                           ScopeLoc, AttributeList::AS_CXX11, 0);
-  else
-    ParseAttributeArgsCommon(AttrName, AttrNameLoc, Attrs, EndLoc, ScopeName,
-                             ScopeLoc, AttributeList::AS_CXX11);
+  else {
+    unsigned NumArgs =
+        ParseAttributeArgsCommon(AttrName, AttrNameLoc, Attrs, EndLoc,
+                                 ScopeName, ScopeLoc, AttributeList::AS_CXX11);
+    
+    const AttributeList *Attr = Attrs.getList();
+    if (Attr && IsBuiltInOrStandardCXX11Attribute(AttrName, ScopeName)) {
+      // If the attribute is a standard or built-in attribute and we are
+      // parsing an argument list, we need to determine whether this attribute
+      // was allowed to have an argument list (such as [[deprecated]]), and how
+      // many arguments were parsed (so we can diagnose on [[deprecated()]]).
+      if (Attr->getMaxArgs() && !NumArgs) {
+        // The attribute was allowed to have arguments, but none were provided
+        // even though the attribute parsed successfully. This is an error.
+        Diag(LParenLoc, diag::err_attribute_requires_arguements) << AttrName;
+        return false;
+      } else if (!Attr->getMaxArgs()) {
+        // The attribute parsed successfully, but was not allowed to have any
+        // arguments. It doesn't matter whether any were provided -- the
+        // presence of the argument list (even if empty) is diagnosed.
+        Diag(LParenLoc, diag::err_cxx11_attribute_forbids_arguments)
+            << AttrName;
+        return false;
+      }
+    }
+  }
   return true;
 }
 
@@ -3324,14 +3349,9 @@ void Parser::ParseCXX11AttributeSpecifier(ParsedAttributes &attrs,
           << AttrName << SourceRange(SeenAttrs[AttrName]);
 
     // Parse attribute arguments
-    if (Tok.is(tok::l_paren)) {
-      if (StandardAttr)
-        Diag(Tok.getLocation(), diag::err_cxx11_attribute_forbids_arguments)
-            << AttrName->getName();
-
+    if (Tok.is(tok::l_paren))
       AttrParsed = ParseCXX11AttributeArgs(AttrName, AttrLoc, attrs, endLoc,
                                            ScopeName, ScopeLoc);
-    }
 
     if (!AttrParsed)
       attrs.addNew(AttrName,

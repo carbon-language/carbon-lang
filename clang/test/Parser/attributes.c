@@ -94,5 +94,4 @@ void testFundef5() __attribute__(()) { }
 
 __attribute__((pure)) int testFundef6(int a) { return a; }
 
-
-
+void deprecatedTestFun(void) __attribute__((deprecated()));

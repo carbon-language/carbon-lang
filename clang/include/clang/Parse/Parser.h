@@ -2012,13 +2012,13 @@ private:
 
   /// \brief Parses syntax-generic attribute arguments for attributes which are
   /// known to the implementation, and adds them to the given ParsedAttributes
-  /// list with the given attribute syntax.
-  void ParseAttributeArgsCommon(IdentifierInfo *AttrName,
-                                SourceLocation AttrNameLoc,
-                                ParsedAttributes &Attrs, SourceLocation *EndLoc,
-                                IdentifierInfo *ScopeName,
-                                SourceLocation ScopeLoc,
-                                AttributeList::Syntax Syntax);
+  /// list with the given attribute syntax. Returns the number of arguments
+  /// parsed for the attribute.
+  unsigned
+  ParseAttributeArgsCommon(IdentifierInfo *AttrName, SourceLocation AttrNameLoc,
+                           ParsedAttributes &Attrs, SourceLocation *EndLoc,
+                           IdentifierInfo *ScopeName, SourceLocation ScopeLoc,
+                           AttributeList::Syntax Syntax);
 
   void MaybeParseGNUAttributes(Declarator &D,
                                LateParsedAttrList *LateAttrs = 0) {

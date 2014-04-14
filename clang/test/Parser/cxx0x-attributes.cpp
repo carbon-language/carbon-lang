@@ -322,3 +322,10 @@ namespace GccASan {
   [[gnu::no_address_safety_analysis]] void f3();
   [[gnu::no_sanitize_address]] void f4();
 }
+
+namespace {
+  [[deprecated]] void bar();
+  [[deprecated("hello")]] void baz();
+  [[deprecated()]] void foo(); // expected-error {{attribute 'deprecated' requires a nonempty argument list}}
+  [[gnu::deprecated()]] void quux();
+}
