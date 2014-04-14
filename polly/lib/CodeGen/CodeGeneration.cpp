@@ -463,6 +463,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
 
   if (VectorDimensions == 1) {
     BlockGenerator::generate(Builder, *Statement, ValueMap, LoopToScev, P);
+    isl_set_free(Domain);
     return;
   }
 
