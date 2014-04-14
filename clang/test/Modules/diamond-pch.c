@@ -4,7 +4,7 @@
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodules-cache-path=%t -fmodule-name=diamond_right %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodules-cache-path=%t -fmodule-name=diamond_bottom %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-pch -fmodules-cache-path=%t -I %S/Inputs -o %t.pch %S/Inputs/diamond.h
-// RUN: %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -include-pch %t.pch %s -verify
+// RUN: %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -include-pch %t.pch %s -I %S/Inputs -verify
 // FIXME: When we have a syntax for modules in C, use that.
 
 void test_diamond(int i, float f, double d, char c) {

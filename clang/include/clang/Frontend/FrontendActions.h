@@ -17,6 +17,7 @@
 namespace clang {
 
 class Module;
+class FileEntry;
   
 //===----------------------------------------------------------------------===//
 // Custom Consumer Actions
@@ -92,7 +93,8 @@ public:
 };
 
 class GenerateModuleAction : public ASTFrontendAction {
-  clang::Module *Module;
+  Module *Module;
+  const FileEntry *ModuleMapForUniquing;
   bool IsSystem;
   
 protected:
@@ -106,8 +108,10 @@ protected:
   bool hasASTFileSupport() const override { return false; }
 
 public:
-  explicit GenerateModuleAction(bool IsSystem = false)
-    : ASTFrontendAction(), IsSystem(IsSystem) { }
+  GenerateModuleAction(const FileEntry *ModuleMap = nullptr,
+                       bool IsSystem = false)
+    : ASTFrontendAction(), ModuleMapForUniquing(ModuleMap), IsSystem(IsSystem)
+  { }
 
   bool BeginSourceFileAction(CompilerInstance &CI, StringRef Filename) override;
 
@@ -115,11 +119,11 @@ public:
   /// create the PCHGenerator instance returned by CreateASTConsumer.
   ///
   /// \returns true if an error occurred, false otherwise.
-  static bool ComputeASTConsumerArguments(CompilerInstance &CI,
-                                          StringRef InFile,
-                                          std::string &Sysroot,
-                                          std::string &OutputFile,
-                                          raw_ostream *&OS);
+  bool ComputeASTConsumerArguments(CompilerInstance &CI,
+                                   StringRef InFile,
+                                   std::string &Sysroot,
+                                   std::string &OutputFile,
+                                   raw_ostream *&OS);
 };
 
 class SyntaxOnlyAction : public ASTFrontendAction {

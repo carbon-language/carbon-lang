@@ -493,9 +493,12 @@ public:
   ///
   /// \param ModuleName The module whose module file name will be returned.
   ///
+  /// \param ModuleMapPath A path that when combined with \c ModuleName
+  /// uniquely identifies this module. See Module::ModuleMap.
+  ///
   /// \returns The name of the module file that corresponds to this module,
   /// or an empty string if this module does not correspond to any module file.
-  std::string getModuleFileName(StringRef ModuleName);
+  std::string getModuleFileName(StringRef ModuleName, StringRef ModuleMapPath);
 
   /// \brief Lookup a module Search for a module with the given name.
   ///

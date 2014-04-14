@@ -131,6 +131,10 @@ private:
     /// \brief Whether the modules we infer are [system] modules.
     unsigned InferSystemModules : 1;
 
+    /// \brief If \c InferModules is non-zero, the module map file that allowed
+    /// inferred modules.  Otherwise, nullptr.
+    const FileEntry *ModuleMapFile;
+
     /// \brief The names of modules that cannot be inferred within this
     /// directory.
     SmallVector<std::string, 2> ExcludedModules;
@@ -293,13 +297,17 @@ public:
   /// \param Parent The module that will act as the parent of this submodule,
   /// or NULL to indicate that this is a top-level module.
   ///
+  /// \param ModuleMap The module map that defines or allows the inference of
+  /// this module.
+  ///
   /// \param IsFramework Whether this is a framework module.
   ///
   /// \param IsExplicit Whether this is an explicit submodule.
   ///
   /// \returns The found or newly-created module, along with a boolean value
   /// that will be true if the module is newly-created.
-  std::pair<Module *, bool> findOrCreateModule(StringRef Name, Module *Parent, 
+  std::pair<Module *, bool> findOrCreateModule(StringRef Name, Module *Parent,
+                                               const FileEntry *ModuleMap,
                                                bool IsFramework,
                                                bool IsExplicit);
 

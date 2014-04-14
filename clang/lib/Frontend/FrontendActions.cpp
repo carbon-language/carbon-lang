@@ -299,6 +299,11 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
     return false;
   }
 
+  if (!ModuleMapForUniquing)
+    ModuleMapForUniquing = ModuleMap;
+  Module->ModuleMap = ModuleMapForUniquing;
+  assert(Module->ModuleMap && "missing module map file");
+
   FileManager &FileMgr = CI.getFileManager();
 
   // Collect the set of #includes we need to build the module.
@@ -337,10 +342,9 @@ bool GenerateModuleAction::ComputeASTConsumerArguments(CompilerInstance &CI,
   // in the module cache.
   if (CI.getFrontendOpts().OutputFile.empty()) {
     HeaderSearch &HS = CI.getPreprocessor().getHeaderSearchInfo();
-    SmallString<256> ModuleFileName(HS.getModuleCachePath());
-    llvm::sys::path::append(ModuleFileName, 
-                            CI.getLangOpts().CurrentModule + ".pcm");
-    CI.getFrontendOpts().OutputFile = ModuleFileName.str();
+    CI.getFrontendOpts().OutputFile =
+        HS.getModuleFileName(CI.getLangOpts().CurrentModule,
+                             ModuleMapForUniquing->getName());
   }
   
   // We use createOutputFile here because this is exposed via libclang, and we

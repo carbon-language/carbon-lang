@@ -11,6 +11,7 @@
 //  modules for the ASTReader.
 //
 //===----------------------------------------------------------------------===//
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/ModuleMap.h"
 #include "clang/Serialization/GlobalModuleIndex.h"
 #include "clang/Serialization/ModuleManager.h"
@@ -155,7 +156,7 @@ void ModuleManager::removeModules(ModuleIterator first, ModuleIterator last,
 
     FileMgr.invalidateCache((*victim)->File);
     if (modMap) {
-      StringRef ModuleName = llvm::sys::path::stem((*victim)->FileName);
+      StringRef ModuleName = (*victim)->ModuleName;
       if (Module *mod = modMap->findModule(ModuleName)) {
         mod->setASTFile(0);
       }
@@ -429,7 +430,7 @@ namespace llvm {
     }
 
     std::string getNodeLabel(ModuleFile *M, const ModuleManager&) {
-      return llvm::sys::path::stem(M->FileName);
+      return M->ModuleName;
     }
   };
 }

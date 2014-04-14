@@ -18,6 +18,8 @@
 #include "clang/Lex/HeaderSearchOptions.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/ADT/APInt.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Capacity.h"
 #include "llvm/Support/FileSystem.h"
@@ -112,24 +114,33 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
 }
 
 std::string HeaderSearch::getModuleFileName(Module *Module) {
-  // If we don't have a module cache path, we can't do anything.
-  if (ModuleCachePath.empty()) 
-    return std::string();
-
-
-  SmallString<256> Result(ModuleCachePath);
-  llvm::sys::path::append(Result, Module->getTopLevelModule()->Name + ".pcm");
-  return Result.str().str();
+  return getModuleFileName(Module->Name, Module->ModuleMap->getName());
 }
 
-std::string HeaderSearch::getModuleFileName(StringRef ModuleName) {
+std::string HeaderSearch::getModuleFileName(StringRef ModuleName,
+                                            StringRef ModuleMapPath) {
   // If we don't have a module cache path, we can't do anything.
   if (ModuleCachePath.empty()) 
     return std::string();
-  
-  
+
   SmallString<256> Result(ModuleCachePath);
-  llvm::sys::path::append(Result, ModuleName + ".pcm");
+  llvm::sys::fs::make_absolute(Result);
+
+  if (HSOpts->DisableModuleHash) {
+    llvm::sys::path::append(Result, ModuleName + ".pcm");
+  } else {
+    // Construct the name <ModuleName>-<hash of ModuleMapPath>.pcm which should
+    // be globally unique to this particular module. To avoid false-negatives
+    // on case-insensitive filesystems, we use lower-case, which is safe because
+    // to cause a collision the modules must have the same name, which is an
+    // error if they are imported in the same translation.
+    SmallString<256> AbsModuleMapPath(ModuleMapPath);
+    llvm::sys::fs::make_absolute(AbsModuleMapPath);
+    llvm::APInt Code(64, llvm::hash_value(AbsModuleMapPath.str().lower()));
+    SmallString<128> HashStr;
+    Code.toStringUnsigned(HashStr, /*Radix*/36);
+    llvm::sys::path::append(Result, ModuleName + "-" + HashStr.str() + ".pcm");
+  }
   return Result.str().str();
 }
 

@@ -1161,7 +1161,7 @@ std::pair<SourceLocation, StringRef> ASTReader::getModuleImportLoc(int ID) {
 
   // FIXME: Can we map this down to a particular submodule? That would be
   // ideal.
-  return std::make_pair(M->ImportLoc, llvm::sys::path::stem(M->FileName));
+  return std::make_pair(M->ImportLoc, StringRef(M->ModuleName));
 }
 
 /// \brief Find the location where the module F is imported.
@@ -1172,14 +1172,10 @@ SourceLocation ASTReader::getImportLocation(ModuleFile *F) {
   // Otherwise we have a PCH. It's considered to be "imported" at the first
   // location of its includer.
   if (F->ImportedBy.empty() || !F->ImportedBy[0]) {
-    // Main file is the importer. We assume that it is the first entry in the
-    // entry table. We can't ask the manager, because at the time of PCH loading
-    // the main file entry doesn't exist yet.
-    // The very first entry is the invalid instantiation loc, which takes up
-    // offsets 0 and 1.
-    return SourceLocation::getFromRawEncoding(2U);
+    // Main file is the importer.
+    assert(!SourceMgr.getMainFileID().isInvalid() && "missing main file");
+    return SourceMgr.getLocForStartOfFile(SourceMgr.getMainFileID());
   }
-  //return F->Loaders[0]->FirstLoc;
   return F->ImportedBy[0]->FirstLoc;
 }
 
@@ -2089,6 +2085,7 @@ void ASTReader::MaybeAddSystemRootToFilename(ModuleFile &M,
 ASTReader::ASTReadResult
 ASTReader::ReadControlBlock(ModuleFile &F,
                             SmallVectorImpl<ImportedModule> &Loaded,
+                            const ModuleFile *ImportedBy,
                             unsigned ClientLoadCapabilities) {
   BitstreamCursor &Stream = F.Stream;
 
@@ -2312,6 +2309,44 @@ ASTReader::ReadControlBlock(ModuleFile &F,
 
     case ORIGINAL_PCH_DIR:
       F.OriginalDir = Blob;
+      break;
+
+    case MODULE_NAME:
+      F.ModuleName = Blob;
+      break;
+
+    case MODULE_MAP_FILE:
+      F.ModuleMapPath = Blob;
+
+      // Try to resolve ModuleName in the current header search context and
+      // verify that it is found in the same module map file as we saved. If the
+      // top-level AST file is a main file, skip this check because there is no
+      // usable header search context.
+      assert(!F.ModuleName.empty() &&
+             "MODULE_NAME should come before MOUDLE_MAP_FILE");
+      if (F.Kind == MK_Module &&
+          (*ModuleMgr.begin())->Kind != MK_MainFile) {
+        Module *M = PP.getHeaderSearchInfo().lookupModule(F.ModuleName);
+        if (!M) {
+          assert(ImportedBy && "top-level import should be verified");
+          if ((ClientLoadCapabilities & ARR_Missing) == 0)
+            Diag(diag::err_imported_module_not_found)
+              << F.ModuleName << ImportedBy->FileName;
+          return Missing;
+        }
+
+        const FileEntry *StoredModMap = FileMgr.getFile(F.ModuleMapPath);
+        if (StoredModMap == nullptr || StoredModMap != M->ModuleMap) {
+          assert(M->ModuleMap && "found module is missing module map file");
+          assert(M->Name == F.ModuleName && "found module with different name");
+          assert(ImportedBy && "top-level import should be verified");
+          if ((ClientLoadCapabilities & ARR_OutOfDate) == 0)
+            Diag(diag::err_imported_module_modmap_changed)
+              << F.ModuleName << ImportedBy->FileName
+              << M->ModuleMap->getName() << F.ModuleMapPath;
+          return OutOfDate;
+        }
+      }
       break;
 
     case INPUT_FILE_OFFSETS:
@@ -3537,7 +3572,7 @@ ASTReader::ReadASTCore(StringRef FileName,
       break;
     case CONTROL_BLOCK_ID:
       HaveReadControlBlock = true;
-      switch (ReadControlBlock(F, Loaded, ClientLoadCapabilities)) {
+      switch (ReadControlBlock(F, Loaded, ImportedBy, ClientLoadCapabilities)) {
       case Success:
         break;
 
@@ -4059,13 +4094,19 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       bool InferExportWildcard = Record[Idx++];
       bool ConfigMacrosExhaustive = Record[Idx++];
 
-      Module *ParentModule = 0;
-      if (Parent)
+      Module *ParentModule = nullptr;
+      const FileEntry *ModuleMap = nullptr;
+      if (Parent) {
         ParentModule = getSubmodule(Parent);
-      
+        ModuleMap = ParentModule->ModuleMap;
+      }
+
+      if (!F.ModuleMapPath.empty())
+        ModuleMap = FileMgr.getFile(F.ModuleMapPath);
+
       // Retrieve this (sub)module from the module map, creating it if
       // necessary.
-      CurrentModule = ModMap.findOrCreateModule(Name, ParentModule, 
+      CurrentModule = ModMap.findOrCreateModule(Name, ParentModule, ModuleMap,
                                                 IsFramework, 
                                                 IsExplicit).first;
       SubmoduleID GlobalIndex = GlobalID - NUM_PREDEF_SUBMODULE_IDS;
@@ -4090,7 +4131,7 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
 
         CurrentModule->setASTFile(F.File);
       }
-      
+
       CurrentModule->IsFromModuleFile = true;
       CurrentModule->IsSystem = IsSystem || CurrentModule->IsSystem;
       CurrentModule->IsExternC = IsExternC;

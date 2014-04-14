@@ -51,10 +51,21 @@ public:
   
   /// \brief The location of the module definition.
   SourceLocation DefinitionLoc;
-  
+
   /// \brief The parent of this module. This will be NULL for the top-level
   /// module.
   Module *Parent;
+
+  /// \brief The module map file that (along with the module name) uniquely
+  /// identifies this module.
+  ///
+  /// The particular module that \c Name refers to may depend on how the module
+  /// was found in header search. However, the combination of \c Name and
+  /// \c ModuleMap will be globally unique for top-level modules. In the case of
+  /// inferred modules, \c ModuleMap will contain the module map that allowed
+  /// the inference (e.g. contained 'Module *') rather than the virtual
+  /// inferred module map file.
+  const FileEntry *ModuleMap;
   
   /// \brief The umbrella header or directory.
   llvm::PointerUnion<const DirectoryEntry *, const FileEntry *> Umbrella;
@@ -264,8 +275,10 @@ public:
   std::vector<Conflict> Conflicts;
 
   /// \brief Construct a new module or submodule.
-  Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
-         bool IsFramework, bool IsExplicit);
+  ///
+  /// For an explanation of \p ModuleMap, see Module::ModuleMap.
+  Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
+         const FileEntry *ModuleMap, bool IsFramework, bool IsExplicit);
   
   ~Module();
   

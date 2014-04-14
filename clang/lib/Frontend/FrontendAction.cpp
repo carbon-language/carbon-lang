@@ -256,6 +256,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     if (!BeginSourceFileAction(CI, InputFile))
       goto failure;
 
+    // Initialize the main file entry.
+    if (!CI.InitializeSourceManager(CurrentInput))
+      goto failure;
+
     return true;
   }
 
@@ -300,6 +304,11 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
   // Initialize the action.
   if (!BeginSourceFileAction(CI, InputFile))
+    goto failure;
+
+  // Initialize the main file entry. It is important that this occurs after
+  // BeginSourceFileAction, which may change CurrentInput during module builds.
+  if (!CI.InitializeSourceManager(CurrentInput))
     goto failure;
 
   // Create the AST context and consumer unless this is a preprocessor only
@@ -388,13 +397,6 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
 bool FrontendAction::Execute() {
   CompilerInstance &CI = getCompilerInstance();
-
-  // Initialize the main file entry. This needs to be delayed until after PCH
-  // has loaded.
-  if (!isCurrentFileAST()) {
-    if (!CI.InitializeSourceManager(getCurrentInput()))
-      return false;
-  }
 
   if (CI.hasFrontendTimer()) {
     llvm::TimeRegion Timer(CI.getFrontendTimer());
