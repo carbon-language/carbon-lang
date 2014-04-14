@@ -60,26 +60,26 @@ class Node;
 class Scanner;
 struct Token;
 
-/// @brief Dump all the tokens in this stream to OS.
-/// @returns true if there was an error, false otherwise.
+/// \brief Dump all the tokens in this stream to OS.
+/// \returns true if there was an error, false otherwise.
 bool dumpTokens(StringRef Input, raw_ostream &);
 
-/// @brief Scans all tokens in input without outputting anything. This is used
+/// \brief Scans all tokens in input without outputting anything. This is used
 ///        for benchmarking the tokenizer.
-/// @returns true if there was an error, false otherwise.
+/// \returns true if there was an error, false otherwise.
 bool scanTokens(StringRef Input);
 
-/// @brief Escape \a Input for a double quoted scalar.
+/// \brief Escape \a Input for a double quoted scalar.
 std::string escape(StringRef Input);
 
-/// @brief This class represents a YAML stream potentially containing multiple
+/// \brief This class represents a YAML stream potentially containing multiple
 ///        documents.
 class Stream {
 public:
-  /// @brief This keeps a reference to the string referenced by \p Input.
+  /// \brief This keeps a reference to the string referenced by \p Input.
   Stream(StringRef Input, SourceMgr &);
 
-  /// @brief This takes ownership of \p InputBuffer.
+  /// \brief This takes ownership of \p InputBuffer.
   Stream(MemoryBuffer *InputBuffer, SourceMgr &);
   ~Stream();
 
@@ -101,7 +101,7 @@ private:
   friend class Document;
 };
 
-/// @brief Abstract base class for all Nodes.
+/// \brief Abstract base class for all Nodes.
 class Node {
    virtual void anchor();
 public:
@@ -117,7 +117,7 @@ public:
   Node(unsigned int Type, std::unique_ptr<Document> &, StringRef Anchor,
        StringRef Tag);
 
-  /// @brief Get the value of the anchor attached to this node. If it does not
+  /// \brief Get the value of the anchor attached to this node. If it does not
   ///        have one, getAnchor().size() will be 0.
   StringRef getAnchor() const { return Anchor; }
 
@@ -169,7 +169,7 @@ private:
   StringRef Tag;
 };
 
-/// @brief A null value.
+/// \brief A null value.
 ///
 /// Example:
 ///   !!null null
@@ -184,7 +184,7 @@ public:
   }
 };
 
-/// @brief A scalar node is an opaque datum that can be presented as a
+/// \brief A scalar node is an opaque datum that can be presented as a
 ///        series of zero or more Unicode scalar values.
 ///
 /// Example:
@@ -205,9 +205,9 @@ public:
   // utf8).
   StringRef getRawValue() const { return Value; }
 
-  /// @brief Gets the value of this node as a StringRef.
+  /// \brief Gets the value of this node as a StringRef.
   ///
-  /// @param Storage is used to store the content of the returned StringRef iff
+  /// \param Storage is used to store the content of the returned StringRef iff
   ///        it requires any modification from how it appeared in the source.
   ///        This happens with escaped characters and multi-line literals.
   StringRef getValue(SmallVectorImpl<char> &Storage) const;
@@ -224,7 +224,7 @@ private:
                                 , SmallVectorImpl<char> &Storage) const;
 };
 
-/// @brief A key and value pair. While not technically a Node under the YAML
+/// \brief A key and value pair. While not technically a Node under the YAML
 ///        representation graph, it is easier to treat them this way.
 ///
 /// TODO: Consider making this not a child of Node.
@@ -238,18 +238,18 @@ public:
     : Node(NK_KeyValue, D, StringRef(), StringRef()), Key(nullptr),
       Value(nullptr) {}
 
-  /// @brief Parse and return the key.
+  /// \brief Parse and return the key.
   ///
   /// This may be called multiple times.
   ///
-  /// @returns The key, or nullptr if failed() == true.
+  /// \returns The key, or nullptr if failed() == true.
   Node *getKey();
 
-  /// @brief Parse and return the value.
+  /// \brief Parse and return the value.
   ///
   /// This may be called multiple times.
   ///
-  /// @returns The value, or nullptr if failed() == true.
+  /// \returns The value, or nullptr if failed() == true.
   Node *getValue();
 
   void skip() override {
@@ -266,7 +266,7 @@ private:
   Node *Value;
 };
 
-/// @brief This is an iterator abstraction over YAML collections shared by both
+/// \brief This is an iterator abstraction over YAML collections shared by both
 ///        sequences and maps.
 ///
 /// BaseT must have a ValueT* member named CurrentEntry and a member function
@@ -334,7 +334,7 @@ void skip(CollectionType &C) {
       i->skip();
 }
 
-/// @brief Represents a YAML map created from either a block map for a flow map.
+/// \brief Represents a YAML map created from either a block map for a flow map.
 ///
 /// This parses the YAML stream as increment() is called.
 ///
@@ -383,7 +383,7 @@ private:
   void increment();
 };
 
-/// @brief Represents a YAML sequence created from either a block sequence for a
+/// \brief Represents a YAML sequence created from either a block sequence for a
 ///        flow sequence.
 ///
 /// This parses the YAML stream as increment() is called.
@@ -443,7 +443,7 @@ private:
   Node *CurrentEntry;
 };
 
-/// @brief Represents an alias to a Node with an anchor.
+/// \brief Represents an alias to a Node with an anchor.
 ///
 /// Example:
 ///   *AnchorName
@@ -464,20 +464,20 @@ private:
   StringRef Name;
 };
 
-/// @brief A YAML Stream is a sequence of Documents. A document contains a root
+/// \brief A YAML Stream is a sequence of Documents. A document contains a root
 ///        node.
 class Document {
 public:
-  /// @brief Root for parsing a node. Returns a single node.
+  /// \brief Root for parsing a node. Returns a single node.
   Node *parseBlockNode();
 
   Document(Stream &ParentStream);
 
-  /// @brief Finish parsing the current document and return true if there are
+  /// \brief Finish parsing the current document and return true if there are
   ///        more. Return false otherwise.
   bool skip();
 
-  /// @brief Parse and return the root level node.
+  /// \brief Parse and return the root level node.
   Node *getRoot() {
     if (Root)
       return Root;
@@ -492,14 +492,14 @@ private:
   friend class Node;
   friend class document_iterator;
 
-  /// @brief Stream to read tokens from.
+  /// \brief Stream to read tokens from.
   Stream &stream;
 
-  /// @brief Used to allocate nodes to. All are destroyed without calling their
+  /// \brief Used to allocate nodes to. All are destroyed without calling their
   ///        destructor when the document is destroyed.
   BumpPtrAllocator NodeAllocator;
 
-  /// @brief The root node. Used to support skipping a partially parsed
+  /// \brief The root node. Used to support skipping a partially parsed
   ///        document.
   Node *Root;
 
@@ -511,7 +511,7 @@ private:
   void setError(const Twine &Message, Token &Location) const;
   bool failed() const;
 
-  /// @brief Parse %BLAH directives and return true if any were encountered.
+  /// \brief Parse %BLAH directives and return true if any were encountered.
   bool parseDirectives();
 
   /// \brief Parse %YAML
@@ -520,11 +520,11 @@ private:
   /// \brief Parse %TAG
   void parseTAGDirective();
 
-  /// @brief Consume the next token and error if it is not \a TK.
+  /// \brief Consume the next token and error if it is not \a TK.
   bool expectToken(int TK);
 };
 
-/// @brief Iterator abstraction for Documents over a Stream.
+/// \brief Iterator abstraction for Documents over a Stream.
 class document_iterator {
 public:
   document_iterator() : Doc(nullptr) {}
