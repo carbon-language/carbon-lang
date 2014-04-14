@@ -26,6 +26,9 @@ extern "C" long _InterlockedExchangeAdd(  // NOLINT
 #pragma intrinsic(_InterlockedExchangeAdd)
 
 #ifdef _WIN64
+extern "C" long long _InterlockedExchangeAdd64(     // NOLINT
+    long long volatile * Addend, long long Value);  // NOLINT
+#pragma intrinsic(_InterlockedExchangeAdd64)
 extern "C" void *_InterlockedCompareExchangePointer(
     void *volatile *Destination,
     void *Exchange, void *Comparand);
@@ -108,12 +111,38 @@ INLINE u32 atomic_fetch_add(volatile atomic_uint32_t *a,
       (volatile long*)&a->val_dont_use, (long)v);  // NOLINT
 }
 
+INLINE uptr atomic_fetch_add(volatile atomic_uintptr_t *a,
+    uptr v, memory_order mo) {
+  (void)mo;
+  DCHECK(!((uptr)a % sizeof(*a)));
+#ifdef _WIN64
+  return (uptr)_InterlockedExchangeAdd64(
+      (volatile long long*)&a->val_dont_use, (long long)v);  // NOLINT
+#else
+  return (uptr)_InterlockedExchangeAdd(
+      (volatile long*)&a->val_dont_use, (long)v);  // NOLINT
+#endif
+}
+
 INLINE u32 atomic_fetch_sub(volatile atomic_uint32_t *a,
     u32 v, memory_order mo) {
   (void)mo;
   DCHECK(!((uptr)a % sizeof(*a)));
   return (u32)_InterlockedExchangeAdd(
       (volatile long*)&a->val_dont_use, -(long)v);  // NOLINT
+}
+
+INLINE uptr atomic_fetch_sub(volatile atomic_uintptr_t *a,
+    uptr v, memory_order mo) {
+  (void)mo;
+  DCHECK(!((uptr)a % sizeof(*a)));
+#ifdef _WIN64
+  return (uptr)_InterlockedExchangeAdd64(
+      (volatile long long*)&a->val_dont_use, -(long long)v);  // NOLINT
+#else
+  return (uptr)_InterlockedExchangeAdd(
+      (volatile long*)&a->val_dont_use, -(long)v);  // NOLINT
+#endif
 }
 
 INLINE u8 atomic_exchange(volatile atomic_uint8_t *a,
