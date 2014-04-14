@@ -43,6 +43,12 @@ static MCInstrInfo *createARM64MCInstrInfo() {
 static MCSubtargetInfo *createARM64MCSubtargetInfo(StringRef TT, StringRef CPU,
                                                    StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
+
+  // FIXME: Make this darwin-only.
+  if (CPU.empty())
+    // We default to Cyclone for now, on Darwin.
+    CPU = "cyclone";
+
   InitARM64MCSubtargetInfo(X, TT, CPU, FS);
   return X;
 }
