@@ -93,7 +93,7 @@ public:
 };
 
 class GenerateModuleAction : public ASTFrontendAction {
-  Module *Module;
+  clang::Module *Module;
   const FileEntry *ModuleMapForUniquing;
   bool IsSystem;
   
