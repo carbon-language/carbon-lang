@@ -170,11 +170,8 @@ void OProfileJITEventListener::NotifyObjectEmitted(const ObjectImage &Obj) {
   }
 
   // Use symbol info to iterate functions in the object.
-  error_code ec;
-  for (object::symbol_iterator I = Obj.begin_symbols(),
-                               E = Obj.end_symbols();
-                        I != E && !ec;
-                        I.increment(ec)) {
+  for (object::symbol_iterator I = Obj.begin_symbols(), E = Obj.end_symbols();
+       I != E; ++I) {
     object::SymbolRef::Type SymType;
     if (I->getType(SymType)) continue;
     if (SymType == object::SymbolRef::ST_Function) {
@@ -203,11 +200,8 @@ void OProfileJITEventListener::NotifyFreeingObject(const ObjectImage &Obj) {
   }
 
   // Use symbol info to iterate functions in the object.
-  error_code ec;
-  for (object::symbol_iterator I = Obj.begin_symbols(),
-                               E = Obj.end_symbols();
-                        I != E && !ec;
-                        I.increment(ec)) {
+  for (object::symbol_iterator I = Obj.begin_symbols(), E = Obj.end_symbols();
+       I != E; ++I) {
     object::SymbolRef::Type SymType;
     if (I->getType(SymType)) continue;
     if (SymType == object::SymbolRef::ST_Function) {
