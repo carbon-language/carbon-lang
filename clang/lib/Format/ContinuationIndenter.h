@@ -135,11 +135,11 @@ struct ParenState {
       : Indent(Indent), IndentLevel(IndentLevel), LastSpace(LastSpace),
         FirstLessLess(0), BreakBeforeClosingBrace(false), QuestionColumn(0),
         AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
-        NoLineBreak(NoLineBreak), ColonPos(0), StartOfFunctionCall(0),
-        StartOfArraySubscripts(0), NestedNameSpecifierContinuation(0),
-        CallContinuation(0), VariablePos(0), ContainsLineBreak(false),
-        ContainsUnwrappedBuilder(0), AlignColons(true),
-        ObjCSelectorNameFound(false), LambdasFound(0) {}
+        NoLineBreak(NoLineBreak), LastOperatorWrapped(true), ColonPos(0),
+        StartOfFunctionCall(0), StartOfArraySubscripts(0),
+        NestedNameSpecifierContinuation(0), CallContinuation(0), VariablePos(0),
+        ContainsLineBreak(false), ContainsUnwrappedBuilder(0),
+        AlignColons(true), ObjCSelectorNameFound(false), LambdasFound(0) {}
 
   /// \brief The position to which a specific parenthesis level needs to be
   /// indented.
@@ -181,6 +181,10 @@ struct ParenState {
 
   /// \brief Line breaking in this context would break a formatting rule.
   bool NoLineBreak;
+
+  /// \brief True if the last binary operator on this level was wrapped to the
+  /// next line.
+  bool LastOperatorWrapped;
 
   /// \brief The position of the colon in an ObjC method declaration/call.
   unsigned ColonPos;
@@ -253,6 +257,8 @@ struct ParenState {
       return BreakBeforeParameter;
     if (NoLineBreak != Other.NoLineBreak)
       return NoLineBreak;
+    if (LastOperatorWrapped != Other.LastOperatorWrapped)
+      return LastOperatorWrapped;
     if (ColonPos != Other.ColonPos)
       return ColonPos < Other.ColonPos;
     if (StartOfFunctionCall != Other.StartOfFunctionCall)

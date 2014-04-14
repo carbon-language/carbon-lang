@@ -173,8 +173,7 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
     if (Previous.Type == TT_BinaryOperator &&
         (!IsComparison || LHSIsBinaryExpr) &&
         Current.Type != TT_BinaryOperator && // For >>.
-        !Current.isTrailingComment() &&
-        !Previous.isOneOf(tok::lessless, tok::question) &&
+        !Current.isTrailingComment() && !Previous.is(tok::lessless) &&
         Previous.getPrecedence() != prec::Assignment &&
         State.Stack.back().BreakBeforeParameter)
       return true;
@@ -485,7 +484,8 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     }
   }
   if (State.Stack.back().QuestionColumn != 0 &&
-      (NextNonComment->Type == TT_ConditionalExpr ||
+      ((NextNonComment->is(tok::colon) &&
+        NextNonComment->Type == TT_ConditionalExpr) ||
        Previous.Type == TT_ConditionalExpr))
     return State.Stack.back().QuestionColumn;
   if (Previous.is(tok::comma) && State.Stack.back().VariablePos != 0)
@@ -547,9 +547,15 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
 
   if (Current.Type == TT_InheritanceColon)
     State.Stack.back().AvoidBinPacking = true;
-  if (Current.is(tok::lessless) && Current.Type != TT_OverloadedOperator &&
-      State.Stack.back().FirstLessLess == 0)
-    State.Stack.back().FirstLessLess = State.Column;
+  if (Current.is(tok::lessless) && Current.Type != TT_OverloadedOperator) {
+    if (State.Stack.back().FirstLessLess == 0)
+      State.Stack.back().FirstLessLess = State.Column;
+    else
+      State.Stack.back().LastOperatorWrapped = Newline;
+  }
+  if ((Current.Type == TT_BinaryOperator && Current.isNot(tok::lessless)) ||
+      Current.Type == TT_ConditionalExpr)
+    State.Stack.back().LastOperatorWrapped = Newline;
   if (Current.Type == TT_ArraySubscriptLSquare &&
       State.Stack.back().StartOfArraySubscripts == 0)
     State.Stack.back().StartOfArraySubscripts = State.Column;
@@ -615,13 +621,19 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
     // there is a line-break right after the operator.
     // Exclude relational operators, as there, it is always more desirable to
     // have the LHS 'left' of the RHS.
-    // FIXME: Implement this for '<<' and BreakBeforeBinaryOperators.
-    if (!Newline && Previous && Previous->Type == TT_BinaryOperator &&
-        !Previous->isOneOf(tok::lessless, tok::question, tok::colon) &&
-        Previous->getPrecedence() > prec::Assignment &&
-        Previous->getPrecedence() != prec::Relational &&
-        !Style.BreakBeforeBinaryOperators)
-      NewParenState.NoLineBreak = true;
+    if (Previous && Previous->getPrecedence() > prec::Assignment &&
+        (Previous->Type == TT_BinaryOperator ||
+         Previous->Type == TT_ConditionalExpr) &&
+        Previous->getPrecedence() != prec::Relational) {
+      bool BreakBeforeOperator = Previous->is(tok::lessless) ||
+                                 (Previous->Type == TT_BinaryOperator &&
+                                  Style.BreakBeforeBinaryOperators) ||
+                                 (Previous->Type == TT_ConditionalExpr &&
+                                  Style.BreakBeforeTernaryOperators);
+      if ((!Newline && !BreakBeforeOperator) ||
+          (!State.Stack.back().LastOperatorWrapped && BreakBeforeOperator))
+        NewParenState.NoLineBreak = true;
+    }
 
     // Do not indent relative to the fake parentheses inserted for "." or "->".
     // This is a special case to make the following to statements consistent:
