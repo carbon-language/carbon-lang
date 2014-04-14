@@ -103,7 +103,8 @@ private:
 
 /// \brief Abstract base class for all Nodes.
 class Node {
-   virtual void anchor();
+  virtual void anchor();
+
 public:
   enum NodeKind {
     NK_Null,
@@ -144,9 +145,8 @@ public:
 
   unsigned int getType() const { return TypeID; }
 
-  void *operator new ( size_t Size
-                     , BumpPtrAllocator &Alloc
-                     , size_t Alignment = 16) throw() {
+  void *operator new(size_t Size, BumpPtrAllocator &Alloc,
+                     size_t Alignment = 16) throw() {
     return Alloc.Allocate(Size, Alignment);
   }
 
@@ -175,13 +175,12 @@ private:
 ///   !!null null
 class NullNode : public Node {
   void anchor() override;
+
 public:
   NullNode(std::unique_ptr<Document> &D)
       : Node(NK_Null, D, StringRef(), StringRef()) {}
 
-  static inline bool classof(const Node *N) {
-    return N->getType() == NK_Null;
-  }
+  static inline bool classof(const Node *N) { return N->getType() == NK_Null; }
 };
 
 /// \brief A scalar node is an opaque datum that can be presented as a
@@ -191,6 +190,7 @@ public:
 ///   Adena
 class ScalarNode : public Node {
   void anchor() override;
+
 public:
   ScalarNode(std::unique_ptr<Document> &D, StringRef Anchor, StringRef Tag,
              StringRef Val)
@@ -219,9 +219,9 @@ public:
 private:
   StringRef Value;
 
-  StringRef unescapeDoubleQuoted( StringRef UnquotedValue
-                                , StringRef::size_type Start
-                                , SmallVectorImpl<char> &Storage) const;
+  StringRef unescapeDoubleQuoted(StringRef UnquotedValue,
+                                 StringRef::size_type Start,
+                                 SmallVectorImpl<char> &Storage) const;
 };
 
 /// \brief A key and value pair. While not technically a Node under the YAML
@@ -233,10 +233,11 @@ private:
 ///   Section: .text
 class KeyValueNode : public Node {
   void anchor() override;
+
 public:
   KeyValueNode(std::unique_ptr<Document> &D)
-    : Node(NK_KeyValue, D, StringRef(), StringRef()), Key(nullptr),
-      Value(nullptr) {}
+      : Node(NK_KeyValue, D, StringRef(), StringRef()), Key(nullptr),
+        Value(nullptr) {}
 
   /// \brief Parse and return the key.
   ///
@@ -273,32 +274,32 @@ private:
 /// increment() which must set CurrentEntry to 0 to create an end iterator.
 template <class BaseT, class ValueT>
 class basic_collection_iterator
-  : public std::iterator<std::forward_iterator_tag, ValueT> {
+    : public std::iterator<std::forward_iterator_tag, ValueT> {
 public:
   basic_collection_iterator() : Base(nullptr) {}
   basic_collection_iterator(BaseT *B) : Base(B) {}
 
-  ValueT *operator ->() const {
+  ValueT *operator->() const {
     assert(Base && Base->CurrentEntry && "Attempted to access end iterator!");
     return Base->CurrentEntry;
   }
 
-  ValueT &operator *() const {
+  ValueT &operator*() const {
     assert(Base && Base->CurrentEntry &&
            "Attempted to dereference end iterator!");
     return *Base->CurrentEntry;
   }
 
-  operator ValueT*() const {
+  operator ValueT *() const {
     assert(Base && Base->CurrentEntry && "Attempted to access end iterator!");
     return Base->CurrentEntry;
   }
 
-  bool operator !=(const basic_collection_iterator &Other) const {
-    if(Base != Other.Base)
+  bool operator!=(const basic_collection_iterator &Other) const {
+    if (Base != Other.Base)
       return true;
-    return (Base && Other.Base) && Base->CurrentEntry
-                                   != Other.Base->CurrentEntry;
+    return (Base && Other.Base) &&
+           Base->CurrentEntry != Other.Base->CurrentEntry;
   }
 
   basic_collection_iterator &operator++() {
@@ -324,13 +325,12 @@ typename CollectionType::iterator begin(CollectionType &C) {
   return ret;
 }
 
-template <class CollectionType>
-void skip(CollectionType &C) {
+template <class CollectionType> void skip(CollectionType &C) {
   // TODO: support skipping from the middle of a parsed collection ;/
   assert((C.IsAtBeginning || C.IsAtEnd) && "Cannot skip mid parse!");
   if (C.IsAtBeginning)
-    for (typename CollectionType::iterator i = begin(C), e = C.end();
-                                           i != e; ++i)
+    for (typename CollectionType::iterator i = begin(C), e = C.end(); i != e;
+         ++i)
       i->skip();
 }
 
@@ -343,6 +343,7 @@ void skip(CollectionType &C) {
 ///   Scope: Global
 class MappingNode : public Node {
   void anchor() override;
+
 public:
   enum MappingType {
     MT_Block,
@@ -360,15 +361,11 @@ public:
   template <class T> friend typename T::iterator yaml::begin(T &);
   template <class T> friend void yaml::skip(T &);
 
-  iterator begin() {
-    return yaml::begin(*this);
-  }
+  iterator begin() { return yaml::begin(*this); }
 
   iterator end() { return iterator(); }
 
-  void skip() override {
-    yaml::skip(*this);
-  }
+  void skip() override { yaml::skip(*this); }
 
   static inline bool classof(const Node *N) {
     return N->getType() == NK_Mapping;
@@ -393,6 +390,7 @@ private:
 ///   - World
 class SequenceNode : public Node {
   void anchor() override;
+
 public:
   enum SequenceType {
     ST_Block,
@@ -421,15 +419,11 @@ public:
 
   void increment();
 
-  iterator begin() {
-    return yaml::begin(*this);
-  }
+  iterator begin() { return yaml::begin(*this); }
 
   iterator end() { return iterator(); }
 
-  void skip() override {
-    yaml::skip(*this);
-  }
+  void skip() override { yaml::skip(*this); }
 
   static inline bool classof(const Node *N) {
     return N->getType() == NK_Sequence;
@@ -449,6 +443,7 @@ private:
 ///   *AnchorName
 class AliasNode : public Node {
   void anchor() override;
+
 public:
   AliasNode(std::unique_ptr<Document> &D, StringRef Val)
       : Node(NK_Alias, D, StringRef(), StringRef()), Name(Val) {}
@@ -456,9 +451,7 @@ public:
   StringRef getName() const { return Name; }
   Node *getTarget();
 
-  static inline bool classof(const Node *N) {
-    return N->getType() == NK_Alias;
-  }
+  static inline bool classof(const Node *N) { return N->getType() == NK_Alias; }
 
 private:
   StringRef Name;
@@ -484,9 +477,7 @@ public:
     return Root = parseBlockNode();
   }
 
-  const std::map<StringRef, StringRef> &getTagMap() const {
-    return TagMap;
-  }
+  const std::map<StringRef, StringRef> &getTagMap() const { return TagMap; }
 
 private:
   friend class Node;
@@ -530,17 +521,15 @@ public:
   document_iterator() : Doc(nullptr) {}
   document_iterator(std::unique_ptr<Document> &D) : Doc(&D) {}
 
-  bool operator ==(const document_iterator &Other) {
+  bool operator==(const document_iterator &Other) {
     if (isAtEnd() || Other.isAtEnd())
       return isAtEnd() && Other.isAtEnd();
 
     return Doc == Other.Doc;
   }
-  bool operator !=(const document_iterator &Other) {
-    return !(*this == Other);
-  }
+  bool operator!=(const document_iterator &Other) { return !(*this == Other); }
 
-  document_iterator operator ++() {
+  document_iterator operator++() {
     assert(Doc && "incrementing iterator past the end.");
     if (!(*Doc)->skip()) {
       Doc->reset(nullptr);
@@ -551,21 +540,18 @@ public:
     return *this;
   }
 
-  Document &operator *() {
-    return *Doc->get();
-  }
+  Document &operator*() { return *Doc->get(); }
 
   std::unique_ptr<Document> &operator->() { return *Doc; }
 
 private:
-  bool isAtEnd() const {
-    return !Doc || !*Doc;
-  }
+  bool isAtEnd() const { return !Doc || !*Doc; }
 
   std::unique_ptr<Document> *Doc;
 };
 
-}
-}
+} // End namespace yaml.
+
+} // End namespace llvm.
 
 #endif
