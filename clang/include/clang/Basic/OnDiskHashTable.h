@@ -166,12 +166,11 @@ public:
   }
 };
 
-template<typename Info>
-class OnDiskChainedHashTable {
+template <typename Info> class OnDiskChainedHashTable {
   const unsigned NumBuckets;
   const unsigned NumEntries;
-  const unsigned char* const Buckets;
-  const unsigned char* const Base;
+  const unsigned char *const Buckets;
+  const unsigned char *const Base;
   Info InfoObj;
 
 public:
@@ -179,80 +178,82 @@ public:
   typedef typename Info::external_key_type external_key_type;
   typedef typename Info::data_type         data_type;
 
-  OnDiskChainedHashTable(unsigned numBuckets, unsigned numEntries,
-                         const unsigned char* buckets,
-                         const unsigned char* base,
+  OnDiskChainedHashTable(unsigned NumBuckets, unsigned NumEntries,
+                         const unsigned char *Buckets,
+                         const unsigned char *Base,
                          const Info &InfoObj = Info())
-    : NumBuckets(numBuckets), NumEntries(numEntries),
-      Buckets(buckets), Base(base), InfoObj(InfoObj) {
-        assert((reinterpret_cast<uintptr_t>(buckets) & 0x3) == 0 &&
-               "'buckets' must have a 4-byte alignment");
-      }
+      : NumBuckets(NumBuckets), NumEntries(NumEntries), Buckets(Buckets),
+        Base(Base), InfoObj(InfoObj) {
+    assert((reinterpret_cast<uintptr_t>(Buckets) & 0x3) == 0 &&
+           "'buckets' must have a 4-byte alignment");
+  }
 
   unsigned getNumBuckets() const { return NumBuckets; }
   unsigned getNumEntries() const { return NumEntries; }
-  const unsigned char* getBase() const { return Base; }
-  const unsigned char* getBuckets() const { return Buckets; }
+  const unsigned char *getBase() const { return Base; }
+  const unsigned char *getBuckets() const { return Buckets; }
 
   bool isEmpty() const { return NumEntries == 0; }
 
   class iterator {
-    internal_key_type key;
-    const unsigned char* const data;
-    const unsigned len;
+    internal_key_type Key;
+    const unsigned char *const Data;
+    const unsigned Len;
     Info *InfoObj;
-  public:
-    iterator() : data(0), len(0) {}
-    iterator(const internal_key_type k, const unsigned char* d, unsigned l,
-             Info *InfoObj)
-      : key(k), data(d), len(l), InfoObj(InfoObj) {}
 
-    data_type operator*() const { return InfoObj->ReadData(key, data, len); }
-    bool operator==(const iterator& X) const { return X.data == data; }
-    bool operator!=(const iterator& X) const { return X.data != data; }
+  public:
+    iterator() : Data(0), Len(0) {}
+    iterator(const internal_key_type K, const unsigned char *D, unsigned L,
+             Info *InfoObj)
+        : Key(K), Data(D), Len(L), InfoObj(InfoObj) {}
+
+    data_type operator*() const { return InfoObj->ReadData(Key, Data, Len); }
+    bool operator==(const iterator &X) const { return X.Data == Data; }
+    bool operator!=(const iterator &X) const { return X.Data != Data; }
   };
 
-  iterator find(const external_key_type& eKey, Info *InfoPtr = 0) {
+  iterator find(const external_key_type &EKey, Info *InfoPtr = 0) {
     if (!InfoPtr)
       InfoPtr = &InfoObj;
 
     using namespace llvm::support;
-    const internal_key_type& iKey = InfoObj.GetInternalKey(eKey);
-    unsigned key_hash = InfoObj.ComputeHash(iKey);
+    const internal_key_type &IKey = InfoObj.GetInternalKey(EKey);
+    unsigned KeyHash = InfoObj.ComputeHash(IKey);
 
     // Each bucket is just a 32-bit offset into the hash table file.
-    unsigned idx = key_hash & (NumBuckets - 1);
-    const unsigned char* Bucket = Buckets + sizeof(uint32_t)*idx;
+    unsigned Idx = KeyHash & (NumBuckets - 1);
+    const unsigned char *Bucket = Buckets + sizeof(uint32_t) * Idx;
 
-    unsigned offset = endian::readNext<uint32_t, little, aligned>(Bucket);
-    if (offset == 0) return iterator(); // Empty bucket.
-    const unsigned char* Items = Base + offset;
+    unsigned Offset = endian::readNext<uint32_t, little, aligned>(Bucket);
+    if (Offset == 0)
+      return iterator(); // Empty bucket.
+    const unsigned char *Items = Base + Offset;
 
     // 'Items' starts with a 16-bit unsigned integer representing the
     // number of items in this bucket.
-    unsigned len = endian::readNext<uint16_t, little, unaligned>(Items);
+    unsigned Len = endian::readNext<uint16_t, little, unaligned>(Items);
 
-    for (unsigned i = 0; i < len; ++i) {
+    for (unsigned i = 0; i < Len; ++i) {
       // Read the hash.
-      uint32_t item_hash = endian::readNext<uint32_t, little, unaligned>(Items);
+      uint32_t ItemHash = endian::readNext<uint32_t, little, unaligned>(Items);
 
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned>& L = Info::ReadKeyDataLength(Items);
-      unsigned item_len = L.first + L.second;
+      const std::pair<unsigned, unsigned> &L = Info::ReadKeyDataLength(Items);
+      unsigned ItemLen = L.first + L.second;
 
       // Compare the hashes.  If they are not the same, skip the entry entirely.
-      if (item_hash != key_hash) {
-        Items += item_len;
+      if (ItemHash != KeyHash) {
+        Items += ItemLen;
         continue;
       }
 
       // Read the key.
-      const internal_key_type& X =
-        InfoPtr->ReadKey((const unsigned char* const) Items, L.first);
+      const internal_key_type &X =
+          InfoPtr->ReadKey((const unsigned char *const)Items, L.first);
 
       // If the key doesn't match just skip reading the value.
-      if (!InfoPtr->EqualKey(X, iKey)) {
-        Items += item_len;
+      if (!InfoPtr->EqualKey(X, IKey)) {
+        Items += ItemLen;
         continue;
       }
 
@@ -267,28 +268,29 @@ public:
 
   /// \brief Iterates over all of the keys in the table.
   class key_iterator {
-    const unsigned char* Ptr;
+    const unsigned char *Ptr;
     unsigned NumItemsInBucketLeft;
     unsigned NumEntriesLeft;
     Info *InfoObj;
+
   public:
     typedef external_key_type value_type;
 
-    key_iterator(const unsigned char* const Ptr, unsigned NumEntries,
-                  Info *InfoObj)
-      : Ptr(Ptr), NumItemsInBucketLeft(0), NumEntriesLeft(NumEntries),
-        InfoObj(InfoObj) { }
+    key_iterator(const unsigned char *const Ptr, unsigned NumEntries,
+                 Info *InfoObj)
+        : Ptr(Ptr), NumItemsInBucketLeft(0), NumEntriesLeft(NumEntries),
+          InfoObj(InfoObj) {}
     key_iterator()
-      : Ptr(0), NumItemsInBucketLeft(0), NumEntriesLeft(0), InfoObj(0) { }
+        : Ptr(0), NumItemsInBucketLeft(0), NumEntriesLeft(0), InfoObj(0) {}
 
     friend bool operator==(const key_iterator &X, const key_iterator &Y) {
       return X.NumEntriesLeft == Y.NumEntriesLeft;
     }
-    friend bool operator!=(const key_iterator& X, const key_iterator &Y) {
+    friend bool operator!=(const key_iterator &X, const key_iterator &Y) {
       return X.NumEntriesLeft != Y.NumEntriesLeft;
     }
 
-    key_iterator& operator++() {  // Preincrement
+    key_iterator &operator++() { // Preincrement
       using namespace llvm::support;
       if (!NumItemsInBucketLeft) {
         // 'Items' starts with a 16-bit unsigned integer representing the
@@ -298,7 +300,7 @@ public:
       }
       Ptr += 4; // Skip the hash.
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned>& L = Info::ReadKeyDataLength(Ptr);
+      const std::pair<unsigned, unsigned> &L = Info::ReadKeyDataLength(Ptr);
       Ptr += L.first + L.second;
       assert(NumItemsInBucketLeft);
       --NumItemsInBucketLeft;
@@ -306,22 +308,22 @@ public:
       --NumEntriesLeft;
       return *this;
     }
-    key_iterator operator++(int) {  // Postincrement
+    key_iterator operator++(int) { // Postincrement
       key_iterator tmp = *this; ++*this; return tmp;
     }
 
     value_type operator*() const {
-      const unsigned char* LocalPtr = Ptr;
+      const unsigned char *LocalPtr = Ptr;
       if (!NumItemsInBucketLeft)
         LocalPtr += 2; // number of items in bucket
-      LocalPtr += 4; // Skip the hash.
+      LocalPtr += 4;   // Skip the hash.
 
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned>& L
-        = Info::ReadKeyDataLength(LocalPtr);
+      const std::pair<unsigned, unsigned> &L =
+          Info::ReadKeyDataLength(LocalPtr);
 
       // Read the key.
-      const internal_key_type& Key = InfoObj->ReadKey(LocalPtr, L.first);
+      const internal_key_type &Key = InfoObj->ReadKey(LocalPtr, L.first);
       return InfoObj->GetExternalKey(Key);
     }
   };
@@ -333,28 +335,29 @@ public:
 
   /// \brief Iterates over all the entries in the table, returning the data.
   class data_iterator {
-    const unsigned char* Ptr;
+    const unsigned char *Ptr;
     unsigned NumItemsInBucketLeft;
     unsigned NumEntriesLeft;
     Info *InfoObj;
+
   public:
     typedef data_type value_type;
 
-    data_iterator(const unsigned char* const Ptr, unsigned NumEntries,
+    data_iterator(const unsigned char *const Ptr, unsigned NumEntries,
                   Info *InfoObj)
-      : Ptr(Ptr), NumItemsInBucketLeft(0), NumEntriesLeft(NumEntries),
-        InfoObj(InfoObj) { }
+        : Ptr(Ptr), NumItemsInBucketLeft(0), NumEntriesLeft(NumEntries),
+          InfoObj(InfoObj) {}
     data_iterator()
-      : Ptr(0), NumItemsInBucketLeft(0), NumEntriesLeft(0), InfoObj(0) { }
+        : Ptr(0), NumItemsInBucketLeft(0), NumEntriesLeft(0), InfoObj(0) {}
 
-    bool operator==(const data_iterator& X) const {
+    bool operator==(const data_iterator &X) const {
       return X.NumEntriesLeft == NumEntriesLeft;
     }
-    bool operator!=(const data_iterator& X) const {
+    bool operator!=(const data_iterator &X) const {
       return X.NumEntriesLeft != NumEntriesLeft;
     }
 
-    data_iterator& operator++() {  // Preincrement
+    data_iterator &operator++() { // Preincrement
       using namespace llvm::support;
       if (!NumItemsInBucketLeft) {
         // 'Items' starts with a 16-bit unsigned integer representing the
@@ -364,7 +367,7 @@ public:
       }
       Ptr += 4; // Skip the hash.
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned>& L = Info::ReadKeyDataLength(Ptr);
+      const std::pair<unsigned, unsigned> &L = Info::ReadKeyDataLength(Ptr);
       Ptr += L.first + L.second;
       assert(NumItemsInBucketLeft);
       --NumItemsInBucketLeft;
@@ -372,22 +375,22 @@ public:
       --NumEntriesLeft;
       return *this;
     }
-    data_iterator operator++(int) {  // Postincrement
+    data_iterator operator++(int) { // Postincrement
       data_iterator tmp = *this; ++*this; return tmp;
     }
 
     value_type operator*() const {
-      const unsigned char* LocalPtr = Ptr;
+      const unsigned char *LocalPtr = Ptr;
       if (!NumItemsInBucketLeft)
         LocalPtr += 2; // number of items in bucket
-      LocalPtr += 4; // Skip the hash.
+      LocalPtr += 4;   // Skip the hash.
 
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned>& L =Info::ReadKeyDataLength(LocalPtr);
+      const std::pair<unsigned, unsigned> &L =
+          Info::ReadKeyDataLength(LocalPtr);
 
       // Read the key.
-      const internal_key_type& Key =
-        InfoObj->ReadKey(LocalPtr, L.first);
+      const internal_key_type &Key = InfoObj->ReadKey(LocalPtr, L.first);
       return InfoObj->ReadData(Key, LocalPtr + L.first, L.second);
     }
   };
@@ -399,18 +402,18 @@ public:
 
   Info &getInfoObj() { return InfoObj; }
 
-  static OnDiskChainedHashTable* Create(const unsigned char* buckets,
-                                        const unsigned char* const base,
+  static OnDiskChainedHashTable *Create(const unsigned char *Buckets,
+                                        const unsigned char *const Base,
                                         const Info &InfoObj = Info()) {
     using namespace llvm::support;
-    assert(buckets > base);
-    assert((reinterpret_cast<uintptr_t>(buckets) & 0x3) == 0 &&
+    assert(Buckets > Base);
+    assert((reinterpret_cast<uintptr_t>(Buckets) & 0x3) == 0 &&
            "buckets should be 4-byte aligned.");
 
-    unsigned numBuckets = endian::readNext<uint32_t, little, aligned>(buckets);
-    unsigned numEntries = endian::readNext<uint32_t, little, aligned>(buckets);
-    return new OnDiskChainedHashTable<Info>(numBuckets, numEntries, buckets,
-                                            base, InfoObj);
+    unsigned NumBuckets = endian::readNext<uint32_t, little, aligned>(Buckets);
+    unsigned NumEntries = endian::readNext<uint32_t, little, aligned>(Buckets);
+    return new OnDiskChainedHashTable<Info>(NumBuckets, NumEntries, Buckets,
+                                            Base, InfoObj);
   }
 };
 
