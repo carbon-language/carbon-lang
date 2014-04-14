@@ -1936,6 +1936,11 @@ class BaseCondSelectOp<bit op, bits<2> op2, RegisterClass regtype, string asm,
   let Inst{4-0}   = Rd;
 }
 
+def inv_cond_XFORM : SDNodeXForm<imm, [{
+  ARM64CC::CondCode CC = static_cast<ARM64CC::CondCode>(N->getZExtValue());
+  return CurDAG->getTargetConstant(ARM64CC::getInvertedCondCode(CC), MVT::i32);
+}]>;
+
 multiclass CondSelectOp<bit op, bits<2> op2, string asm, PatFrag frag> {
   def Wr : BaseCondSelectOp<op, op2, GPR32, asm, frag> {
     let Inst{31} = 0;
@@ -1943,6 +1948,14 @@ multiclass CondSelectOp<bit op, bits<2> op2, string asm, PatFrag frag> {
   def Xr : BaseCondSelectOp<op, op2, GPR64, asm, frag> {
     let Inst{31} = 1;
   }
+
+  def : Pat<(ARM64csel (frag GPR32:$Rm), GPR32:$Rn, (i32 imm:$cond), CPSR),
+            (!cast<Instruction>(NAME # Wr) GPR32:$Rn, GPR32:$Rm,
+                                           (inv_cond_XFORM imm:$cond))>;
+
+  def : Pat<(ARM64csel (frag GPR64:$Rm), GPR64:$Rn, (i32 imm:$cond), CPSR),
+            (!cast<Instruction>(NAME # Xr) GPR64:$Rn, GPR64:$Rm,
+                                           (inv_cond_XFORM imm:$cond))>;
 }
 
 //---

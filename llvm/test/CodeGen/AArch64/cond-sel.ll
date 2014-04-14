@@ -1,10 +1,11 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 @var32 = global i32 0
 @var64 = global i64 0
 
-define void @test_csel(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
+define void @test_csel(i32 %lhs32, i32 %rhs32, i64 %lhs64) minsize {
 ; CHECK-LABEL: test_csel:
 
   %tst1 = icmp ugt i32 %lhs32, %rhs32
@@ -18,8 +19,8 @@ define void @test_csel(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
   %tst2 = icmp sle i64 %lhs64, %rhs64
   %val2 = select i1 %tst2, i64 %lhs64, i64 %rhs64
   store i64 %val2, i64* @var64
-; CHECK-DAG: cmp [[LHS:x[0-9]+]], [[RHS:w[0-9]+]], sxtw
-; CHECK-DAG: sxtw [[EXT_RHS:x[0-9]+]], [[RHS]]
+; CHECK: sxtw [[EXT_RHS:x[0-9]+]], {{[wx]}}[[RHS:[0-9]+]]
+; CHECK: cmp [[LHS:x[0-9]+]], w[[RHS]], sxtw
 ; CHECK: csel {{x[0-9]+}}, [[LHS]], [[EXT_RHS]], le
 
   ret void
@@ -45,7 +46,8 @@ define void @test_floatcsel(float %lhs32, float %rhs32, double %lhs64, double %r
 ; CHECK-NOFP-NOT: fcmp
   %val2 = select i1 %tst2, i64 9, i64 15
   store i64 %val2, i64* @var64
-; CHECK: movz [[CONST15:x[0-9]+]], #15
+; CHECK-AARCH64: movz [[CONST15:x[0-9]+]], #15
+; CHECK-ARM64: orr [[CONST15:x[0-9]+]], xzr, #0xf
 ; CHECK: movz [[CONST9:x[0-9]+]], #9
 ; CHECK: csel [[MAYBETRUE:x[0-9]+]], [[CONST9]], [[CONST15]], eq
 ; CHECK: csel {{x[0-9]+}}, [[CONST9]], [[MAYBETRUE]], vs
@@ -55,7 +57,7 @@ define void @test_floatcsel(float %lhs32, float %rhs32, double %lhs64, double %r
 }
 
 
-define void @test_csinc(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
+define void @test_csinc(i32 %lhs32, i32 %rhs32, i64 %lhs64) minsize {
 ; CHECK-LABEL: test_csinc:
 
 ; Note that commuting rhs and lhs in the select changes ugt to ule (i.e. hi to ls).
@@ -95,7 +97,7 @@ define void @test_csinc(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
 ; CHECK: ret
 }
 
-define void @test_csinv(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
+define void @test_csinv(i32 %lhs32, i32 %rhs32, i64 %lhs64) minsize {
 ; CHECK-LABEL: test_csinv:
 
 ; Note that commuting rhs and lhs in the select changes ugt to ule (i.e. hi to ls).
@@ -135,7 +137,7 @@ define void @test_csinv(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
 ; CHECK: ret
 }
 
-define void @test_csneg(i32 %lhs32, i32 %rhs32, i64 %lhs64) {
+define void @test_csneg(i32 %lhs32, i32 %rhs32, i64 %lhs64) minsize {
 ; CHECK-LABEL: test_csneg:
 
 ; Note that commuting rhs and lhs in the select changes ugt to ule (i.e. hi to ls).
