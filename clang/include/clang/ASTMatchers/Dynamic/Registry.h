@@ -55,11 +55,8 @@ public:
   /// \brief Look up a matcher in the registry by name,
   ///
   /// \return An opaque value which may be used to refer to the matcher
-  /// constructor, or Optional<MatcherCtor>() if not found.  In that case
-  /// \c Error will contain the description of the error.
-  static llvm::Optional<MatcherCtor>
-  lookupMatcherCtor(StringRef MatcherName, const SourceRange &NameRange,
-                    Diagnostics *Error);
+  /// constructor, or Optional<MatcherCtor>() if not found.
+  static llvm::Optional<MatcherCtor> lookupMatcherCtor(StringRef MatcherName);
 
   /// \brief Compute the list of completions for \p Context.
   ///

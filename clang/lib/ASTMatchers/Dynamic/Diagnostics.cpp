@@ -87,7 +87,7 @@ StringRef contextTypeToFormatString(Diagnostics::ContextType Type) {
 
 StringRef errorTypeToFormatString(Diagnostics::ErrorType Type) {
   switch (Type) {
-  case Diagnostics::ET_RegistryNotFound:
+  case Diagnostics::ET_RegistryMatcherNotFound:
     return "Matcher not found: $0";
   case Diagnostics::ET_RegistryWrongArgCount:
     return "Incorrect argument count. (Expected = $0) != (Actual = $1)";
@@ -98,6 +98,8 @@ StringRef errorTypeToFormatString(Diagnostics::ErrorType Type) {
   case Diagnostics::ET_RegistryAmbiguousOverload:
     // TODO: Add type info about the overload error.
     return "Ambiguous matcher overload.";
+  case Diagnostics::ET_RegistryValueNotFound:
+    return "Value not found: $0";
 
   case Diagnostics::ET_ParserStringError:
     return "Error parsing string token: <$0>";

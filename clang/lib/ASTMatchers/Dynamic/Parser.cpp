@@ -258,6 +258,10 @@ private:
 
 Parser::Sema::~Sema() {}
 
+VariantValue Parser::Sema::getNamedValue(StringRef Name) {
+  return VariantValue();
+}
+
 struct Parser::ScopedContextEntry {
   Parser *P;
 
@@ -274,12 +278,43 @@ struct Parser::ScopedContextEntry {
   }
 };
 
+/// \brief Parse expressions that start with an identifier.
+///
+/// This function can parse named values and matchers.
+/// In case of failure it will try to determine the user's intent to give
+/// an appropriate error message.
+bool Parser::parseIdentifierPrefixImpl(VariantValue *Value) {
+  const TokenInfo NameToken = Tokenizer->consumeNextToken();
+
+  if (Tokenizer->nextTokenKind() != TokenInfo::TK_OpenParen) {
+    // Parse as a named value.
+    if (const VariantValue NamedValue = S->getNamedValue(NameToken.Text)) {
+      *Value = NamedValue;
+      return true;
+    }
+    // If the syntax is correct and the name is not a matcher either, report
+    // unknown named value.
+    if ((Tokenizer->nextTokenKind() == TokenInfo::TK_Comma ||
+         Tokenizer->nextTokenKind() == TokenInfo::TK_CloseParen ||
+         Tokenizer->nextTokenKind() == TokenInfo::TK_Eof) &&
+        !S->lookupMatcherCtor(NameToken.Text)) {
+      Error->addError(NameToken.Range, Error->ET_RegistryValueNotFound)
+          << NameToken.Text;
+      return false;
+    }
+    // Otherwise, fallback to the matcher parser.
+  }
+
+  // Parse as a matcher expression.
+  return parseMatcherExpressionImpl(NameToken, Value);
+}
+
 /// \brief Parse and validate a matcher expression.
 /// \return \c true on success, in which case \c Value has the matcher parsed.
 ///   If the input is malformed, or some argument has an error, it
 ///   returns \c false.
-bool Parser::parseMatcherExpressionImpl(VariantValue *Value) {
-  const TokenInfo NameToken = Tokenizer->consumeNextToken();
+bool Parser::parseMatcherExpressionImpl(const TokenInfo &NameToken,
+                                        VariantValue *Value) {
   assert(NameToken.Kind == TokenInfo::TK_Ident);
   const TokenInfo OpenToken = Tokenizer->consumeNextToken();
   if (OpenToken.Kind != TokenInfo::TK_OpenParen) {
@@ -288,8 +323,14 @@ bool Parser::parseMatcherExpressionImpl(VariantValue *Value) {
     return false;
   }
 
-  llvm::Optional<MatcherCtor> Ctor =
-      S->lookupMatcherCtor(NameToken.Text, NameToken.Range, Error);
+  llvm::Optional<MatcherCtor> Ctor = S->lookupMatcherCtor(NameToken.Text);
+
+  if (!Ctor) {
+    Error->addError(NameToken.Range, Error->ET_RegistryMatcherNotFound)
+        << NameToken.Text;
+    // Do not return here. We need to continue to give completion suggestions.
+  }
+
   std::vector<ParserValue> Args;
   TokenInfo EndToken;
 
@@ -425,7 +466,7 @@ bool Parser::parseExpressionImpl(VariantValue *Value) {
     return true;
 
   case TokenInfo::TK_Ident:
-    return parseMatcherExpressionImpl(Value);
+    return parseIdentifierPrefixImpl(Value);
 
   case TokenInfo::TK_CodeCompletion:
     addExpressionCompletions();
@@ -457,27 +498,23 @@ Parser::Parser(CodeTokenizer *Tokenizer, Sema *S,
                Diagnostics *Error)
     : Tokenizer(Tokenizer), S(S), Error(Error) {}
 
-class RegistrySema : public Parser::Sema {
-public:
-  virtual ~RegistrySema() {}
-  llvm::Optional<MatcherCtor> lookupMatcherCtor(StringRef MatcherName,
-                                                const SourceRange &NameRange,
-                                                Diagnostics *Error) {
-    return Registry::lookupMatcherCtor(MatcherName, NameRange, Error);
+Parser::RegistrySema::~RegistrySema() {}
+
+llvm::Optional<MatcherCtor>
+Parser::RegistrySema::lookupMatcherCtor(StringRef MatcherName) {
+  return Registry::lookupMatcherCtor(MatcherName);
+}
+
+VariantMatcher Parser::RegistrySema::actOnMatcherExpression(
+    MatcherCtor Ctor, const SourceRange &NameRange, StringRef BindID,
+    ArrayRef<ParserValue> Args, Diagnostics *Error) {
+  if (BindID.empty()) {
+    return Registry::constructMatcher(Ctor, NameRange, Args, Error);
+  } else {
+    return Registry::constructBoundMatcher(Ctor, NameRange, BindID, Args,
+                                           Error);
   }
-  VariantMatcher actOnMatcherExpression(MatcherCtor Ctor,
-                                        const SourceRange &NameRange,
-                                        StringRef BindID,
-                                        ArrayRef<ParserValue> Args,
-                                        Diagnostics *Error) {
-    if (BindID.empty()) {
-      return Registry::constructMatcher(Ctor, NameRange, Args, Error);
-    } else {
-      return Registry::constructBoundMatcher(Ctor, NameRange, BindID, Args,
-                                             Error);
-    }
-  }
-};
+}
 
 bool Parser::parseExpression(StringRef Code, VariantValue *Value,
                              Diagnostics *Error) {

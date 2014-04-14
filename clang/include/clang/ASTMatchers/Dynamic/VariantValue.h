@@ -78,7 +78,8 @@ public:
   /// \brief Clones the provided matchers.
   ///
   /// They should be the result of a polymorphic matcher.
-  static VariantMatcher PolymorphicMatcher(std::vector<DynTypedMatcher> Matchers);
+  static VariantMatcher
+  PolymorphicMatcher(std::vector<DynTypedMatcher> Matchers);
 
   /// \brief Creates a 'variadic' operator matcher.
   ///
@@ -207,6 +208,10 @@ public:
   VariantValue(unsigned Unsigned);
   VariantValue(const std::string &String);
   VariantValue(const VariantMatcher &Matchers);
+
+  /// \brief Returns true iff this is not an empty value.
+  LLVM_EXPLICIT operator bool() const { return hasValue(); }
+  bool hasValue() const { return Type != VT_Nothing; }
 
   /// \brief Unsigned value functions.
   bool isUnsigned() const;

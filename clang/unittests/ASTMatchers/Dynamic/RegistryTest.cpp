@@ -35,21 +35,15 @@ public:
     return Out;
   }
 
-  llvm::Optional<MatcherCtor> lookupMatcherCtor(StringRef MatcherName,
-                                                Diagnostics *Error = 0) {
-    Diagnostics DummyError;
-    if (!Error) Error = &DummyError;
-    llvm::Optional<MatcherCtor> Ctor =
-        Registry::lookupMatcherCtor(MatcherName, SourceRange(), Error);
-    EXPECT_EQ("", DummyError.toStringFull());
-    return Ctor;
+  llvm::Optional<MatcherCtor> lookupMatcherCtor(StringRef MatcherName) {
+    return Registry::lookupMatcherCtor(MatcherName);
   }
 
   VariantMatcher constructMatcher(StringRef MatcherName,
                                   Diagnostics *Error = NULL) {
     Diagnostics DummyError;
     if (!Error) Error = &DummyError;
-    llvm::Optional<MatcherCtor> Ctor = lookupMatcherCtor(MatcherName, Error);
+    llvm::Optional<MatcherCtor> Ctor = lookupMatcherCtor(MatcherName);
     VariantMatcher Out;
     if (Ctor)
       Out = Registry::constructMatcher(*Ctor, SourceRange(), Args(), Error);
@@ -62,7 +56,7 @@ public:
                                   Diagnostics *Error = NULL) {
     Diagnostics DummyError;
     if (!Error) Error = &DummyError;
-    llvm::Optional<MatcherCtor> Ctor = lookupMatcherCtor(MatcherName, Error);
+    llvm::Optional<MatcherCtor> Ctor = lookupMatcherCtor(MatcherName);
     VariantMatcher Out;
     if (Ctor)
       Out = Registry::constructMatcher(*Ctor, SourceRange(), Args(Arg1), Error);
@@ -76,7 +70,7 @@ public:
                                   Diagnostics *Error = NULL) {
     Diagnostics DummyError;
     if (!Error) Error = &DummyError;
-    llvm::Optional<MatcherCtor> Ctor = lookupMatcherCtor(MatcherName, Error);
+    llvm::Optional<MatcherCtor> Ctor = lookupMatcherCtor(MatcherName);
     VariantMatcher Out;
     if (Ctor)
       Out = Registry::constructMatcher(*Ctor, SourceRange(), Args(Arg1, Arg2),
