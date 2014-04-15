@@ -409,6 +409,15 @@ protected:
     SS << "\n";
   }
 
+  void printBlockLabel(StreamType & SS, BasicBlock *BB, unsigned index) {
+    if (!BB) {
+      SS << "BB_null";
+      return;
+    }
+    SS << "BB_";
+    SS << BB->blockID();
+  }
+
   // TODO: further distinguish between binary operations.
   static const unsigned Prec_Atom = 0;
   static const unsigned Prec_Postfix = 1;
@@ -560,9 +569,11 @@ protected:
 
   void printSApply(SApply *E, StreamType &SS) {
     self()->printSExpr(E->sfun(), SS, Prec_Postfix);
-    SS << "@(";
-    self()->printSExpr(E->arg(), SS, Prec_MAX);
-    SS << ")";
+    if (E->isDelegation()) {
+      SS << "@(";
+      self()->printSExpr(E->arg(), SS, Prec_MAX);
+      SS << ")";
+    }
   }
 
   void printProject(Project *E, StreamType &SS) {
@@ -584,7 +595,7 @@ protected:
   }
 
   void printAlloc(Alloc *E, StreamType &SS) {
-    SS << "#alloc ";
+    SS << "new ";
     self()->printSExpr(E->dataType(), SS, Prec_Other-1);
   }
 
@@ -595,7 +606,7 @@ protected:
 
   void printStore(Store *E, StreamType &SS) {
     self()->printSExpr(E->destination(), SS, Prec_Other-1);
-    SS << " = ";
+    SS << " := ";
     self()->printSExpr(E->source(), SS, Prec_Other-1);
   }
 
@@ -628,9 +639,11 @@ protected:
         newline(SS);
       }
       for (auto I : BBI->instructions()) {
-        SS << "let ";
-        self()->printVariable(I, SS);
-        SS << " = ";
+        if (I->definition()->opcode() != COP_Store) {
+          SS << "let ";
+          self()->printVariable(I, SS);
+          SS << " = ";
+        }
         self()->printSExpr(I->definition(), SS, Prec_MAX);
         SS << ";";
         newline(SS);
@@ -648,31 +661,29 @@ protected:
   }
 
   void printPhi(Phi *E, StreamType &SS) {
-    SS << "#phi(";
+    SS << "phi(";
     unsigned i = 0;
     for (auto V : E->values()) {
-      ++i;
       if (i > 0)
         SS << ", ";
       self()->printSExpr(V, SS, Prec_MAX);
+      ++i;
     }
     SS << ")";
   }
 
   void printGoto(Goto *E, StreamType &SS) {
-    SS << "#goto BB_";
-    SS << E->targetBlock()->blockID();
-    SS << ":";
-    SS << E->index();
+    SS << "goto ";
+    printBlockLabel(SS, E->targetBlock(), E->index());
   }
 
   void printBranch(Branch *E, StreamType &SS) {
-    SS << "#branch (";
+    SS << "branch (";
     self()->printSExpr(E->condition(), SS, Prec_MAX);
-    SS << ") BB_";
-    SS << E->thenBlock()->blockID();
-    SS << " BB_";
-    SS << E->elseBlock()->blockID();
+    SS << ") ";
+    printBlockLabel(SS, E->thenBlock(), E->thenIndex());
+    SS << " ";
+    printBlockLabel(SS, E->elseBlock(), E->elseIndex());
   }
 };
 

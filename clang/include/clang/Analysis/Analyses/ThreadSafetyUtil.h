@@ -78,7 +78,7 @@ template <class T> class SimpleArray {
 public:
   SimpleArray() : Data(nullptr), Size(0), Capacity(0) {}
   SimpleArray(T *Dat, size_t Cp, size_t Sz = 0)
-      : Data(Dat), Size(0), Capacity(Cp) {}
+      : Data(Dat), Size(Sz), Capacity(Cp) {}
   SimpleArray(MemRegionRef A, size_t Cp)
       : Data(A.allocateT<T>(Cp)), Size(0), Capacity(Cp) {}
   SimpleArray(SimpleArray<T> &&A)
@@ -101,8 +101,14 @@ public:
   size_t size() const { return Size; }
   size_t capacity() const { return Capacity; }
 
-  T &operator[](unsigned I) { return Data[I]; }
-  const T &operator[](unsigned I) const { return Data[I]; }
+  T &operator[](unsigned i) {
+    assert(i < Sz && "Array index out of bounds.");
+    return Data[i];
+  }
+  const T &operator[](unsigned i) const {
+    assert(i < Size && "Array index out of bounds.");
+    return Data[i];
+  }
 
   iterator begin() { return Data; }
   iterator end() { return Data + Size; }
@@ -113,6 +119,14 @@ public:
   void push_back(const T &Elem) {
     assert(Size < Capacity);
     Data[Size++] = Elem;
+  }
+
+  void setValues(unsigned Sz, const T& C) {
+    assert(Sz < Capacity);
+    Size = Sz;
+    for (unsigned i = 0; i < Sz; ++i) {
+      Data[i] = C;
+    }
   }
 
   template <class Iter> unsigned append(Iter I, Iter E) {
@@ -132,8 +146,135 @@ private:
   size_t Capacity;
 };
 
-
 } // end namespace til
+
+
+// A copy on write vector.
+// The vector can be in one of three states:
+// * invalid -- no operations are permitted.
+// * read-only -- read operations are permitted.
+// * writable -- read and write operations are permitted.
+// The init(), destroy(), and makeWritable() methods will change state.
+template<typename T>
+class CopyOnWriteVector {
+private:
+  class VectorData {
+  public:
+    VectorData() : NumRefs(1) { }
+    VectorData(const VectorData &VD) : NumRefs(1), Vect(VD.Vect) { }
+
+    unsigned NumRefs;
+    std::vector<T> Vect;
+  };
+
+public:
+  CopyOnWriteVector() : Data(0) { }
+  CopyOnWriteVector(const CopyOnWriteVector &V) = delete;
+  CopyOnWriteVector(CopyOnWriteVector &&V) : Data(V.Data) {
+    V.Data = 0;
+  }
+  ~CopyOnWriteVector() {
+    destroy();
+  }
+
+  // Returns true if this holds a valid vector.
+  bool valid()  { return Data; }
+
+  // Returns true if this vector is writable.
+  bool writable() { return Data && Data->NumRefs == 1; }
+
+  // If this vector is not valid, initialize it to a valid vector.
+  void init() {
+    if (!Data) {
+      Data = new VectorData();
+    }
+  }
+
+  // Destroy this vector; thus making it invalid.
+  void destroy() {
+    if (!Data)
+      return;
+    if (Data->NumRefs <= 1)
+      delete Data;
+    else
+      --Data->NumRefs;
+    Data = 0;
+  }
+
+  // Make this vector writable, creating a copy if needed.
+  void makeWritable() {
+    if (!Data) {
+      Data = new VectorData();
+      return;
+    }
+    if (Data->NumRefs == 1)
+      return;   // already writeable.
+    --Data->NumRefs;
+    Data = new VectorData(*Data);
+  }
+
+  // Create a lazy copy of this vector.
+  CopyOnWriteVector clone() { return CopyOnWriteVector(Data); }
+
+  // No copy constructor or copy assignment.  Use clone() with move assignment.
+  void operator=(const CopyOnWriteVector &V) = delete;
+
+  void operator=(CopyOnWriteVector &&V) {
+    destroy();
+    Data = V.Data;
+    V.Data = 0;
+  }
+
+  typedef typename std::vector<T>::const_iterator iterator;
+
+  const std::vector<T> &elements() const { return Data->Vect; }
+
+  iterator begin() const { return elements().cbegin(); }
+  iterator end()   const { return elements().cend();   }
+
+  const T& operator[](unsigned i) const { return elements()[i]; }
+
+  unsigned size() const { return Data ? elements().size() : 0; }
+
+  // Return true if V and this vector refer to the same data.
+  bool sameAs(const CopyOnWriteVector& V) { return Data == V.Data; }
+
+  // Clear vector.  The vector must be writable.
+  void clear() {
+    assert(writable() && "Vector is not writable!");
+    Data->Vect.clear();
+  }
+
+  // Push a new element onto the end.  The vector must be writable.
+  void push_back(const T& Elem) {
+    assert(writable() && "Vector is not writable!");
+    Data->Vect.push_back(Elem);
+  }
+
+  // Gets a mutable reference to the element at index(i).
+  // The vector must be writable.
+  T& elem(unsigned i) {
+    assert(writable() && "Vector is not writable!");
+    return Data->Vect[i];
+  }
+
+  // Drops elements from the back until the vector has size i.
+  void downsize(unsigned i) {
+    assert(writable() && "Vector is not writable!");
+    Data->Vect.erase(Data->Vect.begin() + i, Data->Vect.end());
+  }
+
+private:
+  CopyOnWriteVector(VectorData *D) : Data(D) {
+    if (!Data)
+      return;
+    ++Data->NumRefs;
+  }
+
+  VectorData *Data;
+};
+
+
 } // end namespace threadSafety
 } // end namespace clang
 

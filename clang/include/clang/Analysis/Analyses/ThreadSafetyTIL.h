@@ -199,7 +199,7 @@ public:
   // These are defined after SExprRef contructor, below
   inline Variable(VariableKind K, SExpr *D = nullptr,
                   const clang::ValueDecl *Cvd = nullptr);
-  inline Variable(const clang::ValueDecl *Cvd, SExpr *D = nullptr);
+  inline Variable(SExpr *D = nullptr, const clang::ValueDecl *Cvd = nullptr);
   inline Variable(const Variable &Vd, SExpr *D);
 
   VariableKind kind() const { return static_cast<VariableKind>(Flags); }
@@ -220,6 +220,7 @@ public:
     BlockID = static_cast<unsigned short>(Bid);
     Id = static_cast<unsigned short>(I);
   }
+  void setClangDecl(const clang::ValueDecl *VD) { Cvdecl = VD; }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     // This routine is only called for variable references.
@@ -353,7 +354,7 @@ Variable::Variable(VariableKind K, SExpr *D, const clang::ValueDecl *Cvd)
   Flags = K;
 }
 
-Variable::Variable(const clang::ValueDecl *Cvd, SExpr *D)
+Variable::Variable(SExpr *D, const clang::ValueDecl *Cvd)
     : SExpr(COP_Variable), Definition(D), Cvdecl(Cvd),
       BlockID(0), Id(0),  NumUses(0) {
   Flags = VK_Let;
@@ -935,6 +936,8 @@ private:
   SExprRef Expr0;
 };
 
+
+
 class BasicBlock;
 
 // An SCFG is a control-flow graph.  It consists of a set of basic blocks, each
@@ -998,13 +1001,16 @@ public:
 
   BasicBlock(MemRegionRef A, unsigned Nargs, unsigned Nins,
              SExpr *Term = nullptr)
-      : BlockID(0), Parent(nullptr), Args(A, Nargs), Instrs(A, Nins),
-        Terminator(Term) {}
+      : BlockID(0), Parent(nullptr), NumPredecessors(0),
+        Args(A, Nargs), Instrs(A, Nins), Terminator(Term) {}
   BasicBlock(const BasicBlock &B, VarArray &&As, VarArray &&Is, SExpr *T)
-      : BlockID(0), Parent(nullptr), Args(std::move(As)), Instrs(std::move(Is)),
-        Terminator(T) {}
+      : BlockID(0), Parent(nullptr), NumPredecessors(B.NumPredecessors),
+        Args(std::move(As)), Instrs(std::move(Is)), Terminator(T)
+  {}
 
   unsigned blockID() const { return BlockID; }
+  unsigned numPredecessors() const { return NumPredecessors; }
+
   const BasicBlock *parent() const { return Parent; }
   BasicBlock *parent() { return Parent; }
 
@@ -1017,8 +1023,9 @@ public:
   const SExpr *terminator() const { return Terminator.get(); }
   SExpr *terminator() { return Terminator.get(); }
 
-  void setParent(BasicBlock *P) { Parent = P; }
   void setBlockID(unsigned i) { BlockID = i; }
+  void setParent(BasicBlock *P) { Parent = P; }
+  void setNumPredecessors(unsigned NP) { NumPredecessors = NP; }
   void setTerminator(SExpr *E) { Terminator.reset(E); }
   void addArgument(Variable *V) { Args.push_back(V); }
   void addInstr(Variable *V) { Args.push_back(V); }
@@ -1057,9 +1064,10 @@ private:
   friend class SCFG;
 
   unsigned BlockID;
-  BasicBlock *Parent;   // The parent block is the enclosing lexical scope.
-                        // The parent dominates this block.
-  VarArray Args;        // Phi nodes
+  BasicBlock *Parent;       // The parent block is the enclosing lexical scope.
+                            // The parent dominates this block.
+  unsigned NumPredecessors; // Number of blocks which jump to this one.
+  VarArray Args;            // Phi nodes.  One argument per predecessor.
   VarArray Instrs;
   SExprRef Terminator;
 };
@@ -1100,8 +1108,8 @@ public:
     return Visitor.reducePhi(*this, Nvs);
   }
 
-  template <class C> typename C::CType compare(Phi *E, C &Cmp) {
-    // TODO -- implement CFG comparisons
+  template <class C> typename C::CType compare(Phi* E, C &Cmp) {
+    // TODO: implement CFG comparisons
     return Cmp.comparePointers(this, E);
   }
 
@@ -1146,16 +1154,25 @@ public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Branch; }
 
   Branch(SExpr *C, BasicBlock *T, BasicBlock *E)
-      : SExpr(COP_Branch), Condition(C), ThenBlock(T), ElseBlock(E) {}
+      : SExpr(COP_Branch), Condition(C), ThenBlock(T), ElseBlock(E),
+        ThenIndex(0), ElseIndex(0)
+  {}
   Branch(const Branch &Br, SExpr *C, BasicBlock *T, BasicBlock *E)
-      : SExpr(COP_Branch), Condition(C), ThenBlock(T), ElseBlock(E) {}
+      : SExpr(COP_Branch), Condition(C), ThenBlock(T), ElseBlock(E),
+        ThenIndex(0), ElseIndex(0)
+  {}
 
   const SExpr *condition() const { return Condition; }
   SExpr *condition() { return Condition; }
+
   const BasicBlock *thenBlock() const { return ThenBlock; }
   BasicBlock *thenBlock() { return ThenBlock; }
+
   const BasicBlock *elseBlock() const { return ElseBlock; }
   BasicBlock *elseBlock() { return ElseBlock; }
+
+  unsigned thenIndex() const { return ThenIndex; }
+  unsigned elseIndex() const { return ElseIndex; }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::R_SExpr Nc = Visitor.traverse(Condition);
@@ -1173,6 +1190,8 @@ private:
   SExpr *Condition;
   BasicBlock *ThenBlock;
   BasicBlock *ElseBlock;
+  unsigned ThenIndex;
+  unsigned ElseIndex;
 };
 
 

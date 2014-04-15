@@ -28,6 +28,8 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 
+#include <algorithm>
+#include <climits>
 #include <vector>
 
 
@@ -38,16 +40,20 @@ typedef SExprBuilder::CallingContext CallingContext;
 
 
 til::SExpr *SExprBuilder::lookupStmt(const Stmt *S) {
-  if (!SMap)
-    return nullptr;
-  auto It = SMap->find(S);
-  if (It != SMap->end())
+  auto It = SMap.find(S);
+  if (It != SMap.end())
     return It->second;
   return nullptr;
 }
 
 void SExprBuilder::insertStmt(const Stmt *S, til::Variable *V) {
-  SMap->insert(std::make_pair(S, V));
+  SMap.insert(std::make_pair(S, V));
+}
+
+
+til::SCFG *SExprBuilder::buildCFG(CFGWalker &Walker) {
+  Walker.walk(*this);
+  return Scfg;
 }
 
 
@@ -55,6 +61,9 @@ void SExprBuilder::insertStmt(const Stmt *S, til::Variable *V) {
 // Also performs substitution of variables; Ctx provides the context.
 // Dispatches on the type of S.
 til::SExpr *SExprBuilder::translate(const Stmt *S, CallingContext *Ctx) {
+  if (!S)
+    return nullptr;
+
   // Check if S has already been translated and cached.
   // This handles the lookup of SSA names for DeclRefExprs here.
   if (til::SExpr *E = lookupStmt(S))
@@ -105,6 +114,9 @@ til::SExpr *SExprBuilder::translate(const Stmt *S, CallingContext *Ctx) {
   case Stmt::StringLiteralClass:
   case Stmt::ObjCStringLiteralClass:
     return new (Arena) til::Literal(cast<Expr>(S));
+
+  case Stmt::DeclStmtClass:
+    return translateDeclStmt(cast<DeclStmt>(S), Ctx);
   default:
     break;
   }
@@ -209,6 +221,7 @@ til::SExpr *SExprBuilder::translateUnaryOperator(const UnaryOperator *UO,
   return new (Arena) til::Undefined(UO);
 }
 
+
 til::SExpr *SExprBuilder::translateBinaryOperator(const BinaryOperator *BO,
                                                   CallingContext *Ctx) {
   switch (BO->getOpcode()) {
@@ -238,10 +251,17 @@ til::SExpr *SExprBuilder::translateBinaryOperator(const BinaryOperator *BO,
         til::BinaryOp(BO->getOpcode(), translate(BO->getLHS(), Ctx),
                       translate(BO->getRHS(), Ctx));
 
-  case BO_Assign:
-    return new (Arena)
-        til::Store(translate(BO->getLHS(), Ctx), translate(BO->getRHS(), Ctx));
-
+  case BO_Assign: {
+    const Expr *LHS = BO->getLHS();
+    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(LHS)) {
+      const Expr *RHS = BO->getRHS();
+      til::SExpr *E1 = translate(RHS, Ctx);
+      return updateVarDecl(DRE->getDecl(), E1);
+    }
+    til::SExpr *E0 = translate(LHS, Ctx);
+    til::SExpr *E1 = translate(BO->getRHS(), Ctx);
+    return new (Arena) til::Store(E0, E1);
+  }
   case BO_MulAssign:
   case BO_DivAssign:
   case BO_RemAssign:
@@ -265,24 +285,32 @@ til::SExpr *SExprBuilder::translateBinaryOperator(const BinaryOperator *BO,
 
 til::SExpr *SExprBuilder::translateCastExpr(const CastExpr *CE,
                                             CallingContext *Ctx) {
-  til::SExpr *E0 = translate(CE->getSubExpr(), Ctx);
-
   clang::CastKind K = CE->getCastKind();
   switch (K) {
-  case CK_LValueToRValue:
+  case CK_LValueToRValue: {
+    if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CE->getSubExpr())) {
+      til::SExpr *E0 = lookupVarDecl(DRE->getDecl());
+      if (E0)
+        return E0;
+    }
+    til::SExpr *E0 = translate(CE->getSubExpr(), Ctx);
     return new (Arena) til::Load(E0);
-
+  }
   case CK_NoOp:
   case CK_DerivedToBase:
   case CK_UncheckedDerivedToBase:
   case CK_ArrayToPointerDecay:
-  case CK_FunctionToPointerDecay:
+  case CK_FunctionToPointerDecay: {
+    til::SExpr *E0 = translate(CE->getSubExpr(), Ctx);
     return E0;
-
-  default:
+  }
+  default: {
+    til::SExpr *E0 = translate(CE->getSubExpr(), Ctx);
     return new (Arena) til::Cast(K, E0);
   }
+  }
 }
+
 
 til::SExpr *
 SExprBuilder::translateArraySubscriptExpr(const ArraySubscriptExpr *E,
@@ -290,11 +318,13 @@ SExprBuilder::translateArraySubscriptExpr(const ArraySubscriptExpr *E,
   return new (Arena) til::Undefined(E);
 }
 
+
 til::SExpr *
 SExprBuilder::translateConditionalOperator(const ConditionalOperator *C,
                                            CallingContext *Ctx) {
   return new (Arena) til::Undefined(C);
 }
+
 
 til::SExpr *SExprBuilder::translateBinaryConditionalOperator(
     const BinaryConditionalOperator *C, CallingContext *Ctx) {
@@ -302,108 +332,285 @@ til::SExpr *SExprBuilder::translateBinaryConditionalOperator(
 }
 
 
+til::SExpr *
+SExprBuilder::translateDeclStmt(const DeclStmt *S, CallingContext *Ctx) {
+  DeclGroupRef DGrp = S->getDeclGroup();
+  for (DeclGroupRef::iterator I = DGrp.begin(), E = DGrp.end(); I != E; ++I) {
+    if (VarDecl *VD = dyn_cast_or_null<VarDecl>(*I)) {
+      Expr *E = VD->getInit();
+      til::SExpr* SE = translate(E, Ctx);
 
-// Build a complete SCFG from a clang CFG.
-class SCFGBuilder {
-  class BBInfo {
-
-  };
-
-  void addStatement(til::SExpr* E, const Stmt *S) {
-    if (!E)
-      return;
-    if (til::ThreadSafetyTIL::isTrivial(E))
-      return;
-
-    til::Variable *V = new (Arena) til::Variable(til::Variable::VK_Let, E);
-    V->setID(CurrentBlockID, CurrentVarID++);
-    CurrentBB->addInstr(V);
-    if (S)
-      BuildEx.insertStmt(S, V);
+      // Add local variables with trivial type to the variable map
+      QualType T = VD->getType();
+      if (T.isTrivialType(VD->getASTContext())) {
+        return addVarDecl(VD, SE);
+      }
+      else {
+        // TODO: add alloca
+      }
+    }
   }
+  return nullptr;
+}
 
-public:
-  // Enter the CFG for Decl D, and perform any initial setup operations.
-  void enterCFG(CFG *Cfg, const NamedDecl *D, const CFGBlock *First) {
-    Scfg = new (Arena) til::SCFG(Arena, Cfg->getNumBlockIDs());
-    CallCtx = new SExprBuilder::CallingContext(D);
+
+// If (E) is non-trivial, then add it to the current basic block, and
+// update the statement map so that S refers to E.  Returns a new variable
+// that refers to E.
+// If E is trivial returns E.
+til::SExpr *SExprBuilder::addStatement(til::SExpr* E, const Stmt *S,
+                                       const ValueDecl *VD) {
+  if (!E)
+    return nullptr;
+  if (til::ThreadSafetyTIL::isTrivial(E))
+    return E;
+
+  til::Variable *V = new (Arena) til::Variable(E, VD);
+  V->setID(CurrentBlockID, CurrentVarID++);
+  CurrentBB->addInstr(V);
+  if (S)
+    insertStmt(S, V);
+  return V;
+}
+
+
+// Returns the current value of VD, if known, and nullptr otherwise.
+til::SExpr *SExprBuilder::lookupVarDecl(const ValueDecl *VD) {
+  auto It = IdxMap.find(VD);
+  if (It != IdxMap.end())
+    return CurrentNameMap[It->second].second;
+  return nullptr;
+}
+
+
+// if E is a til::Variable, update its clangDecl.
+inline void maybeUpdateVD(til::SExpr *E, const ValueDecl *VD) {
+  if (!E)
+    return;
+  if (til::Variable *V = dyn_cast<til::Variable>(E)) {
+    if (!V->clangDecl())
+      V->setClangDecl(VD);
   }
+}
 
-  // Enter a CFGBlock.
-  void enterCFGBlock(const CFGBlock *B) {
-    CurrentBB = new (Arena) til::BasicBlock(Arena, 0, B->size());
-    CurrentBB->setBlockID(CurrentBlockID);
-    CurrentVarID = 0;
-    Scfg->add(CurrentBB);
+// Adds a new variable declaration.
+til::SExpr *SExprBuilder::addVarDecl(const ValueDecl *VD, til::SExpr *E) {
+  maybeUpdateVD(E, VD);
+  IdxMap.insert(std::make_pair(VD, CurrentNameMap.size()));
+  CurrentNameMap.makeWritable();
+  CurrentNameMap.push_back(std::make_pair(VD, E));
+  return E;
+}
+
+
+// Updates a current variable declaration.  (E.g. by assignment)
+til::SExpr *SExprBuilder::updateVarDecl(const ValueDecl *VD, til::SExpr *E) {
+  maybeUpdateVD(E, VD);
+  auto It = IdxMap.find(VD);
+  if (It == IdxMap.end()) {
+    til::SExpr *Ptr = new (Arena) til::LiteralPtr(VD);
+    til::SExpr *St  = new (Arena) til::Store(Ptr, E);
+    return St;
   }
+  CurrentNameMap.makeWritable();
+  CurrentNameMap.elem(It->second).second = E;
+  return E;
+}
 
-  // Process an ordinary statement.
-  void handleStatement(const Stmt *S) {
-    til::SExpr *E = BuildEx.translate(S, CallCtx);
-    addStatement(E, S);
+
+// Merge values from Map into the current entry map.
+void SExprBuilder::mergeEntryMap(NameVarMap Map) {
+  assert(CurrentBlockInfo && "Not processing a block!");
+
+  if (!CurrentNameMap.valid()) {
+    // Steal Map, using copy-on-write.
+    CurrentNameMap = std::move(Map);
+    return;
   }
+  if (CurrentNameMap.sameAs(Map))
+    return;  // Easy merge: maps from different predecessors are unchanged.
 
-  // Process a destructor call
-  void handleDestructorCall(const VarDecl *VD, const CXXDestructorDecl *DD) {
-    til::SExpr *Sf = new (Arena) til::LiteralPtr(VD);
-    til::SExpr *Dr = new (Arena) til::LiteralPtr(DD);
-    til::SExpr *Ap = new (Arena) til::Apply(Dr, Sf);
-    til::SExpr *E = new (Arena) til::Call(Ap);
-    addStatement(E, nullptr);
+  unsigned ESz = CurrentNameMap.size();
+  unsigned MSz = Map.size();
+  unsigned Sz = std::max(ESz, MSz);
+  bool W = CurrentNameMap.writable();
+  for (unsigned i=0; i<Sz; ++i) {
+    if (CurrentNameMap[i].first != Map[i].first) {
+      if (!W)
+        CurrentNameMap.makeWritable();
+      CurrentNameMap.downsize(i);
+      break;
+    }
+    if (CurrentNameMap[i].second != Map[i].second) {
+      til::Variable *V =
+        dyn_cast<til::Variable>(CurrentNameMap[i].second);
+      if (V && V->getBlockID() == CurrentBB->blockID()) {
+        // We already have a Phi node, so add the new variable.
+        til::Phi *Ph = dyn_cast<til::Phi>(V->definition());
+        assert(Ph && "Expecting Phi node.");
+        Ph->values()[CurrentArgIndex] = Map[i].second;
+      }
+      else {
+        if (!W)
+          CurrentNameMap.makeWritable();
+        unsigned NPreds = CurrentBB->numPredecessors();
+        assert(CurrentArgIndex > 0 && CurrentArgIndex < NPreds);
+
+        // Make a new phi node.  All phi args up to the current index must
+        // be the same, and equal to the current NameMap value.
+        auto *Ph = new (Arena) til::Phi(Arena, NPreds);
+        Ph->values().setValues(NPreds, nullptr);
+        for (unsigned PIdx = 0; PIdx < CurrentArgIndex; ++PIdx)
+          Ph->values()[PIdx] = CurrentNameMap[i].second;
+        Ph->values()[CurrentArgIndex] = Map[i].second;
+
+        // Add phi node to current basic block.
+        auto *Var = new (Arena) til::Variable(Ph, CurrentNameMap[i].first);
+        Var->setID(CurrentBlockID, CurrentVarID++);
+        CurrentBB->addArgument(Var);
+        CurrentNameMap.elem(i).second = Var;
+      }
+    }
   }
-
-  // Process a successor edge.
-  void handleSuccessor(const CFGBlock *Succ) {}
-
-  // Process a successor back edge to a previously visited block.
-  void handleSuccessorBackEdge(const CFGBlock *Succ) {}
-
-  // Leave a CFGBlock.
-  void exitCFGBlock(const CFGBlock *B) {
-    CurrentBlockID++;
-    CurrentBB = 0;
+  if (ESz > MSz) {
+    if (!W)
+      CurrentNameMap.makeWritable();
+    CurrentNameMap.downsize(Map.size());
   }
+}
 
-  // Leave the CFG, and perform any final cleanup operations.
-  void exitCFG(const CFGBlock *Last) {
-    delete CallCtx;
-    CallCtx = nullptr;
+
+
+void SExprBuilder::enterCFG(CFG *Cfg, const NamedDecl *D,
+                            const CFGBlock *First) {
+  // Perform initial setup operations.
+  unsigned NBlocks = Cfg->getNumBlockIDs();
+  Scfg = new (Arena) til::SCFG(Arena, NBlocks);
+
+  // allocate all basic blocks immediately, to handle forward references.
+  BlockMap.reserve(NBlocks);
+  BBInfo.resize(NBlocks);
+  for (auto *B : *Cfg) {
+    auto *BB = new (Arena) til::BasicBlock(Arena, 0, B->size());
+    BlockMap.push_back(BB);
   }
+  CallCtx = new SExprBuilder::CallingContext(D);
+}
 
-  SCFGBuilder(til::MemRegionRef A)
-      : Arena(A), Scfg(nullptr), CurrentBB(nullptr), CurrentBlockID(0),
-        CurrentVarID(0), CallCtx(nullptr),
-        SMap(new SExprBuilder::StatementMap()), BuildEx(A, SMap) {}
-  ~SCFGBuilder() { delete SMap; }
 
-  til::SCFG *getCFG() const { return Scfg; }
 
-private:
-  til::MemRegionRef Arena;
-  til::SCFG *Scfg;
-  til::BasicBlock *CurrentBB;
-  unsigned CurrentBlockID;
-  unsigned CurrentVarID;
+void SExprBuilder::enterCFGBlock(const CFGBlock *B) {
+  // Intialize TIL basic block and add it to the CFG.
+  CurrentBB = BlockMap[B->getBlockID()];
+  CurrentBB->setBlockID(CurrentBlockID);
+  CurrentBB->setNumPredecessors(B->pred_size());
+  Scfg->add(CurrentBB);
 
-  SExprBuilder::CallingContext *CallCtx;
-  SExprBuilder::StatementMap *SMap;
-  SExprBuilder BuildEx;
+  CurrentBlockInfo = &BBInfo[B->getBlockID()];
+  CurrentVarID = 0;
+  CurrentArgIndex = 0;
+
+  assert(!CurrentNameMap.valid() && "CurrentNameMap already initialized.");
+}
+
+
+void SExprBuilder::handlePredecessor(const CFGBlock *Pred) {
+  // Compute CurrentNameMap on entry from ExitMaps of predecessors
+
+  BlockInfo *PredInfo = &BBInfo[Pred->getBlockID()];
+  assert(PredInfo->SuccessorsToProcess > 0);
+
+  if (--PredInfo->SuccessorsToProcess == 0)
+    mergeEntryMap(std::move(PredInfo->ExitMap));
+  else
+    mergeEntryMap(PredInfo->ExitMap.clone());
+
+  ++CurrentArgIndex;
+}
+
+
+void SExprBuilder::handlePredecessorBackEdge(const CFGBlock *Pred) {
+  CurrentBlockInfo->HasBackEdges = true;
+}
+
+
+void SExprBuilder::enterCFGBlockBody(const CFGBlock *B) { }
+
+
+void SExprBuilder::handleStatement(const Stmt *S) {
+  til::SExpr *E = translate(S, CallCtx);
+  addStatement(E, S);
+}
+
+
+void SExprBuilder::handleDestructorCall(const VarDecl *VD,
+                                        const CXXDestructorDecl *DD) {
+  til::SExpr *Sf = new (Arena) til::LiteralPtr(VD);
+  til::SExpr *Dr = new (Arena) til::LiteralPtr(DD);
+  til::SExpr *Ap = new (Arena) til::Apply(Dr, Sf);
+  til::SExpr *E = new (Arena) til::Call(Ap);
+  addStatement(E, nullptr);
+}
+
+
+
+void SExprBuilder::exitCFGBlockBody(const CFGBlock *B) {
+  unsigned N = B->succ_size();
+  auto It = B->succ_begin();
+  if (N == 1) {
+    til::BasicBlock *BB = *It ? BlockMap[(*It)->getBlockID()] : nullptr;
+    // TODO: set index
+    til::SExpr *Tm = new (Arena) til::Goto(BB, 0);
+    CurrentBB->setTerminator(Tm);
+  }
+  else if (N == 2) {
+    til::SExpr *C = translate(B->getTerminatorCondition(true), CallCtx);
+    til::BasicBlock *BB1 = *It ? BlockMap[(*It)->getBlockID()] : nullptr;
+    ++It;
+    til::BasicBlock *BB2 = *It ? BlockMap[(*It)->getBlockID()] : nullptr;
+    // TODO: set conditional, set index
+    til::SExpr *Tm = new (Arena) til::Branch(C, BB1, BB2);
+    CurrentBB->setTerminator(Tm);
+  }
+}
+
+
+void SExprBuilder::handleSuccessor(const CFGBlock *Succ) {
+  ++CurrentBlockInfo->SuccessorsToProcess;
+}
+
+
+void SExprBuilder::handleSuccessorBackEdge(const CFGBlock *Succ) {
+
+}
+
+
+void SExprBuilder::exitCFGBlock(const CFGBlock *B) {
+  CurrentBlockInfo->ExitMap = std::move(CurrentNameMap);
+  CurrentBlockID++;
+  CurrentBB = nullptr;
+  CurrentBlockInfo = nullptr;
+}
+
+
+void SExprBuilder::exitCFG(const CFGBlock *Last) {
+  CurrentBlockID = 0;
+  CurrentVarID = 0;
+  CurrentArgIndex = 0;
+}
+
+
+
+class LLVMPrinter : public til::PrettyPrinter<LLVMPrinter, llvm::raw_ostream> {
 };
 
 
-
-class LLVMPrinter :
-    public til::PrettyPrinter<LLVMPrinter, llvm::raw_ostream> {
-};
-
-
-void printSCFG(CFGWalker &walker) {
+void printSCFG(CFGWalker &Walker) {
   llvm::BumpPtrAllocator Bpa;
   til::MemRegionRef Arena(&Bpa);
-  SCFGBuilder builder(Arena);
-  // CFGVisitor visitor;
-  walker.walk(builder);
-  LLVMPrinter::print(builder.getCFG(), llvm::errs());
+  SExprBuilder builder(Arena);
+  til::SCFG *Cfg = builder.buildCFG(Walker);
+  LLVMPrinter::print(Cfg, llvm::errs());
 }
 
 
