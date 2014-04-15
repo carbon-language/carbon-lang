@@ -1022,7 +1022,7 @@ def LDRXro  : Load64RO<0b11,   0, 0b01, GPR64, "ldr",
 def LDRBro : Load8RO<0b00,   1, 0b01, FPR8,   "ldr",
                       [(set FPR8:$Rt, (load ro_indexed8:$addr))]>;
 def LDRHro : Load16RO<0b01,  1, 0b01, FPR16,  "ldr",
-                      [(set FPR16:$Rt, (load ro_indexed16:$addr))]>;
+                      [(set (f16 FPR16:$Rt), (load ro_indexed16:$addr))]>;
 def LDRSro : Load32RO<0b10,    1, 0b01, FPR32,  "ldr",
                       [(set (f32 FPR32:$Rt), (load ro_indexed32:$addr))]>;
 def LDRDro : Load64RO<0b11,    1, 0b01, FPR64,  "ldr",
@@ -1132,7 +1132,7 @@ def LDRWui : LoadUI<0b10, 0, 0b01, GPR32, am_indexed32, "ldr",
 def LDRBui : LoadUI<0b00, 1, 0b01, FPR8, am_indexed8, "ldr",
                     [(set FPR8:$Rt, (load am_indexed8:$addr))]>;
 def LDRHui : LoadUI<0b01, 1, 0b01, FPR16, am_indexed16, "ldr",
-                    [(set FPR16:$Rt, (load am_indexed16:$addr))]>;
+                    [(set (f16 FPR16:$Rt), (load am_indexed16:$addr))]>;
 def LDRSui : LoadUI<0b10, 1, 0b01, FPR32, am_indexed32, "ldr",
                     [(set (f32 FPR32:$Rt), (load am_indexed32:$addr))]>;
 def LDRDui : LoadUI<0b11, 1, 0b01, FPR64, am_indexed64, "ldr",
@@ -1261,7 +1261,7 @@ def LDURWi : LoadUnscaled<0b10, 0, 0b01, GPR32, am_unscaled32, "ldur",
 def LDURBi : LoadUnscaled<0b00, 1, 0b01, FPR8,  am_unscaled8, "ldur",
                           [(set FPR8:$Rt, (load am_unscaled8:$addr))]>;
 def LDURHi : LoadUnscaled<0b01, 1, 0b01, FPR16, am_unscaled16, "ldur",
-                          [(set FPR16:$Rt, (load am_unscaled16:$addr))]>;
+                          [(set (f16 FPR16:$Rt), (load am_unscaled16:$addr))]>;
 def LDURSi : LoadUnscaled<0b10, 1, 0b01, FPR32, am_unscaled32, "ldur",
                           [(set (f32 FPR32:$Rt), (load am_unscaled32:$addr))]>;
 def LDURDi : LoadUnscaled<0b11, 1, 0b01, FPR64, am_unscaled64, "ldur",
@@ -1575,7 +1575,7 @@ def : Pat<(truncstorei32 GPR64:$Rt, ro_indexed32:$addr),
 def STRBro : Store8RO<0b00,  1, 0b00, FPR8,  "str",
                             [(store FPR8:$Rt, ro_indexed8:$addr)]>;
 def STRHro : Store16RO<0b01, 1, 0b00, FPR16, "str",
-                            [(store FPR16:$Rt, ro_indexed16:$addr)]>;
+                            [(store (f16 FPR16:$Rt), ro_indexed16:$addr)]>;
 def STRSro : Store32RO<0b10,   1, 0b00, FPR32, "str",
                             [(store (f32 FPR32:$Rt), ro_indexed32:$addr)]>;
 def STRDro : Store64RO<0b11,   1, 0b00, FPR64, "str",
@@ -1623,7 +1623,7 @@ def STRWui : StoreUI<0b10, 0, 0b00, GPR32, am_indexed32, "str",
 def STRBui : StoreUI<0b00, 1, 0b00, FPR8, am_indexed8, "str",
                      [(store FPR8:$Rt, am_indexed8:$addr)]>;
 def STRHui : StoreUI<0b01, 1, 0b00, FPR16, am_indexed16, "str",
-                     [(store FPR16:$Rt, am_indexed16:$addr)]>;
+                     [(store (f16 FPR16:$Rt), am_indexed16:$addr)]>;
 def STRSui : StoreUI<0b10, 1, 0b00, FPR32, am_indexed32, "str",
                      [(store (f32 FPR32:$Rt), am_indexed32:$addr)]>;
 def STRDui : StoreUI<0b11, 1, 0b00, FPR64, am_indexed64, "str",
@@ -1686,7 +1686,7 @@ def STURWi : StoreUnscaled<0b10, 0, 0b00, GPR32, am_unscaled32, "stur",
 def STURBi : StoreUnscaled<0b00, 1, 0b00, FPR8,  am_unscaled8, "stur",
                            [(store FPR8:$Rt, am_unscaled8:$addr)]>;
 def STURHi : StoreUnscaled<0b01, 1, 0b00, FPR16, am_unscaled16, "stur",
-                           [(store FPR16:$Rt, am_unscaled16:$addr)]>;
+                           [(store (f16 FPR16:$Rt), am_unscaled16:$addr)]>;
 def STURSi : StoreUnscaled<0b10, 1, 0b00, FPR32, am_unscaled32, "stur",
                            [(store (f32 FPR32:$Rt), am_unscaled32:$addr)]>;
 def STURDi : StoreUnscaled<0b11, 1, 0b00, FPR64, am_unscaled64, "stur",

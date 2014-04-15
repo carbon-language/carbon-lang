@@ -368,7 +368,7 @@ def Q31   : ARM64Reg<31, "q31", [D31], ["v31", ""]>, DwarfRegAlias<B31>;
 def FPR8  : RegisterClass<"ARM64", [untyped], 8, (sequence "B%u", 0, 31)> {
   let Size = 8;
 }
-def FPR16 : RegisterClass<"ARM64", [untyped], 16, (sequence "H%u", 0, 31)> {
+def FPR16 : RegisterClass<"ARM64", [f16], 16, (sequence "H%u", 0, 31)> {
   let Size = 16;
 }
 def FPR32 : RegisterClass<"ARM64", [f32, i32], 32,(sequence "S%u", 0, 31)>;

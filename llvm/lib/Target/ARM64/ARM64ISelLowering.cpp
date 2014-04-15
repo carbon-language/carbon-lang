@@ -84,6 +84,7 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   // Set up the register classes.
   addRegisterClass(MVT::i32, &ARM64::GPR32allRegClass);
   addRegisterClass(MVT::i64, &ARM64::GPR64allRegClass);
+  addRegisterClass(MVT::f16, &ARM64::FPR16RegClass);
   addRegisterClass(MVT::f32, &ARM64::FPR32RegClass);
   addRegisterClass(MVT::f64, &ARM64::FPR64RegClass);
   addRegisterClass(MVT::f128, &ARM64::FPR128RegClass);
@@ -370,10 +371,13 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   setLoadExtAction(ISD::EXTLOAD, MVT::f64, Expand);
   setLoadExtAction(ISD::EXTLOAD, MVT::f80, Expand);
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Expand);
+  setTruncStoreAction(MVT::f32, MVT::f16, Expand);
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+  setTruncStoreAction(MVT::f64, MVT::f16, Expand);
   setTruncStoreAction(MVT::f128, MVT::f80, Expand);
   setTruncStoreAction(MVT::f128, MVT::f64, Expand);
   setTruncStoreAction(MVT::f128, MVT::f32, Expand);
+  setTruncStoreAction(MVT::f128, MVT::f16, Expand);
   setTruncStoreAction(MVT::v2i32, MVT::v2i16, Expand);
   // Indexed loads and stores are supported.
   for (unsigned im = (unsigned)ISD::PRE_INC;
