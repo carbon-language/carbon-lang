@@ -61,7 +61,9 @@ STATISTIC(NumElimExt, "Number of IV sign/zero extends eliminated");
 STATISTIC(NumElimIV, "Number of congruent IVs eliminated");
 
 static const bool EnableIVRewrite = true;
+#ifndef NDEBUG
 static const bool VerifyIndvars = false;
+#endif
 
 namespace {
 class PollyIndVarSimplify : public LoopPass {
