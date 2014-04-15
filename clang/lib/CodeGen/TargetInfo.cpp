@@ -4770,7 +4770,9 @@ public:
   void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &M) const override;
 private:
-  static void addKernelMetadata(llvm::Function *F);
+  // Adds a NamedMDNode with F, Name, and Operand as operands, and adds the
+  // resulting MDNode to the nvvm.annotations MDNode.
+  static void addNVVMMetadata(llvm::Function *F, StringRef Name, int Operand);
 };
 
 ABIArgInfo NVPTXABIInfo::classifyReturnType(QualType RetTy) const {
@@ -4829,7 +4831,8 @@ SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
     // By default, all functions are device functions
     if (FD->hasAttr<OpenCLKernelAttr>()) {
       // OpenCL __kernel functions get kernel metadata
-      addKernelMetadata(F);
+      // Create !{<func-ref>, metadata !"kernel", i32 1} node
+      addNVVMMetadata(F, "kernel", 1);
       // And kernel functions are not subject to inlining
       F->addFnAttr(llvm::Attribute::NoInline);
     }
@@ -4840,28 +4843,43 @@ SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
     // CUDA __global__ functions get a kernel metadata entry.  Since
     // __global__ functions cannot be called from the device, we do not
     // need to set the noinline attribute.
-    if (FD->hasAttr<CUDAGlobalAttr>())
-      addKernelMetadata(F);
+    if (FD->hasAttr<CUDAGlobalAttr>()) {
+      // Create !{<func-ref>, metadata !"kernel", i32 1} node
+      addNVVMMetadata(F, "kernel", 1);
+    }
+    if (FD->hasAttr<CUDALaunchBoundsAttr>()) {
+      // Create !{<func-ref>, metadata !"maxntidx", i32 <val>} node
+      addNVVMMetadata(F, "maxntidx",
+                      FD->getAttr<CUDALaunchBoundsAttr>()->getMaxThreads());
+      // min blocks is a default argument for CUDALaunchBoundsAttr, so getting a
+      // zero value from getMinBlocks either means it was not specified in
+      // __launch_bounds__ or the user specified a 0 value. In both cases, we
+      // don't have to add a PTX directive.
+      int MinCTASM = FD->getAttr<CUDALaunchBoundsAttr>()->getMinBlocks();
+      if (MinCTASM > 0) {
+        // Create !{<func-ref>, metadata !"minctasm", i32 <val>} node
+        addNVVMMetadata(F, "minctasm", MinCTASM);
+      }
+    }
   }
 }
 
-void NVPTXTargetCodeGenInfo::addKernelMetadata(llvm::Function *F) {
+void NVPTXTargetCodeGenInfo::addNVVMMetadata(llvm::Function *F, StringRef Name,
+                                             int Operand) {
   llvm::Module *M = F->getParent();
   llvm::LLVMContext &Ctx = M->getContext();
 
   // Get "nvvm.annotations" metadata node
   llvm::NamedMDNode *MD = M->getOrInsertNamedMetadata("nvvm.annotations");
 
-  // Create !{<func-ref>, metadata !"kernel", i32 1} node
   llvm::SmallVector<llvm::Value *, 3> MDVals;
   MDVals.push_back(F);
-  MDVals.push_back(llvm::MDString::get(Ctx, "kernel"));
-  MDVals.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx), 1));
-
+  MDVals.push_back(llvm::MDString::get(Ctx, Name));
+  MDVals.push_back(
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx), Operand));
   // Append metadata to nvvm.annotations
   MD->addOperand(llvm::MDNode::get(Ctx, MDVals));
 }
-
 }
 
 //===----------------------------------------------------------------------===//
