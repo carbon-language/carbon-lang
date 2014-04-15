@@ -59,6 +59,7 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
   std::unique_ptr<Module> m(ModuleOrErr.get());
   PassManager passes;
   passes.add(createVerifierPass());
+  passes.add(createDebugInfoVerifierPass());
   passes.run(*m);
 }
 

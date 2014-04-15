@@ -384,8 +384,10 @@ void TargetPassConfig::addIRPasses() {
 
   // Before running any passes, run the verifier to determine if the input
   // coming from the front-end and/or optimizer is valid.
-  if (!DisableVerify)
+  if (!DisableVerify) {
     addPass(createVerifierPass());
+    addPass(createDebugInfoVerifierPass());
+  }
 
   // Run loop strength reduction before anything else.
   if (getOptLevel() != CodeGenOpt::None && !DisableLSR) {
@@ -442,6 +444,12 @@ void TargetPassConfig::addCodeGenPrepare() {
 /// instruction selection.
 void TargetPassConfig::addISelPrepare() {
   addPreISel();
+
+  // Need to verify DebugInfo *before* creating the stack protector analysis.
+  // It's a function pass, and verifying between it and its users causes a
+  // crash.
+  if (!DisableVerify)
+    addPass(createDebugInfoVerifierPass());
 
   addPass(createStackProtectorPass(TM));
 

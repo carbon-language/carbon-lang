@@ -399,6 +399,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   // Start off with a verification pass.
   PassManager passes;
   passes.add(createVerifierPass());
+  passes.add(createDebugInfoVerifierPass());
 
   // mark which symbols can not be internalized
   Mangler Mangler(TargetMach->getDataLayout());
@@ -471,6 +472,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   // Start off with a verification pass.
   passes.add(createVerifierPass());
+  passes.add(createDebugInfoVerifierPass());
 
   // Add an appropriate DataLayout instance for this module...
   mergedModule->setDataLayout(TargetMach->getDataLayout());
@@ -492,6 +494,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
 
   // Make sure everything is still good.
   passes.add(createVerifierPass());
+  passes.add(createDebugInfoVerifierPass());
 
   PassManager codeGenPasses;
 

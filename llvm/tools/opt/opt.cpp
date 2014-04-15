@@ -191,7 +191,10 @@ static inline void addPass(PassManagerBase &PM, Pass *P) {
   PM.add(P);
 
   // If we are verifying all of the intermediate steps, add the verifier...
-  if (VerifyEach) PM.add(createVerifierPass());
+  if (VerifyEach) {
+    PM.add(createVerifierPass());
+    PM.add(createDebugInfoVerifierPass());
+  }
 }
 
 /// AddOptimizationPasses - This routine adds optimization passes
@@ -201,7 +204,8 @@ static inline void addPass(PassManagerBase &PM, Pass *P) {
 /// OptLevel - Optimization Level
 static void AddOptimizationPasses(PassManagerBase &MPM,FunctionPassManager &FPM,
                                   unsigned OptLevel, unsigned SizeLevel) {
-  FPM.add(createVerifierPass());                  // Verify that input is correct
+  FPM.add(createVerifierPass());          // Verify that input is correct
+  MPM.add(createDebugInfoVerifierPass()); // Verify that debug info is correct
 
   PassManagerBuilder Builder;
   Builder.OptLevel = OptLevel;
@@ -240,6 +244,9 @@ static void AddStandardCompilePasses(PassManagerBase &PM) {
   if (StripDebug)
     addPass(PM, createStripSymbolsPass(true));
 
+  // Verify debug info only after it's (possibly) stripped.
+  PM.add(createDebugInfoVerifierPass());
+
   if (DisableOptimizations) return;
 
   // -std-compile-opts adds the same module passes as -O3.
@@ -256,6 +263,9 @@ static void AddStandardLinkPasses(PassManagerBase &PM) {
   // If the -strip-debug command line option was specified, do it.
   if (StripDebug)
     addPass(PM, createStripSymbolsPass(true));
+
+  // Verify debug info only after it's (possibly) stripped.
+  PM.add(createDebugInfoVerifierPass());
 
   if (DisableOptimizations) return;
 
@@ -600,8 +610,10 @@ int main(int argc, char **argv) {
   }
 
   // Check that the module is well formed on completion of optimization
-  if (!NoVerify && !VerifyEach)
+  if (!NoVerify && !VerifyEach) {
     Passes.add(createVerifierPass());
+    Passes.add(createDebugInfoVerifierPass());
+  }
 
   // Write bitcode or assembly to the output as the last step...
   if (!NoOutput && !AnalyzeOnly) {

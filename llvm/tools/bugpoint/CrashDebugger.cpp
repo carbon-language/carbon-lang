@@ -410,6 +410,7 @@ bool ReduceCrashingInstructions::TestInsts(std::vector<const Instruction*>
   // Verify that this is still valid.
   PassManager Passes;
   Passes.add(createVerifierPass());
+  Passes.add(createDebugInfoVerifierPass());
   Passes.run(*M);
 
   // Try running on the hacked up program...

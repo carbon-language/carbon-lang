@@ -181,6 +181,7 @@ void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM) {
 
 void LLVMAddVerifierPass(LLVMPassManagerRef PM) {
   unwrap(PM)->add(createVerifierPass());
+  // FIXME: should this also add createDebugInfoVerifierPass()?
 }
 
 void LLVMAddCorrelatedValuePropagationPass(LLVMPassManagerRef PM) {
