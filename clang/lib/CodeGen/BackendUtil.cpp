@@ -334,6 +334,8 @@ void EmitAssemblyHelper::CreatePasses() {
 
   // Set up the per-module pass manager.
   PassManager *MPM = getPerModulePasses();
+  if (CodeGenOpts.VerifyModule)
+    MPM->add(createDebugInfoVerifierPass());
 
   if (!CodeGenOpts.DisableGCov &&
       (CodeGenOpts.EmitGcovArcs || CodeGenOpts.EmitGcovNotes)) {
