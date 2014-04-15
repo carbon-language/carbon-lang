@@ -18,7 +18,8 @@ define void @bar(i32* byval %x) {
 
 define void @foo(i32* %x) {
 ; CHECK-LABEL: define void @foo(
-; CHECK: store i32 %1, i32* %x
+; CHECK: llvm.lifetime.start
+; CHECK: store i32 %2, i32* %x
   call void @bar(i32* byval %x)
   ret void
 }

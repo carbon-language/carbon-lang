@@ -394,6 +394,7 @@ static Value *HandleByValArgument(Value *Arg, Instruction *TheCall,
   
   Value *NewAlloca = new AllocaInst(AggTy, 0, Align, Arg->getName(), 
                                     &*Caller->begin()->begin());
+  IFI.StaticAllocas.push_back(cast<AllocaInst>(NewAlloca));
   
   // Uses of the argument in the function should use our new alloca
   // instead.
