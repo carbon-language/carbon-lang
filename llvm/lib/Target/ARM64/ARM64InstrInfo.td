@@ -1108,6 +1108,8 @@ def : Pat<(i64 (zextloadi8 ro_indexed8:$addr)),
     (SUBREG_TO_REG (i64 0), (LDRBBro ro_indexed8:$addr), sub_32)>;
 def : Pat<(i64 (zextloadi16 ro_indexed16:$addr)),
     (SUBREG_TO_REG (i64 0), (LDRHHro ro_indexed16:$addr), sub_32)>;
+def : Pat<(i64 (zextloadi32 ro_indexed32:$addr)),
+    (SUBREG_TO_REG (i64 0), (LDRWro ro_indexed32:$addr), sub_32)>;
 
 // zextloadi1 -> zextloadi8
 def : Pat<(i32 (zextloadi1 ro_indexed8:$addr)), (LDRBBro ro_indexed8:$addr)>;
