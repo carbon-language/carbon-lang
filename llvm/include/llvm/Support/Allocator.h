@@ -50,12 +50,14 @@ public:
   /// \brief Allocate \a Size bytes of \a Alignment aligned memory. This method
   /// must be implemented by \c DerivedT.
   void *Allocate(size_t Size, size_t Alignment) {
+#ifdef __clang__
     static_assert(static_cast<void *(AllocatorBase::*)(size_t, size_t)>(
                       &AllocatorBase::Allocate) !=
                       static_cast<void *(DerivedT::*)(size_t, size_t)>(
                           &DerivedT::Allocate),
                   "Class derives from AllocatorBase without implementing the "
                   "core Allocate(size_t, size_t) overload!");
+#endif
     return static_cast<DerivedT *>(this)->Allocate(Size, Alignment);
   }
 
