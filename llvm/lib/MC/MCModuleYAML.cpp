@@ -336,16 +336,16 @@ void MCModule2YAML::dumpFunction(const MCFunction *MCF) {
   F.Name = MCF->getName();
   for (MCFunction::const_iterator BBI = MCF->begin(), BBE = MCF->end();
        BBI != BBE; ++BBI) {
-    const MCBasicBlock *MCBB = *BBI;
+    const MCBasicBlock &MCBB = **BBI;
     F.BasicBlocks.resize(F.BasicBlocks.size() + 1);
     MCModuleYAML::BasicBlock &BB = F.BasicBlocks.back();
-    BB.Address = MCBB->getInsts()->getBeginAddr();
-    for (MCBasicBlock::pred_const_iterator PI = MCBB->pred_begin(),
-                                           PE = MCBB->pred_end();
+    BB.Address = MCBB.getInsts()->getBeginAddr();
+    for (MCBasicBlock::pred_const_iterator PI = MCBB.pred_begin(),
+                                           PE = MCBB.pred_end();
          PI != PE; ++PI)
       BB.Preds.push_back((*PI)->getInsts()->getBeginAddr());
-    for (MCBasicBlock::succ_const_iterator SI = MCBB->succ_begin(),
-                                           SE = MCBB->succ_end();
+    for (MCBasicBlock::succ_const_iterator SI = MCBB.succ_begin(),
+                                           SE = MCBB.succ_end();
          SI != SE; ++SI)
       BB.Succs.push_back((*SI)->getInsts()->getBeginAddr());
   }

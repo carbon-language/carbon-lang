@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCInst.h"
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -88,13 +89,12 @@ class MCFunction {
 
   std::string Name;
   MCModule *ParentModule;
-  typedef std::vector<MCBasicBlock*> BasicBlockListTy;
+  typedef std::vector<std::unique_ptr<MCBasicBlock>> BasicBlockListTy;
   BasicBlockListTy Blocks;
 
   // MCModule owns the function.
   friend class MCModule;
   MCFunction(StringRef Name, MCModule *Parent);
-  ~MCFunction();
 
 public:
   /// \brief Create an MCBasicBlock backed by Insts and add it to this function.
@@ -126,10 +126,10 @@ public:
   const_iterator   end() const { return Blocks.end(); }
         iterator   end()       { return Blocks.end(); }
 
-  const MCBasicBlock* front() const { return Blocks.front(); }
-        MCBasicBlock* front()       { return Blocks.front(); }
-  const MCBasicBlock*  back() const { return Blocks.back(); }
-        MCBasicBlock*  back()       { return Blocks.back(); }
+  const MCBasicBlock* front() const { return Blocks.front().get(); }
+        MCBasicBlock* front()       { return Blocks.front().get(); }
+  const MCBasicBlock*  back() const { return Blocks.back().get(); }
+        MCBasicBlock*  back()       { return Blocks.back().get(); }
 
   /// \brief Find the basic block, if any, that starts at \p StartAddr.
   const MCBasicBlock *find(uint64_t StartAddr) const;
