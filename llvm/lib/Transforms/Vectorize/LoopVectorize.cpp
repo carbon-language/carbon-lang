@@ -1067,7 +1067,8 @@ struct LoopVectorize : public FunctionPass {
       return false;
 
     if (DL == NULL) {
-      DEBUG(dbgs() << "LV: Not vectorizing: Missing data layout\n");
+      DEBUG(dbgs() << "\nLV: Not vectorizing " << F.getName()
+                   << ": Missing data layout\n");
       return false;
     }
 
@@ -1090,12 +1091,19 @@ struct LoopVectorize : public FunctionPass {
 
   bool processLoop(Loop *L) {
     assert(L->empty() && "Only process inner loops.");
-    DEBUG(dbgs() << "LV: Checking a loop in \""
+    DEBUG(dbgs() << "\nLV: Checking a loop in \""
                  << L->getHeader()->getParent()->getName() << "\" from "
                  << getDebugLocString(L->getHeader()->getFirstNonPHIOrDbg())
                  << "\n");
 
     LoopVectorizeHints Hints(L, DisableUnrolling);
+
+    DEBUG(dbgs() << "LV: Loop hints:"
+                 << " force=" << (Hints.Force == 0
+                                      ? "disabled"
+                                      : (Hints.Force == 1 ? "enabled" : "?"))
+                 << " width=" << Hints.Width << " unroll=" << Hints.Unroll
+                 << "\n");
 
     if (Hints.Force == 0) {
       DEBUG(dbgs() << "LV: Not vectorizing: #pragma vectorize disable.\n");
@@ -1150,10 +1158,10 @@ struct LoopVectorize : public FunctionPass {
     }
 
     // Select the optimal vectorization factor.
-    LoopVectorizationCostModel::VectorizationFactor VF;
-    VF = CM.selectVectorizationFactor(OptForSize, Hints.Width);
+    const LoopVectorizationCostModel::VectorizationFactor VF =
+                          CM.selectVectorizationFactor(OptForSize, Hints.Width);
     // Select the unroll factor.
-    unsigned UF = CM.selectUnrollFactor(OptForSize, Hints.Unroll, VF.Width,
+    const unsigned UF = CM.selectUnrollFactor(OptForSize, Hints.Unroll, VF.Width,
                                         VF.Cost);
 
     DEBUG(dbgs() << "LV: Found a vectorizable loop ("
@@ -5076,7 +5084,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
     }
   }
 
-  DEBUG(dbgs() << "LV: Selecting VF = : "<< Width << ".\n");
+  DEBUG(dbgs() << "LV: Selecting VF: "<< Width << ".\n");
   Factor.Width = Width;
   Factor.Cost = Width * Cost;
   return Factor;

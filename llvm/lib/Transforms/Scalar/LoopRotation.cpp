@@ -82,6 +82,9 @@ bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (skipOptnoneFunction(L))
     return false;
 
+  // Save the loop metadata.
+  MDNode *LoopMD = L->getLoopID();
+
   LI = &getAnalysis<LoopInfo>();
   TTI = &getAnalysis<TargetTransformInfo>();
 
@@ -96,6 +99,12 @@ bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
     MadeChange = true;
     SimplifiedLatch = false;
   }
+
+  // Restore the loop metadata.
+  // NB! We presume LoopRotation DOESN'T ADD its own metadata.
+  if ((MadeChange || SimplifiedLatch) && LoopMD)
+    L->setLoopID(LoopMD);
+
   return MadeChange;
 }
 
