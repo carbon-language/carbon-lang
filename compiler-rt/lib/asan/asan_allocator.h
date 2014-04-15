@@ -17,6 +17,7 @@
 
 #include "asan_internal.h"
 #include "asan_interceptors.h"
+#include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_list.h"
 
 namespace __asan {
@@ -92,10 +93,46 @@ class AsanChunkFifoList: public IntrusiveList<AsanChunk> {
   uptr size_;
 };
 
+struct AsanMapUnmapCallback {
+  void OnMap(uptr p, uptr size) const;
+  void OnUnmap(uptr p, uptr size) const;
+};
+
+#if SANITIZER_CAN_USE_ALLOCATOR64
+# if defined(__powerpc64__)
+const uptr kAllocatorSpace =  0xa0000000000ULL;
+const uptr kAllocatorSize  =  0x20000000000ULL;  // 2T.
+# else
+const uptr kAllocatorSpace = 0x600000000000ULL;
+const uptr kAllocatorSize  =  0x40000000000ULL;  // 4T.
+# endif
+typedef DefaultSizeClassMap SizeClassMap;
+typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 0 /*metadata*/,
+    SizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;
+#else  // Fallback to SizeClassAllocator32.
+static const uptr kRegionSizeLog = 20;
+static const uptr kNumRegions = SANITIZER_MMAP_RANGE_SIZE >> kRegionSizeLog;
+# if SANITIZER_WORDSIZE == 32
+typedef FlatByteMap<kNumRegions> ByteMap;
+# elif SANITIZER_WORDSIZE == 64
+typedef TwoLevelByteMap<(kNumRegions >> 12), 1 << 12> ByteMap;
+# endif
+typedef CompactSizeClassMap SizeClassMap;
+typedef SizeClassAllocator32<0, SANITIZER_MMAP_RANGE_SIZE, 16,
+  SizeClassMap, kRegionSizeLog,
+  ByteMap,
+  AsanMapUnmapCallback> PrimaryAllocator;
+#endif  // SANITIZER_CAN_USE_ALLOCATOR64
+
+typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
+typedef LargeMmapAllocator<AsanMapUnmapCallback> SecondaryAllocator;
+typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
+    SecondaryAllocator> Allocator;
+
+
 struct AsanThreadLocalMallocStorage {
   uptr quarantine_cache[16];
-  // Allocator cache contains atomic_uint64_t which must be 8-byte aligned.
-  ALIGNED(8) uptr allocator2_cache[96 * (512 * 8 + 16)];  // Opaque.
+  AllocatorCache allocator2_cache;
   void CommitBack();
  private:
   // These objects are allocated via mmap() and are zero-initialized.

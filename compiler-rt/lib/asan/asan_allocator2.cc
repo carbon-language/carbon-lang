@@ -21,7 +21,6 @@
 #include "asan_report.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
-#include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_list.h"
@@ -31,64 +30,30 @@
 
 namespace __asan {
 
-struct AsanMapUnmapCallback {
-  void OnMap(uptr p, uptr size) const {
-    PoisonShadow(p, size, kAsanHeapLeftRedzoneMagic);
-    // Statistics.
-    AsanStats &thread_stats = GetCurrentThreadStats();
-    thread_stats.mmaps++;
-    thread_stats.mmaped += size;
-  }
-  void OnUnmap(uptr p, uptr size) const {
-    PoisonShadow(p, size, 0);
-    // We are about to unmap a chunk of user memory.
-    // Mark the corresponding shadow memory as not needed.
-    FlushUnneededASanShadowMemory(p, size);
-    // Statistics.
-    AsanStats &thread_stats = GetCurrentThreadStats();
-    thread_stats.munmaps++;
-    thread_stats.munmaped += size;
-  }
-};
-
-#if SANITIZER_CAN_USE_ALLOCATOR64
-# if defined(__powerpc64__)
-const uptr kAllocatorSpace =  0xa0000000000ULL;
-const uptr kAllocatorSize  =  0x20000000000ULL;  // 2T.
-# else
-const uptr kAllocatorSpace = 0x600000000000ULL;
-const uptr kAllocatorSize  =  0x40000000000ULL;  // 4T.
-# endif
-typedef DefaultSizeClassMap SizeClassMap;
-typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 0 /*metadata*/,
-    SizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;
-#else  // Fallback to SizeClassAllocator32.
-static const uptr kRegionSizeLog = 20;
-static const uptr kNumRegions = SANITIZER_MMAP_RANGE_SIZE >> kRegionSizeLog;
-# if SANITIZER_WORDSIZE == 32
-typedef FlatByteMap<kNumRegions> ByteMap;
-# elif SANITIZER_WORDSIZE == 64
-typedef TwoLevelByteMap<(kNumRegions >> 12), 1 << 12> ByteMap;
-# endif
-typedef CompactSizeClassMap SizeClassMap;
-typedef SizeClassAllocator32<0, SANITIZER_MMAP_RANGE_SIZE, 16,
-  SizeClassMap, kRegionSizeLog,
-  ByteMap,
-  AsanMapUnmapCallback> PrimaryAllocator;
-#endif  // SANITIZER_CAN_USE_ALLOCATOR64
-
-typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
-typedef LargeMmapAllocator<AsanMapUnmapCallback> SecondaryAllocator;
-typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
-    SecondaryAllocator> Allocator;
+void AsanMapUnmapCallback::OnMap(uptr p, uptr size) const {
+  PoisonShadow(p, size, kAsanHeapLeftRedzoneMagic);
+  // Statistics.
+  AsanStats &thread_stats = GetCurrentThreadStats();
+  thread_stats.mmaps++;
+  thread_stats.mmaped += size;
+}
+void AsanMapUnmapCallback::OnUnmap(uptr p, uptr size) const {
+  PoisonShadow(p, size, 0);
+  // We are about to unmap a chunk of user memory.
+  // Mark the corresponding shadow memory as not needed.
+  FlushUnneededASanShadowMemory(p, size);
+  // Statistics.
+  AsanStats &thread_stats = GetCurrentThreadStats();
+  thread_stats.munmaps++;
+  thread_stats.munmaped += size;
+}
 
 // We can not use THREADLOCAL because it is not supported on some of the
 // platforms we care about (OSX 10.6, Android).
 // static THREADLOCAL AllocatorCache cache;
 AllocatorCache *GetAllocatorCache(AsanThreadLocalMallocStorage *ms) {
   CHECK(ms);
-  CHECK_LE(sizeof(AllocatorCache), sizeof(ms->allocator2_cache));
-  return reinterpret_cast<AllocatorCache *>(ms->allocator2_cache);
+  return &ms->allocator2_cache;
 }
 
 static Allocator allocator;
