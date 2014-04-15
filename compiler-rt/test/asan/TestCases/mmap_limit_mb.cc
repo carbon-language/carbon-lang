@@ -27,6 +27,6 @@ int main(int argc, char **argv) {
   for (std::vector<char *>::const_iterator it = v.begin(); it != v.end(); ++it)
     delete[](*it);
   fprintf(stderr, "PASS\n");
-  // CHECK: AddressSanitizer CHECK failed{{.*}}total_mmaped{{.*}}mmap_limit_mb
+  // CHECK: total_mmaped{{.*}}mmap_limit_mb
   return 0;
 }

@@ -254,7 +254,7 @@ void IncreaseTotalMmap(uptr size) {
     // Since for now mmap_limit_mb is not a user-facing flag, just CHECK.
     uptr mmap_limit_mb = common_flags()->mmap_limit_mb;
     common_flags()->mmap_limit_mb = 0;  // Allow mmap in CHECK.
-    CHECK_LT(total_mmaped >> 20, mmap_limit_mb);
+    RAW_CHECK(total_mmaped >> 20 < mmap_limit_mb);
   }
 }
 
