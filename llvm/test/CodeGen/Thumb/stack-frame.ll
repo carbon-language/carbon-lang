@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=thumb-eabi %s -o - | FileCheck %s
+; RUN: llc -mtriple=thumb-eabi < %s -o - | FileCheck %s
 
 define void @f1() {
 	%c = alloca i8, align 1
