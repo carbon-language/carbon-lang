@@ -4872,11 +4872,9 @@ void NVPTXTargetCodeGenInfo::addNVVMMetadata(llvm::Function *F, StringRef Name,
   // Get "nvvm.annotations" metadata node
   llvm::NamedMDNode *MD = M->getOrInsertNamedMetadata("nvvm.annotations");
 
-  llvm::SmallVector<llvm::Value *, 3> MDVals;
-  MDVals.push_back(F);
-  MDVals.push_back(llvm::MDString::get(Ctx, Name));
-  MDVals.push_back(
-      llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx), Operand));
+  llvm::Value *MDVals[] = {
+      F, llvm::MDString::get(Ctx, Name),
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(Ctx), Operand)};
   // Append metadata to nvvm.annotations
   MD->addOperand(llvm::MDNode::get(Ctx, MDVals));
 }
