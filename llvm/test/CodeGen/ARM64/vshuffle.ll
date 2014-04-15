@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm64-apple-ios7.0 | FileCheck %s
+; RUN: llc < %s -mtriple=arm64-apple-ios7.0 -mcpu=cyclone | FileCheck %s
 
 
 ; The mask:

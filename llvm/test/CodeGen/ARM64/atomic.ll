@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm64 -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=arm64 -verify-machineinstrs -mcpu=cyclone | FileCheck %s
 
 define i32 @val_compare_and_swap(i32* %p) {
 ; CHECK-LABEL: val_compare_and_swap:

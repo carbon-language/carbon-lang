@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
-; RUN: llc -mtriple=arm64-none-linux-gnu -verify-machineinstrs -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
+; RUN: llc -mtriple=arm64-none-linux-gnu -mcpu=cyclone -verify-machineinstrs -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 
 @lhs = global fp128 zeroinitializer
 @rhs = global fp128 zeroinitializer

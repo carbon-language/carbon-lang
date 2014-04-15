@@ -1,4 +1,4 @@
-; RUN: llc -march=arm64 -arm64-neon-syntax=apple < %s | FileCheck %s
+; RUN: llc -march=arm64 -arm64-neon-syntax=apple < %s -mcpu=cyclone | FileCheck %s
 
 define signext i8 @test_vaddv_s8(<8 x i8> %a1) {
 ; CHECK-LABEL: test_vaddv_s8:

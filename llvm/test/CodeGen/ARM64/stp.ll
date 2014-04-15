@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=arm64 -arm64-stp-suppress=false -verify-machineinstrs | FileCheck %s
+; RUN: llc < %s -march=arm64 -arm64-stp-suppress=false -verify-machineinstrs -mcpu=cyclone | FileCheck %s
 ; RUN: llc < %s -march=arm64 -arm64-unscaled-mem-op=true\
-; RUN:   -verify-machineinstrs | FileCheck -check-prefix=STUR_CHK %s
+; RUN:   -verify-machineinstrs -mcpu=cyclone | FileCheck -check-prefix=STUR_CHK %s
 
 ; CHECK: stp_int
 ; CHECK: stp w0, w1, [x2]

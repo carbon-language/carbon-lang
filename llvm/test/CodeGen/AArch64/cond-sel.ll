@@ -1,5 +1,5 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
-; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -mcpu=cyclone | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 @var32 = global i32 0

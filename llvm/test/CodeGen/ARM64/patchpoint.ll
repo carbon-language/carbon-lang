@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm64-apple-darwin -enable-misched=0 | FileCheck %s
+; RUN: llc < %s -mtriple=arm64-apple-darwin -enable-misched=0 -mcpu=cyclone | FileCheck %s
 
 ; Trivial patchpoint codegen
 ;

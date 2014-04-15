@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm64 -arm64-neon-syntax=apple | FileCheck %s
+; RUN: llc < %s -march=arm64 -arm64-neon-syntax=apple -mcpu=cyclone | FileCheck %s
 
 define double @foo(<2 x double> %a) nounwind {
 ; CHECK-LABEL: foo:

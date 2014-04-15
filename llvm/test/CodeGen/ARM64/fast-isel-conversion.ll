@@ -1,4 +1,4 @@
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=arm64-apple-darwin | FileCheck %s
+; RUN: llc < %s -O0 -fast-isel-abort -mtriple=arm64-apple-darwin -mcpu=cyclone | FileCheck %s
 
 ;; Test various conversions.
 define zeroext i32 @trunc_(i8 zeroext %a, i16 zeroext %b, i32 %c, i64 %d) nounwind ssp {

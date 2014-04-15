@@ -2,8 +2,8 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -code-model=large | FileCheck --check-prefix=CHECK-LARGE %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -code-model=large -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP-LARGE %s
-; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu | FileCheck %s
-; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu -code-model=large | FileCheck --check-prefix=CHECK-LARGE %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu -mcpu=cyclone | FileCheck %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu -code-model=large -mcpu=cyclone | FileCheck --check-prefix=CHECK-LARGE %s
 
 @varfloat = global float 0.0
 @vardouble = global double 0.0

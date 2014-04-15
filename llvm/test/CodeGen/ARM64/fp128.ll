@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=arm64-linux-gnu -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=arm64-linux-gnu -verify-machineinstrs -mcpu=cyclone < %s | FileCheck %s
 
 @lhs = global fp128 zeroinitializer, align 16
 @rhs = global fp128 zeroinitializer, align 16

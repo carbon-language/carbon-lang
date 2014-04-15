@@ -32,10 +32,8 @@ ARM64Subtarget::ARM64Subtarget(const std::string &TT, const std::string &CPU,
       CPUString(CPU), TargetTriple(TT) {
   // Determine default and user-specified characteristics
 
-  // FIXME: Make this darwin-only.
   if (CPUString.empty())
-    // We default to Cyclone for now, on Darwin.
-    CPUString = "cyclone";
+    CPUString = "generic";
 
   ParseSubtargetFeatures(CPUString, FS);
 }
