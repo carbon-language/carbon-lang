@@ -723,8 +723,8 @@ public:
   unsigned format(const SmallVectorImpl<AnnotatedLine *> &Lines, bool DryRun,
                   int AdditionalIndent = 0, bool FixBadIndentation = false) {
     // Try to look up already computed penalty in DryRun-mode.
-    std::pair<const SmallVectorImpl<AnnotatedLine *> *, unsigned> CacheKey{
-        &Lines, AdditionalIndent};
+    std::pair<const SmallVectorImpl<AnnotatedLine *> *, unsigned> CacheKey(
+        &Lines, AdditionalIndent);
     auto CacheIt = PenaltyCache.find(CacheKey);
     if (DryRun && CacheIt != PenaltyCache.end())
       return CacheIt->second;
