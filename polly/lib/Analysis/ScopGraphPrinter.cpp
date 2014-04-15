@@ -135,7 +135,7 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
     }
 
     for (const auto &SubRegion : *R)
-      printRegionCluster(SD, SubRegion, O, depth + 1);
+      printRegionCluster(SD, SubRegion.get(), O, depth + 1);
 
     RegionInfo *RI = R->getRegionInfo();
 
