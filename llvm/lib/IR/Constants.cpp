@@ -1354,7 +1354,7 @@ void UndefValue::destroyConstant() {
 //
 
 BlockAddress *BlockAddress::get(BasicBlock *BB) {
-  assert(BB->getParent() != 0 && "Block must have a parent");
+  assert(BB->getParent() && "Block must have a parent");
   return get(BB->getParent(), BB);
 }
 
@@ -1381,7 +1381,7 @@ BlockAddress *BlockAddress::lookup(const BasicBlock *BB) {
     return nullptr;
 
   const Function *F = BB->getParent();
-  assert(F != 0 && "Block must have a parent");
+  assert(F && "Block must have a parent");
   BlockAddress *BA =
       F->getContext().pImpl->BlockAddresses.lookup(std::make_pair(F, BB));
   assert(BA && "Refcount and block address map disagree!");

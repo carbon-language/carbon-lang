@@ -420,7 +420,8 @@ MachOObjectFile::MachOObjectFile(MemoryBuffer *Object, bool IsLittleEndian,
                                  bool Is64bits, error_code &EC,
                                  bool BufferOwned)
     : ObjectFile(getMachOType(IsLittleEndian, Is64bits), Object, BufferOwned),
-      SymtabLoadCmd(NULL), DysymtabLoadCmd(NULL), DataInCodeLoadCmd(NULL) {
+      SymtabLoadCmd(nullptr), DysymtabLoadCmd(nullptr),
+      DataInCodeLoadCmd(nullptr) {
   uint32_t LoadCommandCount = this->getHeader().ncmds;
   MachO::LoadCommandType SegmentLoadType = is64Bit() ?
     MachO::LC_SEGMENT_64 : MachO::LC_SEGMENT;

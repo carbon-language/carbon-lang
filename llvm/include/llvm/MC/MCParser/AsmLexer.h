@@ -42,7 +42,7 @@ public:
   AsmLexer(const MCAsmInfo &MAI);
   ~AsmLexer();
 
-  void setBuffer(const MemoryBuffer *buf, const char *ptr = NULL);
+  void setBuffer(const MemoryBuffer *buf, const char *ptr = nullptr);
 
   StringRef LexUntilEndOfStatement() override;
   StringRef LexUntilEndOfLine();

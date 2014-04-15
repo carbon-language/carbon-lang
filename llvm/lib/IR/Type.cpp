@@ -497,7 +497,7 @@ StructType *StructType::get(LLVMContext &Context, bool isPacked) {
 }
 
 StructType *StructType::get(Type *type, ...) {
-  assert(type != 0 && "Cannot create a struct type with no elements with this");
+  assert(type && "Cannot create a struct type with no elements with this");
   LLVMContext &Ctx = type->getContext();
   va_list ap;
   SmallVector<llvm::Type*, 8> StructFields;
@@ -538,7 +538,7 @@ StructType *StructType::create(ArrayRef<Type*> Elements) {
 }
 
 StructType *StructType::create(StringRef Name, Type *type, ...) {
-  assert(type != 0 && "Cannot create a struct type with no elements with this");
+  assert(type && "Cannot create a struct type with no elements with this");
   LLVMContext &Ctx = type->getContext();
   va_list ap;
   SmallVector<llvm::Type*, 8> StructFields;
@@ -582,7 +582,7 @@ StringRef StructType::getName() const {
 }
 
 void StructType::setBody(Type *type, ...) {
-  assert(type != 0 && "Cannot create a struct type with no elements with this");
+  assert(type && "Cannot create a struct type with no elements with this");
   va_list ap;
   SmallVector<llvm::Type*, 8> StructFields;
   va_start(ap, type);

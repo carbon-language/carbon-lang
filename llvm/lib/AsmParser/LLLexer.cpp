@@ -150,7 +150,7 @@ static bool isLabelChar(char C) {
 static const char *isLabelTail(const char *CurPtr) {
   while (1) {
     if (CurPtr[0] == ':') return CurPtr+1;
-    if (!isLabelChar(CurPtr[0])) return 0;
+    if (!isLabelChar(CurPtr[0])) return nullptr;
     ++CurPtr;
   }
 }
@@ -435,8 +435,8 @@ lltok::Kind LLLexer::LexHash() {
 ///    HexIntConstant  [us]0x[0-9A-Fa-f]+
 lltok::Kind LLLexer::LexIdentifier() {
   const char *StartChar = CurPtr;
-  const char *IntEnd = CurPtr[-1] == 'i' ? 0 : StartChar;
-  const char *KeywordEnd = 0;
+  const char *IntEnd = CurPtr[-1] == 'i' ? nullptr : StartChar;
+  const char *KeywordEnd = nullptr;
 
   for (; isLabelChar(*CurPtr); ++CurPtr) {
     // If we decide this is an integer, remember the end of the sequence.
@@ -455,7 +455,7 @@ lltok::Kind LLLexer::LexIdentifier() {
 
   // Otherwise, this wasn't a label.  If this was valid as an integer type,
   // return it.
-  if (IntEnd == 0) IntEnd = CurPtr;
+  if (!IntEnd) IntEnd = CurPtr;
   if (IntEnd != StartChar) {
     CurPtr = IntEnd;
     uint64_t NumBits = atoull(StartChar, CurPtr);
@@ -469,7 +469,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   }
 
   // Otherwise, this was a letter sequence.  See which keyword this is.
-  if (KeywordEnd == 0) KeywordEnd = CurPtr;
+  if (!KeywordEnd) KeywordEnd = CurPtr;
   CurPtr = KeywordEnd;
   --StartChar;
   unsigned Len = CurPtr-StartChar;

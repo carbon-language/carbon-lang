@@ -23,7 +23,7 @@ MDString *MDBuilder::createString(StringRef Str) {
 
 MDNode *MDBuilder::createFPMath(float Accuracy) {
   if (Accuracy == 0.0)
-    return 0;
+    return nullptr;
   assert(Accuracy > 0.0 && "Invalid fpmath accuracy!");
   Value *Op = ConstantFP::get(Type::getFloatTy(Context), Accuracy);
   return MDNode::get(Context, Op);

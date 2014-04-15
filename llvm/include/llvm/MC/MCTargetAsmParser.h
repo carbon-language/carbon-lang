@@ -63,7 +63,7 @@ struct ParseInstructionInfo {
 
   SmallVectorImpl<AsmRewrite> *AsmRewrites;
 
-  ParseInstructionInfo() : AsmRewrites(0) {}
+  ParseInstructionInfo() : AsmRewrites(nullptr) {}
   ParseInstructionInfo(SmallVectorImpl<AsmRewrite> *rewrites)
     : AsmRewrites(rewrites) {}
 
@@ -179,7 +179,7 @@ public:
   virtual const MCExpr *applyModifierToExpr(const MCExpr *E,
                                             MCSymbolRefExpr::VariantKind,
                                             MCContext &Ctx) {
-    return 0;
+    return nullptr;
   }
 
   virtual void onLabelParsed(MCSymbol *Symbol) { };

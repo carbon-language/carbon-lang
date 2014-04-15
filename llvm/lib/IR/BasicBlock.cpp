@@ -81,7 +81,7 @@ BasicBlock::~BasicBlock() {
     }
   }
 
-  assert(getParent() == 0 && "BasicBlock still linked into the program!");
+  assert(getParent() == nullptr && "BasicBlock still linked into the program!");
   dropAllReferences();
   InstList.clear();
 }

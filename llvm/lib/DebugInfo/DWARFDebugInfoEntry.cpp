@@ -99,11 +99,11 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFUnit *U,
   uint64_t AbbrCode = DebugInfoData.getULEB128(OffsetPtr);
   if (0 == AbbrCode) {
     // NULL debug tag entry.
-    AbbrevDecl = NULL;
+    AbbrevDecl = nullptr;
     return true;
   }
   AbbrevDecl = U->getAbbreviations()->getAbbreviationDeclaration(AbbrCode);
-  if (0 == AbbrevDecl) {
+  if (nullptr == AbbrevDecl) {
     // Restore the original offset.
     *OffsetPtr = Offset;
     return false;
@@ -266,14 +266,15 @@ bool DWARFDebugInfoEntryMinimal::addressRangeContainsAddress(
 const char *
 DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U) const {
   if (!isSubroutineDIE())
-    return 0;
+    return nullptr;
   // Try to get mangled name if possible.
   if (const char *name =
-      getAttributeValueAsString(U, DW_AT_MIPS_linkage_name, 0))
+      getAttributeValueAsString(U, DW_AT_MIPS_linkage_name, nullptr))
     return name;
-  if (const char *name = getAttributeValueAsString(U, DW_AT_linkage_name, 0))
+  if (const char *name = getAttributeValueAsString(U, DW_AT_linkage_name,
+                                                   nullptr))
     return name;
-  if (const char *name = getAttributeValueAsString(U, DW_AT_name, 0))
+  if (const char *name = getAttributeValueAsString(U, DW_AT_name, nullptr))
     return name;
   // Try to get name from specification DIE.
   uint32_t spec_ref =
@@ -295,7 +296,7 @@ DWARFDebugInfoEntryMinimal::getSubroutineName(const DWARFUnit *U) const {
         return name;
     }
   }
-  return 0;
+  return nullptr;
 }
 
 void DWARFDebugInfoEntryMinimal::getCallerFrame(const DWARFUnit *U,

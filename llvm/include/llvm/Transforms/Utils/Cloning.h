@@ -96,8 +96,8 @@ struct ClonedCodeInfo {
 ///
 BasicBlock *CloneBasicBlock(const BasicBlock *BB,
                             ValueToValueMapTy &VMap,
-                            const Twine &NameSuffix = "", Function *F = 0,
-                            ClonedCodeInfo *CodeInfo = 0);
+                            const Twine &NameSuffix = "", Function *F = nullptr,
+                            ClonedCodeInfo *CodeInfo = nullptr);
 
 /// CloneFunction - Return a copy of the specified function, but without
 /// embedding the function into another module.  Also, any references specified
@@ -114,7 +114,7 @@ BasicBlock *CloneBasicBlock(const BasicBlock *BB,
 Function *CloneFunction(const Function *F,
                         ValueToValueMapTy &VMap,
                         bool ModuleLevelChanges,
-                        ClonedCodeInfo *CodeInfo = 0);
+                        ClonedCodeInfo *CodeInfo = nullptr);
 
 /// Clone OldFunc into NewFunc, transforming the old arguments into references
 /// to VMap values.  Note that if NewFunc already has basic blocks, the ones
@@ -130,9 +130,9 @@ void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                        bool ModuleLevelChanges,
                        SmallVectorImpl<ReturnInst*> &Returns,
                        const char *NameSuffix = "", 
-                       ClonedCodeInfo *CodeInfo = 0,
-                       ValueMapTypeRemapper *TypeMapper = 0,
-                       ValueMaterializer *Materializer = 0);
+                       ClonedCodeInfo *CodeInfo = nullptr,
+                       ValueMapTypeRemapper *TypeMapper = nullptr,
+                       ValueMaterializer *Materializer = nullptr);
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,
 /// except that it does some simple constant prop and DCE on the fly.  The
@@ -150,16 +150,16 @@ void CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                bool ModuleLevelChanges,
                                SmallVectorImpl<ReturnInst*> &Returns,
                                const char *NameSuffix = "", 
-                               ClonedCodeInfo *CodeInfo = 0,
-                               const DataLayout *DL = 0,
-                               Instruction *TheCall = 0);
+                               ClonedCodeInfo *CodeInfo = nullptr,
+                               const DataLayout *DL = nullptr,
+                               Instruction *TheCall = nullptr);
 
   
 /// InlineFunctionInfo - This class captures the data input to the
 /// InlineFunction call, and records the auxiliary results produced by it. 
 class InlineFunctionInfo {
 public:
-  explicit InlineFunctionInfo(CallGraph *cg = 0, const DataLayout *DL = 0)
+  explicit InlineFunctionInfo(CallGraph *cg = nullptr, const DataLayout *DL = nullptr)
     : CG(cg), DL(DL) {}
   
   /// CG - If non-null, InlineFunction will update the callgraph to reflect the

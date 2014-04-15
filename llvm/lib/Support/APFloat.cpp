@@ -1358,7 +1358,7 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
 {
   switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   case PackCategoriesIntoKey(fcNaN, fcZero):
   case PackCategoriesIntoKey(fcNaN, fcNormal):
@@ -1485,7 +1485,7 @@ APFloat::multiplySpecials(const APFloat &rhs)
 {
   switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   case PackCategoriesIntoKey(fcNaN, fcZero):
   case PackCategoriesIntoKey(fcNaN, fcNormal):
@@ -1529,7 +1529,7 @@ APFloat::divideSpecials(const APFloat &rhs)
 {
   switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   case PackCategoriesIntoKey(fcZero, fcNaN):
   case PackCategoriesIntoKey(fcNormal, fcNaN):
@@ -1570,7 +1570,7 @@ APFloat::modSpecials(const APFloat &rhs)
 {
   switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   case PackCategoriesIntoKey(fcNaN, fcZero):
   case PackCategoriesIntoKey(fcNaN, fcNormal):
@@ -1882,7 +1882,7 @@ APFloat::compare(const APFloat &rhs) const
 
   switch (PackCategoriesIntoKey(category, rhs.category)) {
   default:
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
 
   case PackCategoriesIntoKey(fcNaN, fcZero):
   case PackCategoriesIntoKey(fcNaN, fcNormal):
@@ -3331,7 +3331,7 @@ APFloat::initFromAPInt(const fltSemantics* Sem, const APInt& api)
   if (Sem == &PPCDoubleDouble)
     return initFromPPCDoubleDoubleAPInt(api);
 
-  llvm_unreachable(0);
+  llvm_unreachable(nullptr);
 }
 
 APFloat

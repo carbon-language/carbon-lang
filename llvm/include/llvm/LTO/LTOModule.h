@@ -129,7 +129,7 @@ public:
   const char *getSymbolName(uint32_t index) {
     if (index < _symbols.size())
       return _symbols[index].name;
-    return NULL;
+    return nullptr;
   }
 
   /// getDependentLibraryCount - Get the number of dependent libraries
@@ -141,7 +141,7 @@ public:
   const char *getDependentLibrary(uint32_t index) {
     if (index < _deplibs.size())
       return _deplibs[index];
-    return NULL;
+    return nullptr;
   }
 
   /// getLinkerOptCount - Get the number of linker options
@@ -153,7 +153,7 @@ public:
   const char *getLinkerOpt(uint32_t index) {
     if (index < _linkeropts.size())
       return _linkeropts[index];
-    return NULL;
+    return nullptr;
   }
 
   /// getLLVVMModule - Return the Module.

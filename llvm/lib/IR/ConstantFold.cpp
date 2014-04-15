@@ -1951,7 +1951,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
   if (isa<UndefValue>(C)) {
     PointerType *Ptr = cast<PointerType>(C->getType());
     Type *Ty = GetElementPtrInst::getIndexedType(Ptr, Idxs);
-    assert(Ty != 0 && "Invalid indices for GEP!");
+    assert(Ty && "Invalid indices for GEP!");
     return UndefValue::get(PointerType::get(Ty, Ptr->getAddressSpace()));
   }
 
@@ -1965,7 +1965,7 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
     if (isNull) {
       PointerType *Ptr = cast<PointerType>(C->getType());
       Type *Ty = GetElementPtrInst::getIndexedType(Ptr, Idxs);
-      assert(Ty != 0 && "Invalid indices for GEP!");
+      assert(Ty && "Invalid indices for GEP!");
       return ConstantPointerNull::get(PointerType::get(Ty,
                                                        Ptr->getAddressSpace()));
     }

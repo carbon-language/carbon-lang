@@ -103,7 +103,7 @@ void cl::MarkOptionsChanged() {
 static Option *RegisteredOptionList = nullptr;
 
 void Option::addArgument() {
-  assert(NextRegistered == 0 && "argument multiply registered!");
+  assert(!NextRegistered && "argument multiply registered!");
 
   NextRegistered = RegisteredOptionList;
   RegisteredOptionList = this;
@@ -111,7 +111,7 @@ void Option::addArgument() {
 }
 
 void Option::removeArgument() {
-  assert(NextRegistered != 0 && "argument never registered");
+  assert(NextRegistered && "argument never registered");
   assert(RegisteredOptionList == this && "argument is not the last registered");
   RegisteredOptionList = NextRegistered;
   MarkOptionsChanged();

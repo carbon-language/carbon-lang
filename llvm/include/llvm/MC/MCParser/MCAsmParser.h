@@ -39,7 +39,7 @@ public:
     unsigned Length, Size, Type;
 
     void clear() {
-      OpDecl = 0;
+      OpDecl = nullptr;
       IsVarDecl = false;
       Length = 1;
       Size = 0;

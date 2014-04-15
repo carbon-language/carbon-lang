@@ -114,7 +114,7 @@ public:
   /// operations needed to reliably use the memory are also performed.
   ///
   /// Returns true if an error occurred, false otherwise.
-  virtual bool finalizeMemory(std::string *ErrMsg = 0) = 0;
+  virtual bool finalizeMemory(std::string *ErrMsg = nullptr) = 0;
 };
 
 // Create wrappers for C Binding types (see CBindingWrapping.h).

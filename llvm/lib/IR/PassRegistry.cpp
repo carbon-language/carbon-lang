@@ -174,7 +174,7 @@ void PassRegistry::registerAnalysisGroup(const void *InterfaceID,
            "Cannot add a pass to the same analysis group more than once!");
     AGI.Implementations.insert(ImplementationInfo);
     if (isDefault) {
-      assert(InterfaceInfo->getNormalCtor() == 0 &&
+      assert(InterfaceInfo->getNormalCtor() == nullptr &&
              "Default implementation for analysis group already specified!");
       assert(ImplementationInfo->getNormalCtor() &&
            "Cannot specify pass as default if it does not have a default ctor");

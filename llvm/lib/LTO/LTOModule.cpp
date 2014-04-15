@@ -100,7 +100,7 @@ LTOModule *LTOModule::makeLTOModule(const char *path, TargetOptions options,
   std::unique_ptr<MemoryBuffer> buffer;
   if (error_code ec = MemoryBuffer::getFile(path, buffer)) {
     errMsg = ec.message();
-    return NULL;
+    return nullptr;
   }
   return makeLTOModule(buffer.release(), options, errMsg);
 }
@@ -120,7 +120,7 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
   if (error_code ec =
           MemoryBuffer::getOpenFileSlice(fd, path, buffer, map_size, offset)) {
     errMsg = ec.message();
-    return NULL;
+    return nullptr;
   }
   return makeLTOModule(buffer.release(), options, errMsg);
 }
@@ -130,7 +130,7 @@ LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
                                     std::string &errMsg, StringRef path) {
   std::unique_ptr<MemoryBuffer> buffer(makeBuffer(mem, length, path));
   if (!buffer)
-    return NULL;
+    return nullptr;
   return makeLTOModule(buffer.release(), options, errMsg);
 }
 
@@ -143,7 +143,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   if (error_code EC = ModuleOrErr.getError()) {
     errMsg = EC.message();
     delete buffer;
-    return NULL;
+    return nullptr;
   }
   std::unique_ptr<Module> m(ModuleOrErr.get());
 
@@ -155,7 +155,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
   // find machine architecture for this module
   const Target *march = TargetRegistry::lookupTarget(TripleStr, errMsg);
   if (!march)
-    return NULL;
+    return nullptr;
 
   // construct LTOModule, hand over ownership of module and target
   SubtargetFeatures Features;
@@ -189,7 +189,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
 
   if (Ret->parseSymbols(errMsg)) {
     delete Ret;
-    return NULL;
+    return nullptr;
   }
 
   Ret->parseMetadata();
@@ -460,7 +460,7 @@ void LTOModule::addAsmGlobalSymbol(const char *name,
 
   NameAndAttributes &info = _undefines[entry.getKey().data()];
 
-  if (info.symbol == 0) {
+  if (info.symbol == nullptr) {
     // FIXME: This is trying to take care of module ASM like this:
     //
     //   module asm ".zerofill __FOO, __foo, _bar_baz_qux, 0"
@@ -474,7 +474,7 @@ void LTOModule::addAsmGlobalSymbol(const char *name,
     info.attributes =
       LTO_SYMBOL_PERMISSIONS_DATA | LTO_SYMBOL_DEFINITION_REGULAR | scope;
     info.isFunction = false;
-    info.symbol = 0;
+    info.symbol = nullptr;
 
     // add to table of symbols
     _symbols.push_back(info);
@@ -508,7 +508,7 @@ void LTOModule::addAsmGlobalSymbolUndef(const char *name) {
   info.name = entry.getKey().data();
   info.attributes = attr;
   info.isFunction = false;
-  info.symbol = 0;
+  info.symbol = nullptr;
 
   entry.setValue(info);
 }

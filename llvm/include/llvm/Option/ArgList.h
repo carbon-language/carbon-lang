@@ -160,16 +160,16 @@ public:
   ///
   /// \p Claim Whether the argument should be claimed, if it exists.
   bool hasArgNoClaim(OptSpecifier Id) const {
-    return getLastArgNoClaim(Id) != 0;
+    return getLastArgNoClaim(Id) != nullptr;
   }
   bool hasArg(OptSpecifier Id) const {
-    return getLastArg(Id) != 0;
+    return getLastArg(Id) != nullptr;
   }
   bool hasArg(OptSpecifier Id0, OptSpecifier Id1) const {
-    return getLastArg(Id0, Id1) != 0;
+    return getLastArg(Id0, Id1) != nullptr;
   }
   bool hasArg(OptSpecifier Id0, OptSpecifier Id1, OptSpecifier Id2) const {
-    return getLastArg(Id0, Id1, Id2) != 0;
+    return getLastArg(Id0, Id1, Id2) != nullptr;
   }
 
   /// getLastArg - Return the last argument matching \p Id, or null.

@@ -410,7 +410,7 @@ uint8_t *SimpleBindingMemoryManager::allocateDataSection(
 }
 
 bool SimpleBindingMemoryManager::finalizeMemory(std::string *ErrMsg) {
-  char *errMsgCString = 0;
+  char *errMsgCString = nullptr;
   bool result = Functions.FinalizeMemory(Opaque, &errMsgCString);
   assert((result || !errMsgCString) &&
          "Did not expect an error message if FinalizeMemory succeeded");
@@ -433,7 +433,7 @@ LLVMMCJITMemoryManagerRef LLVMCreateSimpleMCJITMemoryManager(
   
   if (!AllocateCodeSection || !AllocateDataSection || !FinalizeMemory ||
       !Destroy)
-    return NULL;
+    return nullptr;
   
   SimpleBindingMMFunctions functions;
   functions.AllocateCodeSection = AllocateCodeSection;

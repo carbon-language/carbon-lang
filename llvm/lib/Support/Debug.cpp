@@ -109,7 +109,7 @@ raw_ostream &llvm::dbgs() {
       if (EnableDebugBuffering && DebugFlag && DebugBufferSize != 0)
         // TODO: Add a handler for SIGUSER1-type signals so the user can
         // force a debug dump.
-        sys::AddSignalHandler(&debug_user_sig_handler, 0);
+        sys::AddSignalHandler(&debug_user_sig_handler, nullptr);
       // Otherwise we've already set the debug stream buffer size to
       // zero, disabling buffering so it will output directly to errs().
     }

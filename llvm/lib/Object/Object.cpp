@@ -60,7 +60,7 @@ wrap(const relocation_iterator *SI) {
 // ObjectFile creation
 LLVMObjectFileRef LLVMCreateObjectFile(LLVMMemoryBufferRef MemBuf) {
   ErrorOr<ObjectFile*> ObjOrErr(ObjectFile::createObjectFile(unwrap(MemBuf)));
-  ObjectFile *Obj = ObjOrErr ? ObjOrErr.get() : 0;
+  ObjectFile *Obj = ObjOrErr ? ObjOrErr.get() : nullptr;
   return wrap(Obj);
 }
 

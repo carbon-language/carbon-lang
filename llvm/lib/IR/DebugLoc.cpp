@@ -260,7 +260,7 @@ void DebugRecVH::deleted() {
   
   MDNode *OldScope = Entry.first.get();
   MDNode *OldInlinedAt = Entry.second.get();
-  assert(OldScope != 0 && OldInlinedAt != 0 &&
+  assert(OldScope && OldInlinedAt &&
          "Entry should be non-canonical if either val dropped to null");
 
   // Otherwise, we do have an entry in it, nuke it and we're done.
@@ -314,7 +314,7 @@ void DebugRecVH::allUsesReplacedWith(Value *NewVa) {
   
   MDNode *OldScope = Entry.first.get();
   MDNode *OldInlinedAt = Entry.second.get();
-  assert(OldScope != 0 && OldInlinedAt != 0 &&
+  assert(OldScope && OldInlinedAt &&
          "Entry should be non-canonical if either val dropped to null");
   
   // Otherwise, we do have an entry in it, nuke it and we're done.

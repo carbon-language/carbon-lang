@@ -138,7 +138,7 @@ error_code COFFObjectFile::getSymbolName(DataRefImpl Ref,
 error_code COFFObjectFile::getSymbolAddress(DataRefImpl Ref,
                                             uint64_t &Result) const {
   const coff_symbol *Symb = toSymb(Ref);
-  const coff_section *Section = NULL;
+  const coff_section *Section = nullptr;
   if (error_code EC = getSection(Symb->SectionNumber, Section))
     return EC;
 
@@ -163,7 +163,7 @@ error_code COFFObjectFile::getSymbolType(DataRefImpl Ref,
   } else {
     uint32_t Characteristics = 0;
     if (!COFF::isReservedSectionNumber(Symb->SectionNumber)) {
-      const coff_section *Section = NULL;
+      const coff_section *Section = nullptr;
       if (error_code EC = getSection(Symb->SectionNumber, Section))
         return EC;
       Characteristics = Section->Characteristics;
@@ -208,7 +208,7 @@ error_code COFFObjectFile::getSymbolSize(DataRefImpl Ref,
   //        in the same section as this symbol, and looking for either the next
   //        symbol, or the end of the section.
   const coff_symbol *Symb = toSymb(Ref);
-  const coff_section *Section = NULL;
+  const coff_section *Section = nullptr;
   if (error_code EC = getSection(Symb->SectionNumber, Section))
     return EC;
 
@@ -227,7 +227,7 @@ error_code COFFObjectFile::getSymbolSection(DataRefImpl Ref,
   if (COFF::isReservedSectionNumber(Symb->SectionNumber)) {
     Result = section_end();
   } else {
-    const coff_section *Sec = 0;
+    const coff_section *Sec = nullptr;
     if (error_code EC = getSection(Symb->SectionNumber, Sec)) return EC;
     DataRefImpl Ref;
     Ref.p = reinterpret_cast<uintptr_t>(Sec);
@@ -334,7 +334,7 @@ error_code COFFObjectFile::sectionContainsSymbol(DataRefImpl SecRef,
                                                  bool &Result) const {
   const coff_section *Sec = toSec(SecRef);
   const coff_symbol *Symb = toSymb(SymbRef);
-  const coff_section *SymbSec = 0;
+  const coff_section *SymbSec = nullptr;
   if (error_code EC = getSection(Symb->SectionNumber, SymbSec)) return EC;
   if (SymbSec == Sec)
     Result = true;
@@ -507,10 +507,11 @@ error_code COFFObjectFile::initExportTablePtr() {
 
 COFFObjectFile::COFFObjectFile(MemoryBuffer *Object, error_code &EC,
                                bool BufferOwned)
-    : ObjectFile(Binary::ID_COFF, Object, BufferOwned), COFFHeader(0),
-      PE32Header(0), PE32PlusHeader(0), DataDirectory(0), SectionTable(0),
-      SymbolTable(0), StringTable(0), StringTableSize(0), ImportDirectory(0),
-      NumberOfImportDirectory(0), ExportDirectory(0) {
+    : ObjectFile(Binary::ID_COFF, Object, BufferOwned), COFFHeader(nullptr),
+      PE32Header(nullptr), PE32PlusHeader(nullptr), DataDirectory(nullptr),
+      SectionTable(nullptr), SymbolTable(nullptr), StringTable(nullptr),
+      StringTableSize(0), ImportDirectory(nullptr), NumberOfImportDirectory(0),
+      ExportDirectory(nullptr) {
   // Check that we at least have enough room for a header.
   if (!checkSize(Data, EC, sizeof(coff_file_header))) return;
 
@@ -632,8 +633,8 @@ export_directory_iterator COFFObjectFile::export_directory_begin() const {
 }
 
 export_directory_iterator COFFObjectFile::export_directory_end() const {
-  if (ExportDirectory == 0)
-    return export_directory_iterator(ExportDirectoryEntryRef(0, 0, this));
+  if (!ExportDirectory)
+    return export_directory_iterator(ExportDirectoryEntryRef(nullptr, 0, this));
   ExportDirectoryEntryRef Ref(ExportDirectory,
                               ExportDirectory->AddressTableEntries, this);
   return export_directory_iterator(Ref);
@@ -723,7 +724,7 @@ error_code COFFObjectFile::getSection(int32_t Index,
                                       const coff_section *&Result) const {
   // Check for special index values.
   if (COFF::isReservedSectionNumber(Index))
-    Result = NULL;
+    Result = nullptr;
   else if (Index > 0 && Index <= COFFHeader->NumberOfSections)
     // We already verified the section table data, so no need to check again.
     Result = SectionTable + (Index - 1);
@@ -773,7 +774,7 @@ error_code COFFObjectFile::getSymbolName(const coff_symbol *Symbol,
 
 ArrayRef<uint8_t> COFFObjectFile::getSymbolAuxData(
                                   const coff_symbol *Symbol) const {
-  const uint8_t *Aux = NULL;
+  const uint8_t *Aux = nullptr;
 
   if (Symbol->NumberOfAuxSymbols > 0) {
   // AUX data comes immediately after the symbol in COFF
@@ -968,7 +969,7 @@ error_code COFFObjectFile::getRelocationTypeName(DataRefImpl Rel,
 error_code COFFObjectFile::getRelocationValueString(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
   const coff_relocation *Reloc = toRel(Rel);
-  const coff_symbol *Symb = 0;
+  const coff_symbol *Symb = nullptr;
   if (error_code EC = getSymbol(Reloc->SymbolTableIndex, Symb)) return EC;
   DataRefImpl Sym;
   Sym.p = reinterpret_cast<uintptr_t>(Symb);

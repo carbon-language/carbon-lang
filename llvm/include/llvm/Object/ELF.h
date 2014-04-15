@@ -604,14 +604,14 @@ typename ELFFile<ELFT>::uintX_t ELFFile<ELFT>::getStringTableIndex() const {
 template <class ELFT>
 ELFFile<ELFT>::ELFFile(MemoryBuffer *Object, error_code &ec)
     : Buf(Object),
-      SectionHeaderTable(0),
-      dot_shstrtab_sec(0),
-      dot_strtab_sec(0),
-      dot_symtab_sec(0),
-      SymbolTableSectionHeaderIndex(0),
-      dot_gnu_version_sec(0),
-      dot_gnu_version_r_sec(0),
-      dot_gnu_version_d_sec(0),
+      SectionHeaderTable(nullptr),
+      dot_shstrtab_sec(nullptr),
+      dot_strtab_sec(nullptr),
+      dot_symtab_sec(nullptr),
+      SymbolTableSectionHeaderIndex(nullptr),
+      dot_gnu_version_sec(nullptr),
+      dot_gnu_version_r_sec(nullptr),
+      dot_gnu_version_d_sec(nullptr),
       dt_soname(nullptr) {
   const uint64_t FileSize = Buf->getBufferSize();
 
@@ -679,19 +679,19 @@ ELFFile<ELFT>::ELFFile(MemoryBuffer *Object, error_code &ec)
       DynamicRegion.EntSize = SecI->sh_entsize;
       break;
     case ELF::SHT_GNU_versym:
-      if (dot_gnu_version_sec != NULL)
+      if (dot_gnu_version_sec != nullptr)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .gnu.version section!");
       dot_gnu_version_sec = &*SecI;
       break;
     case ELF::SHT_GNU_verdef:
-      if (dot_gnu_version_d_sec != NULL)
+      if (dot_gnu_version_d_sec != nullptr)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .gnu.version_d section!");
       dot_gnu_version_d_sec = &*SecI;
       break;
     case ELF::SHT_GNU_verneed:
-      if (dot_gnu_version_r_sec != NULL)
+      if (dot_gnu_version_r_sec != nullptr)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .gnu.version_r section!");
       dot_gnu_version_r_sec = &*SecI;
@@ -769,7 +769,7 @@ typename ELFFile<ELFT>::Elf_Sym_Iter ELFFile<ELFT>::begin_symbols() const {
 template <class ELFT>
 typename ELFFile<ELFT>::Elf_Sym_Iter ELFFile<ELFT>::end_symbols() const {
   if (!dot_symtab_sec)
-    return Elf_Sym_Iter(0, 0, false);
+    return Elf_Sym_Iter(0, nullptr, false);
   return Elf_Sym_Iter(dot_symtab_sec->sh_entsize,
                       (const char *)base() + dot_symtab_sec->sh_offset +
                           dot_symtab_sec->sh_size,
@@ -782,14 +782,14 @@ ELFFile<ELFT>::begin_dynamic_table() const {
   if (DynamicRegion.Addr)
     return Elf_Dyn_Iter(DynamicRegion.EntSize,
                         (const char *)DynamicRegion.Addr);
-  return Elf_Dyn_Iter(0, 0);
+  return Elf_Dyn_Iter(0, nullptr);
 }
 
 template <class ELFT>
 typename ELFFile<ELFT>::Elf_Dyn_Iter
 ELFFile<ELFT>::end_dynamic_table(bool NULLEnd) const {
   if (!DynamicRegion.Addr)
-    return Elf_Dyn_Iter(0, 0);
+    return Elf_Dyn_Iter(0, nullptr);
   Elf_Dyn_Iter Ret(DynamicRegion.EntSize,
                     (const char *)DynamicRegion.Addr + DynamicRegion.Size);
 

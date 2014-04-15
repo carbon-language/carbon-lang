@@ -147,7 +147,7 @@ DWARFDebugLine::getLineTable(uint32_t offset) const {
   LineTableConstIter pos = LineTableMap.find(offset);
   if (pos != LineTableMap.end())
     return &pos->second;
-  return 0;
+  return nullptr;
 }
 
 const DWARFDebugLine::LineTable *
@@ -159,7 +159,7 @@ DWARFDebugLine::getOrParseLineTable(DataExtractor debug_line_data,
     // Parse and cache the line table for at this offset.
     State state;
     if (!parseStatementTable(debug_line_data, RelocMap, &offset, state))
-      return 0;
+      return nullptr;
     pos.first->second = state;
   }
   return &pos.first->second;

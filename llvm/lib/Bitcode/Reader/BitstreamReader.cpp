@@ -315,7 +315,7 @@ bool BitstreamCursor::ReadBlockInfoBlock() {
   if (EnterSubBlock(bitc::BLOCKINFO_BLOCK_ID)) return true;
 
   SmallVector<uint64_t, 64> Record;
-  BitstreamReader::BlockInfo *CurBlockInfo = 0;
+  BitstreamReader::BlockInfo *CurBlockInfo = nullptr;
 
   // Read all the records for this module.
   while (1) {

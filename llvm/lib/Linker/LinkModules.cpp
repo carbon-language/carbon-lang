@@ -439,16 +439,16 @@ namespace {
       // If the source has no name it can't link.  If it has local linkage,
       // there is no name match-up going on.
       if (!SrcGV->hasName() || SrcGV->hasLocalLinkage())
-        return 0;
+        return nullptr;
       
       // Otherwise see if we have a match in the destination module's symtab.
       GlobalValue *DGV = DstM->getNamedValue(SrcGV->getName());
-      if (DGV == 0) return 0;
+      if (!DGV) return nullptr;
         
       // If we found a global with the same name in the dest module, but it has
       // internal linkage, we are really not doing any linkage here.
       if (DGV->hasLocalLinkage())
-        return 0;
+        return nullptr;
 
       // Otherwise, we do in fact link to the destination global.
       return DGV;
@@ -518,7 +518,7 @@ static bool isLessConstraining(GlobalValue::VisibilityTypes a,
 Value *ValueMaterializerTy::materializeValueFor(Value *V) {
   Function *SF = dyn_cast<Function>(V);
   if (!SF)
-    return NULL;
+    return nullptr;
 
   Function *DF = Function::Create(TypeMap.get(SF->getFunctionType()),
                                   SF->getLinkage(), SF->getName(), DstM);
@@ -612,7 +612,7 @@ void ModuleLinker::computeTypeMapping() {
   for (Module::global_iterator I = SrcM->global_begin(),
        E = SrcM->global_end(); I != E; ++I) {
     GlobalValue *DGV = getLinkedToGlobal(I);
-    if (DGV == 0) continue;
+    if (!DGV) continue;
     
     if (!DGV->hasAppendingLinkage() || !I->hasAppendingLinkage()) {
       TypeMap.addTypeMapping(DGV->getType(), I->getType());
@@ -723,7 +723,7 @@ bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
   // Create the new global variable.
   GlobalVariable *NG =
     new GlobalVariable(*DstGV->getParent(), NewType, SrcGV->isConstant(),
-                       DstGV->getLinkage(), /*init*/0, /*name*/"", DstGV,
+                       DstGV->getLinkage(), /*init*/nullptr, /*name*/"", DstGV,
                        DstGV->getThreadLocalMode(),
                        DstGV->getType()->getAddressSpace());
   
@@ -800,8 +800,8 @@ bool ModuleLinker::linkGlobalProto(GlobalVariable *SGV) {
   // initializer will be filled in later by LinkGlobalInits.
   GlobalVariable *NewDGV =
     new GlobalVariable(*DstM, TypeMap.get(SGV->getType()->getElementType()),
-                       SGV->isConstant(), SGV->getLinkage(), /*init*/0,
-                       SGV->getName(), /*insertbefore*/0,
+                       SGV->isConstant(), SGV->getLinkage(), /*init*/nullptr,
+                       SGV->getName(), /*insertbefore*/nullptr,
                        SGV->getThreadLocalMode(),
                        SGV->getType()->getAddressSpace());
   // Propagate alignment, visibility and section info.
@@ -913,7 +913,7 @@ bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
   // bring over SGA.
   GlobalAlias *NewDA = new GlobalAlias(TypeMap.get(SGA->getType()),
                                        SGA->getLinkage(), SGA->getName(),
-                                       /*aliasee*/0, DstM);
+                                       /*aliasee*/nullptr, DstM);
   copyGVAttributes(NewDA, SGA);
   if (NewVisibility)
     NewDA->setVisibility(*NewVisibility);
@@ -997,7 +997,7 @@ void ModuleLinker::linkFunctionBody(Function *Dst, Function *Src) {
   } else {
     // Clone the body of the function into the dest function.
     SmallVector<ReturnInst*, 8> Returns; // Ignore returns.
-    CloneFunctionInto(Dst, Src, ValueMap, false, Returns, "", NULL,
+    CloneFunctionInto(Dst, Src, ValueMap, false, Returns, "", nullptr,
                       &TypeMap, &ValMaterializer);
   }
   
@@ -1369,7 +1369,7 @@ Linker::~Linker() {
 
 void Linker::deleteModule() {
   delete Composite;
-  Composite = NULL;
+  Composite = nullptr;
 }
 
 bool Linker::linkInModule(Module *Src, unsigned Mode, std::string *ErrorMsg) {
@@ -1406,7 +1406,7 @@ LLVMBool LLVMLinkModules(LLVMModuleRef Dest, LLVMModuleRef Src,
                          LLVMLinkerMode Mode, char **OutMessages) {
   std::string Messages;
   LLVMBool Result = Linker::LinkModules(unwrap(Dest), unwrap(Src),
-                                        Mode, OutMessages? &Messages : 0);
+                                        Mode, OutMessages? &Messages : nullptr);
   if (OutMessages)
     *OutMessages = strdup(Messages.c_str());
   return Result;

@@ -57,7 +57,7 @@ static T getUniversalBinaryStruct(const char *Ptr) {
 MachOUniversalBinary::ObjectForArch::ObjectForArch(
     const MachOUniversalBinary *Parent, uint32_t Index)
     : Parent(Parent), Index(Index) {
-  if (Parent == 0 || Index > Parent->getNumberOfObjects()) {
+  if (!Parent || Index > Parent->getNumberOfObjects()) {
     clear();
   } else {
     // Parse object header.

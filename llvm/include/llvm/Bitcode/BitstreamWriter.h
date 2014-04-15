@@ -204,7 +204,7 @@ public:
          i != e; ++i)
       if (BlockInfoRecords[i].BlockID == BlockID)
         return &BlockInfoRecords[i];
-    return 0;
+    return nullptr;
   }
 
   void EnterSubblock(unsigned BlockID, unsigned CodeLen) {
@@ -347,7 +347,7 @@ private:
             EmitAbbreviatedField(EltEnc, (unsigned char)BlobData[i]);
 
           // Know that blob data is consumed for assertion below.
-          BlobData = 0;
+          BlobData = nullptr;
         } else {
           // Emit a vbr6 to indicate the number of elements present.
           EmitVBR(static_cast<uint32_t>(Vals.size()-RecordIdx), 6);
@@ -378,7 +378,7 @@ private:
             WriteByte((unsigned char)BlobData[i]);
 
           // Know that blob data is consumed for assertion below.
-          BlobData = 0;
+          BlobData = nullptr;
         } else {
           for (unsigned e = Vals.size(); RecordIdx != e; ++RecordIdx) {
             assert(isUInt<8>(Vals[RecordIdx]) &&
@@ -397,7 +397,7 @@ private:
       }
     }
     assert(RecordIdx == Vals.size() && "Not all record operands emitted!");
-    assert(BlobData == 0 &&
+    assert(BlobData == nullptr &&
            "Blob data specified for record that doesn't use it!");
   }
 

@@ -111,7 +111,7 @@ Archive::Child Archive::Child::getNext() const {
 
   // Check to see if this is past the end of the archive.
   if (NextLoc >= Parent->Data->getBufferEnd())
-    return Child(Parent, NULL);
+    return Child(Parent, nullptr);
 
   return Child(Parent, NextLoc);
 }
@@ -349,7 +349,7 @@ Archive::child_iterator Archive::child_begin(bool SkipInternal) const {
 }
 
 Archive::child_iterator Archive::child_end() const {
-  return Child(this, NULL);
+  return Child(this, nullptr);
 }
 
 error_code Archive::Symbol::getName(StringRef &Result) const {

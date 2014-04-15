@@ -153,11 +153,11 @@ public:
   /// register is a PHI destination and the PHI's LiveOutInfo is not valid.
   const LiveOutInfo *GetLiveOutRegInfo(unsigned Reg) {
     if (!LiveOutRegInfo.inBounds(Reg))
-      return NULL;
+      return nullptr;
 
     const LiveOutInfo *LOI = &LiveOutRegInfo[Reg];
     if (!LOI->IsValid)
-      return NULL;
+      return nullptr;
 
     return LOI;
   }

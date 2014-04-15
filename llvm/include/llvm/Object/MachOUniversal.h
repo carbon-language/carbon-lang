@@ -41,7 +41,7 @@ public:
     ObjectForArch(const MachOUniversalBinary *Parent, uint32_t Index);
 
     void clear() {
-      Parent = 0;
+      Parent = nullptr;
       Index = 0;
     }
 
@@ -83,7 +83,7 @@ public:
     return ObjectForArch(this, 0);
   }
   object_iterator end_objects() const {
-    return ObjectForArch(0, 0);
+    return ObjectForArch(nullptr, 0);
   }
 
   uint32_t getNumberOfObjects() const { return NumberOfObjects; }

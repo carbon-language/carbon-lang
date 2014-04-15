@@ -732,7 +732,7 @@ BranchInst::BranchInst(BasicBlock *IfTrue, Instruction *InsertBefore)
   : TerminatorInst(Type::getVoidTy(IfTrue->getContext()), Instruction::Br,
                    OperandTraits<BranchInst>::op_end(this) - 1,
                    1, InsertBefore) {
-  assert(IfTrue != 0 && "Branch destination may not be null!");
+  assert(IfTrue && "Branch destination may not be null!");
   Op<-1>() = IfTrue;
 }
 BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
@@ -752,7 +752,7 @@ BranchInst::BranchInst(BasicBlock *IfTrue, BasicBlock *InsertAtEnd)
   : TerminatorInst(Type::getVoidTy(IfTrue->getContext()), Instruction::Br,
                    OperandTraits<BranchInst>::op_end(this) - 1,
                    1, InsertAtEnd) {
-  assert(IfTrue != 0 && "Branch destination may not be null!");
+  assert(IfTrue && "Branch destination may not be null!");
   Op<-1>() = IfTrue;
 }
 

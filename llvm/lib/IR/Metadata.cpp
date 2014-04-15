@@ -164,10 +164,10 @@ static const Function *getFunctionForValue(Value *V) {
 
 #ifndef NDEBUG
 static const Function *assertLocalFunction(const MDNode *N) {
-  if (!N->isFunctionLocal()) return 0;
+  if (!N->isFunctionLocal()) return nullptr;
 
   // FIXME: This does not handle cyclic function local metadata.
-  const Function *F = 0, *NewF = 0;
+  const Function *F = nullptr, *NewF = nullptr;
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     if (Value *V = N->getOperand(i)) {
       if (MDNode *MD = dyn_cast<MDNode>(V))
@@ -175,10 +175,11 @@ static const Function *assertLocalFunction(const MDNode *N) {
       else
         NewF = getFunctionForValue(V);
     }
-    if (F == 0)
+    if (!F)
       F = NewF;
-    else 
-      assert((NewF == 0 || F == NewF) &&"inconsistent function-local metadata");
+    else
+      assert((NewF == nullptr || F == NewF) &&
+             "inconsistent function-local metadata");
   }
   return F;
 }

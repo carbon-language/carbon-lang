@@ -290,7 +290,7 @@ DWARFContext::getLineTableForCompileUnit(DWARFCompileUnit *cu) {
       cu->getCompileUnitDIE()->getAttributeValueAsSectionOffset(
           cu, DW_AT_stmt_list, -1U);
   if (stmtOffset == -1U)
-    return 0; // No line table for this compile unit.
+    return nullptr; // No line table for this compile unit.
 
   // See if the line table is cached.
   if (const DWARFLineTable *lt = Line->getLineTable(stmtOffset))
@@ -408,7 +408,7 @@ DWARFCompileUnit *DWARFContext::getCompileUnitForOffset(uint32_t Offset) {
   if (CU != CUs.end()) {
     return CU->get();
   }
-  return 0;
+  return nullptr;
 }
 
 DWARFCompileUnit *DWARFContext::getCompileUnitForAddress(uint64_t Address) {
@@ -423,8 +423,7 @@ static bool getFileNameForCompileUnit(DWARFCompileUnit *CU,
                                       uint64_t FileIndex,
                                       bool NeedsAbsoluteFilePath,
                                       std::string &FileName) {
-  if (CU == 0 ||
-      LineTable == 0 ||
+  if (!CU || !LineTable ||
       !LineTable->getFileNameByIndex(FileIndex, NeedsAbsoluteFilePath,
                                      FileName))
     return false;
@@ -446,7 +445,7 @@ static bool getFileLineInfoForCompileUnit(DWARFCompileUnit *CU,
                                           bool NeedsAbsoluteFilePath,
                                           std::string &FileName,
                                           uint32_t &Line, uint32_t &Column) {
-  if (CU == 0 || LineTable == 0)
+  if (!CU || !LineTable)
     return false;
   // Get the index of row we're looking for in the line table.
   uint32_t RowIndex = LineTable->lookupAddress(Address);
@@ -560,7 +559,7 @@ DIInliningInfo DWARFContext::getInliningInfoForAddress(uint64_t Address,
 
   DIInliningInfo InliningInfo;
   uint32_t CallFile = 0, CallLine = 0, CallColumn = 0;
-  const DWARFLineTable *LineTable = 0;
+  const DWARFLineTable *LineTable = nullptr;
   for (uint32_t i = 0, n = InlinedChain.DIEs.size(); i != n; i++) {
     const DWARFDebugInfoEntryMinimal &FunctionDIE = InlinedChain.DIEs[i];
     std::string FileName = "<invalid>";
@@ -670,7 +669,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj)
             .Case("debug_str_offsets.dwo", &StringOffsetDWOSection)
             .Case("debug_addr", &AddrSection)
             // Any more debug info sections go here.
-            .Default(0);
+            .Default(nullptr);
     if (SectionData) {
       *SectionData = data;
       if (name == "debug_ranges") {
@@ -701,7 +700,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj)
         .Case("debug_loc", &LocSection.Relocs)
         .Case("debug_info.dwo", &InfoDWOSection.Relocs)
         .Case("debug_line", &LineSection.Relocs)
-        .Default(0);
+        .Default(nullptr);
     if (!Map) {
       // Find debug_types relocs by section rather than name as there are
       // multiple, comdat grouped, debug_types sections.

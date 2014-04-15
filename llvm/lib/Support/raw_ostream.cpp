@@ -87,8 +87,8 @@ void raw_ostream::SetBuffered() {
 
 void raw_ostream::SetBufferAndMode(char *BufferStart, size_t Size,
                                    BufferKind Mode) {
-  assert(((Mode == Unbuffered && BufferStart == 0 && Size == 0) ||
-          (Mode != Unbuffered && BufferStart && Size)) &&
+  assert(((Mode == Unbuffered && !BufferStart && Size == 0) ||
+          (Mode != Unbuffered && BufferStart && Size != 0)) &&
          "stream must be unbuffered or have at least one byte");
   // Make sure the current buffer is free of content (we can't flush here; the
   // child buffer management logic will be in write_impl).
@@ -433,7 +433,7 @@ void format_object_base::home() {
 raw_fd_ostream::raw_fd_ostream(const char *Filename, std::string &ErrorInfo,
                                sys::fs::OpenFlags Flags)
     : Error(false), UseAtomicWrites(false), pos(0) {
-  assert(Filename != 0 && "Filename is null");
+  assert(Filename && "Filename is null");
   ErrorInfo.clear();
 
   // Handle "-" as stdout. Note that when we do this, we consider ourself

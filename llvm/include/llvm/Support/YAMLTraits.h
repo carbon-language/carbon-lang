@@ -194,7 +194,7 @@ struct has_ScalarBitSetTraits
   static double test(...);
 
 public:
-  static bool const value = (sizeof(test<ScalarBitSetTraits<T> >(0)) == 1);
+  static bool const value = (sizeof(test<ScalarBitSetTraits<T> >(nullptr)) == 1);
 };
 
 
@@ -778,7 +778,7 @@ struct ScalarTraits<double> {
 template <typename TNorm, typename TFinal>
 struct MappingNormalization {
   MappingNormalization(IO &i_o, TFinal &Obj)
-      : io(i_o), BufPtr(NULL), Result(Obj) {
+      : io(i_o), BufPtr(nullptr), Result(Obj) {
     if ( io.outputting() ) {
       BufPtr = new (&Buffer) TNorm(io, Obj);
     }

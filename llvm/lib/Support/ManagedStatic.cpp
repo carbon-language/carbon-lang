@@ -45,7 +45,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
 
     llvm_release_global_lock();
   } else {
-    assert(Ptr == 0 && DeleterFn == 0 && Next == 0 &&
+    assert(!Ptr && !DeleterFn && !Next &&
            "Partially initialized ManagedStatic!?");
     Ptr = Creator ? Creator() : nullptr;
     DeleterFn = Deleter;

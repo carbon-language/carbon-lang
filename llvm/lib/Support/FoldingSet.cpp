@@ -305,7 +305,7 @@ FoldingSetImpl::Node
 /// is not already in the map.  InsertPos must be obtained from 
 /// FindNodeOrInsertPos.
 void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
-  assert(N->getNextInBucket() == 0);
+  assert(!N->getNextInBucket());
   // Do we need to grow the hashtable?
   if (NumNodes+1 > NumBuckets*2) {
     GrowHashTable();

@@ -917,7 +917,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
   SmallVector<uint64_t, 64> Record;
 
   const ValueEnumerator::ValueList &Vals = VE.getValues();
-  Type *LastTy = 0;
+  Type *LastTy = nullptr;
   for (unsigned i = FirstVal; i != LastVal; ++i) {
     const Value *V = Vals[i].first;
     // If we need to switch types, do so now.

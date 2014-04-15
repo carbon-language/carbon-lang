@@ -464,7 +464,7 @@ public:
 // The iterator for the import directory table.
 class ImportDirectoryEntryRef {
 public:
-  ImportDirectoryEntryRef() : OwningObject(0) {}
+  ImportDirectoryEntryRef() : OwningObject(nullptr) {}
   ImportDirectoryEntryRef(const import_directory_table_entry *Table, uint32_t I,
                           const COFFObjectFile *Owner)
       : ImportTable(Table), Index(I), OwningObject(Owner) {}
@@ -488,7 +488,7 @@ private:
 // The iterator for the export directory table entry.
 class ExportDirectoryEntryRef {
 public:
-  ExportDirectoryEntryRef() : OwningObject(0) {}
+  ExportDirectoryEntryRef() : OwningObject(nullptr) {}
   ExportDirectoryEntryRef(const export_directory_table_entry *Table, uint32_t I,
                           const COFFObjectFile *Owner)
       : ExportTable(Table), Index(I), OwningObject(Owner) {}

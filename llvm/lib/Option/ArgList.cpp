@@ -60,11 +60,11 @@ Arg *ArgList::getLastArgNoClaim(OptSpecifier Id) const {
   for (const_reverse_iterator it = rbegin(), ie = rend(); it != ie; ++it)
     if ((*it)->getOption().matches(Id))
       return *it;
-  return 0;
+  return nullptr;
 }
 
 Arg *ArgList::getLastArg(OptSpecifier Id) const {
-  Arg *Res = 0;
+  Arg *Res = nullptr;
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id)) {
       Res = *it;
@@ -76,7 +76,7 @@ Arg *ArgList::getLastArg(OptSpecifier Id) const {
 }
 
 Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1) const {
-  Arg *Res = 0;
+  Arg *Res = nullptr;
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id0) ||
         (*it)->getOption().matches(Id1)) {
@@ -91,7 +91,7 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1) const {
 
 Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
                          OptSpecifier Id2) const {
-  Arg *Res = 0;
+  Arg *Res = nullptr;
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id0) ||
         (*it)->getOption().matches(Id1) ||
@@ -106,7 +106,7 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
 
 Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
                          OptSpecifier Id2, OptSpecifier Id3) const {
-  Arg *Res = 0;
+  Arg *Res = nullptr;
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id0) ||
         (*it)->getOption().matches(Id1) ||
@@ -123,7 +123,7 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
 Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
                          OptSpecifier Id2, OptSpecifier Id3,
                          OptSpecifier Id4) const {
-  Arg *Res = 0;
+  Arg *Res = nullptr;
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id0) ||
         (*it)->getOption().matches(Id1) ||
@@ -141,7 +141,7 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
 Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
                          OptSpecifier Id2, OptSpecifier Id3,
                          OptSpecifier Id4, OptSpecifier Id5) const {
-  Arg *Res = 0;
+  Arg *Res = nullptr;
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id0) ||
         (*it)->getOption().matches(Id1) ||
@@ -161,7 +161,7 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
                          OptSpecifier Id2, OptSpecifier Id3,
                          OptSpecifier Id4, OptSpecifier Id5,
                          OptSpecifier Id6) const {
-  Arg *Res = 0;
+  Arg *Res = nullptr;
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id0) ||
         (*it)->getOption().matches(Id1) ||
@@ -182,7 +182,7 @@ Arg *ArgList::getLastArg(OptSpecifier Id0, OptSpecifier Id1,
                          OptSpecifier Id2, OptSpecifier Id3,
                          OptSpecifier Id4, OptSpecifier Id5,
                          OptSpecifier Id6, OptSpecifier Id7) const {
-  Arg *Res = 0;
+  Arg *Res = nullptr;
   for (const_iterator it = begin(), ie = end(); it != ie; ++it) {
     if ((*it)->getOption().matches(Id0) ||
         (*it)->getOption().matches(Id1) ||

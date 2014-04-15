@@ -75,7 +75,7 @@ MutexImpl::MutexImpl( bool recursive)
 MutexImpl::~MutexImpl()
 {
   pthread_mutex_t* mutex = static_cast<pthread_mutex_t*>(data_);
-  assert(mutex != 0);
+  assert(mutex != nullptr);
   pthread_mutex_destroy(mutex);
   free(mutex);
 }
@@ -84,7 +84,7 @@ bool
 MutexImpl::acquire()
 {
   pthread_mutex_t* mutex = static_cast<pthread_mutex_t*>(data_);
-  assert(mutex != 0);
+  assert(mutex != nullptr);
 
   int errorcode = pthread_mutex_lock(mutex);
   return errorcode == 0;
@@ -94,7 +94,7 @@ bool
 MutexImpl::release()
 {
   pthread_mutex_t* mutex = static_cast<pthread_mutex_t*>(data_);
-  assert(mutex != 0);
+  assert(mutex != nullptr);
 
   int errorcode = pthread_mutex_unlock(mutex);
   return errorcode == 0;
@@ -104,7 +104,7 @@ bool
 MutexImpl::tryacquire()
 {
   pthread_mutex_t* mutex = static_cast<pthread_mutex_t*>(data_);
-  assert(mutex != 0);
+  assert(mutex != nullptr);
 
   int errorcode = pthread_mutex_trylock(mutex);
   return errorcode == 0;

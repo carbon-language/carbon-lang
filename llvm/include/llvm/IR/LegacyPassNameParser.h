@@ -73,7 +73,7 @@ public:
     if (findOption(P->getPassArgument()) != getNumOptions()) {
       errs() << "Two passes with the same argument (-"
            << P->getPassArgument() << ") attempted to be registered!\n";
-      llvm_unreachable(0);
+      llvm_unreachable(nullptr);
     }
     addLiteralOption(P->getPassArgument(), P, P->getPassName());
   }

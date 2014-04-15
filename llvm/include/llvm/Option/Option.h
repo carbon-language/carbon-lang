@@ -73,7 +73,7 @@ public:
   ~Option();
 
   bool isValid() const {
-    return Info != 0;
+    return Info != nullptr;
   }
 
   unsigned getID() const {

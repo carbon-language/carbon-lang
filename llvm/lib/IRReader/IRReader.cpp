@@ -42,12 +42,12 @@ Module *llvm::getLazyIRModule(MemoryBuffer *Buffer, SMDiagnostic &Err,
       // ParseBitcodeFile does not take ownership of the Buffer in the
       // case of an error.
       delete Buffer;
-      return NULL;
+      return nullptr;
     }
     return ModuleOrErr.get();
   }
 
-  return ParseAssembly(Buffer, 0, Err, Context);
+  return ParseAssembly(Buffer, nullptr, Err, Context);
 }
 
 Module *llvm::getLazyIRFileModule(const std::string &Filename, SMDiagnostic &Err,
@@ -56,7 +56,7 @@ Module *llvm::getLazyIRFileModule(const std::string &Filename, SMDiagnostic &Err
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, File)) {
     Err = SMDiagnostic(Filename, SourceMgr::DK_Error,
                        "Could not open input file: " + ec.message());
-    return 0;
+    return nullptr;
   }
 
   return getLazyIRModule(File.release(), Err, Context);
@@ -69,7 +69,7 @@ Module *llvm::ParseIR(MemoryBuffer *Buffer, SMDiagnostic &Err,
   if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                 (const unsigned char *)Buffer->getBufferEnd())) {
     ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(Buffer, Context);
-    Module *M = 0;
+    Module *M = nullptr;
     if (error_code EC = ModuleOrErr.getError())
       Err = SMDiagnostic(Buffer->getBufferIdentifier(), SourceMgr::DK_Error,
                          EC.message());
@@ -80,7 +80,7 @@ Module *llvm::ParseIR(MemoryBuffer *Buffer, SMDiagnostic &Err,
     return M;
   }
 
-  return ParseAssembly(Buffer, 0, Err, Context);
+  return ParseAssembly(Buffer, nullptr, Err, Context);
 }
 
 Module *llvm::ParseIRFile(const std::string &Filename, SMDiagnostic &Err,
@@ -89,7 +89,7 @@ Module *llvm::ParseIRFile(const std::string &Filename, SMDiagnostic &Err,
   if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, File)) {
     Err = SMDiagnostic(Filename, SourceMgr::DK_Error,
                        "Could not open input file: " + ec.message());
-    return 0;
+    return nullptr;
   }
 
   return ParseIR(File.release(), Err, Context);
@@ -111,7 +111,7 @@ LLVMBool LLVMParseIRInContext(LLVMContextRef ContextRef,
       std::string buf;
       raw_string_ostream os(buf);
 
-      Diag.print(NULL, os, false);
+      Diag.print(nullptr, os, false);
       os.flush();
 
       *OutMessage = strdup(buf.c_str());

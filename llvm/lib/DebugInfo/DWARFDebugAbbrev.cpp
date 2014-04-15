@@ -50,7 +50,7 @@ DWARFAbbreviationDeclarationSet::getAbbreviationDeclaration(uint32_t abbrCode)
     if (idx < Decls.size())
       return &Decls[idx];
   }
-  return NULL;
+  return nullptr;
 }
 
 DWARFDebugAbbrev::DWARFDebugAbbrev() :
@@ -99,5 +99,5 @@ DWARFDebugAbbrev::getAbbreviationDeclarationSet(uint64_t cu_abbr_offset) const {
 
   if (pos != AbbrevCollMap.end())
     return &(pos->second);
-  return NULL;
+  return nullptr;
 }

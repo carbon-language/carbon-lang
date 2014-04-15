@@ -100,7 +100,7 @@ static TimerGroup *getDefaultTimerGroup() {
 //===----------------------------------------------------------------------===//
 
 void Timer::init(StringRef N) {
-  assert(TG == 0 && "Timer already initialized");
+  assert(!TG && "Timer already initialized");
   Name.assign(N.begin(), N.end());
   Started = false;
   TG = getDefaultTimerGroup();
@@ -108,7 +108,7 @@ void Timer::init(StringRef N) {
 }
 
 void Timer::init(StringRef N, TimerGroup &tg) {
-  assert(TG == 0 && "Timer already initialized");
+  assert(!TG && "Timer already initialized");
   Name.assign(N.begin(), N.end());
   Started = false;
   TG = &tg;

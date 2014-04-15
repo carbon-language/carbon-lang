@@ -251,7 +251,7 @@ public:
       int64_t LinkedCIEOffset, uint64_t InitialLocation, uint64_t AddressRange)
    : FrameEntry(FK_FDE, D, Offset, Length), LinkedCIEOffset(LinkedCIEOffset),
      InitialLocation(InitialLocation), AddressRange(AddressRange),
-     LinkedCIE(NULL) {}
+     LinkedCIE(nullptr) {}
 
   ~FDE() {
   }
@@ -334,7 +334,7 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
     Id = Data.getUnsigned(&Offset, IsDWARF64 ? 8 : 4);
     bool IsCIE = ((IsDWARF64 && Id == DW64_CIE_ID) || Id == DW_CIE_ID);
 
-    FrameEntry *Entry = 0;
+    FrameEntry *Entry = nullptr;
     if (IsCIE) {
       // Note: this is specifically DWARFv3 CIE header structure. It was
       // changed in DWARFv4. We currently don't support reading DWARFv4

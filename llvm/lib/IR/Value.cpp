@@ -557,7 +557,7 @@ void ValueHandleBase::AddToUseList() {
     // If this value already has a ValueHandle, then it must be in the
     // ValueHandles map already.
     ValueHandleBase *&Entry = pImpl->ValueHandles[VP.getPointer()];
-    assert(Entry != 0 && "Value doesn't have any handles?");
+    assert(Entry && "Value doesn't have any handles?");
     AddToExistingUseList(&Entry);
     return;
   }
@@ -571,7 +571,7 @@ void ValueHandleBase::AddToUseList() {
   const void *OldBucketPtr = Handles.getPointerIntoBucketsArray();
 
   ValueHandleBase *&Entry = Handles[VP.getPointer()];
-  assert(Entry == 0 && "Value really did already have handles?");
+  assert(!Entry && "Value really did already have handles?");
   AddToExistingUseList(&Entry);
   VP.getPointer()->HasValueHandle = true;
 
