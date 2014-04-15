@@ -1,4 +1,5 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-linux-gnu | FileCheck %s
 
 @varfloat = global float 0.0
 @vardouble = global double 0.0

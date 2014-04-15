@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=arm64-apple-ios7.0 -verify-machineinstrs -o - %s | FileCheck %s
 
 %struct = type { i32, i128, i8 }
 
@@ -13,7 +14,7 @@ define i64 @check_size() {
 
   %diff = sub i64 %endi, %starti
   ret i64 %diff
-; CHECK: movz x0, #48
+; CHECK: {{movz x0, #48|orr x0, xzr, #0x30}}
 }
 
 define i64 @check_field() {
@@ -25,5 +26,5 @@ define i64 @check_field() {
 
   %diff = sub i64 %endi, %starti
   ret i64 %diff
-; CHECK: movz x0, #16
+; CHECK: {{movz x0, #16|orr x0, xzr, #0x10}}
 }

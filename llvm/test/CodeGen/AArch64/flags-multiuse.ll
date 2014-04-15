@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=arm64-none-linux-gnu -verify-machineinstrs -o - %s | FileCheck %s
 
 ; LLVM should be able to cope with multiple uses of the same flag-setting
 ; instruction at different points of a routine. Either by rematerializing the

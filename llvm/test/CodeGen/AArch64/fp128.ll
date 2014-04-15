@@ -1,4 +1,5 @@
-; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
+; RUN: llc -mtriple=arm64-none-linux-gnu -verify-machineinstrs -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 
 @lhs = global fp128 zeroinitializer
 @rhs = global fp128 zeroinitializer
@@ -8,8 +9,8 @@ define fp128 @test_add() {
 
   %lhs = load fp128* @lhs
   %rhs = load fp128* @rhs
-; CHECK: ldr q0, [{{x[0-9]+}}, #:lo12:lhs]
-; CHECK: ldr q1, [{{x[0-9]+}}, #:lo12:rhs]
+; CHECK: ldr q0, [{{x[0-9]+}}, {{#?}}:lo12:lhs]
+; CHECK: ldr q1, [{{x[0-9]+}}, {{#?}}:lo12:rhs]
 
   %val = fadd fp128 %lhs, %rhs
 ; CHECK: bl __addtf3
@@ -21,8 +22,8 @@ define fp128 @test_sub() {
 
   %lhs = load fp128* @lhs
   %rhs = load fp128* @rhs
-; CHECK: ldr q0, [{{x[0-9]+}}, #:lo12:lhs]
-; CHECK: ldr q1, [{{x[0-9]+}}, #:lo12:rhs]
+; CHECK: ldr q0, [{{x[0-9]+}}, {{#?}}:lo12:lhs]
+; CHECK: ldr q1, [{{x[0-9]+}}, {{#?}}:lo12:rhs]
 
   %val = fsub fp128 %lhs, %rhs
 ; CHECK: bl __subtf3
@@ -34,8 +35,8 @@ define fp128 @test_mul() {
 
   %lhs = load fp128* @lhs
   %rhs = load fp128* @rhs
-; CHECK: ldr q0, [{{x[0-9]+}}, #:lo12:lhs]
-; CHECK: ldr q1, [{{x[0-9]+}}, #:lo12:rhs]
+; CHECK: ldr q0, [{{x[0-9]+}}, {{#?}}:lo12:lhs]
+; CHECK: ldr q1, [{{x[0-9]+}}, {{#?}}:lo12:rhs]
 
   %val = fmul fp128 %lhs, %rhs
 ; CHECK: bl __multf3
@@ -47,8 +48,8 @@ define fp128 @test_div() {
 
   %lhs = load fp128* @lhs
   %rhs = load fp128* @rhs
-; CHECK: ldr q0, [{{x[0-9]+}}, #:lo12:lhs]
-; CHECK: ldr q1, [{{x[0-9]+}}, #:lo12:rhs]
+; CHECK: ldr q0, [{{x[0-9]+}}, {{#?}}:lo12:lhs]
+; CHECK: ldr q1, [{{x[0-9]+}}, {{#?}}:lo12:rhs]
 
   %val = fdiv fp128 %lhs, %rhs
 ; CHECK: bl __divtf3
@@ -125,8 +126,8 @@ define i1 @test_setcc1() {
 
   %lhs = load fp128* @lhs
   %rhs = load fp128* @rhs
-; CHECK: ldr q0, [{{x[0-9]+}}, #:lo12:lhs]
-; CHECK: ldr q1, [{{x[0-9]+}}, #:lo12:rhs]
+; CHECK: ldr q0, [{{x[0-9]+}}, {{#?}}:lo12:lhs]
+; CHECK: ldr q1, [{{x[0-9]+}}, {{#?}}:lo12:rhs]
 
 ; Technically, everything after the call to __letf2 is redundant, but we'll let
 ; LLVM have its fun for now.
@@ -144,8 +145,8 @@ define i1 @test_setcc2() {
 
   %lhs = load fp128* @lhs
   %rhs = load fp128* @rhs
-; CHECK: ldr q0, [{{x[0-9]+}}, #:lo12:lhs]
-; CHECK: ldr q1, [{{x[0-9]+}}, #:lo12:rhs]
+; CHECK: ldr q0, [{{x[0-9]+}}, {{#?}}:lo12:lhs]
+; CHECK: ldr q1, [{{x[0-9]+}}, {{#?}}:lo12:rhs]
 
 ; Technically, everything after the call to __letf2 is redundant, but we'll let
 ; LLVM have its fun for now.
@@ -169,8 +170,8 @@ define i32 @test_br_cc() {
 
   %lhs = load fp128* @lhs
   %rhs = load fp128* @rhs
-; CHECK: ldr q0, [{{x[0-9]+}}, #:lo12:lhs]
-; CHECK: ldr q1, [{{x[0-9]+}}, #:lo12:rhs]
+; CHECK: ldr q0, [{{x[0-9]+}}, {{#?}}:lo12:lhs]
+; CHECK: ldr q1, [{{x[0-9]+}}, {{#?}}:lo12:rhs]
 
   ; olt == !uge, which LLVM unfortunately "optimizes" this to.
   %cond = fcmp olt fp128 %lhs, %rhs
@@ -189,13 +190,13 @@ define i32 @test_br_cc() {
 iftrue:
   ret i32 42
 ; CHECK-NEXT: BB#
-; CHECK-NEXT: movz x0, #42
+; CHECK-NEXT: movz {{x0|w0}}, #42
 ; CHECK-NEXT: b [[REALRET:.LBB[0-9]+_[0-9]+]]
 
 iffalse:
   ret i32 29
 ; CHECK: [[RET29]]:
-; CHECK-NEXT: movz x0, #29
+; CHECK-NEXT: movz {{x0|w0}}, #29
 ; CHECK-NEXT: [[REALRET]]:
 ; CHECK: ret
 }
@@ -205,14 +206,15 @@ define void @test_select(i1 %cond, fp128 %lhs, fp128 %rhs) {
 
   %val = select i1 %cond, fp128 %lhs, fp128 %rhs
   store fp128 %val, fp128* @lhs
-; CHECK: cmp w0, #0
-; CHECK: str q1, [sp]
+; CHECK: cmp {{w[0-9]+}}, #0
+; CHECK-AARCH64: str q1, [sp]
 ; CHECK-NEXT: b.eq [[IFFALSE:.LBB[0-9]+_[0-9]+]]
 ; CHECK-NEXT: BB#
-; CHECK-NEXT: str q0, [sp]
+; CHECK-AARCH64-NEXT: str q0, [sp]
+; CHECK-ARM64-NEXT: orr v[[DEST:[0-9]+]].16b, v0.16b, v0.16b
 ; CHECK-NEXT: [[IFFALSE]]:
-; CHECK-NEXT: ldr q0, [sp]
-; CHECK: str q0, [{{x[0-9]+}}, #:lo12:lhs]
+; CHECK-AARCH64-NEXT: ldr q[[DEST:[0-9]+]], [sp]
+; CHECK: str q[[DEST]], [{{x[0-9]+}}, {{#?}}:lo12:lhs]
   ret void
 ; CHECK: ret
 }
@@ -228,12 +230,12 @@ define void @test_round() {
   %float = fptrunc fp128 %val to float
   store float %float, float* @varfloat
 ; CHECK: bl __trunctfsf2
-; CHECK: str s0, [{{x[0-9]+}}, #:lo12:varfloat]
+; CHECK: str s0, [{{x[0-9]+}}, {{#?}}:lo12:varfloat]
 
   %double = fptrunc fp128 %val to double
   store double %double, double* @vardouble
 ; CHECK: bl __trunctfdf2
-; CHECK: str d0, [{{x[0-9]+}}, #:lo12:vardouble]
+; CHECK: str d0, [{{x[0-9]+}}, {{#?}}:lo12:vardouble]
 
   ret void
 }
@@ -247,13 +249,13 @@ define void @test_extend() {
   %fromfloat = fpext float %float to fp128
   store volatile fp128 %fromfloat, fp128* @lhs
 ; CHECK: bl __extendsftf2
-; CHECK: str q0, [{{x[0-9]+}}, #:lo12:lhs]
+; CHECK: str q0, [{{x[0-9]+}}, {{#?}}:lo12:lhs]
 
   %double = load double* @vardouble
   %fromdouble = fpext double %double to fp128
   store volatile fp128 %fromdouble, fp128* @lhs
 ; CHECK: bl __extenddftf2
-; CHECK: str q0, [{{x[0-9]+}}, #:lo12:lhs]
+; CHECK: str q0, [{{x[0-9]+}}, {{#?}}:lo12:lhs]
 
   ret void
 ; CHECK: ret
@@ -269,9 +271,10 @@ define fp128 @test_neg(fp128 %in) {
   ; Could in principle be optimized to fneg which we can't select, this makes
   ; sure that doesn't happen.
   %ret = fsub fp128 0xL00000000000000008000000000000000, %in
-; CHECK: str q0, [sp, #-16]
-; CHECK-NEXT: ldr q1, [sp], #16
-; CHECK: ldr q0, [{{x[0-9]+}}, #:lo12:[[MINUS0]]]
+; CHECK-AARCH64: str q0, [sp, #-16]
+; CHECK-AARCH64-NEXT: ldr q1, [sp], #16
+; CHECK-ARM64: orr v1.16b, v0.16b, v0.16b
+; CHECK: ldr q0, [{{x[0-9]+}}, {{#?}}:lo12:[[MINUS0]]]
 ; CHECK: bl __subtf3
 
   ret fp128 %ret

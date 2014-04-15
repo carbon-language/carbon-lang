@@ -1,5 +1,6 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-linux-gnu | FileCheck %s
 
 @var_8bit = global i8 0
 @var_16bit = global i16 0
@@ -160,7 +161,7 @@ define void @ldst_32bit() {
   %val64_unsigned = zext i32 %val32_zext to i64
   store volatile i64 %val64_unsigned, i64* @var_64bit
 ; CHECK: ldur {{w[0-9]+}}, [{{x[0-9]+}}, #-256]
-; CHECK: str {{x[0-9]+}}, [{{x[0-9]+}}, #:lo12:var_64bit]
+; CHECK: str {{x[0-9]+}}, [{{x[0-9]+}}, {{#?}}:lo12:var_64bit]
 
 ; Sign-extension to 64-bits
   %addr32_8_sext = getelementptr i8* %addr_8bit, i64 -12
@@ -169,7 +170,7 @@ define void @ldst_32bit() {
   %val64_signed = sext i32 %val32_sext to i64
   store volatile i64 %val64_signed, i64* @var_64bit
 ; CHECK: ldursw {{x[0-9]+}}, [{{x[0-9]+}}, #-12]
-; CHECK: str {{x[0-9]+}}, [{{x[0-9]+}}, #:lo12:var_64bit]
+; CHECK: str {{x[0-9]+}}, [{{x[0-9]+}}, {{#?}}:lo12:var_64bit]
 
 ; Truncation from 64-bits
   %addr64_8_trunc = getelementptr i8* %addr_8bit, i64 255

@@ -1,4 +1,5 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; arm64 has its own version of this in long-shift.ll. We'll just use that.
 
 define i128 @test_i128_lsl(i128 %a, i32 %shift) {
 ; CHECK-LABEL: test_i128_lsl:
