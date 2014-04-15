@@ -173,7 +173,7 @@ struct ARM64CollectLOH : public MachineFunctionPass {
     initializeARM64CollectLOHPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &Fn);
+  virtual bool runOnMachineFunction(MachineFunction &MF);
 
   virtual const char *getPassName() const {
     return "ARM64 Collect Linker Optimization Hint (LOH)";
@@ -230,15 +230,14 @@ INITIALIZE_PASS_END(ARM64CollectLOH, "arm64-collect-loh",
 /// \param nbRegs is used internally allocate some memory. It must be consistent
 /// with the way sets is used.
 static SetOfMachineInstr &getSet(BlockToSetOfInstrsPerColor &sets,
-                                 const MachineBasicBlock *MBB, unsigned reg,
+                                 const MachineBasicBlock &MBB, unsigned reg,
                                  unsigned nbRegs) {
   SetOfMachineInstr *result;
-  BlockToSetOfInstrsPerColor::iterator it = sets.find(MBB);
-  if (it != sets.end()) {
+  BlockToSetOfInstrsPerColor::iterator it = sets.find(&MBB);
+  if (it != sets.end())
     result = it->second;
-  } else {
-    result = sets[MBB] = new SetOfMachineInstr[nbRegs];
-  }
+  else
+    result = sets[&MBB] = new SetOfMachineInstr[nbRegs];
 
   return result[reg];
 }
@@ -251,15 +250,15 @@ static SetOfMachineInstr &getSet(BlockToSetOfInstrsPerColor &sets,
 /// "sets[reg]".
 /// \pre set[reg] is valid.
 static SetOfMachineInstr &getUses(InstrToInstrs *sets, unsigned reg,
-                                  const MachineInstr *MI) {
-  return sets[reg][MI];
+                                  const MachineInstr &MI) {
+  return sets[reg][&MI];
 }
 
 /// Same as getUses but does not modify the input map: sets.
 /// \return NULL if the couple (reg, MI) is not in sets.
 static const SetOfMachineInstr *getUses(const InstrToInstrs *sets, unsigned reg,
-                                        const MachineInstr *MI) {
-  InstrToInstrs::const_iterator Res = sets[reg].find(MI);
+                                        const MachineInstr &MI) {
+  InstrToInstrs::const_iterator Res = sets[reg].find(&MI);
   if (Res != sets[reg].end())
     return &(Res->second);
   return NULL;
@@ -276,41 +275,36 @@ static const SetOfMachineInstr *getUses(const InstrToInstrs *sets, unsigned reg,
 /// definition. It also consider definitions of ADRP instructions as uses and
 /// ignore other uses. The ADRPMode is used to collect the information for LHO
 /// that involve ADRP operation only.
-static void initReachingDef(MachineFunction *MF,
+static void initReachingDef(MachineFunction &MF,
                             InstrToInstrs *ColorOpToReachedUses,
                             BlockToInstrPerColor &Gen, BlockToRegSet &Kill,
                             BlockToSetOfInstrsPerColor &ReachableUses,
                             const MapRegToId &RegToId,
                             const MachineInstr *DummyOp, bool ADRPMode) {
-  const TargetMachine &TM = MF->getTarget();
+  const TargetMachine &TM = MF.getTarget();
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
 
   unsigned NbReg = RegToId.size();
 
-  for (MachineFunction::const_iterator IMBB = MF->begin(), IMBBEnd = MF->end();
-       IMBB != IMBBEnd; ++IMBB) {
-    const MachineBasicBlock *MBB = &(*IMBB);
-    const MachineInstr **&BBGen = Gen[MBB];
+  for (MachineBasicBlock &MBB : MF) {
+    const MachineInstr **&BBGen = Gen[&MBB];
     BBGen = new const MachineInstr *[NbReg];
     memset(BBGen, 0, sizeof(const MachineInstr *) * NbReg);
 
-    BitVector &BBKillSet = Kill[MBB];
+    BitVector &BBKillSet = Kill[&MBB];
     BBKillSet.resize(NbReg);
-    for (MachineBasicBlock::const_iterator II = MBB->begin(), IEnd = MBB->end();
-         II != IEnd; ++II) {
-      bool IsADRP = II->getOpcode() == ARM64::ADRP;
+    for (const MachineInstr &MI : MBB) {
+      bool IsADRP = MI.getOpcode() == ARM64::ADRP;
 
       // Process uses first.
       if (IsADRP || !ADRPMode)
-        for (MachineInstr::const_mop_iterator IO = II->operands_begin(),
-                                              IOEnd = II->operands_end();
-             IO != IOEnd; ++IO) {
+        for (const MachineOperand &MO : MI.operands()) {
           // Treat ADRP def as use, as the goal of the analysis is to find
           // ADRP defs reached by other ADRP defs.
-          if (!IO->isReg() || (!ADRPMode && !IO->isUse()) ||
-              (ADRPMode && (!IsADRP || !IO->isDef())))
+          if (!MO.isReg() || (!ADRPMode && !MO.isUse()) ||
+              (ADRPMode && (!IsADRP || !MO.isDef())))
             continue;
-          unsigned CurReg = IO->getReg();
+          unsigned CurReg = MO.getReg();
           MapRegToId::const_iterator ItCurRegId = RegToId.find(CurReg);
           if (ItCurRegId == RegToId.end())
             continue;
@@ -318,20 +312,18 @@ static void initReachingDef(MachineFunction *MF,
 
           // if CurReg has not been defined, this use is reachable.
           if (!BBGen[CurReg] && !BBKillSet.test(CurReg))
-            getSet(ReachableUses, MBB, CurReg, NbReg).insert(&(*II));
+            getSet(ReachableUses, MBB, CurReg, NbReg).insert(&MI);
           // current basic block definition for this color, if any, is in Gen.
           if (BBGen[CurReg])
-            getUses(ColorOpToReachedUses, CurReg, BBGen[CurReg]).insert(&(*II));
+            getUses(ColorOpToReachedUses, CurReg, *BBGen[CurReg]).insert(&MI);
         }
 
       // Process clobbers.
-      for (MachineInstr::const_mop_iterator IO = II->operands_begin(),
-                                            IOEnd = II->operands_end();
-           IO != IOEnd; ++IO) {
-        if (!IO->isRegMask())
+      for (const MachineOperand &MO : MI.operands()) {
+        if (!MO.isRegMask())
           continue;
         // Clobbers kill the related colors.
-        const uint32_t *PreservedRegs = IO->getRegMask();
+        const uint32_t *PreservedRegs = MO.getRegMask();
 
         // Set generated regs.
         for (const auto Entry : RegToId) {
@@ -342,19 +334,17 @@ static void initReachingDef(MachineFunction *MF,
             // Do not register clobbered definition for no ADRP.
             // This definition is not used anyway (otherwise register
             // allocation is wrong).
-            BBGen[Reg] = ADRPMode ? II : NULL;
+            BBGen[Reg] = ADRPMode ? &MI : NULL;
             BBKillSet.set(Reg);
           }
         }
       }
 
-      // Process defs
-      for (MachineInstr::const_mop_iterator IO = II->operands_begin(),
-                                            IOEnd = II->operands_end();
-           IO != IOEnd; ++IO) {
-        if (!IO->isReg() || !IO->isDef())
+      // Process register defs.
+      for (const MachineOperand &MO : MI.operands()) {
+        if (!MO.isReg() || !MO.isDef())
           continue;
-        unsigned CurReg = IO->getReg();
+        unsigned CurReg = MO.getReg();
         MapRegToId::const_iterator ItCurRegId = RegToId.find(CurReg);
         if (ItCurRegId == RegToId.end())
           continue;
@@ -365,19 +355,19 @@ static void initReachingDef(MachineFunction *MF,
                  "Sub-register of an "
                  "involved register, not recorded as involved!");
           BBKillSet.set(ItRegId->second);
-          BBGen[ItRegId->second] = &(*II);
+          BBGen[ItRegId->second] = &MI;
         }
-        BBGen[ItCurRegId->second] = &(*II);
+        BBGen[ItCurRegId->second] = &MI;
       }
     }
 
     // If we restrict our analysis to basic block scope, conservatively add a
     // dummy
     // use for each generated value.
-    if (!ADRPMode && DummyOp && !MBB->succ_empty())
+    if (!ADRPMode && DummyOp && !MBB.succ_empty())
       for (unsigned CurReg = 0; CurReg < NbReg; ++CurReg)
         if (BBGen[CurReg])
-          getUses(ColorOpToReachedUses, CurReg, BBGen[CurReg]).insert(DummyOp);
+          getUses(ColorOpToReachedUses, CurReg, *BBGen[CurReg]).insert(DummyOp);
   }
 }
 
@@ -390,7 +380,7 @@ static void initReachingDef(MachineFunction *MF,
 ///                 op.reachedUses
 ///
 ///           Out[bb] = Gen[bb] U (In[bb] - Kill[bb])
-static void reachingDefAlgorithm(MachineFunction *MF,
+static void reachingDefAlgorithm(MachineFunction &MF,
                                  InstrToInstrs *ColorOpToReachedUses,
                                  BlockToSetOfInstrsPerColor &In,
                                  BlockToSetOfInstrsPerColor &Out,
@@ -400,10 +390,7 @@ static void reachingDefAlgorithm(MachineFunction *MF,
   bool HasChanged;
   do {
     HasChanged = false;
-    for (MachineFunction::const_iterator IMBB = MF->begin(),
-                                         IMBBEnd = MF->end();
-         IMBB != IMBBEnd; ++IMBB) {
-      const MachineBasicBlock *MBB = &(*IMBB);
+    for (MachineBasicBlock &MBB : MF) {
       unsigned CurReg;
       for (CurReg = 0; CurReg < NbReg; ++CurReg) {
         SetOfMachineInstr &BBInSet = getSet(In, MBB, CurReg, NbReg);
@@ -412,24 +399,21 @@ static void reachingDefAlgorithm(MachineFunction *MF,
         SetOfMachineInstr &BBOutSet = getSet(Out, MBB, CurReg, NbReg);
         unsigned Size = BBOutSet.size();
         //   In[bb][color] = U Out[bb.predecessors][color]
-        for (MachineBasicBlock::const_pred_iterator
-                 PredMBB = MBB->pred_begin(),
-                 EndPredMBB = MBB->pred_end();
-             PredMBB != EndPredMBB; ++PredMBB) {
+        for (MachineBasicBlock *PredMBB : MBB.predecessors()) {
           SetOfMachineInstr &PredOutSet = getSet(Out, *PredMBB, CurReg, NbReg);
           BBInSet.insert(PredOutSet.begin(), PredOutSet.end());
         }
         //   insert reachableUses[bb][color] in each in[bb][color] op.reachedses
-        for (const MachineInstr *MI: BBInSet) {
+        for (const MachineInstr *MI : BBInSet) {
           SetOfMachineInstr &OpReachedUses =
-              getUses(ColorOpToReachedUses, CurReg, MI);
+              getUses(ColorOpToReachedUses, CurReg, *MI);
           OpReachedUses.insert(BBReachableUses.begin(), BBReachableUses.end());
         }
         //           Out[bb] = Gen[bb] U (In[bb] - Kill[bb])
-        if (!Kill[MBB].test(CurReg))
+        if (!Kill[&MBB].test(CurReg))
           BBOutSet.insert(BBInSet.begin(), BBInSet.end());
-        if (Gen[MBB][CurReg])
-          BBOutSet.insert(Gen[MBB][CurReg]);
+        if (Gen[&MBB][CurReg])
+          BBOutSet.insert(Gen[&MBB][CurReg]);
         HasChanged |= BBOutSet.size() != Size;
       }
     }
@@ -442,21 +426,14 @@ static void finitReachingDef(BlockToSetOfInstrsPerColor &In,
                              BlockToSetOfInstrsPerColor &Out,
                              BlockToInstrPerColor &Gen,
                              BlockToSetOfInstrsPerColor &ReachableUses) {
-  for (BlockToSetOfInstrsPerColor::const_iterator IT = Out.begin(),
-                                                  End = Out.end();
-       IT != End; ++IT)
-    delete[] IT->second;
-  for (BlockToSetOfInstrsPerColor::const_iterator IT = In.begin(),
-                                                  End = In.end();
-       IT != End; ++IT)
-    delete[] IT->second;
-  for (BlockToSetOfInstrsPerColor::const_iterator IT = ReachableUses.begin(),
-                                                  End = ReachableUses.end();
-       IT != End; ++IT)
-    delete[] IT->second;
-  for (BlockToInstrPerColor::const_iterator IT = Gen.begin(), End = Gen.end();
-       IT != End; ++IT)
-    delete[] IT->second;
+  for (auto &IT : Out)
+    delete[] IT.second;
+  for (auto &IT : In)
+    delete[] IT.second;
+  for (auto &IT : ReachableUses)
+    delete[] IT.second;
+  for (auto &IT : Gen)
+    delete[] IT.second;
 }
 
 /// Reaching definition algorithm.
@@ -470,7 +447,7 @@ static void finitReachingDef(BlockToSetOfInstrsPerColor &In,
 /// @p DummyOp.
 /// \pre ColorOpToReachedUses is an array of at least number of registers of
 /// InstrToInstrs.
-static void reachingDef(MachineFunction *MF,
+static void reachingDef(MachineFunction &MF,
                         InstrToInstrs *ColorOpToReachedUses,
                         const MapRegToId &RegToId, bool ADRPMode = false,
                         const MachineInstr *DummyOp = NULL) {
@@ -511,18 +488,12 @@ static void printReachingDef(const InstrToInstrs *ColorOpToReachedUses,
       continue;
     DEBUG(dbgs() << "*** Reg " << PrintReg(IdToReg[CurReg], TRI) << " ***\n");
 
-    InstrToInstrs::const_iterator DefsIt = ColorOpToReachedUses[CurReg].begin();
-    InstrToInstrs::const_iterator DefsItEnd =
-        ColorOpToReachedUses[CurReg].end();
-    for (; DefsIt != DefsItEnd; ++DefsIt) {
+    for (const auto &DefsIt : ColorOpToReachedUses[CurReg]) {
       DEBUG(dbgs() << "Def:\n");
-      DEBUG(DefsIt->first->print(dbgs()));
+      DEBUG(DefsIt.first->print(dbgs()));
       DEBUG(dbgs() << "Reachable uses:\n");
-      for (SetOfMachineInstr::const_iterator UsesIt = DefsIt->second.begin(),
-                                             UsesItEnd = DefsIt->second.end();
-           UsesIt != UsesItEnd; ++UsesIt) {
-        DEBUG((*UsesIt)->print(dbgs()));
-      }
+      for (const MachineInstr *MI : DefsIt.second)
+        DEBUG(MI->print(dbgs()));
     }
   }
 }
@@ -603,34 +574,29 @@ static void reachedUsesToDefs(InstrToInstrs &UseToReachingDefs,
     if (ColorOpToReachedUses[CurReg].empty())
       continue;
 
-    InstrToInstrs::const_iterator DefsIt = ColorOpToReachedUses[CurReg].begin();
-    InstrToInstrs::const_iterator DefsItEnd =
-        ColorOpToReachedUses[CurReg].end();
-    for (; DefsIt != DefsItEnd; ++DefsIt) {
-      for (SetOfMachineInstr::const_iterator UsesIt = DefsIt->second.begin(),
-                                             UsesItEnd = DefsIt->second.end();
-           UsesIt != UsesItEnd; ++UsesIt) {
-        const MachineInstr *Def = DefsIt->first;
+    for (const auto &DefsIt : ColorOpToReachedUses[CurReg]) {
+      for (const MachineInstr *MI : DefsIt.second) {
+        const MachineInstr *Def = DefsIt.first;
         MapRegToId::const_iterator It;
         // if all the reaching defs are not adrp, this use will not be
         // simplifiable.
         if ((ADRPMode && Def->getOpcode() != ARM64::ADRP) ||
             (!ADRPMode && !canDefBePartOfLOH(Def)) ||
-            (!ADRPMode && isCandidateStore(*UsesIt) &&
+            (!ADRPMode && isCandidateStore(MI) &&
              // store are LOH candidate iff the end of the chain is used as
              // base.
-             ((It = RegToId.find((*UsesIt)->getOperand(1).getReg())) == EndIt ||
+             ((It = RegToId.find((MI)->getOperand(1).getReg())) == EndIt ||
               It->second != CurReg))) {
-          NotCandidate.insert(*UsesIt);
+          NotCandidate.insert(MI);
           continue;
         }
         // Do not consider self reaching as a simplifiable case for ADRP.
-        if (!ADRPMode || *UsesIt != DefsIt->first) {
-          UseToReachingDefs[*UsesIt].insert(DefsIt->first);
+        if (!ADRPMode || MI != DefsIt.first) {
+          UseToReachingDefs[MI].insert(DefsIt.first);
           // If UsesIt has several reaching definitions, it is not
           // candidate for simplificaton in non-ADRPMode.
-          if (!ADRPMode && UseToReachingDefs[*UsesIt].size() > 1)
-            NotCandidate.insert(*UsesIt);
+          if (!ADRPMode && UseToReachingDefs[MI].size() > 1)
+            NotCandidate.insert(MI);
         }
       }
     }
@@ -747,8 +713,9 @@ static bool isCandidate(const MachineInstr *Instr,
     if (!MDT->dominates(Def, Instr))
       return false;
     // Move one node up in the simple chain.
-    if (UseToDefs.find(Def) == UseToDefs.end()
-                               // The map may contain garbage we have to ignore.
+    if (UseToDefs.find(Def) ==
+            UseToDefs.end()
+            // The map may contain garbage we have to ignore.
         ||
         UseToDefs.find(Def)->second.empty())
       return false;
@@ -764,7 +731,7 @@ static bool isCandidate(const MachineInstr *Instr,
   return false;
 }
 
-static bool registerADRCandidate(const MachineInstr *Use,
+static bool registerADRCandidate(const MachineInstr &Use,
                                  const InstrToInstrs &UseToDefs,
                                  const InstrToInstrs *DefsPerColorToUses,
                                  ARM64FunctionInfo &ARM64FI,
@@ -773,38 +740,38 @@ static bool registerADRCandidate(const MachineInstr *Use,
   // Look for opportunities to turn ADRP -> ADD or
   // ADRP -> LDR GOTPAGEOFF into ADR.
   // If ADRP has more than one use. Give up.
-  if (Use->getOpcode() != ARM64::ADDXri &&
-      (Use->getOpcode() != ARM64::LDRXui ||
-       !(Use->getOperand(2).getTargetFlags() & ARM64II::MO_GOT)))
+  if (Use.getOpcode() != ARM64::ADDXri &&
+      (Use.getOpcode() != ARM64::LDRXui ||
+       !(Use.getOperand(2).getTargetFlags() & ARM64II::MO_GOT)))
     return false;
-  InstrToInstrs::const_iterator It = UseToDefs.find(Use);
+  InstrToInstrs::const_iterator It = UseToDefs.find(&Use);
   // The map may contain garbage that we need to ignore.
   if (It == UseToDefs.end() || It->second.empty())
     return false;
-  const MachineInstr *Def = *It->second.begin();
-  if (Def->getOpcode() != ARM64::ADRP)
+  const MachineInstr &Def = **It->second.begin();
+  if (Def.getOpcode() != ARM64::ADRP)
     return false;
   // Check the number of users of ADRP.
   const SetOfMachineInstr *Users =
       getUses(DefsPerColorToUses,
-              RegToId.find(Def->getOperand(0).getReg())->second, Def);
+              RegToId.find(Def.getOperand(0).getReg())->second, Def);
   if (Users->size() > 1) {
     ++NumADRComplexCandidate;
     return false;
   }
   ++NumADRSimpleCandidate;
-  assert((!InvolvedInLOHs || InvolvedInLOHs->insert(Def)) &&
+  assert((!InvolvedInLOHs || InvolvedInLOHs->insert(&Def)) &&
          "ADRP already involved in LOH.");
-  assert((!InvolvedInLOHs || InvolvedInLOHs->insert(Use)) &&
+  assert((!InvolvedInLOHs || InvolvedInLOHs->insert(&Use)) &&
          "ADD already involved in LOH.");
-  DEBUG(dbgs() << "Record AdrpAdd\n" << *Def << '\n' << *Use << '\n');
+  DEBUG(dbgs() << "Record AdrpAdd\n" << Def << '\n' << Use << '\n');
 
   SmallVector<const MachineInstr *, 2> Args;
-  Args.push_back(Def);
-  Args.push_back(Use);
+  Args.push_back(&Def);
+  Args.push_back(&Use);
 
-  ARM64FI.addLOHDirective(Use->getOpcode() == ARM64::ADDXri ? MCLOH_AdrpAdd
-                                                            : MCLOH_AdrpLdrGot,
+  ARM64FI.addLOHDirective(Use.getOpcode() == ARM64::ADDXri ? MCLOH_AdrpAdd
+                                                           : MCLOH_AdrpLdrGot,
                           Args);
   return true;
 }
@@ -831,20 +798,18 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
   // to be changed.
   SetOfMachineInstr PotentialCandidates;
   SetOfMachineInstr PotentialADROpportunities;
-  for (InstrToInstrs::const_iterator UseIt = UseToDefs.begin(),
-                                     EndUseIt = UseToDefs.end();
-       UseIt != EndUseIt; ++UseIt) {
+  for (auto &Use : UseToDefs) {
     // If no definition is available, this is a non candidate.
-    if (UseIt->second.empty())
+    if (Use.second.empty())
       continue;
     // Keep only instructions that are load or store and at the end of
     // a ADRP -> ADD/LDR/Nothing chain.
     // We already filtered out the no-chain cases.
-    if (!isCandidate(UseIt->first, UseToDefs, MDT)) {
-      PotentialADROpportunities.insert(UseIt->first);
+    if (!isCandidate(Use.first, UseToDefs, MDT)) {
+      PotentialADROpportunities.insert(Use.first);
       continue;
     }
-    PotentialCandidates.insert(UseIt->first);
+    PotentialCandidates.insert(Use.first);
   }
 
   // Make the following distinctions for statistics as the linker does
@@ -866,10 +831,7 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
 #ifdef DEBUG
   SetOfMachineInstr DefsOfPotentialCandidates;
 #endif
-  for (CandidateIt = PotentialCandidates.begin(),
-      EndCandidateIt = PotentialCandidates.end();
-       CandidateIt != EndCandidateIt; ++CandidateIt) {
-    const MachineInstr *Candidate = *CandidateIt;
+  for (const MachineInstr *Candidate : PotentialCandidates) {
     // Get the definition of the candidate i.e., ADD or LDR.
     const MachineInstr *Def = *UseToDefs.find(Candidate)->second.begin();
     // Record the elements of the chain.
@@ -880,20 +842,20 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
       // Check the number of users of this node.
       const SetOfMachineInstr *Users =
           getUses(DefsPerColorToUses,
-                  RegToId.find(Def->getOperand(0).getReg())->second, Def);
+                  RegToId.find(Def->getOperand(0).getReg())->second, *Def);
       if (Users->size() > 1) {
 #ifdef DEBUG
         // if all the uses of this def are in potential candidate, this is
         // a complex candidate of level 2.
-        SetOfMachineInstr::const_iterator UseIt = Users->begin();
-        SetOfMachineInstr::const_iterator EndUseIt = Users->end();
-        for (; UseIt != EndUseIt; ++UseIt) {
-          if (!PotentialCandidates.count(*UseIt)) {
+        bool IsLevel2 = true;
+        for (const MachineInstr *MI : *Users) {
+          if (!PotentialCandidates.count(MI)) {
             ++NumTooCplxLvl2;
+            IsLevel2 = false;
             break;
           }
         }
-        if (UseIt == EndUseIt)
+        if (IsLevel2)
           ++NumCplxLvl2;
 #endif // DEBUG
         PotentialADROpportunities.insert(Def);
@@ -908,7 +870,7 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
     // Check the number of users of the first node in the chain, i.e., ADRP
     const SetOfMachineInstr *Users =
         getUses(DefsPerColorToUses,
-                RegToId.find(Def->getOperand(0).getReg())->second, Def);
+                RegToId.find(Def->getOperand(0).getReg())->second, *Def);
     if (Users->size() > 1) {
 #ifdef DEBUG
       // if all the uses of this def are in the defs of the potential candidate,
@@ -1030,8 +992,8 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
   }
 
   // Now, we grabbed all the big patterns, check ADR opportunities.
-  for (const MachineInstr *Candidate: PotentialADROpportunities)
-    registerADRCandidate(Candidate, UseToDefs, DefsPerColorToUses, ARM64FI,
+  for (const MachineInstr *Candidate : PotentialADROpportunities)
+    registerADRCandidate(*Candidate, UseToDefs, DefsPerColorToUses, ARM64FI,
                          InvolvedInLOHs, RegToId);
 }
 
@@ -1053,18 +1015,14 @@ static void collectInvolvedReg(MachineFunction &MF, MapRegToId &RegToId,
   }
 
   DEBUG(dbgs() << "** Collect Involved Register\n");
-  for (MachineFunction::const_iterator IMBB = MF.begin(), IMBBEnd = MF.end();
-       IMBB != IMBBEnd; ++IMBB)
-    for (MachineBasicBlock::const_iterator II = IMBB->begin(),
-                                           IEnd = IMBB->end();
-         II != IEnd; ++II) {
-
-      if (!canDefBePartOfLOH(II))
+  for (const auto &MBB : MF) {
+    for (const MachineInstr &MI : MBB) {
+      if (!canDefBePartOfLOH(&MI))
         continue;
 
       // Process defs
-      for (MachineInstr::const_mop_iterator IO = II->operands_begin(),
-                                            IOEnd = II->operands_end();
+      for (MachineInstr::const_mop_iterator IO = MI.operands_begin(),
+                                            IOEnd = MI.operands_end();
            IO != IOEnd; ++IO) {
         if (!IO->isReg() || !IO->isDef())
           continue;
@@ -1079,21 +1037,22 @@ static void collectInvolvedReg(MachineFunction &MF, MapRegToId &RegToId,
           }
       }
     }
+  }
 }
 
-bool ARM64CollectLOH::runOnMachineFunction(MachineFunction &Fn) {
-  const TargetMachine &TM = Fn.getTarget();
+bool ARM64CollectLOH::runOnMachineFunction(MachineFunction &MF) {
+  const TargetMachine &TM = MF.getTarget();
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   const MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTree>();
 
   MapRegToId RegToId;
   MapIdToReg IdToReg;
-  ARM64FunctionInfo *ARM64FI = Fn.getInfo<ARM64FunctionInfo>();
+  ARM64FunctionInfo *ARM64FI = MF.getInfo<ARM64FunctionInfo>();
   assert(ARM64FI && "No MachineFunctionInfo for this function!");
 
-  DEBUG(dbgs() << "Looking for LOH in " << Fn.getName() << '\n');
+  DEBUG(dbgs() << "Looking for LOH in " << MF.getName() << '\n');
 
-  collectInvolvedReg(Fn, RegToId, IdToReg, TRI);
+  collectInvolvedReg(MF, RegToId, IdToReg, TRI);
   if (RegToId.empty())
     return false;
 
@@ -1103,7 +1062,7 @@ bool ARM64CollectLOH::runOnMachineFunction(MachineFunction &Fn) {
         static_cast<const ARM64InstrInfo *>(TM.getInstrInfo());
     // For local analysis, create a dummy operation to record uses that are not
     // local.
-    DummyOp = Fn.CreateMachineInstr(TII->get(ARM64::COPY), DebugLoc());
+    DummyOp = MF.CreateMachineInstr(TII->get(ARM64::COPY), DebugLoc());
   }
 
   unsigned NbReg = RegToId.size();
@@ -1114,7 +1073,7 @@ bool ARM64CollectLOH::runOnMachineFunction(MachineFunction &Fn) {
 
   // Compute the reaching def in ADRP mode, meaning ADRP definitions
   // are first considered as uses.
-  reachingDef(&Fn, ColorOpToReachedUses, RegToId, true, DummyOp);
+  reachingDef(MF, ColorOpToReachedUses, RegToId, true, DummyOp);
   DEBUG(dbgs() << "ADRP reaching defs\n");
   DEBUG(printReachingDef(ColorOpToReachedUses, NbReg, TRI, IdToReg));
 
@@ -1131,7 +1090,7 @@ bool ARM64CollectLOH::runOnMachineFunction(MachineFunction &Fn) {
   ColorOpToReachedUses = new InstrToInstrs[NbReg];
 
   // first perform a regular reaching def analysis.
-  reachingDef(&Fn, ColorOpToReachedUses, RegToId, false, DummyOp);
+  reachingDef(MF, ColorOpToReachedUses, RegToId, false, DummyOp);
   DEBUG(dbgs() << "All reaching defs\n");
   DEBUG(printReachingDef(ColorOpToReachedUses, NbReg, TRI, IdToReg));
 
@@ -1145,7 +1104,7 @@ bool ARM64CollectLOH::runOnMachineFunction(MachineFunction &Fn) {
   delete[] ColorOpToReachedUses;
 
   if (BasicBlockScopeOnly)
-    Fn.DeleteMachineInstr(DummyOp);
+    MF.DeleteMachineInstr(DummyOp);
 
   return Modified;
 }
