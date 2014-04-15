@@ -14,7 +14,10 @@
 #ifndef LLVM_SUPPORT_REGISTRY_H
 #define LLVM_SUPPORT_REGISTRY_H
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
+
+#include <memory>
 
 namespace llvm {
   /// A simple registry entry which provides only a name, description, and
@@ -22,16 +25,16 @@ namespace llvm {
   template <typename T>
   class SimpleRegistryEntry {
     const char *Name, *Desc;
-    T *(*Ctor)();
+    std::unique_ptr<T> (*Ctor)();
 
   public:
-    SimpleRegistryEntry(const char *N, const char *D, T *(*C)())
+    SimpleRegistryEntry(const char *N, const char *D, std::unique_ptr<T> (*C)())
       : Name(N), Desc(D), Ctor(C)
     {}
 
     const char *getName() const { return Name; }
     const char *getDesc() const { return Desc; }
-    T *instantiate() const { return Ctor(); }
+    std::unique_ptr<T> instantiate() const { return Ctor(); }
   };
 
 
@@ -195,7 +198,7 @@ namespace llvm {
       entry Entry;
       node Node;
 
-      static T *CtorFn() { return new V(); }
+      static std::unique_ptr<T> CtorFn() { return make_unique<V>(); }
 
     public:
       Add(const char *Name, const char *Desc)

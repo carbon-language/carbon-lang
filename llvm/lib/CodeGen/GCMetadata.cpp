@@ -70,7 +70,7 @@ GCStrategy *GCModuleInfo::getOrCreateStrategy(const Module *M,
   for (GCRegistry::iterator I = GCRegistry::begin(),
                             E = GCRegistry::end(); I != E; ++I) {
     if (Name == I->getName()) {
-      std::unique_ptr<GCStrategy> S(I->instantiate());
+      std::unique_ptr<GCStrategy> S = I->instantiate();
       S->M = M;
       S->Name = Name;
       StrategyMap.GetOrCreateValue(Name).setValue(S.get());
