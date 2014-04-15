@@ -3656,6 +3656,11 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
     if (Args[0]->getType()->isIncompleteType())
       return false;
 
+    // Make sure the first argument is not an abstract type.
+    CXXRecordDecl *RD = Args[0]->getType()->getAsCXXRecordDecl();
+    if (RD && RD->isAbstract())
+      return false;
+
     SmallVector<OpaqueValueExpr, 2> OpaqueArgExprs;
     SmallVector<Expr *, 2> ArgExprs;
     ArgExprs.reserve(Args.size() - 1);

@@ -1964,6 +1964,10 @@ void constructible_checks() {
 
   { int arr[T(__is_constructible(NonPOD, int))]; }
   { int arr[F(__is_nothrow_constructible(NonPOD, int))]; }
+
+  // PR19178
+  { int arr[F(__is_constructible(Abstract))]; }
+  { int arr[F(__is_nothrow_constructible(Abstract))]; }
 }
 
 // Instantiation of __is_trivially_constructible
@@ -1991,6 +1995,7 @@ void is_trivially_constructible_test() {
   { int arr[F((is_trivially_constructible<int, int*>::value))]; }
   { int arr[F((is_trivially_constructible<NonTrivialDefault>::value))]; }
   { int arr[F((is_trivially_constructible<ThreeArgCtor, int*, char*, int&>::value))]; }
+  { int arr[F((is_trivially_constructible<Abstract>::value))]; } // PR19178
 }
 
 void array_rank() {
