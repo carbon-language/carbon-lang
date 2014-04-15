@@ -42,9 +42,9 @@ class DisassemblerLLVMC : public lldb_private::Disassembler
     {
     public:
         LLVMCDisassembler (const char *triple, unsigned flavor, DisassemblerLLVMC &owner);
-        
+
         ~LLVMCDisassembler();
-        
+
         uint64_t GetMCInst (const uint8_t *opcode_data, size_t opcode_data_len, lldb::addr_t pc, llvm::MCInst &mc_inst);
         uint64_t PrintMCInst (llvm::MCInst &mc_inst, char *output_buffer, size_t out_buffer_len);
         void     SetStyle (bool use_hex_immed, HexImmediateStyle hex_style);
@@ -53,7 +53,7 @@ class DisassemblerLLVMC : public lldb_private::Disassembler
         {
             return m_is_valid;
         }
-        
+
     private:
         bool                                     m_is_valid;
         std::unique_ptr<llvm::MCContext>         m_context_ap;
@@ -71,21 +71,21 @@ public:
     //------------------------------------------------------------------
     static void
     Initialize();
-    
+
     static void
     Terminate();
-    
+
     static lldb_private::ConstString
     GetPluginNameStatic();
-    
+
     static lldb_private::Disassembler *
     CreateInstance(const lldb_private::ArchSpec &arch, const char *flavor);
-        
+
     DisassemblerLLVMC(const lldb_private::ArchSpec &arch, const char *flavor /* = NULL */);
-    
+
     virtual
     ~DisassemblerLLVMC();
-    
+
     virtual size_t
     DecodeInstructions (const lldb_private::Address &base_addr,
                         const lldb_private::DataExtractor& data,
@@ -93,72 +93,72 @@ public:
                         size_t num_instructions,
                         bool append,
                         bool data_from_file);
-    
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
     virtual lldb_private::ConstString
     GetPluginName();
-    
+
     virtual uint32_t
     GetPluginVersion();
-    
+
 protected:
     friend class InstructionLLVMC;
-    
+
     virtual bool
     FlavorValidForArchSpec (const lldb_private::ArchSpec &arch, const char *flavor);
-    
+
     bool
     IsValid()
     {
         return (m_disasm_ap.get() != NULL && m_disasm_ap->IsValid());
     }
-    
+
     int OpInfo(uint64_t PC,
                uint64_t Offset,
                uint64_t Size,
                int TagType,
                void *TagBug);
-    
+
     const char *SymbolLookup (uint64_t ReferenceValue,
                               uint64_t *ReferenceType,
                               uint64_t ReferencePC,
                               const char **ReferenceName);
-    
+
     static int OpInfoCallback (void *DisInfo,
                                uint64_t PC,
                                uint64_t Offset,
                                uint64_t Size,
                                int TagType,
                                void *TagBug);
-    
+
     static const char *SymbolLookupCallback(void *DisInfo,
                                             uint64_t ReferenceValue,
                                             uint64_t *ReferenceType,
                                             uint64_t ReferencePC,
                                             const char **ReferenceName);
-    
-    void Lock(InstructionLLVMC *inst, 
+
+    void Lock(InstructionLLVMC *inst,
               const lldb_private::ExecutionContext *exe_ctx)
     {
         m_mutex.Lock();
         m_inst = inst;
         m_exe_ctx = exe_ctx;
     }
-    
+
     void Unlock()
     {
         m_inst = NULL;
         m_exe_ctx = NULL;
         m_mutex.Unlock();
     }
-    
+
     const lldb_private::ExecutionContext *m_exe_ctx;
     InstructionLLVMC *m_inst;
     lldb_private::Mutex m_mutex;
     bool m_data_from_file;
-    
+
     std::unique_ptr<LLVMCDisassembler> m_disasm_ap;
     std::unique_ptr<LLVMCDisassembler> m_alternate_disasm_ap;
 };
