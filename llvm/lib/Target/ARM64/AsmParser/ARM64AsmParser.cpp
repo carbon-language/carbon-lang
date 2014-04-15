@@ -4218,6 +4218,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     if (Op->isVectorIndexD() && Op->getVectorIndex() == 1) {
       SMLoc Loc = Op->getStartLoc();
       Operands.pop_back();
+      delete Op;
       Operands.push_back(
           ARM64Operand::CreateToken("[", false, Loc, getContext()));
       Operands.push_back(
@@ -4239,6 +4240,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         Operands.insert(
             Operands.begin() + OpNo + 2,
             ARM64Operand::CreateToken("]", false, Loc, getContext()));
+        delete Op;
       }
     }
   }
