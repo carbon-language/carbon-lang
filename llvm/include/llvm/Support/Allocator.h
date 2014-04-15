@@ -61,6 +61,23 @@ public:
     return static_cast<DerivedT *>(this)->Allocate(Size, Alignment);
   }
 
+  /// \brief Deallocate \a Ptr to \a Size bytes of memory allocated by this
+  /// allocator.
+  void Deallocate(const void *Ptr) {
+#ifdef __clang__
+    static_assert(static_cast<void (AllocatorBase::*)(const void *)>(
+                      &AllocatorBase::Deallocate) !=
+                      static_cast<void (DerivedT::*)(const void *)>(
+                          &DerivedT::Deallocate),
+                  "Class derives from AllocatorBase without implementing the "
+                  "core Deallocate(void *) overload!");
+#endif
+    return static_cast<DerivedT *>(this)->Deallocate(Ptr);
+  }
+
+  // The rest of these methods are helpers that redirect to one of the above
+  // core methods.
+
   /// \brief Allocate space for one object without constructing it.
   template <typename T> T *Allocate() {
     return static_cast<T *>(Allocate(sizeof(T), AlignOf<T>::Alignment));
@@ -78,6 +95,16 @@ public:
     size_t EltSize = (sizeof(T) + Alignment - 1) & (-Alignment);
     return static_cast<T *>(Allocate(Num * EltSize, Alignment));
   }
+
+  /// \brief Deallocate space for one object without destroying it.
+  template <typename T> void Deallocate(T *Ptr) {
+    Deallocate(static_cast<const void *>(Ptr));
+  }
+
+  /// \brief Allocate space for an array of objects without constructing them.
+  template <typename T> void Deallocate(T *Ptr, size_t /*Num*/) {
+    Deallocate(static_cast<const void *>(Ptr));
+  }
 };
 
 class MallocAllocator : public AllocatorBase<MallocAllocator> {
@@ -93,6 +120,9 @@ public:
   using AllocatorBase<MallocAllocator>::Allocate;
 
   void Deallocate(const void *Ptr) { free(const_cast<void *>(Ptr)); }
+
+  // Pull in base class overloads.
+  using AllocatorBase<MallocAllocator>::Deallocate;
 
   void PrintStats() const {}
 };
@@ -225,6 +255,9 @@ public:
   using AllocatorBase<BumpPtrAllocatorImpl>::Allocate;
 
   void Deallocate(const void * /*Ptr*/) {}
+
+  // Pull in base class overloads.
+  using AllocatorBase<BumpPtrAllocatorImpl>::Deallocate;
 
   size_t GetNumSlabs() const { return Slabs.size() + CustomSizedSlabs.size(); }
 
