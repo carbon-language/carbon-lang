@@ -1251,82 +1251,73 @@ public:
   void moveBefore(Instruction *Inst, Instruction *Before);
   /// @}
 
-  ~TypePromotionTransaction();
-
 private:
   /// The ordered list of actions made so far.
-  SmallVector<TypePromotionAction *, 16> Actions;
-  typedef SmallVectorImpl<TypePromotionAction *>::iterator CommitPt;
+  SmallVector<std::unique_ptr<TypePromotionAction>, 16> Actions;
+  typedef SmallVectorImpl<std::unique_ptr<TypePromotionAction>>::iterator CommitPt;
 };
 
 void TypePromotionTransaction::setOperand(Instruction *Inst, unsigned Idx,
                                           Value *NewVal) {
   Actions.push_back(
-      new TypePromotionTransaction::OperandSetter(Inst, Idx, NewVal));
+      make_unique<TypePromotionTransaction::OperandSetter>(Inst, Idx, NewVal));
 }
 
 void TypePromotionTransaction::eraseInstruction(Instruction *Inst,
                                                 Value *NewVal) {
   Actions.push_back(
-      new TypePromotionTransaction::InstructionRemover(Inst, NewVal));
+      make_unique<TypePromotionTransaction::InstructionRemover>(Inst, NewVal));
 }
 
 void TypePromotionTransaction::replaceAllUsesWith(Instruction *Inst,
                                                   Value *New) {
-  Actions.push_back(new TypePromotionTransaction::UsesReplacer(Inst, New));
+  Actions.push_back(make_unique<TypePromotionTransaction::UsesReplacer>(Inst, New));
 }
 
 void TypePromotionTransaction::mutateType(Instruction *Inst, Type *NewTy) {
-  Actions.push_back(new TypePromotionTransaction::TypeMutator(Inst, NewTy));
+  Actions.push_back(make_unique<TypePromotionTransaction::TypeMutator>(Inst, NewTy));
 }
 
 Instruction *TypePromotionTransaction::createTrunc(Instruction *Opnd,
                                                    Type *Ty) {
-  TruncBuilder *TB = new TruncBuilder(Opnd, Ty);
-  Actions.push_back(TB);
-  return TB->getBuiltInstruction();
+  std::unique_ptr<TruncBuilder> Ptr(new TruncBuilder(Opnd, Ty));
+  Instruction *I = Ptr->getBuiltInstruction();
+  Actions.push_back(std::move(Ptr));
+  return I;
 }
 
 Instruction *TypePromotionTransaction::createSExt(Instruction *Inst,
                                                   Value *Opnd, Type *Ty) {
-  SExtBuilder *SB = new SExtBuilder(Inst, Opnd, Ty);
-  Actions.push_back(SB);
-  return SB->getBuiltInstruction();
+  std::unique_ptr<SExtBuilder> Ptr(new SExtBuilder(Inst, Opnd, Ty));
+  Instruction *I = Ptr->getBuiltInstruction();
+  Actions.push_back(std::move(Ptr));
+  return I;
 }
 
 void TypePromotionTransaction::moveBefore(Instruction *Inst,
                                           Instruction *Before) {
   Actions.push_back(
-      new TypePromotionTransaction::InstructionMoveBefore(Inst, Before));
+      make_unique<TypePromotionTransaction::InstructionMoveBefore>(Inst, Before));
 }
 
 TypePromotionTransaction::ConstRestorationPt
 TypePromotionTransaction::getRestorationPoint() const {
-  return Actions.rbegin() != Actions.rend() ? *Actions.rbegin() : nullptr;
+  return !Actions.empty() ? Actions.back().get() : nullptr;
 }
 
 void TypePromotionTransaction::commit() {
   for (CommitPt It = Actions.begin(), EndIt = Actions.end(); It != EndIt;
-       ++It) {
+       ++It)
     (*It)->commit();
-    delete *It;
-  }
   Actions.clear();
 }
 
 void TypePromotionTransaction::rollback(
     TypePromotionTransaction::ConstRestorationPt Point) {
-  while (!Actions.empty() && Point != (*Actions.rbegin())) {
-    TypePromotionAction *Curr = Actions.pop_back_val();
+  while (!Actions.empty() && Point != Actions.back().get()) {
+    std::unique_ptr<TypePromotionAction> Curr = Actions.pop_back_val();
     Curr->undo();
-    delete Curr;
   }
-}
-
-TypePromotionTransaction::~TypePromotionTransaction() {
-  for (CommitPt It = Actions.begin(), EndIt = Actions.end(); It != EndIt; ++It)
-    delete *It;
-  Actions.clear();
 }
 
 /// \brief A helper class for matching addressing modes.
