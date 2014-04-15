@@ -88,14 +88,6 @@ public:
     return static_cast<T *>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
   }
 
-  /// \brief Allocate space for an array of objects with the specified alignment
-  /// and without constructing them.
-  template <typename T> T *Allocate(size_t Num, size_t Alignment) {
-    // Round EltSize up to the specified alignment.
-    size_t EltSize = (sizeof(T) + Alignment - 1) & (-Alignment);
-    return static_cast<T *>(Allocate(Num * EltSize, Alignment));
-  }
-
   /// \brief Deallocate space for one object without destroying it.
   template <typename T>
   typename std::enable_if<
