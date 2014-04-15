@@ -338,7 +338,6 @@ bool IndependentBlocks::splitExitBlock(Region *R) {
       if (SubR->getExit() == ExitBB)
         toUpdate.push_back(SubR.get());
 
-
     Reg->replaceExit(NewExit);
   }
 
