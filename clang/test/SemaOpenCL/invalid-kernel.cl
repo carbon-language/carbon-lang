@@ -4,6 +4,8 @@ kernel void no_ptrptr(global int **i) { } // expected-error{{kernel parameter ca
 
 __kernel void no_privateptr(__private int *i) { } // expected-error {{kernel parameter cannot be declared as a pointer to the __private address space}}
 
+__kernel void no_privatearray(__private int i[]) { } // expected-error {{kernel parameter cannot be declared as a pointer to the __private address space}}
+
 kernel int bar()  { // expected-error {{kernel must have void return type}}
   return 6;
 }
