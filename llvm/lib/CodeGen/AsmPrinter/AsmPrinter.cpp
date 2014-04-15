@@ -210,7 +210,7 @@ bool AsmPrinter::doInitialization(Module &M) {
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
   for (GCModuleInfo::iterator I = MI->begin(), E = MI->end(); I != E; ++I)
-    if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*I))
+    if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(**I))
       MP->beginAssembly(*this);
 
   // Emit module-level inline asm if it exists.
@@ -966,7 +966,7 @@ bool AsmPrinter::doFinalization(Module &M) {
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
   for (GCModuleInfo::iterator I = MI->end(), E = MI->begin(); I != E; )
-    if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*--I))
+    if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(**--I))
       MP->finishAssembly(*this);
 
   // Emit llvm.ident metadata in an '.ident' directive.
@@ -2231,24 +2231,24 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
 
 
 
-GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy *S) {
-  if (!S->usesMetadata())
+GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy &S) {
+  if (!S.usesMetadata())
     return 0;
 
   gcp_map_type &GCMap = getGCMap(GCMetadataPrinters);
-  gcp_map_type::iterator GCPI = GCMap.find(S);
+  gcp_map_type::iterator GCPI = GCMap.find(&S);
   if (GCPI != GCMap.end())
     return GCPI->second;
 
-  const char *Name = S->getName().c_str();
+  const char *Name = S.getName().c_str();
 
   for (GCMetadataPrinterRegistry::iterator
          I = GCMetadataPrinterRegistry::begin(),
          E = GCMetadataPrinterRegistry::end(); I != E; ++I)
     if (strcmp(Name, I->getName()) == 0) {
       GCMetadataPrinter *GMP = I->instantiate();
-      GMP->S = S;
-      GCMap.insert(std::make_pair(S, GMP));
+      GMP->S = &S;
+      GCMap.insert(std::make_pair(&S, GMP));
       return GMP;
     }
 
