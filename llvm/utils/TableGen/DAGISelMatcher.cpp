@@ -43,7 +43,7 @@ Matcher *Matcher::unlinkNode(Matcher *Other) {
   for (; Cur && Cur->getNext() != Other; Cur = Cur->getNext())
     /*empty*/;
 
-  if (Cur == 0) return 0;
+  if (!Cur) return nullptr;
   Cur->takeNext();
   Cur->setNext(Other->takeNext());
   return this;
@@ -108,7 +108,7 @@ TreePredicateFn CheckPredicateMatcher::getPredicate() const {
 void ScopeMatcher::printImpl(raw_ostream &OS, unsigned indent) const {
   OS.indent(indent) << "Scope\n";
   for (unsigned i = 0, e = getNumChildren(); i != e; ++i) {
-    if (getChild(i) == 0)
+    if (!getChild(i))
       OS.indent(indent+1) << "NULL POINTER\n";
     else
       getChild(i)->print(OS, indent+2);

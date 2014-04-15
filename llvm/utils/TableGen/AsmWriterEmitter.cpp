@@ -152,7 +152,7 @@ FindUniqueOperandCommands(std::vector<std::string> &UniqueOperandCommands,
 
   for (unsigned i = 0, e = NumberedInstructions->size(); i != e; ++i) {
     const AsmWriterInst *Inst = getAsmWriterInstByID(i);
-    if (Inst == 0)
+    if (!Inst)
       continue; // PHI, INLINEASM, CFI_INSTRUCTION, etc.
 
     std::string Command;
@@ -301,7 +301,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   // representation.
   for (unsigned i = 0, e = NumberedInstructions->size(); i != e; ++i) {
     AsmWriterInst *AWI = CGIAWIMap[NumberedInstructions->at(i)];
-    if (AWI != 0 &&
+    if (AWI &&
         AWI->Operands[0].OperandType ==
                  AsmWriterOperand::isLiteralTextOperand &&
         !AWI->Operands[0].Str.empty()) {
@@ -317,7 +317,7 @@ void AsmWriterEmitter::EmitPrintInstruction(raw_ostream &O) {
   for (unsigned i = 0, e = NumberedInstructions->size(); i != e; ++i) {
     AsmWriterInst *AWI = CGIAWIMap[NumberedInstructions->at(i)];
     unsigned Idx;
-    if (AWI == 0) {
+    if (!AWI) {
       // Something not handled by the asmwriter printer.
       Idx = ~0U;
     } else if (AWI->Operands[0].OperandType !=
@@ -846,7 +846,7 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
             assert(Rec->isSubClassOf("Operand") && "Unexpected operand!");
             // FIXME: We may need to handle these situations.
             delete IAP;
-            IAP = 0;
+            IAP = nullptr;
             CantHandle = true;
             break;
           }

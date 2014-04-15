@@ -631,7 +631,7 @@ void SubtargetEmitter::EmitProcessorResources(const CodeGenProcModel &ProcModel,
   for (unsigned i = 0, e = ProcModel.ProcResourceDefs.size(); i < e; ++i) {
     Record *PRDef = ProcModel.ProcResourceDefs[i];
 
-    Record *SuperDef = 0;
+    Record *SuperDef = nullptr;
     unsigned SuperIdx = 0;
     unsigned NumUnits = 0;
     int BufferSize = PRDef->getValueAsInt("BufferSize");
@@ -676,7 +676,7 @@ Record *SubtargetEmitter::FindWriteResources(
   if (SchedWrite.TheDef->isSubClassOf("SchedWriteRes"))
     return SchedWrite.TheDef;
 
-  Record *AliasDef = 0;
+  Record *AliasDef = nullptr;
   for (RecIter AI = SchedWrite.Aliases.begin(), AE = SchedWrite.Aliases.end();
        AI != AE; ++AI) {
     const CodeGenSchedRW &AliasRW =
@@ -696,7 +696,7 @@ Record *SubtargetEmitter::FindWriteResources(
     return AliasDef;
 
   // Check this processor's list of write resources.
-  Record *ResDef = 0;
+  Record *ResDef = nullptr;
   for (RecIter WRI = ProcModel.WriteResDefs.begin(),
          WRE = ProcModel.WriteResDefs.end(); WRI != WRE; ++WRI) {
     if (!(*WRI)->isSubClassOf("WriteRes"))
@@ -730,7 +730,7 @@ Record *SubtargetEmitter::FindReadAdvance(const CodeGenSchedRW &SchedRead,
     return SchedRead.TheDef;
 
   // Check this processor's list of aliases for SchedRead.
-  Record *AliasDef = 0;
+  Record *AliasDef = nullptr;
   for (RecIter AI = SchedRead.Aliases.begin(), AE = SchedRead.Aliases.end();
        AI != AE; ++AI) {
     const CodeGenSchedRW &AliasRW =
@@ -750,7 +750,7 @@ Record *SubtargetEmitter::FindReadAdvance(const CodeGenSchedRW &SchedRead,
     return AliasDef;
 
   // Check this processor's ReadAdvanceList.
-  Record *ResDef = 0;
+  Record *ResDef = nullptr;
   for (RecIter RAI = ProcModel.ReadAdvanceDefs.begin(),
          RAE = ProcModel.ReadAdvanceDefs.end(); RAI != RAE; ++RAI) {
     if (!(*RAI)->isSubClassOf("ReadAdvance"))
@@ -884,7 +884,7 @@ void SubtargetEmitter::GenSchedClassTables(const CodeGenProcModel &ProcModel,
     if (!SCI->InstRWs.empty()) {
       // This class has a default ReadWrite list which can be overriden by
       // InstRW definitions.
-      Record *RWDef = 0;
+      Record *RWDef = nullptr;
       for (RecIter RWI = SCI->InstRWs.begin(), RWE = SCI->InstRWs.end();
            RWI != RWE; ++RWI) {
         Record *RWModelDef = (*RWI)->getValueAsDef("SchedModel");

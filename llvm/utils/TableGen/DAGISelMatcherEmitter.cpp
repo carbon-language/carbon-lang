@@ -142,7 +142,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
   switch (N->getKind()) {
   case Matcher::Scope: {
     const ScopeMatcher *SM = cast<ScopeMatcher>(N);
-    assert(SM->getNext() == 0 && "Shouldn't have next after scope");
+    assert(SM->getNext() == nullptr && "Shouldn't have next after scope");
 
     unsigned StartIdx = CurrentIdx;
 
@@ -725,7 +725,7 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
 }
 
 static void BuildHistogram(const Matcher *M, std::vector<unsigned> &OpcodeFreq){
-  for (; M != 0; M = M->getNext()) {
+  for (; M != nullptr; M = M->getNext()) {
     // Count this node.
     if (unsigned(M->getKind()) >= OpcodeFreq.size())
       OpcodeFreq.resize(M->getKind()+1);

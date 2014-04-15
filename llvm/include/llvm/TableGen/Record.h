@@ -1486,7 +1486,7 @@ public:
   }
 
   void addValue(const RecordVal &RV) {
-    assert(getValue(RV.getNameInit()) == 0 && "Value already added!");
+    assert(getValue(RV.getNameInit()) == nullptr && "Value already added!");
     Values.push_back(RV);
     if (Values.size() > 1)
       // Keep NAME at the end of the list.  It makes record dumps a

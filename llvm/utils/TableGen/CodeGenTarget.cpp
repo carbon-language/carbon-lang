@@ -133,7 +133,7 @@ std::string llvm::getQualifiedName(const Record *R) {
 /// getTarget - Return the current instance of the Target class.
 ///
 CodeGenTarget::CodeGenTarget(RecordKeeper &records)
-  : Records(records), RegBank(0), SchedModels(0) {
+  : Records(records), RegBank(nullptr), SchedModels(nullptr) {
   std::vector<Record*> Targets = Records.getAllDerivedDefinitions("Target");
   if (Targets.size() == 0)
     PrintFatalError("ERROR: No 'Target' subclasses defined!");
@@ -226,7 +226,7 @@ const CodeGenRegister *CodeGenTarget::getRegisterByName(StringRef Name) const {
   const StringMap<CodeGenRegister*> &Regs = getRegBank().getRegistersByName();
   StringMap<CodeGenRegister*>::const_iterator I = Regs.find(Name);
   if (I == Regs.end())
-    return 0;
+    return nullptr;
   return I->second;
 }
 
@@ -287,7 +287,7 @@ GetInstByName(const char *Name,
 
   DenseMap<const Record*, CodeGenInstruction*>::const_iterator
     I = Insts.find(Rec);
-  if (Rec == 0 || I == Insts.end())
+  if (!Rec || I == Insts.end())
     PrintFatalError(Twine("Could not find '") + Name + "' instruction!");
   return I->second;
 }
@@ -301,7 +301,7 @@ void CodeGenTarget::ComputeInstrsByEnum() const {
       "GC_LABEL",     "KILL",          "EXTRACT_SUBREG",   "INSERT_SUBREG",
       "IMPLICIT_DEF", "SUBREG_TO_REG", "COPY_TO_REGCLASS", "DBG_VALUE",
       "REG_SEQUENCE", "COPY",          "BUNDLE",           "LIFETIME_START",
-      "LIFETIME_END", "STACKMAP",      "PATCHPOINT",       0};
+      "LIFETIME_END", "STACKMAP",      "PATCHPOINT",       nullptr};
   const DenseMap<const Record*, CodeGenInstruction*> &Insts = getInstructions();
   for (const char *const *p = FixedInstrs; *p; ++p) {
     const CodeGenInstruction *Instr = GetInstByName(*p, Insts, Records);

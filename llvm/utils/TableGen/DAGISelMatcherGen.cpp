@@ -144,7 +144,7 @@ namespace {
 MatcherGen::MatcherGen(const PatternToMatch &pattern,
                        const CodeGenDAGPatterns &cgp)
 : Pattern(pattern), CGP(cgp), NextRecordedOperandNo(0),
-  TheMatcher(0), CurPredicate(0) {
+  TheMatcher(nullptr), CurPredicate(nullptr) {
   // We need to produce the matcher tree for the patterns source pattern.  To do
   // this we need to match the structure as well as the types.  To do the type
   // matching, we want to figure out the fewest number of type checks we need to
@@ -182,7 +182,7 @@ void MatcherGen::InferPossibleTypes() {
 
 /// AddMatcher - Add a matcher node to the current graph we're building.
 void MatcherGen::AddMatcher(Matcher *NewNode) {
-  if (CurPredicate != 0)
+  if (CurPredicate)
     CurPredicate->setNext(NewNode);
   else
     TheMatcher = NewNode;
@@ -218,7 +218,7 @@ void MatcherGen::EmitLeafMatchCode(const TreePatternNode *N) {
   }
 
   DefInit *DI = dyn_cast<DefInit>(N->getLeafValue());
-  if (DI == 0) {
+  if (!DI) {
     errs() << "Unknown leaf kind: " << *N << "\n";
     abort();
   }
@@ -600,7 +600,7 @@ void MatcherGen::EmitResultLeafAsOperand(const TreePatternNode *N,
     }
 
     if (Def->getName() == "zero_reg") {
-      AddMatcher(new EmitRegisterMatcher(0, N->getType(0)));
+      AddMatcher(new EmitRegisterMatcher(nullptr, N->getType(0)));
       ResultOps.push_back(NextRecordedOperandNo++);
       return;
     }
@@ -642,7 +642,7 @@ GetInstPatternNode(const DAGInstruction &Inst, const TreePatternNode *N) {
   else if (/*isRoot*/ N == Pattern.getDstPattern())
     InstPatNode = Pattern.getSrcPattern();
   else
-    return 0;
+    return nullptr;
 
   if (InstPatNode && !InstPatNode->isLeaf() &&
       InstPatNode->getOperator()->getName() == "set")
@@ -806,7 +806,7 @@ EmitResultInstructionAsOperand(const TreePatternNode *N,
   if (isRoot && !Pattern.getDstRegs().empty()) {
     // If the root came from an implicit def in the instruction handling stuff,
     // don't re-add it.
-    Record *HandledReg = 0;
+    Record *HandledReg = nullptr;
     if (II.HasOneImplicitDefWithKnownVT(CGT) != MVT::Other)
       HandledReg = II.ImplicitDefs[0];
 
@@ -924,7 +924,7 @@ void MatcherGen::EmitResultCode() {
   if (!Pattern.getDstRegs().empty()) {
     // If the root came from an implicit def in the instruction handling stuff,
     // don't re-add it.
-    Record *HandledReg = 0;
+    Record *HandledReg = nullptr;
     const TreePatternNode *DstPat = Pattern.getDstPattern();
     if (!DstPat->isLeaf() &&DstPat->getOperator()->isSubClassOf("Instruction")){
       const CodeGenTarget &CGT = CGP.getTargetInfo();
@@ -962,7 +962,7 @@ Matcher *llvm::ConvertPatternToMatcher(const PatternToMatch &Pattern,
 
   // Generate the code for the matcher.
   if (Gen.EmitMatcherCode(Variant))
-    return 0;
+    return nullptr;
 
   // FIXME2: Kill extra MoveParent commands at the end of the matcher sequence.
   // FIXME2: Split result code out to another table, and make the matcher end

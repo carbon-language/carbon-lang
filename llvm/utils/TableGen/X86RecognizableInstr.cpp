@@ -788,7 +788,7 @@ void RecognizableInstr::emitDecodePath(DisassemblerTables &tables) const {
 
   OpcodeType    opcodeType  = (OpcodeType)-1;
 
-  ModRMFilter*  filter      = NULL;
+  ModRMFilter*  filter      = nullptr;
   uint8_t       opcodeToSet = 0;
 
   switch (OpMap) {

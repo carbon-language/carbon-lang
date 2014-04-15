@@ -26,7 +26,7 @@ static void ContractNodes(std::unique_ptr<Matcher> &MatcherPtr,
                           const CodeGenDAGPatterns &CGP) {
   // If we reached the end of the chain, we're done.
   Matcher *N = MatcherPtr.get();
-  if (N == 0) return;
+  if (!N) return;
   
   // If we have a scope node, walk down all of the children.
   if (ScopeMatcher *Scope = dyn_cast<ScopeMatcher>(N)) {
@@ -41,7 +41,7 @@ static void ContractNodes(std::unique_ptr<Matcher> &MatcherPtr,
   // If we found a movechild node with a node that comes in a 'foochild' form,
   // transform it.
   if (MoveChildMatcher *MC = dyn_cast<MoveChildMatcher>(N)) {
-    Matcher *New = 0;
+    Matcher *New = nullptr;
     if (RecordMatcher *RM = dyn_cast<RecordMatcher>(MC->getNext()))
       if (MC->getChildNo() < 8)  // Only have RecordChild0...7
         New = new RecordChildMatcher(MC->getChildNo(), RM->getWhatFor(),
@@ -191,7 +191,7 @@ static void SinkPatternPredicates(std::unique_ptr<Matcher> &MatcherPtr) {
   // Recursively scan for a PatternPredicate.
   // If we reached the end of the chain, we're done.
   Matcher *N = MatcherPtr.get();
-  if (N == 0) return;
+  if (!N) return;
   
   // Walk down all members of a scope node.
   if (ScopeMatcher *Scope = dyn_cast<ScopeMatcher>(N)) {
@@ -206,7 +206,7 @@ static void SinkPatternPredicates(std::unique_ptr<Matcher> &MatcherPtr) {
   // If this node isn't a CheckPatternPredicateMatcher we keep scanning until
   // we find one.
   CheckPatternPredicateMatcher *CPPM =dyn_cast<CheckPatternPredicateMatcher>(N);
-  if (CPPM == 0)
+  if (!CPPM)
     return SinkPatternPredicates(N->getNextPtr());
   
   // Ok, we found one, lets try to sink it. Check if we can sink it past the
@@ -236,7 +236,7 @@ static Matcher *FindNodeWithKind(Matcher *M, Matcher::KindTy Kind) {
   for (; M; M = M->getNext())
     if (M->getKind() == Kind)
       return M;
-  return 0;
+  return nullptr;
 }
 
 
@@ -255,11 +255,11 @@ static Matcher *FindNodeWithKind(Matcher *M, Matcher::KindTy Kind) {
 static void FactorNodes(std::unique_ptr<Matcher> &MatcherPtr) {
   // If we reached the end of the chain, we're done.
   Matcher *N = MatcherPtr.get();
-  if (N == 0) return;
+  if (!N) return;
   
   // If this is not a push node, just scan for one.
   ScopeMatcher *Scope = dyn_cast<ScopeMatcher>(N);
-  if (Scope == 0)
+  if (!Scope)
     return FactorNodes(N->getNextPtr());
   
   // Okay, pull together the children of the scope node into a vector so we can
@@ -335,7 +335,7 @@ static void FactorNodes(std::unique_ptr<Matcher> &MatcherPtr) {
       // or the same as what we're looking for.  If so, reorder it.
       if (Optn->isSimplePredicateOrRecordNode()) {
         Matcher *M2 = FindNodeWithKind(ScanMatcher, Optn->getKind());
-        if (M2 != 0 && M2 != ScanMatcher &&
+        if (M2 && M2 != ScanMatcher &&
             M2->canMoveBefore(ScanMatcher) &&
             (M2->isEqual(Optn) || M2->isContradictory(Optn))) {
           Matcher *MatcherWithoutM2 = ScanMatcher->unlinkNode(M2);
@@ -399,7 +399,7 @@ static void FactorNodes(std::unique_ptr<Matcher> &MatcherPtr) {
   }
   
   if (NewOptionsToMatch.empty()) {
-    MatcherPtr.reset(0);
+    MatcherPtr.reset(nullptr);
     return;
   }
   
@@ -427,7 +427,7 @@ static void FactorNodes(std::unique_ptr<Matcher> &MatcherPtr) {
       CheckTypeMatcher *CTM =
         cast_or_null<CheckTypeMatcher>(FindNodeWithKind(NewOptionsToMatch[i],
                                                         Matcher::CheckType));
-      if (CTM == 0 ||
+      if (!CTM ||
           // iPTR checks could alias any other case without us knowing, don't
           // bother with them.
           CTM->getType() == MVT::iPTR ||

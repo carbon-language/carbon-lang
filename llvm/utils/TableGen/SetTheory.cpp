@@ -318,6 +318,6 @@ const RecVec *SetTheory::expand(Record *Set) {
   }
 
   // Set is not expandable.
-  return 0;
+  return nullptr;
 }
 

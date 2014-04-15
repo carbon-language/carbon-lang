@@ -347,7 +347,7 @@ public:
                 unsigned BW,
                 const FixedLenDecoderEmitter *E)
     : AllInstructions(Insts), Opcodes(IDs), Operands(Ops), Filters(),
-      Parent(NULL), BestIndex(-1), BitWidth(BW), Emitter(E) {
+      Parent(nullptr), BestIndex(-1), BitWidth(BW), Emitter(E) {
     for (unsigned i = 0; i < BitWidth; ++i)
       FilterBitValues.push_back(BIT_UNFILTERED);
 
@@ -1776,7 +1776,7 @@ static bool populateInstruction(CodeGenTarget &Target,
       // Determine if Vals[i] actually contributes to the Inst encoding.
       unsigned bi = 0;
       for (; bi < Bits.getNumBits(); ++bi) {
-        VarInit *Var = 0;
+        VarInit *Var = nullptr;
         VarBitInit *BI = dyn_cast<VarBitInit>(Bits.getBit(bi));
         if (BI)
           Var = dyn_cast<VarInit>(BI->getBitVar());
@@ -1798,7 +1798,7 @@ static bool populateInstruction(CodeGenTarget &Target,
       // Get the bit range for this operand:
       unsigned bitStart = bi++, bitWidth = 1;
       for (; bi < Bits.getNumBits(); ++bi) {
-        VarInit *Var = 0;
+        VarInit *Var = nullptr;
         VarBitInit *BI = dyn_cast<VarBitInit>(Bits.getBit(bi));
         if (BI)
           Var = dyn_cast<VarInit>(BI->getBitVar());
@@ -1837,7 +1837,7 @@ static bool populateInstruction(CodeGenTarget &Target,
 
       RecordVal *DecoderString = TypeRecord->getValue("DecoderMethod");
       StringInit *String = DecoderString ?
-        dyn_cast<StringInit>(DecoderString->getValue()) : 0;
+        dyn_cast<StringInit>(DecoderString->getValue()) : nullptr;
       if (String && String->getValue() != "")
         Decoder = String->getValue();
 
@@ -1866,7 +1866,7 @@ static bool populateInstruction(CodeGenTarget &Target,
 
       DecoderString = TypeRecord->getValue("DecoderMethod");
       String = DecoderString ?
-        dyn_cast<StringInit>(DecoderString->getValue()) : 0;
+        dyn_cast<StringInit>(DecoderString->getValue()) : nullptr;
       if (!isReg && String && String->getValue() != "")
         Decoder = String->getValue();
 
@@ -1938,7 +1938,7 @@ static bool populateInstruction(CodeGenTarget &Target,
 
     RecordVal *DecoderString = TypeRecord->getValue("DecoderMethod");
     StringInit *String = DecoderString ?
-      dyn_cast<StringInit>(DecoderString->getValue()) : 0;
+      dyn_cast<StringInit>(DecoderString->getValue()) : nullptr;
     if (!isReg && String && String->getValue() != "")
       Decoder = String->getValue();
 
@@ -1948,7 +1948,7 @@ static bool populateInstruction(CodeGenTarget &Target,
     unsigned Offset = 0;
 
     for (unsigned bi = 0; bi < Bits.getNumBits(); ++bi) {
-      VarInit *Var = 0;
+      VarInit *Var = nullptr;
       VarBitInit *BI = dyn_cast<VarBitInit>(Bits.getBit(bi));
       if (BI)
         Var = dyn_cast<VarInit>(BI->getBitVar());

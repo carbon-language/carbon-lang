@@ -69,7 +69,7 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
     std::string EncoderMethod;
     std::string OperandType = "OPERAND_UNKNOWN";
     unsigned NumOps = 1;
-    DagInit *MIOpInfo = 0;
+    DagInit *MIOpInfo = nullptr;
     if (Rec->isSubClassOf("RegisterOperand")) {
       PrintMethod = Rec->getValueAsString("PrintMethod");
     } else if (Rec->isSubClassOf("Operand")) {
@@ -182,7 +182,7 @@ CGIOperandList::ParseOperandName(const std::string &Op, bool AllowWholeOp) {
 
   // Find the suboperand number involved.
   DagInit *MIOpInfo = OperandList[OpIdx].MIOperandInfo;
-  if (MIOpInfo == 0)
+  if (!MIOpInfo)
     PrintFatalError(TheDef->getName() + ": unknown suboperand name in '" + Op + "'");
 
   // Find the operand with the right name.
@@ -290,7 +290,7 @@ void CGIOperandList::ProcessDisableEncoding(std::string DisableEncoding) {
 //===----------------------------------------------------------------------===//
 
 CodeGenInstruction::CodeGenInstruction(Record *R)
-  : TheDef(R), Operands(R), InferredFrom(0) {
+  : TheDef(R), Operands(R), InferredFrom(nullptr) {
   Namespace = R->getValueAsString("Namespace");
   AsmString = R->getValueAsString("AsmString");
 
@@ -436,7 +436,7 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
                                        ResultOperand &ResOp) {
   Init *Arg = Result->getArg(AliasOpNo);
   DefInit *ADI = dyn_cast<DefInit>(Arg);
-  Record *ResultRecord = ADI ? ADI->getDef() : 0;
+  Record *ResultRecord = ADI ? ADI->getDef() : nullptr;
 
   if (ADI && ADI->getDef() == InstOpRec) {
     // If the operand is a record, it must have a name, and the record type
@@ -504,7 +504,7 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
     //  throw TGError(Loc, "reg0 used for result that is not an "
     //                "OptionalDefOperand!");
 
-    ResOp = ResultOperand(static_cast<Record*>(0));
+    ResOp = ResultOperand(static_cast<Record*>(nullptr));
     return true;
   }
 
@@ -542,7 +542,7 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, CodeGenTarget &T) : TheDef(R) {
 
   // Verify that the root of the result is an instruction.
   DefInit *DI = dyn_cast<DefInit>(Result->getOperator());
-  if (DI == 0 || !DI->getDef()->isSubClassOf("Instruction"))
+  if (!DI || !DI->getDef()->isSubClassOf("Instruction"))
     PrintFatalError(R->getLoc(),
                     "result of inst alias should be an instruction");
 

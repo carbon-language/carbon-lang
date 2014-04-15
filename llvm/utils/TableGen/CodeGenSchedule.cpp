@@ -429,7 +429,7 @@ void CodeGenSchedModels::expandRWSeqForProc(
   const CodeGenProcModel &ProcModel) const {
 
   const CodeGenSchedRW &SchedWrite = getSchedRW(RWIdx, IsRead);
-  Record *AliasDef = 0;
+  Record *AliasDef = nullptr;
   for (RecIter AI = SchedWrite.Aliases.begin(), AE = SchedWrite.Aliases.end();
        AI != AE; ++AI) {
     const CodeGenSchedRW &AliasRW = getSchedRW((*AI)->getValueAsDef("AliasRW"));
@@ -1315,7 +1315,7 @@ static void inferFromTransitions(ArrayRef<PredTransition> LastTransitions,
     IdxVec ProcIndices(I->ProcIndices.begin(), I->ProcIndices.end());
     CodeGenSchedTransition SCTrans;
     SCTrans.ToClassIdx =
-      SchedModels.addSchedClass(/*ItinClassDef=*/0, OperWritesVariant,
+      SchedModels.addSchedClass(/*ItinClassDef=*/nullptr, OperWritesVariant,
                                 OperReadsVariant, ProcIndices);
     SCTrans.ProcIndices = ProcIndices;
     // The final PredTerm is unique set of predicates guarding the transition.
@@ -1621,7 +1621,7 @@ Record *CodeGenSchedModels::findProcResUnits(Record *ProcResKind,
   if (ProcResKind->isSubClassOf("ProcResourceUnits"))
     return ProcResKind;
 
-  Record *ProcUnitDef = 0;
+  Record *ProcUnitDef = nullptr;
   RecVec ProcResourceDefs =
     Records.getAllDerivedDefinitions("ProcResourceUnits");
 
