@@ -481,6 +481,13 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
     }
   }
 
+  // Copy the current value map into all vector maps if the key wasn't
+  // available yet. This is needed in case vector codegen is performed in
+  // OpenMP subfunctions.
+  for (auto KV : ValueMap)
+    for (int i = 0; i < VectorDimensions; ++i)
+      VectorMap[i].insert(KV);
+
   isl_map *Schedule = extractPartialSchedule(Statement, Domain);
   VectorBlockGenerator::generate(Builder, *Statement, VectorMap, VLTS, Schedule,
                                  P);
