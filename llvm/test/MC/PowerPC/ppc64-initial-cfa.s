@@ -7,6 +7,7 @@
 # RUN: llvm-mc -triple=powerpc64le-unknown-linux-gnu -filetype=obj -relocation-model=pic %s | \
 # RUN: llvm-readobj -s -sr -sd | FileCheck %s -check-prefix=PIC -check-prefix=PIC-LE
 
+_proc:
         .cfi_startproc
         nop
         .cfi_endproc

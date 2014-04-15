@@ -1,6 +1,7 @@
 # RUN: llvm-mc < %s -triple=armv7-linux-gnueabi -filetype=obj -o - \
 # RUN:     | llvm-dwarfdump - | FileCheck %s
 
+_proc:
 .cfi_sections .debug_frame
 .cfi_startproc
 bx lr
