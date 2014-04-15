@@ -426,9 +426,8 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   JITCompilerFunction = F;
   TsanIgnoreWritesEnd();
 
-#if defined (X86_32_JIT) && !defined (_MSC_VER)
-  if (Subtarget->hasSSE1())
-    return X86CompilationCallback_SSE;
+#if defined (X86_32_JIT) && !defined (_MSC_VER) && defined(__SSE__)
+  return X86CompilationCallback_SSE;
 #endif
 
   return X86CompilationCallback;
