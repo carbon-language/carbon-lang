@@ -70,7 +70,7 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
     return 0;
 
   // Set up disassembler.
-  MCDisassembler *DisAsm = TheTarget->createMCDisassembler(*STI);
+  MCDisassembler *DisAsm = TheTarget->createMCDisassembler(*STI, *Ctx);
   if (!DisAsm)
     return 0;
 

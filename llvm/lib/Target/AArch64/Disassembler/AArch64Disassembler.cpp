@@ -38,12 +38,11 @@ typedef MCDisassembler::DecodeStatus DecodeStatus;
 namespace {
 /// AArch64 disassembler for all AArch64 platforms.
 class AArch64Disassembler : public MCDisassembler {
-  OwningPtr<const MCRegisterInfo> RegInfo;
 public:
   /// Initializes the disassembler.
   ///
-  AArch64Disassembler(const MCSubtargetInfo &STI, const MCRegisterInfo *Info)
-    : MCDisassembler(STI), RegInfo(Info) {
+  AArch64Disassembler(const MCSubtargetInfo &STI, MCContext &Ctx)
+    : MCDisassembler(STI, Ctx) {
   }
 
   ~AArch64Disassembler() {}
@@ -55,8 +54,6 @@ public:
                               uint64_t address,
                               raw_ostream &vStream,
                               raw_ostream &cStream) const;
-
-  const MCRegisterInfo *getRegInfo() const { return RegInfo.get(); }
 };
 
 }
@@ -297,7 +294,8 @@ DecodeStatus AArch64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
 
 static unsigned getReg(const void *D, unsigned RC, unsigned RegNo) {
   const AArch64Disassembler *Dis = static_cast<const AArch64Disassembler*>(D);
-  return Dis->getRegInfo()->getRegClass(RC).getRegister(RegNo);
+  const MCRegisterInfo *RegInfo = Dis->getContext().getRegisterInfo();
+  return RegInfo->getRegClass(RC).getRegister(RegNo);
 }
 
 static DecodeStatus DecodeGPR64RegisterClass(llvm::MCInst &Inst, unsigned RegNo,
@@ -991,8 +989,9 @@ static DecodeStatus DecodeSingleIndexedInstruction(llvm::MCInst &Inst,
 }
 
 static MCDisassembler *createAArch64Disassembler(const Target &T,
-                                                 const MCSubtargetInfo &STI) {
-  return new AArch64Disassembler(STI, T.createMCRegInfo(""));
+                                                 const MCSubtargetInfo &STI,
+                                                 MCContext &Ctx) {
+  return new AArch64Disassembler(STI, Ctx);
 }
 
 extern "C" void LLVMInitializeAArch64Disassembler() {

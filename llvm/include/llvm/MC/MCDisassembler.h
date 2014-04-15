@@ -56,8 +56,8 @@ public:
   };
 
   /// Constructor     - Performs initial setup for the disassembler.
-  MCDisassembler(const MCSubtargetInfo &STI)
-      : STI(STI), Symbolizer(), CommentStream(nullptr) {}
+  MCDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx)
+    : Ctx(Ctx), STI(STI), Symbolizer(), CommentStream(nullptr) {}
 
   virtual ~MCDisassembler();
 
@@ -83,6 +83,8 @@ public:
                                        uint64_t address,
                                        raw_ostream &vStream,
                                        raw_ostream &cStream) const = 0;
+private:
+  MCContext &Ctx;
 
 protected:
   // Subtarget information, for instruction decoding predicates if required.
@@ -101,6 +103,8 @@ public:
   /// Set \p Symzer as the current symbolizer.
   /// This takes ownership of \p Symzer, and deletes the previously set one.
   void setSymbolizer(std::unique_ptr<MCSymbolizer> Symzer);
+
+  MCContext& getContext() const { return Ctx; }
 
   const MCSubtargetInfo& getSubtargetInfo() const { return STI; }
 

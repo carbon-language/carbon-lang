@@ -14,8 +14,11 @@
 
 #include "Disassembler.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -158,7 +161,24 @@ int Disassembler::disassemble(const Target &T,
                               MemoryBuffer &Buffer,
                               SourceMgr &SM,
                               raw_ostream &Out) {
-  std::unique_ptr<const MCDisassembler> DisAsm(T.createMCDisassembler(STI));
+
+  std::unique_ptr<const MCRegisterInfo> MRI(T.createMCRegInfo(Triple));
+  if (!MRI) {
+    errs() << "error: no register info for target " << Triple << "\n";
+    return -1;
+  }
+
+  std::unique_ptr<const MCAsmInfo> MAI(T.createMCAsmInfo(*MRI, Triple));
+  if (!MAI) {
+    errs() << "error: no assembly info for target " << Triple << "\n";
+    return -1;
+  }
+
+  // Set up the MCContext for creating symbols and MCExpr's.
+  MCContext Ctx(MAI.get(), MRI.get(), 0);
+
+  std::unique_ptr<const MCDisassembler> DisAsm(
+    T.createMCDisassembler(STI, Ctx));
   if (!DisAsm) {
     errs() << "error: no disassembler for target " << Triple << "\n";
     return -1;

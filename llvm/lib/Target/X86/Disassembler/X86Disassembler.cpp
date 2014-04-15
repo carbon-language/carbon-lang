@@ -76,8 +76,9 @@ static bool translateInstruction(MCInst &target,
 
 X86GenericDisassembler::X86GenericDisassembler(
                                          const MCSubtargetInfo &STI,
+                                         MCContext &Ctx,
                                          std::unique_ptr<const MCInstrInfo> MII)
-  : MCDisassembler(STI), MII(std::move(MII)) {
+  : MCDisassembler(STI, Ctx), MII(std::move(MII)) {
   switch (STI.getFeatureBits() &
           (X86::Mode16Bit | X86::Mode32Bit | X86::Mode64Bit)) {
   case X86::Mode16Bit:
@@ -800,9 +801,10 @@ static bool translateInstruction(MCInst &mcInst,
 }
 
 static MCDisassembler *createX86Disassembler(const Target &T,
-                                             const MCSubtargetInfo &STI) {
+                                             const MCSubtargetInfo &STI,
+                                             MCContext &Ctx) {
   std::unique_ptr<const MCInstrInfo> MII(T.createMCInstrInfo());
-  return new X86Disassembler::X86GenericDisassembler(STI, std::move(MII));
+  return new X86Disassembler::X86GenericDisassembler(STI, Ctx, std::move(MII));
 }
 
 extern "C" void LLVMInitializeX86Disassembler() { 

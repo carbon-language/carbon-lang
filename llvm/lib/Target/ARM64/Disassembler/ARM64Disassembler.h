@@ -23,7 +23,8 @@ class raw_ostream;
 
 class ARM64Disassembler : public MCDisassembler {
 public:
-  ARM64Disassembler(const MCSubtargetInfo &STI) : MCDisassembler(STI) {}
+  ARM64Disassembler(const MCSubtargetInfo &STI, MCContext &Ctx)
+    : MCDisassembler(STI, Ctx) {}
 
   ~ARM64Disassembler() {}
 

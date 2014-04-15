@@ -32,12 +32,10 @@ class SparcDisassembler : public MCDisassembler {
 public:
   /// Constructor     - Initializes the disassembler.
   ///
-  SparcDisassembler(const MCSubtargetInfo &STI, const MCRegisterInfo *Info) :
-    MCDisassembler(STI), RegInfo(Info)
+  SparcDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx) :
+    MCDisassembler(STI, Ctx)
   {}
   virtual ~SparcDisassembler() {}
-
-  const MCRegisterInfo *getRegInfo() const { return RegInfo.get(); }
 
   /// getInstruction - See MCDisassembler.
   virtual DecodeStatus getInstruction(MCInst &instr,
@@ -46,8 +44,6 @@ public:
                                       uint64_t address,
                                       raw_ostream &vStream,
                                       raw_ostream &cStream) const;
-private:
-  OwningPtr<const MCRegisterInfo> RegInfo;
 };
 
 }
@@ -58,8 +54,9 @@ namespace llvm {
 
 static MCDisassembler *createSparcDisassembler(
                        const Target &T,
-                       const MCSubtargetInfo &STI) {
-  return new SparcDisassembler(STI, T.createMCRegInfo(""));
+                       const MCSubtargetInfo &STI,
+                       MCContext &Ctx) {
+  return new SparcDisassembler(STI, Ctx);
 }
 
 

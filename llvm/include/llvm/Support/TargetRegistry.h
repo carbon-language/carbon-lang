@@ -108,7 +108,8 @@ namespace llvm {
                                                     MCAsmParser &P,
                                                     const MCInstrInfo &MII);
     typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T,
-                                                    const MCSubtargetInfo &STI);
+                                                    const MCSubtargetInfo &STI,
+                                                    MCContext &Ctx);
     typedef MCInstPrinter *(*MCInstPrinterCtorTy)(const Target &T,
                                                   unsigned SyntaxVariant,
                                                   const MCAsmInfo &MAI,
@@ -377,10 +378,11 @@ namespace llvm {
       return AsmPrinterCtorFn(TM, Streamer);
     }
 
-    MCDisassembler *createMCDisassembler(const MCSubtargetInfo &STI) const {
+    MCDisassembler *createMCDisassembler(const MCSubtargetInfo &STI,
+                                         MCContext &Ctx) const {
       if (!MCDisassemblerCtorFn)
         return nullptr;
-      return MCDisassemblerCtorFn(*this, STI);
+      return MCDisassemblerCtorFn(*this, STI, Ctx);
     }
 
     MCInstPrinter *createMCInstPrinter(unsigned SyntaxVariant,

@@ -22,8 +22,8 @@ typedef MCDisassembler::DecodeStatus DecodeStatus;
 namespace {
 class PPCDisassembler : public MCDisassembler {
 public:
-  PPCDisassembler(const MCSubtargetInfo &STI)
-    : MCDisassembler(STI) {}
+  PPCDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx)
+    : MCDisassembler(STI, Ctx) {}
   virtual ~PPCDisassembler() {}
 
   // Override MCDisassembler.
@@ -37,8 +37,9 @@ public:
 } // end anonymous namespace
 
 static MCDisassembler *createPPCDisassembler(const Target &T,
-                                             const MCSubtargetInfo &STI) {
-  return new PPCDisassembler(STI);
+                                             const MCSubtargetInfo &STI,
+                                             MCContext &Ctx) {
+  return new PPCDisassembler(STI, Ctx);
 }
 
 extern "C" void LLVMInitializePowerPCDisassembler() {

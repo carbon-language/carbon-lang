@@ -184,8 +184,9 @@ using namespace llvm;
 #define Fail llvm::MCDisassembler::Fail
 
 static MCDisassembler *createARM64Disassembler(const Target &T,
-                                               const MCSubtargetInfo &STI) {
-  return new ARM64Disassembler(STI);
+                                               const MCSubtargetInfo &STI,
+                                               MCContext &Ctx) {
+  return new ARM64Disassembler(STI, Ctx);
 }
 
 DecodeStatus ARM64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,

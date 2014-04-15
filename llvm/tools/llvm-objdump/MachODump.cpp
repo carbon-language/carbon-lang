@@ -17,6 +17,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/DebugInfo/DIContext.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
@@ -225,8 +226,9 @@ static void DisassembleInputMachO2(StringRef Filename,
       TheTarget->createMCAsmInfo(*MRI, TripleName));
   std::unique_ptr<const MCSubtargetInfo> STI(
       TheTarget->createMCSubtargetInfo(TripleName, "", ""));
+  MCContext Ctx(AsmInfo.get(), MRI.get(), 0);
   std::unique_ptr<const MCDisassembler> DisAsm(
-      TheTarget->createMCDisassembler(*STI));
+    TheTarget->createMCDisassembler(*STI, Ctx));
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   std::unique_ptr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
       AsmPrinterVariant, *AsmInfo, *InstrInfo, *MRI, *STI));

@@ -105,7 +105,7 @@ class X86GenericDisassembler : public MCDisassembler {
 public:
   /// Constructor     - Initializes the disassembler.
   ///
-  X86GenericDisassembler(const MCSubtargetInfo &STI,
+  X86GenericDisassembler(const MCSubtargetInfo &STI, MCContext &Ctx,
                          std::unique_ptr<const MCInstrInfo> MII);
 public:
 
