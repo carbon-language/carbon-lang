@@ -842,7 +842,7 @@ bool llvm::isKnownToBeAPowerOfTwo(Value *V, bool OrZero, unsigned Depth) {
   if (Depth++ == MaxDepth)
     return false;
 
-  Value *X = 0, *Y = 0;
+  Value *X = nullptr, *Y = nullptr;
   // A shift of a power of two is a power of two or zero.
   if (OrZero && (match(V, m_Shl(m_Value(X), m_Value())) ||
                  match(V, m_Shr(m_Value(X), m_Value()))))
@@ -882,10 +882,10 @@ bool llvm::isKnownToBeAPowerOfTwo(Value *V, bool OrZero, unsigned Depth) {
 
       unsigned BitWidth = V->getType()->getScalarSizeInBits();
       APInt LHSZeroBits(BitWidth, 0), LHSOneBits(BitWidth, 0);
-      ComputeMaskedBits(X, LHSZeroBits, LHSOneBits, 0, Depth);
+      ComputeMaskedBits(X, LHSZeroBits, LHSOneBits, nullptr, Depth);
 
       APInt RHSZeroBits(BitWidth, 0), RHSOneBits(BitWidth, 0);
-      ComputeMaskedBits(Y, RHSZeroBits, RHSOneBits, 0, Depth);
+      ComputeMaskedBits(Y, RHSZeroBits, RHSOneBits, nullptr, Depth);
       // If i8 V is a power of two or zero:
       //  ZeroBits: 1 1 1 0 1 1 1 1
       // ~ZeroBits: 0 0 0 1 0 0 0 0
@@ -1005,7 +1005,7 @@ bool llvm::isKnownNonZero(Value *V, const DataLayout *TD, unsigned Depth) {
   unsigned BitWidth = getBitWidth(V->getType()->getScalarType(), TD);
 
   // X | Y != 0 if X != 0 or Y != 0.
-  Value *X = 0, *Y = 0;
+  Value *X = nullptr, *Y = nullptr;
   if (match(V, m_Or(m_Value(X), m_Value(Y))))
     return isKnownNonZero(X, TD, Depth) || isKnownNonZero(Y, TD, Depth);
 
@@ -1364,7 +1364,7 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
       Op1 = ConstantInt::get(V->getContext(), API);
     }
 
-    Value *Mul0 = NULL;
+    Value *Mul0 = nullptr;
     if (ComputeMultiple(Op0, Base, Mul0, LookThroughSExt, Depth+1)) {
       if (Constant *Op1C = dyn_cast<Constant>(Op1))
         if (Constant *MulC = dyn_cast<Constant>(Mul0)) {
@@ -1388,7 +1388,7 @@ bool llvm::ComputeMultiple(Value *V, unsigned Base, Value *&Multiple,
         }
     }
 
-    Value *Mul1 = NULL;
+    Value *Mul1 = nullptr;
     if (ComputeMultiple(Op1, Base, Mul1, LookThroughSExt, Depth+1)) {
       if (Constant *Op0C = dyn_cast<Constant>(Op0))
         if (Constant *MulC = dyn_cast<Constant>(Mul1)) {
@@ -1432,7 +1432,7 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
     return 1;  // Limit search depth.
 
   const Operator *I = dyn_cast<Operator>(V);
-  if (I == 0) return false;
+  if (!I) return false;
 
   // Check if the nsz fast-math flag is set
   if (const FPMathOperator *FPO = dyn_cast<FPMathOperator>(I))
@@ -1513,7 +1513,7 @@ Value *llvm::isBytewiseValue(Value *V) {
 
         // If the top/bottom halves aren't the same, reject it.
         if (Val != Val2)
-          return 0;
+          return nullptr;
       }
       return ConstantInt::get(V->getContext(), Val);
     }
@@ -1525,11 +1525,11 @@ Value *llvm::isBytewiseValue(Value *V) {
     Value *Elt = CA->getElementAsConstant(0);
     Value *Val = isBytewiseValue(Elt);
     if (!Val)
-      return 0;
+      return nullptr;
 
     for (unsigned I = 1, E = CA->getNumElements(); I != E; ++I)
       if (CA->getElementAsConstant(I) != Elt)
-        return 0;
+        return nullptr;
 
     return Val;
   }
@@ -1540,7 +1540,7 @@ Value *llvm::isBytewiseValue(Value *V) {
   //   %c = or i16 %a, %b
   // but until there is an example that actually needs this, it doesn't seem
   // worth worrying about.
-  return 0;
+  return nullptr;
 }
 
 
@@ -1590,7 +1590,7 @@ static Value *BuildSubAggregate(Value *From, Value* To, Type *IndexedType,
   Value *V = FindInsertedValue(From, Idxs);
 
   if (!V)
-    return NULL;
+    return nullptr;
 
   // Insert the value in the new (sub) aggregrate
   return llvm::InsertValueInst::Create(To, V, makeArrayRef(Idxs).slice(IdxSkip),
@@ -1641,7 +1641,7 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
 
   if (Constant *C = dyn_cast<Constant>(V)) {
     C = C->getAggregateElement(idx_range[0]);
-    if (C == 0) return 0;
+    if (!C) return nullptr;
     return FindInsertedValue(C, idx_range.slice(1), InsertBefore);
   }
 
@@ -1654,7 +1654,7 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
       if (req_idx == idx_range.end()) {
         // We can't handle this without inserting insertvalues
         if (!InsertBefore)
-          return 0;
+          return nullptr;
 
         // The requested index identifies a part of a nested aggregate. Handle
         // this specially. For example,
@@ -1708,7 +1708,7 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
   }
   // Otherwise, we don't know (such as, extracting from a function return value
   // or load instruction)
-  return 0;
+  return nullptr;
 }
 
 /// GetPointerBaseWithConstantOffset - Analyze the specified pointer to see if
@@ -1769,13 +1769,13 @@ bool llvm::getConstantStringInfo(const Value *V, StringRef &Str,
     // Make sure the index-ee is a pointer to array of i8.
     PointerType *PT = cast<PointerType>(GEP->getOperand(0)->getType());
     ArrayType *AT = dyn_cast<ArrayType>(PT->getElementType());
-    if (AT == 0 || !AT->getElementType()->isIntegerTy(8))
+    if (!AT || !AT->getElementType()->isIntegerTy(8))
       return false;
 
     // Check to make sure that the first operand of the GEP is an integer and
     // has value 0 so that we are sure we're indexing into the initializer.
     const ConstantInt *FirstIdx = dyn_cast<ConstantInt>(GEP->getOperand(1));
-    if (FirstIdx == 0 || !FirstIdx->isZero())
+    if (!FirstIdx || !FirstIdx->isZero())
       return false;
 
     // If the second index isn't a ConstantInt, then this is a variable index
@@ -1807,7 +1807,7 @@ bool llvm::getConstantStringInfo(const Value *V, StringRef &Str,
   // Must be a Constant Array
   const ConstantDataArray *Array =
     dyn_cast<ConstantDataArray>(GV->getInitializer());
-  if (Array == 0 || !Array->isString())
+  if (!Array || !Array->isString())
     return false;
 
   // Get the number of elements in the array
@@ -1913,7 +1913,7 @@ llvm::GetUnderlyingObject(Value *V, const DataLayout *TD, unsigned MaxLookup) {
       // See if InstructionSimplify knows any relevant tricks.
       if (Instruction *I = dyn_cast<Instruction>(V))
         // TODO: Acquire a DominatorTree and use it.
-        if (Value *Simplified = SimplifyInstruction(I, TD, 0)) {
+        if (Value *Simplified = SimplifyInstruction(I, TD, nullptr)) {
           V = Simplified;
           continue;
         }

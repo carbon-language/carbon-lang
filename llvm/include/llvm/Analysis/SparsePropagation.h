@@ -82,7 +82,7 @@ public:
   /// constant value, return it.  Otherwise return null.  The returned value
   /// must be in the same LLVM type as Val.
   virtual Constant *GetConstant(LatticeVal LV, Value *Val, SparseSolver &SS) {
-    return 0;
+    return nullptr;
   }
 
   /// ComputeArgument - Given a formal argument value, compute and return a

@@ -46,11 +46,11 @@ LibCallInfo::getFunctionInfo(const Function *F) const {
   
   /// If this is the first time we are querying for this info, lazily construct
   /// the StringMap to index it.
-  if (Map == 0) {
+  if (!Map) {
     Impl = Map = new StringMap<const LibCallFunctionInfo*>();
     
     const LibCallFunctionInfo *Array = getFunctionInfoArray();
-    if (Array == 0) return 0;
+    if (!Array) return nullptr;
     
     // We now have the array of entries.  Populate the StringMap.
     for (unsigned i = 0; Array[i].Name; ++i)

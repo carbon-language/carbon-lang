@@ -97,7 +97,7 @@ namespace llvm {
     PairTy Value;
     explicit MemDepResult(PairTy V) : Value(V) {}
   public:
-    MemDepResult() : Value(0, Invalid) {}
+    MemDepResult() : Value(nullptr, Invalid) {}
 
     /// get methods: These are static ctor methods for creating various
     /// MemDepResult kinds.
@@ -155,7 +155,7 @@ namespace llvm {
     /// getInst() - If this is a normal dependency, return the instruction that
     /// is depended on.  Otherwise, return null.
     Instruction *getInst() const {
-      if (Value.getInt() == Other) return NULL;
+      if (Value.getInt() == Other) return nullptr;
       return Value.getPointer();
     }
 
@@ -285,7 +285,8 @@ namespace llvm {
       /// pointer. May be null if there are no tags or conflicting tags.
       const MDNode *TBAATag;
 
-      NonLocalPointerInfo() : Size(AliasAnalysis::UnknownSize), TBAATag(0) {}
+      NonLocalPointerInfo()
+        : Size(AliasAnalysis::UnknownSize), TBAATag(nullptr) {}
     };
 
     /// CachedNonLocalPointerInfo - This map stores the cached results of doing
@@ -401,7 +402,7 @@ namespace llvm {
                                           bool isLoad,
                                           BasicBlock::iterator ScanIt,
                                           BasicBlock *BB,
-                                          Instruction *QueryInst = 0);
+                                          Instruction *QueryInst = nullptr);
 
 
     /// getLoadLoadClobberFullWidthSize - This is a little bit of analysis that

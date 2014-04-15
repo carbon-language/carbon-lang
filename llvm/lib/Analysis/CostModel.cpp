@@ -41,7 +41,7 @@ namespace {
 
   public:
     static char ID; // Class identification, replacement for typeinfo
-    CostModelAnalysis() : FunctionPass(ID), F(0), TTI(0) {
+    CostModelAnalysis() : FunctionPass(ID), F(nullptr), TTI(nullptr) {
       initializeCostModelAnalysisPass(
         *PassRegistry::getPassRegistry());
     }
@@ -101,7 +101,7 @@ static TargetTransformInfo::OperandValueKind getOperandInfo(Value *V) {
   // Check for a splat of a constant or for a non uniform vector of constants.
   if (isa<ConstantVector>(V) || isa<ConstantDataVector>(V)) {
     OpInfo = TargetTransformInfo::OK_NonUniformConstantValue;
-    if (cast<Constant>(V)->getSplatValue() != NULL)
+    if (cast<Constant>(V)->getSplatValue() != nullptr)
       OpInfo = TargetTransformInfo::OK_UniformConstantValue;
   }
 
@@ -150,7 +150,7 @@ static bool matchPairwiseReductionAtLevel(const BinaryOperator *BinOp,
   // %rdx.shuf.0.1 = shufflevector <4 x float> %rdx, <4 x float> undef,
   //       <4 x i32> <i32 1, i32 3, i32 undef, i32 undef>
   // %bin.rdx.0 = fadd <4 x float> %rdx.shuf.0.0, %rdx.shuf.0.1
-  if (BinOp == 0)
+  if (BinOp == nullptr)
     return false;
 
   assert(BinOp->getType()->isVectorTy() && "Expecting a vector type");
@@ -171,9 +171,9 @@ static bool matchPairwiseReductionAtLevel(const BinaryOperator *BinOp,
     return false;
 
   // Shuffle inputs must match.
-  Value *NextLevelOpL = LS ? LS->getOperand(0) : 0;
-  Value *NextLevelOpR = RS ? RS->getOperand(0) : 0;
-  Value *NextLevelOp = 0;
+  Value *NextLevelOpL = LS ? LS->getOperand(0) : nullptr;
+  Value *NextLevelOpR = RS ? RS->getOperand(0) : nullptr;
+  Value *NextLevelOp = nullptr;
   if (NextLevelOpR && NextLevelOpL) {
     // If we have two shuffles their operands must match.
     if (NextLevelOpL != NextLevelOpR)
@@ -198,7 +198,7 @@ static bool matchPairwiseReductionAtLevel(const BinaryOperator *BinOp,
 
   // Check that the next levels binary operation exists and matches with the
   // current one.
-  BinaryOperator *NextLevelBinOp = 0;
+  BinaryOperator *NextLevelBinOp = nullptr;
   if (Level + 1 != NumLevels) {
     if (!(NextLevelBinOp = dyn_cast<BinaryOperator>(NextLevelOp)))
       return false;
@@ -277,7 +277,7 @@ getShuffleAndOtherOprd(BinaryOperator *B) {
 
   Value *L = B->getOperand(0);
   Value *R = B->getOperand(1);
-  ShuffleVectorInst *S = 0;
+  ShuffleVectorInst *S = nullptr;
 
   if ((S = dyn_cast<ShuffleVectorInst>(L)))
     return std::make_pair(R, S);
@@ -337,7 +337,7 @@ static bool matchVectorSplittingReduction(const ExtractElementInst *ReduxRoot,
     std::tie(NextRdxOp, Shuffle) = getShuffleAndOtherOprd(BinOp);
 
     // Check the current reduction operation and the shuffle use the same value.
-    if (Shuffle == 0)
+    if (Shuffle == nullptr)
       return false;
     if (Shuffle->getOperand(0) != NextRdxOp)
       return false;
@@ -478,7 +478,7 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
 
     if (NumVecElems == Mask.size() && isReverseVectorMask(Mask))
       return TTI->getShuffleCost(TargetTransformInfo::SK_Reverse, VecTypOp0, 0,
-                                 0);
+                                 nullptr);
     return -1;
   }
   case Instruction::Call:

@@ -72,16 +72,16 @@ void AliasSet::mergeSetIn(AliasSet &AS, AliasSetTracker &AST) {
     AS.PtrList->setPrevInList(PtrListEnd);
     PtrListEnd = AS.PtrListEnd;
 
-    AS.PtrList = 0;
+    AS.PtrList = nullptr;
     AS.PtrListEnd = &AS.PtrList;
-    assert(*AS.PtrListEnd == 0 && "End of list is not null?");
+    assert(*AS.PtrListEnd == nullptr && "End of list is not null?");
   }
 }
 
 void AliasSetTracker::removeAliasSet(AliasSet *AS) {
   if (AliasSet *Fwd = AS->Forward) {
     Fwd->dropRef(*this);
-    AS->Forward = 0;
+    AS->Forward = nullptr;
   }
   AliasSets.erase(AS);
 }
@@ -115,10 +115,10 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
   Entry.updateSizeAndTBAAInfo(Size, TBAAInfo);
 
   // Add it to the end of the list...
-  assert(*PtrListEnd == 0 && "End of list is not null?");
+  assert(*PtrListEnd == nullptr && "End of list is not null?");
   *PtrListEnd = &Entry;
   PtrListEnd = Entry.setPrevInList(PtrListEnd);
-  assert(*PtrListEnd == 0 && "End of list is not null?");
+  assert(*PtrListEnd == nullptr && "End of list is not null?");
   addRef();               // Entry points to alias set.
 }
 
@@ -217,11 +217,11 @@ void AliasSetTracker::clear() {
 AliasSet *AliasSetTracker::findAliasSetForPointer(const Value *Ptr,
                                                   uint64_t Size,
                                                   const MDNode *TBAAInfo) {
-  AliasSet *FoundSet = 0;
+  AliasSet *FoundSet = nullptr;
   for (iterator I = begin(), E = end(); I != E; ++I) {
     if (I->Forward || !I->aliasesPointer(Ptr, Size, TBAAInfo, AA)) continue;
     
-    if (FoundSet == 0) {  // If this is the first alias set ptr can go into.
+    if (!FoundSet) {      // If this is the first alias set ptr can go into.
       FoundSet = I;       // Remember it.
     } else {              // Otherwise, we must merge the sets.
       FoundSet->mergeSetIn(*I, *this);     // Merge in contents.
@@ -245,12 +245,12 @@ bool AliasSetTracker::containsPointer(Value *Ptr, uint64_t Size,
 
 
 AliasSet *AliasSetTracker::findAliasSetForUnknownInst(Instruction *Inst) {
-  AliasSet *FoundSet = 0;
+  AliasSet *FoundSet = nullptr;
   for (iterator I = begin(), E = end(); I != E; ++I) {
     if (I->Forward || !I->aliasesUnknownInst(Inst, AA))
       continue;
     
-    if (FoundSet == 0)        // If this is the first alias set ptr can go into.
+    if (!FoundSet)            // If this is the first alias set ptr can go into.
       FoundSet = I;           // Remember it.
     else if (!I->Forward)     // Otherwise, we must merge the sets.
       FoundSet->mergeSetIn(*I, *this);     // Merge in contents.

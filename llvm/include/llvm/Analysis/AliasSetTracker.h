@@ -43,13 +43,13 @@ class AliasSet : public ilist_node<AliasSet> {
     const MDNode *TBAAInfo;
   public:
     PointerRec(Value *V)
-      : Val(V), PrevInList(0), NextInList(0), AS(0), Size(0),
+      : Val(V), PrevInList(nullptr), NextInList(nullptr), AS(nullptr), Size(0),
         TBAAInfo(DenseMapInfo<const MDNode *>::getEmptyKey()) {}
 
     Value *getValue() const { return Val; }
     
     PointerRec *getNext() const { return NextInList; }
-    bool hasAliasSet() const { return AS != 0; }
+    bool hasAliasSet() const { return AS != nullptr; }
 
     PointerRec** setPrevInList(PointerRec **PIL) {
       PrevInList = PIL;
@@ -75,7 +75,7 @@ class AliasSet : public ilist_node<AliasSet> {
       // If we have missing or conflicting TBAAInfo, return null.
       if (TBAAInfo == DenseMapInfo<const MDNode *>::getEmptyKey() ||
           TBAAInfo == DenseMapInfo<const MDNode *>::getTombstoneKey())
-        return 0;
+        return nullptr;
       return TBAAInfo;
     }
 
@@ -91,7 +91,7 @@ class AliasSet : public ilist_node<AliasSet> {
     }
 
     void setAliasSet(AliasSet *as) {
-      assert(AS == 0 && "Already have an alias set!");
+      assert(!AS && "Already have an alias set!");
       AS = as;
     }
 
@@ -100,7 +100,7 @@ class AliasSet : public ilist_node<AliasSet> {
       *PrevInList = NextInList;
       if (AS->PtrListEnd == &NextInList) {
         AS->PtrListEnd = PrevInList;
-        assert(*AS->PtrListEnd == 0 && "List not terminated right!");
+        assert(*AS->PtrListEnd == nullptr && "List not terminated right!");
       }
       delete this;
     }
@@ -174,7 +174,7 @@ public:
   class iterator;
   iterator begin() const { return iterator(PtrList); }
   iterator end()   const { return iterator(); }
-  bool empty() const { return PtrList == 0; }
+  bool empty() const { return PtrList == nullptr; }
 
   void print(raw_ostream &OS) const;
   void dump() const;
@@ -184,7 +184,7 @@ public:
                                         PointerRec, ptrdiff_t> {
     PointerRec *CurNode;
   public:
-    explicit iterator(PointerRec *CN = 0) : CurNode(CN) {}
+    explicit iterator(PointerRec *CN = nullptr) : CurNode(CN) {}
 
     bool operator==(const iterator& x) const {
       return CurNode == x.CurNode;
@@ -220,8 +220,9 @@ private:
   // Can only be created by AliasSetTracker. Also, ilist creates one
   // to serve as a sentinel.
   friend struct ilist_sentinel_traits<AliasSet>;
-  AliasSet() : PtrList(0), PtrListEnd(&PtrList), Forward(0), RefCount(0),
-               AccessTy(NoModRef), AliasTy(MustAlias), Volatile(false) {
+  AliasSet()
+    : PtrList(nullptr), PtrListEnd(&PtrList), Forward(nullptr), RefCount(0),
+      AccessTy(NoModRef), AliasTy(MustAlias), Volatile(false) {
   }
 
   AliasSet(const AliasSet &AS) LLVM_DELETED_FUNCTION;
@@ -285,7 +286,7 @@ class AliasSetTracker {
     void deleted() override;
     void allUsesReplacedWith(Value *) override;
   public:
-    ASTCallbackVH(Value *V, AliasSetTracker *AST = 0);
+    ASTCallbackVH(Value *V, AliasSetTracker *AST = nullptr);
     ASTCallbackVH &operator=(Value *V);
   };
   /// ASTCallbackVHDenseMapInfo - Traits to tell DenseMap that tell us how to
@@ -354,7 +355,7 @@ public:
   /// pointer didn't alias anything).
   AliasSet &getAliasSetForPointer(Value *P, uint64_t Size,
                                   const MDNode *TBAAInfo,
-                                  bool *New = 0);
+                                  bool *New = nullptr);
 
   /// getAliasSetForPointerIfExists - Return the alias set containing the
   /// location specified if one exists, otherwise return null.
@@ -408,7 +409,7 @@ private:
   // entry for the pointer if it doesn't already exist.
   AliasSet::PointerRec &getEntryFor(Value *V) {
     AliasSet::PointerRec *&Entry = PointerMap[ASTCallbackVH(V, this)];
-    if (Entry == 0)
+    if (!Entry)
       Entry = new AliasSet::PointerRec(V);
     return *Entry;
   }

@@ -44,7 +44,7 @@ namespace llvm {
       if (Entry) return Entry;
 
       SmallVector<BasicBlock*, 32> PredCache(pred_begin(BB), pred_end(BB));
-      PredCache.push_back(0); // null terminator.
+      PredCache.push_back(nullptr); // null terminator.
       
       BlockToPredCountMap[BB] = PredCache.size()-1;
 

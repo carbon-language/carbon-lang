@@ -130,7 +130,7 @@ namespace llvm {
     mutable const LibCallLocationInfo *Locations;
     mutable unsigned NumLocations;
   public:
-    LibCallInfo() : Impl(0), Locations(0), NumLocations(0) {}
+    LibCallInfo() : Impl(nullptr), Locations(nullptr), NumLocations(0) {}
     virtual ~LibCallInfo();
     
     //===------------------------------------------------------------------===//

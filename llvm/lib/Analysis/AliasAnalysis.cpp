@@ -473,7 +473,7 @@ AliasAnalysis::~AliasAnalysis() {}
 ///
 void AliasAnalysis::InitializeAliasAnalysis(Pass *P) {
   DataLayoutPass *DLP = P->getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : 0;
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = P->getAnalysisIfAvailable<TargetLibraryInfo>();
   AA = &P->getAnalysis<AliasAnalysis>();
 }

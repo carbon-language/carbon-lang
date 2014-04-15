@@ -142,7 +142,7 @@ public:
 
   /// print - Convert to human readable form
   ///
-  void print(raw_ostream &OS, const Module* = 0) const override;
+  void print(raw_ostream &OS, const Module* = nullptr) const override;
 
   /// dump - Dump the dominance frontier to dbgs().
   void dump() const;

@@ -40,12 +40,12 @@ const DominanceFrontier::DomSetType &
 DominanceFrontier::calculate(const DominatorTree &DT,
                              const DomTreeNode *Node) {
   BasicBlock *BB = Node->getBlock();
-  DomSetType *Result = NULL;
+  DomSetType *Result = nullptr;
 
   std::vector<DFCalculateWorkObject> workList;
   SmallPtrSet<BasicBlock *, 32> visited;
 
-  workList.push_back(DFCalculateWorkObject(BB, NULL, Node, NULL));
+  workList.push_back(DFCalculateWorkObject(BB, nullptr, Node, nullptr));
   do {
     DFCalculateWorkObject *currentW = &workList.back();
     assert (currentW && "Missing work object.");

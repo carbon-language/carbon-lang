@@ -61,8 +61,8 @@ LPPassManager::LPPassManager()
   : FunctionPass(ID), PMDataManager() {
   skipThisLoop = false;
   redoThisLoop = false;
-  LI = NULL;
-  CurrentLoop = NULL;
+  LI = nullptr;
+  CurrentLoop = nullptr;
 }
 
 /// Delete loop from the loop queue and loop hierarchy (LoopInfo).

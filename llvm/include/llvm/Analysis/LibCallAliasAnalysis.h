@@ -27,7 +27,7 @@ namespace llvm {
     
     LibCallInfo *LCI;
     
-    explicit LibCallAliasAnalysis(LibCallInfo *LC = 0)
+    explicit LibCallAliasAnalysis(LibCallInfo *LC = nullptr)
         : FunctionPass(ID), LCI(LC) {
       initializeLibCallAliasAnalysisPass(*PassRegistry::getPassRegistry());
     }

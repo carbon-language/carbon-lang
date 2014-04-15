@@ -141,21 +141,21 @@ bool Loop::makeLoopInvariant(Instruction *I, bool &Changed,
 PHINode *Loop::getCanonicalInductionVariable() const {
   BasicBlock *H = getHeader();
 
-  BasicBlock *Incoming = 0, *Backedge = 0;
+  BasicBlock *Incoming = nullptr, *Backedge = nullptr;
   pred_iterator PI = pred_begin(H);
   assert(PI != pred_end(H) &&
          "Loop must have at least one backedge!");
   Backedge = *PI++;
-  if (PI == pred_end(H)) return 0;  // dead loop
+  if (PI == pred_end(H)) return nullptr;  // dead loop
   Incoming = *PI++;
-  if (PI != pred_end(H)) return 0;  // multiple backedges?
+  if (PI != pred_end(H)) return nullptr;  // multiple backedges?
 
   if (contains(Incoming)) {
     if (contains(Backedge))
-      return 0;
+      return nullptr;
     std::swap(Incoming, Backedge);
   } else if (!contains(Backedge))
-    return 0;
+    return nullptr;
 
   // Loop over all of the PHI nodes, looking for a canonical indvar.
   for (BasicBlock::iterator I = H->begin(); isa<PHINode>(I); ++I) {
@@ -171,7 +171,7 @@ PHINode *Loop::getCanonicalInductionVariable() const {
               if (CI->equalsInt(1))
                 return PN;
   }
-  return 0;
+  return nullptr;
 }
 
 /// isLCSSAForm - Return true if the Loop is in LCSSA form
@@ -232,7 +232,7 @@ bool Loop::isSafeToClone() const {
 }
 
 MDNode *Loop::getLoopID() const {
-  MDNode *LoopID = 0;
+  MDNode *LoopID = nullptr;
   if (isLoopSimplifyForm()) {
     LoopID = getLoopLatch()->getTerminator()->getMetadata(LoopMDName);
   } else {
@@ -241,7 +241,7 @@ MDNode *Loop::getLoopID() const {
     BasicBlock *H = getHeader();
     for (block_iterator I = block_begin(), IE = block_end(); I != IE; ++I) {
       TerminatorInst *TI = (*I)->getTerminator();
-      MDNode *MD = 0;
+      MDNode *MD = nullptr;
 
       // Check if this terminator branches to the loop header.
       for (unsigned i = 0, ie = TI->getNumSuccessors(); i != ie; ++i) {
@@ -251,17 +251,17 @@ MDNode *Loop::getLoopID() const {
         }
       }
       if (!MD)
-        return 0;
+        return nullptr;
 
       if (!LoopID)
         LoopID = MD;
       else if (MD != LoopID)
-        return 0;
+        return nullptr;
     }
   }
   if (!LoopID || LoopID->getNumOperands() == 0 ||
       LoopID->getOperand(0) != LoopID)
-    return 0;
+    return nullptr;
   return LoopID;
 }
 
@@ -402,7 +402,7 @@ BasicBlock *Loop::getUniqueExitBlock() const {
   getUniqueExitBlocks(UniqueExitBlocks);
   if (UniqueExitBlocks.size() == 1)
     return UniqueExitBlocks[0];
-  return 0;
+  return nullptr;
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
@@ -548,7 +548,7 @@ Loop *UnloopUpdater::getNearestLoop(BasicBlock *BB, Loop *BBLoop) {
   // is considered uninitialized.
   Loop *NearLoop = BBLoop;
 
-  Loop *Subloop = 0;
+  Loop *Subloop = nullptr;
   if (NearLoop != Unloop && Unloop->contains(NearLoop)) {
     Subloop = NearLoop;
     // Find the subloop ancestor that is directly contained within Unloop.
@@ -564,7 +564,7 @@ Loop *UnloopUpdater::getNearestLoop(BasicBlock *BB, Loop *BBLoop) {
   succ_iterator I = succ_begin(BB), E = succ_end(BB);
   if (I == E) {
     assert(!Subloop && "subloop blocks must have a successor");
-    NearLoop = 0; // unloop blocks may now exit the function.
+    NearLoop = nullptr; // unloop blocks may now exit the function.
   }
   for (; I != E; ++I) {
     if (*I == BB)
@@ -637,7 +637,7 @@ void LoopInfo::updateUnloop(Loop *Unloop) {
 
       // Blocks no longer have a parent but are still referenced by Unloop until
       // the Unloop object is deleted.
-      LI.changeLoopFor(*I, 0);
+      LI.changeLoopFor(*I, nullptr);
     }
 
     // Remove the loop from the top-level LoopInfo object.

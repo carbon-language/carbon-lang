@@ -182,7 +182,7 @@ void SCEV::print(raw_ostream &OS) const {
   case scUMaxExpr:
   case scSMaxExpr: {
     const SCEVNAryExpr *NAry = cast<SCEVNAryExpr>(this);
-    const char *OpStr = 0;
+    const char *OpStr = nullptr;
     switch (NAry->getSCEVType()) {
     case scAddExpr: OpStr = " + "; break;
     case scMulExpr: OpStr = " * "; break;
@@ -312,7 +312,7 @@ const SCEV *ScalarEvolution::getConstant(ConstantInt *V) {
   FoldingSetNodeID ID;
   ID.AddInteger(scConstant);
   ID.AddPointer(V);
-  void *IP = 0;
+  void *IP = nullptr;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = new (SCEVAllocator) SCEVConstant(ID.Intern(SCEVAllocator), V);
   UniqueSCEVs.InsertNode(S, IP);
@@ -365,7 +365,7 @@ void SCEVUnknown::deleted() {
   SE->UniqueSCEVs.RemoveNode(this);
 
   // Release the value.
-  setValPtr(0);
+  setValPtr(nullptr);
 }
 
 void SCEVUnknown::allUsesReplacedWith(Value *New) {
@@ -829,7 +829,7 @@ const SCEV *ScalarEvolution::getTruncateExpr(const SCEV *Op,
   ID.AddInteger(scTruncate);
   ID.AddPointer(Op);
   ID.AddPointer(Ty);
-  void *IP = 0;
+  void *IP = nullptr;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
 
   // Fold if the operand is constant.
@@ -919,7 +919,7 @@ const SCEV *ScalarEvolution::getZeroExtendExpr(const SCEV *Op,
   ID.AddInteger(scZeroExtend);
   ID.AddPointer(Op);
   ID.AddPointer(Ty);
-  void *IP = 0;
+  void *IP = nullptr;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
 
   // zext(trunc(x)) --> zext(x) or x or trunc(x)
@@ -1072,7 +1072,7 @@ static const SCEV *getOverflowLimitForStep(const SCEV *Step,
     return SE->getConstant(APInt::getSignedMaxValue(BitWidth) -
                        SE->getSignedRange(Step).getSignedMin());
   }
-  return 0;
+  return nullptr;
 }
 
 // The recurrence AR has been shown to have no signed wrap. Typically, if we can
@@ -1091,7 +1091,7 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
   // Check for a simple looking step prior to loop entry.
   const SCEVAddExpr *SA = dyn_cast<SCEVAddExpr>(Start);
   if (!SA)
-    return 0;
+    return nullptr;
 
   // Create an AddExpr for "PreStart" after subtracting Step. Full SCEV
   // subtraction is expensive. For this purpose, perform a quick and dirty
@@ -1103,7 +1103,7 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
       DiffOps.push_back(*I);
   }
   if (DiffOps.size() == SA->getNumOperands())
-    return 0;
+    return nullptr;
 
   // This is a postinc AR. Check for overflow on the preinc recurrence using the
   // same three conditions that getSignExtendedExpr checks.
@@ -1139,7 +1139,7 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
       SE->isLoopEntryGuardedByCond(L, Pred, PreStart, OverflowLimit)) {
     return PreStart;
   }
-  return 0;
+  return nullptr;
 }
 
 // Get the normalized sign-extended expression for this AddRec's Start.
@@ -1181,7 +1181,7 @@ const SCEV *ScalarEvolution::getSignExtendExpr(const SCEV *Op,
   ID.AddInteger(scSignExtend);
   ID.AddPointer(Op);
   ID.AddPointer(Ty);
-  void *IP = 0;
+  void *IP = nullptr;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
 
   // If the input value is provably positive, build a zext instead.
@@ -1811,7 +1811,7 @@ const SCEV *ScalarEvolution::getAddExpr(SmallVectorImpl<const SCEV *> &Ops,
   ID.AddInteger(scAddExpr);
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     ID.AddPointer(Ops[i]);
-  void *IP = 0;
+  void *IP = nullptr;
   SCEVAddExpr *S =
     static_cast<SCEVAddExpr *>(UniqueSCEVs.FindNodeOrInsertPos(ID, IP));
   if (!S) {
@@ -2105,7 +2105,7 @@ const SCEV *ScalarEvolution::getMulExpr(SmallVectorImpl<const SCEV *> &Ops,
   ID.AddInteger(scMulExpr);
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     ID.AddPointer(Ops[i]);
-  void *IP = 0;
+  void *IP = nullptr;
   SCEVMulExpr *S =
     static_cast<SCEVMulExpr *>(UniqueSCEVs.FindNodeOrInsertPos(ID, IP));
   if (!S) {
@@ -2230,7 +2230,7 @@ const SCEV *ScalarEvolution::getUDivExpr(const SCEV *LHS,
   ID.AddInteger(scUDivExpr);
   ID.AddPointer(LHS);
   ID.AddPointer(RHS);
-  void *IP = 0;
+  void *IP = nullptr;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   SCEV *S = new (SCEVAllocator) SCEVUDivExpr(ID.Intern(SCEVAllocator),
                                              LHS, RHS);
@@ -2425,7 +2425,7 @@ ScalarEvolution::getAddRecExpr(SmallVectorImpl<const SCEV *> &Operands,
   for (unsigned i = 0, e = Operands.size(); i != e; ++i)
     ID.AddPointer(Operands[i]);
   ID.AddPointer(L);
-  void *IP = 0;
+  void *IP = nullptr;
   SCEVAddRecExpr *S =
     static_cast<SCEVAddRecExpr *>(UniqueSCEVs.FindNodeOrInsertPos(ID, IP));
   if (!S) {
@@ -2533,7 +2533,7 @@ ScalarEvolution::getSMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   ID.AddInteger(scSMaxExpr);
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     ID.AddPointer(Ops[i]);
-  void *IP = 0;
+  void *IP = nullptr;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   const SCEV **O = SCEVAllocator.Allocate<const SCEV *>(Ops.size());
   std::uninitialized_copy(Ops.begin(), Ops.end(), O);
@@ -2637,7 +2637,7 @@ ScalarEvolution::getUMaxExpr(SmallVectorImpl<const SCEV *> &Ops) {
   ID.AddInteger(scUMaxExpr);
   for (unsigned i = 0, e = Ops.size(); i != e; ++i)
     ID.AddPointer(Ops[i]);
-  void *IP = 0;
+  void *IP = nullptr;
   if (const SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) return S;
   const SCEV **O = SCEVAllocator.Allocate<const SCEV *>(Ops.size());
   std::uninitialized_copy(Ops.begin(), Ops.end(), O);
@@ -2704,7 +2704,7 @@ const SCEV *ScalarEvolution::getUnknown(Value *V) {
   FoldingSetNodeID ID;
   ID.AddInteger(scUnknown);
   ID.AddPointer(V);
-  void *IP = 0;
+  void *IP = nullptr;
   if (SCEV *S = UniqueSCEVs.FindNodeOrInsertPos(ID, IP)) {
     assert(cast<SCEVUnknown>(S)->getValue() == V &&
            "Stale SCEVUnknown in uniquing map!");
@@ -3010,7 +3010,7 @@ const SCEV *ScalarEvolution::getPointerBase(const SCEV *V) {
     return getPointerBase(Cast->getOperand());
   }
   else if (const SCEVNAryExpr *NAry = dyn_cast<SCEVNAryExpr>(V)) {
-    const SCEV *PtrOp = 0;
+    const SCEV *PtrOp = nullptr;
     for (SCEVNAryExpr::op_iterator I = NAry->op_begin(), E = NAry->op_end();
          I != E; ++I) {
       if ((*I)->getType()->isPointerTy()) {
@@ -3090,20 +3090,20 @@ const SCEV *ScalarEvolution::createNodeForPHI(PHINode *PN) {
       // The loop may have multiple entrances or multiple exits; we can analyze
       // this phi as an addrec if it has a unique entry value and a unique
       // backedge value.
-      Value *BEValueV = 0, *StartValueV = 0;
+      Value *BEValueV = nullptr, *StartValueV = nullptr;
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
         Value *V = PN->getIncomingValue(i);
         if (L->contains(PN->getIncomingBlock(i))) {
           if (!BEValueV) {
             BEValueV = V;
           } else if (BEValueV != V) {
-            BEValueV = 0;
+            BEValueV = nullptr;
             break;
           }
         } else if (!StartValueV) {
           StartValueV = V;
         } else if (StartValueV != V) {
-          StartValueV = 0;
+          StartValueV = nullptr;
           break;
         }
       }
@@ -4316,9 +4316,9 @@ ScalarEvolution::BackedgeTakenInfo::getExact(ScalarEvolution *SE) const {
   if (!ExitNotTaken.ExitingBlock) return SE->getCouldNotCompute();
   assert(ExitNotTaken.ExactNotTaken && "uninitialized not-taken info");
 
-  const SCEV *BECount = 0;
+  const SCEV *BECount = nullptr;
   for (const ExitNotTakenInfo *ENT = &ExitNotTaken;
-       ENT != 0; ENT = ENT->getNextExit()) {
+       ENT != nullptr; ENT = ENT->getNextExit()) {
 
     assert(ENT->ExactNotTaken != SE->getCouldNotCompute() && "bad exit SCEV");
 
@@ -4336,7 +4336,7 @@ const SCEV *
 ScalarEvolution::BackedgeTakenInfo::getExact(BasicBlock *ExitingBlock,
                                              ScalarEvolution *SE) const {
   for (const ExitNotTakenInfo *ENT = &ExitNotTaken;
-       ENT != 0; ENT = ENT->getNextExit()) {
+       ENT != nullptr; ENT = ENT->getNextExit()) {
 
     if (ENT->ExitingBlock == ExitingBlock)
       return ENT->ExactNotTaken;
@@ -4359,7 +4359,7 @@ bool ScalarEvolution::BackedgeTakenInfo::hasOperand(const SCEV *S,
     return false;
 
   for (const ExitNotTakenInfo *ENT = &ExitNotTaken;
-       ENT != 0; ENT = ENT->getNextExit()) {
+       ENT != nullptr; ENT = ENT->getNextExit()) {
 
     if (ENT->ExactNotTaken != SE->getCouldNotCompute()
         && SE->hasOperand(ENT->ExactNotTaken, S)) {
@@ -4398,8 +4398,8 @@ ScalarEvolution::BackedgeTakenInfo::BackedgeTakenInfo(
 
 /// clear - Invalidate this result and free the ExitNotTakenInfo array.
 void ScalarEvolution::BackedgeTakenInfo::clear() {
-  ExitNotTaken.ExitingBlock = 0;
-  ExitNotTaken.ExactNotTaken = 0;
+  ExitNotTaken.ExitingBlock = nullptr;
+  ExitNotTaken.ExactNotTaken = nullptr;
   delete[] ExitNotTaken.getNextExit();
 }
 
@@ -4414,7 +4414,7 @@ ScalarEvolution::ComputeBackedgeTakenCount(const Loop *L) {
   const SCEV *MaxBECount = getCouldNotCompute();
   bool CouldComputeBECount = true;
   BasicBlock *Latch = L->getLoopLatch(); // may be NULL.
-  const SCEV *LatchMaxCount = 0;
+  const SCEV *LatchMaxCount = nullptr;
   SmallVector<std::pair<BasicBlock *, const SCEV *>, 4> ExitCounts;
   for (unsigned i = 0, e = ExitingBlocks.size(); i != e; ++i) {
     ExitLimit EL = ComputeExitLimit(L, ExitingBlocks[i]);
@@ -4454,7 +4454,7 @@ ScalarEvolution::ComputeExitLimit(const Loop *L, BasicBlock *ExitingBlock) {
   // exit at this block and remember the exit block and whether all other targets
   // lead to the loop header.
   bool MustExecuteLoopHeader = true;
-  BasicBlock *Exit = 0;
+  BasicBlock *Exit = nullptr;
   for (succ_iterator SI = succ_begin(ExitingBlock), SE = succ_end(ExitingBlock);
        SI != SE; ++SI)
     if (!L->contains(*SI)) {
@@ -4800,7 +4800,7 @@ ScalarEvolution::ComputeLoadConstantCompareExitLimit(
     return getCouldNotCompute();
 
   // Okay, we allow one non-constant index into the GEP instruction.
-  Value *VarIdx = 0;
+  Value *VarIdx = nullptr;
   std::vector<Constant*> Indexes;
   unsigned VarIdxNum = 0;
   for (unsigned i = 2, e = GEP->getNumOperands(); i != e; ++i)
@@ -4810,7 +4810,7 @@ ScalarEvolution::ComputeLoadConstantCompareExitLimit(
       if (VarIdx) return getCouldNotCompute();  // Multiple non-constant idx's.
       VarIdx = GEP->getOperand(i);
       VarIdxNum = i-2;
-      Indexes.push_back(0);
+      Indexes.push_back(nullptr);
     }
 
   // Loop-invariant loads may be a byproduct of loop optimization. Skip them.
@@ -4841,7 +4841,7 @@ ScalarEvolution::ComputeLoadConstantCompareExitLimit(
 
     Constant *Result = ConstantFoldLoadThroughGEPIndices(GV->getInitializer(),
                                                          Indexes);
-    if (Result == 0) break;  // Cannot compute!
+    if (!Result) break;  // Cannot compute!
 
     // Evaluate the condition for this iteration.
     Result = ConstantExpr::getICmp(predicate, Result, RHS);
@@ -4902,14 +4902,14 @@ getConstantEvolvingPHIOperands(Instruction *UseInst, const Loop *L,
 
   // Otherwise, we can evaluate this instruction if all of its operands are
   // constant or derived from a PHI node themselves.
-  PHINode *PHI = 0;
+  PHINode *PHI = nullptr;
   for (Instruction::op_iterator OpI = UseInst->op_begin(),
          OpE = UseInst->op_end(); OpI != OpE; ++OpI) {
 
     if (isa<Constant>(*OpI)) continue;
 
     Instruction *OpInst = dyn_cast<Instruction>(*OpI);
-    if (!OpInst || !canConstantEvolve(OpInst, L)) return 0;
+    if (!OpInst || !canConstantEvolve(OpInst, L)) return nullptr;
 
     PHINode *P = dyn_cast<PHINode>(OpInst);
     if (!P)
@@ -4923,8 +4923,10 @@ getConstantEvolvingPHIOperands(Instruction *UseInst, const Loop *L,
       P = getConstantEvolvingPHIOperands(OpInst, L, PHIMap);
       PHIMap[OpInst] = P;
     }
-    if (P == 0) return 0;        // Not evolving from PHI
-    if (PHI && PHI != P) return 0;  // Evolving from multiple different PHIs.
+    if (!P)
+      return nullptr;  // Not evolving from PHI
+    if (PHI && PHI != P)
+      return nullptr;  // Evolving from multiple different PHIs.
     PHI = P;
   }
   // This is a expression evolving from a constant PHI!
@@ -4938,7 +4940,7 @@ getConstantEvolvingPHIOperands(Instruction *UseInst, const Loop *L,
 /// constraints, return null.
 static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
   Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0 || !canConstantEvolve(I, L)) return 0;
+  if (!I || !canConstantEvolve(I, L)) return nullptr;
 
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     return PN;
@@ -4960,18 +4962,18 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
   // Convenient constant check, but redundant for recursive calls.
   if (Constant *C = dyn_cast<Constant>(V)) return C;
   Instruction *I = dyn_cast<Instruction>(V);
-  if (!I) return 0;
+  if (!I) return nullptr;
 
   if (Constant *C = Vals.lookup(I)) return C;
 
   // An instruction inside the loop depends on a value outside the loop that we
   // weren't given a mapping for, or a value such as a call inside the loop.
-  if (!canConstantEvolve(I, L)) return 0;
+  if (!canConstantEvolve(I, L)) return nullptr;
 
   // An unmapped PHI can be due to a branch or another loop inside this loop,
   // or due to this not being the initial iteration through a loop where we
   // couldn't compute the evolution of this particular PHI last time.
-  if (isa<PHINode>(I)) return 0;
+  if (isa<PHINode>(I)) return nullptr;
 
   std::vector<Constant*> Operands(I->getNumOperands());
 
@@ -4979,12 +4981,12 @@ static Constant *EvaluateExpression(Value *V, const Loop *L,
     Instruction *Operand = dyn_cast<Instruction>(I->getOperand(i));
     if (!Operand) {
       Operands[i] = dyn_cast<Constant>(I->getOperand(i));
-      if (!Operands[i]) return 0;
+      if (!Operands[i]) return nullptr;
       continue;
     }
     Constant *C = EvaluateExpression(Operand, L, Vals, DL, TLI);
     Vals[Operand] = C;
-    if (!C) return 0;
+    if (!C) return nullptr;
     Operands[i] = C;
   }
 
@@ -5013,7 +5015,7 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     return I->second;
 
   if (BEs.ugt(MaxBruteForceIterations))
-    return ConstantEvolutionLoopExitValue[PN] = 0;  // Not going to evaluate it.
+    return ConstantEvolutionLoopExitValue[PN] = nullptr;  // Not going to evaluate it.
 
   Constant *&RetVal = ConstantEvolutionLoopExitValue[PN];
 
@@ -5025,22 +5027,22 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
   // entry must be a constant (coming in from outside of the loop), and the
   // second must be derived from the same PHI.
   bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
-  PHINode *PHI = 0;
+  PHINode *PHI = nullptr;
   for (BasicBlock::iterator I = Header->begin();
        (PHI = dyn_cast<PHINode>(I)); ++I) {
     Constant *StartCST =
       dyn_cast<Constant>(PHI->getIncomingValue(!SecondIsBackedge));
-    if (StartCST == 0) continue;
+    if (!StartCST) continue;
     CurrentIterVals[PHI] = StartCST;
   }
   if (!CurrentIterVals.count(PN))
-    return RetVal = 0;
+    return RetVal = nullptr;
 
   Value *BEValue = PN->getIncomingValue(SecondIsBackedge);
 
   // Execute the loop symbolically to determine the exit value.
   if (BEs.getActiveBits() >= 32)
-    return RetVal = 0; // More than 2^32-1 iterations?? Not doing it!
+    return RetVal = nullptr; // More than 2^32-1 iterations?? Not doing it!
 
   unsigned NumIterations = BEs.getZExtValue(); // must be in range
   unsigned IterationNum = 0;
@@ -5053,8 +5055,8 @@ ScalarEvolution::getConstantEvolutionLoopExitValue(PHINode *PN,
     DenseMap<Instruction *, Constant *> NextIterVals;
     Constant *NextPHI = EvaluateExpression(BEValue, L, CurrentIterVals, DL,
                                            TLI);
-    if (NextPHI == 0)
-      return 0;        // Couldn't evaluate!
+    if (!NextPHI)
+      return nullptr;        // Couldn't evaluate!
     NextIterVals[PN] = NextPHI;
 
     bool StoppedEvolving = NextPHI == CurrentIterVals[PN];
@@ -5101,7 +5103,7 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
                                                           Value *Cond,
                                                           bool ExitWhen) {
   PHINode *PN = getConstantEvolvingPHI(Cond, L);
-  if (PN == 0) return getCouldNotCompute();
+  if (!PN) return getCouldNotCompute();
 
   // If the loop is canonicalized, the PHI will have exactly two entries.
   // That's the only form we support here.
@@ -5114,12 +5116,12 @@ const SCEV *ScalarEvolution::ComputeExitCountExhaustively(const Loop *L,
   // One entry must be a constant (coming in from outside of the loop), and the
   // second must be derived from the same PHI.
   bool SecondIsBackedge = L->contains(PN->getIncomingBlock(1));
-  PHINode *PHI = 0;
+  PHINode *PHI = nullptr;
   for (BasicBlock::iterator I = Header->begin();
        (PHI = dyn_cast<PHINode>(I)); ++I) {
     Constant *StartCST =
       dyn_cast<Constant>(PHI->getIncomingValue(!SecondIsBackedge));
-    if (StartCST == 0) continue;
+    if (!StartCST) continue;
     CurrentIterVals[PHI] = StartCST;
   }
   if (!CurrentIterVals.count(PN))
@@ -5189,7 +5191,7 @@ const SCEV *ScalarEvolution::getSCEVAtScope(const SCEV *V, const Loop *L) {
     if (Values[u].first == L)
       return Values[u].second ? Values[u].second : V;
   }
-  Values.push_back(std::make_pair(L, static_cast<const SCEV *>(0)));
+  Values.push_back(std::make_pair(L, static_cast<const SCEV *>(nullptr)));
   // Otherwise compute it.
   const SCEV *C = computeSCEVAtScope(V, L);
   SmallVector<std::pair<const Loop *, const SCEV *>, 2> &Values2 = ValuesAtScopes[V];
@@ -5243,7 +5245,7 @@ static Constant *BuildConstantFromSCEV(const SCEV *V) {
         }
         for (unsigned i = 1, e = SA->getNumOperands(); i != e; ++i) {
           Constant *C2 = BuildConstantFromSCEV(SA->getOperand(i));
-          if (!C2) return 0;
+          if (!C2) return nullptr;
 
           // First pointer!
           if (!C->getType()->isPointerTy() && C2->getType()->isPointerTy()) {
@@ -5258,7 +5260,7 @@ static Constant *BuildConstantFromSCEV(const SCEV *V) {
           // Don't bother trying to sum two pointers. We probably can't
           // statically compute a load that results from it anyway.
           if (C2->getType()->isPointerTy())
-            return 0;
+            return nullptr;
 
           if (PointerType *PTy = dyn_cast<PointerType>(C->getType())) {
             if (PTy->getElementType()->isStructTy())
@@ -5276,10 +5278,10 @@ static Constant *BuildConstantFromSCEV(const SCEV *V) {
       const SCEVMulExpr *SM = cast<SCEVMulExpr>(V);
       if (Constant *C = BuildConstantFromSCEV(SM->getOperand(0))) {
         // Don't bother with pointers at all.
-        if (C->getType()->isPointerTy()) return 0;
+        if (C->getType()->isPointerTy()) return nullptr;
         for (unsigned i = 1, e = SM->getNumOperands(); i != e; ++i) {
           Constant *C2 = BuildConstantFromSCEV(SM->getOperand(i));
-          if (!C2 || C2->getType()->isPointerTy()) return 0;
+          if (!C2 || C2->getType()->isPointerTy()) return nullptr;
           C = ConstantExpr::getMul(C, C2);
         }
         return C;
@@ -5298,7 +5300,7 @@ static Constant *BuildConstantFromSCEV(const SCEV *V) {
     case scUMaxExpr:
       break; // TODO: smax, umax.
   }
-  return 0;
+  return nullptr;
 }
 
 const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
@@ -5365,7 +5367,7 @@ const SCEV *ScalarEvolution::computeSCEVAtScope(const SCEV *V, const Loop *L) {
 
         // Check to see if getSCEVAtScope actually made an improvement.
         if (MadeImprovement) {
-          Constant *C = 0;
+          Constant *C = nullptr;
           if (const CmpInst *CI = dyn_cast<CmpInst>(I))
             C = ConstantFoldCompareInstOperands(CI->getPredicate(),
                                                 Operands[0], Operands[1], DL,
@@ -5697,7 +5699,7 @@ ScalarEvolution::HowFarToZero(const SCEV *V, const Loop *L, bool IsSubExpr) {
   // to 0, it must be counting down to equal 0. Consequently, N = Start / -Step.
   // We have not yet seen any such cases.
   const SCEVConstant *StepC = dyn_cast<SCEVConstant>(Step);
-  if (StepC == 0 || StepC->getValue()->equalsInt(0))
+  if (!StepC || StepC->getValue()->equalsInt(0))
     return getCouldNotCompute();
 
   // For positive steps (counting up until unsigned overflow):
@@ -7375,7 +7377,8 @@ ScalarEvolution::SCEVCallbackVH::SCEVCallbackVH(Value *V, ScalarEvolution *se)
 //===----------------------------------------------------------------------===//
 
 ScalarEvolution::ScalarEvolution()
-  : FunctionPass(ID), ValuesAtScopes(64), LoopDispositions(64), BlockDispositions(64), FirstUnknown(0) {
+  : FunctionPass(ID), ValuesAtScopes(64), LoopDispositions(64),
+    BlockDispositions(64), FirstUnknown(nullptr) {
   initializeScalarEvolutionPass(*PassRegistry::getPassRegistry());
 }
 
@@ -7383,7 +7386,7 @@ bool ScalarEvolution::runOnFunction(Function &F) {
   this->F = &F;
   LI = &getAnalysis<LoopInfo>();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : 0;
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   return false;
@@ -7394,7 +7397,7 @@ void ScalarEvolution::releaseMemory() {
   // destructors, so that they release their references to their values.
   for (SCEVUnknown *U = FirstUnknown; U; U = U->Next)
     U->~SCEVUnknown();
-  FirstUnknown = 0;
+  FirstUnknown = nullptr;
 
   ValueExprMap.clear();
 

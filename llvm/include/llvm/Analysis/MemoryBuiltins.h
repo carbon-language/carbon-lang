@@ -233,7 +233,7 @@ class ObjectSizeOffsetEvaluator
   bool RoundToAlign;
 
   SizeOffsetEvalType unknown() {
-    return std::make_pair((Value*)0, (Value*)0);
+    return std::make_pair(nullptr, nullptr);
   }
   SizeOffsetEvalType compute_(Value *V);
 

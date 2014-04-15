@@ -46,7 +46,7 @@ namespace {
 
     bool runOnFunction(Function &F) override;
 
-    void print(raw_ostream &OS, const Module * = 0) const override;
+    void print(raw_ostream &OS, const Module * = nullptr) const override;
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequiredTransitive<AliasAnalysis>();
@@ -56,7 +56,7 @@ namespace {
 
     void releaseMemory() override {
       Deps.clear();
-      F = 0;
+      F = nullptr;
     }
 
   private:
@@ -106,7 +106,7 @@ bool MemDepPrinter::runOnFunction(Function &F) {
     MemDepResult Res = MDA.getDependency(Inst);
     if (!Res.isNonLocal()) {
       Deps[Inst].insert(std::make_pair(getInstTypePair(Res),
-                                       static_cast<BasicBlock *>(0)));
+                                       static_cast<BasicBlock *>(nullptr)));
     } else if (CallSite CS = cast<Value>(Inst)) {
       const MemoryDependenceAnalysis::NonLocalDepInfo &NLDI =
         MDA.getNonLocalCallDependency(CS);
@@ -122,8 +122,8 @@ bool MemDepPrinter::runOnFunction(Function &F) {
       if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
         if (!LI->isUnordered()) {
           // FIXME: Handle atomic/volatile loads.
-          Deps[Inst].insert(std::make_pair(getInstTypePair(0, Unknown),
-                                           static_cast<BasicBlock *>(0)));
+          Deps[Inst].insert(std::make_pair(getInstTypePair(nullptr, Unknown),
+                                           static_cast<BasicBlock *>(nullptr)));
           continue;
         }
         AliasAnalysis::Location Loc = AA.getLocation(LI);
@@ -131,8 +131,8 @@ bool MemDepPrinter::runOnFunction(Function &F) {
       } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
         if (!SI->isUnordered()) {
           // FIXME: Handle atomic/volatile stores.
-          Deps[Inst].insert(std::make_pair(getInstTypePair(0, Unknown),
-                                           static_cast<BasicBlock *>(0)));
+          Deps[Inst].insert(std::make_pair(getInstTypePair(nullptr, Unknown),
+                                           static_cast<BasicBlock *>(nullptr)));
           continue;
         }
         AliasAnalysis::Location Loc = AA.getLocation(SI);

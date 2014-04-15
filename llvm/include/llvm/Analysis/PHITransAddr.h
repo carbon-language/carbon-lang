@@ -45,7 +45,8 @@ class PHITransAddr {
   /// InstInputs - The inputs for our symbolic address.
   SmallVector<Instruction*, 4> InstInputs;
 public:
-  PHITransAddr(Value *addr, const DataLayout *DL) : Addr(addr), DL(DL), TLI(0) {
+  PHITransAddr(Value *addr, const DataLayout *DL)
+      : Addr(addr), DL(DL), TLI(nullptr) {
     // If the address is an instruction, the whole thing is considered an input.
     if (Instruction *I = dyn_cast<Instruction>(Addr))
       InstInputs.push_back(I);

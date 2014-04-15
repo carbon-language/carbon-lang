@@ -76,14 +76,14 @@ static Function *getCalledFunction(const Value *V, bool LookThroughBitCast) {
 
   CallSite CS(const_cast<Value*>(V));
   if (!CS.getInstruction())
-    return 0;
+    return nullptr;
 
   if (CS.isNoBuiltin())
-    return 0;
+    return nullptr;
 
   Function *Callee = CS.getCalledFunction();
   if (!Callee || !Callee->isDeclaration())
-    return 0;
+    return nullptr;
   return Callee;
 }
 
@@ -94,17 +94,17 @@ static const AllocFnsTy *getAllocationData(const Value *V, AllocType AllocTy,
                                            bool LookThroughBitCast = false) {
   // Skip intrinsics
   if (isa<IntrinsicInst>(V))
-    return 0;
+    return nullptr;
 
   Function *Callee = getCalledFunction(V, LookThroughBitCast);
   if (!Callee)
-    return 0;
+    return nullptr;
 
   // Make sure that the function is available.
   StringRef FnName = Callee->getName();
   LibFunc::Func TLIFn;
   if (!TLI || !TLI->getLibFunc(FnName, TLIFn) || !TLI->has(TLIFn))
-    return 0;
+    return nullptr;
 
   unsigned i = 0;
   bool found = false;
@@ -115,11 +115,11 @@ static const AllocFnsTy *getAllocationData(const Value *V, AllocType AllocTy,
     }
   }
   if (!found)
-    return 0;
+    return nullptr;
 
   const AllocFnsTy *FnData = &AllocationFnData[i];
   if ((FnData->AllocTy & AllocTy) != FnData->AllocTy)
-    return 0;
+    return nullptr;
 
   // Check function prototype.
   int FstParam = FnData->FstParam;
@@ -135,7 +135,7 @@ static const AllocFnsTy *getAllocationData(const Value *V, AllocType AllocTy,
        FTy->getParamType(SndParam)->isIntegerTy(32) ||
        FTy->getParamType(SndParam)->isIntegerTy(64)))
     return FnData;
-  return 0;
+  return nullptr;
 }
 
 static bool hasNoAliasAttr(const Value *V, bool LookThroughBitCast) {
@@ -202,19 +202,19 @@ bool llvm::isOperatorNewLikeFn(const Value *V, const TargetLibraryInfo *TLI,
 /// ignore InvokeInst here.
 const CallInst *llvm::extractMallocCall(const Value *I,
                                         const TargetLibraryInfo *TLI) {
-  return isMallocLikeFn(I, TLI) ? dyn_cast<CallInst>(I) : 0;
+  return isMallocLikeFn(I, TLI) ? dyn_cast<CallInst>(I) : nullptr;
 }
 
 static Value *computeArraySize(const CallInst *CI, const DataLayout *DL,
                                const TargetLibraryInfo *TLI,
                                bool LookThroughSExt = false) {
   if (!CI)
-    return 0;
+    return nullptr;
 
   // The size of the malloc's result type must be known to determine array size.
   Type *T = getMallocAllocatedType(CI, TLI);
   if (!T || !T->isSized() || !DL)
-    return 0;
+    return nullptr;
 
   unsigned ElementSize = DL->getTypeAllocSize(T);
   if (StructType *ST = dyn_cast<StructType>(T))
@@ -223,12 +223,12 @@ static Value *computeArraySize(const CallInst *CI, const DataLayout *DL,
   // If malloc call's arg can be determined to be a multiple of ElementSize,
   // return the multiple.  Otherwise, return NULL.
   Value *MallocArg = CI->getArgOperand(0);
-  Value *Multiple = 0;
+  Value *Multiple = nullptr;
   if (ComputeMultiple(MallocArg, ElementSize, Multiple,
                       LookThroughSExt))
     return Multiple;
 
-  return 0;
+  return nullptr;
 }
 
 /// isArrayMalloc - Returns the corresponding CallInst if the instruction
@@ -245,7 +245,7 @@ const CallInst *llvm::isArrayMalloc(const Value *I,
       return CI;
 
   // CI is a non-array malloc or we can't figure out that it is an array malloc.
-  return 0;
+  return nullptr;
 }
 
 /// getMallocType - Returns the PointerType resulting from the malloc call.
@@ -257,7 +257,7 @@ PointerType *llvm::getMallocType(const CallInst *CI,
                                  const TargetLibraryInfo *TLI) {
   assert(isMallocLikeFn(CI, TLI) && "getMallocType and not malloc call");
 
-  PointerType *MallocType = 0;
+  PointerType *MallocType = nullptr;
   unsigned NumOfBitCastUses = 0;
 
   // Determine if CallInst has a bitcast use.
@@ -277,7 +277,7 @@ PointerType *llvm::getMallocType(const CallInst *CI,
     return cast<PointerType>(CI->getType());
 
   // Type could not be determined.
-  return 0;
+  return nullptr;
 }
 
 /// getMallocAllocatedType - Returns the Type allocated by malloc call.
@@ -288,7 +288,7 @@ PointerType *llvm::getMallocType(const CallInst *CI,
 Type *llvm::getMallocAllocatedType(const CallInst *CI,
                                    const TargetLibraryInfo *TLI) {
   PointerType *PT = getMallocType(CI, TLI);
-  return PT ? PT->getElementType() : 0;
+  return PT ? PT->getElementType() : nullptr;
 }
 
 /// getMallocArraySize - Returns the array size of a malloc call.  If the
@@ -308,7 +308,7 @@ Value *llvm::getMallocArraySize(CallInst *CI, const DataLayout *DL,
 /// is a calloc call.
 const CallInst *llvm::extractCallocCall(const Value *I,
                                         const TargetLibraryInfo *TLI) {
-  return isCallocLikeFn(I, TLI) ? cast<CallInst>(I) : 0;
+  return isCallocLikeFn(I, TLI) ? cast<CallInst>(I) : nullptr;
 }
 
 
@@ -316,15 +316,15 @@ const CallInst *llvm::extractCallocCall(const Value *I,
 const CallInst *llvm::isFreeCall(const Value *I, const TargetLibraryInfo *TLI) {
   const CallInst *CI = dyn_cast<CallInst>(I);
   if (!CI || isa<IntrinsicInst>(CI))
-    return 0;
+    return nullptr;
   Function *Callee = CI->getCalledFunction();
-  if (Callee == 0 || !Callee->isDeclaration())
-    return 0;
+  if (Callee == nullptr || !Callee->isDeclaration())
+    return nullptr;
 
   StringRef FnName = Callee->getName();
   LibFunc::Func TLIFn;
   if (!TLI || !TLI->getLibFunc(FnName, TLIFn) || !TLI->has(TLIFn))
-    return 0;
+    return nullptr;
 
   unsigned ExpectedNumParams;
   if (TLIFn == LibFunc::free ||
@@ -335,18 +335,18 @@ const CallInst *llvm::isFreeCall(const Value *I, const TargetLibraryInfo *TLI) {
            TLIFn == LibFunc::ZdaPvRKSt9nothrow_t)   // delete[](void*, nothrow)
     ExpectedNumParams = 2;
   else
-    return 0;
+    return nullptr;
 
   // Check free prototype.
   // FIXME: workaround for PR5130, this will be obsolete when a nobuiltin
   // attribute will exist.
   FunctionType *FTy = Callee->getFunctionType();
   if (!FTy->getReturnType()->isVoidTy())
-    return 0;
+    return nullptr;
   if (FTy->getNumParams() != ExpectedNumParams)
-    return 0;
+    return nullptr;
   if (FTy->getParamType(0) != Type::getInt8PtrTy(Callee->getContext()))
-    return 0;
+    return nullptr;
 
   return CI;
 }

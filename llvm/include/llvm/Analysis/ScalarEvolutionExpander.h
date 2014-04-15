@@ -92,7 +92,7 @@ namespace llvm {
   public:
     /// SCEVExpander - Construct a SCEVExpander in "canonical" mode.
     explicit SCEVExpander(ScalarEvolution &se, const char *name)
-      : SE(se), IVName(name), IVIncInsertLoop(0), IVIncInsertPos(0),
+      : SE(se), IVName(name), IVIncInsertLoop(nullptr), IVIncInsertPos(nullptr),
         CanonicalMode(true), LSRMode(false),
         Builder(se.getContext(), TargetFolder(se.DL)) {
 #ifndef NDEBUG
@@ -131,7 +131,7 @@ namespace llvm {
     /// representative. Return the number of phis eliminated.
     unsigned replaceCongruentIVs(Loop *L, const DominatorTree *DT,
                                  SmallVectorImpl<WeakVH> &DeadInsts,
-                                 const TargetTransformInfo *TTI = NULL);
+                                 const TargetTransformInfo *TTI = nullptr);
 
     /// expandCodeFor - Insert code to directly compute the specified SCEV
     /// expression into the program.  The inserted code is inserted into the
@@ -219,7 +219,7 @@ namespace llvm {
     /// expression into the program.  The inserted code is inserted into the
     /// SCEVExpander's current insertion point. If a type is specified, the
     /// result will be expanded to have that type, with a cast if necessary.
-    Value *expandCodeFor(const SCEV *SH, Type *Ty = 0);
+    Value *expandCodeFor(const SCEV *SH, Type *Ty = nullptr);
 
     /// getRelevantLoop - Determine the most "relevant" loop for the given SCEV.
     const Loop *getRelevantLoop(const SCEV *);

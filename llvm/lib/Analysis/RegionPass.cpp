@@ -31,8 +31,8 @@ RGPassManager::RGPassManager()
   : FunctionPass(ID), PMDataManager() {
   skipThisRegion = false;
   redoThisRegion = false;
-  RI = NULL;
-  CurrentRegion = NULL;
+  RI = nullptr;
+  CurrentRegion = nullptr;
 }
 
 // Recurse through all subregions and all regions  into RQ.

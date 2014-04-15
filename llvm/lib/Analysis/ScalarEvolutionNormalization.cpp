@@ -113,7 +113,7 @@ TransformImpl(const SCEV *S, Instruction *User, Value *OperandValToReplace) {
     // Transform each operand.
     for (SCEVNAryExpr::op_iterator I = AR->op_begin(), E = AR->op_end();
          I != E; ++I) {
-      Operands.push_back(TransformSubExpr(*I, LUser, 0));
+      Operands.push_back(TransformSubExpr(*I, LUser, nullptr));
     }
     // Conservatively use AnyWrap until/unless we need FlagNW.
     const SCEV *Result = SE.getAddRecExpr(Operands, L, SCEV::FlagAnyWrap);

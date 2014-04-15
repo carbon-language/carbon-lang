@@ -51,7 +51,7 @@ public:
   }
   bool runOnFunction(Function &F) override;
   void getAnalysisUsage(AnalysisUsage &AU) const override;
-  void print(raw_ostream &O, const Module *M = 0) const override;
+  void print(raw_ostream &O, const Module *M = nullptr) const override;
 };
 
 } // end anonymous namespace
@@ -76,7 +76,7 @@ static Value *getPointerOperand(Instruction &Inst) {
     return Store->getPointerOperand();
   else if (GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(&Inst))
     return Gep->getPointerOperand();
-  return NULL;
+  return nullptr;
 }
 
 void Delinearization::print(raw_ostream &O, const Module *) const {
@@ -92,7 +92,7 @@ void Delinearization::print(raw_ostream &O, const Module *) const {
     const BasicBlock *BB = Inst->getParent();
     // Delinearize the memory access as analyzed in all the surrounding loops.
     // Do not analyze memory accesses outside loops.
-    for (Loop *L = LI->getLoopFor(BB); L != NULL; L = L->getParentLoop()) {
+    for (Loop *L = LI->getLoopFor(BB); L != nullptr; L = L->getParentLoop()) {
       const SCEV *AccessFn = SE->getSCEVAtScope(getPointerOperand(*Inst), L);
       const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(AccessFn);
 

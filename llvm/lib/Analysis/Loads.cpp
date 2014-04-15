@@ -62,7 +62,7 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
   if (ByteOffset < 0) // out of bounds
     return false;
 
-  Type *BaseType = 0;
+  Type *BaseType = nullptr;
   unsigned BaseAlign = 0;
   if (const AllocaInst *AI = dyn_cast<AllocaInst>(Base)) {
     // An alloca is safe to load from as load as it is suitably aligned.
@@ -161,7 +161,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
     ScanFrom++;
    
     // Don't scan huge blocks.
-    if (MaxInstsToScan-- == 0) return 0;
+    if (MaxInstsToScan-- == 0) return nullptr;
     
     --ScanFrom;
     // If this is a load of Ptr, the loaded value is available.
@@ -198,7 +198,7 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
       
       // Otherwise the store that may or may not alias the pointer, bail out.
       ++ScanFrom;
-      return 0;
+      return nullptr;
     }
     
     // If this is some other instruction that may clobber Ptr, bail out.
@@ -211,11 +211,11 @@ Value *llvm::FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
       
       // May modify the pointer, bail out.
       ++ScanFrom;
-      return 0;
+      return nullptr;
     }
   }
   
   // Got to the start of the block, we didn't find it, but are done for this
   // block.
-  return 0;
+  return nullptr;
 }

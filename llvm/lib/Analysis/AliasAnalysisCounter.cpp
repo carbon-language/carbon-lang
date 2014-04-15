@@ -126,7 +126,7 @@ AliasAnalysis::AliasResult
 AliasAnalysisCounter::alias(const Location &LocA, const Location &LocB) {
   AliasResult R = getAnalysis<AliasAnalysis>().alias(LocA, LocB);
 
-  const char *AliasString = 0;
+  const char *AliasString = nullptr;
   switch (R) {
   case NoAlias:   No++;   AliasString = "No alias"; break;
   case MayAlias:  May++;  AliasString = "May alias"; break;
@@ -152,7 +152,7 @@ AliasAnalysisCounter::getModRefInfo(ImmutableCallSite CS,
                                     const Location &Loc) {
   ModRefResult R = getAnalysis<AliasAnalysis>().getModRefInfo(CS, Loc);
 
-  const char *MRString = 0;
+  const char *MRString = nullptr;
   switch (R) {
   case NoModRef: NoMR++;     MRString = "NoModRef"; break;
   case Ref:      JustRef++;  MRString = "JustRef"; break;

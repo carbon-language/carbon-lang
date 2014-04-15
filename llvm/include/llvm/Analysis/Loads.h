@@ -27,7 +27,8 @@ class MDNode;
 /// specified pointer, we do a quick local scan of the basic block containing
 /// ScanFrom, to determine if the address is already accessed.
 bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
-                                 unsigned Align, const DataLayout *TD = 0);
+                                 unsigned Align,
+                                 const DataLayout *TD = nullptr);
 
 /// FindAvailableLoadedValue - Scan the ScanBB block backwards (starting at
 /// the instruction before ScanFrom) checking to see if we have the value at
@@ -49,8 +50,8 @@ bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
 Value *FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
                                 BasicBlock::iterator &ScanFrom,
                                 unsigned MaxInstsToScan = 6,
-                                AliasAnalysis *AA = 0,
-                                MDNode **TBAATag = 0);
+                                AliasAnalysis *AA = nullptr,
+                                MDNode **TBAATag = nullptr);
 
 }
 

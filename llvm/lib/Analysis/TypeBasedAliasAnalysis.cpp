@@ -144,7 +144,7 @@ namespace {
     const MDNode *Node;
 
   public:
-    TBAANode() : Node(0) {}
+    TBAANode() : Node(nullptr) {}
     explicit TBAANode(const MDNode *N) : Node(N) {}
 
     /// getNode - Get the MDNode for this TBAANode.
@@ -182,7 +182,7 @@ namespace {
     const MDNode *Node;
 
   public:
-    TBAAStructTagNode() : Node(0) {}
+    TBAAStructTagNode() : Node(nullptr) {}
     explicit TBAAStructTagNode(const MDNode *N) : Node(N) {}
 
     /// Get the MDNode for this TBAAStructTagNode.
@@ -218,7 +218,7 @@ namespace {
     const MDNode *Node;
 
   public:
-    TBAAStructTypeNode() : Node(0) {}
+    TBAAStructTypeNode() : Node(nullptr) {}
     explicit TBAAStructTypeNode(const MDNode *N) : Node(N) {}
 
     /// Get the MDNode for this TBAAStructTypeNode.
@@ -555,7 +555,7 @@ bool MDNode::isTBAAVtableAccess() const {
 
 MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
   if (!A || !B)
-    return NULL;
+    return nullptr;
 
   if (A == B)
     return A;
@@ -564,29 +564,31 @@ MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
   bool StructPath = isStructPathTBAA(A);
   if (StructPath) {
     A = cast_or_null<MDNode>(A->getOperand(1));
-    if (!A) return 0;
+    if (!A) return nullptr;
     B = cast_or_null<MDNode>(B->getOperand(1));
-    if (!B) return 0;
+    if (!B) return nullptr;
   }
 
   SmallVector<MDNode *, 4> PathA;
   MDNode *T = A;
   while (T) {
     PathA.push_back(T);
-    T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
+    T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1))
+                                 : nullptr;
   }
 
   SmallVector<MDNode *, 4> PathB;
   T = B;
   while (T) {
     PathB.push_back(T);
-    T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1)) : 0;
+    T = T->getNumOperands() >= 2 ? cast_or_null<MDNode>(T->getOperand(1))
+                                 : nullptr;
   }
 
   int IA = PathA.size() - 1;
   int IB = PathB.size() - 1;
 
-  MDNode *Ret = 0;
+  MDNode *Ret = nullptr;
   while (IA >= 0 && IB >=0) {
     if (PathA[IA] == PathB[IB])
       Ret = PathA[IA];
@@ -599,7 +601,7 @@ MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
     return Ret;
 
   if (!Ret)
-    return 0;
+    return nullptr;
   // We need to convert from a type node to a tag node.
   Type *Int64 = IntegerType::get(A->getContext(), 64);
   Value *Ops[3] = { Ret, Ret, ConstantInt::get(Int64, 0) };

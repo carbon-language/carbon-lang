@@ -246,7 +246,7 @@ public:
   /// @param Parent The surrounding region or NULL if this is a top level
   ///               region.
   Region(BasicBlock *Entry, BasicBlock *Exit, RegionInfo* RI,
-         DominatorTree *DT, Region *Parent = 0);
+         DominatorTree *DT, Region *Parent = nullptr);
 
   /// Delete the Region and all its subregions.
   ~Region();
@@ -311,7 +311,7 @@ public:
   /// @brief Check if a Region is the TopLevel region.
   ///
   /// The toplevel region represents the whole function.
-  bool isTopLevelRegion() const { return exit == NULL; }
+  bool isTopLevelRegion() const { return exit == nullptr; }
 
   /// @brief Return a new (non-canonical) region, that is obtained by joining
   ///        this region with its predecessors.
@@ -515,7 +515,7 @@ public:
     }
 
     // Construct the end iterator.
-    block_iterator_wrapper() : super(df_end<pointer>((BasicBlock *)0)) {}
+    block_iterator_wrapper() : super(df_end<pointer>((BasicBlock *)nullptr)) {}
 
     /*implicit*/ block_iterator_wrapper(super I) : super(I) {}
 

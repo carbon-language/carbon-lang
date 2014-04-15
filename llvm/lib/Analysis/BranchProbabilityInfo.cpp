@@ -560,7 +560,7 @@ isEdgeHot(const BasicBlock *Src, const BasicBlock *Dst) const {
 BasicBlock *BranchProbabilityInfo::getHotSucc(BasicBlock *BB) const {
   uint32_t Sum = 0;
   uint32_t MaxWeight = 0;
-  BasicBlock *MaxSucc = 0;
+  BasicBlock *MaxSucc = nullptr;
 
   for (succ_iterator I = succ_begin(BB), E = succ_end(BB); I != E; ++I) {
     BasicBlock *Succ = *I;
@@ -580,7 +580,7 @@ BasicBlock *BranchProbabilityInfo::getHotSucc(BasicBlock *BB) const {
   if (BranchProbability(MaxWeight, Sum) > BranchProbability(4, 5))
     return MaxSucc;
 
-  return 0;
+  return nullptr;
 }
 
 /// Get the raw edge weight for the edge. If can't find it, return

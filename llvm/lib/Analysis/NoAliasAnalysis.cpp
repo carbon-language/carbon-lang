@@ -36,7 +36,7 @@ namespace {
       // Note: NoAA does not call InitializeAliasAnalysis because it's
       // special and does not support chaining.
       DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-      DL = DLP ? &DLP->getDataLayout() : 0;
+      DL = DLP ? &DLP->getDataLayout() : nullptr;
     }
 
     AliasResult alias(const Location &LocA, const Location &LocB) override {

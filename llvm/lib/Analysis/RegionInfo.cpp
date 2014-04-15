@@ -128,8 +128,8 @@ bool Region::contains(const Loop *L) const {
   // BBs that are not part of any loop are element of the Loop
   // described by the NULL pointer. This loop is not part of any region,
   // except if the region describes the whole function.
-  if (L == 0)
-    return getExit() == 0;
+  if (!L)
+    return getExit() == nullptr;
 
   if (!contains(L->getHeader()))
     return false;
@@ -147,7 +147,7 @@ bool Region::contains(const Loop *L) const {
 
 Loop *Region::outermostLoopInRegion(Loop *L) const {
   if (!contains(L))
-    return 0;
+    return nullptr;
 
   while (L && contains(L->getParentLoop())) {
     L = L->getParentLoop();
@@ -165,14 +165,14 @@ Loop *Region::outermostLoopInRegion(LoopInfo *LI, BasicBlock* BB) const {
 BasicBlock *Region::getEnteringBlock() const {
   BasicBlock *entry = getEntry();
   BasicBlock *Pred;
-  BasicBlock *enteringBlock = 0;
+  BasicBlock *enteringBlock = nullptr;
 
   for (pred_iterator PI = pred_begin(entry), PE = pred_end(entry); PI != PE;
        ++PI) {
     Pred = *PI;
     if (DT->getNode(Pred) && !contains(Pred)) {
       if (enteringBlock)
-        return 0;
+        return nullptr;
 
       enteringBlock = Pred;
     }
@@ -184,17 +184,17 @@ BasicBlock *Region::getEnteringBlock() const {
 BasicBlock *Region::getExitingBlock() const {
   BasicBlock *exit = getExit();
   BasicBlock *Pred;
-  BasicBlock *exitingBlock = 0;
+  BasicBlock *exitingBlock = nullptr;
 
   if (!exit)
-    return 0;
+    return nullptr;
 
   for (pred_iterator PI = pred_begin(exit), PE = pred_end(exit); PI != PE;
        ++PI) {
     Pred = *PI;
     if (contains(Pred)) {
       if (exitingBlock)
-        return 0;
+        return nullptr;
 
       exitingBlock = Pred;
     }
@@ -295,7 +295,7 @@ Region* Region::getSubRegionNode(BasicBlock *BB) const {
   Region *R = RI->getRegionFor(BB);
 
   if (!R || R == this)
-    return 0;
+    return nullptr;
 
   // If we pass the BB out of this region, that means our code is broken.
   assert(contains(R) && "BB not in current region!");
@@ -304,7 +304,7 @@ Region* Region::getSubRegionNode(BasicBlock *BB) const {
     R = R->getParent();
 
   if (R->getEntry() != BB)
-    return 0;
+    return nullptr;
 
   return R;
 }
@@ -339,7 +339,7 @@ void Region::transferChildrenTo(Region *To) {
 }
 
 void Region::addSubRegion(Region *SubRegion, bool moveChildren) {
-  assert(SubRegion->parent == 0 && "SubRegion already has a parent!");
+  assert(!SubRegion->parent && "SubRegion already has a parent!");
   assert(std::find(begin(), end(), SubRegion) == children.end()
          && "Subregion already exists!");
 
@@ -375,7 +375,7 @@ void Region::addSubRegion(Region *SubRegion, bool moveChildren) {
 
 Region *Region::removeSubRegion(Region *Child) {
   assert(Child->parent == this && "Child is not a child of this region!");
-  Child->parent = 0;
+  Child->parent = nullptr;
   RegionSet::iterator I = std::find(children.begin(), children.end(), Child);
   assert(I != children.end() && "Region does not exit. Unable to remove.");
   children.erase(children.begin()+(I-begin()));
@@ -385,7 +385,7 @@ Region *Region::removeSubRegion(Region *Child) {
 unsigned Region::getDepth() const {
   unsigned Depth = 0;
 
-  for (Region *R = parent; R != 0; R = R->parent)
+  for (Region *R = parent; R != nullptr; R = R->parent)
     ++Depth;
 
   return Depth;
@@ -395,12 +395,12 @@ Region *Region::getExpandedRegion() const {
   unsigned NumSuccessors = exit->getTerminator()->getNumSuccessors();
 
   if (NumSuccessors == 0)
-    return NULL;
+    return nullptr;
 
   for (pred_iterator PI = pred_begin(getExit()), PE = pred_end(getExit());
        PI != PE; ++PI)
     if (!DT->dominates(getEntry(), *PI))
-      return NULL;
+      return nullptr;
 
   Region *R = RI->getRegionFor(exit);
 
@@ -408,7 +408,7 @@ Region *Region::getExpandedRegion() const {
     if (exit->getTerminator()->getNumSuccessors() == 1)
       return new Region(getEntry(), *succ_begin(exit), RI, DT);
     else
-      return NULL;
+      return nullptr;
   }
 
   while (R->getParent() && R->getParent()->getEntry() == exit)
@@ -418,7 +418,7 @@ Region *Region::getExpandedRegion() const {
     for (pred_iterator PI = pred_begin(getExit()), PE = pred_end(getExit());
          PI != PE; ++PI)
     if (!DT->dominates(R->getExit(), *PI))
-      return NULL;
+      return nullptr;
 
   return new Region(getEntry(), R->getExit(), RI, DT);
 }
@@ -577,7 +577,7 @@ Region *RegionInfo::createRegion(BasicBlock *entry, BasicBlock *exit) {
   assert(entry && exit && "entry and exit must not be null!");
 
   if (isTrivialRegion(entry, exit))
-    return 0;
+    return nullptr;
 
   Region *region = new Region(entry, exit, this, DT);
   BBtoRegion.insert(std::make_pair(entry, region));
@@ -600,7 +600,7 @@ void RegionInfo::findRegionsWithEntry(BasicBlock *entry, BBtoBBMap *ShortCut) {
   if (!N)
     return;
 
-  Region *lastRegion= 0;
+  Region *lastRegion= nullptr;
   BasicBlock *lastExit = entry;
 
   // As only a BasicBlock that postdominates entry can finish a region, walk the
@@ -680,12 +680,12 @@ void RegionInfo::releaseMemory() {
   BBtoRegion.clear();
   if (TopLevelRegion)
     delete TopLevelRegion;
-  TopLevelRegion = 0;
+  TopLevelRegion = nullptr;
 }
 
 RegionInfo::RegionInfo() : FunctionPass(ID) {
   initializeRegionInfoPass(*PassRegistry::getPassRegistry());
-  TopLevelRegion = 0;
+  TopLevelRegion = nullptr;
 }
 
 RegionInfo::~RegionInfo() {
@@ -710,7 +710,7 @@ bool RegionInfo::runOnFunction(Function &F) {
   PDT = &getAnalysis<PostDominatorTree>();
   DF = &getAnalysis<DominanceFrontier>();
 
-  TopLevelRegion = new Region(&F.getEntryBlock(), 0, this, DT, 0);
+  TopLevelRegion = new Region(&F.getEntryBlock(), nullptr, this, DT, nullptr);
   updateStatistics(TopLevelRegion);
 
   Calculate(F);
@@ -744,7 +744,7 @@ void RegionInfo::verifyAnalysis() const {
 Region *RegionInfo::getRegionFor(BasicBlock *BB) const {
   BBtoRegionMap::const_iterator I=
     BBtoRegion.find(BB);
-  return I != BBtoRegion.end() ? I->second : 0;
+  return I != BBtoRegion.end() ? I->second : nullptr;
 }
 
 void RegionInfo::setRegionFor(BasicBlock *BB, Region *R) {
@@ -756,7 +756,7 @@ Region *RegionInfo::operator[](BasicBlock *BB) const {
 }
 
 BasicBlock *RegionInfo::getMaxRegionExit(BasicBlock *BB) const {
-  BasicBlock *Exit = NULL;
+  BasicBlock *Exit = nullptr;
 
   while (true) {
     // Get largest region that starts at BB.

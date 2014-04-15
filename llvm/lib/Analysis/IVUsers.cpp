@@ -84,7 +84,7 @@ static bool isInteresting(const SCEV *S, const Instruction *I, const Loop *L,
 static bool isSimplifiedLoopNest(BasicBlock *BB, const DominatorTree *DT,
                                  const LoopInfo *LI,
                                  SmallPtrSet<Loop*,16> &SimpleLoopNests) {
-  Loop *NearestLoop = 0;
+  Loop *NearestLoop = nullptr;
   for (DomTreeNode *Rung = DT->getNode(BB);
        Rung; Rung = Rung->getIDom()) {
     BasicBlock *DomBB = Rung->getBlock();
@@ -253,7 +253,7 @@ bool IVUsers::runOnLoop(Loop *l, LPPassManager &LPM) {
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = &getAnalysis<ScalarEvolution>();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : 0;
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
 
   // Find all uses of induction variables in this loop, and categorize
   // them by stride.  Start by finding all of the PHI nodes in the header for
@@ -329,16 +329,16 @@ static const SCEVAddRecExpr *findAddRecForLoop(const SCEV *S, const Loop *L) {
          I != E; ++I)
       if (const SCEVAddRecExpr *AR = findAddRecForLoop(*I, L))
         return AR;
-    return 0;
+    return nullptr;
   }
 
-  return 0;
+  return nullptr;
 }
 
 const SCEV *IVUsers::getStride(const IVStrideUse &IU, const Loop *L) const {
   if (const SCEVAddRecExpr *AR = findAddRecForLoop(getExpr(IU), L))
     return AR->getStepRecurrence(*SE);
-  return 0;
+  return nullptr;
 }
 
 void IVStrideUse::transformToPostInc(const Loop *L) {

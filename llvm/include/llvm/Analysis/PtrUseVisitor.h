@@ -48,13 +48,13 @@ public:
   /// analysis and whether the visit completed or aborted early.
   class PtrInfo {
   public:
-    PtrInfo() : AbortedInfo(0, false), EscapedInfo(0, false) {}
+    PtrInfo() : AbortedInfo(nullptr, false), EscapedInfo(nullptr, false) {}
 
     /// \brief Reset the pointer info, clearing all state.
     void reset() {
-      AbortedInfo.setPointer(0);
+      AbortedInfo.setPointer(nullptr);
       AbortedInfo.setInt(false);
-      EscapedInfo.setPointer(0);
+      EscapedInfo.setPointer(nullptr);
       EscapedInfo.setInt(false);
     }
 
@@ -76,14 +76,14 @@ public:
 
     /// \brief Mark the visit as aborted. Intended for use in a void return.
     /// \param I The instruction which caused the visit to abort, if available.
-    void setAborted(Instruction *I = 0) {
+    void setAborted(Instruction *I = nullptr) {
       AbortedInfo.setInt(true);
       AbortedInfo.setPointer(I);
     }
 
     /// \brief Mark the pointer as escaped. Intended for use in a void return.
     /// \param I The instruction which escapes the pointer, if available.
-    void setEscaped(Instruction *I = 0) {
+    void setEscaped(Instruction *I = nullptr) {
       EscapedInfo.setInt(true);
       EscapedInfo.setPointer(I);
     }
@@ -92,7 +92,7 @@ public:
     /// for use in a void return.
     /// \param I The instruction which both escapes the pointer and aborts the
     /// visit, if available.
-    void setEscapedAndAborted(Instruction *I = 0) {
+    void setEscapedAndAborted(Instruction *I = nullptr) {
       setEscaped(I);
       setAborted(I);
     }

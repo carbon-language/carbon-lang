@@ -34,7 +34,7 @@ namespace {
 
   public:
     static char ID; // Class identification, replacement for typeinfo
-    ScalarEvolutionAliasAnalysis() : FunctionPass(ID), SE(0) {
+    ScalarEvolutionAliasAnalysis() : FunctionPass(ID), SE(nullptr) {
       initializeScalarEvolutionAliasAnalysisPass(
         *PassRegistry::getPassRegistry());
     }
@@ -102,7 +102,7 @@ ScalarEvolutionAliasAnalysis::GetBaseValue(const SCEV *S) {
     return U->getValue();
   }
   // No Identified object found.
-  return 0;
+  return nullptr;
 }
 
 AliasAnalysis::AliasResult
@@ -162,10 +162,10 @@ ScalarEvolutionAliasAnalysis::alias(const Location &LocA,
   if ((AO && AO != LocA.Ptr) || (BO && BO != LocB.Ptr))
     if (alias(Location(AO ? AO : LocA.Ptr,
                        AO ? +UnknownSize : LocA.Size,
-                       AO ? 0 : LocA.TBAATag),
+                       AO ? nullptr : LocA.TBAATag),
               Location(BO ? BO : LocB.Ptr,
                        BO ? +UnknownSize : LocB.Size,
-                       BO ? 0 : LocB.TBAATag)) == NoAlias)
+                       BO ? nullptr : LocB.TBAATag)) == NoAlias)
       return NoAlias;
 
   // Forward the query to the next analysis.

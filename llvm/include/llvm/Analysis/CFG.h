@@ -65,8 +65,8 @@ bool isCriticalEdge(const TerminatorInst *TI, unsigned SuccNum,
 /// on branchy code but not loops, and LI is most useful on code with loops but
 /// does not help on branchy code outside loops.
 bool isPotentiallyReachable(const Instruction *From, const Instruction *To,
-                            const DominatorTree *DT = 0,
-                            const LoopInfo *LI = 0);
+                            const DominatorTree *DT = nullptr,
+                            const LoopInfo *LI = nullptr);
 
 /// \brief Determine whether block 'To' is reachable from 'From', returning
 /// true if uncertain.
@@ -75,8 +75,8 @@ bool isPotentiallyReachable(const Instruction *From, const Instruction *To,
 /// Returns false only if we can prove that once 'From' has been reached then
 /// 'To' can not be executed. Conservatively returns true.
 bool isPotentiallyReachable(const BasicBlock *From, const BasicBlock *To,
-                            const DominatorTree *DT = 0,
-                            const LoopInfo *LI = 0);
+                            const DominatorTree *DT = nullptr,
+                            const LoopInfo *LI = nullptr);
 
 } // End llvm namespace
 

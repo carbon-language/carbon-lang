@@ -137,8 +137,8 @@ namespace {
     // that failed.  This provides a nice place to put a breakpoint if you want
     // to see why something is not correct.
     void CheckFailed(const Twine &Message,
-                     const Value *V1 = 0, const Value *V2 = 0,
-                     const Value *V3 = 0, const Value *V4 = 0) {
+                     const Value *V1 = nullptr, const Value *V2 = nullptr,
+                     const Value *V3 = nullptr, const Value *V4 = nullptr) {
       MessagesStr << Message.str() << "\n";
       WriteValue(V1);
       WriteValue(V2);
@@ -177,7 +177,7 @@ bool Lint::runOnFunction(Function &F) {
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : 0;
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = &getAnalysis<TargetLibraryInfo>();
   visit(F);
   dbgs() << MessagesStr.str();
@@ -199,7 +199,7 @@ void Lint::visitCallSite(CallSite CS) {
   Value *Callee = CS.getCalledValue();
 
   visitMemoryReference(I, Callee, AliasAnalysis::UnknownSize,
-                       0, 0, MemRef::Callee);
+                       0, nullptr, MemRef::Callee);
 
   if (Function *F = dyn_cast<Function>(findValue(Callee, /*OffsetOk=*/false))) {
     Assert1(CS.getCallingConv() == F->getCallingConv(),
@@ -275,10 +275,10 @@ void Lint::visitCallSite(CallSite CS) {
       MemCpyInst *MCI = cast<MemCpyInst>(&I);
       // TODO: If the size is known, use it.
       visitMemoryReference(I, MCI->getDest(), AliasAnalysis::UnknownSize,
-                           MCI->getAlignment(), 0,
+                           MCI->getAlignment(), nullptr,
                            MemRef::Write);
       visitMemoryReference(I, MCI->getSource(), AliasAnalysis::UnknownSize,
-                           MCI->getAlignment(), 0,
+                           MCI->getAlignment(), nullptr,
                            MemRef::Read);
 
       // Check that the memcpy arguments don't overlap. The AliasAnalysis API
@@ -299,10 +299,10 @@ void Lint::visitCallSite(CallSite CS) {
       MemMoveInst *MMI = cast<MemMoveInst>(&I);
       // TODO: If the size is known, use it.
       visitMemoryReference(I, MMI->getDest(), AliasAnalysis::UnknownSize,
-                           MMI->getAlignment(), 0,
+                           MMI->getAlignment(), nullptr,
                            MemRef::Write);
       visitMemoryReference(I, MMI->getSource(), AliasAnalysis::UnknownSize,
-                           MMI->getAlignment(), 0,
+                           MMI->getAlignment(), nullptr,
                            MemRef::Read);
       break;
     }
@@ -310,7 +310,7 @@ void Lint::visitCallSite(CallSite CS) {
       MemSetInst *MSI = cast<MemSetInst>(&I);
       // TODO: If the size is known, use it.
       visitMemoryReference(I, MSI->getDest(), AliasAnalysis::UnknownSize,
-                           MSI->getAlignment(), 0,
+                           MSI->getAlignment(), nullptr,
                            MemRef::Write);
       break;
     }
@@ -321,17 +321,17 @@ void Lint::visitCallSite(CallSite CS) {
               &I);
 
       visitMemoryReference(I, CS.getArgument(0), AliasAnalysis::UnknownSize,
-                           0, 0, MemRef::Read | MemRef::Write);
+                           0, nullptr, MemRef::Read | MemRef::Write);
       break;
     case Intrinsic::vacopy:
       visitMemoryReference(I, CS.getArgument(0), AliasAnalysis::UnknownSize,
-                           0, 0, MemRef::Write);
+                           0, nullptr, MemRef::Write);
       visitMemoryReference(I, CS.getArgument(1), AliasAnalysis::UnknownSize,
-                           0, 0, MemRef::Read);
+                           0, nullptr, MemRef::Read);
       break;
     case Intrinsic::vaend:
       visitMemoryReference(I, CS.getArgument(0), AliasAnalysis::UnknownSize,
-                           0, 0, MemRef::Read | MemRef::Write);
+                           0, nullptr, MemRef::Read | MemRef::Write);
       break;
 
     case Intrinsic::stackrestore:
@@ -339,7 +339,7 @@ void Lint::visitCallSite(CallSite CS) {
       // stack pointer, which the compiler may read from or write to
       // at any time, so check it for both readability and writeability.
       visitMemoryReference(I, CS.getArgument(0), AliasAnalysis::UnknownSize,
-                           0, 0, MemRef::Read | MemRef::Write);
+                           0, nullptr, MemRef::Read | MemRef::Write);
       break;
     }
 }
@@ -572,13 +572,13 @@ void Lint::visitAllocaInst(AllocaInst &I) {
 }
 
 void Lint::visitVAArgInst(VAArgInst &I) {
-  visitMemoryReference(I, I.getOperand(0), AliasAnalysis::UnknownSize, 0, 0,
-                       MemRef::Read | MemRef::Write);
+  visitMemoryReference(I, I.getOperand(0), AliasAnalysis::UnknownSize, 0,
+                       nullptr, MemRef::Read | MemRef::Write);
 }
 
 void Lint::visitIndirectBrInst(IndirectBrInst &I) {
-  visitMemoryReference(I, I.getAddress(), AliasAnalysis::UnknownSize, 0, 0,
-                       MemRef::Branchee);
+  visitMemoryReference(I, I.getAddress(), AliasAnalysis::UnknownSize, 0,
+                       nullptr, MemRef::Branchee);
 
   Assert1(I.getNumDestinations() != 0,
           "Undefined behavior: indirectbr with no destinations", &I);

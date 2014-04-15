@@ -54,7 +54,7 @@ LibCallAliasAnalysis::AnalyzeLibCallDetails(const LibCallFunctionInfo *FI,
   // if we have detailed info and if 'P' is any of the locations we know
   // about.
   const LibCallFunctionInfo::LocationMRInfo *Details = FI->LocationDetails;
-  if (Details == 0)
+  if (Details == nullptr)
     return MRInfo;
   
   // If the details array is of the 'DoesNot' kind, we only know something if

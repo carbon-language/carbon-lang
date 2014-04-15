@@ -33,10 +33,10 @@ class LazyValueInfo : public FunctionPass {
   void operator=(const LazyValueInfo&) LLVM_DELETED_FUNCTION;
 public:
   static char ID;
-  LazyValueInfo() : FunctionPass(ID), PImpl(0) {
+  LazyValueInfo() : FunctionPass(ID), PImpl(nullptr) {
     initializeLazyValueInfoPass(*PassRegistry::getPassRegistry());
   }
-  ~LazyValueInfo() { assert(PImpl == 0 && "releaseMemory not called"); }
+  ~LazyValueInfo() { assert(!PImpl && "releaseMemory not called"); }
 
   /// Tristate - This is used to return true/false/dunno results.
   enum Tristate {

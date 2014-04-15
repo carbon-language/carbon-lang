@@ -48,7 +48,7 @@ class IntervalPartition : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
 
-  IntervalPartition() : FunctionPass(ID), RootInterval(0) {
+  IntervalPartition() : FunctionPass(ID), RootInterval(nullptr) {
     initializeIntervalPartitionPass(*PassRegistry::getPassRegistry());
   }
 
@@ -62,7 +62,7 @@ public:
   IntervalPartition(IntervalPartition &I, bool);
 
   // print - Show contents in human readable format...
-  void print(raw_ostream &O, const Module* = 0) const override;
+  void print(raw_ostream &O, const Module* = nullptr) const override;
 
   // getRootInterval() - Return the root interval that contains the starting
   // block of the function.
@@ -77,7 +77,7 @@ public:
   // getBlockInterval - Return the interval that a basic block exists in.
   inline Interval *getBlockInterval(BasicBlock *BB) {
     IntervalMapTy::iterator I = IntervalMap.find(BB);
-    return I != IntervalMap.end() ? I->second : 0;
+    return I != IntervalMap.end() ? I->second : nullptr;
   }
 
   // getAnalysisUsage - Implement the Pass API
