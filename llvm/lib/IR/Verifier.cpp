@@ -79,11 +79,68 @@ using namespace llvm;
 static cl::opt<bool> VerifyDebugInfo("verify-debug-info", cl::init(false));
 
 namespace {
-class Verifier : public InstVisitor<Verifier> {
-  friend class InstVisitor<Verifier>;
-
+struct VerifierSupport {
   raw_ostream &OS;
   const Module *M;
+
+  /// \brief Track the brokenness of the module while recursively visiting.
+  bool Broken;
+
+  explicit VerifierSupport(raw_ostream &OS)
+      : OS(OS), M(nullptr), Broken(false) {}
+
+  void WriteValue(const Value *V) {
+    if (!V)
+      return;
+    if (isa<Instruction>(V)) {
+      OS << *V << '\n';
+    } else {
+      V->printAsOperand(OS, true, M);
+      OS << '\n';
+    }
+  }
+
+  void WriteType(Type *T) {
+    if (!T)
+      return;
+    OS << ' ' << *T;
+  }
+
+  // CheckFailed - A check failed, so print out the condition and the message
+  // that failed.  This provides a nice place to put a breakpoint if you want
+  // to see why something is not correct.
+  void CheckFailed(const Twine &Message, const Value *V1 = nullptr,
+                   const Value *V2 = nullptr, const Value *V3 = nullptr,
+                   const Value *V4 = nullptr) {
+    OS << Message.str() << "\n";
+    WriteValue(V1);
+    WriteValue(V2);
+    WriteValue(V3);
+    WriteValue(V4);
+    Broken = true;
+  }
+
+  void CheckFailed(const Twine &Message, const Value *V1, Type *T2,
+                   const Value *V3 = nullptr) {
+    OS << Message.str() << "\n";
+    WriteValue(V1);
+    WriteType(T2);
+    WriteValue(V3);
+    Broken = true;
+  }
+
+  void CheckFailed(const Twine &Message, Type *T1, Type *T2 = nullptr,
+                   Type *T3 = nullptr) {
+    OS << Message.str() << "\n";
+    WriteType(T1);
+    WriteType(T2);
+    WriteType(T3);
+    Broken = true;
+  }
+};
+class Verifier : public InstVisitor<Verifier>, VerifierSupport {
+  friend class InstVisitor<Verifier>;
+
   LLVMContext *Context;
   const DataLayout *DL;
   DominatorTree DT;
@@ -106,13 +163,10 @@ class Verifier : public InstVisitor<Verifier> {
   /// \brief Finder keeps track of all debug info MDNodes in a Module.
   DebugInfoFinder Finder;
 
-  /// \brief Track the brokenness of the module while recursively visiting.
-  bool Broken;
-
 public:
   explicit Verifier(raw_ostream &OS = dbgs())
-      : OS(OS), M(nullptr), Context(nullptr), DL(nullptr),
-        PersonalityFn(nullptr), Broken(false) {}
+      : VerifierSupport(OS), Context(nullptr), DL(nullptr),
+        PersonalityFn(nullptr) {}
 
   bool verify(const Function &F) {
     M = F.getParent();
@@ -280,55 +334,6 @@ private:
   void VerifyConstantExprBitcastType(const ConstantExpr *CE);
 
   void verifyDebugInfo();
-
-  void WriteValue(const Value *V) {
-    if (!V)
-      return;
-    if (isa<Instruction>(V)) {
-      OS << *V << '\n';
-    } else {
-      V->printAsOperand(OS, true, M);
-      OS << '\n';
-    }
-  }
-
-  void WriteType(Type *T) {
-    if (!T)
-      return;
-    OS << ' ' << *T;
-  }
-
-  // CheckFailed - A check failed, so print out the condition and the message
-  // that failed.  This provides a nice place to put a breakpoint if you want
-  // to see why something is not correct.
-  void CheckFailed(const Twine &Message, const Value *V1 = nullptr,
-                   const Value *V2 = nullptr, const Value *V3 = nullptr,
-                   const Value *V4 = nullptr) {
-    OS << Message.str() << "\n";
-    WriteValue(V1);
-    WriteValue(V2);
-    WriteValue(V3);
-    WriteValue(V4);
-    Broken = true;
-  }
-
-  void CheckFailed(const Twine &Message, const Value *V1, Type *T2,
-                   const Value *V3 = nullptr) {
-    OS << Message.str() << "\n";
-    WriteValue(V1);
-    WriteType(T2);
-    WriteValue(V3);
-    Broken = true;
-  }
-
-  void CheckFailed(const Twine &Message, Type *T1, Type *T2 = nullptr,
-                   Type *T3 = nullptr) {
-    OS << Message.str() << "\n";
-    WriteType(T1);
-    WriteType(T2);
-    WriteType(T3);
-    Broken = true;
-  }
 };
 } // End anonymous namespace
 
