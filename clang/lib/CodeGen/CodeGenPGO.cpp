@@ -335,6 +335,7 @@ namespace {
     // traverse them in the parent context.
     bool TraverseBlockExpr(BlockExpr *BE) { return true; }
     bool TraverseLambdaBody(LambdaExpr *LE) { return true; }
+    bool TraverseCapturedStmt(CapturedStmt *CS) { return true; }
 
     bool VisitDecl(const Decl *D) {
       switch (D->getKind()) {
@@ -347,6 +348,7 @@ namespace {
       case Decl::CXXConversion:
       case Decl::ObjCMethod:
       case Decl::Block:
+      case Decl::Captured:
         CounterMap[D->getBody()] = NextCounter++;
         break;
       }
@@ -436,6 +438,14 @@ namespace {
     // generating them and aren't interested in the body when generating a
     // parent context.
     void VisitLambdaExpr(const LambdaExpr *LE) {}
+
+    void VisitCapturedDecl(const CapturedDecl *D) {
+      // Counter tracks entry to the capture body.
+      RegionCounter Cnt(PGO, D->getBody());
+      Cnt.beginRegion();
+      CountMap[D->getBody()] = PGO.getCurrentRegionCount();
+      Visit(D->getBody());
+    }
 
     void VisitObjCMethodDecl(const ObjCMethodDecl *D) {
       // Counter tracks entry to the method body.
@@ -838,6 +848,8 @@ void CodeGenPGO::mapRegionCounters(const Decl *D) {
     Walker.TraverseDecl(const_cast<ObjCMethodDecl *>(MD));
   else if (const BlockDecl *BD = dyn_cast_or_null<BlockDecl>(D))
     Walker.TraverseDecl(const_cast<BlockDecl *>(BD));
+  else if (const CapturedDecl *CD = dyn_cast_or_null<CapturedDecl>(D))
+    Walker.TraverseDecl(const_cast<CapturedDecl *>(CD));
   NumRegionCounters = Walker.NextCounter;
   // FIXME: The number of counters isn't sufficient for the hash
   FunctionHash = NumRegionCounters;
@@ -852,6 +864,8 @@ void CodeGenPGO::computeRegionCounts(const Decl *D) {
     Walker.VisitObjCMethodDecl(MD);
   else if (const BlockDecl *BD = dyn_cast_or_null<BlockDecl>(D))
     Walker.VisitBlockDecl(BD);
+  else if (const CapturedDecl *CD = dyn_cast_or_null<CapturedDecl>(D))
+    Walker.VisitCapturedDecl(const_cast<CapturedDecl *>(CD));
 }
 
 void CodeGenPGO::applyFunctionAttributes(PGOProfileData *PGOData,
