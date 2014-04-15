@@ -756,6 +756,20 @@ public:
   /// getEndLoc - Get the location of the last token of this operand.
   SMLoc getEndLoc() const { return EndLoc; }
 
+  virtual ~MipsOperand() {
+    switch (Kind) {
+    case k_Immediate:
+      break;
+    case k_Memory:
+      delete Mem.Base;
+      break;
+    case k_PhysRegister:
+    case k_RegisterIndex:
+    case k_Token:
+      break;
+    }
+  }
+
   virtual void print(raw_ostream &OS) const {
     switch (Kind) {
     case k_Immediate:
@@ -1628,6 +1642,7 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::parseMemOperand(
             SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
 
         // Zero register assumed, add a memory operand with ZERO as its base.
+        // "Base" will be managed by k_Memory.
         MipsOperand *Base = MipsOperand::CreateGPRReg(
             0, getContext().getRegisterInfo(), S, E, *this);
         Operands.push_back(MipsOperand::CreateMem(Base, IdVal, S, E, *this));
@@ -1659,6 +1674,7 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::parseMemOperand(
   // Replace the register operand with the memory operand.
   MipsOperand *op = static_cast<MipsOperand *>(Operands.back());
   // Remove the register from the operands.
+  // "op" will be managed by k_Memory.
   Operands.pop_back();
   // Add the memory operand.
   if (const MCBinaryExpr *BE = dyn_cast<MCBinaryExpr>(IdVal)) {
