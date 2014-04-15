@@ -2033,6 +2033,20 @@ def : Pat<(f32 (fma (fneg FPR32:$Rn), FPR32:$Rm, FPR32:$Ra)),
 def : Pat<(f64 (fma (fneg FPR64:$Rn), FPR64:$Rm, FPR64:$Ra)),
           (FMSUBDrrr FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
 
+// We handled -(a + b*c) for FNMADD above, now it's time for "(-a) + (-b)*c" and
+// "(-a) + b*(-c)".
+def : Pat<(f32 (fma (fneg FPR32:$Rn), FPR32:$Rm, (fneg FPR32:$Ra))),
+          (FNMADDSrrr FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
+
+def : Pat<(f64 (fma (fneg FPR64:$Rn), FPR64:$Rm, (fneg FPR64:$Ra))),
+          (FNMADDDrrr FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
+
+def : Pat<(f32 (fma FPR32:$Rn, (fneg FPR32:$Rm), (fneg FPR32:$Ra))),
+          (FNMADDSrrr FPR32:$Rn, FPR32:$Rm, FPR32:$Ra)>;
+
+def : Pat<(f64 (fma FPR64:$Rn, (fneg FPR64:$Rm), (fneg FPR64:$Ra))),
+          (FNMADDDrrr FPR64:$Rn, FPR64:$Rm, FPR64:$Ra)>;
+
 //===----------------------------------------------------------------------===//
 // Floating point comparison instructions.
 //===----------------------------------------------------------------------===//
