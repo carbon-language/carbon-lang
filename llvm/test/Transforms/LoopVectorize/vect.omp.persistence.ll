@@ -1,4 +1,5 @@
 ; RUN: opt < %s -O2 -force-vector-unroll=2 -force-vector-width=4 -debug-only=loop-vectorize -stats -S 2>&1 | FileCheck %s
+; REQUIRES: asserts
 
 ; Loop from "rotated"
 ; CHECK: LV: Loop hints: force=enabled
