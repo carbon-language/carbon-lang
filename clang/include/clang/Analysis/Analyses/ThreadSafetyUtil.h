@@ -102,7 +102,7 @@ public:
   size_t capacity() const { return Capacity; }
 
   T &operator[](unsigned i) {
-    assert(i < Sz && "Array index out of bounds.");
+    assert(i < Size && "Array index out of bounds.");
     return Data[i];
   }
   const T &operator[](unsigned i) const {
