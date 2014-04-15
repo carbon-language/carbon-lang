@@ -6,9 +6,16 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines the MallocAllocator and BumpPtrAllocator interfaces.
-//
+/// \file
+///
+/// This file defines the MallocAllocator and BumpPtrAllocator interfaces. Both
+/// of these conform to an LLVM "Allocator" concept which consists of an
+/// Allocate method accepting a size and alignment, and a Deallocate accepting
+/// a pointer and size. Further, the LLVM "Allocator" concept has overloads of
+/// Allocate and Deallocate for setting size and alignment based on the final
+/// type. These overloads are typically provided by a base class template \c
+/// AllocatorBase.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_SUPPORT_ALLOCATOR_H
@@ -32,7 +39,46 @@ template <typename T> struct ReferenceAdder<T &> {
   typedef T result;
 };
 
-class MallocAllocator {
+/// \brief CRTP base class providing obvious overloads for the core \c
+/// Allocate() methods of LLVM-style allocators.
+///
+/// This base class both documents the full public interface exposed by all
+/// LLVM-style allocators, and redirects all of the overloads to a single core
+/// set of methods which the derived class must define.
+template <typename DerivedT> class AllocatorBase {
+public:
+  /// \brief Allocate \a Size bytes of \a Alignment aligned memory. This method
+  /// must be implemented by \c DerivedT.
+  void *Allocate(size_t Size, size_t Alignment) {
+    static_assert(static_cast<void *(AllocatorBase::*)(size_t, size_t)>(
+                      &AllocatorBase::Allocate) !=
+                      static_cast<void *(DerivedT::*)(size_t, size_t)>(
+                          &DerivedT::Allocate),
+                  "Class derives from AllocatorBase without implementing the "
+                  "core Allocate(size_t, size_t) overload!");
+    return static_cast<DerivedT *>(this)->Allocate(Size, Alignment);
+  }
+
+  /// \brief Allocate space for one object without constructing it.
+  template <typename T> T *Allocate() {
+    return static_cast<T *>(Allocate(sizeof(T), AlignOf<T>::Alignment));
+  }
+
+  /// \brief Allocate space for an array of objects without constructing them.
+  template <typename T> T *Allocate(size_t Num) {
+    return static_cast<T *>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
+  }
+
+  /// \brief Allocate space for an array of objects with the specified alignment
+  /// and without constructing them.
+  template <typename T> T *Allocate(size_t Num, size_t Alignment) {
+    // Round EltSize up to the specified alignment.
+    size_t EltSize = (sizeof(T) + Alignment - 1) & (-Alignment);
+    return static_cast<T *>(Allocate(Num * EltSize, Alignment));
+  }
+};
+
+class MallocAllocator : public AllocatorBase<MallocAllocator> {
 public:
   MallocAllocator() {}
   ~MallocAllocator() {}
@@ -41,13 +87,8 @@ public:
 
   void *Allocate(size_t Size, size_t /*Alignment*/) { return malloc(Size); }
 
-  template <typename T> T *Allocate() {
-    return static_cast<T *>(malloc(sizeof(T)));
-  }
-
-  template <typename T> T *Allocate(size_t Num) {
-    return static_cast<T *>(malloc(sizeof(T) * Num));
-  }
+  // Pull in base class overloads.
+  using AllocatorBase<MallocAllocator>::Allocate;
 
   void Deallocate(const void *Ptr) { free(const_cast<void *>(Ptr)); }
 
@@ -91,7 +132,9 @@ void printBumpPtrAllocatorStats(unsigned NumSlabs, size_t BytesAllocated,
 /// use a custom allocator.
 template <typename AllocatorT = MallocSlabAllocator, size_t SlabSize = 4096,
           size_t SizeThreshold = SlabSize>
-class BumpPtrAllocatorImpl {
+class BumpPtrAllocatorImpl
+    : public AllocatorBase<
+          BumpPtrAllocatorImpl<AllocatorT, SlabSize, SizeThreshold>> {
   BumpPtrAllocatorImpl(const BumpPtrAllocatorImpl &) LLVM_DELETED_FUNCTION;
   void operator=(const BumpPtrAllocatorImpl &) LLVM_DELETED_FUNCTION;
 
@@ -176,23 +219,8 @@ public:
     return Ptr;
   }
 
-  /// \brief Allocate space for one object without constructing it.
-  template <typename T> T *Allocate() {
-    return static_cast<T *>(Allocate(sizeof(T), AlignOf<T>::Alignment));
-  }
-
-  /// \brief Allocate space for an array of objects without constructing them.
-  template <typename T> T *Allocate(size_t Num) {
-    return static_cast<T *>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
-  }
-
-  /// \brief Allocate space for an array of objects with the specified alignment
-  /// and without constructing them.
-  template <typename T> T *Allocate(size_t Num, size_t Alignment) {
-    // Round EltSize up to the specified alignment.
-    size_t EltSize = (sizeof(T) + Alignment - 1) & (-Alignment);
-    return static_cast<T *>(Allocate(Num * EltSize, Alignment));
-  }
+  // Pull in base class overloads.
+  using AllocatorBase<BumpPtrAllocatorImpl>::Allocate;
 
   void Deallocate(const void * /*Ptr*/) {}
 
