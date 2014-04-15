@@ -6,6 +6,7 @@ include_directories(../Utility)
 
 add_lldb_library(lldbPluginProcessFreeBSD
   ProcessFreeBSD.cpp
+  FreeBSDSignals.cpp
   FreeBSDThread.cpp
   ProcessMonitor.cpp
   )
