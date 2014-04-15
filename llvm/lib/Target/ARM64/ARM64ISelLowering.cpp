@@ -3546,6 +3546,17 @@ SDValue ARM64TargetLowering::LowerJumpTable(SDValue Op,
   EVT PtrVT = getPointerTy();
   SDLoc DL(Op);
 
+  if (getTargetMachine().getCodeModel() == CodeModel::Large &&
+      !Subtarget->isTargetMachO()) {
+    const unsigned char MO_NC = ARM64II::MO_NC;
+    return DAG.getNode(
+        ARM64ISD::WrapperLarge, DL, PtrVT,
+        DAG.getTargetJumpTable(JT->getIndex(), PtrVT, ARM64II::MO_G3),
+        DAG.getTargetJumpTable(JT->getIndex(), PtrVT, ARM64II::MO_G2 | MO_NC),
+        DAG.getTargetJumpTable(JT->getIndex(), PtrVT, ARM64II::MO_G1 | MO_NC),
+        DAG.getTargetJumpTable(JT->getIndex(), PtrVT, ARM64II::MO_G0 | MO_NC));
+  }
+
   SDValue Hi = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, ARM64II::MO_PAGE);
   SDValue Lo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT,
                                       ARM64II::MO_PAGEOFF | ARM64II::MO_NC);

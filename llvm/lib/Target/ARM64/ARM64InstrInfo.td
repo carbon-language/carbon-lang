@@ -416,6 +416,13 @@ def : Pat<(ARM64WrapperLarge tconstpool:$g3, tconstpool:$g2,
                           tconstpool:$g1, 16),
                   tconstpool:$g0, 0)>;
 
+def : Pat<(ARM64WrapperLarge tjumptable:$g3, tjumptable:$g2,
+                             tjumptable:$g1, tjumptable:$g0),
+          (MOVKXi (MOVKXi (MOVKXi (MOVZXi tjumptable:$g3, 48),
+                                  tjumptable:$g2, 32),
+                          tjumptable:$g1, 16),
+                  tjumptable:$g0, 0)>;
+
 
 //===----------------------------------------------------------------------===//
 // Arithmetic instructions.

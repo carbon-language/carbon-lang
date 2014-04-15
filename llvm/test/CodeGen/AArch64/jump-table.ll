@@ -1,6 +1,9 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
 ; RUN: llc -code-model=large -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck --check-prefix=CHECK-LARGE %s
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs -relocation-model=pic <%s | FileCheck --check-prefix=CHECK-PIC %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu | FileCheck %s
+; RUN: llc -code-model=large -verify-machineinstrs -o - %s -mtriple=arm64-none-linux-gnu | FileCheck --check-prefix=CHECK-LARGE %s
+; RUN: llc -mtriple=arm64-none-linux-gnu -verify-machineinstrs -relocation-model=pic -o - %s | FileCheck --check-prefix=CHECK-PIC %s
 
 define i32 @test_jumptable(i32 %in) {
 ; CHECK: test_jumptable
@@ -12,7 +15,7 @@ define i32 @test_jumptable(i32 %in) {
     i32 4, label %lbl4
   ]
 ; CHECK: adrp [[JTPAGE:x[0-9]+]], .LJTI0_0
-; CHECK: add x[[JT:[0-9]+]], [[JTPAGE]], #:lo12:.LJTI0_0
+; CHECK: add x[[JT:[0-9]+]], [[JTPAGE]], {{#?}}:lo12:.LJTI0_0
 ; CHECK: ldr [[DEST:x[0-9]+]], [x[[JT]], {{x[0-9]+}}, lsl #3]
 ; CHECK: br [[DEST]]
 
@@ -24,7 +27,7 @@ define i32 @test_jumptable(i32 %in) {
 ; CHECK-LARGE: br [[DEST]]
 
 ; CHECK-PIC: adrp [[JTPAGE:x[0-9]+]], .LJTI0_0
-; CHECK-PIC: add x[[JT:[0-9]+]], [[JTPAGE]], #:lo12:.LJTI0_0
+; CHECK-PIC: add x[[JT:[0-9]+]], [[JTPAGE]], {{#?}}:lo12:.LJTI0_0
 ; CHECK-PIC: ldrsw [[DEST:x[0-9]+]], [x[[JT]], {{x[0-9]+}}, lsl #2]
 ; CHECK-PIC: add [[TABLE:x[0-9]+]], [[DEST]], x[[JT]]
 ; CHECK-PIC: br [[TABLE]]
