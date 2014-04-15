@@ -273,6 +273,13 @@ bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
   Schedule = getCombinedScheduleForSpace(S, ParallelDim);
   Deps = isl_union_map_apply_range(Deps, isl_union_map_copy(Schedule));
   Deps = isl_union_map_apply_domain(Deps, Schedule);
+
+  if (isl_union_map_is_empty(Deps)) {
+    isl_union_map_free(Deps);
+    isl_set_free(ScheduleSubset);
+    return true;
+  }
+
   ScheduleDeps = isl_map_from_union_map(Deps);
   ScheduleDeps =
       isl_map_intersect_domain(ScheduleDeps, isl_set_copy(ScheduleSubset));
