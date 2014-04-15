@@ -1032,8 +1032,7 @@ public:
     return SynchronizationScope((SubclassData >> 12) & 1);
   }
 
-  /// Returns the SrcValue and offset that describes the location of the access
-  const Value *getSrcValue() const { return MMO->getValue(); }
+  // Returns the offset from the location of the access.
   int64_t getSrcValueOffset() const { return MMO->getOffset(); }
 
   /// Returns the TBAAInfo that describes the dereference.

@@ -250,13 +250,15 @@ bool TargetInstrInfo::hasLoadFromStackSlot(const MachineInstr *MI,
          oe = MI->memoperands_end();
        o != oe;
        ++o) {
-    if ((*o)->isLoad() && (*o)->getValue())
+    if ((*o)->isLoad()) {
       if (const FixedStackPseudoSourceValue *Value =
-          dyn_cast<const FixedStackPseudoSourceValue>((*o)->getValue())) {
+          dyn_cast_or_null<FixedStackPseudoSourceValue>(
+              (*o)->getPseudoValue())) {
         FrameIndex = Value->getFrameIndex();
         MMO = *o;
         return true;
       }
+    }
   }
   return false;
 }
@@ -268,13 +270,15 @@ bool TargetInstrInfo::hasStoreToStackSlot(const MachineInstr *MI,
          oe = MI->memoperands_end();
        o != oe;
        ++o) {
-    if ((*o)->isStore() && (*o)->getValue())
+    if ((*o)->isStore()) {
       if (const FixedStackPseudoSourceValue *Value =
-          dyn_cast<const FixedStackPseudoSourceValue>((*o)->getValue())) {
+          dyn_cast_or_null<FixedStackPseudoSourceValue>(
+              (*o)->getPseudoValue())) {
         FrameIndex = Value->getFrameIndex();
         MMO = *o;
         return true;
       }
+    }
   }
   return false;
 }

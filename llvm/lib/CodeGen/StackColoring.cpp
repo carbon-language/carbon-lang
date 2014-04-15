@@ -509,11 +509,6 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
 
       // Update the MachineMemOperand to use the new alloca.
       for (MachineMemOperand *MMO : I.memoperands()) {
-        const Value *V = MMO->getValue();
-
-        if (!V)
-          continue;
-
         // FIXME: In order to enable the use of TBAA when using AA in CodeGen,
         // we'll also need to update the TBAA nodes in MMOs with values
         // derived from the merged allocas. When doing this, we'll need to use
@@ -523,10 +518,10 @@ void StackColoring::remapInstructions(DenseMap<int, int> &SlotRemap) {
 
         // We've replaced IR-level uses of the remapped allocas, so we only
         // need to replace direct uses here.
-        if (!isa<AllocaInst>(V))
+        const AllocaInst *AI = dyn_cast_or_null<AllocaInst>(MMO->getValue());
+        if (!AI)
           continue;
 
-        const AllocaInst *AI= cast<AllocaInst>(V);
         if (!Allocas.count(AI))
           continue;
 

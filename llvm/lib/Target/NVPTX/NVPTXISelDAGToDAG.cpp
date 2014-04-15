@@ -267,7 +267,7 @@ SDNode *NVPTXDAGToDAGISel::Select(SDNode *N) {
 
 static unsigned int getCodeAddrSpace(MemSDNode *N,
                                      const NVPTXSubtarget &Subtarget) {
-  const Value *Src = N->getSrcValue();
+  const Value *Src = N->getMemOperand()->getValue();
 
   if (!Src)
     return NVPTX::PTXLdStInstCode::GENERIC;
@@ -3061,9 +3061,13 @@ bool NVPTXDAGToDAGISel::ChkMemSDNodeAddressSpace(SDNode *N,
   // the classof() for MemSDNode does not include MemIntrinsicSDNode
   // (See SelectionDAGNodes.h). So we need to check for both.
   if (MemSDNode *mN = dyn_cast<MemSDNode>(N)) {
-    Src = mN->getSrcValue();
+    if (spN == 0 && mN->getMemOperand()->getPseudoValue())
+      return true;
+    Src = mN->getMemOperand()->getValue();
   } else if (MemSDNode *mN = dyn_cast<MemIntrinsicSDNode>(N)) {
-    Src = mN->getSrcValue();
+    if (spN == 0 && mN->getMemOperand()->getPseudoValue())
+      return true;
+    Src = mN->getMemOperand()->getValue();
   }
   if (!Src)
     return false;

@@ -161,13 +161,12 @@ void StackSlotColoring::ScanForSpillSlotRefs(MachineFunction &MF) {
       for (MachineInstr::mmo_iterator MMOI = MI->memoperands_begin(),
            EE = MI->memoperands_end(); MMOI != EE; ++MMOI) {
         MachineMemOperand *MMO = *MMOI;
-        if (const Value *V = MMO->getValue()) {
-          if (const FixedStackPseudoSourceValue *FSV =
-              dyn_cast<FixedStackPseudoSourceValue>(V)) {
-            int FI = FSV->getFrameIndex();
-            if (FI >= 0)
-              SSRefs[FI].push_back(MMO);
-          }
+        if (const FixedStackPseudoSourceValue *FSV =
+            dyn_cast_or_null<FixedStackPseudoSourceValue>(
+                MMO->getPseudoValue())) {
+          int FI = FSV->getFrameIndex();
+          if (FI >= 0)
+            SSRefs[FI].push_back(MMO);
         }
       }
     }
@@ -310,7 +309,7 @@ bool StackSlotColoring::ColorSlots(MachineFunction &MF) {
     if (NewFI == -1 || (NewFI == (int)SS))
       continue;
 
-    const Value *NewSV = PseudoSourceValue::getFixedStack(NewFI);
+    const PseudoSourceValue *NewSV = PseudoSourceValue::getFixedStack(NewFI);
     SmallVectorImpl<MachineMemOperand *> &RefMMOs = SSRefs[SS];
     for (unsigned i = 0, e = RefMMOs.size(); i != e; ++i)
       RefMMOs[i]->setValue(NewSV);

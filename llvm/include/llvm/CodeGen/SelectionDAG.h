@@ -705,7 +705,7 @@ public:
   /// getAtomic - Gets a node for an atomic op, produces result (if relevant)
   /// and chain and takes 2 operands.
   SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDValue Chain,
-                    SDValue Ptr, SDValue Val, const Value* PtrVal,
+                    SDValue Ptr, SDValue Val, const Value *PtrVal,
                     unsigned Alignment, AtomicOrdering Ordering,
                     SynchronizationScope SynchScope);
   SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDValue Chain,
@@ -715,11 +715,6 @@ public:
 
   /// getAtomic - Gets a node for an atomic op, produces result and chain and
   /// takes 1 operand.
-  SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, EVT VT,
-                    SDValue Chain, SDValue Ptr, const Value* PtrVal,
-                    unsigned Alignment,
-                    AtomicOrdering Ordering,
-                    SynchronizationScope SynchScope);
   SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, EVT VT,
                     SDValue Chain, SDValue Ptr, MachineMemOperand *MMO,
                     AtomicOrdering Ordering,
@@ -1167,6 +1162,8 @@ public:
   void ExtractVectorElements(SDValue Op, SmallVectorImpl<SDValue> &Args,
                              unsigned Start = 0, unsigned Count = 0);
 
+  unsigned getEVTAlignment(EVT MemoryVT) const;
+
 private:
   bool RemoveNodeFromCSEMaps(SDNode *N);
   void AddModifiedNodeToCSEMaps(SDNode *N);
@@ -1179,8 +1176,6 @@ private:
 
   void DeleteNodeNotInCSEMaps(SDNode *N);
   void DeallocateNode(SDNode *N);
-
-  unsigned getEVTAlignment(EVT MemoryVT) const;
 
   void allnodes_clear();
 

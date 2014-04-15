@@ -1126,12 +1126,6 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Value *V,
     return;
   }
 
-  if (V->getValueID() == Value::PseudoSourceValueVal ||
-      V->getValueID() == Value::FixedStackPseudoSourceValueVal) {
-    V->print(Out);
-    return;
-  }
-
   char Prefix = '%';
   int Slot;
   // If we have a SlotTracker, use it.

@@ -61,6 +61,7 @@ private:
   bool SelectADDR64(SDValue N, SDValue &R1, SDValue &R2);
 
   static bool checkType(const Value *ptr, unsigned int addrspace);
+  static bool checkPrivateAddress(const MachineMemOperand *Op);
 
   static bool isGlobalStore(const StoreSDNode *N);
   static bool isPrivateStore(const StoreSDNode *N);
@@ -431,6 +432,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
 
 
 bool AMDGPUDAGToDAGISel::checkType(const Value *ptr, unsigned int addrspace) {
+  assert(addrspace != 0 && "Use checkPrivateAddress instead.");
   if (!ptr) {
     return false;
   }
@@ -438,29 +440,41 @@ bool AMDGPUDAGToDAGISel::checkType(const Value *ptr, unsigned int addrspace) {
   return dyn_cast<PointerType>(ptrType)->getAddressSpace() == addrspace;
 }
 
+bool AMDGPUDAGToDAGISel::checkPrivateAddress(const MachineMemOperand *Op) {
+  if (Op->getPseudoValue()) return true;
+  const Value *ptr = Op->getValue();
+  if (!ptr) return false;
+  PointerType *ptrType = dyn_cast<PointerType>(ptr->getType());
+  return ptrType->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS;
+}
+
 bool AMDGPUDAGToDAGISel::isGlobalStore(const StoreSDNode *N) {
-  return checkType(N->getSrcValue(), AMDGPUAS::GLOBAL_ADDRESS);
+  return checkType(N->getMemOperand()->getValue(), AMDGPUAS::GLOBAL_ADDRESS);
 }
 
 bool AMDGPUDAGToDAGISel::isPrivateStore(const StoreSDNode *N) {
-  return (!checkType(N->getSrcValue(), AMDGPUAS::LOCAL_ADDRESS)
-          && !checkType(N->getSrcValue(), AMDGPUAS::GLOBAL_ADDRESS)
-          && !checkType(N->getSrcValue(), AMDGPUAS::REGION_ADDRESS));
+  return (!checkType(N->getMemOperand()->getValue(), AMDGPUAS::LOCAL_ADDRESS)
+          && !checkType(N->getMemOperand()->getValue(),
+                        AMDGPUAS::GLOBAL_ADDRESS)
+          && !checkType(N->getMemOperand()->getValue(),
+                        AMDGPUAS::REGION_ADDRESS));
 }
 
 bool AMDGPUDAGToDAGISel::isLocalStore(const StoreSDNode *N) {
-  return checkType(N->getSrcValue(), AMDGPUAS::LOCAL_ADDRESS);
+  return checkType(N->getMemOperand()->getValue(), AMDGPUAS::LOCAL_ADDRESS);
 }
 
 bool AMDGPUDAGToDAGISel::isRegionStore(const StoreSDNode *N) {
-  return checkType(N->getSrcValue(), AMDGPUAS::REGION_ADDRESS);
+  return checkType(N->getMemOperand()->getValue(), AMDGPUAS::REGION_ADDRESS);
 }
 
 bool AMDGPUDAGToDAGISel::isConstantLoad(const LoadSDNode *N, int CbId) const {
   if (CbId == -1) {
-    return checkType(N->getSrcValue(), AMDGPUAS::CONSTANT_ADDRESS);
+    return checkType(N->getMemOperand()->getValue(),
+                     AMDGPUAS::CONSTANT_ADDRESS);
   }
-  return checkType(N->getSrcValue(), AMDGPUAS::CONSTANT_BUFFER_0 + CbId);
+  return checkType(N->getMemOperand()->getValue(),
+                   AMDGPUAS::CONSTANT_BUFFER_0 + CbId);
 }
 
 bool AMDGPUDAGToDAGISel::isGlobalLoad(const LoadSDNode *N) const {
@@ -471,27 +485,26 @@ bool AMDGPUDAGToDAGISel::isGlobalLoad(const LoadSDNode *N) const {
       return true;
     }
   }
-  return checkType(N->getSrcValue(), AMDGPUAS::GLOBAL_ADDRESS);
+  return checkType(N->getMemOperand()->getValue(), AMDGPUAS::GLOBAL_ADDRESS);
 }
 
 bool AMDGPUDAGToDAGISel::isParamLoad(const LoadSDNode *N) const {
-  return checkType(N->getSrcValue(), AMDGPUAS::PARAM_I_ADDRESS);
+  return checkType(N->getMemOperand()->getValue(), AMDGPUAS::PARAM_I_ADDRESS);
 }
 
 bool AMDGPUDAGToDAGISel::isLocalLoad(const  LoadSDNode *N) const {
-  return checkType(N->getSrcValue(), AMDGPUAS::LOCAL_ADDRESS);
+  return checkType(N->getMemOperand()->getValue(), AMDGPUAS::LOCAL_ADDRESS);
 }
 
 bool AMDGPUDAGToDAGISel::isRegionLoad(const  LoadSDNode *N) const {
-  return checkType(N->getSrcValue(), AMDGPUAS::REGION_ADDRESS);
+  return checkType(N->getMemOperand()->getValue(), AMDGPUAS::REGION_ADDRESS);
 }
 
 bool AMDGPUDAGToDAGISel::isCPLoad(const LoadSDNode *N) const {
   MachineMemOperand *MMO = N->getMemOperand();
-  if (checkType(N->getSrcValue(), AMDGPUAS::PRIVATE_ADDRESS)) {
+  if (checkPrivateAddress(N->getMemOperand())) {
     if (MMO) {
-      const Value *V = MMO->getValue();
-      const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V);
+      const PseudoSourceValue *PSV = MMO->getPseudoValue();
       if (PSV && PSV == PseudoSourceValue::getConstantPool()) {
         return true;
       }
@@ -501,19 +514,19 @@ bool AMDGPUDAGToDAGISel::isCPLoad(const LoadSDNode *N) const {
 }
 
 bool AMDGPUDAGToDAGISel::isPrivateLoad(const LoadSDNode *N) const {
-  if (checkType(N->getSrcValue(), AMDGPUAS::PRIVATE_ADDRESS)) {
+  if (checkPrivateAddress(N->getMemOperand())) {
     // Check to make sure we are not a constant pool load or a constant load
     // that is marked as a private load
     if (isCPLoad(N) || isConstantLoad(N, -1)) {
       return false;
     }
   }
-  if (!checkType(N->getSrcValue(), AMDGPUAS::LOCAL_ADDRESS)
-      && !checkType(N->getSrcValue(), AMDGPUAS::GLOBAL_ADDRESS)
-      && !checkType(N->getSrcValue(), AMDGPUAS::REGION_ADDRESS)
-      && !checkType(N->getSrcValue(), AMDGPUAS::CONSTANT_ADDRESS)
-      && !checkType(N->getSrcValue(), AMDGPUAS::PARAM_D_ADDRESS)
-      && !checkType(N->getSrcValue(), AMDGPUAS::PARAM_I_ADDRESS)) {
+  if (!checkType(N->getMemOperand()->getValue(), AMDGPUAS::LOCAL_ADDRESS)
+      && !checkType(N->getMemOperand()->getValue(), AMDGPUAS::GLOBAL_ADDRESS)
+      && !checkType(N->getMemOperand()->getValue(), AMDGPUAS::REGION_ADDRESS)
+      && !checkType(N->getMemOperand()->getValue(), AMDGPUAS::CONSTANT_ADDRESS)
+      && !checkType(N->getMemOperand()->getValue(), AMDGPUAS::PARAM_D_ADDRESS)
+      && !checkType(N->getMemOperand()->getValue(), AMDGPUAS::PARAM_I_ADDRESS)){
     return true;
   }
   return false;

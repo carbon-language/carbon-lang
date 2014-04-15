@@ -1659,7 +1659,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
                                   Flags.getByValAlign(),
                                   /*isVolatile = */ false,
                                   /*alwaysInline = */ false,
-                                  DstInfo, MachinePointerInfo(0));
+                                  DstInfo, MachinePointerInfo());
       MemOpChains.push_back(Cpy);
     } else {
       // Normal stack argument, put it where it's needed.

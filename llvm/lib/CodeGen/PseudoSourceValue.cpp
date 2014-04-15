@@ -58,13 +58,9 @@ static const char *const PSVNames[] = {
   "ConstantPool"
 };
 
-// FIXME: THIS IS A HACK!!!!
-// Eventually these should be uniqued on LLVMContext rather than in a managed
-// static.  For now, we can safely use the global context for the time being to
-// squeak by.
-PseudoSourceValue::PseudoSourceValue(enum ValueTy Subclass) :
-  Value(Type::getInt8PtrTy(getGlobalContext()),
-        Subclass) {}
+PseudoSourceValue::PseudoSourceValue(bool isFixed) : isFixed(isFixed) {}
+
+PseudoSourceValue::~PseudoSourceValue() {}
 
 void PseudoSourceValue::printCustom(raw_ostream &O) const {
   O << PSVNames[this - PSVGlobals->PSVs];

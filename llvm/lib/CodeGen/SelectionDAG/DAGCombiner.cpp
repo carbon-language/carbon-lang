@@ -317,26 +317,7 @@ namespace {
 
     /// isAlias - Return true if there is any possibility that the two addresses
     /// overlap.
-    bool isAlias(SDValue Ptr1, int64_t Size1, bool IsVolatile1,
-                 const Value *SrcValue1, int SrcValueOffset1,
-                 unsigned SrcValueAlign1,
-                 const MDNode *TBAAInfo1,
-                 SDValue Ptr2, int64_t Size2, bool IsVolatile2,
-                 const Value *SrcValue2, int SrcValueOffset2,
-                 unsigned SrcValueAlign2,
-                 const MDNode *TBAAInfo2) const;
-
-    /// isAlias - Return true if there is any possibility that the two addresses
-    /// overlap.
-    bool isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1);
-
-    /// FindAliasInfo - Extracts the relevant alias information from the memory
-    /// node.  Returns true if the operand was a load.
-    bool FindAliasInfo(SDNode *N,
-                       SDValue &Ptr, int64_t &Size, bool &IsVolatile,
-                       const Value *&SrcValue, int &SrcValueOffset,
-                       unsigned &SrcValueAlignment,
-                       const MDNode *&TBAAInfo) const;
+    bool isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const;
 
     /// FindBetterChain - Walk up chain skipping non-aliasing memory nodes,
     /// looking for a better chain (aliasing node.)
@@ -11293,31 +11274,27 @@ static bool FindBaseOffset(SDValue Ptr, SDValue &Base, int64_t &Offset,
 
 /// isAlias - Return true if there is any possibility that the two addresses
 /// overlap.
-bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1, bool IsVolatile1,
-                          const Value *SrcValue1, int SrcValueOffset1,
-                          unsigned SrcValueAlign1,
-                          const MDNode *TBAAInfo1,
-                          SDValue Ptr2, int64_t Size2, bool IsVolatile2,
-                          const Value *SrcValue2, int SrcValueOffset2,
-                          unsigned SrcValueAlign2,
-                          const MDNode *TBAAInfo2) const {
+bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
   // If they are the same then they must be aliases.
-  if (Ptr1 == Ptr2) return true;
+  if (Op0->getBasePtr() == Op1->getBasePtr()) return true;
 
   // If they are both volatile then they cannot be reordered.
-  if (IsVolatile1 && IsVolatile2) return true;
+  if (Op0->isVolatile() && Op1->isVolatile()) return true;
 
   // Gather base node and offset information.
   SDValue Base1, Base2;
   int64_t Offset1, Offset2;
   const GlobalValue *GV1, *GV2;
   const void *CV1, *CV2;
-  bool isFrameIndex1 = FindBaseOffset(Ptr1, Base1, Offset1, GV1, CV1);
-  bool isFrameIndex2 = FindBaseOffset(Ptr2, Base2, Offset2, GV2, CV2);
+  bool isFrameIndex1 = FindBaseOffset(Op0->getBasePtr(),
+                                      Base1, Offset1, GV1, CV1);
+  bool isFrameIndex2 = FindBaseOffset(Op1->getBasePtr(),
+                                      Base2, Offset2, GV2, CV2);
 
   // If they have a same base address then check to see if they overlap.
   if (Base1 == Base2 || (GV1 && (GV1 == GV2)) || (CV1 && (CV1 == CV2)))
-    return !((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
+    return !((Offset1 + (Op0->getMemoryVT().getSizeInBits() >> 3)) <= Offset2 ||
+             (Offset2 + (Op1->getMemoryVT().getSizeInBits() >> 3)) <= Offset1);
 
   // It is possible for different frame indices to alias each other, mostly
   // when tail call optimization reuses return address slots for arguments.
@@ -11327,7 +11304,8 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1, bool IsVolatile1,
     MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
     Offset1 += MFI->getObjectOffset(cast<FrameIndexSDNode>(Base1)->getIndex());
     Offset2 += MFI->getObjectOffset(cast<FrameIndexSDNode>(Base2)->getIndex());
-    return !((Offset1 + Size1) <= Offset2 || (Offset2 + Size2) <= Offset1);
+    return !((Offset1 + (Op0->getMemoryVT().getSizeInBits() >> 3)) <= Offset2 ||
+             (Offset2 + (Op1->getMemoryVT().getSizeInBits() >> 3)) <= Offset1);
   }
 
   // Otherwise, if we know what the bases are, and they aren't identical, then
@@ -11339,15 +11317,18 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1, bool IsVolatile1,
   // compared to the size and offset of the access, we may be able to prove they
   // do not alias.  This check is conservative for now to catch cases created by
   // splitting vector types.
-  if ((SrcValueAlign1 == SrcValueAlign2) &&
-      (SrcValueOffset1 != SrcValueOffset2) &&
-      (Size1 == Size2) && (SrcValueAlign1 > Size1)) {
-    int64_t OffAlign1 = SrcValueOffset1 % SrcValueAlign1;
-    int64_t OffAlign2 = SrcValueOffset2 % SrcValueAlign1;
+  if ((Op0->getOriginalAlignment() == Op1->getOriginalAlignment()) &&
+      (Op0->getSrcValueOffset() != Op1->getSrcValueOffset()) &&
+      (Op0->getMemoryVT().getSizeInBits() >> 3 ==
+       Op1->getMemoryVT().getSizeInBits() >> 3) &&
+      (Op0->getOriginalAlignment() > Op0->getMemoryVT().getSizeInBits()) >> 3) {
+    int64_t OffAlign1 = Op0->getSrcValueOffset() % Op0->getOriginalAlignment();
+    int64_t OffAlign2 = Op1->getSrcValueOffset() % Op1->getOriginalAlignment();
 
     // There is no overlap between these relatively aligned accesses of similar
     // size, return no alias.
-    if ((OffAlign1 + Size1) <= OffAlign2 || (OffAlign2 + Size2) <= OffAlign1)
+    if ((OffAlign1 + (Op0->getMemoryVT().getSizeInBits() >> 3)) <= OffAlign2 ||
+        (OffAlign2 + (Op1->getMemoryVT().getSizeInBits() >> 3)) <= OffAlign1)
       return false;
   }
 
@@ -11358,60 +11339,28 @@ bool DAGCombiner::isAlias(SDValue Ptr1, int64_t Size1, bool IsVolatile1,
       CombinerAAOnlyFunc != DAG.getMachineFunction().getName())
     UseAA = false;
 #endif
-  if (UseAA && SrcValue1 && SrcValue2) {
+  if (UseAA &&
+      Op0->getMemOperand()->getValue() && Op1->getMemOperand()->getValue()) {
     // Use alias analysis information.
-    int64_t MinOffset = std::min(SrcValueOffset1, SrcValueOffset2);
-    int64_t Overlap1 = Size1 + SrcValueOffset1 - MinOffset;
-    int64_t Overlap2 = Size2 + SrcValueOffset2 - MinOffset;
+    int64_t MinOffset = std::min(Op0->getSrcValueOffset(),
+                                 Op1->getSrcValueOffset());
+    int64_t Overlap1 = (Op0->getMemoryVT().getSizeInBits() >> 3) +
+        Op0->getSrcValueOffset() - MinOffset;
+    int64_t Overlap2 = (Op1->getMemoryVT().getSizeInBits() >> 3) +
+        Op1->getSrcValueOffset() - MinOffset;
     AliasAnalysis::AliasResult AAResult =
-      AA.alias(AliasAnalysis::Location(SrcValue1, Overlap1,
-                                       UseTBAA ? TBAAInfo1 : nullptr),
-               AliasAnalysis::Location(SrcValue2, Overlap2,
-                                       UseTBAA ? TBAAInfo2 : nullptr));
+        AA.alias(AliasAnalysis::Location(Op0->getMemOperand()->getValue(),
+                                         Overlap1,
+                                         UseTBAA ? Op0->getTBAAInfo() : nullptr),
+                 AliasAnalysis::Location(Op1->getMemOperand()->getValue(),
+                                         Overlap2,
+                                         UseTBAA ? Op1->getTBAAInfo() : nullptr));
     if (AAResult == AliasAnalysis::NoAlias)
       return false;
   }
 
   // Otherwise we have to assume they alias.
   return true;
-}
-
-bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) {
-  SDValue Ptr0, Ptr1;
-  int64_t Size0, Size1;
-  bool IsVolatile0, IsVolatile1;
-  const Value *SrcValue0, *SrcValue1;
-  int SrcValueOffset0, SrcValueOffset1;
-  unsigned SrcValueAlign0, SrcValueAlign1;
-  const MDNode *SrcTBAAInfo0, *SrcTBAAInfo1;
-  FindAliasInfo(Op0, Ptr0, Size0, IsVolatile0, SrcValue0, SrcValueOffset0,
-                SrcValueAlign0, SrcTBAAInfo0);
-  FindAliasInfo(Op1, Ptr1, Size1, IsVolatile1, SrcValue1, SrcValueOffset1,
-                SrcValueAlign1, SrcTBAAInfo1);
-  return isAlias(Ptr0, Size0, IsVolatile0, SrcValue0, SrcValueOffset0,
-                 SrcValueAlign0, SrcTBAAInfo0,
-                 Ptr1, Size1, IsVolatile1, SrcValue1, SrcValueOffset1,
-                 SrcValueAlign1, SrcTBAAInfo1);
-}
-
-/// FindAliasInfo - Extracts the relevant alias information from the memory
-/// node.  Returns true if the operand was a nonvolatile load.
-bool DAGCombiner::FindAliasInfo(SDNode *N,
-                                SDValue &Ptr, int64_t &Size, bool &IsVolatile,
-                                const Value *&SrcValue,
-                                int &SrcValueOffset,
-                                unsigned &SrcValueAlign,
-                                const MDNode *&TBAAInfo) const {
-  LSBaseSDNode *LS = cast<LSBaseSDNode>(N);
-
-  Ptr = LS->getBasePtr();
-  Size = LS->getMemoryVT().getSizeInBits() >> 3;
-  IsVolatile = LS->isVolatile();
-  SrcValue = LS->getSrcValue();
-  SrcValueOffset = LS->getSrcValueOffset();
-  SrcValueAlign = LS->getOriginalAlignment();
-  TBAAInfo = LS->getTBAAInfo();
-  return isa<LoadSDNode>(LS) && !IsVolatile;
 }
 
 /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
@@ -11422,15 +11371,7 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
   SmallPtrSet<SDNode *, 16> Visited;  // Visited node set.
 
   // Get alias information for node.
-  SDValue Ptr;
-  int64_t Size;
-  bool IsVolatile;
-  const Value *SrcValue;
-  int SrcValueOffset;
-  unsigned SrcValueAlign;
-  const MDNode *SrcTBAAInfo;
-  bool IsLoad = FindAliasInfo(N, Ptr, Size, IsVolatile, SrcValue,
-                              SrcValueOffset, SrcValueAlign, SrcTBAAInfo);
+  bool IsLoad = isa<LoadSDNode>(N) && !cast<LSBaseSDNode>(N)->isVolatile();
 
   // Starting off.
   Chains.push_back(OriginalChain);
@@ -11469,24 +11410,12 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
     case ISD::LOAD:
     case ISD::STORE: {
       // Get alias information for Chain.
-      SDValue OpPtr;
-      int64_t OpSize;
-      bool OpIsVolatile;
-      const Value *OpSrcValue;
-      int OpSrcValueOffset;
-      unsigned OpSrcValueAlign;
-      const MDNode *OpSrcTBAAInfo;
-      bool IsOpLoad = FindAliasInfo(Chain.getNode(), OpPtr, OpSize,
-                                    OpIsVolatile, OpSrcValue, OpSrcValueOffset,
-                                    OpSrcValueAlign,
-                                    OpSrcTBAAInfo);
+      bool IsOpLoad = isa<LoadSDNode>(Chain.getNode()) &&
+          !cast<LSBaseSDNode>(Chain.getNode())->isVolatile();
 
       // If chain is alias then stop here.
       if (!(IsLoad && IsOpLoad) &&
-          isAlias(Ptr, Size, IsVolatile, SrcValue, SrcValueOffset,
-                  SrcValueAlign, SrcTBAAInfo,
-                  OpPtr, OpSize, OpIsVolatile, OpSrcValue, OpSrcValueOffset,
-                  OpSrcValueAlign, OpSrcTBAAInfo)) {
+          isAlias(cast<LSBaseSDNode>(N), cast<LSBaseSDNode>(Chain.getNode()))) {
         Aliases.push_back(Chain);
       } else {
         // Look further up the chain.

@@ -390,10 +390,10 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
 static bool InstructionStoresToFI(const MachineInstr *MI, int FI) {
   for (MachineInstr::mmo_iterator o = MI->memoperands_begin(),
          oe = MI->memoperands_end(); o != oe; ++o) {
-    if (!(*o)->isStore() || !(*o)->getValue())
+    if (!(*o)->isStore() || !(*o)->getPseudoValue())
       continue;
     if (const FixedStackPseudoSourceValue *Value =
-        dyn_cast<const FixedStackPseudoSourceValue>((*o)->getValue())) {
+        dyn_cast<FixedStackPseudoSourceValue>((*o)->getPseudoValue())) {
       if (Value->getFrameIndex() == FI)
         return true;
     }
@@ -882,10 +882,9 @@ static bool isLoadFromGOTOrConstantPool(MachineInstr &MI) {
   assert (MI.mayLoad() && "Expected MI that loads!");
   for (MachineInstr::mmo_iterator I = MI.memoperands_begin(),
          E = MI.memoperands_end(); I != E; ++I) {
-    if (const Value *V = (*I)->getValue()) {
-      if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V))
-        if (PSV == PSV->getGOT() || PSV == PSV->getConstantPool())
-          return true;
+    if (const PseudoSourceValue *PSV = (*I)->getPseudoValue()) {
+      if (PSV == PSV->getGOT() || PSV == PSV->getConstantPool())
+        return true;
     }
   }
   return false;

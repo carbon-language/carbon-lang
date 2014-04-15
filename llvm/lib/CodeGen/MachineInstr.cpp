@@ -399,8 +399,8 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
 /// getAddrSpace - Return the LLVM IR address space number that this pointer
 /// points into.
 unsigned MachinePointerInfo::getAddrSpace() const {
-  if (!V) return 0;
-  return cast<PointerType>(V->getType())->getAddressSpace();
+  if (V.isNull() || V.is<const PseudoSourceValue*>()) return 0;
+  return cast<PointerType>(V.get<const Value*>()->getType())->getAddressSpace();
 }
 
 /// getConstantPool - Return a MachinePointerInfo record that refers to the
@@ -434,7 +434,8 @@ MachineMemOperand::MachineMemOperand(MachinePointerInfo ptrinfo, unsigned f,
   : PtrInfo(ptrinfo), Size(s),
     Flags((f & ((1 << MOMaxBits) - 1)) | ((Log2_32(a) + 1) << MOMaxBits)),
     TBAAInfo(TBAAInfo), Ranges(Ranges) {
-  assert((!PtrInfo.V || isa<PointerType>(PtrInfo.V->getType())) &&
+  assert((PtrInfo.V.isNull() || PtrInfo.V.is<const PseudoSourceValue*>() ||
+          isa<PointerType>(PtrInfo.V.get<const Value*>()->getType())) &&
          "invalid pointer value");
   assert(getBaseAlignment() == a && "Alignment is not a power of 2!");
   assert((isLoad() || isStore()) && "Not a load/store!");
@@ -445,7 +446,7 @@ MachineMemOperand::MachineMemOperand(MachinePointerInfo ptrinfo, unsigned f,
 void MachineMemOperand::Profile(FoldingSetNodeID &ID) const {
   ID.AddInteger(getOffset());
   ID.AddInteger(Size);
-  ID.AddPointer(getValue());
+  ID.AddPointer(getOpaqueValue());
   ID.AddInteger(Flags);
 }
 
@@ -486,10 +487,12 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
 
   // Print the address information.
   OS << "[";
-  if (!MMO.getValue())
-    OS << "<unknown>";
+  if (const Value *V = MMO.getValue())
+    V->printAsOperand(OS, /*PrintType=*/false);
+  else if (const PseudoSourceValue *PSV = MMO.getPseudoValue())
+    PSV->printCustom(OS);
   else
-    MMO.getValue()->printAsOperand(OS, /*PrintType=*/false);
+    OS << "<unknown>";
 
   unsigned AS = MMO.getAddrSpace();
   if (AS != 0)
@@ -1366,11 +1369,13 @@ bool MachineInstr::isInvariantLoad(AliasAnalysis *AA) const {
     if ((*I)->isStore()) return false;
     if ((*I)->isInvariant()) return true;
 
+
+    // A load from a constant PseudoSourceValue is invariant.
+    if (const PseudoSourceValue *PSV = (*I)->getPseudoValue())
+      if (PSV->isConstant(MFI))
+        continue;
+
     if (const Value *V = (*I)->getValue()) {
-      // A load from a constant PseudoSourceValue is invariant.
-      if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V))
-        if (PSV->isConstant(MFI))
-          continue;
       // If we have an AliasAnalysis, ask it whether the memory is constant.
       if (AA && AA->pointsToConstantMemory(
                       AliasAnalysis::Location(V, (*I)->getSize(),

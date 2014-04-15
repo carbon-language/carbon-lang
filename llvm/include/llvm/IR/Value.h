@@ -328,9 +328,6 @@ public:
     MDNodeVal,                // This is an instance of MDNode
     MDStringVal,              // This is an instance of MDString
     InlineAsmVal,             // This is an instance of InlineAsm
-    PseudoSourceValueVal,     // This is an instance of PseudoSourceValue
-    FixedStackPseudoSourceValueVal, // This is an instance of 
-                                    // FixedStackPseudoSourceValue
     InstructionVal,           // This is an instance of Instruction
     // Enum values starting at InstructionVal are used for Instructions;
     // don't add new values here!

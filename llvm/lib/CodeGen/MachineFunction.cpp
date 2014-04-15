@@ -236,8 +236,14 @@ MachineFunction::getMachineMemOperand(MachinePointerInfo PtrInfo, unsigned f,
 MachineMemOperand *
 MachineFunction::getMachineMemOperand(const MachineMemOperand *MMO,
                                       int64_t Offset, uint64_t Size) {
+  if (MMO->getValue())
+    return new (Allocator)
+               MachineMemOperand(MachinePointerInfo(MMO->getValue(),
+                                                    MMO->getOffset()+Offset),
+                                 MMO->getFlags(), Size,
+                                 MMO->getBaseAlignment(), nullptr);
   return new (Allocator)
-             MachineMemOperand(MachinePointerInfo(MMO->getValue(),
+             MachineMemOperand(MachinePointerInfo(MMO->getPseudoValue(),
                                                   MMO->getOffset()+Offset),
                                MMO->getFlags(), Size,
                                MMO->getBaseAlignment(), nullptr);
