@@ -550,6 +550,22 @@ unsigned ARM64MCCodeEmitter::fixMOVZ(const MCInst &MI, unsigned EncodedValue,
   if (UImm16MO.isImm())
     return EncodedValue;
 
+  const ARM64MCExpr *A64E = cast<ARM64MCExpr>(UImm16MO.getExpr());
+  switch (A64E->getKind()) {
+  case ARM64MCExpr::VK_DTPREL_G2:
+  case ARM64MCExpr::VK_DTPREL_G1:
+  case ARM64MCExpr::VK_DTPREL_G0:
+  case ARM64MCExpr::VK_GOTTPREL_G1:
+  case ARM64MCExpr::VK_TPREL_G2:
+  case ARM64MCExpr::VK_TPREL_G1:
+  case ARM64MCExpr::VK_TPREL_G0:
+    return EncodedValue & ~(1u << 30);
+  default:
+    // Nothing to do for an unsigned fixup.
+    return EncodedValue;
+  }
+
+
   return EncodedValue & ~(1u << 30);
 }
 
