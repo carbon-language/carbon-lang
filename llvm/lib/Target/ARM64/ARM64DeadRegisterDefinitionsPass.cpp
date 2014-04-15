@@ -28,9 +28,9 @@ namespace {
 class ARM64DeadRegisterDefinitions : public MachineFunctionPass {
 private:
   const TargetRegisterInfo *TRI;
-  bool implicitlyDefinesSubReg(unsigned Reg, const MachineInstr *MI);
-  bool processMachineBasicBlock(MachineBasicBlock *MBB);
-  bool usesFrameIndex(const MachineInstr *MI);
+  bool implicitlyDefinesSubReg(unsigned Reg, const MachineInstr &MI);
+  bool processMachineBasicBlock(MachineBasicBlock &MBB);
+  bool usesFrameIndex(const MachineInstr &MI);
 public:
   static char ID; // Pass identification, replacement for typeid.
   explicit ARM64DeadRegisterDefinitions() : MachineFunctionPass(ID) {}
@@ -47,45 +47,42 @@ public:
 char ARM64DeadRegisterDefinitions::ID = 0;
 } // end anonymous namespace
 
-bool ARM64DeadRegisterDefinitions::implicitlyDefinesSubReg(
-                                                       unsigned Reg,
-                                                       const MachineInstr *MI) {
-  for (const MachineOperand &MO : MI->implicit_operands())
+bool
+ARM64DeadRegisterDefinitions::implicitlyDefinesSubReg(unsigned Reg,
+                                                      const MachineInstr &MI) {
+  for (const MachineOperand &MO : MI.implicit_operands())
     if (MO.isReg() && MO.isDef())
       if (TRI->isSubRegister(Reg, MO.getReg()))
         return true;
   return false;
 }
 
-bool ARM64DeadRegisterDefinitions::usesFrameIndex(const MachineInstr *MI) {
-  for (int I = MI->getDesc().getNumDefs(), E = MI->getNumOperands(); I != E; ++I) {
-    if (MI->getOperand(I).isFI())
+bool ARM64DeadRegisterDefinitions::usesFrameIndex(const MachineInstr &MI) {
+  for (const MachineOperand &Op : MI.uses())
+    if (Op.isFI())
       return true;
-  }
   return false;
 }
 
 bool
-ARM64DeadRegisterDefinitions::processMachineBasicBlock(MachineBasicBlock *MBB) {
+ARM64DeadRegisterDefinitions::processMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
-  for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end(); I != E;
-       ++I) {
-    MachineInstr *MI = I;
+  for (MachineInstr &MI : MBB) {
     if (usesFrameIndex(MI)) {
       // We need to skip this instruction because while it appears to have a
       // dead def it uses a frame index which might expand into a multi
-      // instruction sequence during EPI
+      // instruction sequence during EPI.
       DEBUG(dbgs() << "    Ignoring, operand is frame index\n");
       continue;
     }
-    for (int i = 0, e = MI->getDesc().getNumDefs(); i != e; ++i) {
-      MachineOperand &MO = MI->getOperand(i);
+    for (int i = 0, e = MI.getDesc().getNumDefs(); i != e; ++i) {
+      MachineOperand &MO = MI.getOperand(i);
       if (MO.isReg() && MO.isDead() && MO.isDef()) {
         assert(!MO.isImplicit() && "Unexpected implicit def!");
         DEBUG(dbgs() << "  Dead def operand #" << i << " in:\n    ";
-              MI->print(dbgs()));
+              MI.print(dbgs()));
         // Be careful not to change the register if it's a tied operand.
-        if (MI->isRegTiedToUseOperand(i)) {
+        if (MI.isRegTiedToUseOperand(i)) {
           DEBUG(dbgs() << "    Ignoring, def is tied operand.\n");
           continue;
         }
@@ -97,7 +94,7 @@ ARM64DeadRegisterDefinitions::processMachineBasicBlock(MachineBasicBlock *MBB) {
         // Make sure the instruction take a register class that contains
         // the zero register and replace it if so.
         unsigned NewReg;
-        switch (MI->getDesc().OpInfo[i].RegClass) {
+        switch (MI.getDesc().OpInfo[i].RegClass) {
         default:
           DEBUG(dbgs() << "    Ignoring, register is not a GPR.\n");
           continue;
@@ -110,7 +107,7 @@ ARM64DeadRegisterDefinitions::processMachineBasicBlock(MachineBasicBlock *MBB) {
         }
         DEBUG(dbgs() << "    Replacing with zero register. New:\n      ");
         MO.setReg(NewReg);
-        DEBUG(MI->print(dbgs()));
+        DEBUG(MI.print(dbgs()));
         ++NumDeadDefsReplaced;
       }
     }
@@ -120,14 +117,13 @@ ARM64DeadRegisterDefinitions::processMachineBasicBlock(MachineBasicBlock *MBB) {
 
 // Scan the function for instructions that have a dead definition of a
 // register. Replace that register with the zero register when possible.
-bool ARM64DeadRegisterDefinitions::runOnMachineFunction(MachineFunction &mf) {
-  MachineFunction *MF = &mf;
-  TRI = MF->getTarget().getRegisterInfo();
+bool ARM64DeadRegisterDefinitions::runOnMachineFunction(MachineFunction &MF) {
+  TRI = MF.getTarget().getRegisterInfo();
   bool Changed = false;
   DEBUG(dbgs() << "***** ARM64DeadRegisterDefinitions *****\n");
 
-  for (MachineFunction::iterator I = MF->begin(), E = MF->end(); I != E; ++I)
-    if (processMachineBasicBlock(I))
+  for (auto &MBB : MF)
+    if (processMachineBasicBlock(MBB))
       Changed = true;
   return Changed;
 }
