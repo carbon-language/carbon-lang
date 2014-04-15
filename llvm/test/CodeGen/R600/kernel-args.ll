@@ -17,7 +17,7 @@ entry:
 ; EG-CHECK-LABEL: @i8_zext_arg
 ; EG-CHECK: MOV {{[ *]*}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 ; SI-CHECK-LABEL: @i8_zext_arg
-; SI-CHECK: S_LOAD_DWORD s{{[0-9]}}, s[0:1], 11
+; SI-CHECK: S_LOAD_DWORD s{{[0-9]}}, s[0:1], 0xb
 
 define void @i8_zext_arg(i32 addrspace(1)* nocapture %out, i8 zeroext %in) nounwind {
 entry:
@@ -29,7 +29,7 @@ entry:
 ; EG-CHECK-LABEL: @i8_sext_arg
 ; EG-CHECK: MOV {{[ *]*}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 ; SI-CHECK-LABEL: @i8_sext_arg
-; SI-CHECK: S_LOAD_DWORD s{{[0-9]}}, s[0:1], 11
+; SI-CHECK: S_LOAD_DWORD s{{[0-9]}}, s[0:1], 0xb
 
 define void @i8_sext_arg(i32 addrspace(1)* nocapture %out, i8 signext %in) nounwind {
 entry:
@@ -53,7 +53,7 @@ entry:
 ; EG-CHECK-LABEL: @i16_zext_arg
 ; EG-CHECK: MOV {{[ *]*}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 ; SI-CHECK-LABEL: @i16_zext_arg
-; SI-CHECK: S_LOAD_DWORD s{{[0-9]}}, s[0:1], 11
+; SI-CHECK: S_LOAD_DWORD s{{[0-9]}}, s[0:1], 0xb
 
 define void @i16_zext_arg(i32 addrspace(1)* nocapture %out, i16 zeroext %in) nounwind {
 entry:
@@ -65,7 +65,7 @@ entry:
 ; EG-CHECK-LABEL: @i16_sext_arg
 ; EG-CHECK: MOV {{[ *]*}}T{{[0-9]+\.[XYZW]}}, KC0[2].Z
 ; SI-CHECK-LABEL: @i16_sext_arg
-; SI-CHECK: S_LOAD_DWORD s{{[0-9]}}, s[0:1], 11
+; SI-CHECK: S_LOAD_DWORD s{{[0-9]}}, s[0:1], 0xb
 
 define void @i16_sext_arg(i32 addrspace(1)* nocapture %out, i16 signext %in) nounwind {
 entry:
@@ -77,7 +77,7 @@ entry:
 ; EG-CHECK-LABEL: @i32_arg
 ; EG-CHECK: T{{[0-9]\.[XYZW]}}, KC0[2].Z
 ; SI-CHECK-LABEL: @i32_arg
-; S_LOAD_DWORD s{{[0-9]}}, s[0:1], 11
+; S_LOAD_DWORD s{{[0-9]}}, s[0:1], 0xb
 define void @i32_arg(i32 addrspace(1)* nocapture %out, i32 %in) nounwind {
 entry:
   store i32 %in, i32 addrspace(1)* %out, align 4
@@ -87,7 +87,7 @@ entry:
 ; EG-CHECK-LABEL: @f32_arg
 ; EG-CHECK: T{{[0-9]\.[XYZW]}}, KC0[2].Z
 ; SI-CHECK-LABEL: @f32_arg
-; S_LOAD_DWORD s{{[0-9]}}, s[0:1], 11
+; S_LOAD_DWORD s{{[0-9]}}, s[0:1], 0xb
 define void @f32_arg(float addrspace(1)* nocapture %out, float %in) nounwind {
 entry:
   store float %in, float addrspace(1)* %out, align 4
@@ -122,7 +122,7 @@ entry:
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[3].X
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[2].W
 ; SI-CHECK-LABEL: @v2i32_arg
-; SI-CHECK: S_LOAD_DWORDX2 s{{\[[0-9]:[0-9]\]}}, s[0:1], 11
+; SI-CHECK: S_LOAD_DWORDX2 s{{\[[0-9]:[0-9]\]}}, s[0:1], 0xb
 define void @v2i32_arg(<2 x i32> addrspace(1)* nocapture %out, <2 x i32> %in) nounwind {
 entry:
   store <2 x i32> %in, <2 x i32> addrspace(1)* %out, align 4
@@ -133,7 +133,7 @@ entry:
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[3].X
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[2].W
 ; SI-CHECK-LABEL: @v2f32_arg
-; SI-CHECK: S_LOAD_DWORDX2 s{{\[[0-9]:[0-9]\]}}, s[0:1], 11
+; SI-CHECK: S_LOAD_DWORDX2 s{{\[[0-9]:[0-9]\]}}, s[0:1], 0xb
 define void @v2f32_arg(<2 x float> addrspace(1)* nocapture %out, <2 x float> %in) nounwind {
 entry:
   store <2 x float> %in, <2 x float> addrspace(1)* %out, align 4
@@ -166,7 +166,7 @@ entry:
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[3].Z
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[3].W
 ; SI-CHECK-LABEL: @v3i32_arg
-; SI-CHECK: S_LOAD_DWORDX4 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 13
+; SI-CHECK: S_LOAD_DWORDX4 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 0xd
 define void @v3i32_arg(<3 x i32> addrspace(1)* nocapture %out, <3 x i32> %in) nounwind {
 entry:
   store <3 x i32> %in, <3 x i32> addrspace(1)* %out, align 4
@@ -178,7 +178,7 @@ entry:
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[3].Z
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[3].W
 ; SI-CHECK-LABEL: @v3f32_arg
-; SI-CHECK: S_LOAD_DWORDX4 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 13
+; SI-CHECK: S_LOAD_DWORDX4 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 0xd
 define void @v3f32_arg(<3 x float> addrspace(1)* nocapture %out, <3 x float> %in) nounwind {
 entry:
   store <3 x float> %in, <3 x float> addrspace(1)* %out, align 4
@@ -223,7 +223,7 @@ entry:
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[3].W
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[4].X
 ; SI-CHECK-LABEL: @v4i32_arg
-; SI-CHECK: S_LOAD_DWORDX4 s{{\[[0-9]:[0-9]\]}}, s[0:1], 13
+; SI-CHECK: S_LOAD_DWORDX4 s{{\[[0-9]:[0-9]\]}}, s[0:1], 0xd
 define void @v4i32_arg(<4 x i32> addrspace(1)* nocapture %out, <4 x i32> %in) nounwind {
 entry:
   store <4 x i32> %in, <4 x i32> addrspace(1)* %out, align 4
@@ -236,7 +236,7 @@ entry:
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[3].W
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[4].X
 ; SI-CHECK-LABEL: @v4f32_arg
-; SI-CHECK: S_LOAD_DWORDX4 s{{\[[0-9]:[0-9]\]}}, s[0:1], 13
+; SI-CHECK: S_LOAD_DWORDX4 s{{\[[0-9]:[0-9]\]}}, s[0:1], 0xd
 define void @v4f32_arg(<4 x float> addrspace(1)* nocapture %out, <4 x float> %in) nounwind {
 entry:
   store <4 x float> %in, <4 x float> addrspace(1)* %out, align 4
@@ -300,7 +300,7 @@ entry:
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[5].W
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[6].X
 ; SI-CHECK-LABEL: @v8i32_arg
-; SI-CHECK: S_LOAD_DWORDX8 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 17
+; SI-CHECK: S_LOAD_DWORDX8 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 0x11
 define void @v8i32_arg(<8 x i32> addrspace(1)* nocapture %out, <8 x i32> %in) nounwind {
 entry:
   store <8 x i32> %in, <8 x i32> addrspace(1)* %out, align 4
@@ -317,7 +317,7 @@ entry:
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[5].W
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[6].X
 ; SI-CHECK-LABEL: @v8f32_arg
-; SI-CHECK: S_LOAD_DWORDX8 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 17
+; SI-CHECK: S_LOAD_DWORDX8 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 0x11
 define void @v8f32_arg(<8 x float> addrspace(1)* nocapture %out, <8 x float> %in) nounwind {
 entry:
   store <8 x float> %in, <8 x float> addrspace(1)* %out, align 4
@@ -422,7 +422,7 @@ entry:
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[9].W
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[10].X
 ; SI-CHECK-LABEL: @v16i32_arg
-; SI-CHECK: S_LOAD_DWORDX16 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 25
+; SI-CHECK: S_LOAD_DWORDX16 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 0x19
 define void @v16i32_arg(<16 x i32> addrspace(1)* nocapture %out, <16 x i32> %in) nounwind {
 entry:
   store <16 x i32> %in, <16 x i32> addrspace(1)* %out, align 4
@@ -447,7 +447,7 @@ entry:
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[9].W
 ; EG-CHECK-DAG: T{{[0-9]\.[XYZW]}}, KC0[10].X
 ; SI-CHECK-LABEL: @v16f32_arg
-; SI-CHECK: S_LOAD_DWORDX16 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 25
+; SI-CHECK: S_LOAD_DWORDX16 s{{\[[0-9]:[0-9]+\]}}, s[0:1], 0x19
 define void @v16f32_arg(<16 x float> addrspace(1)* nocapture %out, <16 x float> %in) nounwind {
 entry:
   store <16 x float> %in, <16 x float> addrspace(1)* %out, align 4

@@ -19,7 +19,7 @@ entry:
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV [[VAL]], KC0[0].Y
 ; SI-CHECK: @ngroups_y
-; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 1
+; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 0x1
 ; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], [[VAL]]
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @ngroups_y (i32 addrspace(1)* %out) {
@@ -33,7 +33,7 @@ entry:
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV [[VAL]], KC0[0].Z
 ; SI-CHECK: @ngroups_z
-; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 2
+; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 0x2
 ; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], [[VAL]]
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @ngroups_z (i32 addrspace(1)* %out) {
@@ -47,7 +47,7 @@ entry:
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV [[VAL]], KC0[0].W
 ; SI-CHECK: @global_size_x
-; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 3
+; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 0x3
 ; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], [[VAL]]
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @global_size_x (i32 addrspace(1)* %out) {
@@ -61,7 +61,7 @@ entry:
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV [[VAL]], KC0[1].X
 ; SI-CHECK: @global_size_y
-; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 4
+; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 0x4
 ; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], [[VAL]]
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @global_size_y (i32 addrspace(1)* %out) {
@@ -75,7 +75,7 @@ entry:
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV [[VAL]], KC0[1].Y
 ; SI-CHECK: @global_size_z
-; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 5
+; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 0x5
 ; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], [[VAL]]
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @global_size_z (i32 addrspace(1)* %out) {
@@ -89,7 +89,7 @@ entry:
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV [[VAL]], KC0[1].Z
 ; SI-CHECK: @local_size_x
-; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 6
+; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 0x6
 ; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], [[VAL]]
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @local_size_x (i32 addrspace(1)* %out) {
@@ -103,7 +103,7 @@ entry:
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV [[VAL]], KC0[1].W
 ; SI-CHECK: @local_size_y
-; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 7
+; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 0x7
 ; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], [[VAL]]
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @local_size_y (i32 addrspace(1)* %out) {
@@ -117,7 +117,7 @@ entry:
 ; R600-CHECK: MEM_RAT_CACHELESS STORE_RAW [[VAL:T[0-9]+\.X]]
 ; R600-CHECK: MOV [[VAL]], KC0[2].X
 ; SI-CHECK: @local_size_z
-; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 8
+; SI-CHECK: S_LOAD_DWORD [[VAL:s[0-9]+]], s[0:1], 0x8
 ; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], [[VAL]]
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @local_size_z (i32 addrspace(1)* %out) {

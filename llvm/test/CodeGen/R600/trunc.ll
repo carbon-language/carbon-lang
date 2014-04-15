@@ -3,7 +3,7 @@
 
 define void @trunc_i64_to_i32_store(i32 addrspace(1)* %out, i64 %in) {
 ; SI-LABEL: @trunc_i64_to_i32_store
-; SI: S_LOAD_DWORD s0, s[0:1], 11
+; SI: S_LOAD_DWORD s0, s[0:1], 0xb
 ; SI: V_MOV_B32_e32 v0, s0
 ; SI: BUFFER_STORE_DWORD v0
 

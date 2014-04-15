@@ -12,6 +12,8 @@
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
 
@@ -21,6 +23,21 @@ void AMDGPUInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
   printInstruction(MI, OS);
 
   printAnnotation(OS, Annot);
+}
+
+void AMDGPUInstPrinter::printU8ImmOperand(const MCInst *MI, unsigned OpNo,
+                                           raw_ostream &O) {
+  O << formatHex(MI->getOperand(OpNo).getImm() & 0xff);
+}
+
+void AMDGPUInstPrinter::printU16ImmOperand(const MCInst *MI, unsigned OpNo,
+                                           raw_ostream &O) {
+  O << formatHex(MI->getOperand(OpNo).getImm() & 0xffff);
+}
+
+void AMDGPUInstPrinter::printU32ImmOperand(const MCInst *MI, unsigned OpNo,
+                                           raw_ostream &O) {
+  O << formatHex(MI->getOperand(OpNo).getImm() & 0xffffffff);
 }
 
 void AMDGPUInstPrinter::printRegOperand(unsigned reg, raw_ostream &O) {
@@ -93,6 +110,28 @@ void AMDGPUInstPrinter::printRegOperand(unsigned reg, raw_ostream &O) {
   O << Type << '[' << RegIdx << ':' << (RegIdx + NumRegs - 1) << ']';
 }
 
+void AMDGPUInstPrinter::printImmediate(uint32_t Imm, raw_ostream &O) {
+  int32_t SImm = static_cast<int32_t>(Imm);
+  if (SImm >= -16 && SImm <= 64) {
+    O << SImm;
+    return;
+  }
+
+  if (Imm == FloatToBits(1.0f) ||
+      Imm == FloatToBits(-1.0f) ||
+      Imm == FloatToBits(0.5f) ||
+      Imm == FloatToBits(-0.5f) ||
+      Imm == FloatToBits(2.0f) ||
+      Imm == FloatToBits(-2.0f) ||
+      Imm == FloatToBits(4.0f) ||
+      Imm == FloatToBits(-4.0f)) {
+    O << BitsToFloat(Imm);
+    return;
+  }
+
+  O << formatHex(static_cast<uint64_t>(Imm));
+}
+
 void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
                                      raw_ostream &O) {
 
@@ -108,7 +147,7 @@ void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
       break;
     }
   } else if (Op.isImm()) {
-    O << Op.getImm();
+    printImmediate(Op.getImm(), O);
   } else if (Op.isFPImm()) {
     O << Op.getFPImm();
   } else if (Op.isExpr()) {

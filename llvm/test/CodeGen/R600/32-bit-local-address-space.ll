@@ -33,7 +33,7 @@ entry:
 
 ; CHECK-LABEL: @local_address_gep_const_offset
 ; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], s{{[0-9]+}}
-; CHECK: DS_READ_B32 v{{[0-9]+}}, [[VPTR]], 4,
+; CHECK: DS_READ_B32 v{{[0-9]+}}, [[VPTR]], 0x4,
 define void @local_address_gep_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
 entry:
   %0 = getelementptr i32 addrspace(3)* %in, i32 1
@@ -44,7 +44,7 @@ entry:
 
 ; Offset too large, can't fold into 16-bit immediate offset.
 ; CHECK-LABEL: @local_address_gep_large_const_offset
-; CHECK: S_ADD_I32 [[SPTR:s[0-9]]], s{{[0-9]+}}, 65540
+; CHECK: S_ADD_I32 [[SPTR:s[0-9]]], s{{[0-9]+}}, 0x10004
 ; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
 ; CHECK: DS_READ_B32 [[VPTR]]
 define void @local_address_gep_large_const_offset(i32 addrspace(1)* %out, i32 addrspace(3)* %in) {
@@ -119,7 +119,7 @@ define void @local_address_gep_store(i32 addrspace(3)* %out, i32, i32 %val, i32 
 ; CHECK-LABEL: @local_address_gep_const_offset_store
 ; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], s{{[0-9]+}}
 ; CHECK: V_MOV_B32_e32 [[VAL:v[0-9]+]], s{{[0-9]+}}
-; CHECK: DS_WRITE_B32 [[VPTR]], [[VAL]], 4
+; CHECK: DS_WRITE_B32 [[VPTR]], [[VAL]], 0x4
 define void @local_address_gep_const_offset_store(i32 addrspace(3)* %out, i32 %val) {
   %gep = getelementptr i32 addrspace(3)* %out, i32 1
   store i32 %val, i32 addrspace(3)* %gep, align 4
@@ -128,7 +128,7 @@ define void @local_address_gep_const_offset_store(i32 addrspace(3)* %out, i32 %v
 
 ; Offset too large, can't fold into 16-bit immediate offset.
 ; CHECK-LABEL: @local_address_gep_large_const_offset_store
-; CHECK: S_ADD_I32 [[SPTR:s[0-9]]], s{{[0-9]+}}, 65540
+; CHECK: S_ADD_I32 [[SPTR:s[0-9]]], s{{[0-9]+}}, 0x10004
 ; CHECK: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[SPTR]]
 ; CHECK: DS_WRITE_B32 [[VPTR]], v{{[0-9]+}}, 0
 define void @local_address_gep_large_const_offset_store(i32 addrspace(3)* %out, i32 %val) {

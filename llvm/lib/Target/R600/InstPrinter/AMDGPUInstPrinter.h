@@ -32,7 +32,11 @@ public:
   virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
 
 private:
+  void printU8ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printU16ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printU32ImmOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printRegOperand(unsigned RegNo, raw_ostream &O);
+  void printImmediate(uint32_t Imm, raw_ostream &O);
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   static void printInterpSlot(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printMemOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);

@@ -37,6 +37,18 @@ class AMDGPUShaderInst <dag outs, dag ins, string asm, list<dag> pattern>
 def InstFlag : OperandWithDefaultOps <i32, (ops (i32 0))>;
 def ADDRIndirect : ComplexPattern<iPTR, 2, "SelectADDRIndirect", [], []>;
 
+def u32imm : Operand<i32> {
+  let PrintMethod = "printU32ImmOperand";
+}
+
+def u16imm : Operand<i16> {
+  let PrintMethod = "printU16ImmOperand";
+}
+
+def u8imm : Operand<i8> {
+  let PrintMethod = "printU8ImmOperand";
+}
+
 //===----------------------------------------------------------------------===//
 // PatLeafs for floating-point comparisons
 //===----------------------------------------------------------------------===//

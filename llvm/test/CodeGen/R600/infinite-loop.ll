@@ -1,7 +1,7 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
 
 ; SI-LABEL: @infinite_loop:
-; SI: V_MOV_B32_e32 [[REG:v[0-9]+]], 999
+; SI: V_MOV_B32_e32 [[REG:v[0-9]+]], 0x3e7
 ; SI: BB0_1:
 ; SI: BUFFER_STORE_DWORD [[REG]]
 ; SI: S_WAITCNT vmcnt(0) expcnt(0)

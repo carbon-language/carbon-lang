@@ -119,7 +119,7 @@ for.end:
 ; R600-CHECK: *
 ; R600-CHECK: MOVA_INT
 
-; SI-CHECK: V_MOV_B32_e32 v{{[0-9]}}, 65536
+; SI-CHECK: V_MOV_B32_e32 v{{[0-9]}}, 0x10000
 ; SI-CHECK: V_MOVRELS_B32_e32
 define void @short_array(i32 addrspace(1)* %out, i32 %index) {
 entry:
@@ -142,7 +142,7 @@ entry:
 ; R600-CHECK: *
 ; R600-CHECK-NEXT: MOVA_INT
 
-; SI-CHECK: V_OR_B32_e32 v{{[0-9]}}, 256
+; SI-CHECK: V_OR_B32_e32 v{{[0-9]}}, 0x100
 ; SI-CHECK: V_MOVRELS_B32_e32
 define void @char_array(i32 addrspace(1)* %out, i32 %index) {
 entry:
