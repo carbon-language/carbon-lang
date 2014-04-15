@@ -3254,12 +3254,13 @@ bool Parser::ParseCXX11AttributeArgs(IdentifierInfo *AttrName,
       // parsing an argument list, we need to determine whether this attribute
       // was allowed to have an argument list (such as [[deprecated]]), and how
       // many arguments were parsed (so we can diagnose on [[deprecated()]]).
-      if (!NumArgs) {
-        // Diagnose an empty argument list when parenthesis are present.
+      if (Attr->getMaxArgs() && !NumArgs) {
+        // The attribute was allowed to have arguments, but none were provided
+        // even though the attribute parsed successfully. This is an error.
         // FIXME: This is a good place for a fixit which removes the parens.
         Diag(LParenLoc, diag::err_attribute_requires_arguments) << AttrName;
         return false;
-      } else if (NumArgs && !Attr->getMaxArgs()) {
+      } else if (!Attr->getMaxArgs()) {
         // The attribute parsed successfully, but was not allowed to have any
         // arguments. It doesn't matter whether any were provided -- the
         // presence of the argument list (even if empty) is diagnosed.
