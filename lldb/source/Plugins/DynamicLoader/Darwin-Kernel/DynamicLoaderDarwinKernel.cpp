@@ -1148,9 +1148,25 @@ DynamicLoaderDarwinKernel::ReadKextSummaryHeader ()
                 {
                     lldb::offset_t offset = 0;
                     m_kext_summary_header.version = data.GetU32(&offset);
+                    if (m_kext_summary_header.version > 128)
+                    {
+                        Stream *s = m_process->GetTarget().GetDebugger().GetOutputFile().get();
+                        s->Printf ("WARNING: Unable to read kext summary header, got improbable version number %u\n", m_kext_summary_header.version);
+                        // If we get an improbably large veriosn number, we're probably getting bad memory.
+                        m_kext_summary_header_addr.Clear();
+                        return false;
+                    }
                     if (m_kext_summary_header.version >= 2)
                     {
                         m_kext_summary_header.entry_size = data.GetU32(&offset);
+                        if (m_kext_summary_header.entry_size > 4096)
+                        {
+                            // If we get an improbably large entry_size, we're probably getting bad memory.
+                            Stream *s = m_process->GetTarget().GetDebugger().GetOutputFile().get();
+                            s->Printf ("WARNING: Unable to read kext summary header, got improbable entry_size %u\n", m_kext_summary_header.entry_size);
+                            m_kext_summary_header_addr.Clear();
+                            return false;
+                        }
                     }
                     else
                     {
@@ -1158,6 +1174,14 @@ DynamicLoaderDarwinKernel::ReadKextSummaryHeader ()
                         m_kext_summary_header.entry_size = KERNEL_MODULE_ENTRY_SIZE_VERSION_1;
                     }
                     m_kext_summary_header.entry_count = data.GetU32(&offset);
+                    if (m_kext_summary_header.entry_count > 10000)
+                    {
+                        // If we get an improbably large number of kexts, we're probably getting bad memory.
+                        Stream *s = m_process->GetTarget().GetDebugger().GetOutputFile().get();
+                        s->Printf ("WARNING: Unable to read kext summary header, got improbable number of kexts %u\n", m_kext_summary_header.entry_count);
+                        m_kext_summary_header_addr.Clear();
+                        return false;
+                    }
                     return true;
                 }
             }
