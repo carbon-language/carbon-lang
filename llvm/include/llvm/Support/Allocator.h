@@ -78,29 +78,16 @@ public:
   // The rest of these methods are helpers that redirect to one of the above
   // core methods.
 
-  /// \brief Allocate space for one object without constructing it.
-  template <typename T> T *Allocate() {
-    return static_cast<T *>(Allocate(sizeof(T), AlignOf<T>::Alignment));
-  }
-
-  /// \brief Allocate space for an array of objects without constructing them.
-  template <typename T> T *Allocate(size_t Num) {
+  /// \brief Allocate space for a sequence of objects without constructing them.
+  template <typename T> T *Allocate(size_t Num = 1) {
     return static_cast<T *>(Allocate(Num * sizeof(T), AlignOf<T>::Alignment));
   }
 
-  /// \brief Deallocate space for one object without destroying it.
+  /// \brief Deallocate space for a sequence of objects without constructing them.
   template <typename T>
   typename std::enable_if<
       !std::is_same<typename std::remove_cv<T>::type, void>::value, void>::type
-  Deallocate(T *Ptr) {
-    Deallocate(static_cast<const void *>(Ptr), sizeof(T));
-  }
-
-  /// \brief Allocate space for an array of objects without constructing them.
-  template <typename T>
-  typename std::enable_if<
-      !std::is_same<typename std::remove_cv<T>::type, void>::value, void>::type
-  Deallocate(T *Ptr, size_t Num) {
+  Deallocate(T *Ptr, size_t Num = 1) {
     Deallocate(static_cast<const void *>(Ptr), Num * sizeof(T));
   }
 };
