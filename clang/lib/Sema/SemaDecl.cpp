@@ -8623,7 +8623,7 @@ void Sema::ActOnInitializerError(Decl *D) {
     return;
   }
 
-  // Require an abstract type.
+  // Require a non-abstract type.
   if (RequireNonAbstractType(VD->getLocation(), Ty,
                              diag::err_abstract_type_in_decl,
                              AbstractVariableType)) {
