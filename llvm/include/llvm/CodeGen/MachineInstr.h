@@ -318,6 +318,22 @@ public:
     return iterator_range<const_mop_iterator>(explicit_operands().end(),
                                               operands_end());
   }
+  iterator_range<mop_iterator> defs() {
+    return iterator_range<mop_iterator>(
+        operands_begin(), operands_begin() + getDesc().getNumDefs());
+  }
+  iterator_range<const_mop_iterator> defs() const {
+    return iterator_range<const_mop_iterator>(
+        operands_begin(), operands_begin() + getDesc().getNumDefs());
+  }
+  iterator_range<mop_iterator> uses() {
+    return iterator_range<mop_iterator>(
+        operands_begin() + getDesc().getNumDefs(), operands_end());
+  }
+  iterator_range<const_mop_iterator> uses() const {
+    return iterator_range<const_mop_iterator>(
+        operands_begin() + getDesc().getNumDefs(), operands_end());
+  }
 
   /// Access to memory operands of the instruction
   mmo_iterator memoperands_begin() const { return MemRefs; }
