@@ -343,6 +343,12 @@ protected:
 
   unsigned createResultReg(const TargetRegisterClass *RC);
 
+  /// Try to constrain Op so that it is usable by argument OpNum of the provided
+  /// MCInstrDesc. If this fails, create a new virtual register in the correct
+  /// class and COPY the value there.
+  unsigned constrainOperandRegClass(const MCInstrDesc &II, unsigned Op,
+                                    unsigned OpNum);
+
   /// Emit a constant in a register using target-specific logic, such as
   /// constant pool loads.
   virtual unsigned TargetMaterializeConstant(const Constant* C) {
