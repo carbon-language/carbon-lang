@@ -32,10 +32,10 @@ public:
   virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
 
 private:
-  static void printRegOperand(unsigned RegNo, raw_ostream &O);
-  static void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printRegOperand(unsigned RegNo, raw_ostream &O);
+  void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   static void printInterpSlot(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  static void printMemOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printMemOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   static void printIfSet(const MCInst *MI, unsigned OpNo, raw_ostream &O,
                          StringRef Asm, StringRef Default = "");
   static void printAbs(const MCInst *MI, unsigned OpNo, raw_ostream &O);
