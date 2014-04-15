@@ -3555,27 +3555,6 @@ SDNode *DAGCombiner::MatchRotatePosNeg(SDValue Shifted, SDValue Pos,
                        HasPos ? Pos : Neg).getNode();
   }
 
-  // fold (or (shl (*ext x), (*ext y)),
-  //          (srl (*ext x), (*ext (sub 32, y)))) ->
-  //   (*ext (rotl x, y)) or (*ext (rotr x, (sub 32, y)))
-  //
-  // fold (or (shl (*ext x), (*ext (sub 32, y))),
-  //          (srl (*ext x), (*ext y))) ->
-  //   (*ext (rotr x, y)) or (*ext (rotl x, (sub 32, y)))
-  if (Shifted.getOpcode() == ISD::ZERO_EXTEND ||
-      Shifted.getOpcode() == ISD::ANY_EXTEND) {
-    SDValue InnerShifted = Shifted.getOperand(0);
-    EVT InnerVT = InnerShifted.getValueType();
-    bool HasPosInner = TLI.isOperationLegalOrCustom(PosOpcode, InnerVT);
-    if (HasPosInner || TLI.isOperationLegalOrCustom(NegOpcode, InnerVT)) {
-      if (matchRotateSub(InnerPos, InnerNeg, InnerVT.getSizeInBits())) {
-        SDValue V = DAG.getNode(HasPosInner ? PosOpcode : NegOpcode, DL,
-                                InnerVT, InnerShifted, HasPosInner ? Pos : Neg);
-        return DAG.getNode(Shifted.getOpcode(), DL, VT, V).getNode();
-      }
-    }
-  }
-
   return nullptr;
 }
 
