@@ -35,7 +35,7 @@ def warn_unsigned_abs : Warning<
   "taking the absolute value of unsigned type %0 has no effect">,
   InGroup<AbsoluteValue>;
 def note_remove_abs : Note<
-  "remove the call to %0 since unsigned values cannot be negative">;
+  "remove the call to '%0' since unsigned values cannot be negative">;
 def warn_abs_too_small : Warning<
   "absolute value function %0 given an argument of type %1 but has parameter "
   "of type %2 which may cause truncation of value">, InGroup<AbsoluteValue>;
