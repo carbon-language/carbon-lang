@@ -198,8 +198,10 @@ public:
   template<typename AllocatorTy>
   void Destroy(AllocatorTy &Allocator) {
     // Free memory referenced by the item.
+    unsigned AllocSize =
+        static_cast<unsigned>(sizeof(StringMapEntry)) + getKeyLength() + 1;
     this->~StringMapEntry();
-    Allocator.Deallocate(this);
+    Allocator.Deallocate(static_cast<void *>(this), AllocSize);
   }
 
   /// Destroy this object, releasing memory back to the malloc allocator.

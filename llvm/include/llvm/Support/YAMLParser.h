@@ -150,8 +150,8 @@ public:
     return Alloc.Allocate(Size, Alignment);
   }
 
-  void operator delete(void *Ptr, BumpPtrAllocator &Alloc, size_t) throw() {
-    Alloc.Deallocate(Ptr);
+  void operator delete(void *Ptr, BumpPtrAllocator &Alloc, size_t Size) throw() {
+    Alloc.Deallocate(Ptr, Size);
   }
 
 protected:

@@ -63,16 +63,16 @@ public:
 
   /// \brief Deallocate \a Ptr to \a Size bytes of memory allocated by this
   /// allocator.
-  void Deallocate(const void *Ptr) {
+  void Deallocate(const void *Ptr, size_t Size) {
 #ifdef __clang__
-    static_assert(static_cast<void (AllocatorBase::*)(const void *)>(
+    static_assert(static_cast<void (AllocatorBase::*)(const void *, size_t)>(
                       &AllocatorBase::Deallocate) !=
-                      static_cast<void (DerivedT::*)(const void *)>(
+                      static_cast<void (DerivedT::*)(const void *, size_t)>(
                           &DerivedT::Deallocate),
                   "Class derives from AllocatorBase without implementing the "
                   "core Deallocate(void *) overload!");
 #endif
-    return static_cast<DerivedT *>(this)->Deallocate(Ptr);
+    return static_cast<DerivedT *>(this)->Deallocate(Ptr, Size);
   }
 
   // The rest of these methods are helpers that redirect to one of the above
@@ -101,15 +101,15 @@ public:
   typename std::enable_if<
       !std::is_same<typename std::remove_cv<T>::type, void>::value, void>::type
   Deallocate(T *Ptr) {
-    Deallocate(static_cast<const void *>(Ptr));
+    Deallocate(static_cast<const void *>(Ptr), sizeof(T));
   }
 
   /// \brief Allocate space for an array of objects without constructing them.
   template <typename T>
   typename std::enable_if<
       !std::is_same<typename std::remove_cv<T>::type, void>::value, void>::type
-  Deallocate(T *Ptr, size_t /*Num*/) {
-    Deallocate(static_cast<const void *>(Ptr));
+  Deallocate(T *Ptr, size_t Num) {
+    Deallocate(static_cast<const void *>(Ptr), Num * sizeof(T));
   }
 };
 
@@ -125,7 +125,9 @@ public:
   // Pull in base class overloads.
   using AllocatorBase<MallocAllocator>::Allocate;
 
-  void Deallocate(const void *Ptr) { free(const_cast<void *>(Ptr)); }
+  void Deallocate(const void *Ptr, size_t /*Size*/) {
+    free(const_cast<void *>(Ptr));
+  }
 
   // Pull in base class overloads.
   using AllocatorBase<MallocAllocator>::Deallocate;
@@ -143,7 +145,7 @@ class MallocSlabAllocator {
 
 public:
   void *Allocate(size_t Size) { return Allocator.Allocate(Size, 0); }
-  void Deallocate(void *Slab, size_t Size) { Allocator.Deallocate(Slab); }
+  void Deallocate(void *Slab, size_t Size) { Allocator.Deallocate(Slab, Size); }
 };
 
 namespace detail {
@@ -260,7 +262,7 @@ public:
   // Pull in base class overloads.
   using AllocatorBase<BumpPtrAllocatorImpl>::Allocate;
 
-  void Deallocate(const void * /*Ptr*/) {}
+  void Deallocate(const void * /*Ptr*/, size_t /*Size*/) {}
 
   // Pull in base class overloads.
   using AllocatorBase<BumpPtrAllocatorImpl>::Deallocate;
