@@ -5070,7 +5070,7 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
                     GetObjectFile()->GetModule()->LogMessage (log,"FindByNameAndTagAndQualifiedNameHash()");
                 m_apple_types_ap->FindByNameAndTagAndQualifiedNameHash (type_name.GetCString(), die->Tag(), qualified_name_hash, die_offsets);
             }
-            else if (has_tag > 1)
+            else if (has_tag)
             {
                 if (log)
                     GetObjectFile()->GetModule()->LogMessage (log,"FindByNameAndTag()");
