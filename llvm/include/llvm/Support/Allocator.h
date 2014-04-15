@@ -98,13 +98,16 @@ public:
 
   /// \brief Deallocate space for one object without destroying it.
   template <typename T>
-  typename std::enable_if<sizeof(T) != 0, void>::type Deallocate(T *Ptr) {
+  typename std::enable_if<
+      std::is_same<typename std::remove_cv<T>::type, void>::value, void>::type
+  Deallocate(T *Ptr) {
     Deallocate(static_cast<const void *>(Ptr));
   }
 
   /// \brief Allocate space for an array of objects without constructing them.
   template <typename T>
-  typename std::enable_if<sizeof(T) != 0, void>::type
+  typename std::enable_if<
+      std::is_same<typename std::remove_cv<T>::type, void>::value, void>::type
   Deallocate(T *Ptr, size_t /*Num*/) {
     Deallocate(static_cast<const void *>(Ptr));
   }
