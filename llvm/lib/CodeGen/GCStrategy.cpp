@@ -101,13 +101,6 @@ GCStrategy::GCStrategy() :
   UsesMetadata(false)
 {}
 
-GCStrategy::~GCStrategy() {
-  for (iterator I = begin(), E = end(); I != E; ++I)
-    delete *I;
-
-  Functions.clear();
-}
-
 bool GCStrategy::initializeCustomLowering(Module &M) { return false; }
 
 bool GCStrategy::performCustomLowering(Function &F) {
@@ -123,9 +116,8 @@ bool GCStrategy::findCustomSafePoints(GCFunctionInfo& FI, MachineFunction &F) {
 
 
 GCFunctionInfo *GCStrategy::insertFunctionInfo(const Function &F) {
-  GCFunctionInfo *FI = new GCFunctionInfo(F, *this);
-  Functions.push_back(FI);
-  return FI;
+  Functions.push_back(make_unique<GCFunctionInfo>(F, *this));
+  return Functions.back().get();
 }
 
 // -----------------------------------------------------------------------------

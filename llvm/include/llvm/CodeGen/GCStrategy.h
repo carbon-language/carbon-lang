@@ -54,7 +54,7 @@ namespace llvm {
   /// be abstractly described.
   class GCStrategy {
   public:
-    typedef std::vector<GCFunctionInfo*> list_type;
+    typedef std::vector<std::unique_ptr<GCFunctionInfo>> list_type;
     typedef list_type::iterator iterator;
     
   private:
@@ -77,7 +77,7 @@ namespace llvm {
   public:
     GCStrategy();
     
-    virtual ~GCStrategy();
+    virtual ~GCStrategy() {}
     
     
     /// getName - The name of the GC strategy, for debugging.
