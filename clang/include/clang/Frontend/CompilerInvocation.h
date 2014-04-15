@@ -204,6 +204,14 @@ public:
   /// @}
 };
 
+namespace vfs {
+  class FileSystem;
+}
+
+IntrusiveRefCntPtr<vfs::FileSystem>
+createVFSFromCompilerInvocation(const CompilerInvocation &CI,
+                                DiagnosticsEngine &Diags);
+
 } // end namespace clang
 
 #endif

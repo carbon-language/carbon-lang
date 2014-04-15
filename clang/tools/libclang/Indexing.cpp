@@ -610,6 +610,11 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   ASTUnit *Unit = ASTUnit::create(CInvok.getPtr(), Diags,
                                   CaptureDiagnostics,
                                   /*UserFilesAreVolatile=*/true);
+  if (!Unit) {
+    ITUI->result = CXError_InvalidArguments;
+    return;
+  }
+
   std::unique_ptr<CXTUOwner> CXTU(
       new CXTUOwner(MakeCXTranslationUnit(CXXIdx, Unit)));
 

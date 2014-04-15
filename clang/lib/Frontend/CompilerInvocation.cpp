@@ -8,12 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/CompilerInvocation.h"
-#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Version.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/Util.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/LangStandard.h"
 #include "clang/Frontend/Utils.h"
 #include "clang/Lex/HeaderSearchOptions.h"
@@ -1907,4 +1907,31 @@ void BuryPointer(const void *Ptr) {
     return;
   GraveYard[Idx] = Ptr;
 }
+
+IntrusiveRefCntPtr<vfs::FileSystem>
+createVFSFromCompilerInvocation(const CompilerInvocation &CI,
+                                DiagnosticsEngine &Diags) {
+  if (CI.getHeaderSearchOpts().VFSOverlayFiles.empty())
+    return vfs::getRealFileSystem();
+
+  IntrusiveRefCntPtr<vfs::OverlayFileSystem>
+    Overlay(new vfs::OverlayFileSystem(vfs::getRealFileSystem()));
+  // earlier vfs files are on the bottom
+  for (const std::string &File : CI.getHeaderSearchOpts().VFSOverlayFiles) {
+    std::unique_ptr<llvm::MemoryBuffer> Buffer;
+    if (llvm::errc::success != llvm::MemoryBuffer::getFile(File, Buffer)) {
+      Diags.Report(diag::err_missing_vfs_overlay_file) << File;
+      return IntrusiveRefCntPtr<vfs::FileSystem>();
+    }
+
+    IntrusiveRefCntPtr<vfs::FileSystem> FS =
+        vfs::getVFSFromYAML(Buffer.release(), /*DiagHandler*/0);
+    if (!FS.getPtr()) {
+      Diags.Report(diag::err_invalid_vfs_overlay) << File;
+      return IntrusiveRefCntPtr<vfs::FileSystem>();
+    }
+    Overlay->pushOverlay(FS);
+  }
+  return Overlay;
 }
+} // end namespace clang

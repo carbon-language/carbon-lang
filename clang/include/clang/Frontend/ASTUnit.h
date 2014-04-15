@@ -499,7 +499,7 @@ public:
   bool hasSema() const { return (bool)TheSema; }
   Sema &getSema() const { 
     assert(TheSema && "ASTUnit does not have a Sema object!");
-    return *TheSema; 
+    return *TheSema;
   }
   
   const FileManager &getFileManager() const { return *FileMgr; }

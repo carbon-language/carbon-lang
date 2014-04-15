@@ -249,7 +249,7 @@ namespace {
 /// AllocatedCXCodeCompleteResults outlives the CXTranslationUnit, so we can
 /// not rely on the StringPool in the TU.
 struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
-  AllocatedCXCodeCompleteResults(const FileSystemOptions& FileSystemOpts);
+  AllocatedCXCodeCompleteResults(IntrusiveRefCntPtr<FileManager> FileMgr);
   ~AllocatedCXCodeCompleteResults();
   
   /// \brief Diagnostics produced while performing code completion.
@@ -262,8 +262,6 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   
   /// \brief Language options used to adjust source locations.
   LangOptions LangOpts;
-
-  FileSystemOptions FileSystemOpts;
 
   /// \brief File manager, used for diagnostics.
   IntrusiveRefCntPtr<FileManager> FileMgr;
@@ -318,20 +316,15 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
 static std::atomic<unsigned> CodeCompletionResultObjects;
   
 AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
-                                      const FileSystemOptions& FileSystemOpts)
-  : CXCodeCompleteResults(),
-    DiagOpts(new DiagnosticOptions),
-    Diag(new DiagnosticsEngine(
-                   IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
-                   &*DiagOpts)),
-    FileSystemOpts(FileSystemOpts),
-    FileMgr(new FileManager(FileSystemOpts)),
-    SourceMgr(new SourceManager(*Diag, *FileMgr)),
-    CodeCompletionAllocator(new clang::GlobalCodeCompletionAllocator),
-    Contexts(CXCompletionContext_Unknown),
-    ContainerKind(CXCursor_InvalidCode),
-    ContainerIsIncomplete(1)
-{ 
+    IntrusiveRefCntPtr<FileManager> FileMgr)
+    : CXCodeCompleteResults(),
+      DiagOpts(new DiagnosticOptions),
+      Diag(new DiagnosticsEngine(
+          IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts)),
+      FileMgr(FileMgr), SourceMgr(new SourceManager(*Diag, *FileMgr)),
+      CodeCompletionAllocator(new clang::GlobalCodeCompletionAllocator),
+      Contexts(CXCompletionContext_Unknown),
+      ContainerKind(CXCursor_InvalidCode), ContainerIsIncomplete(1) {
   if (getenv("LIBCLANG_OBJTRACKING"))
     fprintf(stderr, "+++ %u completion results\n",
             ++CodeCompletionResultObjects);
@@ -709,8 +702,8 @@ void clang_codeCompleteAt_Impl(void *UserData) {
   }
 
   // Parse the resulting source file to find code-completion results.
-  AllocatedCXCodeCompleteResults *Results = 
-        new AllocatedCXCodeCompleteResults(AST->getFileSystemOpts());
+  AllocatedCXCodeCompleteResults *Results = new AllocatedCXCodeCompleteResults(
+      &AST->getFileManager());
   Results->Results = 0;
   Results->NumResults = 0;
   
