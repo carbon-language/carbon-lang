@@ -1322,7 +1322,9 @@ CharUnits ASTContext::getDeclAlign(const Decl *D, bool ForAlignof) const {
             Align = std::max(Align, Target->getLargeArrayAlign());
         }
 
-        // Walk through any array types while we're at it.
+        // Keep track of extra alignment requirements on the array itself, then
+        // work with the element type.
+        Align = std::max(Align, getPreferredTypeAlign(T.getTypePtr()));
         T = getBaseElementType(arrayType);
       }
       Align = std::max(Align, getPreferredTypeAlign(T.getTypePtr()));
