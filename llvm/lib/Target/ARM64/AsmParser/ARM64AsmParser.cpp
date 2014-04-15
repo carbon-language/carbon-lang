@@ -2023,8 +2023,10 @@ ARM64AsmParser::tryParsePrefetch(OperandVector &Operands) {
   SMLoc S = getLoc();
   const AsmToken &Tok = Parser.getTok();
   // Either an identifier for named values or a 5-bit immediate.
-  if (Tok.is(AsmToken::Hash)) {
-    Parser.Lex(); // Eat hash token.
+  bool Hash = Tok.is(AsmToken::Hash);
+  if (Hash || Tok.is(AsmToken::Integer)) {
+    if (Hash)
+      Parser.Lex(); // Eat hash token.
     const MCExpr *ImmVal;
     if (getParser().parseExpression(ImmVal))
       return MatchOperand_ParseFail;
@@ -2135,9 +2137,11 @@ ARM64AsmParser::OperandMatchResultTy
 ARM64AsmParser::tryParseFPImm(OperandVector &Operands) {
   SMLoc S = getLoc();
 
-  if (Parser.getTok().isNot(AsmToken::Hash))
-    return MatchOperand_NoMatch;
-  Parser.Lex(); // Eat the '#'.
+  bool Hash = false;
+  if (Parser.getTok().is(AsmToken::Hash)) {
+    Parser.Lex(); // Eat '#'
+    Hash = true;
+  }
 
   // Handle negation, as that still comes through as a separate token.
   bool isNegative = false;
@@ -2182,6 +2186,9 @@ ARM64AsmParser::tryParseFPImm(OperandVector &Operands) {
     Operands.push_back(ARM64Operand::CreateFPImm(Val, S, getContext()));
     return MatchOperand_Success;
   }
+
+  if (!Hash)
+    return MatchOperand_NoMatch;
 
   TokError("invalid floating point immediate");
   return MatchOperand_ParseFail;
@@ -2257,9 +2264,12 @@ bool ARM64AsmParser::parseOptionalShift(OperandVector &Operands) {
   Parser.Lex();
 
   // We expect a number here.
-  if (getLexer().isNot(AsmToken::Hash))
+  bool Hash = getLexer().is(AsmToken::Hash);
+  if (!Hash && getLexer().isNot(AsmToken::Integer))
     return TokError("immediate value expected for shifter operand");
-  Parser.Lex(); // Eat the '#'.
+
+  if (Hash)
+    Parser.Lex(); // Eat the '#'.
 
   SMLoc ExprLoc = getLoc();
   const MCExpr *ImmVal;
@@ -2318,14 +2328,16 @@ bool ARM64AsmParser::parseOptionalExtend(OperandVector &Operands) {
     return false;
   }
 
-  if (getLexer().isNot(AsmToken::Hash)) {
+  bool Hash = getLexer().is(AsmToken::Hash);
+  if (!Hash && getLexer().isNot(AsmToken::Integer)) {
     SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
     Operands.push_back(
         ARM64Operand::CreateExtend(ExtOp, 0, S, E, getContext()));
     return false;
   }
 
-  Parser.Lex(); // Eat the '#'.
+  if (Hash)
+    Parser.Lex(); // Eat the '#'.
 
   const MCExpr *ImmVal;
   if (getParser().parseExpression(ImmVal))
@@ -2593,9 +2605,11 @@ ARM64AsmParser::tryParseBarrierOperand(OperandVector &Operands) {
   const AsmToken &Tok = Parser.getTok();
 
   // Can be either a #imm style literal or an option name
-  if (Tok.is(AsmToken::Hash)) {
+  bool Hash = Tok.is(AsmToken::Hash);
+  if (Hash || Tok.is(AsmToken::Integer)) {
     // Immediate operand.
-    Parser.Lex(); // Eat the '#'
+    if (Hash)
+      Parser.Lex(); // Eat the '#'
     const MCExpr *ImmVal;
     SMLoc ExprLoc = getLoc();
     if (getParser().parseExpression(ImmVal))
@@ -2830,13 +2844,15 @@ bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
 
         Parser.Lex(); // Eat the extend op.
 
+        bool Hash = getLexer().is(AsmToken::Hash);
         if (getLexer().is(AsmToken::RBrac)) {
           // No immediate operand.
           if (ExtOp == ARM64_AM::UXTX)
             return Error(ExtLoc, "LSL extend requires immediate operand");
-        } else if (getLexer().is(AsmToken::Hash)) {
+        } else if (Hash || getLexer().is(AsmToken::Integer)) {
           // Immediate operand.
-          Parser.Lex(); // Eat the '#'
+          if (Hash)
+            Parser.Lex(); // Eat the '#'
           const MCExpr *ImmVal;
           SMLoc ExprLoc = getLoc();
           if (getParser().parseExpression(ImmVal))
@@ -2864,8 +2880,10 @@ bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
       return false;
 
       // Immediate expressions.
-    } else if (Parser.getTok().is(AsmToken::Hash)) {
-      Parser.Lex(); // Eat hash token.
+    } else if (Parser.getTok().is(AsmToken::Hash) ||
+               Parser.getTok().is(AsmToken::Integer)) {
+      if (Parser.getTok().is(AsmToken::Hash))
+        Parser.Lex(); // Eat hash token.
 
       if (parseSymbolicImmVal(OffsetExpr))
         return true;
@@ -3159,10 +3177,13 @@ bool ARM64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
     Operands.push_back(ARM64Operand::CreateImm(IdVal, S, E, getContext()));
     return false;
   }
+  case AsmToken::Integer:
+  case AsmToken::Real:
   case AsmToken::Hash: {
     // #42 -> immediate.
     S = getLoc();
-    Parser.Lex();
+    if (getLexer().is(AsmToken::Hash))
+      Parser.Lex();
 
     // The only Real that should come through here is a literal #0.0 for
     // the fcmp[e] r, #0.0 instructions. They expect raw token operands,
