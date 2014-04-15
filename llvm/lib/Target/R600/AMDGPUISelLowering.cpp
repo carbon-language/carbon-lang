@@ -776,6 +776,20 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getNode(ISD::getExtForLoadExtType(ExtType), DL, VT, ExtLoad32);
   }
 
+  if (ExtType == ISD::NON_EXTLOAD && VT.getSizeInBits() < 32) {
+    assert(VT == MVT::i1 && "Only i1 non-extloads expected");
+    // FIXME: Copied from PPC
+    // First, load into 32 bits, then truncate to 1 bit.
+
+    SDValue Chain = Load->getChain();
+    SDValue BasePtr = Load->getBasePtr();
+    MachineMemOperand *MMO = Load->getMemOperand();
+
+    SDValue NewLD = DAG.getExtLoad(ISD::EXTLOAD, DL, MVT::i32, Chain,
+                                   BasePtr, MVT::i8, MMO);
+    return DAG.getNode(ISD::TRUNCATE, DL, VT, NewLD);
+  }
+
   // Lower loads constant address space global variable loads
   if (Load->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS &&
       isa<GlobalVariable>(
