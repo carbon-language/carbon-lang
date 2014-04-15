@@ -1336,6 +1336,9 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
   case llvm::Triple::aarch64_be:
     return getAArch64TargetCPU(Args, T);
 
+  case llvm::Triple::arm64:
+    return getARM64TargetCPU(Args);
+
   case llvm::Triple::arm:
   case llvm::Triple::armeb:
   case llvm::Triple::thumb:
