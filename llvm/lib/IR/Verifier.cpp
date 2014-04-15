@@ -2377,16 +2377,23 @@ void DebugInfoVerifier::verifyDebugInfo() {
   processInstructions(Finder);
 
   // Verify Debug Info.
-  for (DICompileUnit CU : Finder.compile_units())
+  //
+  // NOTE:  The loud braces are necessary for MSVC compatibility.
+  for (DICompileUnit CU : Finder.compile_units()) {
     Assert1(CU.Verify(), "DICompileUnit does not Verify!", CU);
-  for (DISubprogram S : Finder.subprograms())
+  }
+  for (DISubprogram S : Finder.subprograms()) {
     Assert1(S.Verify(), "DISubprogram does not Verify!", S);
-  for (DIGlobalVariable GV : Finder.global_variables())
+  }
+  for (DIGlobalVariable GV : Finder.global_variables()) {
     Assert1(GV.Verify(), "DIGlobalVariable does not Verify!", GV);
-  for (DIType T : Finder.types())
+  }
+  for (DIType T : Finder.types()) {
     Assert1(T.Verify(), "DIType does not Verify!", T);
-  for (DIScope S : Finder.scopes())
+  }
+  for (DIScope S : Finder.scopes()) {
     Assert1(S.Verify(), "DIScope does not Verify!", S);
+  }
 }
 
 void DebugInfoVerifier::processInstructions(DebugInfoFinder &Finder) {
