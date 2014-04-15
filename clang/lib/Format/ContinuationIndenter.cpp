@@ -961,6 +961,12 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
         break;
       }
 
+      // When breaking before a tab character, it may be moved by a few columns,
+      // but will still be expanded to the next tab stop, so we don't save any
+      // columns.
+      if (NewRemainingTokenColumns == RemainingTokenColumns)
+        break;
+
       assert(NewRemainingTokenColumns < RemainingTokenColumns);
       if (!DryRun)
         Token->insertBreak(LineIndex, TailOffset, Split, Whitespaces);

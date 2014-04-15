@@ -6366,7 +6366,7 @@ TEST_F(FormatTest, ReformatRegionAdjustsIndent) {
                    67, 0, getLLVMStyle()));
 }
 
-TEST_F(FormatTest, BreakStringLiterals) {
+TEST_F(FormatTest, BreaksStringLiterals) {
   EXPECT_EQ("\"some text \"\n"
             "\"other\";",
             format("\"some text other\";", getLLVMStyleWithColumns(12)));
@@ -6524,6 +6524,16 @@ TEST_F(FormatTest, BreakStringLiterals) {
       "  \"text \" \\\n"
       "  \"other\";",
       format("#define A \"some text other\";", AlignLeft));
+}
+
+TEST_F(FormatTest, BreaksStringLiteralsWithTabs) {
+  EXPECT_EQ(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      "(\n"
+      "    \"x\t\");",
+      format("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+             "aaaaaaa("
+             "\"x\t\");"));
 }
 
 TEST_F(FormatTest, BreaksWideAndNSStringLiterals) {
