@@ -436,12 +436,8 @@ SourceManager::getOrCreateContentCache(const FileEntry *FileEnt,
   ContentCache *&Entry = FileInfos[FileEnt];
   if (Entry) return Entry;
 
-  // Nope, create a new Cache entry.  Make sure it is at least 8-byte aligned
-  // so that FileInfo can use the low 3 bits of the pointer for its own
-  // nefarious purposes.
-  unsigned EntryAlign = llvm::AlignOf<ContentCache>::Alignment;
-  EntryAlign = std::max(8U, EntryAlign);
-  Entry = ContentCacheAlloc.Allocate<ContentCache>(1, EntryAlign);
+  // Nope, create a new Cache entry.
+  Entry = ContentCacheAlloc.Allocate<ContentCache>();
 
   if (OverriddenFilesInfo) {
     // If the file contents are overridden with contents from another file,
@@ -468,12 +464,8 @@ SourceManager::getOrCreateContentCache(const FileEntry *FileEnt,
 ///  memory buffer.  This does no caching.
 const ContentCache*
 SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
-  // Add a new ContentCache to the MemBufferInfos list and return it.  Make sure
-  // it is at least 8-byte aligned so that FileInfo can use the low 3 bits of
-  // the pointer for its own nefarious purposes.
-  unsigned EntryAlign = llvm::AlignOf<ContentCache>::Alignment;
-  EntryAlign = std::max(8U, EntryAlign);
-  ContentCache *Entry = ContentCacheAlloc.Allocate<ContentCache>(1, EntryAlign);
+  // Add a new ContentCache to the MemBufferInfos list and return it.
+  ContentCache *Entry = ContentCacheAlloc.Allocate<ContentCache>();
   new (Entry) ContentCache();
   MemBufferInfos.push_back(Entry);
   Entry->setBuffer(Buffer);

@@ -44,6 +44,7 @@
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -88,6 +89,15 @@ namespace SrcMgr {
       /// \brief Whether the buffer should not be freed on destruction.
       DoNotFreeFlag = 0x02
     };
+
+    // Note that the first member of this class is an aligned character buffer
+    // to ensure that this class has an alignment of 8 bytes. This wastes
+    // 8 bytes for every ContentCache object, but each of these corresponds to
+    // a file loaded into memory, so the 8 bytes doesn't seem terribly
+    // important. It is quite awkward to fit this aligner into any other part
+    // of the class due to the lack of portable ways to combine it with other
+    // members.
+    llvm::AlignedCharArray<8, 1> NonceAligner LLVM_ATTRIBUTE_UNUSED;
 
     /// \brief The actual buffer containing the characters from the input
     /// file.
@@ -223,6 +233,11 @@ namespace SrcMgr {
     // Disable assignments.
     ContentCache &operator=(const ContentCache& RHS) LLVM_DELETED_FUNCTION;
   };
+
+  // Assert that the \c ContentCache objects will always be 8-byte aligned so
+  // that we can pack 3 bits of integer into pointers to such objects.
+  static_assert(llvm::AlignOf<ContentCache>::Alignment >= 8,
+                "ContentCache must be 8-byte aligned.");
 
   /// \brief Information about a FileID, basically just the logical file
   /// that it represents and include stack information.
