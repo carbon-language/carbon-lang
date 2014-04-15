@@ -826,14 +826,20 @@ FastISel::SelectInstruction(const Instruction *I) {
 
   MachineBasicBlock::iterator SavedInsertPt = FuncInfo.InsertPt;
 
-  // As a special case, don't handle calls to builtin library functions that
-  // may be translated directly to target instructions.
   if (const CallInst *Call = dyn_cast<CallInst>(I)) {
     const Function *F = Call->getCalledFunction();
     LibFunc::Func Func;
+
+    // As a special case, don't handle calls to builtin library functions that
+    // may be translated directly to target instructions.
     if (F && !F->hasLocalLinkage() && F->hasName() &&
         LibInfo->getLibFunc(F->getName(), Func) &&
         LibInfo->hasOptimizedCodeGen(Func))
+      return false;
+
+    // Don't handle Intrinsic::trap if a trap funciton is specified.
+    if (F && F->getIntrinsicID() == Intrinsic::trap &&
+        !TM.Options.getTrapFunctionName().empty())
       return false;
   }
 
