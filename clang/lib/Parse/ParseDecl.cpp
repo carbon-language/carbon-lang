@@ -517,7 +517,7 @@ bool Parser::ParseMicrosoftDeclSpecArgs(IdentifierInfo *AttrName,
   // arguments but none were provided, emit a diagnostic.
   const AttributeList *Attr = Attrs.getList();
   if (Attr && Attr->getMaxArgs() && !NumArgs) {
-    Diag(OpenParenLoc, diag::err_attribute_requires_arguements) << AttrName;
+    Diag(OpenParenLoc, diag::err_attribute_requires_arguments) << AttrName;
     return false;
   }
   return true;

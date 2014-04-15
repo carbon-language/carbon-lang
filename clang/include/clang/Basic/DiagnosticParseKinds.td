@@ -527,8 +527,8 @@ def warn_cxx98_compat_attribute : Warning<
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_cxx11_attribute_forbids_arguments : Error<
   "attribute %0 cannot have an argument list">;
-def err_attribute_requires_arguements : Error<
-  "attribute %0 requires a nonempty argument list">;
+def err_attribute_requires_arguments : Error<
+  "parentheses must be omitted if %0 attribute's argument list is empty">;
 def err_cxx11_attribute_forbids_ellipsis : Error<
   "attribute '%0' cannot be used as an attribute pack">;
 def err_cxx11_attribute_repeated : Error<

@@ -104,7 +104,7 @@ struct __declspec("testing") S3 {}; /* expected-warning {{__declspec attribute '
 
 /* declspecs with arguments cannot have an empty argument list, even if the
    arguments are optional. */
-__declspec(deprecated()) void dep_func_test(void); /* expected-error {{attribute 'deprecated' requires a nonempty argument list}} */
+__declspec(deprecated()) void dep_func_test(void); /* expected-error {{parentheses must be omitted if 'deprecated' attribute's argument list is empty}} */
 __declspec(deprecated) void dep_func_test2(void);
 __declspec(deprecated("")) void dep_func_test3(void);
 

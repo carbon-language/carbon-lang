@@ -326,6 +326,6 @@ namespace GccASan {
 namespace {
   [[deprecated]] void bar();
   [[deprecated("hello")]] void baz();
-  [[deprecated()]] void foo(); // expected-error {{attribute 'deprecated' requires a nonempty argument list}}
+  [[deprecated()]] void foo(); // expected-error {{parentheses must be omitted if 'deprecated' attribute's argument list is empty}}
   [[gnu::deprecated()]] void quux();
 }
