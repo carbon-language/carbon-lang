@@ -3291,6 +3291,10 @@ ABIArgInfo ARM64ABIInfo::classifyArgumentType(QualType Ty,
       Ty = EnumTy->getDecl()->getIntegerType();
 
     if (!Ty->isFloatingType() && !Ty->isVectorType()) {
+      unsigned Alignment = getContext().getTypeAlign(Ty);
+      if (!isDarwinPCS() && Alignment > 64)
+        AllocatedGPR = llvm::RoundUpToAlignment(AllocatedGPR, Alignment / 64);
+
       int RegsNeeded = getContext().getTypeSize(Ty) > 64 ? 2 : 1;
       AllocatedGPR += RegsNeeded;
     }
@@ -3328,12 +3332,16 @@ ABIArgInfo ARM64ABIInfo::classifyArgumentType(QualType Ty,
   // Aggregates <= 16 bytes are passed directly in registers or on the stack.
   uint64_t Size = getContext().getTypeSize(Ty);
   if (Size <= 128) {
+    unsigned Alignment = getContext().getTypeAlign(Ty);
+    if (!isDarwinPCS() && Alignment > 64)
+      AllocatedGPR = llvm::RoundUpToAlignment(AllocatedGPR, Alignment / 64);
+
     Size = 64 * ((Size + 63) / 64); // round up to multiple of 8 bytes
     AllocatedGPR += Size / 64;
     IsSmallAggr = true;
     // We use a pair of i64 for 16-byte aggregate with 8-byte alignment.
     // For aggregates with 16-byte alignment, we use i128.
-    if (getContext().getTypeAlign(Ty) < 128 && Size == 128) {
+    if (Alignment < 128 && Size == 128) {
       llvm::Type *BaseTy = llvm::Type::getInt64Ty(getVMContext());
       return ABIArgInfo::getDirect(llvm::ArrayType::get(BaseTy, Size / 64));
     }
