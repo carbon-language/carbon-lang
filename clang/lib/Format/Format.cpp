@@ -1139,6 +1139,13 @@ private:
     if (Previous.Children[0]->Last->isTrailingComment())
       return false;
 
+    // If the child line exceeds the column limit, we wouldn't want to merge it.
+    // We add +2 for the trailing " }".
+    if (Style.ColumnLimit > 0 &&
+        Previous.Children[0]->Last->TotalLength + State.Column + 2 >
+            Style.ColumnLimit)
+      return false;
+
     if (!DryRun) {
       Whitespaces->replaceWhitespace(
           *Previous.Children[0]->First,
