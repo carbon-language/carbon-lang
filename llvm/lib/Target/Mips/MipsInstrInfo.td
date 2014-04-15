@@ -319,6 +319,10 @@ def InvertedImOperand : Operand<i32> {
   let ParserMatchClass = MipsInvertedImmoperand;
 }
 
+def InvertedImOperand64 : Operand<i64> {
+  let ParserMatchClass = MipsInvertedImmoperand;
+}
+
 class mem_generic : Operand<iPTR> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops ptr_rc, simm16);
@@ -1228,9 +1232,14 @@ def  : InstAlias<"tltu $rs, $rt", (TLTU GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 def  : InstAlias<"tne $rs, $rt", (TNE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 def : InstAlias<"sub, $rd, $rs, $imm",
                 (ADDi GPR32Opnd:$rd, GPR32Opnd:$rs, InvertedImOperand:$imm)>;
+def : InstAlias<"sub $rs, $imm",
+                (ADDi GPR32Opnd:$rs, GPR32Opnd:$rs, InvertedImOperand:$imm),
+                0>;
 def : InstAlias<"subu, $rd, $rs, $imm",
                 (ADDiu GPR32Opnd:$rd, GPR32Opnd:$rs, InvertedImOperand:$imm)>;
-
+def : InstAlias<"subu $rs, $imm",
+                (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs, InvertedImOperand:$imm),
+                0>;
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//

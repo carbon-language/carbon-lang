@@ -906,10 +906,6 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::LoadImm32Reg:
   case Mips::LoadAddr32Imm:
   case Mips::LoadAddr32Reg:
-  case Mips::SUBi:
-  case Mips::SUBiu:
-  case Mips::DSUBi:
-  case Mips::DSUBiu:
     return true;
   default:
     return false;
@@ -925,30 +921,6 @@ void MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
     return expandLoadAddressImm(Inst, IDLoc, Instructions);
   case Mips::LoadAddr32Reg:
     return expandLoadAddressReg(Inst, IDLoc, Instructions);
-  case Mips::SUBi:
-    Instructions.push_back(MCInstBuilder(Mips::ADDi)
-                               .addReg(Inst.getOperand(0).getReg())
-                               .addReg(Inst.getOperand(1).getReg())
-                               .addImm(-Inst.getOperand(2).getImm()));
-    return;
-  case Mips::SUBiu:
-    Instructions.push_back(MCInstBuilder(Mips::ADDiu)
-                               .addReg(Inst.getOperand(0).getReg())
-                               .addReg(Inst.getOperand(1).getReg())
-                               .addImm(-Inst.getOperand(2).getImm()));
-    return;
-  case Mips::DSUBi:
-    Instructions.push_back(MCInstBuilder(Mips::DADDi)
-                               .addReg(Inst.getOperand(0).getReg())
-                               .addReg(Inst.getOperand(1).getReg())
-                               .addImm(-Inst.getOperand(2).getImm()));
-    return;
-  case Mips::DSUBiu:
-    Instructions.push_back(MCInstBuilder(Mips::DADDiu)
-                               .addReg(Inst.getOperand(0).getReg())
-                               .addReg(Inst.getOperand(1).getReg())
-                               .addImm(-Inst.getOperand(2).getImm()));
-    return;
   }
 }
 

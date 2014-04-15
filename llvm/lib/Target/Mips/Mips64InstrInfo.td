@@ -428,30 +428,14 @@ def : InstAlias<"add $rs, $imm",
 def : InstAlias<"addu $rs, $imm",
                 (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
                 0>;
-let isPseudo=1, usesCustomInserter=1, isCodeGenOnly=1 in {
-def SUBi : MipsInst<(outs GPR32Opnd: $rt), (ins GPR32Opnd: $rs, simm16: $imm),
-                    "sub\t$rt, $rs, $imm", [], II_DSUB, Pseudo>;
-def SUBiu : MipsInst<(outs GPR32Opnd: $rt), (ins GPR32Opnd: $rs, simm16: $imm),
-                    "subu\t$rt, $rs, $imm", [], II_DSUB, Pseudo>;
-def DSUBi : MipsInst<(outs GPR64Opnd: $rt), (ins GPR64Opnd: $rs, simm16_64: $imm),
-                    "ssub\t$rt, $rs, $imm", [], II_DSUB, Pseudo>;
-def DSUBiu : MipsInst<(outs GPR64Opnd: $rt), (ins GPR64Opnd: $rs, simm16_64: $imm),
-                    "ssubu\t$rt, $rs, $imm", [], II_DSUB, Pseudo>;
-}
 def : InstAlias<"dsubu $rt, $rs, $imm",
-                (DSUBiu GPR64Opnd:$rt, GPR64Opnd:$rs, simm16_64: $imm),
-                0>;
-def : InstAlias<"sub $rs, $imm",
-                (SUBi GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
-                0>;
-def : InstAlias<"subu $rs, $imm",
-                (SUBiu GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
-                0>;
+                (DADDiu GPR64Opnd:$rt, GPR64Opnd:$rs,
+                InvertedImOperand64: $imm),0>;
 def : InstAlias<"dsub $rs, $imm",
-                (DSUBi GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
+                (DADDi GPR64Opnd:$rs, GPR64Opnd:$rs, InvertedImOperand64:$imm),
                 0>;
 def : InstAlias<"dsubu $rs, $imm",
-                (DSUBiu GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
+                (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs, InvertedImOperand64:$imm),
                 0>;
 
 /// Move between CPU and coprocessor registers
