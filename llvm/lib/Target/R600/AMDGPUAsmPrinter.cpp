@@ -64,7 +64,7 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
   SIProgramInfo KernelInfo;
   if (STM.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
-    findNumUsedRegistersSI(MF, KernelInfo.NumSGPR, KernelInfo.NumVGPR);
+    getSIProgramInfo(KernelInfo, MF);
     EmitProgramInfoSI(MF, KernelInfo);
   } else {
     EmitProgramInfoR600(MF);
@@ -84,8 +84,10 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
                               SectionKind::getReadOnly());
     OutStreamer.SwitchSection(CommentSection);
 
-    if (STM.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
+    if (STM.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
       OutStreamer.emitRawComment(" Kernel info:", false);
+      OutStreamer.emitRawComment(" codeLenInByte = " + Twine(KernelInfo.CodeLen),
+                                 false);
       OutStreamer.emitRawComment(" NumSgprs: " + Twine(KernelInfo.NumSGPR),
                                  false);
       OutStreamer.emitRawComment(" NumVgprs: " + Twine(KernelInfo.NumVGPR),
@@ -184,9 +186,9 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
   }
 }
 
-void AMDGPUAsmPrinter::findNumUsedRegistersSI(MachineFunction &MF,
-                                              unsigned &NumSGPR,
-                                              unsigned &NumVGPR) const {
+void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
+                                        MachineFunction &MF) const {
+  uint64_t CodeSize = 0;
   unsigned MaxSGPR = 0;
   unsigned MaxVGPR = 0;
   bool VCCUsed = false;
@@ -199,6 +201,9 @@ void AMDGPUAsmPrinter::findNumUsedRegistersSI(MachineFunction &MF,
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
                                                     I != E; ++I) {
       MachineInstr &MI = *I;
+
+      // TODO: CodeSize should account for multiple functions.
+      CodeSize += MI.getDesc().Size;
 
       unsigned numOperands = MI.getNumOperands();
       for (unsigned op_idx = 0; op_idx < numOperands; op_idx++) {
@@ -274,13 +279,9 @@ void AMDGPUAsmPrinter::findNumUsedRegistersSI(MachineFunction &MF,
   if (VCCUsed)
     MaxSGPR += 2;
 
-  NumSGPR = MaxSGPR;
-  NumVGPR = MaxVGPR;
-}
-
-void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &Out,
-                                        MachineFunction &MF) const {
-  findNumUsedRegistersSI(MF, Out.NumSGPR, Out.NumVGPR);
+  ProgInfo.CodeLen = CodeSize;
+  ProgInfo.NumSGPR = MaxSGPR;
+  ProgInfo.NumVGPR = MaxVGPR;
 }
 
 void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF,

@@ -24,7 +24,12 @@ namespace llvm {
 class AMDGPUAsmPrinter : public AsmPrinter {
 private:
   struct SIProgramInfo {
-    SIProgramInfo() : NumSGPR(0), NumVGPR(0) {}
+    SIProgramInfo() :
+      CodeLen(0),
+      NumSGPR(0),
+      NumVGPR(0) {}
+
+    uint64_t CodeLen;
     unsigned NumSGPR;
     unsigned NumVGPR;
   };
