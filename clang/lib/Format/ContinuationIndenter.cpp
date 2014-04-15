@@ -472,6 +472,9 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     else
       return State.FirstIndent;
   }
+  if (Current.is(tok::identifier) && Current.Next &&
+      Current.Next->Type == TT_DictLiteral)
+    return State.Stack.back().Indent;
   if (NextNonComment->isStringLiteral() && State.StartOfStringLiteral != 0)
     return State.StartOfStringLiteral;
   if (NextNonComment->is(tok::lessless) &&

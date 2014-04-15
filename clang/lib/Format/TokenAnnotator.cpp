@@ -1243,7 +1243,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
 
   if (Left.is(tok::semi))
     return 0;
-  if (Left.is(tok::comma))
+  if (Left.is(tok::comma) || (Right.is(tok::identifier) && Right.Next &&
+                              Right.Next->Type == TT_DictLiteral))
     return 1;
   if (Right.is(tok::l_square)) {
     if (Style.Language == FormatStyle::LK_Proto)
@@ -1645,6 +1646,10 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return true;
 
   if (Left.is(tok::identifier) && Right.is(tok::string_literal))
+    return true;
+
+  if (Right.is(tok::identifier) && Right.Next &&
+      Right.Next->Type == TT_DictLiteral)
     return true;
 
   if (Left.Type == TT_CtorInitializerComma &&

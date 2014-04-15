@@ -81,13 +81,13 @@ TEST_F(FormatTestProto, MessageFieldAttributes) {
   verifyFormat("optional LongMessageType long_proto_field = 1\n"
                "    [default = REALLY_REALLY_LONG_CONSTANT_VALUE];");
   verifyFormat("repeated double value = 1\n"
-               "    [(aaaaaaa.aaaaaaaaa) = {aaaaaaaaaaaaaaaaa : AAAAAAAA}];");
+               "    [(aaaaaaa.aaaaaaaaa) = {aaaaaaaaaaaaaaaaa: AAAAAAAA}];");
   verifyFormat("repeated double value = 1\n"
-               "    [(aaaaaaa.aaaaaaaaa) = {aaaaaaaaaaaaaaaa : AAAAAAAAAA,\n"
-               "                            bbbbbbbbbbbbbbbb : BBBBBBBBBB}];");
+               "    [(aaaaaaa.aaaaaaaaa) = {aaaaaaaaaaaaaaaa: AAAAAAAAAA,\n"
+               "                            bbbbbbbbbbbbbbbb: BBBBBBBBBB}];");
   verifyFormat("repeated double value = 1\n"
-               "    [(aaaaaaa.aaaaaaaaa) = {aaaaaaaaaaaaaaaa : AAAAAAAAAA\n"
-               "                            bbbbbbbbbbbbbbbb : BBBBBBBBBB}];");
+               "    [(aaaaaaa.aaaaaaaaa) = {aaaaaaaaaaaaaaaa: AAAAAAAAAA\n"
+               "                            bbbbbbbbbbbbbbbb: BBBBBBBBBB}];");
 }
 
 TEST_F(FormatTestProto, FormatsOptions) {

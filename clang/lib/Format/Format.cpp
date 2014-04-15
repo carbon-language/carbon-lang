@@ -343,6 +343,7 @@ FormatStyle getGoogleStyle(FormatStyle::LanguageKind Language) {
     GoogleStyle.SpacesInContainerLiterals = false;
   } else if (Language == FormatStyle::LK_Proto) {
     GoogleStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_None;
+    GoogleStyle.SpacesInContainerLiterals = false;
   }
 
   return GoogleStyle;
