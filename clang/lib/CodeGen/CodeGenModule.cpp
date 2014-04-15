@@ -286,6 +286,9 @@ void CodeGenModule::Release() {
   if (getCodeGenOpts().ProfileInstrGenerate)
     if (llvm::Function *PGOInit = CodeGenPGO::emitInitialization(*this))
       AddGlobalCtor(PGOInit, 0);
+  if (PGOData && PGOStats.isOutOfDate())
+    getDiags().Report(diag::warn_profile_data_out_of_date)
+        << PGOStats.Visited << PGOStats.Missing << PGOStats.Mismatched;
   EmitCtorList(GlobalCtors, "llvm.global_ctors");
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitGlobalAnnotations();

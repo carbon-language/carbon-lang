@@ -908,11 +908,17 @@ void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter) {
 }
 
 void CodeGenPGO::loadRegionCounts(PGOProfileData *PGOData) {
+  CGM.getPGOStats().Visited++;
   RegionCounts.reset(new std::vector<uint64_t>);
   uint64_t Hash;
-  if (PGOData->getFunctionCounts(getFuncName(), Hash, *RegionCounts) ||
-      Hash != FunctionHash || RegionCounts->size() != NumRegionCounters)
+  if (PGOData->getFunctionCounts(getFuncName(), Hash, *RegionCounts)) {
+    CGM.getPGOStats().Missing++;
     RegionCounts.reset();
+  } else if (Hash != FunctionHash ||
+             RegionCounts->size() != NumRegionCounters) {
+    CGM.getPGOStats().Mismatched++;
+    RegionCounts.reset();
+  }
 }
 
 void CodeGenPGO::destroyRegionCounters() {
