@@ -1838,12 +1838,12 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
       .setAlwaysAdd(Stmt::AttributedStmtClass);
   }
 
+  // Install the logical handler for -Wtautological-overlap-compare
+  std::unique_ptr<LogicalErrorHandler> LEH;
   if (Diags.getDiagnosticLevel(diag::warn_tautological_overlap_comparison,
                                D->getLocStart())) {
-    LogicalErrorHandler LEH(S);
-    AC.getCFGBuildOptions().Observer = &LEH;
-    AC.getCFG();
-    AC.getCFGBuildOptions().Observer = 0;
+    LEH.reset(new LogicalErrorHandler(S));
+    AC.getCFGBuildOptions().Observer = LEH.get();
   }
 
   // Emit delayed diagnostics.
@@ -1989,6 +1989,13 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       checkRecursiveFunction(S, FD, Body, AC);
     }
+  }
+
+  // If none of the previous checks caused a CFG build, trigger one here
+  // for -Wtautological-overlap-compare
+  if (Diags.getDiagnosticLevel(diag::warn_tautological_overlap_comparison,
+                               D->getLocStart())) {
+    AC.getCFG();
   }
 
   // Collect statistics about the CFG if it was built.

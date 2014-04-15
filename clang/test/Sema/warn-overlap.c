@@ -56,3 +56,9 @@ void f(int x) {
   if (x == (mydefine + 1) && x > 3) { }
 }
 
+// Don't generate a warning here.
+void array_out_of_bounds() {
+  int x;
+  int buffer[4];
+  x = (-7 > 0) ? (buffer[-7]) : 0;
+}
