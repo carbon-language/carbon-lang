@@ -190,7 +190,7 @@ CFG *AnalysisDeclContext::getCFG() {
     if (PM)
       addParentsForSyntheticStmts(cfg.get(), *PM);
 
-    // The Obersver should only observe one build of the CFG.
+    // The Observer should only observe one build of the CFG.
     getCFGBuildOptions().Observer = 0;
   }
   return cfg.get();
@@ -209,7 +209,7 @@ CFG *AnalysisDeclContext::getUnoptimizedCFG() {
     if (PM)
       addParentsForSyntheticStmts(completeCFG.get(), *PM);
 
-    // The Obersver should only observe one build of the CFG.
+    // The Observer should only observe one build of the CFG.
     getCFGBuildOptions().Observer = 0;
   }
   return completeCFG.get();
