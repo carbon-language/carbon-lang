@@ -98,31 +98,31 @@ struct DOTGraphTraits<RegionInfo*> : public DOTGraphTraits<RegionNode*> {
 
   // Print the cluster of the subregions. This groups the single basic blocks
   // and adds a different background color for each group.
-  static void printRegionCluster(const Region *R, GraphWriter<RegionInfo*> &GW,
+  static void printRegionCluster(const Region &R, GraphWriter<RegionInfo*> &GW,
                                  unsigned depth = 0) {
     raw_ostream &O = GW.getOStream();
-    O.indent(2 * depth) << "subgraph cluster_" << static_cast<const void*>(R)
+    O.indent(2 * depth) << "subgraph cluster_" << static_cast<const void*>(&R)
       << " {\n";
     O.indent(2 * (depth + 1)) << "label = \"\";\n";
 
-    if (!onlySimpleRegions || R->isSimple()) {
+    if (!onlySimpleRegions || R.isSimple()) {
       O.indent(2 * (depth + 1)) << "style = filled;\n";
       O.indent(2 * (depth + 1)) << "color = "
-        << ((R->getDepth() * 2 % 12) + 1) << "\n";
+        << ((R.getDepth() * 2 % 12) + 1) << "\n";
 
     } else {
       O.indent(2 * (depth + 1)) << "style = solid;\n";
       O.indent(2 * (depth + 1)) << "color = "
-        << ((R->getDepth() * 2 % 12) + 2) << "\n";
+        << ((R.getDepth() * 2 % 12) + 2) << "\n";
     }
 
-    for (Region::const_iterator RI = R->begin(), RE = R->end(); RI != RE; ++RI)
-      printRegionCluster(*RI, GW, depth + 1);
+    for (Region::const_iterator RI = R.begin(), RE = R.end(); RI != RE; ++RI)
+      printRegionCluster(**RI, GW, depth + 1);
 
-    RegionInfo *RI = R->getRegionInfo();
+    RegionInfo *RI = R.getRegionInfo();
 
-    for (const auto &BB : R->blocks())
-      if (RI->getRegionFor(BB) == R)
+    for (const auto &BB : R.blocks())
+      if (RI->getRegionFor(BB) == &R)
         O.indent(2 * (depth + 1)) << "Node"
           << static_cast<const void*>(RI->getTopLevelRegion()->getBBNode(BB))
           << ";\n";
@@ -134,7 +134,7 @@ struct DOTGraphTraits<RegionInfo*> : public DOTGraphTraits<RegionNode*> {
                                      GraphWriter<RegionInfo*> &GW) {
     raw_ostream &O = GW.getOStream();
     O << "\tcolorscheme = \"paired12\"\n";
-    printRegionCluster(RI->getTopLevelRegion(), GW, 4);
+    printRegionCluster(*RI->getTopLevelRegion(), GW, 4);
   }
 };
 } //end namespace llvm

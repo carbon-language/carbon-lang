@@ -33,6 +33,7 @@
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Support/Allocator.h"
 #include <map>
+#include <memory>
 
 namespace llvm {
 
@@ -213,7 +214,7 @@ class Region : public RegionNode {
   // (The entry BasicBlock is part of RegionNode)
   BasicBlock *exit;
 
-  typedef std::vector<Region*> RegionSet;
+  typedef std::vector<std::unique_ptr<Region>> RegionSet;
 
   // The subregions of this region.
   RegionSet children;

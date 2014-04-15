@@ -36,10 +36,10 @@ RGPassManager::RGPassManager()
 }
 
 // Recurse through all subregions and all regions  into RQ.
-static void addRegionIntoQueue(Region *R, std::deque<Region *> &RQ) {
-  RQ.push_back(R);
-  for (Region::iterator I = R->begin(), E = R->end(); I != E; ++I)
-    addRegionIntoQueue(*I, RQ);
+static void addRegionIntoQueue(Region &R, std::deque<Region *> &RQ) {
+  RQ.push_back(&R);
+  for (const auto &E : R)
+    addRegionIntoQueue(*E, RQ);
 }
 
 /// Pass Manager itself does not invalidate any analysis info.
@@ -57,7 +57,7 @@ bool RGPassManager::runOnFunction(Function &F) {
   // Collect inherited analysis from Module level pass manager.
   populateInheritedAnalysis(TPM->activeStack);
 
-  addRegionIntoQueue(RI->getTopLevelRegion(), RQ);
+  addRegionIntoQueue(*RI->getTopLevelRegion(), RQ);
 
   if (RQ.empty()) // No regions, skip calling finalizers
     return false;

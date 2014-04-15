@@ -19,6 +19,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <algorithm>
+#include <iterator>
 #include <set>
 
 using namespace llvm;
@@ -62,9 +63,6 @@ Region::~Region() {
   // Only clean the cache for this Region. Caches of child Regions will be
   // cleaned when the child Regions are deleted.
   BBNodeMap.clear();
-
-  for (iterator I = begin(), E = end(); I != E; ++I)
-    delete *I;
 }
 
 void Region::replaceEntry(BasicBlock *BB) {
@@ -88,7 +86,7 @@ void Region::replaceEntryRecursive(BasicBlock *NewEntry) {
     R->replaceEntry(NewEntry);
     for (Region::const_iterator RI = R->begin(), RE = R->end(); RI != RE; ++RI)
       if ((*RI)->getEntry() == OldEntry)
-        RegionQueue.push_back(*RI);
+        RegionQueue.push_back(RI->get());
   }
 }
 
@@ -104,7 +102,7 @@ void Region::replaceExitRecursive(BasicBlock *NewExit) {
     R->replaceExit(NewExit);
     for (Region::const_iterator RI = R->begin(), RE = R->end(); RI != RE; ++RI)
       if ((*RI)->getExit() == OldExit)
-        RegionQueue.push_back(*RI);
+        RegionQueue.push_back(RI->get());
   }
 }
 
@@ -333,18 +331,20 @@ RegionNode* Region::getNode(BasicBlock *BB) const {
 void Region::transferChildrenTo(Region *To) {
   for (iterator I = begin(), E = end(); I != E; ++I) {
     (*I)->parent = To;
-    To->children.push_back(*I);
+    To->children.push_back(std::move(*I));
   }
   children.clear();
 }
 
 void Region::addSubRegion(Region *SubRegion, bool moveChildren) {
   assert(!SubRegion->parent && "SubRegion already has a parent!");
-  assert(std::find(begin(), end(), SubRegion) == children.end()
-         && "Subregion already exists!");
+  assert(std::find_if(begin(), end(), [&](const std::unique_ptr<Region> &R) {
+           return R.get() == SubRegion;
+         }) == children.end() &&
+         "Subregion already exists!");
 
   SubRegion->parent = this;
-  children.push_back(SubRegion);
+  children.push_back(std::unique_ptr<Region>(SubRegion));
 
   if (!moveChildren)
     return;
@@ -360,23 +360,27 @@ void Region::addSubRegion(Region *SubRegion, bool moveChildren) {
         RI->setRegionFor(BB, SubRegion);
     }
 
-  std::vector<Region*> Keep;
+  std::vector<std::unique_ptr<Region>> Keep;
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (SubRegion->contains(*I) && *I != SubRegion) {
-      SubRegion->children.push_back(*I);
+    if (SubRegion->contains(I->get()) && I->get() != SubRegion) {
+      SubRegion->children.push_back(std::move(*I));
       (*I)->parent = SubRegion;
     } else
-      Keep.push_back(*I);
+      Keep.push_back(std::move(*I));
 
   children.clear();
-  children.insert(children.begin(), Keep.begin(), Keep.end());
+  children.insert(children.begin(),
+                  std::move_iterator<RegionSet::iterator>(Keep.begin()),
+                  std::move_iterator<RegionSet::iterator>(Keep.end()));
 }
 
 
 Region *Region::removeSubRegion(Region *Child) {
   assert(Child->parent == this && "Child is not a child of this region!");
   Child->parent = nullptr;
-  RegionSet::iterator I = std::find(children.begin(), children.end(), Child);
+  RegionSet::iterator I = std::find_if(
+      children.begin(), children.end(),
+      [&](const std::unique_ptr<Region> &R) { return R.get() == Child; });
   assert(I != children.end() && "Region does not exit. Unable to remove.");
   children.erase(children.begin()+(I-begin()));
   return Child;
