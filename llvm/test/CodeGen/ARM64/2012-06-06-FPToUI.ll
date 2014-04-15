@@ -7,8 +7,9 @@
 @.str3 = private unnamed_addr constant [7 x i8] c"%f %u\0A\00", align 1
 
 define void @testDouble(double %d) ssp {
-; CHECK:  fcvtzu x{{.}}, d{{.}}
-; CHECK:  fcvtzu w{{.}}, d{{.}}
+; CHECK-LABEL: testDouble:
+; CHECK:  fcvtzu x{{[0-9]+}}, d{{[0-9]+}}
+; CHECK:  fcvtzu w{{[0-9]+}}, d{{[0-9]+}}
 entry:
   %d.addr = alloca double, align 8
   store double %d, double* %d.addr, align 8
@@ -26,8 +27,9 @@ entry:
 declare i32 @printf(i8*, ...)
 
 define void @testFloat(float %f) ssp {
-; CHECK:  fcvtzu x{{.}}, s{{.}}
-; CHECK:  fcvtzu w{{.}}, s{{.}}
+; CHECK-LABEL: testFloat:
+; CHECK:  fcvtzu x{{[0-9]+}}, s{{[0-9]+}}
+; CHECK:  fcvtzu w{{[0-9]+}}, s{{[0-9]+}}
 entry:
   %f.addr = alloca float, align 4
   store float %f, float* %f.addr, align 4

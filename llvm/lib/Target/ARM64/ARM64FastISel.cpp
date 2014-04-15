@@ -225,7 +225,7 @@ unsigned ARM64FastISel::ARM64MaterializeFP(const ConstantFP *CFP, MVT VT) {
     Align = DL.getTypeAllocSize(CFP->getType());
 
   unsigned Idx = MCP.getConstantPoolIndex(cast<Constant>(CFP), Align);
-  unsigned ADRPReg = createResultReg(&ARM64::GPR64RegClass);
+  unsigned ADRPReg = createResultReg(&ARM64::GPR64commonRegClass);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::ADRP),
           ADRPReg).addConstantPoolIndex(Idx, 0, ARM64II::MO_PAGE);
 
@@ -253,25 +253,28 @@ unsigned ARM64FastISel::ARM64MaterializeGV(const GlobalValue *GV) {
   EVT DestEVT = TLI.getValueType(GV->getType(), true);
   if (!DestEVT.isSimple())
     return 0;
-  MVT DestVT = DestEVT.getSimpleVT();
 
-  unsigned ADRPReg = createResultReg(&ARM64::GPR64RegClass);
-  unsigned ResultReg = createResultReg(TLI.getRegClassFor(DestVT));
+  unsigned ADRPReg = createResultReg(&ARM64::GPR64commonRegClass);
+  unsigned ResultReg;
 
   if (OpFlags & ARM64II::MO_GOT) {
     // ADRP + LDRX
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::ADRP),
             ADRPReg)
         .addGlobalAddress(GV, 0, ARM64II::MO_GOT | ARM64II::MO_PAGE);
+
+    ResultReg = createResultReg(&ARM64::GPR64RegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::LDRXui),
             ResultReg)
         .addReg(ADRPReg)
         .addGlobalAddress(GV, 0, ARM64II::MO_GOT | ARM64II::MO_PAGEOFF |
-                                     ARM64II::MO_NC);
+                          ARM64II::MO_NC);
   } else {
     // ADRP + ADDX
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::ADRP),
             ADRPReg).addGlobalAddress(GV, 0, ARM64II::MO_PAGE);
+
+    ResultReg = createResultReg(&ARM64::GPR64spRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::ADDXri),
             ResultReg)
         .addReg(ADRPReg)
@@ -1117,7 +1120,8 @@ bool ARM64FastISel::SelectFPToInt(const Instruction *I, bool Signed) {
     else
       Opc = (DestVT == MVT::i32) ? ARM64::FCVTZUUWSr : ARM64::FCVTZUUXSr;
   }
-  unsigned ResultReg = createResultReg(TLI.getRegClassFor(DestVT));
+  unsigned ResultReg = createResultReg(
+      DestVT == MVT::i32 ? &ARM64::GPR32RegClass : &ARM64::GPR64RegClass);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
       .addReg(SrcReg);
   UpdateValueMap(I, ResultReg);
@@ -1142,6 +1146,9 @@ bool ARM64FastISel::SelectIntToFP(const Instruction *I, bool Signed) {
     if (SrcReg == 0)
       return false;
   }
+
+  MRI.constrainRegClass(SrcReg, SrcVT == MVT::i64 ? &ARM64::GPR64RegClass
+                                                  : &ARM64::GPR32RegClass);
 
   unsigned Opc;
   if (SrcVT == MVT::i64) {
