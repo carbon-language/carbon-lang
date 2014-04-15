@@ -733,6 +733,8 @@ LIBBUILTIN(vscanf, "icC*Ra",      "fS:0:", "stdio.h", ALL_LANGUAGES)
 LIBBUILTIN(vfscanf, "iP*RcC*Ra",  "fS:1:", "stdio.h", ALL_LANGUAGES)
 LIBBUILTIN(vsscanf, "icC*RcC*Ra", "fS:1:", "stdio.h", ALL_LANGUAGES)
 // C99
+// In some systems setjmp is a macro that expands to _setjmp. We undefine
+// it here to avoid having two identical LIBBUILTIN entries.
 #undef setjmp
 LIBBUILTIN(setjmp, "iJ",          "fj",    "setjmp.h", ALL_LANGUAGES)
 LIBBUILTIN(longjmp, "vJi",        "fr",    "setjmp.h", ALL_LANGUAGES)
@@ -759,8 +761,6 @@ LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h", ALL_GNU_LANGUAGES)
 LIBBUILTIN(vfork, "p",            "fj",    "unistd.h", ALL_GNU_LANGUAGES)
 // POSIX setjmp.h
 
-// In some systems setjmp is a macro that expands to _setjmp. We undefine
-// it here to avoid having two identical LIBBUILTIN entries.
 LIBBUILTIN(_setjmp, "iJ",         "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
 LIBBUILTIN(__sigsetjmp, "iSJi",   "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
 LIBBUILTIN(sigsetjmp, "iSJi",     "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
