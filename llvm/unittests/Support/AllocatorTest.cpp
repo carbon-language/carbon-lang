@@ -108,7 +108,7 @@ class MockSlabAllocator {
 public:
   ~MockSlabAllocator() { }
 
-  void *Allocate(size_t Size) {
+  void *Allocate(size_t Size, size_t /*Alignment*/) {
     // Allocate space for the alignment, the slab, and a void* that goes right
     // before the slab.
     size_t Alignment = 4096;

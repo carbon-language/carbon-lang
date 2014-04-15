@@ -135,19 +135,6 @@ public:
   void PrintStats() const {}
 };
 
-/// MallocSlabAllocator - The default slab allocator for the bump allocator
-/// is an adapter class for MallocAllocator that just forwards the method
-/// calls and translates the arguments.
-class MallocSlabAllocator {
-  /// Allocator - The underlying allocator that we forward to.
-  ///
-  MallocAllocator Allocator;
-
-public:
-  void *Allocate(size_t Size) { return Allocator.Allocate(Size, 0); }
-  void Deallocate(void *Slab, size_t Size) { Allocator.Deallocate(Slab, Size); }
-};
-
 namespace detail {
 
 // We call out to an external function to actually print the message as the
@@ -167,10 +154,10 @@ void printBumpPtrAllocatorStats(unsigned NumSlabs, size_t BytesAllocated,
 /// Note that this also has a threshold for forcing allocations above a certain
 /// size into their own slab.
 ///
-/// The BumpPtrAllocatorImpl template defaults to using a MallocSlabAllocator
+/// The BumpPtrAllocatorImpl template defaults to using a MallocAllocator
 /// object, which wraps malloc, to allocate memory, but it can be changed to
 /// use a custom allocator.
-template <typename AllocatorT = MallocSlabAllocator, size_t SlabSize = 4096,
+template <typename AllocatorT = MallocAllocator, size_t SlabSize = 4096,
           size_t SizeThreshold = SlabSize>
 class BumpPtrAllocatorImpl
     : public AllocatorBase<
@@ -241,7 +228,7 @@ public:
     // If Size is really big, allocate a separate slab for it.
     size_t PaddedSize = Size + Alignment - 1;
     if (PaddedSize > SizeThreshold) {
-      void *NewSlab = Allocator.Allocate(PaddedSize);
+      void *NewSlab = Allocator.Allocate(PaddedSize, 0);
       CustomSizedSlabs.push_back(std::make_pair(NewSlab, PaddedSize));
 
       Ptr = alignPtr((char *)NewSlab, Alignment);
@@ -319,7 +306,7 @@ private:
   void StartNewSlab() {
     size_t AllocatedSlabSize = computeSlabSize(Slabs.size());
 
-    void *NewSlab = Allocator.Allocate(AllocatedSlabSize);
+    void *NewSlab = Allocator.Allocate(AllocatedSlabSize, 0);
     Slabs.push_back(NewSlab);
     CurPtr = (char *)(NewSlab);
     End = ((char *)NewSlab) + AllocatedSlabSize;

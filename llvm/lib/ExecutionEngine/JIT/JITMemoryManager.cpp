@@ -269,11 +269,11 @@ namespace {
 
   class DefaultJITMemoryManager;
 
-  class JITSlabAllocator {
+  class JITAllocator {
     DefaultJITMemoryManager &JMM;
   public:
-    JITSlabAllocator(DefaultJITMemoryManager &jmm) : JMM(jmm) { }
-    void *Allocate(size_t Size);
+    JITAllocator(DefaultJITMemoryManager &jmm) : JMM(jmm) { }
+    void *Allocate(size_t Size, size_t /*Alignment*/);
     void Deallocate(void *Slab, size_t Size);
   };
 
@@ -312,9 +312,9 @@ namespace {
     // Memory slabs allocated by the JIT.  We refer to them as slabs so we don't
     // confuse them with the blocks of memory described above.
     std::vector<sys::MemoryBlock> CodeSlabs;
-    BumpPtrAllocatorImpl<JITSlabAllocator, DefaultSlabSize,
+    BumpPtrAllocatorImpl<JITAllocator, DefaultSlabSize,
                          DefaultSizeThreshold> StubAllocator;
-    BumpPtrAllocatorImpl<JITSlabAllocator, DefaultSlabSize,
+    BumpPtrAllocatorImpl<JITAllocator, DefaultSlabSize,
                          DefaultSizeThreshold> DataAllocator;
 
     // Circular list of free blocks.
@@ -568,12 +568,12 @@ namespace {
   };
 }
 
-void *JITSlabAllocator::Allocate(size_t Size) {
+void *JITAllocator::Allocate(size_t Size, size_t /*Alignment*/) {
   sys::MemoryBlock B = JMM.allocateNewSlab(Size);
   return B.base();
 }
 
-void JITSlabAllocator::Deallocate(void *Slab, size_t Size) {
+void JITAllocator::Deallocate(void *Slab, size_t Size) {
   sys::MemoryBlock B(Slab, Size);
   sys::Memory::ReleaseRWX(B);
 }
