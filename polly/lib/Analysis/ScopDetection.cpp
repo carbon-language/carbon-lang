@@ -529,14 +529,14 @@ static bool regionWithoutLoops(Region &R, LoopInfo *LI) {
 //
 // Return the number of regions erased from Regs.
 static unsigned eraseAllChildren(std::set<const Region *> &Regs,
-                                 const Region *R) {
+                                 const Region &R) {
   unsigned Count = 0;
-  for (const Region *SubRegion : *R) {
-    if (Regs.find(SubRegion) != Regs.end()) {
+  for (auto &SubRegion : R) {
+    if (Regs.find(SubRegion.get()) != Regs.end()) {
       ++Count;
-      Regs.erase(SubRegion);
+      Regs.erase(SubRegion.get());
     } else {
-      Count += eraseAllChildren(Regs, SubRegion);
+      Count += eraseAllChildren(Regs, *SubRegion);
     }
   }
   return Count;
@@ -556,7 +556,7 @@ void ScopDetection::findScops(Region &R) {
 
   InvalidRegions[&R] = LastFailure;
 
-  for (Region *SubRegion : R)
+  for (auto &SubRegion : R)
     findScops(*SubRegion);
 
   // Try to expand regions.
@@ -567,8 +567,8 @@ void ScopDetection::findScops(Region &R) {
 
   std::vector<Region *> ToExpand;
 
-  for (Region *SubRegion : R)
-    ToExpand.push_back(SubRegion);
+  for (auto &SubRegion : R)
+    ToExpand.push_back(SubRegion.get());
 
   for (Region *CurrentRegion : ToExpand) {
     // Skip invalid regions. Regions may become invalid, if they are element of
@@ -587,7 +587,7 @@ void ScopDetection::findScops(Region &R) {
 
     // Erase all (direct and indirect) children of ExpandedR from the valid
     // regions and update the number of valid regions.
-    ValidRegion -= eraseAllChildren(ValidRegions, ExpandedR);
+    ValidRegion -= eraseAllChildren(ValidRegions, *ExpandedR);
   }
 }
 
