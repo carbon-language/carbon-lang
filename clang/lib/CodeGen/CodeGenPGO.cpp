@@ -908,10 +908,6 @@ void CodeGenPGO::emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter) {
 }
 
 void CodeGenPGO::loadRegionCounts(PGOProfileData *PGOData) {
-  // For now, ignore the counts from the PGO data file only if the number of
-  // counters does not match. This could be tightened down in the future to
-  // ignore counts when the input changes in various ways, e.g., by comparing a
-  // hash value based on some characteristics of the input.
   RegionCounts.reset(new std::vector<uint64_t>);
   uint64_t Hash;
   if (PGOData->getFunctionCounts(getFuncName(), Hash, *RegionCounts) ||
