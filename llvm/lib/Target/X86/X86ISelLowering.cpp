@@ -13359,6 +13359,79 @@ static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
     return DAG.getNode(ISD::MUL, dl, VT, Op, R);
   }
 
+  // If possible, lower this shift as a sequence of two shifts by
+  // constant plus a MOVSS/MOVSD instead of scalarizing it.
+  // Example:
+  //   (v4i32 (srl A, (build_vector < X, Y, Y, Y>)))
+  //
+  // Could be rewritten as:
+  //   (v4i32 (MOVSS (srl A, <Y,Y,Y,Y>), (srl A, <X,X,X,X>)))
+  //
+  // The advantage is that the two shifts from the example would be
+  // lowered as X86ISD::VSRLI nodes. This would be cheaper than scalarizing
+  // the vector shift into four scalar shifts plus four pairs of vector
+  // insert/extract.
+  if ((VT == MVT::v8i16 || VT == MVT::v4i32) &&
+      ISD::isBuildVectorOfConstantSDNodes(Amt.getNode())) {
+    unsigned TargetOpcode = X86ISD::MOVSS;
+    bool CanBeSimplified;
+    // The splat value for the first packed shift (the 'X' from the example).
+    SDValue Amt1 = Amt->getOperand(0);
+    // The splat value for the second packed shift (the 'Y' from the example).
+    SDValue Amt2 = (VT == MVT::v4i32) ? Amt->getOperand(1) :
+                                        Amt->getOperand(2);
+
+    // See if it is possible to replace this node with a sequence of
+    // two shifts followed by a MOVSS/MOVSD
+    if (VT == MVT::v4i32) {
+      // Check if it is legal to use a MOVSS.
+      CanBeSimplified = Amt2 == Amt->getOperand(2) &&
+                        Amt2 == Amt->getOperand(3);
+      if (!CanBeSimplified) {
+        // Otherwise, check if we can still simplify this node using a MOVSD.
+        CanBeSimplified = Amt1 == Amt->getOperand(1) &&
+                          Amt->getOperand(2) == Amt->getOperand(3);
+        TargetOpcode = X86ISD::MOVSD;
+        Amt2 = Amt->getOperand(2);
+      }
+    } else {
+      // Do similar checks for the case where the machine value type
+      // is MVT::v8i16.
+      CanBeSimplified = Amt1 == Amt->getOperand(1);
+      for (unsigned i=3; i != 8 && CanBeSimplified; ++i)
+        CanBeSimplified = Amt2 == Amt->getOperand(i);
+
+      if (!CanBeSimplified) {
+        TargetOpcode = X86ISD::MOVSD;
+        CanBeSimplified = true;
+        Amt2 = Amt->getOperand(4);
+        for (unsigned i=0; i != 4 && CanBeSimplified; ++i)
+          CanBeSimplified = Amt1 == Amt->getOperand(i);
+        for (unsigned j=4; j != 8 && CanBeSimplified; ++j)
+          CanBeSimplified = Amt2 == Amt->getOperand(j);
+      }
+    }
+    
+    if (CanBeSimplified && isa<ConstantSDNode>(Amt1) &&
+        isa<ConstantSDNode>(Amt2)) {
+      // Replace this node with two shifts followed by a MOVSS/MOVSD.
+      EVT CastVT = MVT::v4i32;
+      SDValue Splat1 = 
+        DAG.getConstant(cast<ConstantSDNode>(Amt1)->getAPIntValue(), VT);
+      SDValue Shift1 = DAG.getNode(Op->getOpcode(), dl, VT, R, Splat1);
+      SDValue Splat2 = 
+        DAG.getConstant(cast<ConstantSDNode>(Amt2)->getAPIntValue(), VT);
+      SDValue Shift2 = DAG.getNode(Op->getOpcode(), dl, VT, R, Splat2);
+      if (TargetOpcode == X86ISD::MOVSD)
+        CastVT = MVT::v2i64;
+      SDValue BitCast1 = DAG.getNode(ISD::BITCAST, dl, CastVT, Shift1);
+      SDValue BitCast2 = DAG.getNode(ISD::BITCAST, dl, CastVT, Shift2);
+      SDValue Result = getTargetShuffleNode(TargetOpcode, dl, CastVT, BitCast2,
+                                            BitCast1, DAG);
+      return DAG.getNode(ISD::BITCAST, dl, VT, Result);
+    }
+  }
+
   if (VT == MVT::v16i8 && Op->getOpcode() == ISD::SHL) {
     assert(Subtarget->hasSSE2() && "Need SSE2 for pslli/pcmpeq.");
 
