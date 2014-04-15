@@ -363,8 +363,8 @@ void Region::addSubRegion(Region *SubRegion, bool moveChildren) {
   std::vector<std::unique_ptr<Region>> Keep;
   for (iterator I = begin(), E = end(); I != E; ++I)
     if (SubRegion->contains(I->get()) && I->get() != SubRegion) {
-      SubRegion->children.push_back(std::move(*I));
       (*I)->parent = SubRegion;
+      SubRegion->children.push_back(std::move(*I));
     } else
       Keep.push_back(std::move(*I));
 
