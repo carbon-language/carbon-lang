@@ -21,6 +21,8 @@ namespace llvm {
   class MachineMemOperand;
   class raw_ostream;
 
+  raw_ostream &operator<<(raw_ostream &OS, const MachineMemOperand &MMO);
+
   /// PseudoSourceValue - Special value supplied for machine level alias
   /// analysis. It indicates that a memory access references the functions
   /// stack frame (e.g., a spill slot), below the stack frame (e.g., argument
