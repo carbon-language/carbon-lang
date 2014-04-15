@@ -1558,6 +1558,8 @@ bool MipsAsmParser::ParseRegister(unsigned &RegNo, SMLoc &StartLoc,
       RegNo = isGP64() ? Operand.getGPR64Reg() : Operand.getGPR32Reg();
     }
 
+    delete &Operand;
+
     return (RegNo == (unsigned)-1);
   }
 
