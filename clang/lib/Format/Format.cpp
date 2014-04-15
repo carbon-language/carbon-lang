@@ -721,6 +721,13 @@ public:
 
   unsigned format(const SmallVectorImpl<AnnotatedLine *> &Lines, bool DryRun,
                   int AdditionalIndent = 0, bool FixBadIndentation = false) {
+    // Try to look up already computed penalty in DryRun-mode.
+    std::pair<const SmallVectorImpl<AnnotatedLine *> *, unsigned> CacheKey{
+        &Lines, AdditionalIndent};
+    auto CacheIt = PenaltyCache.find(CacheKey);
+    if (DryRun && CacheIt != PenaltyCache.end())
+      return CacheIt->second;
+
     assert(!Lines.empty());
     unsigned Penalty = 0;
     std::vector<int> IndentForLevel;
@@ -844,6 +851,7 @@ public:
       }
       PreviousLine = *I;
     }
+    PenaltyCache[CacheKey] = Penalty;
     return Penalty;
   }
 
@@ -1149,6 +1157,12 @@ private:
   LineJoiner Joiner;
 
   llvm::SpecificBumpPtrAllocator<StateNode> Allocator;
+
+  // Cache to store the penalty of formatting a vector of AnnotatedLines
+  // starting from a specific additional offset. Improves performance if there
+  // are many nested blocks.
+  std::map<std::pair<const SmallVectorImpl<AnnotatedLine *> *, unsigned>,
+           unsigned> PenaltyCache;
 };
 
 class FormatTokenLexer {
