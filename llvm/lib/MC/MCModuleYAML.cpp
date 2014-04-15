@@ -278,7 +278,7 @@ class MCModule2YAML {
   const MCModule &MCM;
   MCModuleYAML::Module YAMLModule;
   void dumpAtom(const MCAtom *MCA);
-  void dumpFunction(const MCFunction *MCF);
+  void dumpFunction(const MCFunction &MCF);
   void dumpBasicBlock(const MCBasicBlock *MCBB);
 
 public:
@@ -302,7 +302,7 @@ MCModule2YAML::MCModule2YAML(const MCModule &MCM) : MCM(MCM), YAMLModule() {
     dumpAtom(*AI);
   for (MCModule::const_func_iterator FI = MCM.func_begin(), FE = MCM.func_end();
        FI != FE; ++FI)
-    dumpFunction(*FI);
+    dumpFunction(**FI);
 }
 
 void MCModule2YAML::dumpAtom(const MCAtom *MCA) {
@@ -330,11 +330,11 @@ void MCModule2YAML::dumpAtom(const MCAtom *MCA) {
   }
 }
 
-void MCModule2YAML::dumpFunction(const MCFunction *MCF) {
+void MCModule2YAML::dumpFunction(const MCFunction &MCF) {
   YAMLModule.Functions.resize(YAMLModule.Functions.size() + 1);
   MCModuleYAML::Function &F = YAMLModule.Functions.back();
-  F.Name = MCF->getName();
-  for (MCFunction::const_iterator BBI = MCF->begin(), BBE = MCF->end();
+  F.Name = MCF.getName();
+  for (MCFunction::const_iterator BBI = MCF.begin(), BBE = MCF.end();
        BBI != BBE; ++BBI) {
     const MCBasicBlock &MCBB = **BBI;
     F.BasicBlocks.resize(F.BasicBlocks.size() + 1);

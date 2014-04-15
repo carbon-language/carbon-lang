@@ -480,7 +480,7 @@ MCObjectDisassembler::createFunction(MCModule *Module, uint64_t BeginAddr,
       continue;
     // FIXME: MCModule should provide a findFunctionByAddr()
     if ((*FI)->getEntryBlock()->getInsts()->getBeginAddr() == BeginAddr)
-      return *FI;
+      return FI->get();
   }
 
   // Finally, just create a new one.

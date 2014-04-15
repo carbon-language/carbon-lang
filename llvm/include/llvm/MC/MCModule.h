@@ -73,7 +73,7 @@ class MCModule {
 
   /// \name Function tracking
   /// @{
-  typedef std::vector<MCFunction*> FunctionListTy;
+  typedef std::vector<std::unique_ptr<MCFunction>> FunctionListTy;
   FunctionListTy Functions;
   /// @}
 
@@ -87,7 +87,7 @@ class MCModule {
   friend class MCObjectDisassembler;
 
 public:
-  MCModule() : Entrypoint(0) { }
+  MCModule();
   ~MCModule();
 
   /// \name Create a new MCAtom covering the specified offset range.
