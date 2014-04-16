@@ -17,7 +17,9 @@
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Config/config.h" // for strtoull()/strtoul() define
 #include "llvm/IR/MDBuilder.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/MD5.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -321,10 +323,73 @@ llvm::Function *CodeGenPGO::emitInitialization(CodeGenModule &CGM) {
 }
 
 namespace {
+/// \brief Stable hasher for PGO region counters.
+///
+/// PGOHash produces a stable hash of a given function's control flow.
+///
+/// Changing the output of this hash will invalidate all previously generated
+/// profiles -- i.e., don't do it.
+///
+/// \note  When this hash does eventually change (years?), we still need to
+/// support old hashes.  We'll need to pull in the version number from the
+/// profile data format and use the matching hash function.
+class PGOHash {
+  uint64_t Working;
+  unsigned Count;
+  llvm::MD5 MD5;
+
+  static const int NumBitsPerType = 6;
+  static const unsigned NumTypesPerWord = sizeof(uint64_t) * 8 / NumBitsPerType;
+  static const unsigned TooBig = 1u << NumBitsPerType;
+
+public:
+  /// \brief Hash values for AST nodes.
+  ///
+  /// Distinct values for AST nodes that have region counters attached.
+  ///
+  /// These values must be stable.  All new members must be added at the end,
+  /// and no members should be removed.  Changing the enumeration value for an
+  /// AST node will affect the hash of every function that contains that node.
+  enum HashType : unsigned char {
+    None = 0,
+    LabelStmt = 1,
+    WhileStmt,
+    DoStmt,
+    ForStmt,
+    CXXForRangeStmt,
+    ObjCForCollectionStmt,
+    SwitchStmt,
+    CaseStmt,
+    DefaultStmt,
+    IfStmt,
+    CXXTryStmt,
+    CXXCatchStmt,
+    ConditionalOperator,
+    BinaryOperatorLAnd,
+    BinaryOperatorLOr,
+    BinaryConditionalOperator,
+
+    // Keep this last.  It's for the static assert that follows.
+    LastHashType
+  };
+  static_assert(LastHashType <= TooBig, "Too many types in HashType");
+
+  // TODO: When this format changes, take in a version number here, and use the
+  // old hash calculation for file formats that used the old hash.
+  PGOHash() : Working(0), Count(0) {}
+  void combine(HashType Type);
+  uint64_t finalize();
+};
+const int PGOHash::NumBitsPerType;
+const unsigned PGOHash::NumTypesPerWord;
+const unsigned PGOHash::TooBig;
+
   /// A RecursiveASTVisitor that fills a map of statements to PGO counters.
   struct MapRegionCounters : public RecursiveASTVisitor<MapRegionCounters> {
     /// The next counter value to assign.
     unsigned NextCounter;
+    /// The function hash.
+    PGOHash Hash;
     /// The map of statements to counters.
     llvm::DenseMap<const Stmt *, unsigned> &CounterMap;
 
@@ -356,33 +421,56 @@ namespace {
     }
 
     bool VisitStmt(const Stmt *S) {
+      auto Type = getHashType(S);
+      if (Type == PGOHash::None)
+        return true;
+
+      CounterMap[S] = NextCounter++;
+      Hash.combine(Type);
+      return true;
+    }
+    PGOHash::HashType getHashType(const Stmt *S) {
       switch (S->getStmtClass()) {
       default:
         break;
       case Stmt::LabelStmtClass:
+        return PGOHash::LabelStmt;
       case Stmt::WhileStmtClass:
+        return PGOHash::WhileStmt;
       case Stmt::DoStmtClass:
+        return PGOHash::DoStmt;
       case Stmt::ForStmtClass:
+        return PGOHash::ForStmt;
       case Stmt::CXXForRangeStmtClass:
+        return PGOHash::CXXForRangeStmt;
       case Stmt::ObjCForCollectionStmtClass:
+        return PGOHash::ObjCForCollectionStmt;
       case Stmt::SwitchStmtClass:
+        return PGOHash::SwitchStmt;
       case Stmt::CaseStmtClass:
+        return PGOHash::CaseStmt;
       case Stmt::DefaultStmtClass:
+        return PGOHash::DefaultStmt;
       case Stmt::IfStmtClass:
+        return PGOHash::IfStmt;
       case Stmt::CXXTryStmtClass:
+        return PGOHash::CXXTryStmt;
       case Stmt::CXXCatchStmtClass:
+        return PGOHash::CXXCatchStmt;
       case Stmt::ConditionalOperatorClass:
+        return PGOHash::ConditionalOperator;
       case Stmt::BinaryConditionalOperatorClass:
-        CounterMap[S] = NextCounter++;
-        break;
+        return PGOHash::BinaryConditionalOperator;
       case Stmt::BinaryOperatorClass: {
         const BinaryOperator *BO = cast<BinaryOperator>(S);
-        if (BO->getOpcode() == BO_LAnd || BO->getOpcode() == BO_LOr)
-          CounterMap[S] = NextCounter++;
+        if (BO->getOpcode() == BO_LAnd)
+          return PGOHash::BinaryOperatorLAnd;
+        if (BO->getOpcode() == BO_LOr)
+          return PGOHash::BinaryOperatorLOr;
         break;
       }
       }
-      return true;
+      return PGOHash::None;
     }
   };
 
@@ -774,6 +862,43 @@ namespace {
   };
 }
 
+void PGOHash::combine(HashType Type) {
+  // Check that we never combine 0 and only have six bits.
+  assert(Type && "Hash is invalid: unexpected type 0");
+  assert(unsigned(Type) < TooBig && "Hash is invalid: too many types");
+
+  // Pass through MD5 if enough work has built up.
+  if (Count && Count % NumTypesPerWord == 0) {
+    using namespace llvm::support;
+    uint64_t Swapped = endian::byte_swap<uint64_t, little>(Working);
+    MD5.update(llvm::makeArrayRef((uint8_t *)&Swapped, sizeof(Swapped)));
+    Working = 0;
+  }
+
+  // Accumulate the current type.
+  ++Count;
+  Working = Working << NumBitsPerType | Type;
+}
+
+uint64_t PGOHash::finalize() {
+  // Use Working as the hash directly if we never used MD5.
+  if (Count <= NumTypesPerWord)
+    // No need to byte swap here, since none of the math was endian-dependent.
+    // This number will be byte-swapped as required on endianness transitions,
+    // so we will see the same value on the other side.
+    return Working;
+
+  // Check for remaining work in Working.
+  if (Working)
+    MD5.update(Working);
+
+  // Finalize the MD5 and return the hash.
+  llvm::MD5::MD5Result Result;
+  MD5.final(Result);
+  using namespace llvm::support;
+  return endian::read<uint64_t, little, unaligned>(Result);
+}
+
 static void emitRuntimeHook(CodeGenModule &CGM) {
   const char *const RuntimeVarName = "__llvm_profile_runtime";
   const char *const RuntimeUserName = "__llvm_profile_runtime_user";
@@ -851,8 +976,7 @@ void CodeGenPGO::mapRegionCounters(const Decl *D) {
   else if (const CapturedDecl *CD = dyn_cast_or_null<CapturedDecl>(D))
     Walker.TraverseDecl(const_cast<CapturedDecl *>(CD));
   NumRegionCounters = Walker.NextCounter;
-  // FIXME: The number of counters isn't sufficient for the hash
-  FunctionHash = NumRegionCounters;
+  FunctionHash = Walker.Hash.finalize();
 }
 
 void CodeGenPGO::computeRegionCounts(const Decl *D) {

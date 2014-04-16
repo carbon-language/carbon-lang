@@ -1,40 +1,40 @@
 _Z14simple_wrapperv
-2
+4
 2
 1
 100
 
 main
-1
+0
 1
 1
 
 _ZN6SimpleD1Ev
-2
+10
 2
 0
 0
 
 _ZN6SimpleD2Ev
-2
+10
 2
 100
 99
 
 _ZN6Simple6methodEv
-2
+10
 2
 100
 99
 
 _ZN6SimpleC1Ei
-2
+10
 2
 0
 0
 
 _ZN6SimpleC2Ei
-2
+10
 2
 100
 99

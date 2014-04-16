@@ -1,5 +1,5 @@
 simple_loops
-4
+16515
 4
 1
 100
@@ -7,7 +7,7 @@ simple_loops
 75
 
 conditionals
-11
+74917022372782735
 11
 1
 100
@@ -22,7 +22,7 @@ conditionals
 100
 
 early_exits
-9
+44128811889290
 9
 1
 0
@@ -35,7 +35,7 @@ early_exits
 0
 
 jumps
-22
+2016037664281362839
 22
 1
 1
@@ -61,7 +61,7 @@ jumps
 9
 
 switches
-19
+2745195701975551402
 19
 1
 1
@@ -84,7 +84,7 @@ switches
 0
 
 big_switch
-17
+10218718452081869619
 17
 1
 32
@@ -105,7 +105,7 @@ big_switch
 2
 
 boolean_operators
-8
+291222909838
 8
 1
 100
@@ -117,7 +117,7 @@ boolean_operators
 50
 
 boolop_loops
-9
+9760565944591
 9
 1
 50
@@ -130,14 +130,14 @@ boolop_loops
 26
 
 conditional_operator
-3
+848
 3
 1
 0
 1
 
 do_fallthrough
-4
+16586
 4
 1
 10
@@ -145,12 +145,12 @@ do_fallthrough
 8
 
 main
-1
+0
 1
 1
 
 c-general.c:static_func
-2
+4
 2
 1
 10
