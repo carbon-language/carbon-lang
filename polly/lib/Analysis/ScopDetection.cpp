@@ -468,7 +468,7 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
 
 Region *ScopDetection::expandRegion(Region &R) {
   // Initial no valid region was found (greater than R)
-  Region *LastValidRegion = NULL;
+  Region *LastValidRegion = nullptr;
   Region *ExpandedRegion = R.getExpandedRegion();
 
   DEBUG(dbgs() << "\tExpanding " << R.getNameStr() << "\n");

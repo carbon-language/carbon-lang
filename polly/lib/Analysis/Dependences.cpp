@@ -64,7 +64,7 @@ static cl::opt<enum AnalysisType> OptAnalysisType(
     cl::cat(PollyCategory));
 
 //===----------------------------------------------------------------------===//
-Dependences::Dependences() : ScopPass(ID) { RAW = WAR = WAW = NULL; }
+Dependences::Dependences() : ScopPass(ID) { RAW = WAR = WAW = nullptr; }
 
 void Dependences::collectInfo(Scop &S, isl_union_map **Read,
                               isl_union_map **Write, isl_union_map **MayWrite,
@@ -117,18 +117,18 @@ void Dependences::calculateDependences(Scop &S) {
 
   // The pointers below will be set by the subsequent calls to
   // isl_union_map_compute_flow.
-  RAW = WAW = WAR = NULL;
+  RAW = WAW = WAR = nullptr;
 
   if (OptAnalysisType == VALUE_BASED_ANALYSIS) {
     isl_union_map_compute_flow(
         isl_union_map_copy(Read), isl_union_map_copy(Write),
-        isl_union_map_copy(MayWrite), isl_union_map_copy(Schedule), &RAW, NULL,
-        NULL, NULL);
+        isl_union_map_copy(MayWrite), isl_union_map_copy(Schedule), &RAW,
+        nullptr, nullptr, nullptr);
 
     isl_union_map_compute_flow(
         isl_union_map_copy(Write), isl_union_map_copy(Write),
         isl_union_map_copy(Read), isl_union_map_copy(Schedule), &WAW, &WAR,
-        NULL, NULL);
+        nullptr, nullptr);
   } else {
     isl_union_map *Empty;
 
@@ -137,18 +137,18 @@ void Dependences::calculateDependences(Scop &S) {
 
     isl_union_map_compute_flow(
         isl_union_map_copy(Read), isl_union_map_copy(Empty),
-        isl_union_map_copy(Write), isl_union_map_copy(Schedule), NULL, &RAW,
-        NULL, NULL);
+        isl_union_map_copy(Write), isl_union_map_copy(Schedule), nullptr, &RAW,
+        nullptr, nullptr);
 
     isl_union_map_compute_flow(
         isl_union_map_copy(Write), isl_union_map_copy(Empty),
-        isl_union_map_copy(Read), isl_union_map_copy(Schedule), NULL, &WAR,
-        NULL, NULL);
+        isl_union_map_copy(Read), isl_union_map_copy(Schedule), nullptr, &WAR,
+        nullptr, nullptr);
 
     isl_union_map_compute_flow(
         isl_union_map_copy(Write), isl_union_map_copy(Empty),
-        isl_union_map_copy(Write), isl_union_map_copy(Schedule), NULL, &WAW,
-        NULL, NULL);
+        isl_union_map_copy(Write), isl_union_map_copy(Schedule), nullptr, &WAW,
+        nullptr, nullptr);
     isl_union_map_free(Empty);
   }
 
@@ -165,7 +165,7 @@ void Dependences::calculateDependences(Scop &S) {
     isl_union_map_free(RAW);
     isl_union_map_free(WAW);
     isl_union_map_free(WAR);
-    RAW = WAW = WAR = NULL;
+    RAW = WAW = WAR = nullptr;
     isl_ctx_reset_error(S.getIslCtx());
   }
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_ABORT);
@@ -327,7 +327,7 @@ void Dependences::releaseMemory() {
   isl_union_map_free(WAR);
   isl_union_map_free(WAW);
 
-  RAW = WAR = WAW = NULL;
+  RAW = WAR = WAW = nullptr;
 }
 
 isl_union_map *Dependences::getDependences(int Kinds) {
@@ -350,7 +350,7 @@ isl_union_map *Dependences::getDependences(int Kinds) {
 }
 
 bool Dependences::hasValidDependences() {
-  return (RAW != NULL) && (WAR != NULL) && (WAW != NULL);
+  return (RAW != nullptr) && (WAR != nullptr) && (WAW != nullptr);
 }
 
 void Dependences::getAnalysisUsage(AnalysisUsage &AU) const {

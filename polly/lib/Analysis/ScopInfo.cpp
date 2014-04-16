@@ -187,7 +187,7 @@ __isl_give isl_pw_aff *SCEVAffinator::visitMulExpr(const SCEVMulExpr *Expr) {
     if (!isl_pw_aff_is_cst(Product) && !isl_pw_aff_is_cst(NextOperand)) {
       isl_pw_aff_free(Product);
       isl_pw_aff_free(NextOperand);
-      return NULL;
+      return nullptr;
     }
 
     Product = isl_pw_aff_mul(Product, NextOperand);
@@ -318,7 +318,7 @@ isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
 
 MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
                            ScopStmt *Statement)
-    : Statement(Statement), Inst(AccInst), newAccessRelation(NULL) {
+    : Statement(Statement), Inst(AccInst), newAccessRelation(nullptr) {
 
   BaseAddr = Access.getBase();
   setBaseName();
@@ -513,7 +513,7 @@ void ScopStmt::restrictDomain(__isl_take isl_set *NewDomain) {
 }
 
 void ScopStmt::setScattering(isl_map *NewScattering) {
-  assert(NewScattering && "New scattering is NULL");
+  assert(NewScattering && "New scattering is nullptr");
   isl_map_free(Scattering);
   Scattering = NewScattering;
 }
@@ -801,7 +801,7 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
   ParamIdType::const_iterator IdIter = ParameterIds.find(Parameter);
 
   if (IdIter == ParameterIds.end())
-    return NULL;
+    return nullptr;
 
   std::string ParameterName;
 
@@ -969,7 +969,7 @@ void Scop::dump() const { print(dbgs()); }
 isl_ctx *Scop::getIslCtx() const { return IslCtx; }
 
 __isl_give isl_union_set *Scop::getDomains() {
-  isl_union_set *Domain = NULL;
+  isl_union_set *Domain = nullptr;
 
   for (Scop::iterator SI = begin(), SE = end(); SI != SE; ++SI)
     if (!Domain)

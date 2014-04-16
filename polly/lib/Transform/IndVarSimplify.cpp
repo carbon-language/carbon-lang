@@ -970,7 +970,7 @@ const SCEVAddRecExpr *WidenIV::GetExtendedOperandRecurrence(NarrowIVDefUse DU) {
 /// IVUsers' perspective after widening it's type? In other words, can the
 /// extend be safely hoisted out of the loop with SCEV reducing the value to a
 /// recurrence on the same loop. If so, return the sign or zero extended
-/// recurrence. Otherwise return NULL.
+/// recurrence. Otherwise return nullptr.
 const SCEVAddRecExpr *WidenIV::GetWideRecurrence(Instruction *NarrowUse) {
   if (!SE->isSCEVable(NarrowUse->getType()))
     return 0;
@@ -1110,7 +1110,7 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
   // Is this phi an induction variable?
   const SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(SE->getSCEV(OrigPhi));
   if (!AddRec)
-    return NULL;
+    return nullptr;
 
   // Widen the induction variable expression.
   const SCEV *WideIVExpr = IsSigned ? SE->getSignExtendExpr(AddRec, WideType)
@@ -1122,7 +1122,7 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
   // Can the IV be extended outside the loop without overflow?
   AddRec = dyn_cast<SCEVAddRecExpr>(WideIVExpr);
   if (!AddRec || AddRec->getLoop() != L)
-    return NULL;
+    return nullptr;
 
   // An AddRec must have loop-invariant operands. Since this AddRec is
   // materialized by a loop header phi, the expression cannot have any post-loop

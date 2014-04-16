@@ -83,7 +83,7 @@ namespace {
 class IslScheduleOptimizer : public ScopPass {
 public:
   static char ID;
-  explicit IslScheduleOptimizer() : ScopPass(ID) { LastSchedule = NULL; }
+  explicit IslScheduleOptimizer() : ScopPass(ID) { LastSchedule = nullptr; }
 
   ~IslScheduleOptimizer() { isl_schedule_free(LastSchedule); }
 
@@ -187,7 +187,7 @@ private:
 
   virtual bool doFinalization() {
     isl_schedule_free(LastSchedule);
-    LastSchedule = NULL;
+    LastSchedule = nullptr;
     return true;
   }
 };
@@ -444,7 +444,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
     return false;
 
   isl_schedule_free(LastSchedule);
-  LastSchedule = NULL;
+  LastSchedule = nullptr;
 
   // Build input data.
   int ValidityKinds =

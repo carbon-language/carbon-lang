@@ -129,32 +129,32 @@ void ScopLib::initializeStatements() {
 void ScopLib::freeStatement(scoplib_statement_p stmt) {
   if (stmt->read)
     scoplib_matrix_free(stmt->read);
-  stmt->read = NULL;
+  stmt->read = nullptr;
 
   if (stmt->write)
     scoplib_matrix_free(stmt->write);
-  stmt->write = NULL;
+  stmt->write = nullptr;
 
   scoplib_matrix_list_p current = stmt->domain;
   while (current) {
     scoplib_matrix_list_p next = current->next;
-    current->next = NULL;
+    current->next = nullptr;
     scoplib_matrix_free(current->elt);
-    current->elt = NULL;
+    current->elt = nullptr;
     scoplib_matrix_list_free(current);
     current = next;
   }
-  stmt->domain = NULL;
+  stmt->domain = nullptr;
 
   if (stmt->schedule)
     scoplib_matrix_free(stmt->schedule);
-  stmt->schedule = NULL;
+  stmt->schedule = nullptr;
 
   for (int i = 0; i < stmt->nb_iterators; ++i)
     free(stmt->iterators[i]);
 
   free(stmt->iterators);
-  stmt->iterators = NULL;
+  stmt->iterators = nullptr;
   stmt->nb_iterators = 0;
 
   scoplib_statement_free(stmt);
@@ -473,7 +473,7 @@ ScopLib::~ScopLib() {
     free(scoplib->arrays[i]);
 
   free(scoplib->arrays);
-  scoplib->arrays = NULL;
+  scoplib->arrays = nullptr;
   scoplib->nb_arrays = 0;
 
   // Free parameters
@@ -481,7 +481,7 @@ ScopLib::~ScopLib() {
     free(scoplib->parameters[i]);
 
   free(scoplib->parameters);
-  scoplib->parameters = NULL;
+  scoplib->parameters = nullptr;
   scoplib->nb_parameters = 0;
 
   scoplib_statement_p stmt = scoplib->statement;
@@ -489,12 +489,12 @@ ScopLib::~ScopLib() {
   // Free Statements
   while (stmt) {
     scoplib_statement_p TempStmt = stmt->next;
-    stmt->next = NULL;
+    stmt->next = nullptr;
     freeStatement(stmt);
     stmt = TempStmt;
   }
 
-  scoplib->statement = NULL;
+  scoplib->statement = nullptr;
 
   scoplib_scop_free(scoplib);
 }
@@ -720,7 +720,7 @@ StatementToIslMapTy *readScattering(Scop *S, scoplib_scop_p OScop) {
     if (!stmt) {
       errs() << "Not enough statements available in ScopLib file\n";
       freeStmtToIslMap(&NewScattering);
-      return NULL;
+      return nullptr;
     }
 
     NewScattering[*SI] =
@@ -731,7 +731,7 @@ StatementToIslMapTy *readScattering(Scop *S, scoplib_scop_p OScop) {
   if (stmt) {
     errs() << "Too many statements in ScopLib file\n";
     freeStmtToIslMap(&NewScattering);
-    return NULL;
+    return nullptr;
   }
 
   return &NewScattering;

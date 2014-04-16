@@ -238,16 +238,16 @@ static int containsLoops(__isl_take isl_ast_node *Node, void *User) {
     return 0;
   case isl_ast_node_block: {
     isl_ast_node_list *List = isl_ast_node_block_get_children(Node);
-    int Res = isl_ast_node_list_foreach(List, &containsLoops, NULL);
+    int Res = isl_ast_node_list_foreach(List, &containsLoops, nullptr);
     isl_ast_node_list_free(List);
     isl_ast_node_free(Node);
     return Res;
   }
   case isl_ast_node_if: {
     int Res = -1;
-    if (0 == containsLoops(isl_ast_node_if_get_then(Node), NULL) ||
+    if (0 == containsLoops(isl_ast_node_if_get_then(Node), nullptr) ||
         (isl_ast_node_if_has_else(Node) &&
-         0 == containsLoops(isl_ast_node_if_get_else(Node), NULL)))
+         0 == containsLoops(isl_ast_node_if_get_else(Node), nullptr)))
       Res = 0;
     isl_ast_node_free(Node);
     return Res;
@@ -261,7 +261,7 @@ static int containsLoops(__isl_take isl_ast_node *Node, void *User) {
 
 // Returns true when Node contains loops.
 static bool containsLoops(__isl_take isl_ast_node *Node) {
-  return 0 == containsLoops(Node, NULL);
+  return 0 == containsLoops(Node, nullptr);
 }
 
 // This method is executed after the construction of a for node.
@@ -297,7 +297,7 @@ astBuildAfterFor(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Build,
 static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
                                              __isl_keep isl_ast_build *Context,
                                              void *User) {
-  struct IslAstUser *Info = NULL;
+  struct IslAstUser *Info = nullptr;
   isl_id *Id = isl_ast_node_get_annotation(Node);
 
   if (Id)
@@ -307,7 +307,7 @@ static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
     // Allocate annotations once: parallel for detection might have already
     // allocated the annotations for this node.
     Info = allocateIslAstUser();
-    Id = isl_id_alloc(isl_ast_node_get_ctx(Node), NULL, Info);
+    Id = isl_id_alloc(isl_ast_node_get_ctx(Node), nullptr, Info);
     Id = isl_id_set_free_user(Id, &freeIslAstUser);
   }
 
@@ -361,7 +361,7 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
   else
     Context = isl_ast_build_from_context(isl_set_universe(S->getParamSpace()));
 
-  Context = isl_ast_build_set_at_each_domain(Context, AtEachDomain, NULL);
+  Context = isl_ast_build_set_at_each_domain(Context, AtEachDomain, nullptr);
 
   isl_union_map *Schedule = getSchedule();
 
@@ -418,7 +418,7 @@ void IslAst::pprint(llvm::raw_ostream &OS) {
   isl_ast_print_options *Options;
 
   Options = isl_ast_print_options_alloc(S->getIslCtx());
-  Options = isl_ast_print_options_set_print_for(Options, &printFor, NULL);
+  Options = isl_ast_print_options_set_print_for(Options, &printFor, nullptr);
 
   isl_printer *P = isl_printer_to_str(S->getIslCtx());
   P = isl_printer_set_output_format(P, ISL_FORMAT_C);

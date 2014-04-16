@@ -116,7 +116,7 @@ Value *ClastExpCodeGen::codegen(const clast_name *e, Type *Ty) {
 }
 
 static APInt APInt_from_MPZ(const mpz_t mpz) {
-  uint64_t *p = NULL;
+  uint64_t *p = nullptr;
   size_t sz;
 
   p = (uint64_t *)mpz_export(p, &sz, -1, sizeof(uint64_t), 0, 0, mpz);
@@ -294,8 +294,8 @@ private:
                             std::vector<ValueMapT> *VectorVMap = 0,
                             std::vector<LoopToScevMapT> *VLTS = 0);
 
-  void codegen(const clast_user_stmt *u, std::vector<Value *> *IVS = NULL,
-               const char *iterator = NULL,
+  void codegen(const clast_user_stmt *u, std::vector<Value *> *IVS = nullptr,
+               const char *iterator = nullptr,
                __isl_take isl_set *scatteringDomain = 0);
 
   void codegen(const clast_block *b);
