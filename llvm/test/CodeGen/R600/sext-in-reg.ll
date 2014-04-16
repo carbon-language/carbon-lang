@@ -9,7 +9,9 @@ declare i32 @llvm.AMDGPU.imax(i32, i32) nounwind readnone
 ; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], [[ARG]], 0, 1
 ; SI: BUFFER_STORE_DWORD [[EXTRACT]],
 
-; EG: BFE_INT
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+\.[XYZW]]], [[ADDR:T[0-9]+.[XYZW]]]
+; EG: BFE_INT [[RES]], {{.*}}, 0.0, 1
+; EG-NEXT: LSHR * [[ADDR]]
 define void @sext_in_reg_i1_i32(i32 addrspace(1)* %out, i32 %in) {
   %shl = shl i32 %in, 31
   %sext = ashr i32 %shl, 31
@@ -22,7 +24,10 @@ define void @sext_in_reg_i1_i32(i32 addrspace(1)* %out, i32 %in) {
 ; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], [[VAL]], 0, 8
 ; SI: BUFFER_STORE_DWORD [[EXTRACT]],
 
-; EG: BFE_INT
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+\.[XYZW]]], [[ADDR:T[0-9]+.[XYZW]]]
+; EG: ADD_INT
+; EG-NEXT: BFE_INT [[RES]], {{.*}}, 0.0, literal
+; EG-NEXT: LSHR * [[ADDR]]
 define void @sext_in_reg_i8_to_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   %c = add i32 %a, %b ; add to prevent folding into extload
   %shl = shl i32 %c, 24
@@ -36,7 +41,10 @@ define void @sext_in_reg_i8_to_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounw
 ; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], [[VAL]], 0, 16
 ; SI: BUFFER_STORE_DWORD [[EXTRACT]],
 
-; EG: BFE_INT
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+\.[XYZW]]], [[ADDR:T[0-9]+.[XYZW]]]
+; EG: ADD_INT
+; EG-NEXT: BFE_INT [[RES]], {{.*}}, 0.0, literal
+; EG-NEXT: LSHR * [[ADDR]]
 define void @sext_in_reg_i16_to_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   %c = add i32 %a, %b ; add to prevent folding into extload
   %shl = shl i32 %c, 16
@@ -50,7 +58,10 @@ define void @sext_in_reg_i16_to_i32(i32 addrspace(1)* %out, i32 %a, i32 %b) noun
 ; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], [[VAL]], 0, 8
 ; SI: BUFFER_STORE_DWORD [[EXTRACT]],
 
-; EG: BFE_INT
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+\.[XYZW]]], [[ADDR:T[0-9]+.[XYZW]]]
+; EG: ADD_INT
+; EG-NEXT: BFE_INT [[RES]], {{.*}}, 0.0, literal
+; EG-NEXT: LSHR * [[ADDR]]
 define void @sext_in_reg_i8_to_v1i32(<1 x i32> addrspace(1)* %out, <1 x i32> %a, <1 x i32> %b) nounwind {
   %c = add <1 x i32> %a, %b ; add to prevent folding into extload
   %shl = shl <1 x i32> %c, <i32 24>
@@ -64,8 +75,16 @@ define void @sext_in_reg_i8_to_v1i32(<1 x i32> addrspace(1)* %out, <1 x i32> %a,
 ; SI: V_ASHRREV_I32_e32 {{v[0-9]+}}, 31,
 ; SI: BUFFER_STORE_DWORD
 
-; EG: BFE_INT
-; EG: ASHR
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES_HI:T[0-9]+\.[XYZW]]], [[ADDR_HI:T[0-9]+.[XYZW]]]
+; EG: ADD_INT
+; EG-NEXT: BFE_INT {{\*?}} [[RES_LO]], {{.*}}, 0.0, literal
+; EG: ASHR [[RES_HI]]
+; EG-NOT: BFE_INT
+; EG: LSHR
+; EG: LSHR
+;; TODO Check address computation, using | with variables in {{}} does not work,
+;; also the _LO/_HI order might be different
 define void @sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   %c = add i64 %a, %b
   %shl = shl i64 %c, 56
@@ -79,8 +98,16 @@ define void @sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounw
 ; SI: V_ASHRREV_I32_e32 {{v[0-9]+}}, 31,
 ; SI: BUFFER_STORE_DWORD
 
-; EG: BFE_INT
-; EG: ASHR
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES_HI:T[0-9]+\.[XYZW]]], [[ADDR_HI:T[0-9]+.[XYZW]]]
+; EG: ADD_INT
+; EG-NEXT: BFE_INT {{\*?}} [[RES_LO]], {{.*}}, 0.0, literal
+; EG: ASHR [[RES_HI]]
+; EG-NOT: BFE_INT
+; EG: LSHR
+; EG: LSHR
+;; TODO Check address computation, using | with variables in {{}} does not work,
+;; also the _LO/_HI order might be different
 define void @sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   %c = add i64 %a, %b
   %shl = shl i64 %c, 48
@@ -95,6 +122,17 @@ define void @sext_in_reg_i16_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) noun
 ; SI: S_ADD_I32 [[ADD:s[0-9]+]],
 ; SI: S_ASHR_I32 s{{[0-9]+}}, [[ADD]], 31
 ; SI: BUFFER_STORE_DWORDX2
+
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES_HI:T[0-9]+\.[XYZW]]], [[ADDR_HI:T[0-9]+.[XYZW]]]
+; EG-NOT: BFE_INT
+; EG: ADD_INT {{\*?}} [[RES_LO]]
+; EG: ASHR [[RES_HI]]
+; EG: ADD_INT
+; EG: LSHR
+; EG: LSHR
+;; TODO Check address computation, using | with variables in {{}} does not work,
+;; also the _LO/_HI order might be different
 define void @sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   %c = add i64 %a, %b
   %shl = shl i64 %c, 32
@@ -122,7 +160,13 @@ define void @sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) noun
 ; SI-NOT: BFE
 ; SI: S_LSHL_B32 [[REG:s[0-9]+]], {{s[0-9]+}}, 6
 ; SI: S_ASHR_I32 {{s[0-9]+}}, [[REG]], 7
+
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+\.[XYZW]]], [[ADDR:T[0-9]+.[XYZW]]]
 ; EG-NOT: BFE
+; EG: ADD_INT
+; EG: LSHL
+; EG: ASHR [[RES]]
+; EG: LSHR {{\*?}} [[ADDR]]
 define void @sext_in_reg_i1_in_i32_other_amount(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
   %c = add i32 %a, %b
   %x = shl i32 %c, 6
@@ -136,7 +180,15 @@ define void @sext_in_reg_i1_in_i32_other_amount(i32 addrspace(1)* %out, i32 %a, 
 ; SI: S_ASHR_I32 {{s[0-9]+}}, [[REG0]], 7
 ; SI: S_LSHL_B32 [[REG1:s[0-9]+]], {{s[0-9]}}, 6
 ; SI: S_ASHR_I32 {{s[0-9]+}}, [[REG1]], 7
+
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+]]{{\.[XYZW][XYZW]}}, [[ADDR:T[0-9]+.[XYZW]]]
 ; EG-NOT: BFE
+; EG: ADD_INT
+; EG: LSHL
+; EG: ASHR [[RES]]
+; EG: LSHL
+; EG: ASHR [[RES]]
+; EG: LSHR {{\*?}} [[ADDR]]
 define void @sext_in_reg_v2i1_in_v2i32_other_amount(<2 x i32> addrspace(1)* %out, <2 x i32> %a, <2 x i32> %b) nounwind {
   %c = add <2 x i32> %a, %b
   %x = shl <2 x i32> %c, <i32 6, i32 6>
@@ -150,8 +202,11 @@ define void @sext_in_reg_v2i1_in_v2i32_other_amount(<2 x i32> addrspace(1)* %out
 ; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 1
 ; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 1
 ; SI: BUFFER_STORE_DWORDX2
-; EG: BFE
-; EG: BFE
+
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+]]{{\.[XYZW][XYZW]}}, [[ADDR:T[0-9]+.[XYZW]]]
+; EG: BFE_INT [[RES]]
+; EG: BFE_INT [[RES]]
+; EG: LSHR {{\*?}} [[ADDR]]
 define void @sext_in_reg_v2i1_to_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> %a, <2 x i32> %b) nounwind {
   %c = add <2 x i32> %a, %b ; add to prevent folding into extload
   %shl = shl <2 x i32> %c, <i32 31, i32 31>
@@ -167,10 +222,12 @@ define void @sext_in_reg_v2i1_to_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> %
 ; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 1
 ; SI: BUFFER_STORE_DWORDX4
 
-; EG: BFE
-; EG: BFE
-; EG: BFE
-; EG: BFE
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+]]{{\.[XYZW][XYZW][XYZW][XYZW]}}, [[ADDR:T[0-9]+.[XYZW]]]
+; EG: BFE_INT [[RES]]
+; EG: BFE_INT [[RES]]
+; EG: BFE_INT [[RES]]
+; EG: BFE_INT [[RES]]
+; EG: LSHR {{\*?}} [[ADDR]]
 define void @sext_in_reg_v4i1_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> %a, <4 x i32> %b) nounwind {
   %c = add <4 x i32> %a, %b ; add to prevent folding into extload
   %shl = shl <4 x i32> %c, <i32 31, i32 31, i32 31, i32 31>
@@ -184,8 +241,10 @@ define void @sext_in_reg_v4i1_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> %
 ; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 8
 ; SI: BUFFER_STORE_DWORDX2
 
-; EG: BFE
-; EG: BFE
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+]]{{\.[XYZW][XYZW]}}, [[ADDR:T[0-9]+.[XYZW]]]
+; EG: BFE_INT [[RES]]
+; EG: BFE_INT [[RES]]
+; EG: LSHR {{\*?}} [[ADDR]]
 define void @sext_in_reg_v2i8_to_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> %a, <2 x i32> %b) nounwind {
   %c = add <2 x i32> %a, %b ; add to prevent folding into extload
   %shl = shl <2 x i32> %c, <i32 24, i32 24>
@@ -201,10 +260,12 @@ define void @sext_in_reg_v2i8_to_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> %
 ; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 8
 ; SI: BUFFER_STORE_DWORDX4
 
-; EG: BFE
-; EG: BFE
-; EG: BFE
-; EG: BFE
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+]]{{\.[XYZW][XYZW][XYZW][XYZW]}}, [[ADDR:T[0-9]+.[XYZW]]]
+; EG: BFE_INT [[RES]]
+; EG: BFE_INT [[RES]]
+; EG: BFE_INT [[RES]]
+; EG: BFE_INT [[RES]]
+; EG: LSHR {{\*?}} [[ADDR]]
 define void @sext_in_reg_v4i8_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> %a, <4 x i32> %b) nounwind {
   %c = add <4 x i32> %a, %b ; add to prevent folding into extload
   %shl = shl <4 x i32> %c, <i32 24, i32 24, i32 24, i32 24>
@@ -218,8 +279,10 @@ define void @sext_in_reg_v4i8_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> %
 ; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 8
 ; SI: BUFFER_STORE_DWORDX2
 
-; EG: BFE
-; EG: BFE
+; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+]]{{\.[XYZW][XYZW]}}, [[ADDR:T[0-9]+.[XYZW]]]
+; EG: BFE_INT [[RES]]
+; EG: BFE_INT [[RES]]
+; EG: LSHR {{\*?}} [[ADDR]]
 define void @sext_in_reg_v2i16_to_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> %a, <2 x i32> %b) nounwind {
   %c = add <2 x i32> %a, %b ; add to prevent folding into extload
   %shl = shl <2 x i32> %c, <i32 24, i32 24>
