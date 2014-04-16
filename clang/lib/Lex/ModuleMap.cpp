@@ -1006,8 +1006,6 @@ namespace clang {
     void parseConflict();
     void parseInferredModuleDecl(bool Framework, bool Explicit);
     bool parseOptionalAttributes(Attributes &Attrs);
-
-    const DirectoryEntry *getOverriddenHeaderSearchDir();
     
   public:
     explicit ModuleMapParser(Lexer &L, SourceManager &SourceMgr, 
@@ -1628,10 +1626,6 @@ void ModuleMapParser::parseHeaderDecl(MMToken::TokenKind LeadingToken,
   if (llvm::sys::path::is_absolute(Header.FileName)) {
     PathName = Header.FileName;
     File = SourceMgr.getFileManager().getFile(PathName);
-  } else if (const DirectoryEntry *Dir = getOverriddenHeaderSearchDir()) {
-    PathName = Dir->getName();
-    llvm::sys::path::append(PathName, Header.FileName);
-    File = SourceMgr.getFileManager().getFile(PathName);
   } else {
     // Search for the header file within the search directory.
     PathName = Directory->getName();
@@ -2182,22 +2176,6 @@ bool ModuleMapParser::parseOptionalAttributes(Attributes &Attrs) {
   }
 
   return HadError;
-}
-
-/// \brief If there is a specific header search directory due the presence
-/// of an umbrella directory, retrieve that directory. Otherwise, returns null.
-const DirectoryEntry *ModuleMapParser::getOverriddenHeaderSearchDir() {
-  for (Module *Mod = ActiveModule; Mod; Mod = Mod->Parent) {
-    // If we have an umbrella directory, use that.
-    if (Mod->hasUmbrellaDir())
-      return Mod->getUmbrellaDir();
-    
-    // If we have a framework directory, stop looking.
-    if (Mod->IsFramework)
-      return 0;
-  }
-  
-  return 0;
 }
 
 /// \brief Parse a module map file.
