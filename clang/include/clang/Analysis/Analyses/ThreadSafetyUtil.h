@@ -139,7 +139,7 @@ public:
   }
 
 private:
-  SimpleArray(const SimpleArray<T> &A) { }
+  SimpleArray(const SimpleArray<T> &A) LLVM_DELETED_FUNCTION;
 
   T *Data;
   size_t Size;
@@ -157,7 +157,6 @@ private:
 // The init(), destroy(), and makeWritable() methods will change state.
 template<typename T>
 class CopyOnWriteVector {
-private:
   class VectorData {
   public:
     VectorData() : NumRefs(1) { }
@@ -167,9 +166,10 @@ private:
     std::vector<T> Vect;
   };
 
+  CopyOnWriteVector(const CopyOnWriteVector &V) LLVM_DELETED_FUNCTION;
+
 public:
   CopyOnWriteVector() : Data(0) {}
-  CopyOnWriteVector(const CopyOnWriteVector &V) LLVM_DELETED_FUNCTION;
   CopyOnWriteVector(CopyOnWriteVector &&V) : Data(V.Data) { V.Data = 0; }
   ~CopyOnWriteVector() { destroy(); }
 
