@@ -207,8 +207,8 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   GCModuleInfo *MI = getAnalysisIfAvailable<GCModuleInfo>();
   assert(MI && "AsmPrinter didn't require GCModuleInfo?");
-  for (GCModuleInfo::iterator I = MI->begin(), E = MI->end(); I != E; ++I)
-    if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(**I))
+  for (auto &I : *MI)
+    if (GCMetadataPrinter *MP = GetOrCreateGCPrinter(*I))
       MP->beginAssembly(*this);
 
   // Emit module-level inline asm if it exists.
@@ -368,10 +368,9 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   // sections and expected to be contiguous (e.g. ObjC metadata).
   unsigned AlignLog = getGVAlignmentLog2(GV, *DL);
 
-  for (unsigned I = 0, E = Handlers.size(); I != E; ++I) {
-    const HandlerInfo &OI = Handlers[I];
-    NamedRegionTimer T(OI.TimerName, OI.TimerGroupName, TimePassesIsEnabled);
-    OI.Handler->setSymbolSize(GVSym, Size);
+  for (const HandlerInfo &HI : Handlers) {
+    NamedRegionTimer T(HI.TimerName, HI.TimerGroupName, TimePassesIsEnabled);
+    HI.Handler->setSymbolSize(GVSym, Size);
   }
 
   // Handle common and BSS local symbols (.lcomm).
@@ -543,10 +542,9 @@ void AsmPrinter::EmitFunctionHeader() {
   }
 
   // Emit pre-function debug and/or EH information.
-  for (unsigned I = 0, E = Handlers.size(); I != E; ++I) {
-    const HandlerInfo &OI = Handlers[I];
-    NamedRegionTimer T(OI.TimerName, OI.TimerGroupName, TimePassesIsEnabled);
-    OI.Handler->beginFunction(MF);
+  for (const HandlerInfo &HI : Handlers) {
+    NamedRegionTimer T(HI.TimerName, HI.TimerGroupName, TimePassesIsEnabled);
+    HI.Handler->beginFunction(MF);
   }
 
   // Emit the prefix data.
@@ -745,68 +743,64 @@ void AsmPrinter::EmitFunctionBody() {
   // Print out code for the function.
   bool HasAnyRealCode = false;
   const MachineInstr *LastMI = 0;
-  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
-       I != E; ++I) {
+  for (auto &MBB : *MF) {
     // Print a label for the basic block.
-    EmitBasicBlockStart(I);
-    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
-         II != IE; ++II) {
-      LastMI = II;
+    EmitBasicBlockStart(MBB);
+    for (auto &MI : MBB) {
+      LastMI = &MI;
 
       // Print the assembly for the instruction.
-      if (!II->isPosition() && !II->isImplicitDef() && !II->isKill() &&
-          !II->isDebugValue()) {
+      if (!MI.isPosition() && !MI.isImplicitDef() && !MI.isKill() &&
+          !MI.isDebugValue()) {
         HasAnyRealCode = true;
         ++EmittedInsts;
       }
 
       if (ShouldPrintDebugScopes) {
-        for (unsigned III = 0, EEE = Handlers.size(); III != EEE; ++III) {
-          const HandlerInfo &OI = Handlers[III];
-          NamedRegionTimer T(OI.TimerName, OI.TimerGroupName,
+        for (const HandlerInfo &HI : Handlers) {
+          NamedRegionTimer T(HI.TimerName, HI.TimerGroupName,
                              TimePassesIsEnabled);
-          OI.Handler->beginInstruction(II);
+          HI.Handler->beginInstruction(&MI);
         }
       }
 
       if (isVerbose())
-        emitComments(*II, OutStreamer.GetCommentOS());
+        emitComments(MI, OutStreamer.GetCommentOS());
 
-      switch (II->getOpcode()) {
+      switch (MI.getOpcode()) {
       case TargetOpcode::CFI_INSTRUCTION:
-        emitCFIInstruction(*II);
+        emitCFIInstruction(MI);
         break;
 
       case TargetOpcode::EH_LABEL:
       case TargetOpcode::GC_LABEL:
-        OutStreamer.EmitLabel(II->getOperand(0).getMCSymbol());
+        OutStreamer.EmitLabel(MI.getOperand(0).getMCSymbol());
         break;
       case TargetOpcode::INLINEASM:
-        EmitInlineAsm(II);
+        EmitInlineAsm(&MI);
         break;
       case TargetOpcode::DBG_VALUE:
         if (isVerbose()) {
-          if (!emitDebugValueComment(II, *this))
-            EmitInstruction(II);
+          if (!emitDebugValueComment(&MI, *this))
+            EmitInstruction(&MI);
         }
         break;
       case TargetOpcode::IMPLICIT_DEF:
-        if (isVerbose()) emitImplicitDef(II);
+        if (isVerbose()) emitImplicitDef(&MI);
         break;
       case TargetOpcode::KILL:
-        if (isVerbose()) emitKill(II, *this);
+        if (isVerbose()) emitKill(&MI, *this);
         break;
       default:
-        EmitInstruction(II);
+        EmitInstruction(&MI);
         break;
       }
 
       if (ShouldPrintDebugScopes) {
-        for (unsigned III = 0, EEE = Handlers.size(); III != EEE; ++III) {
-          const HandlerInfo &OI = Handlers[III];
-          NamedRegionTimer T(OI.TimerName, OI.TimerGroupName,
+        for (const HandlerInfo &HI : Handlers) {
+          NamedRegionTimer T(HI.TimerName, HI.TimerGroupName,
                              TimePassesIsEnabled);
-          OI.Handler->endInstruction();
+          HI.Handler->endInstruction();
         }
       }
     }
@@ -833,11 +827,10 @@ void AsmPrinter::EmitFunctionBody() {
   }
 
   const Function *F = MF->getFunction();
-  for (Function::const_iterator i = F->begin(), e = F->end(); i != e; ++i) {
-    const BasicBlock *BB = i;
-    if (!BB->hasAddressTaken())
+  for (const auto &BB : *F) {
+    if (!BB.hasAddressTaken())
       continue;
-    MCSymbol *Sym = GetBlockAddressSymbol(BB);
+    MCSymbol *Sym = GetBlockAddressSymbol(&BB);
     if (Sym->isDefined())
       continue;
     OutStreamer.AddComment("Address of block that was removed by CodeGen");
@@ -864,10 +857,9 @@ void AsmPrinter::EmitFunctionBody() {
   }
 
   // Emit post-function debug and/or EH information.
-  for (unsigned I = 0, E = Handlers.size(); I != E; ++I) {
-    const HandlerInfo &OI = Handlers[I];
-    NamedRegionTimer T(OI.TimerName, OI.TimerGroupName, TimePassesIsEnabled);
-    OI.Handler->endFunction(MF);
+  for (const HandlerInfo &HI : Handlers) {
+    NamedRegionTimer T(HI.TimerName, HI.TimerGroupName, TimePassesIsEnabled);
+    HI.Handler->endFunction(MF);
   }
   MMI->EndFunction();
 
@@ -879,13 +871,11 @@ void AsmPrinter::EmitFunctionBody() {
 
 bool AsmPrinter::doFinalization(Module &M) {
   // Emit global variables.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    EmitGlobalVariable(I);
+  for (const auto &G : M.globals())
+    EmitGlobalVariable(&G);
 
   // Emit visibility info for declarations
-  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    const Function &F = *I;
+  for (const Function &F : M) {
     if (!F.isDeclaration())
       continue;
     GlobalValue::VisibilityTypes V = F.getVisibility();
@@ -906,12 +896,11 @@ bool AsmPrinter::doFinalization(Module &M) {
   OutStreamer.Flush();
 
   // Finalize debug and EH information.
-  for (unsigned I = 0, E = Handlers.size(); I != E; ++I) {
-    const HandlerInfo &OI = Handlers[I];
-    NamedRegionTimer T(OI.TimerName, OI.TimerGroupName,
+  for (const HandlerInfo &HI : Handlers) {
+    NamedRegionTimer T(HI.TimerName, HI.TimerGroupName,
                        TimePassesIsEnabled);
-    OI.Handler->endModule();
-    delete OI.Handler;
+    HI.Handler->endModule();
+    delete HI.Handler;
   }
   Handlers.clear();
   DD = 0;
@@ -924,36 +913,36 @@ bool AsmPrinter::doFinalization(Module &M) {
     // happen with the MC stuff eventually.
 
     // Print out module-level global variables here.
-    for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-         I != E; ++I) {
-      if (!I->hasExternalWeakLinkage()) continue;
-      OutStreamer.EmitSymbolAttribute(getSymbol(I), MCSA_WeakReference);
+    for (const auto &G : M.globals()) {
+      if (!G.hasExternalWeakLinkage())
+        continue;
+      OutStreamer.EmitSymbolAttribute(getSymbol(&G), MCSA_WeakReference);
     }
 
-    for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
-      if (!I->hasExternalWeakLinkage()) continue;
-      OutStreamer.EmitSymbolAttribute(getSymbol(I), MCSA_WeakReference);
+    for (const auto &F : M) {
+      if (!F.hasExternalWeakLinkage())
+        continue;
+      OutStreamer.EmitSymbolAttribute(getSymbol(&F), MCSA_WeakReference);
     }
   }
 
   if (MAI->hasSetDirective()) {
     OutStreamer.AddBlankLine();
-    for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
-         I != E; ++I) {
-      MCSymbol *Name = getSymbol(I);
+    for (const auto &Alias : M.aliases()) {
+      MCSymbol *Name = getSymbol(&Alias);
 
-      const GlobalValue *GV = I->getAliasedGlobal();
+      const GlobalValue *GV = Alias.getAliasedGlobal();
       assert(!GV->isDeclaration());
       MCSymbol *Target = getSymbol(GV);
 
-      if (I->hasExternalLinkage() || !MAI->getWeakRefDirective())
+      if (Alias.hasExternalLinkage() || !MAI->getWeakRefDirective())
         OutStreamer.EmitSymbolAttribute(Name, MCSA_Global);
-      else if (I->hasWeakLinkage() || I->hasLinkOnceLinkage())
+      else if (Alias.hasWeakLinkage() || Alias.hasLinkOnceLinkage())
         OutStreamer.EmitSymbolAttribute(Name, MCSA_WeakReference);
       else
-        assert(I->hasLocalLinkage() && "Invalid alias linkage");
+        assert(Alias.hasLocalLinkage() && "Invalid alias linkage");
 
-      EmitVisibility(Name, I->getVisibility());
+      EmitVisibility(Name, Alias.getVisibility());
 
       // Emit the directives as assignments aka .set:
       OutStreamer.EmitAssignment(Name,
@@ -2067,12 +2056,12 @@ static void PrintParentLoopComment(raw_ostream &OS, const MachineLoop *Loop,
 static void PrintChildLoopComment(raw_ostream &OS, const MachineLoop *Loop,
                                   unsigned FunctionNumber) {
   // Add child loop information
-  for (MachineLoop::iterator CL = Loop->begin(), E = Loop->end();CL != E; ++CL){
-    OS.indent((*CL)->getLoopDepth()*2)
+  for (const MachineLoop *CL : *Loop) {
+    OS.indent(CL->getLoopDepth()*2)
       << "Child Loop BB" << FunctionNumber << "_"
-      << (*CL)->getHeader()->getNumber() << " Depth " << (*CL)->getLoopDepth()
+      << CL->getHeader()->getNumber() << " Depth " << CL->getLoopDepth()
       << '\n';
-    PrintChildLoopComment(OS, *CL, FunctionNumber);
+    PrintChildLoopComment(OS, CL, FunctionNumber);
   }
 }
 
@@ -2118,42 +2107,41 @@ static void emitBasicBlockLoopComments(const MachineBasicBlock &MBB,
 /// EmitBasicBlockStart - This method prints the label for the specified
 /// MachineBasicBlock, an alignment (if present) and a comment describing
 /// it if appropriate.
-void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock *MBB) const {
+void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock &MBB) const {
   // Emit an alignment directive for this block, if needed.
-  if (unsigned Align = MBB->getAlignment())
+  if (unsigned Align = MBB.getAlignment())
     EmitAlignment(Align);
 
   // If the block has its address taken, emit any labels that were used to
   // reference the block.  It is possible that there is more than one label
   // here, because multiple LLVM BB's may have been RAUW'd to this block after
   // the references were generated.
-  if (MBB->hasAddressTaken()) {
-    const BasicBlock *BB = MBB->getBasicBlock();
+  if (MBB.hasAddressTaken()) {
+    const BasicBlock *BB = MBB.getBasicBlock();
     if (isVerbose())
       OutStreamer.AddComment("Block address taken");
 
-    std::vector<MCSymbol*> Syms = MMI->getAddrLabelSymbolToEmit(BB);
-
-    for (unsigned i = 0, e = Syms.size(); i != e; ++i)
-      OutStreamer.EmitLabel(Syms[i]);
+    std::vector<MCSymbol*> Symbols = MMI->getAddrLabelSymbolToEmit(BB);
+    for (auto *Sym : Symbols)
+      OutStreamer.EmitLabel(Sym);
   }
 
   // Print some verbose block comments.
   if (isVerbose()) {
-    if (const BasicBlock *BB = MBB->getBasicBlock())
+    if (const BasicBlock *BB = MBB.getBasicBlock())
       if (BB->hasName())
         OutStreamer.AddComment("%" + BB->getName());
-    emitBasicBlockLoopComments(*MBB, LI, *this);
+    emitBasicBlockLoopComments(MBB, LI, *this);
   }
 
   // Print the main label for the block.
-  if (MBB->pred_empty() || isBlockOnlyReachableByFallthrough(MBB)) {
+  if (MBB.pred_empty() || isBlockOnlyReachableByFallthrough(&MBB)) {
     if (isVerbose()) {
       // NOTE: Want this comment at start of line, don't emit with AddComment.
-      OutStreamer.emitRawComment(" BB#" + Twine(MBB->getNumber()) + ":", false);
+      OutStreamer.emitRawComment(" BB#" + Twine(MBB.getNumber()) + ":", false);
     }
   } else {
-    OutStreamer.EmitLabel(MBB->getSymbol());
+    OutStreamer.EmitLabel(MBB.getSymbol());
   }
 }
 
@@ -2189,14 +2177,11 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
     return false;
 
   // If there isn't exactly one predecessor, it can't be a fall through.
-  MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(), PI2 = PI;
-  ++PI2;
-  if (PI2 != MBB->pred_end())
+  if (MBB->pred_size() > 1)
     return false;
 
   // The predecessor has to be immediately before this block.
-  MachineBasicBlock *Pred = *PI;
-
+  MachineBasicBlock *Pred = *MBB->pred_begin();
   if (!Pred->isLayoutSuccessor(MBB))
     return false;
 
@@ -2205,10 +2190,7 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
     return true;
 
   // Check the terminators in the previous blocks
-  for (MachineBasicBlock::iterator II = Pred->getFirstTerminator(),
-         IE = Pred->end(); II != IE; ++II) {
-    MachineInstr &MI = *II;
-
+  for (const auto &MI : Pred->terminators()) {
     // If it is not a simple branch, we are in a table somewhere.
     if (!MI.isBranch() || MI.isIndirectBranch())
       return false;

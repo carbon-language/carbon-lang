@@ -252,7 +252,7 @@ namespace llvm {
     /// EmitBasicBlockStart - This method prints the label for the specified
     /// MachineBasicBlock, an alignment (if present) and a comment describing
     /// it if appropriate.
-    void EmitBasicBlockStart(const MachineBasicBlock *MBB) const;
+    void EmitBasicBlockStart(const MachineBasicBlock &MBB) const;
 
     /// \brief Print a general LLVM constant to the .s file.
     void EmitGlobalConstant(const Constant *CV);
