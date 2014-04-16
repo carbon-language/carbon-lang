@@ -492,8 +492,9 @@ static void printReachingDef(const InstrToInstrs *ColorOpToReachedUses,
       DEBUG(dbgs() << "Def:\n");
       DEBUG(DefsIt.first->print(dbgs()));
       DEBUG(dbgs() << "Reachable uses:\n");
-      for (const MachineInstr *MI : DefsIt.second)
+      for (const MachineInstr *MI : DefsIt.second) {
         DEBUG(MI->print(dbgs()));
+      }
     }
   }
 }
