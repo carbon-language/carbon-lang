@@ -266,8 +266,7 @@ void WinCOFFStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
 }
 
 void WinCOFFStreamer::EmitFileDirective(StringRef Filename) {
-  // Ignore for now, linkers don't care, and proper debug
-  // info will be a much large effort.
+  getAssembler().addFileName(Filename);
 }
 
 // TODO: Implement this if you want to emit .comment section in COFF obj files.
