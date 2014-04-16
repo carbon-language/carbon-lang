@@ -620,10 +620,17 @@ printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
 void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // TODO: Need to add -mabicalls and -mno-abicalls flags.
   // Currently we assume that -mabicalls is the default.
-  getTargetStreamer().emitDirectiveAbiCalls();
-  Reloc::Model RM = Subtarget->getRelocationModel();
-  if (RM == Reloc::Static && !Subtarget->hasMips64())
-    getTargetStreamer().emitDirectiveOptionPic0();
+  bool IsABICalls = true;
+  if (IsABICalls) {
+    getTargetStreamer().emitDirectiveAbiCalls();
+    Reloc::Model RM = Subtarget->getRelocationModel();
+    // FIXME: This condition should be a lot more complicated that it is here.
+    //        Ideally it should test for properties of the ABI and not the ABI
+    //        itself.
+    //        For the moment, I'm only correcting enough to make MIPS-IV work.
+    if (RM == Reloc::Static && !Subtarget->isABI_N64())
+      getTargetStreamer().emitDirectiveOptionPic0();
+  }
 
   // Tell the assembler which ABI we are using
   std::string SectionName = std::string(".mdebug.") + getCurrentABIString();
