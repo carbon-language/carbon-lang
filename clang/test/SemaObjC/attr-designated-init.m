@@ -142,12 +142,6 @@ __attribute__((objc_root_class))
   return [super initB3];
 }
 -(void)meth {}
--(id)initS1 {
-  return 0;
-}
--(id)initS2 {
-  return [super initB1];
-}
 @end
 
 @interface S6 : B1
@@ -272,7 +266,8 @@ __attribute__((objc_root_class))
 // rdar://16323233
 __attribute__((objc_root_class))
 @interface B4 
--(id)initB4 NS_DESIGNATED_INITIALIZER; 
+-(id)initB4 NS_DESIGNATED_INITIALIZER; // expected-note 4 {{method marked as designated initializer of the class here}}
+-(id)initNonDI;
 @end
 
 @interface rdar16323233 : B4
@@ -289,5 +284,87 @@ __attribute__((objc_root_class))
 }
 -(id)initB4 {
    return [self initS4];
+}
+@end
+
+@interface S1B4 : B4
+@end
+@implementation S1B4
+-(id)initB4 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
+   return [super initNonDI]; // expected-warning {{designated initializer invoked a non-designated initializer}}
+}
+@end
+
+@interface S2B4 : B4
+-(id)initB4;
+@end
+@implementation S2B4
+-(id)initB4 { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
+   return [super initNonDI]; // expected-warning {{designated initializer invoked a non-designated initializer}}
+}
+@end
+
+@interface S3B4 : B4
+@end
+@implementation S3B4
+-(id)initNew {
+  return [super initB4];
+}
+-(id)initB4 {
+   return [self initNew];
+}
+@end
+
+@interface S4B4 : B4
+-(id)initNew;
+@end
+@implementation S4B4
+-(id)initNew {
+  return [super initB4];
+}
+-(id)initB4 {
+   return [self initNew];
+}
+@end
+
+@interface S5B4 : B4
+-(id)initB4;
+@end
+@implementation S5B4
+-(id)initNew {
+  return [super initB4];
+}
+-(id)initB4 {
+   return [self initNew];
+}
+@end
+
+@interface S6B4 : B4
+-(id)initNew;
+-(id)initB4;
+@end
+@implementation S6B4
+-(id)initNew {
+  return [super initB4];
+}
+-(id)initB4 {
+   return [self initNew];
+}
+@end
+
+__attribute__((objc_root_class))
+@interface NSObject
+-(instancetype) init NS_DESIGNATED_INITIALIZER;
+@end
+
+@interface Test3 : NSObject
+@end
+
+@implementation Test3
+-(instancetype) initWithBasePath:(id)path {
+  return [super init];
+}
+-(instancetype) init {
+  return [self initWithBasePath:0];
 }
 @end
