@@ -245,8 +245,8 @@ def CSR_O32 : CalleeSavedRegs<(add (sequence "D%u", 15, 10), RA, FP,
 def CSR_O32_FP64 : CalleeSavedRegs<(add (sequence "D%u_64", 31, 20), RA, FP,
                                         (sequence "S%u", 7, 0))>;
 
-def CSR_N32 : CalleeSavedRegs<(add D31_64, D29_64, D27_64, D25_64, D24_64,
-                                   D23_64, D22_64, D21_64, RA_64, FP_64, GP_64,
+def CSR_N32 : CalleeSavedRegs<(add D20_64, D22_64, D24_64, D26_64, D28_64,
+                                   D30_64, RA_64, FP_64, GP_64,
                                    (sequence "S%u_64", 7, 0))>;
 
 def CSR_N64 : CalleeSavedRegs<(add (sequence "D%u_64", 31, 24), RA_64, FP_64,

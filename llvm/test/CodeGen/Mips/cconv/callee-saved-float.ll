@@ -8,11 +8,10 @@
 ; RUN-TODO: llc -march=mips64 -mattr=-n64,+o32 < %s | FileCheck --check-prefix=ALL --check-prefix=ALL-INV --check-prefix=O32-INV %s
 ; RUN-TODO: llc -march=mips64el -mattr=-n64,+o32 < %s | FileCheck --check-prefix=ALL --check-prefix=ALL-INV --check-prefix=O32-INV %s
 
-; N32 should match O32 but currently matches N64
-; RUN-TODO: llc -march=mips64 -mattr=-n64,+n32 < %s | FileCheck --check-prefix=ALL --check-prefix=N32 %s
-; RUN-TODO: llc -march=mips64el -mattr=-n64,+n32 < %s | FileCheck --check-prefix=ALL --check-prefix=N32 %s
-; RUN-TODO: llc -march=mips64 -mattr=-n64,+n32 < %s | FileCheck --check-prefix=ALL --check-prefix=ALL-INV --check-prefix=N32-INV %s
-; RUN-TODO: llc -march=mips64el -mattr=-n64,+n32 < %s | FileCheck --check-prefix=ALL --check-prefix=ALL-INV --check-prefix=N32-INV %s
+; RUN: llc -march=mips64 -mattr=-n64,+n32 < %s | FileCheck --check-prefix=ALL --check-prefix=N32 %s
+; RUN: llc -march=mips64el -mattr=-n64,+n32 < %s | FileCheck --check-prefix=ALL --check-prefix=N32 %s
+; RUN: llc -march=mips64 -mattr=-n64,+n32 < %s | FileCheck --check-prefix=ALL --check-prefix=ALL-INV --check-prefix=N32-INV %s
+; RUN: llc -march=mips64el -mattr=-n64,+n32 < %s | FileCheck --check-prefix=ALL --check-prefix=ALL-INV --check-prefix=N32-INV %s
 
 ; RUN: llc -march=mips64 -mattr=-n64,+n64 < %s | FileCheck --check-prefix=ALL --check-prefix=N64 %s
 ; RUN: llc -march=mips64el -mattr=-n64,+n64 < %s | FileCheck --check-prefix=ALL --check-prefix=N64 %s
