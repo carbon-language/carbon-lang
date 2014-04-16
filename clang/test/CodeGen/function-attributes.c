@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm -Os -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple i386-unknown-unknown -emit-llvm -Os -std=c99 -o - %s | FileCheck %s
 // CHECK: define signext i8 @f0(i32 %x) [[NUW:#[0-9]+]]
 // CHECK: define zeroext i8 @f1(i32 %x) [[NUW]]
 // CHECK: define void @f2(i8 signext %x) [[NUW]]
@@ -115,6 +116,16 @@ typedef int jmp_buf[((9 * 2) + 3 + 16)];
 int setjmp(jmp_buf);
 void f19(void) {
   setjmp(0);
+}
+
+// CHECK-LABEL: define void @f20()
+// CHECK: {
+// CHECK: call i32 @_setjmp(i32* null)
+// CHECK: [[RT_CALL]]
+// CHECK: ret void
+int _setjmp(jmp_buf);
+void f20(void) {
+  _setjmp(0);
 }
 
 // CHECK: attributes [[NUW]] = { nounwind optsize readnone{{.*}} }

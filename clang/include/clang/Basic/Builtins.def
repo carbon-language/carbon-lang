@@ -740,6 +740,9 @@ LIBBUILTIN(setjmp, "iJ",          "fj",    "setjmp.h", ALL_LANGUAGES)
 LIBBUILTIN(longjmp, "vJi",        "fr",    "setjmp.h", ALL_LANGUAGES)
 
 // Non-C library functions, active in GNU mode only.
+// Functions with (returns_twice) attribute (marked as "j") are still active in
+// all languages, because losing this attribute would result in miscompilation
+// when these functions are used in non-GNU mode. PR16138.
 LIBBUILTIN(alloca, "v*z",         "f",     "stdlib.h", ALL_GNU_LANGUAGES)
 // POSIX string.h
 LIBBUILTIN(stpcpy, "c*c*cC*",     "f",     "string.h", ALL_GNU_LANGUAGES)
@@ -758,16 +761,16 @@ LIBBUILTIN(strcasecmp, "icC*cC*", "f",     "strings.h", ALL_GNU_LANGUAGES)
 LIBBUILTIN(strncasecmp, "icC*cC*z", "f",   "strings.h", ALL_GNU_LANGUAGES)
 // POSIX unistd.h
 LIBBUILTIN(_exit, "vi",           "fr",    "unistd.h", ALL_GNU_LANGUAGES)
-LIBBUILTIN(vfork, "p",            "fj",    "unistd.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(vfork, "p",            "fj",    "unistd.h", ALL_LANGUAGES)
 // POSIX setjmp.h
 
-LIBBUILTIN(_setjmp, "iJ",         "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
-LIBBUILTIN(__sigsetjmp, "iSJi",   "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
-LIBBUILTIN(sigsetjmp, "iSJi",     "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
-LIBBUILTIN(setjmp_syscall, "iJ",  "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
-LIBBUILTIN(savectx, "iJ",         "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
-LIBBUILTIN(qsetjmp, "iJ",         "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
-LIBBUILTIN(getcontext, "iK*",     "fj",   "setjmp.h", ALL_GNU_LANGUAGES)
+LIBBUILTIN(_setjmp, "iJ",         "fj",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(__sigsetjmp, "iSJi",   "fj",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(sigsetjmp, "iSJi",     "fj",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(setjmp_syscall, "iJ",  "fj",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(savectx, "iJ",         "fj",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(qsetjmp, "iJ",         "fj",   "setjmp.h", ALL_LANGUAGES)
+LIBBUILTIN(getcontext, "iK*",     "fj",   "setjmp.h", ALL_LANGUAGES)
 
 LIBBUILTIN(_longjmp, "vJi",       "fr",    "setjmp.h", ALL_GNU_LANGUAGES)
 LIBBUILTIN(siglongjmp, "vSJi",    "fr",    "setjmp.h", ALL_GNU_LANGUAGES)
