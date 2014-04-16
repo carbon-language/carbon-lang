@@ -302,18 +302,6 @@ MacosVersion GetMacosVersion() {
   return result;
 }
 
-int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
-    void *abstime), void *c, void *m, void *abstime,
-    void(*cleanup)(void *arg), void *arg) {
-  // pthread_cleanup_push/pop are hardcore macros mess.
-  // We can't intercept nor call them w/o including pthread.h.
-  int res;
-  pthread_cleanup_push(cleanup, arg);
-  res = fn(c, m, abstime);
-  pthread_cleanup_pop(0);
-  return res;
-}
-
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_MAC

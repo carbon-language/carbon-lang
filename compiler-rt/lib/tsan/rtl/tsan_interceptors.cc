@@ -213,6 +213,7 @@ ScopedInterceptor::~ScopedInterceptor() {
 
 #define TSAN_INTERCEPTOR(ret, func, ...) INTERCEPTOR(ret, func, __VA_ARGS__)
 #define TSAN_INTERCEPT(func) INTERCEPT_FUNCTION(func)
+#define TSAN_INTERCEPT_VER(func, ver) INTERCEPT_FUNCTION_VER(func, ver)
 
 #define BLOCK_REAL(name) (BlockingCall(thr), REAL(name))
 
@@ -911,6 +912,122 @@ TSAN_INTERCEPTOR(int, pthread_detach, void *th) {
   int res = REAL(pthread_detach)(th);
   if (res == 0) {
     ThreadDetach(thr, pc, tid);
+  }
+  return res;
+}
+
+// Problem:
+// NPTL implementation of pthread_cond has 2 versions (2.2.5 and 2.3.2).
+// pthread_cond_t has different size in the different versions.
+// If call new REAL functions for old pthread_cond_t, they will corrupt memory
+// after pthread_cond_t (old cond is smaller).
+// If we call old REAL functions for new pthread_cond_t, we will lose  some
+// functionality (e.g. old functions do not support waiting against
+// CLOCK_REALTIME).
+// Proper handling would require to have 2 versions of interceptors as well.
+// But this is messy, in particular requires linker scripts when sanitizer
+// runtime is linked into a shared library.
+// Instead we assume we don't have dynamic libraries built against old
+// pthread (2.2.5 is dated by 2002). And provide legacy_pthread_cond flag
+// that allows to work with old libraries (but this mode does not support
+// some features, e.g. pthread_condattr_getpshared).
+static void *init_cond(void *c, bool force = false) {
+  // sizeof(pthread_cond_t) >= sizeof(uptr) in both versions.
+  // So we allocate additional memory on the side large enough to hold
+  // any pthread_cond_t object. Always call new REAL functions, but pass
+  // the aux object to them.
+  // Note: the code assumes that PTHREAD_COND_INITIALIZER initializes
+  // first word of pthread_cond_t to zero.
+  // It's all relevant only for linux.
+  if (!common_flags()->legacy_pthread_cond)
+    return c;
+  atomic_uintptr_t *p = (atomic_uintptr_t*)c;
+  uptr cond = atomic_load(p, memory_order_acquire);
+  if (!force && cond != 0)
+    return (void*)cond;
+  void *newcond = WRAP(malloc)(pthread_cond_t_sz);
+  internal_memset(newcond, 0, pthread_cond_t_sz);
+  if (atomic_compare_exchange_strong(p, &cond, (uptr)newcond,
+      memory_order_acq_rel))
+    return newcond;
+  WRAP(free)(newcond);
+  return (void*)cond;
+}
+
+struct CondMutexUnlockCtx {
+  ThreadState *thr;
+  uptr pc;
+  void *m;
+};
+
+static void cond_mutex_unlock(CondMutexUnlockCtx *arg) {
+  MutexLock(arg->thr, arg->pc, (uptr)arg->m);
+}
+
+INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
+  void *cond = init_cond(c, true);
+  SCOPED_TSAN_INTERCEPTOR(pthread_cond_init, cond, a);
+  MemoryAccessRange(thr, pc, (uptr)c, sizeof(uptr), true);
+  return REAL(pthread_cond_init)(cond, a);
+}
+
+INTERCEPTOR(int, pthread_cond_wait, void *c, void *m) {
+  void *cond = init_cond(c);
+  SCOPED_TSAN_INTERCEPTOR(pthread_cond_wait, cond, m);
+  MutexUnlock(thr, pc, (uptr)m);
+  MemoryAccessRange(thr, pc, (uptr)c, sizeof(uptr), false);
+  CondMutexUnlockCtx arg = {thr, pc, m};
+  // This ensures that we handle mutex lock even in case of pthread_cancel.
+  // See test/tsan/cond_cancel.cc.
+  int res = call_pthread_cancel_with_cleanup(
+      (int(*)(void *c, void *m, void *abstime))REAL(pthread_cond_wait),
+      cond, m, 0, (void(*)(void *arg))cond_mutex_unlock, &arg);
+  if (res == errno_EOWNERDEAD)
+    MutexRepair(thr, pc, (uptr)m);
+  MutexLock(thr, pc, (uptr)m);
+  return res;
+}
+
+INTERCEPTOR(int, pthread_cond_timedwait, void *c, void *m, void *abstime) {
+  void *cond = init_cond(c);
+  SCOPED_TSAN_INTERCEPTOR(pthread_cond_timedwait, cond, m, abstime);
+  MutexUnlock(thr, pc, (uptr)m);
+  MemoryAccessRange(thr, pc, (uptr)c, sizeof(uptr), false);
+  CondMutexUnlockCtx arg = {thr, pc, m};
+  // This ensures that we handle mutex lock even in case of pthread_cancel.
+  // See test/tsan/cond_cancel.cc.
+  int res = call_pthread_cancel_with_cleanup(
+      REAL(pthread_cond_timedwait), cond, m, abstime,
+      (void(*)(void *arg))cond_mutex_unlock, &arg);
+  if (res == errno_EOWNERDEAD)
+    MutexRepair(thr, pc, (uptr)m);
+  MutexLock(thr, pc, (uptr)m);
+  return res;
+}
+
+INTERCEPTOR(int, pthread_cond_signal, void *c) {
+  void *cond = init_cond(c);
+  SCOPED_TSAN_INTERCEPTOR(pthread_cond_signal, cond);
+  MemoryAccessRange(thr, pc, (uptr)c, sizeof(uptr), false);
+  return REAL(pthread_cond_signal)(cond);
+}
+
+INTERCEPTOR(int, pthread_cond_broadcast, void *c) {
+  void *cond = init_cond(c);
+  SCOPED_TSAN_INTERCEPTOR(pthread_cond_broadcast, cond);
+  MemoryAccessRange(thr, pc, (uptr)c, sizeof(uptr), false);
+  return REAL(pthread_cond_broadcast)(cond);
+}
+
+INTERCEPTOR(int, pthread_cond_destroy, void *c) {
+  void *cond = init_cond(c);
+  SCOPED_TSAN_INTERCEPTOR(pthread_cond_destroy, cond);
+  MemoryAccessRange(thr, pc, (uptr)c, sizeof(uptr), true);
+  int res = REAL(pthread_cond_destroy)(cond);
+  if (common_flags()->legacy_pthread_cond) {
+    // Free our aux cond and zero the pointer to not leave dangling pointers.
+    WRAP(free)(cond);
+    atomic_store((atomic_uintptr_t*)c, 0, memory_order_relaxed);
   }
   return res;
 }
@@ -2208,6 +2325,13 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pthread_create);
   TSAN_INTERCEPT(pthread_join);
   TSAN_INTERCEPT(pthread_detach);
+
+  TSAN_INTERCEPT_VER(pthread_cond_init, "GLIBC_2.3.2");
+  TSAN_INTERCEPT_VER(pthread_cond_signal, "GLIBC_2.3.2");
+  TSAN_INTERCEPT_VER(pthread_cond_broadcast, "GLIBC_2.3.2");
+  TSAN_INTERCEPT_VER(pthread_cond_wait, "GLIBC_2.3.2");
+  TSAN_INTERCEPT_VER(pthread_cond_timedwait, "GLIBC_2.3.2");
+  TSAN_INTERCEPT_VER(pthread_cond_destroy, "GLIBC_2.3.2");
 
   TSAN_INTERCEPT(pthread_mutex_init);
   TSAN_INTERCEPT(pthread_mutex_destroy);

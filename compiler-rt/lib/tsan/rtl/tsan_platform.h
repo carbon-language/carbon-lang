@@ -165,6 +165,10 @@ bool IsGlobalVar(uptr addr);
 int ExtractResolvFDs(void *state, int *fds, int nfd);
 int ExtractRecvmsgFDs(void *msg, int *fds, int nfd);
 
+int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
+    void *abstime), void *c, void *m, void *abstime,
+    void(*cleanup)(void *arg), void *arg);
+
 }  // namespace __tsan
 
 #else  // defined(__LP64__) || defined(_WIN64)
