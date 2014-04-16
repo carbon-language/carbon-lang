@@ -148,6 +148,16 @@ static cl::opt<unsigned> ClRealignStack("asan-realign-stack",
 static cl::opt<std::string> ClBlacklistFile("asan-blacklist",
        cl::desc("File containing the list of objects to ignore "
                 "during instrumentation"), cl::Hidden);
+static cl::opt<int> ClInstrumentationWithCallsThreshold(
+    "asan-instrumentation-with-call-threshold",
+       cl::desc("If the function being instrumented contains more than "
+                "this number of memory accesses, use callbacks instead of "
+                "inline checks (-1 means never use callbacks)."),
+       cl::Hidden, cl::init(-1));
+static cl::opt<std::string> ClMemoryAccessCallbackPrefix(
+       "asan-memory-access-callback-prefix",
+       cl::desc("Prefix for memory access callbacks"), cl::Hidden,
+       cl::init("__asan_"));
 
 // This is an experimental feature that will allow to choose between
 // instrumented and non-instrumented code at link-time.
@@ -303,20 +313,20 @@ struct AddressSanitizer : public FunctionPass {
   const char *getPassName() const override {
     return "AddressSanitizerFunctionPass";
   }
-  void instrumentMop(Instruction *I);
+  void instrumentMop(Instruction *I, bool UseCalls);
   void instrumentPointerComparisonOrSubtraction(Instruction *I);
   void instrumentAddress(Instruction *OrigIns, Instruction *InsertBefore,
                          Value *Addr, uint32_t TypeSize, bool IsWrite,
-                         Value *SizeArgument);
+                         Value *SizeArgument, bool UseCalls);
   Value *createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
                            Value *ShadowValue, uint32_t TypeSize);
   Instruction *generateCrashCode(Instruction *InsertBefore, Value *Addr,
                                  bool IsWrite, size_t AccessSizeIndex,
                                  Value *SizeArgument);
-  bool instrumentMemIntrinsic(MemIntrinsic *MI);
+  bool instrumentMemIntrinsic(MemIntrinsic *MI, bool UseCalls);
   void instrumentMemIntrinsicParam(Instruction *OrigIns, Value *Addr,
-                                   Value *Size,
-                                   Instruction *InsertBefore, bool IsWrite);
+                                   Value *Size, Instruction *InsertBefore,
+                                   bool IsWrite, bool UseCalls);
   Value *memToShadow(Value *Shadow, IRBuilder<> &IRB);
   bool runOnFunction(Function &F) override;
   bool maybeInsertAsanInitAtFunctionEntry(Function &F);
@@ -349,6 +359,7 @@ struct AddressSanitizer : public FunctionPass {
   std::unique_ptr<SpecialCaseList> BL;
   // This array is indexed by AccessIsWrite and log2(AccessSize).
   Function *AsanErrorCallback[2][kNumberOfAccessSizes];
+  Function *AsanMemoryAccessCallback[2][kNumberOfAccessSizes];
   // This array is indexed by AccessIsWrite.
   Function *AsanErrorCallbackSized[2];
   InlineAsm *EmptyAsm;
@@ -588,24 +599,27 @@ Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
     return IRB.CreateAdd(Shadow, ConstantInt::get(IntptrTy, Mapping.Offset));
 }
 
-void AddressSanitizer::instrumentMemIntrinsicParam(
-    Instruction *OrigIns,
-    Value *Addr, Value *Size, Instruction *InsertBefore, bool IsWrite) {
+void AddressSanitizer::instrumentMemIntrinsicParam(Instruction *OrigIns,
+                                                   Value *Addr, Value *Size,
+                                                   Instruction *InsertBefore,
+                                                   bool IsWrite,
+                                                   bool UseCalls) {
   IRBuilder<> IRB(InsertBefore);
   if (Size->getType() != IntptrTy)
     Size = IRB.CreateIntCast(Size, IntptrTy, false);
   // Check the first byte.
-  instrumentAddress(OrigIns, InsertBefore, Addr, 8, IsWrite, Size);
+  instrumentAddress(OrigIns, InsertBefore, Addr, 8, IsWrite, Size, UseCalls);
   // Check the last byte.
   IRB.SetInsertPoint(InsertBefore);
   Value *SizeMinusOne = IRB.CreateSub(Size, ConstantInt::get(IntptrTy, 1));
   Value *AddrLong = IRB.CreatePointerCast(Addr, IntptrTy);
   Value *AddrLast = IRB.CreateAdd(AddrLong, SizeMinusOne);
-  instrumentAddress(OrigIns, InsertBefore, AddrLast, 8, IsWrite, Size);
+  instrumentAddress(OrigIns, InsertBefore, AddrLast, 8, IsWrite, Size,
+                    UseCalls);
 }
 
 // Instrument memset/memmove/memcpy
-bool AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
+bool AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI, bool UseCalls) {
   Value *Dst = MI->getDest();
   MemTransferInst *MemTran = dyn_cast<MemTransferInst>(MI);
   Value *Src = MemTran ? MemTran->getSource() : 0;
@@ -624,9 +638,9 @@ bool AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
     InsertBefore = SplitBlockAndInsertIfThen(Cmp, InsertBefore, false);
   }
 
-  instrumentMemIntrinsicParam(MI, Dst, Length, InsertBefore, true);
+  instrumentMemIntrinsicParam(MI, Dst, Length, InsertBefore, true, UseCalls);
   if (Src)
-    instrumentMemIntrinsicParam(MI, Src, Length, InsertBefore, false);
+    instrumentMemIntrinsicParam(MI, Src, Length, InsertBefore, false, UseCalls);
   return true;
 }
 
@@ -698,7 +712,7 @@ AddressSanitizer::instrumentPointerComparisonOrSubtraction(Instruction *I) {
   IRB.CreateCall2(F, Param[0], Param[1]);
 }
 
-void AddressSanitizer::instrumentMop(Instruction *I) {
+void AddressSanitizer::instrumentMop(Instruction *I, bool UseCalls) {
   bool IsWrite = false;
   Value *Addr = isInterestingMemoryAccess(I, &IsWrite);
   assert(Addr);
@@ -738,7 +752,7 @@ void AddressSanitizer::instrumentMop(Instruction *I) {
   // Instrument a 1-, 2-, 4-, 8-, or 16- byte access with one check.
   if (TypeSize == 8  || TypeSize == 16 ||
       TypeSize == 32 || TypeSize == 64 || TypeSize == 128)
-    return instrumentAddress(I, I, Addr, TypeSize, IsWrite, 0);
+    return instrumentAddress(I, I, Addr, TypeSize, IsWrite, 0, UseCalls);
   // Instrument unusual size (but still multiple of 8).
   // We can not do it with a single check, so we do 1-byte check for the first
   // and the last bytes. We call __asan_report_*_n(addr, real_size) to be able
@@ -749,8 +763,8 @@ void AddressSanitizer::instrumentMop(Instruction *I) {
                     ConstantInt::get(IntptrTy, TypeSize / 8 - 1)),
       OrigPtrTy);
   Value *Size = ConstantInt::get(IntptrTy, TypeSize / 8);
-  instrumentAddress(I, I, Addr, 8, IsWrite, Size);
-  instrumentAddress(I, I, LastByte, 8, IsWrite, Size);
+  instrumentAddress(I, I, Addr, 8, IsWrite, Size, UseCalls);
+  instrumentAddress(I, I, LastByte, 8, IsWrite, Size, UseCalls);
 }
 
 // Validate the result of Module::getOrInsertFunction called for an interface
@@ -798,11 +812,18 @@ Value *AddressSanitizer::createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
 }
 
 void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
-                                         Instruction *InsertBefore,
-                                         Value *Addr, uint32_t TypeSize,
-                                         bool IsWrite, Value *SizeArgument) {
+                                         Instruction *InsertBefore, Value *Addr,
+                                         uint32_t TypeSize, bool IsWrite,
+                                         Value *SizeArgument, bool UseCalls) {
   IRBuilder<> IRB(InsertBefore);
   Value *AddrLong = IRB.CreatePointerCast(Addr, IntptrTy);
+  size_t AccessSizeIndex = TypeSizeToSizeIndex(TypeSize);
+
+  if (UseCalls) {
+    IRB.CreateCall(AsanMemoryAccessCallback[IsWrite][AccessSizeIndex],
+                   AddrLong);
+    return;
+  }
 
   Type *ShadowTy  = IntegerType::get(
       *C, std::max(8U, TypeSize >> Mapping.Scale));
@@ -813,7 +834,6 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
       IRB.CreateIntToPtr(ShadowPtr, ShadowPtrTy));
 
   Value *Cmp = IRB.CreateICmpNE(ShadowValue, CmpVal);
-  size_t AccessSizeIndex = TypeSizeToSizeIndex(TypeSize);
   size_t Granularity = 1 << Mapping.Scale;
   TerminatorInst *CrashTerm = 0;
 
@@ -1108,12 +1128,16 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
     for (size_t AccessSizeIndex = 0; AccessSizeIndex < kNumberOfAccessSizes;
          AccessSizeIndex++) {
       // IsWrite and TypeSize are encoded in the function name.
-      std::string FunctionName = std::string(kAsanReportErrorTemplate) +
+      std::string Suffix =
           (AccessIsWrite ? "store" : "load") + itostr(1 << AccessSizeIndex);
-      // If we are merging crash callbacks, they have two parameters.
       AsanErrorCallback[AccessIsWrite][AccessSizeIndex] =
-          checkInterfaceFunction(M.getOrInsertFunction(
-              FunctionName, IRB.getVoidTy(), IntptrTy, NULL));
+          checkInterfaceFunction(
+              M.getOrInsertFunction(kAsanReportErrorTemplate + Suffix,
+                                    IRB.getVoidTy(), IntptrTy, NULL));
+      AsanMemoryAccessCallback[AccessIsWrite][AccessSizeIndex] =
+          checkInterfaceFunction(
+              M.getOrInsertFunction(ClMemoryAccessCallbackPrefix + Suffix,
+                                    IRB.getVoidTy(), IntptrTy, NULL));
     }
   }
   AsanErrorCallbackSized[0] = checkInterfaceFunction(M.getOrInsertFunction(
@@ -1324,6 +1348,11 @@ bool AddressSanitizer::runOnFunction(Function &F) {
     F.getParent()->getFunctionList().push_back(UninstrumentedDuplicate);
   }
 
+  bool UseCalls = false;
+  if (ClInstrumentationWithCallsThreshold >= 0 &&
+      ToInstrument.size() > (unsigned)ClInstrumentationWithCallsThreshold)
+    UseCalls = true;
+
   // Instrument.
   int NumInstrumented = 0;
   for (size_t i = 0, n = ToInstrument.size(); i != n; i++) {
@@ -1331,9 +1360,9 @@ bool AddressSanitizer::runOnFunction(Function &F) {
     if (ClDebugMin < 0 || ClDebugMax < 0 ||
         (NumInstrumented >= ClDebugMin && NumInstrumented <= ClDebugMax)) {
       if (isInterestingMemoryAccess(Inst, &IsWrite))
-        instrumentMop(Inst);
+        instrumentMop(Inst, UseCalls);
       else
-        instrumentMemIntrinsic(cast<MemIntrinsic>(Inst));
+        instrumentMemIntrinsic(cast<MemIntrinsic>(Inst), UseCalls);
     }
     NumInstrumented++;
   }
