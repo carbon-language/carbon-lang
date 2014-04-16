@@ -186,6 +186,9 @@ public:
   /// \brief Print statistics to standard error.
   void printStats();
 
+  /// \brief Print debugging view to standard error.
+  void dump();
+
   /// \brief Write a global index into the given
   ///
   /// \param FileMgr The file manager to use to load module files.
