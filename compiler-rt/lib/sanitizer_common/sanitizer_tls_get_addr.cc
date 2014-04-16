@@ -43,10 +43,10 @@ static atomic_uintptr_t number_of_live_dtls;
 
 static const uptr kDestroyedThread = -1;
 
-static inline void DTLS_Deallocate(uptr size) {
+static inline void DTLS_Deallocate(DTLS::DTV *dtv, uptr size) {
   if (!size) return;
-  VPrintf(2, "__tls_get_addr: DTLS_Deallocate %p %zd\n", &dtls, size);
-  UnmapOrDie(dtls.dtv, size * sizeof(DTLS::DTV));
+  VPrintf(2, "__tls_get_addr: DTLS_Deallocate %p %zd\n", dtv, size);
+  UnmapOrDie(dtv, size * sizeof(DTLS::DTV));
   atomic_fetch_sub(&number_of_live_dtls, 1, memory_order_relaxed);
 }
 
@@ -60,12 +60,14 @@ static inline void DTLS_Resize(uptr new_size) {
       atomic_fetch_add(&number_of_live_dtls, 1, memory_order_relaxed);
   VPrintf(2, "__tls_get_addr: DTLS_Resize %p %zd\n", &dtls, num_live_dtls);
   CHECK_LT(num_live_dtls, 1 << 20);
-  if (dtls.dtv_size) {
+  uptr old_dtv_size = dtls.dtv_size;
+  DTLS::DTV *old_dtv = dtls.dtv;
+  if (old_dtv_size)
     internal_memcpy(new_dtv, dtls.dtv, dtls.dtv_size * sizeof(DTLS::DTV));
-    DTLS_Deallocate(dtls.dtv_size);
-  }
   dtls.dtv = new_dtv;
   dtls.dtv_size = new_size;
+  if (old_dtv_size)
+    DTLS_Deallocate(old_dtv, old_dtv_size);
 }
 
 void DTLS_Destroy() {
@@ -73,7 +75,7 @@ void DTLS_Destroy() {
   VPrintf(2, "__tls_get_addr: DTLS_Destroy %p %zd\n", &dtls, dtls.dtv_size);
   uptr s = dtls.dtv_size;
   dtls.dtv_size = kDestroyedThread;  // Do this before unmap for AS-safety.
-  DTLS_Deallocate(s);
+  DTLS_Deallocate(dtls.dtv, s);
 }
 
 void DTLS_on_tls_get_addr(void *arg_void, void *res) {

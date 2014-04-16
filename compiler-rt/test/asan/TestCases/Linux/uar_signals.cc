@@ -1,6 +1,5 @@
-// This test shows that the current implementation of use-after-return is
-// not signal-safe.
-// RUN: %clangxx_asan -O1 %s -o %t -lpthread && %t
+// This test checks that the implementation of use-after-return
+// is async-signal-safe.
 // RUN: %clangxx_asan -O1 %s -o %t -lpthread && %t
 #include <signal.h>
 #include <stdlib.h>
