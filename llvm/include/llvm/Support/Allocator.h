@@ -94,9 +94,6 @@ public:
 
 class MallocAllocator : public AllocatorBase<MallocAllocator> {
 public:
-  MallocAllocator() {}
-  ~MallocAllocator() {}
-
   void Reset() {}
 
   void *Allocate(size_t Size, size_t /*Alignment*/) { return malloc(Size); }
