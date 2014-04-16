@@ -29,6 +29,21 @@ TEST(AllocatorTest, Basics) {
   EXPECT_EQ(2, b[9]);
   EXPECT_EQ(3, *c);
   EXPECT_EQ(1U, Alloc.GetNumSlabs());
+
+  BumpPtrAllocator Alloc2 = std::move(Alloc);
+  EXPECT_EQ(0U, Alloc.GetNumSlabs());
+  EXPECT_EQ(1U, Alloc2.GetNumSlabs());
+
+  // Make sure the old pointers still work. These are especially interesting
+  // under ASan or Valgrind.
+  EXPECT_EQ(1, *a);
+  EXPECT_EQ(2, b[0]);
+  EXPECT_EQ(2, b[9]);
+  EXPECT_EQ(3, *c);
+
+  Alloc = std::move(Alloc2);
+  EXPECT_EQ(0U, Alloc2.GetNumSlabs());
+  EXPECT_EQ(1U, Alloc.GetNumSlabs());
 }
 
 // Allocate enough bytes to create three slabs.

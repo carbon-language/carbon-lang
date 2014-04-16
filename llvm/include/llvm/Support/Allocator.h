@@ -138,9 +138,6 @@ template <typename AllocatorT = MallocAllocator, size_t SlabSize = 4096,
 class BumpPtrAllocatorImpl
     : public AllocatorBase<
           BumpPtrAllocatorImpl<AllocatorT, SlabSize, SizeThreshold>> {
-  BumpPtrAllocatorImpl(const BumpPtrAllocatorImpl &) LLVM_DELETED_FUNCTION;
-  void operator=(const BumpPtrAllocatorImpl &) LLVM_DELETED_FUNCTION;
-
 public:
   static_assert(SizeThreshold <= SlabSize,
                 "The SizeThreshold must be at most the SlabSize to ensure "
@@ -153,9 +150,41 @@ public:
   BumpPtrAllocatorImpl(T &&Allocator)
       : CurPtr(nullptr), End(nullptr), BytesAllocated(0),
         Allocator(std::forward<T &&>(Allocator)) {}
+
+  // Manually implement a move constructor as we must clear the old allocators
+  // slabs as a matter of correctness.
+  BumpPtrAllocatorImpl(BumpPtrAllocatorImpl &&Old)
+      : CurPtr(Old.CurPtr), End(Old.End), Slabs(std::move(Old.Slabs)),
+        CustomSizedSlabs(std::move(Old.CustomSizedSlabs)),
+        BytesAllocated(Old.BytesAllocated),
+        Allocator(std::move(Old.Allocator)) {
+    Old.CurPtr = Old.End = nullptr;
+    Old.BytesAllocated = 0;
+    Old.Slabs.clear();
+    Old.CustomSizedSlabs.clear();
+  }
+
   ~BumpPtrAllocatorImpl() {
     DeallocateSlabs(Slabs.begin(), Slabs.end());
     DeallocateCustomSizedSlabs();
+  }
+
+  BumpPtrAllocatorImpl &operator=(BumpPtrAllocatorImpl &&RHS) {
+    DeallocateSlabs(Slabs.begin(), Slabs.end());
+    DeallocateCustomSizedSlabs();
+
+    CurPtr = RHS.CurPtr;
+    End = RHS.End;
+    BytesAllocated = RHS.BytesAllocated;
+    Slabs = std::move(RHS.Slabs);
+    CustomSizedSlabs = std::move(RHS.CustomSizedSlabs);
+    Allocator = std::move(RHS.Allocator);
+
+    RHS.CurPtr = RHS.End = nullptr;
+    RHS.BytesAllocated = 0;
+    RHS.Slabs.clear();
+    RHS.CustomSizedSlabs.clear();
+    return *this;
   }
 
   /// \brief Deallocate all but the current slab and reset the current pointer
