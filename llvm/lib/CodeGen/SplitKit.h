@@ -417,7 +417,7 @@ public:
   /// @param LRMap When not null, this vector will map each live range in Edit
   ///              back to the indices returned by openIntv.
   ///              There may be extra indices created by dead code elimination.
-  void finish(SmallVectorImpl<unsigned> *LRMap = 0);
+  void finish(SmallVectorImpl<unsigned> *LRMap = nullptr);
 
   /// dump - print the current interval maping to dbgs().
   void dump() const;

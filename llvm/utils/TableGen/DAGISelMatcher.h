@@ -207,7 +207,7 @@ public:
 
   Matcher *takeChild(unsigned i) {
     Matcher *Res = Children[i];
-    Children[i] = 0;
+    Children[i] = nullptr;
     return Res;
   }
 

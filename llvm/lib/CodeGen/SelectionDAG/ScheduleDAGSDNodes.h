@@ -139,7 +139,7 @@ namespace llvm {
     public:
       RegDefIter(const SUnit *SU, const ScheduleDAGSDNodes *SD);
 
-      bool IsValid() const { return Node != NULL; }
+      bool IsValid() const { return Node != nullptr; }
 
       MVT GetValue() const {
         assert(IsValid() && "bad iterator");

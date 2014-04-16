@@ -170,7 +170,8 @@ class RegisterClassInfo;
     void GetPassthruRegs(MachineInstr *MI, std::set<unsigned>& PassthruRegs);
 
     void HandleLastUse(unsigned Reg, unsigned KillIdx, const char *tag,
-                       const char *header =NULL, const char *footer =NULL);
+                       const char *header = nullptr,
+                       const char *footer = nullptr);
 
     void PrescanInstruction(MachineInstr *MI, unsigned Count,
                             std::set<unsigned>& PassthruRegs);

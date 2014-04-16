@@ -176,7 +176,8 @@ namespace llvm {
       return FMF;
     }
 
-    bool ParseOptionalToken(lltok::Kind T, bool &Present, LocTy *Loc = 0) {
+    bool ParseOptionalToken(lltok::Kind T, bool &Present,
+                            LocTy *Loc = nullptr) {
       if (Lex.getKind() != T) {
         Present = false;
       } else {
@@ -348,7 +349,7 @@ namespace llvm {
                             PerFunctionState &PFS);
 
     // Constant Parsing.
-    bool ParseValID(ValID &ID, PerFunctionState *PFS = NULL);
+    bool ParseValID(ValID &ID, PerFunctionState *PFS = nullptr);
     bool ParseGlobalValue(Type *Ty, Constant *&V);
     bool ParseGlobalTypeAndValue(Constant *&V);
     bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);

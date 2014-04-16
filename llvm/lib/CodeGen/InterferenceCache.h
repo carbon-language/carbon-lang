@@ -77,7 +77,8 @@ class InterferenceCache {
       /// Iterator pointing into the fixed RegUnit interference.
       LiveInterval::iterator FixedI;
 
-      RegUnitInfo(LiveIntervalUnion &LIU) : VirtTag(LIU.getTag()), Fixed(0) {
+      RegUnitInfo(LiveIntervalUnion &LIU)
+          : VirtTag(LIU.getTag()), Fixed(nullptr) {
         VirtI.setMap(LIU.getMap());
       }
     };
@@ -93,7 +94,7 @@ class InterferenceCache {
     void update(unsigned MBBNum);
 
   public:
-    Entry() : PhysReg(0), Tag(0), RefCount(0), Indexes(0), LIS(0) {}
+    Entry() : PhysReg(0), Tag(0), RefCount(0), Indexes(nullptr), LIS(nullptr) {}
 
     void clear(MachineFunction *mf, SlotIndexes *indexes, LiveIntervals *lis) {
       assert(!hasRefs() && "Cannot clear cache entry with references");
@@ -148,8 +149,9 @@ class InterferenceCache {
   Entry *get(unsigned PhysReg);
 
 public:
-  InterferenceCache() : TRI(0), LIUArray(0), MF(0), PhysRegEntries(NULL),
-                        PhysRegEntriesCount(0), RoundRobin(0) {}
+  InterferenceCache()
+    : TRI(nullptr), LIUArray(nullptr), MF(nullptr), PhysRegEntries(nullptr),
+      PhysRegEntriesCount(0), RoundRobin(0) {}
 
   ~InterferenceCache() {
     free(PhysRegEntries);
@@ -172,7 +174,7 @@ public:
     static BlockInterference NoInterference;
 
     void setEntry(Entry *E) {
-      Current = 0;
+      Current = nullptr;
       // Update reference counts. Nothing happens when RefCount reaches 0, so
       // we don't have to check for E == CacheEntry etc.
       if (CacheEntry)
@@ -184,10 +186,10 @@ public:
 
   public:
     /// Cursor - Create a dangling cursor.
-    Cursor() : CacheEntry(0), Current(0) {}
-    ~Cursor() { setEntry(0); }
+    Cursor() : CacheEntry(nullptr), Current(nullptr) {}
+    ~Cursor() { setEntry(nullptr); }
 
-    Cursor(const Cursor &O) : CacheEntry(0), Current(0) {
+    Cursor(const Cursor &O) : CacheEntry(nullptr), Current(nullptr) {
       setEntry(O.CacheEntry);
     }
 
@@ -200,7 +202,7 @@ public:
     void setPhysReg(InterferenceCache &Cache, unsigned PhysReg) {
       // Release reference before getting a new one. That guarantees we can
       // actually have CacheEntries live cursors.
-      setEntry(0);
+      setEntry(nullptr);
       if (PhysReg)
         setEntry(Cache.get(PhysReg));
     }

@@ -65,7 +65,7 @@ class SpillPlacement  : public MachineFunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid.
 
-  SpillPlacement() : MachineFunctionPass(ID), nodes(0) {}
+  SpillPlacement() : MachineFunctionPass(ID), nodes(nullptr) {}
   ~SpillPlacement() { releaseMemory(); }
 
   /// BorderConstraint - A basic block has separate constraints for entry and
