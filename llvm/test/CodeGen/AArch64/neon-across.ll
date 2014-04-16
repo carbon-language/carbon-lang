@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has copied test in its own directory.
 
 declare float @llvm.aarch64.neon.vminnmv(<4 x float>)
 

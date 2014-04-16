@@ -1,5 +1,4 @@
-; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
-; arm64 has its own copy of this test
+; RUN: llc < %s -verify-machineinstrs -mtriple=arm64-none-linux-gnu -mattr=+neon -arm64-simd-scalar| FileCheck %s
 
 define <8 x i8> @add8xi8(<8 x i8> %A, <8 x i8> %B) {
 ;CHECK: add {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
@@ -183,35 +182,35 @@ define <1 x double> @test_vsub_f64(<1 x double> %a, <1 x double> %b) {
 define <1 x double> @test_vabd_f64(<1 x double> %a, <1 x double> %b) {
 ; CHECK-LABEL: test_vabd_f64
 ; CHECK: fabd d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-  %1 = tail call <1 x double> @llvm.arm.neon.vabds.v1f64(<1 x double> %a, <1 x double> %b)
+  %1 = tail call <1 x double> @llvm.arm64.neon.fabd.v1f64(<1 x double> %a, <1 x double> %b)
   ret <1 x double> %1
 }
 
 define <1 x double> @test_vmax_f64(<1 x double> %a, <1 x double> %b) {
 ; CHECK-LABEL: test_vmax_f64
 ; CHECK: fmax d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-  %1 = tail call <1 x double> @llvm.arm.neon.vmaxs.v1f64(<1 x double> %a, <1 x double> %b)
+  %1 = tail call <1 x double> @llvm.arm64.neon.fmax.v1f64(<1 x double> %a, <1 x double> %b)
   ret <1 x double> %1
 }
 
 define <1 x double> @test_vmin_f64(<1 x double> %a, <1 x double> %b) {
 ; CHECK-LABEL: test_vmin_f64
 ; CHECK: fmin d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-  %1 = tail call <1 x double> @llvm.arm.neon.vmins.v1f64(<1 x double> %a, <1 x double> %b)
+  %1 = tail call <1 x double> @llvm.arm64.neon.fmin.v1f64(<1 x double> %a, <1 x double> %b)
   ret <1 x double> %1
 }
 
 define <1 x double> @test_vmaxnm_f64(<1 x double> %a, <1 x double> %b) {
 ; CHECK-LABEL: test_vmaxnm_f64
 ; CHECK: fmaxnm d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-  %1 = tail call <1 x double> @llvm.aarch64.neon.vmaxnm.v1f64(<1 x double> %a, <1 x double> %b)
+  %1 = tail call <1 x double> @llvm.arm64.neon.fmaxnm.v1f64(<1 x double> %a, <1 x double> %b)
   ret <1 x double> %1
 }
 
 define <1 x double> @test_vminnm_f64(<1 x double> %a, <1 x double> %b) {
 ; CHECK-LABEL: test_vminnm_f64
 ; CHECK: fminnm d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-  %1 = tail call <1 x double> @llvm.aarch64.neon.vminnm.v1f64(<1 x double> %a, <1 x double> %b)
+  %1 = tail call <1 x double> @llvm.arm64.neon.fminnm.v1f64(<1 x double> %a, <1 x double> %b)
   ret <1 x double> %1
 }
 
@@ -230,51 +229,9 @@ define <1 x double> @test_vneg_f64(<1 x double> %a) {
 }
 
 declare <1 x double> @llvm.fabs.v1f64(<1 x double>)
-declare <1 x double> @llvm.aarch64.neon.vminnm.v1f64(<1 x double>, <1 x double>)
-declare <1 x double> @llvm.aarch64.neon.vmaxnm.v1f64(<1 x double>, <1 x double>)
-declare <1 x double> @llvm.arm.neon.vmins.v1f64(<1 x double>, <1 x double>)
-declare <1 x double> @llvm.arm.neon.vmaxs.v1f64(<1 x double>, <1 x double>)
-declare <1 x double> @llvm.arm.neon.vabds.v1f64(<1 x double>, <1 x double>)
+declare <1 x double> @llvm.arm64.neon.fminnm.v1f64(<1 x double>, <1 x double>)
+declare <1 x double> @llvm.arm64.neon.fmaxnm.v1f64(<1 x double>, <1 x double>)
+declare <1 x double> @llvm.arm64.neon.fmin.v1f64(<1 x double>, <1 x double>)
+declare <1 x double> @llvm.arm64.neon.fmax.v1f64(<1 x double>, <1 x double>)
+declare <1 x double> @llvm.arm64.neon.fabd.v1f64(<1 x double>, <1 x double>)
 declare <1 x double> @llvm.fma.v1f64(<1 x double>, <1 x double>, <1 x double>)
-
-define <1 x i8> @test_add_v1i8(<1 x i8> %a, <1 x i8> %b) {
-;CHECK-LABEL: test_add_v1i8:
-;CHECK: add {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-  %c = add <1 x i8> %a, %b
-  ret <1 x i8> %c
-}
-
-define <1 x i16> @test_add_v1i16(<1 x i16> %a, <1 x i16> %b) {
-;CHECK-LABEL: test_add_v1i16:
-;CHECK: add {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
-  %c = add <1 x i16> %a, %b
-  ret <1 x i16> %c
-}
-
-define <1 x i32> @test_add_v1i32(<1 x i32> %a, <1 x i32> %b) {
-;CHECK-LABEL: test_add_v1i32:
-;CHECK: add {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
-  %c = add <1 x i32> %a, %b
-  ret <1 x i32> %c
-}
-
-define <1 x i8> @test_sub_v1i8(<1 x i8> %a, <1 x i8> %b) {
-;CHECK-LABEL: test_sub_v1i8:
-;CHECK: sub {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
-  %c = sub <1 x i8> %a, %b
-  ret <1 x i8> %c
-}
-
-define <1 x i16> @test_sub_v1i16(<1 x i16> %a, <1 x i16> %b) {
-;CHECK-LABEL: test_sub_v1i16:
-;CHECK: sub {{v[0-9]+}}.4h, {{v[0-9]+}}.4h, {{v[0-9]+}}.4h
-  %c = sub <1 x i16> %a, %b
-  ret <1 x i16> %c
-}
-
-define <1 x i32> @test_sub_v1i32(<1 x i32> %a, <1 x i32> %b) {
-;CHECK-LABEL: test_sub_v1i32:
-;CHECK: sub {{v[0-9]+}}.2s, {{v[0-9]+}}.2s, {{v[0-9]+}}.2s
-  %c = sub <1 x i32> %a, %b
-  ret <1 x i32> %c
-}

@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; arm64 has a copy of this test in its own directory.
 
 declare <8 x i8> @llvm.arm.neon.vpadd.v8i8(<8 x i8>, <8 x i8>)
 

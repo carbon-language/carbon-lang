@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon -verify-machineinstrs < %s | FileCheck %s
+; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=+neon -verify-machineinstrs < %s | FileCheck %s
 
 ; From <8 x i8>
 
