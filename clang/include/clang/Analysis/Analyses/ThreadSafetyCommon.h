@@ -219,6 +219,18 @@ public:
     {}
   };
 
+  SExprBuilder(til::MemRegionRef A)
+    : Arena(A), SelfVar(nullptr), Scfg(nullptr), CallCtx(nullptr),
+    CurrentBB(nullptr), CurrentBlockID(0), CurrentVarID(0),
+    CurrentArgIndex(0) {
+    // FIXME: we don't always have a self-variable.
+    SelfVar = new (Arena)til::Variable(til::Variable::VK_SFun);
+  }
+
+  ~SExprBuilder() {
+    delete CallCtx;
+  }
+
   // Translate a clang statement or expression to a TIL expression.
   // Also performs substitution of variables; Ctx provides the context.
   // Dispatches on the type of S.
@@ -226,7 +238,8 @@ public:
   til::SCFG  *buildCFG(CFGWalker &Walker);
 
   til::SExpr *lookupStmt(const Stmt *S);
-  til::SCFG  *getCFG() const { return Scfg; }
+  const til::SCFG *getCFG() const { return Scfg; }
+  til::SCFG *getCFF() { return Scfg; }
 
 private:
   til::SExpr *translateDeclRefExpr(const DeclRefExpr *DRE,
@@ -252,12 +265,11 @@ private:
 
   til::SExpr *translateDeclStmt(const DeclStmt *S, CallingContext *Ctx);
 
-private:
   // Used for looking the index of a name.
-  typedef llvm::DenseMap<const ValueDecl*, unsigned> NameIndexMap;
+  typedef llvm::DenseMap<const ValueDecl *, unsigned> NameIndexMap;
 
   // Used for looking up the current SSA variable for a name, by index.
-  typedef CopyOnWriteVector<std::pair<const ValueDecl*, til::SExpr*> >
+  typedef CopyOnWriteVector<std::pair<const ValueDecl *, til::SExpr *>>
     NameVarMap;
 
   struct BlockInfo {
@@ -299,29 +311,13 @@ private:
 
   void mergeEntryMap(NameVarMap Map);
 
-public:
-  SExprBuilder(til::MemRegionRef A)
-      : Arena(A), SelfVar(nullptr), Scfg(nullptr), CallCtx(nullptr),
-        CurrentBB(nullptr), CurrentBlockID(0), CurrentVarID(0),
-        CurrentArgIndex(0)
-  {
-    // FIXME: we don't always have a self-variable.
-    SelfVar = new (Arena) til::Variable(til::Variable::VK_SFun);
-  }
-
-  ~SExprBuilder() {
-    if (CallCtx)
-      delete CallCtx;
-  }
-
-private:
   til::MemRegionRef Arena;
   til::Variable *SelfVar;       // Variable to use for 'this'.  May be null.
   til::SCFG *Scfg;
 
   StatementMap SMap;                       // Map from Stmt to TIL Variables
   NameIndexMap IdxMap;                     // Indices of clang local vars.
-  std::vector<til::BasicBlock*> BlockMap;  // Map from clang to til BBs.
+  std::vector<til::BasicBlock *> BlockMap; // Map from clang to til BBs.
   std::vector<BlockInfo> BBInfo;           // Extra information per BB.
                                            // Indexed by clang BlockID.
   SExprBuilder::CallingContext *CallCtx;   // Root calling context

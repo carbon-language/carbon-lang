@@ -1108,7 +1108,7 @@ public:
     return Visitor.reducePhi(*this, Nvs);
   }
 
-  template <class C> typename C::CType compare(Phi* E, C &Cmp) {
+  template <class C> typename C::CType compare(Phi *E, C &Cmp) {
     // TODO: implement CFG comparisons
     return Cmp.comparePointers(this, E);
   }
