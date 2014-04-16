@@ -886,7 +886,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("attribute_unused_on_fields", true)
            .Case("blocks", LangOpts.Blocks)
            .Case("c_thread_safety_attributes", true)
-           .Case("cxx_exceptions", LangOpts.Exceptions)
+           .Case("cxx_exceptions", LangOpts.CXXExceptions)
            .Case("cxx_rtti", LangOpts.RTTI)
            .Case("enumerator_attributes", true)
            .Case("memory_sanitizer", LangOpts.Sanitize.Memory)
