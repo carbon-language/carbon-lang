@@ -83,7 +83,11 @@ unsigned ARM64ELFObjectWriter::GetRelocType(const MCValue &Target,
     case ARM64::fixup_arm64_pcrel_call26:
       return ELF::R_AARCH64_CALL26;
     case ARM64::fixup_arm64_pcrel_imm19:
-      return ELF::R_AARCH64_TLSIE_LD_GOTTPREL_PREL19;
+      // A bit of an oddity here: shared by both "ldr x0, :gottprel:var" and
+      // "b.eq var".
+      if (SymLoc == ARM64MCExpr::VK_GOTTPREL)
+        return ELF::R_AARCH64_TLSIE_LD_GOTTPREL_PREL19;
+      return ELF::R_AARCH64_CONDBR19;
     default:
       llvm_unreachable("Unsupported pc-relative fixup kind");
     }
