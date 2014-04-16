@@ -15,6 +15,7 @@
 
 #include <stdint.h>
 #include <strings.h>
+#include <string.h>
 
 #include "libunwind.h"
 #include "config.h"
@@ -91,7 +92,7 @@ inline Registers_x86::Registers_x86(const void *registers) {
 }
 
 inline Registers_x86::Registers_x86() {
-  bzero(&_registers, sizeof(_registers));
+  memset(&_registers, 0, sizeof(_registers));
 }
 
 inline bool Registers_x86::validRegister(int regNum) const {
@@ -282,7 +283,7 @@ inline Registers_x86_64::Registers_x86_64(const void *registers) {
 }
 
 inline Registers_x86_64::Registers_x86_64() {
-  bzero(&_registers, sizeof(_registers));
+  memset(&_registers, 0, sizeof(_registers));
 }
 
 inline bool Registers_x86_64::validRegister(int regNum) const {
@@ -548,9 +549,9 @@ inline Registers_ppc::Registers_ppc(const void *registers) {
 }
 
 inline Registers_ppc::Registers_ppc() {
-  bzero(&_registers, sizeof(_registers));
-  bzero(&_floatRegisters, sizeof(_floatRegisters));
-  bzero(&_vectorRegisters, sizeof(_vectorRegisters));
+  memset(&_registers, 0, sizeof(_registers));
+  memset(&_floatRegisters, 0, sizeof(_floatRegisters));
+  memset(&_vectorRegisters, 0, sizeof(_vectorRegisters));
 }
 
 inline bool Registers_ppc::validRegister(int regNum) const {
@@ -1065,8 +1066,8 @@ inline Registers_arm64::Registers_arm64(const void *registers) {
 }
 
 inline Registers_arm64::Registers_arm64() {
-  bzero(&_registers, sizeof(_registers));
-  bzero(&_vectorHalfRegisters, sizeof(_vectorHalfRegisters));
+  memset(&_registers, 0, sizeof(_registers));
+  memset(&_vectorHalfRegisters, 0, sizeof(_vectorHalfRegisters));
 }
 
 inline bool Registers_arm64::validRegister(int regNum) const {
@@ -1329,7 +1330,7 @@ inline Registers_arm::Registers_arm(const void *registers) {
 }
 
 inline Registers_arm::Registers_arm() {
-  bzero(&_registers, sizeof(_registers));
+  memset(&_registers, 0, sizeof(_registers));
 }
 
 inline bool Registers_arm::validRegister(int regNum) const {
