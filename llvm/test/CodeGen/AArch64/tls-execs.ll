@@ -1,5 +1,6 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs -show-mc-encoding < %s | FileCheck %s
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
+; arm64 has its own copy of tls-execs.ll, copied from this one during implementation.
 
 @initial_exec_var = external thread_local(initialexec) global i32
 

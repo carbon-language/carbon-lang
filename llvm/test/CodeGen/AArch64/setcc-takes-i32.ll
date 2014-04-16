@@ -1,4 +1,5 @@
 ; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
+; RUN: llc -verify-machineinstrs -mtriple=arm64-none-linux-gnu -o - %s | FileCheck %s
 
 ; Most important point here is that the promotion of the i1 works
 ; correctly. Previously LLVM thought that i64 was the appropriate SetCC output,

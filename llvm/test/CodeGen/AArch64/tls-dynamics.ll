@@ -1,6 +1,6 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -relocation-model=pic -verify-machineinstrs < %s | FileCheck %s
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -relocation-model=pic -filetype=obj < %s | llvm-objdump -r - | FileCheck --check-prefix=CHECK-RELOC %s
-
+; arm64 has its own tls-dynamics.ll, copied from this one during implementation.
 @general_dynamic_var = external thread_local global i32
 
 define i32 @test_generaldynamic() {
@@ -10,8 +10,8 @@ define i32 @test_generaldynamic() {
   ret i32 %val
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:general_dynamic_var
-; CHECK-DAG: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var
-; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var]
+; CHECK-DAG: add x0, x[[TLSDESC_HI]], {{#?}}:tlsdesc_lo12:general_dynamic_var
+; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], {{#?}}:tlsdesc_lo12:general_dynamic_var]
 ; CHECK: .tlsdesccall general_dynamic_var
 ; CHECK-NEXT: blr [[CALLEE]]
 
@@ -31,8 +31,8 @@ define i32* @test_generaldynamic_addr() {
   ret i32* @general_dynamic_var
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:general_dynamic_var
-; CHECK-DAG: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var
-; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:general_dynamic_var]
+; CHECK-DAG: add x0, x[[TLSDESC_HI]], {{#?}}:tlsdesc_lo12:general_dynamic_var
+; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], {{#?}}:tlsdesc_lo12:general_dynamic_var]
 ; CHECK: .tlsdesccall general_dynamic_var
 ; CHECK-NEXT: blr [[CALLEE]]
 
@@ -55,8 +55,8 @@ define i32 @test_localdynamic() {
   ret i32 %val
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:_TLS_MODULE_BASE_
-; CHECK-DAG: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_
-; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_]
+; CHECK-DAG: add x0, x[[TLSDESC_HI]], {{#?}}:tlsdesc_lo12:_TLS_MODULE_BASE_
+; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], {{#?}}:tlsdesc_lo12:_TLS_MODULE_BASE_]
 ; CHECK: .tlsdesccall _TLS_MODULE_BASE_
 ; CHECK-NEXT: blr [[CALLEE]]
 
@@ -78,8 +78,8 @@ define i32* @test_localdynamic_addr() {
   ret i32* @local_dynamic_var
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:_TLS_MODULE_BASE_
-; CHECK-DAG: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_
-; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_]
+; CHECK-DAG: add x0, x[[TLSDESC_HI]], {{#?}}:tlsdesc_lo12:_TLS_MODULE_BASE_
+; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], {{#?}}:tlsdesc_lo12:_TLS_MODULE_BASE_]
 ; CHECK: .tlsdesccall _TLS_MODULE_BASE_
 ; CHECK-NEXT: blr [[CALLEE]]
 
@@ -110,8 +110,8 @@ define i32 @test_localdynamic_deduplicate() {
   ret i32 %sum
 
 ; CHECK: adrp x[[TLSDESC_HI:[0-9]+]], :tlsdesc:_TLS_MODULE_BASE_
-; CHECK-DAG: add x0, x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_
-; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], #:tlsdesc_lo12:_TLS_MODULE_BASE_]
+; CHECK-DAG: add x0, x[[TLSDESC_HI]], {{#?}}:tlsdesc_lo12:_TLS_MODULE_BASE_
+; CHECK-DAG: ldr [[CALLEE:x[0-9]+]], [x[[TLSDESC_HI]], {{#?}}:tlsdesc_lo12:_TLS_MODULE_BASE_]
 ; CHECK: .tlsdesccall _TLS_MODULE_BASE_
 ; CHECK-NEXT: blr [[CALLEE]]
 

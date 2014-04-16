@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=aarch64-none-linux-gnu -regalloc=greedy -regalloc-csr-first-time-cost=15 | FileCheck %s
+; RUN: llc < %s -mtriple=arm64-apple-ios7.0 -regalloc=greedy -regalloc-csr-first-time-cost=15 | FileCheck %s
 
 ; This testing case is reduced from 197.parser prune_match function.
 ; We make sure that we do not use callee-saved registers (x19 to x25).
@@ -6,14 +7,14 @@
 
 ; CHECK-LABEL: prune_match:
 ; CHECK: entry
-; CHECK: str x30, [sp
+; CHECK: {{str x30|stp x29, x30}}, [sp
 ; CHECK-NOT: stp x25,
 ; CHECK-NOT: stp x23, x24
 ; CHECK-NOT: stp x21, x22
 ; CHECK-NOT: stp x19, x20
 ; CHECK: if.end
 ; CHECK: return
-; CHECK: ldr x30, [sp
+; CHECK: {{ldr x30|ldp x29, x30}}, [sp
 ; CHECK-NOT: ldp x19, x20
 ; CHECK-NOT: ldp x21, x22
 ; CHECK-NOT: ldp x23, x24

@@ -1,4 +1,5 @@
 ; RUN: llc -O0 -mtriple=aarch64-none-linux-gnu -relocation-model=pic -verify-machineinstrs < %s | FileCheck %s
+; arm64 has its own copy of this file, copied during implementation.
 
 ; If the .tlsdesccall and blr parts are emitted completely separately (even with
 ; glue) then LLVM will separate them quite happily (with a spill at O0, hence
