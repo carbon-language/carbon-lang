@@ -487,14 +487,18 @@ class shift_rotate_imm<string opstr, Operand ImmOpnd,
                        SDPatternOperator PF = null_frag> :
   InstSE<(outs RO:$rd), (ins RO:$rt, ImmOpnd:$shamt),
          !strconcat(opstr, "\t$rd, $rt, $shamt"),
-         [(set RO:$rd, (OpNode RO:$rt, PF:$shamt))], itin, FrmR, opstr>;
+         [(set RO:$rd, (OpNode RO:$rt, PF:$shamt))], itin, FrmR, opstr> {
+  let TwoOperandAliasConstraint = "$rt = $rd";
+}
 
 class shift_rotate_reg<string opstr, RegisterOperand RO, InstrItinClass itin,
                        SDPatternOperator OpNode = null_frag>:
   InstSE<(outs RO:$rd), (ins RO:$rt, GPR32Opnd:$rs),
          !strconcat(opstr, "\t$rd, $rt, $rs"),
          [(set RO:$rd, (OpNode RO:$rt, GPR32Opnd:$rs))], itin, FrmR,
-         opstr>;
+         opstr> {
+  let TwoOperandAliasConstraint = "$rt = $rd";
+}
 
 // Load Upper Imediate
 class LoadUpper<string opstr, RegisterOperand RO, Operand Imm>:

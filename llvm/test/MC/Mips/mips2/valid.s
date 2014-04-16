@@ -77,16 +77,25 @@
 	sdc1	$f31,30574($t5)
 	sdc2	$20,23157($s2)
 	sh	$t6,-6704($t7)
-	sllv	$a3,$zero,$t1
+	sll   $a3,18               # CHECK: sll $7, $7, 18         # encoding: [0x00,0x07,0x3c,0x80]
+	sll   $a3,$zero,18         # CHECK: sll $7, $zero, 18      # encoding: [0x00,0x00,0x3c,0x80]
+	sllv  $a3,$t1              # CHECK: sllv $7, $7, $9        # encoding: [0x01,0x27,0x38,0x04]
+	sllv  $a3,$zero,$t1        # CHECK: sllv $7, $zero, $9     # encoding: [0x01,0x20,0x38,0x04]
 	slt	$s7,$t3,$k1
 	slti	$s1,$t2,9489
 	sltiu	$t9,$t9,-15531
 	sltu	$s4,$s5,$t3
 	sqrt.d	$f17,$f22
 	sqrt.s	$f0,$f1
-	srav	$s1,$s7,$sp
-	srlv	$t9,$s4,$a0
-	ssnop                    # CHECK: ssnop # encoding:  [0x00,0x00,0x00,0x40]
+	sra   $s1,15               # CHECK: sra $17, $17, 15       # encoding: [0x00,0x11,0x8b,0xc3]
+	sra   $s1,$s7,15           # CHECK: sra $17, $23, 15       # encoding: [0x00,0x17,0x8b,0xc3]
+	srav  $s1,$sp              # CHECK: srav $17, $17, $sp     # encoding: [0x03,0xb1,0x88,0x07]
+	srav  $s1,$s7,$sp          # CHECK: srav $17, $23, $sp     # encoding: [0x03,0xb7,0x88,0x07]
+	srl   $2,7                 # CHECK: srl $2, $2, 7          # encoding: [0x00,0x02,0x11,0xc2]
+	srl   $2,$2,7              # CHECK: srl $2, $2, 7          # encoding: [0x00,0x02,0x11,0xc2]
+	srlv  $t9,$a0              # CHECK: srlv $25, $25, $4      # encoding: [0x00,0x99,0xc8,0x06]
+	srlv  $t9,$s4,$a0          # CHECK: srlv $25, $20, $4      # encoding: [0x00,0x94,0xc8,0x06]
+	ssnop                      # CHECK: ssnop                  # encoding: [0x00,0x00,0x00,0x40]
 	sub	$s6,$s3,$t4
 	sub.d	$f18,$f3,$f17
 	sub.s	$f23,$f22,$f22
