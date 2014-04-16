@@ -10942,7 +10942,9 @@ SDValue DAGCombiner::SimplifySelectCC(SDLoc DL, SDValue N0, SDValue N1,
     if (ConstantFPSDNode *FV = dyn_cast<ConstantFPSDNode>(N3)) {
       if (TLI.isTypeLegal(N2.getValueType()) &&
           (TLI.getOperationAction(ISD::ConstantFP, N2.getValueType()) !=
-           TargetLowering::Legal) &&
+               TargetLowering::Legal &&
+           !TLI.isFPImmLegal(TV->getValueAPF(), TV->getValueType(0)) &&
+           !TLI.isFPImmLegal(FV->getValueAPF(), FV->getValueType(0))) &&
           // If both constants have multiple uses, then we won't need to do an
           // extra load, they are likely around in registers for other users.
           (TV->hasOneUse() || FV->hasOneUse())) {
