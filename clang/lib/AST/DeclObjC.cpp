@@ -365,10 +365,10 @@ static bool isIntroducingInitializers(const ObjCInterfaceDecl *D) {
     }
   }
   if (const auto *ImplD = D->getImplementation()) {
-  for (const auto *MD : ImplD->instance_methods()) {
-    if (MD->getMethodFamily() == OMF_init && !MD->isOverriding())
-      return true;
-  }
+    for (const auto *MD : ImplD->instance_methods()) {
+      if (MD->getMethodFamily() == OMF_init && !MD->isOverriding())
+        return true;
+    }
   }
   return false;
 }
