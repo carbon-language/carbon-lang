@@ -6108,7 +6108,7 @@ void RewriteModernObjC::Initialize(ASTContext &context) {
   Preamble += "  int *isa;\n";
   Preamble += "  int flags;\n";
   Preamble += "  char *str;\n";
-  Preamble += "#if __LLP64__\n";
+  Preamble += "#if _WIN64\n";
   Preamble += "  long long length;\n";
   Preamble += "#else\n";
   Preamble += "  long length;\n";
