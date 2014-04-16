@@ -8066,14 +8066,14 @@ public:
 
 private:
   bool SemaBuiltinPrefetch(CallExpr *TheCall);
-  bool SemaBuiltinMMPrefetch(CallExpr *TheCall);
-  bool SemaBuiltinObjectSize(CallExpr *TheCall);
   bool SemaBuiltinLongjmp(CallExpr *TheCall);
   ExprResult SemaBuiltinAtomicOverloaded(ExprResult TheCallResult);
   ExprResult SemaAtomicOpsOverloaded(ExprResult TheCallResult,
                                      AtomicExpr::AtomicOp Op);
   bool SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
                               llvm::APSInt &Result);
+  bool SemaBuiltinConstantArgRange(CallExpr *TheCall, int ArgNum,
+                                   int Low, int High);
 
 public:
   enum FormatStringType {

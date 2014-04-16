@@ -176,7 +176,7 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
       return ExprError();
     break;
   case Builtin::BI__builtin_object_size:
-    if (SemaBuiltinObjectSize(TheCall))
+    if (SemaBuiltinConstantArgRange(TheCall, 1, 0, 3))
       return ExprError();
     break;
   case Builtin::BI__builtin_longjmp:
@@ -467,24 +467,8 @@ bool Sema::CheckNeonBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
 #include "clang/Basic/arm_neon.inc"
 #undef GET_NEON_IMMEDIATE_CHECK
   }
-  ;
 
-  // We can't check the value of a dependent argument.
-  if (TheCall->getArg(i)->isTypeDependent() ||
-      TheCall->getArg(i)->isValueDependent())
-    return false;
-
-  // Check that the immediate argument is actually a constant.
-  if (SemaBuiltinConstantArg(TheCall, i, Result))
-    return true;
-
-  // Range check against the upper/lower values for this isntruction.
-  unsigned Val = Result.getZExtValue();
-  if (Val < l || Val > (u + l))
-    return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
-           << l << u + l << TheCall->getArg(i)->getSourceRange();
-
-  return false;
+  return SemaBuiltinConstantArgRange(TheCall, i, l, u + l);
 }
 
 bool Sema::CheckAArch64BuiltinFunctionCall(unsigned BuiltinID,
@@ -628,25 +612,10 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case ARM::BI__builtin_arm_vcvtr_d: i = 1; u = 1; break;
   case ARM::BI__builtin_arm_dmb:
   case ARM::BI__builtin_arm_dsb: l = 0; u = 15; break;
-  };
-
-  // We can't check the value of a dependent argument.
-  if (TheCall->getArg(i)->isTypeDependent() ||
-      TheCall->getArg(i)->isValueDependent())
-    return false;
-
-  // Check that the immediate argument is actually a constant.
-  if (SemaBuiltinConstantArg(TheCall, i, Result))
-    return true;
-
-  // Range check against the upper/lower values for this isntruction.
-  unsigned Val = Result.getZExtValue();
-  if (Val < l || Val > (u + l))
-    return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
-      << l << u+l << TheCall->getArg(i)->getSourceRange();
+  }
 
   // FIXME: VFP Intrinsics should error if VFP not present.
-  return false;
+  return SemaBuiltinConstantArgRange(TheCall, i, l, u + l);
 }
 
 bool Sema::CheckARM64BuiltinFunctionCall(unsigned BuiltinID,
@@ -675,31 +644,16 @@ bool Sema::CheckMipsBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case Mips::BI__builtin_mips_precr_sra_ph_w: i = 2; l = 0; u = 31; break;
   case Mips::BI__builtin_mips_precr_sra_r_ph_w: i = 2; l = 0; u = 31; break;
   case Mips::BI__builtin_mips_prepend: i = 2; l = 0; u = 31; break;
-  };
+  }
 
-  // We can't check the value of a dependent argument.
-  if (TheCall->getArg(i)->isTypeDependent() ||
-      TheCall->getArg(i)->isValueDependent())
-    return false;
-
-  // Check that the immediate argument is actually a constant.
-  llvm::APSInt Result;
-  if (SemaBuiltinConstantArg(TheCall, i, Result))
-    return true;
-
-  // Range check against the upper/lower values for this instruction.
-  unsigned Val = Result.getZExtValue();
-  if (Val < l || Val > u)
-    return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
-      << l << u << TheCall->getArg(i)->getSourceRange();
-
-  return false;
+  return SemaBuiltinConstantArgRange(TheCall, i, l, u);
 }
 
 bool Sema::CheckX86BuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   switch (BuiltinID) {
   case X86::BI_mm_prefetch:
-    return SemaBuiltinMMPrefetch(TheCall);
+    // This is declared to take (const char*, int)
+    return SemaBuiltinConstantArgRange(TheCall, 1, 0, 3);
   }
   return false;
 }
@@ -1969,50 +1923,9 @@ bool Sema::SemaBuiltinPrefetch(CallExpr *TheCall) {
 
   // Argument 0 is checked for us and the remaining arguments must be
   // constant integers.
-  for (unsigned i = 1; i != NumArgs; ++i) {
-    Expr *Arg = TheCall->getArg(i);
-
-    // We can't check the value of a dependent argument.
-    if (Arg->isTypeDependent() || Arg->isValueDependent())
-      continue;
-
-    llvm::APSInt Result;
-    if (SemaBuiltinConstantArg(TheCall, i, Result))
+  for (unsigned i = 1; i != NumArgs; ++i)
+    if (SemaBuiltinConstantArgRange(TheCall, i, 0, i == 1 ? 1 : 3))
       return true;
-
-    // FIXME: gcc issues a warning and rewrites these to 0. These
-    // seems especially odd for the third argument since the default
-    // is 3.
-    if (i == 1) {
-      if (Result.getLimitedValue() > 1)
-        return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
-             << "0" << "1" << Arg->getSourceRange();
-    } else {
-      if (Result.getLimitedValue() > 3)
-        return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
-            << "0" << "3" << Arg->getSourceRange();
-    }
-  }
-
-  return false;
-}
-
-/// SemaBuiltinMMPrefetch - Handle _mm_prefetch.
-// This is declared to take (const char*, int)
-bool Sema::SemaBuiltinMMPrefetch(CallExpr *TheCall) {
-  Expr *Arg = TheCall->getArg(1);
-
-  // We can't check the value of a dependent argument.
-  if (Arg->isTypeDependent() || Arg->isValueDependent())
-    return false;
-
-  llvm::APSInt Result;
-  if (SemaBuiltinConstantArg(TheCall, 1, Result))
-    return true;
-
-  if (Result.getLimitedValue() > 3)
-    return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
-        << "0" << "3" << Arg->getSourceRange();
 
   return false;
 }
@@ -2034,27 +1947,24 @@ bool Sema::SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
   return false;
 }
 
-/// SemaBuiltinObjectSize - Handle __builtin_object_size(void *ptr,
-/// int type). This simply type checks that type is one of the defined
-/// constants (0-3).
-// For compatibility check 0-3, llvm only handles 0 and 2.
-bool Sema::SemaBuiltinObjectSize(CallExpr *TheCall) {
+/// SemaBuiltinConstantArgRange - Handle a check if argument ArgNum of CallExpr
+/// TheCall is a constant expression in the range [Low, High].
+bool Sema::SemaBuiltinConstantArgRange(CallExpr *TheCall, int ArgNum,
+                                       int Low, int High) {
   llvm::APSInt Result;
 
   // We can't check the value of a dependent argument.
-  if (TheCall->getArg(1)->isTypeDependent() ||
-      TheCall->getArg(1)->isValueDependent())
+  Expr *Arg = TheCall->getArg(ArgNum);
+  if (Arg->isTypeDependent() || Arg->isValueDependent())
     return false;
 
   // Check constant-ness first.
-  if (SemaBuiltinConstantArg(TheCall, 1, Result))
+  if (SemaBuiltinConstantArg(TheCall, ArgNum, Result))
     return true;
 
-  Expr *Arg = TheCall->getArg(1);
-  if (Result.getSExtValue() < 0 || Result.getSExtValue() > 3) {
+  if (Result.getSExtValue() < Low || Result.getSExtValue() > High)
     return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
-             << "0" << "3" << SourceRange(Arg->getLocStart(), Arg->getLocEnd());
-  }
+      << Low << High << Arg->getSourceRange();
 
   return false;
 }
