@@ -285,9 +285,8 @@ void MipsAsmPrinter::EmitFunctionEntryLabel() {
 
   if (Subtarget->inMicroMipsMode())
     TS.emitDirectiveSetMicroMips();
-  // leave out until FSF available gas has micromips changes
-  //  else
-  //    TS.emitDirectiveSetNoMicroMips();
+  else
+    TS.emitDirectiveSetNoMicroMips();
 
   if (Subtarget->inMips16Mode())
     TS.emitDirectiveSetMips16();
