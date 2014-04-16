@@ -17,6 +17,7 @@
 #include "ARM64MachineFunctionInfo.h"
 #include "ARM64MCInstLower.h"
 #include "ARM64RegisterInfo.h"
+#include "ARM64Subtarget.h"
 #include "InstPrinter/ARM64InstPrinter.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -24,6 +25,8 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/StackMaps.h"
+#include "llvm/CodeGen/MachineModuleInfoImpls.h"
+#include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -39,13 +42,18 @@ using namespace llvm;
 namespace {
 
 class ARM64AsmPrinter : public AsmPrinter {
+  /// Subtarget - Keep a pointer to the ARM64Subtarget around so that we can
+  /// make the right decision when printing asm code for different targets.
+  const ARM64Subtarget *Subtarget;
+
   ARM64MCInstLower MCInstLowering;
   StackMaps SM;
 
 public:
   ARM64AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-      : AsmPrinter(TM, Streamer), MCInstLowering(OutContext, *Mang, *this),
-        SM(*this), ARM64FI(NULL), LOHLabelCounter(0) {}
+      : AsmPrinter(TM, Streamer), Subtarget(&TM.getSubtarget<ARM64Subtarget>()),
+        MCInstLowering(OutContext, *Mang, *this), SM(*this), ARM64FI(NULL),
+        LOHLabelCounter(0) {}
 
   virtual const char *getPassName() const { return "ARM64 Assembly Printer"; }
 
@@ -119,6 +127,29 @@ void ARM64AsmPrinter::EmitEndOfAsmFile(Module &M) {
   // generates code that does this, it is always safe to set.
   OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
   SM.serializeToStackMapSection();
+
+  // Emit a .data.rel section containing any stubs that were created.
+  if (Subtarget->isTargetELF()) {
+    const TargetLoweringObjectFileELF &TLOFELF =
+      static_cast<const TargetLoweringObjectFileELF &>(getObjFileLowering());
+
+    MachineModuleInfoELF &MMIELF = MMI->getObjFileInfo<MachineModuleInfoELF>();
+
+    // Output stubs for external and common global variables.
+    MachineModuleInfoELF::SymbolListTy Stubs = MMIELF.GetGVStubList();
+    if (!Stubs.empty()) {
+      OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
+      const DataLayout *TD = TM.getDataLayout();
+
+      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+        OutStreamer.EmitLabel(Stubs[i].first);
+        OutStreamer.EmitSymbolValue(Stubs[i].second.getPointer(),
+                                    TD->getPointerSize(0));
+      }
+      Stubs.clear();
+    }
+  }
+
 }
 
 MachineLocation
