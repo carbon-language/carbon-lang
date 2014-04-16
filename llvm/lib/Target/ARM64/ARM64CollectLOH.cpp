@@ -827,7 +827,6 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
   // PotentialCandidates are result of a chain ADRP -> ADD/LDR ->
   // A potential candidate becomes a candidate, if its current immediate
   // operand is zero and all nodes of the chain have respectively only one user
-  SetOfMachineInstr::const_iterator CandidateIt, EndCandidateIt;
 #ifdef DEBUG
   SetOfMachineInstr DefsOfPotentialCandidates;
 #endif
