@@ -2400,6 +2400,27 @@ Expr *Expr::IgnoreParenCasts() {
   }
 }
 
+Expr *Expr::IgnoreCasts() {
+  Expr *E = this;
+  while (true) {
+    if (CastExpr *P = dyn_cast<CastExpr>(E)) {
+      E = P->getSubExpr();
+      continue;
+    }
+    if (MaterializeTemporaryExpr *Materialize
+        = dyn_cast<MaterializeTemporaryExpr>(E)) {
+      E = Materialize->GetTemporaryExpr();
+      continue;
+    }
+    if (SubstNonTypeTemplateParmExpr *NTTP
+        = dyn_cast<SubstNonTypeTemplateParmExpr>(E)) {
+      E = NTTP->getReplacement();
+      continue;
+    }
+    return E;
+  }
+}
+
 /// IgnoreParenLValueCasts - Ignore parentheses and lvalue-to-rvalue
 /// casts.  This is intended purely as a temporary workaround for code
 /// that hasn't yet been rewritten to do the right thing about those

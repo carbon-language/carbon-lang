@@ -699,6 +699,9 @@ public:
   /// or CastExprs, returning their operand.
   Expr *IgnoreParenCasts() LLVM_READONLY;
 
+  /// Ignore casts.  Strip off any CastExprs, returning their operand.
+  Expr *IgnoreCasts() LLVM_READONLY;
+
   /// IgnoreParenImpCasts - Ignore parentheses and implicit casts.  Strip off
   /// any ParenExpr or ImplicitCastExprs, returning their operand.
   Expr *IgnoreParenImpCasts() LLVM_READONLY;
@@ -760,6 +763,11 @@ public:
   const Expr *IgnoreParenCasts() const LLVM_READONLY {
     return const_cast<Expr*>(this)->IgnoreParenCasts();
   }
+  /// Strip off casts, but keep parentheses.
+  const Expr *IgnoreCasts() const LLVM_READONLY {
+    return const_cast<Expr*>(this)->IgnoreCasts();
+  }
+
   const Expr *IgnoreParenNoopCasts(ASTContext &Ctx) const LLVM_READONLY {
     return const_cast<Expr*>(this)->IgnoreParenNoopCasts(Ctx);
   }

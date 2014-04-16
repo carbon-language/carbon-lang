@@ -139,6 +139,9 @@ static bool isConfigurationValue(const Stmt *S,
   if (!S)
     return false;
 
+  if (const Expr *Ex = dyn_cast<Expr>(S))
+    S = Ex->IgnoreCasts();
+
   // Special case looking for the sigil '()' around an integer literal.
   if (const ParenExpr *PE = dyn_cast<ParenExpr>(S))
     if (!PE->getLocStart().isMacroID())
@@ -146,7 +149,7 @@ static bool isConfigurationValue(const Stmt *S,
                                   IncludeIntegers, true);
 
   if (const Expr *Ex = dyn_cast<Expr>(S))
-    S = Ex->IgnoreParenCasts();
+    S = Ex->IgnoreCasts();
 
   bool IgnoreYES_NO = false;
 

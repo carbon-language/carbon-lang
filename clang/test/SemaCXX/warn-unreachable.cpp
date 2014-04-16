@@ -327,6 +327,36 @@ void test_with_paren_silencing(int x) {
     calledFun();
 }
 
+void test_with_paren_silencing_impcast(int x) {
+  if (0) calledFun(); // expected-warning {{will never be executed}} expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+  if ((0)) calledFun(); // no-warning
+
+  if (1) // expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+    calledFun();
+  else
+    calledFun(); // expected-warning {{will never be executed}}
+
+  if ((1))
+    calledFun();
+  else
+    calledFun(); // no-warning
+  
+  if (!1) // expected-note {{silence by adding parentheses to mark code as explicitly dead}}
+    calledFun(); // expected-warning {{code will never be executed}}
+  else
+    calledFun();
+  
+  if ((!1))
+    calledFun(); // no-warning
+  else
+    calledFun();
+  
+  if (!(1))
+    calledFun(); // no-warning
+  else
+    calledFun();
+}
+
 void tautological_compare(bool x, int y) {
   if (x > 10)           // expected-note {{silence}}
     calledFun();        // expected-warning {{will never be executed}}
