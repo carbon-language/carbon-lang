@@ -1819,7 +1819,7 @@ bool ARM64FastISel::SelectRem(const Instruction *I, unsigned ISDOpcode) {
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(DivOpc), ResultReg)
       .addReg(Src0Reg)
       .addReg(Src1Reg);
-  // The remainder is computed as numerator – (quotient * denominator) using the
+  // The remainder is computed as numerator - (quotient * denominator) using the
   // MSUB instruction.
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(MSubOpc), ResultReg)
       .addReg(ResultReg)
