@@ -719,7 +719,7 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
   // build the new intrinsic call
   SDNode *Result = DAG.getNode(
     Res.size() > 1 ? ISD::INTRINSIC_W_CHAIN : ISD::INTRINSIC_VOID, DL,
-    DAG.getVTList(Res.data(), Res.size()), Ops.data(), Ops.size()).getNode();
+    DAG.getVTList(Res), Ops.data(), Ops.size()).getNode();
 
   if (BR) {
     // Give the branch instruction our target

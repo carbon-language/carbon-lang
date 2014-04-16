@@ -8666,7 +8666,7 @@ static SDValue CombineBaseUpdate(SDNode *N,
       Tys[n] = VecTy;
     Tys[n++] = MVT::i32;
     Tys[n] = MVT::Other;
-    SDVTList SDTys = DAG.getVTList(Tys, NumResultVecs+2);
+    SDVTList SDTys = DAG.getVTList(ArrayRef<EVT>(Tys, NumResultVecs+2));
     SmallVector<SDValue, 8> Ops;
     Ops.push_back(N->getOperand(0)); // incoming chain
     Ops.push_back(N->getOperand(AddrOpIdx));
@@ -8746,7 +8746,7 @@ static bool CombineVLDDUP(SDNode *N, TargetLowering::DAGCombinerInfo &DCI) {
   for (n = 0; n < NumVecs; ++n)
     Tys[n] = VT;
   Tys[n] = MVT::Other;
-  SDVTList SDTys = DAG.getVTList(Tys, NumVecs+1);
+  SDVTList SDTys = DAG.getVTList(ArrayRef<EVT>(Tys, NumVecs+1));
   SDValue Ops[] = { VLD->getOperand(0), VLD->getOperand(2) };
   MemIntrinsicSDNode *VLDMemInt = cast<MemIntrinsicSDNode>(VLD);
   SDValue VLDDup = DAG.getMemIntrinsicNode(NewOpc, SDLoc(VLD), SDTys,

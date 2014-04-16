@@ -392,7 +392,7 @@ public:
   SDVTList getVTList(EVT VT1, EVT VT2);
   SDVTList getVTList(EVT VT1, EVT VT2, EVT VT3);
   SDVTList getVTList(EVT VT1, EVT VT2, EVT VT3, EVT VT4);
-  SDVTList getVTList(const EVT *VTs, unsigned NumVTs);
+  SDVTList getVTList(ArrayRef<EVT> VTs);
 
   //===--------------------------------------------------------------------===//
   // Node creation methods.

@@ -142,7 +142,7 @@ static void CloneNodeWithValues(SDNode *N, SelectionDAG *DAG,
   if (ExtraOper.getNode())
     Ops.push_back(ExtraOper);
 
-  SDVTList VTList = DAG->getVTList(&VTs[0], VTs.size());
+  SDVTList VTList = DAG->getVTList(VTs);
   MachineSDNode::mmo_iterator Begin = nullptr, End = nullptr;
   MachineSDNode *MN = dyn_cast<MachineSDNode>(N);
 

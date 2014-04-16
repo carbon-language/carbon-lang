@@ -2187,7 +2187,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLoadParam(SDNode *Node) {
     VTs = CurDAG->getVTList(EltVT, EltVT, MVT::Other, MVT::Glue);
   } else {
     EVT EVTs[] = { EltVT, EltVT, EltVT, EltVT, MVT::Other, MVT::Glue };
-    VTs = CurDAG->getVTList(&EVTs[0], array_lengthof(EVTs));
+    VTs = CurDAG->getVTList(EVTs);
   }
 
   unsigned OffsetVal = cast<ConstantSDNode>(Offset)->getZExtValue();

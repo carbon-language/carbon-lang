@@ -2922,7 +2922,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       else if (VTs.size() == 2)
         VTList = CurDAG->getVTList(VTs[0], VTs[1]);
       else
-        VTList = CurDAG->getVTList(VTs.data(), VTs.size());
+        VTList = CurDAG->getVTList(VTs);
 
       // Get the operand list.
       unsigned NumOps = MatcherTable[MatcherIndex++];

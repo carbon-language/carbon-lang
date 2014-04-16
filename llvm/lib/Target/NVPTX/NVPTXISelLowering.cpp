@@ -1089,7 +1089,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         LoadRetOps.push_back(InFlag);
         SDValue retval = DAG.getMemIntrinsicNode(
             NVPTXISD::LoadParam, dl,
-            DAG.getVTList(&LoadRetVTs[0], LoadRetVTs.size()), &LoadRetOps[0],
+            DAG.getVTList(LoadRetVTs), &LoadRetOps[0],
             LoadRetOps.size(), EltVT, MachinePointerInfo());
         Chain = retval.getValue(1);
         InFlag = retval.getValue(2);
@@ -1119,7 +1119,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         LoadRetOps.push_back(InFlag);
         SDValue retval = DAG.getMemIntrinsicNode(
             NVPTXISD::LoadParamV2, dl,
-            DAG.getVTList(&LoadRetVTs[0], LoadRetVTs.size()), &LoadRetOps[0],
+            DAG.getVTList(LoadRetVTs), &LoadRetOps[0],
             LoadRetOps.size(), EltVT, MachinePointerInfo());
         Chain = retval.getValue(2);
         InFlag = retval.getValue(3);
@@ -1164,7 +1164,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
           LoadRetOps.push_back(DAG.getConstant(Ofst, MVT::i32));
           LoadRetOps.push_back(InFlag);
           SDValue retval = DAG.getMemIntrinsicNode(
-              Opc, dl, DAG.getVTList(&LoadRetVTs[0], LoadRetVTs.size()),
+              Opc, dl, DAG.getVTList(LoadRetVTs),
               &LoadRetOps[0], LoadRetOps.size(), EltVT, MachinePointerInfo());
           if (VecSize == 2) {
             Chain = retval.getValue(2);
@@ -1220,7 +1220,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         LoadRetOps.push_back(InFlag);
         SDValue retval = DAG.getMemIntrinsicNode(
             NVPTXISD::LoadParam, dl,
-            DAG.getVTList(&LoadRetVTs[0], LoadRetVTs.size()), &LoadRetOps[0],
+            DAG.getVTList(LoadRetVTs), &LoadRetOps[0],
             LoadRetOps.size(), TheLoadType, MachinePointerInfo());
         Chain = retval.getValue(1);
         InFlag = retval.getValue(2);
@@ -2529,7 +2529,7 @@ static void ReplaceLoadVector(SDNode *N, SelectionDAG &DAG,
   case 4: {
     Opcode = NVPTXISD::LoadV4;
     EVT ListVTs[] = { EltVT, EltVT, EltVT, EltVT, MVT::Other };
-    LdResVTs = DAG.getVTList(ListVTs, 5);
+    LdResVTs = DAG.getVTList(ListVTs);
     break;
   }
   }
@@ -2642,7 +2642,7 @@ static void ReplaceINTRINSIC_W_CHAIN(SDNode *N, SelectionDAG &DAG,
           break;
         }
         EVT ListVTs[] = { EltVT, EltVT, EltVT, EltVT, MVT::Other };
-        LdResVTs = DAG.getVTList(ListVTs, 5);
+        LdResVTs = DAG.getVTList(ListVTs);
         break;
       }
       }

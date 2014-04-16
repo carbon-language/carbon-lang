@@ -432,7 +432,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Overflow(SDNode *N) {
   EVT ValueVTs[] = { N->getValueType(0), NVT };
   SDValue Ops[] = { N->getOperand(0), N->getOperand(1) };
   SDValue Res = DAG.getNode(N->getOpcode(), SDLoc(N),
-                            DAG.getVTList(ValueVTs, 2), Ops, 2);
+                            DAG.getVTList(ValueVTs), Ops, 2);
 
   // Modified the sum result - switch anything that used the old sum to use
   // the new one.

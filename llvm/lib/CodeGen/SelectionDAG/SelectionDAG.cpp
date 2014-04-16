@@ -4409,7 +4409,7 @@ SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
   VTs.reserve(NumOps);
   for (unsigned i = 0; i < NumOps; ++i)
     VTs.push_back(Ops[i].getValueType());
-  return getNode(ISD::MERGE_VALUES, dl, getVTList(&VTs[0], NumOps),
+  return getNode(ISD::MERGE_VALUES, dl, getVTList(VTs),
                  Ops, NumOps);
 }
 
@@ -4889,7 +4889,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
                               ArrayRef<EVT> ResultTys,
                               const SDValue *Ops, unsigned NumOps) {
-  return getNode(Opcode, DL, getVTList(&ResultTys[0], ResultTys.size()),
+  return getNode(Opcode, DL, getVTList(ResultTys),
                  Ops, NumOps);
 }
 
@@ -5078,7 +5078,8 @@ SDVTList SelectionDAG::getVTList(EVT VT1, EVT VT2, EVT VT3, EVT VT4) {
   return Result->getSDVTList();
 }
 
-SDVTList SelectionDAG::getVTList(const EVT *VTs, unsigned NumVTs) {
+SDVTList SelectionDAG::getVTList(ArrayRef<EVT> VTs) {
+  unsigned NumVTs = VTs.size();
   FoldingSetNodeID ID;
   ID.AddInteger(NumVTs);
   for (unsigned index = 0; index < NumVTs; index++) {
@@ -5089,7 +5090,7 @@ SDVTList SelectionDAG::getVTList(const EVT *VTs, unsigned NumVTs) {
   SDVTListNode *Result = VTListMap.FindNodeOrInsertPos(ID, IP);
   if (!Result) {
     EVT *Array = Allocator.Allocate<EVT>(NumVTs);
-    std::copy(VTs, VTs + NumVTs, Array);
+    std::copy(VTs.begin(), VTs.end(), Array);
     Result = new (Allocator) SDVTListNode(ID.Intern(Allocator), Array, NumVTs);
     VTListMap.InsertNode(Result, IP);
   }
@@ -5560,7 +5561,7 @@ MachineSDNode *
 SelectionDAG::getMachineNode(unsigned Opcode, SDLoc dl,
                              ArrayRef<EVT> ResultTys,
                              ArrayRef<SDValue> Ops) {
-  SDVTList VTs = getVTList(&ResultTys[0], ResultTys.size());
+  SDVTList VTs = getVTList(ResultTys);
   return getMachineNode(Opcode, dl, VTs, Ops);
 }
 
