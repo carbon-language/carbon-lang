@@ -94,6 +94,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_async_result (PacketResult::Success),
     m_async_response (),
     m_async_signal (-1),
+    m_interrupt_sent (false),
     m_thread_id_to_used_usec_map (),
     m_host_arch(),
     m_process_arch(),
@@ -799,6 +800,8 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                 log->Printf ("GDBRemoteCommunicationClient::%s () sending continue packet: %s", __FUNCTION__, continue_packet.c_str());
             if (SendPacketNoLock(continue_packet.c_str(), continue_packet.size()) != PacketResult::Success)
                 state = eStateInvalid;
+            else
+                m_interrupt_sent = false;
         
             m_private_is_running.SetValue (true, eBroadcastAlways);
         }
