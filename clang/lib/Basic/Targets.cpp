@@ -577,19 +577,6 @@ protected:
     if (Opts.POSIXThreads)
       Builder.defineMacro("_MT");
 
-    if (Opts.MSCVersion != 0)
-      Builder.defineMacro("_MSC_VER", Twine(Opts.MSCVersion));
-
-    if (Opts.MicrosoftExt) {
-      Builder.defineMacro("_MSC_EXTENSIONS");
-
-      if (Opts.CPlusPlus11) {
-        Builder.defineMacro("_RVALUE_REFERENCES_V2_SUPPORTED");
-        Builder.defineMacro("_RVALUE_REFERENCES_SUPPORTED");
-        Builder.defineMacro("_NATIVE_NULLPTR_SUPPORTED");
-      }
-    }
-
     Builder.defineMacro("_INTEGRAL_MAX_BITS", "64");
   }
 

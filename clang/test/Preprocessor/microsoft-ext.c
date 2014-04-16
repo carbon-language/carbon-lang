@@ -1,5 +1,9 @@
-// RUN: %clang_cc1 -E -fms-compatibility %s -o %t
-// RUN: FileCheck %s < %t
+// RUN: %clang_cc1 -triple i686-pc-win32 -E -fms-extensions -fms-compatibility %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i686-linux-gnu -E -fms-extensions -fms-compatibility %s -o - | FileCheck %s
+
+#ifndef _MSC_EXTENSIONS
+# error "_MSC_EXTENSIONS not defined with -fms-extensions"
+#endif
 
 # define M2(x, y) x + y
 # define P(x, y) {x, y}

@@ -507,7 +507,19 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__private_extern__", "extern");
   }
 
+  if (LangOpts.MSCVersion != 0)
+    Builder.defineMacro("_MSC_VER", Twine(LangOpts.MSCVersion));
+
   if (LangOpts.MicrosoftExt) {
+    // Define feature support macros that MSVC provides.
+    Builder.defineMacro("_MSC_EXTENSIONS");
+
+    if (LangOpts.CPlusPlus11) {
+      Builder.defineMacro("_RVALUE_REFERENCES_V2_SUPPORTED");
+      Builder.defineMacro("_RVALUE_REFERENCES_SUPPORTED");
+      Builder.defineMacro("_NATIVE_NULLPTR_SUPPORTED");
+    }
+
     if (LangOpts.WChar) {
       // wchar_t supported as a keyword.
       Builder.defineMacro("_WCHAR_T_DEFINED");
