@@ -80,7 +80,7 @@ declare void @variadic(i32 %a, ...)
 define void @test_variadic() {
   call void(i32, ...)* @variadic(i32 0, i64 1, double 2.0)
 ; CHECK: fmov d0, #2.0
-; CHECK: orr x1, xzr, #0x1
+; CHECK: orr w1, wzr, #0x1
 ; CHECK: bl variadic
   ret void
 }

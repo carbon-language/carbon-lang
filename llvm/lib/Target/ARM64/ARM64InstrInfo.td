@@ -395,6 +395,22 @@ def MOVi64imm
       Sched<[WriteImm]>;
 } // isReMaterializable, isCodeGenOnly
 
+// If possible, we want to use MOVi32imm even for 64-bit moves. This gives the
+// eventual expansion code fewer bits to worry about getting right. Marshalling
+// the types is a little tricky though:
+def i64imm_32bit : ImmLeaf<i64, [{
+  return (Imm & 0xffffffffULL) == Imm;
+}]>;
+
+def trunc_imm : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(N->getZExtValue(), MVT::i32);
+}]>;
+
+def : Pat<(i64 i64imm_32bit:$src),
+          (SUBREG_TO_REG (i64 0), (MOVi32imm (trunc_imm imm:$src)), sub_32)>;
+
+// Deal with the various forms of (ELF) large addressing with MOVZ/MOVK
+// sequences.
 def : Pat<(ARM64WrapperLarge tglobaladdr:$g3, tglobaladdr:$g2,
                              tglobaladdr:$g1, tglobaladdr:$g0),
           (MOVKXi (MOVKXi (MOVKXi (MOVZXi tglobaladdr:$g3, 48),

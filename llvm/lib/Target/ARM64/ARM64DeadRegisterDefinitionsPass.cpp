@@ -28,7 +28,7 @@ namespace {
 class ARM64DeadRegisterDefinitions : public MachineFunctionPass {
 private:
   const TargetRegisterInfo *TRI;
-  bool implicitlyDefinesSubReg(unsigned Reg, const MachineInstr &MI);
+  bool implicitlyDefinesOverlappingReg(unsigned Reg, const MachineInstr &MI);
   bool processMachineBasicBlock(MachineBasicBlock &MBB);
   bool usesFrameIndex(const MachineInstr &MI);
 public:
@@ -47,12 +47,11 @@ public:
 char ARM64DeadRegisterDefinitions::ID = 0;
 } // end anonymous namespace
 
-bool
-ARM64DeadRegisterDefinitions::implicitlyDefinesSubReg(unsigned Reg,
-                                                      const MachineInstr &MI) {
+bool ARM64DeadRegisterDefinitions::implicitlyDefinesOverlappingReg(
+    unsigned Reg, const MachineInstr &MI) {
   for (const MachineOperand &MO : MI.implicit_operands())
     if (MO.isReg() && MO.isDef())
-      if (TRI->isSubRegister(Reg, MO.getReg()))
+      if (TRI->regsOverlap(Reg, MO.getReg()))
         return true;
   return false;
 }
@@ -86,9 +85,10 @@ ARM64DeadRegisterDefinitions::processMachineBasicBlock(MachineBasicBlock &MBB) {
           DEBUG(dbgs() << "    Ignoring, def is tied operand.\n");
           continue;
         }
-        // Don't change the register if there's an implicit def of a subreg.
-        if (implicitlyDefinesSubReg(MO.getReg(), MI)) {
-          DEBUG(dbgs() << "    Ignoring, implicitly defines subregister.\n");
+        // Don't change the register if there's an implicit def of a subreg or
+        // supperreg.
+        if (implicitlyDefinesOverlappingReg(MO.getReg(), MI)) {
+          DEBUG(dbgs() << "    Ignoring, implicitly defines overlap reg.\n");
           continue;
         }
         // Make sure the instruction take a register class that contains

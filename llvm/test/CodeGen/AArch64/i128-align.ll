@@ -14,7 +14,7 @@ define i64 @check_size() {
 
   %diff = sub i64 %endi, %starti
   ret i64 %diff
-; CHECK: {{movz x0, #48|orr x0, xzr, #0x30}}
+; CHECK: {{movz x0, #48|orr w0, wzr, #0x30}}
 }
 
 define i64 @check_field() {
@@ -26,5 +26,5 @@ define i64 @check_field() {
 
   %diff = sub i64 %endi, %starti
   ret i64 %diff
-; CHECK: {{movz x0, #16|orr x0, xzr, #0x10}}
+; CHECK: {{movz x0, #16|orr w0, wzr, #0x10}}
 }

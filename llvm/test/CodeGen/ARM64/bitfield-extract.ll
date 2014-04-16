@@ -376,10 +376,10 @@ entry:
 ; CHECK-LABEL: fct17:
 ; CHECK: ldr [[REG1:x[0-9]+]],
 ; Create the constant
-; CHECK: movz [[REGCST:x[0-9]+]], #26, lsl #16
-; CHECK: movk [[REGCST]], #33120
+; CHECK: movz w[[REGCST:[0-9]+]], #26, lsl #16
+; CHECK: movk w[[REGCST]], #33120
 ; Do the masking
-; CHECK: and [[REG2:x[0-9]+]], [[REG1]], [[REGCST]]
+; CHECK: and [[REG2:x[0-9]+]], [[REG1]], x[[REGCST]]
 ; CHECK-NEXT: bfm [[REG2]], x1, #16, #18
 ; lsr is an alias of ubfm
 ; CHECK-NEXT: ubfm [[REG3:x[0-9]+]], [[REG2]], #2, #61

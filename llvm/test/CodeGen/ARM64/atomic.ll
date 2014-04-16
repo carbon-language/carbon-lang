@@ -17,14 +17,14 @@ define i32 @val_compare_and_swap(i32* %p) {
 
 define i64 @val_compare_and_swap_64(i64* %p) {
 ; CHECK-LABEL: val_compare_and_swap_64:
-; CHECK: orr    [[NEWVAL_REG:x[0-9]+]], xzr, #0x4
-; CHECK: orr    [[OLDVAL_REG:x[0-9]+]], xzr, #0x7
+; CHECK: orr    w[[NEWVAL_REG:[0-9]+]], wzr, #0x4
+; CHECK: orr    w[[OLDVAL_REG:[0-9]+]], wzr, #0x7
 ; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldxr   [[RESULT:x[0-9]+]], [x0]
-; CHECK: cmp    [[RESULT]], [[OLDVAL_REG]]
+; CHECK: cmp    [[RESULT]], x[[OLDVAL_REG]]
 ; CHECK: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
-; CHECK-NOT: stxr [[NEWVAL_REG]], [[NEWVAL_REG]]
-; CHECK: stxr   [[SCRATCH_REG:w[0-9]+]], [[NEWVAL_REG]], [x0]
+; CHECK-NOT: stxr x[[NEWVAL_REG]], x[[NEWVAL_REG]]
+; CHECK: stxr   [[SCRATCH_REG:w[0-9]+]], x[[NEWVAL_REG]], [x0]
 ; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
 ; CHECK: [[LABEL2]]:
   %val = cmpxchg i64* %p, i64 7, i64 4 monotonic monotonic
@@ -47,10 +47,10 @@ define i32 @fetch_and_nand(i32* %p) {
 
 define i64 @fetch_and_nand_64(i64* %p) {
 ; CHECK-LABEL: fetch_and_nand_64:
-; CHECK: orr    [[OLDVAL_REG:x[0-9]+]], xzr, #0x7
+; CHECK: orr    w[[OLDVAL_REG:[0-9]+]], wzr, #0x7
 ; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldaxr   [[DEST_REG:x[0-9]+]], [x0]
-; CHECK: bic    [[SCRATCH2_REG:x[0-9]+]], [[OLDVAL_REG]], [[DEST_REG]]
+; CHECK: bic    [[SCRATCH2_REG:x[0-9]+]], x[[OLDVAL_REG]], [[DEST_REG]]
 ; CHECK: stlxr   [[SCRATCH_REG:w[0-9]+]], [[SCRATCH2_REG]], [x0]
 ; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
 ; CHECK: mov    x0, [[DEST_REG]]
@@ -74,10 +74,10 @@ define i32 @fetch_and_or(i32* %p) {
 
 define i64 @fetch_and_or_64(i64* %p) {
 ; CHECK: fetch_and_or_64:
-; CHECK: orr    [[OLDVAL_REG:x[0-9]+]], xzr, #0x7
+; CHECK: orr    w[[OLDVAL_REG:[0-9]+]], wzr, #0x7
 ; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldxr   [[DEST_REG:x[0-9]+]], [x0]
-; CHECK: orr    [[SCRATCH2_REG:x[0-9]+]], [[DEST_REG]], [[OLDVAL_REG]]
+; CHECK: orr    [[SCRATCH2_REG:x[0-9]+]], [[DEST_REG]], x[[OLDVAL_REG]]
 ; CHECK: stxr   [[SCRATCH_REG:w[0-9]+]], [[SCRATCH2_REG]], [x0]
 ; CHECK: cbnz   [[SCRATCH_REG]], [[LABEL]]
 ; CHECK: mov    x0, [[DEST_REG]]

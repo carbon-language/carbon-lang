@@ -67,11 +67,11 @@ define i64 @jscall_patchpoint_codegen2(i64 %callee) {
 entry:
 ; CHECK-LABEL: jscall_patchpoint_codegen2:
 ; CHECK:      Ltmp
-; CHECK:      orr x{{.+}}, xzr, #0x6
+; CHECK:      orr w{{.+}}, wzr, #0x6
 ; CHECK-NEXT: str x{{.+}}, [sp, #24]
 ; CHECK-NEXT: orr w{{.+}}, wzr, #0x4
 ; CHECK-NEXT: str w{{.+}}, [sp, #16]
-; CHECK-NEXT: orr x{{.+}}, xzr, #0x2
+; CHECK-NEXT: orr w{{.+}}, wzr, #0x2
 ; CHECK-NEXT: str x{{.+}}, [sp]
 ; CHECK:      Ltmp
 ; CHECK-NEXT: movz  x16, #65535, lsl #32
@@ -88,15 +88,15 @@ define i64 @jscall_patchpoint_codegen3(i64 %callee) {
 entry:
 ; CHECK-LABEL: jscall_patchpoint_codegen3:
 ; CHECK:      Ltmp
-; CHECK:      movz  x{{.+}}, #10
+; CHECK:      movz  w{{.+}}, #10
 ; CHECK-NEXT: str x{{.+}}, [sp, #48]
 ; CHECK-NEXT: orr w{{.+}}, wzr, #0x8
 ; CHECK-NEXT: str w{{.+}}, [sp, #36]
-; CHECK-NEXT: orr x{{.+}}, xzr, #0x6
+; CHECK-NEXT: orr w{{.+}}, wzr, #0x6
 ; CHECK-NEXT: str x{{.+}}, [sp, #24]
 ; CHECK-NEXT: orr w{{.+}}, wzr, #0x4
 ; CHECK-NEXT: str w{{.+}}, [sp, #16]
-; CHECK-NEXT: orr x{{.+}}, xzr, #0x2
+; CHECK-NEXT: orr w{{.+}}, wzr, #0x2
 ; CHECK-NEXT: str x{{.+}}, [sp]
 ; CHECK:      Ltmp
 ; CHECK-NEXT: movz  x16, #65535, lsl #32

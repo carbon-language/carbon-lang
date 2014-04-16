@@ -126,7 +126,7 @@ define i64 @foo10(i64 %v) nounwind readnone optsize ssp {
 entry:
 ; CHECK-LABEL: foo10:
 ; CHECK: cmp x0, #0
-; CHECK: orr x[[REG:[0-9]+]], xzr, #0x4
+; CHECK: orr w[[REG:[0-9]+]], wzr, #0x4
 ; CHECK: csinv x0, x[[REG]], x[[REG]], ne
   %tobool = icmp ne i64 %v, 0
   %cond = select i1 %tobool, i64 4, i64 -5
@@ -148,7 +148,7 @@ define i64 @foo12(i64 %v) nounwind readnone optsize ssp {
 entry:
 ; CHECK-LABEL: foo12:
 ; CHECK: cmp x0, #0
-; CHECK: orr x[[REG:[0-9]+]], xzr, #0x4
+; CHECK: orr w[[REG:[0-9]+]], wzr, #0x4
 ; CHECK: csneg x0, x[[REG]], x[[REG]], ne
   %tobool = icmp ne i64 %v, 0
   %cond = select i1 %tobool, i64 4, i64 -4
@@ -203,7 +203,7 @@ define i64 @foo17(i64 %a, i64 %b) nounwind readnone optsize ssp {
 entry:
 ; CHECK-LABEL: foo17:
 ; CHECK: cmp x0, x1
-; CHECK: orr x[[REG:[0-9]+]], xzr, #0x1
+; CHECK: orr w[[REG:[0-9]+]], wzr, #0x1
 ; CHECK: csinc x0, x[[REG]], x[[REG]], le
   %cmp = icmp sgt i64 %a, %b
   %. = select i1 %cmp, i64 2, i64 1
@@ -214,7 +214,7 @@ define i64 @foo18(i64 %a, i64 %b) nounwind readnone optsize ssp {
 entry:
 ; CHECK-LABEL: foo18:
 ; CHECK: cmp x0, x1
-; CHECK: orr x[[REG:[0-9]+]], xzr, #0x1
+; CHECK: orr w[[REG:[0-9]+]], wzr, #0x1
 ; CHECK: csinc x0, x[[REG]], x[[REG]], gt
   %cmp = icmp sgt i64 %a, %b
   %. = select i1 %cmp, i64 1, i64 2

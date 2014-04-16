@@ -3,8 +3,8 @@
 define i128 @shl(i128 %r, i128 %s) nounwind readnone {
 ; CHECK-LABEL: shl:
 ; CHECK: lslv  [[XREG_0:x[0-9]+]], x1, x2
-; CHECK-NEXT: orr [[XREG_1:x[0-9]+]], xzr, #0x40
-; CHECK-NEXT: sub [[XREG_2:x[0-9]+]], [[XREG_1]], x2
+; CHECK-NEXT: orr w[[XREG_1:[0-9]+]], wzr, #0x40
+; CHECK-NEXT: sub [[XREG_2:x[0-9]+]], x[[XREG_1]], x2
 ; CHECK-NEXT: lsrv  [[XREG_3:x[0-9]+]], x0, [[XREG_2]]
 ; CHECK-NEXT: orr [[XREG_6:x[0-9]+]], [[XREG_3]], [[XREG_0]]
 ; CHECK-NEXT: sub [[XREG_4:x[0-9]+]], x2, #64
@@ -20,10 +20,10 @@ define i128 @shl(i128 %r, i128 %s) nounwind readnone {
 }
 
 define i128 @ashr(i128 %r, i128 %s) nounwind readnone {
-; CHECK: ashr:
+; CHECK-LABEL: ashr:
 ; CHECK: lsrv  [[XREG_0:x[0-9]+]], x0, x2
-; CHECK-NEXT: orr [[XREG_1:x[0-9]+]], xzr, #0x40
-; CHECK-NEXT: sub [[XREG_2:x[0-9]+]], [[XREG_1]], x2
+; CHECK-NEXT: orr w[[XREG_1:[0-9]+]], wzr, #0x40
+; CHECK-NEXT: sub [[XREG_2:x[0-9]+]], x[[XREG_1]], x2
 ; CHECK-NEXT: lslv  [[XREG_3:x[0-9]+]], x1, [[XREG_2]]
 ; CHECK-NEXT: orr [[XREG_4:x[0-9]+]], [[XREG_0]], [[XREG_3]]
 ; CHECK-NEXT: sub [[XREG_5:x[0-9]+]], x2, #64
@@ -40,10 +40,10 @@ define i128 @ashr(i128 %r, i128 %s) nounwind readnone {
 }
 
 define i128 @lshr(i128 %r, i128 %s) nounwind readnone {
-; CHECK: lshr:
+; CHECK-LABEL: lshr:
 ; CHECK: lsrv  [[XREG_0:x[0-9]+]], x0, x2
-; CHECK-NEXT: orr [[XREG_1:x[0-9]+]], xzr, #0x40
-; CHECK-NEXT: sub [[XREG_2:x[0-9]+]], [[XREG_1]], x2
+; CHECK-NEXT: orr w[[XREG_1:[0-9]+]], wzr, #0x40
+; CHECK-NEXT: sub [[XREG_2:x[0-9]+]], x[[XREG_1]], x2
 ; CHECK-NEXT: lslv  [[XREG_3:x[0-9]+]], x1, [[XREG_2]]
 ; CHECK-NEXT: orr [[XREG_4:x[0-9]+]], [[XREG_0]], [[XREG_3]]
 ; CHECK-NEXT: sub [[XREG_5:x[0-9]+]], x2, #64
