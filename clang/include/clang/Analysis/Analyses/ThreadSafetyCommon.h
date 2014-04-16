@@ -262,8 +262,9 @@ private:
 
   struct BlockInfo {
     NameVarMap ExitMap;
-    bool HasBackEdges = false;
-    unsigned SuccessorsToProcess = 0;
+    bool HasBackEdges;
+    unsigned SuccessorsToProcess;
+    BlockInfo() : HasBackEdges(false), SuccessorsToProcess(0) {}
   };
 
   // We implement the CFGVisitor API
