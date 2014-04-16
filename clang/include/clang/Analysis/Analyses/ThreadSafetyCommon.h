@@ -265,6 +265,12 @@ private:
     bool HasBackEdges;
     unsigned SuccessorsToProcess;
     BlockInfo() : HasBackEdges(false), SuccessorsToProcess(0) {}
+    BlockInfo(BlockInfo &&RHS)
+        : ExitMap(std::move(RHS.ExitMap)), HasBackEdges(RHS.HasBackEdges),
+          SuccessorsToProcess(RHS.SuccessorsToProcess) {}
+
+  private:
+    BlockInfo(const BlockInfo &) LLVM_DELETED_FUNCTION;
   };
 
   // We implement the CFGVisitor API
