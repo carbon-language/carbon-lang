@@ -399,7 +399,7 @@ def MOVi64imm
 // eventual expansion code fewer bits to worry about getting right. Marshalling
 // the types is a little tricky though:
 def i64imm_32bit : ImmLeaf<i64, [{
-  return (Imm & 0xffffffffULL) == Imm;
+  return (Imm & 0xffffffffULL) == static_cast<uint64_t>(Imm);
 }]>;
 
 def trunc_imm : SDNodeXForm<imm, [{
