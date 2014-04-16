@@ -9976,8 +9976,20 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
           MD->isDesignatedInitializerForTheInterface(&InitMethod);
       assert(isDesignated && InitMethod);
       (void)isDesignated;
-      // Don't issue this warning for unavaialable inits.
-      if (!MD->isUnavailable()) {
+
+      auto superIsNSObject = [&](const ObjCMethodDecl *MD) {
+        auto IFace = MD->getClassInterface();
+        if (!IFace)
+          return false;
+        auto SuperD = IFace->getSuperClass();
+        if (!SuperD)
+          return false;
+        return SuperD->getIdentifier() ==
+            NSAPIObj->getNSClassId(NSAPI::ClassId_NSObject);
+      };
+      // Don't issue this warning for unavailable inits or direct subclasses
+      // of NSObject.
+      if (!MD->isUnavailable() && !superIsNSObject(MD)) {
         Diag(MD->getLocation(),
              diag::warn_objc_designated_init_missing_super_call);
         Diag(InitMethod->getLocation(),

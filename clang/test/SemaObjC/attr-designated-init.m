@@ -354,7 +354,7 @@ __attribute__((objc_root_class))
 
 __attribute__((objc_root_class))
 @interface NSObject
--(instancetype) init NS_DESIGNATED_INITIALIZER;
+-(instancetype) init NS_DESIGNATED_INITIALIZER; // expected-note {{method marked as designated initializer of the class here}}
 @end
 
 @interface Test3 : NSObject
@@ -366,5 +366,25 @@ __attribute__((objc_root_class))
 }
 -(instancetype) init {
   return [self initWithBasePath:0];
+}
+@end
+
+@interface Test1 : NSObject
+-(instancetype) init NS_DESIGNATED_INITIALIZER;
+@end
+@implementation Test1
+-(instancetype) init {
+  return self;
+}
+@end
+
+
+@interface Test2 : NSObject
+@end
+@interface SubTest2 : Test2
+@end
+@implementation SubTest2
+-(instancetype) init { // expected-warning {{designated initializer missing a 'super' call to a designated initializer of the super class}}
+  return self;
 }
 @end
