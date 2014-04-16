@@ -283,6 +283,7 @@ private:
 
   private:
     BlockInfo(const BlockInfo &) LLVM_DELETED_FUNCTION;
+    void operator=(const BlockInfo &) LLVM_DELETED_FUNCTION;
   };
 
   // We implement the CFGVisitor API
