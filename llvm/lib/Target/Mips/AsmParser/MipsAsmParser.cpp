@@ -144,6 +144,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool isEvaluated(const MCExpr *Expr);
   bool parseSetFeature(uint64_t Feature);
   bool parseDirectiveCPSetup();
+  bool parseDirectiveNaN();
   bool parseDirectiveSet();
   bool parseDirectiveOption();
 
@@ -2383,6 +2384,26 @@ bool MipsAsmParser::parseDirectiveCPSetup() {
   return false;
 }
 
+bool MipsAsmParser::parseDirectiveNaN() {
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    const AsmToken &Tok = Parser.getTok();
+
+    if (Tok.getString() == "2008") {
+      Parser.Lex();
+      getTargetStreamer().emitDirectiveNaN2008();
+      return false;
+    } else if (Tok.getString() == "legacy") {
+      Parser.Lex();
+      getTargetStreamer().emitDirectiveNaNLegacy();
+      return false;
+    }
+  }
+  // If we don't recognize the option passed to the .nan
+  // directive (e.g. no option or unknown option), emit an error.
+  reportParseError("invalid option in .nan directive");
+  return false;
+}
+
 bool MipsAsmParser::parseDirectiveSet() {
 
   // Get the next token.
@@ -2565,6 +2586,9 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
     Parser.eatToEndOfStatement();
     return false;
   }
+
+  if (IDVal == ".nan")
+    return parseDirectiveNaN();
 
   if (IDVal == ".gpword") {
     parseDirectiveGpWord();

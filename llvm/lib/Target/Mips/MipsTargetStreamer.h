@@ -34,6 +34,8 @@ public:
 
   virtual void emitDirectiveEnt(const MCSymbol &Symbol) = 0;
   virtual void emitDirectiveAbiCalls() = 0;
+  virtual void emitDirectiveNaN2008() = 0;
+  virtual void emitDirectiveNaNLegacy() = 0;
   virtual void emitDirectiveOptionPic0() = 0;
   virtual void emitDirectiveOptionPic2() = 0;
   virtual void emitFrame(unsigned StackReg, unsigned StackSize,
@@ -68,6 +70,8 @@ public:
 
   virtual void emitDirectiveEnt(const MCSymbol &Symbol);
   virtual void emitDirectiveAbiCalls();
+  virtual void emitDirectiveNaN2008();
+  virtual void emitDirectiveNaNLegacy();
   virtual void emitDirectiveOptionPic0();
   virtual void emitDirectiveOptionPic2();
   virtual void emitFrame(unsigned StackReg, unsigned StackSize,
@@ -111,6 +115,8 @@ public:
 
   virtual void emitDirectiveEnt(const MCSymbol &Symbol);
   virtual void emitDirectiveAbiCalls();
+  virtual void emitDirectiveNaN2008();
+  virtual void emitDirectiveNaNLegacy();
   virtual void emitDirectiveOptionPic0();
   virtual void emitDirectiveOptionPic2();
   virtual void emitFrame(unsigned StackReg, unsigned StackSize,

@@ -637,6 +637,12 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   OutStreamer.SwitchSection(OutContext.getELFSection(
       SectionName, ELF::SHT_PROGBITS, 0, SectionKind::getDataRel()));
 
+  // NaN: At the moment we only support:
+  // 1. .nan legacy (default)
+  // 2. .nan 2008
+  Subtarget->isNaN2008() ? getTargetStreamer().emitDirectiveNaN2008()
+    : getTargetStreamer().emitDirectiveNaNLegacy();
+
   // TODO: handle O64 ABI
 
   if (Subtarget->isABI_EABI()) {

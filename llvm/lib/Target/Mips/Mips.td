@@ -34,6 +34,8 @@ def FeatureGP64Bit     : SubtargetFeature<"gp64", "IsGP64bit", "true",
                                 "General Purpose Registers are 64-bit wide.">;
 def FeatureFP64Bit     : SubtargetFeature<"fp64", "IsFP64bit", "true",
                                 "Support 64-bit FP registers.">;
+def FeatureNaN2008     : SubtargetFeature<"nan2008", "IsNaN2008bit", "true",
+                                "IEEE 754-2008 NaN encoding.">;
 def FeatureSingleFloat : SubtargetFeature<"single-float", "IsSingleFloat",
                                 "true", "Only supports single precision float">;
 def FeatureO32         : SubtargetFeature<"o32", "MipsABI", "O32",
