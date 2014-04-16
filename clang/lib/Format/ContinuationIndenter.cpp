@@ -301,7 +301,9 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
   else if ((Previous.Type == TT_BinaryOperator ||
             Previous.Type == TT_ConditionalExpr ||
             Previous.Type == TT_CtorInitializerColon) &&
-           (Previous.getPrecedence() != prec::Assignment ||
+           ((Previous.getPrecedence() != prec::Assignment &&
+             (Previous.isNot(tok::lessless) || Previous.OperatorIndex != 0 ||
+              !Previous.LastOperator)) ||
             Current.StartsBinaryExpression))
     // Always indent relative to the RHS of the expression unless this is a
     // simple assignment without binary expression on the RHS. Also indent
@@ -573,7 +575,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
         std::min(State.LowestLevelOnLine, State.ParenLevel);
   if (Current.isMemberAccess())
     State.Stack.back().StartOfFunctionCall =
-        Current.LastInChainOfCalls ? 0 : State.Column + Current.ColumnWidth;
+        Current.LastOperator ? 0 : State.Column + Current.ColumnWidth;
   if (Current.Type == TT_ObjCSelectorName)
     State.Stack.back().ObjCSelectorNameFound = true;
   if (Current.Type == TT_LambdaLSquare)
