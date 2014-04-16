@@ -1567,6 +1567,8 @@ static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     break;
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
+  case llvm::Triple::arm64:
+  case llvm::Triple::arm64_be:
     getAArch64TargetFeatures(D, Args, Features);
     break;
   case llvm::Triple::x86:
