@@ -149,17 +149,20 @@ TEST_F(GnuLdParserTest, DefsymHexadecimal) {
   EXPECT_EQ((uint64_t)0x1000, map["sym"]);
 }
 
+TEST_F(GnuLdParserTest, DefsymAlias) {
+  EXPECT_TRUE(
+      parse("ld", "--start-group", "--end-group", "--defsym=sym=abc", nullptr));
+  auto map = _context->getAliases();
+  EXPECT_EQ((size_t)1, map.size());
+  EXPECT_EQ("abc", map["sym"]);
+}
+
 TEST_F(GnuLdParserTest, DefsymOctal) {
   EXPECT_TRUE(parse("ld", "--start-group", "--end-group", "--defsym=sym=0777",
                     nullptr));
   auto map = _context->getAbsoluteSymbols();
   EXPECT_EQ((size_t)1, map.size());
   EXPECT_EQ((uint64_t)0777, map["sym"]);
-}
-
-TEST_F(GnuLdParserTest, DefsymFail) {
-  EXPECT_FALSE(
-      parse("ld", "--start-group", "--end-group", "--defsym=sym=abc", nullptr));
 }
 
 TEST_F(GnuLdParserTest, DefsymMisssingSymbol) {

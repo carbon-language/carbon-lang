@@ -41,6 +41,70 @@ private:
   uint64_t _value;
 };
 
+// An AliasAtom is a zero-size atom representing an alias for other atom. It has
+// a LayoutAfter reference to the target atom, so that this atom and the target
+// atom will be layed out at the same location in the final result. Initially
+// the target atom is an undefined atom. Resolver will replace it with a defined
+// one.
+//
+// It does not have attributes itself. Most member function calls are forwarded
+// to the target atom.
+class AliasAtom : public SimpleDefinedAtom {
+public:
+  AliasAtom(const File &file, StringRef name)
+      : SimpleDefinedAtom(file), _target(nullptr), _name(name) {}
+
+  StringRef name() const override { return _name; }
+  uint64_t size() const override { return 0; }
+  ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
+
+  Scope scope() const override {
+    getTarget();
+    return _target ? _target->scope() : scopeLinkageUnit;
+  }
+
+  Merge merge() const override {
+    getTarget();
+    return _target ? _target->merge() : mergeNo;
+  }
+
+  ContentType contentType() const override {
+    getTarget();
+    return _target ? _target->contentType() : typeUnknown;
+  }
+
+  Interposable interposable() const override {
+    getTarget();
+    return _target ? _target->interposable() : interposeNo;
+  }
+
+  SectionChoice sectionChoice() const override {
+    getTarget();
+    return _target ? _target->sectionChoice() : sectionBasedOnContent;
+  }
+
+  StringRef customSectionName() const override {
+    getTarget();
+    return _target ? _target->customSectionName() : StringRef("");
+  }
+
+private:
+  void getTarget() const {
+    if (_target)
+      return;
+    for (const Reference *r : *this) {
+      if (r->kindNamespace() == lld::Reference::KindNamespace::all &&
+          r->kindValue() == lld::Reference::kindLayoutAfter) {
+        _target = dyn_cast<DefinedAtom>(r->target());
+        return;
+      }
+    }
+  }
+
+  mutable const DefinedAtom *_target;
+  StringRef _name;
+};
+
 class CommandLineUndefinedAtom : public SimpleUndefinedAtom {
 public:
   CommandLineUndefinedAtom(const File &f, StringRef name)
@@ -203,6 +267,17 @@ void ELFLinkingContext::createInternalFiles(
     StringRef sym = i.first;
     uint64_t val = i.second;
     file->addAtom(*(new (_allocator) CommandLineAbsoluteAtom(*file, sym, val)));
+  }
+  for (auto &i : getAliases()) {
+    StringRef from = i.first;
+    StringRef to = i.second;
+    SimpleDefinedAtom *fromAtom = new (_allocator) AliasAtom(*file, from);
+    UndefinedAtom *toAtom = new (_allocator) SimpleUndefinedAtom(*file, to);
+    fromAtom->addReference(Reference::KindNamespace::all,
+                           Reference::KindArch::all, Reference::kindLayoutAfter,
+                           0, toAtom, 0);
+    file->addAtom(*fromAtom);
+    file->addAtom(*toAtom);
   }
   files.push_back(std::move(file));
   LinkingContext::createInternalFiles(files);

@@ -187,6 +187,10 @@ public:
     _absoluteSymbols[name] = addr;
   }
 
+  void addAlias(StringRef sym, StringRef target) {
+    _aliasSymbols[sym] = target;
+  }
+
   /// Return the list of initializer symbols that are specified in the
   /// linker command line, using the -init option.
   range<const StringRef *> initFunctions() const {
@@ -226,6 +230,10 @@ public:
 
   const std::map<std::string, uint64_t> &getAbsoluteSymbols() const {
     return _absoluteSymbols;
+  }
+
+  const std::map<std::string, std::string> getAliases() const {
+    return _aliasSymbols;
   }
 
   /// \brief Helper function to allocate strings.
@@ -275,6 +283,7 @@ protected:
   StringRefVector _rpathList;
   StringRefVector _rpathLinkList;
   std::map<std::string, uint64_t> _absoluteSymbols;
+  std::map<std::string, std::string> _aliasSymbols;
 };
 } // end namespace lld
 

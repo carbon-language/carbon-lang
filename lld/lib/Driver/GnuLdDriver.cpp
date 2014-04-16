@@ -129,10 +129,9 @@ static error_code getFileMagic(ELFLinkingContext &ctx, StringRef path,
   return make_error_code(ReaderError::unknown_file_format);
 }
 
-// Parses an argument of --defsym. A given string must be in the form
-// of <symbol>=<number>. Note that we don't support symbol-relative
-// aliases yet.
-static bool parseDefsymOption(StringRef opt, StringRef &sym, uint64_t &addr) {
+// Parses an argument of --defsym=<sym>=<number>
+static bool parseDefsymAsAbsolute(StringRef opt, StringRef &sym,
+                                  uint64_t &addr) {
   size_t equalPos = opt.find('=');
   if (equalPos == 0 || equalPos == StringRef::npos)
     return false;
@@ -140,6 +139,17 @@ static bool parseDefsymOption(StringRef opt, StringRef &sym, uint64_t &addr) {
   if (opt.substr(equalPos + 1).getAsInteger(0, addr))
     return false;
   return true;
+}
+
+// Parses an argument of --defsym=<sym>=<sym>
+static bool parseDefsymAsAlias(StringRef opt, StringRef &sym,
+                               StringRef &target) {
+  size_t equalPos = opt.find('=');
+  if (equalPos == 0 || equalPos == StringRef::npos)
+    return false;
+  sym = opt.substr(0, equalPos);
+  target = opt.substr(equalPos + 1);
+  return !target.empty();
 }
 
 llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
@@ -416,13 +426,16 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
       break;
 
     case OPT_defsym: {
-      StringRef sym;
+      StringRef sym, target;
       uint64_t addr;
-      if (!parseDefsymOption(inputArg->getValue(), sym, addr)) {
+      if (parseDefsymAsAbsolute(inputArg->getValue(), sym, addr)) {
+        ctx->addInitialAbsoluteSymbol(sym, addr);
+      } else if (parseDefsymAsAlias(inputArg->getValue(), sym, target)) {
+        ctx->addAlias(sym, target);
+      } else {
         diagnostics << "invalid --defsym: " << inputArg->getValue() << "\n";
         return false;
       }
-      ctx->addInitialAbsoluteSymbol(sym, addr);
       break;
     }
 
