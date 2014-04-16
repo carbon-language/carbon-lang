@@ -520,6 +520,17 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 
   Opts.DependentLibraries = Args.getAllArgValues(OPT_dependent_lib);
 
+  if (Arg *A = Args.getLastArg(OPT_Rpass_EQ)) {
+    StringRef Val = A->getValue();
+    std::string RegexError;
+    Opts.OptimizationRemarkPattern = std::make_shared<llvm::Regex>(Val);
+    if (!Opts.OptimizationRemarkPattern->isValid(RegexError)) {
+      Diags.Report(diag::err_drv_optimization_remark_pattern)
+          << RegexError << A->getAsString(Args);
+      Opts.OptimizationRemarkPattern.reset();
+    }
+  }
+
   return Success;
 }
 

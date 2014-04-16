@@ -60,6 +60,7 @@ def I_Group               : OptionGroup<"<I group>">, Group<CompileOnly_Group>;
 def M_Group               : OptionGroup<"<M group>">, Group<CompileOnly_Group>;
 def T_Group               : OptionGroup<"<T group>">;
 def O_Group               : OptionGroup<"<O group>">, Group<CompileOnly_Group>;
+def R_Group               : OptionGroup<"<R group>">, Group<CompileOnly_Group>;
 def W_Group               : OptionGroup<"<W group>">, Group<CompileOnly_Group>;
 def d_Group               : OptionGroup<"<d group>">;
 def f_Group               : OptionGroup<"<f group>">, Group<CompileOnly_Group>;
@@ -253,7 +254,9 @@ def Qn : Flag<["-"], "Qn">;
 def Qunused_arguments : Flag<["-"], "Qunused-arguments">, Flags<[DriverOption, CoreOption]>,
   HelpText<"Don't emit warning for unused driver arguments">;
 def Q : Flag<["-"], "Q">;
-def R : Flag<["-"], "R">;
+def Rpass_EQ : Joined<["-"], "Rpass=">, Group<R_Group>, Flags<[CC1Option]>,
+  HelpText<"Report transformations performed by optimization passes whose "
+           "name matches the given POSIX regular expression">;
 def S : Flag<["-"], "S">, Flags<[DriverOption,CC1Option]>, Group<Action_Group>,
   HelpText<"Only run preprocess and compilation steps">;
 def Tbss : JoinedOrSeparate<["-"], "Tbss">, Group<T_Group>;

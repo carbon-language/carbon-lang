@@ -16,6 +16,7 @@
 
 #include <string>
 #include <vector>
+#include "llvm/Support/Regex.h"
 
 namespace clang {
 
@@ -144,6 +145,13 @@ public:
 
   /// Name of the profile file to use as input for -fprofile-instr-use
   std::string InstrProfileInput;
+
+  /// Regular expression to select optimizations for which we should enable
+  /// optimization remarks. Transformation passes whose name matches this
+  /// expression (and support this feature), will emit a diagnostic
+  /// whenever they perform a transformation. This is enabled by the
+  /// -Rpass=regexp flag.
+  std::shared_ptr<llvm::Regex> OptimizationRemarkPattern;
 
 public:
   // Define accessors/mutators for code generation options of enumeration type.

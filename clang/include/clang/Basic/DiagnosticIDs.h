@@ -154,6 +154,9 @@ public:
   /// default.
   static bool isDefaultMappingAsError(unsigned DiagID);
 
+  /// \brief Return true if the specified diagnostic is a Remark.
+  static bool isRemark(unsigned DiagID);
+
   /// \brief Determine whether the given built-in diagnostic ID is a Note.
   static bool isBuiltinNote(unsigned DiagID);
 

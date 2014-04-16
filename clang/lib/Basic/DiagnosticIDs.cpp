@@ -361,6 +361,11 @@ bool DiagnosticIDs::isDefaultMappingAsError(unsigned DiagID) {
   return GetDefaultDiagMappingInfo(DiagID).getMapping() == diag::MAP_ERROR;
 }
 
+bool DiagnosticIDs::isRemark(unsigned DiagID) {
+  return DiagID < diag::DIAG_UPPER_LIMIT &&
+         getBuiltinDiagClass(DiagID) == CLASS_REMARK;
+}
+
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
 StringRef DiagnosticIDs::getDescription(unsigned DiagID) const {

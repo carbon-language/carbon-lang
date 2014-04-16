@@ -102,6 +102,7 @@ class DefaultWarnNoWerror {
 class DefaultWarnShowInSystemHeader {
   bit WarningShowInSystemHeader = 1;
 }
+class DefaultRemark { DiagMapping DefaultMapping = MAP_REMARK; }
 
 // Definitions for Diagnostics.
 include "DiagnosticASTKinds.td"

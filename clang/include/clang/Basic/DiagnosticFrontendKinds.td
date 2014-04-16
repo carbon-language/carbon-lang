@@ -32,6 +32,12 @@ def err_fe_backend_plugin: Error<"%0">, CatBackend;
 def remark_fe_backend_plugin: Remark<"%0">, CatBackend, InGroup<RemarkBackendPlugin>;
 def note_fe_backend_plugin: Note<"%0">, CatBackend;
 
+def remark_fe_backend_optimization_remark : Remark<"%0">, CatBackend,
+    InGroup<BackendOptimizationRemark>, DefaultRemark;
+def note_fe_backend_optimization_remark_missing_loc : Note<"use "
+  "-gline-tables-only -gcolumn-info to track source location information "
+  "for this optimization remark">;
+
 def err_fe_invalid_code_complete_file : Error<
     "cannot locate code-completion file %0">, DefaultFatal;
 def err_fe_stdout_binary : Error<"unable to change standard output to binary">,
