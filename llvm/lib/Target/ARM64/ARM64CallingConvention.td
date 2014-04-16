@@ -36,7 +36,7 @@ def CC_ARM64_AAPCS : CallingConv<[
                                                     [X0, X1, X3, X5]>>>,
 
   // i128 is split to two i64s, and its stack alignment is 16 bytes.
-  CCIfType<[i64], CCIfSplit<CCAssignToStack<8, 16>>>,
+  CCIfType<[i64], CCIfSplit<CCAssignToStackWithShadow<8, 16, [X7]>>>,
 
   CCIfType<[i64], CCAssignToRegWithShadow<[X0, X1, X2, X3, X4, X5, X6, X7],
                                           [W0, W1, W2, W3, W4, W5, W6, W7]>>,

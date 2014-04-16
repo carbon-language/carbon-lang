@@ -84,3 +84,13 @@ define void @test_variadic() {
 ; CHECK: bl variadic
   ret void
 }
+
+; We weren't marking x7 as used after deciding that the i128 didn't fit into
+; registers and putting the first half on the stack, so the *second* half went
+; into x7. Yuck!
+define i128 @test_i128_shadow([7 x i64] %x0_x6, i128 %sp) {
+; CHECK-LABEL: test_i128_shadow:
+; CHECK: ldp x0, x1, [sp]
+
+  ret i128 %sp
+}
