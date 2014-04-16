@@ -2,7 +2,7 @@
 // REQUIRES: arm64-registered-target
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
 // RUN:   -S -O3 -o - %s | FileCheck %s
-// RUN: %clang_cc1 -triple arm64-none-linux-gnu -S -O3 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple arm64-none-linux-gnu -target-feature +neon -S -O3 -o - %s | FileCheck %s
 
 // Test new aarch64 intrinsics and types
 

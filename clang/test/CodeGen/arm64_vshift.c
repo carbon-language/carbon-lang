@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple arm64-apple-ios7.0 -ffreestanding -emit-llvm -o - -O1 %s | FileCheck %s
+// RUN: %clang_cc1 -triple arm64-apple-ios7.0 -target-feature +neon -ffreestanding -emit-llvm -o - -O1 %s | FileCheck %s
 #include <arm_neon.h>
 
 int8x8_t test_vqshl_n_s8(int8x8_t in) {

@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -ffreestanding -S -o - %s | FileCheck %s
-// RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -ffreestanding -S -o - -emit-llvm %s | \
+// RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -S -o - %s | FileCheck %s
+// RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -S -o - -emit-llvm %s | \
 // RUN:   FileCheck -check-prefix=CHECK-IR %s
 // REQUIRES: arm64-registered-target
 

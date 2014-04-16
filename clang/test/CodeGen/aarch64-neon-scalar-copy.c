@@ -2,7 +2,7 @@
 // REQUIRES: arm64-registered-target
 // RUN: %clang_cc1 -triple aarch64-none-linux-gnu -target-feature +neon \
 // RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck %s
-// RUN: %clang_cc1 -triple arm64-none-linux-gnu \
+// RUN: %clang_cc1 -triple arm64-none-linux-gnu -target-feature +neon \
 // RUN:   -ffp-contract=fast -S -O3 -o - %s | FileCheck %s
 
 

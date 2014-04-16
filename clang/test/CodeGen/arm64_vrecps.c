@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -ffreestanding -S -o - %s | FileCheck %s
+// RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -S -o - %s | FileCheck %s
 // REQUIRES: arm64-registered-target
 /// Test vrecpss_f32, vrecpsd_f64 ARM64 intrinsics
 

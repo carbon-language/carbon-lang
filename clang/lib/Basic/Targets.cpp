@@ -4482,6 +4482,14 @@ class ARM64TargetInfo : public TargetInfo {
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
   static const char *const GCCRegNames[];
 
+  enum FPUModeEnum {
+    FPUMode,
+    NeonMode
+  };
+
+  unsigned FPU;
+  unsigned Crypto;
+
   static const Builtin::Info BuiltinInfo[];
 
   std::string ABI;
@@ -4501,11 +4509,6 @@ public:
 
     LongDoubleWidth = LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::IEEEquad;
-
-    if (Triple.isOSBinFormatMachO())
-      DescriptionString = "e-m:o-i64:64-i128:128-n32:64-S128";
-    else
-      DescriptionString = "e-m:e-i64:64-i128:128-n32:64-S128";
 
     // {} in inline assembly are neon specifiers, not assembly variant
     // specifiers.
@@ -4575,15 +4578,14 @@ public:
     Builder.defineMacro("__ARM_SIZEOF_MINIMAL_ENUM",
                         Opts.ShortEnums ? "1" : "4");
 
-    // FIXME: the target should support NEON as an optional extension, like
-    // the OSS AArch64.
-    Builder.defineMacro("__ARM_NEON");
-    // 64-bit NEON supports half, single and double precision operations.
-    Builder.defineMacro("__ARM_NEON_FP", "7");
+    if (FPU == NeonMode) {
+      Builder.defineMacro("__ARM_NEON");
+      // 64-bit NEON supports half, single and double precision operations.
+      Builder.defineMacro("__ARM_NEON_FP", "7");
+    }
 
-    // FIXME: the target should support crypto as an optional extension, like
-    // the OSS AArch64
-    Builder.defineMacro("__ARM_FEATURE_CRYPTO");
+    if (Crypto)
+      Builder.defineMacro("__ARM_FEATURE_CRYPTO");
   }
 
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -4593,15 +4595,22 @@ public:
   }
 
   virtual bool hasFeature(StringRef Feature) const {
-    return llvm::StringSwitch<bool>(Feature)
-        .Case("arm64", true)
-        .Case("aarch64", true)
-        .Case("neon", true)
-        .Default(false);
+    return Feature == "aarch64" ||
+      Feature == "arm64" ||
+      (Feature == "neon" && FPU == NeonMode);
   }
 
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override {
+    FPU = FPUMode;
+    Crypto = 0;
+    for (unsigned i = 0, e = Features.size(); i != e; ++i) {
+      if (Features[i] == "+neon")
+        FPU = NeonMode;
+      if (Features[i] == "+crypto")
+        Crypto = 1;
+    }
+
     setDescriptionString();
 
     return true;

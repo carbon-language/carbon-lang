@@ -213,7 +213,6 @@
 // Other definitions vary from platform to platform
 
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=aarch64-none-none < /dev/null | FileCheck -check-prefix AARCH64 %s
-// RUN: %clang_cc1 -E -dM -ffreestanding -triple=arm64-none-none < /dev/null | FileCheck -check-prefix AARCH64 %s
 //
 // AARCH64:#define _LP64 1
 // AARCH64-NOT:#define __AARCH64EB__ 1
@@ -316,7 +315,6 @@
 // AARCH64:#define __aarch64__ 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=aarch64_be-none-none < /dev/null | FileCheck -check-prefix AARCH64-BE %s
-// RUN: %clang_cc1 -E -dM -ffreestanding -triple=arm64_be-none-none < /dev/null | FileCheck -check-prefix AARCH64-BE %s
 //
 // AARCH64-BE:#define _LP64 1
 // AARCH64-BE:#define __AARCH64EB__ 1

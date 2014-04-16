@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -ffreestanding -S -o - %s | FileCheck %s
+// RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -S -o - %s | FileCheck %s
 // REQUIRES: arm64-registered-target
 /// Test vqmov[u]n_high_<su>{16,32,64) ARM64 intrinsics
 

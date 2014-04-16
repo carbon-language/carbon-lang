@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple arm64-apple-ios7.0 -ffreestanding -emit-llvm -O1 -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple arm64-apple-ios7.0 -target-feature +neon -ffreestanding -emit-llvm -O1 -o - %s | FileCheck %s
 
 #include <arm_neon.h>
 
