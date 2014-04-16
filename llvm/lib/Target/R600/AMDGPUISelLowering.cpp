@@ -212,22 +212,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::SELECT, VT, Expand);
   }
 
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i1, Custom);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i1, Custom);
-
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Custom);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i8, Custom);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i8, Custom);
-
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Custom);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i16, Custom);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i16, Custom);
-
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Custom);
-
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Custom);
-
   setTargetDAGCombine(ISD::MUL);
 }
 

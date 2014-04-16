@@ -119,6 +119,22 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SIGN_EXTEND, MVT::i64, Custom);
   setOperationAction(ISD::ZERO_EXTEND, MVT::i64, Custom);
 
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Custom);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i1, Custom);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i1, Custom);
+
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Custom);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i8, Custom);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i8, Custom);
+
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Custom);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i16, Custom);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i16, Custom);
+
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Custom);
+
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Custom);
+
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::f32, Custom);
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::v16i8, Custom);

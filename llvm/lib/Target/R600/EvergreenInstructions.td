@@ -286,6 +286,13 @@ def BFI_INT_eg : R600_3OP <0x06, "BFI_INT",
   VecALU
 >;
 
+def : Pat<(i32 (sext_inreg i32:$src, i1)),
+  (BFE_INT_eg i32:$src, (i32 ZERO), (i32 ONE_INT))>;
+def : Pat<(i32 (sext_inreg i32:$src, i8)),
+  (BFE_INT_eg i32:$src, (i32 ZERO), (MOV_IMM_I32 8))>;
+def : Pat<(i32 (sext_inreg i32:$src, i16)),
+  (BFE_INT_eg i32:$src, (i32 ZERO), (MOV_IMM_I32 16))>;
+
 defm : BFIPatterns <BFI_INT_eg>;
 
 def BFM_INT_eg : R600_2OP <0xA0, "BFM_INT",

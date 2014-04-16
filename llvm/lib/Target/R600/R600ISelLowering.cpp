@@ -86,6 +86,30 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SELECT, MVT::v4i32, Expand);
   setOperationAction(ISD::SELECT, MVT::v4f32, Expand);
 
+  // Expand sign extension of vectors
+  if (!Subtarget->hasBFE())
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
+
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i1, Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i1, Expand);
+
+  if (!Subtarget->hasBFE())
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i8, Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i8, Expand);
+
+  if (!Subtarget->hasBFE())
+    setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i16, Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i16, Expand);
+
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i32, Legal);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v2i32, Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::v4i32, Expand);
+
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::Other, Expand);
+
+
   // Legalize loads and stores to the private address space.
   setOperationAction(ISD::LOAD, MVT::i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
