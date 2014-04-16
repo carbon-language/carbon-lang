@@ -638,7 +638,7 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   for (auto FI = Asm.file_names_begin(), FE = Asm.file_names_end();
        FI != FE; ++FI) {
     // round up to calculate the number of auxiliary symbols required
-    unsigned Count = (FI->size() + COFF::SymbolSize) / COFF::SymbolSize;
+    unsigned Count = (FI->size() + COFF::SymbolSize - 1) / COFF::SymbolSize;
 
     COFFSymbol *file = createSymbol(".file");
     file->Data.StorageClass = COFF::IMAGE_SYM_CLASS_FILE;
