@@ -46,7 +46,7 @@ void TargetLoweringObjectFile::Initialize(MCContext &ctx,
   InitMCObjectFileInfo(TM.getTargetTriple(),
                        TM.getRelocationModel(), TM.getCodeModel(), *Ctx);
 }
-  
+
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {
 }
 
