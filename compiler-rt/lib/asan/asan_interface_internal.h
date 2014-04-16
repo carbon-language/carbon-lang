@@ -121,6 +121,20 @@ extern "C" {
   // Global flag, copy of ASAN_OPTIONS=detect_stack_use_after_return
   SANITIZER_INTERFACE_ATTRIBUTE
   extern int __asan_option_detect_stack_use_after_return;
+
+  SANITIZER_INTERFACE_ATTRIBUTE
+  extern uptr *__asan_test_only_reported_buggy_pointer;
+
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_load1(uptr p);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_load2(uptr p);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_load4(uptr p);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_load8(uptr p);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_load16(uptr p);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_store1(uptr p);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_store2(uptr p);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_store4(uptr p);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_store8(uptr p);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_store16(uptr p);
 }  // extern "C"
 
 #endif  // ASAN_INTERFACE_INTERNAL_H

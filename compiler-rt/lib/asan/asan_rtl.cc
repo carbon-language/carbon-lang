@@ -29,6 +29,7 @@
 #include "lsan/lsan_common.h"
 
 int __asan_option_detect_stack_use_after_return;  // Global interface symbol.
+uptr *__asan_test_only_reported_buggy_pointer;  // Used only for testing asan.
 
 namespace __asan {
 
@@ -373,6 +374,36 @@ void __asan_report_ ## type ## _n(uptr addr, uptr size) {      \
 
 ASAN_REPORT_ERROR_N(load, false)
 ASAN_REPORT_ERROR_N(store, true)
+
+#define ASAN_MEMORY_ACCESS_CALLBACK(type, is_write, size)                      \
+  extern "C" NOINLINE INTERFACE_ATTRIBUTE void __asan_##type##size(uptr addr); \
+  void __asan_##type##size(uptr addr) {                                        \
+    uptr sp = MEM_TO_SHADOW(addr);                                             \
+    uptr s = size <= SHADOW_GRANULARITY ? *reinterpret_cast<u8 *>(sp)          \
+                                        : *reinterpret_cast<u16 *>(sp);        \
+    if (s) {                                                                   \
+      if (size >= SHADOW_GRANULARITY ||                                        \
+          (((addr & (SHADOW_GRANULARITY - 1)) + size - 1)) >= s) {             \
+        if (__asan_test_only_reported_buggy_pointer) {                         \
+          *__asan_test_only_reported_buggy_pointer = addr;                     \
+        } else {                                                               \
+          GET_CALLER_PC_BP_SP;                                                 \
+          __asan_report_error(pc, bp, sp, addr, is_write, size);               \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
+  }
+
+ASAN_MEMORY_ACCESS_CALLBACK(load, false, 1)
+ASAN_MEMORY_ACCESS_CALLBACK(load, false, 2)
+ASAN_MEMORY_ACCESS_CALLBACK(load, false, 4)
+ASAN_MEMORY_ACCESS_CALLBACK(load, false, 8)
+ASAN_MEMORY_ACCESS_CALLBACK(load, false, 16)
+ASAN_MEMORY_ACCESS_CALLBACK(store, true, 1)
+ASAN_MEMORY_ACCESS_CALLBACK(store, true, 2)
+ASAN_MEMORY_ACCESS_CALLBACK(store, true, 4)
+ASAN_MEMORY_ACCESS_CALLBACK(store, true, 8)
+ASAN_MEMORY_ACCESS_CALLBACK(store, true, 16)
 
 // Force the linker to keep the symbols for various ASan interface functions.
 // We want to keep those in the executable in order to let the instrumented
