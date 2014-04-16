@@ -119,25 +119,18 @@ public:
     /// \brief Nonce type to select the constructor for the end iterator.
     struct IsAtEndT {};
 
-    LazyCallGraph &G;
+    LazyCallGraph *G;
     NodeVectorImplT::iterator NI;
 
     // Build the begin iterator for a node.
     explicit iterator(LazyCallGraph &G, NodeVectorImplT &Nodes)
-        : G(G), NI(Nodes.begin()) {}
+        : G(&G), NI(Nodes.begin()) {}
 
     // Build the end iterator for a node. This is selected purely by overload.
     iterator(LazyCallGraph &G, NodeVectorImplT &Nodes, IsAtEndT /*Nonce*/)
-        : G(G), NI(Nodes.end()) {}
+        : G(&G), NI(Nodes.end()) {}
 
   public:
-    iterator(const iterator &Arg) : G(Arg.G), NI(Arg.NI) {}
-    iterator(iterator &&Arg) : G(Arg.G), NI(std::move(Arg.NI)) {}
-    iterator &operator=(iterator Arg) {
-      std::swap(Arg, *this);
-      return *this;
-    }
-
     bool operator==(const iterator &Arg) { return NI == Arg.NI; }
     bool operator!=(const iterator &Arg) { return !operator==(Arg); }
 
@@ -146,7 +139,7 @@ public:
         return NI->get<Node *>();
 
       Function *F = NI->get<Function *>();
-      Node *ChildN = G.get(*F);
+      Node *ChildN = G->get(*F);
       *NI = ChildN;
       return ChildN;
     }
