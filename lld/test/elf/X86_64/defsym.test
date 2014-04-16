@@ -1,9 +1,9 @@
-RUN: lld -flavor gnu -target x86_64 --defsym=_start=fn \
-RUN:   -e _start %p/Inputs/fn.o -o %t
+RUN: lld -flavor gnu -target x86_64 --defsym=main=fn --noinhibit-exec \
+RUN:   %p/Inputs/fn.o -o %t
 RUN: llvm-readobj -symbols %t | FileCheck %s
 
 CHECK: Symbol {
-CHECK:   Name: _start (1)
+CHECK:   Name: main (1)
 CHECK:   Value: 0x4001E0
 CHECK:   Size: 0
 CHECK:   Binding: Global (0x1)
@@ -12,7 +12,7 @@ CHECK:   Other: 0
 CHECK:   Section: .text (0x5)
 CHECK: }
 CHECK: Symbol {
-CHECK:   Name: fn (8)
+CHECK:   Name: fn (6)
 CHECK:   Value: 0x4001E0
 CHECK:   Size: 6
 CHECK:   Binding: Global (0x1)
