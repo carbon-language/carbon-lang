@@ -7,6 +7,12 @@
 ; RUN: not llc -mtriple=aarch64-pc-linux -filetype=obj < %s > /dev/null 2> %t2
 ; RUN: FileCheck %s < %t2
 
+; RUN: not llc -mtriple=arm64-pc-linux < %s > /dev/null 2> %t3
+; RUN: FileCheck %s < %t3
+
+; RUN: not llc -mtriple=arm64-pc-linux -filetype=obj < %s > /dev/null 2> %t4
+; RUN: FileCheck %s < %t4
+
 module asm "	.this_directive_is_very_unlikely_to_exist"
 
 ; CHECK: LLVM ERROR: Error parsing inline asm

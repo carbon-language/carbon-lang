@@ -89,4 +89,6 @@ ARM64MCAsmInfoELF::ARM64MCAsmInfoELF() {
 
   // Exceptions handling
   ExceptionsType = ExceptionHandling::DwarfCFI;
+
+  UseIntegratedAssembler = true;
 }
