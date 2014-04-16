@@ -1,4 +1,5 @@
-RUN: lld -flavor gnu -target x86_64 --defsym=_start=fn %p/Inputs/fn.o -o %t
+RUN: lld -flavor gnu -target x86_64 --defsym=_start=fn \
+RUN:   -e _start %p/Inputs/fn.o -o %t
 RUN: llvm-readobj -symbols %t | FileCheck %s
 
 CHECK: Symbol {
