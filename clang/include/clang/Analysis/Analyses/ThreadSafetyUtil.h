@@ -169,7 +169,7 @@ private:
 
 public:
   CopyOnWriteVector() : Data(0) { }
-  CopyOnWriteVector(const CopyOnWriteVector &V) = delete;
+  CopyOnWriteVector(const CopyOnWriteVector &V) LLVM_DELETED_FUNCTION;
   CopyOnWriteVector(CopyOnWriteVector &&V) : Data(V.Data) {
     V.Data = 0;
   }
@@ -217,7 +217,7 @@ public:
   CopyOnWriteVector clone() { return CopyOnWriteVector(Data); }
 
   // No copy constructor or copy assignment.  Use clone() with move assignment.
-  void operator=(const CopyOnWriteVector &V) = delete;
+  void operator=(const CopyOnWriteVector &V) LLVM_DELETED_FUNCTION;
 
   void operator=(CopyOnWriteVector &&V) {
     destroy();
