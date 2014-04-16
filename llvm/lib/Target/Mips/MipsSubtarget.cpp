@@ -131,6 +131,8 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
     IsLinux = false;
 
   // Set UseSmallSection.
+  // TODO: Investigate the IsLinux check. I suspect it's really checking for
+  //       bare-metal.
   UseSmallSection = !IsLinux && (RM == Reloc::Static);
   // set some subtarget specific features
   if (inMips16Mode())
