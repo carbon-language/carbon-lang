@@ -97,7 +97,7 @@ namespace SrcMgr {
     // important. It is quite awkward to fit this aligner into any other part
     // of the class due to the lack of portable ways to combine it with other
     // members.
-    llvm::AlignedCharArray<8, 1> NonceAligner LLVM_ATTRIBUTE_UNUSED;
+    llvm::AlignedCharArray<8, 1> NonceAligner;
 
     /// \brief The actual buffer containing the characters from the input
     /// file.
@@ -146,7 +146,9 @@ namespace SrcMgr {
     ContentCache(const FileEntry *Ent = 0)
       : Buffer(0, false), OrigEntry(Ent), ContentsEntry(Ent),
         SourceLineCache(0), NumLines(0), BufferOverridden(false),
-        IsSystemFile(false) {}
+        IsSystemFile(false) {
+      (void)NonceAligner; // Silence warnings about unused member.
+    }
     
     ContentCache(const FileEntry *Ent, const FileEntry *contentEnt)
       : Buffer(0, false), OrigEntry(Ent), ContentsEntry(contentEnt),
