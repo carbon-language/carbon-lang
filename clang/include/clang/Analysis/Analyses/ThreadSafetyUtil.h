@@ -168,14 +168,10 @@ private:
   };
 
 public:
-  CopyOnWriteVector() : Data(0) { }
+  CopyOnWriteVector() : Data(0) {}
   CopyOnWriteVector(const CopyOnWriteVector &V) LLVM_DELETED_FUNCTION;
-  CopyOnWriteVector(CopyOnWriteVector &&V) : Data(V.Data) {
-    V.Data = 0;
-  }
-  ~CopyOnWriteVector() {
-    destroy();
-  }
+  CopyOnWriteVector(CopyOnWriteVector &&V) : Data(V.Data) { V.Data = 0; }
+  ~CopyOnWriteVector() { destroy(); }
 
   // Returns true if this holds a valid vector.
   bool valid()  { return Data; }
