@@ -182,7 +182,7 @@ private:
   void handleReference(Reference &ref);
 
   void handlePlain(Reference &ref);
-  void handlePLT(Reference &ref);
+  void handle26(Reference &ref);
   void handleGOT(Reference &ref);
 
   const GOTAtom *getLocalGOTEntry(const Reference &ref);
@@ -266,7 +266,7 @@ void RelocationPass<ELFT>::handleReference(Reference &ref) {
     handlePlain(ref);
     break;
   case R_MIPS_26:
-    handlePLT(ref);
+    handle26(ref);
     break;
   case R_MIPS_GOT16:
   case R_MIPS_CALL16:
@@ -287,11 +287,22 @@ void RelocationPass<ELFT>::handlePlain(Reference &ref) {
   if (!ref.target())
     return;
   auto sla = dyn_cast<SharedLibraryAtom>(ref.target());
-  if (sla && sla->type() == SharedLibraryAtom::Type::Data)
+  if (!sla)
+    return;
+  switch (sla->type()) {
+  case SharedLibraryAtom::Type::Data:
     ref.setTarget(getObjectEntry(sla));
+    break;
+  case SharedLibraryAtom::Type::Code:
+    ref.setTarget(getPLTEntry(sla));
+    break;
+  default:
+    // Nothing to do.
+    break;
+  }
 }
 
-template <typename ELFT> void RelocationPass<ELFT>::handlePLT(Reference &ref) {
+template <typename ELFT> void RelocationPass<ELFT>::handle26(Reference &ref) {
   if (ref.kindValue() == R_MIPS_26 && !isLocal(ref.target())) {
     ref.setKindValue(LLD_R_MIPS_GLOBAL_26);
 
@@ -299,8 +310,9 @@ template <typename ELFT> void RelocationPass<ELFT>::handlePLT(Reference &ref) {
       const_cast<Reference &>(ref).setTarget(getLA25Entry(ref.target()));
   }
 
-  if (isa<SharedLibraryAtom>(ref.target()))
-    ref.setTarget(getPLTEntry(ref.target()));
+  const auto *sla = dyn_cast<SharedLibraryAtom>(ref.target());
+  if (sla && sla->type() == SharedLibraryAtom::Type::Code)
+    ref.setTarget(getPLTEntry(sla));
 }
 
 template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {

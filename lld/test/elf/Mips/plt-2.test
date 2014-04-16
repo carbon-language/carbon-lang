@@ -1,0 +1,48 @@
+# Test1. Check PLT entries creation when:
+#   a) Linking shared object file
+#   b) Relocations' targets are undefined symbols
+#
+# RUN: yaml2obj -format=elf %s > %t-obj
+# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t1-so %t-obj
+# RUN: llvm-objdump -disassemble %t1-so | FileCheck -check-prefix=PLT1 %s
+
+# PLT1-NOT: Disassembly of section .plt:
+
+!ELF
+FileHeader: !FileHeader
+  Class: ELFCLASS32
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_MIPS
+  Flags: [EF_MIPS_PIC, EF_MIPS_CPIC]
+
+Sections:
+- Name: .text
+  Type: SHT_PROGBITS
+  Content:  "0000000000000000"
+  AddressAlign: 16
+  Flags: [SHF_EXECINSTR, SHF_ALLOC]
+
+- Name: .data
+  Type: SHT_PROGBITS
+  Content:  "0000000000000000"
+  AddressAlign: 16
+  Flags: [SHF_WRITE, SHF_ALLOC]
+
+- Name: .rel.text
+  Type: SHT_REL
+  Info: .text
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x00
+      Symbol: T1
+      Type: R_MIPS_32
+
+Symbols:
+  Global:
+    - Name: T0
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x0
+      Size: 4
+    - Name: T1
