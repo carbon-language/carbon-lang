@@ -124,6 +124,12 @@ typedef struct LLVMOpaquePassRegistry *LLVMPassRegistryRef;
  * @see llvm::Use */
 typedef struct LLVMOpaqueUse *LLVMUseRef;
 
+
+/**
+ * @see llvm::DiagnosticInfo
+ */
+typedef struct LLVMOpaqueDiagnosticInfo *LLVMDiagnosticInfoRef;
+
 typedef enum {
     LLVMZExtAttribute       = 1<<0,
     LLVMSExtAttribute       = 1<<1,
@@ -400,6 +406,13 @@ typedef enum {
                              the old one */
 } LLVMAtomicRMWBinOp;
 
+typedef enum {
+    LLVMDSError,
+    LLVMDSWarning,
+    LLVMDSRemark,
+    LLVMDSNote
+} LLVMDiagnosticSeverity;
+
 /**
  * @}
  */
@@ -453,6 +466,8 @@ void LLVMEnablePrettyStackTrace(void);
  * @{
  */
 
+typedef void (*LLVMDiagnosticHandler)(LLVMDiagnosticInfoRef, void *);
+
 /**
  * Create a new context.
  *
@@ -467,12 +482,34 @@ LLVMContextRef LLVMContextCreate(void);
 LLVMContextRef LLVMGetGlobalContext(void);
 
 /**
+ * Set the diagnostic handler for this context.
+ */
+void LLVMContextSetDiagnosticHandler(LLVMContextRef C,
+                                     LLVMDiagnosticHandler Handler,
+                                     void *DiagnosticContext);
+
+/**
  * Destroy a context instance.
  *
  * This should be called for every call to LLVMContextCreate() or memory
  * will be leaked.
  */
 void LLVMContextDispose(LLVMContextRef C);
+
+/**
+ * Return a string representation of the DiagnosticInfo. Use
+ * LLVMDisposeMessage to free the string.
+ *
+ * @see DiagnosticInfo::print()
+ */
+char *LLVMGetDiagInfoDescription(LLVMDiagnosticInfoRef DI);
+
+/**
+ * Return an enum LLVMDiagnosticSeverity.
+ *
+ * @see DiagnosticInfo::getSeverity()
+ */
+LLVMDiagnosticSeverity LLVMGetDiagInfoSeverity(LLVMDiagnosticInfoRef DI);
 
 unsigned LLVMGetMDKindIDInContext(LLVMContextRef C, const char* Name,
                                   unsigned SLen);

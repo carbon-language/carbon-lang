@@ -15,6 +15,7 @@
 #ifndef LLVM_SUPPORT_DIAGNOSTICINFO_H
 #define LLVM_SUPPORT_DIAGNOSTICINFO_H
 
+#include "llvm-c/Core.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Casting.h"
 
@@ -293,6 +294,9 @@ private:
   /// Message to report.
   const Twine &Msg;
 };
+
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(DiagnosticInfo, LLVMDiagnosticInfoRef)
 
 } // End namespace llvm
 

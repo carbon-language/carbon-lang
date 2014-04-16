@@ -17,6 +17,8 @@
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -76,6 +78,14 @@ LLVMContextRef LLVMGetGlobalContext() {
   return wrap(&getGlobalContext());
 }
 
+void LLVMContextSetDiagnosticHandler(LLVMContextRef C,
+                                     LLVMDiagnosticHandler Handler,
+                                     void *DiagnosticContext) {
+  unwrap(C)->setDiagnosticHandler(
+      LLVM_EXTENSION reinterpret_cast<LLVMContext::DiagnosticHandlerTy>(Handler),
+      DiagnosticContext);
+}
+
 void LLVMContextDispose(LLVMContextRef C) {
   delete unwrap(C);
 }
@@ -88,6 +98,40 @@ unsigned LLVMGetMDKindIDInContext(LLVMContextRef C, const char* Name,
 unsigned LLVMGetMDKindID(const char* Name, unsigned SLen) {
   return LLVMGetMDKindIDInContext(LLVMGetGlobalContext(), Name, SLen);
 }
+
+char *LLVMGetDiagInfoDescription(LLVMDiagnosticInfoRef DI) {
+  std::string MsgStorage;
+  raw_string_ostream Stream(MsgStorage);
+  DiagnosticPrinterRawOStream DP(Stream);
+
+  unwrap(DI)->print(DP);
+  Stream.flush();
+
+  return LLVMCreateMessage(MsgStorage.c_str());
+}
+
+LLVMDiagnosticSeverity LLVMGetDiagInfoSeverity(LLVMDiagnosticInfoRef DI){
+    LLVMDiagnosticSeverity severity;
+
+    switch(unwrap(DI)->getSeverity()) {
+    default:
+      severity = LLVMDSError;
+      break;
+    case DS_Warning:
+      severity = LLVMDSWarning;
+      break;
+    case DS_Remark:
+      severity = LLVMDSRemark;
+      break;
+    case DS_Note:
+      severity = LLVMDSNote;
+      break;
+    }
+
+    return severity;
+}
+
+
 
 
 /*===-- Operations on modules ---------------------------------------------===*/
