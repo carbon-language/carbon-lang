@@ -2431,6 +2431,9 @@ public:
   decls_iterator decls_end() const {
     return UnresolvedSetIterator(Results + NumResults);
   }
+  llvm::iterator_range<decls_iterator> decls() const {
+    return llvm::iterator_range<decls_iterator>(decls_begin(), decls_end());
+  }
 
   /// \brief Gets the number of declarations in the unresolved set.
   unsigned getNumDecls() const { return NumResults; }

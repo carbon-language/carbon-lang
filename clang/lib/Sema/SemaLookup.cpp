@@ -2390,20 +2390,24 @@ void Sema::LookupOverloadedOperatorName(OverloadedOperatorKind Op, Scope *S,
   if (Operators.empty())
     return;
 
-  for (LookupResult::iterator Op = Operators.begin(), OpEnd = Operators.end();
-       Op != OpEnd; ++Op) {
-    NamedDecl *Found = (*Op)->getUnderlyingDecl();
-    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(Found)) {
-      if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
-        Functions.addDecl(*Op, Op.getAccess()); // FIXME: canonical FD
-    } else if (FunctionTemplateDecl *FunTmpl
-                 = dyn_cast<FunctionTemplateDecl>(Found)) {
-      // FIXME: friend operators?
-      // FIXME: do we need to check IsAcceptableNonMemberOperatorCandidate,
-      // later?
-      if (!FunTmpl->getDeclContext()->isRecord())
-        Functions.addDecl(*Op, Op.getAccess());
-    }
+  for (auto I = Operators.begin(), E = Operators.end(); I != E; ++I)
+    addOverloadedOperatorToUnresolvedSet(Functions, I.getPair(), T1, T2);
+}
+
+void Sema::addOverloadedOperatorToUnresolvedSet(UnresolvedSetImpl &Functions,
+                                                DeclAccessPair Op,
+                                                QualType T1, QualType T2) {
+  NamedDecl *Found = Op->getUnderlyingDecl();
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(Found)) {
+    if (IsAcceptableNonMemberOperatorCandidate(FD, T1, T2, Context))
+      Functions.addDecl(Op, Op.getAccess()); // FIXME: canonical FD
+  } else if (FunctionTemplateDecl *FunTmpl
+               = dyn_cast<FunctionTemplateDecl>(Found)) {
+    // FIXME: friend operators?
+    // FIXME: do we need to check IsAcceptableNonMemberOperatorCandidate,
+    // later?
+    if (!FunTmpl->getDeclContext()->isRecord())
+      Functions.addDecl(Op, Op.getAccess());
   }
 }
 
