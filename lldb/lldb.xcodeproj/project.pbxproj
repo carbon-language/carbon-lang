@@ -677,6 +677,8 @@
 		AF1729D7182C907200E0AB97 /* HistoryUnwind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */; };
 		AF1F7B07189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */; };
 		AF1F7B08189C904B0087DB9C /* AppleGetPendingItemsHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF1F7B06189C904B0087DB9C /* AppleGetPendingItemsHandler.h */; };
+		AF23B4DB19009C66003E2A58 /* FreeBSDSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF23B4D919009C66003E2A58 /* FreeBSDSignals.cpp */; };
+		AF23B4DC19009C66003E2A58 /* FreeBSDSignals.h in Headers */ = {isa = PBXBuildFile; fileRef = AF23B4DA19009C66003E2A58 /* FreeBSDSignals.h */; };
 		AF254E31170CCC33007AE5C9 /* PlatformDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */; };
 		AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */ = {isa = PBXBuildFile; fileRef = AF254E30170CCC33007AE5C9 /* PlatformDarwinKernel.h */; };
 		AF25AB26188F685C0030DEC3 /* AppleGetQueuesHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF25AB24188F685C0030DEC3 /* AppleGetQueuesHandler.cpp */; };
@@ -1932,6 +1934,8 @@
 		AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HistoryUnwind.cpp; path = Utility/HistoryUnwind.cpp; sourceTree = "<group>"; };
 		AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetPendingItemsHandler.cpp; sourceTree = "<group>"; };
 		AF1F7B06189C904B0087DB9C /* AppleGetPendingItemsHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetPendingItemsHandler.h; sourceTree = "<group>"; };
+		AF23B4D919009C66003E2A58 /* FreeBSDSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FreeBSDSignals.cpp; path = Utility/FreeBSDSignals.cpp; sourceTree = "<group>"; };
+		AF23B4DA19009C66003E2A58 /* FreeBSDSignals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FreeBSDSignals.h; path = Utility/FreeBSDSignals.h; sourceTree = "<group>"; };
 		AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformDarwinKernel.cpp; sourceTree = "<group>"; };
 		AF254E30170CCC33007AE5C9 /* PlatformDarwinKernel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformDarwinKernel.h; sourceTree = "<group>"; };
 		AF25AB24188F685C0030DEC3 /* AppleGetQueuesHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetQueuesHandler.cpp; sourceTree = "<group>"; };
@@ -2793,6 +2797,8 @@
 				B23DD24F12EDFAC1000C3894 /* ARMUtils.h */,
 				26954EBC1401EE8B00294D09 /* DynamicRegisterInfo.cpp */,
 				26954EBD1401EE8B00294D09 /* DynamicRegisterInfo.h */,
+				AF23B4D919009C66003E2A58 /* FreeBSDSignals.cpp */,
+				AF23B4DA19009C66003E2A58 /* FreeBSDSignals.h */,
 				AF1729D4182C907200E0AB97 /* HistoryThread.cpp */,
 				AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */,
 				AF061F89182C980000B6A19C /* HistoryThread.h */,
@@ -4059,6 +4065,7 @@
 				26ACEC2815E077AE00E94760 /* Property.h in Headers */,
 				26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */,
 				2697A39515E404BA003E682C /* OptionValueArch.h in Headers */,
+				AF23B4DC19009C66003E2A58 /* FreeBSDSignals.h in Headers */,
 				26474CBF18D0CB2D0073DEBA /* RegisterContextMach_i386.h in Headers */,
 				26474CC118D0CB2D0073DEBA /* RegisterContextMach_x86_64.h in Headers */,
 				2698699D15E6CBD0002415FF /* OperatingSystemPython.h in Headers */,
@@ -4778,6 +4785,7 @@
 				2692BA15136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp in Sources */,
 				263E949F13661AEA00E7D1CE /* UnwindAssembly-x86.cpp in Sources */,
 				264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */,
+				AF23B4DB19009C66003E2A58 /* FreeBSDSignals.cpp in Sources */,
 				26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.cpp in Sources */,
 				AF061F87182C97ED00B6A19C /* RegisterContextHistory.cpp in Sources */,
 				AF26703B1852D01E00B6CC36 /* QueueList.cpp in Sources */,
