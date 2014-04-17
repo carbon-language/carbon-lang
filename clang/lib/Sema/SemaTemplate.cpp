@@ -1721,6 +1721,38 @@ TemplateParameterList *Sema::MatchTemplateParametersToScopeSpecifier(
   //   template<> for each enclosing class template that is
   //   explicitly specialized.
   bool SawNonEmptyTemplateParameterList = false;
+
+  auto CheckExplicitSpecialization = [&](SourceRange Range,
+                                         bool Recovery = false) {
+    if (SawNonEmptyTemplateParameterList) {
+      Diag(DeclLoc, diag::err_specialize_member_of_template)
+        << !Recovery << Range;
+      Invalid = true;
+      IsExplicitSpecialization = false;
+      return true;
+    }
+
+    return false;
+  };
+
+  auto DiagnoseMissingExplicitSpecialization = [&] (SourceRange Range) {
+    // Check that we can have an explicit specialization here.
+    if (CheckExplicitSpecialization(Range, true))
+      return true;
+
+    // We don't have a template header, but we should.
+    SourceLocation ExpectedTemplateLoc;
+    if (!ParamLists.empty())
+      ExpectedTemplateLoc = ParamLists[0]->getTemplateLoc();
+    else
+      ExpectedTemplateLoc = DeclStartLoc;
+
+    Diag(DeclLoc, diag::err_template_spec_needs_header)
+      << Range
+      << FixItHint::CreateInsertion(ExpectedTemplateLoc, "template<> ");
+    return false;
+  };
+
   unsigned ParamIdx = 0;
   for (unsigned TypeIdx = 0, NumTypes = NestedTypes.size(); TypeIdx != NumTypes;
        ++TypeIdx) {
@@ -1791,13 +1823,8 @@ TemplateParameterList *Sema::MatchTemplateParametersToScopeSpecifier(
     //   are not explicitly specialized as well.
     if (ParamIdx < ParamLists.size()) {
       if (ParamLists[ParamIdx]->size() == 0) {
-        if (SawNonEmptyTemplateParameterList) {
-          Diag(DeclLoc, diag::err_specialize_member_of_template)
-            << ParamLists[ParamIdx]->getSourceRange();
-          Invalid = true;
-          IsExplicitSpecialization = false;
+        if (CheckExplicitSpecialization(ParamLists[ParamIdx]->getSourceRange()))
           return 0;
-        }
       } else
         SawNonEmptyTemplateParameterList = true;
     }
@@ -1820,29 +1847,20 @@ TemplateParameterList *Sema::MatchTemplateParametersToScopeSpecifier(
           Invalid = true;
           return 0;
         }
-        
+
         // Consume this template header.
         ++ParamIdx;
         continue;
-      } 
-      
-      if (!IsFriend) {
-        // We don't have a template header, but we should.
-        SourceLocation ExpectedTemplateLoc;
-        if (!ParamLists.empty())
-          ExpectedTemplateLoc = ParamLists[0]->getTemplateLoc();
-        else
-          ExpectedTemplateLoc = DeclStartLoc;
-
-        // FIXME: Don't recover this way if we SawNonEmptyTemplateParameterList.
-        Diag(DeclLoc, diag::err_template_spec_needs_header)
-          << getRangeOfTypeInNestedNameSpecifier(Context, T, SS)
-          << FixItHint::CreateInsertion(ExpectedTemplateLoc, "template<> ");
       }
-      
+
+      if (!IsFriend)
+        if (DiagnoseMissingExplicitSpecialization(
+                getRangeOfTypeInNestedNameSpecifier(Context, T, SS)))
+          return 0;
+
       continue;
     }
-    
+
     if (NeedNonemptyTemplateHeader) {
       // In friend declarations we can have template-ids which don't
       // depend on the corresponding template parameter lists.  But
@@ -1886,18 +1904,11 @@ TemplateParameterList *Sema::MatchTemplateParametersToScopeSpecifier(
   // the declaration itself.
   if (ParamIdx >= ParamLists.size()) {
     if (TemplateId && !IsFriend) {
-      // FIXME: Don't recover this way if we SawNonEmptyTemplateParameterList.
       // We don't have a template header for the declaration itself, but we
       // should.
-      SourceLocation ExpectedTemplateLoc;
-      if (!ParamLists.empty())
-        ExpectedTemplateLoc = ParamLists[0]->getTemplateLoc();
-      else
-        ExpectedTemplateLoc = DeclStartLoc;
-      Diag(DeclLoc, diag::err_template_spec_needs_header)
-          << SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc)
-          << FixItHint::CreateInsertion(ExpectedTemplateLoc, "template<> ");
       IsExplicitSpecialization = true;
+      DiagnoseMissingExplicitSpecialization(SourceRange(TemplateId->LAngleLoc,
+                                                        TemplateId->RAngleLoc));
 
       // Fabricate an empty template parameter list for the invented header.
       return TemplateParameterList::Create(Context, SourceLocation(),
@@ -1947,14 +1958,10 @@ TemplateParameterList *Sema::MatchTemplateParametersToScopeSpecifier(
   //   unspecialized, except that the declaration shall not explicitly 
   //   specialize a class member template if its en- closing class templates 
   //   are not explicitly specialized as well.
-  if (ParamLists.back()->size() == 0 && SawNonEmptyTemplateParameterList) {
-    Diag(DeclLoc, diag::err_specialize_member_of_template)
-      << ParamLists[ParamIdx]->getSourceRange();
-    Invalid = true;
-    IsExplicitSpecialization = false;
+  if (ParamLists.back()->size() == 0 &&
+      CheckExplicitSpecialization(ParamLists[ParamIdx]->getSourceRange()))
     return 0;
-  }
-  
+
   // Return the last template parameter list, which corresponds to the
   // entity being declared.
   return ParamLists.back();
