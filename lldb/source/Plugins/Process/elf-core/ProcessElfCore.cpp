@@ -25,6 +25,7 @@
 
 #include "Plugins/ObjectFile/ELF/ObjectFileELF.h"
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
+#include "Plugins/Process/Utility/FreeBSDSignals.h"
 
 // Project includes
 #include "ProcessElfCore.h"
@@ -105,6 +106,8 @@ ProcessElfCore::ProcessElfCore(Target& target, Listener &listener,
     m_core_module_sp (),
     m_core_file (core_file),
     m_dyld_plugin_name (),
+    m_os(llvm::Triple::UnknownOS),
+    m_signals_sp (),
     m_thread_data_valid(false),
     m_thread_data(),
     m_core_aranges ()
@@ -229,6 +232,15 @@ ProcessElfCore::DoLoadCore ()
     if (arch.IsValid())
         m_target.SetArchitecture(arch);
 
+    switch (m_os)
+    {
+        case llvm::Triple::FreeBSD:
+            m_signals_sp.reset(new FreeBSDSignals());
+            break;
+        default:
+            break;
+    }
+
     return error;
 }
 
@@ -342,6 +354,8 @@ void
 ProcessElfCore::Clear()
 {
     m_thread_list.Clear();
+    m_os = llvm::Triple::UnknownOS;
+    m_signals_sp.reset();
 }
 
 void
@@ -486,6 +500,7 @@ ProcessElfCore::ParseThreadContextsFromNoteSegment(const elf::ELFProgramHeader *
         DataExtractor note_data (segment_data, note_start, note_size);
         if (note.n_name == "FreeBSD")
         {
+            m_os = llvm::Triple::FreeBSD;
             switch (note.n_type)
             {
                 case NT_FREEBSD_PRSTATUS:
