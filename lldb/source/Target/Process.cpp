@@ -437,9 +437,10 @@ ProcessInfo::SetArguments (const Args& args, bool first_arg_is_executable)
 void
 ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
 {
-    // If notthing was specified, then check the process for any default 
+    // If nothing for stdin or stdout or stderr was specified, then check the process for any default 
     // settings that were set with "settings set"
-    if (m_file_actions.empty())
+    if (GetFileActionForFD(STDIN_FILENO) == NULL || GetFileActionForFD(STDOUT_FILENO) == NULL || 
+        GetFileActionForFD(STDERR_FILENO) == NULL)
     {
         if (m_flags.Test(eLaunchFlagDisableSTDIO))
         {
@@ -462,27 +463,32 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
                 out_path = target->GetStandardOutputPath();
                 err_path = target->GetStandardErrorPath();
             }
-            
-            if (in_path || out_path || err_path)
-            {
-                char path[PATH_MAX];
-                if (in_path && in_path.GetPath(path, sizeof(path)))
-                    AppendOpenFileAction(STDIN_FILENO, path, true, false);
-                
-                if (out_path && out_path.GetPath(path, sizeof(path)))
-                    AppendOpenFileAction(STDOUT_FILENO, path, false, true);
-                
-                if (err_path && err_path.GetPath(path, sizeof(path)))
-                    AppendOpenFileAction(STDERR_FILENO, path, false, true);
-            }
-            else if (default_to_use_pty)
-            {
-                if (m_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, NULL, 0))
-                {
-                    const char *slave_path = m_pty.GetSlaveName (NULL, 0);
-                    AppendOpenFileAction(STDIN_FILENO, slave_path, true, false);
-                    AppendOpenFileAction(STDOUT_FILENO, slave_path, false, true);
-                    AppendOpenFileAction(STDERR_FILENO, slave_path, false, true);
+
+            char path[PATH_MAX];
+            if (in_path && in_path.GetPath(path, sizeof(path)))
+                AppendOpenFileAction(STDIN_FILENO, path, true, false);
+
+            if (out_path && out_path.GetPath(path, sizeof(path)))
+                AppendOpenFileAction(STDOUT_FILENO, path, false, true);
+
+            if (err_path && err_path.GetPath(path, sizeof(path)))
+                AppendOpenFileAction(STDERR_FILENO, path, false, true);
+
+            if (default_to_use_pty && (!in_path || !out_path || !err_path)) {
+                if (m_pty.OpenFirstAvailableMaster(O_RDWR| O_NOCTTY, NULL, 0)) {
+                    const char *slave_path = m_pty.GetSlaveName(NULL, 0);
+
+                    if (!in_path) {
+                        AppendOpenFileAction(STDIN_FILENO, slave_path, true, false);
+                    }
+
+                    if (!out_path) {
+                        AppendOpenFileAction(STDOUT_FILENO, slave_path, false, true);
+                    }
+
+                    if (!err_path) {
+                        AppendOpenFileAction(STDERR_FILENO, slave_path, false, true);
+                    }
                 }
             }
         }
