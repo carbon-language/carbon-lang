@@ -21,11 +21,12 @@ static const ManagedStaticBase *StaticList = nullptr;
 
 void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
                                               void (*Deleter)(void*)) const {
+  assert(Creator);
   if (llvm_is_multithreaded()) {
     llvm_acquire_global_lock();
 
     if (!Ptr) {
-      void* tmp = Creator ? Creator() : nullptr;
+      void* tmp = Creator();
 
       TsanHappensBefore(this);
       sys::MemoryFence();
@@ -47,7 +48,7 @@ void ManagedStaticBase::RegisterManagedStatic(void *(*Creator)(),
   } else {
     assert(!Ptr && !DeleterFn && !Next &&
            "Partially initialized ManagedStatic!?");
-    Ptr = Creator ? Creator() : nullptr;
+    Ptr = Creator();
     DeleterFn = Deleter;
   
     // Add to list of managed statics.
