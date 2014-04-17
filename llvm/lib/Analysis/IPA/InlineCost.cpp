@@ -97,9 +97,6 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   void disableSROA(Value *V);
   void accumulateSROACost(DenseMap<Value *, int>::iterator CostIt,
                           int InstructionCost);
-  bool handleSROACandidate(bool IsSROAValid,
-                           DenseMap<Value *, int>::iterator CostIt,
-                           int InstructionCost);
   bool isGEPOffsetConstant(GetElementPtrInst &GEP);
   bool accumulateGEPOffset(GEPOperator &GEP, APInt &Offset);
   bool simplifyCallSite(Function *F, CallSite CS);
@@ -223,21 +220,6 @@ void CallAnalyzer::accumulateSROACost(DenseMap<Value *, int>::iterator CostIt,
                                       int InstructionCost) {
   CostIt->second += InstructionCost;
   SROACostSavings += InstructionCost;
-}
-
-/// \brief Helper for the common pattern of handling a SROA candidate.
-/// Either accumulates the cost savings if the SROA remains valid, or disables
-/// SROA for the candidate.
-bool CallAnalyzer::handleSROACandidate(bool IsSROAValid,
-                                       DenseMap<Value *, int>::iterator CostIt,
-                                       int InstructionCost) {
-  if (IsSROAValid) {
-    accumulateSROACost(CostIt, InstructionCost);
-    return true;
-  }
-
-  disableSROA(CostIt);
-  return false;
 }
 
 /// \brief Check whether a GEP's indices are all constant.

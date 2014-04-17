@@ -185,7 +185,6 @@ private:
 
 public:
   static char ID;
-  PrintRegionPass() : RegionPass(ID), Out(dbgs()) {}
   PrintRegionPass(const std::string &B, raw_ostream &o)
       : RegionPass(ID), Banner(B), Out(o) {}
 

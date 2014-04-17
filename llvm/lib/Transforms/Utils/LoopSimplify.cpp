@@ -761,12 +761,6 @@ namespace {
 
     /// verifyAnalysis() - Verify LoopSimplifyForm's guarantees.
     void verifyAnalysis() const override;
-
-  private:
-    bool ProcessLoop(Loop *L);
-    BasicBlock *RewriteLoopExitBlock(Loop *L, BasicBlock *Exit);
-    Loop *SeparateNestedLoop(Loop *L, BasicBlock *Preheader);
-    BasicBlock *InsertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader);
   };
 }
 

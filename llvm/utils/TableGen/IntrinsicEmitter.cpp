@@ -45,8 +45,6 @@ public:
                                 raw_ostream &OS);
   void EmitIntrinsicToOverloadTable(const std::vector<CodeGenIntrinsic> &Ints,
                                     raw_ostream &OS);
-  void EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
-                    raw_ostream &OS);
   void EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
                      raw_ostream &OS);
   void EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints,

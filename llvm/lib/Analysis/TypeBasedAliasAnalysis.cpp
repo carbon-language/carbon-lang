@@ -182,7 +182,6 @@ namespace {
     const MDNode *Node;
 
   public:
-    TBAAStructTagNode() : Node(nullptr) {}
     explicit TBAAStructTagNode(const MDNode *N) : Node(N) {}
 
     /// Get the MDNode for this TBAAStructTagNode.

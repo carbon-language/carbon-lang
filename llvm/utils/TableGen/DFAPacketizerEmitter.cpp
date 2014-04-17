@@ -139,7 +139,6 @@ public:
   //
   // Modify the DFA.
   //
-  void initialize();
   void addState(State *);
 
   //
@@ -245,12 +244,6 @@ bool State::canAddInsnClass(unsigned InsnClass) const {
       return true;
   }
   return false;
-}
-
-
-void DFA::initialize() {
-  assert(currentState && "Missing current state");
-  currentState->isInitial = true;
 }
 
 

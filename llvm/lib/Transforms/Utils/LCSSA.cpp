@@ -267,8 +267,6 @@ struct LCSSA : public FunctionPass {
   }
 
 private:
-  bool processLoop(Loop &L);
-
   void verifyAnalysis() const override;
 };
 }

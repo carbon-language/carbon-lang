@@ -709,19 +709,6 @@ public:
 
     return true;
   }
-
-  bool operator()(const IAPrinter &RHS) {
-    if (Conds.size() < RHS.Conds.size())
-      return true;
-
-    unsigned Idx = 0;
-    for (std::vector<std::string>::iterator
-           I = Conds.begin(), E = Conds.end(); I != E; ++I)
-      if (*I != RHS.Conds[Idx++])
-        return *I < RHS.Conds[Idx++];
-
-    return false;
-  }
 };
 
 } // end anonymous namespace
