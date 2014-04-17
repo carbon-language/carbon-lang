@@ -350,18 +350,16 @@ void GlobalModuleIndex::printStats() {
 }
 
 void GlobalModuleIndex::dump() {
-  std::fprintf(stderr, "*** Global Module Index Dump:\n");
-  std::fprintf(stderr, "Module files:\n");
-  for (llvm::SmallVector<ModuleInfo, 16>::iterator I = Modules.begin(),
-      E = Modules.end(); I != E; ++I) {
-    ModuleInfo *MI = (ModuleInfo*)I;
-    std::fprintf(stderr, "** %s\n", MI->FileName.c_str());
-    if (MI->File)
-      MI->File->dump();
+  llvm::errs() << "*** Global Module Index Dump:\n";
+  llvm::errs() << "Module files:\n";
+  for (auto MI : Modules) {
+    llvm::errs() << "** " << MI.FileName << "\n";
+    if (MI.File)
+      MI.File->dump();
     else
-      std::fprintf(stderr, "\n");
+      llvm::errs() << "\n";
   }
-  std::fprintf(stderr, "\n");
+  llvm::errs() << "\n";
 }
 
 //----------------------------------------------------------------------------//
