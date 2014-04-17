@@ -349,6 +349,8 @@ protected:
 
 /// List of target independent CodeGen pass IDs.
 namespace llvm {
+  FunctionPass *createAtomicExpandLoadLinkedPass(const TargetMachine *TM);
+
   /// \brief Create a basic TargetTransformInfo analysis pass.
   ///
   /// This pass implements the target transform info analysis using the target
@@ -373,6 +375,9 @@ namespace llvm {
   /// createCodeGenPreparePass - Transform the code to expose more pattern
   /// matching during instruction selection.
   FunctionPass *createCodeGenPreparePass(const TargetMachine *TM = nullptr);
+
+  /// AtomicExpandLoadLinkedID -- FIXME
+  extern char &AtomicExpandLoadLinkedID;
 
   /// MachineLoopInfo - This pass is a loop analysis pass.
   extern char &MachineLoopInfoID;

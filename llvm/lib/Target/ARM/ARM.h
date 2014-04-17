@@ -49,8 +49,6 @@ FunctionPass *createThumb2SizeReductionPass();
 /// \brief Creates an ARM-specific Target Transformation Info pass.
 ImmutablePass *createARMTargetTransformInfoPass(const ARMBaseTargetMachine *TM);
 
-FunctionPass *createARMAtomicExpandPass(const TargetMachine *TM);
-
 void LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                   ARMAsmPrinter &AP);
 

@@ -384,6 +384,13 @@ namespace llvm {
     bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                            Type *Ty) const override;
 
+    Value *emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
+                          AtomicOrdering Ord) const override;
+    Value *emitStoreConditional(IRBuilder<> &Builder, Value *Val,
+                                Value *Addr, AtomicOrdering Ord) const override;
+
+    bool shouldExpandAtomicInIR(Instruction *Inst) const override;
+
   protected:
     std::pair<const TargetRegisterClass*, uint8_t>
     findRepresentativeClass(MVT VT) const override;

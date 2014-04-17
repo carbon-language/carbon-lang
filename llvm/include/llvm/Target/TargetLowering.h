@@ -31,6 +31,7 @@
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Target/TargetCallingConv.h"
 #include "llvm/Target/TargetMachine.h"
@@ -895,6 +896,35 @@ public:
   std::pair<unsigned, MVT> getTypeLegalizationCost(Type *Ty) const;
 
   /// @}
+
+  //===--------------------------------------------------------------------===//
+  /// \name Helpers for load-linked/store-conditional atomic expansion.
+  /// @{
+
+  /// Perform a load-linked operation on Addr, returning a "Value *" with the
+  /// corresponding pointee type. This may entail some non-trivial operations to
+  /// truncate or reconstruct types that will be illegal in the backend. See
+  /// ARMISelLowering for an example implementation.
+  virtual Value *emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
+                                AtomicOrdering Ord) const {
+    llvm_unreachable("Load linked unimplemented on this target");
+  }
+
+  /// Perform a store-conditional operation to Addr. Return the status of the
+  /// store. This should be 0 if the store succeeded, non-zero otherwise.
+  virtual Value *emitStoreConditional(IRBuilder<> &Builder, Value *Val,
+                                      Value *Addr, AtomicOrdering Ord) const {
+    llvm_unreachable("Store conditional unimplemented on this target");
+  }
+
+  /// Return true if the given (atomic) instruction should be expanded by the
+  /// IR-level AtomicExpandLoadLinked pass into a loop involving
+  /// load-linked/store-conditional pairs. Atomic stores will be expanded in the
+  /// same way as "atomic xchg" operations which ignore their output if needed.
+  virtual bool shouldExpandAtomicInIR(Instruction *Inst) const {
+    return false;
+  }
+
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by

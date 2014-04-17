@@ -1,4 +1,4 @@
-//===-- ARMAtomicExpandPass.cpp - Expand atomic instructions --------------===//
+//===-- AtomicExpandLoadLinkedPass.cpp - Expand atomic instructions -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "arm-atomic-expand"
-#include "ARM.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -26,12 +25,14 @@
 using namespace llvm;
 
 namespace {
-  class ARMAtomicExpandPass : public FunctionPass {
+  class AtomicExpandLoadLinked : public FunctionPass {
     const TargetLowering *TLI;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit ARMAtomicExpandPass(const TargetMachine *TM = 0)
-      : FunctionPass(ID), TLI(TM->getTargetLowering()) {}
+    explicit AtomicExpandLoadLinked(const TargetMachine *TM = 0)
+      : FunctionPass(ID), TLI(TM ? TM->getTargetLowering() : 0) {
+      initializeAtomicExpandLoadLinkedPass(*PassRegistry::getPassRegistry());
+    }
 
     bool runOnFunction(Function &F) override;
     bool expandAtomicInsts(Function &F);
@@ -43,30 +44,36 @@ namespace {
 
     AtomicOrdering insertLeadingFence(IRBuilder<> &Builder, AtomicOrdering Ord);
     void insertTrailingFence(IRBuilder<> &Builder, AtomicOrdering Ord);
-
-    /// Perform a load-linked operation on Addr, returning a "Value *" with the
-    /// corresponding pointee type. This may entail some non-trivial operations
-    /// to truncate or reconstruct illegal types since intrinsics must be legal
-    Value *loadLinked(IRBuilder<> &Builder, Value *Addr, AtomicOrdering Ord);
-
-    /// Perform a store-conditional operation to Addr. Return the status of the
-    /// store: 0 if the it succeeded, non-zero otherwise.
-    Value *storeConditional(IRBuilder<> &Builder, Value *Val, Value *Addr,
-                            AtomicOrdering Ord);
-
-    /// Return true if the given (atomic) instruction should be expanded by this
-    /// pass.
-    bool shouldExpandAtomic(Instruction *Inst);
   };
 }
 
-char ARMAtomicExpandPass::ID = 0;
+char AtomicExpandLoadLinked::ID = 0;
+char &llvm::AtomicExpandLoadLinkedID = AtomicExpandLoadLinked::ID;
 
-FunctionPass *llvm::createARMAtomicExpandPass(const TargetMachine *TM) {
-  return new ARMAtomicExpandPass(TM);
+static void *initializeAtomicExpandLoadLinkedPassOnce(PassRegistry &Registry) {
+  PassInfo *PI = new PassInfo(
+      "Expand Atomic calls in terms of load-linked & store-conditional",
+      "atomic-ll-sc", &AtomicExpandLoadLinked::ID,
+      PassInfo::NormalCtor_t(callDefaultCtor<AtomicExpandLoadLinked>), false,
+      false, PassInfo::TargetMachineCtor_t(
+                 callTargetMachineCtor<AtomicExpandLoadLinked>));
+  Registry.registerPass(*PI, true);
+  return PI;
 }
 
-bool ARMAtomicExpandPass::runOnFunction(Function &F) {
+void llvm::initializeAtomicExpandLoadLinkedPass(PassRegistry &Registry) {
+  CALL_ONCE_INITIALIZATION(initializeAtomicExpandLoadLinkedPassOnce)
+}
+
+
+FunctionPass *llvm::createAtomicExpandLoadLinkedPass(const TargetMachine *TM) {
+  return new AtomicExpandLoadLinked(TM);
+}
+
+bool AtomicExpandLoadLinked::runOnFunction(Function &F) {
+  if (!TLI)
+    return false;
+
   SmallVector<Instruction *, 1> AtomicInsts;
 
   // Changing control-flow while iterating through it is a bad idea, so gather a
@@ -81,7 +88,7 @@ bool ARMAtomicExpandPass::runOnFunction(Function &F) {
 
   bool MadeChange = false;
   for (Instruction *Inst : AtomicInsts) {
-    if (!shouldExpandAtomic(Inst))
+    if (!TLI->shouldExpandAtomicInIR(Inst))
       continue;
 
     if (AtomicRMWInst *AI = dyn_cast<AtomicRMWInst>(Inst))
@@ -99,7 +106,7 @@ bool ARMAtomicExpandPass::runOnFunction(Function &F) {
   return MadeChange;
 }
 
-bool ARMAtomicExpandPass::expandAtomicLoad(LoadInst *LI) {
+bool AtomicExpandLoadLinked::expandAtomicLoad(LoadInst *LI) {
   // Load instructions don't actually need a leading fence, even in the
   // SequentiallyConsistent case.
   AtomicOrdering MemOpOrder =
@@ -108,7 +115,8 @@ bool ARMAtomicExpandPass::expandAtomicLoad(LoadInst *LI) {
   // The only 64-bit load guaranteed to be single-copy atomic by the ARM ARM is
   // an ldrexd (A3.5.3).
   IRBuilder<> Builder(LI);
-  Value *Val = loadLinked(Builder, LI->getPointerOperand(), MemOpOrder);
+  Value *Val =
+      TLI->emitLoadLinked(Builder, LI->getPointerOperand(), MemOpOrder);
 
   insertTrailingFence(Builder, LI->getOrdering());
 
@@ -118,7 +126,7 @@ bool ARMAtomicExpandPass::expandAtomicLoad(LoadInst *LI) {
   return true;
 }
 
-bool ARMAtomicExpandPass::expandAtomicStore(StoreInst *SI) {
+bool AtomicExpandLoadLinked::expandAtomicStore(StoreInst *SI) {
   // The only atomic 64-bit store on ARM is an strexd that succeeds, which means
   // we need a loop and the entire instruction is essentially an "atomicrmw
   // xchg" that ignores the value loaded.
@@ -132,7 +140,7 @@ bool ARMAtomicExpandPass::expandAtomicStore(StoreInst *SI) {
   return expandAtomicRMW(AI);
 }
 
-bool ARMAtomicExpandPass::expandAtomicRMW(AtomicRMWInst *AI) {
+bool AtomicExpandLoadLinked::expandAtomicRMW(AtomicRMWInst *AI) {
   AtomicOrdering Order = AI->getOrdering();
   Value *Addr = AI->getPointerOperand();
   BasicBlock *BB = AI->getParent();
@@ -169,7 +177,7 @@ bool ARMAtomicExpandPass::expandAtomicRMW(AtomicRMWInst *AI) {
 
   // Start the main loop block now that we've taken care of the preliminaries.
   Builder.SetInsertPoint(LoopBB);
-  Value *Loaded = loadLinked(Builder, Addr, MemOpOrder);
+  Value *Loaded = TLI->emitLoadLinked(Builder, Addr, MemOpOrder);
 
   Value *NewVal;
   switch (AI->getOperation()) {
@@ -215,7 +223,8 @@ bool ARMAtomicExpandPass::expandAtomicRMW(AtomicRMWInst *AI) {
     llvm_unreachable("Unknown atomic op");
   }
 
-  Value *StoreSuccess = storeConditional(Builder, NewVal, Addr, MemOpOrder);
+  Value *StoreSuccess =
+      TLI->emitStoreConditional(Builder, NewVal, Addr, MemOpOrder);
   Value *TryAgain = Builder.CreateICmpNE(
       StoreSuccess, ConstantInt::get(IntegerType::get(Ctx, 32), 0), "tryagain");
   Builder.CreateCondBr(TryAgain, LoopBB, ExitBB);
@@ -229,7 +238,7 @@ bool ARMAtomicExpandPass::expandAtomicRMW(AtomicRMWInst *AI) {
   return true;
 }
 
-bool ARMAtomicExpandPass::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
+bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   AtomicOrdering SuccessOrder = CI->getSuccessOrdering();
   AtomicOrdering FailureOrder = CI->getFailureOrdering();
   Value *Addr = CI->getPointerOperand();
@@ -257,8 +266,8 @@ bool ARMAtomicExpandPass::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   // cmpxchg.end:
   //     [...]
   BasicBlock *ExitBB = BB->splitBasicBlock(CI, "cmpxchg.end");
-  auto BarrierBB = BasicBlock::Create(Ctx, "cmpxchg.trystore", F, ExitBB);
-  auto TryStoreBB = BasicBlock::Create(Ctx, "cmpxchg.barrier", F, BarrierBB);
+  auto BarrierBB = BasicBlock::Create(Ctx, "cmpxchg.barrier", F, ExitBB);
+  auto TryStoreBB = BasicBlock::Create(Ctx, "cmpxchg.trystore", F, BarrierBB);
   auto LoopBB = BasicBlock::Create(Ctx, "cmpxchg.start", F, TryStoreBB);
 
   // This grabs the DebugLoc from CI
@@ -274,7 +283,7 @@ bool ARMAtomicExpandPass::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
 
   // Start the main loop block now that we've taken care of the preliminaries.
   Builder.SetInsertPoint(LoopBB);
-  Value *Loaded = loadLinked(Builder, Addr, MemOpOrder);
+  Value *Loaded = TLI->emitLoadLinked(Builder, Addr, MemOpOrder);
   Value *ShouldStore =
       Builder.CreateICmpEQ(Loaded, CI->getCompareOperand(), "should_store");
 
@@ -284,8 +293,8 @@ bool ARMAtomicExpandPass::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   Builder.CreateCondBr(ShouldStore, TryStoreBB, FailureBB);
 
   Builder.SetInsertPoint(TryStoreBB);
-  Value *StoreSuccess =
-      storeConditional(Builder, CI->getNewValOperand(), Addr, MemOpOrder);
+  Value *StoreSuccess = TLI->emitStoreConditional(
+      Builder, CI->getNewValOperand(), Addr, MemOpOrder);
   Value *TryAgain = Builder.CreateICmpNE(
       StoreSuccess, ConstantInt::get(Type::getInt32Ty(Ctx), 0), "success");
   Builder.CreateCondBr(TryAgain, LoopBB, BarrierBB);
@@ -302,73 +311,7 @@ bool ARMAtomicExpandPass::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   return true;
 }
 
-Value *ARMAtomicExpandPass::loadLinked(IRBuilder<> &Builder, Value *Addr,
-                                          AtomicOrdering Ord) {
-  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
-  Type *ValTy = cast<PointerType>(Addr->getType())->getElementType();
-  bool IsAcquire =
-      Ord == Acquire || Ord == AcquireRelease || Ord == SequentiallyConsistent;
-
-  // Since i64 isn't legal and intrinsics don't get type-lowered, the ldrexd
-  // intrinsic must return {i32, i32} and we have to recombine them into a
-  // single i64 here.
-  if (ValTy->getPrimitiveSizeInBits() == 64) {
-    Intrinsic::ID Int =
-        IsAcquire ? Intrinsic::arm_ldaexd : Intrinsic::arm_ldrexd;
-    Function *Ldrex = llvm::Intrinsic::getDeclaration(M, Int);
-
-    Addr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(M->getContext()));
-    Value *LoHi = Builder.CreateCall(Ldrex, Addr, "lohi");
-
-    Value *Lo = Builder.CreateExtractValue(LoHi, 0, "lo");
-    Value *Hi = Builder.CreateExtractValue(LoHi, 1, "hi");
-    Lo = Builder.CreateZExt(Lo, ValTy, "lo64");
-    Hi = Builder.CreateZExt(Hi, ValTy, "hi64");
-    return Builder.CreateOr(
-        Lo, Builder.CreateShl(Hi, ConstantInt::get(ValTy, 32)), "val64");
-  }
-
-  Type *Tys[] = { Addr->getType() };
-  Intrinsic::ID Int = IsAcquire ? Intrinsic::arm_ldaex : Intrinsic::arm_ldrex;
-  Function *Ldrex = llvm::Intrinsic::getDeclaration(M, Int, Tys);
-
-  return Builder.CreateTruncOrBitCast(
-      Builder.CreateCall(Ldrex, Addr),
-      cast<PointerType>(Addr->getType())->getElementType());
-}
-
-Value *ARMAtomicExpandPass::storeConditional(IRBuilder<> &Builder, Value *Val,
-                                           Value *Addr, AtomicOrdering Ord) {
-  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
-  bool IsRelease =
-      Ord == Release || Ord == AcquireRelease || Ord == SequentiallyConsistent;
-
-  // Since the intrinsics must have legal type, the i64 intrinsics take two
-  // parameters: "i32, i32". We must marshal Val into the appropriate form
-  // before the call.
-  if (Val->getType()->getPrimitiveSizeInBits() == 64) {
-    Intrinsic::ID Int =
-        IsRelease ? Intrinsic::arm_stlexd : Intrinsic::arm_strexd;
-    Function *Strex = Intrinsic::getDeclaration(M, Int);
-    Type *Int32Ty = Type::getInt32Ty(M->getContext());
-
-    Value *Lo = Builder.CreateTrunc(Val, Int32Ty, "lo");
-    Value *Hi = Builder.CreateTrunc(Builder.CreateLShr(Val, 32), Int32Ty, "hi");
-    Addr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(M->getContext()));
-    return Builder.CreateCall3(Strex, Lo, Hi, Addr);
-  }
-
-  Intrinsic::ID Int = IsRelease ? Intrinsic::arm_stlex : Intrinsic::arm_strex;
-  Type *Tys[] = { Addr->getType() };
-  Function *Strex = Intrinsic::getDeclaration(M, Int, Tys);
-
-  return Builder.CreateCall2(
-      Strex, Builder.CreateZExtOrBitCast(
-                 Val, Strex->getFunctionType()->getParamType(0)),
-      Addr);
-}
-
-AtomicOrdering ARMAtomicExpandPass::insertLeadingFence(IRBuilder<> &Builder,
+AtomicOrdering AtomicExpandLoadLinked::insertLeadingFence(IRBuilder<> &Builder,
                                                        AtomicOrdering Ord) {
   if (!TLI->getInsertFencesForAtomic())
     return Ord;
@@ -381,7 +324,7 @@ AtomicOrdering ARMAtomicExpandPass::insertLeadingFence(IRBuilder<> &Builder,
   return Monotonic;
 }
 
-void ARMAtomicExpandPass::insertTrailingFence(IRBuilder<> &Builder,
+void AtomicExpandLoadLinked::insertTrailingFence(IRBuilder<> &Builder,
                                               AtomicOrdering Ord) {
   if (!TLI->getInsertFencesForAtomic())
     return;
@@ -390,17 +333,4 @@ void ARMAtomicExpandPass::insertTrailingFence(IRBuilder<> &Builder,
     Builder.CreateFence(Acquire);
   else if (Ord == SequentiallyConsistent)
     Builder.CreateFence(SequentiallyConsistent);
-}
-
-bool ARMAtomicExpandPass::shouldExpandAtomic(Instruction *Inst) {
-  // Loads and stores less than 64-bits are already atomic; ones above that
-  // are doomed anyway, so defer to the default libcall and blame the OS when
-  // things go wrong:
-  if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
-    return SI->getValueOperand()->getType()->getPrimitiveSizeInBits() == 64;
-  else if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
-    return LI->getType()->getPrimitiveSizeInBits() == 64;
-
-  // For the real atomic operations, we have ldrex/strex up to 64 bits.
-  return Inst->getType()->getPrimitiveSizeInBits() <= 64;
 }
