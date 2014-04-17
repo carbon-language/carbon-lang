@@ -151,6 +151,10 @@ public:
     return PaddingType;
   }
 
+  void setPaddingType(llvm::Type *T) {
+    PaddingType = T;
+  }
+
   bool getPaddingInReg() const {
     return PaddingInReg;
   }

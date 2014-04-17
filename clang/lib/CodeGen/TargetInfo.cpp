@@ -3183,26 +3183,28 @@ private:
       const unsigned NumGPRs = 8;
       it->info = classifyArgumentType(it->type, AllocatedVFP, IsHA,
                                       AllocatedGPR, IsSmallAggr);
+
+      // Under AAPCS the 64-bit stack slot alignment means we can't pass HAs
+      // as sequences of floats since they'll get "holes" inserted as
+      // padding by the back end.
+      if (IsHA && AllocatedVFP > NumVFPs && !isDarwinPCS()) {
+          uint32_t NumStackSlots = getContext().getTypeSize(it->type);
+          NumStackSlots = llvm::RoundUpToAlignment(NumStackSlots, 64) / 64;
+
+          llvm::Type *CoerceTy = llvm::ArrayType::get(
+              llvm::Type::getDoubleTy(getVMContext()), NumStackSlots);
+          it->info = ABIArgInfo::getDirect(CoerceTy);
+      }
+
       // If we do not have enough VFP registers for the HA, any VFP registers
       // that are unallocated are marked as unavailable. To achieve this, we add
       // padding of (NumVFPs - PreAllocation) floats.
       if (IsHA && AllocatedVFP > NumVFPs && PreAllocation < NumVFPs) {
         llvm::Type *PaddingTy = llvm::ArrayType::get(
             llvm::Type::getFloatTy(getVMContext()), NumVFPs - PreAllocation);
-        if (isDarwinPCS())
-          it->info = ABIArgInfo::getExpandWithPadding(false, PaddingTy);
-        else {
-          // Under AAPCS the 64-bit stack slot alignment means we can't pass HAs
-          // as sequences of floats since they'll get "holes" inserted as
-          // padding by the back end.
-          uint32_t NumStackSlots = getContext().getTypeSize(it->type);
-          NumStackSlots = llvm::RoundUpToAlignment(NumStackSlots, 64) / 64;
-
-          llvm::Type *CoerceTy = llvm::ArrayType::get(
-              llvm::Type::getDoubleTy(getVMContext()), NumStackSlots);
-          it->info = ABIArgInfo::getDirect(CoerceTy, 0, PaddingTy);
-        }
+        it->info.setPaddingType(PaddingTy);
       }
+
       // If we do not have enough GPRs for the small aggregate, any GPR regs
       // that are unallocated are marked as unavailable.
       if (IsSmallAggr && AllocatedGPR > NumGPRs && PreGPR < NumGPRs) {
