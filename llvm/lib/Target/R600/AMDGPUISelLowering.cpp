@@ -1158,6 +1158,8 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
         break;
       }
 
+      // We need to use sext even for MUL_U24, because MUL_U24 is used
+      // for signed multiply of 8 and 16-bit types.
       SDValue Reg = DAG.getSExtOrTrunc(Mul, DL, VT);
 
       return Reg;
