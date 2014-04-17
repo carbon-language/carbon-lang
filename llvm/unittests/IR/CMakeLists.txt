@@ -21,6 +21,7 @@ set(IRSources
   PatternMatch.cpp
   TypeBuilderTest.cpp
   TypesTest.cpp
+  UserTest.cpp
   ValueHandleTest.cpp
   ValueMapTest.cpp
   ValueTest.cpp
