@@ -514,19 +514,17 @@ ARM64PromoteConstant::insertDefinitions(Constant *Cst,
 
       // Update the dominated uses.
       Users &DominatedUsers = IPI->second;
-      for (Users::iterator UseIt = DominatedUsers.begin(),
-                           EndIt = DominatedUsers.end();
-           UseIt != EndIt; ++UseIt) {
+      for (Value::user_iterator Use : DominatedUsers) {
 #ifndef NDEBUG
-        assert((DT.dominates(LoadedCst, cast<Instruction>(**UseIt)) ||
-                (isa<PHINode>(**UseIt) &&
-                 DT.dominates(LoadedCst, findInsertionPoint(*UseIt)))) &&
+        assert((DT.dominates(LoadedCst, cast<Instruction>(*Use)) ||
+                (isa<PHINode>(*Use) &&
+                 DT.dominates(LoadedCst, findInsertionPoint(Use)))) &&
                "Inserted definition does not dominate all its uses!");
 #endif
-        DEBUG(dbgs() << "Use to update " << UseIt->getOperandNo() << ":");
-        DEBUG((*UseIt)->print(dbgs()));
+        DEBUG(dbgs() << "Use to update " << Use.getOperandNo() << ":");
+        DEBUG(Use->print(dbgs()));
         DEBUG(dbgs() << '\n');
-        (*UseIt)->setOperand(UseIt->getOperandNo(), LoadedCst);
+        Use->setOperand(Use.getOperandNo(), LoadedCst);
         ++NumPromotedUses;
       }
     }
