@@ -598,6 +598,14 @@ public:
   /// is delete'd for real.  Note that no operations are valid on an object
   /// that has "dropped all references", except operator delete.
   void dropAllReferences();
+
+/// @}
+/// @name Utility functions for querying Debug information.
+/// @{
+
+  /// \brief Returns the Dwarf Version by checking module flags.
+  unsigned getDwarfVersion() const;
+
 /// @}
 };
 

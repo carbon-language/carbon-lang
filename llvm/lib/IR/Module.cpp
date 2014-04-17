@@ -23,6 +23,7 @@
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/LeakDetector.h"
+#include "llvm/Support/Dwarf.h"
 #include <algorithm>
 #include <cstdarg>
 #include <cstdlib>
@@ -428,4 +429,11 @@ void Module::dropAllReferences() {
 
   for(Module::alias_iterator I = alias_begin(), E = alias_end(); I != E; ++I)
     I->dropAllReferences();
+}
+
+unsigned Module::getDwarfVersion() const {
+  Value *Val = getModuleFlag("Dwarf Version");
+  if (!Val)
+    return dwarf::DWARF_VERSION;
+  return cast<ConstantInt>(Val)->getZExtValue();
 }

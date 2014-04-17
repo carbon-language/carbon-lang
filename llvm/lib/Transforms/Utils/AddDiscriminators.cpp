@@ -154,10 +154,15 @@ static bool hasDebugInfo(const Function &F) {
 /// file and line location as I2. This new lexical block will have a
 /// different discriminator number than I1.
 bool AddDiscriminators::runOnFunction(Function &F) {
-  // No need to do anything if there is no debug info for this function.
   // If the function has debug information, but the user has disabled
   // discriminators, do nothing.
-  if (!hasDebugInfo(F) || NoDiscriminators) return false;
+  // Simlarly, if the function has no debug info, do nothing.
+  // Finally, if this module is built with dwarf versions earlier than 4,
+  // do nothing (discriminator support is a DWARF 4 feature).
+  if (NoDiscriminators ||
+      !hasDebugInfo(F) ||
+      F.getParent()->getDwarfVersion() < 4)
+    return false;
 
   bool Changed = false;
   Module *M = F.getParent();
