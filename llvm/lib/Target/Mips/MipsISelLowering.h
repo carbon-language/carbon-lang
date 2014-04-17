@@ -218,6 +218,11 @@ namespace llvm {
 
     static const MipsTargetLowering *create(MipsTargetMachine &TM);
 
+    /// createFastISel - This method returns a target specific FastISel object,
+    /// or null if the target does not support "fast" ISel.
+    FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
+                             const TargetLibraryInfo *libInfo) const override;
+
     virtual MVT getScalarShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
 
     virtual void LowerOperationWrapper(SDNode *N,
@@ -608,6 +613,11 @@ namespace llvm {
   /// Create MipsTargetLowering objects.
   const MipsTargetLowering *createMips16TargetLowering(MipsTargetMachine &TM);
   const MipsTargetLowering *createMipsSETargetLowering(MipsTargetMachine &TM);
+
+  namespace Mips {
+    FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
+                             const TargetLibraryInfo *libInfo);
+  }
 }
 
 #endif // MipsISELLOWERING_H
