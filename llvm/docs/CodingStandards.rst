@@ -1284,9 +1284,9 @@ method will never be implemented. This enables other checks like
 ``-Wunused-private-field`` to run correctly on classes that contain these
 methods.
 
-To maintain compatibility with C++03, ``LLVM_DELETED_FUNCTION`` should be used
-which will expand to ``= delete`` if the compiler supports it. These methods
-should still be declared private. Example of the uncopyable pattern:
+For compatibility with MSVC, ``LLVM_DELETED_FUNCTION`` should be used which
+will expand to ``= delete`` on compilers that support it. These methods should
+still be declared private. Example of the uncopyable pattern:
 
 .. code-block:: c++
 
