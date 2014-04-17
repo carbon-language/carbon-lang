@@ -352,7 +352,7 @@ void GlobalModuleIndex::printStats() {
 void GlobalModuleIndex::dump() {
   llvm::errs() << "*** Global Module Index Dump:\n";
   llvm::errs() << "Module files:\n";
-  for (auto MI : Modules) {
+  for (auto &MI : Modules) {
     llvm::errs() << "** " << MI.FileName << "\n";
     if (MI.File)
       MI.File->dump();
