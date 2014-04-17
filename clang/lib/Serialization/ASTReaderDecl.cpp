@@ -1199,6 +1199,7 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.DefaultedMoveAssignmentIsDeleted = Record[Idx++];
   Data.DefaultedDestructorIsDeleted = Record[Idx++];
   Data.HasTrivialSpecialMembers = Record[Idx++];
+  Data.DeclaredNonTrivialSpecialMembers = Record[Idx++];
   Data.HasIrrelevantDestructor = Record[Idx++];
   Data.HasConstexprNonCopyMoveConstructor = Record[Idx++];
   Data.DefaultedDefaultConstructorIsConstexpr = Record[Idx++];

@@ -19,3 +19,6 @@ void test_friends(HasFriends s) {
   friend_1(s);
   friend_2(s);
 }
+
+static_assert(!__is_trivial(HasNontrivialDefaultConstructor), "");
+static_assert(!__has_trivial_constructor(HasNontrivialDefaultConstructor), "");
