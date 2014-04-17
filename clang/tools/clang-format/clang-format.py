@@ -59,12 +59,7 @@ def main():
 
   # If successful, replace buffer contents.
   if stderr:
-    message = stderr.splitlines()[0]
-    parts = message.split(' ', 2)
-    if len(parts) > 2:
-      message = parts[2]
-    print 'Formatting failed: %s (total %d warnings, %d errors)' % (
-        message, stderr.count('warning:'), stderr.count('error:'))
+    print stderr
 
   if not stdout:
     print ('No output from clang-format (crashed?).\n' +
