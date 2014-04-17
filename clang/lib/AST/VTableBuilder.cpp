@@ -3180,11 +3180,7 @@ void MicrosoftVTableContext::computeVTablePaths(bool ForVBTables,
     const VPtrInfoVector &BasePaths =
         ForVBTables ? enumerateVBTables(Base) : getVFPtrOffsets(Base);
 
-    for (VPtrInfoVector::const_iterator II = BasePaths.begin(),
-                                        EE = BasePaths.end();
-         II != EE; ++II) {
-      VPtrInfo *BaseInfo = *II;
-
+    for (VPtrInfo *BaseInfo : BasePaths) {
       // Don't include the path if it goes through a virtual base that we've
       // already included.
       if (setsIntersect(VBasesSeen, BaseInfo->ContainingVBases))
@@ -3202,12 +3198,16 @@ void MicrosoftVTableContext::computeVTablePaths(bool ForVBTables,
       // FIXME: Why do we need this?
       P->PathToBaseWithVPtr.insert(P->PathToBaseWithVPtr.begin(), Base);
 
-      // Keep track of which derived class ultimately uses the vtable, and what
-      // the full adjustment is from the MDC to this vtable.  The adjustment is
-      // captured by an optional vbase and a non-virtual offset.
-      if (Base == (ForVBTables ? Layout.getBaseSharingVBPtr()
+      // Keep track of which vtable the derived class is going to extend with
+      // new methods or bases.  We append to either the vftable of our primary
+      // base, or the first non-virtual base that has a vbtable.
+      if (P->ReusingBase == Base &&
+          Base == (ForVBTables ? Layout.getBaseSharingVBPtr()
                                : Layout.getPrimaryBase()))
         P->ReusingBase = RD;
+
+      // Keep track of the full adjustment from the MDC to this vtable.  The
+      // adjustment is captured by an optional vbase and a non-virtual offset.
       if (B.isVirtual())
         P->ContainingVBases.push_back(Base);
       else if (P->ContainingVBases.empty())
