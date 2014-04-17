@@ -379,38 +379,22 @@ template<typename T> T var = T(10);
 // expected-warning@-4 {{variable templates are a C++1y extension}}
 #endif
 
+// No diagnostic for specializations of variable templates; we will have
+// diagnosed the primary template.
 template<typename T> T* var<T*> = new T();
-#ifdef CXX1YCOMPAT
-// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++1y}}
-#else
-// expected-warning@-4 {{variable templates are a C++1y extension}}
-#endif
-
 template<> int var<int> = 10;
-#ifdef CXX1YCOMPAT
-// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++1y}}
-#else
-// expected-warning@-4 {{variable templates are a C++1y extension}}
-#endif
-
 template int var<int>;
 float fvar = var<float>;
 
-class A {  
+class A {
   template<typename T> static T var = T(10);
 #ifdef CXX1YCOMPAT
 // expected-warning@-2 {{variable templates are incompatible with C++ standards before C++1y}}
 #else
 // expected-warning@-4 {{variable templates are a C++1y extension}}
 #endif
-  
-  template<typename T> static T* var<T*> = new T(); 
-#ifdef CXX1YCOMPAT
-// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++1y}}
-#else
-// expected-warning@-4 {{variable templates are a C++1y extension}}
-#endif
 
+  template<typename T> static T* var<T*> = new T(); 
 };
 
 struct B {  template<typename T> static T v; };
@@ -428,19 +412,7 @@ template<typename T> T B::v = T();
 #endif
 
 template<typename T> T* B::v<T*> = new T();
-#ifdef CXX1YCOMPAT
-// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++1y}}
-#else
-// expected-warning@-4 {{variable templates are a C++1y extension}}
-#endif
-
 template<> int B::v<int> = 10;
-#ifdef CXX1YCOMPAT
-// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++1y}}
-#else
-// expected-warning@-4 {{variable templates are a C++1y extension}}
-#endif
-
 template int B::v<int>;
 float fsvar = B::v<float>;
 

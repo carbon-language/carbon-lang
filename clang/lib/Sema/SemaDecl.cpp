@@ -5263,12 +5263,6 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                          TemplateParams->getRAngleLoc());
         TemplateParams = 0;
       } else {
-        // Only C++1y supports variable templates (N3651).
-        Diag(D.getIdentifierLoc(),
-             getLangOpts().CPlusPlus1y
-                 ? diag::warn_cxx11_compat_variable_template
-                 : diag::ext_variable_template);
-
         if (D.getName().getKind() == UnqualifiedId::IK_TemplateId) {
           // This is an explicit specialization or a partial specialization.
           // FIXME: Check that we can declare a specialization here.
@@ -5281,6 +5275,12 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           // Check that we can declare a template here.
           if (CheckTemplateDeclScope(S, TemplateParams))
             return 0;
+
+          // Only C++1y supports variable templates (N3651).
+          Diag(D.getIdentifierLoc(),
+               getLangOpts().CPlusPlus1y
+                   ? diag::warn_cxx11_compat_variable_template
+                   : diag::ext_variable_template);
         }
       }
     }

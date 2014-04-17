@@ -65,8 +65,8 @@ namespace inline_namespaces {
     template<> void ft<int>() {}
     template void ft<char>(); // expected-error {{undefined}}
 
-    template<typename T> int mt<T*>; // expected-warning {{extension}}
-    template<> int mt<int>; // expected-warning {{extension}}
+    template<typename T> int mt<T*>;
+    template<> int mt<int>;
     template int mt<int*>;
     template int mt<char>; // expected-error {{undefined}}
 
@@ -92,8 +92,8 @@ namespace inline_namespaces {
   template<> void N::gt<int>() {}
   template void N::gt<char>(); // expected-error {{undefined}}
 
-  template<typename T> int N::nt<T*>; // expected-warning {{extension}}
-  template<> int N::nt<int>; // expected-warning {{extension}}
+  template<typename T> int N::nt<T*>;
+  template<> int N::nt<int>;
   template int N::nt<int*>;
   template int N::nt<char>; // expected-error {{undefined}}
 
