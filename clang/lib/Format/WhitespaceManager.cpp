@@ -28,7 +28,7 @@ WhitespaceManager::Change::IsBeforeInFile::operator()(const Change &C1,
 
 WhitespaceManager::Change::Change(
     bool CreateReplacement, const SourceRange &OriginalWhitespaceRange,
-    unsigned IndentLevel, unsigned Spaces, unsigned StartOfTokenColumn,
+    unsigned IndentLevel, int Spaces, unsigned StartOfTokenColumn,
     unsigned NewlinesBefore, StringRef PreviousLinePostfix,
     StringRef CurrentLinePrefix, tok::TokenKind Kind, bool ContinuesPPDirective)
     : CreateReplacement(CreateReplacement),
@@ -69,14 +69,14 @@ void WhitespaceManager::addUntouchableToken(const FormatToken &Tok,
 void WhitespaceManager::replaceWhitespaceInToken(
     const FormatToken &Tok, unsigned Offset, unsigned ReplaceChars,
     StringRef PreviousPostfix, StringRef CurrentPrefix, bool InPPDirective,
-    unsigned Newlines, unsigned IndentLevel, unsigned Spaces) {
+    unsigned Newlines, unsigned IndentLevel, int Spaces) {
   if (Tok.Finalized)
     return;
+  SourceLocation Start = Tok.getStartOfNonWhitespace().getLocWithOffset(Offset);
   Changes.push_back(Change(
-      true, SourceRange(Tok.getStartOfNonWhitespace().getLocWithOffset(Offset),
-                        Tok.getStartOfNonWhitespace().getLocWithOffset(
-                            Offset + ReplaceChars)),
-      IndentLevel, Spaces, Spaces, Newlines, PreviousPostfix, CurrentPrefix,
+      true, SourceRange(Start, Start.getLocWithOffset(ReplaceChars)),
+      IndentLevel, Spaces, std::max(0, Spaces), Newlines, PreviousPostfix,
+      CurrentPrefix,
       // If we don't add a newline this change doesn't start a comment. Thus,
       // when we align line comments, we don't need to treat this change as one.
       // FIXME: We still need to take this change in account to properly
@@ -122,6 +122,22 @@ void WhitespaceManager::calculateLineBreakInformation() {
   // cases, setting TokenLength of the last token to 0 is wrong.
   Changes.back().TokenLength = 0;
   Changes.back().IsTrailingComment = Changes.back().Kind == tok::comment;
+
+  const WhitespaceManager::Change *LastBlockComment = nullptr;
+  for (auto &Change : Changes) {
+    Change.StartOfBlockComment = nullptr;
+    Change.IndentationOffset = 0;
+    if (Change.Kind == tok::comment) {
+      LastBlockComment = &Change;
+    } else if (Change.Kind == tok::unknown) {
+      if ((Change.StartOfBlockComment = LastBlockComment))
+        Change.IndentationOffset =
+            Change.StartOfTokenColumn -
+            Change.StartOfBlockComment->StartOfTokenColumn;
+    } else {
+      LastBlockComment = nullptr;
+    }
+  }
 }
 
 void WhitespaceManager::alignTrailingComments() {
@@ -131,58 +147,61 @@ void WhitespaceManager::alignTrailingComments() {
   bool BreakBeforeNext = false;
   unsigned Newlines = 0;
   for (unsigned i = 0, e = Changes.size(); i != e; ++i) {
+    if (Changes[i].StartOfBlockComment)
+      continue;
+    Newlines += Changes[i].NewlinesBefore;
+    if (!Changes[i].IsTrailingComment)
+      continue;
+
     unsigned ChangeMinColumn = Changes[i].StartOfTokenColumn;
     // FIXME: Correctly handle ChangeMaxColumn in PP directives.
     unsigned ChangeMaxColumn = Style.ColumnLimit - Changes[i].TokenLength;
-    Newlines += Changes[i].NewlinesBefore;
-    if (Changes[i].IsTrailingComment) {
-      // If this comment follows an } in column 0, it probably documents the
-      // closing of a namespace and we don't want to align it.
-      bool FollowsRBraceInColumn0 = i > 0 && Changes[i].NewlinesBefore == 0 &&
-                                    Changes[i - 1].Kind == tok::r_brace &&
-                                    Changes[i - 1].StartOfTokenColumn == 0;
-      bool WasAlignedWithStartOfNextLine = false;
-      if (Changes[i].NewlinesBefore == 1) { // A comment on its own line.
-        for (unsigned j = i + 1; j != e; ++j) {
-          if (Changes[j].Kind != tok::comment) { // Skip over comments.
-            // The start of the next token was previously aligned with the
-            // start of this comment.
-            WasAlignedWithStartOfNextLine =
-                (SourceMgr.getSpellingColumnNumber(
-                     Changes[i].OriginalWhitespaceRange.getEnd()) ==
-                 SourceMgr.getSpellingColumnNumber(
-                     Changes[j].OriginalWhitespaceRange.getEnd()));
-            break;
-          }
+    // If this comment follows an } in column 0, it probably documents the
+    // closing of a namespace and we don't want to align it.
+    bool FollowsRBraceInColumn0 = i > 0 && Changes[i].NewlinesBefore == 0 &&
+                                  Changes[i - 1].Kind == tok::r_brace &&
+                                  Changes[i - 1].StartOfTokenColumn == 0;
+    bool WasAlignedWithStartOfNextLine = false;
+    if (Changes[i].NewlinesBefore == 1) { // A comment on its own line.
+      for (unsigned j = i + 1; j != e; ++j) {
+        if (Changes[j].Kind != tok::comment) { // Skip over comments.
+          // The start of the next token was previously aligned with the
+          // start of this comment.
+          WasAlignedWithStartOfNextLine =
+              (SourceMgr.getSpellingColumnNumber(
+                   Changes[i].OriginalWhitespaceRange.getEnd()) ==
+               SourceMgr.getSpellingColumnNumber(
+                   Changes[j].OriginalWhitespaceRange.getEnd()));
+          break;
         }
       }
-      if (!Style.AlignTrailingComments || FollowsRBraceInColumn0) {
-        alignTrailingComments(StartOfSequence, i, MinColumn);
-        MinColumn = ChangeMinColumn;
-        MaxColumn = ChangeMinColumn;
-        StartOfSequence = i;
-      } else if (BreakBeforeNext || Newlines > 1 ||
-                 (ChangeMinColumn > MaxColumn || ChangeMaxColumn < MinColumn) ||
-                 // Break the comment sequence if the previous line did not end
-                 // in a trailing comment.
-                 (Changes[i].NewlinesBefore == 1 && i > 0 &&
-                  !Changes[i - 1].IsTrailingComment) ||
-                 WasAlignedWithStartOfNextLine) {
-        alignTrailingComments(StartOfSequence, i, MinColumn);
-        MinColumn = ChangeMinColumn;
-        MaxColumn = ChangeMaxColumn;
-        StartOfSequence = i;
-      } else {
-        MinColumn = std::max(MinColumn, ChangeMinColumn);
-        MaxColumn = std::min(MaxColumn, ChangeMaxColumn);
-      }
-      BreakBeforeNext =
-          (i == 0) || (Changes[i].NewlinesBefore > 1) ||
-          // Never start a sequence with a comment at the beginning of
-          // the line.
-          (Changes[i].NewlinesBefore == 1 && StartOfSequence == i);
-      Newlines = 0;
     }
+    if (!Style.AlignTrailingComments || FollowsRBraceInColumn0) {
+      alignTrailingComments(StartOfSequence, i, MinColumn);
+      MinColumn = ChangeMinColumn;
+      MaxColumn = ChangeMinColumn;
+      StartOfSequence = i;
+    } else if (BreakBeforeNext || Newlines > 1 ||
+               (ChangeMinColumn > MaxColumn || ChangeMaxColumn < MinColumn) ||
+               // Break the comment sequence if the previous line did not end
+               // in a trailing comment.
+               (Changes[i].NewlinesBefore == 1 && i > 0 &&
+                !Changes[i - 1].IsTrailingComment) ||
+               WasAlignedWithStartOfNextLine) {
+      alignTrailingComments(StartOfSequence, i, MinColumn);
+      MinColumn = ChangeMinColumn;
+      MaxColumn = ChangeMaxColumn;
+      StartOfSequence = i;
+    } else {
+      MinColumn = std::max(MinColumn, ChangeMinColumn);
+      MaxColumn = std::min(MaxColumn, ChangeMaxColumn);
+    }
+    BreakBeforeNext =
+        (i == 0) || (Changes[i].NewlinesBefore > 1) ||
+        // Never start a sequence with a comment at the beginning of
+        // the line.
+        (Changes[i].NewlinesBefore == 1 && StartOfSequence == i);
+    Newlines = 0;
   }
   alignTrailingComments(StartOfSequence, Changes.size(), MinColumn);
 }
@@ -190,15 +209,20 @@ void WhitespaceManager::alignTrailingComments() {
 void WhitespaceManager::alignTrailingComments(unsigned Start, unsigned End,
                                               unsigned Column) {
   for (unsigned i = Start; i != End; ++i) {
+    int Shift = 0;
     if (Changes[i].IsTrailingComment) {
-      assert(Column >= Changes[i].StartOfTokenColumn);
-      Changes[i].Spaces += Column - Changes[i].StartOfTokenColumn;
-      if (i + 1 != End) {
-        Changes[i + 1].PreviousEndOfTokenColumn +=
-            Column - Changes[i].StartOfTokenColumn;
-      }
-      Changes[i].StartOfTokenColumn = Column;
+      Shift = Column - Changes[i].StartOfTokenColumn;
     }
+    if (Changes[i].StartOfBlockComment) {
+      Shift = Changes[i].IndentationOffset +
+              Changes[i].StartOfBlockComment->StartOfTokenColumn -
+              Changes[i].StartOfTokenColumn;
+    }
+    assert(Shift >= 0);
+    Changes[i].Spaces += Shift;
+    if (i + 1 != End)
+      Changes[i + 1].PreviousEndOfTokenColumn += Shift;
+    Changes[i].StartOfTokenColumn += Shift;
   }
 }
 
@@ -245,8 +269,8 @@ void WhitespaceManager::generateChanges() {
                           C.PreviousEndOfTokenColumn, C.EscapedNewlineColumn);
       else
         appendNewlineText(ReplacementText, C.NewlinesBefore);
-      appendIndentText(ReplacementText, C.IndentLevel, C.Spaces,
-                       C.StartOfTokenColumn - C.Spaces);
+      appendIndentText(ReplacementText, C.IndentLevel, std::max(0, C.Spaces),
+                       C.StartOfTokenColumn - std::max(0, C.Spaces));
       ReplacementText.append(C.CurrentLinePrefix);
       storeReplacement(C.OriginalWhitespaceRange, ReplacementText);
     }

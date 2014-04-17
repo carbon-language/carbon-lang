@@ -63,6 +63,12 @@ public:
   /// (in this order) at \p Offset inside \p Tok, replacing \p ReplaceChars
   /// characters.
   ///
+  /// Note: \p Spaces can be negative to retain information about initial
+  /// relative column offset between a line of a block comment and the start of
+  /// the comment. This negative offset may be compensated by trailing comment
+  /// alignment here. In all other cases negative \p Spaces will be truncated to
+  /// 0.
+  ///
   /// When \p InPPDirective is true, escaped newlines are inserted. \p Spaces is
   /// used to align backslashes correctly.
   void replaceWhitespaceInToken(const FormatToken &Tok, unsigned Offset,
@@ -70,7 +76,7 @@ public:
                                 StringRef PreviousPostfix,
                                 StringRef CurrentPrefix, bool InPPDirective,
                                 unsigned Newlines, unsigned IndentLevel,
-                                unsigned Spaces);
+                                int Spaces);
 
   /// \brief Returns all the \c Replacements created during formatting.
   const tooling::Replacements &generateReplacements();
@@ -101,7 +107,7 @@ private:
     /// \p StartOfTokenColumn and \p InPPDirective will be used to lay out
     /// trailing comments and escaped newlines.
     Change(bool CreateReplacement, const SourceRange &OriginalWhitespaceRange,
-           unsigned IndentLevel, unsigned Spaces, unsigned StartOfTokenColumn,
+           unsigned IndentLevel, int Spaces, unsigned StartOfTokenColumn,
            unsigned NewlinesBefore, StringRef PreviousLinePostfix,
            StringRef CurrentLinePrefix, tok::TokenKind Kind,
            bool ContinuesPPDirective);
@@ -128,7 +134,10 @@ private:
 
     // The number of spaces in front of the token or broken part of the token.
     // This will be adapted when aligning tokens.
-    unsigned Spaces;
+    // Can be negative to retain information about the initial relative offset
+    // of the lines in a block comment. This is used when aligning trailing
+    // comments. Uncompensated negative offset is truncated to 0.
+    int Spaces;
 
     // \c IsTrailingComment, \c TokenLength, \c PreviousEndOfTokenColumn and
     // \c EscapedNewlineColumn will be calculated in
@@ -137,6 +146,17 @@ private:
     unsigned TokenLength;
     unsigned PreviousEndOfTokenColumn;
     unsigned EscapedNewlineColumn;
+
+    // These fields are used to retain correct relative line indentation in a
+    // block comment when aligning trailing comments.
+    //
+    // If this Change represents a continuation of a block comment,
+    // \c StartOfBlockComment is pointer to the first Change in the block
+    // comment. \c IndentationOffset is a relative column offset to this
+    // change, so that the correct column can be reconstructed at the end of
+    // the alignment process.
+    const Change *StartOfBlockComment;
+    int IndentationOffset;
   };
 
   /// \brief Calculate \c IsTrailingComment, \c TokenLength for the last tokens

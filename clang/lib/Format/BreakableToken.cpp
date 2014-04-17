@@ -350,10 +350,9 @@ void BreakableBlockComment::adjustWhitespace(unsigned LineIndex,
       Lines[LineIndex].begin() - Lines[LineIndex - 1].end();
 
   // Adjust the start column uniformly across all lines.
-  StartOfLineColumn[LineIndex] = std::max<int>(
-      0,
+  StartOfLineColumn[LineIndex] =
       encoding::columnWidthWithTabs(Whitespace, 0, Style.TabWidth, Encoding) +
-          IndentDelta);
+      IndentDelta;
 }
 
 unsigned BreakableBlockComment::getLineCount() const { return Lines.size(); }
@@ -437,7 +436,6 @@ BreakableBlockComment::replaceWhitespaceBefore(unsigned LineIndex,
   unsigned WhitespaceOffsetInToken = Lines[LineIndex].data() -
                                      Tok.TokenText.data() -
                                      LeadingWhitespace[LineIndex];
-  assert(StartOfLineColumn[LineIndex] >= Prefix.size());
   Whitespaces.replaceWhitespaceInToken(
       Tok, WhitespaceOffsetInToken, LeadingWhitespace[LineIndex], "", Prefix,
       InPPDirective, 1, IndentLevel,
@@ -450,7 +448,7 @@ BreakableBlockComment::getContentStartColumn(unsigned LineIndex,
   // If we break, we always break at the predefined indent.
   if (TailOffset != 0)
     return IndentAtLineBreak;
-  return StartOfLineColumn[LineIndex];
+  return std::max(0, StartOfLineColumn[LineIndex]);
 }
 
 } // namespace format

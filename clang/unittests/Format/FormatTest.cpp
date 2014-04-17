@@ -1013,6 +1013,30 @@ TEST_F(FormatTest, AlignsBlockComments) {
             format("int i; /* Comment with empty...\n"
                    "        *\n"
                    "        * line. */"));
+  EXPECT_EQ("int foobar = 0; /* comment */\n"
+            "int bar = 0;    /* multiline\n"
+            "                   comment 1 */\n"
+            "int baz = 0;    /* multiline\n"
+            "                   comment 2 */\n"
+            "int bzz = 0;    /* multiline\n"
+            "                   comment 3 */",
+            format("int foobar = 0; /* comment */\n"
+                   "int bar = 0;    /* multiline\n"
+                   "                   comment 1 */\n"
+                   "int baz = 0; /* multiline\n"
+                   "                comment 2 */\n"
+                   "int bzz = 0;         /* multiline\n"
+                   "                        comment 3 */"));
+  EXPECT_EQ("int foobar = 0; /* comment */\n"
+            "int bar = 0;    /* multiline\n"
+            "   comment */\n"
+            "int baz = 0;    /* multiline\n"
+            "comment */",
+            format("int foobar = 0; /* comment */\n"
+                   "int bar = 0; /* multiline\n"
+                   "comment */\n"
+                   "int baz = 0;        /* multiline\n"
+                   "comment */"));
 }
 
 TEST_F(FormatTest, CorrectlyHandlesLengthOfBlockComments) {
