@@ -209,8 +209,6 @@ public:
   }
 
 private:
-  Module &M;
-
   /// \brief Allocator that holds all the call graph nodes.
   SpecificBumpPtrAllocator<Node> BPA;
 

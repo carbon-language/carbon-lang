@@ -86,7 +86,7 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Node &&OtherN)
       Callee = G.moveInto(std::move(*ChildN));
 }
 
-LazyCallGraph::LazyCallGraph(Module &M) : M(M) {
+LazyCallGraph::LazyCallGraph(Module &M) {
   for (Function &F : M)
     if (!F.isDeclaration() && !F.hasLocalLinkage())
       if (EntryNodeSet.insert(&F))
@@ -104,7 +104,7 @@ LazyCallGraph::LazyCallGraph(Module &M) : M(M) {
 }
 
 LazyCallGraph::LazyCallGraph(const LazyCallGraph &G)
-    : M(G.M), EntryNodeSet(G.EntryNodeSet) {
+    : EntryNodeSet(G.EntryNodeSet) {
   EntryNodes.reserve(G.EntryNodes.size());
   for (const auto &EntryNode : G.EntryNodes)
     if (Function *Callee = EntryNode.dyn_cast<Function *>())
@@ -117,7 +117,7 @@ LazyCallGraph::LazyCallGraph(const LazyCallGraph &G)
 // invalidating any of the allocated memory. We should make that be the case at
 // some point and delete this.
 LazyCallGraph::LazyCallGraph(LazyCallGraph &&G)
-    : M(G.M), EntryNodes(std::move(G.EntryNodes)),
+    : EntryNodes(std::move(G.EntryNodes)),
       EntryNodeSet(std::move(G.EntryNodeSet)) {
   // Loop over our EntryNodes. They've been moved from another graph, so we
   // need to move the Node*s to live under our bump ptr allocator. We can just
