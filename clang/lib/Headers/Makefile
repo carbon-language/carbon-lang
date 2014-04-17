@@ -32,13 +32,13 @@ $(HeaderDir)/arm_neon.h: $(BUILT_SOURCES) $(HeaderDir)/.dir
 	$(Verb) cp $< $@
 	$(Echo) Copying $(notdir $<) to build dir
 
-$(HeaderDir)/module.map: $(PROJ_SRC_DIR)/module.map $(HeaderDir)/.dir
+$(HeaderDir)/module.modulemap: $(PROJ_SRC_DIR)/module.modulemap $(HeaderDir)/.dir
 	$(Verb) cp $< $@
 	$(Echo) Copying $(notdir $<) to build dir
 
 
 # Hook into the standard Makefile rules.
-all-local:: $(OBJHEADERS) $(HeaderDir)/module.map
+all-local:: $(OBJHEADERS) $(HeaderDir)/module.modulemap
 
 PROJ_headers := $(DESTDIR)$(PROJ_prefix)/lib/clang/$(CLANG_VERSION)/include
 
@@ -52,12 +52,12 @@ $(INSTHEADERS): $(PROJ_headers)/%.h: $(HeaderDir)/%.h | $(PROJ_headers)
 	$(Verb) $(DataInstall) $< $(PROJ_headers)
 	$(Echo) Installing compiler include file: $(notdir $<)
 
-$(PROJ_headers)/module.map: $(HeaderDir)/module.map | $(PROJ_headers)
+$(PROJ_headers)/module.modulemap: $(HeaderDir)/module.modulemap | $(PROJ_headers)
 	$(Verb) $(DataInstall) $< $(PROJ_headers)
 	$(Echo) Installing compiler module map file: $(notdir $<)
 
 
-install-local:: $(INSTHEADERS) $(PROJ_headers)/module.map
+install-local:: $(INSTHEADERS) $(PROJ_headers)/module.modulemap
 
 $(ObjDir)/arm_neon.h.inc.tmp : $(CLANG_LEVEL)/include/clang/Basic/arm_neon.td $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang arm_neon.h.inc with tblgen"

@@ -839,7 +839,7 @@ Where To Learn More About Modules
 =================================
 The Clang source code provides additional information about modules:
 
-``clang/lib/Headers/module.map``
+``clang/lib/Headers/module.modulemap``
   Module map for Clang's compiler-specific header files.
 
 ``clang/test/Modules/``

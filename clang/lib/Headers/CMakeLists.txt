@@ -45,7 +45,7 @@ set(files
   xopintrin.h
   cpuid.h
   unwind.h
-  module.map
+  module.modulemap
   )
 
 set(output_dir ${LLVM_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION}/include)
