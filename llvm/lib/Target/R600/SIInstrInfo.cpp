@@ -991,9 +991,8 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       }
     }
 
-    legalizeOperands(Inst);
-
     // Update the destination register class.
+
     const TargetRegisterClass *NewDstRC = getOpRegClass(*Inst, 0);
 
     switch (Inst->getOpcode()) {
@@ -1018,6 +1017,9 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
     unsigned DstReg = Inst->getOperand(0).getReg();
     unsigned NewDstReg = MRI.createVirtualRegister(NewDstRC);
     MRI.replaceRegWith(DstReg, NewDstReg);
+
+    // Legalize the operands
+    legalizeOperands(Inst);
 
     for (MachineRegisterInfo::use_iterator I = MRI.use_begin(NewDstReg),
            E = MRI.use_end(); I != E; ++I) {
