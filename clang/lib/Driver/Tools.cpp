@@ -875,8 +875,12 @@ static std::string getARM64TargetCPU(const ArgList &Args) {
   // At some point, we may need to check -march here, but for now we only
   // one arm64 architecture.
 
-  // Default to "cyclone" CPU.
-  return "cyclone";
+  // Make sure we pick "cyclone" if -arch is used.
+  // FIXME: Should this be picked by checking the target triple instead?
+  if (Args.getLastArg(options::OPT_arch))
+    return "cyclone";
+
+  return "generic";
 }
 
 void Clang::AddARM64TargetArgs(const ArgList &Args,
