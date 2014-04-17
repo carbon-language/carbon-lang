@@ -1,4 +1,4 @@
-; RUN: llc -march=arm64 -mcpu=generic < %s | FileCheck %s
+; RUN: llc -march=arm64 -mcpu=generic -arm64-neon-syntax=apple < %s | FileCheck %s
 
 define void @test0f(float* nocapture %x, float %a) #0 {
 entry:
