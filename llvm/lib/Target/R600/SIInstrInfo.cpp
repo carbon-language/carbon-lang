@@ -567,6 +567,7 @@ bool SIInstrInfo::canReadVGPR(const MachineInstr &MI, unsigned OpNo) const {
   switch (MI.getOpcode()) {
   case AMDGPU::COPY:
   case AMDGPU::REG_SEQUENCE:
+  case AMDGPU::PHI:
     return RI.hasVGPRs(getOpRegClass(MI, 0));
   default:
     return RI.hasVGPRs(getOpRegClass(MI, OpNo));
@@ -745,10 +746,11 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
     }
   }
 
-  // Legalize REG_SEQUENCE
+  // Legalize REG_SEQUENCE and PHI
   // The register class of the operands much be the same type as the register
   // class of the output.
-  if (MI->getOpcode() == AMDGPU::REG_SEQUENCE) {
+  if (MI->getOpcode() == AMDGPU::REG_SEQUENCE ||
+      MI->getOpcode() == AMDGPU::PHI) {
     const TargetRegisterClass *RC = NULL, *SRC = NULL, *VRC = NULL;
     for (unsigned i = 1, e = MI->getNumOperands(); i != e; i+=2) {
       if (!MI->getOperand(i).isReg() ||
@@ -782,7 +784,17 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
           !TargetRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg()))
         continue;
       unsigned DstReg = MRI.createVirtualRegister(RC);
-      BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
+      MachineBasicBlock *InsertBB;
+      MachineBasicBlock::iterator Insert;
+      if (MI->getOpcode() == AMDGPU::REG_SEQUENCE) {
+        InsertBB = MI->getParent();
+        Insert = MI;
+      } else {
+        // MI is a PHI instruction.
+        InsertBB = MI->getOperand(i + 1).getMBB();
+        Insert = InsertBB->getFirstTerminator();
+      }
+      BuildMI(*InsertBB, Insert, MI->getDebugLoc(),
               get(AMDGPU::COPY), DstReg)
               .addOperand(MI->getOperand(i));
       MI->getOperand(i).setReg(DstReg);
