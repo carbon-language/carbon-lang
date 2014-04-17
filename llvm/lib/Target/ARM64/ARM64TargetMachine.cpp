@@ -111,6 +111,11 @@ bool ARM64PassConfig::addPreISel() {
     addPass(createGlobalMergePass(TM));
   if (TM->getOptLevel() != CodeGenOpt::None)
     addPass(createARM64AddressTypePromotionPass());
+
+  // Always expand atomic operations, we don't deal with atomicrmw or cmpxchg
+  // ourselves.
+  addPass(createAtomicExpandLoadLinkedPass(TM));
+
   return false;
 }
 

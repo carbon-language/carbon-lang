@@ -1969,12 +1969,15 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
     switch (IntNo) {
     default:
       break;
+    case Intrinsic::arm64_ldaxp:
     case Intrinsic::arm64_ldxp: {
+      unsigned Op =
+          IntNo == Intrinsic::arm64_ldaxp ? ARM64::LDAXPX : ARM64::LDXPX;
       SDValue MemAddr = Node->getOperand(2);
       SDLoc DL(Node);
       SDValue Chain = Node->getOperand(0);
 
-      SDNode *Ld = CurDAG->getMachineNode(ARM64::LDXPX, DL, MVT::i64, MVT::i64,
+      SDNode *Ld = CurDAG->getMachineNode(Op, DL, MVT::i64, MVT::i64,
                                           MVT::Other, MemAddr, Chain);
 
       // Transfer memoperands.
@@ -1983,7 +1986,10 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
       cast<MachineSDNode>(Ld)->setMemRefs(MemOp, MemOp + 1);
       return Ld;
     }
+    case Intrinsic::arm64_stlxp:
     case Intrinsic::arm64_stxp: {
+      unsigned Op =
+          IntNo == Intrinsic::arm64_stlxp ? ARM64::STLXPX : ARM64::STXPX;
       SDLoc DL(Node);
       SDValue Chain = Node->getOperand(0);
       SDValue ValLo = Node->getOperand(2);
@@ -1997,8 +2003,7 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
       Ops.push_back(MemAddr);
       Ops.push_back(Chain);
 
-      SDNode *St =
-          CurDAG->getMachineNode(ARM64::STXPX, DL, MVT::i32, MVT::Other, Ops);
+      SDNode *St = CurDAG->getMachineNode(Op, DL, MVT::i32, MVT::Other, Ops);
       // Transfer memoperands.
       MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
       MemOp[0] = cast<MemIntrinsicSDNode>(Node)->getMemOperand();

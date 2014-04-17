@@ -14,12 +14,18 @@
 let TargetPrefix = "arm64" in {
 
 def int_arm64_ldxr : Intrinsic<[llvm_i64_ty], [llvm_anyptr_ty]>;
+def int_arm64_ldaxr : Intrinsic<[llvm_i64_ty], [llvm_anyptr_ty]>;
 def int_arm64_stxr : Intrinsic<[llvm_i32_ty], [llvm_i64_ty, llvm_anyptr_ty]>;
-def int_arm64_clrex : Intrinsic<[]>;
+def int_arm64_stlxr : Intrinsic<[llvm_i32_ty], [llvm_i64_ty, llvm_anyptr_ty]>;
 
 def int_arm64_ldxp : Intrinsic<[llvm_i64_ty, llvm_i64_ty], [llvm_ptr_ty]>;
-def int_arm64_stxp : Intrinsic<[llvm_i32_ty], [llvm_i64_ty, llvm_i64_ty,
-    llvm_ptr_ty]>;
+def int_arm64_ldaxp : Intrinsic<[llvm_i64_ty, llvm_i64_ty], [llvm_ptr_ty]>;
+def int_arm64_stxp : Intrinsic<[llvm_i32_ty],
+                               [llvm_i64_ty, llvm_i64_ty, llvm_ptr_ty]>;
+def int_arm64_stlxp : Intrinsic<[llvm_i32_ty],
+                                [llvm_i64_ty, llvm_i64_ty, llvm_ptr_ty]>;
+
+def int_arm64_clrex : Intrinsic<[]>;
 
 def int_arm64_sdiv : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>,
                                 LLVMMatchType<0>], [IntrNoMem]>;
