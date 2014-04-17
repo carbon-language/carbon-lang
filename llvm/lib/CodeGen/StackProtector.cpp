@@ -86,14 +86,14 @@ bool StackProtector::runOnFunction(Function &Fn) {
   DT = DTWP ? &DTWP->getDomTree() : nullptr;
   TLI = TM->getTargetLowering();
 
-  if (!RequiresStackProtector())
-    return false;
-
   Attribute Attr = Fn.getAttributes().getAttribute(
       AttributeSet::FunctionIndex, "stack-protector-buffer-size");
   if (Attr.isStringAttribute() &&
       Attr.getValueAsString().getAsInteger(10, SSPBufferSize))
       return false; // Invalid integer string
+
+  if (!RequiresStackProtector())
+    return false;
 
   ++NumFunProtected;
   return InsertStackProtectors();

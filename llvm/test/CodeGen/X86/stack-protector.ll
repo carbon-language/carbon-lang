@@ -16,6 +16,7 @@
 %struct.anon.0 = type { %union.anon.1 }
 %union.anon.1 = type { [2 x i8] }
 %struct.small = type { i8 }
+%struct.small_char = type { i32, [5 x i8] }
 
 @.str = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
 
@@ -3212,6 +3213,235 @@ bb21:                                             ; preds = %bb6, %bb
   ret i32 undef
 }
 
+; test28a: An array of [32 x i8] and a requested ssp-buffer-size of 33.
+; Requires no protector.
+; Function Attrs: ssp stack-protector-buffer-size=33
+define i32 @test28a() #3 {
+entry:
+; LINUX-I386-LABEL: test28a:
+; LINUX-I386-NOT: calll __stack_chk_fail
+; LINUX-I386: .cfi_endproc
+
+; LINUX-X64-LABEL: test28a:
+; LINUX-X64-NOT: callq __stack_chk_fail
+; LINUX-X64: .cfi_endproc
+
+; LINUX-KERNEL-X64-LABEL: test28a:
+; LINUX-KERNEL-X64-NOT: callq __stack_chk_fail
+; LINUX-KERNEL-X64: .cfi_endproc
+
+; DARWIN-X64-LABEL: test28a:
+; DARWIN-X64-NOT: callq ___stack_chk_fail
+; DARWIN-X64: .cfi_endproc
+  %test = alloca [32 x i8], align 16
+  %arraydecay = getelementptr inbounds [32 x i8]* %test, i32 0, i32 0
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
+  ret i32 %call
+}
+
+; test28b: An array of [33 x i8] and a requested ssp-buffer-size of 33.
+; Requires protector.
+; Function Attrs: ssp stack-protector-buffer-size=33
+define i32 @test28b() #3 {
+entry:
+; LINUX-I386-LABEL: test28b:
+; LINUX-I386: mov{{l|q}} %gs:
+; LINUX-I386: calll __stack_chk_fail
+
+; LINUX-X64-LABEL: test28b:
+; LINUX-X64: mov{{l|q}} %fs:
+; LINUX-X64: callq __stack_chk_fail
+
+; LINUX-KERNEL-X64-LABEL: test28b:
+; LINUX-KERNEL-X64: mov{{l|q}} %gs:
+; LINUX-KERNEL-X64: callq __stack_chk_fail
+
+; DARWIN-X64-LABEL: test28b:
+; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
+; DARWIN-X64: callq ___stack_chk_fail
+  %test = alloca [33 x i8], align 16
+  %arraydecay = getelementptr inbounds [33 x i8]* %test, i32 0, i32 0
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
+  ret i32 %call
+}
+
+; test29a: An array of [4 x i8] and a requested ssp-buffer-size of 5.
+; Requires no protector.
+; Function Attrs: ssp stack-protector-buffer-size=5
+define i32 @test29a() #4 {
+entry:
+; LINUX-I386-LABEL: test29a:
+; LINUX-I386-NOT: calll __stack_chk_fail
+; LINUX-I386: .cfi_endproc
+
+; LINUX-X64-LABEL: test29a:
+; LINUX-X64-NOT: callq __stack_chk_fail
+; LINUX-X64: .cfi_endproc
+
+; LINUX-KERNEL-X64-LABEL: test29a:
+; LINUX-KERNEL-X64-NOT: callq __stack_chk_fail
+; LINUX-KERNEL-X64: .cfi_endproc
+
+; DARWIN-X64-LABEL: test29a:
+; DARWIN-X64-NOT: callq ___stack_chk_fail
+; DARWIN-X64: .cfi_endproc
+  %test = alloca [4 x i8], align 1
+  %arraydecay = getelementptr inbounds [4 x i8]* %test, i32 0, i32 0
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
+  ret i32 %call
+}
+
+; test29b: An array of [5 x i8] and a requested ssp-buffer-size of 5.
+; Requires protector.
+; Function Attrs: ssp stack-protector-buffer-size=5
+define i32 @test29b() #4 {
+entry:
+; LINUX-I386-LABEL: test29b:
+; LINUX-I386: mov{{l|q}} %gs:
+; LINUX-I386: calll __stack_chk_fail
+
+; LINUX-X64-LABEL: test29b:
+; LINUX-X64: mov{{l|q}} %fs:
+; LINUX-X64: callq __stack_chk_fail
+
+; LINUX-KERNEL-X64-LABEL: test29b:
+; LINUX-KERNEL-X64: mov{{l|q}} %gs:
+; LINUX-KERNEL-X64: callq __stack_chk_fail
+
+; DARWIN-X64-LABEL: test29b:
+; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
+; DARWIN-X64: callq ___stack_chk_fail
+  %test = alloca [5 x i8], align 1
+  %arraydecay = getelementptr inbounds [5 x i8]* %test, i32 0, i32 0
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %arraydecay)
+  ret i32 %call
+}
+
+; test30a: An structure containing an i32 and an array of [5 x i8].
+;          Requested ssp-buffer-size of 6.
+; Requires no protector.
+; Function Attrs: ssp stack-protector-buffer-size=6
+define i32 @test30a() #5 {
+entry:
+; LINUX-I386-LABEL: test30a:
+; LINUX-I386-NOT: calll __stack_chk_fail
+; LINUX-I386: .cfi_endproc
+
+; LINUX-X64-LABEL: test30a:
+; LINUX-X64-NOT: callq __stack_chk_fail
+; LINUX-X64: .cfi_endproc
+
+; LINUX-KERNEL-X64-LABEL: test30a:
+; LINUX-KERNEL-X64-NOT: callq __stack_chk_fail
+; LINUX-KERNEL-X64: .cfi_endproc
+
+; DARWIN-X64-LABEL: test30a:
+; DARWIN-X64-NOT: callq ___stack_chk_fail
+; DARWIN-X64: .cfi_endproc
+  %test = alloca %struct.small_char, align 4
+  %test.coerce = alloca { i64, i8 }
+  %0 = bitcast { i64, i8 }* %test.coerce to i8*
+  %1 = bitcast %struct.small_char* %test to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* %1, i64 12, i32 0, i1 false)
+  %2 = getelementptr { i64, i8 }* %test.coerce, i32 0, i32 0
+  %3 = load i64* %2, align 1
+  %4 = getelementptr { i64, i8 }* %test.coerce, i32 0, i32 1
+  %5 = load i8* %4, align 1
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %3, i8 %5)
+  ret i32 %call
+}
+
+; test30b: An structure containing an i32 and an array of [5 x i8].
+;          Requested ssp-buffer-size of 5.
+; Requires protector.
+; Function Attrs: ssp stack-protector-buffer-size=5
+define i32 @test30b() #4 {
+entry:
+; LINUX-I386-LABEL: test30b:
+; LINUX-I386: mov{{l|q}} %gs:
+; LINUX-I386: calll __stack_chk_fail
+
+; LINUX-X64-LABEL: test30b:
+; LINUX-X64: mov{{l|q}} %fs:
+; LINUX-X64: callq __stack_chk_fail
+
+; LINUX-KERNEL-X64-LABEL: test30b:
+; LINUX-KERNEL-X64: mov{{l|q}} %gs:
+; LINUX-KERNEL-X64: callq __stack_chk_fail
+
+; DARWIN-X64-LABEL: test30b:
+; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
+; DARWIN-X64: callq ___stack_chk_fail
+  %test = alloca %struct.small_char, align 4
+  %test.coerce = alloca { i64, i8 }
+  %0 = bitcast { i64, i8 }* %test.coerce to i8*
+  %1 = bitcast %struct.small_char* %test to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* %1, i64 12, i32 0, i1 false)
+  %2 = getelementptr { i64, i8 }* %test.coerce, i32 0, i32 0
+  %3 = load i64* %2, align 1
+  %4 = getelementptr { i64, i8 }* %test.coerce, i32 0, i32 1
+  %5 = load i8* %4, align 1
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i64 %3, i8 %5)
+  ret i32 %call
+}
+
+; test31a: An alloca of size 5.
+;          Requested ssp-buffer-size of 6.
+; Requires no protector.
+; Function Attrs: ssp stack-protector-buffer-size=6
+define i32 @test31a() #5 {
+entry:
+; LINUX-I386-LABEL: test31a:
+; LINUX-I386-NOT: calll __stack_chk_fail
+; LINUX-I386: .cfi_endproc
+
+; LINUX-X64-LABEL: test31a:
+; LINUX-X64-NOT: callq __stack_chk_fail
+; LINUX-X64: .cfi_endproc
+
+; LINUX-KERNEL-X64-LABEL: test31a:
+; LINUX-KERNEL-X64-NOT: callq __stack_chk_fail
+; LINUX-KERNEL-X64: .cfi_endproc
+
+; DARWIN-X64-LABEL: test31a:
+; DARWIN-X64-NOT: callq ___stack_chk_fail
+; DARWIN-X64: .cfi_endproc
+  %test = alloca i8*, align 8
+  %0 = alloca i8, i64 4
+  store i8* %0, i8** %test, align 8
+  %1 = load i8** %test, align 8
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %1)
+  ret i32 %call
+}
+
+; test31b: An alloca of size 5.
+;          Requested ssp-buffer-size of 5.
+; Requires protector.
+define i32 @test31b() #4 {
+entry:
+; LINUX-I386-LABEL: test31b:
+; LINUX-I386: mov{{l|q}} %gs:
+; LINUX-I386: calll __stack_chk_fail
+
+; LINUX-X64-LABEL: test31b:
+; LINUX-X64: mov{{l|q}} %fs:
+; LINUX-X64: callq __stack_chk_fail
+
+; LINUX-KERNEL-X64-LABEL: test31b:
+; LINUX-KERNEL-X64: mov{{l|q}} %gs:
+; LINUX-KERNEL-X64: callq __stack_chk_fail
+
+; DARWIN-X64-LABEL: test31b:
+; DARWIN-X64: mov{{l|q}} ___stack_chk_guard
+; DARWIN-X64: callq ___stack_chk_fail
+  %test = alloca i8*, align 8
+  %0 = alloca i8, i64 5
+  store i8* %0, i8** %test, align 8
+  %1 = load i8** %test, align 8
+  %call = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str, i32 0, i32 0), i8* %1)
+  ret i32 %call
+}
+
 declare double @testi_aux()
 declare i8* @strcpy(i8*, i8*)
 declare i32 @printf(i8*, ...)
@@ -3223,7 +3453,11 @@ declare void @_Z3exceptPi(i32*)
 declare i32 @__gxx_personality_v0(...)
 declare i32* @getp()
 declare i32 @dummy(...)
+declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture readonly, i64, i32, i1)
 
 attributes #0 = { ssp }
 attributes #1 = { sspstrong }
 attributes #2 = { sspreq }
+attributes #3 = { ssp "stack-protector-buffer-size"="33" }
+attributes #4 = { ssp "stack-protector-buffer-size"="5" }
+attributes #5 = { ssp "stack-protector-buffer-size"="6" }
