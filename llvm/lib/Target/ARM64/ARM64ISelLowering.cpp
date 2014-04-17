@@ -504,6 +504,10 @@ void ARM64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
   setOperationAction(ISD::VSELECT, VT.getSimpleVT(), Expand);
   setLoadExtAction(ISD::EXTLOAD, VT.getSimpleVT(), Expand);
 
+  // CNT supports only B element sizes.
+  if (VT != MVT::v8i8 && VT != MVT::v16i8)
+    setOperationAction(ISD::CTPOP, VT.getSimpleVT(), Expand);
+
   setOperationAction(ISD::UDIV, VT.getSimpleVT(), Expand);
   setOperationAction(ISD::SDIV, VT.getSimpleVT(), Expand);
   setOperationAction(ISD::UREM, VT.getSimpleVT(), Expand);
