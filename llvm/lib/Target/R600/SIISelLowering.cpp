@@ -42,9 +42,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   addRegisterClass(MVT::v2i32, &AMDGPU::VSrc_64RegClass);
   addRegisterClass(MVT::v2f32, &AMDGPU::VSrc_64RegClass);
 
-  addRegisterClass(MVT::v4i32, &AMDGPU::VReg_128RegClass);
-  addRegisterClass(MVT::v4f32, &AMDGPU::VReg_128RegClass);
-  addRegisterClass(MVT::i128, &AMDGPU::SReg_128RegClass);
+  addRegisterClass(MVT::v4i32, &AMDGPU::VSrc_128RegClass);
+  addRegisterClass(MVT::v4f32, &AMDGPU::VSrc_128RegClass);
 
   addRegisterClass(MVT::v8i32, &AMDGPU::VReg_256RegClass);
   addRegisterClass(MVT::v8f32, &AMDGPU::VReg_256RegClass);
@@ -78,8 +77,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::ADDC, MVT::i32, Legal);
   setOperationAction(ISD::ADDE, MVT::i32, Legal);
 
-  setOperationAction(ISD::BITCAST, MVT::i128, Legal);
-
   // We need to custom lower vector stores from local memory
   setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
@@ -99,7 +96,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::STORE, MVT::i1, Custom);
   setOperationAction(ISD::STORE, MVT::i32, Custom);
   setOperationAction(ISD::STORE, MVT::i64, Custom);
-  setOperationAction(ISD::STORE, MVT::i128, Custom);
   setOperationAction(ISD::STORE, MVT::v2i32, Custom);
   setOperationAction(ISD::STORE, MVT::v4i32, Custom);
 
@@ -164,7 +160,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setTruncStoreAction(MVT::i32, MVT::i16, Custom);
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   setTruncStoreAction(MVT::i64, MVT::i32, Expand);
-  setTruncStoreAction(MVT::i128, MVT::i64, Expand);
   setTruncStoreAction(MVT::v8i32, MVT::v8i16, Expand);
   setTruncStoreAction(MVT::v16i32, MVT::v16i16, Expand);
 
@@ -595,7 +590,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
                                   AMDGPU::VGPR2, VT);
     case AMDGPUIntrinsic::SI_load_const: {
       SDValue Ops [] = {
-        ResourceDescriptorToi128(Op.getOperand(1), DAG),
+        Op.getOperand(1),
         Op.getOperand(2)
       };
 
@@ -616,7 +611,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
       return LowerSampleIntrinsic(AMDGPUISD::SAMPLEL, Op, DAG);
     case AMDGPUIntrinsic::SI_vs_load_input:
       return DAG.getNode(AMDGPUISD::LOAD_INPUT, DL, VT,
-                         ResourceDescriptorToi128(Op.getOperand(1), DAG),
+                         Op.getOperand(1),
                          Op.getOperand(2),
                          Op.getOperand(3));
     }
@@ -631,7 +626,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
         SDLoc DL(Op);
         SDValue Ops [] = {
           Chain,
-          ResourceDescriptorToi128(Op.getOperand(2), DAG),
+          Op.getOperand(2),
           Op.getOperand(3),
           Op.getOperand(4),
           Op.getOperand(5),
@@ -799,26 +794,12 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
 
 }
 
-SDValue SITargetLowering::ResourceDescriptorToi128(SDValue Op,
-                                             SelectionDAG &DAG) const {
-
-  if (Op.getValueType() == MVT::i128) {
-    return Op;
-  }
-
-  assert(Op.getOpcode() == ISD::UNDEF);
-
-  return DAG.getNode(ISD::BUILD_PAIR, SDLoc(Op), MVT::i128,
-                     DAG.getConstant(0, MVT::i64),
-                     DAG.getConstant(0, MVT::i64));
-}
-
 SDValue SITargetLowering::LowerSampleIntrinsic(unsigned Opcode,
                                                const SDValue &Op,
                                                SelectionDAG &DAG) const {
   return DAG.getNode(Opcode, SDLoc(Op), Op.getValueType(), Op.getOperand(1),
                      Op.getOperand(2),
-                     ResourceDescriptorToi128(Op.getOperand(3), DAG),
+                     Op.getOperand(3),
                      Op.getOperand(4));
 }
 

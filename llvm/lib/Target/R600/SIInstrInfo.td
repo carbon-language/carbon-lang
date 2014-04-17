@@ -17,13 +17,13 @@ def SIadd64bit32bit : SDNode<"ISD::ADD",
 >;
 
 def SIload_constant : SDNode<"AMDGPUISD::LOAD_CONSTANT",
-  SDTypeProfile<1, 2, [SDTCisVT<0, f32>, SDTCisVT<1, i128>, SDTCisVT<2, i32>]>,
+  SDTypeProfile<1, 2, [SDTCisVT<0, f32>, SDTCisVT<1, v4i32>, SDTCisVT<2, i32>]>,
                       [SDNPMayLoad, SDNPMemOperand]
 >;
 
 def SItbuffer_store : SDNode<"AMDGPUISD::TBUFFER_STORE_FORMAT",
   SDTypeProfile<0, 13,
-    [SDTCisVT<0, i128>,   // rsrc(SGPR)
+    [SDTCisVT<0, v4i32>,   // rsrc(SGPR)
      SDTCisVT<1, iAny>,   // vdata(VGPR)
      SDTCisVT<2, i32>,    // num_channels(imm)
      SDTCisVT<3, i32>,    // vaddr(VGPR)
@@ -41,13 +41,13 @@ def SItbuffer_store : SDNode<"AMDGPUISD::TBUFFER_STORE_FORMAT",
 >;
 
 def SIload_input : SDNode<"AMDGPUISD::LOAD_INPUT",
-  SDTypeProfile<1, 3, [SDTCisVT<0, v4f32>, SDTCisVT<1, i128>, SDTCisVT<2, i16>,
+  SDTypeProfile<1, 3, [SDTCisVT<0, v4f32>, SDTCisVT<1, v4i32>, SDTCisVT<2, i16>,
                        SDTCisVT<3, i32>]>
 >;
 
 class SDSample<string opcode> : SDNode <opcode,
   SDTypeProfile<1, 4, [SDTCisVT<0, v4f32>, SDTCisVT<2, v32i8>,
-                       SDTCisVT<3, i128>, SDTCisVT<4, i32>]>
+                       SDTCisVT<3, v4i32>, SDTCisVT<4, i32>]>
 >;
 
 def SIsample : SDSample<"AMDGPUISD::SAMPLE">;

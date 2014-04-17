@@ -297,3 +297,29 @@ entry:
 }
 
 attributes #0 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "unsafe-fp-math"="false" "use-soft-float"="false" }
+
+; When i128 was a legal type this program generated cannot select errors:
+
+; FUNC-LABEL: @i128-const-store
+; FIXME: We should be able to to this with one store instruction
+; EG-CHECK: STORE_RAW
+; EG-CHECK: STORE_RAW
+; EG-CHECK: STORE_RAW
+; EG-CHECK: STORE_RAW
+; CM-CHECK: STORE_DWORD
+; CM-CHECK: STORE_DWORD
+; CM-CHECK: STORE_DWORD
+; CM-CHECK: STORE_DWORD
+; SI: BUFFER_STORE_DWORDX2
+; SI: BUFFER_STORE_DWORDX2
+define void @i128-const-store(i32 addrspace(1)* %out) {
+entry:
+  store i32 1, i32 addrspace(1)* %out, align 4
+  %arrayidx2 = getelementptr inbounds i32 addrspace(1)* %out, i64 1
+  store i32 1, i32 addrspace(1)* %arrayidx2, align 4
+  %arrayidx4 = getelementptr inbounds i32 addrspace(1)* %out, i64 2
+  store i32 2, i32 addrspace(1)* %arrayidx4, align 4
+  %arrayidx6 = getelementptr inbounds i32 addrspace(1)* %out, i64 3
+  store i32 2, i32 addrspace(1)* %arrayidx6, align 4
+  ret void
+}

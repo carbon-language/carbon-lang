@@ -33,7 +33,6 @@ class SITargetLowering : public AMDGPUTargetLowering {
   SDValue LowerZERO_EXTEND(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
 
-  SDValue ResourceDescriptorToi128(SDValue Op, SelectionDAG &DAG) const;
   bool foldImm(SDValue &Operand, int32_t &Immediate,
                bool &ScalarSlotUsed) const;
   const TargetRegisterClass *getRegClassForNode(SelectionDAG &DAG,

@@ -35,7 +35,7 @@ class SITypeRewriter : public FunctionPass,
   static char ID;
   Module *Mod;
   Type *v16i8;
-  Type *i128;
+  Type *v4i32;
 
 public:
   SITypeRewriter() : FunctionPass(ID) { }
@@ -56,7 +56,7 @@ char SITypeRewriter::ID = 0;
 bool SITypeRewriter::doInitialization(Module &M) {
   Mod = &M;
   v16i8 = VectorType::get(Type::getInt8Ty(M.getContext()), 16);
-  i128 = Type::getIntNTy(M.getContext(), 128);
+  v4i32 = VectorType::get(Type::getInt32Ty(M.getContext()), 4);
   return false;
 }
 
@@ -84,7 +84,8 @@ void SITypeRewriter::visitLoadInst(LoadInst &I) {
   Type *ElemTy = PtrTy->getPointerElementType();
   IRBuilder<> Builder(&I);
   if (ElemTy == v16i8)  {
-    Value *BitCast = Builder.CreateBitCast(Ptr, Type::getIntNPtrTy(I.getContext(), 128, 2));
+    Value *BitCast = Builder.CreateBitCast(Ptr,
+        PointerType::get(v4i32,PtrTy->getPointerAddressSpace()));
     LoadInst *Load = Builder.CreateLoad(BitCast);
     SmallVector <std::pair<unsigned, MDNode*>, 8> MD;
     I.getAllMetadataOtherThanDebugLoc(MD);
@@ -99,6 +100,7 @@ void SITypeRewriter::visitLoadInst(LoadInst &I) {
 
 void SITypeRewriter::visitCallInst(CallInst &I) {
   IRBuilder<> Builder(&I);
+
   SmallVector <Value*, 8> Args;
   SmallVector <Type*, 8> Types;
   bool NeedToReplace = false;
@@ -107,10 +109,10 @@ void SITypeRewriter::visitCallInst(CallInst &I) {
   for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
     Value *Arg = I.getArgOperand(i);
     if (Arg->getType() == v16i8) {
-      Args.push_back(Builder.CreateBitCast(Arg, i128));
-      Types.push_back(i128);
+      Args.push_back(Builder.CreateBitCast(Arg, v4i32));
+      Types.push_back(v4i32);
       NeedToReplace = true;
-      Name = Name + ".i128";
+      Name = Name + ".v4i32";
     } else if (Arg->getType()->isVectorTy() &&
                Arg->getType()->getVectorNumElements() == 1 &&
                Arg->getType()->getVectorElementType() ==
@@ -144,12 +146,12 @@ void SITypeRewriter::visitCallInst(CallInst &I) {
 
 void SITypeRewriter::visitBitCast(BitCastInst &I) {
   IRBuilder<> Builder(&I);
-  if (I.getDestTy() != i128) {
+  if (I.getDestTy() != v4i32) {
     return;
   }
 
   if (BitCastInst *Op = dyn_cast<BitCastInst>(I.getOperand(0))) {
-    if (Op->getSrcTy() == i128) {
+    if (Op->getSrcTy() == v4i32) {
       I.replaceAllUsesWith(Op->getOperand(0));
       I.eraseFromParent();
     }

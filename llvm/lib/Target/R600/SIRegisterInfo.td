@@ -168,7 +168,7 @@ def SReg_64 : RegisterClass<"AMDGPU", [v2i32, i64, i1], 64,
   (add SGPR_64Regs, VCCReg, EXECReg)
 >;
 
-def SReg_128 : RegisterClass<"AMDGPU", [i128, v4i32], 128, (add SGPR_128)>;
+def SReg_128 : RegisterClass<"AMDGPU", [v4i32], 128, (add SGPR_128)>;
 
 def SReg_256 : RegisterClass<"AMDGPU", [v32i8, v8i32, v8f32], 256, (add SGPR_256)>;
 
@@ -183,14 +183,14 @@ def VReg_96 : RegisterClass<"AMDGPU", [untyped], 96, (add VGPR_96)> {
   let Size = 96;
 }
 
-def VReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32, i128], 128, (add VGPR_128)>;
+def VReg_128 : RegisterClass<"AMDGPU", [v4i32, v4f32], 128, (add VGPR_128)>;
 
 def VReg_256 : RegisterClass<"AMDGPU", [v32i8, v8i32, v8f32], 256, (add VGPR_256)>;
 
 def VReg_512 : RegisterClass<"AMDGPU", [v16i32, v16f32], 512, (add VGPR_512)>;
 
 //===----------------------------------------------------------------------===//
-//  [SV]Src_* register classes, can have either an immediate or an register
+//  [SV]Src_(32|64) register classes, can have either an immediate or an register
 //===----------------------------------------------------------------------===//
 
 def SSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add SReg_32)>;
@@ -201,3 +201,9 @@ def VSrc_32 : RegisterClass<"AMDGPU", [i32, f32], 32, (add VReg_32, SReg_32)>;
 
 def VSrc_64 : RegisterClass<"AMDGPU", [i64, f64], 64, (add VReg_64, SReg_64)>;
 
+//===----------------------------------------------------------------------===//
+// SGPR and VGPR register classes
+//===----------------------------------------------------------------------===//
+
+def VSrc_128 : RegisterClass<"AMDGPU", [v4i32, v4f32], 128,
+                             (add VReg_128, SReg_128)>;

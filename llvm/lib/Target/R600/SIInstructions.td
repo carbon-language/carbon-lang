@@ -1456,7 +1456,7 @@ def : Pat <
 
 /* int_SI_vs_load_input */
 def : Pat<
-  (SIload_input i128:$tlst, IMM12bit:$attr_offset, i32:$buf_idx_vgpr),
+  (SIload_input v4i32:$tlst, IMM12bit:$attr_offset, i32:$buf_idx_vgpr),
   (BUFFER_LOAD_FORMAT_XYZW_IDXEN $tlst, $buf_idx_vgpr, imm:$attr_offset, 0, 0, 0, 0)
 >;
 
@@ -1479,34 +1479,34 @@ def : Pat <
 
 /* SIsample for simple 1D texture lookup */
 def : Pat <
-  (SIsample i32:$addr, v32i8:$rsrc, i128:$sampler, imm),
+  (SIsample i32:$addr, v32i8:$rsrc, v4i32:$sampler, imm),
   (IMAGE_SAMPLE_V4_V1 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SamplePattern<SDNode name, MIMG opcode, ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, i128:$sampler, imm),
+    (name vt:$addr, v32i8:$rsrc, v4i32:$sampler, imm),
     (opcode 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SampleRectPattern<SDNode name, MIMG opcode, ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, i128:$sampler, TEX_RECT),
+    (name vt:$addr, v32i8:$rsrc, v4i32:$sampler, TEX_RECT),
     (opcode 0xf, 1, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SampleArrayPattern<SDNode name, MIMG opcode, ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, i128:$sampler, TEX_ARRAY),
+    (name vt:$addr, v32i8:$rsrc, v4i32:$sampler, TEX_ARRAY),
     (opcode 0xf, 0, 0, 1, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SampleShadowPattern<SDNode name, MIMG opcode,
                           ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, i128:$sampler, TEX_SHADOW),
+    (name vt:$addr, v32i8:$rsrc, v4i32:$sampler, TEX_SHADOW),
     (opcode 0xf, 0, 0, 0, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
 class SampleShadowArrayPattern<SDNode name, MIMG opcode,
                                ValueType vt> : Pat <
-    (name vt:$addr, v32i8:$rsrc, i128:$sampler, TEX_SHADOW_ARRAY),
+    (name vt:$addr, v32i8:$rsrc, v4i32:$sampler, TEX_SHADOW_ARRAY),
     (opcode 0xf, 0, 0, 1, 0, 0, 0, 0, $addr, $rsrc, $sampler)
 >;
 
@@ -1695,8 +1695,6 @@ def : BitConvert <i64, v2i32, VReg_64>;
 
 def : BitConvert <v4f32, v4i32, VReg_128>;
 def : BitConvert <v4i32, v4f32, VReg_128>;
-def : BitConvert <v4i32, i128,  VReg_128>;
-def : BitConvert <i128, v4i32,  VReg_128>;
 
 def : BitConvert <v8f32, v8i32, SReg_256>;
 def : BitConvert <v8i32, v8f32, SReg_256>;
@@ -1865,19 +1863,19 @@ def : Ext32Pat <anyext>;
 
 // 1. Offset as 8bit DWORD immediate
 def : Pat <
-  (SIload_constant i128:$sbase, IMM8bitDWORD:$offset),
+  (SIload_constant v4i32:$sbase, IMM8bitDWORD:$offset),
   (S_BUFFER_LOAD_DWORD_IMM $sbase, (as_dword_i32imm $offset))
 >;
 
 // 2. Offset loaded in an 32bit SGPR
 def : Pat <
-  (SIload_constant i128:$sbase, imm:$offset),
+  (SIload_constant v4i32:$sbase, imm:$offset),
   (S_BUFFER_LOAD_DWORD_SGPR $sbase, (S_MOV_B32 imm:$offset))
 >;
 
 // 3. Offset in an 32Bit VGPR
 def : Pat <
-  (SIload_constant i128:$sbase, i32:$voff),
+  (SIload_constant v4i32:$sbase, i32:$voff),
   (BUFFER_LOAD_DWORD_OFFEN $sbase, $voff, 0, 0, 0, 0)
 >;
 
@@ -1979,7 +1977,6 @@ defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, f32>;
 defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, i32>;
 defm : SMRD_Pattern <S_LOAD_DWORDX2_IMM, S_LOAD_DWORDX2_SGPR, i64>;
 defm : SMRD_Pattern <S_LOAD_DWORDX2_IMM, S_LOAD_DWORDX2_SGPR, v2i32>;
-defm : SMRD_Pattern <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, i128>;
 defm : SMRD_Pattern <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, v4i32>;
 defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v32i8>;
 defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v8i32>;
@@ -2071,7 +2068,7 @@ multiclass MUBUF_Load_Dword <ValueType vt, MUBUF offset, MUBUF offen, MUBUF idxe
                              MUBUF bothen> {
 
   def : Pat <
-    (vt (int_SI_buffer_load_dword i128:$rsrc, i32:$vaddr, i32:$soffset,
+    (vt (int_SI_buffer_load_dword v4i32:$rsrc, i32:$vaddr, i32:$soffset,
                                   imm:$offset, 0, 0, imm:$glc, imm:$slc,
                                   imm:$tfe)),
     (offset $rsrc, $vaddr, (as_i16imm $offset), $soffset, (as_i1imm $glc),
@@ -2079,7 +2076,7 @@ multiclass MUBUF_Load_Dword <ValueType vt, MUBUF offset, MUBUF offen, MUBUF idxe
   >;
 
   def : Pat <
-    (vt (int_SI_buffer_load_dword i128:$rsrc, i32:$vaddr, i32:$soffset,
+    (vt (int_SI_buffer_load_dword v4i32:$rsrc, i32:$vaddr, i32:$soffset,
                                   imm, 1, 0, imm:$glc, imm:$slc,
                                   imm:$tfe)),
     (offen $rsrc, $vaddr, $soffset, (as_i1imm $glc), (as_i1imm $slc),
@@ -2087,7 +2084,7 @@ multiclass MUBUF_Load_Dword <ValueType vt, MUBUF offset, MUBUF offen, MUBUF idxe
   >;
 
   def : Pat <
-    (vt (int_SI_buffer_load_dword i128:$rsrc, i32:$vaddr, i32:$soffset,
+    (vt (int_SI_buffer_load_dword v4i32:$rsrc, i32:$vaddr, i32:$soffset,
                                   imm:$offset, 0, 1, imm:$glc, imm:$slc,
                                   imm:$tfe)),
     (idxen $rsrc, $vaddr, (as_i16imm $offset), $soffset, (as_i1imm $glc),
@@ -2095,7 +2092,7 @@ multiclass MUBUF_Load_Dword <ValueType vt, MUBUF offset, MUBUF offen, MUBUF idxe
   >;
 
   def : Pat <
-    (vt (int_SI_buffer_load_dword i128:$rsrc, v2i32:$vaddr, i32:$soffset,
+    (vt (int_SI_buffer_load_dword v4i32:$rsrc, v2i32:$vaddr, i32:$soffset,
                                   imm, 1, 1, imm:$glc, imm:$slc,
                                   imm:$tfe)),
     (bothen $rsrc, $vaddr, $soffset, (as_i1imm $glc), (as_i1imm $slc),
@@ -2116,7 +2113,7 @@ defm : MUBUF_Load_Dword <v4i32, BUFFER_LOAD_DWORDX4_OFFSET, BUFFER_LOAD_DWORDX4_
 
 // TBUFFER_STORE_FORMAT_*, addr64=0
 class MTBUF_StoreResource <ValueType vt, int num_channels, MTBUF opcode> : Pat<
-  (SItbuffer_store i128:$rsrc, vt:$vdata, num_channels, i32:$vaddr,
+  (SItbuffer_store v4i32:$rsrc, vt:$vdata, num_channels, i32:$vaddr,
                    i32:$soffset, imm:$inst_offset, imm:$dfmt,
                    imm:$nfmt, imm:$offen, imm:$idxen,
                    imm:$glc, imm:$slc, imm:$tfe),
@@ -2239,13 +2236,6 @@ def : Pat<
 //===----------------------------------------------------------------------===//
 // Miscellaneous Patterns
 //===----------------------------------------------------------------------===//
-
-def : Pat <
-  (i64 (trunc i128:$x)),
-  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
-    (i32 (EXTRACT_SUBREG $x, sub0)), sub0),
-    (i32 (EXTRACT_SUBREG $x, sub1)), sub1)
->;
 
 def : Pat <
   (i32 (trunc i64:$a)),
