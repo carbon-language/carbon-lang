@@ -1356,19 +1356,10 @@ CollectFunctionTemplateParams(const FunctionDecl *FD, llvm::DIFile Unit) {
 llvm::DIArray CGDebugInfo::
 CollectCXXTemplateParams(const ClassTemplateSpecializationDecl *TSpecial,
                          llvm::DIFile Unit) {
-  llvm::PointerUnion<ClassTemplateDecl *,
-                     ClassTemplatePartialSpecializationDecl *>
-    PU = TSpecial->getSpecializedTemplateOrPartial();
-
-  TemplateParameterList *TPList;
-  if (auto *CTD = PU.dyn_cast<ClassTemplateDecl *>())
-    TPList = CTD->getTemplateParameters();
-  else {
-    // Always get the full list of parameters, not just the ones from
-    // the specialization.
-    auto *CTPSD = PU.get<ClassTemplatePartialSpecializationDecl *>();
-    TPList = CTPSD->getSpecializedTemplate()->getTemplateParameters();
-  }
+  // Always get the full list of parameters, not just the ones from
+  // the specialization.
+  TemplateParameterList *TPList =
+    TSpecial->getSpecializedTemplate()->getTemplateParameters();
   const TemplateArgumentList &TAList = TSpecial->getTemplateArgs();
   return CollectTemplateParams(TPList, TAList.asArray(), Unit);
 }
