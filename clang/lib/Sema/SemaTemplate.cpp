@@ -1722,8 +1722,8 @@ TemplateParameterList *Sema::MatchTemplateParametersToScopeSpecifier(
   //   explicitly specialized.
   bool SawNonEmptyTemplateParameterList = false;
 
-  auto CheckExplicitSpecialization = [&](SourceRange Range,
-                                         bool Recovery = false) {
+  auto CheckExplicitSpecialization = [&](SourceRange Range) {
+    bool Recovery = false;
     if (SawNonEmptyTemplateParameterList) {
       Diag(DeclLoc, diag::err_specialize_member_of_template)
         << !Recovery << Range;
