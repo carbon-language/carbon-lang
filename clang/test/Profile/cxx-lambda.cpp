@@ -18,8 +18,8 @@
 void lambdas() {
   int i = 1;
 
-  // LMBGEN-LABEL: define internal zeroext i1 @"_ZZ7lambdasvENK3$_0clEi"(
-  // LMBUSE-LABEL: define internal zeroext i1 @"_ZZ7lambdasvENK3$_0clEi"(
+  // LMBGEN-LABEL: define internal{{( zeroext)?}} i1 @"_ZZ7lambdasvENK3$_0clEi"(
+  // LMBUSE-LABEL: define internal{{( zeroext)?}} i1 @"_ZZ7lambdasvENK3$_0clEi"(
   // LMBGEN: store {{.*}} @[[LFC]], i64 0, i64 0
   auto f = [&i](int k) {
     // LMBGEN: store {{.*}} @[[LFC]], i64 0, i64 1
