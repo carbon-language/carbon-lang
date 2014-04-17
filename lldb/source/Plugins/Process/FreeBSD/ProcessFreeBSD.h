@@ -18,7 +18,7 @@
 // Other libraries and framework includes
 #include "lldb/Target/Process.h"
 #include "lldb/Target/ThreadList.h"
-#include "FreeBSDSignals.h"
+#include "Plugins/Process/Utility/FreeBSDSignals.h"
 #include "ProcessMessage.h"
 #include "ProcessPOSIX.h"
 
