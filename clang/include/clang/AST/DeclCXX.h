@@ -405,7 +405,7 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief True if this class has a constexpr default constructor.
     ///
     /// This is true for either a user-declared constexpr default constructor
-    /// or an implicitly declared constexpr default constructor..
+    /// or an implicitly declared constexpr default constructor.
     bool HasConstexprDefaultConstructor : 1;
 
     /// \brief True when this class contains at least one non-static data
