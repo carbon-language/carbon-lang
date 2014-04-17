@@ -166,6 +166,44 @@ public:
     }
   };
 
+  /// \brief A node in the call graph.
+  ///
+  /// This represents a single node. It's primary roles are to cache the list of
+  /// callees, de-duplicate and provide fast testing of whether a function is
+  /// a callee, and facilitate iteration of child nodes in the graph.
+  class Node {
+    friend class LazyCallGraph;
+
+    LazyCallGraph *G;
+    Function &F;
+    mutable NodeVectorT Callees;
+    SmallPtrSet<Function *, 4> CalleeSet;
+
+    /// \brief Basic constructor implements the scanning of F into Callees and
+    /// CalleeSet.
+    Node(LazyCallGraph &G, Function &F);
+
+    /// \brief Constructor used when copying a node from one graph to another.
+    Node(LazyCallGraph &G, const Node &OtherN);
+
+    /// \brief Constructor used when moving a node from one graph to another.
+    Node(LazyCallGraph &G, Node &&OtherN);
+
+  public:
+    typedef LazyCallGraph::iterator iterator;
+
+    Function &getFunction() const {
+      return F;
+    };
+
+    iterator begin() const { return iterator(*G, Callees); }
+    iterator end() const { return iterator(*G, Callees, iterator::IsAtEndT()); }
+
+    /// Equality is defined as address equality.
+    bool operator==(const Node &N) const { return this == &N; }
+    bool operator!=(const Node &N) const { return !operator==(N); }
+  };
+
   /// \brief Construct a graph for the given module.
   ///
   /// This sets up the graph and computes all of the entry points of the graph.
@@ -230,44 +268,6 @@ private:
 
   /// \brief Helper to copy a node from another graph into this one.
   Node *copyInto(const Node &OtherN);
-};
-
-/// \brief A node in the call graph.
-///
-/// This represents a single node. It's primary roles are to cache the list of
-/// callees, de-duplicate and provide fast testing of whether a function is
-/// a callee, and facilitate iteration of child nodes in the graph.
-class LazyCallGraph::Node {
-  friend class LazyCallGraph;
-
-  LazyCallGraph *G;
-  Function &F;
-  mutable NodeVectorT Callees;
-  SmallPtrSet<Function *, 4> CalleeSet;
-
-  /// \brief Basic constructor implements the scanning of F into Callees and
-  /// CalleeSet.
-  Node(LazyCallGraph &G, Function &F);
-
-  /// \brief Constructor used when copying a node from one graph to another.
-  Node(LazyCallGraph &G, const Node &OtherN);
-
-  /// \brief Constructor used when moving a node from one graph to another.
-  Node(LazyCallGraph &G, Node &&OtherN);
-
-public:
-  typedef LazyCallGraph::iterator iterator;
-
-  Function &getFunction() const {
-    return F;
-  };
-
-  iterator begin() const { return iterator(*G, Callees); }
-  iterator end() const { return iterator(*G, Callees, iterator::IsAtEndT()); }
-
-  /// Equality is defined as address equality.
-  bool operator==(const Node &N) const { return this == &N; }
-  bool operator!=(const Node &N) const { return !operator==(N); }
 };
 
 // Provide GraphTraits specializations for call graphs.
