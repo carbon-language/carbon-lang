@@ -1541,18 +1541,11 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
       }
 
       // Build the class template specialization.
-      TagOrTempResult
-        = Actions.ActOnClassTemplateSpecialization(getCurScope(), TagType, TUK,
-                       StartLoc, DS.getModulePrivateSpecLoc(), SS,
-                       TemplateId->Template,
-                       TemplateId->TemplateNameLoc,
-                       TemplateId->LAngleLoc,
-                       TemplateArgsPtr,
-                       TemplateId->RAngleLoc,
-                       attrs.getList(),
-                       MultiTemplateParamsArg(
-                                    TemplateParams? &(*TemplateParams)[0] : 0,
-                                 TemplateParams? TemplateParams->size() : 0));
+      TagOrTempResult = Actions.ActOnClassTemplateSpecialization(
+          getCurScope(), TagType, TUK, StartLoc, DS.getModulePrivateSpecLoc(),
+          *TemplateId, attrs.getList(),
+          MultiTemplateParamsArg(TemplateParams ? &(*TemplateParams)[0] : 0,
+                                 TemplateParams ? TemplateParams->size() : 0));
     }
   } else if (TemplateInfo.Kind == ParsedTemplateInfo::ExplicitInstantiation &&
              TUK == Sema::TUK_Declaration) {

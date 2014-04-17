@@ -5197,7 +5197,8 @@ public:
                                   TemplateParamListContext TPC);
   TemplateParameterList *MatchTemplateParametersToScopeSpecifier(
       SourceLocation DeclStartLoc, SourceLocation DeclLoc,
-      const CXXScopeSpec &SS, ArrayRef<TemplateParameterList *> ParamLists,
+      const CXXScopeSpec &SS, TemplateIdAnnotation *TemplateId,
+      ArrayRef<TemplateParameterList *> ParamLists,
       bool IsFriend, bool &IsExplicitSpecialization, bool &Invalid);
 
   DeclResult CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
@@ -5279,12 +5280,7 @@ public:
   ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                    SourceLocation KWLoc,
                                    SourceLocation ModulePrivateLoc,
-                                   CXXScopeSpec &SS,
-                                   TemplateTy Template,
-                                   SourceLocation TemplateNameLoc,
-                                   SourceLocation LAngleLoc,
-                                   ASTTemplateArgsPtr TemplateArgs,
-                                   SourceLocation RAngleLoc,
+                                   TemplateIdAnnotation &TemplateId,
                                    AttributeList *Attr,
                                  MultiTemplateParamsArg TemplateParameterLists);
 

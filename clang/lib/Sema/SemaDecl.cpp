@@ -5228,28 +5228,12 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     // determine whether we have a template or a template specialization.
     TemplateParams = MatchTemplateParametersToScopeSpecifier(
         D.getDeclSpec().getLocStart(), D.getIdentifierLoc(),
-        D.getCXXScopeSpec(), TemplateParamLists,
+        D.getCXXScopeSpec(),
+        D.getName().getKind() == UnqualifiedId::IK_TemplateId
+            ? D.getName().TemplateId
+            : 0,
+        TemplateParamLists,
         /*never a friend*/ false, IsExplicitSpecialization, Invalid);
-
-    if (D.getName().getKind() == UnqualifiedId::IK_TemplateId &&
-        !TemplateParams) {
-      TemplateIdAnnotation *TemplateId = D.getName().TemplateId;
-
-      // We have encountered something that the user meant to be a
-      // specialization (because it has explicitly-specified template
-      // arguments) but that was not introduced with a "template<>" (or had
-      // too few of them).
-      // FIXME: Differentiate between attempts for explicit instantiations
-      // (starting with "template") and the rest.
-      Diag(D.getIdentifierLoc(), diag::err_template_spec_needs_header)
-          << SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc)
-          << FixItHint::CreateInsertion(D.getDeclSpec().getLocStart(),
-                                        "template<> ");
-      IsExplicitSpecialization = true;
-      TemplateParams = TemplateParameterList::Create(Context, SourceLocation(),
-                                                     SourceLocation(), 0, 0,
-                                                     SourceLocation());
-    }
 
     if (TemplateParams) {
       if (!TemplateParams->size() &&
@@ -5283,6 +5267,9 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                    : diag::ext_variable_template);
         }
       }
+    } else {
+      assert(D.getName().getKind() != UnqualifiedId::IK_TemplateId &&
+             "should have a 'template<>' for this decl");
     }
 
     if (IsVariableTemplateSpecialization) {
@@ -6709,8 +6696,12 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     if (TemplateParameterList *TemplateParams =
             MatchTemplateParametersToScopeSpecifier(
                 D.getDeclSpec().getLocStart(), D.getIdentifierLoc(),
-                D.getCXXScopeSpec(), TemplateParamLists, isFriend,
-                isExplicitSpecialization, Invalid)) {
+                D.getCXXScopeSpec(),
+                D.getName().getKind() == UnqualifiedId::IK_TemplateId
+                    ? D.getName().TemplateId
+                    : 0,
+                TemplateParamLists, isFriend, isExplicitSpecialization,
+                Invalid)) {
       if (TemplateParams->size() > 0) {
         // This is a function template
 
@@ -6751,9 +6742,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         // This is a function template specialization.
         isFunctionTemplateSpecialization = true;
         // For source fidelity, store all the template param lists.
-        NewFD->setTemplateParameterListsInfo(Context,
-                                             TemplateParamLists.size(),
-                                             TemplateParamLists.data());
+        if (TemplateParamLists.size() > 0)
+          NewFD->setTemplateParameterListsInfo(Context,
+                                               TemplateParamLists.size(),
+                                               TemplateParamLists.data());
 
         // C++0x [temp.expl.spec]p20 forbids "template<> friend void foo(int);".
         if (isFriend) {
@@ -7152,21 +7144,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
           << SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc);
 
         HasExplicitTemplateArgs = false;
-      } else if (!isFunctionTemplateSpecialization && 
-                 !D.getDeclSpec().isFriendSpecified()) {
-        // We have encountered something that the user meant to be a 
-        // specialization (because it has explicitly-specified template
-        // arguments) but that was not introduced with a "template<>" (or had
-        // too few of them).
-        // FIXME: Differentiate between attempts for explicit instantiations
-        // (starting with "template") and the rest.
-        Diag(D.getIdentifierLoc(), diag::err_template_spec_needs_header)
-          << SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc)
-          << FixItHint::CreateInsertion(
-                                    D.getDeclSpec().getLocStart(),
-                                        "template<> ");
-        isFunctionTemplateSpecialization = true;
       } else {
+        assert((isFunctionTemplateSpecialization ||
+                D.getDeclSpec().isFriendSpecified()) &&
+               "should have a 'template<>' for this decl");
         // "friend void foo<>(int);" is an implicit specialization decl.
         isFunctionTemplateSpecialization = true;
       }
@@ -7178,7 +7159,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       //   friend void foo<>(int);
       // Go ahead and fake up a template id.
       HasExplicitTemplateArgs = true;
-        TemplateArgs.setLAngleLoc(D.getIdentifierLoc());
+      TemplateArgs.setLAngleLoc(D.getIdentifierLoc());
       TemplateArgs.setRAngleLoc(D.getIdentifierLoc());
     }
 
@@ -10569,8 +10550,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       (SS.isNotEmpty() && TUK != TUK_Reference)) {
     if (TemplateParameterList *TemplateParams =
             MatchTemplateParametersToScopeSpecifier(
-                KWLoc, NameLoc, SS, TemplateParameterLists, TUK == TUK_Friend,
-                isExplicitSpecialization, Invalid)) {
+                KWLoc, NameLoc, SS, 0, TemplateParameterLists,
+                TUK == TUK_Friend, isExplicitSpecialization, Invalid)) {
       if (Kind == TTK_Enum) {
         Diag(KWLoc, diag::err_enum_template);
         return 0;

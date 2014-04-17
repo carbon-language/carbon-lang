@@ -19,7 +19,7 @@ virtual void C1::f() { } // expected-error{{'virtual' can only be specified insi
 
 static void C1::g() { } // expected-error{{'static' can only be specified inside the class definition}}
 
-template<int Value> struct CT { }; // expected-note{{previous use is here}}
+template<int Value> struct CT { template<typename> struct Inner; }; // expected-note{{previous use is here}}
 
 CT<10 >> 2> ct; // expected-warning{{require parentheses}}
 
@@ -31,6 +31,8 @@ public:
 struct CT<0> { }; // expected-error{{'template<>'}}
 
 template<> union CT<1> { }; // expected-error{{tag type}}
+
+struct CT<2>::Inner<int> { }; // expected-error 2{{'template<>'}}
 
 // Access declarations
 class A {

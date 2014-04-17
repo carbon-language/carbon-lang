@@ -11370,7 +11370,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
 
   if (TemplateParameterList *TemplateParams =
           MatchTemplateParametersToScopeSpecifier(
-              TagLoc, NameLoc, SS, TempParamLists, /*friend*/ true,
+              TagLoc, NameLoc, SS, 0, TempParamLists, /*friend*/ true,
               isExplicitSpecialization, Invalid)) {
     if (TemplateParams->size() > 0) {
       // This is a declaration of a class template.
