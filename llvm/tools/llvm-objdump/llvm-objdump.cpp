@@ -167,6 +167,12 @@ static const Target *getTarget(const ObjectFile *Obj = NULL) {
       // the best we can do here is indicate that it is mach-o.
       if (Obj->isMachO())
         TheTriple.setObjectFormat(Triple::MachO);
+
+      if (Obj->isCOFF()) {
+        const auto COFFObj = dyn_cast<COFFObjectFile>(Obj);
+        if (COFFObj->getArch() == Triple::thumb)
+          TheTriple.setTriple("thumbv7-windows");
+      }
     }
   } else
     TheTriple.setTriple(Triple::normalize(TripleName));
