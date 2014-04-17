@@ -597,6 +597,7 @@ void SExprBuilder::exitCFG(const CFGBlock *Last) {
   CurrentBlockID = 0;
   CurrentVarID = 0;
   CurrentArgIndex = 0;
+  delete CallCtx;
 }
 
 

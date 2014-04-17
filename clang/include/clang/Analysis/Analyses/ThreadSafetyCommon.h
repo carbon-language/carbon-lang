@@ -227,10 +227,6 @@ public:
     SelfVar = new (Arena)til::Variable(til::Variable::VK_SFun);
   }
 
-  ~SExprBuilder() {
-    delete CallCtx;
-  }
-
   // Translate a clang statement or expression to a TIL expression.
   // Also performs substitution of variables; Ctx provides the context.
   // Dispatches on the type of S.
