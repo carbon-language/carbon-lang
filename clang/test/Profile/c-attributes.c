@@ -1,6 +1,7 @@
 // Test that instrumentation based profiling sets function attributes correctly.
 
-// RUN: %clang %s -o - -mllvm -disable-llvm-optzns -emit-llvm -S -fprofile-instr-use=%S/Inputs/c-attributes.profdata | FileCheck %s
+// RUN: llvm-profdata merge %S/Inputs/c-attributes.proftext -o %t.profdata
+// RUN: %clang %s -o - -mllvm -disable-llvm-optzns -emit-llvm -S -fprofile-instr-use=%t.profdata | FileCheck %s
 
 extern int atoi(const char *);
 

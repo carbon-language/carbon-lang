@@ -6,8 +6,9 @@
 // RUN: %clangxx %s -o - -emit-llvm -S -fprofile-instr-generate -target %itanium_abi_triple | FileCheck -check-prefix=PGOGEN %s
 // RUN: %clangxx %s -o - -emit-llvm -S -fprofile-instr-generate -target %itanium_abi_triple | FileCheck -check-prefix=PGOGEN-EXC %s
 
-// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/cxx-throws.profdata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE %s
-// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/cxx-throws.profdata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE-EXC %s
+// RUN: llvm-profdata merge %S/Inputs/cxx-throws.proftext -o %t.profdata
+// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%t.profdata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE %s
+// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%t.profdata -target %itanium_abi_triple | FileCheck -check-prefix=PGOUSE-EXC %s
 
 // PGOGEN: @[[THC:__llvm_profile_counters__Z6throwsv]] = global [9 x i64] zeroinitializer
 // PGOGEN-EXC: @[[THC:__llvm_profile_counters__Z6throwsv]] = global [9 x i64] zeroinitializer

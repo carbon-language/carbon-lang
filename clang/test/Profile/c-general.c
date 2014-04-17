@@ -1,7 +1,9 @@
 // Test instrumentation of general constructs in C.
 
 // RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name c-general.c %s -o - -emit-llvm -fprofile-instr-generate | FileCheck -check-prefix=PGOGEN %s
-// RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name c-general.c %s -o - -emit-llvm -fprofile-instr-use=%S/Inputs/c-general.profdata | FileCheck -check-prefix=PGOUSE %s
+
+// RUN: llvm-profdata merge %S/Inputs/c-general.proftext -o %t.profdata
+// RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name c-general.c %s -o - -emit-llvm -fprofile-instr-use=%t.profdata | FileCheck -check-prefix=PGOUSE %s
 
 // PGOGEN: @[[SLC:__llvm_profile_counters_simple_loops]] = global [4 x i64] zeroinitializer
 // PGOGEN: @[[IFC:__llvm_profile_counters_conditionals]] = global [11 x i64] zeroinitializer

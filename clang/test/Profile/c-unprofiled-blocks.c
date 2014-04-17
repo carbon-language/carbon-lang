@@ -1,7 +1,8 @@
 // Blocks that we have no profile data for (ie, it was never reached in training
 // runs) shouldn't have any branch weight metadata added.
 
-// RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name c-unprofiled-blocks.c %s -o - -emit-llvm -fprofile-instr-use=%S/Inputs/c-unprofiled-blocks.profdata | FileCheck -check-prefix=PGOUSE %s
+// RUN: llvm-profdata merge %S/Inputs/c-unprofiled-blocks.proftext -o %t.profdata
+// RUN: %clang_cc1 -triple x86_64-apple-macosx10.9 -main-file-name c-unprofiled-blocks.c %s -o - -emit-llvm -fprofile-instr-use=%t.profdata | FileCheck -check-prefix=PGOUSE %s
 
 // PGOUSE-LABEL: @never_called(i32 %i)
 int never_called(int i) {

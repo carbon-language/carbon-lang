@@ -6,7 +6,8 @@
 // RUN: FileCheck --input-file=%tgen -check-prefix=MTHGEN %s
 // RUN: FileCheck --input-file=%tgen -check-prefix=WRPGEN %s
 
-// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%S/Inputs/cxx-class.profdata -fno-exceptions -target %itanium_abi_triple > %tuse
+// RUN: llvm-profdata merge %S/Inputs/cxx-class.proftext -o %t.profdata
+// RUN: %clang %s -o - -emit-llvm -S -fprofile-instr-use=%t.profdata -fno-exceptions -target %itanium_abi_triple > %tuse
 // RUN: FileCheck --input-file=%tuse -check-prefix=CTRUSE %s
 // RUN: FileCheck --input-file=%tuse -check-prefix=DTRUSE %s
 // RUN: FileCheck --input-file=%tuse -check-prefix=MTHUSE %s
