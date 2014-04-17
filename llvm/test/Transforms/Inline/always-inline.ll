@@ -78,7 +78,7 @@ entry:
   ret i32 %add
 }
 
-define i32 @inner5(i8* %addr) alwaysinline {
+define i32 @inner5(i8* %addr) {
 entry:
   indirectbr i8* %addr, [ label %one, label %two ]
 

@@ -1300,8 +1300,14 @@ bool InlineCostAnalysis::isInlineViable(Function &F) {
     F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                    Attribute::ReturnsTwice);
   for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
-    // Disallow inlining of functions which contain an indirect branch.
-    if (isa<IndirectBrInst>(BI->getTerminator()))
+    // Disallow inlining of functions which contain an indirect branch,
+    // unless the always_inline attribute is set.
+    // The attribute serves as a assertion that no local address
+    // like a block label can escpape the function.
+    // Revisit enabling inlining for functions with indirect branches
+    // when a more sophisticated espape/points-to analysis becomes available.
+    if (isa<IndirectBrInst>(BI->getTerminator()) &&
+        !F.hasFnAttribute(Attribute::AlwaysInline))
       return false;
 
     for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); II != IE;
