@@ -4530,6 +4530,7 @@ public:
   virtual bool setCPU(const std::string &Name) {
     bool CPUKnown = llvm::StringSwitch<bool>(Name)
                         .Case("generic", true)
+                        .Cases("cortex-a53", "cortex-a57", true)
                         .Case("cyclone", true)
                         .Default(false);
     return CPUKnown;
