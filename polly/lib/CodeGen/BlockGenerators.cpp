@@ -580,6 +580,10 @@ void VectorBlockGenerator::copyStore(const StoreInst *Store,
   Value *Vector = getVectorValue(Store->getValueOperand(), VectorMap,
                                  ScalarMaps, getLoopForInst(Store));
 
+  // Make sure we have scalar values available to access the pointer to
+  // the data location.
+  extractScalarValues(Store, VectorMap, ScalarMaps);
+
   if (Access.isStrideOne(isl_map_copy(Schedule))) {
     Type *VectorPtrType = getVectorPtrTy(Pointer, VectorWidth);
     Value *NewPointer = getNewValue(Pointer, ScalarMaps[0], GlobalMaps[0],
