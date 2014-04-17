@@ -38,9 +38,9 @@
 #   a) Linking non-shared executable file
 #   b) Relocations' targets are undefined symbols
 #
-# R1UN: yaml2obj -format=elf %s > %t-obj
-# R1UN: lld -flavor gnu -target mipsel --noinhibit-exec -e T0 -o %t2-exe %t-obj
-# R1UN: llvm-objdump -disassemble %t2-exe | FileCheck -check-prefix=PLT2 %s
+# RUN: yaml2obj -format=elf %s > %t-obj
+# RUN: lld -flavor gnu -target mipsel --noinhibit-exec -e T0 -o %t2-exe %t-obj
+# RUN: llvm-objdump -disassemble %t2-exe | FileCheck -check-prefix=PLT2 %s
 
 # PLT2-NOT: Disassembly of section .plt:
 
@@ -48,10 +48,10 @@
 #   a) Linking non-shared executable file
 #   b) Relocations' targets are symbols defined in the other object.
 #
-# R1UN: yaml2obj -format=elf %s > %t-obj1
-# R1UN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-obj2
-# R1UN: lld -flavor gnu -target mipsel -e T0 -o %t3-exe %t-obj1 %t-obj2
-# R1UN: llvm-objdump -disassemble %t3-exe | FileCheck -check-prefix=PLT3 %s
+# RUN: yaml2obj -format=elf %s > %t-obj1
+# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-obj2
+# RUN: lld -flavor gnu -target mipsel -e T0 -o %t3-exe %t-obj1 %t-obj2
+# RUN: llvm-objdump -disassemble %t3-exe | FileCheck -check-prefix=PLT3 %s
 
 # PLT3-NOT: Disassembly of section .plt:
 
