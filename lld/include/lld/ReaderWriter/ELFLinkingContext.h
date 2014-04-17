@@ -232,7 +232,7 @@ public:
     return _absoluteSymbols;
   }
 
-  const std::map<std::string, std::string> getAliases() const {
+  const std::map<std::string, std::string> &getAliases() const {
     return _aliasSymbols;
   }
 
