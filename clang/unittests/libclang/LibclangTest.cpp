@@ -85,6 +85,27 @@ TEST(libclang, VirtualFileOverlay) {
     T.map("/path/virtual/foo.h", "/real/foo.h");
   }
   {
+    const char *contents =
+    "{\n"
+    "  'version': 0,\n"
+    "  'roots': [\n"
+    "    {\n"
+    "      'type': 'directory',\n"
+    "      'name': \"/path/virtual\",\n"
+    "      'contents': [\n"
+    "        {\n"
+    "          'type': 'file',\n"
+    "          'name': \"\\u2602.h\",\n"
+    "          'external-contents': \"/real/\\u2602.h\"\n"
+    "        }\n"
+    "      ]\n"
+    "    }\n"
+    "  ]\n"
+    "}\n";
+    TestVFO T(contents);
+    T.map("/path/virtual/☂.h", "/real/☂.h");
+  }
+  {
     TestVFO T(NULL);
     T.mapError("/path/./virtual/../foo.h", "/real/foo.h",
                CXError_InvalidArguments);

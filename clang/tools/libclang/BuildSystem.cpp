@@ -19,6 +19,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/TimeValue.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/YAMLParser.h"
 
 using namespace clang;
 using namespace llvm::sys;
@@ -147,10 +148,9 @@ private:
       OS.indent(Indent) << "{\n";
       Indent += 2;
       OS.indent(Indent) << "'type': 'file',\n";
-      OS.indent(Indent) << "'name': \"";
-      OS.write_escaped(VName) << "\",\n";
-      OS.indent(Indent) << "'external-contents': \"";
-      OS.write_escaped(Entry.RPath) << "\"\n";
+      OS.indent(Indent) << "'name': \"" << llvm::yaml::escape(VName) << "\",\n";
+      OS.indent(Indent) << "'external-contents': \""
+                        << llvm::yaml::escape(Entry.RPath) << "\"\n";
       Indent -= 2;
       OS.indent(Indent) << '}';
       if (Entries.empty()) {
