@@ -2715,27 +2715,45 @@ void VFTableBuilder::CalculateVtordispAdjustment(
       VBaseMap.find(WhichVFPtr.getVBaseWithVPtr());
   assert(VBaseMapEntry != VBaseMap.end());
 
-  // Check if we need a vtordisp adjustment at all.
+  // If there's no vtordisp, we don't need any vtordisp adjustment.
   if (!VBaseMapEntry->second.hasVtorDisp())
     return;
 
-  CharUnits VFPtrVBaseOffset = VBaseMapEntry->second.VBaseOffset;
+  const CXXRecordDecl *OverriderRD = Overrider.Method->getParent();
+  const CXXRecordDecl *OverriderVBase = 0;
+  if (OverriderRD != MostDerivedClass) {
+    OverriderVBase =
+        ComputeBaseOffset(Context, OverriderRD, MostDerivedClass).VirtualBase;
+  }
+
+  // If the final overrider is defined in the same vbase as the initial
+  // declaration, we don't need a vtordisp thunk at all.
+  if (OverriderVBase == WhichVFPtr.getVBaseWithVPtr())
+    return;
+
+  // OK, now we know we need to use a vtordisp thunk.
   // The implicit vtordisp field is located right before the vbase.
+  CharUnits VFPtrVBaseOffset = VBaseMapEntry->second.VBaseOffset;
   TA.Virtual.Microsoft.VtordispOffset =
       (VFPtrVBaseOffset - WhichVFPtr.FullOffsetInMDC).getQuantity() - 4;
 
-  // If the final overrider is defined in either:
-  // - the most derived class or its non-virtual base or
-  // - the same vbase as the initial declaration,
-  // a simple vtordisp thunk will suffice.
-  const CXXRecordDecl *OverriderRD = Overrider.Method->getParent();
+  // A simple vtordisp thunk will suffice if the final overrider is defined
+  // in either the most derived class or its non-virtual base.
   if (OverriderRD == MostDerivedClass)
     return;
 
-  const CXXRecordDecl *OverriderVBase =
-      ComputeBaseOffset(Context, OverriderRD, MostDerivedClass).VirtualBase;
-  if (!OverriderVBase || OverriderVBase == WhichVFPtr.getVBaseWithVPtr())
+  if (!OverriderVBase) {
+    MethodVFTableLocation ML = VTables.getMethodVFTableLocation(Overrider.Method);
+    assert(ML.VBase && "why would we need a vtordisp if we can call the method "
+                       "without a vfptr of a vbase?");
+    // We need to offset the this parameter if the offset of the vbase is
+    // different between the overrider class and the most derived class.
+    const ASTRecordLayout &OverriderRDLayout =
+        Context.getASTRecordLayout(OverriderRD);
+    TA.NonVirtual += (OverriderRDLayout.getVBaseClassOffset(ML.VBase) +
+                     ML.VFPtrOffset - ThisOffset).getQuantity();
     return;
+  }
 
   // Otherwise, we need to do use the dynamic offset of the final overrider
   // in order to get "this" adjustment right.
