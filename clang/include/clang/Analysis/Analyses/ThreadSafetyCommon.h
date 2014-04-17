@@ -84,8 +84,7 @@ class CFGVisitor {
 // Walks the clang CFG, and invokes methods on a given CFGVisitor.
 class CFGWalker {
 public:
-  CFGWalker() :
-    CFGraph(nullptr), FDecl(nullptr), ACtx(nullptr), SortedGraph(nullptr) {}
+  CFGWalker() : CFGraph(nullptr), ACtx(nullptr), SortedGraph(nullptr) {}
 
   // Initialize the CFGWalker.  This setup only needs to be done once, even
   // if there are multiple passes over the CFG.
@@ -95,8 +94,8 @@ public:
     if (!CFGraph)
       return false;
 
-    FDecl = dyn_cast_or_null<NamedDecl>(AC.getDecl());
-    if (!FDecl) // ignore anonymous functions
+    // Ignore anonymous functions.
+    if (!dyn_cast_or_null<NamedDecl>(AC.getDecl()))
       return false;
 
     SortedGraph = AC.getAnalysis<PostOrderCFGView>();
@@ -111,7 +110,7 @@ public:
   void walk(Visitor &V) {
     PostOrderCFGView::CFGBlockSet VisitedBlocks(CFGraph);
 
-    V.enterCFG(CFGraph, FDecl, &CFGraph->getEntry());
+    V.enterCFG(CFGraph, getDecl(), &CFGraph->getEntry());
 
     for (const auto *CurrBlock : *SortedGraph) {
       VisitedBlocks.insert(CurrBlock);
@@ -181,9 +180,15 @@ public:
     V.exitCFG(&CFGraph->getExit());
   }
 
-public:  // TODO: make these private.
+  const CFG *getGraph() const { return CFGraph; }
+  CFG *getGraph() { return CFGraph; }
+
+  const NamedDecl *getDecl() const { return cast<NamedDecl>(ACtx->getDecl()); }
+
+  const PostOrderCFGView *getSortedGraph() const { return SortedGraph; }
+
+private:
   CFG *CFGraph;
-  const NamedDecl *FDecl;
   AnalysisDeclContext *ACtx;
   PostOrderCFGView *SortedGraph;
 };

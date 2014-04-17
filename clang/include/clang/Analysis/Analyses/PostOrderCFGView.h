@@ -76,14 +76,18 @@ private:
   BlockOrderTy BlockOrder;
 
 public:
-  typedef std::vector<const CFGBlock*>::reverse_iterator iterator;
+  typedef std::vector<const CFGBlock *>::reverse_iterator iterator;
+  typedef std::vector<const CFGBlock *>::const_reverse_iterator const_iterator;
 
   PostOrderCFGView(const CFG *cfg);
 
   iterator begin() { return Blocks.rbegin(); }
   iterator end()   { return Blocks.rend(); }
 
-  bool empty() { return begin() == end(); }
+  const_iterator begin() const { return Blocks.rbegin(); }
+  const_iterator end() const { return Blocks.rend(); }
+
+  bool empty() const { return begin() == end(); }
 
   struct BlockOrderCompare;
   friend struct BlockOrderCompare;

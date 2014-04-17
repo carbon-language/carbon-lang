@@ -1069,8 +1069,8 @@ public:
   }
 
   /// Builds the variable map.
-  void traverseCFG(CFG *CFGraph, PostOrderCFGView *SortedGraph,
-                     std::vector<CFGBlockInfo> &BlockInfo);
+  void traverseCFG(CFG *CFGraph, const PostOrderCFGView *SortedGraph,
+                   std::vector<CFGBlockInfo> &BlockInfo);
 
 protected:
   // Get the current context index
@@ -1289,15 +1289,13 @@ void LocalVariableMap::intersectBackEdge(Context C1, Context C2) {
 //   ...                 { y -> y1           | x3 = 2, x2 = 1, ... }
 //
 void LocalVariableMap::traverseCFG(CFG *CFGraph,
-                                   PostOrderCFGView *SortedGraph,
+                                   const PostOrderCFGView *SortedGraph,
                                    std::vector<CFGBlockInfo> &BlockInfo) {
   PostOrderCFGView::CFGBlockSet VisitedBlocks(CFGraph);
 
   CtxIndices.resize(CFGraph->getNumBlockIDs());
 
-  for (PostOrderCFGView::iterator I = SortedGraph->begin(),
-       E = SortedGraph->end(); I!= E; ++I) {
-    const CFGBlock *CurrBlock = *I;
+  for (const auto *CurrBlock : *SortedGraph) {
     int CurrBlockID = CurrBlock->getBlockID();
     CFGBlockInfo *CurrBlockInfo = &BlockInfo[CurrBlockID];
 
@@ -1376,11 +1374,9 @@ void LocalVariableMap::traverseCFG(CFG *CFGraph,
 /// Find the appropriate source locations to use when producing diagnostics for
 /// each block in the CFG.
 static void findBlockLocations(CFG *CFGraph,
-                               PostOrderCFGView *SortedGraph,
+                               const PostOrderCFGView *SortedGraph,
                                std::vector<CFGBlockInfo> &BlockInfo) {
-  for (PostOrderCFGView::iterator I = SortedGraph->begin(),
-       E = SortedGraph->end(); I!= E; ++I) {
-    const CFGBlock *CurrBlock = *I;
+  for (const auto *CurrBlock : *SortedGraph) {
     CFGBlockInfo *CurrBlockInfo = &BlockInfo[CurrBlock->getBlockID()];
 
     // Find the source location of the last statement in the block, if the
@@ -2374,8 +2370,8 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   // AC.dumpCFG(true);
   // threadSafety::printSCFG(walker);
 
-  CFG *CFGraph = walker.CFGraph;
-  const NamedDecl *D = walker.FDecl;
+  CFG *CFGraph = walker.getGraph();
+  const NamedDecl *D = walker.getDecl();
 
   if (D->hasAttr<NoThreadSafetyAnalysisAttr>())
     return;
@@ -2395,7 +2391,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   // We need to explore the CFG via a "topological" ordering.
   // That way, we will be guaranteed to have information about required
   // predecessor locksets when exploring a new block.
-  PostOrderCFGView *SortedGraph = walker.SortedGraph;
+  const PostOrderCFGView *SortedGraph = walker.getSortedGraph();
   PostOrderCFGView::CFGBlockSet VisitedBlocks(CFGraph);
 
   // Mark entry block as reachable
@@ -2465,9 +2461,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
               CapDiagKind);
   }
 
-  for (PostOrderCFGView::iterator I = SortedGraph->begin(),
-       E = SortedGraph->end(); I!= E; ++I) {
-    const CFGBlock *CurrBlock = *I;
+  for (const auto *CurrBlock : *SortedGraph) {
     int CurrBlockID = CurrBlock->getBlockID();
     CFGBlockInfo *CurrBlockInfo = &BlockInfo[CurrBlockID];
 
