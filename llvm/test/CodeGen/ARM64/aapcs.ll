@@ -57,7 +57,7 @@ define void @test_extension(i1 %bool, i8 %char, i16 %short, i32 %int) {
 
   %ext_char = sext i8 %char to i64
   store volatile i64 %ext_char, i64* @var64
-; CHECK: sxtb [[EXT:x[0-9]+]], x1
+; CHECK: sxtb [[EXT:x[0-9]+]], w1
 ; CHECK: str [[EXT]], [{{x[0-9]+}}, :lo12:var64]
 
   %ext_short = zext i16 %short to i64
@@ -67,7 +67,7 @@ define void @test_extension(i1 %bool, i8 %char, i16 %short, i32 %int) {
 
   %ext_int = zext i32 %int to i64
   store volatile i64 %ext_int, i64* @var64
-; CHECK: uxtw [[EXT:x[0-9]+]], x3
+; CHECK: uxtw [[EXT:x[0-9]+]], w3
 ; CHECK: str [[EXT]], [{{x[0-9]+}}, :lo12:var64]
 
   ret void

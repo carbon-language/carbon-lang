@@ -7,7 +7,7 @@ define i32 @test1sext(i64 %A, i64 %B, i32* %P, i64 *%P2) nounwind {
   %D = trunc i64 %C to i32
   %E = shl i64 %C, 32
   %F = ashr i64 %E, 32
-  ; CHECK: sxtw x[[EXT:[0-9]+]], x[[SUM]]
+  ; CHECK: sxtw x[[EXT:[0-9]+]], w[[SUM]]
   store volatile i64 %F, i64 *%P2
   ; CHECK: str x[[EXT]]
   store volatile i32 %D, i32* %P

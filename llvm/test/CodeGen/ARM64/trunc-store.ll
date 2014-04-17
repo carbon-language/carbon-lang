@@ -22,7 +22,7 @@ define void @fct32(i32 %arg, i64 %var) {
 ; w0 is %arg
 ; CHECK-NEXT: sub w[[OFFSETREGNUM:[0-9]+]], w0, #1
 ; w1 is %var truncated
-; CHECK-NEXT: str w1, {{\[}}[[GLOBALADDR]], x[[OFFSETREGNUM]], sxtw #2]
+; CHECK-NEXT: str w1, {{\[}}[[GLOBALADDR]], w[[OFFSETREGNUM]], sxtw #2]
 ; CHECK-NEXT: ret
 bb:
   %.pre37 = load i32** @zptr32, align 8
@@ -42,7 +42,7 @@ define void @fct16(i32 %arg, i64 %var) {
 ; w0 is %arg
 ; CHECK-NEXT: sub w[[OFFSETREGNUM:[0-9]+]], w0, #1
 ; w1 is %var truncated
-; CHECK-NEXT: strh w1, {{\[}}[[GLOBALADDR]], x[[OFFSETREGNUM]], sxtw #1]
+; CHECK-NEXT: strh w1, {{\[}}[[GLOBALADDR]], w[[OFFSETREGNUM]], sxtw #1]
 ; CHECK-NEXT: ret
 bb:
   %.pre37 = load i16** @zptr16, align 8

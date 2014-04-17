@@ -118,8 +118,7 @@ define i8 @atomic_load_relaxed_8(i8* %p, i32 %off32) {
   %ptr_regoff = getelementptr i8* %p, i32 %off32
   %val_regoff = load atomic i8* %ptr_regoff unordered, align 1
   %tot1 = add i8 %val_unsigned, %val_regoff
-  ; FIXME: syntax is incorrect: "sxtw" should not be able to go with an x-reg.
-; CHECK: ldrb {{w[0-9]+}}, [x0, x1, sxtw]
+; CHECK: ldrb {{w[0-9]+}}, [x0, w1, sxtw]
 
   %ptr_unscaled = getelementptr i8* %p, i32 -256
   %val_unscaled = load atomic i8* %ptr_unscaled monotonic, align 1
@@ -144,8 +143,7 @@ define i16 @atomic_load_relaxed_16(i16* %p, i32 %off32) {
   %ptr_regoff = getelementptr i16* %p, i32 %off32
   %val_regoff = load atomic i16* %ptr_regoff unordered, align 2
   %tot1 = add i16 %val_unsigned, %val_regoff
-  ; FIXME: syntax is incorrect: "sxtw" should not be able to go with an x-reg.
-; CHECK: ldrh {{w[0-9]+}}, [x0, x1, sxtw #1]
+; CHECK: ldrh {{w[0-9]+}}, [x0, w1, sxtw #1]
 
   %ptr_unscaled = getelementptr i16* %p, i32 -128
   %val_unscaled = load atomic i16* %ptr_unscaled monotonic, align 2
@@ -170,8 +168,7 @@ define i32 @atomic_load_relaxed_32(i32* %p, i32 %off32) {
   %ptr_regoff = getelementptr i32* %p, i32 %off32
   %val_regoff = load atomic i32* %ptr_regoff unordered, align 4
   %tot1 = add i32 %val_unsigned, %val_regoff
-  ; FIXME: syntax is incorrect: "sxtw" should not be able to go with an x-reg.
-; CHECK: ldr {{w[0-9]+}}, [x0, x1, sxtw #2]
+; CHECK: ldr {{w[0-9]+}}, [x0, w1, sxtw #2]
 
   %ptr_unscaled = getelementptr i32* %p, i32 -64
   %val_unscaled = load atomic i32* %ptr_unscaled monotonic, align 4
@@ -196,8 +193,7 @@ define i64 @atomic_load_relaxed_64(i64* %p, i32 %off32) {
   %ptr_regoff = getelementptr i64* %p, i32 %off32
   %val_regoff = load atomic i64* %ptr_regoff unordered, align 8
   %tot1 = add i64 %val_unsigned, %val_regoff
-  ; FIXME: syntax is incorrect: "sxtw" should not be able to go with an x-reg.
-; CHECK: ldr {{x[0-9]+}}, [x0, x1, sxtw #3]
+; CHECK: ldr {{x[0-9]+}}, [x0, w1, sxtw #3]
 
   %ptr_unscaled = getelementptr i64* %p, i32 -32
   %val_unscaled = load atomic i64* %ptr_unscaled monotonic, align 8
@@ -229,8 +225,7 @@ define void @atomic_store_relaxed_8(i8* %p, i32 %off32, i8 %val) {
 
   %ptr_regoff = getelementptr i8* %p, i32 %off32
   store atomic i8 %val, i8* %ptr_regoff unordered, align 1
-  ; FIXME: syntax is incorrect: "sxtw" should not be able to go with an x-reg.
-; CHECK: strb {{w[0-9]+}}, [x0, x1, sxtw]
+; CHECK: strb {{w[0-9]+}}, [x0, w1, sxtw]
 
   %ptr_unscaled = getelementptr i8* %p, i32 -256
   store atomic i8 %val, i8* %ptr_unscaled monotonic, align 1
@@ -252,8 +247,7 @@ define void @atomic_store_relaxed_16(i16* %p, i32 %off32, i16 %val) {
 
   %ptr_regoff = getelementptr i16* %p, i32 %off32
   store atomic i16 %val, i16* %ptr_regoff unordered, align 2
-  ; FIXME: syntax is incorrect: "sxtw" should not be able to go with an x-reg.
-; CHECK: strh {{w[0-9]+}}, [x0, x1, sxtw #1]
+; CHECK: strh {{w[0-9]+}}, [x0, w1, sxtw #1]
 
   %ptr_unscaled = getelementptr i16* %p, i32 -128
   store atomic i16 %val, i16* %ptr_unscaled monotonic, align 2
@@ -275,8 +269,7 @@ define void @atomic_store_relaxed_32(i32* %p, i32 %off32, i32 %val) {
 
   %ptr_regoff = getelementptr i32* %p, i32 %off32
   store atomic i32 %val, i32* %ptr_regoff unordered, align 4
-  ; FIXME: syntax is incorrect: "sxtw" should not be able to go with an x-reg.
-; CHECK: str {{w[0-9]+}}, [x0, x1, sxtw #2]
+; CHECK: str {{w[0-9]+}}, [x0, w1, sxtw #2]
 
   %ptr_unscaled = getelementptr i32* %p, i32 -64
   store atomic i32 %val, i32* %ptr_unscaled monotonic, align 4
@@ -298,8 +291,7 @@ define void @atomic_store_relaxed_64(i64* %p, i32 %off32, i64 %val) {
 
   %ptr_regoff = getelementptr i64* %p, i32 %off32
   store atomic i64 %val, i64* %ptr_regoff unordered, align 8
-  ; FIXME: syntax is incorrect: "sxtw" should not be able to go with an x-reg.
-; CHECK: str {{x[0-9]+}}, [x0, x1, sxtw #3]
+; CHECK: str {{x[0-9]+}}, [x0, w1, sxtw #3]
 
   %ptr_unscaled = getelementptr i64* %p, i32 -32
   store atomic i64 %val, i64* %ptr_unscaled monotonic, align 8

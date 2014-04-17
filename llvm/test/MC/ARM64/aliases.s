@@ -239,19 +239,19 @@ foo:
 ; CHECK: uxtb w1, w2
 ; CHECK: uxth w1, w2
 
-  sxtb  x1, x2
-  sxth  x1, x2
-  sxtw  x1, x2
-  uxtb  x1, x2
-  uxth  x1, x2
-  uxtw  x1, x2
+  sxtb  x1, w2
+  sxth  x1, w2
+  sxtw  x1, w2
+  uxtb  x1, w2
+  uxth  x1, w2
+  uxtw  x1, w2
 
-; CHECK: sxtb x1, x2
-; CHECK: sxth x1, x2
-; CHECK: sxtw x1, x2
-; CHECK: uxtb x1, x2
-; CHECK: uxth x1, x2
-; CHECK: uxtw x1, x2
+; CHECK: sxtb x1, w2
+; CHECK: sxth x1, w2
+; CHECK: sxtw x1, w2
+; CHECK: uxtb x1, w2
+; CHECK: uxth x1, w2
+; CHECK: uxtw x1, w2
 
 ;-----------------------------------------------------------------------------
 ; Negate with carry

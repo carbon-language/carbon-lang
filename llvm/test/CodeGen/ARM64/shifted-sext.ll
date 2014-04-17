@@ -133,7 +133,7 @@ define i64 @extendedRightShiftcharToint64By8(i8 signext %a) nounwind readnone ss
 entry:
 ; CHECK-LABEL: extendedRightShiftcharToint64By8:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sxtb x[[REG]], x[[REG]]
+; CHECK: sxtb x[[REG]], w[[REG]]
 ; CHECK: asr x0, x[[REG]], #8
   %inc = add i8 %a, 1
   %conv = sext i8 %inc to i64
@@ -223,7 +223,7 @@ define i64 @extendedRightShiftshortToint64By16(i16 signext %a) nounwind readnone
 entry:
 ; CHECK-LABEL: extendedRightShiftshortToint64By16:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sxth x[[REG]], x[[REG]]
+; CHECK: sxth x[[REG]], w[[REG]]
 ; CHECK: asr x0, x[[REG]], #16
   %inc = add i16 %a, 1
   %conv = sext i16 %inc to i64
@@ -268,7 +268,7 @@ define i64 @extendedRightShiftintToint64By32(i32 %a) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: extendedRightShiftintToint64By32:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sxtw x[[REG]], x[[REG]]
+; CHECK: sxtw x[[REG]], w[[REG]]
 ; CHECK: asr x0, x[[REG]], #32
   %inc = add nsw i32 %a, 1
   %conv = sext i32 %inc to i64

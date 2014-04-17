@@ -5,7 +5,7 @@ define i64 @foo(i32 %i) {
 ; CHECK: foo
 ; CHECK:  adrp  x[[REG:[0-9]+]], _array@GOTPAGE
 ; CHECK:  ldr x[[REG1:[0-9]+]], [x[[REG]], _array@GOTPAGEOFF]
-; CHECK:  ldrsw x0, [x[[REG1]], x0, sxtw #2]
+; CHECK:  ldrsw x0, [x[[REG1]], w0, sxtw #2]
 ; CHECK:  ret
   %idxprom = sext i32 %i to i64
   %arrayidx = getelementptr inbounds [0 x i32]* @array, i64 0, i64 %idxprom

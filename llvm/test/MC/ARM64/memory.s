@@ -426,14 +426,14 @@ foo:
 ; CHECK: ldr  q1, [x1, x2, lsl #4]      ; encoding: [0x21,0x78,0xe2,0x3c]
 
   str  d1, [sp, x3]
-  str  d1, [sp, x3, uxtw #3]
+  str  d1, [sp, w3, uxtw #3]
   str  q1, [sp, x3]
-  str  q1, [sp, x3, uxtw #4]
+  str  q1, [sp, w3, uxtw #4]
 
 ; CHECK: str  d1, [sp, x3]              ; encoding: [0xe1,0x6b,0x23,0xfc]
-; CHECK: str  d1, [sp, x3, uxtw #3]     ; encoding: [0xe1,0x5b,0x23,0xfc]
+; CHECK: str  d1, [sp, w3, uxtw #3]     ; encoding: [0xe1,0x5b,0x23,0xfc]
 ; CHECK: str  q1, [sp, x3]              ; encoding: [0xe1,0x6b,0xa3,0x3c]
-; CHECK: str  q1, [sp, x3, uxtw #4]     ; encoding: [0xe1,0x5b,0xa3,0x3c]
+; CHECK: str  q1, [sp, w3, uxtw #4]     ; encoding: [0xe1,0x5b,0xa3,0x3c]
 
 ;-----------------------------------------------------------------------------
 ; Load literal
