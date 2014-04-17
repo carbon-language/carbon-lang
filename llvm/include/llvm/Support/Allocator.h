@@ -365,8 +365,14 @@ template <typename T> class SpecificBumpPtrAllocator {
 
 public:
   SpecificBumpPtrAllocator() : Allocator() {}
-
+  SpecificBumpPtrAllocator(SpecificBumpPtrAllocator &&Old)
+      : Allocator(std::move(Old.Allocator)) {}
   ~SpecificBumpPtrAllocator() { DestroyAll(); }
+
+  SpecificBumpPtrAllocator &operator=(SpecificBumpPtrAllocator &&RHS) {
+    Allocator = RHS.Allocator;
+    return *this;
+  }
 
   /// Call the destructor of each allocated object and deallocate all but the
   /// current slab and reset the current pointer to the beginning of it, freeing
@@ -400,8 +406,6 @@ public:
 
   /// \brief Allocate space for an array of objects without constructing them.
   T *Allocate(size_t num = 1) { return Allocator.Allocate<T>(num); }
-
-private:
 };
 
 }  // end namespace llvm
