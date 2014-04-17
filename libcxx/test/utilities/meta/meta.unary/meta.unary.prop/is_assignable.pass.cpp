@@ -36,6 +36,7 @@ void test_is_not_assignable()
 
 struct D;
 
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 struct C
 {
     template <class U>
@@ -46,6 +47,7 @@ struct E
 {
     C operator=(int);
 };
+#endif
 
 int main()
 {
@@ -54,9 +56,10 @@ int main()
     test_is_assignable<int&, double> ();
     test_is_assignable<B, A> ();
     test_is_assignable<void*&, void*> ();
-    test_is_assignable<E, int> ();
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    test_is_assignable<E, int> ();
+
     test_is_not_assignable<int, int&> ();
     test_is_not_assignable<int, int> ();
 #endif
