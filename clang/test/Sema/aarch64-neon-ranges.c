@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple aarch64-linux-gnu -target-feature +neon -ffreestanding -fsyntax-only -verify %s
+// RUN: %clang_cc1 -triple arm64-linux-gnu -target-feature +neon -ffreestanding -fsyntax-only -verify %s
 
 #include <arm_neon.h>
 

@@ -1,4 +1,5 @@
 // RUN: %clang -target aarch64-none-linux-gnu -x c -E -dM %s -o - | FileCheck %s
+// RUN: %clang -target arm64-none-linux-gnu -x c -E -dM %s -o - | FileCheck %s
 
 // CHECK: __AARCH64EL__ 1
 // CHECK: __ARM_64BIT_STATE 1

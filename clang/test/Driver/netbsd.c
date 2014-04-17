@@ -13,6 +13,12 @@
 // RUN: %clang -no-canonical-prefixes -target aarch64--netbsd7.0.0 \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=AARCH64-7 %s
+// RUN: %clang -no-canonical-prefixes -target arm64--netbsd \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=ARM64 %s
+// RUN: %clang -no-canonical-prefixes -target arm64--netbsd7.0.0 \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=ARM64-7 %s
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd-eabi \
 // RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=ARM %s
@@ -53,6 +59,12 @@
 // RUN: %clang -no-canonical-prefixes -target aarch64--netbsd7.0.0 -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=S-AARCH64-7 %s
+// RUN: %clang -no-canonical-prefixes -target arm64--netbsd -static \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=S-ARM64 %s
+// RUN: %clang -no-canonical-prefixes -target arm64--netbsd7.0.0 -static \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=S-ARM64-7 %s
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd-eabi -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=S-ARM %s
@@ -100,6 +112,20 @@
 // AARCH64-7:  "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // AARCH64-7: "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed"
 // AARCH64-7: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// ARM64: clang{{.*}}" "-cc1" "-triple" "arm64--netbsd"
+// ARM64: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
+// ARM64: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// ARM64: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// ARM64: "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed"
+// ARM64: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// ARM64-7: clang{{.*}}" "-cc1" "-triple" "arm64--netbsd7.0.0"
+// ARM64-7: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
+// ARM64-7: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// ARM64-7:  "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// ARM64-7: "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed"
+// ARM64-7: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
 // ARM: clang{{.*}}" "-cc1" "-triple" "armv5e--netbsd-eabi"
 // ARM: as{{.*}}" "-mcpu=arm926ej-s" "-o"
@@ -196,6 +222,20 @@
 // S-AARCH64-7: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // S-AARCH64-7: "-lgcc_eh" "-lc" "-lgcc"
 // S-AARCH64-7: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// S-ARM64: clang{{.*}}" "-cc1" "-triple" "arm64--netbsd"
+// S-ARM64: ld{{.*}}" "--eh-frame-hdr" "-Bstatic"
+// S-ARM64: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// S-ARM64: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// S-ARM64: "-lgcc_eh" "-lc" "-lgcc"
+// S-ARM64: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// S-ARM64-7: clang{{.*}}" "-cc1" "-triple" "arm64--netbsd7.0.0"
+// S-ARM64-7: ld{{.*}}" "--eh-frame-hdr" "-Bstatic"
+// S-ARM64-7: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// S-ARM64-7: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// S-ARM64-7: "-lgcc_eh" "-lc" "-lgcc"
+// S-ARM64-7: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
 // S-ARM: clang{{.*}}" "-cc1" "-triple" "armv5e--netbsd-eabi"
 // S-ARM: ld{{.*}}" "--eh-frame-hdr" "-Bstatic"

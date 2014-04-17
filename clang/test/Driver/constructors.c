@@ -55,3 +55,12 @@
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1       \
 // RUN:     -target aarch64-none-none-eabi \
 // RUN:   | FileCheck --check-prefix=CHECK-INIT-ARRAY %s
+
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1       \
+// RUN:     -target arm64-none-linux-gnu \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-INIT-ARRAY %s
+//
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1       \
+// RUN:     -target arm64-none-none-eabi \
+// RUN:   | FileCheck --check-prefix=CHECK-INIT-ARRAY %s
