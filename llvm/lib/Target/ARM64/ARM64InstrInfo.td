@@ -3472,6 +3472,9 @@ def : Pat<(v4i32 immAllOnesV), (MOVIv2d_ns (i32 255))>;
 def : Pat<(v8i16 immAllOnesV), (MOVIv2d_ns (i32 255))>;
 def : Pat<(v16i8 immAllOnesV), (MOVIv2d_ns (i32 255))>;
 
+def : Pat<(v2f64 (ARM64dup (f64 fpimm0))), (MOVIv2d_ns (i32 0))>;
+def : Pat<(v4f32 (ARM64dup (f32 fpimm0))), (MOVIv2d_ns (i32 0))>;
+
 // EDIT per word & halfword: 2s, 4h, 4s, & 8h
 defm MOVI      : SIMDModifiedImmVectorShift<0, 0b10, 0b00, "movi">;
 def : Pat<(v2i32 (ARM64movi_shift imm0_255:$imm8, (i32 imm:$shift))),
