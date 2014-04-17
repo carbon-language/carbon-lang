@@ -455,6 +455,35 @@ struct W : virtual X, A {};
 W w;
 }
 
+namespace Test12 {
+struct X : B, A { };
+
+struct Y : X {
+  virtual void f();  // Overrides A::f.
+};
+
+struct Z : virtual Y {
+  // CHECK-LABEL: VFTable for 'A' in 'Test12::X' in 'Test12::Y' in 'Test12::Z' (2 entries).
+  // CHECK-NEXT:   0 | void Test12::Y::f()
+  // CHECK-NEXT:   1 | void A::z()
+
+  int z;
+  // MANGLING-DAG: @"\01??_7Z@Test12@@6BA@@@" = {{.*}}@"\01?f@Y@Test12@@UAEXXZ"
+};
+
+struct W : Z {
+  // CHECK-LABEL: VFTable for 'A' in 'Test12::X' in 'Test12::Y' in 'Test12::Z' in 'Test12::W' (2 entries).
+  // CHECK-NEXT:   0 | void Test12::Y::f()
+  // CHECK-NEXT:   1 | void A::z()
+  W();
+
+  int w;
+  // MANGLING-DAG: @"\01??_7W@Test12@@6BA@@@" = {{.*}}@"\01?f@Y@Test12@@UAEXXZ"
+};
+
+W::W() {}
+}
+
 namespace vdtors {
 struct X {
   virtual ~X();
@@ -696,4 +725,42 @@ D obj;
 // MANGLING-DAG: @"\01??_7A@pr19240@@6B@"
 // MANGLING-DAG: @"\01??_7B@pr19240@@6B@"
 
+}
+
+namespace pr19408 {
+// This test is a non-vtordisp version of the reproducer for PR19408.
+struct X : virtual A {
+  int x;
+};
+
+struct Y : X {
+  virtual void f();
+  int y;
+};
+
+struct Z : Y {
+  // CHECK-LABEL: VFTable for 'A' in 'pr19408::X' in 'pr19408::Y' in 'pr19408::Z' (2 entries).
+  // CHECK-NEXT:   0 | void pr19408::Y::f()
+  // CHECK-NEXT:       [this adjustment: -4 non-virtual]
+  // CHECK-NEXT:   1 | void A::z()
+
+  Z();
+  int z;
+  // MANGLING-DAG: @"\01??_7Z@pr19408@@6B@" = {{.*}}@"\01?f@Y@pr19408@@W3AEXXZ"
+};
+
+Z::Z() {}
+
+struct W : B, Y {
+  // CHECK-LABEL: VFTable for 'A' in 'pr19408::X' in 'pr19408::Y' in 'pr19408::W' (2 entries).
+  // CHECK-NEXT:   0 | void pr19408::Y::f()
+  // CHECK-NEXT:       [this adjustment: -4 non-virtual]
+  // CHECK-NEXT:   1 | void A::z()
+
+  W();
+  int w;
+  // MANGLING-DAG: @"\01??_7W@pr19408@@6BY@1@@" = {{.*}}@"\01?f@Y@pr19408@@W3AEXXZ"
+};
+
+W::W() {}
 }
