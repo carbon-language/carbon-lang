@@ -1722,8 +1722,7 @@ TemplateParameterList *Sema::MatchTemplateParametersToScopeSpecifier(
   //   explicitly specialized.
   bool SawNonEmptyTemplateParameterList = false;
 
-  auto CheckExplicitSpecialization = [&](SourceRange Range) {
-    bool Recovery = false;
+  auto CheckExplicitSpecialization = [&](SourceRange Range, bool Recovery) {
     if (SawNonEmptyTemplateParameterList) {
       Diag(DeclLoc, diag::err_specialize_member_of_template)
         << !Recovery << Range;
@@ -1823,7 +1822,8 @@ TemplateParameterList *Sema::MatchTemplateParametersToScopeSpecifier(
     //   are not explicitly specialized as well.
     if (ParamIdx < ParamLists.size()) {
       if (ParamLists[ParamIdx]->size() == 0) {
-        if (CheckExplicitSpecialization(ParamLists[ParamIdx]->getSourceRange()))
+        if (CheckExplicitSpecialization(ParamLists[ParamIdx]->getSourceRange(),
+                                        false))
           return 0;
       } else
         SawNonEmptyTemplateParameterList = true;
@@ -1959,7 +1959,8 @@ TemplateParameterList *Sema::MatchTemplateParametersToScopeSpecifier(
   //   specialize a class member template if its en- closing class templates 
   //   are not explicitly specialized as well.
   if (ParamLists.back()->size() == 0 &&
-      CheckExplicitSpecialization(ParamLists[ParamIdx]->getSourceRange()))
+      CheckExplicitSpecialization(ParamLists[ParamIdx]->getSourceRange(),
+                                  false))
     return 0;
 
   // Return the last template parameter list, which corresponds to the
