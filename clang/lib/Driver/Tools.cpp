@@ -473,6 +473,7 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
   case llvm::Triple::arm64:
+  case llvm::Triple::arm64_be:
   case llvm::Triple::arm:
   case llvm::Triple::armeb:
     if (Triple.isOSDarwin() || Triple.isOSWindows())
@@ -1341,6 +1342,7 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
     return getAArch64TargetCPU(Args, T);
 
   case llvm::Triple::arm64:
+  case llvm::Triple::arm64_be:
     return getARM64TargetCPU(Args);
 
   case llvm::Triple::arm:
@@ -2766,6 +2768,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     break;
 
   case llvm::Triple::arm64:
+  case llvm::Triple::arm64_be:
     AddARM64TargetArgs(Args, CmdArgs);
     break;
 
@@ -6848,7 +6851,8 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
   else if (ToolChain.getArch() == llvm::Triple::aarch64 ||
            ToolChain.getArch() == llvm::Triple::arm64)
     return "/lib/ld-linux-aarch64.so.1";
-  else if (ToolChain.getArch() == llvm::Triple::aarch64_be)
+  else if (ToolChain.getArch() == llvm::Triple::aarch64_be ||
+           ToolChain.getArch() == llvm::Triple::arm64_be)
     return "/lib/ld-linux-aarch64_be.so.1";
   else if (ToolChain.getArch() == llvm::Triple::arm ||
            ToolChain.getArch() == llvm::Triple::thumb) {
@@ -6949,7 +6953,8 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   else if (ToolChain.getArch() == llvm::Triple::aarch64 ||
            ToolChain.getArch() == llvm::Triple::arm64)
     CmdArgs.push_back("aarch64linux");
-  else if (ToolChain.getArch() == llvm::Triple::aarch64_be)
+  else if (ToolChain.getArch() == llvm::Triple::aarch64_be ||
+           ToolChain.getArch() == llvm::Triple::arm64_be)
     CmdArgs.push_back("aarch64_be_linux");
   else if (ToolChain.getArch() == llvm::Triple::arm
            ||  ToolChain.getArch() == llvm::Triple::thumb)
