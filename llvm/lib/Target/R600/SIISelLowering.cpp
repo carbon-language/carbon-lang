@@ -972,8 +972,12 @@ SDValue SITargetLowering::LowerZERO_EXTEND(SDValue Op,
     return SDValue();
   }
 
-  return DAG.getNode(ISD::BUILD_PAIR, DL, VT, Op.getOperand(0),
-                                              DAG.getConstant(0, MVT::i32));
+  SDValue Src = Op.getOperand(0);
+  if (Src.getValueType() != MVT::i32)
+    Src = DAG.getNode(ISD::ZERO_EXTEND, DL, MVT::i32, Src);
+
+  SDValue Zero = DAG.getConstant(0, MVT::i32);
+  return DAG.getNode(ISD::BUILD_PAIR, DL, VT, Src, Zero);
 }
 
 //===----------------------------------------------------------------------===//

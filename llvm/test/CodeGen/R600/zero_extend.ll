@@ -26,3 +26,14 @@ entry:
   store i32 %1, i32 addrspace(1)* %out
   ret void
 }
+
+; SI-CHECK-LABEL: @zext_i1_to_i64
+; SI-CHECK: V_CMP_EQ_I32
+; SI-CHECK: V_CNDMASK_B32
+; SI-CHECK: V_MOV_B32_e32 v{{[0-9]+}}, 0
+define void @zext_i1_to_i64(i64 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
+  %cmp = icmp eq i32 %a, %b
+  %ext = zext i1 %cmp to i64
+  store i64 %ext, i64 addrspace(1)* %out, align 8
+  ret void
+}
