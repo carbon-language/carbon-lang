@@ -40,7 +40,7 @@ struct ELFLinuxPrStatus
     int32_t         si_errno;
 
     int16_t         pr_cursig;
-    
+
     uint64_t        pr_sigpend;
     uint64_t        pr_sighold;
 

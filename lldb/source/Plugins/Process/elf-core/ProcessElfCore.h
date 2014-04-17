@@ -37,45 +37,45 @@ public:
     // Constructors and Destructors
     //------------------------------------------------------------------
     static lldb::ProcessSP
-    CreateInstance (lldb_private::Target& target, 
-                    lldb_private::Listener &listener, 
+    CreateInstance (lldb_private::Target& target,
+                    lldb_private::Listener &listener,
                     const lldb_private::FileSpec *crash_file_path);
-    
+
     static void
     Initialize();
-    
+
     static void
     Terminate();
-    
+
     static lldb_private::ConstString
     GetPluginNameStatic();
-    
+
     static const char *
     GetPluginDescriptionStatic();
-    
+
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    ProcessElfCore(lldb_private::Target& target, 
+    ProcessElfCore(lldb_private::Target& target,
                     lldb_private::Listener &listener,
                     const lldb_private::FileSpec &core_file);
-    
+
     virtual
     ~ProcessElfCore();
-    
+
     //------------------------------------------------------------------
     // Check if a given Process
     //------------------------------------------------------------------
     virtual bool
     CanDebug (lldb_private::Target &target,
               bool plugin_specified_by_name);
-    
+
     //------------------------------------------------------------------
     // Creating a new process, or attaching to an existing one
     //------------------------------------------------------------------
     virtual lldb_private::Error
     DoLoadCore ();
-    
+
     virtual lldb_private::DynamicLoader *
     GetDynamicLoader ();
 
@@ -84,19 +84,19 @@ public:
     //------------------------------------------------------------------
     virtual lldb_private::ConstString
     GetPluginName();
-    
+
     virtual uint32_t
     GetPluginVersion();
-    
+
     //------------------------------------------------------------------
     // Process Control
-    //------------------------------------------------------------------    
+    //------------------------------------------------------------------
     virtual lldb_private::Error
     DoDestroy ();
-    
+
     virtual void
     RefreshStateAfterStop();
-    
+
     //------------------------------------------------------------------
     // Process Queries
     //------------------------------------------------------------------
@@ -108,10 +108,10 @@ public:
     //------------------------------------------------------------------
     virtual size_t
     ReadMemory (lldb::addr_t addr, void *buf, size_t size, lldb_private::Error &error);
-    
+
     virtual size_t
     DoReadMemory (lldb::addr_t addr, void *buf, size_t size, lldb_private::Error &error);
-    
+
     virtual lldb::addr_t
     GetImageInfoAddress ();
 
@@ -125,11 +125,11 @@ public:
 protected:
     void
     Clear ( );
-    
+
     virtual bool
-    UpdateThreadList (lldb_private::ThreadList &old_thread_list, 
+    UpdateThreadList (lldb_private::ThreadList &old_thread_list,
                       lldb_private::ThreadList &new_thread_list);
-   
+
 private:
     //------------------------------------------------------------------
     // For ProcessElfCore only

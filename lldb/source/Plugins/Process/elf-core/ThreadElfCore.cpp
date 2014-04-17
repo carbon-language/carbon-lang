@@ -108,7 +108,7 @@ ThreadElfCore::CreateRegisterContextForFrame (StackFrame *frame)
                 }
                 break;
             }
- 
+
             case llvm::Triple::Linux:
             {
                 switch (arch.GetMachine())
