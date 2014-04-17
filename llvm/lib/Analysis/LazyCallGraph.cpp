@@ -46,7 +46,7 @@ static void findCallees(
   }
 }
 
-LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F) : G(G), F(F) {
+LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F) : G(&G), F(F) {
   SmallVector<Constant *, 16> Worklist;
   SmallPtrSet<Constant *, 16> Visited;
   // Find all the potential callees in this function. First walk the
@@ -65,7 +65,7 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F) : G(G), F(F) {
 }
 
 LazyCallGraph::Node::Node(LazyCallGraph &G, const Node &OtherN)
-    : G(G), F(OtherN.F), CalleeSet(OtherN.CalleeSet) {
+    : G(&G), F(OtherN.F), CalleeSet(OtherN.CalleeSet) {
   // Loop over the other node's callees, adding the Function*s to our list
   // directly, and recursing to add the Node*s.
   Callees.reserve(OtherN.Callees.size());
@@ -74,16 +74,6 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, const Node &OtherN)
       Callees.push_back(Callee);
     else
       Callees.push_back(G.copyInto(*OtherCallee.get<Node *>()));
-}
-
-LazyCallGraph::Node::Node(LazyCallGraph &G, Node &&OtherN)
-    : G(G), F(OtherN.F), Callees(std::move(OtherN.Callees)),
-      CalleeSet(std::move(OtherN.CalleeSet)) {
-  // Loop over our Callees. They've been moved from another node, but we need
-  // to move the Node*s to live under our bump ptr allocator.
-  for (auto &Callee : Callees)
-    if (Node *ChildN = Callee.dyn_cast<Node *>())
-      Callee = G.moveInto(std::move(*ChildN));
 }
 
 LazyCallGraph::LazyCallGraph(Module &M) {
@@ -113,18 +103,22 @@ LazyCallGraph::LazyCallGraph(const LazyCallGraph &G)
       EntryNodes.push_back(copyInto(*EntryNode.get<Node *>()));
 }
 
-// FIXME: This would be crazy simpler if BumpPtrAllocator were movable without
-// invalidating any of the allocated memory. We should make that be the case at
-// some point and delete this.
 LazyCallGraph::LazyCallGraph(LazyCallGraph &&G)
-    : EntryNodes(std::move(G.EntryNodes)),
+    : BPA(std::move(G.BPA)), EntryNodes(std::move(G.EntryNodes)),
       EntryNodeSet(std::move(G.EntryNodeSet)) {
-  // Loop over our EntryNodes. They've been moved from another graph, so we
-  // need to move the Node*s to live under our bump ptr allocator. We can just
-  // do this in-place.
+  // Process all nodes updating the graph pointers.
+  SmallVector<Node *, 16> Worklist;
   for (auto &Entry : EntryNodes)
     if (Node *EntryN = Entry.dyn_cast<Node *>())
-      Entry = moveInto(std::move(*EntryN));
+      Worklist.push_back(EntryN);
+
+  while (!Worklist.empty()) {
+    Node *N = Worklist.pop_back_val();
+    N->G = this;
+    for (auto &Callee : N->Callees)
+      if (Node *CalleeN = Callee.dyn_cast<Node *>())
+        Worklist.push_back(CalleeN);
+  }
 }
 
 LazyCallGraph::Node *LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
@@ -137,14 +131,6 @@ LazyCallGraph::Node *LazyCallGraph::copyInto(const Node &OtherN) {
     return N;
 
   return new (N = BPA.Allocate()) Node(*this, OtherN);
-}
-
-LazyCallGraph::Node *LazyCallGraph::moveInto(Node &&OtherN) {
-  Node *&N = NodeMap[&OtherN.F];
-  if (N)
-    return N;
-
-  return new (N = BPA.Allocate()) Node(*this, std::move(OtherN));
 }
 
 char LazyCallGraphAnalysis::PassID;

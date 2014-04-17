@@ -230,9 +230,6 @@ private:
 
   /// \brief Helper to copy a node from another graph into this one.
   Node *copyInto(const Node &OtherN);
-
-  /// \brief Helper to move a node from another graph into this one.
-  Node *moveInto(Node &&OtherN);
 };
 
 /// \brief A node in the call graph.
@@ -243,7 +240,7 @@ private:
 class LazyCallGraph::Node {
   friend class LazyCallGraph;
 
-  LazyCallGraph &G;
+  LazyCallGraph *G;
   Function &F;
   mutable NodeVectorT Callees;
   SmallPtrSet<Function *, 4> CalleeSet;
@@ -265,8 +262,8 @@ public:
     return F;
   };
 
-  iterator begin() const { return iterator(G, Callees); }
-  iterator end() const { return iterator(G, Callees, iterator::IsAtEndT()); }
+  iterator begin() const { return iterator(*G, Callees); }
+  iterator end() const { return iterator(*G, Callees, iterator::IsAtEndT()); }
 
   /// Equality is defined as address equality.
   bool operator==(const Node &N) const { return this == &N; }
