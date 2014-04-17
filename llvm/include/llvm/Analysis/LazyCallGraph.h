@@ -186,9 +186,6 @@ public:
     /// \brief Constructor used when copying a node from one graph to another.
     Node(LazyCallGraph &G, const Node &OtherN);
 
-    /// \brief Constructor used when moving a node from one graph to another.
-    Node(LazyCallGraph &G, Node &&OtherN);
-
   public:
     typedef LazyCallGraph::iterator iterator;
 
