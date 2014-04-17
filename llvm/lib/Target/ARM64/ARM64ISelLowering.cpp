@@ -222,26 +222,6 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   setOperationAction(ISD::FP_ROUND, MVT::f32, Custom);
   setOperationAction(ISD::FP_ROUND, MVT::f64, Custom);
 
-  // 128-bit atomics
-  setOperationAction(ISD::ATOMIC_SWAP, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_OR, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_CMP_SWAP, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_ADD, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_SUB, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_AND, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_XOR, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_MIN, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_MAX, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_NAND, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_UMIN, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_LOAD_UMAX, MVT::i128, Custom);
-  // These are surprisingly difficult. The only single-copy atomic 128-bit
-  // instruction on AArch64 is stxp (when it succeeds). So a store can safely
-  // become a simple swap, but a load can only be determined to have been atomic
-  // if storing the same value back succeeds.
-  setOperationAction(ISD::ATOMIC_LOAD, MVT::i128, Custom);
-  setOperationAction(ISD::ATOMIC_STORE, MVT::i128, Expand);
-
   // Variable arguments.
   setOperationAction(ISD::VASTART, MVT::Other, Custom);
   setOperationAction(ISD::VAARG, MVT::Other, Custom);
@@ -706,437 +686,6 @@ const char *ARM64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-static void getExclusiveOperation(unsigned Size, AtomicOrdering Ord,
-                                  unsigned &LdrOpc, unsigned &StrOpc) {
-  static unsigned LoadBares[] = { ARM64::LDXRB, ARM64::LDXRH, ARM64::LDXRW,
-                                  ARM64::LDXRX, ARM64::LDXPX };
-  static unsigned LoadAcqs[] = { ARM64::LDAXRB, ARM64::LDAXRH, ARM64::LDAXRW,
-                                 ARM64::LDAXRX, ARM64::LDAXPX };
-  static unsigned StoreBares[] = { ARM64::STXRB, ARM64::STXRH, ARM64::STXRW,
-                                   ARM64::STXRX, ARM64::STXPX };
-  static unsigned StoreRels[] = { ARM64::STLXRB, ARM64::STLXRH, ARM64::STLXRW,
-                                  ARM64::STLXRX, ARM64::STLXPX };
-
-  unsigned *LoadOps, *StoreOps;
-  if (Ord == Acquire || Ord == AcquireRelease || Ord == SequentiallyConsistent)
-    LoadOps = LoadAcqs;
-  else
-    LoadOps = LoadBares;
-
-  if (Ord == Release || Ord == AcquireRelease || Ord == SequentiallyConsistent)
-    StoreOps = StoreRels;
-  else
-    StoreOps = StoreBares;
-
-  assert(isPowerOf2_32(Size) && Size <= 16 &&
-         "unsupported size for atomic binary op!");
-
-  LdrOpc = LoadOps[Log2_32(Size)];
-  StrOpc = StoreOps[Log2_32(Size)];
-}
-
-MachineBasicBlock *ARM64TargetLowering::EmitAtomicCmpSwap(MachineInstr *MI,
-                                                          MachineBasicBlock *BB,
-                                                          unsigned Size) const {
-  unsigned dest = MI->getOperand(0).getReg();
-  unsigned ptr = MI->getOperand(1).getReg();
-  unsigned oldval = MI->getOperand(2).getReg();
-  unsigned newval = MI->getOperand(3).getReg();
-  AtomicOrdering Ord = static_cast<AtomicOrdering>(MI->getOperand(4).getImm());
-  unsigned scratch = BB->getParent()->getRegInfo().createVirtualRegister(
-      &ARM64::GPR32RegClass);
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  DebugLoc dl = MI->getDebugLoc();
-
-  // FIXME: We currently always generate a seq_cst operation; we should
-  // be able to relax this in some cases.
-  unsigned ldrOpc, strOpc;
-  getExclusiveOperation(Size, Ord, ldrOpc, strOpc);
-
-  MachineFunction *MF = BB->getParent();
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = BB;
-  ++It; // insert the new blocks after the current block
-
-  MachineBasicBlock *loop1MBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *loop2MBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MF->insert(It, loop1MBB);
-  MF->insert(It, loop2MBB);
-  MF->insert(It, exitMBB);
-
-  // Transfer the remainder of BB and its successor edges to exitMBB.
-  exitMBB->splice(exitMBB->begin(), BB,
-                  std::next(MachineBasicBlock::iterator(MI)), BB->end());
-  exitMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-  //  thisMBB:
-  //   ...
-  //   fallthrough --> loop1MBB
-  BB->addSuccessor(loop1MBB);
-
-  // loop1MBB:
-  //   ldrex dest, [ptr]
-  //   cmp dest, oldval
-  //   bne exitMBB
-  BB = loop1MBB;
-  BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr);
-  BuildMI(BB, dl, TII->get(Size == 8 ? ARM64::SUBSXrr : ARM64::SUBSWrr))
-      .addReg(Size == 8 ? ARM64::XZR : ARM64::WZR, RegState::Define)
-      .addReg(dest)
-      .addReg(oldval);
-  BuildMI(BB, dl, TII->get(ARM64::Bcc)).addImm(ARM64CC::NE).addMBB(exitMBB);
-  BB->addSuccessor(loop2MBB);
-  BB->addSuccessor(exitMBB);
-
-  // loop2MBB:
-  //   strex scratch, newval, [ptr]
-  //   cmp scratch, #0
-  //   bne loop1MBB
-  BB = loop2MBB;
-  BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(newval).addReg(ptr);
-  BuildMI(BB, dl, TII->get(ARM64::CBNZW)).addReg(scratch).addMBB(loop1MBB);
-  BB->addSuccessor(loop1MBB);
-  BB->addSuccessor(exitMBB);
-
-  //  exitMBB:
-  //   ...
-  BB = exitMBB;
-
-  MI->eraseFromParent(); // The instruction is gone now.
-
-  return BB;
-}
-
-MachineBasicBlock *
-ARM64TargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
-                                      unsigned Size, unsigned BinOpcode) const {
-  // This also handles ATOMIC_SWAP, indicated by BinOpcode==0.
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction *MF = BB->getParent();
-  MachineFunction::iterator It = BB;
-  ++It;
-
-  unsigned dest = MI->getOperand(0).getReg();
-  unsigned ptr = MI->getOperand(1).getReg();
-  unsigned incr = MI->getOperand(2).getReg();
-  AtomicOrdering Ord = static_cast<AtomicOrdering>(MI->getOperand(3).getImm());
-  DebugLoc dl = MI->getDebugLoc();
-
-  unsigned ldrOpc, strOpc;
-  getExclusiveOperation(Size, Ord, ldrOpc, strOpc);
-
-  MachineBasicBlock *loopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *exitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MF->insert(It, loopMBB);
-  MF->insert(It, exitMBB);
-
-  // Transfer the remainder of BB and its successor edges to exitMBB.
-  exitMBB->splice(exitMBB->begin(), BB,
-                  std::next(MachineBasicBlock::iterator(MI)), BB->end());
-  exitMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-  MachineRegisterInfo &RegInfo = MF->getRegInfo();
-  unsigned scratch = RegInfo.createVirtualRegister(&ARM64::GPR32RegClass);
-  unsigned scratch2 =
-      (!BinOpcode)
-          ? incr
-          : RegInfo.createVirtualRegister(Size == 8 ? &ARM64::GPR64RegClass
-                                                    : &ARM64::GPR32RegClass);
-
-  //  thisMBB:
-  //   ...
-  //   fallthrough --> loopMBB
-  BB->addSuccessor(loopMBB);
-
-  //  loopMBB:
-  //   ldxr dest, ptr
-  //   <binop> scratch2, dest, incr
-  //   stxr scratch, scratch2, ptr
-  //   cbnz scratch, loopMBB
-  //   fallthrough --> exitMBB
-  BB = loopMBB;
-  BuildMI(BB, dl, TII->get(ldrOpc), dest).addReg(ptr);
-  if (BinOpcode) {
-    // operand order needs to go the other way for NAND
-    if (BinOpcode == ARM64::BICWrr || BinOpcode == ARM64::BICXrr)
-      BuildMI(BB, dl, TII->get(BinOpcode), scratch2).addReg(incr).addReg(dest);
-    else
-      BuildMI(BB, dl, TII->get(BinOpcode), scratch2).addReg(dest).addReg(incr);
-  }
-
-  BuildMI(BB, dl, TII->get(strOpc), scratch).addReg(scratch2).addReg(ptr);
-  BuildMI(BB, dl, TII->get(ARM64::CBNZW)).addReg(scratch).addMBB(loopMBB);
-
-  BB->addSuccessor(loopMBB);
-  BB->addSuccessor(exitMBB);
-
-  //  exitMBB:
-  //   ...
-  BB = exitMBB;
-
-  MI->eraseFromParent(); // The instruction is gone now.
-
-  return BB;
-}
-
-MachineBasicBlock *ARM64TargetLowering::EmitAtomicBinary128(
-    MachineInstr *MI, MachineBasicBlock *BB, unsigned BinOpcodeLo,
-    unsigned BinOpcodeHi) const {
-  // This also handles ATOMIC_SWAP, indicated by BinOpcode==0.
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction *MF = BB->getParent();
-  MachineFunction::iterator It = BB;
-  ++It;
-
-  unsigned DestLo = MI->getOperand(0).getReg();
-  unsigned DestHi = MI->getOperand(1).getReg();
-  unsigned Ptr = MI->getOperand(2).getReg();
-  unsigned IncrLo = MI->getOperand(3).getReg();
-  unsigned IncrHi = MI->getOperand(4).getReg();
-  AtomicOrdering Ord = static_cast<AtomicOrdering>(MI->getOperand(5).getImm());
-  DebugLoc DL = MI->getDebugLoc();
-
-  unsigned LdrOpc, StrOpc;
-  getExclusiveOperation(16, Ord, LdrOpc, StrOpc);
-
-  MachineBasicBlock *LoopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *ExitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MF->insert(It, LoopMBB);
-  MF->insert(It, ExitMBB);
-
-  // Transfer the remainder of BB and its successor edges to exitMBB.
-  ExitMBB->splice(ExitMBB->begin(), BB,
-                  std::next(MachineBasicBlock::iterator(MI)), BB->end());
-  ExitMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-  MachineRegisterInfo &RegInfo = MF->getRegInfo();
-  unsigned ScratchRes = RegInfo.createVirtualRegister(&ARM64::GPR32RegClass);
-  unsigned ScratchLo = IncrLo, ScratchHi = IncrHi;
-  if (BinOpcodeLo) {
-    assert(BinOpcodeHi && "Expect neither or both opcodes to be defined");
-    ScratchLo = RegInfo.createVirtualRegister(&ARM64::GPR64RegClass);
-    ScratchHi = RegInfo.createVirtualRegister(&ARM64::GPR64RegClass);
-  }
-
-  //  ThisMBB:
-  //   ...
-  //   fallthrough --> LoopMBB
-  BB->addSuccessor(LoopMBB);
-
-  //  LoopMBB:
-  //   ldxp DestLo, DestHi, Ptr
-  //   <binoplo> ScratchLo, DestLo, IncrLo
-  //   <binophi> ScratchHi, DestHi, IncrHi
-  //   stxp ScratchRes, ScratchLo, ScratchHi, ptr
-  //   cbnz ScratchRes, LoopMBB
-  //   fallthrough --> ExitMBB
-  BB = LoopMBB;
-  BuildMI(BB, DL, TII->get(LdrOpc), DestLo)
-      .addReg(DestHi, RegState::Define)
-      .addReg(Ptr);
-  if (BinOpcodeLo) {
-    // operand order needs to go the other way for NAND
-    if (BinOpcodeLo == ARM64::BICXrr) {
-      std::swap(IncrLo, DestLo);
-      std::swap(IncrHi, DestHi);
-    }
-
-    BuildMI(BB, DL, TII->get(BinOpcodeLo), ScratchLo).addReg(DestLo).addReg(
-        IncrLo);
-    BuildMI(BB, DL, TII->get(BinOpcodeHi), ScratchHi).addReg(DestHi).addReg(
-        IncrHi);
-  }
-
-  BuildMI(BB, DL, TII->get(StrOpc), ScratchRes)
-      .addReg(ScratchLo)
-      .addReg(ScratchHi)
-      .addReg(Ptr);
-  BuildMI(BB, DL, TII->get(ARM64::CBNZW)).addReg(ScratchRes).addMBB(LoopMBB);
-
-  BB->addSuccessor(LoopMBB);
-  BB->addSuccessor(ExitMBB);
-
-  //  ExitMBB:
-  //   ...
-  BB = ExitMBB;
-
-  MI->eraseFromParent(); // The instruction is gone now.
-
-  return BB;
-}
-
-MachineBasicBlock *
-ARM64TargetLowering::EmitAtomicCmpSwap128(MachineInstr *MI,
-                                          MachineBasicBlock *BB) const {
-  unsigned DestLo = MI->getOperand(0).getReg();
-  unsigned DestHi = MI->getOperand(1).getReg();
-  unsigned Ptr = MI->getOperand(2).getReg();
-  unsigned OldValLo = MI->getOperand(3).getReg();
-  unsigned OldValHi = MI->getOperand(4).getReg();
-  unsigned NewValLo = MI->getOperand(5).getReg();
-  unsigned NewValHi = MI->getOperand(6).getReg();
-  AtomicOrdering Ord = static_cast<AtomicOrdering>(MI->getOperand(7).getImm());
-  unsigned ScratchRes = BB->getParent()->getRegInfo().createVirtualRegister(
-      &ARM64::GPR32RegClass);
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-  DebugLoc DL = MI->getDebugLoc();
-
-  unsigned LdrOpc, StrOpc;
-  getExclusiveOperation(16, Ord, LdrOpc, StrOpc);
-
-  MachineFunction *MF = BB->getParent();
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction::iterator It = BB;
-  ++It; // insert the new blocks after the current block
-
-  MachineBasicBlock *Loop1MBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *Loop2MBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *ExitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MF->insert(It, Loop1MBB);
-  MF->insert(It, Loop2MBB);
-  MF->insert(It, ExitMBB);
-
-  // Transfer the remainder of BB and its successor edges to exitMBB.
-  ExitMBB->splice(ExitMBB->begin(), BB,
-                  std::next(MachineBasicBlock::iterator(MI)), BB->end());
-  ExitMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-  //  ThisMBB:
-  //   ...
-  //   fallthrough --> Loop1MBB
-  BB->addSuccessor(Loop1MBB);
-
-  // Loop1MBB:
-  //   ldxp DestLo, DestHi, [Ptr]
-  //   cmp DestLo, OldValLo
-  //   sbc xzr, DestHi, OldValHi
-  //   bne ExitMBB
-  BB = Loop1MBB;
-  BuildMI(BB, DL, TII->get(LdrOpc), DestLo)
-      .addReg(DestHi, RegState::Define)
-      .addReg(Ptr);
-  BuildMI(BB, DL, TII->get(ARM64::SUBSXrr), ARM64::XZR).addReg(DestLo).addReg(
-      OldValLo);
-  BuildMI(BB, DL, TII->get(ARM64::SBCXr), ARM64::XZR).addReg(DestHi).addReg(
-      OldValHi);
-
-  BuildMI(BB, DL, TII->get(ARM64::Bcc)).addImm(ARM64CC::NE).addMBB(ExitMBB);
-  BB->addSuccessor(Loop2MBB);
-  BB->addSuccessor(ExitMBB);
-
-  // Loop2MBB:
-  //   stxp ScratchRes, NewValLo, NewValHi, [Ptr]
-  //   cbnz ScratchRes, Loop1MBB
-  BB = Loop2MBB;
-  BuildMI(BB, DL, TII->get(StrOpc), ScratchRes)
-      .addReg(NewValLo)
-      .addReg(NewValHi)
-      .addReg(Ptr);
-  BuildMI(BB, DL, TII->get(ARM64::CBNZW)).addReg(ScratchRes).addMBB(Loop1MBB);
-  BB->addSuccessor(Loop1MBB);
-  BB->addSuccessor(ExitMBB);
-
-  //  ExitMBB:
-  //   ...
-  BB = ExitMBB;
-
-  MI->eraseFromParent(); // The instruction is gone now.
-
-  return BB;
-}
-
-MachineBasicBlock *ARM64TargetLowering::EmitAtomicMinMax128(
-    MachineInstr *MI, MachineBasicBlock *BB, unsigned CondCode) const {
-  // This also handles ATOMIC_SWAP, indicated by BinOpcode==0.
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
-
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  MachineFunction *MF = BB->getParent();
-  MachineFunction::iterator It = BB;
-  ++It;
-
-  unsigned DestLo = MI->getOperand(0).getReg();
-  unsigned DestHi = MI->getOperand(1).getReg();
-  unsigned Ptr = MI->getOperand(2).getReg();
-  unsigned IncrLo = MI->getOperand(3).getReg();
-  unsigned IncrHi = MI->getOperand(4).getReg();
-  AtomicOrdering Ord = static_cast<AtomicOrdering>(MI->getOperand(5).getImm());
-  DebugLoc DL = MI->getDebugLoc();
-
-  unsigned LdrOpc, StrOpc;
-  getExclusiveOperation(16, Ord, LdrOpc, StrOpc);
-
-  MachineBasicBlock *LoopMBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *ExitMBB = MF->CreateMachineBasicBlock(LLVM_BB);
-  MF->insert(It, LoopMBB);
-  MF->insert(It, ExitMBB);
-
-  // Transfer the remainder of BB and its successor edges to exitMBB.
-  ExitMBB->splice(ExitMBB->begin(), BB,
-                  std::next(MachineBasicBlock::iterator(MI)), BB->end());
-  ExitMBB->transferSuccessorsAndUpdatePHIs(BB);
-
-  MachineRegisterInfo &RegInfo = MF->getRegInfo();
-  unsigned ScratchRes = RegInfo.createVirtualRegister(&ARM64::GPR32RegClass);
-  unsigned ScratchLo = RegInfo.createVirtualRegister(&ARM64::GPR64RegClass);
-  unsigned ScratchHi = RegInfo.createVirtualRegister(&ARM64::GPR64RegClass);
-
-  //  ThisMBB:
-  //   ...
-  //   fallthrough --> LoopMBB
-  BB->addSuccessor(LoopMBB);
-
-  //  LoopMBB:
-  //   ldxp DestLo, DestHi, Ptr
-  //   cmp ScratchLo, DestLo, IncrLo
-  //   sbc xzr, ScratchHi, DestHi, IncrHi
-  //   csel ScratchLo, DestLo, IncrLo, <cmp-op>
-  //   csel ScratchHi, DestHi, IncrHi, <cmp-op>
-  //   stxp ScratchRes, ScratchLo, ScratchHi, ptr
-  //   cbnz ScratchRes, LoopMBB
-  //   fallthrough --> ExitMBB
-  BB = LoopMBB;
-  BuildMI(BB, DL, TII->get(LdrOpc), DestLo)
-      .addReg(DestHi, RegState::Define)
-      .addReg(Ptr);
-
-  BuildMI(BB, DL, TII->get(ARM64::SUBSXrr), ARM64::XZR).addReg(DestLo).addReg(
-      IncrLo);
-  BuildMI(BB, DL, TII->get(ARM64::SBCXr), ARM64::XZR).addReg(DestHi).addReg(
-      IncrHi);
-
-  BuildMI(BB, DL, TII->get(ARM64::CSELXr), ScratchLo)
-      .addReg(DestLo)
-      .addReg(IncrLo)
-      .addImm(CondCode);
-  BuildMI(BB, DL, TII->get(ARM64::CSELXr), ScratchHi)
-      .addReg(DestHi)
-      .addReg(IncrHi)
-      .addImm(CondCode);
-
-  BuildMI(BB, DL, TII->get(StrOpc), ScratchRes)
-      .addReg(ScratchLo)
-      .addReg(ScratchHi)
-      .addReg(Ptr);
-  BuildMI(BB, DL, TII->get(ARM64::CBNZW)).addReg(ScratchRes).addMBB(LoopMBB);
-
-  BB->addSuccessor(LoopMBB);
-  BB->addSuccessor(ExitMBB);
-
-  //  ExitMBB:
-  //   ...
-  BB = ExitMBB;
-
-  MI->eraseFromParent(); // The instruction is gone now.
-
-  return BB;
-}
-
 MachineBasicBlock *
 ARM64TargetLowering::EmitF128CSEL(MachineInstr *MI,
                                   MachineBasicBlock *MBB) const {
@@ -1208,106 +757,6 @@ ARM64TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 #endif
     assert(0 && "Unexpected instruction for custom inserter!");
     break;
-
-  case ARM64::ATOMIC_LOAD_ADD_I8:
-    return EmitAtomicBinary(MI, BB, 1, ARM64::ADDWrr);
-  case ARM64::ATOMIC_LOAD_ADD_I16:
-    return EmitAtomicBinary(MI, BB, 2, ARM64::ADDWrr);
-  case ARM64::ATOMIC_LOAD_ADD_I32:
-    return EmitAtomicBinary(MI, BB, 4, ARM64::ADDWrr);
-  case ARM64::ATOMIC_LOAD_ADD_I64:
-    return EmitAtomicBinary(MI, BB, 8, ARM64::ADDXrr);
-  case ARM64::ATOMIC_LOAD_ADD_I128:
-    return EmitAtomicBinary128(MI, BB, ARM64::ADDSXrr, ARM64::ADCXr);
-
-  case ARM64::ATOMIC_LOAD_AND_I8:
-    return EmitAtomicBinary(MI, BB, 1, ARM64::ANDWrr);
-  case ARM64::ATOMIC_LOAD_AND_I16:
-    return EmitAtomicBinary(MI, BB, 2, ARM64::ANDWrr);
-  case ARM64::ATOMIC_LOAD_AND_I32:
-    return EmitAtomicBinary(MI, BB, 4, ARM64::ANDWrr);
-  case ARM64::ATOMIC_LOAD_AND_I64:
-    return EmitAtomicBinary(MI, BB, 8, ARM64::ANDXrr);
-  case ARM64::ATOMIC_LOAD_AND_I128:
-    return EmitAtomicBinary128(MI, BB, ARM64::ANDXrr, ARM64::ANDXrr);
-
-  case ARM64::ATOMIC_LOAD_OR_I8:
-    return EmitAtomicBinary(MI, BB, 1, ARM64::ORRWrr);
-  case ARM64::ATOMIC_LOAD_OR_I16:
-    return EmitAtomicBinary(MI, BB, 2, ARM64::ORRWrr);
-  case ARM64::ATOMIC_LOAD_OR_I32:
-    return EmitAtomicBinary(MI, BB, 4, ARM64::ORRWrr);
-  case ARM64::ATOMIC_LOAD_OR_I64:
-    return EmitAtomicBinary(MI, BB, 8, ARM64::ORRXrr);
-  case ARM64::ATOMIC_LOAD_OR_I128:
-    return EmitAtomicBinary128(MI, BB, ARM64::ORRXrr, ARM64::ORRXrr);
-
-  case ARM64::ATOMIC_LOAD_XOR_I8:
-    return EmitAtomicBinary(MI, BB, 1, ARM64::EORWrr);
-  case ARM64::ATOMIC_LOAD_XOR_I16:
-    return EmitAtomicBinary(MI, BB, 2, ARM64::EORWrr);
-  case ARM64::ATOMIC_LOAD_XOR_I32:
-    return EmitAtomicBinary(MI, BB, 4, ARM64::EORWrr);
-  case ARM64::ATOMIC_LOAD_XOR_I64:
-    return EmitAtomicBinary(MI, BB, 8, ARM64::EORXrr);
-  case ARM64::ATOMIC_LOAD_XOR_I128:
-    return EmitAtomicBinary128(MI, BB, ARM64::EORXrr, ARM64::EORXrr);
-
-  case ARM64::ATOMIC_LOAD_NAND_I8:
-    return EmitAtomicBinary(MI, BB, 1, ARM64::BICWrr);
-  case ARM64::ATOMIC_LOAD_NAND_I16:
-    return EmitAtomicBinary(MI, BB, 2, ARM64::BICWrr);
-  case ARM64::ATOMIC_LOAD_NAND_I32:
-    return EmitAtomicBinary(MI, BB, 4, ARM64::BICWrr);
-  case ARM64::ATOMIC_LOAD_NAND_I64:
-    return EmitAtomicBinary(MI, BB, 8, ARM64::BICXrr);
-  case ARM64::ATOMIC_LOAD_NAND_I128:
-    return EmitAtomicBinary128(MI, BB, ARM64::BICXrr, ARM64::BICXrr);
-
-  case ARM64::ATOMIC_LOAD_SUB_I8:
-    return EmitAtomicBinary(MI, BB, 1, ARM64::SUBWrr);
-  case ARM64::ATOMIC_LOAD_SUB_I16:
-    return EmitAtomicBinary(MI, BB, 2, ARM64::SUBWrr);
-  case ARM64::ATOMIC_LOAD_SUB_I32:
-    return EmitAtomicBinary(MI, BB, 4, ARM64::SUBWrr);
-  case ARM64::ATOMIC_LOAD_SUB_I64:
-    return EmitAtomicBinary(MI, BB, 8, ARM64::SUBXrr);
-  case ARM64::ATOMIC_LOAD_SUB_I128:
-    return EmitAtomicBinary128(MI, BB, ARM64::SUBSXrr, ARM64::SBCXr);
-
-  case ARM64::ATOMIC_LOAD_MIN_I128:
-    return EmitAtomicMinMax128(MI, BB, ARM64CC::LT);
-
-  case ARM64::ATOMIC_LOAD_MAX_I128:
-    return EmitAtomicMinMax128(MI, BB, ARM64CC::GT);
-
-  case ARM64::ATOMIC_LOAD_UMIN_I128:
-    return EmitAtomicMinMax128(MI, BB, ARM64CC::CC);
-
-  case ARM64::ATOMIC_LOAD_UMAX_I128:
-    return EmitAtomicMinMax128(MI, BB, ARM64CC::HI);
-
-  case ARM64::ATOMIC_SWAP_I8:
-    return EmitAtomicBinary(MI, BB, 1, 0);
-  case ARM64::ATOMIC_SWAP_I16:
-    return EmitAtomicBinary(MI, BB, 2, 0);
-  case ARM64::ATOMIC_SWAP_I32:
-    return EmitAtomicBinary(MI, BB, 4, 0);
-  case ARM64::ATOMIC_SWAP_I64:
-    return EmitAtomicBinary(MI, BB, 8, 0);
-  case ARM64::ATOMIC_SWAP_I128:
-    return EmitAtomicBinary128(MI, BB, 0, 0);
-
-  case ARM64::ATOMIC_CMP_SWAP_I8:
-    return EmitAtomicCmpSwap(MI, BB, 1);
-  case ARM64::ATOMIC_CMP_SWAP_I16:
-    return EmitAtomicCmpSwap(MI, BB, 2);
-  case ARM64::ATOMIC_CMP_SWAP_I32:
-    return EmitAtomicCmpSwap(MI, BB, 4);
-  case ARM64::ATOMIC_CMP_SWAP_I64:
-    return EmitAtomicCmpSwap(MI, BB, 8);
-  case ARM64::ATOMIC_CMP_SWAP_I128:
-    return EmitAtomicCmpSwap128(MI, BB);
 
   case ARM64::F128CSEL:
     return EmitF128CSEL(MI, BB);
@@ -7476,117 +6925,98 @@ bool ARM64TargetLowering::getPostIndexedAddressParts(SDNode *N, SDNode *Op,
   return true;
 }
 
-/// The only 128-bit atomic operation is an stxp that succeeds. In particular
-/// neither ldp nor ldxp are atomic. So the canonical sequence for an atomic
-/// load is:
-///     loop:
-///         ldxp x0, x1, [x8]
-///         stxp w2, x0, x1, [x8]
-///         cbnz w2, loop
-/// If the stxp succeeds then the ldxp managed to get both halves without an
-/// intervening stxp from a different thread and the read was atomic.
-static void ReplaceATOMIC_LOAD_128(SDNode *N, SmallVectorImpl<SDValue> &Results,
-                                   SelectionDAG &DAG) {
-  SDLoc DL(N);
-  AtomicSDNode *AN = cast<AtomicSDNode>(N);
-  EVT VT = AN->getMemoryVT();
-  SDValue Zero = DAG.getConstant(0, VT);
-
-  // FIXME: Really want ATOMIC_LOAD_NOP but that doesn't fit into the existing
-  // scheme very well. Given the complexity of what we're already generating, an
-  // extra couple of ORRs probably won't make much difference.
-  SDValue Result = DAG.getAtomic(ISD::ATOMIC_LOAD_OR, DL, AN->getMemoryVT(),
-                                 N->getOperand(0), N->getOperand(1), Zero,
-                                 AN->getMemOperand(), AN->getOrdering(),
-                                 AN->getSynchScope());
-
-  Results.push_back(Result.getValue(0)); // Value
-  Results.push_back(Result.getValue(1)); // Chain
-}
-
-static void ReplaceATOMIC_OP_128(SDNode *N, SmallVectorImpl<SDValue> &Results,
-                                 SelectionDAG &DAG, unsigned NewOp) {
-  SDLoc DL(N);
-  AtomicOrdering Ordering = cast<AtomicSDNode>(N)->getOrdering();
-  assert(N->getValueType(0) == MVT::i128 &&
-         "Only know how to expand i128 atomics");
-
-  SmallVector<SDValue, 6> Ops;
-  Ops.push_back(N->getOperand(1)); // Ptr
-  // Low part of Val1
-  Ops.push_back(DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i64,
-                            N->getOperand(2), DAG.getIntPtrConstant(0)));
-  // High part of Val1
-  Ops.push_back(DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i64,
-                            N->getOperand(2), DAG.getIntPtrConstant(1)));
-  if (NewOp == ARM64::ATOMIC_CMP_SWAP_I128) {
-    // Low part of Val2
-    Ops.push_back(DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i64,
-                              N->getOperand(3), DAG.getIntPtrConstant(0)));
-    // High part of Val2
-    Ops.push_back(DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i64,
-                              N->getOperand(3), DAG.getIntPtrConstant(1)));
-  }
-
-  Ops.push_back(DAG.getTargetConstant(Ordering, MVT::i32));
-  Ops.push_back(N->getOperand(0)); // Chain
-
-  SDVTList Tys = DAG.getVTList(MVT::i64, MVT::i64, MVT::Other);
-  SDNode *Result = DAG.getMachineNode(NewOp, DL, Tys, Ops);
-  SDValue OpsF[] = { SDValue(Result, 0), SDValue(Result, 1) };
-  Results.push_back(DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i128, OpsF, 2));
-  Results.push_back(SDValue(Result, 2));
-}
-
 void ARM64TargetLowering::ReplaceNodeResults(SDNode *N,
                                              SmallVectorImpl<SDValue> &Results,
                                              SelectionDAG &DAG) const {
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Don't know how to custom expand this");
-  case ISD::ATOMIC_LOAD:
-    ReplaceATOMIC_LOAD_128(N, Results, DAG);
-    return;
-  case ISD::ATOMIC_LOAD_ADD:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_LOAD_ADD_I128);
-    return;
-  case ISD::ATOMIC_LOAD_SUB:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_LOAD_SUB_I128);
-    return;
-  case ISD::ATOMIC_LOAD_AND:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_LOAD_AND_I128);
-    return;
-  case ISD::ATOMIC_LOAD_OR:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_LOAD_OR_I128);
-    return;
-  case ISD::ATOMIC_LOAD_XOR:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_LOAD_XOR_I128);
-    return;
-  case ISD::ATOMIC_LOAD_NAND:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_LOAD_NAND_I128);
-    return;
-  case ISD::ATOMIC_SWAP:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_SWAP_I128);
-    return;
-  case ISD::ATOMIC_LOAD_MIN:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_LOAD_MIN_I128);
-    return;
-  case ISD::ATOMIC_LOAD_MAX:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_LOAD_MAX_I128);
-    return;
-  case ISD::ATOMIC_LOAD_UMIN:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_LOAD_UMIN_I128);
-    return;
-  case ISD::ATOMIC_LOAD_UMAX:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_LOAD_UMAX_I128);
-    return;
-  case ISD::ATOMIC_CMP_SWAP:
-    ReplaceATOMIC_OP_128(N, Results, DAG, ARM64::ATOMIC_CMP_SWAP_I128);
-    return;
   case ISD::FP_TO_UINT:
   case ISD::FP_TO_SINT:
     assert(N->getValueType(0) == MVT::i128 && "unexpected illegal conversion");
     // Let normal code take care of it by not adding anything to Results.
     return;
   }
+}
+
+bool ARM64TargetLowering::shouldExpandAtomicInIR(Instruction *Inst) const {
+  // Loads and stores less than 128-bits are already atomic; ones above that
+  // are doomed anyway, so defer to the default libcall and blame the OS when
+  // things go wrong:
+  if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
+    return SI->getValueOperand()->getType()->getPrimitiveSizeInBits() == 128;
+  else if (LoadInst *LI = dyn_cast<LoadInst>(Inst))
+    return LI->getType()->getPrimitiveSizeInBits() == 128;
+
+  // For the real atomic operations, we have ldxr/stxr up to 128 bits.
+  return Inst->getType()->getPrimitiveSizeInBits() <= 128;
+}
+
+Value *ARM64TargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
+                                           AtomicOrdering Ord) const {
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  Type *ValTy = cast<PointerType>(Addr->getType())->getElementType();
+  bool IsAcquire =
+      Ord == Acquire || Ord == AcquireRelease || Ord == SequentiallyConsistent;
+
+  // Since i128 isn't legal and intrinsics don't get type-lowered, the ldrexd
+  // intrinsic must return {i64, i64} and we have to recombine them into a
+  // single i128 here.
+  if (ValTy->getPrimitiveSizeInBits() == 128) {
+    Intrinsic::ID Int =
+        IsAcquire ? Intrinsic::arm64_ldaxp : Intrinsic::arm64_ldxp;
+    Function *Ldxr = llvm::Intrinsic::getDeclaration(M, Int);
+
+    Addr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(M->getContext()));
+    Value *LoHi = Builder.CreateCall(Ldxr, Addr, "lohi");
+
+    Value *Lo = Builder.CreateExtractValue(LoHi, 0, "lo");
+    Value *Hi = Builder.CreateExtractValue(LoHi, 1, "hi");
+    Lo = Builder.CreateZExt(Lo, ValTy, "lo64");
+    Hi = Builder.CreateZExt(Hi, ValTy, "hi64");
+    return Builder.CreateOr(
+        Lo, Builder.CreateShl(Hi, ConstantInt::get(ValTy, 64)), "val64");
+  }
+
+  Type *Tys[] = { Addr->getType() };
+  Intrinsic::ID Int =
+      IsAcquire ? Intrinsic::arm64_ldaxr : Intrinsic::arm64_ldxr;
+  Function *Ldxr = llvm::Intrinsic::getDeclaration(M, Int, Tys);
+
+  return Builder.CreateTruncOrBitCast(
+      Builder.CreateCall(Ldxr, Addr),
+      cast<PointerType>(Addr->getType())->getElementType());
+}
+
+Value *ARM64TargetLowering::emitStoreConditional(IRBuilder<> &Builder,
+                                                 Value *Val, Value *Addr,
+                                                 AtomicOrdering Ord) const {
+  Module *M = Builder.GetInsertBlock()->getParent()->getParent();
+  bool IsRelease =
+      Ord == Release || Ord == AcquireRelease || Ord == SequentiallyConsistent;
+
+  // Since the intrinsics must have legal type, the i128 intrinsics take two
+  // parameters: "i64, i64". We must marshal Val into the appropriate form
+  // before the call.
+  if (Val->getType()->getPrimitiveSizeInBits() == 128) {
+    Intrinsic::ID Int =
+        IsRelease ? Intrinsic::arm64_stlxp : Intrinsic::arm64_stxp;
+    Function *Stxr = Intrinsic::getDeclaration(M, Int);
+    Type *Int64Ty = Type::getInt64Ty(M->getContext());
+
+    Value *Lo = Builder.CreateTrunc(Val, Int64Ty, "lo");
+    Value *Hi = Builder.CreateTrunc(Builder.CreateLShr(Val, 64), Int64Ty, "hi");
+    Addr = Builder.CreateBitCast(Addr, Type::getInt8PtrTy(M->getContext()));
+    return Builder.CreateCall3(Stxr, Lo, Hi, Addr);
+  }
+
+  Intrinsic::ID Int =
+      IsRelease ? Intrinsic::arm64_stlxr : Intrinsic::arm64_stxr;
+  Type *Tys[] = { Addr->getType() };
+  Function *Stxr = Intrinsic::getDeclaration(M, Int, Tys);
+
+  return Builder.CreateCall2(
+      Stxr, Builder.CreateZExtOrBitCast(
+                Val, Stxr->getFunctionType()->getParamType(0)),
+      Addr);
 }

@@ -233,19 +233,6 @@ public:
 
   SDValue ReconstructShuffle(SDValue Op, SelectionDAG &DAG) const;
 
-  MachineBasicBlock *EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
-                                      unsigned Size, unsigned BinOpcode) const;
-  MachineBasicBlock *EmitAtomicCmpSwap(MachineInstr *MI, MachineBasicBlock *BB,
-                                       unsigned Size) const;
-  MachineBasicBlock *EmitAtomicBinary128(MachineInstr *MI,
-                                         MachineBasicBlock *BB,
-                                         unsigned BinOpcodeLo,
-                                         unsigned BinOpcodeHi) const;
-  MachineBasicBlock *EmitAtomicCmpSwap128(MachineInstr *MI,
-                                          MachineBasicBlock *BB) const;
-  MachineBasicBlock *EmitAtomicMinMax128(MachineInstr *MI,
-                                         MachineBasicBlock *BB,
-                                         unsigned CondCode) const;
   MachineBasicBlock *EmitF128CSEL(MachineInstr *MI,
                                   MachineBasicBlock *BB) const;
 
@@ -293,8 +280,17 @@ public:
 
   const MCPhysReg *getScratchRegisters(CallingConv::ID CC) const override;
 
+  /// \brief Returns true if it is beneficial to convert a load of a constant
+  /// to just the constant itself.
   bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                          Type *Ty) const override;
+
+  Value *emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
+                        AtomicOrdering Ord) const override;
+  Value *emitStoreConditional(IRBuilder<> &Builder, Value *Val,
+                              Value *Addr, AtomicOrdering Ord) const override;
+
+  bool shouldExpandAtomicInIR(Instruction *Inst) const override;
 
 private:
   /// Subtarget - Keep a pointer to the ARM64Subtarget around so that we can

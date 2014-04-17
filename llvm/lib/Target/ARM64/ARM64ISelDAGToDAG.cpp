@@ -157,9 +157,6 @@ public:
   SDNode *SelectSIMDAddSubNarrowing(unsigned IntNo, SDNode *Node);
   SDNode *SelectSIMDXtnNarrowing(unsigned IntNo, SDNode *Node);
 
-  SDNode *SelectAtomic(SDNode *Node, unsigned Op8, unsigned Op16, unsigned Op32,
-                       unsigned Op64);
-
   SDNode *SelectBitfieldExtractOp(SDNode *N);
   SDNode *SelectBitfieldInsertOp(SDNode *N);
 
@@ -1138,37 +1135,6 @@ SDNode *ARM64DAGToDAGISel::SelectStoreLane(SDNode *N, unsigned NumVecs,
   return St;
 }
 
-SDNode *ARM64DAGToDAGISel::SelectAtomic(SDNode *Node, unsigned Op8,
-                                        unsigned Op16, unsigned Op32,
-                                        unsigned Op64) {
-  // Mostly direct translation to the given operations, except that we preserve
-  // the AtomicOrdering for use later on.
-  AtomicSDNode *AN = cast<AtomicSDNode>(Node);
-  EVT VT = AN->getMemoryVT();
-
-  unsigned Op;
-  if (VT == MVT::i8)
-    Op = Op8;
-  else if (VT == MVT::i16)
-    Op = Op16;
-  else if (VT == MVT::i32)
-    Op = Op32;
-  else if (VT == MVT::i64)
-    Op = Op64;
-  else
-    llvm_unreachable("Unexpected atomic operation");
-
-  SmallVector<SDValue, 4> Ops;
-  for (unsigned i = 1; i < AN->getNumOperands(); ++i)
-    Ops.push_back(AN->getOperand(i));
-
-  Ops.push_back(CurDAG->getTargetConstant(AN->getOrdering(), MVT::i32));
-  Ops.push_back(AN->getOperand(0)); // Chain moves to the end
-
-  return CurDAG->SelectNodeTo(Node, Op, AN->getValueType(0), MVT::Other,
-                              &Ops[0], Ops.size());
-}
-
 static bool isBitfieldExtractOpFromAnd(SelectionDAG *CurDAG, SDNode *N,
                                        unsigned &Opc, SDValue &Opd0,
                                        unsigned &LSB, unsigned &MSB,
@@ -1828,54 +1794,6 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
     if (SDNode *I = SelectMLAV64LaneV128(Node))
       return I;
     break;
-
-  case ISD::ATOMIC_LOAD_ADD:
-    return SelectAtomic(Node, ARM64::ATOMIC_LOAD_ADD_I8,
-                        ARM64::ATOMIC_LOAD_ADD_I16, ARM64::ATOMIC_LOAD_ADD_I32,
-                        ARM64::ATOMIC_LOAD_ADD_I64);
-  case ISD::ATOMIC_LOAD_SUB:
-    return SelectAtomic(Node, ARM64::ATOMIC_LOAD_SUB_I8,
-                        ARM64::ATOMIC_LOAD_SUB_I16, ARM64::ATOMIC_LOAD_SUB_I32,
-                        ARM64::ATOMIC_LOAD_SUB_I64);
-  case ISD::ATOMIC_LOAD_AND:
-    return SelectAtomic(Node, ARM64::ATOMIC_LOAD_AND_I8,
-                        ARM64::ATOMIC_LOAD_AND_I16, ARM64::ATOMIC_LOAD_AND_I32,
-                        ARM64::ATOMIC_LOAD_AND_I64);
-  case ISD::ATOMIC_LOAD_OR:
-    return SelectAtomic(Node, ARM64::ATOMIC_LOAD_OR_I8,
-                        ARM64::ATOMIC_LOAD_OR_I16, ARM64::ATOMIC_LOAD_OR_I32,
-                        ARM64::ATOMIC_LOAD_OR_I64);
-  case ISD::ATOMIC_LOAD_XOR:
-    return SelectAtomic(Node, ARM64::ATOMIC_LOAD_XOR_I8,
-                        ARM64::ATOMIC_LOAD_XOR_I16, ARM64::ATOMIC_LOAD_XOR_I32,
-                        ARM64::ATOMIC_LOAD_XOR_I64);
-  case ISD::ATOMIC_LOAD_NAND:
-    return SelectAtomic(
-        Node, ARM64::ATOMIC_LOAD_NAND_I8, ARM64::ATOMIC_LOAD_NAND_I16,
-        ARM64::ATOMIC_LOAD_NAND_I32, ARM64::ATOMIC_LOAD_NAND_I64);
-  case ISD::ATOMIC_LOAD_MIN:
-    return SelectAtomic(Node, ARM64::ATOMIC_LOAD_MIN_I8,
-                        ARM64::ATOMIC_LOAD_MIN_I16, ARM64::ATOMIC_LOAD_MIN_I32,
-                        ARM64::ATOMIC_LOAD_MIN_I64);
-  case ISD::ATOMIC_LOAD_MAX:
-    return SelectAtomic(Node, ARM64::ATOMIC_LOAD_MAX_I8,
-                        ARM64::ATOMIC_LOAD_MAX_I16, ARM64::ATOMIC_LOAD_MAX_I32,
-                        ARM64::ATOMIC_LOAD_MAX_I64);
-  case ISD::ATOMIC_LOAD_UMIN:
-    return SelectAtomic(
-        Node, ARM64::ATOMIC_LOAD_UMIN_I8, ARM64::ATOMIC_LOAD_UMIN_I16,
-        ARM64::ATOMIC_LOAD_UMIN_I32, ARM64::ATOMIC_LOAD_UMIN_I64);
-  case ISD::ATOMIC_LOAD_UMAX:
-    return SelectAtomic(
-        Node, ARM64::ATOMIC_LOAD_UMAX_I8, ARM64::ATOMIC_LOAD_UMAX_I16,
-        ARM64::ATOMIC_LOAD_UMAX_I32, ARM64::ATOMIC_LOAD_UMAX_I64);
-  case ISD::ATOMIC_SWAP:
-    return SelectAtomic(Node, ARM64::ATOMIC_SWAP_I8, ARM64::ATOMIC_SWAP_I16,
-                        ARM64::ATOMIC_SWAP_I32, ARM64::ATOMIC_SWAP_I64);
-  case ISD::ATOMIC_CMP_SWAP:
-    return SelectAtomic(Node, ARM64::ATOMIC_CMP_SWAP_I8,
-                        ARM64::ATOMIC_CMP_SWAP_I16, ARM64::ATOMIC_CMP_SWAP_I32,
-                        ARM64::ATOMIC_CMP_SWAP_I64);
 
   case ISD::LOAD: {
     // Try to select as an indexed load. Fall through to normal processing
