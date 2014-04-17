@@ -212,6 +212,7 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FTRUNC, MVT::f64, Legal);
     setOperationAction(ISD::FCEIL, MVT::f64, Legal);
     setOperationAction(ISD::FFLOOR, MVT::f64, Legal);
+    setOperationAction(ISD::FRINT, MVT::f64, Legal);
   }
 
   setTargetDAGCombine(ISD::SELECT_CC);

@@ -2144,8 +2144,9 @@ defm V_CEIL_F64 : VOP1_64 <0x00000018, "V_CEIL_F64",
 defm V_FLOOR_F64 : VOP1_64 <0x0000001A, "V_FLOOR_F64",
   [(set f64:$dst, (ffloor f64:$src0))]
 >;
-
-defm V_RNDNE_F64 : VOP1_64 <0x00000019, "V_RNDNE_F64", []>;
+defm V_RNDNE_F64 : VOP1_64 <0x00000019, "V_RNDNE_F64",
+  [(set f64:$dst, (frint f64:$src0))]
+>;
 
 def V_QSAD_PK_U16_U8 : VOP3_32 <0x00000173, "V_QSAD_PK_U16_U8", []>;
 def V_MQSAD_U16_U8 : VOP3_32 <0x000000172, "V_MQSAD_U16_U8", []>;
