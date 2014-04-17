@@ -25,6 +25,11 @@
 #include <vector>
 #include <limits>
 
+// ATTENTION!
+// Please don't call intercepted functions (including malloc() and friends)
+// in this test. The static runtime library is linked explicitly (without
+// -fsanitize=address), thus the interceptors do not work correctly on OS X.
+
 extern "C" {
 // Set specific ASan options for uninstrumented unittest.
 const char* __asan_default_options() {
@@ -233,8 +238,12 @@ TEST(AddressSanitizer, LoadStoreCallbacks) {
   uptr buggy_ptr;
 
   __asan_test_only_reported_buggy_pointer = &buggy_ptr;
+  StackTrace stack;
+  stack.trace[0] = 0x890;
+  stack.size = 1;
+
   for (uptr len = 16; len <= 32; len++) {
-    char *ptr = new char[len];
+    char *ptr = (char*) __asan::asan_malloc(len, &stack);
     uptr p = reinterpret_cast<uptr>(ptr);
     for (uptr is_write = 0; is_write <= 1; is_write++) {
       for (uptr size_log = 0; size_log <= 4; size_log++) {
@@ -251,7 +260,7 @@ TEST(AddressSanitizer, LoadStoreCallbacks) {
         }
       }
     }
-    delete [] ptr;
+    __asan::asan_free(ptr, &stack, __asan::FROM_MALLOC);
   }
   __asan_test_only_reported_buggy_pointer = 0;
 }
