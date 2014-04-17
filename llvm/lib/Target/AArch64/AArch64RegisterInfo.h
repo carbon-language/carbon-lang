@@ -30,6 +30,13 @@ struct AArch64RegisterInfo : public AArch64GenRegisterInfo {
   const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
   const uint32_t *getCallPreservedMask(CallingConv::ID) const;
 
+  unsigned getCSRFirstUseCost() const {
+    // The cost will be compared against BlockFrequency where entry has the
+    // value of 1 << 14. A value of 5 will choose to spill or split really
+    // cold path instead of using a callee-saved register.
+    return 5;
+  }
+
   const uint32_t *getTLSDescCallPreservedMask() const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
