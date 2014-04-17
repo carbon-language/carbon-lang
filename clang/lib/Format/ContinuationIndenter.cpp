@@ -725,6 +725,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
       AvoidBinPacking = Current.BlockKind == BK_Block ||
                         Current.Type == TT_ArrayInitializerLSquare ||
                         Current.Type == TT_DictLiteral ||
+                        !Style.BinPackParameters ||
                         (NextNoComment &&
                          NextNoComment->Type == TT_DesignatedInitializerPeriod);
     } else {
