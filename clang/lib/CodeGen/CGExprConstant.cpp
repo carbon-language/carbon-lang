@@ -1063,7 +1063,9 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
 
       // Apply offset if necessary.
       if (!Offset->isNullValue()) {
-        llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
+        unsigned AS = C->getType()->getPointerAddressSpace();
+        llvm::Type *CharPtrTy = Int8Ty->getPointerTo(AS);
+        llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, CharPtrTy);
         Casted = llvm::ConstantExpr::getGetElementPtr(Casted, Offset);
         C = llvm::ConstantExpr::getPointerCast(Casted, C->getType());
       }
