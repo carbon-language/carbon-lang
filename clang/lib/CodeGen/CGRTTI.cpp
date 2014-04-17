@@ -984,7 +984,8 @@ void CodeGenModule::EmitFundamentalRTTIDescriptors() {
                                   Context.UnsignedShortTy, Context.IntTy,
                                   Context.UnsignedIntTy, Context.LongTy, 
                                   Context.UnsignedLongTy, Context.LongLongTy, 
-                                  Context.UnsignedLongLongTy, Context.FloatTy,
+                                  Context.UnsignedLongLongTy,
+                                  Context.HalfTy, Context.FloatTy,
                                   Context.DoubleTy, Context.LongDoubleTy,
                                   Context.Char16Ty, Context.Char32Ty };
   for (unsigned i = 0; i < llvm::array_lengthof(FundamentalTypes); ++i)

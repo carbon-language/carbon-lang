@@ -89,6 +89,11 @@ namespace __cxxabiv1 {
 // CHECK: @_ZTIPy = constant
 // CHECK: @_ZTIPKy = constant
 
+// half
+// CHECK: @_ZTIDh = constant
+// CHECK: @_ZTIPDh = constant
+// CHECK: @_ZTIPKDh = constant
+
 // float
 // CHECK: @_ZTIf = constant
 // CHECK: @_ZTIPf = constant
