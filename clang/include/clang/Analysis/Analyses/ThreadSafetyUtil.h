@@ -88,6 +88,18 @@ public:
     A.Capacity = 0;
   }
 
+  SimpleArray &operator=(SimpleArray &&RHS) {
+    if (this != &RHS) {
+      Data = RHS.Data;
+      Size = RHS.Size;
+      Capacity = RHS.Capacity;
+
+      RHS.Data = nullptr;
+      RHS.Size = RHS.Capacity = 0;
+    }
+    return *this;
+  }
+
   T *resize(size_t Ncp, MemRegionRef A) {
     T *Odata = Data;
     Data = A.allocateT<T>(Ncp);
