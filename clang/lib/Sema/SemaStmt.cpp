@@ -2194,7 +2194,8 @@ Sema::BuildCXXForRangeStmt(SourceLocation ForLoc, SourceLocation ColonLoc,
         return StmtError();
       }
     } else {
-      OverloadCandidateSet CandidateSet(RangeLoc);
+      OverloadCandidateSet CandidateSet(RangeLoc,
+                                        OverloadCandidateSet::CSK_Normal);
       Sema::BeginEndFunction BEFFailure;
       ForRangeStatus RangeStatus =
           BuildNonArrayForRange(*this, S, BeginRangeRef.get(),

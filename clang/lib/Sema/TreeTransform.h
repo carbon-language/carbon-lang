@@ -9759,11 +9759,7 @@ TreeTransform<Derived>::RebuildCXXOperatorCallExpr(OverloadedOperatorKind Op,
 
   if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(Callee)) {
     assert(ULE->requiresADL());
-
-    for (auto I = ULE->decls_begin(), E = ULE->decls_end(); I != E; ++I)
-      SemaRef.addOverloadedOperatorToUnresolvedSet(
-          Functions, I.getPair(), First->getType(),
-          Second ? Second->getType() : QualType());
+    Functions.append(ULE->decls_begin(), ULE->decls_end());
   } else {
     // If we've resolved this to a particular non-member function, just call
     // that function. If we resolved it to a member function,

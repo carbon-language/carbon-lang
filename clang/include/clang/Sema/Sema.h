@@ -2277,7 +2277,7 @@ public:
                                     SourceLocation OpLoc, ArrayRef<Expr *> Args,
                                     OverloadCandidateSet& CandidateSet);
   void AddArgumentDependentLookupCandidates(DeclarationName Name,
-                                            bool Operator, SourceLocation Loc,
+                                            SourceLocation Loc,
                                             ArrayRef<Expr *> Args,
                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                             OverloadCandidateSet& CandidateSet,
@@ -2591,10 +2591,8 @@ public:
                                                     bool AllowStringTemplate);
   bool isKnownName(StringRef name);
 
-  void ArgumentDependentLookup(DeclarationName Name, bool Operator,
-                               SourceLocation Loc,
-                               ArrayRef<Expr *> Args,
-                               ADLResult &Functions);
+  void ArgumentDependentLookup(DeclarationName Name, SourceLocation Loc,
+                               ArrayRef<Expr *> Args, ADLResult &Functions);
 
   void LookupVisibleDecls(Scope *S, LookupNameKind Kind,
                           VisibleDeclConsumer &Consumer,

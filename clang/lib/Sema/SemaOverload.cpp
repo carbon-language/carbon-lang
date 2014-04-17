@@ -1127,7 +1127,8 @@ TryUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
   }
 
   // Attempt user-defined conversion.
-  OverloadCandidateSet Conversions(From->getExprLoc());
+  OverloadCandidateSet Conversions(From->getExprLoc(),
+                                   OverloadCandidateSet::CSK_Normal);
   OverloadingResult UserDefResult
     = IsUserDefinedConversion(S, From, ToType, ICS.UserDefined, Conversions,
                               AllowExplicit, AllowObjCConversionOnExplicit);
@@ -3244,7 +3245,8 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
 bool
 Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
   ImplicitConversionSequence ICS;
-  OverloadCandidateSet CandidateSet(From->getExprLoc());
+  OverloadCandidateSet CandidateSet(From->getExprLoc(),
+                                    OverloadCandidateSet::CSK_Normal);
   OverloadingResult OvResult =
     IsUserDefinedConversion(*this, From, ToType, ICS.UserDefined,
                             CandidateSet, false, false);
@@ -4071,7 +4073,7 @@ FindConversionForRefInit(Sema &S, ImplicitConversionSequence &ICS,
   CXXRecordDecl *T2RecordDecl
     = dyn_cast<CXXRecordDecl>(T2->getAs<RecordType>()->getDecl());
 
-  OverloadCandidateSet CandidateSet(DeclLoc);
+  OverloadCandidateSet CandidateSet(DeclLoc, OverloadCandidateSet::CSK_Normal);
   std::pair<CXXRecordDecl::conversion_iterator,
             CXXRecordDecl::conversion_iterator>
     Conversions = T2RecordDecl->getVisibleConversionFunctions();
@@ -5419,7 +5421,7 @@ ExprResult Sema::PerformContextualImplicitConversion(
     // If one unique T is found:
     // First, build a candidate set from the previously recorded
     // potentially viable conversions.
-    OverloadCandidateSet CandidateSet(Loc);
+    OverloadCandidateSet CandidateSet(Loc, OverloadCandidateSet::CSK_Normal);
     collectViableConversionCandidates(*this, From, ToType, ViableConversions,
                                       CandidateSet);
 
@@ -5476,6 +5478,45 @@ ExprResult Sema::PerformContextualImplicitConversion(
   return finishContextualImplicitConversion(*this, Loc, From, Converter);
 }
 
+/// IsAcceptableNonMemberOperatorCandidate - Determine whether Fn is
+/// an acceptable non-member overloaded operator for a call whose
+/// arguments have types T1 (and, if non-empty, T2). This routine
+/// implements the check in C++ [over.match.oper]p3b2 concerning
+/// enumeration types.
+static bool IsAcceptableNonMemberOperatorCandidate(ASTContext &Context,
+                                                   FunctionDecl *Fn,
+                                                   ArrayRef<Expr *> Args) {
+  QualType T1 = Args[0]->getType();
+  QualType T2 = Args.size() > 1 ? Args[1]->getType() : QualType();
+
+  if (T1->isDependentType() || (!T2.isNull() && T2->isDependentType()))
+    return true;
+
+  if (T1->isRecordType() || (!T2.isNull() && T2->isRecordType()))
+    return true;
+
+  const FunctionProtoType *Proto = Fn->getType()->getAs<FunctionProtoType>();
+  if (Proto->getNumParams() < 1)
+    return false;
+
+  if (T1->isEnumeralType()) {
+    QualType ArgType = Proto->getParamType(0).getNonReferenceType();
+    if (Context.hasSameUnqualifiedType(T1, ArgType))
+      return true;
+  }
+
+  if (Proto->getNumParams() < 2)
+    return false;
+
+  if (!T2.isNull() && T2->isEnumeralType()) {
+    QualType ArgType = Proto->getParamType(1).getNonReferenceType();
+    if (Context.hasSameUnqualifiedType(T2, ArgType))
+      return true;
+  }
+
+  return false;
+}
+
 /// AddOverloadCandidate - Adds the given function to the set of
 /// candidate functions, using the given function call arguments.  If
 /// @p SuppressUserConversions, then don't allow user-defined
@@ -5517,6 +5558,17 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
   }
 
   if (!CandidateSet.isNewCandidate(Function))
+    return;
+
+  // C++ [over.match.oper]p3:
+  //   if no operand has a class type, only those non-member functions in the
+  //   lookup set that have a first parameter of type T1 or "reference to
+  //   (possibly cv-qualified) T1", when T1 is an enumeration type, or (if there
+  //   is a right operand) a second parameter of type T2 or "reference to
+  //   (possibly cv-qualified) T2", when T2 is an enumeration type, are
+  //   candidate functions.
+  if (CandidateSet.getKind() == OverloadCandidateSet::CSK_Operator &&
+      !IsAcceptableNonMemberOperatorCandidate(Context, Function, Args))
     return;
 
   // C++11 [class.copy]p11: [DR1402]
@@ -8084,7 +8136,7 @@ void Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 /// candidate set (C++ [basic.lookup.argdep]).
 void
 Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
-                                           bool Operator, SourceLocation Loc,
+                                           SourceLocation Loc,
                                            ArrayRef<Expr *> Args,
                                  TemplateArgumentListInfo *ExplicitTemplateArgs,
                                            OverloadCandidateSet& CandidateSet,
@@ -8099,7 +8151,7 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
   // we supposed to consider on ADL candidates, anyway?
 
   // FIXME: Pass in the explicit template arguments?
-  ArgumentDependentLookup(Name, Operator, Loc, Args, Fns);
+  ArgumentDependentLookup(Name, Loc, Args, Fns);
 
   // Erase all of the candidates we already knew about.
   for (OverloadCandidateSet::iterator Cand = CandidateSet.begin(),
@@ -10197,8 +10249,7 @@ void Sema::AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
                                /*KnownValid*/ true);
 
   if (ULE->requiresADL())
-    AddArgumentDependentLookupCandidates(ULE->getName(), /*Operator*/ false,
-                                         ULE->getExprLoc(),
+    AddArgumentDependentLookupCandidates(ULE->getName(), ULE->getExprLoc(),
                                          Args, ExplicitTemplateArgs,
                                          CandidateSet, PartialOverloading);
 }
@@ -10225,6 +10276,7 @@ static bool canBeDeclaredInNamespace(const DeclarationName &Name) {
 static bool
 DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
                        const CXXScopeSpec &SS, LookupResult &R,
+                       OverloadCandidateSet::CandidateSetKind CSK,
                        TemplateArgumentListInfo *ExplicitTemplateArgs,
                        ArrayRef<Expr *> Args) {
   if (SemaRef.ActiveTemplateInstantiations.empty() || !SS.isEmpty())
@@ -10246,7 +10298,7 @@ DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
         return false;
       }
 
-      OverloadCandidateSet Candidates(FnLoc);
+      OverloadCandidateSet Candidates(FnLoc, CSK);
       for (LookupResult::iterator I = R.begin(), E = R.end(); I != E; ++I)
         AddOverloadedCallCandidate(SemaRef, I.getPair(),
                                    ExplicitTemplateArgs, Args,
@@ -10330,6 +10382,7 @@ DiagnoseTwoPhaseOperatorLookup(Sema &SemaRef, OverloadedOperatorKind Op,
     SemaRef.Context.DeclarationNames.getCXXOperatorName(Op);
   LookupResult R(SemaRef, OpName, OpLoc, Sema::LookupOperatorName);
   return DiagnoseTwoPhaseLookup(SemaRef, OpLoc, CXXScopeSpec(), R,
+                                OverloadCandidateSet::CSK_Operator,
                                 /*ExplicitTemplateArgs=*/0, Args);
 }
 
@@ -10390,6 +10443,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
       (CorrectionCandidateCallback*)&Validator :
       (CorrectionCandidateCallback*)&RejectAll;
   if (!DiagnoseTwoPhaseLookup(SemaRef, Fn->getExprLoc(), SS, R,
+                              OverloadCandidateSet::CSK_Normal,
                               ExplicitTemplateArgs, Args) &&
       (!EmptyLookup ||
        SemaRef.DiagnoseEmptyLookup(S, SS, R, *CCC,
@@ -10568,7 +10622,8 @@ ExprResult Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn,
                                          SourceLocation RParenLoc,
                                          Expr *ExecConfig,
                                          bool AllowTypoCorrection) {
-  OverloadCandidateSet CandidateSet(Fn->getExprLoc());
+  OverloadCandidateSet CandidateSet(Fn->getExprLoc(),
+                                    OverloadCandidateSet::CSK_Normal);
   ExprResult result;
 
   if (buildOverloadedCallSet(S, Fn, ULE, Args, LParenLoc, &CandidateSet,
@@ -10657,7 +10712,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   }
 
   // Build an empty overload set.
-  OverloadCandidateSet CandidateSet(OpLoc);
+  OverloadCandidateSet CandidateSet(OpLoc, OverloadCandidateSet::CSK_Operator);
 
   // Add the candidates from the given function set.
   AddFunctionCandidates(Fns, ArgsArray, CandidateSet, false);
@@ -10666,9 +10721,8 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
   AddMemberOperatorCandidates(Op, OpLoc, ArgsArray, CandidateSet);
 
   // Add candidates from ADL.
-  AddArgumentDependentLookupCandidates(OpName, /*Operator*/ true, OpLoc,
-                                       ArgsArray, /*ExplicitTemplateArgs*/ 0,                                       
-                                       CandidateSet);
+  AddArgumentDependentLookupCandidates(OpName, OpLoc, ArgsArray,
+                                       /*ExplicitTemplateArgs*/0, CandidateSet);
 
   // Add builtin operator candidates.
   AddBuiltinOperatorCandidates(Op, OpLoc, ArgsArray, CandidateSet);
@@ -10872,7 +10926,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
     return CreateBuiltinBinOp(OpLoc, Opc, Args[0], Args[1]);
 
   // Build an empty overload set.
-  OverloadCandidateSet CandidateSet(OpLoc);
+  OverloadCandidateSet CandidateSet(OpLoc, OverloadCandidateSet::CSK_Operator);
 
   // Add the candidates from the given function set.
   AddFunctionCandidates(Fns, Args, CandidateSet, false);
@@ -10881,8 +10935,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
   AddMemberOperatorCandidates(Op, OpLoc, Args, CandidateSet);
 
   // Add candidates from ADL.
-  AddArgumentDependentLookupCandidates(OpName, /*Operator*/ true,
-                                       OpLoc, Args,
+  AddArgumentDependentLookupCandidates(OpName, OpLoc, Args,
                                        /*ExplicitTemplateArgs*/ 0,
                                        CandidateSet);
 
@@ -11108,7 +11161,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
     return ExprError();
 
   // Build an empty overload set.
-  OverloadCandidateSet CandidateSet(LLoc);
+  OverloadCandidateSet CandidateSet(LLoc, OverloadCandidateSet::CSK_Operator);
 
   // Subscript can only be overloaded as a member function.
 
@@ -11331,7 +11384,8 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                             : UnresExpr->getBase()->Classify(Context);
 
     // Add overload candidates
-    OverloadCandidateSet CandidateSet(UnresExpr->getMemberLoc());
+    OverloadCandidateSet CandidateSet(UnresExpr->getMemberLoc(),
+                                      OverloadCandidateSet::CSK_Normal);
 
     // FIXME: avoid copy.
     TemplateArgumentListInfo TemplateArgsBuffer, *TemplateArgs = 0;
@@ -11515,7 +11569,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   //  operators of T. The function call operators of T are obtained by
   //  ordinary lookup of the name operator() in the context of
   //  (E).operator().
-  OverloadCandidateSet CandidateSet(LParenLoc);
+  OverloadCandidateSet CandidateSet(LParenLoc,
+                                    OverloadCandidateSet::CSK_Operator);
   DeclarationName OpName = Context.DeclarationNames.getCXXOperatorName(OO_Call);
 
   if (RequireCompleteType(LParenLoc, Object.get()->getType(),
@@ -11794,7 +11849,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc,
   //   overload resolution mechanism (13.3).
   DeclarationName OpName =
     Context.DeclarationNames.getCXXOperatorName(OO_Arrow);
-  OverloadCandidateSet CandidateSet(Loc);
+  OverloadCandidateSet CandidateSet(Loc, OverloadCandidateSet::CSK_Operator);
   const RecordType *BaseRecord = Base->getType()->getAs<RecordType>();
 
   if (RequireCompleteType(Loc, Base->getType(),
@@ -11896,7 +11951,8 @@ ExprResult Sema::BuildLiteralOperatorCall(LookupResult &R,
                                        TemplateArgumentListInfo *TemplateArgs) {
   SourceLocation UDSuffixLoc = SuffixInfo.getCXXLiteralOperatorNameLoc();
 
-  OverloadCandidateSet CandidateSet(UDSuffixLoc);
+  OverloadCandidateSet CandidateSet(UDSuffixLoc,
+                                    OverloadCandidateSet::CSK_Normal);
   AddFunctionCandidates(R.asUnresolvedSet(), Args, CandidateSet, true,
                         TemplateArgs);
 

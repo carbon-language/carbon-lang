@@ -7,19 +7,17 @@ namespace bullet2 {
 // candidates.
 
 struct B { template<typename T> B(T); };
-int operator~(B); // expected-note {{declared prior to the call site}}
+int operator~(B);
 template<typename T> int operator%(B, T);
 enum class E { e };
 
-// FIXME: This is the wrong diagnostic.
-template<typename T> int f(T t) { return ~t; } // expected-error {{call to}}
-template<typename T, typename U> int f(T t, U u) { return t % u; }
+template<typename T> int f(T t) { return ~t; } // expected-error {{invalid argument type}}
+template<typename T, typename U> int f(T t, U u) { return t % u; } // expected-error {{invalid operands to}}
 
 int b1 = ~E::e; // expected-error {{invalid argument type}}
 int b2 = f(E::e); // expected-note {{in instantiation of}}
 int b3 = f(0, E::e);
-// FIXME: This should be rejected.
-int b4 = f(E::e, 0);
+int b4 = f(E::e, 0); // expected-note {{in instantiation of}}
 
 }
 

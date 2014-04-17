@@ -1854,7 +1854,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
     NamedDecl *ND = Corrected.getCorrectionDecl();
     if (ND) {
       if (Corrected.isOverloaded()) {
-        OverloadCandidateSet OCS(R.getNameLoc());
+        OverloadCandidateSet OCS(R.getNameLoc(),
+                                 OverloadCandidateSet::CSK_Normal);
         OverloadCandidateSet::iterator Best;
         for (TypoCorrection::decl_iterator CD = Corrected.begin(),
                                         CDEnd = Corrected.end();
@@ -4006,7 +4007,7 @@ static TypoCorrection TryTypoCorrectionForCall(Sema &S, Expr *Fn,
           S.getScopeForContext(S.CurContext), NULL, CCC)) {
     if (NamedDecl *ND = Corrected.getCorrectionDecl()) {
       if (Corrected.isOverloaded()) {
-        OverloadCandidateSet OCS(NameLoc);
+        OverloadCandidateSet OCS(NameLoc, OverloadCandidateSet::CSK_Normal);
         OverloadCandidateSet::iterator Best;
         for (TypoCorrection::decl_iterator CD = Corrected.begin(),
                                            CDEnd = Corrected.end();

@@ -4411,7 +4411,7 @@ InitializationSequence::InitializationSequence(Sema &S,
                                                const InitializationKind &Kind,
                                                MultiExprArg Args,
                                                bool TopLevelOfInitList)
-    : FailedCandidateSet(Kind.getLocation()) {
+    : FailedCandidateSet(Kind.getLocation(), OverloadCandidateSet::CSK_Normal) {
   InitializeFrom(S, Entity, Kind, Args, TopLevelOfInitList);
 }
 
@@ -4945,7 +4945,7 @@ static ExprResult CopyObject(Sema &S,
   // Only consider constructors and constructor templates. Per
   // C++0x [dcl.init]p16, second bullet to class types, this initialization
   // is direct-initialization.
-  OverloadCandidateSet CandidateSet(Loc);
+  OverloadCandidateSet CandidateSet(Loc, OverloadCandidateSet::CSK_Normal);
   LookupCopyAndMoveConstructors(S, CandidateSet, Class, CurInitExpr);
 
   bool HadMultipleCandidates = (CandidateSet.size() > 1);
@@ -5053,7 +5053,7 @@ static void CheckCXX98CompatAccessibleCopy(Sema &S,
     return;
 
   // Find constructors which would have been considered.
-  OverloadCandidateSet CandidateSet(Loc);
+  OverloadCandidateSet CandidateSet(Loc, OverloadCandidateSet::CSK_Normal);
   LookupCopyAndMoveConstructors(
       S, CandidateSet, cast<CXXRecordDecl>(Record->getDecl()), CurInitExpr);
 

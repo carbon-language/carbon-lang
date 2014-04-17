@@ -684,6 +684,18 @@ namespace clang {
   /// OverloadCandidateSet - A set of overload candidates, used in C++
   /// overload resolution (C++ 13.3).
   class OverloadCandidateSet {
+  public:
+    enum CandidateSetKind {
+      /// Normal lookup.
+      CSK_Normal,
+      /// Lookup for candidates for a call using operator syntax. Candidates
+      /// that have no parameters of class type will be skipped unless there
+      /// is a parameter of (reference to) enum type and the corresponding
+      /// argument is of the same enum type.
+      CSK_Operator
+    };
+
+  private:
     SmallVector<OverloadCandidate, 16> Candidates;
     llvm::SmallPtrSet<Decl *, 16> Functions;
 
@@ -692,6 +704,7 @@ namespace clang {
     llvm::BumpPtrAllocator ConversionSequenceAllocator;
 
     SourceLocation Loc;
+    CandidateSetKind Kind;
 
     unsigned NumInlineSequences;
     char InlineSpace[16 * sizeof(ImplicitConversionSequence)];
@@ -702,10 +715,12 @@ namespace clang {
     void destroyCandidates();
 
   public:
-    OverloadCandidateSet(SourceLocation Loc) : Loc(Loc), NumInlineSequences(0){}
+    OverloadCandidateSet(SourceLocation Loc, CandidateSetKind CSK)
+        : Loc(Loc), Kind(CSK), NumInlineSequences(0) {}
     ~OverloadCandidateSet() { destroyCandidates(); }
 
     SourceLocation getLocation() const { return Loc; }
+    CandidateSetKind getKind() const { return Kind; }
 
     /// \brief Determine when this overload candidate will be new to the
     /// overload set.

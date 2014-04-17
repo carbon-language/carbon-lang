@@ -3833,7 +3833,7 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn, ArrayRef<Expr *> Args) {
 
   // Build an overload candidate set based on the functions we find.
   SourceLocation Loc = Fn->getExprLoc();
-  OverloadCandidateSet CandidateSet(Loc);
+  OverloadCandidateSet CandidateSet(Loc, OverloadCandidateSet::CSK_Normal);
 
   // FIXME: What if we're calling something that isn't a function declaration?
   // FIXME: What if we're calling a pseudo-destructor?
