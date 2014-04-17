@@ -17,6 +17,7 @@
 
 #include "llvm-c/Core.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/IR/DebugLoc.h"
 #include "llvm/Support/Casting.h"
 
 namespace llvm {
@@ -289,7 +290,7 @@ private:
   const Function &Fn;
 
   /// Debug location where this diagnostic is triggered.
-  const DebugLoc &DLoc;
+  DebugLoc DLoc;
 
   /// Message to report.
   const Twine &Msg;
