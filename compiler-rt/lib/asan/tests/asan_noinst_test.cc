@@ -231,6 +231,7 @@ TEST(AddressSanitizer, LoadStoreCallbacks) {
   };
 
   uptr buggy_ptr;
+
   __asan_test_only_reported_buggy_pointer = &buggy_ptr;
   for (uptr len = 16; len <= 32; len++) {
     char *ptr = new char[len];
@@ -240,7 +241,7 @@ TEST(AddressSanitizer, LoadStoreCallbacks) {
         uptr size = 1 << size_log;
         CB call = cb[is_write][size_log];
         // Iterate only size-aligned offsets.
-        for (uptr offset = 0; offset < len; offset += size) {
+        for (uptr offset = 0; offset <= len; offset += size) {
           buggy_ptr = 0;
           call(p + offset);
           if (offset + size <= len)

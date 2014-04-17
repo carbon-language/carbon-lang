@@ -383,7 +383,7 @@ ASAN_REPORT_ERROR_N(store, true)
                                         : *reinterpret_cast<u16 *>(sp);        \
     if (s) {                                                                   \
       if (size >= SHADOW_GRANULARITY ||                                        \
-          (((addr & (SHADOW_GRANULARITY - 1)) + size - 1)) >= s) {             \
+          ((s8)((addr & (SHADOW_GRANULARITY - 1)) + size - 1)) >= (s8)s) {     \
         if (__asan_test_only_reported_buggy_pointer) {                         \
           *__asan_test_only_reported_buggy_pointer = addr;                     \
         } else {                                                               \
