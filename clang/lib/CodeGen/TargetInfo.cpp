@@ -3187,13 +3187,14 @@ private:
       // Under AAPCS the 64-bit stack slot alignment means we can't pass HAs
       // as sequences of floats since they'll get "holes" inserted as
       // padding by the back end.
-      if (IsHA && AllocatedVFP > NumVFPs && !isDarwinPCS()) {
-          uint32_t NumStackSlots = getContext().getTypeSize(it->type);
-          NumStackSlots = llvm::RoundUpToAlignment(NumStackSlots, 64) / 64;
+      if (IsHA && AllocatedVFP > NumVFPs && !isDarwinPCS() &&
+          getContext().getTypeAlign(it->type) < 64) {
+        uint32_t NumStackSlots = getContext().getTypeSize(it->type);
+        NumStackSlots = llvm::RoundUpToAlignment(NumStackSlots, 64) / 64;
 
-          llvm::Type *CoerceTy = llvm::ArrayType::get(
-              llvm::Type::getDoubleTy(getVMContext()), NumStackSlots);
-          it->info = ABIArgInfo::getDirect(CoerceTy);
+        llvm::Type *CoerceTy = llvm::ArrayType::get(
+            llvm::Type::getDoubleTy(getVMContext()), NumStackSlots);
+        it->info = ABIArgInfo::getDirect(CoerceTy);
       }
 
       // If we do not have enough VFP registers for the HA, any VFP registers

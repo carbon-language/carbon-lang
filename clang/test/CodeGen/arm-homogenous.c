@@ -178,7 +178,7 @@ void test_struct_of_four_doubles(void) {
 // CHECK64: test_struct_of_four_doubles
 // CHECK64: call void @takes_struct_of_four_doubles(double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, [3 x float] undef, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}})
 // CHECK64-AAPCS: test_struct_of_four_doubles
-// CHECK64-AAPCS: call void @takes_struct_of_four_doubles(double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, [3 x float] undef, [4 x double] {{.*}}, double {{.*}})
+// CHECK64-AAPCS: call void @takes_struct_of_four_doubles(double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}}, [3 x float] undef, double {{.*}}, double {{.*}}, double {{.*}}, double {{.*}})
   takes_struct_of_four_doubles(3.0, g_s4d, g_s4d, 4.0);
 }
 
@@ -214,7 +214,7 @@ void test_struct_of_vecs(void) {
 // CHECK64: test_struct_of_vecs
 // CHECK64: call void @takes_struct_of_vecs(double {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, [3 x float] undef, <8 x i8> {{.*}}, <4 x i16> {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, double {{.*}})
 // CHECK64-AAPCS: test_struct_of_vecs
-// CHECK64-AAPCS: call void @takes_struct_of_vecs(double {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, [3 x float] undef, [4 x double] {{.*}})
+// CHECK64-AAPCS: call void @takes_struct_of_vecs(double {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, [3 x float] undef, <8 x i8> {{.*}}, <4 x i16> {{.*}}, <8 x i8> {{.*}}, <4 x i16> {{.*}}, double {{.*}})
   takes_struct_of_vecs(3.0, g_vec, g_vec, 4.0);
 }
 
