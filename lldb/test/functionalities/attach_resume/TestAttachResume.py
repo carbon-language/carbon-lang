@@ -21,6 +21,7 @@ class AttachResumeTestCase(TestBase):
         self.buildDwarf()
         self.process_attach_continue_interrupt_detach()
 
+    @expectedFailureLinux('llvm.org/pr19478')
     def process_attach_continue_interrupt_detach(self):
         """Test attach/continue/interrupt/detach"""
 
