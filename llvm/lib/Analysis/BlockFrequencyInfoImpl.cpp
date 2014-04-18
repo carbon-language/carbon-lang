@@ -24,8 +24,10 @@ using namespace llvm;
 // PositiveFloat implementation.
 //
 //===----------------------------------------------------------------------===//
+#ifndef _MSC_VER
 const int PositiveFloatBase::MaxExponent;
 const int PositiveFloatBase::MinExponent;
+#endif
 
 static void appendDigit(std::string &Str, unsigned D) {
   assert(D < 10);
