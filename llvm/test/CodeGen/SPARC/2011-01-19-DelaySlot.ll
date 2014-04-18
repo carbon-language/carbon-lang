@@ -1,6 +1,7 @@
 ;RUN: llc -march=sparc < %s -verify-machineinstrs | FileCheck %s
 ;RUN: llc -march=sparc -O0 < %s -verify-machineinstrs | FileCheck %s -check-prefix=UNOPT
 
+target triple = "sparc-unknown-linux-gnu"
 
 define i32 @test(i32 %a) nounwind {
 entry:

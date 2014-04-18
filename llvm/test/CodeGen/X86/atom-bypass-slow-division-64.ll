@@ -1,4 +1,6 @@
-; RUN: llc < %s -mcpu=atom -mtriple=i686-linux -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mcpu=atom -march=x86-64 | FileCheck %s
+
+target triple = "x86_64-unknown-linux-gnu"
 
 ; Additional tests for 64-bit divide bypass
 
