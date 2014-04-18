@@ -4093,6 +4093,45 @@ static bool isTRN_v_undef_Mask(ArrayRef<int> M, EVT VT, unsigned &WhichResult) {
   return true;
 }
 
+static bool isINSMask(ArrayRef<int> M, int NumInputElements,
+                      bool &BulkIsLeft, int &Anomaly) {
+  if (M.size() != static_cast<size_t>(NumInputElements))
+    return false;
+
+  int NumLHSMatch = 0, NumRHSMatch = 0;
+  int LastLHSMismatch = -1, LastRHSMismatch = -1;
+
+  for (int i = 0; i < NumInputElements; ++i) {
+    if (M[i] == -1) {
+      ++NumLHSMatch;
+      ++NumRHSMatch;
+      continue;
+    }
+
+    if (M[i] == i)
+      ++NumLHSMatch;
+    else
+      LastLHSMismatch = i;
+
+    if (M[i] == i + NumInputElements)
+      ++NumRHSMatch;
+    else
+      LastRHSMismatch = i;
+  }
+
+  if (NumLHSMatch == NumInputElements - 1) {
+    BulkIsLeft = true;
+    Anomaly = LastLHSMismatch;
+    return true;
+  } else if (NumRHSMatch == NumInputElements - 1) {
+    BulkIsLeft = false;
+    Anomaly = LastRHSMismatch;
+    return true;
+  }
+
+  return false;
+}
+
 /// GeneratePerfectShuffle - Given an entry in the perfect-shuffle table, emit
 /// the specified operations to build the shuffle.
 static SDValue GeneratePerfectShuffle(unsigned PFEntry, SDValue LHS,
@@ -4360,6 +4399,31 @@ SDValue ARM64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
   if (isTRN_v_undef_Mask(ShuffleMask, VT, WhichResult)) {
     unsigned Opc = (WhichResult == 0) ? ARM64ISD::TRN1 : ARM64ISD::TRN2;
     return DAG.getNode(Opc, dl, V1.getValueType(), V1, V1);
+  }
+
+  bool DstIsLeft;
+  int Anomaly;
+  int NumInputElements = V1.getValueType().getVectorNumElements();
+  if (isINSMask(ShuffleMask, NumInputElements, DstIsLeft, Anomaly)) {
+    SDValue DstVec = DstIsLeft ? V1 : V2;
+    SDValue DstLaneV = DAG.getConstant(Anomaly, MVT::i64);
+
+    SDValue SrcVec = V1;
+    int SrcLane = ShuffleMask[Anomaly];
+    if (SrcLane >= NumInputElements) {
+      SrcVec = V2;
+      SrcLane -= VT.getVectorNumElements();
+    }
+    SDValue SrcLaneV = DAG.getConstant(SrcLane, MVT::i64);
+
+    EVT ScalarVT = VT.getVectorElementType();
+    if (ScalarVT.getSizeInBits() < 32)
+      ScalarVT = MVT::i32;
+
+    return DAG.getNode(
+        ISD::INSERT_VECTOR_ELT, dl, VT, DstVec,
+        DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, ScalarVT, SrcVec, SrcLaneV),
+        DstLaneV);
   }
 
   // If the shuffle is not directly supported and it has 4 elements, use
