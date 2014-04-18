@@ -105,8 +105,9 @@ void Parser::error(const Token &tok, Twine msg) {
 
 llvm::Optional<Directive *> Parser::parse() {
   consumeToken();
-  // EXPORTS
-  if (_tok._kind == Kind::kw_exports) {
+  switch (_tok._kind) {
+  case Kind::kw_exports: {
+    // EXPORTS
     std::vector<PECOFFLinkingContext::ExportDesc> exports;
     for (;;) {
       PECOFFLinkingContext::ExportDesc desc;
@@ -116,37 +117,39 @@ llvm::Optional<Directive *> Parser::parse() {
     }
     return new (_alloc) Exports(exports);
   }
-  // HEAPSIZE
-  if (_tok._kind == Kind::kw_heapsize) {
+  case Kind::kw_heapsize: {
+    // HEAPSIZE
     uint64_t reserve, commit;
     if (!parseMemorySize(reserve, commit))
       return llvm::None;
     return new (_alloc) Heapsize(reserve, commit);
   }
-  // STACKSIZE
-  if (_tok._kind == Kind::kw_stacksize) {
+  case Kind::kw_stacksize: {
+    // STACKSIZE
     uint64_t reserve, commit;
     if (!parseMemorySize(reserve, commit))
       return llvm::None;
     return new (_alloc) Stacksize(reserve, commit);
   }
-  // NAME
-  if (_tok._kind == Kind::kw_name) {
+  case Kind::kw_name: {
+    // NAME
     std::string outputPath;
     uint64_t baseaddr;
     if (!parseName(outputPath, baseaddr))
       return llvm::None;
     return new (_alloc) Name(outputPath, baseaddr);
   }
-  // VERSION
-  if (_tok._kind == Kind::kw_version) {
+  case Kind::kw_version: {
+    // VERSION
     int major, minor;
     if (!parseVersion(major, minor))
       return llvm::None;
     return new (_alloc) Version(major, minor);
   }
-  error(_tok, Twine("Unknown directive: ") + _tok._range);
-  return llvm::None;
+  default:
+    error(_tok, Twine("Unknown directive: ") + _tok._range);
+    return llvm::None;
+  }
 }
 
 bool Parser::parseExport(PECOFFLinkingContext::ExportDesc &result) {
