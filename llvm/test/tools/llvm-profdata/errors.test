@@ -1,19 +1,13 @@
-RUN: llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/foo4-1.profdata -o /dev/null
-RUN: llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/foo4-1.profdata -o /dev/null 2>&1 | FileCheck %s --check-prefix=HASH
+RUN: llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/foo4-1.profdata -o %t.out 2>&1 | FileCheck %s --check-prefix=HASH
 HASH: foo4-1.profdata: foo: Function hash mismatch
 
-RUN: llvm-profdata merge %p/Inputs/overflow.profdata %p/Inputs/overflow.profdata -o /dev/null
-RUN: llvm-profdata merge %p/Inputs/overflow.profdata %p/Inputs/overflow.profdata -o /dev/null 2>&1 | FileCheck %s --check-prefix=OVERFLOW
+RUN: llvm-profdata merge %p/Inputs/overflow.profdata %p/Inputs/overflow.profdata -o %t.out 2>&1 | FileCheck %s --check-prefix=OVERFLOW
 OVERFLOW: overflow.profdata: overflow: Counter overflow
 
-RUN: not llvm-profdata show %p/Inputs/invalid-count-later.profdata
 RUN: not llvm-profdata show %p/Inputs/invalid-count-later.profdata 2>&1 | FileCheck %s --check-prefix=INVALID-COUNT-LATER
-RUN: not llvm-profdata merge %p/Inputs/invalid-count-later.profdata %p/Inputs/invalid-count-later.profdata -o /dev/null
-RUN: not llvm-profdata merge %p/Inputs/invalid-count-later.profdata %p/Inputs/invalid-count-later.profdata -o /dev/null 2>&1 | FileCheck %s --check-prefix=INVALID-COUNT-LATER
+RUN: not llvm-profdata merge %p/Inputs/invalid-count-later.profdata %p/Inputs/invalid-count-later.profdata -o %t.out 2>&1 | FileCheck %s --check-prefix=INVALID-COUNT-LATER
 INVALID-COUNT-LATER: error: {{.*}}invalid-count-later.profdata: Malformed profile data
 
-RUN: not llvm-profdata show %p/Inputs/bad-hash.profdata
 RUN: not llvm-profdata show %p/Inputs/bad-hash.profdata 2>&1 | FileCheck %s --check-prefix=BAD-HASH
-RUN: not llvm-profdata merge %p/Inputs/bad-hash.profdata %p/Inputs/bad-hash.profdata -o /dev/null
-RUN: not llvm-profdata merge %p/Inputs/bad-hash.profdata %p/Inputs/bad-hash.profdata -o /dev/null 2>&1 | FileCheck %s --check-prefix=BAD-HASH
+RUN: not llvm-profdata merge %p/Inputs/bad-hash.profdata %p/Inputs/bad-hash.profdata -o %t.out 2>&1 | FileCheck %s --check-prefix=BAD-HASH
 BAD-HASH: error: {{.*}}bad-hash.profdata: Malformed profile data
