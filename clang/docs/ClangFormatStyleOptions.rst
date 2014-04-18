@@ -338,7 +338,7 @@ the configuration (without a prefix: ``Auto``).
 **SpacesBeforeTrailingComments** (``unsigned``)
   The number of spaces before trailing line comments (//-comments).
 
-  This does not affect trailing block comments (/**/-comments) as those
+  This does not affect trailing block comments (/\*\*/-comments) as those
   commonly have different usage patterns and a number of special cases.
 
 **SpacesInAngles** (``bool``)

@@ -761,7 +761,7 @@ express this with a single module map file in the library:
 
 because the header ``Foo_Private.h`` won't always be available. The
 module map file could be customized based on whether
-``Foo_Private.h``is available or not, but doing so requires custom
+``Foo_Private.h`` is available or not, but doing so requires custom
 build machinery.
 
 Private module map files, which are named ``module.private.modulemap``
@@ -770,7 +770,7 @@ augment the primary module map file with an additional submodule. For
 example, we would split the module map file above into two module map
 files:
 
-.. parsed-literal::
+.. code-block:: c
 
   /* module.modulemap */
   module Foo {
