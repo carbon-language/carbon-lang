@@ -653,8 +653,8 @@ TEST_F(WinLinkParserTest, Ignore) {
                     "/disallowlib:foo", "/delayload:user32", "/pdb:foo",
                     "/pdbaltpath:bar", "/verbose", "/verbose:icf", "/wx",
                     "/wx:no", "/tlbid:1", "/tlbout:foo", "/idlout:foo",
-                    "/ignoreidl", "/implib:foo", "/safeseh", "/safeseh:no",
-                    "/functionpadmin", "a.obj", nullptr));
+                    "/ignore:4000", "/ignoreidl", "/implib:foo", "/safeseh",
+                    "/safeseh:no", "/functionpadmin", "a.obj", nullptr));
   EXPECT_EQ("", errorMessage());
   EXPECT_EQ(2, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));

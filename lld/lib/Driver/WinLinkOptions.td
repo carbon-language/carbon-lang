@@ -106,6 +106,7 @@ def delay : QF<"delay">;
 def delayload : QF<"delayload">;
 def errorreport : QF<"errorreport">;
 def idlout : QF<"idlout">;
+def ignore : QF<"ignore">;
 def implib : QF<"implib">;
 def pdb : QF<"pdb">;
 def pdbaltpath : QF<"pdbaltpath">;
