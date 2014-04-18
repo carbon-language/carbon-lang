@@ -347,7 +347,7 @@ template <class ELFT> StringRef Section<ELFT>::segmentKindToStr() const {
   case llvm::ELF::PT_GNU_EH_FRAME:
     return "EH_FRAME";
   case llvm::ELF::PT_GNU_RELRO:
-    return "RELRO";
+    return "GNU_RELRO";
   case llvm::ELF::PT_NOTE:
     return "NOTE";
   case llvm::ELF::PT_NULL:
