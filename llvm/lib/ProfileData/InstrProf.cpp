@@ -33,6 +33,8 @@ class InstrProfErrorCategoryType : public error_category {
       return "Invalid header";
     case instrprof_error::unsupported_version:
       return "Unsupported format version";
+    case instrprof_error::unsupported_hash_type:
+      return "Unsupported hash function";
     case instrprof_error::too_large:
       return "Too much profile data";
     case instrprof_error::truncated:

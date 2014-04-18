@@ -41,7 +41,7 @@ public:
   error_code addFunctionCounts(StringRef FunctionName, uint64_t FunctionHash,
                                ArrayRef<uint64_t> Counters);
   /// Ensure that all data is written to disk.
-  void write(raw_ostream &OS);
+  void write(raw_fd_ostream &OS);
 };
 
 } // end namespace llvm

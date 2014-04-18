@@ -13,9 +13,58 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ProfileData/InstrProfWriter.h"
-#include "llvm/Support/Endian.h"
+#include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/EndianStream.h"
+#include "llvm/Support/OnDiskHashTable.h"
+
+#include "InstrProfIndexed.h"
 
 using namespace llvm;
+
+namespace {
+class InstrProfRecordTrait {
+public:
+  typedef StringRef key_type;
+  typedef StringRef key_type_ref;
+
+  typedef InstrProfWriter::CounterData data_type;
+  typedef const InstrProfWriter::CounterData &data_type_ref;
+
+  typedef uint64_t hash_value_type;
+  typedef uint64_t offset_type;
+
+  static hash_value_type ComputeHash(key_type_ref K) {
+    return IndexedInstrProf::ComputeHash(IndexedInstrProf::HashType, K);
+  }
+
+  static std::pair<offset_type, offset_type>
+  EmitKeyDataLength(raw_ostream &Out, key_type_ref K, data_type_ref V) {
+    using namespace llvm::support;
+    endian::Writer<little> LE(Out);
+
+    unsigned N = K.size();
+    LE.write<offset_type>(N);
+
+    unsigned M = (1 + V.Counts.size()) * sizeof(uint64_t);
+    LE.write<offset_type>(M);
+
+    return std::make_pair(N, M);
+  }
+
+  static void EmitKey(raw_ostream &Out, key_type_ref K, unsigned N){
+    Out.write(K.data(), N);
+  }
+
+  static void EmitData(raw_ostream &Out, key_type_ref, data_type_ref V,
+                       unsigned) {
+    using namespace llvm::support;
+    endian::Writer<little> LE(Out);
+    LE.write<uint64_t>(V.Hash);
+    for (uint64_t I : V.Counts)
+      LE.write<uint64_t>(I);
+  }
+};
+}
 
 error_code InstrProfWriter::addFunctionCounts(StringRef FunctionName,
                                               uint64_t FunctionHash,
@@ -45,16 +94,33 @@ error_code InstrProfWriter::addFunctionCounts(StringRef FunctionName,
   return instrprof_error::success;
 }
 
-void InstrProfWriter::write(raw_ostream &OS) {
-  // Write out the counts for each function.
-  for (const auto &I : FunctionData) {
-    StringRef Name = I.getKey();
-    uint64_t Hash = I.getValue().Hash;
-    const std::vector<uint64_t> &Counts = I.getValue().Counts;
+void InstrProfWriter::write(raw_fd_ostream &OS) {
+  OnDiskChainedHashTableGenerator<InstrProfRecordTrait> Generator;
+  uint64_t MaxFunctionCount = 0;
 
-    OS << Name << "\n" << Hash << "\n" << Counts.size() << "\n";
-    for (uint64_t Count : Counts)
-      OS << Count << "\n";
-    OS << "\n";
+  // Populate the hash table generator.
+  for (const auto &I : FunctionData) {
+    Generator.insert(I.getKey(), I.getValue());
+    if (I.getValue().Counts[0] > MaxFunctionCount)
+      MaxFunctionCount = I.getValue().Counts[0];
   }
+
+  using namespace llvm::support;
+  endian::Writer<little> LE(OS);
+
+  // Write the header.
+  LE.write<uint64_t>(IndexedInstrProf::Magic);
+  LE.write<uint64_t>(IndexedInstrProf::Version);
+  LE.write<uint64_t>(MaxFunctionCount);
+  LE.write<uint64_t>(static_cast<uint64_t>(IndexedInstrProf::HashType));
+
+  // Save a space to write the hash table start location.
+  uint64_t HashTableStartLoc = OS.tell();
+  LE.write<uint64_t>(0);
+  // Write the hash table.
+  uint64_t HashTableStart = Generator.Emit(OS);
+
+  // Go back and fill in the hash table start.
+  OS.seek(HashTableStartLoc);
+  LE.write<uint64_t>(HashTableStart);
 }

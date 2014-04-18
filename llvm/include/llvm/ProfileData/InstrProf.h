@@ -29,6 +29,7 @@ struct instrprof_error {
     bad_magic,
     bad_header,
     unsupported_version,
+    unsupported_hash_type,
     too_large,
     truncated,
     malformed,
