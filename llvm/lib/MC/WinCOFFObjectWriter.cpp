@@ -665,13 +665,9 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   for (MCAssembler::const_iterator i = Asm.begin(), e = Asm.end(); i != e; i++)
     DefineSection(*i);
 
-  for (MCAssembler::const_symbol_iterator i = Asm.symbol_begin(),
-                                          e = Asm.symbol_end();
-       i != e; i++) {
-    if (ExportSymbol(*i, Asm)) {
-      DefineSymbol(*i, Asm, Layout);
-    }
-  }
+  for (MCSymbolData &SD : Asm.symbols())
+    if (ExportSymbol(SD, Asm))
+      DefineSymbol(SD, Asm, Layout);
 }
 
 void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,

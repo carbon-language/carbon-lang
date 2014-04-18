@@ -834,6 +834,9 @@ public:
   typedef SymbolDataListType::const_iterator const_symbol_iterator;
   typedef SymbolDataListType::iterator symbol_iterator;
 
+  typedef iterator_range<symbol_iterator> symbol_range;
+  typedef iterator_range<const_symbol_iterator> const_symbol_range;
+
   typedef std::vector<std::string> FileNameVectorType;
   typedef FileNameVectorType::const_iterator const_file_name_iterator;
 
@@ -1098,6 +1101,9 @@ public:
 
   symbol_iterator symbol_end() { return Symbols.end(); }
   const_symbol_iterator symbol_end() const { return Symbols.end(); }
+
+  symbol_range symbols() { return make_range(symbol_begin(), symbol_end()); }
+  const_symbol_range symbols() const { return make_range(symbol_begin(), symbol_end()); }
 
   size_t symbol_size() const { return Symbols.size(); }
 

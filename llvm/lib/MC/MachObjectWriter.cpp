@@ -516,15 +516,14 @@ ComputeSymbolTable(MCAssembler &Asm, SmallString<256> &StringTable,
   // table, then sort the symbols is chosen to match 'as'. Even though it
   // doesn't matter for correctness, this is important for letting us diff .o
   // files.
-  for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
-         ie = Asm.symbol_end(); it != ie; ++it) {
-    const MCSymbol &Symbol = it->getSymbol();
+  for (MCSymbolData &SD : Asm.symbols()) {
+    const MCSymbol &Symbol = SD.getSymbol();
 
     // Ignore non-linker visible symbols.
-    if (!Asm.isSymbolLinkerVisible(it->getSymbol()))
+    if (!Asm.isSymbolLinkerVisible(SD.getSymbol()))
       continue;
 
-    if (!it->isExternal() && !Symbol.isUndefined())
+    if (!SD.isExternal() && !Symbol.isUndefined())
       continue;
 
     uint64_t &Entry = StringIndexMap[Symbol.getName()];
@@ -535,7 +534,7 @@ ComputeSymbolTable(MCAssembler &Asm, SmallString<256> &StringTable,
     }
 
     MachSymbolData MSD;
-    MSD.SymbolData = it;
+    MSD.SymbolData = &SD;
     MSD.StringIndex = Entry;
 
     if (Symbol.isUndefined()) {
@@ -552,15 +551,14 @@ ComputeSymbolTable(MCAssembler &Asm, SmallString<256> &StringTable,
   }
 
   // Now add the data for local symbols.
-  for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
-         ie = Asm.symbol_end(); it != ie; ++it) {
-    const MCSymbol &Symbol = it->getSymbol();
+  for (MCSymbolData &SD : Asm.symbols()) {
+    const MCSymbol &Symbol = SD.getSymbol();
 
     // Ignore non-linker visible symbols.
-    if (!Asm.isSymbolLinkerVisible(it->getSymbol()))
+    if (!Asm.isSymbolLinkerVisible(SD.getSymbol()))
       continue;
 
-    if (it->isExternal() || Symbol.isUndefined())
+    if (SD.isExternal() || Symbol.isUndefined())
       continue;
 
     uint64_t &Entry = StringIndexMap[Symbol.getName()];
@@ -571,7 +569,7 @@ ComputeSymbolTable(MCAssembler &Asm, SmallString<256> &StringTable,
     }
 
     MachSymbolData MSD;
-    MSD.SymbolData = it;
+    MSD.SymbolData = &SD;
     MSD.StringIndex = Entry;
 
     if (Symbol.isAbsolute()) {
@@ -621,10 +619,7 @@ void MachObjectWriter::computeSectionAddresses(const MCAssembler &Asm,
 
 void MachObjectWriter::markAbsoluteVariableSymbols(MCAssembler &Asm,
                                                    const MCAsmLayout &Layout) {
-  for (MCAssembler::symbol_iterator i = Asm.symbol_begin(),
-                                    e = Asm.symbol_end();
-      i != e; ++i) {
-    MCSymbolData &SD = *i;
+  for (MCSymbolData &SD : Asm.symbols()) {
     if (!SD.getSymbol().isVariable())
       continue;
 

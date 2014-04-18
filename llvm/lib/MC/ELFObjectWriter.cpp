@@ -530,9 +530,8 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   // The presence of symbol versions causes undefined symbols and
   // versions declared with @@@ to be renamed.
 
-  for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
-         ie = Asm.symbol_end(); it != ie; ++it) {
-    const MCSymbol &Alias = it->getSymbol();
+  for (MCSymbolData &OriginalData : Asm.symbols()) {
+    const MCSymbol &Alias = OriginalData.getSymbol();
     const MCSymbol &Symbol = Alias.AliasedSymbol();
     MCSymbolData &SD = Asm.getSymbolData(Symbol);
 
@@ -547,8 +546,8 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
 
     // Aliases defined with .symvar copy the binding from the symbol they alias.
     // This is the first place we are able to copy this information.
-    it->setExternal(SD.isExternal());
-    MCELF::SetBinding(*it, MCELF::GetBinding(SD));
+    OriginalData.setExternal(SD.isExternal());
+    MCELF::SetBinding(OriginalData, MCELF::GetBinding(SD));
 
     StringRef Rest = AliasName.substr(Pos);
     if (!Symbol.isUndefined() && !Rest.startswith("@@@"))
@@ -1046,36 +1045,35 @@ ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
   }
 
   // Add the data for the symbols.
-  for (MCAssembler::symbol_iterator it = Asm.symbol_begin(),
-         ie = Asm.symbol_end(); it != ie; ++it) {
-    const MCSymbol &Symbol = it->getSymbol();
+  for (MCSymbolData &SD : Asm.symbols()) {
+    const MCSymbol &Symbol = SD.getSymbol();
 
     bool Used = UsedInReloc.count(&Symbol);
     bool WeakrefUsed = WeakrefUsedInReloc.count(&Symbol);
     bool isSignature = RevGroupMap.count(&Symbol);
 
-    if (!isInSymtab(Asm, *it,
+    if (!isInSymtab(Asm, SD,
                     Used || WeakrefUsed || isSignature,
                     Renames.count(&Symbol)))
       continue;
 
     ELFSymbolData MSD;
-    MSD.SymbolData = it;
+    MSD.SymbolData = &SD;
     const MCSymbol *BaseSymbol = getBaseSymbol(Layout, Symbol);
 
     // Undefined symbols are global, but this is the first place we
     // are able to set it.
-    bool Local = isLocal(*it, isSignature, Used);
-    if (!Local && MCELF::GetBinding(*it) == ELF::STB_LOCAL) {
+    bool Local = isLocal(SD, isSignature, Used);
+    if (!Local && MCELF::GetBinding(SD) == ELF::STB_LOCAL) {
       assert(BaseSymbol);
-      MCSymbolData &SD = Asm.getSymbolData(*BaseSymbol);
-      MCELF::SetBinding(*it, ELF::STB_GLOBAL);
+      MCSymbolData &BaseData = Asm.getSymbolData(*BaseSymbol);
       MCELF::SetBinding(SD, ELF::STB_GLOBAL);
+      MCELF::SetBinding(BaseData, ELF::STB_GLOBAL);
     }
 
     if (!BaseSymbol) {
       MSD.SectionIndex = ELF::SHN_ABS;
-    } else if (it->isCommon()) {
+    } else if (SD.isCommon()) {
       assert(!Local);
       MSD.SectionIndex = ELF::SHN_COMMON;
     } else if (BaseSymbol->isUndefined()) {
@@ -1084,7 +1082,7 @@ ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
       else
         MSD.SectionIndex = ELF::SHN_UNDEF;
       if (!Used && WeakrefUsed)
-        MCELF::SetBinding(*it, ELF::STB_WEAK);
+        MCELF::SetBinding(SD, ELF::STB_WEAK);
     } else {
       const MCSectionELF &Section =
         static_cast<const MCSectionELF&>(BaseSymbol->getSection());
