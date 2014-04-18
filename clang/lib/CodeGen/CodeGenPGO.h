@@ -26,28 +26,6 @@ namespace clang {
 namespace CodeGen {
 class RegionCounter;
 
-/// The raw counter data from an instrumented PGO binary
-class PGOProfileData {
-private:
-  /// The PGO data
-  std::unique_ptr<llvm::MemoryBuffer> DataBuffer;
-  /// Offsets into DataBuffer for each function's counters
-  llvm::StringMap<unsigned> DataOffsets;
-  /// Execution counts for each function.
-  llvm::StringMap<uint64_t> FunctionCounts;
-  /// The maximal execution count among all functions.
-  uint64_t MaxFunctionCount;
-  CodeGenModule &CGM;
-public:
-  PGOProfileData(CodeGenModule &CGM, std::string Path);
-  /// Fill Counts with the profile data for the given function name. Returns
-  /// false on success.
-  bool getFunctionCounts(StringRef FuncName, uint64_t &FuncHash,
-                         std::vector<uint64_t> &Counts);
-  /// Return the maximum of all known function counts.
-  uint64_t getMaximumFunctionCount() { return MaxFunctionCount; }
-};
-
 /// Per-function PGO state. This class should generally not be used directly,
 /// but instead through the CodeGenFunction and RegionCounter types.
 class CodeGenPGO {
@@ -138,8 +116,9 @@ private:
   void setFuncName(llvm::Function *Fn);
   void mapRegionCounters(const Decl *D);
   void computeRegionCounts(const Decl *D);
-  void applyFunctionAttributes(PGOProfileData *PGOData, llvm::Function *Fn);
-  void loadRegionCounts(PGOProfileData *PGOData);
+  void applyFunctionAttributes(llvm::IndexedInstrProfReader *PGOReader,
+                               llvm::Function *Fn);
+  void loadRegionCounts(llvm::IndexedInstrProfReader *PGOReader);
   void emitCounterVariables();
   llvm::GlobalVariable *buildDataVar();
 

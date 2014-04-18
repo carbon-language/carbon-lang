@@ -42,6 +42,7 @@ namespace llvm {
   class DataLayout;
   class FunctionType;
   class LLVMContext;
+  class IndexedInstrProfReader;
 }
 
 namespace clang {
@@ -85,7 +86,6 @@ namespace CodeGen {
   class CGCUDARuntime;
   class BlockFieldFlags;
   class FunctionArgList;
-  class PGOProfileData;
 
   struct OrderGlobalInits {
     unsigned int priority;
@@ -266,7 +266,7 @@ class CodeGenModule : public CodeGenTypeCache {
   ARCEntrypoints *ARCData;
   llvm::MDNode *NoObjCARCExceptionsMetadata;
   RREntrypoints *RRData;
-  PGOProfileData *PGOData;
+  std::unique_ptr<llvm::IndexedInstrProfReader> PGOReader;
   InstrProfStats PGOStats;
 
   // WeakRefReferences - A set of references that have only been seen via
@@ -493,13 +493,8 @@ public:
     return *RRData;
   }
 
-  InstrProfStats &getPGOStats() {
-    return PGOStats;
-  }
-
-  PGOProfileData *getPGOData() const {
-    return PGOData;
-  }
+  InstrProfStats &getPGOStats() { return PGOStats; }
+  llvm::IndexedInstrProfReader *getPGOReader() const { return PGOReader.get(); }
 
   llvm::Constant *getStaticLocalDeclAddress(const VarDecl *D) {
     return StaticLocalDeclMap[D];

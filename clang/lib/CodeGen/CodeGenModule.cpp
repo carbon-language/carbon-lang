@@ -47,6 +47,7 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -78,7 +79,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
       ABI(createCXXABI(*this)), VMContext(M.getContext()), TBAA(0),
       TheTargetCodeGenInfo(0), Types(*this), VTables(*this), ObjCRuntime(0),
       OpenCLRuntime(0), CUDARuntime(0), DebugInfo(0), ARCData(0),
-      NoObjCARCExceptionsMetadata(0), RRData(0), PGOData(0),
+      NoObjCARCExceptionsMetadata(0), RRData(0), PGOReader(nullptr),
       CFConstantStringClassRef(0),
       ConstantStringClassRef(0), NSConstantStringType(0),
       NSConcreteGlobalBlock(0), NSConcreteStackBlock(0), BlockObjectAssign(0),
@@ -134,8 +135,14 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     ARCData = new ARCEntrypoints();
   RRData = new RREntrypoints();
 
-  if (!CodeGenOpts.InstrProfileInput.empty())
-    PGOData = new PGOProfileData(*this, CodeGenOpts.InstrProfileInput);
+  if (!CodeGenOpts.InstrProfileInput.empty()) {
+    if (llvm::error_code EC = llvm::IndexedInstrProfReader::create(
+            CodeGenOpts.InstrProfileInput, PGOReader)) {
+      unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
+                                              "Could not read profile: %0");
+      getDiags().Report(DiagID) << EC.message();
+    }
+  }
 }
 
 CodeGenModule::~CodeGenModule() {
@@ -286,7 +293,7 @@ void CodeGenModule::Release() {
   if (getCodeGenOpts().ProfileInstrGenerate)
     if (llvm::Function *PGOInit = CodeGenPGO::emitInitialization(*this))
       AddGlobalCtor(PGOInit, 0);
-  if (PGOData && PGOStats.isOutOfDate())
+  if (PGOReader && PGOStats.isOutOfDate())
     getDiags().Report(diag::warn_profile_data_out_of_date)
         << PGOStats.Visited << PGOStats.Missing << PGOStats.Mismatched;
   EmitCtorList(GlobalCtors, "llvm.global_ctors");

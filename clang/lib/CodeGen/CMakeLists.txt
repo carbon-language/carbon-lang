@@ -9,6 +9,7 @@ set(LLVM_LINK_COMPONENTS
   Linker
   MC
   ObjCARCOpts
+  ProfileData
   ScalarOpts
   Support
   Target
