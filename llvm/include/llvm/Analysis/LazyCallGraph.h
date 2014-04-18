@@ -193,9 +193,6 @@ public:
     /// CalleeSet.
     Node(LazyCallGraph &G, Function &F);
 
-    /// \brief Constructor used when copying a node from one graph to another.
-    Node(LazyCallGraph &G, const Node &OtherN);
-
   public:
     typedef LazyCallGraph::iterator iterator;
 
@@ -291,23 +288,8 @@ public:
   /// requested during traversal.
   LazyCallGraph(Module &M);
 
-  /// \brief Copy constructor.
-  ///
-  /// This does a deep copy of the graph. It does no verification that the
-  /// graph remains valid for the module. It is also relatively expensive.
-  LazyCallGraph(const LazyCallGraph &G);
-
-  /// \brief Move constructor.
-  ///
-  /// This is a deep move. It leaves G in an undefined but destroyable state.
-  /// Any other operation on G is likely to fail.
   LazyCallGraph(LazyCallGraph &&G);
-
-  /// \brief Copy and move assignment.
-  LazyCallGraph &operator=(LazyCallGraph RHS) {
-    std::swap(*this, RHS);
-    return *this;
-  }
+  LazyCallGraph &operator=(LazyCallGraph &&RHS);
 
   iterator begin() { return iterator(*this, EntryNodes); }
   iterator end() { return iterator(*this, EntryNodes, iterator::IsAtEndT()); }
@@ -378,8 +360,8 @@ private:
   /// the NodeMap.
   Node *insertInto(Function &F, Node *&MappedN);
 
-  /// \brief Helper to copy a node from another graph into this one.
-  Node *copyInto(const Node &OtherN);
+  /// \brief Helper to update pointers back to the graph object during moves.
+  void updateGraphPtrs();
 
   /// \brief Retrieve the next node in the post-order SCC walk of the call graph.
   SCC *getNextSCCInPostOrder();

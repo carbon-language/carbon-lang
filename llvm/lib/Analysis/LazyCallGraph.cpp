@@ -65,18 +65,6 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F)
   findCallees(Worklist, Visited, Callees, CalleeSet);
 }
 
-LazyCallGraph::Node::Node(LazyCallGraph &G, const Node &OtherN)
-    : G(&G), F(OtherN.F), DFSNumber(0), LowLink(0), CalleeSet(OtherN.CalleeSet) {
-  // Loop over the other node's callees, adding the Function*s to our list
-  // directly, and recursing to add the Node*s.
-  Callees.reserve(OtherN.Callees.size());
-  for (const auto &OtherCallee : OtherN.Callees)
-    if (Function *Callee = OtherCallee.dyn_cast<Function *>())
-      Callees.push_back(Callee);
-    else
-      Callees.push_back(G.copyInto(*OtherCallee.get<Node *>()));
-}
-
 LazyCallGraph::LazyCallGraph(Module &M) {
   for (Function &F : M)
     if (!F.isDeclaration() && !F.hasLocalLinkage())
@@ -100,30 +88,33 @@ LazyCallGraph::LazyCallGraph(Module &M) {
       SCCEntryNodes.insert(&Entry.get<Node *>()->getFunction());
 }
 
-LazyCallGraph::LazyCallGraph(const LazyCallGraph &G)
-    : EntryNodeSet(G.EntryNodeSet) {
-  EntryNodes.reserve(G.EntryNodes.size());
-  for (const auto &EntryNode : G.EntryNodes)
-    if (Function *Callee = EntryNode.dyn_cast<Function *>())
-      EntryNodes.push_back(Callee);
-    else
-      EntryNodes.push_back(copyInto(*EntryNode.get<Node *>()));
-
-  // Just re-populate the SCCEntryNodes structure so we recompute the SCCs if
-  // needed.
-  for (auto &Entry : EntryNodes)
-    if (Function *F = Entry.dyn_cast<Function *>())
-      SCCEntryNodes.insert(F);
-    else
-      SCCEntryNodes.insert(&Entry.get<Node *>()->getFunction());
-}
-
 LazyCallGraph::LazyCallGraph(LazyCallGraph &&G)
     : BPA(std::move(G.BPA)), EntryNodes(std::move(G.EntryNodes)),
       EntryNodeSet(std::move(G.EntryNodeSet)), SCCBPA(std::move(G.SCCBPA)),
       SCCMap(std::move(G.SCCMap)), LeafSCCs(std::move(G.LeafSCCs)),
       DFSStack(std::move(G.DFSStack)),
       SCCEntryNodes(std::move(G.SCCEntryNodes)) {
+  updateGraphPtrs();
+}
+
+LazyCallGraph &LazyCallGraph::operator=(LazyCallGraph &&G) {
+  BPA = std::move(G.BPA);
+  EntryNodes = std::move(G.EntryNodes);
+  EntryNodeSet = std::move(G.EntryNodeSet);
+  SCCBPA = std::move(G.SCCBPA);
+  SCCMap = std::move(G.SCCMap);
+  LeafSCCs = std::move(G.LeafSCCs);
+  DFSStack = std::move(G.DFSStack);
+  SCCEntryNodes = std::move(G.SCCEntryNodes);
+  updateGraphPtrs();
+  return *this;
+}
+
+LazyCallGraph::Node *LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
+  return new (MappedN = BPA.Allocate()) Node(*this, F);
+}
+
+void LazyCallGraph::updateGraphPtrs() {
   // Process all nodes updating the graph pointers.
   SmallVector<Node *, 16> Worklist;
   for (auto &Entry : EntryNodes)
@@ -137,18 +128,6 @@ LazyCallGraph::LazyCallGraph(LazyCallGraph &&G)
       if (Node *CalleeN = Callee.dyn_cast<Node *>())
         Worklist.push_back(CalleeN);
   }
-}
-
-LazyCallGraph::Node *LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
-  return new (MappedN = BPA.Allocate()) Node(*this, F);
-}
-
-LazyCallGraph::Node *LazyCallGraph::copyInto(const Node &OtherN) {
-  Node *&N = NodeMap[&OtherN.F];
-  if (N)
-    return N;
-
-  return new (N = BPA.Allocate()) Node(*this, OtherN);
 }
 
 LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
