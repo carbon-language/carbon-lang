@@ -68,8 +68,12 @@ def S_BREV_B64 : SOP1_64 <0x0000000c, "S_BREV_B64", []>;
 //def S_FLBIT_I32_B64 : SOP1_32 <0x00000016, "S_FLBIT_I32_B64", []>;
 def S_FLBIT_I32 : SOP1_32 <0x00000017, "S_FLBIT_I32", []>;
 //def S_FLBIT_I32_I64 : SOP1_32 <0x00000018, "S_FLBIT_I32_I64", []>;
-//def S_SEXT_I32_I8 : SOP1_32 <0x00000019, "S_SEXT_I32_I8", []>;
-//def S_SEXT_I32_I16 : SOP1_32 <0x0000001a, "S_SEXT_I32_I16", []>;
+def S_SEXT_I32_I8 : SOP1_32 <0x00000019, "S_SEXT_I32_I8",
+  [(set i32:$dst, (sext_inreg i32:$src0, i8))]
+>;
+def S_SEXT_I32_I16 : SOP1_32 <0x0000001a, "S_SEXT_I32_I16",
+  [(set i32:$dst, (sext_inreg i32:$src0, i16))]
+>;
 ////def S_BITSET0_B32 : SOP1_BITSET0 <0x0000001b, "S_BITSET0_B32", []>;
 ////def S_BITSET0_B64 : SOP1_BITSET0 <0x0000001c, "S_BITSET0_B64", []>;
 ////def S_BITSET1_B32 : SOP1_BITSET1 <0x0000001d, "S_BITSET1_B32", []>;
@@ -123,6 +127,21 @@ def S_CMPK_EQ_I32 : SOPK <
   [(set i1:$dst, (setcc i32:$src0, imm:$src1, SETEQ))]
 >;
 */
+
+// Handle sext_inreg in i64
+def : Pat <
+  (i64 (sext_inreg i64:$src, i8)),
+  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+    (S_SEXT_I32_I8 (EXTRACT_SUBREG i64:$src, sub0)), sub0),
+    (S_MOV_B32 -1), sub1)
+>;
+
+def : Pat <
+  (i64 (sext_inreg i64:$src, i16)),
+  (INSERT_SUBREG (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+    (S_SEXT_I32_I16 (EXTRACT_SUBREG i64:$src, sub0)), sub0),
+    (S_MOV_B32 -1), sub1)
+>;
 
 let isCompare = 1 in {
 def S_CMPK_LG_I32 : SOPK_32 <0x00000004, "S_CMPK_LG_I32", []>;

@@ -47,6 +47,7 @@ private:
   void splitScalar64BitOp(SmallVectorImpl<MachineInstr *> & Worklist,
                           MachineInstr *Inst, unsigned Opcode) const;
 
+  void addDescImplicitUseDef(const MCInstrDesc &Desc, MachineInstr *MI) const;
 
 public:
   explicit SIInstrInfo(AMDGPUTargetMachine &tm);

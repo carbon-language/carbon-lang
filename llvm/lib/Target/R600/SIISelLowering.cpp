@@ -165,6 +165,9 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::LOAD, MVT::i1, Custom);
 
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8, Legal);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Legal);
+
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
   setOperationAction(ISD::FrameIndex, MVT::i32, Custom);
