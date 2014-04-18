@@ -92,6 +92,7 @@ public:
     return 64;
   }
 
+  unsigned getMaximumUnrollFactor() const override { return 2; }
   /// @}
 };
 
