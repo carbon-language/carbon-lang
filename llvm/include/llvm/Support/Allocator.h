@@ -370,7 +370,7 @@ public:
   ~SpecificBumpPtrAllocator() { DestroyAll(); }
 
   SpecificBumpPtrAllocator &operator=(SpecificBumpPtrAllocator &&RHS) {
-    Allocator = RHS.Allocator;
+    Allocator = std::move(RHS.Allocator);
     return *this;
   }
 
