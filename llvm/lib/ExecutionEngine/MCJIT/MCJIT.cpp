@@ -150,7 +150,8 @@ ObjectBufferStream* MCJIT::emitObject(Module *M) {
 
   // Turn the machine code intermediate representation into bytes in memory
   // that may be executed.
-  if (TM->addPassesToEmitMC(PM, Ctx, CompiledObject->getOStream(), false)) {
+  if (TM->addPassesToEmitMC(PM, Ctx, CompiledObject->getOStream(),
+                            !getVerifyModules())) {
     report_fatal_error("Target does not support MC emission!");
   }
 

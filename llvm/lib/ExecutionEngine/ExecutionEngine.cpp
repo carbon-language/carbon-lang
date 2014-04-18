@@ -66,6 +66,15 @@ ExecutionEngine::ExecutionEngine(Module *M)
   CompilingLazily         = false;
   GVCompilationDisabled   = false;
   SymbolSearchingDisabled = false;
+
+  // IR module verification is enabled by default in debug builds, and disabled
+  // by default in release builds.
+#ifndef NDEBUG
+  VerifyModules = true;
+#else
+  VerifyModules = false;
+#endif
+
   Modules.push_back(M);
   assert(M && "Module is null?");
 }
@@ -483,16 +492,17 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
              << " a different -march switch.\n";
     }
 
-    if (UseMCJIT && ExecutionEngine::MCJITCtor) {
-      ExecutionEngine *EE =
-        ExecutionEngine::MCJITCtor(M, ErrorStr, MCJMM ? MCJMM : JMM,
-                                   AllocateGVsWithCode, TheTM.release());
-      if (EE) return EE;
-    } else if (ExecutionEngine::JITCtor) {
-      ExecutionEngine *EE =
-        ExecutionEngine::JITCtor(M, ErrorStr, JMM,
-                                 AllocateGVsWithCode, TheTM.release());
-      if (EE) return EE;
+    ExecutionEngine *EE = nullptr;
+    if (UseMCJIT && ExecutionEngine::MCJITCtor)
+      EE = ExecutionEngine::MCJITCtor(M, ErrorStr, MCJMM ? MCJMM : JMM,
+                                      AllocateGVsWithCode, TheTM.release());
+    else if (ExecutionEngine::JITCtor)
+      EE = ExecutionEngine::JITCtor(M, ErrorStr, JMM,
+                                    AllocateGVsWithCode, TheTM.release());
+
+    if (EE) {
+      EE->setVerifyModules(VerifyModules);
+      return EE;
     }
   }
 

@@ -123,6 +123,9 @@ class ExecutionEngine {
   /// using dlsym).
   bool SymbolSearchingDisabled;
 
+  /// Whether the JIT should verify IR modules during compilation.
+  bool VerifyModules;
+
   friend class EngineBuilder;  // To allow access to JITCtor and InterpCtor.
 
 protected:
@@ -525,6 +528,17 @@ public:
     return SymbolSearchingDisabled;
   }
 
+  /// Enable/Disable IR module verification.
+  ///
+  /// Note: Module verification is enabled by default in Debug builds, and
+  /// disabled by default in Release. Use this method to override the default.
+  void setVerifyModules(bool Verify) {
+    VerifyModules = Verify;
+  }
+  bool getVerifyModules() const {
+    return VerifyModules;
+  }
+
   /// InstallLazyFunctionCreator - If an unknown function is needed, the
   /// specified function pointer is invoked to create it.  If it returns null,
   /// the JIT will abort.
@@ -572,6 +586,7 @@ private:
   std::string MCPU;
   SmallVector<std::string, 4> MAttrs;
   bool UseMCJIT;
+  bool VerifyModules;
 
   /// InitEngine - Does the common initialization of default options.
   void InitEngine() {
@@ -585,6 +600,14 @@ private:
     RelocModel = Reloc::Default;
     CMModel = CodeModel::JITDefault;
     UseMCJIT = false;
+
+  // IR module verification is enabled by default in debug builds, and disabled
+  // by default in release builds.
+#ifndef NDEBUG
+  VerifyModules = true;
+#else
+  VerifyModules = false;
+#endif
   }
 
 public:
@@ -691,6 +714,13 @@ public:
   /// (experimental).
   EngineBuilder &setUseMCJIT(bool Value) {
     UseMCJIT = Value;
+    return *this;
+  }
+
+  /// setVerifyModules - Set whether the JIT implementation should verify
+  /// IR modules during compilation.
+  EngineBuilder &setVerifyModules(bool Verify) {
+    VerifyModules = Verify;
     return *this;
   }
 
