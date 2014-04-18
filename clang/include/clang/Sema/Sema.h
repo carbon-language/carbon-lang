@@ -7083,13 +7083,13 @@ public:
     PSK_CodeSeg,
   };
 
-  enum PragmaSectionFlag {
+  enum PragmaSectionFlag : unsigned {
     PSF_None = 0,
     PSF_Read = 0x1,
     PSF_Write = 0x2,
     PSF_Execute = 0x4,
     PSF_Implicit = 0x8,
-    PSF_Invalid = 0x80000000,
+    PSF_Invalid = 0x80000000U,
   };
 
   struct SectionInfo {
