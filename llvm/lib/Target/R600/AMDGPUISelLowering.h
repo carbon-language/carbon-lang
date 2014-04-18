@@ -41,7 +41,7 @@ private:
   /// of the same bitwidth.
   SDValue MergeVectorStore(const SDValue &Op, SelectionDAG &DAG) const;
   /// \brief Split a vector store into multiple scalar stores.
-  /// \returns The resulting chain. 
+  /// \returns The resulting chain.
   SDValue LowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG) const;
 

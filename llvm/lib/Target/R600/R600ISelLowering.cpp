@@ -1391,8 +1391,7 @@ SDValue R600TargetLowering::LowerFormalArguments(
 
   SmallVector<ISD::InputArg, 8> LocalIns;
 
-  getOriginalFunctionArgs(DAG, DAG.getMachineFunction().getFunction(), Ins,
-                          LocalIns);
+  getOriginalFunctionArgs(DAG, MF.getFunction(), Ins, LocalIns);
 
   AnalyzeFormalArguments(CCInfo, LocalIns);
 
@@ -1427,28 +1426,29 @@ SDValue R600TargetLowering::LowerFormalArguments(
                                  DAG.getConstant(36 + VA.getLocMemOffset(), MVT::i32),
                                  MachinePointerInfo(UndefValue::get(PtrTy)),
                                  MemVT, false, false, 4);
-    // 4 is the preferred alignment for
-    // the CONSTANT memory space.
+
+    // 4 is the preferred alignment for the CONSTANT memory space.
     InVals.push_back(Arg);
   }
   return Chain;
 }
 
 EVT R600TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
-   if (!VT.isVector()) return MVT::i32;
+   if (!VT.isVector())
+     return MVT::i32;
    return VT.changeVectorElementTypeToInteger();
 }
 
-static SDValue
-CompactSwizzlableVector(SelectionDAG &DAG, SDValue VectorEntry,
-                        DenseMap<unsigned, unsigned> &RemapSwizzle) {
+static SDValue CompactSwizzlableVector(
+  SelectionDAG &DAG, SDValue VectorEntry,
+  DenseMap<unsigned, unsigned> &RemapSwizzle) {
   assert(VectorEntry.getOpcode() == ISD::BUILD_VECTOR);
   assert(RemapSwizzle.empty());
   SDValue NewBldVec[4] = {
-      VectorEntry.getOperand(0),
-      VectorEntry.getOperand(1),
-      VectorEntry.getOperand(2),
-      VectorEntry.getOperand(3)
+    VectorEntry.getOperand(0),
+    VectorEntry.getOperand(1),
+    VectorEntry.getOperand(2),
+    VectorEntry.getOperand(3)
   };
 
   for (unsigned i = 0; i < 4; i++) {
@@ -1479,7 +1479,7 @@ CompactSwizzlableVector(SelectionDAG &DAG, SDValue VectorEntry,
   }
 
   return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(VectorEntry),
-      VectorEntry.getValueType(), NewBldVec, 4);
+                     VectorEntry.getValueType(), NewBldVec, 4);
 }
 
 static SDValue ReorganizeVector(SelectionDAG &DAG, SDValue VectorEntry,

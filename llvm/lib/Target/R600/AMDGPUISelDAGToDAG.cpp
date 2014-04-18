@@ -16,15 +16,9 @@
 #include "AMDGPURegisterInfo.h"
 #include "R600InstrInfo.h"
 #include "SIISelLowering.h"
-#include "llvm/Analysis/ValueTracking.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "llvm/IR/ValueMap.h"
-#include "llvm/Support/Compiler.h"
-#include <list>
-#include <queue>
 
 using namespace llvm;
 
@@ -78,8 +72,8 @@ private:
 
   const TargetRegisterClass *getOperandRegClass(SDNode *N, unsigned OpNo) const;
   bool SelectGlobalValueConstantOffset(SDValue Addr, SDValue& IntPtr);
-  bool SelectGlobalValueVariableOffset(SDValue Addr,
-      SDValue &BaseReg, SDValue& Offset);
+  bool SelectGlobalValueVariableOffset(SDValue Addr, SDValue &BaseReg,
+                                       SDValue& Offset);
   bool SelectADDRVTX_READ(SDValue Addr, SDValue &Base, SDValue &Offset);
   bool SelectADDRIndirect(SDValue Addr, SDValue &Base, SDValue &Offset);
 
@@ -90,8 +84,7 @@ private:
 
 /// \brief This pass converts a legalized DAG into a AMDGPU-specific
 // DAG, ready for instruction scheduling.
-FunctionPass *llvm::createAMDGPUISelDag(TargetMachine &TM
-                                       ) {
+FunctionPass *llvm::createAMDGPUISelDag(TargetMachine &TM) {
   return new AMDGPUDAGToDAGISel(TM);
 }
 
@@ -114,26 +107,27 @@ bool AMDGPUDAGToDAGISel::isInlineImmediate(SDNode *N) const {
 /// determined.
 const TargetRegisterClass *AMDGPUDAGToDAGISel::getOperandRegClass(SDNode *N,
                                                           unsigned OpNo) const {
-  if (!N->isMachineOpcode()) {
-    return NULL;
-  }
+  if (!N->isMachineOpcode())
+    return nullptr;
+
   switch (N->getMachineOpcode()) {
   default: {
     const MCInstrDesc &Desc = TM.getInstrInfo()->get(N->getMachineOpcode());
     unsigned OpIdx = Desc.getNumDefs() + OpNo;
     if (OpIdx >= Desc.getNumOperands())
-      return NULL;
+      return nullptr;
     int RegClass = Desc.OpInfo[OpIdx].RegClass;
-    if (RegClass == -1) {
-      return NULL;
-    }
+    if (RegClass == -1)
+      return nullptr;
+
     return TM.getRegisterInfo()->getRegClass(RegClass);
   }
   case AMDGPU::REG_SEQUENCE: {
-    const TargetRegisterClass *SuperRC = TM.getRegisterInfo()->getRegClass(
-                      cast<ConstantSDNode>(N->getOperand(0))->getZExtValue());
-    unsigned SubRegIdx =
-            dyn_cast<ConstantSDNode>(N->getOperand(OpNo + 1))->getZExtValue();
+    unsigned RCID = cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
+    const TargetRegisterClass *SuperRC = TM.getRegisterInfo()->getRegClass(RCID);
+
+    SDValue SubRegOp = N->getOperand(OpNo + 1);
+    unsigned SubRegIdx = cast<ConstantSDNode>(SubRegOp)->getZExtValue();
     return TM.getRegisterInfo()->getSubClassWithSubReg(SuperRC, SubRegIdx);
   }
   }
@@ -144,7 +138,7 @@ SDValue AMDGPUDAGToDAGISel::getSmallIPtrImm(unsigned int Imm) {
 }
 
 bool AMDGPUDAGToDAGISel::SelectADDRParam(
-    SDValue Addr, SDValue& R1, SDValue& R2) {
+  SDValue Addr, SDValue& R1, SDValue& R2) {
 
   if (Addr.getOpcode() == ISD::FrameIndex) {
     if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
@@ -201,7 +195,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   unsigned int Opc = N->getOpcode();
   if (N->isMachineOpcode()) {
     N->setNodeId(-1);
-    return NULL;   // Already selected.
+    return nullptr;   // Already selected.
   }
 
   const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
@@ -469,21 +463,22 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
 }
 
 
-bool AMDGPUDAGToDAGISel::checkType(const Value *ptr, unsigned int addrspace) {
-  assert(addrspace != 0 && "Use checkPrivateAddress instead.");
-  if (!ptr) {
+bool AMDGPUDAGToDAGISel::checkType(const Value *Ptr, unsigned AS) {
+  assert(AS != 0 && "Use checkPrivateAddress instead.");
+  if (!Ptr)
     return false;
-  }
-  Type *ptrType = ptr->getType();
-  return dyn_cast<PointerType>(ptrType)->getAddressSpace() == addrspace;
+
+  return Ptr->getType()->getPointerAddressSpace() == AS;
 }
 
 bool AMDGPUDAGToDAGISel::checkPrivateAddress(const MachineMemOperand *Op) {
-  if (Op->getPseudoValue()) return true;
-  const Value *ptr = Op->getValue();
-  if (!ptr) return false;
-  PointerType *ptrType = dyn_cast<PointerType>(ptr->getType());
-  return ptrType->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS;
+  if (Op->getPseudoValue())
+    return true;
+
+  if (PointerType *PT = dyn_cast<PointerType>(Op->getValue()->getType()))
+    return PT->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS;
+
+  return false;
 }
 
 bool AMDGPUDAGToDAGISel::isGlobalStore(const StoreSDNode *N) {
@@ -491,11 +486,10 @@ bool AMDGPUDAGToDAGISel::isGlobalStore(const StoreSDNode *N) {
 }
 
 bool AMDGPUDAGToDAGISel::isPrivateStore(const StoreSDNode *N) {
-  return (!checkType(N->getMemOperand()->getValue(), AMDGPUAS::LOCAL_ADDRESS)
-          && !checkType(N->getMemOperand()->getValue(),
-                        AMDGPUAS::GLOBAL_ADDRESS)
-          && !checkType(N->getMemOperand()->getValue(),
-                        AMDGPUAS::REGION_ADDRESS));
+  const Value *MemVal = N->getMemOperand()->getValue();
+  return (!checkType(MemVal, AMDGPUAS::LOCAL_ADDRESS) &&
+          !checkType(MemVal, AMDGPUAS::GLOBAL_ADDRESS) &&
+          !checkType(MemVal, AMDGPUAS::REGION_ADDRESS));
 }
 
 bool AMDGPUDAGToDAGISel::isLocalStore(const StoreSDNode *N) {
@@ -507,12 +501,11 @@ bool AMDGPUDAGToDAGISel::isRegionStore(const StoreSDNode *N) {
 }
 
 bool AMDGPUDAGToDAGISel::isConstantLoad(const LoadSDNode *N, int CbId) const {
-  if (CbId == -1) {
-    return checkType(N->getMemOperand()->getValue(),
-                     AMDGPUAS::CONSTANT_ADDRESS);
-  }
-  return checkType(N->getMemOperand()->getValue(),
-                   AMDGPUAS::CONSTANT_BUFFER_0 + CbId);
+  const Value *MemVal = N->getMemOperand()->getValue();
+  if (CbId == -1)
+    return checkType(MemVal, AMDGPUAS::CONSTANT_ADDRESS);
+
+  return checkType(MemVal, AMDGPUAS::CONSTANT_BUFFER_0 + CbId);
 }
 
 bool AMDGPUDAGToDAGISel::isGlobalLoad(const LoadSDNode *N) const {
@@ -559,12 +552,14 @@ bool AMDGPUDAGToDAGISel::isPrivateLoad(const LoadSDNode *N) const {
       return false;
     }
   }
-  if (!checkType(N->getMemOperand()->getValue(), AMDGPUAS::LOCAL_ADDRESS)
-      && !checkType(N->getMemOperand()->getValue(), AMDGPUAS::GLOBAL_ADDRESS)
-      && !checkType(N->getMemOperand()->getValue(), AMDGPUAS::REGION_ADDRESS)
-      && !checkType(N->getMemOperand()->getValue(), AMDGPUAS::CONSTANT_ADDRESS)
-      && !checkType(N->getMemOperand()->getValue(), AMDGPUAS::PARAM_D_ADDRESS)
-      && !checkType(N->getMemOperand()->getValue(), AMDGPUAS::PARAM_I_ADDRESS)){
+
+  const Value *MemVal = N->getMemOperand()->getValue();
+  if (!checkType(MemVal, AMDGPUAS::LOCAL_ADDRESS) &&
+      !checkType(MemVal, AMDGPUAS::GLOBAL_ADDRESS) &&
+      !checkType(MemVal, AMDGPUAS::REGION_ADDRESS) &&
+      !checkType(MemVal, AMDGPUAS::CONSTANT_ADDRESS) &&
+      !checkType(MemVal, AMDGPUAS::PARAM_D_ADDRESS) &&
+      !checkType(MemVal, AMDGPUAS::PARAM_I_ADDRESS)){
     return true;
   }
   return false;
@@ -584,7 +579,7 @@ const char *AMDGPUDAGToDAGISel::getPassName() const {
 //===----------------------------------------------------------------------===//
 
 bool AMDGPUDAGToDAGISel::SelectGlobalValueConstantOffset(SDValue Addr,
-    SDValue& IntPtr) {
+                                                         SDValue& IntPtr) {
   if (ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(Addr)) {
     IntPtr = CurDAG->getIntPtrConstant(Cst->getZExtValue() / 4, true);
     return true;
@@ -594,7 +589,7 @@ bool AMDGPUDAGToDAGISel::SelectGlobalValueConstantOffset(SDValue Addr,
 
 bool AMDGPUDAGToDAGISel::SelectGlobalValueVariableOffset(SDValue Addr,
     SDValue& BaseReg, SDValue &Offset) {
-  if (!dyn_cast<ConstantSDNode>(Addr)) {
+  if (!isa<ConstantSDNode>(Addr)) {
     BaseReg = Addr;
     Offset = CurDAG->getIntPtrConstant(0, true);
     return true;
@@ -604,7 +599,7 @@ bool AMDGPUDAGToDAGISel::SelectGlobalValueVariableOffset(SDValue Addr,
 
 bool AMDGPUDAGToDAGISel::SelectADDRVTX_READ(SDValue Addr, SDValue &Base,
                                            SDValue &Offset) {
-  ConstantSDNode * IMMOffset;
+  ConstantSDNode *IMMOffset;
 
   if (Addr.getOpcode() == ISD::ADD
       && (IMMOffset = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
@@ -650,7 +645,7 @@ bool AMDGPUDAGToDAGISel::SelectADDRIndirect(SDValue Addr, SDValue &Base,
 
 void AMDGPUDAGToDAGISel::PostprocessISelDAG() {
   const AMDGPUTargetLowering& Lowering =
-    (*(const AMDGPUTargetLowering*)getTargetLowering());
+    *static_cast<const AMDGPUTargetLowering*>(getTargetLowering());
   bool IsModified = false;
   do {
     IsModified = false;
