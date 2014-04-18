@@ -146,7 +146,7 @@ public:
     endian::Writer<little> LE(Out);
 
     // Emit the payload of the table.
-    for (size_t I = 0; I < NumBuckets; ++I) {
+    for (offset_type I = 0; I < NumBuckets; ++I) {
       Bucket &B = Buckets[I];
       if (!B.Head)
         continue;
@@ -179,7 +179,7 @@ public:
     // Emit the hashtable itself.
     LE.write<offset_type>(NumBuckets);
     LE.write<offset_type>(NumEntries);
-    for (size_t I = 0; I < NumBuckets; ++I)
+    for (offset_type I = 0; I < NumBuckets; ++I)
       LE.write<offset_type>(Buckets[I].Off);
 
     return TableOff;
