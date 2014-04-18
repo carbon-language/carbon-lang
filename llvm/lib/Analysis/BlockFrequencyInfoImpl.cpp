@@ -258,7 +258,7 @@ std::pair<uint64_t, int16_t> PositiveFloatBase::divide64(uint64_t Dividend,
 
     // Divide.
     bool DoesDivide = IsOverflow || Divisor <= Dividend;
-    Quotient = (Quotient << 1) | DoesDivide;
+    Quotient = (Quotient << 1) | uint64_t(DoesDivide);
     Dividend -= DoesDivide ? Divisor : 0;
   }
 
@@ -382,7 +382,7 @@ struct LoopStack {
   void push(const BlockNode &LoopHead, const BlockNode &LatestBackedge) {
     assert(LoopHead.isValid());
     assert(LatestBackedge.isValid());
-    OpenLoops.push_back({LoopHead, LatestBackedge});
+    OpenLoops.emplace_back(LoopHead, LatestBackedge);
   }
   void pop(const BlockNode &FinishedNode) {
     while (!empty() && top().LatestBackedge <= FinishedNode)
