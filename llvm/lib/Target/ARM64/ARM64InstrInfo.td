@@ -173,6 +173,7 @@ def ARM64urshri : SDNode<"ARM64ISD::URSHR_I", SDT_ARM64vshift>;
 
 def ARM64not: SDNode<"ARM64ISD::NOT", SDT_ARM64unvec>;
 def ARM64bit: SDNode<"ARM64ISD::BIT", SDT_ARM64trivec>;
+def ARM64bsl: SDNode<"ARM64ISD::BSL", SDT_ARM64trivec>;
 
 def ARM64cmeq: SDNode<"ARM64ISD::CMEQ", SDT_ARM64binvec>;
 def ARM64cmge: SDNode<"ARM64ISD::CMGE", SDT_ARM64binvec>;
@@ -2370,6 +2371,24 @@ defm EOR : SIMDLogicalThreeVector<1, 0b00, "eor", xor>;
 defm ORN : SIMDLogicalThreeVector<0, 0b11, "orn",
                                   BinOpFrag<(or node:$LHS, (vnot node:$RHS))> >;
 defm ORR : SIMDLogicalThreeVector<0, 0b10, "orr", or>;
+
+def : Pat<(ARM64bsl (v8i8 V64:$Rd), V64:$Rn, V64:$Rm),
+          (BSLv8i8 V64:$Rd, V64:$Rn, V64:$Rm)>;
+def : Pat<(ARM64bsl (v4i16 V64:$Rd), V64:$Rn, V64:$Rm),
+          (BSLv8i8 V64:$Rd, V64:$Rn, V64:$Rm)>;
+def : Pat<(ARM64bsl (v2i32 V64:$Rd), V64:$Rn, V64:$Rm),
+          (BSLv8i8 V64:$Rd, V64:$Rn, V64:$Rm)>;
+def : Pat<(ARM64bsl (v1i64 V64:$Rd), V64:$Rn, V64:$Rm),
+          (BSLv8i8 V64:$Rd, V64:$Rn, V64:$Rm)>;
+
+def : Pat<(ARM64bsl (v16i8 V128:$Rd), V128:$Rn, V128:$Rm),
+          (BSLv16i8 V128:$Rd, V128:$Rn, V128:$Rm)>;
+def : Pat<(ARM64bsl (v8i16 V128:$Rd), V128:$Rn, V128:$Rm),
+          (BSLv16i8 V128:$Rd, V128:$Rn, V128:$Rm)>;
+def : Pat<(ARM64bsl (v4i32 V128:$Rd), V128:$Rn, V128:$Rm),
+          (BSLv16i8 V128:$Rd, V128:$Rn, V128:$Rm)>;
+def : Pat<(ARM64bsl (v2i64 V128:$Rd), V128:$Rn, V128:$Rm),
+          (BSLv16i8 V128:$Rd, V128:$Rn, V128:$Rm)>;
 
 // FIXME: the .16b and .8b variantes should be emitted by the
 // AsmWriter. TableGen's AsmWriter-generator doesn't deal with variant syntaxes

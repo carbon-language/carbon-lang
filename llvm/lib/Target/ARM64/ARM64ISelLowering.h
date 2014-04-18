@@ -87,6 +87,10 @@ enum {
   BICi,
   ORRi,
 
+  // Vector bit select: similar to ISD::VSELECT but not all bits within an
+  // element must be identical.
+  BSL,
+
   // Vector arithmetic negation
   NEG,
 

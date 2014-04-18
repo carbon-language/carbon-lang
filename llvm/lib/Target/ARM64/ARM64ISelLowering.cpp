@@ -635,6 +635,7 @@ const char *ARM64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARM64ISD::MVNImsl:           return "ARM64ISD::MVNImsl";
   case ARM64ISD::BICi:              return "ARM64ISD::BICi";
   case ARM64ISD::ORRi:              return "ARM64ISD::ORRi";
+  case ARM64ISD::BSL:               return "ARM64ISD::BSL";
   case ARM64ISD::NEG:               return "ARM64ISD::NEG";
   case ARM64ISD::EXTR:              return "ARM64ISD::EXTR";
   case ARM64ISD::ZIP1:              return "ARM64ISD::ZIP1";
@@ -5924,6 +5925,53 @@ static SDValue tryCombineToEXTR(SDNode *N,
                      DAG.getConstant(ShiftRHS, MVT::i64));
 }
 
+static SDValue tryCombineToBSL(SDNode *N,
+                                TargetLowering::DAGCombinerInfo &DCI) {
+  EVT VT = N->getValueType(0);
+  SelectionDAG &DAG = DCI.DAG;
+  SDLoc DL(N);
+
+  if (!VT.isVector())
+    return SDValue();
+
+  SDValue N0 = N->getOperand(0);
+  if (N0.getOpcode() != ISD::AND)
+    return SDValue();
+
+  SDValue N1 = N->getOperand(1);
+  if (N1.getOpcode() != ISD::AND)
+    return SDValue();
+
+  // We only have to look for constant vectors here since the general, variable
+  // case can be handled in TableGen.
+  unsigned Bits = VT.getVectorElementType().getSizeInBits();
+  uint64_t BitMask = Bits == 64 ? -1ULL : ((1ULL << Bits) - 1);
+  for (int i = 1; i >= 0; --i)
+    for (int j = 1; j >= 0; --j) {
+      BuildVectorSDNode *BVN0 = dyn_cast<BuildVectorSDNode>(N0->getOperand(i));
+      BuildVectorSDNode *BVN1 = dyn_cast<BuildVectorSDNode>(N1->getOperand(j));
+      if (!BVN0 || !BVN1)
+        continue;
+
+      bool FoundMatch = true;
+      for (unsigned k = 0; k < VT.getVectorNumElements(); ++k) {
+        ConstantSDNode *CN0 = dyn_cast<ConstantSDNode>(BVN0->getOperand(k));
+        ConstantSDNode *CN1 = dyn_cast<ConstantSDNode>(BVN1->getOperand(k));
+        if (!CN0 || !CN1 ||
+            CN0->getZExtValue() != (BitMask & ~CN1->getZExtValue())) {
+          FoundMatch = false;
+          break;
+        }
+      }
+
+      if (FoundMatch)
+        return DAG.getNode(ARM64ISD::BSL, DL, VT, SDValue(BVN0, 0),
+                           N0->getOperand(1 - i), N1->getOperand(1 - j));
+    }
+
+  return SDValue();
+}
+
 static SDValue performORCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
                                 const ARM64Subtarget *Subtarget) {
   // Attempt to form an EXTR from (or (shl VAL1, #N), (srl VAL2, #RegWidth-N))
@@ -5936,6 +5984,10 @@ static SDValue performORCombine(SDNode *N, TargetLowering::DAGCombinerInfo &DCI,
     return SDValue();
 
   SDValue Res = tryCombineToEXTR(N, DCI);
+  if (Res.getNode())
+    return Res;
+
+  Res = tryCombineToBSL(N, DCI);
   if (Res.getNode())
     return Res;
 

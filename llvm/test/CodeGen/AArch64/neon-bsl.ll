@@ -1,4 +1,6 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has no equivalent vbsl intrinsic, always using the and/or IR. The final
+; two tests are duplicated by ARM64's vselect.ll test.
 
 declare <2 x double> @llvm.arm.neon.vbsl.v2f64(<2 x double>, <2 x double>, <2 x double>)
 
