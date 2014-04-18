@@ -487,7 +487,7 @@ const unsigned PGOHash::TooBig;
     /// The map of statements to count values.
     llvm::DenseMap<const Stmt *, uint64_t> &CountMap;
 
-    /// BreakContinueStack - Keep counts of breaks and continues inside loops. 
+    /// BreakContinueStack - Keep counts of breaks and continues inside loops.
     struct BreakContinue {
       uint64_t BreakCount;
       uint64_t ContinueCount;
