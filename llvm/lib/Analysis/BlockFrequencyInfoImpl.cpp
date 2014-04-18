@@ -369,38 +369,6 @@ typedef BlockFrequencyInfoImplBase::PackagedLoopData PackagedLoopData;
 typedef BlockFrequencyInfoImplBase::Weight Weight;
 typedef BlockFrequencyInfoImplBase::FrequencyData FrequencyData;
 
-/// \brief Stack entry describing a loop.
-struct LoopStackEntry {
-  BlockNode LoopHead;
-  BlockNode LatestBackedge;
-};
-
-/// \brief Stack describing currently open loops.
-struct LoopStack {
-  std::vector<LoopStackEntry> OpenLoops;
-
-  void push(const BlockNode &LoopHead, const BlockNode &LatestBackedge) {
-    assert(LoopHead.isValid());
-    assert(LatestBackedge.isValid());
-    OpenLoops.emplace_back(LoopHead, LatestBackedge);
-  }
-  void pop(const BlockNode &FinishedNode) {
-    while (!empty() && top().LatestBackedge <= FinishedNode)
-      OpenLoops.pop_back();
-  }
-  bool empty() const { return OpenLoops.empty(); }
-  const LoopStackEntry &top() const {
-    assert(!OpenLoops.empty());
-    return OpenLoops.back();
-  }
-  void adjustAfterFinishing(const BlockNode &Current,
-                            const BlockNode &LatestBackedge) {
-    pop(Current);
-    if (LatestBackedge.isValid() && LatestBackedge > Current)
-      push(Current, LatestBackedge);
-  }
-};
-
 /// \brief Dithering mass distributer.
 ///
 /// This class splits up a single mass into portions by weight, dithering to
