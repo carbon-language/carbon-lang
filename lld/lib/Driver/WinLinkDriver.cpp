@@ -1062,6 +1062,11 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       } else if (auto *hs = dyn_cast<moduledef::Heapsize>(dir.getValue())) {
         ctx.setHeapReserve(hs->getReserve());
         ctx.setHeapCommit(hs->getCommit());
+      } else if (auto *lib = dyn_cast<moduledef::Library>(dir.getValue())) {
+        ctx.setIsDll(true);
+        ctx.setOutputPath(ctx.allocate(lib->getName()));
+        if (lib->getBaseAddress() && !ctx.getBaseAddress())
+          ctx.setBaseAddress(lib->getBaseAddress());
       } else if (auto *name = dyn_cast<moduledef::Name>(dir.getValue())) {
         if (!name->getOutputPath().empty() && ctx.outputPath().empty())
           ctx.setOutputPath(ctx.allocate(name->getOutputPath()));

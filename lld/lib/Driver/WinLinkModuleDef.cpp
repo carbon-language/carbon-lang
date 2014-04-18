@@ -52,6 +52,7 @@ Token Lexer::lex() {
                     .Case("DATA", Kind::kw_data)
                     .Case("EXPORTS", Kind::kw_exports)
                     .Case("HEAPSIZE", Kind::kw_heapsize)
+                    .Case("LIBRARY", Kind::kw_library)
                     .Case("NAME", Kind::kw_name)
                     .Case("NONAME", Kind::kw_noname)
                     .Case("STACKSIZE", Kind::kw_stacksize)
@@ -123,6 +124,14 @@ llvm::Optional<Directive *> Parser::parse() {
     if (!parseMemorySize(reserve, commit))
       return llvm::None;
     return new (_alloc) Heapsize(reserve, commit);
+  }
+  case Kind::kw_library: {
+    // LIBRARY
+    std::string name;
+    uint64_t baseaddr;
+    if (!parseName(name, baseaddr))
+      return llvm::None;
+    return new (_alloc) Library(name, baseaddr);
   }
   case Kind::kw_stacksize: {
     // STACKSIZE
