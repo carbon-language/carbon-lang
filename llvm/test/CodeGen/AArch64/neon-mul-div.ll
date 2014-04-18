@@ -1,5 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
-
+; arm64 has its own copy of this because of the intrinsics
 
 define <8 x i8> @mul8xi8(<8 x i8> %A, <8 x i8> %B) {
 ;CHECK: mul {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b

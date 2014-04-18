@@ -1,5 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon -fp-contract=fast | FileCheck %s
-
+; arm64 has a separate copy of these in aarch64-neon-misc.ll due to different intrinsics.
 
 define <8 x i8> @test_vrev16_s8(<8 x i8> %a) #0 {
 ; CHECK: rev16 v{{[0-9]+}}.8b, v{{[0-9]+}}.8b

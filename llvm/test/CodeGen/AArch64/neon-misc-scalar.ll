@@ -1,4 +1,5 @@
 ;RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 already has copies of these tests (scattered).
 
 declare <1 x i64> @llvm.arm.neon.vqneg.v1i64(<1 x i64>)
 

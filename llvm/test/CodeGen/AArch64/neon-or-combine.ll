@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; RUN: llc < %s -mtriple=arm64-none-linux-gnu -mattr=+neon | FileCheck %s
 
 ; Check that the DAGCombiner does not crash with an assertion failure
 ; when performing a target specific combine to simplify a 'or' dag node

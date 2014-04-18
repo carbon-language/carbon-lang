@@ -1,5 +1,6 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon -mattr=+crypto | FileCheck %s
 ; RUN: not llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon 2>&1 | FileCheck --check-prefix=CHECK-NO-CRYPTO %s
+; arm64 has a separate test for this, covering the same features (crypto.ll). N.b. NO-CRYPTO will need porting.
 
 declare <4 x i32> @llvm.arm.neon.sha256su1(<4 x i32>, <4 x i32>, <4 x i32>) #1
 

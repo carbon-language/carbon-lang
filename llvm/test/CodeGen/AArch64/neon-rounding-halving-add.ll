@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; Just intrinsic calls: arm64 has similar in vhadd.ll
 
 declare <8 x i8> @llvm.arm.neon.vrhaddu.v8i8(<8 x i8>, <8 x i8>)
 declare <8 x i8> @llvm.arm.neon.vrhadds.v8i8(<8 x i8>, <8 x i8>)

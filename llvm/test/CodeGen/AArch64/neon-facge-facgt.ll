@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; arm64 has duplicates for this functionality in vcmp.ll.
 
 declare <2 x i32> @llvm.arm.neon.vacge.v2i32.v2f32(<2 x float>, <2 x float>)
 declare <4 x i32> @llvm.arm.neon.vacge.v4i32.v4f32(<4 x float>, <4 x float>)

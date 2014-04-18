@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; These duplicate tests in arm64's vmax.ll
 
 declare <8 x i8> @llvm.arm.neon.vmaxs.v8i8(<8 x i8>, <8 x i8>)
 declare <8 x i8> @llvm.arm.neon.vmaxu.v8i8(<8 x i8>, <8 x i8>)

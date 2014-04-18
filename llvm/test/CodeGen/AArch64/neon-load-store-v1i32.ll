@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 does not use these pseudo-vectors, and they're not blessed by the PCS. Skipping.
 
 ; Test load/store of v1i8, v1i16, v1i32 types can be selected correctly
 define void @load.store.v1i8(<1 x i8>* %ptr, <1 x i8>* %ptr2) {

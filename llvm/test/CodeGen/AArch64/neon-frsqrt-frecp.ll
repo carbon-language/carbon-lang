@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon  | FileCheck %s
+; arm64 has a duplicate for all these tests in vsqrt.ll
 
 ; Set of tests for when the intrinsic is used.
 
