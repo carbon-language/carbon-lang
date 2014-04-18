@@ -123,8 +123,13 @@ public:
   /// will be false to indicate that this (sub)module is not available.
   SmallVector<Requirement, 2> Requirements;
 
-  /// \brief Whether this module is available in the current
-  /// translation unit.
+  /// \brief Whether this module is missing a feature from \c Requirements.
+  unsigned IsMissingRequirement : 1;
+
+  /// \brief Whether this module is available in the current translation unit.
+  ///
+  /// If the module is missing headers or does not meet all requirements then
+  /// this bit will be 0.
   unsigned IsAvailable : 1;
 
   /// \brief Whether this module was loaded from a module file.
@@ -406,6 +411,9 @@ public:
   void addRequirement(StringRef Feature, bool RequiredState,
                       const LangOptions &LangOpts,
                       const TargetInfo &Target);
+
+  /// \brief Mark this module and all of its submodules as unavailable.
+  void markUnavailable();
 
   /// \brief Find the submodule with the given name.
   ///

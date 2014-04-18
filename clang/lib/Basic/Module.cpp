@@ -160,6 +160,11 @@ void Module::addRequirement(StringRef Feature, bool RequiredState,
   if (hasFeature(Feature, LangOpts, Target) == RequiredState)
     return;
 
+  IsMissingRequirement = true;
+  markUnavailable();
+}
+
+void Module::markUnavailable() {
   if (!IsAvailable)
     return;
 

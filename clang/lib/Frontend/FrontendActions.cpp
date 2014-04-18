@@ -288,7 +288,8 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   if (!Module->isAvailable(CI.getLangOpts(), CI.getTarget(), Requirement,
                            MissingHeader)) {
     if (MissingHeader.FileNameLoc.isValid()) {
-      CI.getDiagnostics().Report(diag::err_module_header_missing)
+      CI.getDiagnostics().Report(MissingHeader.FileNameLoc,
+                                 diag::err_module_header_missing)
         << MissingHeader.IsUmbrella << MissingHeader.FileName;
     } else {
       CI.getDiagnostics().Report(diag::err_module_unavailable)

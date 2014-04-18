@@ -15,3 +15,11 @@ module missing_headers {
   module missing { header "missing.h" }
   module not_missing { header "not_missing.h" }
 }
+
+module missing_unavailable_headers {
+  module missing {
+    requires !objc
+    header "missing.h"
+  }
+  module not_missing { }
+}

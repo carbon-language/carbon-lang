@@ -32,8 +32,3 @@ extern MyTypeA import_self_test_a; // expected-error {{must be imported from mod
 // expected-note@import-self-a.h:1 {{here}}
 extern MyTypeC import_self_test_c;
 extern MyTypeD import_self_test_d;
-
-// expected-error@Inputs/submodules/module.map:15{{header 'missing.h' not found}}
-@import missing_headers.missing;
-@import missing_headers.not_missing;
-void f() { NotMissingFunction(); };
