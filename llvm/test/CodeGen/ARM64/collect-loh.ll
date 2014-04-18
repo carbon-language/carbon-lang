@@ -1,4 +1,10 @@
 ; RUN: llc -mtriple=arm64-apple-ios -O2 -arm64-collect-loh -arm64-collect-loh-bb-only=false < %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm64-linux-gnu -O2 -arm64-collect-loh -arm64-collect-loh-bb-only=false < %s -o - | FileCheck %s --check-prefix=CHECK-ELF
+
+; CHECK-ELF-NOT: .loh
+; CHECK-ELF-NOT: AdrpAdrp
+; CHECK-ELF-NOT: AdrpAdd
+; CHECK-ELF-NOT: AdrpLdrGot
 
 @a = internal unnamed_addr global i32 0, align 4
 @b = external global i32

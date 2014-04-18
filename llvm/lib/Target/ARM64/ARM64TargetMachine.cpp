@@ -165,7 +165,8 @@ bool ARM64PassConfig::addPreEmitPass() {
   // Relax conditional branch instructions if they're otherwise out of
   // range of their destination.
   addPass(createARM64BranchRelaxation());
-  if (TM->getOptLevel() != CodeGenOpt::None && EnableCollectLOH)
+  if (TM->getOptLevel() != CodeGenOpt::None && EnableCollectLOH &&
+      TM->getSubtarget<ARM64Subtarget>().isTargetMachO())
     addPass(createARM64CollectLOHPass());
   return true;
 }
