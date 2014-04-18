@@ -1,7 +1,8 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-LE %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-AARCH64 --check-prefix=CHECK-LE %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-ARM64 %s
 
 %myStruct = type { i64 , i8, i32 }
 
@@ -18,7 +19,7 @@ define void @take_i8s(i8 %val1, i8 %val2) {
     store i8 %val2, i8* @var8
     ; Not using w1 may be technically allowed, but it would indicate a
     ; problem in itself.
-;  CHECK: strb w1, [{{x[0-9]+}}, #:lo12:var8]
+;  CHECK: strb w1, [{{x[0-9]+}}, {{#?}}:lo12:var8]
     ret void
 }
 
@@ -28,7 +29,7 @@ define void @add_floats(float %val1, float %val2) {
 ; CHECK: fadd [[ADDRES:s[0-9]+]], s0, s1
 ; CHECK-NOFP-NOT: fadd
     store float %newval, float* @varfloat
-; CHECK: str [[ADDRES]], [{{x[0-9]+}}, #:lo12:varfloat]
+; CHECK: str [[ADDRES]], [{{x[0-9]+}}, {{#?}}:lo12:varfloat]
     ret void
 }
 
@@ -43,12 +44,12 @@ define void @take_struct(%myStruct* byval %structval) {
     ; Some weird move means x0 is used for one access
 ; CHECK: ldr [[REG32:w[0-9]+]], [{{x[0-9]+|sp}}, #12]
     store volatile i32 %val0, i32* @var32
-; CHECK: str [[REG32]], [{{x[0-9]+}}, #:lo12:var32]
+; CHECK: str [[REG32]], [{{x[0-9]+}}, {{#?}}:lo12:var32]
 
     %val1 = load volatile i64* %addr1
 ; CHECK: ldr [[REG64:x[0-9]+]], [{{x[0-9]+|sp}}]
     store volatile i64 %val1, i64* @var64
-; CHECK: str [[REG64]], [{{x[0-9]+}}, #:lo12:var64]
+; CHECK: str [[REG64]], [{{x[0-9]+}}, {{#?}}:lo12:var64]
 
     ret void
 }
@@ -62,15 +63,16 @@ define void @check_byval_align(i32* byval %ignore, %myStruct* byval align 16 %st
 
     %val0 = load volatile i32* %addr0
     ; Some weird move means x0 is used for one access
-; CHECK: add x[[STRUCTVAL_ADDR:[0-9]+]], sp, #16
-; CHECK: ldr [[REG32:w[0-9]+]], [x[[STRUCTVAL_ADDR]], #12]
+; CHECK-AARCH64: add x[[STRUCTVAL_ADDR:[0-9]+]], sp, #16
+; CHECK-AARCH64: ldr [[REG32:w[0-9]+]], [x[[STRUCTVAL_ADDR]], #12]
+; CHECK-ARM64: ldr [[REG32:w[0-9]+]], [sp, #28]
     store i32 %val0, i32* @var32
-; CHECK: str [[REG32]], [{{x[0-9]+}}, #:lo12:var32]
+; CHECK: str [[REG32]], [{{x[0-9]+}}, {{#?}}:lo12:var32]
 
     %val1 = load volatile i64* %addr1
 ; CHECK: ldr [[REG64:x[0-9]+]], [sp, #16]
     store i64 %val1, i64* @var64
-; CHECK: str [[REG64]], [{{x[0-9]+}}, #:lo12:var64]
+; CHECK: str [[REG64]], [{{x[0-9]+}}, {{#?}}:lo12:var64]
 
     ret void
 }
@@ -79,7 +81,7 @@ define i32 @return_int() {
 ; CHECK-LABEL: return_int:
     %val = load i32* @var32
     ret i32 %val
-; CHECK: ldr w0, [{{x[0-9]+}}, #:lo12:var32]
+; CHECK: ldr w0, [{{x[0-9]+}}, {{#?}}:lo12:var32]
     ; Make sure epilogue follows
 ; CHECK-NEXT: ret
 }
@@ -87,7 +89,7 @@ define i32 @return_int() {
 define double @return_double() {
 ; CHECK-LABEL: return_double:
     ret double 3.14
-; CHECK: ldr d0, [{{x[0-9]+}}, #:lo12:.LCPI
+; CHECK: ldr d0, [{{x[0-9]+}}, {{#?}}:lo12:.LCPI
 ; CHECK-NOFP-NOT: ldr d0,
 }
 
@@ -99,10 +101,10 @@ define [2 x i64] @return_struct() {
     %addr = bitcast %myStruct* @varstruct to [2 x i64]*
     %val = load [2 x i64]* %addr
     ret [2 x i64] %val
-; CHECK: ldr x0, [{{x[0-9]+}}, #:lo12:varstruct]
+; CHECK-DAG: ldr x0, [{{x[0-9]+}}, {{#?}}:lo12:varstruct]
     ; Odd register regex below disallows x0 which we want to be live now.
-; CHECK: add {{x[1-9][0-9]*}}, {{x[1-9][0-9]*}}, #:lo12:varstruct
-; CHECK-NEXT: ldr x1, [{{x[1-9][0-9]*}}, #8]
+; CHECK-DAG: add {{x[1-9][0-9]*}}, {{x[1-9][0-9]*}}, {{#?}}:lo12:varstruct
+; CHECK: ldr x1, [{{x[1-9][0-9]*}}, #8]
     ; Make sure epilogue immediately follows
 ; CHECK-NEXT: ret
 }
@@ -139,11 +141,11 @@ define i32 @struct_on_stack(i8 %var0, i16 %var1, i32 %var2, i64 %var3, i128 %var
     store volatile i64 %val64, i64* @var64
     ; Currently nothing on local stack, so struct should be at sp
 ; CHECK: ldr [[VAL64:x[0-9]+]], [sp]
-; CHECK: str [[VAL64]], [{{x[0-9]+}}, #:lo12:var64]
+; CHECK: str [[VAL64]], [{{x[0-9]+}}, {{#?}}:lo12:var64]
 
     store volatile double %notstacked, double* @vardouble
 ; CHECK-NOT: ldr d0
-; CHECK: str d0, [{{x[0-9]+}}, #:lo12:vardouble
+; CHECK: str d0, [{{x[0-9]+}}, {{#?}}:lo12:vardouble
 ; CHECK-NOFP-NOT: str d0,
 
     %retval = load volatile i32* %stacked
@@ -159,28 +161,28 @@ define void @stacked_fpu(float %var0, double %var1, float %var2, float %var3,
     store float %var8, float* @varfloat
     ; Beware as above: the offset would be different on big-endian
     ; machines if the first ldr were changed to use s-registers.
-; CHECK: ldr d[[VALFLOAT:[0-9]+]], [sp]
-; CHECK: str s[[VALFLOAT]], [{{x[0-9]+}}, #:lo12:varfloat]
+; CHECK: ldr {{[ds]}}[[VALFLOAT:[0-9]+]], [sp]
+; CHECK: str s[[VALFLOAT]], [{{x[0-9]+}}, {{#?}}:lo12:varfloat]
 
     ret void
 }
 
 ; 128-bit integer types should be passed in xEVEN, xODD rather than
 ; the reverse. In this case x2 and x3. Nothing should use x1.
-define i32 @check_i128_regalign(i32 %val0, i128 %val1, i32 %val2) {
-; CHECK: check_i128_regalign
+define i64 @check_i128_regalign(i32 %val0, i128 %val1, i64 %val2) {
+; CHECK-LABEL: check_i128_regalign
     store i128 %val1, i128* @var128
-; CHECK: str x2, [{{x[0-9]+}}, #:lo12:var128]
-; CHECK: str x3, [{{x[0-9]+}}, #8]
+; CHECK-DAG: str x2, [{{x[0-9]+}}, {{#?}}:lo12:var128]
+; CHECK-DAG: str x3, [{{x[0-9]+}}, #8]
 
-    ret i32 %val2
+    ret i64 %val2
 ; CHECK: mov x0, x4
 }
 
 define void @check_i128_stackalign(i32 %val0, i32 %val1, i32 %val2, i32 %val3,
                                    i32 %val4, i32 %val5, i32 %val6, i32 %val7,
                                    i32 %stack1, i128 %stack2) {
-; CHECK: check_i128_stackalign
+; CHECK-LABEL: check_i128_stackalign
     store i128 %stack2, i128* @var128
     ; Nothing local on stack in current codegen, so first stack is 16 away
 ; CHECK-LE: add     x[[REG:[0-9]+]], sp, #16
@@ -188,7 +190,9 @@ define void @check_i128_stackalign(i32 %val0, i32 %val1, i32 %val2, i32 %val3,
 ; CHECK-BE: ldr {{x[0-9]+}}, [sp, #24]
 
     ; Important point is that we address sp+24 for second dword
-; CHECK: ldr     {{x[0-9]+}}, [sp, #16]
+; CHECK-AARCH64: ldr     {{x[0-9]+}}, [sp, #16]
+
+; CHECK-ARM64: ldp {{x[0-9]+}}, {{x[0-9]+}}, [sp, #16]
     ret void
 }
 

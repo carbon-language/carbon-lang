@@ -1574,13 +1574,26 @@ SDValue ARM64TargetLowering::LowerFormalArguments(
     assert(!Res && "Call operand has unhandled type");
     (void)Res;
   }
-
+  assert(ArgLocs.size() == Ins.size());
   SmallVector<SDValue, 16> ArgValues;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
 
-    // Arguments stored in registers.
-    if (VA.isRegLoc()) {
+    if (Ins[i].Flags.isByVal()) {
+      // Byval is used for HFAs in the PCS, but the system should work in a
+      // non-compliant manner for larger structs.
+      EVT PtrTy = getPointerTy();
+      int Size = Ins[i].Flags.getByValSize();
+      unsigned NumRegs = (Size + 7) / 8;
+
+      unsigned FrameIdx =
+          MFI->CreateFixedObject(8 * NumRegs, VA.getLocMemOffset(), false);
+      SDValue FrameIdxN = DAG.getFrameIndex(FrameIdx, PtrTy);
+      InVals.push_back(FrameIdxN);
+
+      continue;
+    } if (VA.isRegLoc()) {
+      // Arguments stored in registers.
       EVT RegVT = VA.getLocVT();
 
       SDValue ArgValue;
@@ -1988,19 +2001,31 @@ SDValue ARM64TargetLowering::LowerCall(CallLoweringInfo &CLI,
       SDValue PtrOff = DAG.getIntPtrConstant(LocMemOffset);
       PtrOff = DAG.getNode(ISD::ADD, DL, getPointerTy(), StackPtr, PtrOff);
 
-      // Since we pass i1/i8/i16 as i1/i8/i16 on stack and Arg is already
-      // promoted to a legal register type i32, we should truncate Arg back to
-      // i1/i8/i16.
-      if (Arg.getValueType().isSimple() &&
-          Arg.getValueType().getSimpleVT() == MVT::i32 &&
-          (VA.getLocVT() == MVT::i1 || VA.getLocVT() == MVT::i8 ||
-           VA.getLocVT() == MVT::i16))
-        Arg = DAG.getNode(ISD::TRUNCATE, DL, VA.getLocVT(), Arg);
+      if (Outs[i].Flags.isByVal()) {
+        SDValue SizeNode =
+            DAG.getConstant(Outs[i].Flags.getByValSize(), MVT::i64);
+        SDValue Cpy = DAG.getMemcpy(
+            Chain, DL, PtrOff, Arg, SizeNode, Outs[i].Flags.getByValAlign(),
+            /*isVolatile = */ false,
+            /*alwaysInline = */ false,
+            MachinePointerInfo::getStack(LocMemOffset), MachinePointerInfo());
 
-      SDValue Store = DAG.getStore(Chain, DL, Arg, PtrOff,
-                                   MachinePointerInfo::getStack(LocMemOffset),
-                                   false, false, 0);
-      MemOpChains.push_back(Store);
+        MemOpChains.push_back(Cpy);
+      } else {
+        // Since we pass i1/i8/i16 as i1/i8/i16 on stack and Arg is already
+        // promoted to a legal register type i32, we should truncate Arg back to
+        // i1/i8/i16.
+        if (Arg.getValueType().isSimple() &&
+            Arg.getValueType().getSimpleVT() == MVT::i32 &&
+            (VA.getLocVT() == MVT::i1 || VA.getLocVT() == MVT::i8 ||
+             VA.getLocVT() == MVT::i16))
+          Arg = DAG.getNode(ISD::TRUNCATE, DL, VA.getLocVT(), Arg);
+
+        SDValue Store = DAG.getStore(Chain, DL, Arg, PtrOff,
+                                     MachinePointerInfo::getStack(LocMemOffset),
+                                     false, false, 0);
+        MemOpChains.push_back(Store);
+      }
     }
   }
 

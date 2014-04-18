@@ -1,7 +1,8 @@
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-BE --check-prefix=CHECK-NOFP %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 
 %myStruct = type { i64 , i8, i32 }
 
@@ -24,15 +25,15 @@ define void @simple_args() {
   %char1 = load i8* @var8
   %char2 = load i8* @var8_2
   call void @take_i8s(i8 %char1, i8 %char2)
-; CHECK-DAG: ldrb w0, [{{x[0-9]+}}, #:lo12:var8]
-; CHECK-DAG: ldrb w1, [{{x[0-9]+}}, #:lo12:var8_2]
+; CHECK-DAG: ldrb w0, [{{x[0-9]+}}, {{#?}}:lo12:var8]
+; CHECK-DAG: ldrb w1, [{{x[0-9]+}}, {{#?}}:lo12:var8_2]
 ; CHECK: bl take_i8s
 
   %float1 = load float* @varfloat
   %float2 = load float* @varfloat_2
   call void @take_floats(float %float1, float %float2)
-; CHECK-DAG: ldr s1, [{{x[0-9]+}}, #:lo12:varfloat_2]
-; CHECK-DAG: ldr s0, [{{x[0-9]+}}, #:lo12:varfloat]
+; CHECK-DAG: ldr s1, [{{x[0-9]+}}, {{#?}}:lo12:varfloat_2]
+; CHECK-DAG: ldr s0, [{{x[0-9]+}}, {{#?}}:lo12:varfloat]
 ; CHECK: bl take_floats
 ; CHECK-NOFP-NOT: ldr s1,
 ; CHECK-NOFP-NOT: ldr s0,
@@ -51,22 +52,22 @@ define void @simple_rets() {
   %int = call i32 @return_int()
   store i32 %int, i32* @var32
 ; CHECK: bl return_int
-; CHECK: str w0, [{{x[0-9]+}}, #:lo12:var32]
+; CHECK: str w0, [{{x[0-9]+}}, {{#?}}:lo12:var32]
 
   %dbl = call double @return_double()
   store double %dbl, double* @vardouble
 ; CHECK: bl return_double
-; CHECK: str d0, [{{x[0-9]+}}, #:lo12:vardouble]
+; CHECK: str d0, [{{x[0-9]+}}, {{#?}}:lo12:vardouble]
 ; CHECK-NOFP-NOT: str d0,
 
   %arr = call [2 x i64] @return_smallstruct()
   store [2 x i64] %arr, [2 x i64]* @varsmallstruct
 ; CHECK: bl return_smallstruct
 ; CHECK: str x1, [{{x[0-9]+}}, #8]
-; CHECK: str x0, [{{x[0-9]+}}, #:lo12:varsmallstruct]
+; CHECK: str x0, [{{x[0-9]+}}, {{#?}}:lo12:varsmallstruct]
 
   call void @return_large_struct(%myStruct* sret @varstruct)
-; CHECK: add x8, {{x[0-9]+}}, #:lo12:varstruct
+; CHECK: add x8, {{x[0-9]+}}, {{#?}}:lo12:varstruct
 ; CHECK: bl return_large_struct
 
   ret void
@@ -88,19 +89,28 @@ define void @check_stack_args() {
   ; Want to check that the final double is passed in registers and
   ; that varstruct is passed on the stack. Rather dependent on how a
   ; memcpy gets created, but the following works for now.
-; CHECK: mov x[[SPREG:[0-9]+]], sp
-; CHECK-DAG: str {{w[0-9]+}}, [x[[SPREG]]]
-; CHECK-DAG: str {{w[0-9]+}}, [x[[SPREG]], #12]
-; CHECK-DAG: fmov d0,
+; CHECK-AARCH64: mov x[[SPREG:[0-9]+]], sp
+; CHECK-AARCH64-DAG: str {{w[0-9]+}}, [x[[SPREG]]]
+; CHECK-AARCH64-DAG: str {{w[0-9]+}}, [x[[SPREG]], #12]
+; CHECK-AARCH64-DAG: fmov d0,
+
+; CHECK-ARM64-DAG: str {{q[0-9]+}}, [sp]
+; CHECK-ARM64-DAG: fmov d[[FINAL_DOUBLE:[0-9]+]], #1.0
+; CHECK-ARM64: orr v0.16b, v[[FINAL_DOUBLE]].16b, v[[FINAL_DOUBLE]].16b
+
 ; CHECK: bl struct_on_stack
 ; CHECK-NOFP-NOT: fmov
 
   call void @stacked_fpu(float -1.0, double 1.0, float 4.0, float 2.0,
                          float -2.0, float -8.0, float 16.0, float 1.0,
                          float 64.0)
-; CHECK: ldr s[[STACKEDREG:[0-9]+]], [{{x[0-9]+}}, #:lo12:.LCPI
-; CHECK: mov x0, sp
-; CHECK: str d[[STACKEDREG]], [x0]
+; CHECK-AARCH64: ldr s[[STACKEDREG:[0-9]+]], [{{x[0-9]+}}, {{#?}}:lo12:.LCPI
+; CHECK-AARCH64: mov x0, sp
+; CHECK-AARCH64: str d[[STACKEDREG]], [x0]
+
+; CHECK-ARM64:  movz [[SIXTY_FOUR:w[0-9]+]], #17024, lsl #16
+; CHECK-ARM64: str [[SIXTY_FOUR]], [sp]
+
 ; CHECK: bl stacked_fpu
   ret void
 }
@@ -119,11 +129,12 @@ define void @check_i128_align() {
   call void @check_i128_stackalign(i32 0, i32 1, i32 2, i32 3,
                                    i32 4, i32 5, i32 6, i32 7,
                                    i32 42, i128 %val)
-; CHECK: ldr [[I128LO:x[0-9]+]], [{{x[0-9]+}}, #:lo12:var128]
+; CHECK: ldr [[I128LO:x[0-9]+]], [{{x[0-9]+}}, {{#?}}:lo12:var128]
 ; CHECK: ldr [[I128HI:x[0-9]+]], [{{x[0-9]+}}, #8]
-; CHECK: mov x[[SPREG:[0-9]+]], sp
-; CHECK: str [[I128HI]], [x[[SPREG]], #24]
-; CHECK: str [[I128LO]], [x[[SPREG]], #16]
+; CHECK-AARCH64: mov x[[SPREG:[0-9]+]], sp
+; CHECK-AARCH64: str [[I128HI]], [x[[SPREG]], #24]
+; CHECK-AARCH64: str [[I128LO]], [x[[SPREG]], #16]
+; CHECK-ARM64: stp [[I128LO]], [[I128HI]], [sp, #16]
 ; CHECK: bl check_i128_stackalign
 
   call void @check_i128_regalign(i32 0, i128 42)
@@ -143,7 +154,7 @@ define void @check_indirect_call() {
 ; CHECK-LABEL: check_indirect_call:
   %func = load void()** @fptr
   call void %func()
-; CHECK: ldr [[FPTR:x[0-9]+]], [{{x[0-9]+}}, #:lo12:fptr]
+; CHECK: ldr [[FPTR:x[0-9]+]], [{{x[0-9]+}}, {{#?}}:lo12:fptr]
 ; CHECK: blr [[FPTR]]
 
   ret void
