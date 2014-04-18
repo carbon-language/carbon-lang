@@ -87,7 +87,7 @@ names are case-sensitive. Example:
 
 .. code-block:: console
 
-  $ cmake -G "Visual Studio 10" path/to/llvm/source/root
+  $ cmake -G "Visual Studio 11" path/to/llvm/source/root
 
 For a given development platform there can be more than one adequate
 generator. If you use Visual Studio "NMake Makefiles" is a generator you can use
