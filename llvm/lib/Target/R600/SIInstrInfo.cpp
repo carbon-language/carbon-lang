@@ -539,6 +539,8 @@ unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   case AMDGPU::S_LSHR_B64: return AMDGPU::V_LSHR_B64;
   case AMDGPU::S_SEXT_I32_I8: return AMDGPU::V_BFE_I32;
   case AMDGPU::S_SEXT_I32_I16: return AMDGPU::V_BFE_I32;
+  case AMDGPU::S_BFE_U32: return AMDGPU::V_BFE_U32;
+  case AMDGPU::S_BFE_I32: return AMDGPU::V_BFE_I32;
   case AMDGPU::S_NOT_B32: return AMDGPU::V_NOT_B32_e32;
   case AMDGPU::S_CMP_EQ_I32: return AMDGPU::V_CMP_EQ_I32_e32;
   case AMDGPU::S_CMP_LG_I32: return AMDGPU::V_CMP_NE_I32_e32;
@@ -1008,6 +1010,27 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
     }
 
     addDescImplicitUseDef(NewDesc, Inst);
+
+    if (Opcode == AMDGPU::S_BFE_I32 || Opcode == AMDGPU::S_BFE_U32) {
+      const MachineOperand &OffsetWidthOp = Inst->getOperand(2);
+      // If we need to move this to VGPRs, we need to unpack the second operand
+      // back into the 2 separate ones for bit offset and width.
+      assert(OffsetWidthOp.isImm() &&
+             "Scalar BFE is only implemented for constant width and offset");
+      uint32_t Imm = OffsetWidthOp.getImm();
+
+      uint32_t Offset = Imm & 0x3f; // Extract bits [5:0].
+      uint32_t BitWidth = (Imm & 0x7f0000) >> 16; // Extract bits [22:16].
+
+      Inst->RemoveOperand(2); // Remove old immediate.
+      Inst->addOperand(MachineOperand::CreateImm(Offset));
+      Inst->addOperand(MachineOperand::CreateImm(BitWidth));
+
+      Inst->addOperand(MachineOperand::CreateImm(0));
+      Inst->addOperand(MachineOperand::CreateImm(0));
+      Inst->addOperand(MachineOperand::CreateImm(0));
+      Inst->addOperand(MachineOperand::CreateImm(0));
+    }
 
     // Update the destination register class.
 

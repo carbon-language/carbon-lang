@@ -1,12 +1,13 @@
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck -check-prefix=SI -check-prefix=FUNC %s
-; RUN: llc < %s -march=r600 -mcpu=cypress | FileCheck -check-prefix=EG -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=cypress -verify-machineinstrs < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
 declare i32 @llvm.AMDGPU.imax(i32, i32) nounwind readnone
 
 
 ; FUNC-LABEL: @sext_in_reg_i1_i32
 ; SI: S_LOAD_DWORD [[ARG:s[0-9]+]],
-; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], [[ARG]], 0, 1
+; SI: S_BFE_I32 [[SEXTRACT:s[0-9]+]], [[ARG]], 0x10000
+; SI: V_MOV_B32_e32 [[EXTRACT:v[0-9]+]], [[SEXTRACT]]
 ; SI: BUFFER_STORE_DWORD [[EXTRACT]],
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+\.[XYZW]]], [[ADDR:T[0-9]+.[XYZW]]]
@@ -148,8 +149,8 @@ define void @sext_in_reg_i32_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) noun
 
 ; This is broken on Evergreen for some reason related to the <1 x i64> kernel arguments.
 ; XFUNC-LABEL: @sext_in_reg_i8_to_v1i64
-; XSI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 8
-; XSI: V_ASHRREV_I32_e32 {{v[0-9]+}}, 31,
+; XSI: S_BFE_I32 [[EXTRACT:s[0-9]+]], {{s[0-9]+}}, 524288
+; XSI: S_ASHR_I32 {{v[0-9]+}}, [[EXTRACT]], 31
 ; XSI: BUFFER_STORE_DWORD
 ; XEG: BFE_INT
 ; XEG: ASHR
@@ -204,8 +205,8 @@ define void @sext_in_reg_v2i1_in_v2i32_other_amount(<2 x i32> addrspace(1)* %out
 
 
 ; FUNC-LABEL: @sext_in_reg_v2i1_to_v2i32
-; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 1
-; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 1
+; SI: S_BFE_I32 {{s[0-9]+}}, {{s[0-9]+}}, 0x10000
+; SI: S_BFE_I32 {{s[0-9]+}}, {{s[0-9]+}}, 0x10000
 ; SI: BUFFER_STORE_DWORDX2
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+]]{{\.[XYZW][XYZW]}}, [[ADDR:T[0-9]+.[XYZW]]]
@@ -221,10 +222,10 @@ define void @sext_in_reg_v2i1_to_v2i32(<2 x i32> addrspace(1)* %out, <2 x i32> %
 }
 
 ; FUNC-LABEL: @sext_in_reg_v4i1_to_v4i32
-; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 1
-; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 1
-; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 1
-; SI: V_BFE_I32 {{v[0-9]+}}, {{s[0-9]+}}, 0, 1
+; SI: S_BFE_I32 {{s[0-9]+}}, {{s[0-9]+}}, 0x10000
+; SI: S_BFE_I32 {{s[0-9]+}}, {{s[0-9]+}}, 0x10000
+; SI: S_BFE_I32 {{s[0-9]+}}, {{s[0-9]+}}, 0x10000
+; SI: S_BFE_I32 {{s[0-9]+}}, {{s[0-9]+}}, 0x10000
 ; SI: BUFFER_STORE_DWORDX4
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES:T[0-9]+]]{{\.[XYZW][XYZW][XYZW][XYZW]}}, [[ADDR:T[0-9]+.[XYZW]]]
@@ -317,6 +318,34 @@ define void @testcase_3(i8 addrspace(1)* %out, i8 %a) nounwind {
   %sel1 = select i1 %cmp_eq, i8 0, i8 %a
   %xor = xor i8 %sel0, %sel1
   store i8 %xor, i8 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: @vgpr_sext_in_reg_v4i8_to_v4i32
+; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], {{v[0-9]+}}, 0, 8
+; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], {{v[0-9]+}}, 0, 8
+; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], {{v[0-9]+}}, 0, 8
+; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], {{v[0-9]+}}, 0, 8
+define void @vgpr_sext_in_reg_v4i8_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %a, <4 x i32> addrspace(1)* %b) nounwind {
+  %loada = load <4 x i32> addrspace(1)* %a, align 16
+  %loadb = load <4 x i32> addrspace(1)* %b, align 16
+  %c = add <4 x i32> %loada, %loadb ; add to prevent folding into extload
+  %shl = shl <4 x i32> %c, <i32 24, i32 24, i32 24, i32 24>
+  %ashr = ashr <4 x i32> %shl, <i32 24, i32 24, i32 24, i32 24>
+  store <4 x i32> %ashr, <4 x i32> addrspace(1)* %out, align 8
+  ret void
+}
+
+; FUNC-LABEL: @vgpr_sext_in_reg_v4i16_to_v4i32
+; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], {{v[0-9]+}}, 0, 16
+; SI: V_BFE_I32 [[EXTRACT:v[0-9]+]], {{v[0-9]+}}, 0, 16
+define void @vgpr_sext_in_reg_v4i16_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x i32> addrspace(1)* %a, <4 x i32> addrspace(1)* %b) nounwind {
+  %loada = load <4 x i32> addrspace(1)* %a, align 16
+  %loadb = load <4 x i32> addrspace(1)* %b, align 16
+  %c = add <4 x i32> %loada, %loadb ; add to prevent folding into extload
+  %shl = shl <4 x i32> %c, <i32 16, i32 16, i32 16, i32 16>
+  %ashr = ashr <4 x i32> %shl, <i32 16, i32 16, i32 16, i32 16>
+  store <4 x i32> %ashr, <4 x i32> addrspace(1)* %out, align 8
   ret void
 }
 

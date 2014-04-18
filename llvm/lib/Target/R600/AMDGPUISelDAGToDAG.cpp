@@ -203,13 +203,14 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     N->setNodeId(-1);
     return NULL;   // Already selected.
   }
+
+  const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
   switch (Opc) {
   default: break;
   // We are selecting i64 ADD here instead of custom lower it during
   // DAG legalization, so we can fold some i64 ADDs used for address
   // calculation into the LOAD and STORE instructions.
   case ISD::ADD: {
-    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
     if (N->getValueType(0) != MVT::i64 ||
         ST.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS)
       break;
@@ -255,7 +256,6 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   }
   case ISD::BUILD_VECTOR: {
     unsigned RegClassID;
-    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
     const AMDGPURegisterInfo *TRI =
                    static_cast<const AMDGPURegisterInfo*>(TM.getRegisterInfo());
     const SIRegisterInfo *SIRI =
@@ -342,7 +342,6 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   }
   case ISD::BUILD_PAIR: {
     SDValue RC, SubReg0, SubReg1;
-    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
     if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
       break;
     }
@@ -393,7 +392,6 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   }
 
   case AMDGPUISD::REGISTER_LOAD: {
-    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
     if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
       break;
     SDValue Addr, Offset;
@@ -410,7 +408,6 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
                                   Ops);
   }
   case AMDGPUISD::REGISTER_STORE: {
-    const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
     if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
       break;
     SDValue Addr, Offset;
@@ -425,6 +422,47 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->getMachineNode(AMDGPU::SI_RegisterStorePseudo, SDLoc(N),
                                         CurDAG->getVTList(MVT::Other),
                                         Ops);
+  }
+
+  case AMDGPUISD::BFE_I32:
+  case AMDGPUISD::BFE_U32: {
+    if (ST.getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS)
+      break;
+
+    // There is a scalar version available, but unlike the vector version which
+    // has a separate operand for the offset and width, the scalar version packs
+    // the width and offset into a single operand. Try to move to the scalar
+    // version if the offsets are constant, so that we can try to keep extended
+    // loads of kernel arguments in SGPRs.
+
+    // TODO: Technically we could try to pattern match scalar bitshifts of
+    // dynamic values, but it's probably not useful.
+    ConstantSDNode *Offset = dyn_cast<ConstantSDNode>(N->getOperand(1));
+    if (!Offset)
+      break;
+
+    ConstantSDNode *Width = dyn_cast<ConstantSDNode>(N->getOperand(2));
+    if (!Width)
+      break;
+
+    bool Signed = Opc == AMDGPUISD::BFE_I32;
+
+    // Transformation function, pack the offset and width of a BFE into
+    // the format expected by the S_BFE_I32 / S_BFE_U32. In the second
+    // source, bits [5:0] contain the offset and bits [22:16] the width.
+
+    uint32_t OffsetVal = Offset->getZExtValue();
+    uint32_t WidthVal = Width->getZExtValue();
+
+    uint32_t PackedVal = OffsetVal | WidthVal << 16;
+
+    SDValue PackedOffsetWidth = CurDAG->getTargetConstant(PackedVal, MVT::i32);
+    return CurDAG->getMachineNode(Signed ? AMDGPU::S_BFE_I32 : AMDGPU::S_BFE_U32,
+                                  SDLoc(N),
+                                  MVT::i32,
+                                  N->getOperand(0),
+                                  PackedOffsetWidth);
+
   }
   }
   return SelectCode(N);
