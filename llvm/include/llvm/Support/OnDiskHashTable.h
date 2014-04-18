@@ -39,9 +39,10 @@ namespace llvm {
 ///   typedef ExampleKey &key_type_ref;
 ///   typedef ExampleData data_type; // Must be copy constructible
 ///   typedef ExampleData &data_type_ref;
+///   typedef uint32_t hash_value_type; // The type the hash function returns.
 ///
 ///   /// Calculate the hash for Key
-///   static unsigned ComputeHash(key_type_ref Key);
+///   static hash_value_type ComputeHash(key_type_ref Key);
 ///   /// Return the lengths, in bytes, of the given Key/Data pair.
 ///   static std::pair<unsigned, unsigned>
 ///   EmitKeyDataLength(raw_ostream &Out, key_type_ref Key, data_type_ref Data);
@@ -63,7 +64,7 @@ template <typename Info> class OnDiskChainedHashTableGenerator {
     typename Info::key_type Key;
     typename Info::data_type Data;
     Item *Next;
-    const uint32_t Hash;
+    const typename Info::hash_value_type Hash;
 
     Item(typename Info::key_type_ref Key, typename Info::data_type_ref Data,
          Info &InfoObj)
@@ -158,7 +159,7 @@ public:
 
       // Write out the entries in the bucket.
       for (Item *I = B.Head; I; I = I->Next) {
-        LE.write<uint32_t>(I->Hash);
+        LE.write<typename Info::hash_value_type>(I->Hash);
         const std::pair<unsigned, unsigned> &Len =
             InfoObj.EmitKeyDataLength(Out, I->Key, I->Data);
         InfoObj.EmitKey(Out, I->Key, Len.first);
@@ -205,11 +206,12 @@ public:
 ///   typedef ExampleData data_type;
 ///   typedef ExampleInternalKey internal_key_type; // The stored key type.
 ///   typedef ExampleKey external_key_type; // The type to pass to find().
+///   typedef uint32_t hash_value_type; // The type the hash function returns.
 ///
 ///   /// Compare two keys for equality.
 ///   static bool EqualKey(internal_key_type &Key1, internal_key_type &Key2);
 ///   /// Calculate the hash for the given key.
-///   static unsigned ComputeHash(internal_key_type &IKey);
+///   static hash_value_type ComputeHash(internal_key_type &IKey);
 ///   /// Translate from the semantic type of a key in the hash table to the
 ///   /// type that is actually stored and used for hashing and comparisons.
 ///   /// The internal and external types are often the same, in which case this
@@ -240,6 +242,7 @@ public:
   typedef typename Info::internal_key_type internal_key_type;
   typedef typename Info::external_key_type external_key_type;
   typedef typename Info::data_type         data_type;
+  typedef typename Info::hash_value_type   hash_value_type;
 
   OnDiskChainedHashTable(unsigned NumBuckets, unsigned NumEntries,
                          const unsigned char *Buckets,
@@ -282,7 +285,7 @@ public:
 
     using namespace llvm::support;
     const internal_key_type &IKey = InfoObj.GetInternalKey(EKey);
-    unsigned KeyHash = InfoObj.ComputeHash(IKey);
+    hash_value_type KeyHash = InfoObj.ComputeHash(IKey);
 
     // Each bucket is just a 32-bit offset into the hash table file.
     unsigned Idx = KeyHash & (NumBuckets - 1);
@@ -299,7 +302,8 @@ public:
 
     for (unsigned i = 0; i < Len; ++i) {
       // Read the hash.
-      uint32_t ItemHash = endian::readNext<uint32_t, little, unaligned>(Items);
+      hash_value_type ItemHash =
+          endian::readNext<hash_value_type, little, unaligned>(Items);
 
       // Determine the length of the key and the data.
       const std::pair<unsigned, unsigned> &L = Info::ReadKeyDataLength(Items);
@@ -368,6 +372,7 @@ public:
   typedef typename base_type::internal_key_type internal_key_type;
   typedef typename base_type::external_key_type external_key_type;
   typedef typename base_type::data_type         data_type;
+  typedef typename base_type::hash_value_type   hash_value_type;
 
   OnDiskIterableChainedHashTable(unsigned NumBuckets, unsigned NumEntries,
                                  const unsigned char *Buckets,
@@ -409,7 +414,7 @@ public:
         NumItemsInBucketLeft =
             endian::readNext<uint16_t, little, unaligned>(Ptr);
       }
-      Ptr += 4; // Skip the hash.
+      Ptr += sizeof(hash_value_type); // Skip the hash.
       // Determine the length of the key and the data.
       const std::pair<unsigned, unsigned> &L = Info::ReadKeyDataLength(Ptr);
       Ptr += L.first + L.second;
@@ -427,7 +432,7 @@ public:
       const unsigned char *LocalPtr = Ptr;
       if (!NumItemsInBucketLeft)
         LocalPtr += 2; // number of items in bucket
-      LocalPtr += 4;   // Skip the hash.
+      LocalPtr += sizeof(hash_value_type); // Skip the hash.
 
       // Determine the length of the key and the data.
       const std::pair<unsigned, unsigned> &L =
@@ -480,7 +485,7 @@ public:
         NumItemsInBucketLeft =
             endian::readNext<uint16_t, little, unaligned>(Ptr);
       }
-      Ptr += 4; // Skip the hash.
+      Ptr += sizeof(hash_value_type); // Skip the hash.
       // Determine the length of the key and the data.
       const std::pair<unsigned, unsigned> &L = Info::ReadKeyDataLength(Ptr);
       Ptr += L.first + L.second;
@@ -498,7 +503,7 @@ public:
       const unsigned char *LocalPtr = Ptr;
       if (!NumItemsInBucketLeft)
         LocalPtr += 2; // number of items in bucket
-      LocalPtr += 4;   // Skip the hash.
+      LocalPtr += sizeof(hash_value_type); // Skip the hash.
 
       // Determine the length of the key and the data.
       const std::pair<unsigned, unsigned> &L =
