@@ -38,6 +38,11 @@ protected:
   bool HasNEON;
   bool HasCrypto;
 
+  /// AllowsUnalignedMem - If true, the subtarget allows unaligned memory
+  /// accesses for some types.  For details, see
+  /// AArch64TargetLowering::allowsUnalignedMemoryAccesses().
+  bool AllowsUnalignedMem;
+
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
@@ -73,6 +78,8 @@ public:
   bool hasFPARMv8() const { return HasFPARMv8; }
   bool hasNEON() const { return HasNEON; }
   bool hasCrypto() const { return HasCrypto; }
+
+  bool allowsUnalignedMem() const { return AllowsUnalignedMem; }
 
   bool isLittle() const { return IsLittleEndian; }
 

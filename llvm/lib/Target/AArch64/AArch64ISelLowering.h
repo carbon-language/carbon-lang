@@ -355,6 +355,12 @@ public:
   /// expanded to fmul + fadd.
   virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const;
 
+  /// allowsUnalignedMemoryAccesses - Returns true if the target allows
+  /// unaligned memory accesses of the specified type. Returns whether it
+  /// is "fast" by reference in the second argument.
+  virtual bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AddrSpace,
+                                             bool *Fast) const;
+
   ConstraintType getConstraintType(const std::string &Constraint) const;
 
   ConstraintWeight getSingleConstraintMatchWeight(AsmOperandInfo &Info,

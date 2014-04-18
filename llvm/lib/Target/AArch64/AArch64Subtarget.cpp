@@ -25,6 +25,25 @@
 
 using namespace llvm;
 
+enum AlignMode {
+  DefaultAlign,
+  StrictAlign,
+  NoStrictAlign
+};
+
+static cl::opt<AlignMode>
+Align(cl::desc("Load/store alignment support"),
+      cl::Hidden, cl::init(DefaultAlign),
+      cl::values(
+          clEnumValN(DefaultAlign,  "aarch64-default-align",
+                     "Generate unaligned accesses only on hardware/OS "
+                     "combinations that are known to support them"),
+          clEnumValN(StrictAlign,   "aarch64-strict-align",
+                     "Disallow all unaligned memory accesses"),
+          clEnumValN(NoStrictAlign, "aarch64-no-strict-align",
+                     "Allow unaligned memory accesses"),
+          clEnumValEnd));
+
 // Pin the vtable to this file.
 void AArch64Subtarget::anchor() {}
 
@@ -39,6 +58,8 @@ AArch64Subtarget::AArch64Subtarget(StringRef TT, StringRef CPU, StringRef FS,
 
 void AArch64Subtarget::initializeSubtargetFeatures(StringRef CPU,
                                                    StringRef FS) {
+  AllowsUnalignedMem = false;
+
   if (CPU.empty())
     CPUString = "generic";
 
@@ -52,6 +73,19 @@ void AArch64Subtarget::initializeSubtargetFeatures(StringRef CPU,
   }
 
   ParseSubtargetFeatures(CPU, FullFS);
+
+  switch (Align) {
+    case DefaultAlign:
+      // Linux targets support unaligned accesses on AARCH64
+      AllowsUnalignedMem = isTargetLinux();
+      break;
+    case StrictAlign:
+      AllowsUnalignedMem = false;
+      break;
+    case NoStrictAlign:
+      AllowsUnalignedMem = true;
+      break;
+  }
 }
 
 bool AArch64Subtarget::GVIsIndirectSymbol(const GlobalValue *GV,

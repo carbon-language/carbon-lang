@@ -4412,6 +4412,50 @@ AArch64TargetLowering::isFMAFasterThanFMulAndFAdd(EVT VT) const {
 
   return false;
 }
+
+bool AArch64TargetLowering::allowsUnalignedMemoryAccesses(EVT VT,
+                                                          unsigned AddrSpace,
+                                                          bool *Fast) const {
+  const AArch64Subtarget *Subtarget = getSubtarget();
+  // The AllowsUnaliged flag models the SCTLR.A setting in ARM cpus
+  bool AllowsUnaligned = Subtarget->allowsUnalignedMem();
+
+  switch (VT.getSimpleVT().SimpleTy) {
+  default:
+    return false;
+  // Scalar types
+  case MVT::i8:  case MVT::i16:
+  case MVT::i32: case MVT::i64:
+  case MVT::f32: case MVT::f64: {
+    // Unaligned access can use (for example) LRDB, LRDH, LDRW
+    if (AllowsUnaligned) {
+      if (Fast)
+        *Fast = true;
+      return true;
+    }
+    return false;
+  }
+  // 64-bit vector types
+  case MVT::v8i8:  case MVT::v4i16:
+  case MVT::v2i32: case MVT::v1i64:
+  case MVT::v2f32: case MVT::v1f64:
+  // 128-bit vector types
+  case MVT::v16i8: case MVT::v8i16:
+  case MVT::v4i32: case MVT::v2i64:
+  case MVT::v4f32: case MVT::v2f64: {
+    // For any little-endian targets with neon, we can support unaligned
+    // load/store of V registers using ld1/st1.
+    // A big-endian target may also explicitly support unaligned accesses
+    if (Subtarget->hasNEON() && (AllowsUnaligned || isLittleEndian())) {
+      if (Fast)
+        *Fast = true;
+      return true;
+    }
+    return false;
+  }
+  }
+}
+
 // Check whether a shuffle_vector could be presented as concat_vector.
 bool AArch64TargetLowering::isConcatVector(SDValue Op, SelectionDAG &DAG,
                                            SDValue V0, SDValue V1,
