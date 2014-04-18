@@ -351,7 +351,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
       SubReg0 = CurDAG->getTargetConstant(AMDGPU::sub0_sub1, MVT::i32);
       SubReg1 = CurDAG->getTargetConstant(AMDGPU::sub2_sub3, MVT::i32);
     } else if (N->getValueType(0) == MVT::i64) {
-      RC = CurDAG->getTargetConstant(AMDGPU::VSrc_64RegClassID, MVT::i32);
+      RC = CurDAG->getTargetConstant(AMDGPU::SReg_64RegClassID, MVT::i32);
       SubReg0 = CurDAG->getTargetConstant(AMDGPU::sub0, MVT::i32);
       SubReg1 = CurDAG->getTargetConstant(AMDGPU::sub1, MVT::i32);
     } else {
