@@ -1907,3 +1907,11 @@ declare <16 x i8> @llvm.arm64.neon.vsli.v16i8(<16 x i8>, <16 x i8>, i32) nounwin
 declare <8 x i16> @llvm.arm64.neon.vsli.v8i16(<8 x i16>, <8 x i16>, i32) nounwind readnone
 declare <4 x i32> @llvm.arm64.neon.vsli.v4i32(<4 x i32>, <4 x i32>, i32) nounwind readnone
 declare <2 x i64> @llvm.arm64.neon.vsli.v2i64(<2 x i64>, <2 x i64>, i32) nounwind readnone
+
+define <1 x i64> @ashr_v1i64(<1 x i64> %a, <1 x i64> %b) {
+; CHECK-LABEL: ashr_v1i64:
+; CHECK: neg d{{[0-9]+}}, d{{[0-9]+}}
+; CHECK: sshl d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
+  %c = ashr <1 x i64> %a, %b
+  ret <1 x i64> %c
+}

@@ -2664,6 +2664,8 @@ defm UQXTN  : SIMDTwoScalarMixedBHS<1, 0b10100, "uqxtn", int_arm64_neon_scalar_u
 defm USQADD : SIMDTwoScalarBHSDTied< 1, 0b00011, "usqadd",
                                     int_arm64_neon_usqadd>;
 
+def : Pat<(ARM64neg (v1i64 V64:$Rn)), (NEGv1i64 V64:$Rn)>;
+
 def : Pat<(v1i64 (int_arm64_neon_fcvtas (v1f64 FPR64:$Rn))),
           (FCVTASv1i64 FPR64:$Rn)>;
 def : Pat<(v1i64 (int_arm64_neon_fcvtau (v1f64 FPR64:$Rn))),

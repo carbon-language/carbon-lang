@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has all tests not involving v1iN.
 
 define <8 x i8> @shl.v8i8(<8 x i8> %a, <8 x i8> %b) {
 ; CHECK-LABEL: shl.v8i8:
