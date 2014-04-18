@@ -58,8 +58,8 @@ class PtrRef2TypedefTestCase(TestBase):
         self.runCmd('type summary add --cascade true -s "IntRRef" "int &&"')
 
         self.expect("frame variable x", substrs = ['(Foo *) x = 0x','IntPointer'])
-        self.expect("frame variable y", substrs = ['(Foo &) y = 0x','IntLRef'])
-        self.expect("frame variable z", substrs = ['(Foo &&) z = 0x','IntRRef'])
+        self.expect("frame variable y", substrs = ['(Foo &const) y = 0x','IntLRef'])
+        self.expect("frame variable z", substrs = ['(Foo &&const) z = 0x','IntRRef'])
 
 if __name__ == '__main__':
     import atexit
