@@ -3368,8 +3368,9 @@ ABIArgInfo ARM64ABIInfo::classifyReturnType(QualType RetTy) const {
     if (const EnumType *EnumTy = RetTy->getAs<EnumType>())
       RetTy = EnumTy->getDecl()->getIntegerType();
 
-    return (RetTy->isPromotableIntegerType() ? ABIArgInfo::getExtend()
-                                             : ABIArgInfo::getDirect());
+    return (RetTy->isPromotableIntegerType() && isDarwinPCS()
+                ? ABIArgInfo::getExtend()
+                : ABIArgInfo::getDirect());
   }
 
   // Structures with either a non-trivial destructor or a non-trivial

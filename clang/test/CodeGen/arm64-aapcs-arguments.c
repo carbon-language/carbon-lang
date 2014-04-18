@@ -33,3 +33,10 @@ typedef __attribute__((neon_vector_type(16))) signed char int8x16_t;
 typedef struct { int8x16_t arr[3]; } BigHFA;
 void test4(BigHFA v0_v2, BigHFA v3_v5, BigHFA sp, double sp48, BigHFA sp64) {
 }
+
+// It's the job of the argument *consumer* to perform the required sign & zero
+// extensions under AAPCS. There shouldn't be
+
+// CHECK: define i8 @test5(i8 %a, i16 %b)
+unsigned char test5(unsigned char a, signed short b) {
+}
