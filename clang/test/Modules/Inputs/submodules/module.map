@@ -20,6 +20,7 @@ module missing_unavailable_headers {
   module missing {
     requires !objc
     header "missing.h"
+    module also_missing { header "also_missing.h" }
   }
   module not_missing { }
 }

@@ -413,7 +413,7 @@ public:
                       const TargetInfo &Target);
 
   /// \brief Mark this module and all of its submodules as unavailable.
-  void markUnavailable();
+  void markUnavailable(bool MissingRequirement = false);
 
   /// \brief Find the submodule with the given name.
   ///

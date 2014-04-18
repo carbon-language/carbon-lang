@@ -39,6 +39,7 @@ Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
       IsSystem = true;
     if (Parent->IsExternC)
       IsExternC = true;
+    IsMissingRequirement = Parent->IsMissingRequirement;
     
     Parent->SubModuleIndex[Name] = Parent->SubModules.size();
     Parent->SubModules.push_back(this);
@@ -160,11 +161,10 @@ void Module::addRequirement(StringRef Feature, bool RequiredState,
   if (hasFeature(Feature, LangOpts, Target) == RequiredState)
     return;
 
-  IsMissingRequirement = true;
-  markUnavailable();
+  markUnavailable(/*MissingRequirement*/true);
 }
 
-void Module::markUnavailable() {
+void Module::markUnavailable(bool MissingRequirement) {
   if (!IsAvailable)
     return;
 
@@ -178,6 +178,7 @@ void Module::markUnavailable() {
       continue;
 
     Current->IsAvailable = false;
+    Current->IsMissingRequirement |= MissingRequirement;
     for (submodule_iterator Sub = Current->submodule_begin(),
                          SubEnd = Current->submodule_end();
          Sub != SubEnd; ++Sub) {
