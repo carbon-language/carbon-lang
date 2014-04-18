@@ -299,6 +299,13 @@ void DWARFUnit::clearDIEs(bool KeepCUDie) {
 }
 
 void DWARFUnit::collectAddressRanges(DWARFAddressRangesVector &CURanges) {
+  // First, check if CU DIE describes address ranges for the unit.
+  const auto &CUDIERanges = getCompileUnitDIE()->getAddressRanges(this);
+  if (!CUDIERanges.empty()) {
+    CURanges.insert(CURanges.end(), CUDIERanges.begin(), CUDIERanges.end());
+    return;
+  }
+
   // This function is usually called if there in no .debug_aranges section
   // in order to produce a compile unit level set of address ranges that
   // is accurate. If the DIEs weren't parsed, then we don't want all dies for
