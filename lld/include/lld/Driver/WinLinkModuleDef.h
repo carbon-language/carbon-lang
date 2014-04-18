@@ -96,7 +96,7 @@ private:
 template <Directive::Kind kind>
 class MemorySize : public Directive {
 public:
-  explicit MemorySize(uint64_t reserve, uint64_t commit)
+  MemorySize(uint64_t reserve, uint64_t commit)
       : Directive(kind), _reserve(reserve), _commit(commit) {}
 
   static bool classof(const Directive *dir) {
@@ -116,7 +116,7 @@ typedef MemorySize<Directive::Kind::stacksize> Stacksize;
 
 class Name : public Directive {
 public:
-  explicit Name(StringRef outputPath, uint64_t baseaddr)
+  Name(StringRef outputPath, uint64_t baseaddr)
       : Directive(Kind::name), _outputPath(outputPath), _baseaddr(baseaddr) {}
 
   static bool classof(const Directive *dir) {
@@ -133,7 +133,7 @@ private:
 
 class Version : public Directive {
 public:
-  explicit Version(int major, int minor)
+  Version(int major, int minor)
       : Directive(Kind::version), _major(major), _minor(minor) {}
 
   static bool classof(const Directive *dir) {
@@ -150,7 +150,7 @@ private:
 
 class Parser {
 public:
-  explicit Parser(Lexer &lex, llvm::BumpPtrAllocator &alloc)
+  Parser(Lexer &lex, llvm::BumpPtrAllocator &alloc)
       : _lex(lex), _alloc(alloc) {}
 
   llvm::Optional<Directive *> parse();
