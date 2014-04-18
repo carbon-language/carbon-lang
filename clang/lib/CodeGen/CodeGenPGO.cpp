@@ -15,7 +15,6 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
-#include "llvm/Config/config.h" // for strtoull()/strtoul() define
 #include "llvm/IR/MDBuilder.h"
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/Endian.h"
