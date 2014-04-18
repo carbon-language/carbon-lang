@@ -688,3 +688,13 @@ TEST_F(WinLinkParserTest, DefEntryNameWindows) {
   EXPECT_TRUE(parse("link.exe", "/subsystem:windows", "a.obj", nullptr));
   EXPECT_EQ("_WinMainCRTStartup", _context.entrySymbolName());
 }
+
+TEST_F(WinLinkParserTest, DefEntryNameDll32) {
+  EXPECT_TRUE(parse("link.exe", "/dll", "/machine:x86", "a.obj", nullptr));
+  EXPECT_EQ("__DllMainCRTStartup@12", _context.entrySymbolName());
+}
+
+TEST_F(WinLinkParserTest, DefEntryNameDll64) {
+  EXPECT_TRUE(parse("link.exe", "/dll", "/machine:x64", "a.obj", nullptr));
+  EXPECT_EQ("_DllMainCRTStartup", _context.entrySymbolName());
+}
