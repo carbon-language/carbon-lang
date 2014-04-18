@@ -117,7 +117,10 @@ public:
   typedef PTHEntry data_type;
   typedef const PTHEntry& data_type_ref;
 
-  static unsigned ComputeHash(PTHEntryKeyVariant V) {
+  typedef unsigned hash_value_type;
+  typedef unsigned offset_type;
+
+  static hash_value_type ComputeHash(PTHEntryKeyVariant V) {
     return llvm::HashString(V.getString());
   }
 
@@ -599,7 +602,10 @@ public:
   typedef uint32_t  data_type;
   typedef data_type data_type_ref;
 
-  static unsigned ComputeHash(PTHIdKey* key) {
+  typedef unsigned hash_value_type;
+  typedef unsigned offset_type;
+
+  static hash_value_type ComputeHash(PTHIdKey* key) {
     return llvm::HashString(key->II->getName());
   }
 

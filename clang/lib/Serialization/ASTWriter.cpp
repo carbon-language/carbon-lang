@@ -1482,8 +1482,10 @@ namespace {
     
     typedef HeaderFileInfo data_type;
     typedef const data_type &data_type_ref;
+    typedef unsigned hash_value_type;
+    typedef unsigned offset_type;
     
-    static unsigned ComputeHash(key_type_ref key) {
+    static hash_value_type ComputeHash(key_type_ref key) {
       // The hash is based only on size/time of the file, so that the reader can
       // match even when symlinking or excess path elements ("foo/../", "../")
       // change the form of the name. However, complete path is still the key.
@@ -1855,8 +1857,10 @@ public:
 
   typedef Data data_type;
   typedef const data_type &data_type_ref;
+  typedef unsigned hash_value_type;
+  typedef unsigned offset_type;
 
-  static unsigned ComputeHash(IdentID IdID) {
+  static hash_value_type ComputeHash(IdentID IdID) {
     return llvm::hash_value(IdID);
   }
 
@@ -2738,9 +2742,12 @@ public:
   };
   typedef const data_type& data_type_ref;
 
+  typedef unsigned hash_value_type;
+  typedef unsigned offset_type;
+
   explicit ASTMethodPoolTrait(ASTWriter &Writer) : Writer(Writer) { }
 
-  static unsigned ComputeHash(Selector Sel) {
+  static hash_value_type ComputeHash(Selector Sel) {
     return serialization::ComputeHash(Sel);
   }
 
@@ -3090,11 +3097,14 @@ public:
   typedef IdentID data_type;
   typedef data_type data_type_ref;
 
+  typedef unsigned hash_value_type;
+  typedef unsigned offset_type;
+
   ASTIdentifierTableTrait(ASTWriter &Writer, Preprocessor &PP, 
                           IdentifierResolver &IdResolver, bool IsModule)
     : Writer(Writer), PP(PP), IdResolver(IdResolver), IsModule(IsModule) { }
 
-  static unsigned ComputeHash(const IdentifierInfo* II) {
+  static hash_value_type ComputeHash(const IdentifierInfo* II) {
     return llvm::HashString(II->getName());
   }
 
@@ -3349,9 +3359,12 @@ public:
   typedef DeclContext::lookup_result data_type;
   typedef const data_type& data_type_ref;
 
+  typedef unsigned hash_value_type;
+  typedef unsigned offset_type;
+
   explicit ASTDeclContextNameLookupTrait(ASTWriter &Writer) : Writer(Writer) { }
 
-  unsigned ComputeHash(DeclarationName Name) {
+  hash_value_type ComputeHash(DeclarationName Name) {
     llvm::FoldingSetNodeID ID;
     ID.AddInteger(Name.getNameKind());
 

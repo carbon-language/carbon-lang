@@ -72,12 +72,14 @@ public:
   typedef StringRef external_key_type;
   typedef StringRef internal_key_type;
   typedef SmallVector<unsigned, 2> data_type;
+  typedef unsigned hash_value_type;
+  typedef unsigned offset_type;
 
   static bool EqualKey(const internal_key_type& a, const internal_key_type& b) {
     return a == b;
   }
 
-  static unsigned ComputeHash(const internal_key_type& a) {
+  static hash_value_type ComputeHash(const internal_key_type& a) {
     return llvm::HashString(a);
   }
 
@@ -645,8 +647,10 @@ public:
   typedef StringRef key_type_ref;
   typedef SmallVector<unsigned, 2> data_type;
   typedef const SmallVector<unsigned, 2> &data_type_ref;
+  typedef unsigned hash_value_type;
+  typedef unsigned offset_type;
 
-  static unsigned ComputeHash(key_type_ref Key) {
+  static hash_value_type ComputeHash(key_type_ref Key) {
     return llvm::HashString(Key);
   }
 
