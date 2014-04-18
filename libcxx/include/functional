@@ -1617,21 +1617,22 @@ function<_Rp(_ArgTypes...)>::function(allocator_arg_t, const _Alloc& __a0, _Fp _
     if (__not_null(__f))
     {
         typedef __function::__func<_Fp, _Alloc, _Rp(_ArgTypes...)> _FF;
-        if (sizeof(_FF) <= sizeof(__buf_) && is_nothrow_copy_constructible<_Fp>::value)
+        typedef typename __alloc_traits::template
+#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
+            rebind_alloc<_FF>
+#else
+            rebind_alloc<_FF>::other
+#endif
+            _Ap;
+        _Ap __a(__a0);
+        if (sizeof(_FF) <= sizeof(__buf_) && 
+            is_nothrow_copy_constructible<_Fp>::value && is_nothrow_copy_constructible<_Ap>::value)
         {
             __f_ = (__base*)&__buf_;
-            ::new (__f_) _FF(_VSTD::move(__f));
+            ::new (__f_) _FF(_VSTD::move(__f), _Alloc(__a));
         }
         else
         {
-            typedef typename __alloc_traits::template
-#ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
-                rebind_alloc<_FF>
-#else
-                rebind_alloc<_FF>::other
-#endif
-                                                         _Ap;
-            _Ap __a(__a0);
             typedef __allocator_destructor<_Ap> _Dp;
             unique_ptr<__base, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
             ::new (__hold.get()) _FF(_VSTD::move(__f), _Alloc(__a));
