@@ -10,7 +10,6 @@
 #ifndef LLVM_ADT_STRINGREF_H
 #define LLVM_ADT_STRINGREF_H
 
-#include "llvm/Support/Allocator.h"
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -124,9 +123,9 @@ namespace llvm {
       return Data[Length-1];
     }
 
-    // copy - Allocate copy in BumpPtrAllocator and return StringRef to it.
-    StringRef copy(BumpPtrAllocator &Allocator) {
-      char *S = Allocator.Allocate<char>(Length);
+    // copy - Allocate copy in Allocator and return StringRef to it.
+    template <typename Allocator> StringRef copy(Allocator &A) {
+      char *S = A.template Allocate<char>(Length);
       std::copy(begin(), end(), S);
       return StringRef(S, Length);
     }

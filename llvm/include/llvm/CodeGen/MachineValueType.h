@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_MACHINEVALUETYPE_H
 
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 
 namespace llvm {
 

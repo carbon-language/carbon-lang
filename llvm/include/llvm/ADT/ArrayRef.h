@@ -12,7 +12,6 @@
 
 #include "llvm/ADT/None.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/Allocator.h"
 #include <vector>
 
 namespace llvm {
@@ -121,9 +120,9 @@ namespace llvm {
       return Data[Length-1];
     }
 
-    // copy - Allocate copy in BumpPtrAllocator and return ArrayRef<T> to it.
-    ArrayRef<T> copy(BumpPtrAllocator &Allocator) {
-      T *Buff = Allocator.Allocate<T>(Length);
+    // copy - Allocate copy in Allocator and return ArrayRef<T> to it.
+    template <typename Allocator> ArrayRef<T> copy(Allocator &A) {
+      T *Buff = A.template Allocate<T>(Length);
       std::copy(begin(), end(), Buff);
       return ArrayRef<T>(Buff, Length);
     }
@@ -132,10 +131,7 @@ namespace llvm {
     bool equals(ArrayRef RHS) const {
       if (Length != RHS.Length)
         return false;
-      for (size_type i = 0; i != Length; i++)
-        if (Data[i] != RHS.Data[i])
-          return false;
-      return true;
+      return std::equal(begin(), end(), RHS.begin());
     }
 
     /// slice(n) - Chop off the first N elements of the array.
@@ -221,7 +217,7 @@ namespace llvm {
 
     /// Construct an MutableArrayRef from a C array.
     template <size_t N>
-    /*implicit*/ MutableArrayRef(T (&Arr)[N])
+    /*implicit*/ LLVM_CONSTEXPR MutableArrayRef(T (&Arr)[N])
       : ArrayRef<T>(Arr) {}
 
     T *data() const { return const_cast<T*>(ArrayRef<T>::data()); }
