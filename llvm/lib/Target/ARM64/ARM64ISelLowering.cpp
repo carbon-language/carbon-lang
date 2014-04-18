@@ -3945,11 +3945,13 @@ static bool isEXTMask(ArrayRef<int> M, EVT VT, bool &ReverseEXT,
   unsigned NumElts = VT.getVectorNumElements();
   ReverseEXT = false;
 
-  // Assume that the first shuffle index is not UNDEF.  Fail if it is.
-  if (M[0] < 0)
-    return false;
-
-  Imm = M[0];
+  // Look for the first non-undef choice and count backwards from
+  // that. E.g. <-1, -1, 3, ...> means that an EXT must start at 3 - 2 = 1. This
+  // guarantees that at least one index is correct.
+  const int *FirstRealElt =
+      std::find_if(M.begin(), M.end(), [](int Elt) { return Elt >= 0; });
+  assert(FirstRealElt != M.end() && "Completely UNDEF shuffle? Why bother?");
+  Imm = *FirstRealElt - (FirstRealElt - M.begin());
 
   // If this is a VEXT shuffle, the immediate value is the index of the first
   // element.  The other shuffle indices must be the successive elements after

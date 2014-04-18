@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has a separate copy due to intrinsics
 
 define <4 x i32> @copyTuple.QPair(i8* %a, i8* %b) {
 ; CHECK-LABEL: copyTuple.QPair:
