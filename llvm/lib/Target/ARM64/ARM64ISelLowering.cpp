@@ -1313,10 +1313,16 @@ static SDValue LowerVectorFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
   if (VT.getSizeInBits() == InVT.getSizeInBits())
     return Op;
 
-  if (InVT == MVT::v2f64) {
+  if (InVT == MVT::v2f64 || InVT == MVT::v4f32) {
     SDLoc dl(Op);
-    SDValue Cv = DAG.getNode(Op.getOpcode(), dl, MVT::v2i64, Op.getOperand(0));
+    SDValue Cv =
+        DAG.getNode(Op.getOpcode(), dl, InVT.changeVectorElementTypeToInteger(),
+                    Op.getOperand(0));
     return DAG.getNode(ISD::TRUNCATE, dl, VT, Cv);
+  } else if (InVT == MVT::v2f32) {
+    SDLoc dl(Op);
+    SDValue Ext = DAG.getNode(ISD::FP_EXTEND, dl, MVT::v2f64, Op.getOperand(0));
+    return DAG.getNode(Op.getOpcode(), dl, VT, Ext);
   }
 
   // Type changing conversions are illegal.
