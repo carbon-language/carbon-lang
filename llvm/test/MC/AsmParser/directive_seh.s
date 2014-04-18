@@ -3,10 +3,10 @@
 # CHECK: .seh_proc func
 # CHECK: .seh_pushframe @code
 # CHECK: .seh_stackalloc 24
-# CHECK: .seh_savereg 6, 16
-# CHECK: .seh_savexmm 8, 0
-# CHECK: .seh_pushreg 3
-# CHECK: .seh_setframe 3, 0
+# CHECK: .seh_savereg %rbp, 16
+# CHECK: .seh_savexmm %r8, 0
+# CHECK: .seh_pushreg %rbx
+# CHECK: .seh_setframe %rbx, 0
 # CHECK: .seh_endprologue
 # CHECK: .seh_handler __C_specific_handler, @except
 # CHECK-NOT: .section{{.*}}.xdata
