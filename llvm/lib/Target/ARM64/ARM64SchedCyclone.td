@@ -342,7 +342,9 @@ def : InstRW<[WriteVMov], (instrs ORRv16i8)>;
 // INS V[x],V[y] is a WriteV.
 
 // FMOVWSr,FMOVXDr,FMOVXDHighr
-def : SchedAlias<WriteFCopy, WriteVLD>;
+def : WriteRes<WriteFCopy, [CyUnitLS]> {
+  let Latency = 5;
+}
 
 // FMOVSWr,FMOVDXr
 def : InstRW<[WriteLD], (instrs FMOVSWr,FMOVDXr,FMOVDXHighr)>;

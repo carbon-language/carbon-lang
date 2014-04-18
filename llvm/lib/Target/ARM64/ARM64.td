@@ -21,7 +21,7 @@ include "llvm/Target/Target.td"
 //
 
 def FeatureFPARMv8 : SubtargetFeature<"fp-armv8", "HasFPARMv8", "true",
-  "Enable ARMv8 FP">;
+                                       "Enable ARMv8 FP">;
 
 def FeatureNEON : SubtargetFeature<"neon", "HasNEON", "true",
   "Enable Advanced SIMD instructions", [FeatureFPARMv8]>;
@@ -56,6 +56,7 @@ def ARM64InstrInfo : InstrInfo;
 //===----------------------------------------------------------------------===//
 // ARM64 Processors supported.
 //
+include "ARM64SchedA53.td"
 include "ARM64SchedCyclone.td"
 
 def ProcA53     : SubtargetFeature<"a53", "ARMProcFamily", "CortexA53",
@@ -79,9 +80,8 @@ def ProcCyclone : SubtargetFeature<"cyclone", "ARMProcFamily", "Cyclone",
 
 def : ProcessorModel<"generic", NoSchedModel, [FeatureFPARMv8, FeatureNEON]>;
 
-def : ProcessorModel<"cortex-a53", NoSchedModel, [ProcA53]>;
+def : ProcessorModel<"cortex-a53", CortexA53Model, [ProcA53]>;
 def : ProcessorModel<"cortex-a57", NoSchedModel, [ProcA57]>;
-
 def : ProcessorModel<"cyclone", CycloneModel, [ProcCyclone]>;
 
 //===----------------------------------------------------------------------===//
