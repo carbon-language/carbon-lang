@@ -865,6 +865,39 @@ static void changeFPCCToARM64CC(ISD::CondCode CC, ARM64CC::CondCode &CondCode,
   }
 }
 
+/// changeVectorFPCCToARM64CC - Convert a DAG fp condition code to an ARM64 CC
+/// usable with the vector instructions. Fewer operations are available without
+/// a real NZCV register, so we have to use less efficient combinations to get
+/// the same effect.
+static void changeVectorFPCCToARM64CC(ISD::CondCode CC,
+                                      ARM64CC::CondCode &CondCode,
+                                      ARM64CC::CondCode &CondCode2,
+                                      bool &Invert) {
+  Invert = false;
+  switch (CC) {
+  default:
+    // Mostly the scalar mappings work fine.
+    changeFPCCToARM64CC(CC, CondCode, CondCode2);
+    break;
+  case ISD::SETUO:
+    Invert = true; // Fallthrough
+  case ISD::SETO:
+    CondCode = ARM64CC::MI;
+    CondCode2 = ARM64CC::GE;
+    break;
+  case ISD::SETUEQ:
+  case ISD::SETULT:
+  case ISD::SETULE:
+  case ISD::SETUGT:
+  case ISD::SETUGE:
+    // All of the compare-mask comparisons are ordered, but we can switch
+    // between the two by a double inversion. E.g. ULE == !OGT.
+    Invert = true;
+    changeFPCCToARM64CC(getSetCCInverse(CC, false), CondCode, CondCode2);
+    break;
+  }
+}
+
 static bool isLegalArithImmed(uint64_t C) {
   // Matches ARM64DAGToDAGISel::SelectArithImmed().
   return (C >> 12 == 0) || ((C & 0xFFFULL) == 0 && C >> 24 == 0);
@@ -5389,12 +5422,13 @@ SDValue ARM64TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
   // Unfortunately, the mapping of LLVM FP CC's onto ARM64 CC's isn't totally
   // clean.  Some of them require two branches to implement.
   ARM64CC::CondCode CC1, CC2;
-  changeFPCCToARM64CC(CC, CC1, CC2);
+  bool ShouldInvert;
+  changeVectorFPCCToARM64CC(CC, CC1, CC2, ShouldInvert);
 
   bool NoNaNs = getTargetMachine().Options.NoNaNsFPMath;
-  SDValue Cmp1 =
+  SDValue Cmp =
       EmitVectorComparison(LHS, RHS, CC1, NoNaNs, Op.getValueType(), dl, DAG);
-  if (!Cmp1.getNode())
+  if (!Cmp.getNode())
     return SDValue();
 
   if (CC2 != ARM64CC::AL) {
@@ -5403,10 +5437,13 @@ SDValue ARM64TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     if (!Cmp2.getNode())
       return SDValue();
 
-    return DAG.getNode(ISD::OR, dl, Cmp1.getValueType(), Cmp1, Cmp2);
+    Cmp = DAG.getNode(ISD::OR, dl, Cmp.getValueType(), Cmp, Cmp2);
   }
 
-  return Cmp1;
+  if (ShouldInvert)
+    return Cmp = DAG.getNOT(dl, Cmp, Cmp.getValueType());
+
+  return Cmp;
 }
 
 /// getTgtMemIntrinsic - Represent NEON load and store intrinsics as
