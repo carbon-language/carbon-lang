@@ -287,7 +287,7 @@ static bool parseManifest(StringRef option, bool &enable, bool &embed,
 // The arguments will be embedded to the manifest XML file with no error check,
 // so the values given via the command line must be valid as XML attributes.
 // This may sound a bit odd, but that's how link.exe works, so we will follow.
-static bool parseManifestUac(StringRef option,
+static bool parseManifestUAC(StringRef option,
                              llvm::Optional<std::string> &level,
                              llvm::Optional<std::string> &uiAccess) {
   for (;;) {
@@ -376,24 +376,26 @@ static std::string createManifestXml(PECOFFLinkingContext &ctx) {
   // syntactically correct. This is intentional for link.exe compatibility.
   out << "<?xml version=\"1.0\" standalone=\"yes\"?>\n"
          "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\"\n"
-         "          manifestVersion=\"1.0\">\n"
-         "  <trustInfo>\n"
-         "    <security>\n"
-         "      <requestedPrivileges>\n"
-         "         <requestedExecutionLevel level=" << ctx.getManifestLevel()
-      << " uiAccess=" << ctx.getManifestUiAccess()
-      << "/>\n"
-         "      </requestedPrivileges>\n"
-         "    </security>\n"
-         "  </trustInfo>\n";
-  const std::string &dependency = ctx.getManifestDependency();
-  if (!dependency.empty()) {
-    out << "  <dependency>\n"
-           "    <dependentAssembly>\n"
-           "      <assemblyIdentity " << dependency
-        << " />\n"
-           "    </dependentAssembly>\n"
-           "  </dependency>\n";
+         "          manifestVersion=\"1.0\">\n";
+  if (ctx.getManifestUAC()) {
+    out << "  <trustInfo>\n"
+           "    <security>\n"
+           "      <requestedPrivileges>\n"
+           "         <requestedExecutionLevel level=" << ctx.getManifestLevel()
+        << " uiAccess=" << ctx.getManifestUiAccess()
+        << "/>\n"
+           "      </requestedPrivileges>\n"
+           "    </security>\n"
+           "  </trustInfo>\n";
+    const std::string &dependency = ctx.getManifestDependency();
+    if (!dependency.empty()) {
+      out << "  <dependency>\n"
+             "    <dependentAssembly>\n"
+             "      <assemblyIdentity " << dependency
+          << " />\n"
+             "    </dependentAssembly>\n"
+             "  </dependency>\n";
+    }
   }
   out << "</assembly>\n";
   out.flush();
@@ -983,9 +985,13 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
     case OPT_manifestuac: {
       // Parse /manifestuac.
+      if (StringRef(inputArg->getValue()).equals_lower("no")) {
+        ctx.setManifestUAC(false);
+        break;
+      }
       llvm::Optional<std::string> privilegeLevel;
       llvm::Optional<std::string> uiAccess;
-      if (!parseManifestUac(inputArg->getValue(), privilegeLevel, uiAccess)) {
+      if (!parseManifestUAC(inputArg->getValue(), privilegeLevel, uiAccess)) {
         diag << "Unknown argument for /manifestuac: " << inputArg->getValue()
              << "\n";
         return false;

@@ -68,6 +68,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ("", _context.getManifestDependency());
   EXPECT_FALSE(_context.getEmbedManifest());
   EXPECT_EQ(1, _context.getManifestId());
+  EXPECT_TRUE(_context.getManifestUAC());
   EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
   EXPECT_EQ("'false'", _context.getManifestUiAccess());
   EXPECT_TRUE(_context.deadStrip());
@@ -600,6 +601,11 @@ TEST_F(WinLinkParserTest, Manifest_Embed_ID42) {
   EXPECT_EQ(42, _context.getManifestId());
   EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
   EXPECT_EQ("'false'", _context.getManifestUiAccess());
+}
+
+TEST_F(WinLinkParserTest, Manifestuac_no) {
+  EXPECT_TRUE(parse("link.exe", "/manifestuac:NO", "a.out", nullptr));
+  EXPECT_FALSE(_context.getManifestUAC());
 }
 
 TEST_F(WinLinkParserTest, Manifestuac_Level) {
