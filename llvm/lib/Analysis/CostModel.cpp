@@ -108,17 +108,6 @@ static TargetTransformInfo::OperandValueKind getOperandInfo(Value *V) {
   return OpInfo;
 }
 
-static bool matchMask(SmallVectorImpl<int> &M1, SmallVectorImpl<int> &M2) {
-  if (M1.size() != M2.size())
-    return false;
-
-  for (unsigned i = 0, e = M1.size(); i != e; ++i)
-    if (M1[i] != M2[i])
-      return false;
-
-  return true;
-}
-
 static bool matchPairwiseShuffleMask(ShuffleVectorInst *SI, bool IsLeft,
                                      unsigned Level) {
   // We don't need a shuffle if we just want to have element 0 in position 0 of
@@ -136,7 +125,7 @@ static bool matchPairwiseShuffleMask(ShuffleVectorInst *SI, bool IsLeft,
     Mask[i] = val;
 
   SmallVector<int, 16> ActualMask = SI->getShuffleMask();
-  if (!matchMask(Mask, ActualMask))
+  if (Mask != ActualMask)
     return false;
 
   return true;
@@ -349,7 +338,7 @@ static bool matchVectorSplittingReduction(const ExtractElementInst *ReduxRoot,
     std::fill(&ShuffleMask[MaskStart], ShuffleMask.end(), -1);
 
     SmallVector<int, 16> Mask = Shuffle->getShuffleMask();
-    if (!matchMask(ShuffleMask, Mask))
+    if (ShuffleMask != Mask)
       return false;
 
     RdxOp = NextRdxOp;

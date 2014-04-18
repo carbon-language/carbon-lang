@@ -868,21 +868,6 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   return ModRefResult(AliasAnalysis::getModRefInfo(CS, Loc) & Min);
 }
 
-static bool areVarIndicesEqual(SmallVectorImpl<VariableGEPIndex> &Indices1,
-                               SmallVectorImpl<VariableGEPIndex> &Indices2) {
-  unsigned Size1 = Indices1.size();
-  unsigned Size2 = Indices2.size();
-
-  if (Size1 != Size2)
-    return false;
-
-  for (unsigned I = 0; I != Size1; ++I)
-    if (Indices1[I] != Indices2[I])
-      return false;
-
-  return true;
-}
-
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
 /// against another pointer.  We know that V1 is a GEP, but we don't know
 /// anything about V2.  UnderlyingV1 is GetUnderlyingObject(GEP1, DL),
@@ -939,7 +924,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
 
         // Same offsets.
         if (GEP1BaseOffset == GEP2BaseOffset &&
-            areVarIndicesEqual(GEP1VariableIndices, GEP2VariableIndices))
+            GEP1VariableIndices == GEP2VariableIndices)
           return NoAlias;
         GEP1VariableIndices.clear();
       }

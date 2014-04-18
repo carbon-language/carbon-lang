@@ -696,12 +696,7 @@ public:
   }
 
   inline bool operator==(const _Self& x) const {
-    if (stack.size() != x.stack.size())
-      return false;
-    for (unsigned i = 0 ; i < stack.size(); i++)
-      if (stack[i] != x.stack[i])
-        return false;
-    return true;
+    return stack == x.stack;
   }
 
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
