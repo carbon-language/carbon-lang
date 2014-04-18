@@ -8304,6 +8304,12 @@ let Predicates = [HasF16C] in {
   defm VCVTPH2PSY : f16c_ph2ps<VR256, f128mem, int_x86_vcvtph2ps_256>, VEX_L;
   defm VCVTPS2PH  : f16c_ps2ph<VR128, f64mem, int_x86_vcvtps2ph_128>;
   defm VCVTPS2PHY : f16c_ps2ph<VR256, f128mem, int_x86_vcvtps2ph_256>, VEX_L;
+
+  // Pattern match vcvtph2ps of a scalar i64 load.
+  def : Pat<(int_x86_vcvtph2ps_128 (vzmovl_v2i64 addr:$src)),
+            (VCVTPH2PSrm addr:$src)>;
+  def : Pat<(int_x86_vcvtph2ps_128 (vzload_v2i64 addr:$src)),
+            (VCVTPH2PSrm addr:$src)>;
 }
 
 //===----------------------------------------------------------------------===//
