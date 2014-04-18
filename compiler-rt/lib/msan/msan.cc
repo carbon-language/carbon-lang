@@ -249,6 +249,34 @@ u32 ChainOrigin(u32 id, StackTrace *stack) {
 
 using namespace __msan;
 
+#define MSAN_MAYBE_WARNING(type, size)              \
+  void __msan_maybe_warning_##size(type s, u32 o) { \
+    GET_CALLER_PC_BP_SP;                            \
+    (void) sp;                                      \
+    if (UNLIKELY(s)) {                              \
+      PrintWarningWithOrigin(pc, bp, o);            \
+      if (__msan::flags()->halt_on_error) {         \
+        Printf("Exiting\n");                        \
+        Die();                                      \
+      }                                             \
+    }                                               \
+  }
+
+MSAN_MAYBE_WARNING(u8, 1)
+MSAN_MAYBE_WARNING(u16, 2)
+MSAN_MAYBE_WARNING(u32, 4)
+MSAN_MAYBE_WARNING(u64, 8)
+
+#define MSAN_MAYBE_STORE_ORIGIN(type, size)                       \
+  void __msan_maybe_store_origin_##size(type s, void *p, u32 o) { \
+    if (UNLIKELY(s)) *(u32 *)MEM_TO_ORIGIN((uptr)p &~3UL) = o;    \
+  }
+
+MSAN_MAYBE_STORE_ORIGIN(u8, 1)
+MSAN_MAYBE_STORE_ORIGIN(u16, 2)
+MSAN_MAYBE_STORE_ORIGIN(u32, 4)
+MSAN_MAYBE_STORE_ORIGIN(u64, 8)
+
 void __msan_warning() {
   GET_CALLER_PC_BP_SP;
   (void)sp;
