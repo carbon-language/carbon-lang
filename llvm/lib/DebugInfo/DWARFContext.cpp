@@ -545,18 +545,32 @@ DILineInfoTable DWARFContext::getLineInfoForAddressRange(uint64_t Address,
 
 DIInliningInfo DWARFContext::getInliningInfoForAddress(uint64_t Address,
     DILineInfoSpecifier Specifier) {
+  DIInliningInfo InliningInfo;
+
   DWARFCompileUnit *CU = getCompileUnitForAddress(Address);
   if (!CU)
-    return DIInliningInfo();
+    return InliningInfo;
 
+  const DWARFLineTable *LineTable = nullptr;
+  const bool NeedsAbsoluteFilePath =
+      Specifier.needs(DILineInfoSpecifier::AbsoluteFilePath);
   const DWARFDebugInfoEntryInlinedChain &InlinedChain =
       CU->getInlinedChainForAddress(Address);
-  if (InlinedChain.DIEs.size() == 0)
-    return DIInliningInfo();
+  if (InlinedChain.DIEs.size() == 0) {
+    // If there is no DIE for address (e.g. it is in unavailable .dwo file),
+    // try to at least get file/line info from symbol table.
+    if (Specifier.needs(DILineInfoSpecifier::FileLineInfo)) {
+      DILineInfo Frame;
+      LineTable = getLineTableForCompileUnit(CU);
+      if (getFileLineInfoForCompileUnit(CU, LineTable, Address,
+                                        NeedsAbsoluteFilePath, Frame)) {
+        InliningInfo.addFrame(Frame);
+      }
+    }
+    return InliningInfo;
+  }
 
-  DIInliningInfo InliningInfo;
   uint32_t CallFile = 0, CallLine = 0, CallColumn = 0;
-  const DWARFLineTable *LineTable = nullptr;
   for (uint32_t i = 0, n = InlinedChain.DIEs.size(); i != n; i++) {
     const DWARFDebugInfoEntryMinimal &FunctionDIE = InlinedChain.DIEs[i];
     DILineInfo Frame;
@@ -566,16 +580,13 @@ DIInliningInfo DWARFContext::getInliningInfoForAddress(uint64_t Address,
         Frame.FunctionName = Name;
     }
     if (Specifier.needs(DILineInfoSpecifier::FileLineInfo)) {
-      const bool NeedsAbsoluteFilePath =
-          Specifier.needs(DILineInfoSpecifier::AbsoluteFilePath);
       if (i == 0) {
         // For the topmost frame, initialize the line table of this
         // compile unit and fetch file/line info from it.
         LineTable = getLineTableForCompileUnit(CU);
         // For the topmost routine, get file/line info from line table.
         getFileLineInfoForCompileUnit(CU, LineTable, Address,
-                                      NeedsAbsoluteFilePath,
-                                      Frame);
+                                      NeedsAbsoluteFilePath, Frame);
       } else {
         // Otherwise, use call file, call line and call column from
         // previous DIE in inlined chain.
