@@ -229,11 +229,11 @@ bool DWARFDebugInfoEntryMinimal::getLowAndHighPC(const DWARFUnit *U,
 DWARFAddressRangesVector
 DWARFDebugInfoEntryMinimal::getAddressRanges(const DWARFUnit *U) const {
   if (isNULL())
-    return DWARFAddressRangesVector{};
+    return DWARFAddressRangesVector();
   // Single range specified by low/high PC.
   uint64_t LowPC, HighPC;
   if (getLowAndHighPC(U, LowPC, HighPC)) {
-    return DWARFAddressRangesVector{std::make_pair(LowPC, HighPC)};
+    return DWARFAddressRangesVector(1, std::make_pair(LowPC, HighPC));
   }
   // Multiple ranges from .debug_ranges section.
   uint32_t RangesOffset =
@@ -243,7 +243,7 @@ DWARFDebugInfoEntryMinimal::getAddressRanges(const DWARFUnit *U) const {
     if (U->extractRangeList(RangesOffset, RangeList))
       return RangeList.getAbsoluteRanges(U->getBaseAddress());
   }
-  return DWARFAddressRangesVector{};
+  return DWARFAddressRangesVector();
 }
 
 void DWARFDebugInfoEntryMinimal::collectChildrenAddressRanges(
