@@ -449,6 +449,21 @@ bool GCOVProfiler::runOnModule(Module &M) {
   return false;
 }
 
+static bool functionHasLines(Function *F) {
+  // Check whether this function actually has any source lines. Not only
+  // do these waste space, they also can crash gcov.
+  for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
+    for (BasicBlock::iterator I = BB->begin(), IE = BB->end();
+         I != IE; ++I) {
+      const DebugLoc &Loc = I->getDebugLoc();
+      if (Loc.isUnknown()) continue;
+      if (Loc.getLine() != 0)
+        return true;
+    }
+  }
+  return false;
+}
+
 void GCOVProfiler::emitProfileNotes() {
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
   if (!CU_Nodes) return;
@@ -474,6 +489,7 @@ void GCOVProfiler::emitProfileNotes() {
 
       Function *F = SP.getFunction();
       if (!F) continue;
+      if (!functionHasLines(F)) continue;
 
       // gcov expects every function to start with an entry block that has a
       // single successor, so split the entry block to make sure of that.
@@ -549,6 +565,7 @@ bool GCOVProfiler::emitProfileArcs() {
         continue;
       Function *F = SP.getFunction();
       if (!F) continue;
+      if (!functionHasLines(F)) continue;
       if (!Result) Result = true;
       unsigned Edges = 0;
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
