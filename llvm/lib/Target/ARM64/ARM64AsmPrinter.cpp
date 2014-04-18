@@ -120,13 +120,15 @@ private:
 //===----------------------------------------------------------------------===//
 
 void ARM64AsmPrinter::EmitEndOfAsmFile(Module &M) {
-  // Funny Darwin hack: This flag tells the linker that no global symbols
-  // contain code that falls through to other global symbols (e.g. the obvious
-  // implementation of multiple entry points).  If this doesn't occur, the
-  // linker can safely perform dead code stripping.  Since LLVM never
-  // generates code that does this, it is always safe to set.
-  OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
-  SM.serializeToStackMapSection();
+  if (Subtarget->isTargetMachO()) {
+    // Funny Darwin hack: This flag tells the linker that no global symbols
+    // contain code that falls through to other global symbols (e.g. the obvious
+    // implementation of multiple entry points).  If this doesn't occur, the
+    // linker can safely perform dead code stripping.  Since LLVM never
+    // generates code that does this, it is always safe to set.
+    OutStreamer.EmitAssemblerFlag(MCAF_SubsectionsViaSymbols);
+    SM.serializeToStackMapSection();
+  }
 
   // Emit a .data.rel section containing any stubs that were created.
   if (Subtarget->isTargetELF()) {
