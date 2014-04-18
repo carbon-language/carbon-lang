@@ -2420,23 +2420,22 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
     StringRef CapDiagKind = "mutex";
 
     SourceLocation Loc = D->getLocation();
-    for (unsigned i = 0; i < ArgAttrs.size(); ++i) {
-      Attr *Attr = ArgAttrs[i];
+    for (const auto *Attr : ArgAttrs) {
       Loc = Attr->getLocation();
-      if (RequiresCapabilityAttr *A = dyn_cast<RequiresCapabilityAttr>(Attr)) {
+      if (const auto *A = dyn_cast<RequiresCapabilityAttr>(Attr)) {
         getMutexIDs(A->isShared() ? SharedLocksToAdd : ExclusiveLocksToAdd, A,
                     0, D);
         CapDiagKind = ClassifyDiagnostic(A);
-      } else if (auto *A = dyn_cast<ReleaseCapabilityAttr>(Attr)) {
+      } else if (const auto *A = dyn_cast<ReleaseCapabilityAttr>(Attr)) {
         // UNLOCK_FUNCTION() is used to hide the underlying lock implementation.
         // We must ignore such methods.
         if (A->args_size() == 0)
           return;
         // FIXME -- deal with exclusive vs. shared unlock functions?
-        getMutexIDs(ExclusiveLocksToAdd, A, (Expr*) 0, D);
-        getMutexIDs(LocksReleased, A, (Expr*) 0, D);
+        getMutexIDs(ExclusiveLocksToAdd, A, nullptr, D);
+        getMutexIDs(LocksReleased, A, nullptr, D);
         CapDiagKind = ClassifyDiagnostic(A);
-      } else if (auto *A = dyn_cast<AcquireCapabilityAttr>(Attr)) {
+      } else if (const auto *A = dyn_cast<AcquireCapabilityAttr>(Attr)) {
         if (A->args_size() == 0)
           return;
         getMutexIDs(A->isShared() ? SharedLocksAcquired
@@ -2487,7 +2486,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
          PE  = CurrBlock->pred_end(); PI != PE; ++PI) {
 
       // if *PI -> CurrBlock is a back edge
-      if (*PI == 0 || !VisitedBlocks.alreadySet(*PI))
+      if (*PI == nullptr || !VisitedBlocks.alreadySet(*PI))
         continue;
 
       int PrevBlockID = (*PI)->getBlockID();
@@ -2530,9 +2529,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
 
     // Process continue and break blocks. Assume that the lockset for the
     // resulting block is unaffected by any discrepancies in them.
-    for (unsigned SpecialI = 0, SpecialN = SpecialBlocks.size();
-         SpecialI < SpecialN; ++SpecialI) {
-      CFGBlock *PrevBlock = SpecialBlocks[SpecialI];
+    for (const auto *PrevBlock : SpecialBlocks) {
       int PrevBlockID = PrevBlock->getBlockID();
       CFGBlockInfo *PrevBlockInfo = &BlockInfo[PrevBlockID];
 
@@ -2628,17 +2625,14 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
   // by *-LOCK_FUNCTION and UNLOCK_FUNCTION.  The intersect below will then
   // issue the appropriate warning.
   // FIXME: the location here is not quite right.
-  for (unsigned i=0,n=ExclusiveLocksAcquired.size(); i<n; ++i) {
-    ExpectedExitSet.addLock(FactMan, ExclusiveLocksAcquired[i],
+  for (const auto &Lock : ExclusiveLocksAcquired)
+    ExpectedExitSet.addLock(FactMan, Lock,
                             LockData(D->getLocation(), LK_Exclusive));
-  }
-  for (unsigned i=0,n=SharedLocksAcquired.size(); i<n; ++i) {
-    ExpectedExitSet.addLock(FactMan, SharedLocksAcquired[i],
+  for (const auto &Lock : SharedLocksAcquired)
+    ExpectedExitSet.addLock(FactMan, Lock,
                             LockData(D->getLocation(), LK_Shared));
-  }
-  for (unsigned i=0,n=LocksReleased.size(); i<n; ++i) {
-    ExpectedExitSet.removeLock(FactMan, LocksReleased[i]);
-  }
+  for (const auto &Lock : LocksReleased)
+    ExpectedExitSet.removeLock(FactMan, Lock);
 
   // FIXME: Should we call this function for all blocks which exit the function?
   intersectAndWarn(ExpectedExitSet, Final->ExitSet,
