@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 already has these tests: pure intrinsics & trivial shifts.
 
 declare <8 x i8> @llvm.arm.neon.vshiftu.v8i8(<8 x i8>, <8 x i8>)
 declare <8 x i8> @llvm.arm.neon.vshifts.v8i8(<8 x i8>, <8 x i8>)

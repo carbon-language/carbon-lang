@@ -1,5 +1,8 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
 
+; arm64 already has these. Essentially just a copy/paste from Clang output from
+; arm_neon.h
+
 define void @test_ldst1_v16i8(<16 x i8>* %ptr, <16 x i8>* %ptr2) {
 ; CHECK-LABEL: test_ldst1_v16i8:
 ; CHECK: ld1 {v{{[0-9]+}}.16b}, [x{{[0-9]+|sp}}]

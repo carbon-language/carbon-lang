@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; interesting parts copied into arm64 directory as aarch64-neon-simd-ldst-one.ll
 
 %struct.uint8x16x2_t = type { [2 x <16 x i8>] }
 %struct.poly8x16x2_t = type { [2 x <16 x i8>] }

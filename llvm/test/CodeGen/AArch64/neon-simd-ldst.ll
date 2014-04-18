@@ -1,4 +1,5 @@
 ; RUN: llc < %s -O2 -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; Just intrinsic mashing. Duplicates existing arm64 tests.
 
 define void @test_ldstq_4v(i8* noalias %io, i32 %count) {
 ; CHECK-LABEL: test_ldstq_4v
