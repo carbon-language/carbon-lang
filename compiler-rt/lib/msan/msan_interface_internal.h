@@ -38,6 +38,24 @@ SANITIZER_INTERFACE_ATTRIBUTE __attribute__((noreturn))
 void __msan_warning_noreturn();
 
 SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_maybe_warning_1(u8 s, u32 o);
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_maybe_warning_2(u16 s, u32 o);
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_maybe_warning_4(u32 s, u32 o);
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_maybe_warning_8(u64 s, u32 o);
+
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_maybe_store_origin_1(u8 s, void *p, u32 o);
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_maybe_store_origin_2(u16 s, void *p, u32 o);
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_maybe_store_origin_4(u32 s, void *p, u32 o);
+SANITIZER_INTERFACE_ATTRIBUTE
+void __msan_maybe_store_origin_8(u64 s, void *p, u32 o);
+
+SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_unpoison(const void *a, uptr size);
 SANITIZER_INTERFACE_ATTRIBUTE
 void __msan_unpoison_string(const char *s);
