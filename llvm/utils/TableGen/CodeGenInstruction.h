@@ -156,7 +156,6 @@ namespace llvm {
     iterator end() { return OperandList.end(); }
     const_iterator end() const { return OperandList.end(); }
 
-
     /// getOperandNamed - Return the index of the operand with the specified
     /// non-empty name.  If the instruction does not have an operand with the
     /// specified name, abort.
