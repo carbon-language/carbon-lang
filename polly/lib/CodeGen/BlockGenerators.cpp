@@ -526,6 +526,10 @@ void VectorBlockGenerator::generateLoad(const LoadInst *Load,
 
   const MemoryAccess &Access = Statement.getAccessFor(Load);
 
+  // Make sure we have scalar values available to access the pointer to
+  // the data location.
+  extractScalarValues(Load, VectorMap, ScalarMaps);
+
   Value *NewLoad;
   if (Access.isStrideZero(isl_map_copy(Schedule)))
     NewLoad = generateStrideZeroLoad(Load, ScalarMaps[0]);

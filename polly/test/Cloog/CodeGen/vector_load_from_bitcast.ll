@@ -15,8 +15,13 @@ for:
   %re115 = bitcast float* %ptr2 to float*
 ; CHECK: %val_p_vec_p = bitcast float** %p_ptr1 to <1 x float*>*
 
-  store float undef, float* %re115, !tbaa !2816
-; CHECK: store <4 x float> undef, <4 x float>* %vector_ptr
+  %scevgep3 = getelementptr float* %val, i32 %indvar
+  %scevgep162163 = bitcast float* %scevgep3 to float*
+  %ptr5 = load float* %scevgep162163, !tbaa !2816
+; CHECK: load <4 x float>
+  %add = fadd float undef, %ptr5
+  store float %add, float* %re115, !tbaa !2816
+; CHECK: store <4 x float>
 
   %indvar.next = add nsw i32 %indvar, 1
   %exitcond = icmp ne i32 %indvar.next, 4
