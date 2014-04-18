@@ -44,13 +44,6 @@ getDILineInfoSpecifierFlags(const LLVMSymbolizer::Options &Opts) {
   return Flags;
 }
 
-static void patchFunctionNameInDILineInfo(const std::string &NewFunctionName,
-                                          DILineInfo &LineInfo) {
-  std::string FileName = LineInfo.getFileName();
-  LineInfo = DILineInfo(StringRef(FileName), StringRef(NewFunctionName),
-                        LineInfo.getLine(), LineInfo.getColumn());
-}
-
 ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
     : Module(Obj), DebugInfoContext(DICtx) {
   for (const SymbolRef &Symbol : Module->symbols()) {
@@ -130,7 +123,7 @@ DILineInfo ModuleInfo::symbolizeCode(
     uint64_t Start, Size;
     if (getNameFromSymbolTable(SymbolRef::ST_Function, ModuleOffset,
                                FunctionName, Start, Size)) {
-      patchFunctionNameInDILineInfo(FunctionName, LineInfo);
+      LineInfo.FunctionName = FunctionName;
     }
   }
   return LineInfo;
@@ -157,7 +150,7 @@ DIInliningInfo ModuleInfo::symbolizeInlinedCode(
         uint64_t Start, Size;
         if (getNameFromSymbolTable(SymbolRef::ST_Function, ModuleOffset,
                                    FunctionName, Start, Size)) {
-          patchFunctionNameInDILineInfo(FunctionName, LineInfo);
+          LineInfo.FunctionName = FunctionName;
         }
       }
       PatchedInlinedContext.addFrame(LineInfo);
@@ -408,18 +401,17 @@ std::string LLVMSymbolizer::printDILineInfo(DILineInfo LineInfo) const {
   static const std::string kDILineInfoBadString = "<invalid>";
   std::stringstream Result;
   if (Opts.PrintFunctions) {
-    std::string FunctionName = LineInfo.getFunctionName();
+    std::string FunctionName = LineInfo.FunctionName;
     if (FunctionName == kDILineInfoBadString)
       FunctionName = kBadString;
     else if (Opts.Demangle)
       FunctionName = DemangleName(FunctionName);
     Result << FunctionName << "\n";
   }
-  std::string Filename = LineInfo.getFileName();
+  std::string Filename = LineInfo.FileName;
   if (Filename == kDILineInfoBadString)
     Filename = kBadString;
-  Result << Filename << ":" << LineInfo.getLine() << ":" << LineInfo.getColumn()
-         << "\n";
+  Result << Filename << ":" << LineInfo.Line << ":" << LineInfo.Column << "\n";
   return Result.str();
 }
 

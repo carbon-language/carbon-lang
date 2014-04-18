@@ -421,9 +421,9 @@ static void DisassembleInputMachO2(StringRef Filename,
             DILineInfo dli =
               diContext->getLineInfoForAddress(SectAddress + Index);
             // Print valid line info if it changed.
-            if (dli != lastLine && dli.getLine() != 0)
-              outs() << "\t## " << dli.getFileName() << ':'
-                << dli.getLine() << ':' << dli.getColumn();
+            if (dli != lastLine && dli.Line != 0)
+              outs() << "\t## " << dli.FileName << ':' << dli.Line << ':'
+                     << dli.Column;
             lastLine = dli;
           }
           outs() << "\n";

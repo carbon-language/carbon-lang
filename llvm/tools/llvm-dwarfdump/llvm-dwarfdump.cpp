@@ -80,10 +80,8 @@ DumpType("debug-dump", cl::init(DIDT_All),
 
 static void PrintDILineInfo(DILineInfo dli) {
   if (PrintFunctions)
-    outs() << (dli.getFunctionName() ? dli.getFunctionName() : "<unknown>")
-           << "\n";
-  outs() << (dli.getFileName() ? dli.getFileName() : "<unknown>") << ':'
-         << dli.getLine() << ':' << dli.getColumn() << '\n';
+    outs() << dli.FunctionName << "\n";
+  outs() << dli.FileName << ':' << dli.Line << ':' << dli.Column << '\n';
 }
 
 static void DumpInput(const StringRef &Filename) {

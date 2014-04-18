@@ -172,8 +172,7 @@ static int printLineInfoForInput() {
         DILineInfoTable::iterator  End = Lines.end();
         for (DILineInfoTable::iterator It = Begin; It != End; ++It) {
           outs() << "  Line info @ " << It->first - Addr << ": "
-                 << It->second.getFileName()
-                 << ", line:" << It->second.getLine() << "\n";
+                 << It->second.FileName << ", line:" << It->second.Line << "\n";
         }
       }
     }
