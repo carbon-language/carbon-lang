@@ -311,7 +311,7 @@ namespace bitc {
     // 32 is unused.
     FUNC_CODE_DEBUG_LOC_AGAIN  = 33, // DEBUG_LOC_AGAIN
 
-    FUNC_CODE_INST_CALL        = 34, // CALL:       [attr, fnty, fnid, args...]
+    FUNC_CODE_INST_CALL        = 34, // CALL:    [attr, cc, fnty, fnid, args...]
 
     FUNC_CODE_DEBUG_LOC        = 35, // DEBUG_LOC:  [Line,Col,ScopeVal, IAVal]
     FUNC_CODE_INST_FENCE       = 36, // FENCE: [ordering, synchscope]
