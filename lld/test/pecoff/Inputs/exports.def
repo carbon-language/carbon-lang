@@ -1,4 +1,3 @@
-LIBRARY foo.dll
 EXPORTS
   exportfn1 @5
   exportfn2
