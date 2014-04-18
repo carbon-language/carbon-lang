@@ -149,6 +149,13 @@ namespace llvm {
     OperandInfo &back() { return OperandList.back(); }
     const OperandInfo &back() const { return OperandList.back(); }
 
+    typedef std::vector<OperandInfo>::iterator iterator;
+    typedef std::vector<OperandInfo>::const_iterator const_iterator;
+    iterator begin() { return OperandList.begin(); }
+    const_iterator begin() const { return OperandList.begin(); }
+    iterator end() { return OperandList.end(); }
+    const_iterator end() const { return OperandList.end(); }
+
 
     /// getOperandNamed - Return the index of the operand with the specified
     /// non-empty name.  If the instruction does not have an operand with the
