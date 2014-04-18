@@ -1209,10 +1209,12 @@ getUncompressedData(MCAsmLayout &Layout,
 // Include the debug info compression header:
 // "ZLIB" followed by 8 bytes representing the uncompressed size of the section,
 // useful for consumers to preallocate a buffer to decompress into.
-static void
+static bool
 prependCompressionHeader(uint64_t Size,
                          SmallVectorImpl<char> &CompressedContents) {
   static const StringRef Magic = "ZLIB";
+  if (Size <= Magic.size() + sizeof(Size) + CompressedContents.size())
+    return false;
   if (sys::IsLittleEndianHost)
     Size = sys::SwapByteOrder(Size);
   CompressedContents.insert(CompressedContents.begin(),
@@ -1221,6 +1223,7 @@ prependCompressionHeader(uint64_t Size,
   std::copy(reinterpret_cast<char *>(&Size),
             reinterpret_cast<char *>(&Size + 1),
             CompressedContents.begin() + Magic.size());
+  return true;
 }
 
 // Return a single fragment containing the compressed contents of the whole
@@ -1243,7 +1246,8 @@ getCompressedFragment(MCAsmLayout &Layout,
   if (Success != zlib::StatusOK)
     return nullptr;
 
-  prependCompressionHeader(UncompressedData.size(), CompressedContents);
+  if (!prependCompressionHeader(UncompressedData.size(), CompressedContents))
+    return nullptr;
 
   return CompressedFragment;
 }
