@@ -36,7 +36,7 @@ static inline uint64_t MD5Hash(StringRef Str) {
   return endian::read<uint64_t, little, unaligned>(Result);
 }
 
-uint64_t ComputeHash(HashT Type, StringRef K) {
+static inline uint64_t ComputeHash(HashT Type, StringRef K) {
   switch (Type) {
   case HashT::MD5:
     return IndexedInstrProf::MD5Hash(K);

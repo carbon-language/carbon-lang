@@ -243,6 +243,11 @@ template class RawInstrProfReader<uint32_t>;
 template class RawInstrProfReader<uint64_t>;
 }
 
+InstrProfLookupTrait::hash_value_type
+InstrProfLookupTrait::ComputeHash(StringRef K) {
+  return IndexedInstrProf::ComputeHash(HashType, K);
+}
+
 bool IndexedInstrProfReader::hasFormat(const MemoryBuffer &DataBuffer) {
   if (DataBuffer.getBufferSize() < 8)
     return false;

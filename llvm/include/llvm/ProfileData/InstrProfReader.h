@@ -198,7 +198,6 @@ typedef RawInstrProfReader<uint64_t> RawInstrProfReader64;
 
 namespace IndexedInstrProf {
 enum class HashT : uint32_t;
-uint64_t ComputeHash(HashT Type, StringRef K);
 }
 
 /// Trait for lookups into the on-disk hash table for the binary instrprof
@@ -218,9 +217,7 @@ public:
   static bool EqualKey(StringRef A, StringRef B) { return A == B; }
   static StringRef GetInternalKey(StringRef K) { return K; }
 
-  hash_value_type ComputeHash(StringRef K) {
-    return IndexedInstrProf::ComputeHash(HashType, K);
-  }
+  hash_value_type ComputeHash(StringRef K);
 
   static std::pair<offset_type, offset_type>
   ReadKeyDataLength(const unsigned char *&D) {
