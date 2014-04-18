@@ -129,9 +129,7 @@ public:
   const char *getCompilationDir();
   uint64_t getDWOId();
 
-  void buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
-                              bool clear_dies_if_already_not_parsed,
-                              uint32_t CUOffsetInAranges);
+  void collectAddressRanges(DWARFAddressRangesVector &CURanges);
 
   /// getInlinedChainForAddress - fetches inlined chain for a given address.
   /// Returns empty chain if there is no subprogram containing address. The

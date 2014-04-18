@@ -298,33 +298,26 @@ void DWARFUnit::clearDIEs(bool KeepCUDie) {
   }
 }
 
-void
-DWARFUnit::buildAddressRangeTable(DWARFDebugAranges *debug_aranges,
-                                         bool clear_dies_if_already_not_parsed,
-                                         uint32_t CUOffsetInAranges) {
+void DWARFUnit::collectAddressRanges(DWARFAddressRangesVector &CURanges) {
   // This function is usually called if there in no .debug_aranges section
   // in order to produce a compile unit level set of address ranges that
   // is accurate. If the DIEs weren't parsed, then we don't want all dies for
   // all compile units to stay loaded when they weren't needed. So we can end
   // up parsing the DWARF and then throwing them all away to keep memory usage
   // down.
-  const bool clear_dies = extractDIEsIfNeeded(false) > 1 &&
-                          clear_dies_if_already_not_parsed;
-  DieArray[0].buildAddressRangeTable(this, debug_aranges, CUOffsetInAranges);
+  const bool ClearDIEs = extractDIEsIfNeeded(false) > 1;
+  DieArray[0].collectChildrenAddressRanges(this, CURanges);
+
+  // Collect address ranges from DIEs in .dwo if necessary.
   bool DWOCreated = parseDWO();
-  if (DWO.get()) {
-    // If there is a .dwo file for this compile unit, then skeleton CU DIE
-    // doesn't have children, and we should instead build address range table
-    // from DIEs in the .debug_info.dwo section of .dwo file.
-    DWO->getUnit()->buildAddressRangeTable(
-        debug_aranges, clear_dies_if_already_not_parsed, CUOffsetInAranges);
-  }
-  if (DWOCreated && clear_dies_if_already_not_parsed)
+  if (DWO.get())
+    DWO->getUnit()->collectAddressRanges(CURanges);
+  if (DWOCreated)
     DWO.reset();
 
   // Keep memory down by clearing DIEs if this generate function
   // caused them to be parsed.
-  if (clear_dies)
+  if (ClearDIEs)
     clearDIEs(true);
 }
 

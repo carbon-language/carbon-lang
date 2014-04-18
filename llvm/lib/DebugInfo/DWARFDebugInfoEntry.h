@@ -11,6 +11,7 @@
 #define LLVM_DEBUGINFO_DWARFDEBUGINFOENTRY_H
 
 #include "DWARFAbbreviationDeclaration.h"
+#include "DWARFDebugRangeList.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"
 
@@ -135,9 +136,10 @@ public:
   bool getLowAndHighPC(const DWARFUnit *U, uint64_t &LowPC,
                        uint64_t &HighPC) const;
 
-  void buildAddressRangeTable(const DWARFUnit *U,
-                              DWARFDebugAranges *DebugAranges,
-                              uint32_t CUOffsetInAranges) const;
+  DWARFAddressRangesVector getAddressRanges(const DWARFUnit *U) const;
+
+  void collectChildrenAddressRanges(const DWARFUnit *U,
+                                    DWARFAddressRangesVector &Ranges) const;
 
   bool addressRangeContainsAddress(const DWARFUnit *U,
                                    const uint64_t Address) const;

@@ -58,8 +58,13 @@ void DWARFDebugAranges::generate(DWARFContext *CTX) {
   // manually build aranges for the rest of them.
   for (const auto &CU : CTX->compile_units()) {
     uint32_t CUOffset = CU->getOffset();
-    if (ParsedCUOffsets.insert(CUOffset).second)
-      CU->buildAddressRangeTable(this, true, CUOffset);
+    if (ParsedCUOffsets.insert(CUOffset).second) {
+      DWARFAddressRangesVector CURanges;
+      CU->collectAddressRanges(CURanges);
+      for (const auto &R : CURanges) {
+        appendRange(CUOffset, R.first, R.second);
+      }
+    }
   }
 
   sortAndMinimize();

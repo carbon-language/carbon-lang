@@ -54,13 +54,16 @@ void DWARFDebugRangeList::dump(raw_ostream &OS) const {
   OS << format("%08x <End of list>\n", Offset);
 }
 
-bool DWARFDebugRangeList::containsAddress(uint64_t BaseAddress,
-                                          uint64_t Address) const {
+DWARFAddressRangesVector
+DWARFDebugRangeList::getAbsoluteRanges(uint64_t BaseAddress) const {
+  DWARFAddressRangesVector Res;
   for (const RangeListEntry &RLE : Entries) {
-    if (RLE.isBaseAddressSelectionEntry(AddressSize))
+    if (RLE.isBaseAddressSelectionEntry(AddressSize)) {
       BaseAddress = RLE.EndAddress;
-    else if (RLE.containsAddress(BaseAddress, Address))
-      return true;
+    } else {
+      Res.push_back(std::make_pair(BaseAddress + RLE.StartAddress,
+                                   BaseAddress + RLE.EndAddress));
+    }
   }
-  return false;
+  return Res;
 }

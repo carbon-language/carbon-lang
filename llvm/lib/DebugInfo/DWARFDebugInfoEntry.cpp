@@ -226,39 +226,47 @@ bool DWARFDebugInfoEntryMinimal::getLowAndHighPC(const DWARFUnit *U,
   return (HighPC != -1ULL);
 }
 
-void DWARFDebugInfoEntryMinimal::buildAddressRangeTable(
-    const DWARFUnit *U, DWARFDebugAranges *DebugAranges,
-    uint32_t UOffsetInAranges) const {
-  if (AbbrevDecl) {
-    if (isSubprogramDIE()) {
-      uint64_t LowPC, HighPC;
-      if (getLowAndHighPC(U, LowPC, HighPC))
-        DebugAranges->appendRange(UOffsetInAranges, LowPC, HighPC);
-      // FIXME: try to append ranges from .debug_ranges section.
-    }
-
-    const DWARFDebugInfoEntryMinimal *Child = getFirstChild();
-    while (Child) {
-      Child->buildAddressRangeTable(U, DebugAranges, UOffsetInAranges);
-      Child = Child->getSibling();
-    }
-  }
-}
-
-bool DWARFDebugInfoEntryMinimal::addressRangeContainsAddress(
-    const DWARFUnit *U, const uint64_t Address) const {
+DWARFAddressRangesVector
+DWARFDebugInfoEntryMinimal::getAddressRanges(const DWARFUnit *U) const {
   if (isNULL())
-    return false;
+    return DWARFAddressRangesVector{};
+  // Single range specified by low/high PC.
   uint64_t LowPC, HighPC;
-  if (getLowAndHighPC(U, LowPC, HighPC))
-    return (LowPC <= Address && Address <= HighPC);
-  // Try to get address ranges from .debug_ranges section.
+  if (getLowAndHighPC(U, LowPC, HighPC)) {
+    return DWARFAddressRangesVector{std::make_pair(LowPC, HighPC)};
+  }
+  // Multiple ranges from .debug_ranges section.
   uint32_t RangesOffset =
       getAttributeValueAsSectionOffset(U, DW_AT_ranges, -1U);
   if (RangesOffset != -1U) {
     DWARFDebugRangeList RangeList;
     if (U->extractRangeList(RangesOffset, RangeList))
-      return RangeList.containsAddress(U->getBaseAddress(), Address);
+      return RangeList.getAbsoluteRanges(U->getBaseAddress());
+  }
+  return DWARFAddressRangesVector{};
+}
+
+void DWARFDebugInfoEntryMinimal::collectChildrenAddressRanges(
+    const DWARFUnit *U, DWARFAddressRangesVector& Ranges) const {
+  if (isNULL())
+    return;
+  if (isSubprogramDIE()) {
+    const auto &DIERanges = getAddressRanges(U);
+    Ranges.insert(Ranges.end(), DIERanges.begin(), DIERanges.end());
+  }
+
+  const DWARFDebugInfoEntryMinimal *Child = getFirstChild();
+  while (Child) {
+    Child->collectChildrenAddressRanges(U, Ranges);
+    Child = Child->getSibling();
+  }
+}
+
+bool DWARFDebugInfoEntryMinimal::addressRangeContainsAddress(
+    const DWARFUnit *U, const uint64_t Address) const {
+  for (const auto& R : getAddressRanges(U)) {
+    if (R.first <= Address && Address < R.second)
+      return true;
   }
   return false;
 }
