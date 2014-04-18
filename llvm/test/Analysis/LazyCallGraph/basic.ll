@@ -124,3 +124,53 @@ define void @test2() {
   load i8** bitcast (void ()** @h to i8**)
   ret void
 }
+
+; Verify the SCCs formed.
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f7
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f6
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f5
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f4
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f3
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f2
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f1
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    test2
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f12
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f11
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f10
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f9
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f8
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    test1
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    f
+;
+; CHECK-LABEL: SCC with 1 functions:
+; CHECK-NEXT:    test0

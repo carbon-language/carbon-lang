@@ -38,8 +38,10 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
@@ -100,6 +102,7 @@ class raw_ostream;
 class LazyCallGraph {
 public:
   class Node;
+  class SCC;
   typedef SmallVector<PointerUnion<Function *, Node *>, 4> NodeVectorT;
   typedef SmallVectorImpl<PointerUnion<Function *, Node *>> NodeVectorImplT;
 
@@ -173,9 +176,16 @@ public:
   /// a callee, and facilitate iteration of child nodes in the graph.
   class Node {
     friend class LazyCallGraph;
+    friend class LazyCallGraph::SCC;
 
     LazyCallGraph *G;
     Function &F;
+
+    // We provide for the DFS numbering and Tarjan walk lowlink numbers to be
+    // stored directly within the node.
+    int DFSNumber;
+    int LowLink;
+
     mutable NodeVectorT Callees;
     SmallPtrSet<Function *, 4> CalleeSet;
 
@@ -199,6 +209,79 @@ public:
     /// Equality is defined as address equality.
     bool operator==(const Node &N) const { return this == &N; }
     bool operator!=(const Node &N) const { return !operator==(N); }
+  };
+
+  /// \brief An SCC of the call graph.
+  ///
+  /// This represents a Strongly Connected Component of the call graph as
+  /// a collection of call graph nodes. While the order of nodes in the SCC is
+  /// stable, it is not any particular order.
+  class SCC {
+    friend class LazyCallGraph;
+    friend class LazyCallGraph::Node;
+
+    SmallSetVector<SCC *, 1> ParentSCCs;
+    SmallVector<Node *, 1> Nodes;
+    SmallPtrSet<Function *, 1> NodeSet;
+
+    SCC() {}
+
+  public:
+    typedef SmallVectorImpl<Node *>::const_iterator iterator;
+
+    iterator begin() const { return Nodes.begin(); }
+    iterator end() const { return Nodes.end(); }
+  };
+
+  /// \brief A post-order depth-first SCC iterator over the call graph.
+  ///
+  /// This iterator triggers the Tarjan DFS-based formation of the SCC DAG for
+  /// the call graph, walking it lazily in depth-first post-order. That is, it
+  /// always visits SCCs for a callee prior to visiting the SCC for a caller
+  /// (when they are in different SCCs).
+  class postorder_scc_iterator
+      : public std::iterator<std::forward_iterator_tag, SCC *, ptrdiff_t, SCC *,
+                             SCC *> {
+    friend class LazyCallGraph;
+    friend class LazyCallGraph::Node;
+    typedef std::iterator<std::forward_iterator_tag, SCC *, ptrdiff_t,
+                          SCC *, SCC *> BaseT;
+
+    /// \brief Nonce type to select the constructor for the end iterator.
+    struct IsAtEndT {};
+
+    LazyCallGraph *G;
+    SCC *C;
+
+    // Build the begin iterator for a node.
+    postorder_scc_iterator(LazyCallGraph &G) : G(&G) {
+      C = G.getNextSCCInPostOrder();
+    }
+
+    // Build the end iterator for a node. This is selected purely by overload.
+    postorder_scc_iterator(LazyCallGraph &G, IsAtEndT /*Nonce*/)
+        : G(&G), C(nullptr) {}
+
+  public:
+    bool operator==(const postorder_scc_iterator &Arg) {
+      return G == Arg.G && C == Arg.C;
+    }
+    bool operator!=(const postorder_scc_iterator &Arg) {
+      return !operator==(Arg);
+    }
+
+    reference operator*() const { return C; }
+    pointer operator->() const { return operator*(); }
+
+    postorder_scc_iterator &operator++() {
+      C = G->getNextSCCInPostOrder();
+      return *this;
+    }
+    postorder_scc_iterator operator++(int) {
+      postorder_scc_iterator prev = *this;
+      ++*this;
+      return prev;
+    }
   };
 
   /// \brief Construct a graph for the given module.
@@ -228,6 +311,18 @@ public:
 
   iterator begin() { return iterator(*this, EntryNodes); }
   iterator end() { return iterator(*this, EntryNodes, iterator::IsAtEndT()); }
+
+  postorder_scc_iterator postorder_scc_begin() {
+    return postorder_scc_iterator(*this);
+  }
+  postorder_scc_iterator postorder_scc_end() {
+    return postorder_scc_iterator(*this, postorder_scc_iterator::IsAtEndT());
+  }
+
+  iterator_range<postorder_scc_iterator> postorder_sccs() {
+    return iterator_range<postorder_scc_iterator>(postorder_scc_begin(),
+                                                  postorder_scc_end());
+  }
 
   /// \brief Lookup a function in the graph which has already been scanned and
   /// added.
@@ -259,12 +354,35 @@ private:
   /// \brief Set of the entry nodes to the graph.
   SmallPtrSet<Function *, 4> EntryNodeSet;
 
+  /// \brief Allocator that holds all the call graph SCCs.
+  SpecificBumpPtrAllocator<SCC> SCCBPA;
+
+  /// \brief Maps Function -> SCC for fast lookup.
+  DenseMap<const Function *, SCC *> SCCMap;
+
+  /// \brief The leaf SCCs of the graph.
+  ///
+  /// These are all of the SCCs which have no children.
+  SmallVector<SCC *, 4> LeafSCCs;
+
+  /// \brief Stack of nodes not-yet-processed into SCCs.
+  SmallVector<std::pair<Node *, iterator>, 4> DFSStack;
+
+  /// \brief Set of entry nodes not-yet-processed into SCCs.
+  SmallSetVector<Function *, 4> SCCEntryNodes;
+
+  /// \brief Counter for the next DFS number to assign.
+  int NextDFSNumber;
+
   /// \brief Helper to insert a new function, with an already looked-up entry in
   /// the NodeMap.
   Node *insertInto(Function &F, Node *&MappedN);
 
   /// \brief Helper to copy a node from another graph into this one.
   Node *copyInto(const Node &OtherN);
+
+  /// \brief Retrieve the next node in the post-order SCC walk of the call graph.
+  SCC *getNextSCCInPostOrder();
 };
 
 // Provide GraphTraits specializations for call graphs.
