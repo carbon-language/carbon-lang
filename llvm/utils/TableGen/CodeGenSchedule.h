@@ -248,6 +248,28 @@ class CodeGenSchedModels {
 public:
   CodeGenSchedModels(RecordKeeper& RK, const CodeGenTarget &TGT);
 
+  // iterator access to the scheduling classes.
+  typedef std::vector<CodeGenSchedClass>::iterator class_iterator;
+  typedef std::vector<CodeGenSchedClass>::const_iterator const_class_iterator;
+  class_iterator classes_begin() { return SchedClasses.begin(); }
+  const_class_iterator classes_begin() const { return SchedClasses.begin(); }
+  class_iterator classes_end() { return SchedClasses.end(); }
+  const_class_iterator classes_end() const { return SchedClasses.end(); }
+  iterator_range<class_iterator> classes() {
+   return iterator_range<class_iterator>(classes_begin(), classes_end());
+  }
+  iterator_range<const_class_iterator> classes() const {
+   return iterator_range<const_class_iterator>(classes_begin(), classes_end());
+  }
+  iterator_range<class_iterator> explicit_classes() {
+    return iterator_range<class_iterator>(
+        classes_begin(), classes_begin() + NumInstrSchedClasses);
+  }
+  iterator_range<const_class_iterator> explicit_classes() const {
+    return iterator_range<const_class_iterator>(
+        classes_begin(), classes_begin() + NumInstrSchedClasses);
+  }
+
   Record *getModelOrItinDef(Record *ProcDef) const {
     Record *ModelDef = ProcDef->getValueAsDef("SchedModel");
     Record *ItinsDef = ProcDef->getValueAsDef("ProcItin");
