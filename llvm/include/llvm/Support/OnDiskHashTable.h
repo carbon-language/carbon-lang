@@ -444,6 +444,10 @@ public:
   }
   key_iterator key_end() { return key_iterator(); }
 
+  iterator_range<key_iterator> keys() {
+    return make_range(key_begin(), key_end());
+  }
+
   /// \brief Iterates over all the entries in the table, returning the data.
   class data_iterator {
     const unsigned char *Ptr;
@@ -510,6 +514,10 @@ public:
     return data_iterator(Payload, this->getNumEntries(), &this->getInfoObj());
   }
   data_iterator data_end() { return data_iterator(); }
+
+  iterator_range<data_iterator> data() {
+    return make_range(data_begin(), data_end());
+  }
 
   /// \brief Create the hash table.
   ///
