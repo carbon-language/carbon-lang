@@ -65,7 +65,7 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F)
   findCallees(Worklist, Visited, Callees, CalleeSet);
 }
 
-LazyCallGraph::LazyCallGraph(Module &M) {
+LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
   for (Function &F : M)
     if (!F.isDeclaration() && !F.hasLocalLinkage())
       if (EntryNodeSet.insert(&F))
@@ -89,16 +89,19 @@ LazyCallGraph::LazyCallGraph(Module &M) {
 }
 
 LazyCallGraph::LazyCallGraph(LazyCallGraph &&G)
-    : BPA(std::move(G.BPA)), EntryNodes(std::move(G.EntryNodes)),
+    : BPA(std::move(G.BPA)), NodeMap(std::move(G.NodeMap)),
+      EntryNodes(std::move(G.EntryNodes)),
       EntryNodeSet(std::move(G.EntryNodeSet)), SCCBPA(std::move(G.SCCBPA)),
       SCCMap(std::move(G.SCCMap)), LeafSCCs(std::move(G.LeafSCCs)),
       DFSStack(std::move(G.DFSStack)),
-      SCCEntryNodes(std::move(G.SCCEntryNodes)) {
+      SCCEntryNodes(std::move(G.SCCEntryNodes)),
+      NextDFSNumber(G.NextDFSNumber) {
   updateGraphPtrs();
 }
 
 LazyCallGraph &LazyCallGraph::operator=(LazyCallGraph &&G) {
   BPA = std::move(G.BPA);
+  NodeMap = std::move(G.NodeMap);
   EntryNodes = std::move(G.EntryNodes);
   EntryNodeSet = std::move(G.EntryNodeSet);
   SCCBPA = std::move(G.SCCBPA);
@@ -106,6 +109,7 @@ LazyCallGraph &LazyCallGraph::operator=(LazyCallGraph &&G) {
   LeafSCCs = std::move(G.LeafSCCs);
   DFSStack = std::move(G.DFSStack);
   SCCEntryNodes = std::move(G.SCCEntryNodes);
+  NextDFSNumber = G.NextDFSNumber;
   updateGraphPtrs();
   return *this;
 }
