@@ -297,10 +297,11 @@ define <2 x i64> @h(i64 %a, i64 %b) nounwind readnone  {
 ; the scalar corresponding to the vector type is illegal (e.g. a <4 x i16>
 ; BUILD_VECTOR will have an i32 as its source). In that case, the operation is
 ; not a simple "dup vD.4h, vN.h[idx]" after all, and we crashed.
+;
+; *However*, it is a dup vD.4h, vN.h[2*idx].
 define <4 x i16> @test_build_illegal(<4 x i32> %in) {
 ; CHECK-LABEL: test_build_illegal:
-; CHECK: umov.s [[WTMP:w[0-9]+]], v0[3]
-; CHECK: dup.4h v0, [[WTMP]]
+; CHECK: dup.4h v0, v0[6]
   %val = extractelement <4 x i32> %in, i32 3
   %smallval = trunc i32 %val to i16
   %vec = insertelement <4x i16> undef, i16 %smallval, i32 3

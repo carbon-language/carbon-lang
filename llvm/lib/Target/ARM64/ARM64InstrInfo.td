@@ -3026,6 +3026,59 @@ def : Pat<(v4f32 (ARM64duplane32 (v4f32 V128:$Rn), VectorIndexS:$imm)),
 def : Pat<(v2f64 (ARM64duplane64 (v2f64 V128:$Rn), VectorIndexD:$imm)),
           (DUPv2i64lane V128:$Rn, VectorIndexD:$imm)>;
 
+// If there's an (ARM64dup (vector_extract ...) ...), we can use a duplane
+// instruction even if the types don't match: we just have to remap the lane
+// carefully. N.b. this trick only applies to truncations.
+def VecIndex_x2 : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(2 * N->getZExtValue(), MVT::i64);
+}]>;
+def VecIndex_x4 : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(4 * N->getZExtValue(), MVT::i64);
+}]>;
+def VecIndex_x8 : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant(8 * N->getZExtValue(), MVT::i64);
+}]>;
+
+multiclass DUPWithTruncPats<ValueType ResVT, ValueType Src64VT,
+                            ValueType Src128VT, ValueType ScalVT,
+                            Instruction DUP, SDNodeXForm IdxXFORM> {
+  def : Pat<(ResVT (ARM64dup (ScalVT (vector_extract (Src128VT V128:$Rn),
+                                                     imm:$idx)))),
+            (DUP V128:$Rn, (IdxXFORM imm:$idx))>;
+
+  def : Pat<(ResVT (ARM64dup (ScalVT (vector_extract (Src64VT V64:$Rn),
+                                                     imm:$idx)))),
+            (DUP (SUBREG_TO_REG (i64 0), V64:$Rn, dsub), (IdxXFORM imm:$idx))>;
+}
+
+defm : DUPWithTruncPats<v8i8,   v4i16, v8i16, i32, DUPv8i8lane,  VecIndex_x2>;
+defm : DUPWithTruncPats<v8i8,   v2i32, v4i32, i32, DUPv8i8lane,  VecIndex_x4>;
+defm : DUPWithTruncPats<v4i16,  v2i32, v4i32, i32, DUPv4i16lane, VecIndex_x2>;
+
+defm : DUPWithTruncPats<v16i8,  v4i16, v8i16, i32, DUPv16i8lane, VecIndex_x2>;
+defm : DUPWithTruncPats<v16i8,  v2i32, v4i32, i32, DUPv16i8lane, VecIndex_x4>;
+defm : DUPWithTruncPats<v8i16,  v2i32, v4i32, i32, DUPv8i16lane, VecIndex_x2>;
+
+multiclass DUPWithTrunci64Pats<ValueType ResVT, Instruction DUP,
+                               SDNodeXForm IdxXFORM> {
+  def : Pat<(ResVT (ARM64dup (i32 (trunc (vector_extract (v2i64 V128:$Rn),
+                                                         imm:$idx))))),
+            (DUP V128:$Rn, (IdxXFORM imm:$idx))>;
+
+  def : Pat<(ResVT (ARM64dup (i32 (trunc (vector_extract (v1i64 V64:$Rn),
+                                                         imm:$idx))))),
+            (DUP (SUBREG_TO_REG (i64 0), V64:$Rn, dsub), (IdxXFORM imm:$idx))>;
+}
+
+defm : DUPWithTrunci64Pats<v8i8,  DUPv8i8lane,   VecIndex_x8>;
+defm : DUPWithTrunci64Pats<v4i16, DUPv4i16lane,  VecIndex_x4>;
+defm : DUPWithTrunci64Pats<v2i32, DUPv2i32lane,  VecIndex_x2>;
+
+defm : DUPWithTrunci64Pats<v16i8, DUPv16i8lane, VecIndex_x8>;
+defm : DUPWithTrunci64Pats<v8i16, DUPv8i16lane, VecIndex_x4>;
+defm : DUPWithTrunci64Pats<v4i32, DUPv4i32lane, VecIndex_x2>;
+
+// SMOV and UMOV definitions, with some extra patterns for convenience
 defm SMOV : SMov;
 defm UMOV : UMov;
 
