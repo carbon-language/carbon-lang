@@ -135,6 +135,10 @@ static cl::opt<bool> ClGlobals("asan-globals",
 static cl::opt<int> ClCoverage("asan-coverage",
        cl::desc("ASan coverage. 0: none, 1: entry block, 2: all blocks"),
        cl::Hidden, cl::init(false));
+static cl::opt<int> ClCoverageBlockThreshold("asan-coverage-block-threshold",
+       cl::desc("Add coverage instrumentation only to the entry block if there "
+                "are more than this number of blocks."),
+       cl::Hidden, cl::init(1500));
 static cl::opt<bool> ClInitializers("asan-initialization-order",
        cl::desc("Handle C++ initializer order"), cl::Hidden, cl::init(false));
 static cl::opt<bool> ClMemIntrin("asan-memintrin",
@@ -1263,7 +1267,8 @@ bool AddressSanitizer::InjectCoverage(Function &F,
                                       const ArrayRef<BasicBlock *> AllBlocks) {
   if (!ClCoverage) return false;
 
-  if (ClCoverage == 1) {
+  if (ClCoverage == 1 ||
+      (unsigned)ClCoverageBlockThreshold < AllBlocks.size()) {
     InjectCoverageAtBlock(F, F.getEntryBlock());
   } else {
     for (size_t i = 0, n = AllBlocks.size(); i < n; i++)
