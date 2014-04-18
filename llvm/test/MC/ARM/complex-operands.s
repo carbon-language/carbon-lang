@@ -21,20 +21,20 @@ return:
 	.global arm_function
 	.type arm_function,%function
 arm_function:
-	mov r0, #(.L_table_end - .L_table_begin) >> 2
+	mov r0, #:lower16:((.L_table_end - .L_table_begin) >> 2)
 	blx return
 
 @ CHECK-LABEL: arm_function
-@ CHECK:  	movw r0, #(.L_table_end-.L_table_begin)>>2
+@ CHECK:  	movw r0, :lower16:((.L_table_end-.L_table_begin)>>2)
 @ CHECK:  	blx return
 
 	.global thumb_function
 	.type thumb_function,%function
 thumb_function:
-	mov r0, #(.L_table_end - .L_table_begin) >> 2
+	mov r0, #:lower16:((.L_table_end - .L_table_begin) >> 2)
 	blx return
 
 @ CHECK-LABEL: thumb_function
-@ CHECK:  	movw r0, #(.L_table_end-.L_table_begin)>>2
+@ CHECK:  	movw r0, :lower16:((.L_table_end-.L_table_begin)>>2)
 @ CHECK:  	blx return
 

@@ -465,3 +465,11 @@
         ldm sp!, {r0}^
 @ CHECK-ERRORS: error: system STM cannot have writeback register
 @ CHECK-ERRORS: error: writeback register only allowed on system LDM if PC in register-list
+
+foo2:
+        mov r0, foo2
+        movw r0, foo2
+@ CHECK-ERRORS: error: immediate expression for mov requires :lower16: or :upper16
+@ CHECK-ERRORS:                 ^
+@ CHECK-ERRORS: error: immediate expression for mov requires :lower16: or :upper16
+@ CHECK-ERRORS:                  ^

@@ -1040,12 +1040,12 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
     return 0;
   }
   // If the expression doesn't have :upper16: or :lower16: on it,
-  // it's just a plain immediate expression, and those evaluate to
+  // it's just a plain immediate expression, previously those evaluated to
   // the lower 16 bits of the expression regardless of whether
-  // we have a movt or a movw.
-  Kind = MCFixupKind(isThumb2(STI) ? ARM::fixup_t2_movw_lo16
-                                   : ARM::fixup_arm_movw_lo16);
-  Fixups.push_back(MCFixup::Create(0, E, Kind, MI.getLoc()));
+  // we have a movt or a movw, but that led to misleadingly results.
+  // This is now disallowed in the the AsmParser in validateInstruction()
+  // so this should never happen.
+  assert(0 && "expression without :upper16: or :lower16:");
   return 0;
 }
 
