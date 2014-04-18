@@ -89,3 +89,18 @@ if (LLVM_ENABLE_DOXYGEN)
   endif()
 endif()
 endif()
+
+if (LLVM_ENABLE_SPHINX)
+  if (SPHINX_FOUND)
+    include(AddSphinxTarget)
+    if (${SPHINX_OUTPUT_HTML})
+      add_sphinx_target(html llvm)
+    endif()
+
+
+    if (${SPHINX_OUTPUT_MAN})
+      add_sphinx_target(man llvm)
+    endif()
+
+  endif()
+endif()
