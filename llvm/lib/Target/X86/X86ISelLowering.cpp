@@ -5703,6 +5703,41 @@ static SDValue LowerVectorBroadcast(SDValue Op, const X86Subtarget* Subtarget,
   return SDValue();
 }
 
+/// \brief For an EXTRACT_VECTOR_ELT with a constant index return the real
+/// underlying vector and index.
+///
+/// Modifies \p ExtractedFromVec to the real vector and returns the real
+/// index.
+static int getUnderlyingExtractedFromVec(SDValue &ExtractedFromVec,
+                                         SDValue ExtIdx) {
+  int Idx = cast<ConstantSDNode>(ExtIdx)->getZExtValue();
+  if (!isa<ShuffleVectorSDNode>(ExtractedFromVec))
+    return Idx;
+
+  // For 256-bit vectors, LowerEXTRACT_VECTOR_ELT_SSE4 may have already
+  // lowered this:
+  //   (extract_vector_elt (v8f32 %vreg1), Constant<6>)
+  // to:
+  //   (extract_vector_elt (vector_shuffle<2,u,u,u>
+  //                           (extract_subvector (v8f32 %vreg0), Constant<4>),
+  //                           undef)
+  //                       Constant<0>)
+  // In this case the vector is the extract_subvector expression and the index
+  // is 2, as specified by the shuffle.
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(ExtractedFromVec);
+  SDValue ShuffleVec = SVOp->getOperand(0);
+  MVT ShuffleVecVT = ShuffleVec.getSimpleValueType();
+  assert(ShuffleVecVT.getVectorElementType() ==
+         ExtractedFromVec.getSimpleValueType().getVectorElementType());
+
+  int ShuffleIdx = SVOp->getMaskElt(Idx);
+  if (isUndefOrInRange(ShuffleIdx, 0, ShuffleVecVT.getVectorNumElements())) {
+    ExtractedFromVec = ShuffleVec;
+    return ShuffleIdx;
+  }
+  return Idx;
+}
+
 static SDValue buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
 
@@ -5736,13 +5771,13 @@ static SDValue buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) {
 
     SDValue ExtractedFromVec = Op.getOperand(i).getOperand(0);
     SDValue ExtIdx = Op.getOperand(i).getOperand(1);
+    // Quit if non-constant index.
+    if (!isa<ConstantSDNode>(ExtIdx))
+      return SDValue();
+    int Idx = getUnderlyingExtractedFromVec(ExtractedFromVec, ExtIdx);
 
     // Quit if extracted from vector of different type.
     if (ExtractedFromVec.getValueType() != VT)
-      return SDValue();
-
-    // Quit if non-constant index.
-    if (!isa<ConstantSDNode>(ExtIdx))
       return SDValue();
 
     if (VecIn1.getNode() == 0)
@@ -5754,8 +5789,6 @@ static SDValue buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) {
         // Quit if more than 2 vectors to shuffle
         return SDValue();
     }
-
-    unsigned Idx = cast<ConstantSDNode>(ExtIdx)->getZExtValue();
 
     if (ExtractedFromVec == VecIn1)
       Mask[i] = Idx;
