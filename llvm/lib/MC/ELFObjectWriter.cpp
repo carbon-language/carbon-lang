@@ -616,6 +616,10 @@ static const MCSymbol *getBaseSymbol(const MCAsmLayout &Layout,
 void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = *MSD.SymbolData;
+  assert(!OrigData.getFragment() ||
+         (&OrigData.getFragment()->getParent()->getSection() ==
+          &OrigData.getSymbol().getSection()) &&
+             "The symbol's section doesn't match the fragment's symbol");
   const MCSymbol *Base = getBaseSymbol(Layout, OrigData.getSymbol());
 
   // This has to be in sync with when computeSymbolTable uses SHN_ABS or
@@ -1244,6 +1248,19 @@ getCompressedFragment(MCAsmLayout &Layout,
   return CompressedFragment;
 }
 
+static void UpdateSymbols(const MCAsmLayout &Layout, const MCSectionData &SD,
+                          MCAssembler::symbol_range Symbols,
+                          MCFragment *NewFragment) {
+  for (MCSymbolData &Data : Symbols) {
+    MCFragment *F = Data.getFragment();
+    if (F && F->getParent() == &SD) {
+      Data.setOffset(Data.getOffset() +
+                     Layout.getFragmentOffset(Data.Fragment));
+      Data.setFragment(NewFragment);
+    }
+  }
+}
+
 static void CompressDebugSection(MCAssembler &Asm, MCAsmLayout &Layout,
                                  const MCSectionELF &Section,
                                  MCSectionData &SD) {
@@ -1256,6 +1273,10 @@ static void CompressDebugSection(MCAssembler &Asm, MCAsmLayout &Layout,
   // Leave the section as-is if the fragments could not be compressed.
   if (!CompressedFragment)
     return;
+
+  // Update the fragment+offsets of any symbols referring to fragments in this
+  // section to refer to the new fragment.
+  UpdateSymbols(Layout, SD, Asm.symbols(), CompressedFragment.get());
 
   // Invalidate the layout for the whole section since it will have new and
   // different fragments now.
