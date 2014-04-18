@@ -3829,9 +3829,11 @@ SDValue ARM64TargetLowering::ReconstructShuffle(SDValue Op,
       VEXTOffsets[i] = 0;
       continue;
     } else if (SourceVecs[i].getValueType().getVectorNumElements() < NumElts) {
-      // It probably isn't worth padding out a smaller vector just to
-      // break it down again in a shuffle.
-      return SDValue();
+      // We can pad out the smaller vector for free, so if it's part of a
+      // shuffle...
+      ShuffleSrcs[i] = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, SourceVecs[i],
+                                   DAG.getUNDEF(SourceVecs[i].getValueType()));
+      continue;
     }
 
     // Don't attempt to extract subvectors from BUILD_VECTOR sources
@@ -4094,7 +4096,7 @@ static bool isTRN_v_undef_Mask(ArrayRef<int> M, EVT VT, unsigned &WhichResult) {
 }
 
 static bool isINSMask(ArrayRef<int> M, int NumInputElements,
-                      bool &BulkIsLeft, int &Anomaly) {
+                      bool &DstIsLeft, int &Anomaly) {
   if (M.size() != static_cast<size_t>(NumInputElements))
     return false;
 
@@ -4120,16 +4122,65 @@ static bool isINSMask(ArrayRef<int> M, int NumInputElements,
   }
 
   if (NumLHSMatch == NumInputElements - 1) {
-    BulkIsLeft = true;
+    DstIsLeft = true;
     Anomaly = LastLHSMismatch;
     return true;
   } else if (NumRHSMatch == NumInputElements - 1) {
-    BulkIsLeft = false;
+    DstIsLeft = false;
     Anomaly = LastRHSMismatch;
     return true;
   }
 
   return false;
+}
+
+static bool isConcatMask(ArrayRef<int> Mask, EVT VT, bool SplitLHS) {
+  if (VT.getSizeInBits() != 128)
+    return false;
+
+  unsigned NumElts = VT.getVectorNumElements();
+
+  for (int I = 0, E = NumElts / 2; I != E; I++) {
+    if (Mask[I] != I)
+      return false;
+  }
+
+  int Offset = NumElts / 2;
+  for (int I = NumElts / 2, E = NumElts; I != E; I++) {
+    if (Mask[I] != I + SplitLHS * Offset)
+      return false;
+  }
+
+  return true;
+}
+
+static SDValue tryFormConcatFromShuffle(SDValue Op, SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  SDValue V0 = Op.getOperand(0);
+  SDValue V1 = Op.getOperand(1);
+  ArrayRef<int> Mask = cast<ShuffleVectorSDNode>(Op)->getMask();
+
+  if (VT.getVectorElementType() != V0.getValueType().getVectorElementType() ||
+      VT.getVectorElementType() != V1.getValueType().getVectorElementType())
+    return SDValue();
+
+  bool SplitV0 = V0.getValueType().getSizeInBits() == 128;
+
+  if (!isConcatMask(Mask, VT, SplitV0))
+    return SDValue();
+
+  EVT CastVT = EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(),
+                                VT.getVectorNumElements() / 2);
+  if (SplitV0) {
+    V0 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, CastVT, V0,
+                     DAG.getConstant(0, MVT::i64));
+  }
+  if (V1.getValueType().getSizeInBits() == 128) {
+    V1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, CastVT, V1,
+                     DAG.getConstant(0, MVT::i64));
+  }
+  return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, V0, V1);
 }
 
 /// GeneratePerfectShuffle - Given an entry in the perfect-shuffle table, emit
@@ -4400,6 +4451,10 @@ SDValue ARM64TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
     unsigned Opc = (WhichResult == 0) ? ARM64ISD::TRN1 : ARM64ISD::TRN2;
     return DAG.getNode(Opc, dl, V1.getValueType(), V1, V1);
   }
+
+  SDValue Concat = tryFormConcatFromShuffle(Op, DAG);
+  if (Concat.getNode())
+    return Concat;
 
   bool DstIsLeft;
   int Anomaly;
@@ -5264,18 +5319,21 @@ bool ARM64TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
       return true;
   }
 
-  bool ReverseVEXT;
-  unsigned Imm, WhichResult;
+  bool DummyBool;
+  int DummyInt;
+  unsigned DummyUnsigned;
 
   return (ShuffleVectorSDNode::isSplatMask(&M[0], VT) || isREVMask(M, VT, 64) ||
           isREVMask(M, VT, 32) || isREVMask(M, VT, 16) ||
-          isEXTMask(M, VT, ReverseVEXT, Imm) ||
+          isEXTMask(M, VT, DummyBool, DummyUnsigned) ||
           // isTBLMask(M, VT) || // FIXME: Port TBL support from ARM.
-          isTRNMask(M, VT, WhichResult) || isUZPMask(M, VT, WhichResult) ||
-          isZIPMask(M, VT, WhichResult) ||
-          isTRN_v_undef_Mask(M, VT, WhichResult) ||
-          isUZP_v_undef_Mask(M, VT, WhichResult) ||
-          isZIP_v_undef_Mask(M, VT, WhichResult));
+          isTRNMask(M, VT, DummyUnsigned) || isUZPMask(M, VT, DummyUnsigned) ||
+          isZIPMask(M, VT, DummyUnsigned) ||
+          isTRN_v_undef_Mask(M, VT, DummyUnsigned) ||
+          isUZP_v_undef_Mask(M, VT, DummyUnsigned) ||
+          isZIP_v_undef_Mask(M, VT, DummyUnsigned) ||
+          isINSMask(M, VT.getVectorNumElements(), DummyBool, DummyInt) ||
+          isConcatMask(M, VT, VT.getSizeInBits() == 128));
 }
 
 /// getVShiftImm - Check if this is a valid build_vector for the immediate
