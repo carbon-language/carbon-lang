@@ -307,7 +307,7 @@ public:
   
   /// \brief Determine whether this module is a submodule of the given other
   /// module.
-  bool isSubModuleOf(Module *Other) const;
+  bool isSubModuleOf(const Module *Other) const;
   
   /// \brief Determine whether this module is a part of a framework,
   /// either because it is a framework module or because it is a submodule

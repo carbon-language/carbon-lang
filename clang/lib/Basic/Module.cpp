@@ -91,7 +91,7 @@ Module::isAvailable(const LangOptions &LangOpts, const TargetInfo &Target,
   llvm_unreachable("could not find a reason why module is unavailable");
 }
 
-bool Module::isSubModuleOf(Module *Other) const {
+bool Module::isSubModuleOf(const Module *Other) const {
   const Module *This = this;
   do {
     if (This == Other)

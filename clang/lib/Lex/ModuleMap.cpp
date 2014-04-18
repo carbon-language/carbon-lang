@@ -411,8 +411,9 @@ bool ModuleMap::isHeaderInUnavailableModule(const FileEntry *Header) const {
   return isHeaderUnavailableInModule(Header, 0);
 }
 
-bool ModuleMap::isHeaderUnavailableInModule(const FileEntry *Header,
-                                            Module *RequestingModule) const {
+bool
+ModuleMap::isHeaderUnavailableInModule(const FileEntry *Header,
+                                       const Module *RequestingModule) const {
   HeadersMap::const_iterator Known = Headers.find(Header);
   if (Known != Headers.end()) {
     for (SmallVectorImpl<KnownHeader>::const_iterator

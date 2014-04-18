@@ -258,7 +258,7 @@ public:
   /// \brief Determine whether the given header is unavailable as part
   /// of the specified module.
   bool isHeaderUnavailableInModule(const FileEntry *Header,
-                                   Module *RequestingModule) const;
+                                   const Module *RequestingModule) const;
 
   /// \brief Retrieve a module with the given name.
   ///
