@@ -719,7 +719,9 @@ def add_magic_target_components(parser, project, opts):
         enable_targets = available_targets.values()
     else:
         # We support both space separated and semi-colon separated lists.
-        if ' ' in opts.enable_targets:
+        if opts.enable_targets == '':
+            enable_target_names = []
+        elif ' ' in opts.enable_targets:
             enable_target_names = opts.enable_targets.split()
         else:
             enable_target_names = opts.enable_targets.split(';')
