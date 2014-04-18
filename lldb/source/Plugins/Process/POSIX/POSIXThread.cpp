@@ -110,7 +110,7 @@ POSIXThread::RefreshStateAfterStop()
         GetRegisterContext()->InvalidateIfNeeded (force);
     }
     // FIXME: This should probably happen somewhere else.
-    SetResumeState(eStateRunning);
+    SetResumeState(eStateRunning, true);
     Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
     if (log)
         log->Printf ("POSIXThread::%s (tid = %" PRIi64 ") setting thread resume state to running", __FUNCTION__, GetID());
