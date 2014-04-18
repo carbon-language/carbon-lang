@@ -11,6 +11,7 @@
 #define LLVM_SUPPORT_LINEITERATOR_H__
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/DataTypes.h"
 #include <iterator>
 
 namespace llvm {
