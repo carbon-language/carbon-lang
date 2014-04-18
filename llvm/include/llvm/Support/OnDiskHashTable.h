@@ -40,11 +40,12 @@ namespace llvm {
 ///   typedef ExampleData data_type; // Must be copy constructible
 ///   typedef ExampleData &data_type_ref;
 ///   typedef uint32_t hash_value_type; // The type the hash function returns.
+///   typedef uint32_t offset_type; // The type for offsets into the table.
 ///
 ///   /// Calculate the hash for Key
 ///   static hash_value_type ComputeHash(key_type_ref Key);
 ///   /// Return the lengths, in bytes, of the given Key/Data pair.
-///   static std::pair<unsigned, unsigned>
+///   static std::pair<offset_type, offset_type>
 ///   EmitKeyDataLength(raw_ostream &Out, key_type_ref Key, data_type_ref Data);
 ///   /// Write Key to Out.  KeyLen is the length from EmitKeyDataLength.
 ///   static void EmitKey(raw_ostream &Out, key_type_ref Key, unsigned KeyLen);
@@ -54,8 +55,9 @@ namespace llvm {
 /// };
 /// \endcode
 template <typename Info> class OnDiskChainedHashTableGenerator {
-  unsigned NumBuckets;
-  unsigned NumEntries;
+  typedef typename Info::offset_type offset_type;
+  offset_type NumBuckets;
+  offset_type NumEntries;
   llvm::BumpPtrAllocator BA;
 
   /// \brief A single item in the hash table.
@@ -74,7 +76,7 @@ template <typename Info> class OnDiskChainedHashTableGenerator {
   /// \brief A linked list of values in a particular hash bucket.
   class Bucket {
   public:
-    uint32_t Off;
+    offset_type Off;
     Item *Head;
     unsigned Length;
 
@@ -96,7 +98,7 @@ private:
   void resize(size_t NewSize) {
     Bucket *NewBuckets = (Bucket *)std::calloc(NewSize, sizeof(Bucket));
     // Populate NewBuckets with the old entries.
-    for (unsigned I = 0; I < NumBuckets; ++I)
+    for (size_t I = 0; I < NumBuckets; ++I)
       for (Item *E = Buckets[I].Head; E;) {
         Item *N = E->Next;
         E->Next = 0;
@@ -131,7 +133,7 @@ public:
   }
 
   /// \brief Emit the table to Out, which must not be at offset 0.
-  uint32_t Emit(raw_ostream &Out) {
+  offset_type Emit(raw_ostream &Out) {
     Info InfoObj;
     return Emit(Out, InfoObj);
   }
@@ -139,12 +141,12 @@ public:
   /// \brief Emit the table to Out, which must not be at offset 0.
   ///
   /// Uses the provided Info instead of a stack allocated one.
-  uint32_t Emit(raw_ostream &Out, Info &InfoObj) {
+  offset_type Emit(raw_ostream &Out, Info &InfoObj) {
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
 
     // Emit the payload of the table.
-    for (unsigned I = 0; I < NumBuckets; ++I) {
+    for (size_t I = 0; I < NumBuckets; ++I) {
       Bucket &B = Buckets[I];
       if (!B.Head)
         continue;
@@ -160,7 +162,7 @@ public:
       // Write out the entries in the bucket.
       for (Item *I = B.Head; I; I = I->Next) {
         LE.write<typename Info::hash_value_type>(I->Hash);
-        const std::pair<unsigned, unsigned> &Len =
+        const std::pair<offset_type, offset_type> &Len =
             InfoObj.EmitKeyDataLength(Out, I->Key, I->Data);
         InfoObj.EmitKey(Out, I->Key, Len.first);
         InfoObj.EmitData(Out, I->Key, I->Data, Len.second);
@@ -168,17 +170,17 @@ public:
     }
 
     // Pad with zeros so that we can start the hashtable at an aligned address.
-    uint32_t TableOff = Out.tell();
-    uint64_t N = llvm::OffsetToAlignment(TableOff, alignOf<uint32_t>());
+    offset_type TableOff = Out.tell();
+    uint64_t N = llvm::OffsetToAlignment(TableOff, alignOf<offset_type>());
     TableOff += N;
     while (N--)
       LE.write<uint8_t>(0);
 
     // Emit the hashtable itself.
-    LE.write<uint32_t>(NumBuckets);
-    LE.write<uint32_t>(NumEntries);
-    for (unsigned I = 0; I < NumBuckets; ++I)
-      LE.write<uint32_t>(Buckets[I].Off);
+    LE.write<offset_type>(NumBuckets);
+    LE.write<offset_type>(NumEntries);
+    for (size_t I = 0; I < NumBuckets; ++I)
+      LE.write<offset_type>(Buckets[I].Off);
 
     return TableOff;
   }
@@ -207,6 +209,7 @@ public:
 ///   typedef ExampleInternalKey internal_key_type; // The stored key type.
 ///   typedef ExampleKey external_key_type; // The type to pass to find().
 ///   typedef uint32_t hash_value_type; // The type the hash function returns.
+///   typedef uint32_t offset_type; // The type for offsets into the table.
 ///
 ///   /// Compare two keys for equality.
 ///   static bool EqualKey(internal_key_type &Key1, internal_key_type &Key2);
@@ -219,7 +222,7 @@ public:
 ///   static const internal_key_type &GetInternalKey(external_key_type &EKey);
 ///   /// Read the key and data length from Buffer, leaving it pointing at the
 ///   /// following byte.
-///   static std::pair<unsigned, unsigned>
+///   static std::pair<offset_type, offset_type>
 ///   ReadKeyDataLength(const unsigned char *&Buffer);
 ///   /// Read the key from Buffer, given the KeyLen as reported from
 ///   /// ReadKeyDataLength.
@@ -232,8 +235,8 @@ public:
 /// };
 /// \endcode
 template <typename Info> class OnDiskChainedHashTable {
-  const unsigned NumBuckets;
-  const unsigned NumEntries;
+  const typename Info::offset_type NumBuckets;
+  const typename Info::offset_type NumEntries;
   const unsigned char *const Buckets;
   const unsigned char *const Base;
   Info InfoObj;
@@ -243,8 +246,9 @@ public:
   typedef typename Info::external_key_type external_key_type;
   typedef typename Info::data_type         data_type;
   typedef typename Info::hash_value_type   hash_value_type;
+  typedef typename Info::offset_type       offset_type;
 
-  OnDiskChainedHashTable(unsigned NumBuckets, unsigned NumEntries,
+  OnDiskChainedHashTable(offset_type NumBuckets, offset_type NumEntries,
                          const unsigned char *Buckets,
                          const unsigned char *Base,
                          const Info &InfoObj = Info())
@@ -254,8 +258,8 @@ public:
            "'buckets' must have a 4-byte alignment");
   }
 
-  unsigned getNumBuckets() const { return NumBuckets; }
-  unsigned getNumEntries() const { return NumEntries; }
+  offset_type getNumBuckets() const { return NumBuckets; }
+  offset_type getNumEntries() const { return NumEntries; }
   const unsigned char *getBase() const { return Base; }
   const unsigned char *getBuckets() const { return Buckets; }
 
@@ -287,11 +291,11 @@ public:
     const internal_key_type &IKey = InfoObj.GetInternalKey(EKey);
     hash_value_type KeyHash = InfoObj.ComputeHash(IKey);
 
-    // Each bucket is just a 32-bit offset into the hash table file.
-    unsigned Idx = KeyHash & (NumBuckets - 1);
-    const unsigned char *Bucket = Buckets + sizeof(uint32_t) * Idx;
+    // Each bucket is just an offset into the hash table file.
+    offset_type Idx = KeyHash & (NumBuckets - 1);
+    const unsigned char *Bucket = Buckets + sizeof(offset_type) * Idx;
 
-    unsigned Offset = endian::readNext<uint32_t, little, aligned>(Bucket);
+    offset_type Offset = endian::readNext<offset_type, little, aligned>(Bucket);
     if (Offset == 0)
       return iterator(); // Empty bucket.
     const unsigned char *Items = Base + Offset;
@@ -306,8 +310,9 @@ public:
           endian::readNext<hash_value_type, little, unaligned>(Items);
 
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned> &L = Info::ReadKeyDataLength(Items);
-      unsigned ItemLen = L.first + L.second;
+      const std::pair<offset_type, offset_type> &L =
+          Info::ReadKeyDataLength(Items);
+      offset_type ItemLen = L.first + L.second;
 
       // Compare the hashes.  If they are not the same, skip the entry entirely.
       if (ItemHash != KeyHash) {
@@ -353,8 +358,10 @@ public:
     assert((reinterpret_cast<uintptr_t>(Buckets) & 0x3) == 0 &&
            "buckets should be 4-byte aligned.");
 
-    unsigned NumBuckets = endian::readNext<uint32_t, little, aligned>(Buckets);
-    unsigned NumEntries = endian::readNext<uint32_t, little, aligned>(Buckets);
+    offset_type NumBuckets =
+        endian::readNext<offset_type, little, aligned>(Buckets);
+    offset_type NumEntries =
+        endian::readNext<offset_type, little, aligned>(Buckets);
     return new OnDiskChainedHashTable<Info>(NumBuckets, NumEntries, Buckets,
                                             Base, InfoObj);
   }
@@ -373,8 +380,9 @@ public:
   typedef typename base_type::external_key_type external_key_type;
   typedef typename base_type::data_type         data_type;
   typedef typename base_type::hash_value_type   hash_value_type;
+  typedef typename base_type::offset_type       offset_type;
 
-  OnDiskIterableChainedHashTable(unsigned NumBuckets, unsigned NumEntries,
+  OnDiskIterableChainedHashTable(offset_type NumBuckets, offset_type NumEntries,
                                  const unsigned char *Buckets,
                                  const unsigned char *Payload,
                                  const unsigned char *Base,
@@ -385,14 +393,14 @@ public:
   /// \brief Iterates over all of the keys in the table.
   class key_iterator {
     const unsigned char *Ptr;
-    unsigned NumItemsInBucketLeft;
-    unsigned NumEntriesLeft;
+    offset_type NumItemsInBucketLeft;
+    offset_type NumEntriesLeft;
     Info *InfoObj;
 
   public:
     typedef external_key_type value_type;
 
-    key_iterator(const unsigned char *const Ptr, unsigned NumEntries,
+    key_iterator(const unsigned char *const Ptr, offset_type NumEntries,
                  Info *InfoObj)
         : Ptr(Ptr), NumItemsInBucketLeft(0), NumEntriesLeft(NumEntries),
           InfoObj(InfoObj) {}
@@ -416,7 +424,8 @@ public:
       }
       Ptr += sizeof(hash_value_type); // Skip the hash.
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned> &L = Info::ReadKeyDataLength(Ptr);
+      const std::pair<offset_type, offset_type> &L =
+          Info::ReadKeyDataLength(Ptr);
       Ptr += L.first + L.second;
       assert(NumItemsInBucketLeft);
       --NumItemsInBucketLeft;
@@ -435,7 +444,7 @@ public:
       LocalPtr += sizeof(hash_value_type); // Skip the hash.
 
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned> &L =
+      const std::pair<offset_type, offset_type> &L =
           Info::ReadKeyDataLength(LocalPtr);
 
       // Read the key.
@@ -456,14 +465,14 @@ public:
   /// \brief Iterates over all the entries in the table, returning the data.
   class data_iterator {
     const unsigned char *Ptr;
-    unsigned NumItemsInBucketLeft;
-    unsigned NumEntriesLeft;
+    offset_type NumItemsInBucketLeft;
+    offset_type NumEntriesLeft;
     Info *InfoObj;
 
   public:
     typedef data_type value_type;
 
-    data_iterator(const unsigned char *const Ptr, unsigned NumEntries,
+    data_iterator(const unsigned char *const Ptr, offset_type NumEntries,
                   Info *InfoObj)
         : Ptr(Ptr), NumItemsInBucketLeft(0), NumEntriesLeft(NumEntries),
           InfoObj(InfoObj) {}
@@ -487,7 +496,8 @@ public:
       }
       Ptr += sizeof(hash_value_type); // Skip the hash.
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned> &L = Info::ReadKeyDataLength(Ptr);
+      const std::pair<offset_type, offset_type> &L =
+          Info::ReadKeyDataLength(Ptr);
       Ptr += L.first + L.second;
       assert(NumItemsInBucketLeft);
       --NumItemsInBucketLeft;
@@ -506,7 +516,7 @@ public:
       LocalPtr += sizeof(hash_value_type); // Skip the hash.
 
       // Determine the length of the key and the data.
-      const std::pair<unsigned, unsigned> &L =
+      const std::pair<offset_type, offset_type> &L =
           Info::ReadKeyDataLength(LocalPtr);
 
       // Read the key.
@@ -545,8 +555,10 @@ public:
     assert((reinterpret_cast<uintptr_t>(Buckets) & 0x3) == 0 &&
            "buckets should be 4-byte aligned.");
 
-    unsigned NumBuckets = endian::readNext<uint32_t, little, aligned>(Buckets);
-    unsigned NumEntries = endian::readNext<uint32_t, little, aligned>(Buckets);
+    offset_type NumBuckets =
+        endian::readNext<offset_type, little, aligned>(Buckets);
+    offset_type NumEntries =
+        endian::readNext<offset_type, little, aligned>(Buckets);
     return new OnDiskIterableChainedHashTable<Info>(
         NumBuckets, NumEntries, Buckets, Payload, Base, InfoObj);
   }
