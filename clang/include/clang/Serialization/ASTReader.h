@@ -259,7 +259,7 @@ class ReadMethodPoolVisitor;
 namespace reader {
   class ASTIdentifierLookupTrait;
   /// \brief The on-disk hash table used for the DeclContext's Name lookup table.
-  typedef OnDiskIterableChainedHashTable<ASTDeclContextNameLookupTrait>
+  typedef llvm::OnDiskIterableChainedHashTable<ASTDeclContextNameLookupTrait>
     ASTDeclContextNameLookupTable;
 }
 

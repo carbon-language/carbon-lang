@@ -25,7 +25,6 @@
 #include "clang/AST/TypeLocVisitor.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemStatCache.h"
-#include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceManagerInternals.h"
 #include "clang/Basic/TargetInfo.h"
@@ -49,6 +48,7 @@
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/OnDiskHashTable.h"
 #include "llvm/Support/Path.h"
 #include <algorithm>
 #include <cstdio>
@@ -1575,7 +1575,7 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot) {
     FilesByUID.resize(HS.header_file_size());
   
   HeaderFileInfoTrait GeneratorTrait(*this, HS);
-  OnDiskChainedHashTableGenerator<HeaderFileInfoTrait> Generator;  
+  llvm::OnDiskChainedHashTableGenerator<HeaderFileInfoTrait> Generator;
   SmallVector<const char *, 4> SavedStrings;
   unsigned NumHeaderSearchEntries = 0;
   for (unsigned UID = 0, LastUID = FilesByUID.size(); UID != LastUID; ++UID) {
@@ -1948,7 +1948,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
   llvm::array_pod_sort(MacroDirectives.begin(), MacroDirectives.end(),
                        &compareMacroDirectives);
 
-  OnDiskChainedHashTableGenerator<ASTMacroTableTrait> Generator;
+  llvm::OnDiskChainedHashTableGenerator<ASTMacroTableTrait> Generator;
 
   // Emit the macro directives as a list and associate the offset with the
   // identifier they belong to.
@@ -2834,7 +2834,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
   unsigned NumTableEntries = 0;
   // Create and write out the blob that contains selectors and the method pool.
   {
-    OnDiskChainedHashTableGenerator<ASTMethodPoolTrait> Generator;
+    llvm::OnDiskChainedHashTableGenerator<ASTMethodPoolTrait> Generator;
     ASTMethodPoolTrait Trait(*this);
 
     // Create the on-disk hash table representation. We walk through every
@@ -3260,7 +3260,7 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
   // Create and write out the blob that contains the identifier
   // strings.
   {
-    OnDiskChainedHashTableGenerator<ASTIdentifierTableTrait> Generator;
+    llvm::OnDiskChainedHashTableGenerator<ASTIdentifierTableTrait> Generator;
     ASTIdentifierTableTrait Trait(*this, PP, IdResolver, IsModule);
 
     // Look for any identifiers that were named while processing the
@@ -3464,7 +3464,8 @@ ASTWriter::GenerateNameLookupTable(const DeclContext *DC,
   assert(!DC->LookupPtr.getInt() && "must call buildLookups first");
   assert(DC == DC->getPrimaryContext() && "only primary DC has lookup table");
 
-  OnDiskChainedHashTableGenerator<ASTDeclContextNameLookupTrait> Generator;
+  llvm::OnDiskChainedHashTableGenerator<ASTDeclContextNameLookupTrait>
+      Generator;
   ASTDeclContextNameLookupTrait Trait(*this);
 
   // Create the on-disk hash table representation.

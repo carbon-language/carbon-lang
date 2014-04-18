@@ -23,13 +23,16 @@
 #include <memory>
 #include <string>
 
+namespace llvm {
+template <typename Info> class OnDiskChainedHashTable;
+template <typename Info> class OnDiskIterableChainedHashTable;
+}
+
 namespace clang {
 
 class FileEntry;
 class DeclContext;
 class Module;
-template<typename Info> class OnDiskChainedHashTable;
-template<typename Info> class OnDiskIterableChainedHashTable;
 
 namespace serialization {
 
@@ -50,7 +53,7 @@ struct DeclContextInfo {
   DeclContextInfo()
     : NameLookupTableData(), LexicalDecls(), NumLexicalDecls() {}
 
-  OnDiskIterableChainedHashTable<reader::ASTDeclContextNameLookupTrait>
+  llvm::OnDiskIterableChainedHashTable<reader::ASTDeclContextNameLookupTrait>
     *NameLookupTableData; // an ASTDeclContextNameLookupTable.
   const KindDeclIDPair *LexicalDecls;
   unsigned NumLexicalDecls;

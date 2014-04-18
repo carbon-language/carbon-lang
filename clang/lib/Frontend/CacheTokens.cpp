@@ -17,7 +17,6 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemStatCache.h"
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/Preprocessor.h"
@@ -26,6 +25,7 @@
 #include "llvm/Support/EndianStream.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/OnDiskHashTable.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -35,11 +35,12 @@
 #endif
 
 using namespace clang;
-using namespace clang::io;
 
 //===----------------------------------------------------------------------===//
 // PTH-specific stuff.
 //===----------------------------------------------------------------------===//
+
+typedef uint32_t Offset;
 
 namespace {
 class PTHEntry {
@@ -171,7 +172,7 @@ public:
 };
 } // end anonymous namespace
 
-typedef OnDiskChainedHashTableGenerator<FileEntryPTHEntryInfo> PTHMap;
+typedef llvm::OnDiskChainedHashTableGenerator<FileEntryPTHEntryInfo> PTHMap;
 
 namespace {
 class PTHWriter {
@@ -287,8 +288,11 @@ void PTHWriter::EmitToken(const Token& T) {
 PTHEntry PTHWriter::LexTokens(Lexer& L) {
   // Pad 0's so that we emit tokens to a 4-byte alignment.
   // This speed up reading them back in.
-  Pad(Out, 4);
-  Offset TokenOff = (Offset) Out.tell();
+  using namespace llvm::support;
+  endian::Writer<little> LE(Out);
+  uint32_t TokenOff = Out.tell();
+  for (uint64_t N = llvm::OffsetToAlignment(TokenOff, 4); N; --N, ++TokenOff)
+    LE.write<uint8_t>(0);
 
   // Keep track of matching '#if' ... '#endif'.
   typedef std::vector<std::pair<Offset, unsigned> > PPCondTable;
@@ -636,7 +640,7 @@ std::pair<Offset,Offset> PTHWriter::EmitIdentifierTable() {
   PTHIdKey *IIDMap = (PTHIdKey*)calloc(idcount, sizeof(PTHIdKey));
 
   // Create the hashtable.
-  OnDiskChainedHashTableGenerator<PTHIdentifierTableTrait> IIOffMap;
+  llvm::OnDiskChainedHashTableGenerator<PTHIdentifierTableTrait> IIOffMap;
 
   // Generate mapping from persistent IDs -> IdentifierInfo*.
   for (IDMap::iterator I = IM.begin(), E = IM.end(); I != E; ++I) {

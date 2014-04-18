@@ -13,7 +13,6 @@
 
 #include "ASTReaderInternals.h"
 #include "clang/Basic/FileManager.h"
-#include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/GlobalModuleIndex.h"
@@ -27,6 +26,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/LockFileManager.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/OnDiskHashTable.h"
 #include "llvm/Support/Path.h"
 #include <cstdio>
 using namespace clang;
@@ -115,7 +115,7 @@ public:
   }
 };
 
-typedef OnDiskIterableChainedHashTable<IdentifierIndexReaderTrait>
+typedef llvm::OnDiskIterableChainedHashTable<IdentifierIndexReaderTrait>
     IdentifierIndexTable;
 
 }
@@ -611,9 +611,8 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
 
     // Handle the identifier table
     if (State == ASTBlock && Code == IDENTIFIER_TABLE && Record[0] > 0) {
-      typedef
-          OnDiskIterableChainedHashTable<InterestingASTIdentifierLookupTrait>
-          InterestingIdentifierTable;
+      typedef llvm::OnDiskIterableChainedHashTable<
+          InterestingASTIdentifierLookupTrait> InterestingIdentifierTable;
       std::unique_ptr<InterestingIdentifierTable> Table(
           InterestingIdentifierTable::Create(
               (const unsigned char *)Blob.data() + Record[0],
@@ -718,7 +717,7 @@ void GlobalModuleIndexBuilder::writeIndex(llvm::BitstreamWriter &Stream) {
 
   // Write the identifier -> module file mapping.
   {
-    OnDiskChainedHashTableGenerator<IdentifierIndexWriterTrait> Generator;
+    llvm::OnDiskChainedHashTableGenerator<IdentifierIndexWriterTrait> Generator;
     IdentifierIndexWriterTrait Trait;
 
     // Populate the hash table.

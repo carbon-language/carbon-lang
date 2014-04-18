@@ -14,9 +14,9 @@
 #define LLVM_CLANG_SERIALIZATION_ASTREADER_INTERNALS_H
 
 #include "clang/AST/DeclarationName.h"
-#include "clang/Basic/OnDiskHashTable.h"
 #include "clang/Serialization/ASTBitCodes.h"
 #include "llvm/Support/Endian.h"
+#include "llvm/Support/OnDiskHashTable.h"
 #include <sys/stat.h>
 #include <utility>
 
@@ -140,7 +140,7 @@ public:
   
 /// \brief The on-disk hash table used to contain information about
 /// all of the identifiers in the program.
-typedef OnDiskIterableChainedHashTable<ASTIdentifierLookupTrait>
+typedef llvm::OnDiskIterableChainedHashTable<ASTIdentifierLookupTrait>
   ASTIdentifierLookupTable;
 
 /// \brief Class that performs lookup for a selector's entries in the global
@@ -182,7 +182,7 @@ public:
 };
   
 /// \brief The on-disk hash table used for the global method pool.
-typedef OnDiskChainedHashTable<ASTSelectorLookupTrait>
+typedef llvm::OnDiskChainedHashTable<ASTSelectorLookupTrait>
   ASTSelectorLookupTable;
   
 /// \brief Trait class used to search the on-disk hash table containing all of
@@ -229,7 +229,7 @@ public:
 };
 
 /// \brief The on-disk hash table used for known header files.
-typedef OnDiskChainedHashTable<HeaderFileInfoTrait>
+typedef llvm::OnDiskChainedHashTable<HeaderFileInfoTrait>
   HeaderFileInfoLookupTable;
   
 } // end namespace clang::serialization::reader
