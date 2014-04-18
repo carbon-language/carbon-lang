@@ -32,12 +32,6 @@
 #include <cstdlib>
 
 namespace llvm {
-template <typename T> struct ReferenceAdder {
-  typedef T &result;
-};
-template <typename T> struct ReferenceAdder<T &> {
-  typedef T result;
-};
 
 /// \brief CRTP base class providing obvious overloads for the core \c
 /// Allocate() methods of LLVM-style allocators.

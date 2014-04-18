@@ -167,10 +167,8 @@ public:
   
 
   /// Access to the allocator.
-  typedef typename ReferenceAdder<AllocatorTy>::result AllocatorRefTy;
-  typedef typename ReferenceAdder<const AllocatorTy>::result AllocatorCRefTy;
-  AllocatorRefTy getAllocator() { return Allocator; }
-  AllocatorCRefTy getAllocator() const { return Allocator; }
+  AllocatorTy &getAllocator() { return Allocator; }
+  const AllocatorTy &getAllocator() const { return Allocator; }
 
   bool count(const K &Key) const {
     return TopLevelMap.count(Key);

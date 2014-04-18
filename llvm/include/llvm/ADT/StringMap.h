@@ -246,10 +246,8 @@ public:
     clear();
   }
 
-  typedef typename ReferenceAdder<AllocatorTy>::result AllocatorRefTy;
-  typedef typename ReferenceAdder<const AllocatorTy>::result AllocatorCRefTy;
-  AllocatorRefTy getAllocator() { return Allocator; }
-  AllocatorCRefTy getAllocator() const { return Allocator; }
+  AllocatorTy &getAllocator() { return Allocator; }
+  const AllocatorTy &getAllocator() const { return Allocator; }
 
   typedef const char* key_type;
   typedef ValueTy mapped_type;
