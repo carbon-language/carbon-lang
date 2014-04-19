@@ -287,8 +287,9 @@ define void @Unwind1() {
 ; CHECKFP: .LBB{{[0-9_]+}}
 ; CHECKFP-NEXT: ldc r2, 40
 ; CHECKFP-NEXT: add r2, r10, r2
-; CHECKFP-NEXT: add r2, r2, r0
+; CHECKFP-NEXT: add r0, r2, r0
 ; CHECKFP-NEXT: mov r3, r1
+; CHECKFP-NEXT: mov r2, r0
 ; CHECKFP-NEXT: ldw r9, r10[4]
 ; CHECKFP-NEXT: ldw r8, r10[5]
 ; CHECKFP-NEXT: ldw r7, r10[6]
@@ -336,8 +337,9 @@ define void @Unwind1() {
 ; CHECK-NEXT: ldc r2, 36
 ; CHECK-NEXT: ldaw r3, sp[0]
 ; CHECK-NEXT: add r2, r3, r2
-; CHECK-NEXT: add r2, r2, r0
+; CHECK-NEXT: add r0, r2, r0
 ; CHECK-NEXT: mov r3, r1
+; CHECK-NEXT: mov r2, r0
 ; CHECK-NEXT: ldw r10, sp[2]
 ; CHECK-NEXT: ldw r9, sp[3]
 ; CHECK-NEXT: ldw r8, sp[4]
