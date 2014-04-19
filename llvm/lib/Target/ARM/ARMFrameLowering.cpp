@@ -409,7 +409,7 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     do {
       MachineBasicBlock::iterator Push = DPRCSPush++;
       if (!HasFP) {
-        CFAOffset -= sizeOfSPAdjustment(Push);;
+        CFAOffset -= sizeOfSPAdjustment(Push);
         unsigned CFIIndex = MMI.addFrameInst(
             MCCFIInstruction::createDefCfaOffset(nullptr, CFAOffset));
         BuildMI(MBB, DPRCSPush, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))

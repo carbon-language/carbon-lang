@@ -239,7 +239,7 @@ bool ARMAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
       if (ARM::GPRPairRegClass.contains(RegBegin)) {
         const TargetRegisterInfo *TRI = MF->getTarget().getRegisterInfo();
         unsigned Reg0 = TRI->getSubReg(RegBegin, ARM::gsub_0);
-        O << ARMInstPrinter::getRegisterName(Reg0) << ", ";;
+        O << ARMInstPrinter::getRegisterName(Reg0) << ", ";
         RegBegin = TRI->getSubReg(RegBegin, ARM::gsub_1);
       }
       O << ARMInstPrinter::getRegisterName(RegBegin);

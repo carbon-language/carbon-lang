@@ -3209,7 +3209,7 @@ static bool originalTypeIsF128(const Type *Ty, const SDNode *CallNode) {
 MipsTargetLowering::MipsCC::SpecialCallingConvType
   MipsTargetLowering::getSpecialCallingConv(SDValue Callee) const {
   MipsCC::SpecialCallingConvType SpecialCallingConv =
-    MipsCC::NoSpecialCallingConv;;
+    MipsCC::NoSpecialCallingConv;
   if (Subtarget->inMips16HardFloat()) {
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
       llvm::StringRef Sym = G->getGlobal()->getName();

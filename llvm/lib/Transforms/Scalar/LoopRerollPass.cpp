@@ -945,7 +945,7 @@ bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
       bool InReduction = Reductions.isPairInSame(J1, J2);
 
       if (!(InReduction && J1->isAssociative())) {
-        bool Swapped = false, SomeOpMatched = false;;
+        bool Swapped = false, SomeOpMatched = false;
         for (unsigned j = 0; j < J1->getNumOperands() && !MatchFailed; ++j) {
           Value *Op2 = J2->getOperand(j);
 

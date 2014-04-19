@@ -542,7 +542,7 @@ PredicateInstruction(MachineInstr *MI,
       MI->setDesc(get(CondOpcode));
       MachineInstrBuilder(*MI->getParent()->getParent(), MI)
         .addImm(CCValid).addImm(CCMask)
-        .addReg(SystemZ::CC, RegState::Implicit);;
+        .addReg(SystemZ::CC, RegState::Implicit);
       return true;
     }
   }

@@ -502,7 +502,7 @@ void LTOModule::addAsmGlobalSymbolUndef(const char *name) {
   if (entry.getValue().name)
     return;
 
-  uint32_t attr = LTO_SYMBOL_DEFINITION_UNDEFINED;;
+  uint32_t attr = LTO_SYMBOL_DEFINITION_UNDEFINED;
   attr |= LTO_SYMBOL_SCOPE_DEFAULT;
   NameAndAttributes info;
   info.name = entry.getKey().data();
