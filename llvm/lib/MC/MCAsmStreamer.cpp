@@ -1257,14 +1257,17 @@ void MCAsmStreamer::EmitWin64EHHandlerData() {
 void MCAsmStreamer::EmitWin64EHPushReg(unsigned Register) {
   MCStreamer::EmitWin64EHPushReg(Register);
 
-  OS << "\t.seh_pushreg " << Register;
+  OS << "\t.seh_pushreg ";
+  EmitRegisterName(Register);
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitWin64EHSetFrame(unsigned Register, unsigned Offset) {
   MCStreamer::EmitWin64EHSetFrame(Register, Offset);
 
-  OS << "\t.seh_setframe " << Register << ", " << Offset;
+  OS << "\t.seh_setframe ";
+  EmitRegisterName(Register);
+  OS << ", " << Offset;
   EmitEOL();
 }
 
@@ -1278,14 +1281,18 @@ void MCAsmStreamer::EmitWin64EHAllocStack(unsigned Size) {
 void MCAsmStreamer::EmitWin64EHSaveReg(unsigned Register, unsigned Offset) {
   MCStreamer::EmitWin64EHSaveReg(Register, Offset);
 
-  OS << "\t.seh_savereg " << Register << ", " << Offset;
+  OS << "\t.seh_savereg ";
+  EmitRegisterName(Register);
+  OS << ", " << Offset;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitWin64EHSaveXMM(unsigned Register, unsigned Offset) {
   MCStreamer::EmitWin64EHSaveXMM(Register, Offset);
 
-  OS << "\t.seh_savexmm " << Register << ", " << Offset;
+  OS << "\t.seh_savexmm ";
+  EmitRegisterName(Register);
+  OS << ", " << Offset;
   EmitEOL();
 }
 
