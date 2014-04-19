@@ -48,10 +48,11 @@ namespace llvm {
 ///   static std::pair<offset_type, offset_type>
 ///   EmitKeyDataLength(raw_ostream &Out, key_type_ref Key, data_type_ref Data);
 ///   /// Write Key to Out.  KeyLen is the length from EmitKeyDataLength.
-///   static void EmitKey(raw_ostream &Out, key_type_ref Key, unsigned KeyLen);
+///   static void EmitKey(raw_ostream &Out, key_type_ref Key,
+///                       offset_type KeyLen);
 ///   /// Write Data to Out.  DataLen is the length from EmitKeyDataLength.
 ///   static void EmitData(raw_ostream &Out, key_type_ref Key,
-///                        data_type_ref Data, unsigned DataLen);
+///                        data_type_ref Data, offset_type DataLen);
 /// };
 /// \endcode
 template <typename Info> class OnDiskChainedHashTableGenerator {
@@ -227,11 +228,11 @@ public:
 ///   /// Read the key from Buffer, given the KeyLen as reported from
 ///   /// ReadKeyDataLength.
 ///   const internal_key_type &ReadKey(const unsigned char *Buffer,
-///                                    unsigned KeyLen);
+///                                    offset_type KeyLen);
 ///   /// Read the data for Key from Buffer, given the DataLen as reported from
 ///   /// ReadKeyDataLength.
 ///   data_type ReadData(StringRef Key, const unsigned char *Buffer,
-///                      unsigned DataLen);
+///                      offset_type DataLen);
 /// };
 /// \endcode
 template <typename Info> class OnDiskChainedHashTable {
@@ -268,12 +269,12 @@ public:
   class iterator {
     internal_key_type Key;
     const unsigned char *const Data;
-    const unsigned Len;
+    const offset_type Len;
     Info *InfoObj;
 
   public:
     iterator() : Data(0), Len(0) {}
-    iterator(const internal_key_type K, const unsigned char *D, unsigned L,
+    iterator(const internal_key_type K, const unsigned char *D, offset_type L,
              Info *InfoObj)
         : Key(K), Data(D), Len(L), InfoObj(InfoObj) {}
 

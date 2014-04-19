@@ -42,21 +42,21 @@ public:
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
 
-    unsigned N = K.size();
+    offset_type N = K.size();
     LE.write<offset_type>(N);
 
-    unsigned M = (1 + V.Counts.size()) * sizeof(uint64_t);
+    offset_type M = (1 + V.Counts.size()) * sizeof(uint64_t);
     LE.write<offset_type>(M);
 
     return std::make_pair(N, M);
   }
 
-  static void EmitKey(raw_ostream &Out, key_type_ref K, unsigned N){
+  static void EmitKey(raw_ostream &Out, key_type_ref K, offset_type N){
     Out.write(K.data(), N);
   }
 
   static void EmitData(raw_ostream &Out, key_type_ref, data_type_ref V,
-                       unsigned) {
+                       offset_type) {
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
     LE.write<uint64_t>(V.Hash);

@@ -227,11 +227,11 @@ public:
     return std::make_pair(KeyLen, DataLen);
   }
 
-  StringRef ReadKey(const unsigned char *D, unsigned N) {
+  StringRef ReadKey(const unsigned char *D, offset_type N) {
     return StringRef((const char *)D, N);
   }
 
-  InstrProfRecord ReadData(StringRef K, const unsigned char *D, unsigned N) {
+  InstrProfRecord ReadData(StringRef K, const unsigned char *D, offset_type N) {
     if (N < 2 * sizeof(uint64_t) || N % sizeof(uint64_t)) {
       // The data is corrupt, don't try to read it.
       CountBuffer.clear();
