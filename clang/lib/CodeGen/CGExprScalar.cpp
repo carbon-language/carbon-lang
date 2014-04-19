@@ -1460,7 +1460,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
 
     // Splat the element across to all elements
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
-    return Builder.CreateVectorSplat(NumElements, Elt, "splat");;
+    return Builder.CreateVectorSplat(NumElements, Elt, "splat");
   }
 
   case CK_IntegralCast:

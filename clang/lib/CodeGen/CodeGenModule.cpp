@@ -2690,7 +2690,7 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
       LT = llvm::GlobalValue::LinkOnceODRLinkage;
       GlobalVariableName = MangledNameBuffer;
     } else {
-      LT = llvm::GlobalValue::PrivateLinkage;;
+      LT = llvm::GlobalValue::PrivateLinkage;
       GlobalVariableName = ".str";
     }
 
