@@ -75,7 +75,7 @@ error_code InstrProfWriter::addFunctionCounts(StringRef FunctionName,
     auto &Data = FunctionData[FunctionName];
     Data.Hash = FunctionHash;
     Data.Counts = Counters;
-    return instrprof_error::success;;
+    return instrprof_error::success;
   }
 
   auto &Data = Where->getValue();
