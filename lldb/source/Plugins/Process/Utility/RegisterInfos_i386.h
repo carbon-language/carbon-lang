@@ -8,6 +8,8 @@
 //===---------------------------------------------------------------------===//
 #include "llvm/Support/Compiler.h"
 
+#include <stddef.h>
+
 #ifdef DECLARE_REGISTER_INFOS_I386_STRUCT
 
 // Computes the offset of the given GPR in the user data area.
