@@ -1,6 +1,5 @@
-;RUN: llc -debug-only=block-freq -march=sparc < %s -verify-machineinstrs | FileCheck %s
-;RUN: llc -debug-only=block-freq -march=sparc -O0 < %s -verify-machineinstrs | FileCheck %s -check-prefix=UNOPT
-;REQUIRES: asserts
+;RUN: llc -march=sparc < %s -verify-machineinstrs | FileCheck %s
+;RUN: llc -march=sparc -O0 < %s -verify-machineinstrs | FileCheck %s -check-prefix=UNOPT
 
 target triple = "sparc-unknown-linux-gnu"
 

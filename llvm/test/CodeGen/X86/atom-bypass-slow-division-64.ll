@@ -1,5 +1,4 @@
-; RUN: llc -debug-only=block-freq < %s -mcpu=atom -march=x86-64 | FileCheck %s
-; REQUIRES: asserts
+; RUN: llc < %s -mcpu=atom -march=x86-64 | FileCheck %s
 
 target triple = "x86_64-unknown-linux-gnu"
 
