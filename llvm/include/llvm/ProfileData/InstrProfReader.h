@@ -222,8 +222,9 @@ public:
   static std::pair<offset_type, offset_type>
   ReadKeyDataLength(const unsigned char *&D) {
     using namespace support;
-    return std::make_pair(endian::readNext<offset_type, little, unaligned>(D),
-                          endian::readNext<offset_type, little, unaligned>(D));
+    offset_type KeyLen = endian::readNext<offset_type, little, unaligned>(D);
+    offset_type DataLen = endian::readNext<offset_type, little, unaligned>(D);
+    return std::make_pair(KeyLen, DataLen);
   }
 
   StringRef ReadKey(const unsigned char *D, unsigned N) {
