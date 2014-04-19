@@ -47,9 +47,23 @@ public:
   // Default ctor - Initialize to empty.
   ASTVector() : Begin(0), End(0), Capacity(0, false) {}
 
+  ASTVector(ASTVector &&O) : Begin(O.Begin), End(O.End), Capacity(O.Capacity) {
+    O.Begin = O.End = 0;
+    O.Capacity.setPointer(0);
+    O.Capacity.setInt(false);
+  }
+
   ASTVector(const ASTContext &C, unsigned N)
       : Begin(0), End(0), Capacity(0, false) {
     reserve(C, N);
+  }
+
+  ASTVector &operator=(ASTVector O) {
+    using std::swap;
+    swap(Begin, O.Begin);
+    swap(End, O.End);
+    swap(Capacity, O.Capacity);
+    return *this;
   }
 
   ~ASTVector() {

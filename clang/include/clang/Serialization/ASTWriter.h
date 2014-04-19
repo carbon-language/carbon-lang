@@ -676,9 +676,7 @@ public:
   void AddVersionTuple(const VersionTuple &Version, RecordDataImpl &Record);
 
   /// \brief Mark a declaration context as needing an update.
-  void AddUpdatedDeclContext(const DeclContext *DC) {
-    UpdatedDeclContexts.insert(DC);
-  }
+  void AddUpdatedDeclContext(const DeclContext *DC);
 
   void RewriteDecl(const Decl *D) {
     DeclsToRewrite.insert(D);

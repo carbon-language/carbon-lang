@@ -3,6 +3,10 @@
 // FIXME: When we have a syntax for modules in C++, use that.
 
 @import cxx_irgen_top;
+
+// CHECK-DAG: call i32 @_ZN8CtorInitIiE1fEv(
+CtorInit<int> x;
+
 @import cxx_irgen_left;
 @import cxx_irgen_right;
 

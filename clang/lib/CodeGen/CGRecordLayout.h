@@ -183,6 +183,7 @@ public:
   /// \brief Return llvm::StructType element number that corresponds to the
   /// field FD.
   unsigned getLLVMFieldNo(const FieldDecl *FD) const {
+    FD = FD->getCanonicalDecl();
     assert(FieldInfo.count(FD) && "Invalid field for record!");
     return FieldInfo.lookup(FD);
   }
@@ -201,6 +202,7 @@ public:
 
   /// \brief Return the BitFieldInfo that corresponds to the field FD.
   const CGBitFieldInfo &getBitFieldInfo(const FieldDecl *FD) const {
+    FD = FD->getCanonicalDecl();
     assert(FD->isBitField() && "Invalid call for non-bit-field decl!");
     llvm::DenseMap<const FieldDecl *, CGBitFieldInfo>::const_iterator
       it = BitFields.find(FD);

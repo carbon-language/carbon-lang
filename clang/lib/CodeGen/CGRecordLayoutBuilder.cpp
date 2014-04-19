@@ -212,7 +212,7 @@ CGRecordLowering::CGRecordLowering(CodeGenTypes &Types, const RecordDecl *D)
 
 void CGRecordLowering::setBitFieldInfo(
     const FieldDecl *FD, CharUnits StartOffset, llvm::Type *StorageType) {
-  CGBitFieldInfo &Info = BitFields[FD];
+  CGBitFieldInfo &Info = BitFields[FD->getCanonicalDecl()];
   Info.IsSigned = FD->getType()->isSignedIntegerOrEnumerationType();
   Info.Offset = (unsigned)(getFieldBitOffset(FD) - Context.toBits(StartOffset));
   Info.Size = FD->getBitWidthValue(Context);
@@ -297,7 +297,7 @@ void CGRecordLowering::lowerUnion() {
         FieldType = getByteArrayType(LayoutSize);
       setBitFieldInfo(Field, CharUnits::Zero(), FieldType);
     }
-    Fields[Field] = 0;
+    Fields[Field->getCanonicalDecl()] = 0;
     llvm::Type *FieldType = getStorageType(Field);
     // Conditionally update our storage type if we've got a new "better" one.
     if (!StorageType ||
@@ -570,7 +570,7 @@ void CGRecordLowering::fillOutputFields() {
       FieldTypes.push_back(Member->Data);
     if (Member->Kind == MemberInfo::Field) {
       if (Member->FD)
-        Fields[Member->FD] = FieldTypes.size() - 1;
+        Fields[Member->FD->getCanonicalDecl()] = FieldTypes.size() - 1;
       // A field without storage must be a bitfield.
       if (!Member->Data)
         setBitFieldInfo(Member->FD, Member->Offset, FieldTypes.back());

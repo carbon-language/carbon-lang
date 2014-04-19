@@ -3440,7 +3440,8 @@ static bool CollectFieldInitializer(Sema &SemaRef, BaseAndFieldInfo &Info,
     return false;
 
   // Overwhelmingly common case: we have a direct initializer for this field.
-  if (CXXCtorInitializer *Init = Info.AllBaseFields.lookup(Field))
+  if (CXXCtorInitializer *Init =
+          Info.AllBaseFields.lookup(Field->getCanonicalDecl()))
     return Info.addFieldInitializer(Init);
 
   // C++11 [class.base.init]p8:
@@ -3553,7 +3554,7 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor, bool AnyErrors,
     if (Member->isBaseInitializer())
       Info.AllBaseFields[Member->getBaseClass()->getAs<RecordType>()] = Member;
     else {
-      Info.AllBaseFields[Member->getAnyMember()] = Member;
+      Info.AllBaseFields[Member->getAnyMember()->getCanonicalDecl()] = Member;
 
       if (IndirectFieldDecl *F = Member->getIndirectMember()) {
         for (auto *C : F->chain()) {
@@ -3701,7 +3702,7 @@ static void PopulateKeysForFields(FieldDecl *Field, SmallVectorImpl<const void*>
       return;
     }
   }
-  IdealInits.push_back(Field);
+  IdealInits.push_back(Field->getCanonicalDecl());
 }
 
 static const void *GetKeyForBase(ASTContext &Context, QualType BaseType) {
@@ -3713,7 +3714,7 @@ static const void *GetKeyForMember(ASTContext &Context,
   if (!Member->isAnyMemberInitializer())
     return GetKeyForBase(Context, QualType(Member->getBaseClass(), 0));
     
-  return Member->getAnyMember();
+  return Member->getAnyMember()->getCanonicalDecl();
 }
 
 static void DiagnoseBaseOrMemInitializerOrder(
@@ -3908,13 +3909,12 @@ void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
     Init->setSourceOrder(i);
 
     if (Init->isAnyMemberInitializer()) {
-      FieldDecl *Field = Init->getAnyMember();
-      if (CheckRedundantInit(*this, Init, Members[Field]) ||
+      const void *Key = GetKeyForMember(Context, Init);
+      if (CheckRedundantInit(*this, Init, Members[Key]) ||
           CheckRedundantUnionInit(*this, Init, MemberUnions))
         HadError = true;
     } else if (Init->isBaseInitializer()) {
-      const void *Key =
-          GetKeyForBase(Context, QualType(Init->getBaseClass(), 0));
+      const void *Key = GetKeyForMember(Context, Init);
       if (CheckRedundantInit(*this, Init, Members[Key]))
         HadError = true;
     } else {

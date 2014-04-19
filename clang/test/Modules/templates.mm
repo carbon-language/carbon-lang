@@ -20,6 +20,9 @@ void testTemplateClasses() {
 
   N::Set<char> set_char;
   set_char.insert('A');
+
+  List<double> list_double;
+  list_double.push_back(0.0);
 }
 
 void testPendingInstantiations() {

@@ -2562,14 +2562,11 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
               (const unsigned char *)Blob.data() + sizeof(uint32_t),
               (const unsigned char *)Blob.data(),
               ASTDeclContextNameLookupTrait(*this, F));
-      if (ID == PREDEF_DECL_TRANSLATION_UNIT_ID) { // Is it the TU?
-        DeclContext *TU = Context.getTranslationUnitDecl();
-        F.DeclContextInfos[TU].NameLookupTableData = Table;
-        TU->setHasExternalVisibleStorage(true);
-      } else if (Decl *D = DeclsLoaded[ID - NUM_PREDEF_DECL_IDS]) {
+      if (Decl *D = GetExistingDecl(ID)) {
         auto *DC = cast<DeclContext>(D);
         DC->getPrimaryContext()->setHasExternalVisibleStorage(true);
         auto *&LookupTable = F.DeclContextInfos[DC].NameLookupTableData;
+        // FIXME: There should never be an existing lookup table.
         delete LookupTable;
         LookupTable = Table;
       } else
@@ -2965,10 +2962,15 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         Error("invalid DECL_UPDATE_OFFSETS block in AST file");
         return Failure;
       }
-      // FIXME: If we've already loaded the decl, perform the updates now.
-      for (unsigned I = 0, N = Record.size(); I != N; I += 2)
-        DeclUpdateOffsets[getGlobalDeclID(F, Record[I])]
-          .push_back(std::make_pair(&F, Record[I+1]));
+      for (unsigned I = 0, N = Record.size(); I != N; I += 2) {
+        GlobalDeclID ID = getGlobalDeclID(F, Record[I]);
+        DeclUpdateOffsets[ID].push_back(std::make_pair(&F, Record[I + 1]));
+
+        // If we've already loaded the decl, perform the updates when we finish
+        // loading this block.
+        if (Decl *D = GetExistingDecl(ID))
+          PendingUpdateRecords.push_back(std::make_pair(ID, D));
+      }
       break;
     }
 
@@ -3626,11 +3628,24 @@ void ASTReader::InitializeContext() {
     DeserializationListener->DeclRead(PREDEF_DECL_TRANSLATION_UNIT_ID, 
                                       Context.getTranslationUnitDecl());
 
-  // Make sure we load the declaration update records for the translation unit,
-  // if there are any.
-  loadDeclUpdateRecords(PREDEF_DECL_TRANSLATION_UNIT_ID, 
-                        Context.getTranslationUnitDecl());
-  
+  // For any declarations we have already loaded, load any update records.
+  {
+    // We're not back to a consistent state until all our pending update
+    // records have been loaded. There can be interdependencies between them.
+    Deserializing SomeUpdateRecords(this);
+    ReadingKindTracker ReadingKind(Read_Decl, *this);
+
+    // Make sure we load the declaration update records for the translation
+    // unit, if there are any.
+    // FIXME: Is this necessary any more?
+    loadDeclUpdateRecords(PREDEF_DECL_TRANSLATION_UNIT_ID,
+                          Context.getTranslationUnitDecl());
+
+    for (auto &Update : PendingUpdateRecords)
+      loadDeclUpdateRecords(Update.first, Update.second);
+    PendingUpdateRecords.clear();
+  }
+
   // FIXME: Find a better way to deal with collisions between these
   // built-in types. Right now, we just ignore the problem.
   
@@ -5844,11 +5859,14 @@ Decl *ASTReader::GetExternalDecl(uint32_t ID) {
   return GetDecl(ID);
 }
 
-uint64_t ASTReader::readCXXBaseSpecifiers(ModuleFile &M, const RecordData &Record, 
-                                          unsigned &Idx){
-  if (Idx >= Record.size())
+uint64_t ASTReader::readCXXBaseSpecifiers(ModuleFile &M,
+                                          const RecordData &Record,
+                                          unsigned &Idx) {
+  if (Idx >= Record.size() || Record[Idx] > M.LocalNumCXXBaseSpecifiers) {
+    Error("malformed AST file: missing C++ base specifier");
     return 0;
-  
+  }
+
   unsigned LocalID = Record[Idx++];
   return getGlobalBitOffset(M, M.CXXBaseSpecifiersOffsets[LocalID - 1]);
 }
@@ -5863,7 +5881,7 @@ CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
   unsigned Code = Cursor.ReadCode();
   unsigned RecCode = Cursor.readRecord(Code, Record);
   if (RecCode != DECL_CXX_BASE_SPECIFIERS) {
-    Error("Malformed AST file: missing C++ base specifiers");
+    Error("malformed AST file: missing C++ base specifiers");
     return 0;
   }
 
@@ -5906,14 +5924,14 @@ ModuleFile *ASTReader::getOwningModuleFile(const Decl *D) {
 SourceLocation ASTReader::getSourceLocationForDeclID(GlobalDeclID ID) {
   if (ID < NUM_PREDEF_DECL_IDS)
     return SourceLocation();
-  
+
   unsigned Index = ID - NUM_PREDEF_DECL_IDS;
 
   if (Index > DeclsLoaded.size()) {
     Error("declaration ID out-of-range for AST file");
     return SourceLocation();
   }
-  
+
   if (Decl *D = DeclsLoaded[Index])
     return D->getLocation();
 
@@ -5922,15 +5940,15 @@ SourceLocation ASTReader::getSourceLocationForDeclID(GlobalDeclID ID) {
   return ReadSourceLocation(*Rec.F, RawLocation);
 }
 
-Decl *ASTReader::GetDecl(DeclID ID) {
-  if (ID < NUM_PREDEF_DECL_IDS) {    
+Decl *ASTReader::GetExistingDecl(DeclID ID) {
+  if (ID < NUM_PREDEF_DECL_IDS) {
     switch ((PredefinedDeclIDs)ID) {
     case PREDEF_DECL_NULL_ID:
       return 0;
-        
+
     case PREDEF_DECL_TRANSLATION_UNIT_ID:
       return Context.getTranslationUnitDecl();
-        
+
     case PREDEF_DECL_OBJC_ID_ID:
       return Context.getObjCIdDecl();
 
@@ -5939,16 +5957,16 @@ Decl *ASTReader::GetDecl(DeclID ID) {
 
     case PREDEF_DECL_OBJC_CLASS_ID:
       return Context.getObjCClassDecl();
-        
+
     case PREDEF_DECL_OBJC_PROTOCOL_ID:
       return Context.getObjCProtocolDecl();
-        
+
     case PREDEF_DECL_INT_128_ID:
       return Context.getInt128Decl();
 
     case PREDEF_DECL_UNSIGNED_INT_128_ID:
       return Context.getUInt128Decl();
-        
+
     case PREDEF_DECL_OBJC_INSTANCETYPE_ID:
       return Context.getObjCInstanceTypeDecl();
 
@@ -5956,7 +5974,7 @@ Decl *ASTReader::GetDecl(DeclID ID) {
       return Context.getBuiltinVaListDecl();
     }
   }
-  
+
   unsigned Index = ID - NUM_PREDEF_DECL_IDS;
 
   if (Index >= DeclsLoaded.size()) {
@@ -5964,7 +5982,22 @@ Decl *ASTReader::GetDecl(DeclID ID) {
     Error("declaration ID out-of-range for AST file");
     return 0;
   }
-  
+
+  return DeclsLoaded[Index];
+}
+
+Decl *ASTReader::GetDecl(DeclID ID) {
+  if (ID < NUM_PREDEF_DECL_IDS)
+    return GetExistingDecl(ID);
+
+  unsigned Index = ID - NUM_PREDEF_DECL_IDS;
+
+  if (Index >= DeclsLoaded.size()) {
+    assert(0 && "declaration ID out-of-range for AST file");
+    Error("declaration ID out-of-range for AST file");
+    return 0;
+  }
+
   if (!DeclsLoaded[Index]) {
     ReadDeclRecord(ID);
     if (DeserializationListener)
@@ -6270,14 +6303,19 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   Contexts.push_back(DC);
   
   if (DC->isNamespace()) {
-    MergedDeclsMap::iterator Merged
-      = MergedDecls.find(const_cast<Decl *>(cast<Decl>(DC)));
+    auto Merged = MergedDecls.find(const_cast<Decl *>(cast<Decl>(DC)));
     if (Merged != MergedDecls.end()) {
       for (unsigned I = 0, N = Merged->second.size(); I != N; ++I)
         Contexts.push_back(cast<DeclContext>(GetDecl(Merged->second[I])));
     }
   }
-  
+  if (isa<CXXRecordDecl>(DC)) {
+    auto Merged = MergedLookups.find(DC);
+    if (Merged != MergedLookups.end())
+      Contexts.insert(Contexts.end(), Merged->second.begin(),
+                      Merged->second.end());
+  }
+
   DeclContextNameLookupVisitor Visitor(*this, Contexts, Name, Decls);
 
   // If we can definitively determine which module file to look into,
@@ -7820,6 +7858,19 @@ void ASTReader::ReadComments() {
   }
 }
 
+std::string ASTReader::getOwningModuleNameForDiagnostic(const Decl *D) {
+  // If we know the owning module, use it.
+  if (Module *M = D->getOwningModule())
+    return M->getFullModuleName();
+
+  // Otherwise, use the name of the top-level module the decl is within.
+  if (ModuleFile *M = getOwningModuleFile(D))
+    return M->ModuleName;
+
+  // Not from a module.
+  return "";
+}
+
 void ASTReader::finishPendingActions() {
   while (!PendingIdentifierInfos.empty() || !PendingDeclChains.empty() ||
          !PendingMacroIDs.empty() || !PendingDeclContextInfos.empty() ||
@@ -7887,6 +7938,20 @@ void ASTReader::finishPendingActions() {
       Info.D->setDeclContextsImpl(SemaDC, LexicalDC, getContext());
     }
 
+    // Trigger the import of the full definition of each class that had any
+    // odr-merging problems, so we can produce better diagnostics for them.
+    for (auto &Merge : PendingOdrMergeFailures) {
+      Merge.first->buildLookup();
+      Merge.first->decls_begin();
+      Merge.first->bases_begin();
+      Merge.first->vbases_begin();
+      for (auto *RD : Merge.second) {
+        RD->decls_begin();
+        RD->bases_begin();
+        RD->vbases_begin();
+      }
+    }
+
     // For each declaration from a merged context, check that the canonical
     // definition of that context also contains a declaration of the same
     // entity.
@@ -7925,11 +7990,11 @@ void ASTReader::finishPendingActions() {
       if (!Found) {
         D->setInvalidDecl();
 
-        Module *CanonDefModule = cast<Decl>(CanonDef)->getOwningModule();
+        std::string CanonDefModule =
+            getOwningModuleNameForDiagnostic(cast<Decl>(CanonDef));
         Diag(D->getLocation(), diag::err_module_odr_violation_missing_decl)
-          << D << D->getOwningModule()->getFullModuleName()
-          << CanonDef << !CanonDefModule
-          << (CanonDefModule ? CanonDefModule->getFullModuleName() : "");
+          << D << getOwningModuleNameForDiagnostic(D)
+          << CanonDef << CanonDefModule.empty() << CanonDefModule;
 
         if (Candidates.empty())
           Diag(cast<Decl>(CanonDef)->getLocation(),
@@ -7940,6 +8005,8 @@ void ASTReader::finishPendingActions() {
                  diag::note_module_odr_violation_possible_decl)
               << Candidates[I];
         }
+
+        DiagnosedOdrMergeFailures.insert(CanonDef);
       }
     }
   }
@@ -8009,6 +8076,46 @@ void ASTReader::finishPendingActions() {
       MD->setLazyBody(PB->second);
   }
   PendingBodies.clear();
+
+  // Issue any pending ODR-failure diagnostics.
+  for (auto &Merge : PendingOdrMergeFailures) {
+    if (!DiagnosedOdrMergeFailures.insert(Merge.first))
+      continue;
+
+    bool Diagnosed = false;
+    for (auto *RD : Merge.second) {
+      // Multiple different declarations got merged together; tell the user
+      // where they came from.
+      if (Merge.first != RD) {
+        // FIXME: Walk the definition, figure out what's different,
+        // and diagnose that.
+        if (!Diagnosed) {
+          std::string Module = getOwningModuleNameForDiagnostic(Merge.first);
+          Diag(Merge.first->getLocation(),
+               diag::err_module_odr_violation_different_definitions)
+            << Merge.first << Module.empty() << Module;
+          Diagnosed = true;
+        }
+
+        Diag(RD->getLocation(),
+             diag::note_module_odr_violation_different_definitions)
+          << getOwningModuleNameForDiagnostic(RD);
+      }
+    }
+
+    if (!Diagnosed) {
+      // All definitions are updates to the same declaration. This happens if a
+      // module instantiates the declaration of a class template specialization
+      // and two or more other modules instantiate its definition.
+      //
+      // FIXME: Indicate which modules had instantiations of this definition.
+      // FIXME: How can this even happen?
+      Diag(Merge.first->getLocation(),
+           diag::err_module_odr_violation_different_instantiations)
+        << Merge.first;
+    }
+  }
+  PendingOdrMergeFailures.clear();
 }
 
 void ASTReader::FinishedDeserializing() {

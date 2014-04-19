@@ -83,6 +83,13 @@ def note_module_odr_violation_no_possible_decls : Note<
   "definition has no member %0">;
 def note_module_odr_violation_possible_decl : Note<
   "declaration of %0 does not match">;
+def err_module_odr_violation_different_definitions : Error<
+  "%q0 has different definitions in different modules; "
+  "%select{definition in module '%2' is here|defined here}1">;
+def note_module_odr_violation_different_definitions : Note<
+  "definition in module '%0' is here">;
+def err_module_odr_violation_different_instantiations : Error<
+  "instantiation of %q0 is different in different modules">;
 
 } // let CategoryName
 } // let Component
