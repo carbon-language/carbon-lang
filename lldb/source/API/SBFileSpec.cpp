@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <inttypes.h> // PRIu64
 #include <limits.h>
 
 #include "lldb/API/SBFileSpec.h"

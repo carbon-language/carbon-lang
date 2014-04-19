@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <inttypes.h> // PRIu64
+
 #include "lldb/API/SBData.h"
 #include "lldb/API/SBError.h"
 #include "lldb/API/SBStream.h"

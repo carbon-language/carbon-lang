@@ -9,6 +9,7 @@
 
 
 // C Includes
+#include <inttypes.h> // PRIx64
 #include <stdarg.h>
 #include <stddef.h>  // offsetof
 
