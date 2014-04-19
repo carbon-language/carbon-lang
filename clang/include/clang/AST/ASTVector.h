@@ -58,7 +58,8 @@ public:
     reserve(C, N);
   }
 
-  ASTVector &operator=(ASTVector O) {
+  ASTVector &operator=(ASTVector &&RHS) {
+    ASTVector O(std::move(RHS));
     using std::swap;
     swap(Begin, O.Begin);
     swap(End, O.End);
