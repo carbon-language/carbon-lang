@@ -616,10 +616,10 @@ static const MCSymbol *getBaseSymbol(const MCAsmLayout &Layout,
 void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = *MSD.SymbolData;
-  assert(!OrigData.getFragment() ||
-         (&OrigData.getFragment()->getParent()->getSection() ==
-          &OrigData.getSymbol().getSection()) &&
-             "The symbol's section doesn't match the fragment's symbol");
+  assert((!OrigData.getFragment() ||
+          (&OrigData.getFragment()->getParent()->getSection() ==
+           &OrigData.getSymbol().getSection())) &&
+         "The symbol's section doesn't match the fragment's symbol");
   const MCSymbol *Base = getBaseSymbol(Layout, OrigData.getSymbol());
 
   // This has to be in sync with when computeSymbolTable uses SHN_ABS or
