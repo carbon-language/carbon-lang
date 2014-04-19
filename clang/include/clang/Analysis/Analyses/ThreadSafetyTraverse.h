@@ -510,7 +510,7 @@ protected:
   }
 
   void printLiteralPtr(LiteralPtr *E, StreamType &SS) {
-    SS << E->clangDecl()->getName();
+    SS << E->clangDecl()->getNameAsString();
   }
 
   void printVariable(Variable *E, StreamType &SS) {

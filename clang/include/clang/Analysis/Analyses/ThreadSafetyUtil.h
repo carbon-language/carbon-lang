@@ -80,7 +80,7 @@ public:
   SimpleArray(T *Dat, size_t Cp, size_t Sz = 0)
       : Data(Dat), Size(Sz), Capacity(Cp) {}
   SimpleArray(MemRegionRef A, size_t Cp)
-      : Data(A.allocateT<T>(Cp)), Size(0), Capacity(Cp) {}
+      : Data(Cp == 0 ? nullptr : A.allocateT<T>(Cp)), Size(0), Capacity(Cp) {}
   SimpleArray(SimpleArray<T> &&A)
       : Data(A.Data), Size(A.Size), Capacity(A.Capacity) {
     A.Data = nullptr;
@@ -100,11 +100,14 @@ public:
     return *this;
   }
 
-  T *resize(size_t Ncp, MemRegionRef A) {
+  void reserve(size_t Ncp, MemRegionRef A) {
+    if (Ncp < Capacity)
+      return;
     T *Odata = Data;
     Data = A.allocateT<T>(Ncp);
+    Capacity = Ncp;
     memcpy(Data, Odata, sizeof(T) * Size);
-    return Odata;
+    return;
   }
 
   typedef T *iterator;
@@ -134,7 +137,7 @@ public:
   }
 
   void setValues(unsigned Sz, const T& C) {
-    assert(Sz < Capacity);
+    assert(Sz <= Capacity);
     Size = Sz;
     for (unsigned i = 0; i < Sz; ++i) {
       Data[i] = C;

@@ -952,7 +952,8 @@ public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_SCFG; }
 
   SCFG(MemRegionRef A, unsigned Nblocks)
-      : SExpr(COP_SCFG), Blocks(A, Nblocks), Entry(nullptr), Exit(nullptr) {}
+      : SExpr(COP_SCFG), Blocks(A, Nblocks),
+        Entry(nullptr), Exit(nullptr) {}
   SCFG(const SCFG &Cfg, BlockArray &&Ba) // steals memory from Ba
       : SExpr(COP_SCFG), Blocks(std::move(Ba)), Entry(nullptr), Exit(nullptr) {
     // TODO: set entry and exit!
@@ -972,7 +973,7 @@ public:
   const BasicBlock *exit() const { return Exit; }
   BasicBlock *exit() { return Exit; }
 
-  void add(BasicBlock *BB) { Blocks.push_back(BB); }
+  void add(BasicBlock *BB);
   void setEntry(BasicBlock *BB) { Entry = BB; }
   void setExit(BasicBlock *BB) { Exit = BB; }
 
@@ -1001,12 +1002,12 @@ public:
 
   BasicBlock(MemRegionRef A, unsigned Nargs, unsigned Nins,
              SExpr *Term = nullptr)
-      : BlockID(0), Parent(nullptr), NumPredecessors(0),
+      : BlockID(0), NumVars(0), NumPredecessors(0), Parent(nullptr),
         Args(A, Nargs), Instrs(A, Nins), Terminator(Term) {}
   BasicBlock(const BasicBlock &B, VarArray &&As, VarArray &&Is, SExpr *T)
-      : BlockID(0), Parent(nullptr), NumPredecessors(B.NumPredecessors),
-        Args(std::move(As)), Instrs(std::move(Is)), Terminator(T)
-  {}
+      : BlockID(0),  NumVars(B.NumVars), NumPredecessors(B.NumPredecessors),
+        Parent(nullptr), Args(std::move(As)), Instrs(std::move(Is)),
+        Terminator(T) {}
 
   unsigned blockID() const { return BlockID; }
   unsigned numPredecessors() const { return NumPredecessors; }
@@ -1027,8 +1028,15 @@ public:
   void setParent(BasicBlock *P) { Parent = P; }
   void setNumPredecessors(unsigned NP) { NumPredecessors = NP; }
   void setTerminator(SExpr *E) { Terminator.reset(E); }
-  void addArgument(Variable *V) { Args.push_back(V); }
-  void addInstr(Variable *V) { Args.push_back(V); }
+
+  void addArgument(Variable *V) {
+    V->setID(BlockID, NumVars++);
+    Args.push_back(V);
+  }
+  void addInstruction(Variable *V) {
+    V->setID(BlockID, NumVars++);
+    Instrs.push_back(V);
+  }
 
   template <class V> BasicBlock *traverse(V &Visitor) {
     typename V::template Container<Variable*> Nas(Visitor, Args.size());
@@ -1064,13 +1072,22 @@ private:
   friend class SCFG;
 
   unsigned BlockID;
+  unsigned NumVars;
+  unsigned NumPredecessors; // Number of blocks which jump to this one.
+
   BasicBlock *Parent;       // The parent block is the enclosing lexical scope.
                             // The parent dominates this block.
-  unsigned NumPredecessors; // Number of blocks which jump to this one.
   VarArray Args;            // Phi nodes.  One argument per predecessor.
   VarArray Instrs;
   SExprRef Terminator;
 };
+
+
+inline void SCFG::add(BasicBlock *BB) {
+  BB->setBlockID(Blocks.size());
+  Blocks.push_back(BB);
+}
+
 
 template <class V>
 typename V::R_SExpr SCFG::traverse(V &Visitor) {
@@ -1083,6 +1100,7 @@ typename V::R_SExpr SCFG::traverse(V &Visitor) {
   Visitor.exitCFG(*this);
   return Visitor.reduceSCFG(*this, Bbs);
 }
+
 
 class Phi : public SExpr {
 public:
@@ -1097,6 +1115,15 @@ public:
 
   const ValArray &values() const { return Values; }
   ValArray &values() { return Values; }
+
+  // Incomplete phi nodes are constructed during SSA conversion, and
+  // may not be necessary.
+  bool incomplete() const { return Flags == 1; }
+
+  void setIncomplete(bool b) {
+    if (b) Flags = 1;
+    else Flags = 0;
+  }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::template Container<typename V::R_SExpr> Nvs(Visitor,

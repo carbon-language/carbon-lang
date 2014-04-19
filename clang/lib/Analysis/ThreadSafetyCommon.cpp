@@ -46,10 +46,6 @@ til::SExpr *SExprBuilder::lookupStmt(const Stmt *S) {
   return nullptr;
 }
 
-void SExprBuilder::insertStmt(const Stmt *S, til::Variable *V) {
-  SMap.insert(std::make_pair(S, V));
-}
-
 
 til::SCFG *SExprBuilder::buildCFG(CFGWalker &Walker) {
   Walker.walk(*this);
@@ -354,6 +350,7 @@ SExprBuilder::translateDeclStmt(const DeclStmt *S, CallingContext *Ctx) {
 }
 
 
+
 // If (E) is non-trivial, then add it to the current basic block, and
 // update the statement map so that S refers to E.  Returns a new variable
 // that refers to E.
@@ -366,8 +363,7 @@ til::SExpr *SExprBuilder::addStatement(til::SExpr* E, const Stmt *S,
     return E;
 
   til::Variable *V = new (Arena) til::Variable(E, VD);
-  V->setID(CurrentBlockID, CurrentVarID++);
-  CurrentBB->addInstr(V);
+  CurrentInstructions.push_back(V);
   if (S)
     insertStmt(S, V);
   return V;
@@ -376,9 +372,11 @@ til::SExpr *SExprBuilder::addStatement(til::SExpr* E, const Stmt *S,
 
 // Returns the current value of VD, if known, and nullptr otherwise.
 til::SExpr *SExprBuilder::lookupVarDecl(const ValueDecl *VD) {
-  auto It = IdxMap.find(VD);
-  if (It != IdxMap.end())
-    return CurrentNameMap[It->second].second;
+  auto It = LVarIdxMap.find(VD);
+  if (It != LVarIdxMap.end()) {
+    assert(CurrentLVarMap[It->second].first == VD);
+    return CurrentLVarMap[It->second].second;
+  }
   return nullptr;
 }
 
@@ -396,9 +394,9 @@ inline void maybeUpdateVD(til::SExpr *E, const ValueDecl *VD) {
 // Adds a new variable declaration.
 til::SExpr *SExprBuilder::addVarDecl(const ValueDecl *VD, til::SExpr *E) {
   maybeUpdateVD(E, VD);
-  IdxMap.insert(std::make_pair(VD, CurrentNameMap.size()));
-  CurrentNameMap.makeWritable();
-  CurrentNameMap.push_back(std::make_pair(VD, E));
+  LVarIdxMap.insert(std::make_pair(VD, CurrentLVarMap.size()));
+  CurrentLVarMap.makeWritable();
+  CurrentLVarMap.push_back(std::make_pair(VD, E));
   return E;
 }
 
@@ -406,76 +404,151 @@ til::SExpr *SExprBuilder::addVarDecl(const ValueDecl *VD, til::SExpr *E) {
 // Updates a current variable declaration.  (E.g. by assignment)
 til::SExpr *SExprBuilder::updateVarDecl(const ValueDecl *VD, til::SExpr *E) {
   maybeUpdateVD(E, VD);
-  auto It = IdxMap.find(VD);
-  if (It == IdxMap.end()) {
+  auto It = LVarIdxMap.find(VD);
+  if (It == LVarIdxMap.end()) {
     til::SExpr *Ptr = new (Arena) til::LiteralPtr(VD);
     til::SExpr *St  = new (Arena) til::Store(Ptr, E);
     return St;
   }
-  CurrentNameMap.makeWritable();
-  CurrentNameMap.elem(It->second).second = E;
+  CurrentLVarMap.makeWritable();
+  CurrentLVarMap.elem(It->second).second = E;
   return E;
 }
 
 
-// Merge values from Map into the current entry map.
-void SExprBuilder::mergeEntryMap(NameVarMap Map) {
-  assert(CurrentBlockInfo && "Not processing a block!");
+// Return true if the given expression represents a possibly unnecessary
+// variable: i.e. a variable that references a Phi node that may be removed.
+inline bool isIncompleteVar(til::SExpr *E) {
+  if (!E)
+    return true;  // Null values are used on unknown backedges.
+  if (til::Variable *V = dyn_cast<til::Variable>(E)) {
+    if (til::Phi *Ph = dyn_cast<til::Phi>(V->definition()))
+      return Ph->incomplete();
+  }
+  return false;
+}
 
-  if (!CurrentNameMap.valid()) {
-    // Steal Map, using copy-on-write.
-    CurrentNameMap = std::move(Map);
+
+// Make a Phi node in the current block for the i^th variable in CurrentVarMap.
+// If E != null, sets Phi[CurrentBlockInfo->ArgIndex] = E.
+// If E == null, this is a backedge and will be set later.
+void SExprBuilder::makePhiNodeVar(unsigned i, unsigned NPreds, til::SExpr *E) {
+  unsigned ArgIndex = CurrentBlockInfo->ProcessedPredecessors;
+  assert(ArgIndex > 0 && ArgIndex < NPreds);
+
+  til::Variable *V = dyn_cast<til::Variable>(CurrentLVarMap[i].second);
+  if (V && V->getBlockID() == CurrentBB->blockID()) {
+    // We already have a Phi node in the current block,
+    // so just add the new variable to the Phi node.
+    til::Phi *Ph = dyn_cast<til::Phi>(V->definition());
+    assert(Ph && "Expecting Phi node.");
+    if (E)
+      Ph->values()[ArgIndex] = E;
+    if (!Ph->incomplete() && isIncompleteVar(E))
+      Ph->setIncomplete(true);
     return;
   }
-  if (CurrentNameMap.sameAs(Map))
+
+  // Make a new phi node: phi(..., E)
+  // All phi args up to the current index are set to the current value.
+  til::Phi *Ph = new (Arena) til::Phi(Arena, NPreds);
+  Ph->values().setValues(NPreds, nullptr);
+  for (unsigned PIdx = 0; PIdx < ArgIndex; ++PIdx)
+    Ph->values()[PIdx] = CurrentLVarMap[i].second;
+  if (E)
+    Ph->values()[ArgIndex] = E;
+  if (isIncompleteVar(E))
+    Ph->setIncomplete(true);
+
+  // Add Phi node to current block, and update CurrentLVarMap[i]
+  auto *Var = new (Arena) til::Variable(Ph, CurrentLVarMap[i].first);
+  CurrentArguments.push_back(Var);
+
+  CurrentLVarMap.makeWritable();
+  CurrentLVarMap.elem(i).second = Var;
+}
+
+
+// Merge values from Map into the current variable map.
+// This will construct Phi nodes in the current basic block as necessary.
+void SExprBuilder::mergeEntryMap(LVarDefinitionMap Map) {
+  assert(CurrentBlockInfo && "Not processing a block!");
+
+  if (!CurrentLVarMap.valid()) {
+    // Steal Map, using copy-on-write.
+    CurrentLVarMap = std::move(Map);
+    return;
+  }
+  if (CurrentLVarMap.sameAs(Map))
     return;  // Easy merge: maps from different predecessors are unchanged.
 
-  unsigned ESz = CurrentNameMap.size();
+  unsigned NPreds = CurrentBB->numPredecessors();
+  unsigned ESz = CurrentLVarMap.size();
   unsigned MSz = Map.size();
-  unsigned Sz = std::max(ESz, MSz);
-  bool W = CurrentNameMap.writable();
+  unsigned Sz  = std::min(ESz, MSz);
+
   for (unsigned i=0; i<Sz; ++i) {
-    if (CurrentNameMap[i].first != Map[i].first) {
-      if (!W)
-        CurrentNameMap.makeWritable();
-      CurrentNameMap.downsize(i);
+    if (CurrentLVarMap[i].first != Map[i].first) {
+      // We've reached the end of variables in common.
+      CurrentLVarMap.makeWritable();
+      CurrentLVarMap.downsize(i);
       break;
     }
-    if (CurrentNameMap[i].second != Map[i].second) {
-      til::Variable *V =
-        dyn_cast<til::Variable>(CurrentNameMap[i].second);
-      if (V && V->getBlockID() == CurrentBB->blockID()) {
-        // We already have a Phi node, so add the new variable.
-        til::Phi *Ph = dyn_cast<til::Phi>(V->definition());
-        assert(Ph && "Expecting Phi node.");
-        Ph->values()[CurrentArgIndex] = Map[i].second;
-      }
-      else {
-        if (!W)
-          CurrentNameMap.makeWritable();
-        unsigned NPreds = CurrentBB->numPredecessors();
-        assert(CurrentArgIndex > 0 && CurrentArgIndex < NPreds);
-
-        // Make a new phi node.  All phi args up to the current index must
-        // be the same, and equal to the current NameMap value.
-        auto *Ph = new (Arena) til::Phi(Arena, NPreds);
-        Ph->values().setValues(NPreds, nullptr);
-        for (unsigned PIdx = 0; PIdx < CurrentArgIndex; ++PIdx)
-          Ph->values()[PIdx] = CurrentNameMap[i].second;
-        Ph->values()[CurrentArgIndex] = Map[i].second;
-
-        // Add phi node to current basic block.
-        auto *Var = new (Arena) til::Variable(Ph, CurrentNameMap[i].first);
-        Var->setID(CurrentBlockID, CurrentVarID++);
-        CurrentBB->addArgument(Var);
-        CurrentNameMap.elem(i).second = Var;
-      }
-    }
+    if (CurrentLVarMap[i].second != Map[i].second)
+      makePhiNodeVar(i, NPreds, Map[i].second);
   }
   if (ESz > MSz) {
-    if (!W)
-      CurrentNameMap.makeWritable();
-    CurrentNameMap.downsize(Map.size());
+    CurrentLVarMap.makeWritable();
+    CurrentLVarMap.downsize(Map.size());
+  }
+}
+
+
+// Merge a back edge into the current variable map.
+// This will create phi nodes for all variables in the variable map.
+void SExprBuilder::mergeEntryMapBackEdge() {
+  // We don't have definitions for variables on the backedge, because we
+  // haven't gotten that far in the CFG.  Thus, when encountering a back edge,
+  // we conservatively create Phi nodes for all variables.  Unnecessary Phi
+  // nodes will be marked as incomplete, and stripped out at the end.
+  //
+  // An Phi node is unnecessary if it only refers to itself and one other
+  // variable, e.g. x = Phi(y, y, x)  can be reduced to x = y.
+
+  assert(CurrentBlockInfo && "Not processing a block!");
+
+  if (CurrentBlockInfo->HasBackEdges)
+    return;
+  CurrentBlockInfo->HasBackEdges = true;
+
+  CurrentLVarMap.makeWritable();
+  unsigned Sz = CurrentLVarMap.size();
+  unsigned NPreds = CurrentBB->numPredecessors();
+
+  for (unsigned i=0; i < Sz; ++i) {
+    makePhiNodeVar(i, NPreds, nullptr);
+  }
+}
+
+
+// Update the phi nodes that were initially created for a back edge
+// once the variable definitions have been computed.
+// I.e., merge the current variable map into the phi nodes for Blk.
+void SExprBuilder::mergePhiNodesBackEdge(const CFGBlock *Blk) {
+  til::BasicBlock *BB = lookupBlock(Blk);
+  unsigned ArgIndex = BBInfo[Blk->getBlockID()].ProcessedPredecessors;
+  assert(ArgIndex > 0 && ArgIndex < BB->numPredecessors());
+
+  for (til::Variable *V : BB->arguments()) {
+    til::Phi *Ph = dyn_cast_or_null<til::Phi>(V->definition());
+    assert(Ph && "Expecting Phi Node.");
+    assert(Ph->values()[ArgIndex] == nullptr && "Wrong index for back edge.");
+    assert(V->clangDecl() && "No local variable for Phi node.");
+
+    til::SExpr *E = lookupVarDecl(V->clangDecl());
+    assert(E && "Couldn't find local variable for Phi node.");
+
+    Ph->values()[ArgIndex] = E;
   }
 }
 
@@ -488,53 +561,60 @@ void SExprBuilder::enterCFG(CFG *Cfg, const NamedDecl *D,
   Scfg = new (Arena) til::SCFG(Arena, NBlocks);
 
   // allocate all basic blocks immediately, to handle forward references.
-  BlockMap.reserve(NBlocks);
   BBInfo.resize(NBlocks);
+  BlockMap.resize(NBlocks, nullptr);
+  // create map from clang blockID to til::BasicBlocks
   for (auto *B : *Cfg) {
     auto *BB = new (Arena) til::BasicBlock(Arena, 0, B->size());
-    BlockMap.push_back(BB);
+    BlockMap[B->getBlockID()] = BB;
   }
   CallCtx = new SExprBuilder::CallingContext(D);
 }
 
 
-
 void SExprBuilder::enterCFGBlock(const CFGBlock *B) {
   // Intialize TIL basic block and add it to the CFG.
   CurrentBB = BlockMap[B->getBlockID()];
-  CurrentBB->setBlockID(CurrentBlockID);
   CurrentBB->setNumPredecessors(B->pred_size());
   Scfg->add(CurrentBB);
 
   CurrentBlockInfo = &BBInfo[B->getBlockID()];
-  CurrentVarID = 0;
-  CurrentArgIndex = 0;
+  CurrentArguments.clear();
+  CurrentInstructions.clear();
 
-  assert(!CurrentNameMap.valid() && "CurrentNameMap already initialized.");
+  // CurrentLVarMap is moved to ExitMap on block exit.
+  assert(!CurrentLVarMap.valid() && "CurrentLVarMap already initialized.");
 }
 
 
 void SExprBuilder::handlePredecessor(const CFGBlock *Pred) {
-  // Compute CurrentNameMap on entry from ExitMaps of predecessors
+  // Compute CurrentLVarMap on entry from ExitMaps of predecessors
 
   BlockInfo *PredInfo = &BBInfo[Pred->getBlockID()];
-  assert(PredInfo->SuccessorsToProcess > 0);
+  assert(PredInfo->UnprocessedSuccessors > 0);
 
-  if (--PredInfo->SuccessorsToProcess == 0)
+  if (--PredInfo->UnprocessedSuccessors == 0)
     mergeEntryMap(std::move(PredInfo->ExitMap));
   else
     mergeEntryMap(PredInfo->ExitMap.clone());
 
-  ++CurrentArgIndex;
+  ++CurrentBlockInfo->ProcessedPredecessors;
 }
 
 
 void SExprBuilder::handlePredecessorBackEdge(const CFGBlock *Pred) {
-  CurrentBlockInfo->HasBackEdges = true;
+  mergeEntryMapBackEdge();
 }
 
 
-void SExprBuilder::enterCFGBlockBody(const CFGBlock *B) { }
+void SExprBuilder::enterCFGBlockBody(const CFGBlock *B) {
+  // The merge*() methods have created arguments.
+  // Push those arguments onto the basic block.
+  CurrentBB->arguments().reserve(
+    static_cast<unsigned>(CurrentArguments.size()), Arena);
+  for (auto *V : CurrentArguments)
+    CurrentBB->addArgument(V);
+}
 
 
 void SExprBuilder::handleStatement(const Stmt *S) {
@@ -555,19 +635,25 @@ void SExprBuilder::handleDestructorCall(const VarDecl *VD,
 
 
 void SExprBuilder::exitCFGBlockBody(const CFGBlock *B) {
+  CurrentBB->instructions().reserve(
+    static_cast<unsigned>(CurrentInstructions.size()), Arena);
+  for (auto *V : CurrentInstructions)
+    CurrentBB->addInstruction(V);
+
+  // Create an appropriate terminator
   unsigned N = B->succ_size();
   auto It = B->succ_begin();
   if (N == 1) {
-    til::BasicBlock *BB = *It ? BlockMap[(*It)->getBlockID()] : nullptr;
+    til::BasicBlock *BB = *It ? lookupBlock(*It) : nullptr;
     // TODO: set index
     til::SExpr *Tm = new (Arena) til::Goto(BB, 0);
     CurrentBB->setTerminator(Tm);
   }
   else if (N == 2) {
     til::SExpr *C = translate(B->getTerminatorCondition(true), CallCtx);
-    til::BasicBlock *BB1 = *It ? BlockMap[(*It)->getBlockID()] : nullptr;
+    til::BasicBlock *BB1 = *It ? lookupBlock(*It) : nullptr;
     ++It;
-    til::BasicBlock *BB2 = *It ? BlockMap[(*It)->getBlockID()] : nullptr;
+    til::BasicBlock *BB2 = *It ? lookupBlock(*It) : nullptr;
     // TODO: set conditional, set index
     til::SExpr *Tm = new (Arena) til::Branch(C, BB1, BB2);
     CurrentBB->setTerminator(Tm);
@@ -576,28 +662,26 @@ void SExprBuilder::exitCFGBlockBody(const CFGBlock *B) {
 
 
 void SExprBuilder::handleSuccessor(const CFGBlock *Succ) {
-  ++CurrentBlockInfo->SuccessorsToProcess;
+  ++CurrentBlockInfo->UnprocessedSuccessors;
 }
 
 
 void SExprBuilder::handleSuccessorBackEdge(const CFGBlock *Succ) {
-
+  mergePhiNodesBackEdge(Succ);
+  ++BBInfo[Succ->getBlockID()].ProcessedPredecessors;
 }
 
 
 void SExprBuilder::exitCFGBlock(const CFGBlock *B) {
-  CurrentBlockInfo->ExitMap = std::move(CurrentNameMap);
-  CurrentBlockID++;
+  CurrentBlockInfo->ExitMap = std::move(CurrentLVarMap);
   CurrentBB = nullptr;
   CurrentBlockInfo = nullptr;
 }
 
 
 void SExprBuilder::exitCFG(const CFGBlock *Last) {
-  CurrentBlockID = 0;
-  CurrentVarID = 0;
-  CurrentArgIndex = 0;
-  delete CallCtx;
+  CurrentArguments.clear();
+  CurrentInstructions.clear();
 }
 
 
