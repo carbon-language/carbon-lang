@@ -162,7 +162,7 @@ private:
 
 // Contains various helper functions for SExprs.
 namespace ThreadSafetyTIL {
-  inline bool isTrivial(SExpr *E) {
+  inline bool isTrivial(const SExpr *E) {
     unsigned Op = E->opcode();
     return Op == COP_Variable || Op == COP_Literal || Op == COP_LiteralPtr;
   }
@@ -209,6 +209,7 @@ public:
 
   // Returns the definition (for let vars) or type (for parameter & self vars)
   SExpr *definition() { return Definition.get(); }
+  const SExpr *definition() const { return Definition.get(); }
 
   void attachVar() const { ++NumUses; }
   void detachVar() const { assert(NumUses > 0); --NumUses; }
@@ -1107,6 +1108,15 @@ public:
   // TODO: change to SExprRef
   typedef SimpleArray<SExpr *> ValArray;
 
+  // In minimal SSA form, all Phi nodes are MultiVal.
+  // During conversion to SSA, incomplete Phi nodes may be introduced, which
+  // are later determined to be SingleVal.
+  enum Status {
+    PH_MultiVal = 0, // Phi node has multiple distinct values.  (Normal)
+    PH_SingleVal,    // Phi node has one distinct value, and can be eliminated
+    PH_Incomplete    // Phi node is incomplete
+  };
+
   static bool classof(const SExpr *E) { return E->opcode() == COP_Phi; }
 
   Phi(MemRegionRef A, unsigned Nvals) : SExpr(COP_Phi), Values(A, Nvals) {}
@@ -1116,14 +1126,8 @@ public:
   const ValArray &values() const { return Values; }
   ValArray &values() { return Values; }
 
-  // Incomplete phi nodes are constructed during SSA conversion, and
-  // may not be necessary.
-  bool incomplete() const { return Flags == 1; }
-
-  void setIncomplete(bool b) {
-    if (b) Flags = 1;
-    else Flags = 0;
-  }
+  Status status() const { return static_cast<Status>(Flags); }
+  void setStatus(Status s) { Flags = s; }
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     typename V::template Container<typename V::R_SExpr> Nvs(Visitor,
@@ -1220,6 +1224,12 @@ private:
   unsigned ThenIndex;
   unsigned ElseIndex;
 };
+
+
+SExpr *getCanonicalVal(SExpr *E);
+void simplifyIncompleteArg(Variable *V, til::Phi *Ph);
+
+
 
 
 } // end namespace til

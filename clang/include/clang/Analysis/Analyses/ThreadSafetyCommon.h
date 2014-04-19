@@ -365,6 +365,7 @@ private:
   LVarDefinitionMap CurrentLVarMap;
   std::vector<til::Variable*> CurrentArguments;
   std::vector<til::Variable*> CurrentInstructions;
+  std::vector<til::Variable*> IncompleteArgs;
   til::BasicBlock *CurrentBB;
   BlockInfo *CurrentBlockInfo;
 };

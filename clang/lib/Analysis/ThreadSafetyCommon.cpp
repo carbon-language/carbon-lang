@@ -36,6 +36,65 @@
 namespace clang {
 namespace threadSafety {
 
+namespace til {
+
+// If E is a variable, then trace back through any aliases or redundant
+// Phi nodes to find the canonical definition.
+SExpr *getCanonicalVal(SExpr *E) {
+  while (auto *V = dyn_cast<Variable>(E)) {
+    SExpr *D;
+    do {
+      if (V->kind() != Variable::VK_Let)
+        return V;
+      D = V->definition();
+      if (auto *V2 = dyn_cast<Variable>(D)) {
+        V = V2;
+        continue;
+      }
+    } while(false);
+
+    if (ThreadSafetyTIL::isTrivial(D))
+      return D;
+
+    if (Phi *Ph = dyn_cast<Phi>(D)) {
+      if (Ph->status() == Phi::PH_Incomplete)
+        simplifyIncompleteArg(V, Ph);
+
+      if (Ph->status() == Phi::PH_SingleVal) {
+        E = Ph->values()[0];
+        continue;
+      }
+    }
+    return V;
+  }
+  return E;
+}
+
+
+// Trace the arguments of an incomplete Phi node to see if they have the same
+// canonical definition.  If so, mark the Phi node as redundant.
+// getCanonicalVal() will recursively call simplifyIncompletePhi().
+void simplifyIncompleteArg(Variable *V, til::Phi *Ph) {
+  assert(!Ph && Ph->status() == Phi::PH_Incomplete);
+
+  // eliminate infinite recursion -- assume that this node is not redundant.
+  Ph->setStatus(Phi::PH_MultiVal);
+
+  SExpr *E0 = getCanonicalVal(Ph->values()[0]);
+  for (unsigned i=1, n=Ph->values().size(); i<n; ++i) {
+    SExpr *Ei = getCanonicalVal(Ph->values()[i]);
+    if (Ei == V)
+      continue;  // Recursive reference to itself.  Don't count.
+    if (Ei != E0) {
+      return;    // Status is already set to MultiVal.
+    }
+  }
+  Ph->setStatus(Phi::PH_SingleVal);
+}
+
+}  // end namespace til
+
+
 typedef SExprBuilder::CallingContext CallingContext;
 
 
@@ -416,19 +475,6 @@ til::SExpr *SExprBuilder::updateVarDecl(const ValueDecl *VD, til::SExpr *E) {
 }
 
 
-// Return true if the given expression represents a possibly unnecessary
-// variable: i.e. a variable that references a Phi node that may be removed.
-inline bool isIncompleteVar(til::SExpr *E) {
-  if (!E)
-    return true;  // Null values are used on unknown backedges.
-  if (til::Variable *V = dyn_cast<til::Variable>(E)) {
-    if (til::Phi *Ph = dyn_cast<til::Phi>(V->definition()))
-      return Ph->incomplete();
-  }
-  return false;
-}
-
-
 // Make a Phi node in the current block for the i^th variable in CurrentVarMap.
 // If E != null, sets Phi[CurrentBlockInfo->ArgIndex] = E.
 // If E == null, this is a backedge and will be set later.
@@ -444,8 +490,6 @@ void SExprBuilder::makePhiNodeVar(unsigned i, unsigned NPreds, til::SExpr *E) {
     assert(Ph && "Expecting Phi node.");
     if (E)
       Ph->values()[ArgIndex] = E;
-    if (!Ph->incomplete() && isIncompleteVar(E))
-      Ph->setIncomplete(true);
     return;
   }
 
@@ -457,12 +501,16 @@ void SExprBuilder::makePhiNodeVar(unsigned i, unsigned NPreds, til::SExpr *E) {
     Ph->values()[PIdx] = CurrentLVarMap[i].second;
   if (E)
     Ph->values()[ArgIndex] = E;
-  if (isIncompleteVar(E))
-    Ph->setIncomplete(true);
+  if (!E) {
+    // This is a non-minimal SSA node, which may be removed later.
+    Ph->setStatus(til::Phi::PH_Incomplete);
+  }
 
   // Add Phi node to current block, and update CurrentLVarMap[i]
   auto *Var = new (Arena) til::Variable(Ph, CurrentLVarMap[i].first);
   CurrentArguments.push_back(Var);
+  if (Ph->status() == til::Phi::PH_Incomplete)
+    IncompleteArgs.push_back(Var);
 
   CurrentLVarMap.makeWritable();
   CurrentLVarMap.elem(i).second = Var;
@@ -680,8 +728,15 @@ void SExprBuilder::exitCFGBlock(const CFGBlock *B) {
 
 
 void SExprBuilder::exitCFG(const CFGBlock *Last) {
+  for (auto *V : IncompleteArgs) {
+    til::Phi *Ph = dyn_cast<til::Phi>(V->definition());
+    if (Ph && Ph->status() == til::Phi::PH_Incomplete)
+      simplifyIncompleteArg(V, Ph);
+  }
+
   CurrentArguments.clear();
   CurrentInstructions.clear();
+  IncompleteArgs.clear();
 }
 
 
