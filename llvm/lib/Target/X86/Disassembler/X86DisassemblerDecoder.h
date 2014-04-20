@@ -473,8 +473,6 @@ enum VectorExtensionType {
   TYPE_XOP          = 0x4
 };
 
-typedef uint8_t BOOL;
-
 /// \brief Type for the byte reader that the consumer must provide to
 /// the decoder. Reads a single byte from the instruction's address space.
 /// \param arg     A baton that the consumer can associate with any internal
@@ -541,7 +539,7 @@ struct InternalInstruction {
   // The segment override type
   SegmentOverride segmentOverride;
   // 1 if the prefix byte, 0xf2 or 0xf3 is xacquire or xrelease
-  BOOL xAcquireRelease;
+  bool xAcquireRelease;
 
   // Sizes of various critical pieces of data, in bytes
   uint8_t registerSize;
@@ -583,15 +581,15 @@ struct InternalInstruction {
 
   // The ModR/M byte, which contains most register operands and some portion of
   // all memory operands.
-  BOOL                          consumedModRM;
+  bool                          consumedModRM;
   uint8_t                       modRM;
 
   // The SIB byte, used for more complex 32- or 64-bit memory operands
-  BOOL                          consumedSIB;
+  bool                          consumedSIB;
   uint8_t                       sib;
 
   // The displacement, used for memory operands
-  BOOL                          consumedDisplacement;
+  bool                          consumedDisplacement;
   int32_t                       displacement;
 
   // Immediates.  There can be two in some cases
