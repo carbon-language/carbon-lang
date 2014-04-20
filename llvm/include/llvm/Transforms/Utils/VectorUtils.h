@@ -14,6 +14,8 @@
 #ifndef LLVM_TRANSFORMS_UTILS_VECTORUTILS_H
 #define LLVM_TRANSFORMS_UTILS_VECTORUTILS_H
 
+#include "llvm/IR/Intrinsics.h"
+
 namespace llvm {
 
 /// \brief Identify if the intrinsic is trivially vectorizable.
