@@ -9,6 +9,7 @@
 
 #include "llvm/Option/ArgList.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/Option.h"
@@ -348,52 +349,50 @@ DerivedArgList::DerivedArgList(const InputArgList &_BaseArgs)
   : BaseArgs(_BaseArgs) {
 }
 
-DerivedArgList::~DerivedArgList() {
-  // We only own the arguments we explicitly synthesized.
-  for (iterator it = SynthesizedArgs.begin(), ie = SynthesizedArgs.end();
-       it != ie; ++it)
-    delete *it;
-}
+DerivedArgList::~DerivedArgList() {}
 
 const char *DerivedArgList::MakeArgString(StringRef Str) const {
   return BaseArgs.MakeArgString(Str);
 }
 
+void DerivedArgList::AddSynthesizedArg(Arg *A) {
+  SynthesizedArgs.push_back(std::unique_ptr<Arg>(A));
+}
+
 Arg *DerivedArgList::MakeFlagArg(const Arg *BaseArg, const Option Opt) const {
-  Arg *A = new Arg(Opt, ArgList::MakeArgString(Twine(Opt.getPrefix()) +
-                                               Twine(Opt.getName())),
-                   BaseArgs.MakeIndex(Opt.getName()), BaseArg);
-  SynthesizedArgs.push_back(A);
-  return A;
+  SynthesizedArgs.push_back(make_unique<Arg>(
+      Opt,
+      ArgList::MakeArgString(Twine(Opt.getPrefix()) + Twine(Opt.getName())),
+      BaseArgs.MakeIndex(Opt.getName()), BaseArg));
+  return SynthesizedArgs.back().get();
 }
 
 Arg *DerivedArgList::MakePositionalArg(const Arg *BaseArg, const Option Opt,
                                        StringRef Value) const {
   unsigned Index = BaseArgs.MakeIndex(Value);
-  Arg *A = new Arg(Opt, ArgList::MakeArgString(Twine(Opt.getPrefix()) +
-                                               Twine(Opt.getName())),
-                   Index, BaseArgs.getArgString(Index), BaseArg);
-  SynthesizedArgs.push_back(A);
-  return A;
+  SynthesizedArgs.push_back(make_unique<Arg>(
+      Opt,
+      ArgList::MakeArgString(Twine(Opt.getPrefix()) + Twine(Opt.getName())),
+      Index, BaseArgs.getArgString(Index), BaseArg));
+  return SynthesizedArgs.back().get();
 }
 
 Arg *DerivedArgList::MakeSeparateArg(const Arg *BaseArg, const Option Opt,
                                      StringRef Value) const {
   unsigned Index = BaseArgs.MakeIndex(Opt.getName(), Value);
-  Arg *A = new Arg(Opt, ArgList::MakeArgString(Twine(Opt.getPrefix()) +
-                                               Twine(Opt.getName())),
-                   Index, BaseArgs.getArgString(Index + 1), BaseArg);
-  SynthesizedArgs.push_back(A);
-  return A;
+  SynthesizedArgs.push_back(make_unique<Arg>(
+      Opt,
+      ArgList::MakeArgString(Twine(Opt.getPrefix()) + Twine(Opt.getName())),
+      Index, BaseArgs.getArgString(Index + 1), BaseArg));
+  return SynthesizedArgs.back().get();
 }
 
 Arg *DerivedArgList::MakeJoinedArg(const Arg *BaseArg, const Option Opt,
                                    StringRef Value) const {
   unsigned Index = BaseArgs.MakeIndex(Opt.getName().str() + Value.str());
-  Arg *A = new Arg(Opt, ArgList::MakeArgString(Twine(Opt.getPrefix()) +
-                                               Twine(Opt.getName())), Index,
-                   BaseArgs.getArgString(Index) + Opt.getName().size(),
-                   BaseArg);
-  SynthesizedArgs.push_back(A);
-  return A;
+  SynthesizedArgs.push_back(make_unique<Arg>(
+      Opt,
+      ArgList::MakeArgString(Twine(Opt.getPrefix()) + Twine(Opt.getName())),
+      Index, BaseArgs.getArgString(Index) + Opt.getName().size(), BaseArg));
+  return SynthesizedArgs.back().get();
 }
