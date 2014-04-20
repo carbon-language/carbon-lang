@@ -907,7 +907,11 @@ enum {
 
 // Special values for the st_other field in the symbol table entry for MIPS.
 enum {
-  STO_MIPS_MICROMIPS       = 0x80 // MIPS Specific ISA for MicroMips
+  STO_MIPS_OPTIONAL        = 0x04,  // Symbol whose definition is optional
+  STO_MIPS_PLT             = 0x08,  // PLT entry related dynamic table record
+  STO_MIPS_PIC             = 0x20,  // PIC func in an object mixes PIC/non-PIC
+  STO_MIPS_MICROMIPS       = 0x80,  // MIPS Specific ISA for MicroMips
+  STO_MIPS_MIPS16          = 0xf0   // MIPS Specific ISA for Mips16
 };
 
 // Hexagon Specific e_flags
