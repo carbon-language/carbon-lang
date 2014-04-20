@@ -16,13 +16,7 @@
 #ifndef X86DISASSEMBLERDECODER_H
 #define X86DISASSEMBLERDECODER_H
 
-#define INSTRUCTION_IDS     \
-  uint16_t instructionIDs;
-
 #include "X86DisassemblerDecoderCommon.h"
-
-#undef INSTRUCTION_SPECIFIER_FIELDS
-#undef INSTRUCTION_IDS
 
 namespace llvm {
 namespace X86Disassembler {

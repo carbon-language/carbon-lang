@@ -22,6 +22,29 @@
 
 using namespace llvm::X86Disassembler;
 
+/// Specifies whether a ModR/M byte is needed and (if so) which
+/// instruction each possible value of the ModR/M byte corresponds to.  Once
+/// this information is known, we have narrowed down to a single instruction.
+struct ModRMDecision {
+  uint8_t modrm_type;
+  uint16_t instructionIDs;
+};
+
+/// Specifies which set of ModR/M->instruction tables to look at
+/// given a particular opcode.
+struct OpcodeDecision {
+  ModRMDecision modRMDecisions[256];
+};
+
+/// Specifies which opcode->instruction tables to look at given
+/// a particular context (set of attributes).  Since there are many possible
+/// contexts, the decoder first uses CONTEXTS_SYM to determine which context
+/// applies given a specific set of attributes.  Hence there are only IC_max
+/// entries in this table, rather than 2^(ATTR_max).
+struct ContextDecision {
+  OpcodeDecision opcodeDecisions[IC_max];
+};
+
 #include "X86GenDisassemblerTables.inc"
 
 #define TRUE  1
