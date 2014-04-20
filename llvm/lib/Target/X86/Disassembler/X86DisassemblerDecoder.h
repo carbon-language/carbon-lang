@@ -600,7 +600,7 @@ struct InternalInstruction {
   /* The instruction ID, extracted from the decode table */
   uint16_t instructionID;
   /* The specifier for the instruction, from the instruction info table */
-  const struct InstructionSpecifier *spec;
+  const InstructionSpecifier *spec;
 
   /* state for additional bytes, consumed during operand decode.  Pattern:
      consumed___ indicates that the byte was already consumed and does not
@@ -654,7 +654,7 @@ struct InternalInstruction {
   uint8_t                       sibScale;
   SIBBase                       sibBase;
 
-  const struct OperandSpecifier *operands;
+  const OperandSpecifier *operands;
 };
 
 /* decodeInstruction - Decode one instruction and store the decoding results in
@@ -673,12 +673,12 @@ struct InternalInstruction {
  * @param mode      - The mode (16-bit, 32-bit, 64-bit) to decode in.
  * @return          - Nonzero if there was an error during decode, 0 otherwise.
  */
-int decodeInstruction(struct InternalInstruction* insn,
+int decodeInstruction(InternalInstruction *insn,
                       byteReader_t reader,
-                      const void* readerArg,
+                      const void *readerArg,
                       dlog_t logger,
-                      void* loggerArg,
-                      const void* miiArg,
+                      void *loggerArg,
+                      const void *miiArg,
                       uint64_t startLoc,
                       DisassemblerMode mode);
 

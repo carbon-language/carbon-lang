@@ -74,17 +74,7 @@
 #ifndef X86DISASSEMBLER_H
 #define X86DISASSEMBLER_H
 
-#define INSTRUCTION_SPECIFIER_FIELDS \
-  uint16_t operands;
-
-#define INSTRUCTION_IDS               \
-  uint16_t instructionIDs;
-
 #include "X86DisassemblerDecoderCommon.h"
-
-#undef INSTRUCTION_SPECIFIER_FIELDS
-#undef INSTRUCTION_IDS
-
 #include "llvm/MC/MCDisassembler.h"
 
 namespace llvm {
