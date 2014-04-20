@@ -14,6 +14,7 @@
 #include "CodeGenIntrinsics.h"
 #include "CodeGenTarget.h"
 #include "SequenceToOffsetTable.h"
+#include "TableGenBackends.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
@@ -476,11 +477,13 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";  // End of GET_INTRINSIC_GENERATOR_GLOBAL
 }
 
+namespace {
 enum ModRefKind {
   MRK_none,
   MRK_readonly,
   MRK_readnone
 };
+}
 
 static ModRefKind getModRefKind(const CodeGenIntrinsic &intrinsic) {
   switch (intrinsic.ModRef) {
@@ -787,10 +790,6 @@ EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
-namespace llvm {
-
-void EmitIntrinsics(RecordKeeper &RK, raw_ostream &OS, bool TargetOnly = false) {
+void llvm::EmitIntrinsics(RecordKeeper &RK, raw_ostream &OS, bool TargetOnly) {
   IntrinsicEmitter(RK, TargetOnly).run(OS);
 }
-
-} // End llvm namespace
