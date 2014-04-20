@@ -106,10 +106,14 @@ private:
   arglist_type Args;
 
 protected:
-  ArgList();
+  // Default ctor provided explicitly as it is not provided implicitly due to
+  // the presence of the (deleted) copy ctor above.
+  ArgList() { }
+  // Virtual to provide a vtable anchor and because -Wnon-virtua-dtor warns, not
+  // because this type is ever actually destroyed polymorphically.
+  virtual ~ArgList();
 
 public:
-  virtual ~ArgList();
 
   /// @name Arg Access
   /// @{

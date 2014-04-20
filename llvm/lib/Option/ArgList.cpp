@@ -33,11 +33,6 @@ void arg_iterator::SkipToNextArg() {
   }
 }
 
-//
-
-ArgList::ArgList() {
-}
-
 ArgList::~ArgList() {
 }
 
