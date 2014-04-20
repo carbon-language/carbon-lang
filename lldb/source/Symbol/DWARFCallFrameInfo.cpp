@@ -55,7 +55,7 @@ DWARFCallFrameInfo::GetUnwindPlan (Address addr, UnwindPlan& unwind_plan)
     // Make sure that the Address we're searching for is the same object file
     // as this DWARFCallFrameInfo, we only store File offsets in m_fde_index.
     ModuleSP module_sp = addr.GetModule();
-    if (module_sp.get() == NULL || module_sp->GetObjectFile() == NULL || module_sp->GetObjectFile() != &m_objfile)
+    if (module_sp.get() == nullptr || module_sp->GetObjectFile() == nullptr || module_sp->GetObjectFile() != &m_objfile)
         return false;
 
     if (GetFDEEntryByFileAddress (addr.GetFileAddress(), fde_entry) == false)
@@ -70,10 +70,10 @@ DWARFCallFrameInfo::GetAddressRange (Address addr, AddressRange &range)
     // Make sure that the Address we're searching for is the same object file
     // as this DWARFCallFrameInfo, we only store File offsets in m_fde_index.
     ModuleSP module_sp = addr.GetModule();
-    if (module_sp.get() == NULL || module_sp->GetObjectFile() == NULL || module_sp->GetObjectFile() != &m_objfile)
+    if (module_sp.get() == nullptr || module_sp->GetObjectFile() == nullptr || module_sp->GetObjectFile() != &m_objfile)
         return false;
 
-    if (m_section_sp.get() == NULL || m_section_sp->IsEncrypted())
+    if (m_section_sp.get() == nullptr || m_section_sp->IsEncrypted())
         return false;
     GetFDEIndex();
     FDEEntryMap::Entry *fde_entry = m_fde_index.FindEntryThatContains (addr.GetFileAddress());
@@ -87,7 +87,7 @@ DWARFCallFrameInfo::GetAddressRange (Address addr, AddressRange &range)
 bool
 DWARFCallFrameInfo::GetFDEEntryByFileAddress (addr_t file_addr, FDEEntryMap::Entry &fde_entry)
 {
-    if (m_section_sp.get() == NULL || m_section_sp->IsEncrypted())
+    if (m_section_sp.get() == nullptr || m_section_sp->IsEncrypted())
         return false;
 
     GetFDEIndex();
@@ -97,7 +97,7 @@ DWARFCallFrameInfo::GetFDEEntryByFileAddress (addr_t file_addr, FDEEntryMap::Ent
 
     FDEEntryMap::Entry *fde = m_fde_index.FindEntryThatContains (file_addr);
 
-    if (fde == NULL)
+    if (fde == nullptr)
         return false;
 
     fde_entry = *fde;
@@ -131,12 +131,12 @@ DWARFCallFrameInfo::GetCIE(dw_offset_t cie_offset)
     if (pos != m_cie_map.end())
     {
         // Parse and cache the CIE
-        if (pos->second.get() == NULL)
+        if (pos->second.get() == nullptr)
             pos->second = ParseCIE (cie_offset);
 
         return pos->second.get();
     }
-    return NULL;
+    return nullptr;
 }
 
 DWARFCallFrameInfo::CIESP
@@ -318,7 +318,7 @@ DWARFCallFrameInfo::GetCFIData()
 void
 DWARFCallFrameInfo::GetFDEIndex ()
 {
-    if (m_section_sp.get() == NULL || m_section_sp->IsEncrypted())
+    if (m_section_sp.get() == nullptr || m_section_sp->IsEncrypted())
         return;
     
     if (m_fde_index_initialized)
@@ -381,7 +381,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
     lldb::offset_t offset = dwarf_offset;
     lldb::offset_t current_entry = offset;
 
-    if (m_section_sp.get() == NULL || m_section_sp->IsEncrypted())
+    if (m_section_sp.get() == nullptr || m_section_sp->IsEncrypted())
         return false;
 
     if (m_cfi_data_initialized == false)
@@ -413,7 +413,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
     unwind_plan.SetSourcedFromCompiler (eLazyBoolYes);
 
     const CIE *cie = GetCIE (cie_offset);
-    assert (cie != NULL);
+    assert (cie != nullptr);
 
     const dw_offset_t end_offset = current_entry + length + 4;
 

@@ -106,7 +106,7 @@ ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
         return result;
     }
     
-    return NULL;
+    return nullptr;
 }
 
 lldb::clang_type_t
@@ -117,7 +117,7 @@ ClangASTImporter::DeportType (clang::ASTContext *dst_ctx,
     MinionSP minion_sp (GetMinion (dst_ctx, src_ctx));
     
     if (!minion_sp)
-        return NULL;
+        return nullptr;
     
     std::set<NamedDecl *> decls_to_deport;
     std::set<NamedDecl *> decls_already_deported;
@@ -130,7 +130,7 @@ ClangASTImporter::DeportType (clang::ASTContext *dst_ctx,
     minion_sp->ExecuteDeportWorkQueues();
     
     if (!result)
-        return NULL;
+        return nullptr;
     
     return result;
 
@@ -152,7 +152,7 @@ ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
     MinionSP minion_sp (GetMinion (dst_ctx, src_ctx));
 
     if (!minion_sp)
-        return NULL;
+        return nullptr;
 
     std::set<NamedDecl *> decls_to_deport;
     std::set<NamedDecl *> decls_already_deported;
@@ -165,7 +165,7 @@ ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
     minion_sp->ExecuteDeportWorkQueues();
 
     if (!result)
-        return NULL;
+        return nullptr;
 
     if (log)
         log->Printf("    [ClangASTImporter] DeportDecl deported (%sDecl*)%p to (%sDecl*)%p",
@@ -501,8 +501,8 @@ ClangASTImporter::Minion::ExecuteDeportWorkQueues ()
         to_context_md->m_origins.erase(decl);
     }
     
-    m_decls_to_deport = NULL;
-    m_decls_already_deported = NULL;
+    m_decls_to_deport = nullptr;
+    m_decls_already_deported = nullptr;
 }
 
 void
@@ -716,12 +716,12 @@ clang::Decl *ClangASTImporter::Minion::GetOriginalDecl (clang::Decl *To)
     ASTContextMetadataSP to_context_md = m_master.GetContextMetadata(&To->getASTContext());
     
     if (!to_context_md)
-        return NULL;
+        return nullptr;
     
     OriginMap::iterator iter = to_context_md->m_origins.find(To);
     
     if (iter == to_context_md->m_origins.end())
-        return NULL;
+        return nullptr;
     
     return const_cast<clang::Decl*>(iter->second.decl);
 }

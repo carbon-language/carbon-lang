@@ -215,7 +215,7 @@ Function::Function
     m_prologue_byte_size (0)
 {
     m_block.SetParentScope(this);
-    assert(comp_unit != NULL);
+    assert(comp_unit != nullptr);
 }
 
 Function::Function
@@ -239,7 +239,7 @@ Function::Function
     m_prologue_byte_size (0)
 {
     m_block.SetParentScope(this);
-    assert(comp_unit != NULL);
+    assert(comp_unit != nullptr);
 }
 
 
@@ -253,10 +253,10 @@ Function::GetStartLineSourceInfo (FileSpec &source_file, uint32_t &line_no)
     line_no = 0;
     source_file.Clear();
     
-    if (m_comp_unit == NULL)
+    if (m_comp_unit == nullptr)
         return;
         
-    if (m_type != NULL && m_type->GetDeclaration().GetLine() != 0)
+    if (m_type != nullptr && m_type->GetDeclaration().GetLine() != 0)
     {
         source_file = m_type->GetDeclaration().GetFile();
         line_no = m_type->GetDeclaration().GetLine();
@@ -264,11 +264,11 @@ Function::GetStartLineSourceInfo (FileSpec &source_file, uint32_t &line_no)
     else 
     {
         LineTable *line_table = m_comp_unit->GetLineTable();
-        if (line_table == NULL)
+        if (line_table == nullptr)
             return;
             
         LineEntry line_entry;
-        if (line_table->FindLineEntryByAddress (GetAddressRange().GetBaseAddress(), line_entry, NULL))
+        if (line_table->FindLineEntryByAddress (GetAddressRange().GetBaseAddress(), line_entry, nullptr))
         {
             line_no = line_entry.line;
             source_file = line_entry.file;
@@ -288,11 +288,11 @@ Function::GetEndLineSourceInfo (FileSpec &source_file, uint32_t &line_no)
     scratch_addr.SetOffset (scratch_addr.GetOffset() + GetAddressRange().GetByteSize() - 1);
     
     LineTable *line_table = m_comp_unit->GetLineTable();
-    if (line_table == NULL)
+    if (line_table == nullptr)
         return;
         
     LineEntry line_entry;
-    if (line_table->FindLineEntryByAddress (scratch_addr, line_entry, NULL))
+    if (line_table->FindLineEntryByAddress (scratch_addr, line_entry, nullptr))
     {
         line_no = line_entry.line;
         source_file = line_entry.file;
@@ -411,7 +411,7 @@ Function::GetInstructions (const ExecutionContext &exe_ctx,
     {
         const bool prefer_file_cache = false;
         return Disassembler::DisassembleRange (module_sp->GetArchitecture(),
-                                               NULL,
+                                               nullptr,
                                                flavor,
                                                exe_ctx,
                                                GetAddressRange(),
@@ -467,17 +467,17 @@ Function::GetClangDeclContext()
     CalculateSymbolContext (&sc);
     
     if (!sc.module_sp)
-        return NULL;
+        return nullptr;
     
     SymbolVendor *sym_vendor = sc.module_sp->GetSymbolVendor();
     
     if (!sym_vendor)
-        return NULL;
+        return nullptr;
     
     SymbolFile *sym_file = sym_vendor->GetSymbolFile();
     
     if (!sym_file)
-        return NULL;
+        return nullptr;
     
     return sym_file->GetClangDeclContextForTypeUID (sc, m_uid);
 }
@@ -485,24 +485,24 @@ Function::GetClangDeclContext()
 Type*
 Function::GetType()
 {
-    if (m_type == NULL)
+    if (m_type == nullptr)
     {
         SymbolContext sc;
         
         CalculateSymbolContext (&sc);
         
         if (!sc.module_sp)
-            return NULL;
+            return nullptr;
         
         SymbolVendor *sym_vendor = sc.module_sp->GetSymbolVendor();
         
-        if (sym_vendor == NULL)
-            return NULL;
+        if (sym_vendor == nullptr)
+            return nullptr;
         
         SymbolFile *sym_file = sym_vendor->GetSymbolFile();
         
-        if (sym_file == NULL)
-            return NULL;
+        if (sym_file == nullptr)
+            return nullptr;
         
         m_type = sym_file->ResolveTypeUID(m_type_uid);
     }

@@ -59,7 +59,7 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
                 // first
                 if (file_exists && module_sp->GetObjectName())
                 {
-                    for (uint32_t idx = 0; (create_object_container_callback = PluginManager::GetObjectContainerCreateCallbackAtIndex(idx)) != NULL; ++idx)
+                    for (uint32_t idx = 0; (create_object_container_callback = PluginManager::GetObjectContainerCreateCallbackAtIndex(idx)) != nullptr; ++idx)
                     {
                         std::unique_ptr<ObjectContainer> object_container_ap(create_object_container_callback(module_sp, data_sp, data_offset, file, file_offset, file_size));
 
@@ -101,7 +101,7 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
                         // from the container plugins since we had a name. Also, don't read
                         // ANY data in case there is data cached in the container plug-ins
                         // (like BSD archives caching the contained objects within an file).
-                        for (uint32_t idx = 0; (create_object_container_callback = PluginManager::GetObjectContainerCreateCallbackAtIndex(idx)) != NULL; ++idx)
+                        for (uint32_t idx = 0; (create_object_container_callback = PluginManager::GetObjectContainerCreateCallbackAtIndex(idx)) != nullptr; ++idx)
                         {
                             std::unique_ptr<ObjectContainer> object_container_ap(create_object_container_callback(module_sp, data_sp, data_offset, file, file_offset, file_size));
 
@@ -123,7 +123,7 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
                 // Check if this is a normal object file by iterating through
                 // all object file plugin instances.
                 ObjectFileCreateInstance create_object_file_callback;
-                for (uint32_t idx = 0; (create_object_file_callback = PluginManager::GetObjectFileCreateCallbackAtIndex(idx)) != NULL; ++idx)
+                for (uint32_t idx = 0; (create_object_file_callback = PluginManager::GetObjectFileCreateCallbackAtIndex(idx)) != nullptr; ++idx)
                 {
                     object_file_sp.reset (create_object_file_callback(module_sp, data_sp, data_offset, file, file_offset, file_size));
                     if (object_file_sp.get())
@@ -133,7 +133,7 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
                 // Check if this is a object container by iterating through
                 // all object container plugin instances and then trying to get
                 // an object file from the container.
-                for (uint32_t idx = 0; (create_object_container_callback = PluginManager::GetObjectContainerCreateCallbackAtIndex(idx)) != NULL; ++idx)
+                for (uint32_t idx = 0; (create_object_container_callback = PluginManager::GetObjectContainerCreateCallbackAtIndex(idx)) != nullptr; ++idx)
                 {
                     std::unique_ptr<ObjectContainer> object_container_ap(create_object_container_callback(module_sp, data_sp, data_offset, file, file_offset, file_size));
 
@@ -171,7 +171,7 @@ ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp,
         // Check if this is a normal object file by iterating through
         // all object file plugin instances.
         ObjectFileCreateMemoryInstance create_callback;
-        for (idx = 0; (create_callback = PluginManager::GetObjectFileCreateMemoryCallbackAtIndex(idx)) != NULL; ++idx)
+        for (idx = 0; (create_callback = PluginManager::GetObjectFileCreateMemoryCallbackAtIndex(idx)) != nullptr; ++idx)
         {
             object_file_sp.reset (create_callback(module_sp, data_sp, process_sp, header_addr));
             if (object_file_sp.get())
@@ -222,14 +222,14 @@ ObjectFile::GetModuleSpecifications (const lldb_private::FileSpec& file,
     ObjectFileGetModuleSpecifications callback;
     uint32_t i;
     // Try the ObjectFile plug-ins
-    for (i = 0; (callback = PluginManager::GetObjectFileGetModuleSpecificationsCallbackAtIndex(i)) != NULL; ++i)
+    for (i = 0; (callback = PluginManager::GetObjectFileGetModuleSpecificationsCallbackAtIndex(i)) != nullptr; ++i)
     {
         if (callback (file, data_sp, data_offset, file_offset, file_size, specs) > 0)
             return specs.GetSize() - initial_count;
     }
 
     // Try the ObjectContainer plug-ins
-    for (i = 0; (callback = PluginManager::GetObjectContainerGetModuleSpecificationsCallbackAtIndex(i)) != NULL; ++i)
+    for (i = 0; (callback = PluginManager::GetObjectContainerGetModuleSpecificationsCallbackAtIndex(i)) != nullptr; ++i)
     {
         if (callback (file, data_sp, data_offset, file_offset, file_size, specs) > 0)
             return specs.GetSize() - initial_count;
@@ -601,7 +601,7 @@ ObjectFile::ClearSymtab ()
 SectionList *
 ObjectFile::GetSectionList()
 {
-    if (m_sections_ap.get() == NULL)
+    if (m_sections_ap.get() == nullptr)
     {
         ModuleSP module_sp(GetModule());
         if (module_sp)

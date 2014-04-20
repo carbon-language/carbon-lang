@@ -155,7 +155,7 @@ PseudoTerminal::OpenSlave (int oflag, char *error_str, size_t error_len)
     // Open the master side of a pseudo terminal
     const char *slave_name = GetSlaveName (error_str, error_len);
 
-    if (slave_name == NULL)
+    if (slave_name == nullptr)
         return false;
 
     m_slave_fd = ::open (slave_name, oflag);
@@ -193,11 +193,11 @@ PseudoTerminal::GetSlaveName (char *error_str, size_t error_len) const
     {
         if (error_str)
             ::snprintf (error_str, error_len, "%s", "master file descriptor is invalid");
-        return NULL;
+        return nullptr;
     }
     const char *slave_name = ::ptsname (m_master_fd);
 
-    if (error_str && slave_name == NULL)
+    if (error_str && slave_name == nullptr)
         ::strerror_r (errno, error_str, error_len);
 
     return slave_name;

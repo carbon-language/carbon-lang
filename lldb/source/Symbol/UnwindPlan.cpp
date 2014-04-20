@@ -126,7 +126,7 @@ UnwindPlan::Row::RegisterLocation::Dump (Stream &s, const UnwindPlan* unwind_pla
 
         case inOtherRegister: 
             {
-                const RegisterInfo *other_reg_info = NULL;
+                const RegisterInfo *other_reg_info = nullptr;
                 if (unwind_plan)
                     other_reg_info = unwind_plan->GetRegisterInfo (thread, m_location.reg_num);
                 if (other_reg_info)
@@ -381,7 +381,7 @@ UnwindPlan::PlanValidAtAddress (Address addr)
         if (log)
         {
             StreamString s;
-            if (addr.Dump (&s, NULL, Address::DumpStyleSectionNameOffset))
+            if (addr.Dump (&s, nullptr, Address::DumpStyleSectionNameOffset))
             {
                 log->Printf ("UnwindPlan is invalid -- no unwind rows for UnwindPlan '%s' at address %s",
                              m_source_name.GetCString(), s.GetData());
@@ -397,13 +397,13 @@ UnwindPlan::PlanValidAtAddress (Address addr)
 
     // If the 0th Row of unwind instructions is missing, or if it doesn't provide
     // a register to use to find the Canonical Frame Address, this is not a valid UnwindPlan.
-    if (GetRowAtIndex(0).get() == NULL || GetRowAtIndex(0)->GetCFARegister() == LLDB_INVALID_REGNUM)
+    if (GetRowAtIndex(0).get() == nullptr || GetRowAtIndex(0)->GetCFARegister() == LLDB_INVALID_REGNUM)
     {
         Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
         if (log)
         {
             StreamString s;
-            if (addr.Dump (&s, NULL, Address::DumpStyleSectionNameOffset))
+            if (addr.Dump (&s, nullptr, Address::DumpStyleSectionNameOffset))
             {
                 log->Printf ("UnwindPlan is invalid -- no CFA register defined in row 0 for UnwindPlan '%s' at address %s",
                              m_source_name.GetCString(), s.GetData());
@@ -480,6 +480,6 @@ UnwindPlan::GetRegisterInfo (Thread* thread, uint32_t unwind_reg) const
                 return reg_ctx->GetRegisterInfoAtIndex (reg);
         }
     }
-    return NULL;
+    return nullptr;
 }
     

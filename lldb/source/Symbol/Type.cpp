@@ -91,7 +91,7 @@ Type::Type
     m_name (name),
     m_symbol_file (symbol_file),
     m_context (context),
-    m_encoding_type (NULL),
+    m_encoding_type (nullptr),
     m_encoding_uid (encoding_uid),
     m_encoding_uid_type (encoding_uid_type),
     m_byte_size (byte_size),
@@ -106,9 +106,9 @@ Type::Type () :
     std::enable_shared_from_this<Type> (),
     UserID (0),
     m_name ("<INVALID TYPE>"),
-    m_symbol_file (NULL),
-    m_context (NULL),
-    m_encoding_type (NULL),
+    m_symbol_file (nullptr),
+    m_context (nullptr),
+    m_encoding_type (nullptr),
     m_encoding_uid (LLDB_INVALID_UID),
     m_encoding_uid_type (eEncodingInvalid),
     m_byte_size (0),
@@ -210,7 +210,7 @@ Type::Dump (Stream *s, bool show_context)
     if (m_byte_size != 0)
         s->Printf(", size = %" PRIu64, m_byte_size);
 
-    if (show_context && m_context != NULL)
+    if (show_context && m_context != nullptr)
     {
         s->PutCString(", context = ( ");
         m_context->DumpSymbolContext(s);
@@ -306,7 +306,7 @@ Type::DumpValue
 Type *
 Type::GetEncodingType ()
 {
-    if (m_encoding_type == NULL && m_encoding_uid != LLDB_INVALID_UID)
+    if (m_encoding_type == nullptr && m_encoding_uid != LLDB_INVALID_UID)
         m_encoding_type = m_symbol_file->ResolveTypeUID(m_encoding_uid);
     return m_encoding_type;
 }
@@ -406,7 +406,7 @@ Type::DumpValueInMemory
     if (address != LLDB_INVALID_ADDRESS)
     {
         DataExtractor data;
-        Target *target = NULL;
+        Target *target = nullptr;
         if (exe_ctx)
             target = exe_ctx->GetTargetPtr();
         if (target)
@@ -439,14 +439,14 @@ Type::ReadFromMemory (ExecutionContext *exe_ctx, lldb::addr_t addr, AddressType 
     }
 
     uint8_t* dst = (uint8_t*)data.PeekData(0, byte_size);
-    if (dst != NULL)
+    if (dst != nullptr)
     {
         if (address_type == eAddressTypeHost)
         {
             // The address is an address in this process, so just copy it
             if (addr == 0)
                 return false;
-            memcpy (dst, (uint8_t*)NULL + addr, byte_size);
+            memcpy (dst, (uint8_t*)nullptr + addr, byte_size);
             return true;
         }
         else
@@ -488,7 +488,7 @@ Type::GetDeclaration () const
 bool
 Type::ResolveClangType (ResolveState clang_type_resolve_state)
 {
-    Type *encoding_type = NULL;
+    Type *encoding_type = nullptr;
     if (!m_clang_type.IsValid())
     {
         encoding_type = GetEncodingType();
@@ -603,7 +603,7 @@ Type::ResolveClangType (ResolveState clang_type_resolve_state)
     // resolved appropriately.
     if (m_encoding_uid != LLDB_INVALID_UID)
     {
-        if (encoding_type == NULL)
+        if (encoding_type == nullptr)
             encoding_type = GetEncodingType();
         if (encoding_type)
         {
@@ -777,7 +777,7 @@ Type::GetTypeScopeAndBasename (const char* &name_cstr,
         if (namespace_separator)
         {
             const char* template_arg_char = ::strchr (basename_cstr, '<');
-            while (namespace_separator != NULL)
+            while (namespace_separator != nullptr)
             {
                 if (template_arg_char && namespace_separator > template_arg_char) // but namespace'd template arguments are still good to go
                     break;

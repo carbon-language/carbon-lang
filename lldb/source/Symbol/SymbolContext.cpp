@@ -29,11 +29,11 @@ using namespace lldb_private;
 SymbolContext::SymbolContext() :
     target_sp   (),
     module_sp   (),
-    comp_unit   (NULL),
-    function    (NULL),
-    block       (NULL),
+    comp_unit   (nullptr),
+    function    (nullptr),
+    block       (nullptr),
     line_entry  (),
-    symbol      (NULL)
+    symbol      (nullptr)
 {
 }
 
@@ -78,11 +78,11 @@ SymbolContext::SymbolContext(const SymbolContext& rhs) :
 SymbolContext::SymbolContext (SymbolContextScope *sc_scope) :
     target_sp   (),
     module_sp   (),
-    comp_unit   (NULL),
-    function    (NULL),
-    block       (NULL),
+    comp_unit   (nullptr),
+    function    (nullptr),
+    block       (nullptr),
     line_entry  (),
-    symbol      (NULL)
+    symbol      (nullptr)
 {
     sc_scope->CalculateSymbolContext (this);
 }
@@ -113,11 +113,11 @@ SymbolContext::Clear(bool clear_target)
     if (clear_target)
         target_sp.reset();
     module_sp.reset();
-    comp_unit   = NULL;
-    function    = NULL;
-    block       = NULL;
+    comp_unit   = nullptr;
+    function    = nullptr;
+    block       = nullptr;
     line_entry.Clear();
-    symbol      = NULL;
+    symbol      = nullptr;
 }
 
 bool
@@ -142,7 +142,7 @@ SymbolContext::DumpStopContext
         dumped_something = true;
     }
 
-    if (function != NULL)
+    if (function != nullptr)
     {
         SymbolContext inline_parent_sc;
         Address inline_parent_addr;
@@ -202,7 +202,7 @@ SymbolContext::DumpStopContext
             }
         }
     }
-    else if (symbol != NULL)
+    else if (symbol != nullptr)
     {
         if (symbol->GetMangled().GetName())
         {
@@ -243,14 +243,14 @@ SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Target *t
         s->EOL();
     }
 
-    if (comp_unit != NULL)
+    if (comp_unit != nullptr)
     {
         s->Indent("CompileUnit: ");
         comp_unit->GetDescription (s, level);
         s->EOL();
     }
 
-    if (function != NULL)
+    if (function != nullptr)
     {
         s->Indent("   Function: ");
         function->GetDescription (s, level, target);
@@ -265,7 +265,7 @@ SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Target *t
         }
     }
 
-    if (block != NULL)
+    if (block != nullptr)
     {
         std::vector<Block *> blocks;
         blocks.push_back (block);
@@ -297,7 +297,7 @@ SymbolContext::GetDescription(Stream *s, lldb::DescriptionLevel level, Target *t
         s->EOL();
     }
 
-    if (symbol != NULL)
+    if (symbol != nullptr)
     {
         s->Indent("     Symbol: ");
         symbol->GetDescription(s, level, target);
@@ -335,12 +335,12 @@ SymbolContext::Dump(Stream *s, Target *target) const
     s->EOL();
     s->Indent();
     *s << "CompileUnit  = " << (void *)comp_unit;
-    if (comp_unit != NULL)
+    if (comp_unit != nullptr)
         *s << " {0x" << comp_unit->GetID() << "} " << *(static_cast<FileSpec*> (comp_unit));
     s->EOL();
     s->Indent();
     *s << "Function     = " << (void *)function;
-    if (function != NULL)
+    if (function != nullptr)
     {
         *s << " {0x" << function->GetID() << "} " << function->GetType()->GetName() << ", address-range = ";
         function->GetAddressRange().Dump(s, target, Address::DumpStyleLoadAddress, Address::DumpStyleModuleWithFileAddress);
@@ -356,7 +356,7 @@ SymbolContext::Dump(Stream *s, Target *target) const
     s->EOL();
     s->Indent();
     *s << "Block        = " << (void *)block;
-    if (block != NULL)
+    if (block != nullptr)
         *s << " {0x" << block->GetID() << '}';
     // Dump the block and pass it a negative depth to we print all the parent blocks
     //if (block != NULL)
@@ -368,7 +368,7 @@ SymbolContext::Dump(Stream *s, Target *target) const
     s->EOL();
     s->Indent();
     *s << "Symbol       = " << (void *)symbol;
-    if (symbol != NULL && symbol->GetMangled())
+    if (symbol != nullptr && symbol->GetMangled())
         *s << ' ' << symbol->GetMangled().GetName().AsCString();
     s->EOL();
     s->IndentLess();
@@ -409,7 +409,7 @@ SymbolContext::GetAddressRange (uint32_t scope,
         return true;
     }
     
-    if ((scope & eSymbolContextBlock) && (block != NULL))
+    if ((scope & eSymbolContextBlock) && (block != nullptr))
     {
         if (use_inline_block_range)
         {
@@ -423,7 +423,7 @@ SymbolContext::GetAddressRange (uint32_t scope,
         }
     }
 
-    if ((scope & eSymbolContextFunction) && (function != NULL))
+    if ((scope & eSymbolContextFunction) && (function != nullptr))
     {
         if (range_idx == 0)
         {
@@ -432,7 +432,7 @@ SymbolContext::GetAddressRange (uint32_t scope,
         }            
     } 
     
-    if ((scope & eSymbolContextSymbol) && (symbol != NULL))
+    if ((scope & eSymbolContextSymbol) && (symbol != nullptr))
     {
         if (range_idx == 0)
         {
@@ -562,7 +562,7 @@ SymbolContext::GetFunctionBlock ()
         // the function itself.
         return &function->GetBlock(true);
     }
-    return NULL;
+    return nullptr;
 }
 
 bool
@@ -777,7 +777,7 @@ SymbolContextSpecifier::SymbolContextMatches(SymbolContext &sc)
     {
         if (sc.module_sp)
         {
-            if (m_module_sp.get() != NULL)
+            if (m_module_sp.get() != nullptr)
             { 
                 if (m_module_sp.get() != sc.module_sp.get())
                     return false;
@@ -795,15 +795,15 @@ SymbolContextSpecifier::SymbolContextMatches(SymbolContext &sc)
         if (m_file_spec_ap.get())
         {
             // If we don't have a block or a comp_unit, then we aren't going to match a source file.
-            if (sc.block == NULL && sc.comp_unit == NULL)
+            if (sc.block == nullptr && sc.comp_unit == nullptr)
                 return false;
                 
             // Check if the block is present, and if so is it inlined:
             bool was_inlined = false;
-            if (sc.block != NULL)
+            if (sc.block != nullptr)
             {
                 const InlineFunctionInfo *inline_info = sc.block->GetInlinedFunctionInfo();
-                if (inline_info != NULL)
+                if (inline_info != nullptr)
                 {
                     was_inlined = true;
                     if (!FileSpec::Equal (inline_info->GetDeclaration().GetFile(), *(m_file_spec_ap.get()), false))
@@ -812,7 +812,7 @@ SymbolContextSpecifier::SymbolContextMatches(SymbolContext &sc)
             }
             
             // Next check the comp unit, but only if the SymbolContext was not inlined.
-            if (!was_inlined && sc.comp_unit != NULL)
+            if (!was_inlined && sc.comp_unit != nullptr)
             {
                 if (!FileSpec::Equal (*(sc.comp_unit), *(m_file_spec_ap.get()), false))
                     return false;
@@ -832,10 +832,10 @@ SymbolContextSpecifier::SymbolContextMatches(SymbolContext &sc)
         bool was_inlined = false;
         ConstString func_name(m_function_spec.c_str());
         
-        if (sc.block != NULL)
+        if (sc.block != nullptr)
         {
             const InlineFunctionInfo *inline_info = sc.block->GetInlinedFunctionInfo();
-            if (inline_info != NULL)
+            if (inline_info != nullptr)
             {
                 was_inlined = true;
                 const Mangled &name = inline_info->GetMangled();
@@ -846,12 +846,12 @@ SymbolContextSpecifier::SymbolContextMatches(SymbolContext &sc)
         //  If it wasn't inlined, check the name in the function or symbol:
         if (!was_inlined)
         {
-            if (sc.function != NULL)
+            if (sc.function != nullptr)
             {
                 if (!sc.function->GetMangled().NameMatches(func_name))
                     return false;
             }
-            else if (sc.symbol != NULL)
+            else if (sc.symbol != nullptr)
             {
                 if (!sc.symbol->GetMangled().NameMatches(func_name))
                     return false;
@@ -873,7 +873,7 @@ SymbolContextSpecifier::AddressMatches(lldb::addr_t addr)
     }
     else
     {
-        Address match_address (addr, NULL);
+        Address match_address (addr, nullptr);
         SymbolContext sc;
         m_target_sp->GetImages().ResolveSymbolContextForAddress(match_address, eSymbolContextEverything, sc);
         return SymbolContextMatches(sc);
@@ -903,7 +903,7 @@ SymbolContextSpecifier::GetDescription (Stream *s, lldb::DescriptionLevel level)
             s->Printf ("Module: %s\n", m_module_spec.c_str());
     }
     
-    if (m_type == eFileSpecified  && m_file_spec_ap.get() != NULL)
+    if (m_type == eFileSpecified  && m_file_spec_ap.get() != nullptr)
     {
         m_file_spec_ap->GetPath (path_str, PATH_MAX);
         s->Indent();
@@ -950,7 +950,7 @@ SymbolContextSpecifier::GetDescription (Stream *s, lldb::DescriptionLevel level)
         s->Printf ("Class name: %s.\n", m_class_name.c_str());
     }
     
-    if (m_type == eAddressRangeSpecified && m_address_range_ap.get() != NULL)
+    if (m_type == eAddressRangeSpecified && m_address_range_ap.get() != nullptr)
     {
         s->Indent();
         s->PutCString ("Address range: ");
@@ -1013,10 +1013,10 @@ SymbolContextList::AppendIfUnique (const SymbolContext& sc, bool merge_symbol_in
             return false;
     }
     if (merge_symbol_into_function 
-        && sc.symbol    != NULL
-        && sc.comp_unit == NULL
-        && sc.function  == NULL
-        && sc.block     == NULL
+        && sc.symbol    != nullptr
+        && sc.comp_unit == nullptr
+        && sc.function  == nullptr
+        && sc.block     == nullptr
         && sc.line_entry.IsValid() == false)
     {
         if (sc.symbol->ValueIsAddress())
@@ -1034,7 +1034,7 @@ SymbolContextList::AppendIfUnique (const SymbolContext& sc, bool merge_symbol_in
                         // Do we already have a function with this symbol?
                         if (pos->symbol == sc.symbol)
                             return false;
-                        if (pos->symbol == NULL)
+                        if (pos->symbol == nullptr)
                         {
                             pos->symbol = sc.symbol;
                             return false;
@@ -1053,10 +1053,10 @@ SymbolContextList::MergeSymbolContextIntoFunctionContext (const SymbolContext& s
                                                           uint32_t start_idx,
                                                           uint32_t stop_idx)
 {
-    if (symbol_sc.symbol    != NULL
-        && symbol_sc.comp_unit == NULL
-        && symbol_sc.function  == NULL
-        && symbol_sc.block     == NULL
+    if (symbol_sc.symbol    != nullptr
+        && symbol_sc.comp_unit == nullptr
+        && symbol_sc.function  == nullptr
+        && symbol_sc.block     == nullptr
         && symbol_sc.line_entry.IsValid() == false)
     {
         if (symbol_sc.symbol->ValueIsAddress())
@@ -1077,7 +1077,7 @@ SymbolContextList::MergeSymbolContextIntoFunctionContext (const SymbolContext& s
                         if (function_sc.symbol == symbol_sc.symbol)
                             return true; // Already have a symbol context with this symbol, return true
 
-                        if (function_sc.symbol == NULL)
+                        if (function_sc.symbol == nullptr)
                         {
                             // We successfully merged this symbol into an existing symbol context
                             m_symbol_contexts[i].symbol = symbol_sc.symbol;

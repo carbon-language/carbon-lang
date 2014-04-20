@@ -30,8 +30,8 @@ UnwindTable::UnwindTable (ObjectFile& objfile) :
     m_object_file (objfile), 
     m_unwinds (),
     m_initialized (false),
-    m_assembly_profiler (NULL),
-    m_eh_frame (NULL)
+    m_assembly_profiler (nullptr),
+    m_eh_frame (nullptr)
 {
 }
 
@@ -94,7 +94,7 @@ UnwindTable::GetFuncUnwindersContainingAddress (const Address& addr, SymbolConte
     if (!sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, 0, false, range) || !range.GetBaseAddress().IsValid())
     {
         // Does the eh_frame unwind info has a function bounds for this addr?
-        if (m_eh_frame == NULL || !m_eh_frame->GetAddressRange (addr, range))
+        if (m_eh_frame == nullptr || !m_eh_frame->GetAddressRange (addr, range))
         {
             return no_unwind_found;
         }
@@ -121,7 +121,7 @@ UnwindTable::GetUncachedFuncUnwindersContainingAddress (const Address& addr, Sym
     if (!sc.GetAddressRange(eSymbolContextFunction | eSymbolContextSymbol, 0, false, range) || !range.GetBaseAddress().IsValid())
     {
         // Does the eh_frame unwind info has a function bounds for this addr?
-        if (m_eh_frame == NULL || !m_eh_frame->GetAddressRange (addr, range))
+        if (m_eh_frame == nullptr || !m_eh_frame->GetAddressRange (addr, range))
         {
             return no_unwind_found;
         }

@@ -36,7 +36,7 @@ ClangExternalASTSourceCommon::GetMetadata (const void *object)
     if (HasMetadata (object))
         return &m_metadata[object];
     else
-        return NULL;
+        return nullptr;
 }
 
 void

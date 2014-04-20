@@ -174,7 +174,7 @@ Symbol::Clear()
 bool
 Symbol::ValueIsAddress() const
 {
-    return m_addr_range.GetBaseAddress().GetSection().get() != NULL;
+    return m_addr_range.GetBaseAddress().GetSection().get() != nullptr;
 }
 
 ConstString
@@ -312,7 +312,7 @@ Symbol::Dump(Stream *s, Target *target, uint32_t index) const
 
     if (ValueIsAddress())
     {
-        if (!m_addr_range.GetBaseAddress().Dump(s, NULL, Address::DumpStyleFileAddress))
+        if (!m_addr_range.GetBaseAddress().Dump(s, nullptr, Address::DumpStyleFileAddress))
             s->Printf("%*s", 18, "");
 
         s->PutChar(' ');
@@ -578,7 +578,7 @@ Symbol::ResolveReExportedSymbol (Target &target)
             }
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 
@@ -592,7 +592,7 @@ Symbol::GetInstructions (const ExecutionContext &exe_ctx,
     {
         const bool prefer_file_cache = false;
         return Disassembler::DisassembleRange (module_sp->GetArchitecture(),
-                                               NULL,
+                                               nullptr,
                                                flavor,
                                                exe_ctx,
                                                m_addr_range,

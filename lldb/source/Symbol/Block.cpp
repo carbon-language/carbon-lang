@@ -24,7 +24,7 @@ using namespace lldb_private;
 
 Block::Block(lldb::user_id_t uid) :
     UserID(uid),
-    m_parent_scope (NULL),
+    m_parent_scope (nullptr),
     m_children (),
     m_ranges (),
     m_inlineInfoSP (),
@@ -62,7 +62,7 @@ Block::GetDescription(Stream *s, Function *function, lldb::DescriptionLevel leve
         }
     }
 
-    if (m_inlineInfoSP.get() != NULL)
+    if (m_inlineInfoSP.get() != nullptr)
     {
         bool show_fullpaths = (level == eDescriptionLevelVerbose);
         m_inlineInfoSP->Dump(s, show_fullpaths);
@@ -91,7 +91,7 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
     {
         s->Printf(", parent = {0x%8.8" PRIx64 "}", parent_block->GetID());
     }
-    if (m_inlineInfoSP.get() != NULL)
+    if (m_inlineInfoSP.get() != nullptr)
     {
         bool show_fullpaths = false;
         m_inlineInfoSP->Dump(s, show_fullpaths);
@@ -105,7 +105,7 @@ Block::Dump(Stream *s, addr_t base_addr, int32_t depth, bool show_context) const
         for (size_t i=0; i<num_ranges; ++i)
         {
             const Range &range = m_ranges.GetEntryRef(i);
-            if (parent_block != NULL && parent_block->Contains(range) == false)
+            if (parent_block != nullptr && parent_block->Contains(range) == false)
                 *s << '!';
             else
                 *s << ' ';
@@ -139,7 +139,7 @@ Block::FindBlockByID (user_id_t block_id)
     if (block_id == GetID())
         return this;
 
-    Block *matching_block = NULL;
+    Block *matching_block = nullptr;
     collection::const_iterator pos, end = m_children.end();
     for (pos = m_children.begin(); pos != end; ++pos)
     {
@@ -171,7 +171,7 @@ Block::CalculateSymbolContextCompileUnit ()
 {
     if (m_parent_scope)
         return m_parent_scope->CalculateSymbolContextCompileUnit ();
-    return NULL;
+    return nullptr;
 }
 
 Function *
@@ -179,7 +179,7 @@ Block::CalculateSymbolContextFunction ()
 {
     if (m_parent_scope)
         return m_parent_scope->CalculateSymbolContextFunction ();
-    return NULL;
+    return nullptr;
 }
 
 Block *
@@ -214,7 +214,7 @@ Block::DumpAddressRanges (Stream *s, lldb::addr_t base_addr)
 bool
 Block::Contains (addr_t range_offset) const
 {
-    return m_ranges.FindEntryThatContains(range_offset) != NULL;
+    return m_ranges.FindEntryThatContains(range_offset) != nullptr;
 }
 
 bool
@@ -226,7 +226,7 @@ Block::Contains (const Block *block) const
     // Walk the parent chain for "block" and see if any if them match this block
     const Block *block_parent;
     for (block_parent = block->GetParent();
-         block_parent != NULL;
+         block_parent != nullptr;
          block_parent = block_parent->GetParent())
     {
         if (this == block_parent)
@@ -238,7 +238,7 @@ Block::Contains (const Block *block) const
 bool
 Block::Contains (const Range& range) const
 {
-    return m_ranges.FindEntryThatContains (range) != NULL;
+    return m_ranges.FindEntryThatContains (range) != nullptr;
 }
 
 Block *
@@ -246,7 +246,7 @@ Block::GetParent () const
 {
     if (m_parent_scope)
         return m_parent_scope->CalculateSymbolContextBlock();
-    return NULL;
+    return nullptr;
 }
 
 Block *
@@ -268,7 +268,7 @@ Block::GetInlinedParent ()
         else
             return parent_block->GetInlinedParent();
     }
-    return NULL;
+    return nullptr;
 }
 
 
@@ -472,7 +472,7 @@ Block::GetBlockVariableList (bool can_create)
 {
     if (m_parsed_block_variables == false)
     {
-        if (m_variable_list_sp.get() == NULL && can_create)
+        if (m_variable_list_sp.get() == nullptr && can_create)
         {
             m_parsed_block_variables = true;
             SymbolContext sc;
@@ -505,7 +505,7 @@ Block::AppendBlockVariables (bool can_create,
         {
             Block *child_block = pos->get();
             if (stop_if_child_block_is_inlined_function == false || 
-                child_block->GetInlinedFunctionInfo() == NULL)
+                child_block->GetInlinedFunctionInfo() == nullptr)
             {
                 num_variables_added += child_block->AppendBlockVariables (can_create,
                                                                           get_child_block_variables,
@@ -529,7 +529,7 @@ Block::AppendVariables
     uint32_t num_variables_added = 0;
     VariableListSP variable_list_sp(GetBlockVariableList(can_create));
 
-    bool is_inlined_function = GetInlinedFunctionInfo() != NULL;
+    bool is_inlined_function = GetInlinedFunctionInfo() != nullptr;
     if (variable_list_sp.get())
     {
         num_variables_added = variable_list_sp->GetSize();
@@ -556,17 +556,17 @@ Block::GetClangDeclContext()
     CalculateSymbolContext (&sc);
     
     if (!sc.module_sp)
-        return NULL;
+        return nullptr;
     
     SymbolVendor *sym_vendor = sc.module_sp->GetSymbolVendor();
     
     if (!sym_vendor)
-        return NULL;
+        return nullptr;
     
     SymbolFile *sym_file = sym_vendor->GetSymbolFile();
     
     if (!sym_file)
-        return NULL;
+        return nullptr;
     
     return sym_file->GetClangDeclContextForTypeUID (sc, m_uid);
 }
@@ -606,7 +606,7 @@ Block::GetSibling() const
         if (parent_block)
             return parent_block->GetSiblingForChild (this);
     }
-    return NULL;
+    return nullptr;
 }
 // A parent of child blocks can be asked to find a sibling block given
 // one of its child blocks
@@ -626,6 +626,6 @@ Block::GetSiblingForChild (const Block *child_block) const
             }
         }
     }
-    return NULL;
+    return nullptr;
 }
 

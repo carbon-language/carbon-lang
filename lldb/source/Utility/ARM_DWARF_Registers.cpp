@@ -202,7 +202,7 @@ GetARMDWARFRegisterName (unsigned reg_num)
         case dwarf_q14:         return "q14";
         case dwarf_q15:         return "q15";
     }
-    return 0;
+    return nullptr;
 }
 
 bool

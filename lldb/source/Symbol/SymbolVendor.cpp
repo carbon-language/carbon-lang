@@ -37,7 +37,7 @@ SymbolVendor::FindPlugin (const lldb::ModuleSP &module_sp, lldb_private::Stream 
     std::unique_ptr<SymbolVendor> instance_ap;
     SymbolVendorCreateInstance create_callback;
 
-    for (size_t idx = 0; (create_callback = PluginManager::GetSymbolVendorCreateCallbackAtIndex(idx)) != NULL; ++idx)
+    for (size_t idx = 0; (create_callback = PluginManager::GetSymbolVendorCreateCallbackAtIndex(idx)) != nullptr; ++idx)
     {
         instance_ap.reset(create_callback(module_sp, feedback_strm));
 
@@ -109,7 +109,7 @@ SymbolVendor::SetCompileUnitAtIndex (size_t idx, const CompUnitSP &cu_sp)
             // unit once, so if this assertion fails, we need to make sure that
             // we don't have a race condition, or have a second parse of the same
             // compile unit.
-            assert(m_compile_units[idx].get() == NULL);
+            assert(m_compile_units[idx].get() == nullptr);
             m_compile_units[idx] = cu_sp;
             return true;
         }
@@ -247,7 +247,7 @@ SymbolVendor::ResolveTypeUID(lldb::user_id_t type_uid)
         if (m_sym_file_ap.get())
             return m_sym_file_ap->ResolveTypeUID(type_uid);
     }
-    return NULL;
+    return nullptr;
 }
 
 
@@ -427,7 +427,7 @@ SymbolVendor::GetCompileUnitAtIndex(size_t idx)
         if (idx < num_compile_units)
         {
             cu_sp = m_compile_units[idx];
-            if (cu_sp.get() == NULL)
+            if (cu_sp.get() == nullptr)
             {
                 m_compile_units[idx] = m_sym_file_ap->ParseCompileUnitAtIndex(idx);
                 cu_sp = m_compile_units[idx];
@@ -450,7 +450,7 @@ SymbolVendor::GetSymtab ()
             return objfile->GetSymtab ();
         }
     }
-    return NULL;
+    return nullptr;
 }
 
 void

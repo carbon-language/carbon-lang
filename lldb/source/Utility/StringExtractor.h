@@ -137,7 +137,7 @@ public:
     {
         if (m_index < m_packet.size())
             return m_packet.c_str() + m_index;
-        return NULL;
+        return nullptr;
     }
 
 protected:

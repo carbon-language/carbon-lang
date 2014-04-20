@@ -68,7 +68,7 @@ FuncUnwinders::GetUnwindPlanAtCallSite (int current_offset)
     //  if (best_unwind_plan == NULL)
     //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
-    if (m_tried_unwind_at_call_site == false && m_unwind_plan_call_site_sp.get() == NULL)
+    if (m_tried_unwind_at_call_site == false && m_unwind_plan_call_site_sp.get() == nullptr)
     {
         m_tried_unwind_at_call_site = true;
         // We have cases (e.g. with _sigtramp on Mac OS X) where the hand-written eh_frame unwind info for a
@@ -111,7 +111,7 @@ FuncUnwinders::GetUnwindPlanAtNonCallSite (Thread& thread)
     //  if (best_unwind_plan == NULL)
     //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
-    if (m_tried_unwind_at_non_call_site == false && m_unwind_plan_non_call_site_sp.get() == NULL)
+    if (m_tried_unwind_at_non_call_site == false && m_unwind_plan_non_call_site_sp.get() == nullptr)
     {
         m_tried_unwind_at_non_call_site = true;
         if (m_assembly_profiler)
@@ -140,7 +140,7 @@ FuncUnwinders::GetUnwindPlanFastUnwind (Thread& thread)
     //  if (best_unwind_plan == NULL)
     //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
-    if (m_tried_unwind_fast == false && m_unwind_plan_fast_sp.get() == NULL)
+    if (m_tried_unwind_fast == false && m_unwind_plan_fast_sp.get() == nullptr)
     {
         m_tried_unwind_fast = true;
         if (m_assembly_profiler)
@@ -169,7 +169,7 @@ FuncUnwinders::GetUnwindPlanArchitectureDefault (Thread& thread)
     //  if (best_unwind_plan == NULL)
     //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
-    if (m_tried_unwind_arch_default == false && m_unwind_plan_arch_default_sp.get() == NULL)
+    if (m_tried_unwind_arch_default == false && m_unwind_plan_arch_default_sp.get() == nullptr)
     {
         m_tried_unwind_arch_default = true;
         Address current_pc;
@@ -205,7 +205,7 @@ FuncUnwinders::GetUnwindPlanArchitectureDefaultAtFunctionEntry (Thread& thread)
     //  if (best_unwind_plan == NULL)
     //      best_unwind_plan = GetUnwindPlanAtNonCallSite (...)
     Mutex::Locker locker (m_mutex);
-    if (m_tried_unwind_arch_default_at_func_entry == false && m_unwind_plan_arch_default_at_func_entry_sp.get() == NULL)
+    if (m_tried_unwind_arch_default_at_func_entry == false && m_unwind_plan_arch_default_at_func_entry_sp.get() == nullptr)
     {
         m_tried_unwind_arch_default_at_func_entry = true;
         Address current_pc;

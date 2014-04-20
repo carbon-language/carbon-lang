@@ -155,7 +155,7 @@ StringExtractor::GetU32 (uint32_t fail_value, int base)
 {
     if (m_index < m_packet.size())
     {
-        char *end = NULL;
+        char *end = nullptr;
         const char *start = m_packet.c_str();
         const char *cstr = start + m_index;
         uint32_t result = ::strtoul (cstr, &end, base);
@@ -174,7 +174,7 @@ StringExtractor::GetS32 (int32_t fail_value, int base)
 {
     if (m_index < m_packet.size())
     {
-        char *end = NULL;
+        char *end = nullptr;
         const char *start = m_packet.c_str();
         const char *cstr = start + m_index;
         int32_t result = ::strtol (cstr, &end, base);
@@ -194,7 +194,7 @@ StringExtractor::GetU64 (uint64_t fail_value, int base)
 {
     if (m_index < m_packet.size())
     {
-        char *end = NULL;
+        char *end = nullptr;
         const char *start = m_packet.c_str();
         const char *cstr = start + m_index;
         uint64_t result = ::strtoull (cstr, &end, base);
@@ -213,7 +213,7 @@ StringExtractor::GetS64 (int64_t fail_value, int base)
 {
     if (m_index < m_packet.size())
     {
-        char *end = NULL;
+        char *end = nullptr;
         const char *start = m_packet.c_str();
         const char *cstr = start + m_index;
         int64_t result = ::strtoll (cstr, &end, base);

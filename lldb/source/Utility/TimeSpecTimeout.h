@@ -76,7 +76,7 @@ public:
     GetTimeSpecPtr () const
     {
         if (m_infinite)
-            return NULL;
+            return nullptr;
         return &m_timespec;
     }
     

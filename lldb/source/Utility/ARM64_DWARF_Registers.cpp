@@ -28,7 +28,7 @@ arm64_dwarf::GetRegisterName (unsigned reg_num, bool altnernate_name)
             default:
                 break;
         }
-        return NULL;
+        return nullptr;
     }
     
     switch (reg_num)
@@ -100,7 +100,7 @@ arm64_dwarf::GetRegisterName (unsigned reg_num, bool altnernate_name)
         case v30:      return "v30";
         case v31:      return "v31";
     }
-    return 0;
+    return nullptr;
 }
 
 bool

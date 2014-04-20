@@ -87,7 +87,7 @@ Variable::GetType()
 {
     if (m_symfile_type_sp)
         return m_symfile_type_sp->GetType();
-    return NULL;
+    return nullptr;
 }
 
 void
@@ -123,7 +123,7 @@ Variable::Dump(Stream *s, bool show_context) const
         }
     }
 
-    if (show_context && m_owner_scope != NULL)
+    if (show_context && m_owner_scope != nullptr)
     {
         s->PutCString(", context = ( ");
         m_owner_scope->DumpSymbolContext(s);
@@ -144,7 +144,7 @@ Variable::Dump(Stream *s, bool show_context) const
             if (variable_sc.function)
                 loclist_base_addr = variable_sc.function->GetAddressRange().GetBaseAddress().GetFileAddress();
         }
-        ABI *abi = NULL;
+        ABI *abi = nullptr;
         if (m_owner_scope)
         {
             ModuleSP module_sp (m_owner_scope->CalculateSymbolContextModule());
@@ -171,12 +171,12 @@ Variable::DumpDeclaration (Stream *s, bool show_fullpaths, bool show_module)
     {
         SymbolContext sc;
         m_owner_scope->CalculateSymbolContext(&sc);
-        sc.block = NULL;
+        sc.block = nullptr;
         sc.line_entry.Clear();
         bool show_inlined_frames = false;
     
         dumped_declaration_info = sc.DumpStopContext (s, 
-                                                      NULL, 
+                                                      nullptr,
                                                       Address(), 
                                                       show_fullpaths, 
                                                       show_module, 
@@ -277,7 +277,7 @@ Variable::IsInScope (StackFrame *frame)
     {
     case eValueTypeRegister:
     case eValueTypeRegisterSet:
-        return frame != NULL;
+        return frame != nullptr;
 
     case eValueTypeConstResult:
     case eValueTypeVariableGlobal:
@@ -297,7 +297,7 @@ Variable::IsInScope (StackFrame *frame)
                 CalculateSymbolContext (&variable_sc);
                 // Check for static or global variable defined at the compile unit 
                 // level that wasn't defined in a block
-                if (variable_sc.block == NULL)
+                if (variable_sc.block == nullptr)
                     return true;    
 
                 if (variable_sc.block == deepest_frame_block)
@@ -419,7 +419,7 @@ Variable::GetValuesForVariableExpressionPath (const char *variable_expr_path,
                                         const char *variable_sub_expr_path = variable_expr_path + variable_name.size();
                                         if (*variable_sub_expr_path)
                                         {
-                                            const char* first_unparsed = NULL;
+                                            const char* first_unparsed = nullptr;
                                             ValueObject::ExpressionPathScanEndReason reason_to_stop;
                                             ValueObject::ExpressionPathEndResultType final_value_type;
                                             ValueObject::GetValueForExpressionPathOptions options;
@@ -485,7 +485,7 @@ Variable::DumpLocationForAddress (Stream *s, const Address &address)
         CalculateSymbolContext(&sc);
         if (sc.module_sp == address.GetModule())
         {
-            ABI *abi = NULL;
+            ABI *abi = nullptr;
             if (m_owner_scope)
             {
                 ModuleSP module_sp (m_owner_scope->CalculateSymbolContextModule());
@@ -553,7 +553,7 @@ PrivateAutoCompleteMembers (StackFrame *frame,
     {
         for (uint32_t i = 0; i < num_bases; ++i)
         {
-            ClangASTType base_class_type (clang_type.GetDirectBaseClassAtIndex (i, NULL));
+            ClangASTType base_class_type (clang_type.GetDirectBaseClassAtIndex (i, nullptr));
             
             PrivateAutoCompleteMembers (frame,
                                         partial_member_name,
@@ -571,7 +571,7 @@ PrivateAutoCompleteMembers (StackFrame *frame,
     {
         for (uint32_t i = 0; i < num_vbases; ++i)
         {
-            ClangASTType vbase_class_type (clang_type.GetVirtualBaseClassAtIndex(i,NULL));
+            ClangASTType vbase_class_type (clang_type.GetVirtualBaseClassAtIndex(i,nullptr));
             
             PrivateAutoCompleteMembers (frame,
                                         partial_member_name,
@@ -592,7 +592,7 @@ PrivateAutoCompleteMembers (StackFrame *frame,
         {
             std::string member_name;
             
-            ClangASTType member_clang_type = clang_type.GetFieldAtIndex (i, member_name, NULL, NULL, NULL);
+            ClangASTType member_clang_type = clang_type.GetFieldAtIndex (i, member_name, nullptr, nullptr, nullptr);
             
             if (partial_member_name.empty() ||
                 member_name.find(partial_member_name) == 0)
