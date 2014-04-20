@@ -113,7 +113,7 @@ OptionValueEnumeration::SetEnumerations (const OptionEnumValueElement *enumerato
     m_enumerations.Clear();
     if (enumerators)
     {
-        for (size_t i=0; enumerators[i].string_value != NULL; ++i)
+        for (size_t i=0; enumerators[i].string_value != nullptr; ++i)
         {
             ConstString const_enumerator_name(enumerators[i].string_value);
             EnumeratorInfo enumerator_info = { enumerators[i].value, enumerators[i].usage };

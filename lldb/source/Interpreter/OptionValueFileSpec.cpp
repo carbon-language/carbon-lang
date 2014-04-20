@@ -140,7 +140,7 @@ OptionValueFileSpec::AutoComplete (CommandInterpreter &interpreter,
                                                          s,
                                                          match_start_point,
                                                          max_return_elements,
-                                                         NULL,
+                                                         nullptr,
                                                          word_complete,
                                                          matches);
     return matches.GetSize();

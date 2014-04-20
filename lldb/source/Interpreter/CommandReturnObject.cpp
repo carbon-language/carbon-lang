@@ -141,7 +141,7 @@ void
 CommandReturnObject::SetError (const Error &error, const char *fallback_error_cstr)
 {
     const char *error_cstr = error.AsCString();
-    if (error_cstr == NULL)
+    if (error_cstr == nullptr)
         error_cstr = fallback_error_cstr;
     SetError(error_cstr);
 }

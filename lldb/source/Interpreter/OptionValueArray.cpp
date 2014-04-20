@@ -90,12 +90,12 @@ OptionValueArray::GetSubValue (const ExecutionContext *exe_ctx,
         const char *end_bracket = strchr (name+1, ']');
         if (end_bracket)
         {
-            const char *sub_value = NULL;
+            const char *sub_value = nullptr;
             if (end_bracket[1])
                 sub_value = end_bracket + 1;
             std::string index_str (name+1, end_bracket);
             const size_t array_count = m_values.size();
-            int32_t idx = Args::StringToSInt32(index_str.c_str(), INT32_MAX, 0, NULL);
+            int32_t idx = Args::StringToSInt32(index_str.c_str(), INT32_MAX, 0, nullptr);
             if (idx != INT32_MAX)
             {
                 ;

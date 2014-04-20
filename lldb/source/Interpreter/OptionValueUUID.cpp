@@ -92,7 +92,7 @@ OptionValueUUID::AutoComplete (CommandInterpreter &interpreter,
         if (num_modules > 0)
         {
             UUID::ValueType uuid_bytes;
-            const size_t num_bytes_decoded = UUID::DecodeUUIDBytesFromCString(s, uuid_bytes, NULL);
+            const size_t num_bytes_decoded = UUID::DecodeUUIDBytesFromCString(s, uuid_bytes, nullptr);
             for (size_t i=0; i<num_modules; ++i)
             {
                 ModuleSP module_sp (target->GetImages().GetModuleAtIndex(i));

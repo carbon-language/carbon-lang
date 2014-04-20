@@ -91,7 +91,7 @@ OptionValueDictionary::GetArgs (Args &args) const
     {
         StreamString strm;
         strm.Printf("%s=", pos->first.GetCString());
-        pos->second->DumpValue(NULL, strm, eDumpOptionValue|eDumpOptionRaw);
+        pos->second->DumpValue(nullptr, strm, eDumpOptionValue|eDumpOptionRaw);
         args.AppendArgument(strm.GetString().c_str());
     }
     return args.GetArgumentCount();
@@ -210,7 +210,7 @@ OptionValueDictionary::SetArgs (const Args &args, VarSetOperationType op)
     case eVarSetOperationInsertBefore:
     case eVarSetOperationInsertAfter:
     case eVarSetOperationInvalid:
-        error = OptionValue::SetValueFromCString (NULL, op);
+        error = OptionValue::SetValueFromCString (nullptr, op);
         break;
     }
     return error;
@@ -230,14 +230,14 @@ OptionValueDictionary::GetSubValue (const ExecutionContext *exe_ctx, const char 
 
     if (name && name[0])
     {
-        const char *sub_name = NULL;
+        const char *sub_name = nullptr;
         ConstString key;
         const char *open_bracket = ::strchr (name, '[');
 
         if (open_bracket)
         {
             const char *key_start = open_bracket + 1;
-            const char *key_end = NULL;
+            const char *key_end = nullptr;
             switch (open_bracket[1])
             {
                 case '\'':
@@ -314,7 +314,7 @@ OptionValueDictionary::GetSubValue (const ExecutionContext *exe_ctx, const char 
                 }
             }
         }
-        if (!value_sp && error.AsCString() == NULL)
+        if (!value_sp && error.AsCString() == nullptr)
         {
             error.SetErrorStringWithFormat ("invalid value path '%s', %s values only support '[<key>]' subvalues where <key> a string value optionally delimitted by single or double quotes",
                                             name,
@@ -334,7 +334,7 @@ OptionValueDictionary::SetSubValue (const ExecutionContext *exe_ctx, VarSetOpera
         error = value_sp->SetValueFromCString(value, op);
     else
     {
-        if (error.AsCString() == NULL)
+        if (error.AsCString() == nullptr)
             error.SetErrorStringWithFormat("invalid value path '%s'", name);
     }
     return error;
@@ -361,7 +361,7 @@ OptionValueDictionary::GetStringValueForKey (const ConstString &key)
         if (string_value)
             return string_value->GetCurrentValue();
     }
-    return NULL;
+    return nullptr;
 }
 
 

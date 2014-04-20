@@ -31,7 +31,7 @@ using namespace lldb;
 // PythonObject
 //----------------------------------------------------------------------
 PythonObject::PythonObject (const lldb::ScriptInterpreterObjectSP &script_object_sp) :
-    m_py_obj (NULL)
+    m_py_obj (nullptr)
 {
     if (script_object_sp)
         Reset ((PyObject *)script_object_sp->GetObject());
@@ -133,8 +133,8 @@ PythonString::Reset (PyObject *py_obj)
     if (py_obj && PyString_Check(py_obj))
         return PythonObject::Reset(py_obj);
     
-    PythonObject::Reset(NULL);
-    return py_obj == NULL;
+    PythonObject::Reset(nullptr);
+    return py_obj == nullptr;
 }
 
 const char*
@@ -142,7 +142,7 @@ PythonString::GetString() const
 {
     if (m_py_obj)
         return PyString_AsString(m_py_obj);
-    return NULL;
+    return nullptr;
 }
 
 size_t
@@ -202,8 +202,8 @@ PythonInteger::Reset (PyObject *py_obj)
             return PythonObject::Reset(py_obj);
     }
     
-    PythonObject::Reset(NULL);
-    return py_obj == NULL;
+    PythonObject::Reset(nullptr);
+    return py_obj == nullptr;
 }
 
 int64_t
@@ -230,7 +230,7 @@ PythonInteger::SetInteger (int64_t value)
 //----------------------------------------------------------------------
 
 PythonList::PythonList (bool create_empty) :
-    PythonObject(create_empty ? PyList_New(0) : NULL)
+    PythonObject(create_empty ? PyList_New(0) : nullptr)
 {
 }
 
@@ -269,8 +269,8 @@ PythonList::Reset (PyObject *py_obj)
     if (py_obj && PyList_Check(py_obj))
         return PythonObject::Reset(py_obj);
     
-    PythonObject::Reset(NULL);
-    return py_obj == NULL;
+    PythonObject::Reset(nullptr);
+    return py_obj == nullptr;
 }
 
 uint32_t
@@ -308,7 +308,7 @@ PythonList::AppendItem (const PythonObject &object)
 //----------------------------------------------------------------------
 
 PythonDictionary::PythonDictionary (bool create_empty) :
-PythonObject(create_empty ? PyDict_New() : NULL)
+PythonObject(create_empty ? PyDict_New() : nullptr)
 {
 }
 
@@ -342,8 +342,8 @@ PythonDictionary::Reset (PyObject *py_obj)
     if (py_obj && PyDict_Check(py_obj))
         return PythonObject::Reset(py_obj);
     
-    PythonObject::Reset(NULL);
-    return py_obj == NULL;
+    PythonObject::Reset(nullptr);
+    return py_obj == nullptr;
 }
 
 uint32_t

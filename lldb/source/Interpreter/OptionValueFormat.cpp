@@ -49,7 +49,7 @@ OptionValueFormat::SetValueFromCString (const char *value_cstr, VarSetOperationT
     case eVarSetOperationAssign:
         {
             Format new_format;
-            error = Args::StringToFormat (value_cstr, new_format, NULL);
+            error = Args::StringToFormat (value_cstr, new_format, nullptr);
             if (error.Success())
             {
                 m_value_was_set = true;

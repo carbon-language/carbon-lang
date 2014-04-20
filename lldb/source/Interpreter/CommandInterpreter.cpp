@@ -73,10 +73,10 @@ using namespace lldb_private;
 static PropertyDefinition
 g_properties[] =
 {
-    { "expand-regex-aliases", OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, regular expression alias commands will show the expanded command that will be executed. This can be used to debug new regular expression alias commands." },
-    { "prompt-on-quit", OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, LLDB will prompt you before quitting if there are any live processes being debugged. If false, LLDB will quit without asking in any case." },
-    { "stop-command-source-on-error", OptionValue::eTypeBoolean, true, true, NULL, NULL, "If true, LLDB will stop running a 'command source' script upon encountering an error." },
-    { NULL                  , OptionValue::eTypeInvalid, true, 0    , NULL, NULL, NULL }
+    { "expand-regex-aliases", OptionValue::eTypeBoolean, true, false, nullptr, nullptr, "If true, regular expression alias commands will show the expanded command that will be executed. This can be used to debug new regular expression alias commands." },
+    { "prompt-on-quit", OptionValue::eTypeBoolean, true, true, nullptr, nullptr, "If true, LLDB will prompt you before quitting if there are any live processes being debugged. If false, LLDB will quit without asking in any case." },
+    { "stop-command-source-on-error", OptionValue::eTypeBoolean, true, true, nullptr, nullptr, "If true, LLDB will stop running a 'command source' script upon encountering an error." },
+    { nullptr                  , OptionValue::eTypeInvalid, true, 0    , nullptr, nullptr, nullptr }
 };
 
 enum
@@ -125,21 +125,21 @@ bool
 CommandInterpreter::GetExpandRegexAliases () const
 {
     const uint32_t idx = ePropertyExpandRegexAliases;
-    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (nullptr, idx, g_properties[idx].default_uint_value != 0);
 }
 
 bool
 CommandInterpreter::GetPromptOnQuit () const
 {
     const uint32_t idx = ePropertyPromptOnQuit;
-    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (nullptr, idx, g_properties[idx].default_uint_value != 0);
 }
 
 bool
 CommandInterpreter::GetStopCmdSourceOnError () const
 {
     const uint32_t idx = ePropertyStopCmdSourceOnError;
-    return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, g_properties[idx].default_uint_value != 0);
+    return m_collection_sp->GetPropertyAtIndexAsBoolean (nullptr, idx, g_properties[idx].default_uint_value != 0);
 }
 
 void
@@ -702,7 +702,7 @@ CommandInterpreter::GetCommandSP (const char *cmd_cstr, bool include_aliases, bo
         CommandObjectSP user_match_sp, alias_match_sp, real_match_sp;
 
         StringList local_matches;
-        if (matches == NULL)
+        if (matches == nullptr)
             matches = &local_matches;
 
         unsigned int num_cmd_matches = 0;
@@ -830,17 +830,17 @@ CommandInterpreter::GetCommandSPExact (const char *cmd_cstr, bool include_aliase
     Args cmd_words (cmd_cstr); // Break up the command string into words, in case it's a multi-word command.
     CommandObjectSP ret_val;   // Possibly empty return value.
     
-    if (cmd_cstr == NULL)
+    if (cmd_cstr == nullptr)
         return ret_val;
     
     if (cmd_words.GetArgumentCount() == 1)
-        return GetCommandSP(cmd_cstr, include_aliases, true, NULL);
+        return GetCommandSP(cmd_cstr, include_aliases, true, nullptr);
     else
     {
         // We have a multi-word command (seemingly), so we need to do more work.
         // First, get the cmd_obj_sp for the first word in the command.
-        CommandObjectSP cmd_obj_sp = GetCommandSP (cmd_words.GetArgumentAtIndex (0), include_aliases, true, NULL);
-        if (cmd_obj_sp.get() != NULL)
+        CommandObjectSP cmd_obj_sp = GetCommandSP (cmd_words.GetArgumentAtIndex (0), include_aliases, true, nullptr);
+        if (cmd_obj_sp.get() != nullptr)
         {
             // Loop through the rest of the words in the command (everything passed in was supposed to be part of a 
             // command name), and find the appropriate sub-command SP for each command word....
@@ -850,7 +850,7 @@ CommandInterpreter::GetCommandSPExact (const char *cmd_cstr, bool include_aliase
                 if (cmd_obj_sp->IsMultiwordObject())
                 {
                     cmd_obj_sp = cmd_obj_sp->GetSubcommandSP (cmd_words.GetArgumentAtIndex (j));
-                    if (cmd_obj_sp.get() == NULL)
+                    if (cmd_obj_sp.get() == nullptr)
                         // The sub-command name was invalid.  Fail and return the empty 'ret_val'.
                         return ret_val;
                 }
@@ -890,7 +890,7 @@ CommandInterpreter::GetCommandObject (const char *cmd_cstr, StringList *matches)
         return command_obj;
     
     // If there wasn't an exact match then look for an inexact one in just the commands
-    command_obj = GetCommandSP(cmd_cstr, false, false, NULL).get();
+    command_obj = GetCommandSP(cmd_cstr, false, false, nullptr).get();
 
     // Finally, if there wasn't an inexact match among the commands, look for an inexact
     // match in both the commands and aliases.
@@ -1156,7 +1156,7 @@ CommandInterpreter::GetCommandObjectForCommand (std::string &command_string)
     // This function finds the final, lowest-level, alias-resolved command object whose 'Execute' function will
     // eventually be invoked by the given command line.
     
-    CommandObject *cmd_obj = NULL;
+    CommandObject *cmd_obj = nullptr;
     std::string white_space (" \t\v");
     size_t start = command_string.find_first_not_of (white_space);
     size_t end = 0;
@@ -1171,7 +1171,7 @@ CommandInterpreter::GetCommandObjectForCommand (std::string &command_string)
                 end = command_string.size();
             std::string cmd_word = command_string.substr (start, end - start);
             
-            if (cmd_obj == NULL)
+            if (cmd_obj == nullptr)
                 // Since cmd_obj is NULL we are on our first time through this loop. Check to see if cmd_word is a valid 
                 // command or alias.
                 cmd_obj = GetCommandObject (cmd_word.c_str());
@@ -1325,7 +1325,7 @@ CommandInterpreter::BuildAliasResult (const char *alias_name,
                                       std::string &alias_result,
                                       CommandReturnObject &result)
 {
-    CommandObject *alias_cmd_obj = NULL;
+    CommandObject *alias_cmd_obj = nullptr;
     Args cmd_args (raw_input_string.c_str());
     alias_cmd_obj = GetCommandObject (alias_name);
     StreamString result_str;
@@ -1530,7 +1530,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
 {
 
     bool done = false;
-    CommandObject *cmd_obj = NULL;
+    CommandObject *cmd_obj = nullptr;
     bool wants_raw_input = false;
     std::string command_string (command_line);
     std::string original_command_string (command_line);
@@ -1540,7 +1540,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
     
     // Make a scoped cleanup object that will clear the crash description string 
     // on exit of this function.
-    lldb_utility::CleanUp <const char *> crash_description_cleanup(NULL, Host::SetCrashDescription);
+    lldb_utility::CleanUp <const char *> crash_description_cleanup(nullptr, Host::SetCrashDescription);
 
     if (log)
         log->Printf ("Processing command: %s", command_line);
@@ -1574,7 +1574,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
         else if (command_string[non_space] == CommandHistory::g_repeat_char)
         {
             const char *history_string = m_command_history.FindString(command_string.c_str() + non_space);
-            if (history_string == NULL)
+            if (history_string == nullptr)
             {
                 result.AppendErrorWithFormat ("Could not find entry: %s in history", command_string.c_str());
                 result.SetStatus(eReturnStatusFailed);
@@ -1650,7 +1650,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
         char quote_char = '\0';
         std::string suffix;
         ExtractCommand (command_string, next_word, suffix, quote_char);
-        if (cmd_obj == NULL)
+        if (cmd_obj == nullptr)
         {
             std::string full_name;
             if (GetAliasFullName(next_word.c_str(), full_name))
@@ -1710,7 +1710,7 @@ CommandInterpreter::HandleCommand (const char *command_line,
             }
         }
 
-        if (cmd_obj == NULL)
+        if (cmd_obj == nullptr)
         {
             const size_t num_matches = matches.GetSize();
             if (matches.GetSize() > 1) {
@@ -1823,13 +1823,13 @@ CommandInterpreter::HandleCommand (const char *command_line,
     // Take care of things like setting up the history command & calling the appropriate Execute method on the
     // CommandObject, with the appropriate arguments.
     
-    if (cmd_obj != NULL)
+    if (cmd_obj != nullptr)
     {
         if (add_to_history)
         {
             Args command_args (revised_command_line.GetData());
             const char *repeat_command = cmd_obj->GetRepeatCommand(command_args, 0);
-            if (repeat_command != NULL)
+            if (repeat_command != nullptr)
                 m_repeat_command.assign(repeat_command);
             else
                 m_repeat_command.assign(original_command_string.c_str());
@@ -1931,7 +1931,7 @@ CommandInterpreter::HandleCompletionMatches (Args &parsed_line,
 
         if (num_command_matches == 1
             && cmd_obj && cmd_obj->IsMultiwordObject()
-            && matches.GetStringAtIndex(0) != NULL
+            && matches.GetStringAtIndex(0) != nullptr
             && strcmp (parsed_line.GetArgumentAtIndex(0), matches.GetStringAtIndex(0)) == 0)
         {
             if (parsed_line.GetArgumentCount() == 1)
@@ -1956,7 +1956,7 @@ CommandInterpreter::HandleCompletionMatches (Args &parsed_line,
         // to complete the command.
         // First see if there is a matching initial command:
         CommandObject *command_object = GetCommandObject (parsed_line.GetArgumentAtIndex(0));
-        if (command_object == NULL)
+        if (command_object == nullptr)
         {
             return 0;
         }
@@ -2002,7 +2002,7 @@ CommandInterpreter::HandleCompletion (const char *current_line,
         else if (first_arg[0] == CommandHistory::g_repeat_char)
         {
             const char *history_string = m_command_history.FindString (first_arg);
-            if (history_string != NULL)
+            if (history_string != nullptr)
             {
                 matches.Clear();
                 matches.InsertStringAtIndex(0, history_string);
@@ -2392,7 +2392,7 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
     {
         const bool saved_batch = SetBatchCommandMode (true);
         HandleCommandsFromFile (init_file,
-                                NULL,           // Execution context
+                                nullptr,           // Execution context
                                 eLazyBoolYes,   // Stop on continue
                                 eLazyBoolNo,    // Stop on error
                                 eLazyBoolNo,    // Don't echo commands
@@ -2445,7 +2445,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
     // If we've been given an execution context, set it at the start, but don't keep resetting it or we will
     // cause series of commands that change the context, then do an operation that relies on that context to fail.
     
-    if (override_context != NULL)
+    if (override_context != nullptr)
         UpdateExecutionContext (override_context);
             
     if (!stop_on_continue)
@@ -2475,9 +2475,9 @@ CommandInterpreter::HandleCommands (const StringList &commands,
         if (!add_to_history)
             m_command_source_depth++;
         bool success = HandleCommand(cmd, add_to_history, tmp_result,
-                                     NULL, /* override_context */
+                                     nullptr, /* override_context */
                                      true, /* repeat_on_empty_command */
-                                     override_context != NULL /* no_context_switching */);
+                                     override_context != nullptr /* no_context_switching */);
         if (!add_to_history)
             m_command_source_depth--;
         
@@ -2490,7 +2490,7 @@ CommandInterpreter::HandleCommands (const StringList &commands,
         if (!success || !tmp_result.Succeeded())
         {
             const char *error_msg = tmp_result.GetErrorData();
-            if (error_msg == NULL || error_msg[0] == '\0')
+            if (error_msg == nullptr || error_msg[0] == '\0')
                 error_msg = "<unknown error>.\n";
             if (stop_on_error)
             {
@@ -2660,7 +2660,7 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
                                                               empty_stream_sp, // Pass in an empty stream so we inherit the top input reader output stream
                                                               empty_stream_sp, // Pass in an empty stream so we inherit the top input reader error stream
                                                               flags,
-                                                              NULL, // Pass in NULL for "editline_name" so no history is saved, or written
+                                                              nullptr, // Pass in NULL for "editline_name" so no history is saved, or written
                                                               debugger.GetPrompt(),
                                                               false, // Not multi-line
                                                               0,
@@ -2700,11 +2700,11 @@ CommandInterpreter::HandleCommandsFromFile (FileSpec &cmd_file,
 ScriptInterpreter *
 CommandInterpreter::GetScriptInterpreter (bool can_create)
 {
-    if (m_script_interpreter_ap.get() != NULL)
+    if (m_script_interpreter_ap.get() != nullptr)
         return m_script_interpreter_ap.get();
     
     if (!can_create)
-        return NULL;
+        return nullptr;
  
     // <rdar://problem/11751427>
     // we need to protect the initialization of the script interpreter
@@ -2929,7 +2929,7 @@ CommandInterpreter::FindCommandsForApropos (const char *search_word, StringList 
 void
 CommandInterpreter::UpdateExecutionContext (ExecutionContext *override_context)
 {
-    if (override_context != NULL)
+    if (override_context != nullptr)
     {
         m_exe_ctx_ref = *override_context;
     }

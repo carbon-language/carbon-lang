@@ -58,7 +58,7 @@ OptionValueBoolean::SetValueFromCString (const char *value_cstr,
             }
             else
             {
-                if (value_cstr == NULL)
+                if (value_cstr == nullptr)
                     error.SetErrorString ("invalid boolean string value: NULL");
                 else if (value_cstr[0] == '\0')
                     error.SetErrorString ("invalid boolean string value <empty>");

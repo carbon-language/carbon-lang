@@ -86,11 +86,11 @@ CommandObjectRegexCommand::DoExecute
                     result.GetOutputStream().Printf("%s\n", new_command.c_str());
                 // Pass in true for "no context switching".  The command that called us should have set up the context
                 // appropriately, we shouldn't have to redo that.
-                return m_interpreter.HandleCommand(new_command.c_str(), eLazyBoolCalculate, result, NULL, true, true);
+                return m_interpreter.HandleCommand(new_command.c_str(), eLazyBoolCalculate, result, nullptr, true, true);
             }
         }
         result.SetStatus(eReturnStatusFailed);
-        if (GetSyntax() != NULL)
+        if (GetSyntax() != nullptr)
             result.AppendError (GetSyntax());
         else
             result.AppendErrorWithFormat ("Command contents '%s' failed to match any regular expression in the '%s' regex command.\n",
@@ -136,7 +136,7 @@ CommandObjectRegexCommand::HandleCompletion (Args &input,
                                                              completion_str.c_str(),
                                                              match_start_point,
                                                              max_return_elements,
-                                                             NULL,
+                                                             nullptr,
                                                              word_complete,
                                                              matches);
         return matches.GetSize();

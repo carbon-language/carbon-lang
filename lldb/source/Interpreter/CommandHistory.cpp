@@ -41,17 +41,17 @@ CommandHistory::FindString (const char* input_str) const
 {
     Mutex::Locker locker(m_mutex);
     if (!input_str)
-        return NULL;
+        return nullptr;
     if (input_str[0] != g_repeat_char)
-        return NULL;
+        return nullptr;
     if (input_str[1] == '-')
     {
         bool success;
         size_t idx = Args::StringToUInt32 (input_str+2, 0, 0, &success);
         if (!success)
-            return NULL;
+            return nullptr;
         if (idx > m_history.size())
-            return NULL;
+            return nullptr;
         idx = m_history.size() - idx;
         return m_history[idx].c_str();
         
@@ -59,7 +59,7 @@ CommandHistory::FindString (const char* input_str) const
     else if (input_str[1] == g_repeat_char)
     {
         if (m_history.empty())
-            return NULL;
+            return nullptr;
         else
             return m_history.back().c_str();
     }
@@ -68,9 +68,9 @@ CommandHistory::FindString (const char* input_str) const
         bool success;
         uint32_t idx = Args::StringToUInt32 (input_str+1, 0, 0, &success);
         if (!success)
-            return NULL;
+            return nullptr;
         if (idx >= m_history.size())
-            return NULL;
+            return nullptr;
         return m_history[idx].c_str();
     }
 }
@@ -81,7 +81,7 @@ CommandHistory::GetStringAtIndex (size_t idx) const
     Mutex::Locker locker(m_mutex);
     if (idx < m_history.size())
         return m_history[idx].c_str();
-    return NULL;
+    return nullptr;
 }
 
 const char*
@@ -95,7 +95,7 @@ CommandHistory::GetRecentmostString () const
 {
     Mutex::Locker locker(m_mutex);
     if (m_history.empty())
-        return NULL;
+        return nullptr;
     return m_history.back().c_str();
 }
 

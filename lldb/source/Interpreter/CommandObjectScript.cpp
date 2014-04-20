@@ -66,7 +66,7 @@ CommandObjectScript::DoExecute
     
     ScriptInterpreter *script_interpreter = m_interpreter.GetScriptInterpreter ();
 
-    if (script_interpreter == NULL)
+    if (script_interpreter == nullptr)
     {
         result.AppendError("no script interpreter");
         result.SetStatus (eReturnStatusFailed);
@@ -75,7 +75,7 @@ CommandObjectScript::DoExecute
 
     DataVisualization::ForceUpdate(); // script might change Python code we use for formatting.. make sure we keep up to date with it
     
-    if (command == NULL || command[0] == '\0')
+    if (command == nullptr || command[0] == '\0')
     {
         script_interpreter->ExecuteInterpreterLoop ();
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
