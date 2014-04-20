@@ -1,24 +1,20 @@
-/*===-- X86DisassemblerDecoderInternal.h - Disassembler decoder ---*- C -*-===*
- *
- *                     The LLVM Compiler Infrastructure
- *
- * This file is distributed under the University of Illinois Open Source
- * License. See LICENSE.TXT for details.
- *
- *===----------------------------------------------------------------------===*
- *
- * This file is part of the X86 Disassembler.
- * It contains the public interface of the instruction decoder.
- * Documentation for the disassembler can be found in X86Disassembler.h.
- *
- *===----------------------------------------------------------------------===*/
+//===-- X86DisassemblerDecoderInternal.h - Disassembler decoder -*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file is part of the X86 Disassembler.
+// It contains the public interface of the instruction decoder.
+// Documentation for the disassembler can be found in X86Disassembler.h.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef X86DISASSEMBLERDECODER_H
 #define X86DISASSEMBLERDECODER_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #define INSTRUCTION_SPECIFIER_FIELDS \
   uint16_t operands;
@@ -30,6 +26,9 @@ extern "C" {
 
 #undef INSTRUCTION_SPECIFIER_FIELDS
 #undef INSTRUCTION_IDS
+
+namespace llvm {
+namespace X86Disassembler {
 
 /*
  * Accessor functions for various fields of an Intel instruction
@@ -684,21 +683,17 @@ int decodeInstruction(struct InternalInstruction* insn,
                       uint64_t startLoc,
                       DisassemblerMode mode);
 
-/* x86DisassemblerDebug - C-accessible function for printing a message to
- *   debugs()
+/* \brief Debug - Print a message to debugs()
  * @param file  - The name of the file printing the debug message.
  * @param line  - The line number that printed the debug message.
  * @param s     - The message to print.
  */
 
-void x86DisassemblerDebug(const char *file,
-                          unsigned line,
-                          const char *s);
+void Debug(const char *file, unsigned line, const char *s);
 
-const char *x86DisassemblerGetInstrName(unsigned Opcode, const void *mii);
+const char *GetInstrName(unsigned Opcode, const void *mii);
 
-#ifdef __cplusplus
-}
-#endif
+} // namespace X86Disassembler
+} // namespace llvm
 
 #endif

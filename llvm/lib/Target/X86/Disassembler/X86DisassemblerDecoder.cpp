@@ -1,17 +1,17 @@
-/*===-- X86DisassemblerDecoder.c - Disassembler decoder ------------*- C -*-===*
- *
- *                     The LLVM Compiler Infrastructure
- *
- * This file is distributed under the University of Illinois Open Source
- * License. See LICENSE.TXT for details.
- *
- *===----------------------------------------------------------------------===*
- *
- * This file is part of the X86 Disassembler.
- * It contains the implementation of the instruction decoder.
- * Documentation for the disassembler can be found in X86Disassembler.h.
- *
- *===----------------------------------------------------------------------===*/
+//===-- X86DisassemblerDecoder.c - Disassembler decoder -------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file is part of the X86 Disassembler.
+// It contains the implementation of the instruction decoder.
+// Documentation for the disassembler can be found in X86Disassembler.h.
+//
+//===----------------------------------------------------------------------===//
 
 #include <stdarg.h>   /* for va_*()       */
 #include <stdio.h>    /* for vsnprintf()  */
@@ -20,13 +20,15 @@
 
 #include "X86DisassemblerDecoder.h"
 
+using namespace llvm::X86Disassembler;
+
 #include "X86GenDisassemblerTables.inc"
 
 #define TRUE  1
 #define FALSE 0
 
 #ifndef NDEBUG
-#define debug(s) do { x86DisassemblerDebug(__FILE__, __LINE__, s); } while (0)
+#define debug(s) do { Debug(__FILE__, __LINE__, s); } while (0)
 #else
 #define debug(s) do { } while (0)
 #endif
@@ -41,7 +43,7 @@
  *                    an instruction with these attributes.
  */
 static InstructionContext contextForAttrs(uint16_t attrMask) {
-  return CONTEXTS_SYM[attrMask];
+  return static_cast<InstructionContext>(CONTEXTS_SYM[attrMask]);
 }
 
 /*
@@ -792,9 +794,7 @@ static int getIDWithAttrMask(uint16_t* instructionID,
                              uint16_t attrMask) {
   BOOL hasModRMExtension;
 
-  uint16_t instructionClass;
-
-  instructionClass = contextForAttrs(attrMask);
+  InstructionContext instructionClass = contextForAttrs(attrMask);
 
   hasModRMExtension = modRMRequired(insn->opcodeType,
                                     instructionClass,
@@ -1011,9 +1011,8 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
       return 0;
     }
 
-    specName = x86DisassemblerGetInstrName(instructionID, miiArg);
-    specWithOpSizeName =
-      x86DisassemblerGetInstrName(instructionIDWithOpsize, miiArg);
+    specName = GetInstrName(instructionID, miiArg);
+    specWithOpSizeName = GetInstrName(instructionIDWithOpsize, miiArg);
 
     if (is16BitEquivalent(specName, specWithOpSizeName) &&
         (insn->mode == MODE_16BIT) ^ insn->prefixPresent[0x66]) {
@@ -1077,8 +1076,8 @@ static int getID(struct InternalInstruction* insn, const void *miiArg) {
  * @return      - 0 if the SIB byte was successfully read; nonzero otherwise.
  */
 static int readSIB(struct InternalInstruction* insn) {
-  SIBIndex sibIndexBase = 0;
-  SIBBase sibBaseBase = 0;
+  SIBIndex sibIndexBase = SIB_INDEX_NONE;
+  SIBBase sibBaseBase = SIB_BASE_NONE;
   uint8_t index, base;
 
   dbgprintf(insn, "readSIB()");
@@ -1599,20 +1598,22 @@ static int readImmediate(struct InternalInstruction* insn, uint8_t size) {
 static int readVVVV(struct InternalInstruction* insn) {
   dbgprintf(insn, "readVVVV()");
 
+  int vvvv;
   if (insn->vectorExtensionType == TYPE_EVEX)
-    insn->vvvv = vvvvFromEVEX3of4(insn->vectorExtensionPrefix[2]);
+    vvvv = vvvvFromEVEX3of4(insn->vectorExtensionPrefix[2]);
   else if (insn->vectorExtensionType == TYPE_VEX_3B)
-    insn->vvvv = vvvvFromVEX3of3(insn->vectorExtensionPrefix[2]);
+    vvvv = vvvvFromVEX3of3(insn->vectorExtensionPrefix[2]);
   else if (insn->vectorExtensionType == TYPE_VEX_2B)
-    insn->vvvv = vvvvFromVEX2of2(insn->vectorExtensionPrefix[1]);
+    vvvv = vvvvFromVEX2of2(insn->vectorExtensionPrefix[1]);
   else if (insn->vectorExtensionType == TYPE_XOP)
-    insn->vvvv = vvvvFromXOP3of3(insn->vectorExtensionPrefix[2]);
+    vvvv = vvvvFromXOP3of3(insn->vectorExtensionPrefix[2]);
   else
     return -1;
 
   if (insn->mode != MODE_64BIT)
-    insn->vvvv &= 0x7;
+    vvvv &= 0x7;
 
+  insn->vvvv = static_cast<Reg>(vvvv);
   return 0;
 }
 
@@ -1629,7 +1630,8 @@ static int readMaskRegister(struct InternalInstruction* insn) {
   if (insn->vectorExtensionType != TYPE_EVEX)
     return -1;
 
-  insn->writemask = aaaFromEVEX4of4(insn->vectorExtensionPrefix[3]);
+  insn->writemask =
+      static_cast<Reg>(aaaFromEVEX4of4(insn->vectorExtensionPrefix[3]));
   return 0;
 }
 
@@ -1781,14 +1783,10 @@ static int readOperands(struct InternalInstruction* insn) {
  * @return          - 0 if the instruction's memory could be read; nonzero if
  *                    not.
  */
-int decodeInstruction(struct InternalInstruction* insn,
-                      byteReader_t reader,
-                      const void* readerArg,
-                      dlog_t logger,
-                      void* loggerArg,
-                      const void* miiArg,
-                      uint64_t startLoc,
-                      DisassemblerMode mode) {
+int llvm::X86Disassembler::decodeInstruction(
+    struct InternalInstruction *insn, byteReader_t reader,
+    const void *readerArg, dlog_t logger, void *loggerArg, const void *miiArg,
+    uint64_t startLoc, DisassemblerMode mode) {
   memset(insn, 0, sizeof(struct InternalInstruction));
 
   insn->reader = reader;

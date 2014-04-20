@@ -1,28 +1,26 @@
-/*===-- X86DisassemblerDecoderCommon.h - Disassembler decoder -----*- C -*-===*
- *
- *                     The LLVM Compiler Infrastructure
- *
- * This file is distributed under the University of Illinois Open Source
- * License. See LICENSE.TXT for details.
- *
- *===----------------------------------------------------------------------===*
- *
- * This file is part of the X86 Disassembler.
- * It contains common definitions used by both the disassembler and the table
- *  generator.
- * Documentation for the disassembler can be found in X86Disassembler.h.
- *
- *===----------------------------------------------------------------------===*/
-
-/*
- * This header file provides those definitions that need to be shared between
- * the decoder and the table generator in a C-friendly manner.
- */
+//===-- X86DisassemblerDecoderCommon.h - Disassembler decoder ---*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file is part of the X86 Disassembler.
+// It contains common definitions used by both the disassembler and the table
+//  generator.
+// Documentation for the disassembler can be found in X86Disassembler.h.
+//
+//===----------------------------------------------------------------------===//
 
 #ifndef X86DISASSEMBLERDECODERCOMMON_H
 #define X86DISASSEMBLERDECODERCOMMON_H
 
 #include "llvm/Support/DataTypes.h"
+
+namespace llvm {
+namespace X86Disassembler {
 
 #define INSTRUCTIONS_SYM  x86DisassemblerInstrSpecifiers
 #define CONTEXTS_SYM      x86DisassemblerContexts
@@ -274,17 +272,17 @@ enum attributeBits {
   ENUM_ENTRY(IC_EVEX_L2_W_OPSIZE_KZ, 4,  "requires EVEX_KZ, L2, W and OpSize")     
 
 #define ENUM_ENTRY(n, r, d) n,
-typedef enum {
+enum InstructionContext {
   INSTRUCTION_CONTEXTS
   IC_max
-} InstructionContext;
+};
 #undef ENUM_ENTRY
 
 /*
  * Opcode types, which determine which decode table to use, both in the Intel
  * manual and also for the decoder.
  */
-typedef enum {
+enum OpcodeType {
   ONEBYTE       = 0,
   TWOBYTE       = 1,
   THREEBYTE_38  = 2,
@@ -292,7 +290,7 @@ typedef enum {
   XOP8_MAP      = 4,
   XOP9_MAP      = 5,
   XOPA_MAP      = 6
-} OpcodeType;
+};
 
 /*
  * The following structs are used for the hierarchical decode table.  After
@@ -333,10 +331,10 @@ typedef uint16_t InstrUID;
   ENUM_ENTRY(MODRM_FULL)
 
 #define ENUM_ENTRY(n) n,
-typedef enum {
+enum ModRMDecisionType {
   MODRMTYPES
   MODRM_max
-} ModRMDecisionType;
+};
 #undef ENUM_ENTRY
 
 /*
@@ -356,7 +354,7 @@ struct ModRMDecision {
  *   given a particular opcode.
  */
 struct OpcodeDecision {
-  struct ModRMDecision modRMDecisions[256];
+  ModRMDecision modRMDecisions[256];
 };
 
 /*
@@ -367,7 +365,7 @@ struct OpcodeDecision {
  *   entries in this table, rather than 2^(ATTR_max).
  */
 struct ContextDecision {
-  struct OpcodeDecision opcodeDecisions[IC_max];
+  OpcodeDecision opcodeDecisions[IC_max];
 };
 
 /*
@@ -408,10 +406,10 @@ struct ContextDecision {
   ENUM_ENTRY(ENCODING_DI,     "Destination index; encoded in prefixes")
 
 #define ENUM_ENTRY(n, d) n,
-  typedef enum {
-    ENCODINGS
-    ENCODING_max
-  } OperandEncoding;
+enum OperandEncoding {
+  ENCODINGS
+  ENCODING_max
+};
 #undef ENUM_ENTRY
 
 /*
@@ -508,10 +506,10 @@ struct ContextDecision {
   ENUM_ENTRY(TYPE_M512,       "512-bit FPU/MMX/XMM/MXCSR state")
 
 #define ENUM_ENTRY(n, d) n,
-typedef enum {
+enum OperandType {
   TYPES
   TYPE_max
-} OperandType;
+};
 #undef ENUM_ENTRY
 
 /*
@@ -532,10 +530,10 @@ struct OperandSpecifier {
   ENUM_ENTRY(MODIFIER_NONE)
 
 #define ENUM_ENTRY(n) n,
-typedef enum {
+enum ModifierType {
   MODIFIER_TYPES
   MODIFIER_max
-} ModifierType;
+};
 #undef ENUM_ENTRY
 
 #define X86_MAX_OPERANDS 5
@@ -554,10 +552,13 @@ struct InstructionSpecifier {
  * are supported, and represent real mode, IA-32e, and IA-32e in 64-bit mode,
  * respectively.
  */
-typedef enum {
+enum DisassemblerMode {
   MODE_16BIT,
   MODE_32BIT,
   MODE_64BIT
-} DisassemblerMode;
+};
+
+} // namespace X86Disassembler
+} // namespace llvm
 
 #endif

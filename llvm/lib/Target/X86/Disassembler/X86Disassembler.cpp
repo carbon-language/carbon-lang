@@ -37,18 +37,18 @@
 using namespace llvm;
 using namespace llvm::X86Disassembler;
 
-void x86DisassemblerDebug(const char *file,
-                          unsigned line,
-                          const char *s) {
+void llvm::X86Disassembler::Debug(const char *file, unsigned line,
+                                  const char *s) {
   dbgs() << file << ":" << line << ": " << s;
 }
 
-const char *x86DisassemblerGetInstrName(unsigned Opcode, const void *mii) {
+const char *llvm::X86Disassembler::GetInstrName(unsigned Opcode,
+                                                const void *mii) {
   const MCInstrInfo *MII = static_cast<const MCInstrInfo *>(mii);
   return MII->getName(Opcode);
 }
 
-#define debug(s) DEBUG(x86DisassemblerDebug(__FILE__, __LINE__, s));
+#define debug(s) DEBUG(Debug(__FILE__, __LINE__, s));
 
 namespace llvm {  
   
