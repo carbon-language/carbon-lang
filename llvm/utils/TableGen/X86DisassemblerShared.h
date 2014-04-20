@@ -13,17 +13,6 @@
 #include <string.h>
 #include <string>
 
-#define INSTRUCTION_SPECIFIER_FIELDS       \
-  struct OperandSpecifier operands[X86_MAX_OPERANDS]; \
-  InstructionContext      insnContext;     \
-  std::string             name;            \
-                                           \
-  InstructionSpecifier() {                 \
-    insnContext = IC;                      \
-    name = "";                             \
-    memset(operands, 0, sizeof(operands)); \
-  }
-
 #define INSTRUCTION_IDS           \
   InstrUID   instructionIDs[256];
 
@@ -31,5 +20,17 @@
 
 #undef INSTRUCTION_SPECIFIER_FIELDS
 #undef INSTRUCTION_IDS
+
+struct InstructionSpecifier {
+  llvm::X86Disassembler::OperandSpecifier operands[X86_MAX_OPERANDS];
+  llvm::X86Disassembler::InstructionContext insnContext;
+  std::string name;
+
+  InstructionSpecifier() {
+    insnContext = llvm::X86Disassembler::IC;
+    name = "";
+    memset(operands, 0, sizeof(operands));
+  }
+};
 
 #endif

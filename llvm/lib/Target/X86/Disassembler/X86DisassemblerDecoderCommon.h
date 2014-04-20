@@ -539,15 +539,6 @@ enum ModifierType {
 #define X86_MAX_OPERANDS 5
 
 /*
- * The specification for how to extract and interpret a full instruction and
- * its operands.
- */
-struct InstructionSpecifier {
-  /* The macro below must be defined wherever this file is included. */
-  INSTRUCTION_SPECIFIER_FIELDS
-};
-
-/*
  * Decoding mode for the Intel disassembler.  16-bit, 32-bit, and 64-bit mode
  * are supported, and represent real mode, IA-32e, and IA-32e in 64-bit mode,
  * respectively.

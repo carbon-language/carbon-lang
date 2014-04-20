@@ -16,9 +16,6 @@
 #ifndef X86DISASSEMBLERDECODER_H
 #define X86DISASSEMBLERDECODER_H
 
-#define INSTRUCTION_SPECIFIER_FIELDS \
-  uint16_t operands;
-
 #define INSTRUCTION_IDS     \
   uint16_t instructionIDs;
 
@@ -530,6 +527,14 @@ typedef int (*byteReader_t)(const void* arg, uint8_t* byte, uint64_t address);
  *                  the logger returns.
  */
 typedef void (*dlog_t)(void* arg, const char *log);
+
+/*
+ * The specification for how to extract and interpret a full instruction and
+ * its operands.
+ */
+struct InstructionSpecifier {
+  uint16_t operands;
+};
 
 /*
  * The x86 internal instruction, which is produced by the decoder.
