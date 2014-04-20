@@ -16,7 +16,8 @@
 #include "../../lib/Target/X86/Disassembler/X86DisassemblerDecoderCommon.h"
 
 struct InstructionSpecifier {
-  llvm::X86Disassembler::OperandSpecifier operands[X86_MAX_OPERANDS];
+  llvm::X86Disassembler::OperandSpecifier
+      operands[llvm::X86Disassembler::X86_MAX_OPERANDS];
   llvm::X86Disassembler::InstructionContext insnContext;
   std::string name;
 

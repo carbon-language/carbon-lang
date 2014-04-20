@@ -42,11 +42,9 @@ namespace X86Disassembler {
 #define XOP9_MAP_STR      "x86DisassemblerXOP9Opcodes"
 #define XOPA_MAP_STR      "x86DisassemblerXOPAOpcodes"
 
-/*
- * Attributes of an instruction that must be known before the opcode can be
- * processed correctly.  Most of these indicate the presence of particular
- * prefixes, but ATTR_64BIT is simply an attribute of the decoding context.
- */
+// Attributes of an instruction that must be known before the opcode can be
+// processed correctly.  Most of these indicate the presence of particular
+// prefixes, but ATTR_64BIT is simply an attribute of the decoding context.
 #define ATTRIBUTE_BITS                  \
   ENUM_ENTRY(ATTR_NONE,   0x00)         \
   ENUM_ENTRY(ATTR_64BIT,  (0x1 << 0))   \
@@ -71,13 +69,11 @@ enum attributeBits {
 };
 #undef ENUM_ENTRY
 
-/*
- * Combinations of the above attributes that are relevant to instruction
- * decode. Although other combinations are possible, they can be reduced to
- * these without affecting the ultimately decoded instruction.
- */
+// Combinations of the above attributes that are relevant to instruction
+// decode. Although other combinations are possible, they can be reduced to
+// these without affecting the ultimately decoded instruction.
 
-/*           Class name           Rank  Rationale for rank assignment         */
+//           Class name           Rank  Rationale for rank assignment
 #define INSTRUCTION_CONTEXTS                                                   \
   ENUM_ENTRY(IC,                    0,  "says nothing about the instruction")  \
   ENUM_ENTRY(IC_64BIT,              1,  "says the instruction applies in "     \
@@ -278,10 +274,8 @@ enum InstructionContext {
 };
 #undef ENUM_ENTRY
 
-/*
- * Opcode types, which determine which decode table to use, both in the Intel
- * manual and also for the decoder.
- */
+// Opcode types, which determine which decode table to use, both in the Intel
+// manual and also for the decoder.
 enum OpcodeType {
   ONEBYTE       = 0,
   TWOBYTE       = 1,
@@ -292,37 +286,31 @@ enum OpcodeType {
   XOPA_MAP      = 6
 };
 
-/*
- * The following structs are used for the hierarchical decode table.  After
- * determining the instruction's class (i.e., which IC_* constant applies to
- * it), the decoder reads the opcode.  Some instructions require specific
- * values of the ModR/M byte, so the ModR/M byte indexes into the final table.
- *
- * If a ModR/M byte is not required, "required" is left unset, and the values
- * for each instructionID are identical.
- */
-
+// The following structs are used for the hierarchical decode table.  After
+// determining the instruction's class (i.e., which IC_* constant applies to
+// it), the decoder reads the opcode.  Some instructions require specific
+// values of the ModR/M byte, so the ModR/M byte indexes into the final table.
+//
+// If a ModR/M byte is not required, "required" is left unset, and the values
+// for each instructionID are identical.
 typedef uint16_t InstrUID;
 
-/*
- * ModRMDecisionType - describes the type of ModR/M decision, allowing the
- * consumer to determine the number of entries in it.
- *
- * MODRM_ONEENTRY - No matter what the value of the ModR/M byte is, the decoded
- *                  instruction is the same.
- * MODRM_SPLITRM  - If the ModR/M byte is between 0x00 and 0xbf, the opcode
- *                  corresponds to one instruction; otherwise, it corresponds to
- *                  a different instruction.
- * MODRM_SPLITMISC- If the ModR/M byte is between 0x00 and 0xbf, ModR/M byte
- *                  divided by 8 is used to select instruction; otherwise, each
- *                  value of the ModR/M byte could correspond to a different
- *                  instruction.
- * MODRM_SPLITREG - ModR/M byte divided by 8 is used to select instruction. This
-                    corresponds to instructions that use reg field as opcode
- * MODRM_FULL     - Potentially, each value of the ModR/M byte could correspond
- *                  to a different instruction.
- */
-
+// ModRMDecisionType - describes the type of ModR/M decision, allowing the
+// consumer to determine the number of entries in it.
+//
+// MODRM_ONEENTRY - No matter what the value of the ModR/M byte is, the decoded
+//                  instruction is the same.
+// MODRM_SPLITRM  - If the ModR/M byte is between 0x00 and 0xbf, the opcode
+//                  corresponds to one instruction; otherwise, it corresponds to
+//                  a different instruction.
+// MODRM_SPLITMISC- If the ModR/M byte is between 0x00 and 0xbf, ModR/M byte
+//                  divided by 8 is used to select instruction; otherwise, each
+//                  value of the ModR/M byte could correspond to a different
+//                  instruction.
+// MODRM_SPLITREG - ModR/M byte divided by 8 is used to select instruction. This
+//                  corresponds to instructions that use reg field as opcode
+// MODRM_FULL     - Potentially, each value of the ModR/M byte could correspond
+//                  to a different instruction.
 #define MODRMTYPES            \
   ENUM_ENTRY(MODRM_ONEENTRY)  \
   ENUM_ENTRY(MODRM_SPLITRM)   \
@@ -337,10 +325,7 @@ enum ModRMDecisionType {
 };
 #undef ENUM_ENTRY
 
-/*
- * Physical encodings of instruction operands.
- */
-
+// Physical encodings of instruction operands.
 #define ENCODINGS                                                              \
   ENUM_ENTRY(ENCODING_NONE,   "")                                              \
   ENUM_ENTRY(ENCODING_REG,    "Register operand in ModR/M byte.")              \
@@ -381,10 +366,7 @@ enum OperandEncoding {
 };
 #undef ENUM_ENTRY
 
-/*
- * Semantic interpretations of instruction operands.
- */
-
+// Semantic interpretations of instruction operands.
 #define TYPES                                                                  \
   ENUM_ENTRY(TYPE_NONE,       "")                                              \
   ENUM_ENTRY(TYPE_REL8,       "1-byte immediate address")                      \
@@ -481,20 +463,14 @@ enum OperandType {
 };
 #undef ENUM_ENTRY
 
-/*
- * OperandSpecifier - The specification for how to extract and interpret one
- *   operand.
- */
+/// \brief The specification for how to extract and interpret one operand.
 struct OperandSpecifier {
   uint8_t encoding;
   uint8_t type;
 };
 
-/*
- * Indicates where the opcode modifier (if any) is to be found.  Extended
- * opcodes with AddRegFrm have the opcode modifier in the ModR/M byte.
- */
-
+// Indicates where the opcode modifier (if any) is to be found.  Extended
+// opcodes with AddRegFrm have the opcode modifier in the ModR/M byte.
 #define MODIFIER_TYPES        \
   ENUM_ENTRY(MODIFIER_NONE)
 
@@ -505,13 +481,11 @@ enum ModifierType {
 };
 #undef ENUM_ENTRY
 
-#define X86_MAX_OPERANDS 5
+static const int X86_MAX_OPERANDS = 5;
 
-/*
- * Decoding mode for the Intel disassembler.  16-bit, 32-bit, and 64-bit mode
- * are supported, and represent real mode, IA-32e, and IA-32e in 64-bit mode,
- * respectively.
- */
+/// Decoding mode for the Intel disassembler.  16-bit, 32-bit, and 64-bit mode
+/// are supported, and represent real mode, IA-32e, and IA-32e in 64-bit mode,
+/// respectively.
 enum DisassemblerMode {
   MODE_16BIT,
   MODE_32BIT,
