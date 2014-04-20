@@ -81,9 +81,9 @@ public:
                  ArrayRef<EnumEntry<TEnum> > EnumValues) {
     StringRef Name;
     bool Found = false;
-    for (size_t i = 0; i < EnumValues.size(); ++i) {
-      if (EnumValues[i].Value == Value) {
-        Name = EnumValues[i].Name;
+    for (const auto &EnumItem : EnumValues) {
+      if (EnumItem.Value == Value) {
+        Name = EnumItem.Name;
         Found = true;
         break;
       }
@@ -103,25 +103,22 @@ public:
     typedef SmallVector<FlagEntry, 10> FlagVector;
     FlagVector SetFlags;
 
-    for (typename ArrayRef<FlagEntry>::const_iterator I = Flags.begin(),
-                                                 E = Flags.end(); I != E; ++I) {
-      if (I->Value == 0)
+    for (const auto &Flag : Flags) {
+      if (Flag.Value == 0)
         continue;
 
-      bool IsEnum = (I->Value & EnumMask) != 0;
-      if ((!IsEnum && (Value & I->Value) == I->Value) ||
-          (IsEnum  && (Value & EnumMask) == I->Value)) {
-        SetFlags.push_back(*I);
+      bool IsEnum = (Flag.Value & EnumMask) != 0;
+      if ((!IsEnum && (Value & Flag.Value) == Flag.Value) ||
+          (IsEnum  && (Value & EnumMask) == Flag.Value)) {
+        SetFlags.push_back(Flag);
       }
     }
 
     std::sort(SetFlags.begin(), SetFlags.end(), &flagName<TFlag>);
 
     startLine() << Label << " [ (" << hex(Value) << ")\n";
-    for (typename FlagVector::const_iterator I = SetFlags.begin(),
-                                             E = SetFlags.end();
-                                             I != E; ++I) {
-      startLine() << "  " << I->Name << " (" << hex(I->Value) << ")\n";
+    for (const auto &Flag : SetFlags) {
+      startLine() << "  " << Flag.Name << " (" << hex(Flag.Value) << ")\n";
     }
     startLine() << "]\n";
   }
@@ -176,10 +173,10 @@ public:
   void printList(StringRef Label, const SmallVectorImpl<T_> &List) {
     startLine() << Label << ": [";
     bool Comma = false;
-    for (unsigned LI = 0, LE = List.size(); LI != LE; ++LI) {
+    for (const auto &Item : List) {
       if (Comma)
         OS << ", ";
-      OS << List[LI];
+      OS << Item;
       Comma = true;
     }
     OS << "]\n";
