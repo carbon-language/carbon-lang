@@ -361,13 +361,13 @@ class Diagnostic(object):
 
     @property
     def category_number(self):
-        """The category number for this diagnostic."""
+        """The category number for this diagnostic or 0 if unavailable."""
         return conf.lib.clang_getDiagnosticCategory(self)
 
     @property
     def category_name(self):
         """The string name of the category for this diagnostic."""
-        return conf.lib.clang_getDiagnosticCategoryName(self.category_number)
+        return conf.lib.clang_getDiagnosticCategoryText(self)
 
     @property
     def option(self):
@@ -2922,8 +2922,8 @@ functionList = [
    [Diagnostic],
    c_uint),
 
-  ("clang_getDiagnosticCategoryName",
-   [c_uint],
+  ("clang_getDiagnosticCategoryText",
+   [Diagnostic],
    _CXString,
    _CXString.from_result),
 
