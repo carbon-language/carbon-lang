@@ -1,6 +1,8 @@
 // RUN: %clangxx_asan -O %s -o %t
 // RUN: not %t crash 2>&1 | FileCheck --check-prefix=CHECK-CRASH %s
 // RUN: not %t bad-bounds 2>&1 | FileCheck --check-prefix=CHECK-BAD %s
+// RUN: ASAN_OPTIONS=detect_container_overflow=0 %t crash
+//
 // Test crash due to __sanitizer_annotate_contiguous_container.
 
 #include <assert.h>
@@ -16,6 +18,7 @@ static volatile int one = 1;
 
 int TestCrash() {
   long t[100];
+  t[60] = 0;
   __sanitizer_annotate_contiguous_container(&t[0], &t[0] + 100, &t[0] + 100,
                                             &t[0] + 50);
   return (int)t[60 * one];  // Touches the poisoned memory.

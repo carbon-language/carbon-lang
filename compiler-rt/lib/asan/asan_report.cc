@@ -141,7 +141,7 @@ static void PrintLegend(InternalScopedString *str) {
                   kAsanInitializationOrderMagic);
   PrintShadowByte(str, "  Poisoned by user:        ",
                   kAsanUserPoisonedMemoryMagic);
-  PrintShadowByte(str, "  Contiguous container OOB:",
+  PrintShadowByte(str, "  Container overflow:      ",
                   kAsanContiguousContainerOOBMagic);
   PrintShadowByte(str, "  ASan internal:           ", kAsanInternalHeapMagic);
 }

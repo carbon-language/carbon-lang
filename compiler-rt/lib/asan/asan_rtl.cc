@@ -220,6 +220,11 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
       "If non-zero, try to detect operations like <, <=, >, >= and - on "
       "invalid pointer pairs (e.g. when pointers belong to different objects). "
       "The bigger the value the harder we try.");
+
+  ParseFlag(str, &f->detect_container_overflow,
+      "detect_container_overflow",
+      "If true, honor the container overflow  annotations. "
+      "See https://code.google.com/p/address-sanitizer/wiki/ContainerOverflow");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
@@ -267,6 +272,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->strict_init_order = false;
   f->start_deactivated = false;
   f->detect_invalid_pointer_pairs = 0;
+  f->detect_container_overflow = true;
 
   // Override from compile definition.
   ParseFlagsFromString(f, MaybeUseAsanDefaultOptionsCompileDefiniton());
