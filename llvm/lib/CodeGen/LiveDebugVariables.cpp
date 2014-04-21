@@ -41,6 +41,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
+#include <memory>
+
 using namespace llvm;
 
 static cl::opt<bool>
@@ -292,7 +294,7 @@ class LDVImpl {
   bool ModifiedMF;
 
   /// userValues - All allocated UserValue instances.
-  SmallVector<UserValue*, 8> userValues;
+  SmallVector<std::unique_ptr<UserValue>, 8> userValues;
 
   /// Map virtual register to eq class leader.
   typedef DenseMap<unsigned, UserValue*> VRMap;
@@ -332,7 +334,6 @@ public:
 
   /// clear - Release all memory.
   void clear() {
-    DeleteContainerPointers(userValues);
     userValues.clear();
     virtRegToEqClass.clear();
     userVarMap.clear();
@@ -429,8 +430,9 @@ UserValue *LDVImpl::getUserValue(const MDNode *Var, unsigned Offset,
         return UV;
   }
 
-  UserValue *UV = new UserValue(Var, Offset, IsIndirect, DL, allocator);
-  userValues.push_back(UV);
+  userValues.push_back(
+      make_unique<UserValue>(Var, Offset, IsIndirect, DL, allocator));
+  UserValue *UV = userValues.back().get();
   Leader = UserValue::merge(Leader, UV);
   return UV;
 }
