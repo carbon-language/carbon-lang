@@ -2271,22 +2271,16 @@ class Evaluator {
 public:
   Evaluator(const DataLayout *DL, const TargetLibraryInfo *TLI)
     : DL(DL), TLI(TLI) {
-    ValueStack.push_back(new DenseMap<Value*, Constant*>);
+    ValueStack.push_back(make_unique<DenseMap<Value*, Constant*>>());
   }
 
   ~Evaluator() {
-    DeleteContainerPointers(ValueStack);
-    while (!AllocaTmps.empty()) {
-      GlobalVariable *Tmp = AllocaTmps.back();
-      AllocaTmps.pop_back();
-
+    for (auto &Tmp : AllocaTmps)
       // If there are still users of the alloca, the program is doing something
       // silly, e.g. storing the address of the alloca somewhere and using it
       // later.  Since this is undefined, we'll just make it be null.
       if (!Tmp->use_empty())
         Tmp->replaceAllUsesWith(Constant::getNullValue(Tmp->getType()));
-      delete Tmp;
-    }
   }
 
   /// EvaluateFunction - Evaluate a call to function F, returning true if
@@ -2325,7 +2319,7 @@ private:
   /// ValueStack - As we compute SSA register values, we store their contents
   /// here. The back of the vector contains the current function and the stack
   /// contains the values in the calling frames.
-  SmallVector<DenseMap<Value*, Constant*>*, 4> ValueStack;
+  SmallVector<std::unique_ptr<DenseMap<Value*, Constant*>>, 4> ValueStack;
 
   /// CallStack - This is used to detect recursion.  In pathological situations
   /// we could hit exponential behavior, but at least there is nothing
@@ -2340,7 +2334,7 @@ private:
   /// AllocaTmps - To 'execute' an alloca, we create a temporary global variable
   /// to represent its body.  This vector is needed so we can delete the
   /// temporary globals when we are done.
-  SmallVector<GlobalVariable*, 32> AllocaTmps;
+  SmallVector<std::unique_ptr<GlobalVariable>, 32> AllocaTmps;
 
   /// Invariants - These global variables have been marked invariant by the
   /// static constructor.
@@ -2530,11 +2524,10 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
         return false;  // Cannot handle array allocs.
       }
       Type *Ty = AI->getType()->getElementType();
-      AllocaTmps.push_back(new GlobalVariable(Ty, false,
-                                              GlobalValue::InternalLinkage,
-                                              UndefValue::get(Ty),
-                                              AI->getName()));
-      InstResult = AllocaTmps.back();
+      AllocaTmps.push_back(
+          make_unique<GlobalVariable>(Ty, false, GlobalValue::InternalLinkage,
+                                      UndefValue::get(Ty), AI->getName()));
+      InstResult = AllocaTmps.back().get();
       DEBUG(dbgs() << "Found an alloca. Result: " << *InstResult << "\n");
     } else if (isa<CallInst>(CurInst) || isa<InvokeInst>(CurInst)) {
       CallSite CS(CurInst);
@@ -2638,12 +2631,12 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
 
         Constant *RetVal = 0;
         // Execute the call, if successful, use the return value.
-        ValueStack.push_back(new DenseMap<Value*, Constant*>);
+        ValueStack.push_back(make_unique<DenseMap<Value *, Constant *>>());
         if (!EvaluateFunction(Callee, RetVal, Formals)) {
           DEBUG(dbgs() << "Failed to evaluate function.\n");
           return false;
         }
-        delete ValueStack.pop_back_val();
+        ValueStack.pop_back();
         InstResult = RetVal;
 
         if (InstResult != NULL) {
