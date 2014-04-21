@@ -105,6 +105,42 @@
 ; RUN:     | FileCheck %s --check-prefix=CHECK-UNBALANCED10
 ; CHECK-UNBALANCED10: unable to parse pass pipeline description
 
+; RUN: opt -disable-output -debug-pass-manager -debug-cgscc-pass-manager \
+; RUN:     -passes=no-op-cgscc,no-op-cgscc %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-TWO-NOOP-CG
+; CHECK-TWO-NOOP-CG: Starting module pass manager
+; CHECK-TWO-NOOP-CG: Running module pass: ModuleToPostOrderCGSCCPassAdaptor
+; CHECK-TWO-NOOP-CG: Starting CGSCC pass manager
+; CHECK-TWO-NOOP-CG: Running CGSCC pass: NoOpCGSCCPass
+; CHECK-TWO-NOOP-CG: Running CGSCC pass: NoOpCGSCCPass
+; CHECK-TWO-NOOP-CG: Finished CGSCC pass manager
+; CHECK-TWO-NOOP-CG: Finished module pass manager
+
+; RUN: opt -disable-output -debug-pass-manager -debug-cgscc-pass-manager \
+; RUN:     -passes='module(function(no-op-function),cgscc(no-op-cgscc,function(no-op-function),no-op-cgscc),function(no-op-function))' %s 2>&1 \
+; RUN:     | FileCheck %s --check-prefix=CHECK-NESTED-MP-CG-FP
+; CHECK-NESTED-MP-CG-FP: Starting module pass manager
+; CHECK-NESTED-MP-CG-FP: Starting module pass manager
+; CHECK-NESTED-MP-CG-FP: Running module pass: ModuleToFunctionPassAdaptor
+; CHECK-NESTED-MP-CG-FP: Starting function pass manager
+; CHECK-NESTED-MP-CG-FP: Running function pass: NoOpFunctionPass
+; CHECK-NESTED-MP-CG-FP: Finished function pass manager
+; CHECK-NESTED-MP-CG-FP: Running module pass: ModuleToPostOrderCGSCCPassAdaptor
+; CHECK-NESTED-MP-CG-FP: Starting CGSCC pass manager
+; CHECK-NESTED-MP-CG-FP: Running CGSCC pass: NoOpCGSCCPass
+; CHECK-NESTED-MP-CG-FP: Running CGSCC pass: CGSCCToFunctionPassAdaptor
+; CHECK-NESTED-MP-CG-FP: Starting function pass manager
+; CHECK-NESTED-MP-CG-FP: Running function pass: NoOpFunctionPass
+; CHECK-NESTED-MP-CG-FP: Finished function pass manager
+; CHECK-NESTED-MP-CG-FP: Running CGSCC pass: NoOpCGSCCPass
+; CHECK-NESTED-MP-CG-FP: Finished CGSCC pass manager
+; CHECK-NESTED-MP-CG-FP: Running module pass: ModuleToFunctionPassAdaptor
+; CHECK-NESTED-MP-CG-FP: Starting function pass manager
+; CHECK-NESTED-MP-CG-FP: Running function pass: NoOpFunctionPass
+; CHECK-NESTED-MP-CG-FP: Finished function pass manager
+; CHECK-NESTED-MP-CG-FP: Finished module pass manager
+; CHECK-NESTED-MP-CG-FP: Finished module pass manager
+
 define void @f() {
  ret void
 }

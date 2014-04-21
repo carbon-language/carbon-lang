@@ -29,6 +29,16 @@ MODULE_PASS("print", PrintModulePass(dbgs()))
 MODULE_PASS("print-cg", LazyCallGraphPrinterPass(dbgs()))
 #undef MODULE_PASS
 
+#ifndef CGSCC_ANALYSIS
+#define CGSCC_ANALYSIS(NAME, CREATE_PASS)
+#endif
+#undef CGSCC_ANALYSIS
+
+#ifndef CGSCC_PASS
+#define CGSCC_PASS(NAME, CREATE_PASS)
+#endif
+#undef CGSCC_PASS
+
 #ifndef FUNCTION_ANALYSIS
 #define FUNCTION_ANALYSIS(NAME, CREATE_PASS)
 #endif
