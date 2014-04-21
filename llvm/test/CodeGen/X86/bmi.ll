@@ -216,6 +216,24 @@ entry:
 ; CHECK: bzhiq
 }
 
+define i32 @bzhi32_constant_mask(i32 %x) #0 {
+entry:
+  %and = and i32 %x, 1073741823
+  ret i32 %and
+; CHECK-LABEL: bzhi32_constant_mask:
+; CHECK: movb    $30, %al
+; CHECK: bzhil   %eax, %edi, %eax
+}
+
+define i64 @bzhi64_constant_mask(i64 %x) #0 {
+entry:
+  %and = and i64 %x, 4611686018427387903
+  ret i64 %and
+; CHECK-LABEL: bzhi64_constant_mask:
+; CHECK: movb    $62, %al
+; CHECK: bzhiq   %rax, %rdi, %rax
+}
+
 define i32 @blsi32(i32 %x) nounwind readnone {
   %tmp = sub i32 0, %x
   %tmp2 = and i32 %x, %tmp

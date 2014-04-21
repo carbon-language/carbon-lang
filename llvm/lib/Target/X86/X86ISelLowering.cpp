@@ -18503,6 +18503,20 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
       }
     } // BEXTR
 
+    // Check for BZHI with contiguous mask: (and X, 0x0..0f..f)
+    // This should be checked after BEXTR - when X is a shift, a BEXTR is
+    // preferrable.
+    if (Subtarget->hasBMI2()) {
+      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N1)) {
+        uint64_t Mask = C->getZExtValue();
+        if (isMask_64(Mask)) {
+          unsigned LZ = CountTrailingOnes_64(Mask);
+          return DAG.getNode(X86ISD::BZHI, DL, VT, N0,
+                             DAG.getConstant(LZ, MVT::i8));
+        }
+      }
+    }
+
     return SDValue();
   }
 
