@@ -60,7 +60,7 @@ public:
   public:
     typedef ptrdiff_t difference_type;
     typedef EntT value_type;
-    typedef std::random_access_iterator_tag iterator_category;
+    typedef std::forward_iterator_tag iterator_category;
     typedef value_type &reference;
     typedef value_type *pointer;
 
