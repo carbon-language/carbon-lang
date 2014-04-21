@@ -640,6 +640,12 @@ float test_hfa(int n, ...) {
   return h.d;
 }
 
+float test_hfa_call(struct HFA *a) {
+// CHECK-LABEL: define float @test_hfa_call(%struct.HFA* %a)
+// CHECK: call float (i32, ...)* @test_hfa(i32 1, [2 x double] {{.*}})
+  test_hfa(1, *a);
+}
+
 struct TooBigHFA {
   float a, b, c, d, e;
 };
