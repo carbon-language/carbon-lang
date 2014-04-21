@@ -682,6 +682,7 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   HasMultipleConditionRegisters = false;
   IntDivIsCheap = false;
   Pow2DivIsCheap = false;
+  DivIsWellDefined = false;
   JumpIsExpensive = false;
   PredictableSelectIsExpensive = false;
   MaskAndBranchFoldingIsLegal = false;
