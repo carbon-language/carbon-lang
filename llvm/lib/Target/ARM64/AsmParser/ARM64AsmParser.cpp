@@ -1725,56 +1725,6 @@ public:
 
 } // end anonymous namespace.
 
-/// isFPR32Register - Check if a register is in the FPR32 register class.
-/// (The parser does not have the target register info to check the register
-/// class directly.)
-static bool isFPR32Register(unsigned Reg) {
-  using namespace ARM64;
-  switch (Reg) {
-  default:
-    break;
-  case S0:  case S1:  case S2:  case S3:  case S4:  case S5:  case S6:
-  case S7:  case S8:  case S9:  case S10:  case S11:  case S12:  case S13:
-  case S14:  case S15:  case S16:  case S17:  case S18:  case S19:  case S20:
-  case S21:  case S22:  case S23:  case S24:  case S25:  case S26:  case S27:
-  case S28:  case S29:  case S30:  case S31:
-    return true;
-  }
-  return false;
-}
-
-/// isGPR32Register - Check if a register is in the GPR32sp register class.
-/// (The parser does not have the target register info to check the register
-/// class directly.)
-static bool isGPR32Register(unsigned Reg) {
-  using namespace ARM64;
-  switch (Reg) {
-  default:
-    break;
-  case W0:  case W1:  case W2:  case W3:  case W4:  case W5:  case W6:
-  case W7:  case W8:  case W9:  case W10:  case W11:  case W12:  case W13:
-  case W14:  case W15:  case W16:  case W17:  case W18:  case W19:  case W20:
-  case W21:  case W22:  case W23:  case W24:  case W25:  case W26:  case W27:
-  case W28:  case W29:  case W30:  case WSP:  case WZR:
-    return true;
-  }
-  return false;
-}
-
-static bool isGPR64Register(unsigned Reg) {
-  using namespace ARM64;
-  switch (Reg) {
-  case X0:  case X1:  case X2:  case X3:  case X4:  case X5:  case X6:
-  case X7:  case X8:  case X9:  case X10:  case X11:  case X12:  case X13:
-  case X14:  case X15:  case X16:  case X17:  case X18:  case X19:  case X20:
-  case X21:  case X22:  case X23:  case X24:  case X25:  case X26:  case X27:
-  case X28:  case FP:  case LR:  case SP:  case XZR:
-    return true;
-  default:
-    return false;
-  }
-}
-
 void ARM64Operand::print(raw_ostream &OS) const {
   switch (Kind) {
   case k_FPImm:
@@ -2896,12 +2846,13 @@ bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
 
         // A 32-bit offset register is only valid for [SU]/XTW extend
         // operators.
-        if (isGPR32Register(Reg2)) {
+        if (ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(Reg2)) {
          if (ExtOp != ARM64_AM::UXTW &&
             ExtOp != ARM64_AM::SXTW)
           return Error(ExtLoc, "32-bit general purpose offset register "
                                "requires sxtw or uxtw extend");
-        } else if (!isGPR64Register(Reg2))
+        } else if (!ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(
+                       Reg2))
           return Error(OffsetLoc,
                        "64-bit general purpose offset register expected");
 
@@ -3808,7 +3759,8 @@ static void rewriteMOVR(ARM64AsmParser::OperandVector &Operands,
   Operands.push_back(Operands[2]);
   // And Operands[2] becomes ZR.
   unsigned ZeroReg = ARM64::XZR;
-  if (isGPR32Register(Operands[2]->getReg()))
+  if (ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(
+          Operands[2]->getReg()))
     ZeroReg = ARM64::WZR;
 
   Operands[2] =
@@ -3888,7 +3840,9 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     // Insert WZR or XZR as destination operand.
     ARM64Operand *RegOp = static_cast<ARM64Operand *>(Operands[1]);
     unsigned ZeroReg;
-    if (RegOp->isReg() && isGPR32Register(RegOp->getReg()))
+    if (RegOp->isReg() &&
+        ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(
+            RegOp->getReg()))
       ZeroReg = ARM64::WZR;
     else
       ZeroReg = ARM64::XZR;
@@ -3919,7 +3873,9 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         // set, clear the complemented upper 32-bits so the logic below works
         // for 32-bit registers too.
         ARM64Operand *Op1 = static_cast<ARM64Operand *>(Operands[1]);
-        if (Op1->isReg() && isGPR32Register(Op1->getReg()) &&
+        if (Op1->isReg() &&
+            ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(
+                Op1->getReg()) &&
             (Val & 0xFFFFFFFFULL) == Val)
           NVal &= 0x00000000FFFFFFFFULL;
 
@@ -3959,10 +3915,14 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       // reg->reg move.
       unsigned Reg1 = Op1->getReg();
       unsigned Reg2 = Op2->getReg();
-      if ((Reg1 == ARM64::SP && isGPR64Register(Reg2)) ||
-          (Reg2 == ARM64::SP && isGPR64Register(Reg1)) ||
-          (Reg1 == ARM64::WSP && isGPR32Register(Reg2)) ||
-          (Reg2 == ARM64::WSP && isGPR32Register(Reg1)))
+      if ((Reg1 == ARM64::SP &&
+           ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(Reg2)) ||
+          (Reg2 == ARM64::SP &&
+           ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(Reg1)) ||
+          (Reg1 == ARM64::WSP &&
+           ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(Reg2)) ||
+          (Reg2 == ARM64::WSP &&
+           ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(Reg1)))
         rewriteMOVRSP(Operands, getContext());
       else
         rewriteMOVR(Operands, getContext());
@@ -4009,7 +3969,8 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
           uint64_t Op3Val = Op3CE->getValue();
           uint64_t NewOp3Val = 0;
           uint64_t NewOp4Val = 0;
-          if (isGPR32Register(Op2->getReg())) {
+          if (ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(
+                  Op2->getReg())) {
             NewOp3Val = (32 - Op3Val) & 0x1f;
             NewOp4Val = 31 - Op3Val;
           } else {
@@ -4076,7 +4037,8 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
           uint64_t Op4Val = Op4CE->getValue();
 
           uint64_t NewOp3Val = 0;
-          if (isGPR32Register(Op1->getReg()))
+          if (ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(
+                  Op1->getReg()))
             NewOp3Val = (32 - Op3Val) & 0x1f;
           else
             NewOp3Val = (64 - Op3Val) & 0x3f;
@@ -4189,7 +4151,9 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   else if (NumOperands == 3 &&
            (Tok == "sxtb" || Tok == "uxtb" || Tok == "sxth" || Tok == "uxth")) {
     ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[1]);
-    if (Op->isReg() && isGPR64Register(Op->getReg())) {
+    if (Op->isReg() &&
+        ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(
+            Op->getReg())) {
       // The source register can be Wn here, but the matcher expects a
       // GPR64. Twiddle it here if necessary.
       ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[2]);
@@ -4208,8 +4172,10 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     ARM64Operand *ImmOp = static_cast<ARM64Operand *>(Operands[2]);
     if (RegOp->isReg() && ImmOp->isFPImm() &&
         ImmOp->getFPImm() == (unsigned)-1) {
-      unsigned zreg =
-          isFPR32Register(RegOp->getReg()) ? ARM64::WZR : ARM64::XZR;
+      unsigned zreg = ARM64MCRegisterClasses[ARM64::FPR32RegClassID].contains(
+                          RegOp->getReg())
+                          ? ARM64::WZR
+                          : ARM64::XZR;
       Operands[2] = ARM64Operand::CreateReg(zreg, false, Op->getStartLoc(),
                                             Op->getEndLoc(), getContext());
       delete ImmOp;
@@ -4317,8 +4283,9 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       MatchResult = Match_InvalidMemoryIndexed64;
       if (ErrorInfo) {
         ARM64Operand *PrevOp = (ARM64Operand *)Operands[ErrorInfo - 1];
-        if (PrevOp->isReg() && ARM64MCRegisterClasses[ARM64::GPR32RegClassID]
-                                   .contains(PrevOp->getReg()))
+        if (PrevOp->isReg() &&
+            ARM64MCRegisterClasses[ARM64::GPR32RegClassID].contains(
+                PrevOp->getReg()))
           MatchResult = Match_InvalidMemoryIndexed32;
       }
     }
