@@ -628,6 +628,187 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
   return MadeChange;
 }
 
+/// isExtractBitsCandidateUse - Check if the candidates could
+/// be combined with shift instruction, which includes:
+/// 1. Truncate instruction
+/// 2. And instruction and the imm is a mask of the low bits:
+/// imm & (imm+1) == 0
+bool isExtractBitsCandidateUse(Instruction *User) {
+  if (!isa<TruncInst>(User)) {
+    if (User->getOpcode() != Instruction::And ||
+        !isa<ConstantInt>(User->getOperand(1)))
+      return false;
+
+    unsigned Cimm = dyn_cast<ConstantInt>(User->getOperand(1))->getZExtValue();
+
+    if (Cimm & (Cimm + 1))
+      return false;
+  }
+  return true;
+}
+
+/// SinkShiftAndTruncate - sink both shift and truncate instruction
+/// to the use of truncate's BB.
+bool
+SinkShiftAndTruncate(BinaryOperator *ShiftI, Instruction *User, ConstantInt *CI,
+                     DenseMap<BasicBlock *, BinaryOperator *> &InsertedShifts,
+                     const TargetLowering &TLI) {
+  BasicBlock *UserBB = User->getParent();
+  DenseMap<BasicBlock *, CastInst *> InsertedTruncs;
+  TruncInst *TruncI = dyn_cast<TruncInst>(User);
+  bool MadeChange = false;
+
+  for (Value::user_iterator TruncUI = TruncI->user_begin(),
+                            TruncE = TruncI->user_end();
+       TruncUI != TruncE;) {
+
+    Use &TruncTheUse = TruncUI.getUse();
+    Instruction *TruncUser = cast<Instruction>(*TruncUI);
+    // Preincrement use iterator so we don't invalidate it.
+
+    ++TruncUI;
+
+    int ISDOpcode = TLI.InstructionOpcodeToISD(TruncUser->getOpcode());
+    if (!ISDOpcode)
+      continue;
+
+    // If the use is actually a legal node, there will not be an implicit
+    // truncate.
+    if (TLI.isOperationLegalOrCustom(ISDOpcode,
+                                     EVT::getEVT(TruncUser->getType())))
+      continue;
+
+    // Don't bother for PHI nodes.
+    if (isa<PHINode>(TruncUser))
+      continue;
+
+    BasicBlock *TruncUserBB = TruncUser->getParent();
+
+    if (UserBB == TruncUserBB)
+      continue;
+
+    BinaryOperator *&InsertedShift = InsertedShifts[TruncUserBB];
+    CastInst *&InsertedTrunc = InsertedTruncs[TruncUserBB];
+
+    if (!InsertedShift && !InsertedTrunc) {
+      BasicBlock::iterator InsertPt = TruncUserBB->getFirstInsertionPt();
+      // Sink the shift
+      if (ShiftI->getOpcode() == Instruction::AShr)
+        InsertedShift =
+            BinaryOperator::CreateAShr(ShiftI->getOperand(0), CI, "", InsertPt);
+      else
+        InsertedShift =
+            BinaryOperator::CreateLShr(ShiftI->getOperand(0), CI, "", InsertPt);
+
+      // Sink the trunc
+      BasicBlock::iterator TruncInsertPt = TruncUserBB->getFirstInsertionPt();
+      TruncInsertPt++;
+
+      InsertedTrunc = CastInst::Create(TruncI->getOpcode(), InsertedShift,
+                                       TruncI->getType(), "", TruncInsertPt);
+
+      MadeChange = true;
+
+      TruncTheUse = InsertedTrunc;
+    }
+  }
+  return MadeChange;
+}
+
+/// OptimizeExtractBits - sink the shift *right* instruction into user blocks if
+/// the uses could potentially be combined with this shift instruction and
+/// generate BitExtract instruction. It will only be applied if the architecture
+/// supports BitExtract instruction. Here is an example:
+/// BB1:
+///   %x.extract.shift = lshr i64 %arg1, 32
+/// BB2:
+///   %x.extract.trunc = trunc i64 %x.extract.shift to i16
+/// ==>
+///
+/// BB2:
+///   %x.extract.shift.1 = lshr i64 %arg1, 32
+///   %x.extract.trunc = trunc i64 %x.extract.shift.1 to i16
+///
+/// CodeGen will recoginze the pattern in BB2 and generate BitExtract
+/// instruction.
+/// Return true if any changes are made.
+static bool OptimizeExtractBits(BinaryOperator *ShiftI, ConstantInt *CI,
+                                const TargetLowering &TLI) {
+  BasicBlock *DefBB = ShiftI->getParent();
+
+  /// Only insert instructions in each block once.
+  DenseMap<BasicBlock *, BinaryOperator *> InsertedShifts;
+
+  bool shiftIsLegal = TLI.isTypeLegal(TLI.getValueType(ShiftI->getType()));
+
+  bool MadeChange = false;
+  for (Value::user_iterator UI = ShiftI->user_begin(), E = ShiftI->user_end();
+       UI != E;) {
+    Use &TheUse = UI.getUse();
+    Instruction *User = cast<Instruction>(*UI);
+    // Preincrement use iterator so we don't invalidate it.
+    ++UI;
+
+    // Don't bother for PHI nodes.
+    if (isa<PHINode>(User))
+      continue;
+
+    if (!isExtractBitsCandidateUse(User))
+      continue;
+
+    BasicBlock *UserBB = User->getParent();
+
+    if (UserBB == DefBB) {
+      // If the shift and truncate instruction are in the same BB. The use of
+      // the truncate(TruncUse) may still introduce another truncate if not
+      // legal. In this case, we would like to sink both shift and truncate
+      // instruction to the BB of TruncUse.
+      // for example:
+      // BB1:
+      // i64 shift.result = lshr i64 opnd, imm
+      // trunc.result = trunc shift.result to i16
+      //
+      // BB2:
+      //   ----> We will have an implicit truncate here if the architecture does
+      //   not have i16 compare.
+      // cmp i16 trunc.result, opnd2
+      //
+      if (isa<TruncInst>(User) && shiftIsLegal
+          // If the type of the truncate is legal, no trucate will be
+          // introduced in other basic blocks.
+          && (!TLI.isTypeLegal(TLI.getValueType(User->getType()))))
+        MadeChange =
+            SinkShiftAndTruncate(ShiftI, User, CI, InsertedShifts, TLI);
+
+      continue;
+    }
+    // If we have already inserted a shift into this block, use it.
+    BinaryOperator *&InsertedShift = InsertedShifts[UserBB];
+
+    if (!InsertedShift) {
+      BasicBlock::iterator InsertPt = UserBB->getFirstInsertionPt();
+
+      if (ShiftI->getOpcode() == Instruction::AShr)
+        InsertedShift =
+            BinaryOperator::CreateAShr(ShiftI->getOperand(0), CI, "", InsertPt);
+      else
+        InsertedShift =
+            BinaryOperator::CreateLShr(ShiftI->getOperand(0), CI, "", InsertPt);
+
+      MadeChange = true;
+    }
+
+    // Replace a use of the shift with a use of the new shift.
+    TheUse = InsertedShift;
+  }
+
+  // If we removed all uses, nuke the shift.
+  if (ShiftI->use_empty())
+    ShiftI->eraseFromParent();
+
+  return MadeChange;
+}
+
 namespace {
 class CodeGenPrepareFortifiedLibCalls : public SimplifyFortifiedLibCalls {
 protected:
@@ -3222,6 +3403,17 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I) {
     if (TLI)
       return OptimizeMemoryInst(I, SI->getOperand(1),
                                 SI->getOperand(0)->getType());
+    return false;
+  }
+
+  BinaryOperator *BinOp = dyn_cast<BinaryOperator>(I);
+
+  if (BinOp && (BinOp->getOpcode() == Instruction::AShr ||
+                BinOp->getOpcode() == Instruction::LShr)) {
+    ConstantInt *CI = dyn_cast<ConstantInt>(BinOp->getOperand(1));
+    if (TLI && CI && TLI->hasExtractBitsInsn())
+      return OptimizeExtractBits(BinOp, CI, *TLI);
+
     return false;
   }
 

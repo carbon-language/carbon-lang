@@ -1183,6 +1183,14 @@ static bool isBitfieldExtractOpFromAnd(SelectionDAG *CurDAG, SDNode *N,
     // Make sure to clamp the MSB so that we preserve the semantics of the
     // original operations.
     ClampMSB = true;
+  } else if (VT == MVT::i32 && Op0->getOpcode() == ISD::TRUNCATE &&
+             isOpcWithIntImmediate(Op0->getOperand(0).getNode(), ISD::SRL,
+                                   Srl_imm)) {
+    // If the shift result was truncated, we can still combine them.
+    Opd0 = Op0->getOperand(0).getOperand(0);
+
+    // Use the type of SRL node.
+    VT = Opd0->getValueType(0);
   } else if (isOpcWithIntImmediate(Op0, ISD::SRL, Srl_imm)) {
     Opd0 = Op0->getOperand(0);
   } else if (BiggerPattern) {
@@ -1277,8 +1285,19 @@ static bool isBitfieldExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
 
   // we're looking for a shift of a shift
   uint64_t Shl_imm = 0;
+  uint64_t Trunc_bits = 0;
   if (isOpcWithIntImmediate(N->getOperand(0).getNode(), ISD::SHL, Shl_imm)) {
     Opd0 = N->getOperand(0).getOperand(0);
+  } else if (VT == MVT::i32 && N->getOpcode() == ISD::SRL &&
+             N->getOperand(0).getNode()->getOpcode() == ISD::TRUNCATE) {
+    // We are looking for a shift of truncate. Truncate from i64 to i32 could
+    // be considered as setting high 32 bits as zero. Our strategy here is to
+    // always generate 64bit UBFM. This consistency will help the CSE pass
+    // later find more redundancy.
+    Opd0 = N->getOperand(0).getOperand(0);
+    Trunc_bits = Opd0->getValueType(0).getSizeInBits() - VT.getSizeInBits();
+    VT = Opd0->getValueType(0);
+    assert(VT == MVT::i64 && "the promoted type should be i64");
   } else if (BiggerPattern) {
     // Let's pretend a 0 shift left has been performed.
     // FIXME: Currently we limit this to the bigger pattern case,
@@ -1295,7 +1314,7 @@ static bool isBitfieldExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
   assert(Srl_imm > 0 && Srl_imm < VT.getSizeInBits() &&
          "bad amount in shift node!");
   // Note: The width operand is encoded as width-1.
-  unsigned Width = VT.getSizeInBits() - Srl_imm - 1;
+  unsigned Width = VT.getSizeInBits() - Trunc_bits - Srl_imm - 1;
   int sLSB = Srl_imm - Shl_imm;
   if (sLSB < 0)
     return false;
@@ -1354,8 +1373,23 @@ SDNode *ARM64DAGToDAGISel::SelectBitfieldExtractOp(SDNode *N) {
     return NULL;
 
   EVT VT = N->getValueType(0);
-  SDValue Ops[] = { Opd0, CurDAG->getTargetConstant(LSB, VT),
-                    CurDAG->getTargetConstant(MSB, VT) };
+
+  // If the bit extract operation is 64bit but the original type is 32bit, we
+  // need to add one EXTRACT_SUBREG.
+  if ((Opc == ARM64::SBFMXri || Opc == ARM64::UBFMXri) && VT == MVT::i32) {
+    SDValue Ops64[] = {Opd0, CurDAG->getTargetConstant(LSB, MVT::i64),
+                       CurDAG->getTargetConstant(MSB, MVT::i64)};
+
+    SDNode *BFM = CurDAG->getMachineNode(Opc, SDLoc(N), MVT::i64, Ops64);
+    SDValue SubReg = CurDAG->getTargetConstant(ARM64::sub_32, MVT::i32);
+    MachineSDNode *Node =
+        CurDAG->getMachineNode(TargetOpcode::EXTRACT_SUBREG, SDLoc(N), MVT::i32,
+                               SDValue(BFM, 0), SubReg);
+    return Node;
+  }
+
+  SDValue Ops[] = {Opd0, CurDAG->getTargetConstant(LSB, VT),
+                   CurDAG->getTargetConstant(MSB, VT)};
   return CurDAG->SelectNodeTo(N, Opc, VT, Ops, 3);
 }
 

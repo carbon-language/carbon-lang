@@ -1,3 +1,4 @@
+; RUN: opt -codegenprepare -mtriple=arm64-apple=ios -S -o - %s | FileCheck --check-prefix=OPT %s
 ; RUN: llc < %s -march=arm64 | FileCheck %s
 %struct.X = type { i8, i8, [2 x i8] }
 %struct.Y = type { i32, i8 }
@@ -403,4 +404,76 @@ define i64 @fct18(i32 %xor72) nounwind ssp {
   %conv82 = zext i32 %shr81 to i64
   %result = and i64 %conv82, 255
   ret i64 %result
+}
+
+; Using the access to the global array to keep the instruction and control flow.
+@first_ones = external global [65536 x i8]
+
+; Function Attrs: nounwind readonly ssp
+define i32 @fct19(i64 %arg1) nounwind readonly ssp  {
+; CHECK-LABEL: fct19:
+entry:
+  %x.sroa.1.0.extract.shift = lshr i64 %arg1, 16
+  %x.sroa.1.0.extract.trunc = trunc i64 %x.sroa.1.0.extract.shift to i16
+  %x.sroa.3.0.extract.shift = lshr i64 %arg1, 32
+  %x.sroa.5.0.extract.shift = lshr i64 %arg1, 48
+  %tobool = icmp eq i64 %x.sroa.5.0.extract.shift, 0
+  br i1 %tobool, label %if.end, label %if.then
+
+if.then:                                          ; preds = %entry
+  %arrayidx3 = getelementptr inbounds [65536 x i8]* @first_ones, i64 0, i64 %x.sroa.5.0.extract.shift
+  %0 = load i8* %arrayidx3, align 1
+  %conv = zext i8 %0 to i32
+  br label %return
+
+; OPT-LABEL: if.end
+if.end:                                           ; preds = %entry
+; OPT: lshr
+; CHECK: ubfm	[[REG1:x[0-9]+]], [[REG2:x[0-9]+]], #32, #47
+  %x.sroa.3.0.extract.trunc = trunc i64 %x.sroa.3.0.extract.shift to i16
+  %tobool6 = icmp eq i16 %x.sroa.3.0.extract.trunc, 0
+; CHECK: cbz
+  br i1 %tobool6, label %if.end13, label %if.then7
+
+; OPT-LABEL: if.then7
+if.then7:                                         ; preds = %if.end
+; OPT: lshr
+; "and" should be combined to "ubfm" while "ubfm" should be removed by cse. 
+; So neither of them should be in the assemble code. 
+; CHECK-NOT: and
+; CHECK-NOT: ubfm
+  %idxprom10 = and i64 %x.sroa.3.0.extract.shift, 65535
+  %arrayidx11 = getelementptr inbounds [65536 x i8]* @first_ones, i64 0, i64 %idxprom10
+  %1 = load i8* %arrayidx11, align 1
+  %conv12 = zext i8 %1 to i32
+  %add = add nsw i32 %conv12, 16
+  br label %return
+
+; OPT-LABEL: if.end13
+if.end13:                                         ; preds = %if.end
+; OPT: lshr
+; OPT: trunc
+; CHECK: ubfm	[[REG3:x[0-9]+]], [[REG4:x[0-9]+]], #16, #31
+  %tobool16 = icmp eq i16 %x.sroa.1.0.extract.trunc, 0
+; CHECK: cbz
+  br i1 %tobool16, label %return, label %if.then17
+
+; OPT-LABEL: if.then17
+if.then17:                                        ; preds = %if.end13
+; OPT: lshr
+; "and" should be combined to "ubfm" while "ubfm" should be removed by cse. 
+; So neither of them should be in the assemble code. 
+; CHECK-NOT: and
+; CHECK-NOT: ubfm
+  %idxprom20 = and i64 %x.sroa.1.0.extract.shift, 65535
+  %arrayidx21 = getelementptr inbounds [65536 x i8]* @first_ones, i64 0, i64 %idxprom20
+  %2 = load i8* %arrayidx21, align 1
+  %conv22 = zext i8 %2 to i32
+  %add23 = add nsw i32 %conv22, 32
+  br label %return
+
+return:                                           ; preds = %if.end13, %if.then17, %if.then7, %if.then
+; CHECK: ret
+  %retval.0 = phi i32 [ %conv, %if.then ], [ %add, %if.then7 ], [ %add23, %if.then17 ], [ 64, %if.end13 ]
+  ret i32 %retval.0
 }

@@ -438,6 +438,8 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   setDivIsWellDefined(true);
 
   RequireStrictAlign = StrictAlign;
+
+  setHasExtractBitsInsn(true);
 }
 
 void ARM64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
