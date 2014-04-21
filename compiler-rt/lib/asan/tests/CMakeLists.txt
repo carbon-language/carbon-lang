@@ -79,9 +79,9 @@ append_if(COMPILER_RT_HAS_LIBPTHREAD -lpthread
 
 # Compile source for the given architecture, using compiler
 # options in ${ARGN}, and add it to the object list.
-macro(asan_compile obj_list source arch)
+macro(asan_compile obj_list source arch kind)
   get_filename_component(basename ${source} NAME)
-  set(output_obj "${obj_list}.${basename}.${arch}.o")
+  set(output_obj "${obj_list}.${basename}.${arch}${kind}.o")
   get_target_flags_for_arch(${arch} TARGET_CFLAGS)
   set(COMPILE_DEPS ${ASAN_UNITTEST_HEADERS} ${ASAN_BLACKLIST_FILE})
   if(NOT COMPILER_RT_STANDALONE_BUILD)
@@ -95,7 +95,7 @@ endmacro()
 
 # Link ASan unit test for a given architecture from a set
 # of objects in with given linker flags.
-macro(add_asan_test test_suite test_name arch)
+macro(add_asan_test test_suite test_name arch kind)
   parse_arguments(TEST "OBJECTS;LINKFLAGS" "WITH_TEST_RUNTIME" ${ARGN})
   get_target_flags_for_arch(${arch} TARGET_LINK_FLAGS)
   set(TEST_DEPS ${TEST_OBJECTS})
@@ -142,32 +142,32 @@ endif()
 
 set(ASAN_BENCHMARKS_SOURCES
   ${COMPILER_RT_GTEST_SOURCE}
-  asan_benchmarks_test.cc)  
+  asan_benchmarks_test.cc)
 
 # Adds ASan unit tests and benchmarks for architecture.
-macro(add_asan_tests_for_arch arch)
+macro(add_asan_tests_for_arch_and_kind arch kind)
   # Instrumented tests.
   set(ASAN_INST_TEST_OBJECTS)
   foreach(src ${ASAN_INST_TEST_SOURCES})
-    asan_compile(ASAN_INST_TEST_OBJECTS ${src} ${arch}
-                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+    asan_compile(ASAN_INST_TEST_OBJECTS ${src} ${arch} ${kind}
+      ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} ${ARGN})
   endforeach()
   if (APPLE)
     # Add Mac-specific helper.
-    asan_compile(ASAN_INST_TEST_OBJECTS asan_mac_test_helpers.mm ${arch}
-                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} -ObjC)
+    asan_compile(ASAN_INST_TEST_OBJECTS asan_mac_test_helpers.mm ${arch} ${kind}
+                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} -ObjC ${ARGN})
   endif()
-  add_asan_test(AsanUnitTests "Asan-${arch}-Test" ${arch}
+  add_asan_test(AsanUnitTests "Asan-${arch}${kind}-Test" ${arch} ${kind}
                 OBJECTS ${ASAN_INST_TEST_OBJECTS}
                 LINKFLAGS ${ASAN_UNITTEST_INSTRUMENTED_LINKFLAGS})
   if(COMPILER_RT_BUILD_SHARED_ASAN)
-    add_asan_test(AsanUnitTests "Asan-${arch}-Dynamic-Test" ${arch}
+    add_asan_test(AsanUnitTests "Asan-${arch}${kind}-Dynamic-Test" ${arch} ${kind}
                   OBJECTS ${ASAN_INST_TEST_OBJECTS}
                   LINKFLAGS ${ASAN_DYNAMIC_UNITTEST_INSTRUMENTED_LINKFLAGS})
   endif()
 
   # Add static ASan runtime that will be linked with uninstrumented tests.
-  set(ASAN_TEST_RUNTIME RTAsanTest.${arch})
+  set(ASAN_TEST_RUNTIME RTAsanTest.${arch}${kind})
   if(APPLE)
     set(ASAN_TEST_RUNTIME_OBJECTS
       $<TARGET_OBJECTS:RTAsan.osx>
@@ -188,10 +188,10 @@ macro(add_asan_tests_for_arch arch)
   # Uninstrumented tests.
   set(ASAN_NOINST_TEST_OBJECTS)
   foreach(src ${ASAN_NOINST_TEST_SOURCES})
-    asan_compile(ASAN_NOINST_TEST_OBJECTS ${src} ${arch}
-                 ${ASAN_UNITTEST_COMMON_CFLAGS})
+    asan_compile(ASAN_NOINST_TEST_OBJECTS ${src} ${arch} ${kind}
+                 ${ASAN_UNITTEST_COMMON_CFLAGS} ${ARGN})
   endforeach()
-  add_asan_test(AsanUnitTests "Asan-${arch}-Noinst-Test" ${arch}
+  add_asan_test(AsanUnitTests "Asan-${arch}${kind}-Noinst-Test" ${arch} ${kind}
                 OBJECTS ${ASAN_NOINST_TEST_OBJECTS}
                 LINKFLAGS ${ASAN_UNITTEST_NOINST_LINKFLAGS}
                 WITH_TEST_RUNTIME)
@@ -199,14 +199,14 @@ macro(add_asan_tests_for_arch arch)
   # Benchmarks.
   set(ASAN_BENCHMARKS_OBJECTS)
   foreach(src ${ASAN_BENCHMARKS_SOURCES})
-    asan_compile(ASAN_BENCHMARKS_OBJECTS ${src} ${arch}
-                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+    asan_compile(ASAN_BENCHMARKS_OBJECTS ${src} ${arch} ${kind}
+                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} ${ARGN})
   endforeach()
-  add_asan_test(AsanBenchmarks "Asan-${arch}-Benchmark" ${arch}
+  add_asan_test(AsanBenchmarks "Asan-${arch}${kind}-Benchmark" ${arch} ${kind}
                 OBJECTS ${ASAN_BENCHMARKS_OBJECTS}
                 LINKFLAGS ${ASAN_UNITTEST_INSTRUMENTED_LINKFLAGS})
   if(COMPILER_RT_BUILD_SHARED_ASAN)
-    add_asan_test(AsanBenchmarks "Asan-${arch}-Dynamic-Benchmark" ${arch}
+    add_asan_test(AsanBenchmarks "Asan-${arch}${kind}-Dynamic-Benchmark" ${arch} ${kind}
                   OBJECTS ${ASAN_BENCHMARKS_OBJECTS}
                   LINKFLAGS ${ASAN_DYNAMIC_UNITTEST_INSTRUMENTED_LINKFLAGS})
   endif()
@@ -214,7 +214,9 @@ endmacro()
 
 if(COMPILER_RT_CAN_EXECUTE_TESTS)
   foreach(arch ${ASAN_SUPPORTED_ARCH})
-    add_asan_tests_for_arch(${arch})
+    add_asan_tests_for_arch_and_kind(${arch} "-inline")
+    add_asan_tests_for_arch_and_kind(${arch} "-with-calls"
+      -mllvm -asan-instrumentation-with-call-threshold=0)
   endforeach()
 endif()
 
