@@ -14,3 +14,5 @@ LIBRARYNAME = LLVMX86Disassembler
 CPP.Flags += -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
 include $(LEVEL)/Makefile.common
+
+.PHONY: $(PROJ_SRC_DIR)/X86DisassemblerDecoder.c
