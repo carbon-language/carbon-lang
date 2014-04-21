@@ -222,6 +222,7 @@ public:
     Id = static_cast<unsigned short>(I);
   }
   void setClangDecl(const clang::ValueDecl *VD) { Cvdecl = VD; }
+  void setDefinition(SExpr *E);
 
   template <class V> typename V::R_SExpr traverse(V &Visitor) {
     // This routine is only called for variable references.
@@ -316,7 +317,8 @@ private:
   SExprRef *Location;
 };
 
-void SExprRef::attach() {
+
+inline void SExprRef::attach() {
   if (!Ptr)
     return;
 
@@ -328,43 +330,47 @@ void SExprRef::attach() {
   }
 }
 
-void SExprRef::detach() {
+inline void SExprRef::detach() {
   if (Ptr && Ptr->opcode() == COP_Variable) {
     cast<Variable>(Ptr)->detachVar();
   }
 }
 
-SExprRef::SExprRef(SExpr *P) : Ptr(P) {
+inline SExprRef::SExprRef(SExpr *P) : Ptr(P) {
   attach();
 }
 
-SExprRef::~SExprRef() {
+inline SExprRef::~SExprRef() {
   detach();
 }
 
-void SExprRef::reset(SExpr *P) {
+inline void SExprRef::reset(SExpr *P) {
   detach();
   Ptr = P;
   attach();
 }
 
 
-Variable::Variable(VariableKind K, SExpr *D, const clang::ValueDecl *Cvd)
+inline Variable::Variable(VariableKind K, SExpr *D, const clang::ValueDecl *Cvd)
     : SExpr(COP_Variable), Definition(D), Cvdecl(Cvd),
       BlockID(0), Id(0),  NumUses(0) {
   Flags = K;
 }
 
-Variable::Variable(SExpr *D, const clang::ValueDecl *Cvd)
+inline Variable::Variable(SExpr *D, const clang::ValueDecl *Cvd)
     : SExpr(COP_Variable), Definition(D), Cvdecl(Cvd),
       BlockID(0), Id(0),  NumUses(0) {
   Flags = VK_Let;
 }
 
-Variable::Variable(const Variable &Vd, SExpr *D) // rewrite constructor
+inline Variable::Variable(const Variable &Vd, SExpr *D) // rewrite constructor
     : SExpr(Vd), Definition(D), Cvdecl(Vd.Cvdecl),
       BlockID(0), Id(0), NumUses(0) {
   Flags = Vd.kind();
+}
+
+inline void Variable::setDefinition(SExpr *E) {
+  Definition.reset(E);
 }
 
 void Future::force() {
@@ -375,6 +381,7 @@ void Future::force() {
     Location->reset(R);
   Status = FS_done;
 }
+
 
 // Placeholder for C++ expressions that cannot be represented in the TIL.
 class Undefined : public SExpr {

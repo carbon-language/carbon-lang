@@ -396,7 +396,12 @@ public:
 // Pretty printer for TIL expressions
 template <typename Self, typename StreamType>
 class PrettyPrinter {
+private:
+  bool Verbose;  // Print out additional information
+
 public:
+  PrettyPrinter(bool V = false) : Verbose(V) { }
+
   static void print(SExpr *E, StreamType &SS) {
     Self printer;
     printer.printSExpr(E, SS, Prec_MAX);
@@ -530,17 +535,21 @@ protected:
     SS << E->clangDecl()->getNameAsString();
   }
 
-  void printVariable(Variable *E, StreamType &SS, bool IsVarDecl = false) {
-    SS << E->name() << E->getBlockID() << "_" << E->getID();
-    if (IsVarDecl)
-      return;
-
-    SExpr *V = getCanonicalVal(E);
-    if (V != E) {
-      SS << "{";
-      printSExpr(V, SS, Prec_MAX);
-      SS << "}";
+  void printVariable(Variable *V, StreamType &SS, bool IsVarDecl = false) {
+    SExpr* E = nullptr;
+    if (!IsVarDecl) {
+      E = getCanonicalVal(V);
+      if (E != V) {
+        printSExpr(E, SS, Prec_Atom);
+        if (Verbose) {
+          SS << " /*";
+          SS << V->name() << V->getBlockID() << "_" << V->getID();
+          SS << "*/";
+        }
+        return;
+      }
     }
+    SS << V->name() << V->getBlockID() << "_" << V->getID();
   }
 
   void printFunction(Function *E, StreamType &SS, unsigned sugared = 0) {

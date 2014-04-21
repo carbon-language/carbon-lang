@@ -192,7 +192,9 @@ public:
   const CFG *getGraph() const { return CFGraph; }
   CFG *getGraph() { return CFGraph; }
 
-  const NamedDecl *getDecl() const { return cast<NamedDecl>(ACtx->getDecl()); }
+  const FunctionDecl *getDecl() const {
+    return dyn_cast<FunctionDecl>(ACtx->getDecl());
+  }
 
   const PostOrderCFGView *getSortedGraph() const { return SortedGraph; }
 
@@ -237,6 +239,10 @@ public:
     // FIXME: we don't always have a self-variable.
     SelfVar = new (Arena) til::Variable(til::Variable::VK_SFun);
   }
+  ~SExprBuilder() {
+    if (CallCtx)
+      delete CallCtx;
+  }
 
   // Translate a clang statement or expression to a TIL expression.
   // Also performs substitution of variables; Ctx provides the context.
@@ -251,7 +257,7 @@ public:
   }
 
   const til::SCFG *getCFG() const { return Scfg; }
-  til::SCFG *getCFF() { return Scfg; }
+  til::SCFG *getCFG() { return Scfg; }
 
 private:
   til::SExpr *translateDeclRefExpr(const DeclRefExpr *DRE,
@@ -265,6 +271,9 @@ private:
                                            CallingContext *Ctx);
   til::SExpr *translateUnaryOperator(const UnaryOperator *UO,
                                      CallingContext *Ctx);
+  til::SExpr *translateBinAssign(til::TIL_BinaryOpcode Op,
+                                 const BinaryOperator *BO,
+                                 CallingContext *Ctx);
   til::SExpr *translateBinaryOperator(const BinaryOperator *BO,
                                       CallingContext *Ctx);
   til::SExpr *translateCastExpr(const CastExpr *CE, CallingContext *Ctx);
@@ -320,7 +329,7 @@ private:
   // We implement the CFGVisitor API
   friend class CFGWalker;
 
-  void enterCFG(CFG *Cfg, const NamedDecl *D, const CFGBlock *First);
+  void enterCFG(CFG *Cfg, const FunctionDecl *D, const CFGBlock *First);
   void enterCFGBlock(const CFGBlock *B);
   bool visitPredecessors() { return true; }
   void handlePredecessor(const CFGBlock *Pred);
