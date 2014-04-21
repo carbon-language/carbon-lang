@@ -245,7 +245,7 @@ bool State::canAddInsnClass(unsigned InsnClass) const {
 
 
 const State &DFA::newState() {
-  auto IterPair = states.emplace();
+  auto IterPair = states.insert(State());
   assert(IterPair.second && "State already exists");
   return *IterPair.first;
 }
