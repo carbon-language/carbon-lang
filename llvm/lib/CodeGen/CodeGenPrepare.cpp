@@ -688,6 +688,293 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI) {
     }
     return true;
   }
+  // Lower all uses of llvm.safe.[us]{div|rem}...
+  if (II &&
+      (II->getIntrinsicID() == Intrinsic::safe_sdiv ||
+       II->getIntrinsicID() == Intrinsic::safe_udiv ||
+       II->getIntrinsicID() == Intrinsic::safe_srem ||
+       II->getIntrinsicID() == Intrinsic::safe_urem)) {
+    // Given
+    //   result_struct = type {iN, i1}
+    //   %R = call result_struct llvm.safe.sdiv.iN(iN %x, iN %y)
+    // Expand it to actual IR, which produces result to the same variable %R.
+    // First element of the result %R.1 is the result of division, second
+    // element shows whether the division was correct or not.
+    // If %y is 0, %R.1 is 0, %R.2 is 1.                            (1)
+    // If %x is minSignedValue and %y is -1, %R.1 is %x, %R.2 is 1. (2)
+    // In other cases %R.1 is (sdiv %x, %y), %R.2 is 0.             (3)
+    //
+    // Similar applies to srem, udiv, and urem builtins, except that in unsigned
+    // variants we don't check condition (2).
+
+    bool IsSigned;
+    BinaryOperator::BinaryOps Op;
+    switch (II->getIntrinsicID()) {
+      case Intrinsic::safe_sdiv:
+        IsSigned = true;
+        Op = Instruction::SDiv;
+        break;
+      case Intrinsic::safe_udiv:
+        IsSigned = false;
+        Op = Instruction::UDiv;
+        break;
+      case Intrinsic::safe_srem:
+        IsSigned = true;
+        Op = Instruction::SRem;
+        break;
+      case Intrinsic::safe_urem:
+        IsSigned = false;
+        Op = Instruction::URem;
+        break;
+      default:
+        llvm_unreachable("Only Div/Rem intrinsics are handled here.");
+    }
+
+    Value *LHS = II->getOperand(0), *RHS = II->getOperand(1);
+    bool DivWellDefined = TLI && TLI->isDivWellDefined();
+
+    bool ResultNeeded[2] = {false, false};
+    SmallVector<User*, 1> ResultsUsers[2];
+    bool BadCase = false;
+    for (User *U: II->users()) {
+      ExtractValueInst *EVI = dyn_cast<ExtractValueInst>(U);
+      if (!EVI || EVI->getNumIndices() > 1 || EVI->getIndices()[0] > 1) {
+        BadCase = true;
+        break;
+      }
+      ResultNeeded[EVI->getIndices()[0]] = true;
+      ResultsUsers[EVI->getIndices()[0]].push_back(U);
+    }
+    // Behave conservatively, if there is an unusual user of the results.
+    if (BadCase)
+      ResultNeeded[0] = ResultNeeded[1] = true;
+
+    // Early exit if non of the results is ever used.
+    if (!ResultNeeded[0] && !ResultNeeded[1]) {
+      II->eraseFromParent();
+      return true;
+    }
+
+    // Early exit if the second result (flag) isn't used and target
+    // div-instruction computes exactly what we want to get as the first result
+    // and never traps.
+    if (ResultNeeded[0] && !ResultNeeded[1] && DivWellDefined) {
+      BinaryOperator *Div = BinaryOperator::Create(Op, LHS, RHS);
+      Div->insertAfter(II);
+      for (User *U: ResultsUsers[0]) {
+        Instruction *UserInst = dyn_cast<Instruction>(U);
+        assert(UserInst && "Unexpected null-instruction");
+        UserInst->replaceAllUsesWith(Div);
+        UserInst->eraseFromParent();
+      }
+      II->eraseFromParent();
+      CurInstIterator = Div;
+      ModifiedDT = true;
+      return true;
+    }
+
+    // Check if the flag is used to jump out to a 'trap' block
+    // If it's the case, we want to use this block directly when we create
+    // branches after comparing with 0 and comparing with -1 (signed case).
+    // We can do it only iff we can track all the uses of the flag, i.e. the
+    // only users are EXTRACTVALUE-insns, and their users are conditional
+    // branches, targeting the same 'trap' basic block.
+    BasicBlock *TrapBB = nullptr;
+    bool DoRelinkTrap = true;
+    for (User *FlagU: ResultsUsers[1]) {
+      for (User *U: FlagU->users()) {
+        BranchInst *TrapBranch = dyn_cast<BranchInst>(U);
+        // If the user isn't a branch-insn, or it jumps to another BB, don't
+        // try to use TrapBB in the lowering.
+        if (!TrapBranch || (TrapBB && TrapBB != TrapBranch->getSuccessor(0))) {
+          DoRelinkTrap = false;
+          break;
+        }
+        TrapBB = TrapBranch->getSuccessor(0);
+      }
+    }
+    if (!TrapBB)
+      DoRelinkTrap = false;
+    // We want to reuse TrapBB if possible, because in that case we can avoid
+    // creating new basic blocks and thus overcomplicating the IR. However, if
+    // DIV instruction isn't well defined, we still need those blocks to model
+    // well-defined behaviour. Thus, we can't reuse TrapBB in this case.
+    if (!DivWellDefined)
+      DoRelinkTrap = false;
+
+    Value *MinusOne = Constant::getAllOnesValue(LHS->getType());
+    Value *Zero = Constant::getNullValue(LHS->getType());
+
+    // Split the original BB and create other basic blocks that will be used
+    // for checks.
+    BasicBlock *StartBB = II->getParent();
+    BasicBlock::iterator SplitPt = ++(BasicBlock::iterator(II));
+    BasicBlock *NextBB = StartBB->splitBasicBlock(SplitPt, "div.end");
+
+    BasicBlock *DivByZeroBB;
+    if (!DoRelinkTrap) {
+      DivByZeroBB = BasicBlock::Create(II->getContext(), "div.divz",
+                                       NextBB->getParent(), NextBB);
+      BranchInst::Create(NextBB, DivByZeroBB);
+    }
+    BasicBlock *DivBB = BasicBlock::Create(II->getContext(), "div.div",
+                                           NextBB->getParent(), NextBB);
+    BranchInst::Create(NextBB, DivBB);
+
+    // For signed variants, check the condition (2):
+    // LHS == SignedMinValue, RHS == -1.
+    Value *CmpMinusOne;
+    Value *CmpMinValue;
+    BasicBlock *ChkDivMinBB;
+    BasicBlock *DivMinBB;
+    Value *MinValue;
+    if (IsSigned) {
+      APInt SignedMinValue =
+        APInt::getSignedMinValue(LHS->getType()->getPrimitiveSizeInBits());
+      MinValue = Constant::getIntegerValue(LHS->getType(), SignedMinValue);
+      ChkDivMinBB = BasicBlock::Create(II->getContext(), "div.chkdivmin",
+                                       NextBB->getParent(), NextBB);
+      BranchInst::Create(NextBB, ChkDivMinBB);
+      if (!DoRelinkTrap) {
+        DivMinBB = BasicBlock::Create(II->getContext(), "div.divmin",
+                                      NextBB->getParent(), NextBB);
+        BranchInst::Create(NextBB, DivMinBB);
+      }
+      CmpMinusOne = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ,
+                                    RHS, MinusOne, "cmp.rhs.minus.one",
+                                    ChkDivMinBB->getTerminator());
+      CmpMinValue = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ,
+                                    LHS, MinValue, "cmp.lhs.signed.min",
+                                    ChkDivMinBB->getTerminator());
+      BinaryOperator *CmpSignedOvf = BinaryOperator::Create(Instruction::And,
+                                                            CmpMinusOne,
+                                                            CmpMinValue);
+      // Here we're interested in the case when both %x is TMin and %y is -1.
+      // In this case the result will overflow.
+      // If that's not the case, we can perform usual division. These blocks
+      // will be inserted after DivByZero, so the division will be safe.
+      CmpSignedOvf->insertBefore(ChkDivMinBB->getTerminator());
+      BranchInst::Create(DoRelinkTrap ? TrapBB : DivMinBB, DivBB, CmpSignedOvf,
+                         ChkDivMinBB->getTerminator());
+      ChkDivMinBB->getTerminator()->eraseFromParent();
+    }
+
+    // Check the condition (1):
+    // RHS == 0.
+    Value *CmpDivZero = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ,
+                                        RHS, Zero, "cmp.rhs.zero",
+                                        StartBB->getTerminator());
+
+    // If RHS != 0, we want to check condition (2) in signed case, or proceed
+    // to usual division in unsigned case.
+    BranchInst::Create(DoRelinkTrap ? TrapBB : DivByZeroBB,
+                       IsSigned ? ChkDivMinBB : DivBB, CmpDivZero,
+                       StartBB->getTerminator());
+    StartBB->getTerminator()->eraseFromParent();
+
+    // At the moment we have all the control flow created. We just need to
+    // insert DIV and PHI (if needed) to get the result value.
+    Instruction *DivRes, *FlagRes;
+    Instruction *InsPoint = nullptr;
+    if (ResultNeeded[0]) {
+      BinaryOperator *Div = BinaryOperator::Create(Op, LHS, RHS);
+      if (DivWellDefined) {
+        // The result value is the result of DIV operation placed right at the
+        // original place of the intrinsic.
+        Div->insertAfter(II);
+        DivRes = Div;
+      } else {
+        // The result is a PHI-node.
+        Div->insertBefore(DivBB->getTerminator());
+        PHINode *DivResPN =
+          PHINode::Create(LHS->getType(), IsSigned ? 3 : 2, "div.res.phi",
+                          NextBB->begin());
+        DivResPN->addIncoming(Div, DivBB);
+        DivResPN->addIncoming(Zero, DivByZeroBB);
+        if (IsSigned)
+          DivResPN->addIncoming(MinValue, DivMinBB);
+        DivRes = DivResPN;
+        InsPoint = DivResPN;
+      }
+    }
+
+    // Prepare a value for the second result (flag) if it is needed.
+    if (ResultNeeded[1] && !DoRelinkTrap) {
+      Type *FlagTy = II->getType()->getStructElementType(1);
+      PHINode *FlagResPN =
+        PHINode::Create(FlagTy, IsSigned ? 3 : 2, "div.flag.phi",
+                        NextBB->begin());
+      FlagResPN->addIncoming(Constant::getNullValue(FlagTy), DivBB);
+      FlagResPN->addIncoming(Constant::getAllOnesValue(FlagTy), DivByZeroBB);
+      if (IsSigned)
+        FlagResPN->addIncoming(Constant::getAllOnesValue(FlagTy), DivMinBB);
+      FlagRes = FlagResPN;
+      if (!InsPoint)
+        InsPoint = FlagRes;
+    }
+
+    // If possible, propagate the results to the user. Otherwise, create alloca,
+    // and create a struct with the results on stack.
+    if (!BadCase) {
+      if (ResultNeeded[0]) {
+        for (User *U: ResultsUsers[0]) {
+          Instruction *UserInst = dyn_cast<Instruction>(U);
+          assert(UserInst && "Unexpected null-instruction");
+          UserInst->replaceAllUsesWith(DivRes);
+          UserInst->eraseFromParent();
+        }
+      }
+      if (ResultNeeded[1]) {
+        for (User *FlagU: ResultsUsers[1]) {
+          Instruction *FlagUInst = dyn_cast<Instruction>(FlagU);
+          if (DoRelinkTrap) {
+            // Replace
+            //   %flag = extractvalue %intrinsic.res, 1
+            //   br i1 %flag, label %trap.bb, label %other.bb
+            // With
+            //   br label %other.bb
+            // We've already created checks that are pointing to %trap.bb, there
+            // is no need to have the same checks here.
+            for (User *U: FlagUInst->users()) {
+              BranchInst *TrapBranch = dyn_cast<BranchInst>(U);
+              BasicBlock *CurBB = TrapBranch->getParent();
+              BasicBlock *SuccessorBB = TrapBranch->getSuccessor(1);
+              CurBB->getTerminator()->eraseFromParent();
+              BranchInst::Create(SuccessorBB, CurBB);
+            }
+          } else {
+            FlagUInst->replaceAllUsesWith(FlagRes);
+          }
+          dyn_cast<Instruction>(FlagUInst)->eraseFromParent();
+        }
+      }
+    } else {
+      // Create alloca, store our new values to it, and then load the final
+      // result from it.
+      Constant *Idx0 = ConstantInt::get(Type::getInt32Ty(II->getContext()), 0);
+      Constant *Idx1 = ConstantInt::get(Type::getInt32Ty(II->getContext()), 1);
+      Value *Idxs_DivRes[2] = {Idx0, Idx0};
+      Value *Idxs_FlagRes[2] = {Idx0, Idx1};
+      Value *NewRes = new llvm::AllocaInst(II->getType(), 0, "div.res.ptr", II);
+      Instruction *ResDivAddr = GetElementPtrInst::Create(NewRes, Idxs_DivRes);
+      Instruction *ResFlagAddr =
+        GetElementPtrInst::Create(NewRes, Idxs_FlagRes);
+      ResDivAddr->insertAfter(InsPoint);
+      ResFlagAddr->insertAfter(ResDivAddr);
+      StoreInst *StoreResDiv = new StoreInst(DivRes, ResDivAddr);
+      StoreInst *StoreResFlag = new StoreInst(FlagRes, ResFlagAddr);
+      StoreResDiv->insertAfter(ResFlagAddr);
+      StoreResFlag->insertAfter(StoreResDiv);
+      LoadInst *LoadRes = new LoadInst(NewRes, "div.res");
+      LoadRes->insertAfter(StoreResFlag);
+      II->replaceAllUsesWith(LoadRes);
+    }
+
+    II->eraseFromParent();
+    CurInstIterator = StartBB->end();
+    ModifiedDT = true;
+    return true;
+  }
 
   if (II && TLI) {
     SmallVector<Value*, 2> PtrOps;
