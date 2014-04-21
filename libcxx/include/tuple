@@ -268,17 +268,8 @@ public:
                                 >::value)),
        "Attempted to construct a reference element in a tuple with an rvalue");}
 
-    _LIBCPP_INLINE_VISIBILITY
-    _LIBCPP_CONSTEXPR_AFTER_CXX11
-    __tuple_leaf(const __tuple_leaf& __t) _NOEXCEPT_(is_nothrow_copy_constructible<_Hp>::value)
-        : value(__t.get())
-        {static_assert(!is_rvalue_reference<_Hp>::value, "Can not copy a tuple with rvalue reference member");}
-
-    _LIBCPP_INLINE_VISIBILITY
-    _LIBCPP_CONSTEXPR_AFTER_CXX11
-    __tuple_leaf(__tuple_leaf&& __t) _NOEXCEPT_(is_nothrow_move_constructible<_Hp>::value)
-        : value(_VSTD::forward<_Hp>(__t.get()))
-        {}
+    __tuple_leaf(const __tuple_leaf& __t) = default;
+    __tuple_leaf(__tuple_leaf&& __t) = default;
 
     template <class _Tp>
         _LIBCPP_INLINE_VISIBILITY
