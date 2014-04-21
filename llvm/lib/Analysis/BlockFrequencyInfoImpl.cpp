@@ -21,12 +21,12 @@ using namespace llvm;
 
 //===----------------------------------------------------------------------===//
 //
-// PositiveFloat implementation.
+// UnsignedFloat implementation.
 //
 //===----------------------------------------------------------------------===//
 #ifndef _MSC_VER
-const int32_t PositiveFloatBase::MaxExponent;
-const int32_t PositiveFloatBase::MinExponent;
+const int32_t UnsignedFloatBase::MaxExponent;
+const int32_t UnsignedFloatBase::MinExponent;
 #endif
 
 static void appendDigit(std::string &Str, unsigned D) {
@@ -55,22 +55,22 @@ static bool doesRoundUp(char Digit) {
 }
 
 static std::string toStringAPFloat(uint64_t D, int E, unsigned Precision) {
-  assert(E >= PositiveFloatBase::MinExponent);
-  assert(E <= PositiveFloatBase::MaxExponent);
+  assert(E >= UnsignedFloatBase::MinExponent);
+  assert(E <= UnsignedFloatBase::MaxExponent);
 
   // Find a new E, but don't let it increase past MaxExponent.
-  int LeadingZeros = PositiveFloatBase::countLeadingZeros64(D);
-  int NewE = std::min(PositiveFloatBase::MaxExponent, E + 63 - LeadingZeros);
+  int LeadingZeros = UnsignedFloatBase::countLeadingZeros64(D);
+  int NewE = std::min(UnsignedFloatBase::MaxExponent, E + 63 - LeadingZeros);
   int Shift = 63 - (NewE - E);
   assert(Shift <= LeadingZeros);
-  assert(Shift == LeadingZeros || NewE == PositiveFloatBase::MaxExponent);
+  assert(Shift == LeadingZeros || NewE == UnsignedFloatBase::MaxExponent);
   D <<= Shift;
   E = NewE;
 
   // Check for a denormal.
   unsigned AdjustedE = E + 16383;
   if (!(D >> 63)) {
-    assert(E == PositiveFloatBase::MaxExponent);
+    assert(E == UnsignedFloatBase::MaxExponent);
     AdjustedE = 0;
   }
 
@@ -92,7 +92,7 @@ static std::string stripTrailingZeros(const std::string &Float) {
   return Float.substr(0, NonZero + 1);
 }
 
-std::string PositiveFloatBase::toString(uint64_t D, int16_t E, int Width,
+std::string UnsignedFloatBase::toString(uint64_t D, int16_t E, int Width,
                                         unsigned Precision) {
   if (!D)
     return "0.0";
@@ -203,12 +203,12 @@ std::string PositiveFloatBase::toString(uint64_t D, int16_t E, int Width,
   return stripTrailingZeros(std::string(Carry, '1') + Str.substr(0, Truncate));
 }
 
-raw_ostream &PositiveFloatBase::print(raw_ostream &OS, uint64_t D, int16_t E,
+raw_ostream &UnsignedFloatBase::print(raw_ostream &OS, uint64_t D, int16_t E,
                                       int Width, unsigned Precision) {
   return OS << toString(D, E, Width, Precision);
 }
 
-void PositiveFloatBase::dump(uint64_t D, int16_t E, int Width) {
+void UnsignedFloatBase::dump(uint64_t D, int16_t E, int Width) {
   print(dbgs(), D, E, Width, 0) << "[" << Width << ":" << D << "*2^" << E
                                 << "]";
 }
@@ -222,7 +222,7 @@ getRoundedFloat(uint64_t N, bool ShouldRound, int64_t Shift) {
   return std::make_pair(N, Shift);
 }
 
-std::pair<uint64_t, int16_t> PositiveFloatBase::divide64(uint64_t Dividend,
+std::pair<uint64_t, int16_t> UnsignedFloatBase::divide64(uint64_t Dividend,
                                                          uint64_t Divisor) {
   // Input should be sanitized.
   assert(Divisor);
@@ -273,7 +273,7 @@ std::pair<uint64_t, int16_t> PositiveFloatBase::divide64(uint64_t Dividend,
   return getRoundedFloat(Quotient, Dividend >= getHalf(Divisor), Shift);
 }
 
-std::pair<uint64_t, int16_t> PositiveFloatBase::multiply64(uint64_t L,
+std::pair<uint64_t, int16_t> UnsignedFloatBase::multiply64(uint64_t L,
                                                            uint64_t R) {
   // Separate into two 32-bit digits (U.L).
   uint64_t UL = L >> 32, LL = L & UINT32_MAX, UR = R >> 32, LR = R & UINT32_MAX;
@@ -335,10 +335,10 @@ BlockMass &BlockMass::operator*=(const BranchProbability &P) {
   return *this;
 }
 
-PositiveFloat<uint64_t> BlockMass::toFloat() const {
+UnsignedFloat<uint64_t> BlockMass::toFloat() const {
   if (isFull())
-    return PositiveFloat<uint64_t>(1, 0);
-  return PositiveFloat<uint64_t>(getMass() + 1, -64);
+    return UnsignedFloat<uint64_t>(1, 0);
+  return UnsignedFloat<uint64_t>(getMass() + 1, -64);
 }
 
 void BlockMass::dump() const { print(dbgs()); }
@@ -709,11 +709,8 @@ void BlockFrequencyInfoImplBase::addLoopSuccessorsToDist(
 
 /// \brief Get the maximum allowed loop scale.
 ///
-/// Gives the maximum number of estimated iterations allowed for a loop.
-/// Downstream users have trouble with very large numbers (even within
-/// 64-bits).  Perhaps they can be changed to use PositiveFloat.
-///
-/// TODO: change downstream users so that this can be increased or removed.
+/// Gives the maximum number of estimated iterations allowed for a loop.  Very
+/// large numbers cause problems downstream (even within 64-bits).
 static Float getMaxLoopScale() { return Float(1, 12); }
 
 /// \brief Compute the loop scale for a loop.
