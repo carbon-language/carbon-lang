@@ -3703,6 +3703,21 @@ INTERCEPTOR(int, xdr_string, __sanitizer_XDR *xdrs, char **p,
 #define INIT_XDR
 #endif  // SANITIZER_INTERCEPT_XDR
 
+#if SANITIZER_INTERCEPT_TSEARCH
+INTERCEPTOR(void *, tsearch, void *key, void **rootp,
+            int (*compar)(const void *, const void *)) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, tsearch, key, rootp, compar);
+  void *res = REAL(tsearch)(key, rootp, compar);
+  if (res && *(void **)res == key)
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, res, sizeof(void *));
+  return res;
+}
+#define INIT_TSEARCH COMMON_INTERCEPT_FUNCTION(tsearch);
+#else
+#define INIT_TSEARCH
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -3832,5 +3847,6 @@ INTERCEPTOR(int, xdr_string, __sanitizer_XDR *xdrs, char **p,
   INIT_AEABI_MEM;                          \
   INIT___BZERO;                            \
   INIT_FTIME;                              \
-  INIT_XDR;
+  INIT_XDR;                                \
+  INIT_TSEARCH;
 /**/
