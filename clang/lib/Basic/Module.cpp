@@ -26,12 +26,12 @@ using namespace clang;
 
 Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
                const FileEntry *File, bool IsFramework, bool IsExplicit)
-  : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), ModuleMap(File),
-    Umbrella(), ASTFile(0), IsAvailable(true), IsFromModuleFile(false),
-    IsFramework(IsFramework), IsExplicit(IsExplicit), IsSystem(false),
-    IsExternC(false), InferSubmodules(false), InferExplicitSubmodules(false),
-    InferExportWildcard(false), ConfigMacrosExhaustive(false),
-    NameVisibility(Hidden) {
+    : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), ModuleMap(File),
+      Umbrella(), ASTFile(0), IsMissingRequirement(false), IsAvailable(true),
+      IsFromModuleFile(false), IsFramework(IsFramework), IsExplicit(IsExplicit),
+      IsSystem(false), IsExternC(false), InferSubmodules(false),
+      InferExplicitSubmodules(false), InferExportWildcard(false),
+      ConfigMacrosExhaustive(false), NameVisibility(Hidden) {
   if (Parent) {
     if (!Parent->isAvailable())
       IsAvailable = false;
