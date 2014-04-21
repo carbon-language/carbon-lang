@@ -52,7 +52,7 @@ extern "C" void LLVMInitializeHexagonTarget() {
 }
 
 static ScheduleDAGInstrs *createVLIWMachineSched(MachineSchedContext *C) {
-  return new VLIWMachineScheduler(C, new ConvergingVLIWScheduler());
+  return new VLIWMachineScheduler(C, make_unique<ConvergingVLIWScheduler>());
 }
 
 static MachineSchedRegistry

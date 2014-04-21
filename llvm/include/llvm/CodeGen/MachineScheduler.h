@@ -81,6 +81,8 @@
 #include "llvm/CodeGen/RegisterPressure.h"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 
+#include <memory>
+
 namespace llvm {
 
 extern cl::opt<bool> ForceTopDown;
@@ -221,14 +223,14 @@ public:
 class ScheduleDAGMI : public ScheduleDAGInstrs {
 protected:
   AliasAnalysis *AA;
-  MachineSchedStrategy *SchedImpl;
+  std::unique_ptr<MachineSchedStrategy> SchedImpl;
 
   /// Topo - A topological ordering for SUnits which permits fast IsReachable
   /// and similar queries.
   ScheduleDAGTopologicalSort Topo;
 
   /// Ordered list of DAG postprocessing steps.
-  std::vector<ScheduleDAGMutation*> Mutations;
+  std::vector<std::unique_ptr<ScheduleDAGMutation>> Mutations;
 
   /// The top of the unscheduled zone.
   MachineBasicBlock::iterator CurrentTop;
@@ -246,17 +248,19 @@ protected:
   unsigned NumInstrsScheduled;
 #endif
 public:
-  ScheduleDAGMI(MachineSchedContext *C, MachineSchedStrategy *S, bool IsPostRA):
-    ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, IsPostRA,
-                      /*RemoveKillFlags=*/IsPostRA, C->LIS),
-    AA(C->AA), SchedImpl(S), Topo(SUnits, &ExitSU), CurrentTop(),
-    CurrentBottom(), NextClusterPred(nullptr), NextClusterSucc(nullptr) {
+  ScheduleDAGMI(MachineSchedContext *C, std::unique_ptr<MachineSchedStrategy> S,
+                bool IsPostRA)
+      : ScheduleDAGInstrs(*C->MF, *C->MLI, *C->MDT, IsPostRA,
+                          /*RemoveKillFlags=*/IsPostRA, C->LIS),
+        AA(C->AA), SchedImpl(std::move(S)), Topo(SUnits, &ExitSU), CurrentTop(),
+        CurrentBottom(), NextClusterPred(nullptr), NextClusterSucc(nullptr) {
 #ifndef NDEBUG
     NumInstrsScheduled = 0;
 #endif
   }
 
-  virtual ~ScheduleDAGMI();
+  // Provide a vtable anchor
+  ~ScheduleDAGMI() override;
 
   /// Return true if this DAG supports VReg liveness and RegPressure.
   virtual bool hasVRegLiveness() const { return false; }
@@ -266,8 +270,8 @@ public:
   /// building and before MachineSchedStrategy initialization.
   ///
   /// ScheduleDAGMI takes ownership of the Mutation object.
-  void addMutation(ScheduleDAGMutation *Mutation) {
-    Mutations.push_back(Mutation);
+  void addMutation(std::unique_ptr<ScheduleDAGMutation> Mutation) {
+    Mutations.push_back(std::move(Mutation));
   }
 
   /// \brief True if an edge can be added from PredSU to SuccSU without creating
@@ -375,11 +379,12 @@ protected:
   RegPressureTracker BotRPTracker;
 
 public:
-  ScheduleDAGMILive(MachineSchedContext *C, MachineSchedStrategy *S):
-    ScheduleDAGMI(C, S, /*IsPostRA=*/false), RegClassInfo(C->RegClassInfo),
-    DFSResult(nullptr), ShouldTrackPressure(false), RPTracker(RegPressure),
-    TopRPTracker(TopPressure), BotRPTracker(BotPressure)
-  {}
+  ScheduleDAGMILive(MachineSchedContext *C,
+                    std::unique_ptr<MachineSchedStrategy> S)
+      : ScheduleDAGMI(C, std::move(S), /*IsPostRA=*/false),
+        RegClassInfo(C->RegClassInfo), DFSResult(nullptr),
+        ShouldTrackPressure(false), RPTracker(RegPressure),
+        TopRPTracker(TopPressure), BotRPTracker(BotPressure) {}
 
   virtual ~ScheduleDAGMILive();
 
