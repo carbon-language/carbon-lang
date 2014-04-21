@@ -39,19 +39,20 @@ struct NoOpFunctionPass {
 
 } // End anonymous namespace.
 
-// FIXME: Factor all of the parsing logic into a .def file that we include
-// under different macros.
 static bool isModulePassName(StringRef Name) {
   if (Name == "no-op-module") return true;
-  if (Name == "print") return true;
-  if (Name == "print-cg") return true;
+
+#define MODULE_PASS(NAME, CREATE_PASS) if (Name == NAME) return true;
+#include "PassRegistry.def"
 
   return false;
 }
 
 static bool isFunctionPassName(StringRef Name) {
   if (Name == "no-op-function") return true;
-  if (Name == "print") return true;
+
+#define FUNCTION_PASS(NAME, CREATE_PASS) if (Name == NAME) return true;
+#include "PassRegistry.def"
 
   return false;
 }
@@ -61,14 +62,14 @@ static bool parseModulePassName(ModulePassManager &MPM, StringRef Name) {
     MPM.addPass(NoOpModulePass());
     return true;
   }
-  if (Name == "print") {
-    MPM.addPass(PrintModulePass(dbgs()));
-    return true;
+
+#define MODULE_PASS(NAME, CREATE_PASS)                                         \
+  if (Name == NAME) {                                                          \
+    MPM.addPass(CREATE_PASS);                                                  \
+    return true;                                                               \
   }
-  if (Name == "print-cg") {
-    MPM.addPass(LazyCallGraphPrinterPass(dbgs()));
-    return true;
-  }
+#include "PassRegistry.def"
+
   return false;
 }
 
@@ -77,10 +78,14 @@ static bool parseFunctionPassName(FunctionPassManager &FPM, StringRef Name) {
     FPM.addPass(NoOpFunctionPass());
     return true;
   }
-  if (Name == "print") {
-    FPM.addPass(PrintFunctionPass(dbgs()));
-    return true;
+
+#define FUNCTION_PASS(NAME, CREATE_PASS)                                       \
+  if (Name == NAME) {                                                          \
+    FPM.addPass(CREATE_PASS);                                                  \
+    return true;                                                               \
   }
+#include "PassRegistry.def"
+
   return false;
 }
 

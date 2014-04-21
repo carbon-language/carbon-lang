@@ -1,0 +1,30 @@
+//===- PassRegistry.def - Registry of passes --------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file is used as the registry of passes that are part of the core LLVM
+// libraries. This file describes both transformation passes and analyses
+// Analyses are registered while transformation passes have names registered
+// that can be used when providing a textual pass pipeline.
+//
+//===----------------------------------------------------------------------===//
+
+// NOTE: NO INCLUDE GUARD DESIRED!
+
+#ifndef MODULE_PASS
+#define MODULE_PASS(NAME, CREATE_PASS)
+#endif
+MODULE_PASS("print", PrintModulePass(dbgs()))
+MODULE_PASS("print-cg", LazyCallGraphPrinterPass(dbgs()))
+#undef MODULE_PASS
+
+#ifndef FUNCTION_PASS
+#define FUNCTION_PASS(NAME, CREATE_PASS)
+#endif
+FUNCTION_PASS("print", PrintFunctionPass(dbgs()))
+#undef FUNCTION_PASS
