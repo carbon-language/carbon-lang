@@ -17,7 +17,7 @@ class AssertingInferiorTestCase(TestBase):
         self.inferior_asserting()
 
     @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly'
-    @unittest2.expectedFailure("rdar://15367233")
+    @unittest2.expectedFailure("rdar://15367233") # XPASS on FreeBSD w/ Clang 3.4 and libc++
     def test_inferior_asserting_dwarf(self):
         """Test that lldb reliably catches the inferior asserting (command)."""
         self.buildDwarf()
@@ -70,7 +70,7 @@ class AssertingInferiorTestCase(TestBase):
         self.inferior_asserting_step()
 
     @expectedFailurei386 # llvm.org/pr17384: lldb needs to be aware of linux-vdso.so to unwind stacks properly
-    @unittest2.expectedFailure("rdar://15367233")
+    @unittest2.expectedFailure("rdar://15367233") # XPASS on FreeBSD w/ Clang 3.4 and libc++
     def test_inferior_asserting_step(self):
         """Test that lldb functions correctly after stepping through a call to assert()."""
         self.buildDwarf()
