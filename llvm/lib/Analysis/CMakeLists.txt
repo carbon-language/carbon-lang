@@ -7,6 +7,7 @@ add_llvm_library(LLVMAnalysis
   Analysis.cpp
   BasicAliasAnalysis.cpp
   BlockFrequencyInfo.cpp
+  BlockFrequencyInfoImpl.cpp
   BranchProbabilityInfo.cpp
   CFG.cpp
   CFGPrinter.cpp
