@@ -1762,10 +1762,7 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
 
   // If this reference is in an @implementation, check for 'private' methods.
   if (!Getter)
-    if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
-      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-        if (ObjCImplementationDecl *ImpDecl = ClassDecl->getImplementation())
-          Getter = ImpDecl->getClassMethod(Sel);
+    Getter = IFace->lookupPrivateClassMethod(Sel);
 
   if (Getter) {
     // FIXME: refactor/share with ActOnMemberReference().
@@ -1784,10 +1781,7 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
   if (!Setter) {
     // If this reference is in an @implementation, also check for 'private'
     // methods.
-    if (ObjCMethodDecl *CurMeth = getCurMethodDecl())
-      if (ObjCInterfaceDecl *ClassDecl = CurMeth->getClassInterface())
-        if (ObjCImplementationDecl *ImpDecl = ClassDecl->getImplementation())
-          Setter = ImpDecl->getClassMethod(SetterSel);
+    Setter = IFace->lookupPrivateClassMethod(SetterSel);
   }
   // Look through local category implementations associated with the class.
   if (!Setter)
