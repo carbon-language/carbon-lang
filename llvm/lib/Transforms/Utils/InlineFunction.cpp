@@ -586,15 +586,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       if (CS.isByValArgument(ArgNo)) {
         ActualArg = HandleByValArgument(ActualArg, TheCall, CalledFunc, IFI,
                                         CalledFunc->getParamAlignment(ArgNo+1));
- 
-        // Calls that we inline may use the new alloca, so we need to clear
-        // their 'tail' flags if HandleByValArgument introduced a new alloca and
-        // the callee has calls.
-        if (ActualArg != *AI) {
-          MustClearTailCallFlags = true;
+        if (ActualArg != *AI)
           ByValInit.push_back(std::make_pair(ActualArg, (Value*) *AI));
-        }
-
       }
 
       VMap[I] = ActualArg;

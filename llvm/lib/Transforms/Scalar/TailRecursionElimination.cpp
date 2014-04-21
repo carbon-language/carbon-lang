@@ -204,6 +204,15 @@ bool TailCallElim::runOnFunction(Function &F) {
     }
   }
 
+  // If any byval or inalloca args are captured, exit. They are also allocated
+  // in our stack frame.
+  for (Argument &Arg : F.args()) {
+    if (Arg.hasByValOrInAllocaAttr())
+      PointerMayBeCaptured(&Arg, &ACT);
+    if (ACT.Captured)
+      return false;
+  }
+
   // Second pass, change any tail recursive calls to loops.
   //
   // FIXME: The code generator produces really bad code when an 'escaping

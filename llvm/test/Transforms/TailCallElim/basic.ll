@@ -143,3 +143,11 @@ cond_false:
   call void @noarg()
   ret i32* null
 }
+
+; Don't tail call if a byval arg is captured.
+define void @test9(i32* byval %a) {
+; CHECK-LABEL: define void @test9(
+; CHECK: {{^ *}}call void @use(
+  call void @use(i32* %a)
+  ret void
+}
