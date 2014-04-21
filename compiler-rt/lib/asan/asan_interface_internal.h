@@ -135,6 +135,8 @@ extern "C" {
   SANITIZER_INTERFACE_ATTRIBUTE void __asan_store4(uptr p);
   SANITIZER_INTERFACE_ATTRIBUTE void __asan_store8(uptr p);
   SANITIZER_INTERFACE_ATTRIBUTE void __asan_store16(uptr p);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_loadN(uptr p, uptr size);
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_storeN(uptr p, uptr size);
 }  // extern "C"
 
 #endif  // ASAN_INTERFACE_INTERNAL_H

@@ -381,9 +381,10 @@ ASAN_REPORT_ERROR_N(store, true)
     uptr sp = MEM_TO_SHADOW(addr);                                             \
     uptr s = size <= SHADOW_GRANULARITY ? *reinterpret_cast<u8 *>(sp)          \
                                         : *reinterpret_cast<u16 *>(sp);        \
-    if (s) {                                                                   \
-      if (size >= SHADOW_GRANULARITY ||                                        \
-          ((s8)((addr & (SHADOW_GRANULARITY - 1)) + size - 1)) >= (s8)s) {     \
+    if (UNLIKELY(s)) {                                                         \
+      if (UNLIKELY(size >= SHADOW_GRANULARITY ||                               \
+                   ((s8)((addr & (SHADOW_GRANULARITY - 1)) + size - 1)) >=     \
+                       (s8)s)) {                                               \
         if (__asan_test_only_reported_buggy_pointer) {                         \
           *__asan_test_only_reported_buggy_pointer = addr;                     \
         } else {                                                               \
@@ -404,6 +405,22 @@ ASAN_MEMORY_ACCESS_CALLBACK(store, true, 2)
 ASAN_MEMORY_ACCESS_CALLBACK(store, true, 4)
 ASAN_MEMORY_ACCESS_CALLBACK(store, true, 8)
 ASAN_MEMORY_ACCESS_CALLBACK(store, true, 16)
+
+extern "C"
+NOINLINE INTERFACE_ATTRIBUTE void __asan_loadN(uptr addr, uptr size) {
+  if (__asan_region_is_poisoned(addr, size)) {
+    GET_CALLER_PC_BP_SP;
+    __asan_report_error(pc, bp, sp, addr, false, size);
+  }
+}
+
+extern "C"
+NOINLINE INTERFACE_ATTRIBUTE void __asan_storeN(uptr addr, uptr size) {
+  if (__asan_region_is_poisoned(addr, size)) {
+    GET_CALLER_PC_BP_SP;
+    __asan_report_error(pc, bp, sp, addr, true, size);
+  }
+}
 
 // Force the linker to keep the symbols for various ASan interface functions.
 // We want to keep those in the executable in order to let the instrumented
