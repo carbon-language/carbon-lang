@@ -365,7 +365,8 @@ struct AddressSanitizer : public FunctionPass {
   Function *AsanErrorCallback[2][kNumberOfAccessSizes];
   Function *AsanMemoryAccessCallback[2][kNumberOfAccessSizes];
   // This array is indexed by AccessIsWrite.
-  Function *AsanErrorCallbackSized[2];
+  Function *AsanErrorCallbackSized[2],
+           *AsanMemoryAccessCallbackSized[2];
   InlineAsm *EmptyAsm;
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
 
@@ -824,8 +825,12 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
   size_t AccessSizeIndex = TypeSizeToSizeIndex(TypeSize);
 
   if (UseCalls) {
-    IRB.CreateCall(AsanMemoryAccessCallback[IsWrite][AccessSizeIndex],
-                   AddrLong);
+    if (SizeArgument)
+      IRB.CreateCall2(AsanMemoryAccessCallbackSized[IsWrite], AddrLong,
+                      SizeArgument);
+    else
+      IRB.CreateCall(AsanMemoryAccessCallback[IsWrite][AccessSizeIndex],
+                     AddrLong);
     return;
   }
 
@@ -1148,6 +1153,13 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
               kAsanReportLoadN, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
   AsanErrorCallbackSized[1] = checkInterfaceFunction(M.getOrInsertFunction(
               kAsanReportStoreN, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+
+  AsanMemoryAccessCallbackSized[0] = checkInterfaceFunction(
+      M.getOrInsertFunction(ClMemoryAccessCallbackPrefix + "loadN",
+                            IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+  AsanMemoryAccessCallbackSized[1] = checkInterfaceFunction(
+      M.getOrInsertFunction(ClMemoryAccessCallbackPrefix + "storeN",
+                            IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
 
   AsanHandleNoReturnFunc = checkInterfaceFunction(M.getOrInsertFunction(
       kAsanHandleNoReturnName, IRB.getVoidTy(), NULL));
