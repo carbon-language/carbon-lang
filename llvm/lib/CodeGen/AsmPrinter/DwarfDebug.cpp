@@ -563,14 +563,13 @@ DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit *TheCU,
 
   // Collect arguments for current function.
   if (LScopes.isCurrentFunctionScope(Scope)) {
-    for (DbgVariable *ArgDV : CurrentFnArguments)
-      if (ArgDV)
-        if (DIE *Arg =
-                TheCU->constructVariableDIE(*ArgDV, Scope->isAbstractScope())) {
-          Children.push_back(Arg);
-          if (ArgDV->isObjectPointer())
-            ObjectPointer = Arg;
-        }
+    for (DbgVariable &ArgDV : CurrentFnArguments)
+      if (ArgDV.getVariable()) {
+        DIE *Arg = TheCU->constructVariableDIE(ArgDV, Scope->isAbstractScope());
+        Children.push_back(Arg);
+        if (ArgDV.isObjectPointer())
+          ObjectPointer = Arg;
+      }
 
     // If this is a variadic function, add an unspecified parameter.
     DISubprogram SP(Scope->getScopeNode());
@@ -583,11 +582,11 @@ DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit *TheCU,
   }
 
   // Collect lexical scope children first.
-  for (DbgVariable *DV : ScopeVariables.lookup(Scope))
-    if (DIE *Variable = TheCU->constructVariableDIE(*DV,
+  for (DbgVariable &DV : ScopeVariables.lookup(Scope))
+    if (DIE *Variable = TheCU->constructVariableDIE(DV,
                                                     Scope->isAbstractScope())) {
       Children.push_back(Variable);
-      if (DV->isObjectPointer())
+      if (DV.isObjectPointer())
         ObjectPointer = Variable;
     }
   for (LexicalScope *LS : Scope->getChildren())
@@ -1120,32 +1119,33 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
   if (!Scope)
     return NULL;
 
-  AbsDbgVariable = new DbgVariable(Var, NULL, this);
-  addScopeVariable(Scope, AbsDbgVariable);
+  AbsDbgVariable = &addScopeVariable(Scope, DbgVariable(Var, NULL, this));
   AbstractVariables[Var] = AbsDbgVariable;
   return AbsDbgVariable;
 }
 
 // If Var is a current function argument then add it to CurrentFnArguments list.
-bool DwarfDebug::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
+DbgVariable *DwarfDebug::addCurrentFnArgument(DbgVariable &Var, LexicalScope *Scope) {
   if (!LScopes.isCurrentFunctionScope(Scope))
-    return false;
-  DIVariable DV = Var->getVariable();
+    return nullptr;
+  DIVariable DV = Var.getVariable();
   if (DV.getTag() != dwarf::DW_TAG_arg_variable)
-    return false;
+    return nullptr;
   unsigned ArgNo = DV.getArgNumber();
   if (ArgNo == 0)
-    return false;
+    return nullptr;
 
-  size_t Size = CurrentFnArguments.size();
-  if (Size == 0)
-    CurrentFnArguments.resize(CurFn->getFunction()->arg_size());
-  // llvm::Function argument size is not good indicator of how many
-  // arguments does the function have at source level.
-  if (ArgNo > Size)
-    CurrentFnArguments.resize(ArgNo * 2);
-  CurrentFnArguments[ArgNo - 1] = Var;
-  return true;
+  auto I = CurrentFnArguments.begin();
+  for (; I != CurrentFnArguments.end(); ++I)
+    if (ArgNo < I->getVariable().getArgNumber())
+      break;
+  return &*CurrentFnArguments.insert(I, std::move(Var));
+}
+
+DbgVariable &DwarfDebug::addVariable(DbgVariable Var, LexicalScope *Scope) {
+  if (DbgVariable *Res = addCurrentFnArgument(Var, Scope))
+    return *Res;
+  return addScopeVariable(Scope, std::move(Var));
 }
 
 // Collect variable information from side table maintained by MMI.
@@ -1163,10 +1163,9 @@ void DwarfDebug::collectVariableInfoFromMMITable(
       continue;
 
     DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VI.Loc);
-    DbgVariable *RegVar = new DbgVariable(DV, AbsDbgVariable, this);
-    RegVar->setFrameIndex(VI.Slot);
-    if (!addCurrentFnArgument(RegVar, Scope))
-      addScopeVariable(Scope, RegVar);
+    DbgVariable RegVar(DV, AbsDbgVariable, this);
+    RegVar.setFrameIndex(VI.Slot);
+    addVariable(std::move(RegVar), Scope);
     if (AbsDbgVariable)
       AbsDbgVariable->setFrameIndex(VI.Slot);
   }
@@ -1247,21 +1246,19 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     Processed.insert(DV);
     assert(MInsn->isDebugValue() && "History must begin with debug value");
     DbgVariable *AbsVar = findAbstractVariable(DV, MInsn->getDebugLoc());
-    DbgVariable *RegVar = new DbgVariable(DV, AbsVar, this);
-    if (!addCurrentFnArgument(RegVar, Scope))
-      addScopeVariable(Scope, RegVar);
+    DbgVariable &RegVar = addVariable(DbgVariable(DV, AbsVar, this), Scope);
     if (AbsVar)
       AbsVar->setMInsn(MInsn);
 
     // Simplify ranges that are fully coalesced.
     if (History.size() <= 1 ||
         (History.size() == 2 && MInsn->isIdenticalTo(History.back()))) {
-      RegVar->setMInsn(MInsn);
+      RegVar.setMInsn(MInsn);
       continue;
     }
 
     // Handle multiple DBG_VALUE instructions describing one variable.
-    RegVar->setDotDebugLocOffset(DotDebugLocEntries.size());
+    RegVar.setDotDebugLocOffset(DotDebugLocEntries.size());
 
     DotDebugLocEntries.resize(DotDebugLocEntries.size() + 1);
     DebugLocList &LocList = DotDebugLocEntries.back();
@@ -1319,7 +1316,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     if (!DV || !DV.isVariable() || !Processed.insert(DV))
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext()))
-      addScopeVariable(Scope, new DbgVariable(DV, NULL, this));
+      addScopeVariable(Scope, DbgVariable(DV, NULL, this));
   }
 }
 
@@ -1626,9 +1623,9 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   }
 }
 
-void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
-  SmallVectorImpl<DbgVariable *> &Vars = ScopeVariables[LS];
-  DIVariable DV = Var->getVariable();
+DbgVariable &DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable Var) {
+  auto &Vars = ScopeVariables[LS];
+  DIVariable DV = Var.getVariable();
   // Variables with positive arg numbers are parameters.
   if (unsigned ArgNum = DV.getArgNumber()) {
     // Keep all parameters in order at the start of the variable list to ensure
@@ -1638,9 +1635,9 @@ void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
     // builds have the right order to begin with), searching from the back (this
     // would catch the unoptimized case quickly), or doing a binary search
     // rather than linear search.
-    SmallVectorImpl<DbgVariable *>::iterator I = Vars.begin();
+    auto I = Vars.begin();
     while (I != Vars.end()) {
-      unsigned CurNum = (*I)->getVariable().getArgNumber();
+      unsigned CurNum = I->getVariable().getArgNumber();
       // A local (non-parameter) variable has been found, insert immediately
       // before it.
       if (CurNum == 0)
@@ -1650,11 +1647,11 @@ void DwarfDebug::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
         break;
       ++I;
     }
-    Vars.insert(I, Var);
-    return;
+    return *Vars.insert(I, std::move(Var));
   }
 
-  Vars.push_back(Var);
+  Vars.push_back(std::move(Var));
+  return Vars.back();
 }
 
 // Gather and emit post-function debug information.
@@ -1710,7 +1707,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
         if (AbstractVariables.lookup(CleanDV))
           continue;
         if (LexicalScope *Scope = LScopes.findAbstractScope(DV.getContext()))
-          addScopeVariable(Scope, new DbgVariable(DV, NULL, this));
+          addScopeVariable(Scope, DbgVariable(DV, NULL, this));
       }
     }
     if (ProcessedSPNodes.count(AScope->getScopeNode()) == 0)
@@ -1728,10 +1725,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   PrevCU = TheCU;
 
   // Clear debug info
-  for (auto &I : ScopeVariables)
-    DeleteContainerPointers(I.second);
   ScopeVariables.clear();
-  DeleteContainerPointers(CurrentFnArguments);
+  CurrentFnArguments.clear();
   UserVariables.clear();
   DbgValues.clear();
   AbstractVariables.clear();
@@ -2470,7 +2465,7 @@ void DwarfDebug::emitDebugARanges() {
 
   // Build a set of address spans, sorted by CU.
   for (const MCSection *Section : Sections) {
-    SmallVector<SymbolCU, 8> &List = SectionMap[Section];
+    auto &List = SectionMap[Section];
     if (List.size() < 2)
       continue;
 

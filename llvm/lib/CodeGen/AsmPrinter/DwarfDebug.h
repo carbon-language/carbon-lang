@@ -30,6 +30,8 @@
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/Support/Allocator.h"
 
+#include <list>
+
 namespace llvm {
 
 class AsmPrinter;
@@ -274,7 +276,9 @@ class DwarfDebug : public AsmPrinterHandler {
   SectionMapType SectionMap;
 
   // List of arguments for current function.
-  SmallVector<DbgVariable *, 8> CurrentFnArguments;
+  // Linked list use to maintain pointer validity. Singly linked list could
+  // suffice with some contortions to addCurrentFnArgument.
+  std::list<DbgVariable> CurrentFnArguments;
 
   LexicalScopes LScopes;
 
@@ -282,7 +286,9 @@ class DwarfDebug : public AsmPrinterHandler {
   DenseMap<const MDNode *, DIE *> AbstractSPDies;
 
   // Collection of dbg variables of a scope.
-  typedef DenseMap<LexicalScope *, SmallVector<DbgVariable *, 8> >
+  // Linked list use to maintain pointer validity. Singly linked list could
+  // suffice with some contortions to addScopeVariable.
+  typedef DenseMap<LexicalScope *, std::list<DbgVariable>>
   ScopeVariablesMap;
   ScopeVariablesMap ScopeVariables;
 
@@ -413,7 +419,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   MCDwarfDwoLineTable *getDwoLineTable(const DwarfCompileUnit &);
 
-  void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
+  DbgVariable &addScopeVariable(LexicalScope *LS, DbgVariable Var);
 
   const SmallVectorImpl<DwarfUnit *> &getUnits() {
     return InfoHolder.getUnits();
@@ -591,7 +597,9 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief If Var is an current function argument that add it in
   /// CurrentFnArguments list.
-  bool addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope);
+  DbgVariable *addCurrentFnArgument(DbgVariable &Var, LexicalScope *Scope);
+
+  DbgVariable &addVariable(DbgVariable Var, LexicalScope *Scope);
 
   /// \brief Populate LexicalScope entries with variables' info.
   void collectVariableInfo(SmallPtrSet<const MDNode *, 16> &ProcessedVars);
