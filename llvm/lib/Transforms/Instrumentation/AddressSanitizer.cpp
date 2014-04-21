@@ -141,8 +141,6 @@ static cl::opt<int> ClCoverageBlockThreshold("asan-coverage-block-threshold",
        cl::Hidden, cl::init(1500));
 static cl::opt<bool> ClInitializers("asan-initialization-order",
        cl::desc("Handle C++ initializer order"), cl::Hidden, cl::init(false));
-static cl::opt<bool> ClMemIntrin("asan-memintrin",
-       cl::desc("Handle memset/memcpy/memmove"), cl::Hidden, cl::init(true));
 static cl::opt<bool> ClInvalidPointerPairs("asan-detect-invalid-pointer-pair",
        cl::desc("Instrument <, <=, >, >=, - with pointer operands"),
        cl::Hidden, cl::init(false));
@@ -327,7 +325,7 @@ struct AddressSanitizer : public FunctionPass {
   Instruction *generateCrashCode(Instruction *InsertBefore, Value *Addr,
                                  bool IsWrite, size_t AccessSizeIndex,
                                  Value *SizeArgument);
-  bool instrumentMemIntrinsic(MemIntrinsic *MI, bool UseCalls);
+  void instrumentMemIntrinsic(MemIntrinsic *MI);
   void instrumentMemIntrinsicParam(Instruction *OrigIns, Value *Addr,
                                    Value *Size, Instruction *InsertBefore,
                                    bool IsWrite, bool UseCalls);
@@ -367,6 +365,7 @@ struct AddressSanitizer : public FunctionPass {
   // This array is indexed by AccessIsWrite.
   Function *AsanErrorCallbackSized[2],
            *AsanMemoryAccessCallbackSized[2];
+  Function *AsanMemmove, *AsanMemcpy, *AsanMemset;
   InlineAsm *EmptyAsm;
   SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
 
@@ -623,29 +622,24 @@ void AddressSanitizer::instrumentMemIntrinsicParam(Instruction *OrigIns,
 }
 
 // Instrument memset/memmove/memcpy
-bool AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI, bool UseCalls) {
-  Value *Dst = MI->getDest();
-  MemTransferInst *MemTran = dyn_cast<MemTransferInst>(MI);
-  Value *Src = MemTran ? MemTran->getSource() : 0;
-  Value *Length = MI->getLength();
-
-  Constant *ConstLength = dyn_cast<Constant>(Length);
-  Instruction *InsertBefore = MI;
-  if (ConstLength) {
-    if (ConstLength->isNullValue()) return false;
-  } else {
-    // The size is not a constant so it could be zero -- check at run-time.
-    IRBuilder<> IRB(InsertBefore);
-
-    Value *Cmp = IRB.CreateICmpNE(Length,
-                                  Constant::getNullValue(Length->getType()));
-    InsertBefore = SplitBlockAndInsertIfThen(Cmp, InsertBefore, false);
+void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
+  IRBuilder<> IRB(MI);
+  Instruction *Call = 0;
+  if (isa<MemTransferInst>(MI)) {
+    Call = IRB.CreateCall3(
+        isa<MemMoveInst>(MI) ? AsanMemmove : AsanMemcpy,
+        IRB.CreatePointerCast(MI->getOperand(0), IRB.getInt8PtrTy()),
+        IRB.CreatePointerCast(MI->getOperand(1), IRB.getInt8PtrTy()),
+        IRB.CreateIntCast(MI->getOperand(2), IntptrTy, false));
+  } else if (isa<MemSetInst>(MI)) {
+    Call = IRB.CreateCall3(
+        AsanMemset,
+        IRB.CreatePointerCast(MI->getOperand(0), IRB.getInt8PtrTy()),
+        IRB.CreateIntCast(MI->getOperand(1), IRB.getInt32Ty(), false),
+        IRB.CreateIntCast(MI->getOperand(2), IntptrTy, false));
   }
-
-  instrumentMemIntrinsicParam(MI, Dst, Length, InsertBefore, true, UseCalls);
-  if (Src)
-    instrumentMemIntrinsicParam(MI, Src, Length, InsertBefore, false, UseCalls);
-  return true;
+  Call->setDebugLoc(MI->getDebugLoc());
+  MI->eraseFromParent();
 }
 
 // If I is an interesting memory access, return the PointerOperand
@@ -1156,8 +1150,18 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
       M.getOrInsertFunction(ClMemoryAccessCallbackPrefix + "storeN",
                             IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
 
-  AsanHandleNoReturnFunc = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanHandleNoReturnName, IRB.getVoidTy(), NULL));
+  AsanMemmove = checkInterfaceFunction(M.getOrInsertFunction(
+      ClMemoryAccessCallbackPrefix + "memmove", IRB.getInt8PtrTy(),
+      IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IntptrTy, NULL));
+  AsanMemcpy = checkInterfaceFunction(M.getOrInsertFunction(
+      ClMemoryAccessCallbackPrefix + "memcpy", IRB.getInt8PtrTy(),
+      IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IntptrTy, NULL));
+  AsanMemset = checkInterfaceFunction(M.getOrInsertFunction(
+      ClMemoryAccessCallbackPrefix + "memset", IRB.getInt8PtrTy(),
+      IRB.getInt8PtrTy(), IRB.getInt32Ty(), IntptrTy, NULL));
+
+  AsanHandleNoReturnFunc = checkInterfaceFunction(
+      M.getOrInsertFunction(kAsanHandleNoReturnName, IRB.getVoidTy(), NULL));
   AsanCovFunction = checkInterfaceFunction(M.getOrInsertFunction(
       kAsanCovName, IRB.getVoidTy(), NULL));
   AsanPtrCmpFunction = checkInterfaceFunction(M.getOrInsertFunction(
@@ -1328,7 +1332,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
                  isInterestingPointerComparisonOrSubtraction(BI)) {
         PointerComparisonsOrSubtracts.push_back(BI);
         continue;
-      } else if (isa<MemIntrinsic>(BI) && ClMemIntrin) {
+      } else if (isa<MemIntrinsic>(BI)) {
         // ok, take it.
       } else {
         if (isa<AllocaInst>(BI))
@@ -1374,7 +1378,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
       if (isInterestingMemoryAccess(Inst, &IsWrite))
         instrumentMop(Inst, UseCalls);
       else
-        instrumentMemIntrinsic(cast<MemIntrinsic>(Inst), UseCalls);
+        instrumentMemIntrinsic(cast<MemIntrinsic>(Inst));
     }
     NumInstrumented++;
   }
