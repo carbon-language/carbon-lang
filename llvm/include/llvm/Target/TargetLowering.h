@@ -218,10 +218,6 @@ public:
   /// Return true if pow2 div is cheaper than a chain of srl/add/sra.
   bool isPow2DivCheap() const { return Pow2DivIsCheap; }
 
-  /// Return true if Div never traps, returns 0 when div by 0 and return TMin,
-  /// when sdiv TMin by -1.
-  bool isDivWellDefined() const { return DivIsWellDefined; }
-
   /// Return true if Flow Control is an expensive operation that should be
   /// avoided.
   bool isJumpExpensive() const { return JumpIsExpensive; }
@@ -1030,13 +1026,6 @@ protected:
   /// signed divide by power of two, and let the target handle it.
   void setPow2DivIsCheap(bool isCheap = true) { Pow2DivIsCheap = isCheap; }
 
-  /// Tells the code-generator that it is safe to execute sdiv/udiv/srem/urem
-  /// even when RHS is 0. It is also safe to execute sdiv/srem when LHS is
-  /// SignedMinValue and RHS is -1.
-  void setDivIsWellDefined (bool isWellDefined = true) {
-    DivIsWellDefined = isWellDefined;
-  }
-
   /// Add the specified register class as an available regclass for the
   /// specified value type. This indicates the selector can handle values of
   /// that class natively.
@@ -1451,11 +1440,6 @@ private:
   /// Tells the code generator that it shouldn't generate srl/add/sra for a
   /// signed divide by power of two, and let the target handle it.
   bool Pow2DivIsCheap;
-
-  /// Tells the code-generator that it is safe to execute sdiv/udiv/srem/urem
-  /// even when RHS is 0. It is also safe to execute sdiv/srem when LHS is
-  /// SignedMinValue and RHS is -1.
-  bool DivIsWellDefined;
 
   /// Tells the code generator that it shouldn't generate extra flow control
   /// instructions and should attempt to combine flow control instructions via

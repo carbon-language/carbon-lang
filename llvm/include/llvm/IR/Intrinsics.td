@@ -444,19 +444,6 @@ def int_umul_with_overflow : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
                                        [LLVMMatchType<0>, LLVMMatchType<0>],
                                        [IntrNoMem]>;
 
-def int_safe_udiv : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
-                              [LLVMMatchType<0>, LLVMMatchType<0>],
-                              [IntrNoMem]>;
-def int_safe_urem : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
-                              [LLVMMatchType<0>, LLVMMatchType<0>],
-                              [IntrNoMem]>;
-def int_safe_sdiv : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
-                              [LLVMMatchType<0>, LLVMMatchType<0>],
-                              [IntrNoMem]>;
-def int_safe_srem : Intrinsic<[llvm_anyint_ty, llvm_i1_ty],
-                              [LLVMMatchType<0>, LLVMMatchType<0>],
-                              [IntrNoMem]>;
-
 //===------------------------- Memory Use Markers -------------------------===//
 //
 def int_lifetime_start  : Intrinsic<[],
