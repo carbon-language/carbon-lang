@@ -7,12 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "lcg"
 #include "llvm/Analysis/LazyCallGraph.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/InstVisitor.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -35,8 +37,11 @@ static void findCallees(
       // alias. Then a test of the address of the weak function against the new
       // strong definition's address would be an effective way to determine the
       // safety of optimizing a direct call edge.
-      if (!F->isDeclaration() && CalleeSet.insert(F))
+      if (!F->isDeclaration() && CalleeSet.insert(F)) {
+        DEBUG(dbgs() << "    Added callable function: " << F->getName()
+                     << "\n");
         Callees.push_back(F);
+      }
       continue;
     }
 
@@ -48,6 +53,9 @@ static void findCallees(
 
 LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F)
     : G(&G), F(F), DFSNumber(0), LowLink(0) {
+  DEBUG(dbgs() << "  Adding functions called by '" << F.getName()
+               << "' to the graph.\n");
+
   SmallVector<Constant *, 16> Worklist;
   SmallPtrSet<Constant *, 16> Visited;
   // Find all the potential callees in this function. First walk the
@@ -66,10 +74,15 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F)
 }
 
 LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
+  DEBUG(dbgs() << "Building CG for module: " << M.getModuleIdentifier()
+               << "\n");
   for (Function &F : M)
     if (!F.isDeclaration() && !F.hasLocalLinkage())
-      if (EntryNodeSet.insert(&F))
+      if (EntryNodeSet.insert(&F)) {
+        DEBUG(dbgs() << "  Adding '" << F.getName()
+                     << "' to entry set of the graph.\n");
         EntryNodes.push_back(&F);
+      }
 
   // Now add entry nodes for functions reachable via initializers to globals.
   SmallVector<Constant *, 16> Worklist;
@@ -79,6 +92,8 @@ LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
       if (Visited.insert(GV.getInitializer()))
         Worklist.push_back(GV.getInitializer());
 
+  DEBUG(dbgs() << "  Adding functions referenced by global initializers to the "
+                  "entry set.\n");
   findCallees(Worklist, Visited, EntryNodes, EntryNodeSet);
 
   for (auto &Entry : EntryNodes)
