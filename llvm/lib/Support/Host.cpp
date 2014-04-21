@@ -39,6 +39,8 @@
 #include <mach/machine.h>
 #endif
 
+#define DEBUG_TYPE "host-detection"
+
 //===----------------------------------------------------------------------===//
 //
 //  Implementations of the CPU detection routines
