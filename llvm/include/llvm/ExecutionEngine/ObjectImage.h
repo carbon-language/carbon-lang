@@ -36,9 +36,17 @@ public:
 
   virtual object::symbol_iterator begin_symbols() const = 0;
   virtual object::symbol_iterator end_symbols() const = 0;
+  iterator_range<object::symbol_iterator> symbols() const {
+    return iterator_range<object::symbol_iterator>(begin_symbols(),
+                                                   end_symbols());
+  }
 
   virtual object::section_iterator begin_sections() const = 0;
   virtual object::section_iterator end_sections() const  = 0;
+  iterator_range<object::section_iterator> sections() const {
+    return iterator_range<object::section_iterator>(begin_sections(),
+                                                    end_sections());
+  }
 
   virtual /* Triple::ArchType */ unsigned getArch() const = 0;
 
