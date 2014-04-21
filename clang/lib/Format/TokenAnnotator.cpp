@@ -17,6 +17,8 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Debug.h"
 
+#define DEBUG_TYPE "format-token-annotator"
+
 namespace clang {
 namespace format {
 

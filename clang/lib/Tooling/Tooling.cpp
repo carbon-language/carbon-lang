@@ -38,6 +38,8 @@
 #  include <unistd.h>
 #endif
 
+#define DEBUG_TYPE "clang-tooling"
+
 namespace clang {
 namespace tooling {
 
