@@ -3464,7 +3464,7 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
   CGF.Builder.CreateCondBr(UsingStack, OnStackBlock, MaybeRegBlock);
 
   // Otherwise, at least some kind of argument could go in these registers, the
-  // quesiton is whether this particular type is too big.
+  // question is whether this particular type is too big.
   CGF.EmitBlock(MaybeRegBlock);
 
   // Integer arguments may need to correct register alignment (for example a
