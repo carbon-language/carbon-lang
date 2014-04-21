@@ -1416,7 +1416,7 @@ public:
     assert(N == 3 && "Invalid number of operands!");
 
     Inst.addOperand(MCOperand::CreateReg(Mem.BaseRegNum));
-    Inst.addOperand(MCOperand::CreateReg(Mem.OffsetRegNum));
+    Inst.addOperand(MCOperand::CreateReg(getXRegFromWReg(Mem.OffsetRegNum)));
     unsigned ExtendImm = ARM64_AM::getMemExtendImm(Mem.ExtType, DoShift);
     Inst.addOperand(MCOperand::CreateImm(ExtendImm));
   }
@@ -2893,6 +2893,17 @@ bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
           return Error(ExtLoc, "expected valid extend operation");
 
         Parser.Lex(); // Eat the extend op.
+
+        // A 32-bit offset register is only valid for [SU]/XTW extend
+        // operators.
+        if (isGPR32Register(Reg2)) {
+         if (ExtOp != ARM64_AM::UXTW &&
+            ExtOp != ARM64_AM::SXTW)
+          return Error(ExtLoc, "32-bit general purpose offset register "
+                               "requires sxtw or uxtw extend");
+        } else if (!isGPR64Register(Reg2))
+          return Error(OffsetLoc,
+                       "64-bit general purpose offset register expected");
 
         bool Hash = getLexer().is(AsmToken::Hash);
         if (getLexer().is(AsmToken::RBrac)) {

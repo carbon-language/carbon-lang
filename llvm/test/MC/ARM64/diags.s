@@ -74,6 +74,18 @@ foo:
 ; CHECK-ERRORS:                   ^
 
 
+; Check that register offset addressing modes only accept 32-bit offset
+; registers when using uxtw/sxtw extends. Everything else requires a 64-bit
+; register.
+  str    d1, [x3, w3, sxtx #3]
+  ldr    s1, [x3, d3, sxtx #2]
+
+; CHECK-ERRORS: 32-bit general purpose offset register requires sxtw or uxtw extend
+; CHECK-ERRORS:   str    d1, [x3, w3, sxtx #3]
+; CHECK-ERRORS:                       ^
+; CHECK-ERRORS: error: 64-bit general purpose offset register expected
+; CHECK-ERRORS:   ldr    s1, [x3, d3, sxtx #2]
+; CHECK-ERRORS:                   ^
 
 ; Shift immediates range checking.
   sqrshrn b4, h9, #10
