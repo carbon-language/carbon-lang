@@ -1988,7 +1988,8 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
 
   if (ActiveModule) {
     // Inferred modules must have umbrella directories.
-    if (!Failed && !ActiveModule->getUmbrellaDir()) {
+    if (!Failed && ActiveModule->IsAvailable &&
+        !ActiveModule->getUmbrellaDir()) {
       Diags.Report(StarLoc, diag::err_mmap_inferred_no_umbrella);
       Failed = true;
     }

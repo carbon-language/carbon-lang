@@ -24,3 +24,9 @@ module missing_unavailable_headers {
   }
   module not_missing { }
 }
+
+module missing_umbrella_with_inferred_submodules {
+  umbrella header "missing_umbrella.h"
+  module * { export * }
+  export *
+}
