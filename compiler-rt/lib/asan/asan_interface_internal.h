@@ -137,6 +137,13 @@ extern "C" {
   SANITIZER_INTERFACE_ATTRIBUTE void __asan_store16(uptr p);
   SANITIZER_INTERFACE_ATTRIBUTE void __asan_loadN(uptr p, uptr size);
   SANITIZER_INTERFACE_ATTRIBUTE void __asan_storeN(uptr p, uptr size);
+
+  SANITIZER_INTERFACE_ATTRIBUTE
+      void* __asan_memcpy(void *dst, const void *src, uptr size);
+  SANITIZER_INTERFACE_ATTRIBUTE
+      void* __asan_memset(void *s, int c, uptr n);
+  SANITIZER_INTERFACE_ATTRIBUTE
+      void* __asan_memmove(void* dest, const void* src, uptr n);
 }  // extern "C"
 
 #endif  // ASAN_INTERFACE_INTERNAL_H

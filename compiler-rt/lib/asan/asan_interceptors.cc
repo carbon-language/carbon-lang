@@ -355,23 +355,7 @@ INTERCEPTOR(int, memcmp, const void *a1, const void *a2, uptr size) {
   return REAL(memcmp(a1, a2, size));
 }
 
-#define MEMMOVE_BODY { \
-  if (!asan_inited) return internal_memmove(to, from, size); \
-  if (asan_init_is_running) { \
-    return REAL(memmove)(to, from, size); \
-  } \
-  ENSURE_ASAN_INITED(); \
-  if (flags()->replace_intrin) { \
-    ASAN_READ_RANGE(from, size); \
-    ASAN_WRITE_RANGE(to, size); \
-  } \
-  return internal_memmove(to, from, size); \
-}
-
-INTERCEPTOR(void*, memmove, void *to, const void *from, uptr size) MEMMOVE_BODY
-
-INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
-#if !SANITIZER_MAC
+void *__asan_memcpy(void *to, const void *from, uptr size) {
   if (!asan_inited) return internal_memcpy(to, from, size);
   // memcpy is called during __asan_init() from the internals
   // of printf(...).
@@ -389,18 +373,9 @@ INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
     ASAN_WRITE_RANGE(to, size);
   }
   return REAL(memcpy)(to, from, size);
-#else
-  // At least on 10.7 and 10.8 both memcpy() and memmove() are being replaced
-  // with WRAP(memcpy). As a result, false positives are reported for memmove()
-  // calls. If we just disable error reporting with
-  // ASAN_OPTIONS=replace_intrin=0, memmove() is still replaced with
-  // internal_memcpy(), which may lead to crashes, see
-  // http://llvm.org/bugs/show_bug.cgi?id=16362.
-  MEMMOVE_BODY
-#endif  // !SANITIZER_MAC
 }
 
-INTERCEPTOR(void*, memset, void *block, int c, uptr size) {
+void *__asan_memset(void *block, int c, uptr size) {
   if (!asan_inited) return internal_memset(block, c, size);
   // memset is called inside Printf.
   if (asan_init_is_running) {
@@ -411,6 +386,39 @@ INTERCEPTOR(void*, memset, void *block, int c, uptr size) {
     ASAN_WRITE_RANGE(block, size);
   }
   return REAL(memset)(block, c, size);
+}
+
+void *__asan_memmove(void *to, const void *from, uptr size) {
+  if (!asan_inited)
+    return internal_memmove(to, from, size);
+  ENSURE_ASAN_INITED();
+  if (flags()->replace_intrin) {
+    ASAN_READ_RANGE(from, size);
+    ASAN_WRITE_RANGE(to, size);
+  }
+  return internal_memmove(to, from, size);
+}
+
+INTERCEPTOR(void*, memmove, void *to, const void *from, uptr size) {
+  return __asan_memmove(to, from, size);
+}
+
+INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
+#if !SANITIZER_MAC
+  return __asan_memcpy(to, from, size);
+#else
+  // At least on 10.7 and 10.8 both memcpy() and memmove() are being replaced
+  // with WRAP(memcpy). As a result, false positives are reported for memmove()
+  // calls. If we just disable error reporting with
+  // ASAN_OPTIONS=replace_intrin=0, memmove() is still replaced with
+  // internal_memcpy(), which may lead to crashes, see
+  // http://llvm.org/bugs/show_bug.cgi?id=16362.
+  return __asan_memmove(to, from, size);
+#endif  // !SANITIZER_MAC
+}
+
+INTERCEPTOR(void*, memset, void *block, int c, uptr size) {
+  return __asan_memset(block, c, size);
 }
 
 INTERCEPTOR(char*, strchr, const char *str, int c) {
