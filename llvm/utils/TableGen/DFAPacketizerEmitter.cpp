@@ -91,7 +91,6 @@ class State {
   mutable TransitionMap Transitions;
 
   State();
-  State(const State &S);
 
   bool operator<(const State &s) const {
     return stateNum < s.stateNum;
@@ -155,11 +154,6 @@ public:
 //
 State::State() :
   stateNum(currentStateNum++), isInitial(false) {}
-
-
-State::State(const State &S) :
-  stateNum(currentStateNum++), isInitial(S.isInitial),
-  stateInfo(S.stateInfo) {}
 
 DFA::DFA(): currentState(nullptr) {}
 
