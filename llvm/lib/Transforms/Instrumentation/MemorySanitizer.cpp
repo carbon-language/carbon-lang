@@ -188,7 +188,7 @@ static cl::opt<int> ClInstrumentationWithCallThreshold(
         "If the function being instrumented requires more than "
         "this number of checks and origin stores, use callbacks instead of "
         "inline checks (-1 means never use callbacks)."),
-    cl::Hidden, cl::init(-1));
+    cl::Hidden, cl::init(3500));
 
 // Experimental. Wraps all indirect calls in the instrumented code with
 // a call to the given function. This is needed to assist the dynamic
