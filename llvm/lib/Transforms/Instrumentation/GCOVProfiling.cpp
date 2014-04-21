@@ -39,6 +39,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <utility>
 using namespace llvm;
@@ -76,9 +77,6 @@ namespace {
       assert((Options.EmitNotes || Options.EmitData) &&
              "GCOVProfiler asked to do nothing?");
       init();
-    }
-    ~GCOVProfiler() {
-      DeleteContainerPointers(Funcs);
     }
     const char *getPassName() const override {
       return "GCOV Profiler";
@@ -141,7 +139,7 @@ namespace {
 
     Module *M;
     LLVMContext *Ctx;
-    SmallVector<GCOVFunction *, 16> Funcs;
+    SmallVector<std::unique_ptr<GCOVFunction>, 16> Funcs;
   };
 }
 
@@ -499,19 +497,19 @@ void GCOVProfiler::emitProfileNotes() {
         ++It;
       EntryBlock.splitBasicBlock(It);
 
-      GCOVFunction *Func =
-        new GCOVFunction(SP, &out, i, Options.UseCfgChecksum);
-      Funcs.push_back(Func);
+      Funcs.push_back(
+          make_unique<GCOVFunction>(SP, &out, i, Options.UseCfgChecksum));
+      GCOVFunction &Func = *Funcs.back();
 
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-        GCOVBlock &Block = Func->getBlock(BB);
+        GCOVBlock &Block = Func.getBlock(BB);
         TerminatorInst *TI = BB->getTerminator();
         if (int successors = TI->getNumSuccessors()) {
           for (int i = 0; i != successors; ++i) {
-            Block.addEdge(Func->getBlock(TI->getSuccessor(i)));
+            Block.addEdge(Func.getBlock(TI->getSuccessor(i)));
           }
         } else if (isa<ReturnInst>(TI)) {
-          Block.addEdge(Func->getReturnBlock());
+          Block.addEdge(Func.getReturnBlock());
         }
 
         uint32_t Line = 0;
@@ -527,7 +525,7 @@ void GCOVProfiler::emitProfileNotes() {
           Lines.addLine(Loc.getLine());
         }
       }
-      EdgeDestinations += Func->getEdgeDestinations();
+      EdgeDestinations += Func.getEdgeDestinations();
     }
 
     FileChecksums.push_back(hash_value(EdgeDestinations));
@@ -535,9 +533,7 @@ void GCOVProfiler::emitProfileNotes() {
     out.write(ReversedVersion, 4);
     out.write(reinterpret_cast<char*>(&FileChecksums.back()), 4);
 
-    for (SmallVectorImpl<GCOVFunction *>::iterator I = Funcs.begin(),
-           E = Funcs.end(); I != E; ++I) {
-      GCOVFunction *Func = *I;
+    for (auto &Func : Funcs) {
       Func->setCfgChecksum(FileChecksums.back());
       Func->writeOut();
     }
