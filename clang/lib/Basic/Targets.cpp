@@ -3085,6 +3085,31 @@ public:
 };
 } // end anonymous namespace
 
+static void addMinGWDefines(const LangOptions &Opts, MacroBuilder &Builder) {
+  Builder.defineMacro("__MSVCRT__");
+  Builder.defineMacro("__MINGW32__");
+
+  // Mingw defines __declspec(a) to __attribute__((a)).  Clang supports
+  // __declspec natively under -fms-extensions, but we define a no-op __declspec
+  // macro anyway for pre-processor compatibility.
+  if (Opts.MicrosoftExt)
+    Builder.defineMacro("__declspec", "__declspec");
+  else
+    Builder.defineMacro("__declspec(a)", "__attribute__((a))");
+
+  if (!Opts.MicrosoftExt) {
+    // Provide macros for all the calling convention keywords.  Provide both
+    // single and double underscore prefixed variants.  These are available on
+    // x64 as well as x86, even though they have no effect.
+    const char *CCs[] = {"cdecl", "stdcall", "fastcall", "thiscall", "pascal"};
+    for (const char *CC : CCs) {
+      Twine GCCSpelling = Twine("__attribute__((__") + CC + Twine("__))");
+      Builder.defineMacro(Twine("_") + CC, GCCSpelling);
+      Builder.defineMacro(Twine("__") + CC, GCCSpelling);
+    }
+  }
+}
+
 namespace {
 // x86-32 MinGW target
 class MinGWX86_32TargetInfo : public WindowsX86_32TargetInfo {
@@ -3097,17 +3122,7 @@ public:
     DefineStd(Builder, "WIN32", Opts);
     DefineStd(Builder, "WINNT", Opts);
     Builder.defineMacro("_X86_");
-    Builder.defineMacro("__MSVCRT__");
-    Builder.defineMacro("__MINGW32__");
-
-    // mingw32-gcc provides __declspec(a) as alias of __attribute__((a)).
-    // In contrast, clang-cc1 provides __declspec(a) with -fms-extensions.
-    if (Opts.MicrosoftExt)
-      // Provide "as-is" __declspec.
-      Builder.defineMacro("__declspec", "__declspec");
-    else
-      // Provide alias of __attribute__ like mingw32-gcc.
-      Builder.defineMacro("__declspec(a)", "__attribute__((a))");
+    addMinGWDefines(Opts, Builder);
   }
 };
 } // end anonymous namespace
@@ -3327,18 +3342,8 @@ public:
                         MacroBuilder &Builder) const override {
     WindowsX86_64TargetInfo::getTargetDefines(Opts, Builder);
     DefineStd(Builder, "WIN64", Opts);
-    Builder.defineMacro("__MSVCRT__");
-    Builder.defineMacro("__MINGW32__");
     Builder.defineMacro("__MINGW64__");
-
-    // mingw32-gcc provides __declspec(a) as alias of __attribute__((a)).
-    // In contrast, clang-cc1 provides __declspec(a) with -fms-extensions.
-    if (Opts.MicrosoftExt)
-      // Provide "as-is" __declspec.
-      Builder.defineMacro("__declspec", "__declspec");
-    else
-      // Provide alias of __attribute__ like mingw32-gcc.
-      Builder.defineMacro("__declspec(a)", "__attribute__((a))");
+    addMinGWDefines(Opts, Builder);
   }
 };
 } // end anonymous namespace

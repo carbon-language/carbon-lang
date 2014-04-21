@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -triple i686-pc-win32 -fms-extensions -verify %s
+// RUN: %clang_cc1 -triple i686-pc-mingw32 -verify %s
+// RUN: %clang_cc1 -triple i686-pc-mingw32 -fms-extensions -verify %s
 
 typedef void void_fun_t();
 typedef void __cdecl cdecl_fun_t();
