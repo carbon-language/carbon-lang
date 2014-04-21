@@ -165,6 +165,8 @@ void FunctionAnalysisManager::invalidateImpl(Function *F,
   while (!InvalidatedPassIDs.empty())
     FunctionAnalysisResults.erase(
         std::make_pair(InvalidatedPassIDs.pop_back_val(), F));
+  if (ResultsList.empty())
+    FunctionAnalysisResultLists.erase(F);
 }
 
 char FunctionAnalysisManagerModuleProxy::PassID;
