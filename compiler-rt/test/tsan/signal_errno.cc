@@ -44,7 +44,6 @@ int main() {
 
 // CHECK: WARNING: ThreadSanitizer: signal handler spoils errno
 // CHECK:     #0 MyHandler(int, siginfo{{(_t)?}}*, void*) {{.*}}signal_errno.cc
-// CHECK:     #1 loop
-// CHECK:     #2 main
+// CHECK:     main
 // CHECK: SUMMARY: ThreadSanitizer: signal handler spoils errno{{.*}}MyHandler
 
