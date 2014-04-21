@@ -119,12 +119,11 @@ struct DropFirst {
 }
 
 LLVMContextImpl::~LLVMContextImpl() {
-  // NOTE: We need to delete the contents of OwnedModules, but we have to
-  // duplicate it into a temporary vector, because the destructor of Module
-  // will try to remove itself from OwnedModules set.  This would cause
-  // iterator invalidation if we iterated on the set directly.
-  std::vector<Module*> Modules(OwnedModules.begin(), OwnedModules.end());
-  DeleteContainerPointers(Modules);
+  // NOTE: We need to delete the contents of OwnedModules, but Module's dtor
+  // will call LLVMContextImpl::removeModule, thus invalidating iterators into
+  // the container. Avoid iterators during this operation:
+  while (!OwnedModules.empty())
+    delete *OwnedModules.begin();
   
   // Free the constants.  This is important to do here to ensure that they are
   // freed before the LeakDetector is torn down.
