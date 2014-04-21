@@ -19,6 +19,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "legalize-types"
 #include "LegalizeTypes.h"
 #include "llvm/IR/DataLayout.h"
 using namespace llvm;

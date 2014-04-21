@@ -20,6 +20,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "legalize-types"
 #include "LegalizeTypes.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Support/ErrorHandling.h"

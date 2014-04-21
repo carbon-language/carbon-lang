@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "legalize-types"
 #include "LegalizeTypes.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/IR/CallingConv.h"

@@ -16,7 +16,6 @@
 #ifndef SELECTIONDAG_LEGALIZETYPES_H
 #define SELECTIONDAG_LEGALIZETYPES_H
 
-#define DEBUG_TYPE "legalize-types"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/CodeGen/SelectionDAG.h"
