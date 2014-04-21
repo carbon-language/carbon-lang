@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "nvptx-isel"
 #include "NVPTXISelDAGToDAG.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Instructions.h"
@@ -19,9 +20,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
-
-#undef DEBUG_TYPE
-#define DEBUG_TYPE "nvptx-isel"
 
 using namespace llvm;
 
