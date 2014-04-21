@@ -53,7 +53,7 @@ void RuntimeDyldImpl::resolveRelocations() {
     // symbol for the relocation is located.  The SectionID in the relocation
     // entry provides the section to which the relocation will be applied.
     uint64_t Addr = Sections[i].LoadAddress;
-    DEBUG(dbgs() << "Resolving relocations Section #" << i << "\t"
+    DEBUG(dbgs() << "Resolving relocations Section " << i << "\t"
                  << format("%p", (uint8_t *)Addr) << "\n");
     resolveRelocationList(Relocations[i], Addr);
     Relocations.erase(i);
@@ -131,24 +131,23 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
 
   // Parse symbols
   DEBUG(dbgs() << "Parse symbols:\n");
-  for (symbol_iterator I = Obj->begin_symbols(), E = Obj->end_symbols(); I != E;
-       ++I) {
+  for (const SymbolRef &Sym : Obj->symbols()) {
     object::SymbolRef::Type SymType;
     StringRef Name;
-    Check(I->getType(SymType));
-    Check(I->getName(Name));
+    Check(Sym.getType(SymType));
+    Check(Sym.getName(Name));
 
-    uint32_t Flags = I->getFlags();
+    uint32_t Flags = Sym.getFlags();
 
     bool IsCommon = Flags & SymbolRef::SF_Common;
     if (IsCommon) {
       // Add the common symbols to a list.  We'll allocate them all below.
       uint32_t Align;
-      Check(I->getAlignment(Align));
+      Check(Sym.getAlignment(Align));
       uint64_t Size = 0;
-      Check(I->getSize(Size));
+      Check(Sym.getSize(Size));
       CommonSize += Size + Align;
-      CommonSymbols[*I] = CommonSymbolInfo(Size, Align);
+      CommonSymbols[Sym] = CommonSymbolInfo(Size, Align);
     } else {
       if (SymType == object::SymbolRef::ST_Function ||
           SymType == object::SymbolRef::ST_Data ||
@@ -157,8 +156,8 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
         StringRef SectionData;
         bool IsCode;
         section_iterator SI = Obj->end_sections();
-        Check(getOffset(*I, SectOffset));
-        Check(I->getSection(SI));
+        Check(getOffset(Sym, SectOffset));
+        Check(Sym.getSection(SI));
         if (SI == Obj->end_sections())
           continue;
         Check(SI->getContents(SectionData));
@@ -180,14 +179,13 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
 
   // Parse and process relocations
   DEBUG(dbgs() << "Parse relocations:\n");
-  for (section_iterator SI = Obj->begin_sections(), SE = Obj->end_sections();
-       SI != SE; ++SI) {
+  for (const SectionRef &Section : Obj->sections()) {
     unsigned SectionID = 0;
     StubMap Stubs;
-    section_iterator RelocatedSection = SI->getRelocatedSection();
+    section_iterator RelocatedSection = Section.getRelocatedSection();
 
-    relocation_iterator I = SI->relocation_begin();
-    relocation_iterator E = SI->relocation_end();
+    relocation_iterator I = Section.relocation_begin();
+    relocation_iterator E = Section.relocation_end();
 
     if (I == E && !ProcessAllSections)
       continue;
@@ -216,9 +214,8 @@ static uint64_t
 computeAllocationSizeForSections(std::vector<uint64_t> &SectionSizes,
                                  uint64_t Alignment) {
   uint64_t TotalSize = 0;
-  for (size_t Idx = 0, Cnt = SectionSizes.size(); Idx < Cnt; Idx++) {
-    uint64_t AlignedSize =
-        (SectionSizes[Idx] + Alignment - 1) / Alignment * Alignment;
+  for (uint64_t Size : SectionSizes) {
+    uint64_t AlignedSize = (Size + Alignment - 1) / Alignment * Alignment;
     TotalSize += AlignedSize;
   }
   return TotalSize;
@@ -238,10 +235,7 @@ void RuntimeDyldImpl::computeTotalAllocSize(ObjectImage &Obj,
 
   // Collect sizes of all sections to be loaded;
   // also determine the max alignment of all sections
-  for (section_iterator SI = Obj.begin_sections(), SE = Obj.end_sections();
-       SI != SE; ++SI) {
-    const SectionRef &Section = *SI;
-
+  for (const SectionRef &Section : Obj.sections()) {
     bool IsRequired;
     Check(Section.isRequiredForExecution(IsRequired));
 
@@ -324,13 +318,12 @@ unsigned RuntimeDyldImpl::computeSectionStubBufSize(ObjectImage &Obj,
   // necessary section allocation size in loadObject by walking all the sections
   // once.
   unsigned StubBufSize = 0;
-  for (section_iterator SI = Obj.begin_sections(), SE = Obj.end_sections();
-       SI != SE; ++SI) {
-    section_iterator RelSecI = SI->getRelocatedSection();
+  for (const SectionRef &Section : Obj.sections()) {
+    section_iterator RelSecI = Section.getRelocatedSection();
     if (!(RelSecI == Section))
       continue;
 
-    for (const RelocationRef &Reloc : SI->relocations()) {
+    for (const RelocationRef &Reloc : Section.relocations()) {
       (void)Reloc;
       StubBufSize += StubSize;
     }
@@ -369,12 +362,11 @@ void RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
                << format("%p", Addr) << " DataSize: " << TotalSize << "\n");
 
   // Assign the address of each symbol
-  for (CommonSymbolMap::const_iterator it = CommonSymbols.begin(),
-       itEnd = CommonSymbols.end(); it != itEnd; ++it) {
-    uint64_t Size = it->second.first;
-    uint64_t Align = it->second.second;
+  for (const auto &Entry : CommonSymbols) {
+    uint64_t Size = Entry.second.first;
+    uint64_t Align = Entry.second.second;
     StringRef Name;
-    it->first.getName(Name);
+    Entry.first.getName(Name);
     if (Align) {
       // This symbol has an alignment requirement.
       uint64_t AlignOffset = OffsetToAlignment((uint64_t)Addr, Align);
@@ -383,7 +375,7 @@ void RuntimeDyldImpl::emitCommonSymbols(ObjectImage &Obj,
       DEBUG(dbgs() << "Allocating common symbol " << Name << " address "
                    << format("%p\n", Addr));
     }
-    Obj.updateSymbolAddress(it->first, (uint64_t)Addr);
+    Obj.updateSymbolAddress(Entry.first, (uint64_t)Addr);
     SymbolTable[Name.data()] = SymbolLoc(SectionID, Offset);
     Offset += Size;
     Addr += Size;
