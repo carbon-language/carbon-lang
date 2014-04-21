@@ -2308,7 +2308,7 @@ public:
   }
 
   void setVal(Value *V, Constant *C) {
-    ValueStack.back()->operator[](V) = C;
+    (*ValueStack.back())[V] = C;
   }
 
   const DenseMap<Constant*, Constant*> &getMutatedMemory() const {
