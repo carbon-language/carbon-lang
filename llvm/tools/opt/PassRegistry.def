@@ -16,12 +16,23 @@
 
 // NOTE: NO INCLUDE GUARD DESIRED!
 
+#ifndef MODULE_ANALYSIS
+#define MODULE_ANALYSIS(NAME, CREATE_PASS)
+#endif
+MODULE_ANALYSIS("lcg", LazyCallGraphAnalysis())
+#undef MODULE_ANALYSIS
+
 #ifndef MODULE_PASS
 #define MODULE_PASS(NAME, CREATE_PASS)
 #endif
 MODULE_PASS("print", PrintModulePass(dbgs()))
 MODULE_PASS("print-cg", LazyCallGraphPrinterPass(dbgs()))
 #undef MODULE_PASS
+
+#ifndef FUNCTION_ANALYSIS
+#define FUNCTION_ANALYSIS(NAME, CREATE_PASS)
+#endif
+#undef FUNCTION_ANALYSIS
 
 #ifndef FUNCTION_PASS
 #define FUNCTION_PASS(NAME, CREATE_PASS)
