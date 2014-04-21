@@ -72,6 +72,34 @@ void RuntimeDyldImpl::mapSectionAddress(const void *LocalAddress,
   llvm_unreachable("Attempting to remap address of unknown section!");
 }
 
+static error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
+  uint64_t Address;
+  if (error_code EC = Sym.getAddress(Address))
+    return EC;
+
+  if (Address == UnknownAddressOrSize) {
+    Result = UnknownAddressOrSize;
+    return object_error::success;
+  }
+
+  const ObjectFile *Obj = Sym.getObject();
+  section_iterator SecI(Obj->section_begin());
+  if (error_code EC = Sym.getSection(SecI))
+    return EC;
+
+ if (SecI == Obj->section_end()) {
+   Result = UnknownAddressOrSize;
+   return object_error::success;
+ }
+
+  uint64_t SectionAddress;
+  if (error_code EC = SecI->getAddress(SectionAddress))
+    return EC;
+
+  Result = Address - SectionAddress;
+  return object_error::success;
+}
+
 ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
   MutexGuard locked(lock);
 
@@ -125,26 +153,21 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
       if (SymType == object::SymbolRef::ST_Function ||
           SymType == object::SymbolRef::ST_Data ||
           SymType == object::SymbolRef::ST_Unknown) {
-        uint64_t FileOffset;
+        uint64_t SectOffset;
         StringRef SectionData;
         bool IsCode;
         section_iterator SI = Obj->end_sections();
-        Check(I->getFileOffset(FileOffset));
+        Check(getOffset(*I, SectOffset));
         Check(I->getSection(SI));
         if (SI == Obj->end_sections())
           continue;
         Check(SI->getContents(SectionData));
         Check(SI->isText(IsCode));
-        const uint8_t *SymPtr =
-            (const uint8_t *)Obj->getData().data() + (uintptr_t)FileOffset;
-        uintptr_t SectOffset =
-            (uintptr_t)(SymPtr - (const uint8_t *)SectionData.begin());
         unsigned SectionID =
             findOrEmitSection(*Obj, *SI, IsCode, LocalSections);
         LocalSymbols[Name.data()] = SymbolLoc(SectionID, SectOffset);
-        DEBUG(dbgs() << "\tFileOffset: " << format("%p", (uintptr_t)FileOffset)
-                     << " flags: " << Flags << " SID: " << SectionID
-                     << " Offset: " << format("%p", SectOffset));
+        DEBUG(dbgs() << "\tOffset: " << format("%p", (uintptr_t)SectOffset)
+                     << " flags: " << Flags << " SID: " << SectionID);
         GlobalSymbolTable[Name] = SymbolLoc(SectionID, SectOffset);
       }
     }

@@ -145,7 +145,6 @@ public:
   /// Returns the symbol virtual address (i.e. address at which it will be
   /// mapped).
   error_code getAddress(uint64_t &Result) const;
-  error_code getFileOffset(uint64_t &Result) const;
   /// @brief Get the alignment of this symbol as the actual value (not log 2).
   error_code getAlignment(uint32_t &Result) const;
   error_code getSize(uint64_t &Result) const;
@@ -346,42 +345,6 @@ inline error_code SymbolRef::getName(StringRef &Result) const {
 
 inline error_code SymbolRef::getAddress(uint64_t &Result) const {
   return getObject()->getSymbolAddress(getRawDataRefImpl(), Result);
-}
-
-inline error_code SymbolRef::getFileOffset(uint64_t &Result) const {
-  uint64_t Address;
-  if (error_code EC = getAddress(Address))
-    return EC;
-  if (Address == UnknownAddressOrSize) {
-    Result = UnknownAddressOrSize;
-    return object_error::success;
-  }
-
-  const ObjectFile *Obj = getObject();
-  section_iterator SecI(Obj->section_begin());
-  if (error_code EC = getSection(SecI))
-    return EC;
-
-  if (SecI == Obj->section_end()) {
-    Result = UnknownAddressOrSize;
-    return object_error::success;
-  }
-
-  uint64_t SectionAddress;
-  if (error_code EC = SecI->getAddress(SectionAddress))
-    return EC;
-
-  uint64_t OffsetInSection = Address - SectionAddress;
-
-  StringRef SecContents;
-  if (error_code EC = SecI->getContents(SecContents))
-    return EC;
-
-  // FIXME: this is a hack.
-  uint64_t SectionOffset = (uint64_t)SecContents.data() - (uint64_t)Obj->base();
-
-  Result = SectionOffset + OffsetInSection;
-  return object_error::success;
 }
 
 inline error_code SymbolRef::getAlignment(uint32_t &Result) const {

@@ -311,14 +311,6 @@ class Symbol(LLVMObject):
         return lib.LLVMGetSymbolAddress(self)
 
     @CachedProperty
-    def file_offset(self):
-        """The offset of this symbol in the file, in long bytes."""
-        if self.expired:
-            raise Exception('Symbol instance has expired.')
-
-        return lib.LLVMGetSymbolFileOffset(self)
-
-    @CachedProperty
     def size(self):
         """The size of the symbol, in long bytes."""
         if self.expired:
@@ -345,7 +337,6 @@ class Symbol(LLVMObject):
         """Cache all cacheable properties."""
         getattr(self, 'name')
         getattr(self, 'address')
-        getattr(self, 'file_offset')
         getattr(self, 'size')
 
     def expire(self):
@@ -494,9 +485,6 @@ def register_library(library):
 
     library.LLVMGetSymbolAddress.argtypes = [Symbol]
     library.LLVMGetSymbolAddress.restype = c_uint64
-
-    library.LLVMGetSymbolFileOffset.argtypes = [Symbol]
-    library.LLVMGetSymbolFileOffset.restype = c_uint64
 
     library.LLVMGetSymbolSize.argtypes = [Symbol]
     library.LLVMGetSymbolSize.restype = c_uint64

@@ -184,13 +184,6 @@ uint64_t LLVMGetSymbolAddress(LLVMSymbolIteratorRef SI) {
   return ret;
 }
 
-uint64_t LLVMGetSymbolFileOffset(LLVMSymbolIteratorRef SI) {
-  uint64_t ret;
-  if (error_code ec = (*unwrap(SI))->getFileOffset(ret))
-    report_fatal_error(ec.message());
-  return ret;
-}
-
 uint64_t LLVMGetSymbolSize(LLVMSymbolIteratorRef SI) {
   uint64_t ret;
   if (error_code ec = (*unwrap(SI))->getSize(ret))

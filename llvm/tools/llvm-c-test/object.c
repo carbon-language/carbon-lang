@@ -72,9 +72,8 @@ int object_list_symbols(void) {
   while (!LLVMIsSymbolIteratorAtEnd(O, sym)) {
 
     LLVMMoveToContainingSection(sect, sym);
-    printf("%s @0x%08" PRIx64 "/0x%08" PRIx64 " +%" PRIu64 " (%s)\n",
-           LLVMGetSymbolName(sym), LLVMGetSymbolAddress(sym),
-           LLVMGetSymbolFileOffset(sym), LLVMGetSymbolSize(sym),
+    printf("%s @0x%08" PRIx64 " +%" PRIu64 " (%s)\n", LLVMGetSymbolName(sym),
+           LLVMGetSymbolAddress(sym), LLVMGetSymbolSize(sym),
            LLVMGetSectionName(sect));
 
     LLVMMoveToNextSymbol(sym);
