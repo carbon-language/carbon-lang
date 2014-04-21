@@ -17,8 +17,8 @@
 #define LLVM_ADT_EDIT_DISTANCE_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/OwningPtr.h"
 #include <algorithm>
+#include <memory>
 
 namespace llvm {
 
@@ -57,7 +57,7 @@ unsigned ComputeEditDistance(ArrayRef<T> FromArray, ArrayRef<T> ToArray,
 
   const unsigned SmallBufferSize = 64;
   unsigned SmallBuffer[SmallBufferSize];
-  llvm::OwningArrayPtr<unsigned> Allocated;
+  std::unique_ptr<unsigned[]> Allocated;
   unsigned *Previous = SmallBuffer;
   if (2*(n + 1) > SmallBufferSize) {
     Previous = new unsigned [2*(n+1)];

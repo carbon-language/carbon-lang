@@ -610,7 +610,7 @@ bool Filler::searchSuccBBs(MachineBasicBlock &MBB, Iter Slot) const {
   RegDefsUses RegDU(TM);
   bool HasMultipleSuccs = false;
   BB2BrMap BrMap;
-  OwningPtr<InspectMemInstr> IM;
+  std::unique_ptr<InspectMemInstr> IM;
   Iter Filler;
 
   // Iterate over SuccBB's predecessor list.

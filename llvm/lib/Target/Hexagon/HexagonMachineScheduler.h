@@ -14,7 +14,6 @@
 #ifndef HEXAGONASMPRINTER_H
 #define HEXAGONASMPRINTER_H
 
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"

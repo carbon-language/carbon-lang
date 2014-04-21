@@ -25,7 +25,6 @@
 #define LLVM_CODEGEN_LIVEREGMATRIX_H
 
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/LiveIntervalUnion.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
@@ -51,7 +50,7 @@ class LiveRegMatrix : public MachineFunctionPass {
   LiveIntervalUnion::Array Matrix;
 
   // Cached queries per register unit.
-  OwningArrayPtr<LiveIntervalUnion::Query> Queries;
+  std::unique_ptr<LiveIntervalUnion::Query[]> Queries;
 
   // Cached register mask interference info.
   unsigned RegMaskTag;

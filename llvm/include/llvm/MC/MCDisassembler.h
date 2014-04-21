@@ -10,7 +10,6 @@
 #define LLVM_MC_MCDISASSEMBLER_H
 
 #include "llvm-c/Disassembler.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/MC/MCRelocationInfo.h"
 #include "llvm/MC/MCSymbolizer.h"
 #include "llvm/Support/DataTypes.h"

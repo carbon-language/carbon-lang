@@ -20,7 +20,6 @@
 #include "AMDGPUSubtarget.h"
 #include "AMDILIntrinsicInfo.h"
 #include "R600ISelLowering.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/DataLayout.h"
 
 namespace llvm {
@@ -31,8 +30,8 @@ class AMDGPUTargetMachine : public LLVMTargetMachine {
   const DataLayout Layout;
   AMDGPUFrameLowering FrameLowering;
   AMDGPUIntrinsicInfo IntrinsicInfo;
-  OwningPtr<AMDGPUInstrInfo> InstrInfo;
-  OwningPtr<AMDGPUTargetLowering> TLInfo;
+  std::unique_ptr<AMDGPUInstrInfo> InstrInfo;
+  std::unique_ptr<AMDGPUTargetLowering> TLInfo;
   const InstrItineraryData *InstrItins;
 
 public:

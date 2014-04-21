@@ -11,9 +11,9 @@
 #define LLVM_LINEEDITOR_LINEEDITOR_H
 
 #include "llvm/ADT/Optional.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringRef.h"
-#include <stdio.h>
+#include <cstdio>
+#include <memory>
 #include <string>
 #include <vector>
 

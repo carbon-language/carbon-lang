@@ -13,7 +13,6 @@
 #include "MCTargetDesc/ARMArchName.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMMCExpr.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -2917,7 +2916,7 @@ int ARMAsmParser::tryParseShiftRegister(
   // The source register for the shift has already been added to the
   // operand list, so we need to pop it off and combine it into the shifted
   // register operand instead.
-  OwningPtr<ARMOperand> PrevOp((ARMOperand*)Operands.pop_back_val());
+  std::unique_ptr<ARMOperand> PrevOp((ARMOperand*)Operands.pop_back_val());
   if (!PrevOp->isReg())
     return Error(PrevOp->getStartLoc(), "shift must be of a register");
   int SrcReg = PrevOp->getReg();

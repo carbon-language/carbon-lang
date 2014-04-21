@@ -19,7 +19,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
@@ -31,7 +30,7 @@ class RegisterClassInfo {
     bool ProperSubClass;
     uint8_t MinCost;
     uint16_t LastCostChange;
-    OwningArrayPtr<MCPhysReg> Order;
+    std::unique_ptr<MCPhysReg[]> Order;
 
     RCInfo()
       : Tag(0), NumRegs(0), ProperSubClass(false), MinCost(0),
@@ -43,7 +42,7 @@ class RegisterClassInfo {
   };
 
   // Brief cached information for each register class.
-  OwningArrayPtr<RCInfo> RegClass;
+  std::unique_ptr<RCInfo[]> RegClass;
 
   // Tag changes whenever cached information needs to be recomputed. An RCInfo
   // entry is valid when its tag matches.
@@ -62,7 +61,7 @@ class RegisterClassInfo {
   // Reserved registers in the current MF.
   BitVector Reserved;
 
-  OwningArrayPtr<unsigned> PSetLimits;
+  std::unique_ptr<unsigned[]> PSetLimits;
 
   // Compute all information about RC.
   void compute(const TargetRegisterClass *RC) const;

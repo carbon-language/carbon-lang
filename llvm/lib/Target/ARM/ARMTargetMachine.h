@@ -23,7 +23,6 @@
 #include "Thumb1FrameLowering.h"
 #include "Thumb1InstrInfo.h"
 #include "Thumb2InstrInfo.h"
-#include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetMachine.h"
@@ -128,12 +127,12 @@ public:
 class ThumbTargetMachine : public ARMBaseTargetMachine {
   virtual void anchor();
   // Either Thumb1InstrInfo or Thumb2InstrInfo.
-  OwningPtr<ARMBaseInstrInfo> InstrInfo;
+  std::unique_ptr<ARMBaseInstrInfo> InstrInfo;
   const DataLayout    DL;   // Calculates type size & alignment
   ARMTargetLowering   TLInfo;
   ARMSelectionDAGInfo TSInfo;
   // Either Thumb1FrameLowering or ARMFrameLowering.
-  OwningPtr<ARMFrameLowering> FrameLowering;
+  std::unique_ptr<ARMFrameLowering> FrameLowering;
 public:
   ThumbTargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS,
