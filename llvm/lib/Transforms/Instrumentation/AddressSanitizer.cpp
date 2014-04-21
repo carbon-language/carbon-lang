@@ -613,14 +613,13 @@ void AddressSanitizer::instrumentMemIntrinsicParam(Instruction *OrigIns,
   if (Size->getType() != IntptrTy)
     Size = IRB.CreateIntCast(Size, IntptrTy, false);
   // Check the first byte.
-  instrumentAddress(OrigIns, InsertBefore, Addr, 8, IsWrite, Size, UseCalls);
+  instrumentAddress(OrigIns, InsertBefore, Addr, 8, IsWrite, Size, false);
   // Check the last byte.
   IRB.SetInsertPoint(InsertBefore);
   Value *SizeMinusOne = IRB.CreateSub(Size, ConstantInt::get(IntptrTy, 1));
   Value *AddrLong = IRB.CreatePointerCast(Addr, IntptrTy);
   Value *AddrLast = IRB.CreateAdd(AddrLong, SizeMinusOne);
-  instrumentAddress(OrigIns, InsertBefore, AddrLast, 8, IsWrite, Size,
-                    UseCalls);
+  instrumentAddress(OrigIns, InsertBefore, AddrLast, 8, IsWrite, Size, false);
 }
 
 // Instrument memset/memmove/memcpy
@@ -768,8 +767,8 @@ void AddressSanitizer::instrumentMop(Instruction *I, bool UseCalls) {
                     ConstantInt::get(IntptrTy, TypeSize / 8 - 1)),
       OrigPtrTy);
   Value *Size = ConstantInt::get(IntptrTy, TypeSize / 8);
-  instrumentAddress(I, I, Addr, 8, IsWrite, Size, UseCalls);
-  instrumentAddress(I, I, LastByte, 8, IsWrite, Size, UseCalls);
+  instrumentAddress(I, I, Addr, 8, IsWrite, Size, false);
+  instrumentAddress(I, I, LastByte, 8, IsWrite, Size, false);
 }
 
 // Validate the result of Module::getOrInsertFunction called for an interface
@@ -825,12 +824,8 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
   size_t AccessSizeIndex = TypeSizeToSizeIndex(TypeSize);
 
   if (UseCalls) {
-    if (SizeArgument)
-      IRB.CreateCall2(AsanMemoryAccessCallbackSized[IsWrite], AddrLong,
-                      SizeArgument);
-    else
-      IRB.CreateCall(AsanMemoryAccessCallback[IsWrite][AccessSizeIndex],
-                     AddrLong);
+    IRB.CreateCall(AsanMemoryAccessCallback[IsWrite][AccessSizeIndex],
+                   AddrLong);
     return;
   }
 
