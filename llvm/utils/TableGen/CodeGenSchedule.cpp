@@ -59,7 +59,7 @@ struct InstRegexOp : public SetTheory::Operator {
 
   void apply(SetTheory &ST, DagInit *Expr, SetTheory::RecSet &Elts,
              ArrayRef<SMLoc> Loc) override {
-    SmallVector<Regex*, 4> RegexList;
+    SmallVector<Regex, 4> RegexList;
     for (DagInit::const_arg_iterator
            AI = Expr->arg_begin(), AE = Expr->arg_end(); AI != AE; ++AI) {
       StringInit *SI = dyn_cast<StringInit>(*AI);
@@ -72,17 +72,15 @@ struct InstRegexOp : public SetTheory::Operator {
         pat.insert(0, "^(");
         pat.insert(pat.end(), ')');
       }
-      RegexList.push_back(new Regex(pat));
+      RegexList.push_back(Regex(pat));
     }
     for (CodeGenTarget::inst_iterator I = Target.inst_begin(),
            E = Target.inst_end(); I != E; ++I) {
-      for (SmallVectorImpl<Regex*>::iterator
-             RI = RegexList.begin(), RE = RegexList.end(); RI != RE; ++RI) {
-        if ((*RI)->match((*I)->TheDef->getName()))
+      for (auto &R : RegexList) {
+        if (R.match((*I)->TheDef->getName()))
           Elts.insert((*I)->TheDef);
       }
     }
-    DeleteContainerPointers(RegexList);
   }
 };
 } // end anonymous namespace
