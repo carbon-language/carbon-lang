@@ -3103,7 +3103,9 @@ static void addMinGWDefines(const LangOptions &Opts, MacroBuilder &Builder) {
     // x64 as well as x86, even though they have no effect.
     const char *CCs[] = {"cdecl", "stdcall", "fastcall", "thiscall", "pascal"};
     for (const char *CC : CCs) {
-      Twine GCCSpelling = Twine("__attribute__((__") + CC + Twine("__))");
+      std::string GCCSpelling = "__attribute__((__";
+      GCCSpelling += CC;
+      GCCSpelling += "__))";
       Builder.defineMacro(Twine("_") + CC, GCCSpelling);
       Builder.defineMacro(Twine("__") + CC, GCCSpelling);
     }
