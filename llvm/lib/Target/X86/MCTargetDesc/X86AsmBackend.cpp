@@ -37,23 +37,28 @@ MCDisableArithRelaxation("mc-x86-disable-arith-relaxation",
 
 static unsigned getFixupKindLog2Size(unsigned Kind) {
   switch (Kind) {
-  default: llvm_unreachable("invalid fixup kind!");
+  default:
+    llvm_unreachable("invalid fixup kind!");
   case FK_PCRel_1:
   case FK_SecRel_1:
-  case FK_Data_1: return 0;
+  case FK_Data_1:
+    return 0;
   case FK_PCRel_2:
   case FK_SecRel_2:
-  case FK_Data_2: return 1;
+  case FK_Data_2:
+    return 1;
   case FK_PCRel_4:
   case X86::reloc_riprel_4byte:
   case X86::reloc_riprel_4byte_movq_load:
   case X86::reloc_signed_4byte:
   case X86::reloc_global_offset_table:
   case FK_SecRel_4:
-  case FK_Data_4: return 2;
+  case FK_Data_4:
+    return 2;
   case FK_PCRel_8:
   case FK_SecRel_8:
-  case FK_Data_8: return 3;
+  case FK_Data_8:
+    return 3;
   }
 }
 
