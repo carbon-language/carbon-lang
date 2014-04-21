@@ -100,7 +100,7 @@ def main():
   if (xcode_path.find(".app/") != -1):
     # Cut off the 'Developer' dir, as the xcspec lies in another part
     # of the Xcode.app subtree.
-    xcode_path = os.path.dirname(xcode_path)
+    xcode_path = xcode_path.rsplit('/Developer', 1)[0]
 
   foundSpec = False
   for x in FindClangSpecs(xcode_path):
