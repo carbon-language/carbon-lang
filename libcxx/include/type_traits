@@ -2034,9 +2034,23 @@ class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn(_A0, _A1, _A2)>
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
-#ifndef _LIBCPP_HAS_NO_VARIADICS
-
 // template <class T, class... Args> struct is_constructible;
+
+namespace __is_construct
+{
+struct __nat {};
+}
+
+#if __has_feature(is_constructible)
+
+template <class _Tp, class ..._Args>
+struct _LIBCPP_TYPE_VIS_ONLY is_constructible
+    : public integral_constant<bool, __is_constructible(_Tp, _Args...)>
+    {};
+
+#else
+
+#ifndef _LIBCPP_HAS_NO_VARIADICS
 
 //      main is_constructible test
 
@@ -2265,13 +2279,6 @@ struct __is_constructible2_void_check<true, _Tp, _A0, _A1>
 
 //      is_constructible entry point
 
-namespace __is_construct
-{
-
-struct __nat {};
-
-}
-
 template <class _Tp, class _A0 = __is_construct::__nat,
                      class _A1 = __is_construct::__nat>
 struct _LIBCPP_TYPE_VIS_ONLY is_constructible
@@ -2336,6 +2343,7 @@ struct __is_constructible2_imp<false, _Ap[], _A0, _A1>
     {};
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
+#endif  // __has_feature(is_constructible)
 
 // is_default_constructible
 
