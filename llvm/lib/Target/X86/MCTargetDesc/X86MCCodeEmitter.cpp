@@ -339,7 +339,13 @@ EmitImmediate(const MCOperand &DispOp, SMLoc Loc, unsigned Size,
     if (Kind != GOT_None) {
       assert(ImmOffset == 0);
 
-      FixupKind = MCFixupKind(X86::reloc_global_offset_table);
+      if (Size == 8) {
+        FixupKind = MCFixupKind(X86::reloc_global_offset_table8);
+      } else {
+        assert(Size == 4);
+        FixupKind = MCFixupKind(X86::reloc_global_offset_table);
+      }
+
       if (Kind == GOT_Normal)
         ImmOffset = CurByte;
     } else if (Expr->getKind() == MCExpr::SymbolRef) {

@@ -58,6 +58,7 @@ static unsigned getFixupKindLog2Size(unsigned Kind) {
   case FK_PCRel_8:
   case FK_SecRel_8:
   case FK_Data_8:
+  case X86::reloc_global_offset_table8:
     return 3;
   }
 }
