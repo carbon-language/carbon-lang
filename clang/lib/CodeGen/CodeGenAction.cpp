@@ -404,7 +404,8 @@ void BackendConsumer::OptimizationRemarkHandler(
       Loc = SourceMgr.translateFileLineCol(FileMgr.getFile(Filename), Line,
                                            Column);
     }
-    Diags.Report(Loc, diag::remark_fe_backend_optimization_remark)
+    Diags.Report(Loc, diag::remark_fe_backend_optimization_remark,
+                 D.getPassName())
         << D.getMsg().str();
 
     if (Line == 0)

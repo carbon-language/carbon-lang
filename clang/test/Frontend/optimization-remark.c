@@ -13,7 +13,7 @@ int foo(int x, int y) __attribute__((always_inline));
 int foo(int x, int y) { return x + y; }
 int bar(int j) { return foo(j, j - 2); }
 
-// INLINE: remark: foo inlined into bar [-Rpass]
+// INLINE: remark: foo inlined into bar [-Rpass=inline]
 
 // INLINE-NO-LOC: {{^remark: foo inlined into bar}}
 // INLINE-NO-LOC: note: use -gline-tables-only -gcolumn-info to track

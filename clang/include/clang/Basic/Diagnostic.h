@@ -341,6 +341,14 @@ private:
   /// \brief Second string argument for the delayed diagnostic.
   std::string DelayedDiagArg2;
 
+  /// \brief Flag name value.
+  ///
+  /// Some flags accept values. For instance, -Wframe-larger-than or -Rpass.
+  /// When reporting a diagnostic with those flags, it is useful to also
+  /// report the value that actually triggered the flag. The content of this
+  /// string is a value to be emitted after the flag name.
+  std::string FlagNameValue;
+
 public:
   explicit DiagnosticsEngine(
                       const IntrusiveRefCntPtr<DiagnosticIDs> &Diags,
@@ -646,6 +654,11 @@ public:
   /// \param DiagID A member of the @c diag::kind enum.
   /// \param Loc Represents the source location associated with the diagnostic,
   /// which can be an invalid location if no position information is available.
+  /// \param FlagNameValue A string that represents the value that triggered
+  /// this diagnostic. If given, this value will be emitted as "=value"
+  /// after the flag name.
+  inline DiagnosticBuilder Report(SourceLocation Loc, unsigned DiagID,
+                                  StringRef Val);
   inline DiagnosticBuilder Report(SourceLocation Loc, unsigned DiagID);
   inline DiagnosticBuilder Report(unsigned DiagID);
 
@@ -680,6 +693,9 @@ public:
   
   /// \brief Clear out the current diagnostic.
   void Clear() { CurDiagID = ~0U; }
+
+  /// \brief Return the overridden name for this diagnostic flag.
+  StringRef getFlagNameValue() const { return StringRef(FlagNameValue); }
 
 private:
   /// \brief Report the delayed diagnostic.
@@ -1084,15 +1100,22 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   return DB;
 }
 
-inline DiagnosticBuilder DiagnosticsEngine::Report(SourceLocation Loc,
-                                                   unsigned DiagID) {
+inline DiagnosticBuilder
+DiagnosticsEngine::Report(SourceLocation Loc, unsigned DiagID, StringRef Val) {
   assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");
   CurDiagLoc = Loc;
   CurDiagID = DiagID;
+  FlagNameValue = Val.str();
   return DiagnosticBuilder(this);
 }
+
+inline DiagnosticBuilder DiagnosticsEngine::Report(SourceLocation Loc,
+                                                   unsigned DiagID) {
+  return Report(Loc, DiagID, "");
+}
+
 inline DiagnosticBuilder DiagnosticsEngine::Report(unsigned DiagID) {
-  return Report(SourceLocation(), DiagID);
+  return Report(SourceLocation(), DiagID, "");
 }
 
 //===----------------------------------------------------------------------===//
