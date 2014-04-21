@@ -295,7 +295,6 @@ ObjectFileJIT::SetLoadAddress (Target &target,
                                lldb::addr_t value,
                                bool value_is_offset)
 {
-    bool changed = false;
     size_t num_loaded_sections = 0;
     SectionList *section_list = GetSectionList ();
     if (section_list)
@@ -317,7 +316,6 @@ ObjectFileJIT::SetLoadAddress (Target &target,
             }
         }
     }
-    changed = num_loaded_sections > 0;
     return num_loaded_sections > 0;
 }
 
