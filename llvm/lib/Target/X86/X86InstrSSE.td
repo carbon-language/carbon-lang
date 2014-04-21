@@ -3157,23 +3157,23 @@ let Predicates = [UseSSE2] in {
 
 let Predicates = [UseSSE41] in {
   // If the subtarget has SSE4.1 but not AVX, the vector insert
-  // instruction is lowered into a X86insrtps rather than a X86Movss.
+  // instruction is lowered into a X86insertps rather than a X86Movss.
   // When selecting SSE scalar single-precision fp arithmetic instructions,
-  // make sure that we correctly match the X86insrtps.
+  // make sure that we correctly match the X86insertps.
 
-  def : Pat<(v4f32 (X86insrtps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
+  def : Pat<(v4f32 (X86insertps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
                   (fadd (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
                     FR32:$src))), (iPTR 0))),
             (ADDSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
-  def : Pat<(v4f32 (X86insrtps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
+  def : Pat<(v4f32 (X86insertps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
                   (fsub (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
                     FR32:$src))), (iPTR 0))),
             (SUBSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
-  def : Pat<(v4f32 (X86insrtps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
+  def : Pat<(v4f32 (X86insertps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
                   (fmul (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
                     FR32:$src))), (iPTR 0))),
             (MULSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
-  def : Pat<(v4f32 (X86insrtps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
+  def : Pat<(v4f32 (X86insertps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
                   (fdiv (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
                     FR32:$src))), (iPTR 0))),
             (DIVSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
@@ -3199,19 +3199,19 @@ let Predicates = [HasAVX] in {
                       (f64 (vector_extract (v2f64 VR128:$dst), (iPTR 0))),
                       FR64:$src))))),
             (VDIVSDrr_Int v2f64:$dst, (COPY_TO_REGCLASS FR64:$src, VR128))>;
-  def : Pat<(v4f32 (X86insrtps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
+  def : Pat<(v4f32 (X86insertps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
                  (fadd (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
                        FR32:$src))), (iPTR 0))),
             (VADDSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
-  def : Pat<(v4f32 (X86insrtps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
+  def : Pat<(v4f32 (X86insertps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
                  (fsub (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
                        FR32:$src))), (iPTR 0))),
             (VSUBSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
-  def : Pat<(v4f32 (X86insrtps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
+  def : Pat<(v4f32 (X86insertps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
                  (fmul (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
                        FR32:$src))), (iPTR 0))),
             (VMULSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
-  def : Pat<(v4f32 (X86insrtps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
+  def : Pat<(v4f32 (X86insertps (v4f32 VR128:$dst), (v4f32 (scalar_to_vector
                  (fdiv (f32 (vector_extract (v4f32 VR128:$dst), (iPTR 0))),
                        FR32:$src))), (iPTR 0))),
             (VDIVSSrr_Int v4f32:$dst, (COPY_TO_REGCLASS FR32:$src, VR128))>;
@@ -6528,7 +6528,7 @@ multiclass SS41I_insertf32<bits<8> opc, string asm, bit Is2Addr = 1,
         !strconcat(asm,
                    "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
       [(set VR128:$dst,
-        (X86insrtps VR128:$src1, VR128:$src2, imm:$src3))], itins.rr>,
+        (X86insertps VR128:$src1, VR128:$src2, imm:$src3))], itins.rr>,
       Sched<[WriteFShuffle]>;
   def rm : SS4AIi8<opc, MRMSrcMem, (outs VR128:$dst),
       (ins VR128:$src1, f32mem:$src2, u32u8imm:$src3),
@@ -6537,7 +6537,7 @@ multiclass SS41I_insertf32<bits<8> opc, string asm, bit Is2Addr = 1,
         !strconcat(asm,
                    "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}")),
       [(set VR128:$dst,
-        (X86insrtps VR128:$src1,
+        (X86insertps VR128:$src1,
                    (v4f32 (scalar_to_vector (loadf32 addr:$src2))),
                     imm:$src3))], itins.rm>,
       Sched<[WriteFShuffleLd, ReadAfterLd]>;

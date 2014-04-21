@@ -81,7 +81,7 @@ def X86pinsrb  : SDNode<"X86ISD::PINSRB",
 def X86pinsrw  : SDNode<"X86ISD::PINSRW",
                  SDTypeProfile<1, 3, [SDTCisVT<0, v8i16>, SDTCisSameAs<0,1>,
                                       SDTCisVT<2, i32>, SDTCisPtrTy<3>]>>;
-def X86insrtps : SDNode<"X86ISD::INSERTPS",
+def X86insertps : SDNode<"X86ISD::INSERTPS",
                  SDTypeProfile<1, 3, [SDTCisVT<0, v4f32>, SDTCisSameAs<0,1>,
                                       SDTCisVT<2, v4f32>, SDTCisPtrTy<3>]>>;
 def X86vzmovl  : SDNode<"X86ISD::VZEXT_MOVL",
