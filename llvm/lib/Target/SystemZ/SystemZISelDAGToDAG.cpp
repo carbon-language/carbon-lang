@@ -19,6 +19,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "systemz-isel"
+
 namespace {
 // Used to build addressing modes.
 struct SystemZAddressingMode {

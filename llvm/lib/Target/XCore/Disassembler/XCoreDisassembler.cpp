@@ -24,6 +24,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "xcore-disassembler"
+
 typedef MCDisassembler::DecodeStatus DecodeStatus;
 
 namespace {

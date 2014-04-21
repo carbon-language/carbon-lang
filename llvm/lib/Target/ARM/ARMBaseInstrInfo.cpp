@@ -42,6 +42,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "arm-instrinfo"
+
 static cl::opt<bool>
 EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                cl::desc("Enable ARM 2-addr to 3-addr conv"));

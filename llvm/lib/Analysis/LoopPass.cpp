@@ -19,6 +19,8 @@
 #include "llvm/Support/Timer.h"
 using namespace llvm;
 
+#define DEBUG_TYPE "loop-pass-manager"
+
 namespace {
 
 /// PrintLoopPass - Print a Function corresponding to a Loop.

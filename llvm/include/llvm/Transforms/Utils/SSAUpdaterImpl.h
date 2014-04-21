@@ -23,6 +23,8 @@
 
 namespace llvm {
 
+#define DEBUG_TYPE "ssaupdater"
+
 class CastInst;
 class PHINode;
 template<typename T> class SSAUpdaterTraits;
@@ -450,6 +452,8 @@ public:
       }
   }
 };
+
+#undef DEBUG_TYPE // "ssaupdater"
 
 } // End llvm namespace
 

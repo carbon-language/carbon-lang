@@ -38,6 +38,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "xcore-reg-info"
+
 XCoreRegisterInfo::XCoreRegisterInfo()
   : XCoreGenRegisterInfo(XCore::LR) {
 }

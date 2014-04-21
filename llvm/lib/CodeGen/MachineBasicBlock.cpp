@@ -35,6 +35,8 @@
 #include <algorithm>
 using namespace llvm;
 
+#define DEBUG_TYPE "codegen"
+
 MachineBasicBlock::MachineBasicBlock(MachineFunction &mf, const BasicBlock *bb)
   : BB(bb), Number(-1), xParent(&mf), Alignment(0), IsLandingPad(false),
     AddressTaken(false), CachedMCSymbol(nullptr) {

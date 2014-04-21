@@ -31,6 +31,8 @@
 using namespace llvm;
 using namespace object;
 
+#define DEBUG_TYPE "mc"
+
 MCObjectDisassembler::MCObjectDisassembler(const ObjectFile &Obj,
                                            const MCDisassembler &Dis,
                                            const MCInstrAnalysis &MIA)

@@ -29,6 +29,7 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "mips16-instrinfo"
 
 Mips16InstrInfo::Mips16InstrInfo(MipsTargetMachine &tm)
   : MipsInstrInfo(tm, Mips::Bimm16),

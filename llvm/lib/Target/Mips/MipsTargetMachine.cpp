@@ -35,6 +35,8 @@
 #include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
+#define DEBUG_TYPE "mips"
+
 
 
 extern "C" void LLVMInitializeMipsTarget() {

@@ -21,6 +21,8 @@
 namespace llvm {
 namespace sys {
 
+#define DEBUG_TYPE "unicode"
+
 /// \brief Represents a closed range of Unicode code points [Lower, Upper].
 struct UnicodeCharRange {
   uint32_t Lower;
@@ -87,6 +89,8 @@ private:
 
   const CharRanges Ranges;
 };
+
+#undef DEBUG_TYPE // "unicode"
 
 } // namespace sys
 } // namespace llvm

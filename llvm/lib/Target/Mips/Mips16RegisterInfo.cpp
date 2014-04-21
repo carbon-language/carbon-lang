@@ -39,6 +39,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "mips16-registerinfo"
+
 Mips16RegisterInfo::Mips16RegisterInfo(const MipsSubtarget &ST)
   : MipsRegisterInfo(ST) {}
 

@@ -17,6 +17,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "ppc-disassembler"
+
 typedef MCDisassembler::DecodeStatus DecodeStatus;
 
 namespace {

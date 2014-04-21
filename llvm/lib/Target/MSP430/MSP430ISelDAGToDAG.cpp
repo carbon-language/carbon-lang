@@ -31,6 +31,8 @@
 #include "llvm/Target/TargetLowering.h"
 using namespace llvm;
 
+#define DEBUG_TYPE "msp430-isel"
+
 namespace {
   struct MSP430ISelAddressMode {
     enum {

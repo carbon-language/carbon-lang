@@ -26,6 +26,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "lli"
+
 bool RemoteTargetExternal::allocateSpace(size_t Size, unsigned Alignment,
                                  uint64_t &Address) {
   DEBUG(dbgs() << "Message [allocate space] size: " << Size <<

@@ -25,6 +25,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "mips-disassembler"
+
 typedef MCDisassembler::DecodeStatus DecodeStatus;
 
 namespace {

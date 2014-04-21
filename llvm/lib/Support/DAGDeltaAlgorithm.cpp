@@ -42,6 +42,8 @@
 #include <map>
 using namespace llvm;
 
+#define DEBUG_TYPE "dag-delta"
+
 namespace {
 
 class DAGDeltaAlgorithmImpl {

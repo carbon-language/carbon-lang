@@ -41,6 +41,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "ppc-instr-info"
+
 static cl::
 opt<bool> DisableCTRLoopAnal("disable-ppc-ctrloop-analysis", cl::Hidden,
             cl::desc("Disable analysis for CTR loops"));

@@ -27,6 +27,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
+#define DEBUG_TYPE "dag-printer"
+
 namespace llvm {
   template<>
   struct DOTGraphTraits<SelectionDAG*> : public DefaultDOTGraphTraits {

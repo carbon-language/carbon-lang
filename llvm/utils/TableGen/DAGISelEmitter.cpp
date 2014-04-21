@@ -18,6 +18,8 @@
 #include "llvm/TableGen/TableGenBackend.h"
 using namespace llvm;
 
+#define DEBUG_TYPE "dag-isel-emitter"
+
 namespace {
 /// DAGISelEmitter - The top-level class which coordinates construction
 /// and emission of the instruction selector.

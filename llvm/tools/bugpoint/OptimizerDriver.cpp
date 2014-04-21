@@ -36,6 +36,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "bugpoint"
+
 namespace llvm {
   extern cl::opt<std::string> OutputPrefix;
 }

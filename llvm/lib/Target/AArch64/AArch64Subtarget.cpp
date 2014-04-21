@@ -19,6 +19,8 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 
+#define DEBUG_TYPE "aarch64-subtarget"
+
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "AArch64GenSubtargetInfo.inc"

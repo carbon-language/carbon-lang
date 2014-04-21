@@ -29,6 +29,8 @@
 #include <vector>
 using namespace llvm;
 
+#define DEBUG_TYPE "asm-writer-emitter"
+
 namespace {
 class AsmWriterEmitter {
   RecordKeeper &Records;

@@ -117,6 +117,8 @@
 #include <sstream>
 using namespace llvm;
 
+#define DEBUG_TYPE "asm-matcher-emitter"
+
 static cl::opt<std::string>
 MatchPrefix("match-prefix", cl::init(""),
             cl::desc("Only match instructions with the given prefix"));

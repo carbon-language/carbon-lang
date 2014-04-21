@@ -29,6 +29,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "mips-asm-parser"
+
 namespace llvm {
 class MCInstrInfo;
 }

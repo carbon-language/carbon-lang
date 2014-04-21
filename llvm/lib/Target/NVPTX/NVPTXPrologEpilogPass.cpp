@@ -25,6 +25,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "nvptx-prolog-epilog"
+
 namespace {
 class NVPTXPrologEpilogPass : public MachineFunctionPass {
 public:

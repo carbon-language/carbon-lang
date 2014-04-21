@@ -38,6 +38,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "nvptx-reflect"
+
 namespace llvm { void initializeNVVMReflectPass(PassRegistry &); }
 
 namespace {

@@ -29,6 +29,8 @@
 #include "llvm/Transforms/Utils/SSAUpdaterImpl.h"
 using namespace llvm;
 
+#define DEBUG_TYPE "machine-ssaupdater"
+
 typedef DenseMap<MachineBasicBlock*, unsigned> AvailableValsTy;
 static AvailableValsTy &getAvailableVals(void *AV) {
   return *static_cast<AvailableValsTy*>(AV);

@@ -41,6 +41,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "ir"
+
 void llvm::initializeCore(PassRegistry &Registry) {
   initializeDominatorTreeWrapperPassPass(Registry);
   initializePrintModulePassWrapperPass(Registry);

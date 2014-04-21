@@ -12,6 +12,8 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/Host.h"
 
+#define DEBUG_TYPE "systemz-subtarget"
+
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "SystemZGenSubtargetInfo.inc"

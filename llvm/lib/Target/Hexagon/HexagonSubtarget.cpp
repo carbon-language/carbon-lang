@@ -18,6 +18,8 @@
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
+#define DEBUG_TYPE "hexagon-subtarget"
+
 #define GET_SUBTARGETINFO_CTOR
 #define GET_SUBTARGETINFO_TARGET_DESC
 #include "HexagonGenSubtargetInfo.inc"

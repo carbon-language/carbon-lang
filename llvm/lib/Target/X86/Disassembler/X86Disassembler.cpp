@@ -37,6 +37,8 @@
 using namespace llvm;
 using namespace llvm::X86Disassembler;
 
+#define DEBUG_TYPE "x86-disassembler"
+
 void llvm::X86Disassembler::Debug(const char *file, unsigned line,
                                   const char *s) {
   dbgs() << file << ":" << line << ": " << s;

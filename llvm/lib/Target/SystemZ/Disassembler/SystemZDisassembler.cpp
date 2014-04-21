@@ -17,6 +17,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "systemz-disassembler"
+
 typedef MCDisassembler::DecodeStatus DecodeStatus;
 
 namespace {

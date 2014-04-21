@@ -25,6 +25,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 
+#define DEBUG_TYPE "ir"
+
 namespace llvm {
 template<class ValType>
 struct ConstantTraits;

@@ -26,6 +26,8 @@
 #include <vector>
 using namespace llvm;
 
+#define DEBUG_TYPE "mc"
+
 void MachObjectWriter::reset() {
   Relocations.clear();
   IndirectSymBase.clear();

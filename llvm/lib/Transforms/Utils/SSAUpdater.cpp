@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ssaupdater"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/TinyPtrVector.h"
@@ -27,6 +26,8 @@
 #include "llvm/Transforms/Utils/SSAUpdaterImpl.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "ssaupdater"
 
 typedef DenseMap<BasicBlock*, Value*> AvailableValsTy;
 static AvailableValsTy &getAvailableVals(void *AV) {

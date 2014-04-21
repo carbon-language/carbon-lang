@@ -33,6 +33,8 @@
 
 using namespace llvm;
 
+#define DEBUG_TYPE "hexagon-instrinfo"
+
 ///
 /// Constants for Hexagon instructions.
 ///

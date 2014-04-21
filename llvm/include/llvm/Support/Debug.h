@@ -13,10 +13,12 @@
 //
 // In particular, just wrap your code with the DEBUG() macro, and it will be
 // enabled automatically if you specify '-debug' on the command-line.
-// Alternatively, you can also use the SET_DEBUG_TYPE("foo") macro to specify
-// that your debug code belongs to class "foo".  Then, on the command line, you
-// can specify '-debug-only=foo' to enable JUST the debug information for the
-// foo class.
+// Alternatively, you can also define the DEBUG_TYPE macro to "foo" specify
+// that your debug code belongs to class "foo". Be careful that you only do
+// this after including Debug.h and not around any #include of headers. Headers
+// should define and undef the macro acround the code that needs to use the
+// DEBUG() macro. Then, on the command line, you can specify '-debug-only=foo'
+// to enable JUST the debug information for the foo class.
 //
 // When compiling without assertions, the -debug-* options and all code in
 // DEBUG() statements disappears, so it does not affect the runtime of the code.
@@ -29,12 +31,6 @@
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
-
-/// DEBUG_TYPE macro - Files can specify a DEBUG_TYPE as a string, which causes
-/// all of their DEBUG statements to be activatable with -debug-only=thatstring.
-#ifndef DEBUG_TYPE
-#define DEBUG_TYPE ""
-#endif
 
 #ifndef NDEBUG
 /// DebugFlag - This boolean is set to true if the '-debug' command line option

@@ -18,6 +18,8 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/TargetRegistry.h"
 
+#define DEBUG_TYPE "arm64-subtarget"
+
 #define GET_SUBTARGETINFO_CTOR
 #define GET_SUBTARGETINFO_TARGET_DESC
 #include "ARM64GenSubtargetInfo.inc"

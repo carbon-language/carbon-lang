@@ -34,6 +34,8 @@
 #include <set>
 using namespace llvm;
 
+#define DEBUG_TYPE "bugpoint"
+
 namespace llvm {
   bool DisableSimplifyCFG = false;
   extern cl::opt<std::string> OutputPrefix;

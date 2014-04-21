@@ -20,6 +20,8 @@ using namespace llvm;
 using namespace dwarf;
 using namespace object;
 
+#define DEBUG_TYPE "dwarf"
+
 typedef DWARFDebugLine::LineTable DWARFLineTable;
 
 static void dumpPubSection(raw_ostream &OS, StringRef Name, StringRef Data,

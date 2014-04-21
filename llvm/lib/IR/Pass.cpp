@@ -22,6 +22,8 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+#define DEBUG_TYPE "ir"
+
 //===----------------------------------------------------------------------===//
 // Pass Implementation
 //

@@ -27,6 +27,8 @@
 #include <algorithm>
 using namespace llvm;
 
+#define DEBUG_TYPE "lower-switch"
+
 namespace {
   /// LowerSwitch Pass - Replace all SwitchInst instructions with chained branch
   /// instructions.
