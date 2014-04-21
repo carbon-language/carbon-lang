@@ -986,11 +986,6 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
       // we have lost all RejectMemNodes below barrier.
       if (BarrierChain)
         BarrierChain->addPred(SDep(SU, SDep::Barrier));
-
-      if (!ExitSU.isPred(SU))
-        // Push store's up a bit to avoid them getting in between cmp
-        // and branches.
-        ExitSU.addPred(SDep(SU, SDep::Artificial));
     } else if (MI->mayLoad()) {
       bool MayAlias = true;
       if (MI->isInvariantLoad(AA)) {
