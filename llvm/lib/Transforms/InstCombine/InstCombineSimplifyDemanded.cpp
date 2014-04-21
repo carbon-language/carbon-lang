@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-
+#define DEBUG_TYPE "instcombine"
 #include "InstCombine.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/IntrinsicInst.h"

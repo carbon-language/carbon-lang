@@ -10,7 +10,6 @@
 #ifndef INSTCOMBINE_WORKLIST_H
 #define INSTCOMBINE_WORKLIST_H
 
-#define DEBUG_TYPE "instcombine"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/Instruction.h"

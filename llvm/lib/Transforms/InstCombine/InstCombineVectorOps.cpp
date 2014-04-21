@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "instcombine"
 #include "InstCombine.h"
 #include "llvm/IR/PatternMatch.h"
 using namespace llvm;
