@@ -654,11 +654,6 @@ public:
   /// \param DiagID A member of the @c diag::kind enum.
   /// \param Loc Represents the source location associated with the diagnostic,
   /// which can be an invalid location if no position information is available.
-  /// \param Val A string that represents the value that triggered
-  /// this diagnostic. If given, this value will be emitted as "=value"
-  /// after the flag name.
-  inline DiagnosticBuilder Report(SourceLocation Loc, unsigned DiagID,
-                                  StringRef Val);
   inline DiagnosticBuilder Report(SourceLocation Loc, unsigned DiagID);
   inline DiagnosticBuilder Report(unsigned DiagID);
 
@@ -694,8 +689,11 @@ public:
   /// \brief Clear out the current diagnostic.
   void Clear() { CurDiagID = ~0U; }
 
-  /// \brief Return the overridden name for this diagnostic flag.
+  /// \brief Return the value associated to this diagnostic flag.
   StringRef getFlagNameValue() const { return StringRef(FlagNameValue); }
+
+  /// \brief Set the value associated to this diagnostic flag.
+  void setFlagNameValue(StringRef V) { FlagNameValue = V; }
 
 private:
   /// \brief Report the delayed diagnostic.
@@ -1010,7 +1008,24 @@ public:
   bool hasMaxFixItHints() const {
     return NumFixits == DiagnosticsEngine::MaxFixItHints;
   }
+
+  void addFlagValue(StringRef V) const { DiagObj->setFlagNameValue(V); }
 };
+
+struct AddFlagValue {
+  explicit AddFlagValue(StringRef V) : Val(V) {}
+  StringRef Val;
+};
+
+/// \brief Register a value for the flag in the current diagnostic. This
+/// value will be shown as the suffix "=value" after the flag name. It is
+/// useful in cases where the diagnostic flag accepts values (e.g.,
+/// -Rpass or -Wframe-larger-than).
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           const AddFlagValue V) {
+  DB.addFlagValue(V.Val);
+  return DB;
+}
 
 inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                            StringRef S) {
@@ -1100,22 +1115,17 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   return DB;
 }
 
-inline DiagnosticBuilder
-DiagnosticsEngine::Report(SourceLocation Loc, unsigned DiagID, StringRef Val) {
+inline DiagnosticBuilder DiagnosticsEngine::Report(SourceLocation Loc,
+                                                   unsigned DiagID) {
   assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");
   CurDiagLoc = Loc;
   CurDiagID = DiagID;
-  FlagNameValue = Val.str();
+  FlagNameValue.clear();
   return DiagnosticBuilder(this);
 }
 
-inline DiagnosticBuilder DiagnosticsEngine::Report(SourceLocation Loc,
-                                                   unsigned DiagID) {
-  return Report(Loc, DiagID, "");
-}
-
 inline DiagnosticBuilder DiagnosticsEngine::Report(unsigned DiagID) {
-  return Report(SourceLocation(), DiagID, "");
+  return Report(SourceLocation(), DiagID);
 }
 
 //===----------------------------------------------------------------------===//
