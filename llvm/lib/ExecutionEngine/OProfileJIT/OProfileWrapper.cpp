@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "oprofile-wrapper"
 #include "llvm/ExecutionEngine/OProfileWrapper.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Debug.h"
@@ -28,6 +27,8 @@
 #include <stddef.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#define DEBUG_TYPE "oprofile-wrapper"
 
 namespace {
 

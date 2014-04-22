@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "WinCOFFStreamer"
-
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAsmLayout.h"
@@ -34,6 +32,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "WinCOFFStreamer"
 
 namespace {
 class WinCOFFStreamer : public MCObjectStreamer {

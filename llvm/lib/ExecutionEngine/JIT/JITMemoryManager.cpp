@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "jit"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -39,6 +38,8 @@
 #endif
 
 using namespace llvm;
+
+#define DEBUG_TYPE "jit"
 
 STATISTIC(NumSlabs, "Number of slabs of memory allocated by the JIT");
 

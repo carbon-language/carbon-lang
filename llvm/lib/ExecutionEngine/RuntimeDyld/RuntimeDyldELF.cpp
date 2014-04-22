@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "dyld"
 #include "RuntimeDyldELF.h"
 #include "JITRegistrar.h"
 #include "ObjectImageCommon.h"
@@ -28,6 +27,8 @@
 
 using namespace llvm;
 using namespace llvm::object;
+
+#define DEBUG_TYPE "dyld"
 
 namespace {
 

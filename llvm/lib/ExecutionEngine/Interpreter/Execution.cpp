@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "interpreter"
 #include "Interpreter.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/Statistic.h"
@@ -27,6 +26,8 @@
 #include <algorithm>
 #include <cmath>
 using namespace llvm;
+
+#define DEBUG_TYPE "interpreter"
 
 STATISTIC(NumDynamicInsts, "Number of dynamic instructions executed");
 

@@ -15,7 +15,6 @@
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
 
-#define DEBUG_TYPE "amplifier-jit-event-listener"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Metadata.h"
@@ -33,6 +32,8 @@
 
 using namespace llvm;
 using namespace llvm::jitprofiling;
+
+#define DEBUG_TYPE "amplifier-jit-event-listener"
 
 namespace {
 
