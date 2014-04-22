@@ -8175,13 +8175,13 @@ int64_t test_vcltzd_s64(int64_t a) {
 
 int64_t test_vtstd_s64(int64_t a, int64_t b) {
 // CHECK-LABEL: test_vtstd_s64
-// CHECK: {{cmtst d[0-9]+, d[0-9]+, d[0-9]+|and x[0-9]+, x1, x0}}
+// CHECK: {{cmtst d[0-9]+, d[0-9]+, d[0-9]+|tst x1, x0}}
   return (int64_t)vtstd_s64(a, b);
 }
 
 uint64_t test_vtstd_u64(uint64_t a, uint64_t b) {
 // CHECK-LABEL: test_vtstd_u64
-// CHECK: {{cmtst d[0-9]+, d[0-9]+, d[0-9]+|and x[0-9]+, x1, x0}}
+// CHECK: {{cmtst d[0-9]+, d[0-9]+, d[0-9]+|tst x1, x0}}
   return (uint64_t)vtstd_u64(a, b);
 }
 
