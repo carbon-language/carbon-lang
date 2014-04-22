@@ -685,32 +685,46 @@ SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
   }
 
   SDLoc DL(Op);
-  const SDValue &Value = Store->getValue();
+  SDValue Value = Store->getValue();
   EVT VT = Value.getValueType();
-  const SDValue &Ptr = Store->getBasePtr();
+  EVT ElemVT = VT.getVectorElementType();
+  SDValue Ptr = Store->getBasePtr();
   EVT MemEltVT = MemVT.getVectorElementType();
   unsigned MemEltBits = MemEltVT.getSizeInBits();
   unsigned MemNumElements = MemVT.getVectorNumElements();
-  EVT PackedVT = EVT::getIntegerVT(*DAG.getContext(), MemVT.getSizeInBits());
-  SDValue Mask = DAG.getConstant((1 << MemEltBits) - 1, PackedVT);
+  unsigned PackedSize = MemVT.getStoreSizeInBits();
+  SDValue Mask = DAG.getConstant((1 << MemEltBits) - 1, MVT::i32);
+
+  assert(Value.getValueType().getScalarSizeInBits() >= 32);
 
   SDValue PackedValue;
   for (unsigned i = 0; i < MemNumElements; ++i) {
-    EVT ElemVT = VT.getVectorElementType();
     SDValue Elt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, ElemVT, Value,
                               DAG.getConstant(i, MVT::i32));
-    Elt = DAG.getZExtOrTrunc(Elt, DL, PackedVT);
-    Elt = DAG.getNode(ISD::AND, DL, PackedVT, Elt, Mask);
-    SDValue Shift = DAG.getConstant(MemEltBits * i, PackedVT);
-    Elt = DAG.getNode(ISD::SHL, DL, PackedVT, Elt, Shift);
+    Elt = DAG.getZExtOrTrunc(Elt, DL, MVT::i32);
+    Elt = DAG.getNode(ISD::AND, DL, MVT::i32, Elt, Mask); // getZeroExtendInReg
+
+    SDValue Shift = DAG.getConstant(MemEltBits * i, MVT::i32);
+    Elt = DAG.getNode(ISD::SHL, DL, MVT::i32, Elt, Shift);
+
     if (i == 0) {
       PackedValue = Elt;
     } else {
-      PackedValue = DAG.getNode(ISD::OR, DL, PackedVT, PackedValue, Elt);
+      PackedValue = DAG.getNode(ISD::OR, DL, MVT::i32, PackedValue, Elt);
     }
   }
+
+  if (PackedSize < 32) {
+    EVT PackedVT = EVT::getIntegerVT(*DAG.getContext(), PackedSize);
+    return DAG.getTruncStore(Store->getChain(), DL, PackedValue, Ptr,
+                             Store->getMemOperand()->getPointerInfo(),
+                             PackedVT,
+                             Store->isNonTemporal(), Store->isVolatile(),
+                             Store->getAlignment());
+  }
+
   return DAG.getStore(Store->getChain(), DL, PackedValue, Ptr,
-                      MachinePointerInfo(Store->getMemOperand()->getValue()),
+                      Store->getMemOperand()->getPointerInfo(),
                       Store->isVolatile(),  Store->isNonTemporal(),
                       Store->getAlignment());
 }
