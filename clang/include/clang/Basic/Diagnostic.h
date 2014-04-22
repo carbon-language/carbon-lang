@@ -654,7 +654,7 @@ public:
   /// \param DiagID A member of the @c diag::kind enum.
   /// \param Loc Represents the source location associated with the diagnostic,
   /// which can be an invalid location if no position information is available.
-  /// \param FlagNameValue A string that represents the value that triggered
+  /// \param Val A string that represents the value that triggered
   /// this diagnostic. If given, this value will be emitted as "=value"
   /// after the flag name.
   inline DiagnosticBuilder Report(SourceLocation Loc, unsigned DiagID,
