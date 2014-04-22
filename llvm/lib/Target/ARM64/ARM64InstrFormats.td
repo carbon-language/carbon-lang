@@ -5801,6 +5801,10 @@ multiclass SIMDScalarCPY<string asm> {
     let Inst{19-16} = 0b1000;
   }
 
+  def : Pat<(v1i64 (scalar_to_vector (i64 (vector_extract (v2i64 V128:$src),
+                                                          VectorIndexD:$idx)))),
+            (!cast<Instruction>(NAME # i64) V128:$src, VectorIndexD:$idx)>;
+
   // 'DUP' mnemonic aliases.
   def : SIMDScalarCPYAlias<"dup", ".b",
                            !cast<Instruction>(NAME#"i8"),
