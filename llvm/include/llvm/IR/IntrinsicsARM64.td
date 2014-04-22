@@ -189,7 +189,9 @@ let Properties = [IntrNoMem] in {
         Intrinsic<[llvm_v16i8_ty], [llvm_i64_ty, llvm_i64_ty], [IntrNoMem]>;
 
   // Vector Extending Multiply
-  def int_arm64_neon_fmulx : AdvSIMD_2FloatArg_Intrinsic;
+  def int_arm64_neon_fmulx : AdvSIMD_2FloatArg_Intrinsic {
+    let Properties = [IntrNoMem, Commutative];
+  }
 
   // Vector Saturating Doubling Long Multiply
   def int_arm64_neon_sqdmull : AdvSIMD_2VectorArg_Long_Intrinsic;
