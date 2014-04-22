@@ -38,7 +38,7 @@ class StaticVariableTestCase(TestBase):
         self.buildDsym()
         self.static_variable_python()
 
-    @expectedFailureClang(9980907) # XPASS on FreeBSD w/ Clang 3.4 and libc++
+    @expectedFailureDarwin(9980907)
     @python_api_test
     @dwarf_test
     def test_with_dwarf_and_python_api(self):
