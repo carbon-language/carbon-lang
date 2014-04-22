@@ -2319,7 +2319,7 @@ def warn_impcast_float_precision : Warning<
   InGroup<Conversion>, DefaultIgnore;
 def warn_impcast_float_integer : Warning<
   "implicit conversion turns floating-point number into integer: %0 to %1">,
-  InGroup<Conversion>, DefaultIgnore;
+  InGroup<FloatingPointConversion>, DefaultIgnore;
 def warn_impcast_integer_sign : Warning<
   "implicit conversion changes signedness: %0 to %1">,
   InGroup<SignConversion>, DefaultIgnore;
