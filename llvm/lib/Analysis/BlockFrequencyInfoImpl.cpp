@@ -367,7 +367,7 @@ typedef BlockFrequencyInfoImplBase::BlockNode BlockNode;
 typedef BlockFrequencyInfoImplBase::Distribution Distribution;
 typedef BlockFrequencyInfoImplBase::Distribution::WeightList WeightList;
 typedef BlockFrequencyInfoImplBase::Float Float;
-typedef BlockFrequencyInfoImplBase::PackagedLoopData PackagedLoopData;
+typedef BlockFrequencyInfoImplBase::LoopData LoopData;
 typedef BlockFrequencyInfoImplBase::Weight Weight;
 typedef BlockFrequencyInfoImplBase::FrequencyData FrequencyData;
 
@@ -696,8 +696,8 @@ void BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
 void BlockFrequencyInfoImplBase::addLoopSuccessorsToDist(
     const BlockNode &LoopHead, const BlockNode &LocalLoopHead,
     Distribution &Dist) {
-  PackagedLoopData &LoopPackage = getLoopPackage(LocalLoopHead);
-  const PackagedLoopData::ExitMap &Exits = LoopPackage.Exits;
+  LoopData &LoopPackage = getLoopPackage(LocalLoopHead);
+  const LoopData::ExitMap &Exits = LoopPackage.Exits;
 
   // Copy the exit map into Dist.
   for (const auto &I : Exits)
@@ -721,7 +721,7 @@ void BlockFrequencyInfoImplBase::computeLoopScale(const BlockNode &LoopHead) {
 
   // LoopScale == 1 / ExitMass
   // ExitMass == HeadMass - BackedgeMass
-  PackagedLoopData &LoopPackage = getLoopPackage(LoopHead);
+  LoopData &LoopPackage = getLoopPackage(LoopHead);
   BlockMass ExitMass = BlockMass::getFull() - LoopPackage.BackedgeMass;
 
   // Block scale stores the inverse of the scale.
@@ -771,7 +771,7 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
   (void)debugAssign;
 #endif
 
-  PackagedLoopData *LoopPackage = 0;
+  LoopData *LoopPackage = 0;
   if (LoopHead.isValid())
     LoopPackage = &getLoopPackage(LoopHead);
   for (const Weight &W : Dist.Weights) {
@@ -829,7 +829,7 @@ static void convertFloatingToInteger(BlockFrequencyInfoImplBase &BFI,
 
 static void scaleBlockData(BlockFrequencyInfoImplBase &BFI,
                            const BlockNode &Node,
-                           const PackagedLoopData &Loop) {
+                           const LoopData &Loop) {
   Float F = Loop.Mass.toFloat() * Loop.Scale;
 
   Float &Current = BFI.Freqs[Node.Index].Floating;
@@ -849,7 +849,7 @@ static void unwrapLoopPackage(BlockFrequencyInfoImplBase &BFI,
                               const BlockNode &Head) {
   assert(Head.isValid());
 
-  PackagedLoopData &LoopPackage = BFI.getLoopPackage(Head);
+  LoopData &LoopPackage = BFI.getLoopPackage(Head);
   DEBUG(dbgs() << "unwrap-loop-package: " << BFI.getBlockName(Head)
                << ": mass = " << LoopPackage.Mass
                << ", scale = " << LoopPackage.Scale << "\n");

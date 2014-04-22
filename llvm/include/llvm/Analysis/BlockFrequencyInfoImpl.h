@@ -937,15 +937,11 @@ public:
     uint64_t Integer;
   };
 
-  /// \brief Data for a packaged loop.
+  /// \brief Data about a loop.
   ///
-  /// Contains the data necessary to represent represent a loop as a node once
-  /// it's packaged.
-  ///
-  /// PackagedLoopData inherits from BlockData to give the node the necessary
-  /// stats.  Further, it has a list of successors, list of members, and stores
-  /// the backedge mass assigned to this loop.
-  struct PackagedLoopData {
+  /// Contains the data necessary to represent represent a loop as a
+  /// pseudo-node once it's packaged.
+  struct LoopData {
     typedef SmallVector<std::pair<BlockNode, BlockMass>, 4> ExitMap;
     typedef SmallVector<BlockNode, 4> MemberList;
     BlockNode Header;       ///< Header.
@@ -955,7 +951,7 @@ public:
     BlockMass Mass;
     Float Scale;
 
-    PackagedLoopData(const BlockNode &Header) : Header(Header) {}
+    LoopData(const BlockNode &Header) : Header(Header) {}
   };
 
   /// \brief Index of loop information.
@@ -1044,7 +1040,7 @@ public:
   std::vector<WorkingData> Working;
 
   /// \brief Indexed information about packaged loops.
-  std::vector<PackagedLoopData> PackagedLoops;
+  std::vector<LoopData> PackagedLoops;
 
   /// \brief Add all edges out of a packaged loop to the distribution.
   ///
@@ -1063,7 +1059,7 @@ public:
   void addToDist(Distribution &Dist, const BlockNode &LoopHead,
                  const BlockNode &Pred, const BlockNode &Succ, uint64_t Weight);
 
-  PackagedLoopData &getLoopPackage(const BlockNode &Head) {
+  LoopData &getLoopPackage(const BlockNode &Head) {
     assert(Head.Index < Working.size());
     size_t Index = Working[Head.Index].LoopIndex;
     assert(Index < PackagedLoops.size());
@@ -1221,7 +1217,7 @@ template <> inline std::string getBlockName(const BasicBlock *BB) {
 ///
 ///         - Fetch and categorize the weight distribution for its successors.
 ///           If this is a packaged-subloop, the weight distribution is stored
-///           in \a PackagedLoopData::Exits.  Otherwise, fetch it from
+///           in \a LoopData::Exits.  Otherwise, fetch it from
 ///           BranchProbabilityInfo.
 ///
 ///         - Each successor is categorized as \a Weight::Local, a normal
