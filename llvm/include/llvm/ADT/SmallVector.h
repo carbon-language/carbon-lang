@@ -220,7 +220,7 @@ protected:
   /// Guarantees space for at least one more element, or MinSize more
   /// elements if specified.
   void grow(size_t MinSize = 0);
-  
+
 public:
   void push_back(const T &Elt) {
     if (this->EndX >= this->CapacityX)
@@ -247,7 +247,7 @@ template <typename T, bool isPodLike>
 void SmallVectorTemplateBase<T, isPodLike>::grow(size_t MinSize) {
   size_t CurCapacity = this->capacity();
   size_t CurSize = this->size();
-  // Always grow, even from zero.  
+  // Always grow, even from zero.
   size_t NewCapacity = size_t(NextPowerOf2(CurCapacity+2));
   if (NewCapacity < MinSize)
     NewCapacity = MinSize;
@@ -332,7 +332,7 @@ public:
     memcpy(this->end(), &Elt, sizeof(T));
     this->setEnd(this->end()+1);
   }
-  
+
   void pop_back() {
     this->setEnd(this->end()-1);
   }
