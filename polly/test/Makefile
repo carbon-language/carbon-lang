@@ -54,6 +54,8 @@ lit.site.cfg: FORCE
 	     -e "s#@LLVM_SHLIBEXT@#$(SHLIBEXT)#g" \
              -e "s#@POLLY_LIB_DIR@#$(LibDir)#g" \
              -e "s#@LINK_POLLY_INTO_TOOLS@#OFF#g" \
+             -e "s#@CLOOG_FOUND@#$(CLOOG_FOUND)#g" \
+             -e "s#@CUDALIB_FOUND@#$(CUDALIB_FOUND)#g" \
 	     $(PROJ_SRC_DIR)/lit.site.cfg.in > $@
 
 clean::
