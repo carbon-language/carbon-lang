@@ -326,9 +326,6 @@ struct AddressSanitizer : public FunctionPass {
                                  bool IsWrite, size_t AccessSizeIndex,
                                  Value *SizeArgument);
   void instrumentMemIntrinsic(MemIntrinsic *MI);
-  void instrumentMemIntrinsicParam(Instruction *OrigIns, Value *Addr,
-                                   Value *Size, Instruction *InsertBefore,
-                                   bool IsWrite, bool UseCalls);
   Value *memToShadow(Value *Shadow, IRBuilder<> &IRB);
   bool runOnFunction(Function &F) override;
   bool maybeInsertAsanInitAtFunctionEntry(Function &F);
@@ -603,24 +600,6 @@ Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
     return IRB.CreateAdd(Shadow, ConstantInt::get(IntptrTy, Mapping.Offset));
 }
 
-void AddressSanitizer::instrumentMemIntrinsicParam(Instruction *OrigIns,
-                                                   Value *Addr, Value *Size,
-                                                   Instruction *InsertBefore,
-                                                   bool IsWrite,
-                                                   bool UseCalls) {
-  IRBuilder<> IRB(InsertBefore);
-  if (Size->getType() != IntptrTy)
-    Size = IRB.CreateIntCast(Size, IntptrTy, false);
-  // Check the first byte.
-  instrumentAddress(OrigIns, InsertBefore, Addr, 8, IsWrite, Size, false);
-  // Check the last byte.
-  IRB.SetInsertPoint(InsertBefore);
-  Value *SizeMinusOne = IRB.CreateSub(Size, ConstantInt::get(IntptrTy, 1));
-  Value *AddrLong = IRB.CreatePointerCast(Addr, IntptrTy);
-  Value *AddrLast = IRB.CreateAdd(AddrLong, SizeMinusOne);
-  instrumentAddress(OrigIns, InsertBefore, AddrLast, 8, IsWrite, Size, false);
-}
-
 // Instrument memset/memmove/memcpy
 void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
   IRBuilder<> IRB(MI);
@@ -756,13 +735,19 @@ void AddressSanitizer::instrumentMop(Instruction *I, bool UseCalls) {
   // and the last bytes. We call __asan_report_*_n(addr, real_size) to be able
   // to report the actual access size.
   IRBuilder<> IRB(I);
-  Value *LastByte =  IRB.CreateIntToPtr(
-      IRB.CreateAdd(IRB.CreatePointerCast(Addr, IntptrTy),
-                    ConstantInt::get(IntptrTy, TypeSize / 8 - 1)),
-      OrigPtrTy);
   Value *Size = ConstantInt::get(IntptrTy, TypeSize / 8);
-  instrumentAddress(I, I, Addr, 8, IsWrite, Size, false);
-  instrumentAddress(I, I, LastByte, 8, IsWrite, Size, false);
+  Value *AddrLong = IRB.CreatePointerCast(Addr, IntptrTy);
+  if (UseCalls) {
+    CallInst *Check =
+        IRB.CreateCall2(AsanMemoryAccessCallbackSized[IsWrite], AddrLong, Size);
+    Check->setDebugLoc(I->getDebugLoc());
+  } else {
+    Value *LastByte = IRB.CreateIntToPtr(
+        IRB.CreateAdd(AddrLong, ConstantInt::get(IntptrTy, TypeSize / 8 - 1)),
+        OrigPtrTy);
+    instrumentAddress(I, I, Addr, 8, IsWrite, Size, false);
+    instrumentAddress(I, I, LastByte, 8, IsWrite, Size, false);
+  }
 }
 
 // Validate the result of Module::getOrInsertFunction called for an interface
