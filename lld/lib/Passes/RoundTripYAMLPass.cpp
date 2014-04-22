@@ -6,8 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "RoundTripYAMLPass"
-
 #include "lld/Core/Instrumentation.h"
 #include "lld/Passes/RoundTripYAMLPass.h"
 #include "lld/ReaderWriter/Simple.h"
@@ -19,6 +17,8 @@
 #include <memory>
 
 using namespace lld;
+
+#define DEBUG_TYPE "RoundTripYAMLPass"
 
 /// Perform the actual pass
 void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {

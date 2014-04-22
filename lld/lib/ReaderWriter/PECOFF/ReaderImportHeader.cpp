@@ -118,8 +118,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ReaderImportHeader"
-
 #include "Atoms.h"
 
 #include "lld/Core/File.h"
@@ -146,6 +144,8 @@
 using namespace lld;
 using namespace lld::pecoff;
 using namespace llvm;
+
+#define DEBUG_TYPE "ReaderImportHeader"
 
 namespace lld {
 

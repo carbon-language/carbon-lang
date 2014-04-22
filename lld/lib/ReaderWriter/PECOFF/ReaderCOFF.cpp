@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ReaderCOFF"
-
 #include "Atoms.h"
 #include "ReaderImportHeader.h"
 
@@ -37,6 +35,8 @@
 #include <map>
 #include <set>
 #include <vector>
+
+#define DEBUG_TYPE "ReaderCOFF"
 
 using std::vector;
 using lld::pecoff::COFFAbsoluteAtom;

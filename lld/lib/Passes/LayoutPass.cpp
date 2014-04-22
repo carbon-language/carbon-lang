@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "LayoutPass"
-
 #include <algorithm>
 #include <set>
 
@@ -19,6 +17,8 @@
 #include "llvm/Support/Debug.h"
 
 using namespace lld;
+
+#define DEBUG_TYPE "LayoutPass"
 
 static bool compareAtoms(const LayoutPass::SortKey &,
                          const LayoutPass::SortKey &);

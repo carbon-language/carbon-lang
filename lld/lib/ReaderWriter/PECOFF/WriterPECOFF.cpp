@@ -19,8 +19,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "WriterPECOFF"
-
 #include "Atoms.h"
 #include "WriterImportLibrary.h"
 
@@ -45,6 +43,8 @@
 #include <map>
 #include <time.h>
 #include <vector>
+
+#define DEBUG_TYPE "WriterPECOFF"
 
 using llvm::COFF::DataDirectoryIndex;
 using llvm::object::coff_runtime_function_x64;

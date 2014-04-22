@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "RoundTripNativePass"
-
 #include "lld/Core/Instrumentation.h"
 #include "lld/Passes/RoundTripNativePass.h"
 #include "lld/ReaderWriter/Simple.h"
@@ -20,6 +18,8 @@
 #include <memory>
 
 using namespace lld;
+
+#define DEBUG_TYPE "RoundTripNativePass"
 
 /// Perform the actual pass
 void RoundTripNativePass::perform(std::unique_ptr<MutableFile> &mergedFile) {
