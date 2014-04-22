@@ -3,7 +3,7 @@
 // strlen() and memcpy() called by printf().
 // RUN: ASAN_OPTIONS=replace_str=0:replace_intrin=0:check_printf=1 not %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
 // RUN: ASAN_OPTIONS=replace_str=0:replace_intrin=0:check_printf=0 %t 2>&1 | FileCheck --check-prefix=CHECK-OFF %s
-// RUN: ASAN_OPTIONS=replace_str=0:replace_intrin=0 %t 2>&1 | FileCheck --check-prefix=CHECK-OFF %s
+// RUN: ASAN_OPTIONS=replace_str=0:replace_intrin=0 not %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
 
 #include <stdio.h>
 #include <stdlib.h>
