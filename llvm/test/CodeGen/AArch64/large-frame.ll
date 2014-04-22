@@ -1,4 +1,5 @@
 ; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
+; arm64 has a separate copy: aarch64-large-frame.ll (codegen was too different).
 declare void @use_addr(i8*)
 
 @addr = global i8* null

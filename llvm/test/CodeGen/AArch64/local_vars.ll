@@ -1,5 +1,7 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -O0 | FileCheck %s
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -O0 -disable-fp-elim | FileCheck -check-prefix CHECK-WITHFP %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -O0 -disable-fp-elim | FileCheck -check-prefix CHECK-WITHFP-AARCH64 %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -disable-fp-elim | FileCheck -check-prefix CHECK-WITHFP-ARM64 %s
 
 ; Make sure a reasonably sane prologue and epilogue are
 ; generated. This test is not robust in the face of an frame-handling
@@ -16,7 +18,7 @@
 declare void @foo()
 
 define void @trivial_func() nounwind {
-; CHECK: trivial_func: // @trivial_func
+; CHECK-LABEL: trivial_func: // @trivial_func
 ; CHECK-NEXT: // BB#0
 ; CHECK-NEXT: ret
 
@@ -24,11 +26,14 @@ define void @trivial_func() nounwind {
 }
 
 define void @trivial_fp_func() {
-; CHECK-WITHFP-LABEL: trivial_fp_func:
+; CHECK-WITHFP-AARCH64-LABEL: trivial_fp_func:
+; CHECK-WITHFP-AARCH64: sub sp, sp, #16
+; CHECK-WITHFP-AARCH64: stp x29, x30, [sp]
+; CHECK-WITHFP-AARCH64-NEXT: mov x29, sp
 
-; CHECK-WITHFP: sub sp, sp, #16
-; CHECK-WITHFP: stp x29, x30, [sp]
-; CHECK-WITHFP-NEXT: mov x29, sp
+; CHECK-WITHFP-ARM64-LABEL: trivial_fp_func:
+; CHECK-WITHFP-ARM64: stp x29, x30, [sp, #-16]!
+; CHECK-WITHFP-ARM64-NEXT: mov x29, sp
 
 ; Dont't really care, but it would be a Bad Thing if this came after the epilogue.
 ; CHECK: bl foo
@@ -48,10 +53,10 @@ define void @stack_local() {
 
   %val = load i64* @var
   store i64 %val, i64* %local_var
-; CHECK: str {{x[0-9]+}}, [sp, #{{[0-9]+}}]
+; CHECK-DAG: str {{x[0-9]+}}, [sp, #{{[0-9]+}}]
 
   store i64* %local_var, i64** @local_addr
-; CHECK: add {{x[0-9]+}}, sp, #{{[0-9]+}}
+; CHECK-DAG: add {{x[0-9]+}}, sp, #{{[0-9]+}}
 
   ret void
 }

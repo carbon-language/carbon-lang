@@ -2,6 +2,8 @@
 ; Bug: i8 type in FRP8 register but not registering with register class causes segmentation fault.
 ; Fix: Removed i8 type from FPR8 register class.
 
+; Not relevant to arm64.
+
 define void @test_concatvector_v8i8() {
 entry.split:
   br i1 undef, label %if.then, label %if.end
