@@ -324,13 +324,13 @@ error_code FileCOFF::readSymbolTable(vector<const coff_symbol *> &result) {
   for (uint32_t i = 0, e = header->NumberOfSymbols; i != e; ++i) {
     // Retrieve the symbol.
     const coff_symbol *sym;
+    StringRef name;
     if (error_code ec = _obj->getSymbol(i, sym))
       return ec;
-    assert(sym->SectionNumber != llvm::COFF::IMAGE_SYM_DEBUG &&
-           "Cannot atomize IMAGE_SYM_DEBUG!");
+    if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_DEBUG)
+      goto next;
     result.push_back(sym);
 
-    StringRef name;
     if (error_code ec = _obj->getSymbolName(sym, name))
       return ec;
 
@@ -338,7 +338,7 @@ error_code FileCOFF::readSymbolTable(vector<const coff_symbol *> &result) {
     // with Safe Exception Handling.
     if (name == "@feat.00") {
       _compatibleWithSEH = true;
-      continue;
+      goto next;
     }
 
     // Cache the name.
@@ -354,8 +354,9 @@ error_code FileCOFF::readSymbolTable(vector<const coff_symbol *> &result) {
       if (error_code ec = _obj->getAuxSymbol(i + 1, aux))
         return ec;
       _auxSymbol[sym] = aux;
-      i += sym->NumberOfAuxSymbols;
     }
+ next:
+      i += sym->NumberOfAuxSymbols;
   }
   return error_code::success();
 }
@@ -482,7 +483,8 @@ error_code FileCOFF::createDefinedSymbols(const SymbolVectorT &symbols,
     }
 
     // Skip if it's not for defined atom.
-    if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_ABSOLUTE ||
+    if (sym->SectionNumber == llvm::COFF::IMAGE_SYM_DEBUG ||
+        sym->SectionNumber == llvm::COFF::IMAGE_SYM_ABSOLUTE ||
         sym->SectionNumber == llvm::COFF::IMAGE_SYM_UNDEFINED)
       continue;
 
