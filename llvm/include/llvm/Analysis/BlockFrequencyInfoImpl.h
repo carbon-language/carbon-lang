@@ -945,28 +945,30 @@ public:
     typedef SmallVector<std::pair<BlockNode, BlockMass>, 4> ExitMap;
     typedef SmallVector<BlockNode, 4> MemberList;
     BlockNode Header;       ///< Header.
+    bool IsPackaged;        ///< Whether this has been packaged.
     ExitMap Exits;          ///< Successor edges (and weights).
     MemberList Members;     ///< Members of the loop.
     BlockMass BackedgeMass; ///< Mass returned to loop header.
     BlockMass Mass;
     Float Scale;
 
-    LoopData(const BlockNode &Header) : Header(Header) {}
+    LoopData(const BlockNode &Header) : Header(Header), IsPackaged(false) {}
   };
 
   /// \brief Index of loop information.
   struct WorkingData {
+    LoopData *Loop;           ///< The loop this block is the header of.
     BlockNode ContainingLoop; ///< The block whose loop this block is inside.
-    uint32_t LoopIndex;       ///< Index into PackagedLoops.
     bool IsPackaged;          ///< Has ContainingLoop been packaged up?
-    bool IsAPackage;          ///< Has this block's loop been packaged up?
     BlockMass Mass;           ///< Mass distribution from the entry block.
 
-    WorkingData()
-        : LoopIndex(UINT32_MAX), IsPackaged(false), IsAPackage(false) {}
+    WorkingData() : Loop(nullptr), IsPackaged(false) {}
 
     bool hasLoopHeader() const { return ContainingLoop.isValid(); }
-    bool isLoopHeader() const { return LoopIndex != UINT32_MAX; }
+    bool isLoopHeader() const { return Loop; }
+
+    /// \brief Has this block's loop been packaged up?
+    bool isAPackage() const { return Loop && Loop->IsPackaged; }
   };
 
   /// \brief Unscaled probability weight.
@@ -1040,7 +1042,7 @@ public:
   std::vector<WorkingData> Working;
 
   /// \brief Indexed information about packaged loops.
-  std::vector<LoopData> PackagedLoops;
+  std::vector<std::unique_ptr<LoopData>> PackagedLoops;
 
   /// \brief Add all edges out of a packaged loop to the distribution.
   ///
@@ -1061,9 +1063,8 @@ public:
 
   LoopData &getLoopPackage(const BlockNode &Head) {
     assert(Head.Index < Working.size());
-    size_t Index = Working[Head.Index].LoopIndex;
-    assert(Index < PackagedLoops.size());
-    return PackagedLoops[Index];
+    assert(Working[Head.Index].Loop != nullptr);
+    return *Working[Head.Index].Loop;
   }
 
   /// \brief Distribute mass according to a distribution.
@@ -1428,8 +1429,8 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
     BlockNode Header = getNode(Loop->getHeader());
     assert(Header.isValid());
 
-    Working[Header.Index].LoopIndex = PackagedLoops.size();
-    PackagedLoops.emplace_back(Header);
+    PackagedLoops.emplace_back(new LoopData(Header));
+    Working[Header.Index].Loop = PackagedLoops.back().get();
     DEBUG(dbgs() << " - loop = " << getBlockName(Header) << "\n");
   }
 
@@ -1452,7 +1453,7 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
     assert(HeaderData.isLoopHeader());
 
     Working[Index].ContainingLoop = Header;
-    PackagedLoops[HeaderData.LoopIndex].Members.push_back(Index);
+    HeaderData.Loop->Members.push_back(Index);
     DEBUG(dbgs() << " - loop = " << getBlockName(Header)
                  << ": member = " << getBlockName(Index) << "\n");
   }
@@ -1460,7 +1461,7 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
 
 template <class BT> void BlockFrequencyInfoImpl<BT>::computeMassInLoops() {
   // Visit loops with the deepest first, and the top-level loops last.
-  for (auto L = PackagedLoops.rbegin(), LE = PackagedLoops.rend(); L != LE; ++L)
+  for (const auto &L : make_range(PackagedLoops.rbegin(), PackagedLoops.rend()))
     computeMassInLoop(L->Header);
 }
 

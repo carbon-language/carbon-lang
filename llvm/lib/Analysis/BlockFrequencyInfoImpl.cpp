@@ -602,7 +602,7 @@ void BlockFrequencyInfoImplBase::clear() {
   // does not actually clear heap storage.
   std::vector<FrequencyData>().swap(Freqs);
   std::vector<WorkingData>().swap(Working);
-  std::vector<LoopData>().swap(PackagedLoops);
+  std::vector<std::unique_ptr<LoopData>>().swap(PackagedLoops);
 }
 
 /// \brief Clear all memory not needed downstream.
@@ -646,7 +646,7 @@ static BlockMass &getPackageMass(BlockFrequencyInfoImplBase &BFI,
                                  const BlockNode &Node) {
   assert(Node.isValid());
   assert(!BFI.Working[Node.Index].IsPackaged);
-  if (!BFI.Working[Node.Index].IsAPackage)
+  if (!BFI.Working[Node.Index].isAPackage())
     return BFI.Working[Node.Index].Mass;
 
   return BFI.getLoopPackage(Node).Mass;
@@ -744,8 +744,9 @@ void BlockFrequencyInfoImplBase::computeLoopScale(const BlockNode &LoopHead) {
 /// \brief Package up a loop.
 void BlockFrequencyInfoImplBase::packageLoop(const BlockNode &LoopHead) {
   DEBUG(dbgs() << "packaging-loop: " << getBlockName(LoopHead) << "\n");
-  Working[LoopHead.Index].IsAPackage = true;
-  for (const BlockNode &M : getLoopPackage(LoopHead).Members) {
+  auto &PackagedLoop = getLoopPackage(LoopHead);
+  PackagedLoop.IsPackaged = true;
+  for (const BlockNode &M : PackagedLoop.Members) {
     DEBUG(dbgs() << " - node: " << getBlockName(M.Index) << "\n");
     Working[M.Index].IsPackaged = true;
   }
