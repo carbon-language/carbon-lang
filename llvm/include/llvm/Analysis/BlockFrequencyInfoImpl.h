@@ -1046,14 +1046,6 @@ public:
   /// \brief Indexed information about packaged loops.
   std::vector<PackagedLoopData> PackagedLoops;
 
-  /// \brief Create the initial loop packages.
-  ///
-  /// Initializes PackagedLoops using the data in Working about backedges
-  /// and containing loops.  Called by initializeLoops().
-  ///
-  /// \post WorkingData::LoopIndex has been initialized for every loop header
-  /// and PackagedLoopData::Members has been initialized.
-
   /// \brief Add all edges out of a packaged loop to the distribution.
   ///
   /// Adds all edges from LocalLoopHead to Dist.  Calls addToDist() to add each
