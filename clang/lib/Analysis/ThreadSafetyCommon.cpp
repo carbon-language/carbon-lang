@@ -362,9 +362,8 @@ til::SExpr *SExprBuilder::translateBinaryOperator(const BinaryOperator *BO,
   case BO_Comma:
     // The clang CFG should have already processed both sides.
     return translate(BO->getRHS(), Ctx);
-
-  return new (Arena) til::Undefined(BO);
   }
+  return new (Arena) til::Undefined(BO);
 }
 
 
