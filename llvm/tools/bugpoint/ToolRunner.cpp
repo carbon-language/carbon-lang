@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "toolrunner"
 #include "ToolRunner.h"
 #include "llvm/Config/config.h"   // for HAVE_LINK_R
 #include "llvm/Support/CommandLine.h"
@@ -23,6 +22,8 @@
 #include <fstream>
 #include <sstream>
 using namespace llvm;
+
+#define DEBUG_TYPE "toolrunner"
 
 namespace llvm {
   cl::opt<bool>

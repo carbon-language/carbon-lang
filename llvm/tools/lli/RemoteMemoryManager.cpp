@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "lli"
 #include "RemoteMemoryManager.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/ObjectImage.h"
@@ -20,6 +19,8 @@
 #include "llvm/Support/Format.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "lli"
 
 RemoteMemoryManager::~RemoteMemoryManager() {
   for (SmallVector<Allocation, 2>::iterator

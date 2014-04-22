@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "lli"
 #include "llvm/IR/LLVMContext.h"
 #include "RemoteMemoryManager.h"
 #include "RemoteTarget.h"
@@ -63,6 +62,8 @@
 #endif
 
 using namespace llvm;
+
+#define DEBUG_TYPE "lli"
 
 namespace {
   cl::opt<std::string>
