@@ -373,8 +373,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
   // concrete DIE twice.
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
     // Pick up abstract subprogram DIE.
-    SPDie =
-        SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU.getUnitDie());
+    SPDie = SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU.getUnitDie());
     SPCU.addDIEEntry(SPDie, dwarf::DW_AT_abstract_origin, AbsSPDIE);
   } else {
     DISubprogram SPDecl = SP.getFunctionDeclaration();
@@ -396,8 +395,8 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
         if (SPTag == dwarf::DW_TAG_subroutine_type)
           SPCU.constructSubprogramArguments(*SPDie, Args);
         DIE *SPDeclDie = SPDie;
-        SPDie = SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram,
-                                      *SPCU.getUnitDie());
+        SPDie =
+            SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU.getUnitDie());
         SPCU.addDIEEntry(SPDie, dwarf::DW_AT_specification, SPDeclDie);
       }
     }
@@ -456,7 +455,7 @@ void DwarfDebug::addScopeRangeList(DwarfCompileUnit &TheCU, DIE *ScopeDIE,
   // CU's DW_AT_GNU_ranges_base.
   if (useSplitDwarf())
     TheCU.addSectionDelta(ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
-                           DwarfDebugRangeSectionSym);
+                          DwarfDebugRangeSectionSym);
   else
     addSectionLabel(*Asm, TheCU, ScopeDIE, dwarf::DW_AT_ranges, RangeSym,
                     DwarfDebugRangeSectionSym);
@@ -547,9 +546,8 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
 
   // Add the call site information to the DIE.
   DILocation DL(Scope->getInlinedAt());
-  TheCU.addUInt(
-      ScopeDIE, dwarf::DW_AT_call_file, None,
-      TheCU.getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
+  TheCU.addUInt(ScopeDIE, dwarf::DW_AT_call_file, None,
+                TheCU.getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
   TheCU.addUInt(ScopeDIE, dwarf::DW_AT_call_line, None, DL.getLineNumber());
 
   // Add name to the name table, we do this here because we're guaranteed
@@ -587,8 +585,8 @@ DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit &TheCU,
 
   // Collect lexical scope children first.
   for (DbgVariable *DV : ScopeVariables.lookup(Scope))
-    if (DIE *Variable = TheCU.constructVariableDIE(*DV,
-                                                    Scope->isAbstractScope())) {
+    if (DIE *Variable =
+            TheCU.constructVariableDIE(*DV, Scope->isAbstractScope())) {
       Children.push_back(Variable);
       if (DV->isObjectPointer())
         ObjectPointer = Variable;
@@ -691,7 +689,6 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   DwarfCompileUnit &NewCU = *OwnedUnit;
   InfoHolder.addUnit(std::move(OwnedUnit));
 
-
   // LTO with assembly output shares a single line table amongst multiple CUs.
   // To avoid the compilation directory being ambiguous, let the line table
   // explicitly describe the directory of all files, never relying on the
@@ -702,7 +699,7 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
 
   NewCU.addString(Die, dwarf::DW_AT_producer, DIUnit.getProducer());
   NewCU.addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
-                 DIUnit.getLanguage());
+                DIUnit.getLanguage());
   NewCU.addString(Die, dwarf::DW_AT_name, FN);
 
   if (!useSplitDwarf()) {
@@ -725,18 +722,18 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
 
   if (unsigned RVer = DIUnit.getRunTimeVersion())
     NewCU.addUInt(Die, dwarf::DW_AT_APPLE_major_runtime_vers,
-                   dwarf::DW_FORM_data1, RVer);
+                  dwarf::DW_FORM_data1, RVer);
 
   if (!FirstCU)
     FirstCU = &NewCU;
 
   if (useSplitDwarf()) {
     NewCU.initSection(Asm->getObjFileLowering().getDwarfInfoDWOSection(),
-                       DwarfInfoDWOSectionSym);
+                      DwarfInfoDWOSectionSym);
     NewCU.setSkeleton(constructSkeletonCU(NewCU));
   } else
     NewCU.initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
-                       DwarfInfoSectionSym);
+                      DwarfInfoSectionSym);
 
   CUMap.insert(std::make_pair(DIUnit, &NewCU));
   CUDieMap.insert(std::make_pair(Die, &NewCU));
@@ -800,8 +797,8 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
   else
     EntityDie = TheCU.getDIE(Entity);
   TheCU.addSourceLine(IMDie, Module.getLineNumber(),
-                       Module.getContext().getFilename(),
-                       Module.getContext().getDirectory());
+                      Module.getContext().getFilename(),
+                      Module.getContext().getDirectory());
   TheCU.addDIEEntry(IMDie, dwarf::DW_AT_import, EntityDie);
   StringRef Name = Module.getName();
   if (!Name.empty())
@@ -2673,7 +2670,7 @@ DwarfCompileUnit &DwarfDebug::constructSkeletonCU(const DwarfCompileUnit &CU) {
       CU.getUniqueID(), Die, CU.getCUNode(), Asm, this, &SkeletonHolder);
   DwarfCompileUnit &NewCU = *OwnedUnit;
   NewCU.initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
-                     DwarfInfoSectionSym);
+                    DwarfInfoSectionSym);
 
   NewCU.initStmtList(DwarfLineSectionSym);
 
@@ -2768,7 +2765,7 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   InfoHolder.addUnit(std::move(OwnedUnit));
 
   NewTU.addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
-                 CU.getLanguage());
+                CU.getLanguage());
 
   MD5 Hash;
   Hash.update(Identifier);
