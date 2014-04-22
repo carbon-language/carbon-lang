@@ -790,7 +790,8 @@ AppleObjCTrampolineHandler::SetupDispatchFunction (Thread &thread, ValueList &di
             m_impl_function.reset(new ClangFunction (thread,
                                                      clang_void_ptr_type,
                                                      impl_code_address,
-                                                     dispatch_values));
+                                                     dispatch_values,
+                                                     "objc-dispatch-lookup"));
             
             errors.Clear();        
             unsigned num_errors = m_impl_function->CompileFunction(errors);

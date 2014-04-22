@@ -1773,7 +1773,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
         m_get_class_info_function.reset(new ClangFunction (*m_process,
                                                            clang_uint32_t_type,
                                                            function_address,
-                                                           arguments));
+                                                           arguments,
+                                                           "objc-v2-isa-to-descriptor"));
         
         if (m_get_class_info_function.get() == NULL)
             return false;
@@ -2022,7 +2023,8 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         m_get_shared_cache_class_info_function.reset(new ClangFunction (*m_process,
                                                                         clang_uint32_t_type,
                                                                         function_address,
-                                                                        arguments));
+                                                                        arguments,
+                                                                        "objc-isa-to-descriptor-shared-cache"));
         
         if (m_get_shared_cache_class_info_function.get() == NULL)
             return false;

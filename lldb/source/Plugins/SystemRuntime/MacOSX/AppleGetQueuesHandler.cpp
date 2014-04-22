@@ -228,7 +228,8 @@ AppleGetQueuesHandler::SetupGetQueuesFunction (Thread &thread, ValueList &get_qu
             m_get_queues_function.reset(new ClangFunction (thread,
                                                      get_queues_return_type,
                                                      impl_code_address,
-                                                     get_queues_arglist));
+                                                     get_queues_arglist,
+                                                     "queue-fetch-queues"));
             
             errors.Clear();        
             unsigned num_errors = m_get_queues_function->CompileFunction(errors);

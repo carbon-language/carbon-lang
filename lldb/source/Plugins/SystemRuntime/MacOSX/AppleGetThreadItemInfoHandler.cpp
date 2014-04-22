@@ -218,9 +218,10 @@ AppleGetThreadItemInfoHandler::SetupGetThreadItemInfoFunction (Thread &thread, V
             ClangASTContext *clang_ast_context = thread.GetProcess()->GetTarget().GetScratchClangASTContext();
             ClangASTType get_thread_item_info_return_type = clang_ast_context->GetBasicType(eBasicTypeVoid).GetPointerType();
             m_get_thread_item_info_function.reset(new ClangFunction (thread,
-                                                     get_thread_item_info_return_type,
-                                                     impl_code_address,
-                                                     get_thread_item_info_arglist));
+                                                                     get_thread_item_info_return_type,
+                                                                     impl_code_address,
+                                                                     get_thread_item_info_arglist,
+                                                                     "queue-thread-item-info"));
             
             errors.Clear();        
             unsigned num_errors = m_get_thread_item_info_function->CompileFunction(errors);

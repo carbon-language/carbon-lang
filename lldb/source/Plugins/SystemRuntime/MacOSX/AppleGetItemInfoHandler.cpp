@@ -216,7 +216,8 @@ AppleGetItemInfoHandler::SetupGetItemInfoFunction (Thread &thread, ValueList &ge
             m_get_item_info_function.reset(new ClangFunction (thread,
                                                      get_item_info_return_type,
                                                      impl_code_address,
-                                                     get_item_info_arglist));
+                                                     get_item_info_arglist,
+                                                     "queue-bt-item-info"));
             
             errors.Clear();        
             unsigned num_errors = m_get_item_info_function->CompileFunction(errors);

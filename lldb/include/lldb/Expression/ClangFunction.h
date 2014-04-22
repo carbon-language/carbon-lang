@@ -88,7 +88,8 @@ public:
     ClangFunction (ExecutionContextScope &exe_scope,
                    Function &function_ptr, 
                    ClangASTContext *ast_context, 
-                   const ValueList &arg_value_list);
+                   const ValueList &arg_value_list,
+                   const char *name);
     
     //------------------------------------------------------------------
     /// Constructor
@@ -114,7 +115,8 @@ public:
     ClangFunction (ExecutionContextScope &exe_scope,
                    const ClangASTType &return_type,
                    const Address& function_address, 
-                   const ValueList &arg_value_list);
+                   const ValueList &arg_value_list,
+                   const char *name);
     
     //------------------------------------------------------------------
     /// Destructor
@@ -412,6 +414,7 @@ private:
     std::unique_ptr<ClangExpressionParser> m_parser;                 ///< The parser responsible for compiling the function.
     std::shared_ptr<IRExecutionUnit> m_execution_unit_sp;
     lldb::ModuleWP                  m_jit_module_wp;
+    std::string                     m_name;                         ///< The name of this clang function - for debugging purposes.
     
     Function                       *m_function_ptr;                 ///< The function we're going to call.  May be NULL if we don't have debug info for the function.
     Address                         m_function_addr;                ///< If we don't have the FunctionSP, we at least need the address & return type.

@@ -54,11 +54,13 @@ ClangFunction::ClangFunction
     ExecutionContextScope &exe_scope,
     const ClangASTType &return_type, 
     const Address& functionAddress, 
-    const ValueList &arg_value_list
+    const ValueList &arg_value_list,
+    const char *name
 ) :
     m_parser(),
     m_execution_unit_sp(),
     m_jit_module_wp(),
+    m_name (name ? name : "<unknown>"),
     m_function_ptr (NULL),
     m_function_addr (functionAddress),
     m_function_return_type(return_type),
@@ -79,8 +81,10 @@ ClangFunction::ClangFunction
     ExecutionContextScope &exe_scope,
     Function &function, 
     ClangASTContext *ast_context, 
-    const ValueList &arg_value_list
+    const ValueList &arg_value_list,
+    const char *name
 ) :
+    m_name (name ? name : "<unknown>"),
     m_function_ptr (&function),
     m_function_addr (),
     m_function_return_type (),
@@ -427,7 +431,7 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
     
     if (log)
-        log->Printf("-- [ClangFunction::GetThreadPlanToCallFunction] Creating thread plan to call function --");
+        log->Printf("-- [ClangFunction::GetThreadPlanToCallFunction] Creating thread plan to call function \"%s\" --", m_name.c_str());
     
     // FIXME: Use the errors Stream for better error reporting.
     Thread *thread = exe_ctx.GetThreadPtr();
@@ -464,7 +468,7 @@ ClangFunction::FetchFunctionResults (ExecutionContext &exe_ctx, lldb::addr_t arg
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
     
     if (log)
-        log->Printf("-- [ClangFunction::FetchFunctionResults] Fetching function results --");
+        log->Printf("-- [ClangFunction::FetchFunctionResults] Fetching function results for \"%s\"--", m_name.c_str());
     
     Process *process = exe_ctx.GetProcessPtr();
     
@@ -535,7 +539,7 @@ ClangFunction::ExecuteFunction(
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
 
     if (log)
-        log->Printf("== [ClangFunction::ExecuteFunction] Executing function ==");
+        log->Printf("== [ClangFunction::ExecuteFunction] Executing function \"%s\" ==", m_name.c_str());
     
     lldb::ThreadPlanSP call_plan_sp (GetThreadPlanToCallFunction (exe_ctx,
                                                                   args_addr,
@@ -558,11 +562,11 @@ ClangFunction::ExecuteFunction(
     {
         if (return_value != eExecutionCompleted)
         {
-            log->Printf("== [ClangFunction::ExecuteFunction] Execution completed abnormally ==");
+            log->Printf("== [ClangFunction::ExecuteFunction] Execution of \"%s\" completed abnormally ==", m_name.c_str());
         }
         else
         {
-            log->Printf("== [ClangFunction::ExecuteFunction] Execution completed normally ==");
+            log->Printf("== [ClangFunction::ExecuteFunction] Execution of \"%s\" completed normally ==", m_name.c_str());
         }
     }
     

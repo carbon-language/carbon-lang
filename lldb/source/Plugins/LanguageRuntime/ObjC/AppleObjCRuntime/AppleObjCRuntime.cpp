@@ -129,7 +129,8 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     ClangFunction func (*exe_ctx.GetBestExecutionContextScope(),
                         return_clang_type, 
                         *function_address, 
-                        arg_value_list);
+                        arg_value_list,
+                        "objc-object-description");
 
     StreamString error_stream;
     
