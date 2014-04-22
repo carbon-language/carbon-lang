@@ -918,23 +918,32 @@ static SDValue emitComparison(SDValue LHS, SDValue RHS, ISD::CondCode CC,
   // SUBS means that it's possible to get CSE with subtract operations.
   // A later phase can perform the optimization of setting the destination
   // register to WZR/XZR if it ends up being unused.
-
-  // We'd like to combine a (CMP op1, (sub 0, op2) into a CMN instruction on the
-  // grounds that "op1 - (-op2) == op1 + op2". However, the C and V flags can be
-  // set differently by this operation. It comes down to whether "SInt(~op2)+1
-  // == SInt(~op2+1)" (and the same for UInt). If they are then everything is
-  // fine. If not then the optimization is wrong. Thus general comparisons are
-  // only valid if op2 != 0.
-
-  // So, finally, the only LLVM-native comparisons that don't mention C and V
-  // are SETEQ and SETNE. They're the only ones we can safely use CMN for in the
-  // absence of information about op2.
   unsigned Opcode = ARM64ISD::SUBS;
+
   if (RHS.getOpcode() == ISD::SUB && isa<ConstantSDNode>(RHS.getOperand(0)) &&
       cast<ConstantSDNode>(RHS.getOperand(0))->getZExtValue() == 0 &&
       (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+    // We'd like to combine a (CMP op1, (sub 0, op2) into a CMN instruction on
+    // the grounds that "op1 - (-op2) == op1 + op2". However, the C and V flags
+    // can be set differently by this operation. It comes down to whether
+    // "SInt(~op2)+1 == SInt(~op2+1)" (and the same for UInt). If they are then
+    // everything is fine. If not then the optimization is wrong. Thus general
+    // comparisons are only valid if op2 != 0.
+
+    // So, finally, the only LLVM-native comparisons that don't mention C and V
+    // are SETEQ and SETNE. They're the only ones we can safely use CMN for in
+    // the absence of information about op2.
     Opcode = ARM64ISD::ADDS;
     RHS = RHS.getOperand(1);
+  } else if (LHS.getOpcode() == ISD::AND && isa<ConstantSDNode>(RHS) &&
+             cast<ConstantSDNode>(RHS)->getZExtValue() == 0 &&
+             !isUnsignedIntSetCC(CC)) {
+    // Similarly, (CMP (and X, Y), 0) can be implemented with a TST
+    // (a.k.a. ANDS) except that the flags are only guaranteed to work for one
+    // of the signed comparisons.
+    Opcode = ARM64ISD::ANDS;
+    RHS = LHS.getOperand(1);
+    LHS = LHS.getOperand(0);
   }
 
   return DAG.getNode(Opcode, dl, DAG.getVTList(VT, MVT::i32), LHS, RHS)

@@ -1,6 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
-; RUN: llc -mtriple=arm64-none-linux-gnu -mcpu=cyclone -verify-machineinstrs -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
-
+; arm64 has a separate copy of this test.
 @lhs = global fp128 zeroinitializer
 @rhs = global fp128 zeroinitializer
 
@@ -206,8 +205,9 @@ define void @test_select(i1 %cond, fp128 %lhs, fp128 %rhs) {
 
   %val = select i1 %cond, fp128 %lhs, fp128 %rhs
   store fp128 %val, fp128* @lhs
-; CHECK: cmp {{w[0-9]+}}, #0
+; CHECK-AARCH64: cmp {{w[0-9]+}}, #0
 ; CHECK-AARCH64: str q1, [sp]
+; CHECK-ARM64: tst {{w[0-9]+}}, #0x1
 ; CHECK-NEXT: b.eq [[IFFALSE:.LBB[0-9]+_[0-9]+]]
 ; CHECK-NEXT: BB#
 ; CHECK-AARCH64-NEXT: str q0, [sp]

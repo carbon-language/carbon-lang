@@ -580,6 +580,10 @@ bool ARM64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
   case ARM64::ANDXrr:
   case ARM64::BICWrr:
   case ARM64::BICXrr:
+  case ARM64::ANDSWrr:
+  case ARM64::ANDSXrr:
+  case ARM64::BICSWrr:
+  case ARM64::BICSXrr:
   case ARM64::EONWrr:
   case ARM64::EONXrr:
   case ARM64::EORWrr:
@@ -604,6 +608,10 @@ bool ARM64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
     case ARM64::ANDXrr:      Opcode = ARM64::ANDXrs; break;
     case ARM64::BICWrr:      Opcode = ARM64::BICWrs; break;
     case ARM64::BICXrr:      Opcode = ARM64::BICXrs; break;
+    case ARM64::ANDSWrr:     Opcode = ARM64::ANDSWrs; break;
+    case ARM64::ANDSXrr:     Opcode = ARM64::ANDSXrs; break;
+    case ARM64::BICSWrr:     Opcode = ARM64::BICSWrs; break;
+    case ARM64::BICSXrr:     Opcode = ARM64::BICSXrs; break;
     case ARM64::EONWrr:      Opcode = ARM64::EONWrs; break;
     case ARM64::EONXrr:      Opcode = ARM64::EONXrs; break;
     case ARM64::EORWrr:      Opcode = ARM64::EORWrs; break;

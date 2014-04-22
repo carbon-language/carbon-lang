@@ -1798,12 +1798,18 @@ multiclass LogicalReg<bits<2> opc, bit N, string mnemonic,
 }
 
 // Split from LogicalReg to allow setting CPSR Defs
-multiclass LogicalRegS<bits<2> opc, bit N, string mnemonic> {
+multiclass LogicalRegS<bits<2> opc, bit N, string mnemonic,
+                       SDPatternOperator OpNode = null_frag> {
   let Defs = [CPSR], mayLoad = 0, mayStore = 0, hasSideEffects = 0 in {
-  def Wrs : BaseLogicalSReg<opc, N, GPR32, logical_shifted_reg32, mnemonic, []>{
+  def Wrr : BaseLogicalRegPseudo<GPR32, OpNode>;
+  def Xrr : BaseLogicalRegPseudo<GPR64, OpNode>;
+
+  def Wrs : BaseLogicalSReg<opc, N, GPR32, logical_shifted_reg32, mnemonic,
+            [(set GPR32:$Rd, (OpNode GPR32:$Rn, logical_shifted_reg32:$Rm))]> {
     let Inst{31} = 0;
   }
-  def Xrs : BaseLogicalSReg<opc, N, GPR64, logical_shifted_reg64, mnemonic, []>{
+  def Xrs : BaseLogicalSReg<opc, N, GPR64, logical_shifted_reg64, mnemonic,
+            [(set GPR64:$Rd, (OpNode GPR64:$Rn, logical_shifted_reg64:$Rm))]> {
     let Inst{31} = 1;
   }
   } // Defs = [CPSR]
