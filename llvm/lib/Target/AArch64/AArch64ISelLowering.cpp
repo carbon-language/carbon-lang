@@ -5538,3 +5538,10 @@ int AArch64TargetLowering::getScalingFactorCost(const AddrMode &AM,
     return AM.Scale != 0 && AM.Scale != 1;
   return -1;
 }
+
+/// getMaximalGlobalOffset - Returns the maximal possible offset which can
+/// be used for loads / stores from the global.
+unsigned AArch64TargetLowering::getMaximalGlobalOffset() const {
+  return 4095;
+}
+

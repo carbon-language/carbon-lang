@@ -376,6 +376,10 @@ public:
   virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info, const CallInst &I,
                                   unsigned Intrinsic) const override;
 
+  /// getMaximalGlobalOffset - Returns the maximal possible offset which can
+  /// be used for loads / stores from the global.
+  unsigned getMaximalGlobalOffset() const override;
+
 protected:
   std::pair<const TargetRegisterClass*, uint8_t>
   findRepresentativeClass(MVT VT) const;

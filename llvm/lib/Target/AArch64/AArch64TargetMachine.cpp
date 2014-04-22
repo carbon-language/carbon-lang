@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
 
@@ -86,10 +87,18 @@ public:
     return *getAArch64TargetMachine().getSubtargetImpl();
   }
 
+  bool addPreISel() override;
   virtual bool addInstSelector();
   virtual bool addPreEmitPass();
 };
 } // namespace
+
+bool AArch64PassConfig::addPreISel() {
+  if (TM->getOptLevel() != CodeGenOpt::None)
+    addPass(createGlobalMergePass(TM));
+
+  return false;
+}
 
 TargetPassConfig *AArch64TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new AArch64PassConfig(this, PM);
