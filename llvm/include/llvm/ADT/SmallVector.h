@@ -223,14 +223,14 @@ protected:
   
 public:
   void push_back(const T &Elt) {
-    while (this->EndX >= this->CapacityX)
+    if (this->EndX >= this->CapacityX)
       this->grow();
     ::new ((void*) this->end()) T(Elt);
     this->setEnd(this->end()+1);
   }
 
   void push_back(T &&Elt) {
-    while (this->EndX >= this->CapacityX)
+    if (this->EndX >= this->CapacityX)
       this->grow();
     ::new ((void*) this->end()) T(::std::move(Elt));
     this->setEnd(this->end()+1);
@@ -327,7 +327,7 @@ protected:
   }
 public:
   void push_back(const T &Elt) {
-    while (this->EndX >= this->CapacityX)
+    if (this->EndX >= this->CapacityX)
       this->grow();
     memcpy(this->end(), &Elt, sizeof(T));
     this->setEnd(this->end()+1);
@@ -481,7 +481,7 @@ public:
     assert(I >= this->begin() && "Insertion iterator is out of bounds.");
     assert(I <= this->end() && "Inserting past the end of the vector.");
 
-    while (this->EndX >= this->CapacityX) {
+    if (this->EndX >= this->CapacityX) {
       size_t EltNo = I-this->begin();
       this->grow();
       I = this->begin()+EltNo;
@@ -511,7 +511,7 @@ public:
     assert(I >= this->begin() && "Insertion iterator is out of bounds.");
     assert(I <= this->end() && "Inserting past the end of the vector.");
 
-    while (this->EndX >= this->CapacityX) {
+    if (this->EndX >= this->CapacityX) {
       size_t EltNo = I-this->begin();
       this->grow();
       I = this->begin()+EltNo;
