@@ -2,7 +2,14 @@
 
 ;CHECK: @func63
 ;CHECK: cmeq.4h v0, v0, v1
-;CHECK: sshll.4s  v0, v0, #0
+
+;FIXME: currently, it will generate 3 instructions:
+; ushll.4s	v0, v0, #0
+; shl.4s	v0, v0, #31
+; sshr.4s	v0, v0, #31
+;But these instrucitons can be optimized into 1 instruction:
+; sshll.4s  v0, v0, #0
+
 ;CHECK: bsl.16b v0, v2, v3
 ;CHECK: str  q0, [x0]
 ;CHECK: ret

@@ -5479,7 +5479,10 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
   }
 
   if (N0.getOpcode() == ISD::SETCC) {
-    // aext(setcc) -> sext_in_reg(vsetcc) for vectors.
+    // For vectors:
+    // aext(setcc) -> vsetcc
+    // aext(setcc) -> truncate(vsetcc)
+    // aext(setcc) -> aext(vsetcc)
     // Only do this before legalize for now.
     if (VT.isVector() && !LegalOperations) {
       EVT N0VT = N0.getOperand(0).getValueType();
@@ -5494,19 +5497,14 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
                              cast<CondCodeSDNode>(N0.getOperand(2))->get());
       // If the desired elements are smaller or larger than the source
       // elements we can use a matching integer vector type and then
-      // truncate/sign extend
+      // truncate/any extend
       else {
-        EVT MatchingElementType =
-          EVT::getIntegerVT(*DAG.getContext(),
-                            N0VT.getScalarType().getSizeInBits());
-        EVT MatchingVectorType =
-          EVT::getVectorVT(*DAG.getContext(), MatchingElementType,
-                           N0VT.getVectorNumElements());
+        EVT MatchingVectorType = N0VT.changeVectorElementTypeToInteger();
         SDValue VsetCC =
           DAG.getSetCC(SDLoc(N), MatchingVectorType, N0.getOperand(0),
                         N0.getOperand(1),
                         cast<CondCodeSDNode>(N0.getOperand(2))->get());
-        return DAG.getSExtOrTrunc(VsetCC, SDLoc(N), VT);
+        return DAG.getAnyExtOrTrunc(VsetCC, SDLoc(N), VT);
       }
     }
 
