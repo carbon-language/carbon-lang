@@ -27,7 +27,6 @@
 /// to reduce MOV count.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "vec-merger"
 #include "llvm/Support/Debug.h"
 #include "AMDGPU.h"
 #include "R600InstrInfo.h"
@@ -41,6 +40,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "vec-merger"
 
 namespace {
 

@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "x86-vzeroupper"
 #include "X86.h"
 #include "X86InstrInfo.h"
 #include "X86Subtarget.h"
@@ -27,6 +26,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "x86-vzeroupper"
 
 STATISTIC(NumVZU, "Number of vzeroupper instructions inserted");
 

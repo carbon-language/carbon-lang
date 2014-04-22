@@ -14,7 +14,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64tti"
 #include "ARM64.h"
 #include "ARM64TargetMachine.h"
 #include "MCTargetDesc/ARM64AddressingModes.h"
@@ -24,6 +23,8 @@
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64tti"
 
 // Declare the pass initialization routine locally as target-specific passes
 // don't havve a target-wide initialization entry point, and so we rely on the

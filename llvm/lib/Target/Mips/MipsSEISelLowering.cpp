@@ -10,7 +10,6 @@
 // Subclass of MipsTargetLowering specialized for mips32/64.
 //
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "mips-isel"
 #include "MipsSEISelLowering.h"
 #include "MipsRegisterInfo.h"
 #include "MipsTargetMachine.h"
@@ -23,6 +22,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mips-isel"
 
 static cl::opt<bool>
 EnableMipsTailCalls("enable-mips-tail-calls", cl::Hidden,

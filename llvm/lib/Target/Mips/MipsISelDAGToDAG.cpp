@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mips-isel"
 #include "MipsISelDAGToDAG.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "Mips.h"
@@ -35,6 +34,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "mips-isel"
 
 //===----------------------------------------------------------------------===//
 // Instruction Selector Implementation

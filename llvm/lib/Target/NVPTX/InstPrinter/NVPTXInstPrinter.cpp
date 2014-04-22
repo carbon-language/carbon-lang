@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "InstPrinter/NVPTXInstPrinter.h"
 #include "MCTargetDesc/NVPTXBaseInfo.h"
 #include "NVPTX.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/FormattedStream.h"
 #include <cctype>
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 #include "NVPTXGenAsmWriter.inc"
 

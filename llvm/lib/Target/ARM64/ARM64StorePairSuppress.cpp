@@ -11,7 +11,6 @@
 // store pairs. Later we may do the same for floating point loads.
 // ===---------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-stp-suppress"
 #include "ARM64InstrInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -23,6 +22,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-stp-suppress"
 
 namespace {
 class ARM64StorePairSuppress : public MachineFunctionPass {

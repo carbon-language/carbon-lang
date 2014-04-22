@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "armmcexpr"
 #include "ARMMCExpr.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "armmcexpr"
 
 const ARMMCExpr*
 ARMMCExpr::Create(VariantKind Kind, const MCExpr *Expr,

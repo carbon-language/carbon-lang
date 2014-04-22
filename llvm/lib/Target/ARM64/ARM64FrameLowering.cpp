@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "frame-info"
 #include "ARM64FrameLowering.h"
 #include "ARM64InstrInfo.h"
 #include "ARM64MachineFunctionInfo.h"
@@ -31,6 +30,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "frame-info"
 
 static cl::opt<bool> EnableRedZone("arm64-redzone",
                                    cl::desc("enable use of redzone on ARM64"),

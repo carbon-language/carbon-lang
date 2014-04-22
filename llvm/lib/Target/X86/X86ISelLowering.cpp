@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "x86-isel"
 #include "X86ISelLowering.h"
 #include "Utils/X86ShuffleDecode.h"
 #include "X86CallingConv.h"
@@ -51,6 +50,8 @@
 #include <bitset>
 #include <cctype>
 using namespace llvm;
+
+#define DEBUG_TYPE "x86-isel"
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 

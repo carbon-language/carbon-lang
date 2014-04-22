@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "HexagonAsmPrinter.h"
 #include "Hexagon.h"
 #include "HexagonInstPrinter.h"
@@ -23,6 +22,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 #define GET_INSTRUCTION_NAME
 #include "HexagonGenAsmWriter.inc"

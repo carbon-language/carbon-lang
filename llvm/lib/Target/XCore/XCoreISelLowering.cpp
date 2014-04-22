@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "xcore-lower"
-
 #include "XCoreISelLowering.h"
 #include "XCore.h"
 #include "XCoreMachineFunctionInfo.h"
@@ -40,6 +38,8 @@
 #include <algorithm>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "xcore-lower"
 
 const char *XCoreTargetLowering::
 getTargetNodeName(unsigned Opcode) const

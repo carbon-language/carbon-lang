@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "ARMInstPrinter.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
@@ -22,6 +21,8 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 #include "ARMGenAsmWriter.inc"
 

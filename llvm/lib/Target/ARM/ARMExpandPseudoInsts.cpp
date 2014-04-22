@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-pseudo"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
@@ -30,6 +29,8 @@
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "arm-pseudo"
 
 static cl::opt<bool>
 VerifyARMPseudo("verify-arm-pseudo-expand", cl::Hidden,

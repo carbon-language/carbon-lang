@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "msp430-lower"
-
 #include "MSP430ISelLowering.h"
 #include "MSP430.h"
 #include "MSP430MachineFunctionInfo.h"
@@ -37,6 +35,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "msp430-lower"
 
 typedef enum {
   NoHWMult,

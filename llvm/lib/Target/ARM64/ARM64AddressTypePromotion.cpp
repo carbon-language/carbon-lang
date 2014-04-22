@@ -29,7 +29,6 @@
 // FIXME: This pass may be useful for other targets too.
 // ===---------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-type-promotion"
 #include "ARM64.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -45,6 +44,8 @@
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-type-promotion"
 
 static cl::opt<bool>
 EnableAddressTypePromotion("arm64-type-promotion", cl::Hidden,

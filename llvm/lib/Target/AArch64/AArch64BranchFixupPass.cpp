@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "aarch64-branch-fixup"
 #include "AArch64.h"
 #include "AArch64InstrInfo.h"
 #include "Utils/AArch64BaseInfo.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "aarch64-branch-fixup"
 
 STATISTIC(NumSplit,      "Number of uncond branches inserted");
 STATISTIC(NumCBrFixed,   "Number of cond branches fixed");

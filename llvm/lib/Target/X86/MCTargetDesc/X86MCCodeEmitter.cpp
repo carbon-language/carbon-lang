@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mccodeemitter"
 #include "MCTargetDesc/X86MCTargetDesc.h"
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "MCTargetDesc/X86FixupKinds.h"
@@ -26,6 +25,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mccodeemitter"
 
 namespace {
 class X86MCCodeEmitter : public MCCodeEmitter {

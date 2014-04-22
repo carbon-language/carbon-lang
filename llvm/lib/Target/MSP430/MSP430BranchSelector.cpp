@@ -15,7 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "msp430-branch-select"
 #include "MSP430.h"
 #include "MSP430InstrInfo.h"
 #include "llvm/ADT/Statistic.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "msp430-branch-select"
 
 STATISTIC(NumExpanded, "Number of branches expanded to long format");
 

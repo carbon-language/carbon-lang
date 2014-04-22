@@ -12,7 +12,6 @@
 //
 //===---------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "jit"
 #include "Sparc.h"
 #include "MCTargetDesc/SparcMCExpr.h"
 #include "SparcRelocations.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "jit"
 
 STATISTIC(NumEmitted, "Number of machine instructions emitted");
 

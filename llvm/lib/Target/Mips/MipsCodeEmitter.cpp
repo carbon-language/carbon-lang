@@ -12,7 +12,6 @@
 //
 //===---------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "jit"
 #include "Mips.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "MipsInstrInfo.h"
@@ -40,6 +39,8 @@
 #endif
 
 using namespace llvm;
+
+#define DEBUG_TYPE "jit"
 
 STATISTIC(NumEmitted, "Number of machine instructions emitted");
 

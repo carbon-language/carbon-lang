@@ -12,7 +12,6 @@
 // NOP is placed.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "delay-slot-filler"
 #include "Sparc.h"
 #include "SparcSubtarget.h"
 #include "llvm/ADT/SmallSet.h"
@@ -26,6 +25,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "delay-slot-filler"
 
 STATISTIC(FilledSlots, "Number of delay slots filled");
 

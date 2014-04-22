@@ -17,14 +17,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mips-mc-nacl"
-
 #include "Mips.h"
 #include "MipsELFStreamer.h"
 #include "MipsMCNaCl.h"
 #include "llvm/MC/MCELFStreamer.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mips-mc-nacl"
 
 namespace {
 

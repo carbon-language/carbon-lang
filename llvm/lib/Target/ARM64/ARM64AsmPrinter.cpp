@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "ARM64.h"
 #include "ARM64MachineFunctionInfo.h"
 #include "ARM64MCInstLower.h"
@@ -38,6 +37,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 namespace {
 

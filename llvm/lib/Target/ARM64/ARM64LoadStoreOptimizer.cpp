@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-ldst-opt"
 #include "ARM64InstrInfo.h"
 #include "MCTargetDesc/ARM64AddressingModes.h"
 #include "llvm/ADT/BitVector.h"
@@ -29,6 +28,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-ldst-opt"
 
 /// ARM64AllocLoadStoreOpt - Post-register allocation pass to combine
 /// load / store instructions to form ldp / stp instructions.

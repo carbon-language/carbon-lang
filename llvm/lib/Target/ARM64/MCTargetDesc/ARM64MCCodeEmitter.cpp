@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mccodeemitter"
 #include "MCTargetDesc/ARM64AddressingModes.h"
 #include "MCTargetDesc/ARM64FixupKinds.h"
 #include "MCTargetDesc/ARM64MCExpr.h"
@@ -25,6 +24,8 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "mccodeemitter"
 
 STATISTIC(MCNumEmitted, "Number of MC instructions emitted.");
 STATISTIC(MCNumFixups, "Number of MC fixups created.");

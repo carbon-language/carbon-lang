@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "reginfo"
 #include "PPCRegisterInfo.h"
 #include "PPC.h"
 #include "PPCFrameLowering.h"
@@ -43,6 +42,8 @@
 #include <cstdlib>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "reginfo"
 
 #define GET_REGINFO_TARGET_DESC
 #include "PPCGenRegisterInfo.inc"

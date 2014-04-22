@@ -11,7 +11,6 @@
 // selection DAG.
 //
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "mips-lower"
 #include "MipsISelLowering.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
@@ -38,6 +37,8 @@
 #include <cctype>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mips-lower"
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 

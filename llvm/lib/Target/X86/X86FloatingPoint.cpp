@@ -23,7 +23,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "x86-codegen"
 #include "X86.h"
 #include "X86InstrInfo.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -44,6 +43,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE "x86-codegen"
 
 STATISTIC(NumFXCH, "Number of fxch instructions inserted");
 STATISTIC(NumFP  , "Number of floating point instructions");

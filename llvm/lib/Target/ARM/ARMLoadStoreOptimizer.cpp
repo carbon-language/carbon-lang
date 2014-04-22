@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-ldst-opt"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
@@ -41,6 +40,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "arm-ldst-opt"
 
 STATISTIC(NumLDMGened , "Number of ldm instructions generated");
 STATISTIC(NumSTMGened , "Number of stm instructions generated");

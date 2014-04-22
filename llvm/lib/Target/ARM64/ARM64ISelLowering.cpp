@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-lower"
-
 #include "ARM64ISelLowering.h"
 #include "ARM64PerfectShuffle.h"
 #include "ARM64Subtarget.h"
@@ -35,6 +33,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-lower"
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 STATISTIC(NumShiftInserts, "Number of vector shift inserts");

@@ -33,7 +33,6 @@
 // solution.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-simd-scalar"
 #include "ARM64.h"
 #include "ARM64InstrInfo.h"
 #include "ARM64RegisterInfo.h"
@@ -47,6 +46,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-simd-scalar"
 
 static cl::opt<bool>
 AdvSIMDScalar("arm64-simd-scalar",

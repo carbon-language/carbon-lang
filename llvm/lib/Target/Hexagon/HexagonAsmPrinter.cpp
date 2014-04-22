@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "Hexagon.h"
 #include "HexagonAsmPrinter.h"
 #include "HexagonMachineFunctionInfo.h"
@@ -55,6 +54,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 static cl::opt<bool> AlignCalls(
          "hexagon-align-calls", cl::Hidden, cl::init(true),

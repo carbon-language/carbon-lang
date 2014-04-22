@@ -7,13 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ppcmcexpr"
 #include "PPCMCExpr.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "ppcmcexpr"
 
 const PPCMCExpr*
 PPCMCExpr::Create(VariantKind Kind, const MCExpr *Expr,

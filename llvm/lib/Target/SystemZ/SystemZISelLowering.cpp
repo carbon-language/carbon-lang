@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "systemz-lower"
-
 #include "SystemZISelLowering.h"
 #include "SystemZCallingConv.h"
 #include "SystemZConstantPoolValue.h"
@@ -25,6 +23,8 @@
 #include <cctype>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "systemz-lower"
 
 namespace {
 // Represents a sequence for extracting a 0/1 value from an IPM result:

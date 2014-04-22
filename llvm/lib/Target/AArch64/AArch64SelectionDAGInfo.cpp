@@ -11,10 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-selectiondag-info"
 #include "AArch64TargetMachine.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "arm-selectiondag-info"
 
 AArch64SelectionDAGInfo::AArch64SelectionDAGInfo(const AArch64TargetMachine &TM)
   : TargetSelectionDAGInfo(TM),

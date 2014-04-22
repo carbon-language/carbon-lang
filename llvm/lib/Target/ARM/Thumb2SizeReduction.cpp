@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "t2-reduce-size"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMSubtarget.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "t2-reduce-size"
 
 STATISTIC(NumNarrows,  "Number of 32-bit instrs reduced to 16-bit ones");
 STATISTIC(Num2Addrs,   "Number of 32-bit instrs reduced to 2addr 16-bit ones");

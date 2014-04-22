@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "aarch64-isel"
 #include "AArch64.h"
 #include "AArch64InstrInfo.h"
 #include "AArch64Subtarget.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "aarch64-isel"
 
 //===--------------------------------------------------------------------===//
 /// AArch64 specific code to select AArch64 machine instructions for

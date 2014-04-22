@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "pre-RA-sched"
 #include "PPCHazardRecognizers.h"
 #include "PPC.h"
 #include "PPCInstrInfo.h"
@@ -21,6 +20,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "pre-RA-sched"
 
 bool PPCDispatchGroupSBHazardRecognizer::isLoadAfterStore(SUnit *SU) {
   // FIXME: Move this.

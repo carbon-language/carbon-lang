@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "XCore.h"
 #include "InstPrinter/XCoreInstPrinter.h"
 #include "XCoreInstrInfo.h"
@@ -46,6 +45,8 @@
 #include <algorithm>
 #include <cctype>
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 namespace {
   class XCoreAsmPrinter : public AsmPrinter {

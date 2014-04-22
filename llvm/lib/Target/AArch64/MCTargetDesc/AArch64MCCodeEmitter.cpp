@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mccodeemitter"
 #include "MCTargetDesc/AArch64FixupKinds.h"
 #include "MCTargetDesc/AArch64MCExpr.h"
 #include "MCTargetDesc/AArch64MCTargetDesc.h"
@@ -26,6 +25,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mccodeemitter"
 
 namespace {
 class AArch64MCCodeEmitter : public MCCodeEmitter {

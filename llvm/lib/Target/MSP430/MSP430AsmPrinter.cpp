@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "MSP430.h"
 #include "InstPrinter/MSP430InstPrinter.h"
 #include "MSP430InstrInfo.h"
@@ -34,6 +33,8 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 namespace {
   class MSP430AsmPrinter : public AsmPrinter {

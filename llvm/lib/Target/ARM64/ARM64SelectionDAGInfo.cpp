@@ -11,9 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-selectiondag-info"
 #include "ARM64TargetMachine.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-selectiondag-info"
 
 ARM64SelectionDAGInfo::ARM64SelectionDAGInfo(const TargetMachine &TM)
     : TargetSelectionDAGInfo(TM),

@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mccodeemitter"
 #include "MCTargetDesc/SystemZMCTargetDesc.h"
 #include "MCTargetDesc/SystemZMCFixups.h"
 #include "llvm/MC/MCCodeEmitter.h"
@@ -20,6 +19,8 @@
 #include "llvm/MC/MCInstrInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mccodeemitter"
 
 namespace {
 class SystemZMCCodeEmitter : public MCCodeEmitter {

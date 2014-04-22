@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "x86-emitter"
 #include "X86.h"
 #include "X86InstrInfo.h"
 #include "X86JITInfo.h"
@@ -35,6 +34,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "x86-emitter"
 
 STATISTIC(NumEmitted, "Number of machine instructions emitted");
 

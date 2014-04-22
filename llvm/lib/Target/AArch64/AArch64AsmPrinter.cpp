@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "AArch64AsmPrinter.h"
 #include "InstPrinter/AArch64InstPrinter.h"
 #include "llvm/ADT/SmallString.h"
@@ -26,6 +25,8 @@
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 /// Try to print a floating-point register as if it belonged to a specified
 /// register-class. For example the inline asm operand modifier "b" requires its

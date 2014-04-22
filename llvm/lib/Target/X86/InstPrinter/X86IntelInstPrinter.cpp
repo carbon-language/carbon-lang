@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "X86IntelInstPrinter.h"
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "MCTargetDesc/X86MCTargetDesc.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/FormattedStream.h"
 #include <cctype>
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 #include "X86GenAsmWriter1.inc"
 

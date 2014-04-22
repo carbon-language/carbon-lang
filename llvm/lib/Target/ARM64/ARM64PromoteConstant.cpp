@@ -21,7 +21,6 @@
 // FIXME: This pass may be useful for other targets too.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-promote-const"
 #include "ARM64.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/DenseMap.h"
@@ -41,6 +40,8 @@
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-promote-const"
 
 // Stress testing mode - disable heuristics.
 static cl::opt<bool> Stress("arm64-stress-promote-const", cl::Hidden,

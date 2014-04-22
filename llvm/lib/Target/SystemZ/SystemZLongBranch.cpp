@@ -53,8 +53,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "systemz-long-branch"
-
 #include "SystemZTargetMachine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -67,6 +65,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "systemz-long-branch"
 
 STATISTIC(LongBranches, "Number of long branches.");
 

@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mips-isel"
 #include "Mips16ISelDAGToDAG.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "Mips.h"
@@ -34,6 +33,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "mips-isel"
 
 bool Mips16DAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
   if (!Subtarget.inMips16Mode())

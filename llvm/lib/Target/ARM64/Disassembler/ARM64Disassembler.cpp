@@ -10,8 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-disassembler"
-
 #include "ARM64Disassembler.h"
 #include "ARM64ExternalSymbolizer.h"
 #include "ARM64Subtarget.h"
@@ -25,6 +23,8 @@
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-disassembler"
 
 // Pull DecodeStatus and its enum values into the global namespace.
 typedef llvm::MCDisassembler::DecodeStatus DecodeStatus;

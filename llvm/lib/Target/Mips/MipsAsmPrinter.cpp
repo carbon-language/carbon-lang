@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mips-asm-printer"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "MCTargetDesc/MipsMCNaCl.h"
@@ -51,6 +50,8 @@
 #include <string>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mips-asm-printer"
 
 MipsTargetStreamer &MipsAsmPrinter::getTargetStreamer() {
   return static_cast<MipsTargetStreamer &>(*OutStreamer.getTargetStreamer());

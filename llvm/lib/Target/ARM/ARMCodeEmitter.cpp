@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "jit"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMConstantPoolValue.h"
@@ -39,6 +38,8 @@
 #include <iomanip>
 #endif
 using namespace llvm;
+
+#define DEBUG_TYPE "jit"
 
 STATISTIC(NumEmitted, "Number of machine instructions emitted");
 

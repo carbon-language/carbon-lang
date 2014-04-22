@@ -6,7 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "hexagon_cfg"
 #include "Hexagon.h"
 #include "HexagonMachineFunctionInfo.h"
 #include "HexagonSubtarget.h"
@@ -25,6 +24,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "hexagon_cfg"
 
 namespace llvm {
   void initializeHexagonCFGOptimizerPass(PassRegistry&);

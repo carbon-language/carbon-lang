@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "Sparc.h"
 #include "InstPrinter/SparcInstPrinter.h"
 #include "MCTargetDesc/SparcMCExpr.h"
@@ -34,6 +33,8 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 namespace {
   class SparcAsmPrinter : public AsmPrinter {

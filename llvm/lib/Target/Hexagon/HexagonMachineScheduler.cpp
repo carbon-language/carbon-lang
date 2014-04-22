@@ -12,13 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "misched"
-
 #include "HexagonMachineScheduler.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/IR/Function.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "misched"
 
 /// Platform specific modifications to DAG.
 void VLIWMachineScheduler::postprocessDAG() {

@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "aarch64-isel"
 #include "AArch64.h"
 #include "AArch64ISelLowering.h"
 #include "AArch64MachineFunctionInfo.h"
@@ -29,6 +28,8 @@
 #include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "aarch64-isel"
 
 static TargetLoweringObjectFile *createTLOF(AArch64TargetMachine &TM) {
   assert (TM.getSubtarget<AArch64Subtarget>().isTargetELF() &&

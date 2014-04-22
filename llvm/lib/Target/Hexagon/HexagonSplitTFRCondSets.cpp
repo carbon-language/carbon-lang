@@ -26,7 +26,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "xfer"
 #include "Hexagon.h"
 #include "HexagonMachineFunctionInfo.h"
 #include "HexagonSubtarget.h"
@@ -48,6 +47,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "xfer"
 
 namespace llvm {
   void initializeHexagonSplitTFRCondSetsPass(PassRegistry&);

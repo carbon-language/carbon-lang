@@ -9,7 +9,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-branch-relax"
 #include "ARM64.h"
 #include "ARM64InstrInfo.h"
 #include "ARM64MachineFunctionInfo.h"
@@ -23,6 +22,8 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-branch-relax"
 
 static cl::opt<bool>
 BranchRelaxation("arm64-branch-relax", cl::Hidden, cl::init(true),

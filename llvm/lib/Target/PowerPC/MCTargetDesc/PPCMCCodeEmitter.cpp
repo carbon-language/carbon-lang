@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mccodeemitter"
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCFixupKinds.h"
 #include "llvm/ADT/Statistic.h"
@@ -25,6 +24,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOpcodes.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "mccodeemitter"
 
 STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
 

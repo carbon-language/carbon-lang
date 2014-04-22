@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-isel"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMTargetMachine.h"
@@ -36,6 +35,8 @@
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "arm-isel"
 
 static cl::opt<bool>
 DisableShifterOp("disable-shifter-op", cl::Hidden,

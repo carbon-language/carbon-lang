@@ -16,7 +16,6 @@
 // prune the dependence.
 //
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "packets"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "Hexagon.h"
 #include "HexagonMachineFunctionInfo.h"
@@ -50,6 +49,8 @@
 #include <vector>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "packets"
 
 static cl::opt<bool> PacketizeVolatiles("hexagon-packetize-volatiles",
       cl::ZeroOrMore, cl::Hidden, cl::init(true),

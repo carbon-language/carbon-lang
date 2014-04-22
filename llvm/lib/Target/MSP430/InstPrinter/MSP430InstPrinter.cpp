@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "MSP430InstPrinter.h"
 #include "MSP430.h"
 #include "llvm/MC/MCAsmInfo.h"
@@ -20,6 +19,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 
 // Include the auto-generated portion of the assembly writer.

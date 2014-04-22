@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mccodeemitter"
 #include "SparcMCExpr.h"
 #include "MCTargetDesc/SparcFixupKinds.h"
 #include "SparcMCTargetDesc.h"
@@ -25,6 +24,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mccodeemitter"
 
 STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
 

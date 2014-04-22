@@ -26,7 +26,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "hwloops"
 #include "llvm/ADT/SmallSet.h"
 #include "Hexagon.h"
 #include "HexagonTargetMachine.h"
@@ -46,6 +45,8 @@
 #include <vector>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "hwloops"
 
 #ifndef NDEBUG
 static cl::opt<int> HWLoopLimit("max-hwloop", cl::Hidden, cl::init(-1));

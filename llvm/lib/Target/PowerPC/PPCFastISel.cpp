@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ppcfastisel"
 #include "PPC.h"
 #include "MCTargetDesc/PPCPredicates.h"
 #include "PPCISelLowering.h"
@@ -57,6 +56,8 @@
 //
 //===----------------------------------------------------------------------===//
 using namespace llvm;
+
+#define DEBUG_TYPE "ppcfastisel"
 
 namespace {
 

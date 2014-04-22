@@ -65,7 +65,6 @@
 /// ultimately led to the creation of an illegal COPY.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sgpr-copies"
 #include "AMDGPU.h"
 #include "SIInstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -76,6 +75,8 @@
 #include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "sgpr-copies"
 
 namespace {
 

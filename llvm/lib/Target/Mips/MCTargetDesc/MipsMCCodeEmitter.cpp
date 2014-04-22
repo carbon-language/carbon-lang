@@ -12,8 +12,6 @@
 //===----------------------------------------------------------------------===//
 //
 
-#define DEBUG_TYPE "mccodeemitter"
-
 #include "MipsMCCodeEmitter.h"
 #include "MCTargetDesc/MipsFixupKinds.h"
 #include "MCTargetDesc/MipsMCExpr.h"
@@ -27,6 +25,8 @@
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/raw_ostream.h"
+
+#define DEBUG_TYPE "mccodeemitter"
 
 #define GET_INSTRMAP_INFO
 #include "MipsGenInstrInfo.inc"

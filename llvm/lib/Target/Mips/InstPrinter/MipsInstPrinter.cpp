@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "MipsInstPrinter.h"
 #include "MCTargetDesc/MipsMCExpr.h"
 #include "MipsInstrInfo.h"
@@ -23,6 +22,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 #define PRINT_ALIAS_INSTR
 #include "MipsGenAsmWriter.inc"

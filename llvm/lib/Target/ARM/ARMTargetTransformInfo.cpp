@@ -14,7 +14,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "armtti"
 #include "ARM.h"
 #include "ARMTargetMachine.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -22,6 +21,8 @@
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "armtti"
 
 // Declare the pass initialization routine locally as target-specific passes
 // don't havve a target-wide initialization entry point, and so we rely on the

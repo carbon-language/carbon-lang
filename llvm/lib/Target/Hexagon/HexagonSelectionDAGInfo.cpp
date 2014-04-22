@@ -11,9 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "hexagon-selectiondag-info"
 #include "HexagonTargetMachine.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "hexagon-selectiondag-info"
 
 bool llvm::flag_aligned_memcpy;
 

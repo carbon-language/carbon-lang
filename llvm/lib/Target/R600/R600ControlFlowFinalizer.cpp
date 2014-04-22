@@ -12,7 +12,6 @@
 /// computing their address on the fly ; it also sets STACK_SIZE info.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "r600cf"
 #include "llvm/Support/Debug.h"
 #include "AMDGPU.h"
 #include "R600Defines.h"
@@ -25,6 +24,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "r600cf"
 
 namespace {
 

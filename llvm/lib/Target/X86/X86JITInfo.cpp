@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "jit"
 #include "X86JITInfo.h"
 #include "X86Relocations.h"
 #include "X86Subtarget.h"
@@ -23,6 +22,8 @@
 #include <cstdlib>
 #include <cstring>
 using namespace llvm;
+
+#define DEBUG_TYPE "jit"
 
 // Determine the platform we're running on
 #if defined (__x86_64__) || defined (_M_AMD64) || defined (_M_X64)

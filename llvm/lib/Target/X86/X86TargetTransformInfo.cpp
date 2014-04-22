@@ -14,7 +14,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "x86tti"
 #include "X86.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -26,6 +25,8 @@
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "x86tti"
 
 // Declare the pass initialization routine locally as target-specific passes
 // don't havve a target-wide initialization entry point, and so we rely on the

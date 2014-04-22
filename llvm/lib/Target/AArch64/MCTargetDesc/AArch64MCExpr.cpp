@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "aarch64mcexpr"
 #include "AArch64MCExpr.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -20,6 +19,8 @@
 #include "llvm/Object/ELF.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "aarch64mcexpr"
 
 const AArch64MCExpr*
 AArch64MCExpr::Create(VariantKind Kind, const MCExpr *Expr,

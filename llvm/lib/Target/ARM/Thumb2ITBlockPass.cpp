@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "thumb2-it"
 #include "ARM.h"
 #include "ARMMachineFunctionInfo.h"
 #include "Thumb2InstrInfo.h"
@@ -18,6 +17,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "thumb2-it"
 
 STATISTIC(NumITs,        "Number of IT blocks inserted");
 STATISTIC(NumMovedInsts, "Number of predicated instructions moved");

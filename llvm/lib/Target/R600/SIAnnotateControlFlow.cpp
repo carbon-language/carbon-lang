@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "si-annotate-control-flow"
-
 #include "AMDGPU.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/IR/Constants.h"
@@ -25,6 +23,8 @@
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "si-annotate-control-flow"
 
 namespace {
 

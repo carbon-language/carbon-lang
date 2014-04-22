@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-disassembler"
-
 #include "ARM64ExternalSymbolizer.h"
 #include "ARM64Subtarget.h"
 #include "MCTargetDesc/ARM64AddressingModes.h"
@@ -20,6 +18,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-disassembler"
 
 static MCSymbolRefExpr::VariantKind
 getVariant(uint64_t LLVMDisassembler_VariantKind) {

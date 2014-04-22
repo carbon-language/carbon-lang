@@ -11,8 +11,6 @@
 // to move them together. If we can move them next to each other we do so and
 // replace them with a combine instruction.
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "hexagon-copy-combine"
-
 #include "llvm/PassSupport.h"
 #include "Hexagon.h"
 #include "HexagonInstrInfo.h"
@@ -35,6 +33,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "hexagon-copy-combine"
 
 static
 cl::opt<bool> IsCombinesDisabled("disable-merge-into-combines",

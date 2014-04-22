@@ -17,8 +17,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "xfer"
-
 #include "HexagonTargetMachine.h"
 #include "HexagonMachineFunctionInfo.h"
 #include "HexagonSubtarget.h"
@@ -43,6 +41,8 @@
 #include <map>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "xfer"
 
 namespace {
 

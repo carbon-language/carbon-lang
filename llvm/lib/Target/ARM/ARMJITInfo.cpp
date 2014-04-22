@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "jit"
 #include "ARMJITInfo.h"
 #include "ARMConstantPoolValue.h"
 #include "ARMRelocations.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 using namespace llvm;
+
+#define DEBUG_TYPE "jit"
 
 void ARMJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
   report_fatal_error("ARMJITInfo::replaceMachineCodeForFunction");

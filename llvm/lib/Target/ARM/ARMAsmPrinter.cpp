@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "ARMAsmPrinter.h"
 #include "ARM.h"
 #include "ARMConstantPoolValue.h"
@@ -54,6 +53,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include <cctype>
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 void ARMAsmPrinter::EmitFunctionBodyEnd() {
   // Make sure to terminate any constant pools that were at the end

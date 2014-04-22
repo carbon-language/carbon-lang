@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-disassembler"
-
 #include "llvm/MC/MCDisassembler.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
@@ -28,6 +26,8 @@
 #include <vector>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "arm-disassembler"
 
 typedef MCDisassembler::DecodeStatus DecodeStatus;
 

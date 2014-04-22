@@ -21,7 +21,6 @@
 //
 //
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "hexagon-nvj"
 #include "llvm/PassSupport.h"
 #include "Hexagon.h"
 #include "HexagonInstrInfo.h"
@@ -46,6 +45,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <map>
 using namespace llvm;
+
+#define DEBUG_TYPE "hexagon-nvj"
 
 STATISTIC(NumNVJGenerated, "Number of New Value Jump Instructions created");
 

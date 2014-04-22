@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-isel"
 #include "ARM64TargetMachine.h"
 #include "MCTargetDesc/ARM64AddressingModes.h"
 #include "llvm/ADT/APSInt.h"
@@ -25,6 +24,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-isel"
 
 //===--------------------------------------------------------------------===//
 /// ARM64DAGToDAGISel - ARM64 specific code to select ARM64 machine

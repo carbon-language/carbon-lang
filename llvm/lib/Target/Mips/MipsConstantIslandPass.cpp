@@ -21,8 +21,6 @@
 //
 //
 
-#define DEBUG_TYPE "mips-constant-islands"
-
 #include "Mips.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "Mips16InstrInfo.h"
@@ -46,6 +44,8 @@
 #include <algorithm>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mips-constant-islands"
 
 STATISTIC(NumCPEs,       "Number of constpool entries");
 STATISTIC(NumSplit,      "Number of uncond branches inserted");

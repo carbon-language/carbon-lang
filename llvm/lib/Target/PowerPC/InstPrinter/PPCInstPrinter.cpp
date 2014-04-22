@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "PPCInstPrinter.h"
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCPredicates.h"
@@ -22,6 +21,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOpcodes.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 // FIXME: Once the integrated assembler supports full register names, tie this
 // to the verbose-asm setting.

@@ -17,7 +17,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-ccmp"
 #include "ARM64.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -42,6 +41,8 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-ccmp"
 
 // Absolute maximum number of instructions allowed per speculated block.
 // This bypasses all other heuristics, so it should be set fairly high.

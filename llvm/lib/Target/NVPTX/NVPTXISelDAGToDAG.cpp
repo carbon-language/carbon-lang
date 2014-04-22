@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "nvptx-isel"
 #include "NVPTXISelDAGToDAG.h"
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Instructions.h"
@@ -22,6 +21,8 @@
 #include "llvm/Target/TargetIntrinsicInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "nvptx-isel"
 
 static cl::opt<int>
 FMAContractLevel("nvptx-fma-level", cl::ZeroOrMore, cl::Hidden,

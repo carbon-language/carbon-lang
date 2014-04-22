@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "packets"
 #include "llvm/Support/Debug.h"
 #include "AMDGPU.h"
 #include "R600InstrInfo.h"
@@ -27,6 +26,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "packets"
 
 namespace {
 

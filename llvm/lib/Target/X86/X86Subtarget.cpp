@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "subtarget"
 #include "X86Subtarget.h"
 #include "X86InstrInfo.h"
 #include "llvm/IR/Attributes.h"
@@ -24,11 +23,13 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
-using namespace llvm;
-
 #if defined(_MSC_VER)
 #include <intrin.h>
 #endif
+
+using namespace llvm;
+
+#define DEBUG_TYPE "subtarget"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR

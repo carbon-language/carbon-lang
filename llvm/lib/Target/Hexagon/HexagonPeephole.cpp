@@ -35,7 +35,6 @@
 
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "hexagon-peephole"
 #include "Hexagon.h"
 #include "HexagonTargetMachine.h"
 #include "llvm/ADT/DenseMap.h"
@@ -56,6 +55,8 @@
 #include <algorithm>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "hexagon-peephole"
 
 static cl::opt<bool> DisableHexagonPeephole("disable-hexagon-peephole",
     cl::Hidden, cl::ZeroOrMore, cl::init(false),

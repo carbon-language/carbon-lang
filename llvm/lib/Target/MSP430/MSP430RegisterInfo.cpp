@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "msp430-reg-info"
-
 #include "MSP430RegisterInfo.h"
 #include "MSP430.h"
 #include "MSP430MachineFunctionInfo.h"
@@ -27,6 +25,8 @@
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "msp430-reg-info"
 
 #define GET_REGINFO_TARGET_DESC
 #include "MSP430GenRegisterInfo.inc"

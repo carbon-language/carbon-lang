@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-isel"
 #include "ARMISelLowering.h"
 #include "ARMCallingConv.h"
 #include "ARMConstantPoolValue.h"
@@ -49,6 +48,8 @@
 #include "llvm/Target/TargetOptions.h"
 #include <utility>
 using namespace llvm;
+
+#define DEBUG_TYPE "arm-isel"
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 STATISTIC(NumMovwMovt, "Number of GAs materialized with movw + movt");

@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "x86-fixup-LEAs"
 #include "X86.h"
 #include "X86InstrInfo.h"
 #include "X86Subtarget.h"
@@ -27,6 +26,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "x86-fixup-LEAs"
 
 STATISTIC(NumLEAs, "Number of LEA instructions created");
 

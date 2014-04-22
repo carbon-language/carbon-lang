@@ -13,7 +13,6 @@
 /// It needs to be called after IfCvt for best results.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "r600mergeclause"
 #include "AMDGPU.h"
 #include "R600Defines.h"
 #include "R600InstrInfo.h"
@@ -26,6 +25,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "r600mergeclause"
 
 namespace {
 

@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "X86ATTInstPrinter.h"
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "MCTargetDesc/X86MCTargetDesc.h"
@@ -27,6 +26,8 @@
 #include "llvm/Support/FormattedStream.h"
 #include <map>
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 // Include the auto-generated portion of the assembly writer.
 #define PRINT_ALIAS_INSTR

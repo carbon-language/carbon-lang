@@ -11,11 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "systemz-selectiondag-info"
 #include "SystemZTargetMachine.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "systemz-selectiondag-info"
 
 SystemZSelectionDAGInfo::
 SystemZSelectionDAGInfo(const SystemZTargetMachine &TM)

@@ -16,8 +16,6 @@
 //    determined accurately, load branch target addresses from the GOT.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mips-long-branch"
-
 #include "Mips.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "MipsTargetMachine.h"
@@ -32,6 +30,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mips-long-branch"
 
 STATISTIC(LongBranches, "Number of long branches.");
 

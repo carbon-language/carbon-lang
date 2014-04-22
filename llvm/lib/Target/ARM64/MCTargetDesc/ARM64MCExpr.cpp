@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "aarch64symbolrefexpr"
 #include "ARM64MCExpr.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -23,6 +22,8 @@
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "aarch64symbolrefexpr"
 
 const ARM64MCExpr *ARM64MCExpr::Create(const MCExpr *Expr, VariantKind Kind,
                                        MCContext &Ctx) {

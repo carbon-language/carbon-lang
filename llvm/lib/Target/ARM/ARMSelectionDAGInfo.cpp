@@ -11,11 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-selectiondag-info"
 #include "ARMTargetMachine.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/DerivedTypes.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "arm-selectiondag-info"
 
 ARMSelectionDAGInfo::ARMSelectionDAGInfo(const TargetMachine &TM)
   : TargetSelectionDAGInfo(TM),

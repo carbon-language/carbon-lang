@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
-
 #include "SystemZInstPrinter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 #include "SystemZGenAsmWriter.inc"
 

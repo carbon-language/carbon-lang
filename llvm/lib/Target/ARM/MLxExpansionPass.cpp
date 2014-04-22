@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mlx-expansion"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMSubtarget.h"
@@ -27,6 +26,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "mlx-expansion"
 
 static cl::opt<bool>
 ForceExapnd("expand-all-fp-mlx", cl::init(false), cl::Hidden);

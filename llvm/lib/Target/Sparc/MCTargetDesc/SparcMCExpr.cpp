@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sparcmcexpr"
 #include "SparcMCExpr.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -22,6 +21,8 @@
 
 
 using namespace llvm;
+
+#define DEBUG_TYPE "sparcmcexpr"
 
 const SparcMCExpr*
 SparcMCExpr::Create(VariantKind Kind, const MCExpr *Expr,

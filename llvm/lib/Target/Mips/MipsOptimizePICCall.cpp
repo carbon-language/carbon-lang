@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "optimize-mips-pic-call"
-
 #include "Mips.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "MipsMachineFunction.h"
@@ -24,6 +22,8 @@
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "optimize-mips-pic-call"
 
 static cl::opt<bool> LoadTargetFromGOT("mips-load-target-from-got",
                                        cl::init(true),

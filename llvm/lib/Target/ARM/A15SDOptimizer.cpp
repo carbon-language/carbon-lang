@@ -24,7 +24,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "a15-sd-optimizer"
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
@@ -38,6 +37,8 @@
 #include <set>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "a15-sd-optimizer"
 
 namespace {
   struct A15SDOptimizer : public MachineFunctionPass {

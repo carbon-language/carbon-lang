@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm-cp-islands"
 #include "ARM.h"
 #include "ARMMachineFunctionInfo.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
@@ -35,6 +34,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE "arm-cp-islands"
 
 STATISTIC(NumCPEs,       "Number of constpool entries");
 STATISTIC(NumSplit,      "Number of uncond branches inserted");

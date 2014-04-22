@@ -16,7 +16,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asmprinter"
 #include "PPC.h"
 #include "InstPrinter/PPCInstPrinter.h"
 #include "MCTargetDesc/PPCMCExpr.h"
@@ -58,6 +57,8 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asmprinter"
 
 namespace {
   class PPCAsmPrinter : public AsmPrinter {

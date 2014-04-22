@@ -10,7 +10,6 @@
 // This file implements the JIT interfaces for the Sparc target.
 //
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "jit"
 #include "SparcJITInfo.h"
 #include "Sparc.h"
 #include "SparcRelocations.h"
@@ -19,6 +18,8 @@
 #include "llvm/Support/Memory.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "jit"
 
 /// JITCompilerFunction - This contains the address of the JIT function used to
 /// compile a function lazily.

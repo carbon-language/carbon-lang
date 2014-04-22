@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sparc-disassembler"
-
 #include "Sparc.h"
 #include "SparcRegisterInfo.h"
 #include "SparcSubtarget.h"
@@ -22,6 +20,8 @@
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "sparc-disassembler"
 
 typedef MCDisassembler::DecodeStatus DecodeStatus;
 

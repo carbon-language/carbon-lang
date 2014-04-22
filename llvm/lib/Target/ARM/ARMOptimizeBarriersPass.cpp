@@ -8,14 +8,14 @@
 //
 //===------------------------------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "double barriers"
-
 #include "ARM.h"
 #include "ARMMachineFunctionInfo.h"
 #include "ARMInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "double barriers"
 
 STATISTIC(NumDMBsRemoved, "Number of DMBs removed");
 

@@ -8,8 +8,6 @@
 /// \file
 //==-----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "structcfg"
-
 #include "AMDGPU.h"
 #include "AMDGPUInstrInfo.h"
 #include "R600InstrInfo.h"
@@ -33,6 +31,8 @@
 #include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "structcfg"
 
 #define DEFAULT_VEC_SLOTS 8
 

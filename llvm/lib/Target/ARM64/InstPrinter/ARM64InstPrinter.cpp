@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "ARM64InstPrinter.h"
 #include "MCTargetDesc/ARM64AddressingModes.h"
 #include "Utils/ARM64BaseInfo.h"
@@ -23,6 +22,8 @@
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 #define GET_INSTRUCTION_NAME
 #define PRINT_ALIAS_INSTR

@@ -13,8 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "systemz-elim-compare"
-
 #include "SystemZTargetMachine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -27,6 +25,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "systemz-elim-compare"
 
 STATISTIC(BranchOnCounts, "Number of branch-on-count instructions");
 STATISTIC(EliminatedComparisons, "Number of eliminated comparisons");

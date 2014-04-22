@@ -13,12 +13,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "systemz-shorten-inst"
-
 #include "SystemZTargetMachine.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "systemz-shorten-inst"
 
 namespace {
 class SystemZShortenInst : public MachineFunctionPass {

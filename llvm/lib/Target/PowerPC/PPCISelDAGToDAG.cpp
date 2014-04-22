@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ppc-codegen"
 #include "PPC.h"
 #include "MCTargetDesc/PPCPredicates.h"
 #include "PPCTargetMachine.h"
@@ -34,6 +33,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "ppc-codegen"
 
 // FIXME: Remove this once the bug has been fixed!
 cl::opt<bool> ANDIGlueBug("expose-ppc-andi-glue-bug",

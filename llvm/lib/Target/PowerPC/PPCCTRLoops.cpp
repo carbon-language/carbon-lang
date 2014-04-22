@@ -23,8 +23,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ctrloops"
-
 #include "llvm/Transforms/Scalar.h"
 #include "PPC.h"
 #include "PPCTargetMachine.h"
@@ -60,6 +58,8 @@
 #include <vector>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "ctrloops"
 
 #ifndef NDEBUG
 static cl::opt<int> CTRLoopLimit("ppc-max-ctrloop", cl::Hidden, cl::init(-1));

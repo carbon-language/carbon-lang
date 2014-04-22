@@ -11,7 +11,6 @@
 // hardware's register renamer.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "arm64-dead-defs"
 #include "ARM64.h"
 #include "ARM64RegisterInfo.h"
 #include "llvm/ADT/Statistic.h"
@@ -21,6 +20,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "arm64-dead-defs"
 
 STATISTIC(NumDeadDefsReplaced, "Number of dead definitions replaced");
 

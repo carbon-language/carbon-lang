@@ -10,7 +10,6 @@
 // Subclass of MipsTargetLowering specialized for mips16.
 //
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "mips-lower"
 #include "Mips16ISelLowering.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "MipsRegisterInfo.h"
@@ -22,6 +21,8 @@
 #include <string>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "mips-lower"
 
 static cl::opt<bool> DontExpandCondPseudos16(
   "mips16-dont-expand-cond-pseudo",
