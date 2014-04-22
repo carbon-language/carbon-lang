@@ -501,6 +501,11 @@ public:
     assert(TheSema && "ASTUnit does not have a Sema object!");
     return *TheSema;
   }
+
+  const LangOptions &getLangOpts() const {
+    assert(LangOpts && " ASTUnit does not have language options");
+    return *LangOpts;
+  }
   
   const FileManager &getFileManager() const { return *FileMgr; }
         FileManager &getFileManager()       { return *FileMgr; }
