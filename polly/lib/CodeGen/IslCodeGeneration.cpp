@@ -624,8 +624,8 @@ Value *IslExprBuilder::create(__isl_take isl_ast_expr *Expr) {
 class IslNodeBuilder {
 public:
   IslNodeBuilder(PollyIRBuilder &Builder, LoopAnnotator &Annotator, Pass *P)
-      : Builder(Builder), Annotator(Annotator),
-        ExprBuilder(Builder, IDToValue), P(P) {}
+      : Builder(Builder), Annotator(Annotator), ExprBuilder(Builder, IDToValue),
+        P(P) {}
 
   void addParameters(__isl_take isl_set *Context);
   void create(__isl_take isl_ast_node *Node);
