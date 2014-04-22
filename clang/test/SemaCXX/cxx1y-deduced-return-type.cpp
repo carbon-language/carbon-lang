@@ -261,6 +261,13 @@ namespace DefaultedMethods {
 
 namespace Constexpr {
   constexpr auto f1(int n) { return n; }
+  template<typename T> struct X { constexpr auto f() {} }; // PR18746
+  template<typename T> struct Y { constexpr T f() {} }; // expected-note {{control reached end of constexpr function}}
+  void f() {
+    X<int>().f();
+    Y<void>().f();
+    constexpr int q = Y<int>().f(); // expected-error {{must be initialized by a constant expression}} expected-note {{in call to '&Y<int>()->f()'}}
+  }
   struct NonLiteral { ~NonLiteral(); } nl; // expected-note {{user-provided destructor}}
   constexpr auto f2(int n) { return nl; } // expected-error {{return type 'Constexpr::NonLiteral' is not a literal type}}
 }
