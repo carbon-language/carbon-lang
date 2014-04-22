@@ -207,7 +207,6 @@ std::string LLVMSymbolizer::symbolizeData(const std::string &ModuleName,
 
 void LLVMSymbolizer::flush() {
   DeleteContainerSeconds(Modules);
-  DeleteContainerPointers(ParsedBinariesAndObjects);
   BinaryForPath.clear();
   ObjectFileForArch.clear();
 }
@@ -305,8 +304,8 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
   if (!error(BinaryOrErr.getError())) {
     std::unique_ptr<Binary> ParsedBinary(BinaryOrErr.get());
     // Check if it's a universal binary.
-    Bin = ParsedBinary.release();
-    ParsedBinariesAndObjects.push_back(Bin);
+    Bin = ParsedBinary.get();
+    ParsedBinariesAndObjects.push_back(std::move(ParsedBinary));
     if (Bin->isMachO() || Bin->isMachOUniversalBinary()) {
       // On Darwin we may find DWARF in separate object file in
       // resource directory.
@@ -316,7 +315,7 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
       error_code EC = BinaryOrErr.getError();
       if (EC != errc::no_such_file_or_directory && !error(EC)) {
         DbgBin = BinaryOrErr.get();
-        ParsedBinariesAndObjects.push_back(DbgBin);
+        ParsedBinariesAndObjects.push_back(std::unique_ptr<Binary>(DbgBin));
       }
     }
     // Try to locate the debug binary using .gnu_debuglink section.
@@ -329,7 +328,7 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
         BinaryOrErr = createBinary(DebugBinaryPath);
         if (!error(BinaryOrErr.getError())) {
           DbgBin = BinaryOrErr.get();
-          ParsedBinariesAndObjects.push_back(DbgBin);
+          ParsedBinariesAndObjects.push_back(std::unique_ptr<Binary>(DbgBin));
         }
       }
     }
@@ -353,8 +352,8 @@ LLVMSymbolizer::getObjectFileFromBinary(Binary *Bin, const std::string &ArchName
       return I->second;
     std::unique_ptr<ObjectFile> ParsedObj;
     if (!UB->getObjectForArch(Triple(ArchName).getArch(), ParsedObj)) {
-      Res = ParsedObj.release();
-      ParsedBinariesAndObjects.push_back(Res);
+      Res = ParsedObj.get();
+      ParsedBinariesAndObjects.push_back(std::move(ParsedObj));
     }
     ObjectFileForArch[std::make_pair(UB, ArchName)] = Res;
   } else if (Bin->isObject()) {

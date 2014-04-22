@@ -19,6 +19,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <map>
+#include <memory>
 #include <string>
 
 namespace llvm {
@@ -72,7 +73,7 @@ private:
   std::string printDILineInfo(DILineInfo LineInfo) const;
 
   // Owns all the parsed binaries and object files.
-  SmallVector<Binary*, 4> ParsedBinariesAndObjects;
+  SmallVector<std::unique_ptr<Binary>, 4> ParsedBinariesAndObjects;
   // Owns module info objects.
   typedef std::map<std::string, ModuleInfo *> ModuleMapTy;
   ModuleMapTy Modules;
