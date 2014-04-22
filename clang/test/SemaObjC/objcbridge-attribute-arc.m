@@ -64,9 +64,9 @@ typedef CFErrorRef1 CFErrorRef2; // expected-note 2 {{declared here}}
 
 void Test2(CFErrorRef2 cf, NSError *ns, NSString *str, Class c, CFUColor2Ref cf2) {
   (void)(NSString *)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'NSString'}}
-  (void)(NSError *)cf; // okay
-  (void)(MyError*)cf; // okay,
-  (void)(NSUColor *)cf2; // okay
+  (void)(NSError *)cf; // expected-error {{under ARC 'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, but it still requires an explicit bridge cast}}
+  (void)(MyError*)cf; // expected-error {{under ARC 'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, but it still requires an explicit bridge cast}}
+  (void)(NSUColor *)cf2; // expected-error {{under ARC 'CFUColor2Ref' (aka 'union __CFUPrimeColor *') bridges to NSUColor, but it still requires an explicit bridge cast}}
   (void)(CFErrorRef)ns; // okay
   (void)(CFErrorRef)str;  // expected-warning {{'NSString' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
   (void)(Class)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'Class'}}

@@ -3289,7 +3289,8 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
 }
 
 template <typename TB>
-static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
+static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr,
+                                  bool TollFreeBridgeCast) {
   QualType T = castExpr->getType();
   while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
     TypedefNameDecl *TDNDecl = TD->getDecl();
@@ -3308,8 +3309,15 @@ static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
               ObjCInterfaceDecl *CastClass
                 = InterfacePointerType->getObjectType()->getInterface();
               if ((CastClass == ExprClass) ||
-                  (CastClass && ExprClass->isSuperClassOf(CastClass)))
+                  (CastClass && ExprClass->isSuperClassOf(CastClass))) {
+                if (!TollFreeBridgeCast && S.getLangOpts().ObjCAutoRefCount) {
+                  // bridge attribute is ok. However, under ARC, cast still requires
+                  // an explicit cast and should not compile under ARC.
+                  S.Diag(castExpr->getLocStart(), diag::err_objc_invalid_bridge)
+                    << T << Target->getName();
+                }
                 return true;
+              }
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
                 << T << Target->getName() << castType->getPointeeType();
               return true;
@@ -3402,8 +3410,8 @@ void Sema::CheckTollFreeBridgeCast(QualType castType, Expr *castExpr) {
   ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExpr->getType());
   ARCConversionTypeClass castACTC = classifyTypeForARCConversion(castType);
   if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation) {
-    (void)CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr);
-    (void)CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr);
+    (void)CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr, true);
+    (void)CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr, true);
   }
   else if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable) {
     (void)CheckObjCBridgeCFCast<ObjCBridgeAttr>(*this, castType, castExpr);
@@ -3624,8 +3632,8 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
   
   if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation &&
       (CCK == CCK_CStyleCast || CCK == CCK_FunctionalCast))
-    if (CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr) ||
-        CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr))
+    if (CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr, false) ||
+        CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr, false))
       return ACR_okay;
     
   if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable &&

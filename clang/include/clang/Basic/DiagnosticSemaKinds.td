@@ -2551,6 +2551,8 @@ def warn_objc_invalid_bridge : Warning<
   "%0 bridges to %1, not %2">, InGroup<ObjCBridge>;
 def warn_objc_invalid_bridge_to_cf : Warning<
   "%0 cannot bridge to %1">, InGroup<ObjCBridge>;
+def err_objc_invalid_bridge : Error<
+  "under ARC %0 bridges to %1, but it still requires an explicit bridge cast">;
 
 // objc_bridge_related attribute diagnostics.
 def err_objc_bridged_related_invalid_class : Error<
