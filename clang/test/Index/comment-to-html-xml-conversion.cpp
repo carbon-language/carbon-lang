@@ -721,6 +721,18 @@ void comment_to_html_conversion_35();
 // CHECK-NEXT:         (CXComment_Text Text=[Γ])
 // CHECK-NEXT:         (CXComment_Text Text=[ Greek letter Gamma Γ.])))]
 
+/// <h1 id="]]>">Aaa</h1>
+void comment_to_html_conversion_36();
+
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_36:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <h1 id="]]>">Aaa</h1></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_36</Name><USR>c:@F@comment_to_html_conversion_36#</USR><Declaration>void comment_to_html_conversion_36()</Declaration><Abstract><Para> <rawHTML isSafeToPassThrough="1"><![CDATA[<h1 id="]]]]><![CDATA[>">]]></rawHTML>Aaa<rawHTML isSafeToPassThrough="1">&lt;/h1&gt;</rawHTML></Para></Abstract></Function>]
+// CHECK-NEXT:  CommentAST=[
+// CHECK-NEXT:    (CXComment_FullComment
+// CHECK-NEXT:       (CXComment_Paragraph
+// CHECK-NEXT:         (CXComment_Text Text=[ ] IsWhitespace)
+// CHECK-NEXT:         (CXComment_HTMLStartTag Name=[h1] Attrs: id=]]>)
+// CHECK-NEXT:         (CXComment_Text Text=[Aaa])
+// CHECK-NEXT:         (CXComment_HTMLEndTag Name=[h1])))]
+
 
 /// Aaa.
 class comment_to_xml_conversion_01 {
