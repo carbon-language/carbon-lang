@@ -488,8 +488,8 @@ void ConstantHoisting::emitBaseConstants(Instruction *Base, Constant *Offset,
       ClonedCastInst->insertAfter(CastInst);
       // Use the same debug location as the original cast instruction.
       ClonedCastInst->setDebugLoc(CastInst->getDebugLoc());
-      DEBUG(dbgs() << "Clone instruction: " << *ClonedCastInst << '\n'
-                   << "To               : " << *CastInst << '\n');
+      DEBUG(dbgs() << "Clone instruction: " << *CastInst << '\n'
+                   << "To               : " << *ClonedCastInst << '\n');
     }
 
     DEBUG(dbgs() << "Update: " << *ConstUser.Inst << '\n');
