@@ -9,7 +9,6 @@
 // Detects single entry single exit regions in the control flow graph.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "region"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
@@ -23,6 +22,8 @@
 #include <set>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "region"
 
 // Always verify if expensive checking is enabled.
 #ifdef XDEBUG

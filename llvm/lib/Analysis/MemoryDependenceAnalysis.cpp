@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "memdep"
 #include "llvm/Analysis/MemoryDependenceAnalysis.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
@@ -32,6 +31,8 @@
 #include "llvm/IR/PredIteratorCache.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "memdep"
 
 STATISTIC(NumCacheNonLocal, "Number of fully cached non-local responses");
 STATISTIC(NumCacheDirtyNonLocal, "Number of dirty cached non-local responses");

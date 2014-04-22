@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "globalsmodref-aa"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
@@ -32,6 +31,8 @@
 #include "llvm/Support/CommandLine.h"
 #include <set>
 using namespace llvm;
+
+#define DEBUG_TYPE "globalsmodref-aa"
 
 STATISTIC(NumNonAddrTakenGlobalVars,
           "Number of global vars without address taken");

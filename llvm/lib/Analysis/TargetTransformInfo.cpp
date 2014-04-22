@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "tti"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
@@ -18,6 +17,8 @@
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "tti"
 
 // Setup the analysis group to manage the TargetTransformInfo passes.
 INITIALIZE_ANALYSIS_GROUP(TargetTransformInfo, "Target Information", NoTTI)

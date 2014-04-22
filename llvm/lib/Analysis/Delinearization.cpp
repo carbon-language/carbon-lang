@@ -14,8 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DL_NAME "delinearize"
-#define DEBUG_TYPE DL_NAME
 #include "llvm/IR/Constants.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Passes.h"
@@ -33,6 +31,9 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DL_NAME "delinearize"
+#define DEBUG_TYPE DL_NAME
 
 namespace {
 

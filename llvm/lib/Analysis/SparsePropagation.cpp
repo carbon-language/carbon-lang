@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sparseprop"
 #include "llvm/Analysis/SparsePropagation.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
@@ -20,6 +19,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "sparseprop"
 
 //===----------------------------------------------------------------------===//
 //                  AbstractLatticeFunction Implementation

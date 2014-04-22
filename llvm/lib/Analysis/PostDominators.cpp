@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "postdomtree"
-
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
@@ -21,6 +19,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GenericDomTreeConstruction.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "postdomtree"
 
 //===----------------------------------------------------------------------===//
 //  PostDominatorTree Implementation

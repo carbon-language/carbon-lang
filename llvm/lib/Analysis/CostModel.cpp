@@ -17,8 +17,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define CM_NAME "cost-model"
-#define DEBUG_TYPE CM_NAME
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
@@ -31,6 +29,9 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define CM_NAME "cost-model"
+#define DEBUG_TYPE CM_NAME
 
 static cl::opt<bool> EnableReduxCost("costmodel-reduxcost", cl::init(false),
                                      cl::Hidden,

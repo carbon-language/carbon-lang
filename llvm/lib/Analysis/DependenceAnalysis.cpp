@@ -51,8 +51,6 @@
 //                                                                            //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "da"
-
 #include "llvm/Analysis/DependenceAnalysis.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -68,6 +66,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "da"
 
 //===----------------------------------------------------------------------===//
 // statistics

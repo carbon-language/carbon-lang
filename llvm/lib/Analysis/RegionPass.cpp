@@ -17,9 +17,10 @@
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Support/Timer.h"
 
-#define DEBUG_TYPE "regionpassmgr"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "regionpassmgr"
 
 //===----------------------------------------------------------------------===//
 // RGPassManager

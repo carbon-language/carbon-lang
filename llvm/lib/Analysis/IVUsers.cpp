@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "iv-users"
 #include "llvm/Analysis/IVUsers.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -28,6 +27,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE "iv-users"
 
 char IVUsers::ID = 0;
 INITIALIZE_PASS_BEGIN(IVUsers, "iv-users",

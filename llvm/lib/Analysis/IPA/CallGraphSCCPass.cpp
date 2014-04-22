@@ -15,7 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "cgscc-passmgr"
 #include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
@@ -28,6 +27,8 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "cgscc-passmgr"
 
 static cl::opt<unsigned> 
 MaxIterations("max-cg-scc-iterations", cl::ReallyHidden, cl::init(4));

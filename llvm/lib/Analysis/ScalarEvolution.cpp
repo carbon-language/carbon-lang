@@ -58,7 +58,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "scalar-evolution"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -88,6 +87,8 @@
 #include "llvm/Target/TargetLibraryInfo.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE "scalar-evolution"
 
 STATISTIC(NumArrayLenItCounts,
           "Number of trip counts computed with array length");

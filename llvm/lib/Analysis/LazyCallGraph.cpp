@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "lcg"
 #include "llvm/Analysis/LazyCallGraph.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/CallSite.h"
@@ -18,6 +17,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "lcg"
 
 static void findCallees(
     SmallVectorImpl<Constant *> &Worklist, SmallPtrSetImpl<Constant *> &Visited,
