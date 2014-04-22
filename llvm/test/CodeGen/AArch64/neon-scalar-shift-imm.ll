@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; Intrinsic wrangling & arm64 does it differently.
 
 define i64 @test_vshrd_n_s64(i64 %a) {
 ; CHECK: test_vshrd_n_s64

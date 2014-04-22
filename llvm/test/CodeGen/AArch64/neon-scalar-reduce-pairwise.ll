@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; Intrinsic wrangling. Duplicates various arm64 tests.
 
 declare <1 x i64> @llvm.aarch64.neon.vpadd(<2 x i64>)
 

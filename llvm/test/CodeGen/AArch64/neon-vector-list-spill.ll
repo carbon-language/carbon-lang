@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon -fp-contract=fast
+; arm64 has separate copy as aarch64-neon-vector-list-spill.ll
 
 ; FIXME: We should not generate ld/st for such register spill/fill, because the
 ; test case seems very simple and the register pressure is not high. If the

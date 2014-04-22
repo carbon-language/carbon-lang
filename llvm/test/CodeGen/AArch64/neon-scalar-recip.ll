@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; duplicates arm64 tests in vsqrt.ll
 
 define float @test_vrecpss_f32(float %a, float %b) {
 ; CHECK: test_vrecpss_f32

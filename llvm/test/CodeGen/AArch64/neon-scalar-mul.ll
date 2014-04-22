@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; Just intrinsic wrangling, and arm64 does scalar differently anyway.
 
 define i16 @test_vqdmulhh_s16(i16 %a, i16 %b) {
 ; CHECK: test_vqdmulhh_s16

@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; not relevant for arm64: <1 x iN> isn't legal
 
 ; This file tests the spill of FPR8/FPR16. The volatile loads/stores force the
 ; allocator to keep the value live until it's needed.

@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; intrinsic wrangling that arm64 does differently.
 
 define i8 @test_vqmovunh_s16(i16 %a) {
 ; CHECK: test_vqmovunh_s16

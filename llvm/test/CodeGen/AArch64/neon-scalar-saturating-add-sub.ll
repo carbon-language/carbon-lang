@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; Intrinsic wrangling and arm64 does it differently.
 
 declare <1 x i8> @llvm.arm.neon.vqaddu.v1i8(<1 x i8>, <1 x i8>)
 declare <1 x i8> @llvm.arm.neon.vqadds.v1i8(<1 x i8>, <1 x i8>)

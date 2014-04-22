@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; arm64 duplicates these tests in cvt.ll
 
 ;; Scalar Floating-point Convert
 

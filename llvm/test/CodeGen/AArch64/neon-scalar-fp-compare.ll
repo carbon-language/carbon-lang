@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; arm64 does not use intrinsics for comparisons.
 
 ;; Scalar Floating-point Compare
 

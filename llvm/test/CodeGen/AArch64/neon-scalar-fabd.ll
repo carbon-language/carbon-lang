@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has these two tests in vabs.ll
 
 define float @test_vabds_f32(float %a, float %b) {
 ; CHECK-LABEL: test_vabds_f32
