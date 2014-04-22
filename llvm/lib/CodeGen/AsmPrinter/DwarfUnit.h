@@ -163,7 +163,7 @@ public:
   virtual ~DwarfUnit();
 
   /// Set the skeleton unit associated with this unit.
-  void setSkeleton(DwarfUnit *Skel) { Skeleton = Skel; }
+  void setSkeleton(DwarfUnit &Skel) { Skeleton = &Skel; }
 
   /// Get the skeleton unit associated with this unit.
   DwarfUnit *getSkeleton() const { return Skeleton; }
