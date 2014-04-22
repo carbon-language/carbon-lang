@@ -16,11 +16,10 @@
 
 #include "ManagedStringPool.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include <sstream>
 
 #define GET_REGINFO_HEADER
 #include "NVPTXGenRegisterInfo.inc"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include <sstream>
 
 namespace llvm {
 
