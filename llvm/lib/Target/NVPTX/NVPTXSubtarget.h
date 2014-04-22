@@ -16,11 +16,10 @@
 
 #include "NVPTX.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
+#include <string>
 
 #define GET_SUBTARGETINFO_HEADER
 #include "NVPTXGenSubtargetInfo.inc"
-
-#include <string>
 
 namespace llvm {
 

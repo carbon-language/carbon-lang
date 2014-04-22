@@ -16,11 +16,10 @@
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
+#include <string>
 
 #define GET_SUBTARGETINFO_HEADER
 #include "AArch64GenSubtargetInfo.inc"
-
-#include <string>
 
 namespace llvm {
 class StringRef;
