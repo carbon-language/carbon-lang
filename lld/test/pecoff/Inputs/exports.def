@@ -1,3 +1,5 @@
+; This is a comment line
+
 EXPORTS
-  exportfn1 @5
+  exportfn1 @5   ; foo
   exportfn2

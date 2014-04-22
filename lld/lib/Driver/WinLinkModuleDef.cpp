@@ -19,48 +19,55 @@ namespace lld {
 namespace moduledef {
 
 Token Lexer::lex() {
-  _buffer = _buffer.trim();
-  if (_buffer.empty() || _buffer[0] == '\0')
-    return Token(Kind::eof, _buffer);
+  for (;;) {
+    _buffer = _buffer.trim();
+    if (_buffer.empty() || _buffer[0] == '\0')
+      return Token(Kind::eof, _buffer);
 
-  switch (_buffer[0]) {
-  case '=':
-    _buffer = _buffer.drop_front();
-    return Token(Kind::equal, "=");
-  case ',':
-    _buffer = _buffer.drop_front();
-    return Token(Kind::comma, ",");
-  case '"': {
-    size_t end = _buffer.find('"', 1);
-    Token ret;
-    if (end == _buffer.npos) {
-      ret = Token(Kind::identifier, _buffer.substr(1, end));
-      _buffer = "";
-    } else {
-      ret = Token(Kind::identifier, _buffer.substr(1, end - 1));
-      _buffer = _buffer.drop_front(end);
+    switch (_buffer[0]) {
+    case ';': {
+      size_t end = _buffer.find('\n');
+      _buffer = (end == _buffer.npos) ? "" : _buffer.drop_front(end);
+      continue;
     }
-    return ret;
-  }
-  default: {
-    size_t end = _buffer.find_first_not_of(
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "0123456789_.*~+!@#$%^&*()/");
-    StringRef word = _buffer.substr(0, end);
-    Kind kind = llvm::StringSwitch<Kind>(word)
-                    .Case("BASE", Kind::kw_base)
-                    .Case("DATA", Kind::kw_data)
-                    .Case("EXPORTS", Kind::kw_exports)
-                    .Case("HEAPSIZE", Kind::kw_heapsize)
-                    .Case("LIBRARY", Kind::kw_library)
-                    .Case("NAME", Kind::kw_name)
-                    .Case("NONAME", Kind::kw_noname)
-                    .Case("STACKSIZE", Kind::kw_stacksize)
-                    .Case("VERSION", Kind::kw_version)
-                    .Default(Kind::identifier);
-    _buffer = (end == _buffer.npos) ? "" : _buffer.drop_front(end);
-    return Token(kind, word);
-  }
+    case '=':
+      _buffer = _buffer.drop_front();
+      return Token(Kind::equal, "=");
+    case ',':
+      _buffer = _buffer.drop_front();
+      return Token(Kind::comma, ",");
+    case '"': {
+      size_t end = _buffer.find('"', 1);
+      Token ret;
+      if (end == _buffer.npos) {
+        ret = Token(Kind::identifier, _buffer.substr(1, end));
+        _buffer = "";
+      } else {
+        ret = Token(Kind::identifier, _buffer.substr(1, end - 1));
+        _buffer = _buffer.drop_front(end);
+      }
+      return ret;
+    }
+    default: {
+      size_t end = _buffer.find_first_not_of(
+          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+          "0123456789_.*~+!@#$%^&*()/");
+      StringRef word = _buffer.substr(0, end);
+      Kind kind = llvm::StringSwitch<Kind>(word)
+          .Case("BASE", Kind::kw_base)
+          .Case("DATA", Kind::kw_data)
+          .Case("EXPORTS", Kind::kw_exports)
+          .Case("HEAPSIZE", Kind::kw_heapsize)
+          .Case("LIBRARY", Kind::kw_library)
+          .Case("NAME", Kind::kw_name)
+          .Case("NONAME", Kind::kw_noname)
+          .Case("STACKSIZE", Kind::kw_stacksize)
+          .Case("VERSION", Kind::kw_version)
+          .Default(Kind::identifier);
+      _buffer = (end == _buffer.npos) ? "" : _buffer.drop_front(end);
+      return Token(kind, word);
+    }
+    }
   }
 }
 
