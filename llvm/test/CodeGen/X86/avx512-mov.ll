@@ -153,12 +153,31 @@ define void @test18(i8 * %addr, <8 x i64> %data) {
   ret void
 }
 
-; CHECK-LABEL: store_i1
+; CHECK-LABEL: store_i1_1
 ; CHECK: movb
 ; CHECK: movb
 ; CHECK: ret
-define void @store_i1() {
+define void @store_i1_1() {
   store i1 true, i1 addrspace(3)* undef, align 128
   store i1 false, i1 addrspace(2)* undef, align 128
+  ret void
+}
+
+; CHECK-LABEL: store_i1_2
+; CHECK: movb
+; CHECK: ret
+define void @store_i1_2(i64 %a, i64 %b) {
+  %res = icmp eq i64 %a, %b
+  store i1 %res, i1 addrspace(3)* undef, align 128
+  ret void
+}
+
+; CHECK-LABEL: store_i1_3
+; CHECK: kmovw
+; CHECK: ret
+define void @store_i1_3(i16 %a) {
+  %a_vec = bitcast i16 %a to <16 x i1>
+  %res = extractelement <16 x i1> %a_vec, i32 4
+  store i1 %res, i1 addrspace(3)* undef, align 128
   ret void
 }
