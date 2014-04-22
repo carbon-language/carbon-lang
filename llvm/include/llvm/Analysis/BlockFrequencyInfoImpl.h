@@ -1051,7 +1051,7 @@ public:
   std::vector<WorkingData> Working;
 
   /// \brief Indexed information about loops.
-  std::vector<std::unique_ptr<LoopData>> PackagedLoops;
+  std::vector<std::unique_ptr<LoopData>> Loops;
 
   /// \brief Add all edges out of a packaged loop to the distribution.
   ///
@@ -1079,7 +1079,7 @@ public:
   /// \brief Distribute mass according to a distribution.
   ///
   /// Distributes the mass in Source according to Dist.  If LoopHead.isValid(),
-  /// backedges and exits are stored in its entry in PackagedLoops.
+  /// backedges and exits are stored in its entry in Loops.
   ///
   /// Mass is distributed in parallel from two copies of the source mass.
   ///
@@ -1438,8 +1438,8 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
     BlockNode Header = getNode(Loop->getHeader());
     assert(Header.isValid());
 
-    PackagedLoops.emplace_back(new LoopData(Header));
-    Working[Header.Index].Loop = PackagedLoops.back().get();
+    Loops.emplace_back(new LoopData(Header));
+    Working[Header.Index].Loop = Loops.back().get();
     DEBUG(dbgs() << " - loop = " << getBlockName(Header) << "\n");
   }
 
@@ -1470,7 +1470,7 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
 
 template <class BT> void BlockFrequencyInfoImpl<BT>::computeMassInLoops() {
   // Visit loops with the deepest first, and the top-level loops last.
-  for (const auto &L : make_range(PackagedLoops.rbegin(), PackagedLoops.rend()))
+  for (const auto &L : make_range(Loops.rbegin(), Loops.rend()))
     computeMassInLoop(L->Header);
 }
 

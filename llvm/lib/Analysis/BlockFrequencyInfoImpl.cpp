@@ -602,7 +602,7 @@ void BlockFrequencyInfoImplBase::clear() {
   // does not actually clear heap storage.
   std::vector<FrequencyData>().swap(Freqs);
   std::vector<WorkingData>().swap(Working);
-  std::vector<std::unique_ptr<LoopData>>().swap(PackagedLoops);
+  std::vector<std::unique_ptr<LoopData>>().swap(Loops);
 }
 
 /// \brief Clear all memory not needed downstream.
