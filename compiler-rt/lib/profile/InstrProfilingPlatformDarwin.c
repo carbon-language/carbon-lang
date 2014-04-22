@@ -9,6 +9,7 @@
 
 #include "InstrProfiling.h"
 
+#if defined(__APPLE__)
 /* Use linker magic to find the bounds of the Data section. */
 extern __llvm_profile_data DataStart __asm("section$start$__DATA$__llvm_prf_data");
 extern __llvm_profile_data DataEnd   __asm("section$end$__DATA$__llvm_prf_data");
@@ -27,3 +28,4 @@ const char *__llvm_profile_names_begin(void) { return &NamesStart; }
 const char *__llvm_profile_names_end(void) { return &NamesEnd; }
 uint64_t *__llvm_profile_counters_begin(void) { return &CountersStart; }
 uint64_t *__llvm_profile_counters_end(void) { return &CountersEnd; }
+#endif

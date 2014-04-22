@@ -8,6 +8,8 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "InstrProfiling.h"
+
+#if !defined(__APPLE__)
 #include <stdlib.h>
 
 static const __llvm_profile_data *DataFirst = NULL;
@@ -62,3 +64,4 @@ const char *__llvm_profile_names_begin(void) { return NamesFirst; }
 const char *__llvm_profile_names_end(void) { return NamesLast; }
 uint64_t *__llvm_profile_counters_begin(void) { return CountersFirst; }
 uint64_t *__llvm_profile_counters_end(void) { return CountersLast; }
+#endif
