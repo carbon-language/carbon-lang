@@ -467,6 +467,11 @@ void Sema::actOnHTMLStartTagFinish(
                               SourceLocation GreaterLoc,
                               bool IsSelfClosing) {
   Tag->setAttrs(Attrs);
+  for (const auto &Attr : Attrs) {
+    if (!isHTMLAttributeSafeToPassThrough(Attr.Name))
+      Tag->setUnsafeToPassThrough();
+  }
+
   Tag->setGreaterLoc(GreaterLoc);
   if (IsSelfClosing)
     Tag->setSelfClosing();
@@ -482,6 +487,7 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
   if (isHTMLEndTagForbidden(TagName)) {
     Diag(HET->getLocation(), diag::warn_doc_html_end_forbidden)
       << TagName << HET->getSourceRange();
+    HET->setUnsafeToPassThrough();
     return HET;
   }
 
@@ -497,14 +503,19 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
   if (!FoundOpen) {
     Diag(HET->getLocation(), diag::warn_doc_html_end_unbalanced)
       << HET->getSourceRange();
+    HET->setUnsafeToPassThrough();
     return HET;
   }
 
   while (!HTMLOpenTags.empty()) {
-    const HTMLStartTagComment *HST = HTMLOpenTags.pop_back_val();
+    HTMLStartTagComment *HST = HTMLOpenTags.pop_back_val();
     StringRef LastNotClosedTagName = HST->getTagName();
-    if (LastNotClosedTagName == TagName)
+    if (LastNotClosedTagName == TagName) {
+      // If the start tag is unsafe, end tag is unsafe as well.
+      if (!HST->isSafeToPassThrough())
+        HET->setUnsafeToPassThrough();
       break;
+    }
 
     if (isHTMLEndTagOptional(LastNotClosedTagName))
       continue;
@@ -518,16 +529,18 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
                                                 HET->getLocation(),
                                                 &CloseLineInvalid);
 
-    if (OpenLineInvalid || CloseLineInvalid || OpenLine == CloseLine)
+    if (OpenLineInvalid || CloseLineInvalid || OpenLine == CloseLine) {
       Diag(HST->getLocation(), diag::warn_doc_html_start_end_mismatch)
         << HST->getTagName() << HET->getTagName()
         << HST->getSourceRange() << HET->getSourceRange();
-    else {
+      HST->setUnsafeToPassThrough();
+    } else {
       Diag(HST->getLocation(), diag::warn_doc_html_start_end_mismatch)
         << HST->getTagName() << HET->getTagName()
         << HST->getSourceRange();
       Diag(HET->getLocation(), diag::note_doc_html_end_tag)
         << HET->getSourceRange();
+      HST->setUnsafeToPassThrough();
     }
   }
 
@@ -538,6 +551,18 @@ FullComment *Sema::actOnFullComment(
                               ArrayRef<BlockContentComment *> Blocks) {
   FullComment *FC = new (Allocator) FullComment(Blocks, ThisDeclInfo);
   resolveParamCommandIndexes(FC);
+
+  // Complain about HTML tags that are not closed.
+  while (!HTMLOpenTags.empty()) {
+    HTMLStartTagComment *HST = HTMLOpenTags.pop_back_val();
+    if (isHTMLEndTagOptional(HST->getTagName()))
+      continue;
+
+    Diag(HST->getLocation(), diag::warn_doc_html_missing_end_tag)
+      << HST->getTagName() << HST->getSourceRange();
+    HST->setUnsafeToPassThrough();
+  }
+
   return FC;
 }
 

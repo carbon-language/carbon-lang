@@ -52,3 +52,83 @@ def Tr      : Tag<"tr"> { let EndTagOptional = 1; }
 def Th      : Tag<"th"> { let EndTagOptional = 1; }
 def Td      : Tag<"td"> { let EndTagOptional = 1; }
 
+// Define a blacklist of attributes that are not safe to pass through to HTML
+// output if the input is untrusted.
+//
+// FIXME: this should be a whitelist.  When changing this to a whitelist, don't
+// forget to change the default in the TableGen backend.
+class Attribute<string spelling> {
+  string Spelling = spelling;
+  bit IsSafeToPassThrough = 1;
+}
+class EventHandlerContentAttribute<string spelling> : Attribute<spelling> {
+  let IsSafeToPassThrough = 0;
+}
+
+// This list is based on HTML5 draft as of 04 February 2014.
+//
+// The list is intentionally organized as one item per line to make it easier
+// to compare with the HTML spec.
+foreach AttrName = [
+    "onabort",
+    "onblur",
+    "oncancel",
+    "oncanplay",
+    "oncanplaythrough",
+    "onchange",
+    "onclick",
+    "onclose",
+    "oncuechange",
+    "ondblclick",
+    "ondrag",
+    "ondragend",
+    "ondragenter",
+    "ondragexit",
+    "ondragleave",
+    "ondragover",
+    "ondragstart",
+    "ondrop",
+    "ondurationchange",
+    "onemptied",
+    "onended",
+    "onerror",
+    "onfocus",
+    "oninput",
+    "oninvalid",
+    "onkeydown",
+    "onkeypress",
+    "onkeyup",
+    "onload",
+    "onloadeddata",
+    "onloadedmetadata",
+    "onloadstart",
+    "onmousedown",
+    "onmouseenter",
+    "onmouseleave",
+    "onmousemove",
+    "onmouseout",
+    "onmouseover",
+    "onmouseup",
+    "onmousewheel",
+    "onpause",
+    "onplay",
+    "onplaying",
+    "onprogress",
+    "onratechange",
+    "onreset",
+    "onresize",
+    "onscroll",
+    "onseeked",
+    "onseeking",
+    "onselect",
+    "onshow",
+    "onstalled",
+    "onsubmit",
+    "onsuspend",
+    "ontimeupdate",
+    "ontoggle",
+    "onvolumechange",
+    "onwaiting"
+  ] in {
+  def Attr#AttrName : EventHandlerContentAttribute<AttrName>;
+}

@@ -41,6 +41,10 @@ def warn_doc_html_start_end_mismatch : Warning<
 def note_doc_html_end_tag : Note<
   "end tag">;
 
+def warn_doc_html_missing_end_tag : Warning<
+  "HTML tag '%0' requires an end tag">,
+  InGroup<DocumentationHTML>, DefaultIgnore;
+
 // Commands
 
 def warn_doc_block_command_empty_paragraph : Warning<

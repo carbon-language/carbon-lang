@@ -472,7 +472,7 @@ void test_full_comment_1(int x1, int x2);
 /// <br><a href="http://example.com/">Aaa</a>
 void comment_to_html_conversion_24();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_24:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <br><a href="http://example.com/">Aaa</a></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_24</Name><USR>c:@F@comment_to_html_conversion_24#</USR><Declaration>void comment_to_html_conversion_24()</Declaration><Abstract><Para> <rawHTML><![CDATA[<br>]]></rawHTML><rawHTML><![CDATA[<a href="http://example.com/">]]></rawHTML>Aaa<rawHTML>&lt;/a&gt;</rawHTML></Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_24:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <br><a href="http://example.com/">Aaa</a></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_24</Name><USR>c:@F@comment_to_html_conversion_24#</USR><Declaration>void comment_to_html_conversion_24()</Declaration><Abstract><Para> <rawHTML isSafeToPassThrough="1"><![CDATA[<br>]]></rawHTML><rawHTML isSafeToPassThrough="1"><![CDATA[<a href="http://example.com/">]]></rawHTML>Aaa<rawHTML isSafeToPassThrough="1">&lt;/a&gt;</rawHTML></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -678,7 +678,7 @@ void comment_to_html_conversion_33();
 /// <em>0&lt;i</em>
 void comment_to_html_conversion_34();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_34:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>0&lt;i</em></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_34</Name><USR>c:@F@comment_to_html_conversion_34#</USR><Declaration>void comment_to_html_conversion_34()</Declaration><Abstract><Para> <rawHTML><![CDATA[<em>]]></rawHTML>0&lt;i<rawHTML>&lt;/em&gt;</rawHTML></Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_34:{{.*}} FullCommentAsHTML=[<p class="para-brief"> <em>0&lt;i</em></p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_34</Name><USR>c:@F@comment_to_html_conversion_34#</USR><Declaration>void comment_to_html_conversion_34()</Declaration><Abstract><Para> <rawHTML isSafeToPassThrough="1"><![CDATA[<em>]]></rawHTML>0&lt;i<rawHTML isSafeToPassThrough="1">&lt;/em&gt;</rawHTML></Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
@@ -852,6 +852,34 @@ enum class comment_to_xml_conversion_17 {
   comment_to_xml_conversion_18
 // CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:3: EnumConstantDecl=comment_to_xml_conversion_18:{{.*}} FullCommentAsXML=[<Variable file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="3"><Name>comment_to_xml_conversion_18</Name><USR>c:@E@comment_to_xml_conversion_17@comment_to_xml_conversion_18</USR><Declaration>comment_to_xml_conversion_18</Declaration><Abstract><Para> Aaa.</Para></Abstract></Variable>]
 };
+
+/// <a href="http://example.org/">
+void comment_to_xml_conversion_unsafe_html_01();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_unsafe_html_01:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_unsafe_html_01</Name><USR>c:@F@comment_to_xml_conversion_unsafe_html_01#</USR><Declaration>void comment_to_xml_conversion_unsafe_html_01()</Declaration><Abstract><Para> <rawHTML><![CDATA[<a href="http://example.org/">]]></rawHTML></Para></Abstract></Function>]
+
+/// <a href="http://example.org/"><em>Aaa</em>
+void comment_to_xml_conversion_unsafe_html_02();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_unsafe_html_02:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_unsafe_html_02</Name><USR>c:@F@comment_to_xml_conversion_unsafe_html_02#</USR><Declaration>void comment_to_xml_conversion_unsafe_html_02()</Declaration><Abstract><Para> <rawHTML><![CDATA[<a href="http://example.org/">]]></rawHTML><rawHTML isSafeToPassThrough="1"><![CDATA[<em>]]></rawHTML>Aaa<rawHTML isSafeToPassThrough="1">&lt;/em&gt;</rawHTML></Para></Abstract></Function>]
+
+/// <em>Aaa
+void comment_to_xml_conversion_unsafe_html_03();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_unsafe_html_03:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_unsafe_html_03</Name><USR>c:@F@comment_to_xml_conversion_unsafe_html_03#</USR><Declaration>void comment_to_xml_conversion_unsafe_html_03()</Declaration><Abstract><Para> <rawHTML><![CDATA[<em>]]></rawHTML>Aaa</Para></Abstract></Function>]
+
+/// <em>Aaa</b></em>
+void comment_to_xml_conversion_unsafe_html_04();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_unsafe_html_04:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_unsafe_html_04</Name><USR>c:@F@comment_to_xml_conversion_unsafe_html_04#</USR><Declaration>void comment_to_xml_conversion_unsafe_html_04()</Declaration><Abstract><Para> <rawHTML isSafeToPassThrough="1"><![CDATA[<em>]]></rawHTML>Aaa<rawHTML>&lt;/b&gt;</rawHTML><rawHTML isSafeToPassThrough="1">&lt;/em&gt;</rawHTML></Para></Abstract></Function>]
+
+/// <em>Aaa</em></b>
+void comment_to_xml_conversion_unsafe_html_05();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_unsafe_html_05:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_unsafe_html_05</Name><USR>c:@F@comment_to_xml_conversion_unsafe_html_05#</USR><Declaration>void comment_to_xml_conversion_unsafe_html_05()</Declaration><Abstract><Para> <rawHTML isSafeToPassThrough="1"><![CDATA[<em>]]></rawHTML>Aaa<rawHTML isSafeToPassThrough="1">&lt;/em&gt;</rawHTML><rawHTML>&lt;/b&gt;</rawHTML></Para></Abstract></Function>]
+
+/// </table>
+void comment_to_xml_conversion_unsafe_html_06();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_unsafe_html_06:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_unsafe_html_06</Name><USR>c:@F@comment_to_xml_conversion_unsafe_html_06#</USR><Declaration>void comment_to_xml_conversion_unsafe_html_06()</Declaration><Abstract><Para> <rawHTML>&lt;/table&gt;</rawHTML></Para></Abstract></Function>]
+
+/// <div onclick="alert('meow');">Aaa</div>
+void comment_to_xml_conversion_unsafe_html_07();
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: FunctionDecl=comment_to_xml_conversion_unsafe_html_07:{{.*}} FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_unsafe_html_07</Name><USR>c:@F@comment_to_xml_conversion_unsafe_html_07#</USR><Declaration>void comment_to_xml_conversion_unsafe_html_07()</Declaration><Abstract><Para> <rawHTML><![CDATA[<div onclick="alert('meow');">]]></rawHTML>Aaa<rawHTML>&lt;/div&gt;</rawHTML></Para></Abstract></Function>]
 
 //===---
 // Check that we attach comments from the base class to derived classes if they don't have a comment.

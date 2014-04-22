@@ -4,35 +4,43 @@
 // RUN: c-index-test -test-load-source all -comments-xml-schema=%S/../../bindings/xml/comment-xml-schema.rng %s | FileCheck %s -check-prefix=WRONG
 // WRONG-NOT: CommentXMLInvalid
 
+// expected-warning@+2 {{HTML tag 'a' requires an end tag}}
 // expected-warning@+1 {{expected quoted string after equals sign}}
 /// <a href=>
 int test_html1(int);
 
+// expected-warning@+2 {{HTML tag 'a' requires an end tag}}
 // expected-warning@+1 {{expected quoted string after equals sign}}
 /// <a href==>
 int test_html2(int);
 
+// expected-warning@+3 {{HTML tag 'a' requires an end tag}}
 // expected-warning@+2 {{expected quoted string after equals sign}}
 // expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a href= blah
 int test_html3(int);
 
+// expected-warning@+2 {{HTML tag 'a' requires an end tag}}
 // expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a =>
 int test_html4(int);
 
+// expected-warning@+2 {{HTML tag 'a' requires an end tag}}
 // expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a "aaa">
 int test_html5(int);
 
+// expected-warning@+2 {{HTML tag 'a' requires an end tag}}
 // expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a a="b" =>
 int test_html6(int);
 
+// expected-warning@+2 {{HTML tag 'a' requires an end tag}}
 // expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a a="b" "aaa">
 int test_html7(int);
 
+// expected-warning@+2 {{HTML tag 'a' requires an end tag}}
 // expected-warning@+1 {{HTML start tag prematurely ended, expected attribute name or '>'}}
 /// <a a="b" =
 int test_html8(int);
@@ -67,6 +75,8 @@ int test_html_nesting3(int);
 /// Bbb</p>
 int test_html_nesting4(int);
 
+// expected-warning@+3 {{HTML tag 'b' requires an end tag}}
+// expected-warning@+2 {{HTML tag 'i' requires an end tag}}
 // expected-warning@+1 {{HTML end tag does not match any start tag}}
 /// <b><i>Meow</a>
 int test_html_nesting5(int);
@@ -81,6 +91,9 @@ int test_html_nesting6(int);
 /// <b><i>Meow</b></i>
 int test_html_nesting7(int);
 
+// expected-warning@+1 {{HTML tag 'b' requires an end tag}}
+/// <b>Meow
+int test_html_nesting8(int);
 
 // expected-warning@+1 {{empty paragraph passed to '\brief' command}}
 /// \brief\returns Aaa

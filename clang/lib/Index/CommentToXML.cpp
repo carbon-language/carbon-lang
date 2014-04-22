@@ -667,14 +667,20 @@ void CommentASTToXMLConverter::visitInlineCommandComment(
 
 void CommentASTToXMLConverter::visitHTMLStartTagComment(
     const HTMLStartTagComment *C) {
-  Result << "<rawHTML><![CDATA[";
+  Result << "<rawHTML";
+  if (C->isSafeToPassThrough())
+    Result << " isSafeToPassThrough=\"1\"";
+  Result << "><![CDATA[";
   printHTMLStartTagComment(C, Result);
   Result << "]]></rawHTML>";
 }
 
 void
 CommentASTToXMLConverter::visitHTMLEndTagComment(const HTMLEndTagComment *C) {
-  Result << "<rawHTML>&lt;/" << C->getTagName() << "&gt;</rawHTML>";
+  Result << "<rawHTML";
+  if (C->isSafeToPassThrough())
+    Result << " isSafeToPassThrough=\"1\"";
+  Result << ">&lt;/" << C->getTagName() << "&gt;</rawHTML>";
 }
 
 void
