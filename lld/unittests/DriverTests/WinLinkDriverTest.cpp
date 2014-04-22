@@ -642,6 +642,25 @@ TEST_F(WinLinkParserTest, Manifestdependency) {
 }
 
 //
+// Test for /OPT
+//
+
+TEST_F(WinLinkParserTest, OptNoRef) {
+  EXPECT_TRUE(parse("link.exe", "/opt:noref", "a.obj", nullptr));
+  EXPECT_FALSE(_context.deadStrip());
+}
+
+TEST_F(WinLinkParserTest, OptIgnore) {
+  EXPECT_TRUE(parse("link.exe", "/opt:ref", "/opt:icf", "/opt:noicf",
+                    "/opt:icf=foo", "/opt:lbr", "/opt:nolbr", "a.obj",
+                    nullptr));
+}
+
+TEST_F(WinLinkParserTest, OptUnknown) {
+  EXPECT_FALSE(parse("link.exe", "/opt:foo", "a.obj", nullptr));
+}
+
+//
 // Test for command line flags that are ignored.
 //
 

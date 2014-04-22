@@ -1088,6 +1088,22 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       ctx.appendInputSearchPath(ctx.allocate(inputArg->getValue()));
       break;
 
+    case OPT_opt: {
+      StringRef arg = inputArg->getValue();
+      if (arg.equals_lower("noref")) {
+        ctx.setDeadStripping(false);
+        break;
+      }
+      if (arg.equals_lower("ref") || arg.equals_lower("icf") ||
+          arg.equals_lower("noicf") || arg.startswith_lower("icf=") ||
+          arg.equals_lower("lbr") || arg.equals_lower("nolbr")) {
+        // Ignore known but unsupported options.
+        break;
+      }
+      diag << "unknown option for /opt: " << arg << "\n";
+      return false;
+    }
+
     case OPT_debug:
       // LLD is not yet capable of creating a PDB file, so /debug does not have
       // any effect, other than disabling dead stripping.
@@ -1161,7 +1177,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       ctx.setter(false);                        \
       break
 
-    DEFINE_BOOLEAN_FLAG(ref, setDeadStripping);
     DEFINE_BOOLEAN_FLAG(nxcompat, setNxCompat);
     DEFINE_BOOLEAN_FLAG(largeaddressaware, setLargeAddressAware);
     DEFINE_BOOLEAN_FLAG(allowbind, setAllowBind);
@@ -1204,12 +1219,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
   // Specify /noentry without /dll is an error.
   if (parsedArgs->getLastArg(OPT_noentry) && !parsedArgs->getLastArg(OPT_dll)) {
     diag << "/noentry must be specified with /dll\n";
-    return false;
-  }
-
-  // Specifying both /opt:ref and /opt:noref is an error.
-  if (parsedArgs->getLastArg(OPT_ref) && parsedArgs->getLastArg(OPT_ref_no)) {
-    diag << "/opt:ref must not be specified with /opt:noref\n";
     return false;
   }
 

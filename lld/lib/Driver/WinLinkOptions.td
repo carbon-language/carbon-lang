@@ -36,6 +36,7 @@ def merge   : P<"merge", "Combine sections">;
 def section : P<"section", "Specify section attributes">;
 def subsystem : P<"subsystem", "Specify subsystem">;
 def stub    : P<"stub", "Specify DOS stub file">;
+def opt     : P<"opt", "Control optimizations">;
 
 def manifest : F<"manifest">;
 def manifest_colon : P<"manifest", "Create manifest file">;
@@ -65,10 +66,6 @@ def swaprun_net : F<"swaprun:net">;
 def force : F<"force">,
     HelpText<"Allow undefined symbols when creating executables">;
 def force_unresolved : F<"force:unresolved">;
-
-def ref : F<"opt:ref">;
-def ref_no : F<"opt:noref">,
-    HelpText<"Keep unreferenced symbols to be included to the output">;
 
 defm nxcompat : B<"nxcompat", "Disable data execution provention">;
 defm largeaddressaware : B<"largeaddressaware", "Disable large addresses">;
