@@ -169,6 +169,12 @@ public:
   R_SExpr reduceStore(Store &Orig, R_SExpr E0, R_SExpr E1) {
     return new (Arena) Store(Orig, E0, E1);
   }
+  R_SExpr reduceArrayFirst(ArrayFirst &Orig, R_SExpr E0) {
+    return new (Arena) ArrayFirst(Orig, E0);
+  }
+  R_SExpr reduceArrayAdd(ArrayAdd &Orig, R_SExpr E0, R_SExpr E1) {
+    return new (Arena) ArrayAdd(Orig, E0, E1);
+  }
   R_SExpr reduceUnaryOp(UnaryOp &Orig, R_SExpr E0) {
     return new (Arena) UnaryOp(Orig, E0);
   }
@@ -279,6 +285,10 @@ public:
   R_SExpr reduceAlloc(Alloc &Orig, R_SExpr E0) { return E0; }
   R_SExpr reduceLoad(Load &Orig, R_SExpr E0) { return E0; }
   R_SExpr reduceStore(Store &Orig, R_SExpr E0, R_SExpr E1) { return E0 && E1; }
+  R_SExpr reduceArrayFirst(Store &Orig, R_SExpr E0) { return E0; }
+  R_SExpr reduceArrayAdd(Store &Orig, R_SExpr E0, R_SExpr E1) {
+    return E0 && E1;
+  }
   R_SExpr reduceUnaryOp(UnaryOp &Orig, R_SExpr E0) { return E0; }
   R_SExpr reduceBinaryOp(BinaryOp &Orig, R_SExpr E0, R_SExpr E1) {
     return E0 && E1;
@@ -454,6 +464,8 @@ protected:
       case COP_Alloc:      return Prec_Other;
       case COP_Load:       return Prec_Postfix;
       case COP_Store:      return Prec_Other;
+      case COP_ArrayFirst: return Prec_Postfix;
+      case COP_ArrayAdd:   return Prec_Postfix;
 
       case COP_UnaryOp:    return Prec_Unary;
       case COP_BinaryOp:   return Prec_Binary;
@@ -643,6 +655,23 @@ protected:
     self()->printSExpr(E->destination(), SS, Prec_Other-1);
     SS << " := ";
     self()->printSExpr(E->source(), SS, Prec_Other-1);
+  }
+
+  void printArrayFirst(ArrayFirst *E, StreamType &SS) {
+    self()->printSExpr(E->array(), SS, Prec_Postfix);
+    if (ArrayAdd *A = dyn_cast_or_null<ArrayAdd>(E)) {
+      SS << "[";
+      printSExpr(A->index(), SS, Prec_MAX);
+      SS << "]";
+      return;
+    }
+    SS << "[0]";
+  }
+
+  void printArrayAdd(ArrayAdd *E, StreamType &SS) {
+    self()->printSExpr(E->array(), SS, Prec_Postfix);
+    SS << " + ";
+    self()->printSExpr(E->index(), SS, Prec_Atom);
   }
 
   void printUnaryOp(UnaryOp *E, StreamType &SS) {

@@ -399,7 +399,10 @@ til::SExpr *SExprBuilder::translateCastExpr(const CastExpr *CE,
 til::SExpr *
 SExprBuilder::translateArraySubscriptExpr(const ArraySubscriptExpr *E,
                                           CallingContext *Ctx) {
-  return new (Arena) til::Undefined(E);
+  til::SExpr *E0 = translate(E->getBase(), Ctx);
+  til::SExpr *E1 = translate(E->getIdx(), Ctx);
+  auto *AA = new (Arena) til::ArrayAdd(E0, E1);
+  return new (Arena) til::ArrayFirst(AA);
 }
 
 

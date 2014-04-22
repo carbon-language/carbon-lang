@@ -798,6 +798,7 @@ private:
 
 
 // Store a value to memory.
+// Source is a pointer, destination is the value to store.
 class Store : public SExpr {
 public:
   static bool classof(const SExpr *E) { return E->opcode() == COP_Store; }
@@ -827,6 +828,68 @@ public:
 private:
   SExprRef Dest;
   SExprRef Source;
+};
+
+
+// If p is a reference to an array, then first(p) is a reference to the first
+// element.  The usual array notation p[i]  becomes first(p + i).
+class ArrayFirst : public SExpr {
+public:
+  static bool classof(const SExpr *E) { return E->opcode() == COP_ArrayFirst; }
+
+  ArrayFirst(SExpr *A) : SExpr(COP_ArrayFirst), Array(A) {}
+  ArrayFirst(const ArrayFirst &E, SExpr *A) : SExpr(E), Array(A) {}
+
+  SExpr *array() { return Array.get(); }
+  const SExpr *array() const { return Array.get(); }
+
+  template <class V> typename V::R_SExpr traverse(V &Visitor) {
+    typename V::R_SExpr Na = Visitor.traverse(Array);
+    return Visitor.reduceArrayFirst(*this, Na);
+  }
+
+  template <class C> typename C::CType compare(ArrayFirst* E, C& Cmp) {
+    return Cmp.compare(array(), E->array());
+  }
+
+private:
+  SExprRef Array;
+};
+
+
+// Pointer arithmetic, restricted to arrays only.
+// If p is a reference to an array, then p + n, where n is an integer, is
+// a reference to a subarray.
+class ArrayAdd : public SExpr {
+public:
+  static bool classof(const SExpr *E) { return E->opcode() == COP_ArrayAdd; }
+
+  ArrayAdd(SExpr *A, SExpr *N) : SExpr(COP_ArrayAdd), Array(A), Index(N) {}
+  ArrayAdd(const ArrayAdd &E, SExpr *A, SExpr *N)
+    : SExpr(E), Array(A), Index(N) {}
+
+  SExpr *array() { return Array.get(); }
+  const SExpr *array() const { return Array.get(); }
+
+  SExpr *index() { return Index.get(); }
+  const SExpr *index() const { return Index.get(); }
+
+  template <class V> typename V::R_SExpr traverse(V &Visitor) {
+    typename V::R_SExpr Na = Visitor.traverse(Array);
+    typename V::R_SExpr Ni = Visitor.traverse(Index);
+    return Visitor.reduceArrayAdd(*this, Na, Ni);
+  }
+
+  template <class C> typename C::CType compare(ArrayAdd* E, C& Cmp) {
+    typename C::CType Ct = Cmp.compare(array(), E->array());
+    if (Cmp.notTrue(Ct))
+      return Ct;
+    return Cmp.compare(index(), E->index());
+  }
+
+private:
+  SExprRef Array;
+  SExprRef Index;
 };
 
 
