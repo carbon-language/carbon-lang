@@ -687,7 +687,7 @@ void BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
     return;
   }
 
-  if (!LoopHead.isValid() && Resolved < Pred) {
+  if (Resolved < Pred) {
     // Irreducible backedge.  Skip this edge in the distribution.
     DEBUG(debugSuccessor("skipped ", Resolved));
     return;

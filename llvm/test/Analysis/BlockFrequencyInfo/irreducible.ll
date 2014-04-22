@@ -195,3 +195,34 @@ declare i32 @choose(i32)
 
 !2 = metadata !{metadata !"branch_weights", i32 3, i32 1}
 !3 = metadata !{metadata !"branch_weights", i32 2, i32 2, i32 2}
+
+; A reducible loop with irreducible control flow inside should still have
+; correct exit frequency.
+;
+; CHECK-LABEL: Printing analysis {{.*}} for function 'loop_around_irreducible':
+; CHECK-NEXT: block-frequency-info: loop_around_irreducible
+define void @loop_around_irreducible(i1 %x) {
+; CHECK-NEXT: entry: float = 1.0, int = [[ENTRY:[0-9]+]]
+entry:
+  br label %loop
+
+; CHECK-NEXT: loop: float = [[HEAD:[0-9.]+]], int = [[HEADINT:[0-9]+]]
+loop:
+  br i1 %x, label %left, label %right
+
+; CHECK-NEXT: left:
+left:
+  br i1 %x, label %right, label %loop.end
+
+; CHECK-NEXT: right:
+right:
+  br i1 %x, label %left, label %loop.end
+
+; CHECK-NEXT: loop.end: float = [[HEAD]], int = [[HEADINT]]
+loop.end:
+  br i1 %x, label %loop, label %exit
+
+; CHECK-NEXT: float = 1.0, int = [[ENTRY]]
+exit:
+  ret void
+}
