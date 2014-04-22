@@ -2104,18 +2104,36 @@ let Predicates = [HasBMI2], Defs = [EFLAGS] in {
                                int_x86_bmi_bzhi_64, loadi64>, VEX_W;
 }
 
-def : Pat<(X86bzhi GR32:$src1, GR8:$src2),
-          (BZHI32rr GR32:$src1,
-                    (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
-def : Pat<(X86bzhi (loadi32 addr:$src1), GR8:$src2),
-          (BZHI32rm addr:$src1,
-                    (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
-def : Pat<(X86bzhi GR64:$src1, GR8:$src2),
-          (BZHI64rr GR64:$src1,
-                    (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
-def : Pat<(X86bzhi (loadi64 addr:$src1), GR8:$src2),
-          (BZHI64rm addr:$src1,
-                    (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR8:$src2, sub_8bit))>;
+
+def CountTrailingOnes : SDNodeXForm<imm, [{
+  // Count the trailing ones in the immediate.
+  return getI8Imm(CountTrailingOnes_64(N->getZExtValue()));
+}]>;
+
+def BZHIMask : ImmLeaf<i64, [{
+  return isMask_64(Imm) && (CountTrailingOnes_64(Imm) > 32);
+}]>;
+
+def : Pat<(and GR64:$src, BZHIMask:$mask),
+          (BZHI64rr GR64:$src,
+            (INSERT_SUBREG (i64 (IMPLICIT_DEF)),
+                           (MOV8ri (CountTrailingOnes imm:$mask)), sub_8bit))>;
+
+def : Pat<(and GR32:$src, (add (shl 1, GR8:$lz), -1)),
+          (BZHI32rr GR32:$src,
+            (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR8:$lz, sub_8bit))>;
+
+def : Pat<(and (loadi32 addr:$src), (add (shl 1, GR8:$lz), -1)),
+          (BZHI32rm addr:$src,
+            (INSERT_SUBREG (i32 (IMPLICIT_DEF)), GR8:$lz, sub_8bit))>;
+
+def : Pat<(and GR64:$src, (add (shl 1, GR8:$lz), -1)),
+          (BZHI64rr GR64:$src,
+            (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR8:$lz, sub_8bit))>;
+
+def : Pat<(and (loadi64 addr:$src), (add (shl 1, GR8:$lz), -1)),
+          (BZHI64rm addr:$src,
+            (INSERT_SUBREG (i64 (IMPLICIT_DEF)), GR8:$lz, sub_8bit))>;
 
 let Predicates = [HasBMI] in {
   def : Pat<(X86bextr GR32:$src1, GR32:$src2),
