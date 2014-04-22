@@ -5198,10 +5198,9 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         // This is just for accounting:
         uint32_t num_resumes = 0;
 
-        TimeValue one_thread_timeout = TimeValue::Now();
-        TimeValue final_timeout = one_thread_timeout;
-
         uint32_t timeout_usec = options.GetTimeoutUsec();
+        uint32_t one_thread_timeout_usec;
+        uint32_t all_threads_timeout_usec = 0;
         
         // If we are going to run all threads the whole time, or if we are only going to run one thread,
         // then we don't need the first timeout.  So we set the final timeout, and pretend we are after the
@@ -5210,19 +5209,20 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         if (!options.GetStopOthers() || !options.GetTryAllThreads())
         {
             before_first_timeout = false;
-            final_timeout.OffsetWithMicroSeconds(timeout_usec);
+            one_thread_timeout_usec = 0;
+            all_threads_timeout_usec = timeout_usec;
         }
         else
         {
-            uint64_t option_one_thread_timeout = options.GetOneThreadTimeoutUsec();
+            uint32_t option_one_thread_timeout = options.GetOneThreadTimeoutUsec();
 
             // If the overall wait is forever, then we only need to set the one thread timeout:
             if (timeout_usec == 0)
             {
                 if (option_one_thread_timeout != 0)
-                    one_thread_timeout.OffsetWithMicroSeconds(option_one_thread_timeout);
+                    one_thread_timeout_usec = option_one_thread_timeout;
                 else
-                    one_thread_timeout.OffsetWithMicroSeconds(default_one_thread_timeout_usec);
+                    one_thread_timeout_usec = default_one_thread_timeout_usec;
             }
             else
             {
@@ -5244,19 +5244,19 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     if (computed_one_thread_timeout > default_one_thread_timeout_usec)
                         computed_one_thread_timeout = default_one_thread_timeout_usec;
                 }
-                one_thread_timeout.OffsetWithMicroSeconds(computed_one_thread_timeout);
+                one_thread_timeout_usec = computed_one_thread_timeout;
+                all_threads_timeout_usec = timeout_usec - one_thread_timeout_usec;
+                
             }
-            final_timeout.OffsetWithMicroSeconds (timeout_usec);
         }
         
         if (log)
-            log->Printf ("Stop others: %u, try all: %u, one thread: %" PRIu64 " - all threads: %" PRIu64 ".\n",
+            log->Printf ("Stop others: %u, try all: %u, before_first: %u, one thread: %" PRIu32 " - all threads: %" PRIu32 ".\n",
                          options.GetStopOthers(),
                          options.GetTryAllThreads(),
-                         one_thread_timeout.GetAsMicroSecondsSinceJan1_1970(),
-                         final_timeout.GetAsMicroSecondsSinceJan1_1970());
-        
-        
+                         before_first_timeout,
+                         one_thread_timeout_usec,
+                         all_threads_timeout_usec);
 
         // This isn't going to work if there are unfetched events on the queue.
         // Are there cases where we might want to run the remaining events here, and then try to
@@ -5286,6 +5286,9 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         // The expression evaluation should still succeed.
         bool miss_first_event = true;
 #endif
+        TimeValue one_thread_timeout;
+        TimeValue final_timeout;
+        
         
         while (1)
         {
@@ -5380,13 +5383,21 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (before_first_timeout)
             {
                 if (options.GetTryAllThreads())
+                {
+                    one_thread_timeout = TimeValue::Now();
+                    one_thread_timeout.OffsetWithMicroSeconds(one_thread_timeout_usec);
                     timeout_ptr = &one_thread_timeout;
+                }
                 else
                 {
                     if (timeout_usec == 0)
                         timeout_ptr = NULL;
                     else
+                    {
+                        final_timeout = TimeValue::Now();
+                        final_timeout.OffsetWithMicroSeconds (timeout_usec);
                         timeout_ptr = &final_timeout;
+                    }
                 }
             }
             else
@@ -5394,7 +5405,11 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 if (timeout_usec == 0)
                     timeout_ptr = NULL;
                 else
+                {
+                    final_timeout = TimeValue::Now();
+                    final_timeout.OffsetWithMicroSeconds (all_threads_timeout_usec);
                     timeout_ptr = &final_timeout;
+                }
             }
 
             do_resume = true;
@@ -5569,10 +5584,9 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         {
                             if (timeout_usec != 0)
                             {
-                                uint64_t remaining_time = final_timeout - TimeValue::Now();
                                 log->Printf ("Process::RunThreadPlan(): Running function with one thread timeout timed out, "
-                                             "running for %" PRIu64 " usec with all threads enabled.",
-                                             remaining_time);
+                                             "running for %" PRIu32 " usec with all threads enabled.",
+                                             all_threads_timeout_usec);
                             }
                             else
                             {
