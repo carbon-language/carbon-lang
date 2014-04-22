@@ -636,9 +636,10 @@ ObjectFileMachO::GetModuleSpecifications (const lldb_private::FileSpec& file,
         llvm::MachO::mach_header header;
         if (ParseHeader (data, &data_offset, header))
         {
-            if (header.sizeofcmds >= data_sp->GetByteSize())
+            size_t header_and_load_cmds = header.sizeofcmds + MachHeaderSizeFromMagic(header.magic);
+            if (header_and_load_cmds >= data_sp->GetByteSize())
             {
-                data_sp = file.ReadFileContents(file_offset, header.sizeofcmds);
+                data_sp = file.ReadFileContents(file_offset, header_and_load_cmds);
                 data.SetData(data_sp);
                 data_offset = MachHeaderSizeFromMagic(header.magic);
             }
