@@ -98,10 +98,7 @@ public:
                               const SmallVectorImpl<SDValue> &OutVals,
                               SDLoc DL, SelectionDAG &DAG) const;
   virtual SDValue LowerCall(CallLoweringInfo &CLI,
-                            SmallVectorImpl<SDValue> &InVals) const {
-    CLI.Callee.dump();
-    llvm_unreachable("Undefined function");
-  }
+                            SmallVectorImpl<SDValue> &InVals) const;
 
   virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
   virtual void ReplaceNodeResults(SDNode * N,

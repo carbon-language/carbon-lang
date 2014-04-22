@@ -28,8 +28,50 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/DiagnosticPrinter.h"
 
 using namespace llvm;
+
+namespace {
+
+/// Diagnostic information for unimplemented or unsupported feature reporting.
+class DiagnosticInfoUnsupported : public DiagnosticInfo {
+private:
+  const Twine &Description;
+  const Function &Fn;
+
+  static int KindID;
+
+  static int getKindID() {
+    if (KindID == 0)
+      KindID = llvm::getNextAvailablePluginDiagnosticKind();
+    return KindID;
+  }
+
+public:
+  DiagnosticInfoUnsupported(const Function &Fn, const Twine &Desc,
+                          DiagnosticSeverity Severity = DS_Error)
+    : DiagnosticInfo(getKindID(), Severity),
+      Description(Desc),
+      Fn(Fn) { }
+
+  const Function &getFunction() const { return Fn; }
+  const Twine &getDescription() const { return Description; }
+
+  void print(DiagnosticPrinter &DP) const override {
+    DP << "unsupported " << getDescription() << " in " << Fn.getName();
+  }
+
+  static bool classof(const DiagnosticInfo *DI) {
+    return DI->getKind() == getKindID();
+  }
+};
+
+int DiagnosticInfoUnsupported::KindID = 0;
+}
+
+
 static bool allocateStack(unsigned ValNo, MVT ValVT, MVT LocVT,
                       CCValAssign::LocInfo LocInfo,
                       ISD::ArgFlagsTy ArgFlags, CCState &State) {
@@ -310,6 +352,23 @@ SDValue AMDGPUTargetLowering::LowerReturn(
 //===---------------------------------------------------------------------===//
 // Target specific lowering
 //===---------------------------------------------------------------------===//
+
+SDValue AMDGPUTargetLowering::LowerCall(CallLoweringInfo &CLI,
+                                        SmallVectorImpl<SDValue> &InVals) const {
+  SDValue Callee = CLI.Callee;
+  SelectionDAG &DAG = CLI.DAG;
+
+  const Function &Fn = *DAG.getMachineFunction().getFunction();
+
+  StringRef FuncName("<unknown>");
+
+  if (const GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    FuncName = G->getGlobal()->getName();
+
+  DiagnosticInfoUnsupported NoCalls(Fn, "call to function " + FuncName);
+  DAG.getContext()->diagnose(NoCalls);
+  return SDValue();
+}
 
 SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     const {
