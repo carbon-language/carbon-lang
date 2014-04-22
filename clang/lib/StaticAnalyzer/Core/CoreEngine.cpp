@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "CoreEngine"
-
 #include "clang/StaticAnalyzer/Core/PathSensitive/CoreEngine.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtCXX.h"
@@ -25,6 +23,8 @@
 
 using namespace clang;
 using namespace ento;
+
+#define DEBUG_TYPE "CoreEngine"
 
 STATISTIC(NumSteps,
             "The # of steps executed.");

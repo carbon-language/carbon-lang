@@ -12,8 +12,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "format-formatter"
-
 #include "BreakableToken.h"
 #include "ContinuationIndenter.h"
 #include "WhitespaceManager.h"
@@ -22,6 +20,8 @@
 #include "clang/Format/Format.h"
 #include "llvm/Support/Debug.h"
 #include <string>
+
+#define DEBUG_TYPE "format-formatter"
 
 namespace clang {
 namespace format {

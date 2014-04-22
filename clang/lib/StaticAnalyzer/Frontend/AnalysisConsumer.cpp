@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "AnalysisConsumer"
-
 #include "clang/StaticAnalyzer/Frontend/AnalysisConsumer.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DataRecursiveASTVisitor.h"
@@ -50,6 +48,8 @@
 using namespace clang;
 using namespace ento;
 using llvm::SmallPtrSet;
+
+#define DEBUG_TYPE "AnalysisConsumer"
 
 static ExplodedNode::Auditor* CreateUbiViz();
 

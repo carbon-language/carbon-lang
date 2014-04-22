@@ -13,10 +13,10 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "format-parser"
-
 #include "UnwrappedLineParser.h"
 #include "llvm/Support/Debug.h"
+
+#define DEBUG_TYPE "format-parser"
 
 namespace clang {
 namespace format {

@@ -8,8 +8,6 @@
 //===----------------------------------------------------------------------===//
 // This file reports various statistics about analyzer visitation.
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "StatsChecker"
-
 #include "ClangSACheckers.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/SourceManager.h"
@@ -25,6 +23,8 @@
 
 using namespace clang;
 using namespace ento;
+
+#define DEBUG_TYPE "StatsChecker"
 
 STATISTIC(NumBlocks,
           "The # of blocks in top level functions");

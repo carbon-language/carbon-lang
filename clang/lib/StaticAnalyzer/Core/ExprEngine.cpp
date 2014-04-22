@@ -13,8 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ExprEngine"
-
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "PrettyStackTraceLocationContext.h"
 #include "clang/AST/CharUnits.h"
@@ -39,6 +37,8 @@
 using namespace clang;
 using namespace ento;
 using llvm::APSInt;
+
+#define DEBUG_TYPE "ExprEngine"
 
 STATISTIC(NumRemoveDeadBindings,
             "The # of times RemoveDeadBindings is called");

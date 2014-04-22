@@ -10,8 +10,6 @@
 //  This file defines the AST-based CallGraph.
 //
 //===----------------------------------------------------------------------===//
-#define DEBUG_TYPE "CallGraph"
-
 #include "clang/Analysis/CallGraph.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
@@ -21,6 +19,8 @@
 #include "llvm/Support/GraphWriter.h"
 
 using namespace clang;
+
+#define DEBUG_TYPE "CallGraph"
 
 STATISTIC(NumObjCCallEdges, "Number of Objective-C method call edges");
 STATISTIC(NumBlockCallEdges, "Number of block call edges");

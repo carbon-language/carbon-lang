@@ -13,8 +13,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "format-formatter"
-
 #include "ContinuationIndenter.h"
 #include "TokenAnnotator.h"
 #include "UnwrappedLineParser.h"
@@ -30,6 +28,8 @@
 #include "llvm/Support/YAMLTraits.h"
 #include <queue>
 #include <string>
+
+#define DEBUG_TYPE "format-formatter"
 
 using clang::format::FormatStyle;
 
