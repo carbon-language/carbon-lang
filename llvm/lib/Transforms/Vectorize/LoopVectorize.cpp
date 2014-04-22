@@ -42,9 +42,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define LV_NAME "loop-vectorize"
-#define DEBUG_TYPE LV_NAME
-
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/EquivalenceClasses.h"
@@ -97,6 +94,9 @@
 
 using namespace llvm;
 using namespace llvm::PatternMatch;
+
+#define LV_NAME "loop-vectorize"
+#define DEBUG_TYPE LV_NAME
 
 static cl::opt<unsigned>
 VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,

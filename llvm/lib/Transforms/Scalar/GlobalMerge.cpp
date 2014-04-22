@@ -51,7 +51,6 @@
 //  note that we saved 2 registers here almostly "for free".
 // ===---------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "global-merge"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -69,6 +68,8 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "global-merge"
 
 static cl::opt<bool>
 EnableGlobalMerge("global-merge", cl::Hidden,

@@ -53,7 +53,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "loop-reduce"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Hashing.h"
@@ -77,6 +76,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE "loop-reduce"
 
 /// MaxIVUsers is an arbitrary threshold that provides an early opportunitiy for
 /// bail out. This threshold is far beyond the number of users that LSR can

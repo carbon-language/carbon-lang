@@ -20,6 +20,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/SimplifyLibCalls.h"
 
+#define DEBUG_TYPE "instcombine"
+
 namespace llvm {
   class CallSite;
   class DataLayout;
@@ -394,8 +396,8 @@ private:
   Value *Descale(Value *Val, APInt Scale, bool &NoSignedWrap);
 };
 
-
-
 } // end namespace llvm.
+
+#undef DEBUG_TYPE
 
 #endif

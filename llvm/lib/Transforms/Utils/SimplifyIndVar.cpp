@@ -13,8 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "indvars"
-
 #include "llvm/Transforms/Utils/SimplifyIndVar.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -33,6 +31,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "indvars"
 
 STATISTIC(NumElimIdentity, "Number of IV identities eliminated");
 STATISTIC(NumElimOperand,  "Number of IV operands folded into a use");

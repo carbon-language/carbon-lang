@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "early-cse"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/ScopedHashTable.h"
@@ -28,6 +27,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include <vector>
 using namespace llvm;
+
+#define DEBUG_TYPE "early-cse"
 
 STATISTIC(NumSimplify, "Number of instructions simplified or DCE'd");
 STATISTIC(NumCSE,      "Number of instructions CSE'd");

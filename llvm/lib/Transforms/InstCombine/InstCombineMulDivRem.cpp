@@ -12,13 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "instcombine"
 #include "InstCombine.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
+
+#define DEBUG_TYPE "instcombine"
 
 
 /// simplifyValueKnownNonZero - The specific integer value is used in a context

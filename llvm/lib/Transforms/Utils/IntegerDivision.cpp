@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "integer-division"
 #include "llvm/Transforms/Utils/IntegerDivision.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
@@ -23,6 +22,8 @@
 #include <utility>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "integer-division"
 
 /// Generate code to compute the remainder of two signed integers. Returns the
 /// remainder, which will have the sign of the dividend. Builder's insert point

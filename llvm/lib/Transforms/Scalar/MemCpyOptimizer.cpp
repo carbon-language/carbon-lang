@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "memcpyopt"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -32,6 +31,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include <list>
 using namespace llvm;
+
+#define DEBUG_TYPE "memcpyopt"
 
 STATISTIC(NumMemCpyInstr, "Number of memcpy instructions deleted");
 STATISTIC(NumMemSetInfer, "Number of memsets inferred");

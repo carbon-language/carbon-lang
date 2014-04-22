@@ -15,9 +15,6 @@
 //  "Loop-Aware SLP in GCC" by Ira Rosen, Dorit Nuzman, Ayal Zaks.
 //
 //===----------------------------------------------------------------------===//
-#define SV_NAME "slp-vectorizer"
-#define DEBUG_TYPE "SLP"
-
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/PostOrderIterator.h"
@@ -46,6 +43,9 @@
 #include <map>
 
 using namespace llvm;
+
+#define SV_NAME "slp-vectorizer"
+#define DEBUG_TYPE "SLP"
 
 static cl::opt<int>
     SLPCostThreshold("slp-threshold", cl::init(0), cl::Hidden,

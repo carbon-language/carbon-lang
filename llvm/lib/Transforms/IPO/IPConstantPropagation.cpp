@@ -15,7 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ipconstprop"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -26,6 +25,8 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Pass.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "ipconstprop"
 
 STATISTIC(NumArgumentsProped, "Number of args turned into constants");
 STATISTIC(NumReturnValProped, "Number of return values turned into constants");

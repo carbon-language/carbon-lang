@@ -15,7 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "break-crit-edges"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -29,6 +28,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "break-crit-edges"
 
 STATISTIC(NumBroken, "Number of blocks inserted");
 

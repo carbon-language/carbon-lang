@@ -17,6 +17,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
+#define DEBUG_TYPE "instcombine"
+
 namespace llvm {
 
 /// InstCombineWorklist - This is the worklist management logic for
@@ -99,5 +101,7 @@ public:
 };
 
 } // end namespace llvm.
+
+#undef DEBUG_TYPE
 
 #endif

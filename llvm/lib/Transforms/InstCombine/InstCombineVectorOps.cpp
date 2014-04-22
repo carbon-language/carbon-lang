@@ -12,11 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "instcombine"
 #include "InstCombine.h"
 #include "llvm/IR/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
+
+#define DEBUG_TYPE "instcombine"
 
 /// CheapToScalarize - Return true if the value is cheaper to scalarize than it
 /// is to leave as a vector operation.  isConstant indicates whether we're

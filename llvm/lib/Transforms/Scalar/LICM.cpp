@@ -30,7 +30,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "licm"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -59,6 +58,8 @@
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE "licm"
 
 STATISTIC(NumSunk      , "Number of instructions sunk out of loop");
 STATISTIC(NumHoisted   , "Number of instructions hoisted out of loop");

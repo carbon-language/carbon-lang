@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "inline"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/InlineCost.h"
@@ -25,6 +24,8 @@
 #include "llvm/Transforms/IPO/InlinerPass.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "inline"
 
 namespace {
 

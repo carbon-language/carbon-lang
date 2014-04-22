@@ -26,7 +26,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "loop-unswitch"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -52,6 +51,8 @@
 #include <map>
 #include <set>
 using namespace llvm;
+
+#define DEBUG_TYPE "loop-unswitch"
 
 STATISTIC(NumBranches, "Number of branches unswitched");
 STATISTIC(NumSwitches, "Number of switches unswitched");

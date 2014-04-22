@@ -93,8 +93,6 @@
 
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "msan"
-
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallString.h"
@@ -122,6 +120,8 @@
 #include "llvm/Transforms/Utils/SpecialCaseList.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "msan"
 
 static const uint64_t kShadowMask32 = 1ULL << 31;
 static const uint64_t kShadowMask64 = 1ULL << 46;

@@ -12,13 +12,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "loweratomic"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Pass.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "loweratomic"
 
 static bool LowerAtomicCmpXchgInst(AtomicCmpXchgInst *CXI) {
   IRBuilder<> Builder(CXI->getParent(), CXI);

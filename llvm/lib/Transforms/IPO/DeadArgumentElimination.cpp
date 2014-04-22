@@ -17,7 +17,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "deadargelim"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -39,6 +38,8 @@
 #include <map>
 #include <set>
 using namespace llvm;
+
+#define DEBUG_TYPE "deadargelim"
 
 STATISTIC(NumArgumentsEliminated, "Number of unread args removed");
 STATISTIC(NumRetValsEliminated  , "Number of unused return values removed");

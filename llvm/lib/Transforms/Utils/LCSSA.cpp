@@ -27,7 +27,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "lcssa"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
@@ -43,6 +42,8 @@
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "lcssa"
 
 STATISTIC(NumLCSSA, "Number of live out of a loop variables");
 

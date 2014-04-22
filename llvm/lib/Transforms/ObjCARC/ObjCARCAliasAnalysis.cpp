@@ -20,13 +20,14 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "objc-arc-aa"
 #include "ObjCARC.h"
 #include "ObjCARCAliasAnalysis.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/PassSupport.h"
+
+#define DEBUG_TYPE "objc-arc-aa"
 
 namespace llvm {
   class Function;

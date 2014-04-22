@@ -17,7 +17,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sccp"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -41,6 +40,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE "sccp"
 
 STATISTIC(NumInstRemoved, "Number of instructions removed");
 STATISTIC(NumDeadBlocks , "Number of basic blocks unreachable");

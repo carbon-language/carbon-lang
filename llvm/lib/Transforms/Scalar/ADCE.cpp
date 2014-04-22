@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "adce"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -27,6 +26,8 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Pass.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "adce"
 
 STATISTIC(NumRemoved, "Number of instructions removed");
 

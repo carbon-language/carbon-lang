@@ -18,7 +18,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "functionattrs"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SetVector.h"
@@ -34,6 +33,8 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "functionattrs"
 
 STATISTIC(NumReadNone, "Number of functions marked readnone");
 STATISTIC(NumReadOnly, "Number of functions marked readonly");

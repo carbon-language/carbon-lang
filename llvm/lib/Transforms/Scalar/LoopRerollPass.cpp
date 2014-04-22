@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "loop-reroll"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
@@ -35,6 +34,8 @@
 #include "llvm/Transforms/Utils/LoopUtils.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "loop-reroll"
 
 STATISTIC(NumRerolledLoops, "Number of rerolled loops");
 

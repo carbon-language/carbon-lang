@@ -19,7 +19,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "internalize"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -34,6 +33,8 @@
 #include <fstream>
 #include <set>
 using namespace llvm;
+
+#define DEBUG_TYPE "internalize"
 
 STATISTIC(NumAliases  , "Number of aliases internalized");
 STATISTIC(NumFunctions, "Number of functions internalized");

@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "partialinlining"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/CFG.h"
@@ -23,6 +22,8 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/CodeExtractor.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "partialinlining"
 
 STATISTIC(NumPartialInlined, "Number of functions partially inlined");
 

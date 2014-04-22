@@ -16,7 +16,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "reg2mem"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/BasicBlock.h"
@@ -29,6 +28,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include <list>
 using namespace llvm;
+
+#define DEBUG_TYPE "reg2mem"
 
 STATISTIC(NumRegsDemoted, "Number of registers demoted");
 STATISTIC(NumPhisDemoted, "Number of phi-nodes demoted");

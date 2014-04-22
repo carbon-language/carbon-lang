@@ -33,7 +33,6 @@
 // %0 = load i64* inttoptr (i64 big_constant to i64*)
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "consthoist"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -46,6 +45,8 @@
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "consthoist"
 
 STATISTIC(NumConstantsHoisted, "Number of constants hoisted");
 STATISTIC(NumConstantsRebased, "Number of constants rebased");

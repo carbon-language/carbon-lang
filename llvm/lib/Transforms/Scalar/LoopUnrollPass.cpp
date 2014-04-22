@@ -12,7 +12,6 @@
 // counts of loops easily.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "loop-unroll"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -28,6 +27,8 @@
 #include <climits>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "loop-unroll"
 
 static cl::opt<unsigned>
 UnrollThreshold("unroll-threshold", cl::init(150), cl::Hidden,

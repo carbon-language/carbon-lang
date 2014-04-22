@@ -17,7 +17,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "constmerge"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
@@ -30,6 +29,8 @@
 #include "llvm/IR/Operator.h"
 #include "llvm/Pass.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "constmerge"
 
 STATISTIC(NumMerged, "Number of global constants merged");
 

@@ -14,8 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "insert-gcov-profiling"
-
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"
@@ -43,6 +41,8 @@
 #include <string>
 #include <utility>
 using namespace llvm;
+
+#define DEBUG_TYPE "insert-gcov-profiling"
 
 static cl::opt<std::string>
 DefaultGCOVVersion("default-gcov-version", cl::init("402*"), cl::Hidden,

@@ -22,8 +22,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sample-profile"
-
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -53,6 +51,8 @@
 #include <cctype>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "sample-profile"
 
 // Command line option to specify the file to read samples from. This is
 // mainly used for debugging.

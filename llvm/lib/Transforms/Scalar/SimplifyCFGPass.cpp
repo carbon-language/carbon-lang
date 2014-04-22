@@ -21,7 +21,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "simplifycfg"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -37,6 +36,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "simplifycfg"
 
 STATISTIC(NumSimpl, "Number of blocks simplified");
 

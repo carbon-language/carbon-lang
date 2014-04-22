@@ -19,7 +19,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "scalarrepl"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
@@ -51,6 +50,8 @@
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "scalarrepl"
 
 STATISTIC(NumReplaced,  "Number of allocas broken up");
 STATISTIC(NumPromoted,  "Number of allocas promoted");

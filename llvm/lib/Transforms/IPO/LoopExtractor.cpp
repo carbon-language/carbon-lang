@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "loop-extract"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopPass.h"
@@ -29,6 +28,8 @@
 #include <fstream>
 #include <set>
 using namespace llvm;
+
+#define DEBUG_TYPE "loop-extract"
 
 STATISTIC(NumExtracted, "Number of loops extracted");
 

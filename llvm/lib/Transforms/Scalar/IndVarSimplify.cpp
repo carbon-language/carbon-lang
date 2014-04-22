@@ -24,7 +24,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "indvars"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -49,6 +48,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SimplifyIndVar.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "indvars"
 
 STATISTIC(NumWidened     , "Number of indvars widened");
 STATISTIC(NumReplaced    , "Number of exit values replaced");

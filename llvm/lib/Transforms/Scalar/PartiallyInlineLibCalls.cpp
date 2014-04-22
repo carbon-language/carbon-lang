@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "partially-inline-libcalls"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Intrinsics.h"
@@ -24,6 +23,8 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "partially-inline-libcalls"
 
 namespace {
   class PartiallyInlineLibCalls : public FunctionPass {

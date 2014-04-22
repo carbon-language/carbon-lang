@@ -11,13 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "instcombine"
 #include "InstCombine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/IR/DataLayout.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "instcombine"
 
 /// FoldPHIArgBinOpIntoPHI - If we have something like phi [add (a,b), add(a,c)]
 /// and if a/b/c and the add's all have a single use, turn this into a phi

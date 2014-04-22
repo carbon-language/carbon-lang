@@ -19,8 +19,6 @@
 // The rest is handled by the run-time library.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "tsan"
-
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
@@ -45,6 +43,8 @@
 #include "llvm/Transforms/Utils/SpecialCaseList.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "tsan"
 
 static cl::opt<std::string>  ClBlacklistFile("tsan-blacklist",
        cl::desc("Blacklist file"), cl::Hidden);

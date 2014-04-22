@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "lowerinvoke"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -24,6 +23,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "lowerinvoke"
 
 STATISTIC(NumInvokes, "Number of invokes replaced");
 

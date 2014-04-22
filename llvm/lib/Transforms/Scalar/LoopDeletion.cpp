@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "loop-delete"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -22,6 +21,8 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/IR/Dominators.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "loop-delete"
 
 STATISTIC(NumDeleted, "Number of loops deleted");
 

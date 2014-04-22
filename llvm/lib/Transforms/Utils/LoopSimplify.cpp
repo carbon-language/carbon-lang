@@ -37,7 +37,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "loop-simplify"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
@@ -62,6 +61,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "loop-simplify"
 
 STATISTIC(NumInserted, "Number of pre-header or exit blocks inserted");
 STATISTIC(NumNested  , "Number of nested loops split out");

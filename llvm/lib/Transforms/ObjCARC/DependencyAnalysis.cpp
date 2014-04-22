@@ -20,7 +20,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "objc-arc-dependency"
 #include "ObjCARC.h"
 #include "DependencyAnalysis.h"
 #include "ProvenanceAnalysis.h"
@@ -28,6 +27,8 @@
 
 using namespace llvm;
 using namespace llvm::objcarc;
+
+#define DEBUG_TYPE "objc-arc-dependency"
 
 /// Test whether the given instruction can result in a reference count
 /// modification (positive or negative) for the pointer's object.

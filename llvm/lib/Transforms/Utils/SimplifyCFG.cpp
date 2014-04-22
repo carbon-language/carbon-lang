@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "simplifycfg"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -49,6 +48,8 @@
 #include <set>
 using namespace llvm;
 using namespace PatternMatch;
+
+#define DEBUG_TYPE "simplifycfg"
 
 static cl::opt<unsigned>
 PHINodeFoldingThreshold("phi-node-folding-threshold", cl::Hidden, cl::init(1),

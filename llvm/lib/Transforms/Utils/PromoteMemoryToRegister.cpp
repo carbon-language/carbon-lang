@@ -25,7 +25,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mem2reg"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -50,6 +49,8 @@
 #include <algorithm>
 #include <queue>
 using namespace llvm;
+
+#define DEBUG_TYPE "mem2reg"
 
 STATISTIC(NumLocalPromoted, "Number of alloca's promoted within one block");
 STATISTIC(NumSingleStore,   "Number of alloca's promoted with a single store");

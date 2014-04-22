@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "instcombine"
 #include "InstCombine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/InstructionSimplify.h"
@@ -20,6 +19,8 @@
 #include "llvm/IR/PatternMatch.h"
 using namespace llvm;
 using namespace PatternMatch;
+
+#define DEBUG_TYPE "instcombine"
 
 namespace {
 

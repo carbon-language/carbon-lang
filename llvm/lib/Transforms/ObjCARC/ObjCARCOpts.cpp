@@ -24,7 +24,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "objc-arc-opts"
 #include "ObjCARC.h"
 #include "ARCRuntimeEntryPoints.h"
 #include "DependencyAnalysis.h"
@@ -43,6 +42,8 @@
 
 using namespace llvm;
 using namespace llvm::objcarc;
+
+#define DEBUG_TYPE "objc-arc-opts"
 
 /// \defgroup MiscUtils Miscellaneous utilities that are not ARC specific.
 /// @{

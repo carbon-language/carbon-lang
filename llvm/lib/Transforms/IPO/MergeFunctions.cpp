@@ -43,7 +43,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mergefunc"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -66,6 +65,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include <vector>
 using namespace llvm;
+
+#define DEBUG_TYPE "mergefunc"
 
 STATISTIC(NumFunctionsMerged, "Number of functions merged");
 STATISTIC(NumThunksWritten, "Number of thunks generated");

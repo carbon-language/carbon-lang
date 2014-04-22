@@ -29,7 +29,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "argpromotion"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
@@ -48,6 +47,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include <set>
 using namespace llvm;
+
+#define DEBUG_TYPE "argpromotion"
 
 STATISTIC(NumArgumentsPromoted , "Number of pointer arguments promoted");
 STATISTIC(NumAggregatesPromoted, "Number of aggregate arguments promoted");

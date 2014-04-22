@@ -18,7 +18,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "constprop"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ConstantFolding.h"
@@ -30,6 +29,8 @@
 #include "llvm/Target/TargetLibraryInfo.h"
 #include <set>
 using namespace llvm;
+
+#define DEBUG_TYPE "constprop"
 
 STATISTIC(NumInstKilled, "Number of instructions killed");
 

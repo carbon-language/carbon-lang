@@ -23,7 +23,6 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sroa"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
@@ -63,6 +62,8 @@
 #endif
 
 using namespace llvm;
+
+#define DEBUG_TYPE "sroa"
 
 STATISTIC(NumAllocasAnalyzed, "Number of allocas analyzed for replacement");
 STATISTIC(NumAllocaPartitions, "Number of alloca partitions formed");

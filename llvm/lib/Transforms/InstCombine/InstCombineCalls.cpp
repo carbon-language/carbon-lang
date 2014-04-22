@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "instcombine"
 #include "InstCombine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
@@ -22,6 +21,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
 using namespace PatternMatch;
+
+#define DEBUG_TYPE "instcombine"
 
 STATISTIC(NumSimplified, "Number of library calls simplified");
 

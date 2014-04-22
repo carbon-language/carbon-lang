@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "mem2reg"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Dominators.h"
@@ -21,6 +20,8 @@
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
 #include "llvm/Transforms/Utils/UnifyFunctionExitNodes.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "mem2reg"
 
 STATISTIC(NumPromoted, "Number of alloca's promoted");
 

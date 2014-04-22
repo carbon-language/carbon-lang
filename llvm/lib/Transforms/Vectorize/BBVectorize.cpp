@@ -15,7 +15,6 @@
 //===----------------------------------------------------------------------===//
 
 #define BBV_NAME "bb-vectorize"
-#define DEBUG_TYPE BBV_NAME
 #include "llvm/Transforms/Vectorize.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
@@ -49,6 +48,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE BBV_NAME
 
 static cl::opt<bool>
 IgnoreTargetInfo("bb-vectorize-ignore-target-info",  cl::init(false),

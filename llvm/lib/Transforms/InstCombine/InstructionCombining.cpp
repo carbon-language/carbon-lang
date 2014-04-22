@@ -33,7 +33,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "instcombine"
 #include "llvm/Transforms/Scalar.h"
 #include "InstCombine.h"
 #include "llvm-c/Initialization.h"
@@ -57,6 +56,8 @@
 #include <climits>
 using namespace llvm;
 using namespace llvm::PatternMatch;
+
+#define DEBUG_TYPE "instcombine"
 
 STATISTIC(NumCombined , "Number of insts combined");
 STATISTIC(NumConstProp, "Number of constant folds");

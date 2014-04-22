@@ -16,7 +16,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "dce"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/InstIterator.h"
@@ -25,6 +24,8 @@
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "dce"
 
 STATISTIC(DIEEliminated, "Number of insts removed by DIE pass");
 STATISTIC(DCEEliminated, "Number of insts removed");

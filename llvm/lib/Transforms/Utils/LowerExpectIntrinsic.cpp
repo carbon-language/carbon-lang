@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "lower-expect-intrinsic"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/BasicBlock.h"
@@ -28,6 +27,8 @@
 #include <vector>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "lower-expect-intrinsic"
 
 STATISTIC(IfHandled, "Number of 'expect' intrinsic instructions handled");
 

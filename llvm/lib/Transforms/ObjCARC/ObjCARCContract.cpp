@@ -26,7 +26,6 @@
 // TODO: ObjCARCContract could insert PHI nodes when uses aren't
 // dominated by single calls.
 
-#define DEBUG_TYPE "objc-arc-contract"
 #include "ObjCARC.h"
 #include "ARCRuntimeEntryPoints.h"
 #include "DependencyAnalysis.h"
@@ -39,6 +38,8 @@
 
 using namespace llvm;
 using namespace llvm::objcarc;
+
+#define DEBUG_TYPE "objc-arc-contract"
 
 STATISTIC(NumPeeps,       "Number of calls peephole-optimized");
 STATISTIC(NumStoreStrongs, "Number objc_storeStrong calls formed");

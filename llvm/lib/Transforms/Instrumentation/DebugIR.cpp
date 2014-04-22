@@ -16,8 +16,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "debug-ir"
-
 #include "llvm/IR/ValueMap.h"
 #include "DebugIR.h"
 #include "llvm/IR/AssemblyAnnotationWriter.h"
@@ -41,6 +39,8 @@
 #define STR(x) STR_HELPER(x)
 
 using namespace llvm;
+
+#define DEBUG_TYPE "debug-ir"
 
 namespace {
 

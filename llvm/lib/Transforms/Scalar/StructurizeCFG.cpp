@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "structurizecfg"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SCCIterator.h"
@@ -20,6 +19,8 @@
 
 using namespace llvm;
 using namespace llvm::PatternMatch;
+
+#define DEBUG_TYPE "structurizecfg"
 
 namespace {
 

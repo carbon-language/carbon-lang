@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "globalopt"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -43,6 +42,8 @@
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE "globalopt"
 
 STATISTIC(NumMarked    , "Number of globals marked constant");
 STATISTIC(NumUnnamed   , "Number of globals marked unnamed_addr");
