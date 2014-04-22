@@ -492,7 +492,6 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
     return Data->getCommonAlignment();
 
   const MCSymbol *Symbol = &Data->getSymbol();
-  bool IsThumbFunc = OrigData.getFlags() & ELF_Other_ThumbFunc;
 
   uint64_t Res = 0;
   if (Symbol->isVariable()) {
@@ -514,7 +513,7 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
     }
   }
 
-  if (IsThumbFunc)
+  if (Data && Data->getFlags() & ELF_Other_ThumbFunc)
     Res |= 1;
 
   if (!Symbol || !Symbol->isInSection())

@@ -11,7 +11,17 @@
 foo:
 	bx	lr
 
-@@ make sure foo is thumb function: bit 0 = 1 (st_value)
+	.global bar
+bar = foo
+
+@@ make sure foo and bar are thumb function: bit 0 = 1 (st_value)
+@CHECK:        Symbol {
+@CHECK:          Name: bar
+@CHECK-NEXT:     Value: 0x1
+@CHECK-NEXT:     Size: 0
+@CHECK-NEXT:     Binding: Global
+@CHECK-NEXT:     Type: Function
+
 @CHECK:        Symbol {
 @CHECK:          Name: foo
 @CHECK-NEXT:     Value: 0x1
