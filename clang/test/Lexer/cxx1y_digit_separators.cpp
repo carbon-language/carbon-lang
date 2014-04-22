@@ -34,6 +34,20 @@ namespace floating {
   float d = 1.0'e1; // expected-error {{digit separator cannot appear at end of digit sequence}}
   float e = 1e'1; // expected-error {{digit separator cannot appear at start of digit sequence}}
   float f = 1e1'ms; // expected-error {{digit separator cannot appear at end of digit sequence}}
+  float g = 0.'0; // expected-error {{digit separator cannot appear at start of digit sequence}}
+  float h = .'0; // '; // expected-error {{expected expression}}, lexed as . followed by character literal
+  float i = 0x.'0p0; // expected-error {{digit separator cannot appear at start of digit sequence}}
+  float j = 0x'0.0p0; // expected-error {{invalid suffix 'x'0.0p0'}}
+  float k = 0x0'.0p0; // '; // expected-error {{expected ';'}}
+  float l = 0x0.'0p0; // expected-error {{digit separator cannot appear at start of digit sequence}}
+  float m = 0x0.0'p0; // expected-error {{digit separator cannot appear at end of digit sequence}}
+  float n = 0x0.0p'0; // expected-error {{digit separator cannot appear at start of digit sequence}}
+  float o = 0x0.0p0'ms; // expected-error {{digit separator cannot appear at end of digit sequence}}
+  float p = 0'e1; // expected-error {{digit separator cannot appear at end of digit sequence}}
+  float q = 0'0e1;
+  float r = 0.'0e1; // expected-error {{digit separator cannot appear at start of digit sequence}}
+  float s = 0.0'e1; // expected-error {{digit separator cannot appear at end of digit sequence}}
+  float t = 0.0e'1; // expected-error {{digit separator cannot appear at start of digit sequence}}
 }
 
 #line 123'456

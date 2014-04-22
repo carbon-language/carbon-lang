@@ -765,6 +765,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
       s++;
       saw_period = true;
       const char *floatDigitsBegin = s;
+      checkSeparator(TokLoc, s, CSK_BeforeDigits);
       s = SkipHexDigits(s);
       noSignificand &= (floatDigitsBegin == s);
     }
@@ -779,6 +780,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     // A binary exponent can appear with or with a '.'. If dotted, the
     // binary exponent is required.
     if (*s == 'p' || *s == 'P') {
+      checkSeparator(TokLoc, s, CSK_AfterDigits);
       const char *Exponent = s;
       s++;
       saw_exponent = true;
@@ -790,6 +792,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
         hadError = true;
         return;
       }
+      checkSeparator(TokLoc, s, CSK_BeforeDigits);
       s = first_non_digit;
 
       if (!PP.getLangOpts().HexFloats)
@@ -858,9 +861,11 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     s++;
     radix = 10;
     saw_period = true;
+    checkSeparator(TokLoc, s, CSK_BeforeDigits);
     s = SkipDigits(s); // Skip suffix.
   }
   if (*s == 'e' || *s == 'E') { // exponent
+    checkSeparator(TokLoc, s, CSK_AfterDigits);
     const char *Exponent = s;
     s++;
     radix = 10;
@@ -868,6 +873,7 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
     if (*s == '+' || *s == '-')  s++; // sign
     const char *first_non_digit = SkipDigits(s);
     if (first_non_digit != s) {
+      checkSeparator(TokLoc, s, CSK_BeforeDigits);
       s = first_non_digit;
     } else {
       PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, Exponent-ThisTokBegin),
