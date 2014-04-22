@@ -1017,81 +1017,22 @@ SDValue AMDGPUTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
   MVT VT = Op.getSimpleValueType();
   MVT ScalarVT = VT.getScalarType();
 
-  unsigned SrcBits = ExtraVT.getScalarType().getSizeInBits();
-  unsigned DestBits = ScalarVT.getSizeInBits();
-  unsigned BitsDiff = DestBits - SrcBits;
-
-  if (!Subtarget->hasBFE())
-    return ExpandSIGN_EXTEND_INREG(Op, BitsDiff, DAG);
+  if (!VT.isVector())
+    return SDValue();
 
   SDValue Src = Op.getOperand(0);
-  if (VT.isVector()) {
-    SDLoc DL(Op);
-    // Need to scalarize this, and revisit each of the scalars later.
-    // TODO: Don't scalarize on Evergreen?
-    unsigned NElts = VT.getVectorNumElements();
-    SmallVector<SDValue, 8> Args;
-    DAG.ExtractVectorElements(Src, Args);
+  SDLoc DL(Op);
 
-    SDValue VTOp = DAG.getValueType(ExtraVT.getScalarType());
-    for (unsigned I = 0; I < NElts; ++I)
-      Args[I] = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, ScalarVT, Args[I], VTOp);
+  // TODO: Don't scalarize on Evergreen?
+  unsigned NElts = VT.getVectorNumElements();
+  SmallVector<SDValue, 8> Args;
+  DAG.ExtractVectorElements(Src, Args, 0, NElts);
 
-    return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Args.data(), Args.size());
-  }
+  SDValue VTOp = DAG.getValueType(ExtraVT.getScalarType());
+  for (unsigned I = 0; I < NElts; ++I)
+    Args[I] = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, ScalarVT, Args[I], VTOp);
 
-  if (SrcBits == 32) {
-    SDLoc DL(Op);
-
-    // If the source is 32-bits, this is really half of a 2-register pair, and
-    // we need to discard the unused half of the pair.
-    SDValue TruncSrc = DAG.getNode(ISD::TRUNCATE, DL, MVT::i32, Src);
-    return DAG.getNode(ISD::SIGN_EXTEND, DL, VT, TruncSrc);
-  }
-
-  unsigned NElts = VT.isVector() ? VT.getVectorNumElements() : 1;
-
-  // TODO: Match 64-bit BFE. SI has a 64-bit BFE, but it's scalar only so it
-  // might not be worth the effort, and will need to expand to shifts when
-  // fixing SGPR copies.
-  if (SrcBits < 32 && DestBits <= 32) {
-    SDLoc DL(Op);
-    MVT ExtVT = (NElts == 1) ? MVT::i32 : MVT::getVectorVT(MVT::i32, NElts);
-
-    if (DestBits != 32)
-      Src = DAG.getNode(ISD::ZERO_EXTEND, DL, ExtVT, Src);
-
-    // FIXME: This should use TargetConstant, but that hits assertions for
-    // Evergreen.
-    SDValue Ext = DAG.getNode(AMDGPUISD::BFE_I32, DL, ExtVT,
-                              Op.getOperand(0), // Operand
-                              DAG.getConstant(0, ExtVT), // Offset
-                              DAG.getConstant(SrcBits, ExtVT)); // Width
-
-    // Truncate to the original type if necessary.
-    if (ScalarVT == MVT::i32)
-      return Ext;
-    return DAG.getNode(ISD::TRUNCATE, DL, VT, Ext);
-  }
-
-  // For small types, extend to 32-bits first.
-  if (SrcBits < 32) {
-    SDLoc DL(Op);
-    MVT ExtVT = (NElts == 1) ? MVT::i32 : MVT::getVectorVT(MVT::i32, NElts);
-
-    SDValue TruncSrc = DAG.getNode(ISD::TRUNCATE, DL, ExtVT, Src);
-    SDValue Ext32 = DAG.getNode(AMDGPUISD::BFE_I32,
-                                DL,
-                                ExtVT,
-                                TruncSrc, // Operand
-                                DAG.getConstant(0, ExtVT), // Offset
-                                DAG.getConstant(SrcBits, ExtVT)); // Width
-
-    return DAG.getNode(ISD::SIGN_EXTEND, DL, VT, Ext32);
-  }
-
-  // For everything else, use the standard bitshift expansion.
-  return ExpandSIGN_EXTEND_INREG(Op, BitsDiff, DAG);
+  return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Args.data(), Args.size());
 }
 
 //===----------------------------------------------------------------------===//
