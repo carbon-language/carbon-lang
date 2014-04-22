@@ -357,7 +357,7 @@ bool DataLayout::operator==(const DataLayout &Other) const {
              StackNaturalAlign == Other.StackNaturalAlign &&
              ManglingMode == Other.ManglingMode &&
              LegalIntWidths == Other.LegalIntWidths &&
-             Alignments == Other.Alignments && Pointers == Pointers;
+             Alignments == Other.Alignments && Pointers == Other.Pointers;
   assert(Ret == (getStringRepresentation() == Other.getStringRepresentation()));
   return Ret;
 }

@@ -1,1 +1,1 @@
-target datalayout = "E"
+target datalayout = "e-p:16:16"
