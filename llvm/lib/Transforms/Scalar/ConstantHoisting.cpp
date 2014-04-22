@@ -207,7 +207,16 @@ bool ConstantHoisting::runOnFunction(Function &Fn) {
 /// \brief Find the constant materialization insertion point.
 Instruction *ConstantHoisting::findMatInsertPt(Instruction *Inst,
                                                unsigned Idx) const {
-  // The simple and common case.
+  // If the operand is a cast instruction, then we have to materialize the
+  // constant before the cast instruction.
+  if (Idx != ~0U) {
+    Value *Opnd = Inst->getOperand(Idx);
+    if (auto CastInst = dyn_cast<Instruction>(Opnd))
+      if (CastInst->isCast())
+        return CastInst;
+  }
+
+  // The simple and common case. This also includes constant expressions.
   if (!isa<PHINode>(Inst) && !isa<LandingPadInst>(Inst))
     return Inst;
 
@@ -229,7 +238,7 @@ findConstantInsertionPoint(const ConstantInfo &ConstInfo) const {
   SmallPtrSet<BasicBlock *, 8> BBs;
   for (auto const &RCI : ConstInfo.RebasedConstants)
     for (auto const &U : RCI.Uses)
-      BBs.insert(U.Inst->getParent());
+      BBs.insert(findMatInsertPt(U.Inst, U.OpndIdx)->getParent());
 
   if (BBs.count(Entry))
     return &Entry->front();
