@@ -82,11 +82,11 @@ def DeprecatedIncrementBool : DiagGroup<"deprecated-increment-bool">;
 def DeprecatedRegister : DiagGroup<"deprecated-register">;
 def DeprecatedWritableStr : DiagGroup<"deprecated-writable-strings",
                                       [CXX11CompatDeprecatedWritableStr]>;
-// FIXME: Why are DeprecatedImplementations and DeprecatedWritableStr
-// not in this group?
+// FIXME: Why is DeprecatedImplementations not in this group?
 def Deprecated : DiagGroup<"deprecated", [DeprecatedDeclarations,
                                           DeprecatedIncrementBool,
-                                          DeprecatedRegister]>,
+                                          DeprecatedRegister,
+                                          DeprecatedWritableStr]>,
                  DiagCategory<"Deprecations">;
 
 def : DiagGroup<"disabled-optimization">;
@@ -422,8 +422,18 @@ def ZeroLengthArray : DiagGroup<"zero-length-array">;
 def GNUZeroLineDirective : DiagGroup<"gnu-zero-line-directive">;
 def GNUZeroVariadicMacroArguments : DiagGroup<"gnu-zero-variadic-macro-arguments">;
 
+// This covers both the deprecated case (in C++98)
+// and the extension case (in C++11 onwards).
+def WritableStrings : DiagGroup<"writable-strings", [DeprecatedWritableStr]>;
+
 // GCC calls -Wdeprecated-writable-strings -Wwrite-strings.
-def GCCWriteStrings : DiagGroup<"write-strings" , [DeprecatedWritableStr]>;
+//
+// Bizarrely, this warning flag enables -fconst-strings in C. This is
+// GCC-compatible, but really weird.
+//
+// FIXME: Should this affect C++11 (where this is an error,
+//        not just deprecated) or not?
+def GCCWriteStrings : DiagGroup<"write-strings" , [WritableStrings]>;
 
 def CharSubscript : DiagGroup<"char-subscripts">;
 def LargeByValueCopy : DiagGroup<"large-by-value-copy">;
