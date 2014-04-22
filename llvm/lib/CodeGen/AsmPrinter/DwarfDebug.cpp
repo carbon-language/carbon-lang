@@ -257,9 +257,7 @@ unsigned DwarfFile::getStringPoolIndex(StringRef Str) {
 
 unsigned DwarfFile::getAddrPoolIndex(const MCSymbol *Sym, bool TLS) {
   std::pair<AddrPool::iterator, bool> P = AddressPool.insert(
-      std::make_pair(Sym, AddressPoolEntry(NextAddrPoolNumber, TLS)));
-  if (P.second)
-    ++NextAddrPoolNumber;
+      std::make_pair(Sym, AddressPoolEntry(AddressPool.size(), TLS)));
   return P.first->second.Number;
 }
 

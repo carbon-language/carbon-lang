@@ -166,12 +166,10 @@ class DwarfFile {
   // references.
   typedef DenseMap<const MCSymbol *, AddressPoolEntry> AddrPool;
   AddrPool AddressPool;
-  unsigned NextAddrPoolNumber;
 
 public:
   DwarfFile(AsmPrinter *AP, const char *Pref, BumpPtrAllocator &DA)
-      : Asm(AP), StringPool(DA), NextStringPoolNumber(0), StringPref(Pref),
-        AddressPool(), NextAddrPoolNumber(0) {}
+      : Asm(AP), StringPool(DA), NextStringPoolNumber(0), StringPref(Pref) {}
 
   ~DwarfFile();
 
