@@ -145,7 +145,7 @@ class DwarfFile {
   std::vector<DIEAbbrev *> Abbreviations;
 
   // A pointer to all units in the section.
-  SmallVector<DwarfUnit *, 1> CUs;
+  SmallVector<std::unique_ptr<DwarfUnit>, 1> CUs;
 
   // Collection of strings for this unit and assorted symbols.
   // A String->Symbol mapping of strings used by indirect
@@ -168,12 +168,11 @@ class DwarfFile {
   AddrPool AddressPool;
 
 public:
-  DwarfFile(AsmPrinter *AP, const char *Pref, BumpPtrAllocator &DA)
-      : Asm(AP), StringPool(DA), NextStringPoolNumber(0), StringPref(Pref) {}
+  DwarfFile(AsmPrinter *AP, const char *Pref, BumpPtrAllocator &DA);
 
   ~DwarfFile();
 
-  const SmallVectorImpl<DwarfUnit *> &getUnits() { return CUs; }
+  const SmallVectorImpl<std::unique_ptr<DwarfUnit>> &getUnits() { return CUs; }
 
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE &Die, unsigned Offset);
@@ -185,7 +184,7 @@ public:
   void assignAbbrevNumber(DIEAbbrev &Abbrev);
 
   /// \brief Add a unit to the list of CUs.
-  void addUnit(DwarfUnit *CU) { CUs.push_back(CU); }
+  void addUnit(DwarfUnit *CU);
 
   /// \brief Emit all of the units to the section listed with the given
   /// abbreviation section.
@@ -413,7 +412,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
 
-  const SmallVectorImpl<DwarfUnit *> &getUnits() {
+  const SmallVectorImpl<std::unique_ptr<DwarfUnit>> &getUnits() {
     return InfoHolder.getUnits();
   }
 

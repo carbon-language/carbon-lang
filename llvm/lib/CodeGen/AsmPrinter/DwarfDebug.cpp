@@ -225,9 +225,9 @@ static MCSymbol *emitSectionSym(AsmPrinter *Asm, const MCSection *Section,
   return TmpSym;
 }
 
+DwarfFile::DwarfFile(AsmPrinter *AP, const char *Pref, BumpPtrAllocator &DA)
+    : Asm(AP), StringPool(DA), NextStringPoolNumber(0), StringPref(Pref) {}
 DwarfFile::~DwarfFile() {
-  for (DwarfUnit *DU : CUs)
-    delete DU;
 }
 
 MCSymbol *DwarfFile::getStringPoolSym() {
@@ -278,6 +278,10 @@ void DwarfFile::assignAbbrevNumber(DIEAbbrev &Abbrev) {
     // Assign existing abbreviation number.
     Abbrev.setNumber(InSet->getNumber());
   }
+}
+
+void DwarfFile::addUnit(DwarfUnit *CU) {
+  CUs.push_back(std::unique_ptr<DwarfUnit>(CU));
 }
 
 static bool isObjCClass(StringRef Name) {
@@ -927,7 +931,7 @@ void DwarfDebug::finalizeModuleInfo() {
 
   // Handle anything that needs to be done on a per-unit basis after
   // all other generation.
-  for (DwarfUnit *TheU : getUnits()) {
+  for (const auto &TheU : getUnits()) {
     // Emit DW_AT_containing_type attribute to connect types with their
     // vtable holding type.
     TheU->constructContainingTypeDIEs();
@@ -964,26 +968,27 @@ void DwarfDebug::finalizeModuleInfo() {
       // FIXME: We should use ranges allow reordering of code ala
       // .subsections_via_symbols in mach-o. This would mean turning on
       // ranges for all subprogram DIEs for mach-o.
-      DwarfCompileUnit *U = SkCU ? SkCU : static_cast<DwarfCompileUnit *>(TheU);
+      DwarfCompileUnit &U =
+          SkCU ? *SkCU : static_cast<DwarfCompileUnit &>(*TheU);
       unsigned NumRanges = TheU->getRanges().size();
       if (NumRanges) {
         if (NumRanges > 1) {
-          addSectionLabel(Asm, U, U->getUnitDie(), dwarf::DW_AT_ranges,
-                          Asm->GetTempSymbol("cu_ranges", U->getUniqueID()),
+          addSectionLabel(Asm, &U, U.getUnitDie(), dwarf::DW_AT_ranges,
+                          Asm->GetTempSymbol("cu_ranges", U.getUniqueID()),
                           DwarfDebugRangeSectionSym);
 
           // A DW_AT_low_pc attribute may also be specified in combination with
           // DW_AT_ranges to specify the default base address for use in
           // location lists (see Section 2.6.2) and range lists (see Section
           // 2.17.3).
-          U->addUInt(U->getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
-                     0);
+          U.addUInt(U.getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
+                    0);
         } else {
           RangeSpan &Range = TheU->getRanges().back();
-          U->addLocalLabelAddress(U->getUnitDie(), dwarf::DW_AT_low_pc,
-                                  Range.getStart());
-          U->addLabelDelta(U->getUnitDie(), dwarf::DW_AT_high_pc,
-                           Range.getEnd(), Range.getStart());
+          U.addLocalLabelAddress(U.getUnitDie(), dwarf::DW_AT_low_pc,
+                                 Range.getStart());
+          U.addLabelDelta(U.getUnitDie(), dwarf::DW_AT_high_pc, Range.getEnd(),
+                          Range.getStart());
         }
       }
     }
@@ -1776,8 +1781,8 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
       llvm_unreachable("Unexpected scope info");
 
     unsigned CUID = Asm->OutStreamer.getContext().getDwarfCompileUnitID();
-    Src = static_cast<DwarfCompileUnit *>(InfoHolder.getUnits()[CUID])
-              ->getOrCreateSourceID(Fn, Dir);
+    Src = static_cast<DwarfCompileUnit &>(*InfoHolder.getUnits()[CUID])
+              .getOrCreateSourceID(Fn, Dir);
   }
   Asm->OutStreamer.EmitDwarfLocDirective(Src, Line, Col, Flags, 0,
                                          Discriminator, Fn);
@@ -1835,7 +1840,7 @@ void DwarfFile::computeSizeAndOffsets() {
 
   // Iterate over each compile unit and set the size and offsets for each
   // DIE within each compile unit. All offsets are CU relative.
-  for (DwarfUnit *TheU : CUs) {
+  for (const auto &TheU : CUs) {
     TheU->setDebugInfoOffset(SecOffset);
 
     // CU-relative offset is reset to 0 here.
@@ -1941,7 +1946,7 @@ void DwarfDebug::emitDIE(DIE &Die) {
 // Emit the various dwarf units to the unit section USection with
 // the abbreviations going into ASection.
 void DwarfFile::emitUnits(DwarfDebug *DD, const MCSymbol *ASectionSym) {
-  for (DwarfUnit *TheU : CUs) {
+  for (const auto &TheU : CUs) {
     DIE *Die = TheU->getUnitDie();
     const MCSection *USection = TheU->getSection();
     Asm->OutStreamer.SwitchSection(USection);
@@ -2022,7 +2027,7 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
 void DwarfDebug::emitAccelNames() {
   DwarfAccelTable AT(
       DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4));
-  for (DwarfUnit *TheU : getUnits()) {
+  for (const auto &TheU : getUnits()) {
     for (const auto &GI : TheU->getAccelNames()) {
       StringRef Name = GI.getKey();
       for (const DIE *D : GI.second)
@@ -2045,7 +2050,7 @@ void DwarfDebug::emitAccelNames() {
 void DwarfDebug::emitAccelObjC() {
   DwarfAccelTable AT(
       DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4));
-  for (DwarfUnit *TheU : getUnits()) {
+  for (const auto &TheU : getUnits()) {
     for (const auto &GI : TheU->getAccelObjC()) {
       StringRef Name = GI.getKey();
       for (const DIE *D : GI.second)
@@ -2067,7 +2072,7 @@ void DwarfDebug::emitAccelObjC() {
 void DwarfDebug::emitAccelNamespaces() {
   DwarfAccelTable AT(
       DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4));
-  for (DwarfUnit *TheU : getUnits()) {
+  for (const auto &TheU : getUnits()) {
     for (const auto &GI : TheU->getAccelNamespace()) {
       StringRef Name = GI.getKey();
       for (const DIE *D : GI.second)
@@ -2095,7 +2100,7 @@ void DwarfDebug::emitAccelTypes() {
   Atoms.push_back(
       DwarfAccelTable::Atom(dwarf::DW_ATOM_type_flags, dwarf::DW_FORM_data1));
   DwarfAccelTable AT(Atoms);
-  for (DwarfUnit *TheU : getUnits()) {
+  for (const auto &TheU : getUnits()) {
     for (const auto &GI : TheU->getAccelTypes()) {
       StringRef Name = GI.getKey();
       for (const auto &DI : GI.second)
