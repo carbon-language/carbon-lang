@@ -182,7 +182,7 @@ struct FormatStyle {
   ShortFunctionStyle AllowShortFunctionsOnASingleLine;
 
   /// \brief Add a space after \c @property in Objective-C, i.e. use
-  /// <tt>@property (readonly)</tt> instead of <tt>@property(readonly)</tt>.
+  /// <tt>\@property (readonly)</tt> instead of <tt>\@property(readonly)</tt>.
   bool ObjCSpaceAfterProperty;
 
   /// \brief Add a space in front of an Objective-C protocol list, i.e. use
