@@ -598,7 +598,11 @@ void Distribution::normalize() {
 }
 
 void BlockFrequencyInfoImplBase::clear() {
-  *this = BlockFrequencyInfoImplBase();
+  // Swap with a default-constructed std::vector, since std::vector<>::clear()
+  // does not actually clear heap storage.
+  std::vector<FrequencyData>().swap(Freqs);
+  std::vector<WorkingData>().swap(Working);
+  std::vector<LoopData>().swap(PackagedLoops);
 }
 
 /// \brief Clear all memory not needed downstream.
