@@ -223,25 +223,17 @@ protected:
   
 public:
   void push_back(const T &Elt) {
-    if (this->EndX < this->CapacityX) {
-    Retry:
-      ::new ((void*) this->end()) T(Elt);
-      this->setEnd(this->end()+1);
-      return;
-    }
-    this->grow();
-    goto Retry;
+    while (this->EndX >= this->CapacityX)
+      this->grow();
+    ::new ((void*) this->end()) T(Elt);
+    this->setEnd(this->end()+1);
   }
 
   void push_back(T &&Elt) {
-    if (this->EndX < this->CapacityX) {
-    Retry:
-      ::new ((void*) this->end()) T(::std::move(Elt));
-      this->setEnd(this->end()+1);
-      return;
-    }
-    this->grow();
-    goto Retry;
+    while (this->EndX >= this->CapacityX)
+      this->grow();
+    ::new ((void*) this->end()) T(::std::move(Elt));
+    this->setEnd(this->end()+1);
   }
 
   void pop_back() {
@@ -335,14 +327,10 @@ protected:
   }
 public:
   void push_back(const T &Elt) {
-    if (this->EndX < this->CapacityX) {
-    Retry:
-      memcpy(this->end(), &Elt, sizeof(T));
-      this->setEnd(this->end()+1);
-      return;
-    }
-    this->grow();
-    goto Retry;
+    while (this->EndX >= this->CapacityX)
+      this->grow();
+    memcpy(this->end(), &Elt, sizeof(T));
+    this->setEnd(this->end()+1);
   }
   
   void pop_back() {
@@ -493,26 +481,25 @@ public:
     assert(I >= this->begin() && "Insertion iterator is out of bounds.");
     assert(I <= this->end() && "Inserting past the end of the vector.");
 
-    if (this->EndX < this->CapacityX) {
-    Retry:
-      ::new ((void*) this->end()) T(::std::move(this->back()));
-      this->setEnd(this->end()+1);
-      // Push everything else over.
-      this->move_backward(I, this->end()-1, this->end());
-
-      // If we just moved the element we're inserting, be sure to update
-      // the reference.
-      T *EltPtr = &Elt;
-      if (I <= EltPtr && EltPtr < this->EndX)
-        ++EltPtr;
-
-      *I = ::std::move(*EltPtr);
-      return I;
+    while (this->EndX >= this->CapacityX) {
+      size_t EltNo = I-this->begin();
+      this->grow();
+      I = this->begin()+EltNo;
     }
-    size_t EltNo = I-this->begin();
-    this->grow();
-    I = this->begin()+EltNo;
-    goto Retry;
+
+    ::new ((void*) this->end()) T(::std::move(this->back()));
+    this->setEnd(this->end()+1);
+    // Push everything else over.
+    this->move_backward(I, this->end()-1, this->end());
+
+    // If we just moved the element we're inserting, be sure to update
+    // the reference.
+    T *EltPtr = &Elt;
+    if (I <= EltPtr && EltPtr < this->EndX)
+      ++EltPtr;
+
+    *I = ::std::move(*EltPtr);
+    return I;
   }
 
   iterator insert(iterator I, const T &Elt) {
@@ -524,26 +511,24 @@ public:
     assert(I >= this->begin() && "Insertion iterator is out of bounds.");
     assert(I <= this->end() && "Inserting past the end of the vector.");
 
-    if (this->EndX < this->CapacityX) {
-    Retry:
-      ::new ((void*) this->end()) T(this->back());
-      this->setEnd(this->end()+1);
-      // Push everything else over.
-      this->move_backward(I, this->end()-1, this->end());
-
-      // If we just moved the element we're inserting, be sure to update
-      // the reference.
-      const T *EltPtr = &Elt;
-      if (I <= EltPtr && EltPtr < this->EndX)
-        ++EltPtr;
-
-      *I = *EltPtr;
-      return I;
+    while (this->EndX >= this->CapacityX) {
+      size_t EltNo = I-this->begin();
+      this->grow();
+      I = this->begin()+EltNo;
     }
-    size_t EltNo = I-this->begin();
-    this->grow();
-    I = this->begin()+EltNo;
-    goto Retry;
+    ::new ((void*) this->end()) T(this->back());
+    this->setEnd(this->end()+1);
+    // Push everything else over.
+    this->move_backward(I, this->end()-1, this->end());
+
+    // If we just moved the element we're inserting, be sure to update
+    // the reference.
+    const T *EltPtr = &Elt;
+    if (I <= EltPtr && EltPtr < this->EndX)
+      ++EltPtr;
+
+    *I = *EltPtr;
+    return I;
   }
 
   iterator insert(iterator I, size_type NumToInsert, const T &Elt) {
