@@ -10,6 +10,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/DebugInfo.h"
@@ -24,8 +25,6 @@
 #include "llvm/IR/LLVMContext.h"
 #include "gtest/gtest.h"
 
-#include <set>
-
 using namespace llvm;
 
 namespace {
@@ -39,38 +38,34 @@ protected:
   template <typename T>
   T *clone(T *V1) {
     Value *V2 = V1->clone();
-    std::unique_ptr<Value> V(V1);
-    if (!Orig.insert(std::move(V)).second)
-      V.release(); // this wasn't the first time we added the element, so the
-                   // set already had ownership
-    Clones.insert(std::unique_ptr<Value>(V2));
+    Orig.insert(V1);
+    Clones.insert(V2);
     return cast<T>(V2);
   }
 
-  void eraseClones() { Clones.clear(); }
+  void eraseClones() {
+    DeleteContainerPointers(Clones);
+  }
 
   virtual void TearDown() {
     eraseClones();
-    Orig.clear();
-    V.reset();
+    DeleteContainerPointers(Orig);
+    delete V;
   }
 
-  std::set<std::unique_ptr<Value>> Orig;   // Erase on exit
-  std::set<std::unique_ptr<Value>> Clones; // Erase in eraseClones
+  SmallPtrSet<Value *, 4> Orig;   // Erase on exit
+  SmallPtrSet<Value *, 4> Clones; // Erase in eraseClones
 
   LLVMContext context;
-  std::unique_ptr<Value> V;
+  Value *V;
 };
 
 TEST_F(CloneInstruction, OverflowBits) {
-  V = make_unique<Argument>(Type::getInt32Ty(context));
+  V = new Argument(Type::getInt32Ty(context));
 
-  BinaryOperator *Add =
-      BinaryOperator::Create(Instruction::Add, V.get(), V.get());
-  BinaryOperator *Sub =
-      BinaryOperator::Create(Instruction::Sub, V.get(), V.get());
-  BinaryOperator *Mul =
-      BinaryOperator::Create(Instruction::Mul, V.get(), V.get());
+  BinaryOperator *Add = BinaryOperator::Create(Instruction::Add, V, V);
+  BinaryOperator *Sub = BinaryOperator::Create(Instruction::Sub, V, V);
+  BinaryOperator *Mul = BinaryOperator::Create(Instruction::Mul, V, V);
 
   BinaryOperator *AddClone = this->clone(Add);
   BinaryOperator *SubClone = this->clone(Sub);
@@ -136,12 +131,12 @@ TEST_F(CloneInstruction, OverflowBits) {
 }
 
 TEST_F(CloneInstruction, Inbounds) {
-  V = make_unique<Argument>(Type::getInt32PtrTy(context));
+  V = new Argument(Type::getInt32PtrTy(context));
 
   Constant *Z = Constant::getNullValue(Type::getInt32Ty(context));
   std::vector<Value *> ops;
   ops.push_back(Z);
-  GetElementPtrInst *GEP = GetElementPtrInst::Create(V.get(), ops);
+  GetElementPtrInst *GEP = GetElementPtrInst::Create(V, ops);
   EXPECT_FALSE(this->clone(GEP)->isInBounds());
 
   GEP->setIsInBounds();
@@ -149,10 +144,9 @@ TEST_F(CloneInstruction, Inbounds) {
 }
 
 TEST_F(CloneInstruction, Exact) {
-  V = make_unique<Argument>(Type::getInt32Ty(context));
+  V = new Argument(Type::getInt32Ty(context));
 
-  BinaryOperator *SDiv =
-      BinaryOperator::Create(Instruction::SDiv, V.get(), V.get());
+  BinaryOperator *SDiv = BinaryOperator::Create(Instruction::SDiv, V, V);
   EXPECT_FALSE(this->clone(SDiv)->isExact());
 
   SDiv->setIsExact(true);
