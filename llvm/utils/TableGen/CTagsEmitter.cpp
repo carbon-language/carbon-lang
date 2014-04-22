@@ -13,8 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "ctags-emitter"
-
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/TableGen/Error.h"
@@ -23,6 +21,8 @@
 #include <string>
 #include <vector>
 using namespace llvm;
+
+#define DEBUG_TYPE "ctags-emitter"
 
 namespace llvm { extern SourceMgr SrcMgr; }
 

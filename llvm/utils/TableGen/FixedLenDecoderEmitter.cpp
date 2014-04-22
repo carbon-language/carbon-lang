@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "decoder-emitter"
-
 #include "CodeGenTarget.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallString.h"
@@ -33,6 +31,8 @@
 #include <vector>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "decoder-emitter"
 
 namespace {
 struct EncodingField {

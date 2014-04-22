@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "pseudo-lowering"
 #include "CodeGenInstruction.h"
 #include "CodeGenTarget.h"
 #include "llvm/ADT/IndexedMap.h"
@@ -20,6 +19,8 @@
 #include "llvm/TableGen/TableGenBackend.h"
 #include <vector>
 using namespace llvm;
+
+#define DEBUG_TYPE "pseudo-lowering"
 
 namespace {
 class PseudoLoweringEmitter {

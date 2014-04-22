@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "subtarget-emitter"
-
 #include "CodeGenSchedule.h"
 #include "CodeGenTarget.h"
 #include "llvm/ADT/STLExtras.h"
@@ -22,6 +20,8 @@
 #include "llvm/TableGen/Error.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "subtarget-emitter"
 
 #ifndef NDEBUG
 static void dumpIdxVec(const IdxVec &V) {
