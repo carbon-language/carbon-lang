@@ -477,3 +477,26 @@ return:                                           ; preds = %if.end13, %if.then1
   %retval.0 = phi i32 [ %conv, %if.then ], [ %add, %if.then7 ], [ %add23, %if.then17 ], [ 64, %if.end13 ]
   ret i32 %retval.0
 }
+
+; Make sure we do not assert if the immediate in and is bigger than i64.
+; PR19503.
+; OPT-LABEL: @fct20
+; OPT: lshr
+; OPT-NOT: lshr
+; OPT: ret
+; CHECK-LABEL: fct20:
+; CHECK: ret
+define i80 @fct20(i128 %a, i128 %b) {
+entry:
+  %shr = lshr i128 %a, 18
+  %conv = trunc i128 %shr to i80
+  %tobool = icmp eq i128 %b, 0
+  br i1 %tobool, label %then, label %end
+then:                     
+  %and = and i128 %shr, 483673642326615442599424
+  %conv2 = trunc i128 %and to i80
+  br label %end
+end:
+  %conv3 = phi i80 [%conv, %entry], [%conv2, %then] 
+  ret i80 %conv3
+}

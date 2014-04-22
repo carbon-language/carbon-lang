@@ -639,9 +639,9 @@ bool isExtractBitsCandidateUse(Instruction *User) {
         !isa<ConstantInt>(User->getOperand(1)))
       return false;
 
-    unsigned Cimm = dyn_cast<ConstantInt>(User->getOperand(1))->getZExtValue();
+    const APInt &Cimm = cast<ConstantInt>(User->getOperand(1))->getValue();
 
-    if (Cimm & (Cimm + 1))
+    if ((Cimm & (Cimm + 1)).getBoolValue())
       return false;
   }
   return true;
