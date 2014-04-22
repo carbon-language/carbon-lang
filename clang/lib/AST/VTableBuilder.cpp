@@ -64,10 +64,14 @@ public:
     /// Method - The method decl of the overrider.
     const CXXMethodDecl *Method;
 
+    /// VirtualBase - The virtual base class subobject of this overridder.
+    /// Note that this records the closest derived virtual base class subobject.
+    const CXXRecordDecl *VirtualBase;
+
     /// Offset - the base offset of the overrider's parent in the layout class.
     CharUnits Offset;
     
-    OverriderInfo() : Method(0), Offset(CharUnits::Zero()) { }
+    OverriderInfo() : Method(0), VirtualBase(0), Offset(CharUnits::Zero()) { }
   };
 
 private:
@@ -201,6 +205,7 @@ FinalOverriders::FinalOverriders(const CXXRecordDecl *MostDerivedClass,
       
       Overrider.Offset = OverriderOffset;
       Overrider.Method = Method.Method;
+      Overrider.VirtualBase = Method.InVirtualSubobject;
     }
   }
 
@@ -2716,20 +2721,10 @@ void VFTableBuilder::CalculateVtordispAdjustment(
       VBaseMap.find(WhichVFPtr.getVBaseWithVPtr());
   assert(VBaseMapEntry != VBaseMap.end());
 
-  // If there's no vtordisp, we don't need any vtordisp adjustment.
-  if (!VBaseMapEntry->second.hasVtorDisp())
-    return;
-
-  const CXXRecordDecl *OverriderRD = Overrider.Method->getParent();
-  const CXXRecordDecl *OverriderVBase = 0;
-  if (OverriderRD != MostDerivedClass) {
-    OverriderVBase =
-        ComputeBaseOffset(Context, OverriderRD, MostDerivedClass).VirtualBase;
-  }
-
-  // If the final overrider is defined in the same vbase as the initial
-  // declaration, we don't need a vtordisp thunk at all.
-  if (OverriderVBase == WhichVFPtr.getVBaseWithVPtr())
+  // If there's no vtordisp or the final overrider is defined in the same vbase
+  // as the initial declaration, we don't need any vtordisp adjustment.
+  if (!VBaseMapEntry->second.hasVtorDisp() ||
+      Overrider.VirtualBase == WhichVFPtr.getVBaseWithVPtr())
     return;
 
   // OK, now we know we need to use a vtordisp thunk.
@@ -2740,7 +2735,8 @@ void VFTableBuilder::CalculateVtordispAdjustment(
 
   // A simple vtordisp thunk will suffice if the final overrider is defined
   // in either the most derived class or its non-virtual base.
-  if (OverriderRD == MostDerivedClass || !OverriderVBase)
+  if (Overrider.Method->getParent() == MostDerivedClass ||
+      !Overrider.VirtualBase)
     return;
 
   // Otherwise, we need to do use the dynamic offset of the final overrider
@@ -2750,7 +2746,7 @@ void VFTableBuilder::CalculateVtordispAdjustment(
        MostDerivedClassLayout.getVBPtrOffset()).getQuantity();
   TA.Virtual.Microsoft.VBOffsetOffset =
       Context.getTypeSizeInChars(Context.IntTy).getQuantity() *
-      VTables.getVBTableIndex(MostDerivedClass, OverriderVBase);
+      VTables.getVBTableIndex(MostDerivedClass, Overrider.VirtualBase);
 
   TA.NonVirtual = (ThisOffset - Overrider.Offset).getQuantity();
 }
