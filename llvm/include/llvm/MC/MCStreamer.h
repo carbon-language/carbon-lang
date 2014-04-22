@@ -529,9 +529,12 @@ public:
   /// @param Value - The value to emit.
   /// @param Size - The size of the integer (in bytes) to emit. This must
   /// match a native machine width.
-  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size) = 0;
+  /// @param Loc - The location of the expression for error reporting.
+  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
+                             const SMLoc &Loc = SMLoc()) = 0;
 
-  void EmitValue(const MCExpr *Value, unsigned Size);
+  void EmitValue(const MCExpr *Value, unsigned Size,
+                 const SMLoc &Loc = SMLoc());
 
   /// EmitIntValue - Special case of EmitValue that avoids the client having
   /// to pass in a MCExpr for constant integers.

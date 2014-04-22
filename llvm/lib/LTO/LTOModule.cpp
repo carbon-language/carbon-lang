@@ -698,7 +698,8 @@ namespace {
     void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                         uint64_t Size, unsigned ByteAlignment) override {}
     void EmitBytes(StringRef Data) override {}
-    void EmitValueImpl(const MCExpr *Value, unsigned Size) override {}
+    void EmitValueImpl(const MCExpr *Value, unsigned Size,
+                       const SMLoc &Loc) override {}
     void EmitULEB128Value(const MCExpr *Value) override {}
     void EmitSLEB128Value(const MCExpr *Value) override {}
     void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value,

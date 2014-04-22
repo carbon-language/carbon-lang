@@ -97,7 +97,8 @@ const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
   return Value;
 }
 
-void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size) {
+void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
+                                     const SMLoc &Loc) {
   MCDataFragment *DF = getOrCreateDataFragment();
 
   MCLineEntry::Make(this, getCurrentSection().first);
@@ -110,7 +111,7 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size) {
   }
   DF->getFixups().push_back(
       MCFixup::Create(DF->getContents().size(), Value,
-                      MCFixup::getKindForSize(Size, false)));
+                      MCFixup::getKindForSize(Size, false), Loc));
   DF->getContents().resize(DF->getContents().size() + Size, 0);
 }
 

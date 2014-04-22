@@ -92,7 +92,8 @@ public:
   /// This is one of the functions used to emit data into an ELF section, so the
   /// ARM64 streamer overrides it to add the appropriate mapping symbol ($d)
   /// if necessary.
-  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size) {
+  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
+                             const SMLoc &Loc) {
     EmitDataMappingSymbol();
     MCELFStreamer::EmitValueImpl(Value, Size);
   }

@@ -2364,7 +2364,7 @@ bool AsmParser::parseDirectiveValue(unsigned Size) {
           return Error(ExprLoc, "literal value out of range for directive");
         getStreamer().EmitIntValue(IntValue, Size);
       } else
-        getStreamer().EmitValue(Value, Size);
+        getStreamer().EmitValue(Value, Size, ExprLoc);
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;
