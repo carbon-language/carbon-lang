@@ -12,10 +12,10 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
+using namespace llvm;
+
 #define GET_REGINFO_TARGET_DESC
 #include "SystemZGenRegisterInfo.inc"
-
-using namespace llvm;
 
 SystemZRegisterInfo::SystemZRegisterInfo(SystemZTargetMachine &tm)
   : SystemZGenRegisterInfo(SystemZ::R14D), TM(tm) {}

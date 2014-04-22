@@ -27,17 +27,17 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
+using namespace llvm;
+using namespace llvm::X86Disassembler;
+
+#define DEBUG_TYPE "x86-disassembler"
+
 #define GET_REGINFO_ENUM
 #include "X86GenRegisterInfo.inc"
 #define GET_INSTRINFO_ENUM
 #include "X86GenInstrInfo.inc"
 #define GET_SUBTARGETINFO_ENUM
 #include "X86GenSubtargetInfo.inc"
-
-using namespace llvm;
-using namespace llvm::X86Disassembler;
-
-#define DEBUG_TYPE "x86-disassembler"
 
 void llvm::X86Disassembler::Debug(const char *file, unsigned line,
                                   const char *s) {

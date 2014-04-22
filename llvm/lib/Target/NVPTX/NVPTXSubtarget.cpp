@@ -13,14 +13,14 @@
 
 #include "NVPTXSubtarget.h"
 
+using namespace llvm;
+
 #define DEBUG_TYPE "nvptx-subtarget"
 
 #define GET_SUBTARGETINFO_ENUM
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "NVPTXGenSubtargetInfo.inc"
-
-using namespace llvm;
 
 // Pin the vtable to this file.
 void NVPTXSubtarget::anchor() {}

@@ -23,10 +23,10 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_CTOR_DTOR
 #include "AMDGPUGenDFAPacketizer.inc"
-
-using namespace llvm;
 
 R600InstrInfo::R600InstrInfo(AMDGPUTargetMachine &tm)
   : AMDGPUInstrInfo(tm),

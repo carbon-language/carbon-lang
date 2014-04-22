@@ -24,13 +24,13 @@
 #include "llvm/Target/TargetMachine.h"
 #include <cstdlib>
 
+using namespace llvm;
+
 #define DEBUG_TYPE "ppc-subtarget"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "PPCGenSubtargetInfo.inc"
-
-using namespace llvm;
 
 PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, bool is64Bit,

@@ -26,6 +26,8 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_MC_DESC
 #include "PPCGenInstrInfo.inc"
 
@@ -34,8 +36,6 @@
 
 #define GET_REGINFO_MC_DESC
 #include "PPCGenRegisterInfo.inc"
-
-using namespace llvm;
 
 // Pin the vtable to this file.
 PPCTargetStreamer::~PPCTargetStreamer() {}

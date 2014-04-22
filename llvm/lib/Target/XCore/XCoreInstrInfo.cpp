@@ -26,6 +26,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_CTOR_DTOR
 #include "XCoreGenInstrInfo.inc"
 
@@ -40,9 +42,6 @@ namespace XCore {
   };
 }
 }
-
-using namespace llvm;
-
 
 // Pin the vtable to this file.
 void XCoreInstrInfo::anchor() {}

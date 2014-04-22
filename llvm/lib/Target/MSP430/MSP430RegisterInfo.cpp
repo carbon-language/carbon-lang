@@ -26,10 +26,10 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
+using namespace llvm;
+
 #define GET_REGINFO_TARGET_DESC
 #include "MSP430GenRegisterInfo.inc"
-
-using namespace llvm;
 
 // FIXME: Provide proper call frame setup / destroy opcodes.
 MSP430RegisterInfo::MSP430RegisterInfo(MSP430TargetMachine &tm)

@@ -28,10 +28,10 @@
 #include "llvm/Support/TargetRegistry.h"
 #include <algorithm>
 
+using namespace llvm;
+
 #define GET_INSTRINFO_CTOR_DTOR
 #include "AArch64GenInstrInfo.inc"
-
-using namespace llvm;
 
 AArch64InstrInfo::AArch64InstrInfo(const AArch64Subtarget &STI)
   : AArch64GenInstrInfo(AArch64::ADJCALLSTACKDOWN, AArch64::ADJCALLSTACKUP),

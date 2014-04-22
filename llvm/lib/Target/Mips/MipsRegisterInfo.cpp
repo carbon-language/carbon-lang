@@ -37,10 +37,10 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
+using namespace llvm;
+
 #define GET_REGINFO_TARGET_DESC
 #include "MipsGenRegisterInfo.inc"
-
-using namespace llvm;
 
 MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST)
   : MipsGenRegisterInfo(Mips::RA), Subtarget(ST) {}

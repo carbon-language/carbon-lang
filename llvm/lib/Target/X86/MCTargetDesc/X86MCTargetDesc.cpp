@@ -27,6 +27,12 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/TargetRegistry.h"
 
+#if _MSC_VER
+#include <intrin.h>
+#endif
+
+using namespace llvm;
+
 #define GET_REGINFO_MC_DESC
 #include "X86GenRegisterInfo.inc"
 
@@ -35,13 +41,6 @@
 
 #define GET_SUBTARGETINFO_MC_DESC
 #include "X86GenSubtargetInfo.inc"
-
-#if _MSC_VER
-#include <intrin.h>
-#endif
-
-using namespace llvm;
-
 
 std::string X86_MC::ParseX86Triple(StringRef TT) {
   Triple TheTriple(TT);

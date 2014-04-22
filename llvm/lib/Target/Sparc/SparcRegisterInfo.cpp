@@ -25,10 +25,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
+using namespace llvm;
+
 #define GET_REGINFO_TARGET_DESC
 #include "SparcGenRegisterInfo.inc"
-
-using namespace llvm;
 
 static cl::opt<bool>
 ReserveAppRegisters("sparc-reserve-app-registers", cl::Hidden, cl::init(false),

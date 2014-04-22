@@ -22,10 +22,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_CTOR_DTOR
 #include "MSP430GenInstrInfo.inc"
-
-using namespace llvm;
 
 // Pin the vtable to this file.
 void MSP430InstrInfo::anchor() {}

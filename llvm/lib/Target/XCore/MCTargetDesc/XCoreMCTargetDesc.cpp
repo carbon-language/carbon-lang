@@ -23,6 +23,8 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_MC_DESC
 #include "XCoreGenInstrInfo.inc"
 
@@ -31,8 +33,6 @@
 
 #define GET_REGINFO_MC_DESC
 #include "XCoreGenRegisterInfo.inc"
-
-using namespace llvm;
 
 static MCInstrInfo *createXCoreMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();

@@ -12,13 +12,13 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/Host.h"
 
+using namespace llvm;
+
 #define DEBUG_TYPE "systemz-subtarget"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "SystemZGenSubtargetInfo.inc"
-
-using namespace llvm;
 
 // Pin the vtabel to this file.
 void SystemZSubtarget::anchor() {}

@@ -35,13 +35,13 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 
-#define GET_INSTRMAP_INFO
-#define GET_INSTRINFO_CTOR_DTOR
-#include "PPCGenInstrInfo.inc"
-
 using namespace llvm;
 
 #define DEBUG_TYPE "ppc-instr-info"
+
+#define GET_INSTRMAP_INFO
+#define GET_INSTRINFO_CTOR_DTOR
+#include "PPCGenInstrInfo.inc"
 
 static cl::
 opt<bool> DisableCTRLoopAnal("disable-ppc-ctrloop-analysis", cl::Hidden,

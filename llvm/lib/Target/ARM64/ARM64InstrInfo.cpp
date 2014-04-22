@@ -23,10 +23,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_CTOR_DTOR
 #include "ARM64GenInstrInfo.inc"
-
-using namespace llvm;
 
 ARM64InstrInfo::ARM64InstrInfo(const ARM64Subtarget &STI)
     : ARM64GenInstrInfo(ARM64::ADJCALLSTACKDOWN, ARM64::ADJCALLSTACKUP),

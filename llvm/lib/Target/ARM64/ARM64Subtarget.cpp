@@ -18,13 +18,13 @@
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define DEBUG_TYPE "arm64-subtarget"
 
 #define GET_SUBTARGETINFO_CTOR
 #define GET_SUBTARGETINFO_TARGET_DESC
 #include "ARM64GenSubtargetInfo.inc"
-
-using namespace llvm;
 
 ARM64Subtarget::ARM64Subtarget(const std::string &TT, const std::string &CPU,
                                const std::string &FS)

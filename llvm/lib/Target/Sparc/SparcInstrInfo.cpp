@@ -24,11 +24,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
-#define GET_INSTRINFO_CTOR_DTOR
-#include "SparcGenInstrInfo.inc"
-
 using namespace llvm;
 
+#define GET_INSTRINFO_CTOR_DTOR
+#include "SparcGenInstrInfo.inc"
 
 // Pin the vtable to this file.
 void SparcInstrInfo::anchor() {}

@@ -16,6 +16,8 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_MC_DESC
 #include "SystemZGenInstrInfo.inc"
 
@@ -24,8 +26,6 @@
 
 #define GET_REGINFO_MC_DESC
 #include "SystemZGenRegisterInfo.inc"
-
-using namespace llvm;
 
 const unsigned SystemZMC::GR32Regs[16] = {
   SystemZ::R0L, SystemZ::R1L, SystemZ::R2L, SystemZ::R3L,

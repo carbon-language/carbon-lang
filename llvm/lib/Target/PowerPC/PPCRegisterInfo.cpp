@@ -42,10 +42,10 @@
 #include "llvm/Target/TargetOptions.h"
 #include <cstdlib>
 
+using namespace llvm;
+
 #define GET_REGINFO_TARGET_DESC
 #include "PPCGenRegisterInfo.inc"
-
-using namespace llvm;
 
 static cl::opt<bool>
 EnableBasePointer("ppc-use-base-pointer", cl::Hidden, cl::init(true),

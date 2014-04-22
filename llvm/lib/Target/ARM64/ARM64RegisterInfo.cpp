@@ -27,10 +27,10 @@
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetOptions.h"
 
+using namespace llvm;
+
 #define GET_REGINFO_TARGET_DESC
 #include "ARM64GenRegisterInfo.inc"
-
-using namespace llvm;
 
 ARM64RegisterInfo::ARM64RegisterInfo(const ARM64InstrInfo *tii,
                                      const ARM64Subtarget *sti)

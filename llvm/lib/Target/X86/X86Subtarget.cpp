@@ -24,15 +24,15 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
-#define GET_SUBTARGETINFO_TARGET_DESC
-#define GET_SUBTARGETINFO_CTOR
-#include "X86GenSubtargetInfo.inc"
-
 using namespace llvm;
 
 #if defined(_MSC_VER)
 #include <intrin.h>
 #endif
+
+#define GET_SUBTARGETINFO_TARGET_DESC
+#define GET_SUBTARGETINFO_CTOR
+#include "X86GenSubtargetInfo.inc"
 
 /// ClassifyBlockAddressReference - Classify a blockaddress reference for the
 /// current subtarget according to how we should reference it in a non-pcrel

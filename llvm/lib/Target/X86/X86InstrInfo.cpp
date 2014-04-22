@@ -36,12 +36,12 @@
 #include "llvm/Target/TargetOptions.h"
 #include <limits>
 
+using namespace llvm;
+
 #define DEBUG_TYPE "x86-instr-info"
 
 #define GET_INSTRINFO_CTOR_DTOR
 #include "X86GenInstrInfo.inc"
-
-using namespace llvm;
 
 static cl::opt<bool>
 NoFusing("disable-spill-fusing",

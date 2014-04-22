@@ -15,13 +15,13 @@
 #include "XCore.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define DEBUG_TYPE "xcore-subtarget"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "XCoreGenSubtargetInfo.inc"
-
-using namespace llvm;
 
 void XCoreSubtarget::anchor() { }
 

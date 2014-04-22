@@ -24,6 +24,8 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 
+using namespace llvm;
+
 // Pull DecodeStatus and its enum values into the global namespace.
 typedef llvm::MCDisassembler::DecodeStatus DecodeStatus;
 
@@ -177,8 +179,6 @@ static DecodeStatus DecodeVecShiftL8Imm(llvm::MCInst &Inst, unsigned Imm,
 
 #include "ARM64GenDisassemblerTables.inc"
 #include "ARM64GenInstrInfo.inc"
-
-using namespace llvm;
 
 #define Success llvm::MCDisassembler::Success
 #define Fail llvm::MCDisassembler::Fail

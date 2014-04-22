@@ -38,10 +38,10 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
+using namespace llvm;
+
 #define GET_REGINFO_TARGET_DESC
 #include "X86GenRegisterInfo.inc"
-
-using namespace llvm;
 
 cl::opt<bool>
 ForceStackAlign("force-align-stack",

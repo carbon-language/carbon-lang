@@ -25,6 +25,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_REGINFO_MC_DESC
 #include "AArch64GenRegisterInfo.inc"
 
@@ -33,8 +35,6 @@
 
 #define GET_SUBTARGETINFO_MC_DESC
 #include "AArch64GenSubtargetInfo.inc"
-
-using namespace llvm;
 
 MCSubtargetInfo *AArch64_MC::createAArch64MCSubtargetInfo(StringRef TT,
                                                           StringRef CPU,

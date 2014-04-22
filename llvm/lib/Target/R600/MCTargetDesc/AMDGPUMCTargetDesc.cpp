@@ -24,6 +24,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_MC_DESC
 #include "AMDGPUGenInstrInfo.inc"
 
@@ -32,8 +34,6 @@
 
 #define GET_REGINFO_MC_DESC
 #include "AMDGPUGenRegisterInfo.inc"
-
-using namespace llvm;
 
 static MCInstrInfo *createAMDGPUMCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();

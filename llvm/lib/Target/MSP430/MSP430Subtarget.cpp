@@ -15,13 +15,13 @@
 #include "MSP430.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define DEBUG_TYPE "msp430-subtarget"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "MSP430GenSubtargetInfo.inc"
-
-using namespace llvm;
 
 void MSP430Subtarget::anchor() { }
 

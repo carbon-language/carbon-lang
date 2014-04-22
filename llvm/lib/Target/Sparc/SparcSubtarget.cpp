@@ -16,13 +16,13 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define DEBUG_TYPE "sparc-subtarget"
 
 #define GET_SUBTARGETINFO_TARGET_DESC
 #define GET_SUBTARGETINFO_CTOR
 #include "SparcGenSubtargetInfo.inc"
-
-using namespace llvm;
 
 void SparcSubtarget::anchor() { }
 

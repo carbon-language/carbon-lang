@@ -23,6 +23,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_MC_DESC
 #include "ARM64GenInstrInfo.inc"
 
@@ -31,8 +33,6 @@
 
 #define GET_REGINFO_MC_DESC
 #include "ARM64GenRegisterInfo.inc"
-
-using namespace llvm;
 
 static MCInstrInfo *createARM64MCInstrInfo() {
   MCInstrInfo *X = new MCInstrInfo();

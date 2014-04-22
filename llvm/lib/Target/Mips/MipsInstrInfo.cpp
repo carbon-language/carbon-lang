@@ -22,10 +22,10 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
+using namespace llvm;
+
 #define GET_INSTRINFO_CTOR_DTOR
 #include "MipsGenInstrInfo.inc"
-
-using namespace llvm;
 
 // Pin the vtable to this file.
 void MipsInstrInfo::anchor() {}
