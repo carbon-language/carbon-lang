@@ -937,6 +937,27 @@ public:
     uint64_t Integer;
   };
 
+  /// \brief Data for a packaged loop.
+  ///
+  /// Contains the data necessary to represent represent a loop as a node once
+  /// it's packaged.
+  ///
+  /// PackagedLoopData inherits from BlockData to give the node the necessary
+  /// stats.  Further, it has a list of successors, list of members, and stores
+  /// the backedge mass assigned to this loop.
+  struct PackagedLoopData {
+    typedef SmallVector<std::pair<BlockNode, BlockMass>, 4> ExitMap;
+    typedef SmallVector<BlockNode, 4> MemberList;
+    BlockNode Header;       ///< Header.
+    ExitMap Exits;          ///< Successor edges (and weights).
+    MemberList Members;     ///< Members of the loop.
+    BlockMass BackedgeMass; ///< Mass returned to loop header.
+    BlockMass Mass;
+    Float Scale;
+
+    PackagedLoopData(const BlockNode &Header) : Header(Header) {}
+  };
+
   /// \brief Index of loop information.
   struct WorkingData {
     BlockNode ContainingLoop; ///< The block whose loop this block is inside.
@@ -1014,27 +1035,6 @@ public:
 
   private:
     void add(const BlockNode &Node, uint64_t Amount, Weight::DistType Type);
-  };
-
-  /// \brief Data for a packaged loop.
-  ///
-  /// Contains the data necessary to represent represent a loop as a node once
-  /// it's packaged.
-  ///
-  /// PackagedLoopData inherits from BlockData to give the node the necessary
-  /// stats.  Further, it has a list of successors, list of members, and stores
-  /// the backedge mass assigned to this loop.
-  struct PackagedLoopData {
-    typedef SmallVector<std::pair<BlockNode, BlockMass>, 4> ExitMap;
-    typedef SmallVector<BlockNode, 4> MemberList;
-    BlockNode Header;       ///< Header.
-    ExitMap Exits;          ///< Successor edges (and weights).
-    MemberList Members;     ///< Members of the loop.
-    BlockMass BackedgeMass; ///< Mass returned to loop header.
-    BlockMass Mass;
-    Float Scale;
-
-    PackagedLoopData(const BlockNode &Header) : Header(Header) {}
   };
 
   /// \brief Data about each block.  This is used downstream.
