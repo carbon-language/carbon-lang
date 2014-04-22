@@ -52,10 +52,12 @@ int main(int argc, char **argv) {
     *t = 42;
     x = (char*)realloc(t, size);
     assert(*t == 42);
+    free(t);
   }
   // The NULL pointer is printed differently on different systems, while (long)0
   // is always the same.
   fprintf(stderr, "x: %lx\n", (long)x);
+  free(x);
   return x != 0;
 }
 // CHECK-mCRASH: malloc:

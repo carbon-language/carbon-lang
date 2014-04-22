@@ -31,6 +31,8 @@ struct T : S {
 
 struct U : S, T { virtual int v() { return 2; } };
 
+T *p = 0;  // Make p global so that lsan does not complain.
+
 int main(int, char **argv) {
   T t;
   (void)t.a;
@@ -49,7 +51,6 @@ int main(int, char **argv) {
   (void)u.T::v();
   (void)((T&)u).S::v();
 
-  T *p = 0;
   char Buffer[sizeof(U)] = {};
   switch (argv[1][1]) {
   case '0':
