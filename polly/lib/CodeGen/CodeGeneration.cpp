@@ -23,7 +23,6 @@
 #include "polly/CodeGen/Cloog.h"
 #ifdef CLOOG_FOUND
 
-#define DEBUG_TYPE "polly-codegen"
 #include "polly/Dependences.h"
 #include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
@@ -57,6 +56,8 @@
 
 using namespace polly;
 using namespace llvm;
+
+#define DEBUG_TYPE "polly-codegen"
 
 struct isl_set;
 

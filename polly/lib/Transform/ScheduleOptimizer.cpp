@@ -30,12 +30,12 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
-
-#define DEBUG_TYPE "polly-opt-isl"
 #include "llvm/Support/Debug.h"
 
 using namespace llvm;
 using namespace polly;
+
+#define DEBUG_TYPE "polly-opt-isl"
 
 namespace polly {
 bool DisablePollyTiling;

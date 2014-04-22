@@ -25,6 +25,8 @@
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
+#include "llvm/Support/Debug.h"
+
 #include <isl/aff.h>
 #include <isl/ctx.h>
 #include <isl/flow.h>
@@ -32,11 +34,10 @@
 #include <isl/options.h>
 #include <isl/set.h>
 
-#define DEBUG_TYPE "polly-dependence"
-#include "llvm/Support/Debug.h"
-
 using namespace polly;
 using namespace llvm;
+
+#define DEBUG_TYPE "polly-dependence"
 
 static cl::opt<int>
 OptComputeOut("polly-dependences-computeout",

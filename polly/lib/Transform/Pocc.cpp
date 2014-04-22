@@ -24,8 +24,7 @@
 #include "polly/Options.h"
 #include "polly/ScheduleOptimizer.h"
 #include "polly/ScopInfo.h"
-
-#define DEBUG_TYPE "polly-opt-pocc"
+#include "polly/ScopLib.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
@@ -34,14 +33,14 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 
-#include "polly/ScopLib.h"
-
 #include "isl/space.h"
 #include "isl/map.h"
 #include "isl/constraint.h"
 
 using namespace llvm;
 using namespace polly;
+
+#define DEBUG_TYPE "polly-opt-pocc"
 
 static cl::opt<std::string> PlutoFuse("pluto-fuse", cl::desc(""), cl::Hidden,
                                       cl::value_desc("Set fuse mode of Pluto"),

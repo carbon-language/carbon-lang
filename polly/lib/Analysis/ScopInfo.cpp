@@ -31,8 +31,6 @@
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Support/CommandLine.h"
-
-#define DEBUG_TYPE "polly-scops"
 #include "llvm/Support/Debug.h"
 
 #include "isl/constraint.h"
@@ -44,12 +42,15 @@
 #include "isl/local_space.h"
 #include "isl/options.h"
 #include "isl/val.h"
+
 #include <sstream>
 #include <string>
 #include <vector>
 
 using namespace llvm;
 using namespace polly;
+
+#define DEBUG_TYPE "polly-scops"
 
 STATISTIC(ScopFound, "Number of valid Scops");
 STATISTIC(RichScopFound, "Number of Scops containing a loop");

@@ -22,8 +22,6 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/system_error.h"
 
-#define DEBUG_TYPE "polly-import-jscop"
-
 #include "json/reader.h"
 #include "json/writer.h"
 
@@ -36,6 +34,8 @@
 
 using namespace llvm;
 using namespace polly;
+
+#define DEBUG_TYPE "polly-import-jscop"
 
 STATISTIC(NewAccessMapFound, "Number of updated access functions");
 

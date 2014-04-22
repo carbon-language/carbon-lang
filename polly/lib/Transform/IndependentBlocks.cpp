@@ -22,13 +22,14 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CommandLine.h"
-#define DEBUG_TYPE "polly-independent"
 #include "llvm/Support/Debug.h"
 
 #include <vector>
 
 using namespace polly;
 using namespace llvm;
+
+#define DEBUG_TYPE "polly-independent"
 
 static cl::opt<bool> DisableIntraScopScalarToArray(
     "disable-polly-intra-scop-scalar-to-array",

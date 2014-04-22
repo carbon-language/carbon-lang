@@ -61,14 +61,13 @@
 #include "llvm/IR/DiagnosticInfo.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
-
-#define DEBUG_TYPE "polly-detect"
 #include "llvm/Support/Debug.h"
-
 #include <set>
 
 using namespace llvm;
 using namespace polly;
+
+#define DEBUG_TYPE "polly-detect"
 
 static cl::opt<bool>
 DetectScopsWithoutLoops("polly-detect-scops-in-functions-without-loops",

@@ -20,8 +20,6 @@
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
 #include "polly/Support/GICHelper.h"
-
-#define DEBUG_TYPE "polly-opt-pluto"
 #include "llvm/Support/Debug.h"
 
 #include "pluto/libpluto.h"
@@ -29,6 +27,8 @@
 
 using namespace llvm;
 using namespace polly;
+
+#define DEBUG_TYPE "polly-opt-pluto"
 
 static cl::opt<bool> EnableTiling("polly-pluto-tile", cl::desc("Enable tiling"),
                                   cl::Hidden, cl::init(false), cl::ZeroOrMore,

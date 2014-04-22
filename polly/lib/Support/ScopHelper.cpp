@@ -18,12 +18,12 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/IR/CFG.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
-#define DEBUG_TYPE "polly-scop-helper"
-#include "llvm/Support/Debug.h"
-
 using namespace llvm;
+
+#define DEBUG_TYPE "polly-scop-helper"
 
 // Helper function for Scop
 // TODO: Add assertion to not allow parameter to be null

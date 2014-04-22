@@ -33,7 +33,6 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/IR/Module.h"
-#define DEBUG_TYPE "polly-codegen-isl"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/IR/DataLayout.h"
@@ -51,6 +50,8 @@
 
 using namespace polly;
 using namespace llvm;
+
+#define DEBUG_TYPE "polly-codegen-isl"
 
 /// @brief Insert function calls that print certain LLVM values at run time.
 ///

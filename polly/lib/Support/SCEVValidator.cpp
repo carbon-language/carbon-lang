@@ -1,16 +1,16 @@
 
 #include "polly/Support/SCEVValidator.h"
 #include "polly/ScopInfo.h"
-
-#define DEBUG_TYPE "polly-scev-validator"
-#include "llvm/Support/Debug.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/RegionInfo.h"
+#include "llvm/Support/Debug.h"
 
 #include <vector>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "polly-scev-validator"
 
 namespace SCEVType {
 /// @brief The type of a SCEV

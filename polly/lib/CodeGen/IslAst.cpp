@@ -25,8 +25,6 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/Options.h"
 #include "polly/ScopInfo.h"
-
-#define DEBUG_TYPE "polly-ast"
 #include "llvm/Support/Debug.h"
 
 #include "isl/union_map.h"
@@ -38,6 +36,8 @@
 
 using namespace llvm;
 using namespace polly;
+
+#define DEBUG_TYPE "polly-ast"
 
 static cl::opt<bool> UseContext("polly-ast-use-context",
                                 cl::desc("Use context"), cl::Hidden,

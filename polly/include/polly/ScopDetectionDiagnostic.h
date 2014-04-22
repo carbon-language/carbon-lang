@@ -23,12 +23,11 @@
 #include "llvm/IR/Value.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include <string>
 
 #define DEBUG_TYPE "polly-detect"
-#include "llvm/Support/Debug.h"
-
-#include <string>
 
 #define BADSCOP_STAT(NAME, DESC)                                               \
   STATISTIC(Bad##NAME##ForScop, "Number of bad regions for Scop: " DESC)

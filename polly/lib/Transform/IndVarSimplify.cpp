@@ -24,8 +24,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "indvars"
-
 #include "polly/LinkAllPasses.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -51,6 +49,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/SimplifyIndVar.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "indvars"
 
 STATISTIC(NumRemoved, "Number of aux indvars removed");
 STATISTIC(NumWidened, "Number of indvars widened");
