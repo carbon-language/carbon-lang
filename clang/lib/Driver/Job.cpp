@@ -62,7 +62,8 @@ static int skipArgs(const char *Flag) {
 
   // These flags are treated as a single argument (e.g., -F<Dir>).
   StringRef FlagRef(Flag);
-  if (FlagRef.startswith("-F") || FlagRef.startswith("-I"))
+  if (FlagRef.startswith("-F") || FlagRef.startswith("-I") ||
+      FlagRef.startswith("-fmodules-cache-path="))
     return 1;
 
   return 0;
