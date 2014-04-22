@@ -630,11 +630,11 @@ static void cleanup(BlockFrequencyInfoImplBase &BFI) {
 static BlockNode getPackagedNode(const BlockFrequencyInfoImplBase &BFI,
                                  const BlockNode &Node) {
   assert(Node.isValid());
-  if (!BFI.Working[Node.Index].IsPackaged)
+  if (!BFI.Working[Node.Index].isPackaged())
     return Node;
-  if (!BFI.Working[Node.Index].ContainingLoop.isValid())
+  if (!BFI.Working[Node.Index].isAPackage())
     return Node;
-  return getPackagedNode(BFI, BFI.Working[Node.Index].ContainingLoop);
+  return getPackagedNode(BFI, BFI.Working[Node.Index].getContainingHeader());
 }
 
 /// \brief Get the appropriate mass for a possible pseudo-node loop package.
@@ -645,7 +645,7 @@ static BlockNode getPackagedNode(const BlockFrequencyInfoImplBase &BFI,
 static BlockMass &getPackageMass(BlockFrequencyInfoImplBase &BFI,
                                  const BlockNode &Node) {
   assert(Node.isValid());
-  assert(!BFI.Working[Node.Index].IsPackaged);
+  assert(!BFI.Working[Node.Index].isPackaged());
   if (!BFI.Working[Node.Index].isAPackage())
     return BFI.Working[Node.Index].Mass;
 
@@ -681,7 +681,7 @@ void BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
   BlockNode Resolved = getPackagedNode(*this, Succ);
   assert(Resolved != LoopHead);
 
-  if (Working[Resolved.Index].ContainingLoop != LoopHead) {
+  if (Working[Resolved.Index].getContainingHeader() != LoopHead) {
     DEBUG(debugSuccessor("  exit  ", Resolved));
     Dist.addExit(Resolved, Weight);
     return;
@@ -746,10 +746,10 @@ void BlockFrequencyInfoImplBase::packageLoop(const BlockNode &LoopHead) {
   DEBUG(dbgs() << "packaging-loop: " << getBlockName(LoopHead) << "\n");
   auto &PackagedLoop = getLoopPackage(LoopHead);
   PackagedLoop.IsPackaged = true;
-  for (const BlockNode &M : PackagedLoop.Members) {
-    DEBUG(dbgs() << " - node: " << getBlockName(M.Index) << "\n");
-    Working[M.Index].IsPackaged = true;
-  }
+  DEBUG(for (const BlockNode &M
+             : PackagedLoop.Members) {
+               dbgs() << " - node: " << getBlockName(M.Index) << "\n";
+             });
 }
 
 void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,

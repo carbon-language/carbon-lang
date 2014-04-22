@@ -958,16 +958,25 @@ public:
   /// \brief Index of loop information.
   struct WorkingData {
     LoopData *Loop;           ///< The loop this block is the header of.
-    BlockNode ContainingLoop; ///< The block whose loop this block is inside.
-    bool IsPackaged;          ///< Has ContainingLoop been packaged up?
+    LoopData *ContainingLoop; ///< The block whose loop this block is inside.
     BlockMass Mass;           ///< Mass distribution from the entry block.
 
-    WorkingData() : Loop(nullptr), IsPackaged(false) {}
+    WorkingData() : Loop(nullptr), ContainingLoop(nullptr) {}
 
-    bool hasLoopHeader() const { return ContainingLoop.isValid(); }
+    bool hasLoopHeader() const { return ContainingLoop; }
     bool isLoopHeader() const { return Loop; }
 
-    /// \brief Has this block's loop been packaged up?
+    BlockNode getContainingHeader() const {
+      if (ContainingLoop)
+        return ContainingLoop->Header;
+      return BlockNode();
+    }
+
+    /// \brief Has ContainingLoop been packaged up?
+    bool isPackaged() const {
+      return ContainingLoop && ContainingLoop->IsPackaged;
+    }
+    /// \brief Has Loop been packaged up?
     bool isAPackage() const { return Loop && Loop->IsPackaged; }
   };
 
@@ -1041,7 +1050,7 @@ public:
   /// \brief Loop data: see initializeLoops().
   std::vector<WorkingData> Working;
 
-  /// \brief Indexed information about packaged loops.
+  /// \brief Indexed information about loops.
   std::vector<std::unique_ptr<LoopData>> PackagedLoops;
 
   /// \brief Add all edges out of a packaged loop to the distribution.
@@ -1452,7 +1461,7 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
     const auto &HeaderData = Working[Header.Index];
     assert(HeaderData.isLoopHeader());
 
-    Working[Index].ContainingLoop = Header;
+    Working[Index].ContainingLoop = HeaderData.Loop;
     HeaderData.Loop->Members.push_back(Index);
     DEBUG(dbgs() << " - loop = " << getBlockName(Header)
                  << ": member = " << getBlockName(Index) << "\n");
