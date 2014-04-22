@@ -417,7 +417,7 @@ namespace llvm {
     // Unrecoverable error has occurred. Display the best diagnostic we can
     // and bail via exit(1). For now, most MC backend errors are unrecoverable.
     // FIXME: We should really do something about that.
-    LLVM_ATTRIBUTE_NORETURN void FatalError(SMLoc L, const Twine &Msg);
+    LLVM_ATTRIBUTE_NORETURN void FatalError(SMLoc L, const Twine &Msg) const;
   };
 
 } // end namespace llvm

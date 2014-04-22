@@ -339,7 +339,7 @@ bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
   return !MCDwarfFiles[FileNumber].Name.empty();
 }
 
-void MCContext::FatalError(SMLoc Loc, const Twine &Msg) {
+void MCContext::FatalError(SMLoc Loc, const Twine &Msg) const {
   // If we have a source manager and a location, use it. Otherwise just
   // use the generic report_fatal_error().
   if (!SrcMgr || Loc == SMLoc())
