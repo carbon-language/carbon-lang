@@ -1,4 +1,6 @@
 // Check that memset() call from a shared library gets intercepted.
+// Please always keep this file in sync with
+// ../Linux/interception-in-shared-lib-test.cc.
 
 // RUN: %clangxx_asan -O0 %s -DSHARED_LIB \
 // RUN:     -shared -o %T/libinterception-in-shared-lib-test.so \
@@ -24,7 +26,7 @@ int main(int argc, char *argv[]) {
   my_memset(buf, 11);
   // CHECK: {{.*ERROR: AddressSanitizer: stack-buffer-overflow}}
   // CHECK: {{WRITE of size 11 at 0x.* thread T0}}
-  // CHECK: {{    #0 0x.* in my_memset .*interception-in-shared-lib-test.cc:17}}
+  // CHECK: {{0x.* in my_memset .*interception-in-shared-lib-test.cc:19}}
   return 0;
 }
 #endif
