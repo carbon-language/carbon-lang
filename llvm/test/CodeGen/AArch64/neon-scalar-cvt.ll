@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; arm64 has a different approach to scalars. Discarding.
 
 define float @test_vcvts_f32_s32(i32 %a) {
 ; CHECK: test_vcvts_f32_s32

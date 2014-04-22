@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has a copy of the key parts in AdvSIMD-Scalar.ll
 
 define <1 x i64> @add1xi64(<1 x i64> %A, <1 x i64> %B) {
 ;CHECK: add {{d[0-9]+}}, {{d[0-9]+}}, {{d[0-9]+}}

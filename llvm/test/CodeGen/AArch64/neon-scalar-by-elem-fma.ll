@@ -1,10 +1,11 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon -fp-contract=fast | FileCheck %s
+; RUN: llc < %s -verify-machineinstrs -mtriple=arm64-none-linux-gnu -mattr=+neon -fp-contract=fast | FileCheck %s
 
 declare float @llvm.fma.f32(float, float, float)
 declare double @llvm.fma.f64(double, double, double)
 
 define float @test_fmla_ss4S(float %a, float %b, <4 x float> %v) {
-  ; CHECK: test_fmla_ss4S
+  ; CHECK-LABEL: test_fmla_ss4S
   ; CHECK: fmla {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[3]
   %tmp1 = extractelement <4 x float> %v, i32 3
   %tmp2 = call float @llvm.fma.f32(float %b, float %tmp1, float %a)
@@ -12,7 +13,7 @@ define float @test_fmla_ss4S(float %a, float %b, <4 x float> %v) {
 }
 
 define float @test_fmla_ss4S_swap(float %a, float %b, <4 x float> %v) {
-  ; CHECK: test_fmla_ss4S_swap
+  ; CHECK-LABEL: test_fmla_ss4S_swap
   ; CHECK: fmla {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[3]
   %tmp1 = extractelement <4 x float> %v, i32 3
   %tmp2 = call float @llvm.fma.f32(float %tmp1, float %a, float %a)
@@ -20,7 +21,7 @@ define float @test_fmla_ss4S_swap(float %a, float %b, <4 x float> %v) {
 }
 
 define float @test_fmla_ss2S(float %a, float %b, <2 x float> %v) {
-  ; CHECK: test_fmla_ss2S
+  ; CHECK-LABEL: test_fmla_ss2S
   ; CHECK: fmla {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[1]
   %tmp1 = extractelement <2 x float> %v, i32 1
   %tmp2 = call float @llvm.fma.f32(float %b, float %tmp1, float %a)
@@ -28,15 +29,15 @@ define float @test_fmla_ss2S(float %a, float %b, <2 x float> %v) {
 }
 
 define double @test_fmla_ddD(double %a, double %b, <1 x double> %v) {
-  ; CHECK: test_fmla_ddD
-  ; CHECK: fmla {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[0]
+  ; CHECK-LABEL: test_fmla_ddD
+  ; CHECK: {{fmla d[0-9]+, d[0-9]+, v[0-9]+.d\[0]|fmadd d[0-9]+, d[0-9]+, d[0-9]+, d[0-9]+}}
   %tmp1 = extractelement <1 x double> %v, i32 0
   %tmp2 = call double @llvm.fma.f64(double %b, double %tmp1, double %a)
   ret double %tmp2
 }
 
 define double @test_fmla_dd2D(double %a, double %b, <2 x double> %v) {
-  ; CHECK: test_fmla_dd2D
+  ; CHECK-LABEL: test_fmla_dd2D
   ; CHECK: fmla {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[1]
   %tmp1 = extractelement <2 x double> %v, i32 1
   %tmp2 = call double @llvm.fma.f64(double %b, double %tmp1, double %a)
@@ -44,7 +45,7 @@ define double @test_fmla_dd2D(double %a, double %b, <2 x double> %v) {
 }
 
 define double @test_fmla_dd2D_swap(double %a, double %b, <2 x double> %v) {
-  ; CHECK: test_fmla_dd2D_swap
+  ; CHECK-LABEL: test_fmla_dd2D_swap
   ; CHECK: fmla {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[1]
   %tmp1 = extractelement <2 x double> %v, i32 1
   %tmp2 = call double @llvm.fma.f64(double %tmp1, double %b, double %a)
@@ -52,7 +53,7 @@ define double @test_fmla_dd2D_swap(double %a, double %b, <2 x double> %v) {
 }
 
 define float @test_fmls_ss4S(float %a, float %b, <4 x float> %v) {
-  ; CHECK: test_fmls_ss4S
+  ; CHECK-LABEL: test_fmls_ss4S
   ; CHECK: fmls {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[3]
   %tmp1 = extractelement <4 x float> %v, i32 3
   %tmp2 = fsub float -0.0, %tmp1
@@ -61,7 +62,7 @@ define float @test_fmls_ss4S(float %a, float %b, <4 x float> %v) {
 }
 
 define float @test_fmls_ss4S_swap(float %a, float %b, <4 x float> %v) {
-  ; CHECK: test_fmls_ss4S_swap
+  ; CHECK-LABEL: test_fmls_ss4S_swap
   ; CHECK: fmls {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[3]
   %tmp1 = extractelement <4 x float> %v, i32 3
   %tmp2 = fsub float -0.0, %tmp1
@@ -71,7 +72,7 @@ define float @test_fmls_ss4S_swap(float %a, float %b, <4 x float> %v) {
 
 
 define float @test_fmls_ss2S(float %a, float %b, <2 x float> %v) {
-  ; CHECK: test_fmls_ss2S
+  ; CHECK-LABEL: test_fmls_ss2S
   ; CHECK: fmls {{s[0-9]+}}, {{s[0-9]+}}, {{v[0-9]+}}.s[1]
   %tmp1 = extractelement <2 x float> %v, i32 1
   %tmp2 = fsub float -0.0, %tmp1
@@ -80,8 +81,8 @@ define float @test_fmls_ss2S(float %a, float %b, <2 x float> %v) {
 }
 
 define double @test_fmls_ddD(double %a, double %b, <1 x double> %v) {
-  ; CHECK: test_fmls_ddD
-  ; CHECK: fmls {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[0]
+  ; CHECK-LABEL: test_fmls_ddD
+  ; CHECK: {{fmls d[0-9]+, d[0-9]+, v[0-9]+.d\[0]|fmsub d[0-9]+, d[0-9]+, d[0-9]+, d[0-9]+}}
   %tmp1 = extractelement <1 x double> %v, i32 0
   %tmp2 = fsub double -0.0, %tmp1
   %tmp3 = call double @llvm.fma.f64(double %tmp2, double %tmp1, double %a)
@@ -89,7 +90,7 @@ define double @test_fmls_ddD(double %a, double %b, <1 x double> %v) {
 }
 
 define double @test_fmls_dd2D(double %a, double %b, <2 x double> %v) {
-  ; CHECK: test_fmls_dd2D
+  ; CHECK-LABEL: test_fmls_dd2D
   ; CHECK: fmls {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[1]
   %tmp1 = extractelement <2 x double> %v, i32 1
   %tmp2 = fsub double -0.0, %tmp1
@@ -98,7 +99,7 @@ define double @test_fmls_dd2D(double %a, double %b, <2 x double> %v) {
 }
 
 define double @test_fmls_dd2D_swap(double %a, double %b, <2 x double> %v) {
-  ; CHECK: test_fmls_dd2D_swap
+  ; CHECK-LABEL: test_fmls_dd2D_swap
   ; CHECK: fmls {{d[0-9]+}}, {{d[0-9]+}}, {{v[0-9]+}}.d[1]
   %tmp1 = extractelement <2 x double> %v, i32 1
   %tmp2 = fsub double -0.0, %tmp1

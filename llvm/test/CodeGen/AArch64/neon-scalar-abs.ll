@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has tests for i64 versions, uses different approach for others.
 
 define i64 @test_vabsd_s64(i64 %a) {
 ; CHECK: test_vabsd_s64

@@ -1,5 +1,5 @@
 ; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu < %s | FileCheck %s
-; RUN: llc -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 < %s | FileCheck --check-prefix=CHECK-NOFP %s
+; arm64 has its own copy of this file, ported during implementation (variadic-aapcs.ll)
 
 %va_list = type {i8*, i8*, i8*, i32, i32}
 

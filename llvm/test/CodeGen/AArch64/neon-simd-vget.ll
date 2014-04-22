@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has its own copy: aarch64-neon-simd-vget.ll
 
 define <8 x i8> @test_vget_high_s8(<16 x i8> %a) {
 ; CHECK-LABEL: test_vget_high_s8:

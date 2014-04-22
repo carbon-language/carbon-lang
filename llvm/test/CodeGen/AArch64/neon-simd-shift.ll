@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; arm64 has separate copy of parts that aren't pure intrinsic wrangling.
 
 define <8 x i8> @test_vshr_n_s8(<8 x i8> %a) {
 ; CHECK: test_vshr_n_s8

@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; arm64 has (the non-trivial parts of) this test covered by vcmp.ll
 
 ;; Scalar Integer Compare
 

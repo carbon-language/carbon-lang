@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=+neon < %s | FileCheck %s
+; arm64 doesn't use <1 x iN> types, for N < 64.
 
 define <1 x i64> @test_zext_v1i32_v1i64(<2 x i32> %v) nounwind readnone {
 ; CHECK-LABEL: test_zext_v1i32_v1i64:

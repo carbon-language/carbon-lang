@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
+; This test is just intrinsic pumping. arm64 has its own tbl/tbx tests.
 
 declare <16 x i8> @llvm.aarch64.neon.vtbx4.v16i8(<16 x i8>, <16 x i8>, <16 x i8>, <16 x i8>, <16 x i8>, <16 x i8>)
 
