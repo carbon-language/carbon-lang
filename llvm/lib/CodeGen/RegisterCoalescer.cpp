@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "regalloc"
 #include "RegisterCoalescer.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallSet.h"
@@ -41,6 +40,8 @@
 #include <algorithm>
 #include <cmath>
 using namespace llvm;
+
+#define DEBUG_TYPE "regalloc"
 
 STATISTIC(numJoins    , "Number of interval joins performed");
 STATISTIC(numCrossRCs , "Number of cross class joins performed");

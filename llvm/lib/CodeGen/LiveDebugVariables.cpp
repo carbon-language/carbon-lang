@@ -19,7 +19,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "livedebug"
 #include "LiveDebugVariables.h"
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/Statistic.h"
@@ -44,6 +43,8 @@
 #include <memory>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "livedebug"
 
 static cl::opt<bool>
 EnableLDV("live-debug-variables", cl::init(true),

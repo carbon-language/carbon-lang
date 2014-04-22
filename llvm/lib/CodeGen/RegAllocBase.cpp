@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "regalloc"
 #include "RegAllocBase.h"
 #include "Spiller.h"
 #include "llvm/ADT/Statistic.h"
@@ -34,6 +33,8 @@
 #include "llvm/Support/Timer.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "regalloc"
 
 STATISTIC(NumNewQueued    , "Number of new live ranges queued");
 

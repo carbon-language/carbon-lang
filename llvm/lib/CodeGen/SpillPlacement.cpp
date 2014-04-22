@@ -27,7 +27,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "spillplacement"
 #include "SpillPlacement.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/EdgeBundles.h"
@@ -40,6 +39,8 @@
 #include "llvm/Support/Format.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "spillplacement"
 
 char SpillPlacement::ID = 0;
 INITIALIZE_PASS_BEGIN(SpillPlacement, "spill-code-placement",

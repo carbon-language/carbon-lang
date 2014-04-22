@@ -11,13 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "regalloc"
 #include "InterferenceCache.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "regalloc"
 
 // Static member used for null interference cursors.
 InterferenceCache::BlockInterference InterferenceCache::Cursor::NoInterference;

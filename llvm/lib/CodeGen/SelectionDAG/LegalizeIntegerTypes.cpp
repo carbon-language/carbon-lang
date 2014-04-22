@@ -18,12 +18,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "legalize-types"
 #include "LegalizeTypes.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "legalize-types"
 
 //===----------------------------------------------------------------------===//
 //  Integer Result Promotion

@@ -15,12 +15,13 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "basictti"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include <utility>
 using namespace llvm;
+
+#define DEBUG_TYPE "basictti"
 
 namespace {
 

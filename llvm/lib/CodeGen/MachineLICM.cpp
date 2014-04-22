@@ -20,7 +20,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "machine-licm"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
@@ -41,6 +40,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "machine-licm"
 
 static cl::opt<bool>
 AvoidSpeculation("avoid-speculation",

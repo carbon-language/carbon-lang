@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "stack-protector"
 #include "llvm/CodeGen/StackProtector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -36,6 +35,8 @@
 #include "llvm/Support/CommandLine.h"
 #include <cstdlib>
 using namespace llvm;
+
+#define DEBUG_TYPE "stack-protector"
 
 STATISTIC(NumFunProtected, "Number of functions protected");
 STATISTIC(NumAddrTaken, "Number of local variables that have their address"

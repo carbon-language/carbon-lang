@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "misched"
 #include "llvm/CodeGen/ScheduleDAGInstrs.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -40,6 +39,8 @@
 #include <queue>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "misched"
 
 static cl::opt<bool> EnableAASchedMI("enable-aa-sched-mi", cl::Hidden,
     cl::ZeroOrMore, cl::init(false),

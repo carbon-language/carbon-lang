@@ -11,12 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "regalloc"
 #include "LiveRangeCalc.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "regalloc"
 
 void LiveRangeCalc::reset(const MachineFunction *mf,
                           SlotIndexes *SI,

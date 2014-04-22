@@ -13,11 +13,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "scheduler"
 #include "llvm/CodeGen/LatencyPriorityQueue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "scheduler"
 
 bool latency_sort::operator()(const SUnit *LHS, const SUnit *RHS) const {
   // The isScheduleHigh flag allows nodes with wraparound dependencies that

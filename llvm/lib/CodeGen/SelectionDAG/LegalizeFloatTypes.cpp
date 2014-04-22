@@ -19,11 +19,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "legalize-types"
 #include "LegalizeTypes.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "legalize-types"
 
 /// GetFPLibCall - Return the right libcall for the given floating point type.
 static RTLIB::Libcall GetFPLibCall(EVT VT,

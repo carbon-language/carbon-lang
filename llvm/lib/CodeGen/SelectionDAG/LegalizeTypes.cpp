@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "legalize-types"
 #include "LegalizeTypes.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/IR/CallingConv.h"
@@ -22,6 +21,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "legalize-types"
 
 static cl::opt<bool>
 EnableExpensiveChecks("enable-legalize-types-checking", cl::Hidden);

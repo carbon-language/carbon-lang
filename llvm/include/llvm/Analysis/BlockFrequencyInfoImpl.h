@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+#define DEBUG_TYPE "block-freq"
+
 //===----------------------------------------------------------------------===//
 //
 // UnsignedFloat definition.
@@ -1544,5 +1546,7 @@ raw_ostream &BlockFrequencyInfoImpl<BT>::print(raw_ostream &OS) const {
   return OS;
 }
 }
+
+#undef DEBUG_TYPE
 
 #endif

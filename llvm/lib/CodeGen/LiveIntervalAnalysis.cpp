@@ -15,7 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "regalloc"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "LiveRangeCalc.h"
 #include "llvm/ADT/DenseSet.h"
@@ -41,6 +40,8 @@
 #include <cmath>
 #include <limits>
 using namespace llvm;
+
+#define DEBUG_TYPE "regalloc"
 
 char LiveIntervals::ID = 0;
 char &llvm::LiveIntervalsID = LiveIntervals::ID;

@@ -66,7 +66,6 @@
 //     C = copy A    <-- same-bank copy
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "peephole-opt"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -80,6 +79,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "peephole-opt"
 
 // Optimize Extensions
 static cl::opt<bool>

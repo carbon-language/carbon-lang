@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "dwarfdebug"
-
 #include "DwarfUnit.h"
 #include "DwarfAccelTable.h"
 #include "DwarfDebug.h"
@@ -34,6 +32,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "dwarfdebug"
 
 static cl::opt<bool>
 GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,

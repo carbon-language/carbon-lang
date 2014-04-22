@@ -11,13 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "block-freq"
 #include "llvm/Analysis/BlockFrequencyInfoImpl.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/raw_ostream.h"
 #include <deque>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "block-freq"
 
 //===----------------------------------------------------------------------===//
 //

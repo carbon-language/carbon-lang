@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "sjljehprepare"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
@@ -37,6 +36,8 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include <set>
 using namespace llvm;
+
+#define DEBUG_TYPE "sjljehprepare"
 
 STATISTIC(NumInvokes, "Number of invokes replaced");
 STATISTIC(NumSpilled, "Number of registers live across unwind edges");

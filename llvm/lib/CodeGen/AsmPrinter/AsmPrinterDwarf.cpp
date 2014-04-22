@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "ByteStreamer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/ADT/SmallBitVector.h"
@@ -29,6 +28,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 //===----------------------------------------------------------------------===//
 // Dwarf Emission Helper Routines

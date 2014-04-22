@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "stackslotcoloring"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
@@ -32,6 +31,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include <vector>
 using namespace llvm;
+
+#define DEBUG_TYPE "stackslotcoloring"
 
 static cl::opt<bool>
 DisableSharing("no-stack-slot-sharing",

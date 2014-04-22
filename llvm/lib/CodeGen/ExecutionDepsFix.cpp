@@ -20,7 +20,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "execution-fix"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/LivePhysRegs.h"
@@ -32,6 +31,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "execution-fix"
 
 /// A DomainValue is a bit like LiveIntervals' ValNo, but it also keeps track
 /// of execution domains.

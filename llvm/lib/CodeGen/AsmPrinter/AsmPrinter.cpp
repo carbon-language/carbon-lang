@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "asm-printer"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "DwarfDebug.h"
 #include "DwarfException.h"
@@ -52,6 +51,8 @@
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "asm-printer"
 
 static const char *const DWARFGroupName = "DWARF Emission";
 static const char *const DbgTimerName = "Debug Info Emission";

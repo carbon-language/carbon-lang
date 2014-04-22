@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "regalloc"
 #include "llvm/CodeGen/LiveIntervalUnion.h"
 #include "llvm/ADT/SparseBitVector.h"
 #include "llvm/Support/Debug.h"
@@ -22,6 +21,8 @@
 #include <algorithm>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "regalloc"
 
 
 // Merge a LiveInterval's segments. Guarantee no overlaps.

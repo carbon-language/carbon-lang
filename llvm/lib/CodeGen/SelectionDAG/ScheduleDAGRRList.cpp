@@ -15,7 +15,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "pre-RA-sched"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "ScheduleDAGSDNodes.h"
 #include "llvm/ADT/STLExtras.h"
@@ -35,6 +34,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <climits>
 using namespace llvm;
+
+#define DEBUG_TYPE "pre-RA-sched"
 
 STATISTIC(NumBacktracks, "Number of times scheduler backtracked");
 STATISTIC(NumUnfolds,    "Number of nodes unfolded");

@@ -11,7 +11,6 @@
 // is spilled or split.
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "regalloc"
 #include "llvm/CodeGen/LiveRangeEdit.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/CalcSpillWeights.h"
@@ -23,6 +22,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "regalloc"
 
 STATISTIC(NumDCEDeleted,     "Number of instructions deleted by DCE");
 STATISTIC(NumDCEFoldedLoads, "Number of single use loads folded after DCE");

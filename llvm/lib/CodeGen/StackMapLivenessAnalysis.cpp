@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "stackmaps"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -25,6 +24,8 @@
 
 
 using namespace llvm;
+
+#define DEBUG_TYPE "stackmaps"
 
 namespace llvm {
 cl::opt<bool> EnableStackMapLiveness("enable-stackmap-liveness",

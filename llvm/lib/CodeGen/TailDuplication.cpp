@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "tailduplication"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SetVector.h"
@@ -33,6 +32,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "tailduplication"
 
 STATISTIC(NumTails     , "Number of tails duplicated");
 STATISTIC(NumTailDups  , "Number of tail duplicated blocks");

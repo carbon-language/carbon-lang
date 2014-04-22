@@ -25,7 +25,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "block-placement2"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -45,6 +44,8 @@
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
 using namespace llvm;
+
+#define DEBUG_TYPE "block-placement2"
 
 STATISTIC(NumCondBranches, "Number of conditional branches");
 STATISTIC(NumUncondBranches, "Number of uncondittional branches");

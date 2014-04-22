@@ -11,8 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "dwarfdebug"
-
 #include "ByteStreamer.h"
 #include "DIEHash.h"
 #include "DIE.h"
@@ -27,6 +25,8 @@
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "dwarfdebug"
 
 /// \brief Grabs the string in whichever attribute is passed in and returns
 /// a reference to it.

@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "misched"
-
 #include "llvm/CodeGen/MachineScheduler.h"
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -34,6 +32,8 @@
 #include <queue>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "misched"
 
 namespace llvm {
 cl::opt<bool> ForceTopDown("misched-topdown", cl::Hidden,

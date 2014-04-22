@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE ::llvm::ScoreboardHazardRecognizer::DebugType
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/MC/MCInstrItineraries.h"
@@ -23,6 +22,8 @@
 #include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE ::llvm::ScoreboardHazardRecognizer::DebugType
 
 #ifndef NDEBUG
 const char *ScoreboardHazardRecognizer::DebugType = "";

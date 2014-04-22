@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "localstackalloc"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
@@ -39,6 +38,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "localstackalloc"
 
 STATISTIC(NumAllocations, "Number of frame indices allocated into local block");
 STATISTIC(NumBaseRegisters, "Number of virtual frame base registers allocated");

@@ -14,7 +14,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "lexicalscopes"
 #include "llvm/CodeGen/LexicalScopes.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 using namespace llvm;
+
+#define DEBUG_TYPE "lexicalscopes"
 
 /// ~LexicalScopes - final cleanup after ourselves.
 LexicalScopes::~LexicalScopes() { reset(); }

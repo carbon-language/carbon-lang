@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "stackmaps"
-
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -28,6 +26,8 @@
 #include <iterator>
 
 using namespace llvm;
+
+#define DEBUG_TYPE "stackmaps"
 
 PatchPointOpers::PatchPointOpers(const MachineInstr *MI)
   : MI(MI),

@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "block-freq"
 #include "llvm/CodeGen/MachineBlockFrequencyInfo.h"
 #include "llvm/Analysis/BlockFrequencyInfoImpl.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
@@ -24,6 +23,8 @@
 #include "llvm/Support/GraphWriter.h"
 
 using namespace llvm;
+
+#define DEBUG_TYPE "block-freq"
 
 #ifndef NDEBUG
 enum GVDAGType {

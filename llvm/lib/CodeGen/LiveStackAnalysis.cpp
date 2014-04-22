@@ -13,7 +13,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "livestacks"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
@@ -23,6 +22,8 @@
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <limits>
 using namespace llvm;
+
+#define DEBUG_TYPE "livestacks"
 
 char LiveStacks::ID = 0;
 INITIALIZE_PASS_BEGIN(LiveStacks, "livestacks",
