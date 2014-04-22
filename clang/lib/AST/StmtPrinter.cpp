@@ -664,6 +664,18 @@ void OMPClausePrinter::VisitOMPSharedClause(OMPSharedClause *Node) {
   }
 }
 
+void OMPClausePrinter::VisitOMPLinearClause(OMPLinearClause *Node) {
+  if (!Node->varlist_empty()) {
+    OS << "linear";
+    VisitOMPClauseList(Node, '(');
+    if (Node->getStep() != 0) {
+      OS << ": ";
+      Node->getStep()->printPretty(OS, 0, Policy, 0);
+    }
+    OS << ")";
+  }
+}
+
 void OMPClausePrinter::VisitOMPCopyinClause(OMPCopyinClause *Node) {
   if (!Node->varlist_empty()) {
     OS << "copyin";

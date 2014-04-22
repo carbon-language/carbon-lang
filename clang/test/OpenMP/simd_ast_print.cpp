@@ -14,8 +14,8 @@ template<class T, class N> T reduct(T* arr, N num) {
   N myind;
   T sum = (T)0;
 // CHECK: T sum = (T)0;
-#pragma omp simd private(myind, g_ind)
-// CHECK-NEXT: #pragma omp simd private(myind,g_ind)
+#pragma omp simd private(myind, g_ind), linear(ind)
+// CHECK-NEXT: #pragma omp simd private(myind,g_ind) linear(ind)
   for (i = 0; i < num; ++i) {
     myind = ind;
     T cur = arr[myind];
@@ -31,13 +31,16 @@ template<class T> struct S {
   T result(T *v) const {
     T res;
     T val;
+    T lin = 0;
 // CHECK: T res;
 // CHECK: T val;
-    #pragma omp simd private(val)  safelen(7)
-// CHECK-NEXT: #pragma omp simd private(val) safelen(7)
+// CHECK: T lin = 0;
+    #pragma omp simd private(val)  safelen(7) linear(lin : -5)
+// CHECK-NEXT: #pragma omp simd private(val) safelen(7) linear(lin: -5)
     for (T i = 7; i < m_a; ++i) {
       val = v[i-7] + m_a;
       res = val;
+      lin -= 5;
     }
     const T clen = 3;
 // CHECK: T clen = 3;
@@ -58,9 +61,14 @@ template<class T> struct S {
 
 template<int LEN> struct S2 {
   static void func(int n, float *a, float *b, float *c) {
-#pragma omp simd safelen(LEN)
+    int k1 = 0, k2 = 0;
+#pragma omp simd safelen(LEN) linear(k1,k2:LEN)
     for(int i = 0; i < n; i++) {
       c[i] = a[i] + b[i];
+      c[k1] = a[k1] + b[k1];
+      c[k2] = a[k2] + b[k2];
+      k1 = k1 + LEN;
+      k2 = k2 + LEN;
     }
   }
 };
@@ -68,9 +76,14 @@ template<int LEN> struct S2 {
 // S2<4>::func is called below in main.
 // CHECK: template <int LEN = 4> struct S2 {
 // CHECK-NEXT: static void func(int n, float *a, float *b, float *c)     {
-// CHECK-NEXT: #pragma omp simd safelen(4)
+// CHECK-NEXT:   int k1 = 0, k2 = 0;
+// CHECK-NEXT: #pragma omp simd safelen(4) linear(k1,k2: 4)
 // CHECK-NEXT:   for (int i = 0; i < n; i++) {
 // CHECK-NEXT:     c[i] = a[i] + b[i];
+// CHECK-NEXT:     c[k1] = a[k1] + b[k1];
+// CHECK-NEXT:     c[k2] = a[k2] + b[k2];
+// CHECK-NEXT:     k1 = k1 + 4;
+// CHECK-NEXT:     k2 = k2 + 4;
 // CHECK-NEXT:   }
 // CHECK-NEXT: }
 
@@ -99,8 +112,8 @@ int main (int argc, char **argv) {
 // CHECK-NEXT: foo();
   const int CLEN = 4;
 // CHECK-NEXT: const int CLEN = 4;
-  #pragma omp simd safelen(CLEN)
-// CHECK-NEXT: #pragma omp simd safelen(CLEN)
+  #pragma omp simd linear(a:CLEN) safelen(CLEN)
+// CHECK-NEXT: #pragma omp simd linear(a: CLEN) safelen(CLEN)
   for (int i = 0; i < 10; ++i)foo();
 // CHECK-NEXT: for (int i = 0; i < 10; ++i)
 // CHECK-NEXT: foo();

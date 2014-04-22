@@ -6928,6 +6928,16 @@ def err_omp_ambiguous_conversion : Error<
   "enumeration type">;
 def err_omp_required_access : Error<
   "%0 variable must be %1">;
+def err_omp_const_variable : Error<
+  "const-qualified variable cannot be %0">;
+def err_omp_linear_incomplete_type : Error<
+  "a linear variable with incomplete type %0">;
+def err_omp_linear_expected_int_or_ptr : Error<
+  "argument of a linear clause should be of integral or pointer "
+  "type, not %0">;
+def warn_omp_linear_step_zero : Warning<
+  "zero linear step (%0 %select{|and other variables in clause }1should probably be const)">,
+  InGroup<OpenMPClauses>;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

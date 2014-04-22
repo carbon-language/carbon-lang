@@ -294,9 +294,10 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D) {
   if (Kind != OMPD_parallel) {
     if (isOpenMPLocal(D, std::next(Stack.rbegin())) && D->isLocalVarDecl() &&
         (D->getStorageClass() == SC_Auto ||
-         D->getStorageClass() == SC_None))
+         D->getStorageClass() == SC_None)) {
       DVar.CKind = OMPC_private;
       return DVar;
+    }
   }
 
   // OpenMP [2.9.1.1, Data-sharing Attribute Rules for Variables Referenced
@@ -774,6 +775,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_shared:
+  case OMPC_linear:
   case OMPC_copyin:
   case OMPC_threadprivate:
   case OMPC_unknown:
@@ -929,6 +931,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_shared:
+  case OMPC_linear:
   case OMPC_copyin:
   case OMPC_threadprivate:
   case OMPC_unknown:
@@ -986,8 +989,10 @@ OMPClause *Sema::ActOnOpenMPDefaultClause(OpenMPDefaultClauseKind Kind,
 
 OMPClause *Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
                                           ArrayRef<Expr *> VarList,
+                                          Expr *TailExpr,
                                           SourceLocation StartLoc,
                                           SourceLocation LParenLoc,
+                                          SourceLocation ColonLoc,
                                           SourceLocation EndLoc) {
   OMPClause *Res = 0;
   switch (Kind) {
@@ -999,6 +1004,10 @@ OMPClause *Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
     break;
   case OMPC_shared:
     Res = ActOnOpenMPSharedClause(VarList, StartLoc, LParenLoc, EndLoc);
+    break;
+  case OMPC_linear:
+    Res = ActOnOpenMPLinearClause(VarList, TailExpr, StartLoc, LParenLoc,
+                                  ColonLoc, EndLoc);
     break;
   case OMPC_copyin:
     Res = ActOnOpenMPCopyinClause(VarList, StartLoc, LParenLoc, EndLoc);
@@ -1380,6 +1389,135 @@ OMPClause *Sema::ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,
   if (Vars.empty()) return 0;
 
   return OMPSharedClause::Create(Context, StartLoc, LParenLoc, EndLoc, Vars);
+}
+
+OMPClause *Sema::ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList, Expr *Step,
+                                         SourceLocation StartLoc,
+                                         SourceLocation LParenLoc,
+                                         SourceLocation ColonLoc,
+                                         SourceLocation EndLoc) {
+  SmallVector<Expr *, 8> Vars;
+  for (ArrayRef<Expr *>::iterator I = VarList.begin(), E = VarList.end();
+       I != E; ++I) {
+    assert(*I && "NULL expr in OpenMP linear clause.");
+    if (isa<DependentScopeDeclRefExpr>(*I)) {
+      // It will be analyzed later.
+      Vars.push_back(*I);
+      continue;
+    }
+
+    // OpenMP [2.14.3.7, linear clause]
+    // A list item that appears in a linear clause is subject to the private
+    // clause semantics described in Section 2.14.3.3 on page 159 except as
+    // noted. In addition, the value of the new list item on each iteration
+    // of the associated loop(s) corresponds to the value of the original
+    // list item before entering the construct plus the logical number of
+    // the iteration times linear-step.
+
+    SourceLocation ELoc = (*I)->getExprLoc();
+    // OpenMP [2.1, C/C++]
+    //  A list item is a variable name.
+    // OpenMP  [2.14.3.3, Restrictions, p.1]
+    //  A variable that is part of another variable (as an array or
+    //  structure element) cannot appear in a private clause.
+    DeclRefExpr *DE = dyn_cast<DeclRefExpr>(*I);
+    if (!DE || !isa<VarDecl>(DE->getDecl())) {
+      Diag(ELoc, diag::err_omp_expected_var_name) << (*I)->getSourceRange();
+      continue;
+    }
+
+    VarDecl *VD = cast<VarDecl>(DE->getDecl());
+
+    // OpenMP [2.14.3.7, linear clause]
+    //  A list-item cannot appear in more than one linear clause.
+    //  A list-item that appears in a linear clause cannot appear in any
+    //  other data-sharing attribute clause.
+    DSAStackTy::DSAVarData DVar = DSAStack->getTopDSA(VD);
+    if (DVar.RefExpr) {
+      Diag(ELoc, diag::err_omp_wrong_dsa) << getOpenMPClauseName(DVar.CKind)
+                                          << getOpenMPClauseName(OMPC_linear);
+      Diag(DVar.RefExpr->getExprLoc(), diag::note_omp_explicit_dsa)
+          << getOpenMPClauseName(DVar.CKind);
+      continue;
+    }
+
+    QualType QType = VD->getType();
+    if (QType->isDependentType() || QType->isInstantiationDependentType()) {
+      // It will be analyzed later.
+      Vars.push_back(DE);
+      continue;
+    }
+
+    // A variable must not have an incomplete type or a reference type.
+    if (RequireCompleteType(ELoc, QType,
+                            diag::err_omp_linear_incomplete_type)) {
+      continue;
+    }
+    if (QType->isReferenceType()) {
+      Diag(ELoc, diag::err_omp_clause_ref_type_arg)
+          << getOpenMPClauseName(OMPC_linear) << QType;
+      bool IsDecl =
+          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
+      Diag(VD->getLocation(),
+           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+          << VD;
+      continue;
+    }
+
+    // A list item must not be const-qualified.
+    if (QType.isConstant(Context)) {
+      Diag(ELoc, diag::err_omp_const_variable)
+          << getOpenMPClauseName(OMPC_linear);
+      bool IsDecl =
+          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
+      Diag(VD->getLocation(),
+           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+          << VD;
+      continue;
+    }
+
+    // A list item must be of integral or pointer type.
+    QType = QType.getUnqualifiedType().getCanonicalType();
+    const Type *Ty = QType.getTypePtrOrNull();
+    if (!Ty || (!Ty->isDependentType() && !Ty->isIntegralType(Context) &&
+                !Ty->isPointerType())) {
+      Diag(ELoc, diag::err_omp_linear_expected_int_or_ptr) << QType;
+      bool IsDecl =
+          VD->isThisDeclarationADefinition(Context) == VarDecl::DeclarationOnly;
+      Diag(VD->getLocation(),
+           IsDecl ? diag::note_previous_decl : diag::note_defined_here)
+          << VD;
+      continue;
+    }
+
+    DSAStack->addDSA(VD, DE, OMPC_linear);
+    Vars.push_back(DE);
+  }
+
+  if (Vars.empty())
+    return 0;
+
+  Expr *StepExpr = Step;
+  if (Step && !Step->isValueDependent() && !Step->isTypeDependent() &&
+      !Step->isInstantiationDependent() &&
+      !Step->containsUnexpandedParameterPack()) {
+    SourceLocation StepLoc = Step->getLocStart();
+    ExprResult Val = PerformImplicitIntegerConversion(StepLoc, Step);
+    if (Val.isInvalid())
+      return 0;
+    StepExpr = Val.take();
+
+    // Warn about zero linear step (it would be probably better specified as
+    // making corresponding variables 'const').
+    llvm::APSInt Result;
+    if (StepExpr->isIntegerConstantExpr(Result, Context) &&
+        !Result.isNegative() && !Result.isStrictlyPositive())
+      Diag(StepLoc, diag::warn_omp_linear_step_zero) << Vars[0]
+                                                     << (Vars.size() > 1);
+  }
+
+  return OMPLinearClause::Create(Context, StartLoc, LParenLoc, ColonLoc, EndLoc,
+                                 Vars, StepExpr);
 }
 
 OMPClause *Sema::ActOnOpenMPCopyinClause(ArrayRef<Expr *> VarList,

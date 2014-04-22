@@ -7286,8 +7286,10 @@ public:
 
   OMPClause *ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
                                       ArrayRef<Expr *> Vars,
+                                      Expr *TailExpr,
                                       SourceLocation StartLoc,
                                       SourceLocation LParenLoc,
+                                      SourceLocation ColonLoc,
                                       SourceLocation EndLoc);
   /// \brief Called on well-formed 'private' clause.
   OMPClause *ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
@@ -7303,6 +7305,13 @@ public:
   OMPClause *ActOnOpenMPSharedClause(ArrayRef<Expr *> VarList,
                                      SourceLocation StartLoc,
                                      SourceLocation LParenLoc,
+                                     SourceLocation EndLoc);
+  /// \brief Called on well-formed 'linear' clause.
+  OMPClause *ActOnOpenMPLinearClause(ArrayRef<Expr *> VarList,
+                                     Expr *Step,
+                                     SourceLocation StartLoc,
+                                     SourceLocation LParenLoc,
+                                     SourceLocation ColonLoc,
                                      SourceLocation EndLoc);
   /// \brief Called on well-formed 'copyin' clause.
   OMPClause *ActOnOpenMPCopyinClause(ArrayRef<Expr *> VarList,

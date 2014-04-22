@@ -553,6 +553,91 @@ public:
   }
 };
 
+/// \brief This represents clause 'linear' in the '#pragma omp ...'
+/// directives.
+///
+/// \code
+/// #pragma omp simd linear(a,b : 2)
+/// \endcode
+/// In this example directive '#pragma omp simd' has clause 'linear'
+/// with variables 'a', 'b' and linear step '2'.
+///
+class OMPLinearClause : public OMPVarListClause<OMPLinearClause> {
+  friend class OMPClauseReader;
+  /// \brief Location of ':'.
+  SourceLocation ColonLoc;
+
+  /// \brief Sets the linear step for clause.
+  void setStep(Expr *Step) { *varlist_end() = Step; }
+
+  /// \brief Build 'linear' clause with given number of variables \a NumVars.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param ColonLoc Location of ':'.
+  /// \param EndLoc Ending location of the clause.
+  /// \param NumVars Number of variables.
+  ///
+  OMPLinearClause(SourceLocation StartLoc, SourceLocation LParenLoc,
+                  SourceLocation ColonLoc, SourceLocation EndLoc,
+                  unsigned NumVars)
+      : OMPVarListClause<OMPLinearClause>(OMPC_linear, StartLoc, LParenLoc,
+                                          EndLoc, NumVars),
+        ColonLoc(ColonLoc) {}
+
+  /// \brief Build an empty clause.
+  ///
+  /// \param NumVars Number of variables.
+  ///
+  explicit OMPLinearClause(unsigned NumVars)
+      : OMPVarListClause<OMPLinearClause>(OMPC_linear, SourceLocation(),
+                                          SourceLocation(), SourceLocation(),
+                                          NumVars),
+        ColonLoc(SourceLocation()) {}
+
+public:
+  /// \brief Creates clause with a list of variables \a VL and a linear step
+  /// \a Step.
+  ///
+  /// \param C AST Context.
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param ColonLoc Location of ':'.
+  /// \param EndLoc Ending location of the clause.
+  /// \param VL List of references to the variables.
+  /// \param Step Linear step.
+  static OMPLinearClause *Create(const ASTContext &C, SourceLocation StartLoc,
+                                 SourceLocation LParenLoc,
+                                 SourceLocation ColonLoc, SourceLocation EndLoc,
+                                 ArrayRef<Expr *> VL, Expr *Step);
+
+  /// \brief Creates an empty clause with the place for \a NumVars variables.
+  ///
+  /// \param C AST context.
+  /// \param NumVars Number of variables.
+  ///
+  static OMPLinearClause *CreateEmpty(const ASTContext &C, unsigned NumVars);
+
+  /// \brief Sets the location of ':'.
+  void setColonLoc(SourceLocation Loc) { ColonLoc = Loc; }
+  /// \brief Returns the location of '('.
+  SourceLocation getColonLoc() const { return ColonLoc; }
+
+  /// \brief Returns linear step.
+  Expr *getStep() { return *varlist_end(); }
+  /// \brief Returns linear step.
+  const Expr *getStep() const { return *varlist_end(); }
+
+  StmtRange children() {
+    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
+                     reinterpret_cast<Stmt **>(varlist_end() + 1));
+  }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_linear;
+  }
+};
+
 /// \brief This represents clause 'copyin' in the '#pragma omp ...' directives.
 ///
 /// \code
