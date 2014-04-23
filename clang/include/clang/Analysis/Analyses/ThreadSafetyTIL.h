@@ -104,6 +104,12 @@ public:
     return ::operator new(S, R);
   }
 
+  // SExpr objects cannot be deleted.
+  // This declaration is public to avoid breaking gcc compilation
+  // with REQUIRES_EH=1.
+  // The access check is also mandated by C++11 5.3.4p17 and former standards.
+  void operator delete(void *) LLVM_DELETED_FUNCTION;
+
 protected:
   SExpr(TIL_Opcode Op) : Opcode(Op), Reserved(0), Flags(0) {}
   SExpr(const SExpr &E) : Opcode(E.Opcode), Reserved(0), Flags(E.Flags) {}
@@ -115,9 +121,8 @@ protected:
 private:
   SExpr() LLVM_DELETED_FUNCTION;
 
-  // SExpr objects must be created in an arena and cannot be deleted.
+  // SExpr objects must be created in an arena.
   void *operator new(size_t) LLVM_DELETED_FUNCTION;
-  void operator delete(void *) LLVM_DELETED_FUNCTION;
 };
 
 
