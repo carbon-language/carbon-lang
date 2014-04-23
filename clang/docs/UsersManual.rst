@@ -1180,11 +1180,20 @@ a. Source line offset. This number represents the line number
    defined. So, if the function has its header at line 280, the offset
    13 is at line 293 in the file.
 
+   Note that this offset should never be a negative number. This could
+   happen in cases like macros. The debug machinery will register the
+   line number at the point of macro expansion. So, if the macro was
+   expanded in a line before the start of the function, the profile
+   converter should emit a 0 as the offset (this means that the optimizers
+   will not be able to associate a meaningful weight to the instructions
+   in the macro).
+
 b. [OPTIONAL] Discriminator. This is used if the sampled program
    was compiled with DWARF discriminator support
    (http://wiki.dwarfstd.org/index.php?title=Path_Discriminators).
-   DWARF discriminators allow the compiler to distinguish between
-   multiple execution paths on the same source line location.
+   DWARF discriminators are unsigned integer values that allow the
+   compiler to distinguish between multiple execution paths on the
+   same source line location.
 
    For example, consider the line of code ``if (cond) foo(); else bar();``.
    If the predicate ``cond`` is true 80% of the time, then the edge
