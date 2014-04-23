@@ -21,8 +21,7 @@ namespace llvm {
 DwarfFile::DwarfFile(AsmPrinter *AP, const char *Pref, BumpPtrAllocator &DA)
     : Asm(AP), StringPool(DA), NextStringPoolNumber(0), StringPref(Pref) {}
 
-DwarfFile::~DwarfFile() {
-}
+DwarfFile::~DwarfFile() {}
 
 MCSymbol *DwarfFile::getStringPoolSym() {
   return Asm->GetTempSymbol(StringPref);
@@ -192,7 +191,7 @@ void DwarfFile::emitStrings(const MCSection *StrSection,
 
   // Get all of the string pool entries and put them in an array by their ID so
   // we can sort them.
-  SmallVector<std::pair<unsigned, const StrPool::value_type *>, 64 > Entries;
+  SmallVector<std::pair<unsigned, const StrPool::value_type *>, 64> Entries;
 
   for (const auto &I : StringPool)
     Entries.push_back(std::make_pair(I.second.second, &I));
