@@ -29,6 +29,7 @@ class CommentToXMLConverter {
 
 public:
   CommentToXMLConverter() : FormatContext(0), FormatInMemoryUniqueId(0) {}
+  ~CommentToXMLConverter();
 
   void convertCommentToHTML(const comments::FullComment *FC,
                             SmallVectorImpl<char> &HTML,

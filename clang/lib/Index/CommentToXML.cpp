@@ -1136,6 +1136,10 @@ void CommentASTToXMLConverter::appendToResultWithCDATAEscaping(StringRef S) {
   Result << "]]>";
 }
 
+CommentToXMLConverter::~CommentToXMLConverter() {
+  delete FormatContext;
+}
+
 void CommentToXMLConverter::convertCommentToHTML(const FullComment *FC,
                                                  SmallVectorImpl<char> &HTML,
                                                  const ASTContext &Context) {
