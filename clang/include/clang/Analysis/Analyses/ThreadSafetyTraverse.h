@@ -726,16 +726,14 @@ protected:
 
   void printPhi(Phi *E, StreamType &SS) {
     SS << "phi(";
-    unsigned i = 0;
-    if (E->status() == Phi::PH_SingleVal) {
+    if (E->status() == Phi::PH_SingleVal)
       self()->printSExpr(E->values()[0], SS, Prec_MAX);
-    }
     else {
+      unsigned i = 0;
       for (auto V : E->values()) {
-        if (i > 0)
+        if (i++ > 0)
           SS << ", ";
         self()->printSExpr(V, SS, Prec_MAX);
-        ++i;
       }
     }
     SS << ")";
