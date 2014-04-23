@@ -105,9 +105,8 @@ public:
   }
 
   // SExpr objects cannot be deleted.
-  // This declaration is public to avoid breaking gcc compilation
+  // This declaration is public to workaround a gcc bug that breaks building
   // with REQUIRES_EH=1.
-  // The access check is also mandated by C++11 5.3.4p17 and former standards.
   void operator delete(void *) LLVM_DELETED_FUNCTION;
 
 protected:
