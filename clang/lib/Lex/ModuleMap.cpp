@@ -365,6 +365,7 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
             llvm::sys::path::stem(SkippedDirs[I-1]->getName()), NameBuf);
         Result = findOrCreateModule(Name, Result, UmbrellaModule->ModuleMap,
                                     /*IsFramework=*/false, Explicit).first;
+        Result->IsInferred = true;
 
         // Associate the module and the directory.
         UmbrellaDirs[SkippedDirs[I-1]] = Result;
@@ -381,6 +382,7 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
                          llvm::sys::path::stem(File->getName()), NameBuf);
       Result = findOrCreateModule(Name, Result, UmbrellaModule->ModuleMap,
                                   /*IsFramework=*/false, Explicit).first;
+      Result->IsInferred = true;
       Result->addTopHeader(File);
 
       // If inferred submodules export everything they import, add a

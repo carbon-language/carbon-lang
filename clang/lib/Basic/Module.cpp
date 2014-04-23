@@ -29,9 +29,10 @@ Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), ModuleMap(File),
       Umbrella(), ASTFile(0), IsMissingRequirement(false), IsAvailable(true),
       IsFromModuleFile(false), IsFramework(IsFramework), IsExplicit(IsExplicit),
-      IsSystem(false), IsExternC(false), InferSubmodules(false),
-      InferExplicitSubmodules(false), InferExportWildcard(false),
-      ConfigMacrosExhaustive(false), NameVisibility(Hidden) {
+      IsSystem(false), IsExternC(false), IsInferred(false),
+      InferSubmodules(false), InferExplicitSubmodules(false),
+      InferExportWildcard(false), ConfigMacrosExhaustive(false),
+      NameVisibility(Hidden) {
   if (Parent) {
     if (!Parent->isAvailable())
       IsAvailable = false;
@@ -360,7 +361,8 @@ void Module::print(raw_ostream &OS, unsigned Indent) const {
   
   for (submodule_const_iterator MI = submodule_begin(), MIEnd = submodule_end();
        MI != MIEnd; ++MI)
-    (*MI)->print(OS, Indent + 2);
+    if (!(*MI)->IsInferred)
+      (*MI)->print(OS, Indent + 2);
   
   for (unsigned I = 0, N = Exports.size(); I != N; ++I) {
     OS.indent(Indent + 2);
