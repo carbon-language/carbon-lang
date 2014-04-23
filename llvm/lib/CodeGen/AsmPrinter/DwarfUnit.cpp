@@ -290,7 +290,7 @@ void DwarfCompileUnit::addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
   if (Label)
     DD->addArangeLabel(SymbolCU(this, Label));
 
-  unsigned idx = DU->getAddressPool().getIndex(Label);
+  unsigned idx = DD->getAddressPool().getIndex(Label);
   DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
   Die->addValue(Attribute, dwarf::DW_FORM_GNU_addr_index, Value);
 }
@@ -336,7 +336,7 @@ void DwarfUnit::addOpAddress(DIELoc *Die, const MCSymbol *Sym) {
   } else {
     addUInt(Die, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_addr_index);
     addUInt(Die, dwarf::DW_FORM_GNU_addr_index,
-            DU->getAddressPool().getIndex(Sym));
+            DD->getAddressPool().getIndex(Sym));
   }
 }
 
@@ -1669,7 +1669,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
       } else {
         addUInt(Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_const_index);
         addUInt(Loc, dwarf::DW_FORM_udata,
-                DU->getAddressPool().getIndex(Sym, /* TLS */ true));
+                DD->getAddressPool().getIndex(Sym, /* TLS */ true));
       }
       // 3) followed by a custom OP to make the debugger do a TLS lookup.
       addUInt(Loc, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_push_tls_address);

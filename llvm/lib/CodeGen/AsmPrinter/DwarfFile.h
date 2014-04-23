@@ -52,8 +52,6 @@ class DwarfFile {
   unsigned NextStringPoolNumber;
   std::string StringPref;
 
-  AddressPool AddrPool;
-
 public:
   DwarfFile(AsmPrinter *AP, const char *Pref, BumpPtrAllocator &DA);
 
@@ -98,8 +96,6 @@ public:
 
   /// \brief Returns the string pool.
   StrPool *getStringPool() { return &StringPool; }
-
-  AddressPool &getAddressPool() { return AddrPool; }
 };
 }
 #endif

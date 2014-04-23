@@ -321,6 +321,8 @@ class DwarfDebug : public AsmPrinterHandler {
   // True iff there are multiple CUs in this module.
   bool SingleCU;
 
+  AddressPool AddrPool;
+
   MCDwarfDwoLineTable *getDwoLineTable(const DwarfCompileUnit &);
 
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
@@ -631,6 +633,8 @@ public:
   /// isSubprogramContext - Return true if Context is either a subprogram
   /// or another context nested inside a subprogram.
   bool isSubprogramContext(const MDNode *Context);
+
+  AddressPool &getAddressPool() { return AddrPool; }
 };
 } // End of namespace llvm
 
