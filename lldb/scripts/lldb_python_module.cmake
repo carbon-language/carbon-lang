@@ -8,7 +8,7 @@ include(FindPythonInterp)
 SET(PYTHON_DIRECTORY python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR})
 
 SET(lldb_module_src ${CMAKE_CURRENT_BINARY_DIR}/lib/${PYTHON_DIRECTORY})
-SET(lldb_module_dest ${CMAKE_INSTALL_PREFIX}/lib)
+SET(lldb_module_dest "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/lib")
 
 MESSAGE(STATUS "Installing LLDB python module from: ${lldb_module_src} to ${lldb_module_dest}")
 FILE(COPY "${lldb_module_src}" DESTINATION "${lldb_module_dest}")
