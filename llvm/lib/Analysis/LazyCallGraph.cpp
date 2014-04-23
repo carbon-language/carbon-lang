@@ -260,7 +260,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
         // Track the lowest link of the childen, if any are still in the stack.
         // Any child not on the stack will have a LowLink of -1.
         assert(ChildN->LowLink != 0 &&
-               "Impossible with a non-zero DFS number.");
+               "Low-link must not be zero with a non-zero DFS number.");
         if (ChildN->LowLink >= 0 && ChildN->LowLink < N->LowLink)
           N->LowLink = ChildN->LowLink;
       }
@@ -465,7 +465,9 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
       }
 
       // Track the lowest link of the childen, if any are still in the stack.
-      if (ChildN->LowLink < N->LowLink && !SCCMap.count(&ChildN->getFunction()))
+      assert(ChildN->LowLink != 0 &&
+             "Low-link must not be zero with a non-zero DFS number.");
+      if (ChildN->LowLink >= 0 && ChildN->LowLink < N->LowLink)
         N->LowLink = ChildN->LowLink;
     }
     // No more children to process for this stack entry.
