@@ -21,6 +21,7 @@
 
 namespace clang {
 
+class GlobalModuleIndex;
 class IdentifierInfo;
 class Module;
 
@@ -53,11 +54,24 @@ public:
 /// for resolving a module name (e.g., "std") to an actual module file, and
 /// then loading that module.
 class ModuleLoader {
+  // Building a module if true.
+  bool BuildingModule;
 public:
-  ModuleLoader() : HadFatalFailure(false) {}
+  explicit ModuleLoader(bool BuildingModule = false) :
+    BuildingModule(BuildingModule),
+    HadFatalFailure(false) {}
 
   virtual ~ModuleLoader();
   
+  /// \brief Returns true if this instance is building a module.
+  bool buildingModule() const {
+    return BuildingModule;
+  }
+  /// \brief Flag indicating whether this instance is building a module.
+  void setBuildingModule(bool BuildingModuleFlag) {
+    BuildingModule = BuildingModuleFlag;
+  }
+ 
   /// \brief Attempt to load the given module.
   ///
   /// This routine attempts to load the module described by the given 
@@ -87,6 +101,19 @@ public:
                                  Module::NameVisibilityKind Visibility,
                                  SourceLocation ImportLoc,
                                  bool Complain) = 0;
+
+  /// \brief Load, create, or return global module.
+  /// This function returns an existing global module index, if one
+  /// had already been loaded or created, or loads one if it
+  /// exists, or creates one if it doesn't exist.
+  /// Also, importantly, if the index doesn't cover all the modules
+  /// in the module map, it will be update to do so here, because
+  /// of its use in searching for needed module imports and
+  /// associated fixit messages.
+  /// \param TriggerLoc The location for what triggered the load.
+  /// \returns Returns null if load failed.
+  virtual GlobalModuleIndex *loadGlobalModuleIndex(
+                                            SourceLocation TriggerLoc) = 0;
 
   bool HadFatalFailure;
 };

@@ -2601,10 +2601,16 @@ public:
                           VisibleDeclConsumer &Consumer,
                           bool IncludeGlobalScope = true);
 
+  enum CorrectTypoKind {
+    CTK_NonError,     // CorrectTypo used in a non error recovery situation.
+    CTK_ErrorRecovery // CorrectTypo used in normal error recovery.
+  };
+
   TypoCorrection CorrectTypo(const DeclarationNameInfo &Typo,
                              Sema::LookupNameKind LookupKind,
                              Scope *S, CXXScopeSpec *SS,
                              CorrectionCandidateCallback &CCC,
+                             CorrectTypoKind Mode,
                              DeclContext *MemberContext = 0,
                              bool EnteringContext = false,
                              const ObjCObjectPointerType *OPT = 0,

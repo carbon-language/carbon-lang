@@ -45,6 +45,9 @@ class VoidModuleLoader : public ModuleLoader {
                                  Module::NameVisibilityKind Visibility,
                                  SourceLocation ImportLoc,
                                  bool Complain) { }
+
+  virtual GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc)
+    { return 0; }
 };
 
 // Stub to collect data from InclusionDirective callbacks.

@@ -1816,7 +1816,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
         if (TypoCorrection Corrected = SemaRef.CorrectTypo(
                 DeclarationNameInfo(FieldName, D->getFieldLoc()),
                 Sema::LookupMemberName, /*Scope=*/ 0, /*SS=*/ 0, Validator,
-                RT->getDecl())) {
+                Sema::CTK_ErrorRecovery, RT->getDecl())) {
           SemaRef.diagnoseTypo(
               Corrected,
               SemaRef.PDiag(diag::err_field_designator_unknown_suggest)

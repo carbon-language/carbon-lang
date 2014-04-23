@@ -1669,7 +1669,7 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   DeclFilterCCC<ObjCPropertyDecl> Validator;
   if (TypoCorrection Corrected = CorrectTypo(
           DeclarationNameInfo(MemberName, MemberLoc), LookupOrdinaryName, NULL,
-          NULL, Validator, IFace, false, OPT)) {
+          NULL, Validator, CTK_ErrorRecovery, IFace, false, OPT)) {
     diagnoseTypo(Corrected, PDiag(diag::err_property_not_found_suggest)
                               << MemberName << QualType(OPT, 0));
     DeclarationName TypoResult = Corrected.getCorrection();
@@ -1901,7 +1901,8 @@ Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
   ObjCInterfaceOrSuperCCC Validator(getCurMethodDecl());
   if (TypoCorrection Corrected =
           CorrectTypo(Result.getLookupNameInfo(), Result.getLookupKind(), S,
-                      NULL, Validator, NULL, false, NULL, false)) {
+                      NULL, Validator, CTK_ErrorRecovery, NULL, false, NULL,
+                      false)) {
     if (Corrected.isKeyword()) {
       // If we've found the keyword "super" (the only keyword that would be
       // returned by CorrectTypo), this is a send to super.

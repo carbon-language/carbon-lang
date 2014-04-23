@@ -64,6 +64,9 @@ class VoidModuleLoader : public ModuleLoader {
                                  Module::NameVisibilityKind Visibility,
                                  SourceLocation ImportLoc,
                                  bool Complain) { }
+
+  virtual GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc)
+    { return 0; }
 };
 
 TEST_F(PPConditionalDirectiveRecordTest, PPRecAPI) {

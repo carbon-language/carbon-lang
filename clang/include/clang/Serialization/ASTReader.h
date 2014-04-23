@@ -1384,8 +1384,15 @@ public:
   /// \brief Determine whether this AST reader has a global index.
   bool hasGlobalIndex() const { return (bool)GlobalIndex; }
 
+  /// \brief Return global module index.
+  GlobalModuleIndex *getGlobalIndex() { return GlobalIndex.get(); }
+
+  /// \brief Reset reader for a reload try.
+  void resetForReload() { TriedLoadingGlobalIndex = false; }
+
   /// \brief Attempts to load the global index.
   ///
+  /// \param TriggerLoc The location for what triggered the load.
   /// \returns true if loading the global index has failed for any reason.
   bool loadGlobalIndex();
 

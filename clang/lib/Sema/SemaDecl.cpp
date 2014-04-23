@@ -218,7 +218,8 @@ ParsedType Sema::getTypeName(const IdentifierInfo &II, SourceLocation NameLoc,
     if (CorrectedII) {
       TypeNameValidatorCCC Validator(true, isClassName);
       TypoCorrection Correction = CorrectTypo(Result.getLookupNameInfo(),
-                                              Kind, S, SS, Validator);
+                                              Kind, S, SS, Validator,
+                                              CTK_ErrorRecovery);
       IdentifierInfo *NewII = Correction.getCorrectionAsIdentifierInfo();
       TemplateTy Template;
       bool MemberOfUnknownSpecialization;
@@ -408,7 +409,7 @@ bool Sema::DiagnoseUnknownTypeName(IdentifierInfo *&II,
   TypeNameValidatorCCC Validator(false, false, AllowClassTemplates);
   if (TypoCorrection Corrected = CorrectTypo(DeclarationNameInfo(II, IILoc),
                                              LookupOrdinaryName, S, SS,
-                                             Validator)) {
+                                             Validator, CTK_ErrorRecovery)) {
     if (Corrected.isKeyword()) {
       // We corrected to a keyword.
       diagnoseTypo(Corrected, PDiag(diag::err_unknown_typename_suggest) << II);
@@ -650,7 +651,8 @@ Corrected:
       SecondTry = true;
       if (TypoCorrection Corrected = CorrectTypo(Result.getLookupNameInfo(),
                                                  Result.getLookupKind(), S, 
-                                                 &SS, *CCC)) {
+                                                 &SS, *CCC,
+                                                 CTK_ErrorRecovery)) {
         unsigned UnqualifiedDiag = diag::err_undeclared_var_use_suggest;
         unsigned QualifiedDiag = diag::err_no_member_suggest;
 
@@ -1422,7 +1424,7 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
     DeclFilterCCC<ObjCInterfaceDecl> Validator;
     if (TypoCorrection C = CorrectTypo(DeclarationNameInfo(Id, IdLoc),
                                        LookupOrdinaryName, TUScope, NULL,
-                                       Validator)) {
+                                       Validator, CTK_ErrorRecovery)) {
       diagnoseTypo(C, PDiag(diag::err_undef_interface_suggest) << Id);
       IDecl = C.getCorrectionDeclAs<ObjCInterfaceDecl>();
       Id = IDecl->getIdentifier();
@@ -6160,7 +6162,7 @@ static NamedDecl *DiagnoseInvalidRedeclaration(
   } else if ((Correction = SemaRef.CorrectTypo(
                  Prev.getLookupNameInfo(), Prev.getLookupKind(), S,
                  &ExtraArgs.D.getCXXScopeSpec(), Validator,
-                 IsLocalFriend ? 0 : NewDC))) {
+                 Sema::CTK_ErrorRecovery, IsLocalFriend ? 0 : NewDC))) {
     // Set up everything for the call to ActOnFunctionDeclarator
     ExtraArgs.D.SetIdentifier(Correction.getCorrectionAsIdentifierInfo(),
                               ExtraArgs.D.getIdentifierLoc());
@@ -10100,7 +10102,8 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
     TypoCorrection Corrected;
     DeclFilterCCC<FunctionDecl> Validator;
     if (S && (Corrected = CorrectTypo(DeclarationNameInfo(&II, Loc),
-                                      LookupOrdinaryName, S, 0, Validator)))
+                                      LookupOrdinaryName, S, 0, Validator,
+                                      CTK_NonError)))
       diagnoseTypo(Corrected, PDiag(diag::note_function_suggestion),
                    /*ErrorRecovery*/false);
   }

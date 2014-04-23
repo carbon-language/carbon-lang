@@ -547,7 +547,8 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     Found.clear();
     if (TypoCorrection Corrected =
             CorrectTypo(Found.getLookupNameInfo(), Found.getLookupKind(), S,
-                        &SS, Validator, LookupCtx, EnteringContext)) {
+                        &SS, Validator, CTK_ErrorRecovery, LookupCtx,
+                        EnteringContext)) {
       if (LookupCtx) {
         bool DroppedSpecifier =
             Corrected.WillReplaceSpecifier() &&

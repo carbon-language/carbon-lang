@@ -511,7 +511,6 @@ public:
   /// \returns The module with the given name.
   Module *lookupModule(StringRef ModuleName, bool AllowSearch = true);
 
-
   /// \brief Try to find a module map file in the given directory, returning
   /// \c nullptr if none is found.
   const FileEntry *lookupModuleMapFile(const DirectoryEntry *Dir,

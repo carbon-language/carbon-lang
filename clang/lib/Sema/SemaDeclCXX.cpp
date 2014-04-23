@@ -2605,7 +2605,7 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
       MemInitializerValidatorCCC Validator(ClassDecl);
       if (R.empty() && BaseType.isNull() &&
           (Corr = CorrectTypo(R.getLookupNameInfo(), R.getLookupKind(), S, &SS,
-                              Validator, ClassDecl))) {
+                              Validator, CTK_ErrorRecovery, ClassDecl))) {
         if (FieldDecl *Member = Corr.getCorrectionDeclAs<FieldDecl>()) {
           // We have found a non-static data member with a similar
           // name to what was typed; complain and initialize that
@@ -6900,7 +6900,8 @@ static bool TryNamespaceTypoCorrection(Sema &S, LookupResult &R, Scope *Sc,
   R.clear();
   if (TypoCorrection Corrected = S.CorrectTypo(R.getLookupNameInfo(),
                                                R.getLookupKind(), Sc, &SS,
-                                               Validator)) {
+                                               Validator,
+                                               Sema::CTK_ErrorRecovery)) {
     if (DeclContext *DC = S.computeDeclContext(SS, false)) {
       std::string CorrectedStr(Corrected.getAsString(S.getLangOpts()));
       bool DroppedSpecifier = Corrected.WillReplaceSpecifier() &&
@@ -7471,7 +7472,8 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
     UsingValidatorCCC CCC(HasTypenameKeyword, IsInstantiation,
                           CurContext->isRecord());
     if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
-                                               R.getLookupKind(), S, &SS, CCC)){
+                                               R.getLookupKind(), S, &SS, CCC,
+                                               CTK_ErrorRecovery)){
       // We reject any correction for which ND would be NULL.
       NamedDecl *ND = Corrected.getCorrectionDecl();
       R.setLookupName(Corrected.getCorrection());

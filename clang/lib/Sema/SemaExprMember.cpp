@@ -627,7 +627,8 @@ LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
   RecordMemberExprValidatorCCC Validator(RTy);
   TypoCorrection Corrected = SemaRef.CorrectTypo(R.getLookupNameInfo(),
                                                  R.getLookupKind(), NULL,
-                                                 &SS, Validator, DC);
+                                                 &SS, Validator,
+                                                 Sema::CTK_ErrorRecovery, DC);
   R.clear();
   if (Corrected.isResolved() && !Corrected.isKeyword()) {
     R.setLookupName(Corrected.getCorrection());
@@ -1270,7 +1271,8 @@ Sema::LookupMemberExpr(LookupResult &R, ExprResult &BaseExpr,
       Validator.IsObjCIvarLookup = IsArrow;
       if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
                                                  LookupMemberName, NULL, NULL,
-                                                 Validator, IDecl)) {
+                                                 Validator, CTK_ErrorRecovery,
+                                                 IDecl)) {
         IV = Corrected.getCorrectionDeclAs<ObjCIvarDecl>();
         diagnoseTypo(Corrected,
                      PDiag(diag::err_typecheck_member_reference_ivar_suggest)
