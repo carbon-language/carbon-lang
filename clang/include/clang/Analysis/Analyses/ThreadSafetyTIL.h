@@ -901,7 +901,7 @@ public:
   UnaryOp(TIL_UnaryOpcode Op, SExpr *E) : SExpr(COP_UnaryOp), Expr0(E) {
     Flags = Op;
   }
-  UnaryOp(const UnaryOp &U, SExpr *E) : SExpr(U) { Flags = U.Flags; }
+  UnaryOp(const UnaryOp &U, SExpr *E) : SExpr(U), Expr0(E) { Flags = U.Flags; }
 
   TIL_UnaryOpcode unaryOpcode() const {
     return static_cast<TIL_UnaryOpcode>(Flags);
