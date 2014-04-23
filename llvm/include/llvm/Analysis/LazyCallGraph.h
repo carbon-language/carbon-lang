@@ -328,7 +328,7 @@ public:
   ///
   /// \returns null if the function hasn't been assigned an SCC via the SCC
   /// iterator walk.
-  SCC *lookupSCC(const Function &F) const { return SCCMap.lookup(&F); }
+  SCC *lookupSCC(Node &N) const { return SCCMap.lookup(&N); }
 
   /// \brief Get a graph node for a given function, scanning it to populate the
   /// graph data as necessary.
@@ -369,7 +369,7 @@ private:
   SpecificBumpPtrAllocator<SCC> SCCBPA;
 
   /// \brief Maps Function -> SCC for fast lookup.
-  DenseMap<const Function *, SCC *> SCCMap;
+  DenseMap<Node *, SCC *> SCCMap;
 
   /// \brief The leaf SCCs of the graph.
   ///

@@ -293,16 +293,16 @@ TEST(LazyCallGraphTest, MultiArmSCC) {
   LazyCallGraph::SCC *SCC = *SCCI++;
   EXPECT_EQ(CG.postorder_scc_end(), SCCI);
 
-  LazyCallGraph::Node *A = CG.lookup(lookupFunction(*M, "a"));
-  LazyCallGraph::Node *B = CG.lookup(lookupFunction(*M, "b"));
-  LazyCallGraph::Node *C = CG.lookup(lookupFunction(*M, "c"));
-  LazyCallGraph::Node *D = CG.lookup(lookupFunction(*M, "d"));
-  LazyCallGraph::Node *E = CG.lookup(lookupFunction(*M, "e"));
-  EXPECT_EQ(SCC, CG.lookupSCC(A->getFunction()));
-  EXPECT_EQ(SCC, CG.lookupSCC(B->getFunction()));
-  EXPECT_EQ(SCC, CG.lookupSCC(C->getFunction()));
-  EXPECT_EQ(SCC, CG.lookupSCC(D->getFunction()));
-  EXPECT_EQ(SCC, CG.lookupSCC(E->getFunction()));
+  LazyCallGraph::Node &A = *CG.lookup(lookupFunction(*M, "a"));
+  LazyCallGraph::Node &B = *CG.lookup(lookupFunction(*M, "b"));
+  LazyCallGraph::Node &C = *CG.lookup(lookupFunction(*M, "c"));
+  LazyCallGraph::Node &D = *CG.lookup(lookupFunction(*M, "d"));
+  LazyCallGraph::Node &E = *CG.lookup(lookupFunction(*M, "e"));
+  EXPECT_EQ(SCC, CG.lookupSCC(A));
+  EXPECT_EQ(SCC, CG.lookupSCC(B));
+  EXPECT_EQ(SCC, CG.lookupSCC(C));
+  EXPECT_EQ(SCC, CG.lookupSCC(D));
+  EXPECT_EQ(SCC, CG.lookupSCC(E));
 }
 
 TEST(LazyCallGraphTest, InterSCCEdgeRemoval) {
@@ -322,20 +322,20 @@ TEST(LazyCallGraphTest, InterSCCEdgeRemoval) {
   for (LazyCallGraph::SCC *C : CG.postorder_sccs())
     (void)C;
 
-  LazyCallGraph::Node *A = CG.lookup(lookupFunction(*M, "a"));
-  LazyCallGraph::Node *B = CG.lookup(lookupFunction(*M, "b"));
-  LazyCallGraph::SCC *AC = CG.lookupSCC(lookupFunction(*M, "a"));
-  LazyCallGraph::SCC *BC = CG.lookupSCC(lookupFunction(*M, "b"));
+  LazyCallGraph::Node &A = *CG.lookup(lookupFunction(*M, "a"));
+  LazyCallGraph::Node &B = *CG.lookup(lookupFunction(*M, "b"));
+  LazyCallGraph::SCC &AC = *CG.lookupSCC(A);
+  LazyCallGraph::SCC &BC = *CG.lookupSCC(B);
 
-  EXPECT_EQ("b", A->begin()->getFunction().getName());
-  EXPECT_EQ(B->end(), B->begin());
-  EXPECT_EQ(AC, *BC->parent_begin());
+  EXPECT_EQ("b", A.begin()->getFunction().getName());
+  EXPECT_EQ(B.end(), B.begin());
+  EXPECT_EQ(&AC, *BC.parent_begin());
 
-  CG.removeEdge(*A, lookupFunction(*M, "b"));
+  CG.removeEdge(A, lookupFunction(*M, "b"));
 
-  EXPECT_EQ(A->end(), A->begin());
-  EXPECT_EQ(B->end(), B->begin());
-  EXPECT_EQ(BC->parent_end(), BC->parent_begin());
+  EXPECT_EQ(A.end(), A.begin());
+  EXPECT_EQ(B.end(), B.begin());
+  EXPECT_EQ(BC.parent_end(), BC.parent_begin());
 }
 
 TEST(LazyCallGraphTest, IntraSCCEdgeRemoval) {
@@ -369,27 +369,27 @@ TEST(LazyCallGraphTest, IntraSCCEdgeRemoval) {
   LazyCallGraph::SCC *SCC = *SCCI++;
   EXPECT_EQ(CG1.postorder_scc_end(), SCCI);
 
-  LazyCallGraph::Node *A = CG1.lookup(lookupFunction(*M1, "a"));
-  LazyCallGraph::Node *B = CG1.lookup(lookupFunction(*M1, "b"));
-  LazyCallGraph::Node *C = CG1.lookup(lookupFunction(*M1, "c"));
-  EXPECT_EQ(SCC, CG1.lookupSCC(A->getFunction()));
-  EXPECT_EQ(SCC, CG1.lookupSCC(B->getFunction()));
-  EXPECT_EQ(SCC, CG1.lookupSCC(C->getFunction()));
+  LazyCallGraph::Node &A = *CG1.lookup(lookupFunction(*M1, "a"));
+  LazyCallGraph::Node &B = *CG1.lookup(lookupFunction(*M1, "b"));
+  LazyCallGraph::Node &C = *CG1.lookup(lookupFunction(*M1, "c"));
+  EXPECT_EQ(SCC, CG1.lookupSCC(A));
+  EXPECT_EQ(SCC, CG1.lookupSCC(B));
+  EXPECT_EQ(SCC, CG1.lookupSCC(C));
 
   // Remove the edge from b -> a, which should leave the 3 functions still in
   // a single connected component because of a -> b -> c -> a.
-  CG1.removeEdge(*B, A->getFunction());
-  EXPECT_EQ(SCC, CG1.lookupSCC(A->getFunction()));
-  EXPECT_EQ(SCC, CG1.lookupSCC(B->getFunction()));
-  EXPECT_EQ(SCC, CG1.lookupSCC(C->getFunction()));
+  CG1.removeEdge(B, A.getFunction());
+  EXPECT_EQ(SCC, CG1.lookupSCC(A));
+  EXPECT_EQ(SCC, CG1.lookupSCC(B));
+  EXPECT_EQ(SCC, CG1.lookupSCC(C));
 
   // Remove the edge from c -> a, which should leave 'a' in the original SCC
   // and form a new SCC for 'b' and 'c'.
-  CG1.removeEdge(*C, A->getFunction());
-  EXPECT_EQ(SCC, CG1.lookupSCC(A->getFunction()));
+  CG1.removeEdge(C, A.getFunction());
+  EXPECT_EQ(SCC, CG1.lookupSCC(A));
   EXPECT_EQ(1, std::distance(SCC->begin(), SCC->end()));
-  LazyCallGraph::SCC *SCC2 = CG1.lookupSCC(B->getFunction());
-  EXPECT_EQ(SCC2, CG1.lookupSCC(C->getFunction()));
+  LazyCallGraph::SCC *SCC2 = CG1.lookupSCC(B);
+  EXPECT_EQ(SCC2, CG1.lookupSCC(C));
 }
 
 }

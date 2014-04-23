@@ -141,7 +141,7 @@ void LazyCallGraph::SCC::removeEdge(LazyCallGraph &G, Function &Caller,
   bool HasOtherCallOutsideSCC = false;
   for (Node *N : *this) {
     for (Node *Callee : *N) {
-      SCC *OtherCalleeC = G.SCCMap.lookup(&Callee->F);
+      SCC *OtherCalleeC = G.SCCMap.lookup(Callee);
       if (OtherCalleeC == &CalleeC) {
         HasOtherCallToCalleeC = true;
         break;
@@ -237,7 +237,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
         Node *ChildN = *I;
         // If this child isn't currently in this SCC, no need to process it.
         // However, we do need to remove this SCC from its SCC's parent set.
-        SCC *ChildSCC = G.SCCMap.lookup(&ChildN->F);
+        SCC *ChildSCC = G.SCCMap.lookup(ChildN);
         assert(ChildSCC &&
                "Everything reachable must already be in *some* SCC");
         if (ChildSCC != this) {
@@ -296,7 +296,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     for (Node *ChildN : *N) {
       if (NewNodes.count(ChildN))
         continue;
-      SCC *ChildSCC = G.SCCMap.lookup(&ChildN->getFunction());
+      SCC *ChildSCC = G.SCCMap.lookup(ChildN);
       assert(ChildSCC &&
              "Must have all child SCCs processed when building a new SCC!");
       ChildSCC->ParentSCCs.insert(this);
@@ -331,7 +331,7 @@ void LazyCallGraph::removeEdge(Node &CallerN, Function &Callee) {
   CallerN.Callees.erase(CallerN.Callees.begin() + IndexMapI->second);
   CallerN.CalleeIndexMap.erase(IndexMapI);
 
-  SCC *CallerC = SCCMap.lookup(&CallerN.F);
+  SCC *CallerC = SCCMap.lookup(&CallerN);
   if (!CallerC) {
     // We can only remove edges when the edge isn't actively participating in
     // a DFS walk. Either it must have been popped into an SCC, or it must not
@@ -347,7 +347,7 @@ void LazyCallGraph::removeEdge(Node &CallerN, Function &Callee) {
   assert(CalleeN && "If the caller is in an SCC, we have to have explored all "
                     "its transitively called functions.");
 
-  SCC *CalleeC = SCCMap.lookup(&Callee);
+  SCC *CalleeC = SCCMap.lookup(CalleeN);
   assert(CalleeC &&
          "The caller has an SCC, and thus by necessity so does the callee.");
 
@@ -395,7 +395,7 @@ LazyCallGraph::SCC *LazyCallGraph::formSCCFromDFSStack(
            "We cannot have a low link in an SCC lower than its root on the "
            "stack!");
 
-    SCCMap[&SCCN->getFunction()] = NewSCC;
+    SCCMap[SCCN] = NewSCC;
     NewSCC->Nodes.push_back(SCCN);
     bool Inserted =
         NewSCC->NodeSet.insert(&SCCN->getFunction());
@@ -412,7 +412,7 @@ LazyCallGraph::SCC *LazyCallGraph::formSCCFromDFSStack(
     for (Node *SCCChildN : *SCCN) {
       if (NewSCC->NodeSet.count(&SCCChildN->getFunction()))
         continue;
-      SCC *ChildSCC = SCCMap.lookup(&SCCChildN->getFunction());
+      SCC *ChildSCC = SCCMap.lookup(SCCChildN);
       assert(ChildSCC &&
              "Must have all child SCCs processed when building a new SCC!");
       ChildSCC->ParentSCCs.insert(NewSCC);
@@ -443,7 +443,7 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
   if (SI->first->DFSNumber == 0) {
     // This node hasn't been visited before, assign it a DFS number and remove
     // it from the entry set.
-    assert(!SCCMap.count(&SI->first->getFunction()) &&
+    assert(!SCCMap.count(SI->first) &&
            "Found a node with 0 DFS number but already in an SCC!");
     SI->first->LowLink = SI->first->DFSNumber = NextDFSNumber++;
     SCCEntryNodes.remove(&SI->first->getFunction());
