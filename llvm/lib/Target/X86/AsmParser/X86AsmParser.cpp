@@ -2073,8 +2073,10 @@ ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
       (Name == "smov" || Name == "smovb" || Name == "smovw" ||
        Name == "smovl" || Name == "smovd" || Name == "smovq"))) {
     if (Operands.size() == 1) {
-      if (Name == "movsd")
+      if (Name == "movsd") {
+        delete Operands.back();
         Operands.back() = X86Operand::CreateToken("movsl", NameLoc);
+      }
       if (isParsingIntelSyntax()) {
         Operands.push_back(DefaultMemDIOperand(NameLoc));
         Operands.push_back(DefaultMemSIOperand(NameLoc));
