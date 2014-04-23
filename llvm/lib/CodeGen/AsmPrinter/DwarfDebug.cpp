@@ -1923,13 +1923,10 @@ void DwarfDebug::emitAccelNamespaces() {
 
 // Emit type dies into a hashed accelerator table.
 void DwarfDebug::emitAccelTypes() {
-  std::vector<DwarfAccelTable::Atom> Atoms;
-  Atoms.push_back(
-      DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4));
-  Atoms.push_back(
-      DwarfAccelTable::Atom(dwarf::DW_ATOM_die_tag, dwarf::DW_FORM_data2));
-  Atoms.push_back(
-      DwarfAccelTable::Atom(dwarf::DW_ATOM_type_flags, dwarf::DW_FORM_data1));
+  DwarfAccelTable::Atom Atoms[] = {
+      DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4),
+      DwarfAccelTable::Atom(dwarf::DW_ATOM_die_tag, dwarf::DW_FORM_data2),
+      DwarfAccelTable::Atom(dwarf::DW_ATOM_type_flags, dwarf::DW_FORM_data1)};
   DwarfAccelTable AT(Atoms);
   for (const auto &TheU : getUnits()) {
     for (const auto &GI : TheU->getAccelTypes()) {

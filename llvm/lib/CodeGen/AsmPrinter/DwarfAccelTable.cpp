@@ -29,8 +29,6 @@ DwarfAccelTable::DwarfAccelTable(ArrayRef<DwarfAccelTable::Atom> atomList)
     : Header(8 + (atomList.size() * 4)), HeaderData(atomList),
       Entries(Allocator) {}
 
-DwarfAccelTable::~DwarfAccelTable() {}
-
 void DwarfAccelTable::AddName(StringRef Name, const DIE *die, char Flags) {
   assert(Data.empty() && "Already finalized!");
   // If the string is in the list already then add this die to the list
