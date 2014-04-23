@@ -533,7 +533,7 @@ FormatManager::ShouldPrintAsOneLiner (ValueObject& valobj)
         if (child_sp->GetSummaryFormat())
         {
             // and it wants children, then bail out
-            if (child_sp->GetSummaryFormat()->DoesPrintChildren())
+            if (child_sp->GetSummaryFormat()->DoesPrintChildren(child_sp.get()))
                 return false;
         }
         

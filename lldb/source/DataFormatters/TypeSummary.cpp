@@ -69,7 +69,7 @@ StringSummaryFormat::FormatObject (ValueObject *valobj,
     if (IsOneLiner())
     {
         ValueObjectPrinter printer(valobj,&s,DumpValueObjectOptions());
-        printer.PrintChildrenOneLiner(HideNames());
+        printer.PrintChildrenOneLiner(HideNames(valobj));
         retval.assign(s.GetData());
         return true;
     }
@@ -95,12 +95,12 @@ StringSummaryFormat::GetDescription ()
     
     sstr.Printf ("`%s`%s%s%s%s%s%s%s",      m_format.c_str(),
                  Cascades() ? "" : " (not cascading)",
-                 !DoesPrintChildren() ? "" : " (show children)",
-                 !DoesPrintValue() ? " (hide value)" : "",
+                 !DoesPrintChildren(nullptr) ? "" : " (show children)",
+                 !DoesPrintValue(nullptr) ? " (hide value)" : "",
                  IsOneLiner() ? " (one-line printout)" : "",
                  SkipsPointers() ? " (skip pointers)" : "",
                  SkipsReferences() ? " (skip references)" : "",
-                 HideNames() ? " (hide member names)" : "");
+                 HideNames(nullptr) ? " (hide member names)" : "");
     return sstr.GetString();
 }
 
@@ -132,12 +132,12 @@ CXXFunctionSummaryFormat::GetDescription ()
     sstr.Printf ("`%s (%p) `%s%s%s%s%s%s%s", m_description.c_str(),
                  static_cast<void*>(&m_impl),
                  Cascades() ? "" : " (not cascading)",
-                 !DoesPrintChildren() ? "" : " (show children)",
-                 !DoesPrintValue() ? " (hide value)" : "",
+                 !DoesPrintChildren(nullptr) ? "" : " (show children)",
+                 !DoesPrintValue(nullptr) ? " (hide value)" : "",
                  IsOneLiner() ? " (one-line printout)" : "",
                  SkipsPointers() ? " (skip pointers)" : "",
                  SkipsReferences() ? " (skip references)" : "",
-                 HideNames() ? " (hide member names)" : "");
+                 HideNames(nullptr) ? " (hide member names)" : "");
     return sstr.GetString();
 }
 
@@ -199,12 +199,12 @@ ScriptSummaryFormat::GetDescription ()
 {
     StreamString sstr;
     sstr.Printf ("%s%s%s%s%s%s%s\n%s",       Cascades() ? "" : " (not cascading)",
-                 !DoesPrintChildren() ? "" : " (show children)",
-                 !DoesPrintValue() ? " (hide value)" : "",
+                 !DoesPrintChildren(nullptr) ? "" : " (show children)",
+                 !DoesPrintValue(nullptr) ? " (hide value)" : "",
                  IsOneLiner() ? " (one-line printout)" : "",
                  SkipsPointers() ? " (skip pointers)" : "",
                  SkipsReferences() ? " (skip references)" : "",
-                 HideNames() ? " (hide member names)" : "",
+                 HideNames(nullptr) ? " (hide member names)" : "",
                  m_python_script.c_str());
     return sstr.GetString();
     
