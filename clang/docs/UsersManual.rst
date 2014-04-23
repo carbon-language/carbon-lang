@@ -1070,17 +1070,17 @@ Using Sampling Profilers for Optimization
 
 Sampling profilers are used to collect runtime information, such as
 hardware counters, while your application executes. They are typically
-very efficient and do not incur in a large runtime overhead. The
+very efficient and do not incur a large runtime overhead. The
 sample data collected by the profiler can be used during compilation
-to determine what are the most executed areas of the code.
+to determine what the most executed areas of the code are.
 
 In particular, sample profilers can provide execution counts for all
-instructions in the code, information on branches taken and function
+instructions in the code and information on branches taken and function
 invocation. The compiler can use this information in its optimization
 cost models. For example, knowing that a branch is taken very
 frequently helps the compiler make better decisions when ordering
 basic blocks. Knowing that a function ``foo`` is called more
-frequently than another ``bar`` helps the inliner.
+frequently than another function ``bar`` helps the inliner.
 
 Using the data from a sample profiler requires some changes in the way
 a program is built. Before the compiler can use profiling information,
@@ -1089,7 +1089,7 @@ usual build cycle when using sample profilers for optimization:
 
 1. Build the code with source line table information. You can use all the
    usual build flags that you always build your application with. The only
-   requirement is that you add ``-gline-tables-ony`` or ``-g`` to the
+   requirement is that you add ``-gline-tables-only`` or ``-g`` to the
    command line. This is important for the profiler to be able to map
    instructions back to source line locations.
 
@@ -1130,7 +1130,10 @@ usual build cycle when using sample profilers for optimization:
 
 4. Build the code again using the collected profile. This step feeds
    the profile back to the optimizers. This should result in a binary
-   that executes faster than the original one.
+   that executes faster than the original one. Note that you are not
+   required to build the code with the exact same arguments that you
+   used in the first step. The only requirement is that you build the code
+   with ``-gline-tables-only`` and ``-fprofile-sample-use``.
 
    .. code-block:: console
 
@@ -1157,12 +1160,16 @@ https://github.com/google/autofdo/blob/master/profile_writer.h):
     ...
     offsetN[.discriminator]: number_of_samples [fn5:num fn6:num ... ]
 
+The file may contain blank lines between sections and lines within a
+section. However, the spacing within a single line is fixed. Additional
+spaces will result in an error while reading the file.
+
 Function names must be mangled in order for the profile loader to
 match them in the current translation unit. The two numbers in the
 function header specify how many total samples were accumulated in the
 function (first number), and the total number of samples accumulated
-at the prologue of the function (second number). This head sample
-count provides an indicator of how frequent is the function invoked.
+in the prologue of the function (second number). This head sample
+count provides an indicator of how frequently the function is invoked.
 
 Each sampled line may contain several items. Some are optional (marked
 below):
@@ -1175,14 +1182,29 @@ a. Source line offset. This number represents the line number
 
 b. [OPTIONAL] Discriminator. This is used if the sampled program
    was compiled with DWARF discriminator support
-   (http://wiki.dwarfstd.org/index.php?title=Path_Discriminators)
+   (http://wiki.dwarfstd.org/index.php?title=Path_Discriminators).
+   DWARF discriminators allow the compiler to distinguish between
+   multiple execution paths on the same source line location.
 
-c. Number of samples. This is the number of samples collected by
-   the profiler at this source location.
+   For example, consider the line of code ``if (cond) foo(); else bar();``.
+   If the predicate ``cond`` is true 80% of the time, then the edge
+   into function ``foo`` should be considered to be taken most of the
+   time. But both calls to ``foo`` and ``bar`` are at the same source
+   line, so a sample count at that line is not sufficient. The
+   compiler needs to know which part of that line is taken more
+   frequently.
+
+   This is what discriminators provide. In this case, the calls to
+   ``foo`` and ``bar`` will be at the same line, but will have
+   different discriminator values. This allows the compiler to correctly
+   set edge weights into ``foo`` and ``bar``.
+
+c. Number of samples. This is an integer quantity representing the
+   number of samples collected by the profiler at this source
+   location.
 
 d. [OPTIONAL] Potential call targets and samples. If present, this
    line contains a call instruction. This models both direct and
-   indirect calls. Each called target is listed together with the
    number of samples. For example,
 
    .. code-block:: console
@@ -1190,8 +1212,8 @@ d. [OPTIONAL] Potential call targets and samples. If present, this
      130: 7  foo:3  bar:2  baz:7
 
    The above means that at relative line offset 130 there is a call
-   instruction that calls one of ``foo()``, ``bar()`` and ``baz()``.
-   With ``baz()`` being the relatively more frequent call target.
+   instruction that calls one of ``foo()``, ``bar()`` and ``baz()``,
+   with ``baz()`` being the relatively more frequently called target.
 
 
 Controlling Size of Debug Information
