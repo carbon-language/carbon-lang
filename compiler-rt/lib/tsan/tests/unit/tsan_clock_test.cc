@@ -246,7 +246,7 @@ static bool ClockFuzzer(bool printing) {
 
   // Do N random operations (acquire, release, etc) and compare results
   // for SimpleThread/SyncClock and real Thread/SyncClock.
-  for (int i = 0; i < 1000000; i++) {
+  for (int i = 0; i < 10000; i++) {
     unsigned tid = rand() % kThreads;
     unsigned cid = rand() % kClocks;
     thr0[tid]->tick();
