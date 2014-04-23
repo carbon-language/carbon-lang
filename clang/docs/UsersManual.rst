@@ -1123,7 +1123,7 @@ usual build cycle when using sample profilers for optimization:
 
      $ create_llvm_prof --binary=./code --out=code.prof
 
-   This will read ``perf.data``, the binary file ``./code`` and emit
+   This will read ``perf.data`` and the binary file ``./code`` and emit
    the profile data in ``code.prof``. Note that if you ran ``perf``
    without the ``-b`` flag, you need to use ``--use_lbr=false`` when
    calling ``create_llvm_prof``.
@@ -1160,7 +1160,7 @@ https://github.com/google/autofdo/blob/master/profile_writer.h):
     ...
     offsetN[.discriminator]: number_of_samples [fn5:num fn6:num ... ]
 
-The file may contain blank lines between sections and lines within a
+The file may contain blank lines between sections and within a
 section. However, the spacing within a single line is fixed. Additional
 spaces will result in an error while reading the file.
 
