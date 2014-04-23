@@ -152,27 +152,26 @@ void LazyCallGraph::updateGraphPtrs() {
 }
 
 LazyCallGraph::SCC *LazyCallGraph::formSCCFromDFSStack(
-    SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack) {
+    SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack,
+    SmallVectorImpl<std::pair<Node *, Node::iterator>>::iterator SCCBegin) {
   // The tail of the stack is the new SCC. Allocate the SCC and pop the stack
   // into it.
   SCC *NewSCC = new (SCCBPA.Allocate()) SCC();
 
-  // Because we don't follow the strict Tarjan recursive formulation, walk
-  // from the top of the stack down, propagating the lowest link and stopping
-  // when the DFS number is the lowest link.
-  int LowestLink = DFSStack.back().first->LowLink;
-  do {
-    Node *SCCN = DFSStack.pop_back_val().first;
+  for (auto I = SCCBegin, E = DFSStack.end(); I != E; ++I) {
+    Node *SCCN = I->first;
+    assert(SCCN->LowLink >= SCCBegin->first->LowLink &&
+           "We cannot have a low link in an SCC lower than its root on the "
+           "stack!");
+
     SCCMap[&SCCN->getFunction()] = NewSCC;
     NewSCC->Nodes.push_back(SCCN);
-    LowestLink = std::min(LowestLink, SCCN->LowLink);
     bool Inserted =
         NewSCC->NodeSet.insert(&SCCN->getFunction());
     (void)Inserted;
     assert(Inserted && "Cannot have duplicates in the DFSStack!");
-  } while (!DFSStack.empty() && LowestLink <= DFSStack.back().first->DFSNumber);
-  assert(LowestLink == NewSCC->Nodes.back()->DFSNumber &&
-         "Cannot stop with a DFS number greater than the lowest link!");
+  }
+  DFSStack.erase(SCCBegin, DFSStack.end());
 
   // A final pass over all edges in the SCC (this remains linear as we only
   // do this once when we build the SCC) to connect it to the parent sets of
@@ -209,36 +208,45 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
     DFSStack.push_back(std::make_pair(N, N->begin()));
   }
 
-  Node *N = DFSStack.back().first;
-  if (N->DFSNumber == 0) {
+  auto SI = DFSStack.rbegin();
+  if (SI->first->DFSNumber == 0) {
     // This node hasn't been visited before, assign it a DFS number and remove
     // it from the entry set.
-    N->LowLink = N->DFSNumber = NextDFSNumber++;
-    SCCEntryNodes.remove(&N->getFunction());
+    SI->first->LowLink = SI->first->DFSNumber = NextDFSNumber++;
+    SCCEntryNodes.remove(&SI->first->getFunction());
   }
 
-  for (auto I = DFSStack.back().second, E = N->end(); I != E; ++I) {
-    Node *ChildN = *I;
-    if (ChildN->DFSNumber == 0) {
-      // Mark that we should start at this child when next this node is the
-      // top of the stack. We don't start at the next child to ensure this
-      // child's lowlink is reflected.
-      // FIXME: I don't actually think this is required, and we could start
-      // at the next child.
-      DFSStack.back().second = I;
+  do {
+    Node *N = SI->first;
+    for (auto I = SI->second, E = N->end(); I != E; ++I) {
+      Node *ChildN = *I;
+      if (ChildN->DFSNumber == 0) {
+        // Mark that we should start at this child when next this node is the
+        // top of the stack. We don't start at the next child to ensure this
+        // child's lowlink is reflected.
+        SI->second = I;
 
-      // Recurse onto this node via a tail call.
-      DFSStack.push_back(std::make_pair(ChildN, ChildN->begin()));
-      return LazyCallGraph::getNextSCCInPostOrder();
+        // Recurse onto this node via a tail call.
+        DFSStack.push_back(std::make_pair(ChildN, ChildN->begin()));
+        return LazyCallGraph::getNextSCCInPostOrder();
+      }
+
+      // Track the lowest link of the childen, if any are still in the stack.
+      if (ChildN->LowLink < N->LowLink && !SCCMap.count(&ChildN->getFunction()))
+        N->LowLink = ChildN->LowLink;
     }
+    // No more children to process for this stack entry.
+    SI->second = N->end();
 
-    // Track the lowest link of the childen, if any are still in the stack.
-    if (ChildN->LowLink < N->LowLink && !SCCMap.count(&ChildN->getFunction()))
-      N->LowLink = ChildN->LowLink;
-  }
+    if (N->LowLink == N->DFSNumber)
+      // Form the new SCC out of the top of the DFS stack.
+      return formSCCFromDFSStack(DFSStack, std::prev(SI.base()));
 
-  // Form the new SCC out of the top of the DFS stack.
-  return formSCCFromDFSStack(DFSStack);
+    ++SI;
+  } while (SI != DFSStack.rend());
+
+  llvm_unreachable(
+      "We cannot reach the bottom of the stack without popping an SCC.");
 }
 
 char LazyCallGraphAnalysis::PassID;

@@ -248,4 +248,61 @@ TEST(LazyCallGraphTest, BasicGraphFormation) {
   EXPECT_EQ(CG.postorder_scc_end(), SCCI);
 }
 
+static Function &lookupFunction(Module &M, StringRef Name) {
+  for (Function &F : M)
+    if (F.getName() == Name)
+      return F;
+  report_fatal_error("Couldn't find function!");
+}
+
+TEST(LazyCallGraphTest, MultiArmSCC) {
+  // Two interlocking cycles. The really useful thing about this SCC is that it
+  // will require Tarjan's DFS to backtrack and finish processing all of the
+  // children of each node in the SCC.
+  std::unique_ptr<Module> M = parseAssembly(
+      "define void @a() {\n"
+      "entry:\n"
+      "  call void @b()\n"
+      "  call void @d()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @b() {\n"
+      "entry:\n"
+      "  call void @c()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @c() {\n"
+      "entry:\n"
+      "  call void @a()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @d() {\n"
+      "entry:\n"
+      "  call void @e()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @e() {\n"
+      "entry:\n"
+      "  call void @a()\n"
+      "  ret void\n"
+      "}\n");
+  LazyCallGraph CG(*M);
+
+  // Force the graph to be fully expanded.
+  auto SCCI = CG.postorder_scc_begin();
+  LazyCallGraph::SCC *SCC = *SCCI++;
+  EXPECT_EQ(CG.postorder_scc_end(), SCCI);
+
+  LazyCallGraph::Node *A = CG.lookup(lookupFunction(*M, "a"));
+  LazyCallGraph::Node *B = CG.lookup(lookupFunction(*M, "b"));
+  LazyCallGraph::Node *C = CG.lookup(lookupFunction(*M, "c"));
+  LazyCallGraph::Node *D = CG.lookup(lookupFunction(*M, "d"));
+  LazyCallGraph::Node *E = CG.lookup(lookupFunction(*M, "e"));
+  EXPECT_EQ(SCC, CG.lookupSCC(A->getFunction()));
+  EXPECT_EQ(SCC, CG.lookupSCC(B->getFunction()));
+  EXPECT_EQ(SCC, CG.lookupSCC(C->getFunction()));
+  EXPECT_EQ(SCC, CG.lookupSCC(D->getFunction()));
+  EXPECT_EQ(SCC, CG.lookupSCC(E->getFunction()));
+}
+
 }

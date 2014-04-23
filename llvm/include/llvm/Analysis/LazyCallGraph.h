@@ -381,7 +381,8 @@ private:
   /// \brief Helper to form a new SCC out of the top of a DFSStack-like
   /// structure.
   SCC *formSCCFromDFSStack(
-      SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack);
+      SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack,
+      SmallVectorImpl<std::pair<Node *, Node::iterator>>::iterator SCCBegin);
 
   /// \brief Retrieve the next node in the post-order SCC walk of the call graph.
   SCC *getNextSCCInPostOrder();
