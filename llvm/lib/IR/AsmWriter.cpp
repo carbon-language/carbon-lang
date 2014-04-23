@@ -2141,10 +2141,10 @@ void Module::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
   W.printModule(this);
 }
 
-void NamedMDNode::print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW) const {
+void NamedMDNode::print(raw_ostream &ROS) const {
   SlotTracker SlotTable(getParent());
   formatted_raw_ostream OS(ROS);
-  AssemblyWriter W(OS, SlotTable, getParent(), AAW);
+  AssemblyWriter W(OS, SlotTable, getParent(), nullptr);
   W.printNamedMDNode(this);
 }
 
@@ -2247,4 +2247,4 @@ void Type::dump() const { print(dbgs()); }
 void Module::dump() const { print(dbgs(), nullptr); }
 
 // NamedMDNode::dump() - Allow printing of NamedMDNodes from the debugger.
-void NamedMDNode::dump() const { print(dbgs(), nullptr); }
+void NamedMDNode::dump() const { print(dbgs()); }

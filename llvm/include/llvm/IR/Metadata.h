@@ -272,7 +272,7 @@ public:
   StringRef getName() const;
 
   /// print - Implement operator<< on NamedMDNode.
-  void print(raw_ostream &ROS, AssemblyAnnotationWriter *AAW = nullptr) const;
+  void print(raw_ostream &ROS) const;
 
   /// dump() - Allow printing of NamedMDNodes from the debugger.
   void dump() const;
