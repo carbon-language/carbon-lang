@@ -1449,7 +1449,7 @@ GlobalModuleIndex *CompilerInstance::loadGlobalModuleIndex(
 				  getPreprocessor().getIdentifierInfo(TheModule->Name), TriggerLoc));
         std::reverse(Path.begin(), Path.end());
 		    // Load a module as hidden.  This also adds it to the global index.
-        ModuleLoadResult Result = loadModule(TheModule->DefinitionLoc, Path,
+        loadModule(TheModule->DefinitionLoc, Path,
                                              Module::Hidden, false);
         RecreateIndex = true;
       }
