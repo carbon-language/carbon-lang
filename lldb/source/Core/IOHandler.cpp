@@ -359,6 +359,7 @@ IOHandlerEditline::IOHandlerEditline (Debugger &debugger,
     {
         m_editline_ap.reset(new Editline (editline_name,
                                           prompt ? prompt : "",
+                                          multi_line,
                                           GetInputFILE (),
                                           GetOutputFILE (),
                                           GetErrorFILE ()));

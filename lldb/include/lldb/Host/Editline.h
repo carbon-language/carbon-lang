@@ -58,6 +58,7 @@ public:
     
     Editline(const char *prog,  // Used for the history file and for editrc program name
              const char *prompt,
+             bool configure_for_multiline,             
              FILE *fin,
              FILE *fout,
              FILE *ferr);

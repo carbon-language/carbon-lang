@@ -24,6 +24,7 @@ static const char k_prompt_escape_char = '\1';
 
 Editline::Editline (const char *prog,       // prog can't be NULL
                     const char *prompt,     // can be NULL for no prompt
+                    bool configure_for_multiline,
                     FILE *fin,
                     FILE *fout,
                     FILE *ferr) :
@@ -90,6 +91,23 @@ Editline::Editline (const char *prog,       // prog can't be NULL
     ::el_set (m_editline, EL_BIND, "^w", "ed-delete-prev-word", NULL); // Delete previous word, behave like bash does.
     ::el_set (m_editline, EL_BIND, "\033[3~", "ed-delete-next-char", NULL); // Fix the delete key.
     ::el_set (m_editline, EL_BIND, "\t", "lldb-complete", NULL); // Bind TAB to be auto complete
+    
+    if (configure_for_multiline)
+    {
+        // Use escape sequences for control characters due to bugs in editline
+        // where "-k up" and "-k down" don't always work.
+        ::el_set (m_editline, EL_BIND, "^[[A", "lldb-edit-prev-line", NULL); // Map up arrow
+        ::el_set (m_editline, EL_BIND, "^[[B", "lldb-edit-next-line", NULL); // Map down arrow
+        ::el_set (m_editline, EL_BIND, "^\[", "ed-prev-history", NULL);
+        ::el_set (m_editline, EL_BIND, "^\]", "ed-next-history", NULL);
+    }
+    else
+    {
+        // Use escape sequences for control characters due to bugs in editline
+        // where "-k up" and "-k down" don't always work.
+        ::el_set (m_editline, EL_BIND, "^[[A", "ed-prev-history", NULL); // Map up arrow
+        ::el_set (m_editline, EL_BIND, "^[[B", "ed-next-history", NULL); // Map down arrow
+    }
     
     // Source $PWD/.editrc then $HOME/.editrc
     ::el_source (m_editline, NULL);
@@ -233,8 +251,6 @@ Editline::GetLine(std::string &line)
 
     // Set arrow key bindings for up and down arrows for single line
     // mode where up and down arrows do prev/next history
-    ::el_set (m_editline, EL_BIND, "^[[A", "ed-prev-history", NULL); // Map up arrow
-    ::el_set (m_editline, EL_BIND, "^[[B", "ed-next-history", NULL); // Map down arrow
     m_interrupted = false;
 
     if (!m_got_eof)
@@ -296,10 +312,6 @@ Editline::GetLines(const std::string &end_line, StringList &lines)
     
     // Set arrow key bindings for up and down arrows for multiple line
     // mode where up and down arrows do edit prev/next line
-    ::el_set (m_editline, EL_BIND, "^[[A", "lldb-edit-prev-line", NULL); // Map up arrow
-    ::el_set (m_editline, EL_BIND, "^[[B", "lldb-edit-next-line", NULL); // Map down arrow
-    ::el_set (m_editline, EL_BIND, "^b", "ed-prev-history", NULL);
-    ::el_set (m_editline, EL_BIND, "^n", "ed-next-history", NULL);
     m_interrupted = false;
 
     LineStatus line_status = LineStatus::Success;
