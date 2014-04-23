@@ -50,7 +50,7 @@
 ; X86-NEXT: ret
 ; X86-NEXT: [[END_OF_F:.*]]:
 ;
-; X86-LABEL: .section        .debug$S,"rn"
+; X86-LABEL: .section        .debug$S,"rnd"
 ; X86-NEXT: .long   4
 ; Line table subsection for x
 ; X86-NEXT: .long   242
@@ -200,7 +200,7 @@
 ; X64-NEXT: ret
 ; X64-NEXT: [[END_OF_F:.*]]:
 ;
-; X64-LABEL: .section        .debug$S,"rn"
+; X64-LABEL: .section        .debug$S,"rnd"
 ; X64-NEXT: .long   4
 ; Line table subsection for x
 ; X64-NEXT: .long   242

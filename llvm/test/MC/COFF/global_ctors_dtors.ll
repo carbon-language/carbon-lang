@@ -29,11 +29,11 @@ define i32 @main() nounwind {
   ret i32 0
 }
 
-; WIN32: .section .CRT$XCU,"r"
+; WIN32: .section .CRT$XCU,"rd"
 ; WIN32: a_global_ctor
-; WIN32: .section .CRT$XTX,"r"
+; WIN32: .section .CRT$XTX,"rd"
 ; WIN32: a_global_dtor
-; MINGW32: .section .ctors,"w"
+; MINGW32: .section .ctors,"wd"
 ; MINGW32: a_global_ctor
-; MINGW32: .section .dtors,"w"
+; MINGW32: .section .dtors,"wd"
 ; MINGW32: a_global_dtor

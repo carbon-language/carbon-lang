@@ -4,7 +4,7 @@
 ; CHECK:    .section  .debug_info
 
 ; RUN: llc -mtriple=i686-pc-win32 -filetype=asm -O0 < %s | FileCheck -check-prefix=WIN32 %s
-; WIN32:    .section .debug$S,"rn"
+; WIN32:    .section .debug$S,"rnd"
 
 ; generated from:
 ; clang -g -S -emit-llvm test.c -o test.ll
