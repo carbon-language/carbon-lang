@@ -900,18 +900,17 @@ DeclContext *DeclContext::getPrimaryContext() {
       // If this is a tag type that has a definition or is currently
       // being defined, that definition is our primary context.
       TagDecl *Tag = cast<TagDecl>(this);
-      assert(isa<TagType>(Tag->TypeForDecl) ||
-             isa<InjectedClassNameType>(Tag->TypeForDecl));
 
       if (TagDecl *Def = Tag->getDefinition())
         return Def;
 
-      if (!isa<InjectedClassNameType>(Tag->TypeForDecl)) {
-        const TagType *TagTy = cast<TagType>(Tag->TypeForDecl);
-        if (TagTy->isBeingDefined())
-          // FIXME: is it necessarily being defined in the decl
-          // that owns the type?
-          return TagTy->getDecl();
+      if (const TagType *TagTy = dyn_cast<TagType>(Tag->getTypeForDecl())) {
+        // Note, TagType::getDecl returns the (partial) definition one exists.
+        TagDecl *PossiblePartialDef = TagTy->getDecl();
+        if (PossiblePartialDef->isBeingDefined())
+          return PossiblePartialDef;
+      } else {
+        assert(isa<InjectedClassNameType>(Tag->getTypeForDecl()));
       }
 
       return Tag;

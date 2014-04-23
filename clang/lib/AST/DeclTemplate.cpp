@@ -472,7 +472,7 @@ TemplateTypeParmDecl::Create(const ASTContext &C, DeclContext *DC,
   TemplateTypeParmDecl *TTPDecl =
     new (C, DC) TemplateTypeParmDecl(DC, KeyLoc, NameLoc, Id, Typename);
   QualType TTPType = C.getTemplateTypeParmType(D, P, ParameterPack, TTPDecl);
-  TTPDecl->TypeForDecl = TTPType.getTypePtr();
+  TTPDecl->setTypeForDecl(TTPType.getTypePtr());
   return TTPDecl;
 }
 
@@ -497,15 +497,15 @@ SourceRange TemplateTypeParmDecl::getSourceRange() const {
 }
 
 unsigned TemplateTypeParmDecl::getDepth() const {
-  return TypeForDecl->getAs<TemplateTypeParmType>()->getDepth();
+  return getTypeForDecl()->getAs<TemplateTypeParmType>()->getDepth();
 }
 
 unsigned TemplateTypeParmDecl::getIndex() const {
-  return TypeForDecl->getAs<TemplateTypeParmType>()->getIndex();
+  return getTypeForDecl()->getAs<TemplateTypeParmType>()->getIndex();
 }
 
 bool TemplateTypeParmDecl::isParameterPack() const {
-  return TypeForDecl->getAs<TemplateTypeParmType>()->isParameterPack();
+  return getTypeForDecl()->getAs<TemplateTypeParmType>()->isParameterPack();
 }
 
 //===----------------------------------------------------------------------===//

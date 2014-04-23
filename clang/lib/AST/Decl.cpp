@@ -3202,8 +3202,8 @@ TagDecl *TagDecl::getCanonicalDecl() { return getFirstDecl(); }
 
 void TagDecl::setTypedefNameForAnonDecl(TypedefNameDecl *TDD) {
   NamedDeclOrQualifier = TDD;
-  if (TypeForDecl)
-    assert(TypeForDecl->isLinkageValid());
+  if (const Type *T = getTypeForDecl())
+    assert(T->isLinkageValid());
   assert(isLinkageValid());
 }
 

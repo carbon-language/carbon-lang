@@ -2374,11 +2374,6 @@ class TypeDecl : public NamedDecl {
   /// LocStart - The start of the source range for this declaration.
   SourceLocation LocStart;
   friend class ASTContext;
-  friend class DeclContext;
-  friend class TagDecl;
-  friend class TemplateTypeParmDecl;
-  friend class TagType;
-  friend class ASTReader;
 
 protected:
   TypeDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,

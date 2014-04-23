@@ -8019,7 +8019,7 @@ void ASTReader::finishPendingActions() {
                                            DEnd = PendingDefinitions.end();
        D != DEnd; ++D) {
     if (TagDecl *TD = dyn_cast<TagDecl>(*D)) {
-      if (const TagType *TagT = dyn_cast<TagType>(TD->TypeForDecl)) {
+      if (const TagType *TagT = dyn_cast<TagType>(TD->getTypeForDecl())) {
         // Make sure that the TagType points at the definition.
         const_cast<TagType*>(TagT)->decl = TD;
       }
