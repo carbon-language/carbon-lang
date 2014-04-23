@@ -27,6 +27,7 @@
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/OperatorKinds.h"
 
+#include <memory>
 #include <vector>
 
 
@@ -234,14 +235,10 @@ public:
   };
 
   SExprBuilder(til::MemRegionRef A)
-    : Arena(A), SelfVar(nullptr), Scfg(nullptr), CallCtx(nullptr),
-      CurrentBB(nullptr), CurrentBlockInfo(nullptr) {
+      : Arena(A), SelfVar(nullptr), Scfg(nullptr), CurrentBB(nullptr),
+        CurrentBlockInfo(nullptr) {
     // FIXME: we don't always have a self-variable.
     SelfVar = new (Arena) til::Variable(til::Variable::VK_SFun);
-  }
-  ~SExprBuilder() {
-    if (CallCtx)
-      delete CallCtx;
   }
 
   // Translate a clang statement or expression to a TIL expression.
@@ -369,7 +366,7 @@ private:
   std::vector<til::BasicBlock *> BlockMap; // Map from clang to til BBs.
   std::vector<BlockInfo> BBInfo;           // Extra information per BB.
                                            // Indexed by clang BlockID.
-  SExprBuilder::CallingContext *CallCtx;   // Root calling context
+  std::unique_ptr<SExprBuilder::CallingContext> CallCtx; // Root calling context
 
   LVarDefinitionMap CurrentLVarMap;
   std::vector<til::Variable*> CurrentArguments;

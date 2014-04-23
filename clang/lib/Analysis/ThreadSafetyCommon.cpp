@@ -649,7 +649,7 @@ void SExprBuilder::enterCFG(CFG *Cfg, const FunctionDecl *FD,
     auto *BB = new (Arena) til::BasicBlock(Arena, 0, B->size());
     BlockMap[B->getBlockID()] = BB;
   }
-  CallCtx = new SExprBuilder::CallingContext(FD);
+  CallCtx.reset(new SExprBuilder::CallingContext(FD));
 
   CurrentBB = lookupBlock(&Cfg->getEntry());
   for (auto *Pm : FD->parameters()) {
@@ -712,7 +712,7 @@ void SExprBuilder::enterCFGBlockBody(const CFGBlock *B) {
 
 
 void SExprBuilder::handleStatement(const Stmt *S) {
-  til::SExpr *E = translate(S, CallCtx);
+  til::SExpr *E = translate(S, CallCtx.get());
   addStatement(E, S);
 }
 
@@ -744,7 +744,7 @@ void SExprBuilder::exitCFGBlockBody(const CFGBlock *B) {
     CurrentBB->setTerminator(Tm);
   }
   else if (N == 2) {
-    til::SExpr *C = translate(B->getTerminatorCondition(true), CallCtx);
+    til::SExpr *C = translate(B->getTerminatorCondition(true), CallCtx.get());
     til::BasicBlock *BB1 = *It ? lookupBlock(*It) : nullptr;
     ++It;
     til::BasicBlock *BB2 = *It ? lookupBlock(*It) : nullptr;
