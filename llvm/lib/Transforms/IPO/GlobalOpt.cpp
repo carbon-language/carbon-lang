@@ -1170,10 +1170,13 @@ static Value *GetHeapSROAValue(Value *V, unsigned FieldNo,
   } else if (PHINode *PN = dyn_cast<PHINode>(V)) {
     // PN's type is pointer to struct.  Make a new PHI of pointer to struct
     // field.
-    StructType *ST = cast<StructType>(PN->getType()->getPointerElementType());
 
+    PointerType *PTy = cast<PointerType>(PN->getType());
+    StructType *ST = cast<StructType>(PTy->getElementType());
+
+    unsigned AS = PTy->getAddressSpace();
     PHINode *NewPN =
-     PHINode::Create(PointerType::getUnqual(ST->getElementType(FieldNo)),
+      PHINode::Create(PointerType::get(ST->getElementType(FieldNo), AS),
                      PN->getNumIncomingValues(),
                      PN->getName()+".f"+Twine(FieldNo), PN);
     Result = NewPN;
@@ -1285,9 +1288,10 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
   std::vector<Value*> FieldGlobals;
   std::vector<Value*> FieldMallocs;
 
+  unsigned AS = GV->getType()->getPointerAddressSpace();
   for (unsigned FieldNo = 0, e = STy->getNumElements(); FieldNo != e;++FieldNo){
     Type *FieldTy = STy->getElementType(FieldNo);
-    PointerType *PFieldTy = PointerType::getUnqual(FieldTy);
+    PointerType *PFieldTy = PointerType::get(FieldTy, AS);
 
     GlobalVariable *NGV =
       new GlobalVariable(*GV->getParent(),
