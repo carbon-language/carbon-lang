@@ -1858,24 +1858,14 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
 
 // Emit visible names into a hashed accelerator table section.
 void DwarfDebug::emitAccelNames() {
-  DwarfAccelTable AT(
-      DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4));
-  for (const auto &TheU : getUnits()) {
-    for (const auto &GI : TheU->getAccelNames()) {
-      StringRef Name = GI.getKey();
-      for (const DIE *D : GI.second)
-        AT.AddName(Name, D);
-    }
-  }
-
-  AT.FinalizeTable(Asm, "Names");
+  AccelNames.FinalizeTable(Asm, "Names");
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfAccelNamesSection());
   MCSymbol *SectionBegin = Asm->GetTempSymbol("names_begin");
   Asm->OutStreamer.EmitLabel(SectionBegin);
 
   // Emit the full data.
-  AT.Emit(Asm, SectionBegin, &InfoHolder);
+  AccelNames.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
 // Emit objective C classes and categories into a hashed accelerator table
