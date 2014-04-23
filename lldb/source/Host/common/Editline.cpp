@@ -98,8 +98,9 @@ Editline::Editline (const char *prog,       // prog can't be NULL
         // where "-k up" and "-k down" don't always work.
         ::el_set (m_editline, EL_BIND, "^[[A", "lldb-edit-prev-line", NULL); // Map up arrow
         ::el_set (m_editline, EL_BIND, "^[[B", "lldb-edit-next-line", NULL); // Map down arrow
-        ::el_set (m_editline, EL_BIND, "^\[", "ed-prev-history", NULL);
-        ::el_set (m_editline, EL_BIND, "^\]", "ed-next-history", NULL);
+        // Bindings for next/prev history
+        ::el_set (m_editline, EL_BIND, "^P", "ed-prev-history", NULL); // Map up arrow
+        ::el_set (m_editline, EL_BIND, "^N", "ed-next-history", NULL); // Map down arrow
     }
     else
     {
