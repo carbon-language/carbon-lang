@@ -119,3 +119,14 @@ inline int define_lambda() {
 int call_lambda() {
   return define_lambda();
 }
+
+namespace PR19361 {
+struct A {
+  void foo() __restrict &;
+  void foo() __restrict &&;
+};
+void A::foo() __restrict & {}
+// CHECK-DAG: @"\01?foo@A@PR19361@@QIGAEXXZ"
+void A::foo() __restrict && {}
+// CHECK-DAG: @"\01?foo@A@PR19361@@QIHAEXXZ"
+}

@@ -236,6 +236,7 @@ private:
   void mangleOperatorName(OverloadedOperatorKind OO, SourceLocation Loc);
   void mangleCXXDtorType(CXXDtorType T);
   void mangleQualifiers(Qualifiers Quals, bool IsMember);
+  void mangleRefQualifier(RefQualifierKind RefQualifier);
   void manglePointerCVQualifiers(Qualifiers Quals);
   void manglePointerExtQualifiers(Qualifiers Quals, const Type *PointeeType);
 
@@ -1257,6 +1258,24 @@ void MicrosoftCXXNameMangler::mangleQualifiers(Qualifiers Quals,
 }
 
 void
+MicrosoftCXXNameMangler::mangleRefQualifier(RefQualifierKind RefQualifier) {
+  // <ref-qualifier> ::= G                # lvalue reference
+  //                 ::= H                # rvalue-reference
+  switch (RefQualifier) {
+  case RQ_None:
+    break;
+
+  case RQ_LValue:
+    Out << 'G';
+    break;
+
+  case RQ_RValue:
+    Out << 'H';
+    break;
+  }
+}
+
+void
 MicrosoftCXXNameMangler::manglePointerExtQualifiers(Qualifiers Quals,
                                                     const Type *PointeeType) {
   bool HasRestrict = Quals.hasRestrict();
@@ -1519,6 +1538,7 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
   if (IsInstMethod) {
     Qualifiers Quals = Qualifiers::fromCVRMask(Proto->getTypeQuals());
     manglePointerExtQualifiers(Quals, 0);
+    mangleRefQualifier(Proto->getRefQualifier());
     mangleQualifiers(Quals, false);
   }
 
