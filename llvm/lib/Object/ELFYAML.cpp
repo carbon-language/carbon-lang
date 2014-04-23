@@ -15,7 +15,7 @@
 
 namespace llvm {
 
-ELFYAML::Section ::~Section() {}
+ELFYAML::Section::~Section() {}
 
 namespace yaml {
 
