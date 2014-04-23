@@ -518,8 +518,8 @@ PreservedAnalyses LazyCallGraphPrinterPass::run(Module *M,
     if (Printed.insert(&N))
       printNodes(OS, N, Printed);
 
-  for (LazyCallGraph::SCC *SCC : G.postorder_sccs())
-    printSCC(OS, *SCC);
+  for (LazyCallGraph::SCC &SCC : G.postorder_sccs())
+    printSCC(OS, SCC);
 
   return PreservedAnalyses::all();
 

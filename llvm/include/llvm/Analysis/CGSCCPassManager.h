@@ -334,8 +334,8 @@ public:
     LazyCallGraph &CG = AM->getResult<LazyCallGraphAnalysis>(M);
 
     PreservedAnalyses PA = PreservedAnalyses::all();
-    for (LazyCallGraph::SCC *C : CG.postorder_sccs()) {
-      PreservedAnalyses PassPA = Pass.run(C, &CGAM);
+    for (LazyCallGraph::SCC &C : CG.postorder_sccs()) {
+      PreservedAnalyses PassPA = Pass.run(&C, &CGAM);
 
       // We know that the CGSCC pass couldn't have invalidated any other
       // SCC's analyses (that's the contract of a CGSCC pass), so
@@ -343,7 +343,7 @@ public:
       // FIXME: This isn't quite correct. We need to handle the case where the
       // pass updated the CG, particularly some child of the current SCC, and
       // invalidate its analyses.
-      CGAM.invalidate(C, PassPA);
+      CGAM.invalidate(&C, PassPA);
 
       // Then intersect the preserved set so that invalidation of module
       // analyses will eventually occur when the module pass completes.
