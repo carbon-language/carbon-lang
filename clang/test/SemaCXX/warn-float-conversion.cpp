@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -fsyntax-only %s -Wfloating-point-conversion
+// RUN: %clang_cc1 -verify -fsyntax-only %s -Wfloat-conversion
 
 bool ReturnBool(float f) {
   return f;  //expected-warning{{conversion}}
