@@ -53,6 +53,7 @@ class DwarfFile {
   std::string StringPref;
 
   AddressPool AddrPool;
+
 public:
   DwarfFile(AsmPrinter *AP, const char *Pref, BumpPtrAllocator &DA);
 

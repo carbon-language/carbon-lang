@@ -26,6 +26,7 @@ class AddressPool {
     AddressPoolEntry(unsigned Number, bool TLS) : Number(Number), TLS(TLS) {}
   };
   DenseMap<const MCSymbol *, AddressPoolEntry> Pool;
+
 public:
   /// \brief Returns the index into the address pool with the given
   /// label/symbol.
