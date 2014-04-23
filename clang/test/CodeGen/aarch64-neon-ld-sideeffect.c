@@ -10,5 +10,5 @@ float32x2_t bar(void) {
   return vld1_f32(foo());
   // CHECK: call i8* @foo
   // CHECK-NOT: call i8* @foo
-  // CHECK: call <2 x float> @llvm.arm.neon.vld1
+  // CHECK: call <2 x float> @llvm.{{arm|arm64}}.neon.vld1
 }
