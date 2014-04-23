@@ -362,8 +362,8 @@ void LazyCallGraph::removeEdge(Node &CallerN, Function &Callee) {
   CallerC->removeInternalEdge(*this, CallerN, *CalleeN);
 }
 
-LazyCallGraph::Node *LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
-  return new (MappedN = BPA.Allocate()) Node(*this, F);
+LazyCallGraph::Node &LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
+  return *new (MappedN = BPA.Allocate()) Node(*this, F);
 }
 
 void LazyCallGraph::updateGraphPtrs() {
@@ -435,8 +435,8 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
 
     // Reset the DFS numbering.
     NextDFSNumber = 1;
-    Node *N = get(*SCCEntryNodes.pop_back_val());
-    DFSStack.push_back(std::make_pair(N, N->begin()));
+    Node &N = get(*SCCEntryNodes.pop_back_val());
+    DFSStack.push_back(std::make_pair(&N, N.begin()));
   }
 
   auto SI = DFSStack.rbegin();

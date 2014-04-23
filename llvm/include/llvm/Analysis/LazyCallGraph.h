@@ -142,9 +142,9 @@ public:
         return NI->get<Node *>();
 
       Function *F = NI->get<Function *>();
-      Node *ChildN = G->get(*F);
-      *NI = ChildN;
-      return ChildN;
+      Node &ChildN = G->get(*F);
+      *NI = &ChildN;
+      return &ChildN;
     }
     pointer operator->() const { return operator*(); }
 
@@ -332,10 +332,10 @@ public:
 
   /// \brief Get a graph node for a given function, scanning it to populate the
   /// graph data as necessary.
-  Node *get(Function &F) {
+  Node &get(Function &F) {
     Node *&N = NodeMap[&F];
     if (N)
-      return N;
+      return *N;
 
     return insertInto(F, N);
   }
@@ -345,7 +345,7 @@ public:
 
   /// \brief Update the call graph after deleting an edge.
   void removeEdge(Function &Caller, Function &Callee) {
-    return removeEdge(*get(Caller), Callee);
+    return removeEdge(get(Caller), Callee);
   }
 
 private:
@@ -387,7 +387,7 @@ private:
 
   /// \brief Helper to insert a new function, with an already looked-up entry in
   /// the NodeMap.
-  Node *insertInto(Function &F, Node *&MappedN);
+  Node &insertInto(Function &F, Node *&MappedN);
 
   /// \brief Helper to update pointers back to the graph object during moves.
   void updateGraphPtrs();
