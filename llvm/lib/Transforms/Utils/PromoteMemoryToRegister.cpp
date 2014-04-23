@@ -60,6 +60,7 @@ STATISTIC(NumPHIInsert,     "Number of PHI nodes inserted");
 bool llvm::isAllocaPromotable(const AllocaInst *AI) {
   // FIXME: If the memory unit is of pointer or integer type, we can permit
   // assignments to subsections of the memory unit.
+  unsigned AS = AI->getType()->getAddressSpace();
 
   // Only allow direct and non-volatile loads and stores...
   for (const User *U : AI->users()) {
@@ -80,12 +81,12 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI) {
           II->getIntrinsicID() != Intrinsic::lifetime_end)
         return false;
     } else if (const BitCastInst *BCI = dyn_cast<BitCastInst>(U)) {
-      if (BCI->getType() != Type::getInt8PtrTy(U->getContext()))
+      if (BCI->getType() != Type::getInt8PtrTy(U->getContext(), AS))
         return false;
       if (!onlyUsedByLifetimeMarkers(BCI))
         return false;
     } else if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(U)) {
-      if (GEPI->getType() != Type::getInt8PtrTy(U->getContext()))
+      if (GEPI->getType() != Type::getInt8PtrTy(U->getContext(), AS))
         return false;
       if (!GEPI->hasAllZeroIndices())
         return false;

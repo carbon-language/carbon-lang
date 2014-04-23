@@ -27,7 +27,8 @@ using namespace llvm;
 
 /// CastToCStr - Return V if it is an i8*, otherwise cast it to i8*.
 Value *llvm::CastToCStr(Value *V, IRBuilder<> &B) {
-  return B.CreateBitCast(V, B.getInt8PtrTy(), "cstr");
+  unsigned AS = V->getType()->getPointerAddressSpace();
+  return B.CreateBitCast(V, B.getInt8PtrTy(AS), "cstr");
 }
 
 /// EmitStrLen - Emit a call to the strlen function to the builder, for the
