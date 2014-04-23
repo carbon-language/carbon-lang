@@ -65,6 +65,7 @@ class LLDB_API SBStringList;
 class LLDB_API SBSymbol;
 class LLDB_API SBSymbolContext;
 class LLDB_API SBSymbolContextList;
+class LLDB_API SBSection;
 class LLDB_API SBTarget;
 class LLDB_API SBThread;
 class LLDB_API SBType;
