@@ -1065,6 +1065,135 @@ are listed below.
    only. This only applies to the AArch64 architecture.
 
 
+Using Sampling Profilers for Optimization
+-----------------------------------------
+
+Sampling profilers are used to collect runtime information, such as
+hardware counters, while your application executes. They are typically
+very efficient and do not incur in a large runtime overhead. The
+sample data collected by the profiler can be used during compilation
+to determine what are the most executed areas of the code.
+
+In particular, sample profilers can provide execution counts for all
+instructions in the code, information on branches taken and function
+invocation. The compiler can use this information in its optimization
+cost models. For example, knowing that a branch is taken very
+frequently helps the compiler make better decisions when ordering
+basic blocks. Knowing that a function ``foo`` is called more
+frequently than another ``bar`` helps the inliner.
+
+Using the data from a sample profiler requires some changes in the way
+a program is built. Before the compiler can use profiling information,
+the code needs to execute under the profiler. The following is the
+usual build cycle when using sample profilers for optimization:
+
+1. Build the code with source line table information. You can use all the
+   usual build flags that you always build your application with. The only
+   requirement is that you add ``-gline-tables-ony`` or ``-g`` to the
+   command line. This is important for the profiler to be able to map
+   instructions back to source line locations.
+
+   .. code-block:: console
+
+     $ clang++ -O2 -gline-tables-only code.cc -o code
+
+2. Run the executable under a sampling profiler. The specific profiler
+   you use does not really matter, as long as its output can be converted
+   into the format that the LLVM optimizer understands. Currently, there
+   exists a conversion tool for the Linux Perf profiler
+   (https://perf.wiki.kernel.org/), so these examples assume that you
+   are using Linux Perf to profile your code.
+
+   .. code-block:: console
+
+     $ perf record -b ./code
+
+   Note the use of the ``-b`` flag. This tells Perf to use the Last Branch
+   Record (LBR) to record call chains. While this is not strictly required,
+   it provides better call information, which improves the accuracy of
+   the profile data.
+
+3. Convert the collected profile data to LLVM's sample profile format.
+   This is currently supported via the AutoFDO converter ``create_llvm_prof``.
+   It is available at http://github.com/google/autofdo. Once built and
+   installed, you can convert the ``perf.data`` file to LLVM using
+   the command:
+
+   .. code-block:: console
+
+     $ create_llvm_prof --binary=./code --out=code.prof
+
+   This will read ``perf.data``, the binary file ``./code`` and emit
+   the profile data in ``code.prof``. Note that if you ran ``perf``
+   without the ``-b`` flag, you need to use ``--use_lbr=false`` when
+   calling ``create_llvm_prof``.
+
+4. Build the code again using the collected profile. This step feeds
+   the profile back to the optimizers. This should result in a binary
+   that executes faster than the original one.
+
+   .. code-block:: console
+
+     $ clang++ -O2 -gline-tables-only -fprofile-sample-use=code.prof code.cc -o code
+
+
+Sample Profile Format
+^^^^^^^^^^^^^^^^^^^^^
+
+If you are not using Linux Perf to collect profiles, you will need to
+write a conversion tool from your profiler to LLVM's format. This section
+explains the file format expected by the backend.
+
+Sample profiles are written as ASCII text. The file is divided into sections,
+which correspond to each of the functions executed at runtime. Each
+section has the following format (taken from
+https://github.com/google/autofdo/blob/master/profile_writer.h):
+
+.. code-block:: console
+
+    function1:total_samples:total_head_samples
+    offset1[.discriminator]: number_of_samples [fn1:num fn2:num ... ]
+    offset2[.discriminator]: number_of_samples [fn3:num fn4:num ... ]
+    ...
+    offsetN[.discriminator]: number_of_samples [fn5:num fn6:num ... ]
+
+Function names must be mangled in order for the profile loader to
+match them in the current translation unit. The two numbers in the
+function header specify how many total samples were accumulated in the
+function (first number), and the total number of samples accumulated
+at the prologue of the function (second number). This head sample
+count provides an indicator of how frequent is the function invoked.
+
+Each sampled line may contain several items. Some are optional (marked
+below):
+
+a. Source line offset. This number represents the line number
+   in the function where the sample was collected. The line number is
+   always relative to the line where symbol of the function is
+   defined. So, if the function has its header at line 280, the offset
+   13 is at line 293 in the file.
+
+b. [OPTIONAL] Discriminator. This is used if the sampled program
+   was compiled with DWARF discriminator support
+   (http://wiki.dwarfstd.org/index.php?title=Path_Discriminators)
+
+c. Number of samples. This is the number of samples collected by
+   the profiler at this source location.
+
+d. [OPTIONAL] Potential call targets and samples. If present, this
+   line contains a call instruction. This models both direct and
+   indirect calls. Each called target is listed together with the
+   number of samples. For example,
+
+   .. code-block:: console
+
+     130: 7  foo:3  bar:2  baz:7
+
+   The above means that at relative line offset 130 there is a call
+   instruction that calls one of ``foo()``, ``bar()`` and ``baz()``.
+   With ``baz()`` being the relatively more frequent call target.
+
+
 Controlling Size of Debug Information
 -------------------------------------
 
