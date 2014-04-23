@@ -97,9 +97,9 @@ void simplifyIncompleteArg(Variable *V, til::Phi *Ph) {
 
 
 // Return true if E is a variable that points to an incomplete Phi node.
-inline bool isIncompleteVar(SExpr *E) {
-  if (Variable *V = dyn_cast<Variable>(E)) {
-    if (Phi *Ph = dyn_cast<Phi>(V->definition()))
+static bool isIncompleteVar(const SExpr *E) {
+  if (const auto *V = dyn_cast<Variable>(E)) {
+    if (const auto *Ph = dyn_cast<Phi>(V->definition()))
       return Ph->status() == Phi::PH_Incomplete;
   }
   return false;
