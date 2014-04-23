@@ -53,3 +53,14 @@ typedef struct
 }
 @end
 // CHECK: private global [39 x i8] c"{?=\22presentationInstance\22^{SCNCamera}}\00"
+
+// rdar://16655340
+int i;
+typeof(@encode(typeof(i))) e = @encode(typeof(i));
+const char * Test()
+{
+    return e;
+}
+// CHECK: @e = global [2 x i8] c"i\00", align 1
+// CHECK: define i8* @Test()
+// CHECK: ret i8* getelementptr inbounds ([2 x i8]* @e, i32 0, i32 0)

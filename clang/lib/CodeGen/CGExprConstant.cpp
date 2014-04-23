@@ -836,7 +836,10 @@ public:
     // as an inline array.
     std::string Str;
     CGM.getContext().getObjCEncodingForType(E->getEncodedType(), Str);
-    const ConstantArrayType *CAT = cast<ConstantArrayType>(E->getType());
+    QualType T = E->getType();
+    if (T->getTypeClass() == Type::TypeOfExpr)
+      T = cast<TypeOfExprType>(T)->getUnderlyingExpr()->getType();
+    const ConstantArrayType *CAT = cast<ConstantArrayType>(T);
 
     // Resize the string to the right size, adding zeros at the end, or
     // truncating as needed.
