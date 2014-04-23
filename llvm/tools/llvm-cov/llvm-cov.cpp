@@ -39,6 +39,10 @@ static cl::opt<bool> BranchCount("c", cl::Grouping, cl::init(false),
                                            "of percentages (requires -b)"));
 static cl::alias BranchCountA("branch-counts", cl::aliasopt(BranchCount));
 
+static cl::opt<bool> LongNames("l", cl::Grouping, cl::init(false),
+                               cl::desc("Prefix filenames with the main file"));
+static cl::alias LongNamesA("long-file-names", cl::aliasopt(LongNames));
+
 static cl::opt<bool> FuncSummary("f", cl::Grouping, cl::init(false),
                                  cl::desc("Show coverage for each function"));
 static cl::alias FuncSummaryA("function-summaries", cl::aliasopt(FuncSummary));
@@ -126,9 +130,9 @@ int main(int argc, char **argv) {
     GF.dump();
 
   GCOVOptions Options(AllBlocks, BranchProb, BranchCount, FuncSummary,
-                      PreservePaths, UncondBranch);
+                      PreservePaths, UncondBranch, LongNames);
   FileInfo FI(Options);
   GF.collectLineCounts(FI);
-  FI.print(InputGCNO, InputGCDA);
+  FI.print(SourceFile, InputGCNO, InputGCDA);
   return 0;
 }

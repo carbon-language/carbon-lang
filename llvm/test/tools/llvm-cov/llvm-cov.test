@@ -43,6 +43,16 @@ RUN: llvm-cov test_paths.cpp | diff -u test_no_preserve_paths.output -
 RUN: diff -aub test_paths.cpp.gcov test.cpp.gcov
 RUN: diff -aub test_paths.h.gcov test.h.gcov
 
+# Long file names.
+RUN: llvm-cov -l test_paths.cpp | diff -u test_long_file_names.output -
+RUN: diff -aub test_paths.cpp.gcov test_paths.cpp##test.cpp.gcov
+RUN: diff -aub test_paths.h.gcov test_paths.cpp##test.h.gcov
+
+# Long file names and preserve paths.
+RUN: llvm-cov -lp -gcno test_paths.gcno -gcda test_paths.gcda srcdir/../test_paths.cpp | diff -u test_long_paths.output -
+RUN: diff -aub test_paths.cpp.gcov srcdir#^#test_paths.cpp##srcdir#nested_dir#^#test.cpp.gcov
+RUN: diff -aub test_paths.h.gcov srcdir#^#test_paths.cpp##srcdir#nested_dir#^#test.h.gcov
+
 # Function summaries. This changes stdout, but not the gcov files.
 RUN: llvm-cov test.c -f | diff -u test_-f.output -
 RUN: diff -aub test_no_options.cpp.gcov test.cpp.gcov

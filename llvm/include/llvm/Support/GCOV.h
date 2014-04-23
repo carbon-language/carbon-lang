@@ -37,9 +37,9 @@ namespace GCOV {
 
 /// GCOVOptions - A struct for passing gcov options between functions.
 struct GCOVOptions {
-  GCOVOptions(bool A, bool B, bool C, bool F, bool P, bool U)
+  GCOVOptions(bool A, bool B, bool C, bool F, bool P, bool U, bool L)
       : AllBlocks(A), BranchInfo(B), BranchCount(C), FuncCoverage(F),
-        PreservePaths(P), UncondBranch(U) {}
+        PreservePaths(P), UncondBranch(U), LongFileNames(L) {}
 
   bool AllBlocks;
   bool BranchInfo;
@@ -47,6 +47,7 @@ struct GCOVOptions {
   bool FuncCoverage;
   bool PreservePaths;
   bool UncondBranch;
+  bool LongFileNames;
 };
 
 /// GCOVBuffer - A wrapper around MemoryBuffer to provide GCOV specific
@@ -385,7 +386,8 @@ public:
   }
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
-  void print(StringRef GCNOFile, StringRef GCDAFile);
+  void print(StringRef MainFilename, StringRef GCNOFile, StringRef GCDAFile);
+
 private:
   void printFunctionSummary(raw_fd_ostream &OS,
                             const FunctionVector &Funcs) const;

@@ -424,7 +424,7 @@ static raw_ostream &operator<<(raw_ostream &OS, const formatBranchInfo &FBI) {
 /// translates "/" to "#", ".." to "^", and drops ".", to match gcov.
 static std::string mangleCoveragePath(StringRef Filename, bool PreservePaths) {
   if (!PreservePaths)
-    return (sys::path::filename(Filename) + ".gcov").str();
+    return sys::path::filename(Filename).str();
 
   // This behaviour is defined by gcov in terms of text replacements, so it's
   // not likely to do anything useful on filesystems with different textual
@@ -452,12 +452,12 @@ static std::string mangleCoveragePath(StringRef Filename, bool PreservePaths) {
 
   if (S < I)
     Result.append(S, I);
-  Result.append(".gcov");
   return Result.str();
 }
 
 /// print -  Print source files with collected line count information.
-void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) {
+void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
+                     StringRef GCDAFile) {
   for (StringMap<LineData>::const_iterator I = LineInfo.begin(),
          E = LineInfo.end(); I != E; ++I) {
     StringRef Filename = I->first();
@@ -468,8 +468,12 @@ void FileInfo::print(StringRef GCNOFile, StringRef GCDAFile) {
     }
     StringRef AllLines = Buff->getBuffer();
 
-    std::string CoveragePath = mangleCoveragePath(Filename,
-                                                  Options.PreservePaths);
+    std::string CoveragePath;
+    if (Options.LongFileNames && !Filename.equals(MainFilename))
+      CoveragePath =
+          mangleCoveragePath(MainFilename, Options.PreservePaths) + "##";
+    CoveragePath +=
+        mangleCoveragePath(Filename, Options.PreservePaths) + ".gcov";
     std::string ErrorInfo;
     raw_fd_ostream OS(CoveragePath.c_str(), ErrorInfo, sys::fs::F_Text);
     if (!ErrorInfo.empty())
