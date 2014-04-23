@@ -227,23 +227,21 @@ getLVForType(const Type &T, LVComputationKind computation) {
 /// template parameter list.  For visibility purposes, template
 /// parameters are part of the signature of a template.
 static LinkageInfo
-getLVForTemplateParameterList(const TemplateParameterList *params,
+getLVForTemplateParameterList(const TemplateParameterList *Params,
                               LVComputationKind computation) {
   LinkageInfo LV;
-  for (TemplateParameterList::const_iterator P = params->begin(),
-                                          PEnd = params->end();
-       P != PEnd; ++P) {
-
+  for (const NamedDecl *P : *Params) {
     // Template type parameters are the most common and never
     // contribute to visibility, pack or not.
-    if (isa<TemplateTypeParmDecl>(*P))
+    if (isa<TemplateTypeParmDecl>(P))
       continue;
 
     // Non-type template parameters can be restricted by the value type, e.g.
     //   template <enum X> class A { ... };
     // We have to be careful here, though, because we can be dealing with
     // dependent types.
-    if (NonTypeTemplateParmDecl *NTTP = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
+    if (const NonTypeTemplateParmDecl *NTTP =
+            dyn_cast<NonTypeTemplateParmDecl>(P)) {
       // Handle the non-pack case first.
       if (!NTTP->isExpandedParameterPack()) {
         if (!NTTP->getType()->isDependentType()) {
@@ -263,7 +261,7 @@ getLVForTemplateParameterList(const TemplateParameterList *params,
 
     // Template template parameters can be restricted by their
     // template parameters, recursively.
-    TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(*P);
+    const TemplateTemplateParmDecl *TTP = cast<TemplateTemplateParmDecl>(P);
 
     // Handle the non-pack case first.
     if (!TTP->isExpandedParameterPack()) {
@@ -303,43 +301,41 @@ static const Decl *getOutermostFuncOrBlockContext(const Decl *D) {
 ///
 /// Note that we don't take an LVComputationKind because we always
 /// want to honor the visibility of template arguments in the same way.
-static LinkageInfo
-getLVForTemplateArgumentList(ArrayRef<TemplateArgument> args,
-                             LVComputationKind computation) {
+static LinkageInfo getLVForTemplateArgumentList(ArrayRef<TemplateArgument> Args,
+                                                LVComputationKind computation) {
   LinkageInfo LV;
 
-  for (unsigned i = 0, e = args.size(); i != e; ++i) {
-    const TemplateArgument &arg = args[i];
-    switch (arg.getKind()) {
+  for (const TemplateArgument &Arg : Args) {
+    switch (Arg.getKind()) {
     case TemplateArgument::Null:
     case TemplateArgument::Integral:
     case TemplateArgument::Expression:
       continue;
 
     case TemplateArgument::Type:
-      LV.merge(getLVForType(*arg.getAsType(), computation));
+      LV.merge(getLVForType(*Arg.getAsType(), computation));
       continue;
 
     case TemplateArgument::Declaration:
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(arg.getAsDecl())) {
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(Arg.getAsDecl())) {
         assert(!usesTypeVisibility(ND));
         LV.merge(getLVForDecl(ND, computation));
       }
       continue;
 
     case TemplateArgument::NullPtr:
-      LV.merge(arg.getNullPtrType()->getLinkageAndVisibility());
+      LV.merge(Arg.getNullPtrType()->getLinkageAndVisibility());
       continue;
 
     case TemplateArgument::Template:
     case TemplateArgument::TemplateExpansion:
-      if (TemplateDecl *Template
-                = arg.getAsTemplateOrTemplatePattern().getAsTemplateDecl())
+      if (TemplateDecl *Template =
+              Arg.getAsTemplateOrTemplatePattern().getAsTemplateDecl())
         LV.merge(getLVForDecl(Template, computation));
       continue;
 
     case TemplateArgument::Pack:
-      LV.merge(getLVForTemplateArgumentList(arg.getPackAsArray(), computation));
+      LV.merge(getLVForTemplateArgumentList(Arg.getPackAsArray(), computation));
       continue;
     }
     llvm_unreachable("bad template argument kind");
