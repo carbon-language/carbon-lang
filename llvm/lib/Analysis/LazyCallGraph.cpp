@@ -140,13 +140,13 @@ void LazyCallGraph::SCC::removeEdge(LazyCallGraph &G, Function &Caller,
   bool HasOtherCallToCalleeC = false;
   bool HasOtherCallOutsideSCC = false;
   for (Node *N : *this) {
-    for (Node *Callee : *N) {
-      SCC *OtherCalleeC = G.SCCMap.lookup(Callee);
-      if (OtherCalleeC == &CalleeC) {
+    for (Node &Callee : *N) {
+      SCC &OtherCalleeC = *G.SCCMap.lookup(&Callee);
+      if (&OtherCalleeC == &CalleeC) {
         HasOtherCallToCalleeC = true;
         break;
       }
-      if (OtherCalleeC != this)
+      if (&OtherCalleeC != this)
         HasOtherCallOutsideSCC = true;
     }
     if (HasOtherCallToCalleeC)
@@ -234,35 +234,33 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     do {
       N = SI->first;
       for (auto I = SI->second, E = N->end(); I != E; ++I) {
-        Node *ChildN = *I;
+        Node &ChildN = *I;
         // If this child isn't currently in this SCC, no need to process it.
         // However, we do need to remove this SCC from its SCC's parent set.
-        SCC *ChildSCC = G.SCCMap.lookup(ChildN);
-        assert(ChildSCC &&
-               "Everything reachable must already be in *some* SCC");
-        if (ChildSCC != this) {
-          ChildSCC->ParentSCCs.remove(this);
+        SCC &ChildSCC = *G.SCCMap.lookup(&ChildN);
+        if (&ChildSCC != this) {
+          ChildSCC.ParentSCCs.remove(this);
           continue;
         }
 
-        if (ChildN->DFSNumber == 0) {
+        if (ChildN.DFSNumber == 0) {
           // Mark that we should start at this child when next this node is the
           // top of the stack. We don't start at the next child to ensure this
           // child's lowlink is reflected.
           SI->second = I;
 
           // Recurse onto this node via a tail call.
-          DFSStack.push_back(std::make_pair(ChildN, ChildN->begin()));
+          DFSStack.push_back(std::make_pair(&ChildN, ChildN.begin()));
           PushedChildNode = true;
           break;
         }
 
         // Track the lowest link of the childen, if any are still in the stack.
         // Any child not on the stack will have a LowLink of -1.
-        assert(ChildN->LowLink != 0 &&
+        assert(ChildN.LowLink != 0 &&
                "Low-link must not be zero with a non-zero DFS number.");
-        if (ChildN->LowLink >= 0 && ChildN->LowLink < N->LowLink)
-          N->LowLink = ChildN->LowLink;
+        if (ChildN.LowLink >= 0 && ChildN.LowLink < N->LowLink)
+          N->LowLink = ChildN.LowLink;
       }
       if (!PushedChildNode)
         // No more children to process for this stack entry.
@@ -293,13 +291,11 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     N->LowLink = -1;
     Nodes.push_back(N);
     NodeSet.insert(&N->getFunction());
-    for (Node *ChildN : *N) {
-      if (NewNodes.count(ChildN))
+    for (Node &ChildN : *N) {
+      if (NewNodes.count(&ChildN))
         continue;
-      SCC *ChildSCC = G.SCCMap.lookup(ChildN);
-      assert(ChildSCC &&
-             "Must have all child SCCs processed when building a new SCC!");
-      ChildSCC->ParentSCCs.insert(this);
+      SCC &ChildSCC = *G.SCCMap.lookup(&ChildN);
+      ChildSCC.ParentSCCs.insert(this);
       IsLeafSCC = false;
     }
   }
@@ -409,13 +405,11 @@ LazyCallGraph::SCC *LazyCallGraph::formSCCFromDFSStack(
   // its children.
   bool IsLeafSCC = true;
   for (Node *SCCN : NewSCC->Nodes)
-    for (Node *SCCChildN : *SCCN) {
-      if (NewSCC->NodeSet.count(&SCCChildN->getFunction()))
+    for (Node &SCCChildN : *SCCN) {
+      if (NewSCC->NodeSet.count(&SCCChildN.getFunction()))
         continue;
-      SCC *ChildSCC = SCCMap.lookup(SCCChildN);
-      assert(ChildSCC &&
-             "Must have all child SCCs processed when building a new SCC!");
-      ChildSCC->ParentSCCs.insert(NewSCC);
+      SCC &ChildSCC = *SCCMap.lookup(&SCCChildN);
+      ChildSCC.ParentSCCs.insert(NewSCC);
       IsLeafSCC = false;
     }
 
@@ -452,23 +446,23 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
   do {
     Node *N = SI->first;
     for (auto I = SI->second, E = N->end(); I != E; ++I) {
-      Node *ChildN = *I;
-      if (ChildN->DFSNumber == 0) {
+      Node &ChildN = *I;
+      if (ChildN.DFSNumber == 0) {
         // Mark that we should start at this child when next this node is the
         // top of the stack. We don't start at the next child to ensure this
         // child's lowlink is reflected.
         SI->second = I;
 
         // Recurse onto this node via a tail call.
-        DFSStack.push_back(std::make_pair(ChildN, ChildN->begin()));
+        DFSStack.push_back(std::make_pair(&ChildN, ChildN.begin()));
         return LazyCallGraph::getNextSCCInPostOrder();
       }
 
       // Track the lowest link of the childen, if any are still in the stack.
-      assert(ChildN->LowLink != 0 &&
+      assert(ChildN.LowLink != 0 &&
              "Low-link must not be zero with a non-zero DFS number.");
-      if (ChildN->LowLink >= 0 && ChildN->LowLink < N->LowLink)
-        N->LowLink = ChildN->LowLink;
+      if (ChildN.LowLink >= 0 && ChildN.LowLink < N->LowLink)
+        N->LowLink = ChildN.LowLink;
     }
     // No more children to process for this stack entry.
     SI->second = N->end();
@@ -491,9 +485,9 @@ LazyCallGraphPrinterPass::LazyCallGraphPrinterPass(raw_ostream &OS) : OS(OS) {}
 static void printNodes(raw_ostream &OS, LazyCallGraph::Node &N,
                        SmallPtrSetImpl<LazyCallGraph::Node *> &Printed) {
   // Recurse depth first through the nodes.
-  for (LazyCallGraph::Node *ChildN : N)
-    if (Printed.insert(ChildN))
-      printNodes(OS, *ChildN, Printed);
+  for (LazyCallGraph::Node &ChildN : N)
+    if (Printed.insert(&ChildN))
+      printNodes(OS, ChildN, Printed);
 
   OS << "  Call edges in function: " << N.getFunction().getName() << "\n";
   for (LazyCallGraph::iterator I = N.begin(), E = N.end(); I != E; ++I)
@@ -520,9 +514,9 @@ PreservedAnalyses LazyCallGraphPrinterPass::run(Module *M,
      << "\n\n";
 
   SmallPtrSet<LazyCallGraph::Node *, 16> Printed;
-  for (LazyCallGraph::Node *N : G)
-    if (Printed.insert(N))
-      printNodes(OS, *N, Printed);
+  for (LazyCallGraph::Node &N : G)
+    if (Printed.insert(&N))
+      printNodes(OS, N, Printed);
 
   for (LazyCallGraph::SCC *SCC : G.postorder_sccs())
     printSCC(OS, *SCC);

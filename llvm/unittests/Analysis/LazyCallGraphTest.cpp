@@ -128,79 +128,79 @@ TEST(LazyCallGraphTest, BasicGraphFormation) {
   // the IR, and everything in our module is an entry node, so just directly
   // build variables for each node.
   auto I = CG.begin();
-  LazyCallGraph::Node *A1 = *I++;
-  EXPECT_EQ("a1", A1->getFunction().getName());
-  LazyCallGraph::Node *A2 = *I++;
-  EXPECT_EQ("a2", A2->getFunction().getName());
-  LazyCallGraph::Node *A3 = *I++;
-  EXPECT_EQ("a3", A3->getFunction().getName());
-  LazyCallGraph::Node *B1 = *I++;
-  EXPECT_EQ("b1", B1->getFunction().getName());
-  LazyCallGraph::Node *B2 = *I++;
-  EXPECT_EQ("b2", B2->getFunction().getName());
-  LazyCallGraph::Node *B3 = *I++;
-  EXPECT_EQ("b3", B3->getFunction().getName());
-  LazyCallGraph::Node *C1 = *I++;
-  EXPECT_EQ("c1", C1->getFunction().getName());
-  LazyCallGraph::Node *C2 = *I++;
-  EXPECT_EQ("c2", C2->getFunction().getName());
-  LazyCallGraph::Node *C3 = *I++;
-  EXPECT_EQ("c3", C3->getFunction().getName());
-  LazyCallGraph::Node *D1 = *I++;
-  EXPECT_EQ("d1", D1->getFunction().getName());
-  LazyCallGraph::Node *D2 = *I++;
-  EXPECT_EQ("d2", D2->getFunction().getName());
-  LazyCallGraph::Node *D3 = *I++;
-  EXPECT_EQ("d3", D3->getFunction().getName());
+  LazyCallGraph::Node &A1 = *I++;
+  EXPECT_EQ("a1", A1.getFunction().getName());
+  LazyCallGraph::Node &A2 = *I++;
+  EXPECT_EQ("a2", A2.getFunction().getName());
+  LazyCallGraph::Node &A3 = *I++;
+  EXPECT_EQ("a3", A3.getFunction().getName());
+  LazyCallGraph::Node &B1 = *I++;
+  EXPECT_EQ("b1", B1.getFunction().getName());
+  LazyCallGraph::Node &B2 = *I++;
+  EXPECT_EQ("b2", B2.getFunction().getName());
+  LazyCallGraph::Node &B3 = *I++;
+  EXPECT_EQ("b3", B3.getFunction().getName());
+  LazyCallGraph::Node &C1 = *I++;
+  EXPECT_EQ("c1", C1.getFunction().getName());
+  LazyCallGraph::Node &C2 = *I++;
+  EXPECT_EQ("c2", C2.getFunction().getName());
+  LazyCallGraph::Node &C3 = *I++;
+  EXPECT_EQ("c3", C3.getFunction().getName());
+  LazyCallGraph::Node &D1 = *I++;
+  EXPECT_EQ("d1", D1.getFunction().getName());
+  LazyCallGraph::Node &D2 = *I++;
+  EXPECT_EQ("d2", D2.getFunction().getName());
+  LazyCallGraph::Node &D3 = *I++;
+  EXPECT_EQ("d3", D3.getFunction().getName());
   EXPECT_EQ(CG.end(), I);
 
   // Build vectors and sort them for the rest of the assertions to make them
   // independent of order.
   std::vector<std::string> Nodes;
 
-  for (LazyCallGraph::Node *N : *A1)
-    Nodes.push_back(N->getFunction().getName());
+  for (LazyCallGraph::Node &N : A1)
+    Nodes.push_back(N.getFunction().getName());
   std::sort(Nodes.begin(), Nodes.end());
   EXPECT_EQ("a2", Nodes[0]);
   EXPECT_EQ("b2", Nodes[1]);
   EXPECT_EQ("c3", Nodes[2]);
   Nodes.clear();
 
-  EXPECT_EQ(A2->end(), std::next(A2->begin()));
-  EXPECT_EQ("a3", A2->begin()->getFunction().getName());
-  EXPECT_EQ(A3->end(), std::next(A3->begin()));
-  EXPECT_EQ("a1", A3->begin()->getFunction().getName());
+  EXPECT_EQ(A2.end(), std::next(A2.begin()));
+  EXPECT_EQ("a3", A2.begin()->getFunction().getName());
+  EXPECT_EQ(A3.end(), std::next(A3.begin()));
+  EXPECT_EQ("a1", A3.begin()->getFunction().getName());
 
-  for (LazyCallGraph::Node *N : *B1)
-    Nodes.push_back(N->getFunction().getName());
+  for (LazyCallGraph::Node &N : B1)
+    Nodes.push_back(N.getFunction().getName());
   std::sort(Nodes.begin(), Nodes.end());
   EXPECT_EQ("b2", Nodes[0]);
   EXPECT_EQ("d3", Nodes[1]);
   Nodes.clear();
 
-  EXPECT_EQ(B2->end(), std::next(B2->begin()));
-  EXPECT_EQ("b3", B2->begin()->getFunction().getName());
-  EXPECT_EQ(B3->end(), std::next(B3->begin()));
-  EXPECT_EQ("b1", B3->begin()->getFunction().getName());
+  EXPECT_EQ(B2.end(), std::next(B2.begin()));
+  EXPECT_EQ("b3", B2.begin()->getFunction().getName());
+  EXPECT_EQ(B3.end(), std::next(B3.begin()));
+  EXPECT_EQ("b1", B3.begin()->getFunction().getName());
 
-  for (LazyCallGraph::Node *N : *C1)
-    Nodes.push_back(N->getFunction().getName());
+  for (LazyCallGraph::Node &N : C1)
+    Nodes.push_back(N.getFunction().getName());
   std::sort(Nodes.begin(), Nodes.end());
   EXPECT_EQ("c2", Nodes[0]);
   EXPECT_EQ("d2", Nodes[1]);
   Nodes.clear();
 
-  EXPECT_EQ(C2->end(), std::next(C2->begin()));
-  EXPECT_EQ("c3", C2->begin()->getFunction().getName());
-  EXPECT_EQ(C3->end(), std::next(C3->begin()));
-  EXPECT_EQ("c1", C3->begin()->getFunction().getName());
+  EXPECT_EQ(C2.end(), std::next(C2.begin()));
+  EXPECT_EQ("c3", C2.begin()->getFunction().getName());
+  EXPECT_EQ(C3.end(), std::next(C3.begin()));
+  EXPECT_EQ("c1", C3.begin()->getFunction().getName());
 
-  EXPECT_EQ(D1->end(), std::next(D1->begin()));
-  EXPECT_EQ("d2", D1->begin()->getFunction().getName());
-  EXPECT_EQ(D2->end(), std::next(D2->begin()));
-  EXPECT_EQ("d3", D2->begin()->getFunction().getName());
-  EXPECT_EQ(D3->end(), std::next(D3->begin()));
-  EXPECT_EQ("d1", D3->begin()->getFunction().getName());
+  EXPECT_EQ(D1.end(), std::next(D1.begin()));
+  EXPECT_EQ("d2", D1.begin()->getFunction().getName());
+  EXPECT_EQ(D2.end(), std::next(D2.begin()));
+  EXPECT_EQ("d3", D2.begin()->getFunction().getName());
+  EXPECT_EQ(D3.end(), std::next(D3.begin()));
+  EXPECT_EQ("d1", D3.begin()->getFunction().getName());
 
   // Now lets look at the SCCs.
   auto SCCI = CG.postorder_scc_begin();

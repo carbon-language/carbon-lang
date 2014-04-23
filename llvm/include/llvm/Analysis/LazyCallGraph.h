@@ -112,8 +112,7 @@ public:
   /// be scanned for "calls" or uses of functions and its child information
   /// will be constructed. All of these results are accumulated and cached in
   /// the graph.
-  class iterator : public std::iterator<std::bidirectional_iterator_tag, Node *,
-                                        ptrdiff_t, Node *, Node *> {
+  class iterator : public std::iterator<std::bidirectional_iterator_tag, Node> {
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
     typedef std::iterator<std::bidirectional_iterator_tag, Node *, ptrdiff_t,
@@ -139,14 +138,14 @@ public:
 
     reference operator*() const {
       if (NI->is<Node *>())
-        return NI->get<Node *>();
+        return *NI->get<Node *>();
 
       Function *F = NI->get<Function *>();
       Node &ChildN = G->get(*F);
       *NI = &ChildN;
-      return &ChildN;
+      return ChildN;
     }
-    pointer operator->() const { return operator*(); }
+    pointer operator->() const { return &operator*(); }
 
     iterator &operator++() {
       ++NI;
