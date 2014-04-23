@@ -567,14 +567,23 @@ bool ARM64InstrInfo::analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
     return true;
   case ARM64::SUBSWri:
   case ARM64::ADDSWri:
-  case ARM64::ANDSWri:
   case ARM64::SUBSXri:
   case ARM64::ADDSXri:
-  case ARM64::ANDSXri:
     SrcReg = MI->getOperand(1).getReg();
     SrcReg2 = 0;
     CmpMask = ~0;
     CmpValue = MI->getOperand(2).getImm();
+    return true;
+  case ARM64::ANDSWri:
+  case ARM64::ANDSXri:
+    // ANDS does not use the same encoding scheme as the others xxxS
+    // instructions.
+    SrcReg = MI->getOperand(1).getReg();
+    SrcReg2 = 0;
+    CmpMask = ~0;
+    CmpValue = ARM64_AM::decodeLogicalImmediate(
+        MI->getOperand(2).getImm(),
+        MI->getOpcode() == ARM64::ANDSWri ? 32 : 64);
     return true;
   }
 
