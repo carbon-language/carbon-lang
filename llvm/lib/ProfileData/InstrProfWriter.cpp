@@ -27,8 +27,8 @@ public:
   typedef StringRef key_type;
   typedef StringRef key_type_ref;
 
-  typedef InstrProfWriter::CounterData data_type;
-  typedef const InstrProfWriter::CounterData &data_type_ref;
+  typedef const InstrProfWriter::CounterData *const data_type;
+  typedef const InstrProfWriter::CounterData *const data_type_ref;
 
   typedef uint64_t hash_value_type;
   typedef uint64_t offset_type;
@@ -45,7 +45,7 @@ public:
     offset_type N = K.size();
     LE.write<offset_type>(N);
 
-    offset_type M = (1 + V.Counts.size()) * sizeof(uint64_t);
+    offset_type M = (1 + V->Counts.size()) * sizeof(uint64_t);
     LE.write<offset_type>(M);
 
     return std::make_pair(N, M);
@@ -59,8 +59,8 @@ public:
                        offset_type) {
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
-    LE.write<uint64_t>(V.Hash);
-    for (uint64_t I : V.Counts)
+    LE.write<uint64_t>(V->Hash);
+    for (uint64_t I : V->Counts)
       LE.write<uint64_t>(I);
   }
 };
@@ -100,7 +100,7 @@ void InstrProfWriter::write(raw_fd_ostream &OS) {
 
   // Populate the hash table generator.
   for (const auto &I : FunctionData) {
-    Generator.insert(I.getKey(), I.getValue());
+    Generator.insert(I.getKey(), &I.getValue());
     if (I.getValue().Counts[0] > MaxFunctionCount)
       MaxFunctionCount = I.getValue().Counts[0];
   }
