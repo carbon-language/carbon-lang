@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the machine model for Intal Silvermont to support
+// This file defines the machine model for Intel Silvermont to support
 // instruction scheduling and other instruction cost heuristics.
 //
 //===----------------------------------------------------------------------===//
@@ -27,7 +27,7 @@ def SLMModel : SchedMachineModel {
 
 let SchedModel = SLMModel in {
 
-// Silveromnt has 5 reservation stations for micro-ops
+// Silvermont has 5 reservation stations for micro-ops
 
 def IEC_RSV0 : ProcResource<1>;
 def IEC_RSV1 : ProcResource<1>;
