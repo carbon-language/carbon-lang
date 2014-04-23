@@ -225,9 +225,17 @@ public:
 
   public:
     typedef SmallVectorImpl<Node *>::const_iterator iterator;
+    typedef SmallSetVector<SCC *, 1>::const_iterator parent_iterator;
 
     iterator begin() const { return Nodes.begin(); }
     iterator end() const { return Nodes.end(); }
+
+    parent_iterator parent_begin() const { return ParentSCCs.begin(); }
+    parent_iterator parent_end() const { return ParentSCCs.end(); }
+
+    iterator_range<parent_iterator> parents() const {
+      return iterator_range<parent_iterator>(parent_begin(), parent_end());
+    }
   };
 
   /// \brief A post-order depth-first SCC iterator over the call graph.
@@ -309,6 +317,12 @@ public:
   /// \brief Lookup a function in the graph which has already been scanned and
   /// added.
   Node *lookup(const Function &F) const { return NodeMap.lookup(&F); }
+
+  /// \brief Lookup a function's SCC in the graph.
+  ///
+  /// \returns null if the function hasn't been assigned an SCC via the SCC
+  /// iterator walk.
+  SCC *lookupSCC(const Function &F) const { return SCCMap.lookup(&F); }
 
   /// \brief Get a graph node for a given function, scanning it to populate the
   /// graph data as necessary.
