@@ -24,7 +24,7 @@ using namespace llvm;
 namespace {
 class ARM64ELFObjectWriter : public MCELFObjectTargetWriter {
 public:
-  ARM64ELFObjectWriter(uint8_t OSABI);
+  ARM64ELFObjectWriter(uint8_t OSABI, bool IsLittleEndian);
 
   virtual ~ARM64ELFObjectWriter();
 
@@ -36,7 +36,7 @@ private:
 };
 }
 
-ARM64ELFObjectWriter::ARM64ELFObjectWriter(uint8_t OSABI)
+ARM64ELFObjectWriter::ARM64ELFObjectWriter(uint8_t OSABI, bool IsLittleEndian)
     : MCELFObjectTargetWriter(/*Is64Bit*/ true, OSABI, ELF::EM_AARCH64,
                               /*HasRelocationAddend*/ true) {}
 
@@ -235,7 +235,8 @@ unsigned ARM64ELFObjectWriter::GetRelocType(const MCValue &Target,
 }
 
 MCObjectWriter *llvm::createARM64ELFObjectWriter(raw_ostream &OS,
-                                                 uint8_t OSABI) {
-  MCELFObjectTargetWriter *MOTW = new ARM64ELFObjectWriter(OSABI);
-  return createELFObjectWriter(MOTW, OS, /*IsLittleEndian=*/true);
+                                                 uint8_t OSABI,
+                                                 bool IsLittleEndian) {
+  MCELFObjectTargetWriter *MOTW = new ARM64ELFObjectWriter(OSABI, IsLittleEndian);
+  return createELFObjectWriter(MOTW, OS, IsLittleEndian);
 }

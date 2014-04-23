@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARM64MCAsmInfo.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCStreamer.h"
@@ -63,7 +64,11 @@ const MCExpr *ARM64MCAsmInfoDarwin::getExprForPersonalitySymbol(
   return MCBinaryExpr::CreateSub(Res, PC, Context);
 }
 
-ARM64MCAsmInfoELF::ARM64MCAsmInfoELF() {
+ARM64MCAsmInfoELF::ARM64MCAsmInfoELF(StringRef TT) {
+  Triple T(TT);
+  if (T.getArch() == Triple::aarch64_be)
+    IsLittleEndian = false;
+
   // We prefer NEON instructions to be printed in the short form.
   AssemblerDialect = AsmWriterVariant == Default ? 0 : AsmWriterVariant;
 

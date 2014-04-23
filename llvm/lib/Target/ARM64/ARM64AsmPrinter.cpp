@@ -593,5 +593,6 @@ void ARM64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
 // Force static initialization.
 extern "C" void LLVMInitializeARM64AsmPrinter() {
-  RegisterAsmPrinter<ARM64AsmPrinter> X(TheARM64Target);
+  RegisterAsmPrinter<ARM64AsmPrinter> X(TheARM64leTarget);
+  RegisterAsmPrinter<ARM64AsmPrinter> Y(TheARM64beTarget);
 }

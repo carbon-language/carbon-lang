@@ -29,16 +29,20 @@ class StringRef;
 class Target;
 class raw_ostream;
 
-extern Target TheARM64Target;
+extern Target TheARM64leTarget;
+extern Target TheARM64beTarget;
 
 MCCodeEmitter *createARM64MCCodeEmitter(const MCInstrInfo &MCII,
                                         const MCRegisterInfo &MRI,
                                         const MCSubtargetInfo &STI,
                                         MCContext &Ctx);
-MCAsmBackend *createARM64AsmBackend(const Target &T, const MCRegisterInfo &MRI,
-                                    StringRef TT, StringRef CPU);
+MCAsmBackend *createARM64leAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+                                      StringRef TT, StringRef CPU);
+MCAsmBackend *createARM64beAsmBackend(const Target &T, const MCRegisterInfo &MRI,
+                                      StringRef TT, StringRef CPU);
 
-MCObjectWriter *createARM64ELFObjectWriter(raw_ostream &OS, uint8_t OSABI);
+        MCObjectWriter *createARM64ELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
+                                                   bool IsLittleEndian);
 
 MCObjectWriter *createARM64MachObjectWriter(raw_ostream &OS, uint32_t CPUType,
                                             uint32_t CPUSubtype);

@@ -39,7 +39,8 @@ private:
 public:
   ARM64TargetMachine(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
                      const TargetOptions &Options, Reloc::Model RM,
-                     CodeModel::Model CM, CodeGenOpt::Level OL);
+                     CodeModel::Model CM, CodeGenOpt::Level OL,
+                     bool IsLittleEndian);
 
   const ARM64Subtarget *getSubtargetImpl() const override { return &Subtarget; }
   const ARM64TargetLowering *getTargetLowering() const override {
@@ -62,6 +63,28 @@ public:
 
   /// \brief Register ARM64 analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;
+};
+
+// ARM64leTargetMachine - ARM64 little endian target machine.
+//
+class ARM64leTargetMachine : public ARM64TargetMachine {
+  virtual void anchor();
+public:
+  ARM64leTargetMachine(const Target &T, StringRef TT,
+                       StringRef CPU, StringRef FS, const TargetOptions &Options,
+                       Reloc::Model RM, CodeModel::Model CM,
+                       CodeGenOpt::Level OL);
+};
+
+// ARM64beTargetMachine - ARM64 big endian target machine.
+//
+class ARM64beTargetMachine : public ARM64TargetMachine {
+  virtual void anchor();
+public:
+  ARM64beTargetMachine(const Target &T, StringRef TT,
+                       StringRef CPU, StringRef FS, const TargetOptions &Options,
+                       Reloc::Model RM, CodeModel::Model CM,
+                       CodeGenOpt::Level OL);
 };
 
 } // end namespace llvm

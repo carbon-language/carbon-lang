@@ -229,9 +229,13 @@ createARM64ExternalSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
 }
 
 extern "C" void LLVMInitializeARM64Disassembler() {
-  TargetRegistry::RegisterMCDisassembler(TheARM64Target,
+  TargetRegistry::RegisterMCDisassembler(TheARM64leTarget,
                                          createARM64Disassembler);
-  TargetRegistry::RegisterMCSymbolizer(TheARM64Target,
+  TargetRegistry::RegisterMCDisassembler(TheARM64beTarget,
+                                         createARM64Disassembler);
+  TargetRegistry::RegisterMCSymbolizer(TheARM64leTarget,
+                                       createARM64ExternalSymbolizer);
+  TargetRegistry::RegisterMCSymbolizer(TheARM64beTarget,
                                        createARM64ExternalSymbolizer);
 }
 

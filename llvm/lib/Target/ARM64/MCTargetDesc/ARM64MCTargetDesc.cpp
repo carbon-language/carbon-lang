@@ -66,7 +66,7 @@ static MCAsmInfo *createARM64MCAsmInfo(const MCRegisterInfo &MRI,
     MAI = new ARM64MCAsmInfoDarwin();
   else {
     assert(TheTriple.isOSBinFormatELF() && "Only expect Darwin or ELF");
-    MAI = new ARM64MCAsmInfoELF();
+    MAI = new ARM64MCAsmInfoELF(TT);
   }
 
   // Initial state of the frame pointer is SP.
@@ -139,33 +139,46 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
 // Force static initialization.
 extern "C" void LLVMInitializeARM64TargetMC() {
   // Register the MC asm info.
-  RegisterMCAsmInfoFn X(TheARM64Target, createARM64MCAsmInfo);
+  RegisterMCAsmInfoFn X(TheARM64leTarget, createARM64MCAsmInfo);
+  RegisterMCAsmInfoFn Y(TheARM64beTarget, createARM64MCAsmInfo);
 
   // Register the MC codegen info.
-  TargetRegistry::RegisterMCCodeGenInfo(TheARM64Target,
+  TargetRegistry::RegisterMCCodeGenInfo(TheARM64leTarget,
+                                        createARM64MCCodeGenInfo);
+  TargetRegistry::RegisterMCCodeGenInfo(TheARM64beTarget,
                                         createARM64MCCodeGenInfo);
 
   // Register the MC instruction info.
-  TargetRegistry::RegisterMCInstrInfo(TheARM64Target, createARM64MCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheARM64leTarget, createARM64MCInstrInfo);
+  TargetRegistry::RegisterMCInstrInfo(TheARM64beTarget, createARM64MCInstrInfo);
 
   // Register the MC register info.
-  TargetRegistry::RegisterMCRegInfo(TheARM64Target, createARM64MCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheARM64leTarget, createARM64MCRegisterInfo);
+  TargetRegistry::RegisterMCRegInfo(TheARM64beTarget, createARM64MCRegisterInfo);
 
   // Register the MC subtarget info.
-  TargetRegistry::RegisterMCSubtargetInfo(TheARM64Target,
+  TargetRegistry::RegisterMCSubtargetInfo(TheARM64leTarget,
+                                          createARM64MCSubtargetInfo);
+  TargetRegistry::RegisterMCSubtargetInfo(TheARM64beTarget,
                                           createARM64MCSubtargetInfo);
 
   // Register the asm backend.
-  TargetRegistry::RegisterMCAsmBackend(TheARM64Target, createARM64AsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheARM64leTarget, createARM64leAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheARM64beTarget, createARM64beAsmBackend);
 
   // Register the MC Code Emitter
-  TargetRegistry::RegisterMCCodeEmitter(TheARM64Target,
+  TargetRegistry::RegisterMCCodeEmitter(TheARM64leTarget,
+                                        createARM64MCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheARM64beTarget,
                                         createARM64MCCodeEmitter);
 
   // Register the object streamer.
-  TargetRegistry::RegisterMCObjectStreamer(TheARM64Target, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheARM64leTarget, createMCStreamer);
+  TargetRegistry::RegisterMCObjectStreamer(TheARM64beTarget, createMCStreamer);
 
   // Register the MCInstPrinter.
-  TargetRegistry::RegisterMCInstPrinter(TheARM64Target,
+  TargetRegistry::RegisterMCInstPrinter(TheARM64leTarget,
+                                        createARM64MCInstPrinter);
+  TargetRegistry::RegisterMCInstPrinter(TheARM64beTarget,
                                         createARM64MCInstPrinter);
 }

@@ -48,11 +48,14 @@ protected:
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
+  /// IsLittleEndian - Is the target little endian?
+  bool IsLittleEndian;
+
 public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
   ARM64Subtarget(const std::string &TT, const std::string &CPU,
-                 const std::string &FS);
+                 const std::string &FS, bool LittleEndian);
 
   bool enableMachineScheduler() const override { return true; }
 
@@ -63,6 +66,8 @@ public:
   bool hasFPARMv8() const { return HasFPARMv8; }
   bool hasNEON() const { return HasNEON; }
   bool hasCrypto() const { return HasCrypto; }
+
+  bool isLittleEndian() const { return IsLittleEndian; }
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
 

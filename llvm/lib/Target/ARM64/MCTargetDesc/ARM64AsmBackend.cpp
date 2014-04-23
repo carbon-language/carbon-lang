@@ -483,12 +483,13 @@ namespace {
 class ELFARM64AsmBackend : public ARM64AsmBackend {
 public:
   uint8_t OSABI;
+  bool IsLittleEndian;
 
-  ELFARM64AsmBackend(const Target &T, uint8_t OSABI)
-      : ARM64AsmBackend(T), OSABI(OSABI) {}
+  ELFARM64AsmBackend(const Target &T, uint8_t OSABI, bool IsLittleEndian)
+    : ARM64AsmBackend(T), OSABI(OSABI), IsLittleEndian(IsLittleEndian) {}
 
   MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
-    return createARM64ELFObjectWriter(OS, OSABI);
+    return createARM64ELFObjectWriter(OS, OSABI, IsLittleEndian);
   }
 
   void processFixupValue(const MCAssembler &Asm, const MCAsmLayout &Layout,
@@ -520,14 +521,23 @@ void ELFARM64AsmBackend::processFixupValue(const MCAssembler &Asm,
 }
 }
 
-MCAsmBackend *llvm::createARM64AsmBackend(const Target &T,
-                                          const MCRegisterInfo &MRI,
-                                          StringRef TT, StringRef CPU) {
+MCAsmBackend *llvm::createARM64leAsmBackend(const Target &T,
+                                            const MCRegisterInfo &MRI,
+                                            StringRef TT, StringRef CPU) {
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin())
     return new DarwinARM64AsmBackend(T, MRI);
 
   assert(TheTriple.isOSBinFormatELF() && "Expect either MachO or ELF target");
-  return new ELFARM64AsmBackend(T, TheTriple.getOS());
+  return new ELFARM64AsmBackend(T, TheTriple.getOS(), /*IsLittleEndian=*/true);
+}
+
+MCAsmBackend *llvm::createARM64beAsmBackend(const Target &T,
+                                            const MCRegisterInfo &MRI,
+                                            StringRef TT, StringRef CPU) {
+  Triple TheTriple(TT);
+
+  assert(TheTriple.isOSBinFormatELF() && "Big endian is only supported for ELF targets!");
+  return new ELFARM64AsmBackend(T, TheTriple.getOS(), /*IsLittleEndian=*/false);
 }

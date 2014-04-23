@@ -28,7 +28,7 @@ struct ARM64MCAsmInfoDarwin : public MCAsmInfoDarwin {
 };
 
 struct ARM64MCAsmInfoELF : public MCAsmInfo {
-  explicit ARM64MCAsmInfoELF();
+  explicit ARM64MCAsmInfoELF(StringRef TT);
 };
 
 } // namespace llvm

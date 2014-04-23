@@ -12,10 +12,13 @@
 using namespace llvm;
 
 namespace llvm {
-Target TheARM64Target;
+Target TheARM64leTarget;
+Target TheARM64beTarget;
 } // end namespace llvm
 
 extern "C" void LLVMInitializeARM64TargetInfo() {
-  RegisterTarget<Triple::arm64, /*HasJIT=*/true> X(TheARM64Target, "arm64",
-                                                   "ARM64");
+  RegisterTarget<Triple::arm64, /*HasJIT=*/true> X(TheARM64leTarget, "arm64",
+                                                   "ARM64 (little endian)");
+  RegisterTarget<Triple::arm64_be, /*HasJIT=*/true> Y(TheARM64beTarget, "arm64_be",
+                                                      "ARM64 (big endian)");
 }

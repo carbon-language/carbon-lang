@@ -27,11 +27,11 @@ using namespace llvm;
 #include "ARM64GenSubtargetInfo.inc"
 
 ARM64Subtarget::ARM64Subtarget(const std::string &TT, const std::string &CPU,
-                               const std::string &FS)
+                               const std::string &FS, bool LittleEndian)
     : ARM64GenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       HasFPARMv8(false), HasNEON(false), HasCrypto(false),
       HasZeroCycleRegMove(false), HasZeroCycleZeroing(false),
-      CPUString(CPU), TargetTriple(TT) {
+  CPUString(CPU), TargetTriple(TT), IsLittleEndian(LittleEndian) {
   // Determine default and user-specified characteristics
 
   if (CPUString.empty())
