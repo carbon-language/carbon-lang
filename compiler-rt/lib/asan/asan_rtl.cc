@@ -230,7 +230,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 void InitializeFlags(Flags *f, const char *env) {
   CommonFlags *cf = common_flags();
   SetCommonFlagsDefaults(cf);
-  cf->detect_leaks = CAN_SANITIZE_LEAKS;
+  cf->detect_leaks = false;  // CAN_SANITIZE_LEAKS;
   cf->external_symbolizer_path = GetEnv("ASAN_SYMBOLIZER_PATH");
   cf->malloc_context_size = kDefaultMallocContextSize;
   cf->intercept_tls_get_addr = true;
