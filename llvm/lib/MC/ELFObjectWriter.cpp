@@ -513,7 +513,8 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
     }
   }
 
-  if (Data && Data->getFlags() & ELF_Other_ThumbFunc)
+  if ((Data && Data->getFlags() & ELF_Other_ThumbFunc) ||
+      OrigData.getFlags() & ELF_Other_ThumbFunc)
     Res |= 1;
 
   if (!Symbol || !Symbol->isInSection())
@@ -644,8 +645,6 @@ void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
   Other |= Visibility;
 
   uint64_t Value = SymbolValue(OrigData, Layout);
-  if (OrigData.getFlags() & ELF_Other_ThumbFunc)
-    Value |= 1;
   uint64_t Size = 0;
 
   const MCExpr *ESize = OrigData.getSize();
