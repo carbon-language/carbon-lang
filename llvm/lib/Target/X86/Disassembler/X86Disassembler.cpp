@@ -319,7 +319,7 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
   }
   // By default sign-extend all X86 immediates based on their encoding.
   else if (type == TYPE_IMM8 || type == TYPE_IMM16 || type == TYPE_IMM32 ||
-           type == TYPE_IMM64) {
+           type == TYPE_IMM64 || type == TYPE_IMMv) {
     uint32_t Opcode = mcInst.getOpcode();
     switch (operand.encoding) {
     default:

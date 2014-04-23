@@ -44,6 +44,10 @@
 # CHECK-NEXT:	nop
 0xf0 0x90
 
+# Test that immediate is printed correctly within opsize prefix
+# CHECK: addw    $-12, %ax
+0x66,0x83,0xc0,0xf4
+
 # Test that multiple redundant prefixes work (redundant, but valid x86).
 # CHECK: rep
 # CHECK-NEXT: rep
