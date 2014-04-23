@@ -4643,44 +4643,35 @@ public:
     case 'w': // Floating point and SIMD registers (V0-V31)
       Info.setAllowsRegister();
       return true;
+    case 'I': // Constant that can be used with an ADD instruction
+    case 'J': // Constant that can be used with a SUB instruction
+    case 'K': // Constant that can be used with a 32-bit logical instruction
+    case 'L': // Constant that can be used with a 64-bit logical instruction
+    case 'M': // Constant that can be used as a 32-bit MOV immediate
+    case 'N': // Constant that can be used as a 64-bit MOV immediate
+    case 'Y': // Floating point constant zero
+    case 'Z': // Integer constant zero
+      return true;
+    case 'Q': // A memory reference with base register and no offset
+      Info.setAllowsMemory();
+      return true;
+    case 'S': // A symbolic address
+      Info.setAllowsRegister();
+      return true;
+    case 'U':
+      // Ump: A memory address suitable for ldp/stp in SI, DI, SF and DF modes, whatever they may be
+      // Utf: A memory address suitable for ldp/stp in TF mode, whatever it may be
+      // Usa: An absolute symbolic address
+      // Ush: The high part (bits 32:12) of a pc-relative symbolic address
+      llvm_unreachable("FIXME: Unimplemented support for bizarre constraints");
     case 'z': // Zero register, wzr or xzr
       Info.setAllowsRegister();
       return true;
     case 'x': // Floating point and SIMD registers (V0-V15)
       Info.setAllowsRegister();
       return true;
-    case 'Q': // A memory address that is a single base register.
-      Info.setAllowsMemory();
-      return true;
     }
     return false;
-  }
-
-  virtual bool validateConstraintModifier(StringRef Constraint,
-                                          const char Modifier,
-                                          unsigned Size) const {
-    // Strip off constraint modifiers.
-    while (Constraint[0] == '=' || Constraint[0] == '+' || Constraint[0] == '&')
-      Constraint = Constraint.substr(1);
-
-    switch (Constraint[0]) {
-    default:
-      return true;
-    case 'z':
-    case 'r': {
-      switch (Modifier) {
-      case 'x':
-      case 'w':
-        // For now assume that the person knows what they're
-        // doing with the modifier.
-        return true;
-      default:
-        // By default an 'r' constraint will be in the 'x'
-        // registers.
-        return (Size == 64);
-      }
-    }
-    }
   }
 
   virtual const char *getClobbers() const { return ""; }
