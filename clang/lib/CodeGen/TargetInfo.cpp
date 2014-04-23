@@ -6182,7 +6182,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::mips64el:
     return *(TheTargetCodeGenInfo = new MIPSTargetCodeGenInfo(Types, false));
 
-  case llvm::Triple::arm64: {
+  case llvm::Triple::arm64:
+  case llvm::Triple::arm64_be: {
     ARM64ABIInfo::ABIKind Kind = ARM64ABIInfo::AAPCS;
     if (strcmp(getTarget().getABI(), "darwinpcs") == 0)
       Kind = ARM64ABIInfo::DarwinPCS;
