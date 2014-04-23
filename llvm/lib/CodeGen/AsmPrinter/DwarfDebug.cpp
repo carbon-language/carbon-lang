@@ -261,7 +261,8 @@ static bool SectionSort(const MCSection *A, const MCSection *B) {
 // TODO: Determine whether or not we should add names for programs
 // that do not have a DW_AT_name or DW_AT_linkage_name field - this
 // is only slightly different than the lookup of non-standard ObjC names.
-void DwarfDebug::addSubprogramNames(DwarfUnit &TheU, DISubprogram SP, DIE *Die) {
+void DwarfDebug::addSubprogramNames(DwarfUnit &TheU, DISubprogram SP,
+                                    DIE *Die) {
   if (!SP.isDefinition())
     return;
   addAccelName(SP.getName(), Die);
