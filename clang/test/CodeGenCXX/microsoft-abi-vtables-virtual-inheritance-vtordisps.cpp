@@ -535,3 +535,35 @@ struct X : C, virtual B {
 
 void build_vftable(X *obj) { obj->g(); }
 }
+
+namespace pr19519 {
+// VS2013 CL miscompiles this, just make sure we don't regress.
+
+struct A {
+  virtual void f();
+  virtual void g();
+};
+
+struct B : virtual A {
+  virtual void f();
+  B();
+};
+
+struct C : virtual A {
+  virtual void g();
+};
+
+struct X : B, C {
+  X();
+
+  // CHECK-LABEL: VFTable for 'pr19519::A' in 'pr19519::B' in 'pr19519::X' (2 entries).
+  // CHECK-NEXT:   0 | void pr19519::B::f()
+  // CHECK-NEXT:       [this adjustment: vtordisp at -4, -4 non-virtual]
+  // CHECK-NEXT:   1 | void pr19519::C::g()
+  // CHECK-NEXT:       [this adjustment: vtordisp at -4, -4 non-virtual]
+
+  // MANGLING-DAG: @"\01??_7X@pr19519@@6B@" = {{.*}}@"\01?g@C@pr19519@@$4PPPPPPPM@3AEXXZ"
+};
+
+X::X() {}
+}
