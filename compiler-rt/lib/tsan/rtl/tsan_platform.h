@@ -77,6 +77,8 @@ static const uptr kLinuxShadowMsk = 0x200000000000ULL;
 #elif defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
 static const uptr kLinuxAppMemBeg = 0x290000000000ULL;
 static const uptr kLinuxAppMemEnd = 0x7fffffffffffULL;
+static const uptr kAppMemGapBeg   = 0x2c0000000000ULL;
+static const uptr kAppMemGapEnd   = 0x7d0000000000ULL;
 #else
 static const uptr kLinuxAppMemBeg = 0x7cf000000000ULL;
 static const uptr kLinuxAppMemEnd = 0x7fffffffffffULL;
@@ -105,7 +107,12 @@ static const uptr kLinuxShadowEnd =
     MemToShadow(kLinuxAppMemEnd) | 0xff;
 
 static inline bool IsAppMem(uptr mem) {
+#if defined(TSAN_COMPAT_SHADOW) && TSAN_COMPAT_SHADOW
+  return (mem >= kLinuxAppMemBeg && mem < kAppMemGapBeg) ||
+         (mem >= kAppMemGapEnd   && mem <= kLinuxAppMemEnd);
+#else
   return mem >= kLinuxAppMemBeg && mem <= kLinuxAppMemEnd;
+#endif
 }
 
 static inline bool IsShadowMem(uptr mem) {
