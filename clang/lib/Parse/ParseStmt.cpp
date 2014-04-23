@@ -26,6 +26,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInstPrinter.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -2197,8 +2198,8 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   std::unique_ptr<llvm::MCTargetAsmParser> TargetParser(
       TheTarget->createMCAsmParser(*STI, *Parser, *MII, MCOptions));
 
-  llvm::MCInstPrinter *IP =
-    TheTarget->createMCInstPrinter(1, *MAI, *MII, *MRI, *STI);
+  std::unique_ptr<llvm::MCInstPrinter> IP(
+      TheTarget->createMCInstPrinter(1, *MAI, *MII, *MRI, *STI));
 
   // Change to the Intel dialect.
   Parser->setAssemblerDialect(1);
@@ -2220,7 +2221,7 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   SmallVector<std::string, 4> Clobbers;
   if (Parser->parseMSInlineAsm(AsmLoc.getPtrEncoding(), AsmStringIR,
                                NumOutputs, NumInputs, OpExprs, Constraints,
-                               Clobbers, MII, IP, Callback))
+                               Clobbers, MII, IP.get(), Callback))
     return StmtError();
 
   // Filter out "fpsw".  Clang doesn't accept it, and it always lists flags and
