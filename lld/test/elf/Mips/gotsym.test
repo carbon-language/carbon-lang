@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check _gp_disp and GOT_OFFSET_TABLE value
 # RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t1 %s
 

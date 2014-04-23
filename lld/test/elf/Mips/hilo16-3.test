@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check handling of HI16 and LO16 relocations for _gp_disp.
 #
 # R_MIPS_HI16: (AHL + GP - P) - (short)(AHL + GP - P)

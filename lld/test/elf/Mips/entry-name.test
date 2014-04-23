@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check name of executable entry symbol.
 # RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t1 %s
 # RUN: lld -flavor gnu -target mipsel --noinhibit-exec -o %t2 %t1

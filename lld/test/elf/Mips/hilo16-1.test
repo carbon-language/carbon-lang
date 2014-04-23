@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check handling multiple HI16 relocation followed by a single LO16 relocation.
 #
 # RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s

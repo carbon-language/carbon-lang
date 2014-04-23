@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check that external symbol defined in the executable file
 # and referenced by R_MIPS_CALL16 relocation has a corresponded
 # entry in the local GOT section.

@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check sorting of .dynsym content accordingly to .got section.
 
 # Build shared library

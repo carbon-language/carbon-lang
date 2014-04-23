@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check handling of R_MIPS_COPY relocation
 
 # Build shared library

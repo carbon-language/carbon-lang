@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check pairing of R_MIPS_HI16 and R_MIPS_LO16 relocations.
 # RUN: yaml2obj -format=elf %s > %t-obj
 # RUN: lld -flavor gnu -target mipsel -e glob1 -o %t-exe %t-obj

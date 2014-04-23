@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check initialization of .plt header entries.
 
 # Build shared library

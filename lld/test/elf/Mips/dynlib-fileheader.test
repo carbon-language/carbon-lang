@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check ELF Header for shared library.
 
 # Build shared library

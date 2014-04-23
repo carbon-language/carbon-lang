@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check handling of global/local GOT16 relocations.
 # RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec \
 # RUN:     --output-filetype=yaml %S/Inputs/got16.o \

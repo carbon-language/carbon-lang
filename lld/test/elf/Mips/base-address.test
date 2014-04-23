@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check executable base address configuration. Base address should be
 # equal to 0x400000 and the MIPS_BASE_ADDRESS dynamic tag's value should
 # be the same.

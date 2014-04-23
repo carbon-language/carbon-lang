@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check LA25 stubs creation when PIC code is called from non-PIC routines.
 
 # Build executable from pic and non-pic code.

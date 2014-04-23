@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Test1. Check PLT entries creation when:
 #   a) Linking non-shared executable file
 #   b) Relocations' targets are symbols defined in the shared object.

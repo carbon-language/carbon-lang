@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check that symbol referenced by an entry in the global part of GOT
 # has a corresponded entry in the .dynsym section.
 

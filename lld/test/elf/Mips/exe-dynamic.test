@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check MIPS specific tags in the dynamic table in case executable linking.
 
 # Build shared library

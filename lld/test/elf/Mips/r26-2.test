@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check reading addendum for R_MIPS_26 relocation.
 # RUN: yaml2obj -format=elf %s > %t-obj
 # RUN: lld -flavor gnu -target mipsel -o %t-exe %t-obj

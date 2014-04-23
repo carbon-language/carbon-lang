@@ -1,3 +1,5 @@
+# REQUIRES: mips
+
 # Check ELF Header for non-pic executable file.
 
 # Build shared library
