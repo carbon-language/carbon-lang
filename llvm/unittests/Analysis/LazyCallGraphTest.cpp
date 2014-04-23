@@ -305,4 +305,91 @@ TEST(LazyCallGraphTest, MultiArmSCC) {
   EXPECT_EQ(SCC, CG.lookupSCC(E->getFunction()));
 }
 
+TEST(LazyCallGraphTest, InterSCCEdgeRemoval) {
+  std::unique_ptr<Module> M = parseAssembly(
+      "define void @a() {\n"
+      "entry:\n"
+      "  call void @b()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @b() {\n"
+      "entry:\n"
+      "  ret void\n"
+      "}\n");
+  LazyCallGraph CG(*M);
+
+  // Force the graph to be fully expanded.
+  for (LazyCallGraph::SCC *C : CG.postorder_sccs())
+    (void)C;
+
+  LazyCallGraph::Node *A = CG.lookup(lookupFunction(*M, "a"));
+  LazyCallGraph::Node *B = CG.lookup(lookupFunction(*M, "b"));
+  LazyCallGraph::SCC *AC = CG.lookupSCC(lookupFunction(*M, "a"));
+  LazyCallGraph::SCC *BC = CG.lookupSCC(lookupFunction(*M, "b"));
+
+  EXPECT_EQ("b", A->begin()->getFunction().getName());
+  EXPECT_EQ(B->end(), B->begin());
+  EXPECT_EQ(AC, *BC->parent_begin());
+
+  CG.removeEdge(*A, lookupFunction(*M, "b"));
+
+  EXPECT_EQ(A->end(), A->begin());
+  EXPECT_EQ(B->end(), B->begin());
+  EXPECT_EQ(BC->parent_end(), BC->parent_begin());
+}
+
+TEST(LazyCallGraphTest, IntraSCCEdgeRemoval) {
+  // A nice fully connected (including self-edges) SCC.
+  std::unique_ptr<Module> M1 = parseAssembly(
+      "define void @a() {\n"
+      "entry:\n"
+      "  call void @a()\n"
+      "  call void @b()\n"
+      "  call void @c()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @b() {\n"
+      "entry:\n"
+      "  call void @a()\n"
+      "  call void @b()\n"
+      "  call void @c()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @c() {\n"
+      "entry:\n"
+      "  call void @a()\n"
+      "  call void @b()\n"
+      "  call void @c()\n"
+      "  ret void\n"
+      "}\n");
+  LazyCallGraph CG1(*M1);
+
+  // Force the graph to be fully expanded.
+  auto SCCI = CG1.postorder_scc_begin();
+  LazyCallGraph::SCC *SCC = *SCCI++;
+  EXPECT_EQ(CG1.postorder_scc_end(), SCCI);
+
+  LazyCallGraph::Node *A = CG1.lookup(lookupFunction(*M1, "a"));
+  LazyCallGraph::Node *B = CG1.lookup(lookupFunction(*M1, "b"));
+  LazyCallGraph::Node *C = CG1.lookup(lookupFunction(*M1, "c"));
+  EXPECT_EQ(SCC, CG1.lookupSCC(A->getFunction()));
+  EXPECT_EQ(SCC, CG1.lookupSCC(B->getFunction()));
+  EXPECT_EQ(SCC, CG1.lookupSCC(C->getFunction()));
+
+  // Remove the edge from b -> a, which should leave the 3 functions still in
+  // a single connected component because of a -> b -> c -> a.
+  CG1.removeEdge(*B, A->getFunction());
+  EXPECT_EQ(SCC, CG1.lookupSCC(A->getFunction()));
+  EXPECT_EQ(SCC, CG1.lookupSCC(B->getFunction()));
+  EXPECT_EQ(SCC, CG1.lookupSCC(C->getFunction()));
+
+  // Remove the edge from c -> a, which should leave 'a' in the original SCC
+  // and form a new SCC for 'b' and 'c'.
+  CG1.removeEdge(*C, A->getFunction());
+  EXPECT_EQ(SCC, CG1.lookupSCC(A->getFunction()));
+  EXPECT_EQ(1, std::distance(SCC->begin(), SCC->end()));
+  LazyCallGraph::SCC *SCC2 = CG1.lookupSCC(B->getFunction());
+  EXPECT_EQ(SCC2, CG1.lookupSCC(C->getFunction()));
+}
+
 }

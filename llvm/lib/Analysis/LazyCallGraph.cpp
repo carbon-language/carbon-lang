@@ -131,6 +131,237 @@ LazyCallGraph &LazyCallGraph::operator=(LazyCallGraph &&G) {
   return *this;
 }
 
+void LazyCallGraph::SCC::removeEdge(LazyCallGraph &G, Function &Caller,
+                                    Function &Callee, SCC &CalleeC) {
+  assert(std::find(G.LeafSCCs.begin(), G.LeafSCCs.end(), this) ==
+             G.LeafSCCs.end() &&
+         "Cannot have a leaf SCC caller with a different SCC callee.");
+
+  bool HasOtherCallToCalleeC = false;
+  bool HasOtherCallOutsideSCC = false;
+  for (Node *N : *this) {
+    for (Node *Callee : *N) {
+      SCC *OtherCalleeC = G.SCCMap.lookup(&Callee->F);
+      if (OtherCalleeC == &CalleeC) {
+        HasOtherCallToCalleeC = true;
+        break;
+      }
+      if (OtherCalleeC != this)
+        HasOtherCallOutsideSCC = true;
+    }
+    if (HasOtherCallToCalleeC)
+      break;
+  }
+  // Because the SCCs form a DAG, deleting such an edge cannot change the set
+  // of SCCs in the graph. However, it may cut an edge of the SCC DAG, making
+  // the caller no longer a parent of the callee. Walk the other call edges
+  // in the caller to tell.
+  if (!HasOtherCallToCalleeC) {
+    bool Removed = CalleeC.ParentSCCs.remove(this);
+    (void)Removed;
+    assert(Removed &&
+           "Did not find the caller SCC in the callee SCC's parent list!");
+
+    // It may orphan an SCC if it is the last edge reaching it, but that does
+    // not violate any invariants of the graph.
+    if (CalleeC.ParentSCCs.empty())
+      DEBUG(dbgs() << "LCG: Update removing " << Caller.getName() << " -> "
+                   << Callee.getName() << " edge orphaned the callee's SCC!\n");
+  }
+
+  // It may make the Caller SCC a leaf SCC.
+  if (!HasOtherCallOutsideSCC)
+    G.LeafSCCs.push_back(this);
+}
+
+SmallVector<LazyCallGraph::SCC *, 1>
+LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
+                                       Node &Callee) {
+  // We return a list of the resulting SCCs, where 'this' is always the first
+  // element.
+  SmallVector<SCC *, 1> ResultSCCs;
+  ResultSCCs.push_back(this);
+
+  // We're going to do a full mini-Tarjan's walk using a local stack here.
+  int NextDFSNumber = 1;
+  SmallVector<std::pair<Node *, Node::iterator>, 4> DFSStack;
+
+  // The worklist is every node in the original SCC. FIXME: switch the SCC to
+  // use a SmallSetVector and swap here.
+  SmallSetVector<Node *, 1> Worklist;
+  for (Node *N : Nodes) {
+    // Clear these to 0 while we re-run Tarjan's over the SCC.
+    N->DFSNumber = 0;
+    N->LowLink = 0;
+    Worklist.insert(N);
+  }
+
+  // The callee can already reach every node in this SCC (by definition). It is
+  // the only node we know will stay inside this SCC. Everything which
+  // transitively reaches Callee will also remain in the SCC. To model this we
+  // incrementally add any chain of nodes which reaches something in the new
+  // node set to the new node set. This short circuits one side of the Tarjan's
+  // walk.
+  SmallSetVector<Node *, 1> NewNodes;
+  NewNodes.insert(&Callee);
+
+  for (;;) {
+    if (DFSStack.empty()) {
+      if (Worklist.empty())
+        break;
+      Node *N = Worklist.pop_back_val();
+      DFSStack.push_back(std::make_pair(N, N->begin()));
+    }
+
+    Node *N = DFSStack.back().first;
+
+    // Check if we have reached a node in the new (known connected) set. If so,
+    // the entire stack is necessarily in that set and we can re-start.
+    if (NewNodes.count(N)) {
+      DFSStack.pop_back();
+      while (!DFSStack.empty())
+        NewNodes.insert(DFSStack.pop_back_val().first);
+      continue;
+    }
+
+    if (N->DFSNumber == 0) {
+      N->LowLink = N->DFSNumber = NextDFSNumber++;
+      Worklist.remove(N);
+    }
+
+    auto SI = DFSStack.rbegin();
+    bool PushedChildNode = false;
+    do {
+      N = SI->first;
+      for (auto I = SI->second, E = N->end(); I != E; ++I) {
+        Node *ChildN = *I;
+        // If this child isn't currently in this SCC, no need to process it.
+        // However, we do need to remove this SCC from its SCC's parent set.
+        SCC *ChildSCC = G.SCCMap.lookup(&ChildN->F);
+        assert(ChildSCC &&
+               "Everything reachable must already be in *some* SCC");
+        if (ChildSCC != this) {
+          ChildSCC->ParentSCCs.remove(this);
+          continue;
+        }
+
+        if (ChildN->DFSNumber == 0) {
+          // Mark that we should start at this child when next this node is the
+          // top of the stack. We don't start at the next child to ensure this
+          // child's lowlink is reflected.
+          SI->second = I;
+
+          // Recurse onto this node via a tail call.
+          DFSStack.push_back(std::make_pair(ChildN, ChildN->begin()));
+          PushedChildNode = true;
+          break;
+        }
+
+        // Track the lowest link of the childen, if any are still in the stack.
+        // Any child not on the stack will have a LowLink of -1.
+        assert(ChildN->LowLink != 0 &&
+               "Impossible with a non-zero DFS number.");
+        if (ChildN->LowLink >= 0 && ChildN->LowLink < N->LowLink)
+          N->LowLink = ChildN->LowLink;
+      }
+      if (!PushedChildNode)
+        // No more children to process for this stack entry.
+        SI->second = N->end();
+
+      ++SI;
+      // If nothing is new on the stack and this isn't the SCC root, walk
+      // upward.
+    } while (!PushedChildNode && N->LowLink != N->DFSNumber &&
+             SI != DFSStack.rend());
+
+    if (PushedChildNode)
+      continue;
+
+    // Form the new SCC out of the top of the DFS stack.
+    ResultSCCs.push_back(G.formSCCFromDFSStack(DFSStack, SI.base()));
+  }
+
+  // Replace this SCC with the NewNodes we collected above.
+  // FIXME: Simplify this when the SCC's datastructure is just a list.
+  Nodes.clear();
+  NodeSet.clear();
+
+  // Now we need to reconnect the current SCC to the graph.
+  bool IsLeafSCC = true;
+  for (Node *N : NewNodes) {
+    N->DFSNumber = -1;
+    N->LowLink = -1;
+    Nodes.push_back(N);
+    NodeSet.insert(&N->getFunction());
+    for (Node *ChildN : *N) {
+      if (NewNodes.count(ChildN))
+        continue;
+      SCC *ChildSCC = G.SCCMap.lookup(&ChildN->getFunction());
+      assert(ChildSCC &&
+             "Must have all child SCCs processed when building a new SCC!");
+      ChildSCC->ParentSCCs.insert(this);
+      IsLeafSCC = false;
+    }
+  }
+#ifndef NDEBUG
+  if (ResultSCCs.size() > 1)
+    assert(!IsLeafSCC && "This SCC cannot be a leaf as we have split out new "
+                         "SCCs by removing this edge.");
+  if (!std::any_of(G.LeafSCCs.begin(), G.LeafSCCs.end(),
+                   [&](SCC *C) { return C == this; }))
+    assert(!IsLeafSCC && "This SCC cannot be a leaf as it already had child "
+                         "SCCs before we removed this edge.");
+#endif
+  // If this SCC stopped being a leaf through this edge removal, remove it from
+  // the leaf SCC list.
+  if (!IsLeafSCC && ResultSCCs.size() > 1)
+    G.LeafSCCs.erase(std::remove(G.LeafSCCs.begin(), G.LeafSCCs.end(), this),
+                     G.LeafSCCs.end());
+
+  // Return the new list of SCCs.
+  return ResultSCCs;
+}
+
+void LazyCallGraph::removeEdge(Node &CallerN, Function &Callee) {
+  auto IndexMapI = CallerN.CalleeIndexMap.find(&Callee);
+  assert(IndexMapI != CallerN.CalleeIndexMap.end() &&
+         "Callee not in the callee set for the caller?");
+
+  Node *CalleeN = CallerN.Callees[IndexMapI->second].dyn_cast<Node *>();
+  CallerN.Callees.erase(CallerN.Callees.begin() + IndexMapI->second);
+  CallerN.CalleeIndexMap.erase(IndexMapI);
+
+  SCC *CallerC = SCCMap.lookup(&CallerN.F);
+  if (!CallerC) {
+    // We can only remove edges when the edge isn't actively participating in
+    // a DFS walk. Either it must have been popped into an SCC, or it must not
+    // yet have been reached by the DFS walk. Assert the latter here.
+    assert(std::all_of(DFSStack.begin(), DFSStack.end(),
+                       [&](const std::pair<Node *, iterator> &StackEntry) {
+             return StackEntry.first != &CallerN;
+           }) &&
+           "Found the caller on the DFSStack!");
+    return;
+  }
+
+  assert(CalleeN && "If the caller is in an SCC, we have to have explored all "
+                    "its transitively called functions.");
+
+  SCC *CalleeC = SCCMap.lookup(&Callee);
+  assert(CalleeC &&
+         "The caller has an SCC, and thus by necessity so does the callee.");
+
+  // The easy case is when they are different SCCs.
+  if (CallerC != CalleeC) {
+    CallerC->removeEdge(*this, CallerN.getFunction(), Callee, *CalleeC);
+    return;
+  }
+
+  // The hard case is when we remove an edge within a SCC. This may cause new
+  // SCCs to need to be added to the graph.
+  CallerC->removeInternalEdge(*this, CallerN, *CalleeN);
+}
+
 LazyCallGraph::Node *LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
   return new (MappedN = BPA.Allocate()) Node(*this, F);
 }
@@ -212,6 +443,8 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
   if (SI->first->DFSNumber == 0) {
     // This node hasn't been visited before, assign it a DFS number and remove
     // it from the entry set.
+    assert(!SCCMap.count(&SI->first->getFunction()) &&
+           "Found a node with 0 DFS number but already in an SCC!");
     SI->first->LowLink = SI->first->DFSNumber = NextDFSNumber++;
     SCCEntryNodes.remove(&SI->first->getFunction());
   }

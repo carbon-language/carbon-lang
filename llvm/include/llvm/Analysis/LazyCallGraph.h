@@ -223,6 +223,12 @@ public:
 
     SCC() {}
 
+    void removeEdge(LazyCallGraph &G, Function &Caller, Function &Callee,
+                    SCC &CalleeC);
+
+    SmallVector<LazyCallGraph::SCC *, 1>
+    removeInternalEdge(LazyCallGraph &G, Node &Caller, Node &Callee);
+
   public:
     typedef SmallVectorImpl<Node *>::const_iterator iterator;
     typedef SmallSetVector<SCC *, 1>::const_iterator parent_iterator;
@@ -332,6 +338,14 @@ public:
       return N;
 
     return insertInto(F, N);
+  }
+
+  /// \brief Update the call graph after deleting an edge.
+  void removeEdge(Node &Caller, Function &Callee);
+
+  /// \brief Update the call graph after deleting an edge.
+  void removeEdge(Function &Caller, Function &Callee) {
+    return removeEdge(*get(Caller), Callee);
   }
 
 private:
