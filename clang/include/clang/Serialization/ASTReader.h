@@ -1392,7 +1392,6 @@ public:
 
   /// \brief Attempts to load the global index.
   ///
-  /// \param TriggerLoc The location for what triggered the load.
   /// \returns true if loading the global index has failed for any reason.
   bool loadGlobalIndex();
 
