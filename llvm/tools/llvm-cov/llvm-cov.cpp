@@ -26,20 +26,20 @@ using namespace llvm;
 static cl::opt<std::string> SourceFile(cl::Positional, cl::Required,
                                        cl::desc("SOURCEFILE"));
 
-static cl::opt<bool> AllBlocks("a", cl::init(false),
+static cl::opt<bool> AllBlocks("a", cl::Grouping, cl::init(false),
                                cl::desc("Display all basic blocks"));
 static cl::alias AllBlocksA("all-blocks", cl::aliasopt(AllBlocks));
 
-static cl::opt<bool> BranchProb("b", cl::init(false),
+static cl::opt<bool> BranchProb("b", cl::Grouping, cl::init(false),
                                 cl::desc("Display branch probabilities"));
 static cl::alias BranchProbA("branch-probabilities", cl::aliasopt(BranchProb));
 
-static cl::opt<bool> BranchCount("c", cl::init(false),
+static cl::opt<bool> BranchCount("c", cl::Grouping, cl::init(false),
                                  cl::desc("Display branch counts instead "
                                            "of percentages (requires -b)"));
 static cl::alias BranchCountA("branch-counts", cl::aliasopt(BranchCount));
 
-static cl::opt<bool> FuncSummary("f", cl::init(false),
+static cl::opt<bool> FuncSummary("f", cl::Grouping, cl::init(false),
                                  cl::desc("Show coverage for each function"));
 static cl::alias FuncSummaryA("function-summaries", cl::aliasopt(FuncSummary));
 
@@ -49,11 +49,11 @@ ObjectDir("o", cl::value_desc("DIR|FILE"), cl::init(""),
 static cl::alias ObjectDirA("object-directory", cl::aliasopt(ObjectDir));
 static cl::alias ObjectDirB("object-file", cl::aliasopt(ObjectDir));
 
-static cl::opt<bool> PreservePaths("p", cl::init(false),
+static cl::opt<bool> PreservePaths("p", cl::Grouping, cl::init(false),
                                    cl::desc("Preserve path components"));
 static cl::alias PreservePathsA("preserve-paths", cl::aliasopt(PreservePaths));
 
-static cl::opt<bool> UncondBranch("u", cl::init(false),
+static cl::opt<bool> UncondBranch("u", cl::Grouping, cl::init(false),
                                   cl::desc("Display unconditional branch info "
                                            "(requires -b)"));
 static cl::alias UncondBranchA("unconditional-branches",
