@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Query.h"
+#include "QueryParser.h"
 #include "QuerySession.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/Dynamic/VariantValue.h"
@@ -24,20 +25,22 @@ using namespace clang::ast_matchers::dynamic;
 using namespace clang::query;
 using namespace clang::tooling;
 
-TEST(Query, Basic) {
-  std::unique_ptr<ASTUnit> FooAST(
-      buildASTFromCode("void foo1(void) {}\nvoid foo2(void) {}", "foo.cc"));
-  ASSERT_TRUE(FooAST.get());
-  std::unique_ptr<ASTUnit> BarAST(
-      buildASTFromCode("void bar1(void) {}\nvoid bar2(void) {}", "bar.cc"));
-  ASSERT_TRUE(BarAST.get());
+class QueryEngineTest : public ::testing::Test {
+protected:
+  QueryEngineTest() {}
 
-  ASTUnit *ASTs[] = { FooAST.get(), BarAST.get() };
+  std::unique_ptr<ASTUnit> FooAST{
+      buildASTFromCode("void foo1(void) {}\nvoid foo2(void) {}", "foo.cc")};
+  std::unique_ptr<ASTUnit> BarAST{
+      buildASTFromCode("void bar1(void) {}\nvoid bar2(void) {}", "bar.cc")};
+  ASTUnit *ASTs[2]{FooAST.get(), BarAST.get()};
+  QuerySession S{ASTs};
 
   std::string Str;
-  llvm::raw_string_ostream OS(Str);
-  QuerySession S(ASTs);
+  llvm::raw_string_ostream OS{Str};
+};
 
+TEST_F(QueryEngineTest, Basic) {
   DynTypedMatcher FnMatcher = functionDecl();
   DynTypedMatcher FooMatcher = functionDecl(hasName("foo1"));
 
@@ -107,4 +110,29 @@ TEST(Query, Basic) {
   EXPECT_FALSE(MatchQuery(isArrow()).run(OS, S));
 
   EXPECT_EQ("Not a valid top-level matcher.\n", OS.str());
+}
+
+TEST_F(QueryEngineTest, LetAndMatch) {
+  EXPECT_TRUE(QueryParser::parse("let x \"foo1\"", S)->run(OS, S));
+  EXPECT_EQ("", OS.str());
+  Str.clear();
+
+  EXPECT_TRUE(QueryParser::parse("let y hasName(x)", S)->run(OS, S));
+  EXPECT_EQ("", OS.str());
+  Str.clear();
+
+  EXPECT_TRUE(QueryParser::parse("match functionDecl(y)", S)->run(OS, S));
+  EXPECT_TRUE(OS.str().find("foo.cc:1:1: note: \"root\" binds here") !=
+              std::string::npos);
+  EXPECT_TRUE(OS.str().find("1 match.") != std::string::npos);
+  Str.clear();
+
+  EXPECT_TRUE(QueryParser::parse("unlet x", S)->run(OS, S));
+  EXPECT_EQ("", OS.str());
+  Str.clear();
+
+  EXPECT_FALSE(QueryParser::parse("let y hasName(x)", S)->run(OS, S));
+  EXPECT_EQ("1:2: Error parsing argument 1 for matcher hasName.\n"
+            "1:10: Value not found: x\n", OS.str());
+  Str.clear();
 }

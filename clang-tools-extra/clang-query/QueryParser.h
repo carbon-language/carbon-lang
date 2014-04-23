@@ -11,6 +11,7 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_QUERY_QUERY_PARSER_H
 
 #include "Query.h"
+#include "QuerySession.h"
 #include "llvm/LineEditor/LineEditor.h"
 #include <stddef.h>
 
@@ -24,19 +25,20 @@ public:
   /// Parse \a Line as a query.
   ///
   /// \return A QueryRef representing the query, which may be an InvalidQuery.
-  static QueryRef parse(StringRef Line);
+  static QueryRef parse(StringRef Line, const QuerySession &QS);
 
   /// Compute a list of completions for \a Line assuming a cursor at
   /// \param Pos characters past the start of \a Line, ordered from most
   /// likely to least likely.
   ///
   /// \return A vector of completions for \a Line.
-  static std::vector<llvm::LineEditor::Completion> complete(StringRef Line,
-                                                            size_t Pos);
+  static std::vector<llvm::LineEditor::Completion>
+  complete(StringRef Line, size_t Pos, const QuerySession &QS);
 
 private:
-  QueryParser(StringRef Line)
-      : Begin(Line.data()), End(Line.data() + Line.size()), CompletionPos(0) {}
+  QueryParser(StringRef Line, const QuerySession &QS)
+      : Begin(Line.data()), End(Line.data() + Line.size()), CompletionPos(0),
+        QS(QS) {}
 
   StringRef lexWord();
 
@@ -45,6 +47,7 @@ private:
 
   QueryRef parseSetBool(bool QuerySession::*Var);
   QueryRef parseSetOutputKind();
+  QueryRef completeMatcherExpression();
 
   QueryRef endQuery(QueryRef Q);
 
@@ -59,6 +62,8 @@ private:
 
   const char *CompletionPos;
   std::vector<llvm::LineEditor::Completion> Completions;
+
+  const QuerySession &QS;
 };
 
 } // namespace query

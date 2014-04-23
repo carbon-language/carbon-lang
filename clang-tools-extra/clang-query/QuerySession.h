@@ -11,7 +11,9 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_QUERY_QUERY_SESSION_H
 
 #include "Query.h"
+#include "clang/ASTMatchers/Dynamic/VariantValue.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringMap.h"
 
 namespace clang {
 
@@ -28,6 +30,7 @@ public:
   llvm::ArrayRef<ASTUnit *> ASTs;
   OutputKind OutKind;
   bool BindRoot;
+  llvm::StringMap<ast_matchers::dynamic::VariantValue> NamedValues;
 };
 
 } // namespace query

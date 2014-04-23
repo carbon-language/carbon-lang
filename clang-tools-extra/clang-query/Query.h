@@ -28,9 +28,10 @@ enum QueryKind {
   QK_Invalid,
   QK_NoOp,
   QK_Help,
+  QK_Let,
   QK_Match,
   QK_SetBool,
-  QK_SetOutputKind
+  QK_SetOutputKind,
 };
 
 class QuerySession;
@@ -84,6 +85,17 @@ struct MatchQuery : Query {
   ast_matchers::dynamic::DynTypedMatcher Matcher;
 
   static bool classof(const Query *Q) { return Q->Kind == QK_Match; }
+};
+
+struct LetQuery : Query {
+  LetQuery(StringRef Name, const ast_matchers::dynamic::VariantValue &Value)
+      : Query(QK_Let), Name(Name), Value(Value) {}
+  bool run(llvm::raw_ostream &OS, QuerySession &QS) const override;
+
+  std::string Name;
+  ast_matchers::dynamic::VariantValue Value;
+
+  static bool classof(const Query *Q) { return Q->Kind == QK_Let; }
 };
 
 template <typename T> struct SetQueryKind {};

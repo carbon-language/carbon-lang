@@ -132,12 +132,16 @@ QueryRef QueryParser::endQuery(QueryRef Q) {
   return Q;
 }
 
+namespace {
+
 enum ParsedQueryKind {
   PQK_Invalid,
   PQK_NoOp,
   PQK_Help,
+  PQK_Let,
   PQK_Match,
-  PQK_Set
+  PQK_Set,
+  PQK_Unlet,
 };
 
 enum ParsedQueryVariable {
@@ -146,15 +150,51 @@ enum ParsedQueryVariable {
   PQV_BindRoot
 };
 
+QueryRef makeInvalidQueryFromDiagnostics(const Diagnostics &Diag) {
+  std::string ErrStr;
+  llvm::raw_string_ostream OS(ErrStr);
+  Diag.printToStreamFull(OS);
+  return new InvalidQuery(OS.str());
+}
+
+class QuerySessionSema : public Parser::RegistrySema {
+public:
+  QuerySessionSema(const QuerySession &QS) : QS(QS) {}
+
+  ast_matchers::dynamic::VariantValue getNamedValue(StringRef Name) override {
+    return QS.NamedValues.lookup(Name);
+  }
+
+private:
+  const QuerySession &QS;
+};
+
+}  // namespace
+
+QueryRef QueryParser::completeMatcherExpression() {
+  std::vector<MatcherCompletion> Comps = Parser::completeExpression(
+      StringRef(Begin, End - Begin), CompletionPos - Begin);
+  for (std::vector<MatcherCompletion>::iterator I = Comps.begin(),
+                                                E = Comps.end();
+       I != E; ++I) {
+    Completions.push_back(LineEditor::Completion(I->TypedText, I->MatcherDecl));
+  }
+  return QueryRef();
+}
+
 QueryRef QueryParser::doParse() {
   StringRef CommandStr;
   ParsedQueryKind QKind = lexOrCompleteWord<ParsedQueryKind>(CommandStr)
                               .Case("", PQK_NoOp)
                               .Case("help", PQK_Help)
                               .Case("m", PQK_Match, /*IsCompletion=*/false)
+                              .Case("let", PQK_Let)
                               .Case("match", PQK_Match)
                               .Case("set", PQK_Set)
+                              .Case("unlet", PQK_Unlet)
                               .Default(PQK_Invalid);
+
+  QuerySessionSema S(QS);
 
   switch (QKind) {
   case PQK_NoOp:
@@ -163,29 +203,36 @@ QueryRef QueryParser::doParse() {
   case PQK_Help:
     return endQuery(new HelpQuery);
 
-  case PQK_Match: {
-    if (CompletionPos) {
-      std::vector<MatcherCompletion> Comps = Parser::completeExpression(
-          StringRef(Begin, End - Begin), CompletionPos - Begin);
-      for (std::vector<MatcherCompletion>::iterator I = Comps.begin(),
-                                                    E = Comps.end();
-           I != E; ++I) {
-        Completions.push_back(
-            LineEditor::Completion(I->TypedText, I->MatcherDecl));
-      }
-      return QueryRef();
-    } else {
-      Diagnostics Diag;
-      Optional<DynTypedMatcher> Matcher =
-          Parser::parseMatcherExpression(StringRef(Begin, End - Begin), &Diag);
-      if (!Matcher) {
-        std::string ErrStr;
-        llvm::raw_string_ostream OS(ErrStr);
-        Diag.printToStreamFull(OS);
-        return new InvalidQuery(OS.str());
-      }
-      return new MatchQuery(*Matcher);
+  case PQK_Let: {
+    StringRef Name = lexWord();
+
+    if (Name.empty())
+      return new InvalidQuery("expected variable name");
+
+    if (CompletionPos)
+      return completeMatcherExpression();
+
+    Diagnostics Diag;
+    ast_matchers::dynamic::VariantValue Value;
+    if (!Parser::parseExpression(StringRef(Begin, End - Begin), &S, &Value,
+                                 &Diag)) {
+      return makeInvalidQueryFromDiagnostics(Diag);
     }
+
+    return new LetQuery(Name, Value);
+  }
+
+  case PQK_Match: {
+    if (CompletionPos)
+      return completeMatcherExpression();
+
+    Diagnostics Diag;
+    Optional<DynTypedMatcher> Matcher = Parser::parseMatcherExpression(
+        StringRef(Begin, End - Begin), &S, &Diag);
+    if (!Matcher) {
+      return makeInvalidQueryFromDiagnostics(Diag);
+    }
+    return new MatchQuery(*Matcher);
   }
 
   case PQK_Set: {
@@ -214,6 +261,15 @@ QueryRef QueryParser::doParse() {
     return endQuery(Q);
   }
 
+  case PQK_Unlet: {
+    StringRef Name = lexWord();
+
+    if (Name.empty())
+      return new InvalidQuery("expected variable name");
+
+    return endQuery(new LetQuery(Name, {}));
+  }
+
   case PQK_Invalid:
     return new InvalidQuery("unknown command: " + CommandStr);
   }
@@ -221,13 +277,13 @@ QueryRef QueryParser::doParse() {
   llvm_unreachable("Invalid query kind");
 }
 
-QueryRef QueryParser::parse(StringRef Line) {
-  return QueryParser(Line).doParse();
+QueryRef QueryParser::parse(StringRef Line, const QuerySession &QS) {
+  return QueryParser(Line, QS).doParse();
 }
 
-std::vector<LineEditor::Completion> QueryParser::complete(StringRef Line,
-                                                          size_t Pos) {
-  QueryParser P(Line);
+std::vector<LineEditor::Completion>
+QueryParser::complete(StringRef Line, size_t Pos, const QuerySession &QS) {
+  QueryParser P(Line, QS);
   P.CompletionPos = Line.data() + Pos;
 
   P.doParse();
