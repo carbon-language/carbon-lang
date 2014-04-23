@@ -52,20 +52,22 @@ protected:
 };
 
 class VoidModuleLoader : public ModuleLoader {
-  virtual ModuleLoadResult loadModule(SourceLocation ImportLoc, 
-                                      ModuleIdPath Path,
-                                      Module::NameVisibilityKind Visibility,
-                                      bool IsInclusionDirective) {
+  ModuleLoadResult loadModule(SourceLocation ImportLoc, 
+                              ModuleIdPath Path,
+                              Module::NameVisibilityKind Visibility,
+                              bool IsInclusionDirective) override {
     return ModuleLoadResult();
   }
 
-  virtual void makeModuleVisible(Module *Mod,
-                                 Module::NameVisibilityKind Visibility,
-                                 SourceLocation ImportLoc,
-                                 bool Complain) { }
+  void makeModuleVisible(Module *Mod,
+                         Module::NameVisibilityKind Visibility,
+                         SourceLocation ImportLoc,
+                         bool Complain) override { }
 
-  virtual GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc)
+  GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc) override
     { return 0; }
+  bool lookupMissingImports(StringRef Name, SourceLocation TriggerLoc) override
+    { return 0; };
 };
 
 TEST_F(SourceManagerTest, isBeforeInTranslationUnit) {

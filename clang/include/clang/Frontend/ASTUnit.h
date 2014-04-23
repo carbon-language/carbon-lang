@@ -874,8 +874,10 @@ public:
   void makeModuleVisible(Module *Mod, Module::NameVisibilityKind Visibility,
                          SourceLocation ImportLoc, bool Complain) override {}
 
-  GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc)
+  GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc) override
     { return 0; }
+  bool lookupMissingImports(StringRef Name, SourceLocation TriggerLoc) override
+    { return 0; };
 };
 
 } // namespace clang

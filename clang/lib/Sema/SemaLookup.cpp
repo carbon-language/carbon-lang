@@ -23,8 +23,6 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/LangOptions.h"
-#include "clang/Lex/HeaderSearch.h"
-#include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ExternalSemaSource.h"
@@ -35,8 +33,6 @@
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/TemplateDeduction.h"
 #include "clang/Sema/TypoCorrection.h"
-#include "clang/Serialization/GlobalModuleIndex.h"
-#include "clang/Serialization/Module.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -3986,29 +3982,13 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
   TypoCorrectionConsumer Consumer(*this, Typo);
 
-  // Get the module loader (usually compiler instance).
-  ModuleLoader &Loader = PP.getModuleLoader();
-
-  // Look for the symbol in non-imported modules, but only if an error
-  // actually occurred.
-  if ((Mode == CTK_ErrorRecovery) && !Loader.buildingModule() &&
-      getLangOpts().Modules && getLangOpts().ModulesSearchAll) {
-    // Load global module index, or retrieve a previously loaded one.
-    GlobalModuleIndex *GlobalIndex = Loader.loadGlobalModuleIndex(
-      TypoName.getLocStart());
-
-    // Only if we have a global index.
-    if (GlobalIndex) {
-      GlobalModuleIndex::HitSet FoundModules;
-
-      // Find the modules that reference the identifier.
-      // Note that this only finds top-level modules.
-      // We'll let diagnoseTypo find the actual declaration module.
-      if (GlobalIndex->lookupIdentifier(Typo->getName(), FoundModules)) {
-        TypoCorrection TC(TypoName.getName(), (NestedNameSpecifier *)0, 0);
-        TC.setCorrectionRange(SS, TypoName);
-        TC.setRequiresImport(true);
-      }
+  if ((Mode == CTK_ErrorRecovery) &&  getLangOpts().Modules &&
+      getLangOpts().ModulesSearchAll) {
+    if (PP.getModuleLoader().lookupMissingImports(Typo->getName(),
+                                               TypoName.getLocStart())) {
+      TypoCorrection TC(TypoName.getName(), (NestedNameSpecifier *)0, 0);
+      TC.setCorrectionRange(SS, TypoName);
+      TC.setRequiresImport(true);
     }
   }
 

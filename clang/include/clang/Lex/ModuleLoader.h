@@ -113,7 +113,14 @@ public:
   /// \param TriggerLoc The location for what triggered the load.
   /// \returns Returns null if load failed.
   virtual GlobalModuleIndex *loadGlobalModuleIndex(
-                                            SourceLocation TriggerLoc) = 0;
+                                                SourceLocation TriggerLoc) = 0;
+
+  /// Check global module index for missing imports.
+  /// \param Name The symbol name to look for.
+  /// \param TriggerLoc The location for what triggered the load.
+  /// \returns Returns true if any modules with that symbol found.
+  virtual bool lookupMissingImports(StringRef Name,
+                                    SourceLocation TriggerLoc) = 0;
 
   bool HadFatalFailure;
 };

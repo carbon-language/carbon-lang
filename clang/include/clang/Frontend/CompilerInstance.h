@@ -700,7 +700,9 @@ public:
     return ModuleLoader::HadFatalFailure;
   }
 
-  GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc);
+  GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc) override;
+
+  bool lookupMissingImports(StringRef Name, SourceLocation TriggerLoc) override;
 };
 
 } // end namespace clang
