@@ -364,6 +364,11 @@ private:
   /// \brief Helper to update pointers back to the graph object during moves.
   void updateGraphPtrs();
 
+  /// \brief Helper to form a new SCC out of the top of a DFSStack-like
+  /// structure.
+  SCC *formSCCFromDFSStack(
+      SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack);
+
   /// \brief Retrieve the next node in the post-order SCC walk of the call graph.
   SCC *getNextSCCInPostOrder();
 };

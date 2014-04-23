@@ -151,6 +151,51 @@ void LazyCallGraph::updateGraphPtrs() {
   }
 }
 
+LazyCallGraph::SCC *LazyCallGraph::formSCCFromDFSStack(
+    SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack) {
+  // The tail of the stack is the new SCC. Allocate the SCC and pop the stack
+  // into it.
+  SCC *NewSCC = new (SCCBPA.Allocate()) SCC();
+
+  // Because we don't follow the strict Tarjan recursive formulation, walk
+  // from the top of the stack down, propagating the lowest link and stopping
+  // when the DFS number is the lowest link.
+  int LowestLink = DFSStack.back().first->LowLink;
+  do {
+    Node *SCCN = DFSStack.pop_back_val().first;
+    SCCMap[&SCCN->getFunction()] = NewSCC;
+    NewSCC->Nodes.push_back(SCCN);
+    LowestLink = std::min(LowestLink, SCCN->LowLink);
+    bool Inserted =
+        NewSCC->NodeSet.insert(&SCCN->getFunction());
+    (void)Inserted;
+    assert(Inserted && "Cannot have duplicates in the DFSStack!");
+  } while (!DFSStack.empty() && LowestLink <= DFSStack.back().first->DFSNumber);
+  assert(LowestLink == NewSCC->Nodes.back()->DFSNumber &&
+         "Cannot stop with a DFS number greater than the lowest link!");
+
+  // A final pass over all edges in the SCC (this remains linear as we only
+  // do this once when we build the SCC) to connect it to the parent sets of
+  // its children.
+  bool IsLeafSCC = true;
+  for (Node *SCCN : NewSCC->Nodes)
+    for (Node *SCCChildN : *SCCN) {
+      if (NewSCC->NodeSet.count(&SCCChildN->getFunction()))
+        continue;
+      SCC *ChildSCC = SCCMap.lookup(&SCCChildN->getFunction());
+      assert(ChildSCC &&
+             "Must have all child SCCs processed when building a new SCC!");
+      ChildSCC->ParentSCCs.insert(NewSCC);
+      IsLeafSCC = false;
+    }
+
+  // For the SCCs where we fine no child SCCs, add them to the leaf list.
+  if (IsLeafSCC)
+    LeafSCCs.push_back(NewSCC);
+
+  return NewSCC;
+}
+
 LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
   // When the stack is empty, there are no more SCCs to walk in this graph.
   if (DFSStack.empty()) {
@@ -190,47 +235,8 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
       N->LowLink = ChildN->LowLink;
   }
 
-  // The tail of the stack is the new SCC. Allocate the SCC and pop the stack
-  // into it.
-  SCC *NewSCC = new (SCCBPA.Allocate()) SCC();
-
-  // Because we don't follow the strict Tarjan recursive formulation, walk
-  // from the top of the stack down, propagating the lowest link and stopping
-  // when the DFS number is the lowest link.
-  int LowestLink = N->LowLink;
-  do {
-    Node *SCCN = DFSStack.pop_back_val().first;
-    SCCMap.insert(std::make_pair(&SCCN->getFunction(), NewSCC));
-    NewSCC->Nodes.push_back(SCCN);
-    LowestLink = std::min(LowestLink, SCCN->LowLink);
-    bool Inserted =
-        NewSCC->NodeSet.insert(&SCCN->getFunction());
-    (void)Inserted;
-    assert(Inserted && "Cannot have duplicates in the DFSStack!");
-  } while (!DFSStack.empty() && LowestLink <= DFSStack.back().first->DFSNumber);
-  assert(LowestLink == NewSCC->Nodes.back()->DFSNumber &&
-         "Cannot stop with a DFS number greater than the lowest link!");
-
-  // A final pass over all edges in the SCC (this remains linear as we only
-  // do this once when we build the SCC) to connect it to the parent sets of
-  // its children.
-  bool IsLeafSCC = true;
-  for (Node *SCCN : NewSCC->Nodes)
-    for (Node *SCCChildN : *SCCN) {
-      if (NewSCC->NodeSet.count(&SCCChildN->getFunction()))
-        continue;
-      SCC *ChildSCC = SCCMap.lookup(&SCCChildN->getFunction());
-      assert(ChildSCC &&
-             "Must have all child SCCs processed when building a new SCC!");
-      ChildSCC->ParentSCCs.insert(NewSCC);
-      IsLeafSCC = false;
-    }
-
-  // For the SCCs where we fine no child SCCs, add them to the leaf list.
-  if (IsLeafSCC)
-    LeafSCCs.push_back(NewSCC);
-
-  return NewSCC;
+  // Form the new SCC out of the top of the DFS stack.
+  return formSCCFromDFSStack(DFSStack);
 }
 
 char LazyCallGraphAnalysis::PassID;
