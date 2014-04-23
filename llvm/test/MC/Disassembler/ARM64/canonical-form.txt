@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple arm64-apple-darwin --disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple arm64-apple-darwin -mattr=neon --disassemble < %s | FileCheck %s
 
 0x00 0x08 0x00 0xc8
 

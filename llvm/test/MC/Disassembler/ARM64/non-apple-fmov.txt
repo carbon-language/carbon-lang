@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple arm64 -disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple arm64 -mattr=neon -disassemble < %s | FileCheck %s
 
 0x00 0x00 0xae 0x9e
 0x00 0x00 0xaf 0x9e

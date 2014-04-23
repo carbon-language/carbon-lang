@@ -21,7 +21,7 @@ class CCIfAlign<string Align, CCAction A> :
 
 def CC_ARM64_AAPCS : CallingConv<[
   CCIfType<[v2f32], CCBitConvertToType<v2i32>>,
-  CCIfType<[v2f64, v4f32, f128], CCBitConvertToType<v2i64>>,
+  CCIfType<[v2f64, v4f32], CCBitConvertToType<v2i64>>,
 
   // An SRet is passed in X8, not X0 like a normal pointer parameter.
   CCIfSRet<CCIfType<[i64], CCAssignToRegWithShadow<[X8], [W8]>>>,
@@ -51,7 +51,7 @@ def CC_ARM64_AAPCS : CallingConv<[
   CCIfType<[v1i64, v2i32, v4i16, v8i8, v1f64, v2f32],
            CCAssignToRegWithShadow<[D0, D1, D2, D3, D4, D5, D6, D7],
                                    [Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7]>>,
-  CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32, v2f64],
+  CCIfType<[f128, v2i64, v4i32, v8i16, v16i8, v4f32, v2f64],
            CCAssignToReg<[Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7]>>,
 
   // If more than will fit in registers, pass them on the stack instead.
@@ -64,7 +64,7 @@ def CC_ARM64_AAPCS : CallingConv<[
 
 def RetCC_ARM64_AAPCS : CallingConv<[
   CCIfType<[v2f32], CCBitConvertToType<v2i32>>,
-  CCIfType<[v2f64, v4f32, f128], CCBitConvertToType<v2i64>>,
+  CCIfType<[v2f64, v4f32], CCBitConvertToType<v2i64>>,
 
   CCIfType<[i32], CCAssignToRegWithShadow<[W0, W1, W2, W3, W4, W5, W6, W7],
                                           [X0, X1, X2, X3, X4, X5, X6, X7]>>,
@@ -77,7 +77,7 @@ def RetCC_ARM64_AAPCS : CallingConv<[
   CCIfType<[v1i64, v2i32, v4i16, v8i8, v1f64, v2f32],
       CCAssignToRegWithShadow<[D0, D1, D2, D3, D4, D5, D6, D7],
                               [Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7]>>,
-  CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32, v2f64],
+  CCIfType<[f128, v2i64, v4i32, v8i16, v16i8, v4f32, v2f64],
       CCAssignToReg<[Q0, Q1, Q2, Q3, Q4, Q5, Q6, Q7]>>
 ]>;
 

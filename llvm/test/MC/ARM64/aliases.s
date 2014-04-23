@@ -1,4 +1,4 @@
-; RUN: llvm-mc -triple arm64-apple-darwin -output-asm-variant=1 -show-encoding < %s | FileCheck %s
+; RUN: llvm-mc -triple arm64-apple-darwin -mattr=neon -output-asm-variant=1 -show-encoding < %s | FileCheck %s
 
 foo:
 ;-----------------------------------------------------------------------------

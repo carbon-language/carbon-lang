@@ -107,6 +107,9 @@ public:
                  const MCInstrInfo &MII)
       : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
+
+    // Initialize the set of available features.
+    setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
 
   virtual bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
@@ -3815,6 +3818,8 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
   }
 }
 
+static const char *getSubtargetFeatureName(unsigned Val);
+
 bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                              OperandVector &Operands,
                                              MCStreamer &Out,
@@ -4247,7 +4252,21 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     Out.EmitInstruction(Inst, STI);
     return false;
   }
-  case Match_MissingFeature:
+  case Match_MissingFeature: {
+    assert(ErrorInfo && "Unknown missing feature!");
+    // Special case the error message for the very common case where only
+    // a single subtarget feature is missing (neon, e.g.).
+    std::string Msg = "instruction requires:";
+    unsigned Mask = 1;
+    for (unsigned i = 0; i < (sizeof(ErrorInfo)*8-1); ++i) {
+      if (ErrorInfo & Mask) {
+        Msg += " ";
+        Msg += getSubtargetFeatureName(ErrorInfo & Mask);
+      }
+      Mask <<= 1;
+    }
+    return Error(IDLoc, Msg);
+  }
   case Match_MnemonicFail:
     return showMatchError(IDLoc, MatchResult);
   case Match_InvalidOperand: {
@@ -4494,6 +4513,7 @@ extern "C" void LLVMInitializeARM64AsmParser() {
 }
 
 #define GET_REGISTER_MATCHER
+#define GET_SUBTARGET_FEATURE_NAME
 #define GET_MATCHER_IMPLEMENTATION
 #include "ARM64GenAsmMatcher.inc"
 

@@ -1,5 +1,5 @@
-# RUN: llvm-mc -triple arm64-apple-darwin --disassemble < %s | FileCheck %s
-# RUN: llvm-mc -triple arm64-apple-darwin -output-asm-variant=1 --disassemble < %s | FileCheck %s --check-prefix=CHECK-APPLE
+# RUN: llvm-mc -triple arm64-apple-darwin -mattr=crypto --disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple arm64-apple-darwin -mattr=crypto -output-asm-variant=1 --disassemble < %s | FileCheck %s --check-prefix=CHECK-APPLE
 
   0x20 0x48 0x28 0x4e
   0x20 0x58 0x28 0x4e

@@ -1,4 +1,4 @@
-// RUN: llvm-mc < %s -triple arm64 -show-encoding | FileCheck %s
+// RUN: llvm-mc < %s -triple arm64 -mattr=neon -show-encoding | FileCheck %s
 
 fcsel d28,d31,d31,nv
 csel x0,x0,x0,nv

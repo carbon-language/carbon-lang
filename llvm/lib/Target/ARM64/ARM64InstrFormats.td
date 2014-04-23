@@ -3077,6 +3077,8 @@ class ExceptionGeneration<bits<3> op1, bits<2> ll, string asm>
   let Inst{1-0}   = ll;
 }
 
+let Predicates = [HasFPARMv8] in {
+
 //---
 // Floating point to integer conversion
 //---
@@ -3708,6 +3710,7 @@ multiclass FPMoveImmediate<string asm> {
     let Inst{22} = 1;
   }
 }
+} // end of 'let Predicates = [HasFPARMv8]'
 
 //----------------------------------------------------------------------------
 // AdvSIMD
@@ -3745,6 +3748,20 @@ def VectorIndexD : Operand<i64>, ImmLeaf<i64, [{
   let PrintMethod = "printVectorIndex";
   let MIOperandInfo = (ops i64imm);
 }
+
+def MemorySIMDNoIndexOperand : AsmOperandClass {
+  let Name = "MemorySIMDNoIndex";
+  let ParserMethod = "tryParseNoIndexMemory";
+}
+def am_simdnoindex : Operand<i64>,
+                     ComplexPattern<i64, 1, "SelectAddrModeNoIndex", []> {
+  let PrintMethod = "printAMNoIndex";
+  let ParserMatchClass = MemorySIMDNoIndexOperand;
+  let MIOperandInfo = (ops GPR64sp:$base);
+  let DecoderMethod = "DecodeGPR64spRegisterClass";
+}
+
+let Predicates = [HasNEON] in {
 
 //----------------------------------------------------------------------------
 // AdvSIMD three register vector instructions
@@ -4634,12 +4651,14 @@ multiclass SIMDDifferentThreeVectorBD<bit U, bits<4> opc, string asm,
   def v16i8  : BaseSIMDDifferentThreeVector<U, 0b001, opc,
                                             V128, V128, V128,
                                             asm#"2", ".8h", ".16b", ".16b", []>;
-  def v1i64  : BaseSIMDDifferentThreeVector<U, 0b110, opc,
-                                            V128, V64, V64,
-                                            asm, ".1q", ".1d", ".1d", []>;
-  def v2i64  : BaseSIMDDifferentThreeVector<U, 0b111, opc,
-                                            V128, V128, V128,
-                                            asm#"2", ".1q", ".2d", ".2d", []>;
+  let Predicates = [HasCrypto] in {
+    def v1i64  : BaseSIMDDifferentThreeVector<U, 0b110, opc,
+                                              V128, V64, V64,
+                                              asm, ".1q", ".1d", ".1d", []>;
+    def v2i64  : BaseSIMDDifferentThreeVector<U, 0b111, opc,
+                                              V128, V128, V128,
+                                              asm#"2", ".1q", ".2d", ".2d", []>;
+  }
 
   def : Pat<(v8i16 (IntOp (v8i8 (extract_high_v16i8 V128:$Rn)),
                           (v8i8 (extract_high_v16i8 V128:$Rm)))),
@@ -7366,17 +7385,6 @@ multiclass SIMDVectorLShiftLongBHSD<bit U, bits<5> opc, string asm,
 // ", #0" constant and handle post-indexing explicitly, so we use
 // a more specialized parse method for them. Otherwise, it's the same as
 // the general am_noindex handling.
-def MemorySIMDNoIndexOperand : AsmOperandClass {
-  let Name = "MemorySIMDNoIndex";
-  let ParserMethod = "tryParseNoIndexMemory";
-}
-def am_simdnoindex : Operand<i64>,
-                     ComplexPattern<i64, 1, "SelectAddrModeNoIndex", []> {
-  let PrintMethod = "printAMNoIndex";
-  let ParserMatchClass = MemorySIMDNoIndexOperand;
-  let MIOperandInfo = (ops GPR64sp:$base);
-  let DecoderMethod = "DecodeGPR64spRegisterClass";
-}
 
 class BaseSIMDLdSt<bit Q, bit L, bits<4> opcode, bits<2> size,
                    string asm, dag oops, dag iops, list<dag> pattern>
@@ -8191,11 +8199,13 @@ multiclass SIMDLdSt4SingleAliases<string asm> {
   defm : SIMDLdStSingleAliases<asm, "s", "i32", "Four", 16, VectorIndexS>;
   defm : SIMDLdStSingleAliases<asm, "d", "i64", "Four", 32, VectorIndexD>;
 }
+} // end of 'let Predicates = [HasNEON]'
 
 //----------------------------------------------------------------------------
 // Crypto extensions
 //----------------------------------------------------------------------------
 
+let Predicates = [HasCrypto] in {
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
 class AESBase<bits<4> opc, string asm, dag outs, dag ins, string cstr,
               list<dag> pat>
@@ -8285,6 +8295,7 @@ class SHATiedInstVV<bits<4> opc, string asm, Intrinsic OpNode>
 class SHAInstSS<bits<4> opc, string asm, Intrinsic OpNode>
   : SHA2OpInst<opc, asm, "", "", (outs FPR32:$Rd), (ins FPR32:$Rn),
                [(set (i32 FPR32:$Rd), (OpNode (i32 FPR32:$Rn)))]>;
+} // end of 'let Predicates = [HasCrypto]'
 
 // Allow the size specifier tokens to be upper case, not just lower.
 def : TokenAlias<".8B", ".8b">;

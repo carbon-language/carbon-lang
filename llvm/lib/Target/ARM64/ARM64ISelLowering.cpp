@@ -84,27 +84,32 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   // Set up the register classes.
   addRegisterClass(MVT::i32, &ARM64::GPR32allRegClass);
   addRegisterClass(MVT::i64, &ARM64::GPR64allRegClass);
-  addRegisterClass(MVT::f16, &ARM64::FPR16RegClass);
-  addRegisterClass(MVT::f32, &ARM64::FPR32RegClass);
-  addRegisterClass(MVT::f64, &ARM64::FPR64RegClass);
-  addRegisterClass(MVT::f128, &ARM64::FPR128RegClass);
-  addRegisterClass(MVT::v16i8, &ARM64::FPR8RegClass);
-  addRegisterClass(MVT::v8i16, &ARM64::FPR16RegClass);
 
-  // Someone set us up the NEON.
-  addDRTypeForNEON(MVT::v2f32);
-  addDRTypeForNEON(MVT::v8i8);
-  addDRTypeForNEON(MVT::v4i16);
-  addDRTypeForNEON(MVT::v2i32);
-  addDRTypeForNEON(MVT::v1i64);
-  addDRTypeForNEON(MVT::v1f64);
+  if (Subtarget->hasFPARMv8()) {
+    addRegisterClass(MVT::f16, &ARM64::FPR16RegClass);
+    addRegisterClass(MVT::f32, &ARM64::FPR32RegClass);
+    addRegisterClass(MVT::f64, &ARM64::FPR64RegClass);
+    addRegisterClass(MVT::f128, &ARM64::FPR128RegClass);
+  }
 
-  addQRTypeForNEON(MVT::v4f32);
-  addQRTypeForNEON(MVT::v2f64);
-  addQRTypeForNEON(MVT::v16i8);
-  addQRTypeForNEON(MVT::v8i16);
-  addQRTypeForNEON(MVT::v4i32);
-  addQRTypeForNEON(MVT::v2i64);
+  if (Subtarget->hasNEON()) {
+    addRegisterClass(MVT::v16i8, &ARM64::FPR8RegClass);
+    addRegisterClass(MVT::v8i16, &ARM64::FPR16RegClass);
+    // Someone set us up the NEON.
+    addDRTypeForNEON(MVT::v2f32);
+    addDRTypeForNEON(MVT::v8i8);
+    addDRTypeForNEON(MVT::v4i16);
+    addDRTypeForNEON(MVT::v2i32);
+    addDRTypeForNEON(MVT::v1i64);
+    addDRTypeForNEON(MVT::v1f64);
+
+    addQRTypeForNEON(MVT::v4f32);
+    addQRTypeForNEON(MVT::v2f64);
+    addQRTypeForNEON(MVT::v16i8);
+    addQRTypeForNEON(MVT::v8i16);
+    addQRTypeForNEON(MVT::v4i32);
+    addQRTypeForNEON(MVT::v2i64);
+  }
 
   // Compute derived properties from the register classes
   computeRegisterProperties();
@@ -139,42 +144,6 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   setOperationAction(ISD::FREM, MVT::f32, Expand);
   setOperationAction(ISD::FREM, MVT::f64, Expand);
   setOperationAction(ISD::FREM, MVT::f80, Expand);
-
-  // FIXME: v1f64 shouldn't be legal if we can avoid it, because it leads to
-  // silliness like this:
-  setOperationAction(ISD::FABS, MVT::v1f64, Expand);
-  setOperationAction(ISD::FADD, MVT::v1f64, Expand);
-  setOperationAction(ISD::FCEIL, MVT::v1f64, Expand);
-  setOperationAction(ISD::FCOPYSIGN, MVT::v1f64, Expand);
-  setOperationAction(ISD::FCOS, MVT::v1f64, Expand);
-  setOperationAction(ISD::FDIV, MVT::v1f64, Expand);
-  setOperationAction(ISD::FFLOOR, MVT::v1f64, Expand);
-  setOperationAction(ISD::FMA, MVT::v1f64, Expand);
-  setOperationAction(ISD::FMUL, MVT::v1f64, Expand);
-  setOperationAction(ISD::FNEARBYINT, MVT::v1f64, Expand);
-  setOperationAction(ISD::FNEG, MVT::v1f64, Expand);
-  setOperationAction(ISD::FPOW, MVT::v1f64, Expand);
-  setOperationAction(ISD::FREM, MVT::v1f64, Expand);
-  setOperationAction(ISD::FROUND, MVT::v1f64, Expand);
-  setOperationAction(ISD::FRINT, MVT::v1f64, Expand);
-  setOperationAction(ISD::FSIN, MVT::v1f64, Expand);
-  setOperationAction(ISD::FSINCOS, MVT::v1f64, Expand);
-  setOperationAction(ISD::FSQRT, MVT::v1f64, Expand);
-  setOperationAction(ISD::FSUB, MVT::v1f64, Expand);
-  setOperationAction(ISD::FTRUNC, MVT::v1f64, Expand);
-  setOperationAction(ISD::SETCC, MVT::v1f64, Expand);
-  setOperationAction(ISD::BR_CC, MVT::v1f64, Expand);
-  setOperationAction(ISD::SELECT, MVT::v1f64, Expand);
-  setOperationAction(ISD::SELECT_CC, MVT::v1f64, Expand);
-  setOperationAction(ISD::FP_EXTEND, MVT::v1f64, Expand);
-
-  setOperationAction(ISD::FP_TO_SINT, MVT::v1i64, Expand);
-  setOperationAction(ISD::FP_TO_UINT, MVT::v1i64, Expand);
-  setOperationAction(ISD::SINT_TO_FP, MVT::v1i64, Expand);
-  setOperationAction(ISD::UINT_TO_FP, MVT::v1i64, Expand);
-  setOperationAction(ISD::FP_ROUND, MVT::v1f64, Expand);
-
-  setOperationAction(ISD::MUL, MVT::v1i64, Expand);
 
   // Custom lowering hooks are needed for XOR
   // to fold it into CSINC/CSINV.
@@ -258,24 +227,10 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   setOperationAction(ISD::ROTL, MVT::i32, Expand);
   setOperationAction(ISD::ROTL, MVT::i64, Expand);
 
-  // ARM64 doesn't have a direct vector ->f32 conversion instructions for
-  // elements smaller than i32, so promote the input to i32 first.
-  setOperationAction(ISD::UINT_TO_FP, MVT::v4i8, Promote);
-  setOperationAction(ISD::SINT_TO_FP, MVT::v4i8, Promote);
-  setOperationAction(ISD::UINT_TO_FP, MVT::v4i16, Promote);
-  setOperationAction(ISD::SINT_TO_FP, MVT::v4i16, Promote);
-  // Similarly, there is no direct i32 -> f64 vector conversion instruction.
-  setOperationAction(ISD::SINT_TO_FP, MVT::v2i32, Custom);
-  setOperationAction(ISD::UINT_TO_FP, MVT::v2i32, Custom);
-  setOperationAction(ISD::SINT_TO_FP, MVT::v2i64, Custom);
-  setOperationAction(ISD::UINT_TO_FP, MVT::v2i64, Custom);
-
   // ARM64 doesn't have {U|S}MUL_LOHI.
   setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
   setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
 
-  // ARM64 doesn't have MUL.2d:
-  setOperationAction(ISD::MUL, MVT::v2i64, Expand);
 
   // Expand the undefined-at-zero variants to cttz/ctlz to their defined-at-zero
   // counterparts, which ARM64 supports directly.
@@ -320,8 +275,7 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
 
   // ARM64 has implementations of a lot of rounding-like FP operations.
-  static MVT RoundingTypes[] = { MVT::f32,   MVT::f64,  MVT::v2f32,
-                                 MVT::v4f32, MVT::v2f64 };
+  static MVT RoundingTypes[] = { MVT::f32, MVT::f64};
   for (unsigned I = 0; I < array_lengthof(RoundingTypes); ++I) {
     MVT Ty = RoundingTypes[I];
     setOperationAction(ISD::FFLOOR, Ty, Legal);
@@ -358,7 +312,6 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   setTruncStoreAction(MVT::f128, MVT::f64, Expand);
   setTruncStoreAction(MVT::f128, MVT::f32, Expand);
   setTruncStoreAction(MVT::f128, MVT::f16, Expand);
-  setTruncStoreAction(MVT::v2i32, MVT::v2i16, Expand);
   // Indexed loads and stores are supported.
   for (unsigned im = (unsigned)ISD::PRE_INC;
        im != (unsigned)ISD::LAST_INDEXED_MODE; ++im) {
@@ -376,26 +329,8 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
     setIndexedStoreAction(im, MVT::f32, Legal);
   }
 
-  // Likewise, narrowing and extending vector loads/stores aren't handled
-  // directly.
-  for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-       VT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
-
-    setOperationAction(ISD::SIGN_EXTEND_INREG, (MVT::SimpleValueType)VT,
-                       Expand);
-
-    for (unsigned InnerVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
-         InnerVT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
-      setTruncStoreAction((MVT::SimpleValueType)VT,
-                          (MVT::SimpleValueType)InnerVT, Expand);
-    setLoadExtAction(ISD::SEXTLOAD, (MVT::SimpleValueType)VT, Expand);
-    setLoadExtAction(ISD::ZEXTLOAD, (MVT::SimpleValueType)VT, Expand);
-    setLoadExtAction(ISD::EXTLOAD, (MVT::SimpleValueType)VT, Expand);
-  }
-
   // Trap.
   setOperationAction(ISD::TRAP, MVT::Other, Legal);
-  setOperationAction(ISD::ANY_EXTEND, MVT::v4i32, Legal);
 
   // We combine OR nodes for bitfield operations.
   setTargetDAGCombine(ISD::OR);
@@ -440,6 +375,89 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   RequireStrictAlign = StrictAlign;
 
   setHasExtractBitsInsn(true);
+
+  if (Subtarget->hasNEON()) {
+    // FIXME: v1f64 shouldn't be legal if we can avoid it, because it leads to
+    // silliness like this:
+    setOperationAction(ISD::FABS, MVT::v1f64, Expand);
+    setOperationAction(ISD::FADD, MVT::v1f64, Expand);
+    setOperationAction(ISD::FCEIL, MVT::v1f64, Expand);
+    setOperationAction(ISD::FCOPYSIGN, MVT::v1f64, Expand);
+    setOperationAction(ISD::FCOS, MVT::v1f64, Expand);
+    setOperationAction(ISD::FDIV, MVT::v1f64, Expand);
+    setOperationAction(ISD::FFLOOR, MVT::v1f64, Expand);
+    setOperationAction(ISD::FMA, MVT::v1f64, Expand);
+    setOperationAction(ISD::FMUL, MVT::v1f64, Expand);
+    setOperationAction(ISD::FNEARBYINT, MVT::v1f64, Expand);
+    setOperationAction(ISD::FNEG, MVT::v1f64, Expand);
+    setOperationAction(ISD::FPOW, MVT::v1f64, Expand);
+    setOperationAction(ISD::FREM, MVT::v1f64, Expand);
+    setOperationAction(ISD::FROUND, MVT::v1f64, Expand);
+    setOperationAction(ISD::FRINT, MVT::v1f64, Expand);
+    setOperationAction(ISD::FSIN, MVT::v1f64, Expand);
+    setOperationAction(ISD::FSINCOS, MVT::v1f64, Expand);
+    setOperationAction(ISD::FSQRT, MVT::v1f64, Expand);
+    setOperationAction(ISD::FSUB, MVT::v1f64, Expand);
+    setOperationAction(ISD::FTRUNC, MVT::v1f64, Expand);
+    setOperationAction(ISD::SETCC, MVT::v1f64, Expand);
+    setOperationAction(ISD::BR_CC, MVT::v1f64, Expand);
+    setOperationAction(ISD::SELECT, MVT::v1f64, Expand);
+    setOperationAction(ISD::SELECT_CC, MVT::v1f64, Expand);
+    setOperationAction(ISD::FP_EXTEND, MVT::v1f64, Expand);
+
+    setOperationAction(ISD::FP_TO_SINT, MVT::v1i64, Expand);
+    setOperationAction(ISD::FP_TO_UINT, MVT::v1i64, Expand);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v1i64, Expand);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v1i64, Expand);
+    setOperationAction(ISD::FP_ROUND, MVT::v1f64, Expand);
+
+    setOperationAction(ISD::MUL, MVT::v1i64, Expand);
+
+    // ARM64 doesn't have a direct vector ->f32 conversion instructions for
+    // elements smaller than i32, so promote the input to i32 first.
+    setOperationAction(ISD::UINT_TO_FP, MVT::v4i8, Promote);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v4i8, Promote);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v4i16, Promote);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v4i16, Promote);
+    // Similarly, there is no direct i32 -> f64 vector conversion instruction.
+    setOperationAction(ISD::SINT_TO_FP, MVT::v2i32, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v2i32, Custom);
+    setOperationAction(ISD::SINT_TO_FP, MVT::v2i64, Custom);
+    setOperationAction(ISD::UINT_TO_FP, MVT::v2i64, Custom);
+
+    // ARM64 doesn't have MUL.2d:
+    setOperationAction(ISD::MUL, MVT::v2i64, Expand);
+    setOperationAction(ISD::ANY_EXTEND, MVT::v4i32, Legal);
+    setTruncStoreAction(MVT::v2i32, MVT::v2i16, Expand);
+    // Likewise, narrowing and extending vector loads/stores aren't handled
+    // directly.
+    for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+         VT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++VT) {
+
+      setOperationAction(ISD::SIGN_EXTEND_INREG, (MVT::SimpleValueType)VT,
+                         Expand);
+
+      for (unsigned InnerVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
+           InnerVT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
+        setTruncStoreAction((MVT::SimpleValueType)VT,
+                            (MVT::SimpleValueType)InnerVT, Expand);
+      setLoadExtAction(ISD::SEXTLOAD, (MVT::SimpleValueType)VT, Expand);
+      setLoadExtAction(ISD::ZEXTLOAD, (MVT::SimpleValueType)VT, Expand);
+      setLoadExtAction(ISD::EXTLOAD, (MVT::SimpleValueType)VT, Expand);
+    }
+
+    // ARM64 has implementations of a lot of rounding-like FP operations.
+    static MVT RoundingVecTypes[] = {MVT::v2f32, MVT::v4f32, MVT::v2f64 };
+    for (unsigned I = 0; I < array_lengthof(RoundingVecTypes); ++I) {
+      MVT Ty = RoundingVecTypes[I];
+      setOperationAction(ISD::FFLOOR, Ty, Legal);
+      setOperationAction(ISD::FNEARBYINT, Ty, Legal);
+      setOperationAction(ISD::FCEIL, Ty, Legal);
+      setOperationAction(ISD::FRINT, Ty, Legal);
+      setOperationAction(ISD::FTRUNC, Ty, Legal);
+      setOperationAction(ISD::FROUND, Ty, Legal);
+    }
+  }
 }
 
 void ARM64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
@@ -1662,8 +1680,9 @@ SDValue ARM64TargetLowering::LowerFormalArguments(
                RegVT == MVT::v1f64 || RegVT == MVT::v2i32 ||
                RegVT == MVT::v4i16 || RegVT == MVT::v8i8)
         RC = &ARM64::FPR64RegClass;
-      else if (RegVT == MVT::v2i64 || RegVT == MVT::v4i32 ||
-               RegVT == MVT::v8i16 || RegVT == MVT::v16i8)
+      else if (RegVT == MVT::f128 ||RegVT == MVT::v2i64 ||
+               RegVT == MVT::v4i32||RegVT == MVT::v8i16 ||
+               RegVT == MVT::v16i8)
         RC = &ARM64::FPR128RegClass;
       else
         llvm_unreachable("RegVT not supported by FORMAL_ARGUMENTS Lowering");
@@ -1747,13 +1766,6 @@ void ARM64TargetLowering::saveVarArgRegisters(CCState &CCInfo,
   unsigned FirstVariadicGPR =
       CCInfo.getFirstUnallocated(GPRArgRegs, NumGPRArgRegs);
 
-  static const MCPhysReg FPRArgRegs[] = { ARM64::Q0, ARM64::Q1, ARM64::Q2,
-                                          ARM64::Q3, ARM64::Q4, ARM64::Q5,
-                                          ARM64::Q6, ARM64::Q7 };
-  static const unsigned NumFPRArgRegs = array_lengthof(FPRArgRegs);
-  unsigned FirstVariadicFPR =
-      CCInfo.getFirstUnallocated(FPRArgRegs, NumFPRArgRegs);
-
   unsigned GPRSaveSize = 8 * (NumGPRArgRegs - FirstVariadicGPR);
   int GPRIdx = 0;
   if (GPRSaveSize != 0) {
@@ -1772,30 +1784,38 @@ void ARM64TargetLowering::saveVarArgRegisters(CCState &CCInfo,
                         DAG.getConstant(8, getPointerTy()));
     }
   }
-
-  unsigned FPRSaveSize = 16 * (NumFPRArgRegs - FirstVariadicFPR);
-  int FPRIdx = 0;
-  if (FPRSaveSize != 0) {
-    FPRIdx = MFI->CreateStackObject(FPRSaveSize, 16, false);
-
-    SDValue FIN = DAG.getFrameIndex(FPRIdx, getPointerTy());
-
-    for (unsigned i = FirstVariadicFPR; i < NumFPRArgRegs; ++i) {
-      unsigned VReg = MF.addLiveIn(FPRArgRegs[i], &ARM64::FPR128RegClass);
-      SDValue Val = DAG.getCopyFromReg(Chain, DL, VReg, MVT::v2i64);
-      SDValue Store =
-          DAG.getStore(Val.getValue(1), DL, Val, FIN,
-                       MachinePointerInfo::getStack(i * 16), false, false, 0);
-      MemOps.push_back(Store);
-      FIN = DAG.getNode(ISD::ADD, DL, getPointerTy(), FIN,
-                        DAG.getConstant(16, getPointerTy()));
-    }
-  }
-
   FuncInfo->setVarArgsGPRIndex(GPRIdx);
   FuncInfo->setVarArgsGPRSize(GPRSaveSize);
-  FuncInfo->setVarArgsFPRIndex(FPRIdx);
-  FuncInfo->setVarArgsFPRSize(FPRSaveSize);
+
+  if (Subtarget->hasFPARMv8()) {
+    static const MCPhysReg FPRArgRegs[] = { ARM64::Q0, ARM64::Q1, ARM64::Q2,
+                                            ARM64::Q3, ARM64::Q4, ARM64::Q5,
+                                            ARM64::Q6, ARM64::Q7 };
+    static const unsigned NumFPRArgRegs = array_lengthof(FPRArgRegs);
+    unsigned FirstVariadicFPR =
+        CCInfo.getFirstUnallocated(FPRArgRegs, NumFPRArgRegs);
+
+    unsigned FPRSaveSize = 16 * (NumFPRArgRegs - FirstVariadicFPR);
+    int FPRIdx = 0;
+    if (FPRSaveSize != 0) {
+      FPRIdx = MFI->CreateStackObject(FPRSaveSize, 16, false);
+
+      SDValue FIN = DAG.getFrameIndex(FPRIdx, getPointerTy());
+
+      for (unsigned i = FirstVariadicFPR; i < NumFPRArgRegs; ++i) {
+        unsigned VReg = MF.addLiveIn(FPRArgRegs[i], &ARM64::FPR128RegClass);
+        SDValue Val = DAG.getCopyFromReg(Chain, DL, VReg, MVT::v2i64);
+        SDValue Store =
+            DAG.getStore(Val.getValue(1), DL, Val, FIN,
+                         MachinePointerInfo::getStack(i * 16), false, false, 0);
+        MemOps.push_back(Store);
+        FIN = DAG.getNode(ISD::ADD, DL, getPointerTy(), FIN,
+                          DAG.getConstant(16, getPointerTy()));
+      }
+    }
+    FuncInfo->setVarArgsFPRIndex(FPRIdx);
+    FuncInfo->setVarArgsFPRSize(FPRSaveSize);
+  }
 
   if (!MemOps.empty()) {
     Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, &MemOps[0],

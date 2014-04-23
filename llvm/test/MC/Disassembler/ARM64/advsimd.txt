@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple arm64-apple-darwin -output-asm-variant=1 --disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple arm64-apple-darwin -mattr=crypto -output-asm-variant=1 --disassemble < %s | FileCheck %s
 
 0x00 0xb8 0x20 0x0e
 0x00 0xb8 0x20 0x4e

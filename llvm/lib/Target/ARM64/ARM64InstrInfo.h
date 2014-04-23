@@ -44,6 +44,8 @@ public:
   /// always be able to get register info as well (through this method).
   const ARM64RegisterInfo &getRegisterInfo() const { return RI; }
 
+  const ARM64Subtarget &getSubTarget() const { return Subtarget; }
+
   unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
 
   bool isCoalescableExtInstr(const MachineInstr &MI, unsigned &SrcReg,

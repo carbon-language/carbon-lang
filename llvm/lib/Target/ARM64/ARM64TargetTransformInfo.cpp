@@ -87,16 +87,20 @@ public:
   /// @{
 
   unsigned getNumberOfRegisters(bool Vector) const override {
-    if (Vector)
-      return 32;
-
+    if (Vector) {
+      if (ST->hasNEON())
+        return 32;
+      return 0;
+    }
     return 31;
   }
 
   unsigned getRegisterBitWidth(bool Vector) const override {
-    if (Vector)
-      return 128;
-
+    if (Vector) {
+      if (ST->hasNEON())
+        return 128;
+      return 0;
+    }
     return 64;
   }
 

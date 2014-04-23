@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple arm64-apple-darwin --disassemble -output-asm-variant=1 < %s | FileCheck %s
+# RUN: llvm-mc -triple arm64-apple-darwin -mattr=neon --disassemble -output-asm-variant=1 < %s | FileCheck %s
 
 #-----------------------------------------------------------------------------
 # Floating-point arithmetic

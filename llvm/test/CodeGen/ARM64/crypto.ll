@@ -1,4 +1,4 @@
-; RUN: llc -march=arm64 -arm64-neon-syntax=apple -o - %s | FileCheck %s
+; RUN: llc -march=arm64 -mattr=crypto -arm64-neon-syntax=apple -o - %s | FileCheck %s
 
 declare <16 x i8> @llvm.arm64.crypto.aese(<16 x i8> %data, <16 x i8> %key)
 declare <16 x i8> @llvm.arm64.crypto.aesd(<16 x i8> %data, <16 x i8> %key)

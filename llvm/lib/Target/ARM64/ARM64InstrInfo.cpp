@@ -1102,6 +1102,8 @@ void ARM64InstrInfo::copyPhysRegTuple(MachineBasicBlock &MBB,
                                       unsigned SrcReg, bool KillSrc,
                                       unsigned Opcode,
                                       llvm::ArrayRef<unsigned> Indices) const {
+  assert(getSubTarget().hasNEON() &&
+         "Unexpected register copy without NEON");
   const TargetRegisterInfo *TRI = &getRegisterInfo();
   uint16_t DestEncoding = TRI->getEncodingValue(DestReg);
   uint16_t SrcEncoding = TRI->getEncodingValue(SrcReg);
@@ -1261,52 +1263,91 @@ void ARM64InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   if (ARM64::FPR128RegClass.contains(DestReg) &&
       ARM64::FPR128RegClass.contains(SrcReg)) {
-    BuildMI(MBB, I, DL, get(ARM64::ORRv16i8), DestReg).addReg(SrcReg).addReg(
-        SrcReg, getKillRegState(KillSrc));
+    if(getSubTarget().hasNEON()) {
+      BuildMI(MBB, I, DL, get(ARM64::ORRv16i8), DestReg).addReg(SrcReg).addReg(
+          SrcReg, getKillRegState(KillSrc));
+    } else {
+      BuildMI(MBB, I, DL, get(ARM64::STRQpre))
+        .addReg(SrcReg, getKillRegState(KillSrc))
+        .addReg(ARM64::SP)
+        .addImm(-16);
+      BuildMI(MBB, I, DL, get(ARM64::LDRQpre))
+        .addReg(DestReg, RegState::Define)
+        .addReg(ARM64::SP)
+        .addImm(16);
+    }
     return;
   }
 
   if (ARM64::FPR64RegClass.contains(DestReg) &&
       ARM64::FPR64RegClass.contains(SrcReg)) {
-    DestReg =
-        RI.getMatchingSuperReg(DestReg, ARM64::dsub, &ARM64::FPR128RegClass);
-    SrcReg =
-        RI.getMatchingSuperReg(SrcReg, ARM64::dsub, &ARM64::FPR128RegClass);
-    BuildMI(MBB, I, DL, get(ARM64::ORRv16i8), DestReg).addReg(SrcReg).addReg(
-        SrcReg, getKillRegState(KillSrc));
+    if(getSubTarget().hasNEON()) {
+      DestReg =
+          RI.getMatchingSuperReg(DestReg, ARM64::dsub, &ARM64::FPR128RegClass);
+      SrcReg =
+          RI.getMatchingSuperReg(SrcReg, ARM64::dsub, &ARM64::FPR128RegClass);
+      BuildMI(MBB, I, DL, get(ARM64::ORRv16i8), DestReg).addReg(SrcReg).addReg(
+          SrcReg, getKillRegState(KillSrc));
+    } else {
+      BuildMI(MBB, I, DL, get(ARM64::FMOVDr), DestReg)
+          .addReg(SrcReg, getKillRegState(KillSrc));
+    }
     return;
   }
 
   if (ARM64::FPR32RegClass.contains(DestReg) &&
       ARM64::FPR32RegClass.contains(SrcReg)) {
-    DestReg =
-        RI.getMatchingSuperReg(DestReg, ARM64::ssub, &ARM64::FPR128RegClass);
-    SrcReg =
-        RI.getMatchingSuperReg(SrcReg, ARM64::ssub, &ARM64::FPR128RegClass);
-    BuildMI(MBB, I, DL, get(ARM64::ORRv16i8), DestReg).addReg(SrcReg).addReg(
-        SrcReg, getKillRegState(KillSrc));
+    if(getSubTarget().hasNEON()) {
+      DestReg =
+          RI.getMatchingSuperReg(DestReg, ARM64::ssub, &ARM64::FPR128RegClass);
+      SrcReg =
+          RI.getMatchingSuperReg(SrcReg, ARM64::ssub, &ARM64::FPR128RegClass);
+      BuildMI(MBB, I, DL, get(ARM64::ORRv16i8), DestReg).addReg(SrcReg).addReg(
+          SrcReg, getKillRegState(KillSrc));
+    } else {
+      BuildMI(MBB, I, DL, get(ARM64::FMOVSr), DestReg)
+          .addReg(SrcReg, getKillRegState(KillSrc));
+    }
     return;
   }
 
   if (ARM64::FPR16RegClass.contains(DestReg) &&
       ARM64::FPR16RegClass.contains(SrcReg)) {
-    DestReg =
-        RI.getMatchingSuperReg(DestReg, ARM64::hsub, &ARM64::FPR128RegClass);
-    SrcReg =
-        RI.getMatchingSuperReg(SrcReg, ARM64::hsub, &ARM64::FPR128RegClass);
-    BuildMI(MBB, I, DL, get(ARM64::ORRv16i8), DestReg).addReg(SrcReg).addReg(
-        SrcReg, getKillRegState(KillSrc));
+    if(getSubTarget().hasNEON()) {
+      DestReg =
+          RI.getMatchingSuperReg(DestReg, ARM64::hsub, &ARM64::FPR128RegClass);
+      SrcReg =
+          RI.getMatchingSuperReg(SrcReg, ARM64::hsub, &ARM64::FPR128RegClass);
+      BuildMI(MBB, I, DL, get(ARM64::ORRv16i8), DestReg).addReg(SrcReg).addReg(
+          SrcReg, getKillRegState(KillSrc));
+    } else {
+      DestReg =
+          RI.getMatchingSuperReg(DestReg, ARM64::hsub, &ARM64::FPR32RegClass);
+      SrcReg =
+          RI.getMatchingSuperReg(SrcReg, ARM64::hsub, &ARM64::FPR32RegClass);
+      BuildMI(MBB, I, DL, get(ARM64::FMOVSr), DestReg)
+          .addReg(SrcReg, getKillRegState(KillSrc));
+    }
     return;
   }
 
   if (ARM64::FPR8RegClass.contains(DestReg) &&
       ARM64::FPR8RegClass.contains(SrcReg)) {
-    DestReg =
-        RI.getMatchingSuperReg(DestReg, ARM64::bsub, &ARM64::FPR128RegClass);
-    SrcReg =
-        RI.getMatchingSuperReg(SrcReg, ARM64::bsub, &ARM64::FPR128RegClass);
-    BuildMI(MBB, I, DL, get(ARM64::ORRv16i8), DestReg).addReg(SrcReg).addReg(
-        SrcReg, getKillRegState(KillSrc));
+    if(getSubTarget().hasNEON()) {
+      DestReg =
+          RI.getMatchingSuperReg(DestReg, ARM64::bsub, &ARM64::FPR128RegClass);
+      SrcReg =
+          RI.getMatchingSuperReg(SrcReg, ARM64::bsub, &ARM64::FPR128RegClass);
+      BuildMI(MBB, I, DL, get(ARM64::ORRv16i8), DestReg).addReg(SrcReg).addReg(
+          SrcReg, getKillRegState(KillSrc));
+    } else {
+      DestReg =
+          RI.getMatchingSuperReg(DestReg, ARM64::bsub, &ARM64::FPR32RegClass);
+      SrcReg =
+          RI.getMatchingSuperReg(SrcReg, ARM64::bsub, &ARM64::FPR32RegClass);
+      BuildMI(MBB, I, DL, get(ARM64::FMOVSr), DestReg)
+          .addReg(SrcReg, getKillRegState(KillSrc));
+    }
     return;
   }
 
@@ -1389,26 +1430,43 @@ void ARM64InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   case 16:
     if (ARM64::FPR128RegClass.hasSubClassEq(RC))
       Opc = ARM64::STRQui;
-    else if (ARM64::DDRegClass.hasSubClassEq(RC))
+    else if (ARM64::DDRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register store without NEON");
       Opc = ARM64::ST1Twov1d, Offset = false;
+    }
     break;
   case 24:
-    if (ARM64::DDDRegClass.hasSubClassEq(RC))
+    if (ARM64::DDDRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register store without NEON");
       Opc = ARM64::ST1Threev1d, Offset = false;
+    }
     break;
   case 32:
-    if (ARM64::DDDDRegClass.hasSubClassEq(RC))
+    if (ARM64::DDDDRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register store without NEON");
       Opc = ARM64::ST1Fourv1d, Offset = false;
-    else if (ARM64::QQRegClass.hasSubClassEq(RC))
+    } else if (ARM64::QQRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register store without NEON");
       Opc = ARM64::ST1Twov2d, Offset = false;
+    }
     break;
   case 48:
-    if (ARM64::QQQRegClass.hasSubClassEq(RC))
+    if (ARM64::QQQRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register store without NEON");
       Opc = ARM64::ST1Threev2d, Offset = false;
+    }
     break;
   case 64:
-    if (ARM64::QQQQRegClass.hasSubClassEq(RC))
+    if (ARM64::QQQQRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register store without NEON");
       Opc = ARM64::ST1Fourv2d, Offset = false;
+    }
     break;
   }
   assert(Opc && "Unknown register class");
@@ -1471,26 +1529,43 @@ void ARM64InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   case 16:
     if (ARM64::FPR128RegClass.hasSubClassEq(RC))
       Opc = ARM64::LDRQui;
-    else if (ARM64::DDRegClass.hasSubClassEq(RC))
+    else if (ARM64::DDRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register load without NEON");
       Opc = ARM64::LD1Twov1d, Offset = false;
+    }
     break;
   case 24:
-    if (ARM64::DDDRegClass.hasSubClassEq(RC))
+    if (ARM64::DDDRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register load without NEON");
       Opc = ARM64::LD1Threev1d, Offset = false;
+    }
     break;
   case 32:
-    if (ARM64::DDDDRegClass.hasSubClassEq(RC))
+    if (ARM64::DDDDRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register load without NEON");
       Opc = ARM64::LD1Fourv1d, Offset = false;
-    else if (ARM64::QQRegClass.hasSubClassEq(RC))
+    } else if (ARM64::QQRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register load without NEON");
       Opc = ARM64::LD1Twov2d, Offset = false;
+    }
     break;
   case 48:
-    if (ARM64::QQQRegClass.hasSubClassEq(RC))
+    if (ARM64::QQQRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register load without NEON");
       Opc = ARM64::LD1Threev2d, Offset = false;
+    }
     break;
   case 64:
-    if (ARM64::QQQQRegClass.hasSubClassEq(RC))
+    if (ARM64::QQQQRegClass.hasSubClassEq(RC)) {
+      assert(getSubTarget().hasNEON() &&
+             "Unexpected register load without NEON");
       Opc = ARM64::LD1Fourv2d, Offset = false;
+    }
     break;
   }
   assert(Opc && "Unknown register class");

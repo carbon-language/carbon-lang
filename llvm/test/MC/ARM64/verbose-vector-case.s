@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple arm64 -show-encoding < %s | FileCheck %s
+// RUN: llvm-mc -triple arm64 -mattr=crypto -show-encoding < %s | FileCheck %s
 
 pmull v8.8h, v8.8b, v8.8b
 pmull2 v8.8h, v8.16b, v8.16b
