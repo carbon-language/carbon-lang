@@ -1,5 +1,9 @@
 ; Check that this test makes INDVAR and related stuff dead.
-; RUN: opt < %s -loop-reduce -S | grep phi | count 2
+; RUN: opt < %s -loop-reduce -S | FileCheck %s
+
+; CHECK: phi
+; CHECK: phi
+; CHECK-NOT: phi
 
 declare i1 @pred()
 
