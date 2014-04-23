@@ -1273,10 +1273,14 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
   llvm::ConstantInt *Zero = llvm::ConstantInt::get(GuardTy, 0);
 
   // Get the guard variable for this function if we have one already.
-  GuardInfo &GI = GuardVariableMap[D.getDeclContext()];
+  GuardInfo EmptyGuardInfo;
+  GuardInfo *GI = &EmptyGuardInfo;
+  if (isa<FunctionDecl>(D.getDeclContext())) {
+    GI = &GuardVariableMap[D.getDeclContext()];
+  }
 
   unsigned BitIndex;
-  if (D.isExternallyVisible()) {
+  if (D.isStaticLocal() && D.isExternallyVisible()) {
     // Externally visible variables have to be numbered in Sema to properly
     // handle unreachable VarDecls.
     BitIndex = getContext().getStaticLocalNumber(&D);
@@ -1284,18 +1288,18 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
     BitIndex--;
   } else {
     // Non-externally visible variables are numbered here in CodeGen.
-    BitIndex = GI.BitIndex++;
+    BitIndex = GI->BitIndex++;
   }
 
   if (BitIndex >= 32) {
     if (D.isExternallyVisible())
       ErrorUnsupportedABI(CGF, "more than 32 guarded initializations");
     BitIndex %= 32;
-    GI.Guard = 0;
+    GI->Guard = 0;
   }
 
   // Lazily create the i32 bitfield for this function.
-  if (!GI.Guard) {
+  if (!GI->Guard) {
     // Mangle the name for the guard.
     SmallString<256> GuardName;
     {
@@ -1306,11 +1310,12 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
 
     // Create the guard variable with a zero-initializer.  Just absorb linkage
     // and visibility from the guarded variable.
-    GI.Guard = new llvm::GlobalVariable(CGM.getModule(), GuardTy, false,
-                                     GV->getLinkage(), Zero, GuardName.str());
-    GI.Guard->setVisibility(GV->getVisibility());
+    GI->Guard =
+        new llvm::GlobalVariable(CGM.getModule(), GuardTy, false,
+                                 GV->getLinkage(), Zero, GuardName.str());
+    GI->Guard->setVisibility(GV->getVisibility());
   } else {
-    assert(GI.Guard->getLinkage() == GV->getLinkage() &&
+    assert(GI->Guard->getLinkage() == GV->getLinkage() &&
            "static local from the same function had different linkage");
   }
 
@@ -1322,7 +1327,7 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
 
   // Test our bit from the guard variable.
   llvm::ConstantInt *Bit = llvm::ConstantInt::get(GuardTy, 1U << BitIndex);
-  llvm::LoadInst *LI = Builder.CreateLoad(GI.Guard);
+  llvm::LoadInst *LI = Builder.CreateLoad(GI->Guard);
   llvm::Value *IsInitialized =
       Builder.CreateICmpNE(Builder.CreateAnd(LI, Bit), Zero);
   llvm::BasicBlock *InitBlock = CGF.createBasicBlock("init");
@@ -1332,7 +1337,7 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
   // Set our bit in the guard variable and emit the initializer and add a global
   // destructor if appropriate.
   CGF.EmitBlock(InitBlock);
-  Builder.CreateStore(Builder.CreateOr(LI, Bit), GI.Guard);
+  Builder.CreateStore(Builder.CreateOr(LI, Bit), GI->Guard);
   CGF.EmitCXXGlobalVarDeclInit(D, GV, PerformInit);
   Builder.CreateBr(EndBlock);
 
