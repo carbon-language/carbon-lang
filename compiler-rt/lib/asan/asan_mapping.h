@@ -67,7 +67,8 @@
 // || `[0x00000000, 0x0aaa7fff]` || LowMem     ||
 
 static const u64 kDefaultShadowScale = 3;
-static const u64 kDefaultShadowOffset32 = 1ULL << 29;
+static const u64 kDefaultShadowOffset32 = 1ULL << 29;  // 0x20000000
+static const u64 kIosShadowOffset32 = 1ULL << 30;  // 0x40000000
 static const u64 kDefaultShadowOffset64 = 1ULL << 44;
 static const u64 kDefaultShort64bitShadowOffset = 0x7FFF8000;  // < 2G.
 static const u64 kAArch64_ShadowOffset64 = 1ULL << 36;
@@ -81,7 +82,11 @@ static const u64 kMIPS32_ShadowOffset32 = 0x0aaa8000;
 #  if defined(__mips__)
 #    define SHADOW_OFFSET kMIPS32_ShadowOffset32
 #  else
-#    define SHADOW_OFFSET kDefaultShadowOffset32
+#    if SANITIZER_IOS
+#      define SHADOW_OFFSET kIosShadowOffset32
+#    else
+#      define SHADOW_OFFSET kDefaultShadowOffset32
+#    endif
 #  endif
 # else
 #  if defined(__aarch64__)
