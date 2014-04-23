@@ -275,9 +275,6 @@ public:
   ///
   void addGlobalName(StringRef Name, DIE *Die, DIScope Context);
 
-  /// addAccelName - Add a new name to the name accelerator table.
-  void addAccelName(StringRef Name, const DIE *Die);
-
   /// addAccelObjC - Add a new name to the ObjC accelerator table.
   void addAccelObjC(StringRef Name, const DIE *Die);
 

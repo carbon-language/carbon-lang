@@ -19,6 +19,7 @@
 #include "DIE.h"
 #include "DebugLocEntry.h"
 #include "DebugLocList.h"
+#include "DwarfAccelTable.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -322,6 +323,8 @@ class DwarfDebug : public AsmPrinterHandler {
   bool SingleCU;
 
   AddressPool AddrPool;
+
+  DwarfAccelTable AccelNames;
 
   MCDwarfDwoLineTable *getDwoLineTable(const DwarfCompileUnit &);
 
@@ -634,7 +637,11 @@ public:
   /// or another context nested inside a subprogram.
   bool isSubprogramContext(const MDNode *Context);
 
+  void addSubprogramNames(DwarfUnit &TheU, DISubprogram SP, DIE *Die);
+
   AddressPool &getAddressPool() { return AddrPool; }
+
+  void addAccelName(StringRef Name, const DIE *Die);
 };
 } // End of namespace llvm
 

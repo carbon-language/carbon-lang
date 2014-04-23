@@ -1065,18 +1065,6 @@ void DwarfUnit::addType(DIE *Entity, DIType Ty, dwarf::Attribute Attribute) {
   addDIEEntry(Entity, Attribute, Entry);
 }
 
-// Accelerator table mutators - add each name along with its companion
-// DIE to the proper table while ensuring that the name that we're going
-// to reference is in the string table. We do this since the names we
-// add may not only be identical to the names in the DIE.
-void DwarfUnit::addAccelName(StringRef Name, const DIE *Die) {
-  if (!DD->useDwarfAccelTables())
-    return;
-  DU->getStringPoolEntry(Name);
-  std::vector<const DIE *> &DIEs = AccelNames[Name];
-  DIEs.push_back(Die);
-}
-
 void DwarfUnit::addAccelObjC(StringRef Name, const DIE *Die) {
   if (!DD->useDwarfAccelTables())
     return;
@@ -1727,12 +1715,12 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
 
   if (addToAccelTable) {
     DIE *AddrDIE = VariableSpecDIE ? VariableSpecDIE : VariableDIE;
-    addAccelName(GV.getName(), AddrDIE);
+    DD->addAccelName(GV.getName(), AddrDIE);
 
     // If the linkage name is different than the name, go ahead and output
     // that as well into the name table.
     if (GV.getLinkageName() != "" && GV.getName() != GV.getLinkageName())
-      addAccelName(GV.getLinkageName(), AddrDIE);
+      DD->addAccelName(GV.getLinkageName(), AddrDIE);
   }
 
   if (!GV.isLocalToUnit())

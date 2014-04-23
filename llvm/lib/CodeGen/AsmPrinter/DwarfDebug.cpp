@@ -15,7 +15,6 @@
 #include "DwarfDebug.h"
 #include "DIE.h"
 #include "DIEHash.h"
-#include "DwarfAccelTable.h"
 #include "DwarfUnit.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
@@ -169,7 +168,9 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     : Asm(A), MMI(Asm->MMI), FirstCU(0), PrevLabel(NULL), GlobalRangeCount(0),
       InfoHolder(A, "info_string", DIEValueAllocator),
       UsedNonDefaultText(false),
-      SkeletonHolder(A, "skel_string", DIEValueAllocator) {
+      SkeletonHolder(A, "skel_string", DIEValueAllocator),
+      AccelNames(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
+                                       dwarf::DW_FORM_data4)) {
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = DwarfStrSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = DwarfLineSectionSym = 0;
@@ -260,15 +261,15 @@ static bool SectionSort(const MCSection *A, const MCSection *B) {
 // TODO: Determine whether or not we should add names for programs
 // that do not have a DW_AT_name or DW_AT_linkage_name field - this
 // is only slightly different than the lookup of non-standard ObjC names.
-static void addSubprogramNames(DwarfUnit &TheU, DISubprogram SP, DIE *Die) {
+void DwarfDebug::addSubprogramNames(DwarfUnit &TheU, DISubprogram SP, DIE *Die) {
   if (!SP.isDefinition())
     return;
-  TheU.addAccelName(SP.getName(), Die);
+  addAccelName(SP.getName(), Die);
 
   // If the linkage name is different than the name, go ahead and output
   // that as well into the name table.
   if (SP.getLinkageName() != "" && SP.getName() != SP.getLinkageName())
-    TheU.addAccelName(SP.getLinkageName(), Die);
+    addAccelName(SP.getLinkageName(), Die);
 
   // If this is an Objective-C selector name add it to the ObjC accelerator
   // too.
@@ -279,7 +280,7 @@ static void addSubprogramNames(DwarfUnit &TheU, DISubprogram SP, DIE *Die) {
     if (Category != "")
       TheU.addAccelObjC(Category, Die);
     // Also add the base method name to the name table.
-    TheU.addAccelName(getObjCMethodName(SP.getName()), Die);
+    addAccelName(getObjCMethodName(SP.getName()), Die);
   }
 }
 
@@ -2565,4 +2566,15 @@ void DwarfDebug::attachLowHighPC(DwarfCompileUnit &Unit, DIE *D,
     Unit.addLabelAddress(D, dwarf::DW_AT_high_pc, End);
   else
     Unit.addLabelDelta(D, dwarf::DW_AT_high_pc, End, Begin);
+}
+
+// Accelerator table mutators - add each name along with its companion
+// DIE to the proper table while ensuring that the name that we're going
+// to reference is in the string table. We do this since the names we
+// add may not only be identical to the names in the DIE.
+void DwarfDebug::addAccelName(StringRef Name, const DIE *Die) {
+  if (!useDwarfAccelTables())
+    return;
+  InfoHolder.getStringPoolEntry(Name);
+  AccelNames.AddName(Name, Die);
 }
