@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Allocator.h"
+#include "AddressPool.h"
 
 #include <vector>
 #include <string>
@@ -51,17 +52,7 @@ class DwarfFile {
   unsigned NextStringPoolNumber;
   std::string StringPref;
 
-  struct AddressPoolEntry {
-    unsigned Number;
-    bool TLS;
-    AddressPoolEntry(unsigned Number, bool TLS) : Number(Number), TLS(TLS) {}
-  };
-  // Collection of addresses for this unit and assorted labels.
-  // A Symbol->unsigned mapping of addresses used by indirect
-  // references.
-  typedef DenseMap<const MCSymbol *, AddressPoolEntry> AddrPool;
-  AddrPool AddressPool;
-
+  AddressPool AddrPool;
 public:
   DwarfFile(AsmPrinter *AP, const char *Pref, BumpPtrAllocator &DA);
 
@@ -93,9 +84,6 @@ public:
                    const MCSection *OffsetSection = nullptr,
                    const MCSymbol *StrSecSym = nullptr);
 
-  /// \brief Emit all of the addresses to the section given.
-  void emitAddresses(const MCSection *AddrSection);
-
   /// \brief Returns the entry into the start of the pool.
   MCSymbol *getStringPoolSym();
 
@@ -110,12 +98,7 @@ public:
   /// \brief Returns the string pool.
   StrPool *getStringPool() { return &StringPool; }
 
-  /// \brief Returns the index into the address pool with the given
-  /// label/symbol.
-  unsigned getAddrPoolIndex(const MCSymbol *Sym, bool TLS = false);
-
-  /// \brief Returns the address pool.
-  AddrPool *getAddrPool() { return &AddressPool; }
+  AddressPool &getAddressPool() { return AddrPool; }
 };
 }
 #endif

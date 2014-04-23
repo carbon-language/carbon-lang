@@ -1,4 +1,5 @@
 add_llvm_library(LLVMAsmPrinter
+  AddressPool.cpp
   ARMException.cpp
   AsmPrinter.cpp
   AsmPrinterDwarf.cpp

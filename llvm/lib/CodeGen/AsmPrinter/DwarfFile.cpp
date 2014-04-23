@@ -48,12 +48,6 @@ unsigned DwarfFile::getStringPoolIndex(StringRef Str) {
   return Entry.second;
 }
 
-unsigned DwarfFile::getAddrPoolIndex(const MCSymbol *Sym, bool TLS) {
-  std::pair<AddrPool::iterator, bool> P = AddressPool.insert(
-      std::make_pair(Sym, AddressPoolEntry(AddressPool.size(), TLS)));
-  return P.first->second.Number;
-}
-
 // Define a unique number for the abbreviation.
 //
 void DwarfFile::assignAbbrevNumber(DIEAbbrev &Abbrev) {
@@ -217,27 +211,5 @@ void DwarfFile::emitStrings(const MCSection *StrSection,
       offset += Entry.second->getKeyLength() + 1;
     }
   }
-}
-
-// Emit addresses into the section given.
-void DwarfFile::emitAddresses(const MCSection *AddrSection) {
-
-  if (AddressPool.empty())
-    return;
-
-  // Start the dwarf addr section.
-  Asm->OutStreamer.SwitchSection(AddrSection);
-
-  // Order the address pool entries by ID
-  SmallVector<const MCExpr *, 64> Entries(AddressPool.size());
-
-  for (const auto &I : AddressPool)
-    Entries[I.second.Number] =
-        I.second.TLS
-            ? Asm->getObjFileLowering().getDebugThreadLocalSymbol(I.first)
-            : MCSymbolRefExpr::Create(I.first, Asm->OutContext);
-
-  for (const MCExpr *Entry : Entries)
-    Asm->OutStreamer.EmitValue(Entry, Asm->getDataLayout().getPointerSize());
 }
 }

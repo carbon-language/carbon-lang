@@ -888,7 +888,7 @@ void DwarfDebug::finalizeModuleInfo() {
 
         // We don't keep track of which addresses are used in which CU so this
         // is a bit pessimistic under LTO.
-        if (!InfoHolder.getAddrPool()->empty())
+        if (!InfoHolder.getAddressPool().isEmpty())
           addSectionLabel(*Asm, *SkCU, SkCU->getUnitDie(),
                           dwarf::DW_AT_GNU_addr_base, DwarfAddrSectionSym,
                           DwarfAddrSectionSym);
@@ -1019,7 +1019,8 @@ void DwarfDebug::endModule() {
     emitDebugAbbrevDWO();
     emitDebugLineDWO();
     // Emit DWO addresses.
-    InfoHolder.emitAddresses(Asm->getObjFileLowering().getDwarfAddrSection());
+    InfoHolder.getAddressPool().emit(
+        *Asm, Asm->getObjFileLowering().getDwarfAddrSection());
     emitDebugLocDWO();
   } else
     // Emit info into a debug loc section.
@@ -2204,7 +2205,7 @@ void DwarfDebug::emitDebugLocDWO() {
       // address we know we've emitted elsewhere (the start of the function?
       // The start of the CU or CU subrange that encloses this range?)
       Asm->EmitInt8(dwarf::DW_LLE_start_length_entry);
-      unsigned idx = InfoHolder.getAddrPoolIndex(Entry.getBeginSym());
+      unsigned idx = InfoHolder.getAddressPool().getIndex(Entry.getBeginSym());
       Asm->EmitULEB128(idx);
       Asm->EmitLabelDifference(Entry.getEndSym(), Entry.getBeginSym(), 4);
 
