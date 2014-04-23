@@ -39,7 +39,6 @@ class TestObjectFile(TestBase):
             assert isinstance(symbol.name, str)
             assert isinstance(symbol.address, long)
             assert isinstance(symbol.size, long)
-            assert isinstance(symbol.file_offset, long)
 
         self.assertGreater(count, 0)
 
