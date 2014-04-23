@@ -1322,7 +1322,8 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
   // lifetime or initialization issues.
   static const char *const AArch64LibDirs[] = { "/lib" };
   static const char *const AArch64Triples[] = { "aarch64-none-linux-gnu",
-                                                "aarch64-linux-gnu" };
+                                                "aarch64-linux-gnu",
+                                                "aarch64-linux-android" };
   static const char *const AArch64beLibDirs[] = { "/lib" };
   static const char *const AArch64beTriples[] = { "aarch64_be-none-linux-gnu",
                                                   "aarch64_be-linux-gnu" };
