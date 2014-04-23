@@ -23,7 +23,7 @@ using namespace llvm;
 static void findCallees(
     SmallVectorImpl<Constant *> &Worklist, SmallPtrSetImpl<Constant *> &Visited,
     SmallVectorImpl<PointerUnion<Function *, LazyCallGraph::Node *>> &Callees,
-    SmallPtrSetImpl<Function *> &CalleeSet) {
+    DenseMap<Function *, size_t> &CalleeIndexMap) {
   while (!Worklist.empty()) {
     Constant *C = Worklist.pop_back_val();
 
@@ -38,7 +38,8 @@ static void findCallees(
       // alias. Then a test of the address of the weak function against the new
       // strong definition's address would be an effective way to determine the
       // safety of optimizing a direct call edge.
-      if (!F->isDeclaration() && CalleeSet.insert(F)) {
+      if (!F->isDeclaration() &&
+          CalleeIndexMap.insert(std::make_pair(F, Callees.size())).second) {
         DEBUG(dbgs() << "    Added callable function: " << F->getName()
                      << "\n");
         Callees.push_back(F);
@@ -71,7 +72,7 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F)
   // We've collected all the constant (and thus potentially function or
   // function containing) operands to all of the instructions in the function.
   // Process them (recursively) collecting every function found.
-  findCallees(Worklist, Visited, Callees, CalleeSet);
+  findCallees(Worklist, Visited, Callees, CalleeIndexMap);
 }
 
 LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
@@ -79,7 +80,7 @@ LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
                << "\n");
   for (Function &F : M)
     if (!F.isDeclaration() && !F.hasLocalLinkage())
-      if (EntryNodeSet.insert(&F)) {
+      if (EntryIndexMap.insert(std::make_pair(&F, EntryNodes.size())).second) {
         DEBUG(dbgs() << "  Adding '" << F.getName()
                      << "' to entry set of the graph.\n");
         EntryNodes.push_back(&F);
@@ -95,7 +96,7 @@ LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
 
   DEBUG(dbgs() << "  Adding functions referenced by global initializers to the "
                   "entry set.\n");
-  findCallees(Worklist, Visited, EntryNodes, EntryNodeSet);
+  findCallees(Worklist, Visited, EntryNodes, EntryIndexMap);
 
   for (auto &Entry : EntryNodes)
     if (Function *F = Entry.dyn_cast<Function *>())
@@ -107,7 +108,7 @@ LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
 LazyCallGraph::LazyCallGraph(LazyCallGraph &&G)
     : BPA(std::move(G.BPA)), NodeMap(std::move(G.NodeMap)),
       EntryNodes(std::move(G.EntryNodes)),
-      EntryNodeSet(std::move(G.EntryNodeSet)), SCCBPA(std::move(G.SCCBPA)),
+      EntryIndexMap(std::move(G.EntryIndexMap)), SCCBPA(std::move(G.SCCBPA)),
       SCCMap(std::move(G.SCCMap)), LeafSCCs(std::move(G.LeafSCCs)),
       DFSStack(std::move(G.DFSStack)),
       SCCEntryNodes(std::move(G.SCCEntryNodes)),
@@ -119,7 +120,7 @@ LazyCallGraph &LazyCallGraph::operator=(LazyCallGraph &&G) {
   BPA = std::move(G.BPA);
   NodeMap = std::move(G.NodeMap);
   EntryNodes = std::move(G.EntryNodes);
-  EntryNodeSet = std::move(G.EntryNodeSet);
+  EntryIndexMap = std::move(G.EntryIndexMap);
   SCCBPA = std::move(G.SCCBPA);
   SCCMap = std::move(G.SCCMap);
   LeafSCCs = std::move(G.LeafSCCs);

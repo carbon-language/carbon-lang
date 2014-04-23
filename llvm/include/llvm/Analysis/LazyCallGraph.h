@@ -187,10 +187,10 @@ public:
     int LowLink;
 
     mutable NodeVectorT Callees;
-    SmallPtrSet<Function *, 4> CalleeSet;
+    DenseMap<Function *, size_t> CalleeIndexMap;
 
     /// \brief Basic constructor implements the scanning of F into Callees and
-    /// CalleeSet.
+    /// CalleeIndexMap.
     Node(LazyCallGraph &G, Function &F);
 
   public:
@@ -333,8 +333,9 @@ private:
   /// escape at the module scope.
   NodeVectorT EntryNodes;
 
-  /// \brief Set of the entry nodes to the graph.
-  SmallPtrSet<Function *, 4> EntryNodeSet;
+  /// \brief Map of the entry nodes in the graph to their indices in
+  /// \c EntryNodes.
+  DenseMap<Function *, size_t> EntryIndexMap;
 
   /// \brief Allocator that holds all the call graph SCCs.
   SpecificBumpPtrAllocator<SCC> SCCBPA;
