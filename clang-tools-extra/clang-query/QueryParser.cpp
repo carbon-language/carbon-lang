@@ -267,7 +267,7 @@ QueryRef QueryParser::doParse() {
     if (Name.empty())
       return new InvalidQuery("expected variable name");
 
-    return endQuery(new LetQuery(Name, {}));
+    return endQuery(new LetQuery(Name, VariantValue()));
   }
 
   case PQK_Invalid:
