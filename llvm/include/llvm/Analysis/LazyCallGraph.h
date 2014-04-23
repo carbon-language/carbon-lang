@@ -115,8 +115,6 @@ public:
   class iterator : public std::iterator<std::bidirectional_iterator_tag, Node> {
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
-    typedef std::iterator<std::bidirectional_iterator_tag, Node *, ptrdiff_t,
-                          Node *, Node *> BaseT;
 
     /// \brief Nonce type to select the constructor for the end iterator.
     struct IsAtEndT {};
@@ -254,8 +252,6 @@ public:
                              SCC *> {
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
-    typedef std::iterator<std::forward_iterator_tag, SCC *, ptrdiff_t,
-                          SCC *, SCC *> BaseT;
 
     /// \brief Nonce type to select the constructor for the end iterator.
     struct IsAtEndT {};
