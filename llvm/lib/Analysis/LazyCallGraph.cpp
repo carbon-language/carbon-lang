@@ -203,6 +203,8 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
     if (SCCEntryNodes.empty())
       return nullptr;
 
+    // Reset the DFS numbering.
+    NextDFSNumber = 1;
     Node *N = get(*SCCEntryNodes.pop_back_val());
     DFSStack.push_back(std::make_pair(N, N->begin()));
   }

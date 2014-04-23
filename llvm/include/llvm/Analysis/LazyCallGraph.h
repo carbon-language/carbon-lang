@@ -134,8 +134,8 @@ public:
         : G(&G), NI(Nodes.end()) {}
 
   public:
-    bool operator==(const iterator &Arg) { return NI == Arg.NI; }
-    bool operator!=(const iterator &Arg) { return !operator==(Arg); }
+    bool operator==(const iterator &Arg) const { return NI == Arg.NI; }
+    bool operator!=(const iterator &Arg) const { return !operator==(Arg); }
 
     reference operator*() const {
       if (NI->is<Node *>())
@@ -260,10 +260,10 @@ public:
         : G(&G), C(nullptr) {}
 
   public:
-    bool operator==(const postorder_scc_iterator &Arg) {
+    bool operator==(const postorder_scc_iterator &Arg) const {
       return G == Arg.G && C == Arg.C;
     }
-    bool operator!=(const postorder_scc_iterator &Arg) {
+    bool operator!=(const postorder_scc_iterator &Arg) const {
       return !operator==(Arg);
     }
 
