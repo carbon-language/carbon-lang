@@ -1164,7 +1164,7 @@ bool AddressSanitizer::doInitialization(Module &M) {
   // Initialize the private fields. No one has accessed them before.
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   if (!DLP)
-    return false;
+    report_fatal_error("data layout missing");
   DL = &DLP->getDataLayout();
 
   BL.reset(SpecialCaseList::createOrDie(BlacklistFile));

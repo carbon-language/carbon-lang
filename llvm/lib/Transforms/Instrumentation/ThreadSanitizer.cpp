@@ -226,7 +226,7 @@ void ThreadSanitizer::initializeCallbacks(Module &M) {
 bool ThreadSanitizer::doInitialization(Module &M) {
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   if (!DLP)
-    return false;
+    report_fatal_error("data layout missing");
   DL = &DLP->getDataLayout();
   BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
 

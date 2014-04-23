@@ -345,7 +345,7 @@ FunctionType *DataFlowSanitizer::getCustomFunctionType(FunctionType *T) {
 bool DataFlowSanitizer::doInitialization(Module &M) {
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
   if (!DLP)
-    return false;
+    report_fatal_error("data layout missing");
   DL = &DLP->getDataLayout();
 
   Mod = &M;
