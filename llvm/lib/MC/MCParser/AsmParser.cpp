@@ -59,8 +59,9 @@ struct MCAsmMacroParameter {
   StringRef Name;
   MCAsmMacroArgument Value;
   bool Required;
+  bool Vararg;
 
-  MCAsmMacroParameter() : Required(false) { }
+  MCAsmMacroParameter() : Required(false), Vararg(false) {}
 };
 
 typedef std::vector<MCAsmMacroParameter> MCAsmMacroParameters;
@@ -292,7 +293,7 @@ private:
   void handleMacroExit();
 
   /// \brief Extract AsmTokens for a macro argument.
-  bool parseMacroArgument(MCAsmMacroArgument &MA);
+  bool parseMacroArgument(MCAsmMacroArgument &MA, bool Vararg);
 
   /// \brief Parse all macro arguments for a given macro.
   bool parseMacroArguments(const MCAsmMacro *M, MCAsmMacroArguments &A);
@@ -1739,6 +1740,7 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
                             ArrayRef<MCAsmMacroParameter> Parameters,
                             ArrayRef<MCAsmMacroArgument> A, const SMLoc &L) {
   unsigned NParameters = Parameters.size();
+  bool HasVararg = NParameters ? Parameters.back().Vararg : false;
   if ((!IsDarwin || NParameters != 0) && NParameters != A.size())
     return Error(L, "Wrong number of arguments");
 
@@ -1820,13 +1822,16 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
           Pos = I;
         }
       } else {
+        bool VarargParameter = HasVararg && Index == (NParameters - 1);
         for (MCAsmMacroArgument::const_iterator it = A[Index].begin(),
                                                 ie = A[Index].end();
              it != ie; ++it)
-          if (it->getKind() == AsmToken::String)
-            OS << it->getStringContents();
-          else
+          // We expect no quotes around the string's contents when
+          // parsing for varargs.
+          if (it->getKind() != AsmToken::String || VarargParameter)
             OS << it->getString();
+          else
+            OS << it->getStringContents();
 
         Pos += 1 + Argument.size();
       }
@@ -1890,7 +1895,16 @@ private:
 };
 }
 
-bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA) {
+bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA, bool Vararg) {
+
+  if (Vararg) {
+    if (Lexer.isNot(AsmToken::EndOfStatement)) {
+      StringRef Str = parseStringToEndOfStatement();
+      MA.push_back(AsmToken(AsmToken::String, Str));
+    }
+    return false;
+  }
+
   unsigned ParenLevel = 0;
   unsigned AddTokens = 0;
 
@@ -1961,6 +1975,7 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
   // Parse two kinds of macro invocations:
   // - macros defined without any parameters accept an arbitrary number of them
   // - macros defined with parameters accept at most that many of them
+  bool HasVararg = NParameters ? M->Parameters.back().Vararg : false;
   for (unsigned Parameter = 0; !NParameters || Parameter < NParameters;
        ++Parameter) {
     SMLoc IDLoc = Lexer.getLoc();
@@ -1989,7 +2004,8 @@ bool AsmParser::parseMacroArguments(const MCAsmMacro *M,
       return true;
     }
 
-    if (parseMacroArgument(FA.Value))
+    bool Vararg = HasVararg && Parameter == (NParameters - 1);
+    if (parseMacroArgument(FA.Value, Vararg))
       return true;
 
     unsigned PI = Parameter;
@@ -3240,6 +3256,12 @@ bool AsmParser::parseDirectiveMacro(SMLoc DirectiveLoc) {
 
   MCAsmMacroParameters Parameters;
   while (getLexer().isNot(AsmToken::EndOfStatement)) {
+
+    if (Parameters.size() && Parameters.back().Vararg)
+      return Error(Lexer.getLoc(),
+                   "Vararg parameter '" + Parameters.back().Name +
+                   "' should be last one in the list of parameters.");
+
     MCAsmMacroParameter Parameter;
     if (parseIdentifier(Parameter.Name))
       return TokError("expected identifier in '.macro' directive");
@@ -3257,6 +3279,8 @@ bool AsmParser::parseDirectiveMacro(SMLoc DirectiveLoc) {
 
       if (Qualifier == "req")
         Parameter.Required = true;
+      else if (Qualifier == "vararg" && !IsDarwin)
+        Parameter.Vararg = true;
       else
         return Error(QualLoc, Qualifier + " is not a valid parameter qualifier "
                      "for '" + Parameter.Name + "' in macro '" + Name + "'");
@@ -3268,7 +3292,7 @@ bool AsmParser::parseDirectiveMacro(SMLoc DirectiveLoc) {
       SMLoc ParamLoc;
 
       ParamLoc = Lexer.getLoc();
-      if (parseMacroArgument(Parameter.Value))
+      if (parseMacroArgument(Parameter.Value, /*Vararg=*/false ))
         return true;
 
       if (Parameter.Required)
