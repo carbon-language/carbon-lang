@@ -9,7 +9,7 @@ except:
     import ConfigParser as configparser
 import sys
 
-from llvmbuild.util import *
+from llvmbuild.util import fatal, warning
 
 class ParseError(Exception):
     pass

@@ -5,7 +5,7 @@ import sys
 import llvmbuild.componentinfo as componentinfo
 import llvmbuild.configutil as configutil
 
-from llvmbuild.util import *
+from llvmbuild.util import fatal, note
 
 ###
 
