@@ -1164,9 +1164,8 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
     break;
   case TemplateArgument::Pack:
     // Unlike Itanium, there is no character code to indicate an argument pack.
-    for (TemplateArgument::pack_iterator I = TA.pack_begin(), E = TA.pack_end();
-         I != E; ++I)
-      mangleTemplateArg(TD, *I);
+    for (const TemplateArgument &PA : TA.getPackAsArray())
+      mangleTemplateArg(TD, PA);
     break;
   case TemplateArgument::Template:
     mangleType(cast<TagDecl>(
@@ -1561,7 +1560,7 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
     Out << 'X';
   } else {
     // Happens for function pointer type arguments for example.
-    for (const auto &Arg : Proto->param_types())
+    for (const QualType Arg : Proto->param_types())
       mangleArgumentType(Arg, Range);
     // <builtin-type>      ::= Z  # ellipsis
     if (Proto->isVariadic())
@@ -1776,8 +1775,8 @@ void MicrosoftCXXNameMangler::mangleArrayType(const ArrayType *T) {
   Out << 'Y';
   // <dimension-count> ::= <number> # number of extra dimensions
   mangleNumber(Dimensions.size());
-  for (unsigned Dim = 0; Dim < Dimensions.size(); ++Dim)
-    mangleNumber(Dimensions[Dim].getLimitedValue());
+  for (const llvm::APInt &Dimension : Dimensions)
+    mangleNumber(Dimension.getLimitedValue());
   mangleType(ElementTy, SourceRange(), QMM_Escape);
 }
 
@@ -2188,11 +2187,8 @@ void MicrosoftMangleContextImpl::mangleCXXVFTable(
   Mangler.getStream() << "\01??_7";
   Mangler.mangleName(Derived);
   Mangler.getStream() << "6B"; // '6' for vftable, 'B' for const.
-  for (ArrayRef<const CXXRecordDecl *>::iterator I = BasePath.begin(),
-                                                 E = BasePath.end();
-       I != E; ++I) {
-    Mangler.mangleName(*I);
-  }
+  for (const CXXRecordDecl *RD : BasePath)
+    Mangler.mangleName(RD);
   Mangler.getStream() << '@';
 }
 
@@ -2207,11 +2203,8 @@ void MicrosoftMangleContextImpl::mangleCXXVBTable(
   Mangler.getStream() << "\01??_8";
   Mangler.mangleName(Derived);
   Mangler.getStream() << "7B";  // '7' for vbtable, 'B' for const.
-  for (ArrayRef<const CXXRecordDecl *>::iterator I = BasePath.begin(),
-                                                 E = BasePath.end();
-       I != E; ++I) {
-    Mangler.mangleName(*I);
-  }
+  for (const CXXRecordDecl *RD : BasePath)
+    Mangler.mangleName(RD);
   Mangler.getStream() << '@';
 }
 
