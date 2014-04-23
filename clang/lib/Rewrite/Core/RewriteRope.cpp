@@ -788,9 +788,8 @@ RopePiece RewriteRope::MakeRopeString(const char *Start, const char *End) {
   // Otherwise, this was a small request but we just don't have space for it
   // Make a new chunk and share it with later allocations.
 
-  // If we had an old allocation, drop our reference to it.
-  if (AllocBuffer && --AllocBuffer->RefCount == 0)
-    delete [] (char*)AllocBuffer;
+  if (AllocBuffer)
+    AllocBuffer->dropRef();
 
   unsigned AllocSize = offsetof(RopeRefCountString, Data) + AllocChunkSize;
   AllocBuffer = reinterpret_cast<RopeRefCountString *>(new char[AllocSize]);
