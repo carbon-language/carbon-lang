@@ -79,6 +79,7 @@ struct Section {
   StringRef Info;
   llvm::yaml::Hex64 AddressAlign;
   Section(SectionKind Kind) : Kind(Kind) {}
+  virtual ~Section();
 };
 struct RawContentSection : Section {
   object::yaml::BinaryRef Content;

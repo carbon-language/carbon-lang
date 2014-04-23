@@ -14,6 +14,9 @@
 #include "llvm/Object/ELFYAML.h"
 
 namespace llvm {
+
+ELFYAML::Section ::~Section() {}
+
 namespace yaml {
 
 void
