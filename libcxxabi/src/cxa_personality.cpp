@@ -838,7 +838,7 @@ _UA_CLEANUP_PHASE
 */
 
 _Unwind_Reason_Code
-#if __arm__
+#if __USING_SJLJ_EXCEPTIONS__
 __gxx_personality_sj0
 #else
 __gxx_personality_v0

@@ -83,7 +83,7 @@ extern "C" {
 //
 // The following are the base functions documented by the C++ ABI
 //
-#if __arm__
+#if __USING_SJLJ_EXCEPTIONS__
 extern _Unwind_Reason_Code
     _Unwind_SjLj_RaiseException(struct _Unwind_Exception *exception_object);
 extern void _Unwind_SjLj_Resume(struct _Unwind_Exception *exception_object);
