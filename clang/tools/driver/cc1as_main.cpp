@@ -34,6 +34,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetAsmParser.h"
+#include "llvm/MC/MCTargetOptions.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
@@ -373,8 +374,11 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
 
   std::unique_ptr<MCAsmParser> Parser(
       createMCAsmParser(SrcMgr, Ctx, *Str.get(), *MAI));
+
+  // FIXME: init MCTargetOptions from sanitizer flags here.
+  MCTargetOptions Options;
   std::unique_ptr<MCTargetAsmParser> TAP(
-      TheTarget->createMCAsmParser(*STI, *Parser, *MCII));
+      TheTarget->createMCAsmParser(*STI, *Parser, *MCII, Options));
   if (!TAP) {
     Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
     return false;

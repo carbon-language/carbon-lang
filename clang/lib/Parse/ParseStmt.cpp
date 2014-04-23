@@ -32,6 +32,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetAsmParser.h"
+#include "llvm/MC/MCTargetOptions.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -2190,8 +2191,11 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
   std::unique_ptr<llvm::MCStreamer> Str(createNullStreamer(Ctx));
   std::unique_ptr<llvm::MCAsmParser> Parser(
       createMCAsmParser(TempSrcMgr, Ctx, *Str.get(), *MAI));
+
+  // FIXME: init MCOptions from sanitizer flags here.
+  llvm::MCTargetOptions MCOptions;
   std::unique_ptr<llvm::MCTargetAsmParser> TargetParser(
-      TheTarget->createMCAsmParser(*STI, *Parser, *MII));
+      TheTarget->createMCAsmParser(*STI, *Parser, *MII, MCOptions));
 
   llvm::MCInstPrinter *IP =
     TheTarget->createMCInstPrinter(1, *MAI, *MII, *MRI, *STI);
