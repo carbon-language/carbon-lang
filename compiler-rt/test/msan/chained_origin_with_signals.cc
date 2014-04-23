@@ -1,0 +1,32 @@
+// Check that stores in signal handlers are not recorded in origin history.
+// This is, in fact, undesired behavior caused by our chained origins
+// implementation being not async-signal-safe.
+
+// RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -m64 -O3 %s -o %t && \
+// RUN:     not %t >%t.out 2>&1
+// RUN: FileCheck %s < %t.out
+
+#include <signal.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+volatile int x, y;
+
+void SignalHandler(int signo) {
+  y = x;
+}
+
+int main(int argc, char *argv[]) {
+  int volatile z;
+  x = z;
+
+  signal(SIGUSR1, SignalHandler);
+  kill(getpid(), SIGUSR1);
+  signal(SIGUSR1, SIG_DFL);
+
+  return y;
+}
+
+// CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
+// CHECK-NOT: in SignalHandler

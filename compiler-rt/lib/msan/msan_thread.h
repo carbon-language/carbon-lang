@@ -38,6 +38,10 @@ class MsanThread {
     return addr >= stack_bottom_ && addr < stack_top_;
   }
 
+  bool InSignalHandler() { return in_signal_handler_; }
+  void EnterSignalHandler() { in_signal_handler_++; }
+  void LeaveSignalHandler() { in_signal_handler_--; }
+
   MsanThreadLocalMallocStorage &malloc_storage() { return malloc_storage_; }
 
   int destructor_iterations_;
@@ -53,6 +57,8 @@ class MsanThread {
   uptr stack_bottom_;
   uptr tls_begin_;
   uptr tls_end_;
+
+  unsigned in_signal_handler_;
 
   MsanThreadLocalMallocStorage malloc_storage_;
 };

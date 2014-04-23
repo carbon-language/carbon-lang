@@ -981,6 +981,12 @@ INTERCEPTOR(int, getrusage, int who, void *usage) {
   return res;
 }
 
+class SignalHandlerScope {
+ public:
+  SignalHandlerScope() { GetCurrentThread()->EnterSignalHandler(); }
+  ~SignalHandlerScope() { GetCurrentThread()->LeaveSignalHandler(); }
+};
+
 // sigactions_mu guarantees atomicity of sigaction() and signal() calls.
 // Access to sigactions[] is gone with relaxed atomics to avoid data race with
 // the signal handler.
@@ -989,6 +995,7 @@ static atomic_uintptr_t sigactions[kMaxSignals];
 static StaticSpinMutex sigactions_mu;
 
 static void SignalHandler(int signo) {
+  SignalHandlerScope signal_handler_scope;
   ScopedThreadLocalStateBackup stlsb;
   UnpoisonParam(1);
 
@@ -999,6 +1006,7 @@ static void SignalHandler(int signo) {
 }
 
 static void SignalAction(int signo, void *si, void *uc) {
+  SignalHandlerScope signal_handler_scope;
   ScopedThreadLocalStateBackup stlsb;
   UnpoisonParam(3);
   __msan_unpoison(si, sizeof(__sanitizer_sigaction));
