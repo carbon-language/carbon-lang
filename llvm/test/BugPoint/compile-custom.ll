@@ -1,6 +1,8 @@
 ; RUN: bugpoint -load %llvmshlibdir/BugpointPasses%shlibext --compile-custom --compile-command="%s.py arg1 arg2" --output-prefix %t %s | FileCheck %s
 ; REQUIRES: loadable_module
 
+; XFAIL: vg_leak
+
 ; Test that arguments are correctly passed in --compile-command.  The output
 ; of bugpoint includes the output of the custom tool, so we just echo the args
 ; in the tool and check here.
