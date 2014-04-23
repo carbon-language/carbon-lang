@@ -40,8 +40,8 @@ public:
 
 void guard_variables(int a) {
   static Guarded mine(a);
-// CHECK: [[GUARDBIT:%[0-9]+]] = and i64 {{%[0-9]+}}, 1
-// CHECK: icmp eq i64 [[GUARDBIT]], 0
+// CHECK: [[GUARDBIT:%[0-9]+]] = and i8 {{%[0-9]+}}, 1
+// CHECK: icmp eq i8 [[GUARDBIT]], 0
 
   // As guards are 64-bit, these helpers should take 64-bit pointers.
 // CHECK: call i32 @__cxa_guard_acquire(i64*

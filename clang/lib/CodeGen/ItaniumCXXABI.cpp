@@ -1393,25 +1393,7 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   }
 
   // Test whether the variable has completed initialization.
-  llvm::Value *isInitialized;
-
-  // ARM C++ ABI 3.2.3.1:
-  //   To support the potential use of initialization guard variables
-  //   as semaphores that are the target of ARM SWP and LDREX/STREX
-  //   synchronizing instructions we define a static initialization
-  //   guard variable to be a 4-byte aligned, 4- byte word with the
-  //   following inline access protocol.
-  //     #define INITIALIZED 1
-  //     if ((obj_guard & INITIALIZED) != INITIALIZED) {
-  //       if (__cxa_guard_acquire(&obj_guard))
-  //         ...
-  //     }
-  if (UseARMGuardVarABI && !useInt8GuardVariable) {
-    llvm::Value *V = Builder.CreateLoad(guard);
-    llvm::Value *Test1 = llvm::ConstantInt::get(guardTy, 1);
-    V = Builder.CreateAnd(V, Test1);
-    isInitialized = Builder.CreateIsNull(V, "guard.uninitialized");
-
+  //
   // Itanium C++ ABI 3.3.2:
   //   The following is pseudo-code showing how these functions can be used:
   //     if (obj_guard.first_byte == 0) {
@@ -1427,29 +1409,45 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   //       }
   //     }
 
-    // ARM64 C++ ABI 3.2.2:
-    // This ABI instead only specifies the value bit 0 of the static guard
-    // variable; all other bits are platform defined. Bit 0 shall be 0 when the
-    // variable is not initialized and 1 when it is.
-    // FIXME: Reading one bit is no more efficient than reading one byte so
-    // the codegen is same as generic Itanium ABI.
-  } else {
-    // Load the first byte of the guard variable.
-    llvm::LoadInst *LI = 
+  // Load the first byte of the guard variable.
+  llvm::LoadInst *LI =
       Builder.CreateLoad(Builder.CreateBitCast(guard, CGM.Int8PtrTy));
-    LI->setAlignment(1);
+  LI->setAlignment(1);
 
-    // Itanium ABI:
-    //   An implementation supporting thread-safety on multiprocessor
-    //   systems must also guarantee that references to the initialized
-    //   object do not occur before the load of the initialization flag.
-    //
-    // In LLVM, we do this by marking the load Acquire.
-    if (threadsafe)
-      LI->setAtomic(llvm::Acquire);
+  // Itanium ABI:
+  //   An implementation supporting thread-safety on multiprocessor
+  //   systems must also guarantee that references to the initialized
+  //   object do not occur before the load of the initialization flag.
+  //
+  // In LLVM, we do this by marking the load Acquire.
+  if (threadsafe)
+    LI->setAtomic(llvm::Acquire);
 
-    isInitialized = Builder.CreateIsNull(LI, "guard.uninitialized");
-  }
+  // For ARM, we should only check the first bit, rather than the entire byte:
+  //
+  // ARM C++ ABI 3.2.3.1:
+  //   To support the potential use of initialization guard variables
+  //   as semaphores that are the target of ARM SWP and LDREX/STREX
+  //   synchronizing instructions we define a static initialization
+  //   guard variable to be a 4-byte aligned, 4-byte word with the
+  //   following inline access protocol.
+  //     #define INITIALIZED 1
+  //     if ((obj_guard & INITIALIZED) != INITIALIZED) {
+  //       if (__cxa_guard_acquire(&obj_guard))
+  //         ...
+  //     }
+  //
+  // and similarly for ARM64:
+  //
+  // ARM64 C++ ABI 3.2.2:
+  //   This ABI instead only specifies the value bit 0 of the static guard
+  //   variable; all other bits are platform defined. Bit 0 shall be 0 when the
+  //   variable is not initialized and 1 when it is.
+  llvm::Value *V =
+      (UseARMGuardVarABI && !useInt8GuardVariable)
+          ? Builder.CreateAnd(LI, llvm::ConstantInt::get(CGM.Int8Ty, 1))
+          : LI;
+  llvm::Value *isInitialized = Builder.CreateIsNull(V, "guard.uninitialized");
 
   llvm::BasicBlock *InitCheckBlock = CGF.createBasicBlock("init.check");
   llvm::BasicBlock *EndBlock = CGF.createBasicBlock("init.end");
