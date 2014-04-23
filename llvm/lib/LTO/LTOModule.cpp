@@ -739,7 +739,8 @@ bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
       _target->getTargetTriple(), _target->getTargetCPU(),
       _target->getTargetFeatureString()));
   std::unique_ptr<MCTargetAsmParser> TAP(
-      T.createMCAsmParser(*STI, *Parser.get(), *MCII));
+      T.createMCAsmParser(*STI, *Parser.get(), *MCII,
+                          _target->Options.MCOptions));
   if (!TAP) {
     errMsg = "target " + std::string(T.getName()) +
       " does not define AsmParser.";

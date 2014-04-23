@@ -45,6 +45,7 @@ add_llvm_library(LLVMMC
   MCSubtargetInfo.cpp
   MCSymbol.cpp
   MCSymbolizer.cpp
+  MCTargetOptions.cpp
   MCValue.cpp
   MCWin64EH.cpp
   MachObjectWriter.cpp

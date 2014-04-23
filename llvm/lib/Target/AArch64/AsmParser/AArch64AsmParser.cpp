@@ -55,7 +55,8 @@ public:
   };
 
   AArch64AsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
-                   const MCInstrInfo &MII)
+                   const MCInstrInfo &MII,
+                   const MCTargetOptions &Options)
       : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
 

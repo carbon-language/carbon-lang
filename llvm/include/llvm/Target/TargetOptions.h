@@ -15,6 +15,7 @@
 #ifndef LLVM_TARGET_TARGETOPTIONS_H
 #define LLVM_TARGET_TARGETOPTIONS_H
 
+#include "llvm/MC/MCTargetOptions.h"
 #include <string>
 
 namespace llvm {
@@ -197,6 +198,9 @@ namespace llvm {
     /// via the llvm.fma.* intrinsic) will always be honored, regardless of
     /// the value of this option.
     FPOpFusion::FPOpFusionMode AllowFPOpFusion;
+
+    /// Machine level options.
+    MCTargetOptions MCOptions;
   };
 
 // Comparison operators:
@@ -223,7 +227,8 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(TrapUnreachable) &&
     ARE_EQUAL(TrapFuncName) &&
     ARE_EQUAL(FloatABIType) &&
-    ARE_EQUAL(AllowFPOpFusion);
+    ARE_EQUAL(AllowFPOpFusion) &&
+    ARE_EQUAL(MCOptions);
 #undef ARE_EQUAL
 }
 

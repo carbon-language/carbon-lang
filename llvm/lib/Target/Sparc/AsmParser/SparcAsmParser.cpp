@@ -83,7 +83,8 @@ class SparcAsmParser : public MCTargetAsmParser {
   bool is64Bit() const { return STI.getTargetTriple().startswith("sparcv9"); }
 public:
   SparcAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
-                const MCInstrInfo &MII)
+                const MCInstrInfo &MII,
+                const MCTargetOptions &Options)
       : MCTargetAsmParser(), STI(sti), Parser(parser) {
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));

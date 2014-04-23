@@ -16,6 +16,7 @@
 #ifndef LLVM_CODEGEN_COMMANDFLAGS_H
 #define LLVM_CODEGEN_COMMANDFLAGS_H
 
+#include "llvm/MC/MCTargetOptionsCommandFlags.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetMachine.h"
@@ -225,6 +226,9 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.TrapFuncName = TrapFuncName;
   Options.PositionIndependentExecutable = EnablePIE;
   Options.UseInitArray = UseInitArray;
+
+  Options.MCOptions = InitMCTargetOptionsFromFlags();
+
   return Options;
 }
 

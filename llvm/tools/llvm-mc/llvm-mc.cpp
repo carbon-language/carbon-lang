@@ -25,6 +25,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetAsmParser.h"
+#include "llvm/MC/MCTargetOptionsCommandFlags.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compression.h"
 #include "llvm/Support/FileUtilities.h"
@@ -320,9 +321,11 @@ static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI, tool_output_file *Out) 
 static int AssembleInput(const char *ProgName, const Target *TheTarget,
                          SourceMgr &SrcMgr, MCContext &Ctx, MCStreamer &Str,
                          MCAsmInfo &MAI, MCSubtargetInfo &STI, MCInstrInfo &MCII) {
-  std::unique_ptr<MCAsmParser> Parser(createMCAsmParser(SrcMgr, Ctx, Str, MAI));
+  std::unique_ptr<MCAsmParser> Parser(
+      createMCAsmParser(SrcMgr, Ctx, Str, MAI));
   std::unique_ptr<MCTargetAsmParser> TAP(
-      TheTarget->createMCAsmParser(STI, *Parser, MCII));
+      TheTarget->createMCAsmParser(STI, *Parser, MCII,
+                                   InitMCTargetOptionsFromFlags()));
   if (!TAP) {
     errs() << ProgName
            << ": error: this target does not support assembly parsing.\n";

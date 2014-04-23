@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -135,8 +136,11 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   // emitInlineAsmEnd().
   MCSubtargetInfo STIOrig = *STI;
 
+  MCTargetOptions MCOptions;
+  if (MF)
+    MCOptions = MF->getTarget().Options.MCOptions;
   std::unique_ptr<MCTargetAsmParser> TAP(
-      TM.getTarget().createMCAsmParser(*STI, *Parser, *MII));
+      TM.getTarget().createMCAsmParser(*STI, *Parser, *MII, MCOptions));
   if (!TAP)
     report_fatal_error("Inline asm not supported by this streamer because"
                        " we don't have an asm parser for this target\n");

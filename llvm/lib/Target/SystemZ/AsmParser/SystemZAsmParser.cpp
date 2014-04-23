@@ -331,7 +331,8 @@ private:
 
 public:
   SystemZAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
-                   const MCInstrInfo &MII)
+                   const MCInstrInfo &MII,
+                   const MCTargetOptions &Options)
       : MCTargetAsmParser(), STI(sti), Parser(parser) {
     MCAsmParserExtension::Initialize(Parser);
 

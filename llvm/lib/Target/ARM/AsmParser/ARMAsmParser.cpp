@@ -344,7 +344,8 @@ public:
   };
 
   ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser,
-               const MCInstrInfo &MII)
+               const MCInstrInfo &MII,
+               const MCTargetOptions &Options)
       : MCTargetAsmParser(), STI(_STI), Parser(_Parser), MII(MII), UC(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
 

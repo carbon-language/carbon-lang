@@ -710,13 +710,16 @@ private:
 
 public:
   X86AsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
-               const MCInstrInfo &MII)
+               const MCInstrInfo &MII,
+               const MCTargetOptions &Options)
       : MCTargetAsmParser(), STI(sti), Parser(parser), InstInfo(0) {
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
-    Instrumentation.reset(CreateX86AsmInstrumentation(STI));
+    Instrumentation.reset(
+        CreateX86AsmInstrumentation(Options, Parser.getContext(), STI));
   }
+
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
   bool

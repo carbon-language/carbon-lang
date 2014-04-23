@@ -11,21 +11,17 @@
 #include "X86AsmInstrumentation.h"
 #include "X86Operand.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/IR/Function.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstBuilder.h"
+#include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Compiler.h"
-#include "llvm/MC/MCParser/MCParsedAsmOperand.h"
+#include "llvm/MC/MCTargetOptions.h"
 
 namespace llvm {
 namespace {
-
-static cl::opt<bool> ClAsanInstrumentInlineAssembly(
-    "asan-instrument-inline-assembly", cl::desc("instrument inline assembly"),
-    cl::Hidden, cl::init(false));
 
 bool IsStackReg(unsigned Reg) {
   return Reg == X86::RSP || Reg == X86::ESP || Reg == X86::SP;
@@ -38,7 +34,7 @@ std::string FuncName(unsigned AccessSize, bool IsWrite) {
 
 class X86AddressSanitizer : public X86AsmInstrumentation {
 public:
-  X86AddressSanitizer(MCSubtargetInfo &sti) : STI(sti) {}
+  X86AddressSanitizer(const MCSubtargetInfo &STI) : STI(STI) {}
   virtual ~X86AddressSanitizer() {}
 
   // X86AsmInstrumentation implementation:
@@ -63,7 +59,7 @@ public:
   }
 
 protected:
-  MCSubtargetInfo &STI;
+  const MCSubtargetInfo &STI;
 };
 
 void X86AddressSanitizer::InstrumentMemOperand(
@@ -144,7 +140,8 @@ void X86AddressSanitizer::InstrumentMOV(
 
 class X86AddressSanitizer32 : public X86AddressSanitizer {
 public:
-  X86AddressSanitizer32(MCSubtargetInfo &sti) : X86AddressSanitizer(sti) {}
+  X86AddressSanitizer32(const MCSubtargetInfo &STI)
+      : X86AddressSanitizer(STI) {}
   virtual ~X86AddressSanitizer32() {}
 
   virtual void InstrumentMemOperandImpl(X86Operand *Op, unsigned AccessSize,
@@ -179,7 +176,8 @@ void X86AddressSanitizer32::InstrumentMemOperandImpl(
 
 class X86AddressSanitizer64 : public X86AddressSanitizer {
 public:
-  X86AddressSanitizer64(MCSubtargetInfo &sti) : X86AddressSanitizer(sti) {}
+  X86AddressSanitizer64(const MCSubtargetInfo &STI)
+      : X86AddressSanitizer(STI) {}
   virtual ~X86AddressSanitizer64() {}
 
   virtual void InstrumentMemOperandImpl(X86Operand *Op, unsigned AccessSize,
@@ -223,8 +221,10 @@ void X86AsmInstrumentation::InstrumentInstruction(
     const MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
     MCContext &Ctx, MCStreamer &Out) {}
 
-X86AsmInstrumentation *CreateX86AsmInstrumentation(MCSubtargetInfo &STI) {
-  if (ClAsanInstrumentInlineAssembly) {
+X86AsmInstrumentation *
+CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions, const MCContext &Ctx,
+                            const MCSubtargetInfo &STI) {
+  if (MCOptions.SanitizeAddress) {
     if ((STI.getFeatureBits() & X86::Mode32Bit) != 0)
       return new X86AddressSanitizer32(STI);
     if ((STI.getFeatureBits() & X86::Mode64Bit) != 0)

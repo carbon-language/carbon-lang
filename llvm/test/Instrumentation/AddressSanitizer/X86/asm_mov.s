@@ -1,4 +1,4 @@
-# RUN: llvm-mc %s -triple=x86_64-unknown-linux-gnu -mcpu=corei7 -mattr=+sse2 -asan-instrument-inline-assembly | FileCheck %s
+# RUN: llvm-mc %s -triple=x86_64-unknown-linux-gnu -mcpu=corei7 -mattr=+sse2 -asm-instrumentation=address | FileCheck %s
 
 	.text
 	.globl	mov1b

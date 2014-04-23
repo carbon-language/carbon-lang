@@ -229,7 +229,8 @@ class MipsAsmParser : public MCTargetAsmParser {
 
 public:
   MipsAsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
-                const MCInstrInfo &MII)
+                const MCInstrInfo &MII,
+                const MCTargetOptions &Options)
       : MCTargetAsmParser(), STI(sti), Parser(parser) {
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));

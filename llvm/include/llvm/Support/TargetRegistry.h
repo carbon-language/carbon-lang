@@ -45,6 +45,7 @@ namespace llvm {
   class MCSymbolizer;
   class MCRelocationInfo;
   class MCTargetAsmParser;
+  class MCTargetOptions;
   class TargetMachine;
   class TargetOptions;
   class raw_ostream;
@@ -104,9 +105,11 @@ namespace llvm {
                                                 const MCRegisterInfo &MRI,
                                                 StringRef TT,
                                                 StringRef CPU);
-    typedef MCTargetAsmParser *(*MCAsmParserCtorTy)(MCSubtargetInfo &STI,
-                                                    MCAsmParser &P,
-                                                    const MCInstrInfo &MII);
+    typedef MCTargetAsmParser *(*MCAsmParserCtorTy)(
+        MCSubtargetInfo &STI,
+        MCAsmParser &P,
+        const MCInstrInfo &MII,
+        const MCTargetOptions &Options);
     typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T,
                                                     const MCSubtargetInfo &STI,
                                                     MCContext &Ctx);
@@ -362,12 +365,14 @@ namespace llvm {
     ///
     /// \param Parser The target independent parser implementation to use for
     /// parsing and lexing.
-    MCTargetAsmParser *createMCAsmParser(MCSubtargetInfo &STI,
-                                         MCAsmParser &Parser,
-                                         const MCInstrInfo &MII) const {
+    MCTargetAsmParser *createMCAsmParser(
+        MCSubtargetInfo &STI,
+        MCAsmParser &Parser,
+        const MCInstrInfo &MII,
+        const MCTargetOptions &Options) const {
       if (!MCAsmParserCtorFn)
         return nullptr;
-      return MCAsmParserCtorFn(STI, Parser, MII);
+      return MCAsmParserCtorFn(STI, Parser, MII, Options);
     }
 
     /// createAsmPrinter - Create a target specific assembly printer pass.  This
@@ -1099,8 +1104,9 @@ namespace llvm {
 
   private:
     static MCTargetAsmParser *Allocator(MCSubtargetInfo &STI, MCAsmParser &P,
-                                        const MCInstrInfo &MII) {
-      return new MCAsmParserImpl(STI, P, MII);
+                                        const MCInstrInfo &MII,
+                                        const MCTargetOptions &Options) {
+      return new MCAsmParserImpl(STI, P, MII, Options);
     }
   };
 

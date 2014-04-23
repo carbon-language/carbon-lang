@@ -19,10 +19,13 @@ class MCInst;
 class MCParsedAsmOperand;
 class MCStreamer;
 class MCSubtargetInfo;
+class MCTargetOptions;
 
 class X86AsmInstrumentation;
 
-X86AsmInstrumentation *CreateX86AsmInstrumentation(MCSubtargetInfo &STI);
+X86AsmInstrumentation *
+CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
+                            const MCContext &Ctx, const MCSubtargetInfo &STI);
 
 class X86AsmInstrumentation {
 public:
@@ -36,11 +39,12 @@ public:
 
 protected:
   friend X86AsmInstrumentation *
-  CreateX86AsmInstrumentation(MCSubtargetInfo &STI);
+  CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
+                              const MCContext &Ctx, const MCSubtargetInfo &STI);
 
   X86AsmInstrumentation();
 };
 
-}  // End llvm namespace
+} // End llvm namespace
 
-#endif  // X86_ASM_INSTRUMENTATION_H
+#endif // X86_ASM_INSTRUMENTATION_H
