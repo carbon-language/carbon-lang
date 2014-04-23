@@ -333,7 +333,9 @@ static AtExitContext *atexit_ctx;
 TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
   if (cur_thread()->in_symbolizer)
     return 0;
-  SCOPED_TSAN_INTERCEPTOR(atexit, f);
+  // We want to setup the atexit callback even if we are in ignored lib
+  // or after fork.
+  SCOPED_INTERCEPTOR_RAW(atexit, f);
   return atexit_ctx->atexit(thr, pc, false, (void(*)())f, 0);
 }
 
