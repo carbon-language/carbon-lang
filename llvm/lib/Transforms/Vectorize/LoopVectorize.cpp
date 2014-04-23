@@ -51,6 +51,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
@@ -97,6 +98,9 @@ using namespace llvm::PatternMatch;
 
 #define LV_NAME "loop-vectorize"
 #define DEBUG_TYPE LV_NAME
+
+STATISTIC(LoopsVectorized, "Number of loops vectorized");
+STATISTIC(LoopsAnalyzed, "Number of loops analyzed for vectorization");
 
 static cl::opt<unsigned>
 VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
@@ -1080,6 +1084,8 @@ struct LoopVectorize : public FunctionPass {
     for (Loop *L : *LI)
       addInnerLoop(*L, Worklist);
 
+    LoopsAnalyzed += Worklist.size();
+
     // Now walk the identified inner loops.
     bool Changed = false;
     while (!Worklist.empty())
@@ -1182,6 +1188,7 @@ struct LoopVectorize : public FunctionPass {
       // If we decided that it is *legal* to vectorize the loop then do it.
       InnerLoopVectorizer LB(L, SE, LI, DT, DL, TLI, VF.Width, UF);
       LB.vectorize(&LVL);
+      ++LoopsVectorized;
     }
 
     // Mark the loop as already vectorized to avoid vectorizing again.
