@@ -1,5 +1,5 @@
-
-; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 
 @var32 = global i32 0
 @var64 = global i64 0
@@ -24,7 +24,8 @@ define void @test_extendb(i8 %var) {
 
   %uxt64 = zext i8 %var to i64
   store volatile i64 %uxt64, i64* @var64
-; CHECK: uxtb {{x[0-9]+}}, {{w[0-9]+}}
+; CHECK-AARCH64: uxtb {{x[0-9]+}}, {{w[0-9]+}}
+; CHECK-ARM64: and {{x[0-9]+}}, {{x[0-9]+}}, #0xff
   ret void
 }
 
@@ -48,7 +49,8 @@ define void @test_extendh(i16 %var) {
 
   %uxt64 = zext i16 %var to i64
   store volatile i64 %uxt64, i64* @var64
-; CHECK: uxth {{x[0-9]+}}, {{w[0-9]+}}
+; CHECK-AARCH64: uxth {{x[0-9]+}}, {{w[0-9]+}}
+; CHECK-ARM64: and {{x[0-9]+}}, {{x[0-9]+}}, #0xffff
   ret void
 }
 
@@ -61,7 +63,8 @@ define void @test_extendw(i32 %var) {
 
   %uxt64 = zext i32 %var to i64
   store volatile i64 %uxt64, i64* @var64
-; CHECK: ubfx {{w[0-9]+}}, {{w[0-9]+}}, #0, #32
+; CHECK-AARCH64: ubfx {{w[0-9]+}}, {{w[0-9]+}}, #0, #32
+; CHECK-ARM64: uxtw {{x[0-9]+}}, {{w[0-9]+}}
   ret void
 }
 
@@ -121,7 +124,8 @@ define void @test_sext_inreg_64(i64 %in) {
   %trunc_i1 = trunc i64 %in to i1
   %sext_i1 = sext i1 %trunc_i1 to i64
   store volatile i64 %sext_i1, i64* @var64
-; CHECK: sbfx {{x[0-9]+}}, {{x[0-9]+}}, #0, #1
+; CHECK-AARCH64: sbfx {{x[0-9]+}}, {{x[0-9]+}}, #0, #1
+; CHECK-ARM64: sbfm {{x[0-9]+}}, {{x[0-9]+}}, #0, #0
 
   %trunc_i8 = trunc i64 %in to i8
   %sext_i8 = sext i8 %trunc_i8 to i64
@@ -172,14 +176,16 @@ define i64 @test_sext_inreg_from_32(i32 %in) {
   ; Different registers are of course, possible, though suboptimal. This is
   ; making sure that a 64-bit "(sext_inreg (anyext GPR32), i1)" uses the 64-bit
   ; sbfx rather than just 32-bits.
-; CHECK: sbfx x0, x0, #0, #1
+; CHECK-AARCH64: sbfx x0, x0, #0, #1
+; CHECK-ARM64: sbfm x0, x0, #0, #0
   ret i64 %ext
 }
 
 
 define i32 @test_ubfx32(i32* %addr) {
 ; CHECK-LABEL: test_ubfx32:
-; CHECK: ubfx {{w[0-9]+}}, {{w[0-9]+}}, #23, #3
+; CHECK-AARCH64: ubfx {{w[0-9]+}}, {{w[0-9]+}}, #23, #3
+; CHECK-ARM64: ubfm {{w[0-9]+}}, {{w[0-9]+}}, #23, #25
 
    %fields = load i32* %addr
    %shifted = lshr i32 %fields, 23
@@ -189,8 +195,8 @@ define i32 @test_ubfx32(i32* %addr) {
 
 define i64 @test_ubfx64(i64* %addr) {
 ; CHECK-LABEL: test_ubfx64:
-; CHECK: ubfx {{x[0-9]+}}, {{x[0-9]+}}, #25, #10
-
+; CHECK-AARCH64: ubfx {{x[0-9]+}}, {{x[0-9]+}}, #25, #10
+; CHECK-ARM64: ubfm {{x[0-9]+}}, {{x[0-9]+}}, #25, #34
    %fields = load i64* %addr
    %shifted = lshr i64 %fields, 25
    %masked = and i64 %shifted, 1023
@@ -199,7 +205,8 @@ define i64 @test_ubfx64(i64* %addr) {
 
 define i32 @test_sbfx32(i32* %addr) {
 ; CHECK-LABEL: test_sbfx32:
-; CHECK: sbfx {{w[0-9]+}}, {{w[0-9]+}}, #6, #3
+; CHECK-AARCH64: sbfx {{w[0-9]+}}, {{w[0-9]+}}, #6, #3
+; CHECK-ARM64: sbfm {{w[0-9]+}}, {{w[0-9]+}}, #6, #8
 
    %fields = load i32* %addr
    %shifted = shl i32 %fields, 23
@@ -209,7 +216,8 @@ define i32 @test_sbfx32(i32* %addr) {
 
 define i64 @test_sbfx64(i64* %addr) {
 ; CHECK-LABEL: test_sbfx64:
-; CHECK: sbfx {{x[0-9]+}}, {{x[0-9]+}}, #0, #63
+; CHECK-AARCH64: sbfx {{x[0-9]+}}, {{x[0-9]+}}, #0, #63
+; CHECK-ARM64: sbfm {{x[0-9]+}}, {{x[0-9]+}}, #0, #62
 
    %fields = load i64* %addr
    %shifted = shl i64 %fields, 1
