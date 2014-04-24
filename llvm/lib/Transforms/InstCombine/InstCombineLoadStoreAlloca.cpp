@@ -31,10 +31,13 @@ STATISTIC(NumGlobalCopies, "Number of allocas copied from constant global");
 static bool pointsToConstantGlobal(Value *V) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
     return GV->isConstant();
-  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
     if (CE->getOpcode() == Instruction::BitCast ||
+        CE->getOpcode() == Instruction::AddrSpaceCast ||
         CE->getOpcode() == Instruction::GetElementPtr)
       return pointsToConstantGlobal(CE->getOperand(0));
+  }
   return false;
 }
 
@@ -62,9 +65,9 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
       continue;
     }
 
-    if (BitCastInst *BCI = dyn_cast<BitCastInst>(I)) {
+    if (isa<BitCastInst>(I) || isa<AddrSpaceCastInst>(I)) {
       // If uses of the bitcast are ok, we are ok.
-      if (!isOnlyCopiedFromConstantGlobal(BCI, TheCopy, ToDelete, IsOffset))
+      if (!isOnlyCopiedFromConstantGlobal(I, TheCopy, ToDelete, IsOffset))
         return false;
       continue;
     }
