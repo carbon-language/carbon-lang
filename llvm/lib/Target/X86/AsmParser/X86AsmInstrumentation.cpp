@@ -82,60 +82,60 @@ void X86AddressSanitizer::InstrumentMOV(
     MCContext &Ctx, MCStreamer &Out) {
   // Access size in bytes.
   unsigned AccessSize = 0;
-  unsigned long OpIx = Operands.size();
+
+  // FIXME: use MCInstrDesc to get proper value of IsWrite.
+  bool IsWrite = false;
   switch (Inst.getOpcode()) {
   case X86::MOV8mi:
   case X86::MOV8mr:
     AccessSize = 1;
-    OpIx = 2;
+    IsWrite = true;
     break;
   case X86::MOV8rm:
     AccessSize = 1;
-    OpIx = 1;
     break;
   case X86::MOV16mi:
   case X86::MOV16mr:
     AccessSize = 2;
-    OpIx = 2;
+    IsWrite = true;
     break;
   case X86::MOV16rm:
     AccessSize = 2;
-    OpIx = 1;
     break;
   case X86::MOV32mi:
   case X86::MOV32mr:
     AccessSize = 4;
-    OpIx = 2;
+    IsWrite = true;
     break;
   case X86::MOV32rm:
     AccessSize = 4;
-    OpIx = 1;
     break;
   case X86::MOV64mi32:
   case X86::MOV64mr:
     AccessSize = 8;
-    OpIx = 2;
+    IsWrite = true;
     break;
   case X86::MOV64rm:
     AccessSize = 8;
-    OpIx = 1;
     break;
   case X86::MOVAPDmr:
   case X86::MOVAPSmr:
     AccessSize = 16;
-    OpIx = 2;
+    IsWrite = true;
     break;
   case X86::MOVAPDrm:
   case X86::MOVAPSrm:
     AccessSize = 16;
-    OpIx = 1;
     break;
-  }
-  if (OpIx >= Operands.size())
+  default:
     return;
+  }
 
-  const bool IsWrite = (OpIx != 1);
-  InstrumentMemOperand(Operands[OpIx], AccessSize, IsWrite, Ctx, Out);
+  for (unsigned Ix = 0; Ix < Operands.size(); ++Ix) {
+    MCParsedAsmOperand *Op = Operands[Ix];
+    if (Op && Op->isMem())
+      InstrumentMemOperand(Op, AccessSize, IsWrite, Ctx, Out);
+  }
 }
 
 class X86AddressSanitizer32 : public X86AddressSanitizer {
