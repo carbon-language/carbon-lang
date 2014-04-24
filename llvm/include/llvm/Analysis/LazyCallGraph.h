@@ -217,7 +217,6 @@ public:
 
     SmallSetVector<SCC *, 1> ParentSCCs;
     SmallVector<Node *, 1> Nodes;
-    SmallPtrSet<Function *, 1> NodeSet;
 
     SCC() {}
 

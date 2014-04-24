@@ -282,7 +282,6 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   // Replace this SCC with the NewNodes we collected above.
   // FIXME: Simplify this when the SCC's datastructure is just a list.
   Nodes.clear();
-  NodeSet.clear();
 
   // Now we need to reconnect the current SCC to the graph.
   bool IsLeafSCC = true;
@@ -290,7 +289,6 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     N->DFSNumber = -1;
     N->LowLink = -1;
     Nodes.push_back(N);
-    NodeSet.insert(&N->getFunction());
     for (Node &ChildN : *N) {
       if (NewNodes.count(&ChildN))
         continue;
@@ -393,10 +391,6 @@ LazyCallGraph::SCC *LazyCallGraph::formSCCFromDFSStack(
 
     SCCMap[SCCN] = NewSCC;
     NewSCC->Nodes.push_back(SCCN);
-    bool Inserted =
-        NewSCC->NodeSet.insert(&SCCN->getFunction());
-    (void)Inserted;
-    assert(Inserted && "Cannot have duplicates in the DFSStack!");
   }
   DFSStack.erase(SCCBegin, DFSStack.end());
 
@@ -406,7 +400,7 @@ LazyCallGraph::SCC *LazyCallGraph::formSCCFromDFSStack(
   bool IsLeafSCC = true;
   for (Node *SCCN : NewSCC->Nodes)
     for (Node &SCCChildN : *SCCN) {
-      if (NewSCC->NodeSet.count(&SCCChildN.getFunction()))
+      if (SCCMap.lookup(&SCCChildN) == NewSCC)
         continue;
       SCC &ChildSCC = *SCCMap.lookup(&SCCChildN);
       ChildSCC.ParentSCCs.insert(NewSCC);
