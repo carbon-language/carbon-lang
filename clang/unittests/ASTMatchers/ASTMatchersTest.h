@@ -64,8 +64,10 @@ testing::AssertionResult matchesConditionally(const std::string &Code,
                                               llvm::StringRef CompileArg) {
   bool Found = false, DynamicFound = false;
   MatchFinder Finder;
-  Finder.addMatcher(AMatcher, new VerifyMatch(0, &Found));
-  if (!Finder.addDynamicMatcher(AMatcher, new VerifyMatch(0, &DynamicFound)))
+  VerifyMatch VerifyFound(0, &Found);
+  Finder.addMatcher(AMatcher, &VerifyFound);
+  VerifyMatch VerifyDynamicFound(0, &DynamicFound);
+  if (!Finder.addDynamicMatcher(AMatcher, &VerifyDynamicFound))
     return testing::AssertionFailure() << "Could not add dynamic matcher";
   std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory(&Finder));
@@ -109,8 +111,8 @@ matchAndVerifyResultConditionally(const std::string &Code, const T &AMatcher,
   std::unique_ptr<BoundNodesCallback> ScopedVerifier(FindResultVerifier);
   bool VerifiedResult = false;
   MatchFinder Finder;
-  Finder.addMatcher(
-      AMatcher, new VerifyMatch(FindResultVerifier, &VerifiedResult));
+  VerifyMatch VerifyVerifiedResult(FindResultVerifier, &VerifiedResult);
+  Finder.addMatcher(AMatcher, &VerifyVerifiedResult);
   std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory(&Finder));
   // Some tests use typeof, which is a gnu extension.
