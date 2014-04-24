@@ -55,68 +55,7 @@ our @llvm_repositories = (
     "$llvm_srcroot",
     "$llvm_srcroot/tools/clang"
 );
-our @archive_files = (
-    "$llvm_configuration/lib/libclang.a",
-    "$llvm_configuration/lib/libclangAnalysis.a",
-    "$llvm_configuration/lib/libclangAST.a",
-    "$llvm_configuration/lib/libclangBasic.a",
-    "$llvm_configuration/lib/libclangCodeGen.a",
-    "$llvm_configuration/lib/libclangEdit.a",
-    "$llvm_configuration/lib/libclangFrontend.a",
-    "$llvm_configuration/lib/libclangDriver.a",
-    "$llvm_configuration/lib/libclangLex.a",
-    "$llvm_configuration/lib/libclangParse.a",
-    "$llvm_configuration/lib/libclangSema.a",
-    "$llvm_configuration/lib/libclangSerialization.a",
-    "$llvm_configuration/lib/libLLVMAnalysis.a",
-    "$llvm_configuration/lib/libLLVMARMAsmParser.a",
-    "$llvm_configuration/lib/libLLVMARMAsmPrinter.a",
-    "$llvm_configuration/lib/libLLVMARMCodeGen.a",
-    "$llvm_configuration/lib/libLLVMARMDesc.a",
-    "$llvm_configuration/lib/libLLVMARMDisassembler.a",
-    "$llvm_configuration/lib/libLLVMARMInfo.a",
-    "$llvm_configuration/lib/libLLVMARM64AsmParser.a",
-    "$llvm_configuration/lib/libLLVMARM64AsmPrinter.a",
-    "$llvm_configuration/lib/libLLVMARM64CodeGen.a",
-    "$llvm_configuration/lib/libLLVMARM64Desc.a",
-    "$llvm_configuration/lib/libLLVMARM64Disassembler.a",
-    "$llvm_configuration/lib/libLLVMARM64Info.a",
-    "$llvm_configuration/lib/libLLVMARM64Utils.a",
-    "$llvm_configuration/lib/libLLVMAsmParser.a",
-    "$llvm_configuration/lib/libLLVMAsmPrinter.a",
-    "$llvm_configuration/lib/libLLVMBitReader.a",
-    "$llvm_configuration/lib/libLLVMBitWriter.a",
-    "$llvm_configuration/lib/libLLVMCodeGen.a",
-    "$llvm_configuration/lib/libLLVMCore.a",
-    "$llvm_configuration/lib/libLLVMExecutionEngine.a",
-    "$llvm_configuration/lib/libLLVMProfileData.a",
-    "$llvm_configuration/lib/libLLVMInstCombine.a",
-    "$llvm_configuration/lib/libLLVMInstrumentation.a",
-    "$llvm_configuration/lib/libLLVMipa.a",
-    "$llvm_configuration/lib/libLLVMInterpreter.a",
-    "$llvm_configuration/lib/libLLVMipo.a",
-    "$llvm_configuration/lib/libLLVMJIT.a",
-    "$llvm_configuration/lib/libLLVMLinker.a",
-    "$llvm_configuration/lib/libLLVMMC.a",
-    "$llvm_configuration/lib/libLLVMMCParser.a",
-    "$llvm_configuration/lib/libLLVMMCDisassembler.a",
-    "$llvm_configuration/lib/libLLVMMCJIT.a",
-    "$llvm_configuration/lib/libLLVMObject.a",
-    "$llvm_configuration/lib/libLLVMOption.a",
-    "$llvm_configuration/lib/libLLVMRuntimeDyld.a",
-    "$llvm_configuration/lib/libLLVMScalarOpts.a",
-    "$llvm_configuration/lib/libLLVMSelectionDAG.a",
-    "$llvm_configuration/lib/libLLVMSupport.a",
-    "$llvm_configuration/lib/libLLVMTarget.a",
-    "$llvm_configuration/lib/libLLVMTransformUtils.a",
-    "$llvm_configuration/lib/libLLVMX86AsmParser.a",
-    "$llvm_configuration/lib/libLLVMX86AsmPrinter.a",
-    "$llvm_configuration/lib/libLLVMX86CodeGen.a",
-    "$llvm_configuration/lib/libLLVMX86Desc.a",
-    "$llvm_configuration/lib/libLLVMX86Disassembler.a",
-    "$llvm_configuration/lib/libLLVMX86Info.a",
-    "$llvm_configuration/lib/libLLVMX86Utils.a",
-);
+
 
 if (-e "$llvm_srcroot/lib")
 {
@@ -211,15 +150,6 @@ sub build_llvm
             $do_configure = !-e "$llvm_dstroot_arch/config.log";
 
             my @archive_modtimes;
-            # dstroot for llvm build exists, make sure all .a files are built
-            for my $llvm_lib (@archive_files)
-            {
-                if (!-e "$llvm_dstroot_arch/$llvm_lib")
-                {
-                    print "missing archive: '$llvm_dstroot_arch/$llvm_lib'\n";
-                    $do_make = 1;
-                }
-            }
             if ($do_make == 0)
             {
                 if (-e $arch_digest_file)
@@ -251,11 +181,16 @@ sub build_llvm
                         # the final archive exists, check the modification times on all .a files that
                         # make the final archive to make sure we don't need to rebuild
                         my $llvm_dstroot_arch_archive_modtime = (stat($llvm_dstroot_arch_archive))[9];
+                        
+                        our @archive_files = glob "$llvm_dstroot_arch/$llvm_configuration/lib/*.a";
+                        
                         for my $llvm_lib (@archive_files)
                         {
-                            if (-e "$llvm_dstroot_arch/$llvm_lib")
+                            print "archive (1): $llvm_lib\n";
+                            
+                            if (-e $llvm_lib)
                             {
-                                if ($llvm_dstroot_arch_archive_modtime < (stat("$llvm_dstroot_arch/$llvm_lib"))[9])
+                                if ($llvm_dstroot_arch_archive_modtime < (stat($llvm_lib))[9])
                                 {
                                     print "'$llvm_dstroot_arch/$llvm_lib' is newer than '$llvm_dstroot_arch_archive', rebuilding...\n";
                                     $do_make = 1;
@@ -454,10 +389,12 @@ sub create_single_llvm_archive_for_arch
     -e $arch_output_file and return;
     my $files = "$arch_dstroot/files.txt";
     open (FILES, ">$files") or die "Can't open $! for writing...\n";
-
-    for my $path (@archive_files)
+    
+    our @archive_files = glob "$arch_dstroot/$llvm_configuration/lib/*.a";
+    
+    for my $archive_fullpath (@archive_files)
     {
-        my $archive_fullpath = finalize_path ("$arch_dstroot/$path");
+        print "archive (2): $archive_fullpath\n";
         if (-e $archive_fullpath)
         {
             if ($split_into_objects)
