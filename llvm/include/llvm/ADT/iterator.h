@@ -14,88 +14,64 @@
 
 namespace llvm {
 
-/// \brief CRTP base class for adapting an iterator to a different type.
+/// \brief CRTP base class which implements the entire standard iterator facade
+/// in terms of a minimal subset of the interface.
 ///
-/// This class can be used through CRTP to adapt one iterator into another.
-/// Typically this is done through providing in the derived class a custom \c
-/// operator* implementation. Other methods can be overridden as well.
+/// Use this when it is reasonable to implement most of the iterator
+/// functionality in terms of a core subset. If you need special behavior or
+/// there are performance implications for this, you may want to override the
+/// relevant members instead.
 ///
-/// FIXME: Factor out the iterator-facade-like aspects into a base class that
-/// can be used for defining completely custom iterators.
-template <typename DerivedT, typename WrappedIteratorT, typename T,
-          typename PointerT = T *, typename ReferenceT = T &,
-          // Don't provide these, they are mostly to act as aliases below.
-          typename WrappedTraitsT = std::iterator_traits<WrappedIteratorT>>
-class iterator_adaptor_base
-    : public std::iterator<typename WrappedTraitsT::iterator_category, T,
-                           typename WrappedTraitsT::difference_type, PointerT,
-                           ReferenceT> {
-protected:
-  WrappedIteratorT I;
-
-  iterator_adaptor_base() {}
-
-  template <
-      typename U,
-      typename = typename std::enable_if<
-          !std::is_same<typename std::remove_cv<
-                            typename std::remove_reference<U>::type>::type,
-                        DerivedT>::value>::type>
-  explicit iterator_adaptor_base(U &&u)
-      : I(std::forward<U &&>(u)) {}
-
-public:
-  typedef typename iterator_adaptor_base::iterator::difference_type
-  difference_type;
-
-  DerivedT &operator+=(difference_type n) {
-    I += n;
-    return *static_cast<DerivedT *>(this);
-  }
-  DerivedT &operator-=(difference_type n) {
-    I -= n;
-    return *static_cast<DerivedT *>(this);
-  }
-  DerivedT operator+(difference_type n) const {
-    DerivedT tmp = *this;
+/// Note, one abstraction that this does *not* provide is implementing
+/// subtraction in terms of addition by negating the difference. Negation isn't
+/// always information preserving, and I can see very reasonable iterator
+/// designs where this doesn't work well. It doesn't really force much added
+/// boilerplate anyways.
+///
+/// Another abstraction that this doesn't provide is implementing increment in
+/// terms of addition of one. These aren't equivalent for all iterator
+/// categories, and respecting that adds a lot of complexity for little gain.
+template <typename DerivedT, typename IteratorCategoryT, typename T,
+          typename DifferenceTypeT, typename PointerT = T *,
+          typename ReferenceT = T &>
+struct iterator_facade_base
+    : std::iterator<IteratorCategoryT, T, DifferenceTypeT, PointerT,
+                    ReferenceT> {
+  DerivedT operator+(DifferenceTypeT n) const {
+    DerivedT tmp = *static_cast<const DerivedT *>(this);
     tmp += n;
     return tmp;
   }
-  friend DerivedT operator+(difference_type n, const DerivedT &i) {
+  friend DerivedT operator+(DifferenceTypeT n, const DerivedT &i) {
     return i + n;
   }
-  DerivedT operator-(difference_type n) const {
-    DerivedT tmp = *this;
+  DerivedT operator-(DifferenceTypeT n) const {
+    DerivedT tmp = *static_cast<const DerivedT *>(this);
     tmp -= n;
     return tmp;
   }
-  difference_type operator-(const DerivedT &RHS) const { return I - RHS.I; }
 
   DerivedT &operator++() {
-    ++I;
-    return *static_cast<DerivedT *>(this);
-  }
-  DerivedT &operator--() {
-    --I;
-    return *static_cast<DerivedT *>(this);
+    return static_cast<DerivedT *>(this)->operator+=(1);
   }
   DerivedT operator++(int) {
     DerivedT tmp = *static_cast<DerivedT *>(this);
-    ++*this;
+    ++*static_cast<DerivedT *>(this);
     return tmp;
+  }
+  DerivedT &operator--() {
+    return static_cast<DerivedT *>(this)->operator-=(1);
   }
   DerivedT operator--(int) {
     DerivedT tmp = *static_cast<DerivedT *>(this);
-    --*this;
+    --*static_cast<DerivedT *>(this);
     return tmp;
   }
 
-  bool operator==(const DerivedT &RHS) const { return I == RHS.I; }
   bool operator!=(const DerivedT &RHS) const {
     return !static_cast<const DerivedT *>(this)->operator==(RHS);
   }
 
-  bool operator<(const DerivedT &RHS) const { return I < RHS.I; }
   bool operator>(const DerivedT &RHS) const {
     return !static_cast<const DerivedT *>(this)->operator<(RHS) &&
            !static_cast<const DerivedT *>(this)->operator==(RHS);
@@ -107,13 +83,72 @@ public:
     return !static_cast<const DerivedT *>(this)->operator<(RHS);
   }
 
-  ReferenceT operator*() const { return *I; }
   PointerT operator->() const {
-    return static_cast<const DerivedT *>(this)->operator*();
+    return &static_cast<const DerivedT *>(this)->operator*();
   }
-  ReferenceT operator[](difference_type n) const {
+  ReferenceT operator[](DifferenceTypeT n) const {
     return *static_cast<const DerivedT *>(this)->operator+(n);
   }
+};
+
+/// \brief CRTP base class for adapting an iterator to a different type.
+///
+/// This class can be used through CRTP to adapt one iterator into another.
+/// Typically this is done through providing in the derived class a custom \c
+/// operator* implementation. Other methods can be overridden as well.
+template <typename DerivedT, typename WrappedIteratorT, typename T,
+          typename PointerT = T *, typename ReferenceT = T &,
+          // Don't provide these, they are mostly to act as aliases below.
+          typename WrappedTraitsT = std::iterator_traits<WrappedIteratorT>>
+class iterator_adaptor_base
+    : public iterator_facade_base<
+          DerivedT, typename WrappedTraitsT::iterator_category, T,
+          typename WrappedTraitsT::difference_type, PointerT, ReferenceT> {
+protected:
+  WrappedIteratorT I;
+
+  iterator_adaptor_base() {}
+
+  template <
+      typename U,
+      typename = typename std::enable_if<
+          !std::is_base_of<typename std::remove_cv<
+                               typename std::remove_reference<U>::type>::type,
+                           DerivedT>::value>::type>
+  explicit iterator_adaptor_base(U &&u)
+      : I(std::forward<U &&>(u)) {}
+
+public:
+  typedef typename WrappedTraitsT::difference_type difference_type;
+
+  DerivedT &operator+=(difference_type n) {
+    I += n;
+    return *static_cast<DerivedT *>(this);
+  }
+  DerivedT &operator-=(difference_type n) {
+    I -= n;
+    return *static_cast<DerivedT *>(this);
+  }
+  using iterator_adaptor_base::iterator_facade_base::operator-;
+  difference_type operator-(const DerivedT &RHS) const { return I - RHS.I; }
+
+  // We have to explicitly provide ++ and -- rather than letting the facade
+  // forward to += because WrappedIteratorT might not support +=.
+  using iterator_adaptor_base::iterator_facade_base::operator++;
+  DerivedT &operator++() {
+    ++I;
+    return *static_cast<DerivedT *>(this);
+  }
+  using iterator_adaptor_base::iterator_facade_base::operator--;
+  DerivedT &operator--() {
+    --I;
+    return *static_cast<DerivedT *>(this);
+  }
+
+  bool operator==(const DerivedT &RHS) const { return I == RHS.I; }
+  bool operator<(const DerivedT &RHS) const { return I < RHS.I; }
+
+  ReferenceT operator*() const { return *I; }
 };
 
 /// \brief An iterator type that allows iterating over the pointees via some
