@@ -5121,7 +5121,7 @@ CXDiagnostic clang_codeCompleteGetDiagnostic(CXCodeCompleteResults *Results,
                                              unsigned Index);
 
 /**
- * \brief Determines what compeltions are appropriate for the context
+ * \brief Determines what completions are appropriate for the context
  * the given code completion.
  * 
  * \param Results the code completion results to query
