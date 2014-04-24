@@ -1740,7 +1740,7 @@ enum CXCursorKind {
 
   /**
    * \brief An expression that refers to some value declaration, such
-   * as a function, varible, or enumerator.
+   * as a function, variable, or enumerator.
    */
   CXCursor_DeclRefExpr                   = 101,
 
@@ -1978,7 +1978,7 @@ enum CXCursorKind {
    */
   CXCursor_ObjCBoolLiteralExpr           = 145,
 
-  /** \brief Represents the "self" expression in a ObjC method.
+  /** \brief Represents the "self" expression in an Objective-C method.
    */
   CXCursor_ObjCSelfExpr                  = 146,
 
@@ -2510,10 +2510,10 @@ CINDEX_LINKAGE unsigned clang_CXCursorSet_insert(CXCursorSet cset,
  * void C::f() { }
  * \endcode
  *
- * In the out-of-line definition of \c C::f, the semantic parent is the 
+ * In the out-of-line definition of \c C::f, the semantic parent is
  * the class \c C, of which this function is a member. The lexical parent is
  * the place where the declaration actually occurs in the source code; in this
- * case, the definition occurs in the translation unit. In general, the 
+ * case, the definition occurs in the translation unit. In general, the
  * lexical parent for a given entity can change without affecting the semantics
  * of the program, and the lexical parent of different declarations of the
  * same entity may be different. Changing the semantic parent of a declaration,
@@ -2545,10 +2545,10 @@ CINDEX_LINKAGE CXCursor clang_getCursorSemanticParent(CXCursor cursor);
  * void C::f() { }
  * \endcode
  *
- * In the out-of-line definition of \c C::f, the semantic parent is the 
+ * In the out-of-line definition of \c C::f, the semantic parent is
  * the class \c C, of which this function is a member. The lexical parent is
  * the place where the declaration actually occurs in the source code; in this
- * case, the definition occurs in the translation unit. In general, the 
+ * case, the definition occurs in the translation unit. In general, the
  * lexical parent for a given entity can change without affecting the semantics
  * of the program, and the lexical parent of different declarations of the
  * same entity may be different. Changing the semantic parent of a declaration,
@@ -2673,7 +2673,7 @@ CINDEX_LINKAGE CXSourceLocation clang_getCursorLocation(CXCursor);
  *
  * The extent of a cursor starts with the file/line/column pointing at the
  * first character within the source construct that the cursor refers to and
- * ends with the last character withinin that source construct. For a
+ * ends with the last character within that source construct. For a
  * declaration, the extent covers the declaration itself. For a reference,
  * the extent covers the location of the reference (e.g., where the referenced
  * entity was actually used).
@@ -2695,7 +2695,7 @@ CINDEX_LINKAGE CXSourceRange clang_getCursorExtent(CXCursor);
  */
 enum CXTypeKind {
   /**
-   * \brief Reprents an invalid type (e.g., where no type is available).
+   * \brief Represents an invalid type (e.g., where no type is available).
    */
   CXType_Invalid = 0,
 
@@ -3367,8 +3367,8 @@ CINDEX_LINKAGE CXString clang_getCursorSpelling(CXCursor);
 /**
  * \brief Retrieve a range for a piece that forms the cursors spelling name.
  * Most of the times there is only one range for the complete spelling but for
- * objc methods and objc message expressions, there are multiple pieces for each
- * selector identifier.
+ * Objective-C methods and Objective-C message expressions, there are multiple
+ * pieces for each selector identifier.
  * 
  * \param pieceIndex the index of the spelling name piece. If this is greater
  * than the actual number of pieces, it will return a NULL (invalid) range.
@@ -3464,25 +3464,25 @@ CINDEX_LINKAGE CXCursor clang_getCanonicalCursor(CXCursor);
 
 
 /**
- * \brief If the cursor points to a selector identifier in a objc method or
- * message expression, this returns the selector index.
+ * \brief If the cursor points to a selector identifier in an Objective-C
+ * method or message expression, this returns the selector index.
  *
  * After getting a cursor with #clang_getCursor, this can be called to
  * determine if the location points to a selector identifier.
  *
- * \returns The selector index if the cursor is an objc method or message
+ * \returns The selector index if the cursor is an Objective-C method or message
  * expression and the cursor is pointing to a selector identifier, or -1
  * otherwise.
  */
 CINDEX_LINKAGE int clang_Cursor_getObjCSelectorIndex(CXCursor);
 
 /**
- * \brief Given a cursor pointing to a C++ method call or an ObjC message,
- * returns non-zero if the method/message is "dynamic", meaning:
+ * \brief Given a cursor pointing to a C++ method call or an Objective-C
+ * message, returns non-zero if the method/message is "dynamic", meaning:
  * 
  * For a C++ method: the call is virtual.
- * For an ObjC message: the receiver is an object instance, not 'super' or a
- * specific class.
+ * For an Objective-C message: the receiver is an object instance, not 'super'
+ * or a specific class.
  * 
  * If the method/message is "static" or the cursor does not point to a
  * method/message, it will return zero.
@@ -3490,8 +3490,8 @@ CINDEX_LINKAGE int clang_Cursor_getObjCSelectorIndex(CXCursor);
 CINDEX_LINKAGE int clang_Cursor_isDynamicCall(CXCursor C);
 
 /**
- * \brief Given a cursor pointing to an ObjC message, returns the CXType of the
- * receiver.
+ * \brief Given a cursor pointing to an Objective-C message, returns the CXType
+ * of the receiver.
  */
 CINDEX_LINKAGE CXType clang_Cursor_getReceiverType(CXCursor C);
 
@@ -3526,7 +3526,7 @@ CINDEX_LINKAGE unsigned clang_Cursor_getObjCPropertyAttributes(CXCursor C,
 
 /**
  * \brief 'Qualifiers' written next to the return and parameter types in
- * ObjC method declarations.
+ * Objective-C method declarations.
  */
 typedef enum {
   CXObjCDeclQualifier_None = 0x0,
@@ -3539,15 +3539,16 @@ typedef enum {
 } CXObjCDeclQualifierKind;
 
 /**
- * \brief Given a cursor that represents an ObjC method or parameter
- * declaration, return the associated ObjC qualifiers for the return type or the
- * parameter respectively. The bits are formed from CXObjCDeclQualifierKind.
+ * \brief Given a cursor that represents an Objective-C method or parameter
+ * declaration, return the associated Objective-C qualifiers for the return
+ * type or the parameter respectively. The bits are formed from
+ * CXObjCDeclQualifierKind.
  */
 CINDEX_LINKAGE unsigned clang_Cursor_getObjCDeclQualifiers(CXCursor C);
 
 /**
- * \brief Given a cursor that represents an ObjC method or property declaration,
- * return non-zero if the declaration was affected by "@optional".
+ * \brief Given a cursor that represents an Objective-C method or property
+ * declaration, return non-zero if the declaration was affected by "@optional".
  * Returns zero if the cursor is not such a declaration or it is "@required".
  */
 CINDEX_LINKAGE unsigned clang_Cursor_isObjCOptional(CXCursor C);
@@ -4288,7 +4289,7 @@ enum CXNameRefFlags {
    * Non-contiguous names occur in Objective-C when a selector with two or more
    * parameters is used, or in C++ when using an operator:
    * \code
-   * [object doSomething:here withValue:there]; // ObjC
+   * [object doSomething:here withValue:there]; // Objective-C
    * return some_vector[1]; // C++
    * \endcode
    */
@@ -5571,7 +5572,7 @@ typedef struct {
   const CXIdxContainerInfo *declAsContainer;
   /**
    * \brief Whether the declaration exists in code or was created implicitly
-   * by the compiler, e.g. implicit objc methods for properties.
+   * by the compiler, e.g. implicit Objective-C methods for properties.
    */
   int isImplicit;
   const CXIdxAttrInfo *const *attributes;
@@ -5644,8 +5645,8 @@ typedef enum {
    */
   CXIdxEntityRef_Direct = 1,
   /**
-   * \brief An implicit reference, e.g. a reference of an ObjC method via the
-   * dot syntax.
+   * \brief An implicit reference, e.g. a reference of an Objective-C method
+   * via the dot syntax.
    */
   CXIdxEntityRef_Implicit = 2
 } CXIdxEntityRefKind;
@@ -5839,7 +5840,7 @@ typedef enum {
 
   /**
    * \brief Skip a function/method body that was already parsed during an
-   * indexing session assosiated with a \c CXIndexAction object.
+   * indexing session associated with a \c CXIndexAction object.
    * Bodies in system headers are always skipped.
    */
   CXIndexOpt_SkipParsedBodiesInSession = 0x10
