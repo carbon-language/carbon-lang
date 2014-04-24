@@ -675,6 +675,14 @@ namespace {
       case Intrinsic::exp:
       case Intrinsic::exp2:
       case Intrinsic::pow:
+      case Intrinsic::round:
+      case Intrinsic::copysign:
+      case Intrinsic::ceil:
+      case Intrinsic::nearbyint:
+      case Intrinsic::rint:
+      case Intrinsic::trunc:
+      case Intrinsic::floor:
+      case Intrinsic::fabs:
         return Config.VectorizeMath;
       case Intrinsic::fma:
       case Intrinsic::fmuladd:
