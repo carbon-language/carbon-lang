@@ -187,3 +187,14 @@ define i32 @test13(i32 %mask, i32 %base, i32 %intra) {
 ; CHECK: testb	$8, %dil
 ; CHECK: cmovnel
 }
+
+define i32 @test14(i32 %mask, i32 %base, i32 %intra) #0 {
+  %s = lshr i32 %mask, 7
+  %tobool = icmp sgt i32 %s, -1
+  %cond = select i1 %tobool, i32 %intra, i32 %base
+  ret i32 %cond
+
+; CHECK-LABEL: test14:
+; CHECK: 	shrl	$7, %edi
+; CHECK-NEXT: 	cmovnsl	%edx, %esi
+}

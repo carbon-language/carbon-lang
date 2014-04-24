@@ -9802,7 +9802,8 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
     // If we have a constant logical shift that's only used in a comparison
     // against zero turn it into an equivalent AND. This allows turning it into
     // a TEST instruction later.
-    if (isa<ConstantSDNode>(Op->getOperand(1)) && !hasNonFlagsUse(Op)) {
+    if ((X86CC == X86::COND_E || X86CC == X86::COND_NE) &&
+        isa<ConstantSDNode>(Op->getOperand(1)) && !hasNonFlagsUse(Op)) {
       EVT VT = Op.getValueType();
       unsigned BitWidth = VT.getSizeInBits();
       unsigned ShAmt = Op->getConstantOperandVal(1);
