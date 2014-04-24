@@ -2369,6 +2369,9 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
                               CXXRecordDecl *Instantiation,
                         const MultiLevelTemplateArgumentList &TemplateArgs,
                               TemplateSpecializationKind TSK) {
+  // FIXME: We need to notify the ASTMutationListener that we did all of these
+  // things, in case we have an explicit instantiation definition in a PCM, a
+  // module, or preamble, and the declaration is in an imported AST.
   assert(
       (TSK == TSK_ExplicitInstantiationDefinition ||
        TSK == TSK_ExplicitInstantiationDeclaration ||
@@ -2393,28 +2396,27 @@ Sema::InstantiateClassMembers(SourceLocation PointOfInstantiation,
                                                    SuppressNew) ||
             SuppressNew)
           continue;
-        
-        if (Function->isDefined())
+
+        // C++11 [temp.explicit]p8:
+        //   An explicit instantiation definition that names a class template
+        //   specialization explicitly instantiates the class template
+        //   specialization and is only an explicit instantiation definition
+        //   of members whose definition is visible at the point of
+        //   instantiation.
+        if (TSK == TSK_ExplicitInstantiationDefinition && !Pattern->isDefined())
           continue;
 
-        if (TSK == TSK_ExplicitInstantiationDefinition) {
-          // C++0x [temp.explicit]p8:
-          //   An explicit instantiation definition that names a class template
-          //   specialization explicitly instantiates the class template 
-          //   specialization and is only an explicit instantiation definition 
-          //   of members whose definition is visible at the point of 
-          //   instantiation.
-          if (!Pattern->isDefined())
-            continue;
-        
-          Function->setTemplateSpecializationKind(TSK, PointOfInstantiation);
-                      
+        Function->setTemplateSpecializationKind(TSK, PointOfInstantiation);
+
+        if (Function->isDefined()) {
+          // Let the ASTConsumer know that this function has been explicitly
+          // instantiated now, and its linkage might have changed.
+          Consumer.HandleTopLevelDecl(DeclGroupRef(Function));
+        } else if (TSK == TSK_ExplicitInstantiationDefinition) {
           InstantiateFunctionDefinition(PointOfInstantiation, Function);
-        } else {
-          Function->setTemplateSpecializationKind(TSK, PointOfInstantiation);
-          if (TSK == TSK_ImplicitInstantiation)
-            PendingLocalImplicitInstantiations.push_back(
-                std::make_pair(Function, PointOfInstantiation));
+        } else if (TSK == TSK_ImplicitInstantiation) {
+          PendingLocalImplicitInstantiations.push_back(
+              std::make_pair(Function, PointOfInstantiation));
         }
       }
     } else if (auto *Var = dyn_cast<VarDecl>(D)) {

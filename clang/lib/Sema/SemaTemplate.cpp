@@ -7188,6 +7188,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
     // TSK_ExplicitInstantiationDefinition
     if (Old_TSK == TSK_ExplicitInstantiationDeclaration &&
         TSK == TSK_ExplicitInstantiationDefinition)
+      // FIXME: Need to notify the ASTMutationListener that we did this.
       Def->setTemplateSpecializationKind(TSK);
 
     InstantiateClassTemplateSpecializationMembers(TemplateNameLoc, Def, TSK);
@@ -7624,7 +7625,11 @@ DeclResult Sema::ActOnExplicitInstantiation(Scope *S,
   if (Attr)
     ProcessDeclAttributeList(S, Specialization, Attr);
 
-  if (TSK == TSK_ExplicitInstantiationDefinition)
+  if (Specialization->isDefined()) {
+    // Let the ASTConsumer know that this function has been explicitly
+    // instantiated now, and its linkage might have changed.
+    Consumer.HandleTopLevelDecl(DeclGroupRef(Specialization));
+  } else if (TSK == TSK_ExplicitInstantiationDefinition)
     InstantiateFunctionDefinition(D.getIdentifierLoc(), Specialization);
 
   // C++0x [temp.explicit]p2:

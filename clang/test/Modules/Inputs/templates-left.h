@@ -41,3 +41,13 @@ int defineListDoubleLeft() {
 }
 
 template<typename T> struct MergePatternDecl;
+
+extern template struct ExplicitInstantiation<false, false>;
+extern template struct ExplicitInstantiation<false, true>;
+extern template struct ExplicitInstantiation<true, false>;
+extern template struct ExplicitInstantiation<true, true>;
+
+void useExplicitInstantiation() {
+  ExplicitInstantiation<true, false>().f();
+  ExplicitInstantiation<true, true>().f();
+}

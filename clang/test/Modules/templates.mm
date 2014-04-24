@@ -39,6 +39,11 @@ void testRedeclDefinition() {
   redeclDefinitionEmit();
 }
 
+// CHECK-NOT: @_ZN21ExplicitInstantiationILb0ELb0EE1fEv(
+// CHECK: declare {{.*}}@_ZN21ExplicitInstantiationILb1ELb0EE1fEv(
+// CHECK: define {{.*}}@_ZN21ExplicitInstantiationILb1ELb1EE1fEv(
+// CHECK-NOT: @_ZN21ExplicitInstantiationILb0ELb0EE1fEv(
+
 // These three are all the same type.
 typedef OuterIntInner_left OuterIntInner;
 typedef OuterIntInner_right OuterIntInner;
@@ -76,3 +81,6 @@ template<typename T> struct MergePatternDecl {
   void f(Type);
 };
 template<typename T> void MergePatternDecl<T>::f(Type type) {}
+// CHECK: define {{.*}}@_ZN21ExplicitInstantiationILb0ELb1EE1fEv(
+template struct ExplicitInstantiation<false, true>;
+template struct ExplicitInstantiation<true, true>;
