@@ -633,7 +633,7 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   // "Define" each section & symbol. This creates section & symbol
   // entries in the staging area.
 
-  static_assert(sizeof(((COFF::AuxiliaryFile *)0)->FileName) == COFF::SymbolSize,
+  static_assert(sizeof(((COFF::AuxiliaryFile *)nullptr)->FileName) == COFF::SymbolSize,
                 "size mismatch for COFF::AuxiliaryFile::FileName");
   for (auto FI = Asm.file_names_begin(), FE = Asm.file_names_end();
        FI != FE; ++FI) {

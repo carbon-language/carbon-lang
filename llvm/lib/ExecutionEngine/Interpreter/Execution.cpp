@@ -897,7 +897,7 @@ void Interpreter::visitSwitchInst(SwitchInst &I) {
   GenericValue CondVal = getOperandValue(Cond, SF);
 
   // Check to see if any of the cases match...
-  BasicBlock *Dest = 0;
+  BasicBlock *Dest = nullptr;
   for (SwitchInst::CaseIt i = I.case_begin(), e = I.case_end(); i != e; ++i) {
     GenericValue CaseVal = getOperandValue(i.getCaseValue(), SF);
     if (executeICMP_EQ(CondVal, CaseVal, ElTy).IntVal != 0) {

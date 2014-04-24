@@ -81,7 +81,7 @@ public:
       else
         T = T->getRight();
     }
-    return NULL;
+    return nullptr;
   }
 
   /// getMaxElement - Find the subtree associated with the highest ranged
@@ -242,9 +242,9 @@ private:
   ///   ImutAVLFactory.
   ImutAVLTree(Factory *f, ImutAVLTree* l, ImutAVLTree* r, value_type_ref v,
               unsigned height)
-    : factory(f), left(l), right(r), prev(0), next(0), height(height),
-      IsMutable(true), IsDigestCached(false), IsCanonicalized(0),
-      value(v), digest(0), refCount(0)
+    : factory(f), left(l), right(r), prev(nullptr), next(nullptr),
+      height(height), IsMutable(true), IsDigestCached(false),
+      IsCanonicalized(0), value(v), digest(0), refCount(0)
   {
     if (left) left->retain();
     if (right) right->retain();
@@ -411,7 +411,7 @@ public:
     return T;
   }
 
-  TreeTy* getEmptyTree() const { return NULL; }
+  TreeTy* getEmptyTree() const { return nullptr; }
 
 protected:
 
@@ -607,7 +607,7 @@ protected:
 public:
   TreeTy *getCanonicalTree(TreeTy *TNew) {
     if (!TNew)
-      return 0;
+      return nullptr;
 
     if (TNew->IsCanonicalized)
       return TNew;
@@ -619,7 +619,7 @@ public:
     do {
       if (!entry)
         break;
-      for (TreeTy *T = entry ; T != 0; T = T->next) {
+      for (TreeTy *T = entry ; T != nullptr; T = T->next) {
         // Compare the Contents('T') with Contents('TNew')
         typename TreeTy::iterator TI = T->begin(), TE = T->end();
         if (!compareTreeWithSection(TNew, TI, TE))

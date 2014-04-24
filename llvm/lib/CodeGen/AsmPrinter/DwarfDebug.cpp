@@ -170,8 +170,8 @@ static LLVM_CONSTEXPR DwarfAccelTable::Atom TypeAtoms[] = {
     DwarfAccelTable::Atom(dwarf::DW_ATOM_type_flags, dwarf::DW_FORM_data1)};
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
-    : Asm(A), MMI(Asm->MMI), FirstCU(0), PrevLabel(NULL), GlobalRangeCount(0),
-      InfoHolder(A, "info_string", DIEValueAllocator),
+    : Asm(A), MMI(Asm->MMI), FirstCU(nullptr), PrevLabel(nullptr),
+      GlobalRangeCount(0), InfoHolder(A, "info_string", DIEValueAllocator),
       UsedNonDefaultText(false),
       SkeletonHolder(A, "skel_string", DIEValueAllocator),
       AccelNames(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
@@ -182,13 +182,14 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
                                            dwarf::DW_FORM_data4)),
       AccelTypes(TypeAtoms) {
 
-  DwarfInfoSectionSym = DwarfAbbrevSectionSym = DwarfStrSectionSym = 0;
-  DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = DwarfLineSectionSym = 0;
-  DwarfAddrSectionSym = 0;
-  DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = 0;
-  FunctionBeginSym = FunctionEndSym = 0;
-  CurFn = 0;
-  CurMI = 0;
+  DwarfInfoSectionSym = DwarfAbbrevSectionSym = DwarfStrSectionSym = nullptr;
+  DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = nullptr;
+  DwarfLineSectionSym = nullptr;
+  DwarfAddrSectionSym = nullptr;
+  DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = nullptr;
+  FunctionBeginSym = FunctionEndSym = nullptr;
+  CurFn = nullptr;
+  CurMI = nullptr;
 
   // Turn on accelerator tables for Darwin by default, pubnames by
   // default for non-Darwin, and handle split dwarf.
@@ -222,10 +223,10 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
 // Switch to the specified MCSection and emit an assembler
 // temporary label to it if SymbolStem is specified.
 static MCSymbol *emitSectionSym(AsmPrinter *Asm, const MCSection *Section,
-                                const char *SymbolStem = 0) {
+                                const char *SymbolStem = nullptr) {
   Asm->OutStreamer.SwitchSection(Section);
   if (!SymbolStem)
-    return 0;
+    return nullptr;
 
   MCSymbol *TmpSym = Asm->GetTempSymbol(SymbolStem);
   Asm->OutStreamer.EmitLabel(TmpSym);
@@ -423,7 +424,7 @@ void DwarfDebug::addScopeRangeList(DwarfCompileUnit &TheCU, DIE *ScopeDIE,
 DIE *DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
                                           LexicalScope *Scope) {
   if (isLexicalScopeDIENull(Scope))
-    return 0;
+    return nullptr;
 
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_lexical_block);
   if (Scope->isAbstractScope())
@@ -460,13 +461,13 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
          "LexicalScope does not have instruction markers!");
 
   if (!Scope->getScopeNode())
-    return NULL;
+    return nullptr;
   DIScope DS(Scope->getScopeNode());
   DISubprogram InlinedSP = getDISubprogram(DS);
   DIE *OriginDIE = TheCU.getDIE(InlinedSP);
   if (!OriginDIE) {
     DEBUG(dbgs() << "Unable to find original DIE for an inlined subprogram.");
-    return NULL;
+    return nullptr;
   }
 
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
@@ -480,7 +481,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
     MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
     MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
 
-    if (StartLabel == 0 || EndLabel == 0)
+    if (!StartLabel || !EndLabel)
       llvm_unreachable("Unexpected Start and End labels for an inlined scope!");
 
     assert(StartLabel->isDefined() &&
@@ -508,7 +509,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
 DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit &TheCU,
                                         LexicalScope *Scope,
                                         SmallVectorImpl<DIE *> &Children) {
-  DIE *ObjectPointer = NULL;
+  DIE *ObjectPointer = nullptr;
 
   // Collect arguments for current function.
   if (LScopes.isCurrentFunctionScope(Scope)) {
@@ -549,18 +550,18 @@ DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit &TheCU,
 DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
                                    LexicalScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
-    return NULL;
+    return nullptr;
 
   DIScope DS(Scope->getScopeNode());
 
   SmallVector<DIE *, 8> Children;
-  DIE *ObjectPointer = NULL;
+  DIE *ObjectPointer = nullptr;
   bool ChildrenCreated = false;
 
   // We try to create the scope DIE first, then the children DIEs. This will
   // avoid creating un-used children then removing them later when we find out
   // the scope DIE is null.
-  DIE *ScopeDIE = NULL;
+  DIE *ScopeDIE = nullptr;
   if (Scope->getInlinedAt())
     ScopeDIE = constructInlinedScopeDIE(TheCU, Scope);
   else if (DS.isSubprogram()) {
@@ -575,7 +576,7 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
   } else {
     // Early exit when we know the scope DIE is going to be null.
     if (isLexicalScopeDIENull(Scope))
-      return NULL;
+      return nullptr;
 
     // We create children here when we know the scope DIE is not going to be
     // null and the children will be added to the scope DIE.
@@ -588,10 +589,10 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
         std::equal_range(
             ScopesWithImportedEntities.begin(),
             ScopesWithImportedEntities.end(),
-            std::pair<const MDNode *, const MDNode *>(DS, (const MDNode *)0),
+            std::pair<const MDNode *, const MDNode *>(DS, nullptr),
             less_first());
     if (Children.empty() && Range.first == Range.second)
-      return NULL;
+      return nullptr;
     ScopeDIE = constructLexicalScopeDIE(TheCU, Scope);
     assert(ScopeDIE && "Scope DIE should not be null.");
     for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second;
@@ -602,7 +603,7 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
   if (!ScopeDIE) {
     assert(Children.empty() &&
            "We create children only when the scope DIE is not null.");
-    return NULL;
+    return nullptr;
   }
   if (!ChildrenCreated)
     // We create children when the scope DIE is not null.
@@ -612,7 +613,7 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
   for (DIE *I : Children)
     ScopeDIE->addChild(I);
 
-  if (DS.isSubprogram() && ObjectPointer != NULL)
+  if (DS.isSubprogram() && ObjectPointer != nullptr)
     TheCU.addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, ObjectPointer);
 
   return ScopeDIE;
@@ -860,7 +861,7 @@ void DwarfDebug::collectDeadVariables() {
           DIVariable DV(Variables.getElement(vi));
           if (!DV.isVariable())
             continue;
-          DbgVariable NewVar(DV, NULL, this);
+          DbgVariable NewVar(DV, nullptr, this);
           if (DIE *VariableDIE = SPCU->constructVariableDIE(NewVar, false))
             SPDIE->addChild(VariableDIE);
         }
@@ -959,7 +960,7 @@ void DwarfDebug::endSections() {
       // Some symbols (e.g. common/bss on mach-o) can have no section but still
       // appear in the output. This sucks as we rely on sections to build
       // arange spans. We can do it without, but it's icky.
-      SectionMap[NULL].push_back(SCU);
+      SectionMap[nullptr].push_back(SCU);
     }
   }
 
@@ -977,7 +978,7 @@ void DwarfDebug::endSections() {
   // Add terminating symbols for each section.
   for (unsigned ID = 0, E = Sections.size(); ID != E; ID++) {
     const MCSection *Section = Sections[ID];
-    MCSymbol *Sym = NULL;
+    MCSymbol *Sym = nullptr;
 
     if (Section) {
       // We can't call MCSection::getLabelEndName, as it's only safe to do so
@@ -990,7 +991,7 @@ void DwarfDebug::endSections() {
     }
 
     // Insert a final terminator.
-    SectionMap[Section].push_back(SymbolCU(NULL, Sym));
+    SectionMap[Section].push_back(SymbolCU(nullptr, Sym));
   }
 }
 
@@ -1054,7 +1055,7 @@ void DwarfDebug::endModule() {
   SPMap.clear();
 
   // Reset these for the next Module if we have one.
-  FirstCU = NULL;
+  FirstCU = nullptr;
 }
 
 // Find abstract variable, if any, associated with Var.
@@ -1069,9 +1070,9 @@ DbgVariable *DwarfDebug::findAbstractVariable(DIVariable &DV,
 
   LexicalScope *Scope = LScopes.findAbstractScope(ScopeLoc.getScope(Ctx));
   if (!Scope)
-    return NULL;
+    return nullptr;
 
-  AbsDbgVariable = new DbgVariable(Var, NULL, this);
+  AbsDbgVariable = new DbgVariable(Var, nullptr, this);
   addScopeVariable(Scope, AbsDbgVariable);
   AbstractVariables[Var] = AbsDbgVariable;
   return AbsDbgVariable;
@@ -1110,7 +1111,7 @@ void DwarfDebug::collectVariableInfoFromMMITable(
     LexicalScope *Scope = LScopes.findLexicalScope(VI.Loc);
 
     // If variable scope is not found then skip this variable.
-    if (Scope == 0)
+    if (!Scope)
       continue;
 
     DbgVariable *AbsDbgVariable = findAbstractVariable(DV, VI.Loc);
@@ -1183,7 +1184,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     const MachineInstr *MInsn = History.front();
 
     DIVariable DV(Var);
-    LexicalScope *Scope = NULL;
+    LexicalScope *Scope = nullptr;
     if (DV.getTag() == dwarf::DW_TAG_arg_variable &&
         DISubprogram(DV.getContext()).describes(CurFn->getFunction()))
       Scope = LScopes.getCurrentFunctionScope();
@@ -1233,7 +1234,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
 
       // Compute the range for a register location.
       const MCSymbol *FLabel = getLabelBeforeInsn(Begin);
-      const MCSymbol *SLabel = 0;
+      const MCSymbol *SLabel = nullptr;
 
       if (HI + 1 == HE)
         // If Begin is the last instruction in History then its value is valid
@@ -1270,7 +1271,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     if (!DV || !DV.isVariable() || !Processed.insert(DV))
       continue;
     if (LexicalScope *Scope = LScopes.findLexicalScope(DV.getContext()))
-      addScopeVariable(Scope, new DbgVariable(DV, NULL, this));
+      addScopeVariable(Scope, new DbgVariable(DV, nullptr, this));
   }
 }
 
@@ -1307,7 +1308,7 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
         const MDNode *Scope = DL.getScope(Asm->MF->getFunction()->getContext());
         recordSourceLine(DL.getLine(), DL.getCol(), Scope, Flags);
       } else
-        recordSourceLine(0, 0, 0, 0);
+        recordSourceLine(0, 0, nullptr, 0);
     }
   }
 
@@ -1336,11 +1337,11 @@ void DwarfDebug::endInstruction() {
   // Don't create a new label after DBG_VALUE instructions.
   // They don't generate code.
   if (!CurMI->isDebugValue())
-    PrevLabel = 0;
+    PrevLabel = nullptr;
 
   DenseMap<const MachineInstr *, MCSymbol *>::iterator I =
       LabelsAfterInsn.find(CurMI);
-  CurMI = 0;
+  CurMI = nullptr;
 
   // No label needed.
   if (I == LabelsAfterInsn.end())
@@ -1507,7 +1508,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
             if (!Var)
               continue;
             // Reg is now clobbered.
-            LiveUserVar[Reg] = 0;
+            LiveUserVar[Reg] = nullptr;
 
             // Was MD last defined by a DBG_VALUE referring to Reg?
             DbgValueHistoryMap::iterator HistI = DbgValues.find(Var);
@@ -1613,7 +1614,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Every beginFunction(MF) call should be followed by an endFunction(MF) call,
   // though the beginFunction may not be called at all.
   // We should handle both cases.
-  if (CurFn == 0)
+  if (!CurFn)
     CurFn = MF;
   else
     assert(CurFn == MF);
@@ -1625,7 +1626,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     // previously used section to nullptr.
     PrevSection = nullptr;
     PrevCU = nullptr;
-    CurFn = 0;
+    CurFn = nullptr;
     return;
   }
 
@@ -1660,7 +1661,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
         if (AbstractVariables.lookup(CleanDV))
           continue;
         if (LexicalScope *Scope = LScopes.findAbstractScope(DV.getContext()))
-          addScopeVariable(Scope, new DbgVariable(DV, NULL, this));
+          addScopeVariable(Scope, new DbgVariable(DV, nullptr, this));
       }
     }
     if (ProcessedSPNodes.count(AScope->getScopeNode()) == 0)
@@ -1687,8 +1688,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   AbstractVariables.clear();
   LabelsBeforeInsn.clear();
   LabelsAfterInsn.clear();
-  PrevLabel = NULL;
-  CurFn = 0;
+  PrevLabel = nullptr;
+  CurFn = nullptr;
 }
 
 // Register a source line with debug info. Returns the  unique label that was
@@ -2229,11 +2230,11 @@ void DwarfDebug::emitDebugARanges() {
 
     // If we have no section (e.g. common), just write out
     // individual spans for each symbol.
-    if (Section == NULL) {
+    if (!Section) {
       for (const SymbolCU &Cur : List) {
         ArangeSpan Span;
         Span.Start = Cur.Sym;
-        Span.End = NULL;
+        Span.End = nullptr;
         if (Cur.CU)
           Spans[Cur.CU].push_back(Span);
       }
@@ -2426,7 +2427,7 @@ DwarfTypeUnit &DwarfDebug::constructSkeletonTU(DwarfTypeUnit &TU) {
                                               this, &SkeletonHolder);
   DwarfTypeUnit &NewTU = *OwnedUnit;
   NewTU.setTypeSignature(TU.getTypeSignature());
-  NewTU.setType(NULL);
+  NewTU.setType(nullptr);
   NewTU.initSection(
       Asm->getObjFileLowering().getDwarfTypesSection(TU.getTypeSignature()));
 

@@ -178,14 +178,14 @@ namespace {
         FunctionInfo.find(F);
       if (I != FunctionInfo.end())
         return &I->second;
-      return 0;
+      return nullptr;
     }
 
     void AnalyzeGlobals(Module &M);
     void AnalyzeCallGraph(CallGraph &CG, Module &M);
     bool AnalyzeUsesOfPointer(Value *V, std::vector<Function*> &Readers,
                               std::vector<Function*> &Writers,
-                              GlobalValue *OkayStoreDest = 0);
+                              GlobalValue *OkayStoreDest = nullptr);
     bool AnalyzeIndirectGlobalMemory(GlobalValue *GV);
   };
 }
@@ -493,8 +493,8 @@ GlobalsModRef::alias(const Location &LocA,
   if (GV1 || GV2) {
     // If the global's address is taken, pretend we don't know it's a pointer to
     // the global.
-    if (GV1 && !NonAddressTakenGlobals.count(GV1)) GV1 = 0;
-    if (GV2 && !NonAddressTakenGlobals.count(GV2)) GV2 = 0;
+    if (GV1 && !NonAddressTakenGlobals.count(GV1)) GV1 = nullptr;
+    if (GV2 && !NonAddressTakenGlobals.count(GV2)) GV2 = nullptr;
 
     // If the two pointers are derived from two different non-addr-taken
     // globals, or if one is and the other isn't, we know these can't alias.
@@ -508,7 +508,7 @@ GlobalsModRef::alias(const Location &LocA,
   // These pointers may be based on the memory owned by an indirect global.  If
   // so, we may be able to handle this.  First check to see if the base pointer
   // is a direct load from an indirect global.
-  GV1 = GV2 = 0;
+  GV1 = GV2 = nullptr;
   if (const LoadInst *LI = dyn_cast<LoadInst>(UV1))
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(LI->getOperand(0)))
       if (IndirectGlobals.count(GV))

@@ -71,7 +71,7 @@ template <typename Info> class OnDiskChainedHashTableGenerator {
 
     Item(typename Info::key_type_ref Key, typename Info::data_type_ref Data,
          Info &InfoObj)
-        : Key(Key), Data(Data), Next(0), Hash(InfoObj.ComputeHash(Key)) {}
+        : Key(Key), Data(Data), Next(nullptr), Hash(InfoObj.ComputeHash(Key)) {}
   };
 
   /// \brief A linked list of values in a particular hash bucket.
@@ -102,7 +102,7 @@ private:
     for (size_t I = 0; I < NumBuckets; ++I)
       for (Item *E = Buckets[I].Head; E;) {
         Item *N = E->Next;
-        E->Next = 0;
+        E->Next = nullptr;
         insert(NewBuckets, NewSize, E);
         E = N;
       }
@@ -273,7 +273,7 @@ public:
     Info *InfoObj;
 
   public:
-    iterator() : Data(0), Len(0) {}
+    iterator() : Data(nullptr), Len(0) {}
     iterator(const internal_key_type K, const unsigned char *D, offset_type L,
              Info *InfoObj)
         : Key(K), Data(D), Len(L), InfoObj(InfoObj) {}
@@ -406,7 +406,8 @@ public:
         : Ptr(Ptr), NumItemsInBucketLeft(0), NumEntriesLeft(NumEntries),
           InfoObj(InfoObj) {}
     key_iterator()
-        : Ptr(0), NumItemsInBucketLeft(0), NumEntriesLeft(0), InfoObj(0) {}
+        : Ptr(nullptr), NumItemsInBucketLeft(0), NumEntriesLeft(0),
+          InfoObj(0) {}
 
     friend bool operator==(const key_iterator &X, const key_iterator &Y) {
       return X.NumEntriesLeft == Y.NumEntriesLeft;
@@ -478,7 +479,8 @@ public:
         : Ptr(Ptr), NumItemsInBucketLeft(0), NumEntriesLeft(NumEntries),
           InfoObj(InfoObj) {}
     data_iterator()
-        : Ptr(0), NumItemsInBucketLeft(0), NumEntriesLeft(0), InfoObj(0) {}
+        : Ptr(nullptr), NumItemsInBucketLeft(0), NumEntriesLeft(0),
+          InfoObj(nullptr) {}
 
     bool operator==(const data_iterator &X) const {
       return X.NumEntriesLeft == NumEntriesLeft;

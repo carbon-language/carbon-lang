@@ -98,11 +98,11 @@ public:
   static JITEventListener *createIntelJITEventListener(
                                       IntelJITEventsWrapper* AlternativeImpl);
 #else
-  static JITEventListener *createIntelJITEventListener() { return 0; }
+  static JITEventListener *createIntelJITEventListener() { return nullptr; }
 
   static JITEventListener *createIntelJITEventListener(
                                       IntelJITEventsWrapper* AlternativeImpl) {
-    return 0;
+    return nullptr;
   }
 #endif // USE_INTEL_JITEVENTS
 
@@ -115,11 +115,11 @@ public:
                                       OProfileWrapper* AlternativeImpl);
 #else
 
-  static JITEventListener *createOProfileJITEventListener() { return 0; }
+  static JITEventListener *createOProfileJITEventListener() { return nullptr; }
 
   static JITEventListener *createOProfileJITEventListener(
                                       OProfileWrapper* AlternativeImpl) {
-    return 0;
+    return nullptr;
   }
 #endif // USE_OPROFILE
 

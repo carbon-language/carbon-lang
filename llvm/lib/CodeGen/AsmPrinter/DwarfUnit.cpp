@@ -44,7 +44,8 @@ GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
 DwarfUnit::DwarfUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
                      DwarfDebug *DW, DwarfFile *DWU)
     : UniqueID(UID), CUNode(Node), UnitDie(D), DebugInfoOffset(0), Asm(A),
-      DD(DW), DU(DWU), IndexTyDie(0), Section(0), Skeleton(0) {
+      DD(DW), DU(DWU), IndexTyDie(nullptr), Section(nullptr),
+      Skeleton(nullptr) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
@@ -979,7 +980,7 @@ DIE *DwarfUnit::createTypeDIE(DICompositeType Ty) {
 /// given DIType.
 DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
   if (!TyNode)
-    return NULL;
+    return nullptr;
 
   DIType Ty(TyNode);
   assert(Ty.isType());
@@ -1226,7 +1227,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     DIArray Elements = CTy.getTypeArray();
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIDescriptor Element = Elements.getElement(i);
-      DIE *ElemDie = NULL;
+      DIE *ElemDie = nullptr;
       if (Element.isSubprogram())
         ElemDie = getOrCreateSubprogramDIE(DISubprogram(Element));
       else if (Element.isDerivedType()) {
@@ -1430,7 +1431,7 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   // DW_TAG_inlined_subroutine may refer to this DIE.
   SPDie = createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, SP);
 
-  DIE *DeclDie = NULL;
+  DIE *DeclDie = nullptr;
   if (SPDecl.isSubprogram())
     DeclDie = getOrCreateSubprogramDIE(SPDecl);
 
@@ -1542,22 +1543,22 @@ static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
   const ConstantExpr *CE = dyn_cast_or_null<ConstantExpr>(V);
   if (!CE || CE->getNumOperands() != 3 ||
       CE->getOpcode() != Instruction::GetElementPtr)
-    return NULL;
+    return nullptr;
 
   // First operand points to a global struct.
   Value *Ptr = CE->getOperand(0);
   if (!isa<GlobalValue>(Ptr) ||
       !isa<StructType>(cast<PointerType>(Ptr->getType())->getElementType()))
-    return NULL;
+    return nullptr;
 
   // Second operand is zero.
   const ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CE->getOperand(1));
   if (!CI || !CI->isZero())
-    return NULL;
+    return nullptr;
 
   // Third operand is offset.
   if (!isa<ConstantInt>(CE->getOperand(2)))
-    return NULL;
+    return nullptr;
 
   return CE;
 }
@@ -1575,7 +1576,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
 
   // If this is a static data member definition, some attributes belong
   // to the declaration DIE.
-  DIE *VariableDIE = NULL;
+  DIE *VariableDIE = nullptr;
   bool IsStaticMember = false;
   DIDerivedType SDMDecl = GV.getStaticDataMemberDeclaration();
   if (SDMDecl.Verify()) {
@@ -1609,8 +1610,8 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
 
   // Add location.
   bool addToAccelTable = false;
-  DIE *VariableSpecDIE = NULL;
-  bool isGlobalVariable = GV.getGlobal() != NULL;
+  DIE *VariableSpecDIE = nullptr;
+  bool isGlobalVariable = GV.getGlobal() != nullptr;
   if (isGlobalVariable) {
     addToAccelTable = true;
     DIELoc *Loc = new (DIEValueAllocator) DIELoc();
@@ -1806,7 +1807,7 @@ DIE *DwarfUnit::constructVariableDIE(DbgVariable &DV, bool isScopeAbstract) {
   // Define variable debug information entry.
   DIE *VariableDie = new DIE(DV.getTag());
   DbgVariable *AbsVar = DV.getAbstractVariable();
-  DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : NULL;
+  DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : nullptr;
   if (AbsDIE)
     addDIEEntry(VariableDie, dwarf::DW_AT_abstract_origin, AbsDIE);
   else {
@@ -1963,7 +1964,7 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
 /// getOrCreateStaticMemberDIE - Create new DIE for C++ static member.
 DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
   if (!DT.Verify())
-    return NULL;
+    return nullptr;
 
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.

@@ -193,7 +193,7 @@ bool ELFAsmParser::ParseDirectiveSymbolAttribute(StringRef Directive, SMLoc) {
 
 bool ELFAsmParser::ParseSectionSwitch(StringRef Section, unsigned Type,
                                       unsigned Flags, SectionKind Kind) {
-  const MCExpr *Subsection = 0;
+  const MCExpr *Subsection = nullptr;
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     if (getParser().parseExpression(Subsection))
       return true;
@@ -411,7 +411,7 @@ bool ELFAsmParser::ParseSectionArguments(bool IsPush) {
   int64_t Size = 0;
   StringRef GroupName;
   unsigned Flags = 0;
-  const MCExpr *Subsection = 0;
+  const MCExpr *Subsection = nullptr;
   bool UseLastGroup = false;
 
   // Set the defaults first.
@@ -554,7 +554,7 @@ EndStmt:
 
 bool ELFAsmParser::ParseDirectivePrevious(StringRef DirName, SMLoc) {
   MCSectionSubPair PreviousSection = getStreamer().getPreviousSection();
-  if (PreviousSection.first == NULL)
+  if (PreviousSection.first == nullptr)
       return TokError(".previous without corresponding .section");
   getStreamer().SwitchSection(PreviousSection.first, PreviousSection.second);
 
@@ -730,7 +730,7 @@ bool ELFAsmParser::ParseDirectiveWeakref(StringRef, SMLoc) {
 }
 
 bool ELFAsmParser::ParseDirectiveSubsection(StringRef, SMLoc) {
-  const MCExpr *Subsection = 0;
+  const MCExpr *Subsection = nullptr;
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     if (getParser().parseExpression(Subsection))
      return true;

@@ -38,7 +38,7 @@ ExecutionEngine *Interpreter::create(Module *M, std::string* ErrStr) {
     if (ErrStr)
       *ErrStr = EC.message();
     // We got an error, just return 0
-    return 0;
+    return nullptr;
   }
 
   return new Interpreter(M);

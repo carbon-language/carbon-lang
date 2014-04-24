@@ -147,10 +147,10 @@ public:
   class member_iterator;
   member_iterator member_begin(iterator I) const {
     // Only leaders provide anything to iterate over.
-    return member_iterator(I->isLeader() ? &*I : 0);
+    return member_iterator(I->isLeader() ? &*I : nullptr);
   }
   member_iterator member_end() const {
-    return member_iterator(0);
+    return member_iterator(nullptr);
   }
 
   /// findValue - Return an iterator to the specified value.  If it does not

@@ -90,7 +90,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   if (!MCAI->useIntegratedAssembler() &&
       !OutStreamer.isIntegratedAssemblerRequired()) {
     OutStreamer.EmitRawText(Str);
-    emitInlineAsmEnd(TM.getSubtarget<MCSubtargetInfo>(), 0);
+    emitInlineAsmEnd(TM.getSubtarget<MCSubtargetInfo>(), nullptr);
     return;
   }
 
@@ -100,7 +100,7 @@ void AsmPrinter::EmitInlineAsm(StringRef Str, const MDNode *LocMDNode,
   // If the current LLVMContext has an inline asm handler, set it in SourceMgr.
   LLVMContext &LLVMCtx = MMI->getModule()->getContext();
   bool HasDiagHandler = false;
-  if (LLVMCtx.getInlineAsmDiagnosticHandler() != 0) {
+  if (LLVMCtx.getInlineAsmDiagnosticHandler() != nullptr) {
     // If the source manager has an issue, we arrange for srcMgrDiagHandler
     // to be invoked, getting DiagInfo passed into it.
     DiagInfo.LocInfo = LocMDNode;
@@ -234,10 +234,10 @@ static void EmitMSInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
 
         if (InlineAsm::isMemKind(OpFlags)) {
           Error = AP->PrintAsmMemoryOperand(MI, OpNo, InlineAsmVariant,
-                                            /*Modifier*/ 0, OS);
+                                            /*Modifier*/ nullptr, OS);
         } else {
           Error = AP->PrintAsmOperand(MI, OpNo, InlineAsmVariant,
-                                      /*Modifier*/ 0, OS);
+                                      /*Modifier*/ nullptr, OS);
         }
       }
       if (Error) {
@@ -329,7 +329,7 @@ static void EmitGCCInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
         ++LastEmitted;
         const char *StrStart = LastEmitted;
         const char *StrEnd = strchr(StrStart, '}');
-        if (StrEnd == 0)
+        if (!StrEnd)
           report_fatal_error("Unterminated ${:foo} operand in inline asm"
                              " string: '" + Twine(AsmStr) + "'");
 
@@ -404,11 +404,11 @@ static void EmitGCCInlineAsmStr(const char *AsmStr, const MachineInstr *MI,
           else {
             if (InlineAsm::isMemKind(OpFlags)) {
               Error = AP->PrintAsmMemoryOperand(MI, OpNo, InlineAsmVariant,
-                                                Modifier[0] ? Modifier : 0,
+                                                Modifier[0] ? Modifier : nullptr,
                                                 OS);
             } else {
               Error = AP->PrintAsmOperand(MI, OpNo, InlineAsmVariant,
-                                          Modifier[0] ? Modifier : 0, OS);
+                                          Modifier[0] ? Modifier : nullptr, OS);
             }
           }
         }
@@ -457,7 +457,7 @@ void AsmPrinter::EmitInlineAsm(const MachineInstr *MI) const {
   // Get the !srcloc metadata node if we have it, and decode the loc cookie from
   // it.
   unsigned LocCookie = 0;
-  const MDNode *LocMD = 0;
+  const MDNode *LocMD = nullptr;
   for (unsigned i = MI->getNumOperands(); i != 0; --i) {
     if (MI->getOperand(i-1).isMetadata() &&
         (LocMD = MI->getOperand(i-1).getMetadata()) &&

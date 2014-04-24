@@ -50,7 +50,7 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
   // Try to register the program as a source of symbols to resolve against.
   //
   // FIXME: Don't do this here.
-  sys::DynamicLibrary::LoadLibraryPermanently(0, NULL);
+  sys::DynamicLibrary::LoadLibraryPermanently(nullptr, nullptr);
 
   return new MCJIT(M, TM, MemMgr ? MemMgr : new SectionMemoryManager(),
                    GVsWithCode);
@@ -58,8 +58,8 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
 
 MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
              bool AllocateGVsWithCode)
-  : ExecutionEngine(m), TM(tm), Ctx(0), MemMgr(this, MM), Dyld(&MemMgr),
-    ObjCache(0) {
+  : ExecutionEngine(m), TM(tm), Ctx(nullptr), MemMgr(this, MM), Dyld(&MemMgr),
+    ObjCache(nullptr) {
 
   OwnedModules.addModule(m);
   setDataLayout(TM->getDataLayout());
@@ -186,9 +186,9 @@ void MCJIT::generateCodeForModule(Module *M) {
 
   std::unique_ptr<ObjectBuffer> ObjectToLoad;
   // Try to load the pre-compiled object from cache if possible
-  if (0 != ObjCache) {
+  if (ObjCache) {
     std::unique_ptr<MemoryBuffer> PreCompiledObject(ObjCache->getObject(M));
-    if (0 != PreCompiledObject.get())
+    if (PreCompiledObject.get())
       ObjectToLoad.reset(new ObjectBuffer(PreCompiledObject.release()));
   }
 
@@ -286,7 +286,7 @@ Module *MCJIT::findModuleForSymbol(const std::string &Name,
     }
   }
   // We didn't find the symbol in any of our modules.
-  return NULL;
+  return nullptr;
 }
 
 uint64_t MCJIT::getSymbolAddress(const std::string &Name,
@@ -366,7 +366,7 @@ void *MCJIT::getPointerToFunction(Function *F) {
     generateCodeForModule(M);
   else if (!OwnedModules.hasModuleBeenLoaded(M))
     // If this function doesn't belong to one of our modules, we're done.
-    return NULL;
+    return nullptr;
 
   // FIXME: Should the Dyld be retaining module information? Probably not.
   //
@@ -410,7 +410,7 @@ Function *MCJIT::FindFunctionNamedInModulePtrSet(const char *FnName,
     if (Function *F = (*I)->getFunction(FnName))
       return F;
   }
-  return 0;
+  return nullptr;
 }
 
 Function *MCJIT::FindFunctionNamed(const char *FnName) {
@@ -542,17 +542,17 @@ void *MCJIT::getPointerToNamedFunction(const std::string &Name,
     report_fatal_error("Program used external function '"+Name+
                        "' which could not be resolved!");
   }
-  return 0;
+  return nullptr;
 }
 
 void MCJIT::RegisterJITEventListener(JITEventListener *L) {
-  if (L == NULL)
+  if (!L)
     return;
   MutexGuard locked(lock);
   EventListeners.push_back(L);
 }
 void MCJIT::UnregisterJITEventListener(JITEventListener *L) {
-  if (L == NULL)
+  if (!L)
     return;
   MutexGuard locked(lock);
   SmallVector<JITEventListener*, 2>::reverse_iterator I=

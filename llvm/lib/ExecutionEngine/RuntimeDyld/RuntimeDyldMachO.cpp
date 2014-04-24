@@ -67,7 +67,7 @@ void RuntimeDyldMachO::registerEHFrames() {
       continue;
     SectionEntry *Text = &Sections[SectionInfo.TextSID];
     SectionEntry *EHFrame = &Sections[SectionInfo.EHFrameSID];
-    SectionEntry *ExceptTab = NULL;
+    SectionEntry *ExceptTab = nullptr;
     if (SectionInfo.ExceptTabSID != RTDYLD_INVALID_SECTION_ID)
       ExceptTab = &Sections[SectionInfo.ExceptTabSID];
 

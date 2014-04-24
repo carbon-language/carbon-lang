@@ -344,7 +344,8 @@ namespace {
       void *FunctionBody;  // Beginning of the function's allocation.
       void *Code;  // The address the function's code actually starts at.
       void *ExceptionTable;
-      EmittedCode() : FunctionBody(0), Code(0), ExceptionTable(0) {}
+      EmittedCode() : FunctionBody(nullptr), Code(nullptr),
+                      ExceptionTable(nullptr) {}
     };
     struct EmittedFunctionConfig : public ValueMapConfig<const Function*> {
       typedef JITEmitter *ExtraData;
@@ -361,7 +362,7 @@ namespace {
 
   public:
     JITEmitter(JIT &jit, JITMemoryManager *JMM, TargetMachine &TM)
-      : SizeEstimate(0), Resolver(jit, *this), MMI(0), CurFn(0),
+      : SizeEstimate(0), Resolver(jit, *this), MMI(nullptr), CurFn(nullptr),
         EmittedFunctions(this), TheJIT(&jit) {
       MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
@@ -517,7 +518,7 @@ void *JITResolver::getLazyFunctionStub(Function *F) {
   // Call the lazy resolver function if we are JIT'ing lazily.  Otherwise we
   // must resolve the symbol now.
   void *Actual = TheJIT->isCompilingLazily()
-    ? (void *)(intptr_t)LazyResolverFn : (void *)0;
+    ? (void *)(intptr_t)LazyResolverFn : (void *)nullptr;
 
   // If this is an external declaration, attempt to resolve the address now
   // to place in the stub.
@@ -526,7 +527,7 @@ void *JITResolver::getLazyFunctionStub(Function *F) {
 
     // If we resolved the symbol to a null address (eg. a weak external)
     // don't emit a stub. Return a null pointer to the application.
-    if (!Actual) return 0;
+    if (!Actual) return nullptr;
   }
 
   TargetJITInfo::StubLayout SL = TheJIT->getJITInfo().getStubLayout();
@@ -593,8 +594,8 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
   if (Stub) return Stub;
 
   TargetJITInfo::StubLayout SL = TheJIT->getJITInfo().getStubLayout();
-  JE.startGVStub(0, SL.Size, SL.Alignment);
-  Stub = TheJIT->getJITInfo().emitFunctionStub(0, FnAddr, JE);
+  JE.startGVStub(nullptr, SL.Size, SL.Alignment);
+  Stub = TheJIT->getJITInfo().emitFunctionStub(nullptr, FnAddr, JE);
   JE.finishGVStub();
 
   DEBUG(dbgs() << "JIT: Stub emitted at [" << Stub
@@ -620,8 +621,8 @@ void *JITResolver::JITCompilerFn(void *Stub) {
   JITResolver *JR = StubToResolverMap->getResolverFromStub(Stub);
   assert(JR && "Unable to find the corresponding JITResolver to the call site");
 
-  Function* F = 0;
-  void* ActualPtr = 0;
+  Function* F = nullptr;
+  void* ActualPtr = nullptr;
 
   {
     // Only lock for getting the Function. The call getPointerToFunction made
@@ -736,7 +737,7 @@ void JITEmitter::processDebugLoc(DebugLoc DL, bool BeforePrintingInsn) {
 
   const LLVMContext &Context = EmissionDetails.MF->getFunction()->getContext();
 
-  if (DL.getScope(Context) != 0 && PrevDL != DL) {
+  if (DL.getScope(Context) != nullptr && PrevDL != DL) {
     JITEvent_EmittedFunctionDetails::LineStart NextLine;
     NextLine.Address = getCurrentPCValue();
     NextLine.Loc = DL;
@@ -825,7 +826,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     // Resolve the relocations to concrete pointers.
     for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
       MachineRelocation &MR = Relocations[i];
-      void *ResultPtr = 0;
+      void *ResultPtr = nullptr;
       if (!MR.letTargetResolve()) {
         if (MR.isExternalSymbol()) {
           ResultPtr = TheJIT->getPointerToNamedFunction(MR.getExternalSymbol(),
@@ -871,7 +872,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
       }
     }
 
-    CurFn = 0;
+    CurFn = nullptr;
     TheJIT->getJITInfo().relocate(BufferBegin, &Relocations[0],
                                   Relocations.size(), MemMgr->getGOTBase());
   }
@@ -900,7 +901,7 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
     SizeEstimate = 0;
   }
 
-  BufferBegin = CurBufferPtr = 0;
+  BufferBegin = CurBufferPtr = nullptr;
   NumBytes += FnEnd-FnStart;
 
   // Invalidate the icache if necessary.
@@ -1018,7 +1019,7 @@ void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
   ConstantPoolBase = allocateSpace(Size, Align);
   ConstantPool = MCP;
 
-  if (ConstantPoolBase == 0) return;  // Buffer overflow.
+  if (!ConstantPoolBase) return;  // Buffer overflow.
 
   DEBUG(dbgs() << "JIT: Emitted constant pool at [" << ConstantPoolBase
                << "] (size: " << Size << ", alignment: " << Align << ")\n");
@@ -1074,7 +1075,7 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
     return;
 
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
-  if (JT.empty() || JumpTableBase == 0) return;
+  if (JT.empty() || !JumpTableBase) return;
 
 
   switch (MJTI->getEntryKind()) {
@@ -1244,7 +1245,7 @@ void JIT::updateFunctionStub(Function *F) {
 void JIT::freeMachineCodeForFunction(Function *F) {
   // Delete translation for this from the ExecutionEngine, so it will get
   // retranslated next time it is used.
-  updateGlobalMapping(F, 0);
+  updateGlobalMapping(F, nullptr);
 
   // Free the actual memory for the function body and related stuff.
   static_cast<JITEmitter*>(JCE)->deallocateMemForFunction(F);

@@ -65,7 +65,7 @@ char AsmPrinter::ID = 0;
 
 typedef DenseMap<GCStrategy*, std::unique_ptr<GCMetadataPrinter>> gcp_map_type;
 static gcp_map_type &getGCMap(void *&P) {
-  if (P == 0)
+  if (!P)
     P = new gcp_map_type();
   return *(gcp_map_type*)P;
 }
@@ -102,21 +102,21 @@ AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
     TM(tm), MAI(tm.getMCAsmInfo()), MII(tm.getInstrInfo()),
     OutContext(Streamer.getContext()),
     OutStreamer(Streamer),
-    LastMI(0), LastFn(0), Counter(~0U), SetCounter(0) {
-  DD = 0; MMI = 0; LI = 0; MF = 0;
-  CurrentFnSym = CurrentFnSymForSize = 0;
-  GCMetadataPrinters = 0;
+    LastMI(nullptr), LastFn(0), Counter(~0U), SetCounter(0) {
+  DD = nullptr; MMI = nullptr; LI = nullptr; MF = nullptr;
+  CurrentFnSym = CurrentFnSymForSize = nullptr;
+  GCMetadataPrinters = nullptr;
   VerboseAsm = Streamer.isVerboseAsm();
 }
 
 AsmPrinter::~AsmPrinter() {
   assert(DD == 0 && Handlers.empty() && "Debug/EH info didn't get finalized");
 
-  if (GCMetadataPrinters != 0) {
+  if (GCMetadataPrinters) {
     gcp_map_type &GCMap = getGCMap(GCMetadataPrinters);
 
     delete &GCMap;
-    GCMetadataPrinters = 0;
+    GCMetadataPrinters = nullptr;
   }
 
   delete &OutStreamer;
@@ -232,7 +232,7 @@ bool AsmPrinter::doInitialization(Module &M) {
     }
   }
 
-  DwarfException *DE = 0;
+  DwarfException *DE = nullptr;
   switch (MAI->getExceptionHandlingType()) {
   case ExceptionHandling::None:
     break;
@@ -743,7 +743,7 @@ void AsmPrinter::EmitFunctionBody() {
 
   // Print out code for the function.
   bool HasAnyRealCode = false;
-  const MachineInstr *LastMI = 0;
+  const MachineInstr *LastMI = nullptr;
   for (auto &MBB : *MF) {
     // Print a label for the basic block.
     EmitBasicBlockStart(MBB);
@@ -904,7 +904,7 @@ bool AsmPrinter::doFinalization(Module &M) {
     delete HI.Handler;
   }
   Handlers.clear();
-  DD = 0;
+  DD = nullptr;
 
   // If the target wants to know about weak references, print them all.
   if (MAI->getWeakRefDirective()) {
@@ -971,8 +971,8 @@ bool AsmPrinter::doFinalization(Module &M) {
   // after everything else has gone out.
   EmitEndOfAsmFile(M);
 
-  delete Mang; Mang = 0;
-  MMI = 0;
+  delete Mang; Mang = nullptr;
+  MMI = nullptr;
 
   OutStreamer.Finish();
   OutStreamer.reset();
@@ -1088,7 +1088,7 @@ void AsmPrinter::EmitConstantPool() {
 void AsmPrinter::EmitJumpTableInfo() {
   const DataLayout *DL = MF->getTarget().getDataLayout();
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
-  if (MJTI == 0) return;
+  if (!MJTI) return;
   if (MJTI->getEntryKind() == MachineJumpTableInfo::EK_Inline) return;
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
@@ -1173,7 +1173,7 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
                                     const MachineBasicBlock *MBB,
                                     unsigned UID) const {
   assert(MBB && MBB->getNumber() >= 0 && "Invalid basic block");
-  const MCExpr *Value = 0;
+  const MCExpr *Value = nullptr;
   switch (MJTI->getEntryKind()) {
   case MachineJumpTableInfo::EK_Inline:
     llvm_unreachable("Cannot emit EK_Inline jump table entry");
@@ -1491,7 +1491,7 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
     return MCSymbolRefExpr::Create(AP.GetBlockAddressSymbol(BA), Ctx);
 
   const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV);
-  if (CE == 0) {
+  if (!CE) {
     llvm_unreachable("Unknown constant value to lower!");
   }
 
@@ -1516,7 +1516,7 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
       raw_string_ostream OS(S);
       OS << "Unsupported expression in static initializer: ";
       CE->printAsOperand(OS, /*PrintType=*/false,
-                     !AP.MF ? 0 : AP.MF->getFunction()->getParent());
+                     !AP.MF ? nullptr : AP.MF->getFunction()->getParent());
       report_fatal_error(OS.str());
     }
   case Instruction::GetElementPtr: {
@@ -2043,7 +2043,7 @@ MCSymbol *AsmPrinter::GetExternalSymbolSymbol(StringRef Sym) const {
 /// PrintParentLoopComment - Print comments about parent loops of this one.
 static void PrintParentLoopComment(raw_ostream &OS, const MachineLoop *Loop,
                                    unsigned FunctionNumber) {
-  if (Loop == 0) return;
+  if (!Loop) return;
   PrintParentLoopComment(OS, Loop->getParentLoop(), FunctionNumber);
   OS.indent(Loop->getLoopDepth()*2)
     << "Parent Loop BB" << FunctionNumber << "_"
@@ -2072,7 +2072,7 @@ static void emitBasicBlockLoopComments(const MachineBasicBlock &MBB,
                                        const AsmPrinter &AP) {
   // Add loop depth information
   const MachineLoop *Loop = LI->getLoopFor(&MBB);
-  if (Loop == 0) return;
+  if (!Loop) return;
 
   MachineBasicBlock *Header = Loop->getHeader();
   assert(Header && "No header for loop");
@@ -2214,7 +2214,7 @@ isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const {
 
 GCMetadataPrinter *AsmPrinter::GetOrCreateGCPrinter(GCStrategy &S) {
   if (!S.usesMetadata())
-    return 0;
+    return nullptr;
 
   gcp_map_type &GCMap = getGCMap(GCMetadataPrinters);
   gcp_map_type::iterator GCPI = GCMap.find(&S);

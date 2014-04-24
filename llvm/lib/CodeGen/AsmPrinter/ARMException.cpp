@@ -144,7 +144,7 @@ void ARMException::EmitTypeInfos(unsigned TTypeEncoding) {
         Asm->OutStreamer.AddComment("FilterInfo " + Twine(Entry));
     }
 
-    Asm->EmitTTypeReference((TypeID == 0 ? 0 : TypeInfos[TypeID - 1]),
+    Asm->EmitTTypeReference((TypeID == 0 ? nullptr : TypeInfos[TypeID - 1]),
                             TTypeEncoding);
   }
 }

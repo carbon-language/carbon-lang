@@ -81,7 +81,7 @@ namespace {
     /// getFreeBlockBefore - If the block before this one is free, return it,
     /// otherwise return null.
     FreeRangeHeader *getFreeBlockBefore() const {
-      if (PrevAllocated) return 0;
+      if (PrevAllocated) return nullptr;
       intptr_t PrevSize = reinterpret_cast<intptr_t *>(
                             const_cast<MemoryRangeHeader *>(this))[-1];
       return reinterpret_cast<FreeRangeHeader *>(
@@ -175,7 +175,7 @@ FreeRangeHeader *MemoryRangeHeader::FreeBlock(FreeRangeHeader *FreeList) {
     // coalesce with it, update our notion of what the free list is.
     if (&FollowingFreeBlock == FreeList) {
       FreeList = FollowingFreeBlock.Next;
-      FreeListToReturn = 0;
+      FreeListToReturn = nullptr;
       assert(&FollowingFreeBlock != FreeList && "No tombstone block?");
     }
     FollowingFreeBlock.RemoveFromFreeList();
@@ -586,7 +586,7 @@ DefaultJITMemoryManager::DefaultJITMemoryManager()
 #else
       PoisonMemory(true),
 #endif
-      LastSlab(0, 0), StubAllocator(*this), DataAllocator(*this) {
+      LastSlab(nullptr, 0), StubAllocator(*this), DataAllocator(*this) {
 
   // Allocate space for code.
   sys::MemoryBlock MemBlock = allocateNewSlab(DefaultCodeSlabSize);
@@ -639,7 +639,7 @@ DefaultJITMemoryManager::DefaultJITMemoryManager()
   // Start out with the freelist pointing to Mem0.
   FreeMemoryList = Mem0;
 
-  GOTBase = NULL;
+  GOTBase = nullptr;
 }
 
 void DefaultJITMemoryManager::AllocateGOT() {
@@ -658,9 +658,9 @@ DefaultJITMemoryManager::~DefaultJITMemoryManager() {
 sys::MemoryBlock DefaultJITMemoryManager::allocateNewSlab(size_t size) {
   // Allocate a new block close to the last one.
   std::string ErrMsg;
-  sys::MemoryBlock *LastSlabPtr = LastSlab.base() ? &LastSlab : 0;
+  sys::MemoryBlock *LastSlabPtr = LastSlab.base() ? &LastSlab : nullptr;
   sys::MemoryBlock B = sys::Memory::AllocateRWX(size, LastSlabPtr, &ErrMsg);
-  if (B.base() == 0) {
+  if (!B.base()) {
     report_fatal_error("Allocation failed when allocating new memory in the"
                        " JIT\n" + Twine(ErrMsg));
   }
@@ -721,7 +721,7 @@ bool DefaultJITMemoryManager::CheckInvariants(std::string &ErrorStr) {
     char *End = Start + I->size();
 
     // Check each memory range.
-    for (MemoryRangeHeader *Hdr = (MemoryRangeHeader*)Start, *LastHdr = NULL;
+    for (MemoryRangeHeader *Hdr = (MemoryRangeHeader*)Start, *LastHdr = nullptr;
          Start <= (char*)Hdr && (char*)Hdr < End;
          Hdr = &Hdr->getBlockAfter()) {
       if (Hdr->ThisAllocated == 0) {
@@ -890,7 +890,7 @@ void *DefaultJITMemoryManager::getPointerToNamedFunction(const std::string &Name
     report_fatal_error("Program used external function '"+Name+
                       "' which could not be resolved!");
   }
-  return 0;
+  return nullptr;
 }
 
 

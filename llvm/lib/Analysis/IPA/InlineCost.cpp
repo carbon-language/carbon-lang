@@ -926,7 +926,7 @@ bool CallAnalyzer::analyzeBlock(BasicBlock *BB) {
 /// no constant offsets applied.
 ConstantInt *CallAnalyzer::stripAndComputeInBoundsConstantOffsets(Value *&V) {
   if (!DL || !V->getType()->isPointerTy())
-    return 0;
+    return nullptr;
 
   unsigned IntPtrWidth = DL->getPointerSizeInBits();
   APInt Offset = APInt::getNullValue(IntPtrWidth);
@@ -938,7 +938,7 @@ ConstantInt *CallAnalyzer::stripAndComputeInBoundsConstantOffsets(Value *&V) {
   do {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
       if (!GEP->isInBounds() || !accumulateGEPOffset(*GEP, Offset))
-        return 0;
+        return nullptr;
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {
       V = cast<Operator>(V)->getOperand(0);

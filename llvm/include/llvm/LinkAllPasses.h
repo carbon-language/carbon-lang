@@ -53,7 +53,7 @@ namespace {
       (void) llvm::createAliasDebugger();
       (void) llvm::createArgumentPromotionPass();
       (void) llvm::createBasicAliasAnalysisPass();
-      (void) llvm::createLibCallAliasAnalysisPass(0);
+      (void) llvm::createLibCallAliasAnalysisPass(nullptr);
       (void) llvm::createScalarEvolutionAliasAnalysisPass();
       (void) llvm::createTypeBasedAliasAnalysisPass();
       (void) llvm::createBoundsCheckingPass();
@@ -140,9 +140,9 @@ namespace {
       (void) llvm::createMetaRenamerPass();
       (void) llvm::createFunctionAttrsPass();
       (void) llvm::createMergeFunctionsPass();
-      (void) llvm::createPrintModulePass(*(llvm::raw_ostream*)0);
-      (void) llvm::createPrintFunctionPass(*(llvm::raw_ostream*)0);
-      (void) llvm::createPrintBasicBlockPass(*(llvm::raw_ostream*)0);
+      (void) llvm::createPrintModulePass(*(llvm::raw_ostream*)nullptr);
+      (void) llvm::createPrintFunctionPass(*(llvm::raw_ostream*)nullptr);
+      (void) llvm::createPrintBasicBlockPass(*(llvm::raw_ostream*)nullptr);
       (void) llvm::createModuleDebugInfoPrinterPass();
       (void) llvm::createPartialInliningPass();
       (void) llvm::createLintPass();
@@ -160,11 +160,11 @@ namespace {
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
       (void)new llvm::ScalarEvolution();
-      ((llvm::Function*)0)->viewCFGOnly();
+      ((llvm::Function*)nullptr)->viewCFGOnly();
       llvm::RGPassManager RGM;
-      ((llvm::RegionPass*)0)->runOnRegion((llvm::Region*)0, RGM);
-      llvm::AliasSetTracker X(*(llvm::AliasAnalysis*)0);
-      X.add((llvm::Value*)0, 0, 0);  // for -print-alias-sets
+      ((llvm::RegionPass*)nullptr)->runOnRegion((llvm::Region*)nullptr, RGM);
+      llvm::AliasSetTracker X(*(llvm::AliasAnalysis*)nullptr);
+      X.add((llvm::Value*)nullptr, 0, nullptr);  // for -print-alias-sets
     }
   } ForcePassLinking; // Force link by creating a global definition.
 }

@@ -79,7 +79,7 @@ uint8_t *SectionMemoryManager::allocateSection(MemoryGroup &MemGroup,
                                                           ec);
   if (ec) {
     // FIXME: Add error propagation to the interface.
-    return NULL;
+    return nullptr;
   }
 
   // Save this address as the basis for our next request

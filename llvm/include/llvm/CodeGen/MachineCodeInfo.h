@@ -27,7 +27,7 @@ private:
   void *Address; // The address of the function in memory
 
 public:
-  MachineCodeInfo() : Size(0), Address(0) {}
+  MachineCodeInfo() : Size(0), Address(nullptr) {}
 
   void setSize(size_t s) {
     Size = s;

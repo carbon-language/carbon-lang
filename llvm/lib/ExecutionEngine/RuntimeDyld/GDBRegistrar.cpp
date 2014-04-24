@@ -45,7 +45,7 @@ extern "C" {
   // We put information about the JITed function in this global, which the
   // debugger reads.  Make sure to specify the version statically, because the
   // debugger checks the version before we can set it during runtime.
-  struct jit_descriptor __jit_debug_descriptor = { 1, 0, 0, 0 };
+  struct jit_descriptor __jit_debug_descriptor = { 1, 0, nullptr, nullptr };
 
   // Debuggers puts a breakpoint in this function.
   LLVM_ATTRIBUTE_NOINLINE void __jit_debug_register_code() {
@@ -108,10 +108,10 @@ void NotifyDebugger(jit_code_entry* JITCodeEntry) {
   __jit_debug_descriptor.action_flag = JIT_REGISTER_FN;
 
   // Insert this entry at the head of the list.
-  JITCodeEntry->prev_entry = NULL;
+  JITCodeEntry->prev_entry = nullptr;
   jit_code_entry* NextEntry = __jit_debug_descriptor.first_entry;
   JITCodeEntry->next_entry = NextEntry;
-  if (NextEntry != NULL) {
+  if (NextEntry) {
     NextEntry->prev_entry = JITCodeEntry;
   }
   __jit_debug_descriptor.first_entry = JITCodeEntry;
@@ -142,11 +142,10 @@ void GDBJITRegistrar::registerObject(const ObjectBuffer &Object) {
          "Second attempt to perform debug registration.");
   jit_code_entry* JITCodeEntry = new jit_code_entry();
 
-  if (JITCodeEntry == 0) {
+  if (!JITCodeEntry) {
     llvm::report_fatal_error(
       "Allocation failed when registering a JIT entry!\n");
-  }
-  else {
+  } else {
     JITCodeEntry->symfile_addr = Buffer;
     JITCodeEntry->symfile_size = Size;
 
@@ -198,7 +197,7 @@ void GDBJITRegistrar::deregisterObjectInternal(
   }
 
   delete JITCodeEntry;
-  JITCodeEntry = NULL;
+  JITCodeEntry = nullptr;
 }
 
 llvm::ManagedStatic<GDBJITRegistrar> TheRegistrar;

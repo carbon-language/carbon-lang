@@ -249,7 +249,7 @@ struct has_MappingValidateTraits
   static double test(...);
 
 public:
-  static bool const value = (sizeof(test<MappingTraits<T> >(0)) == 1);
+  static bool const value = (sizeof(test<MappingTraits<T> >(nullptr)) == 1);
 };
 
 
@@ -321,7 +321,7 @@ struct has_DocumentListTraits
   static double test(...);
 
 public:
-  static bool const value =  (sizeof(test<DocumentListTraits<T> >(0)) == 1);
+  static bool const value = (sizeof(test<DocumentListTraits<T> >(nullptr))==1);
 };
 
 inline bool isNumber(StringRef S) {

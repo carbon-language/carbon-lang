@@ -21,14 +21,14 @@ using namespace llvm;
 //
 
 CallGraph::CallGraph(Module &M)
-    : M(M), Root(0), ExternalCallingNode(getOrInsertFunction(0)),
-      CallsExternalNode(new CallGraphNode(0)) {
+    : M(M), Root(nullptr), ExternalCallingNode(getOrInsertFunction(nullptr)),
+      CallsExternalNode(new CallGraphNode(nullptr)) {
   // Add every function to the call graph.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     addToCallGraph(I);
 
   // If we didn't find a main function, use the external call graph node
-  if (Root == 0)
+  if (!Root)
     Root = ExternalCallingNode;
 }
 
@@ -210,7 +210,7 @@ void CallGraphNode::removeOneAbstractEdgeTo(CallGraphNode *Callee) {
   for (CalledFunctionsVector::iterator I = CalledFunctions.begin(); ; ++I) {
     assert(I != CalledFunctions.end() && "Cannot find callee to remove!");
     CallRecord &CR = *I;
-    if (CR.second == Callee && CR.first == 0) {
+    if (CR.second == Callee && CR.first == nullptr) {
       Callee->DropRef();
       *I = CalledFunctions.back();
       CalledFunctions.pop_back();
@@ -267,7 +267,7 @@ INITIALIZE_PASS(CallGraphWrapperPass, "basiccg", "CallGraph Construction",
 
 char CallGraphWrapperPass::ID = 0;
 
-void CallGraphWrapperPass::releaseMemory() { G.reset(0); }
+void CallGraphWrapperPass::releaseMemory() { G.reset(nullptr); }
 
 void CallGraphWrapperPass::print(raw_ostream &OS, const Module *) const {
   if (!G) {

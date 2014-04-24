@@ -167,7 +167,7 @@ void RuntimeDyldELF::deregisterEHFrames() {
 ObjectImage *
 RuntimeDyldELF::createObjectImageFromFile(object::ObjectFile *ObjFile) {
   if (!ObjFile)
-    return NULL;
+    return nullptr;
 
   error_code ec;
   MemoryBuffer *Buffer =
@@ -176,19 +176,19 @@ RuntimeDyldELF::createObjectImageFromFile(object::ObjectFile *ObjFile) {
   if (ObjFile->getBytesInAddress() == 4 && ObjFile->isLittleEndian()) {
     DyldELFObject<ELFType<support::little, 2, false>> *Obj =
         new DyldELFObject<ELFType<support::little, 2, false>>(Buffer, ec);
-    return new ELFObjectImage<ELFType<support::little, 2, false>>(NULL, Obj);
+    return new ELFObjectImage<ELFType<support::little, 2, false>>(nullptr, Obj);
   } else if (ObjFile->getBytesInAddress() == 4 && !ObjFile->isLittleEndian()) {
     DyldELFObject<ELFType<support::big, 2, false>> *Obj =
         new DyldELFObject<ELFType<support::big, 2, false>>(Buffer, ec);
-    return new ELFObjectImage<ELFType<support::big, 2, false>>(NULL, Obj);
+    return new ELFObjectImage<ELFType<support::big, 2, false>>(nullptr, Obj);
   } else if (ObjFile->getBytesInAddress() == 8 && !ObjFile->isLittleEndian()) {
     DyldELFObject<ELFType<support::big, 2, true>> *Obj =
         new DyldELFObject<ELFType<support::big, 2, true>>(Buffer, ec);
-    return new ELFObjectImage<ELFType<support::big, 2, true>>(NULL, Obj);
+    return new ELFObjectImage<ELFType<support::big, 2, true>>(nullptr, Obj);
   } else if (ObjFile->getBytesInAddress() == 8 && ObjFile->isLittleEndian()) {
     DyldELFObject<ELFType<support::little, 2, true>> *Obj =
         new DyldELFObject<ELFType<support::little, 2, true>>(Buffer, ec);
-    return new ELFObjectImage<ELFType<support::little, 2, true>>(NULL, Obj);
+    return new ELFObjectImage<ELFType<support::little, 2, true>>(nullptr, Obj);
   } else
     llvm_unreachable("Unexpected ELF format");
 }
@@ -1152,7 +1152,7 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
       // Extra check to avoid relocation againt empty symbols (usually
       // the R_PPC64_TOC).
       if (SymType != SymbolRef::ST_Unknown && TargetName.empty())
-        Value.SymbolName = NULL;
+        Value.SymbolName = nullptr;
 
       if (Value.SymbolName)
         addRelocationForSymbol(RE, Value.SymbolName);
@@ -1284,7 +1284,8 @@ void RuntimeDyldELF::updateGOTEntries(StringRef Name, uint64_t Addr) {
   for (it = GOTs.begin(); it != end; ++it) {
     GOTRelocations &GOTEntries = it->second;
     for (int i = 0, e = GOTEntries.size(); i != e; ++i) {
-      if (GOTEntries[i].SymbolName != 0 && GOTEntries[i].SymbolName == Name) {
+      if (GOTEntries[i].SymbolName != nullptr &&
+          GOTEntries[i].SymbolName == Name) {
         GOTEntries[i].Offset = Addr;
       }
     }
@@ -1332,7 +1333,7 @@ uint64_t RuntimeDyldELF::findGOTEntry(uint64_t LoadAddress, uint64_t Offset) {
     // Find the matching entry in our vector.
     uint64_t SymbolOffset = 0;
     for (int i = 0, e = GOTEntries.size(); i != e; ++i) {
-      if (GOTEntries[i].SymbolName == 0) {
+      if (!GOTEntries[i].SymbolName) {
         if (getSectionLoadAddress(GOTEntries[i].SectionID) == LoadAddress &&
             GOTEntries[i].Offset == Offset) {
           GOTIndex = i;

@@ -29,7 +29,7 @@ StringRef WinCodeViewLineTables::getFullFilepath(const MDNode *S) {
   StringRef Dir = Scope.getDirectory(),
             Filename = Scope.getFilename();
   char *&Result = DirAndFilenameToFilepathMap[std::make_pair(Dir, Filename)];
-  if (Result != 0)
+  if (Result)
     return Result;
 
   // Clang emits directory and relative filename info into the IR, but CodeView
@@ -102,7 +102,7 @@ void WinCodeViewLineTables::maybeRecordLocation(DebugLoc DL,
 }
 
 WinCodeViewLineTables::WinCodeViewLineTables(AsmPrinter *AP)
-    : Asm(0), CurFn(0) {
+    : Asm(nullptr), CurFn(nullptr) {
   MachineModuleInfo *MMI = AP->MMI;
 
   // If module doesn't have named metadata anchors or COFF debug section
@@ -171,7 +171,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   EmitLabelDiff(Asm->OutStreamer, Fn, FI.End);
 
   // PC-to-linenumber lookup table:
-  MCSymbol *FileSegmentEnd = 0;
+  MCSymbol *FileSegmentEnd = nullptr;
   for (size_t J = 0, F = FI.Instrs.size(); J != F; ++J) {
     MCSymbol *Instr = FI.Instrs[J];
     assert(InstrInfo.count(Instr));
@@ -321,7 +321,7 @@ void WinCodeViewLineTables::endFunction(const MachineFunction *MF) {
     Asm->OutStreamer.EmitLabel(FunctionEndSym);
     CurFn->End = FunctionEndSym;
   }
-  CurFn = 0;
+  CurFn = nullptr;
 }
 
 void WinCodeViewLineTables::beginInstruction(const MachineInstr *MI) {

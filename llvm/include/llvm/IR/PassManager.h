@@ -193,7 +193,7 @@ class PassRunAcceptsAnalysisManager {
   template <typename T> static BigType f(...);
 
 public:
-  enum { Value = sizeof(f<PassT>(0)) == sizeof(SmallType) };
+  enum { Value = sizeof(f<PassT>(nullptr)) == sizeof(SmallType) };
 };
 
 /// \brief A template wrapper used to implement the polymorphic API.
@@ -293,7 +293,7 @@ template <typename IRUnitT, typename ResultT> class ResultHasInvalidateMethod {
   template <typename T> static BigType f(...);
 
 public:
-  enum { Value = sizeof(f<ResultT>(0)) == sizeof(SmallType) };
+  enum { Value = sizeof(f<ResultT>(nullptr)) == sizeof(SmallType) };
 };
 
 /// \brief Wrapper to model the analysis result concept.
@@ -616,7 +616,7 @@ public:
     ResultConceptT *ResultConcept =
         derived_this()->getCachedResultImpl(PassT::ID(), IR);
     if (!ResultConcept)
-      return 0;
+      return nullptr;
 
     typedef detail::AnalysisResultModel<IRUnitT, PassT, typename PassT::Result>
         ResultModelT;

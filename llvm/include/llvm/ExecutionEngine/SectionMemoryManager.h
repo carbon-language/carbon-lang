@@ -72,7 +72,7 @@ public:
   /// operations needed to reliably use the memory are also performed.
   ///
   /// \returns true if an error occurred, false otherwise.
-  bool finalizeMemory(std::string *ErrMsg = 0) override;
+  bool finalizeMemory(std::string *ErrMsg = nullptr) override;
 
   /// \brief Invalidate instruction cache for code sections.
   ///

@@ -565,7 +565,7 @@ std::pair<const typename ELFFile<ELFT>::Elf_Shdr *,
           const typename ELFFile<ELFT>::Elf_Sym *>
 ELFFile<ELFT>::getRelocationSymbol(const Elf_Shdr *Sec, const RelT *Rel) const {
   if (!Sec->sh_link)
-    return std::make_pair((const Elf_Shdr *)0, (const Elf_Sym *)0);
+    return std::make_pair(nullptr, nullptr);
   const Elf_Shdr *SymTable = getSection(Sec->sh_link);
   return std::make_pair(
       SymTable, getEntry<Elf_Sym>(SymTable, Rel->getSymbol(isMips64EL())));

@@ -41,20 +41,20 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
   std::string Error;
   const Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
   if (!TheTarget)
-    return 0;
+    return nullptr;
 
   const MCRegisterInfo *MRI = TheTarget->createMCRegInfo(Triple);
   if (!MRI)
-    return 0;
+    return nullptr;
 
   // Get the assembler info needed to setup the MCContext.
   const MCAsmInfo *MAI = TheTarget->createMCAsmInfo(*MRI, Triple);
   if (!MAI)
-    return 0;
+    return nullptr;
 
   const MCInstrInfo *MII = TheTarget->createMCInstrInfo();
   if (!MII)
-    return 0;
+    return nullptr;
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
@@ -62,22 +62,22 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
   const MCSubtargetInfo *STI = TheTarget->createMCSubtargetInfo(Triple, CPU,
                                                                 FeaturesStr);
   if (!STI)
-    return 0;
+    return nullptr;
 
   // Set up the MCContext for creating symbols and MCExpr's.
-  MCContext *Ctx = new MCContext(MAI, MRI, 0);
+  MCContext *Ctx = new MCContext(MAI, MRI, nullptr);
   if (!Ctx)
-    return 0;
+    return nullptr;
 
   // Set up disassembler.
   MCDisassembler *DisAsm = TheTarget->createMCDisassembler(*STI, *Ctx);
   if (!DisAsm)
-    return 0;
+    return nullptr;
 
   std::unique_ptr<MCRelocationInfo> RelInfo(
       TheTarget->createMCRelocationInfo(Triple, *Ctx));
   if (!RelInfo)
-    return 0;
+    return nullptr;
 
   std::unique_ptr<MCSymbolizer> Symbolizer(TheTarget->createMCSymbolizer(
       Triple, GetOpInfo, SymbolLookUp, DisInfo, Ctx, RelInfo.release()));
@@ -88,14 +88,14 @@ LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
   MCInstPrinter *IP = TheTarget->createMCInstPrinter(AsmPrinterVariant,
                                                      *MAI, *MII, *MRI, *STI);
   if (!IP)
-    return 0;
+    return nullptr;
 
   LLVMDisasmContext *DC = new LLVMDisasmContext(Triple, DisInfo, TagType,
                                                 GetOpInfo, SymbolLookUp,
                                                 TheTarget, MAI, MRI,
                                                 STI, MII, Ctx, DisAsm, IP);
   if (!DC)
-    return 0;
+    return nullptr;
 
   DC->setCPU(CPU);
   return DC;

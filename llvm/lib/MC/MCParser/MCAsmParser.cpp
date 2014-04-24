@@ -17,7 +17,7 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-MCAsmParser::MCAsmParser() : TargetParser(0), ShowParsedOperands(0) {
+MCAsmParser::MCAsmParser() : TargetParser(nullptr), ShowParsedOperands(0) {
 }
 
 MCAsmParser::~MCAsmParser() {

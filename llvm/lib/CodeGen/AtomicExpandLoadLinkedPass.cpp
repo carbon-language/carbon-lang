@@ -30,8 +30,8 @@ namespace {
     const TargetLowering *TLI;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit AtomicExpandLoadLinked(const TargetMachine *TM = 0)
-      : FunctionPass(ID), TLI(TM ? TM->getTargetLowering() : 0) {
+    explicit AtomicExpandLoadLinked(const TargetMachine *TM = nullptr)
+      : FunctionPass(ID), TLI(TM ? TM->getTargetLowering() : nullptr) {
       initializeAtomicExpandLoadLinkedPass(*PassRegistry::getPassRegistry());
     }
 

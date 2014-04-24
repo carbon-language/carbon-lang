@@ -98,13 +98,13 @@ static ExFunc lookupFunction(const Function *F) {
 
   sys::ScopedLock Writer(*FunctionsLock);
   ExFunc FnPtr = FuncNames[ExtName];
-  if (FnPtr == 0)
+  if (!FnPtr)
     FnPtr = FuncNames["lle_X_" + F->getName().str()];
-  if (FnPtr == 0)  // Try calling a generic function... if it exists...
+  if (!FnPtr)  // Try calling a generic function... if it exists...
     FnPtr = (ExFunc)(intptr_t)
       sys::DynamicLibrary::SearchForAddressOfSymbol("lle_X_" +
                                                     F->getName().str());
-  if (FnPtr != 0)
+  if (FnPtr)
     ExportedFunctions->insert(std::make_pair(F, FnPtr));  // Cache for later
   return FnPtr;
 }

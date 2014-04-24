@@ -122,7 +122,7 @@ const DIE *DIE::getUnitOrNull() const {
       return p;
     p = p->getParent();
   }
-  return NULL;
+  return nullptr;
 }
 
 DIEValue *DIE::findAttribute(dwarf::Attribute Attribute) const {
@@ -134,7 +134,7 @@ DIEValue *DIE::findAttribute(dwarf::Attribute Attribute) const {
   for (size_t i = 0; i < Values.size(); ++i)
     if (Abbrevs.getData()[i].getAttribute() == Attribute)
       return Values[i];
-  return NULL;
+  return nullptr;
 }
 
 #ifndef NDEBUG

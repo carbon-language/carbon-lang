@@ -40,12 +40,15 @@ namespace {
       llvm::linkErlangGC();
       llvm::linkShadowStackGC();
 
-      (void) llvm::createBURRListDAGScheduler(NULL, llvm::CodeGenOpt::Default);
-      (void) llvm::createSourceListDAGScheduler(NULL,llvm::CodeGenOpt::Default);
-      (void) llvm::createHybridListDAGScheduler(NULL,llvm::CodeGenOpt::Default);
-      (void) llvm::createFastDAGScheduler(NULL, llvm::CodeGenOpt::Default);
-      (void) llvm::createDefaultScheduler(NULL, llvm::CodeGenOpt::Default);
-      (void) llvm::createVLIWDAGScheduler(NULL, llvm::CodeGenOpt::Default);
+      (void) llvm::createBURRListDAGScheduler(nullptr,
+                                              llvm::CodeGenOpt::Default);
+      (void) llvm::createSourceListDAGScheduler(nullptr,
+                                                llvm::CodeGenOpt::Default);
+      (void) llvm::createHybridListDAGScheduler(nullptr,
+                                                llvm::CodeGenOpt::Default);
+      (void) llvm::createFastDAGScheduler(nullptr, llvm::CodeGenOpt::Default);
+      (void) llvm::createDefaultScheduler(nullptr, llvm::CodeGenOpt::Default);
+      (void) llvm::createVLIWDAGScheduler(nullptr, llvm::CodeGenOpt::Default);
 
     }
   } ForceCodegenLinking; // Force link by creating a global definition.

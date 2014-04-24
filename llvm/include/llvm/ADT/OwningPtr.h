@@ -69,7 +69,7 @@ public:
   /// not delete the pointer before returning it.
   T *take() {
     T *Tmp = Ptr;
-    Ptr = 0;
+    Ptr = nullptr;
     return Tmp;
   }
 
@@ -84,9 +84,9 @@ public:
 
   T *operator->() const { return Ptr; }
   T *get() const { return Ptr; }
-  LLVM_EXPLICIT operator bool() const { return Ptr != 0; }
-  bool operator!() const { return Ptr == 0; }
-  bool isValid() const { return Ptr != 0; }
+  LLVM_EXPLICIT operator bool() const { return Ptr != nullptr; }
+  bool operator!() const { return Ptr == nullptr; }
+  bool isValid() const { return Ptr != nullptr; }
 
   void swap(OwningPtr &RHS) {
     T *Tmp = RHS.Ptr;

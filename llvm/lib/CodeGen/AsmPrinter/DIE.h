@@ -135,12 +135,12 @@ protected:
 protected:
   DIE()
       : Offset(0), Size(0), Abbrev((dwarf::Tag)0, dwarf::DW_CHILDREN_no),
-        Parent(0) {}
+        Parent(nullptr) {}
 
 public:
   explicit DIE(dwarf::Tag Tag)
       : Offset(0), Size(0), Abbrev((dwarf::Tag)Tag, dwarf::DW_CHILDREN_no),
-        Parent(0) {}
+        Parent(nullptr) {}
 
   // Accessors.
   DIEAbbrev &getAbbrev() { return Abbrev; }
