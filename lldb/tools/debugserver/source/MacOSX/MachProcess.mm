@@ -138,6 +138,8 @@ MachProcess::MachProcess() :
     m_name_to_addr_baton(NULL),
     m_image_infos_callback(NULL),
     m_image_infos_baton(NULL),
+    m_sent_interrupt_signo (0),
+    m_auto_resume_signo (0),
     m_did_exec (false)
 {
     DNBLogThreadedIf(LOG_PROCESS | LOG_VERBOSE, "%s", __PRETTY_FUNCTION__);
@@ -468,6 +470,37 @@ MachProcess::Kill (const struct timespec *timeout_abstime)
 }
 
 bool
+MachProcess::Interrupt()
+{
+    nub_state_t state = GetState();
+    if (IsRunning(state))
+    {
+        if (m_sent_interrupt_signo == 0)
+        {
+            m_sent_interrupt_signo = SIGSTOP;
+            if (Signal (m_sent_interrupt_signo))
+            {
+                DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Interrupt() - sent %i signal to interrupt process", m_sent_interrupt_signo);
+            }
+            else
+            {
+                m_sent_interrupt_signo = 0;
+                DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Interrupt() - failed to send %i signal to interrupt process", m_sent_interrupt_signo);
+            }
+        }
+        else
+        {
+            DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Interrupt() - previously sent an interrupt signal %i that hasn't been received yet, interrupt aborted", m_sent_interrupt_signo);
+        }
+    }
+    else
+    {
+        DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Interrupt() - process already stopped, no interrupt sent");
+    }
+    return false;
+}
+
+bool
 MachProcess::Signal (int signal, const struct timespec *timeout_abstime)
 {
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Signal (signal = %d, timeout = %p)", signal, timeout_abstime);
@@ -746,7 +779,13 @@ void
 MachProcess::PrivateResume ()
 {
     PTHREAD_MUTEX_LOCKER (locker, m_exception_messages_mutex);
-
+    
+    m_auto_resume_signo = m_sent_interrupt_signo;
+    if (m_auto_resume_signo)
+        DNBLogThreadedIf(LOG_PROCESS, "MachProcess::PrivateResume() - task 0x%x resuming (with unhandled interrupt signal %i)...", m_task.TaskPort(), m_auto_resume_signo);
+    else
+        DNBLogThreadedIf(LOG_PROCESS, "MachProcess::PrivateResume() - task 0x%x resuming...", m_task.TaskPort());
+    
     ReplyToAllExceptions ();
 //    bool stepOverBreakInstruction = step;
 
@@ -1147,6 +1186,7 @@ MachProcess::ExceptionMessageBundleComplete()
     // We have a complete bundle of exceptions for our child process.
     PTHREAD_MUTEX_LOCKER (locker, m_exception_messages_mutex);
     DNBLogThreadedIf(LOG_EXCEPTIONS, "%s: %llu exception messages.", __PRETTY_FUNCTION__, (uint64_t)m_exception_messages.size());
+    bool auto_resume = false;
     if (!m_exception_messages.empty())
     {
         m_did_exec = false;
@@ -1155,10 +1195,13 @@ MachProcess::ExceptionMessageBundleComplete()
         size_t i;
         if (m_pid != 0)
         {
+            bool received_interrupt = false;
+            uint32_t num_task_exceptions = 0;
             for (i=0; i<m_exception_messages.size(); ++i)
             {
                 if (m_exception_messages[i].state.task_port == task)
                 {
+                    ++num_task_exceptions;
                     const int signo = m_exception_messages[i].state.SoftSignal();
                     if (signo == SIGTRAP)
                     {
@@ -1182,6 +1225,10 @@ MachProcess::ExceptionMessageBundleComplete()
                         }
                         break;
                     }
+                    else if (m_sent_interrupt_signo != 0 && signo == m_sent_interrupt_signo)
+                    {
+                        received_interrupt = true;
+                    }
                 }
             }
             
@@ -1196,6 +1243,37 @@ MachProcess::ExceptionMessageBundleComplete()
                 }
                 m_thread_list.Clear();
                 m_breakpoints.DisableAll();
+            }
+            
+            if (m_sent_interrupt_signo != 0)
+            {
+                if (received_interrupt)
+                {
+                    DNBLogThreadedIf(LOG_PROCESS, "MachProcess::ExceptionMessageBundleComplete(): process successfully interrupted with signal %i", m_sent_interrupt_signo);
+                    
+                    // Mark that we received the interrupt signal
+                    m_sent_interrupt_signo = 0;
+                    // Not check if we had a case where:
+                    // 1 - We called MachProcess::Interrupt() but we stopped for another reason
+                    // 2 - We called MachProcess::Resume() (but still haven't gotten the interrupt signal)
+                    // 3 - We are now incorrectly stopped because we are handling the interrupt signal we missed
+                    // 4 - We might need to resume if we stopped only with the interrupt signal that we never handled
+                    if (m_auto_resume_signo != 0)
+                    {
+                        // Only auto_resume if we stopped with _only_ the interrupt signal
+                        if (num_task_exceptions == 1)
+                        {
+                            auto_resume = true;
+                            DNBLogThreadedIf(LOG_PROCESS, "MachProcess::ExceptionMessageBundleComplete(): auto resuming due to unhandled interrupt signal %i", m_auto_resume_signo);
+                        }
+                        m_auto_resume_signo = 0;
+                    }
+                }
+                else
+                {
+                    DNBLogThreadedIf(LOG_PROCESS, "MachProcess::ExceptionMessageBundleComplete(): didn't get signal %i after MachProcess::Interrupt()",
+                            m_sent_interrupt_signo);
+                }
             }
         }
 
@@ -1218,7 +1296,7 @@ MachProcess::ExceptionMessageBundleComplete()
             m_thread_list.Dump();
 
         bool step_more = false;
-        if (m_thread_list.ShouldStop(step_more))
+        if (m_thread_list.ShouldStop(step_more) && auto_resume == false)
         {
             // Wait for the eEventProcessRunningStateChanged event to be reset
             // before changing state to stopped to avoid race condition with

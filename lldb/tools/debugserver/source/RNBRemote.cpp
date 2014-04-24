@@ -862,8 +862,6 @@ typedef struct register_map_entry
 // If the notion of registers differs from what is handed out by the
 // architecture, then flavors can be defined here.
 
-static const uint32_t MAX_REGISTER_BYTE_SIZE = 16;
-static const uint8_t k_zero_bytes[MAX_REGISTER_BYTE_SIZE] = {0};
 static std::vector<register_map_entry_t> g_dynamic_register_map;
 static register_map_entry_t *g_reg_entries = NULL;
 static size_t g_num_reg_entries = 0;
@@ -3684,9 +3682,12 @@ RNBRemote::HandlePacket_stop_process (const char *p)
     m_comm.Disconnect(true);
     return err;
 #else
-    DNBProcessSignal (m_ctx.ProcessID(), SIGSTOP);
-    //DNBProcessSignal (m_ctx.ProcessID(), SIGINT);
-    // Do not send any response packet! Wait for the stop reply packet to naturally happen
+    if (!DNBProcessInterrupt(m_ctx.ProcessID()))
+    {
+        // If we failed to interrupt the process, then send a stop
+        // reply packet as the process was probably already stopped
+        HandlePacket_last_signal (NULL);
+    }
     return rnb_success;
 #endif
 }

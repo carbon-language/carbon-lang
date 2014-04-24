@@ -63,6 +63,7 @@ nub_bool_t      DNBProcessResume        (nub_process_t pid, const DNBThreadResum
 nub_bool_t      DNBProcessHalt          (nub_process_t pid) DNB_EXPORT;
 nub_bool_t      DNBProcessDetach        (nub_process_t pid) DNB_EXPORT;
 nub_bool_t      DNBProcessSignal        (nub_process_t pid, int signal) DNB_EXPORT;
+nub_bool_t      DNBProcessInterrupt     (nub_process_t pid) DNB_EXPORT;
 nub_bool_t      DNBProcessKill          (nub_process_t pid) DNB_EXPORT;
 nub_bool_t      DNBProcessSendEvent     (nub_process_t pid, const char *event) DNB_EXPORT;
 nub_size_t      DNBProcessMemoryRead    (nub_process_t pid, nub_addr_t addr, nub_size_t size, void *buf) DNB_EXPORT;

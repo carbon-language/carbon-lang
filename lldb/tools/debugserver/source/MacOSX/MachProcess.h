@@ -101,6 +101,7 @@ public:
 
     bool                    Resume (const DNBThreadResumeActions& thread_actions);
     bool                    Signal  (int signal, const struct timespec *timeout_abstime = NULL);
+    bool                    Interrupt();
     bool                    SendEvent (const char *event, DNBError &send_err);
     bool                    Kill (const struct timespec *timeout_abstime = NULL);
     bool                    Detach ();
@@ -325,6 +326,18 @@ private:
                                 m_image_infos_callback;
     void *                      m_image_infos_baton;
     std::string                 m_bundle_id;                 // If we are a SB or BKS process, this will be our bundle ID.
+    int                         m_sent_interrupt_signo;      // When we call MachProcess::Interrupt(), we want to send a single signal
+                                                             // to the inferior and only send the signal if we aren't already stopped.
+                                                             // If we end up sending a signal to stop the process we store it until we
+                                                             // receive an exception with this signal. This helps us to verify we got
+                                                             // the signal that interrupted the process. We might stop due to another
+                                                             // reason after an interrupt signal is sent, so this helps us ensure that
+                                                             // we don't report a spurious stop on the next resume.
+    int                         m_auto_resume_signo;         // If we resume the process and still haven't received our interrupt signal
+                                                             // acknownledgement, we will shortly after the next resume. We store the
+                                                             // interrupt signal in this variable so when we get the interrupt signal
+                                                             // as the sole reason for the process being stopped, we can auto resume
+                                                             // the process.
     bool                        m_did_exec;
 };
 

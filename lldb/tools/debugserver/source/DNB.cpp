@@ -787,6 +787,16 @@ DNBProcessSignal (nub_process_t pid, int signal)
     return false;
 }
 
+
+nub_bool_t
+DNBProcessInterrupt(nub_process_t pid)
+{
+    MachProcessSP procSP;
+    if (GetProcessSP (pid, procSP))
+        return procSP->Interrupt();
+    return false;
+}
+
 nub_bool_t
 DNBProcessSendEvent (nub_process_t pid, const char *event)
 {
