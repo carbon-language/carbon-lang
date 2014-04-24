@@ -1625,6 +1625,7 @@ static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
                                     int &MaskWidth) {
   EVT VT = Op.getValueType();
   unsigned BitWidth = VT.getSizeInBits();
+  (void)BitWidth;
   assert(BitWidth == 32 || BitWidth == 64);
 
   APInt KnownZero, KnownOne;
