@@ -122,7 +122,7 @@ public:
   static bool classifySymbolRef(const MCExpr *Expr,
                                 ARM64MCExpr::VariantKind &ELFRefKind,
                                 MCSymbolRefExpr::VariantKind &DarwinRefKind,
-                                const MCConstantExpr *&Addend);
+                                int64_t &Addend);
 };
 } // end anonymous namespace
 
@@ -587,7 +587,7 @@ public:
 
     ARM64MCExpr::VariantKind ELFRefKind;
     MCSymbolRefExpr::VariantKind DarwinRefKind;
-    const MCConstantExpr *Addend;
+    int64_t Addend;
     if (!ARM64AsmParser::classifySymbolRef(getImm(), ELFRefKind, DarwinRefKind,
                                            Addend)) {
       return false;
@@ -911,7 +911,7 @@ public:
     const MCExpr *Expr = Mem.OffsetImm;
     ARM64MCExpr::VariantKind ELFRefKind;
     MCSymbolRefExpr::VariantKind DarwinRefKind;
-    const MCConstantExpr *Addend;
+    int64_t Addend;
     if (!ARM64AsmParser::classifySymbolRef(Expr, ELFRefKind, DarwinRefKind,
                                            Addend)) {
       // If we don't understand the expression, assume the best and
@@ -931,8 +931,7 @@ public:
       // Note that we don't range-check the addend. It's adjusted modulo page
       // size when converted, so there is no "out of range" condition when using
       // @pageoff.
-      int64_t Value = Addend ? Addend->getValue() : 0;
-      return Value >= 0 && (Value % Scale) == 0;
+      return Addend >= 0 && (Addend % Scale) == 0;
     } else if (DarwinRefKind == MCSymbolRefExpr::VK_GOTPAGEOFF ||
                DarwinRefKind == MCSymbolRefExpr::VK_TLVPPAGEOFF) {
       // @gotpageoff/@tlvppageoff can only be used directly, not with an addend.
@@ -1482,7 +1481,7 @@ public:
     const MCExpr *Expr = Mem.OffsetImm;
     ARM64MCExpr::VariantKind ELFRefKind;
     MCSymbolRefExpr::VariantKind DarwinRefKind;
-    const MCConstantExpr *Addend;
+    int64_t Addend;
     if (Scale > 1 &&
         (!ARM64AsmParser::classifySymbolRef(Expr, ELFRefKind, DarwinRefKind,
                                             Addend) ||
@@ -2091,7 +2090,7 @@ ARM64AsmParser::tryParseAdrpLabel(OperandVector &Operands) {
 
   ARM64MCExpr::VariantKind ELFRefKind;
   MCSymbolRefExpr::VariantKind DarwinRefKind;
-  const MCConstantExpr *Addend;
+  int64_t Addend;
   if (classifySymbolRef(Expr, ELFRefKind, DarwinRefKind, Addend)) {
     if (DarwinRefKind == MCSymbolRefExpr::VK_None &&
         ELFRefKind == ARM64MCExpr::VK_INVALID) {
@@ -2925,7 +2924,7 @@ bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
       // assume it's OK and let the relocation stuff puke if it's not.
       ARM64MCExpr::VariantKind ELFRefKind;
       MCSymbolRefExpr::VariantKind DarwinRefKind;
-      const MCConstantExpr *Addend;
+      int64_t Addend;
       if (classifySymbolRef(OffsetExpr, ELFRefKind, DarwinRefKind, Addend) &&
           Addend == 0) {
         assert(ELFRefKind == ARM64MCExpr::VK_INVALID &&
@@ -3491,7 +3490,7 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
       const MCExpr *Expr = Inst.getOperand(2).getExpr();
       ARM64MCExpr::VariantKind ELFRefKind;
       MCSymbolRefExpr::VariantKind DarwinRefKind;
-      const MCConstantExpr *Addend;
+      int64_t Addend;
       if (!classifySymbolRef(Expr, ELFRefKind, DarwinRefKind, Addend)) {
         return Error(Loc[2], "invalid immediate expression");
       }
@@ -4478,9 +4477,10 @@ bool
 ARM64AsmParser::classifySymbolRef(const MCExpr *Expr,
                                   ARM64MCExpr::VariantKind &ELFRefKind,
                                   MCSymbolRefExpr::VariantKind &DarwinRefKind,
-                                  const MCConstantExpr *&Addend) {
+                                  int64_t &Addend) {
   ELFRefKind = ARM64MCExpr::VK_INVALID;
   DarwinRefKind = MCSymbolRefExpr::VK_None;
+  Addend = 0;
 
   if (const ARM64MCExpr *AE = dyn_cast<ARM64MCExpr>(Expr)) {
     ELFRefKind = AE->getKind();
@@ -4491,7 +4491,6 @@ ARM64AsmParser::classifySymbolRef(const MCExpr *Expr,
   if (SE) {
     // It's a simple symbol reference with no addend.
     DarwinRefKind = SE->getKind();
-    Addend = 0;
     return true;
   }
 
@@ -4504,14 +4503,19 @@ ARM64AsmParser::classifySymbolRef(const MCExpr *Expr,
     return false;
   DarwinRefKind = SE->getKind();
 
-  if (BE->getOpcode() != MCBinaryExpr::Add)
+  if (BE->getOpcode() != MCBinaryExpr::Add &&
+      BE->getOpcode() != MCBinaryExpr::Sub)
     return false;
 
   // See if the addend is is a constant, otherwise there's more going
   // on here than we can deal with.
-  Addend = dyn_cast<MCConstantExpr>(BE->getRHS());
-  if (!Addend)
+  auto AddendExpr = dyn_cast<MCConstantExpr>(BE->getRHS());
+  if (!AddendExpr)
     return false;
+
+  Addend = AddendExpr->getValue();
+  if (BE->getOpcode() == MCBinaryExpr::Sub)
+    Addend = -Addend;
 
   // It's some symbol reference + a constant addend, but really
   // shouldn't use both Darwin and ELF syntax.
