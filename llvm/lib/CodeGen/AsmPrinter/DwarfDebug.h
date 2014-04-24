@@ -326,6 +326,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   DwarfAccelTable AccelNames;
   DwarfAccelTable AccelObjC;
+  DwarfAccelTable AccelNamespace;
 
   MCDwarfDwoLineTable *getDwoLineTable(const DwarfCompileUnit &);
 
@@ -645,6 +646,8 @@ public:
   void addAccelName(StringRef Name, const DIE *Die);
 
   void addAccelObjC(StringRef Name, const DIE *Die);
+
+  void addAccelNamespace(StringRef Name, const DIE *Die);
 };
 } // End of namespace llvm
 

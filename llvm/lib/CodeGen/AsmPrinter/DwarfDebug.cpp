@@ -172,7 +172,9 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       AccelNames(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
                                        dwarf::DW_FORM_data4)),
       AccelObjC(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
-                                      dwarf::DW_FORM_data4)) {
+                                      dwarf::DW_FORM_data4)),
+      AccelNamespace(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
+                                           dwarf::DW_FORM_data4)) {
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = DwarfStrSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = DwarfLineSectionSym = 0;
@@ -1885,24 +1887,14 @@ void DwarfDebug::emitAccelObjC() {
 
 // Emit namespace dies into a hashed accelerator table.
 void DwarfDebug::emitAccelNamespaces() {
-  DwarfAccelTable AT(
-      DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4));
-  for (const auto &TheU : getUnits()) {
-    for (const auto &GI : TheU->getAccelNamespace()) {
-      StringRef Name = GI.getKey();
-      for (const DIE *D : GI.second)
-        AT.AddName(Name, D);
-    }
-  }
-
-  AT.FinalizeTable(Asm, "namespac");
+  AccelNamespace.FinalizeTable(Asm, "namespac");
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfAccelNamespaceSection());
   MCSymbol *SectionBegin = Asm->GetTempSymbol("namespac_begin");
   Asm->OutStreamer.EmitLabel(SectionBegin);
 
   // Emit the full data.
-  AT.Emit(Asm, SectionBegin, &InfoHolder);
+  AccelNamespace.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
 // Emit type dies into a hashed accelerator table.
@@ -2567,4 +2559,11 @@ void DwarfDebug::addAccelObjC(StringRef Name, const DIE *Die) {
     return;
   InfoHolder.getStringPoolEntry(Name);
   AccelObjC.AddName(Name, Die);
+}
+
+void DwarfDebug::addAccelNamespace(StringRef Name, const DIE *Die) {
+  if (!useDwarfAccelTables())
+    return;
+  InfoHolder.getStringPoolEntry(Name);
+  AccelNamespace.AddName(Name, Die);
 }

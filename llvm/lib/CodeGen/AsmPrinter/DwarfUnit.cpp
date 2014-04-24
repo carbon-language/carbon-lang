@@ -1065,14 +1065,6 @@ void DwarfUnit::addType(DIE *Entity, DIType Ty, dwarf::Attribute Attribute) {
   addDIEEntry(Entity, Attribute, Entry);
 }
 
-void DwarfUnit::addAccelNamespace(StringRef Name, const DIE *Die) {
-  if (!DD->useDwarfAccelTables())
-    return;
-  DU->getStringPoolEntry(Name);
-  std::vector<const DIE *> &DIEs = AccelNamespace[Name];
-  DIEs.push_back(Die);
-}
-
 void DwarfUnit::addAccelType(StringRef Name,
                              std::pair<const DIE *, unsigned> Die) {
   if (!DD->useDwarfAccelTables())
@@ -1415,10 +1407,10 @@ DIE *DwarfUnit::getOrCreateNameSpace(DINameSpace NS) {
 
   if (!NS.getName().empty()) {
     addString(NDie, dwarf::DW_AT_name, NS.getName());
-    addAccelNamespace(NS.getName(), NDie);
+    DD->addAccelNamespace(NS.getName(), NDie);
     addGlobalName(NS.getName(), NDie, NS.getContext());
   } else
-    addAccelNamespace("(anonymous namespace)", NDie);
+    DD->addAccelNamespace("(anonymous namespace)", NDie);
   addSourceLine(NDie, NS);
   return NDie;
 }

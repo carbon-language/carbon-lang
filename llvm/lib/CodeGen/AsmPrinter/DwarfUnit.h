@@ -102,9 +102,6 @@ protected:
   /// GlobalTypes - A map of globally visible types for this unit.
   StringMap<const DIE *> GlobalTypes;
 
-  /// AccelNamespace - A map of names for the namespace accelerator table.
-  StringMap<std::vector<const DIE *> > AccelNamespace;
-
   /// AccelTypes - A map of names for the type accelerator table.
   StringMap<std::vector<std::pair<const DIE *, unsigned> > > AccelTypes;
 
@@ -225,9 +222,6 @@ public:
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
 
-  const StringMap<std::vector<const DIE *> > &getAccelNamespace() const {
-    return AccelNamespace;
-  }
   const StringMap<std::vector<std::pair<const DIE *, unsigned> > > &
   getAccelTypes() const {
     return AccelTypes;
