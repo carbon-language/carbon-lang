@@ -206,7 +206,8 @@ StringRef PECOFFLinkingContext::decorateSymbol(StringRef name) const {
 StringRef PECOFFLinkingContext::undecorateSymbol(StringRef name) const {
   if (_machineType != llvm::COFF::IMAGE_FILE_MACHINE_I386)
     return name;
-  assert(name.startswith("_"));
+  if (!name.startswith("_"))
+    return name;
   return name.substr(1);
 }
 
