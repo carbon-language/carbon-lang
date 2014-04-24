@@ -39,6 +39,9 @@ struct dfsan_label_info {
   void *userdata;
 };
 
+/// Signature of the callback argument to dfsan_set_write_callback().
+typedef void (*dfsan_write_callback_t)(int fd, const void *buf, size_t count);
+
 /// Computes the union of \c l1 and \c l2, possibly creating a union label in
 /// the process.
 dfsan_label dfsan_union(dfsan_label l1, dfsan_label l2);
@@ -76,6 +79,11 @@ dfsan_label dfsan_has_label_with_desc(dfsan_label label, const char *desc);
 
 /// Returns the number of labels allocated.
 size_t dfsan_get_label_count(void);
+
+/// Sets a callback to be invoked on calls to write().  The callback is invoked
+/// before the write is done.  The write is not guaranteed to succeed when the
+/// callback executes.  Pass in NULL to remove any callback.
+void dfsan_set_write_callback(dfsan_write_callback_t labeled_write_callback);
 
 #ifdef __cplusplus
 }  // extern "C"

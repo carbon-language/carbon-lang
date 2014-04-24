@@ -24,6 +24,8 @@ fun:dfsan_has_label=uninstrumented
 fun:dfsan_has_label=discard
 fun:dfsan_has_label_with_desc=uninstrumented
 fun:dfsan_has_label_with_desc=discard
+fun:dfsan_set_write_callback=uninstrumented
+fun:dfsan_set_write_callback=custom
 
 ###############################################################################
 # glibc
@@ -142,7 +144,6 @@ fun:symlink=discard
 fun:syscall=discard
 fun:unlink=discard
 fun:uselocale=discard
-fun:write=discard
 
 # Functions that produce output does not depend on the input (need to zero the
 # shadow manually).
@@ -191,6 +192,10 @@ fun:strncasecmp=custom
 fun:strncmp=custom
 fun:strrchr=custom
 fun:strstr=custom
+
+# Functions which take action based on global state, such as running a callback
+# set by a sepperate function.
+fun:write=custom
 
 # Functions that take a callback (wrap the callback manually).
 fun:dl_iterate_phdr=custom

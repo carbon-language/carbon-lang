@@ -800,4 +800,43 @@ __dfsw_socketpair(int domain, int type, int protocol, int sv[2],
   }
   return ret;
 }
+
+// Type of the trampoline function passed to the custom version of
+// dfsan_set_write_callback.
+typedef void (*write_trampoline_t)(
+    void *callback,
+    int fd, const void *buf, ssize_t count,
+    dfsan_label fd_label, dfsan_label buf_label, dfsan_label count_label);
+
+// Calls to dfsan_set_write_callback() set the values in this struct.
+// Calls to the custom version of write() read (and invoke) them.
+static struct {
+  write_trampoline_t write_callback_trampoline = NULL;
+  void *write_callback = NULL;
+} write_callback_info;
+
+SANITIZER_INTERFACE_ATTRIBUTE void
+__dfsw_dfsan_set_write_callback(
+    write_trampoline_t write_callback_trampoline,
+    void *write_callback,
+    dfsan_label write_callback_label,
+    dfsan_label *ret_label) {
+  write_callback_info.write_callback_trampoline = write_callback_trampoline;
+  write_callback_info.write_callback = write_callback;
+}
+
+SANITIZER_INTERFACE_ATTRIBUTE int
+__dfsw_write(int fd, const void *buf, size_t count,
+             dfsan_label fd_label, dfsan_label buf_label,
+             dfsan_label count_label, dfsan_label *ret_label) {
+  if (write_callback_info.write_callback != NULL) {
+    write_callback_info.write_callback_trampoline(
+        write_callback_info.write_callback,
+        fd, buf, count,
+        fd_label, buf_label, count_label);
+  }
+
+  *ret_label = 0;
+  return write(fd, buf, count);
+}
 }

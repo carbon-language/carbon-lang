@@ -30,6 +30,7 @@
 
 dfsan_label i_label = 0;
 dfsan_label j_label = 0;
+dfsan_label k_label = 0;
 dfsan_label i_j_label = 0;
 
 #define ASSERT_ZERO_LABEL(data) \
@@ -337,6 +338,54 @@ void test_ctime_r() {
   ret = ctime_r(&t, buf);
   ASSERT_LABEL(ret, j_label);
   ASSERT_READ_ZERO_LABEL(buf, strlen(buf) + 1);
+}
+
+static int write_callback_count = 0;
+static int last_fd;
+static const void *last_buf;
+static size_t last_count;
+
+void write_callback(int fd, const void *buf, size_t count) {
+  write_callback_count++;
+
+  last_fd = fd;
+  last_buf = buf;
+  last_count = count;
+}
+
+void test_dfsan_set_write_callback() {
+  char buf[] = "Sample chars";
+  int buf_len = strlen(buf);
+
+  int fd = open("/dev/null", O_WRONLY);
+
+  dfsan_set_write_callback(write_callback);
+
+  write_callback_count = 0;
+
+  // Callback should be invoked on every call to write().
+  int res = write(fd, buf, buf_len);
+  assert(write_callback_count == 1);
+  ASSERT_READ_ZERO_LABEL(&res, sizeof(res));
+  ASSERT_READ_ZERO_LABEL(&last_fd, sizeof(last_fd));
+  ASSERT_READ_ZERO_LABEL(last_buf, sizeof(last_buf));
+  ASSERT_READ_ZERO_LABEL(&last_count, sizeof(last_count));
+
+  // Add a label to write() arguments.  Check that the labels are readable from
+  // the values passed to the callback.
+  dfsan_set_label(i_label, &fd, sizeof(fd));
+  dfsan_set_label(j_label, &(buf[3]), 1);
+  dfsan_set_label(k_label, &buf_len, sizeof(buf_len));
+  
+  res = write(fd, buf, buf_len);
+  assert(write_callback_count == 2);
+  ASSERT_READ_ZERO_LABEL(&res, sizeof(res));
+  ASSERT_READ_LABEL(&last_fd, sizeof(last_fd), i_label);
+  ASSERT_READ_LABEL(&last_buf[3], sizeof(last_buf[3]), j_label);
+  ASSERT_READ_LABEL(last_buf, sizeof(last_buf), j_label);
+  ASSERT_READ_LABEL(&last_count, sizeof(last_count), k_label);
+
+  dfsan_set_write_callback(NULL);
 }
 
 void test_fgets() {
@@ -702,14 +751,39 @@ void test_socketpair() {
   ASSERT_READ_ZERO_LABEL(fd, sizeof(fd));
 }
 
+void test_write() {
+  int fd = open("/dev/null", O_WRONLY);
+
+  char buf[] = "a string";
+  int len = strlen(buf);
+
+  // The result of a write always unlabeled.
+  int res = write(fd, buf, len);
+  assert(res > 0);
+  ASSERT_ZERO_LABEL(res);
+
+  // Label all arguments to write().
+  dfsan_set_label(i_label, &(buf[3]), 1);
+  dfsan_set_label(j_label, &fd, sizeof(fd));
+  dfsan_set_label(i_label, &len, sizeof(len));
+
+  // The value returned by write() should have no label.
+  res = write(fd, buf, len);
+  ASSERT_ZERO_LABEL(res);
+
+  close(fd);
+}
+
 int main(void) {
   i_label = dfsan_create_label("i", 0);
   j_label = dfsan_create_label("j", 0);
+  k_label = dfsan_create_label("k", 0);
   i_j_label = dfsan_union(i_label, j_label);
 
   test_calloc();
   test_clock_gettime();
   test_ctime_r();
+  test_dfsan_set_write_callback();
   test_dl_iterate_phdr();
   test_dlopen();
   test_fgets();
@@ -755,4 +829,5 @@ int main(void) {
   test_strtoul();
   test_strtoull();
   test_time();
+  test_write();
 }
