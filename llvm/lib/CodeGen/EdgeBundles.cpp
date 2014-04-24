@@ -69,15 +69,11 @@ bool EdgeBundles::runOnMachineFunction(MachineFunction &mf) {
   return false;
 }
 
-/// view - Visualize the annotated bipartite CFG with Graphviz.
-void EdgeBundles::view() const {
-  ViewGraph(*this, "EdgeBundles");
-}
-
 /// Specialize WriteGraph, the standard implementation won't work.
-raw_ostream &llvm::WriteGraph(raw_ostream &O, const EdgeBundles &G,
-                              bool ShortNames,
-                              const Twine &Title) {
+template<>
+raw_ostream &llvm::WriteGraph<>(raw_ostream &O, const EdgeBundles &G,
+                                bool ShortNames,
+                                const Twine &Title) {
   const MachineFunction *MF = G.getMachineFunction();
 
   O << "digraph {\n";
@@ -94,4 +90,9 @@ raw_ostream &llvm::WriteGraph(raw_ostream &O, const EdgeBundles &G,
   }
   O << "}\n";
   return O;
+}
+
+/// view - Visualize the annotated bipartite CFG with Graphviz.
+void EdgeBundles::view() const {
+  ViewGraph(*this, "EdgeBundles");
 }

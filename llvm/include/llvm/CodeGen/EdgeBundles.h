@@ -59,11 +59,6 @@ private:
   void getAnalysisUsage(AnalysisUsage&) const override;
 };
 
-/// Specialize WriteGraph, the standard implementation won't work.
-raw_ostream &WriteGraph(raw_ostream &O, const EdgeBundles &G,
-                        bool ShortNames = false,
-                        const Twine &Title = "");
-
 } // end namespace llvm
 
 #endif
