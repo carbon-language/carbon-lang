@@ -271,7 +271,7 @@ enum {
 // 1-bit: has lsda
 // 2-bit: personality index
 //
-// 4-bits: 4=frame-based, 2=frameless, 3=dwarf
+// 4-bits: 4=frame-based, 3=dwarf, 2=frameless
 //  frameless:
 //        12-bits of stack size
 //  frame-based:
@@ -295,15 +295,6 @@ enum {
     UNWIND_ARM64_FRAME_D10_D11_PAIR            = 0x00000200,
     UNWIND_ARM64_FRAME_D12_D13_PAIR            = 0x00000400,
     UNWIND_ARM64_FRAME_D14_D15_PAIR            = 0x00000800,
-
-    UNWIND_ARM64_FRAME_X21_X22_PAIR_OLD        = 0x00000001,
-    UNWIND_ARM64_FRAME_X23_X24_PAIR_OLD        = 0x00000002,
-    UNWIND_ARM64_FRAME_X25_X26_PAIR_OLD        = 0x00000004,
-    UNWIND_ARM64_FRAME_X27_X28_PAIR_OLD        = 0x00000008,
-    UNWIND_ARM64_FRAME_D8_D9_PAIR_OLD          = 0x00000010,
-    UNWIND_ARM64_FRAME_D10_D11_PAIR_OLD        = 0x00000020,
-    UNWIND_ARM64_FRAME_D12_D13_PAIR_OLD        = 0x00000040,
-    UNWIND_ARM64_FRAME_D14_D15_PAIR_OLD        = 0x00000080,
 
     UNWIND_ARM64_FRAMELESS_STACK_SIZE_MASK     = 0x00FFF000,
     UNWIND_ARM64_DWARF_SECTION_OFFSET          = 0x00FFFFFF,
