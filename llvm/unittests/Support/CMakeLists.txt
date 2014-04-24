@@ -15,12 +15,13 @@ add_llvm_unittest(SupportTests
   EndianTest.cpp
   ErrorOrTest.cpp
   FileOutputBufferTest.cpp
+  IteratorTest.cpp
   LEB128Test.cpp
   LineIteratorTest.cpp
   LockFileManagerTest.cpp
+  MD5Test.cpp
   ManagedStatic.cpp
   MathExtrasTest.cpp
-  MD5Test.cpp
   MemoryBufferTest.cpp
   MemoryTest.cpp
   Path.cpp
