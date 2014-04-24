@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/MC/MCAsmBackend.h"
@@ -31,6 +32,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Path.h"
 #include <cctype>
+#include <unordered_map>
 using namespace llvm;
 
 namespace {
@@ -57,7 +59,9 @@ private:
                        EHPrivateExtern  = 1 << 2 };
   DenseMap<const MCSymbol*, unsigned> FlagMap;
 
-  DenseMap<const MCSymbol*, MCSymbolData*> SymbolMap;
+  // Using std::unordered_map to ensure pointers to MCSymbolData remain valid
+  // over insertions/removals from the SymbolMap.
+  std::unordered_map<const MCSymbol*, MCSymbolData> SymbolMap;
 
   void EmitRegisterName(int64_t Register);
   void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) override;
@@ -76,7 +80,6 @@ public:
     if (InstPrinter && IsVerboseAsm)
       InstPrinter->setCommentStream(CommentStream);
   }
-  ~MCAsmStreamer() {}
 
   inline void EmitEOL() {
     // If we don't have any comments, just emit a \n.
@@ -1470,12 +1473,11 @@ void MCAsmStreamer::FinishImpl() {
 }
 
 MCSymbolData &MCAsmStreamer::getOrCreateSymbolData(const MCSymbol *Symbol) {
-  MCSymbolData *&Entry = SymbolMap[Symbol];
-
-  if (!Entry)
-    Entry = new MCSymbolData(*Symbol, nullptr, 0, nullptr);
-
-  return *Entry;
+  auto Iter = SymbolMap.find(Symbol);
+  if (Iter == SymbolMap.end())
+    Iter = SymbolMap.insert(
+        Iter, std::make_pair(Symbol, MCSymbolData(*Symbol, nullptr, 0)));
+  return Iter->second;
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
