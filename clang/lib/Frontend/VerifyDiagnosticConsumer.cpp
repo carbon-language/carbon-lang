@@ -491,11 +491,12 @@ static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
     }
 
     // Construct new directive.
-    Directive *D = Directive::create(RegexKind, Pos, ExpectedLoc, Text,
-                                     Min, Max);
+    std::unique_ptr<Directive> D(
+        Directive::create(RegexKind, Pos, ExpectedLoc, Text, Min, Max));
+
     std::string Error;
     if (D->isValid(Error)) {
-      DL->push_back(D);
+      DL->push_back(D.release());
       FoundDirective = true;
     } else {
       Diags.Report(Pos.getLocWithOffset(ContentBegin-PH.Begin),
@@ -880,5 +881,6 @@ Directive *Directive::create(bool RegexKind, SourceLocation DirectiveLoc,
     }
   }
 
-  return new RegexDirective(DirectiveLoc, DiagnosticLoc, Text, Min, Max, RegexStr);
+  return new RegexDirective(DirectiveLoc, DiagnosticLoc, Text, Min, Max,
+                            RegexStr);
 }
