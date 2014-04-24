@@ -9668,6 +9668,25 @@ static SDValue LowerVectorAllZeroTest(SDValue Op, const X86Subtarget *Subtarget,
                      VecIns.back(), VecIns.back());
 }
 
+/// \brief return true if \c Op has a use that doesn't just read flags.
+static bool hasNonFlagsUse(SDValue Op) {
+  for (SDNode::use_iterator UI = Op->use_begin(), UE = Op->use_end(); UI != UE;
+       ++UI) {
+    SDNode *User = *UI;
+    unsigned UOpNo = UI.getOperandNo();
+    if (User->getOpcode() == ISD::TRUNCATE && User->hasOneUse()) {
+      // Look pass truncate.
+      UOpNo = User->use_begin().getOperandNo();
+      User = *User->use_begin();
+    }
+
+    if (User->getOpcode() != ISD::BRCOND && User->getOpcode() != ISD::SETCC &&
+        !(User->getOpcode() == ISD::SELECT && UOpNo == 0))
+      return true;
+  }
+  return false;
+}
+
 /// Emit nodes that will be selected as "test Op0,Op0", or something
 /// equivalent.
 SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
@@ -9772,31 +9791,34 @@ SDValue X86TargetLowering::EmitTest(SDValue Op, unsigned X86CC, SDLoc dl,
     Opcode = X86ISD::ADD;
     NumOperands = 2;
     break;
-  case ISD::AND: {
+  case ISD::SHL:
+  case ISD::SRL:
+    // If we have a constant logical shift that's only used in a comparison
+    // against zero turn it into an equivalent AND. This allows turning it into
+    // a TEST instruction later.
+    if (isa<ConstantSDNode>(Op->getOperand(1)) && !hasNonFlagsUse(Op)) {
+      EVT VT = Op.getValueType();
+      unsigned BitWidth = VT.getSizeInBits();
+      unsigned ShAmt = Op->getConstantOperandVal(1);
+      if (ShAmt >= BitWidth) // Avoid undefined shifts.
+        break;
+      APInt Mask = ArithOp.getOpcode() == ISD::SRL
+                       ? APInt::getHighBitsSet(BitWidth, BitWidth - ShAmt)
+                       : APInt::getLowBitsSet(BitWidth, BitWidth - ShAmt);
+      if (!Mask.isSignedIntN(32)) // Avoid large immediates.
+        break;
+      SDValue New = DAG.getNode(ISD::AND, dl, VT, Op->getOperand(0),
+                                DAG.getConstant(Mask, VT));
+      DAG.ReplaceAllUsesWith(Op, New);
+      Op = New;
+    }
+    break;
+
+  case ISD::AND:
     // If the primary and result isn't used, don't bother using X86ISD::AND,
     // because a TEST instruction will be better.
-    bool NonFlagUse = false;
-    for (SDNode::use_iterator UI = Op.getNode()->use_begin(),
-           UE = Op.getNode()->use_end(); UI != UE; ++UI) {
-      SDNode *User = *UI;
-      unsigned UOpNo = UI.getOperandNo();
-      if (User->getOpcode() == ISD::TRUNCATE && User->hasOneUse()) {
-        // Look pass truncate.
-        UOpNo = User->use_begin().getOperandNo();
-        User = *User->use_begin();
-      }
-
-      if (User->getOpcode() != ISD::BRCOND &&
-          User->getOpcode() != ISD::SETCC &&
-          !(User->getOpcode() == ISD::SELECT && UOpNo == 0)) {
-        NonFlagUse = true;
-        break;
-      }
-    }
-
-    if (!NonFlagUse)
+    if (!hasNonFlagsUse(Op))
       break;
-  }
     // FALL THROUGH
   case ISD::SUB:
   case ISD::OR:

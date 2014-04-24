@@ -26,9 +26,22 @@ cond_true:		; preds = %0
 ReturnBlock:		; preds = %0
 	ret i32 0
 ; CHECK-LABEL: test2:
-; CHECK: movl	(%rsi), %eax
-; CHECK: shll	$3, %eax
-; CHECK: testl	%eax, %eax
+; CHECK: testl	$536870911, (%rsi)
+}
+
+define i8 @test2b(i8 %X, i8* %y) nounwind {
+	%tmp = load i8* %y		; <i8> [#uses=1]
+	%tmp1 = shl i8 %tmp, 3		; <i8> [#uses=1]
+	%tmp1.upgrd.2 = icmp eq i8 %tmp1, 0		; <i1> [#uses=1]
+	br i1 %tmp1.upgrd.2, label %ReturnBlock, label %cond_true
+
+cond_true:		; preds = %0
+	ret i8 1
+
+ReturnBlock:		; preds = %0
+	ret i8 0
+; CHECK-LABEL: test2b:
+; CHECK: testb	$31, (%rsi)
 }
 
 define i64 @test3(i64 %x) nounwind {
@@ -68,8 +81,8 @@ define i32 @test5(double %A) nounwind  {
  bb12:; preds = %entry
  ret i32 32
 ; CHECK-LABEL: test5:
-; CHECK: ucomisd	LCPI4_0(%rip), %xmm0
-; CHECK: ucomisd	LCPI4_1(%rip), %xmm0
+; CHECK: ucomisd	LCPI5_0(%rip), %xmm0
+; CHECK: ucomisd	LCPI5_1(%rip), %xmm0
 }
 
 declare i32 @foo(...)
@@ -163,3 +176,14 @@ define i32 @test12() uwtable ssp {
 }
 
 declare zeroext i1 @test12b()
+
+define i32 @test13(i32 %mask, i32 %base, i32 %intra) {
+  %and = and i32 %mask, 8
+  %tobool = icmp ne i32 %and, 0
+  %cond = select i1 %tobool, i32 %intra, i32 %base
+  ret i32 %cond
+
+; CHECK-LABEL: test13:
+; CHECK: testb	$8, %dil
+; CHECK: cmovnel
+}
