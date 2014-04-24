@@ -26,18 +26,27 @@ using namespace clang::query;
 using namespace clang::tooling;
 
 class QueryEngineTest : public ::testing::Test {
-protected:
-  QueryEngineTest() {}
+  ArrayRef<ASTUnit *> mkASTUnit2(ASTUnit *a, ASTUnit *b) {
+    ASTs[0] = a;
+    ASTs[1] = b;
+    return ASTs;
+  }
 
-  std::unique_ptr<ASTUnit> FooAST{
-      buildASTFromCode("void foo1(void) {}\nvoid foo2(void) {}", "foo.cc")};
-  std::unique_ptr<ASTUnit> BarAST{
-      buildASTFromCode("void bar1(void) {}\nvoid bar2(void) {}", "bar.cc")};
-  ASTUnit *ASTs[2]{FooAST.get(), BarAST.get()};
-  QuerySession S{ASTs};
+protected:
+  QueryEngineTest()
+      : FooAST(buildASTFromCode("void foo1(void) {}\nvoid foo2(void) {}",
+                                "foo.cc")),
+        BarAST(buildASTFromCode("void bar1(void) {}\nvoid bar2(void) {}",
+                                "bar.cc")),
+        S(mkASTUnit2(FooAST.get(), BarAST.get())), OS(Str) {}
+
+  std::unique_ptr<ASTUnit> FooAST;
+  std::unique_ptr<ASTUnit> BarAST;
+  ASTUnit *ASTs[2];
+  QuerySession S;
 
   std::string Str;
-  llvm::raw_string_ostream OS{Str};
+  llvm::raw_string_ostream OS;
 };
 
 TEST_F(QueryEngineTest, Basic) {

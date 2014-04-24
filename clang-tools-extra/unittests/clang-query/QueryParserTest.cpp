@@ -18,10 +18,10 @@ using namespace clang::query;
 
 class QueryParserTest : public ::testing::Test {
 protected:
-  QueryParserTest() {}
+  QueryParserTest() : QS(llvm::ArrayRef<ASTUnit *>()) {}
   QueryRef parse(StringRef Code) { return QueryParser::parse(Code, QS); }
 
-  QuerySession QS{llvm::ArrayRef<ASTUnit*>()};
+  QuerySession QS;
 };
 
 TEST_F(QueryParserTest, NoOp) {
