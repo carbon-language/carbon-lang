@@ -38,7 +38,7 @@ define i64 @test_builtin_rdtscp(i8* %A) {
 ; CHECK-LABEL: test_builtin_rdtscp
 ; CHECK: rdtscp
 ; X86-NOT: shlq
-; CHECK:   movl	%ecx, (%{{[a-z]+}})
+; CHECK:   movl	%ecx, (%{{[a-z0-9]+}})
 ; X86-NOT: shlq
 ; CHECK: ret
 
