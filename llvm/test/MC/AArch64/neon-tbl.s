@@ -1,4 +1,5 @@
 // RUN: llvm-mc -triple=aarch64 -mattr=+neon -show-encoding < %s | FileCheck %s
+// RUN: llvm-mc -triple=arm64 -mattr=+neon -show-encoding < %s | FileCheck %s
 
 // Check that the assembler can handle the documented syntax for AArch64
 
@@ -53,4 +54,3 @@
 // CHECK: tbx	v0.16b, { v1.16b, v2.16b, v3.16b }, v2.16b // encoding: [0x20,0x50,0x02,0x4e]
 // CHECK: tbx	v0.16b, { v1.16b, v2.16b, v3.16b, v4.16b }, v2.16b // encoding: [0x20,0x70,0x02,0x4e]
 // CHECK: tbx	v0.16b, { v30.16b, v31.16b, v0.16b, v1.16b }, v2.16b // encoding: [0xc0,0x73,0x02,0x4e]
-

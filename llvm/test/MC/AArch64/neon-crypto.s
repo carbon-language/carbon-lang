@@ -1,5 +1,7 @@
 // RUN: llvm-mc -triple=aarch64 -mattr=+neon -mattr=+crypto -show-encoding < %s | FileCheck %s
 // RUN: not llvm-mc -triple=aarch64 -mattr=+neon -show-encoding < %s 2>&1 | FileCheck -check-prefix=CHECK-NO-CRYPTO %s
+// RUN: llvm-mc -triple=arm64 -mattr=+neon -mattr=+crypto -show-encoding < %s | FileCheck %s
+// RUN: not llvm-mc -triple=arm64 -mattr=+neon -show-encoding < %s 2>&1 | FileCheck -check-prefix=CHECK-NO-CRYPTO-ARM64 %s
 
 // Check that the assembler can handle the documented syntax for AArch64
 
@@ -13,6 +15,7 @@
         aesimc v0.16b, v1.16b
 
 // CHECK-NO-CRYPTO: error: instruction requires a CPU feature not currently enabled
+// CHECK-NO-CRYPTO-ARM64: error: instruction requires: crypto
 // CHECK: aese	v0.16b, v1.16b          // encoding: [0x20,0x48,0x28,0x4e]
 // CHECK: aesd	v0.16b, v1.16b          // encoding: [0x20,0x58,0x28,0x4e]
 // CHECK: aesmc	v0.16b, v1.16b          // encoding: [0x20,0x68,0x28,0x4e]
