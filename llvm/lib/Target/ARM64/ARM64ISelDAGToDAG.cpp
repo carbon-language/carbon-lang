@@ -1394,28 +1394,23 @@ SDNode *ARM64DAGToDAGISel::SelectBitfieldExtractOp(SDNode *N) {
   return CurDAG->SelectNodeTo(N, Opc, VT, Ops, 3);
 }
 
-// Is mask a i32 or i64 binary sequence 1..10..0 and
-// CountTrailingZeros(mask) == ExpectedTrailingZeros
-static bool isHighMask(uint64_t Mask, unsigned ExpectedTrailingZeros,
-                       unsigned NumberOfIgnoredHighBits, EVT VT) {
+/// Does DstMask form a complementary pair with the mask provided by
+/// BitsToBeInserted, suitable for use in a BFI instruction. Roughly speaking,
+/// this asks whether DstMask zeroes precisely those bits that will be set by
+/// the other half.
+static bool isBitfieldDstMask(uint64_t DstMask, APInt BitsToBeInserted,
+                              unsigned NumberOfIgnoredHighBits, EVT VT) {
   assert((VT == MVT::i32 || VT == MVT::i64) &&
          "i32 or i64 mask type expected!");
+  unsigned BitWidth = VT.getSizeInBits() - NumberOfIgnoredHighBits;
+  APInt SignificantBits =
+      ~APInt::getHighBitsSet(BitWidth, NumberOfIgnoredHighBits);
 
-  uint64_t ExpectedMask;
-  if (VT == MVT::i32) {
-    uint32_t ExpectedMaski32 = ~0 << ExpectedTrailingZeros;
-    ExpectedMask = ExpectedMaski32;
-    if (NumberOfIgnoredHighBits) {
-      uint32_t highMask = ~0 << (32 - NumberOfIgnoredHighBits);
-      Mask |= highMask;
-    }
-  } else {
-    ExpectedMask = ((uint64_t) ~0) << ExpectedTrailingZeros;
-    if (NumberOfIgnoredHighBits)
-      Mask |= ((uint64_t) ~0) << (64 - NumberOfIgnoredHighBits);
-  }
+  APInt SignificantDstMask = APInt(BitWidth, DstMask);
+  APInt SignificantBitsToBeInserted = BitsToBeInserted.zextOrTrunc(BitWidth);
 
-  return Mask == ExpectedMask;
+  return (SignificantDstMask & SignificantBitsToBeInserted) == 0 &&
+         (SignificantDstMask | SignificantBitsToBeInserted).isAllOnesValue();
 }
 
 // Look for bits that will be useful for later uses.
@@ -1593,6 +1588,79 @@ static void getUsefulBits(SDValue Op, APInt &UsefulBits, unsigned Depth) {
   UsefulBits &= UsersUsefulBits;
 }
 
+/// Create a machine node performing a notional SHL of Op by ShlAmount. If
+/// ShlAmount is negative, do a (logical) right-shift instead. If ShlAmount is
+/// 0, return Op unchanged.
+static SDValue getLeftShift(SelectionDAG *CurDAG, SDValue Op, int ShlAmount) {
+  if (ShlAmount == 0)
+    return Op;
+
+  EVT VT = Op.getValueType();
+  unsigned BitWidth = VT.getSizeInBits();
+  unsigned UBFMOpc = BitWidth == 32 ? ARM64::UBFMWri : ARM64::UBFMXri;
+
+  SDNode *ShiftNode;
+  if (ShlAmount > 0) {
+    // LSL wD, wN, #Amt == UBFM wD, wN, #32-Amt, #31-Amt
+    ShiftNode = CurDAG->getMachineNode(
+        UBFMOpc, SDLoc(Op), VT, Op,
+        CurDAG->getTargetConstant(BitWidth - ShlAmount, VT),
+        CurDAG->getTargetConstant(BitWidth - 1 - ShlAmount, VT));
+  } else {
+    // LSR wD, wN, #Amt == UBFM wD, wN, #Amt, #32-1
+    assert(ShlAmount < 0 && "expected right shift");
+    int ShrAmount = -ShlAmount;
+    ShiftNode = CurDAG->getMachineNode(
+        UBFMOpc, SDLoc(Op), VT, Op, CurDAG->getTargetConstant(ShrAmount, VT),
+        CurDAG->getTargetConstant(BitWidth - 1, VT));
+  }
+
+  return SDValue(ShiftNode, 0);
+}
+
+/// Does this tree qualify as an attempt to move a bitfield into position,
+/// essentially "(and (shl VAL, N), Mask)".
+static bool isBitfieldPositioningOp(SelectionDAG *CurDAG, SDValue Op,
+                                    SDValue &Src, int &ShiftAmount,
+                                    int &MaskWidth) {
+  EVT VT = Op.getValueType();
+  unsigned BitWidth = VT.getSizeInBits();
+  assert(BitWidth == 32 || BitWidth == 64);
+
+  APInt KnownZero, KnownOne;
+  CurDAG->ComputeMaskedBits(Op, KnownZero, KnownOne);
+
+  // Non-zero in the sense that they're not provably zero, which is the key
+  // point if we want to use this value
+  uint64_t NonZeroBits = (~KnownZero).getZExtValue();
+
+  // Discard a constant AND mask if present. It's safe because the node will
+  // already have been factored into the ComputeMaskedBits calculation above.
+  uint64_t AndImm;
+  if (isOpcWithIntImmediate(Op.getNode(), ISD::AND, AndImm)) {
+    assert((~APInt(BitWidth, AndImm) & ~KnownZero) == 0);
+    Op = Op.getOperand(0);
+  }
+
+  uint64_t ShlImm;
+  if (!isOpcWithIntImmediate(Op.getNode(), ISD::SHL, ShlImm))
+    return false;
+  Op = Op.getOperand(0);
+
+  if (!isShiftedMask_64(NonZeroBits))
+    return false;
+
+  ShiftAmount = countTrailingZeros(NonZeroBits);
+  MaskWidth = CountTrailingOnes_64(NonZeroBits >> ShiftAmount);
+
+  // BFI encompasses sufficiently many nodes that it's worth inserting an extra
+  // LSL/LSR if the mask in NonZeroBits doesn't quite match up with the ISD::SHL
+  // amount.
+  Src = getLeftShift(CurDAG, Op, ShlImm - ShiftAmount);
+
+  return true;
+}
+
 // Given a OR operation, check if we have the following pattern
 // ubfm c, b, imm, imm2 (or something that does the same jobs, see
 //                       isBitfieldExtractOp)
@@ -1602,9 +1670,9 @@ static void getUsefulBits(SDValue Op, APInt &UsefulBits, unsigned Depth) {
 // if yes, given reference arguments will be update so that one can replace
 // the OR instruction with:
 // f = Opc Opd0, Opd1, LSB, MSB ; where Opc is a BFM, LSB = imm, and MSB = imm2
-static bool isBitfieldInsertOpFromOr(SDNode *N, unsigned &Opc, SDValue &Opd0,
-                                     SDValue &Opd1, unsigned &LSB,
-                                     unsigned &MSB, SelectionDAG *CurDAG) {
+static bool isBitfieldInsertOpFromOr(SDNode *N, unsigned &Opc, SDValue &Dst,
+                                     SDValue &Src, unsigned &ImmR,
+                                     unsigned &ImmS, SelectionDAG *CurDAG) {
   assert(N->getOpcode() == ISD::OR && "Expect a OR operation");
 
   // Set Opc
@@ -1632,30 +1700,36 @@ static bool isBitfieldInsertOpFromOr(SDNode *N, unsigned &Opc, SDValue &Opd0,
   for (int i = 0; i < 2;
        ++i, std::swap(OrOpd0, OrOpd1), OrOpd1Val = N->getOperand(0)) {
     unsigned BFXOpc;
-    // Set Opd1, LSB and MSB arguments by looking for
-    // c = ubfm b, imm, imm2
-    if (!isBitfieldExtractOp(CurDAG, OrOpd0, BFXOpc, Opd1, LSB, MSB,
-                             NumberOfIgnoredLowBits, true))
-      continue;
+    int DstLSB, Width;
+    if (isBitfieldExtractOp(CurDAG, OrOpd0, BFXOpc, Src, ImmR, ImmS,
+                            NumberOfIgnoredLowBits, true)) {
+      // Check that the returned opcode is compatible with the pattern,
+      // i.e., same type and zero extended (U and not S)
+      if ((BFXOpc != ARM64::UBFMXri && VT == MVT::i64) ||
+          (BFXOpc != ARM64::UBFMWri && VT == MVT::i32))
+        continue;
 
-    // Check that the returned opcode is compatible with the pattern,
-    // i.e., same type and zero extended (U and not S)
-    if ((BFXOpc != ARM64::UBFMXri && VT == MVT::i64) ||
-        (BFXOpc != ARM64::UBFMWri && VT == MVT::i32))
-      continue;
+      // Compute the width of the bitfield insertion
+      DstLSB = 0;
+      Width = ImmS - ImmR + 1;
+      // FIXME: This constraint is to catch bitfield insertion we may
+      // want to widen the pattern if we want to grab general bitfied
+      // move case
+      if (Width <= 0)
+        continue;
 
-    // Compute the width of the bitfield insertion
-    int sMSB = MSB - LSB + 1;
-    // FIXME: This constraints is to catch bitfield insertion we may
-    // want to widen the pattern if we want to grab general bitfied
-    // move case
-    if (sMSB <= 0)
+      // If the mask on the insertee is correct, we have a BFXIL operation. We
+      // can share the ImmR and ImmS values from the already-computed UBFM.
+    } else if (isBitfieldPositioningOp(CurDAG, SDValue(OrOpd0, 0), Src,
+                                       DstLSB, Width)) {
+      ImmR = (VT.getSizeInBits() - DstLSB) % VT.getSizeInBits();
+      ImmS = Width - 1;
+    } else
       continue;
 
     // Check the second part of the pattern
     EVT VT = OrOpd1->getValueType(0);
-    if (VT != MVT::i32 && VT != MVT::i64)
-      continue;
+    assert((VT == MVT::i32 || VT == MVT::i64) && "unexpected OR operand");
 
     // Compute the Known Zero for the candidate of the first operand.
     // This allows to catch more general case than just looking for
@@ -1666,19 +1740,22 @@ static bool isBitfieldInsertOpFromOr(SDNode *N, unsigned &Opc, SDValue &Opd0,
 
     // Check if there is enough room for the second operand to appear
     // in the first one
-    if (KnownZero.countTrailingOnes() < (unsigned)sMSB)
+    APInt BitsToBeInserted =
+        APInt::getBitsSet(KnownZero.getBitWidth(), DstLSB, DstLSB + Width);
+
+    if ((BitsToBeInserted & ~KnownZero) != 0)
       continue;
 
     // Set the first operand
     uint64_t Imm;
     if (isOpcWithIntImmediate(OrOpd1, ISD::AND, Imm) &&
-        isHighMask(Imm, sMSB, NumberOfIgnoredHighBits, VT))
+        isBitfieldDstMask(Imm, BitsToBeInserted, NumberOfIgnoredHighBits, VT))
       // In that case, we can eliminate the AND
-      Opd0 = OrOpd1->getOperand(0);
+      Dst = OrOpd1->getOperand(0);
     else
       // Maybe the AND has been removed by simplify-demanded-bits
       // or is useful because it discards more bits
-      Opd0 = OrOpd1Val;
+      Dst = OrOpd1Val;
 
     // both parts match
     return true;
