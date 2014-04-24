@@ -444,7 +444,7 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
     DFSStack.push_back(std::make_pair(&N, N.begin()));
   }
 
-  do {
+  for (;;) {
     Node *N = DFSStack.back().first;
     assert(N->DFSNumber != 0 && "We should always assign a DFS number "
                                 "before placing a node onto the stack.");
@@ -479,16 +479,15 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
       // Form the new SCC out of the top of the DFS stack.
       return formSCC(N, PendingSCCStack);
 
+    assert(!DFSStack.empty() && "We never found a viable root!");
+
     // At this point we know that N cannot ever be an SCC root. Its low-link
     // is not its dfs-number, and we've processed all of its children. It is
     // just sitting here waiting until some node further down the stack gets
     // low-link == dfs-number and pops it off as well. Move it to the pending
     // stack which is pulled into the next SCC to be formed.
     PendingSCCStack.push_back(N);
-  } while (!DFSStack.empty());
-
-  llvm_unreachable(
-      "We cannot reach the bottom of the stack without popping an SCC.");
+  }
 }
 
 char LazyCallGraphAnalysis::PassID;
