@@ -215,7 +215,7 @@ public:
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
 
-    SmallSetVector<SCC *, 1> ParentSCCs;
+    SmallPtrSet<SCC *, 1> ParentSCCs;
     SmallVector<Node *, 1> Nodes;
 
     SCC() {}
@@ -228,7 +228,7 @@ public:
 
   public:
     typedef SmallVectorImpl<Node *>::const_iterator iterator;
-    typedef pointee_iterator<SmallSetVector<SCC *, 1>::const_iterator> parent_iterator;
+    typedef pointee_iterator<SmallPtrSet<SCC *, 1>::const_iterator> parent_iterator;
 
     iterator begin() const { return Nodes.begin(); }
     iterator end() const { return Nodes.end(); }

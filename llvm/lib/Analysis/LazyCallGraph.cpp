@@ -157,7 +157,7 @@ void LazyCallGraph::SCC::removeEdge(LazyCallGraph &G, Function &Caller,
   // the caller no longer a parent of the callee. Walk the other call edges
   // in the caller to tell.
   if (!HasOtherCallToCalleeC) {
-    bool Removed = CalleeC.ParentSCCs.remove(this);
+    bool Removed = CalleeC.ParentSCCs.erase(this);
     (void)Removed;
     assert(Removed &&
            "Did not find the caller SCC in the callee SCC's parent list!");
@@ -239,7 +239,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
         // However, we do need to remove this SCC from its SCC's parent set.
         SCC &ChildSCC = *G.SCCMap.lookup(&ChildN);
         if (&ChildSCC != this) {
-          ChildSCC.ParentSCCs.remove(this);
+          ChildSCC.ParentSCCs.erase(this);
           continue;
         }
 
