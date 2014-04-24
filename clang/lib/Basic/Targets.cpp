@@ -5777,32 +5777,44 @@ class Mips64TargetInfoBase : public MipsTargetInfoBase {
 public:
   Mips64TargetInfoBase(const llvm::Triple &Triple)
       : MipsTargetInfoBase(Triple, "n64", "mips64r2") {
-    LongWidth = LongAlign = 64;
-    PointerWidth = PointerAlign = 64;
     LongDoubleWidth = LongDoubleAlign = 128;
     LongDoubleFormat = &llvm::APFloat::IEEEquad;
     if (getTriple().getOS() == llvm::Triple::FreeBSD) {
       LongDoubleWidth = LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEdouble;
     }
+    setN64ABITypes();
     SuitableAlign = 128;
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
   }
+
+  void setN64ABITypes() {
+    LongWidth = LongAlign = 64;
+    PointerWidth = PointerAlign = 64;
+    SizeType = UnsignedLong;
+    PtrDiffType = SignedLong;
+  }
+
+  void setN32ABITypes() {
+    LongWidth = LongAlign = 32;
+    PointerWidth = PointerAlign = 32;
+    SizeType = UnsignedInt;
+    PtrDiffType = SignedInt;
+  }
+
   bool setABI(const std::string &Name) override {
     if (Name == "n32") {
-      LongWidth = LongAlign = 32;
-      PointerWidth = PointerAlign = 32;
+      setN32ABITypes();
       ABI = Name;
       return true;
-    } else if (Name == "n64") {
-      ABI = Name;
-      return true;
-    } else if (Name == "64") {
+    } else if (Name == "n64" || Name == "64") {
+      setN64ABITypes();
       ABI = "n64";
       return true;
-    } else
-      return false;
+    }
+    return false;
   }
+
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
     MipsTargetInfoBase::getTargetDefines(Opts, Builder);
