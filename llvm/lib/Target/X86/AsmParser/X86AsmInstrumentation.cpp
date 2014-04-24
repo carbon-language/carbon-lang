@@ -15,6 +15,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstBuilder.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -40,8 +41,8 @@ public:
   // X86AsmInstrumentation implementation:
   virtual void InstrumentInstruction(
       const MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
-      MCContext &Ctx, MCStreamer &Out) override {
-    InstrumentMOV(Inst, Operands, Ctx, Out);
+      MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out) override {
+    InstrumentMOV(Inst, Operands, Ctx, MII, Out);
   }
 
   // Should be implemented differently in x86_32 and x86_64 subclasses.
@@ -53,7 +54,7 @@ public:
                             bool IsWrite, MCContext &Ctx, MCStreamer &Out);
   void InstrumentMOV(const MCInst &Inst,
                      SmallVectorImpl<MCParsedAsmOperand *> &Operands,
-                     MCContext &Ctx, MCStreamer &Out);
+                     MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out);
   void EmitInstruction(MCStreamer &Out, const MCInst &Inst) {
     Out.EmitInstruction(Inst, STI);
   }
@@ -79,50 +80,33 @@ void X86AddressSanitizer::InstrumentMemOperand(
 
 void X86AddressSanitizer::InstrumentMOV(
     const MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
-    MCContext &Ctx, MCStreamer &Out) {
+    MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out) {
   // Access size in bytes.
   unsigned AccessSize = 0;
 
-  // FIXME: use MCInstrDesc to get proper value of IsWrite.
-  bool IsWrite = false;
   switch (Inst.getOpcode()) {
   case X86::MOV8mi:
   case X86::MOV8mr:
-    AccessSize = 1;
-    IsWrite = true;
-    break;
   case X86::MOV8rm:
     AccessSize = 1;
     break;
   case X86::MOV16mi:
   case X86::MOV16mr:
-    AccessSize = 2;
-    IsWrite = true;
-    break;
   case X86::MOV16rm:
     AccessSize = 2;
     break;
   case X86::MOV32mi:
   case X86::MOV32mr:
-    AccessSize = 4;
-    IsWrite = true;
-    break;
   case X86::MOV32rm:
     AccessSize = 4;
     break;
   case X86::MOV64mi32:
   case X86::MOV64mr:
-    AccessSize = 8;
-    IsWrite = true;
-    break;
   case X86::MOV64rm:
     AccessSize = 8;
     break;
   case X86::MOVAPDmr:
   case X86::MOVAPSmr:
-    AccessSize = 16;
-    IsWrite = true;
-    break;
   case X86::MOVAPDrm:
   case X86::MOVAPSrm:
     AccessSize = 16;
@@ -131,6 +115,7 @@ void X86AddressSanitizer::InstrumentMOV(
     return;
   }
 
+  const bool IsWrite = MII.get(Inst.getOpcode()).mayStore();
   for (unsigned Ix = 0; Ix < Operands.size(); ++Ix) {
     MCParsedAsmOperand *Op = Operands[Ix];
     if (Op && Op->isMem())
@@ -219,7 +204,7 @@ X86AsmInstrumentation::~X86AsmInstrumentation() {}
 
 void X86AsmInstrumentation::InstrumentInstruction(
     const MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
-    MCContext &Ctx, MCStreamer &Out) {}
+    MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out) {}
 
 X86AsmInstrumentation *
 CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions, const MCContext &Ctx,

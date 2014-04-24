@@ -20,6 +20,7 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
@@ -55,6 +56,7 @@ static const char OpPrecedence[] = {
 class X86AsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
+  const MCInstrInfo &MII;
   ParseInstructionInfo *InstInfo;
   std::unique_ptr<X86AsmInstrumentation> Instrumentation;
 private:
@@ -710,9 +712,9 @@ private:
 
 public:
   X86AsmParser(MCSubtargetInfo &sti, MCAsmParser &parser,
-               const MCInstrInfo &MII,
+               const MCInstrInfo &mii,
                const MCTargetOptions &Options)
-      : MCTargetAsmParser(), STI(sti), Parser(parser), InstInfo(0) {
+      : MCTargetAsmParser(), STI(sti), Parser(parser), MII(mii), InstInfo(0) {
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
@@ -2258,7 +2260,8 @@ static const char *getSubtargetFeatureName(unsigned Val);
 void X86AsmParser::EmitInstruction(
     MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
     MCStreamer &Out) {
-  Instrumentation->InstrumentInstruction(Inst, Operands, getContext(), Out);
+  Instrumentation->InstrumentInstruction(Inst, Operands, getContext(), MII,
+                                         Out);
   Out.EmitInstruction(Inst, STI);
 }
 

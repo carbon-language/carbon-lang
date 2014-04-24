@@ -16,6 +16,7 @@ namespace llvm {
 
 class MCContext;
 class MCInst;
+class MCInstrInfo;
 class MCParsedAsmOperand;
 class MCStreamer;
 class MCSubtargetInfo;
@@ -35,7 +36,9 @@ public:
   // instruction is sent to Out.
   virtual void InstrumentInstruction(
       const MCInst &Inst, SmallVectorImpl<MCParsedAsmOperand *> &Operands,
-      MCContext &Ctx, MCStreamer &Out);
+      MCContext &Ctx,
+      const MCInstrInfo &MII,
+      MCStreamer &Out);
 
 protected:
   friend X86AsmInstrumentation *
