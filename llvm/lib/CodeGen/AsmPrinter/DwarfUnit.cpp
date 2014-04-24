@@ -1065,14 +1065,6 @@ void DwarfUnit::addType(DIE *Entity, DIType Ty, dwarf::Attribute Attribute) {
   addDIEEntry(Entity, Attribute, Entry);
 }
 
-void DwarfUnit::addAccelObjC(StringRef Name, const DIE *Die) {
-  if (!DD->useDwarfAccelTables())
-    return;
-  DU->getStringPoolEntry(Name);
-  std::vector<const DIE *> &DIEs = AccelObjC[Name];
-  DIEs.push_back(Die);
-}
-
 void DwarfUnit::addAccelNamespace(StringRef Name, const DIE *Die) {
   if (!DD->useDwarfAccelTables())
     return;

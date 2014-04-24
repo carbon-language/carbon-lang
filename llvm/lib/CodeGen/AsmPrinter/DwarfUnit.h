@@ -102,9 +102,6 @@ protected:
   /// GlobalTypes - A map of globally visible types for this unit.
   StringMap<const DIE *> GlobalTypes;
 
-  /// AccelObjC - A map of objc spec for the objc accelerator table.
-  StringMap<std::vector<const DIE *> > AccelObjC;
-
   /// AccelNamespace - A map of names for the namespace accelerator table.
   StringMap<std::vector<const DIE *> > AccelNamespace;
 
@@ -228,9 +225,6 @@ public:
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
 
-  const StringMap<std::vector<const DIE *> > &getAccelObjC() const {
-    return AccelObjC;
-  }
   const StringMap<std::vector<const DIE *> > &getAccelNamespace() const {
     return AccelNamespace;
   }
@@ -268,9 +262,6 @@ public:
   /// addGlobalName - Add a new global entity to the compile unit.
   ///
   void addGlobalName(StringRef Name, DIE *Die, DIScope Context);
-
-  /// addAccelObjC - Add a new name to the ObjC accelerator table.
-  void addAccelObjC(StringRef Name, const DIE *Die);
 
   /// addAccelNamespace - Add a new name to the namespace accelerator table.
   void addAccelNamespace(StringRef Name, const DIE *Die);

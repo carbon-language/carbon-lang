@@ -170,7 +170,9 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       UsedNonDefaultText(false),
       SkeletonHolder(A, "skel_string", DIEValueAllocator),
       AccelNames(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
-                                       dwarf::DW_FORM_data4)) {
+                                       dwarf::DW_FORM_data4)),
+      AccelObjC(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
+                                      dwarf::DW_FORM_data4)) {
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = DwarfStrSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = DwarfLineSectionSym = 0;
@@ -277,9 +279,9 @@ void DwarfDebug::addSubprogramNames(DwarfUnit &TheU, DISubprogram SP,
   if (isObjCClass(SP.getName())) {
     StringRef Class, Category;
     getObjCClassCategory(SP.getName(), Class, Category);
-    TheU.addAccelObjC(Class, Die);
+    addAccelObjC(Class, Die);
     if (Category != "")
-      TheU.addAccelObjC(Category, Die);
+      addAccelObjC(Category, Die);
     // Also add the base method name to the name table.
     addAccelName(getObjCMethodName(SP.getName()), Die);
   }
@@ -1871,24 +1873,14 @@ void DwarfDebug::emitAccelNames() {
 // Emit objective C classes and categories into a hashed accelerator table
 // section.
 void DwarfDebug::emitAccelObjC() {
-  DwarfAccelTable AT(
-      DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4));
-  for (const auto &TheU : getUnits()) {
-    for (const auto &GI : TheU->getAccelObjC()) {
-      StringRef Name = GI.getKey();
-      for (const DIE *D : GI.second)
-        AT.AddName(Name, D);
-    }
-  }
-
-  AT.FinalizeTable(Asm, "ObjC");
+  AccelObjC.FinalizeTable(Asm, "ObjC");
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfAccelObjCSection());
   MCSymbol *SectionBegin = Asm->GetTempSymbol("objc_begin");
   Asm->OutStreamer.EmitLabel(SectionBegin);
 
   // Emit the full data.
-  AT.Emit(Asm, SectionBegin, &InfoHolder);
+  AccelObjC.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
 // Emit namespace dies into a hashed accelerator table.
@@ -2568,4 +2560,11 @@ void DwarfDebug::addAccelName(StringRef Name, const DIE *Die) {
     return;
   InfoHolder.getStringPoolEntry(Name);
   AccelNames.AddName(Name, Die);
+}
+
+void DwarfDebug::addAccelObjC(StringRef Name, const DIE *Die) {
+  if (!useDwarfAccelTables())
+    return;
+  InfoHolder.getStringPoolEntry(Name);
+  AccelObjC.AddName(Name, Die);
 }
