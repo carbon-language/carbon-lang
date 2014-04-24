@@ -104,6 +104,8 @@ class iterator_adaptor_base
     : public iterator_facade_base<
           DerivedT, typename WrappedTraitsT::iterator_category, T,
           typename WrappedTraitsT::difference_type, PointerT, ReferenceT> {
+  typedef typename iterator_adaptor_base::iterator_facade_base BaseT;
+
 protected:
   WrappedIteratorT I;
 
@@ -130,17 +132,17 @@ public:
     I -= n;
     return *static_cast<DerivedT *>(this);
   }
-  using iterator_adaptor_base::iterator_facade_base::operator-;
+  using BaseT::operator-;
   difference_type operator-(const DerivedT &RHS) const { return I - RHS.I; }
 
   // We have to explicitly provide ++ and -- rather than letting the facade
   // forward to += because WrappedIteratorT might not support +=.
-  using iterator_adaptor_base::iterator_facade_base::operator++;
+  using BaseT::operator++;
   DerivedT &operator++() {
     ++I;
     return *static_cast<DerivedT *>(this);
   }
-  using iterator_adaptor_base::iterator_facade_base::operator--;
+  using BaseT::operator--;
   DerivedT &operator--() {
     --I;
     return *static_cast<DerivedT *>(this);
