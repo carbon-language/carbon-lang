@@ -1,5 +1,9 @@
 ; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon | FileCheck %s
 
+; arm64: This test contains much that is unique and valuable. Unfortunately the
+; bits that are unique aren't valuable and the bits that are valuable aren't
+; unique. (weird ABI types vs bog-standard shifting & extensions).
+
 ; For formal arguments, we have the following vector type promotion,
 ; v2i8 is promoted to v2i32(f64)
 ; v2i16 is promoted to v2i32(f64)

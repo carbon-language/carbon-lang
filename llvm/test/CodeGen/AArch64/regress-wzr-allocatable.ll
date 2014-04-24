@@ -1,5 +1,8 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -O0
 
+; Skipping for arm64, there's no evidence it would ever have hit the same
+; problem.
+
 ; When WZR wasn't marked as reserved, this function tried to allocate
 ; it at O0 and then generated an internal fault (mostly incidentally)
 ; when it discovered that it was already in use for a multiplication.

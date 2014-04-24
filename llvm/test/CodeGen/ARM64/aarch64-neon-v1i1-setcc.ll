@@ -1,4 +1,4 @@
-; RUN: llc < %s -verify-machineinstrs -mtriple=aarch64-none-linux-gnu -mattr=+neon -fp-contract=fast | FileCheck %s
+; RUN: llc < %s -verify-machineinstrs -mtriple=arm64-none-linux-gnu -mattr=+neon -fp-contract=fast | FileCheck %s
 ; arm64 has a separate copy as aarch64-neon-v1i1-setcc.ll
 
 ; This file test the DAG node like "v1i1 SETCC v1i64, v1i64". As the v1i1 type
@@ -11,7 +11,7 @@
 
 define i64 @test_sext_extr_cmp_0(<1 x i64> %v1, <1 x i64> %v2) {
 ; CHECK-LABEL: test_sext_extr_cmp_0:
-; CHECK: cmge d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
+; CHECK: cmp {{x[0-9]+}}, {{x[0-9]+}}
   %1 = icmp sge <1 x i64> %v1, %v2
   %2 = extractelement <1 x i1> %1, i32 0
   %vget_lane = sext i1 %2 to i64
@@ -20,7 +20,7 @@ define i64 @test_sext_extr_cmp_0(<1 x i64> %v1, <1 x i64> %v2) {
 
 define i64 @test_sext_extr_cmp_1(<1 x double> %v1, <1 x double> %v2) {
 ; CHECK-LABEL: test_sext_extr_cmp_1:
-; CHECK: fcmeq d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
+; CHECK: fcmp {{d[0-9]+}}, {{d[0-9]+}}
   %1 = fcmp oeq <1 x double> %v1, %v2
   %2 = extractelement <1 x i1> %1, i32 0
   %vget_lane = sext i1 %2 to i64
@@ -30,7 +30,7 @@ define i64 @test_sext_extr_cmp_1(<1 x double> %v1, <1 x double> %v2) {
 define <1 x i64> @test_select_v1i1_0(<1 x i64> %v1, <1 x i64> %v2, <1 x i64> %v3) {
 ; CHECK-LABEL: test_select_v1i1_0:
 ; CHECK: cmeq d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-; CHECK: bsl v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+; CHECK: bic v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
   %1 = icmp eq <1 x i64> %v1, %v2
   %res = select <1 x i1> %1, <1 x i64> zeroinitializer, <1 x i64> %v3
   ret <1 x i64> %res
@@ -39,7 +39,7 @@ define <1 x i64> @test_select_v1i1_0(<1 x i64> %v1, <1 x i64> %v2, <1 x i64> %v3
 define <1 x i64> @test_select_v1i1_1(<1 x double> %v1, <1 x double> %v2, <1 x i64> %v3) {
 ; CHECK-LABEL: test_select_v1i1_1:
 ; CHECK: fcmeq d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-; CHECK: bsl v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+; CHECK: bic v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
   %1 = fcmp oeq <1 x double> %v1, %v2
   %res = select <1 x i1> %1, <1 x i64> zeroinitializer, <1 x i64> %v3
   ret <1 x i64> %res
@@ -48,7 +48,7 @@ define <1 x i64> @test_select_v1i1_1(<1 x double> %v1, <1 x double> %v2, <1 x i6
 define <1 x double> @test_select_v1i1_2(<1 x i64> %v1, <1 x i64> %v2, <1 x double> %v3) {
 ; CHECK-LABEL: test_select_v1i1_2:
 ; CHECK: cmeq d{{[0-9]+}}, d{{[0-9]+}}, d{{[0-9]+}}
-; CHECK: bsl v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
+; CHECK: bic v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b
   %1 = icmp eq <1 x i64> %v1, %v2
   %res = select <1 x i1> %1, <1 x double> zeroinitializer, <1 x double> %v3
   ret <1 x double> %res
