@@ -370,11 +370,14 @@ private:
   /// These are all of the SCCs which have no children.
   SmallVector<SCC *, 4> LeafSCCs;
 
-  /// \brief Stack of nodes not-yet-processed into SCCs.
+  /// \brief Stack of nodes in the DFS walk.
   SmallVector<std::pair<Node *, iterator>, 4> DFSStack;
 
   /// \brief Set of entry nodes not-yet-processed into SCCs.
   SmallSetVector<Function *, 4> SCCEntryNodes;
+
+  /// \brief Stack of nodes the DFS has walked but not yet put into a SCC.
+  SmallVector<Node *, 4> PendingSCCStack;
 
   /// \brief Counter for the next DFS number to assign.
   int NextDFSNumber;
@@ -388,9 +391,7 @@ private:
 
   /// \brief Helper to form a new SCC out of the top of a DFSStack-like
   /// structure.
-  SCC *formSCCFromDFSStack(
-      SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack,
-      SmallVectorImpl<std::pair<Node *, Node::iterator>>::iterator SCCBegin);
+  SCC *formSCC(Node *RootN, SmallVectorImpl<Node *> &NodeStack);
 
   /// \brief Retrieve the next node in the post-order SCC walk of the call graph.
   SCC *getNextSCCInPostOrder();
