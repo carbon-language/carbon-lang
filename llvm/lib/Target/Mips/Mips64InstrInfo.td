@@ -307,7 +307,7 @@ def SEQi  : SetCC64_I<"seqi", seteq>, SEQI_FM<0x2e>;
 def SNE   : SetCC64_R<"sne", setne>, SEQ_FM<0x2b>;
 def SNEi  : SetCC64_I<"snei", setne>, SEQI_FM<0x2f>;
 
-// 192-bit × 64-bit Unsigned Multiply and Add
+// 192-bit x 64-bit Unsigned Multiply and Add
 let Defs = [P0, P1, P2] in
 def V3MULU: ArithLogicR<"v3mulu", GPR64Opnd, 0, II_DMUL>,
                                   ADD_FM<0x1c, 0x11>;
