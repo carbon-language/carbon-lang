@@ -100,9 +100,6 @@ static __inline__
 unsigned int __popcnt(unsigned int);
 static __inline__
 unsigned short __popcnt16(unsigned short);
-static __inline__
-unsigned __int64 __rdtsc(void);
-unsigned __int64 __rdtscp(unsigned int *);
 unsigned long __readcr0(void);
 unsigned long __readcr2(void);
 static __inline__
