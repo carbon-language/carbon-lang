@@ -603,7 +603,7 @@ void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
   // the offset when the destination has the same MCFragment.
   if (A && (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl) {
     const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
-    MCSymbolData &SymData = Asm.getSymbolData(Sym);
+    const MCSymbolData &SymData = Asm.getSymbolData(Sym);
     IsResolved = (SymData.getFragment() == DF);
   }
   // We must always generate a relocation for BL/BLX instructions if we have

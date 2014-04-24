@@ -146,13 +146,13 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     const MCSymbol *A = &Target.getSymA()->getSymbol();
     if (A->isTemporary())
       A = &A->AliasedSymbol();
-    MCSymbolData &A_SD = Asm.getSymbolData(*A);
+    const MCSymbolData &A_SD = Asm.getSymbolData(*A);
     const MCSymbolData *A_Base = Asm.getAtom(&A_SD);
 
     const MCSymbol *B = &Target.getSymB()->getSymbol();
     if (B->isTemporary())
       B = &B->AliasedSymbol();
-    MCSymbolData &B_SD = Asm.getSymbolData(*B);
+    const MCSymbolData &B_SD = Asm.getSymbolData(*B);
     const MCSymbolData *B_Base = Asm.getAtom(&B_SD);
 
     // Neither symbol can be modified.
@@ -220,7 +220,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
     Type = MachO::X86_64_RELOC_SUBTRACTOR;
   } else {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
-    MCSymbolData &SD = Asm.getSymbolData(*Symbol);
+    const MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     const MCSymbolData *Base = Asm.getAtom(&SD);
 
     // Relocations inside debug sections always use local relocations when
@@ -369,7 +369,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+  const MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
   if (!A_SD->getFragment())
     report_fatal_error("symbol '" + A->getName() +
@@ -382,7 +382,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
   uint32_t Value2 = 0;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+    const MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
     if (!B_SD->getFragment())
       report_fatal_error("symbol '" + B->getSymbol().getName() +
@@ -465,7 +465,7 @@ void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
   unsigned IsPCRel = 0;
 
   // Get the symbol data.
-  MCSymbolData *SD_A = &Asm.getSymbolData(Target.getSymA()->getSymbol());
+  const MCSymbolData *SD_A = &Asm.getSymbolData(Target.getSymA()->getSymbol());
   unsigned Index = SD_A->getIndex();
 
   // We're only going to have a second symbol in pic mode and it'll be a
@@ -476,7 +476,8 @@ void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
     // If this is a subtraction then we're pcrel.
     uint32_t FixupAddress =
       Writer->getFragmentAddress(Fragment, Layout) + Fixup.getOffset();
-    MCSymbolData *SD_B = &Asm.getSymbolData(Target.getSymB()->getSymbol());
+    const MCSymbolData *SD_B =
+        &Asm.getSymbolData(Target.getSymB()->getSymbol());
     IsPCRel = 1;
     FixedValue = (FixupAddress - Writer->getSymbolAddress(SD_B, Layout) +
                   Target.getConstant());
@@ -524,7 +525,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   }
 
   // Get the symbol data, if any.
-  MCSymbolData *SD = 0;
+  const MCSymbolData *SD = 0;
   if (Target.getSymA())
     SD = &Asm.getSymbolData(Target.getSymA()->getSymbol());
 

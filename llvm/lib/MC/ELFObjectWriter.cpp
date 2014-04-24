@@ -925,7 +925,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 uint64_t
 ELFObjectWriter::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
                                              const MCSymbol *S) {
-  MCSymbolData &SD = Asm.getSymbolData(*S);
+  const MCSymbolData &SD = Asm.getSymbolData(*S);
   return SD.getIndex();
 }
 

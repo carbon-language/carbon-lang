@@ -183,11 +183,11 @@ void ARM64MachObjectWriter::RecordRelocation(
     }
   } else if (Target.getSymB()) { // A - B + constant
     const MCSymbol *A = &Target.getSymA()->getSymbol();
-    MCSymbolData &A_SD = Asm.getSymbolData(*A);
+    const MCSymbolData &A_SD = Asm.getSymbolData(*A);
     const MCSymbolData *A_Base = Asm.getAtom(&A_SD);
 
     const MCSymbol *B = &Target.getSymB()->getSymbol();
-    MCSymbolData &B_SD = Asm.getSymbolData(*B);
+    const MCSymbolData &B_SD = Asm.getSymbolData(*B);
     const MCSymbolData *B_Base = Asm.getAtom(&B_SD);
 
     // Check for "_foo@got - .", which comes through here as:
@@ -267,7 +267,7 @@ void ARM64MachObjectWriter::RecordRelocation(
     Type = MachO::ARM64_RELOC_SUBTRACTOR;
   } else { // A + constant
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
-    MCSymbolData &SD = Asm.getSymbolData(*Symbol);
+    const MCSymbolData &SD = Asm.getSymbolData(*Symbol);
     const MCSymbolData *Base = Asm.getAtom(&SD);
     const MCSectionMachO &Section = static_cast<const MCSectionMachO &>(
         Fragment->getParent()->getSection());

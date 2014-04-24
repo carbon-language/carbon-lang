@@ -156,7 +156,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+  const MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
   if (!A_SD->getFragment())
     Asm.getContext().FatalError(Fixup.getLoc(),
@@ -170,7 +170,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
   FixedValue += SecAddr;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+    const MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
     if (!B_SD->getFragment())
       Asm.getContext().FatalError(Fixup.getLoc(),
@@ -259,7 +259,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+  const MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
   if (!A_SD->getFragment())
     Asm.getContext().FatalError(Fixup.getLoc(),
@@ -272,7 +272,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
   uint32_t Value2 = 0;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+    const MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
     if (!B_SD->getFragment())
       Asm.getContext().FatalError(Fixup.getLoc(),
@@ -378,7 +378,7 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
   }
 
   // Get the symbol data, if any.
-  MCSymbolData *SD = 0;
+  const MCSymbolData *SD = 0;
   if (Target.getSymA())
     SD = &Asm.getSymbolData(Target.getSymA()->getSymbol());
 

@@ -206,7 +206,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  MCSymbolData *A_SD = &Asm.getSymbolData(*A);
+  const MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
   if (!A_SD->getFragment())
     report_fatal_error("symbol '" + A->getName() +
@@ -219,7 +219,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
   uint32_t Value2 = 0;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
+    const MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
     if (!B_SD->getFragment())
       report_fatal_error("symbol '" + B->getSymbol().getName() +
@@ -324,7 +324,7 @@ void PPCMachObjectWriter::RecordPPCRelocation(
 
   // this doesn't seem right for RIT_PPC_BR24
   // Get the symbol data, if any.
-  MCSymbolData *SD = 0;
+  const MCSymbolData *SD = 0;
   if (Target.getSymA())
     SD = &Asm.getSymbolData(Target.getSymA()->getSymbol());
 

@@ -686,7 +686,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
         Fixup.getLoc(),
         Twine("symbol '") + A.getName() + "' can not be undefined");
 
-  MCSymbolData &A_SD = Asm.getSymbolData(A);
+  const MCSymbolData &A_SD = Asm.getSymbolData(A);
 
   MCSectionData const *SectionData = Fragment->getParent();
 
@@ -703,7 +703,7 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
 
   if (SymB) {
     const MCSymbol *B = &SymB->getSymbol();
-    MCSymbolData &B_SD = Asm.getSymbolData(*B);
+    const MCSymbolData &B_SD = Asm.getSymbolData(*B);
     if (!B_SD.getFragment())
       Asm.getContext().FatalError(
           Fixup.getLoc(),
