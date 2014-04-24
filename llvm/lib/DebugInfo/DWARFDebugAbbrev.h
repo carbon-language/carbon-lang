@@ -62,8 +62,10 @@ private:
 
 public:
   DWARFDebugAbbrev();
+
   const DWARFAbbreviationDeclarationSet *
-    getAbbreviationDeclarationSet(uint64_t cu_abbr_offset) const;
+  getAbbreviationDeclarationSet(uint64_t CUAbbrOffset) const;
+
   void dump(raw_ostream &OS) const;
   void parse(DataExtractor data);
 };

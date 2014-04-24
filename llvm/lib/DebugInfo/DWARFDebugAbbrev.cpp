@@ -86,18 +86,18 @@ void DWARFDebugAbbrev::dump(raw_ostream &OS) const {
 }
 
 const DWARFAbbreviationDeclarationSet*
-DWARFDebugAbbrev::getAbbreviationDeclarationSet(uint64_t cu_abbr_offset) const {
-  DWARFAbbreviationDeclarationCollMapConstIter end = AbbrevCollMap.end();
-  DWARFAbbreviationDeclarationCollMapConstIter pos;
-  if (PrevAbbrOffsetPos != end &&
-      PrevAbbrOffsetPos->first == cu_abbr_offset) {
+DWARFDebugAbbrev::getAbbreviationDeclarationSet(uint64_t CUAbbrOffset) const {
+  DWARFAbbreviationDeclarationCollMapConstIter End = AbbrevCollMap.end();
+  if (PrevAbbrOffsetPos != End && PrevAbbrOffsetPos->first == CUAbbrOffset) {
     return &(PrevAbbrOffsetPos->second);
-  } else {
-    pos = AbbrevCollMap.find(cu_abbr_offset);
-    PrevAbbrOffsetPos = pos;
   }
 
-  if (pos != AbbrevCollMap.end())
-    return &(pos->second);
+  DWARFAbbreviationDeclarationCollMapConstIter Pos =
+      AbbrevCollMap.find(CUAbbrOffset);
+  if (Pos != End) {
+    PrevAbbrOffsetPos = Pos;
+    return &(Pos->second);
+  }
+
   return nullptr;
 }
