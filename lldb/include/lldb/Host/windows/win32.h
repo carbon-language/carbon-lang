@@ -45,6 +45,7 @@ char* realpath(const char * name, char * resolved);
 
 #ifdef _MSC_VER
 
+#include <inttypes.h>
 #include <stdint.h>
 #include <io.h>
 typedef unsigned short mode_t;
