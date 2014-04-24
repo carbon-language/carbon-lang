@@ -578,6 +578,73 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     break;
   }
 
+  case Intrinsic::x86_sse4a_insertqi: {
+    // insertqi x, y, 64, 0 can just copy y's lower bits and leave the top
+    // ones undef
+    // TODO: eventually we should lower this intrinsic to IR
+    if (auto CIWidth = dyn_cast<ConstantInt>(II->getArgOperand(2))) {
+      if (auto CIStart = dyn_cast<ConstantInt>(II->getArgOperand(3))) {
+        if (CIWidth->equalsInt(64) && CIStart->isZero()) {
+          Value *Vec = II->getArgOperand(1);
+          Value *Undef = UndefValue::get(Vec->getType());
+          const uint32_t Mask[] = { 0, 2 };
+          return ReplaceInstUsesWith(
+              CI,
+              Builder->CreateShuffleVector(
+                  Vec, Undef, ConstantDataVector::get(
+                                  II->getContext(), ArrayRef<uint32_t>(Mask))));
+
+        } else if (auto Source =
+                       dyn_cast<IntrinsicInst>(II->getArgOperand(0))) {
+          if (Source->hasOneUse() &&
+              Source->getArgOperand(1) == II->getArgOperand(1)) {
+            // If the source of the insert has only one use and it's another
+            // insert (and they're both inserting from the same vector), try to
+            // bundle both together.
+            auto CISourceWidth =
+                dyn_cast<ConstantInt>(Source->getArgOperand(2));
+            auto CISourceStart =
+                dyn_cast<ConstantInt>(Source->getArgOperand(3));
+            if (CISourceStart && CISourceWidth) {
+              unsigned Start = CIStart->getZExtValue();
+              unsigned Width = CIWidth->getZExtValue();
+              unsigned End = Start + Width;
+              unsigned SourceStart = CISourceStart->getZExtValue();
+              unsigned SourceWidth = CISourceWidth->getZExtValue();
+              unsigned SourceEnd = SourceStart + SourceWidth;
+              unsigned NewStart, NewWidth;
+              bool ShouldReplace = false;
+              if (Start <= SourceStart && SourceStart <= End) {
+                NewStart = Start;
+                NewWidth = std::max(End, SourceEnd) - NewStart;
+                ShouldReplace = true;
+              } else if (SourceStart <= Start && Start <= SourceEnd) {
+                NewStart = SourceStart;
+                NewWidth = std::max(SourceEnd, End) - NewStart;
+                ShouldReplace = true;
+              }
+
+              if (ShouldReplace) {
+                Constant *ConstantWidth = ConstantInt::get(
+                    II->getArgOperand(2)->getType(), NewWidth, false);
+                Constant *ConstantStart = ConstantInt::get(
+                    II->getArgOperand(3)->getType(), NewStart, false);
+                Value *Args[4] = { Source->getArgOperand(0),
+                                   II->getArgOperand(1), ConstantWidth,
+                                   ConstantStart };
+                Module *M = CI.getParent()->getParent()->getParent();
+                Value *F =
+                    Intrinsic::getDeclaration(M, Intrinsic::x86_sse4a_insertqi);
+                return ReplaceInstUsesWith(CI, Builder->CreateCall(F, Args));
+              }
+            }
+          }
+        }
+      }
+    }
+    break;
+  }
+
   case Intrinsic::x86_avx_vpermilvar_ps:
   case Intrinsic::x86_avx_vpermilvar_ps_256:
   case Intrinsic::x86_avx_vpermilvar_pd:
