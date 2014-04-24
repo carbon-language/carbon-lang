@@ -186,8 +186,6 @@ sub build_llvm
                         
                         for my $llvm_lib (@archive_files)
                         {
-                            print "archive (1): $llvm_lib\n";
-                            
                             if (-e $llvm_lib)
                             {
                                 if ($llvm_dstroot_arch_archive_modtime < (stat($llvm_lib))[9])
@@ -394,7 +392,6 @@ sub create_single_llvm_archive_for_arch
     
     for my $archive_fullpath (@archive_files)
     {
-        print "archive (2): $archive_fullpath\n";
         if (-e $archive_fullpath)
         {
             if ($split_into_objects)
