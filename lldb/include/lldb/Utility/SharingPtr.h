@@ -138,6 +138,7 @@ private:
     struct nat {int for_bool_;};
 public:
     SharingPtr();
+    SharingPtr(std::nullptr_t);
     template<class Y> explicit SharingPtr(Y* p);
     template<class Y> explicit SharingPtr(Y* p, imp::shared_count *ctrl_block);
     template<class Y> SharingPtr(const SharingPtr<Y>& r, element_type *p); 
@@ -189,6 +190,14 @@ inline
 SharingPtr<T>::SharingPtr()
     : ptr_(0),
       cntrl_(0)
+{
+}
+    
+template<class T>
+inline
+SharingPtr<T>::SharingPtr(std::nullptr_t)
+: ptr_(0),
+cntrl_(0)
 {
 }
 
