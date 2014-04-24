@@ -19,6 +19,7 @@
 #ifndef LLVM_IR_USER_H
 #define LLVM_IR_USER_H
 
+#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -129,61 +130,13 @@ public:
 
   /// Convenience iterator for directly iterating over the Values in the
   /// OperandList
-  class value_op_iterator
-      : public std::iterator<std::random_access_iterator_tag, Value *,
-                             ptrdiff_t, Value *, Value *> {
-    op_iterator OI;
-  public:
-    explicit value_op_iterator(Use *U = nullptr) : OI(U) {}
+  struct value_op_iterator
+      : iterator_adaptor_base<value_op_iterator, op_iterator, Value *, Value *,
+                              Value *> {
+    explicit value_op_iterator(Use *U = nullptr) : iterator_adaptor_base(U) {}
 
-    bool operator==(const value_op_iterator &x) const {
-      return OI == x.OI;
-    }
-    bool operator!=(const value_op_iterator &x) const {
-      return !operator==(x);
-    }
-
-    value_op_iterator &operator+=(ptrdiff_t n) {
-      OI += n;
-      return *this;
-    }
-    value_op_iterator &operator-=(ptrdiff_t n) {
-      OI -= n;
-      return *this;
-    }
-    value_op_iterator operator+(ptrdiff_t n) const {
-      return value_op_iterator(OI + n);
-    }
-    friend value_op_iterator operator+(ptrdiff_t n,
-                                       const value_op_iterator &i) {
-      return i + n;
-    }
-    value_op_iterator operator-(ptrdiff_t n) const {
-      return value_op_iterator(OI - n);
-    }
-    ptrdiff_t operator-(const value_op_iterator &RHS) const {
-      return OI - RHS.OI;
-    }
-    bool operator<(const value_op_iterator &RHS) const { return OI < RHS.OI; }
-    bool operator>(const value_op_iterator &RHS) const { return OI > RHS.OI; }
-    bool operator<=(const value_op_iterator &RHS) const { return OI <= RHS.OI; }
-    bool operator>=(const value_op_iterator &RHS) const { return OI >= RHS.OI; }
-    value_op_iterator &operator++() { return *this += 1; }
-    value_op_iterator &operator--() { return *this -= 1; }
-    value_op_iterator operator++(int) {
-      value_op_iterator tmp = *this;
-      ++*this;
-      return tmp;
-    }
-    value_op_iterator operator--(int) {
-      value_op_iterator tmp = *this;
-      --*this;
-      return tmp;
-    }
-
-    Value *operator*() const { return *OI; }
+    Value *operator*() const { return *I; }
     Value *operator->() const { return operator*(); }
-    Value *operator[](ptrdiff_t n) const { return *(*this + n); }
   };
 
   inline value_op_iterator value_op_begin() {
