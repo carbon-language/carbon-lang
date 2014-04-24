@@ -614,7 +614,7 @@ public:
             if (m_original_data)
             {
                 if ((data.GetByteSize() == m_original_data->GetByteSize()) &&
-                    memcmp(m_original_data->GetBytes(), data.GetDataStart(), data.GetByteSize()))
+                    !memcmp(m_original_data->GetBytes(), data.GetDataStart(), data.GetByteSize()))
                 {
                     actually_write = false;
                 }
