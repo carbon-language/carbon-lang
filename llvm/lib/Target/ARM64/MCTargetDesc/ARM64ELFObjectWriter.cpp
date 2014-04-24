@@ -87,6 +87,8 @@ unsigned ARM64ELFObjectWriter::GetRelocType(const MCValue &Target,
       if (SymLoc == ARM64MCExpr::VK_GOTTPREL)
         return ELF::R_AARCH64_TLSIE_LD_GOTTPREL_PREL19;
       return ELF::R_AARCH64_LD_PREL_LO19;
+    case ARM64::fixup_arm64_pcrel_branch14:
+      return ELF::R_AARCH64_TSTBR14;
     case ARM64::fixup_arm64_pcrel_branch19:
       return ELF::R_AARCH64_CONDBR19;
     default:
