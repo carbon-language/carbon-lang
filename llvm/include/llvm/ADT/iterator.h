@@ -109,13 +109,14 @@ protected:
 
   iterator_adaptor_base() {}
 
-  template <
-      typename U,
-      typename = typename std::enable_if<
+  template <typename U>
+  explicit iterator_adaptor_base(
+      U &&u,
+      typename std::enable_if<
           !std::is_base_of<typename std::remove_cv<
                                typename std::remove_reference<U>::type>::type,
-                           DerivedT>::value>::type>
-  explicit iterator_adaptor_base(U &&u)
+                           DerivedT>::value,
+          int>::type = 0)
       : I(std::forward<U &&>(u)) {}
 
 public:
