@@ -443,7 +443,8 @@ void FrontendAction::EndSourceFile() {
   // FrontendAction.
   CI.clearOutputFiles(/*EraseFiles=*/shouldEraseOutputFiles());
 
-  if (DisableFree && isCurrentFileAST()) {
+  // FIXME: Only do this if DisableFree is set.
+  if (isCurrentFileAST()) {
     CI.resetAndLeakSema();
     CI.resetAndLeakASTContext();
     CI.resetAndLeakPreprocessor();
