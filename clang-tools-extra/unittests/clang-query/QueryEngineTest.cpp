@@ -29,7 +29,7 @@ class QueryEngineTest : public ::testing::Test {
   ArrayRef<ASTUnit *> mkASTUnit2(ASTUnit *a, ASTUnit *b) {
     ASTs[0] = a;
     ASTs[1] = b;
-    return ASTs;
+    return ArrayRef<ASTUnit *>(ASTs);
   }
 
 protected:
