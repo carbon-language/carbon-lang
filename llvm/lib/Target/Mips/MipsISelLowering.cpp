@@ -2339,6 +2339,10 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       isEligibleForTailCallOptimization(MipsCCInfo, NextStackOffset,
                                         *MF.getInfo<MipsFunctionInfo>());
 
+  if (!IsTailCall && CLI.CS && CLI.CS->isMustTailCall())
+    report_fatal_error("failed to perform tail call elimination on a call "
+                       "site marked musttail");
+
   if (IsTailCall)
     ++NumTailCalls;
 

@@ -301,6 +301,7 @@ private:
   void visitLandingPadInst(LandingPadInst &LPI);
 
   void VerifyCallSite(CallSite CS);
+  void verifyMustTailCall(CallInst &CI);
   bool PerformTypeCheck(Intrinsic::ID ID, Function *F, Type *Ty, int VT,
                         unsigned ArgNo, std::string &Suffix);
   bool VerifyIntrinsicType(Type *Ty, ArrayRef<Intrinsic::IITDescriptor> &Infos,
@@ -1545,8 +1546,96 @@ void Verifier::VerifyCallSite(CallSite CS) {
   visitInstruction(*I);
 }
 
+/// Two types are "congruent" if they are identical, or if they are both pointer
+/// types with different pointee types and the same address space.
+static bool isTypeCongruent(Type *L, Type *R) {
+  if (L == R)
+    return true;
+  PointerType *PL = dyn_cast<PointerType>(L);
+  PointerType *PR = dyn_cast<PointerType>(R);
+  if (!PL || !PR)
+    return false;
+  return PL->getAddressSpace() == PR->getAddressSpace();
+}
+
+void Verifier::verifyMustTailCall(CallInst &CI) {
+  Assert1(!CI.isInlineAsm(), "cannot use musttail call with inline asm", &CI);
+
+  // - The caller and callee prototypes must match.  Pointer types of
+  //   parameters or return types may differ in pointee type, but not
+  //   address space.
+  Function *F = CI.getParent()->getParent();
+  auto GetFnTy = [](Value *V) {
+    return cast<FunctionType>(
+        cast<PointerType>(V->getType())->getElementType());
+  };
+  FunctionType *CallerTy = GetFnTy(F);
+  FunctionType *CalleeTy = GetFnTy(CI.getCalledValue());
+  Assert1(CallerTy->getNumParams() == CalleeTy->getNumParams(),
+          "cannot guarantee tail call due to mismatched parameter counts", &CI);
+  Assert1(CallerTy->isVarArg() == CalleeTy->isVarArg(),
+          "cannot guarantee tail call due to mismatched varargs", &CI);
+  Assert1(isTypeCongruent(CallerTy->getReturnType(), CalleeTy->getReturnType()),
+          "cannot guarantee tail call due to mismatched return types", &CI);
+  for (int I = 0, E = CallerTy->getNumParams(); I != E; ++I) {
+    Assert1(
+        isTypeCongruent(CallerTy->getParamType(I), CalleeTy->getParamType(I)),
+        "cannot guarantee tail call due to mismatched parameter types", &CI);
+  }
+
+  // - The calling conventions of the caller and callee must match.
+  Assert1(F->getCallingConv() == CI.getCallingConv(),
+          "cannot guarantee tail call due to mismatched calling conv", &CI);
+
+  // - All ABI-impacting function attributes, such as sret, byval, inreg,
+  //   returned, and inalloca, must match.
+  static const Attribute::AttrKind ABIAttrs[] = {
+      Attribute::Alignment, Attribute::StructRet, Attribute::ByVal,
+      Attribute::InAlloca,  Attribute::InReg,     Attribute::Returned};
+  AttributeSet CallerAttrs = F->getAttributes();
+  AttributeSet CalleeAttrs = CI.getAttributes();
+  for (int I = 0, E = CallerTy->getNumParams(); I != E; ++I) {
+    AttrBuilder CallerABIAttrs;
+    AttrBuilder CalleeABIAttrs;
+    for (auto AK : ABIAttrs) {
+      if (CallerAttrs.hasAttribute(I + 1, AK))
+        CallerABIAttrs.addAttribute(AK);
+      if (CalleeAttrs.hasAttribute(I + 1, AK))
+        CalleeABIAttrs.addAttribute(AK);
+    }
+    Assert2(CallerABIAttrs == CalleeABIAttrs,
+            "cannot guarantee tail call due to mismatched ABI impacting "
+            "function attributes", &CI, CI.getOperand(I));
+  }
+
+  // - The call must immediately precede a :ref:`ret <i_ret>` instruction,
+  //   or a pointer bitcast followed by a ret instruction.
+  // - The ret instruction must return the (possibly bitcasted) value
+  //   produced by the call or void.
+  Value *RetVal = &CI;
+  Instruction *Next = CI.getNextNode();
+
+  // Handle the optional bitcast.
+  if (BitCastInst *BI = dyn_cast_or_null<BitCastInst>(Next)) {
+    Assert1(BI->getOperand(0) == RetVal,
+            "bitcast following musttail call must use the call", BI);
+    RetVal = BI;
+    Next = BI->getNextNode();
+  }
+
+  // Check the return.
+  ReturnInst *Ret = dyn_cast_or_null<ReturnInst>(Next);
+  Assert1(Ret, "musttail call must be precede a ret with an optional bitcast",
+          &CI);
+  Assert1(!Ret->getReturnValue() || Ret->getReturnValue() == RetVal,
+          "musttail call result must be returned", Ret);
+}
+
 void Verifier::visitCallInst(CallInst &CI) {
   VerifyCallSite(&CI);
+
+  if (CI.isMustTailCall())
+    verifyMustTailCall(CI);
 
   if (Function *F = CI.getCalledFunction())
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())

@@ -3720,6 +3720,10 @@ PPCTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv, isVarArg,
                                                    Ins, DAG);
 
+  if (!isTailCall && CLI.CS && CLI.CS->isMustTailCall())
+    report_fatal_error("failed to perform tail call elimination on a call "
+                       "site marked musttail");
+
   if (PPCSubTarget.isSVR4ABI()) {
     if (PPCSubTarget.isPPC64())
       return LowerCall_64SVR4(Chain, Callee, CallConv, isVarArg,

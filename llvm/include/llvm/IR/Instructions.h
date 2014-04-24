@@ -1279,10 +1279,24 @@ public:
 
   ~CallInst();
 
-  bool isTailCall() const { return getSubclassDataFromInstruction() & 1; }
+  // Note that 'musttail' implies 'tail'.
+  enum TailCallKind { TCK_None = 0, TCK_Tail = 1, TCK_MustTail = 2 };
+  TailCallKind getTailCallKind() const {
+    return TailCallKind(getSubclassDataFromInstruction() & 3);
+  }
+  bool isTailCall() const {
+    return (getSubclassDataFromInstruction() & 3) != TCK_None;
+  }
+  bool isMustTailCall() const {
+    return (getSubclassDataFromInstruction() & 3) == TCK_MustTail;
+  }
   void setTailCall(bool isTC = true) {
-    setInstructionSubclassData((getSubclassDataFromInstruction() & ~1) |
-                               unsigned(isTC));
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~3) |
+                               unsigned(isTC ? TCK_Tail : TCK_None));
+  }
+  void setTailCallKind(TailCallKind TCK) {
+    setInstructionSubclassData((getSubclassDataFromInstruction() & ~3) |
+                               unsigned(TCK));
   }
 
   /// Provide fast operand accessors
@@ -1316,11 +1330,11 @@ public:
   /// getCallingConv/setCallingConv - Get or set the calling convention of this
   /// function call.
   CallingConv::ID getCallingConv() const {
-    return static_cast<CallingConv::ID>(getSubclassDataFromInstruction() >> 1);
+    return static_cast<CallingConv::ID>(getSubclassDataFromInstruction() >> 2);
   }
   void setCallingConv(CallingConv::ID CC) {
-    setInstructionSubclassData((getSubclassDataFromInstruction() & 1) |
-                               (static_cast<unsigned>(CC) << 1));
+    setInstructionSubclassData((getSubclassDataFromInstruction() & 3) |
+                               (static_cast<unsigned>(CC) << 2));
   }
 
   /// getAttributes - Return the parameter attributes for this call.

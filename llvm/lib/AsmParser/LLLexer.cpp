@@ -512,6 +512,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(null);
   KEYWORD(to);
   KEYWORD(tail);
+  KEYWORD(musttail);
   KEYWORD(target);
   KEYWORD(triple);
   KEYWORD(unwind);

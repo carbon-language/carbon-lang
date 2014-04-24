@@ -2544,6 +2544,10 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                     MF.getFunction()->hasStructRetAttr(), CLI.RetTy,
                     Outs, OutVals, Ins, DAG);
 
+    if (!isTailCall && CLI.CS && CLI.CS->isMustTailCall())
+      report_fatal_error("failed to perform tail call elimination on a call "
+                         "site marked musttail");
+
     // Sibcalls are automatically detected tailcalls which do not require
     // ABI changes.
     if (!MF.getTarget().Options.GuaranteedTailCallOpt && isTailCall)

@@ -160,6 +160,15 @@ public:
   ///
   FunTy *getCaller() const { return (*this)->getParent()->getParent(); }
 
+  /// \brief Tests if this is a tail call.  Only a CallInst can be a tail call.
+  bool isTailCall() const { return isCall() && cast<CallInst>->isTailCall(); }
+
+  /// \brief Tests if this call site must be tail call optimized.  Only a
+  /// CallInst can be tail call optimized.
+  bool isMustTailCall() const {
+    return isCall() && cast<CallInst>(getInstruction())->isMustTailCall();
+  }
+
 #define CALLSITE_DELEGATE_GETTER(METHOD) \
   InstrTy *II = getInstruction();    \
   return isCall()                        \

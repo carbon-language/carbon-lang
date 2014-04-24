@@ -6161,7 +6161,7 @@ Syntax:
 
 ::
 
-      <result> = [tail] call [cconv] [ret attrs] <ty> [<fnty>*] <fnptrval>(<function args>) [fn attrs]
+      <result> = [tail | musttail] call [cconv] [ret attrs] <ty> [<fnty>*] <fnptrval>(<function args>) [fn attrs]
 
 Overview:
 """""""""
@@ -6173,17 +6173,34 @@ Arguments:
 
 This instruction requires several arguments:
 
-#. The optional "tail" marker indicates that the callee function does
-   not access any allocas or varargs in the caller. Note that calls may
-   be marked "tail" even if they do not occur before a
-   :ref:`ret <i_ret>` instruction. If the "tail" marker is present, the
-   function call is eligible for tail call optimization, but `might not
-   in fact be optimized into a jump <CodeGenerator.html#tailcallopt>`_.
-   The code generator may optimize calls marked "tail" with either 1)
-   automatic `sibling call
-   optimization <CodeGenerator.html#sibcallopt>`_ when the caller and
-   callee have matching signatures, or 2) forced tail call optimization
-   when the following extra requirements are met:
+#. The optional ``tail`` and ``musttail`` markers indicate that the optimizers
+   should perform tail call optimization.  The ``tail`` marker is a hint that
+   `can be ignored <CodeGenerator.html#sibcallopt>`_.  The ``musttail`` marker
+   means that the call must be tail call optimized in order for the program to
+   be correct.  The ``musttail`` marker provides these guarantees:
+
+   #. The call will not cause unbounded stack growth if it is part of a
+      recursive cycle in the call graph.
+   #. Arguments with the :ref:`inalloca <attr_inalloca>` attribute are
+      forwarded in place.
+
+   Both markers imply that the callee does not access allocas or varargs from
+   the caller.  Calls marked ``musttail`` must obey the following additional
+   rules:
+
+   - The call must immediately precede a :ref:`ret <i_ret>` instruction,
+     or a pointer bitcast followed by a ret instruction.
+   - The ret instruction must return the (possibly bitcasted) value
+     produced by the call or void.
+   - The caller and callee prototypes must match.  Pointer types of
+     parameters or return types may differ in pointee type, but not
+     in address space.
+   - The calling conventions of the caller and callee must match.
+   - All ABI-impacting function attributes, such as sret, byval, inreg,
+     returned, and inalloca, must match.
+
+   Tail call optimization for calls marked ``tail`` is guaranteed to occur if
+   the following conditions are met:
 
    -  Caller and callee both have the calling convention ``fastcc``.
    -  The call is in tail position (ret immediately follows call and ret

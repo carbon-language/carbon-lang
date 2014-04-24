@@ -1524,6 +1524,10 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
                     IsVarArg, IsStructRet, MF.getFunction()->hasStructRetAttr(),
                                                    Outs, OutVals, Ins, DAG);
 
+    if (!IsTailCall && CLI.CS && CLI.CS->isMustTailCall())
+      report_fatal_error("failed to perform tail call elimination on a call "
+                         "site marked musttail");
+
     // A sibling call is one where we're under the usual C ABI and not planning
     // to change that but can still do a tail call:
     if (!TailCallOpt && IsTailCall)

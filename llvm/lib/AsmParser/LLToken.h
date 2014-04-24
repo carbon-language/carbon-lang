@@ -54,6 +54,7 @@ namespace lltok {
     kw_undef, kw_null,
     kw_to,
     kw_tail,
+    kw_musttail,
     kw_target,
     kw_triple,
     kw_unwind,

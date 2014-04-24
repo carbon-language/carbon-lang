@@ -3367,8 +3367,10 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
   case lltok::kw_shufflevector:  return ParseShuffleVector(Inst, PFS);
   case lltok::kw_phi:            return ParsePHI(Inst, PFS);
   case lltok::kw_landingpad:     return ParseLandingPad(Inst, PFS);
-  case lltok::kw_call:           return ParseCall(Inst, PFS, false);
-  case lltok::kw_tail:           return ParseCall(Inst, PFS, true);
+  // Call.
+  case lltok::kw_call:     return ParseCall(Inst, PFS, CallInst::TCK_None);
+  case lltok::kw_tail:     return ParseCall(Inst, PFS, CallInst::TCK_Tail);
+  case lltok::kw_musttail: return ParseCall(Inst, PFS, CallInst::TCK_MustTail);
   // Memory.
   case lltok::kw_alloca:         return ParseAlloc(Inst, PFS);
   case lltok::kw_load:           return ParseLoad(Inst, PFS);
@@ -3984,10 +3986,14 @@ bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
 }
 
 /// ParseCall
-///   ::= 'tail'? 'call' OptionalCallingConv OptionalAttrs Type Value
+///   ::= 'call' OptionalCallingConv OptionalAttrs Type Value
+///       ParameterList OptionalAttrs
+///   ::= 'tail' 'call' OptionalCallingConv OptionalAttrs Type Value
+///       ParameterList OptionalAttrs
+///   ::= 'musttail' 'call' OptionalCallingConv OptionalAttrs Type Value
 ///       ParameterList OptionalAttrs
 bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
-                         bool isTail) {
+                         CallInst::TailCallKind TCK) {
   AttrBuilder RetAttrs, FnAttrs;
   std::vector<unsigned> FwdRefAttrGrps;
   LocTy BuiltinLoc;
@@ -3998,7 +4004,8 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   SmallVector<ParamInfo, 16> ArgList;
   LocTy CallLoc = Lex.getLoc();
 
-  if ((isTail && ParseToken(lltok::kw_call, "expected 'tail call'")) ||
+  if ((TCK != CallInst::TCK_None &&
+       ParseToken(lltok::kw_call, "expected 'tail call'")) ||
       ParseOptionalCallingConv(CC) ||
       ParseOptionalReturnAttrs(RetAttrs) ||
       ParseType(RetType, RetTypeLoc, true /*void allowed*/) ||
@@ -4074,7 +4081,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   AttributeSet PAL = AttributeSet::get(Context, Attrs);
 
   CallInst *CI = CallInst::Create(Callee, Args);
-  CI->setTailCall(isTail);
+  CI->setTailCallKind(TCK);
   CI->setCallingConv(CC);
   CI->setAttributes(PAL);
   ForwardRefAttrGroups[CI] = FwdRefAttrGrps;

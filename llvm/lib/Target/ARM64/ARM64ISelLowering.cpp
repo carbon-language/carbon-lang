@@ -1957,6 +1957,9 @@ SDValue ARM64TargetLowering::LowerCall(CallLoweringInfo &CLI,
     IsTailCall = isEligibleForTailCallOptimization(
         Callee, CallConv, IsVarArg, IsStructRet,
         MF.getFunction()->hasStructRetAttr(), Outs, OutVals, Ins, DAG);
+    if (!IsTailCall && CLI.CS && CLI.CS->isMustTailCall())
+      report_fatal_error("failed to perform tail call elimination on a call "
+                         "site marked musttail");
     // We don't support GuaranteedTailCallOpt, only automatically
     // detected sibcalls.
     // FIXME: Re-evaluate. Is this true? Should it be true?

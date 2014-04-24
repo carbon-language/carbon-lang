@@ -372,6 +372,8 @@ namespace llvm {
     bool ParseFunctionBody(Function &Fn);
     bool ParseBasicBlock(PerFunctionState &PFS);
 
+    enum TailCallType { TCT_None, TCT_Tail, TCT_MustTail };
+
     // Instruction Parsing.  Each instruction parsing routine can return with a
     // normal result, an error result, or return having eaten an extra comma.
     enum InstResult { InstNormal = 0, InstError = 1, InstExtraComma = 2 };
@@ -398,7 +400,8 @@ namespace llvm {
     bool ParseShuffleVector(Instruction *&I, PerFunctionState &PFS);
     int ParsePHI(Instruction *&I, PerFunctionState &PFS);
     bool ParseLandingPad(Instruction *&I, PerFunctionState &PFS);
-    bool ParseCall(Instruction *&I, PerFunctionState &PFS, bool isTail);
+    bool ParseCall(Instruction *&I, PerFunctionState &PFS,
+                   CallInst::TailCallKind IsTail);
     int ParseAlloc(Instruction *&I, PerFunctionState &PFS);
     int ParseLoad(Instruction *&I, PerFunctionState &PFS);
     int ParseStore(Instruction *&I, PerFunctionState &PFS);

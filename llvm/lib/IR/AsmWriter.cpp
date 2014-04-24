@@ -1768,8 +1768,12 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       Out << '%' << SlotNum << " = ";
   }
 
-  if (isa<CallInst>(I) && cast<CallInst>(I).isTailCall())
-    Out << "tail ";
+  if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
+    if (CI->isMustTailCall())
+      Out << "musttail ";
+    else if (CI->isTailCall())
+      Out << "tail ";
+  }
 
   // Print out the opcode...
   Out << I.getOpcodeName();
