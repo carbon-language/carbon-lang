@@ -640,7 +640,7 @@ public:
   /// or another context nested inside a subprogram.
   bool isSubprogramContext(const MDNode *Context);
 
-  void addSubprogramNames(DwarfUnit &TheU, DISubprogram SP, DIE *Die);
+  void addSubprogramNames(DISubprogram SP, DIE *Die);
 
   AddressPool &getAddressPool() { return AddrPool; }
 
