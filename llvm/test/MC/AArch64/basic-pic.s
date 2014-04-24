@@ -1,4 +1,5 @@
 // RUN: llvm-mc -triple=aarch64-none-linux-gnu -filetype=obj %s -o -| llvm-objdump -r - | FileCheck %s
+// RUN: llvm-mc -triple=arm64-none-linux-gnu -filetype=obj %s -o -| llvm-objdump -r - | FileCheck %s
 
 // CHECK: RELOCATION RECORDS FOR [.rela.text]
 

@@ -1,6 +1,9 @@
 // RUN: llvm-mc -triple=aarch64-none-linux-gnu -filetype=obj %s -o - | \
 // RUN:   llvm-readobj -r | FileCheck -check-prefix=OBJ %s
 
+// RUN: llvm-mc -triple=arm64-none-linux-gnu -filetype=obj %s -o - | \
+// RUN:   llvm-readobj -r | FileCheck -check-prefix=OBJ %s
+
         add x2, x3, #:lo12:some_label
 
 // OBJ:      Relocations [
