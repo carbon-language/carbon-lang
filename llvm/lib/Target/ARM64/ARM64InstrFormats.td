@@ -277,6 +277,15 @@ def movz_symbol_g0 : Operand<i32> {
   let ParserMatchClass = MovZSymbolG0AsmOperand;
 }
 
+def MovKSymbolG3AsmOperand : AsmOperandClass {
+  let Name = "MovKSymbolG3";
+  let RenderMethod = "addImmOperands";
+}
+
+def movk_symbol_g3 : Operand<i32> {
+  let ParserMatchClass = MovKSymbolG3AsmOperand;
+}
+
 def MovKSymbolG2AsmOperand : AsmOperandClass {
   let Name = "MovKSymbolG2";
   let RenderMethod = "addImmOperands";

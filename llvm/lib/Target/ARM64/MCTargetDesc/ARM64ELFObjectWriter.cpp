@@ -188,14 +188,20 @@ unsigned ARM64ELFObjectWriter::GetRelocType(const MCValue &Target,
         return ELF::R_AARCH64_MOVW_UABS_G3;
       if (RefKind == ARM64MCExpr::VK_ABS_G2)
         return ELF::R_AARCH64_MOVW_UABS_G2;
+      if (RefKind == ARM64MCExpr::VK_ABS_G2_S)
+        return ELF::R_AARCH64_MOVW_SABS_G2;
       if (RefKind == ARM64MCExpr::VK_ABS_G2_NC)
         return ELF::R_AARCH64_MOVW_UABS_G2_NC;
       if (RefKind == ARM64MCExpr::VK_ABS_G1)
         return ELF::R_AARCH64_MOVW_UABS_G1;
+      if (RefKind == ARM64MCExpr::VK_ABS_G1_S)
+        return ELF::R_AARCH64_MOVW_SABS_G1;
       if (RefKind == ARM64MCExpr::VK_ABS_G1_NC)
         return ELF::R_AARCH64_MOVW_UABS_G1_NC;
       if (RefKind == ARM64MCExpr::VK_ABS_G0)
         return ELF::R_AARCH64_MOVW_UABS_G0;
+      if (RefKind == ARM64MCExpr::VK_ABS_G0_S)
+        return ELF::R_AARCH64_MOVW_SABS_G0;
       if (RefKind == ARM64MCExpr::VK_ABS_G0_NC)
         return ELF::R_AARCH64_MOVW_UABS_G0_NC;
       if (RefKind == ARM64MCExpr::VK_DTPREL_G2)

@@ -610,6 +610,7 @@ public:
 
   bool isMovZSymbolG2() const {
     static ARM64MCExpr::VariantKind Variants[] = { ARM64MCExpr::VK_ABS_G2,
+                                                   ARM64MCExpr::VK_ABS_G2_S,
                                                    ARM64MCExpr::VK_TPREL_G2,
                                                    ARM64MCExpr::VK_DTPREL_G2 };
     return isMovWSymbol(Variants);
@@ -617,6 +618,7 @@ public:
 
   bool isMovZSymbolG1() const {
     static ARM64MCExpr::VariantKind Variants[] = { ARM64MCExpr::VK_ABS_G1,
+                                                   ARM64MCExpr::VK_ABS_G1_S,
                                                    ARM64MCExpr::VK_GOTTPREL_G1,
                                                    ARM64MCExpr::VK_TPREL_G1,
                                                    ARM64MCExpr::VK_DTPREL_G1, };
@@ -625,8 +627,14 @@ public:
 
   bool isMovZSymbolG0() const {
     static ARM64MCExpr::VariantKind Variants[] = { ARM64MCExpr::VK_ABS_G0,
+                                                   ARM64MCExpr::VK_ABS_G0_S,
                                                    ARM64MCExpr::VK_TPREL_G0,
                                                    ARM64MCExpr::VK_DTPREL_G0 };
+    return isMovWSymbol(Variants);
+  }
+
+  bool isMovKSymbolG3() const {
+    static ARM64MCExpr::VariantKind Variants[] = { ARM64MCExpr::VK_ABS_G3 };
     return isMovWSymbol(Variants);
   }
 
@@ -2985,10 +2993,13 @@ bool ARM64AsmParser::parseSymbolicImmVal(const MCExpr *&ImmVal) {
                   .Case("lo12", ARM64MCExpr::VK_LO12)
                   .Case("abs_g3", ARM64MCExpr::VK_ABS_G3)
                   .Case("abs_g2", ARM64MCExpr::VK_ABS_G2)
+                  .Case("abs_g2_s", ARM64MCExpr::VK_ABS_G2_S)
                   .Case("abs_g2_nc", ARM64MCExpr::VK_ABS_G2_NC)
                   .Case("abs_g1", ARM64MCExpr::VK_ABS_G1)
+                  .Case("abs_g1_s", ARM64MCExpr::VK_ABS_G1_S)
                   .Case("abs_g1_nc", ARM64MCExpr::VK_ABS_G1_NC)
                   .Case("abs_g0", ARM64MCExpr::VK_ABS_G0)
+                  .Case("abs_g0_s", ARM64MCExpr::VK_ABS_G0_S)
                   .Case("abs_g0_nc", ARM64MCExpr::VK_ABS_G0_NC)
                   .Case("dtprel_g2", ARM64MCExpr::VK_DTPREL_G2)
                   .Case("dtprel_g1", ARM64MCExpr::VK_DTPREL_G1)

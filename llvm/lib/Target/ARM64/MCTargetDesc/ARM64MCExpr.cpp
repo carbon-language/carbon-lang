@@ -36,10 +36,13 @@ StringRef ARM64MCExpr::getVariantKindName() const {
   case VK_LO12:                return ":lo12:";
   case VK_ABS_G3:              return ":abs_g3:";
   case VK_ABS_G2:              return ":abs_g2:";
+  case VK_ABS_G2_S:            return ":abs_g2_s:";
   case VK_ABS_G2_NC:           return ":abs_g2_nc:";
   case VK_ABS_G1:              return ":abs_g1:";
+  case VK_ABS_G1_S:            return ":abs_g1_s:";
   case VK_ABS_G1_NC:           return ":abs_g1_nc:";
   case VK_ABS_G0:              return ":abs_g0:";
+  case VK_ABS_G0_S:            return ":abs_g0_s:";
   case VK_ABS_G0_NC:           return ":abs_g0_nc:";
   case VK_DTPREL_G2:           return ":dtprel_g2:";
   case VK_DTPREL_G1:           return ":dtprel_g1:";
