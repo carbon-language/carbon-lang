@@ -184,6 +184,7 @@ bool StackSizeIsUnlimited();
 void SetStackSizeLimitInBytes(uptr limit);
 void AdjustStackSize(void *attr);
 void PrepareForSandboxing();
+void SetSandboxingCallback(void (*f)());
 
 void InitTlsSize();
 uptr GetTlsSize();

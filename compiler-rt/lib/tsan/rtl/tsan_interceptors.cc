@@ -2473,15 +2473,19 @@ void InitializeInterceptors() {
   FdInit();
 }
 
-void internal_start_thread(void(*func)(void *arg), void *arg) {
+void *internal_start_thread(void(*func)(void *arg), void *arg) {
   // Start the thread with signals blocked, otherwise it can steal user signals.
   __sanitizer_sigset_t set, old;
   internal_sigfillset(&set);
   internal_sigprocmask(SIG_SETMASK, &set, &old);
   void *th;
   REAL(pthread_create)(&th, 0, (void*(*)(void *arg))func, arg);
-  REAL(pthread_detach)(th);
   internal_sigprocmask(SIG_SETMASK, &old, 0);
+  return th;
+}
+
+void internal_join_thread(void *th) {
+  REAL(pthread_join)(th, 0);
 }
 
 }  // namespace __tsan

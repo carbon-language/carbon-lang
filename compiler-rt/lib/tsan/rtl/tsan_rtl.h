@@ -536,6 +536,9 @@ struct Context {
   int nmissed_expected;
   atomic_uint64_t last_symbolize_time_ns;
 
+  void *background_thread;
+  atomic_uint32_t stop_background_thread;
+
   ThreadRegistry *thread_registry;
 
   Vector<RacyStacks> racy_stacks;

@@ -120,8 +120,13 @@ static void MemoryProfiler(Context *ctx, fd_t fd, int i) {
 }
 
 static void BackgroundThread(void *arg) {
+#ifndef TSAN_GO
   // This is a non-initialized non-user thread, nothing to see here.
-  ScopedIgnoreInterceptors ignore;
+  // We don't use ScopedIgnoreInterceptors, because we want ignores to be
+  // enabled even when the thread function exits (e.g. during pthread thread
+  // shutdown code).
+  cur_thread()->ignore_interceptors++;
+#endif
   const u64 kMs2Ns = 1000 * 1000;
 
   fd_t mprof_fd = kInvalidFd;
@@ -140,8 +145,10 @@ static void BackgroundThread(void *arg) {
 
   u64 last_flush = NanoTime();
   uptr last_rss = 0;
-  for (int i = 0; ; i++) {
-    SleepForSeconds(1);
+  for (int i = 0;
+      atomic_load(&ctx->stop_background_thread, memory_order_relaxed) == 0;
+      i++) {
+    SleepForMillis(100);
     u64 now = NanoTime();
 
     // Flush memory if requested.
@@ -190,6 +197,16 @@ static void BackgroundThread(void *arg) {
     }
 #endif
   }
+}
+
+static void StartBackgroundThread() {
+  ctx->background_thread = internal_start_thread(&BackgroundThread, 0);
+}
+
+static void StopBackgroundThread() {
+  atomic_store(&ctx->stop_background_thread, 1, memory_order_relaxed);
+  internal_join_thread(ctx->background_thread);
+  ctx->background_thread = 0;
 }
 
 void DontNeedShadowFor(uptr addr, uptr size) {
@@ -250,7 +267,8 @@ void Initialize(ThreadState *thr) {
   Symbolizer::Init(common_flags()->external_symbolizer_path);
   Symbolizer::Get()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 #endif
-  internal_start_thread(&BackgroundThread, 0);
+  StartBackgroundThread();
+  SetSandboxingCallback(StopBackgroundThread);
   if (flags()->detect_deadlocks)
     ctx->dd = DDetector::Create(flags());
 
