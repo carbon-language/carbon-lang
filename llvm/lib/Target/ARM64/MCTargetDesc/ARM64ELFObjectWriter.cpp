@@ -67,7 +67,8 @@ unsigned ARM64ELFObjectWriter::GetRelocType(const MCValue &Target,
     case FK_Data_8:
       return ELF::R_AARCH64_PREL64;
     case ARM64::fixup_arm64_pcrel_adr_imm21:
-      llvm_unreachable("No ELF relocations supported for ADR at the moment");
+      assert(SymLoc == ARM64MCExpr::VK_NONE && "unexpected ADR relocation");
+      return ELF::R_AARCH64_ADR_PREL_LO21;
     case ARM64::fixup_arm64_pcrel_adrp_imm21:
       if (SymLoc == ARM64MCExpr::VK_ABS && !IsNC)
         return ELF::R_AARCH64_ADR_PREL_PG_HI21;
