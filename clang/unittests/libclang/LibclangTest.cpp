@@ -49,14 +49,14 @@ struct TestVFO {
   }
 
   ~TestVFO() {
-    if (!Contents)
-      return;
-    char *BufPtr;
-    unsigned BufSize;
-    clang_VirtualFileOverlay_writeToBuffer(VFO, 0, &BufPtr, &BufSize);
-    std::string BufStr(BufPtr, BufSize);
-    EXPECT_STREQ(Contents, BufStr.c_str());
-    free(BufPtr);
+    if (Contents) {
+      char *BufPtr;
+      unsigned BufSize;
+      clang_VirtualFileOverlay_writeToBuffer(VFO, 0, &BufPtr, &BufSize);
+      std::string BufStr(BufPtr, BufSize);
+      EXPECT_STREQ(Contents, BufStr.c_str());
+      free(BufPtr);
+    }
     clang_VirtualFileOverlay_dispose(VFO);
   }
 };
