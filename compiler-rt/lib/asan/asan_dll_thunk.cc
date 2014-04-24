@@ -148,6 +148,10 @@ WRAP_V_W(__asan_report_load8)
 WRAP_V_W(__asan_report_load16)
 WRAP_V_WW(__asan_report_load_n)
 
+WRAP_W_WWW(__asan_memcpy);
+WRAP_W_WWW(__asan_memset);
+WRAP_W_WWW(__asan_memmove);
+
 WRAP_V_WW(__asan_register_globals)
 WRAP_V_WW(__asan_unregister_globals)
 
