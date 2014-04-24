@@ -5874,6 +5874,8 @@ public:
     Aliases = GCCRegAliases;
     NumAliases = llvm::array_lengthof(GCCRegAliases);
   }
+
+  bool hasInt128Type() const override { return true; }
 };
 
 class Mips64EBTargetInfo : public Mips64TargetInfoBase {

@@ -283,7 +283,7 @@ public:
   unsigned getLongLongAlign() const { return LongLongAlign; }
 
   /// \brief Determine whether the __int128 type is supported on this target.
-  bool hasInt128Type() const { return getPointerWidth(0) >= 64; } // FIXME
+  virtual bool hasInt128Type() const { return getPointerWidth(0) >= 64; } // FIXME
 
   /// \brief Return the alignment that is suitable for storing any
   /// object with a fundamental alignment requirement.
