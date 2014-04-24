@@ -183,7 +183,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   ResultSCCs.push_back(this);
 
   // We're going to do a full mini-Tarjan's walk using a local stack here.
-  int NextDFSNumber = 1;
+  int NextDFSNumber;
   SmallVector<std::pair<Node *, Node::iterator>, 4> DFSStack;
 
   // The worklist is every node in the original SCC. FIXME: switch the SCC to
@@ -210,24 +210,15 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
       if (Worklist.empty())
         break;
       Node *N = Worklist.pop_back_val();
+      N->LowLink = N->DFSNumber = 1;
+      NextDFSNumber = 2;
       DFSStack.push_back(std::make_pair(N, N->begin()));
     }
 
     Node *N = DFSStack.back().first;
 
-    // Check if we have reached a node in the new (known connected) set. If so,
-    // the entire stack is necessarily in that set and we can re-start.
-    if (NewNodes.count(N)) {
-      DFSStack.pop_back();
-      while (!DFSStack.empty())
-        NewNodes.insert(DFSStack.pop_back_val().first);
-      continue;
-    }
-
-    if (N->DFSNumber == 0) {
-      N->LowLink = N->DFSNumber = NextDFSNumber++;
-      Worklist.remove(N);
-    }
+    assert(N->DFSNumber != 0 && "We should always assign a DFS number "
+                                "before placing a node onto the stack.");
 
     auto SI = DFSStack.rbegin();
     bool PushedChildNode = false;
@@ -243,6 +234,14 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
           continue;
         }
 
+        // Check if we have reached a node in the new (known connected) set. If
+        // so, the entire stack is necessarily in that set and we can re-start.
+        if (NewNodes.count(&ChildN)) {
+          while (!DFSStack.empty())
+            NewNodes.insert(DFSStack.pop_back_val().first);
+          continue;
+        }
+
         if (ChildN.DFSNumber == 0) {
           // Mark that we should start at this child when next this node is the
           // top of the stack. We don't start at the next child to ensure this
@@ -250,6 +249,8 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
           SI->second = I;
 
           // Recurse onto this node via a tail call.
+          ChildN.LowLink = ChildN.DFSNumber = NextDFSNumber++;
+          Worklist.remove(&ChildN);
           DFSStack.push_back(std::make_pair(&ChildN, ChildN.begin()));
           PushedChildNode = true;
           break;
@@ -272,7 +273,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     } while (!PushedChildNode && N->LowLink != N->DFSNumber &&
              SI != DFSStack.rend());
 
-    if (PushedChildNode)
+    if (DFSStack.empty() || PushedChildNode)
       continue;
 
     // Form the new SCC out of the top of the DFS stack.
@@ -421,21 +422,15 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
     if (SCCEntryNodes.empty())
       return nullptr;
 
-    // Reset the DFS numbering.
-    NextDFSNumber = 1;
     Node &N = get(*SCCEntryNodes.pop_back_val());
+    N.LowLink = N.DFSNumber = 1;
+    NextDFSNumber = 2;
     DFSStack.push_back(std::make_pair(&N, N.begin()));
   }
 
   auto SI = DFSStack.rbegin();
-  if (SI->first->DFSNumber == 0) {
-    // This node hasn't been visited before, assign it a DFS number and remove
-    // it from the entry set.
-    assert(!SCCMap.count(SI->first) &&
-           "Found a node with 0 DFS number but already in an SCC!");
-    SI->first->LowLink = SI->first->DFSNumber = NextDFSNumber++;
-    SCCEntryNodes.remove(&SI->first->getFunction());
-  }
+  assert(SI->first->DFSNumber != 0 && "We should always assign a DFS number "
+                                      "before placing a node onto the stack.");
 
   do {
     Node *N = SI->first;
@@ -448,6 +443,10 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
         SI->second = I;
 
         // Recurse onto this node via a tail call.
+        assert(!SCCMap.count(&ChildN) &&
+               "Found a node with 0 DFS number but already in an SCC!");
+        ChildN.LowLink = ChildN.DFSNumber = NextDFSNumber++;
+        SCCEntryNodes.remove(&ChildN.getFunction());
         DFSStack.push_back(std::make_pair(&ChildN, ChildN.begin()));
         return LazyCallGraph::getNextSCCInPostOrder();
       }
