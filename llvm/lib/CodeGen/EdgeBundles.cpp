@@ -70,10 +70,11 @@ bool EdgeBundles::runOnMachineFunction(MachineFunction &mf) {
 }
 
 /// Specialize WriteGraph, the standard implementation won't work.
+namespace llvm {
 template<>
-raw_ostream &llvm::WriteGraph<>(raw_ostream &O, const EdgeBundles &G,
-                                bool ShortNames,
-                                const Twine &Title) {
+raw_ostream &WriteGraph<>(raw_ostream &O, const EdgeBundles &G,
+                          bool ShortNames,
+                          const Twine &Title) {
   const MachineFunction *MF = G.getMachineFunction();
 
   O << "digraph {\n";
@@ -90,6 +91,7 @@ raw_ostream &llvm::WriteGraph<>(raw_ostream &O, const EdgeBundles &G,
   }
   O << "}\n";
   return O;
+}
 }
 
 /// view - Visualize the annotated bipartite CFG with Graphviz.
