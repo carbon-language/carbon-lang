@@ -37,3 +37,5 @@ int defineListDoubleRight() {
   ld.push_back(0.0);
   return ld.size;
 }
+
+template<typename T> struct MergePatternDecl;

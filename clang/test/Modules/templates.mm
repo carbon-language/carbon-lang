@@ -70,3 +70,9 @@ unsigned testMixedStruct() {
   // CHECK: load i32* bitcast (i8* getelementptr inbounds (i8* bitcast ({{.*}}* @list_right to i8*), i64 8) to i32*)
   return list_left.*size_right + list_right.*size_left;
 }
+
+template<typename T> struct MergePatternDecl {
+  typedef int Type;
+  void f(Type);
+};
+template<typename T> void MergePatternDecl<T>::f(Type type) {}

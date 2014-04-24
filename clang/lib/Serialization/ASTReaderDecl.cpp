@@ -267,7 +267,7 @@ namespace clang {
     void VisitImplicitParamDecl(ImplicitParamDecl *PD);
     void VisitParmVarDecl(ParmVarDecl *PD);
     void VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D);
-    void VisitTemplateDecl(TemplateDecl *D);
+    DeclID VisitTemplateDecl(TemplateDecl *D);
     RedeclarableResult VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D);
     void VisitClassTemplateDecl(ClassTemplateDecl *D);
     void VisitVarTemplateDecl(VarTemplateDecl *D);
@@ -288,19 +288,25 @@ namespace clang {
     void VisitEmptyDecl(EmptyDecl *D);
 
     std::pair<uint64_t, uint64_t> VisitDeclContext(DeclContext *DC);
-    
-    template<typename T> 
+
+    template<typename T>
     RedeclarableResult VisitRedeclarable(Redeclarable<T> *D);
 
     template<typename T>
-    void mergeRedeclarable(Redeclarable<T> *D, RedeclarableResult &Redecl);
+    void mergeRedeclarable(Redeclarable<T> *D, RedeclarableResult &Redecl,
+                           DeclID TemplatePatternID = 0);
 
     template<typename T>
     void mergeRedeclarable(Redeclarable<T> *D, T *Existing,
-                           RedeclarableResult &Redecl);
+                           RedeclarableResult &Redecl,
+                           DeclID TemplatePatternID = 0);
 
     template<typename T>
     void mergeMergeable(Mergeable<T> *D);
+
+    void mergeTemplatePattern(RedeclarableTemplateDecl *D,
+                              RedeclarableTemplateDecl *Existing,
+                              DeclID DsID);
 
     // FIXME: Reorder according to DeclNodes.td?
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
@@ -340,7 +346,7 @@ void ASTDeclReader::Visit(Decl *D) {
   }
 
   if (TypeDecl *TD = dyn_cast<TypeDecl>(D)) {
-    // if we have a fully initialized TypeDecl, we can safely read its type now.
+    // We have a fully initialized TypeDecl. Read its type now.
     TD->setTypeForDecl(Reader.GetType(TypeIDForTypeDecl).getTypePtrOrNull());
   } else if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(D)) {
     // if we have a fully initialized TypeDecl, we can safely read its type now.
@@ -985,10 +991,6 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
       VD->getLexicalDeclContext()->isFunctionOrMethod())
     VD->setLocalExternDecl();
 
-  // Only true variables (not parameters or implicit parameters) can be merged.
-  if (VD->getKind() != Decl::ParmVar && VD->getKind() != Decl::ImplicitParam)
-    mergeRedeclarable(VD, Redecl);
-  
   if (uint64_t Val = Record[Idx++]) {
     VD->setInit(Reader.ReadExpr(F));
     if (Val > 1) {
@@ -1003,8 +1005,12 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
   };
   switch ((VarKind)Record[Idx++]) {
   case VarNotTemplate:
+    // Only true variables (not parameters or implicit parameters) can be merged
+    if (VD->getKind() != Decl::ParmVar && VD->getKind() != Decl::ImplicitParam)
+      mergeRedeclarable(VD, Redecl);
     break;
   case VarTemplate:
+    // Merged when we merge the template.
     VD->setDescribedVarTemplate(ReadDeclAs<VarTemplateDecl>(Record, Idx));
     break;
   case StaticDataMemberSpecialization: { // HasMemberSpecializationInfo.
@@ -1012,6 +1018,7 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
     TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
     SourceLocation POI = ReadSourceLocation(Record, Idx);
     Reader.getContext().setInstantiatedFromStaticDataMember(VD, Tmpl, TSK,POI);
+    mergeRedeclarable(VD, Redecl);
     break;
   }
   }
@@ -1414,9 +1421,21 @@ ASTDeclReader::VisitCXXRecordDeclImpl(CXXRecordDecl *D) {
   case CXXRecNotTemplate:
     mergeRedeclarable(D, Redecl);
     break;
-  case CXXRecTemplate:
-    D->TemplateOrInstantiation = ReadDeclAs<ClassTemplateDecl>(Record, Idx);
+  case CXXRecTemplate: {
+    // Merged when we merge the template.
+    ClassTemplateDecl *Template = ReadDeclAs<ClassTemplateDecl>(Record, Idx);
+    D->TemplateOrInstantiation = Template;
+    if (!Template->getTemplatedDecl()) {
+      // We've not actually loaded the ClassTemplateDecl yet, because we're
+      // currently being loaded as its pattern. Rely on it to set up our
+      // TypeForDecl (see VisitClassTemplateDecl).
+      //
+      // Beware: we do not yet know our canonical declaration, and may still
+      // get merged once the surrounding class template has got off the ground.
+      TypeIDForTypeDecl = 0;
+    }
     break;
+  }
   case CXXRecMemberSpecialization: {
     CXXRecordDecl *RD = ReadDeclAs<CXXRecordDecl>(Record, Idx);
     TemplateSpecializationKind TSK = (TemplateSpecializationKind)Record[Idx++];
@@ -1522,16 +1541,19 @@ void ASTDeclReader::VisitFriendTemplateDecl(FriendTemplateDecl *D) {
   D->FriendLoc = ReadSourceLocation(Record, Idx);
 }
 
-void ASTDeclReader::VisitTemplateDecl(TemplateDecl *D) {
+DeclID ASTDeclReader::VisitTemplateDecl(TemplateDecl *D) {
   VisitNamedDecl(D);
 
-  NamedDecl *TemplatedDecl = ReadDeclAs<NamedDecl>(Record, Idx);
+  DeclID PatternID = ReadDeclID(Record, Idx);
+  NamedDecl *TemplatedDecl = cast_or_null<NamedDecl>(Reader.GetDecl(PatternID));
   TemplateParameterList* TemplateParams
       = Reader.ReadTemplateParameterList(F, Record, Idx); 
   D->init(TemplatedDecl, TemplateParams);
 
   // FIXME: If this is a redeclaration of a template from another module, handle
   // inheritance of default template arguments.
+
+  return PatternID;
 }
 
 ASTDeclReader::RedeclarableResult 
@@ -1560,10 +1582,10 @@ ASTDeclReader::VisitRedeclarableTemplateDecl(RedeclarableTemplateDecl *D) {
     }
   }
 
-  VisitTemplateDecl(D);
+  DeclID PatternID = VisitTemplateDecl(D);
   D->IdentifierNamespace = Record[Idx++];
 
-  mergeRedeclarable(D, Redecl);
+  mergeRedeclarable(D, Redecl, PatternID);
 
   // If we merged the template with a prior declaration chain, merge the common
   // pointer.
@@ -1606,6 +1628,14 @@ void ASTDeclReader::VisitClassTemplateDecl(ClassTemplateDecl *D) {
     }
     
     CommonPtr->InjectedClassNameType = Reader.readType(F, Record, Idx);
+  }
+
+  if (D->getTemplatedDecl()->TemplateOrInstantiation) {
+    // We were loaded before our templated declaration was. We've not set up
+    // its corresponding type yet (see VisitCXXRecordDeclImpl), so reconstruct
+    // it now.
+    Reader.Context.getInjectedClassNameType(
+        D->getTemplatedDecl(), D->getCommonPtr()->InjectedClassNameType);
   }
 }
 
@@ -1957,23 +1987,54 @@ ASTDeclReader::VisitRedeclarable(Redeclarable<T> *D) {
 /// of the same entity.
 template<typename T>
 void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D,
-                                      RedeclarableResult &Redecl) {
+                                      RedeclarableResult &Redecl,
+                                      DeclID TemplatePatternID) {
   // If modules are not available, there is no reason to perform this merge.
   if (!Reader.getContext().getLangOpts().Modules)
     return;
 
   if (FindExistingResult ExistingRes = findExisting(static_cast<T*>(D)))
     if (T *Existing = ExistingRes)
-      mergeRedeclarable(D, Existing, Redecl);
+      mergeRedeclarable(D, Existing, Redecl, TemplatePatternID);
+}
+
+/// \brief "Cast" to type T, asserting if we don't have an implicit conversion.
+/// We use this to put code in a template that will only be valid for certain
+/// instantiations.
+template<typename T> static T assert_cast(T t) { return t; }
+template<typename T> static T assert_cast(...) {
+  llvm_unreachable("bad assert_cast");
+}
+
+/// \brief Merge together the pattern declarations from two template
+/// declarations.
+void ASTDeclReader::mergeTemplatePattern(RedeclarableTemplateDecl *D,
+                                         RedeclarableTemplateDecl *Existing,
+                                         DeclID DsID) {
+  auto *DPattern = D->getTemplatedDecl();
+  auto *ExistingPattern = Existing->getTemplatedDecl();
+  RedeclarableResult Result(Reader, DsID, DPattern->getKind());
+  if (auto *DClass = dyn_cast<CXXRecordDecl>(DPattern))
+    // FIXME: Merge definitions here, if both declarations had definitions.
+    return mergeRedeclarable(DClass, cast<TagDecl>(ExistingPattern),
+                             Result);
+  if (auto *DFunction = dyn_cast<FunctionDecl>(DPattern))
+    return mergeRedeclarable(DFunction, cast<FunctionDecl>(ExistingPattern),
+                             Result);
+  if (auto *DVar = dyn_cast<VarDecl>(DPattern))
+    return mergeRedeclarable(DVar, cast<VarDecl>(ExistingPattern), Result);
+  llvm_unreachable("merged an unknown kind of redeclarable template");
 }
 
 /// \brief Attempts to merge the given declaration (D) with another declaration
 /// of the same entity.
 template<typename T>
-void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D, T *Existing,
-                                      RedeclarableResult &Redecl) {
+void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *DBase, T *Existing,
+                                      RedeclarableResult &Redecl,
+                                      DeclID TemplatePatternID) {
+  T *D = static_cast<T*>(DBase);
   T *ExistingCanon = Existing->getCanonicalDecl();
-  T *DCanon = static_cast<T*>(D)->getCanonicalDecl();
+  T *DCanon = D->getCanonicalDecl();
   if (ExistingCanon != DCanon) {
     // Have our redeclaration link point back at the canonical declaration
     // of the existing declaration, so that this declaration has the 
@@ -1981,11 +2042,15 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D, T *Existing,
     D->RedeclLink = Redeclarable<T>::PreviousDeclLink(ExistingCanon);
 
     // When we merge a namespace, update its pointer to the first namespace.
-    if (NamespaceDecl *Namespace
-          = dyn_cast<NamespaceDecl>(static_cast<T*>(D))) {
+    if (auto *Namespace = dyn_cast<NamespaceDecl>(D))
       Namespace->AnonOrFirstNamespaceAndInline.setPointer(
-        static_cast<NamespaceDecl *>(static_cast<void*>(ExistingCanon)));
-    }
+          assert_cast<NamespaceDecl*>(ExistingCanon));
+
+    // When we merge a template, merge its pattern.
+    if (auto *DTemplate = dyn_cast<RedeclarableTemplateDecl>(D))
+      mergeTemplatePattern(
+          DTemplate, assert_cast<RedeclarableTemplateDecl*>(ExistingCanon),
+          TemplatePatternID);
 
     // Don't introduce DCanon into the set of pending declaration chains.
     Redecl.suppress();
@@ -2002,7 +2067,7 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *D, T *Existing,
     // If this declaration was the canonical declaration, make a note of
     // that. We accept the linear algorithm here because the number of
     // unique canonical declarations of an entity should always be tiny.
-    if (DCanon == static_cast<T*>(D)) {
+    if (DCanon == D) {
       SmallVectorImpl<DeclID> &Merged = Reader.MergedDecls[ExistingCanon];
       if (std::find(Merged.begin(), Merged.end(), Redecl.getFirstID())
             == Merged.end())
