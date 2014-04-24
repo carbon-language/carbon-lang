@@ -1035,7 +1035,7 @@ void DwarfUnit::updateAcceleratorTables(DIScope Context, DIType Ty,
       IsImplementation = (CT.getRunTimeLang() == 0) || CT.isObjcClassComplete();
     }
     unsigned Flags = IsImplementation ? dwarf::DW_FLAG_type_implementation : 0;
-    addAccelType(Ty.getName(), std::make_pair(TyDIE, Flags));
+    DD->addAccelType(Ty.getName(), TyDIE, Flags);
 
     if ((!Context || Context.isCompileUnit() || Context.isFile() ||
          Context.isNameSpace()) &&
@@ -1063,15 +1063,6 @@ void DwarfUnit::addType(DIE *Entity, DIType Ty, dwarf::Attribute Attribute) {
   Entry = createDIEEntry(Buffer);
   insertDIEEntry(Ty, Entry);
   addDIEEntry(Entity, Attribute, Entry);
-}
-
-void DwarfUnit::addAccelType(StringRef Name,
-                             std::pair<const DIE *, unsigned> Die) {
-  if (!DD->useDwarfAccelTables())
-    return;
-  DU->getStringPoolEntry(Name);
-  std::vector<std::pair<const DIE *, unsigned> > &DIEs = AccelTypes[Name];
-  DIEs.push_back(Die);
 }
 
 /// addGlobalName - Add a new global name to the compile unit.

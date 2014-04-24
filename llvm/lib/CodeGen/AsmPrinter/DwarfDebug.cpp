@@ -164,6 +164,11 @@ DIType DbgVariable::getType() const {
   return Ty;
 }
 
+static LLVM_CONSTEXPR DwarfAccelTable::Atom TypeAtoms[] = {
+    DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4),
+    DwarfAccelTable::Atom(dwarf::DW_ATOM_die_tag, dwarf::DW_FORM_data2),
+    DwarfAccelTable::Atom(dwarf::DW_ATOM_type_flags, dwarf::DW_FORM_data1)};
+
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     : Asm(A), MMI(Asm->MMI), FirstCU(0), PrevLabel(NULL), GlobalRangeCount(0),
       InfoHolder(A, "info_string", DIEValueAllocator),
@@ -174,7 +179,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
       AccelObjC(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
                                       dwarf::DW_FORM_data4)),
       AccelNamespace(DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset,
-                                           dwarf::DW_FORM_data4)) {
+                                           dwarf::DW_FORM_data4)),
+      AccelTypes(TypeAtoms) {
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = DwarfStrSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = DwarfLineSectionSym = 0;
@@ -1899,27 +1905,15 @@ void DwarfDebug::emitAccelNamespaces() {
 
 // Emit type dies into a hashed accelerator table.
 void DwarfDebug::emitAccelTypes() {
-  DwarfAccelTable::Atom Atoms[] = {
-      DwarfAccelTable::Atom(dwarf::DW_ATOM_die_offset, dwarf::DW_FORM_data4),
-      DwarfAccelTable::Atom(dwarf::DW_ATOM_die_tag, dwarf::DW_FORM_data2),
-      DwarfAccelTable::Atom(dwarf::DW_ATOM_type_flags, dwarf::DW_FORM_data1)};
-  DwarfAccelTable AT(Atoms);
-  for (const auto &TheU : getUnits()) {
-    for (const auto &GI : TheU->getAccelTypes()) {
-      StringRef Name = GI.getKey();
-      for (const auto &DI : GI.second)
-        AT.AddName(Name, DI.first, DI.second);
-    }
-  }
 
-  AT.FinalizeTable(Asm, "types");
+  AccelTypes.FinalizeTable(Asm, "types");
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfAccelTypesSection());
   MCSymbol *SectionBegin = Asm->GetTempSymbol("types_begin");
   Asm->OutStreamer.EmitLabel(SectionBegin);
 
   // Emit the full data.
-  AT.Emit(Asm, SectionBegin, &InfoHolder);
+  AccelTypes.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
 // Public name handling.
@@ -2566,4 +2560,11 @@ void DwarfDebug::addAccelNamespace(StringRef Name, const DIE *Die) {
     return;
   InfoHolder.getStringPoolEntry(Name);
   AccelNamespace.AddName(Name, Die);
+}
+
+void DwarfDebug::addAccelType(StringRef Name, const DIE *Die, char Flags) {
+  if (!useDwarfAccelTables())
+    return;
+  InfoHolder.getStringPoolEntry(Name);
+  AccelTypes.AddName(Name, Die, Flags);
 }

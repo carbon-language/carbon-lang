@@ -102,9 +102,6 @@ protected:
   /// GlobalTypes - A map of globally visible types for this unit.
   StringMap<const DIE *> GlobalTypes;
 
-  /// AccelTypes - A map of names for the type accelerator table.
-  StringMap<std::vector<std::pair<const DIE *, unsigned> > > AccelTypes;
-
   /// DIEBlocks - A list of all the DIEBlocks in use.
   std::vector<DIEBlock *> DIEBlocks;
   
@@ -222,11 +219,6 @@ public:
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
 
-  const StringMap<std::vector<std::pair<const DIE *, unsigned> > > &
-  getAccelTypes() const {
-    return AccelTypes;
-  }
-
   unsigned getDebugInfoOffset() const { return DebugInfoOffset; }
   void setDebugInfoOffset(unsigned DbgInfoOff) { DebugInfoOffset = DbgInfoOff; }
 
@@ -259,9 +251,6 @@ public:
 
   /// addAccelNamespace - Add a new name to the namespace accelerator table.
   void addAccelNamespace(StringRef Name, const DIE *Die);
-
-  /// addAccelType - Add a new type to the type accelerator table.
-  void addAccelType(StringRef Name, std::pair<const DIE *, unsigned> Die);
 
   /// getDIE - Returns the debug information entry map slot for the
   /// specified debug variable. We delegate the request to DwarfDebug
