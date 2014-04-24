@@ -42,7 +42,7 @@ public:
     addAtom(_imageBaseAtom);
 
     // Create implciit symbols for exported symbols.
-    for (const PECOFFLinkingContext::ExportDesc exp : ctx.getDllExports()) {
+    for (const PECOFFLinkingContext::ExportDesc &exp : ctx.getDllExports()) {
       UndefinedAtom *target = new (_alloc) SimpleUndefinedAtom(*this, exp.name);
       COFFLinkerInternalAtom *imp = createImpPointerAtom(ctx, exp.name);
       imp->addReference(std::unique_ptr<COFFReference>(
