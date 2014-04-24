@@ -186,11 +186,13 @@ public:
     DirectiveList Warnings;
     DirectiveList Notes;
 
-    ~ExpectedData() {
+    void Reset() {
       llvm::DeleteContainerPointers(Errors);
       llvm::DeleteContainerPointers(Warnings);
       llvm::DeleteContainerPointers(Notes);
     }
+
+    ~ExpectedData() { Reset(); }
   };
 
   enum DirectiveStatus {

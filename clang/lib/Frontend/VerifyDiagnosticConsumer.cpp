@@ -847,9 +847,7 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
 
   // Reset the buffer, we have processed all the diagnostics in it.
   Buffer.reset(new TextDiagnosticBuffer());
-  ED.Errors.clear();
-  ED.Warnings.clear();
-  ED.Notes.clear();
+  ED.Reset();
 }
 
 Directive *Directive::create(bool RegexKind, SourceLocation DirectiveLoc,
