@@ -520,7 +520,7 @@ void AArch64InstPrinter::printVectorList(const MCInst *MI, unsigned OpNum,
 
   unsigned Reg = MI->getOperand(OpNum).getReg();
   std::string LayoutStr = A64VectorLayoutToString(Layout);
-  O << "{";
+  O << "{ ";
   if (Count > 1) { // Print sub registers separately
     bool IsVec64 = (Layout < A64Layout::VL_16B);
     unsigned SubRegIdx = IsVec64 ? AArch64::dsub_0 : AArch64::qsub_0;
@@ -536,5 +536,5 @@ void AArch64InstPrinter::printVectorList(const MCInst *MI, unsigned OpNum,
     Name[0] = 'v';
     O << Name << LayoutStr;
   }
-  O << "}";
+  O << " }";
 }

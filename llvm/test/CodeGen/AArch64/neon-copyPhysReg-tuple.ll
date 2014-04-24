@@ -5,7 +5,7 @@ define <4 x i32> @copyTuple.QPair(i8* %a, i8* %b) {
 ; CHECK-LABEL: copyTuple.QPair:
 ; CHECK: orr v{{[0-9]+}}.16b, v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 ; CHECK: orr v{{[0-9]+}}.16b, v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
-; CHECK: ld2 {{{v[0-9]+}}.s, {{v[0-9]+}}.s}[{{[0-9]+}}], [x{{[0-9]+|sp}}]
+; CHECK: ld2 { {{v[0-9]+}}.s, {{v[0-9]+}}.s }[{{[0-9]+}}], [x{{[0-9]+|sp}}]
 entry:
   %vld = tail call { <4 x i32>, <4 x i32> } @llvm.arm.neon.vld2lane.v4i32(i8* %a, <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> <i32 2, i32 2, i32 2, i32 2>, i32 0, i32 4)
   %extract = extractvalue { <4 x i32>, <4 x i32> } %vld, 0
@@ -19,7 +19,7 @@ define <4 x i32> @copyTuple.QTriple(i8* %a, i8* %b, <4 x i32> %c) {
 ; CHECK: orr v{{[0-9]+}}.16b, v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 ; CHECK: orr v{{[0-9]+}}.16b, v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 ; CHECK: orr v{{[0-9]+}}.16b, v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
-; CHECK: ld3 {{{v[0-9]+}}.s, {{v[0-9]+}}.s, {{v[0-9]+}}.s}[{{[0-9]+}}], [x{{[0-9]+|sp}}]
+; CHECK: ld3 { {{v[0-9]+}}.s, {{v[0-9]+}}.s, {{v[0-9]+}}.s }[{{[0-9]+}}], [x{{[0-9]+|sp}}]
 entry:
   %vld = tail call { <4 x i32>, <4 x i32>, <4 x i32> } @llvm.arm.neon.vld3lane.v4i32(i8* %a, <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> %c, <4 x i32> %c, i32 0, i32 4)
   %extract = extractvalue { <4 x i32>, <4 x i32>, <4 x i32> } %vld, 0
@@ -34,7 +34,7 @@ define <4 x i32> @copyTuple.QQuad(i8* %a, i8* %b, <4 x i32> %c) {
 ; CHECK: orr v{{[0-9]+}}.16b, v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 ; CHECK: orr v{{[0-9]+}}.16b, v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
 ; CHECK: orr v{{[0-9]+}}.16b, v{{[0-9]+}}.16b, v{{[0-9]+}}.16b
-; CHECK: ld4 {{{v[0-9]+}}.s, {{v[0-9]+}}.s, {{v[0-9]+}}.s, {{v[0-9]+}}.s}[{{[0-9]+}}], [x{{[0-9]+|sp}}]
+; CHECK: ld4 { {{v[0-9]+}}.s, {{v[0-9]+}}.s, {{v[0-9]+}}.s, {{v[0-9]+}}.s }[{{[0-9]+}}], [x{{[0-9]+|sp}}]
 entry:
   %vld = tail call { <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32> } @llvm.arm.neon.vld4lane.v4i32(i8* %a, <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> %c, <4 x i32> %c, <4 x i32> %c, i32 0, i32 4)
   %extract = extractvalue { <4 x i32>, <4 x i32>, <4 x i32>, <4 x i32> } %vld, 0

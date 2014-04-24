@@ -2,7 +2,7 @@
 
 define { [2 x <16 x i8>] } @test_vld2q_dup_fx_update(i8* %a, i8** %ptr) {
 ; CHECK-LABEL: test_vld2q_dup_fx_update
-; CHECK: ld2r  {v{{[0-9]+}}.16b, v{{[0-9]+}}.16b}, [x{{[0-9]+|sp}}], #2
+; CHECK: ld2r  { v{{[0-9]+}}.16b, v{{[0-9]+}}.16b }, [x{{[0-9]+|sp}}], #2
   %1 = tail call { <16 x i8>, <16 x i8> } @llvm.arm.neon.vld2lane.v16i8(i8* %a, <16 x i8> undef, <16 x i8> undef, i32 0, i32 1)
   %2 = extractvalue { <16 x i8>, <16 x i8> } %1, 0
   %3 = shufflevector <16 x i8> %2, <16 x i8> undef, <16 x i32> zeroinitializer
@@ -17,7 +17,7 @@ define { [2 x <16 x i8>] } @test_vld2q_dup_fx_update(i8* %a, i8** %ptr) {
 
 define { [2 x <4 x i32>] } @test_vld2q_dup_reg_update(i32* %a, i32** %ptr, i32 %inc) {
 ; CHECK-LABEL: test_vld2q_dup_reg_update
-; CHECK: ld2r  {v{{[0-9]+}}.4s, v{{[0-9]+}}.4s}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld2r  { v{{[0-9]+}}.4s, v{{[0-9]+}}.4s }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = bitcast i32* %a to i8*
   %2 = tail call { <4 x i32>, <4 x i32> } @llvm.arm.neon.vld2lane.v4i32(i8* %1, <4 x i32> undef, <4 x i32> undef, i32 0, i32 4)
   %3 = extractvalue { <4 x i32>, <4 x i32> } %2, 0
@@ -33,7 +33,7 @@ define { [2 x <4 x i32>] } @test_vld2q_dup_reg_update(i32* %a, i32** %ptr, i32 %
 
 define { [3 x <4 x i16>] } @test_vld3_dup_fx_update(i16* %a, i16** %ptr) {
 ; CHECK-LABEL: test_vld3_dup_fx_update
-; CHECK: ld3r  {v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, v{{[0-9]+}}.4h}, [x{{[0-9]+|sp}}], #6
+; CHECK: ld3r  { v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, v{{[0-9]+}}.4h }, [x{{[0-9]+|sp}}], #6
   %1 = bitcast i16* %a to i8*
   %2 = tail call { <4 x i16>, <4 x i16>, <4 x i16> } @llvm.arm.neon.vld3lane.v4i16(i8* %1, <4 x i16> undef, <4 x i16> undef, <4 x i16> undef, i32 0, i32 2)
   %3 = extractvalue { <4 x i16>, <4 x i16>, <4 x i16> } %2, 0
@@ -52,7 +52,7 @@ define { [3 x <4 x i16>] } @test_vld3_dup_fx_update(i16* %a, i16** %ptr) {
 
 define { [3 x <8 x i8>] } @test_vld3_dup_reg_update(i8* %a, i8** %ptr, i32 %inc) {
 ; CHECK-LABEL: test_vld3_dup_reg_update
-; CHECK: ld3r  {v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld3r  { v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = tail call { <8 x i8>, <8 x i8>, <8 x i8> } @llvm.arm.neon.vld3lane.v8i8(i8* %a, <8 x i8> undef, <8 x i8> undef, <8 x i8> undef, i32 0, i32 1)
   %2 = extractvalue { <8 x i8>, <8 x i8>, <8 x i8> } %1, 0
   %3 = shufflevector <8 x i8> %2, <8 x i8> undef, <8 x i32> zeroinitializer
@@ -70,7 +70,7 @@ define { [3 x <8 x i8>] } @test_vld3_dup_reg_update(i8* %a, i8** %ptr, i32 %inc)
 
 define { [4 x <2 x i32>] } @test_vld4_dup_fx_update(i32* %a, i32** %ptr) #0 {
 ; CHECK-LABEL: test_vld4_dup_fx_update
-; CHECK: ld4r  {v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s}, [x{{[0-9]+|sp}}], #16
+; CHECK: ld4r  { v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s }, [x{{[0-9]+|sp}}], #16
   %1 = bitcast i32* %a to i8*
   %2 = tail call { <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32> } @llvm.arm.neon.vld4lane.v2i32(i8* %1, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, <2 x i32> undef, i32 0, i32 4)
   %3 = extractvalue { <2 x i32>, <2 x i32>, <2 x i32>, <2 x i32> } %2, 0
@@ -92,7 +92,7 @@ define { [4 x <2 x i32>] } @test_vld4_dup_fx_update(i32* %a, i32** %ptr) #0 {
 
 define { [4 x <2 x double>] } @test_vld4_dup_reg_update(double* %a, double** %ptr, i32 %inc) {
 ; CHECK-LABEL: test_vld4_dup_reg_update
-; CHECK: ld4r  {v{{[0-9]+}}.2d, v{{[0-9]+}}.2d, v{{[0-9]+}}.2d, v{{[0-9]+}}.2d}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld4r  { v{{[0-9]+}}.2d, v{{[0-9]+}}.2d, v{{[0-9]+}}.2d, v{{[0-9]+}}.2d }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = bitcast double* %a to i8*
   %2 = tail call { <2 x double>, <2 x double>, <2 x double>, <2 x double> } @llvm.arm.neon.vld4lane.v2f64(i8* %1, <2 x double> undef, <2 x double> undef, <2 x double> undef, <2 x double> undef, i32 0, i32 8)
   %3 = extractvalue { <2 x double>, <2 x double>, <2 x double>, <2 x double> } %2, 0
@@ -114,7 +114,7 @@ define { [4 x <2 x double>] } @test_vld4_dup_reg_update(double* %a, double** %pt
 
 define { [2 x <8 x i8>] } @test_vld2_lane_fx_update(i8*  %a, [2 x <8 x i8>] %b, i8** %ptr) {
 ; CHECK-LABEL: test_vld2_lane_fx_update
-; CHECK: ld2  {v{{[0-9]+}}.b, v{{[0-9]+}}.b}[7], [x{{[0-9]+|sp}}], #2
+; CHECK: ld2  { v{{[0-9]+}}.b, v{{[0-9]+}}.b }[7], [x{{[0-9]+|sp}}], #2
   %1 = extractvalue [2 x <8 x i8>] %b, 0
   %2 = extractvalue [2 x <8 x i8>] %b, 1
   %3 = tail call { <8 x i8>, <8 x i8> } @llvm.arm.neon.vld2lane.v8i8(i8* %a, <8 x i8> %1, <8 x i8> %2, i32 7, i32 1)
@@ -129,7 +129,7 @@ define { [2 x <8 x i8>] } @test_vld2_lane_fx_update(i8*  %a, [2 x <8 x i8>] %b, 
 
 define { [2 x <8 x i8>] } @test_vld2_lane_reg_update(i8*  %a, [2 x <8 x i8>] %b, i8** %ptr, i32 %inc) {
 ; CHECK-LABEL: test_vld2_lane_reg_update
-; CHECK: ld2  {v{{[0-9]+}}.b, v{{[0-9]+}}.b}[6], [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld2  { v{{[0-9]+}}.b, v{{[0-9]+}}.b }[6], [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = extractvalue [2 x <8 x i8>] %b, 0
   %2 = extractvalue [2 x <8 x i8>] %b, 1
   %3 = tail call { <8 x i8>, <8 x i8> } @llvm.arm.neon.vld2lane.v8i8(i8* %a, <8 x i8> %1, <8 x i8> %2, i32 6, i32 1)
@@ -144,7 +144,7 @@ define { [2 x <8 x i8>] } @test_vld2_lane_reg_update(i8*  %a, [2 x <8 x i8>] %b,
 
 define { [3 x <2 x float>] } @test_vld3_lane_fx_update(float* %a, [3 x <2 x float>] %b, float** %ptr) {
 ; CHECK-LABEL: test_vld3_lane_fx_update
-; CHECK: ld3  {v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s}[1], [x{{[0-9]+|sp}}], #12
+; CHECK: ld3  { v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s }[1], [x{{[0-9]+|sp}}], #12
   %1 = extractvalue [3 x <2 x float>] %b, 0
   %2 = extractvalue [3 x <2 x float>] %b, 1
   %3 = extractvalue [3 x <2 x float>] %b, 2
@@ -163,7 +163,7 @@ define { [3 x <2 x float>] } @test_vld3_lane_fx_update(float* %a, [3 x <2 x floa
 
 define { [3 x <4 x i16>] } @test_vld3_lane_reg_update(i16* %a, [3 x <4 x i16>] %b, i16** %ptr, i32 %inc) {
 ; CHECK-LABEL: test_vld3_lane_reg_update
-; CHECK: ld3  {v{{[0-9]+}}.h, v{{[0-9]+}}.h, v{{[0-9]+}}.h}[3], [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld3  { v{{[0-9]+}}.h, v{{[0-9]+}}.h, v{{[0-9]+}}.h }[3], [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = extractvalue [3 x <4 x i16>] %b, 0
   %2 = extractvalue [3 x <4 x i16>] %b, 1
   %3 = extractvalue [3 x <4 x i16>] %b, 2
@@ -182,7 +182,7 @@ define { [3 x <4 x i16>] } @test_vld3_lane_reg_update(i16* %a, [3 x <4 x i16>] %
 
 define { [4 x <2 x i32>] } @test_vld4_lane_fx_update(i32* readonly %a, [4 x <2 x i32>] %b, i32** %ptr) {
 ; CHECK-LABEL: test_vld4_lane_fx_update
-; CHECK: ld4  {v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s}[1], [x{{[0-9]+|sp}}], #16
+; CHECK: ld4  { v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s }[1], [x{{[0-9]+|sp}}], #16
   %1 = extractvalue [4 x <2 x i32>] %b, 0
   %2 = extractvalue [4 x <2 x i32>] %b, 1
   %3 = extractvalue [4 x <2 x i32>] %b, 2
@@ -204,7 +204,7 @@ define { [4 x <2 x i32>] } @test_vld4_lane_fx_update(i32* readonly %a, [4 x <2 x
 
 define { [4 x <2 x double>] } @test_vld4_lane_reg_update(double* readonly %a, [4 x <2 x double>] %b, double** %ptr, i32 %inc) {
 ; CHECK-LABEL: test_vld4_lane_reg_update
-; CHECK: ld4  {v{{[0-9]+}}.d, v{{[0-9]+}}.d, v{{[0-9]+}}.d, v{{[0-9]+}}.d}[1], [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld4  { v{{[0-9]+}}.d, v{{[0-9]+}}.d, v{{[0-9]+}}.d, v{{[0-9]+}}.d }[1], [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = extractvalue [4 x <2 x double>] %b, 0
   %2 = extractvalue [4 x <2 x double>] %b, 1
   %3 = extractvalue [4 x <2 x double>] %b, 2
@@ -226,7 +226,7 @@ define { [4 x <2 x double>] } @test_vld4_lane_reg_update(double* readonly %a, [4
 
 define void @test_vst2_lane_fx_update(i8* %a, [2 x <8 x i8>] %b, i8** %ptr) {
 ; CHECK-LABEL: test_vst2_lane_fx_update
-; CHECK: st2  {v{{[0-9]+}}.b, v{{[0-9]+}}.b}[7], [x{{[0-9]+|sp}}], #2
+; CHECK: st2  { v{{[0-9]+}}.b, v{{[0-9]+}}.b }[7], [x{{[0-9]+|sp}}], #2
   %1 = extractvalue [2 x <8 x i8>] %b, 0
   %2 = extractvalue [2 x <8 x i8>] %b, 1
   call void @llvm.arm.neon.vst2lane.v8i8(i8* %a, <8 x i8> %1, <8 x i8> %2, i32 7, i32 1)
@@ -237,7 +237,7 @@ define void @test_vst2_lane_fx_update(i8* %a, [2 x <8 x i8>] %b, i8** %ptr) {
 
 define void @test_vst2_lane_reg_update(i32* %a, [2 x <2 x i32>] %b.coerce, i32** %ptr, i32 %inc) {
 ; CHECK-LABEL: test_vst2_lane_reg_update
-; CHECK: st2  {v{{[0-9]+}}.s, v{{[0-9]+}}.s}[1], [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: st2  { v{{[0-9]+}}.s, v{{[0-9]+}}.s }[1], [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = extractvalue [2 x <2 x i32>] %b.coerce, 0
   %2 = extractvalue [2 x <2 x i32>] %b.coerce, 1
   %3 = bitcast i32* %a to i8*
@@ -249,7 +249,7 @@ define void @test_vst2_lane_reg_update(i32* %a, [2 x <2 x i32>] %b.coerce, i32**
 
 define void @test_vst3_lane_fx_update(float* %a, [3 x <4 x float>] %b, float** %ptr) {
 ; CHECK-LABEL: test_vst3_lane_fx_update
-; CHECK: st3  {v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s}[3], [x{{[0-9]+|sp}}], #12
+; CHECK: st3  { v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s }[3], [x{{[0-9]+|sp}}], #12
   %1 = extractvalue [3 x <4 x float>] %b, 0
   %2 = extractvalue [3 x <4 x float>] %b, 1
   %3 = extractvalue [3 x <4 x float>] %b, 2
@@ -263,7 +263,7 @@ define void @test_vst3_lane_fx_update(float* %a, [3 x <4 x float>] %b, float** %
 ; Function Attrs: nounwind
 define void @test_vst3_lane_reg_update(i16* %a, [3 x <4 x i16>] %b, i16** %ptr, i32 %inc) {
 ; CHECK-LABEL: test_vst3_lane_reg_update
-; CHECK: st3  {v{{[0-9]+}}.h, v{{[0-9]+}}.h, v{{[0-9]+}}.h}[3], [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: st3  { v{{[0-9]+}}.h, v{{[0-9]+}}.h, v{{[0-9]+}}.h }[3], [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = extractvalue [3 x <4 x i16>] %b, 0
   %2 = extractvalue [3 x <4 x i16>] %b, 1
   %3 = extractvalue [3 x <4 x i16>] %b, 2
@@ -276,7 +276,7 @@ define void @test_vst3_lane_reg_update(i16* %a, [3 x <4 x i16>] %b, i16** %ptr, 
 
 define void @test_vst4_lane_fx_update(double* %a, [4 x <2 x double>] %b.coerce, double** %ptr) {
 ; CHECK-LABEL: test_vst4_lane_fx_update
-; CHECK: st4  {v{{[0-9]+}}.d, v{{[0-9]+}}.d, v{{[0-9]+}}.d, v{{[0-9]+}}.d}[1], [x{{[0-9]+|sp}}], #32
+; CHECK: st4  { v{{[0-9]+}}.d, v{{[0-9]+}}.d, v{{[0-9]+}}.d, v{{[0-9]+}}.d }[1], [x{{[0-9]+|sp}}], #32
   %1 = extractvalue [4 x <2 x double>] %b.coerce, 0
   %2 = extractvalue [4 x <2 x double>] %b.coerce, 1
   %3 = extractvalue [4 x <2 x double>] %b.coerce, 2
@@ -291,7 +291,7 @@ define void @test_vst4_lane_fx_update(double* %a, [4 x <2 x double>] %b.coerce, 
 
 define void @test_vst4_lane_reg_update(float* %a, [4 x <2 x float>] %b.coerce, float** %ptr, i32 %inc) {
 ; CHECK-LABEL: test_vst4_lane_reg_update
-; CHECK: st4  {v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s}[1], [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: st4  { v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s, v{{[0-9]+}}.s }[1], [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = extractvalue [4 x <2 x float>] %b.coerce, 0
   %2 = extractvalue [4 x <2 x float>] %b.coerce, 1
   %3 = extractvalue [4 x <2 x float>] %b.coerce, 2

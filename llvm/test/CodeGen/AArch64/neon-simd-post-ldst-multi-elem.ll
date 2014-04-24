@@ -3,7 +3,7 @@
 ;Check for a post-increment updating load.
 define <4 x i16> @test_vld1_fx_update(i16** %ptr) nounwind {
 ; CHECK: test_vld1_fx_update
-; CHECK: ld1 {v{{[0-9]+}}.4h}, [x{{[0-9]+|sp}}], #8
+; CHECK: ld1 { v{{[0-9]+}}.4h }, [x{{[0-9]+|sp}}], #8
   %A = load i16** %ptr
   %tmp0 = bitcast i16* %A to i8*
   %tmp1 = call <4 x i16> @llvm.arm.neon.vld1.v4i16(i8* %tmp0, i32 2)
@@ -15,7 +15,7 @@ define <4 x i16> @test_vld1_fx_update(i16** %ptr) nounwind {
 ;Check for a post-increment updating load with register increment.
 define <2 x i32> @test_vld1_reg_update(i32** %ptr, i32 %inc) nounwind {
 ; CHECK: test_vld1_reg_update
-; CHECK: ld1 {v{{[0-9]+}}.2s}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld1 { v{{[0-9]+}}.2s }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %A = load i32** %ptr
   %tmp0 = bitcast i32* %A to i8*
   %tmp1 = call <2 x i32> @llvm.arm.neon.vld1.v2i32(i8* %tmp0, i32 4)
@@ -26,7 +26,7 @@ define <2 x i32> @test_vld1_reg_update(i32** %ptr, i32 %inc) nounwind {
 
 define <2 x float> @test_vld2_fx_update(float** %ptr) nounwind {
 ; CHECK: test_vld2_fx_update
-; CHECK: ld2 {v{{[0-9]+}}.2s, v{{[0-9]+}}.2s}, [x{{[0-9]+|sp}}], #16
+; CHECK: ld2 { v{{[0-9]+}}.2s, v{{[0-9]+}}.2s }, [x{{[0-9]+|sp}}], #16
   %A = load float** %ptr
   %tmp0 = bitcast float* %A to i8*
   %tmp1 = call { <2 x float>, <2 x float> } @llvm.arm.neon.vld2.v2f32(i8* %tmp0, i32 4)
@@ -38,7 +38,7 @@ define <2 x float> @test_vld2_fx_update(float** %ptr) nounwind {
 
 define <16 x i8> @test_vld2_reg_update(i8** %ptr, i32 %inc) nounwind {
 ; CHECK: test_vld2_reg_update
-; CHECK: ld2 {v{{[0-9]+}}.16b, v{{[0-9]+}}.16b}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld2 { v{{[0-9]+}}.16b, v{{[0-9]+}}.16b }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %A = load i8** %ptr
   %tmp0 = call { <16 x i8>, <16 x i8> } @llvm.arm.neon.vld2.v16i8(i8* %A, i32 1)
   %tmp1 = extractvalue { <16 x i8>, <16 x i8> } %tmp0, 0
@@ -49,7 +49,7 @@ define <16 x i8> @test_vld2_reg_update(i8** %ptr, i32 %inc) nounwind {
 
 define <4 x i32> @test_vld3_fx_update(i32** %ptr) nounwind {
 ; CHECK: test_vld3_fx_update
-; CHECK: ld3 {v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s}, [x{{[0-9]+|sp}}], #48
+; CHECK: ld3 { v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s }, [x{{[0-9]+|sp}}], #48
   %A = load i32** %ptr
   %tmp0 = bitcast i32* %A to i8*
   %tmp1 = call { <4 x i32>, <4 x i32>, <4 x i32> } @llvm.arm.neon.vld3.v4i32(i8* %tmp0, i32 4)
@@ -61,7 +61,7 @@ define <4 x i32> @test_vld3_fx_update(i32** %ptr) nounwind {
 
 define <4 x i16> @test_vld3_reg_update(i16** %ptr, i32 %inc) nounwind {
 ; CHECK: test_vld3_reg_update
-; CHECK: ld3 {v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, v{{[0-9]+}}.4h}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld3 { v{{[0-9]+}}.4h, v{{[0-9]+}}.4h, v{{[0-9]+}}.4h }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %A = load i16** %ptr
   %tmp0 = bitcast i16* %A to i8*
   %tmp1 = call { <4 x i16>, <4 x i16>, <4 x i16> } @llvm.arm.neon.vld3.v4i16(i8* %tmp0, i32 2)
@@ -73,7 +73,7 @@ define <4 x i16> @test_vld3_reg_update(i16** %ptr, i32 %inc) nounwind {
 
 define <8 x i16> @test_vld4_fx_update(i16** %ptr) nounwind {
 ; CHECK: test_vld4_fx_update
-; CHECK: ld4 {v{{[0-9]+}}.8h, v{{[0-9]+}}.8h, v{{[0-9]+}}.8h, v{{[0-9]+}}.8h}, [x{{[0-9]+|sp}}], #64
+; CHECK: ld4 { v{{[0-9]+}}.8h, v{{[0-9]+}}.8h, v{{[0-9]+}}.8h, v{{[0-9]+}}.8h }, [x{{[0-9]+|sp}}], #64
   %A = load i16** %ptr
   %tmp0 = bitcast i16* %A to i8*
   %tmp1 = call { <8 x i16>, <8 x i16>, <8 x i16>, <8 x i16> } @llvm.arm.neon.vld4.v8i16(i8* %tmp0, i32 8)
@@ -85,7 +85,7 @@ define <8 x i16> @test_vld4_fx_update(i16** %ptr) nounwind {
 
 define <8 x i8> @test_vld4_reg_update(i8** %ptr, i32 %inc) nounwind {
 ; CHECK: test_vld4_reg_update
-; CHECK: ld4 {v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld4 { v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %A = load i8** %ptr
   %tmp0 = call { <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8> } @llvm.arm.neon.vld4.v8i8(i8* %A, i32 1)
   %tmp1 = extractvalue { <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8> } %tmp0, 0
@@ -96,7 +96,7 @@ define <8 x i8> @test_vld4_reg_update(i8** %ptr, i32 %inc) nounwind {
 
 define void @test_vst1_fx_update(float** %ptr, <2 x float> %B) nounwind {
 ; CHECK: test_vst1_fx_update
-; CHECK: st1 {v{{[0-9]+}}.2s}, [{{x[0-9]+|sp}}], #8
+; CHECK: st1 { v{{[0-9]+}}.2s }, [{{x[0-9]+|sp}}], #8
   %A = load float** %ptr
   %tmp0 = bitcast float* %A to i8*
   call void @llvm.arm.neon.vst1.v2f32(i8* %tmp0, <2 x float> %B, i32 4)
@@ -107,7 +107,7 @@ define void @test_vst1_fx_update(float** %ptr, <2 x float> %B) nounwind {
 
 define void @test_vst1_reg_update(i16** %ptr, <8 x i16> %B, i32 %inc) nounwind {
 ; CHECK: test_vst1_reg_update
-; CHECK: st1 {v{{[0-9]+}}.8h}, [{{x[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: st1 { v{{[0-9]+}}.8h }, [{{x[0-9]+|sp}}], x{{[0-9]+}}
   %A = load i16** %ptr
   %tmp0 = bitcast i16* %A to i8*
   call void @llvm.arm.neon.vst1.v8i16(i8* %tmp0, <8 x i16> %B, i32 2)
@@ -118,7 +118,7 @@ define void @test_vst1_reg_update(i16** %ptr, <8 x i16> %B, i32 %inc) nounwind {
 
 define void @test_vst2_fx_update(i64** %ptr, <1 x i64> %B) nounwind {
 ; CHECK: test_vst2_fx_update
-; CHECK: st1 {v{{[0-9]+}}.1d, v{{[0-9]+}}.1d}, [{{x[0-9]+|sp}}], #16
+; CHECK: st1 { v{{[0-9]+}}.1d, v{{[0-9]+}}.1d }, [{{x[0-9]+|sp}}], #16
   %A = load i64** %ptr
   %tmp0 = bitcast i64* %A to i8*
   call void @llvm.arm.neon.vst2.v1i64(i8* %tmp0, <1 x i64> %B, <1 x i64> %B, i32 8)
@@ -129,7 +129,7 @@ define void @test_vst2_fx_update(i64** %ptr, <1 x i64> %B) nounwind {
 
 define void @test_vst2_reg_update(i8** %ptr, <8 x i8> %B, i32 %inc) nounwind {
 ; CHECK: test_vst2_reg_update
-; CHECK: st2 {v{{[0-9]+}}.8b, v{{[0-9]+}}.8b}, [{{x[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: st2 { v{{[0-9]+}}.8b, v{{[0-9]+}}.8b }, [{{x[0-9]+|sp}}], x{{[0-9]+}}
   %A = load i8** %ptr
   call void @llvm.arm.neon.vst2.v8i8(i8* %A, <8 x i8> %B, <8 x i8> %B, i32 4)
   %tmp0 = getelementptr i8* %A, i32 %inc
@@ -139,7 +139,7 @@ define void @test_vst2_reg_update(i8** %ptr, <8 x i8> %B, i32 %inc) nounwind {
 
 define void @test_vst3_fx_update(i32** %ptr, <2 x i32> %B) nounwind {
 ; CHECK: test_vst3_fx_update
-; CHECK: st3 {v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s}, [{{x[0-9]+|sp}}], #24
+; CHECK: st3 { v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s }, [{{x[0-9]+|sp}}], #24
   %A = load i32** %ptr
   %tmp0 = bitcast i32* %A to i8*
   call void @llvm.arm.neon.vst3.v2i32(i8* %tmp0, <2 x i32> %B, <2 x i32> %B, <2 x i32> %B, i32 4)
@@ -150,7 +150,7 @@ define void @test_vst3_fx_update(i32** %ptr, <2 x i32> %B) nounwind {
 
 define void @test_vst3_reg_update(i16** %ptr, <8 x i16> %B, i32 %inc) nounwind {
 ; CHECK: test_vst3_reg_update
-; CHECK: st3 {v{{[0-9]+}}.8h, v{{[0-9]+}}.8h, v{{[0-9]+}}.8h}, [{{x[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: st3 { v{{[0-9]+}}.8h, v{{[0-9]+}}.8h, v{{[0-9]+}}.8h }, [{{x[0-9]+|sp}}], x{{[0-9]+}}
   %A = load i16** %ptr
   %tmp0 = bitcast i16* %A to i8*
   call void @llvm.arm.neon.vst3.v8i16(i8* %tmp0, <8 x i16> %B, <8 x i16> %B, <8 x i16> %B, i32 2)
@@ -161,7 +161,7 @@ define void @test_vst3_reg_update(i16** %ptr, <8 x i16> %B, i32 %inc) nounwind {
 
 define void @test_vst4_fx_update(float** %ptr, <4 x float> %B) nounwind {
 ; CHECK: test_vst4_fx_update
-; CHECK: st4 {v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s}, [{{x[0-9]+|sp}}], #64
+; CHECK: st4 { v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s }, [{{x[0-9]+|sp}}], #64
   %A = load float** %ptr
   %tmp0 = bitcast float* %A to i8*
   call void @llvm.arm.neon.vst4.v4f32(i8* %tmp0, <4 x float> %B, <4 x float> %B, <4 x float> %B, <4 x float> %B, i32 4)
@@ -172,7 +172,7 @@ define void @test_vst4_fx_update(float** %ptr, <4 x float> %B) nounwind {
 
 define void @test_vst4_reg_update(i8** %ptr, <8 x i8> %B, i32 %inc) nounwind {
 ; CHECK: test_vst4_reg_update
-; CHECK: st4 {v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b}, [{{x[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: st4 { v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b }, [{{x[0-9]+|sp}}], x{{[0-9]+}}
   %A = load i8** %ptr
   call void @llvm.arm.neon.vst4.v8i8(i8* %A, <8 x i8> %B, <8 x i8> %B, <8 x i8> %B, <8 x i8> %B, i32 1)
   %tmp0 = getelementptr i8* %A, i32 %inc
@@ -201,7 +201,7 @@ declare void @llvm.arm.neon.vst4.v8i8(i8*, <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8
 
 define <16 x i8> @test_vld1x2_fx_update(i8* %a, i8** %ptr) {
 ; CHECK: test_vld1x2_fx_update
-; CHECK: ld1 {v{{[0-9]+}}.16b, v{{[0-9]+}}.16b}, [x{{[0-9]+|sp}}], #32
+; CHECK: ld1 { v{{[0-9]+}}.16b, v{{[0-9]+}}.16b }, [x{{[0-9]+|sp}}], #32
   %1 = call { <16 x i8>, <16 x i8> } @llvm.aarch64.neon.vld1x2.v16i8(i8* %a, i32 1)
   %2 = extractvalue { <16 x i8>, <16 x i8> } %1, 0
   %tmp1 = getelementptr i8* %a, i32 32
@@ -211,7 +211,7 @@ define <16 x i8> @test_vld1x2_fx_update(i8* %a, i8** %ptr) {
 
 define <8 x i16> @test_vld1x2_reg_update(i16* %a, i16** %ptr, i32 %inc) {
 ; CHECK: test_vld1x2_reg_update
-; CHECK: ld1 {v{{[0-9]+}}.8h, v{{[0-9]+}}.8h}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld1 { v{{[0-9]+}}.8h, v{{[0-9]+}}.8h }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = bitcast i16* %a to i8*
   %2 = tail call { <8 x i16>, <8 x i16> } @llvm.aarch64.neon.vld1x2.v8i16(i8* %1, i32 2)
   %3 = extractvalue { <8 x i16>, <8 x i16> } %2, 0
@@ -222,7 +222,7 @@ define <8 x i16> @test_vld1x2_reg_update(i16* %a, i16** %ptr, i32 %inc) {
 
 define <2 x i64> @test_vld1x3_fx_update(i64* %a, i64** %ptr) {
 ; CHECK: test_vld1x3_fx_update
-; CHECK: ld1 {v{{[0-9]+}}.2d, v{{[0-9]+}}.2d, v{{[0-9]+}}.2d}, [x{{[0-9]+|sp}}], #48
+; CHECK: ld1 { v{{[0-9]+}}.2d, v{{[0-9]+}}.2d, v{{[0-9]+}}.2d }, [x{{[0-9]+|sp}}], #48
   %1 = bitcast i64* %a to i8*
   %2 = tail call { <2 x i64>, <2 x i64>, <2 x i64> } @llvm.aarch64.neon.vld1x3.v2i64(i8* %1, i32 8)
   %3 = extractvalue { <2 x i64>, <2 x i64>, <2 x i64> } %2, 0
@@ -233,7 +233,7 @@ define <2 x i64> @test_vld1x3_fx_update(i64* %a, i64** %ptr) {
 
 define <8 x i16> @test_vld1x3_reg_update(i16* %a, i16** %ptr, i32 %inc) {
 ; CHECK: test_vld1x3_reg_update
-; CHECK: ld1 {v{{[0-9]+}}.8h, v{{[0-9]+}}.8h, v{{[0-9]+}}.8h}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld1 { v{{[0-9]+}}.8h, v{{[0-9]+}}.8h, v{{[0-9]+}}.8h }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = bitcast i16* %a to i8*
   %2 = tail call { <8 x i16>, <8 x i16>, <8 x i16> } @llvm.aarch64.neon.vld1x3.v8i16(i8* %1, i32 2)
   %3 = extractvalue { <8 x i16>, <8 x i16>, <8 x i16> } %2, 0
@@ -244,7 +244,7 @@ define <8 x i16> @test_vld1x3_reg_update(i16* %a, i16** %ptr, i32 %inc) {
 
 define <4 x float> @test_vld1x4_fx_update(float* %a, float** %ptr) {
 ; CHECK: test_vld1x4_fx_update
-; CHECK: ld1 {v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s}, [x{{[0-9]+|sp}}], #64
+; CHECK: ld1 { v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s }, [x{{[0-9]+|sp}}], #64
   %1 = bitcast float* %a to i8*
   %2 = tail call { <4 x float>, <4 x float>, <4 x float>, <4 x float> } @llvm.aarch64.neon.vld1x4.v4f32(i8* %1, i32 4)
   %3 = extractvalue { <4 x float>, <4 x float>, <4 x float>, <4 x float> } %2, 0
@@ -255,7 +255,7 @@ define <4 x float> @test_vld1x4_fx_update(float* %a, float** %ptr) {
 
 define <8 x i8> @test_vld1x4_reg_update(i8* readonly %a, i8** %ptr, i32 %inc) #0 {
 ; CHECK: test_vld1x4_reg_update
-; CHECK: ld1 {v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: ld1 { v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b, v{{[0-9]+}}.8b }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = tail call { <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8> } @llvm.aarch64.neon.vld1x4.v8i8(i8* %a, i32 1)
   %2 = extractvalue { <8 x i8>, <8 x i8>, <8 x i8>, <8 x i8> } %1, 0
   %tmp1 = getelementptr i8* %a, i32 %inc
@@ -265,7 +265,7 @@ define <8 x i8> @test_vld1x4_reg_update(i8* readonly %a, i8** %ptr, i32 %inc) #0
 
 define void @test_vst1x2_fx_update(i8* %a, [2 x <16 x i8>] %b.coerce, i8** %ptr) #2 {
 ; CHECK: test_vst1x2_fx_update
-; CHECK: st1 {v{{[0-9]+}}.16b, v{{[0-9]+}}.16b}, [x{{[0-9]+|sp}}], #32
+; CHECK: st1 { v{{[0-9]+}}.16b, v{{[0-9]+}}.16b }, [x{{[0-9]+|sp}}], #32
   %1 = extractvalue [2 x <16 x i8>] %b.coerce, 0
   %2 = extractvalue [2 x <16 x i8>] %b.coerce, 1
   tail call void @llvm.aarch64.neon.vst1x2.v16i8(i8* %a, <16 x i8> %1, <16 x i8> %2, i32 1)
@@ -276,7 +276,7 @@ define void @test_vst1x2_fx_update(i8* %a, [2 x <16 x i8>] %b.coerce, i8** %ptr)
 
 define void @test_vst1x2_reg_update(i16* %a, [2 x <8 x i16>] %b.coerce, i16** %ptr, i32 %inc) #2 {
 ; CHECK: test_vst1x2_reg_update
-; CHECK: st1 {v{{[0-9]+}}.8h, v{{[0-9]+}}.8h}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: st1 { v{{[0-9]+}}.8h, v{{[0-9]+}}.8h }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = extractvalue [2 x <8 x i16>] %b.coerce, 0
   %2 = extractvalue [2 x <8 x i16>] %b.coerce, 1
   %3 = bitcast i16* %a to i8*
@@ -288,7 +288,7 @@ define void @test_vst1x2_reg_update(i16* %a, [2 x <8 x i16>] %b.coerce, i16** %p
 
 define void @test_vst1x3_fx_update(i32* %a, [3 x <2 x i32>] %b.coerce, i32** %ptr) #2 {
 ; CHECK: test_vst1x3_fx_update
-; CHECK: st1 {v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s}, [x{{[0-9]+|sp}}], #24
+; CHECK: st1 { v{{[0-9]+}}.2s, v{{[0-9]+}}.2s, v{{[0-9]+}}.2s }, [x{{[0-9]+|sp}}], #24
   %1 = extractvalue [3 x <2 x i32>] %b.coerce, 0
   %2 = extractvalue [3 x <2 x i32>] %b.coerce, 1
   %3 = extractvalue [3 x <2 x i32>] %b.coerce, 2
@@ -301,7 +301,7 @@ define void @test_vst1x3_fx_update(i32* %a, [3 x <2 x i32>] %b.coerce, i32** %pt
 
 define void @test_vst1x3_reg_update(i64* %a, [3 x <1 x i64>] %b.coerce, i64** %ptr, i32 %inc) #2 {
 ; CHECK: test_vst1x3_reg_update
-; CHECK: st1 {v{{[0-9]+}}.1d, v{{[0-9]+}}.1d, v{{[0-9]+}}.1d}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: st1 { v{{[0-9]+}}.1d, v{{[0-9]+}}.1d, v{{[0-9]+}}.1d }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = extractvalue [3 x <1 x i64>] %b.coerce, 0
   %2 = extractvalue [3 x <1 x i64>] %b.coerce, 1
   %3 = extractvalue [3 x <1 x i64>] %b.coerce, 2
@@ -314,7 +314,7 @@ define void @test_vst1x3_reg_update(i64* %a, [3 x <1 x i64>] %b.coerce, i64** %p
 
 define void @test_vst1x4_fx_update(float* %a, [4 x <4 x float>] %b.coerce, float** %ptr) #2 {
 ; CHECK: test_vst1x4_fx_update
-; CHECK: st1 {v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s}, [x{{[0-9]+|sp}}], #64
+; CHECK: st1 { v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s, v{{[0-9]+}}.4s }, [x{{[0-9]+|sp}}], #64
   %1 = extractvalue [4 x <4 x float>] %b.coerce, 0
   %2 = extractvalue [4 x <4 x float>] %b.coerce, 1
   %3 = extractvalue [4 x <4 x float>] %b.coerce, 2
@@ -328,7 +328,7 @@ define void @test_vst1x4_fx_update(float* %a, [4 x <4 x float>] %b.coerce, float
 
 define void @test_vst1x4_reg_update(double* %a, [4 x <2 x double>] %b.coerce, double** %ptr, i32 %inc) #2 {
 ; CHECK: test_vst1x4_reg_update
-; CHECK: st1 {v{{[0-9]+}}.2d, v{{[0-9]+}}.2d, v{{[0-9]+}}.2d, v{{[0-9]+}}.2d}, [x{{[0-9]+|sp}}], x{{[0-9]+}}
+; CHECK: st1 { v{{[0-9]+}}.2d, v{{[0-9]+}}.2d, v{{[0-9]+}}.2d, v{{[0-9]+}}.2d }, [x{{[0-9]+|sp}}], x{{[0-9]+}}
   %1 = extractvalue [4 x <2 x double>] %b.coerce, 0
   %2 = extractvalue [4 x <2 x double>] %b.coerce, 1
   %3 = extractvalue [4 x <2 x double>] %b.coerce, 2
