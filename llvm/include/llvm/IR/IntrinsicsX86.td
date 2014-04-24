@@ -18,6 +18,15 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 //===----------------------------------------------------------------------===//
+// Read Time Stamp Counter.
+let TargetPrefix = "x86" in {
+  def int_x86_rdtsc : GCCBuiltin<"__builtin_ia32_rdtsc">,
+              Intrinsic<[llvm_i64_ty], [], []>;
+  def int_x86_rdtscp : GCCBuiltin<"__builtin_ia32_rdtscp">,
+              Intrinsic<[llvm_i64_ty], [llvm_ptr_ty], [IntrReadWriteArgMem]>;
+}
+
+//===----------------------------------------------------------------------===//
 // 3DNow!
 
 let TargetPrefix = "x86" in {

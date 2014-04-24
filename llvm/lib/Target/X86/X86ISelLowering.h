@@ -83,6 +83,9 @@ namespace llvm {
       /// readcyclecounter
       RDTSC_DAG,
 
+      /// X86 Read Time-Stamp Counter and Processor ID.
+      RDTSCP_DAG,
+
       /// X86 compare and logical compare instructions.
       CMP, COMI, UCOMI,
 

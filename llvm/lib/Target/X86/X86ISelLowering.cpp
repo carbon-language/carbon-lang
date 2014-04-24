@@ -1472,6 +1472,8 @@ void X86TargetLowering::resetOperationActions() {
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_VOID, MVT::Other, Custom);
+  if (!Subtarget->is64Bit())
+    setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::i64, Custom);
 
   // Only custom-lower 64-bit SADDO and friends on 64-bit because we don't
   // handle type legalization for these operations here.
@@ -12261,6 +12263,71 @@ static SDValue getMScatterNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
   return SDValue(Res, 1);
 }
 
+// getReadTimeStampCounter - Handles the lowering of builtin intrinsics that
+// read the time stamp counter (x86_rdtsc and x86_rdtscp). This function is
+// also used to custom lower READCYCLECOUNTER nodes.
+static void getReadTimeStampCounter(SDNode *N, SDLoc DL, unsigned Opcode,
+                              SelectionDAG &DAG, const X86Subtarget *Subtarget,
+                              SmallVectorImpl<SDValue> &Results) {
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
+  SDValue TheChain = N->getOperand(0);
+  SDValue rd = DAG.getNode(Opcode, DL, Tys, &TheChain, 1);
+  SDValue LO, HI;
+
+  // The processor's time-stamp counter (a 64-bit MSR) is stored into the
+  // EDX:EAX registers. EDX is loaded with the high-order 32 bits of the MSR
+  // and the EAX register is loaded with the low-order 32 bits.
+  if (Subtarget->is64Bit()) {
+    LO = DAG.getCopyFromReg(rd, DL, X86::RAX, MVT::i64, rd.getValue(1));
+    HI = DAG.getCopyFromReg(LO.getValue(1), DL, X86::RDX, MVT::i64,
+                            LO.getValue(2));
+  } else {
+    LO = DAG.getCopyFromReg(rd, DL, X86::EAX, MVT::i32, rd.getValue(1));
+    HI = DAG.getCopyFromReg(LO.getValue(1), DL, X86::EDX, MVT::i32,
+                            LO.getValue(2));
+  }
+  SDValue Chain = HI.getValue(1);
+
+  if (Opcode == X86ISD::RDTSCP_DAG) {
+    assert(N->getNumOperands() == 3 && "Unexpected number of operands!");
+
+    // Instruction RDTSCP loads the IA32:TSC_AUX_MSR (address C000_0103H) into
+    // the ECX register. Add 'ecx' explicitly to the chain.
+    SDValue ecx = DAG.getCopyFromReg(Chain, DL, X86::ECX, MVT::i32,
+                                     HI.getValue(2));
+    // Explicitly store the content of ECX at the location passed in input
+    // to the 'rdtscp' intrinsic.
+    Chain = DAG.getStore(ecx.getValue(1), DL, ecx, N->getOperand(2),
+                         MachinePointerInfo(), false, false, 0);
+  }
+
+  if (Subtarget->is64Bit()) {
+    // The EDX register is loaded with the high-order 32 bits of the MSR, and
+    // the EAX register is loaded with the low-order 32 bits.
+    SDValue Tmp = DAG.getNode(ISD::SHL, DL, MVT::i64, HI,
+                              DAG.getConstant(32, MVT::i8));
+    Results.push_back(DAG.getNode(ISD::OR, DL, MVT::i64, LO, Tmp));
+    Results.push_back(Chain);
+    return;
+  }
+
+  // Use a buildpair to merge the two 32-bit values into a 64-bit one.
+  SDValue Ops[] = { LO, HI };
+  SDValue Pair = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, Ops,
+                             array_lengthof(Ops));
+  Results.push_back(Pair);
+  Results.push_back(Chain);
+}
+
+static SDValue LowerREADCYCLECOUNTER(SDValue Op, const X86Subtarget *Subtarget,
+                                     SelectionDAG &DAG) {
+  SmallVector<SDValue, 2> Results;
+  SDLoc DL(Op);
+  getReadTimeStampCounter(Op.getNode(), DL, X86ISD::RDTSC_DAG, DAG, Subtarget,
+                          Results);
+  return DAG.getMergeValues(&Results[0], Results.size(), DL);
+}
+
 static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                                       SelectionDAG &DAG) {
   SDLoc dl(Op);
@@ -12434,6 +12501,22 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     SDValue Src   = Op.getOperand(5);
     SDValue Scale = Op.getOperand(6);
     return getMScatterNode(Opc, Op, DAG, Src, Mask, Base, Index, Scale, Chain);
+  }
+  // Read Time Stamp Counter (RDTSC).
+  case Intrinsic::x86_rdtsc:
+  // Read Time Stamp Counter and Processor ID (RDTSCP).
+  case Intrinsic::x86_rdtscp: {
+    unsigned Opc;
+    switch (IntNo) {
+    default: llvm_unreachable("Impossible intrinsic"); // Can't reach here.
+    case Intrinsic::x86_rdtsc:
+      Opc = X86ISD::RDTSC_DAG; break;
+    case Intrinsic::x86_rdtscp:
+      Opc = X86ISD::RDTSCP_DAG; break;
+    }
+    SmallVector<SDValue, 2> Results;
+    getReadTimeStampCounter(Op.getNode(), dl, Opc, DAG, Subtarget, Results);
+    return DAG.getMergeValues(&Results[0], Results.size(), dl);
   }
   // XTEST intrinsics.
   case Intrinsic::x86_xtest: {
@@ -13805,25 +13888,6 @@ static SDValue LowerCMP_SWAP(SDValue Op, const X86Subtarget *Subtarget,
   return cpOut;
 }
 
-static SDValue LowerREADCYCLECOUNTER(SDValue Op, const X86Subtarget *Subtarget,
-                                     SelectionDAG &DAG) {
-  assert(Subtarget->is64Bit() && "Result not type legalized?");
-  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
-  SDValue TheChain = Op.getOperand(0);
-  SDLoc dl(Op);
-  SDValue rd = DAG.getNode(X86ISD::RDTSC_DAG, dl, Tys, &TheChain, 1);
-  SDValue rax = DAG.getCopyFromReg(rd, dl, X86::RAX, MVT::i64, rd.getValue(1));
-  SDValue rdx = DAG.getCopyFromReg(rax.getValue(1), dl, X86::RDX, MVT::i64,
-                                   rax.getValue(2));
-  SDValue Tmp = DAG.getNode(ISD::SHL, dl, MVT::i64, rdx,
-                            DAG.getConstant(32, MVT::i8));
-  SDValue Ops[] = {
-    DAG.getNode(ISD::OR, dl, MVT::i64, rax, Tmp),
-    rdx.getValue(1)
-  };
-  return DAG.getMergeValues(Ops, array_lengthof(Ops), dl);
-}
-
 static SDValue LowerBITCAST(SDValue Op, const X86Subtarget *Subtarget,
                             SelectionDAG &DAG) {
   MVT SrcVT = Op.getOperand(0).getSimpleValueType();
@@ -14158,20 +14222,22 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     Results.push_back(V);
     return;
   }
+  case ISD::INTRINSIC_W_CHAIN: {
+    unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+    switch (IntNo) {
+    default : llvm_unreachable("Do not know how to custom type "
+                               "legalize this intrinsic operation!");
+    case Intrinsic::x86_rdtsc:
+      return getReadTimeStampCounter(N, dl, X86ISD::RDTSC_DAG, DAG, Subtarget,
+                                     Results);
+    case Intrinsic::x86_rdtscp:
+      return getReadTimeStampCounter(N, dl, X86ISD::RDTSCP_DAG, DAG, Subtarget,
+                                     Results);
+    }
+  }
   case ISD::READCYCLECOUNTER: {
-    SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
-    SDValue TheChain = N->getOperand(0);
-    SDValue rd = DAG.getNode(X86ISD::RDTSC_DAG, dl, Tys, &TheChain, 1);
-    SDValue eax = DAG.getCopyFromReg(rd, dl, X86::EAX, MVT::i32,
-                                     rd.getValue(1));
-    SDValue edx = DAG.getCopyFromReg(eax.getValue(1), dl, X86::EDX, MVT::i32,
-                                     eax.getValue(2));
-    // Use a buildpair to merge the two 32-bit values into a 64-bit one.
-    SDValue Ops[] = { eax, edx };
-    Results.push_back(DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Ops,
-                                  array_lengthof(Ops)));
-    Results.push_back(edx.getValue(1));
-    return;
+    return getReadTimeStampCounter(N, dl, X86ISD::RDTSC_DAG, DAG, Subtarget,
+                                   Results);
   }
   case ISD::ATOMIC_CMP_SWAP: {
     EVT T = N->getValueType(0);
