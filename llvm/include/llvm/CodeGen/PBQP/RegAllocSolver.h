@@ -346,7 +346,7 @@ namespace PBQP {
 
     typedef Graph<RegAllocSolverImpl> Graph;
 
-    Solution solve(Graph& G) {
+    inline Solution solve(Graph& G) {
       if (G.empty())
         return Solution();
       RegAllocSolverImpl RegAllocSolver(G);
