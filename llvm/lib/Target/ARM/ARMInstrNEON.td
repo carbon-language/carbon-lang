@@ -39,6 +39,49 @@ def nImmVMOVI32 : Operand<i32> {
   let PrintMethod = "printNEONModImmOperand";
   let ParserMatchClass = nImmVMOVI32AsmOperand;
 }
+
+def nImmVMOVI16AsmOperandByteReplicate :
+  AsmOperandClass {
+  let Name = "NEONi16vmovByteReplicate";
+  let PredicateMethod = "isNEONi16ByteReplicate";
+  let RenderMethod = "addNEONvmovByteReplicateOperands";
+}
+def nImmVMOVI32AsmOperandByteReplicate :
+  AsmOperandClass {
+  let Name = "NEONi32vmovByteReplicate";
+  let PredicateMethod = "isNEONi32ByteReplicate";
+  let RenderMethod = "addNEONvmovByteReplicateOperands";
+}
+def nImmVMVNI16AsmOperandByteReplicate :
+  AsmOperandClass {
+  let Name = "NEONi16invByteReplicate";
+  let PredicateMethod = "isNEONi16ByteReplicate";
+  let RenderMethod = "addNEONinvByteReplicateOperands";
+}
+def nImmVMVNI32AsmOperandByteReplicate :
+  AsmOperandClass {
+  let Name = "NEONi32invByteReplicate";
+  let PredicateMethod = "isNEONi32ByteReplicate";
+  let RenderMethod = "addNEONinvByteReplicateOperands";
+}
+
+def nImmVMOVI16ByteReplicate : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
+  let ParserMatchClass = nImmVMOVI16AsmOperandByteReplicate;
+}
+def nImmVMOVI32ByteReplicate : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
+  let ParserMatchClass = nImmVMOVI32AsmOperandByteReplicate;
+}
+def nImmVMVNI16ByteReplicate : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
+  let ParserMatchClass = nImmVMVNI16AsmOperandByteReplicate;
+}
+def nImmVMVNI32ByteReplicate : Operand<i32> {
+  let PrintMethod = "printNEONModImmOperand";
+  let ParserMatchClass = nImmVMVNI32AsmOperandByteReplicate;
+}
+
 def nImmVMOVI32NegAsmOperand : AsmOperandClass { let Name = "NEONi32vmovNeg"; }
 def nImmVMOVI32Neg : Operand<i32> {
   let PrintMethod = "printNEONModImmOperand";
@@ -5301,6 +5344,35 @@ def VMOVv4f32 : N1ModImm<1, 0b000, 0b1111, 0, 1, 0, 1, (outs QPR:$Vd),
                          [(set QPR:$Vd, (v4f32 (NEONvmovFPImm timm:$SIMM)))]>;
 } // isReMaterializable
 
+// Add support for bytes replication feature, so it could be GAS compatible.
+// E.g. instructions below:
+// "vmov.i32 d0, 0xffffffff"
+// "vmov.i32 d0, 0xabababab"
+// "vmov.i16 d0, 0xabab"
+// are incorrect, but we could deal with such cases.
+// For last two instructions, for example, it should emit:
+// "vmov.i8 d0, 0xab"
+def : NEONInstAlias<"vmov${p}.i16 $Vd, $Vm",
+                    (VMOVv8i8 DPR:$Vd, nImmVMOVI16ByteReplicate:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmov${p}.i32 $Vd, $Vm",
+                    (VMOVv8i8 DPR:$Vd, nImmVMOVI32ByteReplicate:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmov${p}.i16 $Vd, $Vm",
+                    (VMOVv16i8 QPR:$Vd, nImmVMOVI16ByteReplicate:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmov${p}.i32 $Vd, $Vm",
+                    (VMOVv16i8 QPR:$Vd, nImmVMOVI32ByteReplicate:$Vm, pred:$p)>;
+
+// Also add same support for VMVN instructions. So instruction:
+// "vmvn.i32 d0, 0xabababab"
+// actually means:
+// "vmov.i8 d0, 0x54"
+def : NEONInstAlias<"vmvn${p}.i16 $Vd, $Vm",
+                    (VMOVv8i8 DPR:$Vd, nImmVMVNI16ByteReplicate:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmvn${p}.i32 $Vd, $Vm",
+                    (VMOVv8i8 DPR:$Vd, nImmVMVNI32ByteReplicate:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmvn${p}.i16 $Vd, $Vm",
+                    (VMOVv16i8 QPR:$Vd, nImmVMVNI16ByteReplicate:$Vm, pred:$p)>;
+def : NEONInstAlias<"vmvn${p}.i32 $Vd, $Vm",
+                    (VMOVv16i8 QPR:$Vd, nImmVMVNI32ByteReplicate:$Vm, pred:$p)>;
 
 // On some CPUs the two instructions "vmov.i32 dD, #0" and "vmov.i32 qD, #0"
 // require zero cycles to execute so they should be used wherever possible for
