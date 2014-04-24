@@ -29,7 +29,6 @@ class raw_ostream;
 class DWARFUnit {
   const DWARFDebugAbbrev *Abbrev;
   StringRef InfoSection;
-  StringRef AbbrevSection;
   StringRef RangeSection;
   uint32_t RangeSectionBase;
   StringRef StringSection;
@@ -62,10 +61,9 @@ protected:
   virtual bool extractImpl(DataExtractor debug_info, uint32_t *offset_ptr);
 
 public:
-
-  DWARFUnit(const DWARFDebugAbbrev *DA, StringRef IS, StringRef AS,
-            StringRef RS, StringRef SS, StringRef SOS, StringRef AOS,
-            const RelocAddrMap *M, bool LE);
+  DWARFUnit(const DWARFDebugAbbrev *DA, StringRef IS, StringRef RS,
+            StringRef SS, StringRef SOS, StringRef AOS, const RelocAddrMap *M,
+            bool LE);
 
   virtual ~DWARFUnit();
 

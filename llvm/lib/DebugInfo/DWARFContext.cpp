@@ -312,8 +312,8 @@ void DWARFContext::parseCompileUnits() {
                                               isLittleEndian(), 0);
   while (DIData.isValidOffset(offset)) {
     std::unique_ptr<DWARFCompileUnit> CU(new DWARFCompileUnit(
-        getDebugAbbrev(), getInfoSection().Data, getAbbrevSection(),
-        getRangeSection(), getStringSection(), StringRef(), getAddrSection(),
+        getDebugAbbrev(), getInfoSection().Data, getRangeSection(),
+        getStringSection(), StringRef(), getAddrSection(),
         &getInfoSection().Relocs, isLittleEndian()));
     if (!CU->extract(DIData, &offset)) {
       break;
@@ -331,10 +331,10 @@ void DWARFContext::parseTypeUnits() {
     const DataExtractor &DIData =
         DataExtractor(I.second.Data, isLittleEndian(), 0);
     while (DIData.isValidOffset(offset)) {
-      std::unique_ptr<DWARFTypeUnit> TU(new DWARFTypeUnit(
-          getDebugAbbrev(), I.second.Data, getAbbrevSection(),
-          getRangeSection(), getStringSection(), StringRef(), getAddrSection(),
-          &I.second.Relocs, isLittleEndian()));
+      std::unique_ptr<DWARFTypeUnit> TU(
+          new DWARFTypeUnit(getDebugAbbrev(), I.second.Data, getRangeSection(),
+                            getStringSection(), StringRef(), getAddrSection(),
+                            &I.second.Relocs, isLittleEndian()));
       if (!TU->extract(DIData, &offset))
         break;
       TUs.push_back(std::move(TU));
@@ -351,9 +351,8 @@ void DWARFContext::parseDWOCompileUnits() {
       DataExtractor(getInfoDWOSection().Data, isLittleEndian(), 0);
   while (DIData.isValidOffset(offset)) {
     std::unique_ptr<DWARFCompileUnit> DWOCU(new DWARFCompileUnit(
-        getDebugAbbrevDWO(), getInfoDWOSection().Data, getAbbrevDWOSection(),
-        getRangeDWOSection(), getStringDWOSection(),
-        getStringOffsetDWOSection(), getAddrSection(),
+        getDebugAbbrevDWO(), getInfoDWOSection().Data, getRangeDWOSection(),
+        getStringDWOSection(), getStringOffsetDWOSection(), getAddrSection(),
         &getInfoDWOSection().Relocs, isLittleEndian()));
     if (!DWOCU->extract(DIData, &offset)) {
       break;
@@ -372,10 +371,9 @@ void DWARFContext::parseDWOTypeUnits() {
         DataExtractor(I.second.Data, isLittleEndian(), 0);
     while (DIData.isValidOffset(offset)) {
       std::unique_ptr<DWARFTypeUnit> TU(new DWARFTypeUnit(
-          getDebugAbbrevDWO(), I.second.Data, getAbbrevDWOSection(),
-          getRangeDWOSection(), getStringDWOSection(),
-          getStringOffsetDWOSection(), getAddrSection(), &I.second.Relocs,
-          isLittleEndian()));
+          getDebugAbbrevDWO(), I.second.Data, getRangeDWOSection(),
+          getStringDWOSection(), getStringOffsetDWOSection(), getAddrSection(),
+          &I.second.Relocs, isLittleEndian()));
       if (!TU->extract(DIData, &offset))
         break;
       DWOTUs.push_back(std::move(TU));

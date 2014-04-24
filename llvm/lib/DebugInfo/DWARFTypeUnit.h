@@ -19,10 +19,10 @@ private:
   uint64_t TypeHash;
   uint32_t TypeOffset;
 public:
-  DWARFTypeUnit(const DWARFDebugAbbrev *DA, StringRef IS, StringRef AS,
-                StringRef RS, StringRef SS, StringRef SOS, StringRef AOS,
+  DWARFTypeUnit(const DWARFDebugAbbrev *DA, StringRef IS, StringRef RS,
+                StringRef SS, StringRef SOS, StringRef AOS,
                 const RelocAddrMap *M, bool LE)
-      : DWARFUnit(DA, IS, AS, RS, SS, SOS, AOS, M, LE) {}
+      : DWARFUnit(DA, IS, RS, SS, SOS, AOS, M, LE) {}
   uint32_t getSize() const override { return DWARFUnit::getSize() + 12; }
   void dump(raw_ostream &OS);
 protected:

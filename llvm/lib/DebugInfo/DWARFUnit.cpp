@@ -17,12 +17,12 @@
 using namespace llvm;
 using namespace dwarf;
 
-DWARFUnit::DWARFUnit(const DWARFDebugAbbrev *DA, StringRef IS, StringRef AS,
-                     StringRef RS, StringRef SS, StringRef SOS, StringRef AOS,
+DWARFUnit::DWARFUnit(const DWARFDebugAbbrev *DA, StringRef IS, StringRef RS,
+                     StringRef SS, StringRef SOS, StringRef AOS,
                      const RelocAddrMap *M, bool LE)
-    : Abbrev(DA), InfoSection(IS), AbbrevSection(AS), RangeSection(RS),
-      StringSection(SS), StringOffsetSection(SOS), AddrOffsetSection(AOS),
-      RelocMap(M), isLittleEndian(LE) {
+    : Abbrev(DA), InfoSection(IS), RangeSection(RS), StringSection(SS),
+      StringOffsetSection(SOS), AddrOffsetSection(AOS), RelocMap(M),
+      isLittleEndian(LE) {
   clear();
 }
 
@@ -54,18 +54,20 @@ bool DWARFUnit::getStringOffsetSectionItem(uint32_t Index,
 bool DWARFUnit::extractImpl(DataExtractor debug_info, uint32_t *offset_ptr) {
   Length = debug_info.getU32(offset_ptr);
   Version = debug_info.getU16(offset_ptr);
-  uint64_t abbrOffset = debug_info.getU32(offset_ptr);
+  uint64_t AbbrOffset = debug_info.getU32(offset_ptr);
   AddrSize = debug_info.getU8(offset_ptr);
 
-  bool lengthOK = debug_info.isValidOffset(getNextUnitOffset() - 1);
-  bool versionOK = DWARFContext::isSupportedVersion(Version);
-  bool abbrOffsetOK = AbbrevSection.size() > abbrOffset;
-  bool addrSizeOK = AddrSize == 4 || AddrSize == 8;
+  bool LengthOK = debug_info.isValidOffset(getNextUnitOffset() - 1);
+  bool VersionOK = DWARFContext::isSupportedVersion(Version);
+  bool AddrSizeOK = AddrSize == 4 || AddrSize == 8;
 
-  if (!lengthOK || !versionOK || !addrSizeOK || !abbrOffsetOK)
+  if (!LengthOK || !VersionOK || !AddrSizeOK)
     return false;
 
-  Abbrevs = Abbrev->getAbbreviationDeclarationSet(abbrOffset);
+  Abbrevs = Abbrev->getAbbreviationDeclarationSet(AbbrOffset);
+  if (Abbrevs == nullptr)
+    return false;
+
   return true;
 }
 
