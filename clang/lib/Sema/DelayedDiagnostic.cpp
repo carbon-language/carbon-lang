@@ -52,12 +52,13 @@ DelayedDiagnostic::makeAvailability(Sema::AvailabilityDiagnostic AD,
 }
 
 void DelayedDiagnostic::Destroy() {
-  switch (Kind) {
+  switch (static_cast<DDKind>(Kind)) {
   case Access: 
     getAccessData().~AccessedEntity(); 
     break;
 
-  case Deprecation: 
+  case Deprecation:
+  case Unavailable:
     delete [] DeprecationData.Message;
     break;
 
