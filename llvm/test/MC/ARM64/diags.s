@@ -8,7 +8,7 @@ foo:
   ldr x3, (foo + 4)
   ldr x3, [foo + 4]
 ; CHECK:  ldr x3, foo+4               ; encoding: [0bAAA00011,A,A,0x58]
-; CHECK:                              ;   fixup A - offset: 0, value: foo+4, kind: fixup_arm64_pcrel_imm19
+; CHECK:                              ;   fixup A - offset: 0, value: foo+4, kind: fixup_arm64_ldr_pcrel_imm19
 ; CHECK-ERRORS: error: register expected
 
 ; The last argument should be flagged as an error.  rdar://9576009

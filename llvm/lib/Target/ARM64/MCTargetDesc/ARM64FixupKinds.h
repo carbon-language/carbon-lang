@@ -36,6 +36,11 @@ enum Fixups {
   fixup_arm64_ldst_imm12_scale8,
   fixup_arm64_ldst_imm12_scale16,
 
+  // fixup_arm64_ldr_pcrel_imm19 - The high 19 bits of a 21-bit pc-relative
+  // immediate. Same encoding as fixup_arm64_pcrel_adrhi, except this is used by
+  // pc-relative loads and generates relocations directly when necessary.
+  fixup_arm64_ldr_pcrel_imm19,
+
   // FIXME: comment
   fixup_arm64_movw,
 
@@ -43,11 +48,10 @@ enum Fixups {
   // immediate.
   fixup_arm64_pcrel_branch14,
 
-  // fixup_arm64_pcrel_imm19 - The high 19 bits of a 21-bit pc-relative
-  // immediate. Same encoding as fixup_arm64_pcrel_adrhi, except this
-  // is not used as part of a lo/hi pair and thus generates relocations
-  // directly when necessary.
-  fixup_arm64_pcrel_imm19,
+  // fixup_arm64_pcrel_branch19 - The high 19 bits of a 21-bit pc-relative
+  // immediate. Same encoding as fixup_arm64_pcrel_adrhi, except this is use by
+  // b.cc and generates relocations directly when necessary.
+  fixup_arm64_pcrel_branch19,
 
   // fixup_arm64_pcrel_branch26 - The high 26 bits of a 28-bit pc-relative
   // immediate.

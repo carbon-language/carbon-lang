@@ -558,7 +558,7 @@ public:
       return false;
     return (Val >= -(0x2000000 << 2) && Val <= (0x1ffffff << 2));
   }
-  bool isBranchTarget19() const {
+  bool isPCRelLabel19() const {
     if (!isImm())
       return false;
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
@@ -1272,7 +1272,7 @@ public:
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue() >> 2));
   }
 
-  void addBranchTarget19Operands(MCInst &Inst, unsigned N) const {
+  void addPCRelLabel19Operands(MCInst &Inst, unsigned N) const {
     // Branch operands don't encode the low bits, so shift them off
     // here. If it's a label, however, just put it on directly as there's
     // not enough information now to do anything.

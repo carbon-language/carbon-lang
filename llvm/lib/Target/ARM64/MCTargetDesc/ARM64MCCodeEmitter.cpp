@@ -83,6 +83,12 @@ public:
                                       SmallVectorImpl<MCFixup> &Fixups,
                                       const MCSubtargetInfo &STI) const;
 
+  /// getLoadLiteralOpValue - Return the encoded value for a load-literal
+  /// pc-relative address.
+  uint32_t getLoadLiteralOpValue(const MCInst &MI, unsigned OpIdx,
+                                 SmallVectorImpl<MCFixup> &Fixups,
+                                 const MCSubtargetInfo &STI) const;
+
   /// getTestBranchTargetOpValue - Return the encoded value for a test-bit-and-
   /// branch target.
   uint32_t getTestBranchTargetOpValue(const MCInst &MI, unsigned OpIdx,
@@ -305,7 +311,29 @@ uint32_t ARM64MCCodeEmitter::getCondBranchTargetOpValue(
     return MO.getImm();
   assert(MO.isExpr() && "Unexpected target type!");
 
-  MCFixupKind Kind = MCFixupKind(ARM64::fixup_arm64_pcrel_imm19);
+  MCFixupKind Kind = MCFixupKind(ARM64::fixup_arm64_pcrel_branch19);
+  Fixups.push_back(MCFixup::Create(0, MO.getExpr(), Kind, MI.getLoc()));
+
+  ++MCNumFixups;
+
+  // All of the information is in the fixup.
+  return 0;
+}
+
+/// getLoadLiteralOpValue - Return the encoded value for a load-literal
+/// pc-relative address.
+uint32_t
+ARM64MCCodeEmitter::getLoadLiteralOpValue(const MCInst &MI, unsigned OpIdx,
+                                          SmallVectorImpl<MCFixup> &Fixups,
+                                          const MCSubtargetInfo &STI) const {
+  const MCOperand &MO = MI.getOperand(OpIdx);
+
+  // If the destination is an immediate, we have nothing to do.
+  if (MO.isImm())
+    return MO.getImm();
+  assert(MO.isExpr() && "Unexpected target type!");
+
+  MCFixupKind Kind = MCFixupKind(ARM64::fixup_arm64_ldr_pcrel_imm19);
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(), Kind, MI.getLoc()));
 
   ++MCNumFixups;

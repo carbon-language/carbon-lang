@@ -136,14 +136,13 @@ void ARM64MachObjectWriter::RecordRelocation(
   // ADRP fixups use relocations for the whole symbol value and only
   // put the addend in the instruction itself. Clear out any value the
   // generic code figured out from the sybmol definition.
-  if (Kind == ARM64::fixup_arm64_pcrel_adrp_imm21 ||
-      Kind == ARM64::fixup_arm64_pcrel_imm19)
+  if (Kind == ARM64::fixup_arm64_pcrel_adrp_imm21)
     FixedValue = 0;
 
   // imm19 relocations are for conditional branches, which require
   // assembler local symbols. If we got here, that's not what we have,
   // so complain loudly.
-  if (Kind == ARM64::fixup_arm64_pcrel_imm19) {
+  if (Kind == ARM64::fixup_arm64_pcrel_branch19) {
     Asm.getContext().FatalError(Fixup.getLoc(),
                                 "conditional branch requires assembler-local"
                                 " label. '" +

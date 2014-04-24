@@ -87,9 +87,8 @@ static DecodeStatus DecodeFixedPointScaleImm32(llvm::MCInst &Inst, unsigned Imm,
 static DecodeStatus DecodeFixedPointScaleImm64(llvm::MCInst &Inst, unsigned Imm,
                                                uint64_t Address,
                                                const void *Decoder);
-static DecodeStatus DecodeCondBranchTarget(llvm::MCInst &Inst, unsigned Imm,
-                                           uint64_t Address,
-                                           const void *Decoder);
+static DecodeStatus DecodePCRelLabel19(llvm::MCInst &Inst, unsigned Imm,
+                                       uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeMRSSystemRegister(llvm::MCInst &Inst, unsigned Imm,
                                             uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeMSRSystemRegister(llvm::MCInst &Inst, unsigned Imm,
@@ -582,8 +581,8 @@ static DecodeStatus DecodeFixedPointScaleImm64(llvm::MCInst &Inst, unsigned Imm,
   return Success;
 }
 
-static DecodeStatus DecodeCondBranchTarget(llvm::MCInst &Inst, unsigned Imm,
-                                           uint64_t Addr, const void *Decoder) {
+static DecodeStatus DecodePCRelLabel19(llvm::MCInst &Inst, unsigned Imm,
+                                       uint64_t Addr, const void *Decoder) {
   int64_t ImmVal = Imm;
   const ARM64Disassembler *Dis =
       static_cast<const ARM64Disassembler *>(Decoder);

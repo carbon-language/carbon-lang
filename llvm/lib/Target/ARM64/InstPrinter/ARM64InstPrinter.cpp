@@ -1422,9 +1422,8 @@ void ARM64InstPrinter::printVectorIndex(const MCInst *MI, unsigned OpNum,
   O << "[" << MI->getOperand(OpNum).getImm() << "]";
 }
 
-void ARM64InstPrinter::printAlignedBranchTarget(const MCInst *MI,
-                                                unsigned OpNum,
-                                                raw_ostream &O) {
+void ARM64InstPrinter::printAlignedLabel(const MCInst *MI, unsigned OpNum,
+                                         raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNum);
 
   // If the label has already been resolved to an immediate offset (say, when

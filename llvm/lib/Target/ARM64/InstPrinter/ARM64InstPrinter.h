@@ -69,8 +69,7 @@ protected:
   void printExtend(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printCondCode(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printDotCondCode(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printAlignedBranchTarget(const MCInst *MI, unsigned OpNum,
-                                raw_ostream &O);
+  void printAlignedLabel(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printAMIndexed(const MCInst *MI, unsigned OpNum, unsigned Scale,
                       raw_ostream &O);
   void printAMIndexedWB(const MCInst *MI, unsigned OpNum, unsigned Scale,

@@ -858,14 +858,14 @@ def dotCcode : Operand<i32> {
 
 // Conditional branch target. 19-bit immediate. The low two bits of the target
 // offset are implied zero and so are not part of the immediate.
-def BranchTarget19Operand : AsmOperandClass {
-  let Name = "BranchTarget19";
+def PCRelLabel19Operand : AsmOperandClass {
+  let Name = "PCRelLabel19";
 }
 def am_brcond : Operand<OtherVT> {
   let EncoderMethod = "getCondBranchTargetOpValue";
-  let DecoderMethod = "DecodeCondBranchTarget";
-  let PrintMethod = "printAlignedBranchTarget";
-  let ParserMatchClass = BranchTarget19Operand;
+  let DecoderMethod = "DecodePCRelLabel19";
+  let PrintMethod = "printAlignedLabel";
+  let ParserMatchClass = PCRelLabel19Operand;
 }
 
 class BranchCond : I<(outs), (ins dotCcode:$cond, am_brcond:$target),
@@ -922,7 +922,7 @@ def BranchTarget14Operand : AsmOperandClass {
 }
 def am_tbrcond : Operand<OtherVT> {
   let EncoderMethod = "getTestBranchTargetOpValue";
-  let PrintMethod = "printAlignedBranchTarget";
+  let PrintMethod = "printAlignedLabel";
   let ParserMatchClass = BranchTarget14Operand;
 }
 
@@ -956,12 +956,12 @@ def BranchTarget26Operand : AsmOperandClass {
 }
 def am_b_target : Operand<OtherVT> {
   let EncoderMethod = "getBranchTargetOpValue";
-  let PrintMethod = "printAlignedBranchTarget";
+  let PrintMethod = "printAlignedLabel";
   let ParserMatchClass = BranchTarget26Operand;
 }
 def am_bl_target : Operand<i64> {
   let EncoderMethod = "getBranchTargetOpValue";
-  let PrintMethod = "printAlignedBranchTarget";
+  let PrintMethod = "printAlignedLabel";
   let ParserMatchClass = BranchTarget26Operand;
 }
 
@@ -2128,9 +2128,18 @@ class PrefetchUI<bits<2> sz, bit V, bits<2> opc, string asm, list<dag> pat>
 // Load literal
 //---
 
+// Load literal address: 19-bit immediate. The low two bits of the target
+// offset are implied zero and so are not part of the immediate.
+def am_ldrlit : Operand<OtherVT> {
+  let EncoderMethod = "getLoadLiteralOpValue";
+  let DecoderMethod = "DecodePCRelLabel19";
+  let PrintMethod = "printAlignedLabel";
+  let ParserMatchClass = PCRelLabel19Operand;
+}
+
 let mayLoad = 1, mayStore = 0, hasSideEffects = 0 in
 class LoadLiteral<bits<2> opc, bit V, RegisterClass regtype, string asm>
-    : I<(outs regtype:$Rt), (ins am_brcond:$label),
+    : I<(outs regtype:$Rt), (ins am_ldrlit:$label),
         asm, "\t$Rt, $label", "", []>,
       Sched<[WriteLD]> {
   bits<5> Rt;
@@ -2145,7 +2154,7 @@ class LoadLiteral<bits<2> opc, bit V, RegisterClass regtype, string asm>
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 1 in
 class PrefetchLiteral<bits<2> opc, bit V, string asm, list<dag> pat>
-    : I<(outs), (ins prfop:$Rt, am_brcond:$label),
+    : I<(outs), (ins prfop:$Rt, am_ldrlit:$label),
         asm, "\t$Rt, $label", "", pat>,
       Sched<[WriteLD]> {
   bits<5> Rt;
