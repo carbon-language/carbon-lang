@@ -82,9 +82,13 @@ __writeeflags(unsigned int __f)
 /* __rdtsc */
 static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
 __rdtsc(void) {
-  unsigned int __eax, __edx;
-  __asm__ ("rdtsc" : "=a" (__eax), "=d" (__edx));
-  return ((unsigned long long)__edx << 32) | __eax;
+  return __builtin_ia32_rdtsc();
+}
+
+/* __rdtscp */
+static __inline__ unsigned long long __attribute__((__always_inline__, __nodebug__))
+__rdtscp(unsigned int *__A) {
+  return __builtin_ia32_rdtscp(__A);
 }
 
 #define _rdtsc() __rdtsc()

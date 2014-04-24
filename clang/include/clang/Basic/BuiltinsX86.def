@@ -760,5 +760,7 @@ BUILTIN(__builtin_ia32_xbegin, "i", "")
 BUILTIN(__builtin_ia32_xend, "v", "")
 BUILTIN(__builtin_ia32_xabort, "vIc", "")
 BUILTIN(__builtin_ia32_xtest, "i", "")
+BUILTIN(__builtin_ia32_rdtsc, "ULLi", "")
+BUILTIN(__builtin_ia32_rdtscp, "ULLiUi*", "")
 
 #undef BUILTIN
