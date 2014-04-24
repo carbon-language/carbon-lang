@@ -206,7 +206,9 @@ TEST(newFrontendActionFactory, InjectsSourceFileCallbacks) {
   Tool.mapVirtualFile("/a.cc", "void a() {}");
   Tool.mapVirtualFile("/b.cc", "void b() {}");
 
-  Tool.run(newFrontendActionFactory(&EndCallback, &EndCallback));
+  std::unique_ptr<FrontendActionFactory> Action(
+      newFrontendActionFactory(&EndCallback, &EndCallback));
+  Tool.run(Action.get());
 
   EXPECT_TRUE(EndCallback.Matched);
   EXPECT_EQ(2u, EndCallback.BeginCalled);
@@ -277,10 +279,13 @@ TEST(ClangToolTest, ArgumentAdjusters) {
   ClangTool Tool(Compilations, std::vector<std::string>(1, "/a.cc"));
   Tool.mapVirtualFile("/a.cc", "void a() {}");
 
+  std::unique_ptr<FrontendActionFactory> Action(
+      newFrontendActionFactory<SyntaxOnlyAction>());
+
   bool Found = false;
   bool Ran = false;
   Tool.appendArgumentsAdjuster(new CheckSyntaxOnlyAdjuster(Found, Ran));
-  Tool.run(newFrontendActionFactory<SyntaxOnlyAction>());
+  Tool.run(Action.get());
   EXPECT_TRUE(Ran);
   EXPECT_TRUE(Found);
 
@@ -288,7 +293,7 @@ TEST(ClangToolTest, ArgumentAdjusters) {
   Tool.clearArgumentsAdjusters();
   Tool.appendArgumentsAdjuster(new CheckSyntaxOnlyAdjuster(Found, Ran));
   Tool.appendArgumentsAdjuster(new ClangSyntaxOnlyAdjuster());
-  Tool.run(newFrontendActionFactory<SyntaxOnlyAction>());
+  Tool.run(Action.get());
   EXPECT_TRUE(Ran);
   EXPECT_FALSE(Found);
 }
@@ -327,7 +332,9 @@ TEST(ClangToolTest, InjectDiagnosticConsumer) {
   Tool.mapVirtualFile("/a.cc", "int x = undeclared;");
   TestDiagnosticConsumer Consumer;
   Tool.setDiagnosticConsumer(&Consumer);
-  Tool.run(newFrontendActionFactory<SyntaxOnlyAction>());
+  std::unique_ptr<FrontendActionFactory> Action(
+      newFrontendActionFactory<SyntaxOnlyAction>());
+  Tool.run(Action.get());
   EXPECT_EQ(1u, Consumer.NumDiagnosticsSeen);
 }
 
