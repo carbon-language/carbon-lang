@@ -3274,6 +3274,8 @@ static bool rebucketPaths(VPtrInfoVector &Paths) {
 }
 
 MicrosoftVTableContext::~MicrosoftVTableContext() {
+  for (auto &P : VFPtrLocations) 
+    llvm::DeleteContainerPointers(*P.second);
   llvm::DeleteContainerSeconds(VFPtrLocations);
   llvm::DeleteContainerSeconds(VFTableLayouts);
   llvm::DeleteContainerSeconds(VBaseInfo);
