@@ -163,10 +163,9 @@ public:
 /// \code
 ///   typedef pointee_iterator<SmallVectorImpl<T *>::iterator> iterator;
 /// \endcode
-template <
-    typename WrappedIteratorT,
-    typename T = typename std::remove_pointer<
-        typename std::iterator_traits<WrappedIteratorT>::value_type>::type>
+template <typename WrappedIteratorT,
+          typename T = typename std::remove_reference<
+              decltype(**std::declval<WrappedIteratorT>())>::type>
 struct pointee_iterator
     : iterator_adaptor_base<pointee_iterator<WrappedIteratorT>,
                             WrappedIteratorT, T> {
