@@ -455,6 +455,7 @@ public:
   }
 
   Sema *takeSema() { return TheSema.release(); }
+  void resetAndLeakSema() { BuryPointer(TheSema.release()); }
 
   /// }
   /// @name Module Management

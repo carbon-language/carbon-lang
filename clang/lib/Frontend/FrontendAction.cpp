@@ -415,7 +415,7 @@ void FrontendAction::EndSourceFile() {
   if (CI.getFrontendOpts().DisableFree) {
     BuryPointer(CI.takeASTConsumer());
     if (!isCurrentFileAST()) {
-      BuryPointer(CI.takeSema());
+      CI.resetAndLeakSema();
       CI.resetAndLeakASTContext();
     }
   } else {
@@ -444,7 +444,7 @@ void FrontendAction::EndSourceFile() {
   CI.clearOutputFiles(/*EraseFiles=*/shouldEraseOutputFiles());
 
   if (isCurrentFileAST()) {
-    CI.takeSema();
+    CI.resetAndLeakSema();
     CI.resetAndLeakASTContext();
     CI.resetAndLeakPreprocessor();
     CI.resetAndLeakSourceManager();
