@@ -13,6 +13,7 @@
 // RUN: %clangxx_asan -O3 %s -DTHREAD -DSAVE_ALL_THE_REGISTERS -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O0 %s -DTHREAD -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O3 %s -DTHREAD -lpthread -o %t && ASAN_OPTIONS=use_sigaltstack=1 not %t 2>&1 | FileCheck %s
+// RUN: not %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <stdlib.h>

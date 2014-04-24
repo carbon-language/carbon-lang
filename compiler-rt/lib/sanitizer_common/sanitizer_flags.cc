@@ -48,7 +48,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   // TODO(glider): tools may want to set different defaults for handle_segv.
   f->handle_segv = SANITIZER_NEEDS_SEGV;
   f->allow_user_segv_handler = false;
-  f->use_sigaltstack = false;
+  f->use_sigaltstack = true;
   f->detect_deadlocks = false;
   f->clear_shadow_mmap_threshold = 64 * 1024;
   f->color = "auto";
