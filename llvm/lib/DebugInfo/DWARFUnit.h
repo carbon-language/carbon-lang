@@ -59,6 +59,8 @@ class DWARFUnit {
 
 protected:
   virtual bool extractImpl(DataExtractor debug_info, uint32_t *offset_ptr);
+  /// Size in bytes of the unit header.
+  virtual uint32_t getHeaderSize() const { return 11; }
 
 public:
   DWARFUnit(const DWARFDebugAbbrev *DA, StringRef IS, StringRef RS,
@@ -100,12 +102,7 @@ public:
                         DWARFDebugRangeList &RangeList) const;
   void clear();
   uint32_t getOffset() const { return Offset; }
-  /// Size in bytes of the compile unit header.
-  virtual uint32_t getSize() const { return 11; }
-  uint32_t getFirstDIEOffset() const { return Offset + getSize(); }
   uint32_t getNextUnitOffset() const { return Offset + Length + 4; }
-  /// Size in bytes of the .debug_info data associated with this compile unit.
-  size_t getDebugInfoSize() const { return Length + 4 - getSize(); }
   uint32_t getLength() const { return Length; }
   uint16_t getVersion() const { return Version; }
   const DWARFAbbreviationDeclarationSet *getAbbreviations() const {
@@ -135,6 +132,9 @@ public:
   DWARFDebugInfoEntryInlinedChain getInlinedChainForAddress(uint64_t Address);
 
 private:
+  /// Size in bytes of the .debug_info data associated with this compile unit.
+  size_t getDebugInfoSize() const { return Length + 4 - getHeaderSize(); }
+
   /// extractDIEsIfNeeded - Parses a compile unit and indexes its DIEs if it
   /// hasn't already been done. Returns the number of DIEs parsed at this call.
   size_t extractDIEsIfNeeded(bool CUDieOnly);

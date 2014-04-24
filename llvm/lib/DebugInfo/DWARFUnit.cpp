@@ -168,13 +168,13 @@ void DWARFUnit::extractDIEsToVector(
 
   // Set the offset to that of the first DIE and calculate the start of the
   // next compilation unit header.
-  uint32_t Offset = getFirstDIEOffset();
+  uint32_t DIEOffset = Offset + getHeaderSize();
   uint32_t NextCUOffset = getNextUnitOffset();
   DWARFDebugInfoEntryMinimal DIE;
   uint32_t Depth = 0;
   bool IsCUDie = true;
 
-  while (Offset < NextCUOffset && DIE.extractFast(this, &Offset)) {
+  while (DIEOffset < NextCUOffset && DIE.extractFast(this, &DIEOffset)) {
     if (IsCUDie) {
       if (AppendCUDie)
         Dies.push_back(DIE);
@@ -207,9 +207,9 @@ void DWARFUnit::extractDIEsToVector(
   // Give a little bit of info if we encounter corrupt DWARF (our offset
   // should always terminate at or before the start of the next compilation
   // unit header).
-  if (Offset > NextCUOffset)
+  if (DIEOffset > NextCUOffset)
     fprintf(stderr, "warning: DWARF compile unit extends beyond its "
-                    "bounds cu 0x%8.8x at 0x%8.8x'\n", getOffset(), Offset);
+                    "bounds cu 0x%8.8x at 0x%8.8x'\n", getOffset(), DIEOffset);
 }
 
 size_t DWARFUnit::extractDIEsIfNeeded(bool CUDieOnly) {
