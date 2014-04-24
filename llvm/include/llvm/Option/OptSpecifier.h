@@ -10,6 +10,8 @@
 #ifndef LLVM_OPTION_OPTSPECIFIER_H
 #define LLVM_OPTION_OPTSPECIFIER_H
 
+#include "llvm/Support/Compiler.h"
+
 namespace llvm {
 namespace opt {
   class Option;
