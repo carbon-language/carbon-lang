@@ -329,7 +329,7 @@ TEST(LazyCallGraphTest, InterSCCEdgeRemoval) {
 
   EXPECT_EQ("b", A.begin()->getFunction().getName());
   EXPECT_EQ(B.end(), B.begin());
-  EXPECT_EQ(&AC, *BC.parent_begin());
+  EXPECT_EQ(&AC, &*BC.parent_begin());
 
   CG.removeEdge(A, lookupFunction(*M, "b"));
 

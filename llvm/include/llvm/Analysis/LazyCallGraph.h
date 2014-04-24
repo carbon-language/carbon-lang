@@ -41,6 +41,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Function.h"
@@ -228,7 +229,7 @@ public:
 
   public:
     typedef SmallVectorImpl<Node *>::const_iterator iterator;
-    typedef SmallSetVector<SCC *, 1>::const_iterator parent_iterator;
+    typedef pointee_iterator<SmallSetVector<SCC *, 1>::const_iterator> parent_iterator;
 
     iterator begin() const { return Nodes.begin(); }
     iterator end() const { return Nodes.end(); }
