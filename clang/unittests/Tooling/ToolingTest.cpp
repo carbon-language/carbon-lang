@@ -348,6 +348,7 @@ TEST(ClangToolTest, InjectDiagnosticConsumerInBuildASTs) {
   Tool.buildASTs(ASTs);
   EXPECT_EQ(1u, ASTs.size());
   EXPECT_EQ(1u, Consumer.NumDiagnosticsSeen);
+  llvm::DeleteContainerPointers(ASTs);
 }
 #endif
 
