@@ -1019,6 +1019,12 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   return true;
 }
 
+/// Determine whether this alloca is either a VLA or an array.
+static bool isArray(AllocaInst *AI) {
+  return AI->isArrayAllocation() ||
+    AI->getType()->getElementType()->isArrayTy();
+}
+
 /// LowerDbgDeclare - Lowers llvm.dbg.declare intrinsics into appropriate set
 /// of llvm.dbg.value intrinsics.
 bool llvm::LowerDbgDeclare(Function &F) {
@@ -1041,7 +1047,7 @@ bool llvm::LowerDbgDeclare(Function &F) {
     // stored on the stack, while the dbg.declare can only describe
     // the stack slot (and at a lexical-scope granularity). Later
     // passes will attempt to elide the stack slot.
-    if (AI && !AI->isArrayAllocation()) {
+    if (AI && !isArray(AI)) {
       for (User *U : AI->users())
         if (StoreInst *SI = dyn_cast<StoreInst>(U))
           ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
