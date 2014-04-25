@@ -218,7 +218,7 @@ const DWARFDebugAbbrev *DWARFContext::getDebugAbbrev() {
   DataExtractor abbrData(getAbbrevSection(), isLittleEndian(), 0);
 
   Abbrev.reset(new DWARFDebugAbbrev());
-  Abbrev->parse(abbrData);
+  Abbrev->extract(abbrData);
   return Abbrev.get();
 }
 
@@ -228,7 +228,7 @@ const DWARFDebugAbbrev *DWARFContext::getDebugAbbrevDWO() {
 
   DataExtractor abbrData(getAbbrevDWOSection(), isLittleEndian(), 0);
   AbbrevDWO.reset(new DWARFDebugAbbrev());
-  AbbrevDWO->parse(abbrData);
+  AbbrevDWO->extract(abbrData);
   return AbbrevDWO.get();
 }
 
