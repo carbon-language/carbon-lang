@@ -268,10 +268,6 @@ public:
   /// kept in DwarfDebug.
   void insertDIE(DIDescriptor Desc, DIE *D);
 
-  /// addDie - Adds or interns the DIE to the compile unit.
-  ///
-  void addDie(DIE *Buffer) { UnitDie->addChild(std::unique_ptr<DIE>(Buffer)); }
-
   /// addFlag - Add a flag that is true to the DIE.
   void addFlag(DIE &Die, dwarf::Attribute Attribute);
 
