@@ -524,26 +524,7 @@ SystemRuntimeMacOSX::GetExtendedBacktraceTypes ()
 void
 SystemRuntimeMacOSX::PopulateQueueList (lldb_private::QueueList &queue_list)
 {
-    if (!BacktraceRecordingHeadersInitialized())
-    {
-        // We don't have libBacktraceRecording -- build the list of queues by looking at
-        // all extant threads, and the queues that they currently belong to.
-
-        for (ThreadSP thread_sp : m_process->Threads())
-        {
-            if (thread_sp->GetQueueID() != LLDB_INVALID_QUEUE_ID)
-            {
-                if (queue_list.FindQueueByID (thread_sp->GetQueueID()).get() == NULL)
-                {
-                    QueueSP queue_sp (new Queue(m_process->shared_from_this(), thread_sp->GetQueueID(), thread_sp->GetQueueName()));
-                    queue_sp->SetKind (GetQueueKind (thread_sp->GetQueueLibdispatchQueueAddress()));
-                    queue_sp->SetLibdispatchQueueAddress (thread_sp->GetQueueLibdispatchQueueAddress());
-                    queue_list.AddQueue (queue_sp);
-                }
-            }
-        }
-    }
-    else
+    if (BacktraceRecordingHeadersInitialized())
     {
         AppleGetQueuesHandler::GetQueuesReturnInfo queue_info_pointer;
         ThreadSP cur_thread_sp (m_process->GetThreadList().GetSelectedThread());
@@ -563,6 +544,26 @@ SystemRuntimeMacOSX::PopulateQueueList (lldb_private::QueueList &queue_list)
                 {
                     PopulateQueuesUsingLibBTR (queue_info_pointer.queues_buffer_ptr, queue_info_pointer.queues_buffer_size, queue_info_pointer.count, queue_list);
                 }
+            }
+        }
+    }
+
+    // We either didn't have libBacktraceRecording (and need to create the queues list based on threads)
+    // or we did get the queues list from libBacktraceRecording but some special queues may not be
+    // included in its information.  This is needed because libBacktraceRecording
+    // will only list queues with pending or running items by default - but the magic com.apple.main-thread
+    // queue on thread 1 is always around.
+
+    for (ThreadSP thread_sp : m_process->Threads())
+    {
+        if (thread_sp->GetQueueID() != LLDB_INVALID_QUEUE_ID)
+        {
+            if (queue_list.FindQueueByID (thread_sp->GetQueueID()).get() == NULL)
+            {
+                QueueSP queue_sp (new Queue(m_process->shared_from_this(), thread_sp->GetQueueID(), thread_sp->GetQueueName()));
+                queue_sp->SetKind (GetQueueKind (thread_sp->GetQueueLibdispatchQueueAddress()));
+                queue_sp->SetLibdispatchQueueAddress (thread_sp->GetQueueLibdispatchQueueAddress());
+                queue_list.AddQueue (queue_sp);
             }
         }
     }

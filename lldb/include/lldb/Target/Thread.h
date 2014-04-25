@@ -365,6 +365,22 @@ public:
     }
 
     //------------------------------------------------------------------
+    /// Retrieve the Queue for this thread, if any.
+    ///
+    /// @return
+    ///     A QueueSP for the queue that is currently associated with this 
+    ///     thread.
+    ///     An empty shared pointer indicates that this thread is not
+    ///     associated with a queue, or libdispatch queues are not 
+    ///     supported on this target.
+    //------------------------------------------------------------------
+    virtual lldb::QueueSP
+    GetQueue ()
+    {
+        return lldb::QueueSP();
+    }
+
+    //------------------------------------------------------------------
     /// Retrieve the address of the libdispatch_queue_t struct for queue
     /// currently using this Thread
     ///

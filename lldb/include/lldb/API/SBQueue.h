@@ -14,7 +14,6 @@
 
 #include "lldb/lldb-forward.h"
 #include "lldb/API/SBDefines.h"
-#include "lldb/API/SBQueueItem.h"
 
 namespace lldb {
 
@@ -70,6 +69,7 @@ public:
 
 protected:
     friend class SBProcess;
+    friend class SBThread;
 
     void
     SetQueue (const lldb::QueueSP& queue_sp);

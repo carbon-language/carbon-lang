@@ -107,6 +107,22 @@ ThreadGDBRemote::GetQueueID ()
     return LLDB_INVALID_QUEUE_ID;
 }
 
+QueueSP
+ThreadGDBRemote::GetQueue ()
+{
+    queue_id_t queue_id = GetQueueID();
+    QueueSP queue;
+    if (queue_id != LLDB_INVALID_QUEUE_ID)
+    {
+        ProcessSP process_sp (GetProcess());
+        if (process_sp)
+        {
+            queue = process_sp->GetQueueList().FindQueueByID (queue_id);
+        }
+    }
+    return queue;
+}
+
 addr_t
 ThreadGDBRemote::GetQueueLibdispatchQueueAddress ()
 {

@@ -23,6 +23,7 @@
 #include "lldb/Target/SystemRuntime.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/Queue.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Target/StopInfo.h"
@@ -87,6 +88,42 @@ SBThread::operator = (const SBThread &rhs)
 SBThread::~SBThread()
 {
 }
+
+lldb::SBQueue
+SBThread::GetQueue () const
+{
+    SBQueue sb_queue;
+    QueueSP queue_sp;
+    Mutex::Locker api_locker;
+    ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
+
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (exe_ctx.HasThreadScope())
+    {
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&exe_ctx.GetProcessPtr()->GetRunLock()))
+        {
+            queue_sp = exe_ctx.GetThreadPtr()->GetQueue();
+            if (queue_sp)
+            {
+                sb_queue.SetQueue (queue_sp);
+            }
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBThread(%p)::GetQueueKind() => error: process is running",
+                             static_cast<void*>(exe_ctx.GetThreadPtr()));
+        }
+    }
+
+    if (log)
+        log->Printf ("SBThread(%p)::GetQueueKind () => SBQueue(%p)",
+                     static_cast<void*>(exe_ctx.GetThreadPtr()), static_cast<void*>(queue_sp.get()));
+
+    return sb_queue;
+}
+
 
 bool
 SBThread::IsValid() const

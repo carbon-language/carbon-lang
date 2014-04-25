@@ -41,6 +41,9 @@ public:
 
    ~SBThread();
 
+    lldb::SBQueue
+    GetQueue () const;
+
     bool
     IsValid() const;
 

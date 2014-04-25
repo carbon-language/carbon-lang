@@ -165,6 +165,19 @@ public:
     lldb::queue_id_t
     GetQueueID() const;
 
+    %feature("autodoc", "
+    Return the SBQueue for this thread.  If this thread is not currently associated
+    with a libdispatch queue, the SBQueue object's IsValid() method will return false.
+    If this SBThread is actually a HistoryThread, we may be able to provide QueueID
+    and QueueName, but not provide an SBQueue.  Those individual attributes may have
+    been saved for the HistoryThread without enough information to reconstitute the
+    entire SBQueue at that time.
+    This method takes no arguments, returns an SBQueue.
+    ") GetQueue;
+
+    lldb::SBQueue
+    GetQueue () const;
+
     void
     StepOver (lldb::RunMode stop_other_threads = lldb::eOnlyDuringStepping);
 

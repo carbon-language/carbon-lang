@@ -63,6 +63,7 @@ class TestQueues(TestBase):
             self.assertTrue(t.IsValid(), "Queue %s's thread #%d must be valid" % (queue.GetName(), idx))
             self.assertTrue(t.GetQueueID() == queue.GetQueueID(), "Queue %s has a QueueID of %d but its thread #%d has a QueueID of %d" % (queue.GetName(), queue.GetQueueID(), idx, t.GetQueueID()))
             self.assertTrue(t.GetQueueName() == queue.GetName(), "Queue %s has a QueueName of %s but its thread #%d has a QueueName of %s" % (queue.GetName(), queue.GetName(), idx, t.GetQueueName()))
+            self.assertTrue(t.GetQueue().GetQueueID() == queue.GetQueueID(), "Thread #%d's Queue's QueueID of %d is not the same as the QueueID of its owning queue %d" % (idx, t.GetQueue().GetQueueID(), queue.GetQueueID()))
 
     def queues(self):
         """Test queues inspection SB APIs without libBacktraceRecording."""

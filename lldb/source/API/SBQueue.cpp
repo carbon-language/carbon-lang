@@ -15,6 +15,8 @@
 
 #include "lldb/API/SBProcess.h"
 #include "lldb/API/SBThread.h"
+#include "lldb/API/SBQueueItem.h"
+
 #include "lldb/Core/Log.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Queue.h"
