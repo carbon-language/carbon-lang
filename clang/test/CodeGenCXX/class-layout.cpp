@@ -91,3 +91,12 @@ namespace Test7 {
   B* b;
   #pragma pack ()
 }
+
+// Shouldn't crash.
+namespace Test8 {
+	struct A {};
+	struct D { int a; };
+	struct B : virtual D, A { };
+	struct C : B, A { void f() {} };
+	C c;
+}
