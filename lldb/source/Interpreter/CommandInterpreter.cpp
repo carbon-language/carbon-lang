@@ -351,6 +351,12 @@ CommandInterpreter::Initialize ()
     }
 }
 
+void
+CommandInterpreter::Clear()
+{
+    m_command_io_handler_sp.reset();
+}
+
 const char *
 CommandInterpreter::ProcessEmbeddedScriptCommands (const char *arg)
 {

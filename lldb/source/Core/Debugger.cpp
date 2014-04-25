@@ -696,6 +696,8 @@ Debugger::Clear()
     m_terminal_state.Clear();
     if (m_input_file_sp)
         m_input_file_sp->GetFile().Close ();
+    
+    m_command_interpreter_ap->Clear();
 }
 
 bool

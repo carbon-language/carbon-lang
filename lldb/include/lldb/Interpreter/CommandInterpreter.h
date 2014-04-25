@@ -332,6 +332,9 @@ public:
 
     void
     Initialize ();
+    
+    void
+    Clear ();
 
     void
     SetScriptLanguage (lldb::ScriptLanguage lang);
