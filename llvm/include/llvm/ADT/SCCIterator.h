@@ -35,15 +35,17 @@ namespace llvm {
 /// This is implemented using Tarjan's DFS algorithm using an internal stack to
 /// build up a vector of nodes in a particular SCC. Note that it is a forward
 /// iterator and thus you cannot backtrack or re-visit nodes.
-template <class GraphT, class GT = GraphTraits<GraphT> >
+template <class GraphT, class GT = GraphTraits<GraphT>>
 class scc_iterator
     : public std::iterator<std::forward_iterator_tag,
-                           std::vector<typename GT::NodeType>, ptrdiff_t> {
+                           const std::vector<typename GT::NodeType>,
+                           ptrdiff_t> {
   typedef typename GT::NodeType NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
   typedef std::vector<NodeType *> SccTy;
   typedef std::iterator<std::forward_iterator_tag,
-                        std::vector<typename GT::NodeType>, ptrdiff_t> super;
+                        const std::vector<typename GT::NodeType>,
+                        ptrdiff_t> super;
   typedef typename super::reference reference;
   typedef typename super::pointer pointer;
 
@@ -126,10 +128,6 @@ public:
   }
 
   const SccTy &operator*() const {
-    assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
-    return CurrentSCC;
-  }
-  SccTy &operator*() {
     assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
     return CurrentSCC;
   }
