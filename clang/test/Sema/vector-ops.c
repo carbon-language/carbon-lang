@@ -10,14 +10,14 @@ void test1(v2u v2ua, v2s v2sa, v2f v2fa) {
 
   // Unary operators
   (void)(~v2ua);
-  (void)(~v2fa); // expected-error{{invalid argument type 'v2f' to unary}}
+  (void)(~v2fa); // expected-error{{invalid argument type 'v2f' (vector of 2 'float' values) to unary}}
 
   // Comparison operators
-  v2ua = (v2ua==v2sa); // expected-warning{{incompatible vector types assigning to 'v2u' from 'int __attribute__((ext_vector_type(2)))'}}
+  v2ua = (v2ua==v2sa); // expected-warning{{incompatible vector types assigning to 'v2u' (vector of 2 'unsigned int' values) from 'int __attribute__((ext_vector_type(2)))' (vector of 2 'int' values)}}
   v2sa = (v2ua==v2sa);
   
   // Arrays
-  int array1[v2ua]; // expected-error{{size of array has non-integer type 'v2u'}}
+  int array1[v2ua]; // expected-error{{size of array has non-integer type 'v2u' (vector of 2 'unsigned int' values)}}
   int array2[17];
   // FIXME: error message below needs type!
   (void)(array2[v2ua]); // expected-error{{array subscript is not an integer}}

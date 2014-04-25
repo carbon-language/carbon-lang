@@ -32,30 +32,30 @@ static void test() {
     ivec4 = (int4)5;
     ivec4 = (int4)vec4_3;
     
-    i = (int)ivec4; // expected-error {{invalid conversion between vector type 'int4' and integer type 'int' of different size}}
-    i = ivec4; // expected-error {{assigning to 'int' from incompatible type 'int4'}}
+    i = (int)ivec4; // expected-error {{invalid conversion between vector type 'int4' (vector of 4 'int' values) and integer type 'int' of different size}}
+    i = ivec4; // expected-error {{assigning to 'int' from incompatible type 'int4' (vector of 4 'int' values)}}
     
-    ivec4 = (int4)ptr; // expected-error {{invalid conversion between vector type 'int4' and scalar type 'int *'}}
+    ivec4 = (int4)ptr; // expected-error {{invalid conversion between vector type 'int4' (vector of 4 'int' values) and scalar type 'int *'}}
     
-    vec4 = (float4)vec2; // expected-error {{invalid conversion between ext-vector type 'float4' and 'float2'}}
+    vec4 = (float4)vec2; // expected-error {{invalid conversion between ext-vector type 'float4' (vector of 4 'float' values) and 'float2' (vector of 2 'float' values)}}
   
     ish8 += 5;
     ivec4 *= 5;
      vec4 /= 5.2f;
-     vec4 %= 4; // expected-error {{invalid operands to binary expression ('float4' and 'int')}}
+     vec4 %= 4; // expected-error {{invalid operands to binary expression ('float4' (vector of 4 'float' values) and 'int')}}
     ivec4 %= 4;
-    ivec4 += vec4; // expected-error {{can't convert between vector values of different size ('int4' and 'float4')}}
+    ivec4 += vec4; // expected-error {{can't convert between vector values of different size ('int4' (vector of 4 'int' values) and 'float4' (vector of 4 'float' values))}}
     ivec4 += (int4)vec4;
     ivec4 -= ivec4;
     ivec4 |= ivec4;
-    ivec4 += ptr; // expected-error {{can't convert between vector and non-scalar values ('int4' and 'int *')}}
+    ivec4 += ptr; // expected-error {{can't convert between vector and non-scalar values ('int4' (vector of 4 'int' values) and 'int *')}}
 }
 
-typedef __attribute__(( ext_vector_type(2) )) float2 vecfloat2; // expected-error{{invalid vector element type 'float2'}}
+typedef __attribute__(( ext_vector_type(2) )) float2 vecfloat2; // expected-error{{invalid vector element type 'float2' (vector of 2 'float' values)}}
 
 void inc(float2 f2) {
-  f2++; // expected-error{{cannot increment value of type 'float2'}}
-  __real f2; // expected-error{{invalid type 'float2' to __real operator}}
+  f2++; // expected-error{{cannot increment value of type 'float2' (vector of 2 'float' values)}}
+  __real f2; // expected-error{{invalid type 'float2' (vector of 2 'float' values) to __real operator}}
 }
 
 typedef enum
@@ -86,7 +86,7 @@ typedef float C3DVector3 __attribute__((ext_vector_type(3)));
 extern float32x4_t vabsq_f32(float32x4_t __a);
 
 C3DVector3 Func(const C3DVector3 a) {
-    return (C3DVector3)vabsq_f32((float32x4_t)a); // expected-error {{invalid conversion between ext-vector type 'float32x4_t' and 'C3DVector3'}}
+    return (C3DVector3)vabsq_f32((float32x4_t)a); // expected-error {{invalid conversion between ext-vector type 'float32x4_t' (vector of 4 'float' values) and 'C3DVector3' (vector of 3 'float' values)}}
 }
 
 // rdar://16350802
@@ -99,7 +99,7 @@ static void splats(int i, long l, __uint128_t t, float f, double d) {
   float2 vf = f;
   double2 vd = d;
   
-  vs = 65536 + vs; // expected-warning {{implicit conversion from 'int' to 'short8' changes value from 65536 to 0}}
+  vs = 65536 + vs; // expected-warning {{implicit conversion from 'int' to 'short8' (vector of 8 'short' values) changes value from 65536 to 0}}
   vs = vs + i; // expected-warning {{implicit conversion loses integer precision}}
   vs = vs + 1;
   vs = vs + 1.f; // expected-error {{can't convert between vector values of different size}}

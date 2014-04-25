@@ -24,8 +24,8 @@ void f1_test(char16 c16, longlong16 ll16, char16_e c16e, longlong16_e ll16e) {
   f1(ll16e); // expected-error{{call to 'f1' is ambiguous}}
 }
 
-void f2(char16_e); // expected-note{{no known conversion from 'longlong16_e' to 'char16_e' for 1st argument}} \
-       // expected-note{{candidate function not viable: no known conversion from 'convertible_to<longlong16_e>' to 'char16_e' for 1st argument}}
+void f2(char16_e); // expected-note{{no known conversion from 'longlong16_e' (vector of 2 'long long' values) to 'char16_e' (vector of 16 'char' values) for 1st argument}} \
+       // expected-note{{candidate function not viable: no known conversion from 'convertible_to<longlong16_e>' to 'char16_e' (vector of 16 'char' values) for 1st argument}}
 
 void f2_test(char16 c16, longlong16 ll16, char16_e c16e, longlong16_e ll16e) {
   f2(c16);
@@ -85,7 +85,7 @@ void casts(longlong16 ll16, longlong16_e ll16e) {
   (void)static_cast<longlong16>(ll16);
   (void)static_cast<longlong16_e>(ll16);
   (void)static_cast<char16>(ll16e);
-  (void)static_cast<char16_e>(ll16e); // expected-error{{static_cast from 'longlong16_e' to 'char16_e' is not allowed}}
+  (void)static_cast<char16_e>(ll16e); // expected-error{{static_cast from 'longlong16_e' (vector of 2 'long long' values) to 'char16_e' (vector of 16 'char' values) is not allowed}}
   (void)static_cast<longlong16>(ll16e);
   (void)static_cast<longlong16_e>(ll16e);
 
@@ -194,11 +194,11 @@ typedef float fltx4 __attribute__((__vector_size__(16)));
 typedef double dblx2 __attribute__((__vector_size__(16)));
 typedef double dblx4 __attribute__((__vector_size__(32)));
 
-void accept_fltx2(fltx2); // expected-note{{candidate function not viable: no known conversion from 'double' to 'fltx2' for 1st argument}}
+void accept_fltx2(fltx2); // expected-note{{candidate function not viable: no known conversion from 'double' to 'fltx2' (vector of 2 'float' values) for 1st argument}}
 void accept_fltx4(fltx4);
 void accept_dblx2(dblx2);
 void accept_dblx4(dblx4);
-void accept_bool(bool); // expected-note{{candidate function not viable: no known conversion from 'fltx2' to 'bool' for 1st argument}}
+void accept_bool(bool); // expected-note{{candidate function not viable: no known conversion from 'fltx2' (vector of 2 'float' values) to 'bool' for 1st argument}}
 
 void test(fltx2 fltx2_val, fltx4 fltx4_val, dblx2 dblx2_val, dblx4 dblx4_val) {
   // Exact matches

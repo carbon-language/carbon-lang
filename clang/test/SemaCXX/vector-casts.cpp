@@ -23,19 +23,19 @@ void f() {
   (void)reinterpret_cast<__v2si>(ll);
   (void)(__v2si)(ll);
 
-  (void)reinterpret_cast<S>(v2si); // expected-error {{reinterpret_cast from '__v2si' to 'S' is not allowed}}
-  (void)(S)v2si; // expected-error {{no matching conversion for C-style cast from '__v2si' to 'S'}}
-  (void)reinterpret_cast<__v2si>(s); // expected-error {{reinterpret_cast from 'S' to '__v2si' is not allowed}}
-  (void)(__v2si)s; // expected-error {{cannot convert 'S' to '__v2si' without a conversion operator}}
+  (void)reinterpret_cast<S>(v2si); // expected-error {{reinterpret_cast from '__v2si' (vector of 2 'int' values) to 'S' is not allowed}}
+  (void)(S)v2si; // expected-error {{no matching conversion for C-style cast from '__v2si' (vector of 2 'int' values) to 'S'}}
+  (void)reinterpret_cast<__v2si>(s); // expected-error {{reinterpret_cast from 'S' to '__v2si' (vector of 2 'int' values) is not allowed}}
+  (void)(__v2si)s; // expected-error {{cannot convert 'S' to '__v2si' (vector of 2 'int' values) without a conversion operator}}
   
-  (void)reinterpret_cast<unsigned char>(v2si); // expected-error {{reinterpret_cast from vector '__v2si' to scalar 'unsigned char' of different size}}
-  (void)(unsigned char)v2si; // expected-error {{C-style cast from vector '__v2si' to scalar 'unsigned char' of different size}}
-  (void)reinterpret_cast<__v2si>(c); // expected-error {{reinterpret_cast from scalar 'unsigned char' to vector '__v2si' of different size}}
+  (void)reinterpret_cast<unsigned char>(v2si); // expected-error {{reinterpret_cast from vector '__v2si' (vector of 2 'int' values) to scalar 'unsigned char' of different size}}
+  (void)(unsigned char)v2si; // expected-error {{C-style cast from vector '__v2si' (vector of 2 'int' values) to scalar 'unsigned char' of different size}}
+  (void)reinterpret_cast<__v2si>(c); // expected-error {{reinterpret_cast from scalar 'unsigned char' to vector '__v2si' (vector of 2 'int' values) of different size}}
 
-  (void)reinterpret_cast<__v8hi>(v4hi); // expected-error {{reinterpret_cast from vector '__v4hi' to vector '__v8hi' of different size}}
-  (void)(__v8hi)v4hi; // expected-error {{C-style cast from vector '__v4hi' to vector '__v8hi' of different size}}
-  (void)reinterpret_cast<__v4hi>(v8hi); // expected-error {{reinterpret_cast from vector '__v8hi' to vector '__v4hi' of different size}}
-  (void)(__v4hi)v8hi; // expected-error {{C-style cast from vector '__v8hi' to vector '__v4hi' of different size}}
+  (void)reinterpret_cast<__v8hi>(v4hi); // expected-error {{reinterpret_cast from vector '__v4hi' (vector of 4 'short' values) to vector '__v8hi' (vector of 8 'short' values) of different size}}
+  (void)(__v8hi)v4hi; // expected-error {{C-style cast from vector '__v4hi' (vector of 4 'short' values) to vector '__v8hi' (vector of 8 'short' values) of different size}}
+  (void)reinterpret_cast<__v4hi>(v8hi); // expected-error {{reinterpret_cast from vector '__v8hi' (vector of 8 'short' values) to vector '__v4hi' (vector of 4 'short' values) of different size}}
+  (void)(__v4hi)v8hi; // expected-error {{C-style cast from vector '__v8hi' (vector of 8 'short' values) to vector '__v4hi' (vector of 4 'short' values) of different size}}
 }
 
 struct testvec {

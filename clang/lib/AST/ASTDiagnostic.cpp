@@ -228,6 +228,20 @@ ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
         return S;
       }
     }
+
+    // Give some additional info on vector types. These are either not desugared
+    // or displaying complex __attribute__ expressions so add details of the
+    // type and element count.
+    if (Ty->isVectorType()) {
+      const VectorType *VTy = Ty->getAs<VectorType>();
+      std::string DecoratedString;
+      llvm::raw_string_ostream OS(DecoratedString);
+      const char *Values = VTy->getNumElements() > 1 ? "values" : "value";
+      OS << "'" << S << "' (vector of " << VTy->getNumElements() << " '"
+         << VTy->getElementType().getAsString(Context.getPrintingPolicy())
+         << "' " << Values << ")";
+      return OS.str();
+    }
   }
 
   S = "'" + S + "'";

@@ -40,5 +40,5 @@ typedef short __attribute__((vector_size(8))) short4;
 void test3() {
   extern short8 test3_helper(void);
   longlong2 arr1[2] = { test3_helper(), test3_helper() };
-  short4 arr2[2] = { test3_helper(), test3_helper() }; // expected-error 2 {{initializing 'short4' with an expression of incompatible type 'short8'}}
+  short4 arr2[2] = { test3_helper(), test3_helper() }; // expected-error 2 {{initializing 'short4' (vector of 4 'short' values) with an expression of incompatible type 'short8' (vector of 8 'short' values)}}
 }

@@ -67,7 +67,7 @@ typedef union { } TU4 __attribute__((transparent_union)); // expected-warning{{f
 
 typedef int int4 __attribute__((ext_vector_type(4)));
 typedef union {
-  int4 vec; // expected-warning{{first field of a transparent union cannot have vector type 'int4'; transparent_union attribute ignored}}
+  int4 vec; // expected-warning{{first field of a transparent union cannot have vector type 'int4' (vector of 4 'int' values); transparent_union attribute ignored}}
 } TU5 __attribute__((transparent_union));
 
 union pr15134 {
