@@ -161,8 +161,8 @@ bool runToolOnCodeWithArgs(clang::FrontendAction *ToolAction, const Twine &Code,
 /// \param FileName The file name which 'Code' will be mapped as.
 ///
 /// \return The resulting AST or null if an error occurred.
-ASTUnit *buildASTFromCode(const Twine &Code,
-                          const Twine &FileName = "input.cc");
+std::unique_ptr<ASTUnit> buildASTFromCode(const Twine &Code,
+                                          const Twine &FileName = "input.cc");
 
 /// \brief Builds an AST for 'Code' with additional flags.
 ///
@@ -171,9 +171,10 @@ ASTUnit *buildASTFromCode(const Twine &Code,
 /// \param FileName The file name which 'Code' will be mapped as.
 ///
 /// \return The resulting AST or null if an error occurred.
-ASTUnit *buildASTFromCodeWithArgs(const Twine &Code,
-                                  const std::vector<std::string> &Args,
-                                  const Twine &FileName = "input.cc");
+std::unique_ptr<ASTUnit>
+buildASTFromCodeWithArgs(const Twine &Code,
+                         const std::vector<std::string> &Args,
+                         const Twine &FileName = "input.cc");
 
 /// \brief Utility to run a FrontendAction in a single clang invocation.
 class ToolInvocation {

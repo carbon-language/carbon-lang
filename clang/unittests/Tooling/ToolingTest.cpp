@@ -108,11 +108,11 @@ TEST(runToolOnCode, FindsClassDecl) {
 }
 
 TEST(buildASTFromCode, FindsClassDecl) {
-  std::unique_ptr<ASTUnit> AST(buildASTFromCode("class X;"));
+  std::unique_ptr<ASTUnit> AST = buildASTFromCode("class X;");
   ASSERT_TRUE(AST.get());
   EXPECT_TRUE(FindClassDeclX(AST.get()));
 
-  AST.reset(buildASTFromCode("class Y;"));
+  AST = buildASTFromCode("class Y;");
   ASSERT_TRUE(AST.get());
   EXPECT_FALSE(FindClassDeclX(AST.get()));
 }

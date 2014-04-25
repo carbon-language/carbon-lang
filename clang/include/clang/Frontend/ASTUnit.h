@@ -775,15 +775,13 @@ public:
   //
   // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
   // shouldn't need to specify them at construction time.
-  static ASTUnit *LoadFromCompilerInvocation(CompilerInvocation *CI,
-                              IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                                             bool OnlyLocalDecls = false,
-                                             bool CaptureDiagnostics = false,
-                                             bool PrecompilePreamble = false,
-                                      TranslationUnitKind TUKind = TU_Complete,
-                                       bool CacheCodeCompletionResults = false,
-                            bool IncludeBriefCommentsInCodeCompletion = false,
-                                             bool UserFilesAreVolatile = false);
+  static std::unique_ptr<ASTUnit> LoadFromCompilerInvocation(
+      CompilerInvocation *CI, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
+      bool OnlyLocalDecls = false, bool CaptureDiagnostics = false,
+      bool PrecompilePreamble = false, TranslationUnitKind TUKind = TU_Complete,
+      bool CacheCodeCompletionResults = false,
+      bool IncludeBriefCommentsInCodeCompletion = false,
+      bool UserFilesAreVolatile = false);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.

@@ -379,10 +379,10 @@ public:
   bool runInvocation(CompilerInvocation *Invocation, FileManager *Files,
                      DiagnosticConsumer *DiagConsumer) override {
     // FIXME: This should use the provided FileManager.
-    std::unique_ptr<ASTUnit> AST(ASTUnit::LoadFromCompilerInvocation(
+    std::unique_ptr<ASTUnit> AST = ASTUnit::LoadFromCompilerInvocation(
         Invocation, CompilerInstance::createDiagnostics(
                         &Invocation->getDiagnosticOpts(), DiagConsumer,
-                        /*ShouldOwnClient=*/false)));
+                        /*ShouldOwnClient=*/false));
     if (!AST)
       return false;
 
@@ -398,13 +398,15 @@ int ClangTool::buildASTs(std::vector<std::unique_ptr<ASTUnit>> &ASTs) {
   return run(&Action);
 }
 
-ASTUnit *buildASTFromCode(const Twine &Code, const Twine &FileName) {
+std::unique_ptr<ASTUnit> buildASTFromCode(const Twine &Code,
+                                          const Twine &FileName) {
   return buildASTFromCodeWithArgs(Code, std::vector<std::string>(), FileName);
 }
 
-ASTUnit *buildASTFromCodeWithArgs(const Twine &Code,
-                                  const std::vector<std::string> &Args,
-                                  const Twine &FileName) {
+std::unique_ptr<ASTUnit>
+buildASTFromCodeWithArgs(const Twine &Code,
+                         const std::vector<std::string> &Args,
+                         const Twine &FileName) {
   SmallString<16> FileNameStorage;
   StringRef FileNameRef = FileName.toNullTerminatedStringRef(FileNameStorage);
 
@@ -419,7 +421,7 @@ ASTUnit *buildASTFromCodeWithArgs(const Twine &Code,
     return 0;
 
   assert(ASTs.size() == 1);
-  return ASTs[0].release();
+  return std::move(ASTs[0]);
 }
 
 } // end namespace tooling
