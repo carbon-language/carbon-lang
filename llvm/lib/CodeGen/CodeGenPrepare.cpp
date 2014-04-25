@@ -3470,7 +3470,12 @@ bool CodeGenPrepare::PlaceDbgValues(Function &F) {
     for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;) {
       Instruction *Insn = BI; ++BI;
       DbgValueInst *DVI = dyn_cast<DbgValueInst>(Insn);
-      if (!DVI) {
+      // Leave dbg.values that refer to an alloca alone. These
+      // instrinsics describe the address of a variable (= the alloca)
+      // being taken.  They should not be moved next to the alloca
+      // (and to the beginning of the scope), but rather stay close to
+      // where said address is used.
+      if (!DVI || (DVI->getValue() && isa<AllocaInst>(DVI->getValue()))) {
         PrevNonDbgInst = Insn;
         continue;
       }
