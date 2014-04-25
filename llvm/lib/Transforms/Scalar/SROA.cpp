@@ -160,8 +160,8 @@ public:
 
   Use *getUse() const { return UseAndIsSplittable.getPointer(); }
 
-  bool isDead() const { return getUse() == 0; }
-  void kill() { UseAndIsSplittable.setPointer(0); }
+  bool isDead() const { return getUse() == nullptr; }
+  void kill() { UseAndIsSplittable.setPointer(nullptr); }
 
   /// \brief Support for ordering ranges.
   ///
@@ -321,7 +321,7 @@ static Value *foldSelectInst(SelectInst &SI) {
   if (SI.getOperand(1) == SI.getOperand(2))
     return SI.getOperand(1);
 
-  return 0;
+  return nullptr;
 }
 
 /// \brief Builder for the alloca slices.
@@ -643,7 +643,7 @@ private:
           Uses.push_back(std::make_pair(I, cast<Instruction>(U)));
     } while (!Uses.empty());
 
-    return 0;
+    return nullptr;
   }
 
   void visitPHINode(PHINode &PN) {
@@ -725,7 +725,7 @@ AllocaSlices::AllocaSlices(const DataLayout &DL, AllocaInst &AI)
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
       AI(AI),
 #endif
-      PointerEscapingInstr(0) {
+      PointerEscapingInstr(nullptr) {
   SliceBuilder PB(DL, AI, *this);
   SliceBuilder::PtrInfo PtrI = PB.visitPtr(AI);
   if (PtrI.isEscaped() || PtrI.isAborted()) {
@@ -874,7 +874,7 @@ public:
     for (SmallVectorImpl<DbgValueInst *>::const_iterator I = DVIs.begin(),
            E = DVIs.end(); I != E; ++I) {
       DbgValueInst *DVI = *I;
-      Value *Arg = 0;
+      Value *Arg = nullptr;
       if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
         // If an argument is zero extended then use argument directly. The ZExt
         // may be zapped by an optimization pass in future.
@@ -970,7 +970,7 @@ class SROA : public FunctionPass {
 public:
   SROA(bool RequiresDomTree = true)
       : FunctionPass(ID), RequiresDomTree(RequiresDomTree),
-        C(0), DL(0), DT(0) {
+        C(nullptr), DL(nullptr), DT(nullptr) {
     initializeSROAPass(*PassRegistry::getPassRegistry());
   }
   bool runOnFunction(Function &F) override;
@@ -1012,9 +1012,9 @@ INITIALIZE_PASS_END(SROA, "sroa", "Scalar Replacement Of Aggregates",
 static Type *findCommonType(AllocaSlices::const_iterator B,
                             AllocaSlices::const_iterator E,
                             uint64_t EndOffset) {
-  Type *Ty = 0;
+  Type *Ty = nullptr;
   bool TyIsCommon = true;
-  IntegerType *ITy = 0;
+  IntegerType *ITy = nullptr;
 
   // Note that we need to look at *every* alloca slice's Use to ensure we
   // always get consistent results regardless of the order of slices.
@@ -1025,7 +1025,7 @@ static Type *findCommonType(AllocaSlices::const_iterator B,
     if (I->beginOffset() != B->beginOffset() || I->endOffset() != EndOffset)
       continue;
 
-    Type *UserTy = 0;
+    Type *UserTy = nullptr;
     if (LoadInst *LI = dyn_cast<LoadInst>(U->getUser())) {
       UserTy = LI->getType();
     } else if (StoreInst *SI = dyn_cast<StoreInst>(U->getUser())) {
@@ -1075,7 +1075,7 @@ static Type *findCommonType(AllocaSlices::const_iterator B,
 /// FIXME: This should be hoisted into a generic utility, likely in
 /// Transforms/Util/Local.h
 static bool isSafePHIToSpeculate(PHINode &PN,
-                                 const DataLayout *DL = 0) {
+                                 const DataLayout *DL = nullptr) {
   // For now, we can only do this promotion if the load is in the same block
   // as the PHI, and if there are no stores between the phi and load.
   // TODO: Allow recursive phi users.
@@ -1085,7 +1085,7 @@ static bool isSafePHIToSpeculate(PHINode &PN,
   bool HaveLoad = false;
   for (User *U : PN.users()) {
     LoadInst *LI = dyn_cast<LoadInst>(U);
-    if (LI == 0 || !LI->isSimple())
+    if (!LI || !LI->isSimple())
       return false;
 
     // For now we only allow loads in the same block as the PHI.  This is
@@ -1192,7 +1192,8 @@ static void speculatePHINodeLoads(PHINode &PN) {
 ///
 /// We can do this to a select if its only uses are loads and if the operand
 /// to the select can be loaded unconditionally.
-static bool isSafeSelectToSpeculate(SelectInst &SI, const DataLayout *DL = 0) {
+static bool isSafeSelectToSpeculate(SelectInst &SI,
+                                    const DataLayout *DL = nullptr) {
   Value *TValue = SI.getTrueValue();
   Value *FValue = SI.getFalseValue();
   bool TDerefable = TValue->isDereferenceablePointer();
@@ -1200,7 +1201,7 @@ static bool isSafeSelectToSpeculate(SelectInst &SI, const DataLayout *DL = 0) {
 
   for (User *U : SI.users()) {
     LoadInst *LI = dyn_cast<LoadInst>(U);
-    if (LI == 0 || !LI->isSimple())
+    if (!LI || !LI->isSimple())
       return false;
 
     // Both operands to the select need to be dereferencable, either
@@ -1333,19 +1334,21 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &DL,
 
   // We can't recurse through pointer types.
   if (Ty->isPointerTy())
-    return 0;
+    return nullptr;
 
   // We try to analyze GEPs over vectors here, but note that these GEPs are
   // extremely poorly defined currently. The long-term goal is to remove GEPing
   // over a vector from the IR completely.
   if (VectorType *VecTy = dyn_cast<VectorType>(Ty)) {
     unsigned ElementSizeInBits = DL.getTypeSizeInBits(VecTy->getScalarType());
-    if (ElementSizeInBits % 8)
-      return 0; // GEPs over non-multiple of 8 size vector elements are invalid.
+    if (ElementSizeInBits % 8 != 0) {
+      // GEPs over non-multiple of 8 size vector elements are invalid.
+      return nullptr;
+    }
     APInt ElementSize(Offset.getBitWidth(), ElementSizeInBits / 8);
     APInt NumSkippedElements = Offset.sdiv(ElementSize);
     if (NumSkippedElements.ugt(VecTy->getNumElements()))
-      return 0;
+      return nullptr;
     Offset -= NumSkippedElements * ElementSize;
     Indices.push_back(IRB.getInt(NumSkippedElements));
     return getNaturalGEPRecursively(IRB, DL, Ptr, VecTy->getElementType(),
@@ -1357,7 +1360,7 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &DL,
     APInt ElementSize(Offset.getBitWidth(), DL.getTypeAllocSize(ElementTy));
     APInt NumSkippedElements = Offset.sdiv(ElementSize);
     if (NumSkippedElements.ugt(ArrTy->getNumElements()))
-      return 0;
+      return nullptr;
 
     Offset -= NumSkippedElements * ElementSize;
     Indices.push_back(IRB.getInt(NumSkippedElements));
@@ -1367,17 +1370,17 @@ static Value *getNaturalGEPRecursively(IRBuilderTy &IRB, const DataLayout &DL,
 
   StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy)
-    return 0;
+    return nullptr;
 
   const StructLayout *SL = DL.getStructLayout(STy);
   uint64_t StructOffset = Offset.getZExtValue();
   if (StructOffset >= SL->getSizeInBytes())
-    return 0;
+    return nullptr;
   unsigned Index = SL->getElementContainingOffset(StructOffset);
   Offset -= APInt(Offset.getBitWidth(), SL->getElementOffset(Index));
   Type *ElementTy = STy->getElementType(Index);
   if (Offset.uge(DL.getTypeAllocSize(ElementTy)))
-    return 0; // The offset points into alignment padding.
+    return nullptr; // The offset points into alignment padding.
 
   Indices.push_back(IRB.getInt32(Index));
   return getNaturalGEPRecursively(IRB, DL, Ptr, ElementTy, Offset, TargetTy,
@@ -1403,14 +1406,14 @@ static Value *getNaturalGEPWithOffset(IRBuilderTy &IRB, const DataLayout &DL,
   // Don't consider any GEPs through an i8* as natural unless the TargetTy is
   // an i8.
   if (Ty == IRB.getInt8PtrTy(Ty->getAddressSpace()) && TargetTy->isIntegerTy(8))
-    return 0;
+    return nullptr;
 
   Type *ElementTy = Ty->getElementType();
   if (!ElementTy->isSized())
-    return 0; // We can't GEP through an unsized element.
+    return nullptr; // We can't GEP through an unsized element.
   APInt ElementSize(Offset.getBitWidth(), DL.getTypeAllocSize(ElementTy));
   if (ElementSize == 0)
-    return 0; // Zero-length arrays can't help us build a natural GEP.
+    return nullptr; // Zero-length arrays can't help us build a natural GEP.
   APInt NumSkippedElements = Offset.sdiv(ElementSize);
 
   Offset -= NumSkippedElements * ElementSize;
@@ -1446,11 +1449,11 @@ static Value *getAdjustedPtr(IRBuilderTy &IRB, const DataLayout &DL, Value *Ptr,
   // We may end up computing an offset pointer that has the wrong type. If we
   // never are able to compute one directly that has the correct type, we'll
   // fall back to it, so keep it around here.
-  Value *OffsetPtr = 0;
+  Value *OffsetPtr = nullptr;
 
   // Remember any i8 pointer we come across to re-use if we need to do a raw
   // byte offset.
-  Value *Int8Ptr = 0;
+  Value *Int8Ptr = nullptr;
   APInt Int8PtrOffset(Offset.getBitWidth(), 0);
 
   Type *TargetTy = PointerTy->getPointerElementType();
@@ -2044,14 +2047,14 @@ public:
         NewAllocaBeginOffset(NewAllocaBeginOffset),
         NewAllocaEndOffset(NewAllocaEndOffset),
         NewAllocaTy(NewAI.getAllocatedType()),
-        VecTy(IsVectorPromotable ? cast<VectorType>(NewAllocaTy) : 0),
-        ElementTy(VecTy ? VecTy->getElementType() : 0),
+        VecTy(IsVectorPromotable ? cast<VectorType>(NewAllocaTy) : nullptr),
+        ElementTy(VecTy ? VecTy->getElementType() : nullptr),
         ElementSize(VecTy ? DL.getTypeSizeInBits(ElementTy) / 8 : 0),
         IntTy(IsIntegerPromotable
                   ? Type::getIntNTy(
                         NewAI.getContext(),
                         DL.getTypeSizeInBits(NewAI.getAllocatedType()))
-                  : 0),
+                  : nullptr),
         BeginOffset(), EndOffset(), IsSplittable(), IsSplit(), OldUse(),
         OldPtr(), PHIUsers(PHIUsers), SelectUsers(SelectUsers),
         IRB(NewAI.getContext(), ConstantFolder()) {
@@ -2145,7 +2148,7 @@ private:
   ///
   /// You can optionally pass a type to this routine and if that type's ABI
   /// alignment is itself suitable, this will return zero.
-  unsigned getSliceAlign(Type *Ty = 0) {
+  unsigned getSliceAlign(Type *Ty = nullptr) {
     unsigned NewAIAlign = NewAI.getAlignment();
     if (!NewAIAlign)
       NewAIAlign = DL.getABITypeAlignment(NewAI.getAllocatedType());
@@ -2595,7 +2598,7 @@ private:
     unsigned EndIndex = VecTy ? getIndex(NewEndOffset) : 0;
     unsigned NumElements = EndIndex - BeginIndex;
     IntegerType *SubIntTy
-      = IntTy ? Type::getIntNTy(IntTy->getContext(), Size*8) : 0;
+      = IntTy ? Type::getIntNTy(IntTy->getContext(), Size*8) : nullptr;
 
     // Reset the other pointer type to match the register type we're going to
     // use, but using the address space of the original other pointer.
@@ -2993,22 +2996,22 @@ static Type *getTypePartition(const DataLayout &DL, Type *Ty,
     return stripAggregateTypeWrapping(DL, Ty);
   if (Offset > DL.getTypeAllocSize(Ty) ||
       (DL.getTypeAllocSize(Ty) - Offset) < Size)
-    return 0;
+    return nullptr;
 
   if (SequentialType *SeqTy = dyn_cast<SequentialType>(Ty)) {
     // We can't partition pointers...
     if (SeqTy->isPointerTy())
-      return 0;
+      return nullptr;
 
     Type *ElementTy = SeqTy->getElementType();
     uint64_t ElementSize = DL.getTypeAllocSize(ElementTy);
     uint64_t NumSkippedElements = Offset / ElementSize;
     if (ArrayType *ArrTy = dyn_cast<ArrayType>(SeqTy)) {
       if (NumSkippedElements >= ArrTy->getNumElements())
-        return 0;
+        return nullptr;
     } else if (VectorType *VecTy = dyn_cast<VectorType>(SeqTy)) {
       if (NumSkippedElements >= VecTy->getNumElements())
-        return 0;
+        return nullptr;
     }
     Offset -= NumSkippedElements * ElementSize;
 
@@ -3016,7 +3019,7 @@ static Type *getTypePartition(const DataLayout &DL, Type *Ty,
     if (Offset > 0 || Size < ElementSize) {
       // Bail if the partition ends in a different array element.
       if ((Offset + Size) > ElementSize)
-        return 0;
+        return nullptr;
       // Recurse through the element type trying to peel off offset bytes.
       return getTypePartition(DL, ElementTy, Offset, Size);
     }
@@ -3027,20 +3030,20 @@ static Type *getTypePartition(const DataLayout &DL, Type *Ty,
     assert(Size > ElementSize);
     uint64_t NumElements = Size / ElementSize;
     if (NumElements * ElementSize != Size)
-      return 0;
+      return nullptr;
     return ArrayType::get(ElementTy, NumElements);
   }
 
   StructType *STy = dyn_cast<StructType>(Ty);
   if (!STy)
-    return 0;
+    return nullptr;
 
   const StructLayout *SL = DL.getStructLayout(STy);
   if (Offset >= SL->getSizeInBytes())
-    return 0;
+    return nullptr;
   uint64_t EndOffset = Offset + Size;
   if (EndOffset > SL->getSizeInBytes())
-    return 0;
+    return nullptr;
 
   unsigned Index = SL->getElementContainingOffset(Offset);
   Offset -= SL->getElementOffset(Index);
@@ -3048,12 +3051,12 @@ static Type *getTypePartition(const DataLayout &DL, Type *Ty,
   Type *ElementTy = STy->getElementType(Index);
   uint64_t ElementSize = DL.getTypeAllocSize(ElementTy);
   if (Offset >= ElementSize)
-    return 0; // The offset points into alignment padding.
+    return nullptr; // The offset points into alignment padding.
 
   // See if any partition must be contained by the element.
   if (Offset > 0 || Size < ElementSize) {
     if ((Offset + Size) > ElementSize)
-      return 0;
+      return nullptr;
     return getTypePartition(DL, ElementTy, Offset, Size);
   }
   assert(Offset == 0);
@@ -3066,14 +3069,14 @@ static Type *getTypePartition(const DataLayout &DL, Type *Ty,
   if (EndOffset < SL->getSizeInBytes()) {
     unsigned EndIndex = SL->getElementContainingOffset(EndOffset);
     if (Index == EndIndex)
-      return 0; // Within a single element and its padding.
+      return nullptr; // Within a single element and its padding.
 
     // Don't try to form "natural" types if the elements don't line up with the
     // expected size.
     // FIXME: We could potentially recurse down through the last element in the
     // sub-struct to find a natural end point.
     if (SL->getElementOffset(EndIndex) != EndOffset)
-      return 0;
+      return nullptr;
 
     assert(Index < EndIndex);
     EE = STy->element_begin() + EndIndex;
@@ -3084,7 +3087,7 @@ static Type *getTypePartition(const DataLayout &DL, Type *Ty,
                                       STy->isPacked());
   const StructLayout *SubSL = DL.getStructLayout(SubTy);
   if (Size != SubSL->getSizeInBytes())
-    return 0; // The sub-struct doesn't have quite the size needed.
+    return nullptr; // The sub-struct doesn't have quite the size needed.
 
   return SubTy;
 }
@@ -3109,7 +3112,7 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
   // Try to compute a friendly type for this partition of the alloca. This
   // won't always succeed, in which case we fall back to a legal integer type
   // or an i8 array of an appropriate size.
-  Type *SliceTy = 0;
+  Type *SliceTy = nullptr;
   if (Type *CommonUseTy = findCommonType(B, E, EndOffset))
     if (DL->getTypeAllocSize(CommonUseTy) >= SliceSize)
       SliceTy = CommonUseTy;
@@ -3156,7 +3159,7 @@ bool SROA::rewritePartition(AllocaInst &AI, AllocaSlices &S,
     // the alloca's alignment unconstrained.
     if (Alignment <= DL->getABITypeAlignment(SliceTy))
       Alignment = 0;
-    NewAI = new AllocaInst(SliceTy, 0, Alignment,
+    NewAI = new AllocaInst(SliceTy, nullptr, Alignment,
                            AI.getName() + ".sroa." + Twine(B - S.begin()), &AI);
     ++NumNewAllocas;
   }
@@ -3495,7 +3498,7 @@ void SROA::deleteDeadInstructions(SmallPtrSet<AllocaInst*, 4> &DeletedAllocas) {
     for (Use &Operand : I->operands())
       if (Instruction *U = dyn_cast<Instruction>(Operand)) {
         // Zero out the operand and see if it becomes trivially dead.
-        Operand = 0;
+        Operand = nullptr;
         if (isInstructionTriviallyDead(U))
           DeadInsts.insert(U);
       }
@@ -3613,7 +3616,7 @@ bool SROA::runOnFunction(Function &F) {
   DL = &DLP->getDataLayout();
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  DT = DTWP ? &DTWP->getDomTree() : 0;
+  DT = DTWP ? &DTWP->getDomTree() : nullptr;
 
   BasicBlock &EntryBB = F.getEntryBlock();
   for (BasicBlock::iterator I = EntryBB.begin(), E = std::prev(EntryBB.end());

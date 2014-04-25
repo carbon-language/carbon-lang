@@ -41,7 +41,7 @@ bool isAllocaPromotable(const AllocaInst *AI);
 /// If AST is specified, the specified tracker is updated to reflect changes
 /// made to the IR.
 void PromoteMemToReg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
-                     AliasSetTracker *AST = 0);
+                     AliasSetTracker *AST = nullptr);
 
 } // End llvm namespace
 

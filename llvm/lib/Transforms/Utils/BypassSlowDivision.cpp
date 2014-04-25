@@ -54,11 +54,11 @@ namespace llvm {
     }
 
     static DivOpInfo getEmptyKey() {
-      return DivOpInfo(false, 0, 0);
+      return DivOpInfo(false, nullptr, nullptr);
     }
 
     static DivOpInfo getTombstoneKey() {
-      return DivOpInfo(true, 0, 0);
+      return DivOpInfo(true, nullptr, nullptr);
     }
 
     static unsigned getHashValue(const DivOpInfo &Val) {

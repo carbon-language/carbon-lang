@@ -192,7 +192,7 @@ static void StripTypeNames(Module &M, bool PreserveDbgInfo) {
 /// Find values that are marked as llvm.used.
 static void findUsedValues(GlobalVariable *LLVMUsed,
                            SmallPtrSet<const GlobalValue*, 8> &UsedValues) {
-  if (LLVMUsed == 0) return;
+  if (!LLVMUsed) return;
   UsedValues.insert(LLVMUsed);
 
   ConstantArray *Inits = cast<ConstantArray>(LLVMUsed->getInitializer());

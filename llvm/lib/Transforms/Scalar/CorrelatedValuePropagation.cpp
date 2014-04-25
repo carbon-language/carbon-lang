@@ -139,7 +139,7 @@ bool CorrelatedValuePropagation::processPHI(PHINode *P) {
 }
 
 bool CorrelatedValuePropagation::processMemAccess(Instruction *I) {
-  Value *Pointer = 0;
+  Value *Pointer = nullptr;
   if (LoadInst *L = dyn_cast<LoadInst>(I))
     Pointer = L->getPointerOperand();
   else

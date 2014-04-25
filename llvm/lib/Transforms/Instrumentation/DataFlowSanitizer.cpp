@@ -211,7 +211,8 @@ class DataFlowSanitizer : public ModulePass {
 
  public:
   DataFlowSanitizer(StringRef ABIListFile = StringRef(),
-                    void *(*getArgTLS)() = 0, void *(*getRetValTLS)() = 0);
+                    void *(*getArgTLS)() = nullptr,
+                    void *(*getRetValTLS)() = nullptr);
   static char ID;
   bool doInitialization(Module &M) override;
   bool runOnModule(Module &M) override;
@@ -233,8 +234,8 @@ struct DFSanFunction {
 
   DFSanFunction(DataFlowSanitizer &DFS, Function *F, bool IsNativeABI)
       : DFS(DFS), F(F), IA(DFS.getInstrumentedABI()),
-        IsNativeABI(IsNativeABI), ArgTLSPtr(0), RetvalTLSPtr(0),
-        LabelReturnAlloca(0) {}
+        IsNativeABI(IsNativeABI), ArgTLSPtr(nullptr), RetvalTLSPtr(nullptr),
+        LabelReturnAlloca(nullptr) {}
   Value *getArgTLSPtr();
   Value *getArgTLS(unsigned Index, Instruction *Pos);
   Value *getRetvalTLS();
@@ -303,7 +304,7 @@ FunctionType *DataFlowSanitizer::getArgsFunctionType(FunctionType *T) {
     ArgTypes.push_back(ShadowPtrTy);
   Type *RetType = T->getReturnType();
   if (!RetType->isVoidTy())
-    RetType = StructType::get(RetType, ShadowTy, (Type *)0);
+    RetType = StructType::get(RetType, ShadowTy, (Type *)nullptr);
   return FunctionType::get(RetType, ArgTypes, T->isVarArg());
 }
 
@@ -373,18 +374,20 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
 
   if (GetArgTLSPtr) {
     Type *ArgTLSTy = ArrayType::get(ShadowTy, 64);
-    ArgTLS = 0;
+    ArgTLS = nullptr;
     GetArgTLS = ConstantExpr::getIntToPtr(
         ConstantInt::get(IntptrTy, uintptr_t(GetArgTLSPtr)),
         PointerType::getUnqual(
-            FunctionType::get(PointerType::getUnqual(ArgTLSTy), (Type *)0)));
+            FunctionType::get(PointerType::getUnqual(ArgTLSTy),
+                              (Type *)nullptr)));
   }
   if (GetRetvalTLSPtr) {
-    RetvalTLS = 0;
+    RetvalTLS = nullptr;
     GetRetvalTLS = ConstantExpr::getIntToPtr(
         ConstantInt::get(IntptrTy, uintptr_t(GetRetvalTLSPtr)),
         PointerType::getUnqual(
-            FunctionType::get(PointerType::getUnqual(ShadowTy), (Type *)0)));
+            FunctionType::get(PointerType::getUnqual(ShadowTy),
+                              (Type *)nullptr)));
   }
 
   ColdCallWeights = MDBuilder(*Ctx).createBranchWeights(1, 1000);
@@ -629,7 +632,7 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
                // function... yet.
     } else if (FT->isVarArg()) {
       UnwrappedFnMap[&F] = &F;
-      *i = 0;
+      *i = nullptr;
     } else if (!IsZeroArgsVoidRet || getWrapperKind(&F) == WK_Custom) {
       // Build a wrapper function for F.  The wrapper simply calls F, and is
       // added to FnsToInstrument so that any instrumentation according to its
@@ -1312,7 +1315,7 @@ void DFSanVisitor::visitCallSite(CallSite CS) {
     }
   }
 
-  Instruction *Next = 0;
+  Instruction *Next = nullptr;
   if (!CS.getType()->isVoidTy()) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(CS.getInstruction())) {
       if (II->getNormalDest()->getSinglePredecessor()) {

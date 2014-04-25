@@ -158,7 +158,7 @@ ObjCARCContract::ContractAutorelease(Function &F, Instruction *Autorelease,
 
   // Check that there are no instructions between the retain and the autorelease
   // (such as an autorelease_pop) which may change the count.
-  CallInst *Retain = 0;
+  CallInst *Retain = nullptr;
   if (Class == IC_AutoreleaseRV)
     FindDependencies(RetainAutoreleaseRVDep, Arg,
                      Autorelease->getParent(), Autorelease,
@@ -219,7 +219,7 @@ void ObjCARCContract::ContractRelease(Instruction *Release,
   BasicBlock::iterator I = Load, End = BB->end();
   ++I;
   AliasAnalysis::Location Loc = AA->getLocation(Load);
-  StoreInst *Store = 0;
+  StoreInst *Store = nullptr;
   bool SawRelease = false;
   for (; !Store || !SawRelease; ++I) {
     if (I == End)
@@ -301,7 +301,7 @@ bool ObjCARCContract::doInitialization(Module &M) {
   EP.Initialize(&M);
 
   // Initialize RetainRVMarker.
-  RetainRVMarker = 0;
+  RetainRVMarker = nullptr;
   if (NamedMDNode *NMD =
         M.getNamedMetadata("clang.arc.retainAutoreleasedReturnValueMarker"))
     if (NMD->getNumOperands() == 1) {

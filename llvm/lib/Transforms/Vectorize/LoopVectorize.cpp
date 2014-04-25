@@ -230,8 +230,9 @@ public:
                       const TargetLibraryInfo *TLI, unsigned VecWidth,
                       unsigned UnrollFactor)
       : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), DL(DL), TLI(TLI),
-        VF(VecWidth), UF(UnrollFactor), Builder(SE->getContext()), Induction(0),
-        OldInduction(0), WidenMap(UnrollFactor), Legal(0) {}
+        VF(VecWidth), UF(UnrollFactor), Builder(SE->getContext()),
+        Induction(nullptr), OldInduction(nullptr), WidenMap(UnrollFactor),
+        Legal(nullptr) {}
 
   // Perform the actual loop widening (vectorization).
   void vectorize(LoopVectorizationLegality *L) {
@@ -520,8 +521,8 @@ public:
   LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
                             DominatorTree *DT, TargetLibraryInfo *TLI)
       : NumLoads(0), NumStores(0), NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
-        DT(DT), TLI(TLI), Induction(0), WidestIndTy(0), HasFunNoNaNAttr(false),
-        MaxSafeDepDistBytes(-1U) {}
+        DT(DT), TLI(TLI), Induction(nullptr), WidestIndTy(nullptr),
+        HasFunNoNaNAttr(false), MaxSafeDepDistBytes(-1U) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
@@ -559,7 +560,7 @@ public:
 
   /// This struct holds information about reduction variables.
   struct ReductionDescriptor {
-    ReductionDescriptor() : StartValue(0), LoopExitInstr(0),
+    ReductionDescriptor() : StartValue(nullptr), LoopExitInstr(nullptr),
       Kind(RK_NoReduction), MinMaxKind(MRK_Invalid) {}
 
     ReductionDescriptor(Value *Start, Instruction *Exit, ReductionKind K,
@@ -631,7 +632,7 @@ public:
   /// A struct for saving information about induction variables.
   struct InductionInfo {
     InductionInfo(Value *Start, InductionKind K) : StartValue(Start), IK(K) {}
-    InductionInfo() : StartValue(0), IK(IK_NoInduction) {}
+    InductionInfo() : StartValue(nullptr), IK(IK_NoInduction) {}
     /// Start value.
     TrackingVH<Value> StartValue;
     /// Induction kind.
@@ -960,7 +961,7 @@ private:
     assert(LoopID->getOperand(0) == LoopID && "invalid loop id");
 
     for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
-      const MDString *S = 0;
+      const MDString *S = nullptr;
       SmallVector<Value*, 4> Args;
 
       // The expected hint is either a MDString or a MDNode with the first
@@ -1053,7 +1054,7 @@ struct LoopVectorize : public FunctionPass {
   bool runOnFunction(Function &F) override {
     SE = &getAnalysis<ScalarEvolution>();
     DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-    DL = DLP ? &DLP->getDataLayout() : 0;
+    DL = DLP ? &DLP->getDataLayout() : nullptr;
     LI = &getAnalysis<LoopInfo>();
     TTI = &getAnalysis<TargetTransformInfo>();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
@@ -1070,7 +1071,7 @@ struct LoopVectorize : public FunctionPass {
     if (!TTI->getNumberOfRegisters(true))
       return false;
 
-    if (DL == NULL) {
+    if (!DL) {
       DEBUG(dbgs() << "\nLV: Not vectorizing " << F.getName()
                    << ": Missing data layout\n");
       return false;
@@ -1232,7 +1233,7 @@ static Value *stripIntegerCast(Value *V) {
 /// \p Ptr.
 static const SCEV *replaceSymbolicStrideSCEV(ScalarEvolution *SE,
                                              ValueToValueMap &PtrToStride,
-                                             Value *Ptr, Value *OrigPtr = 0) {
+                                             Value *Ptr, Value *OrigPtr = nullptr) {
 
   const SCEV *OrigSCEV = SE->getSCEV(Ptr);
 
@@ -1399,7 +1400,7 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
 
   // We can emit wide load/stores only if the last non-zero index is the
   // induction variable.
-  const SCEV *Last = 0;
+  const SCEV *Last = nullptr;
   if (!Strides.count(Gep))
     Last = SE->getSCEV(Gep->getOperand(InductionOperand));
   else {
@@ -1648,17 +1649,17 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr, bool IfPredic
   // Does this instruction return a value ?
   bool IsVoidRetTy = Instr->getType()->isVoidTy();
 
-  Value *UndefVec = IsVoidRetTy ? 0 :
+  Value *UndefVec = IsVoidRetTy ? nullptr :
     UndefValue::get(VectorType::get(Instr->getType(), VF));
   // Create a new entry in the WidenMap and initialize it to Undef or Null.
   VectorParts &VecResults = WidenMap.splat(Instr, UndefVec);
 
   Instruction *InsertPt = Builder.GetInsertPoint();
   BasicBlock *IfBlock = Builder.GetInsertBlock();
-  BasicBlock *CondBlock = 0;
+  BasicBlock *CondBlock = nullptr;
 
   VectorParts Cond;
-  Loop *VectorLp = 0;
+  Loop *VectorLp = nullptr;
   if (IfPredicateStore) {
     assert(Instr->getParent()->getSinglePredecessor() &&
            "Only support single predecessor blocks");
@@ -1674,7 +1675,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr, bool IfPredic
     for (unsigned Width = 0; Width < VF; ++Width) {
 
       // Start if-block.
-      Value *Cmp = 0;
+      Value *Cmp = nullptr;
       if (IfPredicateStore) {
         Cmp = Builder.CreateExtractElement(Cond[Part], Builder.getInt32(Width));
         Cmp = Builder.CreateICmp(ICmpInst::ICMP_EQ, Cmp, ConstantInt::get(Cmp->getType(), 1));
@@ -1725,21 +1726,21 @@ static Instruction *getFirstInst(Instruction *FirstInst, Value *V,
   if (FirstInst)
     return FirstInst;
   if (Instruction *I = dyn_cast<Instruction>(V))
-    return I->getParent() == Loc->getParent() ? I : 0;
-  return 0;
+    return I->getParent() == Loc->getParent() ? I : nullptr;
+  return nullptr;
 }
 
 std::pair<Instruction *, Instruction *>
 InnerLoopVectorizer::addStrideCheck(Instruction *Loc) {
-  Instruction *tnullptr = 0;
+  Instruction *tnullptr = nullptr;
   if (!Legal->mustCheckStrides())
     return std::pair<Instruction *, Instruction *>(tnullptr, tnullptr);
 
   IRBuilder<> ChkBuilder(Loc);
 
   // Emit checks.
-  Value *Check = 0;
-  Instruction *FirstInst = 0;
+  Value *Check = nullptr;
+  Instruction *FirstInst = nullptr;
   for (SmallPtrSet<Value *, 8>::iterator SI = Legal->strides_begin(),
                                          SE = Legal->strides_end();
        SI != SE; ++SI) {
@@ -1771,7 +1772,7 @@ InnerLoopVectorizer::addRuntimeCheck(Instruction *Loc) {
   LoopVectorizationLegality::RuntimePointerCheck *PtrRtCheck =
   Legal->getRuntimePointerCheck();
 
-  Instruction *tnullptr = 0;
+  Instruction *tnullptr = nullptr;
   if (!PtrRtCheck->Need)
     return std::pair<Instruction *, Instruction *>(tnullptr, tnullptr);
 
@@ -1781,7 +1782,7 @@ InnerLoopVectorizer::addRuntimeCheck(Instruction *Loc) {
 
   LLVMContext &Ctx = Loc->getContext();
   SCEVExpander Exp(*SE, "induction");
-  Instruction *FirstInst = 0;
+  Instruction *FirstInst = nullptr;
 
   for (unsigned i = 0; i < NumPointers; ++i) {
     Value *Ptr = PtrRtCheck->Pointers[i];
@@ -1808,7 +1809,7 @@ InnerLoopVectorizer::addRuntimeCheck(Instruction *Loc) {
 
   IRBuilder<> ChkBuilder(Loc);
   // Our instructions might fold to a constant.
-  Value *MemoryRuntimeCheck = 0;
+  Value *MemoryRuntimeCheck = nullptr;
   for (unsigned i = 0; i < NumPointers; ++i) {
     for (unsigned j = i+1; j < NumPointers; ++j) {
       // No need to check if two readonly pointers intersect.
@@ -2072,7 +2073,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // start value.
 
   // This variable saves the new starting index for the scalar loop.
-  PHINode *ResumeIndex = 0;
+  PHINode *ResumeIndex = nullptr;
   LoopVectorizationLegality::InductionList::iterator I, E;
   LoopVectorizationLegality::InductionList *List = Legal->getInductionVars();
   // Set builder to point to last bypass block.
@@ -2088,9 +2089,9 @@ void InnerLoopVectorizer::createEmptyLoop() {
     // truncated version for the scalar loop.
     PHINode *TruncResumeVal = (OrigPhi == OldInduction) ?
       PHINode::Create(OrigPhi->getType(), 2, "trunc.resume.val",
-                      MiddleBlock->getTerminator()) : 0;
+                      MiddleBlock->getTerminator()) : nullptr;
 
-    Value *EndValue = 0;
+    Value *EndValue = nullptr;
     switch (II.IK) {
     case LoopVectorizationLegality::IK_NoInduction:
       llvm_unreachable("Unknown induction");
@@ -2675,7 +2676,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
       assert(isPowerOf2_32(VF) &&
              "Reduction emission only supported for pow2 vectors!");
       Value *TmpVec = ReducedPartRdx;
-      SmallVector<Constant*, 32> ShuffleMask(VF, 0);
+      SmallVector<Constant*, 32> ShuffleMask(VF, nullptr);
       for (unsigned i = VF; i != 1; i >>= 1) {
         // Move the upper half of the vector to the lower half.
         for (unsigned j = 0; j != i/2; ++j)
@@ -3073,7 +3074,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       VectorParts &A = getVectorValue(it->getOperand(0));
       VectorParts &B = getVectorValue(it->getOperand(1));
       for (unsigned Part = 0; Part < UF; ++Part) {
-        Value *C = 0;
+        Value *C = nullptr;
         if (FCmp)
           C = Builder.CreateFCmp(Cmp->getPredicate(), A[Part], B[Part]);
         else
@@ -3560,14 +3561,14 @@ static Value *stripGetElementPtr(Value *Ptr, ScalarEvolution *SE,
 
 ///\brief Look for a cast use of the passed value.
 static Value *getUniqueCastUse(Value *Ptr, Loop *Lp, Type *Ty) {
-  Value *UniqueCast = 0;
+  Value *UniqueCast = nullptr;
   for (User *U : Ptr->users()) {
     CastInst *CI = dyn_cast<CastInst>(U);
     if (CI && CI->getType() == Ty) {
       if (!UniqueCast)
         UniqueCast = CI;
       else
-        return 0;
+        return nullptr;
     }
   }
   return UniqueCast;
@@ -3580,7 +3581,7 @@ static Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE,
                                    const DataLayout *DL, Loop *Lp) {
   const PointerType *PtrTy = dyn_cast<PointerType>(Ptr->getType());
   if (!PtrTy || PtrTy->isAggregateType())
-    return 0;
+    return nullptr;
 
   // Try to remove a gep instruction to make the pointer (actually index at this
   // point) easier analyzable. If OrigPtr is equal to Ptr we are analzying the
@@ -3600,11 +3601,11 @@ static Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE,
 
   const SCEVAddRecExpr *S = dyn_cast<SCEVAddRecExpr>(V);
   if (!S)
-    return 0;
+    return nullptr;
 
   V = S->getStepRecurrence(*SE);
   if (!V)
-    return 0;
+    return nullptr;
 
   // Strip off the size of access multiplication if we are still analyzing the
   // pointer.
@@ -3612,24 +3613,24 @@ static Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE,
     DL->getTypeAllocSize(PtrTy->getElementType());
     if (const SCEVMulExpr *M = dyn_cast<SCEVMulExpr>(V)) {
       if (M->getOperand(0)->getSCEVType() != scConstant)
-        return 0;
+        return nullptr;
 
       const APInt &APStepVal =
           cast<SCEVConstant>(M->getOperand(0))->getValue()->getValue();
 
       // Huge step value - give up.
       if (APStepVal.getBitWidth() > 64)
-        return 0;
+        return nullptr;
 
       int64_t StepVal = APStepVal.getSExtValue();
       if (PtrAccessSize != StepVal)
-        return 0;
+        return nullptr;
       V = M->getOperand(1);
     }
   }
 
   // Strip off casts.
-  Type *StripedOffRecurrenceCast = 0;
+  Type *StripedOffRecurrenceCast = nullptr;
   if (const SCEVCastExpr *C = dyn_cast<SCEVCastExpr>(V)) {
     StripedOffRecurrenceCast = C->getType();
     V = C->getOperand();
@@ -3638,11 +3639,11 @@ static Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE,
   // Look for the loop invariant symbolic value.
   const SCEVUnknown *U = dyn_cast<SCEVUnknown>(V);
   if (!U)
-    return 0;
+    return nullptr;
 
   Value *Stride = U->getValue();
   if (!Lp->isLoopInvariant(Stride))
-    return 0;
+    return nullptr;
 
   // If we have stripped off the recurrence cast we have to make sure that we
   // return the value that is used in this loop so that we can replace it later.
@@ -3653,7 +3654,7 @@ static Value *getStrideFromPointer(Value *Ptr, ScalarEvolution *SE,
 }
 
 void LoopVectorizationLegality::collectStridedAcccess(Value *MemAccess) {
-  Value *Ptr = 0;
+  Value *Ptr = nullptr;
   if (LoadInst *LI = dyn_cast<LoadInst>(MemAccess))
     Ptr = LI->getPointerOperand();
   else if (StoreInst *SI = dyn_cast<StoreInst>(MemAccess))
@@ -4652,7 +4653,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
   // We only allow for a single reduction value to be used outside the loop.
   // This includes users of the reduction, variables (which form a cycle
   // which ends in the phi node).
-  Instruction *ExitInstruction = 0;
+  Instruction *ExitInstruction = nullptr;
   // Indicates that we found a reduction operation in our scan.
   bool FoundReduxOp = false;
 
@@ -4666,7 +4667,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
   // the number of instruction we saw from the recognized min/max pattern,
   //  to make sure we only see exactly the two instructions.
   unsigned NumCmpSelectPatternInst = 0;
-  ReductionInstDesc ReduxDesc(false, 0);
+  ReductionInstDesc ReduxDesc(false, nullptr);
 
   SmallPtrSet<Instruction *, 8> VisitedInsts;
   SmallVector<Instruction *, 8> Worklist;
@@ -4749,7 +4750,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
         // being used. In this case the user uses the value of the previous
         // iteration, in which case we would loose "VF-1" iterations of the
         // reduction operation if we vectorize.
-        if (ExitInstruction != 0 || Cur == Phi)
+        if (ExitInstruction != nullptr || Cur == Phi)
           return false;
 
         // The instruction used by an outside user must be the last instruction
@@ -4765,7 +4766,7 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
       // Process instructions only once (termination). Each reduction cycle
       // value must only be used once, except by phi nodes and min/max
       // reductions which are represented as a cmp followed by a select.
-      ReductionInstDesc IgnoredVal(false, 0);
+      ReductionInstDesc IgnoredVal(false, nullptr);
       if (VisitedInsts.insert(UI)) {
         if (isa<PHINode>(UI))
           PHIs.push_back(UI);
@@ -4819,8 +4820,8 @@ LoopVectorizationLegality::isMinMaxSelectCmpPattern(Instruction *I,
 
   assert((isa<ICmpInst>(I) || isa<FCmpInst>(I) || isa<SelectInst>(I)) &&
          "Expect a select instruction");
-  Instruction *Cmp = 0;
-  SelectInst *Select = 0;
+  Instruction *Cmp = nullptr;
+  SelectInst *Select = nullptr;
 
   // We must handle the select(cmp()) as a single instruction. Advance to the
   // select.
@@ -5540,7 +5541,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
       Op2VK = TargetTransformInfo::OK_UniformConstantValue;
     else if (isa<ConstantVector>(Op2) || isa<ConstantDataVector>(Op2)) {
       Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
-      if (cast<Constant>(Op2)->getSplatValue() != NULL)
+      if (cast<Constant>(Op2)->getSplatValue() != nullptr)
         Op2VK = TargetTransformInfo::OK_UniformConstantValue;
     }
 
@@ -5754,17 +5755,17 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
   // Does this instruction return a value ?
   bool IsVoidRetTy = Instr->getType()->isVoidTy();
 
-  Value *UndefVec = IsVoidRetTy ? 0 :
+  Value *UndefVec = IsVoidRetTy ? nullptr :
   UndefValue::get(Instr->getType());
   // Create a new entry in the WidenMap and initialize it to Undef or Null.
   VectorParts &VecResults = WidenMap.splat(Instr, UndefVec);
 
   Instruction *InsertPt = Builder.GetInsertPoint();
   BasicBlock *IfBlock = Builder.GetInsertBlock();
-  BasicBlock *CondBlock = 0;
+  BasicBlock *CondBlock = nullptr;
 
   VectorParts Cond;
-  Loop *VectorLp = 0;
+  Loop *VectorLp = nullptr;
   if (IfPredicateStore) {
     assert(Instr->getParent()->getSinglePredecessor() &&
            "Only support single predecessor blocks");
@@ -5779,7 +5780,7 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
     // For each scalar that we create:
 
     // Start an "if (pred) a[i] = ..." block.
-    Value *Cmp = 0;
+    Value *Cmp = nullptr;
     if (IfPredicateStore) {
       if (Cond[Part]->getType()->isVectorTy())
         Cond[Part] =

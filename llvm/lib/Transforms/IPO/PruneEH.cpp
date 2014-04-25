@@ -86,7 +86,7 @@ bool PruneEH::runOnSCC(CallGraphSCC &SCC) {
   for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); 
        (!SCCMightUnwind || !SCCMightReturn) && I != E; ++I) {
     Function *F = (*I)->getFunction();
-    if (F == 0) {
+    if (!F) {
       SCCMightUnwind = true;
       SCCMightReturn = true;
     } else if (F->isDeclaration() || F->mayBeOverridden()) {

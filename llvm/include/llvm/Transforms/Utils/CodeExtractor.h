@@ -66,7 +66,7 @@ namespace llvm {
     /// dominates the rest, prepare a code extractor object for pulling this
     /// sequence out into its new function. When a DominatorTree is also given,
     /// extra checking and transformations are enabled.
-    CodeExtractor(ArrayRef<BasicBlock *> BBs, DominatorTree *DT = 0,
+    CodeExtractor(ArrayRef<BasicBlock *> BBs, DominatorTree *DT = nullptr,
                   bool AggregateArgs = false);
 
     /// \brief Create a code extractor for a loop body.

@@ -118,7 +118,7 @@ public:
 
   void visitInstruction(Instruction &I) {
     if (I.getMetadata(LLVMContext::MD_dbg))
-      I.setMetadata(LLVMContext::MD_dbg, 0);
+      I.setMetadata(LLVMContext::MD_dbg, nullptr);
   }
 
   void run(Module *M) {
@@ -168,11 +168,11 @@ class DIUpdater : public InstVisitor<DIUpdater> {
 
 public:
   DIUpdater(Module &M, StringRef Filename = StringRef(),
-            StringRef Directory = StringRef(), const Module *DisplayM = 0,
-            const ValueToValueMapTy *VMap = 0)
+            StringRef Directory = StringRef(), const Module *DisplayM = nullptr,
+            const ValueToValueMapTy *VMap = nullptr)
       : Builder(M), Layout(&M), LineTable(DisplayM ? DisplayM : &M), VMap(VMap),
-        Finder(), Filename(Filename), Directory(Directory), FileNode(0),
-        LexicalBlockFileNode(0), CUNode(0) {
+        Finder(), Filename(Filename), Directory(Directory), FileNode(nullptr),
+        LexicalBlockFileNode(nullptr), CUNode(nullptr) {
     Finder.processModule(M);
     visit(&M);
   }
@@ -184,7 +184,7 @@ public:
       report_fatal_error("DebugIR pass supports only a signle compile unit per "
                          "Module.");
     createCompileUnit(Finder.compile_unit_count() == 1 ?
-                      (MDNode*)*Finder.compile_units().begin() : 0);
+                      (MDNode*)*Finder.compile_units().begin() : nullptr);
   }
 
   void visitFunction(Function &F) {
@@ -232,7 +232,7 @@ public:
     /// If a ValueToValueMap is provided, use it to get the real instruction as
     /// the line table was generated on a clone of the module on which we are
     /// operating.
-    Value *RealInst = 0;
+    Value *RealInst = nullptr;
     if (VMap)
       RealInst = VMap->lookup(&I);
 
@@ -256,7 +256,7 @@ public:
       NewLoc = DebugLoc::get(Line, Col, Loc.getScope(RealInst->getContext()),
                              Loc.getInlinedAt(RealInst->getContext()));
     else if (MDNode *scope = findScope(&I))
-      NewLoc = DebugLoc::get(Line, Col, scope, 0);
+      NewLoc = DebugLoc::get(Line, Col, scope, nullptr);
     else {
       DEBUG(dbgs() << "WARNING: no valid scope for instruction " << &I
                    << ". no DebugLoc will be present."
@@ -334,7 +334,7 @@ private:
     }
     DEBUG(dbgs() << "unable to find DISubprogram node for function "
                  << F->getName().str() << "\n");
-    return 0;
+    return nullptr;
   }
 
   /// Sets Line to the line number on which V appears and returns true. If a
@@ -366,7 +366,7 @@ private:
     TypeNodeIter i = TypeDescriptors.find(T);
     if (i != TypeDescriptors.end())
       return i->second;
-    return 0;
+    return nullptr;
   }
 
   /// Returns a DebugInfo type from an LLVM type T.
@@ -375,12 +375,12 @@ private:
     if (N)
       return DIDerivedType(N);
     else if (T->isVoidTy())
-      return DIDerivedType(0);
+      return DIDerivedType(nullptr);
     else if (T->isStructTy()) {
       N = Builder.createStructType(
           DIScope(LexicalBlockFileNode), T->getStructName(), DIFile(FileNode),
           0, Layout.getTypeSizeInBits(T), Layout.getABITypeAlignment(T), 0,
-          DIType(0), DIArray(0)); // filled in later
+          DIType(nullptr), DIArray(nullptr)); // filled in later
 
       // N is added to the map (early) so that element search below can find it,
       // so as to avoid infinite recursion for structs that contain pointers to
@@ -535,7 +535,7 @@ void DebugIR::writeDebugBitcode(const Module *M, int *fd) {
     Out.reset(new raw_fd_ostream(*fd, true));
   }
 
-  M->print(*Out, 0);
+  M->print(*Out, nullptr);
   Out->close();
 }
 

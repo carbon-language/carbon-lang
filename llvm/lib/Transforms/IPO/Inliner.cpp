@@ -185,7 +185,7 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
     // canonicalized to be an allocation *of* an array), or allocations whose
     // type is not itself an array (because we're afraid of pessimizing SRoA).
     ArrayType *ATy = dyn_cast<ArrayType>(AI->getAllocatedType());
-    if (ATy == 0 || AI->isArrayAllocation())
+    if (!ATy || AI->isArrayAllocation())
       continue;
     
     // Get the list of all available allocas for this array type.
@@ -241,7 +241,7 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
       AI->eraseFromParent();
       MergedAwayAlloca = true;
       ++NumMergedAllocas;
-      IFI.StaticAllocas[AllocaNo] = 0;
+      IFI.StaticAllocas[AllocaNo] = nullptr;
       break;
     }
 
@@ -412,7 +412,7 @@ static bool InlineHistoryIncludes(Function *F, int InlineHistoryID,
 bool Inliner::runOnSCC(CallGraphSCC &SCC) {
   CallGraph &CG = getAnalysis<CallGraphWrapperPass>().getCallGraph();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  const DataLayout *DL = DLP ? &DLP->getDataLayout() : 0;
+  const DataLayout *DL = DLP ? &DLP->getDataLayout() : nullptr;
   const TargetLibraryInfo *TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 
   SmallPtrSet<Function*, 8> SCCFunctions;
@@ -501,7 +501,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
         ++NumCallsDeleted;
       } else {
         // We can only inline direct calls to non-declarations.
-        if (Callee == 0 || Callee->isDeclaration()) continue;
+        if (!Callee || Callee->isDeclaration()) continue;
       
         // If this call site was obtained by inlining another function, verify
         // that the include path for the function did not include the callee

@@ -233,7 +233,7 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
 
   // Make sure the loop is in canonical form, and there is a single
   // exit block only.
-  if (!L->isLoopSimplifyForm() || L->getUniqueExitBlock() == 0)
+  if (!L->isLoopSimplifyForm() || !L->getUniqueExitBlock())
     return false;
 
   // Use Scalar Evolution to compute the trip count.  This allows more
@@ -241,7 +241,7 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   if (!LPM)
     return false;
   ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>();
-  if (SE == 0)
+  if (!SE)
     return false;
 
   // Only unroll loops with a computable trip count and the trip count needs
@@ -302,7 +302,7 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count, LoopInfo *LI,
   ValueToValueMapTy LVMap;
   Function *F = Header->getParent();
   // These variables are used to update the CFG links in each iteration
-  BasicBlock *CompareBB = 0;
+  BasicBlock *CompareBB = nullptr;
   BasicBlock *LastLoopBB = PH;
   // Get an ordered list of blocks in the loop to help with the ordering of the
   // cloned blocks in the prolog code

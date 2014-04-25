@@ -291,7 +291,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
   BasicBlock *OrigLatch = L->getLoopLatch();
 
   BranchInst *BI = dyn_cast<BranchInst>(OrigHeader->getTerminator());
-  if (BI == 0 || BI->isUnconditional())
+  if (!BI || BI->isUnconditional())
     return false;
 
   // If the loop header is not one of the loop exiting blocks then
@@ -302,7 +302,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
 
   // If the loop latch already contains a branch that leaves the loop then the
   // loop is already rotated.
-  if (OrigLatch == 0)
+  if (!OrigLatch)
     return false;
 
   // Rotate if either the loop latch does *not* exit the loop, or if the loop
@@ -329,7 +329,7 @@ bool LoopRotate::rotateLoop(Loop *L, bool SimplifiedLatch) {
 
   // If the loop could not be converted to canonical form, it must have an
   // indirectbr in it, just give up.
-  if (OrigPreheader == 0)
+  if (!OrigPreheader)
     return false;
 
   // Anything ScalarEvolution may know about this loop or the PHI nodes

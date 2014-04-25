@@ -28,11 +28,12 @@ class FlattenCFGOpt {
   AliasAnalysis *AA;
   /// \brief Use parallel-and or parallel-or to generate conditions for
   /// conditional branches.
-  bool FlattenParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder, Pass *P = 0);
+  bool FlattenParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder,
+                            Pass *P = nullptr);
   /// \brief If \param BB is the merge block of an if-region, attempt to merge
   /// the if-region with an adjacent if-region upstream if two if-regions
   /// contain identical instructions.
-  bool MergeIfRegion(BasicBlock *BB, IRBuilder<> &Builder, Pass *P = 0);
+  bool MergeIfRegion(BasicBlock *BB, IRBuilder<> &Builder, Pass *P = nullptr);
   /// \brief Compare a pair of blocks: \p Block1 and \p Block2, which
   /// are from two if-regions whose entry blocks are \p Head1 and \p
   /// Head2.  \returns true if \p Block1 and \p Block2 contain identical
@@ -127,9 +128,9 @@ bool FlattenCFGOpt::FlattenParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder,
   if (PHI)
     return false; // For simplicity, avoid cases containing PHI nodes.
 
-  BasicBlock *LastCondBlock = NULL;
-  BasicBlock *FirstCondBlock = NULL;
-  BasicBlock *UnCondBlock = NULL;
+  BasicBlock *LastCondBlock = nullptr;
+  BasicBlock *FirstCondBlock = nullptr;
+  BasicBlock *UnCondBlock = nullptr;
   int Idx = -1;
 
   // Check predecessors of \param BB.

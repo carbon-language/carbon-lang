@@ -27,7 +27,7 @@ struct UnifyFunctionExitNodes : public FunctionPass {
 public:
   static char ID; // Pass identification, replacement for typeid
   UnifyFunctionExitNodes() : FunctionPass(ID),
-                             ReturnBlock(0), UnwindBlock(0) {
+                             ReturnBlock(nullptr), UnwindBlock(nullptr) {
     initializeUnifyFunctionExitNodesPass(*PassRegistry::getPassRegistry());
   }
 

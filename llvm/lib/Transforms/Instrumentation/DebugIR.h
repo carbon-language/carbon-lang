@@ -90,7 +90,7 @@ private:
   /// Write M to disk, optionally passing in an fd to an open file which is
   /// closed by this function after writing. If no fd is specified, a new file
   /// is opened, written, and closed.
-  void writeDebugBitcode(const llvm::Module *M, int *fd = 0);
+  void writeDebugBitcode(const llvm::Module *M, int *fd = nullptr);
 };
 
 } // llvm namespace

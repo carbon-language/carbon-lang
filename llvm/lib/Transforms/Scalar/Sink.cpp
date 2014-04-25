@@ -204,7 +204,7 @@ bool Sinking::IsAcceptableTarget(Instruction *Inst,
     // Don't sink instructions into a loop.
     Loop *succ = LI->getLoopFor(SuccToSinkTo);
     Loop *cur = LI->getLoopFor(Inst->getParent());
-    if (succ != 0 && succ != cur)
+    if (succ != nullptr && succ != cur)
       return false;
   }
 
@@ -238,14 +238,14 @@ bool Sinking::SinkInstruction(Instruction *Inst,
 
   // SuccToSinkTo - This is the successor to sink this instruction to, once we
   // decide.
-  BasicBlock *SuccToSinkTo = 0;
+  BasicBlock *SuccToSinkTo = nullptr;
 
   // Instructions can only be sunk if all their uses are in blocks
   // dominated by one of the successors.
   // Look at all the postdominators and see if we can sink it in one.
   DomTreeNode *DTN = DT->getNode(Inst->getParent());
   for (DomTreeNode::iterator I = DTN->begin(), E = DTN->end();
-      I != E && SuccToSinkTo == 0; ++I) {
+      I != E && SuccToSinkTo == nullptr; ++I) {
     BasicBlock *Candidate = (*I)->getBlock();
     if ((*I)->getIDom()->getBlock() == Inst->getParent() &&
         IsAcceptableTarget(Inst, Candidate))
@@ -255,13 +255,13 @@ bool Sinking::SinkInstruction(Instruction *Inst,
   // If no suitable postdominator was found, look at all the successors and
   // decide which one we should sink to, if any.
   for (succ_iterator I = succ_begin(Inst->getParent()),
-      E = succ_end(Inst->getParent()); I != E && SuccToSinkTo == 0; ++I) {
+      E = succ_end(Inst->getParent()); I != E && !SuccToSinkTo; ++I) {
     if (IsAcceptableTarget(Inst, *I))
       SuccToSinkTo = *I;
   }
 
   // If we couldn't find a block to sink to, ignore this instruction.
-  if (SuccToSinkTo == 0)
+  if (!SuccToSinkTo)
     return false;
 
   DEBUG(dbgs() << "Sink" << *Inst << " (";

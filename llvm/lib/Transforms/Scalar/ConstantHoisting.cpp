@@ -118,7 +118,8 @@ class ConstantHoisting : public FunctionPass {
   SmallVector<ConstantInfo, 8> ConstantVec;
 public:
   static char ID; // Pass identification, replacement for typeid
-  ConstantHoisting() : FunctionPass(ID), TTI(0), DT(0), Entry(0) {
+  ConstantHoisting() : FunctionPass(ID), TTI(nullptr), DT(nullptr),
+                       Entry(nullptr) {
     initializeConstantHoistingPass(*PassRegistry::getPassRegistry());
   }
 

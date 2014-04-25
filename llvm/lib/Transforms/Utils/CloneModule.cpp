@@ -47,8 +47,8 @@ Module *llvm::CloneModule(const Module *M, ValueToValueMapTy &VMap) {
     GlobalVariable *GV = new GlobalVariable(*New, 
                                             I->getType()->getElementType(),
                                             I->isConstant(), I->getLinkage(),
-                                            (Constant*) 0, I->getName(),
-                                            (GlobalVariable*) 0,
+                                            (Constant*) nullptr, I->getName(),
+                                            (GlobalVariable*) nullptr,
                                             I->getThreadLocalMode(),
                                             I->getType()->getAddressSpace());
     GV->copyAttributesFrom(I);
@@ -68,7 +68,7 @@ Module *llvm::CloneModule(const Module *M, ValueToValueMapTy &VMap) {
   for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
        I != E; ++I) {
     GlobalAlias *GA = new GlobalAlias(I->getType(), I->getLinkage(),
-                                      I->getName(), NULL, New);
+                                      I->getName(), nullptr, New);
     GA->copyAttributesFrom(I);
     VMap[I] = GA;
   }

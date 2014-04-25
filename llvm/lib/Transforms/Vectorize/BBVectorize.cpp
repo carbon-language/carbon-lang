@@ -207,8 +207,8 @@ namespace {
       DT = &P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
       SE = &P->getAnalysis<ScalarEvolution>();
       DataLayoutPass *DLP = P->getAnalysisIfAvailable<DataLayoutPass>();
-      DL = DLP ? &DLP->getDataLayout() : 0;
-      TTI = IgnoreTargetInfo ? 0 : &P->getAnalysis<TargetTransformInfo>();
+      DL = DLP ? &DLP->getDataLayout() : nullptr;
+      TTI = IgnoreTargetInfo ? nullptr : &P->getAnalysis<TargetTransformInfo>();
     }
 
     typedef std::pair<Value *, Value *> ValuePair;
@@ -284,7 +284,7 @@ namespace {
     bool trackUsesOfI(DenseSet<Value *> &Users,
                       AliasSetTracker &WriteSet, Instruction *I,
                       Instruction *J, bool UpdateUsers = true,
-                      DenseSet<ValuePair> *LoadMoveSetPairs = 0);
+                      DenseSet<ValuePair> *LoadMoveSetPairs = nullptr);
 
   void computePairsConnectedTo(
              DenseMap<Value *, std::vector<Value *> > &CandidatePairs,
@@ -297,8 +297,8 @@ namespace {
     bool pairsConflict(ValuePair P, ValuePair Q,
              DenseSet<ValuePair> &PairableInstUsers,
              DenseMap<ValuePair, std::vector<ValuePair> >
-               *PairableInstUserMap = 0,
-             DenseSet<VPPair> *PairableInstUserPairSet = 0);
+               *PairableInstUserMap = nullptr,
+             DenseSet<VPPair> *PairableInstUserPairSet = nullptr);
 
     bool pairWillFormCycle(ValuePair P,
              DenseMap<ValuePair, std::vector<ValuePair> > &PairableInstUsers,
@@ -443,8 +443,8 @@ namespace {
       DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
       SE = &getAnalysis<ScalarEvolution>();
       DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-      DL = DLP ? &DLP->getDataLayout() : 0;
-      TTI = IgnoreTargetInfo ? 0 : &getAnalysis<TargetTransformInfo>();
+      DL = DLP ? &DLP->getDataLayout() : nullptr;
+      TTI = IgnoreTargetInfo ? nullptr : &getAnalysis<TargetTransformInfo>();
 
       return vectorizeBB(BB);
     }
@@ -896,7 +896,7 @@ namespace {
     }
 
     // We can't vectorize memory operations without target data
-    if (DL == 0 && IsSimpleLoadStore)
+    if (!DL && IsSimpleLoadStore)
       return false;
 
     Type *T1, *T2;
@@ -933,7 +933,7 @@ namespace {
     if (T2->isX86_FP80Ty() || T2->isPPC_FP128Ty() || T2->isX86_MMXTy())
       return false;
 
-    if ((!Config.VectorizePointers || DL == 0) &&
+    if ((!Config.VectorizePointers || !DL) &&
         (T1->getScalarType()->isPointerTy() ||
          T2->getScalarType()->isPointerTy()))
       return false;
@@ -1067,7 +1067,7 @@ namespace {
               (isa<ConstantVector>(JOp) || isa<ConstantDataVector>(JOp))) {
             Op2VK = TargetTransformInfo::OK_NonUniformConstantValue;
             Constant *SplatValue = cast<Constant>(IOp)->getSplatValue();
-            if (SplatValue != NULL &&
+            if (SplatValue != nullptr &&
                 SplatValue == cast<Constant>(JOp)->getSplatValue())
               Op2VK = TargetTransformInfo::OK_UniformConstantValue;
           }
@@ -1685,8 +1685,9 @@ namespace {
               C2->first.second == C->first.first ||
               C2->first.second == C->first.second ||
               pairsConflict(C2->first, C->first, PairableInstUsers,
-                            UseCycleCheck ? &PairableInstUserMap : 0,
-                            UseCycleCheck ? &PairableInstUserPairSet : 0)) {
+                            UseCycleCheck ? &PairableInstUserMap : nullptr,
+                            UseCycleCheck ? &PairableInstUserPairSet
+                                          : nullptr)) {
             if (C2->second >= C->second) {
               CanAdd = false;
               break;
@@ -1706,8 +1707,9 @@ namespace {
               T->second == C->first.first ||
               T->second == C->first.second ||
               pairsConflict(*T, C->first, PairableInstUsers,
-                            UseCycleCheck ? &PairableInstUserMap : 0,
-                            UseCycleCheck ? &PairableInstUserPairSet : 0)) {
+                            UseCycleCheck ? &PairableInstUserMap : nullptr,
+                            UseCycleCheck ? &PairableInstUserPairSet
+                                          : nullptr)) {
             CanAdd = false;
             break;
           }
@@ -1724,8 +1726,9 @@ namespace {
               C2->first.second == C->first.first ||
               C2->first.second == C->first.second ||
               pairsConflict(C2->first, C->first, PairableInstUsers,
-                            UseCycleCheck ? &PairableInstUserMap : 0,
-                            UseCycleCheck ? &PairableInstUserPairSet : 0)) {
+                            UseCycleCheck ? &PairableInstUserMap : nullptr,
+                            UseCycleCheck ? &PairableInstUserPairSet
+                                          : nullptr)) {
             CanAdd = false;
             break;
           }
@@ -1740,8 +1743,9 @@ namespace {
               ChosenPairs.begin(), E2 = ChosenPairs.end();
              C2 != E2; ++C2) {
           if (pairsConflict(*C2, C->first, PairableInstUsers,
-                            UseCycleCheck ? &PairableInstUserMap : 0,
-                            UseCycleCheck ? &PairableInstUserPairSet : 0)) {
+                            UseCycleCheck ? &PairableInstUserMap : nullptr,
+                            UseCycleCheck ? &PairableInstUserPairSet
+                                          : nullptr)) {
             CanAdd = false;
             break;
           }
@@ -1822,8 +1826,8 @@ namespace {
       for (DenseMap<Value *, Value *>::iterator C = ChosenPairs.begin(),
            E = ChosenPairs.end(); C != E; ++C) {
         if (pairsConflict(*C, IJ, PairableInstUsers,
-                          UseCycleCheck ? &PairableInstUserMap : 0,
-                          UseCycleCheck ? &PairableInstUserPairSet : 0)) {
+                          UseCycleCheck ? &PairableInstUserMap : nullptr,
+                          UseCycleCheck ? &PairableInstUserPairSet : nullptr)) {
           DoesConflict = true;
           break;
         }
@@ -2393,7 +2397,7 @@ namespace {
         } while ((LIENext =
                    dyn_cast<InsertElementInst>(LIENext->getOperand(0))));
 
-        LIENext = 0;
+        LIENext = nullptr;
         Value *LIEPrev = UndefValue::get(ArgTypeH);
         for (unsigned i = 0; i < numElemL; ++i) {
           if (isa<UndefValue>(VectElemts[i])) continue;
@@ -2461,14 +2465,14 @@ namespace {
     if ((LEE || LSV) && (HEE || HSV) && !IsSizeChangeShuffle) {
       // We can have at most two unique vector inputs.
       bool CanUseInputs = true;
-      Value *I1, *I2 = 0;
+      Value *I1, *I2 = nullptr;
       if (LEE) {
         I1 = LEE->getOperand(0);
       } else {
         I1 = LSV->getOperand(0);
         I2 = LSV->getOperand(1);
         if (I2 == I1 || isa<UndefValue>(I2))
-          I2 = 0;
+          I2 = nullptr;
       }
   
       if (HEE) {
@@ -2973,7 +2977,7 @@ namespace {
 
       switch (Kind) {
       default:
-        K->setMetadata(Kind, 0); // Remove unknown metadata
+        K->setMetadata(Kind, nullptr); // Remove unknown metadata
         break;
       case LLVMContext::MD_tbaa:
         K->setMetadata(Kind, MDNode::getMostGenericTBAA(JMD, KMD));
@@ -3144,7 +3148,7 @@ namespace {
 
       // Instruction insertion point:
       Instruction *InsertionPt = K;
-      Instruction *K1 = 0, *K2 = 0;
+      Instruction *K1 = nullptr, *K2 = nullptr;
       replaceOutputsOfPair(Context, L, H, K, InsertionPt, K1, K2);
 
       // The use dag of the first original instruction must be moved to after

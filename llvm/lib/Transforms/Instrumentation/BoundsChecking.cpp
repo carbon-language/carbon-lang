@@ -62,7 +62,7 @@ namespace {
     BasicBlock *TrapBB;
 
     BasicBlock *getTrapBB();
-    void emitBranchToTrap(Value *Cmp = 0);
+    void emitBranchToTrap(Value *Cmp = nullptr);
     bool instrument(Value *Ptr, Value *Val);
  };
 }
@@ -104,7 +104,7 @@ void BoundsChecking::emitBranchToTrap(Value *Cmp) {
     if (!C->getZExtValue())
       return;
     else
-      Cmp = 0; // unconditional branch
+      Cmp = nullptr; // unconditional branch
   }
   ++ChecksAdded;
 
@@ -168,7 +168,7 @@ bool BoundsChecking::runOnFunction(Function &F) {
   DL = &getAnalysis<DataLayoutPass>().getDataLayout();
   TLI = &getAnalysis<TargetLibraryInfo>();
 
-  TrapBB = 0;
+  TrapBB = nullptr;
   BuilderTy TheBuilder(F.getContext(), TargetFolder(DL));
   Builder = &TheBuilder;
   ObjectSizeOffsetEvaluator TheObjSizeEval(DL, TLI, F.getContext(),

@@ -47,7 +47,7 @@ STATISTIC(NumAnnotated, "Number of attributes added to library functions");
 namespace {
   struct FunctionAttrs : public CallGraphSCCPass {
     static char ID; // Pass identification, replacement for typeid
-    FunctionAttrs() : CallGraphSCCPass(ID), AA(0) {
+    FunctionAttrs() : CallGraphSCCPass(ID), AA(nullptr) {
       initializeFunctionAttrsPass(*PassRegistry::getPassRegistry());
     }
 
@@ -161,7 +161,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
   for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
     Function *F = (*I)->getFunction();
 
-    if (F == 0)
+    if (!F)
       // External node - may write memory.  Just give up.
       return false;
 
@@ -320,7 +320,7 @@ namespace {
     ArgumentGraphNode SyntheticRoot;
 
   public:
-    ArgumentGraph() { SyntheticRoot.Definition = 0; }
+    ArgumentGraph() { SyntheticRoot.Definition = nullptr; }
 
     typedef SmallVectorImpl<ArgumentGraphNode*>::iterator iterator;
 
@@ -522,7 +522,7 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
   for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
     Function *F = (*I)->getFunction();
 
-    if (F == 0)
+    if (!F)
       // External node - only a problem for arguments that we pass to it.
       continue;
 
@@ -776,7 +776,7 @@ bool FunctionAttrs::AddNoAliasAttrs(const CallGraphSCC &SCC) {
   for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
     Function *F = (*I)->getFunction();
 
-    if (F == 0)
+    if (!F)
       // External node - skip it;
       return false;
 
@@ -1669,7 +1669,7 @@ bool FunctionAttrs::annotateLibraryCalls(const CallGraphSCC &SCC) {
   for (CallGraphSCC::iterator I = SCC.begin(), E = SCC.end(); I != E; ++I) {
     Function *F = (*I)->getFunction();
 
-    if (F != 0 && F->isDeclaration())
+    if (F && F->isDeclaration())
       MadeChange |= inferPrototypeAttributes(*F);
   }
 

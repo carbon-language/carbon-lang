@@ -86,7 +86,7 @@ static void placeSplitBlockCarefully(BasicBlock *NewBB,
 
   // Figure out *which* outside block to put this after.  Prefer an outside
   // block that neighbors a BB actually in the loop.
-  BasicBlock *FoundBB = 0;
+  BasicBlock *FoundBB = nullptr;
   for (unsigned i = 0, e = SplitPreds.size(); i != e; ++i) {
     Function::iterator BBI = SplitPreds[i];
     if (++BBI != NewBB->getParent()->end() &&
@@ -120,7 +120,7 @@ BasicBlock *llvm::InsertPreheaderForLoop(Loop *L, Pass *PP) {
       // If the loop is branched to from an indirect branch, we won't
       // be able to fully transform the loop, because it prohibits
       // edge splitting.
-      if (isa<IndirectBrInst>(P->getTerminator())) return 0;
+      if (isa<IndirectBrInst>(P->getTerminator())) return nullptr;
 
       // Keep track of it.
       OutsideBlocks.push_back(P);
@@ -161,14 +161,14 @@ static BasicBlock *rewriteLoopExitBlock(Loop *L, BasicBlock *Exit, Pass *PP) {
     BasicBlock *P = *I;
     if (L->contains(P)) {
       // Don't do this if the loop is exited via an indirect branch.
-      if (isa<IndirectBrInst>(P->getTerminator())) return 0;
+      if (isa<IndirectBrInst>(P->getTerminator())) return nullptr;
 
       LoopBlocks.push_back(P);
     }
   }
 
   assert(!LoopBlocks.empty() && "No edges coming in from outside the loop?");
-  BasicBlock *NewExitBB = 0;
+  BasicBlock *NewExitBB = nullptr;
 
   if (Exit->isLandingPad()) {
     SmallVector<BasicBlock*, 2> NewBBs;
@@ -212,7 +212,7 @@ static PHINode *findPHIToPartitionLoops(Loop *L, AliasAnalysis *AA,
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
-    if (Value *V = SimplifyInstruction(PN, 0, 0, DT)) {
+    if (Value *V = SimplifyInstruction(PN, nullptr, nullptr, DT)) {
       // This is a degenerate PHI already, don't modify it!
       PN->replaceAllUsesWith(V);
       if (AA) AA->deleteValue(PN);
@@ -227,7 +227,7 @@ static PHINode *findPHIToPartitionLoops(Loop *L, AliasAnalysis *AA,
         // We found something tasty to remove.
         return PN;
   }
-  return 0;
+  return nullptr;
 }
 
 /// \brief If this loop has multiple backedges, try to pull one of them out into
@@ -254,14 +254,14 @@ static Loop *separateNestedLoop(Loop *L, BasicBlock *Preheader,
                                 LoopInfo *LI, ScalarEvolution *SE, Pass *PP) {
   // Don't try to separate loops without a preheader.
   if (!Preheader)
-    return 0;
+    return nullptr;
 
   // The header is not a landing pad; preheader insertion should ensure this.
   assert(!L->getHeader()->isLandingPad() &&
          "Can't insert backedge to landing pad");
 
   PHINode *PN = findPHIToPartitionLoops(L, AA, DT);
-  if (PN == 0) return 0;  // No known way to partition.
+  if (!PN) return nullptr;  // No known way to partition.
 
   // Pull out all predecessors that have varying values in the loop.  This
   // handles the case when a PHI node has multiple instances of itself as
@@ -272,7 +272,7 @@ static Loop *separateNestedLoop(Loop *L, BasicBlock *Preheader,
         !L->contains(PN->getIncomingBlock(i))) {
       // We can't split indirectbr edges.
       if (isa<IndirectBrInst>(PN->getIncomingBlock(i)->getTerminator()))
-        return 0;
+        return nullptr;
       OuterLoopPreds.push_back(PN->getIncomingBlock(i));
     }
   }
@@ -363,7 +363,7 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
 
   // Unique backedge insertion currently depends on having a preheader.
   if (!Preheader)
-    return 0;
+    return nullptr;
 
   // The header is not a landing pad; preheader insertion should ensure this.
   assert(!Header->isLandingPad() && "Can't insert backedge to landing pad");
@@ -375,7 +375,7 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
 
     // Indirectbr edges cannot be split, so we must fail if we find one.
     if (isa<IndirectBrInst>(P->getTerminator()))
-      return 0;
+      return nullptr;
 
     if (P != Preheader) BackedgeBlocks.push_back(P);
   }
@@ -404,7 +404,7 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
     // preheader over to the new PHI node.
     unsigned PreheaderIdx = ~0U;
     bool HasUniqueIncomingValue = true;
-    Value *UniqueValue = 0;
+    Value *UniqueValue = nullptr;
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
       BasicBlock *IBB = PN->getIncomingBlock(i);
       Value *IV = PN->getIncomingValue(i);
@@ -413,7 +413,7 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
       } else {
         NewPN->addIncoming(IV, IBB);
         if (HasUniqueIncomingValue) {
-          if (UniqueValue == 0)
+          if (!UniqueValue)
             UniqueValue = IV;
           else if (UniqueValue != IV)
             HasUniqueIncomingValue = false;
@@ -610,7 +610,7 @@ ReprocessLoop:
   PHINode *PN;
   for (BasicBlock::iterator I = L->getHeader()->begin();
        (PN = dyn_cast<PHINode>(I++)); )
-    if (Value *V = SimplifyInstruction(PN, 0, 0, DT)) {
+    if (Value *V = SimplifyInstruction(PN, nullptr, nullptr, DT)) {
       if (AA) AA->deleteValue(PN);
       if (SE) SE->forgetValue(PN);
       PN->replaceAllUsesWith(V);
@@ -654,7 +654,8 @@ ReprocessLoop:
         if (Inst == CI)
           continue;
         if (!L->makeLoopInvariant(Inst, AnyInvariant,
-                                 Preheader ? Preheader->getTerminator() : 0)) {
+                                  Preheader ? Preheader->getTerminator()
+                                            : nullptr)) {
           AllInvariant = false;
           break;
         }

@@ -36,7 +36,7 @@ Value *llvm::CastToCStr(Value *V, IRBuilder<> &B) {
 Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout *TD,
                         const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::strlen))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
@@ -65,7 +65,7 @@ Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout *TD,
 Value *llvm::EmitStrNLen(Value *Ptr, Value *MaxLen, IRBuilder<> &B,
                          const DataLayout *TD, const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::strnlen))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
@@ -95,7 +95,7 @@ Value *llvm::EmitStrNLen(Value *Ptr, Value *MaxLen, IRBuilder<> &B,
 Value *llvm::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
                         const DataLayout *TD, const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::strchr))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   Attribute::AttrKind AVs[2] = { Attribute::ReadOnly, Attribute::NoUnwind };
@@ -121,7 +121,7 @@ Value *llvm::EmitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len,
                          IRBuilder<> &B, const DataLayout *TD,
                          const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::strncmp))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[3];
@@ -154,7 +154,7 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
                         const DataLayout *TD, const TargetLibraryInfo *TLI,
                         StringRef Name) {
   if (!TLI->has(LibFunc::strcpy))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
@@ -178,7 +178,7 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
                          IRBuilder<> &B, const DataLayout *TD,
                          const TargetLibraryInfo *TLI, StringRef Name) {
   if (!TLI->has(LibFunc::strncpy))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
@@ -205,7 +205,7 @@ Value *llvm::EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
                            IRBuilder<> &B, const DataLayout *TD,
                            const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::memcpy_chk))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS;
@@ -233,7 +233,7 @@ Value *llvm::EmitMemChr(Value *Ptr, Value *Val,
                         Value *Len, IRBuilder<> &B, const DataLayout *TD,
                         const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::memchr))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS;
@@ -261,7 +261,7 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
                         Value *Len, IRBuilder<> &B, const DataLayout *TD,
                         const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::memcmp))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[3];
@@ -348,7 +348,7 @@ Value *llvm::EmitBinaryFloatFnCall(Value *Op1, Value *Op2, StringRef Name,
 Value *llvm::EmitPutChar(Value *Char, IRBuilder<> &B, const DataLayout *TD,
                          const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::putchar))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   Value *PutChar = M->getOrInsertFunction("putchar", B.getInt32Ty(),
@@ -370,7 +370,7 @@ Value *llvm::EmitPutChar(Value *Char, IRBuilder<> &B, const DataLayout *TD,
 Value *llvm::EmitPutS(Value *Str, IRBuilder<> &B, const DataLayout *TD,
                       const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::puts))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
@@ -394,7 +394,7 @@ Value *llvm::EmitPutS(Value *Str, IRBuilder<> &B, const DataLayout *TD,
 Value *llvm::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B,
                        const DataLayout *TD, const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::fputc))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[2];
@@ -427,7 +427,7 @@ Value *llvm::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B,
 Value *llvm::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B,
                        const DataLayout *TD, const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::fputs))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[3];
@@ -460,7 +460,7 @@ Value *llvm::EmitFWrite(Value *Ptr, Value *Size, Value *File,
                         IRBuilder<> &B, const DataLayout *TD,
                         const TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::fwrite))
-    return 0;
+    return nullptr;
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeSet AS[3];

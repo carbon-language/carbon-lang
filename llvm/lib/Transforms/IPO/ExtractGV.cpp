@@ -95,7 +95,7 @@ namespace {
 	makeVisible(*I, Delete);
 
         if (Delete)
-          I->setInitializer(0);
+          I->setInitializer(nullptr);
       }
 
       // Visit the Functions.
@@ -134,7 +134,7 @@ namespace {
           } else {
             Declaration =
               new GlobalVariable(M, Ty, false, GlobalValue::ExternalLinkage,
-                                 0, CurI->getName());
+                                 nullptr, CurI->getName());
 
           }
           CurI->replaceAllUsesWith(Declaration);

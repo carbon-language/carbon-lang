@@ -117,7 +117,7 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
     // If this is isn't our memcpy/memmove, reject it as something we can't
     // handle.
     MemTransferInst *MI = dyn_cast<MemTransferInst>(I);
-    if (MI == 0)
+    if (!MI)
       return false;
 
     // If the transfer is using the alloca as a source of the transfer, then
@@ -153,10 +153,10 @@ isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
 static MemTransferInst *
 isOnlyCopiedFromConstantGlobal(AllocaInst *AI,
                                SmallVectorImpl<Instruction *> &ToDelete) {
-  MemTransferInst *TheCopy = 0;
+  MemTransferInst *TheCopy = nullptr;
   if (isOnlyCopiedFromConstantGlobal(AI, TheCopy, ToDelete))
     return TheCopy;
-  return 0;
+  return nullptr;
 }
 
 Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
@@ -177,7 +177,7 @@ Instruction *InstCombiner::visitAllocaInst(AllocaInst &AI) {
     if (const ConstantInt *C = dyn_cast<ConstantInt>(AI.getArraySize())) {
       Type *NewTy =
         ArrayType::get(AI.getAllocatedType(), C->getZExtValue());
-      AllocaInst *New = Builder->CreateAlloca(NewTy, 0, AI.getName());
+      AllocaInst *New = Builder->CreateAlloca(NewTy, nullptr, AI.getName());
       New->setAlignment(AI.getAlignment());
 
       // Scan to the end of the allocation instructions, to skip over a block of
@@ -300,7 +300,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
 
     // If the address spaces don't match, don't eliminate the cast.
     if (DestTy->getAddressSpace() != SrcTy->getAddressSpace())
-      return 0;
+      return nullptr;
 
     Type *SrcPTy = SrcTy->getElementType();
 
@@ -351,7 +351,7 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
       }
     }
   }
-  return 0;
+  return nullptr;
 }
 
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
@@ -378,7 +378,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
   // None of the following transforms are legal for volatile/atomic loads.
   // FIXME: Some of it is okay for atomic loads; needs refactoring.
-  if (!LI.isSimple()) return 0;
+  if (!LI.isSimple()) return nullptr;
 
   // Do really simple store-to-load forwarding and load CSE, to catch cases
   // where there are several consecutive memory accesses to the same location,
@@ -460,7 +460,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         }
     }
   }
-  return 0;
+  return nullptr;
 }
 
 /// InstCombineStoreToCast - Fold store V, (cast P) -> store (cast V), P
@@ -472,12 +472,12 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
 
   Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
   PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType());
-  if (SrcTy == 0) return 0;
+  if (!SrcTy) return nullptr;
 
   Type *SrcPTy = SrcTy->getElementType();
 
   if (!DestPTy->isIntegerTy() && !DestPTy->isPointerTy())
-    return 0;
+    return nullptr;
 
   /// NewGEPIndices - If SrcPTy is an aggregate type, we can emit a "noop gep"
   /// to its first element.  This allows us to handle things like:
@@ -511,20 +511,20 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   }
 
   if (!SrcPTy->isIntegerTy() && !SrcPTy->isPointerTy())
-    return 0;
+    return nullptr;
 
   // If the pointers point into different address spaces don't do the
   // transformation.
   if (SrcTy->getAddressSpace() !=
       cast<PointerType>(CI->getType())->getAddressSpace())
-    return 0;
+    return nullptr;
 
   // If the pointers point to values of different sizes don't do the
   // transformation.
   if (!IC.getDataLayout() ||
       IC.getDataLayout()->getTypeSizeInBits(SrcPTy) !=
       IC.getDataLayout()->getTypeSizeInBits(DestPTy))
-    return 0;
+    return nullptr;
 
   // If the pointers point to pointers to different address spaces don't do the
   // transformation. It is not safe to introduce an addrspacecast instruction in
@@ -532,7 +532,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   // cast.
   if (SrcPTy->isPointerTy() && DestPTy->isPointerTy() &&
       SrcPTy->getPointerAddressSpace() != DestPTy->getPointerAddressSpace())
-    return 0;
+    return nullptr;
 
   // Okay, we are casting from one integer or pointer type to another of
   // the same size.  Instead of casting the pointer before
@@ -612,7 +612,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
 
   // Don't hack volatile/atomic stores.
   // FIXME: Some bits are legal for atomic stores; needs refactoring.
-  if (!SI.isSimple()) return 0;
+  if (!SI.isSimple()) return nullptr;
 
   // If the RHS is an alloca with a single use, zapify the store, making the
   // alloca dead.
@@ -679,7 +679,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
       if (Instruction *U = dyn_cast<Instruction>(Val))
         Worklist.Add(U);  // Dropped a use.
     }
-    return 0;  // Do not modify these!
+    return nullptr;  // Do not modify these!
   }
 
   // store undef, Ptr -> noop
@@ -708,9 +708,9 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
   if (BranchInst *BI = dyn_cast<BranchInst>(BBI))
     if (BI->isUnconditional())
       if (SimplifyStoreAtEndOfBlock(SI))
-        return 0;  // xform done!
+        return nullptr;  // xform done!
 
-  return 0;
+  return nullptr;
 }
 
 /// SimplifyStoreAtEndOfBlock - Turn things like:
@@ -733,7 +733,7 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   // the other predecessor.
   pred_iterator PI = pred_begin(DestBB);
   BasicBlock *P = *PI;
-  BasicBlock *OtherBB = 0;
+  BasicBlock *OtherBB = nullptr;
 
   if (P != StoreBB)
     OtherBB = P;
@@ -763,7 +763,7 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
 
   // If the other block ends in an unconditional branch, check for the 'if then
   // else' case.  there is an instruction before the branch.
-  StoreInst *OtherStore = 0;
+  StoreInst *OtherStore = nullptr;
   if (OtherBr->isUnconditional()) {
     --BBI;
     // Skip over debugging info.

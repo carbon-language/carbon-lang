@@ -84,7 +84,7 @@ Value *llvm::getICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS,
     case 7: // True.
       return ConstantInt::get(CmpInst::makeCmpResultType(LHS->getType()), 1);
   }
-  return NULL;
+  return nullptr;
 }
 
 /// PredicatesFoldable - Return true if both predicates match sign or if at

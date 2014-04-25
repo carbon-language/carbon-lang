@@ -56,14 +56,14 @@ namespace {
 
   public:
     SimplifyIndvar(Loop *Loop, ScalarEvolution *SE, LPPassManager *LPM,
-                   SmallVectorImpl<WeakVH> &Dead, IVUsers *IVU = NULL) :
+                   SmallVectorImpl<WeakVH> &Dead, IVUsers *IVU = nullptr) :
       L(Loop),
       LI(LPM->getAnalysisIfAvailable<LoopInfo>()),
       SE(SE),
       DeadInsts(Dead),
       Changed(false) {
       DataLayoutPass *DLP = LPM->getAnalysisIfAvailable<DataLayoutPass>();
-      DL = DLP ? &DLP->getDataLayout() : 0;
+      DL = DLP ? &DLP->getDataLayout() : nullptr;
       assert(LI && "IV simplification requires LoopInfo");
     }
 
@@ -72,7 +72,7 @@ namespace {
     /// Iteratively perform simplification on a worklist of users of the
     /// specified induction variable. This is the top-level driver that applies
     /// all simplicitions to users of an IV.
-    void simplifyUsers(PHINode *CurrIV, IVVisitor *V = NULL);
+    void simplifyUsers(PHINode *CurrIV, IVVisitor *V = nullptr);
 
     Value *foldIVUser(Instruction *UseInst, Instruction *IVOperand);
 
@@ -95,25 +95,25 @@ namespace {
 /// be folded (in case more folding opportunities have been exposed).
 /// Otherwise return null.
 Value *SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) {
-  Value *IVSrc = 0;
+  Value *IVSrc = nullptr;
   unsigned OperIdx = 0;
-  const SCEV *FoldedExpr = 0;
+  const SCEV *FoldedExpr = nullptr;
   switch (UseInst->getOpcode()) {
   default:
-    return 0;
+    return nullptr;
   case Instruction::UDiv:
   case Instruction::LShr:
     // We're only interested in the case where we know something about
     // the numerator and have a constant denominator.
     if (IVOperand != UseInst->getOperand(OperIdx) ||
         !isa<ConstantInt>(UseInst->getOperand(1)))
-      return 0;
+      return nullptr;
 
     // Attempt to fold a binary operator with constant operand.
     // e.g. ((I + 1) >> 2) => I >> 2
     if (!isa<BinaryOperator>(IVOperand)
         || !isa<ConstantInt>(IVOperand->getOperand(1)))
-      return 0;
+      return nullptr;
 
     IVSrc = IVOperand->getOperand(0);
     // IVSrc must be the (SCEVable) IV, since the other operand is const.
@@ -124,7 +124,7 @@ Value *SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) 
       // Get a constant for the divisor. See createSCEV.
       uint32_t BitWidth = cast<IntegerType>(UseInst->getType())->getBitWidth();
       if (D->getValue().uge(BitWidth))
-        return 0;
+        return nullptr;
 
       D = ConstantInt::get(UseInst->getContext(),
                            APInt::getOneBitSet(BitWidth, D->getZExtValue()));
@@ -133,11 +133,11 @@ Value *SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) 
   }
   // We have something that might fold it's operand. Compare SCEVs.
   if (!SE->isSCEVable(UseInst->getType()))
-    return 0;
+    return nullptr;
 
   // Bypass the operand if SCEV can prove it has no effect.
   if (SE->getSCEV(UseInst) != FoldedExpr)
-    return 0;
+    return nullptr;
 
   DEBUG(dbgs() << "INDVARS: Eliminated IV operand: " << *IVOperand
         << " -> " << *UseInst << '\n');
@@ -283,8 +283,8 @@ Instruction *SimplifyIndvar::splitOverflowIntrinsic(Instruction *IVUser,
     return IVUser;
 
   // Find a branch guarded by the overflow check.
-  BranchInst *Branch = 0;
-  Instruction *AddVal = 0;
+  BranchInst *Branch = nullptr;
+  Instruction *AddVal = nullptr;
   for (User *U : II->users()) {
     if (ExtractValueInst *ExtractInst = dyn_cast<ExtractValueInst>(U)) {
       if (ExtractInst->getNumIndices() != 1)

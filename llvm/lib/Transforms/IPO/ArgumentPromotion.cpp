@@ -124,14 +124,14 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   Function *F = CGN->getFunction();
 
   // Make sure that it is local to this module.
-  if (!F || !F->hasLocalLinkage()) return 0;
+  if (!F || !F->hasLocalLinkage()) return nullptr;
 
   // First check: see if there are any pointer arguments!  If not, quick exit.
   SmallVector<Argument*, 16> PointerArgs;
   for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
     if (I->getType()->isPointerTy())
       PointerArgs.push_back(I);
-  if (PointerArgs.empty()) return 0;
+  if (PointerArgs.empty()) return nullptr;
 
   // Second check: make sure that all callers are direct callers.  We can't
   // transform functions that have indirect callers.  Also see if the function
@@ -140,7 +140,7 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   for (Use &U : F->uses()) {
     CallSite CS(U.getUser());
     // Must be a direct call.
-    if (CS.getInstruction() == 0 || !CS.isCallee(&U)) return 0;
+    if (CS.getInstruction() == nullptr || !CS.isCallee(&U)) return nullptr;
     
     if (CS.getInstruction()->getParent()->getParent() == F)
       isSelfRecursive = true;
@@ -208,7 +208,7 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
 
   // No promotable pointer arguments.
   if (ArgsToPromote.empty() && ByValArgsToTransform.empty()) 
-    return 0;
+    return nullptr;
 
   return DoPromotion(F, ArgsToPromote, ByValArgsToTransform);
 }
@@ -661,7 +661,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
         Type *AgTy = cast<PointerType>(I->getType())->getElementType();
         StructType *STy = cast<StructType>(AgTy);
         Value *Idxs[2] = {
-              ConstantInt::get(Type::getInt32Ty(F->getContext()), 0), 0 };
+              ConstantInt::get(Type::getInt32Ty(F->getContext()), 0), nullptr };
         for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
           Idxs[1] = ConstantInt::get(Type::getInt32Ty(F->getContext()), i);
           Value *Idx = GetElementPtrInst::Create(*AI, Idxs,
@@ -789,10 +789,10 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
       // Just add all the struct element types.
       Type *AgTy = cast<PointerType>(I->getType())->getElementType();
-      Value *TheAlloca = new AllocaInst(AgTy, 0, "", InsertPt);
+      Value *TheAlloca = new AllocaInst(AgTy, nullptr, "", InsertPt);
       StructType *STy = cast<StructType>(AgTy);
       Value *Idxs[2] = {
-            ConstantInt::get(Type::getInt32Ty(F->getContext()), 0), 0 };
+            ConstantInt::get(Type::getInt32Ty(F->getContext()), 0), nullptr };
 
       for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
         Idxs[1] = ConstantInt::get(Type::getInt32Ty(F->getContext()), i);

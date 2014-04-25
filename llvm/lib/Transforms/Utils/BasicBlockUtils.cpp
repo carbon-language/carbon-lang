@@ -68,8 +68,8 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
 void llvm::FoldSingleEntryPHINodes(BasicBlock *BB, Pass *P) {
   if (!isa<PHINode>(BB->begin())) return;
 
-  AliasAnalysis *AA = 0;
-  MemoryDependenceAnalysis *MemDep = 0;
+  AliasAnalysis *AA = nullptr;
+  MemoryDependenceAnalysis *MemDep = nullptr;
   if (P) {
     AA = P->getAnalysisIfAvailable<AliasAnalysis>();
     MemDep = P->getAnalysisIfAvailable<MemoryDependenceAnalysis>();
@@ -130,7 +130,7 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
   BasicBlock *OnlySucc = BB;
   for (; SI != SE; ++SI)
     if (*SI != OnlySucc) {
-      OnlySucc = 0;     // There are multiple distinct successors!
+      OnlySucc = nullptr;     // There are multiple distinct successors!
       break;
     }
 
@@ -254,7 +254,7 @@ BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
     // If the successor only has a single pred, split the top of the successor
     // block.
     assert(SP == BB && "CFG broken");
-    SP = NULL;
+    SP = nullptr;
     return SplitBlock(Succ, Succ->begin(), P);
   }
 
@@ -310,7 +310,7 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
   if (!P) return;
 
   LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
-  Loop *L = LI ? LI->getLoopFor(OldBB) : 0;
+  Loop *L = LI ? LI->getLoopFor(OldBB) : nullptr;
 
   // If we need to preserve loop analyses, collect some information about how
   // this split will affect loops.
@@ -351,7 +351,7 @@ static void UpdateAnalysisInformation(BasicBlock *OldBB, BasicBlock *NewBB,
     // loop). To find this, examine each of the predecessors and determine which
     // loops enclose them, and select the most-nested loop which contains the
     // loop containing the block being split.
-    Loop *InnermostPredLoop = 0;
+    Loop *InnermostPredLoop = nullptr;
     for (ArrayRef<BasicBlock*>::iterator
            i = Preds.begin(), e = Preds.end(); i != e; ++i) {
       BasicBlock *Pred = *i;
@@ -384,18 +384,18 @@ static void UpdatePHINodes(BasicBlock *OrigBB, BasicBlock *NewBB,
                            ArrayRef<BasicBlock*> Preds, BranchInst *BI,
                            Pass *P, bool HasLoopExit) {
   // Otherwise, create a new PHI node in NewBB for each PHI node in OrigBB.
-  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : 0;
+  AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : nullptr;
   for (BasicBlock::iterator I = OrigBB->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I++);
 
     // Check to see if all of the values coming in are the same.  If so, we
     // don't need to create a new PHI node, unless it's needed for LCSSA.
-    Value *InVal = 0;
+    Value *InVal = nullptr;
     if (!HasLoopExit) {
       InVal = PN->getIncomingValueForBlock(Preds[0]);
       for (unsigned i = 1, e = Preds.size(); i != e; ++i)
         if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
-          InVal = 0;
+          InVal = nullptr;
           break;
         }
     }
@@ -542,7 +542,7 @@ void llvm::SplitLandingPadPredecessors(BasicBlock *OrigBB,
     e = pred_end(OrigBB);
   }
 
-  BasicBlock *NewBB2 = 0;
+  BasicBlock *NewBB2 = nullptr;
   if (!NewBB2Preds.empty()) {
     // Create another basic block for the rest of OrigBB's predecessors.
     NewBB2 = BasicBlock::Create(OrigBB->getContext(),
@@ -607,7 +607,7 @@ ReturnInst *llvm::FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
   for (User::op_iterator i = NewRet->op_begin(), e = NewRet->op_end();
        i != e; ++i) {
     Value *V = *i;
-    Instruction *NewBC = 0;
+    Instruction *NewBC = nullptr;
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(V)) {
       // Return value might be bitcasted. Clone and insert it before the
       // return instruction.
@@ -724,32 +724,32 @@ void llvm::SplitBlockAndInsertIfThenElse(Value *Cond, Instruction *SplitBefore,
 Value *llvm::GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
                              BasicBlock *&IfFalse) {
   PHINode *SomePHI = dyn_cast<PHINode>(BB->begin());
-  BasicBlock *Pred1 = NULL;
-  BasicBlock *Pred2 = NULL;
+  BasicBlock *Pred1 = nullptr;
+  BasicBlock *Pred2 = nullptr;
 
   if (SomePHI) {
     if (SomePHI->getNumIncomingValues() != 2)
-      return NULL;
+      return nullptr;
     Pred1 = SomePHI->getIncomingBlock(0);
     Pred2 = SomePHI->getIncomingBlock(1);
   } else {
     pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
     if (PI == PE) // No predecessor
-      return NULL;
+      return nullptr;
     Pred1 = *PI++;
     if (PI == PE) // Only one predecessor
-      return NULL;
+      return nullptr;
     Pred2 = *PI++;
     if (PI != PE) // More than two predecessors
-      return NULL;
+      return nullptr;
   }
 
   // We can only handle branches.  Other control flow will be lowered to
   // branches if possible anyway.
   BranchInst *Pred1Br = dyn_cast<BranchInst>(Pred1->getTerminator());
   BranchInst *Pred2Br = dyn_cast<BranchInst>(Pred2->getTerminator());
-  if (Pred1Br == 0 || Pred2Br == 0)
-    return 0;
+  if (!Pred1Br || !Pred2Br)
+    return nullptr;
 
   // Eliminate code duplication by ensuring that Pred1Br is conditional if
   // either are.
@@ -759,7 +759,7 @@ Value *llvm::GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
     // required anyway, we stand no chance of eliminating it, so the xform is
     // probably not profitable.
     if (Pred1Br->isConditional())
-      return 0;
+      return nullptr;
 
     std::swap(Pred1, Pred2);
     std::swap(Pred1Br, Pred2Br);
@@ -769,8 +769,8 @@ Value *llvm::GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
     // The only thing we have to watch out for here is to make sure that Pred2
     // doesn't have incoming edges from other blocks.  If it does, the condition
     // doesn't dominate BB.
-    if (Pred2->getSinglePredecessor() == 0)
-      return 0;
+    if (!Pred2->getSinglePredecessor())
+      return nullptr;
 
     // If we found a conditional branch predecessor, make sure that it branches
     // to BB and Pred2Br.  If it doesn't, this isn't an "if statement".
@@ -785,7 +785,7 @@ Value *llvm::GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
     } else {
       // We know that one arm of the conditional goes to BB, so the other must
       // go somewhere unrelated, and this must not be an "if statement".
-      return 0;
+      return nullptr;
     }
 
     return Pred1Br->getCondition();
@@ -795,12 +795,12 @@ Value *llvm::GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
   // BB.  Don't panic!  If both blocks only have a single (identical)
   // predecessor, and THAT is a conditional branch, then we're all ok!
   BasicBlock *CommonPred = Pred1->getSinglePredecessor();
-  if (CommonPred == 0 || CommonPred != Pred2->getSinglePredecessor())
-    return 0;
+  if (CommonPred == nullptr || CommonPred != Pred2->getSinglePredecessor())
+    return nullptr;
 
   // Otherwise, if this is a conditional branch, then we can use it!
   BranchInst *BI = dyn_cast<BranchInst>(CommonPred->getTerminator());
-  if (BI == 0) return 0;
+  if (!BI) return nullptr;
 
   assert(BI->isConditional() && "Two successors but not conditional?");
   if (BI->getSuccessor(0) == Pred1) {

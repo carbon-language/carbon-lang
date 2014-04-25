@@ -71,12 +71,12 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
     // Check all operands to see if any need to be remapped.
     for (unsigned i = 0, e = MD->getNumOperands(); i != e; ++i) {
       Value *OP = MD->getOperand(i);
-      if (OP == 0) continue;
+      if (!OP) continue;
       Value *Mapped_OP = MapValue(OP, VM, Flags, TypeMapper, Materializer);
       // Use identity map if Mapped_Op is null and we can ignore missing
       // entries.
       if (Mapped_OP == OP ||
-          (Mapped_OP == 0 && (Flags & RF_IgnoreMissingEntries)))
+          (Mapped_OP == nullptr && (Flags & RF_IgnoreMissingEntries)))
         continue;
 
       // Ok, at least one operand needs remapping.  
@@ -84,13 +84,13 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
       Elts.reserve(MD->getNumOperands());
       for (i = 0; i != e; ++i) {
         Value *Op = MD->getOperand(i);
-        if (Op == 0)
-          Elts.push_back(0);
+        if (!Op)
+          Elts.push_back(nullptr);
         else {
           Value *Mapped_Op = MapValue(Op, VM, Flags, TypeMapper, Materializer);
           // Use identity map if Mapped_Op is null and we can ignore missing
           // entries.
-          if (Mapped_Op == 0 && (Flags & RF_IgnoreMissingEntries))
+          if (Mapped_Op == nullptr && (Flags & RF_IgnoreMissingEntries))
             Mapped_Op = Op;
           Elts.push_back(Mapped_Op);
         }
@@ -112,8 +112,8 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
   // Okay, this either must be a constant (which may or may not be mappable) or
   // is something that is not in the mapping table.
   Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V));
-  if (C == 0)
-    return 0;
+  if (!C)
+    return nullptr;
   
   if (BlockAddress *BA = dyn_cast<BlockAddress>(C)) {
     Function *F = 
@@ -126,7 +126,7 @@ Value *llvm::MapValue(const Value *V, ValueToValueMapTy &VM, RemapFlags Flags,
   // Otherwise, we have some other constant to remap.  Start by checking to see
   // if all operands have an identity remapping.
   unsigned OpNo = 0, NumOperands = C->getNumOperands();
-  Value *Mapped = 0;
+  Value *Mapped = nullptr;
   for (; OpNo != NumOperands; ++OpNo) {
     Value *Op = C->getOperand(OpNo);
     Mapped = MapValue(Op, VM, Flags, TypeMapper, Materializer);
@@ -187,7 +187,7 @@ void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &VMap,
   for (User::op_iterator op = I->op_begin(), E = I->op_end(); op != E; ++op) {
     Value *V = MapValue(*op, VMap, Flags, TypeMapper, Materializer);
     // If we aren't ignoring missing entries, assert that something happened.
-    if (V != 0)
+    if (V)
       *op = V;
     else
       assert((Flags & RF_IgnoreMissingEntries) &&
@@ -199,7 +199,7 @@ void llvm::RemapInstruction(Instruction *I, ValueToValueMapTy &VMap,
     for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
       Value *V = MapValue(PN->getIncomingBlock(i), VMap, Flags);
       // If we aren't ignoring missing entries, assert that something happened.
-      if (V != 0)
+      if (V)
         PN->setIncomingBlock(i, cast<BasicBlock>(V));
       else
         assert((Flags & RF_IgnoreMissingEntries) &&

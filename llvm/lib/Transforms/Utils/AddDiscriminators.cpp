@@ -99,7 +99,7 @@ FunctionPass *llvm::createAddDiscriminatorsPass() {
 
 static bool hasDebugInfo(const Function &F) {
   NamedMDNode *CUNodes = F.getParent()->getNamedMetadata("llvm.dbg.cu");
-  return CUNodes != 0;
+  return CUNodes != nullptr;
 }
 
 /// \brief Assign DWARF discriminators.

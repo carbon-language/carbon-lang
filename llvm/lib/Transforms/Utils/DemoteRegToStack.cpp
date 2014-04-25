@@ -25,17 +25,17 @@ AllocaInst *llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
                                    Instruction *AllocaPoint) {
   if (I.use_empty()) {
     I.eraseFromParent();
-    return 0;
+    return nullptr;
   }
 
   // Create a stack slot to hold the value.
   AllocaInst *Slot;
   if (AllocaPoint) {
-    Slot = new AllocaInst(I.getType(), 0,
+    Slot = new AllocaInst(I.getType(), nullptr,
                           I.getName()+".reg2mem", AllocaPoint);
   } else {
     Function *F = I.getParent()->getParent();
-    Slot = new AllocaInst(I.getType(), 0, I.getName()+".reg2mem",
+    Slot = new AllocaInst(I.getType(), nullptr, I.getName()+".reg2mem",
                           F->getEntryBlock().begin());
   }
 
@@ -56,7 +56,7 @@ AllocaInst *llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         if (PN->getIncomingValue(i) == &I) {
           Value *&V = Loads[PN->getIncomingBlock(i)];
-          if (V == 0) {
+          if (!V) {
             // Insert the load into the predecessor block
             V = new LoadInst(Slot, I.getName()+".reload", VolatileLoads,
                              PN->getIncomingBlock(i)->getTerminator());
@@ -110,17 +110,17 @@ AllocaInst *llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
 AllocaInst *llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
   if (P->use_empty()) {
     P->eraseFromParent();
-    return 0;
+    return nullptr;
   }
 
   // Create a stack slot to hold the value.
   AllocaInst *Slot;
   if (AllocaPoint) {
-    Slot = new AllocaInst(P->getType(), 0,
+    Slot = new AllocaInst(P->getType(), nullptr,
                           P->getName()+".reg2mem", AllocaPoint);
   } else {
     Function *F = P->getParent()->getParent();
-    Slot = new AllocaInst(P->getType(), 0, P->getName()+".reg2mem",
+    Slot = new AllocaInst(P->getType(), nullptr, P->getName()+".reg2mem",
                           F->getEntryBlock().begin());
   }
 

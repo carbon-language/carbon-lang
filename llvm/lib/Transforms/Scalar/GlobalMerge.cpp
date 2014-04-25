@@ -108,7 +108,7 @@ namespace {
 
   public:
     static char ID;             // Pass identification, replacement for typeid.
-    explicit GlobalMerge(const TargetMachine *TM = 0)
+    explicit GlobalMerge(const TargetMachine *TM = nullptr)
       : FunctionPass(ID), TM(TM) {
       initializeGlobalMergePass(*PassRegistry::getPassRegistry());
     }
@@ -174,7 +174,8 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
     GlobalVariable *MergedGV = new GlobalVariable(M, MergedTy, isConst,
                                                   GlobalValue::InternalLinkage,
                                                   MergedInit, "_MergedGlobals",
-                                                  0, GlobalVariable::NotThreadLocal,
+                                                  nullptr,
+                                                  GlobalVariable::NotThreadLocal,
                                                   AddrSpace);
     for (size_t k = i; k < j; ++k) {
       Constant *Idx[2] = {

@@ -79,8 +79,8 @@ FunctionPass *createThreadSanitizerPass(StringRef BlacklistFile = StringRef());
 
 // Insert DataFlowSanitizer (dynamic data flow analysis) instrumentation
 ModulePass *createDataFlowSanitizerPass(StringRef ABIListFile = StringRef(),
-                                        void *(*getArgTLS)() = 0,
-                                        void *(*getRetValTLS)() = 0);
+                                        void *(*getArgTLS)() = nullptr,
+                                        void *(*getRetValTLS)() = nullptr);
 
 #if defined(__GNUC__) && defined(__linux__) && !defined(ANDROID)
 inline ModulePass *createDataFlowSanitizerPassForJIT(StringRef ABIListFile =

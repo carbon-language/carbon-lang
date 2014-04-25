@@ -59,7 +59,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
 
   // Then unreachable blocks.
   if (UnreachableBlocks.empty()) {
-    UnreachableBlock = 0;
+    UnreachableBlock = nullptr;
   } else if (UnreachableBlocks.size() == 1) {
     UnreachableBlock = UnreachableBlocks.front();
   } else {
@@ -77,7 +77,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
 
   // Now handle return blocks.
   if (ReturningBlocks.empty()) {
-    ReturnBlock = 0;
+    ReturnBlock = nullptr;
     return false;                          // No blocks return
   } else if (ReturningBlocks.size() == 1) {
     ReturnBlock = ReturningBlocks.front(); // Already has a single return block
@@ -91,9 +91,9 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   BasicBlock *NewRetBlock = BasicBlock::Create(F.getContext(),
                                                "UnifiedReturnBlock", &F);
 
-  PHINode *PN = 0;
+  PHINode *PN = nullptr;
   if (F.getReturnType()->isVoidTy()) {
-    ReturnInst::Create(F.getContext(), NULL, NewRetBlock);
+    ReturnInst::Create(F.getContext(), nullptr, NewRetBlock);
   } else {
     // If the function doesn't return void... add a PHI node to the block...
     PN = PHINode::Create(F.getReturnType(), ReturningBlocks.size(),

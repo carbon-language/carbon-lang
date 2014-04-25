@@ -295,7 +295,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
       Changed = true;
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
-        Constant *SubInit = 0;
+        Constant *SubInit = nullptr;
         if (Init)
           SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
         Changed |= CleanupConstantGlobalUsers(CE, SubInit, DL, TLI);
@@ -303,7 +303,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
                   CE->getType()->isPointerTy()) ||
                  CE->getOpcode() == Instruction::AddrSpaceCast) {
         // Pointer cast, delete any stores and memsets to the global.
-        Changed |= CleanupConstantGlobalUsers(CE, 0, DL, TLI);
+        Changed |= CleanupConstantGlobalUsers(CE, nullptr, DL, TLI);
       }
 
       if (CE->use_empty()) {
@@ -314,7 +314,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
       // Do not transform "gepinst (gep constexpr (GV))" here, because forming
       // "gepconstexpr (gep constexpr (GV))" will cause the two gep's to fold
       // and will invalidate our notion of what Init is.
-      Constant *SubInit = 0;
+      Constant *SubInit = nullptr;
       if (!isa<ConstantExpr>(GEP->getOperand(0))) {
         ConstantExpr *CE =
           dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP, DL, TLI));
@@ -371,7 +371,7 @@ static bool isSafeSROAElementUse(Value *V) {
 
   // Otherwise, it must be a GEP.
   GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(I);
-  if (GEPI == 0) return false;
+  if (!GEPI) return false;
 
   if (GEPI->getNumOperands() < 3 || !isa<Constant>(GEPI->getOperand(1)) ||
       !cast<Constant>(GEPI->getOperand(1))->isNullValue())
@@ -471,7 +471,7 @@ static bool GlobalUsersSafeToSRA(GlobalValue *GV) {
 static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
   // Make sure this global only has simple uses that we can SRA.
   if (!GlobalUsersSafeToSRA(GV))
-    return 0;
+    return nullptr;
 
   assert(GV->hasLocalLinkage() && !GV->isConstant());
   Constant *Init = GV->getInitializer();
@@ -515,7 +515,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
       NumElements = cast<VectorType>(STy)->getNumElements();
 
     if (NumElements > 16 && GV->hasNUsesOrMore(16))
-      return 0; // It's not worth it.
+      return nullptr; // It's not worth it.
     NewGlobals.reserve(NumElements);
 
     uint64_t EltSize = DL.getTypeAllocSize(STy->getElementType());
@@ -542,7 +542,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
   }
 
   if (NewGlobals.empty())
-    return 0;
+    return nullptr;
 
   DEBUG(dbgs() << "PERFORMING GLOBAL SRA ON: " << *GV);
 
@@ -604,7 +604,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
       if (FirstGlobal == i) ++FirstGlobal;
     }
 
-  return FirstGlobal != NewGlobals.size() ? NewGlobals[FirstGlobal] : 0;
+  return FirstGlobal != NewGlobals.size() ? NewGlobals[FirstGlobal] : nullptr;
 }
 
 /// AllUsesOfValueWillTrapIfNull - Return true if all users of the specified
@@ -786,7 +786,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV,
       Changed |= CleanupPointerRootUsers(GV, TLI);
     } else {
       Changed = true;
-      CleanupConstantGlobalUsers(GV, 0, DL, TLI);
+      CleanupConstantGlobalUsers(GV, nullptr, DL, TLI);
     }
     if (GV->use_empty()) {
       DEBUG(dbgs() << "  *** GLOBAL NOW DEAD!\n");
@@ -848,7 +848,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   // If there are bitcast users of the malloc (which is typical, usually we have
   // a malloc + bitcast) then replace them with uses of the new global.  Update
   // other users to use the global as well.
-  BitCastInst *TheBC = 0;
+  BitCastInst *TheBC = nullptr;
   while (!CI->use_empty()) {
     Instruction *User = cast<Instruction>(CI->user_back());
     if (BitCastInst *BCI = dyn_cast<BitCastInst>(User)) {
@@ -859,7 +859,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
         BCI->setOperand(0, NewGV);
       }
     } else {
-      if (TheBC == 0)
+      if (!TheBC)
         TheBC = new BitCastInst(NewGV, CI->getType(), "newgv", CI);
       User->replaceUsesOfWith(CI, TheBC);
     }
@@ -1307,7 +1307,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
     Type *IntPtrTy = DL->getIntPtrType(CI->getType());
     Value *NMI = CallInst::CreateMalloc(CI, IntPtrTy, FieldTy,
                                         ConstantInt::get(IntPtrTy, TypeSize),
-                                        NElems, 0,
+                                        NElems, nullptr,
                                         CI->getName() + ".f" + Twine(FieldNo));
     FieldMallocs.push_back(NMI);
     new StoreInst(NMI, NGV, CI);
@@ -1540,7 +1540,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
       Value *NumElements = ConstantInt::get(IntPtrTy, AT->getNumElements());
       Instruction *Malloc = CallInst::CreateMalloc(CI, IntPtrTy, AllocSTy,
                                                    AllocSize, NumElements,
-                                                   0, CI->getName());
+                                                   nullptr, CI->getName());
       Instruction *Cast = new BitCastInst(Malloc, CI->getType(), "tmp", CI);
       CI->replaceAllUsesWith(Cast);
       CI->eraseFromParent();
@@ -1755,7 +1755,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
                                                    ->getEntryBlock().begin());
     Type *ElemTy = GV->getType()->getElementType();
     // FIXME: Pass Global's alignment when globals have alignment
-    AllocaInst *Alloca = new AllocaInst(ElemTy, NULL, GV->getName(), &FirstI);
+    AllocaInst *Alloca = new AllocaInst(ElemTy, nullptr,
+                                        GV->getName(), &FirstI);
     if (!isa<UndefValue>(GV->getInitializer()))
       new StoreInst(GV->getInitializer(), Alloca, &FirstI);
 
@@ -1966,11 +1967,11 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
 /// initializers have an init priority of 65535.
 GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
   GlobalVariable *GV = M.getGlobalVariable("llvm.global_ctors");
-  if (GV == 0) return 0;
+  if (!GV) return nullptr;
 
   // Verify that the initializer is simple enough for us to handle. We are
   // only allowed to optimize the initializer if it is unique.
-  if (!GV->hasUniqueInitializer()) return 0;
+  if (!GV->hasUniqueInitializer()) return nullptr;
 
   if (isa<ConstantAggregateZero>(GV->getInitializer()))
     return GV;
@@ -1985,12 +1986,12 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
 
     // Must have a function or null ptr.
     if (!isa<Function>(CS->getOperand(1)))
-      return 0;
+      return nullptr;
 
     // Init priority must be standard.
     ConstantInt *CI = cast<ConstantInt>(CS->getOperand(0));
     if (CI->getZExtValue() != 65535)
-      return 0;
+      return nullptr;
   }
 
   return GV;
@@ -2018,7 +2019,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   // If we made a change, reassemble the initializer list.
   Constant *CSVals[2];
   CSVals[0] = ConstantInt::get(Type::getInt32Ty(GCL->getContext()), 65535);
-  CSVals[1] = 0;
+  CSVals[1] = nullptr;
 
   StructType *StructTy =
     cast<StructType>(GCL->getType()->getElementType()->getArrayElementType());
@@ -2068,7 +2069,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   if (Ctors.size())
     return NGV;
   else
-    return 0;
+    return nullptr;
 }
 
 
@@ -2368,7 +2369,7 @@ Constant *Evaluator::ComputeLoadResult(Constant *P) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(P)) {
     if (GV->hasDefinitiveInitializer())
       return GV->getInitializer();
-    return 0;
+    return nullptr;
   }
 
   // Handle a constantexpr getelementptr.
@@ -2380,7 +2381,7 @@ Constant *Evaluator::ComputeLoadResult(Constant *P) {
         return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);
     }
 
-  return 0;  // don't know how to evaluate.
+  return nullptr;  // don't know how to evaluate.
 }
 
 /// EvaluateBlock - Evaluate all instructions in block BB, returning true if
@@ -2390,7 +2391,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
                               BasicBlock *&NextBB) {
   // This is the main evaluation loop.
   while (1) {
-    Constant *InstResult = 0;
+    Constant *InstResult = nullptr;
 
     DEBUG(dbgs() << "Evaluating Instruction: " << *CurInst << "\n");
 
@@ -2516,7 +2517,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
               "folding: " << *Ptr << "\n");
       }
       InstResult = ComputeLoadResult(Ptr);
-      if (InstResult == 0) {
+      if (!InstResult) {
         DEBUG(dbgs() << "Failed to compute load result. Can not evaluate load."
               "\n");
         return false; // Could not evaluate load.
@@ -2634,7 +2635,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
           return false;
         }
 
-        Constant *RetVal = 0;
+        Constant *RetVal = nullptr;
         // Execute the call, if successful, use the return value.
         ValueStack.push_back(make_unique<DenseMap<Value *, Constant *>>());
         if (!EvaluateFunction(Callee, RetVal, Formals)) {
@@ -2644,7 +2645,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
         ValueStack.pop_back();
         InstResult = RetVal;
 
-        if (InstResult != NULL) {
+        if (InstResult) {
           DEBUG(dbgs() << "Successfully evaluated function. Result: " <<
                 InstResult << "\n\n");
         } else {
@@ -2676,7 +2677,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
         else
           return false;  // Cannot determine.
       } else if (isa<ReturnInst>(CurInst)) {
-        NextBB = 0;
+        NextBB = nullptr;
       } else {
         // invoke, unwind, resume, unreachable.
         DEBUG(dbgs() << "Can not handle terminator.");
@@ -2741,13 +2742,13 @@ bool Evaluator::EvaluateFunction(Function *F, Constant *&RetVal,
   BasicBlock::iterator CurInst = CurBB->begin();
 
   while (1) {
-    BasicBlock *NextBB = 0; // Initialized to avoid compiler warnings.
+    BasicBlock *NextBB = nullptr; // Initialized to avoid compiler warnings.
     DEBUG(dbgs() << "Trying to evaluate BB: " << *CurBB << "\n");
 
     if (!EvaluateBlock(CurInst, NextBB))
       return false;
 
-    if (NextBB == 0) {
+    if (!NextBB) {
       // Successfully running until there's no next block means that we found
       // the return.  Fill it the return value and pop the call stack.
       ReturnInst *RI = cast<ReturnInst>(CurBB->getTerminator());
@@ -2766,7 +2767,7 @@ bool Evaluator::EvaluateFunction(Function *F, Constant *&RetVal,
     // Okay, we have never been in this block before.  Check to see if there
     // are any PHI nodes.  If so, evaluate them with information about where
     // we came from.
-    PHINode *PN = 0;
+    PHINode *PN = nullptr;
     for (CurInst = NextBB->begin();
          (PN = dyn_cast<PHINode>(CurInst)); ++CurInst)
       setVal(PN, getVal(PN->getIncomingValueForBlock(CurBB)));
@@ -2816,7 +2817,7 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
     Function *F = Ctors[i];
     // Found a null terminator in the middle of the list, prune off the rest of
     // the list.
-    if (F == 0) {
+    if (!F) {
       if (i != Ctors.size()-1) {
         Ctors.resize(i+1);
         MadeChange = true;
@@ -3040,12 +3041,12 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
 
 static Function *FindCXAAtExit(Module &M, TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::cxa_atexit))
-    return 0;
+    return nullptr;
 
   Function *Fn = M.getFunction(TLI->getName(LibFunc::cxa_atexit));
 
   if (!Fn)
-    return 0;
+    return nullptr;
 
   FunctionType *FTy = Fn->getFunctionType();
 
@@ -3056,7 +3057,7 @@ static Function *FindCXAAtExit(Module &M, TargetLibraryInfo *TLI) {
       !FTy->getParamType(0)->isPointerTy() ||
       !FTy->getParamType(1)->isPointerTy() ||
       !FTy->getParamType(2)->isPointerTy())
-    return 0;
+    return nullptr;
 
   return Fn;
 }
@@ -3158,7 +3159,7 @@ bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
 
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : 0;
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = &getAnalysis<TargetLibraryInfo>();
 
   // Try to find the llvm.globalctors list.

@@ -137,7 +137,7 @@ bool LoopExtractor::runOnLoop(Loop *L, LPPassManager &LPM) {
     if (NumLoops == 0) return Changed;
     --NumLoops;
     CodeExtractor Extractor(DT, *L);
-    if (Extractor.extractCodeRegion() != 0) {
+    if (Extractor.extractCodeRegion() != nullptr) {
       Changed = true;
       // After extraction, the loop is replaced by a function call, so
       // we shouldn't try to run any more loop passes on it.
@@ -242,7 +242,7 @@ void BlockExtractorPass::SplitLandingPadPreds(Function *F) {
     if (!Split) continue;
 
     SmallVector<BasicBlock*, 2> NewBBs;
-    SplitLandingPadPredecessors(LPad, Parent, ".1", ".2", 0, NewBBs);
+    SplitLandingPadPredecessors(LPad, Parent, ".1", ".2", nullptr, NewBBs);
   }
 }
 

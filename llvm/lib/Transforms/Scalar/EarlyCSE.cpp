@@ -208,7 +208,7 @@ namespace {
         return false;
 
       CallInst *CI = dyn_cast<CallInst>(Inst);
-      if (CI == 0 || !CI->onlyReadsMemory())
+      if (!CI || !CI->onlyReadsMemory())
         return false;
       return true;
     }
@@ -406,14 +406,14 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
   // have invalidated the live-out memory values of our parent value.  For now,
   // just be conservative and invalidate memory if this block has multiple
   // predecessors.
-  if (BB->getSinglePredecessor() == 0)
+  if (!BB->getSinglePredecessor())
     ++CurrentGeneration;
 
   /// LastStore - Keep track of the last non-volatile store that we saw... for
   /// as long as there in no instruction that reads memory.  If we see a store
   /// to the same location, we delete the dead store.  This zaps trivial dead
   /// stores which can occur in bitfield code among other things.
-  StoreInst *LastStore = 0;
+  StoreInst *LastStore = nullptr;
 
   bool Changed = false;
 
@@ -463,7 +463,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
       // Ignore volatile loads.
       if (!LI->isSimple()) {
-        LastStore = 0;
+        LastStore = nullptr;
         continue;
       }
 
@@ -471,7 +471,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       // generation, replace this instruction.
       std::pair<Value*, unsigned> InVal =
         AvailableLoads->lookup(Inst->getOperand(0));
-      if (InVal.first != 0 && InVal.second == CurrentGeneration) {
+      if (InVal.first != nullptr && InVal.second == CurrentGeneration) {
         DEBUG(dbgs() << "EarlyCSE CSE LOAD: " << *Inst << "  to: "
               << *InVal.first << '\n');
         if (!Inst->use_empty()) Inst->replaceAllUsesWith(InVal.first);
@@ -484,20 +484,20 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       // Otherwise, remember that we have this instruction.
       AvailableLoads->insert(Inst->getOperand(0),
                           std::pair<Value*, unsigned>(Inst, CurrentGeneration));
-      LastStore = 0;
+      LastStore = nullptr;
       continue;
     }
 
     // If this instruction may read from memory, forget LastStore.
     if (Inst->mayReadFromMemory())
-      LastStore = 0;
+      LastStore = nullptr;
 
     // If this is a read-only call, process it.
     if (CallValue::canHandle(Inst)) {
       // If we have an available version of this call, and if it is the right
       // generation, replace this instruction.
       std::pair<Value*, unsigned> InVal = AvailableCalls->lookup(Inst);
-      if (InVal.first != 0 && InVal.second == CurrentGeneration) {
+      if (InVal.first != nullptr && InVal.second == CurrentGeneration) {
         DEBUG(dbgs() << "EarlyCSE CSE CALL: " << *Inst << "  to: "
                      << *InVal.first << '\n');
         if (!Inst->use_empty()) Inst->replaceAllUsesWith(InVal.first);
@@ -529,7 +529,7 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
           LastStore->eraseFromParent();
           Changed = true;
           ++NumDSE;
-          LastStore = 0;
+          LastStore = nullptr;
           continue;
         }
 
@@ -559,7 +559,7 @@ bool EarlyCSE::runOnFunction(Function &F) {
   std::vector<StackNode *> nodesToProcess;
 
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : 0;
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
   TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 

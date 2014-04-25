@@ -43,7 +43,7 @@ static bool LowerAtomicRMWInst(AtomicRMWInst *RMWI) {
   Value *Val = RMWI->getValOperand();
 
   LoadInst *Orig = Builder.CreateLoad(Ptr);
-  Value *Res = NULL;
+  Value *Res = nullptr;
 
   switch (RMWI->getOperation()) {
   default: llvm_unreachable("Unexpected RMW operation");

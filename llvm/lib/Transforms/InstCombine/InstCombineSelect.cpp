@@ -26,10 +26,10 @@ using namespace PatternMatch;
 static SelectPatternFlavor
 MatchSelectPattern(Value *V, Value *&LHS, Value *&RHS) {
   SelectInst *SI = dyn_cast<SelectInst>(V);
-  if (SI == 0) return SPF_UNKNOWN;
+  if (!SI) return SPF_UNKNOWN;
 
   ICmpInst *ICI = dyn_cast<ICmpInst>(SI->getCondition());
-  if (ICI == 0) return SPF_UNKNOWN;
+  if (!ICI) return SPF_UNKNOWN;
 
   LHS = ICI->getOperand(0);
   RHS = ICI->getOperand(1);
@@ -131,15 +131,15 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
     if (TI->isCast()) {
       Type *FIOpndTy = FI->getOperand(0)->getType();
       if (TI->getOperand(0)->getType() != FIOpndTy)
-        return 0;
+        return nullptr;
       // The select condition may be a vector. We may only change the operand
       // type if the vector width remains the same (and matches the condition).
       Type *CondTy = SI.getCondition()->getType();
       if (CondTy->isVectorTy() && (!FIOpndTy->isVectorTy() ||
           CondTy->getVectorNumElements() != FIOpndTy->getVectorNumElements()))
-        return 0;
+        return nullptr;
     } else {
-      return 0;  // unknown unary op.
+      return nullptr;  // unknown unary op.
     }
 
     // Fold this by inserting a select from the input values.
@@ -151,7 +151,7 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
 
   // Only handle binary operators here.
   if (!isa<BinaryOperator>(TI))
-    return 0;
+    return nullptr;
 
   // Figure out if the operations have any operands in common.
   Value *MatchOp, *OtherOpT, *OtherOpF;
@@ -167,7 +167,7 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
     OtherOpF = FI->getOperand(0);
     MatchIsOpZero = false;
   } else if (!TI->isCommutative()) {
-    return 0;
+    return nullptr;
   } else if (TI->getOperand(0) == FI->getOperand(1)) {
     MatchOp  = TI->getOperand(0);
     OtherOpT = TI->getOperand(1);
@@ -179,7 +179,7 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
     OtherOpF = FI->getOperand(1);
     MatchIsOpZero = true;
   } else {
-    return 0;
+    return nullptr;
   }
 
   // If we reach here, they do have operations in common.
@@ -284,7 +284,7 @@ Instruction *InstCombiner::FoldSelectIntoOp(SelectInst &SI, Value *TrueVal,
     }
   }
 
-  return 0;
+  return nullptr;
 }
 
 /// SimplifyWithOpReplaced - See if V simplifies when its operand Op is
@@ -298,7 +298,7 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
 
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I)
-    return 0;
+    return nullptr;
 
   // If this is a binary operator, try to simplify it with the replaced op.
   if (BinaryOperator *B = dyn_cast<BinaryOperator>(I)) {
@@ -349,7 +349,7 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
     }
   }
 
-  return 0;
+  return nullptr;
 }
 
 /// foldSelectICmpAndOr - We want to turn:
@@ -370,18 +370,18 @@ static Value *foldSelectICmpAndOr(const SelectInst &SI, Value *TrueVal,
                                   InstCombiner::BuilderTy *Builder) {
   const ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition());
   if (!IC || !IC->isEquality() || !SI.getType()->isIntegerTy())
-    return 0;
+    return nullptr;
 
   Value *CmpLHS = IC->getOperand(0);
   Value *CmpRHS = IC->getOperand(1);
 
   if (!match(CmpRHS, m_Zero()))
-    return 0;
+    return nullptr;
 
   Value *X;
   const APInt *C1;
   if (!match(CmpLHS, m_And(m_Value(X), m_Power2(C1))))
-    return 0;
+    return nullptr;
 
   const APInt *C2;
   bool OrOnTrueVal = false;
@@ -390,7 +390,7 @@ static Value *foldSelectICmpAndOr(const SelectInst &SI, Value *TrueVal,
     OrOnTrueVal = match(TrueVal, m_Or(m_Specific(FalseVal), m_Power2(C2)));
 
   if (!OrOnFalseVal && !OrOnTrueVal)
-    return 0;
+    return nullptr;
 
   Value *V = CmpLHS;
   Value *Y = OrOnFalseVal ? TrueVal : FalseVal;
@@ -529,7 +529,7 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   if (IntegerType *Ty = dyn_cast<IntegerType>(CmpLHS->getType())) {
     if (TrueVal->getType() == Ty) {
       if (ConstantInt *Cmp = dyn_cast<ConstantInt>(CmpRHS)) {
-        ConstantInt *C1 = NULL, *C2 = NULL;
+        ConstantInt *C1 = nullptr, *C2 = nullptr;
         if (Pred == ICmpInst::ICMP_SGT && Cmp->isAllOnesValue()) {
           C1 = dyn_cast<ConstantInt>(TrueVal);
           C2 = dyn_cast<ConstantInt>(FalseVal);
@@ -588,7 +588,7 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
   if (Value *V = foldSelectICmpAndOr(SI, TrueVal, FalseVal, Builder))
     return ReplaceInstUsesWith(SI, V);
 
-  return Changed ? &SI : 0;
+  return Changed ? &SI : nullptr;
 }
 
 
@@ -608,7 +608,7 @@ static bool CanSelectOperandBeMappingIntoPredBlock(const Value *V,
   // If the value is a non-instruction value like a constant or argument, it
   // can always be mapped.
   const Instruction *I = dyn_cast<Instruction>(V);
-  if (I == 0) return true;
+  if (!I) return true;
 
   // If V is a PHI node defined in the same block as the condition PHI, we can
   // map the arguments.
@@ -652,7 +652,7 @@ Instruction *InstCombiner::FoldSPFofSPF(Instruction *Inner,
   }
 
   // TODO: MIN(MIN(A, 23), 97)
-  return 0;
+  return nullptr;
 }
 
 
@@ -665,27 +665,27 @@ static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
                                 InstCombiner::BuilderTy *Builder) {
   const ICmpInst *IC = dyn_cast<ICmpInst>(SI.getCondition());
   if (!IC || !IC->isEquality() || !SI.getType()->isIntegerTy())
-    return 0;
+    return nullptr;
 
   if (!match(IC->getOperand(1), m_Zero()))
-    return 0;
+    return nullptr;
 
   ConstantInt *AndRHS;
   Value *LHS = IC->getOperand(0);
   if (!match(LHS, m_And(m_Value(), m_ConstantInt(AndRHS))))
-    return 0;
+    return nullptr;
 
   // If both select arms are non-zero see if we have a select of the form
   // 'x ? 2^n + C : C'. Then we can offset both arms by C, use the logic
   // for 'x ? 2^n : 0' and fix the thing up at the end.
-  ConstantInt *Offset = 0;
+  ConstantInt *Offset = nullptr;
   if (!TrueVal->isZero() && !FalseVal->isZero()) {
     if ((TrueVal->getValue() - FalseVal->getValue()).isPowerOf2())
       Offset = FalseVal;
     else if ((FalseVal->getValue() - TrueVal->getValue()).isPowerOf2())
       Offset = TrueVal;
     else
-      return 0;
+      return nullptr;
 
     // Adjust TrueVal and FalseVal to the offset.
     TrueVal = ConstantInt::get(Builder->getContext(),
@@ -698,7 +698,7 @@ static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
   if (!AndRHS->getValue().isPowerOf2() ||
       (!TrueVal->getValue().isPowerOf2() &&
        !FalseVal->getValue().isPowerOf2()))
-    return 0;
+    return nullptr;
 
   // Determine which shift is needed to transform result of the 'and' into the
   // desired result.
@@ -710,7 +710,7 @@ static Value *foldSelectICmpAnd(const SelectInst &SI, ConstantInt *TrueVal,
   // or a trunc of the 'and'. The trunc case requires that all of the truncated
   // bits are zero, we can figure that out by looking at the 'and' mask.
   if (AndZeros >= ValC->getBitWidth())
-    return 0;
+    return nullptr;
 
   Value *V = Builder->CreateZExtOrTrunc(LHS, SI.getType());
   if (ValZeros > AndZeros)
@@ -868,7 +868,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   if (Instruction *TI = dyn_cast<Instruction>(TrueVal))
     if (Instruction *FI = dyn_cast<Instruction>(FalseVal))
       if (TI->hasOneUse() && FI->hasOneUse()) {
-        Instruction *AddOp = 0, *SubOp = 0;
+        Instruction *AddOp = nullptr, *SubOp = nullptr;
 
         // Turn (select C, (op X, Y), (op X, Z)) -> (op X, (select C, Y, Z))
         if (TI->getOpcode() == FI->getOpcode())
@@ -890,7 +890,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
         }
 
         if (AddOp) {
-          Value *OtherAddOp = 0;
+          Value *OtherAddOp = nullptr;
           if (SubOp->getOperand(0) == AddOp->getOperand(0)) {
             OtherAddOp = AddOp->getOperand(1);
           } else if (SubOp->getOperand(0) == AddOp->getOperand(1)) {
@@ -971,7 +971,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   if (SelectInst *TrueSI = dyn_cast<SelectInst>(TrueVal)) {
     if (TrueSI->getCondition() == CondVal) {
       if (SI.getTrueValue() == TrueSI->getTrueValue())
-        return 0;
+        return nullptr;
       SI.setOperand(1, TrueSI->getTrueValue());
       return &SI;
     }
@@ -979,7 +979,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   if (SelectInst *FalseSI = dyn_cast<SelectInst>(FalseVal)) {
     if (FalseSI->getCondition() == CondVal) {
       if (SI.getFalseValue() == FalseSI->getFalseValue())
-        return 0;
+        return nullptr;
       SI.setOperand(2, FalseSI->getFalseValue());
       return &SI;
     }
@@ -1007,5 +1007,5 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
     }
   }
 
-  return 0;
+  return nullptr;
 }

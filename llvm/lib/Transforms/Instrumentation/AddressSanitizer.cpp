@@ -606,7 +606,7 @@ Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
 // Instrument memset/memmove/memcpy
 void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
   IRBuilder<> IRB(MI);
-  Instruction *Call = 0;
+  Instruction *Call = nullptr;
   if (isa<MemTransferInst>(MI)) {
     Call = IRB.CreateCall3(
         isa<MemMoveInst>(MI) ? AsanMemmove : AsanMemcpy,
@@ -628,26 +628,26 @@ void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
 // and set IsWrite. Otherwise return NULL.
 static Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite) {
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-    if (!ClInstrumentReads) return NULL;
+    if (!ClInstrumentReads) return nullptr;
     *IsWrite = false;
     return LI->getPointerOperand();
   }
   if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-    if (!ClInstrumentWrites) return NULL;
+    if (!ClInstrumentWrites) return nullptr;
     *IsWrite = true;
     return SI->getPointerOperand();
   }
   if (AtomicRMWInst *RMW = dyn_cast<AtomicRMWInst>(I)) {
-    if (!ClInstrumentAtomics) return NULL;
+    if (!ClInstrumentAtomics) return nullptr;
     *IsWrite = true;
     return RMW->getPointerOperand();
   }
   if (AtomicCmpXchgInst *XCHG = dyn_cast<AtomicCmpXchgInst>(I)) {
-    if (!ClInstrumentAtomics) return NULL;
+    if (!ClInstrumentAtomics) return nullptr;
     *IsWrite = true;
     return XCHG->getPointerOperand();
   }
-  return NULL;
+  return nullptr;
 }
 
 static bool isPointerOperand(Value *V) {
@@ -732,7 +732,7 @@ void AddressSanitizer::instrumentMop(Instruction *I, bool UseCalls) {
   // Instrument a 1-, 2-, 4-, 8-, or 16- byte access with one check.
   if (TypeSize == 8  || TypeSize == 16 ||
       TypeSize == 32 || TypeSize == 64 || TypeSize == 128)
-    return instrumentAddress(I, I, Addr, TypeSize, IsWrite, 0, UseCalls);
+    return instrumentAddress(I, I, Addr, TypeSize, IsWrite, nullptr, UseCalls);
   // Instrument unusual size (but still multiple of 8).
   // We can not do it with a single check, so we do 1-byte check for the first
   // and the last bytes. We call __asan_report_*_n(addr, real_size) to be able
@@ -821,7 +821,7 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
 
   Value *Cmp = IRB.CreateICmpNE(ShadowValue, CmpVal);
   size_t Granularity = 1 << Mapping.Scale;
-  TerminatorInst *CrashTerm = 0;
+  TerminatorInst *CrashTerm = nullptr;
 
   if (ClAlwaysSlowPath || (TypeSize < 8 * Granularity)) {
     TerminatorInst *CheckTerm =
@@ -1341,7 +1341,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
     }
   }
 
-  Function *UninstrumentedDuplicate = 0;
+  Function *UninstrumentedDuplicate = nullptr;
   bool LikelyToInstrument =
       !NoReturnCalls.empty() || !ToInstrument.empty() || (NumAllocas > 0);
   if (ClKeepUninstrumented && LikelyToInstrument) {
@@ -1685,7 +1685,7 @@ void FunctionStackPoisoner::poisonAlloca(Value *V, uint64_t Size,
 AllocaInst *FunctionStackPoisoner::findAllocaForValue(Value *V) {
   if (AllocaInst *AI = dyn_cast<AllocaInst>(V))
     // We're intested only in allocas we can handle.
-    return isInterestingAlloca(*AI) ? AI : 0;
+    return isInterestingAlloca(*AI) ? AI : nullptr;
   // See if we've already calculated (or started to calculate) alloca for a
   // given value.
   AllocaForValueMapTy::iterator I = AllocaForValue.find(V);
@@ -1693,8 +1693,8 @@ AllocaInst *FunctionStackPoisoner::findAllocaForValue(Value *V) {
     return I->second;
   // Store 0 while we're calculating alloca for value V to avoid
   // infinite recursion if the value references itself.
-  AllocaForValue[V] = 0;
-  AllocaInst *Res = 0;
+  AllocaForValue[V] = nullptr;
+  AllocaInst *Res = nullptr;
   if (CastInst *CI = dyn_cast<CastInst>(V))
     Res = findAllocaForValue(CI->getOperand(0));
   else if (PHINode *PN = dyn_cast<PHINode>(V)) {
@@ -1704,12 +1704,12 @@ AllocaInst *FunctionStackPoisoner::findAllocaForValue(Value *V) {
       if (IncValue == PN) continue;
       AllocaInst *IncValueAI = findAllocaForValue(IncValue);
       // AI for incoming values should exist and should all be equal.
-      if (IncValueAI == 0 || (Res != 0 && IncValueAI != Res))
-        return 0;
+      if (IncValueAI == nullptr || (Res != nullptr && IncValueAI != Res))
+        return nullptr;
       Res = IncValueAI;
     }
   }
-  if (Res != 0)
+  if (Res)
     AllocaForValue[V] = Res;
   return Res;
 }

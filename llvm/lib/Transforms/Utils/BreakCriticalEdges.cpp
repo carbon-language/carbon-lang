@@ -142,7 +142,7 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
                                     Pass *P, bool MergeIdenticalEdges,
                                     bool DontDeleteUselessPhis,
                                     bool SplitLandingPads) {
-  if (!isCriticalEdge(TI, SuccNum, MergeIdenticalEdges)) return 0;
+  if (!isCriticalEdge(TI, SuccNum, MergeIdenticalEdges)) return nullptr;
 
   assert(!isa<IndirectBrInst>(TI) &&
          "Cannot split critical edge from IndirectBrInst");
@@ -152,7 +152,7 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
 
   // Splitting the critical edge to a landing pad block is non-trivial. Don't do
   // it in this generic function.
-  if (DestBB->isLandingPad()) return 0;
+  if (DestBB->isLandingPad()) return nullptr;
 
   // Create a new basic block, linking it into the CFG.
   BasicBlock *NewBB = BasicBlock::Create(TI->getContext(),
@@ -208,15 +208,15 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
 
 
   // If we don't have a pass object, we can't update anything...
-  if (P == 0) return NewBB;
+  if (!P) return NewBB;
 
   DominatorTreeWrapperPass *DTWP =
       P->getAnalysisIfAvailable<DominatorTreeWrapperPass>();
-  DominatorTree *DT = DTWP ? &DTWP->getDomTree() : 0;
+  DominatorTree *DT = DTWP ? &DTWP->getDomTree() : nullptr;
   LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>();
 
   // If we have nothing to update, just return.
-  if (DT == 0 && LI == 0)
+  if (!DT && !LI)
     return NewBB;
 
   // Now update analysis information.  Since the only predecessor of NewBB is
@@ -252,7 +252,7 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
     //
     if (TINode) {       // Don't break unreachable code!
       DomTreeNode *NewBBNode = DT->addNewBlock(NewBB, TIBB);
-      DomTreeNode *DestBBNode = 0;
+      DomTreeNode *DestBBNode = nullptr;
 
       // If NewBBDominatesDestBB hasn't been computed yet, do so with DT.
       if (!OtherPreds.empty()) {

@@ -78,7 +78,7 @@ namespace {
 struct ThreadSanitizer : public FunctionPass {
   ThreadSanitizer(StringRef BlacklistFile = StringRef())
       : FunctionPass(ID),
-        DL(0),
+        DL(nullptr),
         BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
                                             : BlacklistFile) { }
   const char *getPassName() const override;
@@ -174,8 +174,8 @@ void ThreadSanitizer::initializeCallbacks(Module &M) {
 
     for (int op = AtomicRMWInst::FIRST_BINOP;
         op <= AtomicRMWInst::LAST_BINOP; ++op) {
-      TsanAtomicRMW[op][i] = NULL;
-      const char *NamePart = NULL;
+      TsanAtomicRMW[op][i] = nullptr;
+      const char *NamePart = nullptr;
       if (op == AtomicRMWInst::Xchg)
         NamePart = "_exchange";
       else if (op == AtomicRMWInst::Add)
@@ -518,7 +518,7 @@ bool ThreadSanitizer::instrumentAtomic(Instruction *I) {
     if (Idx < 0)
       return false;
     Function *F = TsanAtomicRMW[RMWI->getOperation()][Idx];
-    if (F == NULL)
+    if (!F)
       return false;
     const size_t ByteSize = 1 << Idx;
     const size_t BitSize = ByteSize * 8;

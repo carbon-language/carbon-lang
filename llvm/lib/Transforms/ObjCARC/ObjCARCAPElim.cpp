@@ -94,7 +94,7 @@ bool ObjCARCAPElim::MayAutorelease(ImmutableCallSite CS, unsigned Depth) {
 bool ObjCARCAPElim::OptimizeBB(BasicBlock *BB) {
   bool Changed = false;
 
-  Instruction *Push = 0;
+  Instruction *Push = nullptr;
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
     Instruction *Inst = I++;
     switch (GetBasicInstructionClass(Inst)) {
@@ -113,11 +113,11 @@ bool ObjCARCAPElim::OptimizeBB(BasicBlock *BB) {
         Inst->eraseFromParent();
         Push->eraseFromParent();
       }
-      Push = 0;
+      Push = nullptr;
       break;
     case IC_CallOrUser:
       if (MayAutorelease(ImmutableCallSite(Inst)))
-        Push = 0;
+        Push = nullptr;
       break;
     default:
       break;

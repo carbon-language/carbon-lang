@@ -41,7 +41,7 @@ struct SpecialCaseList::Entry {
   StringSet<> Strings;
   Regex *RegEx;
 
-  Entry() : RegEx(0) {}
+  Entry() : RegEx(nullptr) {}
 
   bool match(StringRef Query) const {
     return Strings.count(Query) || (RegEx && RegEx->match(Query));
@@ -57,7 +57,7 @@ SpecialCaseList *SpecialCaseList::create(
   std::unique_ptr<MemoryBuffer> File;
   if (error_code EC = MemoryBuffer::getFile(Path, File)) {
     Error = (Twine("Can't open file '") + Path + "': " + EC.message()).str();
-    return 0;
+    return nullptr;
   }
   return create(File.get(), Error);
 }
@@ -66,7 +66,7 @@ SpecialCaseList *SpecialCaseList::create(
     const MemoryBuffer *MB, std::string &Error) {
   std::unique_ptr<SpecialCaseList> SCL(new SpecialCaseList());
   if (!SCL->parse(MB, Error))
-    return 0;
+    return nullptr;
   return SCL.release();
 }
 

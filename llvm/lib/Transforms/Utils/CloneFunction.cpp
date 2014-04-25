@@ -159,7 +159,7 @@ static MDNode* FindSubprogram(const Function *F, DebugInfoFinder &Finder) {
   for (DISubprogram Subprogram : Finder.subprograms()) {
     if (Subprogram.describes(F)) return Subprogram;
   }
-  return NULL;
+  return nullptr;
 }
 
 // Add an operand to an existing MDNode. The new operand will be added at the
@@ -359,7 +359,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
       // If the condition was a known constant in the callee...
       ConstantInt *Cond = dyn_cast<ConstantInt>(BI->getCondition());
       // Or is a known constant in the caller...
-      if (Cond == 0) {
+      if (!Cond) {
         Value *V = VMap[BI->getCondition()];
         Cond = dyn_cast_or_null<ConstantInt>(V);
       }
@@ -375,7 +375,7 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
   } else if (const SwitchInst *SI = dyn_cast<SwitchInst>(OldTI)) {
     // If switching on a value known constant in the caller.
     ConstantInt *Cond = dyn_cast<ConstantInt>(SI->getCondition());
-    if (Cond == 0) { // Or known constant after constant prop in the callee...
+    if (!Cond) { // Or known constant after constant prop in the callee...
       Value *V = VMap[SI->getCondition()];
       Cond = dyn_cast_or_null<ConstantInt>(V);
     }
@@ -454,7 +454,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
        BI != BE; ++BI) {
     Value *V = VMap[BI];
     BasicBlock *NewBB = cast_or_null<BasicBlock>(V);
-    if (NewBB == 0) continue;  // Dead block.
+    if (!NewBB) continue;  // Dead block.
 
     // Add the new block to the new function.
     NewFunc->getBasicBlockList().push_back(NewBB);

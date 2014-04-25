@@ -120,8 +120,8 @@ typedef DenseMap<BasicBlock *, SmallVector<BasicBlock *, 8>> BlockEdgeMap;
 class SampleFunctionProfile {
 public:
   SampleFunctionProfile()
-      : TotalSamples(0), TotalHeadSamples(0), HeaderLineno(0), DT(0), PDT(0),
-        LI(0), Ctx(0) {}
+      : TotalSamples(0), TotalHeadSamples(0), HeaderLineno(0), DT(nullptr),
+        PDT(nullptr), LI(nullptr), Ctx(nullptr) {}
 
   unsigned getFunctionLoc(Function &F);
   bool emitAnnotations(Function &F, DominatorTree *DomTree,

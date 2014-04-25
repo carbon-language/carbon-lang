@@ -180,7 +180,7 @@ bool TailCallElim::runOnFunction(Function &F) {
   if (F.getFunctionType()->isVarArg()) return false;
 
   TTI = &getAnalysis<TargetTransformInfo>();
-  BasicBlock *OldEntry = 0;
+  BasicBlock *OldEntry = nullptr;
   bool TailCallsAreMarkedTail = false;
   SmallVector<PHINode*, 8> ArgumentPHIs;
   bool MadeChange = false;
@@ -353,11 +353,11 @@ static bool isDynamicConstant(Value *V, CallInst *CI, ReturnInst *RI) {
 //
 static Value *getCommonReturnValue(ReturnInst *IgnoreRI, CallInst *CI) {
   Function *F = CI->getParent()->getParent();
-  Value *ReturnedValue = 0;
+  Value *ReturnedValue = nullptr;
 
   for (Function::iterator BBI = F->begin(), E = F->end(); BBI != E; ++BBI) {
     ReturnInst *RI = dyn_cast<ReturnInst>(BBI->getTerminator());
-    if (RI == 0 || RI == IgnoreRI) continue;
+    if (RI == nullptr || RI == IgnoreRI) continue;
 
     // We can only perform this transformation if the value returned is
     // evaluatable at the start of the initial invocation of the function,
@@ -365,10 +365,10 @@ static Value *getCommonReturnValue(ReturnInst *IgnoreRI, CallInst *CI) {
     //
     Value *RetOp = RI->getOperand(0);
     if (!isDynamicConstant(RetOp, CI, RI))
-      return 0;
+      return nullptr;
 
     if (ReturnedValue && RetOp != ReturnedValue)
-      return 0;     // Cannot transform if differing values are returned.
+      return nullptr;     // Cannot transform if differing values are returned.
     ReturnedValue = RetOp;
   }
   return ReturnedValue;
@@ -380,18 +380,18 @@ static Value *getCommonReturnValue(ReturnInst *IgnoreRI, CallInst *CI) {
 ///
 Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
                                                       CallInst *CI) {
-  if (!I->isAssociative() || !I->isCommutative()) return 0;
+  if (!I->isAssociative() || !I->isCommutative()) return nullptr;
   assert(I->getNumOperands() == 2 &&
          "Associative/commutative operations should have 2 args!");
 
   // Exactly one operand should be the result of the call instruction.
   if ((I->getOperand(0) == CI && I->getOperand(1) == CI) ||
       (I->getOperand(0) != CI && I->getOperand(1) != CI))
-    return 0;
+    return nullptr;
 
   // The only user of this instruction we allow is a single return instruction.
   if (!I->hasOneUse() || !isa<ReturnInst>(I->user_back()))
-    return 0;
+    return nullptr;
 
   // Ok, now we have to check all of the other return instructions in this
   // function.  If they return non-constants or differing values, then we cannot
@@ -412,11 +412,11 @@ TailCallElim::FindTRECandidate(Instruction *TI,
   Function *F = BB->getParent();
 
   if (&BB->front() == TI) // Make sure there is something before the terminator.
-    return 0;
+    return nullptr;
 
   // Scan backwards from the return, checking to see if there is a tail call in
   // this block.  If so, set CI to it.
-  CallInst *CI = 0;
+  CallInst *CI = nullptr;
   BasicBlock::iterator BBI = TI;
   while (true) {
     CI = dyn_cast<CallInst>(BBI);
@@ -424,14 +424,14 @@ TailCallElim::FindTRECandidate(Instruction *TI,
       break;
 
     if (BBI == BB->begin())
-      return 0;          // Didn't find a potential tail call.
+      return nullptr;          // Didn't find a potential tail call.
     --BBI;
   }
 
   // If this call is marked as a tail call, and if there are dynamic allocas in
   // the function, we cannot perform this optimization.
   if (CI->isTailCall() && CannotTailCallElimCallsMarkedTail)
-    return 0;
+    return nullptr;
 
   // As a special case, detect code like this:
   //   double fabs(double f) { return __builtin_fabs(f); } // a 'fabs' call
@@ -451,7 +451,7 @@ TailCallElim::FindTRECandidate(Instruction *TI,
     for (; I != E && FI != FE; ++I, ++FI)
       if (*I != &*FI) break;
     if (I == E && FI == FE)
-      return 0;
+      return nullptr;
   }
 
   return CI;
@@ -472,8 +472,8 @@ bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
   // which is different to the constant returned by other return instructions
   // (which is recorded in AccumulatorRecursionEliminationInitVal).  This is a
   // special case of accumulator recursion, the operation being "return C".
-  Value *AccumulatorRecursionEliminationInitVal = 0;
-  Instruction *AccumulatorRecursionInstr = 0;
+  Value *AccumulatorRecursionEliminationInitVal = nullptr;
+  Instruction *AccumulatorRecursionInstr = nullptr;
 
   // Ok, we found a potential tail call.  We can currently only transform the
   // tail call if all of the instructions between the call and the return are
@@ -503,8 +503,8 @@ bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
   // accumulator recursion variable eliminated.
   if (Ret->getNumOperands() == 1 && Ret->getReturnValue() != CI &&
       !isa<UndefValue>(Ret->getReturnValue()) &&
-      AccumulatorRecursionEliminationInitVal == 0 &&
-      !getCommonReturnValue(0, CI)) {
+      AccumulatorRecursionEliminationInitVal == nullptr &&
+      !getCommonReturnValue(nullptr, CI)) {
     // One case remains that we are able to handle: the current return
     // instruction returns a constant, and all other return instructions
     // return a different constant.
@@ -522,7 +522,7 @@ bool TailCallElim::EliminateRecursiveTailCall(CallInst *CI, ReturnInst *Ret,
 
   // OK! We can transform this tail call.  If this is the first one found,
   // create the new entry block, allowing us to branch back to the old entry.
-  if (OldEntry == 0) {
+  if (!OldEntry) {
     OldEntry = &F->getEntryBlock();
     BasicBlock *NewEntry = BasicBlock::Create(F->getContext(), "", F, OldEntry);
     NewEntry->takeName(OldEntry);

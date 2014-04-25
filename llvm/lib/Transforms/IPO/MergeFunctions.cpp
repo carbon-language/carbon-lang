@@ -121,12 +121,12 @@ public:
   void release() {
     assert(Func &&
            "Attempted to release function twice, or release empty/tombstone!");
-    Func = NULL;
+    Func = nullptr;
   }
 
 private:
   explicit ComparableFunction(unsigned Hash)
-    : Func(NULL), Hash(Hash), DL(NULL) {}
+    : Func(nullptr), Hash(Hash), DL(nullptr) {}
 
   AssertingVH<Function> Func;
   unsigned Hash;
@@ -684,7 +684,7 @@ ModulePass *llvm::createMergeFunctionsPass() {
 bool MergeFunctions::runOnModule(Module &M) {
   bool Changed = false;
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : 0;
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
 
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     if (!I->isDeclaration() && !I->hasAvailableExternallyLinkage())

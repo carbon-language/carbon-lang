@@ -35,14 +35,14 @@ static AvailableValsTy &getAvailableVals(void *AV) {
 }
 
 SSAUpdater::SSAUpdater(SmallVectorImpl<PHINode*> *NewPHI)
-  : AV(0), ProtoType(0), ProtoName(), InsertedPHIs(NewPHI) {}
+  : AV(nullptr), ProtoType(nullptr), ProtoName(), InsertedPHIs(NewPHI) {}
 
 SSAUpdater::~SSAUpdater() {
   delete static_cast<AvailableValsTy*>(AV);
 }
 
 void SSAUpdater::Initialize(Type *Ty, StringRef Name) {
-  if (AV == 0)
+  if (!AV)
     AV = new AvailableValsTy();
   else
     getAvailableVals(AV).clear();
@@ -91,7 +91,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
   // Otherwise, we have the hard case.  Get the live-in values for each
   // predecessor.
   SmallVector<std::pair<BasicBlock*, Value*>, 8> PredValues;
-  Value *SingularValue = 0;
+  Value *SingularValue = nullptr;
 
   // We can get our predecessor info by walking the pred_iterator list, but it
   // is relatively slow.  If we already have PHI nodes in this block, walk one
@@ -106,7 +106,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
       if (i == 0)
         SingularValue = PredVal;
       else if (PredVal != SingularValue)
-        SingularValue = 0;
+        SingularValue = nullptr;
     }
   } else {
     bool isFirstPred = true;
@@ -120,7 +120,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
         SingularValue = PredVal;
         isFirstPred = false;
       } else if (PredVal != SingularValue)
-        SingularValue = 0;
+        SingularValue = nullptr;
     }
   }
 
@@ -129,7 +129,7 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
     return UndefValue::get(ProtoType);
 
   // Otherwise, if all the merged values are the same, just use it.
-  if (SingularValue != 0)
+  if (SingularValue)
     return SingularValue;
 
   // Otherwise, we do need a PHI: check to see if we already have one available
@@ -292,7 +292,7 @@ public:
     PHINode *PHI = ValueIsPHI(Val, Updater);
     if (PHI && PHI->getNumIncomingValues() == 0)
       return PHI;
-    return 0;
+    return nullptr;
   }
 
   /// GetPHIValue - For the specified PHI instruction, return the value
@@ -402,7 +402,7 @@ run(const SmallVectorImpl<Instruction*> &Insts) const {
     // the order of these instructions in the block.  If the first use in the
     // block is a load, then it uses the live in value.  The last store defines
     // the live out value.  We handle this by doing a linear scan of the block.
-    Value *StoredValue = 0;
+    Value *StoredValue = nullptr;
     for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ++II) {
       if (LoadInst *L = dyn_cast<LoadInst>(II)) {
         // If this is a load from an unrelated pointer, ignore it.

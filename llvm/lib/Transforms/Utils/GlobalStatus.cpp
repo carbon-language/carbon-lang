@@ -61,7 +61,7 @@ static bool analyzeGlobalAux(const Value *V, GlobalStatus &GS,
     } else if (const Instruction *I = dyn_cast<Instruction>(UR)) {
       if (!GS.HasMultipleAccessingFunctions) {
         const Function *F = I->getParent()->getParent();
-        if (GS.AccessingFunction == 0)
+        if (!GS.AccessingFunction)
           GS.AccessingFunction = F;
         else if (GS.AccessingFunction != F)
           GS.HasMultipleAccessingFunctions = true;
@@ -176,6 +176,6 @@ bool GlobalStatus::analyzeGlobal(const Value *V, GlobalStatus &GS) {
 
 GlobalStatus::GlobalStatus()
     : IsCompared(false), IsLoaded(false), StoredType(NotStored),
-      StoredOnceValue(0), AccessingFunction(0),
+      StoredOnceValue(nullptr), AccessingFunction(nullptr),
       HasMultipleAccessingFunctions(false), HasNonInstructionUser(false),
       Ordering(NotAtomic) {}

@@ -120,7 +120,7 @@ buildExtractionBlockSet(const RegionNode &RN) {
 }
 
 CodeExtractor::CodeExtractor(BasicBlock *BB, bool AggregateArgs)
-  : DT(0), AggregateArgs(AggregateArgs||AggregateArgsOpt),
+  : DT(nullptr), AggregateArgs(AggregateArgs||AggregateArgsOpt),
     Blocks(buildExtractionBlockSet(BB)), NumExitBlocks(~0U) {}
 
 CodeExtractor::CodeExtractor(ArrayRef<BasicBlock *> BBs, DominatorTree *DT,
@@ -412,7 +412,7 @@ static BasicBlock* FindPhiPredForUseInBlock(Value* Used, BasicBlock* BB) {
        return P->getIncomingBlock(U);
   }
 
-  return 0;
+  return nullptr;
 }
 
 /// emitCallAndSwitchStatement - This method sets up the caller side by adding
@@ -440,14 +440,14 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       StructValues.push_back(*i);
     } else {
       AllocaInst *alloca =
-        new AllocaInst((*i)->getType(), 0, (*i)->getName()+".loc",
+        new AllocaInst((*i)->getType(), nullptr, (*i)->getName()+".loc",
                        codeReplacer->getParent()->begin()->begin());
       ReloadOutputs.push_back(alloca);
       params.push_back(alloca);
     }
   }
 
-  AllocaInst *Struct = 0;
+  AllocaInst *Struct = nullptr;
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
     std::vector<Type*> ArgTypes;
     for (ValueSet::iterator v = StructValues.begin(),
@@ -457,7 +457,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     // Allocate a struct at the beginning of this function
     Type *StructArgTy = StructType::get(newFunction->getContext(), ArgTypes);
     Struct =
-      new AllocaInst(StructArgTy, 0, "structArg",
+      new AllocaInst(StructArgTy, nullptr, "structArg",
                      codeReplacer->getParent()->begin()->begin());
     params.push_back(Struct);
 
@@ -486,7 +486,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
   // Reload the outputs passed in by reference
   for (unsigned i = 0, e = outputs.size(); i != e; ++i) {
-    Value *Output = 0;
+    Value *Output = nullptr;
     if (AggregateArgs) {
       Value *Idx[2];
       Idx[0] = Constant::getNullValue(Type::getInt32Ty(Context));
@@ -539,7 +539,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                                          newFunction);
           unsigned SuccNum = switchVal++;
 
-          Value *brVal = 0;
+          Value *brVal = nullptr;
           switch (NumExitBlocks) {
           case 0:
           case 1: break;  // No value needed.
@@ -635,7 +635,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
     // Check if the function should return a value
     if (OldFnRetTy->isVoidTy()) {
-      ReturnInst::Create(Context, 0, TheSwitch);  // Return void
+      ReturnInst::Create(Context, nullptr, TheSwitch);  // Return void
     } else if (OldFnRetTy == TheSwitch->getCondition()->getType()) {
       // return what we have
       ReturnInst::Create(Context, TheSwitch->getCondition(), TheSwitch);
@@ -687,7 +687,7 @@ void CodeExtractor::moveCodeToFunction(Function *newFunction) {
 
 Function *CodeExtractor::extractCodeRegion() {
   if (!isEligible())
-    return 0;
+    return nullptr;
 
   ValueSet inputs, outputs;
 
