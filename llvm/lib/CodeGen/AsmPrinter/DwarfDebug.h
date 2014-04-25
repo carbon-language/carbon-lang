@@ -83,7 +83,7 @@ public:
 
   // Accessors.
   DIVariable getVariable() const { return Var; }
-  void setDIE(DIE *D) { TheDIE = D; }
+  void setDIE(DIE &D) { TheDIE = &D; }
   DIE *getDIE() const { return TheDIE; }
   void setDotDebugLocOffset(unsigned O) { DotDebugLocOffset = O; }
   unsigned getDotDebugLocOffset() const { return DotDebugLocOffset; }

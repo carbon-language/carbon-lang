@@ -457,6 +457,10 @@ protected:
   virtual unsigned getOrCreateSourceID(StringRef File, StringRef Directory) = 0;
 
 private:
+  /// \brief Construct a DIE for the given DbgVariable without initializing the
+  /// DbgVariable's DIE reference.
+  DIE *constructVariableDIEImpl(const DbgVariable &DV, bool isScopeAbstract);
+
   /// constructTypeDIE - Construct basic type die from DIBasicType.
   void constructTypeDIE(DIE &Buffer, DIBasicType BTy);
 

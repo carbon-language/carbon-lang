@@ -1802,6 +1802,13 @@ void DwarfUnit::constructContainingTypeDIEs() {
 
 /// constructVariableDIE - Construct a DIE for the given DbgVariable.
 DIE *DwarfUnit::constructVariableDIE(DbgVariable &DV, bool isScopeAbstract) {
+  auto D = constructVariableDIEImpl(DV, isScopeAbstract);
+  DV.setDIE(*D);
+  return D;
+}
+
+DIE *DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
+                                         bool isScopeAbstract) {
   StringRef Name = DV.getName();
 
   // Define variable debug information entry.
@@ -1820,17 +1827,14 @@ DIE *DwarfUnit::constructVariableDIE(DbgVariable &DV, bool isScopeAbstract) {
   if (DV.isArtificial())
     addFlag(VariableDie, dwarf::DW_AT_artificial);
 
-  if (isScopeAbstract) {
-    DV.setDIE(VariableDie);
+  if (isScopeAbstract)
     return VariableDie;
-  }
 
   // Add variable address.
 
   unsigned Offset = DV.getDotDebugLocOffset();
   if (Offset != ~0U) {
     addLocationList(VariableDie, dwarf::DW_AT_location, Offset);
-    DV.setDIE(VariableDie);
     return VariableDie;
   }
 
@@ -1854,21 +1858,19 @@ DIE *DwarfUnit::constructVariableDIE(DbgVariable &DV, bool isScopeAbstract) {
       addConstantValue(VariableDie, DVInsn->getOperand(0).getCImm(),
                        isUnsignedDIType(DD, DV.getType()));
 
-    DV.setDIE(VariableDie);
     return VariableDie;
-  } else {
-    // .. else use frame index.
-    int FI = DV.getFrameIndex();
-    if (FI != ~0) {
-      unsigned FrameReg = 0;
-      const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
-      int Offset = TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
-      MachineLocation Location(FrameReg, Offset);
-      addVariableAddress(DV, VariableDie, Location);
-    }
   }
 
-  DV.setDIE(VariableDie);
+  // .. else use frame index.
+  int FI = DV.getFrameIndex();
+  if (FI != ~0) {
+    unsigned FrameReg = 0;
+    const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
+    int Offset = TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
+    MachineLocation Location(FrameReg, Offset);
+    addVariableAddress(DV, VariableDie, Location);
+  }
+
   return VariableDie;
 }
 
