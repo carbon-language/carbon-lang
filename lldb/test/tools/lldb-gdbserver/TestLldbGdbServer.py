@@ -36,12 +36,20 @@ class LldbGdbServerTestCase(TestBase):
 
     def create_socket(self):
         sock = socket.socket()
+        logger = self.logger
 
         def shutdown_socket():
             if sock:
-                # send the kill packet so lldb-gdbserver shuts down gracefully
-                sock.sendall(LldbGdbServerTestCase._GDBREMOTE_KILL_PACKET)
-                sock.close()
+                try:
+                    # send the kill packet so lldb-gdbserver shuts down gracefully
+                    sock.sendall(LldbGdbServerTestCase._GDBREMOTE_KILL_PACKET)
+                except:
+                    logger.warning("failed to send kill packet to debug monitor: {}; ignoring".format(sys.exc_info()[0]))
+
+                try:
+                    sock.close()
+                except:
+                    logger.warning("failed to close socket to debug monitor: {}; ignoring".format(sys.exc_info()[0]))
 
         self.addTearDownHook(shutdown_socket)
 
@@ -57,8 +65,13 @@ class LldbGdbServerTestCase(TestBase):
             server.logfile_read = sys.stdout
 
         # Schedule lldb-gdbserver to be shutting down during teardown.
+        logger = self.logger
         def shutdown_lldb_gdbserver():
-            server.close()
+            try:
+                server.close()
+            except:
+                logger.warning("failed to close pexpect server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
+
         self.addTearDownHook(shutdown_lldb_gdbserver)
 
         # Wait until we receive the server ready message before continuing.
