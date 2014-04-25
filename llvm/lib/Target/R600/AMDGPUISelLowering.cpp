@@ -362,7 +362,9 @@ SDValue AMDGPUTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   StringRef FuncName("<unknown>");
 
-  if (const GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+  if (const ExternalSymbolSDNode *G = dyn_cast<ExternalSymbolSDNode>(Callee))
+    FuncName = G->getSymbol();
+  else if (const GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     FuncName = G->getGlobal()->getName();
 
   DiagnosticInfoUnsupported NoCalls(Fn, "call to function " + FuncName);
