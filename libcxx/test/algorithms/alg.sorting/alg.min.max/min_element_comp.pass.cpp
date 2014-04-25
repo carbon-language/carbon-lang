@@ -58,10 +58,28 @@ test()
     test<Iter>(1000);
 }
 
+template <class Iter, class Pred>
+void test_eq0(Iter first, Iter last, Pred p)
+{
+    assert(first == std::min_element(first, last, p));
+}
+
+void test_eq()
+{
+    const size_t N = 10;
+    int* a = new int[N];
+    for (int i = 0; i < N; ++i)
+        a[i] = 10; // all the same
+    test_eq0(a, a+N, std::less<int>());
+    test_eq0(a, a+N, std::greater<int>());
+    delete [] a;
+}
+
 int main()
 {
     test<forward_iterator<const int*> >();
     test<bidirectional_iterator<const int*> >();
     test<random_access_iterator<const int*> >();
     test<const int*>();
+    test_eq();
 }
