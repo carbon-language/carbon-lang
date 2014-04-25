@@ -53,7 +53,7 @@ FunctionPass *llvm::createSystemZShortenInstPass(SystemZTargetMachine &TM) {
 }
 
 SystemZShortenInst::SystemZShortenInst(const SystemZTargetMachine &tm)
-  : MachineFunctionPass(ID), TII(0), LowGPRs(), HighGPRs() {
+  : MachineFunctionPass(ID), TII(nullptr), LowGPRs(), HighGPRs() {
   // Set up LowGPRs and HighGPRs.
   for (unsigned I = 0; I < 16; ++I) {
     LowGPRs[SystemZMC::GR32Regs[I]] |= 1 << I;

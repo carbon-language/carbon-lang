@@ -1747,8 +1747,8 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
   while (Ops.size() > 1) {
     unsigned FirstLoc = ~0U;
     unsigned LastLoc = 0;
-    MachineInstr *FirstOp = 0;
-    MachineInstr *LastOp = 0;
+    MachineInstr *FirstOp = nullptr;
+    MachineInstr *LastOp = nullptr;
     int LastOffset = 0;
     unsigned LastOpcode = 0;
     unsigned LastBytes = 0;

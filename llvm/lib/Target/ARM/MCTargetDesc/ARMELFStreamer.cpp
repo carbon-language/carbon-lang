@@ -62,7 +62,7 @@ static const char *GetFPUName(unsigned ID) {
 #define ARM_FPU_NAME(NAME, ID) case ARM::ID: return NAME;
 #include "ARMFPUName.def"
   }
-  return NULL;
+  return nullptr;
 }
 
 static const char *GetArchName(unsigned ID) {
@@ -75,7 +75,7 @@ static const char *GetArchName(unsigned ID) {
 #define ARM_ARCH_ALIAS(NAME, ID) /* empty */
 #include "ARMArchName.def"
   }
-  return NULL;
+  return nullptr;
 }
 
 static const char *GetArchDefaultCPUName(unsigned ID) {
@@ -88,7 +88,7 @@ static const char *GetArchDefaultCPUName(unsigned ID) {
 #define ARM_ARCH_ALIAS(NAME, ID) /* empty */
 #include "ARMArchName.def"
   }
-  return NULL;
+  return nullptr;
 }
 
 static unsigned GetArchDefaultCPUArch(unsigned ID) {
@@ -310,7 +310,7 @@ private:
     for (size_t i = 0; i < Contents.size(); ++i)
       if (Contents[i].Tag == Attribute)
         return &Contents[i];
-    return 0;
+    return nullptr;
   }
 
   void setAttributeItem(unsigned Attribute, unsigned Value,
@@ -415,7 +415,7 @@ public:
   ARMTargetELFStreamer(MCStreamer &S)
     : ARMTargetStreamer(S), CurrentVendor("aeabi"), FPU(ARM::INVALID_FPU),
       Arch(ARM::INVALID_ARCH), EmittedArch(ARM::INVALID_ARCH),
-      AttributeSection(0) {}
+      AttributeSection(nullptr) {}
 };
 
 /// Extend the generic ELFStreamer class so that it can emit mapping symbols at
@@ -1013,7 +1013,7 @@ inline void ARMELFStreamer::SwitchToEHSection(const char *Prefix,
   }
 
   // Get .ARM.extab or .ARM.exidx section
-  const MCSectionELF *EHSection = NULL;
+  const MCSectionELF *EHSection = nullptr;
   if (const MCSymbol *Group = FnSection.getGroup()) {
     EHSection = getContext().getELFSection(
       EHSecName, Type, Flags | ELF::SHF_GROUP, Kind,
@@ -1050,9 +1050,9 @@ void ARMELFStreamer::EmitFixup(const MCExpr *Expr, MCFixupKind Kind) {
 }
 
 void ARMELFStreamer::Reset() {
-  ExTab = NULL;
-  FnStart = NULL;
-  Personality = NULL;
+  ExTab = nullptr;
+  FnStart = nullptr;
+  Personality = nullptr;
   PersonalityIndex = ARM::EHABI::NUM_PERSONALITY_INDEX;
   FPReg = ARM::SP;
   FPOffset = 0;

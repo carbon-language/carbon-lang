@@ -346,7 +346,7 @@ static const NEONLdStTableEntry *LookupNEONLdSt(unsigned Opcode) {
     std::lower_bound(NEONLdStTable, NEONLdStTable + NumEntries, Opcode);
   if (I != NEONLdStTable + NumEntries && I->PseudoOpc == Opcode)
     return I;
-  return NULL;
+  return nullptr;
 }
 
 /// GetDSubRegs - Get 4 D subregisters of a Q, QQ, or QQQQ register,

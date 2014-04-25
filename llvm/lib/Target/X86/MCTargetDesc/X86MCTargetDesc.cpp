@@ -287,13 +287,13 @@ static MCAsmInfo *createX86MCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   // Initial state of the frame pointer is esp+stackGrowth.
   unsigned StackPtr = is64Bit ? X86::RSP : X86::ESP;
   MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(
-      0, MRI.getDwarfRegNum(StackPtr, true), -stackGrowth);
+      nullptr, MRI.getDwarfRegNum(StackPtr, true), -stackGrowth);
   MAI->addInitialFrameState(Inst);
 
   // Add return address to move list
   unsigned InstPtr = is64Bit ? X86::RIP : X86::EIP;
   MCCFIInstruction Inst2 = MCCFIInstruction::createOffset(
-      0, MRI.getDwarfRegNum(InstPtr, true), stackGrowth);
+      nullptr, MRI.getDwarfRegNum(InstPtr, true), stackGrowth);
   MAI->addInitialFrameState(Inst2);
 
   return MAI;
@@ -377,7 +377,7 @@ static MCInstPrinter *createX86MCInstPrinter(const Target &T,
     return new X86ATTInstPrinter(MAI, MII, MRI);
   if (SyntaxVariant == 1)
     return new X86IntelInstPrinter(MAI, MII, MRI);
-  return 0;
+  return nullptr;
 }
 
 static MCRelocationInfo *createX86MCRelocationInfo(StringRef TT,

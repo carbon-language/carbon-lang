@@ -66,7 +66,7 @@ static MCInstPrinter *createNVPTXMCInstPrinter(const Target &T,
                                                const MCSubtargetInfo &STI) {
   if (SyntaxVariant == 0)
     return new NVPTXInstPrinter(MAI, MII, MRI, STI);
-  return 0;
+  return nullptr;
 }
 
 // Force static initialization.

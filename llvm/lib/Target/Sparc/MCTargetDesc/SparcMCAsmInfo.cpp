@@ -32,7 +32,7 @@ SparcELFMCAsmInfo::SparcELFMCAsmInfo(StringRef TT) {
   Data16bitsDirective = "\t.half\t";
   Data32bitsDirective = "\t.word\t";
   // .xword is only supported by V9.
-  Data64bitsDirective = (isV9) ? "\t.xword\t" : 0;
+  Data64bitsDirective = (isV9) ? "\t.xword\t" : nullptr;
   ZeroDirective = "\t.skip\t";
   CommentString = "!";
   HasLEB128 = true;

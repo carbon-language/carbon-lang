@@ -74,7 +74,7 @@ namespace {
 }
 
 void MLxExpansion::clearStack() {
-  std::fill(LastMIs, LastMIs + 4, (MachineInstr*)0);
+  std::fill(LastMIs, LastMIs + 4, nullptr);
   MIIdx = 0;
 }
 
@@ -89,7 +89,7 @@ MachineInstr *MLxExpansion::getAccDefMI(MachineInstr *MI) const {
   // real definition MI. This is important for _sfp instructions.
   unsigned Reg = MI->getOperand(1).getReg();
   if (TargetRegisterInfo::isPhysicalRegister(Reg))
-    return 0;
+    return nullptr;
 
   MachineBasicBlock *MBB = MI->getParent();
   MachineInstr *DefMI = MRI->getVRegDef(Reg);
@@ -353,7 +353,7 @@ bool MLxExpansion::ExpandFPMLxInstructions(MachineBasicBlock &MBB) {
     if (Domain == ARMII::DomainGeneral) {
       if (++Skip == 2)
         // Assume dual issues of non-VFP / NEON instructions.
-        pushStack(0);
+        pushStack(nullptr);
     } else {
       Skip = 0;
 

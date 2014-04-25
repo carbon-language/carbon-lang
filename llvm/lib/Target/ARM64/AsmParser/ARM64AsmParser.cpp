@@ -964,7 +964,7 @@ public:
       return false;
     if (Mem.Mode != ImmediateOffset)
       return false;
-    return Mem.OffsetImm == 0;
+    return Mem.OffsetImm == nullptr;
   }
   bool isMemoryIndexedSImm9() const {
     if (!isMem() || Mem.Mode != ImmediateOffset)
@@ -1041,7 +1041,7 @@ public:
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.  Null MCExpr = 0.
-    if (Expr == 0)
+    if (!Expr)
       Inst.addOperand(MCOperand::CreateImm(0));
     else if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
       Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
@@ -1688,7 +1688,7 @@ public:
     ARM64Operand *Op = new ARM64Operand(k_Memory, Ctx);
     Op->Mem.BaseRegNum = BaseReg;
     Op->Mem.OffsetRegNum = OffsetReg;
-    Op->Mem.OffsetImm = 0;
+    Op->Mem.OffsetImm = nullptr;
     Op->Mem.ExtType = ExtType;
     Op->Mem.ShiftVal = ShiftVal;
     Op->Mem.ExplicitShift = ExplicitShift;
@@ -2379,7 +2379,7 @@ bool ARM64AsmParser::parseSysAlias(StringRef Name, SMLoc NameLoc,
   StringRef Op = Tok.getString();
   SMLoc S = Tok.getLoc();
 
-  const MCExpr *Expr = 0;
+  const MCExpr *Expr = nullptr;
 
 #define SYS_ALIAS(op1, Cn, Cm, op2)                                            \
   do {                                                                         \
@@ -2799,7 +2799,7 @@ ARM64AsmParser::tryParseNoIndexMemory(OperandVector &Operands) {
 
   Parser.Lex(); // Eat right bracket token.
 
-  Operands.push_back(ARM64Operand::CreateMem(Reg, 0, S, E, E, getContext()));
+  Operands.push_back(ARM64Operand::CreateMem(Reg, nullptr, S, E, E, getContext()));
   return MatchOperand_Success;
 }
 
@@ -2818,7 +2818,7 @@ bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
     return Error(BaseRegTok.getLoc(), "register expected");
 
   // If there is an offset expression, parse it.
-  const MCExpr *OffsetExpr = 0;
+  const MCExpr *OffsetExpr = nullptr;
   SMLoc OffsetLoc;
   if (Parser.getTok().is(AsmToken::Comma)) {
     Parser.Lex(); // Eat the comma.
@@ -3848,7 +3848,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     const char *Repl = StringSwitch<const char *>(Tok)
                            .Case("cmp", "subs")
                            .Case("cmn", "adds")
-                           .Default(0);
+                           .Default(nullptr);
     assert(Repl && "Unknown compare instruction");
     delete Operands[0];
     Operands[0] = ARM64Operand::CreateToken(Repl, false, IDLoc, getContext());

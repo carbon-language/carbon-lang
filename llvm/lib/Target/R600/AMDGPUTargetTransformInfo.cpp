@@ -46,7 +46,7 @@ class AMDGPUTTI final : public ImmutablePass, public TargetTransformInfo {
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) const;
 
 public:
-  AMDGPUTTI() : ImmutablePass(ID), TM(0), ST(0), TLI(0) {
+  AMDGPUTTI() : ImmutablePass(ID), TM(nullptr), ST(nullptr), TLI(nullptr) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 

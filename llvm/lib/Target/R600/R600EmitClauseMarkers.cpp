@@ -291,7 +291,7 @@ private:
 
 public:
   static char ID;
-  R600EmitClauseMarkers() : MachineFunctionPass(ID), TII(0), Address(0) {
+  R600EmitClauseMarkers() : MachineFunctionPass(ID), TII(nullptr), Address(0) {
 
     initializeR600EmitClauseMarkersPass(*PassRegistry::getPassRegistry());
   }

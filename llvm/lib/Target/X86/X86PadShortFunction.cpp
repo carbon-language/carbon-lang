@@ -50,7 +50,7 @@ namespace {
   struct PadShortFunc : public MachineFunctionPass {
     static char ID;
     PadShortFunc() : MachineFunctionPass(ID)
-                   , Threshold(4), TM(0), TII(0) {}
+                   , Threshold(4), TM(nullptr), TII(nullptr) {}
 
     bool runOnMachineFunction(MachineFunction &MF) override;
 

@@ -394,8 +394,8 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
     bool MO2IsKill = false;
     MachineBasicBlock::iterator jmpPos;
     MachineBasicBlock::iterator cmpPos;
-    MachineInstr *cmpInstr = NULL, *jmpInstr = NULL;
-    MachineBasicBlock *jmpTarget = NULL;
+    MachineInstr *cmpInstr = nullptr, *jmpInstr = nullptr;
+    MachineBasicBlock *jmpTarget = nullptr;
     bool afterRA = false;
     bool isSecondOpReg = false;
     bool isSecondOpNewified = false;

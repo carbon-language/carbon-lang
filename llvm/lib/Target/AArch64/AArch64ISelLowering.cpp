@@ -589,7 +589,7 @@ static void getExclusiveOperation(unsigned Size, AtomicOrdering Ord,
 // would fail to figure out the register pressure correctly.
 std::pair<const TargetRegisterClass*, uint8_t>
 AArch64TargetLowering::findRepresentativeClass(MVT VT) const{
-  const TargetRegisterClass *RRC = 0;
+  const TargetRegisterClass *RRC = nullptr;
   uint8_t Cost = 1;
   switch (VT.SimpleTy) {
   default:
@@ -1185,7 +1185,7 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::NEON_VEXTRACT:
     return "AArch64ISD::NEON_VEXTRACT";
   default:
-    return NULL;
+    return nullptr;
   }
 }
 
@@ -2159,7 +2159,7 @@ AArch64TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
 
     // If softenSetCCOperands returned a scalar, we need to compare the result
     // against zero to select between true and false values.
-    if (RHS.getNode() == 0) {
+    if (!RHS.getNode()) {
       RHS = DAG.getConstant(0, LHS.getValueType());
       CC = ISD::SETNE;
     }
@@ -3019,7 +3019,7 @@ AArch64TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
     softenSetCCOperands(DAG, MVT::f128, LHS, RHS, CC, dl);
 
     // If softenSetCCOperands returned a scalar, use it.
-    if (RHS.getNode() == 0) {
+    if (!RHS.getNode()) {
       assert(LHS.getValueType() == Op.getValueType() &&
              "Unexpected setcc expansion!");
       return LHS;
@@ -3167,7 +3167,7 @@ AArch64TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const {
 
     // If softenSetCCOperands returned a scalar, we need to compare the result
     // against zero to select between true and false values.
-    if (RHS.getNode() == 0) {
+    if (!RHS.getNode()) {
       RHS = DAG.getConstant(0, LHS.getValueType());
       CC = ISD::SETNE;
     }
@@ -4535,14 +4535,14 @@ bool AArch64TargetLowering::isKnownShuffleVector(SDValue Op, SelectionDAG &DAG,
             VT.getVectorElementType())
       return false;
 
-    if (V0.getNode() == 0) {
+    if (!V0.getNode()) {
       V0 = Elt.getOperand(0);
       V0NumElts = V0.getValueType().getVectorNumElements();
     }
     if (Elt.getOperand(0) == V0) {
       Mask[i] = (cast<ConstantSDNode>(Elt->getOperand(1))->getZExtValue());
       continue;
-    } else if (V1.getNode() == 0) {
+    } else if (!V1.getNode()) {
       V1 = Elt.getOperand(0);
     }
     if (Elt.getOperand(0) == V1) {
@@ -5243,7 +5243,7 @@ AArch64TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                     std::string &Constraint,
                                                     std::vector<SDValue> &Ops,
                                                     SelectionDAG &DAG) const {
-  SDValue Result(0, 0);
+  SDValue Result;
 
   // Only length 1 constraints are C_Other.
   if (Constraint.size() != 1) return;

@@ -22,7 +22,7 @@ using namespace llvm;
 
 /// Platform specific modifications to DAG.
 void VLIWMachineScheduler::postprocessDAG() {
-  SUnit* LastSequentialCall = NULL;
+  SUnit* LastSequentialCall = nullptr;
   // Currently we only catch the situation when compare gets scheduled
   // before preceding call.
   for (unsigned su = 0, e = SUnits.size(); su != e; ++su) {
@@ -398,13 +398,13 @@ SUnit *ConvergingVLIWScheduler::VLIWSchedBoundary::pickOnlyChoice() {
   for (unsigned i = 0; Available.empty(); ++i) {
     assert(i <= (HazardRec->getMaxLookAhead() + MaxMinLatency) &&
            "permanent hazard"); (void)i;
-    ResourceModel->reserveResources(0);
+    ResourceModel->reserveResources(nullptr);
     bumpCycle();
     releasePending();
   }
   if (Available.size() == 1)
     return *Available.begin();
-  return NULL;
+  return nullptr;
 }
 
 #ifndef NDEBUG
@@ -424,7 +424,7 @@ void ConvergingVLIWScheduler::traceCandidate(const char *Label,
 /// getSingleUnscheduledPred - If there is exactly one unscheduled predecessor
 /// of SU, return it, otherwise return null.
 static SUnit *getSingleUnscheduledPred(SUnit *SU) {
-  SUnit *OnlyAvailablePred = 0;
+  SUnit *OnlyAvailablePred = nullptr;
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     SUnit &Pred = *I->getSUnit();
@@ -432,7 +432,7 @@ static SUnit *getSingleUnscheduledPred(SUnit *SU) {
       // We found an available, but not scheduled, predecessor.  If it's the
       // only one we have found, keep track of it... otherwise give up.
       if (OnlyAvailablePred && OnlyAvailablePred != &Pred)
-        return 0;
+        return nullptr;
       OnlyAvailablePred = &Pred;
     }
   }
@@ -442,7 +442,7 @@ static SUnit *getSingleUnscheduledPred(SUnit *SU) {
 /// getSingleUnscheduledSucc - If there is exactly one unscheduled successor
 /// of SU, return it, otherwise return null.
 static SUnit *getSingleUnscheduledSucc(SUnit *SU) {
-  SUnit *OnlyAvailableSucc = 0;
+  SUnit *OnlyAvailableSucc = nullptr;
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     SUnit &Succ = *I->getSUnit();
@@ -450,7 +450,7 @@ static SUnit *getSingleUnscheduledSucc(SUnit *SU) {
       // We found an available, but not scheduled, successor.  If it's the
       // only one we have found, keep track of it... otherwise give up.
       if (OnlyAvailableSucc && OnlyAvailableSucc != &Succ)
-        return 0;
+        return nullptr;
       OnlyAvailableSucc = &Succ;
     }
   }
@@ -639,7 +639,7 @@ SUnit *ConvergingVLIWScheduler::pickNode(bool &IsTopNode) {
   if (DAG->top() == DAG->bottom()) {
     assert(Top.Available.empty() && Top.Pending.empty() &&
            Bot.Available.empty() && Bot.Pending.empty() && "ReadyQ garbage");
-    return NULL;
+    return nullptr;
   }
   SUnit *SU;
   if (llvm::ForceTopDown) {

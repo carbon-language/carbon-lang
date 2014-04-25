@@ -102,7 +102,7 @@ bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   MMI = &getAnalysis<MachineModuleInfo>();
   MCE.setModuleInfo(MMI);
   do {
-    MovePCtoLROffset = 0;
+    MovePCtoLROffset = nullptr;
     MCE.startFunction(MF);
     for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
       emitBasicBlock(*BB);

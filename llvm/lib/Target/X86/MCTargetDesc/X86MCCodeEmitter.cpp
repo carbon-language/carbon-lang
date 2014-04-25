@@ -286,7 +286,7 @@ enum GlobalOffsetTableExprKind {
 };
 static GlobalOffsetTableExprKind
 StartsWithGlobalOffsetTable(const MCExpr *Expr) {
-  const MCExpr *RHS = 0;
+  const MCExpr *RHS = nullptr;
   if (Expr->getKind() == MCExpr::Binary) {
     const MCBinaryExpr *BE = static_cast<const MCBinaryExpr *>(Expr);
     Expr = BE->getLHS();
@@ -317,7 +317,7 @@ void X86MCCodeEmitter::
 EmitImmediate(const MCOperand &DispOp, SMLoc Loc, unsigned Size,
               MCFixupKind FixupKind, unsigned &CurByte, raw_ostream &OS,
               SmallVectorImpl<MCFixup> &Fixups, int ImmOffset) const {
-  const MCExpr *Expr = NULL;
+  const MCExpr *Expr = nullptr;
   if (DispOp.isImm()) {
     // If this is a simple integer displacement that doesn't require a
     // relocation, emit it now.

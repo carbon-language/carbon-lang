@@ -56,7 +56,7 @@ unsigned getWFCountLimitedByGPR(unsigned GPRCount) {
 }
 
 SUnit* R600SchedStrategy::pickNode(bool &IsTopNode) {
-  SUnit *SU = 0;
+  SUnit *SU = nullptr;
   NextInstKind = IDOther;
 
   IsTopNode = false;
@@ -316,7 +316,7 @@ int R600SchedStrategy::getInstKind(SUnit* SU) {
 
 SUnit *R600SchedStrategy::PopInst(std::vector<SUnit *> &Q, bool AnyALU) {
   if (Q.empty())
-    return NULL;
+    return nullptr;
   for (std::vector<SUnit *>::reverse_iterator It = Q.rbegin(), E = Q.rend();
       It != E; ++It) {
     SUnit *SU = *It;
@@ -331,7 +331,7 @@ SUnit *R600SchedStrategy::PopInst(std::vector<SUnit *> &Q, bool AnyALU) {
       InstructionsGroupCandidate.pop_back();
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 void R600SchedStrategy::LoadAlu() {
@@ -448,11 +448,11 @@ SUnit* R600SchedStrategy::pickAlu() {
     }
     PrepareNextSlot();
   }
-  return NULL;
+  return nullptr;
 }
 
 SUnit* R600SchedStrategy::pickOther(int QID) {
-  SUnit *SU = 0;
+  SUnit *SU = nullptr;
   std::vector<SUnit *> &AQ = Available[QID];
 
   if (AQ.empty()) {

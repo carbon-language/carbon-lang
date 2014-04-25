@@ -96,7 +96,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
       (MO.getTargetFlags() & PPCII::MO_NLP_HIDDEN_FLAG) ? 
          MachO.getHiddenGVStubEntry(Sym) : MachO.getGVStubEntry(Sym);
     
-    if (StubSym.getPointer() == 0) {
+    if (!StubSym.getPointer()) {
       assert(MO.isGlobal() && "Extern symbol not handled yet");
       StubSym = MachineModuleInfoImpl::
                    StubValueTy(AP.getSymbol(MO.getGlobal()),

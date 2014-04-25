@@ -62,7 +62,7 @@ inline LLVMTargetRef wrap(const Target * P) {
 
 LLVMTargetRef LLVMGetFirstTarget() {
   if(TargetRegistry::begin() == TargetRegistry::end()) {
-    return NULL;
+    return nullptr;
   }
 
   const Target* target = &*TargetRegistry::begin();
@@ -80,7 +80,7 @@ LLVMTargetRef LLVMGetTargetFromName(const char *Name) {
       return wrap(&*IT);
   }
   
-  return NULL;
+  return nullptr;
 }
 
 LLVMBool LLVMGetTargetFromTriple(const char* TripleStr, LLVMTargetRef *T,

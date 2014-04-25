@@ -111,7 +111,8 @@ struct TerminatorInfo {
   // otherwise it is zero.
   unsigned ExtraRelaxSize;
 
-  TerminatorInfo() : Branch(0), Size(0), TargetBlock(0), ExtraRelaxSize(0) {}
+  TerminatorInfo() : Branch(nullptr), Size(0), TargetBlock(0),
+                     ExtraRelaxSize(0) {}
 };
 
 // Used to keep track of the current position while iterating over the blocks.
@@ -131,7 +132,7 @@ class SystemZLongBranch : public MachineFunctionPass {
 public:
   static char ID;
   SystemZLongBranch(const SystemZTargetMachine &tm)
-    : MachineFunctionPass(ID), TII(0) {}
+    : MachineFunctionPass(ID), TII(nullptr) {}
 
   const char *getPassName() const override {
     return "SystemZ Long Branch";
@@ -424,7 +425,7 @@ void SystemZLongBranch::relaxBranch(TerminatorInfo &Terminator) {
 
   Terminator.Size += Terminator.ExtraRelaxSize;
   Terminator.ExtraRelaxSize = 0;
-  Terminator.Branch = 0;
+  Terminator.Branch = nullptr;
 
   ++LongBranches;
 }

@@ -32,7 +32,7 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
                                   const char *(*getRegName)(unsigned)) {
   // If this is a shuffle operation, the switch should fill in this state.
   SmallVector<int, 8> ShuffleMask;
-  const char *DestName = 0, *Src1Name = 0, *Src2Name = 0;
+  const char *DestName = nullptr, *Src1Name = nullptr, *Src2Name = nullptr;
 
   switch (MI->getOpcode()) {
   case X86::INSERTPSrr:
@@ -492,7 +492,7 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
 
   // If this was a shuffle operation, print the shuffle mask.
   if (!ShuffleMask.empty()) {
-    if (DestName == 0) DestName = Src1Name;
+    if (!DestName) DestName = Src1Name;
     OS << (DestName ? DestName : "mem") << " = ";
 
     // If the two sources are the same, canonicalize the input elements to be

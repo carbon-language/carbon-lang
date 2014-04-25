@@ -30,7 +30,7 @@ using namespace llvm;
 MCOperand
 AArch64AsmPrinter::lowerSymbolOperand(const MachineOperand &MO,
                                       const MCSymbol *Sym) const {
-  const MCExpr *Expr = 0;
+  const MCExpr *Expr = nullptr;
 
   Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None, OutContext);
 

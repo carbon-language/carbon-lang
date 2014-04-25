@@ -604,7 +604,7 @@ bool HexagonPacketizerList::CanPromoteToNewValueStore( MachineInstr *MI,
     // evaluate identically
     unsigned predRegNumSrc = 0;
     unsigned predRegNumDst = 0;
-    const TargetRegisterClass* predRegClass = NULL;
+    const TargetRegisterClass* predRegClass = nullptr;
 
     // Get predicate register used in the source instruction
     for(unsigned opNum = 0; opNum < PacketMI->getNumOperands(); opNum++) {
@@ -1173,7 +1173,7 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
       // of that (IsCallDependent) function. Bug 6216 is opened for this.
       //
       unsigned DepReg = 0;
-      const TargetRegisterClass* RC = NULL;
+      const TargetRegisterClass* RC = nullptr;
       if (DepType == SDep::Data) {
         DepReg = SUJ->Succs[i].getReg();
         RC = QRI->getMinimalPhysRegClass(DepReg);

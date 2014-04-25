@@ -284,11 +284,11 @@ bool SystemZInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
         std::next(I)->eraseFromParent();
 
       Cond.clear();
-      FBB = 0;
+      FBB = nullptr;
 
       // Delete the JMP if it's equivalent to a fall-through.
       if (MBB.isLayoutSuccessor(Branch.Target->getMBB())) {
-        TBB = 0;
+        TBB = nullptr;
         I->eraseFromParent();
         I = MBB.end();
         continue;
@@ -418,7 +418,7 @@ bool SystemZInstrInfo::analyzeCompare(const MachineInstr *MI,
 static MachineInstr *getDef(unsigned Reg,
                             const MachineRegisterInfo *MRI) {
   if (TargetRegisterInfo::isPhysicalRegister(Reg))
-    return 0;
+    return nullptr;
   return MRI->getUniqueVRegDef(Reg);
 }
 
@@ -442,7 +442,7 @@ static void eraseIfDead(MachineInstr *MI, const MachineRegisterInfo *MRI) {
 static bool removeIPMBasedCompare(MachineInstr *Compare, unsigned SrcReg,
                                   const MachineRegisterInfo *MRI,
                                   const TargetRegisterInfo *TRI) {
-  MachineInstr *LGFR = 0;
+  MachineInstr *LGFR = nullptr;
   MachineInstr *RLL = getDef(SrcReg, MRI);
   if (RLL && RLL->getOpcode() == SystemZ::LGFR) {
     LGFR = RLL;
@@ -740,7 +740,7 @@ SystemZInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       return finishConvertToThreeAddress(MI, MIB, LV);
     }
   }
-  return 0;
+  return nullptr;
 }
 
 MachineInstr *
@@ -761,12 +761,12 @@ SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
         .addFrameIndex(FrameIndex).addImm(0)
         .addImm(MI->getOperand(2).getImm());
     }
-    return 0;
+    return nullptr;
   }
 
   // All other cases require a single operand.
   if (Ops.size() != 1)
-    return 0;
+    return nullptr;
 
   unsigned OpNum = Ops[0];
   assert(Size == MF.getRegInfo()
@@ -858,14 +858,14 @@ SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
     }
   }
 
-  return 0;
+  return nullptr;
 }
 
 MachineInstr *
 SystemZInstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr* MI,
                                         const SmallVectorImpl<unsigned> &Ops,
                                         MachineInstr* LoadMI) const {
-  return 0;
+  return nullptr;
 }
 
 bool

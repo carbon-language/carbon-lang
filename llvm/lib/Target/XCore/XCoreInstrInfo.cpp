@@ -288,7 +288,7 @@ XCoreInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
   assert((Cond.size() == 2 || Cond.size() == 0) &&
          "Unexpected number of components!");
   
-  if (FBB == 0) { // One way branch.
+  if (!FBB) { // One way branch.
     if (Cond.empty()) {
       // Unconditional branch
       BuildMI(&MBB, DL, get(XCore::BRFU_lu6)).addMBB(TBB);

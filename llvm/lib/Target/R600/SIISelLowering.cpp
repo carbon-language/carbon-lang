@@ -700,7 +700,7 @@ static SDNode *findUser(SDValue Value, unsigned Opcode) {
     if (I->getOpcode() == Opcode)
       return *I;
   }
-  return 0;
+  return nullptr;
 }
 
 /// This transforms the control flow intrinsics to get the branch destination as
@@ -712,7 +712,7 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
 
   SDNode *Intr = BRCOND.getOperand(1).getNode();
   SDValue Target = BRCOND.getOperand(2);
-  SDNode *BR = 0;
+  SDNode *BR = nullptr;
 
   if (Intr->getOpcode() == ISD::SETCC) {
     // As long as we negate the condition everything is fine
@@ -1022,7 +1022,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
       SDValue Arg0 = N->getOperand(0);
       SDValue Arg1 = N->getOperand(1);
       SDValue CC = N->getOperand(2);
-      ConstantSDNode * C = NULL;
+      ConstantSDNode * C = nullptr;
       ISD::CondCode CCOp = dyn_cast<CondCodeSDNode>(CC)->get();
 
       // i1 setcc (sext(i1), 0, setne) -> i1 setcc(i1, 0, setne)
@@ -1093,7 +1093,7 @@ bool SITargetLowering::foldImm(SDValue &Operand, int32_t &Immediate,
   MachineSDNode *Mov = dyn_cast<MachineSDNode>(Operand);
   const SIInstrInfo *TII =
     static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
-  if (Mov == 0 || !TII->isMov(Mov->getMachineOpcode()))
+  if (!Mov || !TII->isMov(Mov->getMachineOpcode()))
     return false;
 
   const SDValue &Op = Mov->getOperand(0);
@@ -1140,7 +1140,7 @@ const TargetRegisterClass *SITargetLowering::getRegClassForNode(
       }
       return TRI.getPhysRegClass(Reg);
     }
-    default:  return NULL;
+    default:  return nullptr;
     }
   }
   const MCInstrDesc &Desc = TII->get(Op->getMachineOpcode());
@@ -1244,14 +1244,14 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
 
   // Commuted opcode if available
   int OpcodeRev = Desc->isCommutable() ? TII->commuteOpcode(Opcode) : -1;
-  const MCInstrDesc *DescRev = OpcodeRev == -1 ? 0 : &TII->get(OpcodeRev);
+  const MCInstrDesc *DescRev = OpcodeRev == -1 ? nullptr : &TII->get(OpcodeRev);
 
   assert(!DescRev || DescRev->getNumDefs() == NumDefs);
   assert(!DescRev || DescRev->getNumOperands() == NumOps);
 
   // e64 version if available, -1 otherwise
   int OpcodeE64 = AMDGPU::getVOPe64(Opcode);
-  const MCInstrDesc *DescE64 = OpcodeE64 == -1 ? 0 : &TII->get(OpcodeE64);
+  const MCInstrDesc *DescE64 = OpcodeE64 == -1 ? nullptr : &TII->get(OpcodeE64);
 
   assert(!DescE64 || DescE64->getNumDefs() == NumDefs);
   assert(!DescE64 || DescE64->getNumOperands() == (NumOps + 4));
@@ -1324,7 +1324,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
         std::swap(Ops[0], Ops[1]);
 
         Desc = DescRev;
-        DescRev = 0;
+        DescRev = nullptr;
         continue;
       }
     }
@@ -1345,7 +1345,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
         Immediate = -1;
         Promote2e64 = true;
         Desc = DescE64;
-        DescE64 = 0;
+        DescE64 = nullptr;
       }
     }
   }

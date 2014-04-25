@@ -189,13 +189,14 @@ bool XCoreLowerThreadLocal::lowerGlobal(GlobalVariable *GV) {
 
   // Create replacement global.
   ArrayType *NewType = createLoweredType(GV->getType()->getElementType());
-  Constant *NewInitializer = 0;
+  Constant *NewInitializer = nullptr;
   if (GV->hasInitializer())
     NewInitializer = createLoweredInitializer(NewType,
                                               GV->getInitializer());
   GlobalVariable *NewGV =
     new GlobalVariable(*M, NewType, GV->isConstant(), GV->getLinkage(),
-                       NewInitializer, "", 0, GlobalVariable::NotThreadLocal,
+                       NewInitializer, "", nullptr,
+                       GlobalVariable::NotThreadLocal,
                        GV->getType()->getAddressSpace(),
                        GV->isExternallyInitialized());
 

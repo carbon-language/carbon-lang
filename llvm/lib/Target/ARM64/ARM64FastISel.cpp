@@ -303,7 +303,7 @@ unsigned ARM64FastISel::TargetMaterializeConstant(const Constant *C) {
 
 // Computes the address to get to an object.
 bool ARM64FastISel::ComputeAddress(const Value *Obj, Address &Addr) {
-  const User *U = NULL;
+  const User *U = nullptr;
   unsigned Opcode = Instruction::UserOp1;
   if (const Instruction *I = dyn_cast<Instruction>(Obj)) {
     // Don't walk into other basic blocks unless the object is an alloca from
@@ -1281,7 +1281,7 @@ bool ARM64FastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
 }
 
 bool ARM64FastISel::SelectCall(const Instruction *I,
-                               const char *IntrMemName = 0) {
+                               const char *IntrMemName = nullptr) {
   const CallInst *CI = cast<CallInst>(I);
   const Value *Callee = CI->getCalledValue();
 

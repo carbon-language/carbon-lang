@@ -138,7 +138,7 @@ HexagonInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
       regPos = 1;
     }
 
-    if (FBB == 0) {
+    if (!FBB) {
       if (Cond.empty()) {
         // Due to a bug in TailMerging/CFG Optimization, we need to add a
         // special case handling of a predicated jump followed by an
@@ -154,7 +154,7 @@ HexagonInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
           if (NewTBB == NextBB) {
             ReverseBranchCondition(Cond);
             RemoveBranch(MBB);
-            return InsertBranch(MBB, TBB, 0, Cond, DL);
+            return InsertBranch(MBB, TBB, nullptr, Cond, DL);
           }
         }
         BuildMI(&MBB, DL, get(BOpc)).addMBB(TBB);
@@ -177,8 +177,8 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
                                  MachineBasicBlock *&FBB,
                                  SmallVectorImpl<MachineOperand> &Cond,
                                  bool AllowModify) const {
-  TBB = NULL;
-  FBB = NULL;
+  TBB = nullptr;
+  FBB = nullptr;
 
   // If the block has no terminators, it just falls into the block after it.
   MachineBasicBlock::instr_iterator I = MBB.instr_end();
@@ -227,7 +227,7 @@ bool HexagonInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
   // Get the last instruction in the block.
   MachineInstr *LastInst = I;
-  MachineInstr *SecondLastInst = NULL;
+  MachineInstr *SecondLastInst = nullptr;
   // Find one more terminator if present.
   do {
     if (&*I != LastInst && !I->isBundle() && isUnpredicatedTerminator(I)) {
@@ -560,7 +560,7 @@ MachineInstr *HexagonInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                           const SmallVectorImpl<unsigned> &Ops,
                                                     int FI) const {
   // Hexagon_TODO: Implement.
-  return(0);
+  return nullptr;
 }
 
 unsigned HexagonInstrInfo::createVR(MachineFunction* MF, MVT VT) const {

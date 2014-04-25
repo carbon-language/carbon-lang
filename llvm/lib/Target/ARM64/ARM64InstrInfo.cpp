@@ -260,7 +260,7 @@ unsigned ARM64InstrInfo::InsertBranch(
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
 
-  if (FBB == 0) {
+  if (!FBB) {
     if (Cond.empty()) // Unconditional branch?
       BuildMI(&MBB, DL, get(ARM64::B)).addMBB(TBB);
     else
@@ -289,7 +289,7 @@ static unsigned removeCopies(const MachineRegisterInfo &MRI, unsigned VReg) {
 // csel instruction. If so, return the folded opcode, and the replacement
 // register.
 static unsigned canFoldIntoCSel(const MachineRegisterInfo &MRI, unsigned VReg,
-                                unsigned *NewVReg = 0) {
+                                unsigned *NewVReg = nullptr) {
   VReg = removeCopies(MRI, VReg);
   if (!TargetRegisterInfo::isVirtualRegister(VReg))
     return 0;
@@ -469,7 +469,7 @@ void ARM64InstrInfo::insertSelect(MachineBasicBlock &MBB,
   }
 
   unsigned Opc = 0;
-  const TargetRegisterClass *RC = 0;
+  const TargetRegisterClass *RC = nullptr;
   bool TryFold = false;
   if (MRI.constrainRegClass(DstReg, &ARM64::GPR64RegClass)) {
     RC = &ARM64::GPR64RegClass;
@@ -1667,16 +1667,16 @@ ARM64InstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
     unsigned SrcReg = MI->getOperand(1).getReg();
     if (SrcReg == ARM64::SP && TargetRegisterInfo::isVirtualRegister(DstReg)) {
       MF.getRegInfo().constrainRegClass(DstReg, &ARM64::GPR64RegClass);
-      return 0;
+      return nullptr;
     }
     if (DstReg == ARM64::SP && TargetRegisterInfo::isVirtualRegister(SrcReg)) {
       MF.getRegInfo().constrainRegClass(SrcReg, &ARM64::GPR64RegClass);
-      return 0;
+      return nullptr;
     }
   }
 
   // Cannot fold.
-  return 0;
+  return nullptr;
 }
 
 int llvm::isARM64FrameOffsetLegal(const MachineInstr &MI, int &Offset,

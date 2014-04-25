@@ -246,7 +246,7 @@ HexagonFrameLowering::spillCalleeSavedRegisters(
     //
     unsigned SuperReg = uniqueSuperReg(Reg, TRI);
     bool CanUseDblStore = false;
-    const TargetRegisterClass* SuperRegClass = 0;
+    const TargetRegisterClass* SuperRegClass = nullptr;
 
     if (ContiguousRegs && (i < CSI.size()-1)) {
       unsigned SuperRegNext = uniqueSuperReg(CSI[i+1].getReg(), TRI);
@@ -300,7 +300,7 @@ bool HexagonFrameLowering::restoreCalleeSavedRegisters(
     // Check if we can use a double-word load.
     //
     unsigned SuperReg = uniqueSuperReg(Reg, TRI);
-    const TargetRegisterClass* SuperRegClass = 0;
+    const TargetRegisterClass* SuperRegClass = nullptr;
     bool CanUseDblLoad = false;
     if (ContiguousRegs && (i < CSI.size()-1)) {
       unsigned SuperRegNext = uniqueSuperReg(CSI[i+1].getReg(), TRI);

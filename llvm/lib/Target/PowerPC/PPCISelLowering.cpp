@@ -758,7 +758,7 @@ unsigned PPCTargetLowering::getByValTypeAlignment(Type *Ty) const {
 
 const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
-  default: return 0;
+  default: return nullptr;
   case PPCISD::FSEL:            return "PPCISD::FSEL";
   case PPCISD::FCFID:           return "PPCISD::FCFID";
   case PPCISD::FCTIDZ:          return "PPCISD::FCTIDZ";
@@ -1019,7 +1019,7 @@ unsigned PPC::getVSPLTImmediate(SDNode *N, unsigned EltSize) {
 /// the constant being splatted.  The ByteSize field indicates the number of
 /// bytes of each element [124] -> [bhw].
 SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
-  SDValue OpVal(0, 0);
+  SDValue OpVal(nullptr, 0);
 
   // If ByteSize of the splat is bigger than the element size of the
   // build_vector, then we have a case where we are checking for a splat where
@@ -1038,7 +1038,7 @@ SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
       if (!isa<ConstantSDNode>(N->getOperand(i))) return SDValue();
 
 
-      if (UniquedVals[i&(Multiple-1)].getNode() == 0)
+      if (!UniquedVals[i&(Multiple-1)].getNode())
         UniquedVals[i&(Multiple-1)] = N->getOperand(i);
       else if (UniquedVals[i&(Multiple-1)] != N->getOperand(i))
         return SDValue();  // no match.
@@ -1053,21 +1053,21 @@ SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
     bool LeadingZero = true;
     bool LeadingOnes = true;
     for (unsigned i = 0; i != Multiple-1; ++i) {
-      if (UniquedVals[i].getNode() == 0) continue;  // Must have been undefs.
+      if (!UniquedVals[i].getNode()) continue;  // Must have been undefs.
 
       LeadingZero &= cast<ConstantSDNode>(UniquedVals[i])->isNullValue();
       LeadingOnes &= cast<ConstantSDNode>(UniquedVals[i])->isAllOnesValue();
     }
     // Finally, check the least significant entry.
     if (LeadingZero) {
-      if (UniquedVals[Multiple-1].getNode() == 0)
+      if (!UniquedVals[Multiple-1].getNode())
         return DAG.getTargetConstant(0, MVT::i32);  // 0,0,0,undef
       int Val = cast<ConstantSDNode>(UniquedVals[Multiple-1])->getZExtValue();
       if (Val < 16)
         return DAG.getTargetConstant(Val, MVT::i32);  // 0,0,0,4 -> vspltisw(4)
     }
     if (LeadingOnes) {
-      if (UniquedVals[Multiple-1].getNode() == 0)
+      if (!UniquedVals[Multiple-1].getNode())
         return DAG.getTargetConstant(~0U, MVT::i32);  // -1,-1,-1,undef
       int Val =cast<ConstantSDNode>(UniquedVals[Multiple-1])->getSExtValue();
       if (Val >= -16)                            // -1,-1,-1,-2 -> vspltisw(-2)
@@ -1080,13 +1080,13 @@ SDValue PPC::get_VSPLTI_elt(SDNode *N, unsigned ByteSize, SelectionDAG &DAG) {
   // Check to see if this buildvec has a single non-undef value in its elements.
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     if (N->getOperand(i).getOpcode() == ISD::UNDEF) continue;
-    if (OpVal.getNode() == 0)
+    if (!OpVal.getNode())
       OpVal = N->getOperand(i);
     else if (OpVal != N->getOperand(i))
       return SDValue();
   }
 
-  if (OpVal.getNode() == 0) return SDValue();  // All UNDEF: use implicit def.
+  if (!OpVal.getNode()) return SDValue();  // All UNDEF: use implicit def.
 
   unsigned ValSizeInBytes = EltSize;
   uint64_t Value = 0;
@@ -1439,7 +1439,8 @@ bool PPCTargetLowering::getPreIndexedAddressParts(SDNode *N, SDValue &Base,
 /// GetLabelAccessInfo - Return true if we should reference labels using a
 /// PICBase, set the HiOpFlags and LoOpFlags to the target MO flags.
 static bool GetLabelAccessInfo(const TargetMachine &TM, unsigned &HiOpFlags,
-                               unsigned &LoOpFlags, const GlobalValue *GV = 0) {
+                               unsigned &LoOpFlags,
+                               const GlobalValue *GV = nullptr) {
   HiOpFlags = PPCII::MO_HA;
   LoOpFlags = PPCII::MO_LO;
 
@@ -3174,12 +3175,12 @@ PPCTargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
 /// 32-bit value is representable in the immediate field of a BxA instruction.
 static SDNode *isBLACompatibleAddress(SDValue Op, SelectionDAG &DAG) {
   ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op);
-  if (!C) return 0;
+  if (!C) return nullptr;
 
   int Addr = C->getZExtValue();
   if ((Addr & 3) != 0 ||  // Low 2 bits are implicitly zero.
       SignExtend32<26>(Addr) != Addr)
-    return 0;  // Top 6 bits have to be sext of immediate.
+    return nullptr;  // Top 6 bits have to be sext of immediate.
 
   return DAG.getConstant((int)C->getZExtValue() >> 2,
                          DAG.getTargetLoweringInfo().getPointerTy()).getNode();
@@ -3514,7 +3515,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     }
 
     Chain = DAG.getNode(PPCISD::MTCTR, dl, NodeTys, MTCTROps,
-                        2 + (InFlag.getNode() != 0));
+                        InFlag.getNode() ? 3 : 2);
     InFlag = Chain.getValue(1);
 
     NodeTys.clear();
@@ -3522,7 +3523,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     NodeTys.push_back(MVT::Glue);
     Ops.push_back(Chain);
     CallOpc = PPCISD::BCTRL;
-    Callee.setNode(0);
+    Callee.setNode(nullptr);
     // Add use of X11 (holding environment pointer)
     if (isSVR4ABI && isPPC64)
       Ops.push_back(DAG.getRegister(PPC::X11, PtrVT));
@@ -7236,8 +7237,8 @@ static bool isConsecutiveLS(LSBaseSDNode *LS, LSBaseSDNode *Base,
     return true;
 
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  const GlobalValue *GV1 = NULL;
-  const GlobalValue *GV2 = NULL;
+  const GlobalValue *GV1 = nullptr;
+  const GlobalValue *GV2 = nullptr;
   int64_t Offset1 = 0;
   int64_t Offset2 = 0;
   bool isGA1 = TLI.isGAPlusOffset(Loc.getNode(), GV1, Offset1);
@@ -7887,7 +7888,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     if (N->getOperand(1).getOpcode() == ISD::FSQRT) {
       SDValue RV =
         DAGCombineFastRecipFSQRT(N->getOperand(1).getOperand(0), DCI);
-      if (RV.getNode() != 0) {
+      if (RV.getNode()) {
         DCI.AddToWorklist(RV.getNode());
         return DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
                            N->getOperand(0), RV);
@@ -7897,7 +7898,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       SDValue RV =
         DAGCombineFastRecipFSQRT(N->getOperand(1).getOperand(0).getOperand(0),
                                  DCI);
-      if (RV.getNode() != 0) {
+      if (RV.getNode()) {
         DCI.AddToWorklist(RV.getNode());
         RV = DAG.getNode(ISD::FP_EXTEND, SDLoc(N->getOperand(1)),
                          N->getValueType(0), RV);
@@ -7910,7 +7911,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       SDValue RV =
         DAGCombineFastRecipFSQRT(N->getOperand(1).getOperand(0).getOperand(0),
                                  DCI);
-      if (RV.getNode() != 0) {
+      if (RV.getNode()) {
         DCI.AddToWorklist(RV.getNode());
         RV = DAG.getNode(ISD::FP_ROUND, SDLoc(N->getOperand(1)),
                          N->getValueType(0), RV,
@@ -7922,7 +7923,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     }
 
     SDValue RV = DAGCombineFastRecip(N->getOperand(1), DCI);
-    if (RV.getNode() != 0) {
+    if (RV.getNode()) {
       DCI.AddToWorklist(RV.getNode());
       return DAG.getNode(ISD::FMUL, dl, N->getValueType(0),
                          N->getOperand(0), RV);
@@ -7937,10 +7938,10 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
     // Compute this as 1/(1/sqrt(X)), which is the reciprocal of the
     // reciprocal sqrt.
     SDValue RV = DAGCombineFastRecipFSQRT(N->getOperand(0), DCI);
-    if (RV.getNode() != 0) {
+    if (RV.getNode()) {
       DCI.AddToWorklist(RV.getNode());
       RV = DAGCombineFastRecip(RV, DCI);
-      if (RV.getNode() != 0) {
+      if (RV.getNode()) {
 	// Unfortunately, RV is now NaN if the input was exactly 0. Select out
 	// this case and force the answer to 0.
 
@@ -8254,7 +8255,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         !N->getOperand(2).hasOneUse()) {
 
       // Scan all of the users of the LHS, looking for VCMPo's that match.
-      SDNode *VCMPoNode = 0;
+      SDNode *VCMPoNode = nullptr;
 
       SDNode *LHSN = N->getOperand(0).getNode();
       for (SDNode::use_iterator UI = LHSN->use_begin(), E = LHSN->use_end();
@@ -8275,9 +8276,9 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       // Look at the (necessarily single) use of the flag value.  If it has a
       // chain, this transformation is more complex.  Note that multiple things
       // could use the value result, which we should ignore.
-      SDNode *FlagUser = 0;
+      SDNode *FlagUser = nullptr;
       for (SDNode::use_iterator UI = VCMPoNode->use_begin();
-           FlagUser == 0; ++UI) {
+           FlagUser == nullptr; ++UI) {
         assert(UI != VCMPoNode->use_end() && "Didn't find user!");
         SDNode *User = *UI;
         for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
@@ -8497,7 +8498,7 @@ PPCTargetLowering::getSingleConstraintMatchWeight(
   Value *CallOperandVal = info.CallOperandVal;
     // If we don't have a value, we can't do a match,
     // but allow it at the lowest weight.
-  if (CallOperandVal == NULL)
+  if (!CallOperandVal)
     return CW_Default;
   Type *type = CallOperandVal->getType();
 
@@ -8603,7 +8604,7 @@ void PPCTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                      std::string &Constraint,
                                                      std::vector<SDValue>&Ops,
                                                      SelectionDAG &DAG) const {
-  SDValue Result(0,0);
+  SDValue Result;
 
   // Only support length 1 constraints.
   if (Constraint.length() > 1) return;

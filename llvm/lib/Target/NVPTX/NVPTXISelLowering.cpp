@@ -75,7 +75,7 @@ static bool IsPTXVectorType(MVT VT) {
 /// LowerCall, and LowerReturn.
 static void ComputePTXValueVTs(const TargetLowering &TLI, Type *Ty,
                                SmallVectorImpl<EVT> &ValueVTs,
-                               SmallVectorImpl<uint64_t> *Offsets = 0,
+                               SmallVectorImpl<uint64_t> *Offsets = nullptr,
                                uint64_t StartingOffset = 0) {
   SmallVector<EVT, 16> TempVTs;
   SmallVector<uint64_t, 16> TempOffsets;
@@ -245,7 +245,7 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
 const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default:
-    return 0;
+    return nullptr;
   case NVPTXISD::CALL:
     return "NVPTXISD::CALL";
   case NVPTXISD::RET_FLAG:
@@ -1539,7 +1539,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
     if (isImageOrSamplerVal(
             theArgs[i],
             (theArgs[i]->getParent() ? theArgs[i]->getParent()->getParent()
-                                     : 0))) {
+                                     : nullptr))) {
       assert(isKernel && "Only kernels can have image/sampler params");
       InVals.push_back(DAG.getConstant(i + 1, MVT::i32));
       continue;
@@ -2265,7 +2265,7 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
   case Intrinsic::nvvm_tex_3d_grad_v4f32_f32: {
     Info.opc = getOpcForTextureInstr(Intrinsic);
     Info.memVT = MVT::f32;
-    Info.ptrVal = NULL;
+    Info.ptrVal = nullptr;
     Info.offset = 0;
     Info.vol = 0;
     Info.readMem = true;
@@ -2295,7 +2295,7 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
   case Intrinsic::nvvm_tex_3d_grad_v4i32_f32: {
     Info.opc = getOpcForTextureInstr(Intrinsic);
     Info.memVT = MVT::i32;
-    Info.ptrVal = NULL;
+    Info.ptrVal = nullptr;
     Info.offset = 0;
     Info.vol = 0;
     Info.readMem = true;
@@ -2320,7 +2320,7 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
   case Intrinsic::nvvm_suld_3d_v4i8_trap: {
     Info.opc = getOpcForSurfaceInstr(Intrinsic);
     Info.memVT = MVT::i8;
-    Info.ptrVal = NULL;
+    Info.ptrVal = nullptr;
     Info.offset = 0;
     Info.vol = 0;
     Info.readMem = true;
@@ -2345,7 +2345,7 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
   case Intrinsic::nvvm_suld_3d_v4i16_trap: {
     Info.opc = getOpcForSurfaceInstr(Intrinsic);
     Info.memVT = MVT::i16;
-    Info.ptrVal = NULL;
+    Info.ptrVal = nullptr;
     Info.offset = 0;
     Info.vol = 0;
     Info.readMem = true;
@@ -2370,7 +2370,7 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
   case Intrinsic::nvvm_suld_3d_v4i32_trap: {
     Info.opc = getOpcForSurfaceInstr(Intrinsic);
     Info.memVT = MVT::i32;
-    Info.ptrVal = NULL;
+    Info.ptrVal = nullptr;
     Info.offset = 0;
     Info.vol = 0;
     Info.readMem = true;

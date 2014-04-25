@@ -60,7 +60,7 @@ bool NVPTXPrologEpilogPass::runOnMachineFunction(MachineFunction &MF) {
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         if (!MI->getOperand(i).isFI())
           continue;
-        TRI.eliminateFrameIndex(MI, 0, i, NULL);
+        TRI.eliminateFrameIndex(MI, 0, i, nullptr);
         Modified = true;
       }
     }

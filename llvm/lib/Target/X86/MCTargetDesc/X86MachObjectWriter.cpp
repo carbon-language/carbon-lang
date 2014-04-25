@@ -186,9 +186,9 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
                          false);
 
     Value += Writer->getSymbolAddress(&A_SD, Layout) -
-      (A_Base == NULL ? 0 : Writer->getSymbolAddress(A_Base, Layout));
+      (!A_Base ? 0 : Writer->getSymbolAddress(A_Base, Layout));
     Value -= Writer->getSymbolAddress(&B_SD, Layout) -
-      (B_Base == NULL ? 0 : Writer->getSymbolAddress(B_Base, Layout));
+      (!B_Base ? 0 : Writer->getSymbolAddress(B_Base, Layout));
 
     if (A_Base) {
       Index = A_Base->getIndex();
@@ -231,7 +231,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(MachObjectWriter *Writer,
       const MCSectionMachO &Section = static_cast<const MCSectionMachO&>(
         Fragment->getParent()->getSection());
       if (Section.hasAttribute(MachO::S_ATTR_DEBUG))
-        Base = 0;
+        Base = nullptr;
     }
 
     // x86_64 almost always uses external relocations, except when there is no
@@ -525,7 +525,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   }
 
   // Get the symbol data, if any.
-  const MCSymbolData *SD = 0;
+  const MCSymbolData *SD = nullptr;
   if (Target.getSymA())
     SD = &Asm.getSymbolData(Target.getSymA()->getSymbol());
 

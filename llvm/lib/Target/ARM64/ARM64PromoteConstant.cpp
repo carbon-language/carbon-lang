@@ -489,8 +489,8 @@ ARM64PromoteConstant::insertDefinitions(Constant *Cst,
         ModuleToMergedGV.find(M);
     if (MapIt == ModuleToMergedGV.end()) {
       PromotedGV = new GlobalVariable(
-          *M, Cst->getType(), true, GlobalValue::InternalLinkage, 0,
-          "_PromotedConst", 0, GlobalVariable::NotThreadLocal);
+          *M, Cst->getType(), true, GlobalValue::InternalLinkage, nullptr,
+          "_PromotedConst", nullptr, GlobalVariable::NotThreadLocal);
       PromotedGV->setInitializer(Cst);
       ModuleToMergedGV[M] = PromotedGV;
       DEBUG(dbgs() << "Global replacement: ");

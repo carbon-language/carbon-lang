@@ -66,7 +66,7 @@ static MCInstPrinter *createMSP430MCInstPrinter(const Target &T,
                                                 const MCSubtargetInfo &STI) {
   if (SyntaxVariant == 0)
     return new MSP430InstPrinter(MAI, MII, MRI);
-  return 0;
+  return nullptr;
 }
 
 extern "C" void LLVMInitializeMSP430TargetMC() {

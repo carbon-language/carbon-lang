@@ -129,7 +129,7 @@ X86RegisterInfo::getMatchingSuperRegClass(const TargetRegisterClass *A,
   if (!Is64Bit && SubIdx == X86::sub_8bit) {
     A = X86GenRegisterInfo::getSubClassWithSubReg(A, X86::sub_8bit_hi);
     if (!A)
-      return 0;
+      return nullptr;
   }
   return X86GenRegisterInfo::getMatchingSuperRegClass(A, B, SubIdx);
 }

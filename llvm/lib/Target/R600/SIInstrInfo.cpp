@@ -247,18 +247,18 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
 
   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   if (MI->getNumOperands() < 3 || !MI->getOperand(1).isReg())
-    return 0;
+    return nullptr;
 
   // Cannot commute VOP2 if src0 is SGPR.
   if (isVOP2(MI->getOpcode()) && MI->getOperand(1).isReg() &&
       RI.isSGPRClass(MRI.getRegClass(MI->getOperand(1).getReg())))
-   return 0;
+   return nullptr;
 
   if (!MI->getOperand(2).isReg()) {
     // XXX: Commute instructions with FPImm operands
     if (NewMI || MI->getOperand(2).isFPImm() ||
        (!isVOP2(MI->getOpcode()) && !isVOP3(MI->getOpcode()))) {
-      return 0;
+      return nullptr;
     }
 
     // XXX: Commute VOP3 instructions with abs and neg set.
@@ -267,7 +267,7 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
                         AMDGPU::OpName::abs)).getImm() ||
          MI->getOperand(AMDGPU::getNamedOperandIdx(MI->getOpcode(),
                         AMDGPU::OpName::neg)).getImm()))
-      return 0;
+      return nullptr;
 
     unsigned Reg = MI->getOperand(1).getReg();
     unsigned SubReg = MI->getOperand(1).getSubReg();
@@ -755,7 +755,7 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
   // class of the output.
   if (MI->getOpcode() == AMDGPU::REG_SEQUENCE ||
       MI->getOpcode() == AMDGPU::PHI) {
-    const TargetRegisterClass *RC = NULL, *SRC = NULL, *VRC = NULL;
+    const TargetRegisterClass *RC = nullptr, *SRC = nullptr, *VRC = nullptr;
     for (unsigned i = 1, e = MI->getNumOperands(); i != e; i+=2) {
       if (!MI->getOperand(i).isReg() ||
           !TargetRegisterInfo::isVirtualRegister(MI->getOperand(i).getReg()))

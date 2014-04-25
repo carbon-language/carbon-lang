@@ -40,7 +40,7 @@ public:
     // FIXME: check that the value is actually the same.
     if (Sym->isVariable() == false)
       Sym->setVariableValue(MCConstantExpr::Create(SymAddr, Ctx));
-    const MCExpr *Expr = 0;
+    const MCExpr *Expr = nullptr;
 
     switch(RelType) {
     case X86_64_RELOC_TLV:

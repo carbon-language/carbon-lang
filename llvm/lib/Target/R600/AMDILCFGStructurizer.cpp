@@ -135,7 +135,7 @@ public:
   static char ID;
 
   AMDGPUCFGStructurizer() :
-      MachineFunctionPass(ID), TII(NULL), TRI(NULL) {
+      MachineFunctionPass(ID), TII(nullptr), TRI(nullptr) {
     initializeAMDGPUCFGStructurizerPass(*PassRegistry::getPassRegistry());
   }
 
@@ -334,7 +334,7 @@ protected:
       MachineBasicBlock *DstMBB, MachineBasicBlock::iterator I);
   void recordSccnum(MachineBasicBlock *MBB, int SCCNum);
   void retireBlock(MachineBasicBlock *MBB);
-  void setLoopLandBlock(MachineLoop *LoopRep, MachineBasicBlock *MBB = NULL);
+  void setLoopLandBlock(MachineLoop *LoopRep, MachineBasicBlock *MBB = nullptr);
 
   MachineBasicBlock *findNearestCommonPostDom(std::set<MachineBasicBlock *>&);
   /// This is work around solution for findNearestCommonDominator not avaiable
@@ -361,7 +361,7 @@ MachineBasicBlock *AMDGPUCFGStructurizer::getLoopLandInfo(MachineLoop *LoopRep)
     const {
   LoopLandInfoMap::const_iterator It = LLInfoMap.find(LoopRep);
   if (It == LLInfoMap.end())
-    return NULL;
+    return nullptr;
   return (*It).second;
 }
 
@@ -632,7 +632,7 @@ MachineInstr *AMDGPUCFGStructurizer::getNormalBlockBranchInstr(
   MachineInstr *MI = &*It;
   if (MI && (isCondBranch(MI) || isUncondBranch(MI)))
     return MI;
-  return NULL;
+  return nullptr;
 }
 
 MachineInstr *AMDGPUCFGStructurizer::getLoopendBlockBranchInstr(
@@ -648,7 +648,7 @@ MachineInstr *AMDGPUCFGStructurizer::getLoopendBlockBranchInstr(
         break;
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 MachineInstr *AMDGPUCFGStructurizer::getReturnInstr(MachineBasicBlock *MBB) {
@@ -658,7 +658,7 @@ MachineInstr *AMDGPUCFGStructurizer::getReturnInstr(MachineBasicBlock *MBB) {
     if (instr->getOpcode() == AMDGPU::RETURN)
       return instr;
   }
-  return NULL;
+  return nullptr;
 }
 
 MachineInstr *AMDGPUCFGStructurizer::getContinueInstr(MachineBasicBlock *MBB) {
@@ -668,7 +668,7 @@ MachineInstr *AMDGPUCFGStructurizer::getContinueInstr(MachineBasicBlock *MBB) {
     if (MI->getOpcode() == AMDGPU::CONTINUE)
       return MI;
   }
-  return NULL;
+  return nullptr;
 }
 
 bool AMDGPUCFGStructurizer::isReturnBlock(MachineBasicBlock *MBB) {
@@ -819,7 +819,7 @@ bool AMDGPUCFGStructurizer::run() {
 
     SmallVectorImpl<MachineBasicBlock *>::const_iterator SccBeginIter =
         It;
-    MachineBasicBlock *SccBeginMBB = NULL;
+    MachineBasicBlock *SccBeginMBB = nullptr;
     int SccNumBlk = 0;  // The number of active blocks, init to a
                         // maximum possible number.
     int SccNumIter;     // Number of iteration in this SCC.
@@ -874,7 +874,7 @@ bool AMDGPUCFGStructurizer::run() {
       }
 
       if (ContNextScc)
-        SccBeginMBB = NULL;
+        SccBeginMBB = nullptr;
     } //while, "one iteration" over the function.
 
     MachineBasicBlock *EntryMBB =
@@ -1026,7 +1026,7 @@ int AMDGPUCFGStructurizer::ifPatternMatch(MachineBasicBlock *MBB) {
   } else if (TrueMBB->succ_size() == 1 && *TrueMBB->succ_begin() == FalseMBB) {
     // Triangle pattern, false is empty
     LandBlk = FalseMBB;
-    FalseMBB = NULL;
+    FalseMBB = nullptr;
   } else if (FalseMBB->succ_size() == 1
              && *FalseMBB->succ_begin() == TrueMBB) {
     // Triangle pattern, true is empty
@@ -1034,7 +1034,7 @@ int AMDGPUCFGStructurizer::ifPatternMatch(MachineBasicBlock *MBB) {
     std::swap(TrueMBB, FalseMBB);
     reversePredicateSetter(MBB->end());
     LandBlk = FalseMBB;
-    FalseMBB = NULL;
+    FalseMBB = nullptr;
   } else if (FalseMBB->succ_size() == 1
              && isSameloopDetachedContbreak(TrueMBB, FalseMBB)) {
     LandBlk = *FalseMBB->succ_begin();
@@ -1242,7 +1242,7 @@ int AMDGPUCFGStructurizer::handleJumpintoIfImp(MachineBasicBlock *HeadMBB,
     DEBUG(
       dbgs() << " not working\n";
     );
-    DownBlk = (DownBlk->succ_size() == 1) ? (*DownBlk->succ_begin()) : NULL;
+    DownBlk = (DownBlk->succ_size() == 1) ? (*DownBlk->succ_begin()) : nullptr;
   } // walk down the postDomTree
 
   return Num;
@@ -1721,11 +1721,11 @@ AMDGPUCFGStructurizer::normalizeInfiniteLoopExit(MachineLoop* LoopRep) {
   const TargetRegisterClass * I32RC = TRI->getCFGStructurizerRegClass(MVT::i32);
 
   if (!LoopHeader || !LoopLatch)
-    return NULL;
+    return nullptr;
   MachineInstr *BranchMI = getLoopendBlockBranchInstr(LoopLatch);
   // Is LoopRep an infinite loop ?
   if (!BranchMI || !isUncondBranch(BranchMI))
-    return NULL;
+    return nullptr;
 
   MachineBasicBlock *DummyExitBlk = FuncRep->CreateMachineBasicBlock();
   FuncRep->push_back(DummyExitBlk);  //insert to function
@@ -1858,7 +1858,7 @@ AMDGPUCFGStructurizer::findNearestCommonPostDom(MachineBasicBlock *MBB1,
     return findNearestCommonPostDom(MBB1, *MBB2->succ_begin());
 
   if (!Node1 || !Node2)
-    return NULL;
+    return nullptr;
 
   Node1 = Node1->getIDom();
   while (Node1) {
@@ -1867,7 +1867,7 @@ AMDGPUCFGStructurizer::findNearestCommonPostDom(MachineBasicBlock *MBB1,
     Node1 = Node1->getIDom();
   }
 
-  return NULL;
+  return nullptr;
 }
 
 MachineBasicBlock *

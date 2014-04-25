@@ -54,17 +54,17 @@ namespace {
     unsigned Align;    // CP alignment.
 
     MSP430ISelAddressMode()
-      : BaseType(RegBase), Disp(0), GV(0), CP(0), BlockAddr(0),
-        ES(0), JT(-1), Align(0) {
+      : BaseType(RegBase), Disp(0), GV(nullptr), CP(nullptr),
+        BlockAddr(nullptr), ES(nullptr), JT(-1), Align(0) {
     }
 
     bool hasSymbolicDisplacement() const {
-      return GV != 0 || CP != 0 || ES != 0 || JT != -1;
+      return GV != nullptr || CP != nullptr || ES != nullptr || JT != -1;
     }
 
     void dump() {
       errs() << "MSP430ISelAddressMode " << this << '\n';
-      if (BaseType == RegBase && Base.Reg.getNode() != 0) {
+      if (BaseType == RegBase && Base.Reg.getNode() != nullptr) {
         errs() << "Base.Reg ";
         Base.Reg.getNode()->dump();
       } else if (BaseType == FrameIndexBase) {
@@ -201,7 +201,7 @@ bool MSP430DAGToDAGISel::MatchAddress(SDValue N, MSP430ISelAddressMode &AM) {
 
   case ISD::FrameIndex:
     if (AM.BaseType == MSP430ISelAddressMode::RegBase
-        && AM.Base.Reg.getNode() == 0) {
+        && AM.Base.Reg.getNode() == nullptr) {
       AM.BaseType = MSP430ISelAddressMode::FrameIndexBase;
       AM.Base.FrameIndex = cast<FrameIndexSDNode>(N)->getIndex();
       return false;
@@ -230,7 +230,7 @@ bool MSP430DAGToDAGISel::MatchAddress(SDValue N, MSP430ISelAddressMode &AM) {
       // Start with the LHS as an addr mode.
       if (!MatchAddress(N.getOperand(0), AM) &&
           // Address could not have picked a GV address for the displacement.
-          AM.GV == NULL &&
+          AM.GV == nullptr &&
           // Check to see if the LHS & C is zero.
           CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getAPIntValue())) {
         AM.Disp += Offset;
@@ -332,7 +332,7 @@ static bool isValidIndexedLoad(const LoadSDNode *LD) {
 SDNode *MSP430DAGToDAGISel::SelectIndexedLoad(SDNode *N) {
   LoadSDNode *LD = cast<LoadSDNode>(N);
   if (!isValidIndexedLoad(LD))
-    return NULL;
+    return nullptr;
 
   MVT VT = LD->getMemoryVT().getSimpleVT();
 
@@ -345,7 +345,7 @@ SDNode *MSP430DAGToDAGISel::SelectIndexedLoad(SDNode *N) {
     Opcode = MSP430::MOV16rm_POST;
     break;
   default:
-    return NULL;
+    return nullptr;
   }
 
    return CurDAG->getMachineNode(Opcode, SDLoc(N),
@@ -361,7 +361,7 @@ SDNode *MSP430DAGToDAGISel::SelectIndexedBinOp(SDNode *Op,
       IsLegalToFold(N1, Op, Op, OptLevel)) {
     LoadSDNode *LD = cast<LoadSDNode>(N1);
     if (!isValidIndexedLoad(LD))
-      return NULL;
+      return nullptr;
 
     MVT VT = LD->getMemoryVT().getSimpleVT();
     unsigned Opc = (VT == MVT::i16 ? Opc16 : Opc8);
@@ -380,7 +380,7 @@ SDNode *MSP430DAGToDAGISel::SelectIndexedBinOp(SDNode *Op,
     return ResNode;
   }
 
-  return NULL;
+  return nullptr;
 }
 
 
@@ -398,7 +398,7 @@ SDNode *MSP430DAGToDAGISel::Select(SDNode *Node) {
           Node->dump(CurDAG);
           errs() << "\n");
     Node->setNodeId(-1);
-    return NULL;
+    return nullptr;
   }
 
   // Few custom selection stuff.
@@ -486,7 +486,7 @@ SDNode *MSP430DAGToDAGISel::Select(SDNode *Node) {
   SDNode *ResNode = SelectCode(Node);
 
   DEBUG(errs() << "=> ");
-  if (ResNode == NULL || ResNode == Node)
+  if (ResNode == nullptr || ResNode == Node)
     DEBUG(Node->dump(CurDAG));
   else
     DEBUG(ResNode->dump(CurDAG));

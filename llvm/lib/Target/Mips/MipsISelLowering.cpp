@@ -204,7 +204,7 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case MipsISD::PCKEV:             return "MipsISD::PCKEV";
   case MipsISD::PCKOD:             return "MipsISD::PCKOD";
   case MipsISD::INSVE:             return "MipsISD::INSVE";
-  default:                         return NULL;
+  default:                         return nullptr;
   }
 }
 
@@ -2819,7 +2819,7 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
   Value *CallOperandVal = info.CallOperandVal;
     // If we don't have a value, we can't do a match,
     // but allow it at the lowest weight.
-  if (CallOperandVal == NULL)
+  if (!CallOperandVal)
     return CW_Default;
   Type *type = CallOperandVal->getType();
   // Look at the constraint type.
@@ -2897,12 +2897,12 @@ parseRegForInlineAsmConstraint(const StringRef &C, MVT VT) const {
   std::pair<bool, bool> R = parsePhysicalReg(C, Prefix, Reg);
 
   if (!R.first)
-    return std::make_pair((unsigned)0, (const TargetRegisterClass*)0);
+    return std::make_pair(0U, nullptr);
 
   if ((Prefix == "hi" || Prefix == "lo")) { // Parse hi/lo.
     // No numeric characters follow "hi" or "lo".
     if (R.second)
-      return std::make_pair((unsigned)0, (const TargetRegisterClass*)0);
+      return std::make_pair(0U, nullptr);
 
     RC = TRI->getRegClass(Prefix == "hi" ?
                           Mips::HI32RegClassID : Mips::LO32RegClassID);
@@ -2912,7 +2912,7 @@ parseRegForInlineAsmConstraint(const StringRef &C, MVT VT) const {
 
     // No numeric characters follow the name.
     if (R.second)
-      return std::make_pair((unsigned)0, (const TargetRegisterClass *)0);
+      return std::make_pair(0U, nullptr);
 
     Reg = StringSwitch<unsigned long long>(Prefix)
               .Case("$msair", Mips::MSAIR)
@@ -2926,14 +2926,14 @@ parseRegForInlineAsmConstraint(const StringRef &C, MVT VT) const {
               .Default(0);
 
     if (!Reg)
-      return std::make_pair((unsigned)0, (const TargetRegisterClass *)0);
+      return std::make_pair(0U, nullptr);
 
     RC = TRI->getRegClass(Mips::MSACtrlRegClassID);
     return std::make_pair(Reg, RC);
   }
 
   if (!R.second)
-    return std::make_pair((unsigned)0, (const TargetRegisterClass*)0);
+    return std::make_pair(0U, nullptr);
 
   if (Prefix == "$f") { // Parse $f0-$f31.
     // If the size of FP registers is 64-bit or Reg is an even number, select
@@ -2981,7 +2981,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
       if (VT == MVT::i64 && isGP64bit())
         return std::make_pair(0U, &Mips::GPR64RegClass);
       // This will generate an error message
-      return std::make_pair(0u, static_cast<const TargetRegisterClass*>(0));
+      return std::make_pair(0U, nullptr);
     case 'f': // FPU or MSA register
       if (VT == MVT::v16i8)
         return std::make_pair(0U, &Mips::MSA128BRegClass);
@@ -3011,7 +3011,7 @@ getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const
     case 'x': // register suitable for indirect jump
       // Fixme: Not triggering the use of both hi and low
       // This will generate an error message
-      return std::make_pair(0u, static_cast<const TargetRegisterClass*>(0));
+      return std::make_pair(0U, nullptr);
     }
   }
 
@@ -3030,7 +3030,7 @@ void MipsTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                      std::string &Constraint,
                                                      std::vector<SDValue>&Ops,
                                                      SelectionDAG &DAG) const {
-  SDValue Result(0, 0);
+  SDValue Result;
 
   // Only support length 1 constraints for now.
   if (Constraint.length() > 1) return;
@@ -3293,7 +3293,7 @@ analyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Args,
       continue;
     }
 
-    MVT RegVT = getRegVT(ArgVT, FuncArg->getType(), 0, IsSoftFloat);
+    MVT RegVT = getRegVT(ArgVT, FuncArg->getType(), nullptr, IsSoftFloat);
 
     if (!FixedFn(I, ArgVT, RegVT, CCValAssign::Full, ArgFlags, CCInfo))
       continue;
@@ -3341,7 +3341,7 @@ analyzeCallResult(const SmallVectorImpl<ISD::InputArg> &Ins, bool IsSoftFloat,
 void MipsTargetLowering::MipsCC::
 analyzeReturn(const SmallVectorImpl<ISD::OutputArg> &Outs, bool IsSoftFloat,
               const Type *RetTy) const {
-  analyzeReturn(Outs, IsSoftFloat, 0, RetTy);
+  analyzeReturn(Outs, IsSoftFloat, nullptr, RetTy);
 }
 
 void MipsTargetLowering::MipsCC::handleByValArg(unsigned ValNo, MVT ValVT,
@@ -3611,7 +3611,7 @@ void MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
     SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
     SDValue Store = DAG.getStore(Chain, DL, ArgValue, PtrOff,
                                  MachinePointerInfo(), false, false, 0);
-    cast<StoreSDNode>(Store.getNode())->getMemOperand()->setValue((Value*)0);
+    cast<StoreSDNode>(Store.getNode())->getMemOperand()->setValue((Value*)nullptr);
     OutChains.push_back(Store);
   }
 }

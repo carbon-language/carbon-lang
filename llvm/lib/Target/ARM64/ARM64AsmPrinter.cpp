@@ -53,7 +53,7 @@ class ARM64AsmPrinter : public AsmPrinter {
 public:
   ARM64AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : AsmPrinter(TM, Streamer), Subtarget(&TM.getSubtarget<ARM64Subtarget>()),
-        MCInstLowering(OutContext, *Mang, *this), SM(*this), ARM64FI(NULL),
+        MCInstLowering(OutContext, *Mang, *this), SM(*this), ARM64FI(nullptr),
         LOHLabelCounter(0) {}
 
   virtual const char *getPassName() const { return "ARM64 Assembly Printer"; }

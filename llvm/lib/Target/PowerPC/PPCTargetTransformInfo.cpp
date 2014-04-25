@@ -42,7 +42,7 @@ class PPCTTI final : public ImmutablePass, public TargetTransformInfo {
   const PPCTargetLowering *TLI;
 
 public:
-  PPCTTI() : ImmutablePass(ID), ST(0), TLI(0) {
+  PPCTTI() : ImmutablePass(ID), ST(nullptr), TLI(nullptr) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 

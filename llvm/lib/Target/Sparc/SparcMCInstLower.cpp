@@ -34,7 +34,7 @@ static MCOperand LowerSymbolOperand(const MachineInstr *MI,
 
   SparcMCExpr::VariantKind Kind =
     (SparcMCExpr::VariantKind)MO.getTargetFlags();
-  const MCSymbol *Symbol = 0;
+  const MCSymbol *Symbol = nullptr;
 
   switch(MO.getType()) {
   default: llvm_unreachable("Unknown type in LowerSymbolOperand");

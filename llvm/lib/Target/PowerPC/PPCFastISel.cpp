@@ -283,7 +283,7 @@ bool PPCFastISel::isLoadTypeLegal(Type *Ty, MVT &VT) {
 // Given a value Obj, create an Address object Addr that represents its
 // address.  Return false if we can't handle it.
 bool PPCFastISel::PPCComputeAddress(const Value *Obj, Address &Addr) {
-  const User *U = NULL;
+  const User *U = nullptr;
   unsigned Opcode = Instruction::UserOp1;
   if (const Instruction *I = dyn_cast<Instruction>(Obj)) {
     // Don't walk into other basic blocks unless the object is an alloca from
@@ -557,7 +557,7 @@ bool PPCFastISel::SelectLoad(const Instruction *I) {
   // to constrain RA from using R0/X0 when this is not legal.
   unsigned AssignedReg = FuncInfo.ValueMap[I];
   const TargetRegisterClass *RC =
-    AssignedReg ? MRI.getRegClass(AssignedReg) : 0;
+    AssignedReg ? MRI.getRegClass(AssignedReg) : nullptr;
 
   unsigned ResultReg = 0;
   if (!PPCEmitLoad(VT, ResultReg, Addr, RC))
@@ -1013,7 +1013,7 @@ unsigned PPCFastISel::PPCMoveToIntReg(const Instruction *I, MVT VT,
   // to determine the required register class.
   unsigned AssignedReg = FuncInfo.ValueMap[I];
   const TargetRegisterClass *RC =
-    AssignedReg ? MRI.getRegClass(AssignedReg) : 0;
+    AssignedReg ? MRI.getRegClass(AssignedReg) : nullptr;
 
   unsigned ResultReg = 0;
   if (!PPCEmitLoad(VT, ResultReg, Addr, RC, !IsSigned))
@@ -2150,7 +2150,7 @@ bool PPCFastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
 
   unsigned ResultReg = MI->getOperand(0).getReg();
 
-  if (!PPCEmitLoad(VT, ResultReg, Addr, 0, IsZExt))
+  if (!PPCEmitLoad(VT, ResultReg, Addr, nullptr, IsZExt))
     return false;
 
   MI->eraseFromParent();
@@ -2262,6 +2262,6 @@ namespace llvm {
     if (Subtarget->isPPC64() && Subtarget->isSVR4ABI())
       return new PPCFastISel(FuncInfo, LibInfo);
 
-    return 0;
+    return nullptr;
   }
 }

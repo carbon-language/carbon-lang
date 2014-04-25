@@ -482,7 +482,7 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
       return CurDAG->getMachineNode(PPC::RLWIMI, dl, MVT::i32, Ops);
     }
   }
-  return 0;
+  return nullptr;
 }
 
 /// SelectCC - Select a comparison of the specified values with the specified
@@ -884,7 +884,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   }
 
   if (PPCSubTarget.useCRBits())
-    return 0;
+    return nullptr;
 
   bool Inv;
   unsigned Idx = getCRIdxForSetCC(CC, Inv);
@@ -894,7 +894,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDNode *N) {
   // Force the ccreg into CR7.
   SDValue CR7Reg = CurDAG->getRegister(PPC::CR7, MVT::i32);
 
-  SDValue InFlag(0, 0);  // Null incoming flag value.
+  SDValue InFlag(nullptr, 0);  // Null incoming flag value.
   CCReg = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, CR7Reg, CCReg,
                                InFlag).getValue(1);
 
@@ -919,7 +919,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
   SDLoc dl(N);
   if (N->isMachineOpcode()) {
     N->setNodeId(-1);
-    return NULL;   // Already selected.
+    return nullptr;   // Already selected.
   }
 
   switch (N->getOpcode()) {
@@ -1187,7 +1187,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     // AND X, 0 -> 0, not "rlwinm 32".
     if (isInt32Immediate(N->getOperand(1), Imm) && (Imm == 0)) {
       ReplaceUses(SDValue(N, 0), N->getOperand(1));
-      return NULL;
+      return nullptr;
     }
     // ISD::OR doesn't get all the bitfield insertion fun.
     // (and (or x, c1), c2) where isRunOfOnes(~(c1^c2)) is a bitfield insert
@@ -2204,8 +2204,8 @@ FunctionPass *llvm::createPPCISelDag(PPCTargetMachine &TM) {
 
 static void initializePassOnce(PassRegistry &Registry) {
   const char *Name = "PowerPC DAG->DAG Pattern Instruction Selection";
-  PassInfo *PI = new PassInfo(Name, "ppc-codegen", &SelectionDAGISel::ID, 0,
-                              false, false);
+  PassInfo *PI = new PassInfo(Name, "ppc-codegen", &SelectionDAGISel::ID,
+                              nullptr, false, false);
   Registry.registerPass(*PI, true);
 }
 

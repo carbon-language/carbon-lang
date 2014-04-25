@@ -35,7 +35,7 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   Data16bitsDirective = ".short\t";
   Data32bitsDirective = ".long\t";
   Data64bitsDirective = ".quad\t";
-  GPRel32Directive = 0;
+  GPRel32Directive = nullptr;
   SunStyleELFSectionSwitchSyntax = true;
   UsesELFSectionDirectiveForBSS = true;
 
@@ -58,5 +58,5 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
 
 const MCSection*
 AMDGPUMCAsmInfo::getNonexecutableStackSection(MCContext &CTX) const {
-  return 0;
+  return nullptr;
 }

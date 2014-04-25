@@ -413,7 +413,7 @@ bool MipsSEDAGToDAGISel::selectVSplat(SDNode *N, APInt &Imm) const {
 
   BuildVectorSDNode *Node = dyn_cast<BuildVectorSDNode>(N);
 
-  if (Node == NULL)
+  if (!Node)
     return false;
 
   APInt SplatValue, SplatUndef;
@@ -814,16 +814,16 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     EVT ViaVecTy;
 
     if (!Subtarget.hasMSA() || !BVN->getValueType(0).is128BitVector())
-      return std::make_pair(false, (SDNode*)NULL);
+      return std::make_pair(false, nullptr);
 
     if (!BVN->isConstantSplat(SplatValue, SplatUndef, SplatBitSize,
                               HasAnyUndefs, 8,
                               !Subtarget.isLittle()))
-      return std::make_pair(false, (SDNode*)NULL);
+      return std::make_pair(false, nullptr);
 
     switch (SplatBitSize) {
     default:
-      return std::make_pair(false, (SDNode*)NULL);
+      return std::make_pair(false, nullptr);
     case 8:
       LdiOp = Mips::LDI_B;
       ViaVecTy = MVT::v16i8;
@@ -843,7 +843,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     }
 
     if (!SplatValue.isSignedIntN(10))
-      return std::make_pair(false, (SDNode*)NULL);
+      return std::make_pair(false, nullptr);
 
     SDValue Imm = CurDAG->getTargetConstant(SplatValue,
                                             ViaVecTy.getVectorElementType());
@@ -869,7 +869,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
 
   }
 
-  return std::make_pair(false, (SDNode*)NULL);
+  return std::make_pair(false, nullptr);
 }
 
 FunctionPass *llvm::createMipsSEISelDag(MipsTargetMachine &TM) {

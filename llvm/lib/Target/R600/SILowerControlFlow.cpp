@@ -92,7 +92,7 @@ private:
 
 public:
   SILowerControlFlowPass(TargetMachine &tm) :
-    MachineFunctionPass(ID), TRI(0), TII(0) { }
+    MachineFunctionPass(ID), TRI(nullptr), TII(nullptr) { }
 
   virtual bool runOnMachineFunction(MachineFunction &MF);
 

@@ -84,7 +84,7 @@ AMDGPUInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
                                       MachineBasicBlock::iterator &MBBI,
                                       LiveVariables *LV) const {
 // TODO: Implement this function
-  return NULL;
+  return nullptr;
 }
 bool AMDGPUInstrInfo::getNextBranchInstr(MachineBasicBlock::iterator &iter,
                                         MachineBasicBlock &MBB) const {
@@ -175,7 +175,7 @@ AMDGPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                       const SmallVectorImpl<unsigned> &Ops,
                                       int FrameIndex) const {
 // TODO: Implement this function
-  return 0;
+  return nullptr;
 }
 MachineInstr*
 AMDGPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
@@ -183,7 +183,7 @@ AMDGPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
                                       const SmallVectorImpl<unsigned> &Ops,
                                       MachineInstr *LoadMI) const {
   // TODO: Implement this function
-  return 0;
+  return nullptr;
 }
 bool
 AMDGPUInstrInfo::canFoldMemoryOperand(const MachineInstr *MI,

@@ -85,7 +85,7 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
 
     if (Op2.isImm() && Op2.getImm() == 0 && Op3.isImm()) {
       bool IsSigned = (Opcode == ARM64::SBFMXri || Opcode == ARM64::SBFMWri);
-      const char *AsmMnemonic = 0;
+      const char *AsmMnemonic = nullptr;
 
       switch (Op3.getImm()) {
       default:
@@ -115,7 +115,7 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     // instruction. In all cases the immediate shift amount shift must be in
     // the range 0 to (reg.size -1).
     if (Op2.isImm() && Op3.isImm()) {
-      const char *AsmMnemonic = 0;
+      const char *AsmMnemonic = nullptr;
       int shift = 0;
       int64_t immr = Op2.getImm();
       int64_t imms = Op3.getImm();
@@ -693,7 +693,7 @@ static LdStNInstrDesc *getLdStNInstrDesc(unsigned Opcode) {
     if (LdStNInstInfo[Idx].Opcode == Opcode)
       return &LdStNInstInfo[Idx];
 
-  return 0;
+  return nullptr;
 }
 
 void ARM64AppleInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
@@ -754,7 +754,7 @@ bool ARM64InstPrinter::printSysAlias(const MCInst *MI, raw_ostream &O) {
   assert(Opcode == ARM64::SYSxt && "Invalid opcode for SYS alias!");
 #endif
 
-  const char *Asm = 0;
+  const char *Asm = nullptr;
   const MCOperand &Op1 = MI->getOperand(0);
   const MCOperand &Cn = MI->getOperand(1);
   const MCOperand &Cm = MI->getOperand(2);
@@ -968,7 +968,7 @@ bool ARM64InstPrinter::printSysAlias(const MCInst *MI, raw_ostream &O) {
       O << ", " << getRegisterName(Reg);
   }
 
-  return Asm != 0;
+  return Asm != nullptr;
 }
 
 void ARM64InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,

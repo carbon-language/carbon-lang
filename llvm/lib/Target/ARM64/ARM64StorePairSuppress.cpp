@@ -126,7 +126,7 @@ bool ARM64StorePairSuppress::runOnMachineFunction(MachineFunction &mf) {
   SchedModel.init(*ST.getSchedModel(), &ST, TII);
 
   Traces = &getAnalysis<MachineTraceMetrics>();
-  MinInstr = 0;
+  MinInstr = nullptr;
 
   DEBUG(dbgs() << "*** " << getPassName() << ": " << MF->getName() << '\n');
 

@@ -154,7 +154,7 @@ const char *X86Subtarget::getBZeroEntry() const {
       !getTargetTriple().isMacOSXVersionLT(10, 6))
     return "__bzero";
 
-  return 0;
+  return nullptr;
 }
 
 bool X86Subtarget::hasSinCos() const {

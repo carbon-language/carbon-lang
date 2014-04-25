@@ -47,7 +47,7 @@ namespace {
     }
 
     void printOperand(const MachineInstr *MI, int OpNum,
-                      raw_ostream &O, const char* Modifier = 0);
+                      raw_ostream &O, const char* Modifier = nullptr);
     void printSrcMemOperand(const MachineInstr *MI, int OpNum,
                             raw_ostream &O);
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,

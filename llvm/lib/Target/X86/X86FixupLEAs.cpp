@@ -124,7 +124,7 @@ FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,
     if (!MI->getOperand(2).isImm()) {
       // convertToThreeAddress will call getImm()
       // which requires isImm() to be true
-      return 0;
+      return nullptr;
     }
     break;
   case X86::ADD16rr:
@@ -133,10 +133,10 @@ FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,
       // if src1 != src2, then convertToThreeAddress will
       // need to create a Virtual register, which we cannot do
       // after register allocation.
-      return 0;
+      return nullptr;
     }
   }
-  return TII->convertToThreeAddress(MFI, MBBI, 0);
+  return TII->convertToThreeAddress(MFI, MBBI, nullptr);
 }
 
 FunctionPass *llvm::createX86FixupLEAs() {
@@ -212,7 +212,7 @@ MachineBasicBlock::iterator FixupLEAPass::searchBackwards(MachineOperand& p,
     InstrDistance += TII->getInstrLatency(TM->getInstrItineraryData(), CurInst);
     Found = getPreviousInstr(CurInst, MFI);
   }
-  return 0;
+  return nullptr;
 }
 
 void FixupLEAPass::processInstruction(MachineBasicBlock::iterator& I,

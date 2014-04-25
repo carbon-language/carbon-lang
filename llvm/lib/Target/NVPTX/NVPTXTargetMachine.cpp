@@ -175,7 +175,7 @@ bool NVPTXPassConfig::addPostRegAlloc() {
 }
 
 FunctionPass *NVPTXPassConfig::createTargetRegisterAllocator(bool) {
-  return 0; // No reg alloc
+  return nullptr; // No reg alloc
 }
 
 void NVPTXPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {

@@ -424,7 +424,7 @@ getSingleConstraintMatchWeight(AsmOperandInfo &info,
   Value *CallOperandVal = info.CallOperandVal;
   // If we don't have a value, we can't do a match,
   // but allow it at the lowest weight.
-  if (CallOperandVal == NULL)
+  if (!CallOperandVal)
     return CW_Default;
   Type *type = CallOperandVal->getType();
   // Look at the constraint type.
@@ -492,7 +492,7 @@ parseRegisterNumber(const std::string &Constraint,
     if (Index < 16 && Map[Index])
       return std::make_pair(Map[Index], RC);
   }
-  return std::make_pair(0u, static_cast<TargetRegisterClass*>(0));
+  return std::make_pair(0U, nullptr);
 }
 
 std::pair<unsigned, const TargetRegisterClass *> SystemZTargetLowering::
@@ -1489,7 +1489,7 @@ static void adjustForTestUnderMask(SelectionDAG &DAG, Comparison &C) {
   // Check whether the nonconstant input is an AND with a constant mask.
   Comparison NewC(C);
   uint64_t MaskVal;
-  ConstantSDNode *Mask = 0;
+  ConstantSDNode *Mask = nullptr;
   if (C.Op0.getOpcode() == ISD::AND) {
     NewC.Op0 = C.Op0.getOperand(0);
     NewC.Op1 = C.Op0.getOperand(1);
@@ -2517,7 +2517,7 @@ const char *SystemZTargetLowering::getTargetNodeName(unsigned Opcode) const {
     OPCODE(ATOMIC_CMP_SWAPW);
     OPCODE(PREFETCH);
   }
-  return NULL;
+  return nullptr;
 #undef OPCODE
 }
 
@@ -3116,7 +3116,7 @@ SystemZTargetLowering::emitMemMemWrapper(MachineInstr *MI,
   // When generating more than one CLC, all but the last will need to
   // branch to the end when a difference is found.
   MachineBasicBlock *EndMBB = (Length > 256 && Opcode == SystemZ::CLC ?
-                               splitBlockAfter(MI, MBB) : 0);
+                               splitBlockAfter(MI, MBB) : nullptr);
 
   // Check for the loop form, in which operand 5 is the trip count.
   if (MI->getNumExplicitOperands() > 5) {

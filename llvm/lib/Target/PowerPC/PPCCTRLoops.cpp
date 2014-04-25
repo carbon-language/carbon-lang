@@ -84,7 +84,7 @@ namespace {
   public:
     static char ID;
 
-    PPCCTRLoops() : FunctionPass(ID), TM(0) {
+    PPCCTRLoops() : FunctionPass(ID), TM(nullptr) {
       initializePPCCTRLoopsPass(*PassRegistry::getPassRegistry());
     }
     PPCCTRLoops(PPCTargetMachine &TM) : FunctionPass(ID), TM(&TM) {
@@ -172,7 +172,7 @@ bool PPCCTRLoops::runOnFunction(Function &F) {
   SE = &getAnalysis<ScalarEvolution>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
-  DL = DLP ? &DLP->getDataLayout() : 0;
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
   LibInfo = getAnalysisIfAvailable<TargetLibraryInfo>();
 
   bool MadeChange = false;
@@ -424,9 +424,9 @@ bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
   SmallVector<BasicBlock*, 4> ExitingBlocks;
   L->getExitingBlocks(ExitingBlocks);
 
-  BasicBlock *CountedExitBlock = 0;
-  const SCEV *ExitCount = 0;
-  BranchInst *CountedExitBranch = 0;
+  BasicBlock *CountedExitBlock = nullptr;
+  const SCEV *ExitCount = nullptr;
+  BranchInst *CountedExitBranch = nullptr;
   for (SmallVectorImpl<BasicBlock *>::iterator I = ExitingBlocks.begin(),
        IE = ExitingBlocks.end(); I != IE; ++I) {
     const SCEV *EC = SE->getExitCount(L, *I);

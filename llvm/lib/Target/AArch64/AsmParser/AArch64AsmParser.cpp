@@ -1313,7 +1313,7 @@ AArch64AsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   case AsmToken::Colon: {
     SMLoc StartLoc  = Parser.getTok().getLoc();
     SMLoc EndLoc;
-    const MCExpr *ImmVal = 0;
+    const MCExpr *ImmVal = nullptr;
 
     if (ParseImmediate(ImmVal) != MatchOperand_Success)
       return MatchOperand_ParseFail;
@@ -1325,7 +1325,7 @@ AArch64AsmParser::ParseOperand(SmallVectorImpl<MCParsedAsmOperand*> &Operands,
   case AsmToken::Hash: {   // Immediates
     SMLoc StartLoc = Parser.getTok().getLoc();
     SMLoc EndLoc;
-    const MCExpr *ImmVal = 0;
+    const MCExpr *ImmVal = nullptr;
     Parser.Lex();
 
     if (ParseImmediate(ImmVal) != MatchOperand_Success)

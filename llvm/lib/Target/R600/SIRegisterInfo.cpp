@@ -77,7 +77,7 @@ const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
       return BaseClasses[i];
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 bool SIRegisterInfo::isSGPRClass(const TargetRegisterClass *RC) const {
@@ -113,7 +113,7 @@ const TargetRegisterClass *SIRegisterInfo::getEquivalentVGPRClass(
     } else if (getCommonSubClass(SRC, &AMDGPU::SReg_512RegClass)) {
       return &AMDGPU::VReg_512RegClass;
     }
-    return NULL;
+    return nullptr;
 }
 
 const TargetRegisterClass *SIRegisterInfo::getSubRegClass(

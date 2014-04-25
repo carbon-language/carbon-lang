@@ -74,14 +74,14 @@ struct SystemZAddressingMode {
     errs() << "SystemZAddressingMode " << this << '\n';
 
     errs() << " Base ";
-    if (Base.getNode() != 0)
+    if (Base.getNode())
       Base.getNode()->dump();
     else
       errs() << "null\n";
 
     if (hasIndexField()) {
       errs() << " Index ";
-      if (Index.getNode() != 0)
+      if (Index.getNode())
         Index.getNode()->dump();
       else
         errs() << "null\n";
@@ -869,12 +869,12 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
     if (RISBG.Input.getOpcode() != ISD::ANY_EXTEND)
       Count += 1;
   if (Count == 0)
-    return 0;
+    return nullptr;
   if (Count == 1) {
     // Prefer to use normal shift instructions over RISBG, since they can handle
     // all cases and are sometimes shorter.
     if (N->getOpcode() != ISD::AND)
-      return 0;
+      return nullptr;
 
     // Prefer register extensions like LLC over RISBG.  Also prefer to start
     // out with normal ANDs if one instruction would be enough.  We can convert
@@ -891,7 +891,7 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
         N = CurDAG->UpdateNodeOperands(N, N->getOperand(0), NewMask);
         return SelectCode(N);
       }
-      return 0;
+      return nullptr;
     }
   }  
 
@@ -929,7 +929,7 @@ SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
 
   // Do nothing if neither operand is suitable.
   if (Count[0] == 0 && Count[1] == 0)
-    return 0;
+    return nullptr;
 
   // Pick the deepest second operand.
   unsigned I = Count[0] > Count[1] ? 0 : 1;
@@ -939,7 +939,7 @@ SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
   if (Opcode == SystemZ::ROSBG && (RxSBG[I].Mask & 0xff) == 0)
     if (auto *Load = dyn_cast<LoadSDNode>(Op0.getNode()))
       if (Load->getMemoryVT() == MVT::i8)
-        return 0;
+        return nullptr;
 
   // See whether we can avoid an AND in the first operand by converting
   // ROSBG to RISBG.
@@ -1039,11 +1039,11 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
   if (Node->isMachineOpcode()) {
     DEBUG(errs() << "== "; Node->dump(CurDAG); errs() << "\n");
     Node->setNodeId(-1);
-    return 0;
+    return nullptr;
   }
 
   unsigned Opcode = Node->getOpcode();
-  SDNode *ResNode = 0;
+  SDNode *ResNode = nullptr;
   switch (Opcode) {
   case ISD::OR:
     if (Node->getOperand(1).getOpcode() != ISD::Constant)
@@ -1116,7 +1116,7 @@ SDNode *SystemZDAGToDAGISel::Select(SDNode *Node) {
     ResNode = SelectCode(Node);
 
   DEBUG(errs() << "=> ";
-        if (ResNode == NULL || ResNode == Node)
+        if (ResNode == nullptr || ResNode == Node)
           Node->dump(CurDAG);
         else
           ResNode->dump(CurDAG);

@@ -261,7 +261,7 @@ SDNode *AArch64DAGToDAGISel::TrySelectToMoveImm(SDNode *Node) {
   } else {
     // Can't handle it in one instruction. There's scope for permitting two (or
     // more) instructions, but that'll need more thought.
-    return NULL;
+    return nullptr;
   }
 
   ResNode = CurDAG->getMachineNode(MOVOpcode, dl, MOVType,
@@ -737,7 +737,7 @@ SDNode *AArch64DAGToDAGISel::SelectVLD(SDNode *N, bool isUpdating,
   if (isUpdating)
     ReplaceUses(SDValue(N, NumVecs + 1), SDValue(VLd, 2));
 
-  return NULL;
+  return nullptr;
 }
 
 SDNode *AArch64DAGToDAGISel::SelectVST(SDNode *N, bool isUpdating,
@@ -862,7 +862,7 @@ SDNode *AArch64DAGToDAGISel::SelectVLDDup(SDNode *N, bool isUpdating,
   ReplaceUses(SDValue(N, NumVecs), SDValue(VLdDup, 1));
   if (isUpdating)
     ReplaceUses(SDValue(N, NumVecs + 1), SDValue(VLdDup, 2));
-  return NULL;
+  return nullptr;
 }
 
 // We only have 128-bit vector type of load/store lane instructions.
@@ -956,7 +956,7 @@ SDNode *AArch64DAGToDAGISel::SelectVLDSTLane(SDNode *N, bool IsLoad,
   ReplaceUses(SDValue(N, NumVecs), SDValue(VLdLn, 1));
   if (isUpdating)
     ReplaceUses(SDValue(N, NumVecs + 1), SDValue(VLdLn, 2));
-  return NULL;
+  return nullptr;
 }
 
 unsigned AArch64DAGToDAGISel::getTBLOpc(bool IsExt, bool Is64Bit,
@@ -1031,7 +1031,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   if (Node->isMachineOpcode()) {
     DEBUG(dbgs() << "== "; Node->dump(CurDAG); dbgs() << "\n");
     Node->setNodeId(-1);
-    return NULL;
+    return nullptr;
   }
 
   switch (Node->getOpcode()) {
@@ -1115,7 +1115,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
                                 TFI, CurDAG->getTargetConstant(0, PtrTy));
   }
   case ISD::Constant: {
-    SDNode *ResNode = 0;
+    SDNode *ResNode = nullptr;
     if (cast<ConstantSDNode>(Node)->getZExtValue() == 0) {
       // XZR and WZR are probably even better than an actual move: most of the
       // time they can be folded into another instruction with *no* cost.

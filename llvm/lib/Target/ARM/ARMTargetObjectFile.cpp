@@ -31,7 +31,7 @@ void ARMElfTargetObjectFile::Initialize(MCContext &Ctx,
   InitializeELF(isAAPCS_ABI);
 
   if (isAAPCS_ABI) {
-    LSDASection = NULL;
+    LSDASection = nullptr;
   }
 
   AttributesSection =

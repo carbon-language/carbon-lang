@@ -49,8 +49,8 @@ class SparcCodeEmitter : public MachineFunctionPass {
 
 public:
   SparcCodeEmitter(TargetMachine &tm, JITCodeEmitter &mce)
-    : MachineFunctionPass(ID), JTI(0), II(0), TD(0),
-      TM(tm), MCE(mce), MCPEs(0),
+    : MachineFunctionPass(ID), JTI(nullptr), II(nullptr), TD(nullptr),
+      TM(tm), MCE(mce), MCPEs(nullptr),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
 
   bool runOnMachineFunction(MachineFunction &MF);

@@ -30,7 +30,7 @@ const FuncNameSignature PredefinedFuncs[] = {
   { "__fixunssfsi", { FSig, NoFPRet } },
   { "__fixunssfdi", { FSig, NoFPRet } },
   { "__floatundisf", { NoSig, FRet } },
-  { 0, { NoSig, NoFPRet } }
+  { nullptr, { NoSig, NoFPRet } }
 };
 
 // just do a search for now. there are very few of these special cases.
@@ -44,7 +44,7 @@ extern FuncSignature const *findFuncSignature(const char *name) {
       return &PredefinedFuncs[i].Signature;
     i++;
   }
-  return 0;
+  return nullptr;
 }
 }
 }

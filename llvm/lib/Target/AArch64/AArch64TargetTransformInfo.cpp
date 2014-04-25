@@ -38,7 +38,7 @@ class AArch64TTI final : public ImmutablePass, public TargetTransformInfo {
   const AArch64TargetLowering *TLI;
 
 public:
-  AArch64TTI() : ImmutablePass(ID), ST(0), TLI(0) {
+  AArch64TTI() : ImmutablePass(ID), ST(nullptr), TLI(nullptr) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 

@@ -97,7 +97,7 @@ int AMDGPUFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
 const TargetFrameLowering::SpillSlot *
 AMDGPUFrameLowering::getCalleeSavedSpillSlots(unsigned &NumEntries) const {
   NumEntries = 0;
-  return 0;
+  return nullptr;
 }
 void
 AMDGPUFrameLowering::emitPrologue(MachineFunction &MF) const {

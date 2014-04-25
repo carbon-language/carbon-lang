@@ -54,7 +54,7 @@ TargetMachine::TargetMachine(const Target &T,
                              StringRef TT, StringRef CPU, StringRef FS,
                              const TargetOptions &Options)
   : TheTarget(T), TargetTriple(TT), TargetCPU(CPU), TargetFS(FS),
-    CodeGenInfo(0), AsmInfo(0),
+    CodeGenInfo(nullptr), AsmInfo(nullptr),
     MCRelaxAll(false),
     MCNoExecStack(false),
     MCSaveTempLabels(false),

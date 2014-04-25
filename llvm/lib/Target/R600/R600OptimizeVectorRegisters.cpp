@@ -108,7 +108,7 @@ private:
 public:
   static char ID;
   R600VectorRegMerger(TargetMachine &tm) : MachineFunctionPass(ID),
-  TII(0) { }
+  TII(nullptr) { }
 
   void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesCFG();

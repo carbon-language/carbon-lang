@@ -167,7 +167,7 @@ bool ARM64ExternalSymbolizer::tryAddingSymbolicOperand(
     }
   }
 
-  const MCExpr *Add = NULL;
+  const MCExpr *Add = nullptr;
   if (SymbolicOp.AddSymbol.Present) {
     if (SymbolicOp.AddSymbol.Name) {
       StringRef Name(SymbolicOp.AddSymbol.Name);
@@ -182,7 +182,7 @@ bool ARM64ExternalSymbolizer::tryAddingSymbolicOperand(
     }
   }
 
-  const MCExpr *Sub = NULL;
+  const MCExpr *Sub = nullptr;
   if (SymbolicOp.SubtractSymbol.Present) {
     if (SymbolicOp.SubtractSymbol.Name) {
       StringRef Name(SymbolicOp.SubtractSymbol.Name);
@@ -193,7 +193,7 @@ bool ARM64ExternalSymbolizer::tryAddingSymbolicOperand(
     }
   }
 
-  const MCExpr *Off = NULL;
+  const MCExpr *Off = nullptr;
   if (SymbolicOp.Value != 0)
     Off = MCConstantExpr::Create(SymbolicOp.Value, Ctx);
 
@@ -204,17 +204,17 @@ bool ARM64ExternalSymbolizer::tryAddingSymbolicOperand(
       LHS = MCBinaryExpr::CreateSub(Add, Sub, Ctx);
     else
       LHS = MCUnaryExpr::CreateMinus(Sub, Ctx);
-    if (Off != 0)
+    if (Off)
       Expr = MCBinaryExpr::CreateAdd(LHS, Off, Ctx);
     else
       Expr = LHS;
   } else if (Add) {
-    if (Off != 0)
+    if (Off)
       Expr = MCBinaryExpr::CreateAdd(Add, Off, Ctx);
     else
       Expr = Add;
   } else {
-    if (Off != 0)
+    if (Off)
       Expr = Off;
     else
       Expr = MCConstantExpr::Create(0, Ctx);

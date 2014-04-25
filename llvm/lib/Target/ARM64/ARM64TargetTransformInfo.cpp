@@ -45,7 +45,7 @@ class ARM64TTI final : public ImmutablePass, public TargetTransformInfo {
   unsigned getScalarizationOverhead(Type *Ty, bool Insert, bool Extract) const;
 
 public:
-  ARM64TTI() : ImmutablePass(ID), TM(0), ST(0), TLI(0) {
+  ARM64TTI() : ImmutablePass(ID), TM(nullptr), ST(nullptr), TLI(nullptr) {
     llvm_unreachable("This pass cannot be directly constructed");
   }
 

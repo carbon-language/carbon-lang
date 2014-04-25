@@ -62,7 +62,7 @@ const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
   // operation.
   const SubOperator *Sub = dyn_cast<SubOperator>(CE);
   if (!Sub)
-    return 0;
+    return nullptr;
 
   // Symbols must first be numbers before we can subtract them, we need to see a
   // ptrtoint on both subtraction operands.
@@ -71,13 +71,13 @@ const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
   const PtrToIntOperator *SubRHS =
       dyn_cast<PtrToIntOperator>(Sub->getOperand(1));
   if (!SubLHS || !SubRHS)
-    return 0;
+    return nullptr;
 
   // Our symbols should exist in address space zero, cowardly no-op if
   // otherwise.
   if (SubLHS->getPointerAddressSpace() != 0 ||
       SubRHS->getPointerAddressSpace() != 0)
-    return 0;
+    return nullptr;
 
   // Both ptrtoint instructions must wrap global variables:
   // - Only global variables are eligible for image relative relocations.
@@ -87,7 +87,7 @@ const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
   const GlobalVariable *GVRHS =
       dyn_cast<GlobalVariable>(SubRHS->getPointerOperand());
   if (!GVLHS || !GVRHS)
-    return 0;
+    return nullptr;
 
   // We expect __ImageBase to be a global variable without a section, externally
   // defined.
@@ -96,11 +96,11 @@ const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
   if (GVRHS->isThreadLocal() || GVRHS->getName() != "__ImageBase" ||
       !GVRHS->hasExternalLinkage() || GVRHS->hasInitializer() ||
       GVRHS->hasSection())
-    return 0;
+    return nullptr;
 
   // An image-relative, thread-local, symbol makes no sense.
   if (GVLHS->isThreadLocal())
-    return 0;
+    return nullptr;
 
   return MCSymbolRefExpr::Create(TM.getSymbol(GVLHS, Mang),
                                  MCSymbolRefExpr::VK_COFF_IMGREL32,

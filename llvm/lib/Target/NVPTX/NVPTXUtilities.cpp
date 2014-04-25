@@ -393,12 +393,12 @@ llvm::skipPointerTransfer(const Value *V, bool ignore_GEP_indices) {
 const Value *
 llvm::skipPointerTransfer(const Value *V, std::set<const Value *> &processed) {
   if (processed.find(V) != processed.end())
-    return NULL;
+    return nullptr;
   processed.insert(V);
 
   const Value *V2 = V->stripPointerCasts();
   if (V2 != V && processed.find(V2) != processed.end())
-    return NULL;
+    return nullptr;
   processed.insert(V2);
 
   V = V2;
@@ -414,20 +414,20 @@ llvm::skipPointerTransfer(const Value *V, std::set<const Value *> &processed) {
       continue;
     } else if (const PHINode *PN = dyn_cast<PHINode>(V)) {
       if (V != V2 && processed.find(V) != processed.end())
-        return NULL;
+        return nullptr;
       processed.insert(PN);
-      const Value *common = 0;
+      const Value *common = nullptr;
       for (unsigned i = 0; i != PN->getNumIncomingValues(); ++i) {
         const Value *pv = PN->getIncomingValue(i);
         const Value *base = skipPointerTransfer(pv, processed);
         if (base) {
-          if (common == 0)
+          if (!common)
             common = base;
           else if (common != base)
             return PN;
         }
       }
-      if (common == 0)
+      if (!common)
         return PN;
       V = common;
     }
@@ -445,7 +445,7 @@ BasicBlock *llvm::getParentBlock(Value *v) {
   if (Instruction *I = dyn_cast<Instruction>(v))
     return I->getParent();
 
-  return 0;
+  return nullptr;
 }
 
 Function *llvm::getParentFunction(Value *v) {
@@ -458,13 +458,13 @@ Function *llvm::getParentFunction(Value *v) {
   if (BasicBlock *B = dyn_cast<BasicBlock>(v))
     return B->getParent();
 
-  return 0;
+  return nullptr;
 }
 
 // Dump a block by name
 void llvm::dumpBlock(Value *v, char *blockName) {
   Function *F = getParentFunction(v);
-  if (F == 0)
+  if (!F)
     return;
 
   for (Function::iterator it = F->begin(), ie = F->end(); it != ie; ++it) {
@@ -479,8 +479,8 @@ void llvm::dumpBlock(Value *v, char *blockName) {
 // Find an instruction by name
 Instruction *llvm::getInst(Value *base, char *instName) {
   Function *F = getParentFunction(base);
-  if (F == 0)
-    return 0;
+  if (!F)
+    return nullptr;
 
   for (inst_iterator it = inst_begin(F), ie = inst_end(F); it != ie; ++it) {
     Instruction *I = &*it;
@@ -489,7 +489,7 @@ Instruction *llvm::getInst(Value *base, char *instName) {
     }
   }
 
-  return 0;
+  return nullptr;
 }
 
 // Dump an instruction by nane

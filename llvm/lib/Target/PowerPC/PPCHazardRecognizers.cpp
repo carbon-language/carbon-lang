@@ -227,7 +227,7 @@ void PPCDispatchGroupSBHazardRecognizer::EmitNoop() {
     CurGroup.clear();
     CurSlots = CurBranches = 0;
   } else {
-    CurGroup.push_back(0);
+    CurGroup.push_back(nullptr);
     ++CurSlots;
   }
 }

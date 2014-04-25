@@ -63,7 +63,7 @@ static MCAsmInfo *createAArch64MCAsmInfo(const MCRegisterInfo &MRI,
 
   MCAsmInfo *MAI = new AArch64ELFMCAsmInfo(TT);
   unsigned Reg = MRI.getDwarfRegNum(AArch64::XSP, true);
-  MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(0, Reg, 0);
+  MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(nullptr, Reg, 0);
   MAI->addInitialFrameState(Inst);
 
   return MAI;
@@ -114,7 +114,7 @@ static MCInstPrinter *createAArch64MCInstPrinter(const Target &T,
                                                  const MCSubtargetInfo &STI) {
   if (SyntaxVariant == 0)
     return new AArch64InstPrinter(MAI, MII, MRI, STI);
-  return 0;
+  return nullptr;
 }
 
 namespace {

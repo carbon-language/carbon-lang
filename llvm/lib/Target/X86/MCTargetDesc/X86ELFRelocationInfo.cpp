@@ -39,7 +39,7 @@ public:
     if (Sym->isVariable() == false)
       Sym->setVariableValue(MCConstantExpr::Create(SymAddr, Ctx));
 
-    const MCExpr *Expr = 0;
+    const MCExpr *Expr = nullptr;
     // If hasAddend is true, then we need to add Addend (r_addend) to Expr.
     bool hasAddend = false;
 

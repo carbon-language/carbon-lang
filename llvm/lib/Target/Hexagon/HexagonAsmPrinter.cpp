@@ -225,7 +225,7 @@ static MCInstPrinter *createHexagonMCInstPrinter(const Target &T,
   if (SyntaxVariant == 0)
     return(new HexagonInstPrinter(MAI, MII, MRI));
   else
-   return NULL;
+   return nullptr;
 }
 
 extern "C" void LLVMInitializeHexagonAsmPrinter() {

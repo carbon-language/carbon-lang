@@ -247,7 +247,7 @@ static MCAsmInfo *createARMMCAsmInfo(const MCRegisterInfo &MRI, StringRef TT) {
   }
 
   unsigned Reg = MRI.getDwarfRegNum(ARM::SP, true);
-  MAI->addInitialFrameState(MCCFIInstruction::createDefCfa(0, Reg, 0));
+  MAI->addInitialFrameState(MCCFIInstruction::createDefCfa(nullptr, Reg, 0));
 
   return MAI;
 }
@@ -297,7 +297,7 @@ static MCInstPrinter *createARMMCInstPrinter(const Target &T,
                                              const MCSubtargetInfo &STI) {
   if (SyntaxVariant == 0)
     return new ARMInstPrinter(MAI, MII, MRI, STI);
-  return 0;
+  return nullptr;
 }
 
 static MCRelocationInfo *createARMMCRelocationInfo(StringRef TT,

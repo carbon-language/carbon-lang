@@ -87,7 +87,7 @@ NVPTXRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 // NVPTX Callee Saved Reg Classes
 const TargetRegisterClass *const *
 NVPTXRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  static const TargetRegisterClass *const CalleeSavedRegClasses[] = { 0 };
+  static const TargetRegisterClass *const CalleeSavedRegClasses[] = { nullptr };
   return CalleeSavedRegClasses;
 }
 

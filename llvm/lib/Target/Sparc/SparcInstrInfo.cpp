@@ -161,10 +161,10 @@ bool SparcInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
         std::next(I)->eraseFromParent();
 
       Cond.clear();
-      FBB = 0;
+      FBB = nullptr;
 
       if (MBB.isLayoutSuccessor(I->getOperand(0).getMBB())) {
-        TBB = 0;
+        TBB = nullptr;
         I->eraseFromParent();
         I = MBB.end();
         UnCondBrIter = MBB.end();
@@ -284,7 +284,7 @@ void SparcInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                  bool KillSrc) const {
   unsigned numSubRegs = 0;
   unsigned movOpc     = 0;
-  const unsigned *subRegIdx = 0;
+  const unsigned *subRegIdx = nullptr;
 
   const unsigned DFP_FP_SubRegsIdx[]  = { SP::sub_even, SP::sub_odd };
   const unsigned QFP_DFP_SubRegsIdx[] = { SP::sub_even64, SP::sub_odd64 };
@@ -328,11 +328,11 @@ void SparcInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   } else
     llvm_unreachable("Impossible reg-to-reg copy");
 
-  if (numSubRegs == 0 || subRegIdx == 0 || movOpc == 0)
+  if (numSubRegs == 0 || subRegIdx == nullptr || movOpc == 0)
     return;
 
   const TargetRegisterInfo *TRI = &getRegisterInfo();
-  MachineInstr *MovMI = 0;
+  MachineInstr *MovMI = nullptr;
 
   for (unsigned i = 0; i != numSubRegs; ++i) {
     unsigned Dst = TRI->getSubReg(DestReg, subRegIdx[i]);

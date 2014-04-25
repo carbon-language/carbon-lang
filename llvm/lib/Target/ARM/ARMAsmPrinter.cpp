@@ -384,7 +384,7 @@ void ARMAsmPrinter::emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
   // If either end mode is unknown (EndInfo == NULL) or different than
   // the start mode, then restore the start mode.
   const bool WasThumb = isThumb(StartInfo);
-  if (EndInfo == NULL || WasThumb != isThumb(*EndInfo)) {
+  if (!EndInfo || WasThumb != isThumb(*EndInfo)) {
     OutStreamer.EmitAssemblerFlag(WasThumb ? MCAF_Code16 : MCAF_Code32);
   }
 }
@@ -724,7 +724,7 @@ MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV,
   MachineModuleInfoImpl::StubValueTy &StubSym =
     GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(MCSym) :
     MMIMachO.getGVStubEntry(MCSym);
-  if (StubSym.getPointer() == 0)
+  if (!StubSym.getPointer())
     StubSym = MachineModuleInfoImpl::
       StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
   return MCSym;

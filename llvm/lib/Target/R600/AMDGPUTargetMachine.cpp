@@ -108,7 +108,7 @@ public:
     const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
     if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
       return createR600MachineScheduler(C);
-    return 0;
+    return nullptr;
   }
 
   virtual bool addPreISel();

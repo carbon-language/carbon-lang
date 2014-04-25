@@ -262,7 +262,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
     unsigned KilledOperand = 0;
     if (I2->killsRegister(I2UseReg))
       KilledOperand = I2UseReg;
-    MachineInstr *KillingInstr = 0;
+    MachineInstr *KillingInstr = nullptr;
 
     for (; I != End; ++I) {
       // If the intervening instruction I:
@@ -306,7 +306,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
     // Track killed operands. If we move across an instruction that kills our
     // operand, we need to update the kill information on the moved I1. It kills
     // the operand now.
-    MachineInstr *KillingInstr = 0;
+    MachineInstr *KillingInstr = nullptr;
     unsigned KilledOperand = 0;
 
     while(++I != End) {
@@ -506,7 +506,7 @@ MachineInstr *HexagonCopyToCombine::findPairable(MachineInstr *I1,
     // Not safe. Stop searching.
     break;
   }
-  return 0;
+  return nullptr;
 }
 
 void HexagonCopyToCombine::combine(MachineInstr *I1, MachineInstr *I2,

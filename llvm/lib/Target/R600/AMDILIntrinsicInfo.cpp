@@ -38,7 +38,7 @@ AMDGPUIntrinsicInfo::getName(unsigned int IntrID, Type **Tys,
   };
 
   if (IntrID < Intrinsic::num_intrinsics) {
-    return 0;
+    return nullptr;
   }
   assert(IntrID < AMDGPUIntrinsic::num_AMDGPU_intrinsics
       && "Invalid intrinsic ID");

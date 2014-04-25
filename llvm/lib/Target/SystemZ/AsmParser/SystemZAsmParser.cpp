@@ -110,7 +110,7 @@ private:
 
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediates when possible.  Null MCExpr = 0.
-    if (Expr == 0)
+    if (!Expr)
       Inst.addOperand(MCOperand::CreateImm(0));
     else if (auto *CE = dyn_cast<MCConstantExpr>(Expr))
       Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
@@ -208,7 +208,7 @@ public:
     return (Kind == KindMem &&
             Mem.RegKind == RegKind &&
             (MemKind == BDXMem || !Mem.Index) &&
-            (MemKind == BDLMem) == (Mem.Length != 0));
+            (MemKind == BDLMem) == (Mem.Length != nullptr));
   }
   bool isMemDisp12(RegisterKind RegKind, MemoryKind MemKind) const {
     return isMem(RegKind, MemKind) && inRange(Mem.Disp, 0, 0xfff);
@@ -527,7 +527,7 @@ bool SystemZAsmParser::parseAddress(unsigned &Base, const MCExpr *&Disp,
   // Parse the optional base and index.
   Index = 0;
   Base = 0;
-  Length = 0;
+  Length = nullptr;
   if (getLexer().is(AsmToken::LParen)) {
     Parser.Lex();
 
@@ -759,7 +759,7 @@ parseAccessReg(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     return MatchOperand_NoMatch;
 
   Register Reg;
-  if (parseRegister(Reg, RegAccess, 0))
+  if (parseRegister(Reg, RegAccess, nullptr))
     return MatchOperand_ParseFail;
 
   Operands.push_back(SystemZOperand::createAccessReg(Reg.Num,

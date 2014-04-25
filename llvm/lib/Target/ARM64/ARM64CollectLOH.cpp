@@ -262,7 +262,7 @@ static const SetOfMachineInstr *getUses(const InstrToInstrs *sets, unsigned reg,
   InstrToInstrs::const_iterator Res = sets[reg].find(&MI);
   if (Res != sets[reg].end())
     return &(Res->second);
-  return NULL;
+  return nullptr;
 }
 
 /// Initialize the reaching definition algorithm:
@@ -335,7 +335,7 @@ static void initReachingDef(MachineFunction &MF,
             // Do not register clobbered definition for no ADRP.
             // This definition is not used anyway (otherwise register
             // allocation is wrong).
-            BBGen[Reg] = ADRPMode ? &MI : NULL;
+            BBGen[Reg] = ADRPMode ? &MI : nullptr;
             BBKillSet.set(Reg);
           }
         }
@@ -451,7 +451,7 @@ static void finitReachingDef(BlockToSetOfInstrsPerColor &In,
 static void reachingDef(MachineFunction &MF,
                         InstrToInstrs *ColorOpToReachedUses,
                         const MapRegToId &RegToId, bool ADRPMode = false,
-                        const MachineInstr *DummyOp = NULL) {
+                        const MachineInstr *DummyOp = nullptr) {
   // structures:
   // For each basic block.
   // Out: a set per color of definitions that reach the
@@ -784,7 +784,7 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
                           const InstrToInstrs *DefsPerColorToUses,
                           ARM64FunctionInfo &ARM64FI, const MapRegToId &RegToId,
                           const MachineDominatorTree *MDT) {
-  SetOfMachineInstr *InvolvedInLOHs = NULL;
+  SetOfMachineInstr *InvolvedInLOHs = nullptr;
 #ifdef DEBUG
   SetOfMachineInstr InvolvedInLOHsStorage;
   InvolvedInLOHs = &InvolvedInLOHsStorage;
@@ -837,7 +837,7 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
     const MachineInstr *Def = *UseToDefs.find(Candidate)->second.begin();
     // Record the elements of the chain.
     const MachineInstr *L1 = Def;
-    const MachineInstr *L2 = NULL;
+    const MachineInstr *L2 = nullptr;
     unsigned ImmediateDefOpc = Def->getOpcode();
     if (Def->getOpcode() != ARM64::ADRP) {
       // Check the number of users of this node.
@@ -907,7 +907,7 @@ static void computeOthers(const InstrToInstrs &UseToDefs,
     SmallVector<const MachineInstr *, 3> Args;
     MCLOHType Kind;
     if (isCandidateLoad(Candidate)) {
-      if (L2 == NULL) {
+      if (!L2) {
         // At this point, the candidate LOH indicates that the ldr instruction
         // may use a direct access to the symbol. There is not such encoding
         // for loads of byte and half.
@@ -1057,7 +1057,7 @@ bool ARM64CollectLOH::runOnMachineFunction(MachineFunction &MF) {
   if (RegToId.empty())
     return false;
 
-  MachineInstr *DummyOp = NULL;
+  MachineInstr *DummyOp = nullptr;
   if (BasicBlockScopeOnly) {
     const ARM64InstrInfo *TII =
         static_cast<const ARM64InstrInfo *>(TM.getInstrInfo());

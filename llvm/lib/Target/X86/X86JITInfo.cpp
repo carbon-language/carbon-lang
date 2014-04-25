@@ -443,7 +443,7 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
 X86JITInfo::X86JITInfo(X86TargetMachine &tm) : TM(tm) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
   useGOT = 0;
-  TLSOffset = 0;
+  TLSOffset = nullptr;
 }
 
 void *X86JITInfo::emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,

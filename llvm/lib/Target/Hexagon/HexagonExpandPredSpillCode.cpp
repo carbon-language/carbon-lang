@@ -187,7 +187,7 @@ static void initializePassOnce(PassRegistry &Registry) {
   const char *Name = "Hexagon Expand Predicate Spill Code";
   PassInfo *PI = new PassInfo(Name, "hexagon-spill-pred",
                               &HexagonExpandPredSpillCode::ID,
-                              0, false, false);
+                              nullptr, false, false);
   Registry.registerPass(*PI, true);
 }
 

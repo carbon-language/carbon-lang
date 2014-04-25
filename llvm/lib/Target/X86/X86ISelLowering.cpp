@@ -266,10 +266,10 @@ void X86TargetLowering::resetOperationActions() {
 
     // The _ftol2 runtime function has an unusual calling conv, which
     // is modeled by a special pseudo-instruction.
-    setLibcallName(RTLIB::FPTOUINT_F64_I64, 0);
-    setLibcallName(RTLIB::FPTOUINT_F32_I64, 0);
-    setLibcallName(RTLIB::FPTOUINT_F64_I32, 0);
-    setLibcallName(RTLIB::FPTOUINT_F32_I32, 0);
+    setLibcallName(RTLIB::FPTOUINT_F64_I64, nullptr);
+    setLibcallName(RTLIB::FPTOUINT_F32_I64, nullptr);
+    setLibcallName(RTLIB::FPTOUINT_F64_I32, nullptr);
+    setLibcallName(RTLIB::FPTOUINT_F32_I32, nullptr);
   }
 
   if (Subtarget->isTargetDarwin()) {
@@ -1498,9 +1498,9 @@ void X86TargetLowering::resetOperationActions() {
 
   if (!Subtarget->is64Bit()) {
     // These libcalls are not available in 32-bit.
-    setLibcallName(RTLIB::SHL_I128, 0);
-    setLibcallName(RTLIB::SRL_I128, 0);
-    setLibcallName(RTLIB::SRA_I128, 0);
+    setLibcallName(RTLIB::SHL_I128, nullptr);
+    setLibcallName(RTLIB::SRL_I128, nullptr);
+    setLibcallName(RTLIB::SRA_I128, nullptr);
   }
 
   // Combine sin / cos into one node or libcall if possible.
@@ -1738,7 +1738,7 @@ getPICJumpTableRelocBaseExpr(const MachineFunction *MF, unsigned JTI,
 // FIXME: Why this routine is here? Move to RegInfo!
 std::pair<const TargetRegisterClass*, uint8_t>
 X86TargetLowering::findRepresentativeClass(MVT VT) const{
-  const TargetRegisterClass *RRC = 0;
+  const TargetRegisterClass *RRC = nullptr;
   uint8_t Cost = 1;
   switch (VT.SimpleTy) {
   default:
@@ -2687,7 +2687,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       }
     } else if (!IsSibcall && (!isTailCall || isByVal)) {
       assert(VA.isMemLoc());
-      if (StackPtr.getNode() == 0)
+      if (!StackPtr.getNode())
         StackPtr = DAG.getCopyFromReg(Chain, dl, RegInfo->getStackRegister(),
                                       getPointerTy());
       MemOpChains.push_back(LowerMemOpCallTo(Chain, StackPtr, Arg,
@@ -2776,7 +2776,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         if (Flags.isByVal()) {
           // Copy relative to framepointer.
           SDValue Source = DAG.getIntPtrConstant(VA.getLocMemOffset());
-          if (StackPtr.getNode() == 0)
+          if (!StackPtr.getNode())
             StackPtr = DAG.getCopyFromReg(Chain, dl,
                                           RegInfo->getStackRegister(),
                                           getPointerTy());
@@ -4681,7 +4681,7 @@ static bool ShouldXformToMOVHLPS(ArrayRef<int> Mask, MVT VT) {
 /// isScalarLoadToVector - Returns true if the node is a scalar load that
 /// is promoted to a vector. It also returns the LoadSDNode by reference if
 /// required.
-static bool isScalarLoadToVector(SDNode *N, LoadSDNode **LD = NULL) {
+static bool isScalarLoadToVector(SDNode *N, LoadSDNode **LD = nullptr) {
   if (N->getOpcode() != ISD::SCALAR_TO_VECTOR)
     return false;
   N = N->getOperand(0).getNode();
@@ -5311,7 +5311,7 @@ static SDValue LowerBuildVectorv16i8(SDValue Op, unsigned NonZeros,
     return SDValue();
 
   SDLoc dl(Op);
-  SDValue V(0, 0);
+  SDValue V;
   bool First = true;
   for (unsigned i = 0; i < 16; ++i) {
     bool ThisIsNonZero = (NonZeros & (1 << i)) != 0;
@@ -5324,7 +5324,7 @@ static SDValue LowerBuildVectorv16i8(SDValue Op, unsigned NonZeros,
     }
 
     if ((i & 1) != 0) {
-      SDValue ThisElt(0, 0), LastElt(0, 0);
+      SDValue ThisElt, LastElt;
       bool LastIsNonZero = (NonZeros & (1 << (i-1))) != 0;
       if (LastIsNonZero) {
         LastElt = DAG.getNode(ISD::ZERO_EXTEND, dl,
@@ -5359,7 +5359,7 @@ static SDValue LowerBuildVectorv8i16(SDValue Op, unsigned NonZeros,
     return SDValue();
 
   SDLoc dl(Op);
-  SDValue V(0, 0);
+  SDValue V;
   bool First = true;
   for (unsigned i = 0; i < 8; ++i) {
     bool isNonZero = (NonZeros & (1 << i)) != 0;
@@ -5484,7 +5484,7 @@ static SDValue EltsFromConsecutiveLoads(EVT VT, SmallVectorImpl<SDValue> &Elts,
   EVT EltVT = VT.getVectorElementType();
   unsigned NumElems = Elts.size();
 
-  LoadSDNode *LDBase = NULL;
+  LoadSDNode *LDBase = nullptr;
   unsigned LastLoadedElt = -1U;
 
   // For each element in the initializer, see if we've found a load or an undef.
@@ -5665,7 +5665,7 @@ static SDValue LowerVectorBroadcast(SDValue Op, const X86Subtarget* Subtarget,
     unsigned ScalarSize = CVT.getSizeInBits();
 
     if (ScalarSize == 32 || (IsGE256 && ScalarSize == 64)) {
-      const Constant *C = 0;
+      const Constant *C = nullptr;
       if (ConstantSDNode *CI = dyn_cast<ConstantSDNode>(Ld))
         C = CI->getConstantIntValue();
       else if (ConstantFPSDNode *CF = dyn_cast<ConstantFPSDNode>(Ld))
@@ -5787,10 +5787,10 @@ static SDValue buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) {
     if (ExtractedFromVec.getValueType() != VT)
       return SDValue();
 
-    if (VecIn1.getNode() == 0)
+    if (!VecIn1.getNode())
       VecIn1 = ExtractedFromVec;
     else if (VecIn1 != ExtractedFromVec) {
-      if (VecIn2.getNode() == 0)
+      if (!VecIn2.getNode())
         VecIn2 = ExtractedFromVec;
       else if (VecIn2 != ExtractedFromVec)
         // Quit if more than 2 vectors to shuffle
@@ -5803,7 +5803,7 @@ static SDValue buildFromShuffleMostly(SDValue Op, SelectionDAG &DAG) {
       Mask[i] = Idx + NumElems;
   }
 
-  if (VecIn1.getNode() == 0)
+  if (!VecIn1.getNode())
     return SDValue();
 
   VecIn2 = VecIn2.getNode() ? VecIn2 : DAG.getUNDEF(VT);
@@ -6861,7 +6861,7 @@ static SDValue getVZextMovL(MVT VT, MVT OpVT,
                             SDValue SrcOp, SelectionDAG &DAG,
                             const X86Subtarget *Subtarget, SDLoc dl) {
   if (VT == MVT::v2f64 || VT == MVT::v4f32) {
-    LoadSDNode *LD = NULL;
+    LoadSDNode *LD = nullptr;
     if (!isScalarLoadToVector(SrcOp.getNode(), &LD))
       LD = dyn_cast<LoadSDNode>(SrcOp);
     if (!LD) {
@@ -8418,7 +8418,7 @@ LowerToTLSGeneralDynamicModel32(GlobalAddressSDNode *GA, SelectionDAG &DAG,
 static SDValue
 LowerToTLSGeneralDynamicModel64(GlobalAddressSDNode *GA, SelectionDAG &DAG,
                                 const EVT PtrVT) {
-  return GetTLSADDR(DAG, DAG.getEntryNode(), GA, NULL, PtrVT,
+  return GetTLSADDR(DAG, DAG.getEntryNode(), GA, nullptr, PtrVT,
                     X86::RAX, X86II::MO_TLSGD);
 }
 
@@ -8435,7 +8435,7 @@ static SDValue LowerToTLSLocalDynamicModel(GlobalAddressSDNode *GA,
 
   SDValue Base;
   if (is64Bit) {
-    Base = GetTLSADDR(DAG, DAG.getEntryNode(), GA, NULL, PtrVT, X86::RAX,
+    Base = GetTLSADDR(DAG, DAG.getEntryNode(), GA, nullptr, PtrVT, X86::RAX,
                       X86II::MO_TLSLD, /*LocalDynamic=*/true);
   } else {
     SDValue InFlag;
@@ -9377,7 +9377,7 @@ SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op,
     /*IsSigned=*/ true, /*IsReplace=*/ false);
   SDValue FIST = Vals.first, StackSlot = Vals.second;
   // If FP_TO_INTHelper failed, the node is actually supposed to be Legal.
-  if (FIST.getNode() == 0) return Op;
+  if (!FIST.getNode()) return Op;
 
   if (StackSlot.getNode())
     // Load the result.
@@ -10629,7 +10629,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
         Res = DAG.getNOT(DL, Res, Res.getValueType());
 
       ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(Op2);
-      if (N2C == 0 || !N2C->isNullValue())
+      if (!N2C || !N2C->isNullValue())
         Res = DAG.getNode(ISD::OR, DL, Res.getValueType(), Res, Y);
       return Res;
     }
@@ -13243,7 +13243,7 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
     uint64_t ShiftAmt = 0;
     for (unsigned i = 0; i != Ratio; ++i) {
       ConstantSDNode *C = dyn_cast<ConstantSDNode>(Amt.getOperand(i));
-      if (C == 0)
+      if (!C)
         return SDValue();
       // 6 == Log2(64)
       ShiftAmt |= C->getZExtValue() << (i * (1 << (6 - RatioInLog2)));
@@ -13254,7 +13254,7 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
       for (unsigned j = 0; j != Ratio; ++j) {
         ConstantSDNode *C =
           dyn_cast<ConstantSDNode>(Amt.getOperand(i + j));
-        if (C == 0)
+        if (!C)
           return SDValue();
         // 6 == Log2(64)
         ShAmt |= C->getZExtValue() << (j * (1 << (6 - RatioInLog2)));
@@ -13336,7 +13336,7 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
                BaseShAmt = InVec.getOperand(1);
            }
         }
-        if (BaseShAmt.getNode() == 0)
+        if (!BaseShAmt.getNode())
           BaseShAmt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Amt,
                                   DAG.getIntPtrConstant(0));
       }
@@ -14191,10 +14191,10 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     std::pair<SDValue,SDValue> Vals =
         FP_TO_INTHelper(SDValue(N, 0), DAG, IsSigned, /*IsReplace=*/ true);
     SDValue FIST = Vals.first, StackSlot = Vals.second;
-    if (FIST.getNode() != 0) {
+    if (FIST.getNode()) {
       EVT VT = N->getValueType(0);
       // Return a load from the stack slot.
-      if (StackSlot.getNode() != 0)
+      if (StackSlot.getNode())
         Results.push_back(DAG.getLoad(VT, dl, FIST, StackSlot,
                                       MachinePointerInfo(),
                                       false, false, false, 0));
@@ -14349,7 +14349,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
 
 const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
-  default: return NULL;
+  default: return nullptr;
   case X86ISD::BSF:                return "X86ISD::BSF";
   case X86ISD::BSR:                return "X86ISD::BSR";
   case X86ISD::SHLD:               return "X86ISD::SHLD";
@@ -14524,7 +14524,7 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
   Reloc::Model R = getTargetMachine().getRelocationModel();
 
   // X86 allows a sign-extended 32-bit immediate field as a displacement.
-  if (!X86::isOffsetSuitableForCodeModel(AM.BaseOffs, M, AM.BaseGV != NULL))
+  if (!X86::isOffsetSuitableForCodeModel(AM.BaseOffs, M, AM.BaseGV != nullptr))
     return false;
 
   if (AM.BaseGV) {
@@ -15650,7 +15650,7 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(
     OffsetDestReg = 0; // unused
     OverflowDestReg = DestReg;
 
-    offsetMBB = NULL;
+    offsetMBB = nullptr;
     overflowMBB = thisMBB;
     endMBB = thisMBB;
   } else {
@@ -17891,7 +17891,7 @@ static SDValue checkBoolTestSetCCCombine(SDValue Cmp, X86::CondCode &CC) {
   SDValue Op2 = Cmp.getOperand(1);
 
   SDValue SetCC;
-  const ConstantSDNode* C = 0;
+  const ConstantSDNode* C = nullptr;
   bool needOppositeCond = (CC == X86::COND_E);
   bool checkAgainstTrue = false; // Is it a comparison against 1?
 
@@ -18142,7 +18142,7 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
     // the DCI.xxxx conditions are provided to postpone the optimization as
     // late as possible.
 
-    ConstantSDNode *CmpAgainst = 0;
+    ConstantSDNode *CmpAgainst = nullptr;
     if ((Cond.getOpcode() == X86ISD::CMP || Cond.getOpcode() == X86ISD::SUB) &&
         (CmpAgainst = dyn_cast<ConstantSDNode>(Cond.getOperand(1))) &&
         !isa<ConstantSDNode>(Cond.getOperand(0))) {
@@ -19150,7 +19150,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
       !cast<LoadSDNode>(St->getValue())->isVolatile() &&
       St->getChain().hasOneUse() && !St->isVolatile()) {
     SDNode* LdVal = St->getValue().getNode();
-    LoadSDNode *Ld = 0;
+    LoadSDNode *Ld = nullptr;
     int TokenFactorIndex = -1;
     SmallVector<SDValue, 8> Ops;
     SDNode* ChainVal = St->getChain().getNode();
@@ -20265,7 +20265,7 @@ TargetLowering::ConstraintWeight
   Value *CallOperandVal = info.CallOperandVal;
     // If we don't have a value, we can't do a match,
     // but allow it at the lowest weight.
-  if (CallOperandVal == NULL)
+  if (!CallOperandVal)
     return CW_Default;
   Type *type = CallOperandVal->getType();
   // Look at the constraint type.
@@ -20383,7 +20383,7 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
                                                      std::string &Constraint,
                                                      std::vector<SDValue>&Ops,
                                                      SelectionDAG &DAG) const {
-  SDValue Result(0, 0);
+  SDValue Result;
 
   // Only support length 1 constraints for now.
   if (Constraint.length() > 1) return;
@@ -20466,7 +20466,7 @@ void X86TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 
     // If we are in non-pic codegen mode, we allow the address of a global (with
     // an optional displacement) to be used with 'i'.
-    GlobalAddressSDNode *GA = 0;
+    GlobalAddressSDNode *GA = nullptr;
     int64_t Offset = 0;
 
     // Match either (GA), (GA+C), (GA+C1+C2), etc.
@@ -20622,7 +20622,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
   Res = TargetLowering::getRegForInlineAsmConstraint(Constraint, VT);
 
   // Not found as a standard register?
-  if (Res.second == 0) {
+  if (!Res.second) {
     // Map st(0) -> st(7) -> ST0
     if (Constraint.size() == 7 && Constraint[0] == '{' &&
         tolower(Constraint[1]) == 's' &&

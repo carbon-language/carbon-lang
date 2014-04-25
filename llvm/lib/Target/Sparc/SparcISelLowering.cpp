@@ -663,7 +663,7 @@ static bool hasReturnsTwiceAttr(SelectionDAG &DAG, SDValue Callee,
   if (CS)
     return CS->hasFnAttr(Attribute::ReturnsTwice);
 
-  const Function *CalleeFn = 0;
+  const Function *CalleeFn = nullptr;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     CalleeFn = dyn_cast<Function>(G->getGlobal());
   } else if (ExternalSymbolSDNode *E =
@@ -961,9 +961,9 @@ static bool isFP128ABICall(const char *CalleeName)
        "_Q_sqrt", "_Q_neg",
        "_Q_itoq", "_Q_stoq", "_Q_dtoq", "_Q_utoq",
        "_Q_lltoq", "_Q_ulltoq",
-       0
+       nullptr
     };
-  for (const char * const *I = ABICalls; *I != 0; ++I)
+  for (const char * const *I = ABICalls; *I != nullptr; ++I)
     if (strcmp(CalleeName, *I) == 0)
       return true;
   return false;
@@ -972,7 +972,7 @@ static bool isFP128ABICall(const char *CalleeName)
 unsigned
 SparcTargetLowering::getSRetArgSize(SelectionDAG &DAG, SDValue Callee) const
 {
-  const Function *CalleeFn = 0;
+  const Function *CalleeFn = nullptr;
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     CalleeFn = dyn_cast<Function>(G->getGlobal());
   } else if (ExternalSymbolSDNode *E =
@@ -1263,7 +1263,7 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
 
   // Set inreg flag manually for codegen generated library calls that
   // return float.
-  if (CLI.Ins.size() == 1 && CLI.Ins[0].VT == MVT::f32 && CLI.CS == 0)
+  if (CLI.Ins.size() == 1 && CLI.Ins[0].VT == MVT::f32 && CLI.CS == nullptr)
     CLI.Ins[0].Flags.setInReg();
 
   RVInfo.AnalyzeCallResult(CLI.Ins, RetCC_Sparc64);
@@ -1677,7 +1677,7 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
 
 const char *SparcTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
-  default: return 0;
+  default: return nullptr;
   case SPISD::CMPICC:     return "SPISD::CMPICC";
   case SPISD::CMPFCC:     return "SPISD::CMPFCC";
   case SPISD::BRICC:      return "SPISD::BRICC";
@@ -2065,7 +2065,7 @@ SparcTargetLowering::LowerF128Compare(SDValue LHS, SDValue RHS,
                                       SDLoc DL,
                                       SelectionDAG &DAG) const {
 
-  const char *LibCall = 0;
+  const char *LibCall = nullptr;
   bool is64Bit = Subtarget->is64Bit();
   switch(SPCC) {
   default: llvm_unreachable("Unhandled conditional code!");
@@ -2174,7 +2174,7 @@ LowerF128_FPEXTEND(SDValue Op, SelectionDAG &DAG,
                            TLI.getLibcallName(RTLIB::FPEXT_F32_F128), 1);
 
   llvm_unreachable("fpextend with non-float operand!");
-  return SDValue(0, 0);
+  return SDValue();
 }
 
 static SDValue
@@ -2192,7 +2192,7 @@ LowerF128_FPROUND(SDValue Op, SelectionDAG &DAG,
                            TLI.getLibcallName(RTLIB::FPROUND_F128_F32), 1);
 
   llvm_unreachable("fpround to non-float!");
-  return SDValue(0, 0);
+  return SDValue();
 }
 
 static SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG,
@@ -2213,7 +2213,7 @@ static SDValue LowerFP_TO_SINT(SDValue Op, SelectionDAG &DAG,
 
   // Expand if the resulting type is illegal.
   if (!TLI.isTypeLegal(VT))
-    return SDValue(0, 0);
+    return SDValue();
 
   // Otherwise, Convert the fp value to integer in an FP register.
   if (VT == MVT::i32)
@@ -2244,7 +2244,7 @@ static SDValue LowerSINT_TO_FP(SDValue Op, SelectionDAG &DAG,
 
   // Expand if the operand type is illegal.
   if (!TLI.isTypeLegal(OpVT))
-    return SDValue(0, 0);
+    return SDValue();
 
   // Otherwise, Convert the int value to FP in an FP register.
   SDValue Tmp = DAG.getNode(ISD::BITCAST, dl, floatVT, Op.getOperand(0));
@@ -2262,7 +2262,7 @@ static SDValue LowerFP_TO_UINT(SDValue Op, SelectionDAG &DAG,
   // quad floating point instructions and the resulting type is legal.
   if (Op.getOperand(0).getValueType() != MVT::f128 ||
       (hasHardQuad && TLI.isTypeLegal(VT)))
-    return SDValue(0, 0);
+    return SDValue();
 
   assert(VT == MVT::i32 || VT == MVT::i64);
 
@@ -2283,7 +2283,7 @@ static SDValue LowerUINT_TO_FP(SDValue Op, SelectionDAG &DAG,
   // Expand if it does not involve f128 or the target has support for
   // quad floating point instructions and the operand type is legal.
   if (Op.getValueType() != MVT::f128 || (hasHardQuad && TLI.isTypeLegal(OpVT)))
-    return SDValue(0, 0);
+    return SDValue();
 
   return TLI.LowerF128Op(Op, DAG,
                          TLI.getLibcallName(OpVT == MVT::i32
@@ -3092,7 +3092,7 @@ getSingleConstraintMatchWeight(AsmOperandInfo &info,
   Value *CallOperandVal = info.CallOperandVal;
   // If we don't have a value, we can't do a match,
   // but allow it at the lowest weight.
-  if (CallOperandVal == NULL)
+  if (!CallOperandVal)
     return CW_Default;
 
   // Look at the constraint type.
@@ -3117,7 +3117,7 @@ LowerAsmOperandForConstraint(SDValue Op,
                              std::string &Constraint,
                              std::vector<SDValue> &Ops,
                              SelectionDAG &DAG) const {
-  SDValue Result(0, 0);
+  SDValue Result(nullptr, 0);
 
   // Only support length 1 constraints for now.
   if (Constraint.length() > 1)

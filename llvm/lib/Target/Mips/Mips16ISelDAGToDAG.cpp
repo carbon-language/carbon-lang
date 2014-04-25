@@ -45,7 +45,7 @@ bool Mips16DAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
 std::pair<SDNode*, SDNode*>
 Mips16DAGToDAGISel::selectMULT(SDNode *N, unsigned Opc, SDLoc DL, EVT Ty,
                                bool HasLo, bool HasHi) {
-  SDNode *Lo = 0, *Hi = 0;
+  SDNode *Lo = nullptr, *Hi = nullptr;
   SDNode *Mul = CurDAG->getMachineNode(Opc, DL, MVT::Glue, N->getOperand(0),
                                        N->getOperand(1));
   SDValue InFlag = SDValue(Mul, 0);
@@ -298,7 +298,7 @@ std::pair<bool, SDNode*> Mips16DAGToDAGISel::selectNode(SDNode *Node) {
     if (!SDValue(Node, 1).use_empty())
       ReplaceUses(SDValue(Node, 1), SDValue(LoHi.second, 0));
 
-    return std::make_pair(true, (SDNode*)NULL);
+    return std::make_pair(true, nullptr);
   }
 
   case ISD::MULHS:
@@ -309,7 +309,7 @@ std::pair<bool, SDNode*> Mips16DAGToDAGISel::selectNode(SDNode *Node) {
   }
   }
 
-  return std::make_pair(false, (SDNode*)NULL);
+  return std::make_pair(false, nullptr);
 }
 
 FunctionPass *llvm::createMips16ISelDag(MipsTargetMachine &TM) {

@@ -109,7 +109,7 @@ ConstantPool *
 AssemblerConstantPools::getConstantPool(const MCSection *Section) {
   ConstantPoolMapTy::iterator CP = ConstantPools.find(Section);
   if (CP == ConstantPools.end())
-    return 0;
+    return nullptr;
 
   return &CP->second;
 }

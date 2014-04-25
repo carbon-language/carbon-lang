@@ -469,7 +469,7 @@ private:
 public:
   void addExpr(MCInst &Inst, const MCExpr *Expr) const {
     // Add as immediate when possible.  Null MCExpr = 0.
-    if (Expr == 0)
+    if (!Expr)
       Inst.addOperand(MCOperand::CreateImm(0));
     else if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Expr))
       Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
@@ -1616,7 +1616,7 @@ bool MipsAsmParser::parseMemOffset(const MCExpr *&Res, bool isParenExpr) {
 MipsAsmParser::OperandMatchResultTy MipsAsmParser::parseMemOperand(
     SmallVectorImpl<MCParsedAsmOperand *> &Operands) {
   DEBUG(dbgs() << "parseMemOperand\n");
-  const MCExpr *IdVal = 0;
+  const MCExpr *IdVal = nullptr;
   SMLoc S;
   bool isParenExpr = false;
   MipsAsmParser::OperandMatchResultTy Res = MatchOperand_NoMatch;
@@ -1672,7 +1672,7 @@ MipsAsmParser::OperandMatchResultTy MipsAsmParser::parseMemOperand(
 
   Parser.Lex(); // Eat the ')' token.
 
-  if (IdVal == 0)
+  if (!IdVal)
     IdVal = MCConstantExpr::Create(0, getContext());
 
   // Replace the register operand with the memory operand.

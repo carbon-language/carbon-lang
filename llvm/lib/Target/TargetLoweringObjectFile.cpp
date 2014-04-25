@@ -138,7 +138,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
 
   // Early exit - functions should be always in text sections.
   const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GV);
-  if (GVar == 0)
+  if (!GVar)
     return SectionKind::getText();
 
   // Handle thread-local data first.
@@ -284,10 +284,10 @@ TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
   if (Kind.isText())
     return getTextSection();
 
-  if (Kind.isBSS() && BSSSection != 0)
+  if (Kind.isBSS() && BSSSection != nullptr)
     return BSSSection;
 
-  if (Kind.isReadOnly() && ReadOnlySection != 0)
+  if (Kind.isReadOnly() && ReadOnlySection != nullptr)
     return ReadOnlySection;
 
   return getDataSection();
@@ -298,7 +298,7 @@ TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
 /// should be placed in.
 const MCSection *
 TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
-  if (Kind.isReadOnly() && ReadOnlySection != 0)
+  if (Kind.isReadOnly() && ReadOnlySection != nullptr)
     return ReadOnlySection;
 
   return DataSection;

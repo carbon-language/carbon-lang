@@ -408,7 +408,7 @@ bool LoadFromStackOrConst::hasHazard_(const MachineInstr &MI) {
       (*MI.memoperands_begin())->getPseudoValue()) {
     if (isa<FixedStackPseudoSourceValue>(PSV))
       return false;
-    return !PSV->isConstant(0) && PSV != PseudoSourceValue::getStack();
+    return !PSV->isConstant(nullptr) && PSV != PseudoSourceValue::getStack();
   }
 
   return true;
@@ -644,7 +644,7 @@ bool Filler::searchSuccBBs(MachineBasicBlock &MBB, Iter Slot) const {
 
 MachineBasicBlock *Filler::selectSuccBB(MachineBasicBlock &B) const {
   if (B.succ_empty())
-    return NULL;
+    return nullptr;
 
   // Select the successor with the larget edge weight.
   auto &Prob = getAnalysis<MachineBranchProbabilityInfo>();
@@ -653,14 +653,14 @@ MachineBasicBlock *Filler::selectSuccBB(MachineBasicBlock &B) const {
                                                const MachineBasicBlock *Dst1) {
     return Prob.getEdgeWeight(&B, Dst0) < Prob.getEdgeWeight(&B, Dst1);
   });
-  return S->isLandingPad() ? NULL : S;
+  return S->isLandingPad() ? nullptr : S;
 }
 
 std::pair<MipsInstrInfo::BranchType, MachineInstr *>
 Filler::getBranch(MachineBasicBlock &MBB, const MachineBasicBlock &Dst) const {
   const MipsInstrInfo *TII =
     static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
-  MachineBasicBlock *TrueBB = 0, *FalseBB = 0;
+  MachineBasicBlock *TrueBB = nullptr, *FalseBB = nullptr;
   SmallVector<MachineInstr*, 2> BranchInstrs;
   SmallVector<MachineOperand, 2> Cond;
 
@@ -668,11 +668,11 @@ Filler::getBranch(MachineBasicBlock &MBB, const MachineBasicBlock &Dst) const {
     TII->AnalyzeBranch(MBB, TrueBB, FalseBB, Cond, false, BranchInstrs);
 
   if ((R == MipsInstrInfo::BT_None) || (R == MipsInstrInfo::BT_NoBranch))
-    return std::make_pair(R, (MachineInstr*)NULL);
+    return std::make_pair(R, nullptr);
 
   if (R != MipsInstrInfo::BT_CondUncond) {
     if (!hasUnoccupiedSlot(BranchInstrs[0]))
-      return std::make_pair(MipsInstrInfo::BT_None, (MachineInstr*)NULL);
+      return std::make_pair(MipsInstrInfo::BT_None, nullptr);
 
     assert(((R != MipsInstrInfo::BT_Uncond) || (TrueBB == &Dst)));
 
@@ -689,7 +689,7 @@ Filler::getBranch(MachineBasicBlock &MBB, const MachineBasicBlock &Dst) const {
   if (hasUnoccupiedSlot(BranchInstrs[1]) && (FalseBB == &Dst))
     return std::make_pair(MipsInstrInfo::BT_Uncond, BranchInstrs[1]);
 
-  return std::make_pair(MipsInstrInfo::BT_None, (MachineInstr*)NULL);
+  return std::make_pair(MipsInstrInfo::BT_None, nullptr);
 }
 
 bool Filler::examinePred(MachineBasicBlock &Pred, const MachineBasicBlock &Succ,

@@ -454,7 +454,7 @@ SDNode *ARM64DAGToDAGISel::SelectMLAV64LaneV128(SDNode *N) {
     if (Op1.getOpcode() != ISD::MUL ||
         !checkV64LaneV128(Op1.getOperand(0), Op1.getOperand(1), MLAOp1, MLAOp2,
                           LaneIdx))
-      return 0;
+      return nullptr;
   }
 
   SDValue LaneIdxVal = CurDAG->getTargetConstant(LaneIdx, MVT::i64);
@@ -490,7 +490,7 @@ SDNode *ARM64DAGToDAGISel::SelectMULLV64LaneV128(unsigned IntNo, SDNode *N) {
 
   if (!checkV64LaneV128(N->getOperand(1), N->getOperand(2), SMULLOp0, SMULLOp1,
                         LaneIdx))
-    return 0;
+    return nullptr;
 
   SDValue LaneIdxVal = CurDAG->getTargetConstant(LaneIdx, MVT::i64);
 
@@ -852,7 +852,7 @@ SDNode *ARM64DAGToDAGISel::SelectTable(SDNode *N, unsigned NumVecs,
 SDNode *ARM64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
   LoadSDNode *LD = cast<LoadSDNode>(N);
   if (LD->isUnindexed())
-    return NULL;
+    return nullptr;
   EVT VT = LD->getMemoryVT();
   EVT DstVT = N->getValueType(0);
   ISD::MemIndexedMode AM = LD->getAddressingMode();
@@ -910,7 +910,7 @@ SDNode *ARM64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
   } else if (VT == MVT::f64) {
     Opcode = IsPre ? ARM64::LDRDpre_isel : ARM64::LDRDpost_isel;
   } else
-    return NULL;
+    return nullptr;
   SDValue Chain = LD->getChain();
   SDValue Base = LD->getBasePtr();
   ConstantSDNode *OffsetOp = cast<ConstantSDNode>(LD->getOffset());
@@ -929,7 +929,7 @@ SDNode *ARM64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
     ReplaceUses(SDValue(N, 0), SDValue(Sub, 0));
     ReplaceUses(SDValue(N, 1), SDValue(Res, 1));
     ReplaceUses(SDValue(N, 2), SDValue(Res, 2));
-    return 0;
+    return nullptr;
   }
   return Res;
 }
@@ -977,7 +977,7 @@ SDNode *ARM64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs, unsigned Opc,
 
   ReplaceUses(SDValue(N, NumVecs), SDValue(Ld, 1));
 
-  return 0;
+  return nullptr;
 }
 
 SDNode *ARM64DAGToDAGISel::SelectStore(SDNode *N, unsigned NumVecs,
@@ -1371,7 +1371,7 @@ SDNode *ARM64DAGToDAGISel::SelectBitfieldExtractOp(SDNode *N) {
   unsigned Opc, LSB, MSB;
   SDValue Opd0;
   if (!isBitfieldExtractOp(CurDAG, N, Opc, Opd0, LSB, MSB))
-    return NULL;
+    return nullptr;
 
   EVT VT = N->getValueType(0);
 
@@ -1767,14 +1767,14 @@ static bool isBitfieldInsertOpFromOr(SDNode *N, unsigned &Opc, SDValue &Dst,
 
 SDNode *ARM64DAGToDAGISel::SelectBitfieldInsertOp(SDNode *N) {
   if (N->getOpcode() != ISD::OR)
-    return NULL;
+    return nullptr;
 
   unsigned Opc;
   unsigned LSB, MSB;
   SDValue Opd0, Opd1;
 
   if (!isBitfieldInsertOpFromOr(N, Opc, Opd0, Opd1, LSB, MSB, CurDAG))
-    return NULL;
+    return nullptr;
 
   EVT VT = N->getValueType(0);
   SDValue Ops[] = { Opd0,
@@ -1795,14 +1795,14 @@ SDNode *ARM64DAGToDAGISel::SelectLIBM(SDNode *N) {
   } else if (VT == MVT::f64) {
     Variant = 1;
   } else
-    return 0; // Unrecognized argument type. Fall back on default codegen.
+    return nullptr; // Unrecognized argument type. Fall back on default codegen.
 
   // Pick the FRINTX variant needed to set the flags.
   unsigned FRINTXOpc = FRINTXOpcs[Variant];
 
   switch (N->getOpcode()) {
   default:
-    return 0; // Unrecognized libm ISD node. Fall back on default codegen.
+    return nullptr; // Unrecognized libm ISD node. Fall back on default codegen.
   case ISD::FCEIL: {
     unsigned FRINTPOpcs[] = { ARM64::FRINTPSr, ARM64::FRINTPDr };
     Opc = FRINTPOpcs[Variant];
@@ -1892,11 +1892,11 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
   if (Node->isMachineOpcode()) {
     DEBUG(errs() << "== "; Node->dump(CurDAG); errs() << "\n");
     Node->setNodeId(-1);
-    return NULL;
+    return nullptr;
   }
 
   // Few custom selection stuff.
-  SDNode *ResNode = 0;
+  SDNode *ResNode = nullptr;
   EVT VT = Node->getValueType(0);
 
   switch (Node->getOpcode()) {
@@ -2455,7 +2455,7 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
   ResNode = SelectCode(Node);
 
   DEBUG(errs() << "=> ");
-  if (ResNode == NULL || ResNode == Node)
+  if (ResNode == nullptr || ResNode == Node)
     DEBUG(Node->dump(CurDAG));
   else
     DEBUG(ResNode->dump(CurDAG));

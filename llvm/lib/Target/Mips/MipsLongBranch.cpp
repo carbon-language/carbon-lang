@@ -56,7 +56,7 @@ namespace {
     bool HasLongBranch;
     MachineInstr *Br;
 
-    MBBInfo() : Size(0), HasLongBranch(false), Br(0) {}
+    MBBInfo() : Size(0), HasLongBranch(false), Br(nullptr) {}
   };
 
   class MipsLongBranch : public MachineFunctionPass {
@@ -111,7 +111,7 @@ static MachineBasicBlock *getTargetMBB(const MachineInstr &Br) {
   }
 
   assert(false && "This instruction does not have an MBB operand.");
-  return 0;
+  return nullptr;
 }
 
 // Traverse the list of instructions backwards until a non-debug instruction is

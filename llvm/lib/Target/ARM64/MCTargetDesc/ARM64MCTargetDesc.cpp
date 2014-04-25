@@ -71,7 +71,7 @@ static MCAsmInfo *createARM64MCAsmInfo(const MCRegisterInfo &MRI,
 
   // Initial state of the frame pointer is SP.
   unsigned Reg = MRI.getDwarfRegNum(ARM64::SP, true);
-  MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(0, Reg, 0);
+  MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(nullptr, Reg, 0);
   MAI->addInitialFrameState(Inst);
 
   return MAI;
@@ -119,7 +119,7 @@ static MCInstPrinter *createARM64MCInstPrinter(const Target &T,
   if (SyntaxVariant == 1)
     return new ARM64AppleInstPrinter(MAI, MII, MRI, STI);
 
-  return 0;
+  return nullptr;
 }
 
 static MCStreamer *createMCStreamer(const Target &T, StringRef TT,

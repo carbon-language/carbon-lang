@@ -102,7 +102,7 @@ static void printSymbolOperand(X86AsmPrinter &P, const MachineOperand &MO,
       MCSymbol *Sym = P.getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
       MachineModuleInfoImpl::StubValueTy &StubSym =
           P.MMI->getObjFileInfo<MachineModuleInfoMachO>().getGVStubEntry(Sym);
-      if (StubSym.getPointer() == 0)
+      if (!StubSym.getPointer())
         StubSym = MachineModuleInfoImpl::
           StubValueTy(P.getSymbol(GV), !GV->hasInternalLinkage());
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE){
@@ -110,14 +110,14 @@ static void printSymbolOperand(X86AsmPrinter &P, const MachineOperand &MO,
       MachineModuleInfoImpl::StubValueTy &StubSym =
           P.MMI->getObjFileInfo<MachineModuleInfoMachO>().getHiddenGVStubEntry(
               Sym);
-      if (StubSym.getPointer() == 0)
+      if (!StubSym.getPointer())
         StubSym = MachineModuleInfoImpl::
           StubValueTy(P.getSymbol(GV), !GV->hasInternalLinkage());
     } else if (MO.getTargetFlags() == X86II::MO_DARWIN_STUB) {
       MCSymbol *Sym = P.getSymbolWithGlobalValueBase(GV, "$stub");
       MachineModuleInfoImpl::StubValueTy &StubSym =
           P.MMI->getObjFileInfo<MachineModuleInfoMachO>().getFnStubEntry(Sym);
-      if (StubSym.getPointer() == 0)
+      if (!StubSym.getPointer())
         StubSym = MachineModuleInfoImpl::
           StubValueTy(P.getSymbol(GV), !GV->hasInternalLinkage());
     }
@@ -174,7 +174,7 @@ static void printSymbolOperand(X86AsmPrinter &P, const MachineOperand &MO,
 
 static void printOperand(X86AsmPrinter &P, const MachineInstr *MI,
                          unsigned OpNo, raw_ostream &O,
-                         const char *Modifier = 0, unsigned AsmVariant = 0);
+                         const char *Modifier = nullptr, unsigned AsmVariant = 0);
 
 /// printPCRelImm - This is used to print an immediate value that ends up
 /// being encoded as a pc-relative value.  These print slightly differently, for
@@ -232,7 +232,7 @@ static void printOperand(X86AsmPrinter &P, const MachineInstr *MI,
 
 static void printLeaMemReference(X86AsmPrinter &P, const MachineInstr *MI,
                                  unsigned Op, raw_ostream &O,
-                                 const char *Modifier = NULL) {
+                                 const char *Modifier = nullptr) {
   const MachineOperand &BaseReg  = MI->getOperand(Op+X86::AddrBaseReg);
   const MachineOperand &IndexReg = MI->getOperand(Op+X86::AddrIndexReg);
   const MachineOperand &DispSpec = MI->getOperand(Op+X86::AddrDisp);
@@ -284,7 +284,7 @@ static void printLeaMemReference(X86AsmPrinter &P, const MachineInstr *MI,
 
 static void printMemReference(X86AsmPrinter &P, const MachineInstr *MI,
                               unsigned Op, raw_ostream &O,
-                              const char *Modifier = NULL) {
+                              const char *Modifier = nullptr) {
   assert(isMem(MI, Op) && "Invalid memory reference!");
   const MachineOperand &Segment = MI->getOperand(Op+X86::AddrSegmentReg);
   if (Segment.getReg()) {
@@ -296,7 +296,7 @@ static void printMemReference(X86AsmPrinter &P, const MachineInstr *MI,
 
 static void printIntelMemReference(X86AsmPrinter &P, const MachineInstr *MI,
                                    unsigned Op, raw_ostream &O,
-                                   const char *Modifier = NULL,
+                                   const char *Modifier = nullptr,
                                    unsigned AsmVariant = 1) {
   const MachineOperand &BaseReg  = MI->getOperand(Op+X86::AddrBaseReg);
   unsigned ScaleVal = MI->getOperand(Op+X86::AddrScaleAmt).getImm();
@@ -464,7 +464,7 @@ bool X86AsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     }
   }
 
-  printOperand(*this, MI, OpNo, O, /*Modifier*/ 0, AsmVariant);
+  printOperand(*this, MI, OpNo, O, /*Modifier*/ nullptr, AsmVariant);
   return false;
 }
 

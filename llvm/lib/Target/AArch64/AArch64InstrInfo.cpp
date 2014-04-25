@@ -391,10 +391,10 @@ AArch64InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                MachineBasicBlock *FBB,
                                const SmallVectorImpl<MachineOperand> &Cond,
                                DebugLoc DL) const {
-  if (FBB == 0 && Cond.empty()) {
+  if (!FBB && Cond.empty()) {
     BuildMI(&MBB, DL, get(AArch64::Bimm)).addMBB(TBB);
     return 1;
-  } else if (FBB == 0) {
+  } else if (!FBB) {
     MachineInstrBuilder MIB = BuildMI(&MBB, DL, get(Cond[0].getImm()));
     for (int i = 1, e = Cond.size(); i != e; ++i)
       MIB.addOperand(Cond[i]);

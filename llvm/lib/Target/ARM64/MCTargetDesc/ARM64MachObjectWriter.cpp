@@ -241,14 +241,14 @@ void ARM64MachObjectWriter::RecordRelocation(
       Asm.getContext().FatalError(Fixup.getLoc(),
                                   "unsupported relocation with identical base");
 
-    Value += (A_SD.getFragment() == NULL ? 0 : Writer->getSymbolAddress(
-                                                   &A_SD, Layout)) -
-             (A_Base == NULL || A_Base->getFragment() == NULL
+    Value += (!A_SD.getFragment() ? 0
+                                  : Writer->getSymbolAddress(&A_SD, Layout)) -
+             (!A_Base || !A_Base->getFragment()
                   ? 0
                   : Writer->getSymbolAddress(A_Base, Layout));
-    Value -= (B_SD.getFragment() == NULL ? 0 : Writer->getSymbolAddress(
-                                                   &B_SD, Layout)) -
-             (B_Base == NULL || B_Base->getFragment() == NULL
+    Value -= (!B_SD.getFragment() ? 0
+                                  : Writer->getSymbolAddress(&B_SD, Layout)) -
+             (!B_Base || !B_Base->getFragment()
                   ? 0
                   : Writer->getSymbolAddress(B_Base, Layout));
 
@@ -302,7 +302,7 @@ void ARM64MachObjectWriter::RecordRelocation(
     // have already been fixed up.
     if (Symbol->isInSection()) {
       if (Section.hasAttribute(MachO::S_ATTR_DEBUG))
-        Base = 0;
+        Base = nullptr;
     }
 
     // ARM64 uses external relocations as much as possible. For debug sections,

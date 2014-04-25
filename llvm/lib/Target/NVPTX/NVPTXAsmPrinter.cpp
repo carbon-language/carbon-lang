@@ -132,7 +132,7 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
     return MCSymbolRefExpr::Create(AP.GetBlockAddressSymbol(BA), Ctx);
 
   const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV);
-  if (CE == 0)
+  if (!CE)
     llvm_unreachable("Unknown constant value to lower!");
 
   switch (CE->getOpcode()) {
@@ -150,7 +150,7 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
       raw_string_ostream OS(S);
       OS << "Unsupported expression in static initializer: ";
       CE->printAsOperand(OS, /*PrintType=*/ false,
-                         !AP.MF ? 0 : AP.MF->getFunction()->getParent());
+                         !AP.MF ? nullptr : AP.MF->getFunction()->getParent());
       report_fatal_error(OS.str());
     }
   case Instruction::AddrSpaceCast: {
@@ -165,7 +165,7 @@ const MCExpr *nvptx::LowerConstant(const Constant *CV, AsmPrinter &AP) {
     raw_string_ostream OS(S);
     OS << "Unsupported expression in static initializer: ";
     CE->printAsOperand(OS, /*PrintType=*/ false,
-                       !AP.MF ? 0 : AP.MF->getFunction()->getParent());
+                       !AP.MF ? nullptr : AP.MF->getFunction()->getParent());
     report_fatal_error(OS.str());
   }
   case Instruction::GetElementPtr: {
@@ -1038,7 +1038,7 @@ static bool canDemoteGlobalVar(const GlobalVariable *gv, Function const *&f) {
   if (Pty->getAddressSpace() != llvm::ADDRESS_SPACE_SHARED)
     return false;
 
-  const Function *oneFunc = 0;
+  const Function *oneFunc = nullptr;
 
   bool flag = usedInOneFunc(gv, oneFunc);
   if (flag == false)
@@ -1395,10 +1395,10 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
   if (llvm::isSampler(*GVar)) {
     O << ".global .samplerref " << llvm::getSamplerName(*GVar);
 
-    const Constant *Initializer = NULL;
+    const Constant *Initializer = nullptr;
     if (GVar->hasInitializer())
       Initializer = GVar->getInitializer();
-    const ConstantInt *CI = NULL;
+    const ConstantInt *CI = nullptr;
     if (Initializer)
       CI = dyn_cast<ConstantInt>(Initializer);
     if (CI) {
@@ -1465,7 +1465,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
       return;
   }
 
-  const Function *demotedFunc = 0;
+  const Function *demotedFunc = nullptr;
   if (!processDemoted && canDemoteGlobalVar(GVar, demotedFunc)) {
     O << "// " << GVar->getName().str() << " has been demoted\n";
     if (localDecls.find(demotedFunc) != localDecls.end())
@@ -1637,7 +1637,7 @@ NVPTXAsmPrinter::getPTXFundamentalTypeStr(const Type *Ty, bool useB4PTR) const {
       return "u32";
   }
   llvm_unreachable("unexpected type");
-  return NULL;
+  return nullptr;
 }
 
 void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
@@ -2447,7 +2447,7 @@ void NVPTXAsmPrinter::emitSrcInText(StringRef filename, unsigned line) {
 }
 
 LineReader *NVPTXAsmPrinter::getReader(std::string filename) {
-  if (reader == NULL) {
+  if (!reader) {
     reader = new LineReader(filename);
   }
 

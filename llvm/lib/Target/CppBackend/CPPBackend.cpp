@@ -396,7 +396,7 @@ std::string CppWriter::getCppName(Type* Ty) {
     return I->second;
 
   // Okay, let's build a new name for this type. Start with a prefix
-  const char* prefix = 0;
+  const char* prefix = nullptr;
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID:    prefix = "FuncTy_"; break;
   case Type::StructTyID:      prefix = "StructTy_"; break;

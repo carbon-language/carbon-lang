@@ -257,7 +257,7 @@ unsigned NVPTXInstrInfo::InsertBranch(
          "NVPTX branch conditions have two components!");
 
   // One-way branch.
-  if (FBB == 0) {
+  if (!FBB) {
     if (Cond.empty()) // Unconditional branch
       BuildMI(&MBB, DL, get(NVPTX::GOTO)).addMBB(TBB);
     else // Conditional branch

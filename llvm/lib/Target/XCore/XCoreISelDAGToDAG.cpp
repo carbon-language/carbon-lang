@@ -89,14 +89,14 @@ FunctionPass *llvm::createXCoreISelDag(XCoreTargetMachine &TM,
 
 bool XCoreDAGToDAGISel::SelectADDRspii(SDValue Addr, SDValue &Base,
                                        SDValue &Offset) {
-  FrameIndexSDNode *FIN = 0;
+  FrameIndexSDNode *FIN = nullptr;
   if ((FIN = dyn_cast<FrameIndexSDNode>(Addr))) {
     Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
     Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
   if (Addr.getOpcode() == ISD::ADD) {
-    ConstantSDNode *CN = 0;
+    ConstantSDNode *CN = nullptr;
     if ((FIN = dyn_cast<FrameIndexSDNode>(Addr.getOperand(0)))
       && (CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
       && (CN->getSExtValue() % 4 == 0 && CN->getSExtValue() >= 0)) {
@@ -237,10 +237,10 @@ SDNode *XCoreDAGToDAGISel::SelectBRIND(SDNode *N) {
   SDValue Chain = N->getOperand(0);
   SDValue Addr = N->getOperand(1);
   if (Addr->getOpcode() != ISD::INTRINSIC_W_CHAIN)
-    return 0;
+    return nullptr;
   unsigned IntNo = cast<ConstantSDNode>(Addr->getOperand(1))->getZExtValue();
   if (IntNo != Intrinsic::xcore_checkevent)
-    return 0;
+    return nullptr;
   SDValue nextAddr = Addr->getOperand(2);
   SDValue CheckEventChainOut(Addr.getNode(), 1);
   if (!CheckEventChainOut.use_empty()) {
@@ -252,7 +252,7 @@ SDNode *XCoreDAGToDAGISel::SelectBRIND(SDNode *N) {
     SDValue NewChain = replaceInChain(CurDAG, Chain, CheckEventChainOut,
                                       CheckEventChainIn);
     if (!NewChain.getNode())
-      return 0;
+      return nullptr;
     Chain = NewChain;
   }
   // Enable events on the thread using setsr 1 and then disable them immediately

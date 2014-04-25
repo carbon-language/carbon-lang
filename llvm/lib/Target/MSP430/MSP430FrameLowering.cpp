@@ -242,7 +242,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       // alignment boundary.
       Amount = (Amount+StackAlign-1)/StackAlign*StackAlign;
 
-      MachineInstr *New = 0;
+      MachineInstr *New = nullptr;
       if (Old->getOpcode() == TII.getCallFrameSetupOpcode()) {
         New = BuildMI(MF, Old->getDebugLoc(),
                       TII.get(MSP430::SUB16ri), MSP430::SPW)
