@@ -31,3 +31,7 @@
 // ASAN-DLL: "-incremental:no"
 // ASAN-DLL: "{{.*}}clang_rt.asan_dll_thunk-i386.lib"
 // ASAN-DLL: "{{.*}}cl-link{{.*}}.obj"
+
+// RUN: %clang_cl /Zi /Tc%s -### 2>&1 | FileCheck --check-prefix=DEBUG %s
+// DEBUG: link.exe
+// DEBUG: "-debug"
