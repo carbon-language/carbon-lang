@@ -310,11 +310,9 @@ TEST(ClangToolTest, BuildASTs) {
   Tool.mapVirtualFile("/a.cc", "void a() {}");
   Tool.mapVirtualFile("/b.cc", "void b() {}");
 
-  std::vector<ASTUnit *> ASTs;
+  std::vector<std::unique_ptr<ASTUnit>> ASTs;
   EXPECT_EQ(0, Tool.buildASTs(ASTs));
   EXPECT_EQ(2u, ASTs.size());
-
-  llvm::DeleteContainerPointers(ASTs);
 }
 
 struct TestDiagnosticConsumer : public DiagnosticConsumer {
@@ -344,11 +342,10 @@ TEST(ClangToolTest, InjectDiagnosticConsumerInBuildASTs) {
   Tool.mapVirtualFile("/a.cc", "int x = undeclared;");
   TestDiagnosticConsumer Consumer;
   Tool.setDiagnosticConsumer(&Consumer);
-  std::vector<ASTUnit*> ASTs;
+  std::vector<std::unique_ptr<ASTUnit>> ASTs;
   Tool.buildASTs(ASTs);
   EXPECT_EQ(1u, ASTs.size());
   EXPECT_EQ(1u, Consumer.NumDiagnosticsSeen);
-  llvm::DeleteContainerPointers(ASTs);
 }
 #endif
 

@@ -371,29 +371,29 @@ int ClangTool::run(ToolAction *Action) {
 namespace {
 
 class ASTBuilderAction : public ToolAction {
-  std::vector<ASTUnit *> &ASTs;
+  std::vector<std::unique_ptr<ASTUnit>> &ASTs;
 
 public:
-  ASTBuilderAction(std::vector<ASTUnit *> &ASTs) : ASTs(ASTs) {}
+  ASTBuilderAction(std::vector<std::unique_ptr<ASTUnit>> &ASTs) : ASTs(ASTs) {}
 
   bool runInvocation(CompilerInvocation *Invocation, FileManager *Files,
                      DiagnosticConsumer *DiagConsumer) override {
     // FIXME: This should use the provided FileManager.
-    ASTUnit *AST = ASTUnit::LoadFromCompilerInvocation(
+    std::unique_ptr<ASTUnit> AST(ASTUnit::LoadFromCompilerInvocation(
         Invocation, CompilerInstance::createDiagnostics(
                         &Invocation->getDiagnosticOpts(), DiagConsumer,
-                        /*ShouldOwnClient=*/false));
+                        /*ShouldOwnClient=*/false)));
     if (!AST)
       return false;
 
-    ASTs.push_back(AST);
+    ASTs.push_back(std::move(AST));
     return true;
   }
 };
 
 }
 
-int ClangTool::buildASTs(std::vector<ASTUnit *> &ASTs) {
+int ClangTool::buildASTs(std::vector<std::unique_ptr<ASTUnit>> &ASTs) {
   ASTBuilderAction Action(ASTs);
   return run(&Action);
 }
@@ -408,7 +408,7 @@ ASTUnit *buildASTFromCodeWithArgs(const Twine &Code,
   SmallString<16> FileNameStorage;
   StringRef FileNameRef = FileName.toNullTerminatedStringRef(FileNameStorage);
 
-  std::vector<ASTUnit *> ASTs;
+  std::vector<std::unique_ptr<ASTUnit>> ASTs;
   ASTBuilderAction Action(ASTs);
   ToolInvocation Invocation(getSyntaxOnlyToolArgs(Args, FileNameRef), &Action, 0);
 
@@ -419,7 +419,7 @@ ASTUnit *buildASTFromCodeWithArgs(const Twine &Code,
     return 0;
 
   assert(ASTs.size() == 1);
-  return ASTs[0];
+  return ASTs[0].release();
 }
 
 } // end namespace tooling

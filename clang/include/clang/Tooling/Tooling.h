@@ -39,6 +39,7 @@
 #include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -282,7 +283,7 @@ class ClangTool {
 
   /// \brief Create an AST for each file specified in the command line and
   /// append them to ASTs.
-  int buildASTs(std::vector<ASTUnit *> &ASTs);
+  int buildASTs(std::vector<std::unique_ptr<ASTUnit>> &ASTs);
 
   /// \brief Returns the file manager used in the tool.
   ///
