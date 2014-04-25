@@ -4423,8 +4423,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   }
 
   if (BuiltinID == ARM::BI__builtin_arm_sevl) {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_sevl);
-    return Builder.CreateCall(F);
+    Function *F = CGM.getIntrinsic(Intrinsic::arm_hint);
+    return Builder.CreateCall(F, llvm::ConstantInt::get(Int32Ty, 5));
   }
 
   // CRC32
