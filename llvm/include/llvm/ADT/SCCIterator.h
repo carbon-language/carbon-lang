@@ -47,7 +47,7 @@ class scc_iterator
   typedef typename super::reference reference;
   typedef typename super::pointer pointer;
 
-  // Element of VisitStack during DFS.
+  /// Element of VisitStack during DFS.
   struct StackElement {
     NodeType *Node;       ///< The current node pointer.
     ChildItTy NextChild;  ///< The next child, modified inplace during DFS.
@@ -63,30 +63,30 @@ class scc_iterator
     }
   };
 
-  // The visit counters used to detect when a complete SCC is on the stack.
-  // visitNum is the global counter.
-  // nodeVisitNumbers are per-node visit numbers, also used as DFS flags.
+  /// The visit counters used to detect when a complete SCC is on the stack.
+  /// visitNum is the global counter.
+  ///
+  /// nodeVisitNumbers are per-node visit numbers, also used as DFS flags.
   unsigned visitNum;
   DenseMap<NodeType *, unsigned> nodeVisitNumbers;
 
-  // Stack holding nodes of the SCC.
+  /// Stack holding nodes of the SCC.
   std::vector<NodeType *> SCCNodeStack;
 
-  // The current SCC, retrieved using operator*().
+  /// The current SCC, retrieved using operator*().
   SccTy CurrentSCC;
 
-
-  // DFS stack, Used to maintain the ordering.  The top contains the current
-  // node, the next child to visit, and the minimum uplink value of all child
+  /// DFS stack, Used to maintain the ordering.  The top contains the current
+  /// node, the next child to visit, and the minimum uplink value of all child
   std::vector<StackElement> VisitStack;
 
-  // A single "visit" within the non-recursive DFS traversal.
+  /// A single "visit" within the non-recursive DFS traversal.
   void DFSVisitOne(NodeType *N);
 
-  // The stack-based DFS traversal; defined below.
+  /// The stack-based DFS traversal; defined below.
   void DFSVisitChildren();
 
-  // Compute the next SCC using the DFS traversal.
+  /// Compute the next SCC using the DFS traversal.
   void GetNextSCC();
 
   scc_iterator(NodeType *entryN) : visitNum(0) {
@@ -94,7 +94,7 @@ class scc_iterator
     GetNextSCC();
   }
 
-  // End is when the DFS stack is empty.
+  /// End is when the DFS stack is empty.
   scc_iterator() {}
 
 public:
