@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple=arm64 -disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple=arm64 -mattr=+crc -disassemble < %s | FileCheck %s
 
 # CHECK: crc32b  w5, w7, w20
 # CHECK: crc32h  w28, wzr, w30

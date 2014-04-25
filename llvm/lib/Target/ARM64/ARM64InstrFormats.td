@@ -1243,6 +1243,7 @@ class BaseCRC32<bit sf, bits<2> sz, bit C, RegisterClass StreamReg,
   let Inst{11-10} = sz;
   let Inst{9-5} = Rn;
   let Inst{4-0} = Rd;
+  let Predicates = [HasCRC];
 }
 
 //---

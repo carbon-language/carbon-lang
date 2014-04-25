@@ -1,4 +1,4 @@
-// RUN: not llvm-mc  -triple arm64-linux-gnu -mattr=-fp-armv8 < %s 2> %t
+// RUN: not llvm-mc  -triple arm64-linux-gnu -mattr=-fp-armv8,-crc < %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-ERROR < %t %s
 
 
@@ -15,5 +15,10 @@
         pmull v0.1q, v1.1d, v2.1d
 // CHECK-ERROR: error: instruction requires: crypto
 // CHECK-ERROR-NEXT:        pmull v0.1q, v1.1d, v2.1d
+// CHECK-ERROR-NEXT:        ^
+
+        crc32b  w5, w7, w20
+// CHECK-ERROR: error: instruction requires: crc
+// CHECK-ERROR-NEXT:        crc32b  w5, w7, w20
 // CHECK-ERROR-NEXT:        ^
 
