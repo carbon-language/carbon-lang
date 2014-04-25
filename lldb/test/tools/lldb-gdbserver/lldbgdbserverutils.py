@@ -198,6 +198,20 @@ def expect_lldb_gdbserver_replay(
     return None
 
 
+def gdbremote_hex_encode_string(str):
+    output = ''
+    for c in str:
+        output += '{0:02x}'.format(ord(c))
+    return output
+
+
+def gdbremote_packet_encode_string(str):
+    checksum = 0
+    for c in str:
+        checksum += ord(c)
+    return '$' + str + '#{0:02x}'.format(checksum % 256)
+
+
 if __name__ == '__main__':
     EXE_PATH = get_lldb_gdbserver_exe()
     if EXE_PATH:

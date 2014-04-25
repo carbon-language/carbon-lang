@@ -9,6 +9,7 @@ import sys
 from lldbtest import *
 from lldbgdbserverutils import *
 import logging
+import os.path
 
 class LldbGdbServerTestCase(TestBase):
 
@@ -20,8 +21,8 @@ class LldbGdbServerTestCase(TestBase):
 
     _GDBREMOTE_KILL_PACKET = "$k#6b"
 
-    _LOGGING_LEVEL = logging.WARNING
-#    _LOGGING_LEVEL = logging.DEBUG
+    # _LOGGING_LEVEL = logging.WARNING
+    _LOGGING_LEVEL = logging.DEBUG
 
     def setUp(self):
         TestBase.setUp(self)
@@ -109,7 +110,7 @@ class LldbGdbServerTestCase(TestBase):
         self.assertIsNotNone(server)
 
         log_lines = self.create_no_ack_remote_stream()
-        log_lines.append([
+        log_lines.extend([
             "lldb-gdbserver <  26> read packet: $QThreadSuffixSupported#e4",
             "lldb-gdbserver <   6> send packet: $OK#9a"])
 
@@ -122,13 +123,40 @@ class LldbGdbServerTestCase(TestBase):
         self.assertIsNotNone(server)
 
         log_lines = self.create_no_ack_remote_stream()
-        log_lines.append([
+        log_lines.extend([
             "lldb-gdbserver <  27> read packet: $QListThreadsInStopReply#21",
             "lldb-gdbserver <   6> send packet: $OK#9a"])
 
         expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
                                      self._TIMEOUT_SECONDS, self.logger)
 
+    def start_inferior(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        # TODO grab the build output directory rather than current directory.
+        inferior_exe_name = os.path.abspath('a.out')
+        inferior_exe_name_hex = gdbremote_hex_encode_string(inferior_exe_name)
+
+        log_lines = self.create_no_ack_remote_stream()
+        log_lines.extend([
+            "lldb-gdbserver < 000> read packet: {}".format(
+                gdbremote_packet_encode_string(
+                        "A{},0,{}".format(len(inferior_exe_name_hex), inferior_exe_name_hex))),
+            "lldb-gdbserver <   6> send packet: $OK#9a"])
+
+        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
+                                     self._TIMEOUT_SECONDS, self.logger)
+
+    @dsym_test
+    def test_start_inferior(self):
+        self.buildDsym()
+        self.start_inferior()
+
+    @dwarf_test
+    def test_start_inferior(self):
+        self.buildDwarf()
+        self.start_inferior()
 
 if __name__ == '__main__':
     unittest2.main()
