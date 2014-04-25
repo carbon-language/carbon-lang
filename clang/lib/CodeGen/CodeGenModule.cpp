@@ -1565,6 +1565,18 @@ bool CodeGenModule::isTypeConstant(QualType Ty, bool ExcludeCtor) {
   return true;
 }
 
+static bool isVarDeclInlineInitializedStaticDataMember(const VarDecl *VD) {
+  if (!VD->isStaticDataMember())
+    return false;
+  const VarDecl *InitDecl;
+  const Expr *InitExpr = VD->getAnyInitializer(InitDecl);
+  if (!InitExpr)
+    return false;
+  if (InitDecl->isThisDeclarationADefinition())
+    return false;
+  return true;
+}
+
 /// GetOrCreateLLVMGlobal - If the specified mangled name is not in the module,
 /// create and return an llvm GlobalVariable with the specified type.  If there
 /// is something in the module with the specified name, return it potentially
@@ -1633,8 +1645,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
     // If required by the ABI, treat declarations of static data members with
     // inline initializers as definitions.
     if (getCXXABI().isInlineInitializedStaticDataMemberLinkOnce() &&
-        D->isStaticDataMember() && D->hasInit() &&
-        !D->isThisDeclarationADefinition())
+        isVarDeclInlineInitializedStaticDataMember(D))
       EmitGlobalVarDefinition(D);
   }
 
@@ -1900,13 +1911,6 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   else if (D->hasAttr<DLLExportAttr>())
     GV->setDLLStorageClass(llvm::GlobalVariable::DLLExportStorageClass);
 
-  // If required by the ABI, give definitions of static data members with inline
-  // initializers linkonce_odr linkage.
-  if (getCXXABI().isInlineInitializedStaticDataMemberLinkOnce() &&
-      D->isStaticDataMember() && InitExpr &&
-      !InitDecl->isThisDeclarationADefinition())
-    GV->setLinkage(llvm::GlobalVariable::LinkOnceODRLinkage);
-
   if (Linkage == llvm::GlobalVariable::CommonLinkage)
     // common vars aren't constant even if declared const.
     GV->setConstant(false);
@@ -1992,6 +1996,11 @@ CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D, bool isConstant) {
     // Itanium-specified entry point, which has the normal linkage of the
     // variable.
     return llvm::GlobalValue::InternalLinkage;
+  else if (getCXXABI().isInlineInitializedStaticDataMemberLinkOnce() &&
+           isVarDeclInlineInitializedStaticDataMember(D))
+    // If required by the ABI, give definitions of static data members with inline
+    // initializers linkonce_odr linkage.
+    return llvm::GlobalVariable::LinkOnceODRLinkage;
   // C++ doesn't have tentative definitions and thus cannot have common linkage.
   else if (!getLangOpts().CPlusPlus &&
            !isVarDeclStrongDefinition(D, CodeGenOpts.NoCommon))
