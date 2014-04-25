@@ -323,7 +323,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
     // Pick up abstract subprogram DIE.
     SPDie = SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU.getUnitDie());
-    SPCU.addDIEEntry(SPDie, dwarf::DW_AT_abstract_origin, AbsSPDIE);
+    SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_abstract_origin, AbsSPDIE);
   } else {
     DISubprogram SPDecl = SP.getFunctionDeclaration();
     if (!SPDecl.isSubprogram()) {
@@ -335,7 +335,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
       DIScope SPContext = resolve(SP.getContext());
       if (SP.isDefinition() && !SPContext.isCompileUnit() &&
           !SPContext.isFile() && !isSubprogramContext(SPContext)) {
-        SPCU.addFlag(SPDie, dwarf::DW_AT_declaration);
+        SPCU.addFlag(*SPDie, dwarf::DW_AT_declaration);
 
         // Add arguments.
         DICompositeType SPTy = SP.getType();
@@ -346,16 +346,16 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
         DIE *SPDeclDie = SPDie;
         SPDie =
             SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU.getUnitDie());
-        SPCU.addDIEEntry(SPDie, dwarf::DW_AT_specification, SPDeclDie);
+        SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_specification, SPDeclDie);
       }
     }
   }
 
-  attachLowHighPC(SPCU, SPDie, FunctionBeginSym, FunctionEndSym);
+  attachLowHighPC(SPCU, *SPDie, FunctionBeginSym, FunctionEndSym);
 
   const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
-  SPCU.addAddress(SPDie, dwarf::DW_AT_frame_base, Location);
+  SPCU.addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
 
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_subprogram nodes.
@@ -385,7 +385,7 @@ bool DwarfDebug::isLexicalScopeDIENull(LexicalScope *Scope) {
   return !End;
 }
 
-static void addSectionLabel(AsmPrinter &Asm, DwarfUnit &U, DIE *D,
+static void addSectionLabel(AsmPrinter &Asm, DwarfUnit &U, DIE &D,
                             dwarf::Attribute A, const MCSymbol *L,
                             const MCSymbol *Sec) {
   if (Asm.MAI->doesDwarfUseRelocationsAcrossSections())
@@ -394,7 +394,7 @@ static void addSectionLabel(AsmPrinter &Asm, DwarfUnit &U, DIE *D,
     U.addSectionDelta(D, A, L, Sec);
 }
 
-void DwarfDebug::addScopeRangeList(DwarfCompileUnit &TheCU, DIE *ScopeDIE,
+void DwarfDebug::addScopeRangeList(DwarfCompileUnit &TheCU, DIE &ScopeDIE,
                                    const SmallVectorImpl<InsnRange> &Range) {
   // Emit offset in .debug_range as a relocatable label. emitDIE will handle
   // emitting it appropriately.
@@ -434,7 +434,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
 
   // If we have multiple ranges, emit them into the range section.
   if (ScopeRanges.size() > 1) {
-    addScopeRangeList(TheCU, ScopeDIE, ScopeRanges);
+    addScopeRangeList(TheCU, *ScopeDIE, ScopeRanges);
     return ScopeDIE;
   }
 
@@ -447,7 +447,7 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
   assert(Start->isDefined() && "Invalid starting label for an inlined scope!");
   assert(End->isDefined() && "Invalid end label for an inlined scope!");
 
-  attachLowHighPC(TheCU, ScopeDIE, Start, End);
+  attachLowHighPC(TheCU, *ScopeDIE, Start, End);
 
   return ScopeDIE;
 }
@@ -471,11 +471,11 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   }
 
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
-  TheCU.addDIEEntry(ScopeDIE, dwarf::DW_AT_abstract_origin, OriginDIE);
+  TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_abstract_origin, OriginDIE);
 
   // If we have multiple ranges, emit them into the range section.
   if (ScopeRanges.size() > 1)
-    addScopeRangeList(TheCU, ScopeDIE, ScopeRanges);
+    addScopeRangeList(TheCU, *ScopeDIE, ScopeRanges);
   else {
     SmallVectorImpl<InsnRange>::const_iterator RI = ScopeRanges.begin();
     MCSymbol *StartLabel = getLabelBeforeInsn(RI->first);
@@ -488,16 +488,16 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
            "Invalid starting label for an inlined scope!");
     assert(EndLabel->isDefined() && "Invalid end label for an inlined scope!");
 
-    attachLowHighPC(TheCU, ScopeDIE, StartLabel, EndLabel);
+    attachLowHighPC(TheCU, *ScopeDIE, StartLabel, EndLabel);
   }
 
   InlinedSubprogramDIEs.insert(OriginDIE);
 
   // Add the call site information to the DIE.
   DILocation DL(Scope->getInlinedAt());
-  TheCU.addUInt(ScopeDIE, dwarf::DW_AT_call_file, None,
+  TheCU.addUInt(*ScopeDIE, dwarf::DW_AT_call_file, None,
                 TheCU.getOrCreateSourceID(DL.getFilename(), DL.getDirectory()));
-  TheCU.addUInt(ScopeDIE, dwarf::DW_AT_call_line, None, DL.getLineNumber());
+  TheCU.addUInt(*ScopeDIE, dwarf::DW_AT_call_line, None, DL.getLineNumber());
 
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_inlined_subprogram nodes.
@@ -614,12 +614,12 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
     ScopeDIE->addChild(I);
 
   if (DS.isSubprogram() && ObjectPointer != nullptr)
-    TheCU.addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, ObjectPointer);
+    TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_object_pointer, ObjectPointer);
 
   return ScopeDIE;
 }
 
-void DwarfDebug::addGnuPubAttributes(DwarfUnit &U, DIE *D) const {
+void DwarfDebug::addGnuPubAttributes(DwarfUnit &U, DIE &D) const {
   if (!GenerateGnuPubSections)
     return;
 
@@ -646,10 +646,10 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
     Asm->OutStreamer.getContext().setMCLineTableCompilationDir(
         NewCU.getUniqueID(), CompilationDir);
 
-  NewCU.addString(Die, dwarf::DW_AT_producer, DIUnit.getProducer());
-  NewCU.addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
+  NewCU.addString(*Die, dwarf::DW_AT_producer, DIUnit.getProducer());
+  NewCU.addUInt(*Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                 DIUnit.getLanguage());
-  NewCU.addString(Die, dwarf::DW_AT_name, FN);
+  NewCU.addString(*Die, dwarf::DW_AT_name, FN);
 
   if (!useSplitDwarf()) {
     NewCU.initStmtList(DwarfLineSectionSym);
@@ -657,20 +657,20 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
     // If we're using split dwarf the compilation dir is going to be in the
     // skeleton CU and so we don't need to duplicate it here.
     if (!CompilationDir.empty())
-      NewCU.addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
+      NewCU.addString(*Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
-    addGnuPubAttributes(NewCU, Die);
+    addGnuPubAttributes(NewCU, *Die);
   }
 
   if (DIUnit.isOptimized())
-    NewCU.addFlag(Die, dwarf::DW_AT_APPLE_optimized);
+    NewCU.addFlag(*Die, dwarf::DW_AT_APPLE_optimized);
 
   StringRef Flags = DIUnit.getFlags();
   if (!Flags.empty())
-    NewCU.addString(Die, dwarf::DW_AT_APPLE_flags, Flags);
+    NewCU.addString(*Die, dwarf::DW_AT_APPLE_flags, Flags);
 
   if (unsigned RVer = DIUnit.getRunTimeVersion())
-    NewCU.addUInt(Die, dwarf::DW_AT_APPLE_major_runtime_vers,
+    NewCU.addUInt(*Die, dwarf::DW_AT_APPLE_major_runtime_vers,
                   dwarf::DW_FORM_data1, RVer);
 
   if (!FirstCU)
@@ -707,7 +707,7 @@ void DwarfDebug::constructSubprogramDIE(DwarfCompileUnit &TheCU,
     // class type.
     return;
 
-  DIE *SubprogramDie = TheCU.getOrCreateSubprogramDIE(SP);
+  DIE &SubprogramDie = *TheCU.getOrCreateSubprogramDIE(SP);
 
   // Expose as a global name.
   TheCU.addGlobalName(SP.getName(), SubprogramDie, resolve(SP.getContext()));
@@ -734,7 +734,7 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
   assert(Module.Verify() &&
          "Use one of the MDNode * overloads to handle invalid metadata");
   assert(Context && "Should always have a context for an imported_module");
-  DIE *IMDie = TheCU.createAndAddDIE(Module.getTag(), *Context, Module);
+  DIE &IMDie = *TheCU.createAndAddDIE(Module.getTag(), *Context, Module);
   DIE *EntityDie;
   DIDescriptor Entity = resolve(Module.getEntity());
   if (Entity.isNameSpace())
@@ -819,11 +819,11 @@ void DwarfDebug::beginModule() {
 void DwarfDebug::computeInlinedDIEs() {
   // Attach DW_AT_inline attribute with inlined subprogram DIEs.
   for (DIE *ISP : InlinedSubprogramDIEs)
-    FirstCU->addUInt(ISP, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
+    FirstCU->addUInt(*ISP, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
 
   for (const auto &AI : AbstractSPDies) {
-    DIE *ISP = AI.second;
-    if (InlinedSubprogramDIEs.count(ISP))
+    DIE &ISP = *AI.second;
+    if (InlinedSubprogramDIEs.count(&ISP))
       continue;
     FirstCU->addUInt(ISP, dwarf::DW_AT_inline, None, dwarf::DW_INL_inlined);
   }
@@ -893,19 +893,19 @@ void DwarfDebug::finalizeModuleInfo() {
       if (useSplitDwarf()) {
         // Emit a unique identifier for this CU.
         uint64_t ID = DIEHash(Asm).computeCUSignature(*TheU->getUnitDie());
-        TheU->addUInt(TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
+        TheU->addUInt(*TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                       dwarf::DW_FORM_data8, ID);
-        SkCU->addUInt(SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
+        SkCU->addUInt(*SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                       dwarf::DW_FORM_data8, ID);
 
         // We don't keep track of which addresses are used in which CU so this
         // is a bit pessimistic under LTO.
         if (!AddrPool.isEmpty())
-          addSectionLabel(*Asm, *SkCU, SkCU->getUnitDie(),
+          addSectionLabel(*Asm, *SkCU, *SkCU->getUnitDie(),
                           dwarf::DW_AT_GNU_addr_base, DwarfAddrSectionSym,
                           DwarfAddrSectionSym);
         if (!TheU->getRangeLists().empty())
-          addSectionLabel(*Asm, *SkCU, SkCU->getUnitDie(),
+          addSectionLabel(*Asm, *SkCU, *SkCU->getUnitDie(),
                           dwarf::DW_AT_GNU_ranges_base,
                           DwarfDebugRangeSectionSym, DwarfDebugRangeSectionSym);
       }
@@ -921,7 +921,7 @@ void DwarfDebug::finalizeModuleInfo() {
       unsigned NumRanges = TheU->getRanges().size();
       if (NumRanges) {
         if (NumRanges > 1) {
-          addSectionLabel(*Asm, U, U.getUnitDie(), dwarf::DW_AT_ranges,
+          addSectionLabel(*Asm, U, *U.getUnitDie(), dwarf::DW_AT_ranges,
                           Asm->GetTempSymbol("cu_ranges", U.getUniqueID()),
                           DwarfDebugRangeSectionSym);
 
@@ -929,13 +929,13 @@ void DwarfDebug::finalizeModuleInfo() {
           // DW_AT_ranges to specify the default base address for use in
           // location lists (see Section 2.6.2) and range lists (see Section
           // 2.17.3).
-          U.addUInt(U.getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
+          U.addUInt(*U.getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
                     0);
         } else {
           RangeSpan &Range = TheU->getRanges().back();
-          U.addLocalLabelAddress(U.getUnitDie(), dwarf::DW_AT_low_pc,
+          U.addLocalLabelAddress(*U.getUnitDie(), dwarf::DW_AT_low_pc,
                                  Range.getStart());
-          U.addLabelDelta(U.getUnitDie(), dwarf::DW_AT_high_pc, Range.getEnd(),
+          U.addLabelDelta(*U.getUnitDie(), dwarf::DW_AT_high_pc, Range.getEnd(),
                           Range.getStart());
         }
       }
@@ -1668,7 +1668,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
       constructScopeDIE(TheCU, AScope);
   }
 
-  DIE *CurFnDIE = constructScopeDIE(TheCU, FnScope);
+  DIE &CurFnDIE = *constructScopeDIE(TheCU, FnScope);
   if (!CurFn->getTarget().Options.DisableFramePointerElim(*CurFn))
     TheCU.addFlag(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr);
 
@@ -2384,7 +2384,7 @@ void DwarfDebug::emitDebugRanges() {
 
 // DWARF5 Experimental Separate Dwarf emitters.
 
-void DwarfDebug::initSkeletonUnit(const DwarfUnit &U, DIE *Die,
+void DwarfDebug::initSkeletonUnit(const DwarfUnit &U, DIE &Die,
                                   std::unique_ptr<DwarfUnit> NewU) {
   NewU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name,
                        U.getCUNode().getSplitDebugFilename());
@@ -2411,7 +2411,7 @@ DwarfCompileUnit &DwarfDebug::constructSkeletonCU(const DwarfCompileUnit &CU) {
 
   NewCU.initStmtList(DwarfLineSectionSym);
 
-  initSkeletonUnit(CU, Die, std::move(OwnedUnit));
+  initSkeletonUnit(CU, *Die, std::move(OwnedUnit));
 
   return NewCU;
 }
@@ -2431,7 +2431,7 @@ DwarfTypeUnit &DwarfDebug::constructSkeletonTU(DwarfTypeUnit &TU) {
   NewTU.initSection(
       Asm->getObjFileLowering().getDwarfTypesSection(TU.getTypeSignature()));
 
-  initSkeletonUnit(TU, Die, std::move(OwnedUnit));
+  initSkeletonUnit(TU, *Die, std::move(OwnedUnit));
   return NewTU;
 }
 
@@ -2479,7 +2479,7 @@ MCDwarfDwoLineTable *DwarfDebug::getDwoLineTable(const DwarfCompileUnit &CU) {
 }
 
 void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
-                                      StringRef Identifier, DIE *RefDie,
+                                      StringRef Identifier, DIE &RefDie,
                                       DICompositeType CTy) {
   // Flag the type unit reference as a declaration so that if it contains
   // members (implicit special members, static data member definitions, member
@@ -2501,7 +2501,7 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   TU = &NewTU;
   InfoHolder.addUnit(std::move(OwnedUnit));
 
-  NewTU.addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
+  NewTU.addUInt(*UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                 CU.getLanguage());
 
   MD5 Hash;
@@ -2528,7 +2528,7 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   CU.addDIETypeSignature(RefDie, NewTU);
 }
 
-void DwarfDebug::attachLowHighPC(DwarfCompileUnit &Unit, DIE *D,
+void DwarfDebug::attachLowHighPC(DwarfCompileUnit &Unit, DIE &D,
                                  MCSymbol *Begin, MCSymbol *End) {
   Unit.addLabelAddress(D, dwarf::DW_AT_low_pc, Begin);
   if (DwarfVersion < 4)

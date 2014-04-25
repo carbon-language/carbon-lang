@@ -247,10 +247,10 @@ public:
 
   /// addGlobalName - Add a new global entity to the compile unit.
   ///
-  void addGlobalName(StringRef Name, DIE *Die, DIScope Context);
+  void addGlobalName(StringRef Name, DIE &Die, DIScope Context);
 
   /// addAccelNamespace - Add a new name to the namespace accelerator table.
-  void addAccelNamespace(StringRef Name, const DIE *Die);
+  void addAccelNamespace(StringRef Name, const DIE &Die);
 
   /// getDIE - Returns the debug information entry map slot for the
   /// specified debug variable. We delegate the request to DwarfDebug
@@ -273,113 +273,113 @@ public:
   void addDie(DIE *Buffer) { UnitDie->addChild(Buffer); }
 
   /// addFlag - Add a flag that is true to the DIE.
-  void addFlag(DIE *Die, dwarf::Attribute Attribute);
+  void addFlag(DIE &Die, dwarf::Attribute Attribute);
 
   /// addUInt - Add an unsigned integer attribute data and value.
-  void addUInt(DIE *Die, dwarf::Attribute Attribute, Optional<dwarf::Form> Form,
+  void addUInt(DIE &Die, dwarf::Attribute Attribute, Optional<dwarf::Form> Form,
                uint64_t Integer);
 
-  void addUInt(DIE *Block, dwarf::Form Form, uint64_t Integer);
+  void addUInt(DIE &Block, dwarf::Form Form, uint64_t Integer);
 
   /// addSInt - Add an signed integer attribute data and value.
-  void addSInt(DIE *Die, dwarf::Attribute Attribute, Optional<dwarf::Form> Form,
+  void addSInt(DIE &Die, dwarf::Attribute Attribute, Optional<dwarf::Form> Form,
                int64_t Integer);
 
-  void addSInt(DIELoc *Die, Optional<dwarf::Form> Form, int64_t Integer);
+  void addSInt(DIELoc &Die, Optional<dwarf::Form> Form, int64_t Integer);
 
   /// addString - Add a string attribute data and value.
-  void addString(DIE *Die, dwarf::Attribute Attribute, const StringRef Str);
+  void addString(DIE &Die, dwarf::Attribute Attribute, const StringRef Str);
 
   /// addLocalString - Add a string attribute data and value.
-  void addLocalString(DIE *Die, dwarf::Attribute Attribute,
+  void addLocalString(DIE &Die, dwarf::Attribute Attribute,
                       const StringRef Str);
 
   /// addExpr - Add a Dwarf expression attribute data and value.
-  void addExpr(DIELoc *Die, dwarf::Form Form, const MCExpr *Expr);
+  void addExpr(DIELoc &Die, dwarf::Form Form, const MCExpr *Expr);
 
   /// addLabel - Add a Dwarf label attribute data and value.
-  void addLabel(DIE *Die, dwarf::Attribute Attribute, dwarf::Form Form,
+  void addLabel(DIE &Die, dwarf::Attribute Attribute, dwarf::Form Form,
                 const MCSymbol *Label);
 
-  void addLabel(DIELoc *Die, dwarf::Form Form, const MCSymbol *Label);
+  void addLabel(DIELoc &Die, dwarf::Form Form, const MCSymbol *Label);
 
   /// addLocationList - Add a Dwarf loclistptr attribute data and value.
-  void addLocationList(DIE *Die, dwarf::Attribute Attribute, unsigned Index);
+  void addLocationList(DIE &Die, dwarf::Attribute Attribute, unsigned Index);
 
   /// addSectionLabel - Add a Dwarf section label attribute data and value.
   ///
-  void addSectionLabel(DIE *Die, dwarf::Attribute Attribute,
+  void addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
                        const MCSymbol *Label);
 
   /// addSectionOffset - Add an offset into a section attribute data and value.
   ///
-  void addSectionOffset(DIE *Die, dwarf::Attribute Attribute, uint64_t Integer);
+  void addSectionOffset(DIE &Die, dwarf::Attribute Attribute, uint64_t Integer);
 
   /// addOpAddress - Add a dwarf op address data and value using the
   /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
-  void addOpAddress(DIELoc *Die, const MCSymbol *Label);
+  void addOpAddress(DIELoc &Die, const MCSymbol *Label);
 
   /// addSectionDelta - Add a label delta attribute data and value.
-  void addSectionDelta(DIE *Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
+  void addSectionDelta(DIE &Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
                        const MCSymbol *Lo);
 
   /// addLabelDelta - Add a label delta attribute data and value.
-  void addLabelDelta(DIE *Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
+  void addLabelDelta(DIE &Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
                      const MCSymbol *Lo);
 
   /// addDIEEntry - Add a DIE attribute data and value.
-  void addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIE *Entry);
+  void addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIE *Entry);
 
   /// addDIEEntry - Add a DIE attribute data and value.
-  void addDIEEntry(DIE *Die, dwarf::Attribute Attribute, DIEEntry *Entry);
+  void addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIEEntry *Entry);
 
-  void addDIETypeSignature(DIE *Die, const DwarfTypeUnit &Type);
-
-  /// addBlock - Add block data.
-  void addBlock(DIE *Die, dwarf::Attribute Attribute, DIELoc *Block);
+  void addDIETypeSignature(DIE &Die, const DwarfTypeUnit &Type);
 
   /// addBlock - Add block data.
-  void addBlock(DIE *Die, dwarf::Attribute Attribute, DIEBlock *Block);
+  void addBlock(DIE &Die, dwarf::Attribute Attribute, DIELoc *Block);
+
+  /// addBlock - Add block data.
+  void addBlock(DIE &Die, dwarf::Attribute Attribute, DIEBlock *Block);
 
   /// addSourceLine - Add location information to specified debug information
   /// entry.
-  void addSourceLine(DIE *Die, unsigned Line, StringRef File,
+  void addSourceLine(DIE &Die, unsigned Line, StringRef File,
                      StringRef Directory);
-  void addSourceLine(DIE *Die, DIVariable V);
-  void addSourceLine(DIE *Die, DIGlobalVariable G);
-  void addSourceLine(DIE *Die, DISubprogram SP);
-  void addSourceLine(DIE *Die, DIType Ty);
-  void addSourceLine(DIE *Die, DINameSpace NS);
-  void addSourceLine(DIE *Die, DIObjCProperty Ty);
+  void addSourceLine(DIE &Die, DIVariable V);
+  void addSourceLine(DIE &Die, DIGlobalVariable G);
+  void addSourceLine(DIE &Die, DISubprogram SP);
+  void addSourceLine(DIE &Die, DIType Ty);
+  void addSourceLine(DIE &Die, DINameSpace NS);
+  void addSourceLine(DIE &Die, DIObjCProperty Ty);
 
   /// addAddress - Add an address attribute to a die based on the location
   /// provided.
-  void addAddress(DIE *Die, dwarf::Attribute Attribute,
+  void addAddress(DIE &Die, dwarf::Attribute Attribute,
                   const MachineLocation &Location, bool Indirect = false);
 
   /// addConstantValue - Add constant value entry in variable DIE.
-  void addConstantValue(DIE *Die, const MachineOperand &MO, DIType Ty);
-  void addConstantValue(DIE *Die, const ConstantInt *CI, bool Unsigned);
-  void addConstantValue(DIE *Die, const APInt &Val, bool Unsigned);
+  void addConstantValue(DIE &Die, const MachineOperand &MO, DIType Ty);
+  void addConstantValue(DIE &Die, const ConstantInt *CI, bool Unsigned);
+  void addConstantValue(DIE &Die, const APInt &Val, bool Unsigned);
 
   /// addConstantFPValue - Add constant value entry in variable DIE.
-  void addConstantFPValue(DIE *Die, const MachineOperand &MO);
-  void addConstantFPValue(DIE *Die, const ConstantFP *CFP);
+  void addConstantFPValue(DIE &Die, const MachineOperand &MO);
+  void addConstantFPValue(DIE &Die, const ConstantFP *CFP);
 
   /// addTemplateParams - Add template parameters in buffer.
   void addTemplateParams(DIE &Buffer, DIArray TParams);
 
   /// addRegisterOp - Add register operand.
-  void addRegisterOp(DIELoc *TheDie, unsigned Reg);
+  void addRegisterOp(DIELoc &TheDie, unsigned Reg);
 
   /// addRegisterOffset - Add register offset.
-  void addRegisterOffset(DIELoc *TheDie, unsigned Reg, int64_t Offset);
+  void addRegisterOffset(DIELoc &TheDie, unsigned Reg, int64_t Offset);
 
   /// addComplexAddress - Start with the address based on the location provided,
   /// and generate the DWARF information necessary to find the actual variable
   /// (navigating the extra location information encoded in the type) based on
   /// the starting location.  Add the DWARF information to the die.
-  void addComplexAddress(const DbgVariable &DV, DIE *Die,
+  void addComplexAddress(const DbgVariable &DV, DIE &Die,
                          dwarf::Attribute Attribute,
                          const MachineLocation &Location);
 
@@ -389,19 +389,19 @@ public:
   /// actual Block variable (navigating the Block struct) based on the
   /// starting location.  Add the DWARF information to the die.  Obsolete,
   /// please use addComplexAddress instead.
-  void addBlockByrefAddress(const DbgVariable &DV, DIE *Die,
+  void addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
                             dwarf::Attribute Attribute,
                             const MachineLocation &Location);
 
   /// addVariableAddress - Add DW_AT_location attribute for a
   /// DbgVariable based on provided MachineLocation.
-  void addVariableAddress(const DbgVariable &DV, DIE *Die,
+  void addVariableAddress(const DbgVariable &DV, DIE &Die,
                           MachineLocation Location);
 
   /// addType - Add a new type attribute to the specified entity. This takes
   /// and attribute parameter because DW_AT_friend attributes are also
   /// type references.
-  void addType(DIE *Entity, DIType Ty,
+  void addType(DIE &Entity, DIType Ty,
                dwarf::Attribute Attribute = dwarf::DW_AT_type);
 
   /// getOrCreateNameSpace - Create a DIE for DINameSpace.
@@ -548,12 +548,12 @@ public:
 
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.
-  void addLabelAddress(DIE *Die, dwarf::Attribute Attribute,
+  void addLabelAddress(DIE &Die, dwarf::Attribute Attribute,
                        const MCSymbol *Label);
 
   /// addLocalLabelAddress - Add a dwarf label attribute data and value using
   /// DW_FORM_addr only.
-  void addLocalLabelAddress(DIE *Die, dwarf::Attribute Attribute,
+  void addLocalLabelAddress(DIE &Die, dwarf::Attribute Attribute,
                             const MCSymbol *Label);
 
   DwarfCompileUnit &getCU() override { return *this; }

@@ -352,7 +352,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief A helper function to construct a RangeSpanList for a given
   /// lexical scope.
-  void addScopeRangeList(DwarfCompileUnit &TheCU, DIE *ScopeDIE,
+  void addScopeRangeList(DwarfCompileUnit &TheCU, DIE &ScopeDIE,
                          const SmallVectorImpl<InsnRange> &Range);
 
   /// \brief Construct new DW_TAG_lexical_block for this scope and
@@ -453,7 +453,7 @@ class DwarfDebug : public AsmPrinterHandler {
   /// DWARF 5 Experimental Split Dwarf Emitters
 
   /// \brief Initialize common features of skeleton units.
-  void initSkeletonUnit(const DwarfUnit &U, DIE *Die,
+  void initSkeletonUnit(const DwarfUnit &U, DIE &Die,
                         std::unique_ptr<DwarfUnit> NewU);
 
   /// \brief Construct the split debug info compile unit for the debug info
@@ -478,7 +478,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// Flags to let the linker know we have emitted new style pubnames. Only
   /// emit it here if we don't have a skeleton CU for split dwarf.
-  void addGnuPubAttributes(DwarfUnit &U, DIE *D) const;
+  void addGnuPubAttributes(DwarfUnit &U, DIE &D) const;
 
   /// \brief Create new DwarfCompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
@@ -535,7 +535,7 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Return Label immediately following the instruction.
   MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
 
-  void attachLowHighPC(DwarfCompileUnit &Unit, DIE *D, MCSymbol *Begin,
+  void attachLowHighPC(DwarfCompileUnit &Unit, DIE &D, MCSymbol *Begin,
                        MCSymbol *End);
 
 public:
@@ -573,7 +573,7 @@ public:
   /// \brief Add a DIE to the set of types that we're going to pull into
   /// type units.
   void addDwarfTypeUnitType(DwarfCompileUnit &CU, StringRef Identifier,
-                            DIE *Die, DICompositeType CTy);
+                            DIE &Die, DICompositeType CTy);
 
   /// \brief Add a label so that arange data can be generated for it.
   void addArangeLabel(SymbolCU SCU) { ArangeLabels.push_back(SCU); }
