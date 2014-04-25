@@ -203,8 +203,9 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   // incrementally add any chain of nodes which reaches something in the new
   // node set to the new node set. This short circuits one side of the Tarjan's
   // walk.
-  SmallSetVector<Node *, 1> NewNodes;
-  NewNodes.insert(&Callee);
+  Nodes.push_back(&Callee);
+  G.SCCMap.insert(std::make_pair(&Callee, this));
+  Callee.DFSNumber = Callee.LowLink = -1;
 
   for (;;) {
     if (DFSStack.empty()) {
@@ -229,22 +230,29 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     bool Recurse = false;
     for (auto I = DFSStack.back().second, E = N->end(); I != E; ++I) {
       Node &ChildN = *I;
-      // If this child isn't currently in this SCC, no need to process it.
-      // However, we do need to remove this SCC from its SCC's parent set.
       if (SCC *ChildSCC = G.SCCMap.lookup(&ChildN)) {
+        // Check if we have reached a node in the new (known connected) set of
+        // this SCC. If so, the entire stack is necessarily in that set and we
+        // can re-start.
+        if (ChildSCC == this) {
+          while (!PendingSCCStack.empty()) {
+            Nodes.push_back(PendingSCCStack.pop_back_val());
+            G.SCCMap.insert(std::make_pair(Nodes.back(), this));
+            Nodes.back()->DFSNumber = Nodes.back()->LowLink = -1;
+          }
+          while (!DFSStack.empty()) {
+            Nodes.push_back(DFSStack.pop_back_val().first);
+            G.SCCMap.insert(std::make_pair(Nodes.back(), this));
+            Nodes.back()->DFSNumber = Nodes.back()->LowLink = -1;
+          }
+          Recurse = true;
+          break;
+        }
+
+        // If this child isn't currently in this SCC, no need to process it.
+        // However, we do need to remove this SCC from its SCC's parent set.
         ChildSCC->ParentSCCs.erase(this);
         continue;
-      }
-
-      // Check if we have reached a node in the new (known connected) set. If
-      // so, the entire stack is necessarily in that set and we can re-start.
-      if (NewNodes.count(&ChildN)) {
-        while (!PendingSCCStack.empty())
-          NewNodes.insert(PendingSCCStack.pop_back_val());
-        while (!DFSStack.empty())
-          NewNodes.insert(DFSStack.pop_back_val().first);
-        Recurse = true;
-        break;
       }
 
       if (ChildN.DFSNumber == 0) {
@@ -288,21 +296,13 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     PendingSCCStack.push_back(N);
   }
 
-  // Replace this SCC with the NewNodes we collected above.
-  // FIXME: Simplify this when the SCC's datastructure is just a list.
-  Nodes.clear();
-
   // Now we need to reconnect the current SCC to the graph.
   bool IsLeafSCC = true;
-  for (Node *N : NewNodes) {
-    N->DFSNumber = -1;
-    N->LowLink = -1;
-    Nodes.push_back(N);
-    G.SCCMap.insert(std::make_pair(N, this));
+  for (Node *N : Nodes) {
     for (Node &ChildN : *N) {
-      if (NewNodes.count(&ChildN))
-        continue;
       SCC &ChildSCC = *G.SCCMap.lookup(&ChildN);
+      if (&ChildSCC == this)
+        continue;
       ChildSCC.ParentSCCs.insert(this);
       IsLeafSCC = false;
     }
