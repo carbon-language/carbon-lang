@@ -59,7 +59,8 @@ def CC_ARM64_AAPCS : CallingConv<[
   CCIfType<[i32, f32], CCAssignToStack<8, 8>>,
   CCIfType<[i64, f64, v1f64, v2f32, v1i64, v2i32, v4i16, v8i8],
            CCAssignToStack<8, 8>>,
-  CCIfType<[v2i64, v4i32, v8i16, v16i8, v4f32, v2f64], CCAssignToStack<16, 16>>
+  CCIfType<[f128, v2i64, v4i32, v8i16, v16i8, v4f32, v2f64],
+           CCAssignToStack<16, 16>>
 ]>;
 
 def RetCC_ARM64_AAPCS : CallingConv<[

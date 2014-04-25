@@ -94,3 +94,10 @@ define i128 @test_i128_shadow([7 x i64] %x0_x6, i128 %sp) {
 
   ret i128 %sp
 }
+
+; This test is to check if fp128 can be correctly handled on stack.
+define fp128 @test_fp128([8 x float] %arg0, fp128 %arg1) {
+; CHECK-LABEL: test_fp128:
+; CHECK: ldr {{q[0-9]+}}, [sp]
+  ret fp128 %arg1
+}
