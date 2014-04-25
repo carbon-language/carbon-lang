@@ -851,10 +851,8 @@ void BlockFrequencyInfoImplBase::unwrapLoops() {
   for (size_t Index = 0; Index < Working.size(); ++Index)
     Freqs[Index].Floating = Working[Index].Mass.toFloat();
 
-  for (size_t Index = 0; Index < Working.size(); ++Index) {
-    if (Working[Index].isLoopHeader())
-      unwrapLoopPackage(*this, BlockNode(Index));
-  }
+  for (const LoopData &L : Loops)
+    unwrapLoopPackage(*this, L.getHeader());
 }
 
 void BlockFrequencyInfoImplBase::finalizeMetrics() {
