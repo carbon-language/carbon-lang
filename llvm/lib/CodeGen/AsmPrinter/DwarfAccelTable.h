@@ -179,12 +179,18 @@ public:
   };
 
 private:
+  // String Data
+  struct DataArray {
+    MCSymbol *StrSym;
+    std::vector<HashDataContents *> Values;
+  };
+  friend struct HashData;
   struct HashData {
     StringRef Str;
     uint32_t HashValue;
     MCSymbol *Sym;
-    ArrayRef<HashDataContents *> Data; // offsets
-    HashData(StringRef S, ArrayRef<HashDataContents *> Data)
+    DwarfAccelTable::DataArray &Data; // offsets
+    HashData(StringRef S, DwarfAccelTable::DataArray &Data)
         : Str(S), Data(Data) {
       HashValue = DwarfAccelTable::HashDJB(S);
     }
@@ -198,10 +204,10 @@ private:
       else
         O << "<none>";
       O << "\n";
-      for (size_t i = 0; i < Data.size(); i++) {
-        O << "  Offset: " << Data[i]->Die->getOffset() << "\n";
-        O << "  Tag: " << dwarf::TagString(Data[i]->Die->getTag()) << "\n";
-        O << "  Flags: " << Data[i]->Flags << "\n";
+      for (HashDataContents *C : Data.Values) {
+        O << "  Offset: " << C->Die->getOffset() << "\n";
+        O << "  Tag: " << dwarf::TagString(C->Die->getTag()) << "\n";
+        O << "  Flags: " << C->Flags << "\n";
       }
     }
     void dump() { print(dbgs()); }
@@ -226,8 +232,6 @@ private:
   TableHeaderData HeaderData;
   std::vector<HashData *> Data;
 
-  // String Data
-  typedef std::vector<HashDataContents *> DataArray;
   typedef StringMap<DataArray, BumpPtrAllocator &> StringEntries;
   StringEntries Entries;
 
@@ -240,7 +244,8 @@ private:
   // Public Implementation
 public:
   DwarfAccelTable(ArrayRef<DwarfAccelTable::Atom>);
-  void AddName(StringRef, const DIE *, char = 0);
+  void AddName(StringRef Name, MCSymbol *StrSym, const DIE *Die,
+               char Flags = 0);
   void FinalizeTable(AsmPrinter *, StringRef);
   void Emit(AsmPrinter *, MCSymbol *, DwarfFile *);
 #ifndef NDEBUG
