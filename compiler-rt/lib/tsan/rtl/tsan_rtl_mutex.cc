@@ -281,6 +281,7 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
     MemoryReadAtomic(thr, pc, addr, kSizeLog1);
   SyncVar *s = ctx->synctab.GetOrCreateAndLock(thr, pc, addr, true);
   bool write = true;
+  bool report_bad_unlock = false;
   if (s->owner_tid == SyncVar::kInvalidTid) {
     // Seems to be read unlock.
     write = false;
@@ -303,16 +304,18 @@ void MutexReadOrWriteUnlock(ThreadState *thr, uptr pc, uptr addr) {
     }
   } else if (!s->is_broken) {
     s->is_broken = true;
-    Printf("ThreadSanitizer WARNING: mutex %p is unlock by wrong thread\n",
-           addr);
-    PrintCurrentStack(thr, pc);
+    report_bad_unlock = true;
   }
   thr->mset.Del(s->GetId(), write);
   if (flags()->detect_deadlocks && s->recursion == 0) {
     Callback cb(thr, pc);
     ctx->dd->MutexBeforeUnlock(&cb, &s->dd, write);
   }
+  u64 mid = s->GetId();
   s->mtx.Unlock();
+  // Can't touch s after this point.
+  if (report_bad_unlock)
+    ReportMutexMisuse(thr, pc, ReportTypeMutexBadUnlock, addr, mid);
   if (flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
