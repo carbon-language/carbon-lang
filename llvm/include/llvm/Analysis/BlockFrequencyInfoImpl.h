@@ -945,11 +945,11 @@ public:
   /// pseudo-node once it's packaged.
   struct LoopData {
     typedef SmallVector<std::pair<BlockNode, BlockMass>, 4> ExitMap;
-    typedef SmallVector<BlockNode, 4> MemberList;
+    typedef SmallVector<BlockNode, 4> NodeList;
     LoopData *Parent;       ///< The parent loop.
     bool IsPackaged;        ///< Whether this has been packaged.
     ExitMap Exits;          ///< Successor edges (and weights).
-    MemberList Nodes;       ///< Header and the members of the loop.
+    NodeList Nodes;         ///< Header and the members of the loop.
     BlockMass BackedgeMass; ///< Mass returned to loop header.
     BlockMass Mass;
     Float Scale;
@@ -959,11 +959,9 @@ public:
     bool isHeader(const BlockNode &Node) const { return Node == Nodes[0]; }
     BlockNode getHeader() const { return Nodes[0]; }
 
-    MemberList::const_iterator members_begin() const {
-      return Nodes.begin() + 1;
-    }
-    MemberList::const_iterator members_end() const { return Nodes.end(); }
-    iterator_range<MemberList::const_iterator> members() const {
+    NodeList::const_iterator members_begin() const { return Nodes.begin() + 1; }
+    NodeList::const_iterator members_end() const { return Nodes.end(); }
+    iterator_range<NodeList::const_iterator> members() const {
       return make_range(members_begin(), members_end());
     }
   };
