@@ -187,14 +187,13 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   SmallVector<std::pair<Node *, Node::iterator>, 4> DFSStack;
   SmallVector<Node *, 4> PendingSCCStack;
 
-  // The worklist is every node in the original SCC. FIXME: switch the SCC to
-  // use a SmallSetVector and swap here.
-  SmallSetVector<Node *, 1> Worklist;
-  for (Node *N : Nodes) {
+  // The worklist is every node in the original SCC.
+  SmallVector<Node *, 1> Worklist;
+  Worklist.swap(Nodes);
+  for (Node *N : Worklist) {
     // Clear these to 0 while we re-run Tarjan's over the SCC.
     N->DFSNumber = 0;
     N->LowLink = 0;
-    Worklist.insert(N);
   }
 
   // The callee can already reach every node in this SCC (by definition). It is
@@ -208,6 +207,9 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
 
   for (;;) {
     if (DFSStack.empty()) {
+      // Clear off any nodes which have already been visited in the DFS.
+      while (!Worklist.empty() && Worklist.back()->DFSNumber != 0)
+        Worklist.pop_back();
       if (Worklist.empty())
         break;
       Node *N = Worklist.pop_back_val();
@@ -253,7 +255,6 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
 
         // Recurse onto this node via a tail call.
         ChildN.LowLink = ChildN.DFSNumber = NextDFSNumber++;
-        Worklist.remove(&ChildN);
         DFSStack.push_back(std::make_pair(&ChildN, ChildN.begin()));
         Recurse = true;
         break;
