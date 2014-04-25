@@ -65,4 +65,7 @@ BUILTIN(__builtin_arm_sevl, "v", "")
 BUILTIN(__builtin_arm_dmb, "vUi", "nc")
 BUILTIN(__builtin_arm_dsb, "vUi", "nc")
 
+// MSVC
+BUILTIN(__yield, "v", "")
+
 #undef BUILTIN
