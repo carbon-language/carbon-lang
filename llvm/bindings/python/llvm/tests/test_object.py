@@ -23,6 +23,7 @@ class TestObjectFile(TestBase):
             assert isinstance(section.size, long)
             assert isinstance(section.contents, str)
             assert isinstance(section.address, long)
+            assert len(section.contents) == section.size
 
         self.assertGreater(count, 0)
 

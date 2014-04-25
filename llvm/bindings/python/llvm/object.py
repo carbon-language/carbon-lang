@@ -78,7 +78,10 @@ Here are some examples on how to perform iteration:
 """
 
 from ctypes import c_char_p
+from ctypes import c_char
+from ctypes import POINTER
 from ctypes import c_uint64
+from ctypes import string_at
 
 from .common import CachedProperty
 from .common import LLVMObject
@@ -211,7 +214,12 @@ class Section(LLVMObject):
         if self.expired:
             raise Exception('Section instance has expired.')
 
-        return lib.LLVMGetSectionContents(self)
+        siz = self.size
+
+        r = lib.LLVMGetSectionContents(self)
+        if r:
+            return string_at(r, siz)
+        return None
 
     @CachedProperty
     def address(self):
@@ -462,7 +470,8 @@ def register_library(library):
     library.LLVMGetSectionSize.restype = c_uint64
 
     library.LLVMGetSectionContents.argtypes = [c_object_p]
-    library.LLVMGetSectionContents.restype = c_char_p
+    # Can't use c_char_p here as it isn't a NUL-terminated string.
+    library.LLVMGetSectionContents.restype = POINTER(c_char)
 
     library.LLVMGetSectionAddress.argtypes = [c_object_p]
     library.LLVMGetSectionAddress.restype = c_uint64
