@@ -1,6 +1,7 @@
 ; RUN: opt < %s -analyze -block-freq | FileCheck %s
 
-; A loop with multiple exits should be handled correctly.
+; A loop with multiple exits isn't irreducible.  It should be handled
+; correctly.
 ;
 ; CHECK-LABEL: Printing analysis {{.*}} for function 'multiexit':
 ; CHECK-NEXT: block-frequency-info: multiexit
@@ -9,19 +10,19 @@ define void @multiexit(i1 %x) {
 entry:
   br label %loop.1
 
-; CHECK-NEXT: loop.1: float = 1.333{{3*}},
+; CHECK-NEXT: loop.1: float = 2.0,
 loop.1:
   br i1 %x, label %exit.1, label %loop.2, !prof !0
 
-; CHECK-NEXT: loop.2: float = 0.666{{6*7}},
+; CHECK-NEXT: loop.2: float = 1.75,
 loop.2:
   br i1 %x, label %exit.2, label %loop.1, !prof !1
 
-; CHECK-NEXT: exit.1: float = 0.666{{6*7}},
+; CHECK-NEXT: exit.1: float = 0.25,
 exit.1:
   br label %return
 
-; CHECK-NEXT: exit.2: float = 0.333{{3*}},
+; CHECK-NEXT: exit.2: float = 0.75,
 exit.2:
   br label %return
 
@@ -30,8 +31,8 @@ return:
   ret void
 }
 
-!0 = metadata !{metadata !"branch_weights", i32 3, i32 3}
-!1 = metadata !{metadata !"branch_weights", i32 5, i32 5}
+!0 = metadata !{metadata !"branch_weights", i32 1, i32 7}
+!1 = metadata !{metadata !"branch_weights", i32 3, i32 4}
 
 ; The current BlockFrequencyInfo algorithm doesn't handle multiple entrances
 ; into a loop very well.  The frequencies assigned to blocks in the loop are
