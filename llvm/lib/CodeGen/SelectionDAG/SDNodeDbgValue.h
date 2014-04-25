@@ -45,14 +45,17 @@ private:
     unsigned FrameIx;       // valid for stack objects
   } u;
   MDNode *mdPtr;
+  bool IsIndirect;
   uint64_t Offset;
   DebugLoc DL;
   unsigned Order;
   bool Invalid;
 public:
   // Constructor for non-constants.
-  SDDbgValue(MDNode *mdP, SDNode *N, unsigned R, uint64_t off, DebugLoc dl,
-             unsigned O) : mdPtr(mdP), Offset(off), DL(dl), Order(O),
+  SDDbgValue(MDNode *mdP, SDNode *N, unsigned R,
+	     bool indir, uint64_t off, DebugLoc dl,
+             unsigned O) : mdPtr(mdP), IsIndirect(indir),
+			   Offset(off), DL(dl), Order(O),
                            Invalid(false) {
     kind = SDNODE;
     u.s.Node = N;
@@ -62,14 +65,16 @@ public:
   // Constructor for constants.
   SDDbgValue(MDNode *mdP, const Value *C, uint64_t off, DebugLoc dl,
              unsigned O) : 
-    mdPtr(mdP), Offset(off), DL(dl), Order(O), Invalid(false) {
+    mdPtr(mdP), IsIndirect(false), Offset(off), DL(dl), Order(O),
+    Invalid(false) {
     kind = CONST;
     u.Const = C;
   }
 
   // Constructor for frame indices.
   SDDbgValue(MDNode *mdP, unsigned FI, uint64_t off, DebugLoc dl, unsigned O) : 
-    mdPtr(mdP), Offset(off), DL(dl), Order(O), Invalid(false) {
+    mdPtr(mdP), IsIndirect(false), Offset(off), DL(dl), Order(O),
+    Invalid(false) {
     kind = FRAMEIX;
     u.FrameIx = FI;
   }
@@ -91,6 +96,9 @@ public:
 
   // Returns the FrameIx for a stack object
   unsigned getFrameIx() { assert (kind==FRAMEIX); return u.FrameIx; }
+
+  // Returns whether this is an indirect value.
+  bool isIndirect() { return IsIndirect; }
 
   // Returns the offset.
   uint64_t getOffset() { return Offset; }
