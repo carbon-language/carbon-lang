@@ -37,6 +37,8 @@ struct Flags : CommonFlags, DDFlags {
   bool report_thread_leaks;
   // Report destruction of a locked mutex?
   bool report_destroy_locked;
+  // Report incorrect usages of mutexes and mutex annotations?
+  bool report_mutex_bugs;
   // Report violations of async signal-safety
   // (e.g. malloc() call from a signal handler).
   bool report_signal_unsafe;

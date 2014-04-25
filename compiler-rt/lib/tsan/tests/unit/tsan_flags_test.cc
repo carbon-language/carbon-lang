@@ -42,6 +42,7 @@ static const char *options1 =
   " report_bugs=0"
   " report_thread_leaks=0"
   " report_destroy_locked=0"
+  " report_mutex_bugs=0"
   " report_signal_unsafe=0"
   " report_atomic_races=0"
   " force_seq_cst_atomics=0"
@@ -86,6 +87,7 @@ static const char *options2 =
   " report_bugs=true"
   " report_thread_leaks=true"
   " report_destroy_locked=true"
+  " report_mutex_bugs=true"
   " report_signal_unsafe=true"
   " report_atomic_races=true"
   " force_seq_cst_atomics=true"
@@ -130,6 +132,7 @@ void VerifyOptions1(Flags *f) {
   EXPECT_EQ(f->report_bugs, 0);
   EXPECT_EQ(f->report_thread_leaks, 0);
   EXPECT_EQ(f->report_destroy_locked, 0);
+  EXPECT_EQ(f->report_mutex_bugs, 0);
   EXPECT_EQ(f->report_signal_unsafe, 0);
   EXPECT_EQ(f->report_atomic_races, 0);
   EXPECT_EQ(f->force_seq_cst_atomics, 0);
@@ -174,6 +177,7 @@ void VerifyOptions2(Flags *f) {
   EXPECT_EQ(f->report_bugs, true);
   EXPECT_EQ(f->report_thread_leaks, true);
   EXPECT_EQ(f->report_destroy_locked, true);
+  EXPECT_EQ(f->report_mutex_bugs, true);
   EXPECT_EQ(f->report_signal_unsafe, true);
   EXPECT_EQ(f->report_atomic_races, true);
   EXPECT_EQ(f->force_seq_cst_atomics, true);

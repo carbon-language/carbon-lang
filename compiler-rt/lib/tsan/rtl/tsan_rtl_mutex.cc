@@ -117,15 +117,16 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec, bool try_lock) {
   SyncVar *s = ctx->synctab.GetOrCreateAndLock(thr, pc, addr, true);
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state, EventTypeLock, s->GetId());
+  bool report_double_lock = false;
   if (s->owner_tid == SyncVar::kInvalidTid) {
     CHECK_EQ(s->recursion, 0);
     s->owner_tid = thr->tid;
     s->last_lock = thr->fast_state.raw();
   } else if (s->owner_tid == thr->tid) {
     CHECK_GT(s->recursion, 0);
-  } else {
-    Printf("ThreadSanitizer WARNING: double lock of mutex %p\n", addr);
-    PrintCurrentStack(thr, pc);
+  } else if (flags()->report_mutex_bugs && !s->is_broken) {
+    s->is_broken = true;
+    report_double_lock = true;
   }
   if (s->recursion == 0) {
     StatInc(thr, StatMutexLock);
@@ -142,7 +143,19 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec, bool try_lock) {
       ctx->dd->MutexBeforeLock(&cb, &s->dd, true);
     ctx->dd->MutexAfterLock(&cb, &s->dd, true, try_lock);
   }
+  u64 mid = s->GetId();
   s->mtx.Unlock();
+  // Can't touch s after this point.
+  if (report_double_lock) {
+    ThreadRegistryLock l(ctx->thread_registry);
+    ScopedReport rep(ReportTypeMutexDoubleLock);
+    rep.AddMutex(mid);
+    StackTrace trace;
+    trace.ObtainCurrent(thr, pc);
+    rep.AddStack(&trace);
+    rep.AddLocation(addr, 1);
+    OutputReport(ctx, rep);
+  }
   if (flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));

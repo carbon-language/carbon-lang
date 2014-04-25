@@ -24,6 +24,7 @@ enum ReportType {
   ReportTypeUseAfterFree,
   ReportTypeThreadLeak,
   ReportTypeMutexDestroyLocked,
+  ReportTypeMutexDoubleLock,
   ReportTypeSignalUnsafe,
   ReportTypeErrnoInSignal,
   ReportTypeDeadlock
