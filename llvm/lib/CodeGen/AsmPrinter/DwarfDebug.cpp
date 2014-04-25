@@ -2355,8 +2355,15 @@ void DwarfDebug::emitDebugRanges() {
         const MCSymbol *End = Range.getEnd();
         assert(Begin && "Range without a begin symbol?");
         assert(End && "Range without an end symbol?");
-        Asm->OutStreamer.EmitSymbolValue(Begin, Size);
-        Asm->OutStreamer.EmitSymbolValue(End, Size);
+        if (TheCU->getRanges().size() == 1) {
+          // Grab the begin symbol from the first range as our base.
+          const MCSymbol *Base = TheCU->getRanges()[0].getStart();
+          Asm->EmitLabelDifference(Begin, Base, Size);
+          Asm->EmitLabelDifference(End, Base, Size);
+        } else {
+          Asm->OutStreamer.EmitSymbolValue(Begin, Size);
+          Asm->OutStreamer.EmitSymbolValue(End, Size);
+        }
       }
 
       // And terminate the list with two 0 values.
