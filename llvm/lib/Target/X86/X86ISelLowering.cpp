@@ -3931,6 +3931,29 @@ static bool isMOVLHPSMask(ArrayRef<int> Mask, MVT VT) {
   return true;
 }
 
+/// isINSERTPSMask - Return true if the specified VECTOR_SHUFFLE operand
+/// specifies a shuffle of elements that is suitable for input to INSERTPS.
+/// i. e: If all but one element come from the same vector.
+static bool isINSERTPSMask(ArrayRef<int> Mask, MVT VT) {
+  // TODO: Deal with AVX's VINSERTPS
+  if (!VT.is128BitVector() || (VT != MVT::v4f32 && VT != MVT::v4i32))
+    return false;
+
+  unsigned CorrectPosV1 = 0;
+  unsigned CorrectPosV2 = 0;
+  for (int i = 0, e = (int)VT.getVectorNumElements(); i != e; ++i)
+    if (Mask[i] == i)
+      ++CorrectPosV1;
+    else if (Mask[i] == i + 4)
+      ++CorrectPosV2;
+
+  if (CorrectPosV1 == 3 || CorrectPosV2 == 3)
+    // We have 3 elements from one vector, and one from another.
+    return true;
+
+  return false;
+}
+
 //
 // Some special combinations that can be optimized.
 //
@@ -7263,6 +7286,84 @@ SDValue getMOVLP(SDValue &Op, SDLoc &dl, SelectionDAG &DAG, bool HasSSE2) {
                               getShuffleSHUFImmediate(SVOp), DAG);
 }
 
+// It is only safe to call this function if isINSERTPSMask is true for
+// this shufflevector mask.
+static SDValue getINSERTPS(ShuffleVectorSDNode *SVOp, SDLoc &dl,
+                           SelectionDAG &DAG) {
+  // Generate an insertps instruction when inserting an f32 from memory onto a
+  // v4f32 or when copying a member from one v4f32 to another.
+  // We also use it for transferring i32 from one register to another,
+  // since it simply copies the same bits.
+  // If we're transfering an i32 from memory to a specific element in a
+  // register, we output a generic DAG that will match the PINSRD
+  // instruction.
+  // TODO: Optimize for AVX cases too (VINSERTPS)
+  MVT VT = SVOp->getSimpleValueType(0);
+  MVT EVT = VT.getVectorElementType();
+  SDValue V1 = SVOp->getOperand(0);
+  SDValue V2 = SVOp->getOperand(1);
+  auto Mask = SVOp->getMask();
+  assert((VT == MVT::v4f32 || VT == MVT::v4i32) &&
+         "unsupported vector type for insertps/pinsrd");
+
+  int FromV1 = std::count_if(Mask.begin(), Mask.end(),
+                             [](const int &i) { return i < 4; });
+
+  SDValue From;
+  SDValue To;
+  unsigned DestIndex;
+  if (FromV1 == 1) {
+    From = V1;
+    To = V2;
+    DestIndex = std::find_if(Mask.begin(), Mask.end(),
+                             [](const int &i) { return i < 4; }) -
+                Mask.begin();
+  } else {
+    From = V2;
+    To = V1;
+    DestIndex = std::find_if(Mask.begin(), Mask.end(),
+                             [](const int &i) { return i >= 4; }) -
+                Mask.begin();
+  }
+
+  if (MayFoldLoad(From)) {
+    // Trivial case, when From comes from a load and is only used by the
+    // shuffle. Make it use insertps from the vector that we need from that
+    // load.
+    SDValue Addr = From.getOperand(1);
+    SDValue NewAddr =
+        DAG.getNode(ISD::ADD, dl, Addr.getSimpleValueType(), Addr,
+                    DAG.getConstant(DestIndex * EVT.getStoreSize(),
+                                    Addr.getSimpleValueType()));
+
+    LoadSDNode *Load = cast<LoadSDNode>(From);
+    SDValue NewLoad =
+        DAG.getLoad(EVT, dl, Load->getChain(), NewAddr,
+                    DAG.getMachineFunction().getMachineMemOperand(
+                        Load->getMemOperand(), 0, EVT.getStoreSize()));
+
+    if (EVT == MVT::f32) {
+      // Create this as a scalar to vector to match the instruction pattern.
+      SDValue LoadScalarToVector =
+          DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, VT, NewLoad);
+      SDValue InsertpsMask = DAG.getIntPtrConstant(DestIndex << 4);
+      return DAG.getNode(X86ISD::INSERTPS, dl, VT, To, LoadScalarToVector,
+                         InsertpsMask);
+    } else { // EVT == MVT::i32
+      // If we're getting an i32 from memory, use an INSERT_VECTOR_ELT
+      // instruction, to match the PINSRD instruction, which loads an i32 to a
+      // certain vector element.
+      return DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, VT, To, NewLoad,
+                         DAG.getConstant(DestIndex, MVT::i32));
+    }
+  }
+
+  // Vector-element-to-vector
+  unsigned SrcIndex = Mask[DestIndex] % 4;
+  SDValue InsertpsMask = DAG.getIntPtrConstant(DestIndex << 4 | SrcIndex << 6);
+  return DAG.getNode(X86ISD::INSERTPS, dl, VT, To, From, InsertpsMask);
+}
+
 // Reduce a vector shuffle to zext.
 static SDValue LowerVectorIntExtend(SDValue Op, const X86Subtarget *Subtarget,
                                     SelectionDAG &DAG) {
@@ -7673,6 +7774,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   SDValue BlendOp = LowerVECTOR_SHUFFLEtoBlend(SVOp, Subtarget, DAG);
   if (BlendOp.getNode())
     return BlendOp;
+
+  if (Subtarget->hasSSE41() && isINSERTPSMask(M, VT))
+    return getINSERTPS(SVOp, dl, DAG);
 
   unsigned Imm8;
   if (V2IsUndef && HasInt256 && isPermImmMask(M, VT, Imm8))
