@@ -26,6 +26,7 @@ enum ReportType {
   ReportTypeMutexDestroyLocked,
   ReportTypeMutexDoubleLock,
   ReportTypeMutexBadUnlock,
+  ReportTypeMutexBadReadUnlock,
   ReportTypeSignalUnsafe,
   ReportTypeErrnoInSignal,
   ReportTypeDeadlock
