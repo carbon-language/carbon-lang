@@ -500,3 +500,20 @@ end:
   %conv3 = phi i80 [%conv, %entry], [%conv2, %then] 
   ret i80 %conv3
 }
+
+define i16 @test_ignored_rightbits(i32 %dst, i32 %in) {
+; CHECK-LABEL: test_ignored_rightbits:
+
+  %positioned_field = shl i32 %in, 3
+  %positioned_masked_field = and i32 %positioned_field, 120
+  %masked_dst = and i32 %dst, 7
+  %insertion = or i32 %masked_dst, %positioned_masked_field
+; CHECK: {{bfm|bfi}}
+
+  %shl16 = shl i32 %insertion, 8
+  %or18 = or i32 %shl16, %insertion
+  %conv19 = trunc i32 %or18 to i16
+; CHECK: {{bfm w[0-9]+, w[0-9]+, #24, #6|bfi w[0-9]+, w[0-9]+, #8, #7}}
+
+  ret i16 %conv19
+}

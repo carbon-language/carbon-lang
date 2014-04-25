@@ -1403,8 +1403,6 @@ static bool isBitfieldDstMask(uint64_t DstMask, APInt BitsToBeInserted,
   assert((VT == MVT::i32 || VT == MVT::i64) &&
          "i32 or i64 mask type expected!");
   unsigned BitWidth = VT.getSizeInBits() - NumberOfIgnoredHighBits;
-  APInt SignificantBits =
-      ~APInt::getHighBitsSet(BitWidth, NumberOfIgnoredHighBits);
 
   APInt SignificantDstMask = APInt(BitWidth, DstMask);
   APInt SignificantBitsToBeInserted = BitsToBeInserted.zextOrTrunc(BitWidth);
