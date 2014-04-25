@@ -805,40 +805,29 @@ static void convertFloatingToInteger(BlockFrequencyInfoImplBase &BFI,
   }
 }
 
-static void scaleBlockData(BlockFrequencyInfoImplBase &BFI,
-                           const BlockNode &Node, const LoopData &Loop) {
-  Float F = Loop.Mass.toFloat() * Loop.Scale;
-
-  Float &Current = BFI.Freqs[Node.Index].Floating;
-  Float Updated = Current * F;
-
-  DEBUG(dbgs() << " - " << BFI.getBlockName(Node) << ": " << Current << " => "
-               << Updated << "\n");
-
-  Current = Updated;
-}
-
 /// \brief Unwrap a loop package.
 ///
 /// Visits all the members of a loop, adjusting their BlockData according to
 /// the loop's pseudo-node.
 static void unwrapLoop(BlockFrequencyInfoImplBase &BFI, LoopData &Loop) {
-  BlockNode Head = Loop.getHeader();
-  DEBUG(dbgs() << "unwrap-loop-package: " << BFI.getBlockName(Head)
+  DEBUG(dbgs() << "unwrap-loop-package: " << BFI.getBlockName(Loop.getHeader())
                << ": mass = " << Loop.Mass << ", scale = " << Loop.Scale
                << "\n");
-  scaleBlockData(BFI, Head, Loop);
+  Loop.Scale *= Loop.Mass.toFloat();
+  Loop.IsPackaged = false;
+  DEBUG(dbgs() << " => combined-scale = " << Loop.Scale << "\n");
 
   // Propagate the head scale through the loop.  Since members are visited in
   // RPO, the head scale will be updated by the loop scale first, and then the
   // final head scale will be used for updated the rest of the members.
-  for (const BlockNode &M : Loop.members()) {
-    const FrequencyData &HeadData = BFI.Freqs[Head.Index];
-    FrequencyData &Freqs = BFI.Freqs[M.Index];
-    Float NewFreq = Freqs.Floating * HeadData.Floating;
-    DEBUG(dbgs() << " - " << BFI.getBlockName(M) << ": " << Freqs.Floating
-                 << " => " << NewFreq << "\n");
-    Freqs.Floating = NewFreq;
+  for (const BlockNode &N : Loop.Nodes) {
+    const auto &Working = BFI.Working[N.Index];
+    Float &F = Working.isAPackage() ? BFI.getLoopPackage(N).Scale
+                                    : BFI.Freqs[N.Index].Floating;
+    Float New = Loop.Scale * F;
+    DEBUG(dbgs() << " - " << BFI.getBlockName(N) << ": " << F << " => " << New
+                 << "\n");
+    F = New;
   }
 }
 
