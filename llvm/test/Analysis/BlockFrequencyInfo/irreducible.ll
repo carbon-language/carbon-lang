@@ -4,45 +4,31 @@
 ;
 ; CHECK-LABEL: Printing analysis {{.*}} for function 'multiexit':
 ; CHECK-NEXT: block-frequency-info: multiexit
-define void @multiexit(i32 %a) {
+define void @multiexit(i1 %x) {
 ; CHECK-NEXT: entry: float = 1.0, int = [[ENTRY:[0-9]+]]
 entry:
   br label %loop.1
 
 ; CHECK-NEXT: loop.1: float = 1.333{{3*}},
 loop.1:
-  %i = phi i32 [ 0, %entry ], [ %inc.2, %loop.2 ]
-  call void @f(i32 %i)
-  %inc.1 = add i32 %i, 1
-  %cmp.1 = icmp ugt i32 %inc.1, %a
-  br i1 %cmp.1, label %exit.1, label %loop.2, !prof !0
+  br i1 %x, label %exit.1, label %loop.2, !prof !0
 
 ; CHECK-NEXT: loop.2: float = 0.666{{6*7}},
 loop.2:
-  call void @g(i32 %inc.1)
-  %inc.2 = add i32 %inc.1, 1
-  %cmp.2 = icmp ugt i32 %inc.2, %a
-  br i1 %cmp.2, label %exit.2, label %loop.1, !prof !1
+  br i1 %x, label %exit.2, label %loop.1, !prof !1
 
 ; CHECK-NEXT: exit.1: float = 0.666{{6*7}},
 exit.1:
-  call void @h(i32 %inc.1)
   br label %return
 
 ; CHECK-NEXT: exit.2: float = 0.333{{3*}},
 exit.2:
-  call void @i(i32 %inc.2)
   br label %return
 
 ; CHECK-NEXT: return: float = 1.0, int = [[ENTRY]]
 return:
   ret void
 }
-
-declare void @f(i32 %x)
-declare void @g(i32 %x)
-declare void @h(i32 %x)
-declare void @i(i32 %x)
 
 !0 = metadata !{metadata !"branch_weights", i32 3, i32 3}
 !1 = metadata !{metadata !"branch_weights", i32 5, i32 5}
@@ -97,32 +83,22 @@ declare void @i(i32 %x)
 ;
 ; CHECK-LABEL: Printing analysis {{.*}} for function 'multientry':
 ; CHECK-NEXT: block-frequency-info: multientry
-define void @multientry(i32 %a) {
+define void @multientry(i1 %x) {
 ; CHECK-NEXT: entry: float = 1.0, int = [[ENTRY:[0-9]+]]
 entry:
-  %choose = call i32 @choose(i32 %a)
-  %compare = icmp ugt i32 %choose, %a
-  br i1 %compare, label %c1, label %c2, !prof !2
+  br i1 %x, label %c1, label %c2, !prof !2
 
 ; This is like a single-line XFAIL (see above).
 ; CHECK-NEXT: c1:
 ; CHECK-NOT: float = 2.142857{{[0-9]*}},
 c1:
-  %i1 = phi i32 [ %a, %entry ], [ %i2.inc, %c2 ]
-  %i1.inc = add i32 %i1, 1
-  %choose1 = call i32 @choose(i32 %i1)
-  %compare1 = icmp ugt i32 %choose1, %a
-  br i1 %compare1, label %c2, label %exit, !prof !2
+  br i1 %x, label %c2, label %exit, !prof !2
 
 ; This is like a single-line XFAIL (see above).
 ; CHECK-NEXT: c2:
 ; CHECK-NOT: float = 1.857142{{[0-9]*}},
 c2:
-  %i2 = phi i32 [ %a, %entry ], [ %i1.inc, %c1 ]
-  %i2.inc = add i32 %i2, 1
-  %choose2 = call i32 @choose(i32 %i2)
-  %compare2 = icmp ugt i32 %choose2, %a
-  br i1 %compare2, label %c1, label %exit, !prof !2
+  br i1 %x, label %c1, label %exit, !prof !2
 
 ; We still shouldn't lose any frequency.
 ; CHECK-NEXT: exit: float = 1.0, int = [[ENTRY]]
@@ -158,40 +134,31 @@ exit:
 ;
 ; CHECK-LABEL: Printing analysis {{.*}} for function 'crossloops':
 ; CHECK-NEXT: block-frequency-info: crossloops
-define void @crossloops(i32 %a) {
+define void @crossloops(i2 %x) {
 ; CHECK-NEXT: entry: float = 1.0, int = [[ENTRY:[0-9]+]]
 entry:
-  %choose = call i32 @choose(i32 %a)
-  switch i32 %choose, label %exit [ i32 1, label %c1
-                                    i32 2, label %c2 ], !prof !3
+  switch i2 %x, label %exit [ i2 1, label %c1
+                              i2 2, label %c2 ], !prof !3
 
 ; This is like a single-line XFAIL (see above).
 ; CHECK-NEXT: c1:
 ; CHECK-NOT: float = 1.0,
 c1:
-  %i1 = phi i32 [ %a, %entry ], [ %i1.inc, %c1 ], [ %i2.inc, %c2 ]
-  %i1.inc = add i32 %i1, 1
-  %choose1 = call i32 @choose(i32 %i1)
-  switch i32 %choose1, label %exit [ i32 1, label %c1
-                                     i32 2, label %c2 ], !prof !3
+  switch i2 %x, label %exit [ i2 1, label %c1
+                              i2 2, label %c2 ], !prof !3
 
 ; This is like a single-line XFAIL (see above).
 ; CHECK-NEXT: c2:
 ; CHECK-NOT: float = 1.0,
 c2:
-  %i2 = phi i32 [ %a, %entry ], [ %i1.inc, %c1 ], [ %i2.inc, %c2 ]
-  %i2.inc = add i32 %i2, 1
-  %choose2 = call i32 @choose(i32 %i2)
-  switch i32 %choose2, label %exit [ i32 1, label %c1
-                                     i32 2, label %c2 ], !prof !3
+  switch i2 %x, label %exit [ i2 1, label %c1
+                              i2 2, label %c2 ], !prof !3
 
 ; We still shouldn't lose any frequency.
 ; CHECK-NEXT: exit: float = 1.0, int = [[ENTRY]]
 exit:
   ret void
 }
-
-declare i32 @choose(i32)
 
 !2 = metadata !{metadata !"branch_weights", i32 3, i32 1}
 !3 = metadata !{metadata !"branch_weights", i32 2, i32 2, i32 2}
