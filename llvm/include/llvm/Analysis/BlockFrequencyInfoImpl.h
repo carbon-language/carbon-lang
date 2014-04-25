@@ -23,6 +23,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <string>
 #include <vector>
+#include <list>
 
 #define DEBUG_TYPE "block-freq"
 
@@ -1051,7 +1052,7 @@ public:
   std::vector<WorkingData> Working;
 
   /// \brief Indexed information about loops.
-  std::vector<std::unique_ptr<LoopData>> Loops;
+  std::list<LoopData> Loops;
 
   /// \brief Add all edges out of a packaged loop to the distribution.
   ///
@@ -1438,8 +1439,8 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
     BlockNode Header = getNode(Loop->getHeader());
     assert(Header.isValid());
 
-    Loops.emplace_back(new LoopData(Header));
-    Working[Header.Index].Loop = Loops.back().get();
+    Loops.emplace_back(Header);
+    Working[Header.Index].Loop = &Loops.back();
     DEBUG(dbgs() << " - loop = " << getBlockName(Header) << "\n");
   }
 
@@ -1471,7 +1472,7 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
 template <class BT> void BlockFrequencyInfoImpl<BT>::computeMassInLoops() {
   // Visit loops with the deepest first, and the top-level loops last.
   for (const auto &L : make_range(Loops.rbegin(), Loops.rend()))
-    computeMassInLoop(L->Header);
+    computeMassInLoop(L.Header);
 }
 
 template <class BT>
