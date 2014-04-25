@@ -1208,9 +1208,8 @@ public:
   }
 
   MCSymbolData &getSymbolData(const MCSymbol &Symbol) {
-    MCSymbolData *Entry = SymbolMap.lookup(&Symbol);
-    assert(Entry && "Missing symbol data!");
-    return *Entry;
+    return const_cast<MCSymbolData &>(
+        static_cast<const MCAssembler &>(*this).getSymbolData(Symbol));
   }
 
   const MCSymbolData &getSymbolData(const MCSymbol &Symbol) const {
