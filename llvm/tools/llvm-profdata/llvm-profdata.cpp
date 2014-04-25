@@ -111,6 +111,7 @@ int show_main(int argc, const char *argv[]) {
                  Func.Name.find(ShowFunction) != Func.Name.npos);
 
     ++TotalFunctions;
+    assert(Func.Counts.size() > 0 && "function missing entry counter");
     if (Func.Counts[0] > MaxFunctionCount)
       MaxFunctionCount = Func.Counts[0];
 

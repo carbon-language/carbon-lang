@@ -101,6 +101,8 @@ error_code TextInstrProfReader::readNextRecord(InstrProfRecord &Record) {
     return error(instrprof_error::truncated);
   if ((Line++)->getAsInteger(10, NumCounters))
     return error(instrprof_error::malformed);
+  if (NumCounters == 0)
+    return error(instrprof_error::malformed);
 
   // Read each counter and fill our internal storage with the values.
   Counts.clear();
@@ -210,8 +212,10 @@ RawInstrProfReader<IntPtrT>::readNextRecord(InstrProfRecord &Record) {
 
   // Get the raw data.
   StringRef RawName(getName(Data->NamePtr), swap(Data->NameSize));
-  auto RawCounts = makeArrayRef(getCounter(Data->CounterPtr),
-                                swap(Data->NumCounters));
+  uint32_t NumCounters = swap(Data->NumCounters);
+  if (NumCounters == 0)
+    return error(instrprof_error::malformed);
+  auto RawCounts = makeArrayRef(getCounter(Data->CounterPtr), NumCounters);
 
   // Check bounds.
   auto *NamesStartAsCounter = reinterpret_cast<const uint64_t *>(NamesStart);
