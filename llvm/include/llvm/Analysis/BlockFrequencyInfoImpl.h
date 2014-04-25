@@ -1141,10 +1141,13 @@ public:
   /// \brief Package up a loop.
   void packageLoop(LoopData &Loop);
 
+  /// \brief Unwrap loops.
+  void unwrapLoops();
+
   /// \brief Finalize frequency metrics.
   ///
-  /// Unwraps loop packages, calculates final frequencies, and cleans up
-  /// no-longer-needed data structures.
+  /// Calculates final frequencies and cleans up no-longer-needed data
+  /// structures.
   void finalizeMetrics();
 
   /// \brief Clear all memory.
@@ -1434,6 +1437,7 @@ void BlockFrequencyInfoImpl<BT>::doFunction(const FunctionT *F,
   // the full function.
   computeMassInLoops();
   computeMassInFunction();
+  unwrapLoops();
   finalizeMetrics();
 }
 

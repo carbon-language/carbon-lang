@@ -846,20 +846,24 @@ static void unwrapLoopPackage(BlockFrequencyInfoImplBase &BFI,
   }
 }
 
-void BlockFrequencyInfoImplBase::finalizeMetrics() {
+void BlockFrequencyInfoImplBase::unwrapLoops() {
   // Set initial frequencies from loop-local masses.
   for (size_t Index = 0; Index < Working.size(); ++Index)
     Freqs[Index].Floating = Working[Index].Mass.toFloat();
 
+  for (size_t Index = 0; Index < Working.size(); ++Index) {
+    if (Working[Index].isLoopHeader())
+      unwrapLoopPackage(*this, BlockNode(Index));
+  }
+}
+
+void BlockFrequencyInfoImplBase::finalizeMetrics() {
   // Unwrap loop packages in reverse post-order, tracking min and max
   // frequencies.
   auto Min = Float::getLargest();
   auto Max = Float::getZero();
   for (size_t Index = 0; Index < Working.size(); ++Index) {
-    if (Working[Index].isLoopHeader())
-      unwrapLoopPackage(*this, BlockNode(Index));
-
-    // Update max scale.
+    // Update min/max scale.
     Min = std::min(Min, Freqs[Index].Floating);
     Max = std::max(Max, Freqs[Index].Floating);
   }
