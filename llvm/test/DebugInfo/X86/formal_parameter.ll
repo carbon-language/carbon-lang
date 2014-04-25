@@ -34,7 +34,6 @@ entry:
   ;
   ; LOWERING: call void @llvm.dbg.value{{.*}}, !dbg ![[LOC:.*]]
   ; LOWERING: call void @llvm.dbg.value{{.*}}, !dbg ![[LOC]]
-  ; LOWERING: call void @llvm.dbg.value{{.*}}, !dbg ![[LOC]]
 %0 = load i32* %map.addr, align 4, !dbg !20, !tbaa !15
   %call1 = call i32 (i32, ...)* bitcast (i32 (...)* @verify to i32 (i32, ...)*)(i32 %0) #3, !dbg !20
   ret void, !dbg !22

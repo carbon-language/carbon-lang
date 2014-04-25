@@ -1037,26 +1037,20 @@ bool llvm::LowerDbgDeclare(Function &F) {
     AllocaInst *AI = dyn_cast_or_null<AllocaInst>(DDI->getAddress());
     // If this is an alloca for a scalar variable, insert a dbg.value
     // at each load and store to the alloca and erase the dbg.declare.
-    // The dbg.values allow tracking a variable even if it is not
-    // stored on the stack, while the dbg.declare can only describe
-    // the stack slot (and at a lexical-scope granularity). Later
-    // passes will attempt to elide the stack slot.
     if (AI && !AI->isArrayAllocation()) {
+
+      // We only remove the dbg.declare intrinsic if all uses are
+      // converted to dbg.value intrinsics.
+      bool RemoveDDI = true;
       for (User *U : AI->users())
         if (StoreInst *SI = dyn_cast<StoreInst>(U))
           ConvertDebugDeclareToDebugValue(DDI, SI, DIB);
         else if (LoadInst *LI = dyn_cast<LoadInst>(U))
           ConvertDebugDeclareToDebugValue(DDI, LI, DIB);
-        else if (Instruction *I = dyn_cast<Instruction>(U)) {
-	  // This is a call by-value or some other instruction that
-	  // takes a pointer to the variable. Insert a *value*
-	  // intrinsic that describes the alloca.
-	  auto DbgVal =
-	    DIB.insertDbgValueIntrinsic(AI, 0,
-					DIVariable(DDI->getVariable()), I);
-	  DbgVal->setDebugLoc(DDI->getDebugLoc());
-	}
-      DDI->eraseFromParent();
+        else
+          RemoveDDI = false;
+      if (RemoveDDI)
+        DDI->eraseFromParent();
     }
   }
   return true;

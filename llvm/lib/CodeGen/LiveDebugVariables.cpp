@@ -157,8 +157,8 @@ public:
   UserValue *getNext() const { return next; }
 
   /// match - Does this UserValue match the parameters?
-  bool match(const MDNode *Var, unsigned Offset, bool indirect) const {
-    return Var == variable && Offset == offset && indirect == IsIndirect;
+  bool match(const MDNode *Var, unsigned Offset) const {
+    return Var == variable && Offset == offset;
   }
 
   /// merge - Merge equivalence classes.
@@ -427,7 +427,7 @@ UserValue *LDVImpl::getUserValue(const MDNode *Var, unsigned Offset,
     UserValue *UV = Leader->getLeader();
     Leader = UV;
     for (; UV; UV = UV->getNext())
-      if (UV->match(Var, Offset, IsIndirect))
+      if (UV->match(Var, Offset))
         return UV;
   }
 
