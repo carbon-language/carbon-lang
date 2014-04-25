@@ -301,8 +301,9 @@ bool LTOCodeGenerator::determineTarget(std::string &errMsg) {
     break;
   }
 
-  // construct LTOModule, hand over ownership of module and target
-  SubtargetFeatures Features;
+  // Construct LTOModule, hand over ownership of module and target. Use MAttr as
+  // the default set of features.
+  SubtargetFeatures Features(MAttr);
   Features.getDefaultSubtargetFeatures(Triple);
   std::string FeatureStr = Features.getString();
   // Set a default CPU for Darwin triples.

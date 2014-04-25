@@ -73,6 +73,7 @@ struct LTOCodeGenerator {
   void setCodePICModel(lto_codegen_model);
 
   void setCpu(const char *mCpu) { MCpu = mCpu; }
+  void setAttr(const char *mAttr) { MAttr = mAttr; }
 
   void addMustPreserveSymbol(const char *sym) { MustPreserveSymbols[sym] = 1; }
 
@@ -150,6 +151,7 @@ private:
   llvm::MemoryBuffer *NativeObjectFile;
   std::vector<char *> CodegenOptions;
   std::string MCpu;
+  std::string MAttr;
   std::string NativeObjectPath;
   llvm::TargetOptions Options;
   lto_diagnostic_handler_t DiagHandler;

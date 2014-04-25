@@ -56,6 +56,20 @@ static void lto_initialize() {
   }
 }
 
+// Convert the subtarget features into a string to pass to LTOCodeGenerator.
+static void lto_add_attrs(lto_code_gen_t cg) {
+  if (MAttrs.size()) {
+    std::string attrs;
+    for (unsigned i = 0; i < MAttrs.size(); ++i) {
+      if (i > 0)
+        attrs.append(",");
+      attrs.append(MAttrs[i]);
+    }
+
+    cg->setAttr(attrs.c_str());
+  }
+}
+
 /// lto_get_version - Returns a printable string.
 extern const char* lto_get_version() {
   return LTOCodeGenerator::getVersionString();
@@ -252,6 +266,11 @@ void lto_codegen_set_cpu(lto_code_gen_t cg, const char *cpu) {
   return cg->setCpu(cpu);
 }
 
+/// lto_codegen_set_attr - Sets the attr to generate code for.
+void lto_codegen_set_attr(lto_code_gen_t cg, const char *attr) {
+  return cg->setAttr(attr);
+}
+
 /// lto_codegen_set_assembler_path - Sets the path to the assembler tool.
 void lto_codegen_set_assembler_path(lto_code_gen_t cg, const char *path) {
   // In here only for backwards compatibility. We use MC now.
@@ -278,6 +297,7 @@ void lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg,
 bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
   if (!parsedOptions) {
     cg->parseCodeGenDebugOptions();
+    lto_add_attrs(cg);
     parsedOptions = true;
   }
   return !cg->writeMergedModules(path, sLastErrorString);
@@ -292,6 +312,7 @@ bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
 const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
   if (!parsedOptions) {
     cg->parseCodeGenDebugOptions();
+    lto_add_attrs(cg);
     parsedOptions = true;
   }
   return cg->compile(length, DisableOpt, DisableInline, DisableGVNLoadPRE,
@@ -304,6 +325,7 @@ const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
 bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
   if (!parsedOptions) {
     cg->parseCodeGenDebugOptions();
+    lto_add_attrs(cg);
     parsedOptions = true;
   }
   return !cg->compile_to_file(name, DisableOpt, DisableInline, DisableGVNLoadPRE,

@@ -143,6 +143,16 @@ int main(int argc, char **argv) {
   for (unsigned i = 0; i < KeptDSOSyms.size(); ++i)
     CodeGen.addMustPreserveSymbol(KeptDSOSyms[i].c_str());
 
+  std::string attrs;
+  for (unsigned i = 0; i < MAttrs.size(); ++i) {
+    if (i > 0)
+      attrs.append(",");
+    attrs.append(MAttrs[i]);
+  }
+
+  if (!attrs.empty())
+    CodeGen.setAttr(attrs.c_str());
+
   if (!OutputFilename.empty()) {
     size_t len = 0;
     std::string ErrorInfo;
