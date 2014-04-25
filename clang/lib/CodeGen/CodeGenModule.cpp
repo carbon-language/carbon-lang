@@ -772,6 +772,31 @@ void CodeGenModule::SetInternalFunctionAttributes(const Decl *D,
   SetCommonAttributes(D, F);
 }
 
+static void setLinkageAndVisibilityForGV(llvm::GlobalValue *GV,
+                                         const NamedDecl *ND) {
+  // Set linkage and visibility in case we never see a definition.
+  LinkageInfo LV = ND->getLinkageAndVisibility();
+  if (LV.getLinkage() != ExternalLinkage) {
+    // Don't set internal linkage on declarations.
+  } else {
+    if (ND->hasAttr<DLLImportAttr>()) {
+      GV->setLinkage(llvm::GlobalValue::ExternalLinkage);
+      GV->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
+    } else if (ND->hasAttr<DLLExportAttr>()) {
+      GV->setLinkage(llvm::GlobalValue::ExternalLinkage);
+      GV->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
+    } else if (ND->hasAttr<WeakAttr>() || ND->isWeakImported()) {
+      // "extern_weak" is overloaded in LLVM; we probably should have
+      // separate linkage types for this.
+      GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
+    }
+
+    // Set visibility on a declaration only if it's explicit.
+    if (LV.isVisibilityExplicit())
+      GV->setVisibility(CodeGenModule::GetLLVMVisibility(LV.getVisibility()));
+  }
+}
+
 void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
                                           llvm::Function *F,
                                           bool IsIncompleteFunction) {
@@ -804,24 +829,7 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
   // Only a few attributes are set on declarations; these may later be
   // overridden by a definition.
 
-  if (FD->hasAttr<DLLImportAttr>()) {
-    F->setLinkage(llvm::Function::ExternalLinkage);
-    F->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
-  } else if (FD->hasAttr<WeakAttr>() ||
-             FD->isWeakImported()) {
-    // "extern_weak" is overloaded in LLVM; we probably should have
-    // separate linkage types for this.
-    F->setLinkage(llvm::Function::ExternalWeakLinkage);
-  } else {
-    F->setLinkage(llvm::Function::ExternalLinkage);
-    if (FD->hasAttr<DLLExportAttr>())
-      F->setDLLStorageClass(llvm::GlobalValue::DLLExportStorageClass);
-
-    LinkageInfo LV = FD->getLinkageAndVisibility();
-    if (LV.getLinkage() == ExternalLinkage && LV.isVisibilityExplicit()) {
-      F->setVisibility(GetLLVMVisibility(LV.getVisibility()));
-    }
-  }
+  setLinkageAndVisibilityForGV(F, FD);
 
   if (const SectionAttr *SA = FD->getAttr<SectionAttr>())
     F->setSection(SA->getName());
@@ -1614,21 +1622,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
     // handling.
     GV->setConstant(isTypeConstant(D->getType(), false));
 
-    // Set linkage and visibility in case we never see a definition.
-    LinkageInfo LV = D->getLinkageAndVisibility();
-    if (LV.getLinkage() != ExternalLinkage) {
-      // Don't set internal linkage on declarations.
-    } else {
-      if (D->hasAttr<DLLImportAttr>()) {
-        GV->setLinkage(llvm::GlobalValue::ExternalLinkage);
-        GV->setDLLStorageClass(llvm::GlobalValue::DLLImportStorageClass);
-      } else if (D->hasAttr<WeakAttr>() || D->isWeakImported())
-        GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
-
-      // Set visibility on a declaration only if it's explicit.
-      if (LV.isVisibilityExplicit())
-        GV->setVisibility(GetLLVMVisibility(LV.getVisibility()));
-    }
+    setLinkageAndVisibilityForGV(GV, D);
 
     if (D->getTLSKind()) {
       if (D->getTLSKind() == VarDecl::TLS_Dynamic)
