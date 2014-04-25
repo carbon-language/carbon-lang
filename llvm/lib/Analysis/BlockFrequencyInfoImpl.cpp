@@ -17,7 +17,6 @@
 #include <deque>
 
 using namespace llvm;
-using namespace llvm::bfi_detail;
 
 #define DEBUG_TYPE "block-freq"
 
@@ -569,7 +568,7 @@ static void cleanup(BlockFrequencyInfoImplBase &BFI) {
   BFI.Freqs = std::move(SavedFreqs);
 }
 
-bool BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
+void BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
                                            const LoopData *OuterLoop,
                                            const BlockNode &Pred,
                                            const BlockNode &Succ,
@@ -599,48 +598,34 @@ bool BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
   if (isLoopHeader(Resolved)) {
     DEBUG(debugSuccessor("backedge"));
     Dist.addBackedge(OuterLoop->getHeader(), Weight);
-    return true;
+    return;
   }
 
   if (Working[Resolved.Index].getContainingLoop() != OuterLoop) {
     DEBUG(debugSuccessor("  exit  "));
     Dist.addExit(Resolved, Weight);
-    return true;
+    return;
   }
 
   if (Resolved < Pred) {
-    if (!isLoopHeader(Pred)) {
-      // If OuterLoop is an irreducible loop, we can't actually handle this.
-      assert((!OuterLoop || !OuterLoop->isIrreducible()) &&
-             "unhandled irreducible control flow");
-
-      // Irreducible backedge.  Abort.
-      DEBUG(debugSuccessor("abort!!!"));
-      return false;
-    }
-
-    // If "Pred" is a loop header, then this isn't really a backedge; rather,
-    // OuterLoop must be irreducible.  These false backedges can come only from
-    // secondary loop headers.
-    assert(OuterLoop && OuterLoop->isIrreducible() && !isLoopHeader(Resolved) &&
-           "unhandled irreducible control flow");
+    // Irreducible backedge.  Skip.
+    DEBUG(debugSuccessor("  skip  "));
+    return;
   }
 
   DEBUG(debugSuccessor(" local  "));
   Dist.addLocal(Resolved, Weight);
-  return true;
 }
 
-bool BlockFrequencyInfoImplBase::addLoopSuccessorsToDist(
+void BlockFrequencyInfoImplBase::addLoopSuccessorsToDist(
     const LoopData *OuterLoop, LoopData &Loop, Distribution &Dist) {
   // Copy the exit map into Dist.
   for (const auto &I : Loop.Exits)
-    if (!addToDist(Dist, OuterLoop, Loop.getHeader(), I.first,
-                   I.second.getMass()))
-      // Irreducible backedge.
-      return false;
+    addToDist(Dist, OuterLoop, Loop.getHeader(), I.first, I.second.getMass());
 
-  return true;
+  // We don't need this map any more.  Clear it to prevent quadratic memory
+  // usage in deeply nested loops with irreducible control flow.
+  Loop.Exits.clear();
 }
 
 /// \brief Get the maximum allowed loop scale.
@@ -652,7 +637,8 @@ static Float getMaxLoopScale() { return Float(1, 12); }
 /// \brief Compute the loop scale for a loop.
 void BlockFrequencyInfoImplBase::computeLoopScale(LoopData &Loop) {
   // Compute loop scale.
-  DEBUG(dbgs() << "compute-loop-scale: " << getLoopName(Loop) << "\n");
+  DEBUG(dbgs() << "compute-loop-scale: " << getBlockName(Loop.getHeader())
+               << "\n");
 
   // LoopScale == 1 / ExitMass
   // ExitMass == HeadMass - BackedgeMass
@@ -673,15 +659,12 @@ void BlockFrequencyInfoImplBase::computeLoopScale(LoopData &Loop) {
 
 /// \brief Package up a loop.
 void BlockFrequencyInfoImplBase::packageLoop(LoopData &Loop) {
-  DEBUG(dbgs() << "packaging-loop: " << getLoopName(Loop) << "\n");
-
-  // Clear the subloop exits to prevent quadratic memory usage.
-  for (const BlockNode &M : Loop.Nodes) {
-    if (auto *Loop = Working[M.Index].getPackagedLoop())
-      Loop->Exits.clear();
-    DEBUG(dbgs() << " - node: " << getBlockName(M.Index) << "\n");
-  }
+  DEBUG(dbgs() << "packaging-loop: " << getBlockName(Loop.getHeader()) << "\n");
   Loop.IsPackaged = true;
+  DEBUG(for (const BlockNode &M
+             : Loop.members()) {
+               dbgs() << " - node: " << getBlockName(M.Index) << "\n";
+             });
 }
 
 void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
@@ -762,7 +745,7 @@ static void convertFloatingToInteger(BlockFrequencyInfoImplBase &BFI,
 /// Visits all the members of a loop, adjusting their BlockData according to
 /// the loop's pseudo-node.
 static void unwrapLoop(BlockFrequencyInfoImplBase &BFI, LoopData &Loop) {
-  DEBUG(dbgs() << "unwrap-loop-package: " << BFI.getLoopName(Loop)
+  DEBUG(dbgs() << "unwrap-loop-package: " << BFI.getBlockName(Loop.getHeader())
                << ": mass = " << Loop.Mass << ", scale = " << Loop.Scale
                << "\n");
   Loop.Scale *= Loop.Mass.toFloat();
@@ -774,7 +757,7 @@ static void unwrapLoop(BlockFrequencyInfoImplBase &BFI, LoopData &Loop) {
   // final head scale will be used for updated the rest of the members.
   for (const BlockNode &N : Loop.Nodes) {
     const auto &Working = BFI.Working[N.Index];
-    Float &F = Working.isAPackage() ? Working.getPackagedLoop()->Scale
+    Float &F = Working.isAPackage() ? BFI.getLoopPackage(N).Scale
                                     : BFI.Freqs[N.Index].Floating;
     Float New = Loop.Scale * F;
     DEBUG(dbgs() << " - " << BFI.getBlockName(N) << ": " << F << " => " << New
@@ -830,10 +813,6 @@ std::string
 BlockFrequencyInfoImplBase::getBlockName(const BlockNode &Node) const {
   return std::string();
 }
-std::string
-BlockFrequencyInfoImplBase::getLoopName(const LoopData &Loop) const {
-  return getBlockName(Loop.getHeader()) + (Loop.isIrreducible() ? "**" : "*");
-}
 
 raw_ostream &
 BlockFrequencyInfoImplBase::printBlockFreq(raw_ostream &OS,
@@ -848,173 +827,4 @@ BlockFrequencyInfoImplBase::printBlockFreq(raw_ostream &OS,
   Float Entry(getEntryFreq(), 0);
 
   return OS << Block / Entry;
-}
-
-void IrreducibleGraph::addNodesInLoop(const BFIBase::LoopData &OuterLoop) {
-  Start = OuterLoop.getHeader();
-  Nodes.reserve(OuterLoop.Nodes.size());
-  for (auto N : OuterLoop.Nodes)
-    addNode(N);
-  indexNodes();
-}
-void IrreducibleGraph::addNodesInFunction() {
-  Start = 0;
-  for (uint32_t Index = 0; Index < BFI.Working.size(); ++Index)
-    if (!BFI.Working[Index].isPackaged())
-      addNode(Index);
-  indexNodes();
-}
-void IrreducibleGraph::indexNodes() {
-  for (auto &I : Nodes)
-    Lookup[I.Node.Index] = &I;
-}
-void IrreducibleGraph::addEdge(IrrNode &Irr, const BlockNode &Succ,
-                               const BFIBase::LoopData *OuterLoop) {
-  if (OuterLoop && OuterLoop->isHeader(Succ))
-    return;
-  auto L = Lookup.find(Succ.Index);
-  if (L == Lookup.end())
-    return;
-  IrrNode &SuccIrr = *L->second;
-  Irr.Edges.push_back(&SuccIrr);
-  SuccIrr.Edges.push_front(&Irr);
-  ++SuccIrr.NumIn;
-}
-
-namespace llvm {
-template <> struct GraphTraits<IrreducibleGraph> {
-  typedef bfi_detail::IrreducibleGraph GraphT;
-
-  typedef const typename GraphT::IrrNode NodeType;
-  typedef typename GraphT::IrrNode::iterator ChildIteratorType;
-
-  static const NodeType *getEntryNode(const GraphT &G) {
-    return G.StartIrr;
-  }
-  static ChildIteratorType child_begin(NodeType *N) { return N->succ_begin(); }
-  static ChildIteratorType child_end(NodeType *N) { return N->succ_end(); }
-};
-}
-
-/// \brief Find extra irreducible headers.
-///
-/// Find entry blocks and other blocks with backedges, which exist when \c G
-/// contains irreducible sub-SCCs.
-static void findIrreducibleHeaders(
-    const BlockFrequencyInfoImplBase &BFI,
-    const IrreducibleGraph &G,
-    const std::vector<const IrreducibleGraph::IrrNode *> &SCC,
-    LoopData::NodeList &Headers, LoopData::NodeList &Others) {
-  // Map from nodes in the SCC to whether it's an entry block.
-  SmallDenseMap<const IrreducibleGraph::IrrNode *, bool, 8> InSCC;
-
-  // InSCC also acts the set of nodes in the graph.  Seed it.
-  for (const auto *I : SCC)
-    InSCC[I] = false;
-
-  for (auto I = InSCC.begin(), E = InSCC.end(); I != E; ++I) {
-    auto &Irr = *I->first;
-    for (const auto *P : make_range(Irr.pred_begin(), Irr.pred_end())) {
-      if (InSCC.count(P))
-        continue;
-
-      // This is an entry block.
-      I->second = true;
-      Headers.push_back(Irr.Node);
-      DEBUG(dbgs() << "  => entry = " << BFI.getBlockName(Irr.Node) << "\n");
-      break;
-    }
-  }
-  assert(Headers.size() >= 2 && "Should be irreducible");
-  if (Headers.size() == InSCC.size()) {
-    // Every block is a header.
-    std::sort(Headers.begin(), Headers.end());
-    return;
-  }
-
-  // Look for extra headers from irreducible sub-SCCs.
-  for (const auto &I : InSCC) {
-    // Entry blocks are already headers.
-    if (I.second)
-      continue;
-
-    auto &Irr = *I.first;
-    for (const auto *P : make_range(Irr.pred_begin(), Irr.pred_end())) {
-      // Skip forward edges.
-      if (P->Node < Irr.Node)
-        continue;
-
-      // Skip predecessors from entry blocks.  These can have inverted
-      // ordering.
-      if (InSCC.lookup(P))
-        continue;
-
-      // Store the extra header.
-      Headers.push_back(Irr.Node);
-      DEBUG(dbgs() << "  => extra = " << BFI.getBlockName(Irr.Node) << "\n");
-      break;
-    }
-    if (Headers.back() == Irr.Node)
-      // Added this as a header.
-      continue;
-
-    // This is not a header.
-    Others.push_back(Irr.Node);
-    DEBUG(dbgs() << "  => other = " << BFI.getBlockName(Irr.Node) << "\n");
-  }
-  std::sort(Headers.begin(), Headers.end());
-  std::sort(Others.begin(), Others.end());
-}
-
-static void createIrreducibleLoop(
-    BlockFrequencyInfoImplBase &BFI, const IrreducibleGraph &G,
-    LoopData *OuterLoop, std::list<LoopData>::iterator Insert,
-    const std::vector<const IrreducibleGraph::IrrNode *> &SCC) {
-  // Translate the SCC into RPO.
-  DEBUG(dbgs() << " - found-scc\n");
-
-  LoopData::NodeList Headers;
-  LoopData::NodeList Others;
-  findIrreducibleHeaders(BFI, G, SCC, Headers, Others);
-
-  auto Loop = BFI.Loops.emplace(Insert, OuterLoop, Headers.begin(),
-                                Headers.end(), Others.begin(), Others.end());
-
-  // Update loop hierarchy.
-  for (const auto &N : Loop->Nodes)
-    if (BFI.Working[N.Index].isLoopHeader())
-      BFI.Working[N.Index].Loop->Parent = &*Loop;
-    else
-      BFI.Working[N.Index].Loop = &*Loop;
-}
-
-iterator_range<std::list<LoopData>::iterator>
-BlockFrequencyInfoImplBase::analyzeIrreducible(
-    const IrreducibleGraph &G, LoopData *OuterLoop,
-    std::list<LoopData>::iterator Insert) {
-  assert((OuterLoop == nullptr) == (Insert == Loops.begin()));
-  auto Prev = OuterLoop ? std::prev(Insert) : Loops.end();
-
-  for (auto I = scc_begin(G); !I.isAtEnd(); ++I) {
-    if (I->size() < 2)
-      continue;
-
-    // Translate the SCC into RPO.
-    createIrreducibleLoop(*this, G, OuterLoop, Insert, *I);
-  }
-
-  if (OuterLoop)
-    return make_range(std::next(Prev), Insert);
-  return make_range(Loops.begin(), Insert);
-}
-
-void
-BlockFrequencyInfoImplBase::updateLoopWithIrreducible(LoopData &OuterLoop) {
-  OuterLoop.Exits.clear();
-  OuterLoop.BackedgeMass = BlockMass::getEmpty();
-  auto O = OuterLoop.Nodes.begin() + 1;
-  for (auto I = O, E = OuterLoop.Nodes.end(); I != E; ++I)
-    if (!Working[I->Index].isPackaged())
-      *O++ = *I;
-  OuterLoop.Nodes.erase(O, OuterLoop.Nodes.end());
 }
