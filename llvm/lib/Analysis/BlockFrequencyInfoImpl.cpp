@@ -806,8 +806,7 @@ static void convertFloatingToInteger(BlockFrequencyInfoImplBase &BFI,
 }
 
 static void scaleBlockData(BlockFrequencyInfoImplBase &BFI,
-                           const BlockNode &Node,
-                           const LoopData &Loop) {
+                           const BlockNode &Node, const LoopData &Loop) {
   Float F = Loop.Mass.toFloat() * Loop.Scale;
 
   Float &Current = BFI.Freqs[Node.Index].Floating;
@@ -823,18 +822,17 @@ static void scaleBlockData(BlockFrequencyInfoImplBase &BFI,
 ///
 /// Visits all the members of a loop, adjusting their BlockData according to
 /// the loop's pseudo-node.
-static void unwrapLoopPackage(BlockFrequencyInfoImplBase &BFI,
-                              LoopData &LoopPackage) {
-  BlockNode Head = LoopPackage.getHeader();
+static void unwrapLoop(BlockFrequencyInfoImplBase &BFI, LoopData &Loop) {
+  BlockNode Head = Loop.getHeader();
   DEBUG(dbgs() << "unwrap-loop-package: " << BFI.getBlockName(Head)
-               << ": mass = " << LoopPackage.Mass
-               << ", scale = " << LoopPackage.Scale << "\n");
-  scaleBlockData(BFI, Head, LoopPackage);
+               << ": mass = " << Loop.Mass << ", scale = " << Loop.Scale
+               << "\n");
+  scaleBlockData(BFI, Head, Loop);
 
   // Propagate the head scale through the loop.  Since members are visited in
   // RPO, the head scale will be updated by the loop scale first, and then the
   // final head scale will be used for updated the rest of the members.
-  for (const BlockNode &M : LoopPackage.members()) {
+  for (const BlockNode &M : Loop.members()) {
     const FrequencyData &HeadData = BFI.Freqs[Head.Index];
     FrequencyData &Freqs = BFI.Freqs[M.Index];
     Float NewFreq = Freqs.Floating * HeadData.Floating;
@@ -850,7 +848,7 @@ void BlockFrequencyInfoImplBase::unwrapLoops() {
     Freqs[Index].Floating = Working[Index].Mass.toFloat();
 
   for (LoopData &Loop : Loops)
-    unwrapLoopPackage(*this, Loop);
+    unwrapLoop(*this, Loop);
 }
 
 void BlockFrequencyInfoImplBase::finalizeMetrics() {
