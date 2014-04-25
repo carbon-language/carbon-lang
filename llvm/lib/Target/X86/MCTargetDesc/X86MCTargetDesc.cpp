@@ -358,13 +358,16 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     bool NoExecStack) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSBinFormatMachO())
+  switch (TheTriple.getObjectFormat()) {
+  default: llvm_unreachable("unsupported object format");
+  case Triple::MachO:
     return createMachOStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll);
-
-  if (TheTriple.isOSWindows() && !TheTriple.isOSBinFormatELF())
+  case Triple::COFF:
+    assert(TheTriple.isOSWindows() && "only Windows COFF is supported");
     return createWinCOFFStreamer(Ctx, MAB, *_Emitter, _OS, RelaxAll);
-
-  return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
+  case Triple::ELF:
+    return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
+  }
 }
 
 static MCInstPrinter *createX86MCInstPrinter(const Target &T,
