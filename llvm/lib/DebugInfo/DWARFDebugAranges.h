@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/DataExtractor.h"
+#include <vector>
 
 namespace llvm {
 
