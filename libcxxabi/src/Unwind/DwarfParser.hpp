@@ -216,7 +216,7 @@ bool CFI_Parser<A>::findFDE(A &addressSpace, pint_t pc, pint_t ehSectionStart,
             if (cieInfo->fdesHaveAugmentationData) {
               pint_t augLen = (pint_t)addressSpace.getULEB128(p, nextCFI);
               pint_t endOfAug = p + augLen;
-              if (cieInfo->lsdaEncoding != 0) {
+              if (cieInfo->lsdaEncoding != DW_EH_PE_omit) {
                 // peek at value (without indirection).  Zero means no lsda
                 pint_t lsdaStart = p;
                 if (addressSpace.getEncodedP(
