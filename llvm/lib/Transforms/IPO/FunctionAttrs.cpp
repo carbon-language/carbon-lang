@@ -601,7 +601,7 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
   // captures.
 
   for (scc_iterator<ArgumentGraph*> I = scc_begin(&AG); !I.isAtEnd(); ++I) {
-    std::vector<ArgumentGraphNode*> &ArgumentSCC = *I;
+    const std::vector<ArgumentGraphNode *> &ArgumentSCC = *I;
     if (ArgumentSCC.size() == 1) {
       if (!ArgumentSCC[0]->Definition) continue;  // synthetic root node
 
@@ -617,8 +617,8 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
     }
 
     bool SCCCaptured = false;
-    for (std::vector<ArgumentGraphNode*>::iterator I = ArgumentSCC.begin(),
-           E = ArgumentSCC.end(); I != E && !SCCCaptured; ++I) {
+    for (auto I = ArgumentSCC.begin(), E = ArgumentSCC.end();
+         I != E && !SCCCaptured; ++I) {
       ArgumentGraphNode *Node = *I;
       if (Node->Uses.empty()) {
         if (!Node->Definition->hasNoCaptureAttr())
@@ -630,13 +630,12 @@ bool FunctionAttrs::AddArgumentAttrs(const CallGraphSCC &SCC) {
     SmallPtrSet<Argument*, 8> ArgumentSCCNodes;
     // Fill ArgumentSCCNodes with the elements of the ArgumentSCC.  Used for
     // quickly looking up whether a given Argument is in this ArgumentSCC.
-    for (std::vector<ArgumentGraphNode*>::iterator I = ArgumentSCC.begin(),
-           E = ArgumentSCC.end(); I != E; ++I) {
+    for (auto I = ArgumentSCC.begin(), E = ArgumentSCC.end(); I != E; ++I) {
       ArgumentSCCNodes.insert((*I)->Definition);
     }
 
-    for (std::vector<ArgumentGraphNode*>::iterator I = ArgumentSCC.begin(),
-           E = ArgumentSCC.end(); I != E && !SCCCaptured; ++I) {
+    for (auto I = ArgumentSCC.begin(), E = ArgumentSCC.end();
+         I != E && !SCCCaptured; ++I) {
       ArgumentGraphNode *N = *I;
       for (SmallVectorImpl<ArgumentGraphNode*>::iterator UI = N->Uses.begin(),
              UE = N->Uses.end(); UI != UE; ++UI) {

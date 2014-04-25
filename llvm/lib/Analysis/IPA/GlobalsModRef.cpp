@@ -359,7 +359,7 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
   // We do a bottom-up SCC traversal of the call graph.  In other words, we
   // visit all callees before callers (leaf-first).
   for (scc_iterator<CallGraph*> I = scc_begin(&CG); !I.isAtEnd(); ++I) {
-    std::vector<CallGraphNode *> &SCC = *I;
+    const std::vector<CallGraphNode *> &SCC = *I;
     assert(!SCC.empty() && "SCC with no functions?");
 
     if (!SCC[0]->getFunction()) {

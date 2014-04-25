@@ -75,7 +75,7 @@ bool CFGSCC::runOnFunction(Function &F) {
   unsigned sccNum = 0;
   errs() << "SCCs for Function " << F.getName() << " in PostOrder:";
   for (scc_iterator<Function*> SCCI = scc_begin(&F); !SCCI.isAtEnd(); ++SCCI) {
-    std::vector<BasicBlock*> &nextSCC = *SCCI;
+    const std::vector<BasicBlock *> &nextSCC = *SCCI;
     errs() << "\nSCC #" << ++sccNum << " : ";
     for (std::vector<BasicBlock*>::const_iterator I = nextSCC.begin(),
            E = nextSCC.end(); I != E; ++I)

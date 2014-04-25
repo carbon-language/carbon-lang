@@ -277,7 +277,7 @@ TEST(SCCIteratorTest, AllSmallGraphs) {
     GT::NodeSubset NodesInSomeSCC;
 
     for (scc_iterator<GT> I = scc_begin(G), E = scc_end(G); I != E; ++I) {
-      std::vector<GT::NodeType*> &SCC = *I;
+      const std::vector<GT::NodeType *> &SCC = *I;
 
       // Get the nodes in this SCC as a NodeSubset rather than a vector.
       GT::NodeSubset NodesInThisSCC;

@@ -435,8 +435,8 @@ bool CGPassManager::runOnModule(Module &M) {
   while (!CGI.isAtEnd()) {
     // Copy the current SCC and increment past it so that the pass can hack
     // on the SCC if it wants to without invalidating our iterator.
-    std::vector<CallGraphNode*> &NodeVec = *CGI;
-    CurSCC.initialize(&NodeVec[0], &NodeVec[0]+NodeVec.size());
+    const std::vector<CallGraphNode *> &NodeVec = *CGI;
+    CurSCC.initialize(NodeVec.data(), NodeVec.data() + NodeVec.size());
     ++CGI;
     
     // At the top level, we run all the passes in this pass manager on the
