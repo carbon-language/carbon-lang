@@ -191,9 +191,10 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   SmallVector<Node *, 1> Worklist;
   Worklist.swap(Nodes);
   for (Node *N : Worklist) {
-    // Clear these to 0 while we re-run Tarjan's over the SCC.
+    // The nodes formerly in this SCC are no longer in any SCC.
     N->DFSNumber = 0;
     N->LowLink = 0;
+    G.SCCMap.erase(N);
   }
 
   // The callee can already reach every node in this SCC (by definition). It is
@@ -230,9 +231,8 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
       Node &ChildN = *I;
       // If this child isn't currently in this SCC, no need to process it.
       // However, we do need to remove this SCC from its SCC's parent set.
-      SCC &ChildSCC = *G.SCCMap.lookup(&ChildN);
-      if (&ChildSCC != this) {
-        ChildSCC.ParentSCCs.erase(this);
+      if (SCC *ChildSCC = G.SCCMap.lookup(&ChildN)) {
+        ChildSCC->ParentSCCs.erase(this);
         continue;
       }
 
@@ -298,6 +298,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     N->DFSNumber = -1;
     N->LowLink = -1;
     Nodes.push_back(N);
+    G.SCCMap.insert(std::make_pair(N, this));
     for (Node &ChildN : *N) {
       if (NewNodes.count(&ChildN))
         continue;
