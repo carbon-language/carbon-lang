@@ -358,6 +358,8 @@ AppleGetPendingItemsHandler::GetPendingItems (Thread &thread, addr_t queue, addr
     options.SetUnwindOnError (true);
     options.SetIgnoreBreakpoints (true);
     options.SetStopOthers (true);
+    options.SetTimeoutUsec(500000);
+    options.SetTryAllThreads (false);
     thread.CalculateExecutionContext (exe_ctx);
 
     if (m_get_pending_items_function == NULL)

@@ -363,6 +363,8 @@ AppleGetQueuesHandler::GetCurrentQueues (Thread &thread, addr_t page_to_free, ui
     options.SetUnwindOnError (true);
     options.SetIgnoreBreakpoints (true);
     options.SetStopOthers (true);
+    options.SetTimeoutUsec(500000);
+    options.SetTryAllThreads (false);
     thread.CalculateExecutionContext (exe_ctx);
 
     ExecutionResults func_call_ret;

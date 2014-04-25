@@ -355,6 +355,8 @@ AppleGetThreadItemInfoHandler::GetThreadItemInfo (Thread &thread, tid_t thread_i
     options.SetUnwindOnError (true);
     options.SetIgnoreBreakpoints (true);
     options.SetStopOthers (true);
+    options.SetTimeoutUsec(500000);
+    options.SetTryAllThreads (false);
     thread.CalculateExecutionContext (exe_ctx);
 
     if (m_get_thread_item_info_function == NULL)
