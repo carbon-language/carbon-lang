@@ -688,13 +688,10 @@ InstrEmitter::EmitDbgValue(SDDbgValue *SD,
     MIB.addReg(0U);
   }
 
-  // Indirect addressing is indicated by an Imm as the second parameter.
-  if (SD->isIndirect())
+  if (Offset != 0) // Indirect addressing.
     MIB.addImm(Offset);
-  else {
-    assert(Offset == 0 && "direct value cannot have an offset");
+  else
     MIB.addReg(0U, RegState::Debug);
-  }
 
   MIB.addMetadata(MDPtr);
 
