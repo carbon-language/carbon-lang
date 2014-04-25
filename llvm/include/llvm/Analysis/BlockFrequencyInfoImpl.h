@@ -945,6 +945,7 @@ public:
   struct LoopData {
     typedef SmallVector<std::pair<BlockNode, BlockMass>, 4> ExitMap;
     typedef SmallVector<BlockNode, 4> MemberList;
+    LoopData *Parent;       ///< The parent loop.
     BlockNode Header;       ///< Header.
     bool IsPackaged;        ///< Whether this has been packaged.
     ExitMap Exits;          ///< Successor edges (and weights).
@@ -953,21 +954,26 @@ public:
     BlockMass Mass;
     Float Scale;
 
-    LoopData(const BlockNode &Header) : Header(Header), IsPackaged(false) {}
+    LoopData(LoopData *Parent, const BlockNode &Header)
+        : Parent(Parent), Header(Header), IsPackaged(false) {}
   };
 
   /// \brief Index of loop information.
   struct WorkingData {
-    LoopData *Loop;           ///< The loop this block is the header of.
-    LoopData *ContainingLoop; ///< The block whose loop this block is inside.
-    BlockMass Mass;           ///< Mass distribution from the entry block.
+    BlockNode Node; ///< This node.
+    LoopData *Loop; ///< The loop this block is inside.
+    BlockMass Mass; ///< Mass distribution from the entry block.
 
-    WorkingData() : Loop(nullptr), ContainingLoop(nullptr) {}
+    WorkingData(const BlockNode &Node) : Node(Node), Loop(nullptr) {}
 
-    bool hasLoopHeader() const { return ContainingLoop; }
-    bool isLoopHeader() const { return Loop; }
+    bool isLoopHeader() const { return Loop && Loop->Header == Node; }
+    bool hasLoopHeader() const { return isLoopHeader() ? Loop->Parent : Loop; }
 
+    LoopData *getContainingLoop() const {
+      return isLoopHeader() ? Loop->Parent : Loop;
+    }
     BlockNode getContainingHeader() const {
+      auto *ContainingLoop = getContainingLoop();
       if (ContainingLoop)
         return ContainingLoop->Header;
       return BlockNode();
@@ -975,10 +981,11 @@ public:
 
     /// \brief Has ContainingLoop been packaged up?
     bool isPackaged() const {
+      auto *ContainingLoop = getContainingLoop();
       return ContainingLoop && ContainingLoop->IsPackaged;
     }
     /// \brief Has Loop been packaged up?
-    bool isAPackage() const { return Loop && Loop->IsPackaged; }
+    bool isAPackage() const { return isLoopHeader() && Loop->IsPackaged; }
   };
 
   /// \brief Unscaled probability weight.
@@ -1072,7 +1079,7 @@ public:
 
   LoopData &getLoopPackage(const BlockNode &Head) {
     assert(Head.Index < Working.size());
-    assert(Working[Head.Index].Loop != nullptr);
+    assert(Working[Head.Index].isLoopHeader());
     return *Working[Head.Index].Loop;
   }
 
@@ -1416,7 +1423,9 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeRPOT() {
     Nodes[*I] = Node;
   }
 
-  Working.resize(RPOT.size());
+  Working.reserve(RPOT.size());
+  for (size_t Index = 0; Index < RPOT.size(); ++Index)
+    Working.emplace_back(Index);
   Freqs.resize(RPOT.size());
 }
 
@@ -1426,33 +1435,39 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
     return;
 
   // Visit loops top down and assign them an index.
-  std::deque<const LoopT *> Q;
-  Q.insert(Q.end(), LI->begin(), LI->end());
+  std::deque<std::pair<const LoopT *, LoopData *>> Q;
+  for (const LoopT *L : *LI)
+    Q.emplace_back(L, nullptr);
   while (!Q.empty()) {
-    const LoopT *Loop = Q.front();
+    const LoopT *Loop = Q.front().first;
+    LoopData *Parent = Q.front().second;
     Q.pop_front();
-    Q.insert(Q.end(), Loop->begin(), Loop->end());
 
-    // Save the order this loop was visited.
     BlockNode Header = getNode(Loop->getHeader());
     assert(Header.isValid());
 
-    Loops.emplace_back(Header);
+    Loops.emplace_back(Parent, Header);
     Working[Header.Index].Loop = &Loops.back();
     DEBUG(dbgs() << " - loop = " << getBlockName(Header) << "\n");
+
+    for (const LoopT *L : *Loop)
+      Q.emplace_back(L, &Loops.back());
   }
 
   // Visit nodes in reverse post-order and add them to their deepest containing
   // loop.
   for (size_t Index = 0; Index < RPOT.size(); ++Index) {
+    // Loop headers have already been mostly mapped.
+    if (Working[Index].isLoopHeader()) {
+      LoopData *ContainingLoop = Working[Index].getContainingLoop();
+      if (ContainingLoop)
+        ContainingLoop->Members.push_back(Index);
+      continue;
+    }
+
     const LoopT *Loop = LI->getLoopFor(RPOT[Index]);
     if (!Loop)
       continue;
-
-    // If this is a loop header, find its parent loop (if any).
-    if (Working[Index].isLoopHeader())
-      if (!(Loop = Loop->getParentLoop()))
-        continue;
 
     // Add this node to its containing loop's member list.
     BlockNode Header = getNode(Loop->getHeader());
@@ -1460,7 +1475,7 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
     const auto &HeaderData = Working[Header.Index];
     assert(HeaderData.isLoopHeader());
 
-    Working[Index].ContainingLoop = HeaderData.Loop;
+    Working[Index].Loop = HeaderData.Loop;
     HeaderData.Loop->Members.push_back(Index);
     DEBUG(dbgs() << " - loop = " << getBlockName(Header)
                  << ": member = " << getBlockName(Index) << "\n");
