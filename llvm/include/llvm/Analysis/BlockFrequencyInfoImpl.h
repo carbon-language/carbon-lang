@@ -956,6 +956,8 @@ public:
 
     LoopData(LoopData *Parent, const BlockNode &Header)
         : Parent(Parent), Header(Header), IsPackaged(false) {}
+    bool isHeader(const BlockNode &Node) const { return Node == Header; }
+    BlockNode getHeader() const { return Header; }
   };
 
   /// \brief Index of loop information.
@@ -966,7 +968,7 @@ public:
 
     WorkingData(const BlockNode &Node) : Node(Node), Loop(nullptr) {}
 
-    bool isLoopHeader() const { return Loop && Loop->Header == Node; }
+    bool isLoopHeader() const { return Loop && Loop->isHeader(Node); }
     bool hasLoopHeader() const { return isLoopHeader() ? Loop->Parent : Loop; }
 
     LoopData *getContainingLoop() const {
@@ -975,7 +977,7 @@ public:
     BlockNode getContainingHeader() const {
       auto *ContainingLoop = getContainingLoop();
       if (ContainingLoop)
-        return ContainingLoop->Header;
+        return ContainingLoop->getHeader();
       return BlockNode();
     }
 
@@ -1491,11 +1493,11 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::computeMassInLoops() {
 template <class BT>
 void BlockFrequencyInfoImpl<BT>::computeMassInLoop(LoopData &Loop) {
   // Compute mass in loop.
-  DEBUG(dbgs() << "compute-mass-in-loop: " << getBlockName(Loop.Header)
+  DEBUG(dbgs() << "compute-mass-in-loop: " << getBlockName(Loop.getHeader())
                << "\n");
 
-  Working[Loop.Header.Index].Mass = BlockMass::getFull();
-  propagateMassToSuccessors(&Loop, Loop.Header);
+  Working[Loop.getHeader().Index].Mass = BlockMass::getFull();
+  propagateMassToSuccessors(&Loop, Loop.getHeader());
 
   for (const BlockNode &M : Loop.Members)
     propagateMassToSuccessors(&Loop, M);
@@ -1528,10 +1530,8 @@ BlockFrequencyInfoImpl<BT>::propagateMassToSuccessors(LoopData *OuterLoop,
   DEBUG(dbgs() << " - node: " << getBlockName(Node) << "\n");
   // Calculate probability for successors.
   Distribution Dist;
-  BlockNode LoopHead;
-  if (OuterLoop)
-    LoopHead = OuterLoop->Header;
-  if (Node != LoopHead && Working[Node.Index].isLoopHeader())
+  if (Working[Node.Index].isLoopHeader() &&
+      Working[Node.Index].Loop != OuterLoop)
     addLoopSuccessorsToDist(OuterLoop, *Working[Node.Index].Loop, Dist);
   else {
     const BlockT *BB = getBlock(Node);
