@@ -54,4 +54,11 @@
 // RUN:     FileCheck -check-prefix=ErrWarn %s
 // ErrWarn: warning: falling back to {{.*}}cl.exe
 
+// Don't fall back on non-C or C++ files.
+// RUN: %clang_cl /fallback -### -- %S/Inputs/file.ll 2>&1 | FileCheck -check-prefix=LL %s
+// LL: file.ll
+// LL-NOT: ||
+// LL-NOT: "cl.exe"
+
+
 #error "This fails to compile."
