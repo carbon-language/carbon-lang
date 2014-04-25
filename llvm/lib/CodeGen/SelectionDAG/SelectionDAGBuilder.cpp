@@ -992,14 +992,11 @@ void SelectionDAGBuilder::resolveDanglingDebugInfo(const Value *V,
     unsigned DbgSDNodeOrder = DDI.getSDNodeOrder();
     MDNode *Variable = DI->getVariable();
     uint64_t Offset = DI->getOffset();
-    // FIXME: This does not handle indirect values at offset 0.
-    bool IsIndirect = (Offset != 0);
     SDDbgValue *SDV;
     if (Val.getNode()) {
       if (!EmitFuncArgumentDbgValue(V, Variable, Offset, Val)) {
         SDV = DAG.getDbgValue(Variable, Val.getNode(),
-                              Val.getResNo(), IsIndirect,
-			      Offset, dl, DbgSDNodeOrder);
+                              Val.getResNo(), Offset, dl, DbgSDNodeOrder);
         DAG.AddDbgValue(SDV, Val.getNode(), false);
       }
     } else
@@ -4747,8 +4744,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         FrameIndexSDNode *FINode = dyn_cast<FrameIndexSDNode>(N.getNode());
         if (FINode)
           // Byval parameter.  We have a frame index at this point.
-          SDV = DAG.getFrameIndexDbgValue(Variable, FINode->getIndex(),
-					  0, dl, SDNodeOrder);
+          SDV = DAG.getDbgValue(Variable, FINode->getIndex(),
+                                0, dl, SDNodeOrder);
         else {
           // Address is an argument, so try to emit its dbg value using
           // virtual register info from the FuncInfo.ValueMap.
@@ -4757,7 +4754,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         }
       } else if (AI)
         SDV = DAG.getDbgValue(Variable, N.getNode(), N.getResNo(),
-                              true, 0, dl, SDNodeOrder);
+                              0, dl, SDNodeOrder);
       else {
         // Can't do anything with other non-AI cases yet.
         DEBUG(dbgs() << "Dropping debug info for " << DI << "\n");
@@ -4777,8 +4774,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
             DenseMap<const AllocaInst*, int>::iterator SI =
               FuncInfo.StaticAllocaMap.find(AI);
             if (SI != FuncInfo.StaticAllocaMap.end()) {
-              SDV = DAG.getFrameIndexDbgValue(Variable, SI->second,
-                                              0, dl, SDNodeOrder);
+              SDV = DAG.getDbgValue(Variable, SI->second,
+                                    0, dl, SDNodeOrder);
               DAG.AddDbgValue(SDV, nullptr, false);
               return nullptr;
             }
@@ -4805,7 +4802,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
 
     SDDbgValue *SDV;
     if (isa<ConstantInt>(V) || isa<ConstantFP>(V) || isa<UndefValue>(V)) {
-      SDV = DAG.getConstantDbgValue(Variable, V, Offset, dl, SDNodeOrder);
+      SDV = DAG.getDbgValue(Variable, V, Offset, dl, SDNodeOrder);
       DAG.AddDbgValue(SDV, nullptr, false);
     } else {
       // Do not use getValue() in here; we don't want to generate code at
@@ -4816,11 +4813,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         N = UnusedArgNodeMap[V];
       if (N.getNode()) {
         if (!EmitFuncArgumentDbgValue(V, Variable, Offset, N)) {
-	  // A dbg.value for an alloca is always indirect.
-	  bool IsIndirect(isa<AllocaInst>(V));
           SDV = DAG.getDbgValue(Variable, N.getNode(),
-                                N.getResNo(), IsIndirect,
-				Offset, dl, SDNodeOrder);
+                                N.getResNo(), Offset, dl, SDNodeOrder);
           DAG.AddDbgValue(SDV, N.getNode(), false);
         }
       } else if (!V->use_empty() ) {
@@ -4849,6 +4843,11 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       FuncInfo.StaticAllocaMap.find(AI);
     if (SI == FuncInfo.StaticAllocaMap.end())
       return nullptr; // VLAs.
+    int FI = SI->second;
+
+    MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
+    if (!DI.getDebugLoc().isUnknown() && MMI.hasDebugInfo())
+      MMI.setVariableDbgInfo(Variable, FI, DI.getDebugLoc());
     return nullptr;
   }
 

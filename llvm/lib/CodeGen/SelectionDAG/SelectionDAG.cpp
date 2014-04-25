@@ -5646,26 +5646,21 @@ SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
 
 /// getDbgValue - Creates a SDDbgValue node.
 ///
-/// SDNode
 SDDbgValue *
-SelectionDAG::getDbgValue(MDNode *MDPtr, SDNode *N, unsigned R,
-			  bool IsIndirect, uint64_t Off,
+SelectionDAG::getDbgValue(MDNode *MDPtr, SDNode *N, unsigned R, uint64_t Off,
                           DebugLoc DL, unsigned O) {
-  return new (Allocator) SDDbgValue(MDPtr, N, R, IsIndirect, Off, DL, O);
+  return new (Allocator) SDDbgValue(MDPtr, N, R, Off, DL, O);
 }
 
-/// Constant
 SDDbgValue *
-SelectionDAG::getConstantDbgValue(MDNode *MDPtr, const Value *C,
-				  uint64_t Off,
-				  DebugLoc DL, unsigned O) {
+SelectionDAG::getDbgValue(MDNode *MDPtr, const Value *C, uint64_t Off,
+                          DebugLoc DL, unsigned O) {
   return new (Allocator) SDDbgValue(MDPtr, C, Off, DL, O);
 }
 
-/// FrameIndex
 SDDbgValue *
-SelectionDAG::getFrameIndexDbgValue(MDNode *MDPtr, unsigned FI, uint64_t Off,
-				    DebugLoc DL, unsigned O) {
+SelectionDAG::getDbgValue(MDNode *MDPtr, unsigned FI, uint64_t Off,
+                          DebugLoc DL, unsigned O) {
   return new (Allocator) SDDbgValue(MDPtr, FI, Off, DL, O);
 }
 
@@ -6071,7 +6066,6 @@ void SelectionDAG::TransferDbgValues(SDValue From, SDValue To) {
     SDDbgValue *Dbg = *I;
     if (Dbg->getKind() == SDDbgValue::SDNODE) {
       SDDbgValue *Clone = getDbgValue(Dbg->getMDPtr(), ToNode, To.getResNo(),
-				      Dbg->isIndirect(),
                                       Dbg->getOffset(), Dbg->getDebugLoc(),
                                       Dbg->getOrder());
       ClonedDVs.push_back(Clone);
