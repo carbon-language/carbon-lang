@@ -449,6 +449,7 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
     assert(N->DFSNumber != 0 && "We should always assign a DFS number "
                                 "before placing a node onto the stack.");
 
+    bool Recurse = false; // Used to simulate recursing onto a child.
     for (auto I = DFSStack.back().second, E = N->end(); I != E; ++I) {
       Node &ChildN = *I;
       if (ChildN.DFSNumber == 0) {
@@ -463,7 +464,8 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
         ChildN.LowLink = ChildN.DFSNumber = NextDFSNumber++;
         SCCEntryNodes.remove(&ChildN.getFunction());
         DFSStack.push_back(std::make_pair(&ChildN, ChildN.begin()));
-        return LazyCallGraph::getNextSCCInPostOrder();
+        Recurse = true;
+        break;
       }
 
       // Track the lowest link of the childen, if any are still in the stack.
@@ -472,6 +474,11 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
       if (ChildN.LowLink >= 0 && ChildN.LowLink < N->LowLink)
         N->LowLink = ChildN.LowLink;
     }
+    if (Recurse)
+      // Continue the outer loop when we exit the inner loop in order to
+      // recurse onto a child.
+      continue;
+
     // No more children to process here, pop the node off the stack.
     DFSStack.pop_back();
 
