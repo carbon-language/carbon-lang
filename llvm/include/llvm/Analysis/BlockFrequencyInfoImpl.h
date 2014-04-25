@@ -1058,8 +1058,7 @@ public:
   ///
   /// Adds all edges from LocalLoopHead to Dist.  Calls addToDist() to add each
   /// successor edge.
-  void addLoopSuccessorsToDist(const BlockNode &LoopHead,
-                               const BlockNode &LocalLoopHead,
+  void addLoopSuccessorsToDist(const LoopData *OuterLoop, LoopData &Loop,
                                Distribution &Dist);
 
   /// \brief Add an edge to the distribution.
@@ -1068,7 +1067,7 @@ public:
   /// edge is forward/exit/backedge is in the context of LoopHead.  Otherwise,
   /// every edge should be a forward edge (since all the loops are packaged
   /// up).
-  void addToDist(Distribution &Dist, const BlockNode &LoopHead,
+  void addToDist(Distribution &Dist, const LoopData *OuterLoop,
                  const BlockNode &Pred, const BlockNode &Succ, uint64_t Weight);
 
   LoopData &getLoopPackage(const BlockNode &Head) {
@@ -1096,14 +1095,14 @@ public:
   /// but only actually distributed to the local successors.  The general mass
   /// should be split up between all three types of successors, but distributed
   /// only to exits and backedges.
-  void distributeMass(const BlockNode &Source, const BlockNode &LoopHead,
+  void distributeMass(const BlockNode &Source, LoopData *OuterLoop,
                       Distribution &Dist);
 
   /// \brief Compute the loop scale for a loop.
-  void computeLoopScale(const BlockNode &LoopHead);
+  void computeLoopScale(LoopData &Loop);
 
   /// \brief Package up a loop.
-  void packageLoop(const BlockNode &LoopHead);
+  void packageLoop(LoopData &Loop);
 
   /// \brief Finalize frequency metrics.
   ///
@@ -1330,10 +1329,9 @@ template <class BT> class BlockFrequencyInfoImpl : BlockFrequencyInfoImplBase {
   void initializeLoops();
   void runOnFunction(const FunctionT *F);
 
-  void propagateMassToSuccessors(const BlockNode &LoopHead,
-                                 const BlockNode &Node);
+  void propagateMassToSuccessors(LoopData *OuterLoop, const BlockNode &Node);
   void computeMassInLoops();
-  void computeMassInLoop(const BlockNode &LoopHead);
+  void computeMassInLoop(LoopData &Loop);
   void computeMassInFunction();
 
   std::string getBlockName(const BlockNode &Node) const override {
@@ -1472,22 +1470,23 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
 template <class BT> void BlockFrequencyInfoImpl<BT>::computeMassInLoops() {
   // Visit loops with the deepest first, and the top-level loops last.
   for (auto L = Loops.rbegin(), E = Loops.rend(); L != E; ++L)
-    computeMassInLoop(L->Header);
+    computeMassInLoop(*L);
 }
 
 template <class BT>
-void BlockFrequencyInfoImpl<BT>::computeMassInLoop(const BlockNode &LoopHead) {
+void BlockFrequencyInfoImpl<BT>::computeMassInLoop(LoopData &Loop) {
   // Compute mass in loop.
-  DEBUG(dbgs() << "compute-mass-in-loop: " << getBlockName(LoopHead) << "\n");
+  DEBUG(dbgs() << "compute-mass-in-loop: " << getBlockName(Loop.Header)
+               << "\n");
 
-  Working[LoopHead.Index].Mass = BlockMass::getFull();
-  propagateMassToSuccessors(LoopHead, LoopHead);
+  Working[Loop.Header.Index].Mass = BlockMass::getFull();
+  propagateMassToSuccessors(&Loop, Loop.Header);
 
-  for (const BlockNode &M : getLoopPackage(LoopHead).Members)
-    propagateMassToSuccessors(LoopHead, M);
+  for (const BlockNode &M : Loop.Members)
+    propagateMassToSuccessors(&Loop, M);
 
-  computeLoopScale(LoopHead);
-  packageLoop(LoopHead);
+  computeLoopScale(Loop);
+  packageLoop(Loop);
 }
 
 template <class BT> void BlockFrequencyInfoImpl<BT>::computeMassInFunction() {
@@ -1503,31 +1502,35 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::computeMassInFunction() {
     if (Working[Node.Index].hasLoopHeader())
       continue;
 
-    propagateMassToSuccessors(BlockNode(), Node);
+    propagateMassToSuccessors(nullptr, Node);
   }
 }
 
 template <class BT>
 void
-BlockFrequencyInfoImpl<BT>::propagateMassToSuccessors(const BlockNode &LoopHead,
+BlockFrequencyInfoImpl<BT>::propagateMassToSuccessors(LoopData *OuterLoop,
                                                       const BlockNode &Node) {
   DEBUG(dbgs() << " - node: " << getBlockName(Node) << "\n");
   // Calculate probability for successors.
   Distribution Dist;
+  BlockNode LoopHead;
+  if (OuterLoop)
+    LoopHead = OuterLoop->Header;
   if (Node != LoopHead && Working[Node.Index].isLoopHeader())
-    addLoopSuccessorsToDist(LoopHead, Node, Dist);
+    addLoopSuccessorsToDist(OuterLoop, *Working[Node.Index].Loop, Dist);
   else {
     const BlockT *BB = getBlock(Node);
     for (auto SI = Successor::child_begin(BB), SE = Successor::child_end(BB);
          SI != SE; ++SI)
       // Do not dereference SI, or getEdgeWeight() is linear in the number of
       // successors.
-      addToDist(Dist, LoopHead, Node, getNode(*SI), BPI->getEdgeWeight(BB, SI));
+      addToDist(Dist, OuterLoop, Node, getNode(*SI),
+                BPI->getEdgeWeight(BB, SI));
   }
 
   // Distribute mass to successors, saving exit and backedge data in the
   // loop header.
-  distributeMass(Node, LoopHead, Dist);
+  distributeMass(Node, OuterLoop, Dist);
 }
 
 template <class BT>

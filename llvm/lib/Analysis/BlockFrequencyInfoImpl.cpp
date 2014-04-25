@@ -653,12 +653,16 @@ static BlockMass &getPackageMass(BlockFrequencyInfoImplBase &BFI,
 }
 
 void BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
-                                           const BlockNode &LoopHead,
+                                           const LoopData *OuterLoop,
                                            const BlockNode &Pred,
                                            const BlockNode &Succ,
                                            uint64_t Weight) {
   if (!Weight)
     Weight = 1;
+
+  BlockNode LoopHead;
+  if (OuterLoop)
+    LoopHead = OuterLoop->Header;
 
 #ifndef NDEBUG
   auto debugSuccessor = [&](const char *Type, const BlockNode &Resolved) {
@@ -698,18 +702,14 @@ void BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
 }
 
 void BlockFrequencyInfoImplBase::addLoopSuccessorsToDist(
-    const BlockNode &LoopHead, const BlockNode &LocalLoopHead,
-    Distribution &Dist) {
-  LoopData &LoopPackage = getLoopPackage(LocalLoopHead);
-  const LoopData::ExitMap &Exits = LoopPackage.Exits;
-
+    const LoopData *OuterLoop, LoopData &Loop, Distribution &Dist) {
   // Copy the exit map into Dist.
-  for (const auto &I : Exits)
-    addToDist(Dist, LoopHead, LocalLoopHead, I.first, I.second.getMass());
+  for (const auto &I : Loop.Exits)
+    addToDist(Dist, OuterLoop, Loop.Header, I.first, I.second.getMass());
 
   // We don't need this map any more.  Clear it to prevent quadratic memory
   // usage in deeply nested loops with irreducible control flow.
-  LoopPackage.Exits.clear();
+  Loop.Exits.clear();
 }
 
 /// \brief Get the maximum allowed loop scale.
@@ -719,41 +719,39 @@ void BlockFrequencyInfoImplBase::addLoopSuccessorsToDist(
 static Float getMaxLoopScale() { return Float(1, 12); }
 
 /// \brief Compute the loop scale for a loop.
-void BlockFrequencyInfoImplBase::computeLoopScale(const BlockNode &LoopHead) {
+void BlockFrequencyInfoImplBase::computeLoopScale(LoopData &Loop) {
   // Compute loop scale.
-  DEBUG(dbgs() << "compute-loop-scale: " << getBlockName(LoopHead) << "\n");
+  DEBUG(dbgs() << "compute-loop-scale: " << getBlockName(Loop.Header) << "\n");
 
   // LoopScale == 1 / ExitMass
   // ExitMass == HeadMass - BackedgeMass
-  LoopData &LoopPackage = getLoopPackage(LoopHead);
-  BlockMass ExitMass = BlockMass::getFull() - LoopPackage.BackedgeMass;
+  BlockMass ExitMass = BlockMass::getFull() - Loop.BackedgeMass;
 
   // Block scale stores the inverse of the scale.
-  LoopPackage.Scale = ExitMass.toFloat().inverse();
+  Loop.Scale = ExitMass.toFloat().inverse();
 
   DEBUG(dbgs() << " - exit-mass = " << ExitMass << " (" << BlockMass::getFull()
-               << " - " << LoopPackage.BackedgeMass << ")\n"
-               << " - scale = " << LoopPackage.Scale << "\n");
+               << " - " << Loop.BackedgeMass << ")\n"
+               << " - scale = " << Loop.Scale << "\n");
 
-  if (LoopPackage.Scale > getMaxLoopScale()) {
-    LoopPackage.Scale = getMaxLoopScale();
+  if (Loop.Scale > getMaxLoopScale()) {
+    Loop.Scale = getMaxLoopScale();
     DEBUG(dbgs() << " - reduced-to-max-scale: " << getMaxLoopScale() << "\n");
   }
 }
 
 /// \brief Package up a loop.
-void BlockFrequencyInfoImplBase::packageLoop(const BlockNode &LoopHead) {
-  DEBUG(dbgs() << "packaging-loop: " << getBlockName(LoopHead) << "\n");
-  auto &PackagedLoop = getLoopPackage(LoopHead);
-  PackagedLoop.IsPackaged = true;
+void BlockFrequencyInfoImplBase::packageLoop(LoopData &Loop) {
+  DEBUG(dbgs() << "packaging-loop: " << getBlockName(Loop.Header) << "\n");
+  Loop.IsPackaged = true;
   DEBUG(for (const BlockNode &M
-             : PackagedLoop.Members) {
+             : Loop.Members) {
                dbgs() << " - node: " << getBlockName(M.Index) << "\n";
              });
 }
 
 void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
-                                                const BlockNode &LoopHead,
+                                                LoopData *OuterLoop,
                                                 Distribution &Dist) {
   BlockMass Mass = getPackageMass(*this, Source);
   DEBUG(dbgs() << "  => mass:  " << Mass
@@ -776,9 +774,9 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
   (void)debugAssign;
 #endif
 
-  LoopData *LoopPackage = 0;
-  if (LoopHead.isValid())
-    LoopPackage = &getLoopPackage(LoopHead);
+  BlockNode LoopHead;
+  if (OuterLoop)
+    LoopHead = OuterLoop->Header;
   for (const Weight &W : Dist.Weights) {
     // Check for a local edge (forward and non-exit).
     if (W.Type == Weight::Local) {
@@ -789,12 +787,12 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
     }
 
     // Backedges and exits only make sense if we're processing a loop.
-    assert(LoopPackage && "backedge or exit outside of loop");
+    assert(OuterLoop && "backedge or exit outside of loop");
 
     // Check for a backedge.
     if (W.Type == Weight::Backedge) {
       BlockMass Back = D.takeBackedgeMass(W.Amount);
-      LoopPackage->BackedgeMass += Back;
+      OuterLoop->BackedgeMass += Back;
       DEBUG(debugAssign(BlockNode(), Back, "back"));
       continue;
     }
@@ -802,7 +800,7 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
     // This must be an exit.
     assert(W.Type == Weight::Exit);
     BlockMass Exit = D.takeExitMass(W.Amount);
-    LoopPackage->Exits.push_back(std::make_pair(W.TargetNode, Exit));
+    OuterLoop->Exits.push_back(std::make_pair(W.TargetNode, Exit));
     DEBUG(debugAssign(W.TargetNode, Exit, "exit"));
   }
 }
