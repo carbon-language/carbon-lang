@@ -33,6 +33,10 @@ namespace lldb_private {
 /// @class Editline Editline.h "lldb/Host/Editline.h"
 /// @brief A class that encapsulates editline functionality.
 //----------------------------------------------------------------------
+class EditlineHistory;
+    
+typedef std::shared_ptr<EditlineHistory> EditlineHistorySP;
+    
 class Editline
 {
 public:
@@ -149,9 +153,6 @@ private:
     Error
     PrivateGetLine(std::string &line);
     
-    FileSpec
-    GetHistoryFile();
-
     unsigned char
     HandleCompletion (int ch);
     
@@ -187,9 +188,7 @@ private:
         EditNextLine,
     };
     ::EditLine *m_editline;
-    ::History *m_history;
-    ::HistEvent m_history_event;
-    std::string m_program;
+    EditlineHistorySP m_history_sp;
     std::string m_prompt;
     std::string m_lines_prompt;
     std::string m_getc_buffer;
