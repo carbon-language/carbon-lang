@@ -25,6 +25,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/GraphTraits.h"
+#include "llvm/ADT/iterator.h"
 #include <vector>
 
 namespace llvm {
@@ -36,18 +37,14 @@ namespace llvm {
 /// build up a vector of nodes in a particular SCC. Note that it is a forward
 /// iterator and thus you cannot backtrack or re-visit nodes.
 template <class GraphT, class GT = GraphTraits<GraphT>>
-class scc_iterator
-    : public std::iterator<std::forward_iterator_tag,
-                           const std::vector<typename GT::NodeType>,
-                           ptrdiff_t> {
+class scc_iterator : public iterator_facade_base<
+                         scc_iterator<GraphT, GT>, std::forward_iterator_tag,
+                         const std::vector<typename GT::NodeType>, ptrdiff_t> {
   typedef typename GT::NodeType NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
   typedef std::vector<NodeType *> SccTy;
-  typedef std::iterator<std::forward_iterator_tag,
-                        const std::vector<typename GT::NodeType>,
-                        ptrdiff_t> super;
-  typedef typename super::reference reference;
-  typedef typename super::pointer pointer;
+  typedef typename scc_iterator::reference reference;
+  typedef typename scc_iterator::pointer pointer;
 
   /// Element of VisitStack during DFS.
   struct StackElement {
@@ -115,16 +112,10 @@ public:
   bool operator==(const scc_iterator &x) const {
     return VisitStack == x.VisitStack && CurrentSCC == x.CurrentSCC;
   }
-  bool operator!=(const scc_iterator &x) const { return !operator==(x); }
 
   scc_iterator &operator++() {
     GetNextSCC();
     return *this;
-  }
-  scc_iterator operator++(int) {
-    scc_iterator tmp = *this;
-    ++*this;
-    return tmp;
   }
 
   const SccTy &operator*() const {
