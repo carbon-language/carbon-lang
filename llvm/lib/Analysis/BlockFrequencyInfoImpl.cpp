@@ -614,29 +614,6 @@ static void cleanup(BlockFrequencyInfoImplBase &BFI) {
   BFI.Freqs = std::move(SavedFreqs);
 }
 
-/// \brief Get a possibly packaged node.
-///
-/// Get the node currently representing Node, which could be a containing
-/// loop.
-///
-/// This function should only be called when distributing mass.  As long as
-/// there are no irreducilbe edges to Node, then it will have complexity O(1)
-/// in this context.
-///
-/// In general, the complexity is O(L), where L is the number of loop headers
-/// Node has been packaged into.  Since this method is called in the context
-/// of distributing mass, L will be the number of loop headers an early exit
-/// edge jumps out of.
-static BlockNode getPackagedNode(const BlockFrequencyInfoImplBase &BFI,
-                                 const BlockNode &Node) {
-  assert(Node.isValid());
-  if (!BFI.Working[Node.Index].isPackaged())
-    return Node;
-  if (!BFI.Working[Node.Index].isAPackage())
-    return Node;
-  return getPackagedNode(BFI, BFI.Working[Node.Index].getContainingHeader());
-}
-
 /// \brief Get the appropriate mass for a possible pseudo-node loop package.
 ///
 /// Get appropriate mass for Node.  If Node is a loop-header (whose loop has
@@ -682,7 +659,7 @@ void BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
     Dist.addBackedge(OuterLoop->getHeader(), Weight);
     return;
   }
-  BlockNode Resolved = getPackagedNode(*this, Succ);
+  BlockNode Resolved = getPackagedNode(Succ);
   assert(!isLoopHeader(Resolved));
 
   if (Working[Resolved.Index].getContainingLoop() != OuterLoop) {

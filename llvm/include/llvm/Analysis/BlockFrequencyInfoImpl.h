@@ -1093,6 +1093,28 @@ public:
     return *Working[Head.Index].Loop;
   }
 
+  /// \brief Get a possibly packaged node.
+  ///
+  /// Get the node currently representing Node, which could be a containing
+  /// loop.
+  ///
+  /// This function should only be called when distributing mass.  As long as
+  /// there are no irreducilbe edges to Node, then it will have complexity O(1)
+  /// in this context.
+  ///
+  /// In general, the complexity is O(L), where L is the number of loop headers
+  /// Node has been packaged into.  Since this method is called in the context
+  /// of distributing mass, L will be the number of loop headers an early exit
+  /// edge jumps out of.
+  BlockNode getPackagedNode(const BlockNode &Node) {
+    assert(Node.isValid());
+    if (!Working[Node.Index].isPackaged())
+      return Node;
+    if (!Working[Node.Index].isAPackage())
+      return Node;
+    return getPackagedNode(Working[Node.Index].getContainingHeader());
+  }
+
   /// \brief Distribute mass according to a distribution.
   ///
   /// Distributes the mass in Source according to Dist.  If LoopHead.isValid(),
