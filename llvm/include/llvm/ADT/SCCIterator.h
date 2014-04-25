@@ -151,47 +151,47 @@ class scc_iterator
     }
   }
 
-  inline scc_iterator(NodeType *entryN) : visitNum(0) {
+  scc_iterator(NodeType *entryN) : visitNum(0) {
     DFSVisitOne(entryN);
     GetNextSCC();
   }
 
   // End is when the DFS stack is empty.
-  inline scc_iterator() {}
+  scc_iterator() {}
 
 public:
-  static inline scc_iterator begin(const GraphT &G) {
+  static scc_iterator begin(const GraphT &G) {
     return scc_iterator(GT::getEntryNode(G));
   }
-  static inline scc_iterator end(const GraphT &) { return scc_iterator(); }
+  static scc_iterator end(const GraphT &) { return scc_iterator(); }
 
   /// \brief Direct loop termination test which is more efficient than
   /// comparison with \c end().
-  inline bool isAtEnd() const {
+  bool isAtEnd() const {
     assert(!CurrentSCC.empty() || VisitStack.empty());
     return CurrentSCC.empty();
   }
 
-  inline bool operator==(const scc_iterator &x) const {
+  bool operator==(const scc_iterator &x) const {
     return VisitStack == x.VisitStack && CurrentSCC == x.CurrentSCC;
   }
-  inline bool operator!=(const scc_iterator &x) const { return !operator==(x); }
+  bool operator!=(const scc_iterator &x) const { return !operator==(x); }
 
-  inline scc_iterator &operator++() {
+  scc_iterator &operator++() {
     GetNextSCC();
     return *this;
   }
-  inline scc_iterator operator++(int) {
+  scc_iterator operator++(int) {
     scc_iterator tmp = *this;
     ++*this;
     return tmp;
   }
 
-  inline const SccTy &operator*() const {
+  const SccTy &operator*() const {
     assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
     return CurrentSCC;
   }
-  inline SccTy &operator*() {
+  SccTy &operator*() {
     assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
     return CurrentSCC;
   }
