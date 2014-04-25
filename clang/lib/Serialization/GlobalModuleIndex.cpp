@@ -228,7 +228,9 @@ GlobalModuleIndex::GlobalModuleIndex(llvm::MemoryBuffer *Buffer,
   }
 }
 
-GlobalModuleIndex::~GlobalModuleIndex() { }
+GlobalModuleIndex::~GlobalModuleIndex() {
+  delete static_cast<IdentifierIndexTable *>(IdentifierIndex);
+}
 
 std::pair<GlobalModuleIndex *, GlobalModuleIndex::ErrorCode>
 GlobalModuleIndex::readIndex(StringRef Path) {
