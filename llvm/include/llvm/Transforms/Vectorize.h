@@ -47,6 +47,9 @@ struct VectorizeConfig {
   /// @brief Vectorize floating-point math intrinsics.
   bool VectorizeMath;
 
+  /// @brief Vectorize bit intrinsics.
+  bool VectorizeBitManipulations;
+
   /// @brief Vectorize the fused-multiply-add intrinsic.
   bool VectorizeFMA;
 

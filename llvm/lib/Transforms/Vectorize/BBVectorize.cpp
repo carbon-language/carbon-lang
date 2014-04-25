@@ -123,6 +123,10 @@ NoMath("bb-vectorize-no-math", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize floating-point math intrinsics"));
 
 static cl::opt<bool>
+  NoBitManipulation("bb-vectorize-no-bitmanip", cl::init(false), cl::Hidden,
+  cl::desc("Don't try to vectorize BitManipulation intrinsics"));
+
+static cl::opt<bool>
 NoFMA("bb-vectorize-no-fma", cl::init(false), cl::Hidden,
   cl::desc("Don't try to vectorize the fused-multiply-add intrinsic"));
 
@@ -684,6 +688,11 @@ namespace {
       case Intrinsic::floor:
       case Intrinsic::fabs:
         return Config.VectorizeMath;
+      case Intrinsic::bswap:
+      case Intrinsic::ctpop:
+      case Intrinsic::ctlz:
+      case Intrinsic::cttz:
+        return Config.VectorizeBitManipulations;
       case Intrinsic::fma:
       case Intrinsic::fmuladd:
         return Config.VectorizeFMA;
@@ -1088,13 +1097,14 @@ namespace {
       CostSavings = ICost + JCost - VCost;
     }
 
-    // The powi intrinsic is special because only the first argument is
-    // vectorized, the second arguments must be equal.
+    // The powi,ctlz,cttz intrinsics are special because only the first
+    // argument is vectorized, the second arguments must be equal.
     CallInst *CI = dyn_cast<CallInst>(I);
     Function *FI;
     if (CI && (FI = CI->getCalledFunction())) {
       Intrinsic::ID IID = (Intrinsic::ID) FI->getIntrinsicID();
-      if (IID == Intrinsic::powi) {
+      if (IID == Intrinsic::powi || IID == Intrinsic::ctlz ||
+          IID == Intrinsic::cttz) {
         Value *A1I = CI->getArgOperand(1),
               *A1J = cast<CallInst>(J)->getArgOperand(1);
         const SCEV *A1ISCEV = SE->getSCEV(A1I),
@@ -1118,7 +1128,8 @@ namespace {
         assert(CI->getNumArgOperands() == CJ->getNumArgOperands() &&
                "Intrinsic argument counts differ");
         for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i) {
-          if (IID == Intrinsic::powi && i == 1)
+          if ((IID == Intrinsic::powi || IID == Intrinsic::ctlz ||
+               IID == Intrinsic::cttz) && i == 1)
             Tys.push_back(CI->getArgOperand(i)->getType());
           else
             Tys.push_back(getVecTypeForPair(CI->getArgOperand(i)->getType(),
@@ -2773,10 +2784,11 @@ namespace {
 
           ReplacedOperands[o] = Intrinsic::getDeclaration(M, IID, VArgType);
           continue;
-        } else if (IID == Intrinsic::powi && o == 1) {
-          // The second argument of powi is a single integer and we've already
-          // checked that both arguments are equal. As a result, we just keep
-          // I's second argument.
+        } else if ((IID == Intrinsic::powi || IID == Intrinsic::ctlz ||
+                    IID == Intrinsic::cttz) && o == 1) {
+          // The second argument of powi/ctlz/cttz is a single integer/constant
+          // and we've already checked that both arguments are equal.
+          // As a result, we just keep I's second argument.
           ReplacedOperands[o] = I->getOperand(o);
           continue;
         }
@@ -3222,6 +3234,7 @@ VectorizeConfig::VectorizeConfig() {
   VectorizePointers = !::NoPointers;
   VectorizeCasts = !::NoCasts;
   VectorizeMath = !::NoMath;
+  VectorizeBitManipulations = !::NoBitManipulation;
   VectorizeFMA = !::NoFMA;
   VectorizeSelect = !::NoSelect;
   VectorizeCmp = !::NoCmp;

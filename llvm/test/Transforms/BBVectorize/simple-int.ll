@@ -13,6 +13,10 @@ declare double @llvm.rint.f64(double)
 declare double @llvm.trunc.f64(double)
 declare double @llvm.floor.f64(double)
 declare double @llvm.fabs.f64(double)
+declare i64 @llvm.bswap.i64(i64)
+declare i64 @llvm.ctpop.i64(i64)
+declare i64 @llvm.ctlz.i64(i64, i1)
+declare i64 @llvm.cttz.i64(i64, i1)
 
 ; Basic depth-3 chain with fma
 define double @test1(double %A1, double %A2, double %B1, double %B2, double %C1, double %C2) {
@@ -333,6 +337,155 @@ define double @testfabs(double %A1, double %A2, double %B1, double %B2) {
 
 }
 
+; Basic depth-3 chain with bswap
+define i64 @testbswap(i64 %A1, i64 %A2, i64 %B1, i64 %B2) {
+	%X1 = sub i64 %A1, %B1
+	%X2 = sub i64 %A2, %B2
+	%Y1 = call i64 @llvm.bswap.i64(i64 %X1)
+	%Y2 = call i64 @llvm.bswap.i64(i64 %X2)
+	%Z1 = add i64 %Y1, %B1
+	%Z2 = add i64 %Y2, %B2
+	%R  = mul i64 %Z1, %Z2
+	ret i64 %R
+	
+; CHECK: @testbswap
+; CHECK: %X1.v.i1.1 = insertelement <2 x i64> undef, i64 %B1, i32 0
+; CHECK: %X1.v.i1.2 = insertelement <2 x i64> %X1.v.i1.1, i64 %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x i64> undef, i64 %A1, i32 0
+; CHECK: %X1.v.i0.2 = insertelement <2 x i64> %X1.v.i0.1, i64 %A2, i32 1
+; CHECK: %X1 = sub <2 x i64> %X1.v.i0.2, %X1.v.i1.2
+; CHECK: %Y1 = call <2 x i64> @llvm.bswap.v2i64(<2 x i64> %X1)
+; CHECK: %Z1 = add <2 x i64> %Y1, %X1.v.i1.2
+; CHECK: %Z1.v.r1 = extractelement <2 x i64> %Z1, i32 0
+; CHECK: %Z1.v.r2 = extractelement <2 x i64> %Z1, i32 1
+; CHECK: %R = mul i64 %Z1.v.r1, %Z1.v.r2
+; CHECK: ret i64 %R
+
+}
+
+; Basic depth-3 chain with ctpop
+define i64 @testctpop(i64 %A1, i64 %A2, i64 %B1, i64 %B2) {
+	%X1 = sub i64 %A1, %B1
+	%X2 = sub i64 %A2, %B2
+	%Y1 = call i64 @llvm.ctpop.i64(i64 %X1)
+	%Y2 = call i64 @llvm.ctpop.i64(i64 %X2)
+	%Z1 = add i64 %Y1, %B1
+	%Z2 = add i64 %Y2, %B2
+	%R  = mul i64 %Z1, %Z2
+	ret i64 %R
+	
+; CHECK: @testctpop
+; CHECK: %X1.v.i1.1 = insertelement <2 x i64> undef, i64 %B1, i32 0
+; CHECK: %X1.v.i1.2 = insertelement <2 x i64> %X1.v.i1.1, i64 %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x i64> undef, i64 %A1, i32 0
+; CHECK: %X1.v.i0.2 = insertelement <2 x i64> %X1.v.i0.1, i64 %A2, i32 1
+; CHECK: %X1 = sub <2 x i64> %X1.v.i0.2, %X1.v.i1.2
+; CHECK: %Y1 = call <2 x i64> @llvm.ctpop.v2i64(<2 x i64> %X1)
+; CHECK: %Z1 = add <2 x i64> %Y1, %X1.v.i1.2
+; CHECK: %Z1.v.r1 = extractelement <2 x i64> %Z1, i32 0
+; CHECK: %Z1.v.r2 = extractelement <2 x i64> %Z1, i32 1
+; CHECK: %R = mul i64 %Z1.v.r1, %Z1.v.r2
+; CHECK: ret i64 %R
+
+}
+
+; Basic depth-3 chain with ctlz
+define i64 @testctlz(i64 %A1, i64 %A2, i64 %B1, i64 %B2) {
+	%X1 = sub i64 %A1, %B1
+	%X2 = sub i64 %A2, %B2
+	%Y1 = call i64 @llvm.ctlz.i64(i64 %X1, i1 true)
+	%Y2 = call i64 @llvm.ctlz.i64(i64 %X2, i1 true)
+	%Z1 = add i64 %Y1, %B1
+	%Z2 = add i64 %Y2, %B2
+	%R  = mul i64 %Z1, %Z2
+	ret i64 %R
+
+; CHECK: @testctlz
+; CHECK: %X1.v.i1.1 = insertelement <2 x i64> undef, i64 %B1, i32 0
+; CHECK: %X1.v.i1.2 = insertelement <2 x i64> %X1.v.i1.1, i64 %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x i64> undef, i64 %A1, i32 0
+; CHECK: %X1.v.i0.2 = insertelement <2 x i64> %X1.v.i0.1, i64 %A2, i32 1
+; CHECK: %X1 = sub <2 x i64> %X1.v.i0.2, %X1.v.i1.2
+; CHECK: %Y1 = call <2 x i64> @llvm.ctlz.v2i64(<2 x i64> %X1, i1 true)
+; CHECK: %Z1 = add <2 x i64> %Y1, %X1.v.i1.2
+; CHECK: %Z1.v.r1 = extractelement <2 x i64> %Z1, i32 0
+; CHECK: %Z1.v.r2 = extractelement <2 x i64> %Z1, i32 1
+; CHECK: %R = mul i64 %Z1.v.r1, %Z1.v.r2
+; CHECK: ret i64 %R
+
+}
+
+; Basic depth-3 chain with ctlz
+define i64 @testctlzneg(i64 %A1, i64 %A2, i64 %B1, i64 %B2) {
+	%X1 = sub i64 %A1, %B1
+	%X2 = sub i64 %A2, %B2
+	%Y1 = call i64 @llvm.ctlz.i64(i64 %X1, i1 true)
+	%Y2 = call i64 @llvm.ctlz.i64(i64 %X2, i1 false)
+	%Z1 = add i64 %Y1, %B1
+	%Z2 = add i64 %Y2, %B2
+	%R  = mul i64 %Z1, %Z2
+	ret i64 %R
+
+; CHECK: @testctlzneg
+; CHECK: %X1 = sub i64 %A1, %B1
+; CHECK: %X2 = sub i64 %A2, %B2
+; CHECK: %Y1 = call i64 @llvm.ctlz.i64(i64 %X1, i1 true)
+; CHECK: %Y2 = call i64 @llvm.ctlz.i64(i64 %X2, i1 false)
+; CHECK: %Z1 = add i64 %Y1, %B1
+; CHECK: %Z2 = add i64 %Y2, %B2
+; CHECK: %R = mul i64 %Z1, %Z2
+; CHECK: ret i64 %R
+}
+
+; Basic depth-3 chain with cttz
+define i64 @testcttz(i64 %A1, i64 %A2, i64 %B1, i64 %B2) {
+	%X1 = sub i64 %A1, %B1
+	%X2 = sub i64 %A2, %B2
+	%Y1 = call i64 @llvm.cttz.i64(i64 %X1, i1 true)
+	%Y2 = call i64 @llvm.cttz.i64(i64 %X2, i1 true)
+	%Z1 = add i64 %Y1, %B1
+	%Z2 = add i64 %Y2, %B2
+	%R  = mul i64 %Z1, %Z2
+	ret i64 %R
+
+; CHECK: @testcttz
+; CHECK: %X1.v.i1.1 = insertelement <2 x i64> undef, i64 %B1, i32 0
+; CHECK: %X1.v.i1.2 = insertelement <2 x i64> %X1.v.i1.1, i64 %B2, i32 1
+; CHECK: %X1.v.i0.1 = insertelement <2 x i64> undef, i64 %A1, i32 0
+; CHECK: %X1.v.i0.2 = insertelement <2 x i64> %X1.v.i0.1, i64 %A2, i32 1
+; CHECK: %X1 = sub <2 x i64> %X1.v.i0.2, %X1.v.i1.2
+; CHECK: %Y1 = call <2 x i64> @llvm.cttz.v2i64(<2 x i64> %X1, i1 true)
+; CHECK: %Z1 = add <2 x i64> %Y1, %X1.v.i1.2
+; CHECK: %Z1.v.r1 = extractelement <2 x i64> %Z1, i32 0
+; CHECK: %Z1.v.r2 = extractelement <2 x i64> %Z1, i32 1
+; CHECK: %R = mul i64 %Z1.v.r1, %Z1.v.r2
+; CHECK: ret i64 %R
+
+}
+
+; Basic depth-3 chain with cttz
+define i64 @testcttzneg(i64 %A1, i64 %A2, i64 %B1, i64 %B2) {
+	%X1 = sub i64 %A1, %B1
+	%X2 = sub i64 %A2, %B2
+	%Y1 = call i64 @llvm.cttz.i64(i64 %X1, i1 true)
+	%Y2 = call i64 @llvm.cttz.i64(i64 %X2, i1 false)
+	%Z1 = add i64 %Y1, %B1
+	%Z2 = add i64 %Y2, %B2
+	%R  = mul i64 %Z1, %Z2
+	ret i64 %R
+
+; CHECK: @testcttzneg
+; CHECK: %X1 = sub i64 %A1, %B1
+; CHECK: %X2 = sub i64 %A2, %B2
+; CHECK: %Y1 = call i64 @llvm.cttz.i64(i64 %X1, i1 true)
+; CHECK: %Y2 = call i64 @llvm.cttz.i64(i64 %X2, i1 false)
+; CHECK: %Z1 = add i64 %Y1, %B1
+; CHECK: %Z2 = add i64 %Y2, %B2
+; CHECK: %R = mul i64 %Z1, %Z2
+; CHECK: ret i64 %R
+}
+
+
 
 ; CHECK: declare <2 x double> @llvm.fma.v2f64(<2 x double>, <2 x double>, <2 x double>) #0
 ; CHECK: declare <2 x double> @llvm.fmuladd.v2f64(<2 x double>, <2 x double>, <2 x double>) #0
@@ -346,4 +499,8 @@ define double @testfabs(double %A1, double %A2, double %B1, double %B2) {
 ; CHECK: declare <2 x double> @llvm.trunc.v2f64(<2 x double>) #0
 ; CHECK: declare <2 x double> @llvm.floor.v2f64(<2 x double>) #0
 ; CHECK: declare <2 x double> @llvm.fabs.v2f64(<2 x double>) #0
+; CHECK: declare <2 x i64> @llvm.bswap.v2i64(<2 x i64>) #0
+; CHECK: declare <2 x i64> @llvm.ctpop.v2i64(<2 x i64>) #0
+; CHECK: declare <2 x i64> @llvm.ctlz.v2i64(<2 x i64>, i1) #0
+; CHECK: declare <2 x i64> @llvm.cttz.v2i64(<2 x i64>, i1) #0
 ; CHECK: attributes #0 = { nounwind readnone }
