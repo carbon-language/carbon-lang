@@ -86,7 +86,7 @@ def DADDu  : ArithLogicR<"daddu", GPR64Opnd, 1, II_DADDU, add>,
                               ADD_FM<0, 0x2d>;
 def DSUBu  : ArithLogicR<"dsubu", GPR64Opnd, 0, II_DSUBU, sub>,
                               ADD_FM<0, 0x2f>;
-def DSUB   : ArithLogicR<"dsub", GPR64Opnd, 0, II_DSUB, sub>, ADD_FM<0, 0x2e>;
+def DSUB   : ArithLogicR<"dsub", GPR64Opnd, 0, II_DSUB>, ADD_FM<0, 0x2e>;
 
 let isCodeGenOnly = 1 in {
 def SLT64  : SetCC_R<"slt", setlt, GPR64Opnd>, ADD_FM<0, 0x2a>;
