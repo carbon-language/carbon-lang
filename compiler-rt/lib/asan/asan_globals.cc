@@ -92,6 +92,18 @@ static void RegisterGlobal(const Global *g) {
   CHECK(AddrIsInMem(g->beg));
   CHECK(AddrIsAlignedByGranularity(g->beg));
   CHECK(AddrIsAlignedByGranularity(g->size_with_redzone));
+  if (flags()->detect_odr_violation) {
+    // Try detecting ODR (One Definition Rule) violation, i.e. the situation
+    // where two globals with the same name are defined in different modules.
+    if (__asan_region_is_poisoned(g->beg, g->size_with_redzone)) {
+      // This check may not be enough: if the first global is much larger
+      // the entire redzone of the second global may be within the first global.
+      for (ListOfGlobals *l = list_of_all_globals; l; l = l->next) {
+        if (g->beg == l->g->beg)
+          ReportODRViolation(g, l->g);
+      }
+    }
+  }
   if (flags()->poison_heap)
     PoisonRedZones(*g);
   ListOfGlobals *l = new(allocator_for_globals) ListOfGlobals;

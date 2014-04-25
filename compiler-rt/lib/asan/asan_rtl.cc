@@ -225,6 +225,10 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
       "detect_container_overflow",
       "If true, honor the container overflow  annotations. "
       "See https://code.google.com/p/address-sanitizer/wiki/ContainerOverflow");
+
+  ParseFlag(str, &f->detect_odr_violation,
+      "detect_odr_violation",
+      "If true, detect violation of One-Definition-Rule (ODR) ");
 }
 
 void InitializeFlags(Flags *f, const char *env) {

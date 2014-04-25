@@ -54,6 +54,9 @@ void NORETURN
 ReportBadParamsToAnnotateContiguousContainer(uptr beg, uptr end, uptr old_mid,
                                              uptr new_mid, StackTrace *stack);
 
+void NORETURN
+ReportODRViolation(const __asan_global *g1, const __asan_global *g2);
+
 // Mac-specific errors and warnings.
 void WarnMacFreeUnallocated(
     uptr addr, uptr zone_ptr, const char *zone_name, StackTrace *stack);
