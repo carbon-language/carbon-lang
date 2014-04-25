@@ -1205,6 +1205,17 @@ class Cursor(Structure):
         return self._extent
 
     @property
+    def access_specifier(self):
+        """
+        Retrieves the access specifier (if any) of the entity pointed at by the
+        cursor.
+        """
+        if not hasattr(self, '_access_specifier'):
+            self._access_specifier = conf.lib.clang_getCXXAccessSpecifier(self)
+
+        return AccessSpecifier.from_id(self._access_specifier)
+
+    @property
     def type(self):
         """
         Retrieve the Type (if any) of the entity pointed at by the cursor.
@@ -1425,6 +1436,54 @@ class Cursor(Structure):
 
         res._tu = args[0]._tu
         return res
+
+### C++ access specifiers ###
+
+class AccessSpecifier(object):
+    """
+    Describes the access of a C++ class member
+    """
+
+    # The unique kind objects, index by id.
+    _kinds = []
+    _name_map = None
+
+    def __init__(self, value):
+        if value >= len(AccessSpecifier._kinds):
+            AccessSpecifier._kinds += [None] * (value - len(AccessSpecifier._kinds) + 1)
+        if AccessSpecifier._kinds[value] is not None:
+            raise ValueError,'AccessSpecifier already loaded'
+        self.value = value
+        AccessSpecifier._kinds[value] = self
+        AccessSpecifier._name_map = None
+
+    def from_param(self):
+        return self.value
+
+    @property
+    def name(self):
+        """Get the enumeration name of this access specifier."""
+        if self._name_map is None:
+            self._name_map = {}
+            for key,value in AccessSpecifier.__dict__.items():
+                if isinstance(value,AccessSpecifier):
+                    self._name_map[value] = key
+        return self._name_map[self]
+
+    @staticmethod
+    def from_id(id):
+        if id >= len(AccessSpecifier._kinds) or not AccessSpecifier._kinds[id]:
+            raise ValueError,'Unknown access specifier %d' % id
+        return AccessSpecifier._kinds[id]
+
+    def __repr__(self):
+        return 'AccessSpecifier.%s' % (self.name,)
+
+AccessSpecifier.INVALID = AccessSpecifier(0)
+AccessSpecifier.PUBLIC = AccessSpecifier(1)
+AccessSpecifier.PROTECTED = AccessSpecifier(2)
+AccessSpecifier.PRIVATE = AccessSpecifier(3)
+AccessSpecifier.NONE = AccessSpecifier(4)
 
 ### Type Kinds ###
 
