@@ -10,9 +10,8 @@
 #ifndef LLVM_DEBUGINFO_DWARFDEBUGARANGES_H
 #define LLVM_DEBUGINFO_DWARFDEBUGARANGES_H
 
-#include "DWARFDebugArangeSet.h"
 #include "llvm/ADT/DenseSet.h"
-#include <list>
+#include "llvm/Support/DataExtractor.h"
 
 namespace llvm {
 
@@ -20,20 +19,15 @@ class DWARFContext;
 
 class DWARFDebugAranges {
 public:
-  void clear() {
-    Aranges.clear();
-    ParsedCUOffsets.clear();
-  }
-
   void generate(DWARFContext *CTX);
-
-  // Use appendRange multiple times and then call sortAndMinimize.
-  void appendRange(uint32_t CUOffset, uint64_t LowPC, uint64_t HighPC);
-
   uint32_t findAddress(uint64_t Address) const;
 
 private:
+  void clear();
   void extract(DataExtractor DebugArangesData);
+
+  // Use appendRange multiple times and then call sortAndMinimize.
+  void appendRange(uint32_t CUOffset, uint64_t LowPC, uint64_t HighPC);
   void sortAndMinimize();
 
   struct Range {

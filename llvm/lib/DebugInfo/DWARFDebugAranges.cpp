@@ -10,6 +10,7 @@
 #include "DWARFDebugAranges.h"
 #include "DWARFCompileUnit.h"
 #include "DWARFContext.h"
+#include "DWARFDebugArangeSet.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -68,6 +69,11 @@ void DWARFDebugAranges::generate(DWARFContext *CTX) {
   }
 
   sortAndMinimize();
+}
+
+void DWARFDebugAranges::clear() {
+  Aranges.clear();
+  ParsedCUOffsets.clear();
 }
 
 void DWARFDebugAranges::appendRange(uint32_t CUOffset, uint64_t LowPC,

@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "DWARFContext.h"
+#include "DWARFDebugArangeSet.h"
+
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compression.h"
