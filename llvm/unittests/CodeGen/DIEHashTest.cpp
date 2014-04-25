@@ -567,12 +567,12 @@ TEST(DIEHashTest, MemberSdata) {
   DIEInteger Four(4);
   DIEInteger Five(5);
   DIEString FStr(&One, "int");
-  DIE *IntTyDIE = new DIE(dwarf::DW_TAG_base_type);
-  IntTyDIE->addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Four);
-  IntTyDIE->addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Five);
-  IntTyDIE->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FStr);
+  DIE IntTyDIE(dwarf::DW_TAG_base_type);
+  IntTyDIE.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Four);
+  IntTyDIE.addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Five);
+  IntTyDIE.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FStr);
 
-  DIEEntry IntTy(IntTyDIE);
+  DIEEntry IntTy(&IntTyDIE);
   DIE *PITyDIE = new DIE(dwarf::DW_TAG_const_type);
   PITyDIE->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntTy);
 
@@ -631,18 +631,18 @@ TEST(DIEHashTest, MemberBlock) {
   PI->addValue(dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, &One);
   PI->addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, &One);
 
-  DIEBlock *PIBlock = new DIEBlock();
+  DIEBlock PIBlock;
   DIEInteger Blk1(0xc3);
   DIEInteger Blk2(0xf5);
   DIEInteger Blk3(0x48);
   DIEInteger Blk4(0x40);
 
-  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk1);
-  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk2);
-  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk3);
-  PIBlock->addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk4);
+  PIBlock.addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk1);
+  PIBlock.addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk2);
+  PIBlock.addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk3);
+  PIBlock.addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, &Blk4);
 
-  PI->addValue(dwarf::DW_AT_const_value, dwarf::DW_FORM_block1, PIBlock);
+  PI->addValue(dwarf::DW_AT_const_value, dwarf::DW_FORM_block1, &PIBlock);
 
   A.addChild(PI);
 
