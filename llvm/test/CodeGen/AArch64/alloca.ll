@@ -1,6 +1,7 @@
 ; RUN: llc -mtriple=aarch64-none-linux-gnu -verify-machineinstrs < %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
 ; RUN: llc -mtriple=arm64-linux-gnu -verify-machineinstrs -o - %s | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
-; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-NOFP %s
+; RUN: llc -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-NOFP-AARCH64 %s
+; RUN: llc -mtriple=arm64-none-linux-gnu -mattr=-fp-armv8 -verify-machineinstrs < %s | FileCheck --check-prefix=CHECK-NOFP-ARM64 %s
 
 declare void @use_addr(i8*)
 
@@ -76,11 +77,11 @@ define void @test_variadic_alloca(i64 %n, ...) {
 ; CHECK-AARCH64-FP: str     q1, [x8, #16]
 
 
-; CHECK-NOFP: sub     sp, sp, #80
-; CHECK-NOFP: stp     x29, x30, [sp, #64]
-; CHECK-NOFP: add     x29, sp, #64
-; CHECK-NOFP: sub     [[TMP:x[0-9]+]], x29, #64
-; CHECK-NOFP: add     x8, [[TMP]], #0
+; CHECK-NOFP-AARCH64: sub     sp, sp, #80
+; CHECK-NOFP-AARCH64: stp     x29, x30, [sp, #64]
+; CHECK-NOFP-AARCH64: add     x29, sp, #64
+; CHECK-NOFP-AARCH64: sub     [[TMP:x[0-9]+]], x29, #64
+; CHECK-NOFP-AARCH64: add     x8, [[TMP]], #0
 
 
 ; CHECK-ARM64: stp     x29, x30, [sp, #-16]!
@@ -94,6 +95,16 @@ define void @test_variadic_alloca(i64 %n, ...) {
 ; [...]
 ; CHECK-ARM64: stp     x2, x3, [x29, #-48]
 
+; CHECK-NOFP-ARM64: stp     x29, x30, [sp, #-16]!
+; CHECK-NOFP-ARM64: mov     x29, sp
+; CHECK-NOFP-ARM64: sub     sp, sp, #64
+; CHECK-NOFP-ARM64: stp     x6, x7, [x29, #-16]
+; [...]
+; CHECK-NOFP-ARM64: stp     x4, x5, [x29, #-32]
+; [...]
+; CHECK-NOFP-ARM64: stp     x2, x3, [x29, #-48]
+; [...]
+; CHECK-NOFP-ARM64: mov     x8, sp
 
   %addr = alloca i8, i64 %n
 
@@ -105,9 +116,12 @@ define void @test_variadic_alloca(i64 %n, ...) {
 ; CHECK-AARCH64: ldp x29, x30, [sp, #192]
 ; CHECK-AARCH64: add sp, sp, #208
 
-; CHECK-NOFP: sub sp, x29, #64
-; CHECK-NOFP: ldp x29, x30, [sp, #64]
-; CHECK-NOFP: add sp, sp, #80
+; CHECK-NOFP-AARCH64: sub sp, x29, #64
+; CHECK-NOFP-AARCH64: ldp x29, x30, [sp, #64]
+; CHECK-NOFP-AARCH64: add sp, sp, #80
+
+; CHECK-NOFP-ARM64: mov sp, x29
+; CHECK-NOFP-ARM64: ldp x29, x30, [sp], #16
 }
 
 define void @test_alloca_large_frame(i64 %n) {

@@ -5812,12 +5812,12 @@ EVT ARM64TargetLowering::getOptimalMemOpType(uint64_t Size, unsigned DstAlign,
   // addressing mode). Just do two i64 store of zero-registers.
   bool Fast;
   const Function *F = MF.getFunction();
-  if (!IsMemset && Size >= 16 &&
+  if (Subtarget->hasFPARMv8() && !IsMemset && Size >= 16 &&
       !F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                        Attribute::NoImplicitFloat) &&
       (memOpAlign(SrcAlign, DstAlign, 16) ||
-       (allowsUnalignedMemoryAccesses(MVT::v2i64, 0, &Fast) && Fast)))
-    return MVT::v2i64;
+       (allowsUnalignedMemoryAccesses(MVT::f128, 0, &Fast) && Fast)))
+    return MVT::f128;
 
   return Size >= 8 ? MVT::i64 : MVT::i32;
 }

@@ -3,6 +3,7 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-ARM64 %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 %myStruct = type { i64 , i8, i32 }
 

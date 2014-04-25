@@ -1,6 +1,7 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-AARCH64
 ; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-apple-ios7.0 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 define i32 @test_select_i32(i1 %bit, i32 %a, i32 %b) {
 ; CHECK-LABEL: test_select_i32:

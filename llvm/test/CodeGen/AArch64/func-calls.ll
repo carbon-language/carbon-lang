@@ -3,6 +3,8 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-BE --check-prefix=CHECK-NOFP %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -mattr=-neon | FileCheck --check-prefix=CHECK --check-prefix=CHECK-ARM64-NONEON %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 
 %myStruct = type { i64 , i8, i32 }
 
@@ -98,6 +100,10 @@ define void @check_stack_args() {
 ; CHECK-ARM64-DAG: fmov d[[FINAL_DOUBLE:[0-9]+]], #1.0
 ; CHECK-ARM64: orr v0.16b, v[[FINAL_DOUBLE]].16b, v[[FINAL_DOUBLE]].16b
 
+; CHECK-ARM64-NONEON-DAG: str {{q[0-9]+}}, [sp]
+; CHECK-ARM64-NONEON-DAG: fmov d[[FINAL_DOUBLE:[0-9]+]], #1.0
+; CHECK-ARM64-NONEON: fmov d0, d[[FINAL_DOUBLE]]
+
 ; CHECK: bl struct_on_stack
 ; CHECK-NOFP-NOT: fmov
 
@@ -110,6 +116,9 @@ define void @check_stack_args() {
 
 ; CHECK-ARM64:  movz [[SIXTY_FOUR:w[0-9]+]], #17024, lsl #16
 ; CHECK-ARM64: str [[SIXTY_FOUR]], [sp]
+
+; CHECK-ARM64-NONEON:  movz [[SIXTY_FOUR:w[0-9]+]], #17024, lsl #16
+; CHECK-ARM64-NONEON: str [[SIXTY_FOUR]], [sp]
 
 ; CHECK: bl stacked_fpu
   ret void
@@ -135,6 +144,7 @@ define void @check_i128_align() {
 ; CHECK-AARCH64: str [[I128HI]], [x[[SPREG]], #24]
 ; CHECK-AARCH64: str [[I128LO]], [x[[SPREG]], #16]
 ; CHECK-ARM64: stp [[I128LO]], [[I128HI]], [sp, #16]
+; CHECK-ARM64-NONEON: stp [[I128LO]], [[I128HI]], [sp, #16]
 ; CHECK: bl check_i128_stackalign
 
   call void @check_i128_regalign(i32 0, i128 42)
