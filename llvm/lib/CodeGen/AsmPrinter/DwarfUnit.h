@@ -270,7 +270,7 @@ public:
 
   /// addDie - Adds or interns the DIE to the compile unit.
   ///
-  void addDie(DIE *Buffer) { UnitDie->addChild(Buffer); }
+  void addDie(DIE *Buffer) { UnitDie->addChild(std::unique_ptr<DIE>(Buffer)); }
 
   /// addFlag - Add a flag that is true to the DIE.
   void addFlag(DIE &Die, dwarf::Attribute Attribute);
@@ -425,7 +425,8 @@ public:
   void constructContainingTypeDIEs();
 
   /// constructVariableDIE - Construct a DIE for the given DbgVariable.
-  DIE *constructVariableDIE(DbgVariable &DV, bool isScopeAbstract);
+  std::unique_ptr<DIE> constructVariableDIE(DbgVariable &DV,
+                                            bool isScopeAbstract);
 
   /// constructSubprogramArguments - Construct function argument DIEs.
   void constructSubprogramArguments(DIE &Buffer, DIArray Args);
@@ -459,7 +460,8 @@ protected:
 private:
   /// \brief Construct a DIE for the given DbgVariable without initializing the
   /// DbgVariable's DIE reference.
-  DIE *constructVariableDIEImpl(const DbgVariable &DV, bool isScopeAbstract);
+  std::unique_ptr<DIE> constructVariableDIEImpl(const DbgVariable &DV,
+                                                bool isScopeAbstract);
 
   /// constructTypeDIE - Construct basic type die from DIBasicType.
   void constructTypeDIE(DIE &Buffer, DIBasicType BTy);

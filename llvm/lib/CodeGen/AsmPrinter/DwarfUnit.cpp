@@ -383,7 +383,7 @@ void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
 DIE &DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, DIDescriptor N) {
   assert(Tag != dwarf::DW_TAG_auto_variable &&
          Tag != dwarf::DW_TAG_arg_variable);
-  Parent.addChild(new DIE((dwarf::Tag)Tag));
+  Parent.addChild(make_unique<DIE>((dwarf::Tag)Tag));
   DIE &Die = *Parent.getChildren().back();
   if (N)
     insertDIE(N, &Die);
@@ -1793,18 +1793,19 @@ void DwarfUnit::constructContainingTypeDIEs() {
 }
 
 /// constructVariableDIE - Construct a DIE for the given DbgVariable.
-DIE *DwarfUnit::constructVariableDIE(DbgVariable &DV, bool isScopeAbstract) {
+std::unique_ptr<DIE> DwarfUnit::constructVariableDIE(DbgVariable &DV,
+                                                     bool isScopeAbstract) {
   auto D = constructVariableDIEImpl(DV, isScopeAbstract);
   DV.setDIE(*D);
   return D;
 }
 
-DIE *DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
-                                         bool isScopeAbstract) {
+std::unique_ptr<DIE> DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
+                                                         bool isScopeAbstract) {
   StringRef Name = DV.getName();
 
   // Define variable debug information entry.
-  DIE *VariableDie = new DIE(DV.getTag());
+  auto VariableDie = make_unique<DIE>(DV.getTag());
   DbgVariable *AbsVar = DV.getAbstractVariable();
   DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : nullptr;
   if (AbsDIE)

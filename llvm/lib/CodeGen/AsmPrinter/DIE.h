@@ -172,11 +172,11 @@ public:
 
   /// addChild - Add a child to the DIE.
   ///
-  void addChild(DIE *Child) {
+  void addChild(std::unique_ptr<DIE> Child) {
     assert(!Child->getParent());
     Abbrev.setChildrenFlag(dwarf::DW_CHILDREN_yes);
-    Children.push_back(std::unique_ptr<DIE>(Child));
     Child->Parent = this;
+    Children.push_back(std::move(Child));
   }
 
   /// findAttribute - Find a value in the DIE with the attribute given,

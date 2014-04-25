@@ -506,43 +506,45 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   return ScopeDIE;
 }
 
-DIE *DwarfDebug::createScopeChildrenDIE(DwarfCompileUnit &TheCU,
-                                        LexicalScope *Scope,
-                                        SmallVectorImpl<DIE *> &Children) {
+DIE *DwarfDebug::createScopeChildrenDIE(
+    DwarfCompileUnit &TheCU, LexicalScope *Scope,
+    SmallVectorImpl<std::unique_ptr<DIE>> &Children) {
   DIE *ObjectPointer = nullptr;
 
   // Collect arguments for current function.
   if (LScopes.isCurrentFunctionScope(Scope)) {
     for (DbgVariable *ArgDV : CurrentFnArguments)
-      if (ArgDV)
-        if (DIE *Arg =
-                TheCU.constructVariableDIE(*ArgDV, Scope->isAbstractScope())) {
-          Children.push_back(Arg);
-          if (ArgDV->isObjectPointer())
-            ObjectPointer = Arg;
-        }
+      if (ArgDV) {
+        std::unique_ptr<DIE> Arg =
+            TheCU.constructVariableDIE(*ArgDV, Scope->isAbstractScope());
+        assert(Arg);
+        if (ArgDV->isObjectPointer())
+          ObjectPointer = Arg.get();
+        Children.push_back(std::move(Arg));
+      }
 
     // If this is a variadic function, add an unspecified parameter.
     DISubprogram SP(Scope->getScopeNode());
     DIArray FnArgs = SP.getType().getTypeArray();
     if (FnArgs.getElement(FnArgs.getNumElements() - 1)
             .isUnspecifiedParameter()) {
-      DIE *Ellipsis = new DIE(dwarf::DW_TAG_unspecified_parameters);
-      Children.push_back(Ellipsis);
+      Children.push_back(
+          make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));
     }
   }
 
   // Collect lexical scope children first.
-  for (DbgVariable *DV : ScopeVariables.lookup(Scope))
-    if (DIE *Variable =
-            TheCU.constructVariableDIE(*DV, Scope->isAbstractScope())) {
-      Children.push_back(Variable);
-      if (DV->isObjectPointer())
-        ObjectPointer = Variable;
-    }
+  for (DbgVariable *DV : ScopeVariables.lookup(Scope)) {
+    std::unique_ptr<DIE> Variable =
+        TheCU.constructVariableDIE(*DV, Scope->isAbstractScope());
+    assert(Variable);
+    Children.push_back(std::move(Variable));
+    if (DV->isObjectPointer())
+      ObjectPointer = Variable.get();
+  }
   for (LexicalScope *LS : Scope->getChildren())
     if (DIE *Nested = constructScopeDIE(TheCU, LS))
-      Children.push_back(Nested);
+      Children.push_back(std::unique_ptr<DIE>(Nested));
   return ObjectPointer;
 }
 
@@ -554,7 +556,7 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
 
   DIScope DS(Scope->getScopeNode());
 
-  SmallVector<DIE *, 8> Children;
+  SmallVector<std::unique_ptr<DIE>, 8> Children;
   DIE *ObjectPointer = nullptr;
   bool ChildrenCreated = false;
 
@@ -610,8 +612,8 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
     ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children);
 
   // Add children
-  for (DIE *I : Children)
-    ScopeDIE->addChild(I);
+  for (auto &I : Children)
+    ScopeDIE->addChild(std::move(I));
 
   if (DS.isSubprogram() && ObjectPointer != nullptr)
     TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
@@ -862,8 +864,7 @@ void DwarfDebug::collectDeadVariables() {
           if (!DV.isVariable())
             continue;
           DbgVariable NewVar(DV, nullptr, this);
-          if (DIE *VariableDIE = SPCU->constructVariableDIE(NewVar, false))
-            SPDIE->addChild(VariableDIE);
+          SPDIE->addChild(SPCU->constructVariableDIE(NewVar, false));
         }
       }
     }

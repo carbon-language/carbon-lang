@@ -367,7 +367,7 @@ class DwarfDebug : public AsmPrinterHandler {
   DIE *constructScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope);
   /// A helper function to create children of a Scope DIE.
   DIE *createScopeChildrenDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope,
-                              SmallVectorImpl<DIE *> &Children);
+                              SmallVectorImpl<std::unique_ptr<DIE>> &Children);
 
   /// \brief Emit initial Dwarf sections with a label at the start of each one.
   void emitSectionLabels();
