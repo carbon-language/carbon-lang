@@ -75,7 +75,7 @@ DwarfUnit::~DwarfUnit() {
 
 /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug
 /// information entry.
-DIEEntry *DwarfUnit::createDIEEntry(DIE *Entry) {
+DIEEntry *DwarfUnit::createDIEEntry(DIE &Entry) {
   DIEEntry *Value = new (DIEValueAllocator) DIEEntry(Entry);
   return Value;
 }
@@ -355,7 +355,7 @@ void DwarfUnit::addLabelDelta(DIE &Die, dwarf::Attribute Attribute,
 
 /// addDIEEntry - Add a DIE attribute data and value.
 ///
-void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIE *Entry) {
+void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIE &Entry) {
   addDIEEntry(Die, Attribute, createDIEEntry(Entry));
 }
 
@@ -367,7 +367,7 @@ void DwarfUnit::addDIETypeSignature(DIE &Die, const DwarfTypeUnit &Type) {
 void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
                             DIEEntry *Entry) {
   const DIE *DieCU = Die.getUnitOrNull();
-  const DIE *EntryCU = Entry->getEntry()->getUnitOrNull();
+  const DIE *EntryCU = Entry->getEntry().getUnitOrNull();
   if (!DieCU)
     // We assume that Die belongs to this CU, if it is not linked to any CU yet.
     DieCU = &getUnitDie();
@@ -1055,7 +1055,7 @@ void DwarfUnit::addType(DIE &Entity, DIType Ty, dwarf::Attribute Attribute) {
   DIE *Buffer = getOrCreateTypeDIE(Ty);
 
   // Set up proxy.
-  Entry = createDIEEntry(Buffer);
+  Entry = createDIEEntry(*Buffer);
   insertDIEEntry(Ty, Entry);
   addDIEEntry(Entity, Attribute, Entry);
 }
@@ -1149,7 +1149,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 
   if (Tag == dwarf::DW_TAG_ptr_to_member_type)
     addDIEEntry(Buffer, dwarf::DW_AT_containing_type,
-                getOrCreateTypeDIE(resolve(DTy.getClassType())));
+                *getOrCreateTypeDIE(resolve(DTy.getClassType())));
   // Add source line info if available and TyDesc is not a forward declaration.
   if (!DTy.isForwardDecl())
     addSourceLine(Buffer, DTy);
@@ -1267,7 +1267,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
         DIEEntry *Entry = getDIEEntry(Element);
         if (!Entry) {
-          Entry = createDIEEntry(&ElemDie);
+          Entry = createDIEEntry(ElemDie);
           insertDIEEntry(Element, Entry);
         }
       } else
@@ -1280,7 +1280,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     DICompositeType ContainingType(resolve(CTy.getContainingType()));
     if (ContainingType)
       addDIEEntry(Buffer, dwarf::DW_AT_containing_type,
-                  getOrCreateTypeDIE(ContainingType));
+                  *getOrCreateTypeDIE(ContainingType));
 
     if (CTy.isObjcClassComplete())
       addFlag(Buffer, dwarf::DW_AT_APPLE_objc_complete_type);
@@ -1431,7 +1431,7 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   if (DeclDie)
     // Refer function declaration directly.
-    addDIEEntry(SPDie, dwarf::DW_AT_specification, DeclDie);
+    addDIEEntry(SPDie, dwarf::DW_AT_specification, *DeclDie);
 
   // Add the linkage name if we have one and it isn't in the Decl.
   StringRef LinkageName = SP.getLinkageName();
@@ -1638,7 +1638,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
         !GVContext.isFile() && !DD->isSubprogramContext(GVContext)) {
       // Create specification DIE.
       VariableSpecDIE = &createAndAddDIE(dwarf::DW_TAG_variable, *UnitDie);
-      addDIEEntry(*VariableSpecDIE, dwarf::DW_AT_specification, VariableDIE);
+      addDIEEntry(*VariableSpecDIE, dwarf::DW_AT_specification, *VariableDIE);
       addBlock(*VariableSpecDIE, dwarf::DW_AT_location, Loc);
       // A static member's declaration is already flagged as such.
       if (!SDMDecl.Verify())
@@ -1699,7 +1699,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
 void DwarfUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy) {
   DIE &DW_Subrange = createAndAddDIE(dwarf::DW_TAG_subrange_type, Buffer);
-  addDIEEntry(DW_Subrange, dwarf::DW_AT_type, IndexTy);
+  addDIEEntry(DW_Subrange, dwarf::DW_AT_type, *IndexTy);
 
   // The LowerBound value defines the lower bounds which is typically zero for
   // C/C++. The Count value is the number of elements.  Values are 64 bit. If
@@ -1788,7 +1788,7 @@ void DwarfUnit::constructContainingTypeDIEs() {
     DIE *NDie = getDIE(D);
     if (!NDie)
       continue;
-    addDIEEntry(SPDie, dwarf::DW_AT_containing_type, NDie);
+    addDIEEntry(SPDie, dwarf::DW_AT_containing_type, *NDie);
   }
 }
 
@@ -1808,7 +1808,7 @@ DIE *DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
   DbgVariable *AbsVar = DV.getAbstractVariable();
   DIE *AbsDIE = AbsVar ? AbsVar->getDIE() : nullptr;
   if (AbsDIE)
-    addDIEEntry(*VariableDie, dwarf::DW_AT_abstract_origin, AbsDIE);
+    addDIEEntry(*VariableDie, dwarf::DW_AT_abstract_origin, *AbsDIE);
   else {
     if (!Name.empty())
       addString(*VariableDie, dwarf::DW_AT_name, Name);

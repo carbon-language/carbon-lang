@@ -328,7 +328,7 @@ public:
                      const MCSymbol *Lo);
 
   /// addDIEEntry - Add a DIE attribute data and value.
-  void addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIE *Entry);
+  void addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIE &Entry);
 
   /// addDIEEntry - Add a DIE attribute data and value.
   void addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIEEntry *Entry);
@@ -516,7 +516,7 @@ private:
 
   /// createDIEEntry - Creates a new DIEEntry to be a proxy for a debug
   /// information entry.
-  DIEEntry *createDIEEntry(DIE *Entry);
+  DIEEntry *createDIEEntry(DIE &Entry);
 
   /// resolve - Look in the DwarfDebug map for the MDNode that
   /// corresponds to the reference.

@@ -103,7 +103,7 @@ TEST(DIEHashTest, TypeWithMember) {
   DIEInteger Five(5);
   Int.addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Five);
 
-  DIEEntry IntRef(&Int);
+  DIEEntry IntRef(Int);
   Member->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntRef);
 
   uint64_t MD5Res = DIEHash().computeTypeSignature(Unnamed);
@@ -142,7 +142,7 @@ TEST(DIEHashTest, ReusedType) {
   DIEInteger Five(5);
   Int.addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Five);
 
-  DIEEntry IntRef(&Int);
+  DIEEntry IntRef(Int);
   Mem1->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntRef);
   Mem2->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntRef);
 
@@ -162,7 +162,7 @@ TEST(DIEHashTest, RecursiveType) {
   DIE *Mem = new DIE(dwarf::DW_TAG_member);
   DIEString MemStr(&One, "mem");
   Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &MemStr);
-  DIEEntry FooRef(&Foo);
+  DIEEntry FooRef(Foo);
   Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRef);
   // DW_AT_external and DW_AT_declaration are ignored anyway, so skip them.
 
@@ -189,10 +189,10 @@ TEST(DIEHashTest, Pointer) {
 
   DIE FooPtr(dwarf::DW_TAG_pointer_type);
   FooPtr.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
-  DIEEntry FooRef(&Foo);
+  DIEEntry FooRef(Foo);
   FooPtr.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRef);
 
-  DIEEntry FooPtrRef(&FooPtr);
+  DIEEntry FooPtrRef(FooPtr);
   Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooPtrRef);
 
   Foo.addChild(Mem);
@@ -218,14 +218,14 @@ TEST(DIEHashTest, Reference) {
 
   DIE FooRef(dwarf::DW_TAG_reference_type);
   FooRef.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
-  DIEEntry FooEntry(&Foo);
+  DIEEntry FooEntry(Foo);
   FooRef.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooEntry);
 
   DIE FooRefConst(dwarf::DW_TAG_const_type);
-  DIEEntry FooRefRef(&FooRef);
+  DIEEntry FooRefRef(FooRef);
   FooRefConst.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRefRef);
 
-  DIEEntry FooRefConstRef(&FooRefConst);
+  DIEEntry FooRefConstRef(FooRefConst);
   Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRefConstRef);
 
   Foo.addChild(Mem);
@@ -251,14 +251,14 @@ TEST(DIEHashTest, RValueReference) {
 
   DIE FooRef(dwarf::DW_TAG_rvalue_reference_type);
   FooRef.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
-  DIEEntry FooEntry(&Foo);
+  DIEEntry FooEntry(Foo);
   FooRef.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooEntry);
 
   DIE FooRefConst(dwarf::DW_TAG_const_type);
-  DIEEntry FooRefRef(&FooRef);
+  DIEEntry FooRefRef(FooRef);
   FooRefConst.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRefRef);
 
-  DIEEntry FooRefConstRef(&FooRefConst);
+  DIEEntry FooRefConstRef(FooRefConst);
   Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooRefConstRef);
 
   Foo.addChild(Mem);
@@ -283,12 +283,12 @@ TEST(DIEHashTest, PtrToMember) {
   Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, &Zero);
 
   DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
-  DIEEntry FooEntry(&Foo);
+  DIEEntry FooEntry(Foo);
   PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FooEntry);
   PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
                        &FooEntry);
 
-  DIEEntry PtrToFooMemRef(&PtrToFooMem);
+  DIEEntry PtrToFooMemRef(PtrToFooMem);
   Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
 
   Foo.addChild(Mem);
@@ -326,13 +326,13 @@ TEST(DIEHashTest, PtrToMemberDeclDefMatch) {
                   &Zero);
 
     DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
-    DIEEntry BarEntry(&Bar);
+    DIEEntry BarEntry(Bar);
     PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &BarEntry);
-    DIEEntry FooEntry(&Foo);
+    DIEEntry FooEntry(Foo);
     PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
                          &FooEntry);
 
-    DIEEntry PtrToFooMemRef(&PtrToFooMem);
+    DIEEntry PtrToFooMemRef(PtrToFooMem);
     Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
 
     Foo.addChild(Mem);
@@ -355,13 +355,13 @@ TEST(DIEHashTest, PtrToMemberDeclDefMatch) {
                   &Zero);
 
     DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
-    DIEEntry BarEntry(&Bar);
+    DIEEntry BarEntry(Bar);
     PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &BarEntry);
-    DIEEntry FooEntry(&Foo);
+    DIEEntry FooEntry(Foo);
     PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
                          &FooEntry);
 
-    DIEEntry PtrToFooMemRef(&PtrToFooMem);
+    DIEEntry PtrToFooMemRef(PtrToFooMem);
     Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
 
     Foo.addChild(Mem);
@@ -399,12 +399,12 @@ TEST(DIEHashTest, PtrToMemberDeclDefMisMatch) {
                   &Zero);
 
     DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
-    DIEEntry BarEntry(&Bar);
+    DIEEntry BarEntry(Bar);
     PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &BarEntry);
     PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
                          &BarEntry);
 
-    DIEEntry PtrToFooMemRef(&PtrToFooMem);
+    DIEEntry PtrToFooMemRef(PtrToFooMem);
     Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
 
     Foo.addChild(Mem);
@@ -427,12 +427,12 @@ TEST(DIEHashTest, PtrToMemberDeclDefMisMatch) {
                   &Zero);
 
     DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
-    DIEEntry BarEntry(&Bar);
+    DIEEntry BarEntry(Bar);
     PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &BarEntry);
     PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
                          &BarEntry);
 
-    DIEEntry PtrToFooMemRef(&PtrToFooMem);
+    DIEEntry PtrToFooMemRef(PtrToFooMem);
     Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &PtrToFooMemRef);
 
     Foo.addChild(Mem);
@@ -469,10 +469,10 @@ TEST(DIEHashTest, RefUnnamedType) {
 
   DIE UnnamedPtr(dwarf::DW_TAG_pointer_type);
   UnnamedPtr.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, &Eight);
-  DIEEntry UnnamedRef(&Unnamed);
+  DIEEntry UnnamedRef(Unnamed);
   UnnamedPtr.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &UnnamedRef);
 
-  DIEEntry UnnamedPtrRef(&UnnamedPtr);
+  DIEEntry UnnamedPtrRef(UnnamedPtr);
   Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &UnnamedPtrRef);
 
   Foo.addChild(Mem);
@@ -572,11 +572,11 @@ TEST(DIEHashTest, MemberSdata) {
   IntTyDIE.addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Five);
   IntTyDIE.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FStr);
 
-  DIEEntry IntTy(&IntTyDIE);
+  DIEEntry IntTy(IntTyDIE);
   DIE *PITyDIE = new DIE(dwarf::DW_TAG_const_type);
   PITyDIE->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &IntTy);
 
-  DIEEntry PITy(PITyDIE);
+  DIEEntry PITy(*PITyDIE);
   DIE *PI = new DIE(dwarf::DW_TAG_member);
   DIEString PIStr(&One, "PI");
   DIEInteger Two(2);
@@ -616,11 +616,11 @@ TEST(DIEHashTest, MemberBlock) {
   FloatTyDIE->addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, &Four);
   FloatTyDIE->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, &FStr);
 
-  DIEEntry FloatTy(FloatTyDIE);
+  DIEEntry FloatTy(*FloatTyDIE);
   DIE *PITyDIE = new DIE(dwarf::DW_TAG_const_type);
   PITyDIE->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, &FloatTy);
 
-  DIEEntry PITy(PITyDIE);
+  DIEEntry PITy(*PITyDIE);
   DIE *PI = new DIE(dwarf::DW_TAG_member);
   DIEString PIStr(&One, "PI");
   DIEInteger Two(2);

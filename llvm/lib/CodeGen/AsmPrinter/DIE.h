@@ -405,14 +405,13 @@ public:
 /// this class can also be used as a proxy for a debug information entry not
 /// yet defined (ie. types.)
 class DIEEntry : public DIEValue {
-  DIE *const Entry;
+  DIE &Entry;
 
 public:
-  explicit DIEEntry(DIE *E) : DIEValue(isEntry), Entry(E) {
-    assert(E && "Cannot construct a DIEEntry with a null DIE");
+  explicit DIEEntry(DIE &E) : DIEValue(isEntry), Entry(E) {
   }
 
-  DIE *getEntry() const { return Entry; }
+  DIE &getEntry() const { return Entry; }
 
   /// EmitValue - Emit debug information entry offset.
   ///

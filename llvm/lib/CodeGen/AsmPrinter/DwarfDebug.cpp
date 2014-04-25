@@ -323,7 +323,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
     // Pick up abstract subprogram DIE.
     SPDie = &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
-    SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_abstract_origin, AbsSPDIE);
+    SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_abstract_origin, *AbsSPDIE);
   } else {
     DISubprogram SPDecl = SP.getFunctionDeclaration();
     if (!SPDecl.isSubprogram()) {
@@ -346,7 +346,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
         DIE *SPDeclDie = SPDie;
         SPDie =
             &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
-        SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_specification, SPDeclDie);
+        SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_specification, *SPDeclDie);
       }
     }
   }
@@ -471,7 +471,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   }
 
   DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
-  TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_abstract_origin, OriginDIE);
+  TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_abstract_origin, *OriginDIE);
 
   // If we have multiple ranges, emit them into the range section.
   if (ScopeRanges.size() > 1)
@@ -614,7 +614,7 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
     ScopeDIE->addChild(I);
 
   if (DS.isSubprogram() && ObjectPointer != nullptr)
-    TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_object_pointer, ObjectPointer);
+    TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
 
   return ScopeDIE;
 }
@@ -748,7 +748,7 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
   TheCU.addSourceLine(IMDie, Module.getLineNumber(),
                       Module.getContext().getFilename(),
                       Module.getContext().getDirectory());
-  TheCU.addDIEEntry(IMDie, dwarf::DW_AT_import, EntityDie);
+  TheCU.addDIEEntry(IMDie, dwarf::DW_AT_import, *EntityDie);
   StringRef Name = Module.getName();
   if (!Name.empty())
     TheCU.addString(IMDie, dwarf::DW_AT_name, Name);
@@ -1939,8 +1939,8 @@ static dwarf::PubIndexEntryDescriptor computeIndexValue(DwarfUnit *CU,
   // look for that now.
   DIEValue *SpecVal = Die->findAttribute(dwarf::DW_AT_specification);
   if (SpecVal) {
-    DIE *SpecDIE = cast<DIEEntry>(SpecVal)->getEntry();
-    if (SpecDIE->findAttribute(dwarf::DW_AT_external))
+    DIE &SpecDIE = cast<DIEEntry>(SpecVal)->getEntry();
+    if (SpecDIE.findAttribute(dwarf::DW_AT_external))
       Linkage = dwarf::GIEL_EXTERNAL;
   } else if (Die->findAttribute(dwarf::DW_AT_external))
     Linkage = dwarf::GIEL_EXTERNAL;

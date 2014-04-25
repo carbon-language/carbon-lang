@@ -309,7 +309,7 @@ void DIEHash::hashAttribute(AttrEntry Attr, dwarf::Tag Tag) {
     // ... An attribute that refers to another type entry T is processed as
     // follows:
   case DIEValue::isEntry:
-    hashDIEEntry(Attribute, Tag, *cast<DIEEntry>(Value)->getEntry());
+    hashDIEEntry(Attribute, Tag, cast<DIEEntry>(Value)->getEntry());
     break;
   case DIEValue::isInteger: {
     addULEB128('A');
