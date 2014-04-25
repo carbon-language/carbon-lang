@@ -24,10 +24,10 @@ namespace query {
 /// Represents the state for a particular clang-query session.
 class QuerySession {
 public:
-  QuerySession(llvm::ArrayRef<ASTUnit *> ASTs)
+  QuerySession(llvm::ArrayRef<std::unique_ptr<ASTUnit>> ASTs)
       : ASTs(ASTs), OutKind(OK_Diag), BindRoot(true) {}
 
-  llvm::ArrayRef<ASTUnit *> ASTs;
+  llvm::ArrayRef<std::unique_ptr<ASTUnit>> ASTs;
   OutputKind OutKind;
   bool BindRoot;
   llvm::StringMap<ast_matchers::dynamic::VariantValue> NamedValues;

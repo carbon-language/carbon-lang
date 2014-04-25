@@ -85,7 +85,7 @@ int main(int argc, const char **argv) {
   }
 
   ClangTool Tool(*Compilations, SourcePaths);
-  std::vector<ASTUnit *> ASTs;
+  std::vector<std::unique_ptr<ASTUnit>> ASTs;
   if (Tool.buildASTs(ASTs) != 0)
     return 1;
 
@@ -127,8 +127,6 @@ int main(int argc, const char **argv) {
       Q->run(llvm::outs(), QS);
     }
   }
-
-  llvm::DeleteContainerPointers(ASTs);
 
   return 0;
 }
