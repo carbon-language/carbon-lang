@@ -13,10 +13,10 @@
 
 # CHECK: bfm  w1, w2, #1, #15
 # CHECK: bfm  x1, x2, #1, #15
-# CHECK: sbfm w1, w2, #1, #15
-# CHECK: sbfm x1, x2, #1, #15
-# CHECK: ubfm w1, w2, #1, #15
-# CHECK: ubfm x1, x2, #1, #15
+# CHECK: sbfx w1, w2, #1, #15
+# CHECK: sbfx x1, x2, #1, #15
+# CHECK: ubfx w1, w2, #1, #15
+# CHECK: ubfx x1, x2, #1, #15
 
 #==---------------------------------------------------------------------------==
 # 5.4.5 Extract (immediate)

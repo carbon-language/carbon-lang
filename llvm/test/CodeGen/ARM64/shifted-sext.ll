@@ -6,7 +6,7 @@ define signext i16 @extendedLeftShiftcharToshortBy4(i8 signext %a) nounwind read
 entry:
 ; CHECK-LABEL: extendedLeftShiftcharToshortBy4:
 ; CHECK: add [[REG:w[0-9]+]], w0, #1
-; CHECK: sbfm w0, [[REG]], #28, #7
+; CHECK: sbfiz w0, [[REG]], #4, #8
   %inc = add i8 %a, 1
   %conv1 = sext i8 %inc to i32
   %shl = shl nsw i32 %conv1, 4
@@ -18,7 +18,7 @@ define signext i16 @extendedRightShiftcharToshortBy4(i8 signext %a) nounwind rea
 entry:
 ; CHECK-LABEL: extendedRightShiftcharToshortBy4:
 ; CHECK: add [[REG:w[0-9]+]], w0, #1
-; CHECK: sbfm w0, [[REG]], #4, #7
+; CHECK: sbfx w0, [[REG]], #4, #4
   %inc = add i8 %a, 1
   %conv1 = sext i8 %inc to i32
   %shr4 = lshr i32 %conv1, 4
@@ -30,7 +30,7 @@ define signext i16 @extendedLeftShiftcharToshortBy8(i8 signext %a) nounwind read
 entry:
 ; CHECK-LABEL: extendedLeftShiftcharToshortBy8:
 ; CHECK: add [[REG:w[0-9]+]], w0, #1
-; CHECK: sbfm w0, [[REG]], #24, #7
+; CHECK: sbfiz w0, [[REG]], #8, #8
   %inc = add i8 %a, 1
   %conv1 = sext i8 %inc to i32
   %shl = shl nsw i32 %conv1, 8
@@ -55,7 +55,7 @@ define i32 @extendedLeftShiftcharTointBy4(i8 signext %a) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: extendedLeftShiftcharTointBy4:
 ; CHECK: add [[REG:w[0-9]+]], w0, #1
-; CHECK: sbfm w0, [[REG]], #28, #7
+; CHECK: sbfiz w0, [[REG]], #4, #8
   %inc = add i8 %a, 1
   %conv = sext i8 %inc to i32
   %shl = shl nsw i32 %conv, 4
@@ -66,7 +66,7 @@ define i32 @extendedRightShiftcharTointBy4(i8 signext %a) nounwind readnone ssp 
 entry:
 ; CHECK-LABEL: extendedRightShiftcharTointBy4:
 ; CHECK: add [[REG:w[0-9]+]], w0, #1
-; CHECK: sbfm w0, [[REG]], #4, #7
+; CHECK: sbfx w0, [[REG]], #4, #4
   %inc = add i8 %a, 1
   %conv = sext i8 %inc to i32
   %shr = ashr i32 %conv, 4
@@ -77,7 +77,7 @@ define i32 @extendedLeftShiftcharTointBy8(i8 signext %a) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: extendedLeftShiftcharTointBy8:
 ; CHECK: add [[REG:w[0-9]+]], w0, #1
-; CHECK: sbfm w0, [[REG]], #24, #7
+; CHECK: sbfiz w0, [[REG]], #8, #8
   %inc = add i8 %a, 1
   %conv = sext i8 %inc to i32
   %shl = shl nsw i32 %conv, 8
@@ -100,7 +100,7 @@ define i64 @extendedLeftShiftcharToint64By4(i8 signext %a) nounwind readnone ssp
 entry:
 ; CHECK-LABEL: extendedLeftShiftcharToint64By4:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sbfm x0, x[[REG]], #60, #7
+; CHECK: sbfiz x0, x[[REG]], #4, #8
   %inc = add i8 %a, 1
   %conv = sext i8 %inc to i64
   %shl = shl nsw i64 %conv, 4
@@ -111,7 +111,7 @@ define i64 @extendedRightShiftcharToint64By4(i8 signext %a) nounwind readnone ss
 entry:
 ; CHECK-LABEL: extendedRightShiftcharToint64By4:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sbfm x0, x[[REG]], #4, #7
+; CHECK: sbfx x0, x[[REG]], #4, #4
   %inc = add i8 %a, 1
   %conv = sext i8 %inc to i64
   %shr = ashr i64 %conv, 4
@@ -122,7 +122,7 @@ define i64 @extendedLeftShiftcharToint64By8(i8 signext %a) nounwind readnone ssp
 entry:
 ; CHECK-LABEL: extendedLeftShiftcharToint64By8:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sbfm x0, x[[REG]], #56, #7
+; CHECK: sbfiz x0, x[[REG]], #8, #8
   %inc = add i8 %a, 1
   %conv = sext i8 %inc to i64
   %shl = shl nsw i64 %conv, 8
@@ -145,7 +145,7 @@ define i32 @extendedLeftShiftshortTointBy4(i16 signext %a) nounwind readnone ssp
 entry:
 ; CHECK-LABEL: extendedLeftShiftshortTointBy4:
 ; CHECK: add [[REG:w[0-9]+]], w0, #1
-; CHECK: sbfm w0, [[REG]], #28, #15
+; CHECK: sbfiz w0, [[REG]], #4, #16
   %inc = add i16 %a, 1
   %conv = sext i16 %inc to i32
   %shl = shl nsw i32 %conv, 4
@@ -156,7 +156,7 @@ define i32 @extendedRightShiftshortTointBy4(i16 signext %a) nounwind readnone ss
 entry:
 ; CHECK-LABEL: extendedRightShiftshortTointBy4:
 ; CHECK: add [[REG:w[0-9]+]], w0, #1
-; CHECK: sbfm w0, [[REG]], #4, #15
+; CHECK: sbfx w0, [[REG]], #4, #12
   %inc = add i16 %a, 1
   %conv = sext i16 %inc to i32
   %shr = ashr i32 %conv, 4
@@ -190,7 +190,7 @@ define i64 @extendedLeftShiftshortToint64By4(i16 signext %a) nounwind readnone s
 entry:
 ; CHECK-LABEL: extendedLeftShiftshortToint64By4:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sbfm x0, x[[REG]], #60, #15
+; CHECK: sbfiz x0, x[[REG]], #4, #16
   %inc = add i16 %a, 1
   %conv = sext i16 %inc to i64
   %shl = shl nsw i64 %conv, 4
@@ -201,7 +201,7 @@ define i64 @extendedRightShiftshortToint64By4(i16 signext %a) nounwind readnone 
 entry:
 ; CHECK-LABEL: extendedRightShiftshortToint64By4:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sbfm x0, x[[REG]], #4, #15
+; CHECK: sbfx x0, x[[REG]], #4, #12
   %inc = add i16 %a, 1
   %conv = sext i16 %inc to i64
   %shr = ashr i64 %conv, 4
@@ -212,7 +212,7 @@ define i64 @extendedLeftShiftshortToint64By16(i16 signext %a) nounwind readnone 
 entry:
 ; CHECK-LABEL: extendedLeftShiftshortToint64By16:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sbfm x0, x[[REG]], #48, #15
+; CHECK: sbfiz x0, x[[REG]], #16, #16
   %inc = add i16 %a, 1
   %conv = sext i16 %inc to i64
   %shl = shl nsw i64 %conv, 16
@@ -235,7 +235,7 @@ define i64 @extendedLeftShiftintToint64By4(i32 %a) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: extendedLeftShiftintToint64By4:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sbfm x0, x[[REG]], #60, #31
+; CHECK: sbfiz x0, x[[REG]], #4, #32
   %inc = add nsw i32 %a, 1
   %conv = sext i32 %inc to i64
   %shl = shl nsw i64 %conv, 4
@@ -246,7 +246,7 @@ define i64 @extendedRightShiftintToint64By4(i32 %a) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: extendedRightShiftintToint64By4:
 ; CHECK: add w[[REG:[0-9]+]], w0, #1
-; CHECK: sbfm x0, x[[REG]], #4, #31
+; CHECK: sbfx x0, x[[REG]], #4, #28
   %inc = add nsw i32 %a, 1
   %conv = sext i32 %inc to i64
   %shr = ashr i64 %conv, 4

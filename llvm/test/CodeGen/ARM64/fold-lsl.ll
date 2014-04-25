@@ -8,7 +8,7 @@
 
 define i16 @load_halfword(%struct.a* %ctx, i32 %xor72) nounwind {
 ; CHECK-LABEL: load_halfword:
-; CHECK: ubfm [[REG:x[0-9]+]], x1, #9, #16
+; CHECK: ubfx [[REG:x[0-9]+]], x1, #9, #8
 ; CHECK: ldrh w0, [x0, [[REG]], lsl #1]
   %shr81 = lshr i32 %xor72, 9
   %conv82 = zext i32 %shr81 to i64
@@ -20,7 +20,7 @@ define i16 @load_halfword(%struct.a* %ctx, i32 %xor72) nounwind {
 
 define i32 @load_word(%struct.b* %ctx, i32 %xor72) nounwind {
 ; CHECK-LABEL: load_word:
-; CHECK: ubfm [[REG:x[0-9]+]], x1, #9, #16
+; CHECK: ubfx [[REG:x[0-9]+]], x1, #9, #8
 ; CHECK: ldr w0, [x0, [[REG]], lsl #2]
   %shr81 = lshr i32 %xor72, 9
   %conv82 = zext i32 %shr81 to i64
@@ -32,7 +32,7 @@ define i32 @load_word(%struct.b* %ctx, i32 %xor72) nounwind {
 
 define i64 @load_doubleword(%struct.c* %ctx, i32 %xor72) nounwind {
 ; CHECK-LABEL: load_doubleword:
-; CHECK: ubfm [[REG:x[0-9]+]], x1, #9, #16
+; CHECK: ubfx [[REG:x[0-9]+]], x1, #9, #8
 ; CHECK: ldr x0, [x0, [[REG]], lsl #3]
   %shr81 = lshr i32 %xor72, 9
   %conv82 = zext i32 %shr81 to i64
@@ -44,7 +44,7 @@ define i64 @load_doubleword(%struct.c* %ctx, i32 %xor72) nounwind {
 
 define void @store_halfword(%struct.a* %ctx, i32 %xor72, i16 %val) nounwind {
 ; CHECK-LABEL: store_halfword:
-; CHECK: ubfm [[REG:x[0-9]+]], x1, #9, #16
+; CHECK: ubfx [[REG:x[0-9]+]], x1, #9, #8
 ; CHECK: strh w2, [x0, [[REG]], lsl #1]
   %shr81 = lshr i32 %xor72, 9
   %conv82 = zext i32 %shr81 to i64
@@ -56,7 +56,7 @@ define void @store_halfword(%struct.a* %ctx, i32 %xor72, i16 %val) nounwind {
 
 define void @store_word(%struct.b* %ctx, i32 %xor72, i32 %val) nounwind {
 ; CHECK-LABEL: store_word:
-; CHECK: ubfm [[REG:x[0-9]+]], x1, #9, #16
+; CHECK: ubfx [[REG:x[0-9]+]], x1, #9, #8
 ; CHECK: str w2, [x0, [[REG]], lsl #2]
   %shr81 = lshr i32 %xor72, 9
   %conv82 = zext i32 %shr81 to i64
@@ -68,7 +68,7 @@ define void @store_word(%struct.b* %ctx, i32 %xor72, i32 %val) nounwind {
 
 define void @store_doubleword(%struct.c* %ctx, i32 %xor72, i64 %val) nounwind {
 ; CHECK-LABEL: store_doubleword:
-; CHECK: ubfm [[REG:x[0-9]+]], x1, #9, #16
+; CHECK: ubfx [[REG:x[0-9]+]], x1, #9, #8
 ; CHECK: str x2, [x0, [[REG]], lsl #3]
   %shr81 = lshr i32 %xor72, 9
   %conv82 = zext i32 %shr81 to i64

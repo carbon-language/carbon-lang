@@ -83,23 +83,30 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     const MCOperand &Op2 = MI->getOperand(2);
     const MCOperand &Op3 = MI->getOperand(3);
 
+    bool IsSigned = (Opcode == ARM64::SBFMXri || Opcode == ARM64::SBFMWri);
+    bool Is64Bit = (Opcode == ARM64::SBFMXri || Opcode == ARM64::UBFMXri);
     if (Op2.isImm() && Op2.getImm() == 0 && Op3.isImm()) {
-      bool IsSigned = (Opcode == ARM64::SBFMXri || Opcode == ARM64::SBFMWri);
       const char *AsmMnemonic = nullptr;
 
       switch (Op3.getImm()) {
       default:
         break;
       case 7:
-        AsmMnemonic = IsSigned ? "sxtb" : "uxtb";
+        if (IsSigned)
+          AsmMnemonic = "sxtb";
+        else if (!Is64Bit)
+          AsmMnemonic = "uxtb";
         break;
       case 15:
-        AsmMnemonic = IsSigned ? "sxth" : "uxth";
+        if (IsSigned)
+          AsmMnemonic = "sxth";
+        else if (!Is64Bit)
+          AsmMnemonic = "uxth";
         break;
       case 31:
-        // *xtw is only valid for 64-bit operations.
-        if (Opcode == ARM64::SBFMXri || Opcode == ARM64::UBFMXri)
-          AsmMnemonic = IsSigned ? "sxtw" : "uxtw";
+        // *xtw is only valid for signed 64-bit operations.
+        if (Is64Bit && IsSigned)
+          AsmMnemonic = "sxtw";
         break;
       }
 
@@ -146,6 +153,22 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
         return;
       }
     }
+
+    // SBFIZ/UBFIZ aliases
+    if (Op2.getImm() > Op3.getImm()) {
+      O << '\t' << (IsSigned ? "sbfiz" : "ubfiz") << '\t'
+        << getRegisterName(Op0.getReg()) << ", " << getRegisterName(Op1.getReg())
+        << ", #" << (Is64Bit ? 64 : 32) - Op2.getImm() << ", #" << Op3.getImm() + 1;
+      printAnnotation(O, Annot);
+      return;
+    }
+
+    // Otherwise SBFX/UBFX is the prefered form
+    O << '\t' << (IsSigned ? "sbfx" : "ubfx") << '\t'
+      << getRegisterName(Op0.getReg()) << ", " << getRegisterName(Op1.getReg())
+      << ", #" << Op2.getImm() << ", #" << Op3.getImm() - Op2.getImm() + 1;
+    printAnnotation(O, Annot);
+    return;
   }
 
   // Symbolic operands for MOVZ, MOVN and MOVK already imply a shift

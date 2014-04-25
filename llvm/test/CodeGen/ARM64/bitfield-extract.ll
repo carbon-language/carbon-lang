@@ -7,7 +7,7 @@
 
 define void @foo(%struct.X* nocapture %x, %struct.Y* nocapture %y) nounwind optsize ssp {
 ; CHECK-LABEL: foo:
-; CHECK: ubfm
+; CHECK: ubfx
 ; CHECK-NOT: and
 ; CHECK: ret
 
@@ -23,7 +23,7 @@ define void @foo(%struct.X* nocapture %x, %struct.Y* nocapture %y) nounwind opts
 
 define i32 @baz(i64 %cav1.coerce) nounwind {
 ; CHECK-LABEL: baz:
-; CHECK: sbfm  w0, w0, #0, #3
+; CHECK: sbfx  w0, w0, #0, #4
   %tmp = trunc i64 %cav1.coerce to i32
   %tmp1 = shl i32 %tmp, 28
   %bf.val.sext = ashr exact i32 %tmp1, 28
@@ -32,7 +32,7 @@ define i32 @baz(i64 %cav1.coerce) nounwind {
 
 define i32 @bar(i64 %cav1.coerce) nounwind {
 ; CHECK-LABEL: bar:
-; CHECK: sbfm  w0, w0, #4, #9
+; CHECK: sbfx  w0, w0, #4, #6
   %tmp = trunc i64 %cav1.coerce to i32
   %cav1.sroa.0.1.insert = shl i32 %tmp, 22
   %tmp1 = ashr i32 %cav1.sroa.0.1.insert, 26
@@ -41,7 +41,7 @@ define i32 @bar(i64 %cav1.coerce) nounwind {
 
 define void @fct1(%struct.Z* nocapture %x, %struct.A* nocapture %y) nounwind optsize ssp {
 ; CHECK-LABEL: fct1:
-; CHECK: ubfm
+; CHECK: ubfx
 ; CHECK-NOT: and
 ; CHECK: ret
 
@@ -56,7 +56,7 @@ define void @fct1(%struct.Z* nocapture %x, %struct.A* nocapture %y) nounwind opt
 
 define i64 @fct2(i64 %cav1.coerce) nounwind {
 ; CHECK-LABEL: fct2:
-; CHECK: sbfm  x0, x0, #0, #35
+; CHECK: sbfx  x0, x0, #0, #36
   %tmp = shl i64 %cav1.coerce, 28
   %bf.val.sext = ashr exact i64 %tmp, 28
   ret i64 %bf.val.sext
@@ -64,7 +64,7 @@ define i64 @fct2(i64 %cav1.coerce) nounwind {
 
 define i64 @fct3(i64 %cav1.coerce) nounwind {
 ; CHECK-LABEL: fct3:
-; CHECK: sbfm  x0, x0, #4, #41
+; CHECK: sbfx  x0, x0, #4, #38
   %cav1.sroa.0.1.insert = shl i64 %cav1.coerce, 22
   %tmp1 = ashr i64 %cav1.sroa.0.1.insert, 26
   ret i64 %tmp1
@@ -230,7 +230,7 @@ entry:
 define zeroext i1 @fct12bis(i32 %tmp2) unnamed_addr nounwind ssp align 2 {
 ; CHECK-LABEL: fct12bis:
 ; CHECK-NOT: and
-; CHECK: ubfm w0, w0, #11, #11
+; CHECK: ubfx w0, w0, #11, #1
   %and.i.i = and i32 %tmp2, 2048
   %tobool.i.i = icmp ne i32 %and.i.i, 0
   ret i1 %tobool.i.i
@@ -244,7 +244,7 @@ entry:
 ; CHECK: ldr [[REG1:w[0-9]+]],
 ; CHECK-NEXT: bfm [[REG1]], w1, #16, #18
 ; lsr is an alias of ubfm
-; CHECK-NEXT: ubfm [[REG2:w[0-9]+]], [[REG1]], #2, #29
+; CHECK-NEXT: ubfx [[REG2:w[0-9]+]], [[REG1]], #2, #28
 ; CHECK-NEXT: str [[REG2]],
 ; CHECK-NEXT: ret
   %0 = load i32* %y, align 8
@@ -267,7 +267,7 @@ entry:
 ; CHECK: ldr [[REG1:x[0-9]+]],
 ; CHECK-NEXT: bfm [[REG1]], x1, #16, #18
 ; lsr is an alias of ubfm
-; CHECK-NEXT: ubfm [[REG2:x[0-9]+]], [[REG1]], #2, #61
+; CHECK-NEXT: ubfx [[REG2:x[0-9]+]], [[REG1]], #2, #60
 ; CHECK-NEXT: str [[REG2]],
 ; CHECK-NEXT: ret
   %0 = load i64* %y, align 8
@@ -354,7 +354,7 @@ entry:
 ; CHECK: and [[REG2:w[0-9]+]], [[REG1]], [[REGCST]]
 ; CHECK-NEXT: bfm [[REG2]], w1, #16, #18
 ; lsr is an alias of ubfm
-; CHECK-NEXT: ubfm [[REG3:w[0-9]+]], [[REG2]], #2, #29
+; CHECK-NEXT: ubfx [[REG3:w[0-9]+]], [[REG2]], #2, #28
 ; CHECK-NEXT: str [[REG3]],
 ; CHECK-NEXT: ret
   %0 = load i32* %y, align 8
@@ -383,7 +383,7 @@ entry:
 ; CHECK: and [[REG2:x[0-9]+]], [[REG1]], x[[REGCST]]
 ; CHECK-NEXT: bfm [[REG2]], x1, #16, #18
 ; lsr is an alias of ubfm
-; CHECK-NEXT: ubfm [[REG3:x[0-9]+]], [[REG2]], #2, #61
+; CHECK-NEXT: ubfx [[REG3:x[0-9]+]], [[REG2]], #2, #60
 ; CHECK-NEXT: str [[REG3]],
 ; CHECK-NEXT: ret
   %0 = load i64* %y, align 8
@@ -399,7 +399,7 @@ entry:
 
 define i64 @fct18(i32 %xor72) nounwind ssp {
 ; CHECK-LABEL: fct18:
-; CHECK: ubfm x0, x0, #9, #16
+; CHECK: ubfx x0, x0, #9, #8
   %shr81 = lshr i32 %xor72, 9
   %conv82 = zext i32 %shr81 to i64
   %result = and i64 %conv82, 255
@@ -429,7 +429,7 @@ if.then:                                          ; preds = %entry
 ; OPT-LABEL: if.end
 if.end:                                           ; preds = %entry
 ; OPT: lshr
-; CHECK: ubfm	[[REG1:x[0-9]+]], [[REG2:x[0-9]+]], #32, #47
+; CHECK: ubfx	[[REG1:x[0-9]+]], [[REG2:x[0-9]+]], #32, #16
   %x.sroa.3.0.extract.trunc = trunc i64 %x.sroa.3.0.extract.shift to i16
   %tobool6 = icmp eq i16 %x.sroa.3.0.extract.trunc, 0
 ; CHECK: cbz
@@ -453,7 +453,7 @@ if.then7:                                         ; preds = %if.end
 if.end13:                                         ; preds = %if.end
 ; OPT: lshr
 ; OPT: trunc
-; CHECK: ubfm	[[REG3:x[0-9]+]], [[REG4:x[0-9]+]], #16, #31
+; CHECK: ubfx	[[REG3:x[0-9]+]], [[REG4:x[0-9]+]], #16, #16
   %tobool16 = icmp eq i16 %x.sroa.1.0.extract.trunc, 0
 ; CHECK: cbz
   br i1 %tobool16, label %return, label %if.then17

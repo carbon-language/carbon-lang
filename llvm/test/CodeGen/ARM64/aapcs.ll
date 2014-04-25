@@ -67,7 +67,7 @@ define void @test_extension(i1 %bool, i8 %char, i16 %short, i32 %int) {
 
   %ext_int = zext i32 %int to i64
   store volatile i64 %ext_int, i64* @var64
-; CHECK: uxtw [[EXT:x[0-9]+]], w3
+; CHECK: ubfx [[EXT:x[0-9]+]], x3, #0, #32
 ; CHECK: str [[EXT]], [{{x[0-9]+}}, :lo12:var64]
 
   ret void

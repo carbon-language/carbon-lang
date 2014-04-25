@@ -57,7 +57,7 @@ entry:
 ; CHECK: uxth w0, w0
 ; CHECK: str w0, [sp, #8]
 ; CHECK: ldr w0, [sp, #8]
-; CHECK: uxtw x3, w0
+; CHECK: ubfx x3, w0, #0, #32
 ; CHECK: str x3, [sp]
 ; CHECK: ldr x0, [sp], #16
 ; CHECK: ret
@@ -151,7 +151,7 @@ entry:
 define i32 @sext_i1_i32(i1 signext %a) nounwind ssp {
 entry:
 ; CHECK: sext_i1_i32
-; CHECK: sbfm w0, w0, #0, #0
+; CHECK: sbfx w0, w0, #0, #1
   %conv = sext i1 %a to i32
   ret i32 %conv
 }
@@ -160,7 +160,7 @@ entry:
 define signext i16 @sext_i1_i16(i1 %a) nounwind ssp {
 entry:
 ; CHECK: sext_i1_i16
-; CHECK: sbfm w0, w0, #0, #0
+; CHECK: sbfx w0, w0, #0, #1
   %conv = sext i1 %a to i16
   ret i16 %conv
 }
@@ -169,7 +169,7 @@ entry:
 define signext i8 @sext_i1_i8(i1 %a) nounwind ssp {
 entry:
 ; CHECK: sext_i1_i8
-; CHECK: sbfm w0, w0, #0, #0
+; CHECK: sbfx w0, w0, #0, #1
   %conv = sext i1 %a to i8
   ret i8 %conv
 }
@@ -232,7 +232,7 @@ entry:
 define float @sitofp_sw_i1(i1 %a) nounwind ssp {
 entry:
 ; CHECK: sitofp_sw_i1
-; CHECK: sbfm w0, w0, #0, #0
+; CHECK: sbfx w0, w0, #0, #1
 ; CHECK: scvtf s0, w0
   %conv = sitofp i1 %a to float
   ret float %conv

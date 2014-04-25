@@ -186,20 +186,20 @@ foo:
   ubfx  w0, w0, #2, #3
   ubfx  x0, x0, #2, #3
 
-; CHECK: bfm  w0, w0, #31, #3
-; CHECK: bfm  x0, x0, #63, #3
-; CHECK: bfm  w0, w0, #0, #1
-; CHECK: bfm  x0, x0, #0, #1
-; CHECK: bfm  w0, w0, #2, #4
-; CHECK: bfm  x0, x0, #2, #4
-; CHECK: sbfm w0, w0, #31, #3
-; CHECK: sbfm x0, x0, #63, #3
-; CHECK: sbfm w0, w0, #2, #4
-; CHECK: sbfm x0, x0, #2, #4
-; CHECK: ubfm w0, w0, #31, #3
-; CHECK: ubfm x0, x0, #63, #3
-; CHECK: ubfm w0, w0, #2, #4
-; CHECK: ubfm x0, x0, #2, #4
+; CHECK: bfm   w0, w0, #31, #3
+; CHECK: bfm   x0, x0, #63, #3
+; CHECK: bfm   w0, w0, #0, #1
+; CHECK: bfm   x0, x0, #0, #1
+; CHECK: bfm   w0, w0, #2, #4
+; CHECK: bfm   x0, x0, #2, #4
+; CHECK: sbfiz w0, w0, #1, #4
+; CHECK: sbfiz x0, x0, #1, #4
+; CHECK: sbfx  w0, w0, #2, #3
+; CHECK: sbfx  x0, x0, #2, #3
+; CHECK: ubfiz w0, w0, #1, #4
+; CHECK: ubfiz x0, x0, #1, #4
+; CHECK: ubfx  w0, w0, #2, #3
+; CHECK: ubfx  x0, x0, #2, #3
 
 ;-----------------------------------------------------------------------------
 ; Shift (immediate) aliases
@@ -249,9 +249,9 @@ foo:
 ; CHECK: sxtb x1, w2
 ; CHECK: sxth x1, w2
 ; CHECK: sxtw x1, w2
-; CHECK: uxtb x1, w2
-; CHECK: uxth x1, w2
-; CHECK: uxtw x1, w2
+; CHECK: ubfx x1, x2, #0, #8
+; CHECK: ubfx x1, x2, #0, #16
+; CHECK: ubfx x1, x2, #0, #32
 
 ;-----------------------------------------------------------------------------
 ; Negate with carry
