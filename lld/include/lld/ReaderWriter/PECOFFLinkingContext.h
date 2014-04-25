@@ -49,7 +49,8 @@ public:
         _createManifest(true), _embedManifest(false), _manifestId(1),
         _manifestUAC(true), _manifestLevel("'asInvoker'"),
         _manifestUiAccess("'false'"), _isDll(false), _requireSEH(false),
-        _noSEH(false), _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
+        _noSEH(false), _implib(""),
+        _dosStub(llvm::makeArrayRef(DEFAULT_DOS_STUB)) {
     setDeadStripping(true);
   }
 
@@ -209,6 +210,9 @@ public:
   bool requireSEH() const { return _requireSEH; }
   bool noSEH() const { return _noSEH; }
 
+  void setOutputImportLibraryPath(const std::string &val) { _implib = val; }
+  std::string getOutputImportLibraryPath() const;
+
   StringRef getOutputSectionName(StringRef sectionName) const;
   bool addSectionRenaming(raw_ostream &diagnostics,
                           StringRef from, StringRef to);
@@ -329,6 +333,9 @@ private:
   // will not produce an image with SEH table even if all input object files are
   // compatible with SEH.
   bool _noSEH;
+
+  // /IMPLIB command line option.
+  std::string _implib;
 
   // The set to store /nodefaultlib arguments.
   std::set<std::string> _noDefaultLibs;

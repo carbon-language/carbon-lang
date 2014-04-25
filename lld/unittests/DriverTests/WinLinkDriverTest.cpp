@@ -329,6 +329,16 @@ TEST_F(WinLinkParserTest, Merge_Circular) {
                      "a.out", nullptr));
 }
 
+TEST_F(WinLinkParserTest, Implib) {
+  EXPECT_TRUE(parse("link.exe", "/implib:foo.dll.lib", "a.out", nullptr));
+  EXPECT_EQ("foo.dll.lib", _context.getOutputImportLibraryPath());
+}
+
+TEST_F(WinLinkParserTest, ImplibDefault) {
+  EXPECT_TRUE(parse("link.exe", "/out:foobar.dll", "a.out", nullptr));
+  EXPECT_EQ("foobar.lib", _context.getOutputImportLibraryPath());
+}
+
 //
 // Tests for /section
 //

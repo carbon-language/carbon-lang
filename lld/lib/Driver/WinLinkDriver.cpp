@@ -1143,6 +1143,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       ctx.setSwapRunFromNet(true);
       break;
 
+    case OPT_implib:
+      ctx.setOutputImportLibraryPath(inputArg->getValue());
+      break;
+
     case OPT_stub: {
       ArrayRef<uint8_t> contents;
       if (!readFile(ctx, inputArg->getValue(), contents)) {

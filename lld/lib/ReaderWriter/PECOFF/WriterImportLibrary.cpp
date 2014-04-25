@@ -20,12 +20,6 @@
 namespace lld {
 namespace pecoff {
 
-static std::string getOutputPath(const PECOFFLinkingContext &ctx) {
-  SmallString<128> path = ctx.outputPath();
-  llvm::sys::path::replace_extension(path, ".lib");
-  return path.str();
-}
-
 /// Creates a .def file containing the list of exported symbols.
 static std::string
 createModuleDefinitionFile(const PECOFFLinkingContext &ctx,
@@ -65,7 +59,7 @@ void writeImportLibrary(const PECOFFLinkingContext &ctx) {
   std::string defArg = "/def:";
   defArg.append(createModuleDefinitionFile(ctx, tmpFile));
   std::string outputArg = "/out:";
-  outputArg.append(getOutputPath(ctx));
+  outputArg.append(ctx.getOutputImportLibraryPath());
 
   std::vector<const char *> args;
   args.push_back(programPath.c_str());

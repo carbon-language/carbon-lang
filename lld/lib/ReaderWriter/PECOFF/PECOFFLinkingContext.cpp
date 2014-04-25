@@ -268,6 +268,14 @@ void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
                << "' specified more than once.\n";
 }
 
+std::string PECOFFLinkingContext::getOutputImportLibraryPath() const {
+  if (!_implib.empty())
+    return _implib;
+  SmallString<128> path = outputPath();
+  llvm::sys::path::replace_extension(path, ".lib");
+  return path.str();
+}
+
 void PECOFFLinkingContext::addPasses(PassManager &pm) {
   pm.add(std::unique_ptr<Pass>(new pecoff::SetSubsystemPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::EdataPass(*this)));
