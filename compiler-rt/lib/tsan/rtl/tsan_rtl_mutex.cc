@@ -170,18 +170,11 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state, EventTypeUnlock, s->GetId());
   int rec = 0;
-  if (s->recursion == 0) {
-    if (!s->is_broken) {
+  bool report_bad_unlock = false;
+  if (s->recursion == 0 || s->owner_tid != thr->tid) {
+    if (flags()->report_mutex_bugs && !s->is_broken) {
       s->is_broken = true;
-      Printf("ThreadSanitizer WARNING: unlock of unlocked mutex %p\n", addr);
-      PrintCurrentStack(thr, pc);
-    }
-  } else if (s->owner_tid != thr->tid) {
-    if (!s->is_broken) {
-      s->is_broken = true;
-      Printf("ThreadSanitizer WARNING: mutex %p is unlocked by wrong thread\n",
-             addr);
-      PrintCurrentStack(thr, pc);
+      report_bad_unlock = true;
     }
   } else {
     rec = all ? s->recursion : 1;
@@ -199,7 +192,19 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
     Callback cb(thr, pc);
     ctx->dd->MutexBeforeUnlock(&cb, &s->dd, true);
   }
+  u64 mid = s->GetId();
   s->mtx.Unlock();
+  // Can't touch s after this point.
+  if (report_bad_unlock) {
+    ThreadRegistryLock l(ctx->thread_registry);
+    ScopedReport rep(ReportTypeMutexBadUnlock);
+    rep.AddMutex(mid);
+    StackTrace trace;
+    trace.ObtainCurrent(thr, pc);
+    rep.AddStack(&trace);
+    rep.AddLocation(addr, 1);
+    OutputReport(ctx, rep);
+  }
   if (flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));

@@ -1,0 +1,18 @@
+// RUN: %clangxx_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
+extern "C" void AnnotateRWLockReleased(const char *f, int l, void *m, long rw);
+
+int main() {
+  int m = 0;
+  AnnotateRWLockReleased(__FILE__, __LINE__, &m, 1);
+  return 0;
+}
+
+// CHECK: WARNING: ThreadSanitizer: unlock of an unlocked mutex (or by a wrong thread)
+// CHECK:     #0 AnnotateRWLockReleased
+// CHECK:     #1 main
+// CHECK: Location is stack of main thread.
+// CHECK:   Mutex M1 ({{.*}}) created at:
+// CHECK:     #0 AnnotateRWLockReleased
+// CHECK:     #1 main
+// CHECK: SUMMARY: ThreadSanitizer: unlock of an unlocked mutex (or by a wrong thread)
+
