@@ -1024,17 +1024,14 @@ public:
   /// This class collates the successor edge weights for later processing.
   ///
   /// \a DidOverflow indicates whether \a Total did overflow while adding to
-  /// the distribution.  It should never overflow twice.  There's no flag for
-  /// whether \a ForwardTotal overflows, since when \a Total exceeds 32-bits
-  /// they both get re-computed during \a normalize().
+  /// the distribution.  It should never overflow twice.
   struct Distribution {
     typedef SmallVector<Weight, 4> WeightList;
     WeightList Weights;    ///< Individual successor weights.
     uint64_t Total;        ///< Sum of all weights.
     bool DidOverflow;      ///< Whether \a Total did overflow.
-    uint32_t ForwardTotal; ///< Total excluding backedges.
 
-    Distribution() : Total(0), DidOverflow(false), ForwardTotal(0) {}
+    Distribution() : Total(0), DidOverflow(false) {}
     void addLocal(const BlockNode &Node, uint64_t Amount) {
       add(Node, Amount, Weight::Local);
     }
@@ -1079,9 +1076,8 @@ public:
   /// \brief Add an edge to the distribution.
   ///
   /// Adds an edge to Succ to Dist.  If \c LoopHead.isValid(), then whether the
-  /// edge is forward/exit/backedge is in the context of LoopHead.  Otherwise,
-  /// every edge should be a forward edge (since all the loops are packaged
-  /// up).
+  /// edge is local/exit/backedge is in the context of LoopHead.  Otherwise,
+  /// every edge should be a local edge (since all the loops are packaged up).
   void addToDist(Distribution &Dist, const LoopData *OuterLoop,
                  const BlockNode &Pred, const BlockNode &Succ, uint64_t Weight);
 
@@ -1119,19 +1115,6 @@ public:
   /// backedges and exits are stored in its entry in Loops.
   ///
   /// Mass is distributed in parallel from two copies of the source mass.
-  ///
-  /// The first mass (forward) represents the distribution of mass through the
-  /// local DAG.  This distribution should lose mass at loop exits and ignore
-  /// backedges.
-  ///
-  /// The second mass (general) represents the behavior of the loop in the
-  /// global context.  In a given distribution from the head, how much mass
-  /// exits, and to where?  How much mass returns to the loop head?
-  ///
-  /// The forward mass should be split up between local successors and exits,
-  /// but only actually distributed to the local successors.  The general mass
-  /// should be split up between all three types of successors, but distributed
-  /// only to exits and backedges.
   void distributeMass(const BlockNode &Source, LoopData *OuterLoop,
                       Distribution &Dist);
 
@@ -1270,23 +1253,17 @@ template <> inline std::string getBlockName(const BasicBlock *BB) {
 ///           in \a LoopData::Exits.  Otherwise, fetch it from
 ///           BranchProbabilityInfo.
 ///
-///         - Each successor is categorized as \a Weight::Local, a normal
-///           forward edge within the current loop, \a Weight::Backedge, a
-///           backedge to the loop header, or \a Weight::Exit, any successor
-///           outside the loop.  The weight, the successor, and its category
-///           are stored in \a Distribution.  There can be multiple edges to
-///           each successor.
+///         - Each successor is categorized as \a Weight::Local, a local edge
+///           within the current loop, \a Weight::Backedge, a backedge to the
+///           loop header, or \a Weight::Exit, any successor outside the loop.
+///           The weight, the successor, and its category are stored in \a
+///           Distribution.  There can be multiple edges to each successor.
 ///
 ///         - Normalize the distribution:  scale weights down so that their sum
 ///           is 32-bits, and coalesce multiple edges to the same node.
 ///
 ///         - Distribute the mass accordingly, dithering to minimize mass loss,
-///           as described in \a distributeMass().  Mass is distributed in
-///           parallel in two ways: forward, and general.  Local successors
-///           take their mass from the forward mass, while exit and backedge
-///           successors take their mass from the general mass.  Additionally,
-///           exit edges use up (ignored) mass from the forward mass, and local
-///           edges use up (ignored) mass from the general distribution.
+///           as described in \a distributeMass().
 ///
 ///     Finally, calculate the loop scale from the accumulated backedge mass.
 ///

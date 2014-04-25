@@ -389,31 +389,12 @@ typedef BlockFrequencyInfoImplBase::FrequencyData FrequencyData;
 ///      2. Calculate the portion's mass as \a RemMass times P.
 ///      3. Update \a RemWeight and \a RemMass at each portion by subtracting
 ///         the current portion's weight and mass.
-///
-/// Mass is distributed in two ways: full distribution and forward
-/// distribution.  The latter ignores backedges, and uses the parallel fields
-/// \a RemForwardWeight and \a RemForwardMass.
 struct DitheringDistributer {
   uint32_t RemWeight;
-  uint32_t RemForwardWeight;
-
   BlockMass RemMass;
-  BlockMass RemForwardMass;
 
   DitheringDistributer(Distribution &Dist, const BlockMass &Mass);
 
-  BlockMass takeLocalMass(uint32_t Weight) {
-    (void)takeMass(Weight);
-    return takeForwardMass(Weight);
-  }
-  BlockMass takeExitMass(uint32_t Weight) {
-    (void)takeForwardMass(Weight);
-    return takeMass(Weight);
-  }
-  BlockMass takeBackedgeMass(uint32_t Weight) { return takeMass(Weight); }
-
-private:
-  BlockMass takeForwardMass(uint32_t Weight);
   BlockMass takeMass(uint32_t Weight);
 };
 }
@@ -422,22 +403,9 @@ DitheringDistributer::DitheringDistributer(Distribution &Dist,
                                            const BlockMass &Mass) {
   Dist.normalize();
   RemWeight = Dist.Total;
-  RemForwardWeight = Dist.ForwardTotal;
   RemMass = Mass;
-  RemForwardMass = Dist.ForwardTotal ? Mass : BlockMass();
 }
 
-BlockMass DitheringDistributer::takeForwardMass(uint32_t Weight) {
-  // Compute the amount of mass to take.
-  assert(Weight && "invalid weight");
-  assert(Weight <= RemForwardWeight);
-  BlockMass Mass = RemForwardMass * BranchProbability(Weight, RemForwardWeight);
-
-  // Decrement totals (dither).
-  RemForwardWeight -= Weight;
-  RemForwardMass -= Mass;
-  return Mass;
-}
 BlockMass DitheringDistributer::takeMass(uint32_t Weight) {
   assert(Weight && "invalid weight");
   assert(Weight <= RemWeight);
@@ -468,13 +436,6 @@ void Distribution::add(const BlockNode &Node, uint64_t Amount,
   W.Amount = Amount;
   W.Type = Type;
   Weights.push_back(W);
-
-  if (Type == Weight::Backedge)
-    return;
-
-  // Update forward total.  Don't worry about overflow here, since then Total
-  // will exceed 32-bits and they'll both be recomputed in normalize().
-  ForwardTotal += Amount;
 }
 
 static void combineWeight(Weight &W, const Weight &OtherW) {
@@ -554,7 +515,6 @@ void Distribution::normalize() {
   // Early exit when combined into a single successor.
   if (Weights.size() == 1) {
     Total = 1;
-    ForwardTotal = Weights.front().Type != Weight::Backedge;
     Weights.front().Amount = 1;
     return;
   }
@@ -574,9 +534,8 @@ void Distribution::normalize() {
     return;
 
   // Recompute the total through accumulation (rather than shifting it) so that
-  // it's accurate after shifting.  ForwardTotal is dirty here anyway.
+  // it's accurate after shifting.
   Total = 0;
-  ForwardTotal = 0;
 
   // Sum the weights to each node and shift right if necessary.
   for (Weight &W : Weights) {
@@ -588,11 +547,6 @@ void Distribution::normalize() {
 
     // Update the total.
     Total += W.Amount;
-    if (W.Type == Weight::Backedge)
-      continue;
-
-    // Update the forward total.
-    ForwardTotal += W.Amount;
   }
   assert(Total <= UINT32_MAX);
 }
@@ -732,8 +686,7 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
                                                 LoopData *OuterLoop,
                                                 Distribution &Dist) {
   BlockMass Mass = getPackageMass(*this, Source);
-  DEBUG(dbgs() << "  => mass:  " << Mass
-               << " (    general     |    forward     )\n");
+  DEBUG(dbgs() << "  => mass:  " << Mass << "\n");
 
   // Distribute mass to successors as laid out in Dist.
   DitheringDistributer D(Dist, Mass);
@@ -741,8 +694,7 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
 #ifndef NDEBUG
   auto debugAssign = [&](const BlockNode &T, const BlockMass &M,
                          const char *Desc) {
-    dbgs() << "  => assign " << M << " (" << D.RemMass << "|"
-           << D.RemForwardMass << ")";
+    dbgs() << "  => assign " << M << " (" << D.RemMass << ")";
     if (Desc)
       dbgs() << " [" << Desc << "]";
     if (T.isValid())
@@ -753,11 +705,11 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
 #endif
 
   for (const Weight &W : Dist.Weights) {
-    // Check for a local edge (forward and non-exit).
+    // Check for a local edge (non-backedge and non-exit).
+    BlockMass Taken = D.takeMass(W.Amount);
     if (W.Type == Weight::Local) {
-      BlockMass Local = D.takeLocalMass(W.Amount);
-      getPackageMass(*this, W.TargetNode) += Local;
-      DEBUG(debugAssign(W.TargetNode, Local, nullptr));
+      getPackageMass(*this, W.TargetNode) += Taken;
+      DEBUG(debugAssign(W.TargetNode, Taken, nullptr));
       continue;
     }
 
@@ -766,17 +718,15 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
 
     // Check for a backedge.
     if (W.Type == Weight::Backedge) {
-      BlockMass Back = D.takeBackedgeMass(W.Amount);
-      OuterLoop->BackedgeMass += Back;
-      DEBUG(debugAssign(BlockNode(), Back, "back"));
+      OuterLoop->BackedgeMass += Taken;
+      DEBUG(debugAssign(BlockNode(), Taken, "back"));
       continue;
     }
 
     // This must be an exit.
     assert(W.Type == Weight::Exit);
-    BlockMass Exit = D.takeExitMass(W.Amount);
-    OuterLoop->Exits.push_back(std::make_pair(W.TargetNode, Exit));
-    DEBUG(debugAssign(W.TargetNode, Exit, "exit"));
+    OuterLoop->Exits.push_back(std::make_pair(W.TargetNode, Taken));
+    DEBUG(debugAssign(W.TargetNode, Taken, "exit"));
   }
 }
 
