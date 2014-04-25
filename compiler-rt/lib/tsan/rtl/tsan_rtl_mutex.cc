@@ -59,7 +59,7 @@ static void ReportMutexMisuse(ThreadState *thr, uptr pc, ReportType typ,
   trace.ObtainCurrent(thr, pc);
   rep.AddStack(&trace);
   rep.AddLocation(addr, 1);
-  OutputReport(ctx, rep);
+  OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
 }
 
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
@@ -115,7 +115,7 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
     RestoreStack(last.tid(), last.epoch(), &trace, 0);
     rep.AddStack(&trace);
     rep.AddLocation(s->addr, 1);
-    OutputReport(ctx, rep);
+    OutputReport(ctx, rep, rep.GetReport()->stacks[0]);
   }
   thr->mset.Remove(s->GetId());
   DestroyAndFree(s);
