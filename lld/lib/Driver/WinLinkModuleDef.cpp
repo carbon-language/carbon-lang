@@ -44,7 +44,7 @@ Token Lexer::lex() {
         _buffer = "";
       } else {
         ret = Token(Kind::identifier, _buffer.substr(1, end - 1));
-        _buffer = _buffer.drop_front(end);
+        _buffer = _buffer.drop_front(end + 1);
       }
       return ret;
     }
