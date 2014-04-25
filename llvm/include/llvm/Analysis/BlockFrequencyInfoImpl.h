@@ -1365,12 +1365,47 @@ template <class BT> class BlockFrequencyInfoImpl : BlockFrequencyInfoImplBase {
     return RPOT[Node.Index];
   }
 
+  /// \brief Run (and save) a post-order traversal.
+  ///
+  /// Saves a reverse post-order traversal of all the nodes in \a F.
   void initializeRPOT();
+
+  /// \brief Initialize loop data.
+  ///
+  /// Build up \a Loops using \a LoopInfo.  \a LoopInfo gives us a mapping from
+  /// each block to the deepest loop it's in, but we need the inverse.  For each
+  /// loop, we store in reverse post-order its "immediate" members, defined as
+  /// the header, the headers of immediate sub-loops, and all other blocks in
+  /// the loop that are not in sub-loops.
   void initializeLoops();
 
+  /// \brief Propagate to a block's successors.
+  ///
+  /// In the context of distributing mass through \c OuterLoop, divide the mass
+  /// currently assigned to \c Node between its successors.
   void propagateMassToSuccessors(LoopData *OuterLoop, const BlockNode &Node);
-  void computeMassInLoops();
+
+  /// \brief Compute mass in a particular loop.
+  ///
+  /// Assign mass to \c Loop's header, and then for each block in \c Loop in
+  /// reverse post-order, distribute mass to its successors.  Only visits nodes
+  /// that have not been packaged into sub-loops.
+  ///
+  /// \pre \a computeMassInLoop() has been called for each subloop of \c Loop.
   void computeMassInLoop(LoopData &Loop);
+
+  /// \brief Compute mass in all loops.
+  ///
+  /// For each loop bottom-up, call \a computeMassInLoop().
+  void computeMassInLoops();
+
+  /// \brief Compute mass in the top-level function.
+  ///
+  /// Assign mass to the entry block, and then for each block in reverse
+  /// post-order, distribute mass to its successors.  Skips nodes that have
+  /// been packaged into loops.
+  ///
+  /// \pre \a computeMassInLoops() has been called.
   void computeMassInFunction();
 
   std::string getBlockName(const BlockNode &Node) const override {

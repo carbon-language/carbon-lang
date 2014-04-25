@@ -815,7 +815,7 @@ static void unwrapLoop(BlockFrequencyInfoImplBase &BFI, LoopData &Loop) {
                << "\n");
   Loop.Scale *= Loop.Mass.toFloat();
   Loop.IsPackaged = false;
-  DEBUG(dbgs() << " => combined-scale = " << Loop.Scale << "\n");
+  DEBUG(dbgs() << "  => combined-scale = " << Loop.Scale << "\n");
 
   // Propagate the head scale through the loop.  Since members are visited in
   // RPO, the head scale will be updated by the loop scale first, and then the
