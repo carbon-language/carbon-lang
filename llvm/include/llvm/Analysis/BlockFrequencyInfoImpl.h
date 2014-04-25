@@ -1367,7 +1367,6 @@ template <class BT> class BlockFrequencyInfoImpl : BlockFrequencyInfoImplBase {
 
   void initializeRPOT();
   void initializeLoops();
-  void runOnFunction(const FunctionT *F);
 
   void propagateMassToSuccessors(LoopData *OuterLoop, const BlockNode &Node);
   void computeMassInLoops();
