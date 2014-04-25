@@ -380,13 +380,13 @@ void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
 
 /// Create a DIE with the given Tag, add the DIE to its parent, and
 /// call insertDIE if MD is not null.
-DIE *DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, DIDescriptor N) {
+DIE &DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, DIDescriptor N) {
   assert(Tag != dwarf::DW_TAG_auto_variable &&
          Tag != dwarf::DW_TAG_arg_variable);
-  DIE *Die = new DIE((dwarf::Tag)Tag);
-  Parent.addChild(Die);
+  Parent.addChild(new DIE((dwarf::Tag)Tag));
+  DIE &Die = *Parent.getChildren().back();
   if (N)
-    insertDIE(N, Die);
+    insertDIE(N, &Die);
   return Die;
 }
 
@@ -958,17 +958,16 @@ DIE *DwarfUnit::createTypeDIE(DICompositeType Ty) {
   DIScope Context = resolve(Ty.getContext());
   DIE *ContextDIE = getOrCreateContextDIE(Context);
 
-  DIE *TyDIE = getDIE(Ty);
-  if (TyDIE)
+  if (DIE *TyDIE = getDIE(Ty))
     return TyDIE;
 
   // Create new type.
-  TyDIE = createAndAddDIE(Ty.getTag(), *ContextDIE, Ty);
+  DIE &TyDIE = createAndAddDIE(Ty.getTag(), *ContextDIE, Ty);
 
-  constructTypeDIE(*TyDIE, Ty);
+  constructTypeDIE(TyDIE, Ty);
 
   updateAcceleratorTables(Context, Ty, TyDIE);
-  return TyDIE;
+  return &TyDIE;
 }
 
 /// getOrCreateTypeDIE - Find existing DIE or create new DIE for the
@@ -996,9 +995,9 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
     return TyDIE;
 
   // Create new type.
-  DIE &TyDIE = *createAndAddDIE(Ty.getTag(), *ContextDIE, Ty);
+  DIE &TyDIE = createAndAddDIE(Ty.getTag(), *ContextDIE, Ty);
 
-  updateAcceleratorTables(Context, Ty, &TyDIE);
+  updateAcceleratorTables(Context, Ty, TyDIE);
 
   if (Ty.isBasicType())
     constructTypeDIE(TyDIE, DIBasicType(Ty));
@@ -1020,7 +1019,7 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 }
 
 void DwarfUnit::updateAcceleratorTables(DIScope Context, DIType Ty,
-                                        const DIE *TyDIE) {
+                                        const DIE &TyDIE) {
   if (!Ty.getName().empty() && !Ty.isForwardDecl()) {
     bool IsImplementation = 0;
     if (Ty.isCompositeType()) {
@@ -1035,7 +1034,8 @@ void DwarfUnit::updateAcceleratorTables(DIScope Context, DIType Ty,
     if ((!Context || Context.isCompileUnit() || Context.isFile() ||
          Context.isNameSpace()) &&
         getCUNode().getEmissionKind() != DIBuilder::LineTablesOnly)
-      GlobalTypes[getParentContextString(Context) + Ty.getName().str()] = TyDIE;
+      GlobalTypes[getParentContextString(Context) + Ty.getName().str()] =
+          &TyDIE;
   }
 }
 
@@ -1163,10 +1163,10 @@ void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DIArray Args) {
       assert(i == N-1 && "Unspecified parameter must be the last argument");
       createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
     } else {
-      DIE *Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, Buffer);
-      addType(*Arg, DIType(Ty));
+      DIE &Arg = createAndAddDIE(dwarf::DW_TAG_formal_parameter, Buffer);
+      addType(Arg, DIType(Ty));
       if (DIType(Ty).isArtificial())
-        addFlag(*Arg, dwarf::DW_AT_artificial);
+        addFlag(Arg, dwarf::DW_AT_artificial);
     }
   }
 }
@@ -1226,7 +1226,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       else if (Element.isDerivedType()) {
         DIDerivedType DDTy(Element);
         if (DDTy.getTag() == dwarf::DW_TAG_friend) {
-          DIE &ElemDie = *createAndAddDIE(dwarf::DW_TAG_friend, Buffer);
+          DIE &ElemDie = createAndAddDIE(dwarf::DW_TAG_friend, Buffer);
           addType(ElemDie, resolve(DDTy.getTypeDerivedFrom()),
                   dwarf::DW_AT_friend);
         } else if (DDTy.isStaticMember()) {
@@ -1236,7 +1236,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         }
       } else if (Element.isObjCProperty()) {
         DIObjCProperty Property(Element);
-        DIE &ElemDie = *createAndAddDIE(Property.getTag(), Buffer);
+        DIE &ElemDie = createAndAddDIE(Property.getTag(), Buffer);
         StringRef PropertyName = Property.getObjCPropertyName();
         addString(ElemDie, dwarf::DW_AT_APPLE_property_name, PropertyName);
         if (Property.getType())
@@ -1333,7 +1333,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 void DwarfUnit::constructTemplateTypeParameterDIE(DIE &Buffer,
                                                   DITemplateTypeParameter TP) {
   DIE &ParamDIE =
-      *createAndAddDIE(dwarf::DW_TAG_template_type_parameter, Buffer);
+      createAndAddDIE(dwarf::DW_TAG_template_type_parameter, Buffer);
   // Add the type if it exists, it could be void and therefore no type.
   if (TP.getType())
     addType(ParamDIE, resolve(TP.getType()));
@@ -1346,7 +1346,7 @@ void DwarfUnit::constructTemplateTypeParameterDIE(DIE &Buffer,
 void
 DwarfUnit::constructTemplateValueParameterDIE(DIE &Buffer,
                                               DITemplateValueParameter VP) {
-  DIE &ParamDIE = *createAndAddDIE(VP.getTag(), Buffer);
+  DIE &ParamDIE = createAndAddDIE(VP.getTag(), Buffer);
 
   // Add the type if there is one, template template and template parameter
   // packs will not have a type.
@@ -1387,14 +1387,14 @@ DIE *DwarfUnit::getOrCreateNameSpace(DINameSpace NS) {
 
   if (DIE *NDie = getDIE(NS))
     return NDie;
-  DIE &NDie = *createAndAddDIE(dwarf::DW_TAG_namespace, *ContextDIE, NS);
+  DIE &NDie = createAndAddDIE(dwarf::DW_TAG_namespace, *ContextDIE, NS);
 
   if (!NS.getName().empty()) {
     addString(NDie, dwarf::DW_AT_name, NS.getName());
-    DD->addAccelNamespace(NS.getName(), &NDie);
+    DD->addAccelNamespace(NS.getName(), NDie);
     addGlobalName(NS.getName(), NDie, NS.getContext());
   } else
-    DD->addAccelNamespace("(anonymous namespace)", &NDie);
+    DD->addAccelNamespace("(anonymous namespace)", NDie);
   addSourceLine(NDie, NS);
   return &NDie;
 }
@@ -1420,7 +1420,7 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
     ContextDIE = UnitDie.get();
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
-  DIE &SPDie = *createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, SP);
+  DIE &SPDie = createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, SP);
 
   DIE *DeclDie = nullptr;
   if (SPDecl.isSubprogram())
@@ -1585,7 +1585,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
     DIE *ContextDIE = getOrCreateContextDIE(GVContext);
 
     // Add to map.
-    VariableDIE = createAndAddDIE(GV.getTag(), *ContextDIE, GV);
+    VariableDIE = &createAndAddDIE(GV.getTag(), *ContextDIE, GV);
 
     // Add name and type.
     addString(*VariableDIE, dwarf::DW_AT_name, GV.getDisplayName());
@@ -1637,7 +1637,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
     if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
         !GVContext.isFile() && !DD->isSubprogramContext(GVContext)) {
       // Create specification DIE.
-      VariableSpecDIE = createAndAddDIE(dwarf::DW_TAG_variable, *UnitDie);
+      VariableSpecDIE = &createAndAddDIE(dwarf::DW_TAG_variable, *UnitDie);
       addDIEEntry(*VariableSpecDIE, dwarf::DW_AT_specification, VariableDIE);
       addBlock(*VariableSpecDIE, dwarf::DW_AT_location, Loc);
       // A static member's declaration is already flagged as such.
@@ -1681,7 +1681,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
   }
 
   if (addToAccelTable) {
-    DIE *AddrDIE = VariableSpecDIE ? VariableSpecDIE : VariableDIE;
+    DIE &AddrDIE = VariableSpecDIE ? *VariableSpecDIE : *VariableDIE;
     DD->addAccelName(GV.getName(), AddrDIE);
 
     // If the linkage name is different than the name, go ahead and output
@@ -1698,7 +1698,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
 
 /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
 void DwarfUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy) {
-  DIE &DW_Subrange = *createAndAddDIE(dwarf::DW_TAG_subrange_type, Buffer);
+  DIE &DW_Subrange = createAndAddDIE(dwarf::DW_TAG_subrange_type, Buffer);
   addDIEEntry(DW_Subrange, dwarf::DW_AT_type, IndexTy);
 
   // The LowerBound value defines the lower bounds which is typically zero for
@@ -1735,7 +1735,7 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
   DIE *IdxTy = getIndexTyDie();
   if (!IdxTy) {
     // Construct an integer type to use for indexes.
-    IdxTy = createAndAddDIE(dwarf::DW_TAG_base_type, *UnitDie);
+    IdxTy = &createAndAddDIE(dwarf::DW_TAG_base_type, *UnitDie);
     addString(*IdxTy, dwarf::DW_AT_name, "sizetype");
     addUInt(*IdxTy, dwarf::DW_AT_byte_size, None, sizeof(int64_t));
     addUInt(*IdxTy, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
@@ -1760,7 +1760,7 @@ void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
     DIEnumerator Enum(Elements.getElement(i));
     if (Enum.isEnumerator()) {
-      DIE &Enumerator = *createAndAddDIE(dwarf::DW_TAG_enumerator, Buffer);
+      DIE &Enumerator = createAndAddDIE(dwarf::DW_TAG_enumerator, Buffer);
       StringRef Name = Enum.getName();
       addString(Enumerator, dwarf::DW_AT_name, Name);
       int64_t Value = Enum.getEnumValue();
@@ -1868,7 +1868,7 @@ DIE *DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
 
 /// constructMemberDIE - Construct member DIE from DIDerivedType.
 void DwarfUnit::constructMemberDIE(DIE &Buffer, DIDerivedType DT) {
-  DIE &MemberDie = *createAndAddDIE(DT.getTag(), Buffer);
+  DIE &MemberDie = createAndAddDIE(DT.getTag(), Buffer);
   StringRef Name = DT.getName();
   if (!Name.empty())
     addString(MemberDie, dwarf::DW_AT_name, Name);
@@ -1969,7 +1969,7 @@ DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
   if (DIE *StaticMemberDIE = getDIE(DT))
     return StaticMemberDIE;
 
-  DIE &StaticMemberDIE = *createAndAddDIE(DT.getTag(), *ContextDIE, DT);
+  DIE &StaticMemberDIE = createAndAddDIE(DT.getTag(), *ContextDIE, DT);
 
   DIType Ty = resolve(DT.getTypeDerivedFrom());
 

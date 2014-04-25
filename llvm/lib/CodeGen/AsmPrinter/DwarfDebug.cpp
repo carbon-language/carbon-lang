@@ -272,7 +272,7 @@ static bool SectionSort(const MCSection *A, const MCSection *B) {
 // TODO: Determine whether or not we should add names for programs
 // that do not have a DW_AT_name or DW_AT_linkage_name field - this
 // is only slightly different than the lookup of non-standard ObjC names.
-void DwarfDebug::addSubprogramNames(DISubprogram SP, DIE *Die) {
+void DwarfDebug::addSubprogramNames(DISubprogram SP, DIE &Die) {
   if (!SP.isDefinition())
     return;
   addAccelName(SP.getName(), Die);
@@ -322,7 +322,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
   // concrete DIE twice.
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
     // Pick up abstract subprogram DIE.
-    SPDie = SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
+    SPDie = &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
     SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_abstract_origin, AbsSPDIE);
   } else {
     DISubprogram SPDecl = SP.getFunctionDeclaration();
@@ -345,7 +345,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
           SPCU.constructSubprogramArguments(*SPDie, Args);
         DIE *SPDeclDie = SPDie;
         SPDie =
-            SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
+            &SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
         SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_specification, SPDeclDie);
       }
     }
@@ -359,7 +359,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
 
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_subprogram nodes.
-  addSubprogramNames(SP, SPDie);
+  addSubprogramNames(SP, *SPDie);
 
   return SPDie;
 }
@@ -501,7 +501,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
 
   // Add name to the name table, we do this here because we're guaranteed
   // to have concrete versions of our DW_TAG_inlined_subprogram nodes.
-  addSubprogramNames(InlinedSP, ScopeDIE);
+  addSubprogramNames(InlinedSP, *ScopeDIE);
 
   return ScopeDIE;
 }
@@ -734,7 +734,7 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
   assert(Module.Verify() &&
          "Use one of the MDNode * overloads to handle invalid metadata");
   assert(Context && "Should always have a context for an imported_module");
-  DIE &IMDie = *TheCU.createAndAddDIE(Module.getTag(), *Context, Module);
+  DIE &IMDie = TheCU.createAndAddDIE(Module.getTag(), *Context, Module);
   DIE *EntityDie;
   DIDescriptor Entity = resolve(Module.getEntity());
   if (Entity.isNameSpace())
@@ -2541,30 +2541,30 @@ void DwarfDebug::attachLowHighPC(DwarfCompileUnit &Unit, DIE &D,
 // DIE to the proper table while ensuring that the name that we're going
 // to reference is in the string table. We do this since the names we
 // add may not only be identical to the names in the DIE.
-void DwarfDebug::addAccelName(StringRef Name, const DIE *Die) {
+void DwarfDebug::addAccelName(StringRef Name, const DIE &Die) {
   if (!useDwarfAccelTables())
     return;
   InfoHolder.getStringPoolEntry(Name);
-  AccelNames.AddName(Name, Die);
+  AccelNames.AddName(Name, &Die);
 }
 
-void DwarfDebug::addAccelObjC(StringRef Name, const DIE *Die) {
+void DwarfDebug::addAccelObjC(StringRef Name, const DIE &Die) {
   if (!useDwarfAccelTables())
     return;
   InfoHolder.getStringPoolEntry(Name);
-  AccelObjC.AddName(Name, Die);
+  AccelObjC.AddName(Name, &Die);
 }
 
-void DwarfDebug::addAccelNamespace(StringRef Name, const DIE *Die) {
+void DwarfDebug::addAccelNamespace(StringRef Name, const DIE &Die) {
   if (!useDwarfAccelTables())
     return;
   InfoHolder.getStringPoolEntry(Name);
-  AccelNamespace.AddName(Name, Die);
+  AccelNamespace.AddName(Name, &Die);
 }
 
-void DwarfDebug::addAccelType(StringRef Name, const DIE *Die, char Flags) {
+void DwarfDebug::addAccelType(StringRef Name, const DIE &Die, char Flags) {
   if (!useDwarfAccelTables())
     return;
   InfoHolder.getStringPoolEntry(Name);
-  AccelTypes.AddName(Name, Die, Flags);
+  AccelTypes.AddName(Name, &Die, Flags);
 }

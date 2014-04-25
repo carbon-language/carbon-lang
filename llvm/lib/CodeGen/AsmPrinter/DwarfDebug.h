@@ -640,17 +640,17 @@ public:
   /// or another context nested inside a subprogram.
   bool isSubprogramContext(const MDNode *Context);
 
-  void addSubprogramNames(DISubprogram SP, DIE *Die);
+  void addSubprogramNames(DISubprogram SP, DIE &Die);
 
   AddressPool &getAddressPool() { return AddrPool; }
 
-  void addAccelName(StringRef Name, const DIE *Die);
+  void addAccelName(StringRef Name, const DIE &Die);
 
-  void addAccelObjC(StringRef Name, const DIE *Die);
+  void addAccelObjC(StringRef Name, const DIE &Die);
 
-  void addAccelNamespace(StringRef Name, const DIE *Die);
+  void addAccelNamespace(StringRef Name, const DIE &Die);
 
-  void addAccelType(StringRef Name, const DIE *Die, char Flags);
+  void addAccelType(StringRef Name, const DIE &Die, char Flags);
 };
 } // End of namespace llvm
 
