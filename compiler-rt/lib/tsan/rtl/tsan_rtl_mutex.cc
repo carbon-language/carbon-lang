@@ -50,6 +50,18 @@ void DDMutexInit(ThreadState *thr, uptr pc, SyncVar *s) {
   s->dd.ctx = s->GetId();
 }
 
+static void ReportMutexMisuse(ThreadState *thr, uptr pc, ReportType typ,
+    uptr addr, u64 mid) {
+  ThreadRegistryLock l(ctx->thread_registry);
+  ScopedReport rep(typ);
+  rep.AddMutex(mid);
+  StackTrace trace;
+  trace.ObtainCurrent(thr, pc);
+  rep.AddStack(&trace);
+  rep.AddLocation(addr, 1);
+  OutputReport(ctx, rep);
+}
+
 void MutexCreate(ThreadState *thr, uptr pc, uptr addr,
                  bool rw, bool recursive, bool linker_init) {
   DPrintf("#%d: MutexCreate %zx\n", thr->tid, addr);
@@ -146,16 +158,8 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec, bool try_lock) {
   u64 mid = s->GetId();
   s->mtx.Unlock();
   // Can't touch s after this point.
-  if (report_double_lock) {
-    ThreadRegistryLock l(ctx->thread_registry);
-    ScopedReport rep(ReportTypeMutexDoubleLock);
-    rep.AddMutex(mid);
-    StackTrace trace;
-    trace.ObtainCurrent(thr, pc);
-    rep.AddStack(&trace);
-    rep.AddLocation(addr, 1);
-    OutputReport(ctx, rep);
-  }
+  if (report_double_lock)
+    ReportMutexMisuse(thr, pc, ReportTypeMutexDoubleLock, addr, mid);
   if (flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
@@ -195,16 +199,8 @@ int MutexUnlock(ThreadState *thr, uptr pc, uptr addr, bool all) {
   u64 mid = s->GetId();
   s->mtx.Unlock();
   // Can't touch s after this point.
-  if (report_bad_unlock) {
-    ThreadRegistryLock l(ctx->thread_registry);
-    ScopedReport rep(ReportTypeMutexBadUnlock);
-    rep.AddMutex(mid);
-    StackTrace trace;
-    trace.ObtainCurrent(thr, pc);
-    rep.AddStack(&trace);
-    rep.AddLocation(addr, 1);
-    OutputReport(ctx, rep);
-  }
+  if (report_bad_unlock)
+    ReportMutexMisuse(thr, pc, ReportTypeMutexBadUnlock, addr, mid);
   if (flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
@@ -220,10 +216,12 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr, bool trylock) {
   SyncVar *s = ctx->synctab.GetOrCreateAndLock(thr, pc, addr, false);
   thr->fast_state.IncrementEpoch();
   TraceAddEvent(thr, thr->fast_state, EventTypeRLock, s->GetId());
+  bool report_bad_lock = false;
   if (s->owner_tid != SyncVar::kInvalidTid) {
-    Printf("ThreadSanitizer WARNING: read lock of a write locked mutex %p\n",
-           addr);
-    PrintCurrentStack(thr, pc);
+    if (flags()->report_mutex_bugs && !s->is_broken) {
+      s->is_broken = true;
+      report_bad_lock = true;
+    }
   }
   AcquireImpl(thr, pc, &s->clock);
   s->last_lock = thr->fast_state.raw();
@@ -234,7 +232,11 @@ void MutexReadLock(ThreadState *thr, uptr pc, uptr addr, bool trylock) {
       ctx->dd->MutexBeforeLock(&cb, &s->dd, false);
     ctx->dd->MutexAfterLock(&cb, &s->dd, false, trylock);
   }
+  u64 mid = s->GetId();
   s->mtx.ReadUnlock();
+  // Can't touch s after this point.
+  if (report_bad_lock)
+    ReportMutexMisuse(thr, pc, ReportTypeMutexBadReadLock, addr, mid);
   if (flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
@@ -265,16 +267,8 @@ void MutexReadUnlock(ThreadState *thr, uptr pc, uptr addr) {
   s->mtx.Unlock();
   // Can't touch s after this point.
   thr->mset.Del(mid, false);
-  if (report_bad_unlock) {
-    ThreadRegistryLock l(ctx->thread_registry);
-    ScopedReport rep(ReportTypeMutexBadReadUnlock);
-    rep.AddMutex(mid);
-    StackTrace trace;
-    trace.ObtainCurrent(thr, pc);
-    rep.AddStack(&trace);
-    rep.AddLocation(addr, 1);
-    OutputReport(ctx, rep);
-  }
+  if (report_bad_unlock)
+    ReportMutexMisuse(thr, pc, ReportTypeMutexBadReadUnlock, addr, mid);
   if (flags()->detect_deadlocks) {
     Callback cb(thr, pc);
     ReportDeadlock(thr, pc, ctx->dd->GetReport(&cb));
