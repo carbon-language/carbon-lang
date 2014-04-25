@@ -35,10 +35,10 @@ class QueryEngineTest : public ::testing::Test {
 
 protected:
   QueryEngineTest()
-      : S(mkASTUnit2(std::unique_ptr<ASTUnit>(buildASTFromCode(
-                         "void foo1(void) {}\nvoid foo2(void) {}", "foo.cc")),
-                     std::unique_ptr<ASTUnit>(buildASTFromCode(
-                         "void bar1(void) {}\nvoid bar2(void) {}", "bar.cc")))),
+      : S(mkASTUnit2(buildASTFromCode("void foo1(void) {}\nvoid foo2(void) {}",
+                                      "foo.cc"),
+                     buildASTFromCode("void bar1(void) {}\nvoid bar2(void) {}",
+                                      "bar.cc"))),
         OS(Str) {}
 
   std::unique_ptr<ASTUnit> ASTs[2];
