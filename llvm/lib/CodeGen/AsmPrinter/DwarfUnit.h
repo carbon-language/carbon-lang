@@ -215,7 +215,7 @@ public:
   unsigned getUniqueID() const { return UniqueID; }
   uint16_t getLanguage() const { return CUNode.getLanguage(); }
   DICompileUnit getCUNode() const { return CUNode; }
-  DIE *getUnitDie() const { return UnitDie.get(); }
+  DIE &getUnitDie() const { return *UnitDie; }
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
 

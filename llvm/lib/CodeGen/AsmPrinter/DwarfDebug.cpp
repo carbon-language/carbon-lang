@@ -322,7 +322,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
   // concrete DIE twice.
   if (DIE *AbsSPDIE = AbstractSPDies.lookup(SP)) {
     // Pick up abstract subprogram DIE.
-    SPDie = SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU.getUnitDie());
+    SPDie = SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
     SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_abstract_origin, AbsSPDIE);
   } else {
     DISubprogram SPDecl = SP.getFunctionDeclaration();
@@ -345,7 +345,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
           SPCU.constructSubprogramArguments(*SPDie, Args);
         DIE *SPDeclDie = SPDie;
         SPDie =
-            SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, *SPCU.getUnitDie());
+            SPCU.createAndAddDIE(dwarf::DW_TAG_subprogram, SPCU.getUnitDie());
         SPCU.addDIEEntry(*SPDie, dwarf::DW_AT_specification, SPDeclDie);
       }
     }
@@ -885,27 +885,27 @@ void DwarfDebug::finalizeModuleInfo() {
     TheU->constructContainingTypeDIEs();
 
     // Add CU specific attributes if we need to add any.
-    if (TheU->getUnitDie()->getTag() == dwarf::DW_TAG_compile_unit) {
+    if (TheU->getUnitDie().getTag() == dwarf::DW_TAG_compile_unit) {
       // If we're splitting the dwarf out now that we've got the entire
       // CU then add the dwo id to it.
       DwarfCompileUnit *SkCU =
           static_cast<DwarfCompileUnit *>(TheU->getSkeleton());
       if (useSplitDwarf()) {
         // Emit a unique identifier for this CU.
-        uint64_t ID = DIEHash(Asm).computeCUSignature(*TheU->getUnitDie());
-        TheU->addUInt(*TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
+        uint64_t ID = DIEHash(Asm).computeCUSignature(TheU->getUnitDie());
+        TheU->addUInt(TheU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                       dwarf::DW_FORM_data8, ID);
-        SkCU->addUInt(*SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
+        SkCU->addUInt(SkCU->getUnitDie(), dwarf::DW_AT_GNU_dwo_id,
                       dwarf::DW_FORM_data8, ID);
 
         // We don't keep track of which addresses are used in which CU so this
         // is a bit pessimistic under LTO.
         if (!AddrPool.isEmpty())
-          addSectionLabel(*Asm, *SkCU, *SkCU->getUnitDie(),
+          addSectionLabel(*Asm, *SkCU, SkCU->getUnitDie(),
                           dwarf::DW_AT_GNU_addr_base, DwarfAddrSectionSym,
                           DwarfAddrSectionSym);
         if (!TheU->getRangeLists().empty())
-          addSectionLabel(*Asm, *SkCU, *SkCU->getUnitDie(),
+          addSectionLabel(*Asm, *SkCU, SkCU->getUnitDie(),
                           dwarf::DW_AT_GNU_ranges_base,
                           DwarfDebugRangeSectionSym, DwarfDebugRangeSectionSym);
       }
@@ -921,7 +921,7 @@ void DwarfDebug::finalizeModuleInfo() {
       unsigned NumRanges = TheU->getRanges().size();
       if (NumRanges) {
         if (NumRanges > 1) {
-          addSectionLabel(*Asm, U, *U.getUnitDie(), dwarf::DW_AT_ranges,
+          addSectionLabel(*Asm, U, U.getUnitDie(), dwarf::DW_AT_ranges,
                           Asm->GetTempSymbol("cu_ranges", U.getUniqueID()),
                           DwarfDebugRangeSectionSym);
 
@@ -929,13 +929,13 @@ void DwarfDebug::finalizeModuleInfo() {
           // DW_AT_ranges to specify the default base address for use in
           // location lists (see Section 2.6.2) and range lists (see Section
           // 2.17.3).
-          U.addUInt(*U.getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
+          U.addUInt(U.getUnitDie(), dwarf::DW_AT_low_pc, dwarf::DW_FORM_addr,
                     0);
         } else {
           RangeSpan &Range = TheU->getRanges().back();
-          U.addLocalLabelAddress(*U.getUnitDie(), dwarf::DW_AT_low_pc,
+          U.addLocalLabelAddress(U.getUnitDie(), dwarf::DW_AT_low_pc,
                                  Range.getStart());
-          U.addLabelDelta(*U.getUnitDie(), dwarf::DW_AT_high_pc, Range.getEnd(),
+          U.addLabelDelta(U.getUnitDie(), dwarf::DW_AT_high_pc, Range.getEnd(),
                           Range.getStart());
         }
       }

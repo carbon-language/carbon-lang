@@ -370,9 +370,9 @@ void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
   const DIE *EntryCU = Entry->getEntry()->getUnitOrNull();
   if (!DieCU)
     // We assume that Die belongs to this CU, if it is not linked to any CU yet.
-    DieCU = getUnitDie();
+    DieCU = &getUnitDie();
   if (!EntryCU)
-    EntryCU = getUnitDie();
+    EntryCU = &getUnitDie();
   Die.addValue(Attribute,
                EntryCU == DieCU ? dwarf::DW_FORM_ref4 : dwarf::DW_FORM_ref_addr,
                Entry);
@@ -944,7 +944,7 @@ void DwarfUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
 /// getOrCreateContextDIE - Get context owner's DIE.
 DIE *DwarfUnit::getOrCreateContextDIE(DIScope Context) {
   if (!Context || Context.isFile())
-    return getUnitDie();
+    return &getUnitDie();
   if (Context.isType())
     return getOrCreateTypeDIE(DIType(Context));
   if (Context.isNameSpace())

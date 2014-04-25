@@ -75,7 +75,7 @@ void DwarfFile::addUnit(std::unique_ptr<DwarfUnit> U) {
 // the abbreviations going into ASection.
 void DwarfFile::emitUnits(DwarfDebug *DD, const MCSymbol *ASectionSym) {
   for (const auto &TheU : CUs) {
-    DIE *Die = TheU->getUnitDie();
+    DIE &Die = TheU->getUnitDie();
     const MCSection *USection = TheU->getSection();
     Asm->OutStreamer.SwitchSection(USection);
 
@@ -84,11 +84,11 @@ void DwarfFile::emitUnits(DwarfDebug *DD, const MCSymbol *ASectionSym) {
 
     // Emit size of content not including length itself
     Asm->OutStreamer.AddComment("Length of Unit");
-    Asm->EmitInt32(TheU->getHeaderSize() + Die->getSize());
+    Asm->EmitInt32(TheU->getHeaderSize() + Die.getSize());
 
     TheU->emitHeader(ASectionSym);
 
-    DD->emitDIE(*Die);
+    DD->emitDIE(Die);
     Asm->OutStreamer.EmitLabel(TheU->getLabelEnd());
   }
 }
@@ -108,7 +108,7 @@ void DwarfFile::computeSizeAndOffsets() {
 
     // EndOffset here is CU-relative, after laying out
     // all of the CU DIE.
-    unsigned EndOffset = computeSizeAndOffset(*TheU->getUnitDie(), Offset);
+    unsigned EndOffset = computeSizeAndOffset(TheU->getUnitDie(), Offset);
     SecOffset += EndOffset;
   }
 }
