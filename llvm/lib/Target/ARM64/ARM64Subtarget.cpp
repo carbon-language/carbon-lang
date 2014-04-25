@@ -77,7 +77,8 @@ ARM64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
       return (isDecl || GV->isWeakForLinker()) ? ARM64II::MO_GOT
                                                : ARM64II::MO_NO_FLAG;
     else
-      return ARM64II::MO_GOT;
+      // No need to go through the GOT for local symbols on ELF.
+      return GV->hasLocalLinkage() ? ARM64II::MO_NO_FLAG : ARM64II::MO_GOT;
   }
 
   return ARM64II::MO_NO_FLAG;
