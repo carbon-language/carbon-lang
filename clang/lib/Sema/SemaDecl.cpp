@@ -9062,7 +9062,8 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
     AddPushedVisibilityAttribute(VD);
 
   // FIXME: Warn on unused templates.
-  if (VD->isFileVarDecl() && !VD->getDescribedVarTemplate())
+  if (VD->isFileVarDecl() && !VD->getDescribedVarTemplate() &&
+      !isa<VarTemplatePartialSpecializationDecl>(VD))
     MarkUnusedFileScopedDecl(VD);
 
   // Now we have parsed the initializer and can update the table of magic

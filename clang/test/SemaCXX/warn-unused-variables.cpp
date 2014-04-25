@@ -122,8 +122,19 @@ namespace PR19305 {
   template<typename T> const int l = 0; // no warning
   int b = l<int>;
 
+  // PR19558
+  template<typename T> const int o = 0; // no warning
+  template<typename T> const int o<T*> = 0; // no warning
+  int c = o<int*>;
+
+  template<> int o<void> = 0; // no warning
+  int d = o<void>;
+
   // FIXME: It'd be nice to warn here.
   template<typename T> int m = 0;
+  template<typename T> int m<T*> = 0;
+
+  template<> const int m<void> = 0; // expected-warning {{unused variable}}
 }
 
 namespace ctor_with_cleanups {
