@@ -1827,7 +1827,8 @@ PseudoInst<(outs), (ins i32imm:$amt, pred:$p), NoItinerary,
 }
 
 def HINT : AI<(outs), (ins imm0_239:$imm), MiscFrm, NoItinerary,
-              "hint", "\t$imm", []>, Requires<[IsARM, HasV6]> {
+              "hint", "\t$imm", [(int_arm_hint imm0_239:$imm)]>,
+           Requires<[IsARM, HasV6]> {
   bits<8> imm;
   let Inst{27-8} = 0b00110010000011110000;
   let Inst{7-0} = imm;

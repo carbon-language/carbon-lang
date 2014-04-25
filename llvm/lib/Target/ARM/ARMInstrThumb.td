@@ -269,7 +269,8 @@ class T1SystemEncoding<bits<8> opc>
   let Inst{7-0} = opc;
 }
 
-def tHINT : T1pI<(outs), (ins imm0_15:$imm), NoItinerary, "hint", "\t$imm", []>,
+def tHINT : T1pI<(outs), (ins imm0_15:$imm), NoItinerary, "hint", "\t$imm",
+                 [(int_arm_hint imm0_15:$imm)]>,
             T1SystemEncoding<0x00>,
             Requires<[IsThumb, HasV6M]> {
   bits<4> imm;
