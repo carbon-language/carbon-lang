@@ -1250,20 +1250,21 @@ getCompressedFragment(MCAsmLayout &Layout,
   return CompressedFragment;
 }
 
-static void UpdateSymbols(const MCAsmLayout &Layout, const MCSectionData &SD,
-                          MCAssembler::symbol_range Symbols,
-                          MCFragment *NewFragment) {
-  for (MCSymbolData &Data : Symbols) {
-    MCFragment *F = Data.getFragment();
-    if (F && F->getParent() == &SD) {
-      Data.setOffset(Data.getOffset() +
-                     Layout.getFragmentOffset(Data.Fragment));
-      Data.setFragment(NewFragment);
-    }
+typedef DenseMap<const MCSectionData *, std::vector<MCSymbolData *>>
+DefiningSymbolMap;
+
+static void UpdateSymbols(const MCAsmLayout &Layout,
+                          const std::vector<MCSymbolData *> &Symbols,
+                          MCFragment &NewFragment) {
+  for (MCSymbolData *Sym : Symbols) {
+    Sym->setOffset(Sym->getOffset() +
+                   Layout.getFragmentOffset(Sym->getFragment()));
+    Sym->setFragment(&NewFragment);
   }
 }
 
 static void CompressDebugSection(MCAssembler &Asm, MCAsmLayout &Layout,
+                                 const DefiningSymbolMap &DefiningSymbols,
                                  const MCSectionELF &Section,
                                  MCSectionData &SD) {
   StringRef SectionName = Section.getSectionName();
@@ -1278,7 +1279,9 @@ static void CompressDebugSection(MCAssembler &Asm, MCAsmLayout &Layout,
 
   // Update the fragment+offsets of any symbols referring to fragments in this
   // section to refer to the new fragment.
-  UpdateSymbols(Layout, SD, Asm.symbols(), CompressedFragment.get());
+  auto I = DefiningSymbols.find(&SD);
+  if (I != DefiningSymbols.end())
+    UpdateSymbols(Layout, I->second, *CompressedFragment);
 
   // Invalidate the layout for the whole section since it will have new and
   // different fragments now.
@@ -1300,6 +1303,12 @@ void ELFObjectWriter::CompressDebugSections(MCAssembler &Asm,
   if (!Asm.getContext().getAsmInfo()->compressDebugSections())
     return;
 
+  DefiningSymbolMap DefiningSymbols;
+
+  for (MCSymbolData &SD : Asm.symbols())
+    if (MCFragment *F = SD.getFragment())
+      DefiningSymbols[F->getParent()].push_back(&SD);
+
   for (MCSectionData &SD : Asm) {
     const MCSectionELF &Section =
         static_cast<const MCSectionELF &>(SD.getSection());
@@ -1311,7 +1320,7 @@ void ELFObjectWriter::CompressDebugSections(MCAssembler &Asm,
     if (!SectionName.startswith(".debug_") || SectionName == ".debug_frame")
       continue;
 
-    CompressDebugSection(Asm, Layout, Section, SD);
+    CompressDebugSection(Asm, Layout, DefiningSymbols, Section, SD);
   }
 }
 
