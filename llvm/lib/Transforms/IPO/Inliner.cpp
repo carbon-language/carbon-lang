@@ -290,7 +290,12 @@ unsigned Inliner::getInlineThreshold(CallSite CS) const {
   bool ColdCallee = Callee && !Callee->isDeclaration() &&
     Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                          Attribute::Cold);
-  if (ColdCallee && ColdThreshold < thres)
+  // Command line argument for InlineLimit will override the default
+  // ColdThreshold. If we have -inline-threshold but no -inlinecold-threshold,
+  // do not use the default cold threshold even if it is smaller.
+  if ((InlineLimit.getNumOccurrences() == 0 ||
+       ColdThreshold.getNumOccurrences() > 0) && ColdCallee &&
+      ColdThreshold < thres)
     thres = ColdThreshold;
 
   return thres;
