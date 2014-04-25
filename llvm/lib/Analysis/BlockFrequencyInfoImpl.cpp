@@ -746,7 +746,7 @@ void BlockFrequencyInfoImplBase::packageLoop(LoopData &Loop) {
   DEBUG(dbgs() << "packaging-loop: " << getBlockName(Loop.getHeader()) << "\n");
   Loop.IsPackaged = true;
   DEBUG(for (const BlockNode &M
-             : Loop.Members) {
+             : Loop.members()) {
                dbgs() << " - node: " << getBlockName(M.Index) << "\n";
              });
 }
@@ -859,7 +859,7 @@ static void unwrapLoopPackage(BlockFrequencyInfoImplBase &BFI,
   // Propagate the head scale through the loop.  Since members are visited in
   // RPO, the head scale will be updated by the loop scale first, and then the
   // final head scale will be used for updated the rest of the members.
-  for (const BlockNode &M : LoopPackage.Members) {
+  for (const BlockNode &M : LoopPackage.members()) {
     const FrequencyData &HeadData = BFI.Freqs[Head.Index];
     FrequencyData &Freqs = BFI.Freqs[M.Index];
     Float NewFreq = Freqs.Floating * HeadData.Floating;

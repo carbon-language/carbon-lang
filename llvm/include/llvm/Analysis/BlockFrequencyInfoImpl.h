@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/Support/BlockFrequency.h"
 #include "llvm/Support/BranchProbability.h"
@@ -946,18 +947,25 @@ public:
     typedef SmallVector<std::pair<BlockNode, BlockMass>, 4> ExitMap;
     typedef SmallVector<BlockNode, 4> MemberList;
     LoopData *Parent;       ///< The parent loop.
-    BlockNode Header;       ///< Header.
     bool IsPackaged;        ///< Whether this has been packaged.
     ExitMap Exits;          ///< Successor edges (and weights).
-    MemberList Members;     ///< Members of the loop.
+    MemberList Nodes;       ///< Header and the members of the loop.
     BlockMass BackedgeMass; ///< Mass returned to loop header.
     BlockMass Mass;
     Float Scale;
 
     LoopData(LoopData *Parent, const BlockNode &Header)
-        : Parent(Parent), Header(Header), IsPackaged(false) {}
-    bool isHeader(const BlockNode &Node) const { return Node == Header; }
-    BlockNode getHeader() const { return Header; }
+        : Parent(Parent), IsPackaged(false), Nodes(1, Header) {}
+    bool isHeader(const BlockNode &Node) const { return Node == Nodes[0]; }
+    BlockNode getHeader() const { return Nodes[0]; }
+
+    MemberList::const_iterator members_begin() const {
+      return Nodes.begin() + 1;
+    }
+    MemberList::const_iterator members_end() const { return Nodes.end(); }
+    iterator_range<MemberList::const_iterator> members() const {
+      return make_range(members_begin(), members_end());
+    }
   };
 
   /// \brief Index of loop information.
@@ -1463,7 +1471,7 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
     if (Working[Index].isLoopHeader()) {
       LoopData *ContainingLoop = Working[Index].getContainingLoop();
       if (ContainingLoop)
-        ContainingLoop->Members.push_back(Index);
+        ContainingLoop->Nodes.push_back(Index);
       continue;
     }
 
@@ -1478,7 +1486,7 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
     assert(HeaderData.isLoopHeader());
 
     Working[Index].Loop = HeaderData.Loop;
-    HeaderData.Loop->Members.push_back(Index);
+    HeaderData.Loop->Nodes.push_back(Index);
     DEBUG(dbgs() << " - loop = " << getBlockName(Header)
                  << ": member = " << getBlockName(Index) << "\n");
   }
@@ -1499,7 +1507,7 @@ void BlockFrequencyInfoImpl<BT>::computeMassInLoop(LoopData &Loop) {
   Working[Loop.getHeader().Index].Mass = BlockMass::getFull();
   propagateMassToSuccessors(&Loop, Loop.getHeader());
 
-  for (const BlockNode &M : Loop.Members)
+  for (const BlockNode &M : Loop.members())
     propagateMassToSuccessors(&Loop, M);
 
   computeLoopScale(Loop);
