@@ -61,13 +61,13 @@ static inline Module *LoadFile(const char *argv0, const std::string &FN,
                                LLVMContext& Context) {
   SMDiagnostic Err;
   if (Verbose) errs() << "Loading '" << FN << "'\n";
-  Module* Result = 0;
+  Module* Result = nullptr;
 
   Result = ParseIRFile(FN, Err, Context);
   if (Result) return Result;   // Load successful!
 
   Err.print(argv0, errs());
-  return NULL;
+  return nullptr;
 }
 
 int main(int argc, char **argv) {
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
 
   std::unique_ptr<Module> Composite(
       LoadFile(argv[0], InputFilenames[BaseArg], Context));
-  if (Composite.get() == 0) {
+  if (!Composite.get()) {
     errs() << argv[0] << ": error loading file '"
            << InputFilenames[BaseArg] << "'\n";
     return 1;
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
   Linker L(Composite.get(), SuppressWarnings);
   for (unsigned i = BaseArg+1; i < InputFilenames.size(); ++i) {
     std::unique_ptr<Module> M(LoadFile(argv[0], InputFilenames[i], Context));
-    if (M.get() == 0) {
+    if (!M.get()) {
       errs() << argv[0] << ": error loading file '" <<InputFilenames[i]<< "'\n";
       return 1;
     }

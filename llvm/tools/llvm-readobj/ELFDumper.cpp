@@ -652,7 +652,8 @@ void ELFDumper<ELFT>::printSymbol(typename ELFO::Elf_Sym_Iter Symbol) {
   std::string FullSymbolName(SymbolName);
   if (Symbol.isDynamic()) {
     bool IsDefault;
-    ErrorOr<StringRef> Version = Obj->getSymbolVersion(0, &*Symbol, IsDefault);
+    ErrorOr<StringRef> Version = Obj->getSymbolVersion(nullptr, &*Symbol,
+                                                       IsDefault);
     if (Version) {
       FullSymbolName += (IsDefault ? "@@" : "@");
       FullSymbolName += *Version;

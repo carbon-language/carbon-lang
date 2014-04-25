@@ -283,13 +283,13 @@ public:
     const std::string ModuleID = M->getModuleIdentifier();
     std::string CacheName;
     if (!getCacheFilename(ModuleID, CacheName))
-      return NULL;
+      return nullptr;
     // Load the object from the cache filename
     std::unique_ptr<MemoryBuffer> IRObjectBuffer;
     MemoryBuffer::getFile(CacheName.c_str(), IRObjectBuffer, -1, false);
     // If the file isn't there, that's OK.
     if (!IRObjectBuffer)
-      return NULL;
+      return nullptr;
     // MCJIT will want to write into this buffer, and we don't want that
     // because the file has probably just been mmapped.  Instead we make
     // a copy.  The filed-based buffer will be released when it goes
@@ -320,8 +320,8 @@ private:
   }
 };
 
-static ExecutionEngine *EE = 0;
-static LLIObjectCache *CacheManager = 0;
+static ExecutionEngine *EE = nullptr;
+static LLIObjectCache *CacheManager = nullptr;
 
 static void do_shutdown() {
   // Cygwin-1.5 invokes DLL's dtors before atexit handler.
@@ -450,7 +450,7 @@ int main(int argc, char **argv, char * const *envp) {
     Mod->setTargetTriple(Triple::normalize(TargetTriple));
 
   // Enable MCJIT if desired.
-  RTDyldMemoryManager *RTDyldMM = 0;
+  RTDyldMemoryManager *RTDyldMM = nullptr;
   if (UseMCJIT && !ForceInterpreter) {
     builder.setUseMCJIT(true);
     if (RemoteMCJIT)
@@ -463,7 +463,7 @@ int main(int argc, char **argv, char * const *envp) {
       errs() << "error: Remote process execution requires -use-mcjit\n";
       exit(1);
     }
-    builder.setJITMemoryManager(ForceInterpreter ? 0 :
+    builder.setJITMemoryManager(ForceInterpreter ? nullptr :
                                 JITMemoryManager::CreateDefaultMemManager());
   }
 

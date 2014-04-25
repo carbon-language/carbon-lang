@@ -65,7 +65,7 @@ static const Target *GetTarget(const MachOObjectFile *MachOObj) {
 
   errs() << "llvm-objdump: error: unable to get target for '" << TripleName
          << "', see --version and --triple.\n";
-  return 0;
+  return nullptr;
 }
 
 struct SymbolSorter {
@@ -226,7 +226,7 @@ static void DisassembleInputMachO2(StringRef Filename,
       TheTarget->createMCAsmInfo(*MRI, TripleName));
   std::unique_ptr<const MCSubtargetInfo> STI(
       TheTarget->createMCSubtargetInfo(TripleName, "", ""));
-  MCContext Ctx(AsmInfo.get(), MRI.get(), 0);
+  MCContext Ctx(AsmInfo.get(), MRI.get(), nullptr);
   std::unique_ptr<const MCDisassembler> DisAsm(
     TheTarget->createMCDisassembler(*STI, Ctx));
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();

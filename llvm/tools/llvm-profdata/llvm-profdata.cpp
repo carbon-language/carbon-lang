@@ -156,7 +156,7 @@ int main(int argc, const char *argv[]) {
 
   StringRef ProgName(sys::path::filename(argv[0]));
   if (argc > 1) {
-    int (*func)(int, const char *[]) = 0;
+    int (*func)(int, const char *[]) = nullptr;
 
     if (strcmp(argv[1], "merge") == 0)
       func = merge_main;

@@ -175,7 +175,7 @@ int Disassembler::disassemble(const Target &T,
   }
 
   // Set up the MCContext for creating symbols and MCExpr's.
-  MCContext Ctx(MAI.get(), MRI.get(), 0);
+  MCContext Ctx(MAI.get(), MRI.get(), nullptr);
 
   std::unique_ptr<const MCDisassembler> DisAsm(
     T.createMCDisassembler(STI, Ctx));

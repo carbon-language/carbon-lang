@@ -39,7 +39,7 @@ namespace {
     CFGSCC() : FunctionPass(ID) {}
     bool runOnFunction(Function& func) override;
 
-    void print(raw_ostream &O, const Module* = 0) const override { }
+    void print(raw_ostream &O, const Module* = nullptr) const override { }
 
     void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesAll();
@@ -53,7 +53,7 @@ namespace {
     // run - Print out SCCs in the call graph for the specified module.
     bool runOnModule(Module &M) override;
 
-    void print(raw_ostream &O, const Module* = 0) const override { }
+    void print(raw_ostream &O, const Module* = nullptr) const override { }
 
     // getAnalysisUsage - This pass requires the CallGraph.
     void getAnalysisUsage(AnalysisUsage &AU) const override {

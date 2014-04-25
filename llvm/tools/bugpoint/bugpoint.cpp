@@ -99,7 +99,7 @@ namespace {
   class AddToDriver : public FunctionPassManager {
     BugDriver &D;
   public:
-    AddToDriver(BugDriver &_D) : FunctionPassManager(0), D(_D) {}
+    AddToDriver(BugDriver &_D) : FunctionPassManager(nullptr), D(_D) {}
 
     void add(Pass *P) override {
       const void *ID = P->getPassID();

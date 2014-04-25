@@ -63,7 +63,7 @@ ReducePassList::doTest(std::vector<std::string> &Prefix,
                        std::vector<std::string> &Suffix,
                        std::string &Error) {
   std::string PrefixOutput;
-  Module *OrigProgram = 0;
+  Module *OrigProgram = nullptr;
   if (!Prefix.empty()) {
     outs() << "Checking to see if these passes crash: "
            << getPassesString(Prefix) << ": ";
@@ -73,7 +73,7 @@ ReducePassList::doTest(std::vector<std::string> &Prefix,
     OrigProgram = BD.Program;
 
     BD.Program = ParseInputFile(PrefixOutput, BD.getContext());
-    if (BD.Program == 0) {
+    if (BD.Program == nullptr) {
       errs() << BD.getToolName() << ": Error reading bitcode file '"
              << PrefixOutput << "'!\n";
       exit(1);
@@ -149,7 +149,7 @@ ReduceCrashingGlobalVariables::TestGlobalVariables(
   for (Module::global_iterator I = M->global_begin(), E = M->global_end();
        I != E; ++I)
     if (I->hasInitializer() && !GVSet.count(I)) {
-      I->setInitializer(0);
+      I->setInitializer(nullptr);
       I->setLinkage(GlobalValue::ExternalLinkage);
     }
 
@@ -447,7 +447,7 @@ static bool DebugACrash(BugDriver &BD,
     for (Module::global_iterator I = M->global_begin(), E = M->global_end();
          I != E; ++I)
       if (I->hasInitializer()) {
-        I->setInitializer(0);
+        I->setInitializer(nullptr);
         I->setLinkage(GlobalValue::ExternalLinkage);
         DeletedInit = true;
       }

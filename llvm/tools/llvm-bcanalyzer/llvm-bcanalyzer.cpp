@@ -84,7 +84,7 @@ static const char *GetBlockName(unsigned BlockID,
   if (BlockID < bitc::FIRST_APPLICATION_BLOCKID) {
     if (BlockID == bitc::BLOCKINFO_BLOCK_ID)
       return "BLOCKINFO_BLOCK";
-    return 0;
+    return nullptr;
   }
 
   // Check to see if we have a blockinfo record for this block, with a name.
@@ -95,10 +95,10 @@ static const char *GetBlockName(unsigned BlockID,
   }
 
 
-  if (CurStreamType != LLVMIRBitstream) return 0;
+  if (CurStreamType != LLVMIRBitstream) return nullptr;
 
   switch (BlockID) {
-  default:                             return 0;
+  default:                             return nullptr;
   case bitc::MODULE_BLOCK_ID:          return "MODULE_BLOCK";
   case bitc::PARAMATTR_BLOCK_ID:       return "PARAMATTR_BLOCK";
   case bitc::PARAMATTR_GROUP_BLOCK_ID: return "PARAMATTR_GROUP_BLOCK_ID";
@@ -120,13 +120,13 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
   if (BlockID < bitc::FIRST_APPLICATION_BLOCKID) {
     if (BlockID == bitc::BLOCKINFO_BLOCK_ID) {
       switch (CodeID) {
-      default: return 0;
+      default: return nullptr;
       case bitc::BLOCKINFO_CODE_SETBID:        return "SETBID";
       case bitc::BLOCKINFO_CODE_BLOCKNAME:     return "BLOCKNAME";
       case bitc::BLOCKINFO_CODE_SETRECORDNAME: return "SETRECORDNAME";
       }
     }
-    return 0;
+    return nullptr;
   }
 
   // Check to see if we have a blockinfo record for this record, with a name.
@@ -138,13 +138,13 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
   }
 
 
-  if (CurStreamType != LLVMIRBitstream) return 0;
+  if (CurStreamType != LLVMIRBitstream) return nullptr;
 
   switch (BlockID) {
-  default: return 0;
+  default: return nullptr;
   case bitc::MODULE_BLOCK_ID:
     switch (CodeID) {
-    default: return 0;
+    default: return nullptr;
     case bitc::MODULE_CODE_VERSION:     return "VERSION";
     case bitc::MODULE_CODE_TRIPLE:      return "TRIPLE";
     case bitc::MODULE_CODE_DATALAYOUT:  return "DATALAYOUT";
@@ -159,14 +159,14 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     }
   case bitc::PARAMATTR_BLOCK_ID:
     switch (CodeID) {
-    default: return 0;
+    default: return nullptr;
     case bitc::PARAMATTR_CODE_ENTRY_OLD: return "ENTRY";
     case bitc::PARAMATTR_CODE_ENTRY:     return "ENTRY";
     case bitc::PARAMATTR_GRP_CODE_ENTRY: return "ENTRY";
     }
   case bitc::TYPE_BLOCK_ID_NEW:
     switch (CodeID) {
-    default: return 0;
+    default: return nullptr;
     case bitc::TYPE_CODE_NUMENTRY:     return "NUMENTRY";
     case bitc::TYPE_CODE_VOID:         return "VOID";
     case bitc::TYPE_CODE_FLOAT:        return "FLOAT";
@@ -189,7 +189,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
 
   case bitc::CONSTANTS_BLOCK_ID:
     switch (CodeID) {
-    default: return 0;
+    default: return nullptr;
     case bitc::CST_CODE_SETTYPE:         return "SETTYPE";
     case bitc::CST_CODE_NULL:            return "NULL";
     case bitc::CST_CODE_UNDEF:           return "UNDEF";
@@ -215,7 +215,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     }
   case bitc::FUNCTION_BLOCK_ID:
     switch (CodeID) {
-    default: return 0;
+    default: return nullptr;
     case bitc::FUNC_CODE_DECLAREBLOCKS: return "DECLAREBLOCKS";
 
     case bitc::FUNC_CODE_INST_BINOP:        return "INST_BINOP";
@@ -249,18 +249,18 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     }
   case bitc::VALUE_SYMTAB_BLOCK_ID:
     switch (CodeID) {
-    default: return 0;
+    default: return nullptr;
     case bitc::VST_CODE_ENTRY: return "ENTRY";
     case bitc::VST_CODE_BBENTRY: return "BBENTRY";
     }
   case bitc::METADATA_ATTACHMENT_ID:
     switch(CodeID) {
-    default:return 0;
+    default:return nullptr;
     case bitc::METADATA_ATTACHMENT: return "METADATA_ATTACHMENT";
     }
   case bitc::METADATA_BLOCK_ID:
     switch(CodeID) {
-    default:return 0;
+    default:return nullptr;
     case bitc::METADATA_STRING:      return "METADATA_STRING";
     case bitc::METADATA_NAME:        return "METADATA_NAME";
     case bitc::METADATA_KIND:        return "METADATA_KIND";
@@ -270,7 +270,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     }
   case bitc::USELIST_BLOCK_ID:
     switch(CodeID) {
-    default:return 0;
+    default:return nullptr;
     case bitc::USELIST_CODE_ENTRY:   return "USELIST_CODE_ENTRY";
     }
   }
@@ -345,7 +345,7 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned BlockID,
   if (Stream.EnterSubBlock(BlockID, &NumWords))
     return Error("Malformed block record");
 
-  const char *BlockName = 0;
+  const char *BlockName = nullptr;
   if (Dump) {
     outs() << Indent << "<";
     if ((BlockName = GetBlockName(BlockID, *Stream.getBitStreamReader())))

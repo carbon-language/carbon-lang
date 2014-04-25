@@ -93,7 +93,7 @@ static void PrintObjectSectionSizes(ObjectFile *Obj) {
   std::string fmtbuf;
   raw_string_ostream fmt(fmtbuf);
 
-  const char *radix_fmt = 0;
+  const char *radix_fmt = nullptr;
   switch (Radix) {
   case octal:
     radix_fmt = PRIo64;

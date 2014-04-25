@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
   std::unique_ptr<Module> M;
   M.reset(getLazyIRFileModule(InputFilename, Err, Context));
 
-  if (M.get() == 0) {
+  if (!M.get()) {
     Err.print(argv[0], errs());
     return 1;
   }

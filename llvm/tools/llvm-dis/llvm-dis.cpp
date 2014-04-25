@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
       DisplayFilename = InputFilename;
     M.reset(getStreamedBitcodeModule(DisplayFilename, streamer, Context,
                                      &ErrorMessage));
-    if(M.get() != 0) {
+    if(M.get()) {
       if (error_code EC = M->materializeAllPermanently()) {
         ErrorMessage = EC.message();
         M.reset();
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  if (M.get() == 0) {
+  if (!M.get()) {
     errs() << argv[0] << ": ";
     if (ErrorMessage.size())
       errs() << ErrorMessage << "\n";

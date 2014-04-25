@@ -85,7 +85,7 @@ static bool parseCommand(bool &IsData, std::string &ModuleName,
       char quote = *pos;
       pos++;
       char *end = strchr(pos, quote);
-      if (end == 0)
+      if (!end)
         return false;
       ModuleName = std::string(pos, end - pos);
       pos = end + 1;

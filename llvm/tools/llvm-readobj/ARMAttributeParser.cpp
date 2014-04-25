@@ -126,7 +126,7 @@ void ARMAttributeParser::CPU_arch(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -153,7 +153,7 @@ void ARMAttributeParser::ARM_ISA_use(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -163,7 +163,7 @@ void ARMAttributeParser::THUMB_ISA_use(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -176,7 +176,7 @@ void ARMAttributeParser::FP_arch(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -186,7 +186,7 @@ void ARMAttributeParser::WMMX_arch(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -198,7 +198,7 @@ void ARMAttributeParser::Advanced_SIMD_arch(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -211,7 +211,7 @@ void ARMAttributeParser::PCS_config(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -221,7 +221,7 @@ void ARMAttributeParser::ABI_PCS_R9_use(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -233,7 +233,7 @@ void ARMAttributeParser::ABI_PCS_RW_data(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -243,7 +243,7 @@ void ARMAttributeParser::ABI_PCS_RO_data(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -253,7 +253,7 @@ void ARMAttributeParser::ABI_PCS_GOT_use(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -265,7 +265,7 @@ void ARMAttributeParser::ABI_PCS_wchar_t(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -275,7 +275,7 @@ void ARMAttributeParser::ABI_FP_rounding(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -285,7 +285,7 @@ void ARMAttributeParser::ABI_FP_denormal(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -295,7 +295,7 @@ void ARMAttributeParser::ABI_FP_exceptions(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -306,7 +306,7 @@ void ARMAttributeParser::ABI_FP_user_exceptions(AttrType Tag,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -318,7 +318,7 @@ void ARMAttributeParser::ABI_FP_number_model(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -371,7 +371,7 @@ void ARMAttributeParser::ABI_enum_size(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -383,7 +383,7 @@ void ARMAttributeParser::ABI_HardFP_use(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -395,7 +395,7 @@ void ARMAttributeParser::ABI_VFP_args(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -405,7 +405,7 @@ void ARMAttributeParser::ABI_WMMX_args(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -419,7 +419,7 @@ void ARMAttributeParser::ABI_optimization_goals(AttrType Tag,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -433,7 +433,7 @@ void ARMAttributeParser::ABI_FP_optimization_goals(AttrType Tag,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -465,7 +465,7 @@ void ARMAttributeParser::CPU_unaligned_access(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -475,7 +475,7 @@ void ARMAttributeParser::FP_HP_extension(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -485,7 +485,7 @@ void ARMAttributeParser::ABI_FP_16bit_format(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -495,7 +495,7 @@ void ARMAttributeParser::MPextension_use(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -507,7 +507,7 @@ void ARMAttributeParser::DIV_use(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -517,7 +517,7 @@ void ARMAttributeParser::T2EE_use(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 
@@ -530,7 +530,7 @@ void ARMAttributeParser::Virtualization_use(AttrType Tag, const uint8_t *Data,
 
   uint64_t Value = ParseInteger(Data, Offset);
   StringRef ValueDesc =
-    (Value < array_lengthof(Strings)) ? Strings[Value] : NULL;
+    (Value < array_lengthof(Strings)) ? Strings[Value] : nullptr;
   PrintAttribute(Tag, Value, ValueDesc);
 }
 

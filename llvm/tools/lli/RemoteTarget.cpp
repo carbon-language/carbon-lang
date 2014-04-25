@@ -30,9 +30,9 @@ using namespace llvm;
 
 bool RemoteTarget::allocateSpace(size_t Size, unsigned Alignment,
                                  uint64_t &Address) {
-  sys::MemoryBlock *Prev = Allocations.size() ? &Allocations.back() : NULL;
+  sys::MemoryBlock *Prev = Allocations.size() ? &Allocations.back() : nullptr;
   sys::MemoryBlock Mem = sys::Memory::AllocateRWX(Size, Prev, &ErrorMsg);
-  if (Mem.base() == NULL)
+  if (Mem.base() == nullptr)
     return false;
   if ((uintptr_t)Mem.base() % Alignment) {
     ErrorMsg = "unable to allocate sufficiently aligned memory";

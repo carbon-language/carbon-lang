@@ -198,7 +198,7 @@ static const Target *GetTarget(const char *ProgName) {
                                                          Error);
   if (!TheTarget) {
     errs() << ProgName << ": " << Error;
-    return 0;
+    return nullptr;
   }
 
   // Update the triple name and return the found target.
@@ -216,7 +216,7 @@ static tool_output_file *GetOutputStream() {
   if (!Err.empty()) {
     errs() << Err << '\n';
     delete Out;
-    return 0;
+    return nullptr;
   }
 
   return Out;
@@ -435,12 +435,12 @@ int main(int argc, char **argv) {
   std::unique_ptr<MCSubtargetInfo> STI(
       TheTarget->createMCSubtargetInfo(TripleName, MCPU, FeaturesStr));
 
-  MCInstPrinter *IP = NULL;
+  MCInstPrinter *IP = nullptr;
   if (FileType == OFT_AssemblyFile) {
     IP =
       TheTarget->createMCInstPrinter(OutputAsmVariant, *MAI, *MCII, *MRI, *STI);
-    MCCodeEmitter *CE = 0;
-    MCAsmBackend *MAB = 0;
+    MCCodeEmitter *CE = nullptr;
+    MCAsmBackend *MAB = nullptr;
     if (ShowEncoding) {
       CE = TheTarget->createMCCodeEmitter(*MCII, *MRI, *STI, Ctx);
       MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);

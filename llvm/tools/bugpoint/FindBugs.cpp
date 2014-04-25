@@ -45,7 +45,7 @@ bool BugDriver::runManyPasses(const std::vector<std::string> &AllPasses,
       return false;
   }
   
-  srand(time(NULL));  
+  srand(time(nullptr));
   
   unsigned num = 1;
   while(1) {  

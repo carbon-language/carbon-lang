@@ -157,7 +157,7 @@ bool llvm::error(error_code EC) {
   return true;
 }
 
-static const Target *getTarget(const ObjectFile *Obj = NULL) {
+static const Target *getTarget(const ObjectFile *Obj = nullptr) {
   // Figure out the target triple.
   llvm::Triple TheTriple("unknown-unknown-unknown");
   if (TripleName.empty()) {
@@ -183,7 +183,7 @@ static const Target *getTarget(const ObjectFile *Obj = NULL) {
                                                          Error);
   if (!TheTarget) {
     errs() << ToolName << ": " << Error;
-    return 0;
+    return nullptr;
   }
 
   // Update the triple name and return the found target.

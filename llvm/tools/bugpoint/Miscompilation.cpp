@@ -235,7 +235,7 @@ static Module *TestMergedProgram(const BugDriver &BD, Module *M1, Module *M2,
   if (!Error.empty()) {
     // Delete the linked module
     delete M1;
-    return NULL;
+    return nullptr;
   }
   return M1;
 }
@@ -592,7 +592,7 @@ static bool ExtractBlocks(BugDriver &BD,
                                                 MiscompiledFunctions,
                                                 VMap);
   Module *Extracted = BD.ExtractMappedBlocksFromModule(Blocks, ToExtract);
-  if (Extracted == 0) {
+  if (!Extracted) {
     // Weird, extraction should have worked.
     errs() << "Nondeterministic problem extracting blocks??\n";
     delete ProgClone;
@@ -845,7 +845,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
     Safe->getOrInsertFunction("getPointerToNamedFunction",
                     Type::getInt8PtrTy(Safe->getContext()),
                     Type::getInt8PtrTy(Safe->getContext()),
-                       (Type *)0);
+                       (Type *)nullptr);
 
   // Use the function we just added to get addresses of functions we need.
   for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {

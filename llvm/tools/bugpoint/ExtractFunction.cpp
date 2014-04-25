@@ -51,7 +51,7 @@ namespace {
 
   Function* globalInitUsesExternalBA(GlobalVariable* GV) {
     if (!GV->hasInitializer())
-      return 0;
+      return nullptr;
 
     Constant *I = GV->getInitializer();
 
@@ -78,7 +78,7 @@ namespace {
           Todo.push_back(C);
       }
     }
-    return 0;
+    return nullptr;
   }
 }  // end anonymous namespace
 
@@ -150,7 +150,7 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
     CleanupPasses.push_back("deadargelim");
 
   Module *New = runPassesOn(M, CleanupPasses);
-  if (New == 0) {
+  if (!New) {
     errs() << "Final cleanups failed.  Sorry. :(  Please report a bug!\n";
     return M;
   }
@@ -167,11 +167,11 @@ Module *BugDriver::ExtractLoop(Module *M) {
   LoopExtractPasses.push_back("loop-extract-single");
 
   Module *NewM = runPassesOn(M, LoopExtractPasses);
-  if (NewM == 0) {
+  if (!NewM) {
     outs() << "*** Loop extraction failed: ";
     EmitProgressBitcode(M, "loopextraction", true);
     outs() << "*** Sorry. :(  Please report a bug!\n";
-    return 0;
+    return nullptr;
   }
 
   // Check to see if we created any new functions.  If not, no loops were
@@ -180,7 +180,7 @@ Module *BugDriver::ExtractLoop(Module *M) {
   static unsigned NumExtracted = 32;
   if (M->size() == NewM->size() || --NumExtracted == 0) {
     delete NewM;
-    return 0;
+    return nullptr;
   } else {
     assert(M->size() < NewM->size() && "Loop extract removed functions?");
     Module::iterator MI = NewM->begin();
@@ -337,10 +337,10 @@ llvm::SplitFunctionsOutOfModule(Module *M,
                << "' and from test function '" << TestFn->getName() << "'.\n";
         exit(1);
       }
-      I->setInitializer(0);  // Delete the initializer to make it external
+      I->setInitializer(nullptr);  // Delete the initializer to make it external
     } else {
       // If we keep it in the safe module, then delete it in the test module
-      GV->setInitializer(0);
+      GV->setInitializer(nullptr);
     }
   }
 
@@ -372,7 +372,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
     outs() << "*** Basic Block extraction failed!\n";
     errs() << "Error creating temporary file: " << EC.message() << "\n";
     EmitProgressBitcode(M, "basicblockextractfail", true);
-    return 0;
+    return nullptr;
   }
   sys::RemoveFileOnSignal(Filename);
 
@@ -391,7 +391,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
     errs() << "Error writing list of blocks to not extract\n";
     EmitProgressBitcode(M, "basicblockextractfail", true);
     BlocksToNotExtractFile.os().clear_error();
-    return 0;
+    return nullptr;
   }
   BlocksToNotExtractFile.keep();
 
@@ -405,7 +405,7 @@ Module *BugDriver::ExtractMappedBlocksFromModule(const
 
   sys::fs::remove(Filename.c_str());
 
-  if (Ret == 0) {
+  if (!Ret) {
     outs() << "*** Basic Block extraction failed, please report a bug!\n";
     EmitProgressBitcode(M, "basicblockextractfail", true);
   }

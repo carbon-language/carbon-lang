@@ -245,7 +245,7 @@ protected:
 
   /// Pick a random scalar type.
   Type *pickScalarType() {
-    Type *t = 0;
+    Type *t = nullptr;
     do {
       switch (Ran->Rand() % 30) {
       case 0: t = Type::getInt1Ty(Context); break;
@@ -271,7 +271,7 @@ protected:
       case 29: if (GenX86MMX) t = Type::getX86_MMXTy(Context); break;
       default: llvm_unreachable("Invalid scalar value");
       }
-    } while (t == 0);
+    } while (t == nullptr);
 
     return t;
   }

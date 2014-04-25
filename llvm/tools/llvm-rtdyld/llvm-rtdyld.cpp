@@ -69,7 +69,7 @@ public:
 
   void *getPointerToNamedFunction(const std::string &Name,
                                   bool AbortOnFailure = true) override {
-    return 0;
+    return nullptr;
   }
 
   bool finalizeMemory(std::string *ErrMsg) override { return false; }
@@ -85,7 +85,7 @@ uint8_t *TrivialMemoryManager::allocateCodeSection(uintptr_t Size,
                                                    unsigned Alignment,
                                                    unsigned SectionID,
                                                    StringRef SectionName) {
-  sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, 0, 0);
+  sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, nullptr, nullptr);
   FunctionMemory.push_back(MB);
   return (uint8_t*)MB.base();
 }
@@ -95,7 +95,7 @@ uint8_t *TrivialMemoryManager::allocateDataSection(uintptr_t Size,
                                                    unsigned SectionID,
                                                    StringRef SectionName,
                                                    bool IsReadOnly) {
-  sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, 0, 0);
+  sys::MemoryBlock MB = sys::Memory::AllocateRWX(Size, nullptr, nullptr);
   DataMemory.push_back(MB);
   return (uint8_t*)MB.base();
 }
@@ -213,7 +213,7 @@ static int executeInput() {
 
   // Get the address of the entry point (_main by default).
   void *MainAddress = Dyld.getSymbolAddress(EntryPoint);
-  if (MainAddress == 0)
+  if (!MainAddress)
     return Error("no definition for '" + EntryPoint + "'");
 
   // Invalidate the instruction cache for each loaded function.
@@ -234,7 +234,7 @@ static int executeInput() {
   const char **Argv = new const char*[2];
   // Use the name of the first input object module as argv[0] for the target.
   Argv[0] = InputFileList[0].c_str();
-  Argv[1] = 0;
+  Argv[1] = nullptr;
   return Main(1, Argv);
 }
 
