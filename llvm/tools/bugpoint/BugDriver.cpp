@@ -76,6 +76,10 @@ BugDriver::BugDriver(const char *toolname, bool find_bugs,
 
 BugDriver::~BugDriver() {
   delete Program;
+  if (Interpreter != SafeInterpreter)
+    delete Interpreter;
+  delete SafeInterpreter;
+  delete gcc;
 }
 
 
