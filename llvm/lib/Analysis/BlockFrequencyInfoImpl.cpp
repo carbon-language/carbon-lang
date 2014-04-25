@@ -824,10 +824,8 @@ static void scaleBlockData(BlockFrequencyInfoImplBase &BFI,
 /// Visits all the members of a loop, adjusting their BlockData according to
 /// the loop's pseudo-node.
 static void unwrapLoopPackage(BlockFrequencyInfoImplBase &BFI,
-                              const BlockNode &Head) {
-  assert(Head.isValid());
-
-  LoopData &LoopPackage = BFI.getLoopPackage(Head);
+                              LoopData &LoopPackage) {
+  BlockNode Head = LoopPackage.getHeader();
   DEBUG(dbgs() << "unwrap-loop-package: " << BFI.getBlockName(Head)
                << ": mass = " << LoopPackage.Mass
                << ", scale = " << LoopPackage.Scale << "\n");
@@ -851,8 +849,8 @@ void BlockFrequencyInfoImplBase::unwrapLoops() {
   for (size_t Index = 0; Index < Working.size(); ++Index)
     Freqs[Index].Floating = Working[Index].Mass.toFloat();
 
-  for (const LoopData &L : Loops)
-    unwrapLoopPackage(*this, L.getHeader());
+  for (LoopData &Loop : Loops)
+    unwrapLoopPackage(*this, Loop);
 }
 
 void BlockFrequencyInfoImplBase::finalizeMetrics() {
