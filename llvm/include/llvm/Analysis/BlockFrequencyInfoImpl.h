@@ -1471,8 +1471,8 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::initializeLoops() {
 
 template <class BT> void BlockFrequencyInfoImpl<BT>::computeMassInLoops() {
   // Visit loops with the deepest first, and the top-level loops last.
-  for (const auto &L : make_range(Loops.rbegin(), Loops.rend()))
-    computeMassInLoop(L.Header);
+  for (auto L = Loops.rbegin(), E = Loops.rend(); L != E; ++L)
+    computeMassInLoop(L->Header);
 }
 
 template <class BT>
