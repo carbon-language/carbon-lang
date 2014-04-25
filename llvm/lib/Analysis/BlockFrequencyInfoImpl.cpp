@@ -568,21 +568,6 @@ static void cleanup(BlockFrequencyInfoImplBase &BFI) {
   BFI.Freqs = std::move(SavedFreqs);
 }
 
-/// \brief Get the appropriate mass for a possible pseudo-node loop package.
-///
-/// Get appropriate mass for Node.  If Node is a loop-header (whose loop has
-/// been packaged), returns the mass of its pseudo-node.  If it's a node inside
-/// a packaged loop, it returns the loop's pseudo-node.
-static BlockMass &getPackageMass(BlockFrequencyInfoImplBase &BFI,
-                                 const BlockNode &Node) {
-  assert(Node.isValid());
-  assert(!BFI.Working[Node.Index].isPackaged());
-  if (!BFI.Working[Node.Index].isAPackage())
-    return BFI.Working[Node.Index].Mass;
-
-  return BFI.getLoopPackage(Node).Mass;
-}
-
 void BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
                                            const LoopData *OuterLoop,
                                            const BlockNode &Pred,
@@ -595,11 +580,13 @@ void BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
     return OuterLoop && OuterLoop->isHeader(Node);
   };
 
+  BlockNode Resolved = Working[Succ.Index].getResolvedNode();
+
 #ifndef NDEBUG
-  auto debugSuccessor = [&](const char *Type, const BlockNode &Resolved) {
+  auto debugSuccessor = [&](const char *Type) {
     dbgs() << "  =>"
            << " [" << Type << "] weight = " << Weight;
-    if (!isLoopHeader(Succ))
+    if (!isLoopHeader(Resolved))
       dbgs() << ", succ = " << getBlockName(Succ);
     if (Resolved != Succ)
       dbgs() << ", resolved = " << getBlockName(Resolved);
@@ -608,27 +595,25 @@ void BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
   (void)debugSuccessor;
 #endif
 
-  if (isLoopHeader(Succ)) {
-    DEBUG(debugSuccessor("backedge", Succ));
+  if (isLoopHeader(Resolved)) {
+    DEBUG(debugSuccessor("backedge"));
     Dist.addBackedge(OuterLoop->getHeader(), Weight);
     return;
   }
-  BlockNode Resolved = getPackagedNode(Succ);
-  assert(!isLoopHeader(Resolved));
 
   if (Working[Resolved.Index].getContainingLoop() != OuterLoop) {
-    DEBUG(debugSuccessor("  exit  ", Resolved));
+    DEBUG(debugSuccessor("  exit  "));
     Dist.addExit(Resolved, Weight);
     return;
   }
 
   if (Resolved < Pred) {
-    // Irreducible backedge.  Skip this edge in the distribution.
-    DEBUG(debugSuccessor("skipped ", Resolved));
+    // Irreducible backedge.  Skip.
+    DEBUG(debugSuccessor("  skip  "));
     return;
   }
 
-  DEBUG(debugSuccessor(" local  ", Resolved));
+  DEBUG(debugSuccessor(" local  "));
   Dist.addLocal(Resolved, Weight);
 }
 
@@ -685,7 +670,7 @@ void BlockFrequencyInfoImplBase::packageLoop(LoopData &Loop) {
 void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
                                                 LoopData *OuterLoop,
                                                 Distribution &Dist) {
-  BlockMass Mass = getPackageMass(*this, Source);
+  BlockMass Mass = Working[Source.Index].getMass();
   DEBUG(dbgs() << "  => mass:  " << Mass << "\n");
 
   // Distribute mass to successors as laid out in Dist.
@@ -708,7 +693,7 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
     // Check for a local edge (non-backedge and non-exit).
     BlockMass Taken = D.takeMass(W.Amount);
     if (W.Type == Weight::Local) {
-      getPackageMass(*this, W.TargetNode) += Taken;
+      Working[W.TargetNode.Index].getMass() += Taken;
       DEBUG(debugAssign(W.TargetNode, Taken, nullptr));
       continue;
     }

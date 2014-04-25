@@ -975,23 +975,46 @@ public:
     WorkingData(const BlockNode &Node) : Node(Node), Loop(nullptr) {}
 
     bool isLoopHeader() const { return Loop && Loop->isHeader(Node); }
-    bool hasLoopHeader() const { return isLoopHeader() ? Loop->Parent : Loop; }
 
     LoopData *getContainingLoop() const {
       return isLoopHeader() ? Loop->Parent : Loop;
     }
-    BlockNode getContainingHeader() const {
-      auto *ContainingLoop = getContainingLoop();
-      if (ContainingLoop)
-        return ContainingLoop->getHeader();
-      return BlockNode();
+
+    /// \brief Resolve a node to its representative.
+    ///
+    /// Get the node currently representing Node, which could be a containing
+    /// loop.
+    ///
+    /// This function should only be called when distributing mass.  As long as
+    /// there are no irreducilbe edges to Node, then it will have complexity
+    /// O(1) in this context.
+    ///
+    /// In general, the complexity is O(L), where L is the number of loop
+    /// headers Node has been packaged into.  Since this method is called in
+    /// the context of distributing mass, L will be the number of loop headers
+    /// an early exit edge jumps out of.
+    BlockNode getResolvedNode() const {
+      auto L = getPackagedLoop();
+      return L ? L->getHeader() : Node;
+    }
+    LoopData *getPackagedLoop() const {
+      if (!Loop || !Loop->IsPackaged)
+        return nullptr;
+      auto L = Loop;
+      while (L->Parent && L->Parent->IsPackaged)
+        L = L->Parent;
+      return L;
     }
 
+    /// \brief Get the appropriate mass for a node.
+    ///
+    /// Get appropriate mass for Node.  If Node is a loop-header (whose loop
+    /// has been packaged), returns the mass of its pseudo-node.  If it's a
+    /// node inside a packaged loop, it returns the loop's mass.
+    BlockMass &getMass() { return isAPackage() ? Loop->Mass : Mass; }
+
     /// \brief Has ContainingLoop been packaged up?
-    bool isPackaged() const {
-      auto *ContainingLoop = getContainingLoop();
-      return ContainingLoop && ContainingLoop->IsPackaged;
-    }
+    bool isPackaged() const { return getResolvedNode() != Node; }
     /// \brief Has Loop been packaged up?
     bool isAPackage() const { return isLoopHeader() && Loop->IsPackaged; }
   };
@@ -1085,28 +1108,6 @@ public:
     assert(Head.Index < Working.size());
     assert(Working[Head.Index].isLoopHeader());
     return *Working[Head.Index].Loop;
-  }
-
-  /// \brief Get a possibly packaged node.
-  ///
-  /// Get the node currently representing Node, which could be a containing
-  /// loop.
-  ///
-  /// This function should only be called when distributing mass.  As long as
-  /// there are no irreducilbe edges to Node, then it will have complexity O(1)
-  /// in this context.
-  ///
-  /// In general, the complexity is O(L), where L is the number of loop headers
-  /// Node has been packaged into.  Since this method is called in the context
-  /// of distributing mass, L will be the number of loop headers an early exit
-  /// edge jumps out of.
-  BlockNode getPackagedNode(const BlockNode &Node) {
-    assert(Node.isValid());
-    if (!Working[Node.Index].isPackaged())
-      return Node;
-    if (!Working[Node.Index].isAPackage())
-      return Node;
-    return getPackagedNode(Working[Node.Index].getContainingHeader());
   }
 
   /// \brief Distribute mass according to a distribution.
@@ -1539,7 +1540,7 @@ void BlockFrequencyInfoImpl<BT>::computeMassInLoop(LoopData &Loop) {
   DEBUG(dbgs() << "compute-mass-in-loop: " << getBlockName(Loop.getHeader())
                << "\n");
 
-  Working[Loop.getHeader().Index].Mass = BlockMass::getFull();
+  Working[Loop.getHeader().Index].getMass() = BlockMass::getFull();
   propagateMassToSuccessors(&Loop, Loop.getHeader());
 
   for (const BlockNode &M : Loop.members())
@@ -1555,11 +1556,11 @@ template <class BT> void BlockFrequencyInfoImpl<BT>::computeMassInFunction() {
   assert(!Working.empty() && "no blocks in function");
   assert(!Working[0].isLoopHeader() && "entry block is a loop header");
 
-  Working[0].Mass = BlockMass::getFull();
+  Working[0].getMass() = BlockMass::getFull();
   for (rpot_iterator I = rpot_begin(), IE = rpot_end(); I != IE; ++I) {
     // Check for nodes that have been packaged.
     BlockNode Node = getNode(I);
-    if (Working[Node.Index].hasLoopHeader())
+    if (Working[Node.Index].isPackaged())
       continue;
 
     propagateMassToSuccessors(nullptr, Node);
@@ -1573,10 +1574,10 @@ BlockFrequencyInfoImpl<BT>::propagateMassToSuccessors(LoopData *OuterLoop,
   DEBUG(dbgs() << " - node: " << getBlockName(Node) << "\n");
   // Calculate probability for successors.
   Distribution Dist;
-  if (Working[Node.Index].isLoopHeader() &&
-      Working[Node.Index].Loop != OuterLoop)
-    addLoopSuccessorsToDist(OuterLoop, *Working[Node.Index].Loop, Dist);
-  else {
+  if (auto *Loop = Working[Node.Index].getPackagedLoop()) {
+    assert(Loop != OuterLoop && "Cannot propagate mass in a packaged loop");
+    addLoopSuccessorsToDist(OuterLoop, *Loop, Dist);
+  } else {
     const BlockT *BB = getBlock(Node);
     for (auto SI = Successor::child_begin(BB), SE = Successor::child_end(BB);
          SI != SE; ++SI)
