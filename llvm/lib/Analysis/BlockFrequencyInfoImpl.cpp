@@ -485,7 +485,7 @@ static void combineWeight(Weight &W, const Weight &OtherW) {
   }
   assert(W.Type == OtherW.Type);
   assert(W.TargetNode == OtherW.TargetNode);
-  assert(W.Amount < W.Amount + OtherW.Amount);
+  assert(W.Amount < W.Amount + OtherW.Amount && "Unexpected overflow");
   W.Amount += OtherW.Amount;
 }
 static void combineWeightsBySorting(WeightList &Weights) {
