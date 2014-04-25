@@ -995,14 +995,7 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
     DbgVal = Builder.insertDbgValueIntrinsic(ExtendedArg, 0, DIVar, SI);
   else
     DbgVal = Builder.insertDbgValueIntrinsic(SI->getOperand(0), 0, DIVar, SI);
-
-  // Propagate any debug metadata from the store onto the dbg.value.
-  DebugLoc SIDL = SI->getDebugLoc();
-  if (!SIDL.isUnknown())
-    DbgVal->setDebugLoc(SIDL);
-  // Otherwise propagate debug metadata from dbg.declare.
-  else
-    DbgVal->setDebugLoc(DDI->getDebugLoc());
+  DbgVal->setDebugLoc(DDI->getDebugLoc());
   return true;
 }
 
@@ -1022,14 +1015,7 @@ bool llvm::ConvertDebugDeclareToDebugValue(DbgDeclareInst *DDI,
   Instruction *DbgVal =
     Builder.insertDbgValueIntrinsic(LI->getOperand(0), 0,
                                     DIVar, LI);
-
-  // Propagate any debug metadata from the store onto the dbg.value.
-  DebugLoc LIDL = LI->getDebugLoc();
-  if (!LIDL.isUnknown())
-    DbgVal->setDebugLoc(LIDL);
-  // Otherwise propagate debug metadata from dbg.declare.
-  else
-    DbgVal->setDebugLoc(DDI->getDebugLoc());
+  DbgVal->setDebugLoc(DDI->getDebugLoc());
   return true;
 }
 
@@ -1068,7 +1054,7 @@ bool llvm::LowerDbgDeclare(Function &F) {
 	  auto DbgVal =
 	    DIB.insertDbgValueIntrinsic(AI, 0,
 					DIVariable(DDI->getVariable()), I);
-	  DbgVal->setDebugLoc(I->getDebugLoc());
+	  DbgVal->setDebugLoc(DDI->getDebugLoc());
 	}
       DDI->eraseFromParent();
     }
