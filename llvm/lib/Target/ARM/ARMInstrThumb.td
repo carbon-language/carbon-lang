@@ -289,7 +289,6 @@ def : tHintAlias<"sev$p", (tHINT 4, pred:$p)>; // A8.6.157
 def : tInstAlias<"sevl$p", (tHINT 5, pred:$p)> {
   let Predicates = [IsThumb2, HasV8];
 }
-def : T2Pat<(int_arm_sevl), (tHINT 5)>;
 
 // The imm operand $val can be used by a debugger to store more information
 // about the breakpoint.

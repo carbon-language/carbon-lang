@@ -10,10 +10,10 @@ define void @test() {
   ; CHECK: dsb ishld
   call void @llvm.arm.dsb(i32 9)
   ; CHECK: sevl
-  tail call void @llvm.arm.sevl() nounwind
+  tail call void @llvm.arm.hint(i32 5) nounwind
   ret void
 }
 
 declare void @llvm.arm.dmb(i32)
 declare void @llvm.arm.dsb(i32)
-declare void @llvm.arm.sevl() nounwind
+declare void @llvm.arm.hint(i32) nounwind
