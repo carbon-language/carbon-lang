@@ -37,14 +37,14 @@ namespace llvm {
 /// build up a vector of nodes in a particular SCC. Note that it is a forward
 /// iterator and thus you cannot backtrack or re-visit nodes.
 template <class GraphT, class GT = GraphTraits<GraphT>>
-class scc_iterator : public iterator_facade_base<
-                         scc_iterator<GraphT, GT>, std::forward_iterator_tag,
-                         const std::vector<typename GT::NodeType>, ptrdiff_t> {
+class scc_iterator
+    : public iterator_facade_base<
+          scc_iterator<GraphT, GT>, std::forward_iterator_tag,
+          const std::vector<typename GT::NodeType *>, ptrdiff_t> {
   typedef typename GT::NodeType NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
   typedef std::vector<NodeType *> SccTy;
   typedef typename scc_iterator::reference reference;
-  typedef typename scc_iterator::pointer pointer;
 
   /// Element of VisitStack during DFS.
   struct StackElement {
@@ -118,7 +118,7 @@ public:
     return *this;
   }
 
-  const SccTy &operator*() const {
+  reference operator*() const {
     assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
     return CurrentSCC;
   }
