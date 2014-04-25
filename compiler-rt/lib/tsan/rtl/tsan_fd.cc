@@ -285,13 +285,13 @@ void FdSocketConnect(ThreadState *thr, uptr pc, int fd) {
   init(thr, pc, fd, &fdctx.socksync);
 }
 
-uptr File2addr(char *path) {
+uptr File2addr(const char *path) {
   (void)path;
   static u64 addr;
   return (uptr)&addr;
 }
 
-uptr Dir2addr(char *path) {
+uptr Dir2addr(const char *path) {
   (void)path;
   static u64 addr;
   return (uptr)&addr;

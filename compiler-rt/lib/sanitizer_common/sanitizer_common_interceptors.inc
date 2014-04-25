@@ -65,6 +65,14 @@
 #define COMMON_INTERCEPTOR_HANDLE_RECVMSG(ctx, msg) ((void)(msg))
 #endif
 
+#ifndef COMMON_INTERCEPTOR_FILE_OPEN
+#define COMMON_INTERCEPTOR_FILE_OPEN(ctx, file, path) {}
+#endif
+
+#ifndef COMMON_INTERCEPTOR_FILE_CLOSE
+#define COMMON_INTERCEPTOR_FILE_CLOSE(ctx, file) {}
+#endif
+
 #if SANITIZER_INTERCEPT_TEXTDOMAIN
 INTERCEPTOR(char*, textdomain, const char *domainname) {
   void *ctx;
@@ -3718,6 +3726,174 @@ INTERCEPTOR(void *, tsearch, void *key, void **rootp,
 #define INIT_TSEARCH
 #endif
 
+#if SANITIZER_INTERCEPT_LIBIO_INTERNALS || SANITIZER_INTERCEPT_FOPEN || \
+    SANITIZER_INTERCEPT_OPEN_MEMSTREAM
+void unpoison_file(__sanitizer_FILE *fp) {
+  COMMON_INTERCEPTOR_INITIALIZE_RANGE(fp, sizeof(*fp));
+  if (fp->_IO_read_base && fp->_IO_read_base < fp->_IO_read_end)
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(fp->_IO_read_base,
+                                        fp->_IO_read_end - fp->_IO_read_base);
+}
+#endif
+
+#if SANITIZER_INTERCEPT_LIBIO_INTERNALS
+// These guys are called when a .c source is built with -O2.
+INTERCEPTOR(int, __uflow, __sanitizer_FILE *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __uflow, fp);
+  int res = REAL(__uflow)(fp);
+  unpoison_file(fp);
+  return res;
+}
+INTERCEPTOR(int, __underflow, __sanitizer_FILE *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __underflow, fp);
+  int res = REAL(__underflow)(fp);
+  unpoison_file(fp);
+  return res;
+}
+INTERCEPTOR(int, __overflow, __sanitizer_FILE *fp, int ch) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __overflow, fp, ch);
+  int res = REAL(__overflow)(fp, ch);
+  unpoison_file(fp);
+  return res;
+}
+INTERCEPTOR(int, __wuflow, __sanitizer_FILE *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __wuflow, fp);
+  int res = REAL(__wuflow)(fp);
+  unpoison_file(fp);
+  return res;
+}
+INTERCEPTOR(int, __wunderflow, __sanitizer_FILE *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __wunderflow, fp);
+  int res = REAL(__wunderflow)(fp);
+  unpoison_file(fp);
+  return res;
+}
+INTERCEPTOR(int, __woverflow, __sanitizer_FILE *fp, int ch) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, __woverflow, fp, ch);
+  int res = REAL(__woverflow)(fp, ch);
+  unpoison_file(fp);
+  return res;
+}
+#define INIT_LIBIO_INTERNALS               \
+  COMMON_INTERCEPT_FUNCTION(__uflow);      \
+  COMMON_INTERCEPT_FUNCTION(__underflow);  \
+  COMMON_INTERCEPT_FUNCTION(__overflow);   \
+  COMMON_INTERCEPT_FUNCTION(__wuflow);     \
+  COMMON_INTERCEPT_FUNCTION(__wunderflow); \
+  COMMON_INTERCEPT_FUNCTION(__woverflow);
+#else
+#define INIT_LIBIO_INTERNALS
+#endif
+
+#if SANITIZER_INTERCEPT_FOPEN
+INTERCEPTOR(__sanitizer_FILE *, fopen, const char *path, const char *mode) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fopen, path, mode);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, mode, REAL(strlen)(mode) + 1);
+  __sanitizer_FILE *res = REAL(fopen)(path, mode);
+  COMMON_INTERCEPTOR_FILE_OPEN(ctx, res, path);
+  if (res) unpoison_file(res);
+  return res;
+}
+INTERCEPTOR(__sanitizer_FILE *, fopen64, const char *path, const char *mode) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fopen64, path, mode);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, mode, REAL(strlen)(mode) + 1);
+  __sanitizer_FILE *res = REAL(fopen64)(path, mode);
+  COMMON_INTERCEPTOR_FILE_OPEN(ctx, res, path);
+  if (res) unpoison_file(res);
+  return res;
+}
+INTERCEPTOR(__sanitizer_FILE *, fdopen, int fd, const char *mode) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fdopen, fd, mode);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, mode, REAL(strlen)(mode) + 1);
+  __sanitizer_FILE *res = REAL(fdopen)(fd, mode);
+  if (res) unpoison_file(res);
+  return res;
+}
+INTERCEPTOR(__sanitizer_FILE *, freopen, const char *path, const char *mode,
+            __sanitizer_FILE *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, freopen, path, mode, fp);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, mode, REAL(strlen)(mode) + 1);
+  COMMON_INTERCEPTOR_FILE_CLOSE(ctx, fp);
+  __sanitizer_FILE *res = REAL(freopen)(path, mode, fp);
+  COMMON_INTERCEPTOR_FILE_OPEN(ctx, res, path);
+  if (res) unpoison_file(res);
+  return res;
+}
+INTERCEPTOR(__sanitizer_FILE *, freopen64, const char *path, const char *mode,
+            __sanitizer_FILE *fp) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, freopen64, path, mode, fp);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, path, REAL(strlen)(path) + 1);
+  COMMON_INTERCEPTOR_READ_RANGE(ctx, mode, REAL(strlen)(mode) + 1);
+  COMMON_INTERCEPTOR_FILE_CLOSE(ctx, fp);
+  __sanitizer_FILE *res = REAL(freopen64)(path, mode, fp);
+  COMMON_INTERCEPTOR_FILE_OPEN(ctx, res, path);
+  if (res) unpoison_file(res);
+  return res;
+}
+#define INIT_FOPEN                    \
+  COMMON_INTERCEPT_FUNCTION(fopen);   \
+  COMMON_INTERCEPT_FUNCTION(fopen64); \
+  COMMON_INTERCEPT_FUNCTION(fdopen);  \
+  COMMON_INTERCEPT_FUNCTION(freopen); \
+  COMMON_INTERCEPT_FUNCTION(freopen64);
+#else
+#define INIT_FOPEN
+#endif
+
+#if SANITIZER_INTERCEPT_OPEN_MEMSTREAM
+INTERCEPTOR(__sanitizer_FILE *, open_memstream, char **ptr, SIZE_T *sizeloc) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, open_memstream, ptr, sizeloc);
+  __sanitizer_FILE *res = REAL(open_memstream)(ptr, sizeloc);
+  if (res) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, sizeof(*ptr));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, sizeloc, sizeof(*sizeloc));
+    unpoison_file(res);
+  }
+  return res;
+}
+INTERCEPTOR(__sanitizer_FILE *, open_wmemstream, wchar_t **ptr,
+            SIZE_T *sizeloc) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, open_wmemstream, ptr, sizeloc);
+  __sanitizer_FILE *res = REAL(open_wmemstream)(ptr, sizeloc);
+  if (res) {
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, sizeof(*ptr));
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, sizeloc, sizeof(*sizeloc));
+    unpoison_file(res);
+  }
+  return res;
+}
+INTERCEPTOR(__sanitizer_FILE *, fmemopen, void *buf, SIZE_T size,
+            const char *mode) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fmemopen, buf, size, mode);
+  __sanitizer_FILE *res = REAL(fmemopen)(buf, size, mode);
+  if (res) unpoison_file(res);
+  return res;
+}
+#define INIT_OPEN_MEMSTREAM                   \
+  COMMON_INTERCEPT_FUNCTION(open_memstream);  \
+  COMMON_INTERCEPT_FUNCTION(open_wmemstream); \
+  COMMON_INTERCEPT_FUNCTION(fmemopen);
+#else
+#define INIT_OPEN_MEMSTREAM
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -3848,5 +4024,8 @@ INTERCEPTOR(void *, tsearch, void *key, void **rootp,
   INIT___BZERO;                            \
   INIT_FTIME;                              \
   INIT_XDR;                                \
-  INIT_TSEARCH;
+  INIT_TSEARCH;                            \
+  INIT_LIBIO_INTERNALS;                    \
+  INIT_FOPEN;                              \
+  INIT_OPEN_MEMSTREAM;
 /**/

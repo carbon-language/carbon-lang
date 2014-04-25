@@ -630,6 +630,26 @@ namespace __sanitizer {
 #endif
   };
 
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+  struct __sanitizer_FILE {
+    int _flags;
+    char *_IO_read_ptr;
+    char *_IO_read_end;
+    char *_IO_read_base;
+    char *_IO_write_base;
+    char *_IO_write_ptr;
+    char *_IO_write_end;
+    char *_IO_buf_base;
+    char *_IO_buf_end;
+    char *_IO_save_base;
+    char *_IO_backup_base;
+    char *_IO_save_end;
+    void *_markers;
+    __sanitizer_FILE *_chain;
+    int _fileno;
+  };
+#endif
+
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && \
     (defined(__i386) || defined(__x86_64))
   extern unsigned struct_user_regs_struct_sz;
