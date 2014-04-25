@@ -355,6 +355,9 @@ void
 CommandInterpreter::Clear()
 {
     m_command_io_handler_sp.reset();
+    
+    if (m_script_interpreter_ap)
+        m_script_interpreter_ap->Clear();
 }
 
 const char *

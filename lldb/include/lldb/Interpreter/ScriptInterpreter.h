@@ -414,6 +414,12 @@ public:
         return false;
     }
     
+    virtual void
+    Clear ()
+    {
+        // Clean up any ref counts to SBObjects that might be in global variables
+    }
+    
     virtual size_t
     CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor)
     {

@@ -1779,6 +1779,17 @@ ScriptInterpreterPython::GetScriptedSummary (const char *python_function_name,
     
 }
 
+void
+ScriptInterpreterPython::Clear ()
+{
+    // Release any global variables that might have strong references to
+    // LLDB objects when clearing the python script interpreter.
+    Locker locker(this,
+                  ScriptInterpreterPython::Locker::AcquireLock,
+                  ScriptInterpreterPython::Locker::FreeAcquiredLock);
+    PyRun_SimpleString("lldb.debugger = None; lldb.target = None; lldb.process = None; lldb.thread = None; lldb.frame = None");
+}
+
 bool
 ScriptInterpreterPython::BreakpointCallbackFunction 
 (

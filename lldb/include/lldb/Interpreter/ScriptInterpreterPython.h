@@ -170,6 +170,9 @@ public:
                         lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
                         std::string& retval);
     
+    virtual void
+    Clear ();
+
     virtual bool
     GetDocumentationForItem (const char* item, std::string& dest);
     
