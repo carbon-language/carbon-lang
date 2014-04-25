@@ -208,7 +208,7 @@ void DwarfUnit::addString(DIE &Die, dwarf::Attribute Attribute,
   if (!DD->useSplitDwarf())
     return addLocalString(Die, Attribute, String);
 
-  unsigned idx = DU->getStringPoolIndex(String);
+  unsigned idx = DU->getStringPool().getIndex(*Asm, String);
   DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
   DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);
   Die.addValue(Attribute, dwarf::DW_FORM_GNU_str_index, Str);
@@ -218,12 +218,12 @@ void DwarfUnit::addString(DIE &Die, dwarf::Attribute Attribute,
 /// to be in the local string pool instead of indirected.
 void DwarfUnit::addLocalString(DIE &Die, dwarf::Attribute Attribute,
                                StringRef String) {
-  MCSymbol *Symb = DU->getStringPoolEntry(String);
+  MCSymbol *Symb = DU->getStringPool().getSymbol(*Asm, String);
   DIEValue *Value;
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
     Value = new (DIEValueAllocator) DIELabel(Symb);
   else {
-    MCSymbol *StringPool = DU->getStringPoolSym();
+    MCSymbol *StringPool = DU->getStringPool().getSectionSymbol();
     Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
   }
   DIEValue *Str = new (DIEValueAllocator) DIEString(Value, String);

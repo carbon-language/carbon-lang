@@ -16,6 +16,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/Allocator.h"
 #include "AddressPool.h"
+#include "DwarfStringPool.h"
 
 #include <vector>
 #include <string>
@@ -43,17 +44,10 @@ class DwarfFile {
   // A pointer to all units in the section.
   SmallVector<std::unique_ptr<DwarfUnit>, 1> CUs;
 
-  // Collection of strings for this unit and assorted symbols.
-  // A String->Symbol mapping of strings used by indirect
-  // references.
-  typedef StringMap<std::pair<MCSymbol *, unsigned>, BumpPtrAllocator &>
-  StrPool;
-  StrPool StringPool;
-  unsigned NextStringPoolNumber;
-  std::string StringPref;
+  DwarfStringPool StrPool;
 
 public:
-  DwarfFile(AsmPrinter *AP, const char *Pref, BumpPtrAllocator &DA);
+  DwarfFile(AsmPrinter *AP, StringRef Pref, BumpPtrAllocator &DA);
 
   ~DwarfFile();
 
@@ -83,19 +77,8 @@ public:
                    const MCSection *OffsetSection = nullptr,
                    const MCSymbol *StrSecSym = nullptr);
 
-  /// \brief Returns the entry into the start of the pool.
-  MCSymbol *getStringPoolSym();
-
-  /// \brief Returns an entry into the string pool with the given
-  /// string text.
-  MCSymbol *getStringPoolEntry(StringRef Str);
-
-  /// \brief Returns the index into the string pool with the given
-  /// string text.
-  unsigned getStringPoolIndex(StringRef Str);
-
   /// \brief Returns the string pool.
-  StrPool *getStringPool() { return &StringPool; }
+  DwarfStringPool &getStringPool() { return StrPool; }
 };
 }
 #endif

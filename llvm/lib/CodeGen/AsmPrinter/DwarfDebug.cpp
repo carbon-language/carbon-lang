@@ -2545,27 +2545,27 @@ void DwarfDebug::attachLowHighPC(DwarfCompileUnit &Unit, DIE &D,
 void DwarfDebug::addAccelName(StringRef Name, const DIE &Die) {
   if (!useDwarfAccelTables())
     return;
-  InfoHolder.getStringPoolEntry(Name);
+  InfoHolder.getStringPool().getSymbol(*Asm, Name);
   AccelNames.AddName(Name, &Die);
 }
 
 void DwarfDebug::addAccelObjC(StringRef Name, const DIE &Die) {
   if (!useDwarfAccelTables())
     return;
-  InfoHolder.getStringPoolEntry(Name);
+  InfoHolder.getStringPool().getSymbol(*Asm, Name);
   AccelObjC.AddName(Name, &Die);
 }
 
 void DwarfDebug::addAccelNamespace(StringRef Name, const DIE &Die) {
   if (!useDwarfAccelTables())
     return;
-  InfoHolder.getStringPoolEntry(Name);
+  InfoHolder.getStringPool().getSymbol(*Asm, Name);
   AccelNamespace.AddName(Name, &Die);
 }
 
 void DwarfDebug::addAccelType(StringRef Name, const DIE &Die, char Flags) {
   if (!useDwarfAccelTables())
     return;
-  InfoHolder.getStringPoolEntry(Name);
+  InfoHolder.getStringPool().getSymbol(*Asm, Name);
   AccelTypes.AddName(Name, &Die, Flags);
 }

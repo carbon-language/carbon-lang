@@ -11,6 +11,7 @@ add_llvm_library(LLVMAsmPrinter
   DwarfDebug.cpp
   DwarfException.cpp
   DwarfFile.cpp
+  DwarfStringPool.cpp
   DwarfUnit.cpp
   ErlangGCPrinter.cpp
   OcamlGCPrinter.cpp

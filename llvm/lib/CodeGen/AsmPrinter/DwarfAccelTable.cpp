@@ -179,8 +179,8 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfFile *D) {
       // Remember to emit the label for our offset.
       Asm->OutStreamer.EmitLabel((*HI)->Sym);
       Asm->OutStreamer.AddComment((*HI)->Str);
-      Asm->EmitSectionOffset(D->getStringPoolEntry((*HI)->Str),
-                             D->getStringPoolSym());
+      Asm->EmitSectionOffset(D->getStringPool().getSymbol(*Asm, (*HI)->Str),
+                             D->getStringPool().getSectionSymbol());
       Asm->OutStreamer.AddComment("Num DIEs");
       Asm->EmitInt32((*HI)->Data.size());
       for (ArrayRef<HashDataContents *>::const_iterator
