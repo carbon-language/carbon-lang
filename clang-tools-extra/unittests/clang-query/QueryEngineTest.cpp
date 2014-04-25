@@ -26,23 +26,22 @@ using namespace clang::query;
 using namespace clang::tooling;
 
 class QueryEngineTest : public ::testing::Test {
-  ArrayRef<ASTUnit *> mkASTUnit2(ASTUnit *a, ASTUnit *b) {
-    ASTs[0] = a;
-    ASTs[1] = b;
-    return ArrayRef<ASTUnit *>(ASTs);
+  ArrayRef<std::unique_ptr<ASTUnit>> mkASTUnit2(std::unique_ptr<ASTUnit> a,
+                                                std::unique_ptr<ASTUnit> b) {
+    ASTs[0] = std::move(a);
+    ASTs[1] = std::move(b);
+    return ArrayRef<std::unique_ptr<ASTUnit>>(ASTs);
   }
 
 protected:
   QueryEngineTest()
-      : FooAST(buildASTFromCode("void foo1(void) {}\nvoid foo2(void) {}",
-                                "foo.cc")),
-        BarAST(buildASTFromCode("void bar1(void) {}\nvoid bar2(void) {}",
-                                "bar.cc")),
-        S(mkASTUnit2(FooAST.get(), BarAST.get())), OS(Str) {}
+      : S(mkASTUnit2(std::unique_ptr<ASTUnit>(buildASTFromCode(
+                         "void foo1(void) {}\nvoid foo2(void) {}", "foo.cc")),
+                     std::unique_ptr<ASTUnit>(buildASTFromCode(
+                         "void bar1(void) {}\nvoid bar2(void) {}", "bar.cc")))),
+        OS(Str) {}
 
-  std::unique_ptr<ASTUnit> FooAST;
-  std::unique_ptr<ASTUnit> BarAST;
-  ASTUnit *ASTs[2];
+  std::unique_ptr<ASTUnit> ASTs[2];
   QuerySession S;
 
   std::string Str;

@@ -18,7 +18,7 @@ using namespace clang::query;
 
 class QueryParserTest : public ::testing::Test {
 protected:
-  QueryParserTest() : QS(llvm::ArrayRef<ASTUnit *>()) {}
+  QueryParserTest() : QS(llvm::ArrayRef<std::unique_ptr<ASTUnit>>()) {}
   QueryRef parse(StringRef Code) { return QueryParser::parse(Code, QS); }
 
   QuerySession QS;
