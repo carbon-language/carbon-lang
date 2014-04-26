@@ -1985,27 +1985,39 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
       return DAG.getNode(ISD::UDIV, SDLoc(N), N1.getValueType(),
                          N0, N1);
   }
+
+  const APInt *Divisor = nullptr;
+  if (N1C) {
+    Divisor = &N1C->getAPIntValue();
+  } else if (N1.getValueType().isVector() &&
+             N1->getOpcode() == ISD::BUILD_VECTOR) {
+    BuildVectorSDNode *BV = cast<BuildVectorSDNode>(N->getOperand(1));
+    if (ConstantSDNode *C = BV->getConstantSplatValue())
+      Divisor = &C->getAPIntValue();
+  }
+
   // fold (sdiv X, pow2) -> simple ops after legalize
-  if (N1C && !N1C->isNullValue() &&
-      (N1C->getAPIntValue().isPowerOf2() ||
-       (-N1C->getAPIntValue()).isPowerOf2())) {
+  if (Divisor && !!*Divisor &&
+      (Divisor->isPowerOf2() || (-*Divisor).isPowerOf2())) {
     // If dividing by powers of two is cheap, then don't perform the following
     // fold.
     if (TLI.isPow2DivCheap())
       return SDValue();
 
-    unsigned lg2 = N1C->getAPIntValue().countTrailingZeros();
+    unsigned lg2 = Divisor->countTrailingZeros();
 
     // Splat the sign bit into the register
-    SDValue SGN = DAG.getNode(ISD::SRA, SDLoc(N), VT, N0,
-                              DAG.getConstant(VT.getSizeInBits()-1,
-                                       getShiftAmountTy(N0.getValueType())));
+    SDValue SGN =
+        DAG.getNode(ISD::SRA, SDLoc(N), VT, N0,
+                    DAG.getConstant(VT.getScalarSizeInBits() - 1,
+                                    getShiftAmountTy(N0.getValueType())));
     AddToWorkList(SGN.getNode());
 
     // Add (N0 < 0) ? abs2 - 1 : 0;
-    SDValue SRL = DAG.getNode(ISD::SRL, SDLoc(N), VT, SGN,
-                              DAG.getConstant(VT.getSizeInBits() - lg2,
-                                       getShiftAmountTy(SGN.getValueType())));
+    SDValue SRL =
+        DAG.getNode(ISD::SRL, SDLoc(N), VT, SGN,
+                    DAG.getConstant(VT.getScalarSizeInBits() - lg2,
+                                    getShiftAmountTy(SGN.getValueType())));
     SDValue ADD = DAG.getNode(ISD::ADD, SDLoc(N), VT, N0, SRL);
     AddToWorkList(SRL.getNode());
     AddToWorkList(ADD.getNode());    // Divide by pow2
@@ -2014,12 +2026,11 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
 
     // If we're dividing by a positive value, we're done.  Otherwise, we must
     // negate the result.
-    if (N1C->getAPIntValue().isNonNegative())
+    if (Divisor->isNonNegative())
       return SRA;
 
     AddToWorkList(SRA.getNode());
-    return DAG.getNode(ISD::SUB, SDLoc(N), VT,
-                       DAG.getConstant(0, VT), SRA);
+    return DAG.getNode(ISD::SUB, SDLoc(N), VT, DAG.getConstant(0, VT), SRA);
   }
 
   // if integer divide is expensive and we satisfy the requirements, emit an

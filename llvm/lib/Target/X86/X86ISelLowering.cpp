@@ -1108,9 +1108,6 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::SHL,               MVT::v4i32, Custom);
 
     setOperationAction(ISD::SRA,               MVT::v4i32, Custom);
-
-    setOperationAction(ISD::SDIV,              MVT::v8i16, Custom);
-    setOperationAction(ISD::SDIV,              MVT::v4i32, Custom);
   }
 
   if (!TM.Options.UseSoftFloat && Subtarget->hasFp256()) {
@@ -1175,8 +1172,6 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::SRA,               MVT::v16i16, Custom);
     setOperationAction(ISD::SRA,               MVT::v32i8, Custom);
 
-    setOperationAction(ISD::SDIV,              MVT::v16i16, Custom);
-
     setOperationAction(ISD::SETCC,             MVT::v32i8, Custom);
     setOperationAction(ISD::SETCC,             MVT::v16i16, Custom);
     setOperationAction(ISD::SETCC,             MVT::v8i32, Custom);
@@ -1232,8 +1227,6 @@ void X86TargetLowering::resetOperationActions() {
       setOperationAction(ISD::UMUL_LOHI,       MVT::v8i32, Custom);
 
       setOperationAction(ISD::VSELECT,         MVT::v32i8, Legal);
-
-      setOperationAction(ISD::SDIV,            MVT::v8i32, Custom);
     } else {
       setOperationAction(ISD::ADD,             MVT::v4i64, Custom);
       setOperationAction(ISD::ADD,             MVT::v8i32, Custom);
@@ -1342,7 +1335,6 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::FNEG,               MVT::v8f64, Custom);
     setOperationAction(ISD::FMA,                MVT::v8f64, Legal);
     setOperationAction(ISD::FMA,                MVT::v16f32, Legal);
-    setOperationAction(ISD::SDIV,               MVT::v16i32, Custom);
 
     setOperationAction(ISD::FP_TO_SINT,         MVT::i32, Legal);
     setOperationAction(ISD::FP_TO_UINT,         MVT::i32, Legal);
@@ -13193,61 +13185,6 @@ static SDValue LowerUMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
   return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getValueType(), Highs, Lows);
 }
 
-static SDValue LowerSDIV(SDValue Op, SelectionDAG &DAG) {
-  MVT VT = Op.getSimpleValueType();
-  MVT EltTy = VT.getVectorElementType();
-  unsigned NumElts = VT.getVectorNumElements();
-  SDValue N0 = Op.getOperand(0);
-  SDLoc dl(Op);
-
-  // Lower sdiv X, pow2-const.
-  BuildVectorSDNode *C = dyn_cast<BuildVectorSDNode>(Op.getOperand(1));
-  if (!C)
-    return SDValue();
-
-  APInt SplatValue, SplatUndef;
-  unsigned SplatBitSize;
-  bool HasAnyUndefs;
-  if (!C->isConstantSplat(SplatValue, SplatUndef, SplatBitSize,
-                          HasAnyUndefs) ||
-      EltTy.getSizeInBits() < SplatBitSize)
-    return SDValue();
-
-  if ((SplatValue != 0) &&
-      (SplatValue.isPowerOf2() || (-SplatValue).isPowerOf2())) {
-    unsigned Lg2 = SplatValue.countTrailingZeros();
-    // Splat the sign bit.
-    SmallVector<SDValue, 16> Sz(NumElts,
-                                DAG.getConstant(EltTy.getSizeInBits() - 1,
-                                                EltTy));
-    SDValue SGN = DAG.getNode(ISD::SRA, dl, VT, N0,
-                              DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Sz[0],
-                                          NumElts));
-    // Add (N0 < 0) ? abs2 - 1 : 0;
-    SmallVector<SDValue, 16> Amt(NumElts,
-                                 DAG.getConstant(EltTy.getSizeInBits() - Lg2,
-                                                 EltTy));
-    SDValue SRL = DAG.getNode(ISD::SRL, dl, VT, SGN,
-                              DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Amt[0],
-                                          NumElts));
-    SDValue ADD = DAG.getNode(ISD::ADD, dl, VT, N0, SRL);
-    SmallVector<SDValue, 16> Lg2Amt(NumElts, DAG.getConstant(Lg2, EltTy));
-    SDValue SRA = DAG.getNode(ISD::SRA, dl, VT, ADD,
-                              DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Lg2Amt[0],
-                                          NumElts));
-
-    // If we're dividing by a positive value, we're done.  Otherwise, we must
-    // negate the result.
-    if (SplatValue.isNonNegative())
-      return SRA;
-
-    SmallVector<SDValue, 16> V(NumElts, DAG.getConstant(0, EltTy));
-    SDValue Zero = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &V[0], NumElts);
-    return DAG.getNode(ISD::SUB, dl, VT, Zero, SRA);
-  }
-  return SDValue();
-}
-
 static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
                                          const X86Subtarget *Subtarget) {
   MVT VT = Op.getSimpleValueType();
@@ -14255,7 +14192,6 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SUBE:               return LowerADDC_ADDE_SUBC_SUBE(Op, DAG);
   case ISD::ADD:                return LowerADD(Op, DAG);
   case ISD::SUB:                return LowerSUB(Op, DAG);
-  case ISD::SDIV:               return LowerSDIV(Op, DAG);
   case ISD::FSINCOS:            return LowerFSINCOS(Op, Subtarget, DAG);
   }
 }
