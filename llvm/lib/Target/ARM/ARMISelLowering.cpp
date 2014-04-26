@@ -446,6 +446,11 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLoadExtAction(ISD::SEXTLOAD, (MVT::SimpleValueType)VT, Expand);
     setLoadExtAction(ISD::ZEXTLOAD, (MVT::SimpleValueType)VT, Expand);
     setLoadExtAction(ISD::EXTLOAD, (MVT::SimpleValueType)VT, Expand);
+
+    setOperationAction(ISD::MULHS, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::SMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::MULHU, (MVT::SimpleValueType)VT, Expand);
+    setOperationAction(ISD::UMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
   }
 
   setOperationAction(ISD::ConstantFP, MVT::f32, Custom);

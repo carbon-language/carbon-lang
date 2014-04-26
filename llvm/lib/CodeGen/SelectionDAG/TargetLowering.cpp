@@ -2602,9 +2602,9 @@ SDValue TargetLowering::BuildExactSDIV(SDValue Op1, SDValue Op2, SDLoc dl,
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
-SDValue TargetLowering::
-BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
-          std::vector<SDNode*> *Created) const {
+SDValue TargetLowering::BuildSDIV(SDNode *N, const APInt &Divisor,
+                                  SelectionDAG &DAG, bool IsAfterLegalization,
+                                  std::vector<SDNode *> *Created) const {
   EVT VT = N->getValueType(0);
   SDLoc dl(N);
 
@@ -2613,8 +2613,7 @@ BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
   if (!isTypeLegal(VT))
     return SDValue();
 
-  APInt d = cast<ConstantSDNode>(N->getOperand(1))->getAPIntValue();
-  APInt::ms magics = d.magic();
+  APInt::ms magics = Divisor.magic();
 
   // Multiply the numerator (operand 0) by the magic value
   // FIXME: We should support doing a MUL in a wider type
@@ -2631,13 +2630,13 @@ BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
   else
     return SDValue();       // No mulhs or equvialent
   // If d > 0 and m < 0, add the numerator
-  if (d.isStrictlyPositive() && magics.m.isNegative()) {
+  if (Divisor.isStrictlyPositive() && magics.m.isNegative()) {
     Q = DAG.getNode(ISD::ADD, dl, VT, Q, N->getOperand(0));
     if (Created)
       Created->push_back(Q.getNode());
   }
   // If d < 0 and m > 0, subtract the numerator.
-  if (d.isNegative() && magics.m.isStrictlyPositive()) {
+  if (Divisor.isNegative() && magics.m.isStrictlyPositive()) {
     Q = DAG.getNode(ISD::SUB, dl, VT, Q, N->getOperand(0));
     if (Created)
       Created->push_back(Q.getNode());
@@ -2650,9 +2649,9 @@ BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
       Created->push_back(Q.getNode());
   }
   // Extract the sign bit and add it to the quotient
-  SDValue T =
-    DAG.getNode(ISD::SRL, dl, VT, Q, DAG.getConstant(VT.getSizeInBits()-1,
-                                           getShiftAmountTy(Q.getValueType())));
+  SDValue T = DAG.getNode(ISD::SRL, dl, VT, Q,
+                          DAG.getConstant(VT.getScalarSizeInBits() - 1,
+                                          getShiftAmountTy(Q.getValueType())));
   if (Created)
     Created->push_back(T.getNode());
   return DAG.getNode(ISD::ADD, dl, VT, Q, T);
@@ -2662,9 +2661,9 @@ BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
-SDValue TargetLowering::
-BuildUDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
-          std::vector<SDNode*> *Created) const {
+SDValue TargetLowering::BuildUDIV(SDNode *N, const APInt &Divisor,
+                                  SelectionDAG &DAG, bool IsAfterLegalization,
+                                  std::vector<SDNode *> *Created) const {
   EVT VT = N->getValueType(0);
   SDLoc dl(N);
 
@@ -2675,22 +2674,21 @@ BuildUDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
 
   // FIXME: We should use a narrower constant when the upper
   // bits are known to be zero.
-  const APInt &N1C = cast<ConstantSDNode>(N->getOperand(1))->getAPIntValue();
-  APInt::mu magics = N1C.magicu();
+  APInt::mu magics = Divisor.magicu();
 
   SDValue Q = N->getOperand(0);
 
   // If the divisor is even, we can avoid using the expensive fixup by shifting
   // the divided value upfront.
-  if (magics.a != 0 && !N1C[0]) {
-    unsigned Shift = N1C.countTrailingZeros();
+  if (magics.a != 0 && !Divisor[0]) {
+    unsigned Shift = Divisor.countTrailingZeros();
     Q = DAG.getNode(ISD::SRL, dl, VT, Q,
                     DAG.getConstant(Shift, getShiftAmountTy(Q.getValueType())));
     if (Created)
       Created->push_back(Q.getNode());
 
     // Get magic number for the shifted divisor.
-    magics = N1C.lshr(Shift).magicu(Shift);
+    magics = Divisor.lshr(Shift).magicu(Shift);
     assert(magics.a == 0 && "Should use cheap fixup now");
   }
 
@@ -2709,7 +2707,7 @@ BuildUDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
     Created->push_back(Q.getNode());
 
   if (magics.a == 0) {
-    assert(magics.s < N1C.getBitWidth() &&
+    assert(magics.s < Divisor.getBitWidth() &&
            "We shouldn't generate an undefined shift!");
     return DAG.getNode(ISD::SRL, dl, VT, Q,
                  DAG.getConstant(magics.s, getShiftAmountTy(Q.getValueType())));

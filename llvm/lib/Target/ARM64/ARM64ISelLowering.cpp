@@ -435,6 +435,11 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
       setOperationAction(ISD::SIGN_EXTEND_INREG, (MVT::SimpleValueType)VT,
                          Expand);
 
+      setOperationAction(ISD::MULHS, (MVT::SimpleValueType)VT, Expand);
+      setOperationAction(ISD::SMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
+      setOperationAction(ISD::MULHU, (MVT::SimpleValueType)VT, Expand);
+      setOperationAction(ISD::UMUL_LOHI, (MVT::SimpleValueType)VT, Expand);
+
       for (unsigned InnerVT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
            InnerVT <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++InnerVT)
         setTruncStoreAction((MVT::SimpleValueType)VT,

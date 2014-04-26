@@ -2024,7 +2024,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
 
   // if integer divide is expensive and we satisfy the requirements, emit an
   // alternate sequence.
-  if (N1C && !N1C->isNullValue() && !TLI.isIntDivCheap()) {
+  if ((N1C || N1->getOpcode() == ISD::BUILD_VECTOR) && !TLI.isIntDivCheap()) {
     SDValue Op = BuildSDIV(N);
     if (Op.getNode()) return Op;
   }
@@ -2076,7 +2076,7 @@ SDValue DAGCombiner::visitUDIV(SDNode *N) {
     }
   }
   // fold (udiv x, c) -> alternate
-  if (N1C && !N1C->isNullValue() && !TLI.isIntDivCheap()) {
+  if ((N1C || N1->getOpcode() == ISD::BUILD_VECTOR) && !TLI.isIntDivCheap()) {
     SDValue Op = BuildUDIV(N);
     if (Op.getNode()) return Op;
   }
@@ -11191,8 +11191,24 @@ SDValue DAGCombiner::SimplifySetCC(EVT VT, SDValue N0,
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDValue DAGCombiner::BuildSDIV(SDNode *N) {
+  const APInt *Divisor;
+  if (N->getValueType(0).isVector()) {
+    // Handle splat vectors.
+    BuildVectorSDNode *BV = cast<BuildVectorSDNode>(N->getOperand(1));
+    if (ConstantSDNode *C = BV->getConstantSplatValue())
+      Divisor = &C->getAPIntValue();
+    else
+      return SDValue();
+  } else {
+    Divisor = &cast<ConstantSDNode>(N->getOperand(1))->getAPIntValue();
+  }
+
+  // Avoid division by zero.
+  if (!*Divisor)
+    return SDValue();
+
   std::vector<SDNode*> Built;
-  SDValue S = TLI.BuildSDIV(N, DAG, LegalOperations, &Built);
+  SDValue S = TLI.BuildSDIV(N, *Divisor, DAG, LegalOperations, &Built);
 
   for (std::vector<SDNode*>::iterator ii = Built.begin(), ee = Built.end();
        ii != ee; ++ii)
@@ -11200,13 +11216,29 @@ SDValue DAGCombiner::BuildSDIV(SDNode *N) {
   return S;
 }
 
-/// BuildUDIVSequence - Given an ISD::UDIV node expressing a divide by constant,
+/// BuildUDIV - Given an ISD::UDIV node expressing a divide by constant,
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDValue DAGCombiner::BuildUDIV(SDNode *N) {
+  const APInt *Divisor;
+  if (N->getValueType(0).isVector()) {
+    // Handle splat vectors.
+    BuildVectorSDNode *BV = cast<BuildVectorSDNode>(N->getOperand(1));
+    if (ConstantSDNode *C = BV->getConstantSplatValue())
+      Divisor = &C->getAPIntValue();
+    else
+      return SDValue();
+  } else {
+    Divisor = &cast<ConstantSDNode>(N->getOperand(1))->getAPIntValue();
+  }
+
+  // Avoid division by zero.
+  if (!*Divisor)
+    return SDValue();
+
   std::vector<SDNode*> Built;
-  SDValue S = TLI.BuildUDIV(N, DAG, LegalOperations, &Built);
+  SDValue S = TLI.BuildUDIV(N, *Divisor, DAG, LegalOperations, &Built);
 
   for (std::vector<SDNode*>::iterator ii = Built.begin(), ee = Built.end();
        ii != ee; ++ii)
