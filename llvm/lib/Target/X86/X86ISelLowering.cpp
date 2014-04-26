@@ -1062,6 +1062,7 @@ void X86TargetLowering::resetOperationActions() {
 
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
+    setOperationAction(ISD::SMUL_LOHI,          MVT::v4i32, Custom);
 
     setOperationAction(ISD::VSELECT,            MVT::v2f64, Legal);
     setOperationAction(ISD::VSELECT,            MVT::v2i64, Legal);
@@ -1227,6 +1228,7 @@ void X86TargetLowering::resetOperationActions() {
       // Don't lower v32i8 because there is no 128-bit byte mul
 
       setOperationAction(ISD::UMUL_LOHI,       MVT::v8i32, Custom);
+      setOperationAction(ISD::SMUL_LOHI,       MVT::v8i32, Custom);
       setOperationAction(ISD::MULHU,           MVT::v16i16, Legal);
       setOperationAction(ISD::MULHS,           MVT::v16i16, Legal);
 
@@ -11729,6 +11731,11 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::PMULUDQ, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
 
+  case Intrinsic::x86_sse41_pmuldq:
+  case Intrinsic::x86_avx2_pmul_dq:
+    return DAG.getNode(X86ISD::PMULDQ, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+
   case Intrinsic::x86_sse2_pmulhu_w:
   case Intrinsic::x86_avx2_pmulhu_w:
     return DAG.getNode(ISD::MULHU, dl, Op.getValueType(),
@@ -13168,8 +13175,8 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
   return DAG.getNode(ISD::ADD, dl, VT, Res, AhiBlo);
 }
 
-static SDValue LowerUMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
-                              SelectionDAG &DAG) {
+static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
+                             SelectionDAG &DAG) {
   SDValue Op0 = Op.getOperand(0), Op1 = Op.getOperand(1);
   EVT VT = Op0.getValueType();
   SDLoc dl(Op);
@@ -13185,15 +13192,17 @@ static SDValue LowerUMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
   // Emit two multiplies, one for the lower 2 ints and one for the higher 2
   // ints.
   MVT MulVT = VT == MVT::v4i32 ? MVT::v2i64 : MVT::v4i64;
+  unsigned Opcode =
+      Op->getOpcode() == ISD::UMUL_LOHI ? X86ISD::PMULUDQ : X86ISD::PMULDQ;
   SDValue Mul1 = DAG.getNode(ISD::BITCAST, dl, VT,
-                             DAG.getNode(X86ISD::PMULUDQ, dl, MulVT, Op0, Op1));
+                             DAG.getNode(Opcode, dl, MulVT, Op0, Op1));
   SDValue Mul2 = DAG.getNode(ISD::BITCAST, dl, VT,
-                             DAG.getNode(X86ISD::PMULUDQ, dl, MulVT, Hi0, Hi1));
+                             DAG.getNode(Opcode, dl, MulVT, Hi0, Hi1));
 
   // Shuffle it back into the right order.
-  const int HighMask[] = {1, 3, 5, 7, 9, 11, 13, 15};
+  const int HighMask[] = {1, 5, 3, 7, 9, 13, 11, 15};
   SDValue Highs = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, HighMask);
-  const int LowMask[] = {0, 2, 4, 6, 8, 10, 12, 14};
+  const int LowMask[] = {0, 4, 2, 6, 8, 12, 10, 14};
   SDValue Lows = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, LowMask);
 
   return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getValueType(), Highs, Lows);
@@ -14188,7 +14197,8 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::CTLZ_ZERO_UNDEF:    return LowerCTLZ_ZERO_UNDEF(Op, DAG);
   case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
   case ISD::MUL:                return LowerMUL(Op, Subtarget, DAG);
-  case ISD::UMUL_LOHI:          return LowerUMUL_LOHI(Op, Subtarget, DAG);
+  case ISD::UMUL_LOHI:
+  case ISD::SMUL_LOHI:          return LowerMUL_LOHI(Op, Subtarget, DAG);
   case ISD::SRA:
   case ISD::SRL:
   case ISD::SHL:                return LowerShift(Op, Subtarget, DAG);

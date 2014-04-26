@@ -175,6 +175,9 @@ def X86select  : SDNode<"X86ISD::SELECT"     , SDTSelect>;
 def X86pmuludq : SDNode<"X86ISD::PMULUDQ",
                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
                                       SDTCisSameAs<1,2>]>>;
+def X86pmuldq  : SDNode<"X86ISD::PMULDQ",
+                         SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
+                                       SDTCisSameAs<1,2>]>>;
 
 // Specific shuffle nodes - At some point ISD::VECTOR_SHUFFLE will always get
 // translated into one of the target nodes below during lowering.

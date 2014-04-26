@@ -347,6 +347,8 @@ namespace llvm {
 
       // PMULUDQ - Vector multiply packed unsigned doubleword integers
       PMULUDQ,
+      // PMULUDQ - Vector multiply packed signed doubleword integers
+      PMULDQ,
 
       // FMA nodes
       FMADD,
