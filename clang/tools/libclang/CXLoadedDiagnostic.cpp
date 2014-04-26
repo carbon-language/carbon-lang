@@ -79,8 +79,9 @@ CXDiagnosticSeverity CXLoadedDiagnostic::getSeverity() const {
   CASE(Warning)
   CASE(Error)
   CASE(Fatal)
-  CASE(Remark)
 #undef CASE
+  // The 'Remark' level isn't represented in the stable API.
+  case serialized_diags::Remark: return CXDiagnostic_Warning;
   }
   
   llvm_unreachable("Invalid diagnostic level");
