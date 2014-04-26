@@ -26,8 +26,11 @@ class AddressPool {
     AddressPoolEntry(unsigned Number, bool TLS) : Number(Number), TLS(TLS) {}
   };
   DenseMap<const MCSymbol *, AddressPoolEntry> Pool;
+  bool HasBeenUsed;
 
 public:
+  AddressPool() : HasBeenUsed(false) {}
+
   /// \brief Returns the index into the address pool with the given
   /// label/symbol.
   unsigned getIndex(const MCSymbol *Sym, bool TLS = false);
@@ -35,6 +38,10 @@ public:
   void emit(AsmPrinter &Asm, const MCSection *AddrSection);
 
   bool isEmpty() { return Pool.empty(); }
+
+  bool hasBeenUsed() const { return HasBeenUsed; }
+
+  void resetUsedFlag() { HasBeenUsed = false; }
 };
 }
 #endif

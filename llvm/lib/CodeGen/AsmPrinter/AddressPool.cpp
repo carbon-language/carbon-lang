@@ -17,6 +17,7 @@ using namespace llvm;
 class MCExpr;
 
 unsigned AddressPool::getIndex(const MCSymbol *Sym, bool TLS) {
+  HasBeenUsed = true;
   auto IterBool =
       Pool.insert(std::make_pair(Sym, AddressPoolEntry(Pool.size(), TLS)));
   return IterBool.first->second.Number;

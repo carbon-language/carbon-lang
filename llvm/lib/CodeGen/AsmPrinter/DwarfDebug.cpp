@@ -2500,11 +2500,20 @@ static uint64_t makeTypeSignature(StringRef Identifier) {
 void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
                                       StringRef Identifier, DIE &RefDie,
                                       DICompositeType CTy) {
+  // Fast path if we're building some type units and one has already used the
+  // address pool we know we're going to throw away all this work anyway, so
+  // don't bother building dependent types.
+  if (!TypeUnitsUnderConstruction.empty() && AddrPool.hasBeenUsed())
+    return;
+
   const DwarfTypeUnit *&TU = DwarfTypeUnits[CTy];
   if (TU) {
     CU.addDIETypeSignature(RefDie, *TU);
     return;
   }
+
+  bool TopLevelType = TypeUnitsUnderConstruction.empty();
+  AddrPool.resetUsedFlag();
 
   DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
   auto OwnedUnit =
@@ -2512,7 +2521,7 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
                                  this, &InfoHolder, getDwoLineTable(CU));
   DwarfTypeUnit &NewTU = *OwnedUnit;
   TU = &NewTU;
-  InfoHolder.addUnit(std::move(OwnedUnit));
+  TypeUnitsUnderConstruction.push_back(std::make_pair(std::move(OwnedUnit), CTy));
 
   NewTU.addUInt(*UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                 CU.getLanguage());
@@ -2520,9 +2529,7 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   uint64_t Signature = makeTypeSignature(Identifier);
   NewTU.setTypeSignature(Signature);
 
-  if (useSplitDwarf())
-    NewTU.setSkeleton(constructSkeletonTU(NewTU));
-  else
+  if (!useSplitDwarf())
     CU.applyStmtList(*UnitDie);
 
   NewTU.initSection(
@@ -2532,6 +2539,36 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
 
   NewTU.setType(NewTU.createTypeDIE(CTy));
 
+  if (TopLevelType) {
+    auto TypeUnitsToAdd = std::move(TypeUnitsUnderConstruction);
+    TypeUnitsUnderConstruction.clear();
+
+    // Types referencing entries in the address table cannot be placed in type
+    // units.
+    if (AddrPool.hasBeenUsed()) {
+
+      // Remove all the types built while building this type.
+      // This is pessimistic as some of these types might not be dependent on
+      // the type that used an address.
+      for (const auto &TU : TypeUnitsToAdd)
+        DwarfTypeUnits.erase(TU.second);
+
+      // Construct this type in the CU directly.
+      // This is inefficient because all the dependent types will be rebuilt
+      // from scratch, including building them in type units, discovering that
+      // they depend on addresses, throwing them out and rebuilding them.
+      CU.constructTypeDIE(RefDie, CTy);
+      return;
+    }
+
+    // If the type wasn't dependent on fission addresses, finish adding the type
+    // and all its dependent types.
+    for (auto &TU : TypeUnitsToAdd) {
+      if (useSplitDwarf())
+        TU.first->setSkeleton(constructSkeletonTU(*TU.first));
+      InfoHolder.addUnit(std::move(TU.first));
+    }
+  }
   CU.addDIETypeSignature(RefDie, NewTU);
 }
 

@@ -445,6 +445,9 @@ public:
 
   virtual DwarfCompileUnit &getCU() = 0;
 
+  /// constructTypeDIE - Construct type DIE from DICompositeType.
+  void constructTypeDIE(DIE &Buffer, DICompositeType CTy);
+
 protected:
   /// getOrCreateStaticMemberDIE - Create new static data member DIE.
   DIE *getOrCreateStaticMemberDIE(DIDerivedType DT);
@@ -464,9 +467,6 @@ private:
 
   /// constructTypeDIE - Construct derived type die from DIDerivedType.
   void constructTypeDIE(DIE &Buffer, DIDerivedType DTy);
-
-  /// constructTypeDIE - Construct type DIE from DICompositeType.
-  void constructTypeDIE(DIE &Buffer, DICompositeType CTy);
 
   /// constructSubrangeDIE - Construct subrange DIE from DISubrange.
   void constructSubrangeDIE(DIE &Buffer, DISubrange SR, DIE *IndexTy);
