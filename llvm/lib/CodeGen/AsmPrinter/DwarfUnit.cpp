@@ -360,6 +360,12 @@ void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute, DIE &Entry) {
 }
 
 void DwarfUnit::addDIETypeSignature(DIE &Die, const DwarfTypeUnit &Type) {
+  // Flag the type unit reference as a declaration so that if it contains
+  // members (implicit special members, static data member definitions, member
+  // declarations for definitions in this CU, etc) consumers don't get confused
+  // and think this is a full definition.
+  addFlag(Die, dwarf::DW_AT_declaration);
+
   Die.addValue(dwarf::DW_AT_signature, dwarf::DW_FORM_ref_sig8,
                new (DIEValueAllocator) DIETypeSignature(Type));
 }

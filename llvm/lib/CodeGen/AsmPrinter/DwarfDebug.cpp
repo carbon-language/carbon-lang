@@ -2486,15 +2486,20 @@ MCDwarfDwoLineTable *DwarfDebug::getDwoLineTable(const DwarfCompileUnit &CU) {
   return &SplitTypeUnitFileTable;
 }
 
+static uint64_t makeTypeSignature(StringRef Identifier) {
+  MD5 Hash;
+  Hash.update(Identifier);
+  // ... take the least significant 8 bytes and return those. Our MD5
+  // implementation always returns its results in little endian, swap bytes
+  // appropriately.
+  MD5::MD5Result Result;
+  Hash.final(Result);
+  return *reinterpret_cast<support::ulittle64_t *>(Result + 8);
+}
+
 void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
                                       StringRef Identifier, DIE &RefDie,
                                       DICompositeType CTy) {
-  // Flag the type unit reference as a declaration so that if it contains
-  // members (implicit special members, static data member definitions, member
-  // declarations for definitions in this CU, etc) consumers don't get confused
-  // and think this is a full definition.
-  CU.addFlag(RefDie, dwarf::DW_AT_declaration);
-
   const DwarfTypeUnit *&TU = DwarfTypeUnits[CTy];
   if (TU) {
     CU.addDIETypeSignature(RefDie, *TU);
@@ -2512,26 +2517,20 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   NewTU.addUInt(*UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                 CU.getLanguage());
 
-  MD5 Hash;
-  Hash.update(Identifier);
-  // ... take the least significant 8 bytes and return those. Our MD5
-  // implementation always returns its results in little endian, swap bytes
-  // appropriately.
-  MD5::MD5Result Result;
-  Hash.final(Result);
-  uint64_t Signature = *reinterpret_cast<support::ulittle64_t *>(Result + 8);
+  uint64_t Signature = makeTypeSignature(Identifier);
   NewTU.setTypeSignature(Signature);
+
   if (useSplitDwarf())
     NewTU.setSkeleton(constructSkeletonTU(NewTU));
   else
     CU.applyStmtList(*UnitDie);
 
-  NewTU.setType(NewTU.createTypeDIE(CTy));
-
   NewTU.initSection(
       useSplitDwarf()
           ? Asm->getObjFileLowering().getDwarfTypesDWOSection(Signature)
           : Asm->getObjFileLowering().getDwarfTypesSection(Signature));
+
+  NewTU.setType(NewTU.createTypeDIE(CTy));
 
   CU.addDIETypeSignature(RefDie, NewTU);
 }
