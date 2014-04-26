@@ -132,6 +132,8 @@ public:
         : G(&G), NI(Nodes.end()) {}
 
   public:
+    iterator() {}
+
     bool operator==(const iterator &Arg) const { return NI == Arg.NI; }
     bool operator!=(const iterator &Arg) const { return !operator==(Arg); }
 

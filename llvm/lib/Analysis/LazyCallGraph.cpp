@@ -217,38 +217,46 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   // walk.
   insert(G, Callee);
 
+  Node *N = nullptr;
+  Node::iterator ChildI;
   for (;;) {
-    if (DFSStack.empty()) {
-      // Clear off any nodes which have already been visited in the DFS.
-      while (!Worklist.empty() && Worklist.back()->DFSNumber != 0)
-        Worklist.pop_back();
-      if (Worklist.empty())
-        break;
-      Node *N = Worklist.pop_back_val();
-      N->LowLink = N->DFSNumber = 1;
-      NextDFSNumber = 2;
-      DFSStack.push_back(std::make_pair(N, N->begin()));
-      assert(PendingSCCStack.empty() && "Cannot start a fresh DFS walk with "
-                                        "pending nodes from a prior walk.");
+    if (!N) {
+      if (!DFSStack.empty()) {
+        N = DFSStack.back().first;
+        ChildI = DFSStack.back().second;
+        DFSStack.pop_back();
+      } else {
+        // Clear off any nodes which have already been visited in the DFS.
+        while (!Worklist.empty() && Worklist.back()->DFSNumber != 0)
+          Worklist.pop_back();
+        if (Worklist.empty())
+          break;
+        N = Worklist.pop_back_val();
+        N->LowLink = N->DFSNumber = 1;
+        NextDFSNumber = 2;
+        ChildI = N->begin();
+        assert(PendingSCCStack.empty() && "Cannot start a fresh DFS walk with "
+                                          "pending nodes from a prior walk.");
+      }
     }
-
-    Node *N = DFSStack.back().first;
     assert(N->DFSNumber != 0 && "We should always assign a DFS number "
-                                "before placing a node onto the stack.");
+                                "before processing a node.");
 
     // We simulate recursion by popping out of the nested loop and continuing.
     bool Recurse = false;
-    for (auto I = DFSStack.back().second, E = N->end(); I != E; ++I) {
+    for (auto I = ChildI, E = N->end(); I != E; ++I) {
       Node &ChildN = *I;
       if (SCC *ChildSCC = G.SCCMap.lookup(&ChildN)) {
         // Check if we have reached a node in the new (known connected) set of
         // this SCC. If so, the entire stack is necessarily in that set and we
         // can re-start.
         if (ChildSCC == this) {
+          insert(G, *N);
           while (!PendingSCCStack.empty())
             insert(G, *PendingSCCStack.pop_back_val());
           while (!DFSStack.empty())
             insert(G, *DFSStack.pop_back_val().first);
+          N = nullptr;
           Recurse = true;
           break;
         }
@@ -263,11 +271,12 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
         // Mark that we should start at this child when next this node is the
         // top of the stack. We don't start at the next child to ensure this
         // child's lowlink is reflected.
-        DFSStack.back().second = I;
+        DFSStack.push_back(std::make_pair(N, I));
 
         // Recurse onto this node via a tail call.
         ChildN.LowLink = ChildN.DFSNumber = NextDFSNumber++;
-        DFSStack.push_back(std::make_pair(&ChildN, ChildN.begin()));
+        N = &ChildN;
+        ChildI = ChildN.begin();
         Recurse = true;
         break;
       }
@@ -282,22 +291,21 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     if (Recurse)
       continue;
 
-    // No more children to process, pop it off the core DFS stack.
-    DFSStack.pop_back();
+    if (N->LowLink != N->DFSNumber) {
+      // At this point we know that N cannot ever be an SCC root. Its low-link
+      // is not its dfs-number, and we've processed all of its children. It is
+      // just sitting here waiting until some node further down the stack gets
+      // low-link == dfs-number and pops it off as well. Move it to the pending
+      // stack which is pulled into the next SCC to be formed.
+      PendingSCCStack.push_back(N);
 
-    if (N->LowLink == N->DFSNumber) {
-      ResultSCCs.push_back(G.formSCC(N, PendingSCCStack));
+      assert(!DFSStack.empty() && "We shouldn't have an empty stack!");
+      N = nullptr;
       continue;
     }
 
-    assert(!DFSStack.empty() && "We shouldn't have an empty stack!");
-
-    // At this point we know that N cannot ever be an SCC root. Its low-link
-    // is not its dfs-number, and we've processed all of its children. It is
-    // just sitting here waiting until some node further down the stack gets
-    // low-link == dfs-number and pops it off as well. Move it to the pending
-    // stack which is pulled into the next SCC to be formed.
-    PendingSCCStack.push_back(N);
+    ResultSCCs.push_back(G.formSCC(N, PendingSCCStack));
+    N = nullptr;
   }
 
   // Now we need to reconnect the current SCC to the graph.
