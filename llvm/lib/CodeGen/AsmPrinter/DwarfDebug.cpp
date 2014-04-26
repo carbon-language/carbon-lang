@@ -538,9 +538,9 @@ DIE *DwarfDebug::createScopeChildrenDIE(
     std::unique_ptr<DIE> Variable =
         TheCU.constructVariableDIE(*DV, Scope->isAbstractScope());
     assert(Variable);
-    Children.push_back(std::move(Variable));
     if (DV->isObjectPointer())
       ObjectPointer = Variable.get();
+    Children.push_back(std::move(Variable));
   }
   for (LexicalScope *LS : Scope->getChildren())
     if (DIE *Nested = constructScopeDIE(TheCU, LS))

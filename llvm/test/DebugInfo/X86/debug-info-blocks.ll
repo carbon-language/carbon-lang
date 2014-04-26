@@ -7,6 +7,7 @@
 
 ; CHECK: DW_TAG_subprogram
 ; CHECK: DW_AT_name{{.*}}_block_invoke
+; CHECK: DW_AT_object_pointer
 
 ; CHECK-NOT: DW_TAG_subprogram
 ; CHECK: DW_TAG_formal_parameter
