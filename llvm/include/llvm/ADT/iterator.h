@@ -11,6 +11,7 @@
 #define LLVM_ADT_ITERATOR_H
 
 #include <iterator>
+#include <cstddef>
 
 namespace llvm {
 
@@ -32,7 +33,7 @@ namespace llvm {
 /// terms of addition of one. These aren't equivalent for all iterator
 /// categories, and respecting that adds a lot of complexity for little gain.
 template <typename DerivedT, typename IteratorCategoryT, typename T,
-          typename DifferenceTypeT = ptrdiff_t, typename PointerT = T *,
+          typename DifferenceTypeT = std::ptrdiff_t, typename PointerT = T *,
           typename ReferenceT = T &>
 struct iterator_facade_base
     : std::iterator<IteratorCategoryT, T, DifferenceTypeT, PointerT,
