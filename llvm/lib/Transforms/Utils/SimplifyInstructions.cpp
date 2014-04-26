@@ -76,7 +76,15 @@ namespace {
                 ++NumSimplified;
                 Changed = true;
               }
-            Changed |= RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
+            bool res = RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
+            if (res)  {
+              // RecursivelyDeleteTriviallyDeadInstruction can remove
+              // more than one instruction, so simply incrementing the
+              // iterator does not work. When instructions get deleted
+              // re-iterate instead.
+              BI = BB->begin(); BE = BB->end();
+              Changed |= res;
+            }
           }
 
         // Place the list of instructions to simplify on the next loop iteration
