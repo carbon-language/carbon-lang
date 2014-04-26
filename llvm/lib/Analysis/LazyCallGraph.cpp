@@ -100,9 +100,9 @@ LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
 
   for (auto &Entry : EntryNodes)
     if (Function *F = Entry.dyn_cast<Function *>())
-      SCCEntryNodes.insert(F);
+      SCCEntryNodes.push_back(F);
     else
-      SCCEntryNodes.insert(&Entry.get<Node *>()->getFunction());
+      SCCEntryNodes.push_back(&Entry.get<Node *>()->getFunction());
 }
 
 LazyCallGraph::LazyCallGraph(LazyCallGraph &&G)
@@ -437,10 +437,12 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
     DFSStack.pop_back();
   } else {
     // If we've handled all candidate entry nodes to the SCC forest, we're done.
-    if (SCCEntryNodes.empty())
-      return nullptr;
+    do {
+      if (SCCEntryNodes.empty())
+        return nullptr;
 
-    N = &get(*SCCEntryNodes.pop_back_val());
+      N = &get(*SCCEntryNodes.pop_back_val());
+    } while (N->DFSNumber != 0);
     I = N->begin();
     N->LowLink = N->DFSNumber = 1;
     NextDFSNumber = 2;
@@ -463,7 +465,6 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
         assert(!SCCMap.count(&ChildN) &&
                "Found a node with 0 DFS number but already in an SCC!");
         ChildN.LowLink = ChildN.DFSNumber = NextDFSNumber++;
-        SCCEntryNodes.remove(&ChildN.getFunction());
         N = &ChildN;
         I = ChildN.begin();
         E = ChildN.end();

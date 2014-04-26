@@ -384,7 +384,7 @@ private:
   SmallVector<std::pair<Node *, iterator>, 4> DFSStack;
 
   /// \brief Set of entry nodes not-yet-processed into SCCs.
-  SmallSetVector<Function *, 4> SCCEntryNodes;
+  SmallVector<Function *, 4> SCCEntryNodes;
 
   /// \brief Stack of nodes the DFS has walked but not yet put into a SCC.
   SmallVector<Node *, 4> PendingSCCStack;
