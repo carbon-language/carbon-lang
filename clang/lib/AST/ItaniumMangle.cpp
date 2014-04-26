@@ -456,6 +456,25 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
   if (!Context.shouldMangleDeclName(FD))
     return;
 
+  if (FD->hasAttr<EnableIfAttr>()) {
+    FunctionTypeDepthState Saved = FunctionTypeDepth.push();
+    Out << "Ua9enable_ifI";
+    // FIXME: specific_attr_iterator iterates in reverse order. Fix that and use
+    // it here.
+    for (AttrVec::const_reverse_iterator I = FD->getAttrs().rbegin(),
+                                         E = FD->getAttrs().rend();
+         I != E; ++I) {
+      EnableIfAttr *EIA = dyn_cast<EnableIfAttr>(*I);
+      if (!EIA)
+        continue;
+      Out << 'X';
+      mangleExpression(EIA->getCond());
+      Out << 'E';
+    }
+    Out << 'E';
+    FunctionTypeDepth.pop(Saved);
+  }
+
   // Whether the mangling of a function type includes the return type depends on
   // the context and the nature of the function. The rules for deciding whether
   // the return type is included are:
