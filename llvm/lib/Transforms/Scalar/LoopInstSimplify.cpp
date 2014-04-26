@@ -127,7 +127,15 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
             ++NumSimplified;
           }
         }
-        LocalChanged |= RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
+        bool res = RecursivelyDeleteTriviallyDeadInstructions(I, TLI);
+        if (res) {
+          // RecursivelyDeleteTriviallyDeadInstruction can remove
+          // more than one instruction, so simply incrementing the
+          // iterator does not work. When instructions get deleted
+          // re-iterate instead.
+          BI = BB->begin(); BE = BB->end();
+          LocalChanged |= res;
+        }
 
         if (IsSubloopHeader && !isa<PHINode>(I))
           break;
