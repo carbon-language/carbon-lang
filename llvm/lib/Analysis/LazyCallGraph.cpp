@@ -188,6 +188,10 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   SmallVector<SCC *, 1> ResultSCCs;
   ResultSCCs.push_back(this);
 
+  // Direct recursion doesn't impact the SCC graph at all.
+  if (&Caller == &Callee)
+    return ResultSCCs;
+
   // We're going to do a full mini-Tarjan's walk using a local stack here.
   int NextDFSNumber;
   SmallVector<std::pair<Node *, Node::iterator>, 4> DFSStack;
@@ -202,6 +206,8 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     N->LowLink = 0;
     G.SCCMap.erase(N);
   }
+  assert(Worklist.size() > 1 && "We have to have at least two nodes to have an "
+                                "edge between them that is within the SCC.");
 
   // The callee can already reach every node in this SCC (by definition). It is
   // the only node we know will stay inside this SCC. Everything which
