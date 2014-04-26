@@ -570,8 +570,21 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx2_psll_w:
   case Intrinsic::x86_avx2_pslli_d:
   case Intrinsic::x86_avx2_pslli_q:
-  case Intrinsic::x86_avx2_pslli_w: {
-    // Simplify if count is constant. To 0 if > BitWidth, otherwise to shl.
+  case Intrinsic::x86_avx2_pslli_w:
+  case Intrinsic::x86_sse2_psrl_d:
+  case Intrinsic::x86_sse2_psrl_q:
+  case Intrinsic::x86_sse2_psrl_w:
+  case Intrinsic::x86_sse2_psrli_d:
+  case Intrinsic::x86_sse2_psrli_q:
+  case Intrinsic::x86_sse2_psrli_w:
+  case Intrinsic::x86_avx2_psrl_d:
+  case Intrinsic::x86_avx2_psrl_q:
+  case Intrinsic::x86_avx2_psrl_w:
+  case Intrinsic::x86_avx2_psrli_d:
+  case Intrinsic::x86_avx2_psrli_q:
+  case Intrinsic::x86_avx2_psrli_w: {
+    // Simplify if count is constant. To 0 if >= BitWidth,
+    // otherwise to shl/lshr.
     auto CDV = dyn_cast<ConstantDataVector>(II->getArgOperand(1));
     auto CInt = dyn_cast<ConstantInt>(II->getArgOperand(1));
     if (!CDV && !CInt)
@@ -588,14 +601,33 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         VT->getElementType()->getPrimitiveSizeInBits() - 1)
       return ReplaceInstUsesWith(
           CI, ConstantAggregateZero::get(Vec->getType()));
-    else {
-      unsigned VWidth = VT->getNumElements();
-      // Get a constant vector of the same type as the first operand.
-      auto VTCI = ConstantInt::get(VT->getElementType(), Count->getZExtValue());
-      return BinaryOperator::CreateShl(
-          Vec, Builder->CreateVectorSplat(VWidth, VTCI));
+
+    bool isPackedShiftLeft = true;
+    switch (II->getIntrinsicID()) {
+    default : break;
+    case Intrinsic::x86_sse2_psrl_d:
+    case Intrinsic::x86_sse2_psrl_q:
+    case Intrinsic::x86_sse2_psrl_w:
+    case Intrinsic::x86_sse2_psrli_d:
+    case Intrinsic::x86_sse2_psrli_q:
+    case Intrinsic::x86_sse2_psrli_w:
+    case Intrinsic::x86_avx2_psrl_d:
+    case Intrinsic::x86_avx2_psrl_q:
+    case Intrinsic::x86_avx2_psrl_w:
+    case Intrinsic::x86_avx2_psrli_d:
+    case Intrinsic::x86_avx2_psrli_q:
+    case Intrinsic::x86_avx2_psrli_w: isPackedShiftLeft = false; break;
     }
-    break;
+
+    unsigned VWidth = VT->getNumElements();
+    // Get a constant vector of the same type as the first operand.
+    auto VTCI = ConstantInt::get(VT->getElementType(), Count->getZExtValue());
+    if (isPackedShiftLeft)
+      return BinaryOperator::CreateShl(Vec,
+          Builder->CreateVectorSplat(VWidth, VTCI));
+
+    return BinaryOperator::CreateLShr(Vec,
+        Builder->CreateVectorSplat(VWidth, VTCI));
   }
 
   case Intrinsic::x86_sse41_pmovsxbw:
