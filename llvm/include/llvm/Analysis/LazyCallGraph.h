@@ -227,6 +227,12 @@ public:
     void removeEdge(LazyCallGraph &G, Function &Caller, Function &Callee,
                     SCC &CalleeC);
 
+    void
+    internalDFS(LazyCallGraph &G,
+                SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack,
+                SmallVectorImpl<Node *> &PendingSCCStack, Node *N,
+                SmallVectorImpl<SCC *> &ResultSCCs);
+
     SmallVector<LazyCallGraph::SCC *, 1>
     removeInternalEdge(LazyCallGraph &G, Node &Caller, Node &Callee);
 
