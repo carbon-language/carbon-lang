@@ -151,3 +151,38 @@ define <8 x i32> @test9(<8 x i32> %a) {
 ; AVX: vpsrad $2
 ; AVX: vpadd
 }
+
+define <8 x i32> @test10(<8 x i32> %a) {
+  %rem = urem <8 x i32> %a, <i32 7, i32 7, i32 7, i32 7,i32 7, i32 7, i32 7, i32 7>
+  ret <8 x i32> %rem
+
+; AVX-LABEL: test10:
+; AVX: vpermd
+; AVX: vpmuludq
+; AVX: vshufps	$-35
+; AVX: vpmuludq
+; AVX: vshufps	$-35
+; AVX: vpsubd
+; AVX: vpsrld $1
+; AVX: vpadd
+; AVX: vpsrld $2
+; AVX: vpmulld
+}
+
+define <8 x i32> @test11(<8 x i32> %a) {
+  %rem = srem <8 x i32> %a, <i32 7, i32 7, i32 7, i32 7,i32 7, i32 7, i32 7, i32 7>
+  ret <8 x i32> %rem
+
+; AVX-LABEL: test11:
+; AVX: vpermd
+; AVX: vpmuldq
+; AVX: vshufps	$-35
+; AVX: vpmuldq
+; AVX: vshufps	$-35
+; AVX: vpshufd	$-40
+; AVX: vpadd
+; AVX: vpsrld $31
+; AVX: vpsrad $2
+; AVX: vpadd
+; AVX: vpmulld
+}
