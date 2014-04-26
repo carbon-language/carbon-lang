@@ -255,6 +255,7 @@ entry:
   %vecinit6 = shufflevector <4 x float> %a, <4 x float> %0, <4 x i32> <i32 0, i32 1, i32 2, i32 4>
   ret <4 x float> %vecinit6
 ; CHECK-LABEL: insertps_from_shufflevector_1:
+; CHECK-NOT: movss
 ; CHECK-NOT: shufps
 ; CHECK: insertps    $48,
 ; CHECK: ret
@@ -265,7 +266,6 @@ entry:
   %vecinit6 = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 0, i32 1, i32 5, i32 3>
   ret <4 x float> %vecinit6
 ; CHECK-LABEL: insertps_from_shufflevector_2:
-; CHECK-NOT: mov
 ; CHECK-NOT: shufps
 ; CHECK: insertps    $96,
 ; CHECK: ret
@@ -279,7 +279,7 @@ entry:
   %vecinit6 = shufflevector <4 x i32> %a, <4 x i32> %0, <4 x i32> <i32 0, i32 1, i32 2, i32 4>
   ret <4 x i32> %vecinit6
 ; CHECK-LABEL: pinsrd_from_shufflevector_i32:
-; CHECK-NOT: mov
+; CHECK-NOT: movss
 ; CHECK-NOT: shufps
 ; CHECK: pinsrd  $3,
 ; CHECK: ret
@@ -290,15 +290,15 @@ entry:
   %vecinit6 = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 7, i32 2, i32 3>
   ret <4 x i32> %vecinit6
 ; CHECK-LABEL: insertps_from_shufflevector_i32_2:
-; CHECK-NOT: mov
 ; CHECK-NOT: shufps
+; CHECK-NOT: movaps
 ; CHECK: insertps    $208,
 ; CHECK: ret
 }
 
 define <4 x float> @insertps_from_load_ins_elt_undef(<4 x float> %a, float* %b) {
 ; CHECK-LABEL: insertps_from_load_ins_elt_undef:
-; CHECK-NOT: mov
+; CHECK-NOT: movss
 ; CHECK-NOT: shufps
 ; CHECK: insertps    $16,
 ; CHECK: ret
@@ -311,7 +311,7 @@ define <4 x float> @insertps_from_load_ins_elt_undef(<4 x float> %a, float* %b) 
 define <4 x i32> @insertps_from_load_ins_elt_undef_i32(<4 x i32> %a, i32* %b) {
 ; CHECK-LABEL: insertps_from_load_ins_elt_undef_i32:
 ; TODO: Like on pinsrd_from_shufflevector_i32, remove this mov instr
-;; aCHECK-NOT: mov
+;; aCHECK-NOT: movd
 ; CHECK-NOT: shufps
 ; CHECK: insertps    $32,
 ; CHECK: ret
