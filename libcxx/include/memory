@@ -2401,13 +2401,14 @@ template <class _Ptr1, class _Ptr2>
 struct __same_or_less_cv_qualified_imp<_Ptr1, _Ptr2, false>
     : false_type {};
 
-template <class _Ptr1, class _Ptr2, bool = is_scalar<_Ptr1>::value &&
-                                         !is_pointer<_Ptr1>::value>
+template <class _Ptr1, class _Ptr2, bool = is_pointer<_Ptr1>::value ||
+                                           is_same<_Ptr1, _Ptr2>::value ||
+                                           __has_element_type<_Ptr1>::value>
 struct __same_or_less_cv_qualified
     : __same_or_less_cv_qualified_imp<_Ptr1, _Ptr2> {};
 
 template <class _Ptr1, class _Ptr2>
-struct __same_or_less_cv_qualified<_Ptr1, _Ptr2, true>
+struct __same_or_less_cv_qualified<_Ptr1, _Ptr2, false>
     : false_type {};
 
 // default_delete
