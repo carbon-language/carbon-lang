@@ -370,8 +370,6 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
 
   setMinFunctionAlignment(2);
 
-  setDivIsWellDefined(true);
-
   RequireStrictAlign = StrictAlign;
 
   setHasExtractBitsInsn(true);

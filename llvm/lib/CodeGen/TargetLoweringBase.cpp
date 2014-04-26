@@ -683,7 +683,6 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   HasExtractBitsInsn = false;
   IntDivIsCheap = false;
   Pow2DivIsCheap = false;
-  DivIsWellDefined = false;
   JumpIsExpensive = false;
   PredictableSelectIsExpensive = false;
   MaskAndBranchFoldingIsLegal = false;
