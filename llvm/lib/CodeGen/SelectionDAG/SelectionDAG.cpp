@@ -4414,18 +4414,6 @@ SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
 }
 
 SDValue
-SelectionDAG::getMemIntrinsicNode(unsigned Opcode, SDLoc dl,
-                                  const EVT *VTs, unsigned NumVTs,
-                                  const SDValue *Ops, unsigned NumOps,
-                                  EVT MemVT, MachinePointerInfo PtrInfo,
-                                  unsigned Align, bool Vol,
-                                  bool ReadMem, bool WriteMem) {
-  return getMemIntrinsicNode(Opcode, dl, makeVTList(VTs, NumVTs), Ops, NumOps,
-                             MemVT, PtrInfo, Align, Vol,
-                             ReadMem, WriteMem);
-}
-
-SDValue
 SelectionDAG::getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
                                   const SDValue *Ops, unsigned NumOps,
                                   EVT MemVT, MachinePointerInfo PtrInfo,
@@ -4891,14 +4879,6 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
                               const SDValue *Ops, unsigned NumOps) {
   return getNode(Opcode, DL, getVTList(ResultTys),
                  Ops, NumOps);
-}
-
-SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
-                              const EVT *VTs, unsigned NumVTs,
-                              const SDValue *Ops, unsigned NumOps) {
-  if (NumVTs == 1)
-    return getNode(Opcode, DL, VTs[0], Ops, NumOps);
-  return getNode(Opcode, DL, makeVTList(VTs, NumVTs), Ops, NumOps);
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, SDVTList VTList,

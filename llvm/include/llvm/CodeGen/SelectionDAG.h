@@ -611,8 +611,6 @@ public:
   SDValue getNode(unsigned Opcode, SDLoc DL,
                   ArrayRef<EVT> ResultTys,
                   const SDValue *Ops, unsigned NumOps);
-  SDValue getNode(unsigned Opcode, SDLoc DL, const EVT *VTs, unsigned NumVTs,
-                  const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs,
                   const SDValue *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs);
@@ -735,13 +733,6 @@ public:
   /// result and takes a list of operands. Opcode may be INTRINSIC_VOID,
   /// INTRINSIC_W_CHAIN, or a target-specific opcode with a value not
   /// less than FIRST_TARGET_MEMORY_OPCODE.
-  SDValue getMemIntrinsicNode(unsigned Opcode, SDLoc dl,
-                              const EVT *VTs, unsigned NumVTs,
-                              const SDValue *Ops, unsigned NumOps,
-                              EVT MemVT, MachinePointerInfo PtrInfo,
-                              unsigned Align = 0, bool Vol = false,
-                              bool ReadMem = true, bool WriteMem = true);
-
   SDValue getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
                               const SDValue *Ops, unsigned NumOps,
                               EVT MemVT, MachinePointerInfo PtrInfo,
