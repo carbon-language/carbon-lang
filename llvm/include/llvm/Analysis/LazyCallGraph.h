@@ -228,7 +228,8 @@ public:
   /// always visits SCCs for a callee prior to visiting the SCC for a caller
   /// (when they are in different SCCs).
   class postorder_scc_iterator
-      : public std::iterator<std::forward_iterator_tag, SCC> {
+      : public iterator_facade_base<postorder_scc_iterator,
+                                    std::forward_iterator_tag, SCC> {
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
 
@@ -251,21 +252,13 @@ public:
     bool operator==(const postorder_scc_iterator &Arg) const {
       return G == Arg.G && C == Arg.C;
     }
-    bool operator!=(const postorder_scc_iterator &Arg) const {
-      return !operator==(Arg);
-    }
 
     reference operator*() const { return *C; }
-    pointer operator->() const { return &operator*(); }
 
+    using iterator_facade_base::operator++;
     postorder_scc_iterator &operator++() {
       C = G->getNextSCCInPostOrder();
       return *this;
-    }
-    postorder_scc_iterator operator++(int) {
-      postorder_scc_iterator prev = *this;
-      ++*this;
-      return prev;
     }
   };
 

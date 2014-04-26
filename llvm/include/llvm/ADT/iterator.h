@@ -32,7 +32,7 @@ namespace llvm {
 /// terms of addition of one. These aren't equivalent for all iterator
 /// categories, and respecting that adds a lot of complexity for little gain.
 template <typename DerivedT, typename IteratorCategoryT, typename T,
-          typename DifferenceTypeT, typename PointerT = T *,
+          typename DifferenceTypeT = ptrdiff_t, typename PointerT = T *,
           typename ReferenceT = T &>
 struct iterator_facade_base
     : std::iterator<IteratorCategoryT, T, DifferenceTypeT, PointerT,
