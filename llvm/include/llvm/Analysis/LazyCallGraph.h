@@ -113,59 +113,29 @@ public:
   /// be scanned for "calls" or uses of functions and its child information
   /// will be constructed. All of these results are accumulated and cached in
   /// the graph.
-  class iterator : public std::iterator<std::bidirectional_iterator_tag, Node> {
+  class iterator : public iterator_adaptor_base<
+                       iterator, NodeVectorImplT::iterator, Node> {
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
-
-    /// \brief Nonce type to select the constructor for the end iterator.
-    struct IsAtEndT {};
 
     LazyCallGraph *G;
     NodeVectorImplT::iterator NI;
 
-    // Build the begin iterator for a node.
-    explicit iterator(LazyCallGraph &G, NodeVectorImplT &Nodes)
-        : G(&G), NI(Nodes.begin()) {}
-
-    // Build the end iterator for a node. This is selected purely by overload.
-    iterator(LazyCallGraph &G, NodeVectorImplT &Nodes, IsAtEndT /*Nonce*/)
-        : G(&G), NI(Nodes.end()) {}
+    // Build the iterator for a specific position in a node list.
+    iterator(LazyCallGraph &G, NodeVectorImplT::iterator NI)
+        : iterator_adaptor_base(NI), G(&G) {}
 
   public:
     iterator() {}
 
-    bool operator==(const iterator &Arg) const { return NI == Arg.NI; }
-    bool operator!=(const iterator &Arg) const { return !operator==(Arg); }
-
     reference operator*() const {
-      if (NI->is<Node *>())
-        return *NI->get<Node *>();
+      if (I->is<Node *>())
+        return *I->get<Node *>();
 
-      Function *F = NI->get<Function *>();
+      Function *F = I->get<Function *>();
       Node &ChildN = G->get(*F);
-      *NI = &ChildN;
+      *I = &ChildN;
       return ChildN;
-    }
-    pointer operator->() const { return &operator*(); }
-
-    iterator &operator++() {
-      ++NI;
-      return *this;
-    }
-    iterator operator++(int) {
-      iterator prev = *this;
-      ++*this;
-      return prev;
-    }
-
-    iterator &operator--() {
-      --NI;
-      return *this;
-    }
-    iterator operator--(int) {
-      iterator next = *this;
-      --*this;
-      return next;
     }
   };
 
@@ -200,8 +170,8 @@ public:
       return F;
     };
 
-    iterator begin() const { return iterator(*G, Callees); }
-    iterator end() const { return iterator(*G, Callees, iterator::IsAtEndT()); }
+    iterator begin() const { return iterator(*G, Callees.begin()); }
+    iterator end() const { return iterator(*G, Callees.end()); }
 
     /// Equality is defined as address equality.
     bool operator==(const Node &N) const { return this == &N; }
@@ -309,8 +279,8 @@ public:
   LazyCallGraph(LazyCallGraph &&G);
   LazyCallGraph &operator=(LazyCallGraph &&RHS);
 
-  iterator begin() { return iterator(*this, EntryNodes); }
-  iterator end() { return iterator(*this, EntryNodes, iterator::IsAtEndT()); }
+  iterator begin() { return iterator(*this, EntryNodes.begin()); }
+  iterator end() { return iterator(*this, EntryNodes.end()); }
 
   postorder_scc_iterator postorder_scc_begin() {
     return postorder_scc_iterator(*this);
