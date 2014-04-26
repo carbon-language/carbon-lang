@@ -385,11 +385,21 @@ bool ObjCInterfaceDecl::inheritsDesignatedInitializers() const {
     // misleading warnings.
     if (isIntroducingInitializers(this)) {
       data().InheritedDesignatedInitializers = DefinitionData::IDI_NotInherited;
-      return false;
     } else {
-      data().InheritedDesignatedInitializers = DefinitionData::IDI_Inherited;
-      return true;
+      if (auto SuperD = getSuperClass()) {
+        data().InheritedDesignatedInitializers =
+          SuperD->declaresOrInheritsDesignatedInitializers() ?
+            DefinitionData::IDI_Inherited :
+            DefinitionData::IDI_NotInherited;
+      } else {
+        data().InheritedDesignatedInitializers =
+          DefinitionData::IDI_NotInherited;
+      }
     }
+    assert(data().InheritedDesignatedInitializers
+             != DefinitionData::IDI_Unknown);
+    return data().InheritedDesignatedInitializers ==
+        DefinitionData::IDI_Inherited;
   }
   }
 

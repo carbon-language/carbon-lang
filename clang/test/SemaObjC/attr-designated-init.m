@@ -388,3 +388,25 @@ __attribute__((objc_root_class))
   return self;
 }
 @end
+
+__attribute__((objc_root_class))
+@interface RootNoDI
+-(id)init;
+@end
+
+@interface Base : RootNoDI
+@end
+
+@implementation Base
+@end
+
+@interface Derived : Base
+- (instancetype)initWithInt:(int)n NS_DESIGNATED_INITIALIZER;
+@end
+
+@implementation Derived
+- (instancetype)initWithInt:(int)n
+{
+  return [super init];
+}
+@end
