@@ -20851,3 +20851,16 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
 
   return Res;
 }
+
+int X86TargetLowering::getScalingFactorCost(const AddrMode &AM,
+                                            Type *Ty) const {
+  // Scaling factors are not free at all.
+  // An indexed folded instruction, i.e., inst (reg1, reg2, scale),
+  // will take 2 allocations instead of 1 for plain addressing mode,
+  // i.e. inst (reg1).
+  if (isLegalAddressingMode(AM, Ty))
+    // Scale represents reg2 * scale, thus account for 1
+    // as soon as we use a second register.
+    return AM.Scale != 0;
+  return -1;
+}
