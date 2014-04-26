@@ -1070,7 +1070,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
       if (NumElts == 1) {
         // Just a simple load
-        std::vector<EVT> LoadRetVTs;
+        SmallVector<EVT, 4> LoadRetVTs;
         if (needTruncate) {
           // If loading i1 result, generate
           //   load i16
@@ -1080,7 +1080,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
           LoadRetVTs.push_back(EltVT);
         LoadRetVTs.push_back(MVT::Other);
         LoadRetVTs.push_back(MVT::Glue);
-        std::vector<SDValue> LoadRetOps;
+        SmallVector<SDValue, 4> LoadRetOps;
         LoadRetOps.push_back(Chain);
         LoadRetOps.push_back(DAG.getConstant(1, MVT::i32));
         LoadRetOps.push_back(DAG.getConstant(0, MVT::i32));
@@ -1096,7 +1096,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         InVals.push_back(Ret0);
       } else if (NumElts == 2) {
         // LoadV2
-        std::vector<EVT> LoadRetVTs;
+        SmallVector<EVT, 4> LoadRetVTs;
         if (needTruncate) {
           // If loading i1 result, generate
           //   load i16
@@ -1109,7 +1109,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         }
         LoadRetVTs.push_back(MVT::Other);
         LoadRetVTs.push_back(MVT::Glue);
-        std::vector<SDValue> LoadRetOps;
+        SmallVector<SDValue, 4> LoadRetOps;
         LoadRetOps.push_back(Chain);
         LoadRetOps.push_back(DAG.getConstant(1, MVT::i32));
         LoadRetOps.push_back(DAG.getConstant(0, MVT::i32));
