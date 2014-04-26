@@ -131,6 +131,12 @@ LazyCallGraph &LazyCallGraph::operator=(LazyCallGraph &&G) {
   return *this;
 }
 
+void LazyCallGraph::SCC::insert(LazyCallGraph &G, Node &N) {
+  N.DFSNumber = N.LowLink = -1;
+  Nodes.push_back(&N);
+  G.SCCMap[&N] = this;
+}
+
 void LazyCallGraph::SCC::removeEdge(LazyCallGraph &G, Function &Caller,
                                     Function &Callee, SCC &CalleeC) {
   assert(std::find(G.LeafSCCs.begin(), G.LeafSCCs.end(), this) ==
@@ -203,9 +209,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   // incrementally add any chain of nodes which reaches something in the new
   // node set to the new node set. This short circuits one side of the Tarjan's
   // walk.
-  Nodes.push_back(&Callee);
-  G.SCCMap.insert(std::make_pair(&Callee, this));
-  Callee.DFSNumber = Callee.LowLink = -1;
+  insert(G, Callee);
 
   for (;;) {
     if (DFSStack.empty()) {
@@ -235,16 +239,10 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
         // this SCC. If so, the entire stack is necessarily in that set and we
         // can re-start.
         if (ChildSCC == this) {
-          while (!PendingSCCStack.empty()) {
-            Nodes.push_back(PendingSCCStack.pop_back_val());
-            G.SCCMap.insert(std::make_pair(Nodes.back(), this));
-            Nodes.back()->DFSNumber = Nodes.back()->LowLink = -1;
-          }
-          while (!DFSStack.empty()) {
-            Nodes.push_back(DFSStack.pop_back_val().first);
-            G.SCCMap.insert(std::make_pair(Nodes.back(), this));
-            Nodes.back()->DFSNumber = Nodes.back()->LowLink = -1;
-          }
+          while (!PendingSCCStack.empty())
+            insert(G, *PendingSCCStack.pop_back_val());
+          while (!DFSStack.empty())
+            insert(G, *DFSStack.pop_back_val().first);
           Recurse = true;
           break;
         }
@@ -392,20 +390,13 @@ LazyCallGraph::SCC *LazyCallGraph::formSCC(Node *RootN,
   // into it.
   SCC *NewSCC = new (SCCBPA.Allocate()) SCC();
 
-  SCCMap[RootN] = NewSCC;
-  NewSCC->Nodes.push_back(RootN);
-
   while (!NodeStack.empty() && NodeStack.back()->DFSNumber > RootN->DFSNumber) {
-    Node *SCCN = NodeStack.pop_back_val();
-    assert(SCCN->LowLink >= RootN->LowLink &&
+    assert(NodeStack.back()->LowLink >= RootN->LowLink &&
            "We cannot have a low link in an SCC lower than its root on the "
            "stack!");
-    SCCN->DFSNumber = SCCN->LowLink = -1;
-
-    SCCMap[SCCN] = NewSCC;
-    NewSCC->Nodes.push_back(SCCN);
+    NewSCC->insert(*this, *NodeStack.pop_back_val());
   }
-  RootN->DFSNumber = RootN->LowLink = -1;
+  NewSCC->insert(*this, *RootN);
 
   // A final pass over all edges in the SCC (this remains linear as we only
   // do this once when we build the SCC) to connect it to the parent sets of

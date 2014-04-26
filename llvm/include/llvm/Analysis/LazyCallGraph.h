@@ -220,6 +220,8 @@ public:
 
     SCC() {}
 
+    void insert(LazyCallGraph &G, Node &N);
+
     void removeEdge(LazyCallGraph &G, Function &Caller, Function &Callee,
                     SCC &CalleeC);
 
