@@ -32,7 +32,6 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include <map>
-#include <set>
 using namespace llvm;
 
 // CloneBasicBlock - See comments in Cloning.h
@@ -273,28 +272,42 @@ namespace {
       NameSuffix(nameSuffix), CodeInfo(codeInfo), DL(DL) {
     }
 
-    /// CloneBlock - The specified block is found to be reachable, so clone it
-    /// into newBB.
+    /// CloneBlock - The specified block is found to be reachable, clone it and
+    /// anything that it can reach.
     void CloneBlock(const BasicBlock *BB,
-                    BasicBlock *NewBB,
-                    std::vector<const BasicBlock *> &ToClone,
-                    std::set<const BasicBlock *> &OrigBBs);
+                    std::vector<const BasicBlock*> &ToClone);
   };
 }
 
-/// CloneBlock - The specified block is found to be reachable, so clone it
-/// into newBB.
+/// CloneBlock - The specified block is found to be reachable, clone it and
+/// anything that it can reach.
 void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
-                                       BasicBlock *NewBB,
-                                       std::vector<const BasicBlock *> &ToClone,
-                                       std::set<const BasicBlock *> &OrigBBs) {
-  
-  // Remove BB from list of blocks to clone.
-  // When it was not in the list, it has been cloned already, so
-  // don't clone again.
-  if (!OrigBBs.erase(BB)) return;
+                                       std::vector<const BasicBlock*> &ToClone){
+  WeakVH &BBEntry = VMap[BB];
 
+  // Have we already cloned this block?
+  if (BBEntry) return;
+  
   // Nope, clone it now.
+  BasicBlock *NewBB;
+  BBEntry = NewBB = BasicBlock::Create(BB->getContext());
+  if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);
+
+  // It is only legal to clone a function if a block address within that
+  // function is never referenced outside of the function.  Given that, we
+  // want to map block addresses from the old function to block addresses in
+  // the clone. (This is different from the generic ValueMapper
+  // implementation, which generates an invalid blockaddress when
+  // cloning a function.)
+  //
+  // Note that we don't need to fix the mapping for unreachable blocks;
+  // the default mapping there is safe.
+  if (BB->hasAddressTaken()) {
+    Constant *OldBBAddr = BlockAddress::get(const_cast<Function*>(OldFunc),
+                                            const_cast<BasicBlock*>(BB));
+    VMap[OldBBAddr] = BlockAddress::get(NewFunc, NewBB);
+  }
+    
 
   bool hasCalls = false, hasDynamicAllocas = false, hasStaticAllocas = false;
   
@@ -412,7 +425,7 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                      const DataLayout *DL,
                                      Instruction *TheCall) {
   assert(NameSuffix && "NameSuffix cannot be null!");
-
+  
 #ifndef NDEBUG
   for (Function::const_arg_iterator II = OldFunc->arg_begin(), 
        E = OldFunc->arg_end(); II != E; ++II)
@@ -422,87 +435,15 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
   PruningFunctionCloner PFC(NewFunc, OldFunc, VMap, ModuleLevelChanges,
                             NameSuffix, CodeInfo, DL);
 
-  // Since all BB address references need to be known before block-by-block
-  // processing, we need to create all reachable blocks before processing
-  // them for instruction cloning and pruning. Some of these blocks may
-  // be removed due to later pruning.
+  // Clone the entry block, and anything recursively reachable from it.
   std::vector<const BasicBlock*> CloneWorklist;
-  //
-  // OrigBBs consists of all blocks reachable from the entry
-  // block.
-  // This list will be pruned down by the CloneFunction() currently
-  // (March 2014) due to two optimizations:
-  // First, when a conditional branch target is known at compile-time,
-  // only the actual branch destination block needs to be cloned.
-  // Second, when a switch statement target is known at compile-time,
-  // only the actual case statement needs to be cloned.
-  std::set<const BasicBlock*> OrigBBs;
-
   CloneWorklist.push_back(&OldFunc->getEntryBlock());
   while (!CloneWorklist.empty()) {
     const BasicBlock *BB = CloneWorklist.back();
     CloneWorklist.pop_back();
-
-    // Don't revisit blocks.
-    if (VMap.count(BB))
-      continue;
-
-    BasicBlock *NewBB = BasicBlock::Create(BB->getContext());
-    if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);
-
-    // It is only legal to clone a function if a block address within that
-    // function is never referenced outside of the function.  Given that, we
-    // want to map block addresses from the old function to block addresses in
-    // the clone. (This is different from the generic ValueMapper
-    // implementation, which generates an invalid blockaddress when
-    // cloning a function.)
-    //
-    // Note that we don't need to fix the mapping for unreachable blocks;
-    // the default mapping there is safe.
-    if (BB->hasAddressTaken()) {
-      Constant *OldBBAddr = BlockAddress::get(const_cast<Function*>(OldFunc),
-                                              const_cast<BasicBlock*>(BB));
-      VMap[OldBBAddr] = BlockAddress::get(NewFunc, NewBB);
-    }
-
-    OrigBBs.insert(BB);
-    VMap[BB] = NewBB;
-    // Iterate over all possible successors and add them to the CloneWorklist.
-    const TerminatorInst *Term = BB->getTerminator();
-    for (unsigned i = 0, e = Term->getNumSuccessors(); i != e; ++i) {
-      BasicBlock *Succ = Term->getSuccessor(i);
-      CloneWorklist.push_back(Succ);
-    }
+    PFC.CloneBlock(BB, CloneWorklist);
   }
-
-  // Now, fill only the reachable blocks with the cloned contents
-  // of the originals.
-  assert(CloneWorklist.empty() && "Dirty worklist before re-use\n");
-  CloneWorklist.push_back(&OldFunc->getEntryBlock());
-  while (!CloneWorklist.empty()) {
-    const BasicBlock *BB = CloneWorklist.back();
-    CloneWorklist.pop_back();
-    PFC.CloneBlock(BB, cast<BasicBlock>(VMap[BB]), CloneWorklist,
-                   OrigBBs);
-  }
-
-  // Removed BB's that were created that turned out to be prunable.
-  // Actual cloning may have found pruning opportunities since
-  // branch or switch statement target may have been known at compile-time.
-  // Alternatively we could write a routine CloneFunction and add a) a
-  // parameter to actually do the cloning and b) a return parameter that
-  // gives a list of blocks that need to be cloned also. Then we could
-  // call CloneFunction when we collect the blocks to call, but suppress
-  // cloning. And actually *do* the cloning in the while loop above. Also
-  // the cleanup here would become redundant, and so would be the OrigBBs.
-  for (std::set<const BasicBlock *>::iterator Oi = OrigBBs.begin(),
-       Oe = OrigBBs.end(); Oi != Oe; ++Oi) {
-    const BasicBlock *Orig = *Oi;
-    BasicBlock *NewBB = cast<BasicBlock>(VMap[Orig]);
-    delete NewBB;
-    VMap[Orig] = 0;
-  }
-
+  
   // Loop over all of the basic blocks in the old function.  If the block was
   // reachable, we have cloned it and the old block is now in the value map:
   // insert it into the new function in the right order.  If not, ignore it.
