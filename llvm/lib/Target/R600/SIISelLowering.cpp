@@ -628,7 +628,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
           MachineMemOperand::MOLoad | MachineMemOperand::MOInvariant,
           VT.getSizeInBits() / 8, 4);
       return DAG.getMemIntrinsicNode(AMDGPUISD::LOAD_CONSTANT, DL,
-                                     Op->getVTList(), Ops, 2, VT, MMO);
+                                     Op->getVTList(), Ops, VT, MMO);
     }
     case AMDGPUIntrinsic::SI_sample:
       return LowerSampleIntrinsic(AMDGPUISD::SAMPLE, Op, DAG);
@@ -676,8 +676,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
             MachineMemOperand::MOStore,
             VT.getSizeInBits() / 8, 4);
         return DAG.getMemIntrinsicNode(AMDGPUISD::TBUFFER_STORE_FORMAT, DL,
-                                       Op->getVTList(), Ops,
-                                       sizeof(Ops)/sizeof(Ops[0]), VT, MMO);
+                                       Op->getVTList(), Ops, VT, MMO);
       }
       default:
         break;

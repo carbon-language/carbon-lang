@@ -5095,8 +5095,7 @@ SDValue PPCTargetLowering::LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG,
       MF.getMachineMemOperand(MPI, MachineMemOperand::MOStore, 4, 4);
     SDValue Ops[] = { DAG.getEntryNode(), Tmp, FIPtr };
     Chain = DAG.getMemIntrinsicNode(PPCISD::STFIWX, dl,
-              DAG.getVTList(MVT::Other), Ops, array_lengthof(Ops),
-              MVT::i32, MMO);
+              DAG.getVTList(MVT::Other), Ops, MVT::i32, MMO);
   } else
     Chain = DAG.getStore(DAG.getEntryNode(), dl, Tmp, FIPtr,
                          MPI, false, false, 0);
@@ -5223,7 +5222,7 @@ SDValue PPCTargetLowering::LowerINT_TO_FP(SDValue Op,
     Ld = DAG.getMemIntrinsicNode(Op.getOpcode() == ISD::UINT_TO_FP ?
                                    PPCISD::LFIWZX : PPCISD::LFIWAX,
                                  dl, DAG.getVTList(MVT::f64, MVT::Other),
-                                 Ops, 2, MVT::i32, MMO);
+                                 Ops, MVT::i32, MMO);
   } else {
     assert(PPCSubTarget.isPPC64() &&
            "i32->FP without LFIWAX supported only on PPC64");
@@ -8008,7 +8007,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       };
 
       Val = DAG.getMemIntrinsicNode(PPCISD::STFIWX, dl,
-              DAG.getVTList(MVT::Other), Ops, array_lengthof(Ops),
+              DAG.getVTList(MVT::Other), Ops,
               cast<StoreSDNode>(N)->getMemoryVT(),
               cast<StoreSDNode>(N)->getMemOperand());
       DCI.AddToWorklist(Val.getNode());
@@ -8035,8 +8034,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
       };
       return
         DAG.getMemIntrinsicNode(PPCISD::STBRX, dl, DAG.getVTList(MVT::Other),
-                                Ops, array_lengthof(Ops),
-                                cast<StoreSDNode>(N)->getMemoryVT(),
+                                Ops, cast<StoreSDNode>(N)->getMemoryVT(),
                                 cast<StoreSDNode>(N)->getMemOperand());
     }
     break;
@@ -8214,7 +8212,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
         DAG.getMemIntrinsicNode(PPCISD::LBRX, dl,
                                 DAG.getVTList(N->getValueType(0) == MVT::i64 ?
                                               MVT::i64 : MVT::i32, MVT::Other),
-                                Ops, 3, LD->getMemoryVT(), LD->getMemOperand());
+                                Ops, LD->getMemoryVT(), LD->getMemOperand());
 
       // If this is an i16 load, insert the truncate.
       SDValue ResVal = BSLoad;

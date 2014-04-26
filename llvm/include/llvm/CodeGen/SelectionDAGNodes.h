@@ -1215,9 +1215,9 @@ public:
 class MemIntrinsicSDNode : public MemSDNode {
 public:
   MemIntrinsicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
-                     const SDValue *Ops, unsigned NumOps,
-                     EVT MemoryVT, MachineMemOperand *MMO)
-    : MemSDNode(Opc, Order, dl, VTs, Ops, NumOps, MemoryVT, MMO) {
+                     ArrayRef<SDValue> Ops, EVT MemoryVT,
+                     MachineMemOperand *MMO)
+    : MemSDNode(Opc, Order, dl, VTs, Ops.data(), Ops.size(), MemoryVT, MMO) {
   }
 
   // Methods to support isa and dyn_cast

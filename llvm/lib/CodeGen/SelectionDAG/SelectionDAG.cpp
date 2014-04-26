@@ -4409,7 +4409,7 @@ SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
 
 SDValue
 SelectionDAG::getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
-                                  const SDValue *Ops, unsigned NumOps,
+                                  ArrayRef<SDValue> Ops,
                                   EVT MemVT, MachinePointerInfo PtrInfo,
                                   unsigned Align, bool Vol,
                                   bool ReadMem, bool WriteMem) {
@@ -4427,13 +4427,13 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
   MachineMemOperand *MMO =
     MF.getMachineMemOperand(PtrInfo, Flags, MemVT.getStoreSize(), Align);
 
-  return getMemIntrinsicNode(Opcode, dl, VTList, Ops, NumOps, MemVT, MMO);
+  return getMemIntrinsicNode(Opcode, dl, VTList, Ops, MemVT, MMO);
 }
 
 SDValue
 SelectionDAG::getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
-                                  const SDValue *Ops, unsigned NumOps,
-                                  EVT MemVT, MachineMemOperand *MMO) {
+                                  ArrayRef<SDValue> Ops, EVT MemVT,
+                                  MachineMemOperand *MMO) {
   assert((Opcode == ISD::INTRINSIC_VOID ||
           Opcode == ISD::INTRINSIC_W_CHAIN ||
           Opcode == ISD::PREFETCH ||
@@ -4447,7 +4447,7 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
   MemIntrinsicSDNode *N;
   if (VTList.VTs[VTList.NumVTs-1] != MVT::Glue) {
     FoldingSetNodeID ID;
-    AddNodeIDNode(ID, Opcode, VTList, Ops, NumOps);
+    AddNodeIDNode(ID, Opcode, VTList, Ops.data(), Ops.size());
     ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
     void *IP = nullptr;
     if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
@@ -4457,12 +4457,12 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
 
     N = new (NodeAllocator) MemIntrinsicSDNode(Opcode, dl.getIROrder(),
                                                dl.getDebugLoc(), VTList, Ops,
-                                               NumOps, MemVT, MMO);
+                                               MemVT, MMO);
     CSEMap.InsertNode(N, IP);
   } else {
     N = new (NodeAllocator) MemIntrinsicSDNode(Opcode, dl.getIROrder(),
                                                dl.getDebugLoc(), VTList, Ops,
-                                               NumOps, MemVT, MMO);
+                                               MemVT, MMO);
   }
   AllNodes.push_back(N);
   return SDValue(N, 0);

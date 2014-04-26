@@ -2257,7 +2257,6 @@ SDValue SystemZTargetLowering::lowerATOMIC_LOAD_OP(SDValue Op,
   SDValue Ops[] = { ChainIn, AlignedAddr, Src2, BitShift, NegBitShift,
                     DAG.getConstant(BitSize, WideVT) };
   SDValue AtomicOp = DAG.getMemIntrinsicNode(Opcode, DL, VTList, Ops,
-                                             array_lengthof(Ops),
                                              NarrowVT, MMO);
 
   // Rotate the result of the final CS so that the field is in the lower
@@ -2349,8 +2348,7 @@ SDValue SystemZTargetLowering::lowerATOMIC_CMP_SWAP(SDValue Op,
   SDValue Ops[] = { ChainIn, AlignedAddr, CmpVal, SwapVal, BitShift,
                     NegBitShift, DAG.getConstant(BitSize, WideVT) };
   SDValue AtomicOp = DAG.getMemIntrinsicNode(SystemZISD::ATOMIC_CMP_SWAPW, DL,
-                                             VTList, Ops, array_lengthof(Ops),
-                                             NarrowVT, MMO);
+                                             VTList, Ops, NarrowVT, MMO);
   return AtomicOp;
 }
 
@@ -2386,7 +2384,7 @@ SDValue SystemZTargetLowering::lowerPREFETCH(SDValue Op,
     Op.getOperand(1)
   };
   return DAG.getMemIntrinsicNode(SystemZISD::PREFETCH, SDLoc(Op),
-                                 Node->getVTList(), Ops, array_lengthof(Ops),
+                                 Node->getVTList(), Ops,
                                  Node->getMemoryVT(), Node->getMemOperand());
 }
 

@@ -737,13 +737,13 @@ public:
   /// INTRINSIC_W_CHAIN, or a target-specific opcode with a value not
   /// less than FIRST_TARGET_MEMORY_OPCODE.
   SDValue getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
-                              const SDValue *Ops, unsigned NumOps,
+                              ArrayRef<SDValue> Ops,
                               EVT MemVT, MachinePointerInfo PtrInfo,
                               unsigned Align = 0, bool Vol = false,
                               bool ReadMem = true, bool WriteMem = true);
 
   SDValue getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
-                              const SDValue *Ops, unsigned NumOps,
+                              ArrayRef<SDValue> Ops,
                               EVT MemVT, MachineMemOperand *MMO);
 
   /// getMergeValues - Create a MERGE_VALUES node from the given operands.
