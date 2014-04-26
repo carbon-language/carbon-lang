@@ -12,8 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_IR_LEAKSCONTEXT_H
+#define LLVM_IR_LEAKSCONTEXT_H
+
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Value.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 
@@ -90,3 +94,5 @@ private:
 };
 
 }
+
+#endif // LLVM_IR_LEAKSCONTEXT_H
