@@ -16,6 +16,27 @@ void test_f2() {
   float &fr = f2(AC().a);
 }
 
+template <class T>
+struct Future {
+  explicit Future(T v);
+
+  template <class F>
+  auto call(F&& fn) -> decltype(fn(T())) {
+    return fn(T());
+  }
+
+  template <class B, class F>
+  auto then(F&& fn) -> decltype(call(fn))
+  {
+    return fn(T());
+  }
+};
+
+void rdar16527205() {
+  Future<int> f1(42);
+  f1.call([](int){ return Future<float>(0); });
+}
+
 namespace pr10154 {
   class A{
       A(decltype(nullptr) param);

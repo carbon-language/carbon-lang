@@ -1139,6 +1139,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
 void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope,
                             bool IsInstantiation) {
+  LambdaScopeInfo *LSI = getCurLambda();
+
   // Leave the expression-evaluation context.
   DiscardCleanupsInEvaluationContext();
   PopExpressionEvaluationContext();
@@ -1148,7 +1150,6 @@ void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope,
     PopDeclContext();
 
   // Finalize the lambda.
-  LambdaScopeInfo *LSI = getCurLambda();
   CXXRecordDecl *Class = LSI->Lambda;
   Class->setInvalidDecl();
   SmallVector<Decl*, 4> Fields(Class->fields());

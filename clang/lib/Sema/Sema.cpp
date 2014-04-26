@@ -1114,14 +1114,30 @@ BlockScopeInfo *Sema::getCurBlock() {
   if (FunctionScopes.empty())
     return 0;
 
-  return dyn_cast<BlockScopeInfo>(FunctionScopes.back());
+  auto CurBSI = dyn_cast<BlockScopeInfo>(FunctionScopes.back());
+  if (CurBSI && CurBSI->TheDecl &&
+      !CurBSI->TheDecl->Encloses(CurContext)) {
+    // We have switched contexts due to template instantiation.
+    assert(!ActiveTemplateInstantiations.empty());
+    return nullptr;
+  }
+
+  return CurBSI;
 }
 
 LambdaScopeInfo *Sema::getCurLambda() {
   if (FunctionScopes.empty())
     return 0;
 
-  return dyn_cast<LambdaScopeInfo>(FunctionScopes.back());
+  auto CurLSI = dyn_cast<LambdaScopeInfo>(FunctionScopes.back());
+  if (CurLSI && CurLSI->Lambda &&
+      !CurLSI->Lambda->Encloses(CurContext)) {
+    // We have switched contexts due to template instantiation.
+    assert(!ActiveTemplateInstantiations.empty());
+    return nullptr;
+  }
+
+  return CurLSI;
 }
 // We have a generic lambda if we parsed auto parameters, or we have 
 // an associated template parameter list.
