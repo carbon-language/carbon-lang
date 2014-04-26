@@ -42,4 +42,65 @@ define <8 x i32> @test2(<8 x i32> %a) {
 ; AVX: vpsrld $2
 }
 
+define <8 x i16> @test3(<8 x i16> %a) {
+  %div = udiv <8 x i16> %a, <i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7>
+  ret <8 x i16> %div
+
+; SSE-LABEL: test3:
+; SSE: pmulhuw
+; SSE: psubw
+; SSE: psrlw $1
+; SSE: paddw
+; SSE: psrlw $2
+
+; AVX-LABEL: test3:
+; AVX: vpmulhuw
+; AVX: vpsubw
+; AVX: vpsrlw $1
+; AVX: vpaddw
+; AVX: vpsrlw $2
+}
+
+define <16 x i16> @test4(<16 x i16> %a) {
+  %div = udiv <16 x i16> %a, <i16 7, i16 7, i16 7, i16 7,i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7,i16 7, i16 7, i16 7, i16 7>
+  ret <16 x i16> %div
+
+; AVX-LABEL: test4:
+; AVX: vpmulhuw
+; AVX: vpsubw
+; AVX: vpsrlw $1
+; AVX: vpaddw
+; AVX: vpsrlw $2
+; AVX-NOT: vpmulhuw
+}
+
+define <8 x i16> @test5(<8 x i16> %a) {
+  %div = sdiv <8 x i16> %a, <i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7>
+  ret <8 x i16> %div
+
+; SSE-LABEL: test5:
+; SSE: pmulhw
+; SSE: psrlw $15
+; SSE: psraw $1
+; SSE: paddw
+
+; AVX-LABEL: test5:
+; AVX: vpmulhw
+; AVX: vpsrlw $15
+; AVX: vpsraw $1
+; AVX: vpaddw
+}
+
+define <16 x i16> @test6(<16 x i16> %a) {
+  %div = sdiv <16 x i16> %a, <i16 7, i16 7, i16 7, i16 7,i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7, i16 7,i16 7, i16 7, i16 7, i16 7>
+  ret <16 x i16> %div
+
+; AVX-LABEL: test6:
+; AVX: vpmulhw
+; AVX: vpsrlw $15
+; AVX: vpsraw $1
+; AVX: vpaddw
+; AVX-NOT: vpmulhw
+}
+
 ; TODO: sdiv -> pmuldq
