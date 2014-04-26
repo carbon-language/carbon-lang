@@ -284,6 +284,21 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
+  static const CostTblEntry<MVT::SimpleValueType>
+  AVX2UniformConstCostTable[] = {
+    { ISD::SDIV, MVT::v16i16,  6 }, // vpmulhw sequence
+    { ISD::UDIV, MVT::v16i16,  6 }, // vpmulhuw sequence
+    { ISD::SDIV, MVT::v8i32,  15 }, // vpmuldq sequence
+    { ISD::UDIV, MVT::v8i32,  15 }, // vpmuludq sequence
+  };
+
+  if (Op2Info == TargetTransformInfo::OK_UniformConstantValue &&
+      ST->hasAVX2()) {
+    int Idx = CostTableLookup(AVX2UniformConstCostTable, ISD, LT.second);
+    if (Idx != -1)
+      return LT.first * AVX2UniformConstCostTable[Idx].Cost;
+  }
+
   static const CostTblEntry<MVT::SimpleValueType> AVX2CostTable[] = {
     // Shifts on v4i64/v8i32 on AVX2 is legal even though we declare to
     // customize them to detect the cases where shift amount is a scalar one.
@@ -351,6 +366,10 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
     { ISD::SRA,  MVT::v16i8,  4 }, // psrlw, pand, pxor, psubb.
     { ISD::SRA,  MVT::v8i16,  1 }, // psraw.
     { ISD::SRA,  MVT::v4i32,  1 }, // psrad.
+
+    { ISD::SDIV, MVT::v8i16,  6 }, // pmulhw sequence
+    { ISD::UDIV, MVT::v8i16,  6 }, // pmulhuw sequence
+    { ISD::UDIV, MVT::v4i32, 15 }, // pmuludq sequence
   };
 
   if (Op2Info == TargetTransformInfo::OK_UniformConstantValue &&
