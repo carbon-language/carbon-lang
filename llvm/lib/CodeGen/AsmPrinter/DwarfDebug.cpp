@@ -515,12 +515,10 @@ DIE *DwarfDebug::createScopeChildrenDIE(
   if (LScopes.isCurrentFunctionScope(Scope)) {
     for (DbgVariable *ArgDV : CurrentFnArguments)
       if (ArgDV) {
-        std::unique_ptr<DIE> Arg =
-            TheCU.constructVariableDIE(*ArgDV, Scope->isAbstractScope());
-        assert(Arg);
+        Children.push_back(
+            TheCU.constructVariableDIE(*ArgDV, Scope->isAbstractScope()));
         if (ArgDV->isObjectPointer())
-          ObjectPointer = Arg.get();
-        Children.push_back(std::move(Arg));
+          ObjectPointer = Children.back().get();
       }
 
     // If this is a variadic function, add an unspecified parameter.
@@ -535,12 +533,10 @@ DIE *DwarfDebug::createScopeChildrenDIE(
 
   // Collect lexical scope children first.
   for (DbgVariable *DV : ScopeVariables.lookup(Scope)) {
-    std::unique_ptr<DIE> Variable =
-        TheCU.constructVariableDIE(*DV, Scope->isAbstractScope());
-    assert(Variable);
+    Children.push_back(
+        TheCU.constructVariableDIE(*DV, Scope->isAbstractScope()));
     if (DV->isObjectPointer())
-      ObjectPointer = Variable.get();
-    Children.push_back(std::move(Variable));
+      ObjectPointer = Children.back().get();
   }
   for (LexicalScope *LS : Scope->getChildren())
     if (DIE *Nested = constructScopeDIE(TheCU, LS))
