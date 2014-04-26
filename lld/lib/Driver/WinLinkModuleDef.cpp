@@ -111,9 +111,22 @@ void Parser::error(const Token &tok, Twine msg) {
       msg);
 }
 
-llvm::Optional<Directive *> Parser::parse() {
+bool Parser::parse(std::vector<Directive *> &ret) {
+  for (;;) {
+    Directive *dir = nullptr;
+    if (!parseOne(dir))
+      return false;
+    if (!dir)
+      return true;
+    ret.push_back(dir);
+  }
+}
+
+bool Parser::parseOne(Directive *&ret) {
   consumeToken();
   switch (_tok._kind) {
+  case Kind::eof:
+    return true;
   case Kind::kw_exports: {
     // EXPORTS
     std::vector<PECOFFLinkingContext::ExportDesc> exports;
@@ -123,48 +136,54 @@ llvm::Optional<Directive *> Parser::parse() {
         break;
       exports.push_back(desc);
     }
-    return new (_alloc) Exports(exports);
+    ret = new (_alloc) Exports(exports);
+    return true;
   }
   case Kind::kw_heapsize: {
     // HEAPSIZE
     uint64_t reserve, commit;
     if (!parseMemorySize(reserve, commit))
-      return llvm::None;
-    return new (_alloc) Heapsize(reserve, commit);
+      return false;
+    ret = new (_alloc) Heapsize(reserve, commit);
+    return true;
   }
   case Kind::kw_library: {
     // LIBRARY
     std::string name;
     uint64_t baseaddr;
     if (!parseName(name, baseaddr))
-      return llvm::None;
-    return new (_alloc) Library(name, baseaddr);
+      return false;
+    ret = new (_alloc) Library(name, baseaddr);
+    return true;
   }
   case Kind::kw_stacksize: {
     // STACKSIZE
     uint64_t reserve, commit;
     if (!parseMemorySize(reserve, commit))
-      return llvm::None;
-    return new (_alloc) Stacksize(reserve, commit);
+      return false;
+    ret = new (_alloc) Stacksize(reserve, commit);
+    return true;
   }
   case Kind::kw_name: {
     // NAME
     std::string outputPath;
     uint64_t baseaddr;
     if (!parseName(outputPath, baseaddr))
-      return llvm::None;
-    return new (_alloc) Name(outputPath, baseaddr);
+      return false;
+    ret = new (_alloc) Name(outputPath, baseaddr);
+    return true;
   }
   case Kind::kw_version: {
     // VERSION
     int major, minor;
     if (!parseVersion(major, minor))
-      return llvm::None;
-    return new (_alloc) Version(major, minor);
+      return false;
+    ret = new (_alloc) Version(major, minor);
+    return true;
   }
   default:
     error(_tok, Twine("Unknown directive: ") + _tok._range);
-    return llvm::None;
+    return false;
   }
 }
 
@@ -219,16 +238,19 @@ bool Parser::parseName(std::string &outputPath, uint64_t &baseaddr) {
   consumeToken();
   if (_tok._kind == Kind::identifier) {
     outputPath = _tok._range;
-    consumeToken();
   } else {
     outputPath = "";
+    ungetToken();
+    return true;
   }
+  consumeToken();
   if (_tok._kind == Kind::kw_base) {
     if (!expectAndConsume(Kind::equal, "'=' expected"))
       return false;
     if (!consumeTokenAsInt(baseaddr))
       return false;
   } else {
+    ungetToken();
     baseaddr = 0;
   }
   return true;

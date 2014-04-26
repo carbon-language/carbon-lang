@@ -20,6 +20,8 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/Support/Allocator.h"
 
+#include <vector>
+
 namespace lld {
 namespace moduledef {
 
@@ -171,7 +173,7 @@ public:
   Parser(Lexer &lex, llvm::BumpPtrAllocator &alloc)
       : _lex(lex), _alloc(alloc) {}
 
-  llvm::Optional<Directive *> parse();
+  bool parse(std::vector<Directive *> &ret);
 
 private:
   void consumeToken();
@@ -181,6 +183,7 @@ private:
   void ungetToken();
   void error(const Token &tok, Twine msg);
 
+  bool parseOne(Directive *&dir);
   bool parseExport(PECOFFLinkingContext::ExportDesc &result);
   bool parseMemorySize(uint64_t &reserve, uint64_t &commit);
   bool parseName(std::string &outfile, uint64_t &baseaddr);

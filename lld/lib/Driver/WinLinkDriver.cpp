@@ -351,14 +351,14 @@ static bool parseExport(StringRef option,
 }
 
 // Read module-definition file.
-static llvm::Optional<moduledef::Directive *>
-parseDef(StringRef option, llvm::BumpPtrAllocator &alloc) {
+static bool parseDef(StringRef option, llvm::BumpPtrAllocator &alloc,
+                     std::vector<moduledef::Directive *> &result) {
   std::unique_ptr<MemoryBuffer> buf;
   if (MemoryBuffer::getFile(option, buf))
     return llvm::None;
   moduledef::Lexer lexer(std::move(buf));
   moduledef::Parser parser(lexer, alloc);
-  return parser.parse();
+  return parser.parse(result);
 }
 
 static StringRef replaceExtension(PECOFFLinkingContext &ctx, StringRef path,
@@ -1050,37 +1050,37 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
     case OPT_deffile: {
       llvm::BumpPtrAllocator alloc;
-      llvm::Optional<moduledef::Directive *> dir =
-          parseDef(inputArg->getValue(), alloc);
-      if (!dir.hasValue()) {
+      std::vector<moduledef::Directive *> dirs;
+      if (!parseDef(inputArg->getValue(), alloc, dirs)) {
         diag << "Error: invalid module-definition file\n";
         return false;
       }
-
-      if (auto *exp = dyn_cast<moduledef::Exports>(dir.getValue())) {
-        for (PECOFFLinkingContext::ExportDesc desc : exp->getExports()) {
-          desc.name = ctx.decorateSymbol(desc.name);
-          ctx.addDllExport(desc);
+      for (moduledef::Directive *dir : dirs) {
+        if (auto *exp = dyn_cast<moduledef::Exports>(dir)) {
+          for (PECOFFLinkingContext::ExportDesc desc : exp->getExports()) {
+            desc.name = ctx.decorateSymbol(desc.name);
+            ctx.addDllExport(desc);
+          }
+        } else if (auto *hs = dyn_cast<moduledef::Heapsize>(dir)) {
+          ctx.setHeapReserve(hs->getReserve());
+          ctx.setHeapCommit(hs->getCommit());
+        } else if (auto *lib = dyn_cast<moduledef::Library>(dir)) {
+          ctx.setIsDll(true);
+          ctx.setOutputPath(ctx.allocate(lib->getName()));
+          if (lib->getBaseAddress() && !ctx.getBaseAddress())
+            ctx.setBaseAddress(lib->getBaseAddress());
+        } else if (auto *name = dyn_cast<moduledef::Name>(dir)) {
+          if (!name->getOutputPath().empty() && ctx.outputPath().empty())
+            ctx.setOutputPath(ctx.allocate(name->getOutputPath()));
+          if (name->getBaseAddress() && ctx.getBaseAddress())
+            ctx.setBaseAddress(name->getBaseAddress());
+        } else if (auto *ver = dyn_cast<moduledef::Version>(dir)) {
+          ctx.setImageVersion(PECOFFLinkingContext::Version(
+              ver->getMajorVersion(), ver->getMinorVersion()));
+        } else {
+          llvm::dbgs() << static_cast<int>(dir->getKind()) << "\n";
+          llvm_unreachable("Unknown module-definition directive.\n");
         }
-      } else if (auto *hs = dyn_cast<moduledef::Heapsize>(dir.getValue())) {
-        ctx.setHeapReserve(hs->getReserve());
-        ctx.setHeapCommit(hs->getCommit());
-      } else if (auto *lib = dyn_cast<moduledef::Library>(dir.getValue())) {
-        ctx.setIsDll(true);
-        ctx.setOutputPath(ctx.allocate(lib->getName()));
-        if (lib->getBaseAddress() && !ctx.getBaseAddress())
-          ctx.setBaseAddress(lib->getBaseAddress());
-      } else if (auto *name = dyn_cast<moduledef::Name>(dir.getValue())) {
-        if (!name->getOutputPath().empty() && ctx.outputPath().empty())
-          ctx.setOutputPath(ctx.allocate(name->getOutputPath()));
-        if (name->getBaseAddress() && ctx.getBaseAddress())
-          ctx.setBaseAddress(name->getBaseAddress());
-      } else if (auto *ver = dyn_cast<moduledef::Version>(dir.getValue())) {
-        ctx.setImageVersion(PECOFFLinkingContext::Version(
-            ver->getMajorVersion(), ver->getMinorVersion()));
-      } else {
-        llvm::dbgs() << static_cast<int>(dir.getValue()->getKind()) << "\n";
-        llvm_unreachable("Unknown module-definition directive.\n");
       }
     }
 
