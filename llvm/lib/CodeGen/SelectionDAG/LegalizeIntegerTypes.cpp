@@ -1272,6 +1272,7 @@ std::pair <SDValue, SDValue> DAGTypeLegalizer::ExpandAtomic(SDNode *Node) {
 /// and the shift amount is a constant 'Amt'.  Expand the operation.
 void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
                                              SDValue &Lo, SDValue &Hi) {
+  assert(Amt && "Expected zero shifts to be already optimized away.");
   SDLoc DL(N);
   // Expand the incoming operand to be shifted, so that we have its parts
   SDValue InL, InH;
@@ -1714,9 +1715,13 @@ void DAGTypeLegalizer::ExpandIntRes_Constant(SDNode *N,
                                              SDValue &Lo, SDValue &Hi) {
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   unsigned NBitWidth = NVT.getSizeInBits();
-  const APInt &Cst = cast<ConstantSDNode>(N)->getAPIntValue();
-  Lo = DAG.getConstant(Cst.trunc(NBitWidth), NVT);
-  Hi = DAG.getConstant(Cst.lshr(NBitWidth).trunc(NBitWidth), NVT);
+  auto Constant = cast<ConstantSDNode>(N);
+  const APInt &Cst = Constant->getAPIntValue();
+  bool IsTarget = Constant->isTargetOpcode();
+  bool IsOpaque = Constant->isOpaque();
+  Lo = DAG.getConstant(Cst.trunc(NBitWidth), NVT, IsTarget, IsOpaque);
+  Hi = DAG.getConstant(Cst.lshr(NBitWidth).trunc(NBitWidth), NVT, IsTarget,
+                       IsOpaque);
 }
 
 void DAGTypeLegalizer::ExpandIntRes_CTLZ(SDNode *N,
