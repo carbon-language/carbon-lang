@@ -1510,7 +1510,7 @@ SDValue MipsTargetLowering::lowerGlobalAddress(SDValue Op,
       SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i32, 0,
                                               MipsII::MO_GPREL);
       SDValue GPRelNode = DAG.getNode(MipsISD::GPRel, DL,
-                                      DAG.getVTList(MVT::i32), &GA, 1);
+                                      DAG.getVTList(MVT::i32), GA);
       SDValue GPReg = DAG.getRegister(Mips::GP, MVT::i32);
       return DAG.getNode(ISD::ADD, DL, MVT::i32, GPReg, GPRelNode);
     }
@@ -2438,8 +2438,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Transform all store nodes into one single node because all store
   // nodes are independent of each other.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
-                        &MemOpChains[0], MemOpChains.size());
+    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOpChains);
 
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
@@ -2493,9 +2492,9 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
               CLI, Callee, Chain);
 
   if (IsTailCall)
-    return DAG.getNode(MipsISD::TailCall, DL, MVT::Other, &Ops[0], Ops.size());
+    return DAG.getNode(MipsISD::TailCall, DL, MVT::Other, Ops);
 
-  Chain = DAG.getNode(MipsISD::JmpLink, DL, NodeTys, &Ops[0], Ops.size());
+  Chain = DAG.getNode(MipsISD::JmpLink, DL, NodeTys, Ops);
   SDValue InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
@@ -2683,8 +2682,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
   // the size of Ins and InVals. This only happens when on varg functions
   if (!OutChains.empty()) {
     OutChains.push_back(Chain);
-    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
-                        &OutChains[0], OutChains.size());
+    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, OutChains);
   }
 
   return Chain;
@@ -2769,7 +2767,7 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
     RetOps.push_back(Flag);
 
   // Return on Mips is always a "jr $ra"
-  return DAG.getNode(MipsISD::Ret, DL, MVT::Other, &RetOps[0], RetOps.size());
+  return DAG.getNode(MipsISD::Ret, DL, MVT::Other, RetOps);
 }
 
 //===----------------------------------------------------------------------===//

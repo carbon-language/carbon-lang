@@ -886,7 +886,7 @@ LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
     DAG.getCopyToReg(Chain, dl, HandlerReg, Handler)
   };
 
-  Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains, 2);
+  Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains);
 
   return DAG.getNode(XCoreISD::EH_RETURN, dl, MVT::Other, Chain,
                      DAG.getRegister(StackReg, MVT::i32),
@@ -952,7 +952,7 @@ LowerINIT_TRAMPOLINE(SDValue Op, SelectionDAG &DAG) const {
                               MachinePointerInfo(TrmpAddr, 16), false, false,
                               0);
 
-  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains, 5);
+  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains);
 }
 
 SDValue XCoreTargetLowering::
@@ -1111,7 +1111,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag,
     unsigned index = ResultMemLocs[i].second;
     SDVTList VTs = DAG.getVTList(MVT::i32, MVT::Other);
     SDValue Ops[] = { Chain, DAG.getConstant(offset / 4, MVT::i32) };
-    SDValue load = DAG.getNode(XCoreISD::LDWSP, dl, VTs, Ops, 2);
+    SDValue load = DAG.getNode(XCoreISD::LDWSP, dl, VTs, Ops);
     InVals[index] = load;
     MemOpChains.push_back(load.getValue(1));
   }
@@ -1119,8 +1119,7 @@ LowerCallResult(SDValue Chain, SDValue InFlag,
   // Transform all loads nodes into one single node because
   // all load nodes are independent of each other.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                        &MemOpChains[0], MemOpChains.size());
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOpChains);
 
   return Chain;
 }
@@ -1204,8 +1203,7 @@ XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   // Transform all store nodes into one single node because
   // all store nodes are independent of each other.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                        &MemOpChains[0], MemOpChains.size());
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOpChains);
 
   // Build a sequence of copy-to-reg nodes chained together with token
   // chain and flag operands which copy the outgoing args into registers.
@@ -1244,7 +1242,7 @@ XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   if (InFlag.getNode())
     Ops.push_back(InFlag);
 
-  Chain  = DAG.getNode(XCoreISD::BL, dl, NodeTys, &Ops[0], Ops.size());
+  Chain  = DAG.getNode(XCoreISD::BL, dl, NodeTys, Ops);
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
@@ -1422,8 +1420,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
 
   // 2. chain CopyFromReg nodes into a TokenFactor.
   if (!CFRegNode.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &CFRegNode[0],
-                        CFRegNode.size());
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, CFRegNode);
 
   // 3. Memcpy 'byVal' args & push final InVals.
   // Aggregates passed "byVal" need to be copied by the callee.
@@ -1452,8 +1449,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
   // 4, chain mem ops nodes into a TokenFactor.
   if (!MemOps.empty()) {
     MemOps.push_back(Chain);
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &MemOps[0],
-                        MemOps.size());
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOps);
   }
 
   return Chain;
@@ -1535,8 +1531,7 @@ XCoreTargetLowering::LowerReturn(SDValue Chain,
   // Transform all store nodes into one single node because
   // all stores are independent of each other.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                        &MemOpChains[0], MemOpChains.size());
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOpChains);
 
   // Now handle return values copied to registers.
   for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
@@ -1558,8 +1553,7 @@ XCoreTargetLowering::LowerReturn(SDValue Chain,
   if (Flag.getNode())
     RetOps.push_back(Flag);
 
-  return DAG.getNode(XCoreISD::RETSP, dl, MVT::Other,
-                     &RetOps[0], RetOps.size());
+  return DAG.getNode(XCoreISD::RETSP, dl, MVT::Other, RetOps);
 }
 
 //===----------------------------------------------------------------------===//

@@ -227,8 +227,7 @@ replaceInChain(SelectionDAG *CurDAG, SDValue Chain, SDValue Old, SDValue New)
   }
   if (!found)
     return SDValue();
-  return CurDAG->getNode(ISD::TokenFactor, SDLoc(Chain), MVT::Other,
-                         &Ops[0], Ops.size());
+  return CurDAG->getNode(ISD::TokenFactor, SDLoc(Chain), MVT::Other, Ops);
 }
 
 SDNode *XCoreDAGToDAGISel::SelectBRIND(SDNode *N) {

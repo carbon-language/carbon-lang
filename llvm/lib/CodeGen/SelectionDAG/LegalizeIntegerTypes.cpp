@@ -434,7 +434,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_Overflow(SDNode *N) {
   EVT ValueVTs[] = { N->getValueType(0), NVT };
   SDValue Ops[] = { N->getOperand(0), N->getOperand(1) };
   SDValue Res = DAG.getNode(N->getOpcode(), SDLoc(N),
-                            DAG.getVTList(ValueVTs), Ops, 2);
+                            DAG.getVTList(ValueVTs), Ops);
 
   // Modified the sum result - switch anything that used the old sum to use
   // the new one.
@@ -1299,9 +1299,9 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
       // Emit this X << 1 as X+X.
       SDVTList VTList = DAG.getVTList(NVT, MVT::Glue);
       SDValue LoOps[2] = { InL, InL };
-      Lo = DAG.getNode(ISD::ADDC, DL, VTList, LoOps, 2);
+      Lo = DAG.getNode(ISD::ADDC, DL, VTList, LoOps);
       SDValue HiOps[3] = { InH, InH, Lo.getValue(1) };
-      Hi = DAG.getNode(ISD::ADDE, DL, VTList, HiOps, 3);
+      Hi = DAG.getNode(ISD::ADDE, DL, VTList, HiOps);
     } else {
       Lo = DAG.getNode(ISD::SHL, DL, NVT, InL, DAG.getConstant(Amt, ShTy));
       Hi = DAG.getNode(ISD::OR, DL, NVT,
@@ -1550,20 +1550,20 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
   if (hasCarry) {
     SDVTList VTList = DAG.getVTList(NVT, MVT::Glue);
     if (N->getOpcode() == ISD::ADD) {
-      Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps, 2);
+      Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps);
       HiOps[2] = Lo.getValue(1);
-      Hi = DAG.getNode(ISD::ADDE, dl, VTList, HiOps, 3);
+      Hi = DAG.getNode(ISD::ADDE, dl, VTList, HiOps);
     } else {
-      Lo = DAG.getNode(ISD::SUBC, dl, VTList, LoOps, 2);
+      Lo = DAG.getNode(ISD::SUBC, dl, VTList, LoOps);
       HiOps[2] = Lo.getValue(1);
-      Hi = DAG.getNode(ISD::SUBE, dl, VTList, HiOps, 3);
+      Hi = DAG.getNode(ISD::SUBE, dl, VTList, HiOps);
     }
     return;
   }
 
   if (N->getOpcode() == ISD::ADD) {
-    Lo = DAG.getNode(ISD::ADD, dl, NVT, LoOps, 2);
-    Hi = DAG.getNode(ISD::ADD, dl, NVT, HiOps, 2);
+    Lo = DAG.getNode(ISD::ADD, dl, NVT, LoOps);
+    Hi = DAG.getNode(ISD::ADD, dl, NVT, ArrayRef<SDValue>(HiOps, 2));
     SDValue Cmp1 = DAG.getSetCC(dl, getSetCCResultType(NVT), Lo, LoOps[0],
                                 ISD::SETULT);
     SDValue Carry1 = DAG.getSelect(dl, NVT, Cmp1,
@@ -1575,8 +1575,8 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUB(SDNode *N,
                                    DAG.getConstant(1, NVT), Carry1);
     Hi = DAG.getNode(ISD::ADD, dl, NVT, Hi, Carry2);
   } else {
-    Lo = DAG.getNode(ISD::SUB, dl, NVT, LoOps, 2);
-    Hi = DAG.getNode(ISD::SUB, dl, NVT, HiOps, 2);
+    Lo = DAG.getNode(ISD::SUB, dl, NVT, LoOps);
+    Hi = DAG.getNode(ISD::SUB, dl, NVT, ArrayRef<SDValue>(HiOps, 2));
     SDValue Cmp =
       DAG.getSetCC(dl, getSetCCResultType(LoOps[0].getValueType()),
                    LoOps[0], LoOps[1], ISD::SETULT);
@@ -1599,13 +1599,13 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBC(SDNode *N,
   SDValue HiOps[3] = { LHSH, RHSH };
 
   if (N->getOpcode() == ISD::ADDC) {
-    Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps, 2);
+    Lo = DAG.getNode(ISD::ADDC, dl, VTList, LoOps);
     HiOps[2] = Lo.getValue(1);
-    Hi = DAG.getNode(ISD::ADDE, dl, VTList, HiOps, 3);
+    Hi = DAG.getNode(ISD::ADDE, dl, VTList, HiOps);
   } else {
-    Lo = DAG.getNode(ISD::SUBC, dl, VTList, LoOps, 2);
+    Lo = DAG.getNode(ISD::SUBC, dl, VTList, LoOps);
     HiOps[2] = Lo.getValue(1);
-    Hi = DAG.getNode(ISD::SUBE, dl, VTList, HiOps, 3);
+    Hi = DAG.getNode(ISD::SUBE, dl, VTList, HiOps);
   }
 
   // Legalized the flag result - switch anything that used the old flag to
@@ -1624,9 +1624,9 @@ void DAGTypeLegalizer::ExpandIntRes_ADDSUBE(SDNode *N,
   SDValue LoOps[3] = { LHSL, RHSL, N->getOperand(2) };
   SDValue HiOps[3] = { LHSH, RHSH };
 
-  Lo = DAG.getNode(N->getOpcode(), dl, VTList, LoOps, 3);
+  Lo = DAG.getNode(N->getOpcode(), dl, VTList, LoOps);
   HiOps[2] = Lo.getValue(1);
-  Hi = DAG.getNode(N->getOpcode(), dl, VTList, HiOps, 3);
+  Hi = DAG.getNode(N->getOpcode(), dl, VTList, HiOps);
 
   // Legalized the flag result - switch anything that used the old flag to
   // use the new one.
@@ -2066,7 +2066,7 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
       ShiftOp = DAG.getZExtOrTrunc(ShiftOp, dl, ShiftTy);
 
     SDValue Ops[] = { LHSL, LHSH, ShiftOp };
-    Lo = DAG.getNode(PartsOpc, dl, DAG.getVTList(VT, VT), Ops, 3);
+    Lo = DAG.getNode(PartsOpc, dl, DAG.getVTList(VT, VT), Ops);
     Hi = Lo.getValue(1);
     return;
   }
@@ -2859,7 +2859,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_EXTRACT_SUBVECTOR(SDNode *N) {
     Ops.push_back(Op);
   }
 
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, NOutVT, &Ops[0], Ops.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, NOutVT, Ops);
 }
 
 
@@ -2906,7 +2906,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_VECTOR(SDNode *N) {
     Ops.push_back(Op);
   }
 
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, NOutVT, &Ops[0], Ops.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, NOutVT, Ops);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_SCALAR_TO_VECTOR(SDNode *N) {
@@ -2954,7 +2954,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_CONCAT_VECTORS(SDNode *N) {
     }
   }
 
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, NOutVT, &Ops[0], Ops.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, NOutVT, Ops);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_INSERT_VECTOR_ELT(SDNode *N) {
@@ -3010,6 +3010,5 @@ SDValue DAGTypeLegalizer::PromoteIntOp_CONCAT_VECTORS(SDNode *N) {
     }
   }
 
-  return DAG.getNode(ISD::BUILD_VECTOR, dl,  N->getValueType(0),
-    &NewOps[0], NewOps.size());
-  }
+  return DAG.getNode(ISD::BUILD_VECTOR, dl,  N->getValueType(0), NewOps);
+}

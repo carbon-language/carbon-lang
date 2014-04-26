@@ -444,8 +444,7 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
       Chains.push_back(LowerConstantInitializer(Init->getAggregateElement(i),
                        GV, Ptr, Chain, DAG));
     }
-    return DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
-                       Chains.data(), Chains.size());
+    return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Chains);
   } else {
     Init->dump();
     llvm_unreachable("Unhandled constant initializer");
@@ -525,8 +524,7 @@ SDValue AMDGPUTargetLowering::LowerCONCAT_VECTORS(SDValue Op,
   DAG.ExtractVectorElements(A, Args);
   DAG.ExtractVectorElements(B, Args);
 
-  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op), Op.getValueType(),
-                     Args.data(), Args.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op), Op.getValueType(), Args);
 }
 
 SDValue AMDGPUTargetLowering::LowerEXTRACT_SUBVECTOR(SDValue Op,
@@ -538,8 +536,7 @@ SDValue AMDGPUTargetLowering::LowerEXTRACT_SUBVECTOR(SDValue Op,
   DAG.ExtractVectorElements(Op.getOperand(0), Args, Start,
                             VT.getVectorNumElements());
 
-  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op), Op.getValueType(),
-                     Args.data(), Args.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(Op), Op.getValueType(), Args);
 }
 
 SDValue AMDGPUTargetLowering::LowerFrameIndex(SDValue Op,
@@ -728,8 +725,7 @@ SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue &Op,
                         MemEltVT, Load->isVolatile(), Load->isNonTemporal(),
                         Load->getAlignment()));
   }
-  return DAG.getNode(ISD::BUILD_VECTOR, SL, Op.getValueType(),
-                     Loads.data(), Loads.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, SL, Op.getValueType(), Loads);
 }
 
 SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
@@ -813,7 +809,7 @@ SDValue AMDGPUTargetLowering::SplitVectorStore(SDValue Op,
                          MemEltVT, Store->isVolatile(), Store->isNonTemporal(),
                          Store->getAlignment()));
   }
-  return DAG.getNode(ISD::TokenFactor, SL, MVT::Other, Chains.data(), NumElts);
+  return DAG.getNode(ISD::TokenFactor, SL, MVT::Other, Chains);
 }
 
 SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
@@ -1107,7 +1103,7 @@ SDValue AMDGPUTargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
   for (unsigned I = 0; I < NElts; ++I)
     Args[I] = DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, ScalarVT, Args[I], VTOp);
 
-  return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Args.data(), Args.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Args);
 }
 
 //===----------------------------------------------------------------------===//

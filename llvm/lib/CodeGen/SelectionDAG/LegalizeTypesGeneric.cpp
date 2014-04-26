@@ -354,7 +354,8 @@ SDValue DAGTypeLegalizer::ExpandOp_BITCAST(SDNode *N) {
     SmallVector<SDValue, 8> Ops;
     IntegerToVector(N->getOperand(0), NumElts, Ops, NVT.getVectorElementType());
 
-    SDValue Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, NVT, &Ops[0], NumElts);
+    SDValue Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, NVT,
+                              ArrayRef<SDValue>(&Ops[0], NumElts));
     return DAG.getNode(ISD::BITCAST, dl, N->getValueType(0), Vec);
   }
 
@@ -390,7 +391,7 @@ SDValue DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
   SDValue NewVec = DAG.getNode(ISD::BUILD_VECTOR, dl,
                                EVT::getVectorVT(*DAG.getContext(),
                                                 NewVT, NewElts.size()),
-                               &NewElts[0], NewElts.size());
+                               NewElts);
 
   // Convert the new vector to the old vector type.
   return DAG.getNode(ISD::BITCAST, dl, VecVT, NewVec);
@@ -449,7 +450,7 @@ SDValue DAGTypeLegalizer::ExpandOp_SCALAR_TO_VECTOR(SDNode *N) {
   SDValue UndefVal = DAG.getUNDEF(Ops[0].getValueType());
   for (unsigned i = 1; i < NumElts; ++i)
     Ops[i] = UndefVal;
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &Ops[0], NumElts);
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Ops);
 }
 
 SDValue DAGTypeLegalizer::ExpandOp_NormalStore(SDNode *N, unsigned OpNo) {

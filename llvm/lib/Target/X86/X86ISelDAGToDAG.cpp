@@ -376,8 +376,7 @@ static void MoveBelowOrigChain(SelectionDAG *CurDAG, SDValue Load,
       else
         Ops.push_back(Chain.getOperand(i));
     SDValue NewChain =
-      CurDAG->getNode(ISD::TokenFactor, SDLoc(Load),
-                      MVT::Other, &Ops[0], Ops.size());
+      CurDAG->getNode(ISD::TokenFactor, SDLoc(Load), MVT::Other, Ops);
     Ops.clear();
     Ops.push_back(NewChain);
   }
@@ -1992,7 +1991,7 @@ static bool isLoadIncOrDecStore(StoreSDNode *StoreNode, unsigned Opc,
       // Make a new TokenFactor with all the other input chains except
       // for the load.
       InputChain = CurDAG->getNode(ISD::TokenFactor, SDLoc(Chain),
-                                   MVT::Other, &ChainOps[0], ChainOps.size());
+                                   MVT::Other, ChainOps);
   }
   if (!ChainCheck)
     return false;

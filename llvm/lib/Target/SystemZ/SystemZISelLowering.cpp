@@ -772,8 +772,8 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
       }
       // Join the stores, which are independent of one another.
       Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
-                          &MemOps[NumFixedFPRs],
-                          SystemZ::NumArgFPRs - NumFixedFPRs);
+                          ArrayRef<SDValue>(&MemOps[NumFixedFPRs],
+                                            SystemZ::NumArgFPRs-NumFixedFPRs));
     }
   }
 
@@ -875,8 +875,7 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Join the stores, which are independent of one another.
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
-                        &MemOpChains[0], MemOpChains.size());
+    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOpChains);
 
   // Accept direct calls by converting symbolic call addresses to the
   // associated Target* opcodes.  Force %r1 to be used for indirect
@@ -919,8 +918,8 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
   // Emit the call.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   if (IsTailCall)
-    return DAG.getNode(SystemZISD::SIBCALL, DL, NodeTys, &Ops[0], Ops.size());
-  Chain = DAG.getNode(SystemZISD::CALL, DL, NodeTys, &Ops[0], Ops.size());
+    return DAG.getNode(SystemZISD::SIBCALL, DL, NodeTys, Ops);
+  Chain = DAG.getNode(SystemZISD::CALL, DL, NodeTys, Ops);
   Glue = Chain.getValue(1);
 
   // Mark the end of the call, which is glued to the call itself.
@@ -996,8 +995,7 @@ SystemZTargetLowering::LowerReturn(SDValue Chain,
   if (Glue.getNode())
     RetOps.push_back(Glue);
 
-  return DAG.getNode(SystemZISD::RET_FLAG, DL, MVT::Other,
-                     RetOps.data(), RetOps.size());
+  return DAG.getNode(SystemZISD::RET_FLAG, DL, MVT::Other, RetOps);
 }
 
 SDValue SystemZTargetLowering::
@@ -1779,7 +1777,7 @@ SDValue SystemZTargetLowering::lowerSELECT_CC(SDValue Op,
   Ops.push_back(Glue);
 
   SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::Glue);
-  return DAG.getNode(SystemZISD::SELECT_CCMASK, DL, VTs, &Ops[0], Ops.size());
+  return DAG.getNode(SystemZISD::SELECT_CCMASK, DL, VTs, Ops);
 }
 
 SDValue SystemZTargetLowering::lowerGlobalAddress(GlobalAddressSDNode *Node,
@@ -1971,7 +1969,7 @@ SDValue SystemZTargetLowering::lowerVASTART(SDValue Op,
                              false, false, 0);
     Offset += 8;
   }
-  return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps, NumFields);
+  return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps);
 }
 
 SDValue SystemZTargetLowering::lowerVACOPY(SDValue Op,

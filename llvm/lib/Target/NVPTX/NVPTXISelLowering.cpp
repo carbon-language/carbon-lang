@@ -685,7 +685,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                       DAG.getConstant(paramCount, MVT::i32),
                                       DAG.getConstant(sz, MVT::i32), InFlag };
         Chain = DAG.getNode(NVPTXISD::DeclareParam, dl, DeclareParamVTs,
-                            DeclareParamOps, 5);
+                            DeclareParamOps);
         InFlag = Chain.getValue(1);
         unsigned curOffset = 0;
         for (unsigned j = 0, je = vtparts.size(); j != je; ++j) {
@@ -731,7 +731,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                       DAG.getConstant(paramCount, MVT::i32),
                                       DAG.getConstant(sz, MVT::i32), InFlag };
         Chain = DAG.getNode(NVPTXISD::DeclareParam, dl, DeclareParamVTs,
-                            DeclareParamOps, 5);
+                            DeclareParamOps);
         InFlag = Chain.getValue(1);
         unsigned NumElts = ObjectVT.getVectorNumElements();
         EVT EltVT = ObjectVT.getVectorElementType();
@@ -872,7 +872,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                     DAG.getConstant(sz, MVT::i32),
                                     DAG.getConstant(0, MVT::i32), InFlag };
       Chain = DAG.getNode(NVPTXISD::DeclareScalarParam, dl, DeclareParamVTs,
-                          DeclareParamOps, 5);
+                          DeclareParamOps);
       InFlag = Chain.getValue(1);
       SDValue OutV = OutVals[OIdx];
       if (needExtend) {
@@ -916,7 +916,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       InFlag
     };
     Chain = DAG.getNode(NVPTXISD::DeclareParam, dl, DeclareParamVTs,
-                        DeclareParamOps, 5);
+                        DeclareParamOps);
     InFlag = Chain.getValue(1);
     unsigned curOffset = 0;
     for (unsigned j = 0, je = vtparts.size(); j != je; ++j) {
@@ -975,7 +975,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                   DAG.getConstant(resultsz, MVT::i32),
                                   DAG.getConstant(0, MVT::i32), InFlag };
       Chain = DAG.getNode(NVPTXISD::DeclareRet, dl, DeclareRetVTs,
-                          DeclareRetOps, 5);
+                          DeclareRetOps);
       InFlag = Chain.getValue(1);
     } else {
       retAlignment = getArgumentAlignment(Callee, CS, retTy, 0);
@@ -985,7 +985,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                   DAG.getConstant(resultsz / 8, MVT::i32),
                                   DAG.getConstant(0, MVT::i32), InFlag };
       Chain = DAG.getNode(NVPTXISD::DeclareRetParam, dl, DeclareRetVTs,
-                          DeclareRetOps, 5);
+                          DeclareRetOps);
       InFlag = Chain.getValue(1);
     }
   }
@@ -1005,7 +1005,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     SDValue ProtoOps[] = {
       Chain, DAG.getTargetExternalSymbol(ProtoStr, MVT::i32), InFlag,
     };
-    Chain = DAG.getNode(NVPTXISD::CallPrototype, dl, ProtoVTs, &ProtoOps[0], 3);
+    Chain = DAG.getNode(NVPTXISD::CallPrototype, dl, ProtoVTs, ProtoOps);
     InFlag = Chain.getValue(1);
   }
   // Op to just print "call"
@@ -1014,20 +1014,20 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     Chain, DAG.getConstant((Ins.size() == 0) ? 0 : 1, MVT::i32), InFlag
   };
   Chain = DAG.getNode(Func ? (NVPTXISD::PrintCallUni) : (NVPTXISD::PrintCall),
-                      dl, PrintCallVTs, PrintCallOps, 3);
+                      dl, PrintCallVTs, PrintCallOps);
   InFlag = Chain.getValue(1);
 
   // Ops to print out the function name
   SDVTList CallVoidVTs = DAG.getVTList(MVT::Other, MVT::Glue);
   SDValue CallVoidOps[] = { Chain, Callee, InFlag };
-  Chain = DAG.getNode(NVPTXISD::CallVoid, dl, CallVoidVTs, CallVoidOps, 3);
+  Chain = DAG.getNode(NVPTXISD::CallVoid, dl, CallVoidVTs, CallVoidOps);
   InFlag = Chain.getValue(1);
 
   // Ops to print out the param list
   SDVTList CallArgBeginVTs = DAG.getVTList(MVT::Other, MVT::Glue);
   SDValue CallArgBeginOps[] = { Chain, InFlag };
   Chain = DAG.getNode(NVPTXISD::CallArgBegin, dl, CallArgBeginVTs,
-                      CallArgBeginOps, 2);
+                      CallArgBeginOps);
   InFlag = Chain.getValue(1);
 
   for (unsigned i = 0, e = paramCount; i != e; ++i) {
@@ -1039,21 +1039,20 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     SDVTList CallArgVTs = DAG.getVTList(MVT::Other, MVT::Glue);
     SDValue CallArgOps[] = { Chain, DAG.getConstant(1, MVT::i32),
                              DAG.getConstant(i, MVT::i32), InFlag };
-    Chain = DAG.getNode(opcode, dl, CallArgVTs, CallArgOps, 4);
+    Chain = DAG.getNode(opcode, dl, CallArgVTs, CallArgOps);
     InFlag = Chain.getValue(1);
   }
   SDVTList CallArgEndVTs = DAG.getVTList(MVT::Other, MVT::Glue);
   SDValue CallArgEndOps[] = { Chain, DAG.getConstant(Func ? 1 : 0, MVT::i32),
                               InFlag };
-  Chain =
-      DAG.getNode(NVPTXISD::CallArgEnd, dl, CallArgEndVTs, CallArgEndOps, 3);
+  Chain = DAG.getNode(NVPTXISD::CallArgEnd, dl, CallArgEndVTs, CallArgEndOps);
   InFlag = Chain.getValue(1);
 
   if (!Func) {
     SDVTList PrototypeVTs = DAG.getVTList(MVT::Other, MVT::Glue);
     SDValue PrototypeOps[] = { Chain, DAG.getConstant(uniqueCallSite, MVT::i32),
                                InFlag };
-    Chain = DAG.getNode(NVPTXISD::Prototype, dl, PrototypeVTs, PrototypeOps, 3);
+    Chain = DAG.getNode(NVPTXISD::Prototype, dl, PrototypeVTs, PrototypeOps);
     InFlag = Chain.getValue(1);
   }
 
@@ -1263,8 +1262,7 @@ NVPTXTargetLowering::LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const {
                                 DAG.getIntPtrConstant(j)));
     }
   }
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, Node->getValueType(0), &Ops[0],
-                     Ops.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, Node->getValueType(0), Ops);
 }
 
 SDValue
@@ -1793,8 +1791,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
   //}
 
   if (!OutChains.empty())
-    DAG.setRoot(DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &OutChains[0],
-                            OutChains.size()));
+    DAG.setRoot(DAG.getNode(ISD::TokenFactor, dl, MVT::Other, OutChains));
 
   return Chain;
 }
@@ -2561,8 +2558,7 @@ static void ReplaceLoadVector(SDNode *N, SelectionDAG &DAG,
 
   SDValue LoadChain = NewLD.getValue(NumElts);
 
-  SDValue BuildVec =
-      DAG.getNode(ISD::BUILD_VECTOR, DL, ResVT, &ScalarRes[0], NumElts);
+  SDValue BuildVec = DAG.getNode(ISD::BUILD_VECTOR, DL, ResVT, ScalarRes);
 
   Results.push_back(BuildVec);
   Results.push_back(LoadChain);
@@ -2676,7 +2672,7 @@ static void ReplaceINTRINSIC_W_CHAIN(SDNode *N, SelectionDAG &DAG,
       SDValue LoadChain = NewLD.getValue(NumElts);
 
       SDValue BuildVec =
-          DAG.getNode(ISD::BUILD_VECTOR, DL, ResVT, &ScalarRes[0], NumElts);
+          DAG.getNode(ISD::BUILD_VECTOR, DL, ResVT, ScalarRes);
 
       Results.push_back(BuildVec);
       Results.push_back(LoadChain);

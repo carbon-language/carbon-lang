@@ -1421,8 +1421,7 @@ static SDValue LowerVectorINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
     BuildVectorOps.push_back(Sclr);
   }
 
-  return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, &BuildVectorOps[0],
-                     BuildVectorOps.size());
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, BuildVectorOps);
 }
 
 SDValue ARM64TargetLowering::LowerINT_TO_FP(SDValue Op,
@@ -1821,8 +1820,7 @@ void ARM64TargetLowering::saveVarArgRegisters(CCState &CCInfo,
   }
 
   if (!MemOps.empty()) {
-    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, &MemOps[0],
-                        MemOps.size());
+    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps);
   }
 }
 
@@ -2109,8 +2107,7 @@ SDValue ARM64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   }
 
   if (!MemOpChains.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, &MemOpChains[0],
-                        MemOpChains.size());
+    Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOpChains);
 
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing args into the appropriate regs.
@@ -2186,10 +2183,10 @@ SDValue ARM64TargetLowering::LowerCall(CallLoweringInfo &CLI,
   // If we're doing a tall call, use a TC_RETURN here rather than an
   // actual call instruction.
   if (IsTailCall)
-    return DAG.getNode(ARM64ISD::TC_RETURN, DL, NodeTys, &Ops[0], Ops.size());
+    return DAG.getNode(ARM64ISD::TC_RETURN, DL, NodeTys, Ops);
 
   // Returns a chain and a flag for retval copy to use.
-  Chain = DAG.getNode(ARM64ISD::CALL, DL, NodeTys, &Ops[0], Ops.size());
+  Chain = DAG.getNode(ARM64ISD::CALL, DL, NodeTys, Ops);
   InFlag = Chain.getValue(1);
 
   Chain = DAG.getCALLSEQ_END(Chain, DAG.getIntPtrConstant(NumBytes, true),
@@ -2257,8 +2254,7 @@ ARM64TargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   if (Flag.getNode())
     RetOps.push_back(Flag);
 
-  return DAG.getNode(ARM64ISD::RET_FLAG, DL, MVT::Other, &RetOps[0],
-                     RetOps.size());
+  return DAG.getNode(ARM64ISD::RET_FLAG, DL, MVT::Other, RetOps);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2428,7 +2424,7 @@ SDValue ARM64TargetLowering::LowerELFTLSDescCall(SDValue SymAddr,
   Ops.push_back(Glue);
 
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
-  Chain = DAG.getNode(ARM64ISD::TLSDESC_CALL, DL, NodeTys, &Ops[0], Ops.size());
+  Chain = DAG.getNode(ARM64ISD::TLSDESC_CALL, DL, NodeTys, Ops);
   Glue = Chain.getValue(1);
 
   return DAG.getCopyFromReg(Chain, DL, ARM64::X0, PtrVT, Glue);
@@ -2738,8 +2734,7 @@ SDValue ARM64TargetLowering::LowerFCOPYSIGN(SDValue Op,
   for (unsigned i = 0; i < VecVT.getVectorNumElements(); ++i)
     BuildVectorOps.push_back(EltMask);
 
-  SDValue BuildVec = DAG.getNode(ISD::BUILD_VECTOR, DL, VecVT,
-                                 &BuildVectorOps[0], BuildVectorOps.size());
+  SDValue BuildVec = DAG.getNode(ISD::BUILD_VECTOR, DL, VecVT, BuildVectorOps);
 
   // If we couldn't materialize the mask above, then the mask vector will be
   // the zero vector, and we need to negate it here.
@@ -3276,8 +3271,7 @@ SDValue ARM64TargetLowering::LowerAAPCS_VASTART(SDValue Op,
                                 VROffsAddr, MachinePointerInfo(SV, 28), false,
                                 false, 4));
 
-  return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, &MemOps[0],
-                     MemOps.size());
+  return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, MemOps);
 }
 
 SDValue ARM64TargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
@@ -4362,14 +4356,16 @@ static SDValue GenerateTBL(SDValue Op, ArrayRef<int> ShuffleMask,
     Shuffle = DAG.getNode(
         ISD::INTRINSIC_WO_CHAIN, DL, IndexVT,
         DAG.getConstant(Intrinsic::arm64_neon_tbl1, MVT::i32), V1Cst,
-        DAG.getNode(ISD::BUILD_VECTOR, DL, IndexVT, &TBLMask[0], IndexLen));
+        DAG.getNode(ISD::BUILD_VECTOR, DL, IndexVT,
+                    ArrayRef<SDValue>(TBLMask.data(), IndexLen)));
   } else {
     if (IndexLen == 8) {
       V1Cst = DAG.getNode(ISD::CONCAT_VECTORS, DL, MVT::v16i8, V1Cst, V2Cst);
       Shuffle = DAG.getNode(
           ISD::INTRINSIC_WO_CHAIN, DL, IndexVT,
           DAG.getConstant(Intrinsic::arm64_neon_tbl1, MVT::i32), V1Cst,
-          DAG.getNode(ISD::BUILD_VECTOR, DL, IndexVT, &TBLMask[0], IndexLen));
+          DAG.getNode(ISD::BUILD_VECTOR, DL, IndexVT,
+                      ArrayRef<SDValue>(TBLMask.data(), IndexLen)));
     } else {
       // FIXME: We cannot, for the moment, emit a TBL2 instruction because we
       // cannot currently represent the register constraints on the input
@@ -4380,7 +4376,8 @@ static SDValue GenerateTBL(SDValue Op, ArrayRef<int> ShuffleMask,
       Shuffle = DAG.getNode(
           ISD::INTRINSIC_WO_CHAIN, DL, IndexVT,
           DAG.getConstant(Intrinsic::arm64_neon_tbl2, MVT::i32), V1Cst, V2Cst,
-          DAG.getNode(ISD::BUILD_VECTOR, DL, IndexVT, &TBLMask[0], IndexLen));
+          DAG.getNode(ISD::BUILD_VECTOR, DL, IndexVT,
+                      ArrayRef<SDValue>(TBLMask.data(), IndexLen)));
     }
   }
   return DAG.getNode(ISD::BITCAST, DL, Op.getValueType(), Shuffle);
@@ -5163,7 +5160,7 @@ FailedModImm:
       for (unsigned i = 0; i < NumElts; ++i)
         Ops.push_back(DAG.getNode(ISD::BITCAST, dl, NewType, Op.getOperand(i)));
       EVT VecVT = EVT::getVectorVT(*DAG.getContext(), NewType, NumElts);
-      SDValue Val = DAG.getNode(ISD::BUILD_VECTOR, dl, VecVT, &Ops[0], NumElts);
+      SDValue Val = DAG.getNode(ISD::BUILD_VECTOR, dl, VecVT, Ops);
       Val = LowerBUILD_VECTOR(Val, DAG);
       if (Val.getNode())
         return DAG.getNode(ISD::BITCAST, dl, VT, Val);

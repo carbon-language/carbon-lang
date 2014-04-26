@@ -1806,8 +1806,7 @@ SDNode *SelectionDAGISel::Select_INLINEASM(SDNode *N) {
   SelectInlineAsmMemoryOperands(Ops);
 
   EVT VTs[] = { MVT::Other, MVT::Glue };
-  SDValue New = CurDAG->getNode(ISD::INLINEASM, SDLoc(N),
-                                VTs, &Ops[0], Ops.size());
+  SDValue New = CurDAG->getNode(ISD::INLINEASM, SDLoc(N), VTs, Ops);
   New->setNodeId(-1);
   return New.getNode();
 }
@@ -2081,7 +2080,7 @@ HandleMergeInputChains(SmallVectorImpl<SDNode*> &ChainNodesMatched,
   if (InputChains.size() == 1)
     return InputChains[0];
   return CurDAG->getNode(ISD::TokenFactor, SDLoc(ChainNodesMatched[0]),
-                         MVT::Other, &InputChains[0], InputChains.size());
+                         MVT::Other, InputChains);
 }
 
 /// MorphNode - Handle morphing a node in place for the selector.

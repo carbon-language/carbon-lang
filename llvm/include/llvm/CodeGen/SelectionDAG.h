@@ -496,7 +496,8 @@ public:
                        SDValue Glue) {
     SDVTList VTs = getVTList(MVT::Other, MVT::Glue);
     SDValue Ops[] = { Chain, getRegister(Reg, N.getValueType()), N, Glue };
-    return getNode(ISD::CopyToReg, dl, VTs, Ops, Glue.getNode() ? 4 : 3);
+    return getNode(ISD::CopyToReg, dl, VTs,
+                   ArrayRef<SDValue>(Ops, Glue.getNode() ? 4 : 3));
   }
 
   // Similar to last getCopyToReg() except parameter Reg is a SDValue
@@ -504,13 +505,14 @@ public:
                          SDValue Glue) {
     SDVTList VTs = getVTList(MVT::Other, MVT::Glue);
     SDValue Ops[] = { Chain, Reg, N, Glue };
-    return getNode(ISD::CopyToReg, dl, VTs, Ops, Glue.getNode() ? 4 : 3);
+    return getNode(ISD::CopyToReg, dl, VTs,
+                   ArrayRef<SDValue>(Ops, Glue.getNode() ? 4 : 3));
   }
 
   SDValue getCopyFromReg(SDValue Chain, SDLoc dl, unsigned Reg, EVT VT) {
     SDVTList VTs = getVTList(VT, MVT::Other);
     SDValue Ops[] = { Chain, getRegister(Reg, VT) };
-    return getNode(ISD::CopyFromReg, dl, VTs, Ops, 2);
+    return getNode(ISD::CopyFromReg, dl, VTs, Ops);
   }
 
   // This version of the getCopyFromReg method takes an extra operand, which
@@ -520,7 +522,8 @@ public:
                            SDValue Glue) {
     SDVTList VTs = getVTList(VT, MVT::Other, MVT::Glue);
     SDValue Ops[] = { Chain, getRegister(Reg, VT), Glue };
-    return getNode(ISD::CopyFromReg, dl, VTs, Ops, Glue.getNode() ? 3 : 2);
+    return getNode(ISD::CopyFromReg, dl, VTs,
+                   ArrayRef<SDValue>(Ops, Glue.getNode() ? 3 : 2));
   }
 
   SDValue getCondCode(ISD::CondCode Cond);
@@ -563,7 +566,7 @@ public:
   SDValue getCALLSEQ_START(SDValue Chain, SDValue Op, SDLoc DL) {
     SDVTList VTs = getVTList(MVT::Other, MVT::Glue);
     SDValue Ops[] = { Chain,  Op };
-    return getNode(ISD::CALLSEQ_START, DL, VTs, Ops, 2);
+    return getNode(ISD::CALLSEQ_START, DL, VTs, Ops);
   }
 
   /// getCALLSEQ_END - Return a new CALLSEQ_END node, which always must have a
@@ -576,9 +579,9 @@ public:
     Ops.push_back(Chain);
     Ops.push_back(Op1);
     Ops.push_back(Op2);
-    Ops.push_back(InGlue);
-    return getNode(ISD::CALLSEQ_END, DL, NodeTys, &Ops[0],
-                   (unsigned)Ops.size() - (InGlue.getNode()==nullptr ? 1 : 0));
+    if (InGlue.getNode())
+      Ops.push_back(InGlue);
+    return getNode(ISD::CALLSEQ_END, DL, NodeTys, Ops);
   }
 
   /// getUNDEF - Return an UNDEF node.  UNDEF does not have a useful SDLoc.
@@ -607,12 +610,12 @@ public:
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT,
                   const SDUse *Ops, unsigned NumOps);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT,
-                  const SDValue *Ops, unsigned NumOps);
+                  ArrayRef<SDValue> Ops);
   SDValue getNode(unsigned Opcode, SDLoc DL,
                   ArrayRef<EVT> ResultTys,
-                  const SDValue *Ops, unsigned NumOps);
+                  ArrayRef<SDValue> Ops);
   SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs,
-                  const SDValue *Ops, unsigned NumOps);
+                  ArrayRef<SDValue> Ops);
   SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs);
   SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs, SDValue N);
   SDValue getNode(unsigned Opcode, SDLoc DL, SDVTList VTs,

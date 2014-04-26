@@ -348,8 +348,7 @@ HexagonTargetLowering::LowerReturn(SDValue Chain,
   if (Flag.getNode())
     RetOps.push_back(Flag);
 
-  return DAG.getNode(HexagonISD::RET_FLAG, dl, MVT::Other,
-                     &RetOps[0], RetOps.size());
+  return DAG.getNode(HexagonISD::RET_FLAG, dl, MVT::Other, RetOps);
 }
 
 
@@ -522,8 +521,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Transform all store nodes into one single node because all store
   // nodes are independent of each other.
   if (!MemOpChains.empty()) {
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &MemOpChains[0],
-                        MemOpChains.size());
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOpChains);
   }
 
   if (!isTailCall)
@@ -597,9 +595,9 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   }
 
   if (isTailCall)
-    return DAG.getNode(HexagonISD::TC_RETURN, dl, NodeTys, &Ops[0], Ops.size());
+    return DAG.getNode(HexagonISD::TC_RETURN, dl, NodeTys, Ops);
 
-  Chain = DAG.getNode(HexagonISD::CALL, dl, NodeTys, &Ops[0], Ops.size());
+  Chain = DAG.getNode(HexagonISD::CALL, dl, NodeTys, Ops);
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
@@ -918,8 +916,7 @@ const {
   }
 
   if (!MemOps.empty())
-    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &MemOps[0],
-                        MemOps.size());
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOps);
 
   if (isVarArg) {
     // This will point to the next argument passed via stack.

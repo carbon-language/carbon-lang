@@ -140,7 +140,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
   SDValue Ops[] = { Chain, DAG.getValueType(AVT), InFlag };
-  Chain = DAG.getNode(X86ISD::REP_STOS, dl, Tys, Ops, array_lengthof(Ops));
+  Chain = DAG.getNode(X86ISD::REP_STOS, dl, Tys, Ops);
 
   if (TwoRepStos) {
     InFlag = Chain.getValue(1);
@@ -154,7 +154,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
     InFlag = Chain.getValue(1);
     Tys = DAG.getVTList(MVT::Other, MVT::Glue);
     SDValue Ops[] = { Chain, DAG.getValueType(MVT::i8), InFlag };
-    Chain = DAG.getNode(X86ISD::REP_STOS, dl, Tys, Ops, array_lengthof(Ops));
+    Chain = DAG.getNode(X86ISD::REP_STOS, dl, Tys, Ops);
   } else if (BytesLeft) {
     // Handle the last 1 - 7 bytes.
     unsigned Offset = SizeVal - BytesLeft;
@@ -242,8 +242,7 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
   SDValue Ops[] = { Chain, DAG.getValueType(AVT), InFlag };
-  SDValue RepMovs = DAG.getNode(X86ISD::REP_MOVS, dl, Tys, Ops,
-                                array_lengthof(Ops));
+  SDValue RepMovs = DAG.getNode(X86ISD::REP_MOVS, dl, Tys, Ops);
 
   SmallVector<SDValue, 4> Results;
   Results.push_back(RepMovs);
@@ -264,6 +263,5 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
                                     SrcPtrInfo.getWithOffset(Offset)));
   }
 
-  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                     &Results[0], Results.size());
+  return DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Results);
 }

@@ -1236,7 +1236,7 @@ static SDValue lowerDSPIntr(SDValue Op, SelectionDAG &DAG, unsigned Opc) {
     ResTys.push_back((*I == MVT::i64) ? MVT::Untyped : *I);
 
   // Create node.
-  SDValue Val = DAG.getNode(Opc, DL, ResTys, &Ops[0], Ops.size());
+  SDValue Val = DAG.getNode(Opc, DL, ResTys, Ops);
   SDValue Out = (ResTys[0] == MVT::Untyped) ? extractLOHI(Val, DL, DAG) : Val;
 
   if (!HasChainIn)
@@ -1281,8 +1281,8 @@ static SDValue lowerMSASplatZExt(SDValue Op, unsigned OpNr, SelectionDAG &DAG) {
   SDValue Ops[16] = { LaneA, LaneB, LaneA, LaneB, LaneA, LaneB, LaneA, LaneB,
                       LaneA, LaneB, LaneA, LaneB, LaneA, LaneB, LaneA, LaneB };
 
-  SDValue Result = DAG.getNode(ISD::BUILD_VECTOR, DL, ViaVecTy, Ops,
-                               ViaVecTy.getVectorNumElements());
+  SDValue Result = DAG.getNode(ISD::BUILD_VECTOR, DL, ViaVecTy,
+                       ArrayRef<SDValue>(Ops, ViaVecTy.getVectorNumElements()));
 
   if (ViaVecTy != ResVecTy)
     Result = DAG.getNode(ISD::BITCAST, DL, ResVecTy, Result);
@@ -1321,8 +1321,8 @@ static SDValue getBuildVectorSplat(EVT VecTy, SDValue SplatValue,
                       SplatValueA, SplatValueB, SplatValueA, SplatValueB,
                       SplatValueA, SplatValueB, SplatValueA, SplatValueB };
 
-  SDValue Result = DAG.getNode(ISD::BUILD_VECTOR, DL, ViaVecTy, Ops,
-                               ViaVecTy.getVectorNumElements());
+  SDValue Result = DAG.getNode(ISD::BUILD_VECTOR, DL, ViaVecTy,
+                       ArrayRef<SDValue>(Ops, ViaVecTy.getVectorNumElements()));
 
   if (VecTy != ViaVecTy)
     Result = DAG.getNode(ISD::BITCAST, DL, VecTy, Result);
@@ -1736,7 +1736,7 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
 
     // If ResTy is v2i64 then the type legalizer will break this node down into
     // an equivalent v4i32.
-    return DAG.getNode(ISD::BUILD_VECTOR, DL, ResTy, &Ops[0], Ops.size());
+    return DAG.getNode(ISD::BUILD_VECTOR, DL, ResTy, Ops);
   }
   case Intrinsic::mips_fexp2_w:
   case Intrinsic::mips_fexp2_d: {
@@ -2561,8 +2561,7 @@ static SDValue lowerVECTOR_SHUFFLE_VSHF(SDValue Op, EVT ResTy,
        ++I)
     Ops.push_back(DAG.getTargetConstant(*I, MaskEltTy));
 
-  SDValue MaskVec = DAG.getNode(ISD::BUILD_VECTOR, DL, MaskVecTy, &Ops[0],
-                                Ops.size());
+  SDValue MaskVec = DAG.getNode(ISD::BUILD_VECTOR, DL, MaskVecTy, Ops);
 
   if (Using1stVec && Using2ndVec) {
     Op0 = Op->getOperand(0);

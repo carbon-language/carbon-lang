@@ -3440,8 +3440,7 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
     return nullptr;
 
   SDValue New = CurDAG->getNode(ISD::INLINEASM, SDLoc(N),
-      CurDAG->getVTList(MVT::Other, MVT::Glue), &AsmNodeOperands[0],
-                        AsmNodeOperands.size());
+      CurDAG->getVTList(MVT::Other, MVT::Glue), AsmNodeOperands);
   New->setNodeId(-1);
   return New.getNode();
 }
