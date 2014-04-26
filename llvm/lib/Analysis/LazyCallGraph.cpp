@@ -429,40 +429,45 @@ LazyCallGraph::SCC *LazyCallGraph::formSCC(Node *RootN,
 }
 
 LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
-  // When the stack is empty, there are no more SCCs to walk in this graph.
-  if (DFSStack.empty()) {
+  Node *N;
+  Node::iterator I;
+  if (!DFSStack.empty()) {
+    N = DFSStack.back().first;
+    I = DFSStack.back().second;
+    DFSStack.pop_back();
+  } else {
     // If we've handled all candidate entry nodes to the SCC forest, we're done.
     if (SCCEntryNodes.empty())
       return nullptr;
 
-    Node &N = get(*SCCEntryNodes.pop_back_val());
-    N.LowLink = N.DFSNumber = 1;
+    N = &get(*SCCEntryNodes.pop_back_val());
+    I = N->begin();
+    N->LowLink = N->DFSNumber = 1;
     NextDFSNumber = 2;
-    DFSStack.push_back(std::make_pair(&N, N.begin()));
   }
 
   for (;;) {
-    Node *N = DFSStack.back().first;
     assert(N->DFSNumber != 0 && "We should always assign a DFS number "
                                 "before placing a node onto the stack.");
 
-    bool Recurse = false; // Used to simulate recursing onto a child.
-    for (auto I = DFSStack.back().second, E = N->end(); I != E; ++I) {
+    Node::iterator E = N->end();
+    while (I != E) {
       Node &ChildN = *I;
       if (ChildN.DFSNumber == 0) {
         // Mark that we should start at this child when next this node is the
         // top of the stack. We don't start at the next child to ensure this
         // child's lowlink is reflected.
-        DFSStack.back().second = I;
+        DFSStack.push_back(std::make_pair(N, N->begin()));
 
         // Recurse onto this node via a tail call.
         assert(!SCCMap.count(&ChildN) &&
                "Found a node with 0 DFS number but already in an SCC!");
         ChildN.LowLink = ChildN.DFSNumber = NextDFSNumber++;
         SCCEntryNodes.remove(&ChildN.getFunction());
-        DFSStack.push_back(std::make_pair(&ChildN, ChildN.begin()));
-        Recurse = true;
-        break;
+        N = &ChildN;
+        I = ChildN.begin();
+        E = ChildN.end();
+        continue;
       }
 
       // Track the lowest link of the childen, if any are still in the stack.
@@ -470,20 +475,12 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
              "Low-link must not be zero with a non-zero DFS number.");
       if (ChildN.LowLink >= 0 && ChildN.LowLink < N->LowLink)
         N->LowLink = ChildN.LowLink;
+      ++I;
     }
-    if (Recurse)
-      // Continue the outer loop when we exit the inner loop in order to
-      // recurse onto a child.
-      continue;
-
-    // No more children to process here, pop the node off the stack.
-    DFSStack.pop_back();
 
     if (N->LowLink == N->DFSNumber)
       // Form the new SCC out of the top of the DFS stack.
       return formSCC(N, PendingSCCStack);
-
-    assert(!DFSStack.empty() && "We never found a viable root!");
 
     // At this point we know that N cannot ever be an SCC root. Its low-link
     // is not its dfs-number, and we've processed all of its children. It is
@@ -491,6 +488,11 @@ LazyCallGraph::SCC *LazyCallGraph::getNextSCCInPostOrder() {
     // low-link == dfs-number and pops it off as well. Move it to the pending
     // stack which is pulled into the next SCC to be formed.
     PendingSCCStack.push_back(N);
+
+    assert(!DFSStack.empty() && "We never found a viable root!");
+    N = DFSStack.back().first;
+    I = DFSStack.back().second;
+    DFSStack.pop_back();
   }
 }
 
