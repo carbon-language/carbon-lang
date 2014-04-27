@@ -26,9 +26,11 @@ std::string TimeValue::str() const {
   struct tm Storage;
   struct tm *LT = ::localtime_r(&OurTime, &Storage);
   assert(LT);
-  char Buffer[25];
-  strftime(Buffer, 25, "%b %e %H:%M %Y", LT);
-  return std::string(Buffer);
+  char Buffer1[sizeof("YYYY-MM-DD HH:MM:SS")];
+  strftime(Buffer1, sizeof(Buffer1), "%Y-%m-%d %H:%M:%S", LT);
+  char Buffer2[sizeof("YYYY-MM-DD HH:MM:SS.MMMUUUNNN")];
+  snprintf(Buffer2, sizeof(Buffer2), "%s.%.9u", Buffer1, this->nanoseconds());
+  return std::string(Buffer2);
 }
 
 TimeValue TimeValue::now() {

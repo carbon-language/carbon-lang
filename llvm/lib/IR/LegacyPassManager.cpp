@@ -22,6 +22,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
+#include "llvm/Support/TimeValue.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -1158,7 +1159,8 @@ void PMDataManager::dumpPassInfo(Pass *P, enum PassDebuggingString S1,
                                  StringRef Msg) {
   if (PassDebugging < Executions)
     return;
-  dbgs() << (void*)this << std::string(getDepth()*2+1, ' ');
+  dbgs() << "[" << sys::TimeValue::now().str() << "] " << (void *)this
+         << std::string(getDepth() * 2 + 1, ' ');
   switch (S1) {
   case EXECUTION_MSG:
     dbgs() << "Executing Pass '" << P->getPassName();
