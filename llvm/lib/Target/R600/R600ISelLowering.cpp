@@ -1239,7 +1239,7 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
       Ret,
       Chain
     };
-    return DAG.getMergeValues(Ops, 2, DL);
+    return DAG.getMergeValues(Ops, DL);
   }
 
 
@@ -1248,7 +1248,7 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
       SplitVectorLoad(Op, DAG),
       Chain
     };
-    return DAG.getMergeValues(MergedValues, 2, DL);
+    return DAG.getMergeValues(MergedValues, DL);
   }
 
   int ConstantBlock = ConstantAddressBlock(LoadNode->getAddressSpace());
@@ -1296,7 +1296,7 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
       Result,
       Chain
     };
-    return DAG.getMergeValues(MergedValues, 2, DL);
+    return DAG.getMergeValues(MergedValues, DL);
   }
 
   // For most operations returning SDValue() will result in the node being
@@ -1320,7 +1320,7 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
     SDValue Sra = DAG.getNode(ISD::SRA, DL, VT, Shl, ShiftAmount);
 
     SDValue MergedValues[2] = { Sra, Chain };
-    return DAG.getMergeValues(MergedValues, 2, DL);
+    return DAG.getMergeValues(MergedValues, DL);
   }
 
   if (LoadNode->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS) {
@@ -1370,7 +1370,7 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
     Chain
   };
 
-  return DAG.getMergeValues(Ops, 2, DL);
+  return DAG.getMergeValues(Ops, DL);
 }
 
 /// XXX Only kernel functions are supported, so we can assume for now that

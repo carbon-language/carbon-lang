@@ -747,7 +747,7 @@ public:
                               EVT MemVT, MachineMemOperand *MMO);
 
   /// getMergeValues - Create a MERGE_VALUES node from the given operands.
-  SDValue getMergeValues(const SDValue *Ops, unsigned NumOps, SDLoc dl);
+  SDValue getMergeValues(ArrayRef<SDValue> Ops, SDLoc dl);
 
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.

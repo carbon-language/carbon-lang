@@ -1047,7 +1047,7 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
     Div,
     Rem
   };
-  return DAG.getMergeValues(Ops, 2, DL);
+  return DAG.getMergeValues(Ops, DL);
 }
 
 SDValue AMDGPUTargetLowering::LowerUINT_TO_FP(SDValue Op,

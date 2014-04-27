@@ -1848,7 +1848,7 @@ SDNode *X86DAGToDAGISel::SelectAtomicLoadArith(SDNode *Node, MVT NVT) {
   }
   cast<MachineSDNode>(Ret)->setMemRefs(MemOp, MemOp + 1);
   SDValue RetVals[] = { Undef, Ret };
-  return CurDAG->getMergeValues(RetVals, 2, dl).getNode();
+  return CurDAG->getMergeValues(RetVals, dl).getNode();
 }
 
 /// HasNoSignedComparisonUses - Test whether the given X86ISD::CMP node has

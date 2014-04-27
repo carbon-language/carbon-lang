@@ -4399,17 +4399,15 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
 }
 
 /// getMergeValues - Create a MERGE_VALUES node from the given operands.
-SDValue SelectionDAG::getMergeValues(const SDValue *Ops, unsigned NumOps,
-                                     SDLoc dl) {
-  if (NumOps == 1)
+SDValue SelectionDAG::getMergeValues(ArrayRef<SDValue> Ops, SDLoc dl) {
+  if (Ops.size() == 1)
     return Ops[0];
 
   SmallVector<EVT, 4> VTs;
-  VTs.reserve(NumOps);
-  for (unsigned i = 0; i < NumOps; ++i)
+  VTs.reserve(Ops.size());
+  for (unsigned i = 0; i < Ops.size(); ++i)
     VTs.push_back(Ops[i].getValueType());
-  return getNode(ISD::MERGE_VALUES, dl, getVTList(VTs),
-                 ArrayRef<SDValue>(Ops, NumOps));
+  return getNode(ISD::MERGE_VALUES, dl, getVTList(VTs), Ops.data(), Ops.size());
 }
 
 SDValue

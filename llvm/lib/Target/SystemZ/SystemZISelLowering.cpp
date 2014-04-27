@@ -2010,7 +2010,7 @@ lowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Result = DAG.getNode(ISD::ADD, DL, MVT::i64, NewSP, ArgAdjust);
 
   SDValue Ops[2] = { Result, Chain };
-  return DAG.getMergeValues(Ops, 2, DL);
+  return DAG.getMergeValues(Ops, DL);
 }
 
 SDValue SystemZTargetLowering::lowerSMUL_LOHI(SDValue Op,
@@ -2052,7 +2052,7 @@ SDValue SystemZTargetLowering::lowerSMUL_LOHI(SDValue Op,
     SDValue NegSum = DAG.getNode(ISD::ADD, DL, VT, NegLLTimesRH, NegLHTimesRL);
     Ops[1] = DAG.getNode(ISD::SUB, DL, VT, Ops[1], NegSum);
   }
-  return DAG.getMergeValues(Ops, 2, DL);
+  return DAG.getMergeValues(Ops, DL);
 }
 
 SDValue SystemZTargetLowering::lowerUMUL_LOHI(SDValue Op,
@@ -2071,7 +2071,7 @@ SDValue SystemZTargetLowering::lowerUMUL_LOHI(SDValue Op,
     // low half first, so the results are in reverse order.
     lowerGR128Binary(DAG, DL, VT, SystemZ::AEXT128_64, SystemZISD::UMUL_LOHI64,
                      Op.getOperand(0), Op.getOperand(1), Ops[1], Ops[0]);
-  return DAG.getMergeValues(Ops, 2, DL);
+  return DAG.getMergeValues(Ops, DL);
 }
 
 SDValue SystemZTargetLowering::lowerSDIVREM(SDValue Op,
@@ -2098,7 +2098,7 @@ SDValue SystemZTargetLowering::lowerSDIVREM(SDValue Op,
   SDValue Ops[2];
   lowerGR128Binary(DAG, DL, VT, SystemZ::AEXT128_64, Opcode,
                    Op0, Op1, Ops[1], Ops[0]);
-  return DAG.getMergeValues(Ops, 2, DL);
+  return DAG.getMergeValues(Ops, DL);
 }
 
 SDValue SystemZTargetLowering::lowerUDIVREM(SDValue Op,
@@ -2116,7 +2116,7 @@ SDValue SystemZTargetLowering::lowerUDIVREM(SDValue Op,
   else
     lowerGR128Binary(DAG, DL, VT, SystemZ::ZEXT128_64, SystemZISD::UDIVREM64,
                      Op.getOperand(0), Op.getOperand(1), Ops[1], Ops[0]);
-  return DAG.getMergeValues(Ops, 2, DL);
+  return DAG.getMergeValues(Ops, DL);
 }
 
 SDValue SystemZTargetLowering::lowerOR(SDValue Op, SelectionDAG &DAG) const {
@@ -2266,7 +2266,7 @@ SDValue SystemZTargetLowering::lowerATOMIC_LOAD_OP(SDValue Op,
   SDValue Result = DAG.getNode(ISD::ROTL, DL, WideVT, AtomicOp, ResultShift);
 
   SDValue RetOps[2] = { Result, AtomicOp.getValue(1) };
-  return DAG.getMergeValues(RetOps, 2, DL);
+  return DAG.getMergeValues(RetOps, DL);
 }
 
 // Op is an ATOMIC_LOAD_SUB operation.  Lower 8- and 16-bit operations

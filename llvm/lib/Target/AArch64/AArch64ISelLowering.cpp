@@ -4586,7 +4586,7 @@ SDValue AArch64TargetLowering::LowerShiftRightParts(SDValue Op,
                            TrueVal, FalseVal, A64cc);
 
   SDValue Ops[2] = { Lo, Hi };
-  return DAG.getMergeValues(Ops, 2, dl);
+  return DAG.getMergeValues(Ops, dl);
 }
 
 /// LowerShiftLeftParts - Lower SHL_PARTS, which returns two
@@ -4625,7 +4625,7 @@ SDValue AArch64TargetLowering::LowerShiftLeftParts(SDValue Op,
                            Tmp3, FalseVal, A64cc);
 
   SDValue Ops[2] = { Lo, Hi };
-  return DAG.getMergeValues(Ops, 2, dl);
+  return DAG.getMergeValues(Ops, dl);
 }
 
 // If this is a case we can't handle, return null and let the default

@@ -559,7 +559,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
         SplitVectorLoad(Op, DAG),
         Load->getChain()
       };
-      return DAG.getMergeValues(MergedValues, 2, SDLoc(Op));
+      return DAG.getMergeValues(MergedValues, SDLoc(Op));
     } else {
       return LowerLOAD(Op, DAG);
     }
@@ -787,7 +787,7 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   MergedValues[1] = Load->getChain();
   if (Ret.getNode()) {
     MergedValues[0] = Ret;
-    return DAG.getMergeValues(MergedValues, 2, DL);
+    return DAG.getMergeValues(MergedValues, DL);
   }
 
   if (Load->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS) {
@@ -818,7 +818,7 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   }
 
   MergedValues[0] = Ret;
-  return DAG.getMergeValues(MergedValues, 2, DL);
+  return DAG.getMergeValues(MergedValues, DL);
 
 }
 

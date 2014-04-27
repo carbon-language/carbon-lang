@@ -8801,7 +8801,7 @@ static SDValue LowerShiftParts(SDValue Op, SelectionDAG &DAG) {
   }
 
   SDValue Ops[2] = { Lo, Hi };
-  return DAG.getMergeValues(Ops, array_lengthof(Ops), dl);
+  return DAG.getMergeValues(Ops, dl);
 }
 
 SDValue X86TargetLowering::LowerSINT_TO_FP(SDValue Op,
@@ -9202,7 +9202,7 @@ X86TargetLowering:: FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
     SDValue Ops[] = { eax, edx };
     SDValue pair = IsReplace
       ? DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, Ops)
-      : DAG.getMergeValues(Ops, array_lengthof(Ops), DL);
+      : DAG.getMergeValues(Ops, DL);
     return std::make_pair(pair, SDValue());
   }
 }
@@ -11281,7 +11281,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
         SDLoc(Node));
 
     SDValue Ops[2] = { Tmp1, Tmp2 };
-    return DAG.getMergeValues(Ops, 2, dl);
+    return DAG.getMergeValues(Ops, dl);
   }
 
   // Get the inputs.
@@ -11315,7 +11315,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     SDValue Value = DAG.getNode(X86ISD::SEG_ALLOCA, dl, SPTy, Chain,
                                 DAG.getRegister(Vreg, SPTy));
     SDValue Ops1[2] = { Value, Chain };
-    return DAG.getMergeValues(Ops1, 2, dl);
+    return DAG.getMergeValues(Ops1, dl);
   } else {
     SDValue Flag;
     unsigned Reg = (Subtarget->is64Bit() ? X86::RAX : X86::EAX);
@@ -11339,7 +11339,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     }
 
     SDValue Ops1[2] = { SP, Chain };
-    return DAG.getMergeValues(Ops1, 2, dl);
+    return DAG.getMergeValues(Ops1, dl);
   }
 }
 
@@ -12306,7 +12306,7 @@ static SDValue getGatherNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
   SDValue Ops[] = {Src, MaskInReg, Base, Scale, Index, Disp, Segment, Chain};
   SDNode *Res = DAG.getMachineNode(Opc, dl, VTs, Ops);
   SDValue RetOps[] = { SDValue(Res, 0), SDValue(Res, 2) };
-  return DAG.getMergeValues(RetOps, array_lengthof(RetOps), dl);
+  return DAG.getMergeValues(RetOps, dl);
 }
 
 static SDValue getMGatherNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
@@ -12328,7 +12328,7 @@ static SDValue getMGatherNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
   SDValue Ops[] = {Src, MaskInReg, Base, Scale, Index, Disp, Segment, Chain};
   SDNode *Res = DAG.getMachineNode(Opc, dl, VTs, Ops);
   SDValue RetOps[] = { SDValue(Res, 0), SDValue(Res, 2) };
-  return DAG.getMergeValues(RetOps, array_lengthof(RetOps), dl);
+  return DAG.getMergeValues(RetOps, dl);
 }
 
 static SDValue getScatterNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
@@ -12427,7 +12427,7 @@ static SDValue LowerREADCYCLECOUNTER(SDValue Op, const X86Subtarget *Subtarget,
   SDLoc DL(Op);
   getReadTimeStampCounter(Op.getNode(), DL, X86ISD::RDTSC_DAG, DAG, Subtarget,
                           Results);
-  return DAG.getMergeValues(&Results[0], Results.size(), DL);
+  return DAG.getMergeValues(Results, DL);
 }
 
 static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
@@ -12618,7 +12618,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     }
     SmallVector<SDValue, 2> Results;
     getReadTimeStampCounter(Op.getNode(), dl, Opc, DAG, Subtarget, Results);
-    return DAG.getMergeValues(&Results[0], Results.size(), dl);
+    return DAG.getMergeValues(Results, dl);
   }
   // XTEST intrinsics.
   case Intrinsic::x86_xtest: {

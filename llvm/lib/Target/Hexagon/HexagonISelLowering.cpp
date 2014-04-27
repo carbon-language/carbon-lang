@@ -817,7 +817,7 @@ HexagonTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
                                        Sub);
 
   SDValue Ops[2] = { ArgAdjust, CopyChain };
-  return DAG.getMergeValues(Ops, 2, dl);
+  return DAG.getMergeValues(Ops, dl);
 }
 
 SDValue
