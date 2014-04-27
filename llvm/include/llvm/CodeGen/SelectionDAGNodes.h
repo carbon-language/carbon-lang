@@ -1689,7 +1689,7 @@ class CvtRndSatSDNode : public SDNode {
                            ArrayRef<SDValue> Ops, ISD::CvtCode Code)
     : SDNode(ISD::CONVERT_RNDSAT, Order, dl, getSDVTList(VT), Ops),
       CvtCode(Code) {
-    assert(NumOps == 5 && "wrong number of operations");
+    assert(Ops.size() == 5 && "wrong number of operations");
   }
 public:
   ISD::CvtCode getCvtCode() const { return CvtCode; }
