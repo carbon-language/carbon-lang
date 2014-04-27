@@ -1317,7 +1317,7 @@ SDValue DAGCombiner::combine(SDNode *N) {
     if (isa<ConstantSDNode>(N0) || !isa<ConstantSDNode>(N1)) {
       SDValue Ops[] = { N1, N0 };
       SDNode *CSENode = DAG.getNodeIfExists(N->getOpcode(), N->getVTList(),
-                                            Ops, 2);
+                                            Ops);
       if (CSENode)
         return SDValue(CSENode, 0);
     }

@@ -915,8 +915,7 @@ public:
 
   /// getNodeIfExists - Get the specified node if it's already available, or
   /// else return NULL.
-  SDNode *getNodeIfExists(unsigned Opcode, SDVTList VTs,
-                          const SDValue *Ops, unsigned NumOps);
+  SDNode *getNodeIfExists(unsigned Opcode, SDVTList VTs, ArrayRef<SDValue> Ops);
 
   /// getDbgValue - Creates a SDDbgValue node.
   ///
