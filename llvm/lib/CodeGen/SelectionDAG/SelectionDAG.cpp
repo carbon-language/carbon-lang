@@ -5207,14 +5207,14 @@ void SDNode::DropOperands() {
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    EVT VT) {
   SDVTList VTs = getVTList(VT);
-  return SelectNodeTo(N, MachineOpc, VTs, nullptr, 0);
+  return SelectNodeTo(N, MachineOpc, VTs, None);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    EVT VT, SDValue Op1) {
   SDVTList VTs = getVTList(VT);
   SDValue Ops[] = { Op1 };
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, 1);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
@@ -5222,7 +5222,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    SDValue Op2) {
   SDVTList VTs = getVTList(VT);
   SDValue Ops[] = { Op1, Op2 };
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, 2);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
@@ -5230,41 +5230,39 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    SDValue Op2, SDValue Op3) {
   SDVTList VTs = getVTList(VT);
   SDValue Ops[] = { Op1, Op2, Op3 };
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, 3);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
-                                   EVT VT, const SDValue *Ops,
-                                   unsigned NumOps) {
+                                   EVT VT, ArrayRef<SDValue> Ops) {
   SDVTList VTs = getVTList(VT);
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
-                                   EVT VT1, EVT VT2, const SDValue *Ops,
-                                   unsigned NumOps) {
+                                   EVT VT1, EVT VT2, ArrayRef<SDValue> Ops) {
   SDVTList VTs = getVTList(VT1, VT2);
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    EVT VT1, EVT VT2) {
   SDVTList VTs = getVTList(VT1, VT2);
-  return SelectNodeTo(N, MachineOpc, VTs, (SDValue *)nullptr, 0);
+  return SelectNodeTo(N, MachineOpc, VTs, None);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    EVT VT1, EVT VT2, EVT VT3,
-                                   const SDValue *Ops, unsigned NumOps) {
+                                   ArrayRef<SDValue> Ops) {
   SDVTList VTs = getVTList(VT1, VT2, VT3);
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    EVT VT1, EVT VT2, EVT VT3, EVT VT4,
-                                   const SDValue *Ops, unsigned NumOps) {
+                                   ArrayRef<SDValue> Ops) {
   SDVTList VTs = getVTList(VT1, VT2, VT3, VT4);
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, NumOps);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
@@ -5272,7 +5270,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    SDValue Op1) {
   SDVTList VTs = getVTList(VT1, VT2);
   SDValue Ops[] = { Op1 };
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, 1);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
@@ -5280,7 +5278,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    SDValue Op1, SDValue Op2) {
   SDVTList VTs = getVTList(VT1, VT2);
   SDValue Ops[] = { Op1, Op2 };
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, 2);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
@@ -5289,7 +5287,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    SDValue Op3) {
   SDVTList VTs = getVTList(VT1, VT2);
   SDValue Ops[] = { Op1, Op2, Op3 };
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, 3);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
@@ -5298,13 +5296,12 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    SDValue Op3) {
   SDVTList VTs = getVTList(VT1, VT2, VT3);
   SDValue Ops[] = { Op1, Op2, Op3 };
-  return SelectNodeTo(N, MachineOpc, VTs, Ops, 3);
+  return SelectNodeTo(N, MachineOpc, VTs, Ops);
 }
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
-                                   SDVTList VTs, const SDValue *Ops,
-                                   unsigned NumOps) {
-  N = MorphNodeTo(N, ~MachineOpc, VTs, Ops, NumOps);
+                                   SDVTList VTs,ArrayRef<SDValue> Ops) {
+  N = MorphNodeTo(N, ~MachineOpc, VTs, Ops.data(), Ops.size());
   // Reset the NodeID to -1.
   N->setNodeId(-1);
   return N;

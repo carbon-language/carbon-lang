@@ -2316,7 +2316,7 @@ SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDNode *N,
             SDValue Ops[] = { N->getOperand(0).getOperand(0),
                               CurDAG->getTargetConstant(LSB, MVT::i32),
                               getAL(CurDAG), Reg0, Reg0 };
-            return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 5);
+            return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops);
           }
 
           // ARM models shift instructions as MOVsi with shifter operand.
@@ -2326,14 +2326,14 @@ SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDNode *N,
                                       MVT::i32);
           SDValue Ops[] = { N->getOperand(0).getOperand(0), ShOpc,
                             getAL(CurDAG), Reg0, Reg0 };
-          return CurDAG->SelectNodeTo(N, ARM::MOVsi, MVT::i32, Ops, 5);
+          return CurDAG->SelectNodeTo(N, ARM::MOVsi, MVT::i32, Ops);
         }
 
         SDValue Ops[] = { N->getOperand(0).getOperand(0),
                           CurDAG->getTargetConstant(LSB, MVT::i32),
                           CurDAG->getTargetConstant(Width, MVT::i32),
-          getAL(CurDAG), Reg0 };
-        return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 5);
+                          getAL(CurDAG), Reg0 };
+        return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops);
       }
     }
     return nullptr;
@@ -2356,7 +2356,7 @@ SDNode *ARMDAGToDAGISel::SelectV6T2BitfieldExtractOp(SDNode *N,
                         CurDAG->getTargetConstant(LSB, MVT::i32),
                         CurDAG->getTargetConstant(Width, MVT::i32),
                         getAL(CurDAG), Reg0 };
-      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 5);
+      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops);
     }
   }
   return nullptr;
@@ -2493,14 +2493,14 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
     if (Subtarget->isThumb1Only()) {
       SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->SelectNodeTo(N, ARM::tADDrSPi, MVT::i32, Ops, 4);
+      return CurDAG->SelectNodeTo(N, ARM::tADDrSPi, MVT::i32, Ops);
     } else {
       unsigned Opc = ((Subtarget->isThumb() && Subtarget->hasThumb2()) ?
                       ARM::t2ADDri : ARM::ADDri);
       SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
                         getAL(CurDAG), CurDAG->getRegister(0, MVT::i32),
                         CurDAG->getRegister(0, MVT::i32) };
-      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops, 5);
+      return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Ops);
     }
   }
   case ISD::SRL:
@@ -2527,10 +2527,10 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
         SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
         if (Subtarget->isThumb()) {
           SDValue Ops[] = { V, V, ShImmOp, getAL(CurDAG), Reg0, Reg0 };
-          return CurDAG->SelectNodeTo(N, ARM::t2ADDrs, MVT::i32, Ops, 6);
+          return CurDAG->SelectNodeTo(N, ARM::t2ADDrs, MVT::i32, Ops);
         } else {
           SDValue Ops[] = { V, V, Reg0, ShImmOp, getAL(CurDAG), Reg0, Reg0 };
-          return CurDAG->SelectNodeTo(N, ARM::ADDrsi, MVT::i32, Ops, 7);
+          return CurDAG->SelectNodeTo(N, ARM::ADDrsi, MVT::i32, Ops);
         }
       }
       if (isPowerOf2_32(RHSV+1)) {  // 2^n-1?
@@ -2543,10 +2543,10 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
         SDValue Reg0 = CurDAG->getRegister(0, MVT::i32);
         if (Subtarget->isThumb()) {
           SDValue Ops[] = { V, V, ShImmOp, getAL(CurDAG), Reg0, Reg0 };
-          return CurDAG->SelectNodeTo(N, ARM::t2RSBrs, MVT::i32, Ops, 6);
+          return CurDAG->SelectNodeTo(N, ARM::t2RSBrs, MVT::i32, Ops);
         } else {
           SDValue Ops[] = { V, V, Reg0, ShImmOp, getAL(CurDAG), Reg0, Reg0 };
-          return CurDAG->SelectNodeTo(N, ARM::RSBrsi, MVT::i32, Ops, 7);
+          return CurDAG->SelectNodeTo(N, ARM::RSBrsi, MVT::i32, Ops);
         }
       }
     }

@@ -1391,7 +1391,7 @@ SDNode *ARM64DAGToDAGISel::SelectBitfieldExtractOp(SDNode *N) {
 
   SDValue Ops[] = {Opd0, CurDAG->getTargetConstant(LSB, VT),
                    CurDAG->getTargetConstant(MSB, VT)};
-  return CurDAG->SelectNodeTo(N, Opc, VT, Ops, 3);
+  return CurDAG->SelectNodeTo(N, Opc, VT, Ops);
 }
 
 /// Does DstMask form a complementary pair with the mask provided by
@@ -1779,7 +1779,7 @@ SDNode *ARM64DAGToDAGISel::SelectBitfieldInsertOp(SDNode *N) {
                     Opd1,
                     CurDAG->getTargetConstant(LSB, VT),
                     CurDAG->getTargetConstant(MSB, VT) };
-  return CurDAG->SelectNodeTo(N, Opc, VT, Ops, 4);
+  return CurDAG->SelectNodeTo(N, Opc, VT, Ops);
 }
 
 SDNode *ARM64DAGToDAGISel::SelectLIBM(SDNode *N) {
@@ -1991,7 +1991,7 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
     SDValue TFI = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
     SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, MVT::i32),
                       CurDAG->getTargetConstant(Shifter, MVT::i32) };
-    return CurDAG->SelectNodeTo(Node, ARM64::ADDXri, MVT::i64, Ops, 3);
+    return CurDAG->SelectNodeTo(Node, ARM64::ADDXri, MVT::i64, Ops);
   }
   case ISD::INTRINSIC_W_CHAIN: {
     unsigned IntNo = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();

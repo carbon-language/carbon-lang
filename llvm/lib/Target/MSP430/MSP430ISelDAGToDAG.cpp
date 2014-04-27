@@ -369,9 +369,7 @@ SDNode *MSP430DAGToDAGISel::SelectIndexedBinOp(SDNode *Op,
     MemRefs0[0] = cast<MemSDNode>(N1)->getMemOperand();
     SDValue Ops0[] = { N2, LD->getBasePtr(), LD->getChain() };
     SDNode *ResNode =
-      CurDAG->SelectNodeTo(Op, Opc,
-                           VT, MVT::i16, MVT::Other,
-                           Ops0, 3);
+      CurDAG->SelectNodeTo(Op, Opc, VT, MVT::i16, MVT::Other, Ops0);
     cast<MachineSDNode>(ResNode)->setMemRefs(MemRefs0, MemRefs0 + 1);
     // Transfer chain.
     ReplaceUses(SDValue(N1.getNode(), 2), SDValue(ResNode, 2));

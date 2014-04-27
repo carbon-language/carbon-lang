@@ -246,7 +246,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
       SDValue(AddHi,0),
       Sub1,
     };
-    return CurDAG->SelectNodeTo(N, AMDGPU::REG_SEQUENCE, MVT::i64, Args, 5);
+    return CurDAG->SelectNodeTo(N, AMDGPU::REG_SEQUENCE, MVT::i64, Args);
   }
   case ISD::BUILD_VECTOR: {
     unsigned RegClassID;
@@ -315,7 +315,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     // 16 = Max Num Vector Elements
     // 2 = 2 REG_SEQUENCE operands per element (value, subreg index)
     // 1 = Vector Register Class
-    SDValue RegSeqArgs[16 * 2 + 1];
+    SmallVector<SDValue, 16 * 2 + 1> RegSeqArgs(N->getNumOperands() * 2 + 1);
 
     RegSeqArgs[0] = CurDAG->getTargetConstant(RegClassID, MVT::i32);
     bool IsRegSeq = true;
@@ -332,7 +332,7 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     if (!IsRegSeq)
       break;
     return CurDAG->SelectNodeTo(N, AMDGPU::REG_SEQUENCE, N->getVTList(),
-        RegSeqArgs, 2 * N->getNumOperands() + 1);
+                                RegSeqArgs);
   }
   case ISD::BUILD_PAIR: {
     SDValue RC, SubReg0, SubReg1;

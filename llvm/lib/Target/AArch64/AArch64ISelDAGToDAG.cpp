@@ -425,9 +425,7 @@ SDNode *AArch64DAGToDAGISel::SelectAtomic(SDNode *Node, unsigned Op8,
   Ops.push_back(CurDAG->getTargetConstant(AN->getOrdering(), MVT::i32));
   Ops.push_back(AN->getOperand(0)); // Chain moves to the end
 
-  return CurDAG->SelectNodeTo(Node, Op,
-                              AN->getValueType(0), MVT::Other,
-                              &Ops[0], Ops.size());
+  return CurDAG->SelectNodeTo(Node, Op, AN->getValueType(0), MVT::Other, Ops);
 }
 
 SDValue AArch64DAGToDAGISel::createDTuple(ArrayRef<SDValue> Regs) {
