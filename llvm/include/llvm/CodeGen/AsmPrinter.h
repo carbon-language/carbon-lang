@@ -432,8 +432,8 @@ namespace llvm {
 
     /// \brief Emit a partial DWARF register operation.
     /// \param MLoc             the register
-    /// \param PieceSizeInBits  size and
-    /// \param PieceOffsetBits  offset of the piece in bits, if this is one
+    /// \param PieceSize        size and
+    /// \param PieceOffset      offset of the piece in bits, if this is one
     ///                         piece of an aggregate value.
     ///
     /// If size and offset is zero an operation for the entire
