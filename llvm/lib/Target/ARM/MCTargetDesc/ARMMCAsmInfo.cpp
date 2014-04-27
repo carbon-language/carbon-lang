@@ -89,6 +89,7 @@ void ARMCOFFMCAsmInfoGNU::anchor() { }
 
 ARMCOFFMCAsmInfoGNU::ARMCOFFMCAsmInfoGNU() {
   AlignmentIsInBytes = false;
+  HasSingleParameterDotFile = true;
 
   CommentString = "@";
   Code16Directive = ".code\t16";
