@@ -607,8 +607,7 @@ public:
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT,
                   SDValue N1, SDValue N2, SDValue N3, SDValue N4,
                   SDValue N5);
-  SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT,
-                  const SDUse *Ops, unsigned NumOps);
+  SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT, ArrayRef<SDUse> Ops);
   SDValue getNode(unsigned Opcode, SDLoc DL, EVT VT,
                   ArrayRef<SDValue> Ops);
   SDValue getNode(unsigned Opcode, SDLoc DL,

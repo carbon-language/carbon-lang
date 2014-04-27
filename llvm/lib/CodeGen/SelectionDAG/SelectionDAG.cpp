@@ -4799,10 +4799,10 @@ SDValue SelectionDAG::getVAArg(EVT VT, SDLoc dl,
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
-                              const SDUse *Ops, unsigned NumOps) {
-  switch (NumOps) {
+                              ArrayRef<SDUse> Ops) {
+  switch (Ops.size()) {
   case 0: return getNode(Opcode, DL, VT);
-  case 1: return getNode(Opcode, DL, VT, Ops[0]);
+  case 1: return getNode(Opcode, DL, VT, static_cast<const SDValue>(Ops[0]));
   case 2: return getNode(Opcode, DL, VT, Ops[0], Ops[1]);
   case 3: return getNode(Opcode, DL, VT, Ops[0], Ops[1], Ops[2]);
   default: break;
@@ -4810,7 +4810,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
 
   // Copy from an SDUse array into an SDValue array for use with
   // the regular getNode logic.
-  SmallVector<SDValue, 8> NewOps(Ops, Ops + NumOps);
+  SmallVector<SDValue, 8> NewOps(Ops.begin(), Ops.end());
   return getNode(Opcode, DL, VT, NewOps);
 }
 
