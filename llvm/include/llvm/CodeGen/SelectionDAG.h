@@ -724,12 +724,12 @@ public:
   /// getAtomic - Gets a node for an atomic op, produces result and chain and
   /// takes N operands.
   SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDVTList VTList,
-                    SDValue *Ops, unsigned NumOps, MachineMemOperand *MMO,
+                    const SDValue *Ops, unsigned NumOps, MachineMemOperand *MMO,
                     AtomicOrdering SuccessOrdering,
                     AtomicOrdering FailureOrdering,
                     SynchronizationScope SynchScope);
   SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDVTList VTList,
-                    SDValue *Ops, unsigned NumOps, MachineMemOperand *MMO,
+                    const SDValue *Ops, unsigned NumOps, MachineMemOperand *MMO,
                     AtomicOrdering Ordering, SynchronizationScope SynchScope);
 
   /// getMemIntrinsicNode - Creates a MemIntrinsicNode that may produce a

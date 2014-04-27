@@ -4238,7 +4238,7 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
 }
 
 SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
-                                SDVTList VTList, SDValue *Ops, unsigned NumOps,
+                                SDVTList VTList, const SDValue *Ops, unsigned NumOps,
                                 MachineMemOperand *MMO,
                                 AtomicOrdering SuccessOrdering,
                                 AtomicOrdering FailureOrdering,
@@ -4271,7 +4271,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
 }
 
 SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
-                                SDVTList VTList, SDValue *Ops, unsigned NumOps,
+                                SDVTList VTList, const SDValue *Ops, unsigned NumOps,
                                 MachineMemOperand *MMO,
                                 AtomicOrdering Ordering,
                                 SynchronizationScope SynchScope) {

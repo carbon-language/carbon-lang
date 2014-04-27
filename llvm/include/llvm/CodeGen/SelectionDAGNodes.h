@@ -1160,7 +1160,7 @@ public:
     InitOperands(Ops, Chain, Ptr);
   }
   AtomicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTL, EVT MemVT,
-               SDValue* AllOps, SDUse *DynOps, unsigned NumOps,
+               const SDValue* AllOps, SDUse *DynOps, unsigned NumOps,
                MachineMemOperand *MMO,
                AtomicOrdering SuccessOrdering, AtomicOrdering FailureOrdering,
                SynchronizationScope SynchScope)
