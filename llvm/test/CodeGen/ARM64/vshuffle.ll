@@ -71,11 +71,11 @@ bb:
 ; CHECK: test3
 ; CHECK: adrp    x[[REG3:[0-9]+]], lCPI2_0@PAGE
 ; CHECK: ldr     q[[REG0:[0-9]+]], [x[[REG3]], lCPI2_0@PAGEOFF]
-; CHECK: movi.2d v[[REG1:[0-9]+]], #0000000000000000
+; CHECK: ldr     q[[REG1:[0-9]+]], [x[[REG3]], lCPI2_1@PAGEOFF]
 ; CHECK: tbl.16b v{{[0-9]+}}, { v[[REG1]] }, v[[REG0]]
 define <16 x i1> @test3(i1* %ptr, i32 %v) {
 bb:
-  %Shuff = shufflevector <16 x i1> zeroinitializer, <16 x i1> undef,
+  %Shuff = shufflevector <16 x i1> <i1 0, i1 1, i1 1, i1 0, i1 0, i1 1, i1 0, i1 0, i1 0, i1 1, i1 1, i1 0, i1 0, i1 1, i1 0, i1 0>, <16 x i1> undef,
      <16 x i32> <i32 2, i32 undef, i32 6, i32 undef, i32 10, i32 12, i32 14,
                  i32 0, i32 2, i32 undef, i32 6, i32 undef, i32 10, i32 12,
                  i32 14, i32 0>
