@@ -1,4 +1,4 @@
-// RUN: llvm-mc -triple i686-windows -filetype obj %s -o - | llvm-objdump -t - \
+// RUN: llvm-mc -triple thumbv7-windows -filetype obj %s -o - | llvm-objdump -t - \
 // RUN:   | FileCheck %s
 
 	.file "null-padded.asm"
