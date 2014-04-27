@@ -1,4 +1,4 @@
-// RUN: clang-tidy %s -checks='clang-analyzer-.*' -disable-checks='' -- | FileCheck %s
+// RUN: clang-tidy %s -checks='clang-analyzer-.*' -disable-checks='alpha' -- | FileCheck %s
 extern void *malloc(unsigned long);
 extern void free(void *);
 
