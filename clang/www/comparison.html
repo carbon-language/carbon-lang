@@ -31,7 +31,7 @@
        analysis, you may not care that something lacks codegen support, for
        example.</p>
        
-    <p>Please email cfe-dev if you think we should add another compiler to this
+    <p>Please email <a href="get_involved.html">cfe-dev</a> if you think we should add another compiler to this
        list or if you think some characterization is unfair here.</p>
     
     <ul>
@@ -49,7 +49,7 @@
     
     <ul>
     <li>GCC supports languages that clang does not aim to, such as Java, Ada,
-        FORTRAN, etc.</li>
+        FORTRAN, Go, etc.</li>
     <li>GCC supports more targets than LLVM.</li>
     <li>GCC supports many language extensions, some of which are not implemented
     by Clang. For instance, in C mode, GCC supports
@@ -82,13 +82,6 @@
         custom garbage collector, uses global variables extensively, is not
         reentrant or multi-threadable, etc.  Clang has none of these problems.
         </li>
-    <li>For every token, clang tracks information about where it was written and
-        where it was ultimately expanded into if it was involved in a macro.
-        GCC does not track information about macro instantiations when parsing
-        source code.  This makes it very difficult for source rewriting tools
-        (e.g. for refactoring) to work in the presence of (even simple) 
-        macros. This appears to be partially or fully addressed in recent
-        releases of GCC.</li>
     <li>Clang does not implicitly simplify code as it parses it like GCC does.
         Doing so causes many problems for source analysis tools: as one simple
         example, if you write "x-x" in your source code, the GCC AST will
