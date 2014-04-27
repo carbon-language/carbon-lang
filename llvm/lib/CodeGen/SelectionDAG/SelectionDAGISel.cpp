@@ -2086,7 +2086,7 @@ HandleMergeInputChains(SmallVectorImpl<SDNode*> &ChainNodesMatched,
 /// MorphNode - Handle morphing a node in place for the selector.
 SDNode *SelectionDAGISel::
 MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
-          const SDValue *Ops, unsigned NumOps, unsigned EmitNodeInfo) {
+          ArrayRef<SDValue> Ops, unsigned EmitNodeInfo) {
   // It is possible we're using MorphNodeTo to replace a node with no
   // normal results with one that has a normal result (or we could be
   // adding a chain) and the input could have glue and chains as well.
@@ -2106,8 +2106,7 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
 
   // Call the underlying SelectionDAG routine to do the transmogrification. Note
   // that this deletes operands of the old node that become dead.
-  SDNode *Res = CurDAG->MorphNodeTo(Node, ~TargetOpc, VTList,
-                                    ArrayRef<SDValue>(Ops, NumOps));
+  SDNode *Res = CurDAG->MorphNodeTo(Node, ~TargetOpc, VTList, Ops);
 
   // MorphNodeTo can operate in two ways: if an existing node with the
   // specified operands exists, it can just return it.  Otherwise, it
@@ -2976,8 +2975,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         }
 
       } else if (NodeToMatch->getOpcode() != ISD::DELETED_NODE) {
-        Res = MorphNode(NodeToMatch, TargetOpc, VTList, Ops.data(), Ops.size(),
-                        EmitNodeInfo);
+        Res = MorphNode(NodeToMatch, TargetOpc, VTList, Ops, EmitNodeInfo);
       } else {
         // NodeToMatch was eliminated by CSE when the target changed the DAG.
         // We will visit the equivalent node later.

@@ -248,7 +248,7 @@ private:
 private:
   void DoInstructionSelection();
   SDNode *MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTs,
-                    const SDValue *Ops, unsigned NumOps, unsigned EmitNodeInfo);
+                    ArrayRef<SDValue> Ops, unsigned EmitNodeInfo);
 
   void PrepareEHLandingPad();
 
