@@ -644,11 +644,6 @@ void MCStreamer::Finish() {
   FinishImpl();
 }
 
-MCSymbolData &MCStreamer::getOrCreateSymbolData(const MCSymbol *Symbol) {
-  report_fatal_error("Not supported!");
-  return *(static_cast<MCSymbolData*>(nullptr));
-}
-
 void MCStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   Symbol->setVariableValue(Value);
 

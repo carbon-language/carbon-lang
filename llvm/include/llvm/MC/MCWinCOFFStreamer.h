@@ -62,8 +62,6 @@ public:
 
   /// \}
 
-  MCSymbolData &getOrCreateSymbolData(const MCSymbol *Symbol);
-
 protected:
   const MCSymbol *CurSymbol;
   void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo &STI) override;

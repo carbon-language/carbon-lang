@@ -54,6 +54,10 @@ public:
   /// Object streamers require the integrated assembler.
   bool isIntegratedAssemblerRequired() const override { return true; }
 
+  MCSymbolData &getOrCreateSymbolData(const MCSymbol *Symbol) {
+    return getAssembler().getOrCreateSymbolData(*Symbol);
+  }
+
 protected:
   MCSectionData *getCurrentSectionData() const {
     return CurSectionData;

@@ -398,9 +398,6 @@ public:
   /// a Thumb mode function (ARM target only).
   virtual void EmitThumbFunc(MCSymbol *Func) = 0;
 
-  /// getOrCreateSymbolData - Get symbol data for given symbol.
-  virtual MCSymbolData &getOrCreateSymbolData(const MCSymbol *Symbol);
-
   /// EmitAssignment - Emit an assignment of @p Value to @p Symbol.
   ///
   /// This corresponds to an assembler statement such as:

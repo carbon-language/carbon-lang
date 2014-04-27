@@ -239,9 +239,5 @@ void MCWinCOFFStreamer::EmitWin64EHHandlerData() {
 void MCWinCOFFStreamer::FinishImpl() {
   MCObjectStreamer::FinishImpl();
 }
-
-MCSymbolData &MCWinCOFFStreamer::getOrCreateSymbolData(const MCSymbol *Symbol) {
-  return getAssembler().getOrCreateSymbolData(*Symbol);
-}
 }
 
