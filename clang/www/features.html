@@ -65,71 +65,18 @@ These features are:
 <p>A major focus of our work on clang is to make it fast, light and scalable.
 The library-based architecture of clang makes it straight-forward to time and
 profile the cost of each layer of the stack, and the driver has a number of
-options for performance analysis.</p>
-
-<p>While there is still much that can be done, we find that the clang front-end
-is significantly quicker than gcc and uses less memory  For example, when
-compiling "Carbon.h" on Mac OS X, we see that clang is 2.5x faster than GCC:</p>
-
-<img class="img_slide" src="feature-compile1.png" width="400" height="300"
-     alt="Time to parse carbon.h: -fsyntax-only">
-
-<p>Carbon.h is a monster: it transitively includes 558 files, 12.3M of code,
-declares 10000 functions, has 2000 struct definitions, 8000 fields, 20000 enum
-constants, etc (see slide 25+ of the <a href="clang_video-07-25-2007.html">clang 
-talk</a> for more information). It is also #include'd into almost every C file
-in a GUI app on the Mac, so its compile time is very important.</p>
-
-<p>From the slide above, you can see that we can measure the time to preprocess
-the file independently from the time to parse it, and independently from the
-time to build the ASTs for the code.  GCC doesn't provide a way to measure the
-parser without AST building (it only provides -fsyntax-only).  In our
-measurements, we find that clang's preprocessor is consistently 40% faster than
-GCCs, and the parser + AST builder is ~4x faster than GCC's.  If you have
-sources that do not depend as heavily on the preprocessor (or if you 
-use Precompiled Headers) you may see a much bigger speedup from clang.
-</p>
+options for performance analysis. Many detailed benchmarks can be found online.</p>
 
 <p>Compile time performance is important, but when using clang as an API, often
 memory use is even moreso: the less memory the code takes the more code you can
 fit into memory at a time (useful for whole program analysis tools, for
 example).</p>
 
-<img class="img_slide" src="feature-memory1.png" width="400" height="300"
-     alt="Space">
-
-<p>Here we see a huge advantage of clang: its ASTs take <b>5x less memory</b>
-than GCC's syntax trees, despite the fact that clang's ASTs capture far more 
-source-level information than GCC's trees do.  This feat is accomplished through
-the use of carefully designed APIs and efficient representations.</p>
-
 <p>In addition to being efficient when pitted head-to-head against GCC in batch
-mode, clang is built with a <a href="#libraryarch">library based 
+mode, clang is built with a <a href="#libraryarch">library based
 architecture</a> that makes it relatively easy to adapt it and build new tools
 with it.  This means that it is often possible to apply out-of-the-box thinking
-and novel techniques to improve compilation in various ways.</p> 
-  
-<img class="img_slide" src="feature-compile2.png" width="400" height="300"
-     alt="Preprocessor Speeds: GCC 4.2 vs clang-all">
-
-<p>This slide shows how the clang preprocessor can be used to make "distcc"
-parallelization <b>3x</b> more scalable than when using the GCC preprocessor.
-"distcc" quickly bottlenecks on the preprocessor running on the central driver
-machine, so a fast preprocessor is very useful.  Comparing the first two bars
-of each group shows how a ~40% faster preprocessor can reduce preprocessing time
-of these large C++ apps by about 40% (shocking!).</p>
-
-<p>The third bar on the slide is the interesting part: it shows how trivial
-caching of file system accesses across invocations of the preprocessor allows 
-clang to reduce time spent in the kernel by 10x, making distcc over 3x more
-scalable.  This is obviously just one simple hack, doing more interesting things
-(like caching tokens across preprocessed files) would yield another substantial
-speedup.</p>
-
-<p>The clean framework-based design of clang means that many things are possible
-that would be very difficult in other systems, for example incremental
-compilation, multithreading, intelligent caching, etc.  We are only starting
-to tap the full potential of the clang design.</p>
+and novel techniques to improve compilation in various ways.</p>
 
 
 <!--=======================================================================-->
@@ -157,7 +104,7 @@ GCC and Clang diagnostic:</p>
 </pre>
 
 <p>Here you can see that you don't even need to see the original source code to
-understand what is wrong based on the Clang error: Because clang prints a
+understand what is wrong based on the Clang error: Because Clang prints a
 caret, you know exactly <em>which</em> plus it is complaining about.  The range
 information highlights the left and right side of the plus which makes it
 immediately obvious what the compiler is talking about, which is very useful for
