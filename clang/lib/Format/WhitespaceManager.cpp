@@ -154,8 +154,9 @@ void WhitespaceManager::alignTrailingComments() {
       continue;
 
     unsigned ChangeMinColumn = Changes[i].StartOfTokenColumn;
-    // FIXME: Correctly handle ChangeMaxColumn in PP directives.
     unsigned ChangeMaxColumn = Style.ColumnLimit - Changes[i].TokenLength;
+    if (i + 1 != e && Changes[i + 1].ContinuesPPDirective)
+      ChangeMaxColumn -= 2;
     // If this comment follows an } in column 0, it probably documents the
     // closing of a namespace and we don't want to align it.
     bool FollowsRBraceInColumn0 = i > 0 && Changes[i].NewlinesBefore == 0 &&
