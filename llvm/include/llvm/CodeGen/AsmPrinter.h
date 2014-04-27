@@ -430,14 +430,21 @@ namespace llvm {
     /// encoding specified.
     virtual unsigned getISAEncoding() { return 0; }
 
-    /// \brief Emit a partial dwarf register operation.
+    /// \brief Emit a partial DWARF register operation.
     /// \param MLoc             the register
     /// \param PieceSizeInBits  size and
     /// \param PieceOffsetBits  offset of the piece in bits, if this is one
     ///                         piece of an aggregate value.
+    ///
+    /// If size and offset is zero an operation for the entire
+    /// register is emitted: Some targets do not provide a DWARF
+    /// register number for every register.  If this is the case, this
+    /// function will attempt to emit a DWARF register by emitting a
+    /// piece of a super-register or by piecing together multiple
+    /// subregisters that alias the register.
     void EmitDwarfRegOpPiece(ByteStreamer &BS, const MachineLocation &MLoc,
-                             unsigned PieceSize,
-                             unsigned PieceOffset) const;
+                             unsigned PieceSize = 0,
+                             unsigned PieceOffset = 0) const;
 
     /// EmitDwarfRegOp - Emit dwarf register operation.
     /// \param Indirect   whether this is a register-indirect address

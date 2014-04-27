@@ -240,15 +240,15 @@ static void emitDwarfOpShr(ByteStreamer &Streamer,
   Streamer.EmitInt8(dwarf::DW_OP_shr, "DW_OP_shr");
 }
 
-/// Some targets do not provide a DWARF register number for every
-/// register.  This function attempts to emit a DWARF register by
-/// emitting a piece of a super-register or by piecing together
-/// multiple subregisters that alias the register.
+// Some targets do not provide a DWARF register number for every
+// register.  This function attempts to emit a DWARF register by
+// emitting a piece of a super-register or by piecing together
+// multiple subregisters that alias the register.
 void AsmPrinter::EmitDwarfRegOpPiece(ByteStreamer &Streamer,
                                      const MachineLocation &MLoc,
                                      unsigned PieceSizeInBits,
                                      unsigned PieceOffsetInBits) const {
-  assert(!MLoc.isIndirect());
+  assert(MLoc.isReg() && "MLoc must be a register");
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   int Reg = TRI->getDwarfRegNum(MLoc.getReg(), false);
 
@@ -346,7 +346,7 @@ void AsmPrinter::EmitDwarfRegOp(ByteStreamer &Streamer,
     }
 
     // Attempt to find a valid super- or sub-register.
-    return EmitDwarfRegOpPiece(Streamer, MLoc, 0, 0);
+    return EmitDwarfRegOpPiece(Streamer, MLoc);
   }
 
   if (MLoc.isIndirect())
