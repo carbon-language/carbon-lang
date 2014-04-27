@@ -22,9 +22,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
-#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFStreamer.h"
-#include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -8364,32 +8362,6 @@ void ARMAsmParser::onLabelParsed(MCSymbol *Symbol) {
   if (NextSymbolIsThumb) {
     getParser().getStreamer().EmitThumbFunc(Symbol);
     NextSymbolIsThumb = false;
-    return;
-  }
-
-  if (!isThumb())
-    return;
-
-  const MCObjectFileInfo::Environment Format =
-    getContext().getObjectFileInfo()->getObjectFileType();
-  switch (Format) {
-  case MCObjectFileInfo::IsCOFF: {
-    const MCSymbolData &SD =
-      getParser().getStreamer().getOrCreateSymbolData(Symbol);
-    char Type = COFF::IMAGE_SYM_DTYPE_FUNCTION << COFF::SCT_COMPLEX_TYPE_SHIFT;
-    if (SD.getFlags() & (Type << COFF::SF_TypeShift))
-      getParser().getStreamer().EmitThumbFunc(Symbol);
-    break;
-  }
-  case MCObjectFileInfo::IsELF: {
-    const MCSymbolData &SD =
-      getParser().getStreamer().getOrCreateSymbolData(Symbol);
-    if (MCELF::GetType(SD) & (ELF::STT_FUNC << ELF_STT_Shift))
-      getParser().getStreamer().EmitThumbFunc(Symbol);
-    break;
-  }
-  case MCObjectFileInfo::IsMachO:
-    break;
   }
 }
 

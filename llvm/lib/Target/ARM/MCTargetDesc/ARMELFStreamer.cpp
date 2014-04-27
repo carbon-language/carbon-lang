@@ -30,6 +30,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSection.h"
@@ -406,6 +407,7 @@ private:
   void emitFPU(unsigned FPU) override;
   void emitInst(uint32_t Inst, char Suffix = '\0') override;
   void finishAttributeSection() override;
+  void emitLabel(MCSymbol *Symbol) override;
 
   void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE) override;
 
@@ -981,6 +983,17 @@ void ARMTargetELFStreamer::finishAttributeSection() {
   Contents.clear();
   FPU = ARM::INVALID_FPU;
 }
+
+void ARMTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
+  ARMELFStreamer &Streamer = getStreamer();
+  if (!Streamer.IsThumb)
+    return;
+
+  const MCSymbolData &SD = Streamer.getOrCreateSymbolData(Symbol);
+  if (MCELF::GetType(SD) & (ELF::STT_FUNC << ELF_STT_Shift))
+    Streamer.EmitThumbFunc(Symbol);
+}
+
 void
 ARMTargetELFStreamer::AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *S) {
   getStreamer().EmitFixup(S, FK_Data_4);

@@ -59,10 +59,6 @@ private:
                        EHPrivateExtern  = 1 << 2 };
   DenseMap<const MCSymbol*, unsigned> FlagMap;
 
-  // Using std::unordered_map to ensure pointers to MCSymbolData remain valid
-  // over insertions/removals from the SymbolMap.
-  std::unordered_map<const MCSymbol*, MCSymbolData> SymbolMap;
-
   void EmitRegisterName(int64_t Register);
   void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) override;
   void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override;
@@ -258,8 +254,6 @@ public:
   void EmitRawTextImpl(StringRef String) override;
 
   void FinishImpl() override;
-
-  virtual MCSymbolData &getOrCreateSymbolData(const MCSymbol *Symbol) override;
 };
 
 } // end anonymous namespace.
@@ -1470,14 +1464,6 @@ void MCAsmStreamer::FinishImpl() {
 
   if (!UseCFI)
     EmitFrames(AsmBackend.get(), false);
-}
-
-MCSymbolData &MCAsmStreamer::getOrCreateSymbolData(const MCSymbol *Symbol) {
-  auto Iter = SymbolMap.find(Symbol);
-  if (Iter == SymbolMap.end())
-    Iter = SymbolMap.insert(
-        Iter, std::make_pair(Symbol, MCSymbolData(*Symbol, nullptr, 0)));
-  return Iter->second;
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
