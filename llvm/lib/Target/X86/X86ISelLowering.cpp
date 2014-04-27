@@ -941,6 +941,7 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::MUL,                MVT::v4i32, Custom);
     setOperationAction(ISD::MUL,                MVT::v2i64, Custom);
     setOperationAction(ISD::UMUL_LOHI,          MVT::v4i32, Custom);
+    setOperationAction(ISD::SMUL_LOHI,          MVT::v4i32, Custom);
     setOperationAction(ISD::MULHU,              MVT::v8i16, Legal);
     setOperationAction(ISD::MULHS,              MVT::v8i16, Legal);
     setOperationAction(ISD::SUB,                MVT::v16i8, Legal);
@@ -1062,7 +1063,6 @@ void X86TargetLowering::resetOperationActions() {
 
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
-    setOperationAction(ISD::SMUL_LOHI,          MVT::v4i32, Custom);
 
     setOperationAction(ISD::VSELECT,            MVT::v2f64, Legal);
     setOperationAction(ISD::VSELECT,            MVT::v2i64, Legal);
@@ -13166,8 +13166,9 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
   // Emit two multiplies, one for the lower 2 ints and one for the higher 2
   // ints.
   MVT MulVT = VT == MVT::v4i32 ? MVT::v2i64 : MVT::v4i64;
+  bool IsSigned = Op->getOpcode() == ISD::SMUL_LOHI;
   unsigned Opcode =
-      Op->getOpcode() == ISD::UMUL_LOHI ? X86ISD::PMULUDQ : X86ISD::PMULDQ;
+      (!IsSigned || !Subtarget->hasSSE41()) ? X86ISD::PMULUDQ : X86ISD::PMULDQ;
   SDValue Mul1 = DAG.getNode(ISD::BITCAST, dl, VT,
                              DAG.getNode(Opcode, dl, MulVT, Op0, Op1));
   SDValue Mul2 = DAG.getNode(ISD::BITCAST, dl, VT,
@@ -13178,6 +13179,20 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
   SDValue Highs = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, HighMask);
   const int LowMask[] = {0, 4, 2, 6, 8, 12, 10, 14};
   SDValue Lows = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, LowMask);
+
+  // If we have a signed multiply but no PMULDQ fix up the high parts of a
+  // unsigned multiply.
+  if (IsSigned && !Subtarget->hasSSE41()) {
+    SDValue ShAmt =
+        DAG.getConstant(31, DAG.getTargetLoweringInfo().getShiftAmountTy(VT));
+    SDValue T1 = DAG.getNode(ISD::AND, dl, VT,
+                             DAG.getNode(ISD::SRA, dl, VT, Op0, ShAmt), Op1);
+    SDValue T2 = DAG.getNode(ISD::AND, dl, VT,
+                             DAG.getNode(ISD::SRA, dl, VT, Op1, ShAmt), Op0);
+
+    SDValue Fixup = DAG.getNode(ISD::ADD, dl, VT, T1, T2);
+    Highs = DAG.getNode(ISD::SUB, dl, VT, Highs, Fixup);
+  }
 
   return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getValueType(), Highs, Lows);
 }
