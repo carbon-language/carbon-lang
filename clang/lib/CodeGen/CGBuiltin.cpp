@@ -4877,7 +4877,6 @@ static Value *EmitARM64TblBuiltinExpr(CodeGenFunction &CGF, unsigned BuiltinID,
   if (!Ty)
     return 0;
 
-  Arg = E->getArg(TblPos);
   unsigned nElts = VTy->getNumElements();
 
   CodeGen::CGBuilderTy &Builder = CGF.Builder;
