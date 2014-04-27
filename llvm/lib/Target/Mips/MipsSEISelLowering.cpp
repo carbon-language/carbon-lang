@@ -488,7 +488,8 @@ static SDValue performANDCombine(SDNode *N, SelectionDAG &DAG,
         Log2 == ExtendTySize) {
       SDValue Ops[] = { Op0->getOperand(0), Op0->getOperand(1), Op0Op2 };
       DAG.MorphNodeTo(Op0.getNode(), MipsISD::VEXTRACT_ZEXT_ELT,
-                      Op0->getVTList(), Ops, Op0->getNumOperands());
+                      Op0->getVTList(),
+                      ArrayRef<SDValue>(Ops, Op0->getNumOperands()));
       return Op0;
     }
   }
@@ -832,7 +833,8 @@ static SDValue performSRACombine(SDNode *N, SelectionDAG &DAG,
         SDValue Ops[] = { Op0Op0->getOperand(0), Op0Op0->getOperand(1),
                           Op0Op0->getOperand(2) };
         DAG.MorphNodeTo(Op0Op0.getNode(), MipsISD::VEXTRACT_SEXT_ELT,
-                        Op0Op0->getVTList(), Ops, Op0Op0->getNumOperands());
+                        Op0Op0->getVTList(),
+                        ArrayRef<SDValue>(Ops, Op0Op0->getNumOperands()));
         return Op0Op0;
       }
     }

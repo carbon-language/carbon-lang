@@ -5301,7 +5301,7 @@ SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
 
 SDNode *SelectionDAG::SelectNodeTo(SDNode *N, unsigned MachineOpc,
                                    SDVTList VTs,ArrayRef<SDValue> Ops) {
-  N = MorphNodeTo(N, ~MachineOpc, VTs, Ops.data(), Ops.size());
+  N = MorphNodeTo(N, ~MachineOpc, VTs, Ops);
   // Reset the NodeID to -1.
   N->setNodeId(-1);
   return N;
@@ -5338,13 +5338,13 @@ SDNode *SelectionDAG::UpdadeSDLocOnMergedSDNode(SDNode *N, SDLoc OLoc) {
 /// the node's users.
 ///
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
-                                  SDVTList VTs, const SDValue *Ops,
-                                  unsigned NumOps) {
+                                  SDVTList VTs, ArrayRef<SDValue> Ops) {
+  unsigned NumOps = Ops.size();
   // If an identical node already exists, use it.
   void *IP = nullptr;
   if (VTs.VTs[VTs.NumVTs-1] != MVT::Glue) {
     FoldingSetNodeID ID;
-    AddNodeIDNode(ID, Opc, VTs, Ops, NumOps);
+    AddNodeIDNode(ID, Opc, VTs, Ops.data(), NumOps);
     if (SDNode *ON = CSEMap.FindNodeOrInsertPos(ID, IP))
       return UpdadeSDLocOnMergedSDNode(ON, SDLoc(N));
   }
@@ -5381,22 +5381,22 @@ SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
         // remainder of the current SelectionDAG iteration, so we can allocate
         // the operands directly out of a pool with no recycling metadata.
         MN->InitOperands(OperandAllocator.Allocate<SDUse>(NumOps),
-                         Ops, NumOps);
+                         Ops.data(), NumOps);
       else
-        MN->InitOperands(MN->LocalOperands, Ops, NumOps);
+        MN->InitOperands(MN->LocalOperands, Ops.data(), NumOps);
       MN->OperandsNeedDelete = false;
     } else
-      MN->InitOperands(MN->OperandList, Ops, NumOps);
+      MN->InitOperands(MN->OperandList, Ops.data(), NumOps);
   } else {
     // If NumOps is larger than the # of operands we currently have, reallocate
     // the operand list.
     if (NumOps > N->NumOperands) {
       if (N->OperandsNeedDelete)
         delete[] N->OperandList;
-      N->InitOperands(new SDUse[NumOps], Ops, NumOps);
+      N->InitOperands(new SDUse[NumOps], Ops.data(), NumOps);
       N->OperandsNeedDelete = true;
     } else
-      N->InitOperands(N->OperandList, Ops, NumOps);
+      N->InitOperands(N->OperandList, Ops.data(), NumOps);
   }
 
   // Delete any nodes that are still dead after adding the uses for the

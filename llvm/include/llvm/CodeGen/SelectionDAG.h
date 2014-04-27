@@ -862,7 +862,7 @@ public:
   /// MorphNodeTo - This *mutates* the specified node to have the specified
   /// return type, opcode, and operands.
   SDNode *MorphNodeTo(SDNode *N, unsigned Opc, SDVTList VTs,
-                      const SDValue *Ops, unsigned NumOps);
+                      ArrayRef<SDValue> Ops);
 
   /// getMachineNode - These are used for target selectors to create a new node
   /// with specified return type(s), MachineInstr opcode, and operands.

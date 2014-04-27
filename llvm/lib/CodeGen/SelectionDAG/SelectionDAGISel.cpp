@@ -2106,7 +2106,8 @@ MorphNode(SDNode *Node, unsigned TargetOpc, SDVTList VTList,
 
   // Call the underlying SelectionDAG routine to do the transmogrification. Note
   // that this deletes operands of the old node that become dead.
-  SDNode *Res = CurDAG->MorphNodeTo(Node, ~TargetOpc, VTList, Ops, NumOps);
+  SDNode *Res = CurDAG->MorphNodeTo(Node, ~TargetOpc, VTList,
+                                    ArrayRef<SDValue>(Ops, NumOps));
 
   // MorphNodeTo can operate in two ways: if an existing node with the
   // specified operands exists, it can just return it.  Otherwise, it
