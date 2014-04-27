@@ -737,6 +737,15 @@ void ARMAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
 }
 
 namespace {
+// FIXME: This should be in a separate file.
+class ARMWinCOFFAsmBackend : public ARMAsmBackend {
+public:
+  ARMWinCOFFAsmBackend(const Target &T, const StringRef &Triple)
+    : ARMAsmBackend(T, Triple, true) { }
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
+    return createARMWinCOFFObjectWriter(OS, /*Is64Bit=*/false);
+  }
+};
 
 // FIXME: This should be in a separate file.
 // ELF is an ELF of course...
@@ -777,7 +786,9 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T,
                                         bool isLittle) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSBinFormatMachO()) {
+  switch (TheTriple.getObjectFormat()) {
+  default: llvm_unreachable("unsupported object format");
+  case Triple::MachO: {
     MachO::CPUSubTypeARM CS =
       StringSwitch<MachO::CPUSubTypeARM>(TheTriple.getArchName())
       .Cases("armv4t", "thumbv4t", MachO::CPU_SUBTYPE_ARM_V4T)
@@ -792,15 +803,14 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T,
 
     return new DarwinARMAsmBackend(T, TT, CS);
   }
-
-#if 0
-  // FIXME: Introduce yet another checker but assert(0).
-  if (TheTriple.isOSBinFormatCOFF())
-    assert(0 && "Windows not supported on ARM");
-#endif
-
-  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(Triple(TT).getOS());
-  return new ELFARMAsmBackend(T, TT, OSABI, isLittle);
+  case Triple::COFF:
+    assert(TheTriple.isOSWindows() && "non-Windows ARM COFF is not supported");
+    return new ARMWinCOFFAsmBackend(T, TT);
+  case Triple::ELF:
+    assert(TheTriple.isOSBinFormatELF() && "using ELF for non-ELF target");
+    uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(Triple(TT).getOS());
+    return new ELFARMAsmBackend(T, TT, OSABI, isLittle);
+  }
 }
 
 MCAsmBackend *llvm::createARMLEAsmBackend(const Target &T,

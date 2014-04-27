@@ -780,8 +780,10 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
       (T.isOSDarwin() || T.isOSBinFormatMachO())) {
     Env = IsMachO;
     InitMachOMCObjectFileInfo(T);
-  } else if ((Arch == Triple::x86 || Arch == Triple::x86_64) &&
-             T.getObjectFormat() != Triple::ELF && T.isOSWindows()) {
+  } else if (T.isOSWindows() && T.getObjectFormat() == Triple::COFF) {
+    assert((Arch == Triple::x86 || Arch == Triple::x86_64 ||
+            Arch == Triple::arm || Arch == Triple::thumb) &&
+           "unsupported Windows COFF architecture");
     Env = IsCOFF;
     InitCOFFMCObjectFileInfo(T);
   } else {

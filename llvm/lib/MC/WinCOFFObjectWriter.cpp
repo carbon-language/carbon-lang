@@ -761,6 +761,44 @@ void WinCOFFObjectWriter::RecordRelocation(const MCAssembler &Asm,
        Reloc.Data.Type == COFF::IMAGE_REL_I386_REL32))
     FixedValue += 4;
 
+  if (Header.Machine == COFF::IMAGE_FILE_MACHINE_ARMNT) {
+    switch (Reloc.Data.Type) {
+    case COFF::IMAGE_REL_ARM_ABSOLUTE:
+    case COFF::IMAGE_REL_ARM_ADDR32:
+    case COFF::IMAGE_REL_ARM_ADDR32NB:
+    case COFF::IMAGE_REL_ARM_TOKEN:
+    case COFF::IMAGE_REL_ARM_SECTION:
+    case COFF::IMAGE_REL_ARM_SECREL:
+      break;
+    case COFF::IMAGE_REL_ARM_BRANCH11:
+    case COFF::IMAGE_REL_ARM_BLX11:
+      // IMAGE_REL_ARM_BRANCH11 and IMAGE_REL_ARM_BLX11 are only used for
+      // pre-ARMv7, which implicitly rules it out of ARMNT (it would be valid
+      // for Windows CE).
+    case COFF::IMAGE_REL_ARM_BRANCH24:
+    case COFF::IMAGE_REL_ARM_BLX24:
+    case COFF::IMAGE_REL_ARM_MOV32A:
+      // IMAGE_REL_ARM_BRANCH24, IMAGE_REL_ARM_BLX24, IMAGE_REL_ARM_MOV32A are
+      // only used for ARM mode code, which is documented as being unsupported
+      // by Windows on ARM.  Emperical proof indicates that masm is able to
+      // generate the relocations however the rest of the MSVC toolchain is
+      // unable to handle it.
+      llvm_unreachable("unsupported relocation");
+      break;
+    case COFF::IMAGE_REL_ARM_MOV32T:
+      break;
+    case COFF::IMAGE_REL_ARM_BRANCH20T:
+    case COFF::IMAGE_REL_ARM_BRANCH24T:
+    case COFF::IMAGE_REL_ARM_BLX23T:
+      // IMAGE_REL_BRANCH20T, IMAGE_REL_ARM_BRANCH24T, IMAGE_REL_ARM_BLX23T all
+      // perform a 4 byte adjustment to the relocation.  Relative branches are
+      // offset by 4 on ARM, however, because there is no RELA relocations, all
+      // branches are offset by 4.
+      FixedValue = FixedValue + 4;
+      break;
+    }
+  }
+
   coff_section->Relocations.push_back(Reloc);
 }
 

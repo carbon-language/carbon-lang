@@ -11,4 +11,6 @@ add_llvm_library(LLVMARMDesc
   ARMMCTargetDesc.cpp
   ARMTargetStreamer.cpp
   ARMUnwindOpAsm.cpp
+  ARMWinCOFFObjectWriter.cpp
+  ARMWinCOFFStreamer.cpp
   )

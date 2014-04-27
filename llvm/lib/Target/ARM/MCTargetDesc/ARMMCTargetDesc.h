@@ -78,6 +78,11 @@ MCAsmBackend *createThumbLEAsmBackend(const Target &T, const MCRegisterInfo &MRI
 MCAsmBackend *createThumbBEAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                       StringRef TT, StringRef CPU);
 
+/// createARMWinCOFFStreamer - Construct a PE/COFF machine code streamer which
+/// will generate a PE/COFF object file.
+MCStreamer *createARMWinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
+                                     MCCodeEmitter &Emitter, raw_ostream &OS);
+
 /// createARMELFObjectWriter - Construct an ELF Mach-O object writer.
 MCObjectWriter *createARMELFObjectWriter(raw_ostream &OS,
                                          uint8_t OSABI,
@@ -89,6 +94,8 @@ MCObjectWriter *createARMMachObjectWriter(raw_ostream &OS,
                                           uint32_t CPUType,
                                           uint32_t CPUSubtype);
 
+/// createARMWinCOFFObjectWriter - Construct an ARM PE/COFF object writer.
+MCObjectWriter *createARMWinCOFFObjectWriter(raw_ostream &OS, bool Is64Bit);
 
 /// createARMMachORelocationInfo - Construct ARM Mach-O relocation info.
 MCRelocationInfo *createARMMachORelocationInfo(MCContext &Ctx);

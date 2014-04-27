@@ -21,6 +21,7 @@
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -275,18 +276,20 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
                                     bool NoExecStack) {
   Triple TheTriple(TT);
 
-  if (TheTriple.isOSBinFormatMachO()) {
+  switch (TheTriple.getObjectFormat()) {
+  default: llvm_unreachable("unsupported object format");
+  case Triple::MachO: {
     MCStreamer *S = createMachOStreamer(Ctx, MAB, OS, Emitter, false);
     new ARMTargetStreamer(*S);
     return S;
   }
-
-  if (TheTriple.isOSWindows()) {
-    llvm_unreachable("ARM does not support Windows COFF format");
+  case Triple::COFF:
+    assert(TheTriple.isOSWindows() && "non-Windows ARM COFF is not supported");
+    return createARMWinCOFFStreamer(Ctx, MAB, *Emitter, OS);
+  case Triple::ELF:
+    return createARMELFStreamer(Ctx, MAB, OS, Emitter, false, NoExecStack,
+                                TheTriple.getArch() == Triple::thumb);
   }
-
-  return createARMELFStreamer(Ctx, MAB, OS, Emitter, false, NoExecStack,
-                              TheTriple.getArch() == Triple::thumb);
 }
 
 static MCInstPrinter *createARMMCInstPrinter(const Target &T,
