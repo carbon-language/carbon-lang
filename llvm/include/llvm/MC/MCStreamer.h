@@ -773,14 +773,6 @@ MCStreamer *createMachOStreamer(MCContext &Ctx, MCAsmBackend &TAB,
                                 bool RelaxAll = false,
                                 bool LabelSections = false);
 
-/// createWinCOFFStreamer - Create a machine code streamer which will
-/// generate Microsoft COFF format object files.
-///
-/// Takes ownership of \p TAB and \p CE.
-MCStreamer *createWinCOFFStreamer(MCContext &Ctx, MCAsmBackend &TAB,
-                                  MCCodeEmitter &CE, raw_ostream &OS,
-                                  bool RelaxAll = false);
-
 /// createELFStreamer - Create a machine code streamer which will generate
 /// ELF format object files.
 MCStreamer *createELFStreamer(MCContext &Ctx, MCAsmBackend &TAB,

@@ -233,29 +233,15 @@ void MCWinCOFFStreamer::EmitIdent(StringRef IdentString) {
 }
 
 void MCWinCOFFStreamer::EmitWin64EHHandlerData() {
-  MCStreamer::EmitWin64EHHandlerData();
-
-  // We have to emit the unwind info now, because this directive
-  // actually switches to the .xdata section!
-  MCWin64EHUnwindEmitter::EmitUnwindInfo(*this, getCurrentW64UnwindInfo());
+  llvm_unreachable("not implemented");
 }
 
 void MCWinCOFFStreamer::FinishImpl() {
-  EmitFrames(nullptr, true);
-  EmitW64Tables();
   MCObjectStreamer::FinishImpl();
 }
 
 MCSymbolData &MCWinCOFFStreamer::getOrCreateSymbolData(const MCSymbol *Symbol) {
   return getAssembler().getOrCreateSymbolData(*Symbol);
-}
-
-MCStreamer *createWinCOFFStreamer(MCContext &Context, MCAsmBackend &MAB,
-                                  MCCodeEmitter &CE, raw_ostream &OS,
-                                  bool RelaxAll) {
-  MCWinCOFFStreamer *S = new MCWinCOFFStreamer(Context, MAB, CE, OS);
-  S->getAssembler().setRelaxAll(RelaxAll);
-  return S;
 }
 }
 

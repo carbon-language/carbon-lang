@@ -364,7 +364,7 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
     return createMachOStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll);
   case Triple::COFF:
     assert(TheTriple.isOSWindows() && "only Windows COFF is supported");
-    return createWinCOFFStreamer(Ctx, MAB, *_Emitter, _OS, RelaxAll);
+    return createX86WinCOFFStreamer(Ctx, MAB, _Emitter, _OS, RelaxAll);
   case Triple::ELF:
     return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);
   }
