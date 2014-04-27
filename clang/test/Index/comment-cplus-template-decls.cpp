@@ -67,3 +67,18 @@ void func_template_1(T AAA);
 template<template<template<typename CCC> class DDD, class BBB> class AAA>
 void func_template_2();
 // FIXME: There is not Declaration field in the generated output.
+
+namespace rdar16128173 {
+// CHECK: <Declaration>template &lt;class PtrTy&gt; class OpaquePtr {}</Declaration>
+
+/// \brief Wrapper for void* pointer.
+/// \tparam PtrTy Either a pointer type like 'T*' or a type that behaves like
+///               a pointer.
+template <class PtrTy>
+class OpaquePtr {};
+
+// CHECK: <Declaration>typedef OpaquePtr&lt;int&gt; DeclGroupPtrTy</Declaration>
+typedef OpaquePtr<int> DeclGroupPtrTy;
+
+DeclGroupPtrTy blah;
+}

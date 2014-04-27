@@ -422,6 +422,8 @@ comments::FullComment *ASTContext::cloneFullComment(comments::FullComment *FC,
   ThisDeclInfo->IsFilled = false;
   ThisDeclInfo->fill();
   ThisDeclInfo->CommentDecl = FC->getDecl();
+  if (!ThisDeclInfo->TemplateParameters)
+    ThisDeclInfo->TemplateParameters = FC->getDeclInfo()->TemplateParameters;
   comments::FullComment *CFC =
     new (*this) comments::FullComment(FC->getBlocks(),
                                       ThisDeclInfo);
