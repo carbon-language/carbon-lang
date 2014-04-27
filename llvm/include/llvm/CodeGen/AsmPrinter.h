@@ -430,7 +430,17 @@ namespace llvm {
     /// encoding specified.
     virtual unsigned getISAEncoding() { return 0; }
 
+    /// \brief Emit a partial dwarf register operation.
+    /// \param MLoc             the register
+    /// \param PieceSizeInBits  size and
+    /// \param PieceOffsetBits  offset of the piece in bits, if this is one
+    ///                         piece of an aggregate value.
+    void EmitDwarfRegOpPiece(ByteStreamer &BS, const MachineLocation &MLoc,
+                             unsigned PieceSize,
+                             unsigned PieceOffset) const;
+
     /// EmitDwarfRegOp - Emit dwarf register operation.
+    /// \param Indirect   whether this is a register-indirect address
     virtual void EmitDwarfRegOp(ByteStreamer &BS, const MachineLocation &MLoc,
                                 bool Indirect) const;
 
