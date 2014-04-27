@@ -121,6 +121,8 @@ public:
 
   virtual void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE);
 
+  virtual void emitThumbSet(MCSymbol *Symbol, const MCExpr *Value);
+
   void finish() override;
 
   /// Callback used to implement the ldr= pseudo.

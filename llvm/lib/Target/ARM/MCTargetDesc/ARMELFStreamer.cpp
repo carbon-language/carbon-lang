@@ -140,6 +140,7 @@ class ARMTargetAsmStreamer : public ARMTargetStreamer {
   void finishAttributeSection() override;
 
   void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE) override;
+  void emitThumbSet(MCSymbol *Symbol, const MCExpr *Value) override;
 
 public:
   ARMTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS,
@@ -259,6 +260,10 @@ void ARMTargetAsmStreamer::finishAttributeSection() {
 void
 ARMTargetAsmStreamer::AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *S) {
   OS << "\t.tlsdescseq\t" << S->getSymbol().getName();
+}
+
+void ARMTargetAsmStreamer::emitThumbSet(MCSymbol *Symbol, const MCExpr *Value) {
+  OS << "\t.thumb_set\t" << *Symbol << ", " << *Value << '\n';
 }
 
 void ARMTargetAsmStreamer::emitInst(uint32_t Inst, char Suffix) {
@@ -410,6 +415,7 @@ private:
   void emitLabel(MCSymbol *Symbol) override;
 
   void AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *SRE) override;
+  void emitThumbSet(MCSymbol *Symbol, const MCExpr *Value) override;
 
   size_t calculateContentSize() const;
 
@@ -998,6 +1004,23 @@ void
 ARMTargetELFStreamer::AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *S) {
   getStreamer().EmitFixup(S, FK_Data_4);
 }
+
+void ARMTargetELFStreamer::emitThumbSet(MCSymbol *Symbol, const MCExpr *Value) {
+  if (const MCSymbolRefExpr *SRE = dyn_cast<MCSymbolRefExpr>(Value)) {
+    // FIXME: Doing a lookup in here is a hack.
+    MCSymbol *Sym =
+        getStreamer().getContext().LookupSymbol(SRE->getSymbol().getName());
+    if (!Sym->isDefined()) {
+      getStreamer().EmitSymbolAttribute(Sym, MCSA_Global);
+      getStreamer().EmitAssignment(Symbol, Value);
+      return;
+    }
+  }
+
+  getStreamer().EmitThumbFunc(Symbol);
+  getStreamer().EmitAssignment(Symbol, Value);
+}
+
 void ARMTargetELFStreamer::emitInst(uint32_t Inst, char Suffix) {
   getStreamer().emitInst(Inst, Suffix);
 }

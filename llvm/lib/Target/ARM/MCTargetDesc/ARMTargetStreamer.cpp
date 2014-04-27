@@ -246,3 +246,7 @@ void ARMTargetStreamer::AnnotateTLSDescriptorSequence(
     const MCSymbolRefExpr *SRE) {
   llvm_unreachable("unimplemented");
 }
+
+void ARMTargetStreamer::emitThumbSet(MCSymbol *Symbol, const MCExpr *Value) {
+  llvm_unreachable("unimplemented");
+}

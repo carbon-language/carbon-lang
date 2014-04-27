@@ -1,6 +1,9 @@
 @ RUN: llvm-mc -triple armv7-eabi -filetype obj -o - %s | llvm-readobj -t \
 @ RUN:   | FileCheck %s
 
+@ RUN: llvm-mc -triple armv7-eabi -filetype asm -o - %s \
+@ RUN:   | FileCheck --check-prefix=ASM %s
+
 	.syntax unified
 
 	.arm
@@ -10,6 +13,8 @@ arm_func:
 	nop
 
 	.thumb_set alias_arm_func, arm_func
+
+@ ASM: .thumb_set alias_arm_func, arm_func
 
 	.thumb
 

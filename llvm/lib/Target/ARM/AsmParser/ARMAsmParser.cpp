@@ -9372,36 +9372,7 @@ bool ARMAsmParser::parseDirectiveThumbSet(SMLoc L) {
   Lex();
 
   MCSymbol *Alias = getContext().GetOrCreateSymbol(Name);
-  if (const MCSymbolRefExpr *SRE = dyn_cast<MCSymbolRefExpr>(Value)) {
-    MCSymbol *Sym = getContext().LookupSymbol(SRE->getSymbol().getName());
-    if (!Sym->isDefined()) {
-      getStreamer().EmitSymbolAttribute(Sym, MCSA_Global);
-      getStreamer().EmitAssignment(Alias, Value);
-      return false;
-    }
-
-    const MCObjectFileInfo::Environment Format =
-      getContext().getObjectFileInfo()->getObjectFileType();
-    switch (Format) {
-    case MCObjectFileInfo::IsCOFF: {
-      char Type = COFF::IMAGE_SYM_DTYPE_FUNCTION << COFF::SCT_COMPLEX_TYPE_SHIFT;
-      getStreamer().EmitCOFFSymbolType(Type);
-      // .set values are always local in COFF
-      getStreamer().EmitSymbolAttribute(Alias, MCSA_Local);
-      break;
-    }
-    case MCObjectFileInfo::IsELF:
-      getStreamer().EmitSymbolAttribute(Alias, MCSA_ELF_TypeFunction);
-      break;
-    case MCObjectFileInfo::IsMachO:
-      break;
-    }
-  }
-
-  // FIXME: set the function as being a thumb function via the assembler
-  getStreamer().EmitThumbFunc(Alias);
-  getStreamer().EmitAssignment(Alias, Value);
-
+  getTargetStreamer().emitThumbSet(Alias, Value);
   return false;
 }
 
