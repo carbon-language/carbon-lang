@@ -14,7 +14,7 @@ using namespace llvm;
 
 MCSymbol *DwarfStringPool::getSectionSymbol() { return SectionSymbol; }
 
-std::pair<MCSymbol *, unsigned> &
+static std::pair<MCSymbol *, unsigned> &
 getEntry(AsmPrinter &Asm,
          StringMap<std::pair<MCSymbol *, unsigned>, BumpPtrAllocator &> &Pool,
          StringRef Prefix, StringRef Str) {

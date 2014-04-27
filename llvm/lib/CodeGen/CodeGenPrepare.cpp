@@ -634,7 +634,7 @@ static bool OptimizeCmpExpression(CmpInst *CI) {
 /// 1. Truncate instruction
 /// 2. And instruction and the imm is a mask of the low bits:
 /// imm & (imm+1) == 0
-bool isExtractBitsCandidateUse(Instruction *User) {
+static bool isExtractBitsCandidateUse(Instruction *User) {
   if (!isa<TruncInst>(User)) {
     if (User->getOpcode() != Instruction::And ||
         !isa<ConstantInt>(User->getOperand(1)))
@@ -650,7 +650,7 @@ bool isExtractBitsCandidateUse(Instruction *User) {
 
 /// SinkShiftAndTruncate - sink both shift and truncate instruction
 /// to the use of truncate's BB.
-bool
+static bool
 SinkShiftAndTruncate(BinaryOperator *ShiftI, Instruction *User, ConstantInt *CI,
                      DenseMap<BasicBlock *, BinaryOperator *> &InsertedShifts,
                      const TargetLowering &TLI) {
