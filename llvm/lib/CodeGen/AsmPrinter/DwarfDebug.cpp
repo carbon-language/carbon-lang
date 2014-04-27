@@ -1132,11 +1132,7 @@ static bool isDbgValueInDefinedReg(const MachineInstr *MI) {
 }
 
 // Get .debug_loc entry for the instruction range starting at MI.
-static DebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
-                                      const MCSymbol *FLabel,
-                                      const MCSymbol *SLabel,
-                                      const MachineInstr *MI,
-                                      DwarfCompileUnit *Unit) {
+static DebugLocEntry::Value getDebugLocValue(const MachineInstr *MI) {
   const MDNode *Var = MI->getDebugVariable();
 
   assert(MI->getNumOperands() == 3);
@@ -1148,16 +1144,14 @@ static DebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
       MLoc.set(MI->getOperand(0).getReg());
     else
       MLoc.set(MI->getOperand(0).getReg(), MI->getOperand(1).getImm());
-    return DebugLocEntry(FLabel, SLabel, MLoc, Var, Unit);
+    return DebugLocEntry::Value(Var, MLoc);
   }
   if (MI->getOperand(0).isImm())
-    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getImm(), Var, Unit);
+    return DebugLocEntry::Value(Var, MI->getOperand(0).getImm());
   if (MI->getOperand(0).isFPImm())
-    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getFPImm(),
-                         Var, Unit);
+    return DebugLocEntry::Value(Var, MI->getOperand(0).getFPImm());
   if (MI->getOperand(0).isCImm())
-    return DebugLocEntry(FLabel, SLabel, MI->getOperand(0).getCImm(),
-                         Var, Unit);
+    return DebugLocEntry::Value(Var, MI->getOperand(0).getCImm());
 
   llvm_unreachable("Unexpected 3 operand DBG_VALUE instruction!");
 }
@@ -1165,6 +1159,8 @@ static DebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
 // Find variables for each lexical scope.
 void
 DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
+  LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
+  DwarfCompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
 
   // Grab the variable info that was squirreled away in the MMI side-table.
   collectVariableInfoFromMMITable(Processed);
@@ -1252,16 +1248,13 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
       }
 
       // The value is valid until the next DBG_VALUE or clobber.
-      LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
-      DwarfCompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
-      DebugLocEntry Loc = getDebugLocEntry(Asm, FLabel, SLabel, Begin, TheCU);
+      DebugLocEntry Loc(FLabel, SLabel, getDebugLocValue(Begin), TheCU);
       if (DebugLoc.empty() || !DebugLoc.back().Merge(Loc))
         DebugLoc.push_back(std::move(Loc));
     }
   }
 
   // Collect info for variables that were optimized out.
-  LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
   DIArray Variables = DISubprogram(FnScope->getScopeNode()).getVariables();
   for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
     DIVariable DV(Variables.getElement(i));
@@ -2057,19 +2050,22 @@ void DwarfDebug::emitDebugStr() {
 
 void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
                                    const DebugLocEntry &Entry) {
-  DIVariable DV(Entry.getVariable());
-  if (Entry.isInt()) {
+  assert(Entry.getValues().size() == 1 &&
+	 "multi-value entries are not supported yet.");
+  const DebugLocEntry::Value Value = Entry.getValues()[0];
+  DIVariable DV(Value.getVariable());
+  if (Value.isInt()) {
     DIBasicType BTy(resolve(DV.getType()));
     if (BTy.Verify() && (BTy.getEncoding() == dwarf::DW_ATE_signed ||
                          BTy.getEncoding() == dwarf::DW_ATE_signed_char)) {
       Streamer.EmitInt8(dwarf::DW_OP_consts, "DW_OP_consts");
-      Streamer.EmitSLEB128(Entry.getInt());
+      Streamer.EmitSLEB128(Value.getInt());
     } else {
       Streamer.EmitInt8(dwarf::DW_OP_constu, "DW_OP_constu");
-      Streamer.EmitULEB128(Entry.getInt());
+      Streamer.EmitULEB128(Value.getInt());
     }
-  } else if (Entry.isLocation()) {
-    MachineLocation Loc = Entry.getLoc();
+  } else if (Value.isLocation()) {
+    MachineLocation Loc = Value.getLoc();
     if (!DV.hasComplexAddress())
       // Regular entry.
       Asm->EmitDwarfRegOp(Streamer, Loc, DV.isIndirect());
