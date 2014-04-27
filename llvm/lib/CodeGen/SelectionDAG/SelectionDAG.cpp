@@ -1441,6 +1441,11 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
   if (Identity && NElts)
     return N1;
 
+  // Shuffling a constant splat doesn't change the result.
+  if (N2Undef && N1.getOpcode() == ISD::BUILD_VECTOR)
+    if (cast<BuildVectorSDNode>(N1)->getConstantSplatValue())
+      return N1;
+
   FoldingSetNodeID ID;
   SDValue Ops[2] = { N1, N2 };
   AddNodeIDNode(ID, ISD::VECTOR_SHUFFLE, getVTList(VT), Ops, 2);

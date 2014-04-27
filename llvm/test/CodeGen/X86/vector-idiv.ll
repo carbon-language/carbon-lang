@@ -115,6 +115,7 @@ define <4 x i32> @test8(<4 x i32> %a) {
 ; SSE-LABEL: test8:
 ; SSE: pmuldq
 ; SSE: pshufd	$57
+; SSE-NOT: pshufd	$57
 ; SSE: pmuldq
 ; SSE: shufps	$-35
 ; SSE: pshufd	$-40
@@ -126,6 +127,7 @@ define <4 x i32> @test8(<4 x i32> %a) {
 ; AVX-LABEL: test8:
 ; AVX: vpmuldq
 ; AVX: vpshufd	$57
+; AVX-NOT: vpshufd	$57
 ; AVX: vpmuldq
 ; AVX: vshufps	$-35
 ; AVX: vpshufd	$-40
@@ -140,7 +142,7 @@ define <8 x i32> @test9(<8 x i32> %a) {
   ret <8 x i32> %div
 
 ; AVX-LABEL: test9:
-; AVX: vpermd
+; AVX: vpbroadcastd
 ; AVX: vpmuldq
 ; AVX: vshufps	$-35
 ; AVX: vpmuldq
@@ -157,7 +159,7 @@ define <8 x i32> @test10(<8 x i32> %a) {
   ret <8 x i32> %rem
 
 ; AVX-LABEL: test10:
-; AVX: vpermd
+; AVX: vpbroadcastd
 ; AVX: vpmuludq
 ; AVX: vshufps	$-35
 ; AVX: vpmuludq
@@ -174,7 +176,7 @@ define <8 x i32> @test11(<8 x i32> %a) {
   ret <8 x i32> %rem
 
 ; AVX-LABEL: test11:
-; AVX: vpermd
+; AVX: vpbroadcastd
 ; AVX: vpmuldq
 ; AVX: vshufps	$-35
 ; AVX: vpmuldq
