@@ -163,6 +163,9 @@ public:
     /// CalleeIndexMap.
     Node(LazyCallGraph &G, Function &F);
 
+    /// \brief Internal helper to remove a callee from this node.
+    void removeEdgeInternal(Function &Callee);
+
   public:
     typedef LazyCallGraph::iterator iterator;
 
@@ -187,24 +190,18 @@ public:
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
 
+    LazyCallGraph *G;
     SmallPtrSet<SCC *, 1> ParentSCCs;
     SmallVector<Node *, 1> Nodes;
 
-    SCC() {}
+    SCC(LazyCallGraph &G) : G(&G) {}
 
-    void insert(LazyCallGraph &G, Node &N);
-
-    void removeEdge(LazyCallGraph &G, Function &Caller, Function &Callee,
-                    SCC &CalleeC);
+    void insert(Node &N);
 
     void
-    internalDFS(LazyCallGraph &G,
-                SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack,
+    internalDFS(SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack,
                 SmallVectorImpl<Node *> &PendingSCCStack, Node *N,
                 SmallVectorImpl<SCC *> &ResultSCCs);
-
-    SmallVector<LazyCallGraph::SCC *, 1>
-    removeInternalEdge(LazyCallGraph &G, Node &Caller, Node &Callee);
 
   public:
     typedef SmallVectorImpl<Node *>::const_iterator iterator;
@@ -219,6 +216,63 @@ public:
     iterator_range<parent_iterator> parents() const {
       return iterator_range<parent_iterator>(parent_begin(), parent_end());
     }
+
+    ///@{
+    /// \name Mutation API
+    ///
+    /// These methods provide the core API for updating the call graph in the
+    /// presence of a (potentially still in-flight) DFS-found SCCs.
+    ///
+    /// Note that these methods sometimes have complex runtimes, so be careful
+    /// how you call them.
+
+    /// \brief Remove an edge whose source is in this SCC and target is *not*.
+    ///
+    /// This removes an inter-SCC edge. All inter-SCC edges originating from
+    /// this SCC have been fully explored by any in-flight DFS SCC formation,
+    /// so this is always safe to call once you have the source SCC.
+    ///
+    /// This operation does not change the set of SCCs or the members of the
+    /// SCCs and so is very inexpensive. It may change the connectivity graph
+    /// of the SCCs though, so be careful calling this while iterating over
+    /// them.
+    void removeInterSCCEdge(Node &CallerN, Node &CalleeN);
+
+    /// \brief Remove an edge which is entirely within this SCC.
+    ///
+    /// Both the \a Caller and the \a Callee must be within this SCC. Removing
+    /// such an edge make break cycles that form this SCC and thus this
+    /// operation may change the SCC graph significantly. In particular, this
+    /// operation will re-form new SCCs based on the remaining connectivity of
+    /// the graph. The following invariants are guaranteed to hold after
+    /// calling this method:
+    ///
+    /// 1) This SCC is still an SCC in the graph.
+    /// 2) This SCC will be the parent of any new SCCs. Thus, this SCC is
+    ///    preserved as the root of any new SCC directed graph formed.
+    /// 3) No SCC other than this SCC has its member set changed (this is
+    ///    inherent in the definiton of removing such an edge).
+    /// 4) All of the parent links of the SCC graph will be updated to reflect
+    ///    the new SCC structure.
+    /// 5) All SCCs formed out of this SCC, excluding this SCC, will be
+    ///    returned in a vector.
+    /// 6) The order of the SCCs in the vector will be a valid postorder
+    ///    traversal of the new SCCs.
+    ///
+    /// These invariants are very important to ensure that we can build
+    /// optimization pipeliens on top of the CGSCC pass manager which
+    /// intelligently update the SCC graph without invalidating other parts of
+    /// the SCC graph.
+    ///
+    /// The runtime complexity of this method is, in the worst case, O(V+E)
+    /// where V is the number of nodes in this SCC and E is the number of edges
+    /// leaving the nodes in this SCC. Note that E includes both edges within
+    /// this SCC and edges from this SCC to child SCCs. Some effort has been
+    /// made to minimize the overhead of common cases such as self-edges and
+    /// edge removals which result in a spanning tree with no more cycles.
+    SmallVector<SCC *, 1> removeIntraSCCEdge(Node &CallerN, Node &CalleeN);
+
+    ///@}
   };
 
   /// \brief A post-order depth-first SCC iterator over the call graph.
@@ -307,6 +361,16 @@ public:
     return insertInto(F, N);
   }
 
+  ///@{
+  /// \name Pre-SCC Mutation API
+  ///
+  /// These methods are only valid to call prior to forming any SCCs for this
+  /// call graph. They can be used to update the core node-graph during
+  /// a node-based inorder traversal that precedes any SCC-based traversal.
+  ///
+  /// Once you begin manipulating a call graph's SCCs, you must perform all
+  /// mutation of the graph via the SCC methods.
+
   /// \brief Update the call graph after deleting an edge.
   void removeEdge(Node &Caller, Function &Callee);
 
@@ -314,6 +378,8 @@ public:
   void removeEdge(Function &Caller, Function &Callee) {
     return removeEdge(get(Caller), Callee);
   }
+
+  ///@}
 
 private:
   /// \brief Allocator that holds all the call graph nodes.

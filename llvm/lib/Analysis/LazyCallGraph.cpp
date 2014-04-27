@@ -75,6 +75,15 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F)
   findCallees(Worklist, Visited, Callees, CalleeIndexMap);
 }
 
+void LazyCallGraph::Node::removeEdgeInternal(Function &Callee) {
+  auto IndexMapI = CalleeIndexMap.find(&Callee);
+  assert(IndexMapI != CalleeIndexMap.end() &&
+         "Callee not in the callee set for this caller?");
+
+  Callees.erase(Callees.begin() + IndexMapI->second);
+  CalleeIndexMap.erase(IndexMapI);
+}
+
 LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
   DEBUG(dbgs() << "Building CG for module: " << M.getModuleIdentifier()
                << "\n");
@@ -131,23 +140,32 @@ LazyCallGraph &LazyCallGraph::operator=(LazyCallGraph &&G) {
   return *this;
 }
 
-void LazyCallGraph::SCC::insert(LazyCallGraph &G, Node &N) {
+void LazyCallGraph::SCC::insert(Node &N) {
   N.DFSNumber = N.LowLink = -1;
   Nodes.push_back(&N);
-  G.SCCMap[&N] = this;
+  G->SCCMap[&N] = this;
 }
 
-void LazyCallGraph::SCC::removeEdge(LazyCallGraph &G, Function &Caller,
-                                    Function &Callee, SCC &CalleeC) {
-  assert(std::find(G.LeafSCCs.begin(), G.LeafSCCs.end(), this) ==
-             G.LeafSCCs.end() &&
+void LazyCallGraph::SCC::removeInterSCCEdge(Node &CallerN, Node &CalleeN) {
+  // First remove it from the node.
+  CallerN.removeEdgeInternal(CalleeN.getFunction());
+
+  assert(G->SCCMap.lookup(&CallerN) == this &&
+         "The caller must be a member of this SCC.");
+
+  SCC &CalleeC = *G->SCCMap.lookup(&CalleeN);
+  assert(&CalleeC != this &&
+         "This API only supports the rmoval of inter-SCC edges.");
+
+  assert(std::find(G->LeafSCCs.begin(), G->LeafSCCs.end(), this) ==
+             G->LeafSCCs.end() &&
          "Cannot have a leaf SCC caller with a different SCC callee.");
 
   bool HasOtherCallToCalleeC = false;
   bool HasOtherCallOutsideSCC = false;
   for (Node *N : *this) {
-    for (Node &Callee : *N) {
-      SCC &OtherCalleeC = *G.SCCMap.lookup(&Callee);
+    for (Node &OtherCalleeN : *N) {
+      SCC &OtherCalleeC = *G->SCCMap.lookup(&OtherCalleeN);
       if (&OtherCalleeC == &CalleeC) {
         HasOtherCallToCalleeC = true;
         break;
@@ -171,17 +189,17 @@ void LazyCallGraph::SCC::removeEdge(LazyCallGraph &G, Function &Caller,
     // It may orphan an SCC if it is the last edge reaching it, but that does
     // not violate any invariants of the graph.
     if (CalleeC.ParentSCCs.empty())
-      DEBUG(dbgs() << "LCG: Update removing " << Caller.getName() << " -> "
-                   << Callee.getName() << " edge orphaned the callee's SCC!\n");
+      DEBUG(dbgs() << "LCG: Update removing " << CallerN.getFunction().getName()
+                   << " -> " << CalleeN.getFunction().getName()
+                   << " edge orphaned the callee's SCC!\n");
   }
 
   // It may make the Caller SCC a leaf SCC.
   if (!HasOtherCallOutsideSCC)
-    G.LeafSCCs.push_back(this);
+    G->LeafSCCs.push_back(this);
 }
 
 void LazyCallGraph::SCC::internalDFS(
-    LazyCallGraph &G,
     SmallVectorImpl<std::pair<Node *, Node::iterator>> &DFSStack,
     SmallVectorImpl<Node *> &PendingSCCStack, Node *N,
     SmallVectorImpl<SCC *> &ResultSCCs) {
@@ -196,16 +214,16 @@ void LazyCallGraph::SCC::internalDFS(
     Node::iterator E = N->end();
     while (I != E) {
       Node &ChildN = *I;
-      if (SCC *ChildSCC = G.SCCMap.lookup(&ChildN)) {
+      if (SCC *ChildSCC = G->SCCMap.lookup(&ChildN)) {
         // Check if we have reached a node in the new (known connected) set of
         // this SCC. If so, the entire stack is necessarily in that set and we
         // can re-start.
         if (ChildSCC == this) {
-          insert(G, *N);
+          insert(*N);
           while (!PendingSCCStack.empty())
-            insert(G, *PendingSCCStack.pop_back_val());
+            insert(*PendingSCCStack.pop_back_val());
           while (!DFSStack.empty())
-            insert(G, *DFSStack.pop_back_val().first);
+            insert(*DFSStack.pop_back_val().first);
           return;
         }
 
@@ -240,7 +258,7 @@ void LazyCallGraph::SCC::internalDFS(
     }
 
     if (N->LowLink == N->DFSNumber) {
-      ResultSCCs.push_back(G.formSCC(N, PendingSCCStack));
+      ResultSCCs.push_back(G->formSCC(N, PendingSCCStack));
       if (DFSStack.empty())
         return;
     } else {
@@ -261,15 +279,18 @@ void LazyCallGraph::SCC::internalDFS(
 }
 
 SmallVector<LazyCallGraph::SCC *, 1>
-LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
-                                       Node &Callee) {
+LazyCallGraph::SCC::removeIntraSCCEdge(Node &CallerN,
+                                       Node &CalleeN) {
+  // First remove it from the node.
+  CallerN.removeEdgeInternal(CalleeN.getFunction());
+
   // We return a list of the resulting SCCs, where 'this' is always the first
   // element.
   SmallVector<SCC *, 1> ResultSCCs;
   ResultSCCs.push_back(this);
 
   // Direct recursion doesn't impact the SCC graph at all.
-  if (&Caller == &Callee)
+  if (&CallerN == &CalleeN)
     return ResultSCCs;
 
   // The worklist is every node in the original SCC.
@@ -279,7 +300,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
     // The nodes formerly in this SCC are no longer in any SCC.
     N->DFSNumber = 0;
     N->LowLink = 0;
-    G.SCCMap.erase(N);
+    G->SCCMap.erase(N);
   }
   assert(Worklist.size() > 1 && "We have to have at least two nodes to have an "
                                 "edge between them that is within the SCC.");
@@ -290,7 +311,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   // incrementally add any chain of nodes which reaches something in the new
   // node set to the new node set. This short circuits one side of the Tarjan's
   // walk.
-  insert(G, Callee);
+  insert(CalleeN);
 
   // We're going to do a full mini-Tarjan's walk using a local stack here.
   SmallVector<std::pair<Node *, Node::iterator>, 4> DFSStack;
@@ -298,7 +319,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   do {
     Node *N = Worklist.pop_back_val();
     if (N->DFSNumber == 0)
-      internalDFS(G, DFSStack, PendingSCCStack, N, ResultSCCs);
+      internalDFS(DFSStack, PendingSCCStack, N, ResultSCCs);
 
     assert(DFSStack.empty() && "Didn't flush the entire DFS stack!");
     assert(PendingSCCStack.empty() && "Didn't flush all pending SCC nodes!");
@@ -308,7 +329,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   bool IsLeafSCC = true;
   for (Node *N : Nodes) {
     for (Node &ChildN : *N) {
-      SCC &ChildSCC = *G.SCCMap.lookup(&ChildN);
+      SCC &ChildSCC = *G->SCCMap.lookup(&ChildN);
       if (&ChildSCC == this)
         continue;
       ChildSCC.ParentSCCs.insert(this);
@@ -319,7 +340,7 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   if (ResultSCCs.size() > 1)
     assert(!IsLeafSCC && "This SCC cannot be a leaf as we have split out new "
                          "SCCs by removing this edge.");
-  if (!std::any_of(G.LeafSCCs.begin(), G.LeafSCCs.end(),
+  if (!std::any_of(G->LeafSCCs.begin(), G->LeafSCCs.end(),
                    [&](SCC *C) { return C == this; }))
     assert(!IsLeafSCC && "This SCC cannot be a leaf as it already had child "
                          "SCCs before we removed this edge.");
@@ -327,51 +348,18 @@ LazyCallGraph::SCC::removeInternalEdge(LazyCallGraph &G, Node &Caller,
   // If this SCC stopped being a leaf through this edge removal, remove it from
   // the leaf SCC list.
   if (!IsLeafSCC && ResultSCCs.size() > 1)
-    G.LeafSCCs.erase(std::remove(G.LeafSCCs.begin(), G.LeafSCCs.end(), this),
-                     G.LeafSCCs.end());
+    G->LeafSCCs.erase(std::remove(G->LeafSCCs.begin(), G->LeafSCCs.end(), this),
+                     G->LeafSCCs.end());
 
   // Return the new list of SCCs.
   return ResultSCCs;
 }
 
 void LazyCallGraph::removeEdge(Node &CallerN, Function &Callee) {
-  auto IndexMapI = CallerN.CalleeIndexMap.find(&Callee);
-  assert(IndexMapI != CallerN.CalleeIndexMap.end() &&
-         "Callee not in the callee set for the caller?");
+  assert(SCCMap.empty() && DFSStack.empty() &&
+         "This method cannot be called after SCCs have been formed!");
 
-  Node *CalleeN = CallerN.Callees[IndexMapI->second].dyn_cast<Node *>();
-  CallerN.Callees.erase(CallerN.Callees.begin() + IndexMapI->second);
-  CallerN.CalleeIndexMap.erase(IndexMapI);
-
-  SCC *CallerC = SCCMap.lookup(&CallerN);
-  if (!CallerC) {
-    // We can only remove edges when the edge isn't actively participating in
-    // a DFS walk. Either it must have been popped into an SCC, or it must not
-    // yet have been reached by the DFS walk. Assert the latter here.
-    assert(std::all_of(DFSStack.begin(), DFSStack.end(),
-                       [&](const std::pair<Node *, iterator> &StackEntry) {
-             return StackEntry.first != &CallerN;
-           }) &&
-           "Found the caller on the DFSStack!");
-    return;
-  }
-
-  assert(CalleeN && "If the caller is in an SCC, we have to have explored all "
-                    "its transitively called functions.");
-
-  SCC *CalleeC = SCCMap.lookup(CalleeN);
-  assert(CalleeC &&
-         "The caller has an SCC, and thus by necessity so does the callee.");
-
-  // The easy case is when they are different SCCs.
-  if (CallerC != CalleeC) {
-    CallerC->removeEdge(*this, CallerN.getFunction(), Callee, *CalleeC);
-    return;
-  }
-
-  // The hard case is when we remove an edge within a SCC. This may cause new
-  // SCCs to need to be added to the graph.
-  CallerC->removeInternalEdge(*this, CallerN, *CalleeN);
+  return CallerN.removeEdgeInternal(Callee);
 }
 
 LazyCallGraph::Node &LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
@@ -380,17 +368,31 @@ LazyCallGraph::Node &LazyCallGraph::insertInto(Function &F, Node *&MappedN) {
 
 void LazyCallGraph::updateGraphPtrs() {
   // Process all nodes updating the graph pointers.
-  SmallVector<Node *, 16> Worklist;
-  for (auto &Entry : EntryNodes)
-    if (Node *EntryN = Entry.dyn_cast<Node *>())
-      Worklist.push_back(EntryN);
+  {
+    SmallVector<Node *, 16> Worklist;
+    for (auto &Entry : EntryNodes)
+      if (Node *EntryN = Entry.dyn_cast<Node *>())
+        Worklist.push_back(EntryN);
 
-  while (!Worklist.empty()) {
-    Node *N = Worklist.pop_back_val();
-    N->G = this;
-    for (auto &Callee : N->Callees)
-      if (Node *CalleeN = Callee.dyn_cast<Node *>())
-        Worklist.push_back(CalleeN);
+    while (!Worklist.empty()) {
+      Node *N = Worklist.pop_back_val();
+      N->G = this;
+      for (auto &Callee : N->Callees)
+        if (Node *CalleeN = Callee.dyn_cast<Node *>())
+          Worklist.push_back(CalleeN);
+    }
+  }
+
+  // Process all SCCs updating the graph pointers.
+  {
+    SmallVector<SCC *, 16> Worklist(LeafSCCs.begin(), LeafSCCs.end());
+
+    while (!Worklist.empty()) {
+      SCC *C = Worklist.pop_back_val();
+      C->G = this;
+      Worklist.insert(Worklist.end(), C->ParentSCCs.begin(),
+                      C->ParentSCCs.end());
+    }
   }
 }
 
@@ -398,15 +400,15 @@ LazyCallGraph::SCC *LazyCallGraph::formSCC(Node *RootN,
                                            SmallVectorImpl<Node *> &NodeStack) {
   // The tail of the stack is the new SCC. Allocate the SCC and pop the stack
   // into it.
-  SCC *NewSCC = new (SCCBPA.Allocate()) SCC();
+  SCC *NewSCC = new (SCCBPA.Allocate()) SCC(*this);
 
   while (!NodeStack.empty() && NodeStack.back()->DFSNumber > RootN->DFSNumber) {
     assert(NodeStack.back()->LowLink >= RootN->LowLink &&
            "We cannot have a low link in an SCC lower than its root on the "
            "stack!");
-    NewSCC->insert(*this, *NodeStack.pop_back_val());
+    NewSCC->insert(*NodeStack.pop_back_val());
   }
-  NewSCC->insert(*this, *RootN);
+  NewSCC->insert(*RootN);
 
   // A final pass over all edges in the SCC (this remains linear as we only
   // do this once when we build the SCC) to connect it to the parent sets of

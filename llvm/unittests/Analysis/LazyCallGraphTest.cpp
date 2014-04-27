@@ -331,7 +331,7 @@ TEST(LazyCallGraphTest, InterSCCEdgeRemoval) {
   EXPECT_EQ(B.end(), B.begin());
   EXPECT_EQ(&AC, &*BC.parent_begin());
 
-  CG.removeEdge(A, lookupFunction(*M, "b"));
+  AC.removeInterSCCEdge(A, B);
 
   EXPECT_EQ(A.end(), A.begin());
   EXPECT_EQ(B.end(), B.begin());
@@ -378,14 +378,14 @@ TEST(LazyCallGraphTest, IntraSCCEdgeRemoval) {
 
   // Remove the edge from b -> a, which should leave the 3 functions still in
   // a single connected component because of a -> b -> c -> a.
-  CG1.removeEdge(B, A.getFunction());
+  SCC.removeIntraSCCEdge(B, A);
   EXPECT_EQ(&SCC, CG1.lookupSCC(A));
   EXPECT_EQ(&SCC, CG1.lookupSCC(B));
   EXPECT_EQ(&SCC, CG1.lookupSCC(C));
 
   // Remove the edge from c -> a, which should leave 'a' in the original SCC
   // and form a new SCC for 'b' and 'c'.
-  CG1.removeEdge(C, A.getFunction());
+  SCC.removeIntraSCCEdge(C, A);
   EXPECT_EQ(&SCC, CG1.lookupSCC(A));
   EXPECT_EQ(1, std::distance(SCC.begin(), SCC.end()));
   LazyCallGraph::SCC *SCC2 = CG1.lookupSCC(B);
