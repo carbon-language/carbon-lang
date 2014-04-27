@@ -1993,7 +1993,7 @@ class CompletionString(ClangObject):
             return "<Availability: %s>" % self
 
     def __len__(self):
-        self.num_chunks
+        return self.num_chunks
 
     @CachedProperty
     def num_chunks(self):
