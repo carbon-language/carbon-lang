@@ -715,14 +715,14 @@ protected:
   }
 
   SDNode(unsigned Opc, unsigned Order, const DebugLoc dl, SDVTList VTs,
-         const SDValue *Ops, unsigned NumOps)
+         ArrayRef<SDValue> Ops)
     : NodeType(Opc), OperandsNeedDelete(true), HasDebugValue(false),
       SubclassData(0), NodeId(-1),
-      OperandList(NumOps ? new SDUse[NumOps] : nullptr),
+      OperandList(Ops.size() ? new SDUse[Ops.size()] : nullptr),
       ValueList(VTs.VTs), UseList(nullptr),
-      NumOperands(NumOps), NumValues(VTs.NumVTs),
+      NumOperands(Ops.size()), NumValues(VTs.NumVTs),
       debugLoc(dl), IROrder(Order) {
-    for (unsigned i = 0; i != NumOps; ++i) {
+    for (unsigned i = 0; i != Ops.size(); ++i) {
       OperandList[i].setUser(this);
       OperandList[i].setInitial(Ops[i]);
     }
@@ -998,8 +998,7 @@ public:
             EVT MemoryVT, MachineMemOperand *MMO);
 
   MemSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
-            const SDValue *Ops,
-            unsigned NumOps, EVT MemoryVT, MachineMemOperand *MMO);
+            ArrayRef<SDValue> Ops, EVT MemoryVT, MachineMemOperand *MMO);
 
   bool readMem() const { return MMO->isLoad(); }
   bool writeMem() const { return MMO->isStore(); }
@@ -1217,7 +1216,7 @@ public:
   MemIntrinsicSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
                      ArrayRef<SDValue> Ops, EVT MemoryVT,
                      MachineMemOperand *MMO)
-    : MemSDNode(Opc, Order, dl, VTs, Ops.data(), Ops.size(), MemoryVT, MMO) {
+    : MemSDNode(Opc, Order, dl, VTs, Ops, MemoryVT, MMO) {
   }
 
   // Methods to support isa and dyn_cast
@@ -1687,9 +1686,8 @@ class CvtRndSatSDNode : public SDNode {
   ISD::CvtCode CvtCode;
   friend class SelectionDAG;
   explicit CvtRndSatSDNode(EVT VT, unsigned Order, DebugLoc dl,
-                           const SDValue *Ops, unsigned NumOps,
-                           ISD::CvtCode Code)
-    : SDNode(ISD::CONVERT_RNDSAT, Order, dl, getSDVTList(VT), Ops, NumOps),
+                           ArrayRef<SDValue> Ops, ISD::CvtCode Code)
+    : SDNode(ISD::CONVERT_RNDSAT, Order, dl, getSDVTList(VT), Ops),
       CvtCode(Code) {
     assert(NumOps == 5 && "wrong number of operations");
   }

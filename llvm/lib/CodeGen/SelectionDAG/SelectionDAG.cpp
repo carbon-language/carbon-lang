@@ -1490,7 +1490,7 @@ SDValue SelectionDAG::getConvertRndSat(EVT VT, SDLoc dl,
 
   CvtRndSatSDNode *N = new (NodeAllocator) CvtRndSatSDNode(VT, dl.getIROrder(),
                                                            dl.getDebugLoc(),
-                                                           Ops, 5, Code);
+                                                           Ops, Code);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
   return SDValue(N, 0);
@@ -4407,7 +4407,7 @@ SDValue SelectionDAG::getMergeValues(ArrayRef<SDValue> Ops, SDLoc dl) {
   VTs.reserve(Ops.size());
   for (unsigned i = 0; i < Ops.size(); ++i)
     VTs.push_back(Ops[i].getValueType());
-  return getNode(ISD::MERGE_VALUES, dl, getVTList(VTs), Ops.data(), Ops.size());
+  return getNode(ISD::MERGE_VALUES, dl, getVTList(VTs), Ops);
 }
 
 SDValue
@@ -4858,11 +4858,11 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
       return SDValue(E, 0);
 
     N = new (NodeAllocator) SDNode(Opcode, DL.getIROrder(), DL.getDebugLoc(),
-                                   VTs, Ops.data(), NumOps);
+                                   VTs, Ops);
     CSEMap.InsertNode(N, IP);
   } else {
     N = new (NodeAllocator) SDNode(Opcode, DL.getIROrder(), DL.getDebugLoc(),
-                                   VTs, Ops.data(), NumOps);
+                                   VTs, Ops);
   }
 
   AllNodes.push_back(N);
@@ -4928,7 +4928,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, SDVTList VTList,
                                             Ops[1], Ops[2]);
     } else {
       N = new (NodeAllocator) SDNode(Opcode, DL.getIROrder(), DL.getDebugLoc(),
-                                     VTList, Ops.data(), NumOps);
+                                     VTList, Ops);
     }
     CSEMap.InsertNode(N, IP);
   } else {
@@ -4945,7 +4945,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, SDVTList VTList,
                                             Ops[1], Ops[2]);
     } else {
       N = new (NodeAllocator) SDNode(Opcode, DL.getIROrder(), DL.getDebugLoc(),
-                                     VTList, Ops.data(), NumOps);
+                                     VTList, Ops);
     }
   }
   AllNodes.push_back(N);
@@ -6092,9 +6092,8 @@ MemSDNode::MemSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
 }
 
 MemSDNode::MemSDNode(unsigned Opc, unsigned Order, DebugLoc dl, SDVTList VTs,
-                     const SDValue *Ops, unsigned NumOps, EVT memvt,
-                     MachineMemOperand *mmo)
-   : SDNode(Opc, Order, dl, VTs, Ops, NumOps),
+                     ArrayRef<SDValue> Ops, EVT memvt, MachineMemOperand *mmo)
+   : SDNode(Opc, Order, dl, VTs, Ops),
      MemoryVT(memvt), MMO(mmo) {
   SubclassData = encodeMemSDNodeFlags(0, ISD::UNINDEXED, MMO->isVolatile(),
                                       MMO->isNonTemporal(), MMO->isInvariant());
