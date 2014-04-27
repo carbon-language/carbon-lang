@@ -69,7 +69,7 @@ define <4 x i32> @test8(<4 x i32> %a) {
   ret <4 x i32> %div
 
 ; CHECK: 'Cost Model Analysis' for function 'test8':
-; SSE2: Found an estimated cost of 15 for instruction:   %div
+; SSE2: Found an estimated cost of 19 for instruction:   %div
 ; AVX2: Found an estimated cost of 15 for instruction:   %div
 }
 
@@ -78,7 +78,7 @@ define <8 x i32> @test9(<8 x i32> %a) {
   ret <8 x i32> %div
 
 ; CHECK: 'Cost Model Analysis' for function 'test9':
-; SSE2: Found an estimated cost of 30 for instruction:   %div
+; SSE2: Found an estimated cost of 38 for instruction:   %div
 ; AVX2: Found an estimated cost of 15 for instruction:   %div
 }
 

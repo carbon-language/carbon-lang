@@ -369,11 +369,16 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty,
 
     { ISD::SDIV, MVT::v8i16,  6 }, // pmulhw sequence
     { ISD::UDIV, MVT::v8i16,  6 }, // pmulhuw sequence
+    { ISD::SDIV, MVT::v4i32, 19 }, // pmuludq sequence
     { ISD::UDIV, MVT::v4i32, 15 }, // pmuludq sequence
   };
 
   if (Op2Info == TargetTransformInfo::OK_UniformConstantValue &&
       ST->hasSSE2()) {
+    // pmuldq sequence.
+    if (ISD == ISD::SDIV && LT.second == MVT::v4i32 && ST->hasSSE41())
+      return LT.first * 15;
+
     int Idx = CostTableLookup(SSE2UniformConstCostTable, ISD, LT.second);
     if (Idx != -1)
       return LT.first * SSE2UniformConstCostTable[Idx].Cost;

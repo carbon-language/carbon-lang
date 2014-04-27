@@ -1327,7 +1327,7 @@ int TargetLoweringBase::InstructionOpcodeToISD(unsigned Opcode) const {
   case Mul:            return ISD::MUL;
   case FMul:           return ISD::FMUL;
   case UDiv:           return ISD::UDIV;
-  case SDiv:           return ISD::UDIV;
+  case SDiv:           return ISD::SDIV;
   case FDiv:           return ISD::FDIV;
   case URem:           return ISD::UREM;
   case SRem:           return ISD::SREM;
