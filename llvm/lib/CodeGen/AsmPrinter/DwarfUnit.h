@@ -144,8 +144,8 @@ protected:
   /// Skeleton unit associated with this unit.
   DwarfUnit *Skeleton;
 
-  DwarfUnit(unsigned UID, DIE *D, DICompileUnit CU, AsmPrinter *A,
-            DwarfDebug *DW, DwarfFile *DWU);
+  DwarfUnit(unsigned UID, std::unique_ptr<DIE> D, DICompileUnit CU,
+            AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU);
 
 public:
   virtual ~DwarfUnit();
@@ -533,8 +533,8 @@ class DwarfCompileUnit : public DwarfUnit {
   unsigned stmtListIndex;
 
 public:
-  DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
-                   DwarfDebug *DW, DwarfFile *DWU);
+  DwarfCompileUnit(unsigned UID, std::unique_ptr<DIE> D, DICompileUnit Node,
+                   AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU);
 
   void initStmtList(MCSymbol *DwarfLineSectionSym);
 
@@ -567,8 +567,8 @@ private:
   MCDwarfDwoLineTable *SplitLineTable;
 
 public:
-  DwarfTypeUnit(unsigned UID, DIE *D, DwarfCompileUnit &CU, AsmPrinter *A,
-                DwarfDebug *DW, DwarfFile *DWU,
+  DwarfTypeUnit(unsigned UID, std::unique_ptr<DIE> D, DwarfCompileUnit &CU,
+                AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU,
                 MCDwarfDwoLineTable *SplitLineTable = nullptr);
 
   void setTypeSignature(uint64_t Signature) { TypeSignature = Signature; }

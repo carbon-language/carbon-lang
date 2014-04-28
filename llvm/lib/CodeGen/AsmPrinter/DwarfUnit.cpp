@@ -41,25 +41,26 @@ GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
                        cl::init(false));
 
 /// Unit - Unit constructor.
-DwarfUnit::DwarfUnit(unsigned UID, DIE *D, DICompileUnit Node, AsmPrinter *A,
-                     DwarfDebug *DW, DwarfFile *DWU)
-    : UniqueID(UID), CUNode(Node), UnitDie(D), DebugInfoOffset(0), Asm(A),
-      DD(DW), DU(DWU), IndexTyDie(nullptr), Section(nullptr),
+DwarfUnit::DwarfUnit(unsigned UID, std::unique_ptr<DIE> D, DICompileUnit Node,
+                     AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
+    : UniqueID(UID), CUNode(Node), UnitDie(std::move(D)), DebugInfoOffset(0),
+      Asm(A), DD(DW), DU(DWU), IndexTyDie(nullptr), Section(nullptr),
       Skeleton(nullptr) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
-DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DIE *D, DICompileUnit Node,
-                                   AsmPrinter *A, DwarfDebug *DW,
-                                   DwarfFile *DWU)
-    : DwarfUnit(UID, D, Node, A, DW, DWU) {
-  insertDIE(Node, D);
+DwarfCompileUnit::DwarfCompileUnit(unsigned UID, std::unique_ptr<DIE> D,
+                                   DICompileUnit Node, AsmPrinter *A,
+                                   DwarfDebug *DW, DwarfFile *DWU)
+    : DwarfUnit(UID, std::move(D), Node, A, DW, DWU) {
+  insertDIE(Node, &getUnitDie());
 }
 
-DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DIE *D, DwarfCompileUnit &CU,
-                             AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU,
+DwarfTypeUnit::DwarfTypeUnit(unsigned UID, std::unique_ptr<DIE> D,
+                             DwarfCompileUnit &CU, AsmPrinter *A,
+                             DwarfDebug *DW, DwarfFile *DWU,
                              MCDwarfDwoLineTable *SplitLineTable)
-    : DwarfUnit(UID, D, CU.getCUNode(), A, DW, DWU), CU(CU),
+    : DwarfUnit(UID, std::move(D), CU.getCUNode(), A, DW, DWU), CU(CU),
       SplitLineTable(SplitLineTable) {
   if (SplitLineTable)
     addSectionOffset(*UnitDie, dwarf::DW_AT_stmt_list, 0);

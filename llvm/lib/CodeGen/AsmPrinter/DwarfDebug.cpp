@@ -652,10 +652,12 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   StringRef FN = DIUnit.getFilename();
   CompilationDir = DIUnit.getDirectory();
 
-  DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   auto OwnedUnit = make_unique<DwarfCompileUnit>(
-      InfoHolder.getUnits().size(), Die, DIUnit, Asm, this, &InfoHolder);
+      InfoHolder.getUnits().size(),
+      make_unique<DIE>(dwarf::DW_TAG_compile_unit), DIUnit, Asm, this,
+      &InfoHolder);
   DwarfCompileUnit &NewCU = *OwnedUnit;
+  DIE &Die = NewCU.getUnitDie();
   InfoHolder.addUnit(std::move(OwnedUnit));
 
   // LTO with assembly output shares a single line table amongst multiple CUs.
@@ -666,10 +668,10 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
     Asm->OutStreamer.getContext().setMCLineTableCompilationDir(
         NewCU.getUniqueID(), CompilationDir);
 
-  NewCU.addString(*Die, dwarf::DW_AT_producer, DIUnit.getProducer());
-  NewCU.addUInt(*Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
+  NewCU.addString(Die, dwarf::DW_AT_producer, DIUnit.getProducer());
+  NewCU.addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                 DIUnit.getLanguage());
-  NewCU.addString(*Die, dwarf::DW_AT_name, FN);
+  NewCU.addString(Die, dwarf::DW_AT_name, FN);
 
   if (!useSplitDwarf()) {
     NewCU.initStmtList(DwarfLineSectionSym);
@@ -677,20 +679,20 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
     // If we're using split dwarf the compilation dir is going to be in the
     // skeleton CU and so we don't need to duplicate it here.
     if (!CompilationDir.empty())
-      NewCU.addString(*Die, dwarf::DW_AT_comp_dir, CompilationDir);
+      NewCU.addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
-    addGnuPubAttributes(NewCU, *Die);
+    addGnuPubAttributes(NewCU, Die);
   }
 
   if (DIUnit.isOptimized())
-    NewCU.addFlag(*Die, dwarf::DW_AT_APPLE_optimized);
+    NewCU.addFlag(Die, dwarf::DW_AT_APPLE_optimized);
 
   StringRef Flags = DIUnit.getFlags();
   if (!Flags.empty())
-    NewCU.addString(*Die, dwarf::DW_AT_APPLE_flags, Flags);
+    NewCU.addString(Die, dwarf::DW_AT_APPLE_flags, Flags);
 
   if (unsigned RVer = DIUnit.getRunTimeVersion())
-    NewCU.addUInt(*Die, dwarf::DW_AT_APPLE_major_runtime_vers,
+    NewCU.addUInt(Die, dwarf::DW_AT_APPLE_major_runtime_vers,
                   dwarf::DW_FORM_data1, RVer);
 
   if (!FirstCU)
@@ -705,7 +707,7 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
                       DwarfInfoSectionSym);
 
   CUMap.insert(std::make_pair(DIUnit, &NewCU));
-  CUDieMap.insert(std::make_pair(Die, &NewCU));
+  CUDieMap.insert(std::make_pair(&Die, &NewCU));
   return NewCU;
 }
 
@@ -2423,16 +2425,16 @@ void DwarfDebug::initSkeletonUnit(const DwarfUnit &U, DIE &Die,
 // DW_AT_addr_base, DW_AT_ranges_base.
 DwarfCompileUnit &DwarfDebug::constructSkeletonCU(const DwarfCompileUnit &CU) {
 
-  DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   auto OwnedUnit = make_unique<DwarfCompileUnit>(
-      CU.getUniqueID(), Die, CU.getCUNode(), Asm, this, &SkeletonHolder);
+      CU.getUniqueID(), make_unique<DIE>(dwarf::DW_TAG_compile_unit),
+      CU.getCUNode(), Asm, this, &SkeletonHolder);
   DwarfCompileUnit &NewCU = *OwnedUnit;
   NewCU.initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
                     DwarfInfoSectionSym);
 
   NewCU.initStmtList(DwarfLineSectionSym);
 
-  initSkeletonUnit(CU, *Die, std::move(OwnedUnit));
+  initSkeletonUnit(CU, NewCU.getUnitDie(), std::move(OwnedUnit));
 
   return NewCU;
 }
@@ -2443,16 +2445,16 @@ DwarfTypeUnit &DwarfDebug::constructSkeletonTU(DwarfTypeUnit &TU) {
   DwarfCompileUnit &CU = static_cast<DwarfCompileUnit &>(
       *SkeletonHolder.getUnits()[TU.getCU().getUniqueID()]);
 
-  DIE *Die = new DIE(dwarf::DW_TAG_type_unit);
-  auto OwnedUnit = make_unique<DwarfTypeUnit>(TU.getUniqueID(), Die, CU, Asm,
-                                              this, &SkeletonHolder);
+  auto OwnedUnit = make_unique<DwarfTypeUnit>(
+      TU.getUniqueID(), make_unique<DIE>(dwarf::DW_TAG_type_unit), CU, Asm,
+      this, &SkeletonHolder);
   DwarfTypeUnit &NewTU = *OwnedUnit;
   NewTU.setTypeSignature(TU.getTypeSignature());
   NewTU.setType(nullptr);
   NewTU.initSection(
       Asm->getObjFileLowering().getDwarfTypesSection(TU.getTypeSignature()));
 
-  initSkeletonUnit(TU, *Die, std::move(OwnedUnit));
+  initSkeletonUnit(TU, NewTU.getUnitDie(), std::move(OwnedUnit));
   return NewTU;
 }
 
@@ -2528,23 +2530,23 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   bool TopLevelType = TypeUnitsUnderConstruction.empty();
   AddrPool.resetUsedFlag();
 
-  DIE *UnitDie = new DIE(dwarf::DW_TAG_type_unit);
-  auto OwnedUnit =
-      make_unique<DwarfTypeUnit>(InfoHolder.getUnits().size(), UnitDie, CU, Asm,
-                                 this, &InfoHolder, getDwoLineTable(CU));
+  auto OwnedUnit = make_unique<DwarfTypeUnit>(
+      InfoHolder.getUnits().size(), make_unique<DIE>(dwarf::DW_TAG_type_unit),
+      CU, Asm, this, &InfoHolder, getDwoLineTable(CU));
   DwarfTypeUnit &NewTU = *OwnedUnit;
+  DIE &UnitDie = NewTU.getUnitDie();
   TU = &NewTU;
   TypeUnitsUnderConstruction.push_back(
       std::make_pair(std::move(OwnedUnit), CTy));
 
-  NewTU.addUInt(*UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
+  NewTU.addUInt(UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                 CU.getLanguage());
 
   uint64_t Signature = makeTypeSignature(Identifier);
   NewTU.setTypeSignature(Signature);
 
   if (!useSplitDwarf())
-    CU.applyStmtList(*UnitDie);
+    CU.applyStmtList(UnitDie);
 
   NewTU.initSection(
       useSplitDwarf()
