@@ -531,12 +531,15 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
 
   for (MCSymbolData &OriginalData : Asm.symbols()) {
     const MCSymbol &Alias = OriginalData.getSymbol();
-    const MCSymbol &Symbol = Alias.AliasedSymbol();
-    MCSymbolData &SD = Asm.getSymbolData(Symbol);
 
     // Not an alias.
-    if (&Symbol == &Alias)
+    if (!Alias.isVariable())
       continue;
+    auto *Ref = dyn_cast<MCSymbolRefExpr>(Alias.getVariableValue());
+    if (!Ref)
+      continue;
+    const MCSymbol &Symbol = Ref->getSymbol();
+    MCSymbolData &SD = Asm.getSymbolData(Symbol);
 
     StringRef AliasName = Alias.getName();
     size_t Pos = AliasName.find('@');
