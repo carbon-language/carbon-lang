@@ -8268,7 +8268,8 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
     // Parens on the RHS are ignored.
     llvm::APSInt Result;
     if (RHS.get()->EvaluateAsInt(Result, Context))
-      if ((getLangOpts().Bool && !RHS.get()->getType()->isBooleanType()) ||
+      if ((getLangOpts().Bool && !RHS.get()->getType()->isBooleanType() &&
+           !RHS.get()->getExprLoc().isMacroID()) ||
           (Result != 0 && Result != 1)) {
         Diag(Loc, diag::warn_logical_instead_of_bitwise)
           << RHS.get()->getSourceRange()
