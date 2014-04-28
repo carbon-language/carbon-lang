@@ -5848,6 +5848,16 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "}\n"
                "+ (id)init;\n"
                "@end");
+
+  FormatStyle OnePerLine = getGoogleStyle();
+  OnePerLine.BinPackParameters = false;
+  verifyFormat("@interface aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ()<\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa> {\n"
+               "}",
+               OnePerLine);
 }
 
 TEST_F(FormatTest, FormatObjCImplementation) {

@@ -1583,6 +1583,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   const FormatToken &Left = *Right.Previous;
   if (Left.is(tok::at))
     return false;
+  if (Left.Tok.getObjCKeywordID() == tok::objc_interface)
+    return false;
   if (Right.Type == TT_StartOfName || Right.is(tok::kw_operator))
     return true;
   if (Right.isTrailingComment())
