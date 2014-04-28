@@ -192,7 +192,7 @@ public:
   /// hasMCUseCFI - Check whether we should use dwarf's .cfi_* directives.
   bool hasMCUseCFI() const { return MCUseCFI; }
 
-  /// setMCUseCFI - Set whether all we should use dwarf's .cfi_* directives.
+  /// setMCUseCFI - Set whether we should use dwarf's .cfi_* directives.
   void setMCUseCFI(bool Value) { MCUseCFI = Value; }
 
   /// hasMCUseDwarfDirectory - Check whether we should use .file directives with
