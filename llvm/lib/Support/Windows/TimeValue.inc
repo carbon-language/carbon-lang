@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "WindowsSupport.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Support/raw_ostream.h"
 #include <cctype>
 #include <time.h>
 
@@ -32,6 +34,7 @@ TimeValue TimeValue::now() {
 }
 
 std::string TimeValue::str() const {
+  std::string S;
   struct tm *LT;
 #ifdef __MINGW32__
   // Old versions of mingw don't have _localtime64_s. Remove this once we drop support
@@ -47,9 +50,11 @@ std::string TimeValue::str() const {
   LT = &Storage;
 #endif
 
-  char Buffer1[sizeof("YYYY-MM-DD HH:MM:SS")];
-  strftime(Buffer1, sizeof(Buffer1), "%Y-%m-%d %H:%M:%S", LT);
-  char Buffer2[sizeof("YYYY-MM-DD HH:MM:SS.MMMUUUNNN")];
-  snprintf(Buffer2, sizeof(Buffer2), "%s.%.9u", Buffer1, this->nanoseconds());
-  return std::string(Buffer2);
+  char Buffer[sizeof("YYYY-MM-DD HH:MM:SS")];
+  strftime(Buffer, sizeof(Buffer), "%Y-%m-%d %H:%M:%S", LT);
+  raw_string_ostream OS(S);
+  OS << format("%s.%.9u", static_cast<const char *>(Buffer),
+               this->nanoseconds());
+  OS.flush();
+  return S;
 }
