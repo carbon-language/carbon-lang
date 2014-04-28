@@ -39,16 +39,18 @@ function (add_sphinx_target builder project)
     add_dependencies(sphinx ${SPHINX_TARGET_NAME})
 
     # Handle installation
-    if (builder STREQUAL man)
-      # FIXME: We might not ship all the tools that these man pages describe
-      install(DIRECTORY "${SPHINX_BUILD_DIR}/" # Slash indicates contents of
-              DESTINATION share/man/man1)
+    if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
+      if (builder STREQUAL man)
+        # FIXME: We might not ship all the tools that these man pages describe
+        install(DIRECTORY "${SPHINX_BUILD_DIR}/" # Slash indicates contents of
+                DESTINATION share/man/man1)
 
-    elseif (builder STREQUAL html)
-      install(DIRECTORY "${SPHINX_BUILD_DIR}"
-              DESTINATION "share/doc/${project}")
-    else()
-      message(WARNING Installation of ${builder} not supported)
+      elseif (builder STREQUAL html)
+        install(DIRECTORY "${SPHINX_BUILD_DIR}"
+                DESTINATION "share/doc/${project}")
+      else()
+        message(WARNING Installation of ${builder} not supported)
+      endif()
     endif()
   endif()
 endfunction()
