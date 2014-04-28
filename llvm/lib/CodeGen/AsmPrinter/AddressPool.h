@@ -26,6 +26,11 @@ class AddressPool {
     AddressPoolEntry(unsigned Number, bool TLS) : Number(Number), TLS(TLS) {}
   };
   DenseMap<const MCSymbol *, AddressPoolEntry> Pool;
+
+  /// Record whether the AddressPool has been queried for an address index since
+  /// the last "resetUsedFlag" call. Used to implement type unit fallback - a
+  /// type that references addresses cannot be placed in a type unit when using
+  /// fission.
   bool HasBeenUsed;
 
 public:
