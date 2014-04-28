@@ -285,13 +285,8 @@ private:
 DWARFDebugFrame::DWARFDebugFrame() {
 }
 
-
 DWARFDebugFrame::~DWARFDebugFrame() {
-  for (const auto &Entry : Entries) {
-    delete Entry;
-  }
 }
-
 
 static void LLVM_ATTRIBUTE_UNUSED dumpDataAux(DataExtractor Data,
                                               uint32_t Offset, int Length) {
@@ -334,7 +329,6 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
     Id = Data.getUnsigned(&Offset, IsDWARF64 ? 8 : 4);
     bool IsCIE = ((IsDWARF64 && Id == DW64_CIE_ID) || Id == DW_CIE_ID);
 
-    FrameEntry *Entry = nullptr;
     if (IsCIE) {
       // Note: this is specifically DWARFv3 CIE header structure. It was
       // changed in DWARFv4. We currently don't support reading DWARFv4
@@ -346,30 +340,25 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
       int64_t DataAlignmentFactor = Data.getSLEB128(&Offset);
       uint64_t ReturnAddressRegister = Data.getULEB128(&Offset);
 
-      Entry = new CIE(Data, StartOffset, Length, Version,
-                      StringRef(Augmentation), CodeAlignmentFactor,
-                      DataAlignmentFactor, ReturnAddressRegister);
+      Entries.emplace_back(new CIE(Data, StartOffset, Length, Version,
+                                   StringRef(Augmentation), CodeAlignmentFactor,
+                                   DataAlignmentFactor, ReturnAddressRegister));
     } else {
       // FDE
       uint64_t CIEPointer = Id;
       uint64_t InitialLocation = Data.getAddress(&Offset);
       uint64_t AddressRange = Data.getAddress(&Offset);
 
-      Entry = new FDE(Data, StartOffset, Length, CIEPointer,
-                      InitialLocation, AddressRange);
+      Entries.emplace_back(new FDE(Data, StartOffset, Length, CIEPointer,
+                                   InitialLocation, AddressRange));
     }
 
-    assert(Entry && "Expected Entry to be populated with CIE or FDE");
-    Entry->parseInstructions(&Offset, EndStructureOffset);
+    Entries.back()->parseInstructions(&Offset, EndStructureOffset);
 
-    if (Offset == EndStructureOffset) {
-      // Entry instrucitons parsed successfully.
-      Entries.push_back(Entry);
-    } else {
+    if (Offset != EndStructureOffset) {
       std::string Str;
       raw_string_ostream OS(Str);
-      OS << format("Parsing entry instructions at %lx failed",
-                   Entry->getOffset());
+      OS << format("Parsing entry instructions at %lx failed", StartOffset);
       report_fatal_error(Str);
     }
   }

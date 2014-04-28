@@ -12,13 +12,12 @@
 
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/raw_ostream.h"
+#include <memory>
 #include <vector>
-
 
 namespace llvm {
 
 class FrameEntry;
-
 
 /// \brief A parsed .debug_frame section
 ///
@@ -35,8 +34,7 @@ public:
   void parse(DataExtractor Data);
 
 private:
-  typedef std::vector<FrameEntry *> EntryVector;
-  EntryVector Entries;
+  std::vector<std::unique_ptr<FrameEntry>> Entries;
 };
 
 
