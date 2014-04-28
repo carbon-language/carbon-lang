@@ -2029,7 +2029,7 @@ class N2V<bits<2> op24_23, bits<2> op21_20, bits<2> op19_18, bits<2> op17_16,
 // Same as N2V but not predicated.
 class N2Vnp<bits<2> op19_18, bits<2> op17_16, bits<3> op10_8, bit op7, bit op6,
             dag oops, dag iops, InstrItinClass itin, string OpcodeStr,
-            string Dt, ValueType ResTy, ValueType OpTy, list<dag> pattern>
+            string Dt, list<dag> pattern>
    : NeonInp<oops, iops, AddrModeNone, IndexModeNone, N2RegFrm, itin,
              OpcodeStr, Dt, "$Vd, $Vm", "", pattern> {
   bits<5> Vd;
@@ -2138,8 +2138,7 @@ class N3V<bit op24, bit op23, bits<2> op21_20, bits<4> op11_8, bit op6, bit op4,
 
 class N3Vnp<bits<5> op27_23, bits<2> op21_20, bits<4> op11_8, bit op6,
                 bit op4, dag oops, dag iops,Format f, InstrItinClass itin,
-                string OpcodeStr, string Dt, ValueType ResTy, ValueType OpTy,
-                SDPatternOperator IntOp, bit Commutable, list<dag> pattern>
+                string OpcodeStr, string Dt, list<dag> pattern>
   : NeonInp<oops, iops, AddrModeNone, IndexModeNone, f, itin, OpcodeStr,
             Dt, "$Vd, $Vn, $Vm", "", pattern> {
   bits<5> Vd;
