@@ -21,23 +21,11 @@ void DWARFDebugAranges::extract(DataExtractor DebugArangesData) {
   if (!DebugArangesData.isValidOffset(0))
     return;
   uint32_t Offset = 0;
-  typedef std::vector<DWARFDebugArangeSet> RangeSetColl;
-  RangeSetColl Sets;
   DWARFDebugArangeSet Set;
-  uint32_t TotalRanges = 0;
 
   while (Set.extract(DebugArangesData, &Offset)) {
-    Sets.push_back(Set);
-    TotalRanges += Set.getNumDescriptors();
-  }
-  if (TotalRanges == 0)
-    return;
-
-  Aranges.reserve(TotalRanges);
-  for (const auto &I : Sets) {
-    uint32_t CUOffset = I.getCompileUnitDIEOffset();
-
-    for (const auto &Desc : I.descriptors()) {
+    uint32_t CUOffset = Set.getCompileUnitDIEOffset();
+    for (const auto &Desc : Set.descriptors()) {
       uint64_t LowPC = Desc.Address;
       uint64_t HighPC = Desc.getEndAddress();
       appendRange(CUOffset, LowPC, HighPC);
@@ -111,11 +99,6 @@ void DWARFDebugAranges::sortAndMinimize() {
     if (!Range::SortedOverlapCheck(Aranges[i-1], Aranges[i]))
       ++minimal_size;
   }
-
-  // If the sizes are the same, then no consecutive aranges can be
-  // combined, we are done.
-  if (minimal_size == orig_arange_size)
-    return;
 
   // Else, make a new RangeColl that _only_ contains what we need.
   RangeColl minimal_aranges;

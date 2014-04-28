@@ -63,7 +63,6 @@ public:
     return desc_iterator_range(ArangeDescriptors.begin(),
                                ArangeDescriptors.end());
   }
-  uint32_t getNumDescriptors() const { return ArangeDescriptors.size(); }
 };
 
 }
