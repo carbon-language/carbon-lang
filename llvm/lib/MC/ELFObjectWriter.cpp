@@ -606,7 +606,12 @@ static const MCSymbol *getBaseSymbol(const MCAsmLayout &Layout,
   MCValue Value;
   if (!Expr->EvaluateAsRelocatable(Value, &Layout))
     llvm_unreachable("Invalid Expression");
-  assert(!Value.getSymB());
+  const MCSymbolRefExpr *RefB = Value.getSymB();
+  if (RefB) {
+    Layout.getAssembler().getContext().FatalError(
+        SMLoc(), Twine("symbol '") + RefB->getSymbol().getName() +
+                     "' could not be evaluated in a subtraction expression");
+  }
   const MCSymbolRefExpr *A = Value.getSymA();
   if (!A)
     return nullptr;
