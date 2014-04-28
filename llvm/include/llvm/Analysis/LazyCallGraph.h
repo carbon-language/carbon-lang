@@ -163,6 +163,9 @@ public:
     /// CalleeIndexMap.
     Node(LazyCallGraph &G, Function &F);
 
+    /// \brief Internal helper to insert a callee.
+    void insertEdgeInternal(Function &Callee);
+
     /// \brief Internal helper to remove a callee from this node.
     void removeEdgeInternal(Function &Callee);
 
@@ -370,6 +373,14 @@ public:
   ///
   /// Once you begin manipulating a call graph's SCCs, you must perform all
   /// mutation of the graph via the SCC methods.
+
+  /// \brief Update the call graph after inserting a new edge.
+  void insertEdge(Node &Caller, Function &Callee);
+
+  /// \brief Update the call graph after inserting a new edge.
+  void insertEdge(Function &Caller, Function &Callee) {
+    return insertEdge(get(Caller), Callee);
+  }
 
   /// \brief Update the call graph after deleting an edge.
   void removeEdge(Node &Caller, Function &Callee);

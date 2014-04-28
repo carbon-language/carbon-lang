@@ -75,6 +75,14 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F)
   findCallees(Worklist, Visited, Callees, CalleeIndexMap);
 }
 
+void LazyCallGraph::Node::insertEdgeInternal(Function &Callee) {
+  CalleeIndexMap.insert(std::make_pair(&Callee, Callees.size()));
+  if (Node *N = G->lookup(Callee))
+    Callees.push_back(N);
+  else
+    Callees.push_back(&Callee);
+}
+
 void LazyCallGraph::Node::removeEdgeInternal(Function &Callee) {
   auto IndexMapI = CalleeIndexMap.find(&Callee);
   assert(IndexMapI != CalleeIndexMap.end() &&
@@ -351,6 +359,13 @@ LazyCallGraph::SCC::removeIntraSCCEdge(Node &CallerN,
 
   // Return the new list of SCCs.
   return ResultSCCs;
+}
+
+void LazyCallGraph::insertEdge(Node &CallerN, Function &Callee) {
+  assert(SCCMap.empty() && DFSStack.empty() &&
+         "This method cannot be called after SCCs have been formed!");
+
+  return CallerN.insertEdgeInternal(Callee);
 }
 
 void LazyCallGraph::removeEdge(Node &CallerN, Function &Callee) {

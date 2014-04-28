@@ -255,6 +255,44 @@ static Function &lookupFunction(Module &M, StringRef Name) {
   report_fatal_error("Couldn't find function!");
 }
 
+TEST(LazyCallGraphTest, BasicGraphMutation) {
+  std::unique_ptr<Module> M = parseAssembly(
+      "define void @a() {\n"
+      "entry:\n"
+      "  call void @b()\n"
+      "  call void @c()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @b() {\n"
+      "entry:\n"
+      "  ret void\n"
+      "}\n"
+      "define void @c() {\n"
+      "entry:\n"
+      "  ret void\n"
+      "}\n");
+  LazyCallGraph CG(*M);
+
+  LazyCallGraph::Node &A = CG.get(lookupFunction(*M, "a"));
+  LazyCallGraph::Node &B = CG.get(lookupFunction(*M, "b"));
+  EXPECT_EQ(2, std::distance(A.begin(), A.end()));
+  EXPECT_EQ(0, std::distance(B.begin(), B.end()));
+
+  CG.insertEdge(B, lookupFunction(*M, "c"));
+  EXPECT_EQ(1, std::distance(B.begin(), B.end()));
+  LazyCallGraph::Node &C = *B.begin();
+  EXPECT_EQ(0, std::distance(C.begin(), C.end()));
+
+  CG.insertEdge(C, B.getFunction());
+  EXPECT_EQ(1, std::distance(C.begin(), C.end()));
+  EXPECT_EQ(&B, &*C.begin());
+
+  CG.insertEdge(C, C.getFunction());
+  EXPECT_EQ(2, std::distance(C.begin(), C.end()));
+  EXPECT_EQ(&B, &*C.begin());
+  EXPECT_EQ(&C, &*(C.begin() + 1));
+}
+
 TEST(LazyCallGraphTest, MultiArmSCC) {
   // Two interlocking cycles. The really useful thing about this SCC is that it
   // will require Tarjan's DFS to backtrack and finish processing all of the
