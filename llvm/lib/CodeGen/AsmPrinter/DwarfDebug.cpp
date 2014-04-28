@@ -653,9 +653,7 @@ DwarfCompileUnit &DwarfDebug::constructDwarfCompileUnit(DICompileUnit DIUnit) {
   CompilationDir = DIUnit.getDirectory();
 
   auto OwnedUnit = make_unique<DwarfCompileUnit>(
-      InfoHolder.getUnits().size(),
-      make_unique<DIE>(dwarf::DW_TAG_compile_unit), DIUnit, Asm, this,
-      &InfoHolder);
+      InfoHolder.getUnits().size(), DIUnit, Asm, this, &InfoHolder);
   DwarfCompileUnit &NewCU = *OwnedUnit;
   DIE &Die = NewCU.getUnitDie();
   InfoHolder.addUnit(std::move(OwnedUnit));
@@ -2426,8 +2424,7 @@ void DwarfDebug::initSkeletonUnit(const DwarfUnit &U, DIE &Die,
 DwarfCompileUnit &DwarfDebug::constructSkeletonCU(const DwarfCompileUnit &CU) {
 
   auto OwnedUnit = make_unique<DwarfCompileUnit>(
-      CU.getUniqueID(), make_unique<DIE>(dwarf::DW_TAG_compile_unit),
-      CU.getCUNode(), Asm, this, &SkeletonHolder);
+      CU.getUniqueID(), CU.getCUNode(), Asm, this, &SkeletonHolder);
   DwarfCompileUnit &NewCU = *OwnedUnit;
   NewCU.initSection(Asm->getObjFileLowering().getDwarfInfoSection(),
                     DwarfInfoSectionSym);
@@ -2445,9 +2442,8 @@ DwarfTypeUnit &DwarfDebug::constructSkeletonTU(DwarfTypeUnit &TU) {
   DwarfCompileUnit &CU = static_cast<DwarfCompileUnit &>(
       *SkeletonHolder.getUnits()[TU.getCU().getUniqueID()]);
 
-  auto OwnedUnit = make_unique<DwarfTypeUnit>(
-      TU.getUniqueID(), make_unique<DIE>(dwarf::DW_TAG_type_unit), CU, Asm,
-      this, &SkeletonHolder);
+  auto OwnedUnit = make_unique<DwarfTypeUnit>(TU.getUniqueID(), CU, Asm, this,
+                                              &SkeletonHolder);
   DwarfTypeUnit &NewTU = *OwnedUnit;
   NewTU.setTypeSignature(TU.getTypeSignature());
   NewTU.setType(nullptr);
@@ -2530,9 +2526,9 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   bool TopLevelType = TypeUnitsUnderConstruction.empty();
   AddrPool.resetUsedFlag();
 
-  auto OwnedUnit = make_unique<DwarfTypeUnit>(
-      InfoHolder.getUnits().size(), make_unique<DIE>(dwarf::DW_TAG_type_unit),
-      CU, Asm, this, &InfoHolder, getDwoLineTable(CU));
+  auto OwnedUnit =
+      make_unique<DwarfTypeUnit>(InfoHolder.getUnits().size(), CU, Asm, this,
+                                 &InfoHolder, getDwoLineTable(CU));
   DwarfTypeUnit &NewTU = *OwnedUnit;
   DIE &UnitDie = NewTU.getUnitDie();
   TU = &NewTU;

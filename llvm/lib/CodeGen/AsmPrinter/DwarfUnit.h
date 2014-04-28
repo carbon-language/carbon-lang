@@ -73,7 +73,7 @@ protected:
   DICompileUnit CUNode;
 
   /// Unit debug information entry.
-  const std::unique_ptr<DIE> UnitDie;
+  DIE UnitDie;
 
   /// Offset of the UnitDie from beginning of debug info section.
   unsigned DebugInfoOffset;
@@ -144,8 +144,8 @@ protected:
   /// Skeleton unit associated with this unit.
   DwarfUnit *Skeleton;
 
-  DwarfUnit(unsigned UID, std::unique_ptr<DIE> D, DICompileUnit CU,
-            AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU);
+  DwarfUnit(unsigned UID, dwarf::Tag, DICompileUnit CU, AsmPrinter *A,
+            DwarfDebug *DW, DwarfFile *DWU);
 
 public:
   virtual ~DwarfUnit();
@@ -215,7 +215,7 @@ public:
   unsigned getUniqueID() const { return UniqueID; }
   uint16_t getLanguage() const { return CUNode.getLanguage(); }
   DICompileUnit getCUNode() const { return CUNode; }
-  DIE &getUnitDie() const { return *UnitDie; }
+  DIE &getUnitDie() { return UnitDie; }
   const StringMap<const DIE *> &getGlobalNames() const { return GlobalNames; }
   const StringMap<const DIE *> &getGlobalTypes() const { return GlobalTypes; }
 
@@ -223,7 +223,7 @@ public:
   void setDebugInfoOffset(unsigned DbgInfoOff) { DebugInfoOffset = DbgInfoOff; }
 
   /// hasContent - Return true if this compile unit has something to write out.
-  bool hasContent() const { return !UnitDie->getChildren().empty(); }
+  bool hasContent() const { return !UnitDie.getChildren().empty(); }
 
   /// addRange - Add an address range to the list of ranges for this unit.
   void addRange(RangeSpan Range);
@@ -533,8 +533,8 @@ class DwarfCompileUnit : public DwarfUnit {
   unsigned stmtListIndex;
 
 public:
-  DwarfCompileUnit(unsigned UID, std::unique_ptr<DIE> D, DICompileUnit Node,
-                   AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU);
+  DwarfCompileUnit(unsigned UID, DICompileUnit Node, AsmPrinter *A,
+                   DwarfDebug *DW, DwarfFile *DWU);
 
   void initStmtList(MCSymbol *DwarfLineSectionSym);
 
@@ -567,8 +567,8 @@ private:
   MCDwarfDwoLineTable *SplitLineTable;
 
 public:
-  DwarfTypeUnit(unsigned UID, std::unique_ptr<DIE> D, DwarfCompileUnit &CU,
-                AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU,
+  DwarfTypeUnit(unsigned UID, DwarfCompileUnit &CU, AsmPrinter *A,
+                DwarfDebug *DW, DwarfFile *DWU,
                 MCDwarfDwoLineTable *SplitLineTable = nullptr);
 
   void setTypeSignature(uint64_t Signature) { TypeSignature = Signature; }

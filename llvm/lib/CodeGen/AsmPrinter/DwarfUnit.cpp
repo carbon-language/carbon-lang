@@ -41,29 +41,30 @@ GenerateDwarfTypeUnits("generate-type-units", cl::Hidden,
                        cl::init(false));
 
 /// Unit - Unit constructor.
-DwarfUnit::DwarfUnit(unsigned UID, std::unique_ptr<DIE> D, DICompileUnit Node,
+DwarfUnit::DwarfUnit(unsigned UID, dwarf::Tag UnitTag, DICompileUnit Node,
                      AsmPrinter *A, DwarfDebug *DW, DwarfFile *DWU)
-    : UniqueID(UID), CUNode(Node), UnitDie(std::move(D)), DebugInfoOffset(0),
-      Asm(A), DD(DW), DU(DWU), IndexTyDie(nullptr), Section(nullptr),
+    : UniqueID(UID), CUNode(Node), UnitDie(UnitTag), DebugInfoOffset(0), Asm(A),
+      DD(DW), DU(DWU), IndexTyDie(nullptr), Section(nullptr),
       Skeleton(nullptr) {
+  assert(UnitTag == dwarf::DW_TAG_compile_unit ||
+         UnitTag == dwarf::DW_TAG_type_unit);
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
-DwarfCompileUnit::DwarfCompileUnit(unsigned UID, std::unique_ptr<DIE> D,
-                                   DICompileUnit Node, AsmPrinter *A,
-                                   DwarfDebug *DW, DwarfFile *DWU)
-    : DwarfUnit(UID, std::move(D), Node, A, DW, DWU) {
+DwarfCompileUnit::DwarfCompileUnit(unsigned UID, DICompileUnit Node,
+                                   AsmPrinter *A, DwarfDebug *DW,
+                                   DwarfFile *DWU)
+    : DwarfUnit(UID, dwarf::DW_TAG_compile_unit, Node, A, DW, DWU) {
   insertDIE(Node, &getUnitDie());
 }
 
-DwarfTypeUnit::DwarfTypeUnit(unsigned UID, std::unique_ptr<DIE> D,
-                             DwarfCompileUnit &CU, AsmPrinter *A,
+DwarfTypeUnit::DwarfTypeUnit(unsigned UID, DwarfCompileUnit &CU, AsmPrinter *A,
                              DwarfDebug *DW, DwarfFile *DWU,
                              MCDwarfDwoLineTable *SplitLineTable)
-    : DwarfUnit(UID, std::move(D), CU.getCUNode(), A, DW, DWU), CU(CU),
-      SplitLineTable(SplitLineTable) {
+    : DwarfUnit(UID, dwarf::DW_TAG_type_unit, CU.getCUNode(), A, DW, DWU),
+      CU(CU), SplitLineTable(SplitLineTable) {
   if (SplitLineTable)
-    addSectionOffset(*UnitDie, dwarf::DW_AT_stmt_list, 0);
+    addSectionOffset(UnitDie, dwarf::DW_AT_stmt_list, 0);
 }
 
 /// ~Unit - Destructor for compile unit.
@@ -1424,7 +1425,7 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
   DISubprogram SPDecl = SP.getFunctionDeclaration();
   if (SPDecl.isSubprogram())
     // Add subprogram definitions to the CU die directly.
-    ContextDIE = UnitDie.get();
+    ContextDIE = &getUnitDie();
 
   // DW_TAG_inlined_subroutine may refer to this DIE.
   DIE &SPDie = createAndAddDIE(dwarf::DW_TAG_subprogram, *ContextDIE, SP);
@@ -1644,7 +1645,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
     if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
         !GVContext.isFile() && !DD->isSubprogramContext(GVContext)) {
       // Create specification DIE.
-      VariableSpecDIE = &createAndAddDIE(dwarf::DW_TAG_variable, *UnitDie);
+      VariableSpecDIE = &createAndAddDIE(dwarf::DW_TAG_variable, UnitDie);
       addDIEEntry(*VariableSpecDIE, dwarf::DW_AT_specification, *VariableDIE);
       addBlock(*VariableSpecDIE, dwarf::DW_AT_location, Loc);
       // A static member's declaration is already flagged as such.
@@ -1742,7 +1743,7 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
   DIE *IdxTy = getIndexTyDie();
   if (!IdxTy) {
     // Construct an integer type to use for indexes.
-    IdxTy = &createAndAddDIE(dwarf::DW_TAG_base_type, *UnitDie);
+    IdxTy = &createAndAddDIE(dwarf::DW_TAG_base_type, UnitDie);
     addString(*IdxTy, dwarf::DW_AT_name, "sizetype");
     addUInt(*IdxTy, dwarf::DW_AT_byte_size, None, sizeof(int64_t));
     addUInt(*IdxTy, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
@@ -2049,7 +2050,7 @@ void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {
   MCSymbol *LineTableStartSym =
       Asm->OutStreamer.getDwarfLineTableSymbol(getUniqueID());
 
-  stmtListIndex = UnitDie->getValues().size();
+  stmtListIndex = UnitDie.getValues().size();
 
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section. For split dwarf this is
@@ -2057,16 +2058,16 @@ void DwarfCompileUnit::initStmtList(MCSymbol *DwarfLineSectionSym) {
   // The line table entries are not always emitted in assembly, so it
   // is not okay to use line_table_start here.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    addSectionLabel(*UnitDie, dwarf::DW_AT_stmt_list, LineTableStartSym);
+    addSectionLabel(UnitDie, dwarf::DW_AT_stmt_list, LineTableStartSym);
   else
-    addSectionDelta(*UnitDie, dwarf::DW_AT_stmt_list, LineTableStartSym,
+    addSectionDelta(UnitDie, dwarf::DW_AT_stmt_list, LineTableStartSym,
                     DwarfLineSectionSym);
 }
 
 void DwarfCompileUnit::applyStmtList(DIE &D) {
   D.addValue(dwarf::DW_AT_stmt_list,
-             UnitDie->getAbbrev().getData()[stmtListIndex].getForm(),
-             UnitDie->getValues()[stmtListIndex]);
+             UnitDie.getAbbrev().getData()[stmtListIndex].getForm(),
+             UnitDie.getValues()[stmtListIndex]);
 }
 
 void DwarfTypeUnit::emitHeader(const MCSymbol *ASectionSym) const {
