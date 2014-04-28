@@ -71,3 +71,62 @@ sym_f = sym_a + (1 - 1)
 // CHECK-NEXT:    Other: 0
 // CHECK-NEXT:    Section: .data
 // CHECK-NEXT:  }
+
+
+        .globl test2_a
+        .globl test2_b
+        .globl test2_c
+        .globl test2_d
+        .globl test2_e
+test2_a:
+    .long 0
+test2_b = test2_a
+test2_c:
+    .long 0
+test2_d = test2_c
+test2_e = test2_d - test2_b
+// CHECK:      Symbol {
+// CHECK:        Name: test2_a
+// CHECK-NEXT:   Value: 0x5
+// CHECK-NEXT:   Size: 0
+// CHECK-NEXT:   Binding: Global
+// CHECK-NEXT:   Type: None
+// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Section: .data
+// CHECK-NEXT: }
+// CHECK-NEXT: Symbol {
+// CHECK-NEXT:   Name: test2_b
+// CHECK-NEXT:   Value: 0x5
+// CHECK-NEXT:   Size: 0
+// CHECK-NEXT:   Binding: Global
+// CHECK-NEXT:   Type: None
+// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Section: .data
+// CHECK-NEXT: }
+// CHECK-NEXT: Symbol {
+// CHECK-NEXT:   Name: test2_c
+// CHECK-NEXT:   Value: 0x9
+// CHECK-NEXT:   Size: 0
+// CHECK-NEXT:   Binding: Global
+// CHECK-NEXT:   Type: None
+// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Section: .data
+// CHECK-NEXT: }
+// CHECK-NEXT: Symbol {
+// CHECK-NEXT:   Name: test2_d
+// CHECK-NEXT:   Value: 0x9
+// CHECK-NEXT:   Size: 0
+// CHECK-NEXT:   Binding: Global
+// CHECK-NEXT:   Type: None
+// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Section: .data
+// CHECK-NEXT: }
+// CHECK-NEXT: Symbol {
+// CHECK-NEXT:   Name: test2_e
+// CHECK-NEXT:   Value: 0x4
+// CHECK-NEXT:   Size: 0
+// CHECK-NEXT:   Binding: Global
+// CHECK-NEXT:   Type: None
+// CHECK-NEXT:   Other: 0
+// CHECK-NEXT:   Section: Absolute
+// CHECK-NEXT: }

@@ -53,8 +53,9 @@ protected:
 
   bool EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
                                  const MCAsmLayout *Layout,
-                                 const SectionAddrMap *Addrs,
-                                 bool InSet) const;
+                                 const SectionAddrMap *Addrs, bool InSet,
+                                 bool ForceVarExpansion) const;
+
 public:
   /// @name Accessors
   /// @{
@@ -92,6 +93,14 @@ public:
   /// @param Layout - The assembler layout object to use for evaluating values.
   /// @result - True on success.
   bool EvaluateAsRelocatable(MCValue &Res, const MCAsmLayout *Layout) const;
+
+  /// \brief Try to evaluate the expression to the form (a - b + constant) where
+  /// neither a nor b are variables.
+  ///
+  /// This is a more aggressive variant of EvaluateAsRelocatable. The intended
+  /// use is for when relocations are not available, like the symbol value in
+  /// the symbol table.
+  bool EvaluateAsValue(MCValue &Res, const MCAsmLayout *Layout) const;
 
   /// FindAssociatedSection - Find the "associated section" for this expression,
   /// which is currently defined as the absolute section for constants, or

@@ -496,7 +496,7 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
   if (Symbol->isVariable()) {
     const MCExpr *Expr = Symbol->getVariableValue();
     MCValue Value;
-    if (!Expr->EvaluateAsRelocatable(Value, &Layout))
+    if (!Expr->EvaluateAsValue(Value, &Layout))
       llvm_unreachable("Invalid expression");
 
     assert(!Value.getSymB());
@@ -606,7 +606,7 @@ static const MCSymbol *getBaseSymbol(const MCAsmLayout &Layout,
 
   const MCExpr *Expr = Symbol.getVariableValue();
   MCValue Value;
-  if (!Expr->EvaluateAsRelocatable(Value, &Layout))
+  if (!Expr->EvaluateAsValue(Value, &Layout))
     llvm_unreachable("Invalid Expression");
   const MCSymbolRefExpr *RefB = Value.getSymB();
   if (RefB) {
