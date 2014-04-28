@@ -591,9 +591,9 @@ std::unique_ptr<DIE> DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
   DIScope DS(Scope->getScopeNode());
 
   assert(Scope->getInlinedAt() ||
-         !DS.isSubprogram() && "Only handle inlined subprograms here, use "
-                               "constructSubprogramScopeDIE for non-inlined "
-                               "subprograms");
+         (!DS.isSubprogram() && "Only handle inlined subprograms here, use "
+                                "constructSubprogramScopeDIE for non-inlined "
+                                "subprograms"));
 
   SmallVector<std::unique_ptr<DIE>, 8> Children;
 
