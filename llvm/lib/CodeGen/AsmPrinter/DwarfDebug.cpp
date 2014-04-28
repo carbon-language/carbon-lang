@@ -118,7 +118,6 @@ bool DbgVariable::isBlockByrefVariable() const {
   return Var.isBlockByrefVariable(DD->getTypeIdentifierMap());
 }
 
-
 DIType DbgVariable::getType() const {
   DIType Ty = Var.getType().resolve(DD->getTypeIdentifierMap());
   // FIXME: isBlockByrefVariable should be reformulated in terms of complex
@@ -210,9 +209,8 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   else
     HasDwarfPubSections = DwarfPubSections == Enable;
 
-  DwarfVersion = DwarfVersionNumber
-                     ? DwarfVersionNumber
-                     : MMI->getModule()->getDwarfVersion();
+  DwarfVersion = DwarfVersionNumber ? DwarfVersionNumber
+                                    : MMI->getModule()->getDwarfVersion();
 
   {
     NamedRegionTimer T(DbgTimerName, DWARFGroupName, TimePassesIsEnabled);
@@ -546,7 +544,8 @@ DIE *DwarfDebug::createScopeChildrenDIE(
   return ObjectPointer;
 }
 
-DIE *DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope) {
+DIE *DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
+                                             LexicalScope *Scope) {
   assert(Scope && Scope->getScopeNode());
 
   DIScope DS(Scope->getScopeNode());
@@ -620,11 +619,10 @@ std::unique_ptr<DIE> DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
     // There is no need to emit empty lexical block DIE.
     std::pair<ImportedEntityMap::const_iterator,
               ImportedEntityMap::const_iterator> Range =
-        std::equal_range(
-            ScopesWithImportedEntities.begin(),
-            ScopesWithImportedEntities.end(),
-            std::pair<const MDNode *, const MDNode *>(DS, nullptr),
-            less_first());
+        std::equal_range(ScopesWithImportedEntities.begin(),
+                         ScopesWithImportedEntities.end(),
+                         std::pair<const MDNode *, const MDNode *>(DS, nullptr),
+                         less_first());
     if (Children.empty() && Range.first == Range.second)
       return nullptr;
     ScopeDIE = constructLexicalScopeDIE(TheCU, Scope);
@@ -2074,7 +2072,7 @@ void DwarfDebug::emitDebugStr() {
 void DwarfDebug::emitDebugLocEntry(ByteStreamer &Streamer,
                                    const DebugLocEntry &Entry) {
   assert(Entry.getValues().size() == 1 &&
-	 "multi-value entries are not supported yet.");
+         "multi-value entries are not supported yet.");
   const DebugLocEntry::Value Value = Entry.getValues()[0];
   DIVariable DV(Value.getVariable());
   if (Value.isInt()) {
@@ -2208,7 +2206,7 @@ void DwarfDebug::emitDebugARanges() {
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getDwarfARangesSection());
 
-  typedef DenseMap<DwarfCompileUnit *, std::vector<ArangeSpan> > SpansType;
+  typedef DenseMap<DwarfCompileUnit *, std::vector<ArangeSpan>> SpansType;
 
   SpansType Spans;
 
@@ -2464,7 +2462,7 @@ void DwarfDebug::emitDebugInfoDWO() {
   assert(useSplitDwarf() && "No split dwarf debug info?");
   // Don't pass an abbrev symbol, using a constant zero instead so as not to
   // emit relocations into the dwo file.
-  InfoHolder.emitUnits(this, /* AbbrevSymbol */nullptr);
+  InfoHolder.emitUnits(this, /* AbbrevSymbol */ nullptr);
 }
 
 // Emit the .debug_abbrev.dwo section for separated dwarf. This contains the
@@ -2536,7 +2534,8 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
                                  this, &InfoHolder, getDwoLineTable(CU));
   DwarfTypeUnit &NewTU = *OwnedUnit;
   TU = &NewTU;
-  TypeUnitsUnderConstruction.push_back(std::make_pair(std::move(OwnedUnit), CTy));
+  TypeUnitsUnderConstruction.push_back(
+      std::make_pair(std::move(OwnedUnit), CTy));
 
   NewTU.addUInt(*UnitDie, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                 CU.getLanguage());
