@@ -126,6 +126,13 @@ just_do_benchmarks_test = False
 dont_do_dsym_test = "linux" in sys.platform or "freebsd" in sys.platform
 dont_do_dwarf_test = False
 
+# Don't do debugserver tests on everything except OS X.
+# Something for Windows here?
+dont_do_debugserver_test = "linux" in sys.platform or "freebsd" in sys.platform
+
+# Don't do lldb-gdbserver (llgs) tests on anything except Linux.
+dont_do_llgs_test = not ("linux" in sys.platform)
+
 # The blacklist is optional (-b blacklistFile) and allows a central place to skip
 # testclass's and/or testclass.testmethod's.
 blacklist = None
@@ -1300,6 +1307,8 @@ lldb.just_do_python_api_test = just_do_python_api_test
 lldb.just_do_benchmarks_test = just_do_benchmarks_test
 lldb.dont_do_dsym_test = dont_do_dsym_test
 lldb.dont_do_dwarf_test = dont_do_dwarf_test
+lldb.dont_do_debugserver_test = dont_do_debugserver_test
+lldb.dont_do_llgs_test = dont_do_llgs_test
 
 # Do we need to skip build and cleanup?
 lldb.skip_build_and_cleanup = skip_build_and_cleanup

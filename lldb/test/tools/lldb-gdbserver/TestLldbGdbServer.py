@@ -21,19 +21,26 @@ class LldbGdbServerTestCase(TestBase):
 
     _GDBREMOTE_KILL_PACKET = "$k#6b"
 
-    # _LOGGING_LEVEL = logging.WARNING
-    _LOGGING_LEVEL = logging.DEBUG
+    _LOGGING_LEVEL = logging.WARNING
+    # _LOGGING_LEVEL = logging.DEBUG
 
     def setUp(self):
         TestBase.setUp(self)
-        self.lldb_gdbserver_exe = get_lldb_gdbserver_exe()
-        if not self.lldb_gdbserver_exe:
-            self.skipTest("lldb_gdbserver exe not specified")
 
         FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
         logging.basicConfig(format=FORMAT)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(self._LOGGING_LEVEL)
+
+    def init_llgs_test(self):
+        self.debug_monitor_exe = get_lldb_gdbserver_exe()
+        if not self.debug_monitor_exe:
+            self.skipTest("lldb_gdbserver exe not found")
+
+    def init_debugserver_test(self):
+        self.debug_monitor_exe = get_debugserver_exe()
+        if not self.debug_monitor_exe:
+            self.skipTest("debugserver exe not found")
 
     def create_socket(self):
         sock = socket.socket()
@@ -59,24 +66,24 @@ class LldbGdbServerTestCase(TestBase):
 
     def start_server(self):
         # start the server
-        server = pexpect.spawn("{} localhost:{}".format(self.lldb_gdbserver_exe, self.port))
+        server = pexpect.spawn("{} localhost:{}".format(self.debug_monitor_exe, self.port))
 
         # Turn on logging for what the child sends back.
         if self.TraceOn():
             server.logfile_read = sys.stdout
 
-        # Schedule lldb-gdbserver to be shutting down during teardown.
+        # Schedule debug monitor to be shut down during teardown.
         logger = self.logger
-        def shutdown_lldb_gdbserver():
+        def shutdown_debug_monitor():
             try:
                 server.close()
             except:
                 logger.warning("failed to close pexpect server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
 
-        self.addTearDownHook(shutdown_lldb_gdbserver)
+        self.addTearDownHook(shutdown_debug_monitor)
 
         # Wait until we receive the server ready message before continuing.
-        server.expect_exact('Listening for a connection on localhost:{}'.format(self.port))
+        server.expect_exact('Listening to port {} for a connection from localhost'.format(self.port))
 
         # Create a socket to talk to the server
         self.sock = self.create_socket()
@@ -91,11 +98,17 @@ class LldbGdbServerTestCase(TestBase):
             "lldb-gdbserver <   6> send packet: $OK#9a",
             "lldb-gdbserver <   1> read packet: +"]
 
-
-    def test_exe_starts(self):
+    @debugserver_test
+    def test_exe_starts_debugserver(self):
+        self.init_debugserver_test()
         server = self.start_server()
 
-    def test_start_no_ack_mode(self):
+    @llgs_test
+    def test_exe_starts_llgs(self):
+        self.init_llgs_test()
+        server = self.start_server()
+
+    def start_no_ack_mode(self):
         server = self.start_server()
         self.assertIsNotNone(server)
 
@@ -104,8 +117,17 @@ class LldbGdbServerTestCase(TestBase):
         expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
                                      self._TIMEOUT_SECONDS, self.logger)
 
-    @unittest2.expectedFailure()
-    def test_thread_suffix_supported(self):
+    @debugserver_test
+    def test_start_no_ack_mode_debugserver(self):
+        self.init_debugserver_test()
+        self.start_no_ack_mode()
+
+    @llgs_test
+    def test_start_no_ack_mode_llgs(self):
+        self.init_llgs_test()
+        self.start_no_ack_mode()
+
+    def thread_suffix_supported(self):
         server = self.start_server()
         self.assertIsNotNone(server)
 
@@ -117,8 +139,18 @@ class LldbGdbServerTestCase(TestBase):
         expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
                                      self._TIMEOUT_SECONDS, self.logger)
 
+    @debugserver_test
+    def test_thread_suffix_supported_debugserver(self):
+        self.init_debugserver_test()
+        self.thread_suffix_supported()
+
+    @llgs_test
     @unittest2.expectedFailure()
-    def test_list_threads_in_stop_reply_supported(self):
+    def test_thread_suffix_supported_llgs(self):
+        self.init_llgs_test()
+        self.thread_suffix_supported()
+
+    def list_threads_in_stop_reply_supported(self):
         server = self.start_server()
         self.assertIsNotNone(server)
 
@@ -129,6 +161,17 @@ class LldbGdbServerTestCase(TestBase):
 
         expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
                                      self._TIMEOUT_SECONDS, self.logger)
+
+    @debugserver_test
+    def test_list_threads_in_stop_reply_supported_debugserver(self):
+        self.init_debugserver_test()
+        self.list_threads_in_stop_reply_supported()
+
+    @llgs_test
+    @unittest2.expectedFailure()
+    def test_list_threads_in_stop_reply_supported_llgs(self):
+        self.init_llgs_test()
+        self.list_threads_in_stop_reply_supported()
 
     def start_inferior(self):
         server = self.start_server()
@@ -148,13 +191,17 @@ class LldbGdbServerTestCase(TestBase):
         expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
                                      self._TIMEOUT_SECONDS, self.logger)
 
+    @debugserver_test
     @dsym_test
-    def test_start_inferior(self):
+    def test_start_inferior_debugserver_dsym(self):
+        self.init_debugserver_test()
         self.buildDsym()
         self.start_inferior()
 
+    @llgs_test
     @dwarf_test
-    def test_start_inferior(self):
+    def test_start_inferior_llgs_dwarf(self):
+        self.init_llgs_test()
         self.buildDwarf()
         self.start_inferior()
 

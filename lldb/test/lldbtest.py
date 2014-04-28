@@ -373,6 +373,40 @@ def dwarf_test(func):
     wrapper.__dwarf_test__ = True
     return wrapper
 
+def debugserver_test(func):
+    """Decorate the item as a debugserver test."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@debugserver_test can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if lldb.dont_do_debugserver_test:
+                self.skipTest("debugserver tests")
+        except AttributeError:
+            pass
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from the regular tests.
+    wrapper.__debugserver_test__ = True
+    return wrapper
+
+def llgs_test(func):
+    """Decorate the item as a lldb-gdbserver test."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@llgs_test can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if lldb.dont_do_llgs_test:
+                self.skipTest("llgs tests")
+        except AttributeError:
+            pass
+        return func(self, *args, **kwargs)
+
+    # Mark this function as such to separate them from the regular tests.
+    wrapper.__llgs_test__ = True
+    return wrapper
+
 def not_remote_testsuite_ready(func):
     """Decorate the item as a test which is not ready yet for remote testsuite."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):

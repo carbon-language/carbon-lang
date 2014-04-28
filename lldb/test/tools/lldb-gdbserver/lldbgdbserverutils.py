@@ -7,36 +7,42 @@ import re
 import select
 import time
 
-def _get_lldb_gdbserver_from_lldb(lldb_exe):
-    """Return the lldb-gdbserver exe path given the lldb exe path.
 
-    This method attempts to construct a valid lldb-gdbserver exe name
+def _get_debug_monitor_from_lldb(lldb_exe, debug_monitor_basename):
+    """Return the debug monitor exe path given the lldb exe path.
+
+    This method attempts to construct a valid debug monitor exe name
     from a given lldb exe name.  It will return None if the synthesized
-    lldb-gdbserver name is not found to exist.
+    debug monitor name is not found to exist.
 
-    The lldb-gdbserver exe path is synthesized by taking the directory
+    The debug monitor exe path is synthesized by taking the directory
     of the lldb exe, and replacing the portion of the base name that
-    matches "lldb" (case insensitive) and replacing with "lldb-gdbserver".
+    matches "lldb" (case insensitive) and replacing with the value of
+    debug_monitor_basename.
 
     Args:
         lldb_exe: the path to an lldb executable.
 
+        debug_monitor_basename: the base name portion of the debug monitor
+            that will replace 'lldb'.
+
     Returns:
-        A path to the lldb-gdbserver exe if it is found to exist; otherwise,
+        A path to the debug monitor exe if it is found to exist; otherwise,
         returns None.
+
     """
 
     exe_dir = os.path.dirname(lldb_exe)
     exe_base = os.path.basename(lldb_exe)
 
     # we'll rebuild the filename by replacing lldb with
-    # lldb-gdbserver, keeping any prefix or suffix in place.
+    # the debug monitor basename, keeping any prefix or suffix in place.
     regex = re.compile(r"lldb", re.IGNORECASE)
-    new_base = regex.sub("lldb-gdbserver", exe_base)
+    new_base = regex.sub(debug_monitor_basename, exe_base)
 
-    lldb_gdbserver_exe = os.path.join(exe_dir, new_base)
-    if os.path.exists(lldb_gdbserver_exe):
-        return lldb_gdbserver_exe
+    debug_monitor_exe = os.path.join(exe_dir, new_base)
+    if os.path.exists(debug_monitor_exe):
+        return debug_monitor_exe
     else:
         return None
 
@@ -52,7 +58,20 @@ def get_lldb_gdbserver_exe():
     if not lldb_exe:
         return None
     else:
-        return _get_lldb_gdbserver_from_lldb(lldb_exe)
+        return _get_debug_monitor_from_lldb(lldb_exe, "lldb-gedbserver")
+
+def get_debugserver_exe():
+    """Return the debugserver exe path.
+
+    Returns:
+        A path to the debugserver exe if it is found to exist; otherwise,
+        returns None.
+    """
+    lldb_exe = os.environ["LLDB_EXEC"]
+    if not lldb_exe:
+        return None
+    else:
+        return _get_debug_monitor_from_lldb(lldb_exe, "debugserver")
 
 
 _LOG_LINE_REGEX = re.compile(r'^(lldb-gdbserver|debugserver)\s+<\s*(\d+)>' +
@@ -87,8 +106,18 @@ def _is_packet_lldb_gdbserver_input(packet_type, llgs_input_is_read):
         raise "Unknown packet type: {}".format(packet_type)
 
 
-_GDB_REMOTE_PACKET_REGEX = re.compile(r'^\$[^\#]*\#[0-9a-fA-F]{2}')
+_STRIP_CHECKSUM_REGEX = re.compile(r'#[0-9a-fA-F]{2}$')
 
+def assert_packets_equal(asserter, actual_packet, expected_packet):
+    # strip off the checksum digits of the packet.  When we're in
+    # no-ack mode, the # checksum is ignored, and should not be cause
+    # for a mismatched packet.
+    actual_stripped = _STRIP_CHECKSUM_REGEX.sub('', actual_packet)
+    expected_stripped = _STRIP_CHECKSUM_REGEX.sub('', expected_packet)
+    asserter.assertEqual(actual_stripped, expected_stripped)
+
+
+_GDB_REMOTE_PACKET_REGEX = re.compile(r'^\$([^\#]*)#[0-9a-fA-F]{2}')
 
 def expect_lldb_gdbserver_replay(
     asserter,
@@ -134,19 +163,20 @@ def expect_lldb_gdbserver_replay(
             logger.debug("processing log line: {}".format(packet))
         match = _LOG_LINE_REGEX.match(packet)
         if match:
+            playback_packet = match.group(4)
             if _is_packet_lldb_gdbserver_input(
                     match.group(3),
                     read_is_llgs_input):
                 # handle as something to send to lldb-gdbserver on
                 # socket.
                 if logger:
-                    logger.info("sending packet to llgs: {}".format(match.group(4)))
-                sock.sendall(match.group(4))
+                    logger.info("sending packet to llgs: {}".format(playback_packet))
+                sock.sendall(playback_packet)
             else:
                 # expect it as output from lldb-gdbserver received
                 # from socket.
                 if logger:
-                    logger.info("receiving packet from llgs, should match: {}".format(match.group(4)))
+                    logger.info("receiving packet from llgs, should match: {}".format(playback_packet))
                 start_time = time.time()
                 timeout_time = start_time + timeout_seconds
 
@@ -157,7 +187,7 @@ def expect_lldb_gdbserver_replay(
                     if time.time() > timeout_time:
                         raise Exception(
                             'timed out after {} seconds while waiting for llgs to respond with: {}, currently received: {}'.format(
-                                timeout_seconds, match.group(4), receive_buffer))
+                                timeout_seconds, playback_packet, receive_buffer))
                     can_read, _, _ = select.select(
                         [sock], [], [], 0)
                     if can_read and sock in can_read:
@@ -191,9 +221,8 @@ def expect_lldb_gdbserver_replay(
 
                 # got a line - now try to match it against expected line
                 if len(received_lines) > 0:
-                    actual_receive = received_lines.pop(0)
-                    expected_receive = match.group(4)
-                    asserter.assertEqual(actual_receive, expected_receive)
+                    received_packet = received_lines.pop(0)
+                    assert_packets_equal(asserter, received_packet, playback_packet)
 
     return None
 
