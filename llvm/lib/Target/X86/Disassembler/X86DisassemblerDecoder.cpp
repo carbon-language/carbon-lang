@@ -1663,7 +1663,6 @@ static int readMaskRegister(struct InternalInstruction* insn) {
  * @return      - 0 if all operands could be read; nonzero otherwise.
  */
 static int readOperands(struct InternalInstruction* insn) {
-  int index;
   int hasVVVV, needVVVV;
   int sawRegImm = 0;
 
@@ -1674,8 +1673,8 @@ static int readOperands(struct InternalInstruction* insn) {
   hasVVVV = !readVVVV(insn);
   needVVVV = hasVVVV && (insn->vvvv != 0);
 
-  for (index = 0; index < X86_MAX_OPERANDS; ++index) {
-    switch (x86OperandSets[insn->spec->operands][index].encoding) {
+  for (const auto &Op : x86OperandSets[insn->spec->operands]) {
+    switch (Op.encoding) {
     case ENCODING_NONE:
     case ENCODING_SI:
     case ENCODING_DI:
@@ -1684,7 +1683,7 @@ static int readOperands(struct InternalInstruction* insn) {
     case ENCODING_RM:
       if (readModRM(insn))
         return -1;
-      if (fixupReg(insn, &x86OperandSets[insn->spec->operands][index]))
+      if (fixupReg(insn, &Op))
         return -1;
       break;
     case ENCODING_CB:
@@ -1706,14 +1705,14 @@ static int readOperands(struct InternalInstruction* insn) {
       }
       if (readImmediate(insn, 1))
         return -1;
-      if (x86OperandSets[insn->spec->operands][index].type == TYPE_IMM3 &&
+      if (Op.type == TYPE_IMM3 &&
           insn->immediates[insn->numImmediatesConsumed - 1] > 7)
         return -1;
-      if (x86OperandSets[insn->spec->operands][index].type == TYPE_IMM5 &&
+      if (Op.type == TYPE_IMM5 &&
           insn->immediates[insn->numImmediatesConsumed - 1] > 31)
         return -1;
-      if (x86OperandSets[insn->spec->operands][index].type == TYPE_XMM128 ||
-          x86OperandSets[insn->spec->operands][index].type == TYPE_XMM256)
+      if (Op.type == TYPE_XMM128 ||
+          Op.type == TYPE_XMM256)
         sawRegImm = 1;
       break;
     case ENCODING_IW:
@@ -1762,7 +1761,7 @@ static int readOperands(struct InternalInstruction* insn) {
       needVVVV = 0; /* Mark that we have found a VVVV operand. */
       if (!hasVVVV)
         return -1;
-      if (fixupReg(insn, &x86OperandSets[insn->spec->operands][index]))
+      if (fixupReg(insn, &Op))
         return -1;
       break;
     case ENCODING_WRITEMASK:
@@ -1825,7 +1824,7 @@ int llvm::X86Disassembler::decodeInstruction(
       readOperands(insn))
     return -1;
 
-  insn->operands = &x86OperandSets[insn->spec->operands][0];
+  insn->operands = x86OperandSets[insn->spec->operands];
 
   insn->length = insn->readerCursor - insn->startLocation;
 

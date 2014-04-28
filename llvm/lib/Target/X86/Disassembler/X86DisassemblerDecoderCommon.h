@@ -481,7 +481,7 @@ enum ModifierType {
 };
 #undef ENUM_ENTRY
 
-static const int X86_MAX_OPERANDS = 5;
+static const unsigned X86_MAX_OPERANDS = 5;
 
 /// Decoding mode for the Intel disassembler.  16-bit, 32-bit, and 64-bit mode
 /// are supported, and represent real mode, IA-32e, and IA-32e in 64-bit mode,

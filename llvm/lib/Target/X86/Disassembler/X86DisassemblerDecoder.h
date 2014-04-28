@@ -17,6 +17,7 @@
 #define X86DISASSEMBLERDECODER_H
 
 #include "X86DisassemblerDecoderCommon.h"
+#include "llvm/ADT/ArrayRef.h"
 
 namespace llvm {
 namespace X86Disassembler {
@@ -620,7 +621,7 @@ struct InternalInstruction {
   uint8_t                       sibScale;
   SIBBase                       sibBase;
 
-  const OperandSpecifier *operands;
+  ArrayRef<OperandSpecifier> operands;
 };
 
 /// \brief Decode one instruction and store the decoding results in
