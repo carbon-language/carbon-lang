@@ -4523,6 +4523,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("a * [self dostuff];");
   verifyIndependentOfContext("int x = a * (a + b);");
   verifyIndependentOfContext("(a *)(a + b);");
+  verifyIndependentOfContext("*(int *)(p & ~3UL) = 0;");
   verifyIndependentOfContext("int *pa = (int *)&a;");
   verifyIndependentOfContext("return sizeof(int **);");
   verifyIndependentOfContext("return sizeof(int ******);");

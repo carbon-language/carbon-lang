@@ -682,7 +682,7 @@ private:
       for (FormatToken *Previous = Current.Previous;
            Previous && !Previous->isOneOf(tok::comma, tok::semi);
            Previous = Previous->Previous) {
-        if (Previous->is(tok::r_square))
+        if (Previous->isOneOf(tok::r_square, tok::r_paren))
           Previous = Previous->MatchingParen;
         if (Previous->Type == TT_BinaryOperator &&
             Previous->isOneOf(tok::star, tok::amp)) {
