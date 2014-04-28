@@ -284,10 +284,8 @@ LazyCallGraph::SCC::removeIntraSCCEdge(Node &CallerN,
   // First remove it from the node.
   CallerN.removeEdgeInternal(CalleeN.getFunction());
 
-  // We return a list of the resulting SCCs, where 'this' is always the first
-  // element.
+  // We return a list of the resulting *new* SCCs in postorder.
   SmallVector<SCC *, 1> ResultSCCs;
-  ResultSCCs.push_back(this);
 
   // Direct recursion doesn't impact the SCC graph at all.
   if (&CallerN == &CalleeN)
@@ -337,7 +335,7 @@ LazyCallGraph::SCC::removeIntraSCCEdge(Node &CallerN,
     }
   }
 #ifndef NDEBUG
-  if (ResultSCCs.size() > 1)
+  if (!ResultSCCs.empty())
     assert(!IsLeafSCC && "This SCC cannot be a leaf as we have split out new "
                          "SCCs by removing this edge.");
   if (!std::any_of(G->LeafSCCs.begin(), G->LeafSCCs.end(),
@@ -347,7 +345,7 @@ LazyCallGraph::SCC::removeIntraSCCEdge(Node &CallerN,
 #endif
   // If this SCC stopped being a leaf through this edge removal, remove it from
   // the leaf SCC list.
-  if (!IsLeafSCC && ResultSCCs.size() > 1)
+  if (!IsLeafSCC && !ResultSCCs.empty())
     G->LeafSCCs.erase(std::remove(G->LeafSCCs.begin(), G->LeafSCCs.end(), this),
                      G->LeafSCCs.end());
 
