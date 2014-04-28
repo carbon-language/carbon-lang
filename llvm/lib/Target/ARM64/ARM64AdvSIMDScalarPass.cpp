@@ -90,7 +90,7 @@ public:
   virtual bool runOnMachineFunction(MachineFunction &F);
 
   const char *getPassName() const {
-    return "AdvSIMD scalar operation optimization";
+    return "AdvSIMD Scalar Operation Optimization";
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -117,7 +117,7 @@ static bool isFPR64(unsigned Reg, unsigned SubReg,
             SubReg == 0) ||
            (MRI->getRegClass(Reg)->hasSuperClassEq(&ARM64::FPR128RegClass) &&
             SubReg == ARM64::dsub);
-  // Physical register references just check the regist class directly.
+  // Physical register references just check the register class directly.
   return (ARM64::FPR64RegClass.contains(Reg) && SubReg == 0) ||
          (ARM64::FPR128RegClass.contains(Reg) && SubReg == ARM64::dsub);
 }
@@ -148,7 +148,7 @@ static unsigned getSrcFromCopy(const MachineInstr *MI,
                 MRI) &&
         isFPR64(MI->getOperand(1).getReg(), MI->getOperand(1).getSubReg(),
                 MRI)) {
-      SubReg = ARM64::dsub;
+      SubReg = MI->getOperand(1).getSubReg();
       return MI->getOperand(1).getReg();
     }
   }
