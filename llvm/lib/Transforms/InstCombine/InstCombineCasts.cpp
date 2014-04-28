@@ -143,6 +143,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   AllocaInst *New = AllocaBuilder.CreateAlloca(CastElTy, Amt);
   New->setAlignment(AI.getAlignment());
   New->takeName(&AI);
+  New->setUsedWithInAlloca(AI.isUsedWithInAlloca());
 
   // If the allocation has multiple real uses, insert a cast and change all
   // things that used it to use the new cast.  This will also hack on CI, but it
