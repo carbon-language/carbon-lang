@@ -40,6 +40,7 @@ static const unsigned L = sizeof(long);
 static const unsigned LL = sizeof(long long);
 static const unsigned S = sizeof(short);
 static const unsigned C = sizeof(char);
+static const unsigned LC = sizeof(wchar_t);
 static const unsigned D = sizeof(double);
 static const unsigned LD = sizeof(long double);
 static const unsigned F = sizeof(float);
@@ -114,6 +115,7 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanf("%qd", 1, LL);
   testScanf("a %hd%hhx", 2, S, C);
   testScanf("%c", 1, C);
+  testScanf("%lc", 1, LC);
 
   testScanf("%%", 0);
   testScanf("a%%", 0);
@@ -129,6 +131,8 @@ TEST(SanitizerCommonInterceptors, Scanf) {
 
   testScanf("%10s", 1, 11);
   testScanf("%10c", 1, 10);
+  testScanf("%10ls", 1, 11 * LC);
+  testScanf("%10lc", 1, 10 * LC);
   testScanf("%%10s", 0);
   testScanf("%*10s", 0);
   testScanf("%*d", 0);
@@ -248,4 +252,7 @@ TEST(SanitizerCommonInterceptors, Printf) {
 
   // Dynamic precision for strings is not implemented yet.
   testPrintf("%.*s", 1, 0);
+
+  // Checks for wide-character strings are not implemented yet.
+  testPrintf("%ls", 1, 0);
 }

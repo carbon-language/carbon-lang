@@ -80,24 +80,23 @@ static bool format_is_float_conv(char c) {
 static int format_get_char_size(char convSpecifier,
                                 const char lengthModifier[2]) {
   if (char_is_one_of(convSpecifier, "CS")) {
-    // wchar_t
-    return 0;
+    return sizeof(wchar_t);
   }
 
   if (char_is_one_of(convSpecifier, "cs[")) {
-    if (lengthModifier[0] == 'l')
-      // wchar_t
-      return 0;
-    else if (lengthModifier[0] == 0)
+    if (lengthModifier[0] == 'l' && lengthModifier[1] == '\0')
+      return sizeof(wchar_t);
+    else if (lengthModifier[0] == '\0')
       return sizeof(char);
-    else
-      return 0;
   }
 
   return 0;
 }
 
 enum FormatStoreSize {
+  // Store size not known in advance; can be calculated as wcslen() of the
+  // destination buffer.
+  FSS_WCSLEN = -2,
   // Store size not known in advance; can be calculated as strlen() of the
   // destination buffer.
   FSS_STRLEN = -1,
@@ -108,7 +107,7 @@ enum FormatStoreSize {
 // Returns the memory size of a format directive (if >0), or a value of
 // FormatStoreSize.
 static int format_get_value_size(char convSpecifier,
-                                 const char lengthModifier[2], int fieldWidth,
+                                 const char lengthModifier[2],
                                  bool promote_float) {
   if (format_is_integer_conv(convSpecifier)) {
     switch (lengthModifier[0]) {
@@ -147,15 +146,6 @@ static int format_get_value_size(char convSpecifier,
     default:
       return FSS_INVALID;
     }
-  }
-
-  if (char_is_one_of(convSpecifier, "cC")) {
-    unsigned charSize = format_get_char_size(convSpecifier, lengthModifier);
-    if (charSize == 0)
-      return FSS_INVALID;
-    if (fieldWidth == 0)
-      return charSize;
-    return fieldWidth * charSize;
   }
 
   if (convSpecifier == 'p') {
@@ -288,18 +278,21 @@ static int scanf_get_value_size(ScanfDirective *dir) {
     return sizeof(char *) < sizeof(float) ? sizeof(char *) : sizeof(float);
   }
 
-  if (char_is_one_of(dir->convSpecifier, "sS[")) {
-    unsigned charSize = format_get_char_size(dir->convSpecifier,
-                                             dir->lengthModifier);
+  if (char_is_one_of(dir->convSpecifier, "cCsS[")) {
+    bool needsTerminator = char_is_one_of(dir->convSpecifier, "sS[");
+    unsigned charSize =
+        format_get_char_size(dir->convSpecifier, dir->lengthModifier);
     if (charSize == 0)
       return FSS_INVALID;
-    if (dir->fieldWidth == 0)
-      return FSS_STRLEN;
-    return (dir->fieldWidth + 1) * charSize;
+    if (dir->fieldWidth == 0) {
+      if (!needsTerminator)
+        return charSize;
+      return (charSize == sizeof(char)) ? FSS_STRLEN : FSS_WCSLEN;
+    }
+    return (dir->fieldWidth + needsTerminator) * charSize;
   }
 
-  return format_get_value_size(dir->convSpecifier, dir->lengthModifier,
-                               dir->fieldWidth, false);
+  return format_get_value_size(dir->convSpecifier, dir->lengthModifier, false);
 }
 
 // Common part of *scanf interceptors.
@@ -342,6 +335,9 @@ static void scanf_common(void *ctx, int n_inputs, bool allowGnuMalloc,
       break;
     if (size == FSS_STRLEN) {
       size = internal_strlen((const char *)argp) + 1;
+    } else if (size == FSS_WCSLEN) {
+      // FIXME: actually use wcslen() to calculate it.
+      size = 0;
     }
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, argp, size);
   }
@@ -442,16 +438,18 @@ static int printf_get_value_size(PrintfDirective *dir) {
     return sizeof(char *);
   }
 
-  if (char_is_one_of(dir->convSpecifier, "sS")) {
-    unsigned charSize = format_get_char_size(dir->convSpecifier,
-                                             dir->lengthModifier);
+  if (char_is_one_of(dir->convSpecifier, "cCsS")) {
+    unsigned charSize =
+        format_get_char_size(dir->convSpecifier, dir->lengthModifier);
     if (charSize == 0)
       return FSS_INVALID;
-    return FSS_STRLEN;
+    if (char_is_one_of(dir->convSpecifier, "sS")) {
+      return (charSize == sizeof(char)) ? FSS_STRLEN : FSS_WCSLEN;
+    }
+    return charSize;
   }
 
-  return format_get_value_size(dir->convSpecifier, dir->lengthModifier,
-                               dir->fieldWidth, true);
+  return format_get_value_size(dir->convSpecifier, dir->lengthModifier, true);
 }
 
 #define SKIP_SCALAR_ARG(aq, convSpecifier, size)                   \
@@ -540,6 +538,12 @@ static void printf_common(void *ctx, const char *format, va_list aq) {
           // Whole string will be accessed.
           size = internal_strlen((const char *)argp) + 1;
         }
+        COMMON_INTERCEPTOR_READ_RANGE(ctx, argp, size);
+      }
+    } else if (size == FSS_WCSLEN) {
+      if (void *argp = va_arg(aq, void *)) {
+        // FIXME: Properly support wide-character strings (via wcsrtombs).
+        size = 0;
         COMMON_INTERCEPTOR_READ_RANGE(ctx, argp, size);
       }
     } else {
