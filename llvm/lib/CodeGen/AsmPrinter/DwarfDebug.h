@@ -359,14 +359,17 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Construct new DW_TAG_lexical_block for this scope and
   /// attach DW_AT_low_pc/DW_AT_high_pc labels.
-  DIE *constructLexicalScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope);
+  std::unique_ptr<DIE> constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
+                                                LexicalScope *Scope);
 
   /// \brief This scope represents inlined body of a function. Construct
   /// DIE to represent this concrete inlined copy of the function.
-  DIE *constructInlinedScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope);
+  std::unique_ptr<DIE> constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
+                                                LexicalScope *Scope);
 
   /// \brief Construct a DIE for this scope.
-  DIE *constructScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope);
+  std::unique_ptr<DIE> constructScopeDIE(DwarfCompileUnit &TheCU,
+                                         LexicalScope *Scope);
   /// \brief Construct a DIE for this scope.
   DIE *constructSubprogramScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope);
   /// A helper function to create children of a Scope DIE.
@@ -496,11 +499,11 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Construct import_module DIE.
   void constructImportedEntityDIE(DwarfCompileUnit &TheCU, const MDNode *N,
-                                  DIE *Context);
+                                  DIE &Context);
 
   /// \brief Construct import_module DIE.
   void constructImportedEntityDIE(DwarfCompileUnit &TheCU,
-                                  const DIImportedEntity &Module, DIE *Context);
+                                  const DIImportedEntity &Module, DIE &Context);
 
   /// \brief Register a source line with debug info. Returns the unique
   /// label that was emitted and which provides correspondence to the

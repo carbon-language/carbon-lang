@@ -421,12 +421,13 @@ void DwarfDebug::addScopeRangeList(DwarfCompileUnit &TheCU, DIE &ScopeDIE,
 
 // Construct new DW_TAG_lexical_block for this scope and attach
 // DW_AT_low_pc/DW_AT_high_pc labels.
-DIE *DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
-                                          LexicalScope *Scope) {
+std::unique_ptr<DIE>
+DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
+                                     LexicalScope *Scope) {
   if (isLexicalScopeDIENull(Scope))
     return nullptr;
 
-  DIE *ScopeDIE = new DIE(dwarf::DW_TAG_lexical_block);
+  auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_lexical_block);
   if (Scope->isAbstractScope())
     return ScopeDIE;
 
@@ -454,8 +455,9 @@ DIE *DwarfDebug::constructLexicalScopeDIE(DwarfCompileUnit &TheCU,
 
 // This scope represents inlined body of a function. Construct DIE to
 // represent this concrete inlined copy of the function.
-DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
-                                          LexicalScope *Scope) {
+std::unique_ptr<DIE>
+DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
+                                     LexicalScope *Scope) {
   const SmallVectorImpl<InsnRange> &ScopeRanges = Scope->getRanges();
   assert(!ScopeRanges.empty() &&
          "LexicalScope does not have instruction markers!");
@@ -470,7 +472,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
     return nullptr;
   }
 
-  DIE *ScopeDIE = new DIE(dwarf::DW_TAG_inlined_subroutine);
+  auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_inlined_subroutine);
   TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_abstract_origin, *OriginDIE);
 
   // If we have multiple ranges, emit them into the range section.
@@ -539,8 +541,8 @@ DIE *DwarfDebug::createScopeChildrenDIE(
       ObjectPointer = Children.back().get();
   }
   for (LexicalScope *LS : Scope->getChildren())
-    if (DIE *Nested = constructScopeDIE(TheCU, LS))
-      Children.push_back(std::unique_ptr<DIE>(Nested));
+    if (std::unique_ptr<DIE> Nested = constructScopeDIE(TheCU, LS))
+      Children.push_back(std::move(Nested));
   return ObjectPointer;
 }
 
@@ -582,8 +584,8 @@ DIE *DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU, LexicalSco
 }
 
 // Construct a DIE for this scope.
-DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
-                                   LexicalScope *Scope) {
+std::unique_ptr<DIE> DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
+                                                   LexicalScope *Scope) {
   if (!Scope || !Scope->getScopeNode())
     return nullptr;
 
@@ -599,7 +601,7 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
   // We try to create the scope DIE first, then the children DIEs. This will
   // avoid creating un-used children then removing them later when we find out
   // the scope DIE is null.
-  DIE *ScopeDIE = nullptr;
+  std::unique_ptr<DIE> ScopeDIE;
   if (Scope->getInlinedAt()) {
     ScopeDIE = constructInlinedScopeDIE(TheCU, Scope);
     if (!ScopeDIE)
@@ -629,8 +631,7 @@ DIE *DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
     assert(ScopeDIE && "Scope DIE should not be null.");
     for (ImportedEntityMap::const_iterator i = Range.first; i != Range.second;
          ++i)
-      constructImportedEntityDIE(TheCU, i->second, ScopeDIE);
-
+      constructImportedEntityDIE(TheCU, i->second, *ScopeDIE);
   }
 
   // Add children
@@ -739,11 +740,11 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
   DIImportedEntity Module(N);
   assert(Module.Verify());
   if (DIE *D = TheCU.getOrCreateContextDIE(Module.getContext()))
-    constructImportedEntityDIE(TheCU, Module, D);
+    constructImportedEntityDIE(TheCU, Module, *D);
 }
 
 void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
-                                            const MDNode *N, DIE *Context) {
+                                            const MDNode *N, DIE &Context) {
   DIImportedEntity Module(N);
   assert(Module.Verify());
   return constructImportedEntityDIE(TheCU, Module, Context);
@@ -751,11 +752,10 @@ void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
 
 void DwarfDebug::constructImportedEntityDIE(DwarfCompileUnit &TheCU,
                                             const DIImportedEntity &Module,
-                                            DIE *Context) {
+                                            DIE &Context) {
   assert(Module.Verify() &&
          "Use one of the MDNode * overloads to handle invalid metadata");
-  assert(Context && "Should always have a context for an imported_module");
-  DIE &IMDie = TheCU.createAndAddDIE(Module.getTag(), *Context, Module);
+  DIE &IMDie = TheCU.createAndAddDIE(Module.getTag(), Context, Module);
   DIE *EntityDie;
   DIDescriptor Entity = resolve(Module.getEntity());
   if (Entity.isNameSpace())
