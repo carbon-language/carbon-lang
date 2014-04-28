@@ -58,7 +58,7 @@ def get_lldb_gdbserver_exe():
     if not lldb_exe:
         return None
     else:
-        return _get_debug_monitor_from_lldb(lldb_exe, "lldb-gedbserver")
+        return _get_debug_monitor_from_lldb(lldb_exe, "lldb-gdbserver")
 
 def get_debugserver_exe():
     """Return the debugserver exe path.

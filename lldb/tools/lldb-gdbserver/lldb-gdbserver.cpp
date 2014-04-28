@@ -332,16 +332,25 @@ main (int argc, char *argv[])
         if (conn_ap.get())
         {
             std::string final_host_and_port;
+            std::string listening_host;
+            std::string listening_port;
 
             // If host_and_port starts with ':', default the host to be "localhost" and expect the remainder to be the port.
             if (host_and_port[0] == ':')
                 final_host_and_port.append ("localhost");
             final_host_and_port.append (host_and_port);
 
+            const std::string::size_type colon_pos = final_host_and_port.find(':');
+            if (colon_pos != std::string::npos)
+            {
+                listening_host = final_host_and_port.substr(0, colon_pos);
+                listening_port = final_host_and_port.substr(colon_pos + 1);
+            }
+
             std::string connect_url ("listen://");
             connect_url.append (final_host_and_port);
 
-            printf ("Listening for a connection on %s...\n", final_host_and_port.c_str ());
+            printf ("Listening to port %s for a connection from %s...\n", listening_port.c_str (), listening_host.c_str ());
             if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
             {
                 printf ("Connection established.\n");
