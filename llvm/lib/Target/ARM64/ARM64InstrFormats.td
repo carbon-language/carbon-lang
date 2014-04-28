@@ -6868,10 +6868,12 @@ multiclass SIMDScalarLShiftBHSD<bit U, bits<5> opc, string asm,
 
   def d : BaseSIMDScalarShift<U, opc, {1,?,?,?,?,?,?},
                               FPR64, FPR64, vecshiftL64, asm,
-    [(set (v1i64 FPR64:$Rd), (OpNode (v1i64 FPR64:$Rn),
-                                     (i32 vecshiftL64:$imm)))]> {
+    [(set (i64 FPR64:$Rd), (OpNode (i64 FPR64:$Rn), (i32 vecshiftL64:$imm)))]> {
     let Inst{21-16} = imm{5-0};
   }
+
+  def : Pat<(v1i64 (OpNode (v1i64 FPR64:$Rn), (i32 vecshiftL64:$imm))),
+            (!cast<Instruction>(NAME # "d") FPR64:$Rn, vecshiftL64:$imm)>;
 }
 
 multiclass SIMDScalarRShiftBHSD<bit U, bits<5> opc, string asm> {
