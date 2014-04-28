@@ -208,12 +208,12 @@ private:
   MCOperand GetSymbolRef(const MCSymbol *Symbol);
   unsigned encodeVirtualRegister(unsigned Reg);
 
-  void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const {}
+  void EmitAlignment(unsigned NumBits, const GlobalValue *GV = nullptr) const {}
 
   void printVecModifiedImmediate(const MachineOperand &MO, const char *Modifier,
                                  raw_ostream &O);
   void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                       const char *Modifier = 0);
+                       const char *Modifier = nullptr);
   void printImplicitDef(const MachineInstr *MI, raw_ostream &O) const;
   void printModuleLevelGV(const GlobalVariable *GVar, raw_ostream &O,
                           bool = false);
@@ -236,7 +236,7 @@ private:
                        unsigned AsmVariant, const char *ExtraCode,
                        raw_ostream &);
   void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                    const char *Modifier = 0);
+                    const char *Modifier = nullptr);
   bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                              unsigned AsmVariant, const char *ExtraCode,
                              raw_ostream &);
@@ -312,7 +312,7 @@ public:
       : AsmPrinter(TM, Streamer),
         nvptxSubtarget(TM.getSubtarget<NVPTXSubtarget>()) {
     CurrentBankselLabelInBasicBlock = "";
-    reader = NULL;
+    reader = nullptr;
     EmitGeneric = (nvptxSubtarget.getDrvInterface() == NVPTX::CUDA);
   }
 

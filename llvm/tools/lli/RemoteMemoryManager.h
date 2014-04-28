@@ -63,7 +63,7 @@ private:
   RemoteTarget *Target;
 
 public:
-  RemoteMemoryManager() : Target(NULL) {}
+  RemoteMemoryManager() : Target(nullptr) {}
   virtual ~RemoteMemoryManager();
 
   uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,

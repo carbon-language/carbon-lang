@@ -65,7 +65,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 template<typename ValueSubClass, typename ItemParentClass>
 void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 ::addNodeToList(ValueSubClass *V) {
-  assert(V->getParent() == 0 && "Value already in a container!!");
+  assert(!V->getParent() && "Value already in a container!!");
   ItemParentClass *Owner = getListOwner();
   V->setParent(Owner);
   if (V->hasName())
@@ -76,7 +76,7 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 template<typename ValueSubClass, typename ItemParentClass>
 void SymbolTableListTraits<ValueSubClass,ItemParentClass>
 ::removeNodeFromList(ValueSubClass *V) {
-  V->setParent(0);
+  V->setParent(nullptr);
   if (V->hasName())
     if (ValueSymbolTable *ST = TraitsClass::getSymTab(getListOwner()))
       ST->removeValueName(V->getValueName());

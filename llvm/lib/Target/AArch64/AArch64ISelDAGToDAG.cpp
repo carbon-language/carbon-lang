@@ -1559,7 +1559,7 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
   SDNode *ResNode = SelectCode(Node);
 
   DEBUG(dbgs() << "=> ";
-        if (ResNode == NULL || ResNode == Node)
+        if (ResNode == nullptr || ResNode == Node)
           Node->dump(CurDAG);
         else
           ResNode->dump(CurDAG);

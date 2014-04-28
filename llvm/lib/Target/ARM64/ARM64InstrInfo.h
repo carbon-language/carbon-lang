@@ -193,9 +193,9 @@ enum ARM64FrameOffsetStatus {
 /// (possibly with @p OutUnscaledOp if OutUseUnscaledOp is true) and that
 /// is a legal offset.
 int isARM64FrameOffsetLegal(const MachineInstr &MI, int &Offset,
-                            bool *OutUseUnscaledOp = NULL,
-                            unsigned *OutUnscaledOp = NULL,
-                            int *EmittableOffset = NULL);
+                            bool *OutUseUnscaledOp = nullptr,
+                            unsigned *OutUnscaledOp = nullptr,
+                            int *EmittableOffset = nullptr);
 
 static inline bool isUncondBranchOpcode(int Opc) { return Opc == ARM64::B; }
 

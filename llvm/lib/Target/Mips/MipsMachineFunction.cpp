@@ -27,7 +27,7 @@ FixGlobalBaseReg("mips-fix-global-base-reg", cl::Hidden, cl::init(true),
 MipsCallEntry::MipsCallEntry(const StringRef &N) {
 #ifndef NDEBUG
   Name = N;
-  Val = 0;
+  Val = nullptr;
 #endif
 }
 

@@ -325,7 +325,7 @@ public:
   /// value.
   unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
                               bool UnfoldLoad, bool UnfoldStore,
-                              unsigned *LoadRegIndex = 0) const override;
+                              unsigned *LoadRegIndex = nullptr) const override;
 
   /// areLoadsFromSameBasePtr - This is used by the pre-regalloc scheduler
   /// to determine if two loads are loading from the same base address. It

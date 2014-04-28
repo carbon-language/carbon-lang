@@ -1345,7 +1345,7 @@ XCoreTargetLowering::LowerCCCArguments(SDValue Chain,
           errs() << "LowerFormalArguments Unhandled argument type: "
                  << RegVT.getSimpleVT().SimpleTy << "\n";
 #endif
-          llvm_unreachable(0);
+          llvm_unreachable(nullptr);
         }
       case MVT::i32:
         unsigned VReg = RegInfo.createVirtualRegister(&XCore::GRRegsRegClass);

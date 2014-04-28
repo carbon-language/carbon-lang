@@ -44,7 +44,7 @@ public:
   getLargestLegalSuperClass(const TargetRegisterClass *RC) const;
 
   /// Code Generation virtual methods...
-  const MCPhysReg *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
+  const MCPhysReg *getCalleeSavedRegs(const MachineFunction* MF =nullptr) const;
   const uint32_t *getCallPreservedMask(CallingConv::ID CC) const;
   const uint32_t *getNoPreservedMask() const;
 
@@ -85,7 +85,7 @@ public:
 			    int &FrameIdx) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = NULL) const;
+                           RegScavenger *RS = nullptr) const;
 
   // Support for virtual base registers.
   bool needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const;

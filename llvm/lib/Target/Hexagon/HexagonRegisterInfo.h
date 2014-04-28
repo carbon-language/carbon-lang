@@ -48,16 +48,17 @@ struct HexagonRegisterInfo : public HexagonGenRegisterInfo {
   HexagonRegisterInfo(HexagonSubtarget &st);
 
   /// Code Generation virtual methods...
-  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
+  const MCPhysReg *
+  getCalleeSavedRegs(const MachineFunction *MF = nullptr) const;
 
-  const TargetRegisterClass* const* getCalleeSavedRegClasses(
-                                     const MachineFunction *MF = 0) const;
+  const TargetRegisterClass* const*
+  getCalleeSavedRegClasses(const MachineFunction *MF = nullptr) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = NULL) const;
+                           RegScavenger *RS = nullptr) const;
 
   /// determineFrameLayout - Determine the size of the frame and maximum call
   /// frame size.

@@ -2486,7 +2486,7 @@ public:
       }
       // Update users.
       if (ReductionPHI) {
-        assert(ReductionRoot != NULL && "Need a reduction operation");
+        assert(ReductionRoot && "Need a reduction operation");
         ReductionRoot->setOperand(0, VectorizedTree);
         ReductionRoot->setOperand(1, ReductionPHI);
       } else

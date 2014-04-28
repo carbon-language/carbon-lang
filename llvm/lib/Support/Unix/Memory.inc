@@ -121,7 +121,7 @@ Memory::allocateMappedMemory(size_t NumBytes,
                       Protect, MMFlags, fd, 0);
   if (Addr == MAP_FAILED) {
     if (NearBlock) //Try again without a near hint
-      return allocateMappedMemory(NumBytes, 0, PFlags, EC);
+      return allocateMappedMemory(NumBytes, nullptr, PFlags, EC);
 
     EC = error_code(errno, system_category());
     return MemoryBlock();
@@ -139,13 +139,13 @@ Memory::allocateMappedMemory(size_t NumBytes,
 
 error_code
 Memory::releaseMappedMemory(MemoryBlock &M) {
-  if (M.Address == 0 || M.Size == 0)
+  if (M.Address == nullptr || M.Size == 0)
     return error_code::success();
 
   if (0 != ::munmap(M.Address, M.Size))
     return error_code(errno, system_category());
 
-  M.Address = 0;
+  M.Address = nullptr;
   M.Size = 0;
 
   return error_code::success();
@@ -153,7 +153,7 @@ Memory::releaseMappedMemory(MemoryBlock &M) {
 
 error_code
 Memory::protectMappedMemory(const MemoryBlock &M, unsigned Flags) {
-  if (M.Address == 0 || M.Size == 0)
+  if (M.Address == nullptr || M.Size == 0)
     return error_code::success();
 
   if (!Flags)
@@ -203,7 +203,7 @@ Memory::AllocateRWX(size_t NumBytes, const MemoryBlock* NearBlock,
   ;
 
   void* start = NearBlock ? (unsigned char*)NearBlock->base() +
-                            NearBlock->size() : 0;
+                            NearBlock->size() : nullptr;
 
 #if defined(__APPLE__) && (defined(__arm__) || defined(__arm64__))
   void *pa = ::mmap(start, PageSize*NumPages, PROT_READ|PROT_EXEC,
@@ -214,7 +214,7 @@ Memory::AllocateRWX(size_t NumBytes, const MemoryBlock* NearBlock,
 #endif
   if (pa == MAP_FAILED) {
     if (NearBlock) //Try again without a near hint
-      return AllocateRWX(NumBytes, 0);
+      return AllocateRWX(NumBytes, nullptr);
 
     MakeErrMsg(ErrMsg, "Can't allocate RWX Memory");
     return MemoryBlock();
@@ -246,7 +246,7 @@ Memory::AllocateRWX(size_t NumBytes, const MemoryBlock* NearBlock,
 }
 
 bool Memory::ReleaseRWX(MemoryBlock &M, std::string *ErrMsg) {
-  if (M.Address == 0 || M.Size == 0) return false;
+  if (M.Address == nullptr || M.Size == 0) return false;
   if (0 != ::munmap(M.Address, M.Size))
     return MakeErrMsg(ErrMsg, "Can't release RWX Memory");
   return false;

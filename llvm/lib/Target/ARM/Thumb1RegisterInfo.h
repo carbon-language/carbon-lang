@@ -56,7 +56,7 @@ public:
                              unsigned Reg) const override;
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = NULL) const override;
+                           RegScavenger *RS = nullptr) const override;
 };
 }
 

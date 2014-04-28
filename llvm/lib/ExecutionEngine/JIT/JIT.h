@@ -189,7 +189,7 @@ public:
                                     TargetMachine *TM);
 
   // Run the JIT on F and return information about the generated code
-  void runJITOnFunction(Function *F, MachineCodeInfo *MCI = 0) override;
+  void runJITOnFunction(Function *F, MachineCodeInfo *MCI = nullptr) override;
 
   void RegisterJITEventListener(JITEventListener *L) override;
   void UnregisterJITEventListener(JITEventListener *L) override;

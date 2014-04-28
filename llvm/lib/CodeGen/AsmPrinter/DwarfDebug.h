@@ -78,8 +78,8 @@ class DbgVariable {
 public:
   // AbsVar may be NULL.
   DbgVariable(DIVariable V, DbgVariable *AV, DwarfDebug *DD)
-      : Var(V), TheDIE(0), DotDebugLocOffset(~0U), AbsVar(AV), MInsn(0),
-        FrameIndex(~0), DD(DD) {}
+      : Var(V), TheDIE(nullptr), DotDebugLocOffset(~0U), AbsVar(AV),
+        MInsn(nullptr), FrameIndex(~0), DD(DD) {}
 
   // Accessors.
   DIVariable getVariable() const { return Var; }
@@ -523,7 +523,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Ensure that a label will be emitted before MI.
   void requestLabelBeforeInsn(const MachineInstr *MI) {
-    LabelsBeforeInsn.insert(std::make_pair(MI, (MCSymbol *)0));
+    LabelsBeforeInsn.insert(std::make_pair(MI, nullptr));
   }
 
   /// \brief Return Label preceding the instruction.
@@ -531,7 +531,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Ensure that a label will be emitted after MI.
   void requestLabelAfterInsn(const MachineInstr *MI) {
-    LabelsAfterInsn.insert(std::make_pair(MI, (MCSymbol *)0));
+    LabelsAfterInsn.insert(std::make_pair(MI, nullptr));
   }
 
   /// \brief Return Label immediately following the instruction.

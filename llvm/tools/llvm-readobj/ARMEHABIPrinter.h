@@ -385,7 +385,7 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
       }
     }
   }
-  return NULL;
+  return nullptr;
 }
 
 template <typename ET>

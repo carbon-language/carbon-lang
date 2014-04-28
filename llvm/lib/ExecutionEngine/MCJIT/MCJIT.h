@@ -71,7 +71,7 @@ public:
     ClientMM->deregisterEHFrames(Addr, LoadAddr, Size);
   }
 
-  bool finalizeMemory(std::string *ErrMsg = 0) override {
+  bool finalizeMemory(std::string *ErrMsg = nullptr) override {
     return ClientMM->finalizeMemory(ErrMsg);
   }
 

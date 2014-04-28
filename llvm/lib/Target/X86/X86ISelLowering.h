@@ -783,7 +783,7 @@ namespace llvm {
 
     /// Intel processors have a unified instruction and data cache
     const char * getClearCacheBuiltinName() const {
-      return 0; // nothing to do, move along.
+      return nullptr; // nothing to do, move along.
     }
 
     /// createFastISel - This method returns a target specific FastISel object,

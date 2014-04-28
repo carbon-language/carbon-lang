@@ -1395,7 +1395,7 @@ public:
 
   void doFunction(const FunctionT *F, const BranchProbabilityInfoT *BPI,
                   const LoopInfoT *LI);
-  BlockFrequencyInfoImpl() : BPI(0), LI(0), F(0) {}
+  BlockFrequencyInfoImpl() : BPI(nullptr), LI(nullptr), F(nullptr) {}
 
   using BlockFrequencyInfoImplBase::getEntryFreq;
   BlockFrequency getBlockFreq(const BlockT *BB) const {

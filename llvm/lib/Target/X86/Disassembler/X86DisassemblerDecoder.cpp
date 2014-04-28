@@ -80,7 +80,7 @@ static InstructionContext contextForAttrs(uint16_t attrMask) {
 static int modRMRequired(OpcodeType type,
                          InstructionContext insnContext,
                          uint16_t opcode) {
-  const struct ContextDecision* decision = 0;
+  const struct ContextDecision* decision = nullptr;
 
   switch (type) {
   case ONEBYTE:
@@ -124,7 +124,7 @@ static InstrUID decode(OpcodeType type,
                        InstructionContext insnContext,
                        uint8_t opcode,
                        uint8_t modRM) {
-  const struct ModRMDecision* dec = 0;
+  const struct ModRMDecision* dec = nullptr;
 
   switch (type) {
   case ONEBYTE:

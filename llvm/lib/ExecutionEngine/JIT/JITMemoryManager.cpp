@@ -643,7 +643,7 @@ DefaultJITMemoryManager::DefaultJITMemoryManager()
 }
 
 void DefaultJITMemoryManager::AllocateGOT() {
-  assert(GOTBase == 0 && "Cannot allocate the got multiple times");
+  assert(!GOTBase && "Cannot allocate the got multiple times");
   GOTBase = new uint8_t[sizeof(void*) * 8192];
   HasGOT = true;
 }

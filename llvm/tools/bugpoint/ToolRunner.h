@@ -63,7 +63,7 @@ public:
                      FileType fileType,
                      const std::string &InputFile,
                      const std::string &OutputFile,
-                     std::string *Error = 0,
+                     std::string *Error = nullptr,
                      const std::vector<std::string> &GCCArgs =
                          std::vector<std::string>(),
                      unsigned Timeout = 0,
@@ -89,15 +89,17 @@ class AbstractInterpreter {
 public:
   static LLC *createLLC(const char *Argv0, std::string &Message,
                         const std::string              &GCCBinary,
-                        const std::vector<std::string> *Args = 0,
-                        const std::vector<std::string> *GCCArgs = 0,
+                        const std::vector<std::string> *Args = nullptr,
+                        const std::vector<std::string> *GCCArgs = nullptr,
                         bool UseIntegratedAssembler = false);
 
-  static AbstractInterpreter* createLLI(const char *Argv0, std::string &Message,
-                                        const std::vector<std::string> *Args=0);
+  static AbstractInterpreter*
+  createLLI(const char *Argv0, std::string &Message,
+            const std::vector<std::string> *Args = nullptr);
 
-  static AbstractInterpreter* createJIT(const char *Argv0, std::string &Message,
-                                        const std::vector<std::string> *Args=0);
+  static AbstractInterpreter*
+  createJIT(const char *Argv0, std::string &Message,
+            const std::vector<std::string> *Args = nullptr);
 
   static AbstractInterpreter*
   createCustomCompiler(std::string &Message,

@@ -122,7 +122,7 @@ public:
 
   void eliminateFrameIndex(MachineBasicBlock::iterator MI,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = NULL) const override;
+                           RegScavenger *RS = nullptr) const override;
 
   // Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const override;

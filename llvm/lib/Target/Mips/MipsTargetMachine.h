@@ -67,7 +67,7 @@ public:
   { return &DL;}
 
   virtual const InstrItineraryData *getInstrItineraryData() const {
-    return Subtarget.inMips16Mode() ? 0 : &InstrItins;
+    return Subtarget.inMips16Mode() ? nullptr : &InstrItins;
   }
 
   virtual MipsJITInfo *getJITInfo()

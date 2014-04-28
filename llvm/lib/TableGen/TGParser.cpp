@@ -115,7 +115,7 @@ bool TGParser::SetValue(Record *CurRec, SMLoc Loc, Init *ValName,
 
     // We should have a BitsInit type now.
     BitsInit *BInit = dyn_cast<BitsInit>(BI);
-    assert(BInit != 0);
+    assert(BInit != nullptr);
 
     SmallVector<Init *, 16> NewBits(CurVal->getNumBits());
 

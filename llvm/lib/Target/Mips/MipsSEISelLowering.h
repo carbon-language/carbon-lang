@@ -30,8 +30,8 @@ namespace llvm {
     void addMSAFloatType(MVT::SimpleValueType Ty,
                          const TargetRegisterClass *RC);
 
-    virtual bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS = 0,
-                                               bool *Fast = 0) const override;
+    bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS = 0,
+                                       bool *Fast = nullptr) const override;
 
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
 

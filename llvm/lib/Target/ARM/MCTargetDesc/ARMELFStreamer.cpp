@@ -1102,7 +1102,7 @@ void ARMELFStreamer::Reset() {
 }
 
 void ARMELFStreamer::emitFnStart() {
-  assert(FnStart == 0);
+  assert(FnStart == nullptr);
   FnStart = getContext().CreateTempSymbol();
   EmitLabel(FnStart);
 }

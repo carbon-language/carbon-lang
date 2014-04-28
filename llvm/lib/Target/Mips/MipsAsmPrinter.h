@@ -82,7 +82,7 @@ public:
   MipsMCInstLower MCInstLowering;
 
   explicit MipsAsmPrinter(TargetMachine &TM,  MCStreamer &Streamer)
-    : AsmPrinter(TM, Streamer), MCP(0), InConstantPool(false),
+    : AsmPrinter(TM, Streamer), MCP(nullptr), InConstantPool(false),
       MCInstLowering(*this) {
     Subtarget = &TM.getSubtarget<MipsSubtarget>();
   }
@@ -122,7 +122,7 @@ public:
   void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O);
   void printMemOperandEA(const MachineInstr *MI, int opNum, raw_ostream &O);
   void printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
-                       const char *Modifier = 0);
+                       const char *Modifier = nullptr);
   void EmitStartOfAsmFile(Module &M);
   void EmitEndOfAsmFile(Module &M);
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);

@@ -3268,7 +3268,7 @@ analyzeCallOperands(const SmallVectorImpl<ISD::OutputArg> &Args,
       dbgs() << "Call operand #" << I << " has unhandled type "
              << EVT(ArgVT).getEVTString();
 #endif
-      llvm_unreachable(0);
+      llvm_unreachable(nullptr);
     }
   }
 }
@@ -3300,7 +3300,7 @@ analyzeFormalArguments(const SmallVectorImpl<ISD::InputArg> &Args,
     dbgs() << "Formal Arg #" << I << " has unhandled type "
            << EVT(ArgVT).getEVTString();
 #endif
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
   }
 }
 
@@ -3325,7 +3325,7 @@ analyzeReturn(const SmallVectorImpl<Ty> &RetVals, bool IsSoftFloat,
       dbgs() << "Call result #" << I << " has unhandled type "
              << EVT(VT).getEVTString() << '\n';
 #endif
-      llvm_unreachable(0);
+      llvm_unreachable(nullptr);
     }
   }
 }

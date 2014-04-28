@@ -261,7 +261,7 @@ private:
 
   unsigned getInstrLatency(const InstrItineraryData *ItinData,
                            const MachineInstr *MI,
-                           unsigned *PredCost = 0) const override;
+                           unsigned *PredCost = nullptr) const override;
 
   int getInstrLatency(const InstrItineraryData *ItinData,
                       SDNode *Node) const override;

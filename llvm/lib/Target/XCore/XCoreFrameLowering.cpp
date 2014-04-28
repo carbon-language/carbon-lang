@@ -495,7 +495,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
         errs() << "eliminateCallFramePseudoInstr size too big: "
                << Amount << "\n";
 #endif
-        llvm_unreachable(0);
+        llvm_unreachable(nullptr);
       }
 
       MachineInstr *New;

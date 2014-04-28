@@ -333,7 +333,7 @@ bool HexagonCopyToCombine::isSafeToMoveTogether(MachineInstr *I1,
 
       // Check for an exact kill (registers match).
       if (I1UseReg && I->killsRegister(I1UseReg)) {
-        assert(KillingInstr == 0 && "Should only see one killing instruction");
+        assert(!KillingInstr && "Should only see one killing instruction");
         KilledOperand = I1UseReg;
         KillingInstr = &*I;
       }

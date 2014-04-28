@@ -819,7 +819,7 @@ ARCAnnotationTargetIdentifier("objc-arc-annotation-target-identifier",
 /// arc annotation processor tool. If the function is an
 static MDString *AppendMDNodeToSourcePtr(unsigned NodeId,
                                          Value *Ptr) {
-  MDString *Hash = 0;
+  MDString *Hash = nullptr;
 
   // If pointer is a result of an instruction and it does not have a source
   // MDNode it, attach a new MDNode onto it. If pointer is a result of
@@ -881,7 +881,7 @@ static void AppendMDNodeToInstForPtr(unsigned NodeId,
                                      MDString *PtrSourceMDNodeID,
                                      Sequence OldSeq,
                                      Sequence NewSeq) {
-  MDNode *Node = 0;
+  MDNode *Node = nullptr;
   Value *tmp[3] = {PtrSourceMDNodeID,
                    SequenceToMDString(Inst->getContext(),
                                       OldSeq),
@@ -917,7 +917,7 @@ static void GenerateARCBBEntranceAnnotation(const char *Name, BasicBlock *BB,
 
   Value *PtrName;
   StringRef Tmp = Ptr->getName();
-  if (0 == (PtrName = M->getGlobalVariable(Tmp, true))) {
+  if (nullptr == (PtrName = M->getGlobalVariable(Tmp, true))) {
     Value *ActualPtrName = Builder.CreateGlobalStringPtr(Tmp,
                                                          Tmp + "_STR");
     PtrName = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
@@ -926,7 +926,7 @@ static void GenerateARCBBEntranceAnnotation(const char *Name, BasicBlock *BB,
 
   Value *S;
   std::string SeqStr = SequenceToString(Seq);
-  if (0 == (S = M->getGlobalVariable(SeqStr, true))) {
+  if (nullptr == (S = M->getGlobalVariable(SeqStr, true))) {
     Value *ActualPtrName = Builder.CreateGlobalStringPtr(SeqStr,
                                                          SeqStr + "_STR");
     S = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
@@ -960,7 +960,7 @@ static void GenerateARCBBTerminatorAnnotation(const char *Name, BasicBlock *BB,
 
   Value *PtrName;
   StringRef Tmp = Ptr->getName();
-  if (0 == (PtrName = M->getGlobalVariable(Tmp, true))) {
+  if (nullptr == (PtrName = M->getGlobalVariable(Tmp, true))) {
     Value *ActualPtrName = Builder.CreateGlobalStringPtr(Tmp,
                                                          Tmp + "_STR");
     PtrName = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,
@@ -969,7 +969,7 @@ static void GenerateARCBBTerminatorAnnotation(const char *Name, BasicBlock *BB,
 
   Value *S;
   std::string SeqStr = SequenceToString(Seq);
-  if (0 == (S = M->getGlobalVariable(SeqStr, true))) {
+  if (nullptr == (S = M->getGlobalVariable(SeqStr, true))) {
     Value *ActualPtrName = Builder.CreateGlobalStringPtr(SeqStr,
                                                          SeqStr + "_STR");
     S = new GlobalVariable(*M, I8X, true, GlobalVariable::InternalLinkage,

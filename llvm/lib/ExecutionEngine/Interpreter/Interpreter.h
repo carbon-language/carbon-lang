@@ -108,7 +108,7 @@ public:
   
   /// create - Create an interpreter ExecutionEngine. This can never fail.
   ///
-  static ExecutionEngine *create(Module *M, std::string *ErrorStr = 0);
+  static ExecutionEngine *create(Module *M, std::string *ErrorStr = nullptr);
 
   /// run - Start execution with the specified function and arguments.
   ///
@@ -118,7 +118,7 @@ public:
   void *getPointerToNamedFunction(const std::string &Name,
                                   bool AbortOnFailure = true) override {
     // FIXME: not implemented.
-    return 0;
+    return nullptr;
   }
 
   /// recompileAndRelinkFunction - For the interpreter, functions are always

@@ -118,7 +118,7 @@ public:
   const DWARFDebugInfoEntryMinimal *
   getCompileUnitDIE(bool extract_cu_die_only = true) {
     extractDIEsIfNeeded(extract_cu_die_only);
-    return DieArray.empty() ? NULL : &DieArray[0];
+    return DieArray.empty() ? nullptr : &DieArray[0];
   }
 
   const char *getCompilationDir();

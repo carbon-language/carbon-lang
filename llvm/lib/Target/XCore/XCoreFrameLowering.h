@@ -46,10 +46,10 @@ namespace llvm {
     bool hasFP(const MachineFunction &MF) const;
 
     void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                              RegScavenger *RS = NULL) const;
+                                              RegScavenger *RS = nullptr) const;
 
     void processFunctionBeforeFrameFinalized(MachineFunction &MF,
-                                             RegScavenger *RS = NULL) const;
+                                             RegScavenger *RS = nullptr) const;
 
     //! Stack slot size (4 bytes)
     static int stackSlotSize() {

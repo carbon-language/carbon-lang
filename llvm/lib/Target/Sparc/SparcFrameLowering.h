@@ -41,7 +41,7 @@ public:
   bool hasReservedCallFrame(const MachineFunction &MF) const;
   bool hasFP(const MachineFunction &MF) const;
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                            RegScavenger *RS = NULL) const;
+                                            RegScavenger *RS = nullptr) const;
 
 private:
   // Remap input registers to output registers for leaf procedure.

@@ -18,7 +18,7 @@ namespace llvm {
 static const unsigned MIPS_NACL_BUNDLE_ALIGN = 4u;
 
 bool isBasePlusOffsetMemoryAccess(unsigned Opcode, unsigned *AddrIdx,
-                                  bool *IsStore = NULL);
+                                  bool *IsStore = nullptr);
 bool baseRegNeedsLoadStoreMask(unsigned Reg);
 
 // This function creates an MCELFStreamer for Mips NaCl.

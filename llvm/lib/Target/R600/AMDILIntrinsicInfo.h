@@ -34,12 +34,12 @@ enum ID {
 class AMDGPUIntrinsicInfo : public TargetIntrinsicInfo {
 public:
   AMDGPUIntrinsicInfo(TargetMachine *tm);
-  std::string getName(unsigned int IntrId, Type **Tys = 0,
+  std::string getName(unsigned int IntrId, Type **Tys = nullptr,
                       unsigned int numTys = 0) const;
   unsigned int lookupName(const char *Name, unsigned int Len) const;
   bool isOverloaded(unsigned int IID) const;
   Function *getDeclaration(Module *M, unsigned int ID,
-                           Type **Tys = 0,
+                           Type **Tys = nullptr,
                            unsigned int numTys = 0) const;
 };
 

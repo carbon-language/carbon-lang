@@ -2147,7 +2147,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         IRB.CreateStore(getOrigin(A),
                         getOriginPtrForArgument(A, IRB, ArgOffset));
       (void)Store;
-      assert(Size != 0 && Store != 0);
+      assert(Size != 0 && Store != nullptr);
       DEBUG(dbgs() << "  Param:" << *Store << "\n");
       ArgOffset += DataLayout::RoundUpAlignment(Size, 8);
     }

@@ -35,7 +35,7 @@ struct CPPTargetMachine : public TargetMachine {
                                    AnalysisID StartAfter,
                                    AnalysisID StopAfter);
 
-  virtual const DataLayout *getDataLayout() const { return 0; }
+  virtual const DataLayout *getDataLayout() const { return nullptr; }
 };
 
 extern Target TheCppBackendTarget;

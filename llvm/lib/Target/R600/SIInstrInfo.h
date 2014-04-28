@@ -79,7 +79,7 @@ public:
                                            bool NewMI=false) const;
 
   bool isTriviallyReMaterializable(const MachineInstr *MI,
-                                   AliasAnalysis *AA = 0) const;
+                                   AliasAnalysis *AA = nullptr) const;
 
   virtual unsigned getIEQOpcode() const {
     llvm_unreachable("Unimplemented");

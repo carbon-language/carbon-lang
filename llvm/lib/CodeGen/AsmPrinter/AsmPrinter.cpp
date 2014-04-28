@@ -110,7 +110,7 @@ AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
 }
 
 AsmPrinter::~AsmPrinter() {
-  assert(DD == 0 && Handlers.empty() && "Debug/EH info didn't get finalized");
+  assert(!DD && Handlers.empty() && "Debug/EH info didn't get finalized");
 
   if (GCMetadataPrinters) {
     gcp_map_type &GCMap = getGCMap(GCMetadataPrinters);

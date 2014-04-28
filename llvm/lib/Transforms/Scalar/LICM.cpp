@@ -335,7 +335,7 @@ bool LICM::runOnLoop(Loop *L, LPPassManager &LPM) {
 /// iteration.
 ///
 void LICM::SinkRegion(DomTreeNode *N) {
-  assert(N != 0 && "Null dominator tree node?");
+  assert(N != nullptr && "Null dominator tree node?");
   BasicBlock *BB = N->getBlock();
 
   // If this subregion is not in the top level loop at all, exit.
@@ -382,7 +382,7 @@ void LICM::SinkRegion(DomTreeNode *N) {
 /// before uses, allowing us to hoist a loop body in one pass without iteration.
 ///
 void LICM::HoistRegion(DomTreeNode *N) {
-  assert(N != 0 && "Null dominator tree node?");
+  assert(N != nullptr && "Null dominator tree node?");
   BasicBlock *BB = N->getBlock();
 
   // If this subregion is not in the top level loop at all, exit.

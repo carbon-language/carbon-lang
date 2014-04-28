@@ -116,7 +116,7 @@ Module *llvm::ParseInputFile(const std::string &Filename,
 // parsed), and false on success.
 //
 bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
-  assert(Program == 0 && "Cannot call addSources multiple times!");
+  assert(!Program && "Cannot call addSources multiple times!");
   assert(!Filenames.empty() && "Must specify at least on input filename!");
 
   // Load the first input file.

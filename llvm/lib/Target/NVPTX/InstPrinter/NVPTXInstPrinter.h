@@ -37,15 +37,15 @@ public:
 
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printCvtMode(const MCInst *MI, int OpNum, raw_ostream &O,
-                    const char *Modifier = 0);
+                    const char *Modifier = nullptr);
   void printCmpMode(const MCInst *MI, int OpNum, raw_ostream &O,
-                    const char *Modifier = 0);
+                    const char *Modifier = nullptr);
   void printLdStCode(const MCInst *MI, int OpNum,
-                     raw_ostream &O, const char *Modifier = 0);
+                     raw_ostream &O, const char *Modifier = nullptr);
   void printMemOperand(const MCInst *MI, int OpNum,
-                       raw_ostream &O, const char *Modifier = 0);
+                       raw_ostream &O, const char *Modifier = nullptr);
   void printProtoIdent(const MCInst *MI, int OpNum,
-                       raw_ostream &O, const char *Modifier = 0);
+                       raw_ostream &O, const char *Modifier = nullptr);
 };
 
 }

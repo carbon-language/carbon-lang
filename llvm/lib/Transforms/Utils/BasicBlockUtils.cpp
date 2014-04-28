@@ -217,7 +217,7 @@ void llvm::ReplaceInstWithValue(BasicBlock::InstListType &BIL,
 ///
 void llvm::ReplaceInstWithInst(BasicBlock::InstListType &BIL,
                                BasicBlock::iterator &BI, Instruction *I) {
-  assert(I->getParent() == 0 &&
+  assert(I->getParent() == nullptr &&
          "ReplaceInstWithInst: Instruction already inserted into basic block!");
 
   // Insert the new instruction into the basic block...

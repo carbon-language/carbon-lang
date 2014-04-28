@@ -1476,7 +1476,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
 #ifndef NDEBUG
     dbgs() << "Cannot encode all operands of: " << MI << "\n";
 #endif
-    llvm_unreachable(0);
+    llvm_unreachable(nullptr);
   }
 
   MCE.processDebugLoc(MI.getDebugLoc(), false);

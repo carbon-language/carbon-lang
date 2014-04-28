@@ -55,7 +55,7 @@ bool SSAUpdater::HasValueForBlock(BasicBlock *BB) const {
 }
 
 void SSAUpdater::AddAvailableValue(BasicBlock *BB, Value *V) {
-  assert(ProtoType != 0 && "Need to initialize SSAUpdater");
+  assert(ProtoType && "Need to initialize SSAUpdater");
   assert(ProtoType == V->getType() &&
          "All rewritten values must have the same type");
   getAvailableVals(AV)[BB] = V;

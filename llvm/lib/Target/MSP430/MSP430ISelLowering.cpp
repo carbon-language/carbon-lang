@@ -462,7 +462,7 @@ MSP430TargetLowering::LowerCCCArguments(SDValue Chain,
           errs() << "LowerFormalArguments Unhandled argument type: "
                << RegVT.getSimpleVT().SimpleTy << "\n";
 #endif
-          llvm_unreachable(0);
+          llvm_unreachable(nullptr);
         }
       case MVT::i16:
         unsigned VReg = RegInfo.createVirtualRegister(&MSP430::GR16RegClass);

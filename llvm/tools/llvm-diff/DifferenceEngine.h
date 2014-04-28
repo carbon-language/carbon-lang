@@ -59,7 +59,7 @@ namespace llvm {
     };
 
     DifferenceEngine(Consumer &consumer)
-      : consumer(consumer), globalValueOracle(0) {}
+      : consumer(consumer), globalValueOracle(nullptr) {}
 
     void diff(Module *L, Module *R);
     void diff(Function *L, Function *R);

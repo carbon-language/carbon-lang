@@ -69,7 +69,7 @@ public:
     if (It == WorklistMap.end()) return; // Not in worklist.
 
     // Don't bother moving everything down, just null out the slot.
-    Worklist[It->second] = 0;
+    Worklist[It->second] = nullptr;
 
     WorklistMap.erase(It);
   }

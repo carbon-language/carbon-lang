@@ -35,7 +35,8 @@ public:
   MSP430RegisterInfo(MSP430TargetMachine &tm);
 
   /// Code Generation virtual methods...
-  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
+  const MCPhysReg *
+  getCalleeSavedRegs(const MachineFunction *MF = nullptr) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
   const TargetRegisterClass*
@@ -43,7 +44,7 @@ public:
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = NULL) const;
+                           RegScavenger *RS = nullptr) const;
 
   // Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const;

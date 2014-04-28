@@ -121,7 +121,8 @@ public:
   uint64_t Offset;
   int64_t Addend;
   const char *SymbolName;
-  RelocationValueRef() : SectionID(0), Offset(0), Addend(0), SymbolName(0) {}
+  RelocationValueRef() : SectionID(0), Offset(0), Addend(0),
+                         SymbolName(nullptr) {}
 
   inline bool operator==(const RelocationValueRef &Other) const {
     return SectionID == Other.SectionID && Offset == Other.Offset &&
@@ -335,7 +336,7 @@ public:
     // Work in progress.
     SymbolTableMap::const_iterator pos = GlobalSymbolTable.find(Name);
     if (pos == GlobalSymbolTable.end())
-      return 0;
+      return nullptr;
     SymbolLoc Loc = pos->second;
     return getSectionAddress(Loc.first) + Loc.second;
   }

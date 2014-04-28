@@ -31,7 +31,7 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
   SparcRegisterInfo(SparcSubtarget &st);
 
   /// Code Generation virtual methods...
-  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
+  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF =nullptr) const;
   const uint32_t* getCallPreservedMask(CallingConv::ID CC) const;
 
   const uint32_t* getRTCallPreservedMask(CallingConv::ID CC) const;
@@ -43,10 +43,10 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = NULL) const;
+                           RegScavenger *RS = nullptr) const;
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF,
-                                       RegScavenger *RS = NULL) const;
+                                       RegScavenger *RS = nullptr) const;
 
   // Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const;

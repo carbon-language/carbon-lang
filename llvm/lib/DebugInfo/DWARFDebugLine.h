@@ -24,7 +24,7 @@ class DWARFDebugLine {
 public:
   DWARFDebugLine(const RelocAddrMap* LineInfoRelocMap) : RelocMap(LineInfoRelocMap) {}
   struct FileNameEntry {
-    FileNameEntry() : Name(0), DirIdx(0), ModTime(0), Length(0) {}
+    FileNameEntry() : Name(nullptr), DirIdx(0), ModTime(0), Length(0) {}
 
     const char *Name;
     uint64_t DirIdx;

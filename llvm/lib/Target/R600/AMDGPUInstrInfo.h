@@ -118,7 +118,7 @@ public:
                            SmallVectorImpl<SDNode *> &NewNodes) const;
   unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
                                       bool UnfoldLoad, bool UnfoldStore,
-                                      unsigned *LoadRegIndex = 0) const;
+                                      unsigned *LoadRegIndex = nullptr) const;
   bool shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
                                int64_t Offset1, int64_t Offset2,
                                unsigned NumLoads) const;

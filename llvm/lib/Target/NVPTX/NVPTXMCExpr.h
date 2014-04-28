@@ -68,7 +68,7 @@ public:
   }
   void AddValueSymbols(MCAssembler *) const {};
   const MCSection *FindAssociatedSection() const {
-    return NULL;
+    return nullptr;
   }
 
   // There are no TLS NVPTXMCExprs at the moment.

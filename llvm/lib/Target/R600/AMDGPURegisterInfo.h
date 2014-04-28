@@ -43,11 +43,11 @@ struct AMDGPURegisterInfo : public AMDGPUGenRegisterInfo {
   /// \returns The ISA reg class that is equivalent to \p RC.
   virtual const TargetRegisterClass * getISARegClass(
                                          const TargetRegisterClass * RC) const {
-    assert(!"Unimplemented"); return NULL;
+    assert(!"Unimplemented"); return nullptr;
   }
 
   virtual const TargetRegisterClass* getCFGStructurizerRegClass(MVT VT) const {
-    assert(!"Unimplemented"); return NULL;
+    assert(!"Unimplemented"); return nullptr;
   }
 
   virtual unsigned getHWRegIndex(unsigned Reg) const {

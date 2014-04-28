@@ -35,7 +35,7 @@ public:
   ARMHazardRecognizer(const InstrItineraryData *ItinData,
                       const ScheduleDAG *DAG)
     : ScoreboardHazardRecognizer(ItinData, DAG, "post-RA-sched"),
-      LastMI(0) {}
+      LastMI(nullptr) {}
 
   HazardType getHazardType(SUnit *SU, int Stalls) override;
   void Reset() override;

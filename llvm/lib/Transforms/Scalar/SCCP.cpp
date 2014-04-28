@@ -627,7 +627,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 #ifndef NDEBUG
   dbgs() << "Unknown terminator instruction: " << *TI << '\n';
 #endif
-  llvm_unreachable(0);
+  llvm_unreachable(nullptr);
 }
 
 // visit Implementations - Something changed in this instruction, either an

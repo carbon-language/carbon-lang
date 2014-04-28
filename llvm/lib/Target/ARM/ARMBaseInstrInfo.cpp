@@ -624,7 +624,7 @@ unsigned ARMBaseInstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       MI->getOperand(NumOps - (MI->isPredicable() ? 3 : 2));
     unsigned JTI = JTOP.getIndex();
     const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
-    assert(MJTI != 0);
+    assert(MJTI != nullptr);
     const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
     assert(JTI < JT.size());
     // Thumb instructions are 2 byte aligned, but JT entries are 4 byte

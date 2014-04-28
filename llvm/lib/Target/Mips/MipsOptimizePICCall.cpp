@@ -155,7 +155,7 @@ static void eraseGPOpnd(MachineInstr &MI) {
     }
   }
 
-  llvm_unreachable(0);
+  llvm_unreachable(nullptr);
 }
 
 MBBInfo::MBBInfo(MachineDomTreeNode *N) : Node(N), HTScope(nullptr) {}

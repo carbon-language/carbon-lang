@@ -48,7 +48,7 @@ public:
         object::ObjectFile::createObjectFile(Buffer->getMemBuffer()).get();
   }
   ObjectImageCommon(object::ObjectFile* Input)
-  : ObjectImage(NULL), ObjFile(Input)  {}
+  : ObjectImage(nullptr), ObjFile(Input)  {}
   virtual ~ObjectImageCommon() { delete ObjFile; }
 
   object::symbol_iterator begin_symbols() const override

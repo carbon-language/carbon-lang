@@ -216,7 +216,7 @@ void WinCodeViewLineTables::endModule() {
   if (FnDebugInfo.empty())
     return;
 
-  assert(Asm != 0);
+  assert(Asm != nullptr);
   Asm->OutStreamer.SwitchSection(
       Asm->getObjFileLowering().getCOFFDebugSymbolsSection());
   Asm->EmitInt32(COFF::DEBUG_SECTION_MAGIC);

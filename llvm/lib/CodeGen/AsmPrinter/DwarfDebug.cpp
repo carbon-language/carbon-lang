@@ -994,8 +994,8 @@ void DwarfDebug::endSections() {
 
 // Emit all Dwarf sections that should come after the content.
 void DwarfDebug::endModule() {
-  assert(CurFn == 0);
-  assert(CurMI == 0);
+  assert(CurFn == nullptr);
+  assert(CurMI == nullptr);
 
   if (!FirstCU)
     return;
@@ -1279,7 +1279,7 @@ MCSymbol *DwarfDebug::getLabelAfterInsn(const MachineInstr *MI) {
 
 // Process beginning of an instruction.
 void DwarfDebug::beginInstruction(const MachineInstr *MI) {
-  assert(CurMI == 0);
+  assert(CurMI == nullptr);
   CurMI = MI;
   // Check if source location changes, but ignore DBG_VALUE locations.
   if (!MI->isDebugValue()) {
@@ -1323,7 +1323,7 @@ void DwarfDebug::beginInstruction(const MachineInstr *MI) {
 
 // Process end of an instruction.
 void DwarfDebug::endInstruction() {
-  assert(CurMI != 0);
+  assert(CurMI != nullptr);
   // Don't create a new label after DBG_VALUE instructions.
   // They don't generate code.
   if (!CurMI->isDebugValue())
@@ -1608,7 +1608,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     CurFn = MF;
   else
     assert(CurFn == MF);
-  assert(CurFn != 0);
+  assert(CurFn != nullptr);
 
   if (!MMI->hasDebugInfo() || LScopes.empty()) {
     // If we don't have a lexical scope for this function then there will

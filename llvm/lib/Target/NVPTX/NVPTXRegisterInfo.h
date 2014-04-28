@@ -42,7 +42,7 @@ public:
 
   // NVPTX callee saved registers
   virtual const MCPhysReg *
-  getCalleeSavedRegs(const MachineFunction *MF = 0) const;
+  getCalleeSavedRegs(const MachineFunction *MF = nullptr) const;
 
   // NVPTX callee saved register classes
   virtual const TargetRegisterClass *const *
@@ -52,7 +52,7 @@ public:
 
   virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
                                    unsigned FIOperandNum,
-                                   RegScavenger *RS = NULL) const;
+                                   RegScavenger *RS = nullptr) const;
 
   virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const;
   virtual unsigned getFrameRegister(const MachineFunction &MF) const;

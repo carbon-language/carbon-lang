@@ -29,7 +29,7 @@ public:
 
   /// Code Generation virtual methods...
 
-  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
+  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF =nullptr) const;
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
   
@@ -41,7 +41,7 @@ public:
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = NULL) const;
+                           RegScavenger *RS = nullptr) const;
 
   // Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const;

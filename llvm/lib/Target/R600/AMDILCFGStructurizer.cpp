@@ -168,7 +168,7 @@ public:
     MLI = &getAnalysis<MachineLoopInfo>();
     DEBUG(dbgs() << "LoopInfo:\n"; PrintLoopinfo(*MLI););
     MDT = &getAnalysis<MachineDominatorTree>();
-    DEBUG(MDT->print(dbgs(), (const llvm::Module*)0););
+    DEBUG(MDT->print(dbgs(), (const llvm::Module*)nullptr););
     PDT = &getAnalysis<MachinePostDominatorTree>();
     DEBUG(PDT->print(dbgs()););
     prepare();

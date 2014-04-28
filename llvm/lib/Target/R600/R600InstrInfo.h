@@ -192,7 +192,7 @@ namespace llvm {
 
   unsigned int getInstrLatency(const InstrItineraryData *ItinData,
                                const MachineInstr *MI,
-                               unsigned *PredCost = 0) const;
+                               unsigned *PredCost = nullptr) const;
 
   virtual int getInstrLatency(const InstrItineraryData *ItinData,
                               SDNode *Node) const { return 1;}

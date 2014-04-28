@@ -190,7 +190,7 @@ public:
   /// allowsUnalignedMemoryAccesses - Returns true if the target allows
   /// unaligned memory accesses. of the specified type.
   bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AddrSpace = 0,
-                                     bool *Fast = 0) const override {
+                                     bool *Fast = nullptr) const override {
     if (RequireStrictAlign)
       return false;
     // FIXME: True for Cyclone, but not necessary others.

@@ -104,14 +104,14 @@ namespace {
     void dump() {
       dbgs() << "X86ISelAddressMode " << this << '\n';
       dbgs() << "Base_Reg ";
-      if (Base_Reg.getNode() != 0)
+      if (Base_Reg.getNode())
         Base_Reg.getNode()->dump();
       else
         dbgs() << "nul";
       dbgs() << " Base.FrameIndex " << Base_FrameIndex << '\n'
              << " Scale" << Scale << '\n'
              << "IndexReg ";
-      if (IndexReg.getNode() != 0)
+      if (IndexReg.getNode())
         IndexReg.getNode()->dump();
       else
         dbgs() << "nul";
@@ -2773,7 +2773,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
   SDNode *ResNode = SelectCode(Node);
 
   DEBUG(dbgs() << "=> ";
-        if (ResNode == NULL || ResNode == Node)
+        if (ResNode == nullptr || ResNode == Node)
           Node->dump(CurDAG);
         else
           ResNode->dump(CurDAG);

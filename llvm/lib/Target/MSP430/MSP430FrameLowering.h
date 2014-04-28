@@ -51,7 +51,7 @@ public:
   bool hasFP(const MachineFunction &MF) const;
   bool hasReservedCallFrame(const MachineFunction &MF) const;
   void processFunctionBeforeFrameFinalized(MachineFunction &MF,
-                                       RegScavenger *RS = NULL) const;
+                                       RegScavenger *RS = nullptr) const;
 };
 
 } // End llvm namespace

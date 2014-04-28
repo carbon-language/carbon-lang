@@ -102,7 +102,7 @@ bool InstCombiner::SimplifyDemandedBits(Use &U, APInt DemandedMask,
 Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
                                              APInt &KnownZero, APInt &KnownOne,
                                              unsigned Depth) {
-  assert(V != 0 && "Null pointer of Value???");
+  assert(V != nullptr && "Null pointer of Value???");
   assert(Depth <= 6 && "Limit Search Depth");
   uint32_t BitWidth = DemandedMask.getBitWidth();
   Type *VTy = V->getType();

@@ -23,7 +23,7 @@ protected:
 public:
   ARMElfTargetObjectFile() :
     TargetLoweringObjectFileELF(),
-    AttributesSection(NULL)
+    AttributesSection(nullptr)
   {}
 
   void Initialize(MCContext &Ctx, const TargetMachine &TM) override;

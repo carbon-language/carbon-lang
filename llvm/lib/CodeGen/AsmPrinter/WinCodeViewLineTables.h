@@ -38,7 +38,7 @@ class WinCodeViewLineTables : public AsmPrinterHandler {
   struct FunctionInfo {
     SmallVector<MCSymbol *, 10> Instrs;
     MCSymbol *End;
-    FunctionInfo() : End(0) {}
+    FunctionInfo() : End(nullptr) {}
   } *CurFn;
 
   typedef DenseMap<const Function *, FunctionInfo> FnDebugInfoTy;
@@ -104,7 +104,7 @@ class WinCodeViewLineTables : public AsmPrinterHandler {
   void maybeRecordLocation(DebugLoc DL, const MachineFunction *MF);
 
   void clear() {
-    assert(CurFn == 0);
+    assert(CurFn == nullptr);
     FileNameRegistry.clear();
     InstrInfo.clear();
   }

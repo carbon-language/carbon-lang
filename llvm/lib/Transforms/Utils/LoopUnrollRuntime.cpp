@@ -59,7 +59,7 @@ static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
                           BasicBlock *OrigPH, BasicBlock *NewPH,
                           ValueToValueMapTy &LVMap, Pass *P) {
   BasicBlock *Latch = L->getLoopLatch();
-  assert(Latch != 0 && "Loop must have a latch");
+  assert(Latch && "Loop must have a latch");
 
   // Create a PHI node for each outgoing value from the original loop
   // (which means it is an outgoing value from the prolog code too).
@@ -111,7 +111,7 @@ static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
     new ICmpInst(InsertPt, ICmpInst::ICMP_ULT, TripCount,
                  ConstantInt::get(TripCount->getType(), Count));
   BasicBlock *Exit = L->getUniqueExitBlock();
-  assert(Exit != 0 && "Loop must have a single exit block only");
+  assert(Exit && "Loop must have a single exit block only");
   // Split the exit to maintain loop canonicalization guarantees
   SmallVector<BasicBlock*, 4> Preds(pred_begin(Exit), pred_end(Exit));
   if (!Exit->isLandingPad()) {

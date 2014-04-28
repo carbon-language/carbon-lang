@@ -31,7 +31,7 @@ namespace llvm {
 
   public:
     explicit HexagonMCInst():
-      MCInst(), MCID(0), packetStart(0), packetEnd(0) {};
+      MCInst(), MCID(nullptr), packetStart(0), packetEnd(0) {};
     HexagonMCInst(const MCInstrDesc& mcid):
       MCInst(), MCID(&mcid), packetStart(0), packetEnd(0) {};
 

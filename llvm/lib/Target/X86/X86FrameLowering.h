@@ -47,7 +47,7 @@ public:
   void adjustForHiPEPrologue(MachineFunction &MF) const override;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                        RegScavenger *RS = NULL) const override;
+                                     RegScavenger *RS = nullptr) const override;
 
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI,

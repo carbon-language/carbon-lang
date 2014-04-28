@@ -202,7 +202,7 @@ public:
                    const std::string &BitcodeFile = "",
                    const std::string &SharedObj = "",
                    bool RemoveBitcode = false,
-                   std::string *Error = 0) const;
+                   std::string *Error = nullptr) const;
 
   /// EmitProgressBitcode - This function is used to output M to a file named
   /// "bugpoint-ID.bc".
@@ -244,7 +244,7 @@ public:
   /// this method will never return null.
   Module *runPassesOn(Module *M, const std::vector<std::string> &Passes,
                       bool AutoDebugCrashes = false, unsigned NumExtraArgs = 0,
-                      const char * const *ExtraArgs = NULL);
+                      const char * const *ExtraArgs = nullptr);
 
   /// runPasses - Run the specified passes on Program, outputting a bitcode
   /// file and writting the filename into OutputFile if successful.  If the
@@ -259,7 +259,7 @@ public:
                  const std::vector<std::string> &PassesToRun,
                  std::string &OutputFilename, bool DeleteOutput = false,
                  bool Quiet = false, unsigned NumExtraArgs = 0,
-                 const char * const *ExtraArgs = NULL) const;
+                 const char * const *ExtraArgs = nullptr) const;
                  
   /// runManyPasses - Take the specified pass list and create different 
   /// combinations of passes to compile the program with. Compile the program with

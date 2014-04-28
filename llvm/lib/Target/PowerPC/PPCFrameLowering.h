@@ -46,9 +46,9 @@ public:
   void replaceFPWithRealFP(MachineFunction &MF) const;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                            RegScavenger *RS = NULL) const;
+                                            RegScavenger *RS = nullptr) const;
   void processFunctionBeforeFrameFinalized(MachineFunction &MF,
-                                       RegScavenger *RS = NULL) const;
+                                       RegScavenger *RS = nullptr) const;
   void addScavengingSpillSlot(MachineFunction &MF, RegScavenger *RS) const;
 
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
@@ -156,7 +156,7 @@ public:
     // Early exit if not using the SVR4 ABI.
     if (!Subtarget.isSVR4ABI()) {
       NumEntries = 0;
-      return 0;
+      return nullptr;
     }
 
     // Note that the offsets here overlap, but this is fixed up in

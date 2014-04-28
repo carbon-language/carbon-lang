@@ -214,7 +214,7 @@ Expression ValueTable::create_cmp_expression(unsigned Opcode,
 }
 
 Expression ValueTable::create_extractvalue_expression(ExtractValueInst *EI) {
-  assert(EI != 0 && "Not an ExtractValueInst?");
+  assert(EI && "Not an ExtractValueInst?");
   Expression e;
   e.type = EI->getType();
   e.opcode = 0;

@@ -229,7 +229,7 @@ public:
   // BRANCH exists, return the opcode for the latter, otherwise return 0.
   // MI, if nonnull, is the compare instruction.
   unsigned getCompareAndBranch(unsigned Opcode,
-                               const MachineInstr *MI = 0) const;
+                               const MachineInstr *MI = nullptr) const;
 
   // Emit code before MBBI in MI to move immediate value Value into
   // physical register Reg.

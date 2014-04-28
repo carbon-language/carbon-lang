@@ -56,7 +56,7 @@ class VLIWResourceModel {
 public:
 VLIWResourceModel(const TargetMachine &TM, const TargetSchedModel *SM) :
     SchedModel(SM), TotalPackets(0) {
-    ResourcesModel = TM.getInstrInfo()->CreateTargetScheduleState(&TM,NULL);
+    ResourcesModel = TM.getInstrInfo()->CreateTargetScheduleState(&TM, nullptr);
 
     // This hard requirement could be relaxed,
     // but for now do not let it proceed.
@@ -120,7 +120,7 @@ class ConvergingVLIWScheduler : public MachineSchedStrategy {
     // Best scheduling cost.
     int SCost;
 
-    SchedCandidate(): SU(NULL), SCost(0) {}
+    SchedCandidate(): SU(nullptr), SCost(0) {}
   };
   /// Represent the type of SchedCandidate found within a single queue.
   enum CandResult {
@@ -153,9 +153,9 @@ class ConvergingVLIWScheduler : public MachineSchedStrategy {
     /// Pending queues extend the ready queues with the same ID and the
     /// PendingFlag set.
     VLIWSchedBoundary(unsigned ID, const Twine &Name):
-      DAG(0), SchedModel(0), Available(ID, Name+".A"),
+      DAG(nullptr), SchedModel(nullptr), Available(ID, Name+".A"),
       Pending(ID << ConvergingVLIWScheduler::LogMaxQID, Name+".P"),
-      CheckPending(false), HazardRec(0), ResourceModel(0),
+      CheckPending(false), HazardRec(nullptr), ResourceModel(nullptr),
       CurrCycle(0), IssueCount(0),
       MinReadyCycle(UINT_MAX), MaxMinLatency(0) {}
 
@@ -203,8 +203,9 @@ public:
     LogMaxQID = 2
   };
 
-  ConvergingVLIWScheduler():
-    DAG(0), SchedModel(0), Top(TopQID, "TopQ"), Bot(BotQID, "BotQ") {}
+  ConvergingVLIWScheduler()
+    : DAG(nullptr), SchedModel(nullptr), Top(TopQID, "TopQ"),
+      Bot(BotQID, "BotQ") {}
 
   virtual void initialize(ScheduleDAGMI *dag) override;
 

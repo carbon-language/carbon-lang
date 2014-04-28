@@ -47,16 +47,17 @@ class LLVM_LIBRARY_VISIBILITY ARMAsmPrinter : public AsmPrinter {
   bool InConstantPool;
 public:
   explicit ARMAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-    : AsmPrinter(TM, Streamer), AFI(NULL), MCP(NULL), InConstantPool(false) {
-      Subtarget = &TM.getSubtarget<ARMSubtarget>();
-    }
+    : AsmPrinter(TM, Streamer), AFI(nullptr), MCP(nullptr),
+      InConstantPool(false) {
+    Subtarget = &TM.getSubtarget<ARMSubtarget>();
+  }
 
   const char *getPassName() const override {
     return "ARM Assembly / Object Emitter";
   }
 
   void printOperand(const MachineInstr *MI, int OpNum, raw_ostream &O,
-                    const char *Modifier = 0);
+                    const char *Modifier = nullptr);
 
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                        unsigned AsmVariant, const char *ExtraCode,

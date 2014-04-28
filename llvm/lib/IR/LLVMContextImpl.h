@@ -56,8 +56,8 @@ struct DenseMapAPIntKeyInfo {
       return hash_combine(Key.type, Key.val);
     }
   };
-  static inline KeyTy getEmptyKey() { return KeyTy(APInt(1,0), 0); }
-  static inline KeyTy getTombstoneKey() { return KeyTy(APInt(1,1), 0); }
+  static inline KeyTy getEmptyKey() { return KeyTy(APInt(1,0), nullptr); }
+  static inline KeyTy getTombstoneKey() { return KeyTy(APInt(1,1), nullptr); }
   static unsigned getHashValue(const KeyTy &Key) {
     return static_cast<unsigned>(hash_value(Key));
   }

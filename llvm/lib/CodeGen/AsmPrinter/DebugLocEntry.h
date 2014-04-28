@@ -94,7 +94,7 @@ private:
   const DwarfCompileUnit *Unit;
 
 public:
-  DebugLocEntry() : Begin(0), End(0), Unit(0) {}
+  DebugLocEntry() : Begin(nullptr), End(nullptr), Unit(nullptr) {}
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E,
                 Value Val, const DwarfCompileUnit *U)
       : Begin(B), End(E), Unit(U) {

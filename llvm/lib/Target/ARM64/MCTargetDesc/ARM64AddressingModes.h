@@ -48,7 +48,7 @@ static inline const char *getShiftName(ARM64_AM::ShiftType ST) {
   case ARM64_AM::ROR: return "ror";
   case ARM64_AM::MSL: return "msl";
   }
-  return 0;
+  return nullptr;
 }
 
 /// getShiftType - Extract the shift type.
@@ -104,7 +104,7 @@ static inline const char *getExtendName(ARM64_AM::ExtendType ET) {
   case ARM64_AM::SXTW: return "sxtw";
   case ARM64_AM::SXTX: return "sxtx";
   }
-  return 0;
+  return nullptr;
 }
 
 /// getArithShiftValue - get the arithmetic shift value.

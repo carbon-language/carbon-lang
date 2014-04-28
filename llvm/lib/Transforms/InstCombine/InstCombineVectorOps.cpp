@@ -445,7 +445,7 @@ static ShuffleOps CollectShuffleElements(Value *V,
         if (EI->getOperand(0) == PermittedRHS || PermittedRHS == nullptr) {
           Value *RHS = EI->getOperand(0);
           ShuffleOps LR = CollectShuffleElements(VecOp, Mask, RHS);
-          assert(LR.second == 0 || LR.second == RHS);
+          assert(LR.second == nullptr || LR.second == RHS);
 
           if (LR.first->getType() != RHS->getType()) {
             // We tried our best, but we can't find anything compatible with RHS

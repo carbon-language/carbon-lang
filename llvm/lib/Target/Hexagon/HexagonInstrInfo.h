@@ -111,7 +111,7 @@ public:
                                               MachineInstr* MI,
                                            const SmallVectorImpl<unsigned> &Ops,
                                               MachineInstr* LoadMI) const {
-    return 0;
+    return nullptr;
   }
 
   unsigned createVR(MachineFunction* MF, MVT VT) const;

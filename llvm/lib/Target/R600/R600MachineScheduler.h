@@ -68,7 +68,7 @@ class R600SchedStrategy : public MachineSchedStrategy {
 
 public:
   R600SchedStrategy() :
-    DAG(0), TII(0), TRI(0), MRI(0) {
+    DAG(nullptr), TII(nullptr), TRI(nullptr), MRI(nullptr) {
   }
 
   virtual ~R600SchedStrategy() {

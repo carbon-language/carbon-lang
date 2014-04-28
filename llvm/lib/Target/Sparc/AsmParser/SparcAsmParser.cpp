@@ -245,7 +245,7 @@ public:
     case k_Immediate: OS << "Imm: " << getImm() << "\n"; break;
     case k_MemoryReg: OS << "Mem: " << getMemBase() << "+"
                          << getMemOffsetReg() << "\n"; break;
-    case k_MemoryImm: assert(getMemOff() != 0);
+    case k_MemoryImm: assert(getMemOff() != nullptr);
       OS << "Mem: " << getMemBase()
          << "+" << *getMemOff()
          << "\n"; break;

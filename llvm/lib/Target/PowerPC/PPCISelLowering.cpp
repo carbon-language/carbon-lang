@@ -3801,7 +3801,7 @@ PPCTargetLowering::LowerCall_32SVR4(SDValue Chain, SDValue Callee,
         errs() << "Call operand #" << i << " has unhandled type "
              << EVT(ArgVT).getEVTString() << "\n";
 #endif
-        llvm_unreachable(0);
+        llvm_unreachable(nullptr);
       }
     }
   } else {
@@ -5487,7 +5487,7 @@ SDValue PPCTargetLowering::LowerBUILD_VECTOR(SDValue Op,
                                              SelectionDAG &DAG) const {
   SDLoc dl(Op);
   BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(Op.getNode());
-  assert(BVN != 0 && "Expected a BuildVectorSDNode in LowerBUILD_VECTOR");
+  assert(BVN && "Expected a BuildVectorSDNode in LowerBUILD_VECTOR");
 
   // Check if this is a splat of a constant value.
   APInt APSplatBits, APSplatUndef;

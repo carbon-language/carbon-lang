@@ -137,7 +137,7 @@ CC_Hexagon_VarArg (unsigned ValNo, MVT ValVT,
     State.addLoc(CCValAssign::getMem(ValNo, ValVT, ofst, LocVT, LocInfo));
     return false;
   }
-  llvm_unreachable(0);
+  llvm_unreachable(nullptr);
 }
 
 

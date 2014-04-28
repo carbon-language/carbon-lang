@@ -27,7 +27,7 @@ class AArch64Subtarget;
 struct AArch64RegisterInfo : public AArch64GenRegisterInfo {
   AArch64RegisterInfo();
 
-  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
+  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF =nullptr) const;
   const uint32_t *getCallPreservedMask(CallingConv::ID) const;
 
   unsigned getCSRFirstUseCost() const {
@@ -44,7 +44,7 @@ struct AArch64RegisterInfo : public AArch64GenRegisterInfo {
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
                            unsigned FIOperandNum,
-                           RegScavenger *Rs = NULL) const;
+                           RegScavenger *Rs = nullptr) const;
 
   /// getCrossCopyRegClass - Returns a legal register class to copy a register
   /// in the specified class to or from. Returns original class if it is
