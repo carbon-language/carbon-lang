@@ -22,7 +22,6 @@ configure_lit_site_cfg(
 if ( NOT LLD_BUILT_STANDALONE )
 
   set(LLD_TEST_DEPS
-    lld-test.deps
     FileCheck not llvm-nm
     lld llvm-config llvm-objdump llvm-readobj llvm-mc yaml2obj
     linker-script-test
