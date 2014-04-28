@@ -26,8 +26,8 @@ using namespace dwarf;
 class llvm::FrameEntry {
 public:
   enum FrameKind {FK_CIE, FK_FDE};
-  FrameEntry(FrameKind K, DataExtractor D, uint64_t Offset, uint64_t Length)
-    : Kind(K), Data(D), Offset(Offset), Length(Length) {}
+  FrameEntry(FrameKind K, uint64_t Offset, uint64_t Length)
+      : Kind(K), Offset(Offset), Length(Length) {}
 
   virtual ~FrameEntry() {
   }
@@ -35,11 +35,12 @@ public:
   FrameKind getKind() const { return Kind; }
   virtual uint64_t getOffset() const { return Offset; }
 
-  /// \brief Parse and store a sequence of CFI instructions from our data
-  /// stream, starting at *Offset and ending at EndOffset. If everything
+  /// \brief Parse and store a sequence of CFI instructions from Data,
+  /// starting at *Offset and ending at EndOffset. If everything
   /// goes well, *Offset should be equal to EndOffset when this method
   /// returns. Otherwise, an error occurred.
-  virtual void parseInstructions(uint32_t *Offset, uint32_t EndOffset);
+  virtual void parseInstructions(DataExtractor Data, uint32_t *Offset,
+                                 uint32_t EndOffset);
 
   /// \brief Dump the entry header to the given output stream.
   virtual void dumpHeader(raw_ostream &OS) const = 0;
@@ -49,10 +50,6 @@ public:
 
 protected:
   const FrameKind Kind;
-
-  /// \brief The data stream holding the section from which the entry was
-  /// parsed.
-  DataExtractor Data;
 
   /// \brief Offset of this entry in the section.
   uint64_t Offset;
@@ -97,8 +94,8 @@ protected:
 const uint8_t DWARF_CFI_PRIMARY_OPCODE_MASK = 0xc0;
 const uint8_t DWARF_CFI_PRIMARY_OPERAND_MASK = 0x3f;
 
-
-void FrameEntry::parseInstructions(uint32_t *Offset, uint32_t EndOffset) {
+void FrameEntry::parseInstructions(DataExtractor Data, uint32_t *Offset,
+                                   uint32_t EndOffset) {
   while (*Offset < EndOffset) {
     uint8_t Opcode = Data.getU8(Offset);
     // Some instructions have a primary opcode encoded in the top bits.
@@ -201,13 +198,13 @@ class CIE : public FrameEntry {
 public:
   // CIEs (and FDEs) are simply container classes, so the only sensible way to
   // create them is by providing the full parsed contents in the constructor.
-  CIE(DataExtractor D, uint64_t Offset, uint64_t Length, uint8_t Version,
+  CIE(uint64_t Offset, uint64_t Length, uint8_t Version,
       SmallString<8> Augmentation, uint64_t CodeAlignmentFactor,
       int64_t DataAlignmentFactor, uint64_t ReturnAddressRegister)
-   : FrameEntry(FK_CIE, D, Offset, Length), Version(Version),
-     Augmentation(Augmentation), CodeAlignmentFactor(CodeAlignmentFactor),
-     DataAlignmentFactor(DataAlignmentFactor),
-     ReturnAddressRegister(ReturnAddressRegister) {}
+      : FrameEntry(FK_CIE, Offset, Length), Version(Version),
+        Augmentation(Augmentation), CodeAlignmentFactor(CodeAlignmentFactor),
+        DataAlignmentFactor(DataAlignmentFactor),
+        ReturnAddressRegister(ReturnAddressRegister) {}
 
   ~CIE() {
   }
@@ -229,7 +226,7 @@ public:
 
   static bool classof(const FrameEntry *FE) {
     return FE->getKind() == FK_CIE;
-  } 
+  }
 
 private:
   /// The following fields are defined in section 6.4.1 of the DWARF standard v3
@@ -247,11 +244,11 @@ public:
   // Each FDE has a CIE it's "linked to". Our FDE contains is constructed with
   // an offset to the CIE (provided by parsing the FDE header). The CIE itself
   // is obtained lazily once it's actually required.
-  FDE(DataExtractor D, uint64_t Offset, uint64_t Length,
-      int64_t LinkedCIEOffset, uint64_t InitialLocation, uint64_t AddressRange)
-   : FrameEntry(FK_FDE, D, Offset, Length), LinkedCIEOffset(LinkedCIEOffset),
-     InitialLocation(InitialLocation), AddressRange(AddressRange),
-     LinkedCIE(nullptr) {}
+  FDE(uint64_t Offset, uint64_t Length, int64_t LinkedCIEOffset,
+      uint64_t InitialLocation, uint64_t AddressRange)
+      : FrameEntry(FK_FDE, Offset, Length), LinkedCIEOffset(LinkedCIEOffset),
+        InitialLocation(InitialLocation), AddressRange(AddressRange),
+        LinkedCIE(nullptr) {}
 
   ~FDE() {
   }
@@ -270,9 +267,9 @@ public:
 
   static bool classof(const FrameEntry *FE) {
     return FE->getKind() == FK_FDE;
-  } 
-private:
+  }
 
+private:
   /// The following fields are defined in section 6.4.1 of the DWARF standard v3
   uint64_t LinkedCIEOffset;
   uint64_t InitialLocation;
@@ -340,7 +337,7 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
       int64_t DataAlignmentFactor = Data.getSLEB128(&Offset);
       uint64_t ReturnAddressRegister = Data.getULEB128(&Offset);
 
-      Entries.emplace_back(new CIE(Data, StartOffset, Length, Version,
+      Entries.emplace_back(new CIE(StartOffset, Length, Version,
                                    StringRef(Augmentation), CodeAlignmentFactor,
                                    DataAlignmentFactor, ReturnAddressRegister));
     } else {
@@ -349,11 +346,11 @@ void DWARFDebugFrame::parse(DataExtractor Data) {
       uint64_t InitialLocation = Data.getAddress(&Offset);
       uint64_t AddressRange = Data.getAddress(&Offset);
 
-      Entries.emplace_back(new FDE(Data, StartOffset, Length, CIEPointer,
+      Entries.emplace_back(new FDE(StartOffset, Length, CIEPointer,
                                    InitialLocation, AddressRange));
     }
 
-    Entries.back()->parseInstructions(&Offset, EndStructureOffset);
+    Entries.back()->parseInstructions(Data, &Offset, EndStructureOffset);
 
     if (Offset != EndStructureOffset) {
       std::string Str;
