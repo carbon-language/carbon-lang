@@ -124,6 +124,12 @@ protected:
 
   /// Children DIEs.
   ///
+  // This can't be a vector<DIE> because pointer validity is requirent for the
+  // Parent pointer and DIEEntry.
+  // It can't be a list<DIE> because some clients need pointer validity before
+  // the object has been added to any child list
+  // (eg: DwarfUnit::constructVariableDIE). These aren't insurmountable, but may
+  // be more convoluted than beneficial.
   std::vector<std::unique_ptr<DIE>> Children;
 
   DIE *Parent;
