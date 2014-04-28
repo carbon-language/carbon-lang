@@ -47,13 +47,9 @@ std::string TimeValue::str() const {
   LT = &Storage;
 #endif
 
-  char Buffer[25];
-  // FIXME: the windows version of strftime doesn't support %e
-  strftime(Buffer, 25, "%b %d %H:%M %Y", LT);
-  assert((Buffer[3] == ' ' && isdigit(Buffer[5]) && Buffer[6] == ' ') &&
-         "Unexpected format in strftime()!");
-  // Emulate %e on %d to mute '0'.
-  if (Buffer[4] == '0')
-    Buffer[4] = ' ';
-  return std::string(Buffer);
+  char Buffer1[sizeof("YYYY-MM-DD HH:MM:SS")];
+  strftime(Buffer1, sizeof(Buffer1), "%Y-%m-%d %H:%M:%S", LT);
+  char Buffer2[sizeof("YYYY-MM-DD HH:MM:SS.MMMUUUNNN")];
+  snprintf(Buffer2, sizeof(Buffer2), "%s.%.9u", Buffer1, this->nanoseconds());
+  return std::string(Buffer2);
 }
