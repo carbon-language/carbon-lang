@@ -431,7 +431,11 @@ def VectorRegAsmOperand : AsmOperandClass { let Name = "VectorReg"; }
 let ParserMatchClass = VectorRegAsmOperand in {
 def V64  : RegisterOperand<FPR64, "printVRegOperand">;
 def V128 : RegisterOperand<FPR128, "printVRegOperand">;
-def V128_lo : RegisterOperand<FPR128_lo, "printVRegOperand">;
+}
+
+def VectorRegLoAsmOperand : AsmOperandClass { let Name = "VectorRegLo"; }
+def V128_lo : RegisterOperand<FPR128_lo, "printVRegOperand"> {
+  let ParserMatchClass = VectorRegLoAsmOperand;
 }
 
 class TypedVecListAsmOperand<int count, int regsize, int lanes, string kind>

@@ -688,6 +688,10 @@ public:
   }
   bool isReg() const { return Kind == k_Register && !Reg.isVector; }
   bool isVectorReg() const { return Kind == k_Register && Reg.isVector; }
+  bool isVectorRegLo() const {
+    return Kind == k_Register && Reg.isVector &&
+      ARM64MCRegisterClasses[ARM64::FPR128_loRegClassID].contains(Reg.RegNum);
+  }
 
   /// Is this a vector list with the type implicit (presumably attached to the
   /// instruction itself)?
@@ -1055,6 +1059,11 @@ public:
   }
 
   void addVectorRegOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(getReg()));
+  }
+
+  void addVectorRegLoOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getReg()));
   }
