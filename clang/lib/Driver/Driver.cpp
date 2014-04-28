@@ -447,12 +447,13 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     bool IgnoreInput = false;
 
     // Ignore input from stdin or any inputs that cannot be preprocessed.
-    if (!strcmp(it->second->getValue(), "-")) {
+    // Check type first as not all linker inputs have a value.
+   if (types::getPreprocessedType(it->first) == types::TY_INVALID) {
+      IgnoreInput = true;
+    } else if (!strcmp(it->second->getValue(), "-")) {
       Diag(clang::diag::note_drv_command_failed_diag_msg)
         << "Error generating preprocessed source(s) - ignoring input from stdin"
         ".";
-      IgnoreInput = true;
-    } else if (types::getPreprocessedType(it->first) == types::TY_INVALID) {
       IgnoreInput = true;
     }
 
