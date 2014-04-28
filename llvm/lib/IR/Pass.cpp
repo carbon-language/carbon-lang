@@ -17,6 +17,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRPrintingPasses.h"
 #include "llvm/IR/LegacyPassNameParser.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/PassRegistry.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -241,6 +242,18 @@ PassRegistrationListener::~PassRegistrationListener() {
 void PassRegistrationListener::enumeratePasses() {
   PassRegistry::getPassRegistry()->enumerateWith(this);
 }
+
+//===----------------------------------------------------------------------===//
+// PassRunListener implementation
+//
+
+// PassRunListener ctor - Add the current object to the list of
+// PassRunListeners...
+PassRunListener::PassRunListener(LLVMContext *C) {
+  C->addRunListener(this);
+}
+
+PassRunListener::~PassRunListener() {}
 
 PassNameParser::~PassNameParser() {}
 

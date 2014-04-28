@@ -29,7 +29,9 @@
 #ifndef LLVM_PASS_H
 #define LLVM_PASS_H
 
+#include "llvm/Support/CBindingWrapping.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm-c/Core.h"
 #include <string>
 
 namespace llvm {
@@ -368,6 +370,9 @@ protected:
 /// then the value of this boolean will be true, otherwise false.
 /// @brief This is the storage for the -time-passes option.
 extern bool TimePassesIsEnabled;
+
+// Create wrappers for C Binding types (see CBindingWrapping.h).
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Pass, LLVMPassRef)
 
 } // End llvm namespace
 

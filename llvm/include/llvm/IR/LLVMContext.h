@@ -21,16 +21,19 @@
 
 namespace llvm {
 
+class BasicBlock;
+class DebugLoc;
+class DiagnosticInfo;
+class Function;
+class Instruction;
 class LLVMContextImpl;
+class Module;
+class Pass;
+struct PassRunListener;
+template <typename T> class SmallVectorImpl;
+class SMDiagnostic;
 class StringRef;
 class Twine;
-class Instruction;
-class Module;
-class SMDiagnostic;
-class DiagnosticInfo;
-template <typename T> class SmallVectorImpl;
-class Function;
-class DebugLoc;
 
 /// This is an important class for using LLVM in a threaded context.  It
 /// (opaquely) owns and manages the core "global" data of LLVM's core
@@ -136,6 +139,16 @@ public:
   void emitOptimizationRemark(const char *PassName, const Function &Fn,
                               const DebugLoc &DLoc, const Twine &Msg);
 
+  /// \brief Notify that we finished running a pass.
+  void notifyPassRun(Pass *P, Module *M, Function *F = nullptr,
+                     BasicBlock *BB = nullptr);
+  /// \brief Register the given PassRunListener to receive notifyPassRun()
+  /// callbacks whenever a pass ran. The context will take ownership of the
+  /// listener and free it when the context is destroyed.
+  void addRunListener(PassRunListener *L);
+  /// \brief Unregister a PassRunListener so that it no longer receives
+  /// notifyPassRun() callbacks. Remove and free the listener from the context.
+  void removeRunListener(PassRunListener *L);
 private:
   LLVMContext(LLVMContext&) LLVM_DELETED_FUNCTION;
   void operator=(LLVMContext&) LLVM_DELETED_FUNCTION;
