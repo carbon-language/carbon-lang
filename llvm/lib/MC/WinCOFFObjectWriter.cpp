@@ -662,8 +662,8 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
     }
   }
 
-  for (MCAssembler::const_iterator i = Asm.begin(), e = Asm.end(); i != e; i++)
-    DefineSection(*i);
+  for (const auto & Section : Asm)
+    DefineSection(Section);
 
   for (MCSymbolData &SD : Asm.symbols())
     if (ExportSymbol(SD, Asm))
@@ -808,77 +808,71 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
   Header.NumberOfSections = 0;
 
   DenseMap<COFFSection *, uint16_t> SectionIndices;
-  for (sections::iterator i = Sections.begin(),
-                          e = Sections.end(); i != e; i++) {
-    if (Layout.getSectionAddressSize((*i)->MCData) > 0) {
+  for (auto & Section : Sections) {
+    if (Layout.getSectionAddressSize(Section->MCData) > 0) {
       size_t Number = ++Header.NumberOfSections;
-      SectionIndices[i->get()] = Number;
-      MakeSectionReal(**i, Number);
+      SectionIndices[Section.get()] = Number;
+      MakeSectionReal(*Section, Number);
     } else {
-      (*i)->Number = -1;
+      Section->Number = -1;
     }
   }
 
   Header.NumberOfSymbols = 0;
 
-  for (symbols::iterator i = Symbols.begin(), e = Symbols.end(); i != e; i++) {
-    COFFSymbol &coff_symbol = **i;
-    MCSymbolData const *SymbolData = coff_symbol.MCData;
+  for (auto & Symbol : Symbols) {
+    MCSymbolData const *SymbolData = Symbol->MCData;
 
     // Update section number & offset for symbols that have them.
     if (SymbolData && SymbolData->Fragment) {
-      assert(coff_symbol.Section != nullptr);
+      assert(Symbol->Section != nullptr);
 
-      coff_symbol.Data.SectionNumber = coff_symbol.Section->Number;
-      coff_symbol.Data.Value = Layout.getFragmentOffset(SymbolData->Fragment)
-                              + SymbolData->Offset;
+      Symbol->Data.SectionNumber = Symbol->Section->Number;
+      Symbol->Data.Value = Layout.getFragmentOffset(SymbolData->Fragment)
+                         + SymbolData->Offset;
     }
 
-    if (coff_symbol.should_keep()) {
-      MakeSymbolReal(coff_symbol, Header.NumberOfSymbols++);
+    if (Symbol->should_keep()) {
+      MakeSymbolReal(*Symbol, Header.NumberOfSymbols++);
 
       // Update auxiliary symbol info.
-      coff_symbol.Data.NumberOfAuxSymbols = coff_symbol.Aux.size();
-      Header.NumberOfSymbols += coff_symbol.Data.NumberOfAuxSymbols;
+      Symbol->Data.NumberOfAuxSymbols = Symbol->Aux.size();
+      Header.NumberOfSymbols += Symbol->Data.NumberOfAuxSymbols;
     } else
-      coff_symbol.Index = -1;
+      Symbol->Index = -1;
   }
 
   // Fixup weak external references.
-  for (symbols::iterator i = Symbols.begin(), e = Symbols.end(); i != e; i++) {
-    COFFSymbol &coff_symbol = **i;
-    if (coff_symbol.Other) {
-      assert(coff_symbol.Index != -1);
-      assert(coff_symbol.Aux.size() == 1 &&
-             "Symbol must contain one aux symbol!");
-      assert(coff_symbol.Aux[0].AuxType == ATWeakExternal &&
+  for (auto & Symbol : Symbols) {
+    if (Symbol->Other) {
+      assert(Symbol->Index != -1);
+      assert(Symbol->Aux.size() == 1 && "Symbol must contain one aux symbol!");
+      assert(Symbol->Aux[0].AuxType == ATWeakExternal &&
              "Symbol's aux symbol must be a Weak External!");
-      coff_symbol.Aux[0].Aux.WeakExternal.TagIndex = coff_symbol.Other->Index;
+      Symbol->Aux[0].Aux.WeakExternal.TagIndex = Symbol->Other->Index;
     }
   }
 
   // Fixup associative COMDAT sections.
-  for (sections::iterator i = Sections.begin(),
-                          e = Sections.end(); i != e; i++) {
-    if ((*i)->Symbol->Aux[0].Aux.SectionDefinition.Selection !=
+  for (auto & Section : Sections) {
+    if (Section->Symbol->Aux[0].Aux.SectionDefinition.Selection !=
         COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE)
       continue;
 
-    const MCSectionCOFF &MCSec = static_cast<const MCSectionCOFF &>(
-                                                    (*i)->MCData->getSection());
+    const MCSectionCOFF &MCSec =
+      static_cast<const MCSectionCOFF &>(Section->MCData->getSection());
 
     COFFSection *Assoc = SectionMap.lookup(MCSec.getAssocSection());
-    if (!Assoc) {
+    if (!Assoc)
       report_fatal_error(Twine("Missing associated COMDAT section ") +
                          MCSec.getAssocSection()->getSectionName() +
                          " for section " + MCSec.getSectionName());
-    }
 
     // Skip this section if the associated section is unused.
     if (Assoc->Number == -1)
       continue;
 
-    (*i)->Symbol->Aux[0].Aux.SectionDefinition.Number = SectionIndices[Assoc];
+    Section->Symbol->Aux[0].Aux.SectionDefinition.Number = SectionIndices[Assoc];
   }
 
 
@@ -889,15 +883,13 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
   offset += COFF::HeaderSize;
   offset += COFF::SectionSize * Header.NumberOfSections;
 
-  for (MCAssembler::const_iterator i = Asm.begin(),
-                                   e = Asm.end();
-                                   i != e; i++) {
-    COFFSection *Sec = SectionMap[&i->getSection()];
+  for (const auto & Section : Asm) {
+    COFFSection *Sec = SectionMap[&Section.getSection()];
 
     if (Sec->Number == -1)
       continue;
 
-    Sec->Header.SizeOfRawData = Layout.getSectionAddressSize(i);
+    Sec->Header.SizeOfRawData = Layout.getSectionAddressSize(&Section);
 
     if (IsPhysicalSection(Sec)) {
       Sec->Header.PointerToRawData = offset;
@@ -924,16 +916,14 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
       offset += COFF::RelocationSize * Sec->Relocations.size();
 
-      for (relocations::iterator cr = Sec->Relocations.begin(),
-                                 er = Sec->Relocations.end();
-                                 cr != er; ++cr) {
-        assert((*cr).Symb->Index != -1);
-        (*cr).Data.SymbolTableIndex = (*cr).Symb->Index;
+      for (auto & Relocation : Sec->Relocations) {
+        assert(Relocation.Symb->Index != -1);
+        Relocation.Data.SymbolTableIndex = Relocation.Symb->Index;
       }
     }
 
-    assert(Sec->Symbol->Aux.size() == 1
-      && "Section's symbol must have one aux!");
+    assert(Sec->Symbol->Aux.size() == 1 &&
+           "Section's symbol must have one aux!");
     AuxSymbol &Aux = Sec->Symbol->Aux[0];
     assert(Aux.AuxType == ATSectionDefinition &&
            "Section's symbol's aux symbol must be a Section Definition!");
@@ -956,13 +946,13 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
     sections::iterator i, ie;
     MCAssembler::const_iterator j, je;
 
-    for (i = Sections.begin(), ie = Sections.end(); i != ie; i++)
-      if ((*i)->Number != -1) {
-        if ((*i)->Relocations.size() >= 0xffff) {
-          (*i)->Header.Characteristics |= COFF::IMAGE_SCN_LNK_NRELOC_OVFL;
-        }
-        WriteSectionHeader((*i)->Header);
+    for (auto & Section : Sections) {
+      if (Section->Number != -1) {
+        if (Section->Relocations.size() >= 0xffff)
+          Section->Header.Characteristics |= COFF::IMAGE_SCN_LNK_NRELOC_OVFL;
+        WriteSectionHeader(Section->Header);
       }
+    }
 
     for (i = Sections.begin(), ie = Sections.end(),
          j = Asm.begin(), je = Asm.end();
@@ -992,11 +982,8 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
           WriteRelocation(r);
         }
 
-        for (relocations::const_iterator k = (*i)->Relocations.begin(),
-                                               ke = (*i)->Relocations.end();
-                                               k != ke; k++) {
-          WriteRelocation(k->Data);
-        }
+        for (const auto & Relocation : (*i)->Relocations)
+          WriteRelocation(Relocation.Data);
       } else
         assert((*i)->Header.PointerToRelocations == 0 &&
                "Section::PointerToRelocations is insane!");
@@ -1006,9 +993,9 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
   assert(OS.tell() == Header.PointerToSymbolTable &&
          "Header::PointerToSymbolTable is insane!");
 
-  for (symbols::iterator i = Symbols.begin(), e = Symbols.end(); i != e; i++)
-    if ((*i)->Index != -1)
-      WriteSymbol(**i);
+  for (auto & Symbol : Symbols)
+    if (Symbol->Index != -1)
+      WriteSymbol(*Symbol);
 
   OS.write((char const *)&Strings.Data.front(), Strings.Data.size());
 }
