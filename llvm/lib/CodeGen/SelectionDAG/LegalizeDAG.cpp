@@ -3711,8 +3711,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       BottomHalf = DAG.getNode(Ops[isSigned][1], dl, DAG.getVTList(VT, VT), LHS,
                                RHS);
       TopHalf = BottomHalf.getValue(1);
-    } else if (TLI.isTypeLegal(EVT::getIntegerVT(*DAG.getContext(),
-                                                 VT.getSizeInBits() * 2))) {
+    } else if (TLI.isTypeLegal(WideVT)) {
       LHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, LHS);
       RHS = DAG.getNode(Ops[isSigned][2], dl, WideVT, RHS);
       Tmp1 = DAG.getNode(ISD::MUL, dl, WideVT, LHS, RHS);
