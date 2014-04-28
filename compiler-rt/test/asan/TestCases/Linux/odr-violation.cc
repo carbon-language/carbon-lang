@@ -1,8 +1,16 @@
-// RUN: %clangxx_asan -DBUILD_SO=1 -fPIC -shared %s -o %t.so
 // RUN: %clangxx_asan %s %t.so -Wl,-R. -o %t
+//
+// Different size: detect a bug if detect_odr_violation>=1
+// RUN: %clangxx_asan -DBUILD_SO=1 -fPIC -shared %s -o %t.so
 // RUN: ASAN_OPTIONS=detect_odr_violation=1 not %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=detect_odr_violation=2 not %t 2>&1 | FileCheck %s
 // RUN: ASAN_OPTIONS=detect_odr_violation=0     %t 2>&1 | FileCheck %s --check-prefix=DISABLED
 // RUN:                                         %t 2>&1 | FileCheck %s --check-prefix=DISABLED
+//
+// Same size: report a bug only if detect_odr_violation>=2.
+// RUN: %clangxx_asan -DBUILD_SO=1 -fPIC -shared %s -o %t.so -DSZ=100
+// RUN: ASAN_OPTIONS=detect_odr_violation=1     %t 2>&1 | FileCheck %s --check-prefix=DISABLED
+// RUN: ASAN_OPTIONS=detect_odr_violation=2 not %t 2>&1 | FileCheck %s
 
 #ifndef SZ
 # define SZ 4

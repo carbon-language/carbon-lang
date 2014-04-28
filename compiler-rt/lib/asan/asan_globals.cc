@@ -99,7 +99,8 @@ static void RegisterGlobal(const Global *g) {
       // This check may not be enough: if the first global is much larger
       // the entire redzone of the second global may be within the first global.
       for (ListOfGlobals *l = list_of_all_globals; l; l = l->next) {
-        if (g->beg == l->g->beg)
+        if (g->beg == l->g->beg &&
+            (flags()->detect_odr_violation >= 2 || g->size != l->g->size))
           ReportODRViolation(g, l->g);
       }
     }
