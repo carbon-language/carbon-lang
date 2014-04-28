@@ -2092,5 +2092,4 @@ void DwarfTypeUnit::initSection(const MCSection *Section) {
       Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
   this->LabelEnd =
       Asm->GetTempSymbol(Section->getLabelEndName(), getUniqueID());
-  this->LabelRange = Asm->GetTempSymbol("gnu_ranges", getUniqueID());
 }

@@ -2355,9 +2355,6 @@ void DwarfDebug::emitDebugRanges() {
   for (const auto &I : CUMap) {
     DwarfCompileUnit *TheCU = I.second;
 
-    // Emit a symbol so we can find the beginning of our ranges.
-    Asm->OutStreamer.EmitLabel(TheCU->getLabelRange());
-
     // Iterate over the misc ranges for the compile units in the module.
     for (const RangeSpanList &List : TheCU->getRangeLists()) {
       // Emit our symbol so we can find the beginning of the range.

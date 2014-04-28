@@ -138,9 +138,6 @@ protected:
   /// The end of the unit within its section.
   MCSymbol *LabelEnd;
 
-  /// The label for the start of the range sets for the elements of this unit.
-  MCSymbol *LabelRange;
-
   /// Skeleton unit associated with this unit.
   DwarfUnit *Skeleton;
 
@@ -167,7 +164,6 @@ public:
         Asm->GetTempSymbol(Section->getLabelBeginName(), getUniqueID());
     this->LabelEnd =
         Asm->GetTempSymbol(Section->getLabelEndName(), getUniqueID());
-    this->LabelRange = Asm->GetTempSymbol("gnu_ranges", getUniqueID());
   }
 
   const MCSection *getSection() const {
@@ -204,11 +200,6 @@ public:
   MCSymbol *getLabelEnd() const {
     assert(Section);
     return LabelEnd;
-  }
-
-  MCSymbol *getLabelRange() const {
-    assert(Section);
-    return LabelRange;
   }
 
   // Accessors.
