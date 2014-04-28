@@ -109,8 +109,7 @@ class ELFObjectWriter : public MCObjectWriter {
     static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout);
     static bool isInSymtab(const MCAsmLayout &Layout, const MCSymbolData &Data,
                            bool Used, bool Renamed);
-    static bool isLocal(const MCSymbolData &Data, bool isSignature,
-                        bool isUsedInReloc);
+    static bool isLocal(const MCSymbolData &Data, bool isUsedInReloc);
     static bool IsELFMetaDataSection(const MCSectionData &SD);
     static uint64_t DataSectionSize(const MCSectionData &SD);
     static uint64_t GetSectionFileSize(const MCAsmLayout &Layout,
@@ -971,20 +970,16 @@ bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
   return true;
 }
 
-bool ELFObjectWriter::isLocal(const MCSymbolData &Data, bool isSignature,
-                              bool isUsedInReloc) {
+bool ELFObjectWriter::isLocal(const MCSymbolData &Data, bool isUsedInReloc) {
   if (Data.isExternal())
     return false;
 
   const MCSymbol &Symbol = Data.getSymbol();
-  const MCSymbol &RefSymbol = Symbol.AliasedSymbol();
+  if (Symbol.isDefined())
+    return true;
 
-  if (RefSymbol.isUndefined() && !RefSymbol.isVariable()) {
-    if (isSignature && !isUsedInReloc)
-      return true;
-
+  if (isUsedInReloc)
     return false;
-  }
 
   return true;
 }
@@ -1072,7 +1067,7 @@ ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
 
     // Undefined symbols are global, but this is the first place we
     // are able to set it.
-    bool Local = isLocal(SD, isSignature, Used);
+    bool Local = isLocal(SD, Used);
     if (!Local && MCELF::GetBinding(SD) == ELF::STB_LOCAL) {
       assert(BaseSymbol);
       MCSymbolData &BaseData = Asm.getSymbolData(*BaseSymbol);
