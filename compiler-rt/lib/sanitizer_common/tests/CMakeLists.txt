@@ -45,6 +45,10 @@ set(SANITIZER_TEST_LINK_FLAGS_COMMON
   -lstdc++)
 append_if(COMPILER_RT_HAS_LIBDL -ldl SANITIZER_TEST_LINK_FLAGS_COMMON)
 append_if(COMPILER_RT_HAS_LIBPTHREAD -lpthread SANITIZER_TEST_LINK_FLAGS_COMMON)
+# x86_64 FreeBSD 9.2 additionally requires libc++ to build the tests.
+if(CMAKE_SYSTEM MATCHES "FreeBSD-9.2-RELEASE")
+  list(APPEND SANITIZER_TEST_LINK_FLAGS_COMMON "-lc++")
+endif()
 
 include_directories(..)
 include_directories(../..)

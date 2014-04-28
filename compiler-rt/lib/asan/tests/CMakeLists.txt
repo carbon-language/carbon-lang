@@ -50,6 +50,11 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
 
 # Unit tests require libstdc++.
 set(ASAN_UNITTEST_COMMON_LINKFLAGS -lstdc++)
+# x86_64 FreeBSD 9.2 additionally requires libc++ to build the tests.
+if(CMAKE_SYSTEM MATCHES "FreeBSD-9.2-RELEASE")
+  list(APPEND ASAN_UNITTEST_COMMON_LINKFLAGS "-lc++")
+endif()
+
 # Unit tests on Mac depend on Foundation.
 if(APPLE)
   list(APPEND ASAN_UNITTEST_COMMON_LINKFLAGS -framework Foundation)
