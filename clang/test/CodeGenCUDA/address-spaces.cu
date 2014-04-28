@@ -3,7 +3,7 @@
 // Verifies Clang emits correct address spaces and addrspacecast instructions
 // for CUDA code.
 
-#include "../SemaCUDA/cuda.h"
+#include "Inputs/cuda.h"
 
 // CHECK: @i = addrspace(1) global
 __device__ int i;

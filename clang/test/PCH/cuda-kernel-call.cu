@@ -5,7 +5,7 @@
 #define HEADER
 // Header.
 
-#include "../SemaCUDA/cuda.h"
+#include "Inputs/cuda.h"
 
 void kcall(void (*kp)()) {
   kp<<<1, 1>>>();

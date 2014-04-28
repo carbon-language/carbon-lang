@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
 
-#include "../SemaCUDA/cuda.h"
+#include "Inputs/cuda.h"
 
 // Test that we build the correct number of calls to cudaSetupArgument followed
 // by a call to cudaLaunch.

@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -triple nvptx-unknown-unknown -fcuda-is-device -emit-llvm -o - | FileCheck %s
 
-#include "../SemaCUDA/cuda.h"
+#include "Inputs/cuda.h"
 
 // CHECK-LABEL: define void @device_function
 extern "C"

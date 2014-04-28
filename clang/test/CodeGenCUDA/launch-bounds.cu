@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -triple nvptx-unknown-unknown -fcuda-is-device -emit-llvm -o - | FileCheck %s
 
-#include "../SemaCUDA/cuda.h"
+#include "Inputs/cuda.h"
 
 #define MAX_THREADS_PER_BLOCK 256
 #define MIN_BLOCKS_PER_MP     2
