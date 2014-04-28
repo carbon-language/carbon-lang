@@ -1291,7 +1291,7 @@ struct IrreducibleGraph {
     std::deque<const IrrNode *> Edges;
     IrrNode(const BlockNode &Node) : Node(Node), NumIn(0) {}
 
-    typedef typename std::deque<const IrrNode *>::const_iterator iterator;
+    typedef std::deque<const IrrNode *>::const_iterator iterator;
     iterator pred_begin() const { return Edges.begin(); }
     iterator succ_begin() const { return Edges.begin() + NumIn; }
     iterator pred_end() const { return succ_begin(); }
