@@ -15,15 +15,14 @@ namespace {
 
 typedef PointerUnion<int *, float *> PU;
 
-// Test fixture
-class PointerUnionTest : public testing::Test {};
+struct PointerUnionTest : public testing::Test {
+  float f;
+  int i;
 
-float f = 3.14f;
-int i = 42;
+  PU a, b, n;
 
-const PU a(&f);
-const PU b(&i);
-const PU n;
+  PointerUnionTest() : f(3.14f), i(42), a(&f), b(&i), n() {}
+};
 
 TEST_F(PointerUnionTest, Comparison) {
   EXPECT_TRUE(a != b);
