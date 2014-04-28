@@ -370,7 +370,8 @@ private:
       if (Tok->Previous == NULL)
         return false;
       // Colons from ?: are handled in parseConditional().
-      if (Tok->Previous->is(tok::r_paren) && Contexts.size() == 1) {
+      if (Tok->Previous->is(tok::r_paren) && Contexts.size() == 1 &&
+          Line.First->isNot(tok::kw_case)) {
         Tok->Type = TT_CtorInitializerColon;
       } else if (Contexts.back().ColonIsDictLiteral) {
         Tok->Type = TT_DictLiteral;
@@ -1429,7 +1430,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                         tok::semi) ||
            (Style.SpaceBeforeParens != FormatStyle::SBPO_Never &&
             (Left.isOneOf(tok::kw_if, tok::kw_for, tok::kw_while,
-                          tok::kw_switch, tok::kw_catch) ||
+                          tok::kw_switch, tok::kw_catch, tok::kw_case) ||
              Left.IsForEachMacro)) ||
            (Style.SpaceBeforeParens == FormatStyle::SBPO_Always &&
             Left.isOneOf(tok::identifier, tok::kw___attribute) &&

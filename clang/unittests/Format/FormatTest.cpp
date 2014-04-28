@@ -618,6 +618,10 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "    break;\n"
                "  }\n"
                "});");
+  verifyFormat("switch (a) {\n"
+               "case (b):\n"
+               "  return;\n"
+               "}");
 }
 
 TEST_F(FormatTest, CaseRanges) {
