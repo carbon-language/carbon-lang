@@ -469,7 +469,7 @@ int main(int argc, const char **argv) {
 
   if (FinalSyntaxCheck) {
     ClangTool SyntaxTool(*Compilations, SourcePaths);
-    if (SyntaxTool.run(newFrontendActionFactory<SyntaxOnlyAction>()) != 0)
+    if (SyntaxTool.run(newFrontendActionFactory<SyntaxOnlyAction>().get()) != 0)
       return 1;
   }
 

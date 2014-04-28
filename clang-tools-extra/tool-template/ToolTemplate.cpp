@@ -103,5 +103,5 @@ int main(int argc, const char **argv) {
 // Use Finder.addMatcher(...) to define the patterns in the AST that you
 // want to match against. You are not limited to just one matcher!
 
-  return Tool.run(newFrontendActionFactory(&Finder));
+  return Tool.run(newFrontendActionFactory(&Finder).get());
 }
