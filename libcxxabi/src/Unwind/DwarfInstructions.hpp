@@ -63,33 +63,32 @@ private:
   static v128 getSavedVectorRegister(A &addressSpace, const R &registers,
                                   pint_t cfa, const RegisterLocation &savedReg);
 
-  // x86 specific variants
+  static pint_t getCFA(A &addressSpace, const PrologInfo &prolog,
+                       const R &registers) {
+    if (prolog.cfaRegister != 0)
+      return (pint_t)((sint_t)registers.getRegister((int)prolog.cfaRegister) +
+             prolog.cfaRegisterOffset);
+    if (prolog.cfaExpression != 0)
+      return evaluateExpression((pint_t)prolog.cfaExpression, addressSpace, 
+                                registers, 0);
+    assert(0 && "getCFA(): unknown location");
+    __builtin_unreachable();
+  }
+    // x86 specific variants
   static int lastRestoreReg(const Registers_x86 &);
   static bool isReturnAddressRegister(int regNum, const Registers_x86 &);
-  static pint_t getCFA(A &addressSpace, const PrologInfo &prolog,
-                       const Registers_x86 &);
 
   // x86_64 specific variants
   static int lastRestoreReg(const Registers_x86_64 &);
   static bool isReturnAddressRegister(int regNum, const Registers_x86_64 &);
-  static pint_t getCFA(A &addressSpace,
-                       const PrologInfo &prolog,
-                       const Registers_x86_64 &);
 
   // ppc specific variants
   static int lastRestoreReg(const Registers_ppc &);
   static bool isReturnAddressRegister(int regNum, const Registers_ppc &);
-  static pint_t getCFA(A &addressSpace,
-                       const PrologInfo &prolog,
-                       const Registers_ppc &);
 
   // arm64 specific variants
   static bool isReturnAddressRegister(int regNum, const Registers_arm64 &);
   static int lastRestoreReg(const Registers_arm64 &);
-  static pint_t getCFA(A &addressSpace,
-                       const PrologInfo &prolog,
-                       const Registers_arm64 &);
-
 };
 
 
@@ -781,19 +780,6 @@ DwarfInstructions<A, R>::isReturnAddressRegister(int regNum,
   return (regNum == DW_X86_64_RET_ADDR);
 }
 
-template <typename A, typename R>
-typename A::pint_t DwarfInstructions<A, R>::getCFA(
-    A &addressSpace, const PrologInfo &prolog,
-    const Registers_x86_64 &registers) {
-  if (prolog.cfaRegister != 0)
-    return (pint_t)((sint_t)registers.getRegister((int)prolog.cfaRegister)
-                                                    + prolog.cfaRegisterOffset);
-  else if (prolog.cfaExpression != 0)
-    return evaluateExpression((pint_t)prolog.cfaExpression, addressSpace, registers, 0);
-  else
-    _LIBUNWIND_ABORT("getCFA(): unknown location for x86_64 cfa");
-}
-
 
 //
 //  x86 specific functions
@@ -809,20 +795,6 @@ template <typename A, typename R>
 bool DwarfInstructions<A, R>::isReturnAddressRegister(int regNum,
                                                       const Registers_x86 &) {
   return (regNum == DW_X86_RET_ADDR);
-}
-
-template <typename A, typename R>
-typename A::pint_t DwarfInstructions<A, R>::getCFA(
-    A &addressSpace, const PrologInfo &prolog,
-    const Registers_x86 &registers) {
-  if (prolog.cfaRegister != 0)
-    return (pint_t)((sint_t)registers.getRegister((int)prolog.cfaRegister)
-                                                    + prolog.cfaRegisterOffset);
-  else if (prolog.cfaExpression != 0)
-    return evaluateExpression((pint_t)prolog.cfaExpression, addressSpace,
-                                                                  registers, 0);
-  else
-    _LIBUNWIND_ABORT("getCFA(): unknown location for x86 cfa");
 }
 
 
@@ -842,20 +814,6 @@ bool DwarfInstructions<A, R>::isReturnAddressRegister(int regNum,
   return (regNum == UNW_PPC_LR);
 }
 
-template <typename A, typename R>
-typename A::pint_t DwarfInstructions<A, R>::getCFA(
-    A &addressSpace, const PrologInfo &prolog,
-    const Registers_ppc &registers) {
-  if (prolog.cfaRegister != 0)
-    return registers.getRegister(prolog.cfaRegister) + prolog.cfaRegisterOffset;
-  else if (prolog.cfaExpression != 0)
-    return evaluateExpression((pint_t)prolog.cfaExpression, addressSpace,
-                                                                  registers, 0);
-  else
-    _LIBUNWIND_ABORT("getCFA(): unknown location for ppc cfa");
-}
-
-
 
 //
 // arm64 specific functions
@@ -871,15 +829,6 @@ int DwarfInstructions<A, R>::lastRestoreReg(const Registers_arm64 &) {
   static_assert((int)CFI_Parser<A>::kMaxRegisterNumber
               > (int)UNW_ARM64_D31, "register number out of range");
   return UNW_ARM64_D31;
-}
-
-template <typename A, typename R>
-typename A::pint_t DwarfInstructions<A, R>::getCFA(A&, const PrologInfo &prolog,
-                                             const Registers_arm64 &registers) {
-  if (prolog.cfaRegister != 0)
-    return registers.getRegister(prolog.cfaRegister) + prolog.cfaRegisterOffset;
-  else
-    _LIBUNWIND_ABORT("getCFA(): unsupported location for arm64 cfa");
 }
 
 
