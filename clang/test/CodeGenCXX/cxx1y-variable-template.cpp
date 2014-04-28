@@ -18,7 +18,7 @@ int init_arr();
 template<typename T> template<typename U> template<typename V> int Outer<T>::Inner<U>::arr[sizeof(T) + sizeof(U) + sizeof(V)] = { init_arr() };
 int *p = Outer<char[100]>::Inner<char[20]>::arr<char[3]>;
 
-// CHECK: @_ZN5OuterIA100_cE5InnerIA20_cE3arrIA3_cEE = weak_odr global [123 x i32] zeroinitializer
-// CHECK: @_ZGVN5OuterIA100_cE5InnerIA20_cE3arrIA3_cEE = weak_odr global
+// CHECK: @_ZN5OuterIA100_cE5InnerIA20_cE3arrIA3_cEE = linkonce_odr global [123 x i32] zeroinitializer
+// CHECK: @_ZGVN5OuterIA100_cE5InnerIA20_cE3arrIA3_cEE = linkonce_odr global
 
 // CHECK: call {{.*}}@_Z8init_arrv

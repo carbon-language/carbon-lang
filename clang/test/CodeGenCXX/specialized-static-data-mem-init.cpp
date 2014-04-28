@@ -2,8 +2,8 @@
 // rdar: // 8562966
 // pr8409
 
-// CHECK: @_ZN1CIiE11needs_guardE = weak_odr global
-// CHECK: @_ZGVN1CIiE11needs_guardE = weak_odr global
+// CHECK: @_ZN1CIiE11needs_guardE = linkonce_odr global
+// CHECK: @_ZGVN1CIiE11needs_guardE = linkonce_odr global
 
 struct K
 {

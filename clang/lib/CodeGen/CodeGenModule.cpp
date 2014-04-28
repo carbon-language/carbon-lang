@@ -568,55 +568,13 @@ CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
 
   GVALinkage Linkage = getContext().GetGVALinkageForFunction(D);
 
-  if (Linkage == GVA_Internal)
-    return llvm::Function::InternalLinkage;
-  
-  if (D->hasAttr<DLLExportAttr>())
-    return llvm::Function::ExternalLinkage;
-  
-  if (D->hasAttr<WeakAttr>())
-    return llvm::Function::WeakAnyLinkage;
-  
-  // In C99 mode, 'inline' functions are guaranteed to have a strong
-  // definition somewhere else, so we can use available_externally linkage.
-  if (Linkage == GVA_C99Inline)
-    return llvm::Function::AvailableExternallyLinkage;
-
-  // Note that Apple's kernel linker doesn't support symbol
-  // coalescing, so we need to avoid linkonce and weak linkages there.
-  // Normally, this means we just map to internal, but for explicit
-  // instantiations we'll map to external.
-
-  // In C++, the compiler has to emit a definition in every translation unit
-  // that references the function.  We should use linkonce_odr because
-  // a) if all references in this translation unit are optimized away, we
-  // don't need to codegen it.  b) if the function persists, it needs to be
-  // merged with other definitions. c) C++ has the ODR, so we know the
-  // definition is dependable.
-  if (Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation)
-    return !Context.getLangOpts().AppleKext 
-             ? llvm::Function::LinkOnceODRLinkage 
-             : llvm::Function::InternalLinkage;
-  
-  // An explicit instantiation of a template has weak linkage, since
-  // explicit instantiations can occur in multiple translation units
-  // and must all be equivalent. However, we are not allowed to
-  // throw away these explicit instantiations.
-  if (Linkage == GVA_StrongODR)
-    return !Context.getLangOpts().AppleKext
-             ? llvm::Function::WeakODRLinkage
-             : llvm::Function::ExternalLinkage;
-
-  // Destructor variants in the Microsoft C++ ABI are always linkonce_odr thunks
-  // emitted on an as-needed basis.
-  if (isa<CXXDestructorDecl>(D) &&
+  bool UseThunkForDtorVariant =
+      isa<CXXDestructorDecl>(D) &&
       getCXXABI().useThunkForDtorVariant(cast<CXXDestructorDecl>(D),
-                                         GD.getDtorType()))
-    return llvm::Function::LinkOnceODRLinkage;
+                                         GD.getDtorType());
 
-  // Otherwise, we have strong external linkage.
-  assert(Linkage == GVA_StrongExternal);
-  return llvm::Function::ExternalLinkage;
+  return getLLVMLinkageforDeclarator(D, Linkage, /*isConstantVariable=*/false,
+                                     UseThunkForDtorVariant);
 }
 
 
@@ -1903,8 +1861,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   GV->setAlignment(getContext().getDeclAlign(D).getQuantity());
 
   // Set the llvm linkage type as appropriate.
-  llvm::GlobalValue::LinkageTypes Linkage = 
-    GetLLVMLinkageVarDefinition(D, GV->isConstant());
+  llvm::GlobalValue::LinkageTypes Linkage =
+      getLLVMLinkageVarDefinition(D, GV->isConstant());
   GV->setLinkage(Linkage);
   if (D->hasAttr<DLLImportAttr>())
     GV->setDLLStorageClass(llvm::GlobalVariable::DLLImportStorageClass);
@@ -1967,46 +1925,91 @@ static bool isVarDeclStrongDefinition(const VarDecl *D, bool NoCommon) {
   return false;
 }
 
-llvm::GlobalValue::LinkageTypes
-CodeGenModule::GetLLVMLinkageVarDefinition(const VarDecl *D, bool isConstant) {
-  GVALinkage Linkage = getContext().GetGVALinkageForVariable(D);
+llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageforDeclarator(
+    const DeclaratorDecl *D, GVALinkage Linkage, bool IsConstantVariable,
+    bool UseThunkForDtorVariant) {
   if (Linkage == GVA_Internal)
     return llvm::Function::InternalLinkage;
-  else if (D->hasAttr<DLLImportAttr>())
-    return llvm::Function::ExternalLinkage;
-  else if (D->hasAttr<DLLExportAttr>())
-    return llvm::Function::ExternalLinkage;
-  else if (D->hasAttr<SelectAnyAttr>()) {
-    // selectany symbols are externally visible, so use weak instead of
-    // linkonce.  MSVC optimizes away references to const selectany globals, so
-    // all definitions should be the same and ODR linkage should be used.
-    // http://msdn.microsoft.com/en-us/library/5tkz6s71.aspx
-    return llvm::GlobalVariable::WeakODRLinkage;
-  } else if (D->hasAttr<WeakAttr>()) {
-    if (isConstant)
+
+  if (D->hasAttr<WeakAttr>()) {
+    if (IsConstantVariable)
       return llvm::GlobalVariable::WeakODRLinkage;
     else
       return llvm::GlobalVariable::WeakAnyLinkage;
-  } else if (Linkage == GVA_TemplateInstantiation || Linkage == GVA_StrongODR)
-    return llvm::GlobalVariable::WeakODRLinkage;
-  else if (D->getTLSKind() == VarDecl::TLS_Dynamic &&
-           getTarget().getTriple().isMacOSX())
-    // On Darwin, the backing variable for a C++11 thread_local variable always
-    // has internal linkage; all accesses should just be calls to the
-    // Itanium-specified entry point, which has the normal linkage of the
-    // variable.
-    return llvm::GlobalValue::InternalLinkage;
-  else if (getCXXABI().isInlineInitializedStaticDataMemberLinkOnce() &&
-           isVarDeclInlineInitializedStaticDataMember(D))
-    // If required by the ABI, give definitions of static data members with inline
-    // initializers linkonce_odr linkage.
-    return llvm::GlobalVariable::LinkOnceODRLinkage;
-  // C++ doesn't have tentative definitions and thus cannot have common linkage.
-  else if (!getLangOpts().CPlusPlus &&
-           !isVarDeclStrongDefinition(D, CodeGenOpts.NoCommon))
+  }
+
+  // We are guaranteed to have a strong definition somewhere else,
+  // so we can use available_externally linkage.
+  if (Linkage == GVA_AvailableExternally)
+    return llvm::Function::AvailableExternallyLinkage;
+
+  // LinkOnceODRLinkage is insufficient if the symbol is required to exist in
+  // the symbol table.  Promote the linkage to WeakODRLinkage to preserve the
+  // semantics of LinkOnceODRLinkage while providing visibility in the symbol
+  // table.
+  llvm::GlobalValue::LinkageTypes OnceLinkage =
+      llvm::GlobalValue::LinkOnceODRLinkage;
+  if (D->hasAttr<DLLExportAttr>() || D->hasAttr<DLLImportAttr>())
+    OnceLinkage = llvm::GlobalVariable::WeakODRLinkage;
+
+  // Note that Apple's kernel linker doesn't support symbol
+  // coalescing, so we need to avoid linkonce and weak linkages there.
+  // Normally, this means we just map to internal, but for explicit
+  // instantiations we'll map to external.
+
+  // In C++, the compiler has to emit a definition in every translation unit
+  // that references the function.  We should use linkonce_odr because
+  // a) if all references in this translation unit are optimized away, we
+  // don't need to codegen it.  b) if the function persists, it needs to be
+  // merged with other definitions. c) C++ has the ODR, so we know the
+  // definition is dependable.
+  if (Linkage == GVA_DiscardableODR)
+    return !Context.getLangOpts().AppleKext ? OnceLinkage
+                                            : llvm::Function::InternalLinkage;
+
+  // An explicit instantiation of a template has weak linkage, since
+  // explicit instantiations can occur in multiple translation units
+  // and must all be equivalent. However, we are not allowed to
+  // throw away these explicit instantiations.
+  if (Linkage == GVA_StrongODR)
+    return !Context.getLangOpts().AppleKext ? llvm::Function::WeakODRLinkage
+                                            : llvm::Function::ExternalLinkage;
+
+  // Destructor variants in the Microsoft C++ ABI are always linkonce_odr thunks
+  // emitted on an as-needed basis.
+  if (UseThunkForDtorVariant)
+    return OnceLinkage;
+
+  // If required by the ABI, give definitions of static data members with inline
+  // initializers at least linkonce_odr linkage.
+  if (getCXXABI().isInlineInitializedStaticDataMemberLinkOnce() &&
+      isa<VarDecl>(D) &&
+      isVarDeclInlineInitializedStaticDataMember(cast<VarDecl>(D)))
+    return OnceLinkage;
+
+  // C++ doesn't have tentative definitions and thus cannot have common
+  // linkage.
+  if (!getLangOpts().CPlusPlus && isa<VarDecl>(D) &&
+      !isVarDeclStrongDefinition(cast<VarDecl>(D), CodeGenOpts.NoCommon))
     return llvm::GlobalVariable::CommonLinkage;
 
+  // selectany symbols are externally visible, so use weak instead of
+  // linkonce.  MSVC optimizes away references to const selectany globals, so
+  // all definitions should be the same and ODR linkage should be used.
+  // http://msdn.microsoft.com/en-us/library/5tkz6s71.aspx
+  if (D->hasAttr<SelectAnyAttr>())
+    return llvm::GlobalVariable::WeakODRLinkage;
+
+  // Otherwise, we have strong external linkage.
+  assert(Linkage == GVA_StrongExternal);
   return llvm::GlobalVariable::ExternalLinkage;
+}
+
+llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageVarDefinition(
+    const VarDecl *VD, bool IsConstant) {
+  GVALinkage Linkage = getContext().GetGVALinkageForVariable(VD);
+  return getLLVMLinkageforDeclarator(VD, Linkage, IsConstant,
+                                     /*UseThunkForDtorVariant=*/false);
 }
 
 /// Replace the uses of a function that was declared with a non-proto type.
@@ -2860,10 +2863,16 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalTemporary(
   }
 
   // Create a global variable for this lifetime-extended temporary.
-  llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(getModule(), Type, Constant,
-                             llvm::GlobalValue::PrivateLinkage,
-                             InitialValue, Name.c_str());
+  llvm::GlobalValue::LinkageTypes Linkage =
+      getLLVMLinkageVarDefinition(VD, Constant);
+  if (Linkage == llvm::GlobalVariable::ExternalLinkage)
+    Linkage = llvm::GlobalVariable::PrivateLinkage;
+  unsigned AddrSpace = GetGlobalVarAddressSpace(
+      VD, getContext().getTargetAddressSpace(MaterializedType));
+  llvm::GlobalVariable *GV = new llvm::GlobalVariable(
+      getModule(), Type, Constant, Linkage, InitialValue, Name.c_str(),
+      /*InsertBefore=*/nullptr, llvm::GlobalVariable::NotThreadLocal,
+      AddrSpace);
   GV->setAlignment(
       getContext().getTypeAlignInChars(MaterializedType).getQuantity());
   if (VD->getTLSKind())

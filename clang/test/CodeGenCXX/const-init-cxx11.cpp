@@ -393,6 +393,9 @@ namespace UnemittedTemporaryDecl {
 // CHECK: @_ZZN12LocalVarInit3aggEvE1a = internal constant {{.*}} i32 101
 // CHECK: @_ZZN12LocalVarInit4ctorEvE1a = internal constant {{.*}} i32 102
 // CHECK: @_ZZN12LocalVarInit8mutable_EvE1a = private unnamed_addr constant {{.*}} i32 103
+// CHECK: @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE = linkonce_odr constant i32 5
+// CHECK: @_ZN33ClassTemplateWithStaticDataMember3useE = constant i32* @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE
+// CHECK: @_ZGRZN20InlineStaticConstRef3funEvE1i = linkonce_odr constant i32 10
 
 // Constant initialization tests go before this point,
 // dynamic initialization tests go after.
@@ -551,4 +554,23 @@ namespace Null {
   struct S {};
   // CHECK: call {{.*}} @_ZN4Null4nullEv(
   int S::*q = null();
+}
+
+namespace InlineStaticConstRef {
+  inline const int &fun() {
+    static const int &i = 10;
+    return i;
+    // CHECK: ret i32* @_ZGRZN20InlineStaticConstRef3funEvE1i
+  }
+  const int &use = fun();
+}
+
+namespace ClassTemplateWithStaticDataMember {
+  template <typename T>
+  struct S {
+    static const int &a;
+  };
+  template <typename T>
+  const int &S<T>::a = 5;
+  const int &use = S<void>::a;
 }

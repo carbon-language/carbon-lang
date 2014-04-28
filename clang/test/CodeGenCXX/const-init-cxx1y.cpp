@@ -38,6 +38,36 @@ namespace ModifyStaticTemporary {
   // CHECK: @_ZN21ModifyStaticTemporary1cE = global {{.*}} zeroinitializer
 }
 
+// CHECK: @_ZGRN28VariableTemplateWithConstRef1iIvEE = linkonce_odr constant i32 5, align 4
+// CHECK: @_ZN28VariableTemplateWithConstRef3useE = constant i32* @_ZGRN28VariableTemplateWithConstRef1iIvEE
+namespace VariableTemplateWithConstRef {
+  template <typename T>
+  const int &i = 5;
+  const int &use = i<void>;
+}
+
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE = linkonce_odr constant i32 1
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE2 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE }
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE3 = linkonce_odr constant i32 2
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE4 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE3 }
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE5 = linkonce_odr constant i32 3
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE6 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE5 }
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE7 = linkonce_odr constant i32 4
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE8 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE7 }
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE9 = linkonce_odr global {{.*}} { {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE2, {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE4, {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE6, {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE8 }
+// CHECK: @_ZN24VariableTemplateWithPack1pE = global {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE9
+namespace VariableTemplateWithPack {
+  struct A {
+    const int &r;
+  };
+  struct S {
+    A &&a, &&b, &&c, &&d;
+  };
+  template <int... N>
+  S &&s = {A{N}...};
+  S *p = &s<1, 2, 3, 4>;
+}
+
 // CHECK: __cxa_atexit({{.*}} @_ZN1BD1Ev {{.*}} @b
 
 // CHECK: define

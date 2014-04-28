@@ -979,11 +979,16 @@ public:
   /// the given LLVM type.
   CharUnits GetTargetTypeStoreSize(llvm::Type *Ty) const;
   
-  /// GetLLVMLinkageVarDefinition - Returns LLVM linkage for a global 
-  /// variable.
-  llvm::GlobalValue::LinkageTypes 
-  GetLLVMLinkageVarDefinition(const VarDecl *D, bool isConstant);
-  
+  /// getLLVMLinkageforDeclarator - Returns LLVM linkage for a declarator.
+  llvm::GlobalValue::LinkageTypes
+  getLLVMLinkageforDeclarator(const DeclaratorDecl *D, GVALinkage Linkage,
+                              bool IsConstantVariable,
+                              bool UseThunkForDtorVariant);
+
+  /// getLLVMLinkageVarDefinition - Returns LLVM linkage for a declarator.
+  llvm::GlobalValue::LinkageTypes
+  getLLVMLinkageVarDefinition(const VarDecl *VD, bool IsConstant);
+
   /// Emit all the global annotations.
   void EmitGlobalAnnotations();
 

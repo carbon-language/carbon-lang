@@ -9,8 +9,8 @@
 // CHECK-NOT: @_ZTVN5test018stdio_sync_filebufIA2_iEE
 // CHECK:     @_ZTVN5test018stdio_sync_filebufIA3_iEE = weak_odr unnamed_addr constant
 
-// CHECK: @_ZN7PR100011SIiE3arrE = weak_odr global [3 x i32]
-// CHECK-NOT: @_ZN7PR100011SIiE3arr2E = weak_odr global [3 x i32]A
+// CHECK: @_ZN7PR100011SIiE3arrE = linkonce_odr global [3 x i32]
+// CHECK-NOT: @_ZN7PR100011SIiE3arr2E = linkonce_odr global [3 x i32]A
 
 // CHECK:     @_ZTVN5test018stdio_sync_filebufIA4_iEE = linkonce_odr unnamed_addr constant
 

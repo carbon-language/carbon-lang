@@ -126,17 +126,11 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
 void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
   if (D.isStaticLocal()) {
     llvm::GlobalValue::LinkageTypes Linkage =
-      llvm::GlobalValue::InternalLinkage;
+        CGM.getLLVMLinkageVarDefinition(&D, /*isConstant=*/false);
 
-    // If the variable is externally visible, it must have weak linkage so it
-    // can be uniqued.
-    if (D.isExternallyVisible()) {
-      Linkage = llvm::GlobalValue::LinkOnceODRLinkage;
-
-      // FIXME: We need to force the emission/use of a guard variable for
-      // some variables even if we can constant-evaluate them because
-      // we can't guarantee every translation unit will constant-evaluate them.
-    }
+    // FIXME: We need to force the emission/use of a guard variable for
+    // some variables even if we can constant-evaluate them because
+    // we can't guarantee every translation unit will constant-evaluate them.
 
     return EmitStaticVarDecl(D, Linkage);
   }
