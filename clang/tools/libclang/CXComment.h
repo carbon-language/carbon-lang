@@ -16,6 +16,7 @@
 
 #include "CXTranslationUnit.h"
 #include "clang-c/Index.h"
+#include "clang-c/Documentation.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Comment.h"
 #include "clang/Frontend/ASTUnit.h"

@@ -15,7 +15,6 @@
 #include "CIndexer.h"
 #include "CIndexDiagnostic.h"
 #include "CLog.h"
-#include "CXComment.h"
 #include "CXCursor.h"
 #include "CXSourceLocation.h"
 #include "CXString.h"
@@ -6310,17 +6309,6 @@ CXString clang_Cursor_getBriefCommentText(CXCursor C) {
   }
 
   return cxstring::createNull();
-}
-
-CXComment clang_Cursor_getParsedComment(CXCursor C) {
-  if (!clang_isDeclaration(C.kind))
-    return cxcomment::createCXComment(NULL, NULL);
-
-  const Decl *D = getCursorDecl(C);
-  const ASTContext &Context = getCursorContext(C);
-  const comments::FullComment *FC = Context.getCommentForDecl(D, /*PP=*/ NULL);
-
-  return cxcomment::createCXComment(FC, getCursorTU(C));
 }
 
 CXModule clang_Cursor_getModule(CXCursor C) {

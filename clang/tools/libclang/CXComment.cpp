@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang-c/Index.h"
+#include "clang-c/Documentation.h"
 #include "CXComment.h"
 #include "CXCursor.h"
 #include "CXString.h"
@@ -27,6 +28,19 @@ using namespace clang::comments;
 using namespace clang::cxcomment;
 
 extern "C" {
+
+CXComment clang_Cursor_getParsedComment(CXCursor C) {
+  using namespace clang::cxcursor;
+
+  if (!clang_isDeclaration(C.kind))
+    return createCXComment(NULL, NULL);
+
+  const Decl *D = getCursorDecl(C);
+  const ASTContext &Context = getCursorContext(C);
+  const FullComment *FC = Context.getCommentForDecl(D, /*PP=*/NULL);
+
+  return createCXComment(FC, getCursorTU(C));
+}
 
 enum CXCommentKind clang_Comment_getKind(CXComment CXC) {
   const Comment *C = getASTNode(CXC);
