@@ -385,6 +385,7 @@ static void UpdatePHINodes(BasicBlock *OrigBB, BasicBlock *NewBB,
                            Pass *P, bool HasLoopExit) {
   // Otherwise, create a new PHI node in NewBB for each PHI node in OrigBB.
   AliasAnalysis *AA = P ? P->getAnalysisIfAvailable<AliasAnalysis>() : nullptr;
+  SmallPtrSet<BasicBlock *, 16> PredSet(Preds.begin(), Preds.end());
   for (BasicBlock::iterator I = OrigBB->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I++);
 
@@ -393,42 +394,58 @@ static void UpdatePHINodes(BasicBlock *OrigBB, BasicBlock *NewBB,
     Value *InVal = nullptr;
     if (!HasLoopExit) {
       InVal = PN->getIncomingValueForBlock(Preds[0]);
-      for (unsigned i = 1, e = Preds.size(); i != e; ++i)
-        if (InVal != PN->getIncomingValueForBlock(Preds[i])) {
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+        if (!PredSet.count(PN->getIncomingBlock(i)))
+          continue;
+        if (!InVal)
+          InVal = PN->getIncomingValue(i);
+        else if (InVal != PN->getIncomingValue(i)) {
           InVal = nullptr;
           break;
         }
+      }
     }
 
     if (InVal) {
       // If all incoming values for the new PHI would be the same, just don't
       // make a new PHI.  Instead, just remove the incoming values from the old
       // PHI.
-      for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-        // Explicitly check the BB index here to handle duplicates in Preds.
-        int Idx = PN->getBasicBlockIndex(Preds[i]);
-        if (Idx >= 0)
-          PN->removeIncomingValue(Idx, false);
-      }
-    } else {
-      // If the values coming into the block are not the same, we need a PHI.
-      // Create the new PHI node, insert it into NewBB at the end of the block
-      PHINode *NewPHI =
-        PHINode::Create(PN->getType(), Preds.size(), PN->getName() + ".ph", BI);
-      if (AA) AA->copyValue(PN, NewPHI);
 
-      // Move all of the PHI values for 'Preds' to the new PHI.
-      for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
-        Value *V = PN->removeIncomingValue(Preds[i], false);
-        NewPHI->addIncoming(V, Preds[i]);
-      }
+      // NOTE! This loop walks backwards for a reason! First off, this minimizes
+      // the cost of removal if we end up removing a large number of values, and
+      // second off, this ensures that the indices for the incoming values
+      // aren't invalidated when we remove one.
+      for (int64_t i = PN->getNumIncomingValues() - 1; i >= 0; --i)
+        if (PredSet.count(PN->getIncomingBlock(i)))
+          PN->removeIncomingValue(i, false);
 
-      InVal = NewPHI;
+      // Add an incoming value to the PHI node in the loop for the preheader
+      // edge.
+      PN->addIncoming(InVal, NewBB);
+      continue;
     }
 
-    // Add an incoming value to the PHI node in the loop for the preheader
-    // edge.
-    PN->addIncoming(InVal, NewBB);
+    // If the values coming into the block are not the same, we need a new
+    // PHI.
+    // Create the new PHI node, insert it into NewBB at the end of the block
+    PHINode *NewPHI =
+        PHINode::Create(PN->getType(), Preds.size(), PN->getName() + ".ph", BI);
+    if (AA)
+      AA->copyValue(PN, NewPHI);
+
+    // NOTE! This loop walks backwards for a reason! First off, this minimizes
+    // the cost of removal if we end up removing a large number of values, and
+    // second off, this ensures that the indices for the incoming values aren't
+    // invalidated when we remove one.
+    for (int64_t i = PN->getNumIncomingValues() - 1; i >= 0; --i) {
+      BasicBlock *IncomingBB = PN->getIncomingBlock(i);
+      if (PredSet.count(IncomingBB)) {
+        Value *V = PN->removeIncomingValue(i, false);
+        NewPHI->addIncoming(V, IncomingBB);
+      }
+    }
+
+    PN->addIncoming(NewPHI, NewBB);
   }
 }
 
