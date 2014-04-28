@@ -97,7 +97,7 @@ public:
 /// FrontendActionFactory *Factory =
 ///   newFrontendActionFactory<clang::SyntaxOnlyAction>();
 template <typename T>
-FrontendActionFactory *newFrontendActionFactory();
+std::unique_ptr<FrontendActionFactory> newFrontendActionFactory();
 
 /// \brief Callbacks called before and after each source file processed by a
 /// FrontendAction created by the FrontedActionFactory returned by \c
@@ -126,10 +126,10 @@ public:
 /// struct ProvidesASTConsumers {
 ///   clang::ASTConsumer *newASTConsumer();
 /// } Factory;
-/// FrontendActionFactory *FactoryAdapter =
-///   newFrontendActionFactory(&Factory);
+/// std::unique_ptr<FrontendActionFactory> FactoryAdapter(
+///   newFrontendActionFactory(&Factory));
 template <typename FactoryT>
-inline FrontendActionFactory *newFrontendActionFactory(
+inline std::unique_ptr<FrontendActionFactory> newFrontendActionFactory(
     FactoryT *ConsumerFactory, SourceFileCallbacks *Callbacks = NULL);
 
 /// \brief Runs (and deletes) the tool on 'Code' with the -fsyntax-only flag.
@@ -305,17 +305,18 @@ class ClangTool {
 };
 
 template <typename T>
-FrontendActionFactory *newFrontendActionFactory() {
+std::unique_ptr<FrontendActionFactory> newFrontendActionFactory() {
   class SimpleFrontendActionFactory : public FrontendActionFactory {
   public:
     clang::FrontendAction *create() override { return new T; }
   };
 
-  return new SimpleFrontendActionFactory;
+  return std::unique_ptr<FrontendActionFactory>(
+      new SimpleFrontendActionFactory);
 }
 
 template <typename FactoryT>
-inline FrontendActionFactory *newFrontendActionFactory(
+inline std::unique_ptr<FrontendActionFactory> newFrontendActionFactory(
     FactoryT *ConsumerFactory, SourceFileCallbacks *Callbacks) {
   class FrontendActionFactoryAdapter : public FrontendActionFactory {
   public:
@@ -362,7 +363,8 @@ inline FrontendActionFactory *newFrontendActionFactory(
     SourceFileCallbacks *Callbacks;
   };
 
-  return new FrontendActionFactoryAdapter(ConsumerFactory, Callbacks);
+  return std::unique_ptr<FrontendActionFactory>(
+      new FrontendActionFactoryAdapter(ConsumerFactory, Callbacks));
 }
 
 /// \brief Returns the absolute path of \c File, by prepending it with

@@ -215,7 +215,7 @@ int main(int argc, const char **argv) {
         Analyze ? "--analyze" : "-fsyntax-only", InsertAdjuster::BEGIN));
 
   clang_check::ClangCheckActionFactory CheckFactory;
-  FrontendActionFactory *FrontendFactory;
+  std::unique_ptr<FrontendActionFactory> FrontendFactory;
 
   // Choose the correct factory based on the selected mode.
   if (Analyze)
@@ -225,5 +225,5 @@ int main(int argc, const char **argv) {
   else
     FrontendFactory = newFrontendActionFactory(&CheckFactory);
 
-  return Tool.run(FrontendFactory);
+  return Tool.run(FrontendFactory.get());
 }
