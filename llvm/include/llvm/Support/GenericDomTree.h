@@ -453,6 +453,21 @@ public:
     DomTreeNodeBase<NodeT> *NodeA = getNode(A);
     DomTreeNodeBase<NodeT> *NodeB = getNode(B);
 
+    // If we have DFS info, then we can avoid all allocations by just querying
+    // it from each IDom. Note that because we call 'dominates' twice above, we
+    // expect to call through this code at most 16 times in a row without
+    // building valid DFS information. This is important as below is a *very*
+    // slow tree walk.
+    if (DFSInfoValid) {
+      DomTreeNodeBase<NodeT> *IDomA = NodeA->getIDom();
+      while (IDomA) {
+        if (NodeB->DominatedBy(IDomA))
+          return IDomA->getBlock();
+        IDomA = IDomA->getIDom();
+      }
+      return nullptr;
+    }
+
     // Collect NodeA dominators set.
     SmallPtrSet<DomTreeNodeBase<NodeT>*, 16> NodeADoms;
     NodeADoms.insert(NodeA);
