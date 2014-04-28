@@ -51,7 +51,6 @@
 using namespace clang;
 
 using llvm::TimeRecord;
-using llvm::make_unique;
 
 namespace {
   class SimpleTimer {
