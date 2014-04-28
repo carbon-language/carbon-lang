@@ -97,17 +97,19 @@ private:
   std::unique_ptr<MipsTargetRelocationHandler> _relocationHandler;
 };
 
-class MipsDynamicSymbolTable : public DynamicSymbolTable<Mips32ElELFType> {
+template <class ELFT>
+class MipsDynamicSymbolTable : public DynamicSymbolTable<ELFT> {
 public:
   MipsDynamicSymbolTable(const MipsLinkingContext &context,
-                         MipsTargetLayout<Mips32ElELFType> &layout)
-      : DynamicSymbolTable<Mips32ElELFType>(
+                         MipsTargetLayout<ELFT> &layout)
+      : DynamicSymbolTable<ELFT>(
             context, layout, ".dynsym",
-            DefaultLayout<Mips32ElELFType>::ORDER_DYNAMIC_SYMBOLS),
+            DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS),
         _targetLayout(layout) {}
 
   void sortSymbols() override {
-    std::stable_sort(_symbolTable.begin(), _symbolTable.end(),
+    typedef typename DynamicSymbolTable<ELFT>::SymbolEntry SymbolEntry;
+    std::stable_sort(this->_symbolTable.begin(), this->_symbolTable.end(),
                      [this](const SymbolEntry &A, const SymbolEntry &B) {
       if (A._symbol.getBinding() != STB_GLOBAL &&
           B._symbol.getBinding() != STB_GLOBAL)
@@ -118,7 +120,7 @@ public:
   }
 
 private:
-  MipsTargetLayout<Mips32ElELFType> &_targetLayout;
+  MipsTargetLayout<ELFT> &_targetLayout;
 };
 
 } // end namespace elf

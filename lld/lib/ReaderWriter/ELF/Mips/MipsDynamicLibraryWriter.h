@@ -93,8 +93,9 @@ LLD_UNIQUE_BUMP_PTR(DynamicTable<ELFT>)
 template <class ELFT>
 LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)
     MipsDynamicLibraryWriter<ELFT>::createDynamicSymbolTable() {
-  return LLD_UNIQUE_BUMP_PTR(DynamicSymbolTable<ELFT>)(new (
-      this->_alloc) MipsDynamicSymbolTable(_mipsContext, _mipsTargetLayout));
+  return LLD_UNIQUE_BUMP_PTR(
+      DynamicSymbolTable<ELFT>)(new (this->_alloc) MipsDynamicSymbolTable<ELFT>(
+      _mipsContext, _mipsTargetLayout));
 }
 
 } // namespace elf
