@@ -1,44 +1,117 @@
 # REQUIRES: mips
 
-# Check handling of R_MIPS_COPY relocation
+# Check R_MIPS_COPY relocation emitting
+# when linking non-shared executable file.
+#
+# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-so-obj
+# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-so-obj
+# RUN: yaml2obj -format=elf %s > %t-obj
+# RUN: lld -flavor gnu -target mipsel -e T0 -o %t1-exe %t-obj %t-so
+# RUN: llvm-readobj -dyn-symbols -relocations %t1-exe | FileCheck %s
 
-# Build shared library
-# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic \
-# RUN:         -o=%t-obj %p/Inputs/ext.s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-obj
+# CHECK:      Relocations [
+# CHECK-NEXT:   Section (5) .rel.dyn {
+# CHECK-NEXT:     0x402008 R_MIPS_COPY D1 0x0
+# CHECK-NEXT:     0x402010 R_MIPS_COPY D2 0x0
+# CHECK-NEXT:   }
+# CHECK-NEXT: ]
 
-# Build executable
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-obj %s
-# RUN: lld -flavor gnu -target mipsel -e glob -o %t %t-obj %t-so
-# RUN: llvm-readobj -relocations -symbols -dyn-symbols %t | FileCheck %s
+# CHECK:      DynamicSymbols [
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: @ (0)
+# CHECK-NEXT:     Value: 0x0
+# CHECK-NEXT:     Size: 0
+# CHECK-NEXT:     Binding: Local (0x0)
+# CHECK-NEXT:     Type: None (0x0)
+# CHECK-NEXT:     Other: 0
+# CHECK-NEXT:     Section: Undefined (0x0)
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: D1@ (1)
+# CHECK-NEXT:     Value: 0x402008
+# CHECK-NEXT:     Size: 4
+# CHECK-NEXT:     Binding: Global (0x1)
+# CHECK-NEXT:     Type: Object (0x1)
+# CHECK-NEXT:     Other: 0
+# CHECK-NEXT:     Section: .bss (0xA)
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: D2@ (4)
+# CHECK-NEXT:     Value: 0x402010
+# CHECK-NEXT:     Size: 4
+# CHECK-NEXT:     Binding: Global (0x1)
+# CHECK-NEXT:     Type: Object (0x1)
+# CHECK-NEXT:     Other: 0
+# CHECK-NEXT:     Section: .bss (0xA)
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: D1@ (1)
+# CHECK-NEXT:     Value: 0x0
+# CHECK-NEXT:     Size: 4
+# CHECK-NEXT:     Binding: Global (0x1)
+# CHECK-NEXT:     Type: Object (0x1)
+# CHECK-NEXT:     Other: 0
+# CHECK-NEXT:     Section: Undefined (0x0)
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: D2@ (4)
+# CHECK-NEXT:     Value: 0x0
+# CHECK-NEXT:     Size: 4
+# CHECK-NEXT:     Binding: Global (0x1)
+# CHECK-NEXT:     Type: Object (0x1)
+# CHECK-NEXT:     Other: 0
+# CHECK-NEXT:     Section: Undefined (0x0)
+# CHECK-NEXT:   }
+# CHECK-NEXT: ]
 
-# CHECK:       Relocations [
-# CHECK-NEXT:    Section ({{[0-9]+}}) .rel.dyn {
-# CHECK-NEXT:      0x{{[1-9A-F][0-9A-F]*}} R_MIPS_COPY data1 0x0
-# CHECK-NEXT:    }
-# CHECK-NEXT:  ]
+!ELF
+FileHeader: !FileHeader
+  Class: ELFCLASS32
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_MIPS
+  Flags: [EF_MIPS_CPIC]
 
-# CHECK:         Name: data1 ({{[0-9]+}}
-# CHECK-NEXT:    Value: 0x{{[1-9A-F][0-9A-F]*}}
-# CHECK-NEXT:    Size: 4
-# CHECK-NEXT:    Binding: Global (0x1)
-# CHECK-NEXT:    Type: Object (0x1)
-# CHECK-NEXT:    Other: 0
-# CHECK-NEXT:    Section: .bss (0x{{[1-9A-F][0-9A-F]*}})
+Sections:
+- Name: .text
+  Type: SHT_PROGBITS
+  Content:  "0000000000000000"
+  AddressAlign: 16
+  Flags: [SHF_EXECINSTR, SHF_ALLOC]
 
-# CHECK:         Name: data1@ ({{[0-9]+}}
-# CHECK-NEXT:    Value: 0x{{[1-9A-F][0-9A-F]*}}
-# CHECK-NEXT:    Size: 4
-# CHECK-NEXT:    Binding: Global (0x1)
-# CHECK-NEXT:    Type: Object (0x1)
-# CHECK-NEXT:    Other: 0
-# CHECK-NEXT:    Section: .bss (0x{{[1-9A-F][0-9A-F]*}})
+- Name: .data
+  Type: SHT_PROGBITS
+  Content:  "0000000000000000"
+  AddressAlign: 16
+  Flags: [SHF_WRITE, SHF_ALLOC]
 
-    .abicalls
-    .option pic0
-    .global glob
-    .ent    glob
-glob:
-    lui     $2,%hi(data1)
-    lw      $2,%lo(data1)($2)
-    .end    glob
+- Name: .rel.data
+  Type: SHT_REL
+  Info: .data
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x00
+      Symbol: D1
+      Type: R_MIPS_HI16
+    - Offset: 0x00
+      Symbol: D1
+      Type: R_MIPS_LO16
+    - Offset: 0x04
+      Symbol: D2
+      Type: R_MIPS_32
+
+Symbols:
+  Global:
+    - Name: T0
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x0
+      Size: 8
+    - Name: D0
+      Section: .data
+      Type: STT_OBJECT
+      Value: 0x0
+      Size: 8
+    - Name: D1
+      Type: STT_OBJECT
+    - Name: D2
