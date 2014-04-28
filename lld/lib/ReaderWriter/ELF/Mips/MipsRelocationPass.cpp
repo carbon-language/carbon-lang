@@ -192,8 +192,8 @@ private:
   const ObjectAtom *getObjectEntry(const SharedLibraryAtom *a);
 
   bool isLocal(const Atom *a) const;
-  bool requireLocalGOT(const Atom *a);
-  bool requireLA25Stub(const Atom *a);
+  bool requireLocalGOT(const Atom *a) const;
+  bool requireLA25Stub(const Atom *a) const;
   void createPLTHeader();
 };
 
@@ -323,7 +323,7 @@ template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
 }
 
 template <typename ELFT>
-bool RelocationPass<ELFT>::requireLocalGOT(const Atom *a) {
+bool RelocationPass<ELFT>::requireLocalGOT(const Atom *a) const {
   Atom::Scope scope;
   if (auto *da = dyn_cast<DefinedAtom>(a))
     scope = da->scope();
@@ -344,7 +344,7 @@ bool RelocationPass<ELFT>::requireLocalGOT(const Atom *a) {
 }
 
 template <typename ELFT>
-bool RelocationPass<ELFT>::requireLA25Stub(const Atom *a) {
+bool RelocationPass<ELFT>::requireLA25Stub(const Atom *a) const {
   if (auto *da = dyn_cast<DefinedAtom>(a))
     return static_cast<const MipsELFDefinedAtom<ELFT> *>(da)->file().isPIC();
   return false;
