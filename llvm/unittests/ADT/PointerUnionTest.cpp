@@ -13,11 +13,10 @@ using namespace llvm;
 
 namespace {
 
-typedef PointerUnion<int*, float*> PU;
+typedef PointerUnion<int *, float *> PU;
 
 // Test fixture
-class PointerUnionTest : public testing::Test {
-};
+class PointerUnionTest : public testing::Test {};
 
 float f = 3.14f;
 int i = 42;
@@ -47,18 +46,18 @@ TEST_F(PointerUnionTest, Null) {
 }
 
 TEST_F(PointerUnionTest, Is) {
-  EXPECT_FALSE(a.is<int*>());
-  EXPECT_TRUE(a.is<float*>());
-  EXPECT_TRUE(b.is<int*>());
-  EXPECT_FALSE(b.is<float*>());
-  EXPECT_TRUE(n.is<int*>());
-  EXPECT_FALSE(n.is<float*>());
+  EXPECT_FALSE(a.is<int *>());
+  EXPECT_TRUE(a.is<float *>());
+  EXPECT_TRUE(b.is<int *>());
+  EXPECT_FALSE(b.is<float *>());
+  EXPECT_TRUE(n.is<int *>());
+  EXPECT_FALSE(n.is<float *>());
 }
 
 TEST_F(PointerUnionTest, Get) {
-  EXPECT_EQ(a.get<float*>(), &f);
-  EXPECT_EQ(b.get<int*>(), &i);
-  EXPECT_EQ(n.get<int*>(), (int*)0);
+  EXPECT_EQ(a.get<float *>(), &f);
+  EXPECT_EQ(b.get<int *>(), &i);
+  EXPECT_EQ(n.get<int *>(), (int *)0);
 }
 
 } // end anonymous namespace
