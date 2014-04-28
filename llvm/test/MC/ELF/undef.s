@@ -19,6 +19,9 @@
         .text
         movsd   .Lsym8(%rip), %xmm1
 
+test2_a = undef
+test2_b = undef + 1
+
 // CHECK:      Symbols [
 // CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name:  (0)

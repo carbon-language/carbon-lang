@@ -107,7 +107,7 @@ class ELFObjectWriter : public MCObjectWriter {
     static bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind);
     static bool RelocNeedsGOT(MCSymbolRefExpr::VariantKind Variant);
     static uint64_t SymbolValue(MCSymbolData &Data, const MCAsmLayout &Layout);
-    static bool isInSymtab(const MCAssembler &Asm, const MCSymbolData &Data,
+    static bool isInSymtab(const MCAsmLayout &Layout, const MCSymbolData &Data,
                            bool Used, bool Renamed);
     static bool isLocal(const MCSymbolData &Data, bool isSignature,
                         bool isUsedInReloc);
@@ -934,9 +934,9 @@ ELFObjectWriter::getSymbolIndexInSymbolTable(const MCAssembler &Asm,
   return SD.getIndex();
 }
 
-bool ELFObjectWriter::isInSymtab(const MCAssembler &Asm,
-                                 const MCSymbolData &Data,
-                                 bool Used, bool Renamed) {
+bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
+                                 const MCSymbolData &Data, bool Used,
+                                 bool Renamed) {
   const MCSymbol &Symbol = Data.getSymbol();
   if (Symbol.isVariable()) {
     const MCExpr *Expr = Symbol.getVariableValue();
@@ -955,9 +955,11 @@ bool ELFObjectWriter::isInSymtab(const MCAssembler &Asm,
   if (Symbol.getName() == "_GLOBAL_OFFSET_TABLE_")
     return true;
 
-  const MCSymbol &A = Symbol.AliasedSymbol();
-  if (Symbol.isVariable() && !A.isVariable() && A.isUndefined())
-    return false;
+  if (Symbol.isVariable()) {
+    const MCSymbol *Base = getBaseSymbol(Layout, Symbol);
+    if (Base && Base->isUndefined())
+      return false;
+  }
 
   bool IsGlobal = MCELF::GetBinding(Data) == ELF::STB_GLOBAL;
   if (!Symbol.isVariable() && Symbol.isUndefined() && !IsGlobal)
@@ -1059,7 +1061,7 @@ ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
     bool WeakrefUsed = WeakrefUsedInReloc.count(&Symbol);
     bool isSignature = RevGroupMap.count(&Symbol);
 
-    if (!isInSymtab(Asm, SD,
+    if (!isInSymtab(Layout, SD,
                     Used || WeakrefUsed || isSignature,
                     Renames.count(&Symbol)))
       continue;
