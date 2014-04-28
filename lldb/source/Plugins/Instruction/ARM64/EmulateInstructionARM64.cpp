@@ -58,14 +58,7 @@ NOT(uint64_t x)
     return ~x;
 }
 
-
-static inline int64_t
-SignExtend64(uint64_t x, uint32_t msbit) 
-{
-    return int64_t(x << (64 - msbit)) >> (64 - msbit);
-}
-
-
+#if 0
 // LSL_C() 
 // =======
 static inline uint64_t
@@ -76,6 +69,7 @@ LSL_C (uint64_t x, integer shift, bool &carry_out)
     carry_out = ((1ull << (64-1)) >> (shift - 1)) != 0;
     return result;
 }
+#endif
 
 // LSL()
 // =====

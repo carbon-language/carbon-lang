@@ -46,9 +46,6 @@ public:
             case lldb_private::eInstructionTypePCModifying:
             case lldb_private::eInstructionTypeAll:
                 return false;
-                
-            default:
-                break;
         }
         return false;
     }
