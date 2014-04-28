@@ -19,14 +19,18 @@ struct PointerUnionTest : public testing::Test {
   float f;
   int i;
 
-  PU a, b, n;
+  PU a, b, c, n;
 
-  PointerUnionTest() : f(3.14f), i(42), a(&f), b(&i), n() {}
+  PointerUnionTest() : f(3.14f), i(42), a(&f), b(&i), c(&i), n() {}
 };
 
 TEST_F(PointerUnionTest, Comparison) {
+  EXPECT_TRUE(a == a);
+  EXPECT_FALSE(a != a);
   EXPECT_TRUE(a != b);
   EXPECT_FALSE(a == b);
+  EXPECT_TRUE(b == c);
+  EXPECT_FALSE(b != c);
   EXPECT_TRUE(b != n);
   EXPECT_FALSE(b == n);
 }
