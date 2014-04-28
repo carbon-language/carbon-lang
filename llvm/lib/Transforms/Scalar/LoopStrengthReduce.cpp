@@ -256,7 +256,7 @@ struct Formula {
 
   void InitialMatch(const SCEV *S, Loop *L, ScalarEvolution &SE);
 
-  size_t getNumRegs() const;
+  unsigned getNumRegs() const;
   Type *getType() const;
 
   void DeleteBaseReg(const SCEV *&S);
@@ -351,7 +351,7 @@ void Formula::InitialMatch(const SCEV *S, Loop *L, ScalarEvolution &SE) {
 /// getNumRegs - Return the total number of register operands used by this
 /// formula. This does not include register uses implied by non-constant
 /// addrec strides.
-size_t Formula::getNumRegs() const {
+unsigned Formula::getNumRegs() const {
   return !!ScaledReg + BaseRegs.size();
 }
 
@@ -4132,22 +4132,19 @@ void LSRInstance::SolveRecurse(SmallVectorImpl<const Formula *> &Solution,
        E = LU.Formulae.end(); I != E; ++I) {
     const Formula &F = *I;
 
-    // Ignore formulae which may not be ideal in terms of register reuse of
-    // ReqRegs.  The formula should use all required registers before
-    // introducing new ones.
-    int NumReqRegsToFind = std::min(F.getNumRegs(), ReqRegs.size());
+    // Ignore formulae which do not use any of the required registers.
+    bool SatisfiedReqReg = true;
     for (SmallSetVector<const SCEV *, 4>::const_iterator J = ReqRegs.begin(),
          JE = ReqRegs.end(); J != JE; ++J) {
       const SCEV *Reg = *J;
-      if ((F.ScaledReg && F.ScaledReg == Reg) ||
-          std::find(F.BaseRegs.begin(), F.BaseRegs.end(), Reg) !=
+      if ((!F.ScaledReg || F.ScaledReg != Reg) &&
+          std::find(F.BaseRegs.begin(), F.BaseRegs.end(), Reg) ==
           F.BaseRegs.end()) {
-        --NumReqRegsToFind;
-        if (NumReqRegsToFind == 0)
-          break;
+        SatisfiedReqReg = false;
+        break;
       }
     }
-    if (NumReqRegsToFind != 0) {
+    if (!SatisfiedReqReg) {
       // If none of the formulae satisfied the required registers, then we could
       // clear ReqRegs and try again. Currently, we simply give up in this case.
       continue;
