@@ -364,20 +364,20 @@ static void AddNodeIDValueTypes(FoldingSetNodeID &ID, SDVTList VTList) {
 /// AddNodeIDOperands - Various routines for adding operands to the NodeID data.
 ///
 static void AddNodeIDOperands(FoldingSetNodeID &ID,
-                              const SDValue *Ops, unsigned NumOps) {
-  for (; NumOps; --NumOps, ++Ops) {
-    ID.AddPointer(Ops->getNode());
-    ID.AddInteger(Ops->getResNo());
+                              ArrayRef<SDValue> Ops) {
+  for (auto& Op : Ops) {
+    ID.AddPointer(Op.getNode());
+    ID.AddInteger(Op.getResNo());
   }
 }
 
 /// AddNodeIDOperands - Various routines for adding operands to the NodeID data.
 ///
 static void AddNodeIDOperands(FoldingSetNodeID &ID,
-                              const SDUse *Ops, unsigned NumOps) {
-  for (; NumOps; --NumOps, ++Ops) {
-    ID.AddPointer(Ops->getNode());
-    ID.AddInteger(Ops->getResNo());
+                              ArrayRef<SDUse> Ops) {
+  for (auto& Op : Ops) {
+    ID.AddPointer(Op.getNode());
+    ID.AddInteger(Op.getResNo());
   }
 }
 
@@ -385,7 +385,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, unsigned short OpC,
                           SDVTList VTList, ArrayRef<SDValue> OpList) {
   AddNodeIDOpcode(ID, OpC);
   AddNodeIDValueTypes(ID, VTList);
-  AddNodeIDOperands(ID, OpList.data(), OpList.size());
+  AddNodeIDOperands(ID, OpList);
 }
 
 /// AddNodeIDCustom - If this is an SDNode with special info, add this info to
@@ -527,7 +527,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
   // Add the return value info.
   AddNodeIDValueTypes(ID, N->getVTList());
   // Add the operand info.
-  AddNodeIDOperands(ID, N->op_begin(), N->getNumOperands());
+  AddNodeIDOperands(ID, ArrayRef<SDUse>(N->op_begin(), N->op_end()));
 
   // Handle SDNode leafs with special info.
   AddNodeIDCustom(ID, N);
@@ -797,15 +797,13 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
 /// were replaced with those specified.  If this node is never memoized,
 /// return null, otherwise return a pointer to the slot it would take.  If a
 /// node already exists with these operands, the slot will be non-null.
-SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N,
-                                           const SDValue *Ops,unsigned NumOps,
+SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, ArrayRef<SDValue> Ops,
                                            void *&InsertPos) {
   if (doNotCSE(N))
     return nullptr;
 
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, N->getOpcode(), N->getVTList(),
-                ArrayRef<SDValue>(Ops, NumOps));
+  AddNodeIDNode(ID, N->getOpcode(), N->getVTList(), Ops);
   AddNodeIDCustom(ID, N);
   SDNode *Node = CSEMap.FindNodeOrInsertPos(ID, InsertPos);
   return Node;
@@ -4238,14 +4236,14 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
 }
 
 SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
-                                SDVTList VTList, const SDValue *Ops, unsigned NumOps,
+                                SDVTList VTList, ArrayRef<SDValue> Ops,
                                 MachineMemOperand *MMO,
                                 AtomicOrdering SuccessOrdering,
                                 AtomicOrdering FailureOrdering,
                                 SynchronizationScope SynchScope) {
   FoldingSetNodeID ID;
   ID.AddInteger(MemVT.getRawBits());
-  AddNodeIDNode(ID, Opcode, VTList, ArrayRef<SDValue>(Ops, NumOps));
+  AddNodeIDNode(ID, Opcode, VTList, Ops);
   ID.AddInteger(MMO->getPointerInfo().getAddrSpace());
   void* IP = nullptr;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP)) {
@@ -4258,11 +4256,13 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
   // the node is deallocated, but recovered when the allocator is released.
   // If the number of operands is less than 5 we use AtomicSDNode's internal
   // storage.
-  SDUse *DynOps = NumOps > 4 ? OperandAllocator.Allocate<SDUse>(NumOps) : nullptr;
+  unsigned NumOps = Ops.size();
+  SDUse *DynOps = NumOps > 4 ? OperandAllocator.Allocate<SDUse>(NumOps)
+                             : nullptr;
 
   SDNode *N = new (NodeAllocator) AtomicSDNode(Opcode, dl.getIROrder(),
                                                dl.getDebugLoc(), VTList, MemVT,
-                                               Ops, DynOps, NumOps, MMO,
+                                               Ops.data(), DynOps, NumOps, MMO,
                                                SuccessOrdering, FailureOrdering,
                                                SynchScope);
   CSEMap.InsertNode(N, IP);
@@ -4271,11 +4271,11 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
 }
 
 SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
-                                SDVTList VTList, const SDValue *Ops, unsigned NumOps,
+                                SDVTList VTList, ArrayRef<SDValue> Ops,
                                 MachineMemOperand *MMO,
                                 AtomicOrdering Ordering,
                                 SynchronizationScope SynchScope) {
-  return getAtomic(Opcode, dl, MemVT, VTList, Ops, NumOps, MMO, Ordering,
+  return getAtomic(Opcode, dl, MemVT, VTList, Ops, MMO, Ordering,
                    Ordering, SynchScope);
 }
 
@@ -4322,7 +4322,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
 
   SDVTList VTs = getVTList(VT, MVT::Other);
   SDValue Ops[] = {Chain, Ptr, Cmp, Swp};
-  return getAtomic(Opcode, dl, MemVT, VTs, Ops, 4, MMO, SuccessOrdering,
+  return getAtomic(Opcode, dl, MemVT, VTs, Ops, MMO, SuccessOrdering,
                    FailureOrdering, SynchScope);
 }
 
@@ -4382,7 +4382,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
   SDVTList VTs = Opcode == ISD::ATOMIC_STORE ? getVTList(MVT::Other) :
                                                getVTList(VT, MVT::Other);
   SDValue Ops[] = {Chain, Ptr, Val};
-  return getAtomic(Opcode, dl, MemVT, VTs, Ops, 3, MMO, Ordering, SynchScope);
+  return getAtomic(Opcode, dl, MemVT, VTs, Ops, MMO, Ordering, SynchScope);
 }
 
 SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
@@ -4395,7 +4395,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
 
   SDVTList VTs = getVTList(VT, MVT::Other);
   SDValue Ops[] = {Chain, Ptr};
-  return getAtomic(Opcode, dl, MemVT, VTs, Ops, 2, MMO, Ordering, SynchScope);
+  return getAtomic(Opcode, dl, MemVT, VTs, Ops, MMO, Ordering, SynchScope);
 }
 
 /// getMergeValues - Create a MERGE_VALUES node from the given operands.
@@ -5136,25 +5136,26 @@ SDNode *SelectionDAG::UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2) {
 SDNode *SelectionDAG::
 UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2, SDValue Op3) {
   SDValue Ops[] = { Op1, Op2, Op3 };
-  return UpdateNodeOperands(N, Ops, 3);
+  return UpdateNodeOperands(N, Ops);
 }
 
 SDNode *SelectionDAG::
 UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2,
                    SDValue Op3, SDValue Op4) {
   SDValue Ops[] = { Op1, Op2, Op3, Op4 };
-  return UpdateNodeOperands(N, Ops, 4);
+  return UpdateNodeOperands(N, Ops);
 }
 
 SDNode *SelectionDAG::
 UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2,
                    SDValue Op3, SDValue Op4, SDValue Op5) {
   SDValue Ops[] = { Op1, Op2, Op3, Op4, Op5 };
-  return UpdateNodeOperands(N, Ops, 5);
+  return UpdateNodeOperands(N, Ops);
 }
 
 SDNode *SelectionDAG::
-UpdateNodeOperands(SDNode *N, const SDValue *Ops, unsigned NumOps) {
+UpdateNodeOperands(SDNode *N, ArrayRef<SDValue> Ops) {
+  unsigned NumOps = Ops.size();
   assert(N->getNumOperands() == NumOps &&
          "Update with wrong number of operands");
 
@@ -5172,7 +5173,7 @@ UpdateNodeOperands(SDNode *N, const SDValue *Ops, unsigned NumOps) {
 
   // See if the modified node already exists.
   void *InsertPos = nullptr;
-  if (SDNode *Existing = FindModifiedNodeSlot(N, Ops, NumOps, InsertPos))
+  if (SDNode *Existing = FindModifiedNodeSlot(N, Ops, InsertPos))
     return Existing;
 
   // Nope it doesn't.  Remove the node from its current place in the maps.

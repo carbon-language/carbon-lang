@@ -8159,7 +8159,7 @@ SDValue PPCTargetLowering::PerformDAGCombine(SDNode *N,
             Ops.push_back(*O);
         }
 
-        DAG.UpdateNodeOperands(User, Ops.data(), Ops.size());
+        DAG.UpdateNodeOperands(User, Ops);
       }
 
       return SDValue(N, 0);

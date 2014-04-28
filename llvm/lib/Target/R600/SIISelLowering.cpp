@@ -1428,7 +1428,7 @@ void SITargetLowering::adjustWritemask(MachineSDNode *&Node,
   Ops.push_back(DAG.getTargetConstant(NewDmask, MVT::i32));
   for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
     Ops.push_back(Node->getOperand(i));
-  Node = (MachineSDNode*)DAG.UpdateNodeOperands(Node, Ops.data(), Ops.size());
+  Node = (MachineSDNode*)DAG.UpdateNodeOperands(Node, Ops);
 
   // If we only got one lane, replace it with a copy
   // (if NewDmask has only one bit set...)

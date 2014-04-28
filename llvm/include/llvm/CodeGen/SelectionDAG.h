@@ -723,12 +723,12 @@ public:
   /// getAtomic - Gets a node for an atomic op, produces result and chain and
   /// takes N operands.
   SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDVTList VTList,
-                    const SDValue *Ops, unsigned NumOps, MachineMemOperand *MMO,
+                    ArrayRef<SDValue> Ops, MachineMemOperand *MMO,
                     AtomicOrdering SuccessOrdering,
                     AtomicOrdering FailureOrdering,
                     SynchronizationScope SynchScope);
   SDValue getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT, SDVTList VTList,
-                    const SDValue *Ops, unsigned NumOps, MachineMemOperand *MMO,
+                    ArrayRef<SDValue> Ops, MachineMemOperand *MMO,
                     AtomicOrdering Ordering, SynchronizationScope SynchScope);
 
   /// getMemIntrinsicNode - Creates a MemIntrinsicNode that may produce a
@@ -826,8 +826,7 @@ public:
                                SDValue Op3, SDValue Op4);
   SDNode *UpdateNodeOperands(SDNode *N, SDValue Op1, SDValue Op2,
                                SDValue Op3, SDValue Op4, SDValue Op5);
-  SDNode *UpdateNodeOperands(SDNode *N,
-                               const SDValue *Ops, unsigned NumOps);
+  SDNode *UpdateNodeOperands(SDNode *N, ArrayRef<SDValue> Ops);
 
   /// SelectNodeTo - These are used for target selectors to *mutate* the
   /// specified node to have the specified return type, Target opcode, and
@@ -1164,7 +1163,7 @@ private:
   SDNode *FindModifiedNodeSlot(SDNode *N, SDValue Op, void *&InsertPos);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDValue Op1, SDValue Op2,
                                void *&InsertPos);
-  SDNode *FindModifiedNodeSlot(SDNode *N, const SDValue *Ops, unsigned NumOps,
+  SDNode *FindModifiedNodeSlot(SDNode *N, ArrayRef<SDValue> Ops,
                                void *&InsertPos);
   SDNode *UpdadeSDLocOnMergedSDNode(SDNode *N, SDLoc loc);
 

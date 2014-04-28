@@ -3390,7 +3390,7 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
       // Update the original glue user.
       std::vector<SDValue> Ops(GU->op_begin(), GU->op_end()-1);
       Ops.push_back(T1.getValue(1));
-      CurDAG->UpdateNodeOperands(GU, &Ops[0], Ops.size());
+      CurDAG->UpdateNodeOperands(GU, Ops);
       GU = T1.getNode();
     }
     else {

@@ -152,8 +152,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
     Ops.push_back(LegalizeOp(Node->getOperand(i)));
 
-  SDValue Result =
-    SDValue(DAG.UpdateNodeOperands(Op.getNode(), Ops.data(), Ops.size()), 0);
+  SDValue Result = SDValue(DAG.UpdateNodeOperands(Op.getNode(), Ops), 0);
 
   if (Op.getOpcode() == ISD::LOAD) {
     LoadSDNode *LD = cast<LoadSDNode>(Op.getNode());

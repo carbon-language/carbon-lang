@@ -507,7 +507,7 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
       for (unsigned i = 1; i < (*I)->getNumOperands(); ++i) {
         Ops.push_back((*I)->getOperand(i));
       }
-      DAG.UpdateNodeOperands(*I, Ops.data(), Ops.size());
+      DAG.UpdateNodeOperands(*I, Ops);
     }
     return DAG.getZExtOrTrunc(InitPtr, SDLoc(Op),
         getPointerTy(AMDGPUAS::CONSTANT_ADDRESS));

@@ -490,7 +490,7 @@ SDNode *DAGTypeLegalizer::AnalyzeNewNode(SDNode *N) {
 
   // Some operands changed - update the node.
   if (!NewOps.empty()) {
-    SDNode *M = DAG.UpdateNodeOperands(N, &NewOps[0], NewOps.size());
+    SDNode *M = DAG.UpdateNodeOperands(N, NewOps);
     if (M != N) {
       // The node morphed into a different node.  Normally for this to happen
       // the original node would have to be marked NewNode.  However this can

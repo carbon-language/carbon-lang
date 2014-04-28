@@ -933,7 +933,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BUILD_VECTOR(SDNode *N) {
   for (unsigned i = 0; i < NumElts; ++i)
     NewOps.push_back(GetPromotedInteger(N->getOperand(i)));
 
-  return SDValue(DAG.UpdateNodeOperands(N, &NewOps[0], NumElts), 0);
+  return SDValue(DAG.UpdateNodeOperands(N, NewOps), 0);
 }
 
 SDValue DAGTypeLegalizer::PromoteIntOp_CONVERT_RNDSAT(SDNode *N) {
