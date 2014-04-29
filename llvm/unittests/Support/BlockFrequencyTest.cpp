@@ -102,35 +102,6 @@ TEST(BlockFrequencyTest, Saturate) {
   EXPECT_EQ(33506781356485509ULL, Freq.getFrequency());
 }
 
-TEST(BlockFrequencyTest, ProbabilityCompare) {
-  BranchProbability A(4, 5);
-  BranchProbability B(4U << 29, 5U << 29);
-  BranchProbability C(3, 4);
-
-  EXPECT_TRUE(A == B);
-  EXPECT_FALSE(A != B);
-  EXPECT_FALSE(A < B);
-  EXPECT_FALSE(A > B);
-  EXPECT_TRUE(A <= B);
-  EXPECT_TRUE(A >= B);
-
-  EXPECT_FALSE(B == C);
-  EXPECT_TRUE(B != C);
-  EXPECT_FALSE(B < C);
-  EXPECT_TRUE(B > C);
-  EXPECT_FALSE(B <= C);
-  EXPECT_TRUE(B >= C);
-
-  BranchProbability BigZero(0, UINT32_MAX);
-  BranchProbability BigOne(UINT32_MAX, UINT32_MAX);
-  EXPECT_FALSE(BigZero == BigOne);
-  EXPECT_TRUE(BigZero != BigOne);
-  EXPECT_TRUE(BigZero < BigOne);
-  EXPECT_FALSE(BigZero > BigOne);
-  EXPECT_TRUE(BigZero <= BigOne);
-  EXPECT_FALSE(BigZero >= BigOne);
-}
-
 TEST(BlockFrequencyTest, SaturatingRightShift) {
   BlockFrequency Freq(0x10080ULL);
   Freq >>= 2;

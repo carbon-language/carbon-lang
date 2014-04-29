@@ -80,6 +80,35 @@ TEST(BranchProbabilityTest, Operators) {
   EXPECT_TRUE(BP(4, 7) != BP(3, 7));
 }
 
+TEST(BlockProbabilityTest, MoreOperators) {
+  BP A(4, 5);
+  BP B(4U << 29, 5U << 29);
+  BP C(3, 4);
+
+  EXPECT_TRUE(A == B);
+  EXPECT_FALSE(A != B);
+  EXPECT_FALSE(A < B);
+  EXPECT_FALSE(A > B);
+  EXPECT_TRUE(A <= B);
+  EXPECT_TRUE(A >= B);
+
+  EXPECT_FALSE(B == C);
+  EXPECT_TRUE(B != C);
+  EXPECT_FALSE(B < C);
+  EXPECT_TRUE(B > C);
+  EXPECT_FALSE(B <= C);
+  EXPECT_TRUE(B >= C);
+
+  BP BigZero(0, UINT32_MAX);
+  BP BigOne(UINT32_MAX, UINT32_MAX);
+  EXPECT_FALSE(BigZero == BigOne);
+  EXPECT_TRUE(BigZero != BigOne);
+  EXPECT_TRUE(BigZero < BigOne);
+  EXPECT_FALSE(BigZero > BigOne);
+  EXPECT_TRUE(BigZero <= BigOne);
+  EXPECT_FALSE(BigZero >= BigOne);
+}
+
 TEST(BranchProbabilityTest, getCompl) {
   EXPECT_EQ(BP(5, 7), BP(2, 7).getCompl());
   EXPECT_EQ(BP(2, 7), BP(5, 7).getCompl());
