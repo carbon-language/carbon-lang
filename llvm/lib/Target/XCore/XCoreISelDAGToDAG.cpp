@@ -44,7 +44,7 @@ namespace {
       : SelectionDAGISel(TM, OptLevel),
         Subtarget(*TM.getSubtargetImpl()) { }
 
-    SDNode *Select(SDNode *N);
+    SDNode *Select(SDNode *N) override;
     SDNode *SelectBRIND(SDNode *N);
 
     /// getI32Imm - Return a target constant with the specified value, of type
@@ -70,7 +70,7 @@ namespace {
     bool SelectInlineAsmMemoryOperand(const SDValue &Op, char ConstraintCode,
                                       std::vector<SDValue> &OutOps) override;
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "XCore DAG->DAG Pattern Instruction Selection";
     } 
     

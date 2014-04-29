@@ -37,28 +37,28 @@ public:
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL);
 
-  virtual const XCoreInstrInfo *getInstrInfo() const { return &InstrInfo; }
-  virtual const XCoreFrameLowering *getFrameLowering() const {
+  const XCoreInstrInfo *getInstrInfo() const override { return &InstrInfo; }
+  const XCoreFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
-  virtual const XCoreSubtarget *getSubtargetImpl() const { return &Subtarget; }
-  virtual const XCoreTargetLowering *getTargetLowering() const {
+  const XCoreSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const XCoreTargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }
 
-  virtual const XCoreSelectionDAGInfo* getSelectionDAGInfo() const {
+  const XCoreSelectionDAGInfo* getSelectionDAGInfo() const override {
     return &TSInfo;
   }
 
-  virtual const TargetRegisterInfo *getRegisterInfo() const {
+  const TargetRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
-  virtual const DataLayout       *getDataLayout() const { return &DL; }
+  const DataLayout       *getDataLayout() const override { return &DL; }
 
   // Pass Pipeline Configuration
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
-  virtual void addAnalysisPasses(PassManagerBase &PM);
+  void addAnalysisPasses(PassManagerBase &PM) override;
 };
 
 } // end namespace llvm

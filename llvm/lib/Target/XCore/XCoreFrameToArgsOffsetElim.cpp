@@ -26,9 +26,9 @@ namespace {
     static char ID;
     XCoreFTAOElim() : MachineFunctionPass(ID) {}
 
-    virtual bool runOnMachineFunction(MachineFunction &Fn);
+    bool runOnMachineFunction(MachineFunction &Fn) override;
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "XCore FRAME_TO_ARGS_OFFSET Elimination";
     }
   };

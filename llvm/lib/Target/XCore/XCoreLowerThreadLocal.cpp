@@ -48,7 +48,7 @@ namespace {
 
     bool lowerGlobal(GlobalVariable *GV);
 
-    bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
   };
 }
 

@@ -29,22 +29,23 @@ public:
 
   /// Code Generation virtual methods...
 
-  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF =nullptr) const;
+  const MCPhysReg *
+  getCalleeSavedRegs(const MachineFunction *MF =nullptr) const override;
 
-  BitVector getReservedRegs(const MachineFunction &MF) const;
+  BitVector getReservedRegs(const MachineFunction &MF) const override;
   
-  bool requiresRegisterScavenging(const MachineFunction &MF) const;
+  bool requiresRegisterScavenging(const MachineFunction &MF) const override;
 
-  bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const;
+  bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const override;
 
-  bool useFPForScavengingIndex(const MachineFunction &MF) const;
+  bool useFPForScavengingIndex(const MachineFunction &MF) const override;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = nullptr) const;
+                           RegScavenger *RS = nullptr) const override;
 
   // Debug information queries.
-  unsigned getFrameRegister(const MachineFunction &MF) const;
+  unsigned getFrameRegister(const MachineFunction &MF) const override;
 
   //! Return whether to emit frame moves
   static bool needsFrameMoves(const MachineFunction &MF);

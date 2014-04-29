@@ -46,9 +46,9 @@ public:
     return getTM<XCoreTargetMachine>();
   }
 
-  virtual bool addPreISel();
-  virtual bool addInstSelector();
-  virtual bool addPreEmitPass();
+  bool addPreISel() override;
+  bool addInstSelector() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 
