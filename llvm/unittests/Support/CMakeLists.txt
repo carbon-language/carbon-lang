@@ -7,6 +7,7 @@ add_llvm_unittest(SupportTests
   AllocatorTest.cpp
   ArrayRecyclerTest.cpp
   BlockFrequencyTest.cpp
+  BranchProbabilityTest.cpp
   Casting.cpp
   CommandLineTest.cpp
   CompressionTest.cpp
