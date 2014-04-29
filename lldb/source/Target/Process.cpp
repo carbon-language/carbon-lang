@@ -5591,7 +5591,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                             else
                             {
                                 log->Printf ("Process::RunThreadPlan(): Running function with one thread timeout timed out, "
-                                             "running for ever with all threads enabled.");
+                                             "running forever with all threads enabled.");
                             }
                         }
                         else
