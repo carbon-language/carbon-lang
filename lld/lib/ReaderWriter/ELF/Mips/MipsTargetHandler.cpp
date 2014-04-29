@@ -49,6 +49,7 @@ void MipsTargetHandler::registerRelocationNames(Registry &registry) {
 const Registry::KindStrings MipsTargetHandler::kindStrings[] = {
   LLD_KIND_STRING_ENTRY(R_MIPS_NONE),
   LLD_KIND_STRING_ENTRY(R_MIPS_32),
+  LLD_KIND_STRING_ENTRY(R_MIPS_REL32),
   LLD_KIND_STRING_ENTRY(R_MIPS_26),
   LLD_KIND_STRING_ENTRY(R_MIPS_HI16),
   LLD_KIND_STRING_ENTRY(R_MIPS_LO16),
@@ -63,5 +64,6 @@ const Registry::KindStrings MipsTargetHandler::kindStrings[] = {
   LLD_KIND_STRING_ENTRY(LLD_R_MIPS_GLOBAL_26),
   LLD_KIND_STRING_ENTRY(LLD_R_MIPS_HI16),
   LLD_KIND_STRING_ENTRY(LLD_R_MIPS_LO16),
+  LLD_KIND_STRING_ENTRY(LLD_R_MIPS_STO_PLT),
   LLD_KIND_STRING_END
 };

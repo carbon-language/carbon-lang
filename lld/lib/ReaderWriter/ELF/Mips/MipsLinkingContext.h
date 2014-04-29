@@ -25,7 +25,9 @@ enum {
   /// \brief Setup hi 16 bits using the symbol this reference refers to.
   LLD_R_MIPS_HI16 = 1027,
   /// \brief Setup low 16 bits using the symbol this reference refers to.
-  LLD_R_MIPS_LO16 = 1028
+  LLD_R_MIPS_LO16 = 1028,
+  /// \brief Represents a reference between PLT and dynamic symbol.
+  LLD_R_MIPS_STO_PLT = 1029
 };
 
 typedef llvm::object::ELFType<llvm::support::little, 2, false> Mips32ElELFType;

@@ -26,9 +26,11 @@ public:
   MipsTargetLayout(const MipsLinkingContext &ctx)
       : TargetLayout<ELFType>(ctx),
         _gotSection(new (_alloc) MipsGOTSection<ELFType>(ctx)),
+        _pltSection(new (_alloc) MipsPLTSection<ELFType>(ctx)),
         _cachedGP(false) {}
 
   const MipsGOTSection<ELFType> &getGOTSection() const { return *_gotSection; }
+  const MipsPLTSection<ELFType> &getPLTSection() const { return *_pltSection; }
 
   AtomSection<ELFType> *
   createSection(StringRef name, int32_t type,
@@ -36,6 +38,8 @@ public:
                 Layout::SectionOrder order) override {
     if (type == DefinedAtom::typeGOT && name == ".got")
       return _gotSection;
+    if (type == DefinedAtom::typeStub && name == ".plt")
+      return _pltSection;
     return DefaultLayout<ELFType>::createSection(name, type, permissions,
                                                  order);
   }
@@ -56,6 +60,7 @@ public:
 private:
   llvm::BumpPtrAllocator _alloc;
   MipsGOTSection<ELFType> *_gotSection;
+  MipsPLTSection<ELFType> *_pltSection;
   AtomLayout *_gp;
   bool _cachedGP;
 };
@@ -117,6 +122,26 @@ public:
 
       return _targetLayout.getGOTSection().compare(A._atom, B._atom);
     });
+  }
+
+  void finalize() override {
+    const auto &pltSection = _targetLayout.getPLTSection();
+
+    // Under some conditions a dynamic symbol table record should hold a symbol
+    // value of the corresponding PLT entry. For details look at the PLT entry
+    // creation code in the class MipsRelocationPass. Let's update atomLayout
+    // fields for such symbols.
+    for (auto &ste : this->_symbolTable) {
+      if (!ste._atom || ste._atomLayout)
+        continue;
+      auto *layout = pltSection.findPLTLayout(ste._atom);
+      if (layout) {
+        ste._symbol.st_value = layout->_virtualAddr;
+        ste._symbol.st_other |= ELF::STO_MIPS_PLT;
+      }
+    }
+
+    DynamicSymbolTable<Mips32ElELFType>::finalize();
   }
 
 private:

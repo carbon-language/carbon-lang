@@ -157,7 +157,9 @@ error_code MipsTargetRelocationHandler::applyRelocation(
   case R_MIPS_JALR:
     // We do not do JALR optimization now.
     break;
+  case R_MIPS_REL32:
   case R_MIPS_JUMP_SLOT:
+  case R_MIPS_COPY:
     // Ignore runtime relocations.
     break;
   case R_MIPS_PC32:
@@ -177,6 +179,9 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     break;
   case LLD_R_MIPS_LO16:
     relocLldLo16(location, targetVAddress);
+    break;
+  case LLD_R_MIPS_STO_PLT:
+    // Do nothing.
     break;
   default: {
     std::string str;

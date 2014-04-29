@@ -11,8 +11,8 @@
 
 # CHECK:      Relocations [
 # CHECK-NEXT:   Section (5) .rel.dyn {
+# CHECK-NEXT:     0x402004 R_MIPS_REL32 D2 0x0
 # CHECK-NEXT:     0x402008 R_MIPS_COPY D1 0x0
-# CHECK-NEXT:     0x402010 R_MIPS_COPY D2 0x0
 # CHECK-NEXT:   }
 # CHECK-NEXT: ]
 
@@ -29,15 +29,6 @@
 # CHECK-NEXT:   Symbol {
 # CHECK-NEXT:     Name: D1@ (1)
 # CHECK-NEXT:     Value: 0x402008
-# CHECK-NEXT:     Size: 4
-# CHECK-NEXT:     Binding: Global (0x1)
-# CHECK-NEXT:     Type: Object (0x1)
-# CHECK-NEXT:     Other: 0
-# CHECK-NEXT:     Section: .bss (0xA)
-# CHECK-NEXT:   }
-# CHECK-NEXT:   Symbol {
-# CHECK-NEXT:     Name: D2@ (4)
-# CHECK-NEXT:     Value: 0x402010
 # CHECK-NEXT:     Size: 4
 # CHECK-NEXT:     Binding: Global (0x1)
 # CHECK-NEXT:     Type: Object (0x1)

@@ -1,0 +1,103 @@
+# Conditions:
+#   a) Linking a shared library.
+#   b) The first relocation modifies a regular .text section.
+#   c) The second relocation modifies a .pdr section without SHF_ALLOC flag.
+# Check:
+#   a) There should be no PLT entries.
+#   b) Linker creates a single R_MIPS_REL32 relocation.
+#
+# RUN: yaml2obj -format=elf %s > %t-obj
+# RUN: lld -flavor gnu -target mipsel -shared -o %t1-so %t-obj
+# RUN: llvm-readobj -dt -r -s %t1-so | FileCheck -check-prefix=PLT1 %s
+
+# PLT1-SYM:     Sections [
+# PLT1-SYM:       Section {
+# PLT1-SYM-NOT:     Name: .plt ({{[0-9]+}})
+
+# PLT1:      Relocations [
+# PLT1-NEXT:   Section (4) .rel.dyn {
+# PLT1-NEXT:     0x100 R_MIPS_REL32 T0 0x0
+# PLT1-NEXT:   }
+# PLT1-NEXT: ]
+
+# PLT1:      DynamicSymbols [
+# PLT1-NEXT:   Symbol {
+# PLT1-NEXT:     Name: @ (0)
+# PLT1-NEXT:     Value: 0x0
+# PLT1-NEXT:     Size: 0
+# PLT1-NEXT:     Binding: Local (0x0)
+# PLT1-NEXT:     Type: None (0x0)
+# PLT1-NEXT:     Other: 0
+# PLT1-NEXT:     Section: Undefined (0x0)
+# PLT1-NEXT:   }
+# PLT1-NEXT:   Symbol {
+# PLT1-NEXT:     Name: T1@ (4)
+# PLT1-NEXT:     Value: 0x104
+# PLT1-NEXT:     Size: 4
+# PLT1-NEXT:     Binding: Global (0x1)
+# PLT1-NEXT:     Type: Function (0x2)
+# PLT1-NEXT:     Other: 0
+# PLT1-NEXT:     Section: .text (0x5)
+# PLT1-NEXT:   }
+# PLT1-NEXT:   Symbol {
+# PLT1-NEXT:     Name: T0@ (1)
+# PLT1-NEXT:     Value: 0x100
+# PLT1-NEXT:     Size: 4
+# PLT1-NEXT:     Binding: Global (0x1)
+# PLT1-NEXT:     Type: Function (0x2)
+# PLT1-NEXT:     Other: 0
+# PLT1-NEXT:     Section: .text (0x5)
+# PLT1-NEXT:   }
+# PLT1-NEXT: ]
+
+!ELF
+FileHeader: !FileHeader
+  Class: ELFCLASS32
+  Data: ELFDATA2LSB
+  Type: ET_REL
+  Machine: EM_MIPS
+  Flags: [EF_MIPS_PIC, EF_MIPS_CPIC]
+
+Sections:
+- Name: .text
+  Type: SHT_PROGBITS
+  Content:  "0000000000000000"
+  AddressAlign: 16
+  Flags: [SHF_EXECINSTR, SHF_ALLOC]
+
+- Name: .rel.text
+  Type: SHT_REL
+  Info: .text
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x00
+      Symbol: T0
+      Type: R_MIPS_32
+
+- Name: .pdr
+  Type: SHT_PROGBITS
+  Content:  "0000000000000000"
+  AddressAlign: 16
+  Flags: []
+
+- Name: .rel.pdr
+  Type: SHT_REL
+  Info: .pdr
+  AddressAlign: 4
+  Relocations:
+    - Offset: 0x00
+      Symbol: T1
+      Type: R_MIPS_32
+
+Symbols:
+  Global:
+    - Name: T0
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x0
+      Size: 4
+    - Name: T1
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x4
+      Size: 4

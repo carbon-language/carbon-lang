@@ -79,6 +79,42 @@ private:
   llvm::DenseMap<const Atom *, std::size_t> _posMap;
 };
 
+/// \brief Handle Mips PLT section
+template <class ELFType> class MipsPLTSection : public AtomSection<ELFType> {
+public:
+  MipsPLTSection(const MipsLinkingContext &context)
+      : AtomSection<ELFType>(context, ".plt", DefinedAtom::typeGOT,
+                             DefinedAtom::permR_X,
+                             MipsTargetLayout<ELFType>::ORDER_PLT) {}
+
+  const AtomLayout *findPLTLayout(const Atom *plt) const {
+    auto it = _pltLayoutMap.find(plt);
+    return it != _pltLayoutMap.end() ? it->second : nullptr;
+  }
+
+  const lld::AtomLayout &appendAtom(const Atom *atom) override {
+    const auto &layout = AtomSection<ELFType>::appendAtom(atom);
+
+    const DefinedAtom *da = cast<DefinedAtom>(atom);
+
+    for (const auto &r : *da) {
+      if (r->kindNamespace() != lld::Reference::KindNamespace::ELF)
+        continue;
+      assert(r->kindArch() == Reference::KindArch::Mips);
+      if (r->kindValue() == LLD_R_MIPS_STO_PLT) {
+        _pltLayoutMap[r->target()] = &layout;
+        break;
+      }
+    }
+
+    return layout;
+  }
+
+private:
+  /// \brief Map PLT Atoms to their layouts.
+  std::unordered_map<const Atom *, const AtomLayout *> _pltLayoutMap;
+};
+
 } // elf
 } // lld
 
