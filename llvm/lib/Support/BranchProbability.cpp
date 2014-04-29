@@ -73,11 +73,7 @@ uint64_t BranchProbability::scaleByInverse(uint64_t Num) const {
   return ::scale(Num, D, N);
 }
 
-namespace llvm {
-
-raw_ostream &operator<<(raw_ostream &OS, const BranchProbability &Prob) {
+raw_ostream &llvm::operator<<(raw_ostream &OS, const BranchProbability &Prob) {
   Prob.print(OS);
   return OS;
-}
-
 }
