@@ -31,8 +31,8 @@ class SparcTargetAsmStreamer : public SparcTargetStreamer {
 
 public:
   SparcTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
-  virtual void emitSparcRegisterIgnore(unsigned reg);
-  virtual void emitSparcRegisterScratch(unsigned reg);
+  void emitSparcRegisterIgnore(unsigned reg) override;
+  void emitSparcRegisterScratch(unsigned reg) override;
 
 };
 
@@ -41,8 +41,8 @@ class SparcTargetELFStreamer : public SparcTargetStreamer {
 public:
   SparcTargetELFStreamer(MCStreamer &S);
   MCELFStreamer &getStreamer();
-  virtual void emitSparcRegisterIgnore(unsigned reg) {}
-  virtual void emitSparcRegisterScratch(unsigned reg) {}
+  void emitSparcRegisterIgnore(unsigned reg) override {}
+  void emitSparcRegisterScratch(unsigned reg) override {}
 };
 } // end namespace llvm
 

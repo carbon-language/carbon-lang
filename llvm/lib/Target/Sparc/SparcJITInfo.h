@@ -34,27 +34,27 @@ class SparcJITInfo : public TargetJITInfo {
   /// overwriting OLD with a branch to NEW.  This is used for self-modifying
   /// code.
   ///
-  virtual void replaceMachineCodeForFunction(void *Old, void *New);
+  void replaceMachineCodeForFunction(void *Old, void *New) override;
 
   // getStubLayout - Returns the size and alignment of the largest call stub
   // on Sparc.
-  virtual StubLayout getStubLayout();
+  StubLayout getStubLayout() override;
 
 
   /// emitFunctionStub - Use the specified JITCodeEmitter object to emit a
   /// small native function that simply calls the function at the specified
   /// address.
-  virtual void *emitFunctionStub(const Function *F, void *Fn,
-                                 JITCodeEmitter &JCE);
+  void *emitFunctionStub(const Function *F, void *Fn,
+                         JITCodeEmitter &JCE) override;
 
   /// getLazyResolverFunction - Expose the lazy resolver to the JIT.
-  virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
+  LazyResolverFn getLazyResolverFunction(JITCompilerFn) override;
 
   /// relocate - Before the JIT can run a block of code that has been emitted,
   /// it must rewrite the code to contain the actual addresses of any
   /// referenced global symbols.
-  virtual void relocate(void *Function, MachineRelocation *MR,
-                        unsigned NumRelocs, unsigned char *GOTBase);
+  void relocate(void *Function, MachineRelocation *MR,
+                unsigned NumRelocs, unsigned char *GOTBase) override;
 
   /// Initialize - Initialize internal stage for the function being JITted.
   void Initialize(const MachineFunction &MF, bool isPIC) {

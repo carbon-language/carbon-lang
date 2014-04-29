@@ -50,12 +50,12 @@ namespace {
         Subtarget(&TM.getSubtarget<SparcSubtarget>()) {
     }
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "SPARC Delay Slot Filler";
     }
 
     bool runOnMachineBasicBlock(MachineBasicBlock &MBB);
-    bool runOnMachineFunction(MachineFunction &F) {
+    bool runOnMachineFunction(MachineFunction &F) override {
       bool Changed = false;
 
       // This pass invalidates liveness information when it reorders

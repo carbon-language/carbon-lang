@@ -46,7 +46,7 @@ namespace {
     explicit SparcAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : AsmPrinter(TM, Streamer) {}
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Sparc Assembly Printer";
     }
 
@@ -55,9 +55,9 @@ namespace {
                          const char *Modifier = nullptr);
     void printCCOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
 
-    virtual void EmitFunctionBodyStart();
-    virtual void EmitInstruction(const MachineInstr *MI);
-    virtual void EmitEndOfAsmFile(Module &M);
+    void EmitFunctionBodyStart() override;
+    void EmitInstruction(const MachineInstr *MI) override;
+    void EmitEndOfAsmFile(Module &M) override;
 
     static const char *getRegisterName(unsigned RegNo) {
       return SparcInstPrinter::getRegisterName(RegNo);
@@ -65,10 +65,10 @@ namespace {
 
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode,
-                         raw_ostream &O);
+                         raw_ostream &O) override;
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode,
-                               raw_ostream &O);
+                               raw_ostream &O) override;
 
     void LowerGETPCXAndEmitMCInsts(const MachineInstr *MI,
                                    const MCSubtargetInfo &STI);

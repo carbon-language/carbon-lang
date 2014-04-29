@@ -40,7 +40,7 @@ class SparcCodeEmitter : public MachineFunctionPass {
   const std::vector<MachineConstantPoolEntry> *MCPEs;
   bool IsPIC;
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<MachineModuleInfo> ();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
@@ -53,9 +53,9 @@ public:
       TM(tm), MCE(mce), MCPEs(nullptr),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
 
-  bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "Sparc Machine Code Emitter";
   }
 

@@ -30,8 +30,8 @@ public:
                   const MCSubtargetInfo &sti)
    : MCInstPrinter(MAI, MII, MRI), STI(sti) {}
 
-  virtual void printRegName(raw_ostream &OS, unsigned RegNo) const;
-  virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
+  void printRegName(raw_ostream &OS, unsigned RegNo) const override;
+  void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot) override;
   bool printSparcAliasInstr(const MCInst *MI, raw_ostream &OS);
   bool isV9() const;
 

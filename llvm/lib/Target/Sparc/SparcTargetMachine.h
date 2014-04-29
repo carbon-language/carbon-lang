@@ -40,28 +40,28 @@ public:
                      Reloc::Model RM, CodeModel::Model CM,
                      CodeGenOpt::Level OL, bool is64bit);
 
-  virtual const SparcInstrInfo *getInstrInfo() const { return &InstrInfo; }
-  virtual const TargetFrameLowering  *getFrameLowering() const {
+  const SparcInstrInfo *getInstrInfo() const override { return &InstrInfo; }
+  const TargetFrameLowering  *getFrameLowering() const override {
     return &FrameLowering;
   }
-  virtual const SparcSubtarget   *getSubtargetImpl() const{ return &Subtarget; }
-  virtual const SparcRegisterInfo *getRegisterInfo() const {
+  const SparcSubtarget   *getSubtargetImpl() const override{ return &Subtarget; }
+  const SparcRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
-  virtual const SparcTargetLowering* getTargetLowering() const {
+  const SparcTargetLowering* getTargetLowering() const override {
     return &TLInfo;
   }
-  virtual const SparcSelectionDAGInfo* getSelectionDAGInfo() const {
+  const SparcSelectionDAGInfo* getSelectionDAGInfo() const override {
     return &TSInfo;
   }
-  virtual SparcJITInfo *getJITInfo() {
+  SparcJITInfo *getJITInfo() override {
     return &JITInfo;
   }
-  virtual const DataLayout       *getDataLayout() const { return &DL; }
+  const DataLayout       *getDataLayout() const override { return &DL; }
 
   // Pass Pipeline Configuration
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
-  virtual bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &JCE);
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+  bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &JCE) override;
 };
 
 /// SparcV8TargetMachine - Sparc 32-bit target machine

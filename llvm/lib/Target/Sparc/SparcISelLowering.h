@@ -55,47 +55,47 @@ namespace llvm {
     const SparcSubtarget *Subtarget;
   public:
     SparcTargetLowering(TargetMachine &TM);
-    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
 
     /// computeMaskedBitsForTargetNode - Determine which of the bits specified
     /// in Mask are known to be either zero or one and return them in the
     /// KnownZero/KnownOne bitsets.
-    virtual void computeMaskedBitsForTargetNode(const SDValue Op,
-                                                APInt &KnownZero,
-                                                APInt &KnownOne,
-                                                const SelectionDAG &DAG,
-                                                unsigned Depth = 0) const;
+    void computeMaskedBitsForTargetNode(const SDValue Op,
+                                        APInt &KnownZero,
+                                        APInt &KnownOne,
+                                        const SelectionDAG &DAG,
+                                        unsigned Depth = 0) const override;
 
-    virtual MachineBasicBlock *
+    MachineBasicBlock *
       EmitInstrWithCustomInserter(MachineInstr *MI,
-                                  MachineBasicBlock *MBB) const;
+                                  MachineBasicBlock *MBB) const override;
 
-    virtual const char *getTargetNodeName(unsigned Opcode) const;
+    const char *getTargetNodeName(unsigned Opcode) const override;
 
-    ConstraintType getConstraintType(const std::string &Constraint) const;
+    ConstraintType getConstraintType(const std::string &Constraint) const override;
     ConstraintWeight
     getSingleConstraintMatchWeight(AsmOperandInfo &info,
-                                   const char *constraint) const;
+                                   const char *constraint) const override;
     void LowerAsmOperandForConstraint(SDValue Op,
                                       std::string &Constraint,
                                       std::vector<SDValue> &Ops,
-                                      SelectionDAG &DAG) const;
+                                      SelectionDAG &DAG) const override;
     std::pair<unsigned, const TargetRegisterClass*>
-    getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const;
+    getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const override;
 
-    virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
-    virtual MVT getScalarShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
+    bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const override;
+    MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i32; }
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    virtual EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
+    EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
 
-    virtual SDValue
+    SDValue
       LowerFormalArguments(SDValue Chain,
                            CallingConv::ID CallConv,
                            bool isVarArg,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
                            SDLoc dl, SelectionDAG &DAG,
-                           SmallVectorImpl<SDValue> &InVals) const;
+                           SmallVectorImpl<SDValue> &InVals) const override;
     SDValue LowerFormalArguments_32(SDValue Chain,
                                     CallingConv::ID CallConv,
                                     bool isVarArg,
@@ -109,20 +109,20 @@ namespace llvm {
                                     SDLoc dl, SelectionDAG &DAG,
                                     SmallVectorImpl<SDValue> &InVals) const;
 
-    virtual SDValue
+    SDValue
       LowerCall(TargetLowering::CallLoweringInfo &CLI,
-                SmallVectorImpl<SDValue> &InVals) const;
+                SmallVectorImpl<SDValue> &InVals) const override;
     SDValue LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
                          SmallVectorImpl<SDValue> &InVals) const;
     SDValue LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
                          SmallVectorImpl<SDValue> &InVals) const;
 
-    virtual SDValue
+    SDValue
       LowerReturn(SDValue Chain,
                   CallingConv::ID CallConv, bool isVarArg,
                   const SmallVectorImpl<ISD::OutputArg> &Outs,
                   const SmallVectorImpl<SDValue> &OutVals,
-                  SDLoc dl, SelectionDAG &DAG) const;
+                  SDLoc dl, SelectionDAG &DAG) const override;
     SDValue LowerReturn_32(SDValue Chain,
                            CallingConv::ID CallConv, bool IsVarArg,
                            const SmallVectorImpl<ISD::OutputArg> &Outs,
@@ -156,15 +156,15 @@ namespace llvm {
                              SDLoc DL,
                              SelectionDAG &DAG) const;
 
-    bool ShouldShrinkFPConstant(EVT VT) const {
+    bool ShouldShrinkFPConstant(EVT VT) const override {
       // Do not shrink FP constpool if VT == MVT::f128.
       // (ldd, call _Q_fdtoq) is more expensive than two ldds.
       return VT != MVT::f128;
     }
 
-    virtual void ReplaceNodeResults(SDNode *N,
+    void ReplaceNodeResults(SDNode *N,
                                     SmallVectorImpl<SDValue>& Results,
-                                    SelectionDAG &DAG) const;
+                                    SelectionDAG &DAG) const override;
 
     MachineBasicBlock *expandSelectCC(MachineInstr *MI, MachineBasicBlock *BB,
                                       unsigned BROpcode) const;
