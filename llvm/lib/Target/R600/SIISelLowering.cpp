@@ -169,6 +169,10 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
   setOperationAction(ISD::FrameIndex, MVT::i32, Custom);
 
+  // These should use UDIVREM, so set them to expand
+  setOperationAction(ISD::UDIV, MVT::i64, Expand);
+  setOperationAction(ISD::UREM, MVT::i64, Expand);
+
   // We only support LOAD/STORE and vector manipulation ops for vectors
   // with > 4 elements.
   MVT VecTypes[] = {

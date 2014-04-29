@@ -203,6 +203,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::UDIV, MVT::i32, Expand);
   setOperationAction(ISD::UDIVREM, MVT::i32, Custom);
+  setOperationAction(ISD::UDIVREM, MVT::i64, Custom);
   setOperationAction(ISD::UREM, MVT::i32, Expand);
   setOperationAction(ISD::VSELECT, MVT::v2f32, Expand);
   setOperationAction(ISD::VSELECT, MVT::v4f32, Expand);
@@ -408,7 +409,24 @@ void AMDGPUTargetLowering::ReplaceNodeResults(SDNode *N,
     // ReplaceNodeResults to sext_in_reg to an illegal type, so we'll just do
     // nothing here and let the illegal result integer be handled normally.
     return;
-
+  case ISD::UDIV: {
+    SDValue Op = SDValue(N, 0);
+    SDLoc DL(Op);
+    EVT VT = Op.getValueType();
+    SDValue UDIVREM = DAG.getNode(ISD::UDIVREM, DL, DAG.getVTList(VT, VT),
+      N->getOperand(0), N->getOperand(1));
+    Results.push_back(UDIVREM);
+    break;
+  }
+  case ISD::UREM: {
+    SDValue Op = SDValue(N, 0);
+    SDLoc DL(Op);
+    EVT VT = Op.getValueType();
+    SDValue UDIVREM = DAG.getNode(ISD::UDIVREM, DL, DAG.getVTList(VT, VT),
+      N->getOperand(0), N->getOperand(1));
+    Results.push_back(UDIVREM.getValue(1));
+    break;
+  }
   default:
     return;
   }
