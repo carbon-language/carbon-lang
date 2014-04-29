@@ -46,6 +46,14 @@ namespace VariableTemplateWithConstRef {
   const int &use = i<void>;
 }
 
+// CHECK: @_ZGRN34HiddenVariableTemplateWithConstRef1iIvEE = linkonce_odr hidden constant i32 5, align 4
+// CHECK: @_ZN34HiddenVariableTemplateWithConstRef3useE = constant i32* @_ZGRN34HiddenVariableTemplateWithConstRef1iIvEE
+namespace HiddenVariableTemplateWithConstRef {
+  template <typename T>
+  __attribute__((visibility("hidden"))) const int &i = 5;
+  const int &use = i<void>;
+}
+
 // CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE = linkonce_odr constant i32 1
 // CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE2 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE }
 // CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE3 = linkonce_odr constant i32 2

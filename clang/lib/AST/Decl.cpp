@@ -982,6 +982,10 @@ getExplicitVisibilityAux(const NamedDecl *ND,
         return getVisibilityOf(InstantiatedFrom, kind);
     }
 
+    if (const auto *VTSD = dyn_cast<VarTemplateSpecializationDecl>(Var))
+      return getVisibilityOf(VTSD->getSpecializedTemplate()->getTemplatedDecl(),
+                             kind);
+
     return None;
   }
   // Also handle function template specializations.
