@@ -563,13 +563,14 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
     assert(NegFrameSize);
     unsigned CFIIndex = MMI.addFrameInst(
         MCCFIInstruction::createDefCfaOffset(nullptr, NegFrameSize));
-    BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION)).addCFIIndex(CFIIndex);
+    BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+        .addCFIIndex(CFIIndex);
 
     if (HasFP) {
       unsigned Reg = MRI->getDwarfRegNum(FPReg, true);
       CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createOffset(nullptr, Reg, FPOffset));
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
     }
 
@@ -577,7 +578,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned Reg = MRI->getDwarfRegNum(BPReg, true);
       CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createOffset(nullptr, Reg, BPOffset));
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
     }
 
@@ -585,7 +586,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned Reg = MRI->getDwarfRegNum(LRReg, true);
       CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createOffset(nullptr, Reg, LROffset));
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
     }
   }
@@ -602,7 +603,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createDefCfaRegister(nullptr, Reg));
 
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
     }
   }
@@ -630,7 +631,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       if (isSVR4ABI && isPPC64 && (PPC::CR2 <= Reg && Reg <= PPC::CR4)) {
         unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
             nullptr, MRI->getDwarfRegNum(PPC::CR2, true), 8));
-        BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+        BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
             .addCFIIndex(CFIIndex);
         continue;
       }
@@ -638,7 +639,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       int Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
       unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
           nullptr, MRI->getDwarfRegNum(Reg, true), Offset));
-      BuildMI(MBB, MBBI, dl, TII.get(PPC::CFI_INSTRUCTION))
+      BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
     }
   }

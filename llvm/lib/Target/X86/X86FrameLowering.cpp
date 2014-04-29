@@ -369,7 +369,8 @@ void X86FrameLowering::emitCalleeSavedFrameMoves(
     unsigned CFIIndex =
         MMI.addFrameInst(MCCFIInstruction::createOffset(nullptr, DwarfReg,
                                                         Offset));
-    BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION)).addCFIIndex(CFIIndex);
+    BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+        .addCFIIndex(CFIIndex);
   }
 }
 
@@ -514,7 +515,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       assert(StackSize);
       unsigned CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createDefCfaOffset(nullptr, 2 * stackGrowth));
-      BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION))
+      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
 
       // Change the rule for the FramePtr to be an "offset" rule.
@@ -522,7 +523,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createOffset(nullptr,
                                          DwarfFramePtr, 2 * stackGrowth));
-      BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION))
+      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
     }
 
@@ -538,7 +539,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       unsigned DwarfFramePtr = RegInfo->getDwarfRegNum(FramePtr, true);
       unsigned CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createDefCfaRegister(nullptr, DwarfFramePtr));
-      BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION))
+      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
     }
 
@@ -567,7 +568,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       assert(StackSize);
       unsigned CFIIndex = MMI.addFrameInst(
           MCCFIInstruction::createDefCfaOffset(nullptr, StackOffset));
-      BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION))
+      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
       StackOffset += stackGrowth;
     }
@@ -704,7 +705,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
           MCCFIInstruction::createDefCfaOffset(nullptr,
                                                -StackSize + stackGrowth));
 
-      BuildMI(MBB, MBBI, DL, TII.get(X86::CFI_INSTRUCTION))
+      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
           .addCFIIndex(CFIIndex);
     }
 
