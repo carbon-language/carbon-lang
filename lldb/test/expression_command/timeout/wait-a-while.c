@@ -21,7 +21,7 @@ wait_a_while (useconds_t interval)
         {
           struct timeval now;
           gettimeofday(&now, NULL);
-          interval = target - now.tv_sec * 1000000 + now.tv_usec;
+          interval = target - (now.tv_sec * 1000000 + now.tv_usec);
         }
       else
         break;
