@@ -285,6 +285,8 @@ MCSymbolRefExpr::getVariantKindForName(StringRef Name) {
     .Case("gotoff", VK_GOTOFF)
     .Case("GOTPCREL", VK_GOTPCREL)
     .Case("gotpcrel", VK_GOTPCREL)
+    .Case("GOT_PREL", VK_GOTPCREL)
+    .Case("got_prel", VK_GOTPCREL)
     .Case("GOTTPOFF", VK_GOTTPOFF)
     .Case("gottpoff", VK_GOTTPOFF)
     .Case("INDNTPOFF", VK_INDNTPOFF)

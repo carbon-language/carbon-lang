@@ -2,6 +2,7 @@
 @ RUN: llvm-mc < %s -triple thumbv7-none-linux-gnueabi -filetype=obj  | llvm-objdump -triple thumbv7-none-linux-gnueabi -r - | FileCheck %s --check-prefix=CHECK --check-prefix=THUMB
 
 @ CHECK-LABEL: RELOCATION RECORDS FOR [.rel.text]
+.Lsym:
 
 @ empty
 .word f00
@@ -83,3 +84,8 @@ bl f05(plt)
 @ CHECK: 60 R_ARM_TLS_GOTDESC f24
 @ CHECK: 64 R_ARM_TLS_GOTDESC f25
 
+@ got_prel
+.word	f26(GOT_PREL) + (. - .Lsym)
+	ldr r3, =f27(GOT_PREL)
+@ CHECK: 68 R_ARM_GOT_PREL f26
+@ CHECK: 70 R_ARM_GOT_PREL f27

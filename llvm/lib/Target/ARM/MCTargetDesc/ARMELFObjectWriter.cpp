@@ -91,6 +91,9 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_GOTTPOFF:
         Type = ELF::R_ARM_TLS_IE32;
         break;
+      case MCSymbolRefExpr::VK_GOTPCREL:
+        Type = ELF::R_ARM_GOT_PREL;
+        break;
       }
       break;
     case ARM::fixup_arm_blx:
@@ -166,6 +169,9 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
         break;
       case MCSymbolRefExpr::VK_GOTOFF:
         Type = ELF::R_ARM_GOTOFF32;
+        break;
+      case MCSymbolRefExpr::VK_GOTPCREL:
+        Type = ELF::R_ARM_GOT_PREL;
         break;
       case MCSymbolRefExpr::VK_ARM_TARGET1:
         Type = ELF::R_ARM_TARGET1;
