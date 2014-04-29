@@ -283,6 +283,12 @@ LLVM-specific variables
   are ``Address``, ``Memory`` and ``MemoryWithOrigins``. Defaults to empty
   string.
 
+**LLVM_BUILD_DOCS**:BOOL
+  Enables all enabled documentation targets (i.e. Doxgyen and Sphinx targets) to
+  be built as part of the normal build. If the ``install`` target is run then
+  this also enables all built documentation targets to be installed. Defaults to
+  OFF.
+
 **LLVM_ENABLE_DOXYGEN**:BOOL
   Enables the generation of browsable HTML documentation using doxygen.
   Defaults to OFF.
@@ -327,6 +333,27 @@ LLVM-specific variables
   ``find_program()`` can find. This option is only useful in combination with
   ``-DLLVM_ENABLE_DOXYGEN_QT_HELP=ON``; otherwise this has no
   effect.
+
+**LLVM_ENABLE_SPHINX**:BOOL
+  If enabled CMake will search for the ``sphinx-build`` executable and will make
+  the ``SPHINX_OUTPUT_HTML`` and ``SPHINX_OUTPUT_MAN`` CMake options available.
+  Defaults to OFF.
+
+**SPHINX_EXECUTABLE**:STRING
+  The path to the ``sphinx-build`` executable detected by CMake.
+
+**SPHINX_OUTPUT_HTML**:BOOL
+  If enabled (and ``LLVM_ENABLE_SPHINX`` is enabled) then the targets for
+  building the documentation as html are added (but not built by default unless
+  ``LLVM_BUILD_DOCS`` is enabled). There is a target for each project in the
+  source tree that uses sphinx (e.g.  ``docs-llvm-html``, ``docs-clang-html``
+  and ``docs-lld-html``). Defaults to ON.
+
+**SPHINX_OUTPUT_MAN**:BOOL
+  If enabled (and ``LLVM_ENABLE_SPHINX`` is enabled) the targets for building
+  the man pages are added (but not built by default unless ``LLVM_BUILD_DOCS``
+  is enabled). Currently the only target added is ``docs-llvm-man``. Defaults
+  to ON.
 
 Executing the test suite
 ========================
