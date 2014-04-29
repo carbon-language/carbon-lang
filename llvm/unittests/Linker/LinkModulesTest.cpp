@@ -22,7 +22,6 @@ namespace {
 class LinkModuleTest : public testing::Test {
 protected:
   virtual void SetUp() {
-    LLVMContext &Ctx = getGlobalContext();
     M.reset(new Module("MyModule", Ctx));
     FunctionType *FTy = FunctionType::get(Type::getInt8PtrTy(Ctx),
                                           Type::getInt32Ty(Ctx),
@@ -62,6 +61,7 @@ protected:
     M.reset();
   }
 
+  LLVMContext Ctx;
   std::unique_ptr<Module> M;
   Function *F;
   GlobalVariable *GV;
@@ -72,7 +72,6 @@ protected:
 };
 
 TEST_F(LinkModuleTest, BlockAddress) {
-  LLVMContext &Ctx = getGlobalContext();
   IRBuilder<> Builder(EntryBB);
 
   std::vector<Value*> GEPIndices;
@@ -93,7 +92,7 @@ TEST_F(LinkModuleTest, BlockAddress) {
   Builder.SetInsertPoint(ExitBB);
   Builder.CreateRet(ConstantPointerNull::get(Type::getInt8PtrTy(Ctx)));
 
-  Module *LinkedModule = new Module("MyModuleLinked", getGlobalContext());
+  Module *LinkedModule = new Module("MyModuleLinked", Ctx);
   Linker::LinkModules(LinkedModule, M.get(), Linker::PreserveSource, 0);
 
   // Delete the original module.
@@ -129,7 +128,6 @@ TEST_F(LinkModuleTest, BlockAddress) {
 }
 
 TEST_F(LinkModuleTest, EmptyModule) {
-  LLVMContext &Ctx = getGlobalContext();
   Module *InternalM = new Module("InternalModule", Ctx);
   FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
                                         Type::getInt8PtrTy(Ctx),
