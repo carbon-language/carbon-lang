@@ -187,21 +187,25 @@ RuntimeDyldELF::createObjectImageFromFile(std::unique_ptr<object::ObjectFile> Ob
       MemoryBuffer::getMemBuffer(ObjFile->getData(), "", false);
 
   if (ObjFile->getBytesInAddress() == 4 && ObjFile->isLittleEndian()) {
-    auto Obj = make_unique<DyldELFObject<ELFType<support::little, 2, false>>>(std::move(ObjFile), Buffer, ec);
+    auto Obj =
+        llvm::make_unique<DyldELFObject<ELFType<support::little, 2, false>>>(
+            std::move(ObjFile), Buffer, ec);
     return new ELFObjectImage<ELFType<support::little, 2, false>>(
         nullptr, std::move(Obj));
   } else if (ObjFile->getBytesInAddress() == 4 && !ObjFile->isLittleEndian()) {
-    auto Obj = make_unique<DyldELFObject<ELFType<support::big, 2, false>>>(
-        std::move(ObjFile), Buffer, ec);
+    auto Obj =
+        llvm::make_unique<DyldELFObject<ELFType<support::big, 2, false>>>(
+            std::move(ObjFile), Buffer, ec);
     return new ELFObjectImage<ELFType<support::big, 2, false>>(nullptr, std::move(Obj));
   } else if (ObjFile->getBytesInAddress() == 8 && !ObjFile->isLittleEndian()) {
-    auto Obj = make_unique<DyldELFObject<ELFType<support::big, 2, true>>>(
+    auto Obj = llvm::make_unique<DyldELFObject<ELFType<support::big, 2, true>>>(
         std::move(ObjFile), Buffer, ec);
     return new ELFObjectImage<ELFType<support::big, 2, true>>(nullptr,
                                                               std::move(Obj));
   } else if (ObjFile->getBytesInAddress() == 8 && ObjFile->isLittleEndian()) {
-    auto Obj = make_unique<DyldELFObject<ELFType<support::little, 2, true>>>(
-        std::move(ObjFile), Buffer, ec);
+    auto Obj =
+        llvm::make_unique<DyldELFObject<ELFType<support::little, 2, true>>>(
+            std::move(ObjFile), Buffer, ec);
     return new ELFObjectImage<ELFType<support::little, 2, true>>(
         nullptr, std::move(Obj));
   } else
@@ -217,27 +221,27 @@ ObjectImage *RuntimeDyldELF::createObjectImage(ObjectBuffer *Buffer) {
   error_code ec;
 
   if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB) {
-    auto Obj = make_unique<DyldELFObject<ELFType<support::little, 4, false>>>(
-        Buffer->getMemBuffer(), ec);
+    auto Obj =
+        llvm::make_unique<DyldELFObject<ELFType<support::little, 4, false>>>(
+            Buffer->getMemBuffer(), ec);
     return new ELFObjectImage<ELFType<support::little, 4, false>>(
         Buffer, std::move(Obj));
   } else if (Ident.first == ELF::ELFCLASS32 &&
              Ident.second == ELF::ELFDATA2MSB) {
     auto Obj =
-        make_unique<DyldELFObject<ELFType<support::big, 4, false>>>(
+        llvm::make_unique<DyldELFObject<ELFType<support::big, 4, false>>>(
             Buffer->getMemBuffer(), ec);
     return new ELFObjectImage<ELFType<support::big, 4, false>>(Buffer,
                                                                std::move(Obj));
   } else if (Ident.first == ELF::ELFCLASS64 &&
              Ident.second == ELF::ELFDATA2MSB) {
-    auto Obj =
-        make_unique<DyldELFObject<ELFType<support::big, 8, true>>>(
-            Buffer->getMemBuffer(), ec);
+    auto Obj = llvm::make_unique<DyldELFObject<ELFType<support::big, 8, true>>>(
+        Buffer->getMemBuffer(), ec);
     return new ELFObjectImage<ELFType<support::big, 8, true>>(Buffer, std::move(Obj));
   } else if (Ident.first == ELF::ELFCLASS64 &&
              Ident.second == ELF::ELFDATA2LSB) {
     auto Obj =
-        make_unique<DyldELFObject<ELFType<support::little, 8, true>>>(
+        llvm::make_unique<DyldELFObject<ELFType<support::little, 8, true>>>(
             Buffer->getMemBuffer(), ec);
     return new ELFObjectImage<ELFType<support::little, 8, true>>(Buffer, std::move(Obj));
   } else
