@@ -40,7 +40,10 @@ typedef XXX *CFUColor2Ref;
 typedef struct __attribute__((objc_bridge(NSTesting))) __CFError *CFTestingRef; // expected-note {{declared here}}
 
 id Test1(CFTestingRef cf) {
-  return (NSString *)cf; // expected-error {{CF object of type 'CFTestingRef' (aka 'struct __CFError *') is bridged to 'NSTesting', which is not an Objective-C class}}
+  return (NSString *)cf; // expected-error {{CF object of type 'CFTestingRef' (aka 'struct __CFError *') is bridged to 'NSTesting', which is not an Objective-C class}} \
+                         // expected-error {{cast of C pointer type 'CFTestingRef' (aka 'struct __CFError *') to Objective-C pointer type 'NSString *' requires a bridged cast}} \
+                         // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+                         // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFTestingRef' (aka 'struct __CFError *') into ARC}}
 }
 
 typedef CFErrorRef CFErrorRef1;
@@ -63,46 +66,104 @@ typedef CFErrorRef1 CFErrorRef2; // expected-note 2 {{declared here}}
 @class NSString;
 
 void Test2(CFErrorRef2 cf, NSError *ns, NSString *str, Class c, CFUColor2Ref cf2) {
-  (void)(NSString *)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'NSString'}}
-  (void)(NSError *)cf; // expected-error {{under ARC 'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, but it still requires an explicit bridge cast}}
-  (void)(MyError*)cf; // expected-error {{under ARC 'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, but it still requires an explicit bridge cast}}
-  (void)(NSUColor *)cf2; // expected-error {{under ARC 'CFUColor2Ref' (aka 'union __CFUPrimeColor *') bridges to NSUColor, but it still requires an explicit bridge cast}}
-  (void)(CFErrorRef)ns; // okay
-  (void)(CFErrorRef)str;  // expected-warning {{'NSString' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
-  (void)(Class)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'Class'}}
-  (void)(CFErrorRef)c; // expected-warning {{'Class' cannot bridge to 'CFErrorRef'}}
+  (void)(NSString *)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'NSString'}} \
+                        // expected-error {{cast of C pointer type 'CFErrorRef2' (aka 'struct __CFErrorRef *') to Objective-C pointer type 'NSString *' requires a bridged cast}} \
+                        // expected-note {{__bridge to convert directly (no change in ownership)}} \
+                        // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFErrorRef2' (aka 'struct __CFErrorRef *') into ARC}}
+  (void)(NSError *)cf; // expected-error {{cast of C pointer type 'CFErrorRef2' (aka 'struct __CFErrorRef *') to Objective-C pointer type 'NSError *' requires a bridged cast}} \
+                       // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+                       // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFErrorRef2' (aka 'struct __CFErrorRef *') into ARC}}
+  (void)(MyError*)cf; // expected-error {{cast of C pointer type 'CFErrorRef2' (aka 'struct __CFErrorRef *') to Objective-C pointer type 'MyError *' requires a bridged cast}} \
+                        // expected-note {{__bridge to convert directly (no change in ownership)}} \
+                        // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFErrorRef2' (aka 'struct __CFErrorRef *') into ARC}}
+  (void)(NSUColor *)cf2; // expected-error {{cast of C pointer type 'CFUColor2Ref' (aka 'union __CFUPrimeColor *') to Objective-C pointer type 'NSUColor *' requires a bridged cast}} \
+                         // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+                         // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFUColor2Ref' (aka 'union __CFUPrimeColor *') into ARC}}
+  (void)(CFErrorRef)ns; // expected-error {{cast of Objective-C pointer type 'NSError *' to C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') requires a bridged cast}} \
+                        // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+ 			// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
+  (void)(CFErrorRef)str;  // expected-warning {{'NSString' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *')}} \\
+                          // expected-error {{cast of Objective-C pointer type 'NSString *' to C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') requires a bridged cast}} \
+                        // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+ 			// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
+  (void)(Class)cf; // expected-warning {{'CFErrorRef2' (aka 'struct __CFErrorRef *') bridges to NSError, not 'Class'}} \\
+                   // expected-error {{cast of C pointer type 'CFErrorRef2' (aka 'struct __CFErrorRef *') to Objective-C pointer type 'Class' requires a bridged cast}} \
+ 			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFErrorRef2' (aka 'struct __CFErrorRef *') into ARC}}
+  (void)(CFErrorRef)c; // expected-warning {{'__unsafe_unretained Class' cannot bridge to 'CFErrorRef' (aka 'struct __CFErrorRef *}} \\
+                       // expected-error {{cast of Objective-C pointer type 'Class' to C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') requires a bridged cast}} \
+			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
 }
 
 
 void Test3(CFErrorRef cf, NSError *ns) {
-  (void)(id)cf; // okay
- (void)(id<P1, P2>)cf; // okay
- (void)(id<P1, P2, P4>)cf; // expected-warning {{'CFErrorRef' (aka 'struct __CFErrorRef *') bridges to NSError, not 'id<P1,P2,P4>'}}
+  (void)(id)cf; // expected-error {{cast of C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') to Objective-C pointer type 'id' requires a bridged cast}} \
+		// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+		// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFErrorRef' (aka 'struct __CFErrorRef *') into ARC}}
+ (void)(id<P1, P2>)cf; // expected-error {{cast of C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') to Objective-C pointer type 'id<P1,P2>' requires a bridged cast}} \
+		// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+		// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFErrorRef' (aka 'struct __CFErrorRef *') into ARC}}
+ (void)(id<P1, P2, P4>)cf; // expected-warning {{'CFErrorRef' (aka 'struct __CFErrorRef *') bridges to NSError, not 'id<P1,P2,P4>'}} \
+                           // expected-error {{cast of C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') to Objective-C pointer type 'id<P1,P2,P4>' requires a bridged cast}} \
+		// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+		// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFErrorRef' (aka 'struct __CFErrorRef *') into ARC}}
 }
 
 void Test4(CFMyErrorRef cf) {
-   (void)(id)cf; // okay
- (void)(id<P1, P2>)cf; // ok
- (void)(id<P1, P2, P3>)cf; // ok
- (void)(id<P2, P3>)cf; // ok
- (void)(id<P1, P2, P4>)cf; // expected-warning {{'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') bridges to MyError, not 'id<P1,P2,P4>'}}
+   (void)(id)cf; // expected-error {{cast of C pointer type 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') to Objective-C pointer type 'id' requires a bridged cast}} \
+			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') into ARC}}
+ (void)(id<P1, P2>)cf; // expected-error {{cast of C pointer type 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') to Objective-C pointer type 'id<P1,P2>' requires a bridged cast}} \
+			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') into ARC}}
+ (void)(id<P1, P2, P3>)cf; // expected-error {{cast of C pointer type 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') to Objective-C pointer type 'id<P1,P2,P3>' requires a bridged cast}} \
+			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') into ARC}}
+ (void)(id<P2, P3>)cf; // expected-error {{cast of C pointer type 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') to Objective-C pointer type 'id<P2,P3>' requires a bridged cast}} \
+			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') into ARC}}
+ (void)(id<P1, P2, P4>)cf; // expected-warning {{'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') bridges to MyError, not 'id<P1,P2,P4>'}} \
+                           // expected-error {{cast of C pointer type 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') to Objective-C pointer type 'id<P1,P2,P4>' requires a bridged cast}} \
+				// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') into ARC}}
 }
 
 void Test5(id<P1, P2, P3> P123, id ID, id<P1, P2, P3, P4> P1234, id<P1, P2> P12, id<P2, P3> P23) {
- (void)(CFErrorRef)ID; // ok
- (void)(CFErrorRef)P123; // ok
- (void)(CFErrorRef)P1234; // ok
- (void)(CFErrorRef)P12;
- (void)(CFErrorRef)P23;
+ (void)(CFErrorRef)ID; // expected-error {{cast of Objective-C pointer type 'id' to C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') requires a bridged cast}} \
+			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
+ (void)(CFErrorRef)P123; // expected-error {{cast of Objective-C pointer type 'id<P1,P2,P3>' to C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') requires a bridged cast}} \
+			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
+ (void)(CFErrorRef)P1234; // expected-error {{cast of Objective-C pointer type 'id<P1,P2,P3,P4>' to C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') requires a bridged cast}} \
+			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
+ (void)(CFErrorRef)P12; // expected-error {{cast of Objective-C pointer type 'id<P1,P2>' to C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') requires a bridged cast}} \
+			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
+ (void)(CFErrorRef)P23; // expected-error {{cast of Objective-C pointer type 'id<P2,P3>' to C pointer type 'CFErrorRef' (aka 'struct __CFErrorRef *') requires a bridged cast}} \
+			// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+			// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFErrorRef' (aka 'struct __CFErrorRef *')}}
 }
 
 void Test6(id<P1, P2, P3> P123, id ID, id<P1, P2, P3, P4> P1234, id<P1, P2> P12, id<P2, P3> P23) {
 
- (void)(CFMyErrorRef)ID; // ok
- (void)(CFMyErrorRef)P123; // ok
- (void)(CFMyErrorRef)P1234; // ok
- (void)(CFMyErrorRef)P12; // ok
- (void)(CFMyErrorRef)P23; // ok
+ (void)(CFMyErrorRef)ID; // expected-error {{cast of Objective-C pointer type 'id' to C pointer type 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') requires a bridged cast}} \
+				// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *')}}
+ (void)(CFMyErrorRef)P123; // expected-error {{cast of Objective-C pointer type 'id<P1,P2,P3>' to C pointer type 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') requires a bridged cast}} \
+				// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *')}}
+ (void)(CFMyErrorRef)P1234; // expected-error {{cast of Objective-C pointer type 'id<P1,P2,P3,P4>' to C pointer type 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') requires a bridged cast}} \
+				// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *')}}
+ (void)(CFMyErrorRef)P12; // expected-error {{cast of Objective-C pointer type 'id<P1,P2>' to C pointer type 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') requires a bridged cast}} \
+				// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *')}}
+ (void)(CFMyErrorRef)P23; // expected-error {{cast of Objective-C pointer type 'id<P2,P3>' to C pointer type 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *') requires a bridged cast}} \
+				// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				// expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFMyErrorRef' (aka 'struct __CFMyErrorRef *')}}
 }
 
 typedef struct __attribute__ ((objc_bridge(MyPersonalError))) __CFMyPersonalErrorRef * CFMyPersonalErrorRef;  // expected-note 1 {{declared here}}
@@ -111,20 +172,43 @@ typedef struct __attribute__ ((objc_bridge(MyPersonalError))) __CFMyPersonalErro
 @end
 
 void Test7(id<P1, P2, P3> P123, id ID, id<P1, P2, P3, P4> P1234, id<P1, P2> P12, id<P2, P3> P23) {
- (void)(CFMyPersonalErrorRef)ID; // ok
- (void)(CFMyPersonalErrorRef)P123; // ok
- (void)(CFMyPersonalErrorRef)P1234; // ok
- (void)(CFMyPersonalErrorRef)P12; // ok
- (void)(CFMyPersonalErrorRef)P23; // ok
+ (void)(CFMyPersonalErrorRef)ID; // expected-error {{cast of Objective-C pointer type 'id' to C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') requires a bridged cast}} \
+				 // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				 // expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *')}}
+ (void)(CFMyPersonalErrorRef)P123; // expected-error {{cast of Objective-C pointer type 'id<P1,P2,P3>' to C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') requires a bridged cast}} \
+				 // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				 // expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *')}}
+ (void)(CFMyPersonalErrorRef)P1234; // expected-error {{cast of Objective-C pointer type 'id<P1,P2,P3,P4>' to C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') requires a bridged cast}} \
+				 // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				 // expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *')}}
+ (void)(CFMyPersonalErrorRef)P12; // expected-error {{cast of Objective-C pointer type 'id<P1,P2>' to C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') requires a bridged cast}} \
+				 // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				 // expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *')}}
+ (void)(CFMyPersonalErrorRef)P23; // expected-error {{cast of Objective-C pointer type 'id<P2,P3>' to C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') requires a bridged cast}} \
+				 // expected-note {{use __bridge to convert directly (no change in ownership)}} \
+				 // expected-note {{use __bridge_retained to make an ARC object available as a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *')}}
 }
 
 void Test8(CFMyPersonalErrorRef cf) {
-  (void)(id)cf; // ok
-  (void)(id<P1>)cf; // ok
-  (void)(id<P1, P2>)cf; // ok
-  (void)(id<P1, P2, P3>)cf; // ok
-  (void)(id<P1, P2, P3, P4>)cf; // ok
-  (void)(id<P1, P2, P3, P4, P5>)cf; // expected-warning {{'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') bridges to MyPersonalError, not 'id<P1,P2,P3,P4,P5>'}}
+  (void)(id)cf; // expected-error {{cast of C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') to Objective-C pointer type 'id' requires a bridged cast}} \
+		// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+		// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') into ARC}}
+  (void)(id<P1>)cf; // expected-error {{cast of C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') to Objective-C pointer type 'id<P1>' requires a bridged cast}} \
+		// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+		// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') into ARC}}
+  (void)(id<P1, P2>)cf; // expected-error {{cast of C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') to Objective-C pointer type 'id<P1,P2>' requires a bridged cast}} \
+		// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+		// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') into ARC}}
+  (void)(id<P1, P2, P3>)cf; // expected-error {{cast of C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') to Objective-C pointer type 'id<P1,P2,P3>' requires a bridged cast}} \
+		// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+		// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') into ARC}}
+  (void)(id<P1, P2, P3, P4>)cf; // expected-error {{cast of C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') to Objective-C pointer type 'id<P1,P2,P3,P4>' requires a bridged cast}} \
+		// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+		// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') into ARC}}
+  (void)(id<P1, P2, P3, P4, P5>)cf; // expected-warning {{'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') bridges to MyPersonalError, not 'id<P1,P2,P3,P4,P5>'}} \
+                                    // expected-error {{cast of C pointer type 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') to Objective-C pointer type 'id<P1,P2,P3,P4,P5>' requires a bridged cast}} \
+		// expected-note {{use __bridge to convert directly (no change in ownership)}} \
+		// expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') into ARC}}
 }
 
 void Test9(CFErrorRef2 cf, NSError *ns, NSString *str, Class c, CFUColor2Ref cf2) {

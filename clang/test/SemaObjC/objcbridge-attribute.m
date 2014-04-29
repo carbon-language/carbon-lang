@@ -17,7 +17,7 @@ typedef struct __attribute__((objc_bridge(NSLocale, NSError))) __CFLocale *CFLoc
 
 typedef struct __CFData __attribute__((objc_bridge(NSData))) CFDataRef; // expected-error {{'objc_bridge' attribute only applies to struct or union}}
 
-typedef struct __attribute__((objc_bridge(NSDictionary))) __CFDictionary * CFDictionaryRef;
+typedef struct __attribute__((objc_bridge(NSDictionary))) __CFDictionary * CFDictionaryRef; // expected-note {{declared here}}
 
 typedef struct __CFSetRef * CFSetRef __attribute__((objc_bridge(NSSet))); // expected-error {{'objc_bridge' attribute only applies to struct or union}};
 
@@ -125,4 +125,11 @@ void Test8(CFMyPersonalErrorRef cf) {
   (void)(id<P1, P2, P3>)cf; // ok
   (void)(id<P1, P2, P3, P4>)cf; // ok
   (void)(id<P1, P2, P3, P4, P5>)cf; // expected-warning {{'CFMyPersonalErrorRef' (aka 'struct __CFMyPersonalErrorRef *') bridges to MyPersonalError, not 'id<P1,P2,P3,P4,P5>'}}
+}
+
+CFDictionaryRef bar() __attribute__((cf_returns_not_retained));
+@class NSNumber;
+
+void Test9() {
+  NSNumber *w2 = (NSNumber*) bar(); // expected-error {{CF object of type 'CFDictionaryRef' (aka 'struct __CFDictionary *') is bridged to 'NSDictionary', which is not an Objective-C class}}
 }

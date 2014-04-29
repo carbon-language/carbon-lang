@@ -3243,7 +3243,7 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
 
     return;
   }
-    
+  
   // Bridge from a CF type to an ARC type.
   if (exprACTC == ACTC_retainable && isAnyRetainable(castACTC)) {
     bool br = S.isKnownName("CFBridgingRetain");
@@ -3290,8 +3290,7 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
 }
 
 template <typename TB>
-static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr,
-                                  bool TollFreeBridgeCast) {
+static void CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr) {
   QualType T = castExpr->getType();
   while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
     TypedefNameDecl *TDNDecl = TD->getDecl();
@@ -3310,31 +3309,24 @@ static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr,
               ObjCInterfaceDecl *CastClass
                 = InterfacePointerType->getObjectType()->getInterface();
               if ((CastClass == ExprClass) ||
-                  (CastClass && ExprClass->isSuperClassOf(CastClass))) {
-                if (!TollFreeBridgeCast && S.getLangOpts().ObjCAutoRefCount) {
-                  // bridge attribute is ok. However, under ARC, cast still requires
-                  // an explicit cast and should not compile under ARC.
-                  S.Diag(castExpr->getLocStart(), diag::err_objc_invalid_bridge)
-                    << T << Target->getName();
-                }
-                return true;
-              }
+                  (CastClass && ExprClass->isSuperClassOf(CastClass)))
+                return;
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
                 << T << Target->getName() << castType->getPointeeType();
-              return true;
+              return;
             } else if (castType->isObjCIdType() ||
                        (S.Context.ObjCObjectAdoptsQTypeProtocols(
                           castType, ExprClass)))
               // ok to cast to 'id'.
               // casting to id<p-list> is ok if bridge type adopts all of
               // p-list protocols.
-              return true;
+              return;
             else {
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge)
                 << T << Target->getName() << castType;
               S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
               S.Diag(Target->getLocStart(), diag::note_declared_at);
-              return true;
+              return;
            }
           }
         }
@@ -3344,15 +3336,14 @@ static bool CheckObjCBridgeNSCast(Sema &S, QualType castType, Expr *castExpr,
         if (Target)
           S.Diag(Target->getLocStart(), diag::note_declared_at);
       }
-      return true;
+      return;
     }
     T = TDNDecl->getUnderlyingType();
   }
-  return false;
 }
 
 template <typename TB>
-static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
+static void CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
   QualType T = castType;
   while (const TypedefType *TD = dyn_cast<TypedefType>(T.getTypePtr())) {
     TypedefNameDecl *TDNDecl = TD->getDecl();
@@ -3372,24 +3363,24 @@ static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
                 = InterfacePointerType->getObjectType()->getInterface();
               if ((CastClass == ExprClass) ||
                   (ExprClass && CastClass->isSuperClassOf(ExprClass)))
-                return true;
+                return;
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
                 << castExpr->getType()->getPointeeType() << T;
               S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
-              return true;
+              return;
             } else if (castExpr->getType()->isObjCIdType() ||
                        (S.Context.QIdProtocolsAdoptObjCObjectProtocols(
                           castExpr->getType(), CastClass)))
               // ok to cast an 'id' expression to a CFtype.
               // ok to cast an 'id<plist>' expression to CFtype provided plist
               // adopts all of CFtype's ObjetiveC's class plist.
-              return true;
+              return;
             else {
               S.Diag(castExpr->getLocStart(), diag::warn_objc_invalid_bridge_to_cf)
                 << castExpr->getType() << castType;
               S.Diag(TDNDecl->getLocStart(), diag::note_declared_at);
               S.Diag(Target->getLocStart(), diag::note_declared_at);
-              return true;
+              return;
             }
           }
         }
@@ -3399,24 +3390,25 @@ static bool CheckObjCBridgeCFCast(Sema &S, QualType castType, Expr *castExpr) {
         if (Target)
           S.Diag(Target->getLocStart(), diag::note_declared_at);
       }
-      return true;
+      return;
     }
     T = TDNDecl->getUnderlyingType();
   }
-  return false;
 }
 
 void Sema::CheckTollFreeBridgeCast(QualType castType, Expr *castExpr) {
+  if (!getLangOpts().ObjC1)
+    return;
   // warn in presence of __bridge casting to or from a toll free bridge cast.
   ARCConversionTypeClass exprACTC = classifyTypeForARCConversion(castExpr->getType());
   ARCConversionTypeClass castACTC = classifyTypeForARCConversion(castType);
   if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation) {
-    (void)CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr, true);
-    (void)CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr, true);
+    CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr);
+    CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr);
   }
   else if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable) {
-    (void)CheckObjCBridgeCFCast<ObjCBridgeAttr>(*this, castType, castExpr);
-    (void)CheckObjCBridgeCFCast<ObjCBridgeMutableAttr>(*this, castType, castExpr);
+    CheckObjCBridgeCFCast<ObjCBridgeAttr>(*this, castType, castExpr);
+    CheckObjCBridgeCFCast<ObjCBridgeMutableAttr>(*this, castType, castExpr);
   }
 }
 
@@ -3630,19 +3622,6 @@ Sema::CheckObjCARCConversion(SourceRange castRange, QualType castType,
   if (castACTC == ACTC_indirectRetainable && exprACTC == ACTC_voidPtr &&
       CCK != CCK_ImplicitConversion)
     return ACR_okay;
-  
-  if (castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation &&
-      (CCK == CCK_CStyleCast || CCK == CCK_FunctionalCast))
-    if (CheckObjCBridgeNSCast<ObjCBridgeAttr>(*this, castType, castExpr, false) ||
-        CheckObjCBridgeNSCast<ObjCBridgeMutableAttr>(*this, castType, castExpr, false))
-      return ACR_okay;
-    
-  if (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable &&
-      (CCK == CCK_CStyleCast || CCK == CCK_FunctionalCast))
-    if (CheckObjCBridgeCFCast<ObjCBridgeAttr>(*this, castType, castExpr) ||
-        CheckObjCBridgeCFCast<ObjCBridgeMutableAttr>(*this, castType, castExpr))
-      return ACR_okay;
-    
 
   switch (ARCCastChecker(Context, exprACTC, castACTC, false).Visit(castExpr)) {
   // For invalid casts, fall through.

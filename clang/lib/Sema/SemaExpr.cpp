@@ -5206,6 +5206,8 @@ Sema::ActOnCastExpr(Scope *S, SourceLocation LParenLoc,
   if (getLangOpts().CPlusPlus && !castType->isVoidType() &&
       !getSourceManager().isInSystemMacro(LParenLoc))
     Diag(LParenLoc, diag::warn_old_style_cast) << CastExpr->getSourceRange();
+  
+  CheckTollFreeBridgeCast(castType, CastExpr);
 
   return BuildCStyleCastExpr(LParenLoc, castTInfo, RParenLoc, CastExpr);
 }

@@ -2087,8 +2087,6 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
 
   if (Self.getLangOpts().ObjCAutoRefCount && tcr == TC_Success)
     checkObjCARCConversion(CCK);
-  else if (Self.getLangOpts().ObjC1 && tcr == TC_Success)
-    Self.CheckTollFreeBridgeCast(DestType, SrcExpr.get());
 
   if (tcr != TC_Success && msg != 0) {
     if (SrcExpr.get()->getType() == Self.Context.OverloadTy) {
@@ -2355,8 +2353,6 @@ void CastOperation::CheckCStyleCast() {
       return;
     }
   }
-  else if (Self.getLangOpts().ObjC1)
-    Self.CheckTollFreeBridgeCast(DestType, SrcExpr.get());
   
   DiagnoseCastOfObjCSEL(Self, SrcExpr, DestType);
   DiagnoseBadFunctionCast(Self, SrcExpr, DestType);
