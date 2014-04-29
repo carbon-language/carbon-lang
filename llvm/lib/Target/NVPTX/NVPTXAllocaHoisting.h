@@ -30,17 +30,17 @@ public:
   static char ID; // Pass ID
   NVPTXAllocaHoisting() : FunctionPass(ID) {}
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DataLayoutPass>();
     AU.addPreserved("stack-protector");
     AU.addPreserved<MachineFunctionAnalysis>();
   }
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "NVPTX specific alloca hoisting";
   }
 
-  virtual bool runOnFunction(Function &function);
+  bool runOnFunction(Function &function) override;
 };
 
 extern FunctionPass *createAllocaHoisting();

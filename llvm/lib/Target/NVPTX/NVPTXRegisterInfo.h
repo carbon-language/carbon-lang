@@ -41,22 +41,22 @@ public:
   //------------------------------------------------------
 
   // NVPTX callee saved registers
-  virtual const MCPhysReg *
-  getCalleeSavedRegs(const MachineFunction *MF = nullptr) const;
+  const MCPhysReg *
+  getCalleeSavedRegs(const MachineFunction *MF = nullptr) const override;
 
   // NVPTX callee saved register classes
   virtual const TargetRegisterClass *const *
-  getCalleeSavedRegClasses(const MachineFunction *MF) const;
+  getCalleeSavedRegClasses(const MachineFunction *MF) const final;
 
-  virtual BitVector getReservedRegs(const MachineFunction &MF) const;
+  BitVector getReservedRegs(const MachineFunction &MF) const override;
 
-  virtual void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
-                                   unsigned FIOperandNum,
-                                   RegScavenger *RS = nullptr) const;
+  void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
+                           unsigned FIOperandNum,
+                           RegScavenger *RS = nullptr) const override;
 
-  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const;
-  virtual unsigned getFrameRegister(const MachineFunction &MF) const;
-  virtual unsigned getRARegister() const;
+  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const final;
+  unsigned getFrameRegister(const MachineFunction &MF) const override;
+  virtual unsigned getRARegister() const final;
 
   ManagedStringPool *getStrPool() const {
     return const_cast<ManagedStringPool *>(&ManagedStrPool);

@@ -27,17 +27,17 @@ struct NVPTXLowerAggrCopies : public FunctionPass {
 
   NVPTXLowerAggrCopies() : FunctionPass(ID) {}
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DataLayoutPass>();
     AU.addPreserved("stack-protector");
     AU.addPreserved<MachineFunctionAnalysis>();
   }
 
-  virtual bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
   static const unsigned MaxAggrCopySize = 128;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "Lower aggregate copies/intrinsics into loops";
   }
 };

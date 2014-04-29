@@ -33,7 +33,7 @@ public:
   static char ID;
   NVPTXPrologEpilogPass() : MachineFunctionPass(ID) {}
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
 private:
   void calculateFrameObjectOffsets(MachineFunction &Fn);

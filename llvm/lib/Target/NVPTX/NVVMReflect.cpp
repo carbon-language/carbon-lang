@@ -65,8 +65,10 @@ public:
     }
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const { AU.setPreservesAll(); }
-  virtual bool runOnModule(Module &);
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
+    AU.setPreservesAll();
+  }
+  bool runOnModule(Module &) override;
 
   void setVarMap();
 };

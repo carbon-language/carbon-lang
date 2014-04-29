@@ -51,22 +51,22 @@ public:
                      const TargetOptions &Options, Reloc::Model RM,
                      CodeModel::Model CM, CodeGenOpt::Level OP, bool is64bit);
 
-  virtual const TargetFrameLowering *getFrameLowering() const {
+  const TargetFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
-  virtual const NVPTXInstrInfo *getInstrInfo() const { return &InstrInfo; }
-  virtual const DataLayout *getDataLayout() const { return &DL; }
-  virtual const NVPTXSubtarget *getSubtargetImpl() const { return &Subtarget; }
+  const NVPTXInstrInfo *getInstrInfo() const override { return &InstrInfo; }
+  const DataLayout *getDataLayout() const override { return &DL; }
+  const NVPTXSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
-  virtual const NVPTXRegisterInfo *getRegisterInfo() const {
+  const NVPTXRegisterInfo *getRegisterInfo() const override {
     return &(InstrInfo.getRegisterInfo());
   }
 
-  virtual NVPTXTargetLowering *getTargetLowering() const {
+  NVPTXTargetLowering *getTargetLowering() const override {
     return const_cast<NVPTXTargetLowering *>(&TLInfo);
   }
 
-  virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const {
+  const TargetSelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
 
@@ -79,17 +79,17 @@ public:
     return const_cast<ManagedStringPool *>(&ManagedStrPool);
   }
 
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
   // Emission of machine code through JITCodeEmitter is not supported.
-  virtual bool addPassesToEmitMachineCode(PassManagerBase &, JITCodeEmitter &,
-                                          bool = true) {
+  bool addPassesToEmitMachineCode(PassManagerBase &, JITCodeEmitter &,
+                                  bool = true) override {
     return true;
   }
 
   // Emission of machine code through MCJIT is not supported.
-  virtual bool addPassesToEmitMC(PassManagerBase &, MCContext *&, raw_ostream &,
-                                 bool = true) {
+  bool addPassesToEmitMC(PassManagerBase &, MCContext *&, raw_ostream &,
+                         bool = true) override {
     return true;
   }
 

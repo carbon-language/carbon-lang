@@ -28,13 +28,13 @@ public:
       : TargetFrameLowering(TargetFrameLowering::StackGrowsUp, 8, 0), tm(_tm),
         is64bit(_is64bit) {}
 
-  virtual bool hasFP(const MachineFunction &MF) const;
-  virtual void emitPrologue(MachineFunction &MF) const;
-  virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+  bool hasFP(const MachineFunction &MF) const override;
+  void emitPrologue(MachineFunction &MF) const override;
+  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
+                                  MachineBasicBlock &MBB,
+                                  MachineBasicBlock::iterator I) const override;
 };
 
 } // End llvm namespace

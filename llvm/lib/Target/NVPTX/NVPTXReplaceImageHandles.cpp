@@ -32,7 +32,7 @@ private:
 public:
   NVPTXReplaceImageHandles();
 
-  bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 private:
   bool processInstr(MachineInstr &MI);
   void replaceImageHandle(MachineOperand &Op, MachineFunction &MF);

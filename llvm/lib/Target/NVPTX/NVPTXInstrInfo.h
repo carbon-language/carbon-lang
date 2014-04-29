@@ -30,7 +30,7 @@ class NVPTXInstrInfo : public NVPTXGenInstrInfo {
 public:
   explicit NVPTXInstrInfo(NVPTXTargetMachine &TM);
 
-  virtual const NVPTXRegisterInfo &getRegisterInfo() const { return RegInfo; }
+  const NVPTXRegisterInfo &getRegisterInfo() const { return RegInfo; }
 
   /* The following virtual functions are used in register allocation.
    * They are not implemented because the existing interface and the logic
@@ -50,9 +50,9 @@ public:
    *                               const TargetRegisterClass *RC) const;
    */
 
-  virtual void copyPhysReg(
+  void copyPhysReg(
       MachineBasicBlock &MBB, MachineBasicBlock::iterator I, DebugLoc DL,
-      unsigned DestReg, unsigned SrcReg, bool KillSrc) const;
+      unsigned DestReg, unsigned SrcReg, bool KillSrc) const override;
   virtual bool isMoveInstr(const MachineInstr &MI, unsigned &SrcReg,
                            unsigned &DestReg) const;
   bool isLoadInstr(const MachineInstr &MI, unsigned &AddrSpace) const;
@@ -61,13 +61,13 @@ public:
 
   virtual bool CanTailMerge(const MachineInstr *MI) const;
   // Branch analysis.
-  virtual bool AnalyzeBranch(
+  bool AnalyzeBranch(
       MachineBasicBlock &MBB, MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,
-      SmallVectorImpl<MachineOperand> &Cond, bool AllowModify) const;
-  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
-  virtual unsigned InsertBranch(
+      SmallVectorImpl<MachineOperand> &Cond, bool AllowModify) const override;
+  unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
+  unsigned InsertBranch(
       MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB,
-      const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const;
+      const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const override;
   unsigned getLdStCodeAddrSpace(const MachineInstr &MI) const {
     return MI.getOperand(2).getImm();
   }

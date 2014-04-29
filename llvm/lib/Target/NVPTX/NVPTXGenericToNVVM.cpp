@@ -40,10 +40,9 @@ public:
 
   GenericToNVVM() : ModulePass(ID) {}
 
-  virtual bool runOnModule(Module &M);
+  bool runOnModule(Module &M) override;
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-  }
+  void getAnalysisUsage(AnalysisUsage &AU) const override {}
 
 private:
   Value *getOrInsertCVTA(Module *M, Function *F, GlobalVariable *GV,

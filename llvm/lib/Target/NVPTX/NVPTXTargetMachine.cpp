@@ -115,14 +115,14 @@ public:
     return getTM<NVPTXTargetMachine>();
   }
 
-  virtual void addIRPasses();
-  virtual bool addInstSelector();
-  virtual bool addPreRegAlloc();
-  virtual bool addPostRegAlloc();
+  void addIRPasses() override;
+  bool addInstSelector() override;
+  bool addPreRegAlloc() override;
+  bool addPostRegAlloc() override;
 
-  virtual FunctionPass *createTargetRegisterAllocator(bool) override;
-  virtual void addFastRegAlloc(FunctionPass *RegAllocPass);
-  virtual void addOptimizedRegAlloc(FunctionPass *RegAllocPass);
+  FunctionPass *createTargetRegisterAllocator(bool) override;
+  void addFastRegAlloc(FunctionPass *RegAllocPass) override;
+  void addOptimizedRegAlloc(FunctionPass *RegAllocPass) override;
 };
 } // end anonymous namespace
 

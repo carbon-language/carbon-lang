@@ -33,7 +33,7 @@ private:
 public:
   NVPTXImageOptimizer();
 
-  bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
 private:
   bool replaceIsTypePSampler(Instruction &I);
