@@ -346,7 +346,7 @@ class DwarfDebug : public AsmPrinterHandler {
   /// DW_AT_low_pc and DW_AT_high_pc attributes. If there are global
   /// variables in this scope then create and insert DIEs for these
   /// variables.
-  DIE *updateSubprogramScopeDIE(DwarfCompileUnit &SPCU, DISubprogram SP);
+  DIE &updateSubprogramScopeDIE(DwarfCompileUnit &SPCU, DISubprogram SP);
 
   /// \brief A helper function to check whether the DIE for a given Scope is
   /// going to be null.
@@ -370,8 +370,12 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Construct a DIE for this scope.
   std::unique_ptr<DIE> constructScopeDIE(DwarfCompileUnit &TheCU,
                                          LexicalScope *Scope);
-  /// \brief Construct a DIE for this scope.
-  DIE *constructSubprogramScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope);
+  void createAndAddScopeChildren(DwarfCompileUnit &TheCU, LexicalScope *Scope,
+                                 DIE &ScopeDIE);
+  /// \brief Construct a DIE for this abstract scope.
+  void constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope);
+  /// \brief Construct a DIE for this subprogram scope.
+  DIE &constructSubprogramScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope);
   /// A helper function to create children of a Scope DIE.
   DIE *createScopeChildrenDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope,
                               SmallVectorImpl<std::unique_ptr<DIE>> &Children);

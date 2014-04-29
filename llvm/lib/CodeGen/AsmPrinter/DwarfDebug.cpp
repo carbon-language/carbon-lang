@@ -309,7 +309,7 @@ bool DwarfDebug::isSubprogramContext(const MDNode *Context) {
 // Find DIE for the given subprogram and attach appropriate DW_AT_low_pc
 // and DW_AT_high_pc attributes. If there are global variables in this
 // scope then create and insert DIEs for these variables.
-DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
+DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
                                           DISubprogram SP) {
   DIE *SPDie = SPCU.getDIE(SP);
 
@@ -359,7 +359,7 @@ DIE *DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
   // to have concrete versions of our DW_TAG_subprogram nodes.
   addSubprogramNames(SP, *SPDie);
 
-  return SPDie;
+  return *SPDie;
 }
 
 /// Check whether we should create a DIE for the given Scope, return true
@@ -544,40 +544,46 @@ DIE *DwarfDebug::createScopeChildrenDIE(
   return ObjectPointer;
 }
 
-DIE *DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
-                                             LexicalScope *Scope) {
-  assert(Scope && Scope->getScopeNode());
-
-  DIScope DS(Scope->getScopeNode());
-
-  assert(!Scope->getInlinedAt());
-  assert(DS.isSubprogram());
-
-  ProcessedSPNodes.insert(DS);
-
-  SmallVector<std::unique_ptr<DIE>, 8> Children;
-  DIE *ScopeDIE;
-
-  if (Scope->isAbstractScope()) {
-    ScopeDIE = TheCU.getDIE(DS);
-    // Note down abstract DIE.
-    if (ScopeDIE)
-      AbstractSPDies.insert(std::make_pair(DS, ScopeDIE));
-    else {
-      assert(Children.empty() &&
-             "We create children only when the scope DIE is not null.");
-      return nullptr;
-    }
-  } else
-    ScopeDIE = updateSubprogramScopeDIE(TheCU, DISubprogram(DS));
-
+void DwarfDebug::createAndAddScopeChildren(DwarfCompileUnit &TheCU, LexicalScope *Scope, DIE &ScopeDIE) {
   // We create children when the scope DIE is not null.
+  SmallVector<std::unique_ptr<DIE>, 8> Children;
   if (DIE *ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children))
-    TheCU.addDIEEntry(*ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
+    TheCU.addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
 
   // Add children
   for (auto &I : Children)
-    ScopeDIE->addChild(std::move(I));
+    ScopeDIE.addChild(std::move(I));
+}
+
+void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope) {
+  assert(Scope && Scope->getScopeNode());
+  assert(Scope->isAbstractScope());
+  assert(!Scope->getInlinedAt());
+
+  DISubprogram Sub(Scope->getScopeNode());
+
+  ProcessedSPNodes.insert(Sub);
+
+  if (DIE *ScopeDIE = TheCU.getDIE(Sub)) {
+    AbstractSPDies.insert(std::make_pair(Sub, ScopeDIE));
+    createAndAddScopeChildren(TheCU, Scope, *ScopeDIE);
+  }
+}
+
+DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
+                                             LexicalScope *Scope) {
+  assert(Scope && Scope->getScopeNode());
+  assert(!Scope->getInlinedAt());
+  assert(!Scope->isAbstractScope());
+  assert(DIScope(Scope->getScopeNode()).isSubprogram());
+
+  DISubprogram Sub(Scope->getScopeNode());
+
+  ProcessedSPNodes.insert(Sub);
+
+  DIE &ScopeDIE = updateSubprogramScopeDIE(TheCU, Sub);
+
+  createAndAddScopeChildren(TheCU, Scope, ScopeDIE);
 
   return ScopeDIE;
 }
@@ -1676,10 +1682,10 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
       }
     }
     if (ProcessedSPNodes.count(AScope->getScopeNode()) == 0)
-      constructSubprogramScopeDIE(TheCU, AScope);
+      constructAbstractSubprogramScopeDIE(TheCU, AScope);
   }
 
-  DIE &CurFnDIE = *constructSubprogramScopeDIE(TheCU, FnScope);
+  DIE &CurFnDIE = constructSubprogramScopeDIE(TheCU, FnScope);
   if (!CurFn->getTarget().Options.DisableFramePointerElim(*CurFn))
     TheCU.addFlag(CurFnDIE, dwarf::DW_AT_APPLE_omit_frame_ptr);
 
