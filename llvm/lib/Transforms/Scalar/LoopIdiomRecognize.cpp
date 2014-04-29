@@ -115,7 +115,7 @@ namespace {
     Value *matchCondition (BranchInst *Br, BasicBlock *NonZeroTarget) const;
 
     /// Return true iff the idiom is detected in the loop. and 1) \p CntInst
-    /// is set to the instruction counting the pupulation bit. 2) \p CntPhi
+    /// is set to the instruction counting the population bit. 2) \p CntPhi
     /// is set to the corresponding phi node. 3) \p Var is set to the value
     /// whose population bits are being counted.
     bool detectIdiom
