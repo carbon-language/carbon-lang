@@ -23,9 +23,8 @@ class LinkModuleTest : public testing::Test {
 protected:
   virtual void SetUp() {
     M.reset(new Module("MyModule", Ctx));
-    FunctionType *FTy = FunctionType::get(Type::getInt8PtrTy(Ctx),
-                                          Type::getInt32Ty(Ctx),
-                                          false /*=isVarArg*/);
+    FunctionType *FTy = FunctionType::get(
+        Type::getInt8PtrTy(Ctx), Type::getInt32Ty(Ctx), false /*=isVarArg*/);
     F = Function::Create(FTy, Function::ExternalLinkage, "ba_func", M.get());
     F->setCallingConv(CallingConv::C);
 
@@ -37,12 +36,10 @@ protected:
     ArrayType *AT = ArrayType::get(Type::getInt8PtrTy(Ctx), 3);
 
     GV = new GlobalVariable(*M.get(), AT, false /*=isConstant*/,
-                            GlobalValue::InternalLinkage,
-                            0, "switch.bas");
-
+                            GlobalValue::InternalLinkage, 0, "switch.bas");
 
     // Global Initializer
-    std::vector<Constant*> Init;
+    std::vector<Constant *> Init;
     Constant *SwitchCase1BA = BlockAddress::get(SwitchCase1BB);
     Init.push_back(SwitchCase1BA);
 
@@ -50,16 +47,14 @@ protected:
     Init.push_back(SwitchCase2BA);
 
     ConstantInt *One = ConstantInt::get(Type::getInt32Ty(Ctx), 1);
-    Constant *OnePtr = ConstantExpr::getCast(Instruction::IntToPtr,
-                                             One, Type::getInt8PtrTy(Ctx));
+    Constant *OnePtr = ConstantExpr::getCast(Instruction::IntToPtr, One,
+                                             Type::getInt8PtrTy(Ctx));
     Init.push_back(OnePtr);
 
     GV->setInitializer(ConstantArray::get(AT, Init));
   }
 
-  virtual void TearDown() {
-    M.reset();
-  }
+  virtual void TearDown() { M.reset(); }
 
   LLVMContext Ctx;
   std::unique_ptr<Module> M;
@@ -74,7 +69,7 @@ protected:
 TEST_F(LinkModuleTest, BlockAddress) {
   IRBuilder<> Builder(EntryBB);
 
-  std::vector<Value*> GEPIndices;
+  std::vector<Value *> GEPIndices;
   GEPIndices.push_back(ConstantInt::get(Type::getInt32Ty(Ctx), 0));
   GEPIndices.push_back(F->arg_begin());
 
@@ -116,7 +111,7 @@ TEST_F(LinkModuleTest, BlockAddress) {
             LinkedModule->getFunction("ba_func"));
   EXPECT_EQ(cast<BlockAddress>(Elem)->getBasicBlock()->getParent(),
             LinkedModule->getFunction("ba_func"));
-  
+
   Elem = Init->getOperand(1);
   ASSERT_TRUE(isa<BlockAddress>(Elem));
   EXPECT_EQ(cast<BlockAddress>(Elem)->getFunction(),
@@ -129,9 +124,8 @@ TEST_F(LinkModuleTest, BlockAddress) {
 
 TEST_F(LinkModuleTest, EmptyModule) {
   Module *InternalM = new Module("InternalModule", Ctx);
-  FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
-                                        Type::getInt8PtrTy(Ctx),
-                                        false /*=isVarArgs*/);
+  FunctionType *FTy = FunctionType::get(
+      Type::getVoidTy(Ctx), Type::getInt8PtrTy(Ctx), false /*=isVarArgs*/);
 
   F = Function::Create(FTy, Function::InternalLinkage, "bar", InternalM);
   F->setCallingConv(CallingConv::C);
@@ -143,11 +137,10 @@ TEST_F(LinkModuleTest, EmptyModule) {
   StructType *STy = StructType::create(Ctx, PointerType::get(FTy, 0));
 
   GlobalVariable *GV =
-    new GlobalVariable(*InternalM, STy, false /*=isConstant*/,
-                       GlobalValue::InternalLinkage, 0, "g");
+      new GlobalVariable(*InternalM, STy, false /*=isConstant*/,
+                         GlobalValue::InternalLinkage, 0, "g");
 
   GV->setInitializer(ConstantStruct::get(STy, F));
-
 
   Module *EmptyM = new Module("EmptyModule1", Ctx);
   Linker::LinkModules(EmptyM, InternalM, Linker::PreserveSource, 0);
