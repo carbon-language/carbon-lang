@@ -7,12 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "MipsELFFile.h"
 #include "MipsLinkingContext.h"
 #include "MipsRelocationPass.h"
 #include "MipsTargetHandler.h"
-
-#include "Atoms.h"
-#include "MipsELFFile.h"
 
 #include "llvm/ADT/DenseSet.h"
 
