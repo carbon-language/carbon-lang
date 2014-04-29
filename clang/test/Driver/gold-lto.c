@@ -19,3 +19,8 @@
 // CHECK-ARM-V7A: "-plugin" "{{.*}}/LLVMgold.so"
 // CHECK-ARM-V7A: "-plugin-opt=mcpu=cortex-a8"
 // CHECK-ARM-V7A: "-plugin-opt=foo"
+//
+// RUN: %clang -target i686-linux-android -### %t.o -flto 2>&1 \
+// RUN:     | FileCheck %s --check-prefix=CHECK-X86-ANDROID
+// CHECK-X86-ANDROID: "-pie"
+// CHECK-X86-ANDROID: "-plugin" "{{.*}}/LLVMgold.so"
