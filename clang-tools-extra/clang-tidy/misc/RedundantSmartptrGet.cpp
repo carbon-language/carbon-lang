@@ -22,6 +22,7 @@ internal::Matcher<Expr> callToGet(internal::Matcher<Decl> OnClass) {
              on(expr(anyOf(hasType(OnClass),
                            hasType(qualType(pointsTo(decl(OnClass).bind(
                                "ptr_to_ptr")))))).bind("smart_pointer")),
+             unless(callee(memberExpr(hasObjectExpression(thisExpr())))),
              callee(methodDecl(hasName("get")))).bind("redundant_get");
 }
 
