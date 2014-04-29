@@ -2865,6 +2865,8 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalTemporary(
   // Create a global variable for this lifetime-extended temporary.
   llvm::GlobalValue::LinkageTypes Linkage =
       getLLVMLinkageVarDefinition(VD, Constant);
+  // There is no need for this temporary to have global linkage if the global
+  // variable has external linkage.
   if (Linkage == llvm::GlobalVariable::ExternalLinkage)
     Linkage = llvm::GlobalVariable::PrivateLinkage;
   unsigned AddrSpace = GetGlobalVarAddressSpace(
@@ -2873,6 +2875,7 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalTemporary(
       getModule(), Type, Constant, Linkage, InitialValue, Name.c_str(),
       /*InsertBefore=*/nullptr, llvm::GlobalVariable::NotThreadLocal,
       AddrSpace);
+  setGlobalVisibility(GV, VD);
   GV->setAlignment(
       getContext().getTypeAlignInChars(MaterializedType).getQuantity());
   if (VD->getTLSKind())

@@ -395,6 +395,8 @@ namespace UnemittedTemporaryDecl {
 // CHECK: @_ZZN12LocalVarInit8mutable_EvE1a = private unnamed_addr constant {{.*}} i32 103
 // CHECK: @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE = linkonce_odr constant i32 5
 // CHECK: @_ZN33ClassTemplateWithStaticDataMember3useE = constant i32* @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE
+// CHECK: @_ZGRN39ClassTemplateWithHiddenStaticDataMember1SIvE1aE = linkonce_odr hidden constant i32 5
+// CHECK: @_ZN39ClassTemplateWithHiddenStaticDataMember3useE = constant i32* @_ZGRN39ClassTemplateWithHiddenStaticDataMember1SIvE1aE
 // CHECK: @_ZGRZN20InlineStaticConstRef3funEvE1i = linkonce_odr constant i32 10
 
 // Constant initialization tests go before this point,
@@ -569,6 +571,16 @@ namespace ClassTemplateWithStaticDataMember {
   template <typename T>
   struct S {
     static const int &a;
+  };
+  template <typename T>
+  const int &S<T>::a = 5;
+  const int &use = S<void>::a;
+}
+
+namespace ClassTemplateWithHiddenStaticDataMember {
+  template <typename T>
+  struct S {
+    __attribute__((visibility("hidden"))) static const int &a;
   };
   template <typename T>
   const int &S<T>::a = 5;
