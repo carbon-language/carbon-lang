@@ -76,6 +76,7 @@ typedef __WCHAR_TYPE__ wchar_t;
 #else
 #  define NULL ((void*)0)
 #endif
+#undef __need_NULL
 
 #ifdef __cplusplus
 #if defined(_MSC_EXTENSIONS) && defined(_NATIVE_NULLPTR_SUPPORTED)
@@ -101,6 +102,21 @@ typedef double max_align_t;
 #define offsetof(t, d) __builtin_offsetof(t, d)
 
 #endif /* __STDDEF_H */
+
+/* Some C libraries set __need_NULL and expects NULL to be defined again. */
+#if defined(__need_NULL)
+#undef NULL
+#ifdef __cplusplus
+#  if !defined(__MINGW32__) && !defined(_MSC_VER)
+#    define NULL __null
+#  else
+#    define NULL 0
+#  endif
+#else
+#  define NULL ((void*)0)
+#endif
+#undef __need_NULL
+#endif
 
 /* Some C libraries expect to see a wint_t here. Others (notably MinGW) will use
 __WINT_TYPE__ directly; accommodate both by requiring __need_wint_t */
