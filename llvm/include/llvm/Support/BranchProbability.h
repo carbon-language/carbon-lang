@@ -59,15 +59,9 @@ public:
   bool operator<(BranchProbability RHS) const {
     return (uint64_t)N * RHS.D < (uint64_t)D * RHS.N;
   }
-  bool operator>(BranchProbability RHS) const {
-    return RHS < *this;
-  }
-  bool operator<=(BranchProbability RHS) const {
-    return (uint64_t)N * RHS.D <= (uint64_t)D * RHS.N;
-  }
-  bool operator>=(BranchProbability RHS) const {
-    return RHS <= *this;
-  }
+  bool operator>(BranchProbability RHS) const { return RHS < *this; }
+  bool operator<=(BranchProbability RHS) const { return !(RHS < *this); }
+  bool operator>=(BranchProbability RHS) const { return !(*this < RHS); }
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const BranchProbability &Prob);
