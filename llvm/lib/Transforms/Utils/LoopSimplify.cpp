@@ -778,7 +778,7 @@ INITIALIZE_PASS_END(LoopSimplify, "loop-simplify",
 char &llvm::LoopSimplifyID = LoopSimplify::ID;
 Pass *llvm::createLoopSimplifyPass() { return new LoopSimplify(); }
 
-/// runOnLoop - Run down all loops in the CFG (recursively, but we could do
+/// runOnFunction - Run down all loops in the CFG (recursively, but we could do
 /// it in any convenient order) inserting preheaders...
 ///
 bool LoopSimplify::runOnFunction(Function &F) {
