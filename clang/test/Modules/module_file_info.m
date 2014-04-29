@@ -19,7 +19,6 @@
 // CHECK:     Triple:
 // CHECK:     CPU: 
 // CHECK:     ABI: 
-// CHECK:     Linker version: 
 
 // CHECK: Diagnostic options:
 // CHECK:   IgnoreWarnings: Yes

@@ -446,7 +446,6 @@ namespace {
       Out.indent(4) << "  Triple: " << TargetOpts.Triple << "\n";
       Out.indent(4) << "  CPU: " << TargetOpts.CPU << "\n";
       Out.indent(4) << "  ABI: " << TargetOpts.ABI << "\n";
-      Out.indent(4) << "  Linker version: " << TargetOpts.LinkerVersion << "\n";
 
       if (!TargetOpts.FeaturesAsWritten.empty()) {
         Out.indent(4) << "Target features:\n";
