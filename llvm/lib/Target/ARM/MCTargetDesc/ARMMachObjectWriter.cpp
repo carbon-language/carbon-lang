@@ -206,11 +206,11 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
     // The thumb bit shouldn't be set in the 'other-half' bit of the
     // relocation, but it will be set in FixedValue if the base symbol
     // is a thumb function. Clear it out here.
-    if (A_SD->getFlags() & SF_ThumbFunc)
+    if (Asm.isThumbFunc(A))
       FixedValue &= 0xfffffffe;
     break;
   case ARM::fixup_t2_movt_hi16:
-    if (A_SD->getFlags() & SF_ThumbFunc)
+    if (Asm.isThumbFunc(A))
       FixedValue &= 0xfffffffe;
     MovtBit = 1;
     // Fallthrough

@@ -902,7 +902,7 @@ private:
   // here. Maybe when the relocation stuff moves to target specific,
   // this can go with it? The streamer would need some target specific
   // refactoring too.
-  SmallPtrSet<const MCSymbol*, 64> ThumbFuncs;
+  mutable SmallPtrSet<const MCSymbol*, 64> ThumbFuncs;
 
   /// \brief The bundle alignment size currently set in the assembler.
   ///
@@ -995,9 +995,7 @@ public:
                         const MCAsmLayout &Layout) const;
 
   /// Check whether a given symbol has been flagged with .thumb_func.
-  bool isThumbFunc(const MCSymbol *Func) const {
-    return ThumbFuncs.count(Func);
-  }
+  bool isThumbFunc(const MCSymbol *Func) const;
 
   /// Flag a function symbol as the target of a .thumb_func directive.
   void setIsThumbFunc(const MCSymbol *Func) { ThumbFuncs.insert(Func); }

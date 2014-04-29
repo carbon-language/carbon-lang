@@ -351,6 +351,9 @@ void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
     }
   }
 
+  if (Layout.getAssembler().isThumbFunc(&Symbol))
+    Flags |= SF_ThumbFunc;
+
   // struct nlist (12 bytes)
 
   Write32(MSD.StringIndex);

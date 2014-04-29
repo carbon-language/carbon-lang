@@ -215,7 +215,8 @@ class ELFObjectWriter : public MCObjectWriter {
                           const MCAsmLayout &Layout,
                           SectionIndexMapTy &SectionIndexMap);
 
-    bool shouldRelocateWithSymbol(const MCSymbolRefExpr *RefA,
+    bool shouldRelocateWithSymbol(const MCAssembler &Asm,
+                                  const MCSymbolRefExpr *RefA,
                                   const MCSymbolData *SD, uint64_t C,
                                   unsigned Type) const;
 
@@ -486,6 +487,7 @@ void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
 
 uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
                                       const MCAsmLayout &Layout) {
+  const MCSymbol &OrigSymbol = OrigData.getSymbol();
   MCSymbolData *Data = &OrigData;
   if (Data->isCommon() && Data->isExternal())
     return Data->getCommonAlignment();
@@ -512,8 +514,8 @@ uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
     }
   }
 
-  if ((Data && Data->getFlags() & ELF_Other_ThumbFunc) ||
-      OrigData.getFlags() & ELF_Other_ThumbFunc)
+  const MCAssembler &Asm = Layout.getAssembler();
+  if (Asm.isThumbFunc(&OrigSymbol))
     Res |= 1;
 
   if (!Symbol || !Symbol->isInSection())
@@ -641,8 +643,6 @@ void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
     BaseSD = &Layout.getAssembler().getSymbolData(*Base);
     Type = mergeTypeForSet(Type, MCELF::GetType(*BaseSD));
   }
-  if (OrigData.getFlags() & ELF_Other_ThumbFunc)
-    Type = ELF::STT_FUNC;
   uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
 
   // Other and Visibility share the same byte with Visibility using the lower
@@ -737,7 +737,8 @@ void ELFObjectWriter::WriteSymbolTable(MCDataFragment *SymtabF,
 // It is always valid to create a relocation with a symbol. It is preferable
 // to use a relocation with a section if that is possible. Using the section
 // allows us to omit some local symbols from the symbol table.
-bool ELFObjectWriter::shouldRelocateWithSymbol(const MCSymbolRefExpr *RefA,
+bool ELFObjectWriter::shouldRelocateWithSymbol(const MCAssembler &Asm,
+                                               const MCSymbolRefExpr *RefA,
                                                const MCSymbolData *SD,
                                                uint64_t C,
                                                unsigned Type) const {
@@ -825,7 +826,7 @@ bool ELFObjectWriter::shouldRelocateWithSymbol(const MCSymbolRefExpr *RefA,
   // bit. With a symbol that is done by just having the symbol have that bit
   // set, so we would lose the bit if we relocated with the section.
   // FIXME: We could use the section but add the bit to the relocation value.
-  if (SD->getFlags() & ELF_Other_ThumbFunc)
+  if (Asm.isThumbFunc(&Sym))
     return true;
 
   if (TargetObjectWriter->needsRelocateWithSymbol(Type))
@@ -887,7 +888,7 @@ void ELFObjectWriter::RecordRelocation(const MCAssembler &Asm,
   const MCSymbolData *SymAD = SymA ? &Asm.getSymbolData(*SymA) : nullptr;
 
   unsigned Type = GetRelocType(Target, Fixup, IsPCRel);
-  bool RelocateWithSymbol = shouldRelocateWithSymbol(RefA, SymAD, C, Type);
+  bool RelocateWithSymbol = shouldRelocateWithSymbol(Asm, RefA, SymAD, C, Type);
   if (!RelocateWithSymbol && SymA && !SymA->isUndefined())
     C += Layout.getSymbolOffset(SymAD);
 

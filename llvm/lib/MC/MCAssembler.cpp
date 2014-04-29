@@ -323,6 +323,31 @@ void MCAssembler::reset() {
   getLOHContainer().reset();
 }
 
+bool MCAssembler::isThumbFunc(const MCSymbol *Symbol) const {
+  if (ThumbFuncs.count(Symbol))
+    return true;
+
+  if (!Symbol->isVariable())
+    return false;
+
+  // FIXME: It looks like gas support some cases of the form "foo + 2". It
+  // is not clear if that is a bug or a feature.
+  const MCExpr *Expr = Symbol->getVariableValue();
+  const MCSymbolRefExpr *Ref = dyn_cast<MCSymbolRefExpr>(Expr);
+  if (!Ref)
+    return false;
+
+  if (Ref->getKind() != MCSymbolRefExpr::VK_None)
+    return false;
+
+  const MCSymbol &Sym = Ref->getSymbol();
+  if (!isThumbFunc(&Sym))
+    return false;
+
+  ThumbFuncs.insert(Symbol); // Cache it.
+  return true;
+}
+
 bool MCAssembler::isSymbolLinkerVisible(const MCSymbol &Symbol) const {
   // Non-temporary labels should always be visible to the linker.
   if (!Symbol.isTemporary())

@@ -14,6 +14,9 @@ arm_func:
 
 	.thumb_set alias_arm_func, arm_func
 
+        alias_arm_func2 = alias_arm_func
+        alias_arm_func3 = alias_arm_func2
+
 @ ASM: .thumb_set alias_arm_func, arm_func
 
 	.thumb
@@ -60,6 +63,18 @@ beta:
 
 @ CHECK: Symbol {
 @ CHECK:   Name: alias_arm_func
+@ CHECK:   Value: 0x1
+@ CHECK:   Type: Function
+@ CHECK: }
+
+@ CHECK: Symbol {
+@ CHECK:   Name: alias_arm_func2
+@ CHECK:   Value: 0x1
+@ CHECK:   Type: Function
+@ CHECK: }
+
+@ CHECK: Symbol {
+@ CHECK:   Name: alias_arm_func3
 @ CHECK:   Value: 0x1
 @ CHECK:   Type: Function
 @ CHECK: }

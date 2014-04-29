@@ -609,12 +609,8 @@ private:
   }
 
   void EmitThumbFunc(MCSymbol *Func) override {
-    // FIXME: Anything needed here to flag the function as thumb?
-
     getAssembler().setIsThumbFunc(Func);
-
-    MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Func);
-    SD.setFlags(SD.getFlags() | ELF_Other_ThumbFunc);
+    EmitSymbolAttribute(Func, MCSA_ELF_TypeFunction);
   }
 
   // Helper functions for ARM exception handling directives
