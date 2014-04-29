@@ -86,6 +86,11 @@ void test_scanlist(int *ip, char *sp, wchar_t *ls) {
   scanf("%h[abc]", sp); // expected-warning{{length modifier 'h' results in undefined behavior or no effect with '[' conversion specifier}}
   scanf("%l[xyx]", ls); // no-warning
   scanf("%ll[xyx]", ls); // expected-warning {{length modifier 'll' results in undefined behavior or no effect with '[' conversion specifier}}
+
+  // PR19559
+  scanf("%[]% ]", sp); // no-warning
+  scanf("%[^]% ]", sp); // no-warning
+  scanf("%[a^]% ]", sp); // expected-warning {{invalid conversion specifier ' '}}
 }
 
 void test_alloc_extension(char **sp, wchar_t **lsp, float *fp) {

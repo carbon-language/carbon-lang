@@ -50,6 +50,15 @@ static bool ParseScanList(FormatStringHandler &H,
     }
   }
 
+  // Special case: "]^" are the first characters.
+  if (I + 1 != E && I[0] == '^' && I[1] == ']') {
+    I += 2;
+    if (I == E) {
+      H.HandleIncompleteScanList(start, I - 1);
+      return true;
+    }
+  }
+
   // Look for a ']' character which denotes the end of the scan list.
   while (*I != ']') {
     if (++I == E) {
