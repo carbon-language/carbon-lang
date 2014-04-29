@@ -427,6 +427,56 @@ void AMDGPUTargetLowering::ReplaceNodeResults(SDNode *N,
     Results.push_back(UDIVREM.getValue(1));
     break;
   }
+  case ISD::UDIVREM: {
+    SDValue Op = SDValue(N, 0);
+    SDLoc DL(Op);
+    EVT VT = Op.getValueType();
+    EVT HalfVT = VT.getHalfSizedIntegerVT(*DAG.getContext());
+
+    //HiLo split
+    SDValue LHS_Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, HalfVT,
+      N->getOperand(0), DAG.getConstant(0, HalfVT));
+    SDValue LHS_Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, HalfVT,
+      N->getOperand(0), DAG.getConstant(1, HalfVT));
+
+    SDValue RHS = N->getOperand(1);
+
+    SDValue DIV = DAG.getConstant(0, VT);
+    SDValue REM = DAG.getConstant(0, VT);
+
+    const unsigned bitWidth = VT.getSizeInBits();
+    const unsigned halfBitWidth = HalfVT.getSizeInBits();
+
+    SDValue one = DAG.getConstant(1, HalfVT);
+    SDValue one_VT = DAG.getConstant(1, VT);
+    for (unsigned i = 0; i < bitWidth; ++i) {
+      SDValue POS = DAG.getConstant((bitWidth - i - 1) % halfBitWidth, HalfVT);
+      // Get Value of high bit
+      SDValue HBit = DAG.getNode(ISD::SRL, DL, HalfVT,
+        i < halfBitWidth ? LHS_Hi : LHS_Lo, POS);
+      HBit = DAG.getNode(ISD::AND, DL, HalfVT, HBit, one);
+      HBit = DAG.getNode(ISD::ZERO_EXTEND, DL, VT, HBit);
+
+      // Add the high bit to shifted remainder
+      REM = DAG.getNode(ISD::SHL, DL, VT, REM, one);
+      REM = DAG.getNode(ISD::OR, DL, VT, REM, HBit);
+
+      // Update DIV
+      SDValue ShDIV = DAG.getNode(ISD::SHL, DL, VT, DIV, one);
+      SDValue ShDIV_plus = DAG.getNode(ISD::OR, DL, VT, ShDIV, one_VT);
+
+      DIV = DAG.getSelectCC(DL, REM, RHS, ShDIV_plus, ShDIV, ISD::SETGE);
+
+      // Update REM
+      SDValue REM_sub = DAG.getNode(ISD::SUB, DL, VT, REM, RHS);
+
+      REM = DAG.getSelectCC(DL, REM, RHS, REM_sub, REM, ISD::SETGE);
+    }
+
+    Results.push_back(DIV);
+    Results.push_back(REM);
+    break;
+  }
   default:
     return;
   }
