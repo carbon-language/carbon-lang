@@ -36,7 +36,7 @@ public:
   void RecordRelocation(MachObjectWriter *Writer, const MCAssembler &Asm,
                         const MCAsmLayout &Layout, const MCFragment *Fragment,
                         const MCFixup &Fixup, MCValue Target,
-                        uint64_t &FixedValue);
+                        uint64_t &FixedValue) override;
 };
 }
 

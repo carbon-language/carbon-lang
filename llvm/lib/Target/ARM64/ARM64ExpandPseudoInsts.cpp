@@ -29,9 +29,9 @@ public:
 
   const ARM64InstrInfo *TII;
 
-  virtual bool runOnMachineFunction(MachineFunction &Fn);
+  bool runOnMachineFunction(MachineFunction &Fn) override;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "ARM64 pseudo instruction expansion pass";
   }
 

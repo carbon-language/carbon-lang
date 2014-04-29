@@ -75,13 +75,13 @@ public:
     initializeARM64AddressTypePromotionPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "ARM64 Address Type Promotion";
   }
 
   /// Iterate over the functions and promote the computation of interesting
   // sext instructions.
-  bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
 private:
   /// The current function.
@@ -91,7 +91,7 @@ private:
   Type *ConsideredSExtType;
 
   // This transformation requires dominator info.
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();

@@ -104,13 +104,13 @@ public:
     return getTM<ARM64TargetMachine>();
   }
 
-  virtual bool addPreISel();
-  virtual bool addInstSelector();
-  virtual bool addILPOpts();
-  virtual bool addPreRegAlloc();
-  virtual bool addPostRegAlloc();
-  virtual bool addPreSched2();
-  virtual bool addPreEmitPass();
+  bool addPreISel() override;
+  bool addInstSelector() override;
+  bool addILPOpts() override;
+  bool addPreRegAlloc() override;
+  bool addPostRegAlloc() override;
+  bool addPreSched2() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 

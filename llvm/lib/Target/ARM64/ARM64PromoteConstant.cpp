@@ -87,11 +87,11 @@ public:
   static char ID;
   ARM64PromoteConstant() : ModulePass(ID) {}
 
-  virtual const char *getPassName() const { return "ARM64 Promote Constant"; }
+  const char *getPassName() const override { return "ARM64 Promote Constant"; }
 
   /// Iterate over the functions and promote the interesting constants into
   /// global variables with module scope.
-  bool runOnModule(Module &M) {
+  bool runOnModule(Module &M) override {
     DEBUG(dbgs() << getPassName() << '\n');
     bool Changed = false;
     for (auto &MF : M) {
@@ -107,7 +107,7 @@ private:
   bool runOnFunction(Function &F);
 
   // This transformation requires dominator info
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();

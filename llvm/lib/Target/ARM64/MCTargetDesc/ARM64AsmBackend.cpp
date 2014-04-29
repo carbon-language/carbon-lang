@@ -29,9 +29,11 @@ class ARM64AsmBackend : public MCAsmBackend {
 public:
   ARM64AsmBackend(const Target &T) : MCAsmBackend() {}
 
-  unsigned getNumFixupKinds() const { return ARM64::NumTargetFixupKinds; }
+  unsigned getNumFixupKinds() const override {
+    return ARM64::NumTargetFixupKinds;
+  }
 
-  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override {
     const static MCFixupKindInfo Infos[ARM64::NumTargetFixupKinds] = {
       // This table *must* be in the order that the fixup_* kinds are defined in
       // ARM64FixupKinds.h.
@@ -63,14 +65,14 @@ public:
   }
 
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                  uint64_t Value, bool IsPCRel) const;
+                  uint64_t Value, bool IsPCRel) const override;
 
-  bool mayNeedRelaxation(const MCInst &Inst) const;
+  bool mayNeedRelaxation(const MCInst &Inst) const override;
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                             const MCRelaxableFragment *DF,
-                            const MCAsmLayout &Layout) const;
-  void relaxInstruction(const MCInst &Inst, MCInst &Res) const;
-  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const;
+                            const MCAsmLayout &Layout) const override;
+  void relaxInstruction(const MCInst &Inst, MCInst &Res) const override;
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override;
 
   void HandleAssemblerFlag(MCAssemblerFlag Flag) {}
 
@@ -306,12 +308,12 @@ public:
   DarwinARM64AsmBackend(const Target &T, const MCRegisterInfo &MRI)
       : ARM64AsmBackend(T), MRI(MRI) {}
 
-  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
     return createARM64MachObjectWriter(OS, MachO::CPU_TYPE_ARM64,
                                        MachO::CPU_SUBTYPE_ARM64_ALL);
   }
 
-  virtual bool doesSectionRequireSymbols(const MCSection &Section) const {
+  bool doesSectionRequireSymbols(const MCSection &Section) const override {
     // Any section for which the linker breaks things into atoms needs to
     // preserve symbols, including assembler local symbols, to identify
     // those atoms. These sections are:
@@ -348,9 +350,8 @@ public:
   }
 
   /// \brief Generate the compact unwind encoding from the CFI directives.
-  virtual uint32_t
-  generateCompactUnwindEncoding(ArrayRef<MCCFIInstruction> Instrs) const
-      override {
+  uint32_t generateCompactUnwindEncoding(
+                             ArrayRef<MCCFIInstruction> Instrs) const override {
     if (Instrs.empty())
       return CU::UNWIND_ARM64_MODE_FRAMELESS;
 
@@ -491,7 +492,7 @@ public:
   ELFARM64AsmBackend(const Target &T, uint8_t OSABI, bool IsLittleEndian)
     : ARM64AsmBackend(T), OSABI(OSABI), IsLittleEndian(IsLittleEndian) {}
 
-  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
     return createARM64ELFObjectWriter(OS, OSABI, IsLittleEndian);
   }
 

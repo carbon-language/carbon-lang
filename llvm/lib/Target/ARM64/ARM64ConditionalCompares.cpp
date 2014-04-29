@@ -736,9 +736,11 @@ class ARM64ConditionalCompares : public MachineFunctionPass {
 public:
   static char ID;
   ARM64ConditionalCompares() : MachineFunctionPass(ID) {}
-  void getAnalysisUsage(AnalysisUsage &AU) const;
-  bool runOnMachineFunction(MachineFunction &MF);
-  const char *getPassName() const { return "ARM64 Conditional Compares"; }
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  bool runOnMachineFunction(MachineFunction &MF) override;
+  const char *getPassName() const override {
+    return "ARM64 Conditional Compares";
+  }
 
 private:
   bool tryConvert(MachineBasicBlock *);

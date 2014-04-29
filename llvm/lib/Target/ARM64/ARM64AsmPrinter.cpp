@@ -56,7 +56,7 @@ public:
         MCInstLowering(OutContext, *Mang, *this), SM(*this), ARM64FI(nullptr),
         LOHLabelCounter(0) {}
 
-  virtual const char *getPassName() const { return "ARM64 Assembly Printer"; }
+  const char *getPassName() const override { return "ARM64 Assembly Printer"; }
 
   /// \brief Wrapper for MCInstLowering.lowerOperand() for the
   /// tblgen'erated pseudo lowering.
@@ -73,14 +73,14 @@ public:
   bool emitPseudoExpansionLowering(MCStreamer &OutStreamer,
                                    const MachineInstr *MI);
 
-  void EmitInstruction(const MachineInstr *MI);
+  void EmitInstruction(const MachineInstr *MI) override;
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AsmPrinter::getAnalysisUsage(AU);
     AU.setPreservesAll();
   }
 
-  bool runOnMachineFunction(MachineFunction &F) {
+  bool runOnMachineFunction(MachineFunction &F) override {
     ARM64FI = F.getInfo<ARM64FunctionInfo>();
     return AsmPrinter::runOnMachineFunction(F);
   }
@@ -95,17 +95,17 @@ private:
 
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                        unsigned AsmVariant, const char *ExtraCode,
-                       raw_ostream &O);
+                       raw_ostream &O) override;
   bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNum,
                              unsigned AsmVariant, const char *ExtraCode,
-                             raw_ostream &O);
+                             raw_ostream &O) override;
 
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
 
-  void EmitFunctionBodyEnd();
+  void EmitFunctionBodyEnd() override;
 
-  MCSymbol *GetCPISymbol(unsigned CPID) const;
-  void EmitEndOfAsmFile(Module &M);
+  MCSymbol *GetCPISymbol(unsigned CPID) const override;
+  void EmitEndOfAsmFile(Module &M) override;
   ARM64FunctionInfo *ARM64FI;
 
   /// \brief Emit the LOHs contained in ARM64FI.

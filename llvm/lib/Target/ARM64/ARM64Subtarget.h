@@ -100,7 +100,8 @@ public:
   const char *getBZeroEntry() const;
 
   void overrideSchedPolicy(MachineSchedPolicy &Policy, MachineInstr *begin,
-                           MachineInstr *end, unsigned NumRegionInstrs) const;
+                           MachineInstr *end,
+                           unsigned NumRegionInstrs) const override;
 };
 } // End llvm namespace
 

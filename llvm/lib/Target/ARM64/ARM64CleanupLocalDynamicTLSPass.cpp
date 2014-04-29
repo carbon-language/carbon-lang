@@ -38,7 +38,7 @@ struct LDTLSCleanup : public MachineFunctionPass {
   static char ID;
   LDTLSCleanup() : MachineFunctionPass(ID) {}
 
-  virtual bool runOnMachineFunction(MachineFunction &MF) {
+  bool runOnMachineFunction(MachineFunction &MF) override {
     ARM64FunctionInfo *AFI = MF.getInfo<ARM64FunctionInfo>();
     if (AFI->getNumLocalDynamicTLSAccesses() < 2) {
       // No point folding accesses if there isn't at least two.
@@ -129,11 +129,11 @@ struct LDTLSCleanup : public MachineFunctionPass {
     return Copy;
   }
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "Local Dynamic TLS Access Clean-up";
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<MachineDominatorTree>();
     MachineFunctionPass::getAnalysisUsage(AU);

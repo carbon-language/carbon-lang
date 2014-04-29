@@ -94,9 +94,9 @@ public:
   static char ID;
   ARM64BranchRelaxation() : MachineFunctionPass(ID) {}
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "ARM64 branch relaxation pass";
   }
 };

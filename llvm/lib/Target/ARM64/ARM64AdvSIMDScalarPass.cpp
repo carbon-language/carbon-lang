@@ -87,13 +87,13 @@ public:
   static char ID; // Pass identification, replacement for typeid.
   explicit ARM64AdvSIMDScalar() : MachineFunctionPass(ID) {}
 
-  virtual bool runOnMachineFunction(MachineFunction &F);
+  bool runOnMachineFunction(MachineFunction &F) override;
 
-  const char *getPassName() const {
+  const char *getPassName() const override {
     return "AdvSIMD Scalar Operation Optimization";
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     MachineFunctionPass::getAnalysisUsage(AU);
   }

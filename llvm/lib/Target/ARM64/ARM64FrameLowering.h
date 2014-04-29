@@ -36,38 +36,38 @@ public:
                                  unsigned FramePtr) const;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
+                                  MachineBasicBlock &MBB,
+                                  MachineBasicBlock::iterator I) const override;
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+  void emitPrologue(MachineFunction &MF) const override;
+  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
-  int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const override;
   int getFrameIndexReference(const MachineFunction &MF, int FI,
-                             unsigned &FrameReg) const;
+                             unsigned &FrameReg) const override;
   int resolveFrameIndexReference(const MachineFunction &MF, int FI,
                                  unsigned &FrameReg,
                                  bool PreferFP = false) const;
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI,
-                                 const TargetRegisterInfo *TRI) const;
+                                 const TargetRegisterInfo *TRI) const override;
 
   bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MI,
-                                   const std::vector<CalleeSavedInfo> &CSI,
-                                   const TargetRegisterInfo *TRI) const;
+                                  MachineBasicBlock::iterator MI,
+                                  const std::vector<CalleeSavedInfo> &CSI,
+                                  const TargetRegisterInfo *TRI) const override;
 
   /// \brief Can this function use the red zone for local allocations.
   bool canUseRedZone(const MachineFunction &MF) const;
 
-  bool hasFP(const MachineFunction &MF) const;
-  bool hasReservedCallFrame(const MachineFunction &MF) const;
+  bool hasFP(const MachineFunction &MF) const override;
+  bool hasReservedCallFrame(const MachineFunction &MF) const override;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                            RegScavenger *RS) const;
+                                            RegScavenger *RS) const override;
 };
 
 } // End llvm namespace

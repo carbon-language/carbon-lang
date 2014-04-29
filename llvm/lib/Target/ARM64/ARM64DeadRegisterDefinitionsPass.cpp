@@ -36,11 +36,11 @@ public:
   static char ID; // Pass identification, replacement for typeid.
   explicit ARM64DeadRegisterDefinitions() : MachineFunctionPass(ID) {}
 
-  virtual bool runOnMachineFunction(MachineFunction &F);
+  virtual bool runOnMachineFunction(MachineFunction &F) override;
 
-  const char *getPassName() const { return "Dead register definitions"; }
+  const char *getPassName() const override { return "Dead register definitions"; }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     MachineFunctionPass::getAnalysisUsage(AU);
   }

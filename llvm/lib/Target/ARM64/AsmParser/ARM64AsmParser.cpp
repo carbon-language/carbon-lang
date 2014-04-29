@@ -77,7 +77,8 @@ private:
   bool validateInstruction(MCInst &Inst, SmallVectorImpl<SMLoc> &Loc);
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
-                               unsigned &ErrorInfo, bool MatchingInlineAsm);
+                               unsigned &ErrorInfo,
+                               bool MatchingInlineAsm) override;
 /// @name Auto-generated Match Functions
 /// {
 
@@ -113,11 +114,12 @@ public:
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
 
-  virtual bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
-                                SMLoc NameLoc, OperandVector &Operands);
-  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
-  virtual bool ParseDirective(AsmToken DirectiveID);
-  unsigned validateTargetOperandClass(MCParsedAsmOperand *Op, unsigned Kind);
+  bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
+                        SMLoc NameLoc, OperandVector &Operands) override;
+  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
+  bool ParseDirective(AsmToken DirectiveID) override;
+  unsigned validateTargetOperandClass(MCParsedAsmOperand *Op,
+                                      unsigned Kind) override;
 
   static bool classifySymbolRef(const MCExpr *Expr,
                                 ARM64MCExpr::VariantKind &ELFRefKind,
@@ -293,9 +295,9 @@ public:
   }
 
   /// getStartLoc - Get the location of the first token of this operand.
-  SMLoc getStartLoc() const { return StartLoc; }
+  SMLoc getStartLoc() const override { return StartLoc; }
   /// getEndLoc - Get the location of the last token of this operand.
-  SMLoc getEndLoc() const { return EndLoc; }
+  SMLoc getEndLoc() const override { return EndLoc; }
   /// getOffsetLoc - Get the location of the offset of this memory operand.
   SMLoc getOffsetLoc() const { return OffsetLoc; }
 
@@ -324,7 +326,7 @@ public:
     return Barrier.Val;
   }
 
-  unsigned getReg() const {
+  unsigned getReg() const override {
     assert(Kind == k_Register && "Invalid access!");
     return Reg.RegNum;
   }
@@ -369,7 +371,7 @@ public:
     return Extend.Val;
   }
 
-  bool isImm() const { return Kind == k_Immediate; }
+  bool isImm() const override { return Kind == k_Immediate; }
   bool isSImm9() const {
     if (!isImm())
       return false;
@@ -686,7 +688,7 @@ public:
 
     return IsKnownRegister;
   }
-  bool isReg() const { return Kind == k_Register && !Reg.isVector; }
+  bool isReg() const override { return Kind == k_Register && !Reg.isVector; }
   bool isVectorReg() const { return Kind == k_Register && Reg.isVector; }
   bool isVectorRegLo() const {
     return Kind == k_Register && Reg.isVector &&
@@ -723,11 +725,11 @@ public:
   bool isVectorIndexD() const {
     return Kind == k_VectorIndex && VectorIndex.Val < 2;
   }
-  bool isToken() const { return Kind == k_Token; }
+  bool isToken() const override { return Kind == k_Token; }
   bool isTokenEqual(StringRef Str) const {
     return Kind == k_Token && getToken() == Str;
   }
-  bool isMem() const { return Kind == k_Memory; }
+  bool isMem() const override { return Kind == k_Memory; }
   bool isSysCR() const { return Kind == k_SysCR; }
   bool isPrefetch() const { return Kind == k_Prefetch; }
   bool isShifter() const { return Kind == k_Shifter; }
@@ -1594,7 +1596,7 @@ public:
     addMemoryWritebackIndexedOperands(Inst, N, 16);
   }
 
-  virtual void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const override;
 
   static ARM64Operand *CreateToken(StringRef Str, bool IsSuffix, SMLoc S,
                                    MCContext &Ctx) {

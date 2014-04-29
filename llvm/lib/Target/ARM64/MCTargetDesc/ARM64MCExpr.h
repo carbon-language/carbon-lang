@@ -142,16 +142,16 @@ public:
   /// (e.g. ":got:", ":lo12:").
   StringRef getVariantKindName() const;
 
-  void PrintImpl(raw_ostream &OS) const;
+  void PrintImpl(raw_ostream &OS) const override;
 
-  void AddValueSymbols(MCAssembler *) const;
+  void AddValueSymbols(MCAssembler *) const override;
 
-  const MCSection *FindAssociatedSection() const;
+  const MCSection *FindAssociatedSection() const override;
 
   bool EvaluateAsRelocatableImpl(MCValue &Res,
-                                 const MCAsmLayout *Layout) const;
+                                 const MCAsmLayout *Layout) const override;
 
-  void fixELFSymbolsInTLSFixups(MCAssembler &Asm) const;
+  void fixELFSymbolsInTLSFixups(MCAssembler &Asm) const override;
 
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Target;

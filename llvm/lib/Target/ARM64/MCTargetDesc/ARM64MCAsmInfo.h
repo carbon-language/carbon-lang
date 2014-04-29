@@ -22,9 +22,9 @@ class StringRef;
 class MCStreamer;
 struct ARM64MCAsmInfoDarwin : public MCAsmInfoDarwin {
   explicit ARM64MCAsmInfoDarwin();
-  virtual const MCExpr *getExprForPersonalitySymbol(const MCSymbol *Sym,
-                                                    unsigned Encoding,
-                                                    MCStreamer &Streamer) const;
+  const MCExpr *
+  getExprForPersonalitySymbol(const MCSymbol *Sym, unsigned Encoding,
+                              MCStreamer &Streamer) const override;
 };
 
 struct ARM64MCAsmInfoELF : public MCAsmInfo {

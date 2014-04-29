@@ -147,8 +147,8 @@ private:
 
 public:
   // Backend specific FastISel code.
-  virtual unsigned TargetMaterializeAlloca(const AllocaInst *AI);
-  virtual unsigned TargetMaterializeConstant(const Constant *C);
+  unsigned TargetMaterializeAlloca(const AllocaInst *AI) override;
+  unsigned TargetMaterializeConstant(const Constant *C) override;
 
   explicit ARM64FastISel(FunctionLoweringInfo &funcInfo,
                          const TargetLibraryInfo *libInfo)
@@ -157,7 +157,7 @@ public:
     Context = &funcInfo.Fn->getContext();
   }
 
-  virtual bool TargetSelectInstruction(const Instruction *I);
+  bool TargetSelectInstruction(const Instruction *I) override;
 
 #include "ARM64GenFastISel.inc"
 };

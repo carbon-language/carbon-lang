@@ -47,11 +47,11 @@ public:
       : SelectionDAGISel(tm, OptLevel), TM(tm),
         Subtarget(&TM.getSubtarget<ARM64Subtarget>()), ForCodeSize(false) {}
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "ARM64 Instruction Selection";
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF) {
+  bool runOnMachineFunction(MachineFunction &MF) override {
     AttributeSet FnAttrs = MF.getFunction()->getAttributes();
     ForCodeSize =
         FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
@@ -60,13 +60,13 @@ public:
     return SelectionDAGISel::runOnMachineFunction(MF);
   }
 
-  SDNode *Select(SDNode *Node);
+  SDNode *Select(SDNode *Node) override;
 
   /// SelectInlineAsmMemoryOperand - Implement addressing mode selection for
   /// inline asm expressions.
-  virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                            char ConstraintCode,
-                                            std::vector<SDValue> &OutOps);
+  bool SelectInlineAsmMemoryOperand(const SDValue &Op,
+                                    char ConstraintCode,
+                                    std::vector<SDValue> &OutOps) override;
 
   SDNode *SelectMLAV64LaneV128(SDNode *N);
   SDNode *SelectMULLV64LaneV128(unsigned IntNo, SDNode *N);

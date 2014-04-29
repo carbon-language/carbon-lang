@@ -174,13 +174,13 @@ struct ARM64CollectLOH : public MachineFunctionPass {
     initializeARM64CollectLOHPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "ARM64 Collect Linker Optimization Hint (LOH)";
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesAll();
     MachineFunctionPass::getAnalysisUsage(AU);
     AU.addRequired<MachineDominatorTree>();

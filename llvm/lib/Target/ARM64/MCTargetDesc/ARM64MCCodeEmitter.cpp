@@ -182,7 +182,7 @@ public:
 
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
-                         const MCSubtargetInfo &STI) const;
+                         const MCSubtargetInfo &STI) const override;
 
   unsigned fixMulHigh(const MCInst &MI, unsigned EncodedValue,
                       const MCSubtargetInfo &STI) const;

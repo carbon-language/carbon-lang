@@ -29,11 +29,10 @@ public:
   ~ARM64Disassembler() {}
 
   /// getInstruction - See MCDisassembler.
-  MCDisassembler::DecodeStatus getInstruction(MCInst &instr, uint64_t &size,
-                                              const MemoryObject &region,
-                                              uint64_t address,
-                                              raw_ostream &vStream,
-                                              raw_ostream &cStream) const;
+  MCDisassembler::DecodeStatus
+  getInstruction(MCInst &instr, uint64_t &size, const MemoryObject &region,
+                 uint64_t address, raw_ostream &vStream,
+                 raw_ostream &cStream) const override;
 };
 
 } // namespace llvm

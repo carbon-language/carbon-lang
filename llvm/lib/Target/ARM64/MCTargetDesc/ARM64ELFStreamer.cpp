@@ -62,8 +62,8 @@ public:
 
   ~ARM64ELFStreamer() {}
 
-  virtual void ChangeSection(const MCSection *Section,
-                             const MCExpr *Subsection) {
+  void ChangeSection(const MCSection *Section,
+                     const MCExpr *Subsection) override {
     // We have to keep track of the mapping symbol state of any sections we
     // use. Each one should start off as EMS_None, which is provided as the
     // default constructor by DenseMap::lookup.
@@ -76,7 +76,8 @@ public:
   /// This function is the one used to emit instruction data into the ELF
   /// streamer. We override it to add the appropriate mapping symbol if
   /// necessary.
-  virtual void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) {
+  void EmitInstruction(const MCInst &Inst,
+                       const MCSubtargetInfo &STI) override {
     EmitA64MappingSymbol();
     MCELFStreamer::EmitInstruction(Inst, STI);
   }
@@ -84,7 +85,7 @@ public:
   /// This is one of the functions used to emit data into an ELF section, so the
   /// ARM64 streamer overrides it to add the appropriate mapping symbol ($d)
   /// if necessary.
-  virtual void EmitBytes(StringRef Data) {
+  void EmitBytes(StringRef Data) override {
     EmitDataMappingSymbol();
     MCELFStreamer::EmitBytes(Data);
   }
@@ -92,8 +93,8 @@ public:
   /// This is one of the functions used to emit data into an ELF section, so the
   /// ARM64 streamer overrides it to add the appropriate mapping symbol ($d)
   /// if necessary.
-  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
-                             const SMLoc &Loc) {
+  void EmitValueImpl(const MCExpr *Value, unsigned Size,
+                     const SMLoc &Loc) override {
     EmitDataMappingSymbol();
     MCELFStreamer::EmitValueImpl(Value, Size);
   }
