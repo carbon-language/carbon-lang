@@ -4001,13 +4001,19 @@ static bool isEXTMask(ArrayRef<int> M, EVT VT, bool &ReverseEXT,
   // value of the first element.
   // E.g. <-1, -1, 3, ...> is treated as <1, 2, 3, ...>.
   //      <-1, -1, 0, 1, ...> is treated as <IDX, IDX+1, 0, 1, ...>. IDX is
-  // equal to the ExpectedElt. For this case, ExpectedElt is (NumElts*2 - 2).
+  // equal to the ExpectedElt.
   Imm = (M[0] >= 0) ? static_cast<unsigned>(M[0]) : ExpectedElt.getZExtValue();
 
-  // Adjust the index value if the source operands will be swapped.
-  if (Imm >= NumElts) {
+  // If no beginning UNDEFs, do swap when M[0] >= NumElts.
+  if (M[0] >= 0 && Imm >= NumElts) {
     ReverseEXT = true;
     Imm -= NumElts;
+  } else if (M[0] < 0) {
+    // Only do swap when beginning UNDEFs more than the first real element,
+    if (*FirstRealElt < FirstRealElt - M.begin())
+      ReverseEXT = true;
+    if (Imm >= NumElts)
+      Imm -= NumElts;
   }
 
   return true;
