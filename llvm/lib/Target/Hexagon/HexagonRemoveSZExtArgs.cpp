@@ -33,13 +33,13 @@ namespace {
     HexagonRemoveExtendArgs() : FunctionPass(ID) {
       initializeHexagonRemoveExtendArgsPass(*PassRegistry::getPassRegistry());
     }
-    virtual bool runOnFunction(Function &F);
+    bool runOnFunction(Function &F) override;
 
-    const char *getPassName() const {
+    const char *getPassName() const override {
       return "Remove sign extends";
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<MachineFunctionAnalysis>();
       AU.addPreserved<MachineFunctionAnalysis>();
       AU.addPreserved("stack-protector");

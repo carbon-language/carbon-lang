@@ -40,11 +40,13 @@ namespace {
       initializeHexagonFixupHwLoopsPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
-    const char *getPassName() const { return "Hexagon Hardware Loop Fixup"; }
+    const char *getPassName() const override {
+      return "Hexagon Hardware Loop Fixup";
+    }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
     }

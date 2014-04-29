@@ -19,7 +19,7 @@
 
 namespace llvm {
   class HexagonMCAsmInfo : public MCAsmInfoELF {
-    virtual void anchor();
+    void anchor() override;
   public:
     explicit HexagonMCAsmInfo(StringRef TT);
   };

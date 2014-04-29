@@ -49,10 +49,10 @@ private:
     initializeHexagonCFGOptimizerPass(*PassRegistry::getPassRegistry());
   }
 
-  const char *getPassName() const {
+  const char *getPassName() const override {
     return "Hexagon CFG Optimizer";
   }
-  bool runOnMachineFunction(MachineFunction &Fn);
+  bool runOnMachineFunction(MachineFunction &Fn) override;
 };
 
 

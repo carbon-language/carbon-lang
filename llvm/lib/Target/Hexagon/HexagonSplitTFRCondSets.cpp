@@ -68,10 +68,10 @@ class HexagonSplitTFRCondSets : public MachineFunctionPass {
       initializeHexagonSplitTFRCondSetsPass(*PassRegistry::getPassRegistry());
     }
 
-    const char *getPassName() const {
+    const char *getPassName() const override {
       return "Hexagon Split TFRCondSets";
     }
-    bool runOnMachineFunction(MachineFunction &Fn);
+    bool runOnMachineFunction(MachineFunction &Fn) override;
 };
 
 

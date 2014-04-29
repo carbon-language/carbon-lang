@@ -30,21 +30,22 @@ namespace llvm {
       Subtarget = &TM.getSubtarget<HexagonSubtarget>();
     }
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Hexagon Assembly Printer";
     }
 
-    bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock *MBB) const;
+    bool isBlockOnlyReachableByFallthrough(
+                                   const MachineBasicBlock *MBB) const override;
 
-    virtual void EmitInstruction(const MachineInstr *MI);
+    void EmitInstruction(const MachineInstr *MI) override;
 
     void printOperand(const MachineInstr *MI, unsigned OpNo, raw_ostream &O);
     bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                          unsigned AsmVariant, const char *ExtraCode,
-                         raw_ostream &OS);
+                         raw_ostream &OS) override;
     bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
                                unsigned AsmVariant, const char *ExtraCode,
-                               raw_ostream &OS);
+                               raw_ostream &OS) override;
 
     static const char *getRegisterName(unsigned RegNo);
   };

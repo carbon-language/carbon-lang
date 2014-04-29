@@ -40,124 +40,121 @@ public:
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
   ///
-  virtual const HexagonRegisterInfo &getRegisterInfo() const { return RI; }
+  const HexagonRegisterInfo &getRegisterInfo() const { return RI; }
 
   /// isLoadFromStackSlot - If the specified machine instruction is a direct
   /// load from a stack slot, return the virtual or physical register number of
   /// the destination along with the FrameIndex of the loaded stack slot.  If
   /// not, return 0.  This predicate must return 0 if the instruction has
   /// any side effects other than loading from the stack slot.
-  virtual unsigned isLoadFromStackSlot(const MachineInstr *MI,
-                                       int &FrameIndex) const;
+  unsigned isLoadFromStackSlot(const MachineInstr *MI,
+                               int &FrameIndex) const override;
 
   /// isStoreToStackSlot - If the specified machine instruction is a direct
   /// store to a stack slot, return the virtual or physical register number of
   /// the source reg along with the FrameIndex of the loaded stack slot.  If
   /// not, return 0.  This predicate must return 0 if the instruction has
   /// any side effects other than storing to the stack slot.
-  virtual unsigned isStoreToStackSlot(const MachineInstr *MI,
-                                      int &FrameIndex) const;
+  unsigned isStoreToStackSlot(const MachineInstr *MI,
+                              int &FrameIndex) const override;
 
 
-  virtual bool AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
-                                 MachineBasicBlock *&FBB,
-                                 SmallVectorImpl<MachineOperand> &Cond,
-                                 bool AllowModify) const;
+  bool AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
+                         MachineBasicBlock *&FBB,
+                         SmallVectorImpl<MachineOperand> &Cond,
+                         bool AllowModify) const override;
 
-  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
+  unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
 
-  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                                const SmallVectorImpl<MachineOperand> &Cond,
-                                DebugLoc DL) const;
+  unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                        MachineBasicBlock *FBB,
+                        const SmallVectorImpl<MachineOperand> &Cond,
+                        DebugLoc DL) const override;
 
-  virtual bool analyzeCompare(const MachineInstr *MI,
-                              unsigned &SrcReg, unsigned &SrcReg2,
-                              int &Mask, int &Value) const;
+  bool analyzeCompare(const MachineInstr *MI,
+                      unsigned &SrcReg, unsigned &SrcReg2,
+                      int &Mask, int &Value) const override;
 
-  virtual void copyPhysReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator I, DebugLoc DL,
-                           unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const;
+  void copyPhysReg(MachineBasicBlock &MBB,
+                   MachineBasicBlock::iterator I, DebugLoc DL,
+                   unsigned DestReg, unsigned SrcReg,
+                   bool KillSrc) const override;
 
-  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MBBI,
-                                   unsigned SrcReg, bool isKill, int FrameIndex,
-                                   const TargetRegisterClass *RC,
-                                   const TargetRegisterInfo *TRI) const;
+  void storeRegToStackSlot(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator MBBI,
+                           unsigned SrcReg, bool isKill, int FrameIndex,
+                           const TargetRegisterClass *RC,
+                           const TargetRegisterInfo *TRI) const override;
 
-  virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
-                              SmallVectorImpl<MachineOperand> &Addr,
-                              const TargetRegisterClass *RC,
-                              SmallVectorImpl<MachineInstr*> &NewMIs) const;
+  void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
+                      SmallVectorImpl<MachineOperand> &Addr,
+                      const TargetRegisterClass *RC,
+                      SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
-  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator MBBI,
-                                    unsigned DestReg, int FrameIndex,
-                                    const TargetRegisterClass *RC,
-                                    const TargetRegisterInfo *TRI) const;
+  void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MBBI,
+                            unsigned DestReg, int FrameIndex,
+                            const TargetRegisterClass *RC,
+                            const TargetRegisterInfo *TRI) const override;
 
-  virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                               SmallVectorImpl<MachineOperand> &Addr,
-                               const TargetRegisterClass *RC,
-                               SmallVectorImpl<MachineInstr*> &NewMIs) const;
+  void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                       SmallVectorImpl<MachineOperand> &Addr,
+                       const TargetRegisterClass *RC,
+                       SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
-  virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                              MachineInstr* MI,
-                                           const SmallVectorImpl<unsigned> &Ops,
-                                              int FrameIndex) const;
+  MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+                                      MachineInstr* MI,
+                                      const SmallVectorImpl<unsigned> &Ops,
+                                      int FrameIndex) const override;
 
-  virtual MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
-                                              MachineInstr* MI,
-                                           const SmallVectorImpl<unsigned> &Ops,
-                                              MachineInstr* LoadMI) const {
+  MachineInstr* foldMemoryOperandImpl(MachineFunction &MF,
+                                      MachineInstr* MI,
+                                      const SmallVectorImpl<unsigned> &Ops,
+                                      MachineInstr* LoadMI) const override {
     return nullptr;
   }
 
   unsigned createVR(MachineFunction* MF, MVT VT) const;
 
-  virtual bool isBranch(const MachineInstr *MI) const;
-  virtual bool isPredicable(MachineInstr *MI) const;
-  virtual bool
-  PredicateInstruction(MachineInstr *MI,
-                       const SmallVectorImpl<MachineOperand> &Cond) const;
+  bool isBranch(const MachineInstr *MI) const;
+  bool isPredicable(MachineInstr *MI) const override;
+  bool PredicateInstruction(MachineInstr *MI,
+                    const SmallVectorImpl<MachineOperand> &Cond) const override;
 
-  virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
-                                   unsigned ExtraPredCycles,
-                                   const BranchProbability &Probability) const;
+  bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
+                           unsigned ExtraPredCycles,
+                           const BranchProbability &Probability) const override;
 
-  virtual bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
-                                   unsigned NumTCycles, unsigned ExtraTCycles,
-                                   MachineBasicBlock &FMBB,
-                                   unsigned NumFCycles, unsigned ExtraFCycles,
-                                   const BranchProbability &Probability) const;
+  bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
+                           unsigned NumTCycles, unsigned ExtraTCycles,
+                           MachineBasicBlock &FMBB,
+                           unsigned NumFCycles, unsigned ExtraFCycles,
+                           const BranchProbability &Probability) const override;
 
-  virtual bool isPredicated(const MachineInstr *MI) const;
-  virtual bool isPredicated(unsigned Opcode) const;
-  virtual bool isPredicatedTrue(const MachineInstr *MI) const;
-  virtual bool isPredicatedTrue(unsigned Opcode) const;
-  virtual bool isPredicatedNew(const MachineInstr *MI) const;
-  virtual bool isPredicatedNew(unsigned Opcode) const;
-  virtual bool DefinesPredicate(MachineInstr *MI,
-                                std::vector<MachineOperand> &Pred) const;
-  virtual bool
-  SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
-                    const SmallVectorImpl<MachineOperand> &Pred2) const;
+  bool isPredicated(const MachineInstr *MI) const override;
+  bool isPredicated(unsigned Opcode) const;
+  bool isPredicatedTrue(const MachineInstr *MI) const;
+  bool isPredicatedTrue(unsigned Opcode) const;
+  bool isPredicatedNew(const MachineInstr *MI) const;
+  bool isPredicatedNew(unsigned Opcode) const;
+  bool DefinesPredicate(MachineInstr *MI,
+                        std::vector<MachineOperand> &Pred) const override;
+  bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
+                   const SmallVectorImpl<MachineOperand> &Pred2) const override;
 
-  virtual bool
-  ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+  bool
+  ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
 
-  virtual bool
-  isProfitableToDupForIfCvt(MachineBasicBlock &MBB,unsigned NumCycles,
-                            const BranchProbability &Probability) const;
+  bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
+                           const BranchProbability &Probability) const override;
 
-  virtual DFAPacketizer*
+  DFAPacketizer*
   CreateTargetScheduleState(const TargetMachine *TM,
-                            const ScheduleDAG *DAG) const;
+                            const ScheduleDAG *DAG) const override;
 
-  virtual bool isSchedulingBoundary(const MachineInstr *MI,
-                                    const MachineBasicBlock *MBB,
-                                    const MachineFunction &MF) const;
+  bool isSchedulingBoundary(const MachineInstr *MI,
+                            const MachineBasicBlock *MBB,
+                            const MachineFunction &MF) const override;
   bool isValidOffset(const int Opcode, const int Offset) const;
   bool isValidAutoIncImm(const EVT VT, const int Offset) const;
   bool isMemOp(const MachineInstr *MI) const;

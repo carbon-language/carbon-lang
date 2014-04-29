@@ -25,14 +25,13 @@ public:
   explicit HexagonSelectionDAGInfo(const HexagonTargetMachine &TM);
   ~HexagonSelectionDAGInfo();
 
-  virtual
   SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
                                   SDValue Chain,
                                   SDValue Dst, SDValue Src,
                                   SDValue Size, unsigned Align,
                                   bool isVolatile, bool AlwaysInline,
                                   MachinePointerInfo DstPtrInfo,
-                                  MachinePointerInfo SrcPtrInfo) const;
+                                  MachinePointerInfo SrcPtrInfo) const override;
 };
 
 }

@@ -41,39 +41,39 @@ public:
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
 
-  virtual const HexagonInstrInfo *getInstrInfo() const {
+  const HexagonInstrInfo *getInstrInfo() const override {
     return &InstrInfo;
   }
-  virtual const HexagonSubtarget *getSubtargetImpl() const {
+  const HexagonSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }
-  virtual const HexagonRegisterInfo *getRegisterInfo() const {
+  const HexagonRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual const InstrItineraryData* getInstrItineraryData() const {
+  const InstrItineraryData* getInstrItineraryData() const override {
     return InstrItins;
   }
 
 
-  virtual const HexagonTargetLowering* getTargetLowering() const {
+  const HexagonTargetLowering* getTargetLowering() const override {
     return &TLInfo;
   }
 
-  virtual const HexagonFrameLowering* getFrameLowering() const {
+  const HexagonFrameLowering* getFrameLowering() const override {
     return &FrameLowering;
   }
 
-  virtual const HexagonSelectionDAGInfo* getSelectionDAGInfo() const {
+  const HexagonSelectionDAGInfo* getSelectionDAGInfo() const override {
     return &TSInfo;
   }
 
-  virtual const DataLayout       *getDataLayout() const { return &DL; }
+  const DataLayout       *getDataLayout() const override { return &DL; }
   static unsigned getModuleMatchQuality(const Module &M);
 
   // Pass Pipeline Configuration.
-  virtual bool addPassesForOptimizations(PassManagerBase &PM);
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  virtual bool addPassesForOptimizations(PassManagerBase &PM) final;
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 };
 
 extern bool flag_aligned_memcpy;
