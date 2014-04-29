@@ -724,11 +724,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
   case Intrinsic::x86_avx_vpermilvar_pd_256: {
     // Convert vpermil* to shufflevector if the mask is constant.
     Value *V = II->getArgOperand(1);
+    unsigned Size = cast<VectorType>(V->getType())->getNumElements();
+    assert(Size == 8 || Size == 4 || Size == 2);
+    uint32_t Indexes[8];
     if (auto C = dyn_cast<ConstantDataVector>(V)) {
-      unsigned Size = C->getNumElements();
-      assert(Size == 8 || Size == 4 || Size == 2);
-      uint32_t Indexes[8];
-
       // The intrinsics only read one or two bits, clear the rest.
       for (unsigned I = 0; I < Size; ++I) {
         uint32_t Index = C->getElementAsInteger(I) & 0x3;
@@ -737,23 +736,26 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           Index >>= 1;
         Indexes[I] = Index;
       }
-
-      // The _256 variants are a bit trickier since the mask bits always index
-      // into the corresponding 128 half. In order to convert to a generic
-      // shuffle, we have to make that explicit.
-      if (II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_ps_256 ||
-          II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256) {
-        for (unsigned I = Size / 2; I < Size; ++I)
-          Indexes[I] += Size / 2;
-      }
-      auto NewC =
-          ConstantDataVector::get(C->getContext(), makeArrayRef(Indexes, Size));
-      auto V1 = II->getArgOperand(0);
-      auto V2 = UndefValue::get(V1->getType());
-      auto Shuffle = Builder->CreateShuffleVector(V1, V2, NewC);
-      return ReplaceInstUsesWith(CI, Shuffle);
+    } else if (isa<ConstantAggregateZero>(V)) {
+      for (unsigned I = 0; I < Size; ++I)
+        Indexes[I] = 0;
+    } else {
+      break;
     }
-    break;
+    // The _256 variants are a bit trickier since the mask bits always index
+    // into the corresponding 128 half. In order to convert to a generic
+    // shuffle, we have to make that explicit.
+    if (II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_ps_256 ||
+        II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256) {
+      for (unsigned I = Size / 2; I < Size; ++I)
+        Indexes[I] += Size / 2;
+    }
+    auto NewC =
+        ConstantDataVector::get(V->getContext(), makeArrayRef(Indexes, Size));
+    auto V1 = II->getArgOperand(0);
+    auto V2 = UndefValue::get(V1->getType());
+    auto Shuffle = Builder->CreateShuffleVector(V1, V2, NewC);
+    return ReplaceInstUsesWith(CI, Shuffle);
   }
 
   case Intrinsic::ppc_altivec_vperm:

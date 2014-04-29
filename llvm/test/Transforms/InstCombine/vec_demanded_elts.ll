@@ -339,6 +339,34 @@ define <4 x double> @test_vpermilvar_pd_256(<4 x double> %v) {
   ret <4 x double> %a
 }
 
+define <4 x float> @test_vpermilvar_ps_zero(<4 x float> %v) {
+; CHECK-LABEL: @test_vpermilvar_ps_zero(
+; CHECK: shufflevector <4 x float> %v, <4 x float> undef, <4 x i32> zeroinitializer
+  %a = tail call <4 x float> @llvm.x86.avx.vpermilvar.ps(<4 x float> %v, <4 x i32> zeroinitializer)
+  ret <4 x float> %a
+}
+
+define <8 x float> @test_vpermilvar_ps_256_zero(<8 x float> %v) {
+; CHECK-LABEL: @test_vpermilvar_ps_256_zero(
+; CHECK: shufflevector <8 x float> %v, <8 x float> undef, <8 x i32> <i32 0, i32 0, i32 0, i32 0, i32 4, i32 4, i32 4, i32 4>
+  %a = tail call <8 x float> @llvm.x86.avx.vpermilvar.ps.256(<8 x float> %v, <8 x i32> zeroinitializer)
+  ret <8 x float> %a
+}
+
+define <2 x double> @test_vpermilvar_pd_zero(<2 x double> %v) {
+; CHECK-LABEL: @test_vpermilvar_pd_zero(
+; CHECK: shufflevector <2 x double> %v, <2 x double> undef, <2 x i32> zeroinitializer
+  %a = tail call <2 x double> @llvm.x86.avx.vpermilvar.pd(<2 x double> %v, <2 x i32> zeroinitializer)
+  ret <2 x double> %a
+}
+
+define <4 x double> @test_vpermilvar_pd_256_zero(<4 x double> %v) {
+; CHECK-LABEL: @test_vpermilvar_pd_256_zero(
+; CHECK: shufflevector <4 x double> %v, <4 x double> undef, <4 x i32> <i32 0, i32 0, i32 2, i32 2>
+  %a = tail call <4 x double> @llvm.x86.avx.vpermilvar.pd.256(<4 x double> %v, <4 x i32> zeroinitializer)
+  ret <4 x double> %a
+}
+
 define <2 x i64> @test_sse2_1() nounwind readnone uwtable {
   %S = bitcast i32 1 to i32
   %1 = zext i32 %S to i64
