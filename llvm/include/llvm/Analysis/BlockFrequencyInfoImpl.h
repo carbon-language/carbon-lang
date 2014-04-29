@@ -758,60 +758,6 @@ public:
     return *this;
   }
 
-  /// \brief Scale by another mass.
-  ///
-  /// The current implementation is a little imprecise, but it's relatively
-  /// fast, never overflows, and maintains the property that 1.0*1.0==1.0
-  /// (where isFull represents the number 1.0).  It's an approximation of
-  /// 128-bit multiply that gets right-shifted by 64-bits.
-  ///
-  /// For a given digit size, multiplying two-digit numbers looks like:
-  ///
-  ///                  U1 .    L1
-  ///                * U2 .    L2
-  ///                ============
-  ///           0 .       . L1*L2
-  ///     +     0 . U1*L2 .     0 // (shift left once by a digit-size)
-  ///     +     0 . U2*L1 .     0 // (shift left once by a digit-size)
-  ///     + U1*L2 .     0 .     0 // (shift left twice by a digit-size)
-  ///
-  /// BlockMass has 64-bit numbers.  Split each into two 32-bit digits, stored
-  /// 64-bit.  Add 1 to the lower digits, to model isFull as 1.0; this won't
-  /// overflow, since we have 64-bit storage for each digit.
-  ///
-  /// To do this accurately, (a) multiply into two 64-bit digits, incrementing
-  /// the upper digit on overflows of the lower digit (carry), (b) subtract 1
-  /// from the lower digit, decrementing the upper digit on underflow (carry),
-  /// and (c) truncate the lower digit.  For the 1.0*1.0 case, the upper digit
-  /// will be 0 at the end of step (a), and then will underflow back to isFull
-  /// (1.0) in step (b).
-  ///
-  /// Instead, the implementation does something a little faster with a small
-  /// loss of accuracy: ignore the lower 64-bit digit entirely.  The loss of
-  /// accuracy is small, since the sum of the unmodelled carries is 0 or 1
-  /// (i.e., step (a) will overflow at most once, and step (b) will underflow
-  /// only if step (a) overflows).
-  ///
-  /// This is the formula we're calculating:
-  ///
-  ///     U1.L1 * U2.L2 == U1 * U2 + (U1 * (L2+1))>>32 + (U2 * (L1+1))>>32
-  ///
-  /// As a demonstration of 1.0*1.0, consider two 4-bit numbers that are both
-  /// full (1111).
-  ///
-  ///     U1.L1 * U2.L2 == U1 * U2 + (U1 * (L2+1))>>2 + (U2 * (L1+1))>>2
-  ///     11.11 * 11.11 == 11 * 11 + (11 * (11+1))/4 + (11 * (11+1))/4
-  ///                   == 1001 + (11 * 100)/4 + (11 * 100)/4
-  ///                   == 1001 + 1100/4 + 1100/4
-  ///                   == 1001 + 0011 + 0011
-  ///                   == 1111
-  BlockMass &operator*=(const BlockMass &X) {
-    uint64_t U1 = Mass >> 32, L1 = Mass & UINT32_MAX, U2 = X.Mass >> 32,
-             L2 = X.Mass & UINT32_MAX;
-    Mass = U1 * U2 + (U1 * (L2 + 1) >> 32) + ((L1 + 1) * U2 >> 32);
-    return *this;
-  }
-
   /// \brief Multiply by a branch probability.
   ///
   /// Multiply by P.  Guarantees full precision.
@@ -860,9 +806,6 @@ inline BlockMass operator+(const BlockMass &L, const BlockMass &R) {
 }
 inline BlockMass operator-(const BlockMass &L, const BlockMass &R) {
   return BlockMass(L) -= R;
-}
-inline BlockMass operator*(const BlockMass &L, const BlockMass &R) {
-  return BlockMass(L) *= R;
 }
 inline BlockMass operator*(const BlockMass &L, const BranchProbability &R) {
   return BlockMass(L) *= R;
