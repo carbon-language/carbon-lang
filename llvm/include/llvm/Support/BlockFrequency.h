@@ -23,13 +23,7 @@ class BranchProbability;
 
 // This class represents Block Frequency as a 64-bit value.
 class BlockFrequency {
-
   uint64_t Frequency;
-
-  /// \brief Scale the given BlockFrequency by N/D. Return the remainder from
-  /// the division by D. Upon overflow, the routine will saturate and
-  /// additionally will return the remainder set to D.
-  uint32_t scale(uint32_t N, uint32_t D);
 
 public:
   BlockFrequency(uint64_t Freq = 0) : Frequency(Freq) { }
@@ -57,10 +51,6 @@ public:
 
   /// \brief Shift block frequency to the right by count digits saturating to 1.
   BlockFrequency &operator>>=(const unsigned count);
-
-  /// \brief Scale the given BlockFrequency by N/D. Return the remainder from
-  /// the division by D. Upon overflow, the routine will saturate.
-  uint32_t scale(const BranchProbability &Prob);
 
   bool operator<(const BlockFrequency &RHS) const {
     return Frequency < RHS.Frequency;
