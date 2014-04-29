@@ -5096,9 +5096,11 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
   }
 
   float Cost = expectedCost(1);
+#ifndef NDEBUG
   const float ScalarCost = Cost;
+#endif /* NDEBUG */
   unsigned Width = 1;
-  DEBUG(dbgs() << "LV: Scalar loop costs: " << (int)Cost << ".\n");
+  DEBUG(dbgs() << "LV: Scalar loop costs: " << (int)ScalarCost << ".\n");
 
   // Ignore scalar width, because the user explicitly wants vectorization.
   if (ForceVectorization && VF > 1) {
@@ -5122,7 +5124,6 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
   DEBUG(if (ForceVectorization && Width > 1 && Cost >= ScalarCost) dbgs()
         << "LV: Vectorization seems to be not beneficial, "
         << "but was forced by a user.\n");
-  (void)ScalarCost;
   DEBUG(dbgs() << "LV: Selecting VF: "<< Width << ".\n");
   Factor.Width = Width;
   Factor.Cost = Width * Cost;
