@@ -11,6 +11,8 @@ define i32 @t1() {
 }
 
 ; CHECK:      L_A$non_lazy_ptr:
-; CHECK-NEXT: .long _A
+; CHECK-NEXT: .indirect_symbol _A
+; CHECK-NEXT: .long 0
 ; CHECK:      L_B$non_lazy_ptr:
-; CHECK-NEXT: .long _B
+; CHECK-NEXT: .indirect_symbol _B
+; CHECK-NEXT: .long 0
