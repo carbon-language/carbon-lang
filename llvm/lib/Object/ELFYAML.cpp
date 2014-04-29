@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Object/ELFYAML.h"
+#include "llvm/Support/Casting.h"
 
 namespace llvm {
 

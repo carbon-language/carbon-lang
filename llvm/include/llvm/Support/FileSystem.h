@@ -577,7 +577,7 @@ error_code createTemporaryFile(const Twine &Prefix, StringRef Suffix,
 error_code createUniqueDirectory(const Twine &Prefix,
                                  SmallVectorImpl<char> &ResultPath);
 
-enum OpenFlags {
+enum OpenFlags : unsigned {
   F_None = 0,
 
   /// F_Excl - When opening a file, this flag makes raw_fd_ostream

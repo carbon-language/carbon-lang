@@ -14,6 +14,7 @@
 #ifndef LLVM_PROFILEDATA_INSTRPROF_INDEXED_H_
 #define LLVM_PROFILEDATA_INSTRPROF_INDEXED_H_
 
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MD5.h"
 
 namespace llvm {

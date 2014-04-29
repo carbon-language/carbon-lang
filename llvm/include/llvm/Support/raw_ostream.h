@@ -17,12 +17,17 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/FileSystem.h"
 
 namespace llvm {
   class format_object_base;
   template <typename T>
   class SmallVectorImpl;
+
+  namespace sys {
+    namespace fs {
+      enum OpenFlags : unsigned;
+    }
+  }
 
 /// raw_ostream - This class implements an extremely fast bulk output stream
 /// that can *only* output to a stream.  It does not support seeking, reopening,
