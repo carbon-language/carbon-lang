@@ -65,6 +65,15 @@ define <8 x i8> @test_vextd_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 	ret <8 x i8> %tmp3
 }
 
+define <8 x i8> @test_vextd_undef2(<8 x i8>* %A, <8 x i8>* %B) nounwind {
+;CHECK-LABEL: test_vextd_undef2:
+;CHECK: {{ext.8b.*#6}}
+  %tmp1 = load <8 x i8>* %A
+  %tmp2 = load <8 x i8>* %B
+  %tmp3 = shufflevector <8 x i8> %tmp1, <8 x i8> %tmp2, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 2, i32 3, i32 4, i32 5>
+  ret <8 x i8> %tmp3
+}
+
 define <16 x i8> @test_vextRq_undef(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 ;CHECK-LABEL: test_vextRq_undef:
 ;CHECK: {{ext.16b.*#7}}
@@ -72,6 +81,14 @@ define <16 x i8> @test_vextRq_undef(<16 x i8>* %A, <16 x i8>* %B) nounwind {
 	%tmp2 = load <16 x i8>* %B
 	%tmp3 = shufflevector <16 x i8> %tmp1, <16 x i8> %tmp2, <16 x i32> <i32 23, i32 24, i32 25, i32 26, i32 undef, i32 undef, i32 29, i32 30, i32 31, i32 0, i32 1, i32 2, i32 3, i32 4, i32 undef, i32 6>
 	ret <16 x i8> %tmp3
+}
+
+define <8 x i16> @test_vextRq_undef2(<8 x i16>* %A) nounwind {
+;CHECK-LABEL: test_vextRq_undef2:
+;CHECK: {{ext.16b.*#10}}
+  %tmp1 = load <8 x i16>* %A
+  %vext = shufflevector <8 x i16> %tmp1, <8 x i16> undef, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 1, i32 2, i32 3, i32 4>
+  ret <8 x i16> %vext;
 }
 
 ; Tests for ReconstructShuffle function. Indices have to be carefully

@@ -3981,39 +3981,34 @@ static bool isSingletonEXTMask(ArrayRef<int> M, EVT VT, unsigned &Imm) {
 // vector sources of the shuffle are different.
 static bool isEXTMask(ArrayRef<int> M, EVT VT, bool &ReverseEXT,
                       unsigned &Imm) {
+  // Look for the first non-undef element.
+  const int *FirstRealElt = std::find_if(M.begin(), M.end(),
+      [](int Elt) {return Elt >= 0;});
+
+  // Benefit form APInt to handle overflow when calculating expected element.
   unsigned NumElts = VT.getVectorNumElements();
-  ReverseEXT = false;
+  unsigned MaskBits = APInt(32, NumElts * 2).logBase2();
+  APInt ExpectedElt = APInt(MaskBits, *FirstRealElt + 1);
+  // The following shuffle indices must be the successive elements after the
+  // first real element.
+  const int *FirstWrongElt = std::find_if(FirstRealElt + 1, M.end(),
+      [&](int Elt) {return Elt != ExpectedElt++ && Elt != -1;});
+  if (FirstWrongElt != M.end())
+    return false;
 
-  // Look for the first non-undef choice and count backwards from
-  // that. E.g. <-1, -1, 3, ...> means that an EXT must start at 3 - 2 = 1. This
-  // guarantees that at least one index is correct.
-  const int *FirstRealElt =
-      std::find_if(M.begin(), M.end(), [](int Elt) { return Elt >= 0; });
-  assert(FirstRealElt != M.end() && "Completely UNDEF shuffle? Why bother?");
-  Imm = *FirstRealElt - (FirstRealElt - M.begin());
-
-  // If this is a VEXT shuffle, the immediate value is the index of the first
-  // element.  The other shuffle indices must be the successive elements after
-  // the first one.
-  unsigned ExpectedElt = Imm;
-  for (unsigned i = 1; i < NumElts; ++i) {
-    // Increment the expected index.  If it wraps around, it may still be
-    // a VEXT but the source vectors must be swapped.
-    ExpectedElt += 1;
-    if (ExpectedElt == NumElts * 2) {
-      ExpectedElt = 0;
-      ReverseEXT = true;
-    }
-
-    if (M[i] < 0)
-      continue; // ignore UNDEF indices
-    if (ExpectedElt != static_cast<unsigned>(M[i]))
-      return false;
-  }
+  // The index of an EXT is the first element if it is not UNDEF.
+  // Watch out for the beginning UNDEFs. The EXT index should be the expected
+  // value of the first element.
+  // E.g. <-1, -1, 3, ...> is treated as <1, 2, 3, ...>.
+  //      <-1, -1, 0, 1, ...> is treated as <IDX, IDX+1, 0, 1, ...>. IDX is
+  // equal to the ExpectedElt. For this case, ExpectedElt is (NumElts*2 - 2).
+  Imm = (M[0] >= 0) ? static_cast<unsigned>(M[0]) : ExpectedElt.getZExtValue();
 
   // Adjust the index value if the source operands will be swapped.
-  if (ReverseEXT)
+  if (Imm >= NumElts) {
+    ReverseEXT = true;
     Imm -= NumElts;
+  }
 
   return true;
 }
