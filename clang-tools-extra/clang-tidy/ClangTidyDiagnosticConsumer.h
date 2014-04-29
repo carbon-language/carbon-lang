@@ -28,6 +28,8 @@ class CompilationDatabase;
 
 namespace tidy {
 
+struct ClangTidyOptions;
+
 /// \brief A message from a clang-tidy check.
 ///
 /// Note that this is independent of a \c SourceManager.
@@ -59,7 +61,7 @@ struct ClangTidyError {
 /// \brief Filters checks by name.
 class ChecksFilter {
 public:
-  ChecksFilter(StringRef EnableChecksRegex, StringRef DisableChecksRegex);
+  ChecksFilter(const ClangTidyOptions& Options);
   bool isCheckEnabled(StringRef Name);
 
 private:
@@ -79,7 +81,7 @@ private:
 class ClangTidyContext {
 public:
   ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors,
-                   StringRef EnableChecksRegex, StringRef DisableChecksRegex);
+                   const ClangTidyOptions &Options);
 
   /// \brief Report any errors detected using this method.
   ///

@@ -49,18 +49,21 @@ static cl::opt<bool> ListChecks("list-checks",
 int main(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
 
+  clang::tidy::ClangTidyOptions Options;
+  Options.EnableChecksRegex = Checks;
+  Options.DisableChecksRegex = DisableChecks;
+
   // FIXME: Allow using --list-checks without positional arguments.
   if (ListChecks) {
     llvm::outs() << "Enabled checks:";
-    for (auto CheckName : clang::tidy::getCheckNames(Checks, DisableChecks))
+    for (auto CheckName : clang::tidy::getCheckNames(Options))
       llvm::outs() << "\n    " << CheckName;
     llvm::outs() << "\n\n";
     return 0;
   }
 
   SmallVector<clang::tidy::ClangTidyError, 16> Errors;
-  clang::tidy::runClangTidy(Checks, DisableChecks,
-                            OptionsParser.getCompilations(),
+  clang::tidy::runClangTidy(Options, OptionsParser.getCompilations(),
                             OptionsParser.getSourcePathList(), &Errors);
   clang::tidy::handleErrors(Errors, Fix);
 

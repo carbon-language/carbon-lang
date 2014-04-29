@@ -11,6 +11,7 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_H
 
 #include "ClangTidyDiagnosticConsumer.h"
+#include "ClangTidyOptions.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
@@ -115,11 +116,10 @@ private:
 
 /// \brief Fills the list of check names that are enabled when the provided
 /// filters are applied.
-std::vector<std::string> getCheckNames(StringRef EnableChecksRegex,
-                                       StringRef DisableChecksRegex);
+std::vector<std::string> getCheckNames(const ClangTidyOptions &Options);
 
 /// \brief Run a set of clang-tidy checks on a set of files.
-void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
+void runClangTidy(const ClangTidyOptions &Options,
                   const tooling::CompilationDatabase &Compilations,
                   ArrayRef<std::string> Ranges,
                   SmallVectorImpl<ClangTidyError> *Errors);

@@ -18,6 +18,7 @@
 
 #include "ClangTidyDiagnosticConsumer.h"
 
+#include "ClangTidyOptions.h"
 #include "clang/Frontend/DiagnosticRenderer.h"
 #include "llvm/ADT/SmallString.h"
 
@@ -113,19 +114,17 @@ ClangTidyMessage::ClangTidyMessage(StringRef Message,
 ClangTidyError::ClangTidyError(StringRef CheckName)
     : CheckName(CheckName) {}
 
-ChecksFilter::ChecksFilter(StringRef EnableChecksRegex,
-                           StringRef DisableChecksRegex)
-    : EnableChecks(EnableChecksRegex), DisableChecks(DisableChecksRegex) {}
+ChecksFilter::ChecksFilter(const ClangTidyOptions &Options)
+    : EnableChecks(Options.EnableChecksRegex),
+      DisableChecks(Options.DisableChecksRegex) {}
 
 bool ChecksFilter::isCheckEnabled(StringRef Name) {
   return EnableChecks.match(Name) && !DisableChecks.match(Name);
 }
 
 ClangTidyContext::ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors,
-                                   StringRef EnableChecksRegex,
-                                   StringRef DisableChecksRegex)
-    : Errors(Errors), DiagEngine(nullptr),
-      Filter(EnableChecksRegex, DisableChecksRegex) {}
+                                   const ClangTidyOptions &Options)
+    : Errors(Errors), DiagEngine(nullptr), Filter(Options) {}
 
 DiagnosticBuilder ClangTidyContext::diag(
     StringRef CheckName, SourceLocation Loc, StringRef Description,

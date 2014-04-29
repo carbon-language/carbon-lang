@@ -285,24 +285,21 @@ void ClangTidyCheck::setName(StringRef Name) {
   CheckName = Name.str();
 }
 
-std::vector<std::string> getCheckNames(StringRef EnableChecksRegex,
-                                       StringRef DisableChecksRegex) {
+std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
   SmallVector<ClangTidyError, 8> Errors;
-  clang::tidy::ClangTidyContext Context(&Errors, EnableChecksRegex,
-                                        DisableChecksRegex);
+  clang::tidy::ClangTidyContext Context(&Errors, Options);
   ClangTidyASTConsumerFactory Factory(Context);
   return Factory.getCheckNames();
 }
 
-void runClangTidy(StringRef EnableChecksRegex, StringRef DisableChecksRegex,
+void runClangTidy(const ClangTidyOptions &Options,
                   const tooling::CompilationDatabase &Compilations,
                   ArrayRef<std::string> Ranges,
                   SmallVectorImpl<ClangTidyError> *Errors) {
   // FIXME: Ranges are currently full files. Support selecting specific
   // (line-)ranges.
   ClangTool Tool(Compilations, Ranges);
-  clang::tidy::ClangTidyContext Context(Errors, EnableChecksRegex,
-                                        DisableChecksRegex);
+  clang::tidy::ClangTidyContext Context(Errors, Options);
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
 
   Tool.setDiagnosticConsumer(&DiagConsumer);

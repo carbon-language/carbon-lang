@@ -43,7 +43,7 @@ template <typename T>
 std::string runCheckOnCode(StringRef Code,
                            SmallVectorImpl<ClangTidyError> &Errors) {
   T Check;
-  ClangTidyContext Context(&Errors, ".*", "");
+  ClangTidyContext Context(&Errors, ClangTidyOptions());
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
   Check.setContext(&Context);
   std::vector<std::string> ArgCXX11(1, "-std=c++11");
@@ -59,10 +59,8 @@ std::string runCheckOnCode(StringRef Code,
     return "";
   DiagConsumer.finish();
   tooling::Replacements Fixes;
-  for (SmallVector<ClangTidyError, 16>::const_iterator I = Errors.begin(),
-                                                       E = Errors.end();
-       I != E; ++I)
-    Fixes.insert(I->Fix.begin(), I->Fix.end());
+  for (const ClangTidyError &Error : Errors)
+    Fixes.insert(Error.Fix.begin(), Error.Fix.end());
   return tooling::applyAllReplacements(Code, Fixes);
 }
 
