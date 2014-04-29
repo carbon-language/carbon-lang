@@ -71,7 +71,8 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
                   Ctor->getOuterLocStart(), Ctor->getLocEnd(), isKWExplicit);
     if (ExplicitTokenRange.isValid()) {
       DiagnosticBuilder Diag = diag(ExplicitTokenRange.getBegin(),
-                                    "Copy constructor declared explicit.");
+                                    "%0 constructor declared explicit.")
+                               << (Ctor->isMoveConstructor() ? "Move" : "Copy");
       Diag << FixItHint::CreateRemoval(
           CharSourceRange::getCharRange(ExplicitTokenRange));
     }

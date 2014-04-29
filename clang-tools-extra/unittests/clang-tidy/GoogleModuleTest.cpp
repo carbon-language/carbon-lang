@@ -39,12 +39,12 @@ TEST(ExplicitConstructorCheckTest, OutOfLineDefinitions) {
 
 TEST(ExplicitConstructorCheckTest, RemoveExplicit) {
   EXPECT_EQ("class A { A(const A&); };\n"
-            "class B { /*asdf*/  B(const B&); };\n"
-            "class C { /*asdf*/  C(const C&); };",
+            "class B { /*asdf*/  B(B&&); };\n"
+            "class C { /*asdf*/  C(const C&, int i = 0); };",
             runCheckOnCode<ExplicitConstructorCheck>(
                 "class A { explicit    A(const A&); };\n"
-                "class B { explicit   /*asdf*/  B(const B&); };\n"
-                "class C { explicit/*asdf*/  C(const C&); };"));
+                "class B { explicit   /*asdf*/  B(B&&); };\n"
+                "class C { explicit/*asdf*/  C(const C&, int i = 0); };"));
 }
 
 } // namespace test
