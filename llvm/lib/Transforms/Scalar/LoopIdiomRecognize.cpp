@@ -342,8 +342,8 @@ bool NclPopcountRecognize::preliminaryScreen() {
   return true;
 }
 
-Value *NclPopcountRecognize::matchCondition (BranchInst *Br,
-                                             BasicBlock *LoopEntry) const {
+Value *NclPopcountRecognize::matchCondition(BranchInst *Br,
+                                            BasicBlock *LoopEntry) const {
   if (!Br || !Br->isConditional())
     return nullptr;
 
