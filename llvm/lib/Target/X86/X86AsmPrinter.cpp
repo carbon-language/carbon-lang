@@ -527,6 +527,30 @@ void X86AsmPrinter::EmitStartOfAsmFile(Module &M) {
   }
 }
 
+static void
+emitNonLazySymbolPointer(MCStreamer &OutStreamer, MCSymbol *StubLabel,
+                         MachineModuleInfoImpl::StubValueTy &MCSym) {
+  // L_foo$stub:
+  OutStreamer.EmitLabel(StubLabel);
+  //   .indirect_symbol _foo
+  OutStreamer.EmitSymbolAttribute(MCSym.getPointer(), MCSA_IndirectSymbol);
+
+  if (MCSym.getInt())
+    // External to current translation unit.
+    OutStreamer.EmitIntValue(0, 4/*size*/);
+  else
+    // Internal to current translation unit.
+    //
+    // When we place the LSDA into the TEXT section, the type info
+    // pointers need to be indirect and pc-rel. We accomplish this by
+    // using NLPs; however, sometimes the types are local to the file.
+    // We need to fill in the value for the NLP in those cases.
+    OutStreamer.EmitValue(
+        MCSymbolRefExpr::Create(MCSym.getPointer(), OutStreamer.getContext()),
+        4 /*size*/);
+}
+
+
 
 void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetMacho()) {
@@ -571,44 +595,24 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
                                    SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
 
-      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-        // L_foo$non_lazy_ptr:
-        OutStreamer.EmitLabel(Stubs[i].first);
-        // .indirect_symbol _foo
-        MachineModuleInfoImpl::StubValueTy &MCSym = Stubs[i].second;
-        OutStreamer.EmitSymbolAttribute(MCSym.getPointer(),
-                                        MCSA_IndirectSymbol);
-        // .long 0
-        if (MCSym.getInt())
-          // External to current translation unit.
-          OutStreamer.EmitIntValue(0, 4/*size*/);
-        else
-          // Internal to current translation unit.
-          //
-          // When we place the LSDA into the TEXT section, the type info
-          // pointers need to be indirect and pc-rel. We accomplish this by
-          // using NLPs.  However, sometimes the types are local to the file. So
-          // we need to fill in the value for the NLP in those cases.
-          OutStreamer.EmitValue(MCSymbolRefExpr::Create(MCSym.getPointer(),
-                                                        OutContext), 4/*size*/);
-      }
+      for (auto &Stub : Stubs)
+        emitNonLazySymbolPointer(OutStreamer, Stub.first, Stub.second);
+
       Stubs.clear();
       OutStreamer.AddBlankLine();
     }
 
     Stubs = MMIMacho.GetHiddenGVStubList();
     if (!Stubs.empty()) {
-      OutStreamer.SwitchSection(getObjFileLowering().getDataSection());
-      EmitAlignment(2);
+      const MCSection *TheSection =
+        OutContext.getMachOSection("__IMPORT", "__pointers",
+                                   MachO::S_NON_LAZY_SYMBOL_POINTERS,
+                                   SectionKind::getMetadata());
+      OutStreamer.SwitchSection(TheSection);
 
-      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-        // L_foo$non_lazy_ptr:
-        OutStreamer.EmitLabel(Stubs[i].first);
-        // .long _foo
-        OutStreamer.EmitValue(MCSymbolRefExpr::
-                              Create(Stubs[i].second.getPointer(),
-                                     OutContext), 4/*size*/);
-      }
+      for (auto &Stub : Stubs)
+        emitNonLazySymbolPointer(OutStreamer, Stub.first, Stub.second);
+
       Stubs.clear();
       OutStreamer.AddBlankLine();
     }
