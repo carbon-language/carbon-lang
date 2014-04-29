@@ -1584,7 +1584,7 @@ else {
     }
   }
   else {
-    $Clang = Cwd::realpath($AnalyzerDiscoveryMethod);
+    $Clang = $AnalyzerDiscoveryMethod;
 	if (!defined $Clang or not -x $Clang) {
    	  DieDiag("Cannot find an executable clang at '$AnalyzerDiscoveryMethod'\n");
 	}
