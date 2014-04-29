@@ -80,7 +80,7 @@ TEST(BranchProbabilityTest, Operators) {
   EXPECT_TRUE(BP(4, 7) != BP(3, 7));
 }
 
-TEST(BlockProbabilityTest, MoreOperators) {
+TEST(BranchProbabilityTest, MoreOperators) {
   BP A(4, 5);
   BP B(4U << 29, 5U << 29);
   BP C(3, 4);
@@ -184,7 +184,7 @@ TEST(BranchProbabilityTest, scaleByInverse) {
             BP(Two31 + 1, UINT32_MAX).scaleByInverse(Two63 + Two31));
 }
 
-TEST(BlockProbabilityTest, scaleBruteForce) {
+TEST(BranchProbabilityTest, scaleBruteForce) {
   struct {
     uint64_t Num;
     uint32_t Prob[2];
