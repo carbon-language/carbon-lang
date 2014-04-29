@@ -106,7 +106,7 @@ multiclass MovnPats<RegisterClass CRC, RegisterClass DRC, Instruction MOVNInst,
 def MOVZ_I_I : MMRel, CMov_I_I_FT<"movz", GPR32Opnd, GPR32Opnd, II_MOVZ>,
                ADD_FM<0, 0xa>;
 
-let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1 in {
   def MOVZ_I_I64   : CMov_I_I_FT<"movz", GPR32Opnd, GPR64Opnd, II_MOVZ>,
                      ADD_FM<0, 0xa>;
   def MOVZ_I64_I   : CMov_I_I_FT<"movz", GPR64Opnd, GPR32Opnd, II_MOVZ>,
@@ -118,7 +118,7 @@ let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
 def MOVN_I_I       : MMRel, CMov_I_I_FT<"movn", GPR32Opnd, GPR32Opnd, II_MOVN>,
                      ADD_FM<0, 0xb>;
 
-let Predicates = [HasStdEnc], isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1 in {
   def MOVN_I_I64   : CMov_I_I_FT<"movn", GPR32Opnd, GPR64Opnd, II_MOVN>,
                      ADD_FM<0, 0xb>;
   def MOVN_I64_I   : CMov_I_I_FT<"movn", GPR64Opnd, GPR32Opnd, II_MOVN>,
