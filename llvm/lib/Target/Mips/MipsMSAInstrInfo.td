@@ -3731,3 +3731,55 @@ def SZ_D_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAllZero, v2i64,
                                                MSA128D, NoItinerary>;
 def SZ_V_PSEUDO : MSA_CBRANCH_PSEUDO_DESC_BASE<MipsVAnyZero, v16i8,
                                                MSA128B, NoItinerary>;
+
+// Vector extraction with variable index
+def : MSAPat<(i32 (vextract_sext_i8 v16i8:$ws, i32:$idx)),
+             (SRA (COPY_TO_REGCLASS (i32 (EXTRACT_SUBREG (SPLAT_B v16i8:$ws,
+                                                                  i32:$idx),
+                                                         sub_lo)),
+                                    GPR32), (i32 24))>;
+def : MSAPat<(i32 (vextract_sext_i16 v8i16:$ws, i32:$idx)),
+             (SRA (COPY_TO_REGCLASS (i32 (EXTRACT_SUBREG (SPLAT_H v8i16:$ws,
+                                                                  i32:$idx),
+                                                         sub_lo)),
+                                    GPR32), (i32 16))>;
+def : MSAPat<(i32 (vextract_sext_i32 v4i32:$ws, i32:$idx)),
+             (COPY_TO_REGCLASS (i32 (EXTRACT_SUBREG (SPLAT_W v4i32:$ws,
+                                                             i32:$idx),
+                                                    sub_lo)),
+                               GPR32)>;
+def : MSAPat<(i64 (vextract_sext_i64 v2i64:$ws, i32:$idx)),
+             (COPY_TO_REGCLASS (i64 (EXTRACT_SUBREG (SPLAT_D v2i64:$ws,
+                                                             i32:$idx),
+                                                    sub_64)),
+                               GPR64), [HasMSA, IsGP64bit]>;
+
+def : MSAPat<(i32 (vextract_zext_i8 v16i8:$ws, i32:$idx)),
+             (SRL (COPY_TO_REGCLASS (i32 (EXTRACT_SUBREG (SPLAT_B v16i8:$ws,
+                                                                  i32:$idx),
+                                                         sub_lo)),
+                                    GPR32), (i32 24))>;
+def : MSAPat<(i32 (vextract_zext_i16 v8i16:$ws, i32:$idx)),
+             (SRL (COPY_TO_REGCLASS (i32 (EXTRACT_SUBREG (SPLAT_H v8i16:$ws,
+                                                                  i32:$idx),
+                                                         sub_lo)),
+                                    GPR32), (i32 16))>;
+def : MSAPat<(i32 (vextract_zext_i32 v4i32:$ws, i32:$idx)),
+             (COPY_TO_REGCLASS (i32 (EXTRACT_SUBREG (SPLAT_W v4i32:$ws,
+                                                             i32:$idx),
+                                                    sub_lo)),
+                               GPR32)>;
+def : MSAPat<(i64 (vextract_zext_i64 v2i64:$ws, i32:$idx)),
+             (COPY_TO_REGCLASS (i64 (EXTRACT_SUBREG (SPLAT_D v2i64:$ws,
+                                                             i32:$idx),
+                                                    sub_64)),
+                               GPR64), [HasMSA, IsGP64bit]>;
+
+def : MSAPat<(f32 (vector_extract v4f32:$ws, i32:$idx)),
+             (f32 (EXTRACT_SUBREG (SPLAT_W v4f32:$ws,
+                                           i32:$idx),
+                                  sub_lo))>;
+def : MSAPat<(f64 (vector_extract v2f64:$ws, i32:$idx)),
+             (f64 (EXTRACT_SUBREG (SPLAT_D v2f64:$ws,
+                                           i32:$idx),
+                                  sub_64))>;

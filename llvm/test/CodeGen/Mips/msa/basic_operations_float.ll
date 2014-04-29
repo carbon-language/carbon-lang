@@ -3,6 +3,7 @@
 
 @v4f32 = global <4 x float> <float 0.0, float 0.0, float 0.0, float 0.0>
 @v2f64 = global <2 x double> <double 0.0, double 0.0>
+@i32 = global i32 0
 @f32 = global float 0.0
 @f64 = global double 0.0
 
@@ -155,6 +156,27 @@ define float @extract_v4f32_elt2() nounwind {
   ; MIPS32: .size extract_v4f32_elt2
 }
 
+define float @extract_v4f32_vidx() nounwind {
+  ; MIPS32: extract_v4f32_vidx:
+
+  %1 = load <4 x float>* @v4f32
+  ; MIPS32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4f32)(
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = fadd <4 x float> %1, %1
+  ; MIPS32-DAG: fadd.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = load i32* @i32
+  ; MIPS32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %4 = extractelement <4 x float> %2, i32 %3
+  ; MIPS32-DAG: splat.w $w0, [[R1]]{{\[}}[[IDX]]]
+
+  ret float %4
+  ; MIPS32: .size extract_v4f32_vidx
+}
+
 define double @extract_v2f64() nounwind {
   ; MIPS32: extract_v2f64:
 
@@ -197,6 +219,27 @@ define double @extract_v2f64_elt0() nounwind {
 
   ret double %3
   ; MIPS32: .size extract_v2f64_elt0
+}
+
+define double @extract_v2f64_vidx() nounwind {
+  ; MIPS32: extract_v2f64_vidx:
+
+  %1 = load <2 x double>* @v2f64
+  ; MIPS32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2f64)(
+  ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = fadd <2 x double> %1, %1
+  ; MIPS32-DAG: fadd.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = load i32* @i32
+  ; MIPS32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %4 = extractelement <2 x double> %2, i32 %3
+  ; MIPS32-DAG: splat.d $w0, [[R1]]{{\[}}[[IDX]]]
+
+  ret double %4
+  ; MIPS32: .size extract_v2f64_vidx
 }
 
 define void @insert_v4f32(float %a) nounwind {

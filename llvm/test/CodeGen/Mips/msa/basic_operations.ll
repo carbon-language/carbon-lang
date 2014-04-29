@@ -6,6 +6,7 @@
 @v8i16 = global <8 x i16> <i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0, i16 0>
 @v4i32 = global <4 x i32> <i32 0, i32 0, i32 0, i32 0>
 @v2i64 = global <2 x i64> <i64 0, i64 0>
+@i32 = global i32 0
 @i64 = global i64 0
 
 define void @const_v16i8() nounwind {
@@ -395,6 +396,198 @@ define i64 @extract_zext_v2i64() nounwind {
 
   ret i64 %3
   ; MIPS32-AE: .size extract_zext_v2i64
+}
+
+define i32 @extract_sext_v16i8_vidx() nounwind {
+  ; MIPS32-AE: extract_sext_v16i8_vidx:
+
+  %1 = load <16 x i8>* @v16i8
+  ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v16i8)(
+  ; MIPS32-AE-DAG: ld.b [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = add <16 x i8> %1, %1
+  ; MIPS32-AE-DAG: addv.b [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %4 = extractelement <16 x i8> %2, i32 %3
+  %5 = sext i8 %4 to i32
+  ; MIPS32-AE-DAG: splat.b $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
+  ; MIPS32-AE-DAG: sra [[R6:\$[0-9]+]], [[R5]], 24
+
+  ret i32 %5
+  ; MIPS32-AE: .size extract_sext_v16i8_vidx
+}
+
+define i32 @extract_sext_v8i16_vidx() nounwind {
+  ; MIPS32-AE: extract_sext_v8i16_vidx:
+
+  %1 = load <8 x i16>* @v8i16
+  ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v8i16)(
+  ; MIPS32-AE-DAG: ld.h [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = add <8 x i16> %1, %1
+  ; MIPS32-AE-DAG: addv.h [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %4 = extractelement <8 x i16> %2, i32 %3
+  %5 = sext i16 %4 to i32
+  ; MIPS32-AE-DAG: splat.h $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
+  ; MIPS32-AE-DAG: sra [[R6:\$[0-9]+]], [[R5]], 16
+
+  ret i32 %5
+  ; MIPS32-AE: .size extract_sext_v8i16_vidx
+}
+
+define i32 @extract_sext_v4i32_vidx() nounwind {
+  ; MIPS32-AE: extract_sext_v4i32_vidx:
+
+  %1 = load <4 x i32>* @v4i32
+  ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4i32)(
+  ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = add <4 x i32> %1, %1
+  ; MIPS32-AE-DAG: addv.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %4 = extractelement <4 x i32> %2, i32 %3
+  ; MIPS32-AE-DAG: splat.w $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
+  ; MIPS32-AE-NOT: sra
+
+  ret i32 %4
+  ; MIPS32-AE: .size extract_sext_v4i32_vidx
+}
+
+define i64 @extract_sext_v2i64_vidx() nounwind {
+  ; MIPS32-AE: extract_sext_v2i64_vidx:
+
+  %1 = load <2 x i64>* @v2i64
+  ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2i64)(
+  ; MIPS32-AE-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = add <2 x i64> %1, %1
+  ; MIPS32-AE-DAG: addv.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %4 = extractelement <2 x i64> %2, i32 %3
+  ; MIPS32-AE-DAG: splat.w $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
+  ; MIPS32-AE-DAG: splat.w $w[[R4:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: mfc1 [[R6:\$[0-9]+]], $f[[R4]]
+  ; MIPS32-AE-NOT: sra
+
+  ret i64 %4
+  ; MIPS32-AE: .size extract_sext_v2i64_vidx
+}
+
+define i32 @extract_zext_v16i8_vidx() nounwind {
+  ; MIPS32-AE: extract_zext_v16i8_vidx:
+
+  %1 = load <16 x i8>* @v16i8
+  ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v16i8)(
+  ; MIPS32-AE-DAG: ld.b [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = add <16 x i8> %1, %1
+  ; MIPS32-AE-DAG: addv.b [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %4 = extractelement <16 x i8> %2, i32 %3
+  %5 = zext i8 %4 to i32
+  ; MIPS32-AE-DAG: splat.b $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
+  ; MIPS32-AE-DAG: srl [[R6:\$[0-9]+]], [[R5]], 24
+
+  ret i32 %5
+  ; MIPS32-AE: .size extract_zext_v16i8_vidx
+}
+
+define i32 @extract_zext_v8i16_vidx() nounwind {
+  ; MIPS32-AE: extract_zext_v8i16_vidx:
+
+  %1 = load <8 x i16>* @v8i16
+  ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v8i16)(
+  ; MIPS32-AE-DAG: ld.h [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = add <8 x i16> %1, %1
+  ; MIPS32-AE-DAG: addv.h [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %4 = extractelement <8 x i16> %2, i32 %3
+  %5 = zext i16 %4 to i32
+  ; MIPS32-AE-DAG: splat.h $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
+  ; MIPS32-AE-DAG: srl [[R6:\$[0-9]+]], [[R5]], 16
+
+  ret i32 %5
+  ; MIPS32-AE: .size extract_zext_v8i16_vidx
+}
+
+define i32 @extract_zext_v4i32_vidx() nounwind {
+  ; MIPS32-AE: extract_zext_v4i32_vidx:
+
+  %1 = load <4 x i32>* @v4i32
+  ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4i32)(
+  ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = add <4 x i32> %1, %1
+  ; MIPS32-AE-DAG: addv.w [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %4 = extractelement <4 x i32> %2, i32 %3
+  ; MIPS32-AE-DAG: splat.w $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
+  ; MIPS32-AE-NOT: srl
+
+  ret i32 %4
+  ; MIPS32-AE: .size extract_zext_v4i32_vidx
+}
+
+define i64 @extract_zext_v2i64_vidx() nounwind {
+  ; MIPS32-AE: extract_zext_v2i64_vidx:
+
+  %1 = load <2 x i64>* @v2i64
+  ; MIPS32-AE-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2i64)(
+  ; MIPS32-AE-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = add <2 x i64> %1, %1
+  ; MIPS32-AE-DAG: addv.d [[R2:\$w[0-9]+]], [[R1]], [[R1]]
+
+  %3 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %4 = extractelement <2 x i64> %2, i32 %3
+  ; MIPS32-AE-DAG: splat.w $w[[R3:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: mfc1 [[R5:\$[0-9]+]], $f[[R3]]
+  ; MIPS32-AE-DAG: splat.w $w[[R4:[0-9]+]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: mfc1 [[R6:\$[0-9]+]], $f[[R4]]
+  ; MIPS32-AE-NOT: srl
+
+  ret i64 %4
+  ; MIPS32-AE: .size extract_zext_v2i64_vidx
 }
 
 define void @insert_v16i8(i32 %a) nounwind {
