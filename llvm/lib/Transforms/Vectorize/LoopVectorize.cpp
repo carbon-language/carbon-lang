@@ -1209,6 +1209,13 @@ struct LoopVectorize : public FunctionPass {
       if (UF == 1)
         return false;
       DEBUG(dbgs() << "LV: Trying to at least unroll the loops.\n");
+
+      // Report the unrolling decision.
+      F->getContext().emitOptimizationRemark(
+          DEBUG_TYPE, *F, L->getStartLoc(),
+          Twine("unrolled with interleaving factor " + Twine(UF) +
+                " (vectorization not beneficial)"));
+
       // We decided not to vectorize, but we may want to unroll.
       InnerLoopUnroller Unroller(L, SE, LI, DT, DL, TLI, UF);
       Unroller.vectorize(&LVL);
@@ -1217,16 +1224,16 @@ struct LoopVectorize : public FunctionPass {
       InnerLoopVectorizer LB(L, SE, LI, DT, DL, TLI, VF.Width, UF);
       LB.vectorize(&LVL);
       ++LoopsVectorized;
+
+      // Report the vectorization decision.
+      F->getContext().emitOptimizationRemark(
+          DEBUG_TYPE, *F, L->getStartLoc(),
+          Twine("vectorized loop (vectorization factor: ") + Twine(VF.Width) +
+              ", unrolling interleave factor: " + Twine(UF) + ")");
     }
 
     // Mark the loop as already vectorized to avoid vectorizing again.
     Hints.setAlreadyVectorized(L);
-
-    // Report the vectorization decision.
-    F->getContext().emitOptimizationRemark(
-        DEBUG_TYPE, *F, L->getStartLoc(),
-        Twine("vectorized loop (vectorization factor: ") + Twine(VF.Width) +
-            ", unroll factor: " + Twine(UF) + ")");
 
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
     return true;
