@@ -123,14 +123,14 @@ class AArch64MCInstrAnalysis : public MCInstrAnalysis {
 public:
   AArch64MCInstrAnalysis(const MCInstrInfo *Info) : MCInstrAnalysis(Info) {}
 
-  virtual bool isUnconditionalBranch(const MCInst &Inst) const {
+  bool isUnconditionalBranch(const MCInst &Inst) const override {
     if (Inst.getOpcode() == AArch64::Bcc
         && Inst.getOperand(0).getImm() == A64CC::AL)
       return true;
     return MCInstrAnalysis::isUnconditionalBranch(Inst);
   }
 
-  virtual bool isConditionalBranch(const MCInst &Inst) const {
+  bool isConditionalBranch(const MCInst &Inst) const override {
     if (Inst.getOpcode() == AArch64::Bcc
         && Inst.getOperand(0).getImm() == A64CC::AL)
       return false;
@@ -138,7 +138,7 @@ public:
   }
 
   bool evaluateBranch(const MCInst &Inst, uint64_t Addr,
-                      uint64_t Size, uint64_t &Target) const {
+                      uint64_t Size, uint64_t &Target) const override {
     unsigned LblOperand = Inst.getOpcode() == AArch64::Bcc ? 1 : 0;
     // FIXME: We only handle PCRel branches for now.
     if (Info->get(Inst.getOpcode()).OpInfo[LblOperand].OperandType

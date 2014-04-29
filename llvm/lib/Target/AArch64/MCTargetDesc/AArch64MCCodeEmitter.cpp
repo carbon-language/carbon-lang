@@ -143,7 +143,7 @@ public:
 
   void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
-                         const MCSubtargetInfo &STI) const;
+                         const MCSubtargetInfo &STI) const override;
 
   template<int hasRs, int hasRt2> unsigned
   fixLoadStoreExclusive(const MCInst &MI, unsigned EncodedValue,

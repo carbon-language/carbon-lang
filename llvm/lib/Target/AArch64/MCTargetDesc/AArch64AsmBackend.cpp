@@ -38,13 +38,13 @@ public:
     delete STI;
   }
 
-  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const;
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override;
 
   virtual void processFixupValue(const MCAssembler &Asm,
                                  const MCAsmLayout &Layout,
                                  const MCFixup &Fixup, const MCFragment *DF,
                                  const MCValue &Target, uint64_t &Value,
-                                 bool &IsResolved);
+                                 bool &IsResolved) override;
 };
 } // end anonymous namespace
 
@@ -89,13 +89,13 @@ public:
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value,
                             const MCRelaxableFragment *DF,
-                            const MCAsmLayout &Layout) const;
+                            const MCAsmLayout &Layout) const override;
 
-  unsigned int getNumFixupKinds() const {
+  unsigned int getNumFixupKinds() const override {
     return AArch64::NumTargetFixupKinds;
   }
 
-  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override {
     const static MCFixupKindInfo Infos[AArch64::NumTargetFixupKinds] = {
 // This table *must* be in the order that the fixup_* kinds are defined in
 // AArch64FixupKinds.h.
@@ -177,7 +177,7 @@ public:
   }
 
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                  uint64_t Value, bool IsPCRel) const {
+                  uint64_t Value, bool IsPCRel) const override {
     unsigned NumBytes = getFixupKindInfo(Fixup.getKind()).TargetSize / 8;
     Value = adjustFixupValue(Fixup.getKind(), Value);
     if (!Value) return;           // Doesn't change encoding.
@@ -192,15 +192,15 @@ public:
     }
   }
 
-  bool mayNeedRelaxation(const MCInst&) const {
+  bool mayNeedRelaxation(const MCInst&) const override {
     return false;
   }
 
-  void relaxInstruction(const MCInst&, llvm::MCInst&) const {
+  void relaxInstruction(const MCInst&, llvm::MCInst&) const override {
     llvm_unreachable("Cannot relax instructions");
   }
 
-  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
     return createAArch64ELFObjectWriter(OS, OSABI, IsLittle);
   }
 };

@@ -34,7 +34,7 @@ public:
   static const char *getRegisterName(unsigned RegNo);
   static const char *getInstructionName(unsigned Opcode);
 
-  void printRegName(raw_ostream &O, unsigned RegNum) const;
+  void printRegName(raw_ostream &O, unsigned RegNum) const override;
 
   template<unsigned MemSize, unsigned RmSize>
   void printAddrRegExtendOperand(const MCInst *MI, unsigned OpNum,
@@ -159,7 +159,7 @@ public:
 
   void printVPRRegister(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
+  void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot) override;
 
   bool isStackReg(unsigned RegNo) {
     return RegNo == AArch64::XSP || RegNo == AArch64::WSP;

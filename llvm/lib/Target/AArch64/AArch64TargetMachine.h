@@ -39,32 +39,32 @@ public:
                        CodeGenOpt::Level OL,
                        bool LittleEndian);
 
-  const AArch64InstrInfo *getInstrInfo() const {
+  const AArch64InstrInfo *getInstrInfo() const override {
     return &InstrInfo;
   }
 
-  const AArch64FrameLowering *getFrameLowering() const {
+  const AArch64FrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
 
-  const AArch64TargetLowering *getTargetLowering() const {
+  const AArch64TargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }
 
-  const AArch64SelectionDAGInfo *getSelectionDAGInfo() const {
+  const AArch64SelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
 
-  const AArch64Subtarget *getSubtargetImpl() const { return &Subtarget; }
+  const AArch64Subtarget *getSubtargetImpl() const override { return &Subtarget; }
 
-  const DataLayout *getDataLayout() const { return &DL; }
+  const DataLayout *getDataLayout() const override { return &DL; }
 
-  const TargetRegisterInfo *getRegisterInfo() const {
+  const TargetRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
-  TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
-  virtual void addAnalysisPasses(PassManagerBase &PM);
+  void addAnalysisPasses(PassManagerBase &PM) override;
 };
 
 // AArch64leTargetMachine - AArch64 little endian target machine.

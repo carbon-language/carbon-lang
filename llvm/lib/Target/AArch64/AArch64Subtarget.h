@@ -61,7 +61,7 @@ public:
   AArch64Subtarget(StringRef TT, StringRef CPU, StringRef FS,
                    bool LittleEndian);
 
-  virtual bool enableMachineScheduler() const {
+  bool enableMachineScheduler() const override {
     return true;
   }
 

@@ -65,19 +65,19 @@ public:
   }
 
   // These are the public interface of the MCTargetAsmParser
-  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
+  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
-                        SMLoc NameLoc,
-                        SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+                       SMLoc NameLoc,
+                       SmallVectorImpl<MCParsedAsmOperand*> &Operands) override;
 
-  bool ParseDirective(AsmToken DirectiveID);
+  bool ParseDirective(AsmToken DirectiveID) override;
   bool ParseDirectiveTLSDescCall(SMLoc L);
   bool ParseDirectiveWord(unsigned Size, SMLoc L);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer&Out, unsigned &ErrorInfo,
-                               bool MatchingInlineAsm);
+                               bool MatchingInlineAsm) override;
 
   // The rest of the sub-parsers have more freedom over interface: they return
   // an OperandMatchResultTy because it's less ambiguous than true/false or
@@ -235,17 +235,17 @@ public:
   AArch64Operand(const AArch64Operand &o) : MCParsedAsmOperand() {
   }
 
-  SMLoc getStartLoc() const { return StartLoc; }
-  SMLoc getEndLoc() const { return EndLoc; }
-  void print(raw_ostream&) const;
-  void dump() const;
+  SMLoc getStartLoc() const override { return StartLoc; }
+  SMLoc getEndLoc() const override { return EndLoc; }
+  void print(raw_ostream&) const override;
+  void dump() const override;
 
   StringRef getToken() const {
     assert(Kind == k_Token && "Invalid access!");
     return StringRef(Tok.Data, Tok.Length);
   }
 
-  unsigned getReg() const {
+  unsigned getReg() const override {
     assert((Kind == k_Register || Kind == k_WrappedRegister)
            && "Invalid access!");
     return Reg.RegNum;
@@ -275,10 +275,10 @@ public:
   }
 
   bool isCondCode() const { return Kind == k_CondCode; }
-  bool isToken() const { return Kind == k_Token; }
-  bool isReg() const { return Kind == k_Register; }
-  bool isImm() const { return Kind == k_Immediate; }
-  bool isMem() const { return false; }
+  bool isToken() const override { return Kind == k_Token; }
+  bool isReg() const override { return Kind == k_Register; }
+  bool isImm() const override { return Kind == k_Immediate; }
+  bool isMem() const override { return false; }
   bool isFPImm() const { return Kind == k_FPImmediate; }
   bool isShiftOrExtend() const { return Kind == k_ShiftExtend; }
   bool isSysReg() const { return Kind == k_SysReg; }

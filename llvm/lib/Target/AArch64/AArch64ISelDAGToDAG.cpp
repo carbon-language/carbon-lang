@@ -46,7 +46,7 @@ public:
       Subtarget(&TM.getSubtarget<AArch64Subtarget>()) {
   }
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "AArch64 Instruction Selection";
   }
 
@@ -86,7 +86,7 @@ public:
 
   bool SelectInlineAsmMemoryOperand(const SDValue &Op,
                                     char ConstraintCode,
-                                    std::vector<SDValue> &OutOps);
+                                    std::vector<SDValue> &OutOps) override;
 
   bool SelectLogicalImm(SDValue N, SDValue &Imm);
 
@@ -108,7 +108,7 @@ public:
   SDNode *LowerToFPLitPool(SDNode *Node);
   SDNode *SelectToLitPool(SDNode *N);
 
-  SDNode* Select(SDNode*);
+  SDNode* Select(SDNode*) override;
 private:
   /// Get the opcode for table lookup instruction
   unsigned getTBLOpc(bool IsExt, bool Is64Bit, unsigned NumOfVec);

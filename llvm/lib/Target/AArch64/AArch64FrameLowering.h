@@ -47,8 +47,8 @@ public:
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
-  virtual void emitPrologue(MachineFunction &MF) const;
-  virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+  void emitPrologue(MachineFunction &MF) const override;
+  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
   /// Decides how much stack adjustment to perform in each phase of the prologue
   /// and epilogue.
@@ -59,21 +59,21 @@ public:
                                      unsigned &FrameReg, int SPAdj,
                                      bool IsCalleeSaveOp) const;
 
-  virtual void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                                    RegScavenger *RS) const;
+  void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
+                                            RegScavenger *RS) const override;
 
-  virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                        MachineBasicBlock::iterator MI,
-                                        const std::vector<CalleeSavedInfo> &CSI,
-                                        const TargetRegisterInfo *TRI) const;
-  virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                        MachineBasicBlock::iterator MI,
-                                        const std::vector<CalleeSavedInfo> &CSI,
-                                        const TargetRegisterInfo *TRI) const;
+  bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI,
+                                const TargetRegisterInfo *TRI) const override;
+  bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI,
+                                const TargetRegisterInfo *TRI) const override;
 
-  void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator MI) const;
+  void
+  eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
+                                MachineBasicBlock::iterator MI) const override;
 
   /// If the register is X30 (i.e. LR) and the return address is used in the
   /// function then the callee-save store doesn't actually kill the register,
@@ -94,12 +94,12 @@ public:
                        unsigned NumClasses) const;
 
 
-  virtual bool hasFP(const MachineFunction &MF) const;
+  bool hasFP(const MachineFunction &MF) const override;
 
-  virtual bool useFPForAddressing(const MachineFunction &MF) const;
+  bool useFPForAddressing(const MachineFunction &MF) const;
 
   /// On AA
-  virtual bool hasReservedCallFrame(const MachineFunction &MF) const;
+  bool hasReservedCallFrame(const MachineFunction &MF) const override;
 
 };
 

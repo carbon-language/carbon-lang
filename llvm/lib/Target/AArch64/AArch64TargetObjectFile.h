@@ -23,7 +23,7 @@ namespace llvm {
   /// AArch64ElfTargetObjectFile - This implementation is used for ELF
   /// AArch64 targets.
   class AArch64ElfTargetObjectFile : public TargetLoweringObjectFileELF {
-    virtual void Initialize(MCContext &Ctx, const TargetMachine &TM);
+    void Initialize(MCContext &Ctx, const TargetMachine &TM) override;
   };
 
 } // end namespace llvm

@@ -75,7 +75,7 @@ public:
   /// \name Vector TTI Implementations
   /// @{
 
-  unsigned getNumberOfRegisters(bool Vector) const {
+  unsigned getNumberOfRegisters(bool Vector) const override {
     if (Vector) {
       if (ST->hasNEON())
         return 32;
@@ -84,7 +84,7 @@ public:
     return 32;
   }
 
-  unsigned getRegisterBitWidth(bool Vector) const {
+  unsigned getRegisterBitWidth(bool Vector) const override {
     if (Vector) {
       if (ST->hasNEON())
         return 128;

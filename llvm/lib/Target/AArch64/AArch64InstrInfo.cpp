@@ -867,7 +867,7 @@ namespace {
     static char ID;
     LDTLSCleanup() : MachineFunctionPass(ID) {}
 
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
+    bool runOnMachineFunction(MachineFunction &MF) override {
       AArch64MachineFunctionInfo* MFI
         = MF.getInfo<AArch64MachineFunctionInfo>();
       if (MFI->getNumLocalDynamicTLSAccesses() < 2) {
@@ -962,11 +962,11 @@ namespace {
       return Copy;
     }
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Local Dynamic TLS Access Clean-up";
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.setPreservesCFG();
       AU.addRequired<MachineDominatorTree>();
       MachineFunctionPass::getAnalysisUsage(AU);

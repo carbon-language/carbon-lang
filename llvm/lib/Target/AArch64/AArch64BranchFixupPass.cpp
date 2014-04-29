@@ -136,9 +136,9 @@ namespace {
     static char ID;
     AArch64BranchFixup() : MachineFunctionPass(ID) {}
 
-    virtual bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "AArch64 branch fixup pass";
     }
 

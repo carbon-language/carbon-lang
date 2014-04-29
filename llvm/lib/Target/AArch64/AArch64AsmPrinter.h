@@ -45,15 +45,15 @@ class LLVM_LIBRARY_VISIBILITY AArch64AsmPrinter : public AsmPrinter {
   MCOperand lowerSymbolOperand(const MachineOperand &MO,
                                const MCSymbol *Sym) const;
 
-  void EmitInstruction(const MachineInstr *MI);
-  void EmitEndOfAsmFile(Module &M);
+  void EmitInstruction(const MachineInstr *MI) override;
+  void EmitEndOfAsmFile(Module &M) override;
 
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNum,
                        unsigned AsmVariant, const char *ExtraCode,
-                       raw_ostream &O);
+                       raw_ostream &O) override;
   bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNum,
                              unsigned AsmVariant, const char *ExtraCode,
-                             raw_ostream &O);
+                             raw_ostream &O) override;
 
   /// printSymbolicAddress - Given some kind of reasonably bare symbolic
   /// reference, print out the appropriate asm string to represent it. If
@@ -65,11 +65,11 @@ class LLVM_LIBRARY_VISIBILITY AArch64AsmPrinter : public AsmPrinter {
                             bool PrintImmediatePrefix,
                             StringRef Suffix, raw_ostream &O);
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "AArch64 Assembly Printer";
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 };
 } // end namespace llvm
 

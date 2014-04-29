@@ -205,7 +205,7 @@ class AArch64TargetLowering : public TargetLowering {
 public:
   explicit AArch64TargetLowering(AArch64TargetMachine &TM);
 
-  const char *getTargetNodeName(unsigned Opcode) const;
+  const char *getTargetNodeName(unsigned Opcode) const override;
 
   CCAssignFn *CCAssignFnForNode(CallingConv::ID CC) const;
 
@@ -213,18 +213,18 @@ public:
                                CallingConv::ID CallConv, bool isVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                SDLoc dl, SelectionDAG &DAG,
-                               SmallVectorImpl<SDValue> &InVals) const;
+                               SmallVectorImpl<SDValue> &InVals) const override;
 
   SDValue LowerReturn(SDValue Chain,
                       CallingConv::ID CallConv, bool isVarArg,
                       const SmallVectorImpl<ISD::OutputArg> &Outs,
                       const SmallVectorImpl<SDValue> &OutVals,
-                      SDLoc dl, SelectionDAG &DAG) const;
+                      SDLoc dl, SelectionDAG &DAG) const override;
 
-  virtual unsigned getByValTypeAlignment(Type *Ty) const override;
+  unsigned getByValTypeAlignment(Type *Ty) const override;
 
   SDValue LowerCall(CallLoweringInfo &CLI,
-                    SmallVectorImpl<SDValue> &InVals) const;
+                    SmallVectorImpl<SDValue> &InVals) const override;
 
   SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
                           CallingConv::ID CallConv, bool IsVarArg,
@@ -268,15 +268,15 @@ public:
   SDValue addTokenForArgument(SDValue Chain, SelectionDAG &DAG,
                               MachineFrameInfo *MFI, int ClobberedFI) const;
 
-  EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
+  EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
 
   bool DoesCalleeRestoreStack(CallingConv::ID CallCC, bool TailCallOpt) const;
 
   bool IsTailCallConvention(CallingConv::ID CallCC) const;
 
-  SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
 
-  bool isLegalICmpImmediate(int64_t Val) const;
+  bool isLegalICmpImmediate(int64_t Val) const override;
 
   /// \brief Return true if the addressing mode represented by AM is legal for
   /// this target, for a load/store of the specified type.
@@ -299,8 +299,9 @@ public:
   SDValue getSelectableIntSetCC(SDValue LHS, SDValue RHS, ISD::CondCode CC,
                          SDValue &A64cc, SelectionDAG &DAG, SDLoc &dl) const;
 
-  virtual MachineBasicBlock *
-  EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
+  MachineBasicBlock *
+  EmitInstrWithCustomInserter(MachineInstr *MI,
+                              MachineBasicBlock *MBB) const override;
 
   MachineBasicBlock *
   emitAtomicBinary(MachineInstr *MI, MachineBasicBlock *MBB,
@@ -347,34 +348,37 @@ public:
   SDValue LowerVACOPY(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
 
-  virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue PerformDAGCombine(SDNode *N,DAGCombinerInfo &DCI) const override;
 
   /// isFMAFasterThanFMulAndFAdd - Return true if an FMA operation is faster
   /// than a pair of fmul and fadd instructions. fmuladd intrinsics will be
   /// expanded to FMAs when this method returns true, otherwise fmuladd is
   /// expanded to fmul + fadd.
-  virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const;
+  bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
 
   /// allowsUnalignedMemoryAccesses - Returns true if the target allows
   /// unaligned memory accesses of the specified type. Returns whether it
   /// is "fast" by reference in the second argument.
-  virtual bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AddrSpace,
-                                             bool *Fast) const;
+  bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AddrSpace,
+                                     bool *Fast) const override;
 
-  ConstraintType getConstraintType(const std::string &Constraint) const;
+  ConstraintType
+  getConstraintType(const std::string &Constraint) const override;
 
-  ConstraintWeight getSingleConstraintMatchWeight(AsmOperandInfo &Info,
-                                                  const char *Constraint) const;
+  ConstraintWeight
+  getSingleConstraintMatchWeight(AsmOperandInfo &Info,
+                                 const char *Constraint) const override;
   void LowerAsmOperandForConstraint(SDValue Op,
                                     std::string &Constraint,
                                     std::vector<SDValue> &Ops,
-                                    SelectionDAG &DAG) const;
+                                    SelectionDAG &DAG) const override;
 
   std::pair<unsigned, const TargetRegisterClass*>
-  getRegForInlineAsmConstraint(const std::string &Constraint, MVT VT) const;
+  getRegForInlineAsmConstraint(const std::string &Constraint,
+                               MVT VT) const override;
 
-  virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info, const CallInst &I,
-                                  unsigned Intrinsic) const override;
+  bool getTgtMemIntrinsic(IntrinsicInfo &Info, const CallInst &I,
+                          unsigned Intrinsic) const override;
 
   /// getMaximalGlobalOffset - Returns the maximal possible offset which can
   /// be used for loads / stores from the global.
@@ -382,7 +386,7 @@ public:
 
 protected:
   std::pair<const TargetRegisterClass*, uint8_t>
-  findRepresentativeClass(MVT VT) const;
+  findRepresentativeClass(MVT VT) const override;
 
 private:
   const InstrItineraryData *Itins;

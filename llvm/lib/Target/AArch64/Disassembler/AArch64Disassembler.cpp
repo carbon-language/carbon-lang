@@ -53,7 +53,7 @@ public:
                               const MemoryObject &region,
                               uint64_t address,
                               raw_ostream &vStream,
-                              raw_ostream &cStream) const;
+                              raw_ostream &cStream) const override;
 };
 
 }

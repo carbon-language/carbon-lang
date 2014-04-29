@@ -41,7 +41,7 @@ public:
   void copyPhysReg(MachineBasicBlock &MBB,
                    MachineBasicBlock::iterator I, DebugLoc DL,
                    unsigned DestReg, unsigned SrcReg,
-                   bool KillSrc) const;
+                   bool KillSrc) const override;
   void CopyPhysRegTuple(MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator I, DebugLoc DL,
                         unsigned DestReg, unsigned SrcReg) const;
@@ -50,25 +50,26 @@ public:
                            MachineBasicBlock::iterator MI,
                            unsigned SrcReg, bool isKill, int FrameIndex,
                            const TargetRegisterClass *RC,
-                           const TargetRegisterInfo *TRI) const;
+                           const TargetRegisterInfo *TRI) const override;
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI,
                             unsigned DestReg, int FrameIdx,
                             const TargetRegisterClass *RC,
-                            const TargetRegisterInfo *TRI) const;
+                            const TargetRegisterInfo *TRI) const override;
 
   bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
                      MachineBasicBlock *&FBB,
                      SmallVectorImpl<MachineOperand> &Cond,
-                     bool AllowModify = false) const;
+                     bool AllowModify = false) const override;
   unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                         MachineBasicBlock *FBB,
                         const SmallVectorImpl<MachineOperand> &Cond,
-                        DebugLoc DL) const;
-  unsigned RemoveBranch(MachineBasicBlock &MBB) const;
-  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+                        DebugLoc DL) const override;
+  unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
+  bool
+  ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
 
-  bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const;
+  bool expandPostRAPseudo(MachineBasicBlock::iterator MI) const override;
 
   /// Look through the instructions in this function and work out the largest
   /// the stack frame can be while maintaining the ability to address local

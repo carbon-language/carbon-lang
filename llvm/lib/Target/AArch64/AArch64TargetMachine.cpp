@@ -88,8 +88,8 @@ public:
   }
 
   bool addPreISel() override;
-  virtual bool addInstSelector();
-  virtual bool addPreEmitPass();
+  bool addInstSelector() override;
+  bool addPreEmitPass() override;
 };
 } // namespace
 
