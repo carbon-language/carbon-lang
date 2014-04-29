@@ -2511,7 +2511,7 @@ SDValue DAGCombiner::SimplifyBinOpWithSameOpcodeHands(SDNode *N) {
 
     assert(N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType() &&
            "Inputs to shuffles are not the same type");
- 
+
     // Check that both shuffles use the same mask. The masks are known to be of
     // the same length because the result vector type is the same.
     // Check also that shuffles have only one use to avoid introducing extra
@@ -3249,11 +3249,11 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
       // two ways to fold this node into a shuffle.
       SmallVector<int,4> Mask1;
       SmallVector<int,4> Mask2;
-      
+
       for (unsigned i = 0; i != NumElts && CanFold; ++i) {
         int M0 = SV0->getMaskElt(i);
         int M1 = SV1->getMaskElt(i);
-   
+
         // Both shuffle indexes are undef. Propagate Undef.
         if (M0 < 0 && M1 < 0) {
           Mask1.push_back(M0);
@@ -3267,7 +3267,7 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
           CanFold = false;
           break;
         }
-        
+
         Mask1.push_back(M0 < (int)NumElts ? M0 : M1 + NumElts);
         Mask2.push_back(M1 < (int)NumElts ? M1 : M0 + NumElts);
       }
@@ -4703,7 +4703,7 @@ SDValue DAGCombiner::visitSETCC(SDNode *N) {
 // tryToFoldExtendOfConstant - Try to fold a sext/zext/aext
 // dag node into a ConstantSDNode or a build_vector of constants.
 // This function is called by the DAGCombiner when visiting sext/zext/aext
-// dag nodes (see for example method DAGCombiner::visitSIGN_EXTEND). 
+// dag nodes (see for example method DAGCombiner::visitSIGN_EXTEND).
 // Vector extends are not folded if operations are legal; this is to
 // avoid introducing illegal build_vector dag nodes.
 static SDNode *tryToFoldExtendOfConstant(SDNode *N, const TargetLowering &TLI,
@@ -4730,7 +4730,7 @@ static SDNode *tryToFoldExtendOfConstant(SDNode *N, const TargetLowering &TLI,
       (!LegalTypes || (!LegalOperations && TLI.isTypeLegal(SVT))) &&
       ISD::isBuildVectorOfConstantSDNodes(N0.getNode())))
     return nullptr;
-  
+
   // We can fold this node into a build_vector.
   unsigned VTBits = SVT.getSizeInBits();
   unsigned EVTBits = N0->getValueType(0).getScalarType().getSizeInBits();
@@ -10125,7 +10125,7 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     }
   }
 
-    // If everything is good, we can make a shuffle operation.
+  // If everything is good, we can make a shuffle operation.
   if (VecIn1.getNode()) {
     SmallVector<int, 8> Mask;
     for (unsigned i = 0; i != NumInScalars; ++i) {
