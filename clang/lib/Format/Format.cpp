@@ -499,6 +499,8 @@ public:
       bool Newline =
           Indenter->mustBreak(State) ||
           (Indenter->canBreak(State) && State.NextToken->NewlinesBefore > 0);
+      llvm::errs() << State.NextToken->Tok.getName() << " "
+                   << Indenter->mustBreak(State) << "\n";
       Indenter->addTokenToState(State, Newline, /*DryRun=*/false);
     }
   }

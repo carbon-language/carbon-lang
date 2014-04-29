@@ -8198,6 +8198,9 @@ TEST_F(FormatTest, FormatsWithWebKitStyle) {
           "}",
           Style));
 
+  // Allow functions on a single line.
+  verifyFormat("void f() { return; }", Style);
+
   // Constructor initializers are formatted one per line with the "," on the
   // new line.
   verifyFormat("Constructor()\n"

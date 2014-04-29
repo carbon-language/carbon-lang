@@ -207,8 +207,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
   // The following could be precomputed as they do not depend on the state.
   // However, as they should take effect only if the UnwrappedLine does not fit
   // into the ColumnLimit, they are checked here in the ContinuationIndenter.
-  if (Previous.BlockKind == BK_Block && Previous.is(tok::l_brace) &&
-      !Current.isOneOf(tok::r_brace, tok::comment))
+  if (Style.ColumnLimit != 0 && Previous.BlockKind == BK_Block &&
+      Previous.is(tok::l_brace) && !Current.isOneOf(tok::r_brace, tok::comment))
     return true;
 
   return false;
