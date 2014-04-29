@@ -952,8 +952,6 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
   SDValue Num = Op.getOperand(0);
   SDValue Den = Op.getOperand(1);
 
-  SmallVector<SDValue, 8> Results;
-
   // RCP =  URECIP(Den) = 2^32 / Den + e
   // e is rounding error.
   SDValue RCP = DAG.getNode(AMDGPUISD::URECIP, DL, VT, Den);
