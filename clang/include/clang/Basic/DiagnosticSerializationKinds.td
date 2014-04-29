@@ -39,6 +39,8 @@ def err_pch_langopt_mismatch : Error<"%0 was %select{disabled|enabled}1 in "
     "PCH file but is currently %select{disabled|enabled}2">;
 def err_pch_langopt_value_mismatch : Error<
   "%0 differs in PCH file vs. current file">;
+def err_pch_diagopt_mismatch : Error<"%0 is currently enabled, but was not in "
+  "the PCH file">;
   
 def err_pch_version_too_old : Error<
     "PCH file uses an older PCH format that is no longer supported">;

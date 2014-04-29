@@ -25,6 +25,7 @@ add_clang_library(clangBasic
   Version.cpp
   VersionTuple.cpp
   VirtualFileSystem.cpp
+  Warnings.cpp
   )
 
 # Determine Subversion revision.
