@@ -364,10 +364,8 @@ def FMOV_D64 : ABSS_FT<"mov.d", FGR64Opnd, FGR64Opnd, II_MOV_D>,
 }
 
 /// Floating Point Memory Instructions
-let Predicates = [HasStdEnc] in {
-  def LWC1 : MMRel, LW_FT<"lwc1", FGR32Opnd, II_LWC1, load>, LW_FM<0x31>;
-  def SWC1 : MMRel, SW_FT<"swc1", FGR32Opnd, II_SWC1, store>, LW_FM<0x39>;
-}
+def LWC1 : MMRel, LW_FT<"lwc1", FGR32Opnd, II_LWC1, load>, LW_FM<0x31>;
+def SWC1 : MMRel, SW_FT<"swc1", FGR32Opnd, II_SWC1, store>, LW_FM<0x39>;
 
 let Predicates = [IsFP64bit, HasStdEnc], DecoderNamespace = "Mips64" in {
   def LDC164 : LW_FT<"ldc1", FGR64Opnd, II_LDC1, load>, LW_FM<0x35>;
@@ -380,12 +378,10 @@ let Predicates = [NotFP64bit, HasStdEnc] in {
 }
 
 /// Cop2 Memory Instructions
-let Predicates = [HasStdEnc] in {
-  def LWC2 : LW_FT<"lwc2", COP2Opnd, NoItinerary, load>, LW_FM<0x32>;
-  def SWC2 : SW_FT<"swc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3a>;
-  def LDC2 : LW_FT<"ldc2", COP2Opnd, NoItinerary, load>, LW_FM<0x36>;
-  def SDC2 : SW_FT<"sdc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3e>;
-}
+def LWC2 : LW_FT<"lwc2", COP2Opnd, NoItinerary, load>, LW_FM<0x32>;
+def SWC2 : SW_FT<"swc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3a>;
+def LDC2 : LW_FT<"ldc2", COP2Opnd, NoItinerary, load>, LW_FM<0x36>;
+def SDC2 : SW_FT<"sdc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3e>;
 
 // Indexed loads and stores.
 // Base register + offset register addressing mode (indicated by "x" in the
