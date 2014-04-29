@@ -27,7 +27,7 @@
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
-
+#include <tuple>
 using namespace llvm;
 
 #define DEBUG_TYPE "assembler"
