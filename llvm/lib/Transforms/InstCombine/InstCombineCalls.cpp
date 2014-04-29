@@ -731,10 +731,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
       // The intrinsics only read one or two bits, clear the rest.
       for (unsigned I = 0; I < Size; ++I) {
-	uint32_t Index = C->getElementAsInteger(I) & 0x3;
-	if (II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd ||
-	    II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256)
-	  Index >>= 1;
+        uint32_t Index = C->getElementAsInteger(I) & 0x3;
+        if (II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd ||
+            II->getIntrinsicID() == Intrinsic::x86_avx_vpermilvar_pd_256)
+          Index >>= 1;
         Indexes[I] = Index;
       }
 
