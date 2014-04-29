@@ -241,6 +241,30 @@ def gdbremote_packet_encode_string(str):
     return '$' + str + '#{0:02x}'.format(checksum % 256)
 
 
+def build_gdbremote_A_packet(args_list):
+    """Given a list of args, create a properly-formed $A packet containing each arg.
+    """
+    payload = "A"
+
+    # build the arg content
+    arg_index = 0
+    for arg in args_list:
+        # Comma-separate the args.
+        if arg_index > 0:
+            payload += ','
+
+        # Hex-encode the arg.
+        hex_arg = gdbremote_hex_encode_string(arg)
+
+        # Build the A entry.
+        payload += "{},{},{}".format(len(hex_arg), arg_index, hex_arg)
+
+        # Next arg index, please.
+        arg_index += 1
+
+    # return the packetized payload
+    return gdbremote_packet_encode_string(payload)
+
 if __name__ == '__main__':
     EXE_PATH = get_lldb_gdbserver_exe()
     if EXE_PATH:

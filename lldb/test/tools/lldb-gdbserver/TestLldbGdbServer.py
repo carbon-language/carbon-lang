@@ -21,8 +21,8 @@ class LldbGdbServerTestCase(TestBase):
 
     _GDBREMOTE_KILL_PACKET = "$k#6b"
 
-    _LOGGING_LEVEL = logging.WARNING
-    # _LOGGING_LEVEL = logging.DEBUG
+    # _LOGGING_LEVEL = logging.WARNING
+    _LOGGING_LEVEL = logging.DEBUG
 
     def setUp(self):
         TestBase.setUp(self)
@@ -177,15 +177,12 @@ class LldbGdbServerTestCase(TestBase):
         server = self.start_server()
         self.assertIsNotNone(server)
 
-        # TODO grab the build output directory rather than current directory.
-        inferior_exe_name = os.path.abspath('a.out')
-        inferior_exe_name_hex = gdbremote_hex_encode_string(inferior_exe_name)
+        # build launch args
+        launch_args = [os.path.abspath('a.out')]
 
         log_lines = self.create_no_ack_remote_stream()
         log_lines.extend([
-            "lldb-gdbserver < 000> read packet: {}".format(
-                gdbremote_packet_encode_string(
-                        "A{},0,{}".format(len(inferior_exe_name_hex), inferior_exe_name_hex))),
+            "lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
             "lldb-gdbserver <   6> send packet: $OK#9a"])
 
         expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
@@ -205,19 +202,86 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.start_inferior()
 
+    def inferior_exit_0(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        # build launch args
+        launch_args = [os.path.abspath('a.out')]
+
+        log_lines = self.create_no_ack_remote_stream()
+        log_lines.extend([
+            "lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
+            "lldb-gdbserver <   6> send packet: $OK#00",
+            "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
+            "lldb-gdbserver <   6> send packet: $OK#00",
+            "lldb-gdbserver <   5> read packet: $vCont;c#00",
+            "lldb-gdbserver <   7> send packet: $W00#00"])
+
+        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
+                                     self._TIMEOUT_SECONDS, self.logger)
+
+    @debugserver_test
+    @dsym_test
+    def test_inferior_exit_0_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.inferior_exit_0()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_inferior_exit_0_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.inferior_exit_0()
+
+    def inferior_exit_42(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        RETVAL = 42
+
+        # build launch args
+        launch_args = [os.path.abspath('a.out'), "retval:%d" % RETVAL]
+
+        log_lines = self.create_no_ack_remote_stream()
+        log_lines.extend([
+            "lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
+            "lldb-gdbserver <   6> send packet: $OK#00",
+            "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
+            "lldb-gdbserver <   6> send packet: $OK#00",
+            "lldb-gdbserver <   5> read packet: $vCont;c#00",
+            "lldb-gdbserver <   7> send packet: $W{0:02x}#00".format(RETVAL)])
+
+        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
+                                     self._TIMEOUT_SECONDS, self.logger)
+
+    @debugserver_test
+    @dsym_test
+    def test_inferior_exit_42_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.inferior_exit_42()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_inferior_exit_42_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.inferior_exit_42()
+
     def inferior_print_exit(self):
         server = self.start_server()
         self.assertIsNotNone(server)
 
-        # TODO grab the build output directory rather than current directory.
-        inferior_exe_name = os.path.abspath('a.out')
-        inferior_exe_name_hex = gdbremote_hex_encode_string(inferior_exe_name)
+        # build launch args
+        launch_args = [os.path.abspath('a.out'), "hello, world"]
 
         log_lines = self.create_no_ack_remote_stream()
         log_lines.extend([
-            "lldb-gdbserver < 000> read packet: {}".format(
-                gdbremote_packet_encode_string(
-                        "A{},0,{}".format(len(inferior_exe_name_hex), inferior_exe_name_hex))),
+            "lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
             "lldb-gdbserver <   6> send packet: $OK#00",
             "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
             "lldb-gdbserver <   6> send packet: $OK#00",
