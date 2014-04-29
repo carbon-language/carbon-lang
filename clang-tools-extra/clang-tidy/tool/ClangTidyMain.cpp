@@ -34,7 +34,7 @@ static cl::opt<std::string> Checks(
 static cl::opt<std::string> DisableChecks(
     "disable-checks",
     cl::desc("Regular expression matching the names of the checks to disable."),
-    cl::init("(clang-analyzer-alpha.*" // To many false positives.
+    cl::init("(clang-analyzer-alpha.*" // Too many false positives.
              "|llvm-include-order"     // Not implemented yet.
              "|llvm-namespace-comment" // Not complete.
              "|google-.*)"),           // Doesn't apply to LLVM.
