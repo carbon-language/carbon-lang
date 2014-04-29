@@ -81,6 +81,12 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         }
       }
 
+      // Although we don't yet model pointers-to-members, we do need to make
+      // sure that the members of temporaries have a valid 'this' pointer for
+      // other checks.
+      if (B->getOpcode() == BO_PtrMemD)
+        state = createTemporaryRegionIfNeeded(state, LCtx, LHS);
+
       // Process non-assignments except commas or short-circuited
       // logical expressions (LAnd and LOr).
       SVal Result = evalBinOp(state, Op, LeftV, RightV, B->getType());      
