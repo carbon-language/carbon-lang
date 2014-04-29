@@ -80,61 +80,62 @@ protected:
 public:
   AMDGPUTargetLowering(TargetMachine &TM);
 
-  virtual bool isFAbsFree(EVT VT) const override;
-  virtual bool isFNegFree(EVT VT) const override;
-  virtual bool isTruncateFree(EVT Src, EVT Dest) const override;
-  virtual bool isTruncateFree(Type *Src, Type *Dest) const override;
+  bool isFAbsFree(EVT VT) const override;
+  bool isFNegFree(EVT VT) const override;
+  bool isTruncateFree(EVT Src, EVT Dest) const override;
+  bool isTruncateFree(Type *Src, Type *Dest) const override;
 
-  virtual bool isZExtFree(Type *Src, Type *Dest) const override;
-  virtual bool isZExtFree(EVT Src, EVT Dest) const override;
+  bool isZExtFree(Type *Src, Type *Dest) const override;
+  bool isZExtFree(EVT Src, EVT Dest) const override;
 
-  virtual bool isNarrowingProfitable(EVT VT1, EVT VT2) const override;
+  bool isNarrowingProfitable(EVT VT1, EVT VT2) const override;
 
-  virtual MVT getVectorIdxTy() const override;
-  virtual bool isLoadBitCastBeneficial(EVT, EVT) const override;
-  virtual SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
-                              bool isVarArg,
-                              const SmallVectorImpl<ISD::OutputArg> &Outs,
-                              const SmallVectorImpl<SDValue> &OutVals,
-                              SDLoc DL, SelectionDAG &DAG) const;
-  virtual SDValue LowerCall(CallLoweringInfo &CLI,
-                            SmallVectorImpl<SDValue> &InVals) const;
+  MVT getVectorIdxTy() const override;
+  bool isLoadBitCastBeneficial(EVT, EVT) const override;
+  SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
+                      bool isVarArg,
+                      const SmallVectorImpl<ISD::OutputArg> &Outs,
+                      const SmallVectorImpl<SDValue> &OutVals,
+                      SDLoc DL, SelectionDAG &DAG) const override;
+  SDValue LowerCall(CallLoweringInfo &CLI,
+                    SmallVectorImpl<SDValue> &InVals) const override;
 
-  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
-  virtual void ReplaceNodeResults(SDNode * N,
-                                  SmallVectorImpl<SDValue> &Results,
-                                  SelectionDAG &DAG) const override;
+  SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
+  void ReplaceNodeResults(SDNode * N,
+                          SmallVectorImpl<SDValue> &Results,
+                          SelectionDAG &DAG) const override;
 
   SDValue LowerIntrinsicIABS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerIntrinsicLRP(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerMinMax(SDValue Op, SelectionDAG &DAG) const;
-  virtual const char* getTargetNodeName(unsigned Opcode) const;
+  const char* getTargetNodeName(unsigned Opcode) const override;
 
-  virtual SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const {
+  virtual SDNode *PostISelFolding(MachineSDNode *N,
+                                  SelectionDAG &DAG) const {
     return N;
   }
 
   /// \brief Determine which of the bits specified in \p Mask are known to be
   /// either zero or one and return them in the \p KnownZero and \p KnownOne
   /// bitsets.
-  virtual void computeMaskedBitsForTargetNode(const SDValue Op,
-                                              APInt &KnownZero,
-                                              APInt &KnownOne,
-                                              const SelectionDAG &DAG,
-                                              unsigned Depth = 0) const override;
+  void computeMaskedBitsForTargetNode(const SDValue Op,
+                                      APInt &KnownZero,
+                                      APInt &KnownOne,
+                                      const SelectionDAG &DAG,
+                                      unsigned Depth = 0) const override;
 
 // Functions defined in AMDILISelLowering.cpp
 public:
-  virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info,
-                                  const CallInst &I, unsigned Intrinsic) const;
+  bool getTgtMemIntrinsic(IntrinsicInfo &Info,
+                          const CallInst &I, unsigned Intrinsic) const override;
 
   /// We want to mark f32/f64 floating point values as legal.
-  bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
+  bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
 
   /// We don't want to shrink f64/f32 constants.
-  bool ShouldShrinkFPConstant(EVT VT) const;
+  bool ShouldShrinkFPConstant(EVT VT) const override;
 
-  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
 
 private:
   void InitAMDILLowering();

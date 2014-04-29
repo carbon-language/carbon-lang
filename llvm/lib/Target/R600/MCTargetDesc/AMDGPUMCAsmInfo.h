@@ -22,7 +22,7 @@ class StringRef;
 class AMDGPUMCAsmInfo : public MCAsmInfo {
 public:
   explicit AMDGPUMCAsmInfo(StringRef &TT);
-  const MCSection* getNonexecutableStackSection(MCContext &CTX) const;
+  const MCSection* getNonexecutableStackSection(MCContext &CTX) const override;
 };
 } // namespace llvm
 #endif // AMDGPUMCASMINFO_H

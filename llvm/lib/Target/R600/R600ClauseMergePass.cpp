@@ -63,9 +63,9 @@ private:
 public:
   R600ClauseMergePass(TargetMachine &tm) : MachineFunctionPass(ID) { }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  const char *getPassName() const;
+  const char *getPassName() const override;
 };
 
 char R600ClauseMergePass::ID = 0;

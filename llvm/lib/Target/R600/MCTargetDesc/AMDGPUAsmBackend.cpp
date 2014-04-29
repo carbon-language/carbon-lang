@@ -23,8 +23,8 @@ namespace {
 class AMDGPUMCObjectWriter : public MCObjectWriter {
 public:
   AMDGPUMCObjectWriter(raw_ostream &OS) : MCObjectWriter(OS, true) { }
-  virtual void ExecutePostLayoutBinding(MCAssembler &Asm,
-                                        const MCAsmLayout &Layout) {
+  void ExecutePostLayoutBinding(MCAssembler &Asm,
+                                const MCAsmLayout &Layout) override {
     //XXX: Implement if necessary.
   }
   void RecordRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
@@ -34,7 +34,7 @@ public:
     assert(!"Not implemented");
   }
 
-  virtual void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout);
+  void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
 
 };
 
@@ -43,19 +43,19 @@ public:
   AMDGPUAsmBackend(const Target &T)
     : MCAsmBackend() {}
 
-  virtual unsigned getNumFixupKinds() const { return 0; };
-  virtual void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                          uint64_t Value, bool IsPCRel) const;
-  virtual bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
-                                    const MCRelaxableFragment *DF,
-                                    const MCAsmLayout &Layout) const {
+  unsigned getNumFixupKinds() const override { return 0; };
+  void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
+                  uint64_t Value, bool IsPCRel) const override;
+  bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
+                            const MCRelaxableFragment *DF,
+                            const MCAsmLayout &Layout) const override {
     return false;
   }
-  virtual void relaxInstruction(const MCInst &Inst, MCInst &Res) const {
+  void relaxInstruction(const MCInst &Inst, MCInst &Res) const override {
     assert(!"Not implemented");
   }
-  virtual bool mayNeedRelaxation(const MCInst &Inst) const { return false; }
-  virtual bool writeNopData(uint64_t Count, MCObjectWriter *OW) const {
+  bool mayNeedRelaxation(const MCInst &Inst) const override { return false; }
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override {
     return true;
   }
 };
@@ -88,7 +88,7 @@ class ELFAMDGPUAsmBackend : public AMDGPUAsmBackend {
 public:
   ELFAMDGPUAsmBackend(const Target &T) : AMDGPUAsmBackend(T) { }
 
-  MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
     return createAMDGPUELFObjectWriter(OS);
   }
 };

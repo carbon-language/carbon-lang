@@ -24,21 +24,21 @@ class R600InstrInfo;
 class R600TargetLowering : public AMDGPUTargetLowering {
 public:
   R600TargetLowering(TargetMachine &TM);
-  virtual MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr *MI,
-      MachineBasicBlock * BB) const;
-  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
-  virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
-  virtual void ReplaceNodeResults(SDNode * N,
-                                  SmallVectorImpl<SDValue> &Results,
-                                  SelectionDAG &DAG) const override;
-  virtual SDValue LowerFormalArguments(
-                                      SDValue Chain,
-                                      CallingConv::ID CallConv,
-                                      bool isVarArg,
-                                      const SmallVectorImpl<ISD::InputArg> &Ins,
-                                      SDLoc DL, SelectionDAG &DAG,
-                                      SmallVectorImpl<SDValue> &InVals) const;
-  virtual EVT getSetCCResultType(LLVMContext &, EVT VT) const;
+  MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr *MI,
+      MachineBasicBlock * BB) const override;
+  SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
+  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
+  void ReplaceNodeResults(SDNode * N,
+                          SmallVectorImpl<SDValue> &Results,
+                          SelectionDAG &DAG) const override;
+  SDValue LowerFormalArguments(
+                              SDValue Chain,
+                              CallingConv::ID CallConv,
+                              bool isVarArg,
+                              const SmallVectorImpl<ISD::InputArg> &Ins,
+                              SDLoc DL, SelectionDAG &DAG,
+                              SmallVectorImpl<SDValue> &InVals) const override;
+  EVT getSetCCResultType(LLVMContext &, EVT VT) const override;
 private:
   unsigned Gen;
   /// Each OpenCL kernel has nine implicit parameters that are stored in the
@@ -66,7 +66,7 @@ private:
   void getStackAddress(unsigned StackWidth, unsigned ElemIdx,
                        unsigned &Channel, unsigned &PtrIncr) const;
   bool isZero(SDValue Op) const;
-  virtual SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const;
+  SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const override;
 };
 
 } // End namespace llvm;

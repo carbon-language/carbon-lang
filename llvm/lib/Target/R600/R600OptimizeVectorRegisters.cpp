@@ -110,7 +110,7 @@ public:
   R600VectorRegMerger(TargetMachine &tm) : MachineFunctionPass(ID),
   TII(nullptr) { }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.setPreservesCFG();
     AU.addRequired<MachineDominatorTree>();
     AU.addPreserved<MachineDominatorTree>();
@@ -119,11 +119,11 @@ public:
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 
-  const char *getPassName() const {
+  const char *getPassName() const override {
     return "R600 Vector Registers Merge Pass";
   }
 
-  bool runOnMachineFunction(MachineFunction &Fn);
+  bool runOnMachineFunction(MachineFunction &Fn) override;
 };
 
 char R600VectorRegMerger::ID = 0;

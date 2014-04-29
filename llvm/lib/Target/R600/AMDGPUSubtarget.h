@@ -60,7 +60,7 @@ public:
   AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS);
 
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
-  virtual void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
+  virtual void ParseSubtargetFeatures(StringRef CPU, StringRef FS) final;
 
   bool is64bit() const;
   bool hasVertexCache() const;
@@ -92,14 +92,14 @@ public:
   unsigned getStackEntrySize() const;
   bool hasCFAluBug() const;
 
-  virtual bool enableMachineScheduler() const {
+  bool enableMachineScheduler() const override {
     return getGeneration() <= NORTHERN_ISLANDS;
   }
 
   // Helper functions to simplify if statements
   bool isTargetELF() const;
   std::string getDeviceName() const;
-  virtual size_t getDefaultSize(uint32_t dim) const;
+  virtual size_t getDefaultSize(uint32_t dim) const final;
   bool dumpCode() const { return DumpCode; }
   bool r600ALUEncoding() const { return R600ALUInst; }
 

@@ -296,7 +296,7 @@ public:
     initializeR600EmitClauseMarkersPass(*PassRegistry::getPassRegistry());
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF) {
+  bool runOnMachineFunction(MachineFunction &MF) override {
     TII = static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());
 
     for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
@@ -315,7 +315,7 @@ public:
     return false;
   }
 
-  const char *getPassName() const {
+  const char *getPassName() const override {
     return "R600 Emit Clause Markers Pass";
   }
 };

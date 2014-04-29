@@ -475,7 +475,7 @@ public:
       MaxFetchInst = ST.getTexVTXClauseSize();
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF) {
+  bool runOnMachineFunction(MachineFunction &MF) override {
     TII=static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());
     TRI=static_cast<const R600RegisterInfo *>(MF.getTarget().getRegisterInfo());
     R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
@@ -666,7 +666,7 @@ public:
     return false;
   }
 
-  const char *getPassName() const {
+  const char *getPassName() const override {
     return "R600 Control Flow Finalizer Pass";
   }
 };

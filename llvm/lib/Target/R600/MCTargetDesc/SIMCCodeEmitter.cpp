@@ -54,14 +54,14 @@ public:
   ~SIMCCodeEmitter() { }
 
   /// \brief Encode the instruction and write it to the OS.
-  virtual void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
+  void EncodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
-                         const MCSubtargetInfo &STI) const;
+                         const MCSubtargetInfo &STI) const override;
 
   /// \returns the encoding for an MCOperand.
-  virtual uint64_t getMachineOpValue(const MCInst &MI, const MCOperand &MO,
-                                     SmallVectorImpl<MCFixup> &Fixups,
-                                     const MCSubtargetInfo &STI) const;
+  uint64_t getMachineOpValue(const MCInst &MI, const MCOperand &MO,
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const override;
 };
 
 } // End anonymous namespace

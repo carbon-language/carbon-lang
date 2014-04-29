@@ -33,12 +33,13 @@ public:
 
   /// \returns The number of 32-bit sub-registers that are used when storing
   /// values to the stack.
-  virtual unsigned getStackWidth(const MachineFunction &MF) const;
-  virtual int getFrameIndexOffset(const MachineFunction &MF, int FI) const;
-  virtual const SpillSlot *getCalleeSavedSpillSlots(unsigned &NumEntries) const;
-  virtual void emitPrologue(MachineFunction &MF) const;
-  virtual void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
-  virtual bool hasFP(const MachineFunction &MF) const;
+  virtual unsigned getStackWidth(const MachineFunction &MF) const final;
+  int getFrameIndexOffset(const MachineFunction &MF, int FI) const override;
+  const SpillSlot *
+    getCalleeSavedSpillSlots(unsigned &NumEntries) const override;
+  void emitPrologue(MachineFunction &MF) const override;
+  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
+  bool hasFP(const MachineFunction &MF) const override;
 };
 } // namespace llvm
 #endif // AMDILFRAME_LOWERING_H

@@ -37,9 +37,9 @@ public:
   AMDGPUDAGToDAGISel(TargetMachine &TM);
   virtual ~AMDGPUDAGToDAGISel();
 
-  SDNode *Select(SDNode *N);
-  virtual const char *getPassName() const;
-  virtual void PostprocessISelDAG();
+  SDNode *Select(SDNode *N) override;
+  const char *getPassName() const override;
+  void PostprocessISelDAG() override;
 
 private:
   bool isInlineImmediate(SDNode *N) const;

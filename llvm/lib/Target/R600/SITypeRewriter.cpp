@@ -39,9 +39,9 @@ class SITypeRewriter : public FunctionPass,
 
 public:
   SITypeRewriter() : FunctionPass(ID) { }
-  virtual bool doInitialization(Module &M);
-  virtual bool runOnFunction(Function &F);
-  virtual const char *getPassName() const {
+  bool doInitialization(Module &M) override;
+  bool runOnFunction(Function &F) override;
+  const char *getPassName() const override {
     return "SI Type Rewriter";
   }
   void visitLoadInst(LoadInst &I);

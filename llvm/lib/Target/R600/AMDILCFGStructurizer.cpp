@@ -139,11 +139,11 @@ public:
     initializeAMDGPUCFGStructurizerPass(*PassRegistry::getPassRegistry());
   }
 
-   const char *getPassName() const {
+   const char *getPassName() const override {
     return "AMDGPU Control Flow Graph structurizer Pass";
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addPreserved<MachineFunctionAnalysis>();
     AU.addRequired<MachineFunctionAnalysis>();
     AU.addRequired<MachineDominatorTree>();
@@ -159,7 +159,7 @@ public:
   /// sure all loops have an exit block
   bool prepare();
 
-  bool runOnMachineFunction(MachineFunction &MF) {
+  bool runOnMachineFunction(MachineFunction &MF) override {
     TII = static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());
     TRI = &TII->getRegisterInfo();
     DEBUG(MF.dump(););

@@ -48,32 +48,33 @@ class SITargetLowering : public AMDGPUTargetLowering {
 
 public:
   SITargetLowering(TargetMachine &tm);
-  bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS, bool *IsFast) const;
-  virtual bool shouldSplitVectorType(EVT VT) const override;
+  bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS,
+                                     bool *IsFast) const override;
+  bool shouldSplitVectorType(EVT VT) const override;
 
-  virtual bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
-                                                 Type *Ty) const override;
+  bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
+                                        Type *Ty) const override;
 
   SDValue LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv,
                                bool isVarArg,
                                const SmallVectorImpl<ISD::InputArg> &Ins,
                                SDLoc DL, SelectionDAG &DAG,
-                               SmallVectorImpl<SDValue> &InVals) const;
+                               SmallVectorImpl<SDValue> &InVals) const override;
 
-  virtual MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr * MI,
-                                              MachineBasicBlock * BB) const;
-  virtual EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
-  virtual MVT getScalarShiftAmountTy(EVT VT) const;
-  virtual bool isFMAFasterThanFMulAndFAdd(EVT VT) const;
-  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
-  virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
-  virtual SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const;
-  virtual void AdjustInstrPostInstrSelection(MachineInstr *MI,
-                                             SDNode *Node) const;
+  MachineBasicBlock * EmitInstrWithCustomInserter(MachineInstr * MI,
+                                      MachineBasicBlock * BB) const override;
+  EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
+  MVT getScalarShiftAmountTy(EVT VT) const override;
+  bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
+  SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
+  SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
+  SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const override;
+  void AdjustInstrPostInstrSelection(MachineInstr *MI,
+                                     SDNode *Node) const override;
 
   int32_t analyzeImmediate(const SDNode *N) const;
   SDValue CreateLiveInRegister(SelectionDAG &DAG, const TargetRegisterClass *RC,
-                               unsigned Reg, EVT VT) const;
+                               unsigned Reg, EVT VT) const override;
 };
 
 } // End namespace llvm

@@ -98,9 +98,9 @@ private:
 public:
   SIFixSGPRCopies(TargetMachine &tm) : MachineFunctionPass(ID) { }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  const char *getPassName() const {
+  const char *getPassName() const override {
     return "SI Fix SGPR copies";
   }
 

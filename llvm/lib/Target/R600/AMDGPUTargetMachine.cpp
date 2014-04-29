@@ -103,20 +103,20 @@ public:
     return getTM<AMDGPUTargetMachine>();
   }
 
-  virtual ScheduleDAGInstrs *
-  createMachineScheduler(MachineSchedContext *C) const {
+  ScheduleDAGInstrs *
+  createMachineScheduler(MachineSchedContext *C) const override {
     const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
     if (ST.getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS)
       return createR600MachineScheduler(C);
     return nullptr;
   }
 
-  virtual bool addPreISel();
-  virtual bool addInstSelector();
-  virtual bool addPreRegAlloc();
-  virtual bool addPostRegAlloc();
-  virtual bool addPreSched2();
-  virtual bool addPreEmitPass();
+  bool addPreISel() override;
+  bool addInstSelector() override;
+  bool addPreRegAlloc() override;
+  bool addPostRegAlloc() override;
+  bool addPreSched2() override;
+  bool addPreEmitPass() override;
 };
 } // End of anonymous namespace
 

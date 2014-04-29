@@ -31,9 +31,9 @@ public:
   AMDGPUConvertToISAPass(TargetMachine &tm) :
     MachineFunctionPass(ID), TM(tm) { }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  virtual const char *getPassName() const {return "AMDGPU Convert to ISA";}
+  const char *getPassName() const override {return "AMDGPU Convert to ISA";}
 
 };
 

@@ -47,14 +47,14 @@ private:
 public:
   explicit AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer);
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "AMDGPU Assembly Printer";
   }
 
   /// Implemented in AMDGPUMCInstLower.cpp
-  virtual void EmitInstruction(const MachineInstr *MI);
+  void EmitInstruction(const MachineInstr *MI) override;
 
 protected:
   bool DisasmEnabled;

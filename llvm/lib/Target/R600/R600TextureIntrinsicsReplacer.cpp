@@ -209,7 +209,7 @@ public:
     FunctionPass(ID) {
   }
 
-  virtual bool doInitialization(Module &M) {
+  bool doInitialization(Module &M) override {
     LLVMContext &Ctx = M.getContext();
     Mod = &M;
     FloatType = Type::getFloatTy(Ctx);
@@ -245,16 +245,16 @@ public:
     return false;
   }
 
-  virtual bool runOnFunction(Function &F) {
+  bool runOnFunction(Function &F) override {
     visit(F);
     return false;
   }
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "R600 Texture Intrinsics Replacer";
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
   }
 
   void visitCallInst(CallInst &I) {

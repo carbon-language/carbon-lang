@@ -35,12 +35,12 @@ class AMDGPUIntrinsicInfo : public TargetIntrinsicInfo {
 public:
   AMDGPUIntrinsicInfo(TargetMachine *tm);
   std::string getName(unsigned int IntrId, Type **Tys = nullptr,
-                      unsigned int numTys = 0) const;
-  unsigned int lookupName(const char *Name, unsigned int Len) const;
-  bool isOverloaded(unsigned int IID) const;
+                      unsigned int numTys = 0) const override;
+  unsigned int lookupName(const char *Name, unsigned int Len) const override;
+  bool isOverloaded(unsigned int IID) const override;
   Function *getDeclaration(Module *M, unsigned int ID,
                            Type **Tys = nullptr,
-                           unsigned int numTys = 0) const;
+                           unsigned int numTys = 0) const override;
 };
 
 } // end namespace llvm

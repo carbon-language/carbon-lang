@@ -91,15 +91,15 @@ public:
   SIAnnotateControlFlow():
     FunctionPass(ID) { }
 
-  virtual bool doInitialization(Module &M);
+  bool doInitialization(Module &M) override;
 
-  virtual bool runOnFunction(Function &F);
+  bool runOnFunction(Function &F) override;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "SI annotate control flow";
   }
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+  void getAnalysisUsage(AnalysisUsage &AU) const override {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addPreserved<DominatorTreeWrapperPass>();
     FunctionPass::getAnalysisUsage(AU);

@@ -39,30 +39,32 @@ public:
                       StringRef CPU, TargetOptions Options, Reloc::Model RM,
                       CodeModel::Model CM, CodeGenOpt::Level OL);
   ~AMDGPUTargetMachine();
-  virtual const AMDGPUFrameLowering *getFrameLowering() const {
+  const AMDGPUFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
-  virtual const AMDGPUIntrinsicInfo *getIntrinsicInfo() const {
+  const AMDGPUIntrinsicInfo *getIntrinsicInfo() const override {
     return &IntrinsicInfo;
   }
-  virtual const AMDGPUInstrInfo *getInstrInfo() const {
+  const AMDGPUInstrInfo *getInstrInfo() const override {
     return InstrInfo.get();
   }
-  virtual const AMDGPUSubtarget *getSubtargetImpl() const { return &Subtarget; }
-  virtual const AMDGPURegisterInfo *getRegisterInfo() const {
+  const AMDGPUSubtarget *getSubtargetImpl() const override {
+    return &Subtarget;
+  }
+  const AMDGPURegisterInfo *getRegisterInfo() const override {
     return &InstrInfo->getRegisterInfo();
   }
-  virtual AMDGPUTargetLowering *getTargetLowering() const {
+  AMDGPUTargetLowering *getTargetLowering() const override {
     return TLInfo.get();
   }
-  virtual const InstrItineraryData *getInstrItineraryData() const {
+  const InstrItineraryData *getInstrItineraryData() const override {
     return InstrItins;
   }
-  virtual const DataLayout *getDataLayout() const { return &Layout; }
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  const DataLayout *getDataLayout() const override { return &Layout; }
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
   /// \brief Register R600 analysis passes with a pass manager.
-  virtual void addAnalysisPasses(PassManagerBase &PM);
+  void addAnalysisPasses(PassManagerBase &PM) override;
 };
 
 } // End namespace llvm

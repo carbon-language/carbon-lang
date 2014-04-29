@@ -52,45 +52,45 @@ private:
 public:
   explicit SIInstrInfo(AMDGPUTargetMachine &tm);
 
-  const SIRegisterInfo &getRegisterInfo() const {
+  const SIRegisterInfo &getRegisterInfo() const override {
     return RI;
   }
 
-  virtual void copyPhysReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator MI, DebugLoc DL,
-                           unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const;
+  void copyPhysReg(MachineBasicBlock &MBB,
+                   MachineBasicBlock::iterator MI, DebugLoc DL,
+                   unsigned DestReg, unsigned SrcReg,
+                   bool KillSrc) const override;
 
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI,
                            unsigned SrcReg, bool isKill, int FrameIndex,
                            const TargetRegisterClass *RC,
-                           const TargetRegisterInfo *TRI) const;
+                           const TargetRegisterInfo *TRI) const override;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, int FrameIndex,
                             const TargetRegisterClass *RC,
-                            const TargetRegisterInfo *TRI) const;
+                            const TargetRegisterInfo *TRI) const override;
 
   unsigned commuteOpcode(unsigned Opcode) const;
 
-  virtual MachineInstr *commuteInstruction(MachineInstr *MI,
-                                           bool NewMI=false) const;
+  MachineInstr *commuteInstruction(MachineInstr *MI,
+                                   bool NewMI=false) const override;
 
   bool isTriviallyReMaterializable(const MachineInstr *MI,
                                    AliasAnalysis *AA = nullptr) const;
 
-  virtual unsigned getIEQOpcode() const {
+  unsigned getIEQOpcode() const override {
     llvm_unreachable("Unimplemented");
   }
 
   MachineInstr *buildMovInstr(MachineBasicBlock *MBB,
                               MachineBasicBlock::iterator I,
-                              unsigned DstReg, unsigned SrcReg) const;
-  virtual bool isMov(unsigned Opcode) const;
+                              unsigned DstReg, unsigned SrcReg) const override;
+  bool isMov(unsigned Opcode) const override;
 
-  virtual bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const;
+  bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const override;
   bool isDS(uint16_t Opcode) const;
   int isMIMG(uint16_t Opcode) const;
   int isSMRD(uint16_t Opcode) const;
@@ -102,8 +102,8 @@ public:
   bool isInlineConstant(const MachineOperand &MO) const;
   bool isLiteralConstant(const MachineOperand &MO) const;
 
-  virtual bool verifyInstruction(const MachineInstr *MI,
-                                 StringRef &ErrInfo) const;
+  bool verifyInstruction(const MachineInstr *MI,
+                         StringRef &ErrInfo) const override;
 
   bool isSALUInstr(const MachineInstr &MI) const;
   static unsigned getVALUOp(const MachineInstr &MI);
@@ -142,22 +142,22 @@ public:
   /// VALU if necessary.
   void moveToVALU(MachineInstr &MI) const;
 
-  virtual unsigned calculateIndirectAddress(unsigned RegIndex,
-                                            unsigned Channel) const;
+  unsigned calculateIndirectAddress(unsigned RegIndex,
+                                    unsigned Channel) const override;
 
-  virtual const TargetRegisterClass *getIndirectAddrRegClass() const;
+  const TargetRegisterClass *getIndirectAddrRegClass() const override;
 
-  virtual MachineInstrBuilder buildIndirectWrite(MachineBasicBlock *MBB,
-                                                 MachineBasicBlock::iterator I,
-                                                 unsigned ValueReg,
-                                                 unsigned Address,
-                                                 unsigned OffsetReg) const;
+  MachineInstrBuilder buildIndirectWrite(MachineBasicBlock *MBB,
+                                         MachineBasicBlock::iterator I,
+                                         unsigned ValueReg,
+                                         unsigned Address,
+                                         unsigned OffsetReg) const override;
 
-  virtual MachineInstrBuilder buildIndirectRead(MachineBasicBlock *MBB,
-                                                MachineBasicBlock::iterator I,
-                                                unsigned ValueReg,
-                                                unsigned Address,
-                                                unsigned OffsetReg) const;
+  MachineInstrBuilder buildIndirectRead(MachineBasicBlock *MBB,
+                                        MachineBasicBlock::iterator I,
+                                        unsigned ValueReg,
+                                        unsigned Address,
+                                        unsigned OffsetReg) const override;
   void reserveIndirectRegisters(BitVector &Reserved,
                                 const MachineFunction &MF) const;
 

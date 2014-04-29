@@ -94,9 +94,9 @@ public:
   SILowerControlFlowPass(TargetMachine &tm) :
     MachineFunctionPass(ID), TRI(nullptr), TII(nullptr) { }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  const char *getPassName() const {
+  const char *getPassName() const override {
     return "SI Lower control flow instructions";
   }
 
