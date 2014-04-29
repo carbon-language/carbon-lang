@@ -3051,7 +3051,6 @@ class WindowsX86_32TargetInfo : public WindowsTargetInfo<X86_32TargetInfo> {
 public:
   WindowsX86_32TargetInfo(const llvm::Triple &Triple)
       : WindowsTargetInfo<X86_32TargetInfo>(Triple) {
-    TLSSupported = false;
     WCharType = UnsignedShort;
     DoubleAlign = LongLongAlign = 64;
     DescriptionString = "e-m:w-p:32:32-i64:64-f80:32-n8:16:32-S32";
@@ -3287,7 +3286,6 @@ class WindowsX86_64TargetInfo : public WindowsTargetInfo<X86_64TargetInfo> {
 public:
   WindowsX86_64TargetInfo(const llvm::Triple &Triple)
       : WindowsTargetInfo<X86_64TargetInfo>(Triple) {
-    TLSSupported = false;
     WCharType = UnsignedShort;
     LongWidth = LongAlign = 32;
     DoubleAlign = LongLongAlign = 64;

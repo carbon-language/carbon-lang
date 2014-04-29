@@ -9,9 +9,8 @@
 // RUN: not %clang_cc1 -triple x86_64-apple-darwin10 -fsyntax-only %s
 // RUN: %clang_cc1 -triple x86_64-apple-macos10.7.0 -fsyntax-only %s
 
-// FIXME: I thought it was supported actually?
-// RUN: not %clang_cc1 -triple x86_64-pc-win32 -fsyntax-only %s
-// RUN: not %clang_cc1 -triple i386-pc-win32 -fsyntax-only %s
+// RUN: %clang_cc1 -triple x86_64-pc-win32 -fsyntax-only %s
+// RUN: %clang_cc1 -triple i386-pc-win32 -fsyntax-only %s
 
 // OpenBSD does not suppport TLS.
 // RUN: not %clang_cc1 -triple x86_64-pc-openbsd -fsyntax-only %s
