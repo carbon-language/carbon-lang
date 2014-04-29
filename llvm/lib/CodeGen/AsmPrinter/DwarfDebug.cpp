@@ -544,7 +544,8 @@ DIE *DwarfDebug::createScopeChildrenDIE(
   return ObjectPointer;
 }
 
-void DwarfDebug::createAndAddScopeChildren(DwarfCompileUnit &TheCU, LexicalScope *Scope, DIE &ScopeDIE) {
+void DwarfDebug::createAndAddScopeChildren(DwarfCompileUnit &TheCU,
+                                           LexicalScope *Scope, DIE &ScopeDIE) {
   // We create children when the scope DIE is not null.
   SmallVector<std::unique_ptr<DIE>, 8> Children;
   if (DIE *ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children))
@@ -555,7 +556,8 @@ void DwarfDebug::createAndAddScopeChildren(DwarfCompileUnit &TheCU, LexicalScope
     ScopeDIE.addChild(std::move(I));
 }
 
-void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU, LexicalScope *Scope) {
+void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
+                                                     LexicalScope *Scope) {
   assert(Scope && Scope->getScopeNode());
   assert(Scope->isAbstractScope());
   assert(!Scope->getInlinedAt());
