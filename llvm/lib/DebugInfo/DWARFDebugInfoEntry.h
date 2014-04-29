@@ -29,17 +29,13 @@ class DWARFDebugInfoEntryMinimal {
   /// Offset within the .debug_info of the start of this entry.
   uint32_t Offset;
 
-  /// How many to subtract from "this" to get the parent.
-  /// If zero this die has no parent.
-  uint32_t ParentIdx;
-
   /// How many to add to "this" to get the sibling.
   uint32_t SiblingIdx;
 
   const DWARFAbbreviationDeclaration *AbbrevDecl;
 public:
   DWARFDebugInfoEntryMinimal()
-    : Offset(0), ParentIdx(0), SiblingIdx(0), AbbrevDecl(nullptr) {}
+    : Offset(0), SiblingIdx(0), AbbrevDecl(nullptr) {}
 
   void dump(raw_ostream &OS, const DWARFUnit *u, unsigned recurseDepth,
             unsigned indent = 0) const;
@@ -64,45 +60,23 @@ public:
   bool hasChildren() const { return !isNULL() && AbbrevDecl->hasChildren(); }
 
   // We know we are kept in a vector of contiguous entries, so we know
-  // our parent will be some index behind "this".
-  DWARFDebugInfoEntryMinimal *getParent() {
-    return ParentIdx > 0 ? this - ParentIdx : nullptr;
-  }
-  const DWARFDebugInfoEntryMinimal *getParent() const {
-    return ParentIdx > 0 ? this - ParentIdx : nullptr;
-  }
-  // We know we are kept in a vector of contiguous entries, so we know
   // our sibling will be some index after "this".
-  DWARFDebugInfoEntryMinimal *getSibling() {
-    return SiblingIdx > 0 ? this + SiblingIdx : nullptr;
-  }
   const DWARFDebugInfoEntryMinimal *getSibling() const {
     return SiblingIdx > 0 ? this + SiblingIdx : nullptr;
   }
+
   // We know we are kept in a vector of contiguous entries, so we know
   // we don't need to store our child pointer, if we have a child it will
   // be the next entry in the list...
-  DWARFDebugInfoEntryMinimal *getFirstChild() {
-    return hasChildren() ? this + 1 : nullptr;
-  }
   const DWARFDebugInfoEntryMinimal *getFirstChild() const {
     return hasChildren() ? this + 1 : nullptr;
   }
 
-  void setParent(DWARFDebugInfoEntryMinimal *parent) {
-    if (parent) {
-      // We know we are kept in a vector of contiguous entries, so we know
-      // our parent will be some index behind "this".
-      ParentIdx = this - parent;
-    } else
-      ParentIdx = 0;
-  }
-  void setSibling(DWARFDebugInfoEntryMinimal *sibling) {
-    if (sibling) {
+  void setSibling(const DWARFDebugInfoEntryMinimal *Sibling) {
+    if (Sibling) {
       // We know we are kept in a vector of contiguous entries, so we know
       // our sibling will be some index after "this".
-      SiblingIdx = sibling - this;
-      sibling->setParent(getParent());
+      SiblingIdx = Sibling - this;
     } else
       SiblingIdx = 0;
   }

@@ -126,38 +126,32 @@ uint64_t DWARFUnit::getDWOId() {
 }
 
 void DWARFUnit::setDIERelations() {
-  if (DieArray.empty())
+  if (DieArray.size() <= 1)
     return;
-  DWARFDebugInfoEntryMinimal *die_array_begin = &DieArray.front();
-  DWARFDebugInfoEntryMinimal *die_array_end = &DieArray.back();
-  DWARFDebugInfoEntryMinimal *curr_die;
-  // We purposely are skipping the last element in the array in the loop below
-  // so that we can always have a valid next item
-  for (curr_die = die_array_begin; curr_die < die_array_end; ++curr_die) {
-    // Since our loop doesn't include the last element, we can always
-    // safely access the next die in the array.
-    DWARFDebugInfoEntryMinimal *next_die = curr_die + 1;
 
-    const DWARFAbbreviationDeclaration *curr_die_abbrev =
-      curr_die->getAbbreviationDeclarationPtr();
-
-    if (curr_die_abbrev) {
-      // Normal DIE
-      if (curr_die_abbrev->hasChildren())
-        next_die->setParent(curr_die);
-      else
-        curr_die->setSibling(next_die);
+  std::vector<DWARFDebugInfoEntryMinimal *> ParentChain;
+  DWARFDebugInfoEntryMinimal *SiblingChain = nullptr;
+  for (auto &DIE : DieArray) {
+    if (SiblingChain) {
+      SiblingChain->setSibling(&DIE);
+    }
+    if (const DWARFAbbreviationDeclaration *AbbrDecl =
+            DIE.getAbbreviationDeclarationPtr()) {
+      // Normal DIE.
+      if (AbbrDecl->hasChildren()) {
+        ParentChain.push_back(&DIE);
+        SiblingChain = nullptr;
+      } else {
+        SiblingChain = &DIE;
+      }
     } else {
-      // NULL DIE that terminates a sibling chain
-      DWARFDebugInfoEntryMinimal *parent = curr_die->getParent();
-      if (parent)
-        parent->setSibling(next_die);
+      // NULL entry terminates the sibling chain.
+      SiblingChain = ParentChain.back();
+      ParentChain.pop_back();
     }
   }
-
-  // Since we skipped the last element, we need to fix it up!
-  if (die_array_begin < die_array_end)
-    curr_die->setParent(die_array_begin);
+  assert(SiblingChain == nullptr || SiblingChain == &DieArray[0]);
+  assert(ParentChain.empty());
 }
 
 void DWARFUnit::extractDIEsToVector(
@@ -189,9 +183,8 @@ void DWARFUnit::extractDIEsToVector(
       Dies.push_back(DIE);
     }
 
-    const DWARFAbbreviationDeclaration *AbbrDecl =
-      DIE.getAbbreviationDeclarationPtr();
-    if (AbbrDecl) {
+    if (const DWARFAbbreviationDeclaration *AbbrDecl =
+            DIE.getAbbreviationDeclarationPtr()) {
       // Normal DIE
       if (AbbrDecl->hasChildren())
         ++Depth;
