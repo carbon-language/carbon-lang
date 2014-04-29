@@ -758,31 +758,10 @@ public:
     return *this;
   }
 
-  /// \brief Multiply by a branch probability.
-  ///
-  /// Multiply by P.  Guarantees full precision.
-  ///
-  /// This could be naively implemented by multiplying by the numerator and
-  /// dividing by the denominator, but in what order?  Multiplying first can
-  /// overflow, while dividing first will lose precision (potentially, changing
-  /// a non-zero mass to zero).
-  ///
-  /// The implementation mixes the two methods.  Since \a BranchProbability
-  /// uses 32-bits and \a BlockMass 64-bits, shift the mass as far to the left
-  /// as there is room, then divide by the denominator to get a quotient.
-  /// Multiplying by the numerator and right shifting gives a first
-  /// approximation.
-  ///
-  /// Calculate the error in this first approximation by calculating the
-  /// opposite mass (multiply by the opposite numerator and shift) and
-  /// subtracting both from teh original mass.
-  ///
-  /// Add to the first approximation the correct fraction of this error value.
-  /// This time, multiply first and then divide, since there is no danger of
-  /// overflow.
-  ///
-  /// \pre P represents a fraction between 0.0 and 1.0.
-  BlockMass &operator*=(const BranchProbability &P);
+  BlockMass &operator*=(const BranchProbability &P) {
+    Mass = P.scale(Mass);
+    return *this;
+  }
 
   bool operator==(const BlockMass &X) const { return Mass == X.Mass; }
   bool operator!=(const BlockMass &X) const { return Mass != X.Mass; }

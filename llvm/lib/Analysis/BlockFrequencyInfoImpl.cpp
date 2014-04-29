@@ -311,32 +311,6 @@ std::pair<uint64_t, int16_t> UnsignedFloatBase::multiply64(uint64_t L,
 // BlockMass implementation.
 //
 //===----------------------------------------------------------------------===//
-BlockMass &BlockMass::operator*=(const BranchProbability &P) {
-  uint32_t N = P.getNumerator(), D = P.getDenominator();
-  assert(D && "divide by 0");
-  assert(N <= D && "fraction greater than 1");
-
-  // Fast path for multiplying by 1.0.
-  if (!Mass || N == D)
-    return *this;
-
-  // Get as much precision as we can.
-  int Shift = countLeadingZeros(Mass);
-  uint64_t ShiftedQuotient = (Mass << Shift) / D;
-  uint64_t Product = ShiftedQuotient * N >> Shift;
-
-  // Now check for what's lost.
-  uint64_t Left = ShiftedQuotient * (D - N) >> Shift;
-  uint64_t Lost = Mass - Product - Left;
-
-  // TODO: prove this assertion.
-  assert(Lost <= UINT32_MAX);
-
-  // Take the product plus a portion of the spoils.
-  Mass = Product + Lost * N / D;
-  return *this;
-}
-
 UnsignedFloat<uint64_t> BlockMass::toFloat() const {
   if (isFull())
     return UnsignedFloat<uint64_t>(1, 0);
