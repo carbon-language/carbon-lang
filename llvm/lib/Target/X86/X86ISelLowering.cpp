@@ -4172,6 +4172,29 @@ static bool isUNPCKH_v_undef_Mask(ArrayRef<int> Mask, MVT VT, bool HasInt256) {
   return true;
 }
 
+// Match for INSERTI64x4 INSERTF64x4 instructions (src0[0], src1[0]) or
+// (src1[0], src0[1]), manipulation with 256-bit sub-vectors
+static bool isINSERT64x4Mask(ArrayRef<int> Mask, MVT VT, unsigned int *Imm) {
+  if (!VT.is512BitVector())
+    return false;
+
+  unsigned NumElts = VT.getVectorNumElements();
+  unsigned HalfSize = NumElts/2;
+  if (isSequentialOrUndefInRange(Mask, 0, HalfSize, 0)) {
+    if (isSequentialOrUndefInRange(Mask, HalfSize, HalfSize, NumElts)) {
+      *Imm = 1;
+      return true;
+    }
+  }
+  if (isSequentialOrUndefInRange(Mask, 0, HalfSize, NumElts)) {
+    if (isSequentialOrUndefInRange(Mask, HalfSize, HalfSize, HalfSize)) {
+      *Imm = 0;
+      return true;
+    }
+  }
+  return false;
+}
+
 /// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
 /// specifies a shuffle of elements that is suitable for input to MOVSS,
 /// MOVSD, and MOVD, i.e. setting the lowest element.
@@ -7754,6 +7777,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(X86ISD::VPERMILP, dl, VT, V1,
                                 getShuffleSHUFImmediate(SVOp), DAG);
   }
+
+  unsigned Idx;
+  if (VT.is512BitVector() && isINSERT64x4Mask(M, VT, &Idx))
+    return Insert256BitVector(V1, Extract256BitVector(V2, 0, DAG, dl),
+                              Idx*(NumElems/2), DAG, dl);
 
   // Handle VPERM2F128/VPERM2I128 permutations
   if (isVPERM2X128Mask(M, VT, HasFp256))

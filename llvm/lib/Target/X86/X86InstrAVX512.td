@@ -621,6 +621,22 @@ defm VPERMT2PS : avx512_perm_3src<0x7F, "vpermt2ps",  VR512, memopv16f32, i512me
                                X86VPermv3, v16f32>, EVEX_V512, EVEX_CD8<32, CD8VF>;
 defm VPERMT2PD : avx512_perm_3src<0x7F, "vpermt2pd",  VR512, memopv8f64, i512mem, 
                                X86VPermv3, v8f64>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+
+def : Pat<(v16f32 (int_x86_avx512_mask_vpermt_ps_512 (v16i32 VR512:$idx),
+                   (v16f32 VR512:$src1), (v16f32 VR512:$src2), (i16 -1))),
+          (VPERMT2PSrr VR512:$src1, VR512:$idx, VR512:$src2)>;
+
+def : Pat<(v16i32 (int_x86_avx512_mask_vpermt_d_512 (v16i32 VR512:$idx),
+                   (v16i32 VR512:$src1), (v16i32 VR512:$src2), (i16 -1))),
+          (VPERMT2Drr VR512:$src1, VR512:$idx, VR512:$src2)>;
+
+def : Pat<(v8f64 (int_x86_avx512_mask_vpermt_pd_512 (v8i64 VR512:$idx),
+                   (v8f64 VR512:$src1), (v8f64 VR512:$src2), (i8 -1))),
+          (VPERMT2PDrr VR512:$src1, VR512:$idx, VR512:$src2)>;
+
+def : Pat<(v8i64 (int_x86_avx512_mask_vpermt_q_512 (v8i64 VR512:$idx),
+                   (v8i64 VR512:$src1), (v8i64 VR512:$src2), (i8 -1))),
+          (VPERMT2Qrr VR512:$src1, VR512:$idx, VR512:$src2)>;
 //===----------------------------------------------------------------------===//
 // AVX-512 - BLEND using mask
 //
