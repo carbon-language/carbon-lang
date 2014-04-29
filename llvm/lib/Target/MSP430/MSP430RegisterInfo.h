@@ -36,18 +36,19 @@ public:
 
   /// Code Generation virtual methods...
   const MCPhysReg *
-  getCalleeSavedRegs(const MachineFunction *MF = nullptr) const;
+  getCalleeSavedRegs(const MachineFunction *MF = nullptr) const override;
 
-  BitVector getReservedRegs(const MachineFunction &MF) const;
+  BitVector getReservedRegs(const MachineFunction &MF) const override;
   const TargetRegisterClass*
-  getPointerRegClass(const MachineFunction &MF, unsigned Kind = 0) const;
+  getPointerRegClass(const MachineFunction &MF,
+                     unsigned Kind = 0) const override;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = nullptr) const;
+                           RegScavenger *RS = nullptr) const override;
 
   // Debug information queries.
-  unsigned getFrameRegister(const MachineFunction &MF) const;
+  unsigned getFrameRegister(const MachineFunction &MF) const override;
 };
 
 } // end namespace llvm

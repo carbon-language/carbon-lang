@@ -20,7 +20,7 @@ namespace llvm {
   class StringRef;
 
   class MSP430MCAsmInfo : public MCAsmInfoELF {
-    virtual void anchor();
+    void anchor() override;
   public:
     explicit MSP430MCAsmInfo(StringRef TT);
   };

@@ -43,25 +43,25 @@ public:
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL);
 
-  virtual const TargetFrameLowering *getFrameLowering() const {
+  const TargetFrameLowering *getFrameLowering() const override {
     return &FrameLowering;
   }
-  virtual const MSP430InstrInfo *getInstrInfo() const  { return &InstrInfo; }
-  virtual const DataLayout *getDataLayout() const     { return &DL;}
-  virtual const MSP430Subtarget *getSubtargetImpl() const { return &Subtarget; }
+  const MSP430InstrInfo *getInstrInfo() const override  { return &InstrInfo; }
+  const DataLayout *getDataLayout() const override     { return &DL;}
+  const MSP430Subtarget *getSubtargetImpl() const override { return &Subtarget; }
 
-  virtual const TargetRegisterInfo *getRegisterInfo() const {
+  const TargetRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual const MSP430TargetLowering *getTargetLowering() const {
+  const MSP430TargetLowering *getTargetLowering() const override {
     return &TLInfo;
   }
 
-  virtual const MSP430SelectionDAGInfo* getSelectionDAGInfo() const {
+  const MSP430SelectionDAGInfo* getSelectionDAGInfo() const override {
     return &TSInfo;
   }
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 }; // MSP430TargetMachine.
 
 } // end namespace llvm
