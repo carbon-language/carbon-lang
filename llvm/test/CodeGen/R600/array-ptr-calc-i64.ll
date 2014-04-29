@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck --check-prefix=SI %s
+; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs| FileCheck --check-prefix=SI %s
 
 declare i32 @llvm.SI.tid() readnone
 

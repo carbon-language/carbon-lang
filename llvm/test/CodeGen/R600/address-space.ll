@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck %s
 
 ; Test that codegenprepare understands address space sizes
 

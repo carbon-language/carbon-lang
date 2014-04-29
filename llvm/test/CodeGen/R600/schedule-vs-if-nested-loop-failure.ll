@@ -1,6 +1,6 @@
 ; XFAIL: *
 ; REQUIRES: asserts
-; RUN: llc -O0 -march=r600 -mcpu=SI < %s | FileCheck %s -check-prefix=SI
+; RUN: llc -O0 -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck %s -check-prefix=SI
 
 declare void @llvm.AMDGPU.barrier.local() nounwind noduplicate
 

@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI %s
 
 
 ; SI-LABEL: @global_truncstore_i32_to_i1

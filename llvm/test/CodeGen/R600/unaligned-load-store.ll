@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI %s
 
 ; SI-LABEL: @unaligned_load_store_i32:
 ; DS_READ_U32 {{v[0-9]+}}, 0, [[REG]]

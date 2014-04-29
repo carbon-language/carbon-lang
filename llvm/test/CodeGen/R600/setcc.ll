@@ -1,5 +1,5 @@
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=R600 --check-prefix=FUNC %s
-;RUN: llc < %s -march=r600 -mcpu=SI | FileCheck --check-prefix=SI --check-prefix=FUNC %s
+;RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs| FileCheck --check-prefix=SI --check-prefix=FUNC %s
 
 ; FUNC-LABEL: @setcc_v2i32
 ; R600-DAG: SETE_INT * T{{[0-9]+\.[XYZW]}}, KC0[3].X, KC0[3].Z

@@ -1,4 +1,4 @@
-; RUN: not llc -march=r600 -mcpu=SI < %s 2>&1 | FileCheck %s
+; RUN: not llc -march=r600 -mcpu=SI -verify-machineinstrs< %s 2>&1 | FileCheck %s
 ; RUN: not llc -march=r600 -mcpu=cypress < %s 2>&1 | FileCheck %s
 
 ; CHECK: error: unsupported call to function defined_function in test_call

@@ -1411,21 +1411,38 @@ def LOAD_CONST : AMDGPUShaderInst <
 let mayLoad = 1, mayStore = 1, hasSideEffects = 1,
     Uses = [EXEC], Defs = [EXEC] in {
 
+let usesCustomInserter = 1 in {
+
+def SI_IF_NON_TERM : InstSI <
+  (outs SReg_64:$dst),
+  (ins SReg_64:$vcc, brtarget:$target), "",
+  [(set i64:$dst, (int_SI_if i1:$vcc, bb:$target))]
+>;
+
+def SI_ELSE_NON_TERM : InstSI <
+  (outs SReg_64:$dst),
+  (ins SReg_64:$src, brtarget:$target),
+  "",
+  [(set i64:$dst, (int_SI_else i64:$src, bb:$target))]
+> {
+  let Constraints = "$src = $dst";
+}
+
+} // usesCustomInserter = 1
+
 let isBranch = 1, isTerminator = 1 in {
 
-def SI_IF : InstSI <
+def SI_IF: InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$vcc, brtarget:$target),
-  "SI_IF $dst, $vcc, $target",
-  [(set i64:$dst, (int_SI_if i1:$vcc, bb:$target))]
+  "", []
 >;
 
 def SI_ELSE : InstSI <
   (outs SReg_64:$dst),
   (ins SReg_64:$src, brtarget:$target),
-  "SI_ELSE $dst, $src, $target",
-  [(set i64:$dst, (int_SI_else i64:$src, bb:$target))]> {
-
+  "", []
+> {
   let Constraints = "$src = $dst";
 }
 

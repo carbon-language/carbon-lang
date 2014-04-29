@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=r600 -mcpu=SI  | FileCheck %s
+; RUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs | FileCheck %s
 
 ; This test checks that no VGPR to SGPR copies are created by the register
 ; allocator.

@@ -444,19 +444,48 @@ SDValue SITargetLowering::LowerFormalArguments(
   return Chain;
 }
 
+/// Usually ISel will insert a copy between terminator insturction that output
+/// a value and the S_BRANCH* at the end of the block.  This causes
+/// MachineBasicBlock::getFirstTerminator() to return the incorrect value,
+/// so we want to make sure there are no copies between terminators at the
+/// end of blocks.
+static void LowerTerminatorWithOutput(unsigned Opcode, MachineBasicBlock *BB,
+                                      MachineInstr *MI,
+                                      const TargetInstrInfo *TII,
+                                      MachineRegisterInfo &MRI) {
+  unsigned DstReg = MI->getOperand(0).getReg();
+  // Usually ISel will insert a copy between the SI_IF_NON_TERM instruction
+  // and the S_BRANCH* terminator.  We want to replace SI_IF_NO_TERM with
+  // SI_IF and we can't have any instructions between S_BRANCH* and SI_IF,
+  // since they are both terminators
+  assert(MRI.hasOneUse(DstReg));
+  MachineOperand &Use = *MRI.use_begin(DstReg);
+  MachineInstr *UseMI = Use.getParent();
+  assert(UseMI->getOpcode() == AMDGPU::COPY);
+
+  MRI.replaceRegWith(UseMI->getOperand(0).getReg(), DstReg);
+  UseMI->eraseFromParent();
+  BuildMI(*BB, BB->getFirstTerminator(), MI->getDebugLoc(),
+          TII->get(Opcode))
+          .addOperand(MI->getOperand(0))
+          .addOperand(MI->getOperand(1))
+          .addOperand(MI->getOperand(2));
+  MI->eraseFromParent();
+}
+
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MachineInstr * MI, MachineBasicBlock * BB) const {
 
   MachineBasicBlock::iterator I = *MI;
+  const SIInstrInfo *TII =
+    static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
+  MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
 
   switch (MI->getOpcode()) {
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
   case AMDGPU::BRANCH: return BB;
   case AMDGPU::SI_ADDR64_RSRC: {
-    const SIInstrInfo *TII =
-      static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
-    MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
     unsigned SuperReg = MI->getOperand(0).getReg();
     unsigned SubRegLo = MRI.createVirtualRegister(&AMDGPU::SGPR_64RegClass);
     unsigned SubRegHi = MRI.createVirtualRegister(&AMDGPU::SGPR_64RegClass);
@@ -481,9 +510,13 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MI->eraseFromParent();
     break;
   }
-  case AMDGPU::V_SUB_F64: {
-    const SIInstrInfo *TII =
-      static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
+  case AMDGPU::SI_IF_NON_TERM:
+    LowerTerminatorWithOutput(AMDGPU::SI_IF, BB, MI, TII, MRI);
+    break;
+  case AMDGPU::SI_ELSE_NON_TERM:
+    LowerTerminatorWithOutput(AMDGPU::SI_ELSE, BB, MI, TII, MRI);
+    break;
+  case AMDGPU::V_SUB_F64:
     BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_ADD_F64),
             MI->getOperand(0).getReg())
             .addReg(MI->getOperand(1).getReg())
@@ -495,11 +528,9 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
             .addImm(2); /* NEG */
     MI->eraseFromParent();
     break;
-  }
+
   case AMDGPU::SI_RegisterStorePseudo: {
     MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
-    const SIInstrInfo *TII =
-      static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
     unsigned Reg = MRI.createVirtualRegister(&AMDGPU::SReg_64RegClass);
     MachineInstrBuilder MIB =
         BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::SI_RegisterStore),

@@ -1,5 +1,5 @@
 ; XFAIL: *
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI
 
 ; SI-LABEL: @global_store_v3i64:
 ; SI: BUFFER_STORE_DWORDX4

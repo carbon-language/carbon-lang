@@ -1,6 +1,6 @@
 ; REQUIRES: asserts
 ; XFAIL: *
-; RUN: llc -march=r600 -mcpu=SI -asm-verbose=false < %s | FileCheck %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs-asm-verbose=false < %s | FileCheck %s
 
 
 define void @test(i32 addrspace(1)* %g, i8 addrspace(3)* %l, i32 %x) nounwind {

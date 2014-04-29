@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI %s
 
 ; SI-LABEL: @local_i32_load
 ; SI: DS_READ_B32 [[REG:v[0-9]+]], v{{[0-9]+}}, 0x1c, [M0]

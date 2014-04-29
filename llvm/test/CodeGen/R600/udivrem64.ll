@@ -1,4 +1,4 @@
-;XUN: llc < %s -march=r600 -mcpu=SI | FileCheck --check-prefix=SI --check-prefix=FUNC %s
+;XUN: llc < %s -march=r600 -mcpu=SI -verify-machineinstrs| FileCheck --check-prefix=SI --check-prefix=FUNC %s
 ;RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck --check-prefix=EG --check-prefix=FUNC %s
 
 ;FUNC-LABEL: @test_udiv

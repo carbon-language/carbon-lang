@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck %s
 
 define void @use_gep_address_space([1024 x i32] addrspace(3)* %array) nounwind {
 ; CHECK-LABEL: @use_gep_address_space:
