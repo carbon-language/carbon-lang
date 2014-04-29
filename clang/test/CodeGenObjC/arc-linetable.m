@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -fblocks -fobjc-arc -g -triple x86_64-apple-darwin10 %s -o - | opt -instnamer -S | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -fblocks -fobjc-arc -g -triple x86_64-apple-darwin10 %s -o - | FileCheck %s
 
 // Legend: EXP = Return expression, RET = ret instruction
 
@@ -34,9 +34,7 @@
 
 // CHECK: define {{.*}}testCleanupVoid
 // CHECK: icmp ne {{.*}}!dbg ![[SKIP1:[0-9]+]]
-// CHECK-NEXT: br {{.*}}, label %[[CLEANUP:.*]], label
-// CHECK: [[CLEANUP]]:
-// CHECK-NEXT: !dbg ![[RET8:[0-9]+]]
+// CHECK: store i32 0, i32* {{.*}}, !dbg ![[RET8:[0-9]+]]
 // CHECK: @objc_storeStrong{{.*}}, !dbg ![[ARC8:[0-9]+]]
 // CHECK: ret {{.*}} !dbg ![[RET8]]
 
