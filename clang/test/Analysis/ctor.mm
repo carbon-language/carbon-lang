@@ -678,17 +678,20 @@ namespace InitializerList {
 namespace PR19579 {
   class C {};
 
-  struct S {
-    C c;
-    int i;
-  };
-
   void f() {
     C();
     int a;
+
+    extern void use(int);
+    use(a); // expected-warning{{uninitialized}}
   }
 
   void g() {
+    struct S {
+      C c;
+      int i;
+    };
+    
     // This order triggers the initialization of the inner "a" after the
     // constructor for "C" is run, which used to confuse the analyzer
     // (is "C()" the initialization of "a"?).
