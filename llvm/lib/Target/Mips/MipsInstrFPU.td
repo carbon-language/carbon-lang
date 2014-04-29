@@ -600,10 +600,8 @@ let Predicates = [IsFP64bit, HasStdEnc] in {
 
 // Patterns for loads/stores with a reg+imm operand.
 let AddedComplexity = 40 in {
-  let Predicates = [HasStdEnc] in {
-    def : LoadRegImmPat<LWC1, f32, load>;
-    def : StoreRegImmPat<SWC1, f32>;
-  }
+  def : LoadRegImmPat<LWC1, f32, load>;
+  def : StoreRegImmPat<SWC1, f32>;
 
   let Predicates = [IsFP64bit, HasStdEnc] in {
     def : LoadRegImmPat<LDC164, f64, load>;

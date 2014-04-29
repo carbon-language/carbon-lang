@@ -1358,14 +1358,11 @@ def : MipsPat<(not GPR32:$in),
               (NOR GPR32Opnd:$in, ZERO)>;
 
 // extended loads
-let Predicates = [HasStdEnc] in {
-  def : MipsPat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
-  def : MipsPat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
-  def : MipsPat<(i32 (extloadi16 addr:$src)), (LHu addr:$src)>;
-}
+def : MipsPat<(i32 (extloadi1  addr:$src)), (LBu addr:$src)>;
+def : MipsPat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
+def : MipsPat<(i32 (extloadi16 addr:$src)), (LHu addr:$src)>;
 
 // peepholes
-let Predicates = [HasStdEnc] in
 def : MipsPat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
 
 // brcond patterns
@@ -1459,11 +1456,9 @@ def : MipsPat<(bswap GPR32:$rt), (ROTR (WSBH GPR32:$rt), 16)>;
 
 // Load halfword/word patterns.
 let AddedComplexity = 40 in {
-  let Predicates = [HasStdEnc] in {
-    def : LoadRegImmPat<LBu, i32, zextloadi8>;
-    def : LoadRegImmPat<LH, i32, sextloadi16>;
-    def : LoadRegImmPat<LW, i32, load>;
-  }
+  def : LoadRegImmPat<LBu, i32, zextloadi8>;
+  def : LoadRegImmPat<LH, i32, sextloadi16>;
+  def : LoadRegImmPat<LW, i32, load>;
 }
 
 //===----------------------------------------------------------------------===//

@@ -331,12 +331,10 @@ def VMULU : ArithLogicR<"vmulu", GPR64Opnd, 0, II_DMUL>,
 //===----------------------------------------------------------------------===//
 
 // extended loads
-let Predicates = [HasStdEnc] in {
-  def : MipsPat<(i64 (extloadi1  addr:$src)), (LB64 addr:$src)>;
-  def : MipsPat<(i64 (extloadi8  addr:$src)), (LB64 addr:$src)>;
-  def : MipsPat<(i64 (extloadi16 addr:$src)), (LH64 addr:$src)>;
-  def : MipsPat<(i64 (extloadi32 addr:$src)), (LW64 addr:$src)>;
-}
+def : MipsPat<(i64 (extloadi1  addr:$src)), (LB64 addr:$src)>;
+def : MipsPat<(i64 (extloadi8  addr:$src)), (LB64 addr:$src)>;
+def : MipsPat<(i64 (extloadi16 addr:$src)), (LH64 addr:$src)>;
+def : MipsPat<(i64 (extloadi32 addr:$src)), (LW64 addr:$src)>;
 
 // hi/lo relocs
 def : MipsPat<(MipsHi tglobaladdr:$in), (LUi64 tglobaladdr:$in)>;
