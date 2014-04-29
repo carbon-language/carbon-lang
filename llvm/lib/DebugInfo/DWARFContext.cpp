@@ -142,7 +142,7 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     DataExtractor lineData(getLineDWOSection().Data, isLittleEndian(),
                            savedAddressByteSize);
     DWARFDebugLine::DumpingState state(OS);
-    while (DWARFDebugLine::parsePrologue(lineData, &stmtOffset, &state.Prologue))
+    while (state.Prologue.parse(lineData, &stmtOffset))
       state.finalize();
   }
 

@@ -33,10 +33,7 @@ public:
   };
 
   struct Prologue {
-    Prologue()
-        : TotalLength(0), Version(0), PrologueLength(0), MinInstLength(0),
-          MaxOpsPerInst(0), DefaultIsStmt(0), LineBase(0), LineRange(0),
-          OpcodeBase(0) {}
+    Prologue();
 
     // The size in bytes of the statement information for this compilation unit
     // (not including the total_length field itself).
@@ -77,19 +74,16 @@ public:
     int32_t getMaxLineIncrementForSpecialOpcode() const {
       return LineBase + (int8_t)LineRange - 1;
     }
+
+    void clear();
     void dump(raw_ostream &OS) const;
-    void clear() {
-      TotalLength = Version = PrologueLength = 0;
-      MinInstLength = LineBase = LineRange = OpcodeBase = 0;
-      StandardOpcodeLengths.clear();
-      IncludeDirectories.clear();
-      FileNames.clear();
-    }
+    bool parse(DataExtractor debug_line_data, uint32_t *offset_ptr);
   };
 
   // Standard .debug_line state machine structure.
   struct Row {
-    Row(bool default_is_stmt = false) { reset(default_is_stmt); }
+    explicit Row(bool default_is_stmt = false);
+
     /// Called after a row is appended to the matrix.
     void postAppend();
     void reset(bool default_is_stmt);
@@ -151,14 +145,9 @@ public:
     unsigned LastRowIndex;
     bool Empty;
 
-    Sequence() { reset(); }
-    void reset() {
-      LowPC = 0;
-      HighPC = 0;
-      FirstRowIndex = 0;
-      LastRowIndex = 0;
-      Empty = true;
-    }
+    Sequence();
+    void reset();
+
     static bool orderByLowPC(const Sequence& LHS, const Sequence& RHS) {
       return LHS.LowPC < RHS.LowPC;
     }
@@ -171,23 +160,21 @@ public:
   };
 
   struct LineTable {
-    void appendRow(const DWARFDebugLine::Row &state) { Rows.push_back(state); }
-    void appendSequence(const DWARFDebugLine::Sequence &sequence) {
-      Sequences.push_back(sequence);
+    LineTable();
+
+    void appendRow(const DWARFDebugLine::Row &R) {
+      Rows.push_back(R);
     }
-    void clear() {
-      Prologue.clear();
-      Rows.clear();
-      Sequences.clear();
+    void appendSequence(const DWARFDebugLine::Sequence &S) {
+      Sequences.push_back(S);
     }
 
     // Returns the index of the row with file/line info for a given address,
     // or -1 if there is no such row.
     uint32_t lookupAddress(uint64_t address) const;
 
-    bool lookupAddressRange(uint64_t address,
-                            uint64_t size, 
-                            std::vector<uint32_t>& result) const;
+    bool lookupAddressRange(uint64_t address, uint64_t size,
+                            std::vector<uint32_t> &result) const;
 
     // Extracts filename by its index in filename table in prologue.
     // Returns true on success.
@@ -196,6 +183,7 @@ public:
                             std::string &Result) const;
 
     void dump(raw_ostream &OS) const;
+    void clear();
 
     struct Prologue Prologue;
     typedef std::vector<Row> RowVector;
@@ -236,8 +224,6 @@ public:
     raw_ostream &OS;
   };
 
-  static bool parsePrologue(DataExtractor debug_line_data, uint32_t *offset_ptr,
-                            Prologue *prologue);
   /// Parse a single line table (prologue and all rows).
   static bool parseStatementTable(DataExtractor debug_line_data,
                                   const RelocAddrMap *RMap,
