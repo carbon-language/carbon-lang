@@ -514,6 +514,11 @@ AArch64TargetLowering::AArch64TargetLowering(AArch64TargetMachine &TM)
                 > VT1.getVectorElementType().getSizeInBits())
           setTruncStoreAction(VT, VT1, Expand);
       }
+
+      setOperationAction(ISD::MULHS, VT, Expand);
+      setOperationAction(ISD::SMUL_LOHI, VT, Expand);
+      setOperationAction(ISD::MULHU, VT, Expand);
+      setOperationAction(ISD::UMUL_LOHI, VT, Expand);
     }
 
     // There is no v1i64/v2i64 multiply, expand v1i64/v2i64 to GPR i64 multiply.
