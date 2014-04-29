@@ -18,10 +18,14 @@ using namespace lld::elf;
 using namespace llvm::ELF;
 
 // Lazy resolver
-static const uint8_t mipsGot0AtomContent[] = { 0x00, 0x00, 0x00, 0x00 };
+static const uint8_t mipsGot0AtomContent[] = {
+  0x00, 0x00, 0x00, 0x00
+};
 
 // Module pointer
-static const uint8_t mipsGotModulePointerAtomContent[] = { 0x00, 0x00, 0x00, 0x80 };
+static const uint8_t mipsGotModulePointerAtomContent[] = {
+  0x00, 0x00, 0x00, 0x80
+};
 
 // PLT0 entry
 static const uint8_t mipsPlt0AtomContent[] = {
