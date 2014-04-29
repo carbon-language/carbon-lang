@@ -18,13 +18,12 @@
 
 using namespace llvm;
 
-void BranchProbability::print(raw_ostream &OS) const {
-  OS << N << " / " << D << " = " << format("%g%%", ((double)N / D) * 100.0);
+raw_ostream &BranchProbability::print(raw_ostream &OS) const {
+  return OS << N << " / " << D << " = "
+            << format("%g%%", ((double)N / D) * 100.0);
 }
 
-void BranchProbability::dump() const {
-  dbgs() << *this << '\n';
-}
+void BranchProbability::dump() const { print(dbgs()) << '\n'; }
 
 static uint64_t scale(uint64_t Num, uint32_t N, uint32_t D) {
   assert(D && "divide by 0");
@@ -71,9 +70,4 @@ uint64_t BranchProbability::scale(uint64_t Num) const {
 
 uint64_t BranchProbability::scaleByInverse(uint64_t Num) const {
   return ::scale(Num, D, N);
-}
-
-raw_ostream &llvm::operator<<(raw_ostream &OS, const BranchProbability &Prob) {
-  Prob.print(OS);
-  return OS;
 }

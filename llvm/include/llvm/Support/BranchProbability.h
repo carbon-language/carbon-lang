@@ -46,7 +46,7 @@ public:
     return BranchProbability(D - N, D);
   }
 
-  void print(raw_ostream &OS) const;
+  raw_ostream &print(raw_ostream &OS) const;
 
   void dump() const;
 
@@ -80,7 +80,9 @@ public:
   bool operator>=(BranchProbability RHS) const { return !(*this < RHS); }
 };
 
-raw_ostream &operator<<(raw_ostream &OS, const BranchProbability &Prob);
+inline raw_ostream &operator<<(raw_ostream &OS, const BranchProbability &Prob) {
+  return Prob.print(OS);
+}
 
 }
 
