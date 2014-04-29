@@ -113,8 +113,9 @@ public:
   /// be scanned for "calls" or uses of functions and its child information
   /// will be constructed. All of these results are accumulated and cached in
   /// the graph.
-  class iterator : public iterator_adaptor_base<
-                       iterator, NodeVectorImplT::iterator, Node> {
+  class iterator
+      : public iterator_adaptor_base<iterator, NodeVectorImplT::iterator,
+                                     std::random_access_iterator_tag, Node> {
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
 

@@ -97,14 +97,19 @@ struct iterator_facade_base
 /// This class can be used through CRTP to adapt one iterator into another.
 /// Typically this is done through providing in the derived class a custom \c
 /// operator* implementation. Other methods can be overridden as well.
-template <typename DerivedT, typename WrappedIteratorT, typename T,
-          typename PointerT = T *, typename ReferenceT = T &,
-          // Don't provide these, they are mostly to act as aliases below.
-          typename WrappedTraitsT = std::iterator_traits<WrappedIteratorT>>
+template <
+    typename DerivedT, typename WrappedIteratorT,
+    typename IteratorCategoryT =
+        typename std::iterator_traits<WrappedIteratorT>::iterator_category,
+    typename T = typename std::iterator_traits<WrappedIteratorT>::value_type,
+    typename DifferenceTypeT =
+        typename std::iterator_traits<WrappedIteratorT>::difference_type,
+    typename PointerT = T *, typename ReferenceT = T &,
+    // Don't provide these, they are mostly to act as aliases below.
+    typename WrappedTraitsT = std::iterator_traits<WrappedIteratorT>>
 class iterator_adaptor_base
-    : public iterator_facade_base<
-          DerivedT, typename WrappedTraitsT::iterator_category, T,
-          typename WrappedTraitsT::difference_type, PointerT, ReferenceT> {
+    : public iterator_facade_base<DerivedT, IteratorCategoryT, T,
+                                  DifferenceTypeT, PointerT, ReferenceT> {
   typedef typename iterator_adaptor_base::iterator_facade_base BaseT;
 
 protected:
@@ -123,7 +128,7 @@ protected:
       : I(std::forward<U &&>(u)) {}
 
 public:
-  typedef typename WrappedTraitsT::difference_type difference_type;
+  typedef DifferenceTypeT difference_type;
 
   DerivedT &operator+=(difference_type n) {
     I += n;
@@ -168,8 +173,10 @@ template <typename WrappedIteratorT,
           typename T = typename std::remove_reference<
               decltype(**std::declval<WrappedIteratorT>())>::type>
 struct pointee_iterator
-    : iterator_adaptor_base<pointee_iterator<WrappedIteratorT>,
-                            WrappedIteratorT, T> {
+    : iterator_adaptor_base<
+          pointee_iterator<WrappedIteratorT>, WrappedIteratorT,
+          typename std::iterator_traits<WrappedIteratorT>::iterator_category,
+          T> {
   pointee_iterator() {}
   template <typename U>
   pointee_iterator(U &&u)

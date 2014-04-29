@@ -131,8 +131,9 @@ public:
   /// Convenience iterator for directly iterating over the Values in the
   /// OperandList
   struct value_op_iterator
-      : iterator_adaptor_base<value_op_iterator, op_iterator, Value *, Value *,
-                              Value *> {
+      : iterator_adaptor_base<value_op_iterator, op_iterator,
+                              std::random_access_iterator_tag, Value *,
+                              ptrdiff_t, Value *, Value *> {
     explicit value_op_iterator(Use *U = nullptr) : iterator_adaptor_base(U) {}
 
     Value *operator*() const { return *I; }
