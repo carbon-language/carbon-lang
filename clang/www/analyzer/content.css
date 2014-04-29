@@ -38,7 +38,7 @@ IMG.img_slide {
 
 #content {
   clear: left;
-  padding: 1em 2em 0 2em;
+  padding: 1em 2em 1em 2em;
   background-color: #ffffff;
 }
 
@@ -54,9 +54,7 @@ table.options thead {
   text-align:left;
   border-top: 2px solid #cccccc;
   border-bottom: 2px solid #cccccc;
-  font-weight: bold; font-family: Verdana;
-  table-layout: fixed;
-  width: 100%
+  font-weight: bold; font-family: Verdana
 }
 table.options { border: 1px #cccccc solid }
 table.options { border-collapse: collapse; border-spacing: 0px }
@@ -64,7 +62,6 @@ table.options { margin-left:0px; margin-top:20px; margin-bottom:20px }
 table.options td { border-bottom: 1px #cccccc dotted }
 table.options td { padding:5px; padding-left:8px; padding-right:8px }
 table.options td { text-align:left; font-size:9pt }
-table.options col.option { width:207px }
 
 table.checkers { 
   border: 1px #cccccc solid;
@@ -76,28 +73,29 @@ table.checkers {
   word-wrap :break-word;
   font-size: 100%;
 }
-
 table.checkers thead {
   background-color:#eee; color:#666666;
   border-top: 2px solid #cccccc;
   border-bottom: 2px solid #cccccc;
   font-weight: bold; font-family: Verdana;
 }
-
-table.checkers td { 
-  padding:5px; padding-left:8px; padding-right:8px;
-  border-right: 1px #cccccc dotted;
-  border-bottom: 1px #cccccc dotted;
-}
-
+table.checkers td { border-right: 1px #cccccc dotted; border-bottom: 1px #cccccc dotted; }
 table.checkers td.aligned { text-align: center; vertical-align: middle; }
 table.checkers col.namedescr { width: 45% }
 table.checkers col.example { width: 55% }
 table.checkers col.progress { width: 84px }
-table.checkers pre { margin:1px; font-size: 100%; word-wrap :break-word; }
-table.checkers .name { font-weight:bold; }
-table.checkers .checked { background-color:#81F781; }
-table.checkers .commented { color:#909090; }
+table.checkers thead div.example,
+table.checkers div.namedescr,
+table.checkers div.exampleContainer { overflow: hidden; padding: 5px 8px 10px 8px }
+/* table.checkers tbody div.example { font-family: monospace; white-space: pre } */
+table.checkers div.example { border-top:1px #cccccc dashed; width:100%; padding-top: 5px; margin-top: 5px }
+table.checkers tbody div.example:first-child { border-top:none; padding-top: 0px; margin-top: 0px }
+table.checkers span.name { font-weight: bold }
+table.checkers span.lang { font-weight: bold; padding-left: 7px; /* display:block; */ }
+table.checkers div.descr { margin-top:7px }
+table.checkers div.functions { margin-top: 2px; font-style: italic; font-size: 90%; color:#00B }
+table.checkers pre { margin: 1px; font-size: 100%; word-wrap: break-word }
+table.checkers p { margin: 10px 0px 0px 0px; }
 
 /* Collapsing Trees: http://dbtree.megalingo.com/web/demo/simple-collapsible-tree.cfm  */
 #collapsetree, #collapsetree a:link, #collapsetree li a:link, #collapsetree a:visited, #collapsetree li a:visited{color:#000;text-decoration:none}

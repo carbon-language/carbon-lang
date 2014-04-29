@@ -2,187 +2,30 @@
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <title>Available Checks</title>
+  <title>Available Checkers</title>
   <link type="text/css" rel="stylesheet" href="menu.css">
   <link type="text/css" rel="stylesheet" href="content.css">
   <script type="text/javascript" src="scripts/menu.js"></script>
+  <script type="text/javascript" src="scripts/expandcollapse.js"></script>
   <style type="text/css">
   tr:first-child { width:20%; }
   </style>
 </head>
-<body>
+<body onload="initExpandCollapse()">
 
 <div id="page">
 <!--#include virtual="menu.html.incl"-->
 
 <div id="content">
-
-<h1>Available Checks</h1>
-
-<h3>The list of the checks the analyzer performs by default</h3>
-<p>
-<table border="0" cellpadding="3" cellspacing="3" width="100%">
-<!--  <tr>
-<th><h4>Checker Name</h4></th>
-<th><h4>Description</h4></th>
-</tr>-->
-<tr>
-<td><b>core.AdjustedReturnValue</b></td><td>Check to see if the return value of a function call is different than the caller expects (e.g., from calls through function pointers).</td>
-</tr>
-<tr>
-<td><b>core.CallAndMessage</b></td><td>Check for logical errors for function calls and Objective-C message expressions (e.g., uninitialized arguments, null function pointers).</td>
-</tr>
-<tr>
-<td><b>core.DivideZero</b></td><td>Check for division by zero.</td>
-</tr>
-<tr>
-<td><b>core.NonNullParamChecker</b></td><td>Check for null pointers passed as arguments to a function whose arguments are known to be non-null.</td>
-</tr>
-<tr>
-<td><b>core.NullDereference</b></td><td>Check for dereferences of null pointers.</td>
-</tr>
-<tr>
-<td><b>core.StackAddressEscape</b></td><td>Check that addresses to stack memory do not escape the function.</td>
-</tr>
-<tr>
-<td><b>core.UndefinedBinaryOperatorResult</b></td><td>Check for undefined results of binary operators.</td>
-</tr>
-<tr>
-<td><b>core.VLASize</b></td><td>Check for declarations of VLA of undefined or zero size.</td>
-</tr>
-<tr>
-<td><b>core.builtin.BuiltinFunctions</b></td><td>Evaluate compiler builtin functions (e.g., alloca()).</td>
-</tr>
-<tr>
-<td><b>core.builtin.NoReturnFunctions</b></td><td>Evaluate "panic" functions that are known to not return to the caller.</td>
-</tr>
-<tr>
-<td><b>core.uninitialized.ArraySubscript</b></td><td>Check for uninitialized values used as array subscripts.</td>
-</tr>
-<tr>
-<td><b>core.uninitialized.Assign</b></td><td>Check for assigning uninitialized values.</td>
-</tr>
-<tr>
-<td><b>core.uninitialized.Branch</b></td><td>Check for uninitialized values used as branch conditions.</td>
-</tr>
-<tr>
-<td><b>core.uninitialized.CapturedBlockVariable</b></td><td>Check for blocks that capture uninitialized values.</td>
-</tr>
-<tr>
-<td><b>core.uninitialized.UndefReturn</b></td><td>Check for uninitialized values being returned to the caller.</td>
-</tr>
-<tr>
-<td><b>cplusplus.NewDelete</b></td><td>Check for double-free and use-after-free problems involving C++ <code>delete</code>.</td>
-</tr>
-<tr>
-<td><b>deadcode.DeadStores</b></td><td>Check for values stored to variables that are never read afterwards.</td>
-</tr>
-<!-- 
-<tr>
-<td><b>deadcode.IdempotentOperations</b></td><td>Warn about idempotent operations.</td>
-</tr>
--->
-<tr>
-<td><b>osx.API</b></td><td>Check for proper uses of various Apple APIs.</td>
-</tr>
-<tr>
-<td><b>osx.SecKeychainAPI</b></td><td>Check for proper uses of Secure Keychain APIs.</td>
-</tr>
-<tr>
-<td><b>osx.cocoa.AtSync</b></td><td>Check for nil pointers used as mutexes for @synchronized.</td>
-</tr>
-<tr>
-<td><b>osx.cocoa.ClassRelease</b></td><td>Check for sending 'retain', 'release', or 'autorelease' directly to a Class.</td>
-</tr>
-<tr>
-<td><b>osx.cocoa.IncompatibleMethodTypes</b></td><td>Warn about Objective-C method signatures with type incompatibilities.</td>
-</tr>
-<tr>
-<td><b>osx.cocoa.NSAutoreleasePool</b></td><td>Warn for suboptimal uses of NSAutoreleasePool in Objective-C GC mode.</td>
-</tr>
-<tr>
-<td><b>osx.cocoa.NSError</b></td><td>Check usage of NSError** parameters.</td>
-</tr>
-<tr>
-<td><b>osx.cocoa.NilArg</b></td><td>Check for prohibited nil arguments to ObjC method calls.</td>
-</tr>
-<tr>
-<td><b>osx.cocoa.RetainCount</b></td><td>Check for leaks and improper reference count management.</td>
-</tr>
-<tr>
-<td><b>osx.cocoa.SelfInit</b></td><td>Check that 'self' is properly initialized inside an initializer method.</td>
-</tr>
-<tr>
-<td><b>osx.cocoa.UnusedIvars</b></td><td>Warn about private ivars that are never used.</td>
-</tr>
-<tr>
-<td><b>osx.cocoa.VariadicMethodTypes</b></td><td>Check for passing non-Objective-C types to variadic methods that expect only Objective-C types.</td>
-</tr>
-<tr>
-<td><b>osx.coreFoundation.CFError</b></td><td>Check usage of CFErrorRef* parameters.</td>
-</tr>
-<tr>
-<td><b>osx.coreFoundation.CFNumber</b></td><td>Check for proper uses of CFNumberCreate.</td>
-</tr>
-<tr>
-<td><b>osx.coreFoundation.CFRetainRelease</b></td><td>Check for null arguments to CFRetain/CFRelease/CFMakeCollectable.</td>
-</tr>
-<tr>
-<td><b>osx.coreFoundation.containers.OutOfBounds</b></td><td>Checks for index out-of-bounds when using 'CFArray' API.</td>
-</tr>
-<tr>
-<td><b>osx.coreFoundation.containers.PointerSizedValues</b></td><td>Warns if 'CFArray', 'CFDictionary', 'CFSet' are created with non-pointer-size values.</td>
-</tr>
-<tr>
-<td><b>security.FloatLoopCounter</b></td><td>Warn on using a floating point value as a loop counter (CERT: FLP30-C, FLP30-CPP).</td>
-</tr>
-<tr>
-<td><b>security.insecureAPI.UncheckedReturn</b></td><td>Warn on uses of functions whose return values must be always checked.</td>
-</tr>
-<tr>
-<td><b>security.insecureAPI.getpw</b></td><td>Warn on uses of the 'getpw' function.</td>
-</tr>
-<tr>
-<td><b>security.insecureAPI.gets</b></td><td>Warn on uses of the 'gets' function.</td>
-</tr>
-<tr>
-<td><b>security.insecureAPI.mkstemp</b></td><td>Warn when 'mkstemp' is passed fewer than 6 X's in the format string.</td>
-</tr>
-<tr>
-<td><b>security.insecureAPI.mktemp</b></td><td>Warn on uses of the 'mktemp' function.</td>
-</tr>
-<tr>
-<td><b>security.insecureAPI.rand</b></td><td>Warn on uses of the 'rand', 'random', and related functions.</td>
-</tr>
-<tr>
-<td><b>security.insecureAPI.strcpy</b></td><td>Warn on uses of the 'strcpy' and 'strcat' functions.</td>
-</tr>
-<tr>
-<td><b>security.insecureAPI.vfork</b></td><td>Warn on uses of the 'vfork' function.</td>
-</tr>
-<tr>
-<td><b>unix.API</b></td><td>Check calls to various UNIX/Posix functions.</td>
-</tr>
-<tr>
-<td><b>unix.Malloc</b></td><td>Check for memory leaks, double free, and use-after-free problems involving <code>malloc</code>.</td>
-</tr>
-<tr>
-<td><b>unix.MallocSizeof</b></td><td>Check for dubious malloc arguments involving sizeof.</td>
-</tr>
-<tr>
-<td><b>unix.MismatchedDeallocator</b></td><td>Check for mismatched deallocators (e.g. passing a pointer allocating with <code>new</code> to <code>free()</code>).</td>
-</tr>
-<tr>
-<td><b>unix.cstring.BadSizeArg</b></td><td>Check the size argument passed into C string functions for common erroneous patterns.</td>
-</tr>
-<tr>
-<td><b>unix.cstring.NullArg</b></td><td>Check for null pointers being passed as arguments to C string functions.</td>
-</table>
-
-<p>In addition to these the analyzer contains numerous experimental (alpha) checkers.</p>
+<h1>Available Checkers</h1>
+The analyzer performs checks that are categorized into families or "checkers". The
+default set of checkers covers a variety of checks targeted at finding security
+and API usage bugs, dead code, and other logic errors. See the
+<a href = "#default_checkers">Default Checkers</a> list below. In addition to
+these, the analyzer contains a number of <a href = "alpha_checks.html">
+Experimental (Alpha) Checkers</a>.
 
 <h3>Writeups with examples of some of the bugs that the analyzer finds</h3>
-
 <ul>
 <li><a href="http://www.mobileorchard.com/bug-finding-with-clang-5-resources-to-get-you-started/">Bug Finding With Clang: 5 Resources To Get You Started</a></li>
 <li><a href="http://fruitstandsoftware.com/blog/index.php/2008/08/finding-memory-leaks-with-the-llvmclang-static-analyzer/#comment-2">Finding Memory Leaks With The LLVM/Clang Static Analyzer</a></li>
@@ -190,9 +33,1226 @@
 <li><a href="http://www.mikeash.com/?page=pyblog/friday-qa-2009-03-06-using-the-clang-static-analyzer.html">Mike Ash - Using the Clang Static Analyzer</a></li>
 </ul>
 
+<h2 id="default_checkers">Default Checkers</h2>
+<ul>
+<li><a href="#core_checkers">Core Checkers</a> model core language features and perform general-purpose checks such as division by zero, null pointer dereference, usage of uninitialized values, etc.</li>
+<li><a href="#cplusplus_checkers">C++ Checkers</a> perform C++-specific checks</li>
+<li><a href="#deadcode_checkers">Dead Code Checkers</a> check for unused code</li>
+<li><a href="#osx_checkers">OS X Checkers</a> perform Objective-C-specific checks and check the use of Apple's SDKs (OS X and iOS)</li>
+<li><a href="#security_checkers">Security Checkers</a> check for insecure API usage and perform checks based on the CERT Secure Coding Standards</li>
+<li><a href="#unix_checkers">Unix Checkers</a> check the use of Unix and POSIX APIs</li>
+</ul>
 
-</div>
-</div>
+<!------------------------------------ core ----------------------------------->
+<h3 id="core_checkers">Core Checkers</h3>
+<table class="checkers">
+<colgroup><col class="namedescr"><col class="example"></colgroup>
+
+<thead>
+<tr><td><div class="namedescr">Name, Description</div></td>
+<td><div class="example">Example</div></td></tr>
+</thead>
+
+<tbody>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.CallAndMessage</span><span class="lang">
+(C, C++, ObjC)</span><div class="descr">
+Check for logical errors for function calls and Objective-C message expressions
+(e.g., uninitialized arguments, null function pointers).</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+// C
+struct S {
+  int x;
+};
+
+void f(struct S s);
+
+void test() {
+  struct S s;
+  f(s); // warn: passed-by-value arg contain uninitialized data
+}
+</pre></div>
+<div class="example"><pre>
+// C
+void test() {
+  void (*foo)(void);
+  foo(); // warn: function pointer is uninitialized
+}
+</pre></div>
+<div class="example"><pre>
+// C
+void test() {
+  void (*foo)(void);
+  foo = 0;
+  foo(); // warn: function pointer is null
+}
+</pre></div>
+<div class="example"><pre>
+// C++
+class C {
+public:
+  void f();
+};
+
+void test() {
+  C *pc;
+  pc-&gt;f(); // warn: object pointer is uninitialized
+}
+</pre></div>
+<div class="example"><pre>
+// C++
+class C {
+public:
+  void f();
+};
+
+void test() {
+  C *pc = 0;
+  pc-&gt;f(); // warn: object pointer is null
+}
+</pre></div>
+<div class="example"><pre>
+// Objective-C
+@interface MyClass : NSObject
+@property (readwrite,assign) id x;
+- (long double)longDoubleM;
+@end
+
+void test() {
+  MyClass *obj1;
+  long double ld1 = [obj1 longDoubleM];
+    // warn: receiver is uninitialized
+}
+</pre></div>
+<div class="example"><pre>
+// Objective-C
+@interface MyClass : NSObject
+@property (readwrite,assign) id x;
+- (long double)longDoubleM;
+@end
+
+void test() {
+  MyClass *obj1;
+  id i = obj1.x; // warn: uninitialized object pointer
+}
+</pre></div>
+<div class="example"><pre>
+// Objective-C
+@interface Subscriptable : NSObject
+- (id)objectAtIndexedSubscript:(unsigned int)index;
+@end
+
+@interface MyClass : Subscriptable
+@property (readwrite,assign) id x;
+- (long double)longDoubleM;
+@end
+
+void test() {
+  MyClass *obj1;
+  id i = obj1[0]; // warn: uninitialized object pointer
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.DivideZero</span><span class="lang">
+(C, C++, ObjC)</span><div class="descr">
+Check for division by zero.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test(int z) {
+  if (z == 0)
+    int x = 1 / z; // warn
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int x = 1;
+  int y = x % 0; // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.NonNullParamChecker</span><span class="lang">
+(C, C++, ObjC)</span><div class="descr">
+Check for null pointers passed as arguments to a function whose arguments are
+marked with the <code>nonnull</code> attribute.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+int f(int *p) __attribute__((nonnull));
+
+void test(int *p) {
+  if (!p)
+    f(p); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.NullDereference</span><span class="lang">
+(C, C++, ObjC)</span><div class="descr">
+Check for dereferences of null pointers.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+// C
+void test(int *p) {
+  if (p)
+    return;
+
+  int x = p[0]; // warn
+}
+</pre></div>
+<div class="example"><pre>
+// C
+void test(int *p) {
+  if (!p)
+    *p = 0; // warn
+}
+</pre></div>
+<div class="example"><pre>
+// C++
+class C {
+public:
+  int x;
+};
+
+void test() {
+  C *pc = 0;
+  int k = pc->x; // warn
+}
+</pre></div>
+<div class="example"><pre>
+// Objective-C
+@interface MyClass {
+@public
+  int x;
+}
+@end
+
+void test() {
+  MyClass *obj = 0;
+  obj-&gt;x = 1; // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.StackAddressEscape</span><span class="lang">
+(C)</span><div class="descr">
+Check that addresses of stack memory do not escape the function.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+char const *p;
+
+void test() {
+  char const str[] = "string";
+  p = str; // warn
+}
+</pre></div>
+<div class="example"><pre>
+void* test() {
+   return __builtin_alloca(12); // warn
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  static int *x;
+  int y;
+  x = &amp;y; // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.UndefinedBinaryOperatorResult</span><span class="lang">
+(C)</span><div class="descr">
+Check for undefined results of binary operators.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  int x;
+  int y = x + 1; // warn: left operand is garbage
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.VLASize</span><span class="lang">
+(C)</span><div class="descr">
+Check for declarations of VLA of undefined or zero size.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  int x;
+  int vla1[x]; // warn: garbage as size
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int x = 0;
+  int vla2[x]; // warn: zero size
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.uninitialized.ArraySubscript</span><span class="lang">
+(C)</span><div class="descr">
+Check for uninitialized values used as array subscripts.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  int i, a[10];
+  int x = a[i]; // warn: array subscript is undefined
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.uninitialized.Assign</span><span class="lang">
+(C)</span><div class="descr">
+Check for assigning uninitialized values.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  int x;
+  x |= 1; // warn: left expression is unitialized
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.uninitialized.Branch</span><span class="lang">
+(C)</span><div class="descr">
+Check for uninitialized values used as branch conditions.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  int x;
+  if (x) // warn
+    return;
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.uninitialized.CapturedBlockVariable</span><span class="lang">
+(C)</span><div class="descr">
+Check for blocks that capture uninitialized values.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  int x;
+  ^{ int y = x; }(); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+core.uninitialized.UndefReturn</span><span class="lang">
+(C)</span><div class="descr">
+Check for uninitialized values being returned to the caller.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+int test() {
+  int x;
+  return x; // warn
+}
+</pre></div></div></td></tr>
+
+</tbody></table>
+
+<!------------------------------------ C++ ------------------------------------>
+<h3 id="cplusplus_checkers">C++ Checkers</h3>
+<table class="checkers">
+<colgroup><col class="namedescr"><col class="example"></colgroup>
+
+<thead>
+<tr><td><div class="namedescr">Name, Description</div></td>
+<td><div class="example">Example</div></td></tr>
+</thead>
+
+<tbody>
+<tr><td><div class="namedescr expandable"><span class="name">
+cplusplus.NewDelete</span><span class="lang">
+(C++)</span><div class="descr">
+Check for double-free, use-after-free and offset problems involving C++ <code>
+delete</code>.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void f(int *p);
+
+void testUseMiddleArgAfterDelete(int *p) {
+  delete p;
+  f(p); // warn: use after free
+}
+</pre></div>
+<div class="example"><pre>
+class SomeClass {
+public:
+  void f();
+};
+
+void test() {
+  SomeClass *c = new SomeClass;
+  delete c;
+  c-&gt;f(); // warn: use after free
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int *p = (int *)__builtin_alloca(sizeof(int));
+  delete p; // warn: deleting memory allocated by alloca
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int *p = new int;
+  delete p;
+  delete p; // warn: attempt to free released
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int i;
+  delete &amp;i; // warn: delete address of local
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int *p = new int[1];
+  delete[] (++p);
+    // warn: argument to 'delete[]' is offset by 4 bytes
+    // from the start of memory allocated by 'new[]'
+}
+</pre></div></div></td></tr>
+
+</tbody></table>
+
+<!--------------------------------- dead code --------------------------------->
+<h3 id="deadcode_checkers">Dead Code Checkers</h3>
+<table class="checkers">
+<colgroup><col class="namedescr"><col class="example"></colgroup>
+
+<thead>
+<tr><td><div class="namedescr">Name, Description</div></td>
+<td><div class="example">Example</div></td></tr>
+</thead>
+
+<tbody>
+<tr><td><div class="namedescr expandable"><span class="name">
+deadcode.DeadStores</span><span class="lang">
+(C)</span><div class="descr">
+Check for values stored to variables that are never read afterwards.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  int x;
+  x = 1; // warn
+}
+</pre></div></div></td></tr>
+
+</tbody></table>
+
+<!---------------------------------- OS X ------------------------------------>
+<h3 id="osx_checkers">OS X Checkers</h3>
+<table class="checkers">
+<colgroup><col class="namedescr"><col class="example"></colgroup>
+
+<thead>
+<tr><td><div class="namedescr">Name, Description</div></td>
+<td><div class="example">Example</div></td></tr>
+</thead>
+
+<tbody>
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.API</span><span class="lang">
+(C)</span><div class="descr">
+Check for proper uses of various Apple APIs:<div class=functions>
+dispatch_once</div></div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  dispatch_once_t pred = 0;
+  dispatch_once(&amp;pred, ^(){}); // warn: dispatch_once uses local
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.SecKeychainAPI</span><span class="lang">
+(C)</span><div class="descr">
+Check for improper uses of the Security framework's Keychain APIs:<div class=functions>
+SecKeychainItemCopyContent<br>
+SecKeychainFindGenericPassword<br>
+SecKeychainFindInternetPassword<br>
+SecKeychainItemFreeContent<br>
+SecKeychainItemCopyAttributesAndData<br>
+SecKeychainItemFreeAttributesAndData</div></div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  unsigned int *ptr = 0;
+  UInt32 length;
+
+  SecKeychainItemFreeContent(ptr, &amp;length);
+    // warn: trying to free data which has not been allocated
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  unsigned int *ptr = 0;
+  UInt32 *length = 0;
+  void *outData;
+
+  OSStatus st =
+    SecKeychainItemCopyContent(2, ptr, ptr, length, outData);
+    // warn: data is not released
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  unsigned int *ptr = 0;
+  UInt32 *length = 0;
+  void *outData;
+
+  OSStatus st =
+    SecKeychainItemCopyContent(2, ptr, ptr, length, &amp;outData);
+
+  SecKeychainItemFreeContent(ptr, outData);
+    // warn: only call free if a non-NULL buffer was returned
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  unsigned int *ptr = 0;
+  UInt32 *length = 0;
+  void *outData;
+
+  OSStatus st =
+    SecKeychainItemCopyContent(2, ptr, ptr, length, &amp;outData);
+
+  st = SecKeychainItemCopyContent(2, ptr, ptr, length, &amp;outData);
+    // warn: release data before another call to the allocator
+
+  if (st == noErr)
+    SecKeychainItemFreeContent(ptr, outData);
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  SecKeychainItemRef itemRef = 0;
+  SecKeychainAttributeInfo *info = 0;
+  SecItemClass *itemClass = 0;
+  SecKeychainAttributeList *attrList = 0;
+  UInt32 *length = 0;
+  void *outData = 0;
+
+  OSStatus st =
+    SecKeychainItemCopyAttributesAndData(itemRef, info,
+                                         itemClass, &amp;attrList,
+                                         length, &amp;outData);
+
+  SecKeychainItemFreeContent(attrList, outData);
+    // warn: deallocator doesn't match the allocator
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.cocoa.AtSync</span><span class="lang">
+(ObjC)</span><div class="descr">
+Check for nil pointers used as mutexes for <code>@synchronized</code>.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test(id x) {
+  if (!x)
+    @synchronized(x) {} // warn: nil value used as mutex
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  id y;
+  @synchronized(y) {} // warn: uninitialized value used as mutex
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.cocoa.ClassRelease</span><span class="lang">
+(ObjC)</span><div class="descr">
+Check for sending <code>retain</code>, <code>release</code>, or <code>
+autorelease</code> directly to a class.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+@interface MyClass : NSObject
+@end
+
+void test(void) {
+  [MyClass release]; // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.cocoa.IncompatibleMethodTypes</span><span class="lang">
+(ObjC)</span><div class="descr">
+Check for an incompatible type signature when overriding an Objective-C method.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+@interface MyClass1 : NSObject
+- (int)foo;
+@end
+
+@implementation MyClass1
+- (int)foo { return 1; }
+@end
+
+@interface MyClass2 : MyClass1
+- (float)foo;
+@end
+
+@implementation MyClass2
+- (float)foo { return 1.0; } // warn
+@end
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+alpha.osx.cocoa.MissingSuperCall</span><span class="lang">
+(ObjC)</span><div class="descr">
+Warn about Objective-C methods that lack a necessary call to super. (Note: The
+compiler now has a warning for methods annotated with <code>objc_requires_super</code>
+attribute. The checker exists to check methods in the Cocoa frameworks
+that haven't yet adopted this attribute.)</div></div></td>
+<td><div class="example"><pre>
+@interface Test : UIViewController
+@end
+@implementation test
+- (void)viewDidLoad {} // warn
+@end
+</pre></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.cocoa.NSAutoreleasePool</span><span class="lang">
+(ObjC)</span><div class="descr">
+Warn for suboptimal uses of NSAutoreleasePool in Objective-C
+GC mode (<code>-fobjc-gc</code> compiler option).</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+  [pool release]; // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.cocoa.NSError</span><span class="lang">
+(ObjC)</span><div class="descr">
+Check usage of <code>NSError**</code> parameters.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+@interface A : NSObject
+- (void)foo:(NSError **)error;
+@end
+
+@implementation A
+- (void)foo:(NSError **)error {
+  // warn: method accepting NSError** should have a non-void
+  // return value
+}
+@end
+</pre></div>
+<div class="example"><pre>
+@interface A : NSObject
+- (BOOL)foo:(NSError **)error;
+@end
+
+@implementation A
+- (BOOL)foo:(NSError **)error {
+  *error = 0; // warn: potential null dereference
+  return 0;
+}
+@end
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.cocoa.NilArg</span><span class="lang">
+(ObjC)</span><div class="descr">
+Check for prohibited nil arguments in specific Objective-C method calls:<div class=functions>
+- caseInsensitiveCompare:<br>
+- compare:<br>
+- compare:options:<br>
+- compare:options:range:<br>
+- compare:options:range:locale:<br>
+- componentsSeparatedByCharactersInSet:<br>
+- initWithFormat:</div></div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+NSComparisonResult test(NSString *s) {
+  NSString *aString = nil;
+  return [s caseInsensitiveCompare:aString];
+    // warn: argument to 'NSString' method
+    // 'caseInsensitiveCompare:' cannot be nil
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.cocoa.RetainCount</span><span class="lang">
+(ObjC)</span><div class="descr">
+Check for leaks and violations of the Cocoa Memory Management rules.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  NSString *s = [[NSString alloc] init]; // warn
+}
+</pre></div>
+<div class="example"><pre>
+CFStringRef test(char *bytes) {
+  return CFStringCreateWithCStringNoCopy(
+           0, bytes, NSNEXTSTEPStringEncoding, 0); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.cocoa.SelfInit</span><span class="lang">
+(ObjC)</span><div class="descr">
+Check that <code>self</code> is properly initialized inside an initializer
+method.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+@interface MyObj : NSObject {
+  id x;
+}
+- (id)init;
+@end
+
+@implementation MyObj
+- (id)init {
+  [super init];
+  x = 0; // warn: instance variable used while 'self' is not
+         // initialized
+  return 0;
+}
+@end
+</pre></div>
+<div class="example"><pre>
+@interface MyObj : NSObject
+- (id)init;
+@end
+
+@implementation MyObj
+- (id)init {
+  [super init];
+  return self; // warn: returning uninitialized 'self'
+}
+@end
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.cocoa.UnusedIvars</span><span class="lang">
+(ObjC)</span><div class="descr">
+Warn about private ivars that are never used.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+@interface MyObj : NSObject {
+@private
+  id x; // warn
+}
+@end
+
+@implementation MyObj
+@end
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.cocoa.VariadicMethodTypes</span><span class="lang">
+(ObjC)</span><div class="descr">
+Check for passing non-Objective-C types to variadic collection initialization
+methods that expect only Objective-C types.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  [NSSet setWithObjects:@"Foo", "Bar", nil];
+    // warn: argument should be an ObjC pointer type, not 'char *'
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.coreFoundation.CFError</span><span class="lang">
+(C)</span><div class="descr">
+Check usage of <code>CFErrorRef*</code> parameters.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test(CFErrorRef *error) {
+  // warn: function accepting CFErrorRef* should have a
+  // non-void return
+}
+</pre></div>
+<div class="example"><pre>
+int foo(CFErrorRef *error) {
+  *error = 0; // warn: potential null dereference
+  return 0;
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.coreFoundation.CFNumber</span><span class="lang">
+(C)</span><div class="descr">
+Check for improper uses of <code>CFNumberCreate</code>.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+CFNumberRef test(unsigned char x) {
+  return CFNumberCreate(0, kCFNumberSInt16Type, &amp;x);
+   // warn: 8 bit integer is used to initialize a 16 bit integer
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.coreFoundation.CFRetainRelease</span><span class="lang">
+(C)</span><div class="descr">
+Check for null arguments to <code>CFRetain</code>, <code>CFRelease</code>,
+<code>CFMakeCollectable</code>.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test(CFTypeRef p) {
+  if (!p)
+    CFRetain(p); // warn
+}
+</pre></div>
+<div class="example"><pre>
+void test(int x, CFTypeRef p) {
+  if (p)
+    return;
+
+  CFRelease(p); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.coreFoundation.containers.OutOfBounds</span><span class="lang">
+(C)</span><div class="descr">
+Checks for index out-of-bounds when using <code>CFArray</code> API.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  CFArrayRef A = CFArrayCreate(0, 0, 0, &amp;kCFTypeArrayCallBacks);
+  CFArrayGetValueAtIndex(A, 0); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+osx.coreFoundation.containers.PointerSizedValues</span><span class="lang">
+(C)</span><div class="descr">
+Warns if <code>CFArray</code>, <code>CFDictionary</code>, <code>CFSet</code> are
+created with non-pointer-size values.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  int x[] = { 1 };
+  CFArrayRef A = CFArrayCreate(0, (const void **)x, 1,
+                               &amp;kCFTypeArrayCallBacks); // warn
+}
+</pre></div></div></td></tr>
+
+</tbody></table>
+
+<!------------------------------- security ------------------------------------>
+<h3 id="security_checkers">Security Checkers</h3>
+<table class="checkers">
+<colgroup><col class="namedescr"><col class="example"></colgroup>
+
+<thead>
+<tr><td><div class="namedescr">Name, Description</div></td>
+<td><div class="example">Example</div></td></tr>
+</thead>
+
+<tbody>
+<tr><td><div class="namedescr expandable"><span class="name">
+security.FloatLoopCounter</span><span class="lang">
+(C)</span><div class="descr">
+Warn on using a floating point value as a loop counter (CERT: FLP30-C,
+FLP30-CPP).</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  for (float x = 0.1f; x <= 1.0f; x += 0.1f) {} // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+security.insecureAPI.UncheckedReturn</span><span class="lang">
+(C)</span><div class="descr">
+Warn on uses of functions whose return values must be always checked:<div class=functions>
+setuid<br>
+setgid<br>
+seteuid<br>
+setegid<br>
+setreuid<br>
+setregid</div></div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  setuid(1); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+security.insecureAPI.getpw</span><span class="lang">
+(C)</span><div class="descr">
+Warn on uses of the <code>getpw</code> function.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  char buff[1024];
+  getpw(2, buff); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+security.insecureAPI.gets</span><span class="lang">
+(C)</span><div class="descr">
+Warn on uses of the <code>gets</code> function.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  char buff[1024];
+  gets(buff); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+security.insecureAPI.mkstemp</span><span class="lang">
+(C)</span><div class="descr">
+Warn when <code>mktemp</code>, <code>mkstemp</code>, <code>mkstemps</code> or
+<code>mkdtemp</code> is passed fewer than 6
+X's in the format string.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  mkstemp("XX"); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+security.insecureAPI.mktemp</span><span class="lang">
+(C)</span><div class="descr">
+Warn on uses of the <code>mktemp</code> function.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  char *x = mktemp("/tmp/zxcv"); // warn: insecure, use mkstemp
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+security.insecureAPI.rand</span><span class="lang">
+(C)</span><div class="descr">
+Warn on uses of inferior random number generating functions (only if <code>arc4random</code>
+function is available):<div class=functions>
+drand48<br>
+erand48<br>
+jrand48<br>
+lcong48<br>
+lrand48<br>
+mrand48<br>
+nrand48<br>
+random<br>
+rand_r</div></div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  random(); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+security.insecureAPI.strcpy</span><span class="lang">
+(C)</span><div class="descr">
+Warn on uses of the <code>strcpy</code> and <code>strcat</code> functions.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  char x[4];
+  char *y = "abcd";
+
+  strcpy(x, y); // warn
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+security.insecureAPI.vfork</span><span class="lang">
+(C)</span><div class="descr">
+Warn on uses of the <code>vfork</code> function.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  vfork(); // warn
+}
+</pre></div></div></td></tr>
+
+</tbody></table>
+
+<!--------------------------------- unix -------------------------------------->
+<h3 id="unix_checkers">Unix Checkers</h3>
+<table class="checkers">
+<colgroup><col class="namedescr"><col class="example"></colgroup>
+
+<thead>
+<tr><td><div class="namedescr">Name, Description</div></td>
+<td><div class="example">Example</div></td></tr>
+</thead>
+
+<tbody>
+<tr><td><div class="namedescr expandable"><span class="name">
+unix.API</span><span class="lang">
+(C)</span><div class="descr">
+Check calls to various UNIX/POSIX functions:<div class=functions>
+open<br>
+pthread_once<br>
+calloc<br>
+malloc<br>
+realloc<br>
+alloca<br>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+// Currently the check is performed for apple targets only.
+void test(const char *path) {
+  int fd = open(path, O_CREAT);
+    // warn: call to 'open' requires a third argument when the
+    // 'O_CREAT' flag is set
+}
+</pre></div>
+<div class="example"><pre>
+void f();
+
+void test() {
+  pthread_once_t pred = {0x30B1BCBA, {0}};
+  pthread_once(&amp;pred, f);
+    // warn: call to 'pthread_once' uses the local variable
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  void *p = malloc(0); // warn: allocation size of 0 bytes
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  void *p = calloc(0, 42); // warn: allocation size of 0 bytes
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  void *p = malloc(1);
+  p = realloc(p, 0); // warn: allocation size of 0 bytes
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  void *p = alloca(0); // warn: allocation size of 0 bytes
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  void *p = valloc(0); // warn: allocation size of 0 bytes
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+unix.Malloc</span><span class="lang">
+(C)</span><div class="descr">
+Check for memory leaks, double free, and use-after-free and offset problems
+involving <code>malloc</code>.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  int *p = malloc(1);
+  free(p);
+  free(p); // warn: attempt to free released memory
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int *p = malloc(sizeof(int));
+  free(p);
+  *p = 1; // warn: use after free
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int *p = malloc(1);
+  if (p)
+    return; // warn: memory is never released
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int a[] = { 1 };
+  free(a); // warn: argument is not allocated by malloc
+}
+</pre></div>
+<div class="example"><pre>
+void test() {
+  int *p = malloc(sizeof(char));
+  p = p - 1;
+  free(p); // warn: argument to free() is offset by -4 bytes
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+unix.MallocSizeof</span><span class="lang">
+(C)</span><div class="descr">
+Check for dubious <code>malloc</code>, <code>calloc</code> or
+<code>realloc</code> arguments involving <code>sizeof</code>.</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  long *p = malloc(sizeof(short));
+    // warn: result is converted to 'long *', which is
+    // incompatible with operand type 'short'
+  free(p);
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+unix.MismatchedDeallocator</span><span class="lang">
+(C, C++, ObjC)</span><div class="descr">
+Check for mismatched deallocators (e.g. passing a pointer allocating
+with <code>new</code> to <code>free()</code>).</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+// C, C++
+void test() {
+  int *p = (int *)malloc(sizeof(int));
+  delete p; // warn
+}
+</pre></div>
+<div class="example"><pre>
+// C, C++
+void __attribute((ownership_returns(malloc))) *user_malloc(size_t);
+
+void test() {
+  int *p = (int *)user_malloc(sizeof(int));
+  delete p; // warn
+}
+</pre></div>
+<div class="example"><pre>
+// C, C++
+void test() {
+  int *p = new int;
+  free(p); // warn
+}
+</pre></div>
+<div class="example"><pre>
+// C, C++
+void test() {
+  int *p = new int[1];
+  realloc(p, sizeof(long)); // warn
+}
+</pre></div>
+<div class="example"><pre>
+// C, C++
+template &lt;typename T&gt;
+struct SimpleSmartPointer {
+  T *ptr;
+
+  explicit SimpleSmartPointer(T *p = 0) : ptr(p) {}
+  ~SimpleSmartPointer() {
+    delete ptr; // warn
+  }
+};
+
+void test() {
+  SimpleSmartPointer&lt;int&gt; a((int *)malloc(4));
+}
+</pre></div>
+<div class="example"><pre>
+// C++
+void test() {
+  int *p = (int *)operator new(0);
+  delete[] p; // warn
+}
+</pre></div>
+<div class="example"><pre>
+// Objective-C, C++
+void test(NSUInteger dataLength) {
+  int *p = new int;
+  NSData *d = [NSData dataWithBytesNoCopy:p
+               length:sizeof(int) freeWhenDone:1];
+    // warn +dataWithBytesNoCopy:length:freeWhenDone: cannot take
+    // ownership of memory allocated by 'new'
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+unix.cstring.BadSizeArg</span><span class="lang">
+(C)</span><div class="descr">
+Check the size argument passed to <code>strncat</code> for common erroneous
+patterns. Use <code>-Wno-strncat-size</code> compiler option to mute other
+<code>strncat</code>-related compiler warnings.
+</div></div></td>
+<td><div class="exampleContainer expandable">
+<div class="example"><pre>
+void test() {
+  char dest[3];
+  strncat(dest, "***", sizeof(dest));
+    // warn: potential buffer overflow
+}
+</pre></div></div></td></tr>
+
+
+<tr><td><div class="namedescr expandable"><span class="name">
+unix.cstring.NullArg</span><span class="lang">
+(C)</span><div class="descr">
+Check for null pointers being passed as arguments to C string functions:<div class=functions>
+strlen<br>
+strnlen<br>
+strcpy<br>
+strncpy<br>
+strcat<br>
+strncat<br>
+strcmp<br>
+strncmp<br>
+strcasecmp<br>
+strncasecmp</div></div></div></td>
+<td><div class="example"><pre>
+int test() {
+  return strlen(0); // warn
+}
+</pre></div></td></tr>
+
+</tbody></table>
+
+</div> <!-- page -->
+</div> <!-- content -->
 </body>
 </html>
-
