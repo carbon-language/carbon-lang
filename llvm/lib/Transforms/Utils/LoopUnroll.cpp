@@ -24,6 +24,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Dominators.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -228,20 +229,33 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
       (unsigned)GreatestCommonDivisor64(Count, TripMultiple);
   }
 
+  // Report the unrolling decision.
+  DebugLoc LoopLoc = L->getStartLoc();
+  Function *F = Header->getParent();
+  LLVMContext &Ctx = F->getContext();
+
   if (CompletelyUnroll) {
     DEBUG(dbgs() << "COMPLETELY UNROLLING loop %" << Header->getName()
           << " with trip count " << TripCount << "!\n");
+    Ctx.emitOptimizationRemark(DEBUG_TYPE, *F, LoopLoc,
+                               Twine("completely unrolled loop with ") +
+                                   Twine(TripCount) + " iterations");
   } else {
     DEBUG(dbgs() << "UNROLLING loop %" << Header->getName()
           << " by " << Count);
+    Twine DiagMsg("unrolled loop by a factor of " + Twine(Count));
     if (TripMultiple == 0 || BreakoutTrip != TripMultiple) {
       DEBUG(dbgs() << " with a breakout at trip " << BreakoutTrip);
+      DiagMsg.concat(" with a breakout at trip " + Twine(BreakoutTrip));
     } else if (TripMultiple != 1) {
       DEBUG(dbgs() << " with " << TripMultiple << " trips per branch");
+      DiagMsg.concat(" with " + Twine(TripMultiple) + " trips per branch");
     } else if (RuntimeTripCount) {
       DEBUG(dbgs() << " with run-time trip count");
+      DiagMsg.concat(" with run-time trip count");
     }
     DEBUG(dbgs() << "!\n");
+    Ctx.emitOptimizationRemark(DEBUG_TYPE, *F, LoopLoc, DiagMsg);
   }
 
   bool ContinueOnTrue = L->contains(BI->getSuccessor(0));

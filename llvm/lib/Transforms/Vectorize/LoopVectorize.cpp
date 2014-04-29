@@ -1222,6 +1222,12 @@ struct LoopVectorize : public FunctionPass {
     // Mark the loop as already vectorized to avoid vectorizing again.
     Hints.setAlreadyVectorized(L);
 
+    // Report the vectorization decision.
+    F->getContext().emitOptimizationRemark(
+        DEBUG_TYPE, *F, L->getStartLoc(),
+        Twine("vectorized loop (vectorization factor: ") + Twine(VF.Width) +
+            ", unroll factor: " + Twine(UF) + ")");
+
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
     return true;
   }

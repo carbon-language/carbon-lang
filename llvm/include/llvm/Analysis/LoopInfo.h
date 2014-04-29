@@ -453,6 +453,31 @@ public:
 
   void dump() const;
 
+  /// \brief Return the debug location of the start of this loop.
+  /// This looks for a BB terminating instruction with a known debug
+  /// location by looking at the preheader and header blocks. If it
+  /// cannot find a terminating instruction with location information,
+  /// it returns an unknown location.
+  DebugLoc getStartLoc() const {
+    DebugLoc StartLoc;
+    BasicBlock *HeadBB;
+
+    // Try the pre-header first.
+    if ((HeadBB = getLoopPreheader()) != nullptr) {
+      StartLoc = HeadBB->getTerminator()->getDebugLoc();
+      if (!StartLoc.isUnknown())
+        return StartLoc;
+    }
+
+    // If we have no pre-header or there are no instructions with debug
+    // info in it, try the header.
+    HeadBB = getHeader();
+    if (HeadBB)
+      StartLoc = HeadBB->getTerminator()->getDebugLoc();
+
+    return StartLoc;
+  }
+
 private:
   friend class LoopInfoBase<BasicBlock, Loop>;
   explicit Loop(BasicBlock *BB) : LoopBase<BasicBlock, Loop>(BB) {}
