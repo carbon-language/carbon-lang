@@ -534,7 +534,7 @@ int main(int argc, char **argv, char * const *envp) {
       Err.print(argv[0], errs());
       return 1;
     }
-    EE->addObjectFile(Obj.get());
+    EE->addObjectFile(std::unique_ptr<object::ObjectFile>(Obj.get()));
   }
 
   for (unsigned i = 0, e = ExtraArchives.size(); i != e; ++i) {

@@ -55,7 +55,7 @@ public:
   /// Ownership of the input object is transferred to the ObjectImage
   /// instance returned from this function if successful. In the case of load
   /// failure, the input object will be deleted.
-  ObjectImage *loadObject(object::ObjectFile *InputObject);
+  ObjectImage *loadObject(std::unique_ptr<object::ObjectFile> InputObject);
 
   /// Get the address of our local copy of the symbol. This may or may not
   /// be the address used for relocation (clients can copy the data around

@@ -239,7 +239,7 @@ public:
   /// @name ExecutionEngine interface implementation
   /// @{
   void addModule(Module *M) override;
-  void addObjectFile(object::ObjectFile *O) override;
+  void addObjectFile(std::unique_ptr<object::ObjectFile> O) override;
   void addArchive(object::Archive *O) override;
   bool removeModule(Module *M) override;
 

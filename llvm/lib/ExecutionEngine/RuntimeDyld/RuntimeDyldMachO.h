@@ -88,8 +88,8 @@ public:
   }
 
   static ObjectImage *
-  createObjectImageFromFile(object::ObjectFile *InputObject) {
-    return new ObjectImageCommon(InputObject);
+  createObjectImageFromFile(std::unique_ptr<object::ObjectFile> InputObject) {
+    return new ObjectImageCommon(std::move(InputObject));
   }
 };
 

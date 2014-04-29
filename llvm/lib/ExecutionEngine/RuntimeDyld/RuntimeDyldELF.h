@@ -119,7 +119,7 @@ public:
   virtual ~RuntimeDyldELF();
 
   static ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);
-  static ObjectImage *createObjectImageFromFile(object::ObjectFile *Obj);
+  static ObjectImage *createObjectImageFromFile(std::unique_ptr<object::ObjectFile> Obj);
 };
 
 } // end namespace llvm

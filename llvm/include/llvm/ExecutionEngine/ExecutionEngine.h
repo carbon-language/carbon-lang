@@ -222,7 +222,7 @@ public:
   /// needed by another object.
   ///
   /// MCJIT will take ownership of the ObjectFile.
-  virtual void addObjectFile(object::ObjectFile *O) {
+  virtual void addObjectFile(std::unique_ptr<object::ObjectFile> O) {
     llvm_unreachable(
       "ExecutionEngine subclass doesn't implement addObjectFile.");
   }

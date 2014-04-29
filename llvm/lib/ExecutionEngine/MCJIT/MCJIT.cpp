@@ -113,8 +113,8 @@ bool MCJIT::removeModule(Module *M) {
 
 
 
-void MCJIT::addObjectFile(object::ObjectFile *Obj) {
-  ObjectImage *LoadedObject = Dyld.loadObject(Obj);
+void MCJIT::addObjectFile(std::unique_ptr<object::ObjectFile> Obj) {
+  ObjectImage *LoadedObject = Dyld.loadObject(std::move(Obj));
   if (!LoadedObject || Dyld.hasError())
     report_fatal_error(Dyld.getErrorString());
 
@@ -308,10 +308,10 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
       std::unique_ptr<object::Binary> ChildBin;
       // FIXME: Support nested archives?
       if (!ChildIt->getAsBinary(ChildBin) && ChildBin->isObject()) {
-        object::ObjectFile *OF = reinterpret_cast<object::ObjectFile *>(
-                                                            ChildBin.release());
+        std::unique_ptr<object::ObjectFile> OF(
+            static_cast<object::ObjectFile *>(ChildBin.release()));
         // This causes the object file to be loaded.
-        addObjectFile(OF);
+        addObjectFile(std::move(OF));
         // The address should be here now.
         Addr = getExistingSymbolAddress(Name);
         if (Addr)
