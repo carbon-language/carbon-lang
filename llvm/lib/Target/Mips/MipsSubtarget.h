@@ -130,9 +130,9 @@ protected:
 
   Triple TargetTriple;
 public:
-  virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                                     AntiDepBreakMode& Mode,
-                                     RegClassVector& CriticalPathRCs) const;
+  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
+                             AntiDepBreakMode& Mode,
+                             RegClassVector& CriticalPathRCs) const override;
 
   /// Only O32 and EABI supported right now.
   bool isABI_EABI() const { return MipsABI == EABI; }

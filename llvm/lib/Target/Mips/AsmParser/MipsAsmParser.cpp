@@ -75,10 +75,10 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                SmallVectorImpl<MCParsedAsmOperand *> &Operands,
                                MCStreamer &Out, unsigned &ErrorInfo,
-                               bool MatchingInlineAsm);
+                               bool MatchingInlineAsm) override;
 
   /// Parse a register as used in CFI directives
-  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
+  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
   bool ParseParenSuffix(StringRef Name,
                         SmallVectorImpl<MCParsedAsmOperand *> &Operands);
@@ -86,11 +86,11 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool ParseBracketSuffix(StringRef Name,
                           SmallVectorImpl<MCParsedAsmOperand *> &Operands);
 
-  bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
-                        SMLoc NameLoc,
-                        SmallVectorImpl<MCParsedAsmOperand *> &Operands);
+  bool
+  ParseInstruction(ParseInstructionInfo &Info, StringRef Name, SMLoc NameLoc,
+                   SmallVectorImpl<MCParsedAsmOperand *> &Operands) override;
 
-  bool ParseDirective(AsmToken DirectiveID);
+  bool ParseDirective(AsmToken DirectiveID) override;
 
   MipsAsmParser::OperandMatchResultTy
   parseMemOperand(SmallVectorImpl<MCParsedAsmOperand *> &Operands);
@@ -577,7 +577,7 @@ public:
     addExpr(Inst, Expr);
   }
 
-  bool isReg() const {
+  bool isReg() const override {
     // As a special case until we sort out the definition of div/divu, pretend
     // that $0/$zero are k_PhysRegister so that MCK_ZERO works correctly.
     if (isGPRAsmReg() && RegIdx.Index == 0)
@@ -586,16 +586,16 @@ public:
     return Kind == k_PhysRegister;
   }
   bool isRegIdx() const { return Kind == k_RegisterIndex; }
-  bool isImm() const { return Kind == k_Immediate; }
+  bool isImm() const override { return Kind == k_Immediate; }
   bool isConstantImm() const {
     return isImm() && dyn_cast<MCConstantExpr>(getImm());
   }
-  bool isToken() const {
+  bool isToken() const override {
     // Note: It's not possible to pretend that other operand kinds are tokens.
     // The matcher emitter checks tokens first.
     return Kind == k_Token;
   }
-  bool isMem() const { return Kind == k_Memory; }
+  bool isMem() const override { return Kind == k_Memory; }
   bool isInvNum() const { return Kind == k_Immediate; }
   bool isLSAImm() const {
     if (!isConstantImm())
@@ -609,7 +609,7 @@ public:
     return StringRef(Tok.Data, Tok.Length);
   }
 
-  unsigned getReg() const {
+  unsigned getReg() const override {
     // As a special case until we sort out the definition of div/divu, pretend
     // that $0/$zero are k_PhysRegister so that MCK_ZERO works correctly.
     if (Kind == k_RegisterIndex && RegIdx.Index == 0 &&
@@ -756,9 +756,9 @@ public:
   }
 
   /// getStartLoc - Get the location of the first token of this operand.
-  SMLoc getStartLoc() const { return StartLoc; }
+  SMLoc getStartLoc() const override { return StartLoc; }
   /// getEndLoc - Get the location of the last token of this operand.
-  SMLoc getEndLoc() const { return EndLoc; }
+  SMLoc getEndLoc() const override { return EndLoc; }
 
   virtual ~MipsOperand() {
     switch (Kind) {
@@ -774,7 +774,7 @@ public:
     }
   }
 
-  virtual void print(raw_ostream &OS) const {
+  void print(raw_ostream &OS) const override {
     switch (Kind) {
     case k_Immediate:
       OS << "Imm<";

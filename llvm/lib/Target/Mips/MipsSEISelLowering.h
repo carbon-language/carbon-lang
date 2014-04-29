@@ -33,19 +33,20 @@ namespace llvm {
     bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS = 0,
                                        bool *Fast = nullptr) const override;
 
-    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
 
-    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+    SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
 
-    virtual MachineBasicBlock *
-    EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
+    MachineBasicBlock *
+    EmitInstrWithCustomInserter(MachineInstr *MI,
+                                MachineBasicBlock *MBB) const override;
 
-    virtual bool isShuffleMaskLegal(const SmallVectorImpl<int> &Mask,
-                                    EVT VT) const {
+    bool isShuffleMaskLegal(const SmallVectorImpl<int> &Mask,
+                            EVT VT) const override {
       return false;
     }
 
-    virtual const TargetRegisterClass *getRepRegClassFor(MVT VT) const {
+    const TargetRegisterClass *getRepRegClassFor(MVT VT) const override {
       if (VT == MVT::Untyped)
         return Subtarget->hasDSP() ? &Mips::ACC64DSPRegClass :
                                      &Mips::ACC64RegClass;
@@ -54,16 +55,16 @@ namespace llvm {
     }
 
   private:
-    virtual bool
-    isEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
-                                      unsigned NextStackOffset,
-                                      const MipsFunctionInfo& FI) const;
+    bool isEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,
+                                     unsigned NextStackOffset,
+                                     const MipsFunctionInfo& FI) const override;
 
-    virtual void
+    void
     getOpndList(SmallVectorImpl<SDValue> &Ops,
                 std::deque< std::pair<unsigned, SDValue> > &RegsToPass,
                 bool IsPICCall, bool GlobalOrExternal, bool InternalLinkage,
-                CallLoweringInfo &CLI, SDValue Callee, SDValue Chain) const;
+                CallLoweringInfo &CLI, SDValue Callee,
+                SDValue Chain) const override;
 
     SDValue lowerLOAD(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerSTORE(SDValue Op, SelectionDAG &DAG) const;

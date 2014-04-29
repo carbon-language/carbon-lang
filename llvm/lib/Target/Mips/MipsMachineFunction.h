@@ -37,12 +37,12 @@ class MipsCallEntry : public PseudoSourceValue {
 public:
   explicit MipsCallEntry(const StringRef &N);
   explicit MipsCallEntry(const GlobalValue *V);
-  virtual bool isConstant(const MachineFrameInfo *) const;
-  virtual bool isAliased(const MachineFrameInfo *) const;
-  virtual bool mayAlias(const MachineFrameInfo *) const;
+  bool isConstant(const MachineFrameInfo *) const override;
+  bool isAliased(const MachineFrameInfo *) const override;
+  bool mayAlias(const MachineFrameInfo *) const override;
 
 private:
-  virtual void printCustom(raw_ostream &O) const;
+  void printCustom(raw_ostream &O) const override;
 #ifndef NDEBUG
   std::string Name;
   const GlobalValue *Val;

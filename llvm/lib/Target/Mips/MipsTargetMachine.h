@@ -55,39 +55,38 @@ public:
 
   virtual ~MipsTargetMachine() {}
 
-  virtual void addAnalysisPasses(PassManagerBase &PM);
+  void addAnalysisPasses(PassManagerBase &PM) override;
 
-  virtual const MipsInstrInfo *getInstrInfo() const
+  const MipsInstrInfo *getInstrInfo() const override
   { return InstrInfo.get(); }
-  virtual const TargetFrameLowering *getFrameLowering() const
+  const TargetFrameLowering *getFrameLowering() const override
   { return FrameLowering.get(); }
-  virtual const MipsSubtarget *getSubtargetImpl() const
+  const MipsSubtarget *getSubtargetImpl() const override
   { return &Subtarget; }
-  virtual const DataLayout *getDataLayout()    const
+  const DataLayout *getDataLayout()    const override
   { return &DL;}
 
-  virtual const InstrItineraryData *getInstrItineraryData() const {
+  const InstrItineraryData *getInstrItineraryData() const override {
     return Subtarget.inMips16Mode() ? nullptr : &InstrItins;
   }
 
-  virtual MipsJITInfo *getJITInfo()
-  { return &JITInfo; }
+  MipsJITInfo *getJITInfo() override { return &JITInfo; }
 
-  virtual const MipsRegisterInfo *getRegisterInfo()  const {
+  const MipsRegisterInfo *getRegisterInfo()  const override {
     return &InstrInfo->getRegisterInfo();
   }
 
-  virtual const MipsTargetLowering *getTargetLowering() const {
+  const MipsTargetLowering *getTargetLowering() const override {
     return TLInfo.get();
   }
 
-  virtual const MipsSelectionDAGInfo* getSelectionDAGInfo() const {
+  const MipsSelectionDAGInfo* getSelectionDAGInfo() const override {
     return &TSInfo;
   }
 
   // Pass Pipeline Configuration
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
-  virtual bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &JCE);
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+  bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &JCE) override;
 
   // Set helper classes
   void setHelperClassesMips16();

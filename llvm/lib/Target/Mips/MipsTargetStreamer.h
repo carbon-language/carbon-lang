@@ -55,34 +55,34 @@ class MipsTargetAsmStreamer : public MipsTargetStreamer {
 
 public:
   MipsTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
-  virtual void emitDirectiveSetMicroMips();
-  virtual void emitDirectiveSetNoMicroMips();
-  virtual void emitDirectiveSetMips16();
-  virtual void emitDirectiveSetNoMips16();
+  void emitDirectiveSetMicroMips() override;
+  void emitDirectiveSetNoMicroMips() override;
+  void emitDirectiveSetMips16() override;
+  void emitDirectiveSetNoMips16() override;
 
-  virtual void emitDirectiveSetReorder();
-  virtual void emitDirectiveSetNoReorder();
-  virtual void emitDirectiveSetMacro();
-  virtual void emitDirectiveSetNoMacro();
-  virtual void emitDirectiveSetAt();
-  virtual void emitDirectiveSetNoAt();
-  virtual void emitDirectiveEnd(StringRef Name);
+  void emitDirectiveSetReorder() override;
+  void emitDirectiveSetNoReorder() override;
+  void emitDirectiveSetMacro() override;
+  void emitDirectiveSetNoMacro() override;
+  void emitDirectiveSetAt() override;
+  void emitDirectiveSetNoAt() override;
+  void emitDirectiveEnd(StringRef Name) override;
 
-  virtual void emitDirectiveEnt(const MCSymbol &Symbol);
-  virtual void emitDirectiveAbiCalls();
-  virtual void emitDirectiveNaN2008();
-  virtual void emitDirectiveNaNLegacy();
-  virtual void emitDirectiveOptionPic0();
-  virtual void emitDirectiveOptionPic2();
-  virtual void emitFrame(unsigned StackReg, unsigned StackSize,
-                         unsigned ReturnReg);
-  virtual void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff);
-  virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff);
+  void emitDirectiveEnt(const MCSymbol &Symbol) override;
+  void emitDirectiveAbiCalls() override;
+  void emitDirectiveNaN2008() override;
+  void emitDirectiveNaNLegacy() override;
+  void emitDirectiveOptionPic0() override;
+  void emitDirectiveOptionPic2() override;
+  void emitFrame(unsigned StackReg, unsigned StackSize,
+                 unsigned ReturnReg) override;
+  void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) override;
+  void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) override;
 
-  virtual void emitDirectiveSetMips32R2();
-  virtual void emitDirectiveSetMips64();
-  virtual void emitDirectiveSetMips64R2();
-  virtual void emitDirectiveSetDsp();
+  void emitDirectiveSetMips32R2() override;
+  void emitDirectiveSetMips64() override;
+  void emitDirectiveSetMips64R2() override;
+  void emitDirectiveSetDsp() override;
 };
 
 // This part is for ELF object output
@@ -96,38 +96,38 @@ public:
   MCELFStreamer &getStreamer();
   MipsTargetELFStreamer(MCStreamer &S, const MCSubtargetInfo &STI);
 
-  virtual void emitLabel(MCSymbol *Symbol) override;
-  virtual void emitAssignment(MCSymbol *Symbol, const MCExpr *Value) override;
+  void emitLabel(MCSymbol *Symbol) override;
+  void emitAssignment(MCSymbol *Symbol, const MCExpr *Value) override;
   void finish() override;
 
-  virtual void emitDirectiveSetMicroMips();
-  virtual void emitDirectiveSetNoMicroMips();
-  virtual void emitDirectiveSetMips16();
-  virtual void emitDirectiveSetNoMips16();
+  void emitDirectiveSetMicroMips() override;
+  void emitDirectiveSetNoMicroMips() override;
+  void emitDirectiveSetMips16() override;
+  void emitDirectiveSetNoMips16() override;
 
-  virtual void emitDirectiveSetReorder();
-  virtual void emitDirectiveSetNoReorder();
-  virtual void emitDirectiveSetMacro();
-  virtual void emitDirectiveSetNoMacro();
-  virtual void emitDirectiveSetAt();
-  virtual void emitDirectiveSetNoAt();
-  virtual void emitDirectiveEnd(StringRef Name);
+  void emitDirectiveSetReorder() override;
+  void emitDirectiveSetNoReorder() override;
+  void emitDirectiveSetMacro() override;
+  void emitDirectiveSetNoMacro() override;
+  void emitDirectiveSetAt() override;
+  void emitDirectiveSetNoAt() override;
+  void emitDirectiveEnd(StringRef Name) override;
 
-  virtual void emitDirectiveEnt(const MCSymbol &Symbol);
-  virtual void emitDirectiveAbiCalls();
-  virtual void emitDirectiveNaN2008();
-  virtual void emitDirectiveNaNLegacy();
-  virtual void emitDirectiveOptionPic0();
-  virtual void emitDirectiveOptionPic2();
-  virtual void emitFrame(unsigned StackReg, unsigned StackSize,
-                         unsigned ReturnReg);
-  virtual void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff);
-  virtual void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff);
+  void emitDirectiveEnt(const MCSymbol &Symbol) override;
+  void emitDirectiveAbiCalls() override;
+  void emitDirectiveNaN2008() override;
+  void emitDirectiveNaNLegacy() override;
+  void emitDirectiveOptionPic0() override;
+  void emitDirectiveOptionPic2() override;
+  void emitFrame(unsigned StackReg, unsigned StackSize,
+                 unsigned ReturnReg) override;
+  void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) override;
+  void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) override;
 
-  virtual void emitDirectiveSetMips32R2();
-  virtual void emitDirectiveSetMips64();
-  virtual void emitDirectiveSetMips64R2();
-  virtual void emitDirectiveSetDsp();
+  void emitDirectiveSetMips32R2() override;
+  void emitDirectiveSetMips64() override;
+  void emitDirectiveSetMips64R2() override;
+  void emitDirectiveSetDsp() override;
 };
 }
 #endif

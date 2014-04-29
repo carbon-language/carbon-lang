@@ -34,11 +34,11 @@ public:
     TM(TM_), Subtarget(TM.getSubtarget<MipsSubtarget>()) {
   }
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "MIPS16 Hard Float Pass";
   }
 
-  virtual bool runOnModule(Module &M);
+  bool runOnModule(Module &M) override;
 
 protected:
   /// Keep a pointer to the MipsSubtarget around so that we can make the right

@@ -24,16 +24,16 @@ class MipsSERegisterInfo : public MipsRegisterInfo {
 public:
   MipsSERegisterInfo(const MipsSubtarget &Subtarget);
 
-  bool requiresRegisterScavenging(const MachineFunction &MF) const;
+  bool requiresRegisterScavenging(const MachineFunction &MF) const override;
 
-  bool requiresFrameIndexScavenging(const MachineFunction &MF) const;
+  bool requiresFrameIndexScavenging(const MachineFunction &MF) const override;
 
-  virtual const TargetRegisterClass *intRegClass(unsigned Size) const;
+  const TargetRegisterClass *intRegClass(unsigned Size) const override;
 
 private:
-  virtual void eliminateFI(MachineBasicBlock::iterator II, unsigned OpNo,
-                           int FrameIndex, uint64_t StackSize,
-                           int64_t SPOffset) const;
+  void eliminateFI(MachineBasicBlock::iterator II, unsigned OpNo,
+                   int FrameIndex, uint64_t StackSize,
+                   int64_t SPOffset) const override;
 };
 
 } // end namespace llvm

@@ -32,7 +32,7 @@ public:
   static const MipsFrameLowering *create(MipsTargetMachine &TM,
                                          const MipsSubtarget &ST);
 
-  bool hasFP(const MachineFunction &MF) const;
+  bool hasFP(const MachineFunction &MF) const override;
 
 protected:
   uint64_t estimateStackSize(const MachineFunction &MF) const;

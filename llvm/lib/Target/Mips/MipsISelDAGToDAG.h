@@ -35,11 +35,11 @@ public:
     : SelectionDAGISel(TM), Subtarget(TM.getSubtarget<MipsSubtarget>()) {}
 
   // Pass Name
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "MIPS DAG->DAG Pattern Instruction Selection";
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
 protected:
   SDNode *getGlobalBaseReg();
@@ -110,7 +110,7 @@ private:
   /// starting at bit zero.
   virtual bool selectVSplatMaskR(SDValue N, SDValue &Imm) const;
 
-  virtual SDNode *Select(SDNode *N);
+  SDNode *Select(SDNode *N) override;
 
   virtual std::pair<bool, SDNode*> selectNode(SDNode *Node) = 0;
 
@@ -121,9 +121,9 @@ private:
 
   virtual void processFunctionAfterISel(MachineFunction &MF) = 0;
 
-  virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                            char ConstraintCode,
-                                            std::vector<SDValue> &OutOps);
+  bool SelectInlineAsmMemoryOperand(const SDValue &Op,
+                                    char ConstraintCode,
+                                    std::vector<SDValue> &OutOps) override;
 };
 
 /// createMipsISelDag - This pass converts a legalized DAG into a

@@ -34,11 +34,11 @@ public:
 
   }
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "MIPS Os16 Optimization";
   }
 
-  virtual bool runOnModule(Module &M);
+  bool runOnModule(Module &M) override;
 
 };
 

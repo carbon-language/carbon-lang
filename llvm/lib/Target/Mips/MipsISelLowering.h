@@ -223,32 +223,33 @@ namespace llvm {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
                              const TargetLibraryInfo *libInfo) const override;
 
-    virtual MVT getScalarShiftAmountTy(EVT LHSTy) const { return MVT::i32; }
+    MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i32; }
 
-    virtual void LowerOperationWrapper(SDNode *N,
-                                       SmallVectorImpl<SDValue> &Results,
-                                       SelectionDAG &DAG) const;
+    void LowerOperationWrapper(SDNode *N,
+                               SmallVectorImpl<SDValue> &Results,
+                               SelectionDAG &DAG) const override;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
-    virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
 
     /// ReplaceNodeResults - Replace the results of node with an illegal result
     /// type with new values built out of custom code.
     ///
-    virtual void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
-                                    SelectionDAG &DAG) const;
+    void ReplaceNodeResults(SDNode *N, SmallVectorImpl<SDValue>&Results,
+                            SelectionDAG &DAG) const override;
 
     /// getTargetNodeName - This method returns the name of a target specific
     //  DAG node.
-    virtual const char *getTargetNodeName(unsigned Opcode) const;
+    const char *getTargetNodeName(unsigned Opcode) const override;
 
     /// getSetCCResultType - get the ISD::SETCC result ValueType
-    EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
+    EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
 
-    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+    SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
 
-    virtual MachineBasicBlock *
-    EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
+    MachineBasicBlock *
+    EmitInstrWithCustomInserter(MachineInstr *MI,
+                                MachineBasicBlock *MBB) const override;
 
     struct LTStr {
       bool operator()(const char *S1, const char *S2) const {
@@ -528,41 +529,39 @@ namespace llvm {
     void writeVarArgRegs(std::vector<SDValue> &OutChains, const MipsCC &CC,
                          SDValue Chain, SDLoc DL, SelectionDAG &DAG) const;
 
-    virtual SDValue
+    SDValue
       LowerFormalArguments(SDValue Chain,
                            CallingConv::ID CallConv, bool isVarArg,
                            const SmallVectorImpl<ISD::InputArg> &Ins,
                            SDLoc dl, SelectionDAG &DAG,
-                           SmallVectorImpl<SDValue> &InVals) const;
+                           SmallVectorImpl<SDValue> &InVals) const override;
 
     SDValue passArgOnStack(SDValue StackPtr, unsigned Offset, SDValue Chain,
                            SDValue Arg, SDLoc DL, bool IsTailCall,
                            SelectionDAG &DAG) const;
 
-    virtual SDValue
-      LowerCall(TargetLowering::CallLoweringInfo &CLI,
-                SmallVectorImpl<SDValue> &InVals) const;
+    SDValue LowerCall(TargetLowering::CallLoweringInfo &CLI,
+                      SmallVectorImpl<SDValue> &InVals) const override;
 
-    virtual bool
-      CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
-                     bool isVarArg,
-                     const SmallVectorImpl<ISD::OutputArg> &Outs,
-                     LLVMContext &Context) const;
+    bool CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
+                        bool isVarArg,
+                        const SmallVectorImpl<ISD::OutputArg> &Outs,
+                        LLVMContext &Context) const override;
 
-    virtual SDValue
-      LowerReturn(SDValue Chain,
-                  CallingConv::ID CallConv, bool isVarArg,
-                  const SmallVectorImpl<ISD::OutputArg> &Outs,
-                  const SmallVectorImpl<SDValue> &OutVals,
-                  SDLoc dl, SelectionDAG &DAG) const;
+    SDValue LowerReturn(SDValue Chain,
+                        CallingConv::ID CallConv, bool isVarArg,
+                        const SmallVectorImpl<ISD::OutputArg> &Outs,
+                        const SmallVectorImpl<SDValue> &OutVals,
+                        SDLoc dl, SelectionDAG &DAG) const override;
 
     // Inline asm support
-    ConstraintType getConstraintType(const std::string &Constraint) const;
+    ConstraintType
+      getConstraintType(const std::string &Constraint) const override;
 
     /// Examine constraint string and operand type and determine a weight value.
     /// The operand object must already have been set up with the operand type.
     ConstraintWeight getSingleConstraintMatchWeight(
-      AsmOperandInfo &info, const char *constraint) const;
+      AsmOperandInfo &info, const char *constraint) const override;
 
     /// This function parses registers that appear in inline-asm constraints.
     /// It returns pair (0, 0) on failure.
@@ -571,33 +570,33 @@ namespace llvm {
 
     std::pair<unsigned, const TargetRegisterClass*>
               getRegForInlineAsmConstraint(const std::string &Constraint,
-                                           MVT VT) const;
+                                           MVT VT) const override;
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops. If hasMemory is
     /// true it means one of the asm constraint of the inline asm instruction
     /// being processed is 'm'.
-    virtual void LowerAsmOperandForConstraint(SDValue Op,
-                                              std::string &Constraint,
-                                              std::vector<SDValue> &Ops,
-                                              SelectionDAG &DAG) const;
+    void LowerAsmOperandForConstraint(SDValue Op,
+                                      std::string &Constraint,
+                                      std::vector<SDValue> &Ops,
+                                      SelectionDAG &DAG) const override;
 
-    virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const;
+    bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const override;
 
-    virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+    bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const override;
 
-    virtual EVT getOptimalMemOpType(uint64_t Size, unsigned DstAlign,
-                                    unsigned SrcAlign,
-                                    bool IsMemset, bool ZeroMemset,
-                                    bool MemcpyStrSrc,
-                                    MachineFunction &MF) const;
+    EVT getOptimalMemOpType(uint64_t Size, unsigned DstAlign,
+                            unsigned SrcAlign,
+                            bool IsMemset, bool ZeroMemset,
+                            bool MemcpyStrSrc,
+                            MachineFunction &MF) const override;
 
     /// isFPImmLegal - Returns true if the target can instruction select the
     /// specified FP immediate natively. If false, the legalizer will
     /// materialize the FP immediate as a load from a constant pool.
-    virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
+    bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
 
-    virtual unsigned getJumpTableEncoding() const;
+    unsigned getJumpTableEncoding() const override;
 
     MachineBasicBlock *emitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
                     unsigned Size, unsigned BinOpcode, bool Nand = false) const;

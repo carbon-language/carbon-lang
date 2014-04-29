@@ -124,7 +124,7 @@ namespace {
   public:
     NoMemInstr() : InspectMemInstr(true) {}
   private:
-    virtual bool hasHazard_(const MachineInstr &MI) { return true; }
+    bool hasHazard_(const MachineInstr &MI) override { return true; }
   };
 
   /// This subclass accepts loads from stacks and constant loads.
@@ -132,7 +132,7 @@ namespace {
   public:
     LoadFromStackOrConst() : InspectMemInstr(false) {}
   private:
-    virtual bool hasHazard_(const MachineInstr &MI);
+    bool hasHazard_(const MachineInstr &MI) override;
   };
 
   /// This subclass uses memory dependence information to determine whether a
@@ -144,7 +144,7 @@ namespace {
   private:
     typedef PointerUnion<const Value *, const PseudoSourceValue *> ValueType;
 
-    virtual bool hasHazard_(const MachineInstr &MI);
+    bool hasHazard_(const MachineInstr &MI) override;
 
     /// Update Defs and Uses. Return true if there exist dependences that
     /// disqualify the delay slot candidate between V and values in Uses and
@@ -168,11 +168,11 @@ namespace {
     Filler(TargetMachine &tm)
       : MachineFunctionPass(ID), TM(tm) { }
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Mips Delay Slot Filler";
     }
 
-    bool runOnMachineFunction(MachineFunction &F) {
+    bool runOnMachineFunction(MachineFunction &F) override {
       bool Changed = false;
       for (MachineFunction::iterator FI = F.begin(), FE = F.end();
            FI != FE; ++FI)
@@ -180,7 +180,7 @@ namespace {
       return Changed;
     }
 
-    void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<MachineBranchProbabilityInfo>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }

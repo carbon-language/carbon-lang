@@ -43,30 +43,31 @@ public:
 
   /// Code Generation virtual methods...
   const TargetRegisterClass *getPointerRegClass(const MachineFunction &MF,
-                                                unsigned Kind) const;
+                                                unsigned Kind) const override;
 
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
-                               MachineFunction &MF) const;
-  const MCPhysReg *getCalleeSavedRegs(const MachineFunction *MF =nullptr) const;
-  const uint32_t *getCallPreservedMask(CallingConv::ID) const;
+                               MachineFunction &MF) const override;
+  const MCPhysReg *
+  getCalleeSavedRegs(const MachineFunction *MF = nullptr) const override;
+  const uint32_t *getCallPreservedMask(CallingConv::ID) const override;
   static const uint32_t *getMips16RetHelperMask();
 
-  BitVector getReservedRegs(const MachineFunction &MF) const;
+  BitVector getReservedRegs(const MachineFunction &MF) const override;
 
-  virtual bool requiresRegisterScavenging(const MachineFunction &MF) const;
+  bool requiresRegisterScavenging(const MachineFunction &MF) const override;
 
-  virtual bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const;
+  bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const override;
 
   /// Stack Frame Processing Methods
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
-                           RegScavenger *RS = nullptr) const;
+                           RegScavenger *RS = nullptr) const override;
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF,
                                        RegScavenger *RS = nullptr) const;
 
   /// Debug information queries.
-  unsigned getFrameRegister(const MachineFunction &MF) const;
+  unsigned getFrameRegister(const MachineFunction &MF) const override;
 
   /// \brief Return GPR register class.
   virtual const TargetRegisterClass *intRegClass(unsigned Size) const = 0;

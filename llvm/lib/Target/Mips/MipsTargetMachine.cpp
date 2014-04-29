@@ -171,12 +171,12 @@ public:
     return *getMipsTargetMachine().getSubtargetImpl();
   }
 
-  virtual void addIRPasses();
-  virtual bool addInstSelector();
-  virtual void addMachineSSAOptimization();
-  virtual bool addPreEmitPass();
+  void addIRPasses() override;
+  bool addInstSelector() override;
+  void addMachineSSAOptimization() override;
+  bool addPreEmitPass() override;
 
-  virtual bool addPreRegAlloc();
+  bool addPreRegAlloc() override;
 
 };
 } // namespace

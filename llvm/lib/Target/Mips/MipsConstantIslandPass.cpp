@@ -371,11 +371,11 @@ namespace {
         STI(&TM.getSubtarget<MipsSubtarget>()), MF(nullptr), MCP(nullptr),
         PrescannedForConstants(false){}
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Mips Constant Islands";
     }
 
-    bool runOnMachineFunction(MachineFunction &F);
+    bool runOnMachineFunction(MachineFunction &F) override;
 
     void doInitialPlacement(std::vector<MachineInstr*> &CPEMIs);
     CPEntry *findConstPoolEntry(unsigned CPI, const MachineInstr *CPEMI);

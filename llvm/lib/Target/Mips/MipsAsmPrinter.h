@@ -87,13 +87,13 @@ public:
     Subtarget = &TM.getSubtarget<MipsSubtarget>();
   }
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "Mips Assembly Printer";
   }
 
-  virtual bool runOnMachineFunction(MachineFunction &MF);
+  bool runOnMachineFunction(MachineFunction &MF) override;
 
-  virtual void EmitConstantPool() override {
+  void EmitConstantPool() override {
     bool UsingConstantPools =
       (Subtarget->inMips16Mode() && Subtarget->useConstantIslands());
     if (!UsingConstantPools)
@@ -101,21 +101,21 @@ public:
     // we emit constant pools customly!
   }
 
-  void EmitInstruction(const MachineInstr *MI);
+  void EmitInstruction(const MachineInstr *MI) override;
   void printSavedRegsBitmask();
   void emitFrameDirective();
   const char *getCurrentABIString() const;
-  virtual void EmitFunctionEntryLabel();
-  virtual void EmitFunctionBodyStart();
-  virtual void EmitFunctionBodyEnd();
-  virtual bool isBlockOnlyReachableByFallthrough(const MachineBasicBlock*
-                                                 MBB) const;
+  void EmitFunctionEntryLabel() override;
+  void EmitFunctionBodyStart() override;
+  void EmitFunctionBodyEnd() override;
+  bool isBlockOnlyReachableByFallthrough(
+                                   const MachineBasicBlock* MBB) const override;
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
                        unsigned AsmVariant, const char *ExtraCode,
-                       raw_ostream &O);
+                       raw_ostream &O) override;
   bool PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNum,
                              unsigned AsmVariant, const char *ExtraCode,
-                             raw_ostream &O);
+                             raw_ostream &O) override;
   void printOperand(const MachineInstr *MI, int opNum, raw_ostream &O);
   void printUnsignedImm(const MachineInstr *MI, int opNum, raw_ostream &O);
   void printUnsignedImm8(const MachineInstr *MI, int opNum, raw_ostream &O);
@@ -123,8 +123,8 @@ public:
   void printMemOperandEA(const MachineInstr *MI, int opNum, raw_ostream &O);
   void printFCCOperand(const MachineInstr *MI, int opNum, raw_ostream &O,
                        const char *Modifier = nullptr);
-  void EmitStartOfAsmFile(Module &M);
-  void EmitEndOfAsmFile(Module &M);
+  void EmitStartOfAsmFile(Module &M) override;
+  void EmitEndOfAsmFile(Module &M) override;
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
 };
 }

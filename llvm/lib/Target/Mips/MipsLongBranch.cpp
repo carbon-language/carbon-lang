@@ -69,11 +69,11 @@ namespace {
         ABI(TM.getSubtarget<MipsSubtarget>().getTargetABI()),
         LongBranchSeqSize(!IsPIC ? 2 : (ABI == MipsSubtarget::N64 ? 13 : 9)) {}
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "Mips Long Branch";
     }
 
-    bool runOnMachineFunction(MachineFunction &F);
+    bool runOnMachineFunction(MachineFunction &F) override;
 
   private:
     void splitMBB(MachineBasicBlock *MBB);
