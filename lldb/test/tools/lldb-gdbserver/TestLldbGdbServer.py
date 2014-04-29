@@ -205,5 +205,44 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.start_inferior()
 
+    def inferior_print_exit(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        # TODO grab the build output directory rather than current directory.
+        inferior_exe_name = os.path.abspath('a.out')
+        inferior_exe_name_hex = gdbremote_hex_encode_string(inferior_exe_name)
+
+        log_lines = self.create_no_ack_remote_stream()
+        log_lines.extend([
+            "lldb-gdbserver < 000> read packet: {}".format(
+                gdbremote_packet_encode_string(
+                        "A{},0,{}".format(len(inferior_exe_name_hex), inferior_exe_name_hex))),
+            "lldb-gdbserver <   6> send packet: $OK#00",
+            "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
+            "lldb-gdbserver <   6> send packet: $OK#00",
+            "lldb-gdbserver <   5> read packet: $vCont;c#00",
+            "lldb-gdbserver <   7> send packet: $O{}#00".format(gdbremote_hex_encode_string("hello, world\r\n")),
+            "lldb-gdbserver <   7> send packet: $W00#00"])
+
+        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
+                                     self._TIMEOUT_SECONDS, self.logger)
+
+    @debugserver_test
+    @dsym_test
+    def test_inferior_print_exit_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.inferior_print_exit()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_inferior_print_exit_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.inferior_print_exit()
+
+
 if __name__ == '__main__':
     unittest2.main()
