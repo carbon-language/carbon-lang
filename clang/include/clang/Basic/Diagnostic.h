@@ -21,6 +21,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
+#include "llvm/ADT/iterator_range.h"
 #include <list>
 #include <vector>
 
@@ -363,6 +364,14 @@ public:
 
   /// \brief Retrieve the diagnostic options.
   DiagnosticOptions &getDiagnosticOptions() const { return *DiagOpts; }
+
+  typedef llvm::iterator_range<DiagState::const_iterator> diag_mapping_range;
+
+  /// \brief Get the current set of diagnostic mappings.
+  diag_mapping_range getDiagnosticMappings() const {
+    const DiagState &DS = *GetCurDiagState();
+    return diag_mapping_range(DS.begin(), DS.end());
+  }
 
   DiagnosticConsumer *getClient() { return Client; }
   const DiagnosticConsumer *getClient() const { return Client; }

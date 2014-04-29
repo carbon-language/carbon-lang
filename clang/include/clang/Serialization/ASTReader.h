@@ -133,8 +133,9 @@ public:
   ///
   /// \returns true to indicate the diagnostic options are invalid, or false
   /// otherwise.
-  virtual bool ReadDiagnosticOptions(const DiagnosticOptions &DiagOpts,
-                                     bool Complain) {
+  virtual bool
+  ReadDiagnosticOptions(IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts,
+                        bool Complain) {
     return false;
   }
 
@@ -211,7 +212,7 @@ public:
   bool ReadLanguageOptions(const LangOptions &LangOpts, bool Complain) override;
   bool ReadTargetOptions(const TargetOptions &TargetOpts,
                          bool Complain) override;
-  bool ReadDiagnosticOptions(const DiagnosticOptions &DiagOpts,
+  bool ReadDiagnosticOptions(IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts,
                              bool Complain) override;
   bool ReadFileSystemOptions(const FileSystemOptions &FSOpts,
                              bool Complain) override;
@@ -244,6 +245,8 @@ public:
                            bool Complain) override;
   bool ReadTargetOptions(const TargetOptions &TargetOpts,
                          bool Complain) override;
+  bool ReadDiagnosticOptions(IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts,
+                             bool Complain) override;
   bool ReadPreprocessorOptions(const PreprocessorOptions &PPOpts, bool Complain,
                                std::string &SuggestedPredefines) override;
   void ReadCounter(const serialization::ModuleFile &M, unsigned Value) override;
