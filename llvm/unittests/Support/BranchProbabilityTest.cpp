@@ -155,7 +155,7 @@ TEST(BranchProbabilityTest, scaleByInverse) {
             BP(Two31 + 1, UINT32_MAX).scaleByInverse(Two63 + Two31));
 }
 
-TEST(BlockFrequencyTest, scaleBruteForce) {
+TEST(BlockProbabilityTest, scaleBruteForce) {
   struct {
     uint64_t Num;
     uint32_t Prob[2];
