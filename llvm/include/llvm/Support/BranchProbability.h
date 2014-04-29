@@ -56,10 +56,6 @@ public:
   /// result.
   ///
   /// \return \c Num times \c this.
-  ///
-  /// \note This code should be shared with (or replaced by) the implementation
-  /// of \a BlockFrequency::scale(), which seems to be calculating something
-  /// similar.
   uint64_t scale(uint64_t Num) const;
 
   /// \brief Scale a large integer by the inverse.
@@ -68,10 +64,6 @@ public:
   /// Returns the floor of the result.
   ///
   /// \return \c Num divided by \c this.
-  ///
-  /// \note This code should be shared with (or replaced by) the implementation
-  /// of \a BlockFrequency::scale(), which seems to be calculating something
-  /// similar.
   uint64_t scaleByInverse(uint64_t Num) const;
 
   bool operator==(BranchProbability RHS) const {
