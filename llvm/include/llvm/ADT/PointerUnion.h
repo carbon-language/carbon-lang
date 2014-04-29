@@ -154,6 +154,12 @@ namespace llvm {
          "Can't get the address because PointerLikeTypeTraits changes the ptr");
       return (PT1 *)Val.getAddrOfPointer();
     }
+
+    /// \brief Assignment from nullptr which just clears the union.
+    const PointerUnion &operator=(std::nullptr_t) {
+      Val.initWithPointer(nullptr);
+      return *this;
+    }
     
     /// Assignment operators - Allow assigning into this union from either
     /// pointer type, setting the discriminator to remember what it came from.
@@ -298,6 +304,12 @@ namespace llvm {
       if (is<T>()) return get<T>();
       return T();
     }
+
+    /// \brief Assignment from nullptr which just clears the union.
+    const PointerUnion3 &operator=(std::nullptr_t) {
+      Val = nullptr;
+      return *this;
+    }
     
     /// Assignment operators - Allow assigning into this union from either
     /// pointer type, setting the discriminator to remember what it came from.
@@ -406,6 +418,12 @@ namespace llvm {
     T dyn_cast() const {
       if (is<T>()) return get<T>();
       return T();
+    }
+
+    /// \brief Assignment from nullptr which just clears the union.
+    const PointerUnion4 &operator=(std::nullptr_t) {
+      Val = nullptr;
+      return *this;
     }
     
     /// Assignment operators - Allow assigning into this union from either

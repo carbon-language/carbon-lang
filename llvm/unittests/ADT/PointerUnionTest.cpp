@@ -46,6 +46,12 @@ TEST_F(PointerUnionTest, Null) {
   EXPECT_TRUE((bool)a);
   EXPECT_TRUE((bool)b);
   EXPECT_FALSE(n);
+
+  EXPECT_NE(n, b);
+  EXPECT_EQ(b, c);
+  b = nullptr;
+  EXPECT_EQ(n, b);
+  EXPECT_NE(b, c);
 }
 
 TEST_F(PointerUnionTest, Is) {
