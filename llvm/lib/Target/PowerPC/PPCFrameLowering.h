@@ -38,37 +38,37 @@ public:
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.
-  void emitPrologue(MachineFunction &MF) const;
-  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const;
+  void emitPrologue(MachineFunction &MF) const override;
+  void emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const override;
 
-  bool hasFP(const MachineFunction &MF) const;
+  bool hasFP(const MachineFunction &MF) const override;
   bool needsFP(const MachineFunction &MF) const;
   void replaceFPWithRealFP(MachineFunction &MF) const;
 
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
-                                            RegScavenger *RS = nullptr) const;
+                                     RegScavenger *RS = nullptr) const override;
   void processFunctionBeforeFrameFinalized(MachineFunction &MF,
-                                       RegScavenger *RS = nullptr) const;
+                                     RegScavenger *RS = nullptr) const override;
   void addScavengingSpillSlot(MachineFunction &MF, RegScavenger *RS) const;
 
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI,
-                                 const TargetRegisterInfo *TRI) const;
+                                 const TargetRegisterInfo *TRI) const override;
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
-                                     MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator I) const;
+                                  MachineBasicBlock &MBB,
+                                  MachineBasicBlock::iterator I) const override;
 
   bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MI,
-                                   const std::vector<CalleeSavedInfo> &CSI,
-                                   const TargetRegisterInfo *TRI) const;
+                                  MachineBasicBlock::iterator MI,
+                                  const std::vector<CalleeSavedInfo> &CSI,
+                                  const TargetRegisterInfo *TRI) const override;
 
   /// targetHandlesStackFrameRounding - Returns true if the target is
   /// responsible for rounding up the stack frame (probably at emitPrologue
   /// time).
-  bool targetHandlesStackFrameRounding() const { return true; }
+  bool targetHandlesStackFrameRounding() const override { return true; }
 
   /// getReturnSaveOffset - Return the previous frame offset to save the
   /// return address.
@@ -141,7 +141,7 @@ public:
 
   // With the SVR4 ABI, callee-saved registers have fixed offsets on the stack.
   const SpillSlot *
-  getCalleeSavedSpillSlots(unsigned &NumEntries) const {
+  getCalleeSavedSpillSlots(unsigned &NumEntries) const override {
     if (Subtarget.isDarwinABI()) {
       NumEntries = 1;
       if (Subtarget.isPPC64()) {

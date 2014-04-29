@@ -129,7 +129,7 @@ public:
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
 
   /// \brief Reset the features for the PowerPC target.
-  virtual void resetSubtargetFeatures(const MachineFunction *MF);
+  void resetSubtargetFeatures(const MachineFunction *MF) override;
 private:
   void initializeEnvironment();
   void resetSubtargetFeatures(StringRef CPU, StringRef FS);
@@ -200,15 +200,15 @@ public:
   /// enablePostRAScheduler - True at 'More' optimization.
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              TargetSubtargetInfo::AntiDepBreakMode& Mode,
-                             RegClassVector& CriticalPathRCs) const;
+                             RegClassVector& CriticalPathRCs) const override;
 
   // Scheduling customization.
-  bool enableMachineScheduler() const;
+  bool enableMachineScheduler() const override;
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
                            MachineInstr *begin,
                            MachineInstr *end,
-                           unsigned NumRegionInstrs) const;
-  bool useAA() const;
+                           unsigned NumRegionInstrs) const override;
+  bool useAA() const override;
 };
 } // End llvm namespace
 

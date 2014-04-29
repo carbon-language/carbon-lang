@@ -43,34 +43,34 @@ public:
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL, bool is64Bit);
 
-  virtual const PPCInstrInfo      *getInstrInfo() const { return &InstrInfo; }
-  virtual const PPCFrameLowering  *getFrameLowering() const {
+  const PPCInstrInfo      *getInstrInfo() const override { return &InstrInfo; }
+  const PPCFrameLowering  *getFrameLowering() const override {
     return &FrameLowering;
   }
-  virtual       PPCJITInfo        *getJITInfo()         { return &JITInfo; }
-  virtual const PPCTargetLowering *getTargetLowering() const {
+        PPCJITInfo        *getJITInfo() override         { return &JITInfo; }
+  const PPCTargetLowering *getTargetLowering() const override {
    return &TLInfo;
   }
-  virtual const PPCSelectionDAGInfo* getSelectionDAGInfo() const {
+  const PPCSelectionDAGInfo* getSelectionDAGInfo() const override {
     return &TSInfo;
   }
-  virtual const PPCRegisterInfo   *getRegisterInfo() const {
+  const PPCRegisterInfo   *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual const DataLayout    *getDataLayout() const    { return &DL; }
-  virtual const PPCSubtarget  *getSubtargetImpl() const { return &Subtarget; }
-  virtual const InstrItineraryData *getInstrItineraryData() const {
+  const DataLayout    *getDataLayout() const override    { return &DL; }
+  const PPCSubtarget  *getSubtargetImpl() const override { return &Subtarget; }
+  const InstrItineraryData *getInstrItineraryData() const override {
     return &InstrItins;
   }
 
   // Pass Pipeline Configuration
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
-  virtual bool addCodeEmitter(PassManagerBase &PM,
-                              JITCodeEmitter &JCE);
+  TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+  bool addCodeEmitter(PassManagerBase &PM,
+                      JITCodeEmitter &JCE) override;
 
   /// \brief Register PPC analysis passes with a pass manager.
-  virtual void addAnalysisPasses(PassManagerBase &PM);
+  void addAnalysisPasses(PassManagerBase &PM) override;
 };
 
 /// PPC32TargetMachine - PowerPC 32-bit target machine.

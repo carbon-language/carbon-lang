@@ -86,151 +86,148 @@ public:
   /// such, whenever a client has an instance of instruction info, it should
   /// always be able to get register info as well (through this method).
   ///
-  virtual const PPCRegisterInfo &getRegisterInfo() const { return RI; }
+  const PPCRegisterInfo &getRegisterInfo() const { return RI; }
 
   ScheduleHazardRecognizer *
   CreateTargetHazardRecognizer(const TargetMachine *TM,
-                               const ScheduleDAG *DAG) const;
+                               const ScheduleDAG *DAG) const override;
   ScheduleHazardRecognizer *
   CreateTargetPostRAHazardRecognizer(const InstrItineraryData *II,
-                                     const ScheduleDAG *DAG) const;
+                                     const ScheduleDAG *DAG) const override;
 
-  virtual
   int getOperandLatency(const InstrItineraryData *ItinData,
                         const MachineInstr *DefMI, unsigned DefIdx,
-                        const MachineInstr *UseMI, unsigned UseIdx) const;
-  virtual
+                        const MachineInstr *UseMI,
+                        unsigned UseIdx) const override;
   int getOperandLatency(const InstrItineraryData *ItinData,
                         SDNode *DefNode, unsigned DefIdx,
-                        SDNode *UseNode, unsigned UseIdx) const {
+                        SDNode *UseNode, unsigned UseIdx) const override {
     return PPCGenInstrInfo::getOperandLatency(ItinData, DefNode, DefIdx,
                                               UseNode, UseIdx);
   }
 
   bool isCoalescableExtInstr(const MachineInstr &MI,
                              unsigned &SrcReg, unsigned &DstReg,
-                             unsigned &SubIdx) const;
+                             unsigned &SubIdx) const override;
   unsigned isLoadFromStackSlot(const MachineInstr *MI,
-                               int &FrameIndex) const;
+                               int &FrameIndex) const override;
   unsigned isStoreToStackSlot(const MachineInstr *MI,
-                              int &FrameIndex) const;
+                              int &FrameIndex) const override;
 
   // commuteInstruction - We can commute rlwimi instructions, but only if the
   // rotate amt is zero.  We also have to munge the immediates a bit.
-  virtual MachineInstr *commuteInstruction(MachineInstr *MI, bool NewMI) const;
+  MachineInstr *commuteInstruction(MachineInstr *MI, bool NewMI) const override;
 
-  virtual bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
-                                     unsigned &SrcOpIdx2) const;
+  bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
+                             unsigned &SrcOpIdx2) const override;
 
-  virtual void insertNoop(MachineBasicBlock &MBB,
-                          MachineBasicBlock::iterator MI) const;
+  void insertNoop(MachineBasicBlock &MBB,
+                  MachineBasicBlock::iterator MI) const override;
 
 
   // Branch analysis.
-  virtual bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
-                             MachineBasicBlock *&FBB,
-                             SmallVectorImpl<MachineOperand> &Cond,
-                             bool AllowModify) const;
-  virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const;
-  virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                                MachineBasicBlock *FBB,
-                                const SmallVectorImpl<MachineOperand> &Cond,
-                                DebugLoc DL) const;
+  bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                     MachineBasicBlock *&FBB,
+                     SmallVectorImpl<MachineOperand> &Cond,
+                     bool AllowModify) const override;
+  unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
+  unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                        MachineBasicBlock *FBB,
+                        const SmallVectorImpl<MachineOperand> &Cond,
+                        DebugLoc DL) const override;
 
   // Select analysis.
-  virtual bool canInsertSelect(const MachineBasicBlock&,
-                               const SmallVectorImpl<MachineOperand> &Cond,
-                               unsigned, unsigned, int&, int&, int&) const;
-  virtual void insertSelect(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MI, DebugLoc DL,
-                            unsigned DstReg,
-                            const SmallVectorImpl<MachineOperand> &Cond,
-                            unsigned TrueReg, unsigned FalseReg) const;
+  bool canInsertSelect(const MachineBasicBlock&,
+                       const SmallVectorImpl<MachineOperand> &Cond,
+                       unsigned, unsigned, int&, int&, int&) const override;
+  void insertSelect(MachineBasicBlock &MBB,
+                    MachineBasicBlock::iterator MI, DebugLoc DL,
+                    unsigned DstReg,
+                    const SmallVectorImpl<MachineOperand> &Cond,
+                    unsigned TrueReg, unsigned FalseReg) const override;
 
-  virtual void copyPhysReg(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator I, DebugLoc DL,
-                           unsigned DestReg, unsigned SrcReg,
-                           bool KillSrc) const;
+  void copyPhysReg(MachineBasicBlock &MBB,
+                   MachineBasicBlock::iterator I, DebugLoc DL,
+                   unsigned DestReg, unsigned SrcReg,
+                   bool KillSrc) const override;
 
-  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MBBI,
-                                   unsigned SrcReg, bool isKill, int FrameIndex,
-                                   const TargetRegisterClass *RC,
-                                   const TargetRegisterInfo *TRI) const;
+  void storeRegToStackSlot(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator MBBI,
+                           unsigned SrcReg, bool isKill, int FrameIndex,
+                           const TargetRegisterClass *RC,
+                           const TargetRegisterInfo *TRI) const override;
 
-  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                    MachineBasicBlock::iterator MBBI,
-                                    unsigned DestReg, int FrameIndex,
-                                    const TargetRegisterClass *RC,
-                                    const TargetRegisterInfo *TRI) const;
+  void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MBBI,
+                            unsigned DestReg, int FrameIndex,
+                            const TargetRegisterClass *RC,
+                            const TargetRegisterInfo *TRI) const override;
 
-  virtual
-  bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const;
+  bool
+  ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
 
-  virtual bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
-                             unsigned Reg, MachineRegisterInfo *MRI) const;
+  bool FoldImmediate(MachineInstr *UseMI, MachineInstr *DefMI,
+                     unsigned Reg, MachineRegisterInfo *MRI) const override;
 
   // If conversion by predication (only supported by some branch instructions).
   // All of the profitability checks always return true; it is always
   // profitable to use the predicated branches.
-  virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB,
-                                   unsigned NumCycles, unsigned ExtraPredCycles,
-                                   const BranchProbability &Probability) const {
+  bool isProfitableToIfCvt(MachineBasicBlock &MBB,
+                          unsigned NumCycles, unsigned ExtraPredCycles,
+                          const BranchProbability &Probability) const override {
     return true;
   }
 
-  virtual bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
-                                   unsigned NumT, unsigned ExtraT,
-                                   MachineBasicBlock &FMBB,
-                                   unsigned NumF, unsigned ExtraF,
-                                   const BranchProbability &Probability) const;
+  bool isProfitableToIfCvt(MachineBasicBlock &TMBB,
+                           unsigned NumT, unsigned ExtraT,
+                           MachineBasicBlock &FMBB,
+                           unsigned NumF, unsigned ExtraF,
+                           const BranchProbability &Probability) const override;
 
-  virtual bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
-                                         unsigned NumCycles,
-                                         const BranchProbability
-                                         &Probability) const {
+  bool isProfitableToDupForIfCvt(MachineBasicBlock &MBB,
+                                 unsigned NumCycles,
+                                 const BranchProbability
+                                 &Probability) const override {
     return true;
   }
 
-  virtual bool isProfitableToUnpredicate(MachineBasicBlock &TMBB,
-                                         MachineBasicBlock &FMBB) const {
+  bool isProfitableToUnpredicate(MachineBasicBlock &TMBB,
+                                 MachineBasicBlock &FMBB) const override {
     return false;
   }
 
   // Predication support.
-  bool isPredicated(const MachineInstr *MI) const;
+  bool isPredicated(const MachineInstr *MI) const override;
 
-  virtual bool isUnpredicatedTerminator(const MachineInstr *MI) const;
+  bool isUnpredicatedTerminator(const MachineInstr *MI) const override;
 
-  virtual
   bool PredicateInstruction(MachineInstr *MI,
-                            const SmallVectorImpl<MachineOperand> &Pred) const;
+                    const SmallVectorImpl<MachineOperand> &Pred) const override;
 
-  virtual
   bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
-                         const SmallVectorImpl<MachineOperand> &Pred2) const;
+                   const SmallVectorImpl<MachineOperand> &Pred2) const override;
 
-  virtual bool DefinesPredicate(MachineInstr *MI,
-                                std::vector<MachineOperand> &Pred) const;
+  bool DefinesPredicate(MachineInstr *MI,
+                        std::vector<MachineOperand> &Pred) const override;
 
-  virtual bool isPredicable(MachineInstr *MI) const;
+  bool isPredicable(MachineInstr *MI) const override;
 
   // Comparison optimization.
 
 
-  virtual bool analyzeCompare(const MachineInstr *MI,
-                              unsigned &SrcReg, unsigned &SrcReg2,
-                              int &Mask, int &Value) const;
+  bool analyzeCompare(const MachineInstr *MI,
+                      unsigned &SrcReg, unsigned &SrcReg2,
+                      int &Mask, int &Value) const override;
 
-  virtual bool optimizeCompareInstr(MachineInstr *CmpInstr,
-                                    unsigned SrcReg, unsigned SrcReg2,
-                                    int Mask, int Value,
-                                    const MachineRegisterInfo *MRI) const;
+  bool optimizeCompareInstr(MachineInstr *CmpInstr,
+                            unsigned SrcReg, unsigned SrcReg2,
+                            int Mask, int Value,
+                            const MachineRegisterInfo *MRI) const override;
 
   /// GetInstSize - Return the number of bytes of code the specified
   /// instruction may be.  This returns the maximum number of bytes.
   ///
-  virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
+  virtual unsigned GetInstSizeInBytes(const MachineInstr *MI) const final;
 };
 
 }

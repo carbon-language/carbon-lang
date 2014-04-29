@@ -115,14 +115,14 @@ class PPCTargetAsmStreamer : public PPCTargetStreamer {
 public:
   PPCTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS)
       : PPCTargetStreamer(S), OS(OS) {}
-  virtual void emitTCEntry(const MCSymbol &S) {
+  void emitTCEntry(const MCSymbol &S) override {
     OS << "\t.tc ";
     OS << S.getName();
     OS << "[TC],";
     OS << S.getName();
     OS << '\n';
   }
-  virtual void emitMachine(StringRef CPU) {
+  void emitMachine(StringRef CPU) override {
     OS << "\t.machine " << CPU << '\n';
   }
 };
@@ -130,11 +130,11 @@ public:
 class PPCTargetELFStreamer : public PPCTargetStreamer {
 public:
   PPCTargetELFStreamer(MCStreamer &S) : PPCTargetStreamer(S) {}
-  virtual void emitTCEntry(const MCSymbol &S) {
+  void emitTCEntry(const MCSymbol &S) override {
     // Creates a R_PPC64_TOC relocation
     Streamer.EmitSymbolValue(&S, 8);
   }
-  virtual void emitMachine(StringRef CPU) {
+  void emitMachine(StringRef CPU) override {
     // FIXME: Is there anything to do in here or does this directive only
     // limit the parser?
   }
@@ -143,10 +143,10 @@ public:
 class PPCTargetMachOStreamer : public PPCTargetStreamer {
 public:
   PPCTargetMachOStreamer(MCStreamer &S) : PPCTargetStreamer(S) {}
-  virtual void emitTCEntry(const MCSymbol &S) {
+  void emitTCEntry(const MCSymbol &S) override {
     llvm_unreachable("Unknown pseudo-op: .tc");
   }
-  virtual void emitMachine(StringRef CPU) {
+  void emitMachine(StringRef CPU) override {
     // FIXME: We should update the CPUType, CPUSubType in the Object file if
     // the new values are different from the defaults.
   }

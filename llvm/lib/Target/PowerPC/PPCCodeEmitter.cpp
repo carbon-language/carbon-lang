@@ -32,7 +32,7 @@ namespace {
     JITCodeEmitter &MCE;
     MachineModuleInfo *MMI;
     
-    void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<MachineModuleInfo>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
@@ -73,11 +73,13 @@ namespace {
     unsigned getTLSRegEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getTLSCallEncoding(const MachineInstr &MI, unsigned OpNo) const;
 
-    const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
+    const char *getPassName() const override {
+      return "PowerPC Machine Code Emitter";
+    }
 
     /// runOnMachineFunction - emits the given MachineFunction to memory
     ///
-    bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnMachineFunction(MachineFunction &MF) override;
 
     /// emitBasicBlock - emits the given MachineBasicBlock to memory
     ///

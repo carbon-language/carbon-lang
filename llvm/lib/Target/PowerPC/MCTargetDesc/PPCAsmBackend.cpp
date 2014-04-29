@@ -77,9 +77,11 @@ public:
   PPCAsmBackend(const Target &T, bool isLittle) : MCAsmBackend(), TheTarget(T),
     IsLittleEndian(isLittle) {}
 
-  unsigned getNumFixupKinds() const { return PPC::NumTargetFixupKinds; }
+  unsigned getNumFixupKinds() const override {
+    return PPC::NumTargetFixupKinds;
+  }
 
-  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const {
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override {
     const static MCFixupKindInfo InfosBE[PPC::NumTargetFixupKinds] = {
       // name                    offset  bits  flags
       { "fixup_ppc_br24",        6,      24,   MCFixupKindInfo::FKF_IsPCRel },
@@ -110,7 +112,7 @@ public:
   }
 
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                  uint64_t Value, bool IsPCRel) const {
+                  uint64_t Value, bool IsPCRel) const override {
     Value = adjustFixupValue(Fixup.getKind(), Value);
     if (!Value) return;           // Doesn't change encoding.
 
@@ -126,7 +128,7 @@ public:
     }
   }
 
-  bool mayNeedRelaxation(const MCInst &Inst) const {
+  bool mayNeedRelaxation(const MCInst &Inst) const override {
     // FIXME.
     return false;
   }
@@ -134,18 +136,18 @@ public:
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value,
                             const MCRelaxableFragment *DF,
-                            const MCAsmLayout &Layout) const {
+                            const MCAsmLayout &Layout) const override {
     // FIXME.
     llvm_unreachable("relaxInstruction() unimplemented");
   }
 
 
-  void relaxInstruction(const MCInst &Inst, MCInst &Res) const {
+  void relaxInstruction(const MCInst &Inst, MCInst &Res) const override {
     // FIXME.
     llvm_unreachable("relaxInstruction() unimplemented");
   }
 
-  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const {
+  bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override {
     uint64_t NumNops = Count / 4;
     for (uint64_t i = 0; i != NumNops; ++i)
       OW->Write32(0x60000000);
@@ -180,7 +182,7 @@ namespace {
   public:
     DarwinPPCAsmBackend(const Target &T) : PPCAsmBackend(T, false) { }
 
-    MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+    MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
       bool is64 = getPointerSize() == 8;
       return createPPCMachObjectWriter(
           OS,
@@ -197,7 +199,7 @@ namespace {
       PPCAsmBackend(T, IsLittleEndian), OSABI(OSABI) { }
 
 
-    MCObjectWriter *createObjectWriter(raw_ostream &OS) const {
+    MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
       bool is64 = getPointerSize() == 8;
       return createPPCELFObjectWriter(OS, is64, isLittleEndian(), OSABI);
     }

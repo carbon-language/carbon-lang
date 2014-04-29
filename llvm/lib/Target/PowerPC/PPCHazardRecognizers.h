@@ -37,14 +37,14 @@ public:
     ScoreboardHazardRecognizer(ItinData, DAG_), DAG(DAG_),
     CurSlots(0), CurBranches(0) {}
 
-  virtual HazardType getHazardType(SUnit *SU, int Stalls);
-  virtual bool ShouldPreferAnother(SUnit* SU);
-  virtual unsigned PreEmitNoops(SUnit *SU);
-  virtual void EmitInstruction(SUnit *SU);
-  virtual void AdvanceCycle();
-  virtual void RecedeCycle();
-  virtual void Reset();
-  virtual void EmitNoop();
+  HazardType getHazardType(SUnit *SU, int Stalls) override;
+  bool ShouldPreferAnother(SUnit* SU) override;
+  unsigned PreEmitNoops(SUnit *SU) override;
+  void EmitInstruction(SUnit *SU) override;
+  void AdvanceCycle() override;
+  void RecedeCycle() override;
+  void Reset() override;
+  void EmitNoop() override;
 };
 
 /// PPCHazardRecognizer970 - This class defines a finite state automata that
@@ -76,10 +76,10 @@ class PPCHazardRecognizer970 : public ScheduleHazardRecognizer {
 
 public:
   PPCHazardRecognizer970(const TargetMachine &TM);
-  virtual HazardType getHazardType(SUnit *SU, int Stalls);
-  virtual void EmitInstruction(SUnit *SU);
-  virtual void AdvanceCycle();
-  virtual void Reset();
+  virtual HazardType getHazardType(SUnit *SU, int Stalls) override;
+  virtual void EmitInstruction(SUnit *SU) override;
+  virtual void AdvanceCycle() override;
+  virtual void Reset() override;
 
 private:
   /// EndDispatchGroup - Called when we are finishing a new dispatch group.

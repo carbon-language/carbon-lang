@@ -62,7 +62,7 @@ namespace {
       initializePPCDAGToDAGISelPass(*PassRegistry::getPassRegistry());
     }
 
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
+    bool runOnMachineFunction(MachineFunction &MF) override {
       // Make sure we re-emit a set of the global base reg if necessary
       GlobalBaseReg = 0;
       SelectionDAGISel::runOnMachineFunction(MF);
@@ -73,7 +73,7 @@ namespace {
       return true;
     }
 
-    virtual void PostprocessISelDAG();
+    void PostprocessISelDAG() override;
 
     /// getI32Imm - Return a target constant with the specified value, of type
     /// i32.
@@ -110,7 +110,7 @@ namespace {
 
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
-    SDNode *Select(SDNode *N);
+    SDNode *Select(SDNode *N) override;
 
     SDNode *SelectBitfieldInsert(SDNode *N);
 
@@ -169,16 +169,16 @@ namespace {
     /// a register.  The case of adding a (possibly relocatable) constant to a
     /// register can be improved, but it is wrong to substitute Reg+Reg for
     /// Reg in an asm, because the load or store opcode would have to change.
-   virtual bool SelectInlineAsmMemoryOperand(const SDValue &Op,
-                                              char ConstraintCode,
-                                              std::vector<SDValue> &OutOps) {
+   bool SelectInlineAsmMemoryOperand(const SDValue &Op,
+                                      char ConstraintCode,
+                                      std::vector<SDValue> &OutOps) override {
       OutOps.push_back(Op);
       return false;
     }
 
     void InsertVRSaveCode(MachineFunction &MF);
 
-    virtual const char *getPassName() const {
+    const char *getPassName() const override {
       return "PowerPC DAG->DAG Pattern Instruction Selection";
     }
 

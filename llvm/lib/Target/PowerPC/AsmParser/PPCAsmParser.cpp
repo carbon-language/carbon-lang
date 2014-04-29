@@ -230,7 +230,7 @@ class PPCAsmParser : public MCTargetAsmParser {
   bool MatchRegisterName(const AsmToken &Tok,
                          unsigned &RegNo, int64_t &IntVal);
 
-  virtual bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc);
+  bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
 
   const MCExpr *ExtractModifierFromExpr(const MCExpr *E,
                                         PPCMCExpr::VariantKind &Variant);
@@ -248,7 +248,7 @@ class PPCAsmParser : public MCTargetAsmParser {
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                SmallVectorImpl<MCParsedAsmOperand*> &Operands,
                                MCStreamer &Out, unsigned &ErrorInfo,
-                               bool MatchingInlineAsm);
+                               bool MatchingInlineAsm) override;
 
   void ProcessInstruction(MCInst &Inst,
                           const SmallVectorImpl<MCParsedAsmOperand*> &Ops);
@@ -276,17 +276,18 @@ public:
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
   }
 
-  virtual bool ParseInstruction(ParseInstructionInfo &Info,
-                                StringRef Name, SMLoc NameLoc,
-                                SmallVectorImpl<MCParsedAsmOperand*> &Operands);
+  bool ParseInstruction(ParseInstructionInfo &Info,
+                        StringRef Name, SMLoc NameLoc,
+                        SmallVectorImpl<MCParsedAsmOperand*> &Operands) override;
 
-  virtual bool ParseDirective(AsmToken DirectiveID);
+  bool ParseDirective(AsmToken DirectiveID) override;
 
-  unsigned validateTargetOperandClass(MCParsedAsmOperand *Op, unsigned Kind);
+  unsigned validateTargetOperandClass(MCParsedAsmOperand *Op,
+                                      unsigned Kind) override;
 
-  virtual const MCExpr *applyModifierToExpr(const MCExpr *E,
-                                            MCSymbolRefExpr::VariantKind,
-                                            MCContext &Ctx);
+  const MCExpr *applyModifierToExpr(const MCExpr *E,
+                                    MCSymbolRefExpr::VariantKind,
+                                    MCContext &Ctx) override;
 };
 
 /// PPCOperand - Instances of this class represent a parsed PowerPC machine
@@ -351,10 +352,10 @@ public:
   }
 
   /// getStartLoc - Get the location of the first token of this operand.
-  SMLoc getStartLoc() const { return StartLoc; }
+  SMLoc getStartLoc() const override { return StartLoc; }
 
   /// getEndLoc - Get the location of the last token of this operand.
-  SMLoc getEndLoc() const { return EndLoc; }
+  SMLoc getEndLoc() const override { return EndLoc; }
 
   /// isPPC64 - True if this operand is for an instruction in 64-bit mode.
   bool isPPC64() const { return IsPPC64; }
@@ -379,7 +380,7 @@ public:
     return TLSReg.Sym;
   }
 
-  unsigned getReg() const {
+  unsigned getReg() const override {
     assert(isRegNumber() && "Invalid access!");
     return (unsigned) Imm.Val;
   }
@@ -404,8 +405,8 @@ public:
     return 7 - countTrailingZeros<uint64_t>(Imm.Val);
   }
 
-  bool isToken() const { return Kind == Token; }
-  bool isImm() const { return Kind == Immediate || Kind == Expression; }
+  bool isToken() const override { return Kind == Token; }
+  bool isImm() const override { return Kind == Immediate || Kind == Expression; }
   bool isU2Imm() const { return Kind == Immediate && isUInt<2>(getImm()); }
   bool isU5Imm() const { return Kind == Immediate && isUInt<5>(getImm()); }
   bool isS5Imm() const { return Kind == Immediate && isInt<5>(getImm()); }
@@ -438,8 +439,8 @@ public:
                                        && isUInt<5>(getImm())); }
   bool isCRBitMask() const { return Kind == Immediate && isUInt<8>(getImm()) &&
                                     isPowerOf2_32(getImm()); }
-  bool isMem() const { return false; }
-  bool isReg() const { return false; }
+  bool isMem() const override { return false; }
+  bool isReg() const override { return false; }
 
   void addRegOperands(MCInst &Inst, unsigned N) const {
     llvm_unreachable("addRegOperands");
@@ -545,7 +546,7 @@ public:
     return StringRef(Tok.Data, Tok.Length);
   }
 
-  virtual void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS) const override;
 
   static PPCOperand *CreateToken(StringRef Str, SMLoc S, bool IsPPC64) {
     PPCOperand *Op = new PPCOperand(Token);

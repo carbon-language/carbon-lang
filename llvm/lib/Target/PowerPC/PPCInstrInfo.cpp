@@ -1812,7 +1812,7 @@ protected:
     }
 
 public:
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
+    bool runOnMachineFunction(MachineFunction &MF) override {
       LIS = &getAnalysis<LiveIntervals>();
 
       TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
@@ -1832,7 +1832,7 @@ public:
       return Changed;
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       AU.addRequired<LiveIntervals>();
       AU.addPreserved<LiveIntervals>();
       AU.addRequired<SlotIndexes>();
@@ -1964,7 +1964,7 @@ protected:
     }
 
 public:
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
+    bool runOnMachineFunction(MachineFunction &MF) override {
       TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
       TII = TM->getInstrInfo();
 
@@ -1979,7 +1979,7 @@ public:
       return Changed;
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
@@ -2038,7 +2038,7 @@ protected:
     }
 
 public:
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
+    bool runOnMachineFunction(MachineFunction &MF) override {
       TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
       TII = TM->getInstrInfo();
 
@@ -2053,7 +2053,7 @@ public:
       return Changed;
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
@@ -2195,7 +2195,7 @@ protected:
     }
 
 public:
-    virtual bool runOnMachineFunction(MachineFunction &MF) {
+    bool runOnMachineFunction(MachineFunction &MF) override {
       TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
       TII = TM->getInstrInfo();
 
@@ -2215,7 +2215,7 @@ public:
       return Changed;
     }
 
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    void getAnalysisUsage(AnalysisUsage &AU) const override {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };

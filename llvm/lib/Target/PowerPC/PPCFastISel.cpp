@@ -103,24 +103,24 @@ class PPCFastISel final : public FastISel {
 
   // Backend specific FastISel code.
   private:
-    virtual bool TargetSelectInstruction(const Instruction *I);
-    virtual unsigned TargetMaterializeConstant(const Constant *C);
-    virtual unsigned TargetMaterializeAlloca(const AllocaInst *AI);
-    virtual bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
-                                     const LoadInst *LI);
-    virtual bool FastLowerArguments();
-    virtual unsigned FastEmit_i(MVT Ty, MVT RetTy, unsigned Opc, uint64_t Imm);
-    virtual unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
-                                     const TargetRegisterClass *RC,
-                                     unsigned Op0, bool Op0IsKill,
-                                     uint64_t Imm);
-    virtual unsigned FastEmitInst_r(unsigned MachineInstOpcode,
-                                    const TargetRegisterClass *RC,
-                                    unsigned Op0, bool Op0IsKill);
-    virtual unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
-                                     const TargetRegisterClass *RC,
-                                     unsigned Op0, bool Op0IsKill,
-                                     unsigned Op1, bool Op1IsKill);
+    bool TargetSelectInstruction(const Instruction *I) override;
+    unsigned TargetMaterializeConstant(const Constant *C) override;
+    unsigned TargetMaterializeAlloca(const AllocaInst *AI) override;
+    bool tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
+                             const LoadInst *LI) override;
+    bool FastLowerArguments() override;
+    unsigned FastEmit_i(MVT Ty, MVT RetTy, unsigned Opc, uint64_t Imm) override;
+    unsigned FastEmitInst_ri(unsigned MachineInstOpcode,
+                             const TargetRegisterClass *RC,
+                             unsigned Op0, bool Op0IsKill,
+                             uint64_t Imm);
+    unsigned FastEmitInst_r(unsigned MachineInstOpcode,
+                            const TargetRegisterClass *RC,
+                            unsigned Op0, bool Op0IsKill);
+    unsigned FastEmitInst_rr(unsigned MachineInstOpcode,
+                             const TargetRegisterClass *RC,
+                             unsigned Op0, bool Op0IsKill,
+                             unsigned Op1, bool Op1IsKill);
 
   // Instruction selection routines.
   private:

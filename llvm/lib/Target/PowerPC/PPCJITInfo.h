@@ -30,19 +30,19 @@ namespace llvm {
       is64Bit = tmIs64Bit;
     }
 
-    virtual StubLayout getStubLayout();
-    virtual void *emitFunctionStub(const Function* F, void *Fn,
-                                   JITCodeEmitter &JCE);
-    virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
-    virtual void relocate(void *Function, MachineRelocation *MR,
-                          unsigned NumRelocs, unsigned char* GOTBase);
-    
+    StubLayout getStubLayout() override;
+    void *emitFunctionStub(const Function* F, void *Fn,
+                           JITCodeEmitter &JCE) override;
+    LazyResolverFn getLazyResolverFunction(JITCompilerFn) override;
+    void relocate(void *Function, MachineRelocation *MR,
+                  unsigned NumRelocs, unsigned char* GOTBase) override;
+
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by
     /// overwriting OLD with a branch to NEW.  This is used for self-modifying
     /// code.
     ///
-    virtual void replaceMachineCodeForFunction(void *Old, void *New);
+    void replaceMachineCodeForFunction(void *Old, void *New) override;
   };
 }
 

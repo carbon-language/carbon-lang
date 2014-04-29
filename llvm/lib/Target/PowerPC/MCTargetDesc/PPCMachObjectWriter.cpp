@@ -44,7 +44,7 @@ public:
   void RecordRelocation(MachObjectWriter *Writer, const MCAssembler &Asm,
                         const MCAsmLayout &Layout, const MCFragment *Fragment,
                         const MCFixup &Fixup, MCValue Target,
-                        uint64_t &FixedValue) {
+                        uint64_t &FixedValue) override {
     if (Writer->is64Bit()) {
       report_fatal_error("Relocation emission for MachO/PPC64 unimplemented.");
     } else
