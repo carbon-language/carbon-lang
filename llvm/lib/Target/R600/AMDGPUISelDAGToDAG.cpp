@@ -16,9 +16,11 @@
 #include "AMDGPURegisterInfo.h"
 #include "R600InstrInfo.h"
 #include "SIISelLowering.h"
+#include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/IR/Function.h"
 
 using namespace llvm;
 
@@ -69,6 +71,11 @@ private:
   bool isPrivateLoad(const LoadSDNode *N) const;
   bool isLocalLoad(const LoadSDNode *N) const;
   bool isRegionLoad(const LoadSDNode *N) const;
+
+  /// \returns True if the current basic block being selected is at control
+  ///          flow depth 0.  Meaning that the current block dominates the
+  //           exit block.
+  bool isCFDepth0() const;
 
   const TargetRegisterClass *getOperandRegClass(SDNode *N, unsigned OpNo) const;
   bool SelectGlobalValueConstantOffset(SDValue Addr, SDValue& IntPtr);
@@ -564,6 +571,14 @@ bool AMDGPUDAGToDAGISel::isPrivateLoad(const LoadSDNode *N) const {
   }
   return false;
 }
+
+bool AMDGPUDAGToDAGISel::isCFDepth0() const {
+  // FIXME: Figure out a way to use DominatorTree analysis here.
+  const BasicBlock *CurBlock = FuncInfo->MBB->getBasicBlock();
+  const Function *Fn = FuncInfo->Fn;
+  return &Fn->front() == CurBlock || &Fn->back() == CurBlock;
+}
+
 
 const char *AMDGPUDAGToDAGISel::getPassName() const {
   return "AMDGPU DAG->DAG Pattern Instruction Selection";
