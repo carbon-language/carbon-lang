@@ -2498,10 +2498,10 @@ X86TargetLowering::EmitTailCallLoadRetAddr(SelectionDAG &DAG,
 
 /// EmitTailCallStoreRetAddr - Emit a store of the return address if tail call
 /// optimization is performed and it is required (FPDiff!=0).
-static SDValue
-EmitTailCallStoreRetAddr(SelectionDAG & DAG, MachineFunction &MF,
-                         SDValue Chain, SDValue RetAddrFrIdx, EVT PtrVT,
-                         unsigned SlotSize, int FPDiff, SDLoc dl) {
+static SDValue EmitTailCallStoreRetAddr(SelectionDAG &DAG, MachineFunction &MF,
+                                        SDValue Chain, SDValue RetAddrFrIdx,
+                                        EVT PtrVT, unsigned SlotSize,
+                                        int FPDiff, SDLoc dl) {
   // Store the return address to the appropriate stack slot.
   if (!FPDiff) return Chain;
   // Calculate the new stack slot for the return address.
@@ -2538,16 +2538,18 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (MF.getTarget().Options.DisableTailCalls)
     isTailCall = false;
 
-  if (isTailCall) {
+  bool IsMustTail = CLI.CS && CLI.CS->isMustTailCall();
+  if (IsMustTail) {
+    // Force this to be a tail call.  The verifier rules are enough to ensure
+    // that we can lower this successfully without moving the return address
+    // around.
+    isTailCall = true;
+  } else if (isTailCall) {
     // Check if it's really possible to do a tail call.
     isTailCall = IsEligibleForTailCallOptimization(Callee, CallConv,
                     isVarArg, SR != NotStructReturn,
                     MF.getFunction()->hasStructRetAttr(), CLI.RetTy,
                     Outs, OutVals, Ins, DAG);
-
-    if (!isTailCall && CLI.CS && CLI.CS->isMustTailCall())
-      report_fatal_error("failed to perform tail call elimination on a call "
-                         "site marked musttail");
 
     // Sibcalls are automatically detected tailcalls which do not require
     // ABI changes.
@@ -2583,7 +2585,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
 
   int FPDiff = 0;
-  if (isTailCall && !IsSibcall) {
+  if (isTailCall && !IsSibcall && !IsMustTail) {
     // Lower arguments at fp - stackoffset + fpdiff.
     X86MachineFunctionInfo *X86Info = MF.getInfo<X86MachineFunctionInfo>();
     unsigned NumBytesCallerPushed = X86Info->getBytesToPopOnReturn();
@@ -2746,8 +2748,10 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                         DAG.getConstant(NumXMMRegs, MVT::i8)));
   }
 
-  // For tail calls lower the arguments to the 'real' stack slot.
-  if (isTailCall) {
+  // For tail calls lower the arguments to the 'real' stack slots.  Sibcalls
+  // don't need this because the eligibility check rejects calls that require
+  // shuffling arguments passed in memory.
+  if (!IsSibcall && isTailCall) {
     // Force all the incoming stack arguments to be loaded from the stack
     // before any new outgoing arguments are stored to the stack, because the
     // outgoing stack slots may alias the incoming argument stack slots, and
@@ -2759,39 +2763,40 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     SmallVector<SDValue, 8> MemOpChains2;
     SDValue FIN;
     int FI = 0;
-    if (getTargetMachine().Options.GuaranteedTailCallOpt) {
-      for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
-        CCValAssign &VA = ArgLocs[i];
-        if (VA.isRegLoc())
-          continue;
-        assert(VA.isMemLoc());
-        SDValue Arg = OutVals[i];
-        ISD::ArgFlagsTy Flags = Outs[i].Flags;
-        // Create frame index.
-        int32_t Offset = VA.getLocMemOffset()+FPDiff;
-        uint32_t OpSize = (VA.getLocVT().getSizeInBits()+7)/8;
-        FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset, true);
-        FIN = DAG.getFrameIndex(FI, getPointerTy());
+    for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+      CCValAssign &VA = ArgLocs[i];
+      if (VA.isRegLoc())
+        continue;
+      assert(VA.isMemLoc());
+      SDValue Arg = OutVals[i];
+      ISD::ArgFlagsTy Flags = Outs[i].Flags;
+      // Skip inalloca arguments.  They don't require any work.
+      if (Flags.isInAlloca())
+        continue;
+      // Create frame index.
+      int32_t Offset = VA.getLocMemOffset()+FPDiff;
+      uint32_t OpSize = (VA.getLocVT().getSizeInBits()+7)/8;
+      FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset, true);
+      FIN = DAG.getFrameIndex(FI, getPointerTy());
 
-        if (Flags.isByVal()) {
-          // Copy relative to framepointer.
-          SDValue Source = DAG.getIntPtrConstant(VA.getLocMemOffset());
-          if (!StackPtr.getNode())
-            StackPtr = DAG.getCopyFromReg(Chain, dl,
-                                          RegInfo->getStackRegister(),
-                                          getPointerTy());
-          Source = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, Source);
+      if (Flags.isByVal()) {
+        // Copy relative to framepointer.
+        SDValue Source = DAG.getIntPtrConstant(VA.getLocMemOffset());
+        if (!StackPtr.getNode())
+          StackPtr = DAG.getCopyFromReg(Chain, dl,
+                                        RegInfo->getStackRegister(),
+                                        getPointerTy());
+        Source = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, Source);
 
-          MemOpChains2.push_back(CreateCopyOfByValArgument(Source, FIN,
-                                                           ArgChain,
-                                                           Flags, DAG, dl));
-        } else {
-          // Store relative to framepointer.
-          MemOpChains2.push_back(
-            DAG.getStore(ArgChain, dl, Arg, FIN,
-                         MachinePointerInfo::getFixedStack(FI),
-                         false, false, 0));
-        }
+        MemOpChains2.push_back(CreateCopyOfByValArgument(Source, FIN,
+                                                         ArgChain,
+                                                         Flags, DAG, dl));
+      } else {
+        // Store relative to framepointer.
+        MemOpChains2.push_back(
+          DAG.getStore(ArgChain, dl, Arg, FIN,
+                       MachinePointerInfo::getFixedStack(FI),
+                       false, false, 0));
       }
     }
 
