@@ -32,6 +32,15 @@
 // CHECK: @objc_msgSend{{.*}} !dbg ![[MSG7:[0-9]+]]
 // CHECK: ret {{.*}} !dbg ![[RET7:[0-9]+]]
 
+// CHECK: define {{.*}}testCleanupVoid
+// CHECK: icmp ne {{.*}}!dbg ![[SKIP1:[0-9]+]]
+// CHECK-NEXT: br {{.*}}, label %[[CLEANUP:.*]], label
+// CHECK: [[CLEANUP]]:
+// CHECK-NEXT: !dbg ![[RET8:[0-9]+]]
+// CHECK: @objc_storeStrong{{.*}}, !dbg ![[ARC8:[0-9]+]]
+// CHECK: ret {{.*}} !dbg ![[RET8]]
+
+typedef signed char BOOL;
 
 @interface NSObject
 + (id)alloc;
@@ -91,6 +100,22 @@
   [self testVoid :@"foo"];
   // CHECK: ![[RET7]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
   return 1;
+}
+
+- (void)testCleanupVoid:(BOOL)skip withDelegate: (AppDelegate *) delegate {
+  static BOOL skip_all;
+  // CHECK: ![[SKIP1]] = metadata !{i32 [[@LINE+1]], i32 0,
+  if (!skip_all) {
+    if (!skip) {
+      return;
+    }
+    NSString *s = @"bar";
+    if (!skip) {
+      [delegate testVoid :s];
+    }
+  }
+  // CHECK: ![[RET8]] = metadata !{i32 [[@LINE+2]], i32 0,
+  // CHECK: ![[ARC8]] = metadata !{i32 [[@LINE+1]], i32 0,
 }
 
 

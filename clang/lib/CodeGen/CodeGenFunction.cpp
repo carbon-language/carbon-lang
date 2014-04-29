@@ -498,6 +498,22 @@ void CodeGenFunction::EmitOpenCLKernelMetadata(const FunctionDecl *FD,
   OpenCLKernelMetadata->addOperand(kernelMDNode);
 }
 
+/// Determine whether the function F ends with a return stmt.
+static bool endsWithReturn(const Decl* F) {
+  const Stmt *Body = nullptr;
+  if (auto *FD = dyn_cast_or_null<FunctionDecl>(F))
+    Body = FD->getBody();
+  else if (auto *OMD = dyn_cast_or_null<ObjCMethodDecl>(F))
+    Body = OMD->getBody();
+
+  if (auto *CS = dyn_cast_or_null<CompoundStmt>(Body)) {
+    auto LastStmt = CS->body_rbegin();
+    if (LastStmt != CS->body_rend())
+      return isa<ReturnStmt>(*LastStmt);
+  }
+  return false;
+}
+
 void CodeGenFunction::StartFunction(GlobalDecl GD,
                                     QualType RetTy,
                                     llvm::Function *Fn,
@@ -593,6 +609,10 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
   if (RetTy->isVoidType()) {
     // Void type; nothing to return.
     ReturnValue = 0;
+
+    // Count the implicit return.
+    if (!endsWithReturn(D))
+      ++NumReturnExprs;
   } else if (CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect &&
              !hasScalarEvaluationKind(CurFnInfo->getReturnType())) {
     // Indirect aggregate return; emit returned value directly into sret slot.
