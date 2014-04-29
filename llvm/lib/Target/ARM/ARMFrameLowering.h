@@ -57,7 +57,7 @@ public:
   void processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                             RegScavenger *RS) const override;
 
-  void adjustForSegmentedStacks(MachineFunction &MF) const;
+  void adjustForSegmentedStacks(MachineFunction &MF) const override;
 
  private:
   void emitPushInst(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,

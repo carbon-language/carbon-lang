@@ -108,9 +108,9 @@ namespace {
     explicit CppWriter(formatted_raw_ostream &o) :
       ModulePass(ID), Out(o), uniqueNum(0), is_inline(false), indent_level(0){}
 
-    virtual const char *getPassName() const { return "C++ backend"; }
+    const char *getPassName() const override { return "C++ backend"; }
 
-    bool runOnModule(Module &M);
+    bool runOnModule(Module &M) override;
 
     void printProgram(const std::string& fname, const std::string& modName );
     void printModule(const std::string& fname, const std::string& modName );

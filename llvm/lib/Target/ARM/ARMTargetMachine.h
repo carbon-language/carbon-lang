@@ -101,7 +101,7 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
 /// ARMLETargetMachine - ARM little endian target machine.
 ///
 class ARMLETargetMachine : public ARMTargetMachine {
-  virtual void anchor();
+  void anchor() override;
 public:
   ARMLETargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
@@ -112,7 +112,7 @@ public:
 /// ARMBETargetMachine - ARM big endian target machine.
 ///
 class ARMBETargetMachine : public ARMTargetMachine {
-  virtual void anchor();
+  void anchor() override;
 public:
   ARMBETargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
@@ -168,7 +168,7 @@ public:
 /// ThumbLETargetMachine - Thumb little endian target machine.
 ///
 class ThumbLETargetMachine : public ThumbTargetMachine {
-  virtual void anchor();
+  void anchor() override;
 public:
   ThumbLETargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS, const TargetOptions &Options,
@@ -179,7 +179,7 @@ public:
 /// ThumbBETargetMachine - Thumb big endian target machine.
 ///
 class ThumbBETargetMachine : public ThumbTargetMachine {
-  virtual void anchor();
+  void anchor() override;
 public:
   ThumbBETargetMachine(const Target &T, StringRef TT, StringRef CPU,
                        StringRef FS, const TargetOptions &Options,

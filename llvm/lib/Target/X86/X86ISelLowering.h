@@ -782,7 +782,7 @@ namespace llvm {
                                            Type *Ty) const override;
 
     /// Intel processors have a unified instruction and data cache
-    const char * getClearCacheBuiltinName() const {
+    const char * getClearCacheBuiltinName() const override {
       return nullptr; // nothing to do, move along.
     }
 

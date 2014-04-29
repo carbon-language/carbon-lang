@@ -71,7 +71,7 @@ public:
   }
 
   bool processBlock(MachineBasicBlock &MBB);
-  bool runOnMachineFunction(MachineFunction &F);
+  bool runOnMachineFunction(MachineFunction &F) override;
 
 private:
   Reference getRegReferences(MachineInstr *MI, unsigned Reg);

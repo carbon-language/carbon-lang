@@ -3347,7 +3347,7 @@ public:
   InstructionShuffler(bool alternate, bool topdown)
     : IsAlternating(alternate), IsTopDown(topdown) {}
 
-  virtual void initialize(ScheduleDAGMI*) {
+  void initialize(ScheduleDAGMI*) override {
     TopQ.clear();
     BottomQ.clear();
   }
@@ -3355,7 +3355,7 @@ public:
   /// Implement MachineSchedStrategy interface.
   /// -----------------------------------------
 
-  virtual SUnit *pickNode(bool &IsTopNode) {
+  SUnit *pickNode(bool &IsTopNode) override {
     SUnit *SU;
     if (IsTopDown) {
       do {
@@ -3378,12 +3378,12 @@ public:
     return SU;
   }
 
-  virtual void schedNode(SUnit *SU, bool IsTopNode) {}
+  void schedNode(SUnit *SU, bool IsTopNode) override {}
 
-  virtual void releaseTopNode(SUnit *SU) {
+  void releaseTopNode(SUnit *SU) override {
     TopQ.push(SU);
   }
-  virtual void releaseBottomNode(SUnit *SU) {
+  void releaseBottomNode(SUnit *SU) override {
     BottomQ.push(SU);
   }
 };

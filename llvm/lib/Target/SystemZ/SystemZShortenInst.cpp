@@ -31,7 +31,7 @@ public:
   }
 
   bool processBlock(MachineBasicBlock &MBB);
-  bool runOnMachineFunction(MachineFunction &F);
+  bool runOnMachineFunction(MachineFunction &F) override;
 
 private:
   bool shortenIIF(MachineInstr &MI, unsigned *GPRMap, unsigned LiveOther,

@@ -28,14 +28,12 @@ struct CPPTargetMachine : public TargetMachine {
                    CodeGenOpt::Level OL)
     : TargetMachine(T, TT, CPU, FS, Options) {}
 
-  virtual bool addPassesToEmitFile(PassManagerBase &PM,
-                                   formatted_raw_ostream &Out,
-                                   CodeGenFileType FileType,
-                                   bool DisableVerify,
-                                   AnalysisID StartAfter,
-                                   AnalysisID StopAfter);
+  bool addPassesToEmitFile(PassManagerBase &PM, formatted_raw_ostream &Out,
+                           CodeGenFileType FileType, bool DisableVerify,
+                           AnalysisID StartAfter,
+                           AnalysisID StopAfter) override;
 
-  virtual const DataLayout *getDataLayout() const { return nullptr; }
+  const DataLayout *getDataLayout() const override { return nullptr; }
 };
 
 extern Target TheCppBackendTarget;

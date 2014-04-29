@@ -25,9 +25,9 @@ public:
   static char ID;
   ARMOptimizeBarriersPass() : MachineFunctionPass(ID) {}
 
-  virtual bool runOnMachineFunction(MachineFunction &Fn);
+  bool runOnMachineFunction(MachineFunction &Fn) override;
 
-  virtual const char *getPassName() const {
+  const char *getPassName() const override {
     return "optimise barriers pass";
   }
 

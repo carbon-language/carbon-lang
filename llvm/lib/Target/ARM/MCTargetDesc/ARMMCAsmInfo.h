@@ -35,13 +35,13 @@ namespace llvm {
   };
 
   class ARMCOFFMCAsmInfoMicrosoft : public MCAsmInfoMicrosoft {
-    void anchor();
+    void anchor() override;
   public:
     explicit ARMCOFFMCAsmInfoMicrosoft();
   };
 
   class ARMCOFFMCAsmInfoGNU : public MCAsmInfoGNUCOFF {
-    void anchor();
+    void anchor() override;
   public:
     explicit ARMCOFFMCAsmInfoGNU();
   };

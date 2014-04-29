@@ -1784,7 +1784,7 @@ public:
   }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
-  void dump(ScheduleDAG *DAG) const {
+  void dump(ScheduleDAG *DAG) const override {
     // Emulate pop() without clobbering NodeQueueIds.
     std::vector<SUnit*> DumpQueue = Queue;
     SF DumpPicker = Picker;

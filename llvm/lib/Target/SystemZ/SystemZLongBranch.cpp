@@ -138,7 +138,7 @@ public:
     return "SystemZ Long Branch";
   }
 
-  bool runOnMachineFunction(MachineFunction &F);
+  bool runOnMachineFunction(MachineFunction &F) override;
 
 private:
   void skipNonTerminators(BlockPosition &Position, MBBInfo &Block);
