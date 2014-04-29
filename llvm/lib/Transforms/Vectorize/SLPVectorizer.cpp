@@ -2116,7 +2116,7 @@ unsigned SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
     // Check that the pointer points to scalars.
     Type *Ty = SI->getValueOperand()->getType();
     if (Ty->isAggregateType() || Ty->isVectorTy())
-      return 0;
+      continue;
 
     // Find the base pointer.
     Value *Ptr = GetUnderlyingObject(SI->getPointerOperand(), DL);
