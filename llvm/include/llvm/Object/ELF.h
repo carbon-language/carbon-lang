@@ -317,6 +317,11 @@ public:
 
   ELFFile(MemoryBuffer *Object, error_code &ec);
 
+  bool isMipsELF64() const {
+    return Header->e_machine == ELF::EM_MIPS &&
+      Header->getFileClass() == ELF::ELFCLASS64;
+  }
+
   bool isMips64EL() const {
     return Header->e_machine == ELF::EM_MIPS &&
       Header->getFileClass() == ELF::ELFCLASS64 &&
@@ -537,10 +542,16 @@ StringRef ELFFile<ELFT>::getRelocationTypeName(uint32_t Type) const {
 template <class ELFT>
 void ELFFile<ELFT>::getRelocationTypeName(uint32_t Type,
                                           SmallVectorImpl<char> &Result) const {
-  if (!isMips64EL()) {
+  if (!isMipsELF64()) {
     StringRef Name = getRelocationTypeName(Type);
     Result.append(Name.begin(), Name.end());
   } else {
+    // The Mips N64 ABI allows up to three operations to be specified per
+    // relocation record. Unfortunately there's no easy way to test for the
+    // presence of N64 ELFs as they have no special flag that identifies them
+    // as being N64. We can safely assume at the moment that all Mips
+    // ELFCLASS64 ELFs are N64. New Mips64 ABIs should provide enough
+    // information to disambiguate between old vs new ABIs.
     uint8_t Type1 = (Type >> 0) & 0xFF;
     uint8_t Type2 = (Type >> 8) & 0xFF;
     uint8_t Type3 = (Type >> 16) & 0xFF;
