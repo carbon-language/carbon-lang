@@ -41,17 +41,17 @@ std::unique_ptr<Module> parseAssembly(const char *Assembly) {
 
 // IR forming a call graph with a diamond of triangle-shaped SCCs:
 //
-//         d1
-//        /  \
-//       d3--d2
-//      /     \
-//     b1     c1
-//   /  \    /  \
-//  b3--b2  c3--c2
-//       \  /
-//        a1
-//       /  \
-//      a3--a2
+//         d1       |
+//        /  \      |
+//       d3--d2     |
+//      /     \     |
+//     b1     c1    |
+//   /  \    /  \   |
+//  b3--b2  c3--c2  |
+//       \  /       |
+//        a1        |
+//       /  \       |
+//      a3--a2      |
 //
 // All call edges go up between SCCs, and clockwise around the SCC.
 static const char DiamondOfTriangles[] =
