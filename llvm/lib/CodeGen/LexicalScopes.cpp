@@ -33,7 +33,6 @@ LexicalScopes::~LexicalScopes() { reset(); }
 void LexicalScopes::reset() {
   MF = nullptr;
   CurrentFnLexicalScope = nullptr;
-  DeleteContainerSeconds(AbstractScopeMap);
   InlinedLexicalScopeMap.clear();
   AbstractScopesList.clear();
 }
@@ -194,9 +193,11 @@ LexicalScope *LexicalScopes::getOrCreateAbstractScope(const MDNode *N) {
   DIDescriptor Scope(N);
   if (Scope.isLexicalBlockFile())
     Scope = DILexicalBlockFile(Scope).getScope();
-  LexicalScope *AScope = AbstractScopeMap.lookup(N);
-  if (AScope)
-    return AScope;
+  auto IterBool = AbstractScopeMap.insert(
+      std::make_pair(N, std::unique_ptr<LexicalScope>()));
+  auto &MapEntry = *IterBool.first;
+  if (!IterBool.second)
+    return MapEntry.second.get();
 
   LexicalScope *Parent = nullptr;
   if (Scope.isLexicalBlock()) {
@@ -204,11 +205,11 @@ LexicalScope *LexicalScopes::getOrCreateAbstractScope(const MDNode *N) {
     DIDescriptor ParentDesc = DB.getContext();
     Parent = getOrCreateAbstractScope(ParentDesc);
   }
-  AScope = new LexicalScope(Parent, DIDescriptor(N), nullptr, true);
-  AbstractScopeMap[N] = AScope;
+  MapEntry.second =
+      make_unique<LexicalScope>(Parent, DIDescriptor(N), nullptr, true);
   if (DIDescriptor(N).isSubprogram())
-    AbstractScopesList.push_back(AScope);
-  return AScope;
+    AbstractScopesList.push_back(MapEntry.second.get());
+  return MapEntry.second.get();
 }
 
 /// constructScopeNest

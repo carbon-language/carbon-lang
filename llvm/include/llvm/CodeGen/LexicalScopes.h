@@ -90,7 +90,8 @@ public:
 
   /// findAbstractScope - Find an abstract scope or return NULL.
   LexicalScope *findAbstractScope(const MDNode *N) {
-    return AbstractScopeMap.lookup(N);
+    auto I = AbstractScopeMap.find(N);
+    return I != AbstractScopeMap.end() ? I->second.get() : nullptr;
   }
 
   /// findInlinedScope - Find an inlined scope for the given DebugLoc or return
@@ -144,7 +145,7 @@ private:
 
   /// AbstractScopeMap - These scopes are  not included LexicalScopeMap.
   /// AbstractScopes owns its LexicalScope*s.
-  DenseMap<const MDNode *, LexicalScope *> AbstractScopeMap;
+  DenseMap<const MDNode *, std::unique_ptr<LexicalScope>> AbstractScopeMap;
 
   /// AbstractScopesList - Tracks abstract scopes constructed while processing
   /// a function.
