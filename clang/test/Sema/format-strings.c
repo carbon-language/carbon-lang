@@ -1,8 +1,9 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral -isystem %S/Inputs %s
 // RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral -isystem %S/Inputs -fno-signed-char %s
 
-#define __need_wint_t
 #include <stdarg.h>
+#include <stddef.h>
+#define __need_wint_t
 #include <stddef.h> // For wint_t and wchar_t
 
 typedef struct _FILE FILE;
