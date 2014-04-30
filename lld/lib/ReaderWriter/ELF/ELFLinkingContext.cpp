@@ -226,30 +226,20 @@ static void buildSearchPath(SmallString<128> &path, StringRef dir,
 }
 
 ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
-  bool foundFile = false;
-  StringRef pathref;
   SmallString<128> path;
   for (StringRef dir : _inputSearchPaths) {
     // Search for dynamic library
     if (!_isStaticExecutable) {
       buildSearchPath(path, dir, _sysrootPath);
       llvm::sys::path::append(path, Twine("lib") + libName + ".so");
-      pathref = path.str();
-      if (llvm::sys::fs::exists(pathref)) {
-        foundFile = true;
-      }
+      if (llvm::sys::fs::exists(path.str()))
+        return StringRef(*new (_allocator) std::string(path.str()));
     }
     // Search for static libraries too
-    if (!foundFile) {
-      buildSearchPath(path, dir, _sysrootPath);
-      llvm::sys::path::append(path, Twine("lib") + libName + ".a");
-      pathref = path.str();
-      if (llvm::sys::fs::exists(pathref)) {
-        foundFile = true;
-      }
-    }
-    if (foundFile)
-      return StringRef(*new (_allocator) std::string(pathref));
+    buildSearchPath(path, dir, _sysrootPath);
+    llvm::sys::path::append(path, Twine("lib") + libName + ".a");
+    if (llvm::sys::fs::exists(path.str()))
+      return StringRef(*new (_allocator) std::string(path.str()));
   }
   if (!llvm::sys::fs::exists(libName))
     return llvm::make_error_code(llvm::errc::no_such_file_or_directory);
