@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=arm64 | FileCheck %s
 define void @foo() nounwind {
 ; CHECK: foo
-; CHECK: brk #1
+; CHECK: brk #0x1
   tail call void @llvm.trap()
   ret void
 }

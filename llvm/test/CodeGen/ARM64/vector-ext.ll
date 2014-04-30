@@ -2,7 +2,7 @@
 
 ;CHECK: @func30
 ;CHECK: ushll.4s  v0, v0, #0
-;CHECK: movi.4s v1, #1
+;CHECK: movi.4s v1, #0x1
 ;CHECK: and.16b v0, v0, v1
 ;CHECK: str  q0, [x0]
 ;CHECK: ret

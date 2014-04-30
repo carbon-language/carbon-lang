@@ -1008,6 +1008,12 @@ void ARM64InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
+void ARM64InstPrinter::printHexImm(const MCInst *MI, unsigned OpNo,
+                                   raw_ostream &O) {
+  const MCOperand &Op = MI->getOperand(OpNo);
+  O << format("#%#llx", Op.getImm());
+}
+
 void ARM64InstPrinter::printPostIncOperand(const MCInst *MI, unsigned OpNo,
                                            unsigned Imm, raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);

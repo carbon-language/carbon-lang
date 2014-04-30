@@ -44,6 +44,7 @@ protected:
   bool printSysAlias(const MCInst *MI, raw_ostream &O);
   // Operand printers
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printHexImm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printPostIncOperand(const MCInst *MI, unsigned OpNo, unsigned Imm,
                            raw_ostream &O);
   void printPostIncOperand1(const MCInst *MI, unsigned OpNo, raw_ostream &O);

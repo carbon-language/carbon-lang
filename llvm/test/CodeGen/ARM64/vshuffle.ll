@@ -15,7 +15,7 @@
 ; CHECK:  .byte   0                       ; 0x0
 ; CHECK: test1
 ; CHECK: ldr d[[REG0:[0-9]+]], [{{.*}}, lCPI0_0
-; CHECK: movi.8h v[[REG1:[0-9]+]], #1, lsl #8
+; CHECK: movi.8h v[[REG1:[0-9]+]], #0x1, lsl #8
 ; CHECK: tbl.8b  v{{[0-9]+}}, { v[[REG1]] }, v[[REG0]]
 define <8 x i1> @test1() {
 entry:

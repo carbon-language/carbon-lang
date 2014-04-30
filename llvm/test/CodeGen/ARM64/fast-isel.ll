@@ -87,7 +87,7 @@ entry:
 
 define void @t6() nounwind {
 ; CHECK: t6
-; CHECK: brk #1
+; CHECK: brk #0x1
   tail call void @llvm.trap()
   ret void
 }
