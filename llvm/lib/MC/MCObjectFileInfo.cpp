@@ -341,6 +341,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       FDEEncoding = dwarf::DW_EH_PE_udata4;
       TTypeEncoding = dwarf::DW_EH_PE_absptr;
     }
+    break;
   case Triple::sparcv9:
     LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
     if (RelocM == Reloc::PIC_) {
@@ -354,6 +355,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       FDEEncoding = dwarf::DW_EH_PE_udata4;
       TTypeEncoding = dwarf::DW_EH_PE_absptr;
     }
+    break;
   case Triple::systemz:
     // All currently-defined code models guarantee that 4-byte PC-relative
     // values will be in range.
@@ -370,6 +372,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       FDEEncoding = dwarf::DW_EH_PE_absptr;
       TTypeEncoding = dwarf::DW_EH_PE_absptr;
     }
+    break;
   default:
     break;
   }
