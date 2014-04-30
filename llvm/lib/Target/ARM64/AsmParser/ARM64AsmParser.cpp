@@ -2915,6 +2915,7 @@ bool ARM64AsmParser::parseMemory(OperandVector &Operands) {
 
       // Immediate expressions.
     } else if (Parser.getTok().is(AsmToken::Hash) ||
+               Parser.getTok().is(AsmToken::Colon) ||
                Parser.getTok().is(AsmToken::Integer)) {
       if (Parser.getTok().is(AsmToken::Hash))
         Parser.Lex(); // Eat hash token.
