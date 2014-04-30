@@ -8,6 +8,11 @@
 // RUN:   -target-feature +neon \
 // RUN:   -emit-llvm -w -O1 -o - %s | FileCheck --check-prefix=CHECK-AARCH64 %s
 
+// REQUIRES: arm64-registered-target
+// RUN: %clang_cc1 -triple arm64-linux-gnueabi \
+// RUN:   -target-feature +neon \
+// RUN:   -emit-llvm -w -O1 -o - %s | FileCheck --check-prefix=CHECK-AARCH64 %s
+
 // Test if int64_t and uint64_t can be correctly mangled.
 
 #include "arm_neon.h"

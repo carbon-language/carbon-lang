@@ -32,6 +32,21 @@
 // CHECK-AARCH64: "-L{{.*}}/sysroot/usr/lib"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target arm64-linux-android \
+// RUN:     -B%S/Inputs/basic_android_tree \
+// RUN:     --sysroot=%S/Inputs/basic_android_tree/sysroot \
+// RUN:   | FileCheck --check-prefix=CHECK-ARM64 %s
+// CHECK-ARM64: {{.*}}clang{{.*}}" "-cc1"
+// CHECK-ARM64: "-internal-isystem" "{{.*}}/aarch64-linux-android/include/c++/4.8"
+// CHECK-ARM64: "-internal-isystem" "{{.*}}/aarch64-linux-android/include/c++/4.8/aarch64-linux-android"
+// CHECK-ARM64: "-internal-externc-isystem" "{{.*}}/sysroot/include"
+// CHECK-ARM64: "-internal-externc-isystem" "{{.*}}/sysroot/usr/include"
+// CHECK-ARM64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-ARM64: "-L{{.*}}/lib/gcc/aarch64-linux-android/4.8"
+// CHECK-ARM64: "-L{{.*}}/lib/gcc/aarch64-linux-android/4.8/../../../../aarch64-linux-android/lib"
+// CHECK-ARM64: "-L{{.*}}/sysroot/usr/lib"
+//
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     -target mipsel-linux-android \
 // RUN:     -mips32 \
 // RUN:     -B%S/Inputs/basic_android_tree \
