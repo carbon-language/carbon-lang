@@ -15,7 +15,7 @@ namespace tidy {
 
 /// \brief Contains options for clang-tidy.
 struct ClangTidyOptions {
-  ClangTidyOptions() : EnableChecksRegex(".*") {}
+  ClangTidyOptions() : EnableChecksRegex(".*"), AnalyzeTemporaryDtors(false) {}
   std::string EnableChecksRegex;
   std::string DisableChecksRegex;
   bool AnalyzeTemporaryDtors;
