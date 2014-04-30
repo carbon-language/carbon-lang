@@ -7329,6 +7329,12 @@ public:
     if (!ND || isa<NamespaceDecl>(ND))
       return false;
 
+    // FIXME: We should check if ND is member of base class of class having
+    // using declaration and direct base class in case using declaration names
+    // a constructor.
+    if (RequireMember && !ND->isCXXClassMember())
+      return false;
+
     if (RequireMember && !isa<FieldDecl>(ND) && !isa<CXXMethodDecl>(ND) &&
         !isa<TypeDecl>(ND))
       return false;
