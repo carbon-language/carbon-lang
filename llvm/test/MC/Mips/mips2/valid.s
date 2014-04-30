@@ -65,6 +65,8 @@
 	mult	$sp,$v0
 	multu	$gp,$k0
 	multu	$t1,$s2
+	negu	$2                   # CHECK: negu $2, $2            # encoding: [0x00,0x02,0x10,0x23]
+	negu	$2,$3                # CHECK: negu $2, $3            # encoding: [0x00,0x03,0x10,0x23]
 	neg.d	$f27,$f18
 	neg.s	$f1,$f15
 	nop
