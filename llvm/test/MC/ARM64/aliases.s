@@ -134,8 +134,8 @@ foo:
   mov x0, #281470681743360
   mov x0, #18446744073709486080
 
-; CHECK: movz	x0, #65535, lsl #32
-; CHECK: movn	x0, #65535
+; CHECK: movz	x0, #0xffff, lsl #32
+; CHECK: movn	x0, #0xffff
 
   mov w0, #0xffffffff
   mov w0, #0xffffff00
@@ -143,9 +143,9 @@ foo:
   mov wzr, #0xffffff00
 
 ; CHECK: movn   w0, #0
-; CHECK: movn   w0, #255
+; CHECK: movn   w0, #0xff
 ; CHECK: movn   wzr, #0
-; CHECK: movn   wzr, #255
+; CHECK: movn   wzr, #0xff
 
 ;-----------------------------------------------------------------------------
 ; MVN aliases

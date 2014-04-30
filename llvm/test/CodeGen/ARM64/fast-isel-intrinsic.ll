@@ -4,11 +4,11 @@
 @temp = common global [80 x i8] zeroinitializer, align 16
 
 define void @t1() {
-; ARM64: t1
+; ARM64-LABEL: t1
 ; ARM64: adrp x8, _message@PAGE
 ; ARM64: add x0, x8, _message@PAGEOFF
 ; ARM64: movz w9, #0
-; ARM64: movz x2, #80
+; ARM64: movz x2, #0x50
 ; ARM64: uxtb w1, w9
 ; ARM64: bl _memset
   call void @llvm.memset.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i8 0, i64 80, i32 16, i1 false)
@@ -18,12 +18,12 @@ define void @t1() {
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1)
 
 define void @t2() {
-; ARM64: t2
+; ARM64-LABEL: t2
 ; ARM64: adrp x8, _temp@GOTPAGE
 ; ARM64: ldr x0, [x8, _temp@GOTPAGEOFF]
 ; ARM64: adrp x8, _message@PAGE
 ; ARM64: add x1, x8, _message@PAGEOFF
-; ARM64: movz x2, #80
+; ARM64: movz x2, #0x50
 ; ARM64: bl _memcpy
   call void @llvm.memcpy.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i64 80, i32 16, i1 false)
   ret void
@@ -32,12 +32,12 @@ define void @t2() {
 declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1)
 
 define void @t3() {
-; ARM64: t3
+; ARM64-LABEL: t3
 ; ARM64: adrp x8, _temp@GOTPAGE
 ; ARM64: ldr x0, [x8, _temp@GOTPAGEOFF]
 ; ARM64: adrp x8, _message@PAGE
 ; ARM64: add x1, x8, _message@PAGEOFF
-; ARM64: movz x2, #20
+; ARM64: movz x2, #0x14
 ; ARM64: bl _memmove
   call void @llvm.memmove.p0i8.p0i8.i64(i8* getelementptr inbounds ([80 x i8]* @temp, i32 0, i32 0), i8* getelementptr inbounds ([80 x i8]* @message, i32 0, i32 0), i64 20, i32 16, i1 false)
   ret void
@@ -46,7 +46,7 @@ define void @t3() {
 declare void @llvm.memmove.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1)
 
 define void @t4() {
-; ARM64: t4
+; ARM64-LABEL: t4
 ; ARM64: adrp x8, _temp@GOTPAGE
 ; ARM64: ldr x8, [x8, _temp@GOTPAGEOFF]
 ; ARM64: adrp x9, _message@PAGE
@@ -63,7 +63,7 @@ define void @t4() {
 }
 
 define void @t5() {
-; ARM64: t5
+; ARM64-LABEL: t5
 ; ARM64: adrp x8, _temp@GOTPAGE
 ; ARM64: ldr x8, [x8, _temp@GOTPAGEOFF]
 ; ARM64: adrp x9, _message@PAGE
@@ -80,7 +80,7 @@ define void @t5() {
 }
 
 define void @t6() {
-; ARM64: t6
+; ARM64-LABEL: t6
 ; ARM64: adrp x8, _temp@GOTPAGE
 ; ARM64: ldr x8, [x8, _temp@GOTPAGEOFF]
 ; ARM64: adrp x9, _message@PAGE
@@ -97,7 +97,7 @@ define void @t6() {
 }
 
 define void @t7() {
-; ARM64: t7
+; ARM64-LABEL: t7
 ; ARM64: adrp x8, _temp@GOTPAGE
 ; ARM64: ldr x8, [x8, _temp@GOTPAGEOFF]
 ; ARM64: adrp x9, _message@PAGE
@@ -116,7 +116,7 @@ define void @t7() {
 }
 
 define void @t8() {
-; ARM64: t8
+; ARM64-LABEL: t8
 ; ARM64: adrp x8, _temp@GOTPAGE
 ; ARM64: ldr x8, [x8, _temp@GOTPAGEOFF]
 ; ARM64: adrp x9, _message@PAGE

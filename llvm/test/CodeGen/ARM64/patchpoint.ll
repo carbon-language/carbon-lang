@@ -5,13 +5,13 @@
 define i64 @trivial_patchpoint_codegen(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
 entry:
 ; CHECK-LABEL: trivial_patchpoint_codegen:
-; CHECK:       movz x16, #57005, lsl #32
-; CHECK-NEXT:  movk x16, #48879, lsl #16
-; CHECK-NEXT:  movk x16, #51966
+; CHECK:       movz x16, #0xdead, lsl #32
+; CHECK-NEXT:  movk x16, #0xbeef, lsl #16
+; CHECK-NEXT:  movk x16, #0xcafe
 ; CHECK-NEXT:  blr  x16
-; CHECK:       movz x16, #57005, lsl #32
-; CHECK-NEXT:  movk x16, #48879, lsl #16
-; CHECK-NEXT:  movk x16, #51967
+; CHECK:       movz x16, #0xdead, lsl #32
+; CHECK-NEXT:  movk x16, #0xbeef, lsl #16
+; CHECK-NEXT:  movk x16, #0xcaff
 ; CHECK-NEXT:  blr  x16
 ; CHECK:       ret
   %resolveCall2 = inttoptr i64 244837814094590 to i8*
@@ -51,9 +51,9 @@ entry:
 ; CHECK:      str x{{.+}}, [sp]
 ; CHECK-NEXT: mov  x0, x{{.+}}
 ; CHECK:      Ltmp
-; CHECK-NEXT: movz  x16, #65535, lsl #32
-; CHECK-NEXT: movk  x16, #57005, lsl #16
-; CHECK-NEXT: movk  x16, #48879
+; CHECK-NEXT: movz  x16, #0xffff, lsl #32
+; CHECK-NEXT: movk  x16, #0xdead, lsl #16
+; CHECK-NEXT: movk  x16, #0xbeef
 ; CHECK-NEXT: blr x16
   %resolveCall2 = inttoptr i64 281474417671919 to i8*
   %result = tail call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 5, i32 20, i8* %resolveCall2, i32 2, i64 %p4, i64 %p2)
@@ -74,9 +74,9 @@ entry:
 ; CHECK-NEXT: orr w{{.+}}, wzr, #0x2
 ; CHECK-NEXT: str x{{.+}}, [sp]
 ; CHECK:      Ltmp
-; CHECK-NEXT: movz  x16, #65535, lsl #32
-; CHECK-NEXT: movk  x16, #57005, lsl #16
-; CHECK-NEXT: movk  x16, #48879
+; CHECK-NEXT: movz  x16, #0xffff, lsl #32
+; CHECK-NEXT: movk  x16, #0xdead, lsl #16
+; CHECK-NEXT: movk  x16, #0xbeef
 ; CHECK-NEXT: blr x16
   %call = inttoptr i64 281474417671919 to i8*
   %result = call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 7, i32 20, i8* %call, i32 6, i64 %callee, i64 2, i64 undef, i32 4, i32 undef, i64 6)
@@ -88,7 +88,7 @@ define i64 @jscall_patchpoint_codegen3(i64 %callee) {
 entry:
 ; CHECK-LABEL: jscall_patchpoint_codegen3:
 ; CHECK:      Ltmp
-; CHECK:      movz  w{{.+}}, #10
+; CHECK:      movz  w{{.+}}, #0xa
 ; CHECK-NEXT: str x{{.+}}, [sp, #48]
 ; CHECK-NEXT: orr w{{.+}}, wzr, #0x8
 ; CHECK-NEXT: str w{{.+}}, [sp, #36]
@@ -99,9 +99,9 @@ entry:
 ; CHECK-NEXT: orr w{{.+}}, wzr, #0x2
 ; CHECK-NEXT: str x{{.+}}, [sp]
 ; CHECK:      Ltmp
-; CHECK-NEXT: movz  x16, #65535, lsl #32
-; CHECK-NEXT: movk  x16, #57005, lsl #16
-; CHECK-NEXT: movk  x16, #48879
+; CHECK-NEXT: movz  x16, #0xffff, lsl #32
+; CHECK-NEXT: movk  x16, #0xdead, lsl #16
+; CHECK-NEXT: movk  x16, #0xbeef
 ; CHECK-NEXT: blr x16
   %call = inttoptr i64 281474417671919 to i8*
   %result = call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 7, i32 20, i8* %call, i32 10, i64 %callee, i64 2, i64 undef, i32 4, i32 undef, i64 6, i32 undef, i32 8, i32 undef, i64 10)

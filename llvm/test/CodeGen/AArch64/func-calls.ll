@@ -114,10 +114,10 @@ define void @check_stack_args() {
 ; CHECK-AARCH64: mov x0, sp
 ; CHECK-AARCH64: str d[[STACKEDREG]], [x0]
 
-; CHECK-ARM64:  movz [[SIXTY_FOUR:w[0-9]+]], #17024, lsl #16
+; CHECK-ARM64:  movz [[SIXTY_FOUR:w[0-9]+]], #0x4280, lsl #16
 ; CHECK-ARM64: str [[SIXTY_FOUR]], [sp]
 
-; CHECK-ARM64-NONEON:  movz [[SIXTY_FOUR:w[0-9]+]], #17024, lsl #16
+; CHECK-ARM64-NONEON:  movz [[SIXTY_FOUR:w[0-9]+]], #0x4280, lsl #16
 ; CHECK-ARM64-NONEON: str [[SIXTY_FOUR]], [sp]
 
 ; CHECK: bl stacked_fpu

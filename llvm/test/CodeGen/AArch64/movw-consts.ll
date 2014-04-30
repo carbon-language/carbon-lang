@@ -61,7 +61,7 @@ define i64 @test7() {
 ; couldn't. Useful even for i64
 define i64 @test8() {
 ; CHECK-LABEL: test8:
-; CHECK: movn w0, #60875
+; CHECK: movn w0, #{{60875|0xedcb}}
   ret i64 4294906420
 }
 
@@ -73,7 +73,7 @@ define i64 @test9() {
 
 define i64 @test10() {
 ; CHECK-LABEL: test10:
-; CHECK: movn x0, #60875, lsl #16
+; CHECK: movn x0, #{{60875|0xedcb}}, lsl #16
   ret i64 18446744069720047615
 }
 

@@ -13,7 +13,7 @@ define void @odd() nounwind {
 ; CHECK: stp x24, x23, [sp, #96]
 ; CHECK: stp x22, x21, [sp, #112]
 ; CHECK: stp x20, x19, [sp, #128]
-; CHECK: movz x0, #42
+; CHECK: movz x0, #0x2a
 ; CHECK: ldp x20, x19, [sp, #128]
 ; CHECK: ldp x22, x21, [sp, #112]
 ; CHECK: ldp x24, x23, [sp, #96]
@@ -38,7 +38,7 @@ define void @even() nounwind {
 ; CHECK: stp x24, x23, [sp, #96]
 ; CHECK: stp x22, x21, [sp, #112]
 ; CHECK: stp x20, x19, [sp, #128]
-; CHECK: movz x0, #42
+; CHECK: movz x0, #0x2a
 ; CHECK: ldp x20, x19, [sp, #128]
 ; CHECK: ldp x22, x21, [sp, #112]
 ; CHECK: ldp x24, x23, [sp, #96]

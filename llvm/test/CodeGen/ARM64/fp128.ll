@@ -186,13 +186,13 @@ define i32 @test_br_cc() {
 iftrue:
   ret i32 42
 ; CHECK-NEXT: BB#
-; CHECK-NEXT: movz w0, #42
+; CHECK-NEXT: movz w0, #0x2a
 ; CHECK-NEXT: b [[REALRET:.LBB[0-9]+_[0-9]+]]
 
 iffalse:
   ret i32 29
 ; CHECK: [[RET29]]:
-; CHECK-NEXT: movz w0, #29
+; CHECK-NEXT: movz w0, #0x1d
 ; CHECK-NEXT: [[REALRET]]:
 ; CHECK: ret
 }
