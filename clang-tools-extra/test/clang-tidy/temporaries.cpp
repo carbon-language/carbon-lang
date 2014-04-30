@@ -1,7 +1,4 @@
-// RUN: clang-tidy -checks=clang-analyzer-core.NullDereference -disable-checks='' -analyze-temporary-dtors %s -- > %t.log
-// FileCheck complains if the input file is empty, so add a dummy line.
-// RUN: echo foo >> %t.log
-// RUN: FileCheck %s < %t.log
+// RUN: clang-tidy -checks=clang-analyzer-core.NullDereference -disable-checks='' -analyze-temporary-dtors %s -- | FileCheck %s
 
 struct NoReturnDtor {
   ~NoReturnDtor() __attribute__((noreturn));
