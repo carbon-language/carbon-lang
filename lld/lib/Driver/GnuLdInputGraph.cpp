@@ -88,7 +88,7 @@ error_code ELFGNULdScript::parse(const LinkingContext &ctx,
           _elfLinkingContext, _elfLinkingContext.allocateString(path._path),
           attributes);
       std::unique_ptr<InputElement> inputFile(inputNode);
-      cast<Group>(groupStart.get())->addFile(std::move(inputFile));
+      groupStart.get()->addFile(std::move(inputFile));
     }
     _expandElements.push_back(std::move(groupStart));
   }
