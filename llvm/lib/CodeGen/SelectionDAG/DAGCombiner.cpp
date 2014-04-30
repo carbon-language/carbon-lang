@@ -3867,6 +3867,9 @@ SDValue DAGCombiner::visitShiftByConstant(SDNode *N, ConstantSDNode *Amt) {
       return SDValue();
   }
 
+  if (!TLI.isDesirableToCommuteWithShift(LHS))
+    return SDValue();
+
   // Fold the constants, shifting the binop RHS by the shift amount.
   SDValue NewRHS = DAG.getNode(N->getOpcode(), SDLoc(LHS->getOperand(1)),
                                N->getValueType(0),

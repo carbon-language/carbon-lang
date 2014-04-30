@@ -2017,6 +2017,15 @@ public:
   ///
   virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
+  /// Return true if it is profitable to move a following shift through this
+  //  node, adjusting any immediate operands as necessary to preserve semantics.
+  //  This transformation may not be desirable if it disrupts a particularly
+  //  auspicious target-specific tree (e.g. bitfield extractionon in AArch64).
+  //  By default, it returns true.
+  virtual bool isDesirableToCommuteWithShift(const SDNode *N /*Op*/) const {
+    return true;
+  }
+
   /// Return true if the target has native support for the specified value type
   /// and it is 'desirable' to use the type for the given node type. e.g. On x86
   /// i16 is legal, but undesirable since i16 instruction encodings are longer

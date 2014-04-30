@@ -284,6 +284,9 @@ public:
 
   const MCPhysReg *getScratchRegisters(CallingConv::ID CC) const override;
 
+  /// \brief Returns false if N is a bit extraction pattern of (X >> C) & Mask.
+  bool isDesirableToCommuteWithShift(const SDNode *N) const override;
+
   /// \brief Returns true if it is beneficial to convert a load of a constant
   /// to just the constant itself.
   bool shouldConvertConstantLoadToIntImm(const APInt &Imm,

@@ -501,6 +501,19 @@ end:
   ret i80 %conv3
 }
 
+; Check if we can still catch UBFX when "AND" is used by SHL.
+; CHECK-LABEL: fct21:
+; CHECK: ubfx
+@arr = external global [8 x [64 x i64]]
+define i64 @fct21(i64 %x) {
+entry:
+  %shr = lshr i64 %x, 4
+  %and = and i64 %shr, 15
+  %arrayidx = getelementptr inbounds [8 x [64 x i64]]* @arr, i64 0, i64 0, i64 %and
+  %0 = load i64* %arrayidx, align 8
+  ret i64 %0
+}
+
 define i16 @test_ignored_rightbits(i32 %dst, i32 %in) {
 ; CHECK-LABEL: test_ignored_rightbits:
 

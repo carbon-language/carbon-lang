@@ -5931,6 +5931,21 @@ ARM64TargetLowering::getScratchRegisters(CallingConv::ID) const {
   return ScratchRegs;
 }
 
+bool ARM64TargetLowering::isDesirableToCommuteWithShift(const SDNode *N) const {
+  EVT VT = N->getValueType(0);
+    // If N is unsigned bit extraction: ((x >> C) & mask), then do not combine
+    // it with shift to let it be lowered to UBFX.
+  if (N->getOpcode() == ISD::AND && (VT == MVT::i32 || VT == MVT::i64) &&
+      isa<ConstantSDNode>(N->getOperand(1))) {
+    uint64_t TruncMask = N->getConstantOperandVal(1);
+    if (isMask_64(TruncMask) &&
+      N->getOperand(0).getOpcode() == ISD::SRL &&
+      isa<ConstantSDNode>(N->getOperand(0)->getOperand(1)))
+      return false;
+  }
+  return true;
+}
+
 bool ARM64TargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                                             Type *Ty) const {
   assert(Ty->isIntegerTy());
