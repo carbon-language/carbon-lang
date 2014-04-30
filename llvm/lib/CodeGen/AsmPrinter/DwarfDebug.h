@@ -219,11 +219,8 @@ class DwarfDebug : public AsmPrinterHandler {
   // Maps instruction with label emitted after instruction.
   DenseMap<const MachineInstr *, MCSymbol *> LabelsAfterInsn;
 
-  // Every user variable mentioned by a DBG_VALUE instruction in order of
-  // appearance.
-  SmallVector<const MDNode *, 8> UserVariables;
-
   // History of DBG_VALUE and clobber instructions for each user variable.
+  // Variables are listed in order of appearance.
   DbgValueHistoryMap DbgValues;
 
   // Previous instruction's location information. This is used to determine

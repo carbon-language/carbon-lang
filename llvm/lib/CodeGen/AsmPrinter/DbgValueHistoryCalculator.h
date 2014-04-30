@@ -10,7 +10,7 @@
 #ifndef CODEGEN_ASMPRINTER_DBGVALUEHISTORYCALCULATOR_H_
 #define CODEGEN_ASMPRINTER_DBGVALUEHISTORYCALCULATOR_H_
 
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
@@ -22,8 +22,8 @@ class TargetRegisterInfo;
 
 // For each user variable, keep a list of DBG_VALUE instructions in order.
 // The list can also contain normal instructions that clobber the previous
-// DBG_VALUE.
-typedef DenseMap<const MDNode *, SmallVector<const MachineInstr *, 4>>
+// DBG_VALUE. The variables are listed in order of appearance.
+typedef MapVector<const MDNode *, SmallVector<const MachineInstr *, 4>>
 DbgValueHistoryMap;
 
 void calculateDbgValueHistory(const MachineFunction *MF,

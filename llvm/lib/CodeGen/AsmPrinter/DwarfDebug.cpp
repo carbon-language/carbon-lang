@@ -1196,18 +1196,18 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
   // Grab the variable info that was squirreled away in the MMI side-table.
   collectVariableInfoFromMMITable(Processed);
 
-  for (const MDNode *Var : UserVariables) {
-    if (Processed.count(Var))
+  for (const auto &I : DbgValues) {
+    DIVariable DV(I.first);
+    if (Processed.count(DV))
       continue;
 
-    // History contains relevant DBG_VALUE instructions for Var and instructions
+    // History contains relevant DBG_VALUE instructions for DV and instructions
     // clobbering it.
-    SmallVectorImpl<const MachineInstr *> &History = DbgValues[Var];
+    const SmallVectorImpl<const MachineInstr *> &History = I.second;
     if (History.empty())
       continue;
     const MachineInstr *MInsn = History.front();
 
-    DIVariable DV(Var);
     LexicalScope *Scope = nullptr;
     if (DV.getTag() == dwarf::DW_TAG_arg_variable &&
         DISubprogram(DV.getContext()).describes(CurFn->getFunction()))
@@ -1421,7 +1421,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   if (LScopes.empty())
     return;
 
-  assert(UserVariables.empty() && DbgValues.empty() && "Maps weren't cleaned");
+  assert(DbgValues.empty() && "DbgValues map wasn't cleaned!");
 
   // Make sure that each lexical scope will have a begin/end label.
   identifyScopeMarkers();
@@ -1448,13 +1448,13 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
     for (const auto &MI : MBB) {
       if (MI.isDebugValue()) {
         assert(MI.getNumOperands() > 1 && "Invalid machine instruction!");
-        // Keep track of user variables in order of appearance. Store the set
-        // of variables we've already seen as a set of keys in DbgValues.
+        // Keep track of user variables in order of appearance. Create the
+        // empty history for each variable so that the order of keys in
+        // DbgValues is correct. Actual history will be populated in
+        // calculateDbgValueHistory() function.
         const MDNode *Var = MI.getDebugVariable();
-        auto IterPair = DbgValues.insert(
+        DbgValues.insert(
             std::make_pair(Var, SmallVector<const MachineInstr *, 4>()));
-        if (IterPair.second)
-          UserVariables.push_back(Var);
       } else if (!MI.getFlag(MachineInstr::FrameSetup) &&
                  PrologEndLoc.isUnknown() && !MI.getDebugLoc().isUnknown()) {
         // First known non-DBG_VALUE and non-frame setup location marks
@@ -1609,7 +1609,6 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     DeleteContainerPointers(I.second);
   ScopeVariables.clear();
   DeleteContainerPointers(CurrentFnArguments);
-  UserVariables.clear();
   DbgValues.clear();
   AbstractVariables.clear();
   LabelsBeforeInsn.clear();
