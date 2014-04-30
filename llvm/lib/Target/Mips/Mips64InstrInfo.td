@@ -440,6 +440,8 @@ def : InstAlias<"add $rs, $imm",
 def : InstAlias<"addu $rs, $imm",
                 (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
                 0>;
+def : InstAlias<"dsll $rd, $rt, $rs",
+                (DSLLV GPR64Opnd:$rd, GPR64Opnd:$rt, GPR32Opnd:$rs), 0>;
 def : InstAlias<"dsubu $rt, $rs, $imm",
                 (DADDiu GPR64Opnd:$rt, GPR64Opnd:$rs,
                 InvertedImOperand64: $imm),0>;
@@ -449,6 +451,8 @@ def : InstAlias<"dsub $rs, $imm",
 def : InstAlias<"dsubu $rs, $imm",
                 (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs, InvertedImOperand64:$imm),
                 0>;
+def : InstAlias<"dsrl $rd, $rt, $rs",
+                (DSRLV GPR64Opnd:$rd, GPR64Opnd:$rt, GPR32Opnd:$rs), 0>;
 
 /// Move between CPU and coprocessor registers
 let DecoderNamespace = "Mips64", Predicates = [HasMips64] in {

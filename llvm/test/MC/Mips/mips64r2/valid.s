@@ -60,6 +60,7 @@
 	dshd	$v0,$sp
 	dsll  $zero,18             # CHECK: dsll $zero, $zero, 18       # encoding: [0x00,0x00,0x04,0xb8]
 	dsll  $zero,$s4,18         # CHECK: dsll $zero, $20, 18         # encoding: [0x00,0x14,0x04,0xb8]
+	dsll  $zero,$s4,$t4        # CHECK: dsllv $zero, $20, $12       # encoding: [0x01,0x94,0x00,0x14]
 	dsll32 $zero,18            # CHECK: dsll32 $zero, $zero, 18     # encoding: [0x00,0x00,0x04,0xbc]
 	dsll32 $zero,$zero,18      # CHECK: dsll32 $zero, $zero, 18     # encoding: [0x00,0x00,0x04,0xbc]
 	dsllv $zero,$t4            # CHECK: dsllv $zero, $zero, $12     # encoding: [0x01,0x80,0x00,0x14]
@@ -72,6 +73,7 @@
 	dsrav $gp,$s2,$s3          # CHECK: dsrav $gp, $18, $19         # encoding: [0x02,0x72,0xe0,0x17]
 	dsrl  $s3,23               # CHECK: dsrl $19, $19, 23           # encoding: [0x00,0x13,0x9d,0xfa]
 	dsrl  $s3,$6,23            # CHECK: dsrl $19, $6, 23            # encoding: [0x00,0x06,0x9d,0xfa]
+	dsrl  $s3,$6,$s4           # CHECK: dsrlv $19, $6, $20          # encoding: [0x02,0x86,0x98,0x16]
 	dsrl32  $s3,23             # CHECK: dsrl32 $19, $19, 23         # encoding: [0x00,0x13,0x9d,0xfe]
 	dsrl32  $s3,$6,23          # CHECK: dsrl32 $19, $6, 23          # encoding: [0x00,0x06,0x9d,0xfe]
 	dsrlv $s3,$s4              # CHECK: dsrlv $19, $19, $20         # encoding: [0x02,0x93,0x98,0x16]
