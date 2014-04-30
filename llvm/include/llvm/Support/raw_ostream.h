@@ -162,7 +162,7 @@ public:
     size_t Size = Str.size();
 
     // Make sure we can use the fast path.
-    if (OutBufCur+Size > OutBufEnd)
+    if (Size > (size_t)(OutBufEnd - OutBufCur))
       return write(Str.data(), Size);
 
     memcpy(OutBufCur, Str.data(), Size);
