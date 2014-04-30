@@ -3257,6 +3257,27 @@ bool ARM64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
 bool ARM64AsmParser::ParseInstruction(ParseInstructionInfo &Info,
                                       StringRef Name, SMLoc NameLoc,
                                       OperandVector &Operands) {
+  Name = StringSwitch<StringRef>(Name.lower())
+             .Case("beq", "b.eq")
+             .Case("bne", "b.ne")
+             .Case("bhs", "b.hs")
+             .Case("bcs", "b.cs")
+             .Case("blo", "b.lo")
+             .Case("bcc", "b.cc")
+             .Case("bmi", "b.mi")
+             .Case("bpl", "b.pl")
+             .Case("bvs", "b.vs")
+             .Case("bvc", "b.vc")
+             .Case("bhi", "b.hi")
+             .Case("bls", "b.ls")
+             .Case("bge", "b.ge")
+             .Case("blt", "b.lt")
+             .Case("bgt", "b.gt")
+             .Case("ble", "b.le")
+             .Case("bal", "b.al")
+             .Case("bnv", "b.nv")
+             .Default(Name);
+
   // Create the leading tokens for the mnemonic, split by '.' characters.
   size_t Start = 0, Next = Name.find('.');
   StringRef Head = Name.slice(Start, Next);
