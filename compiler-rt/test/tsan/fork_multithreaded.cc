@@ -1,5 +1,5 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s -check-prefix=CHECK-DIE
-// RUN: %clangxx_tsan -O1 %s -o %t && TSAN_OPTIONS="die_after_fork=0" %t 2>&1 | FileCheck %s -check-prefix=CHECK-NODIE
+// RUN: %clangxx_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s -check-prefix=CHECK-DIE
+// RUN: %clangxx_tsan -O1 %s -o %t && TSAN_OPTIONS="die_after_fork=0" %run %t 2>&1 | FileCheck %s -check-prefix=CHECK-NODIE
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>

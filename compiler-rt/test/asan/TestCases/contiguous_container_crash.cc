@@ -1,7 +1,7 @@
 // RUN: %clangxx_asan -O %s -o %t
-// RUN: not %t crash 2>&1 | FileCheck --check-prefix=CHECK-CRASH %s
-// RUN: not %t bad-bounds 2>&1 | FileCheck --check-prefix=CHECK-BAD %s
-// RUN: ASAN_OPTIONS=detect_container_overflow=0 %t crash
+// RUN: not %run %t crash 2>&1 | FileCheck --check-prefix=CHECK-CRASH %s
+// RUN: not %run %t bad-bounds 2>&1 | FileCheck --check-prefix=CHECK-BAD %s
+// RUN: ASAN_OPTIONS=detect_container_overflow=0 %run %t crash
 //
 // Test crash due to __sanitizer_annotate_contiguous_container.
 

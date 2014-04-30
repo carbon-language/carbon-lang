@@ -1,4 +1,4 @@
-// RUN: %clangxx -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx -fsanitize=unsigned-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s
 
 #include <stdint.h>
 

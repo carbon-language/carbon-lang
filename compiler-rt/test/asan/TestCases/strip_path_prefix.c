@@ -1,5 +1,5 @@
 // RUN: %clang_asan -O2 %s -o %t
-// RUN: ASAN_OPTIONS="strip_path_prefix='/'" not %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS="strip_path_prefix='/'" not %run %t 2>&1 | FileCheck %s
 
 #include <stdlib.h>
 int main() {

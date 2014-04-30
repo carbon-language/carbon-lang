@@ -8,7 +8,7 @@
 
 // FIXME: the following command line may hang in the case of a regression.
 // RUN: DYLD_INSERT_LIBRARIES=darwin-dummy-shared-lib-so.dylib \
-// RUN:     %t 2>&1 | FileCheck %s || exit 1
+// RUN:     %run %t 2>&1 | FileCheck %s || exit 1
 #include <stdio.h>
 #include <stdlib.h>
 

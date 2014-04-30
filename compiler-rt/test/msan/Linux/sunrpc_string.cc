@@ -1,7 +1,7 @@
 // RUN: %clangxx_msan -m64 -g -O0 %s -o %t && \
-// RUN:     %t 2>&1
+// RUN:     %run %t 2>&1
 // RUN: %clangxx_msan -m64 -g -O0 -DUNINIT=1 %s -o %t && \
-// RUN:     not %t 2>&1 | FileCheck %s
+// RUN:     not %run %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <string.h>

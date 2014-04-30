@@ -2,9 +2,9 @@
 // https://code.google.com/p/address-sanitizer/issues/detail?id=183
 
 // RUN: %clangxx_asan -O2 %s -o %t
-// RUN: not %t 12 2>&1 | FileCheck %s
-// RUN: not %t 100 2>&1 | FileCheck %s
-// RUN: not %t 10000 2>&1 | FileCheck %s
+// RUN: not %run %t 12 2>&1 | FileCheck %s
+// RUN: not %run %t 100 2>&1 | FileCheck %s
+// RUN: not %run %t 10000 2>&1 | FileCheck %s
 
 #include <stdlib.h>
 #include <string.h>

@@ -3,7 +3,7 @@
 //
 // RUN: %clangxx_asan -DBUILD_SO=1 -fPIC -shared %s -o %t.so
 // RUN: %clangxx_asan_static %s %t.so -o %t
-// RUN: not %t 2>&1 | FileCheck %s
+// RUN: not %run %t 2>&1 | FileCheck %s
 
 // REQUIRES: asan-dynamic-runtime
 

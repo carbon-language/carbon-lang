@@ -1,12 +1,12 @@
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && %t >%t.out 2>&1
-// RUN: %clangxx_msan -m64 -O1 %s -o %t && %t >%t.out 2>&1
-// RUN: %clangxx_msan -m64 -O2 %s -o %t && %t >%t.out 2>&1
-// RUN: %clangxx_msan -m64 -O3 %s -o %t && %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O0 %s -o %t && %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O1 %s -o %t && %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O2 %s -o %t && %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O3 %s -o %t && %run %t >%t.out 2>&1
 
-// RUN: %clangxx_msan -m64 -O0 %s -o %t -DCHECK_IN_F && %t >%t.out 2>&1
-// RUN: %clangxx_msan -m64 -O1 %s -o %t -DCHECK_IN_F && %t >%t.out 2>&1
-// RUN: %clangxx_msan -m64 -O2 %s -o %t -DCHECK_IN_F && %t >%t.out 2>&1
-// RUN: %clangxx_msan -m64 -O3 %s -o %t -DCHECK_IN_F && %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O0 %s -o %t -DCHECK_IN_F && %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O1 %s -o %t -DCHECK_IN_F && %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O2 %s -o %t -DCHECK_IN_F && %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O3 %s -o %t -DCHECK_IN_F && %run %t >%t.out 2>&1
 
 // Test that (no_sanitize_memory) functions
 // * don't check shadow values (-DCHECK_IN_F)

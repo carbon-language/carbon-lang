@@ -3,17 +3,17 @@
 // With allocator_may_return_null=1 the allocator should return 0.
 //
 // RUN: %clangxx_msan -O0 %s -o %t
-// RUN: not %t malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mCRASH
-// RUN: MSAN_OPTIONS=allocator_may_return_null=0 not %t malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mCRASH
-// RUN: MSAN_OPTIONS=allocator_may_return_null=1     %t malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mNULL
-// RUN: MSAN_OPTIONS=allocator_may_return_null=0 not %t calloc 2>&1 | FileCheck %s --check-prefix=CHECK-cCRASH
-// RUN: MSAN_OPTIONS=allocator_may_return_null=1     %t calloc 2>&1 | FileCheck %s --check-prefix=CHECK-cNULL
-// RUN: MSAN_OPTIONS=allocator_may_return_null=0 not %t calloc-overflow 2>&1 | FileCheck %s --check-prefix=CHECK-coCRASH
-// RUN: MSAN_OPTIONS=allocator_may_return_null=1     %t calloc-overflow 2>&1 | FileCheck %s --check-prefix=CHECK-coNULL
-// RUN: MSAN_OPTIONS=allocator_may_return_null=0 not %t realloc 2>&1 | FileCheck %s --check-prefix=CHECK-rCRASH
-// RUN: MSAN_OPTIONS=allocator_may_return_null=1     %t realloc 2>&1 | FileCheck %s --check-prefix=CHECK-rNULL
-// RUN: MSAN_OPTIONS=allocator_may_return_null=0 not %t realloc-after-malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mrCRASH
-// RUN: MSAN_OPTIONS=allocator_may_return_null=1     %t realloc-after-malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mrNULL
+// RUN: not %run %t malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mCRASH
+// RUN: MSAN_OPTIONS=allocator_may_return_null=0 not %run %t malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mCRASH
+// RUN: MSAN_OPTIONS=allocator_may_return_null=1     %run %t malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mNULL
+// RUN: MSAN_OPTIONS=allocator_may_return_null=0 not %run %t calloc 2>&1 | FileCheck %s --check-prefix=CHECK-cCRASH
+// RUN: MSAN_OPTIONS=allocator_may_return_null=1     %run %t calloc 2>&1 | FileCheck %s --check-prefix=CHECK-cNULL
+// RUN: MSAN_OPTIONS=allocator_may_return_null=0 not %run %t calloc-overflow 2>&1 | FileCheck %s --check-prefix=CHECK-coCRASH
+// RUN: MSAN_OPTIONS=allocator_may_return_null=1     %run %t calloc-overflow 2>&1 | FileCheck %s --check-prefix=CHECK-coNULL
+// RUN: MSAN_OPTIONS=allocator_may_return_null=0 not %run %t realloc 2>&1 | FileCheck %s --check-prefix=CHECK-rCRASH
+// RUN: MSAN_OPTIONS=allocator_may_return_null=1     %run %t realloc 2>&1 | FileCheck %s --check-prefix=CHECK-rNULL
+// RUN: MSAN_OPTIONS=allocator_may_return_null=0 not %run %t realloc-after-malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mrCRASH
+// RUN: MSAN_OPTIONS=allocator_may_return_null=1     %run %t realloc-after-malloc 2>&1 | FileCheck %s --check-prefix=CHECK-mrNULL
 
 #include <limits.h>
 #include <stdlib.h>

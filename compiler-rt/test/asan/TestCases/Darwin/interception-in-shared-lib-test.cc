@@ -8,7 +8,7 @@
 // TODO(glider): figure out how to set rpath in a more portable way and unite
 // this test with ../Linux/interception-in-shared-lib-test.cc.
 // RUN: %clangxx_asan -O0 %s -o %t -Wl,-rpath,@executable-path -L%T -linterception-in-shared-lib-test && \
-// RUN:     not %t 2>&1 | FileCheck %s
+// RUN:     not %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
 #include <string.h>

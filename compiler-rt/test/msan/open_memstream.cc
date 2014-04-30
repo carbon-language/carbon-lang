@@ -1,5 +1,5 @@
-// RUN: %clangxx_msan -m64 -O0 -g -xc++ %s -o %t && %t
-// RUN: %clangxx_msan -m64 -O3 -g -xc++ %s -o %t && %t
+// RUN: %clangxx_msan -m64 -O0 -g -xc++ %s -o %t && %run %t
+// RUN: %clangxx_msan -m64 -O3 -g -xc++ %s -o %t && %run %t
 
 #include <stdio.h>
 #include <stdlib.h>

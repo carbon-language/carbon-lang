@@ -1,10 +1,10 @@
 // Sanity checking a test in pure C.
 // RUN: %clang_asan -O2 %s -o %t
-// RUN: not %t 2>&1 | FileCheck %s
+// RUN: not %run %t 2>&1 | FileCheck %s
 
 // Sanity checking a test in pure C with -pie.
 // RUN: %clang_asan -O2 %s -pie -fPIE -o %t
-// RUN: not %t 2>&1 | FileCheck %s
+// RUN: not %run %t 2>&1 | FileCheck %s
 
 #include <stdlib.h>
 int main() {

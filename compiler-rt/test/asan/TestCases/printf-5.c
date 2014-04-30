@@ -1,8 +1,8 @@
 // RUN: %clang_asan -O2 %s -o %t
 // We need replace_intrin=0 to avoid reporting errors in memcpy.
-// RUN: ASAN_OPTIONS=replace_intrin=0:check_printf=1 not %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
-// RUN: ASAN_OPTIONS=replace_intrin=0:check_printf=0 %t 2>&1 | FileCheck --check-prefix=CHECK-OFF %s
-// RUN: ASAN_OPTIONS=replace_intrin=0 not %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
+// RUN: ASAN_OPTIONS=replace_intrin=0:check_printf=1 not %run %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
+// RUN: ASAN_OPTIONS=replace_intrin=0:check_printf=0 %run %t 2>&1 | FileCheck --check-prefix=CHECK-OFF %s
+// RUN: ASAN_OPTIONS=replace_intrin=0 not %run %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
 
 #include <stdio.h>
 #include <string.h>

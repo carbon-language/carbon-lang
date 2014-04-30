@@ -1,4 +1,4 @@
-// RUN: %clang_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clang_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 // CHECK-NOT: WARNING: ThreadSanitizer: data race
 // CHECK-NOT: ThreadSanitizer WARNING: double lock
 // CHECK-NOT: ThreadSanitizer WARNING: mutex unlock by another thread

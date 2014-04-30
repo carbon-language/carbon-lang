@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -O %s -o %t && %t
+// RUN: %clangxx_asan -O %s -o %t && %run %t
 
 #include <assert.h>
 #include <setjmp.h>

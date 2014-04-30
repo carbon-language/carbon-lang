@@ -1,5 +1,5 @@
-// RUN: %clang_dfsan -m64 %s -o %t && %t
-// RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 %s -o %t && %t
+// RUN: %clang_dfsan -m64 %s -o %t && %run %t
+// RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 %s -o %t && %run %t
 
 // Tests that labels are propagated through function calls.
 

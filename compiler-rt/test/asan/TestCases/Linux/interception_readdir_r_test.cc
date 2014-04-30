@@ -1,12 +1,12 @@
-// RUN: %clangxx_asan -O0 %s -DTEMP_DIR='"'"%T"'"' -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O1 %s -DTEMP_DIR='"'"%T"'"' -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O2 %s -DTEMP_DIR='"'"%T"'"' -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %s -DTEMP_DIR='"'"%T"'"' -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O1 %s -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O2 %s -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s
 //
-// RUN: %clangxx_asan -O0 %s -D_FILE_OFFSET_BITS=64 -DTEMP_DIR='"'"%T"'"' -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O1 %s -D_FILE_OFFSET_BITS=64 -DTEMP_DIR='"'"%T"'"' -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O2 %s -D_FILE_OFFSET_BITS=64 -DTEMP_DIR='"'"%T"'"' -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %s -D_FILE_OFFSET_BITS=64 -DTEMP_DIR='"'"%T"'"' -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -D_FILE_OFFSET_BITS=64 -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O1 %s -D_FILE_OFFSET_BITS=64 -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O2 %s -D_FILE_OFFSET_BITS=64 -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -D_FILE_OFFSET_BITS=64 -DTEMP_DIR='"'"%T"'"' -o %t && %run %t 2>&1 | FileCheck %s
 
 #include <dirent.h>
 #include <memory.h>

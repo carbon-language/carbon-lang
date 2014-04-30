@@ -1,8 +1,8 @@
 // RUN: %clangxx_asan -O0 %s -o %t
-// RUN: not %t      2>&1 | FileCheck %s
-// RUN: not %t heap 2>&1 | FileCheck %s
-// RUN: ASAN_OPTIONS=poison_partial=0 %t
-// RUN: ASAN_OPTIONS=poison_partial=0 %t heap
+// RUN: not %run %t      2>&1 | FileCheck %s
+// RUN: not %run %t heap 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=poison_partial=0 %run %t
+// RUN: ASAN_OPTIONS=poison_partial=0 %run %t heap
 #include <string.h>
 char g[21];
 char *x;

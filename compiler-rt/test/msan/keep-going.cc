@@ -1,19 +1,19 @@
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O0 %s -o %t && not %run %t >%t.out 2>&1
 // FileCheck %s <%t.out
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && MSAN_OPTIONS=keep_going=0 not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O0 %s -o %t && MSAN_OPTIONS=keep_going=0 not %run %t >%t.out 2>&1
 // FileCheck %s <%t.out
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && MSAN_OPTIONS=keep_going=1 not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O0 %s -o %t && MSAN_OPTIONS=keep_going=1 not %run %t >%t.out 2>&1
 // FileCheck %s <%t.out
 
-// RUN: %clangxx_msan -m64 -mllvm -msan-keep-going=1 -O0 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -mllvm -msan-keep-going=1 -O0 %s -o %t && not %run %t >%t.out 2>&1
 // FileCheck --check-prefix=CHECK-KEEP-GOING %s <%t.out
-// RUN: %clangxx_msan -m64 -mllvm -msan-keep-going=1 -O0 %s -o %t && MSAN_OPTIONS=keep_going=0 not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -mllvm -msan-keep-going=1 -O0 %s -o %t && MSAN_OPTIONS=keep_going=0 not %run %t >%t.out 2>&1
 // FileCheck %s <%t.out
-// RUN: %clangxx_msan -m64 -mllvm -msan-keep-going=1 -O0 %s -o %t && MSAN_OPTIONS=keep_going=1 not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -mllvm -msan-keep-going=1 -O0 %s -o %t && MSAN_OPTIONS=keep_going=1 not %run %t >%t.out 2>&1
 // FileCheck --check-prefix=CHECK-KEEP-GOING %s <%t.out
-// RUN: %clangxx_msan -m64 -mllvm -msan-keep-going=1 -O0 %s -o %t && MSAN_OPTIONS=halt_on_error=1 not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -mllvm -msan-keep-going=1 -O0 %s -o %t && MSAN_OPTIONS=halt_on_error=1 not %run %t >%t.out 2>&1
 // FileCheck %s <%t.out
-// RUN: %clangxx_msan -m64 -mllvm -msan-keep-going=1 -O0 %s -o %t && MSAN_OPTIONS=halt_on_error=0 not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -mllvm -msan-keep-going=1 -O0 %s -o %t && MSAN_OPTIONS=halt_on_error=0 not %run %t >%t.out 2>&1
 // FileCheck --check-prefix=CHECK-KEEP-GOING %s <%t.out
 
 // Test behaviour of -mllvm -msan-keep-going and MSAN_OPTIONS=keep_going.

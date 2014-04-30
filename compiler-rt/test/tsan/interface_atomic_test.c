@@ -1,5 +1,5 @@
 // Test that we can include header with TSan atomic interface.
-// RUN: %clang_tsan %s -o %t && %t | FileCheck %s
+// RUN: %clang_tsan %s -o %t && %run %t | FileCheck %s
 #include <sanitizer/tsan_interface_atomic.h>
 #include <stdio.h>
 

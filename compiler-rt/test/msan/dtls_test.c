@@ -1,6 +1,6 @@
 /* RUN: %clang_msan -m64 %s -o %t
    RUN: %clang_msan -m64 %s -DBUILD_SO -fPIC -o %t-so.so -shared
-   RUN: not %t 2>&1 | FileCheck %s
+   RUN: not %run %t 2>&1 | FileCheck %s
    CHECK: MemorySanitizer: use-of-uninitialized-value
 
    This is an actual bug in msan/glibc integration,

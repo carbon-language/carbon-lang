@@ -4,13 +4,13 @@
 // RUN: echo "global:*badGlobal*" >> %tmp
 // RUN: echo "src:*blacklist-extra.cc" >> %tmp
 // RUN: %clangxx_asan -fsanitize-blacklist=%tmp -O0 %s -o %t \
-// RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
+// RUN: %p/Helpers/blacklist-extra.cc && %run %t 2>&1
 // RUN: %clangxx_asan -fsanitize-blacklist=%tmp -O1 %s -o %t \
-// RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
+// RUN: %p/Helpers/blacklist-extra.cc && %run %t 2>&1
 // RUN: %clangxx_asan -fsanitize-blacklist=%tmp -O2 %s -o %t \
-// RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
+// RUN: %p/Helpers/blacklist-extra.cc && %run %t 2>&1
 // RUN: %clangxx_asan -fsanitize-blacklist=%tmp -O3 %s -o %t \
-// RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
+// RUN: %p/Helpers/blacklist-extra.cc && %run %t 2>&1
 
 // badGlobal is accessed improperly, but we blacklisted it. Align
 // it to make sure memory past the end of badGlobal will be in

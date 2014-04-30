@@ -1,5 +1,5 @@
 // RUN: %clangxx_asan -O0 -fsanitize=use-after-scope %s -o %t && \
-// RUN:     not %t 2>&1 | FileCheck %s
+// RUN:     not %run %t 2>&1 | FileCheck %s
 #include <stdio.h>
 
 struct IntHolder {

@@ -1,5 +1,5 @@
 // RUN: %clangxx_tsan %s -o %t
-// RUN: %t 2>&1 | FileCheck %s
+// RUN: %run %t 2>&1 | FileCheck %s
 
 #include "bench.h"
 

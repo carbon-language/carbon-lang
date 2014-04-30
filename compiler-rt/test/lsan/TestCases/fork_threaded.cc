@@ -1,7 +1,7 @@
 // Test that thread local data is handled correctly after forking without
 // exec(). In this test leak checking is initiated from a non-main thread.
 // RUN: %clangxx_lsan %s -o %t
-// RUN: %t 2>&1
+// RUN: %run %t 2>&1
 
 #include <assert.h>
 #include <pthread.h>

@@ -1,4 +1,4 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && %t
+// RUN: %clangxx_tsan -O1 %s -o %t && %run %t
 
 // Make sure TSan doesn't deadlock on a file stream lock at program shutdown.
 // See https://code.google.com/p/thread-sanitizer/issues/detail?id=47

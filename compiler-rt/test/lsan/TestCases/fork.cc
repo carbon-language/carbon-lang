@@ -1,6 +1,6 @@
 // Test that thread local data is handled correctly after forking without exec().
 // RUN: %clangxx_lsan %s -o %t
-// RUN: %t 2>&1
+// RUN: %run %t 2>&1
 
 #include <assert.h>
 #include <stdio.h>

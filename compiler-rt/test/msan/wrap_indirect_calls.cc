@@ -11,7 +11,7 @@
 // RUN:     -mllvm -msan-wrap-indirect-calls-fast=0 \
 // RUN:     -DSLOW=1 \
 // RUN:     -Wl,--defsym=__executable_start=0 -o %t
-// RUN: %t
+// RUN: %run %t
 
 // Enable fast path, call from executable, -O0.
 
@@ -21,7 +21,7 @@
 // RUN:     -mllvm -msan-wrap-indirect-calls-fast=1 \
 // RUN:     -DSLOW=0 \
 // RUN:     -Wl,--defsym=__executable_start=0 -o %t
-// RUN: %t
+// RUN: %run %t
 
 // Enable fast path, call from executable, -O3.
 
@@ -31,7 +31,7 @@
 // RUN:     -mllvm -msan-wrap-indirect-calls-fast=1 \
 // RUN:     -DSLOW=0 \
 // RUN:     -Wl,--defsym=__executable_start=0 -o %t
-// RUN: %t
+// RUN: %run %t
 
 // Enable fast path, call from DSO, -O0.
 
@@ -42,7 +42,7 @@
 // RUN:     -DSLOW=0 \
 // RUN:     -Wl,--defsym=__executable_start=0 -o %t-caller-so.so
 // RUN: %clangxx_msan -O0 %s %t-caller-so.so %t-two-so.so %t-wrapper-so.so -o %t
-// RUN: %t
+// RUN: %run %t
 
 // Enable fast path, call from DSO, -O3.
 
@@ -53,7 +53,7 @@
 // RUN:     -DSLOW=0 \
 // RUN:     -Wl,--defsym=__executable_start=0 -o %t-caller-so.so
 // RUN: %clangxx_msan -O3 %s %t-caller-so.so %t-two-so.so %t-wrapper-so.so -o %t
-// RUN: %t
+// RUN: %run %t
 
 // The actual test is in multiple files in wrap_indirect_calls/ directory.
 void run_test();

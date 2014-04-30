@@ -1,9 +1,9 @@
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && %t >%t.out 2>&1
-// RUN: %clangxx_msan -m64 -O1 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O0 %s -o %t && %run %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O1 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
-// RUN: %clangxx_msan -m64 -O2 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O2 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
-// RUN: %clangxx_msan -m64 -O3 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O3 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
 
 // Test that (no_sanitize_memory) functions propagate shadow.

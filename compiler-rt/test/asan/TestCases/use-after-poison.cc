@@ -1,8 +1,8 @@
 // Check that __asan_poison_memory_region works.
-// RUN: %clangxx_asan -O0 %s -o %t && not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
 //
 // Check that we can disable it
-// RUN: ASAN_OPTIONS=allow_user_poisoning=0 %t
+// RUN: ASAN_OPTIONS=allow_user_poisoning=0 %run %t
 
 #include <stdlib.h>
 

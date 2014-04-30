@@ -1,4 +1,4 @@
-// RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_tsan -O1 %s -o %t && %run %t 2>&1 | FileCheck %s
 // Race between an aligned access and an unaligned access, which
 // touches the same memory region.
 // This is a real race which is not detected by tsan.

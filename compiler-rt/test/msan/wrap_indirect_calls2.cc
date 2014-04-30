@@ -2,7 +2,7 @@
 
 // RUN: %clangxx_msan -mllvm -msan-wrap-indirect-calls=__msan_wrap_indirect_call \
 // RUN:     -mllvm -msan-wrap-indirect-calls-fast=0 \
-// RUN:     -O0 -g -rdynamic -Wl,--defsym=__executable_start=0 %s -o %t && %t
+// RUN:     -O0 -g -rdynamic -Wl,--defsym=__executable_start=0 %s -o %t && %run %t
 
 // This test disables -msan-wrap-indirect-calls-fast, otherwise indirect calls
 // inside the same module are short-circuited and are never seen by the wrapper.

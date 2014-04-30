@@ -1,6 +1,6 @@
-// RUN: %clangxx -fsanitize=enum %s -O3 -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK-PLAIN
-// RUN: %clangxx -fsanitize=enum -std=c++11 -DE="class E" %s -O3 -o %t && %t
-// RUN: %clangxx -fsanitize=enum -std=c++11 -DE="class E : bool" %s -O3 -o %t && %t 2>&1 | FileCheck %s --check-prefix=CHECK-BOOL
+// RUN: %clangxx -fsanitize=enum %s -O3 -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-PLAIN
+// RUN: %clangxx -fsanitize=enum -std=c++11 -DE="class E" %s -O3 -o %t && %run %t
+// RUN: %clangxx -fsanitize=enum -std=c++11 -DE="class E : bool" %s -O3 -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-BOOL
 
 enum E { a = 1 } e;
 #undef E

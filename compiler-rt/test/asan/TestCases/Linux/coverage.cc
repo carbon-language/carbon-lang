@@ -1,11 +1,11 @@
 // RUN: %clangxx_asan -mllvm -asan-coverage=1 -DSHARED %s -shared -o %T/libcoverage_test.so -fPIC
 // RUN: %clangxx_asan -mllvm -asan-coverage=1 %s   -o %t -Wl,-R,\$ORIGIN -L%T -lcoverage_test
 // RUN: export ASAN_OPTIONS=coverage=1:verbosity=1
-// RUN: %t 2>&1         | FileCheck %s --check-prefix=CHECK-main
-// RUN: %t foo 2>&1     | FileCheck %s --check-prefix=CHECK-foo
-// RUN: %t bar 2>&1     | FileCheck %s --check-prefix=CHECK-bar
-// RUN: %t foo bar 2>&1 | FileCheck %s --check-prefix=CHECK-foo-bar
-// RUN: not %t foo bar 1 2  2>&1 | FileCheck %s --check-prefix=CHECK-report
+// RUN: %run %t 2>&1         | FileCheck %s --check-prefix=CHECK-main
+// RUN: %run %t foo 2>&1     | FileCheck %s --check-prefix=CHECK-foo
+// RUN: %run %t bar 2>&1     | FileCheck %s --check-prefix=CHECK-bar
+// RUN: %run %t foo bar 2>&1 | FileCheck %s --check-prefix=CHECK-foo-bar
+// RUN: not %run %t foo bar 1 2  2>&1 | FileCheck %s --check-prefix=CHECK-report
 //
 // https://code.google.com/p/address-sanitizer/issues/detail?id=263
 // XFAIL: android

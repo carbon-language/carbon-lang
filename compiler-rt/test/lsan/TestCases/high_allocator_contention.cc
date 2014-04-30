@@ -1,7 +1,7 @@
 // A benchmark that executes malloc/free pairs in parallel.
 // Usage: ./a.out number_of_threads total_number_of_allocations
 // RUN: %clangxx_lsan %s -o %t
-// RUN: %t 5 1000000 2>&1
+// RUN: %run %t 5 1000000 2>&1
 #include <assert.h>
 #include <pthread.h>
 #include <stdlib.h>

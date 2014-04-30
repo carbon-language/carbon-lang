@@ -1,15 +1,15 @@
 // RUN: %clangxx_asan -O0 %s -o %t
-// RUN: not %t A 2>&1 | FileCheck --check-prefix=CHECK-A %s
-// RUN: not %t B 2>&1 | FileCheck --check-prefix=CHECK-B %s
-// RUN: not %t C 2>&1 | FileCheck --check-prefix=CHECK-C %s
-// RUN: not %t D 2>&1 | FileCheck --check-prefix=CHECK-D %s
-// RUN: not %t E 2>&1 | FileCheck --check-prefix=CHECK-E %s
+// RUN: not %run %t A 2>&1 | FileCheck --check-prefix=CHECK-A %s
+// RUN: not %run %t B 2>&1 | FileCheck --check-prefix=CHECK-B %s
+// RUN: not %run %t C 2>&1 | FileCheck --check-prefix=CHECK-C %s
+// RUN: not %run %t D 2>&1 | FileCheck --check-prefix=CHECK-D %s
+// RUN: not %run %t E 2>&1 | FileCheck --check-prefix=CHECK-E %s
 
-// RUN: not %t K 2>&1 | FileCheck --check-prefix=CHECK-K %s
-// RUN: not %t L 2>&1 | FileCheck --check-prefix=CHECK-L %s
-// RUN: not %t M 2>&1 | FileCheck --check-prefix=CHECK-M %s
-// RUN: not %t N 2>&1 | FileCheck --check-prefix=CHECK-N %s
-// RUN: not %t O 2>&1 | FileCheck --check-prefix=CHECK-O %s
+// RUN: not %run %t K 2>&1 | FileCheck --check-prefix=CHECK-K %s
+// RUN: not %run %t L 2>&1 | FileCheck --check-prefix=CHECK-L %s
+// RUN: not %run %t M 2>&1 | FileCheck --check-prefix=CHECK-M %s
+// RUN: not %run %t N 2>&1 | FileCheck --check-prefix=CHECK-N %s
+// RUN: not %run %t O 2>&1 | FileCheck --check-prefix=CHECK-O %s
 
 #include <sanitizer/asan_interface.h>
 

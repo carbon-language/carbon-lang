@@ -1,15 +1,15 @@
 // RUN: %clangxx_msan -m64 -g -O0 -DTYPE=int -DFN=xdr_int %s -o %t && \
-// RUN:     %t 2>&1
+// RUN:     %run %t 2>&1
 // RUN: %clangxx_msan -m64 -g -O0 -DTYPE=int -DFN=xdr_int -DUNINIT=1 %s -o %t && \
-// RUN:     not %t 2>&1 | FileCheck %s
+// RUN:     not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_msan -m64 -g -O0 -DTYPE=double -DFN=xdr_double %s -o %t && \
-// RUN:     %t 2>&1
+// RUN:     %run %t 2>&1
 // RUN: %clangxx_msan -m64 -g -O0 -DTYPE=double -DFN=xdr_double -DUNINIT=1 %s -o %t && \
-// RUN:     not %t 2>&1 | FileCheck %s
+// RUN:     not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_msan -m64 -g -O0 -DTYPE=u_quad_t -DFN=xdr_u_longlong_t %s -o %t && \
-// RUN:     %t 2>&1
+// RUN:     %run %t 2>&1
 // RUN: %clangxx_msan -m64 -g -O0 -DTYPE=u_quad_t -DFN=xdr_u_longlong_t -DUNINIT=1 %s -o %t && \
-// RUN:     not %t 2>&1 | FileCheck %s
+// RUN:     not %run %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <rpc/xdr.h>

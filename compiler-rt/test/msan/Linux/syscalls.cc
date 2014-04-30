@@ -1,5 +1,5 @@
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && %t 2>&1
-// RUN: %clangxx_msan -m64 -O3 %s -o %t && %t 2>&1
+// RUN: %clangxx_msan -m64 -O0 %s -o %t && %run %t 2>&1
+// RUN: %clangxx_msan -m64 -O3 %s -o %t && %run %t 2>&1
 
 #include <assert.h>
 #include <errno.h>

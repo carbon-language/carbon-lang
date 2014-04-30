@@ -1,7 +1,7 @@
 // Regression test for a leak in tsd:
 // https://code.google.com/p/address-sanitizer/issues/detail?id=233
 // RUN: %clangxx_asan -O1 %s -lpthread -o %t
-// RUN: ASAN_OPTIONS=quarantine_size=1 %t
+// RUN: ASAN_OPTIONS=quarantine_size=1 %run %t
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>

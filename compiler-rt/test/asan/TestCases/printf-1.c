@@ -1,7 +1,7 @@
 // RUN: %clang_asan -O2 %s -o %t
-// RUN: ASAN_OPTIONS=check_printf=1 %t 2>&1 | FileCheck %s
-// RUN: ASAN_OPTIONS=check_printf=0 %t 2>&1 | FileCheck %s
-// RUN: %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=check_printf=1 %run %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=check_printf=0 %run %t 2>&1 | FileCheck %s
+// RUN: %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
 int main() {

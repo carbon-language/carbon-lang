@@ -1,5 +1,5 @@
 // RUN: %clangxx -fsanitize=function %s -O3 -g -o %t
-// RUN: %t 2>&1 | FileCheck %s
+// RUN: %run %t 2>&1 | FileCheck %s
 
 #include <stdint.h>
 

@@ -1,7 +1,7 @@
-// RUN: %clang_dfsan -m64 %s -o %t && DFSAN_OPTIONS="strict_data_dependencies=0" %t
-// RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 %s -o %t && DFSAN_OPTIONS="strict_data_dependencies=0" %t
-// RUN: %clang_dfsan -DSTRICT_DATA_DEPENDENCIES -m64 %s -o %t && %t
-// RUN: %clang_dfsan -DSTRICT_DATA_DEPENDENCIES -mllvm -dfsan-args-abi -m64 %s -o %t && %t
+// RUN: %clang_dfsan -m64 %s -o %t && DFSAN_OPTIONS="strict_data_dependencies=0" %run %t
+// RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 %s -o %t && DFSAN_OPTIONS="strict_data_dependencies=0" %run %t
+// RUN: %clang_dfsan -DSTRICT_DATA_DEPENDENCIES -m64 %s -o %t && %run %t
+// RUN: %clang_dfsan -DSTRICT_DATA_DEPENDENCIES -mllvm -dfsan-args-abi -m64 %s -o %t && %run %t
 
 // Tests custom implementations of various glibc functions.
 

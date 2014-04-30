@@ -1,4 +1,4 @@
-// RUN: %clang_tsan -O1 %s -o %t -lrt && %t 2>&1 | FileCheck %s
+// RUN: %clang_tsan -O1 %s -o %t -lrt && %run %t 2>&1 | FileCheck %s
 // Test that pthread_cond is properly intercepted,
 // previously there were issues with versioned symbols.
 // CHECK: OK

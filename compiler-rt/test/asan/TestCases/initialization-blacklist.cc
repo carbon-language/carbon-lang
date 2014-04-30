@@ -4,17 +4,17 @@
 // RUN:   %p/Helpers/initialization-blacklist-extra2.cc \
 // RUN:   -fsanitize-blacklist=%p/Helpers/initialization-blacklist.txt \
 // RUN:   -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
+// RUN: ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
 // RUN: %clangxx_asan -O1 %s %p/Helpers/initialization-blacklist-extra.cc\
 // RUN:   %p/Helpers/initialization-blacklist-extra2.cc \
 // RUN:   -fsanitize-blacklist=%p/Helpers/initialization-blacklist.txt \
 // RUN:   -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
+// RUN: ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
 // RUN: %clangxx_asan -O2 %s %p/Helpers/initialization-blacklist-extra.cc\
 // RUN:   %p/Helpers/initialization-blacklist-extra2.cc \
 // RUN:   -fsanitize-blacklist=%p/Helpers/initialization-blacklist.txt \
 // RUN:   -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
+// RUN: ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
 
 // Function is defined in another TU.
 int readBadGlobal();

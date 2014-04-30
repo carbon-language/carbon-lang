@@ -3,7 +3,7 @@
 // implementation being not async-signal-safe.
 
 // RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -m64 -O3 %s -o %t && \
-// RUN:     not %t >%t.out 2>&1
+// RUN:     not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
 
 #include <signal.h>

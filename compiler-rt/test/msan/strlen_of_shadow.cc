@@ -1,4 +1,4 @@
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && %t
+// RUN: %clangxx_msan -m64 -O0 %s -o %t && %run %t
 
 // Check that strlen() and similar intercepted functions can be called on shadow
 // memory.

@@ -1,4 +1,4 @@
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && %t
+// RUN: %clangxx_msan -m64 -O0 %s -o %t && %run %t
 
 #include <assert.h>
 #include <locale.h>

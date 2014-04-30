@@ -1,6 +1,6 @@
 // Test indirect call wrapping in MemorySanitizer runtime.
 
-// RUN: %clangxx_msan -O0 -g -rdynamic %s -o %t && %t
+// RUN: %clangxx_msan -O0 -g -rdynamic %s -o %t && %run %t
 
 #include <assert.h>
 #include <math.h>

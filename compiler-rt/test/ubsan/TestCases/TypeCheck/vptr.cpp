@@ -1,15 +1,15 @@
 // RUN: %clangxx -fsanitize=vptr %s -O3 -o %t
-// RUN: %t rT && %t mT && %t fT && %t cT
-// RUN: %t rU && %t mU && %t fU && %t cU
-// RUN: %t rS && %t rV && %t oV
-// RUN: %t mS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --strict-whitespace
-// RUN: %t fS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
-// RUN: %t cS 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --strict-whitespace
-// RUN: %t mV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --strict-whitespace
-// RUN: %t fV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
-// RUN: %t cV 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --strict-whitespace
-// RUN: %t oU 2>&1 | FileCheck %s --check-prefix=CHECK-OFFSET --strict-whitespace
-// RUN: %t m0 2>&1 | FileCheck %s --check-prefix=CHECK-NULL-MEMBER --strict-whitespace
+// RUN: %run %t rT && %run %t mT && %run %t fT && %run %t cT
+// RUN: %run %t rU && %run %t mU && %run %t fU && %run %t cU
+// RUN: %run %t rS && %run %t rV && %run %t oV
+// RUN: %run %t mS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --strict-whitespace
+// RUN: %run %t fS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
+// RUN: %run %t cS 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --strict-whitespace
+// RUN: %run %t mV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER --strict-whitespace
+// RUN: %run %t fV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN --strict-whitespace
+// RUN: %run %t cV 2>&1 | FileCheck %s --check-prefix=CHECK-DOWNCAST --strict-whitespace
+// RUN: %run %t oU 2>&1 | FileCheck %s --check-prefix=CHECK-OFFSET --strict-whitespace
+// RUN: %run %t m0 2>&1 | FileCheck %s --check-prefix=CHECK-NULL-MEMBER --strict-whitespace
 
 // FIXME: This test produces linker errors on Darwin.
 // XFAIL: darwin

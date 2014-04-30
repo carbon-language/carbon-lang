@@ -3,7 +3,7 @@
 
 // RUN: %clangxx_asan -O0 %p/SharedLibs/shared-lib-test-so.cc -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O0 %s -ldl -o %t
-// RUN: ASAN_OPTIONS=symbolize=0 not %t 2>&1 | %asan_symbolize | FileCheck %s
+// RUN: ASAN_OPTIONS=symbolize=0 not %run %t 2>&1 | %asan_symbolize | FileCheck %s
 #include <dlfcn.h>
 #include <stdio.h>
 #include <stdlib.h>

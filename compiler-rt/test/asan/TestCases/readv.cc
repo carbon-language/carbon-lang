@@ -1,5 +1,5 @@
-// RUN: %clangxx_asan -O0 %s -o %t && %t
-// RUN: %clangxx_asan -O0 %s -DPOSITIVE -o %t && not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && %run %t
+// RUN: %clangxx_asan -O0 %s -DPOSITIVE -o %t && not %run %t 2>&1 | FileCheck %s
 
 // Test the readv() interceptor.
 

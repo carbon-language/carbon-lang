@@ -1,4 +1,4 @@
-// RUN: %clangxx_msan -O3 %s -o %t && %t
+// RUN: %clangxx_msan -O3 %s -o %t && %run %t
 
 // Test that no_sanitize_memory attribute applies even when the function would
 // be normally inlined.

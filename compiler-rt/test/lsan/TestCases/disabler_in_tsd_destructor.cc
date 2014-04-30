@@ -1,7 +1,7 @@
 // Regression test. Disabler should not depend on TSD validity.
 // RUN: LSAN_BASE="report_objects=1:use_registers=0:use_stacks=0:use_globals=0:use_tls=1"
 // RUN: %clangxx_lsan %s -o %t
-// RUN: LSAN_OPTIONS=$LSAN_BASE %t
+// RUN: LSAN_OPTIONS=$LSAN_BASE %run %t
 
 #include <assert.h>
 #include <pthread.h>

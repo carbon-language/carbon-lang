@@ -1,6 +1,6 @@
 // RUN: %clangxx_asan %s -lpthread -o %t
-// RUN: ASAN_OPTIONS=detect_stack_use_after_return=1 %t 2>&1 | FileCheck %s --check-prefix=CHECK1
-// RUN: ASAN_OPTIONS=detect_stack_use_after_return=0 %t 2>&1 | FileCheck %s --check-prefix=CHECK0
+// RUN: ASAN_OPTIONS=detect_stack_use_after_return=1 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK1
+// RUN: ASAN_OPTIONS=detect_stack_use_after_return=0 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK0
 
 #include <assert.h>
 #include <stdio.h>

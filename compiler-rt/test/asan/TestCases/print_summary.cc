@@ -1,6 +1,6 @@
 // RUN: %clangxx_asan -O0 %s -o %t
-// RUN: not %t 2>&1 | FileCheck %s --check-prefix=YES
-// RUN: ASAN_OPTIONS=print_summary=false not %t 2>&1 | FileCheck %s --check-prefix=NO
+// RUN: not %run %t 2>&1 | FileCheck %s --check-prefix=YES
+// RUN: ASAN_OPTIONS=print_summary=false not %run %t 2>&1 | FileCheck %s --check-prefix=NO
 
 int main() {
   char *x = new char[20];

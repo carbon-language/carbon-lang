@@ -1,12 +1,12 @@
 // RUN: %clang_dfsan -DLIB -m64 -c %s -o %t.lib.o && \
 // RUN: %clang_dfsan       -m64 -c %s -o %t.o && \
 // RUN: %clang_dfsan -m64 %t.lib.o %t.o -o %t.bin && \
-// RUN: %t.bin
+// RUN: %run %t.bin
 
 // RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 -DLIB -c %s -o %t.lib.o && \
 // RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 -c %s -o %t.o && \
 // RUN: %clang_dfsan -mllvm -dfsan-args-abi -m64 %t.o %t.lib.o -o %t.bin && \
-// RUN: %t.bin
+// RUN: %run %t.bin
 
 #include <sanitizer/dfsan_interface.h>
 #include <assert.h>

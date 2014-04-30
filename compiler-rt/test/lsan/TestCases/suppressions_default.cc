@@ -1,6 +1,6 @@
 // RUN: LSAN_BASE="use_registers=0:use_stacks=0"
 // RUN: %clangxx_lsan %s -o %t
-// RUN: LSAN_OPTIONS=$LSAN_BASE not %t 2>&1 | FileCheck %s
+// RUN: LSAN_OPTIONS=$LSAN_BASE not %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
 #include <stdlib.h>

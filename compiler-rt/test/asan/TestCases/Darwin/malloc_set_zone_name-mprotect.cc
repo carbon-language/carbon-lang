@@ -4,7 +4,7 @@
 // page-aligned address, so we can only test on a best-effort basis.
 
 // RUN: %clangxx_asan %s -o %t
-// RUN: %t 2>&1
+// RUN: %run %t 2>&1
 
 #include <malloc/malloc.h>
 #include <stdlib.h>

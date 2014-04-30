@@ -1,9 +1,9 @@
 // RUN: %clangxx_asan -O0 %s -o %t
-// RUN: ASAN_OPTIONS=malloc_context_size=0:fast_unwind_on_malloc=0 not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
-// RUN: ASAN_OPTIONS=malloc_context_size=0:fast_unwind_on_malloc=1 not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
-// RUN: ASAN_OPTIONS=malloc_context_size=1:fast_unwind_on_malloc=0 not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
-// RUN: ASAN_OPTIONS=malloc_context_size=1:fast_unwind_on_malloc=1 not %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
-// RUN: ASAN_OPTIONS=malloc_context_size=2 not %t 2>&1 | FileCheck %s --check-prefix=TWO
+// RUN: ASAN_OPTIONS=malloc_context_size=0:fast_unwind_on_malloc=0 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
+// RUN: ASAN_OPTIONS=malloc_context_size=0:fast_unwind_on_malloc=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
+// RUN: ASAN_OPTIONS=malloc_context_size=1:fast_unwind_on_malloc=0 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
+// RUN: ASAN_OPTIONS=malloc_context_size=1:fast_unwind_on_malloc=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os
+// RUN: ASAN_OPTIONS=malloc_context_size=2 not %run %t 2>&1 | FileCheck %s --check-prefix=TWO
 
 int main() {
   char *x = new char[20];

@@ -1,5 +1,5 @@
 // RUN: %clangxx_msan -O2 %s -o %t
-// RUN: %t 2>&1 | FileCheck %s
+// RUN: %run %t 2>&1 | FileCheck %s
 #include <stdlib.h>
 #include <unistd.h>
 

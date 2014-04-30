@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -O3 %s -o %t && %t
+// RUN: %clangxx_asan -O3 %s -o %t && %run %t
 
 // Test that no_sanitize_address attribute applies even when the function would
 // be normally inlined.

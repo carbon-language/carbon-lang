@@ -5,7 +5,7 @@
 // RUN: %clangxx %s %t.so -o %t
 //
 // RUN: %clangxx_asan -DBUILD_SO=1 -fPIC -shared %s -o %t.so
-// RUN: LD_PRELOAD=%shared_libasan not %t 2>&1 | FileCheck %s
+// RUN: LD_PRELOAD=%shared_libasan not %run %t 2>&1 | FileCheck %s
 
 // REQUIRES: asan-dynamic-runtime
 

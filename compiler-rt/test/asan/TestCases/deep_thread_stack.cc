@@ -1,7 +1,7 @@
-// RUN: %clangxx_asan -O0 %s -lpthread -o %t && not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O1 %s -lpthread -o %t && not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O2 %s -lpthread -o %t && not %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 %s -lpthread -o %t && not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -lpthread -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O1 %s -lpthread -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O2 %s -lpthread -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -lpthread -o %t && not %run %t 2>&1 | FileCheck %s
 
 #include <pthread.h>
 

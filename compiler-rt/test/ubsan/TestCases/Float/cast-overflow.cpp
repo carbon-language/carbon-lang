@@ -1,14 +1,14 @@
 // RUN: %clangxx -fsanitize=float-cast-overflow %s -o %t
-// RUN: %t _
-// RUN: %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
-// RUN: %t 1 2>&1 | FileCheck %s --check-prefix=CHECK-1
-// RUN: %t 2 2>&1 | FileCheck %s --check-prefix=CHECK-2
-// RUN: %t 3 2>&1 | FileCheck %s --check-prefix=CHECK-3
-// RUN: %t 4 2>&1 | FileCheck %s --check-prefix=CHECK-4
-// RUN: %t 5 2>&1 | FileCheck %s --check-prefix=CHECK-5
-// RUN: %t 6 2>&1 | FileCheck %s --check-prefix=CHECK-6
-// FIXME: %t 7 2>&1 | FileCheck %s --check-prefix=CHECK-7
-// RUN: %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
+// RUN: %run %t _
+// RUN: %run %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
+// RUN: %run %t 1 2>&1 | FileCheck %s --check-prefix=CHECK-1
+// RUN: %run %t 2 2>&1 | FileCheck %s --check-prefix=CHECK-2
+// RUN: %run %t 3 2>&1 | FileCheck %s --check-prefix=CHECK-3
+// RUN: %run %t 4 2>&1 | FileCheck %s --check-prefix=CHECK-4
+// RUN: %run %t 5 2>&1 | FileCheck %s --check-prefix=CHECK-5
+// RUN: %run %t 6 2>&1 | FileCheck %s --check-prefix=CHECK-6
+// FIXME: %run %t 7 2>&1 | FileCheck %s --check-prefix=CHECK-7
+// RUN: %run %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
 
 // This test assumes float and double are IEEE-754 single- and double-precision.
 

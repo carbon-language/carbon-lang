@@ -2,7 +2,7 @@
 
 // RUN: %clangxx_tsan -O1 %s \
 // RUN:   -fsanitize-blacklist=%p/Helpers/blacklist.txt \
-// RUN:   -o %t && %t 2>&1 | FileCheck %s
+// RUN:   -o %t && %run %t 2>&1 | FileCheck %s
 #include <pthread.h>
 #include <stdio.h>
 

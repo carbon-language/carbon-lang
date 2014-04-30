@@ -1,18 +1,18 @@
 // RUN: %clangxx_asan -O2 %s -o %t
-// RUN: not %t -2 2>&1 | FileCheck --check-prefix=CHECK-m2 %s
-// RUN: not %t -1 2>&1 | FileCheck --check-prefix=CHECK-m1 %s
-// RUN: %t 0
-// RUN: %t 8
-// RUN: not %t 9  2>&1 | FileCheck --check-prefix=CHECK-9  %s
-// RUN: not %t 10 2>&1 | FileCheck --check-prefix=CHECK-10 %s
-// RUN: not %t 30 2>&1 | FileCheck --check-prefix=CHECK-30 %s
-// RUN: not %t 31 2>&1 | FileCheck --check-prefix=CHECK-31 %s
-// RUN: not %t 41 2>&1 | FileCheck --check-prefix=CHECK-41 %s
-// RUN: not %t 42 2>&1 | FileCheck --check-prefix=CHECK-42 %s
-// RUN: not %t 62 2>&1 | FileCheck --check-prefix=CHECK-62 %s
-// RUN: not %t 63 2>&1 | FileCheck --check-prefix=CHECK-63 %s
-// RUN: not %t 73 2>&1 | FileCheck --check-prefix=CHECK-73 %s
-// RUN: not %t 74 2>&1 | FileCheck --check-prefix=CHECK-74 %s
+// RUN: not %run %t -2 2>&1 | FileCheck --check-prefix=CHECK-m2 %s
+// RUN: not %run %t -1 2>&1 | FileCheck --check-prefix=CHECK-m1 %s
+// RUN: %run %t 0
+// RUN: %run %t 8
+// RUN: not %run %t 9  2>&1 | FileCheck --check-prefix=CHECK-9  %s
+// RUN: not %run %t 10 2>&1 | FileCheck --check-prefix=CHECK-10 %s
+// RUN: not %run %t 30 2>&1 | FileCheck --check-prefix=CHECK-30 %s
+// RUN: not %run %t 31 2>&1 | FileCheck --check-prefix=CHECK-31 %s
+// RUN: not %run %t 41 2>&1 | FileCheck --check-prefix=CHECK-41 %s
+// RUN: not %run %t 42 2>&1 | FileCheck --check-prefix=CHECK-42 %s
+// RUN: not %run %t 62 2>&1 | FileCheck --check-prefix=CHECK-62 %s
+// RUN: not %run %t 63 2>&1 | FileCheck --check-prefix=CHECK-63 %s
+// RUN: not %run %t 73 2>&1 | FileCheck --check-prefix=CHECK-73 %s
+// RUN: not %run %t 74 2>&1 | FileCheck --check-prefix=CHECK-74 %s
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

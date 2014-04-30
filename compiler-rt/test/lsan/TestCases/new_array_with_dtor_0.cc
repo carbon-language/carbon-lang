@@ -1,6 +1,6 @@
 // Regression test:
 // https://code.google.com/p/address-sanitizer/issues/detail?id=257
-// RUN: %clangxx_lsan %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx_lsan %s -o %t && %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
 

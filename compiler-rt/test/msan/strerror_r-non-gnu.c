@@ -1,4 +1,4 @@
-// RUN: %clang_msan -std=c99 -O0 -g %s -o %t && %t
+// RUN: %clang_msan -std=c99 -O0 -g %s -o %t && %run %t
 
 // strerror_r under a weird set of circumstances can be redirected to
 // __xpg_strerror_r. Test that MSan handles this correctly.

@@ -1,8 +1,8 @@
 // RUN: export ASAN_OPTIONS=detect_stack_use_after_return=1
 // RUN: %clangxx_asan -O0 %s -o %t && \
-// RUN:   not %t 2>&1 | FileCheck %s
+// RUN:   not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O2 %s -o %t && \
-// RUN:   not %t 2>&1 | FileCheck %s
+// RUN:   not %run %t 2>&1 | FileCheck %s
 
 #include <stdio.h>
 #include <string.h>

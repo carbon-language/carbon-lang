@@ -2,9 +2,9 @@
 // RUN: LSAN_BASE="report_objects=1:use_stacks=0:use_registers=0"
 // RUN: %clangxx %s -DBUILD_DSO -fPIC -shared -o %t-so.so
 // RUN: %clangxx_lsan %s -o %t
-// RUN: LSAN_OPTIONS=$LSAN_BASE:"use_tls=0" not %t 2>&1 | FileCheck %s
-// RUN: LSAN_OPTIONS=$LSAN_BASE:"use_tls=1" %t 2>&1
-// RUN: LSAN_OPTIONS="" %t 2>&1
+// RUN: LSAN_OPTIONS=$LSAN_BASE:"use_tls=0" not %run %t 2>&1 | FileCheck %s
+// RUN: LSAN_OPTIONS=$LSAN_BASE:"use_tls=1" %run %t 2>&1
+// RUN: LSAN_OPTIONS="" %run %t 2>&1
 
 #ifndef BUILD_DSO
 #include <assert.h>

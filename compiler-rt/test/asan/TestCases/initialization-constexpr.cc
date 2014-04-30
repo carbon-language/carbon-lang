@@ -6,16 +6,16 @@
 
 // RUN: %clangxx_asan -O0 %s %p/Helpers/initialization-constexpr-extra.cc\
 // RUN:   --std=c++11 -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
+// RUN: ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
 // RUN: %clangxx_asan -O1 %s %p/Helpers/initialization-constexpr-extra.cc\
 // RUN:   --std=c++11 -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
+// RUN: ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
 // RUN: %clangxx_asan -O2 %s %p/Helpers/initialization-constexpr-extra.cc\
 // RUN:   --std=c++11 -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
+// RUN: ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
 // RUN: %clangxx_asan -O3 %s %p/Helpers/initialization-constexpr-extra.cc\
 // RUN:   --std=c++11 -fsanitize=init-order -o %t
-// RUN: ASAN_OPTIONS=check_initialization_order=true %t 2>&1
+// RUN: ASAN_OPTIONS=check_initialization_order=true %run %t 2>&1
 
 class Integer {
   private:

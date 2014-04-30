@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -O0 -fsanitize=use-after-scope %s -o %t && %t
+// RUN: %clangxx_asan -O0 -fsanitize=use-after-scope %s -o %t && %run %t
 
 #include <stdio.h>
 

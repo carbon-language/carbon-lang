@@ -1,10 +1,10 @@
-// RUN: %clangxx_msan -m64 -DERROR %s -o %t && not %t 2>&1 | \
+// RUN: %clangxx_msan -m64 -DERROR %s -o %t && not %run %t 2>&1 | \
 // RUN:     FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-NOCB
-// RUN: %clangxx_msan -m64 -DERROR -DMSANCB_SET %s -o %t && not %t 2>&1 | \
+// RUN: %clangxx_msan -m64 -DERROR -DMSANCB_SET %s -o %t && not %run %t 2>&1 | \
 // RUN:     FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-CB
-// RUN: %clangxx_msan -m64 -DERROR -DMSANCB_SET -DMSANCB_CLEAR %s -o %t && not %t 2>&1 | \
+// RUN: %clangxx_msan -m64 -DERROR -DMSANCB_SET -DMSANCB_CLEAR %s -o %t && not %run %t 2>&1 | \
 // RUN:     FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-NOCB
-// RUN: %clangxx_msan -m64 -DMSANCB_SET %s -o %t && %t 2>&1 | \
+// RUN: %clangxx_msan -m64 -DMSANCB_SET %s -o %t && %run %t 2>&1 | \
 // RUN:     FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-NOCB
 
 #include <sanitizer/msan_interface.h>

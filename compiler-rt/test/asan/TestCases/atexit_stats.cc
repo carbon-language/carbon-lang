@@ -1,6 +1,6 @@
 // Make sure we report atexit stats.
 // RUN: %clangxx_asan -O3 %s -o %t
-// RUN: ASAN_OPTIONS=atexit=1:print_stats=1 %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=atexit=1:print_stats=1 %run %t 2>&1 | FileCheck %s
 //
 // No atexit output on Android due to
 // https://code.google.com/p/address-sanitizer/issues/detail?id=263

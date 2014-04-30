@@ -1,4 +1,4 @@
-// RUN: %clangxx_msan -m64 -fsanitize-memory-track-origins -O0 %s -o %t && %t
+// RUN: %clangxx_msan -m64 -fsanitize-memory-track-origins -O0 %s -o %t && %run %t
 
 // Regression test for a deadlock in pthread_getattr_np
 

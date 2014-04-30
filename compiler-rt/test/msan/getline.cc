@@ -1,4 +1,4 @@
-// RUN: %clangxx_msan -O0 %s -o %t && %t %p
+// RUN: %clangxx_msan -O0 %s -o %t && %run %t %p
 
 #include <assert.h>
 #include <stdio.h>

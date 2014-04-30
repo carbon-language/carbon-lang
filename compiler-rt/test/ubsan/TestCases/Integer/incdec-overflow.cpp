@@ -1,7 +1,7 @@
-// RUN: %clangxx -DOP=n++ -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clangxx -DOP=++n -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clangxx -DOP=m-- -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s
-// RUN: %clangxx -DOP=--m -fsanitize=signed-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s
+// RUN: %clangxx -DOP=n++ -fsanitize=signed-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx -DOP=++n -fsanitize=signed-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx -DOP=m-- -fsanitize=signed-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx -DOP=--m -fsanitize=signed-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s
 
 #include <stdint.h>
 

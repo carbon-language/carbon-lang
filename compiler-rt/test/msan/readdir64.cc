@@ -1,12 +1,12 @@
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && %t
-// RUN: %clangxx_msan -m64 -O1 %s -o %t && %t
-// RUN: %clangxx_msan -m64 -O2 %s -o %t && %t
-// RUN: %clangxx_msan -m64 -O3 %s -o %t && %t
+// RUN: %clangxx_msan -m64 -O0 %s -o %t && %run %t
+// RUN: %clangxx_msan -m64 -O1 %s -o %t && %run %t
+// RUN: %clangxx_msan -m64 -O2 %s -o %t && %run %t
+// RUN: %clangxx_msan -m64 -O3 %s -o %t && %run %t
 
-// RUN: %clangxx_msan -m64 -O0 -D_FILE_OFFSET_BITS=64 %s -o %t && %t
-// RUN: %clangxx_msan -m64 -O1 -D_FILE_OFFSET_BITS=64 %s -o %t && %t
-// RUN: %clangxx_msan -m64 -O2 -D_FILE_OFFSET_BITS=64 %s -o %t && %t
-// RUN: %clangxx_msan -m64 -O3 -D_FILE_OFFSET_BITS=64 %s -o %t && %t
+// RUN: %clangxx_msan -m64 -O0 -D_FILE_OFFSET_BITS=64 %s -o %t && %run %t
+// RUN: %clangxx_msan -m64 -O1 -D_FILE_OFFSET_BITS=64 %s -o %t && %run %t
+// RUN: %clangxx_msan -m64 -O2 -D_FILE_OFFSET_BITS=64 %s -o %t && %run %t
+// RUN: %clangxx_msan -m64 -O3 -D_FILE_OFFSET_BITS=64 %s -o %t && %run %t
 
 // Test that readdir64 is intercepted as well as readdir.
 

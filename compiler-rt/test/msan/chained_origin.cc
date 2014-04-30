@@ -1,9 +1,9 @@
 // RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -m64 -O3 %s -o %t && \
-// RUN:     not %t >%t.out 2>&1
+// RUN:     not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-STACK < %t.out
 
 // RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -DHEAP=1 -m64 -O3 %s -o %t && \
-// RUN:     not %t >%t.out 2>&1
+// RUN:     not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-HEAP < %t.out
 
 #include <stdio.h>

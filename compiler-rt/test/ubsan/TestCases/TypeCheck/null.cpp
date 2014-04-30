@@ -1,9 +1,9 @@
 // RUN: %clangxx -fsanitize=null %s -O3 -o %t
-// RUN: %t l 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD
-// RUN: %t s 2>&1 | FileCheck %s --check-prefix=CHECK-STORE
-// RUN: %t r 2>&1 | FileCheck %s --check-prefix=CHECK-REFERENCE
-// RUN: %t m 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER
-// RUN: %t f 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN
+// RUN: %run %t l 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD
+// RUN: %run %t s 2>&1 | FileCheck %s --check-prefix=CHECK-STORE
+// RUN: %run %t r 2>&1 | FileCheck %s --check-prefix=CHECK-REFERENCE
+// RUN: %run %t m 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER
+// RUN: %run %t f 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN
 
 struct S {
   int f() { return 0; }

@@ -2,7 +2,7 @@
 // https://code.google.com/p/address-sanitizer/issues/detail?id=274.
 
 // RUN: %clang_asan %s -framework Foundation -o %t
-// RUN: %t 2>&1 | FileCheck %s
+// RUN: %run %t 2>&1 | FileCheck %s
 #import <Foundation/Foundation.h>
 
 #include <stdio.h>

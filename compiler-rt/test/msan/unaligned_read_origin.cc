@@ -1,6 +1,6 @@
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out && FileCheck %s < %t.out
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O3 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O3 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out && FileCheck %s < %t.out
 
 #include <sanitizer/msan_interface.h>

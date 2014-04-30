@@ -1,5 +1,5 @@
 // RUN: %clang_asan -O2 %s -o %t
-// RUN: ASAN_OPTIONS="sleep_before_dying=1" not %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS="sleep_before_dying=1" not %run %t 2>&1 | FileCheck %s
 
 #include <stdlib.h>
 int main() {

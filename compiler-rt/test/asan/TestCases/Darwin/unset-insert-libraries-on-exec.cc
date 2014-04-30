@@ -9,9 +9,9 @@
 // Make sure DYLD_INSERT_LIBRARIES doesn't contain the runtime library before
 // execl().
 
-// RUN: %t %T/echo-env >/dev/null 2>&1
+// RUN: %run %t %T/echo-env >/dev/null 2>&1
 // RUN: DYLD_INSERT_LIBRARIES=%t-darwin-dummy-shared-lib-so.dylib \
-// RUN:     %t %T/echo-env 2>&1 | FileCheck %s || exit 1
+// RUN:     %run %t %T/echo-env 2>&1 | FileCheck %s || exit 1
 #include <unistd.h>
 int main(int argc, char *argv[]) {
   execl(argv[1], argv[1], "DYLD_INSERT_LIBRARIES", NULL);

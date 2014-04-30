@@ -1,26 +1,26 @@
 // RUN: %clangxx_asan  %s -o %t
 
 // Regular run.
-// RUN: not %t 2> %t.out
+// RUN: not %run %t 2> %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-ERROR < %t.out
 
 // Good log_path.
 // RUN: rm -f %t.log.*
-// RUN: ASAN_OPTIONS=log_path=%t.log not %t 2> %t.out
+// RUN: ASAN_OPTIONS=log_path=%t.log not %run %t 2> %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-ERROR < %t.log.*
 
 // Invalid log_path.
-// RUN: ASAN_OPTIONS=log_path=/INVALID not %t 2> %t.out
+// RUN: ASAN_OPTIONS=log_path=/INVALID not %run %t 2> %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-INVALID < %t.out
 
 // Too long log_path.
 // RUN: ASAN_OPTIONS=log_path=`for((i=0;i<10000;i++)); do echo -n $i; done` \
-// RUN:   not %t 2> %t.out
+// RUN:   not %run %t 2> %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-LONG < %t.out
 
 // Run w/o errors should not produce any log.
 // RUN: rm -f %t.log.*
-// RUN: ASAN_OPTIONS=log_path=%t.log  %t ARG ARG ARG
+// RUN: ASAN_OPTIONS=log_path=%t.log  %run %t ARG ARG ARG
 // RUN: not cat %t.log.*
 
 

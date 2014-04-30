@@ -1,5 +1,5 @@
-// RUN: %clangxx_msan -m64 -O0 -g %s -o %t && %t
-// RUN: %clangxx_msan -m64 -O0 -g -DUNINIT %s -o %t && not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_msan -m64 -O0 -g %s -o %t && %run %t
+// RUN: %clangxx_msan -m64 -O0 -g -DUNINIT %s -o %t && not %run %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <time.h>

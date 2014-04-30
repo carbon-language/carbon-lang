@@ -2,8 +2,8 @@
 // memory. Make sure we don't report these leaks.
 
 // RUN: %clangxx_lsan %s -o %t
-// RUN: %t 2>&1
-// RUN: not %t foo 2>&1 | FileCheck %s
+// RUN: %run %t 2>&1
+// RUN: not %run %t foo 2>&1 | FileCheck %s
 
 #include <stdio.h>
 #include <ucontext.h>

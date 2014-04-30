@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -O1 %s -o %t && %t 2>&1
+// RUN: %clangxx_asan -O1 %s -o %t && %run %t 2>&1
 // Regression test for
 // https://code.google.com/p/address-sanitizer/issues/detail?id=250
 #include <stdio.h>

@@ -1,11 +1,11 @@
 // RUN: %clangxx -fsanitize=alignment %s -O3 -o %t
-// RUN: %t l0 && %t s0 && %t r0 && %t m0 && %t f0 && %t n0
-// RUN: %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --strict-whitespace
-// RUN: %t s1 2>&1 | FileCheck %s --check-prefix=CHECK-STORE
-// RUN: %t r1 2>&1 | FileCheck %s --check-prefix=CHECK-REFERENCE
-// RUN: %t m1 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER
-// RUN: %t f1 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN
-// RUN: %t n1 2>&1 | FileCheck %s --check-prefix=CHECK-NEW
+// RUN: %run %t l0 && %run %t s0 && %run %t r0 && %run %t m0 && %run %t f0 && %run %t n0
+// RUN: %run %t l1 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD --strict-whitespace
+// RUN: %run %t s1 2>&1 | FileCheck %s --check-prefix=CHECK-STORE
+// RUN: %run %t r1 2>&1 | FileCheck %s --check-prefix=CHECK-REFERENCE
+// RUN: %run %t m1 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER
+// RUN: %run %t f1 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN
+// RUN: %run %t n1 2>&1 | FileCheck %s --check-prefix=CHECK-NEW
 
 #include <new>
 

@@ -1,5 +1,5 @@
-// RUN: %clangxx_msan -m64 -O0 -g %s -o %t && %t
-// RUN: %clangxx_msan -m64 -O0 -g -DPOSITIVE %s -o %t && not %t |& FileCheck %s
+// RUN: %clangxx_msan -m64 -O0 -g %s -o %t && %run %t
+// RUN: %clangxx_msan -m64 -O0 -g -DPOSITIVE %s -o %t && not %run %t |& FileCheck %s
 
 #include <assert.h>
 #include <iconv.h>

@@ -1,5 +1,5 @@
-// RUN: %clangxx_asan %s -o %t && %t
-// RUN: %clangxx_asan %s -o %t -static-libstdc++ && %t
+// RUN: %clangxx_asan %s -o %t && %run %t
+// RUN: %clangxx_asan %s -o %t -static-libstdc++ && %run %t
 #include <stdio.h>
 static volatile int zero = 0;
 inline void pretend_to_do_something(void *x) {

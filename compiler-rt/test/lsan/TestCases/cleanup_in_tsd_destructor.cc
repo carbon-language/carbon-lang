@@ -5,8 +5,8 @@
 // makes its best effort.
 // RUN: LSAN_BASE="report_objects=1:use_registers=0:use_stacks=0:use_globals=0"
 // RUN: %clangxx_lsan %s -o %t
-// RUN: LSAN_OPTIONS=$LSAN_BASE:use_tls=1 %t
-// RUN: LSAN_OPTIONS=$LSAN_BASE:use_tls=0 not %t 2>&1 | FileCheck %s
+// RUN: LSAN_OPTIONS=$LSAN_BASE:use_tls=1 %run %t
+// RUN: LSAN_OPTIONS=$LSAN_BASE:use_tls=0 not %run %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <pthread.h>

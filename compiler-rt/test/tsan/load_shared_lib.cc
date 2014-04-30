@@ -4,7 +4,7 @@
 
 // RUN: %clangxx_tsan -O1 %p/SharedLibs/load_shared_lib-so.cc \
 // RUN:     -fPIC -shared -o %t-so.so
-// RUN: %clangxx_tsan -O1 %s -o %t && not %t 2>&1 | FileCheck %s
+// RUN: %clangxx_tsan -O1 %s -o %t && not %run %t 2>&1 | FileCheck %s
 
 #include <dlfcn.h>
 #include <pthread.h>

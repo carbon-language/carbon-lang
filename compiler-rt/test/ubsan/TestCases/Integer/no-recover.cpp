@@ -1,6 +1,6 @@
-// RUN: %clangxx -fsanitize=unsigned-integer-overflow %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=RECOVER
-// RUN: %clangxx -fsanitize=unsigned-integer-overflow -fsanitize-recover %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=RECOVER
-// RUN: %clangxx -fsanitize=unsigned-integer-overflow -fno-sanitize-recover %s -o %t && %t 2>&1 | FileCheck %s --check-prefix=ABORT
+// RUN: %clangxx -fsanitize=unsigned-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=RECOVER
+// RUN: %clangxx -fsanitize=unsigned-integer-overflow -fsanitize-recover %s -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=RECOVER
+// RUN: %clangxx -fsanitize=unsigned-integer-overflow -fno-sanitize-recover %s -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=ABORT
 
 #include <stdint.h>
 

@@ -1,19 +1,19 @@
-// RUN: %clangxx_msan -m64 -O0 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O0 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
-// RUN: %clangxx_msan -m64 -O1 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O1 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
-// RUN: %clangxx_msan -m64 -O2 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O2 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
-// RUN: %clangxx_msan -m64 -O3 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -m64 -O3 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out
 
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O0 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-ORIGINS < %t.out
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O1 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O1 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-ORIGINS < %t.out
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O2 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O2 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-ORIGINS < %t.out
-// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O3 %s -o %t && not %t >%t.out 2>&1
+// RUN: %clangxx_msan -fsanitize-memory-track-origins -m64 -O3 %s -o %t && not %run %t >%t.out 2>&1
 // RUN: FileCheck %s < %t.out && FileCheck %s --check-prefix=CHECK-ORIGINS < %t.out
 
 #include <sanitizer/msan_interface.h>

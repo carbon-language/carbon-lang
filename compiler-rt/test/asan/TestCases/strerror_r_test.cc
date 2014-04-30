@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -O0 %s -o %t && %t
+// RUN: %clangxx_asan -O0 %s -o %t && %run %t
 
 // Regression test for PR17138.
 
