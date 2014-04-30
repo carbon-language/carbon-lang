@@ -165,24 +165,66 @@ kqueue_thread (void *arg)
         else
         {
             int status;
-            pid_t child_pid = waitpid ((pid_t) death_event.ident, &status, 0);
-            if (death_event.data & NOTE_EXIT_MEMORY)
-            {
-                if (death_event.data & NOTE_VM_PRESSURE)
-                    DNBProcessSetExitInfo (child_pid, "Terminated due to Memory Pressure");
-                else if (death_event.data & NOTE_VM_ERROR)
-                    DNBProcessSetExitInfo (child_pid, "Terminated due to Memory Error");
-                else
-                    DNBProcessSetExitInfo (child_pid, "Terminated due to unknown Memory condition");
-            }
-            else if (death_event.data & NOTE_EXIT_DECRYPTFAIL)
-                    DNBProcessSetExitInfo (child_pid, "Terminated due to decrypt failure");
-            else if (death_event.data & NOTE_EXIT_CSERROR)
-                    DNBProcessSetExitInfo (child_pid, "Terminated due to code signing error");
+            const pid_t pid = (pid_t)death_event.ident;
+            const pid_t child_pid = waitpid (pid, &status, 0);
             
-            DNBLogThreadedIf(LOG_PROCESS, "waitpid_process_thread (): setting exit status for pid = %i to %i", child_pid, status);
-            DNBProcessSetExitStatus (child_pid, status);
-            return NULL;
+            
+            bool exited = false;
+            int signal = 0;
+            int exit_status = 0;
+            const char *status_cstr = NULL;
+            if (WIFSTOPPED(status))
+            {
+                signal = WSTOPSIG(status);
+                status_cstr = "STOPPED";
+                DNBLogThreadedIf(LOG_PROCESS, "waitpid (%i) -> STOPPED (signal = %i)", child_pid, signal);
+            }
+            else if (WIFEXITED(status))
+            {
+                exit_status = WEXITSTATUS(status);
+                status_cstr = "EXITED";
+                exited = true;
+                DNBLogThreadedIf(LOG_PROCESS, "waitpid (%i) -> EXITED (status = %i)", child_pid, exit_status);
+            }
+            else if (WIFSIGNALED(status))
+            {
+                signal = WTERMSIG(status);
+                status_cstr = "SIGNALED";
+                if (child_pid == abs(pid))
+                {
+                    DNBLogThreadedIf(LOG_PROCESS, "waitpid (%i) -> SIGNALED and EXITED (signal = %i)", child_pid, signal);
+                    char exit_info[64];
+                    ::snprintf (exit_info, sizeof(exit_info), "Terminated due to signal %i", signal);
+                    DNBProcessSetExitInfo (child_pid, exit_info);
+                    exited = true;
+                    exit_status = INT8_MAX;
+                }
+                else
+                {
+                    DNBLogThreadedIf(LOG_PROCESS, "waitpid (%i) -> SIGNALED (signal = %i)", child_pid, signal);
+                }
+            }
+
+            if (exited)
+            {
+                if (death_event.data & NOTE_EXIT_MEMORY)
+                {
+                    if (death_event.data & NOTE_VM_PRESSURE)
+                        DNBProcessSetExitInfo (child_pid, "Terminated due to Memory Pressure");
+                    else if (death_event.data & NOTE_VM_ERROR)
+                        DNBProcessSetExitInfo (child_pid, "Terminated due to Memory Error");
+                    else
+                        DNBProcessSetExitInfo (child_pid, "Terminated due to unknown Memory condition");
+                }
+                else if (death_event.data & NOTE_EXIT_DECRYPTFAIL)
+                    DNBProcessSetExitInfo (child_pid, "Terminated due to decrypt failure");
+                else if (death_event.data & NOTE_EXIT_CSERROR)
+                    DNBProcessSetExitInfo (child_pid, "Terminated due to code signing error");
+                
+                DNBLogThreadedIf(LOG_PROCESS, "waitpid_process_thread (): setting exit status for pid = %i to %i", child_pid, exit_status);
+                DNBProcessSetExitStatus (child_pid, status);
+                return NULL;
+            }
         }
     }
 }
