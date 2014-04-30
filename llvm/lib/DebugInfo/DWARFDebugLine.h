@@ -185,6 +185,10 @@ public:
     void dump(raw_ostream &OS) const;
     void clear();
 
+    /// Parse prologue and all rows.
+    bool parse(DataExtractor debug_line_data, const RelocAddrMap *RMap,
+               uint32_t *offset_ptr);
+
     struct Prologue Prologue;
     typedef std::vector<Row> RowVector;
     typedef RowVector::const_iterator RowIter;
@@ -194,46 +198,26 @@ public:
     SequenceVector Sequences;
   };
 
-  struct State : public Row, public Sequence, public LineTable {
-    // Special row codes.
-    enum {
-      StartParsingLineTable = 0,
-      DoneParsingLineTable = -1
-    };
-
-    State() : row(StartParsingLineTable) {}
-    virtual ~State();
-
-    virtual void appendRowToMatrix(uint32_t offset);
-    virtual void finalize();
-    virtual void reset() {
-      Row::reset(Prologue.DefaultIsStmt);
-      Sequence::reset();
-    }
-
-    // The row number that starts at zero for the prologue, and increases for
-    // each row added to the matrix.
-    unsigned row;
-  };
-
-  struct DumpingState : public State {
-    DumpingState(raw_ostream &OS) : OS(OS) {}
-    virtual ~DumpingState();
-    void finalize() override;
-  private:
-    raw_ostream &OS;
-  };
-
-  /// Parse a single line table (prologue and all rows).
-  static bool parseStatementTable(DataExtractor debug_line_data,
-                                  const RelocAddrMap *RMap,
-                                  uint32_t *offset_ptr, State &state);
-
   const LineTable *getLineTable(uint32_t offset) const;
   const LineTable *getOrParseLineTable(DataExtractor debug_line_data,
                                        uint32_t offset);
 
 private:
+  struct ParsingState {
+    ParsingState(struct LineTable *LT);
+
+    void resetRowAndSequence();
+    void appendRowToMatrix(uint32_t offset);
+
+    // Line table we're currently parsing.
+    struct LineTable *LineTable;
+    // The row number that starts at zero for the prologue, and increases for
+    // each row added to the matrix.
+    unsigned RowNumber;
+    struct Row Row;
+    struct Sequence Sequence;
+  };
+
   typedef std::map<uint32_t, LineTable> LineTableMapTy;
   typedef LineTableMapTy::iterator LineTableIter;
   typedef LineTableMapTy::const_iterator LineTableConstIter;

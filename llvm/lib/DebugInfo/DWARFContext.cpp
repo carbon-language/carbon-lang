@@ -130,8 +130,9 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
       if (stmtOffset != -1U) {
         DataExtractor lineData(getLineSection().Data, isLittleEndian(),
                                savedAddressByteSize);
-        DWARFDebugLine::DumpingState state(OS);
-        DWARFDebugLine::parseStatementTable(lineData, &getLineSection().Relocs, &stmtOffset, state);
+        DWARFDebugLine::LineTable LineTable;
+        LineTable.parse(lineData, &getLineSection().Relocs, &stmtOffset);
+        LineTable.dump(OS);
       }
     }
   }
@@ -141,9 +142,11 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
     unsigned stmtOffset = 0;
     DataExtractor lineData(getLineDWOSection().Data, isLittleEndian(),
                            savedAddressByteSize);
-    DWARFDebugLine::DumpingState state(OS);
-    while (state.Prologue.parse(lineData, &stmtOffset))
-      state.finalize();
+    DWARFDebugLine::LineTable LineTable;
+    while (LineTable.Prologue.parse(lineData, &stmtOffset)) {
+      LineTable.dump(OS);
+      LineTable.clear();
+    }
   }
 
   if (DumpType == DIDT_All || DumpType == DIDT_Str) {
