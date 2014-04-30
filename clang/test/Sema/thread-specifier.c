@@ -107,4 +107,17 @@ __thread S s;
 #endif
 #endif
 
+#ifdef __cplusplus
+struct HasCtor {
+  HasCtor();
+};
+__thread HasCtor var_with_ctor;
+#if !defined(CXX11)
+// expected-error@-2 {{initializer for thread-local variable must be a constant expression}}
+#if __cplusplus >= 201103L
+// expected-note@-4 {{use 'thread_local' to allow this}}
+#endif
+#endif
+#endif
+
 __thread int aggregate[10] = {0};
