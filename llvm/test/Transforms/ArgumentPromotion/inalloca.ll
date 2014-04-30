@@ -20,7 +20,7 @@ entry:
 
 define i32 @main() {
 entry:
-  %S = alloca %struct.ss
+  %S = alloca inalloca %struct.ss
   %f0 = getelementptr %struct.ss* %S, i32 0, i32 0
   %f1 = getelementptr %struct.ss* %S, i32 0, i32 1
   store i32 1, i32* %f0, align 4
@@ -42,7 +42,7 @@ entry:
 
 define i32 @test() {
 entry:
-  %S = alloca %struct.ss
+  %S = alloca inalloca %struct.ss
   %c = call i1 @g(%struct.ss* %S, %struct.ss* inalloca %S)
 ; CHECK: call i1 @g(%struct.ss* %S, %struct.ss* inalloca %S)
   ret i32 0

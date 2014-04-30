@@ -1494,6 +1494,16 @@ void Verifier::VerifyCallSite(CallSite CS) {
   // Verify call attributes.
   VerifyFunctionAttrs(FTy, Attrs, I);
 
+  // Conservatively check the inalloca argument.
+  // We have a bug if we can find that there is an underlying alloca without
+  // inalloca.
+  if (CS.hasInAllocaArgument()) {
+    Value *InAllocaArg = CS.getArgument(FTy->getNumParams() - 1);
+    if (auto AI = dyn_cast<AllocaInst>(InAllocaArg->stripInBoundsOffsets()))
+      Assert2(AI->isUsedWithInAlloca(),
+              "inalloca argument for call has mismatched alloca", AI, I);
+  }
+
   if (FTy->isVarArg()) {
     // FIXME? is 'nest' even legal here?
     bool SawNest = false;

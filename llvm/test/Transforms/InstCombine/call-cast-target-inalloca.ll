@@ -8,7 +8,7 @@ declare void @takes_i32_inalloca(i32* inalloca)
 
 define void @f() {
 ; CHECK-LABEL: define void @f()
-  %args = alloca i32
+  %args = alloca inalloca i32
   call void bitcast (void (i32)* @takes_i32 to void (i32*)*)(i32* inalloca %args)
 ; CHECK: call void bitcast
   ret void
