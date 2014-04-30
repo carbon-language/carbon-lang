@@ -54,7 +54,7 @@ define i32 @icmp_uge(i32 %a, i32 %b) nounwind ssp {
 entry:
 ; CHECK: icmp_uge
 ; CHECK: cmp  w0, w1
-; CHECK: csinc w0, wzr, wzr, cc
+; CHECK: csinc w0, wzr, wzr, lo
   %cmp = icmp uge i32 %a, %b
   %conv = zext i1 %cmp to i32
   ret i32 %conv
@@ -64,7 +64,7 @@ define i32 @icmp_ult(i32 %a, i32 %b) nounwind ssp {
 entry:
 ; CHECK: icmp_ult
 ; CHECK: cmp  w0, w1
-; CHECK: csinc w0, wzr, wzr, cs
+; CHECK: csinc w0, wzr, wzr, hs
   %cmp = icmp ult i32 %a, %b
   %conv = zext i1 %cmp to i32
   ret i32 %conv
@@ -158,7 +158,7 @@ entry:
 ; CHECK: uxth w0, w0
 ; CHECK: uxth w1, w1
 ; CHECK: cmp  w0, w1
-; CHECK: csinc w0, wzr, wzr, cs
+; CHECK: csinc w0, wzr, wzr, hs
   %cmp = icmp ult i16 %a, %b
   %conv2 = zext i1 %cmp to i32
   ret i32 %conv2
@@ -206,7 +206,7 @@ entry:
 ; CHECK: icmp_i1_unsigned_const
 ; CHECK: and w0, w0, #0x1
 ; CHECK: cmp  w0, #0
-; CHECK: csinc w0, wzr, wzr, cs
+; CHECK: csinc w0, wzr, wzr, hs
 ; CHECK: and w0, w0, #0x1
   %cmp = icmp ult i1 %a, 0
   %conv2 = zext i1 %cmp to i32

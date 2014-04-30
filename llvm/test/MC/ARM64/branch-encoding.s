@@ -36,10 +36,10 @@ foo:
 ; CHECK: b.ne L1   ; encoding: [0bAAA00001,A,A,0x54]
 ; CHECK: fixup A - offset: 0, value: L1, kind: fixup_arm64_pcrel_branch19
   b.cs  L1
-; CHECK: b.cs L1   ; encoding: [0bAAA00010,A,A,0x54]
+; CHECK: b.hs L1   ; encoding: [0bAAA00010,A,A,0x54]
 ; CHECK: fixup A - offset: 0, value: L1, kind: fixup_arm64_pcrel_branch19
   b.cc  L1
-; CHECK: b.cc L1   ; encoding: [0bAAA00011,A,A,0x54]
+; CHECK: b.lo L1   ; encoding: [0bAAA00011,A,A,0x54]
 ; CHECK: fixup A - offset: 0, value: L1, kind: fixup_arm64_pcrel_branch19
   b.mi  L1
 ; CHECK: b.mi L1   ; encoding: [0bAAA00100,A,A,0x54]
@@ -80,7 +80,7 @@ L1:
   b.lt #28
 ; CHECK: b.lt #28
   b.cc #1048572
-; CHECK: b.cc	#1048572                ; encoding: [0xe3,0xff,0x7f,0x54]
+; CHECK: b.lo	#1048572                ; encoding: [0xe3,0xff,0x7f,0x54]
   b #134217724
 ; CHECK: b	#134217724              ; encoding: [0xff,0xff,0xff,0x15]
   b #-134217728

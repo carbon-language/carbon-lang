@@ -822,9 +822,9 @@ static ARM64CC::CondCode changeIntCCToARM64CC(ISD::CondCode CC) {
   case ISD::SETUGT:
     return ARM64CC::HI;
   case ISD::SETUGE:
-    return ARM64CC::CS;
+    return ARM64CC::HS;
   case ISD::SETULT:
-    return ARM64CC::CC;
+    return ARM64CC::LO;
   case ISD::SETULE:
     return ARM64CC::LS;
   }
@@ -1052,7 +1052,7 @@ getARM64XALUOOp(ARM64CC::CondCode &CC, SDValue Op, SelectionDAG &DAG) {
     break;
   case ISD::UADDO:
     Opc = ARM64ISD::ADDS;
-    CC = ARM64CC::CS;
+    CC = ARM64CC::HS;
     break;
   case ISD::SSUBO:
     Opc = ARM64ISD::SUBS;
@@ -1060,7 +1060,7 @@ getARM64XALUOOp(ARM64CC::CondCode &CC, SDValue Op, SelectionDAG &DAG) {
     break;
   case ISD::USUBO:
     Opc = ARM64ISD::SUBS;
-    CC = ARM64CC::CC;
+    CC = ARM64CC::LO;
     break;
   // Multiply needs a little bit extra work.
   case ISD::SMULO:
@@ -5553,7 +5553,7 @@ static SDValue EmitVectorComparison(SDValue LHS, SDValue RHS,
     return DAG.getNode(ARM64ISD::CMGE, dl, VT, RHS, LHS);
   case ARM64CC::LS:
     return DAG.getNode(ARM64ISD::CMHS, dl, VT, RHS, LHS);
-  case ARM64CC::CC:
+  case ARM64CC::LO:
     return DAG.getNode(ARM64ISD::CMHI, dl, VT, RHS, LHS);
   case ARM64CC::LT:
     if (IsZero)
@@ -5561,7 +5561,7 @@ static SDValue EmitVectorComparison(SDValue LHS, SDValue RHS,
     return DAG.getNode(ARM64ISD::CMGT, dl, VT, RHS, LHS);
   case ARM64CC::HI:
     return DAG.getNode(ARM64ISD::CMHI, dl, VT, LHS, RHS);
-  case ARM64CC::CS:
+  case ARM64CC::HS:
     return DAG.getNode(ARM64ISD::CMHS, dl, VT, LHS, RHS);
   }
 }

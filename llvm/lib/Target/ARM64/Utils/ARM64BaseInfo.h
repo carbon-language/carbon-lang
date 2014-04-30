@@ -192,8 +192,8 @@ namespace ARM64CC {
 enum CondCode {  // Meaning (integer)          Meaning (floating-point)
   EQ = 0x0,      // Equal                      Equal
   NE = 0x1,      // Not equal                  Not equal, or unordered
-  CS = 0x2,      // Carry set                  >, ==, or unordered
-  CC = 0x3,      // Carry clear                Less than
+  HS = 0x2,      // Unsigned higher or same    >, ==, or unordered
+  LO = 0x3,      // Unsigned lower             Less than
   MI = 0x4,      // Minus, negative            Less than
   PL = 0x5,      // Plus, positive or zero     >, ==, or unordered
   VS = 0x6,      // Overflow                   Unordered
@@ -215,8 +215,8 @@ inline static const char *getCondCodeName(CondCode Code) {
   default: llvm_unreachable("Unknown condition code");
   case EQ:  return "eq";
   case NE:  return "ne";
-  case CS:  return "cs";
-  case CC:  return "cc";
+  case HS:  return "hs";
+  case LO:  return "lo";
   case MI:  return "mi";
   case PL:  return "pl";
   case VS:  return "vs";
@@ -237,8 +237,8 @@ inline static CondCode getInvertedCondCode(CondCode Code) {
   default: llvm_unreachable("Unknown condition code");
   case EQ:  return NE;
   case NE:  return EQ;
-  case CS:  return CC;
-  case CC:  return CS;
+  case HS:  return LO;
+  case LO:  return HS;
   case MI:  return PL;
   case PL:  return MI;
   case VS:  return VC;
@@ -263,8 +263,8 @@ inline static unsigned getNZCVToSatisfyCondCode(CondCode Code) {
   default: llvm_unreachable("Unknown condition code");
   case EQ: return Z; // Z == 1
   case NE: return 0; // Z == 0
-  case CS: return C; // C == 1
-  case CC: return 0; // C == 0
+  case HS: return C; // C == 1
+  case LO: return 0; // C == 0
   case MI: return N; // N == 1
   case PL: return 0; // N == 0
   case VS: return V; // V == 1

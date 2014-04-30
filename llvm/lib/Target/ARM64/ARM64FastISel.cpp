@@ -737,9 +737,9 @@ static ARM64CC::CondCode getCompareCC(CmpInst::Predicate Pred) {
   case CmpInst::ICMP_NE:
     return ARM64CC::NE;
   case CmpInst::ICMP_UGE:
-    return ARM64CC::CS;
+    return ARM64CC::HS;
   case CmpInst::ICMP_ULT:
-    return ARM64CC::CC;
+    return ARM64CC::LO;
   }
 }
 
