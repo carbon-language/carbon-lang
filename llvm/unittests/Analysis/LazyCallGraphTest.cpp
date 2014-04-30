@@ -386,6 +386,52 @@ TEST(LazyCallGraphTest, InterSCCEdgeRemoval) {
   EXPECT_EQ(BC.parent_end(), BC.parent_begin());
 }
 
+TEST(LazyCallGraphTest, IntraSCCEdgeInsertion) {
+  std::unique_ptr<Module> M1 = parseAssembly(
+      "define void @a() {\n"
+      "entry:\n"
+      "  call void @b()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @b() {\n"
+      "entry:\n"
+      "  call void @c()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @c() {\n"
+      "entry:\n"
+      "  call void @a()\n"
+      "  ret void\n"
+      "}\n");
+  LazyCallGraph CG1(*M1);
+
+  // Force the graph to be fully expanded.
+  auto SCCI = CG1.postorder_scc_begin();
+  LazyCallGraph::SCC &SCC = *SCCI++;
+  EXPECT_EQ(CG1.postorder_scc_end(), SCCI);
+
+  LazyCallGraph::Node &A = *CG1.lookup(lookupFunction(*M1, "a"));
+  LazyCallGraph::Node &B = *CG1.lookup(lookupFunction(*M1, "b"));
+  LazyCallGraph::Node &C = *CG1.lookup(lookupFunction(*M1, "c"));
+  EXPECT_EQ(&SCC, CG1.lookupSCC(A));
+  EXPECT_EQ(&SCC, CG1.lookupSCC(B));
+  EXPECT_EQ(&SCC, CG1.lookupSCC(C));
+
+  // Insert an edge from 'a' to 'c'. Nothing changes about the SCCs.
+  SCC.insertIntraSCCEdge(A, C);
+  EXPECT_EQ(2, std::distance(A.begin(), A.end()));
+  EXPECT_EQ(&SCC, CG1.lookupSCC(A));
+  EXPECT_EQ(&SCC, CG1.lookupSCC(B));
+  EXPECT_EQ(&SCC, CG1.lookupSCC(C));
+
+  // Insert a self edge from 'a' back to 'a'.
+  SCC.insertIntraSCCEdge(A, A);
+  EXPECT_EQ(3, std::distance(A.begin(), A.end()));
+  EXPECT_EQ(&SCC, CG1.lookupSCC(A));
+  EXPECT_EQ(&SCC, CG1.lookupSCC(B));
+  EXPECT_EQ(&SCC, CG1.lookupSCC(C));
+}
+
 TEST(LazyCallGraphTest, IntraSCCEdgeRemoval) {
   // A nice fully connected (including self-edges) SCC.
   std::unique_ptr<Module> M1 = parseAssembly(

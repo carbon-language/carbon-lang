@@ -186,6 +186,9 @@ public:
     /// \brief Internal helper to insert a callee.
     void insertEdgeInternal(Function &Callee);
 
+    /// \brief Internal helper to insert a callee.
+    void insertEdgeInternal(Node &CalleeN);
+
     /// \brief Internal helper to remove a callee from this node.
     void removeEdgeInternal(Function &Callee);
 
@@ -248,6 +251,12 @@ public:
     ///
     /// Note that these methods sometimes have complex runtimes, so be careful
     /// how you call them.
+
+    /// \brief Insert an edge from one node in this SCC to another in this SCC.
+    ///
+    /// By the definition of an SCC, this does not change the nature or make-up
+    /// of any SCCs.
+    void insertIntraSCCEdge(Node &CallerN, Node &CalleeN);
 
     /// \brief Remove an edge whose source is in this SCC and target is *not*.
     ///

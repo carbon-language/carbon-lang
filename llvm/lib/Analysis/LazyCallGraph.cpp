@@ -76,11 +76,16 @@ LazyCallGraph::Node::Node(LazyCallGraph &G, Function &F)
 }
 
 void LazyCallGraph::Node::insertEdgeInternal(Function &Callee) {
-  CalleeIndexMap.insert(std::make_pair(&Callee, Callees.size()));
   if (Node *N = G->lookup(Callee))
-    Callees.push_back(N);
-  else
-    Callees.push_back(&Callee);
+    return insertEdgeInternal(*N);
+
+  CalleeIndexMap.insert(std::make_pair(&Callee, Callees.size()));
+  Callees.push_back(&Callee);
+}
+
+void LazyCallGraph::Node::insertEdgeInternal(Node &CalleeN) {
+  CalleeIndexMap.insert(std::make_pair(&CalleeN.getFunction(), Callees.size()));
+  Callees.push_back(&CalleeN);
 }
 
 void LazyCallGraph::Node::removeEdgeInternal(Function &Callee) {
@@ -155,6 +160,16 @@ void LazyCallGraph::SCC::insert(Node &N) {
   N.DFSNumber = N.LowLink = -1;
   Nodes.push_back(&N);
   G->SCCMap[&N] = this;
+}
+
+void LazyCallGraph::SCC::insertIntraSCCEdge(Node &CallerN, Node &CalleeN) {
+  // First insert it into the caller.
+  CallerN.insertEdgeInternal(CalleeN);
+
+  assert(G->SCCMap.lookup(&CallerN) == this && "Caller must be in this SCC.");
+  assert(G->SCCMap.lookup(&CalleeN) == this && "Callee must be in this SCC.");
+
+  // Nothing changes about this SCC or any other.
 }
 
 void LazyCallGraph::SCC::removeInterSCCEdge(Node &CallerN, Node &CalleeN) {
