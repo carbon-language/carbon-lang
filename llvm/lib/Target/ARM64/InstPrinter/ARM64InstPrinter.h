@@ -47,18 +47,11 @@ protected:
   void printHexImm(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printPostIncOperand(const MCInst *MI, unsigned OpNo, unsigned Imm,
                            raw_ostream &O);
-  void printPostIncOperand1(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand2(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand3(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand4(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand6(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand8(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand12(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand16(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand24(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand32(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand48(const MCInst *MI, unsigned OpNo, raw_ostream &O);
-  void printPostIncOperand64(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  template<int Amount>
+  void printPostIncOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O) {
+    printPostIncOperand(MI, OpNo, Amount, O);
+  }
+
   void printVRegOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printSysCROperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printAddSubImm(const MCInst *MI, unsigned OpNum, raw_ostream &O);
@@ -75,66 +68,38 @@ protected:
                       raw_ostream &O);
   void printAMIndexedWB(const MCInst *MI, unsigned OpNum, unsigned Scale,
                         raw_ostream &O);
-  void printAMIndexed128(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexed(MI, OpNum, 16, O);
-  }
-  void printAMIndexed128WB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexedWB(MI, OpNum, 16, O);
+
+  template<int BitWidth>
+  void printAMIndexed(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printAMIndexed(MI, OpNum, BitWidth / 8, O);
   }
 
-  void printAMIndexed64(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexed(MI, OpNum, 8, O);
-  }
-  void printAMIndexed64WB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexedWB(MI, OpNum, 8, O);
+  template<int BitWidth>
+  void printAMIndexedWB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printAMIndexedWB(MI, OpNum, BitWidth / 8, O);
   }
 
-  void printAMIndexed32(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexed(MI, OpNum, 4, O);
-  }
-  void printAMIndexed32WB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexedWB(MI, OpNum, 4, O);
-  }
-
-  void printAMIndexed16(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexed(MI, OpNum, 2, O);
-  }
-  void printAMIndexed16WB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexedWB(MI, OpNum, 2, O);
-  }
-
-  void printAMIndexed8(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexed(MI, OpNum, 1, O);
-  }
-  void printAMIndexed8WB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexedWB(MI, OpNum, 1, O);
-  }
-  void printAMUnscaled(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexed(MI, OpNum, 1, O);
-  }
-  void printAMUnscaledWB(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
-    printAMIndexedWB(MI, OpNum, 1, O);
-  }
   void printAMNoIndex(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printImmScale4(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printImmScale8(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printImmScale16(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+
+  template<int Scale>
+  void printImmScale(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+
   void printPrefetchOp(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printMemoryPostIndexed(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printMemoryPostIndexed32(const MCInst *MI, unsigned OpNum,
-                                raw_ostream &O);
-  void printMemoryPostIndexed64(const MCInst *MI, unsigned OpNum,
-                                raw_ostream &O);
-  void printMemoryPostIndexed128(const MCInst *MI, unsigned OpNum,
-                                 raw_ostream &O);
+
+  void printMemoryPostIndexed(const MCInst *MI, unsigned OpNum, raw_ostream &O,
+                              unsigned Scale);
+  template<int BitWidth>
+  void printMemoryPostIndexed(const MCInst *MI, unsigned OpNum,
+                              raw_ostream &O) {
+    printMemoryPostIndexed(MI, OpNum, O, BitWidth / 8);
+  }
+
   void printMemoryRegOffset(const MCInst *MI, unsigned OpNum, raw_ostream &O,
                             int LegalShiftAmt);
-  void printMemoryRegOffset8(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printMemoryRegOffset16(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printMemoryRegOffset32(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printMemoryRegOffset64(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printMemoryRegOffset128(const MCInst *MI, unsigned OpNum,
-                               raw_ostream &O);
+  template<int BitWidth>
+  void printMemoryRegOffset(const MCInst *MI, unsigned OpNum, raw_ostream &O) {
+    printMemoryRegOffset(MI, OpNum, O, BitWidth / 8);
+  }
 
   void printFPImmOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 

@@ -191,7 +191,7 @@ def SImm7s4Operand : AsmOperandClass {
 }
 def simm7s4 : Operand<i32> {
   let ParserMatchClass = SImm7s4Operand;
-  let PrintMethod = "printImmScale4";
+  let PrintMethod = "printImmScale<4>";
 }
 
 // simm7s8 predicate - True if the immediate is a multiple of 8 in the range
@@ -202,7 +202,7 @@ def SImm7s8Operand : AsmOperandClass {
 }
 def simm7s8 : Operand<i32> {
   let ParserMatchClass = SImm7s8Operand;
-  let PrintMethod = "printImmScale8";
+  let PrintMethod = "printImmScale<8>";
 }
 
 // simm7s16 predicate - True if the immediate is a multiple of 16 in the range
@@ -213,7 +213,7 @@ def SImm7s16Operand : AsmOperandClass {
 }
 def simm7s16 : Operand<i32> {
   let ParserMatchClass = SImm7s16Operand;
-  let PrintMethod = "printImmScale16";
+  let PrintMethod = "printImmScale<16>";
 }
 
 // imm0_65535 predicate - True if the immediate is in the range [0,65535].
@@ -2012,7 +2012,7 @@ def MemoryIndexed8Operand : AsmOperandClass {
 }
 def am_indexed8 : Operand<i64>,
                   ComplexPattern<i64, 2, "SelectAddrModeIndexed8", []> {
-  let PrintMethod = "printAMIndexed8";
+  let PrintMethod = "printAMIndexed<8>";
   let EncoderMethod
       = "getAMIndexed8OpValue<ARM64::fixup_arm64_ldst_imm12_scale1>";
   let ParserMatchClass = MemoryIndexed8Operand;
@@ -2027,7 +2027,7 @@ def MemoryIndexed16Operand : AsmOperandClass {
 }
 def am_indexed16 : Operand<i64>,
                    ComplexPattern<i64, 2, "SelectAddrModeIndexed16", []> {
-  let PrintMethod = "printAMIndexed16";
+  let PrintMethod = "printAMIndexed<16>";
   let EncoderMethod
       = "getAMIndexed8OpValue<ARM64::fixup_arm64_ldst_imm12_scale2>";
   let ParserMatchClass = MemoryIndexed16Operand;
@@ -2042,7 +2042,7 @@ def MemoryIndexed32Operand : AsmOperandClass {
 }
 def am_indexed32 : Operand<i64>,
                    ComplexPattern<i64, 2, "SelectAddrModeIndexed32", []> {
-  let PrintMethod = "printAMIndexed32";
+  let PrintMethod = "printAMIndexed<32>";
   let EncoderMethod
       = "getAMIndexed8OpValue<ARM64::fixup_arm64_ldst_imm12_scale4>";
   let ParserMatchClass = MemoryIndexed32Operand;
@@ -2057,7 +2057,7 @@ def MemoryIndexed64Operand : AsmOperandClass {
 }
 def am_indexed64 : Operand<i64>,
                    ComplexPattern<i64, 2, "SelectAddrModeIndexed64", []> {
-  let PrintMethod = "printAMIndexed64";
+  let PrintMethod = "printAMIndexed<64>";
   let EncoderMethod
       = "getAMIndexed8OpValue<ARM64::fixup_arm64_ldst_imm12_scale8>";
   let ParserMatchClass = MemoryIndexed64Operand;
@@ -2072,7 +2072,7 @@ def MemoryIndexed128Operand : AsmOperandClass {
 }
 def am_indexed128 : Operand<i64>,
                    ComplexPattern<i64, 2, "SelectAddrModeIndexed128", []> {
-  let PrintMethod = "printAMIndexed128";
+  let PrintMethod = "printAMIndexed<128>";
   let EncoderMethod
       = "getAMIndexed8OpValue<ARM64::fixup_arm64_ldst_imm12_scale16>";
   let ParserMatchClass = MemoryIndexed128Operand;
@@ -2196,7 +2196,7 @@ def MemROAsmOperand64 : MemROAsmOperand<64>;
 def MemROAsmOperand128 : MemROAsmOperand<128>;
 
 class ro_indexed<int sz> : Operand<i64> { // ComplexPattern<...>
-  let PrintMethod = "printMemoryRegOffset"#sz;
+  let PrintMethod = "printMemoryRegOffset<" # sz # ">";
   let MIOperandInfo = (ops GPR64sp:$base, GPR64:$offset, i32imm:$extend);
 }
 
@@ -2464,12 +2464,12 @@ def MemoryUnscaledOperand : AsmOperandClass {
   let DiagnosticType = "InvalidMemoryIndexedSImm9";
 }
 class am_unscaled_operand : Operand<i64> {
-  let PrintMethod = "printAMUnscaled";
+  let PrintMethod = "printAMIndexed<8>";
   let ParserMatchClass = MemoryUnscaledOperand;
   let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
 }
 class am_unscaled_wb_operand : Operand<i64> {
-  let PrintMethod = "printAMUnscaledWB";
+  let PrintMethod = "printAMIndexedWB<8>";
   let ParserMatchClass = MemoryUnscaledOperand;
   let MIOperandInfo = (ops GPR64sp:$base, i64imm:$offset);
 }
@@ -2791,12 +2791,12 @@ def MemoryIndexed32SImm7 : AsmOperandClass {
   let DiagnosticType = "InvalidMemoryIndexed32SImm7";
 }
 def am_indexed32simm7 : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexed32";
+  let PrintMethod = "printAMIndexed<32>";
   let ParserMatchClass = MemoryIndexed32SImm7;
   let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
 }
 def am_indexed32simm7_wb : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexed32WB";
+  let PrintMethod = "printAMIndexedWB<32>";
   let ParserMatchClass = MemoryIndexed32SImm7;
   let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
 }
@@ -2806,12 +2806,12 @@ def MemoryIndexed64SImm7 : AsmOperandClass {
   let DiagnosticType = "InvalidMemoryIndexed64SImm7";
 }
 def am_indexed64simm7 : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexed64";
+  let PrintMethod = "printAMIndexed<64>";
   let ParserMatchClass = MemoryIndexed64SImm7;
   let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
 }
 def am_indexed64simm7_wb : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexed64WB";
+  let PrintMethod = "printAMIndexedWB<64>";
   let ParserMatchClass = MemoryIndexed64SImm7;
   let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
 }
@@ -2821,12 +2821,12 @@ def MemoryIndexed128SImm7 : AsmOperandClass {
   let DiagnosticType = "InvalidMemoryIndexed128SImm7";
 }
 def am_indexed128simm7 : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexed128";
+  let PrintMethod = "printAMIndexed<128>";
   let ParserMatchClass = MemoryIndexed128SImm7;
   let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
 }
 def am_indexed128simm7_wb : Operand<i32> { // ComplexPattern<...>
-  let PrintMethod = "printAMIndexed128WB";
+  let PrintMethod = "printAMIndexedWB<128>";
   let ParserMatchClass = MemoryIndexed128SImm7;
   let MIOperandInfo = (ops GPR64sp:$base, i32imm:$offset);
 }

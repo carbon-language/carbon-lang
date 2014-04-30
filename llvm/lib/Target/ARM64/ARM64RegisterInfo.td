@@ -167,18 +167,18 @@ def tcGPR64 : RegisterClass<"ARM64", [i64], 64, (sub GPR64common, X19, X20, X21,
 // GPR register classes for post increment amount of vector load/store that
 // has alternate printing when Rm=31 and prints a constant immediate value
 // equal to the total number of bytes transferred.
-def GPR64pi1  : RegisterOperand<GPR64, "printPostIncOperand1">;
-def GPR64pi2  : RegisterOperand<GPR64, "printPostIncOperand2">;
-def GPR64pi3  : RegisterOperand<GPR64, "printPostIncOperand3">;
-def GPR64pi4  : RegisterOperand<GPR64, "printPostIncOperand4">;
-def GPR64pi6  : RegisterOperand<GPR64, "printPostIncOperand6">;
-def GPR64pi8  : RegisterOperand<GPR64, "printPostIncOperand8">;
-def GPR64pi12 : RegisterOperand<GPR64, "printPostIncOperand12">;
-def GPR64pi16 : RegisterOperand<GPR64, "printPostIncOperand16">;
-def GPR64pi24 : RegisterOperand<GPR64, "printPostIncOperand24">;
-def GPR64pi32 : RegisterOperand<GPR64, "printPostIncOperand32">;
-def GPR64pi48 : RegisterOperand<GPR64, "printPostIncOperand48">;
-def GPR64pi64 : RegisterOperand<GPR64, "printPostIncOperand64">;
+def GPR64pi1  : RegisterOperand<GPR64, "printPostIncOperand<1>">;
+def GPR64pi2  : RegisterOperand<GPR64, "printPostIncOperand<2>">;
+def GPR64pi3  : RegisterOperand<GPR64, "printPostIncOperand<3>">;
+def GPR64pi4  : RegisterOperand<GPR64, "printPostIncOperand<4>">;
+def GPR64pi6  : RegisterOperand<GPR64, "printPostIncOperand<6>">;
+def GPR64pi8  : RegisterOperand<GPR64, "printPostIncOperand<8>">;
+def GPR64pi12 : RegisterOperand<GPR64, "printPostIncOperand<12>">;
+def GPR64pi16 : RegisterOperand<GPR64, "printPostIncOperand<16>">;
+def GPR64pi24 : RegisterOperand<GPR64, "printPostIncOperand<24>">;
+def GPR64pi32 : RegisterOperand<GPR64, "printPostIncOperand<32>">;
+def GPR64pi48 : RegisterOperand<GPR64, "printPostIncOperand<48>">;
+def GPR64pi64 : RegisterOperand<GPR64, "printPostIncOperand<64>">;
 
 // Condition code regclass.
 def CCR : RegisterClass<"ARM64", [i32], 32, (add CPSR)> {

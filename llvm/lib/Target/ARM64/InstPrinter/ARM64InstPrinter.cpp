@@ -1027,66 +1027,6 @@ void ARM64InstPrinter::printPostIncOperand(const MCInst *MI, unsigned OpNo,
     assert(0 && "unknown operand kind in printPostIncOperand64");
 }
 
-void ARM64InstPrinter::printPostIncOperand1(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 1, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand2(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 2, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand3(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 3, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand4(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 4, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand6(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 6, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand8(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 8, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand12(const MCInst *MI, unsigned OpNo,
-                                             raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 12, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand16(const MCInst *MI, unsigned OpNo,
-                                             raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 16, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand24(const MCInst *MI, unsigned OpNo,
-                                             raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 24, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand32(const MCInst *MI, unsigned OpNo,
-                                             raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 32, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand48(const MCInst *MI, unsigned OpNo,
-                                             raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 48, O);
-}
-
-void ARM64InstPrinter::printPostIncOperand64(const MCInst *MI, unsigned OpNo,
-                                             raw_ostream &O) {
-  printPostIncOperand(MI, OpNo, 64, O);
-}
-
 void ARM64InstPrinter::printVRegOperand(const MCInst *MI, unsigned OpNo,
                                         raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
@@ -1203,19 +1143,10 @@ void ARM64InstPrinter::printAMNoIndex(const MCInst *MI, unsigned OpNum,
   O << '[' << getRegisterName(MI->getOperand(OpNum).getReg()) << ']';
 }
 
-void ARM64InstPrinter::printImmScale4(const MCInst *MI, unsigned OpNum,
-                                      raw_ostream &O) {
-  O << '#' << 4 * MI->getOperand(OpNum).getImm();
-}
-
-void ARM64InstPrinter::printImmScale8(const MCInst *MI, unsigned OpNum,
-                                      raw_ostream &O) {
-  O << '#' << 8 * MI->getOperand(OpNum).getImm();
-}
-
-void ARM64InstPrinter::printImmScale16(const MCInst *MI, unsigned OpNum,
-                                       raw_ostream &O) {
-  O << '#' << 16 * MI->getOperand(OpNum).getImm();
+template<int Scale>
+void ARM64InstPrinter::printImmScale(const MCInst *MI, unsigned OpNum,
+                                     raw_ostream &O) {
+  O << '#' << Scale * MI->getOperand(OpNum).getImm();
 }
 
 void ARM64InstPrinter::printAMIndexed(const MCInst *MI, unsigned OpNum,
@@ -1256,35 +1187,14 @@ void ARM64InstPrinter::printPrefetchOp(const MCInst *MI, unsigned OpNum,
     O << '#' << prfop;
 }
 
-void ARM64InstPrinter::printMemoryPostIndexed32(const MCInst *MI,
-                                                unsigned OpNum,
-                                                raw_ostream &O) {
-  O << '[' << getRegisterName(MI->getOperand(OpNum).getReg()) << ']' << ", #"
-    << 4 * MI->getOperand(OpNum + 1).getImm();
-}
-
-void ARM64InstPrinter::printMemoryPostIndexed64(const MCInst *MI,
-                                                unsigned OpNum,
-                                                raw_ostream &O) {
-  O << '[' << getRegisterName(MI->getOperand(OpNum).getReg()) << ']' << ", #"
-    << 8 * MI->getOperand(OpNum + 1).getImm();
-}
-
-void ARM64InstPrinter::printMemoryPostIndexed128(const MCInst *MI,
-                                                 unsigned OpNum,
-                                                 raw_ostream &O) {
-  O << '[' << getRegisterName(MI->getOperand(OpNum).getReg()) << ']' << ", #"
-    << 16 * MI->getOperand(OpNum + 1).getImm();
-}
-
 void ARM64InstPrinter::printMemoryPostIndexed(const MCInst *MI, unsigned OpNum,
-                                              raw_ostream &O) {
+                                              raw_ostream &O, unsigned Scale) {
   O << '[' << getRegisterName(MI->getOperand(OpNum).getReg()) << ']' << ", #"
-    << MI->getOperand(OpNum + 1).getImm();
+    << Scale * MI->getOperand(OpNum + 1).getImm();
 }
 
 void ARM64InstPrinter::printMemoryRegOffset(const MCInst *MI, unsigned OpNum,
-                                            raw_ostream &O, int LegalShiftAmt) {
+                                            raw_ostream &O, int Scale) {
   unsigned Val = MI->getOperand(OpNum + 2).getImm();
   ARM64_AM::ExtendType ExtType = ARM64_AM::getMemExtendType(Val);
 
@@ -1303,34 +1213,9 @@ void ARM64InstPrinter::printMemoryRegOffset(const MCInst *MI, unsigned OpNum,
     O << ", " << ARM64_AM::getExtendName(ExtType);
 
   if (DoShift)
-    O << " #" << LegalShiftAmt;
+    O << " #" << Log2_32(Scale);
 
   O << "]";
-}
-
-void ARM64InstPrinter::printMemoryRegOffset8(const MCInst *MI, unsigned OpNum,
-                                             raw_ostream &O) {
-  printMemoryRegOffset(MI, OpNum, O, 0);
-}
-
-void ARM64InstPrinter::printMemoryRegOffset16(const MCInst *MI, unsigned OpNum,
-                                              raw_ostream &O) {
-  printMemoryRegOffset(MI, OpNum, O, 1);
-}
-
-void ARM64InstPrinter::printMemoryRegOffset32(const MCInst *MI, unsigned OpNum,
-                                              raw_ostream &O) {
-  printMemoryRegOffset(MI, OpNum, O, 2);
-}
-
-void ARM64InstPrinter::printMemoryRegOffset64(const MCInst *MI, unsigned OpNum,
-                                              raw_ostream &O) {
-  printMemoryRegOffset(MI, OpNum, O, 3);
-}
-
-void ARM64InstPrinter::printMemoryRegOffset128(const MCInst *MI, unsigned OpNum,
-                                               raw_ostream &O) {
-  printMemoryRegOffset(MI, OpNum, O, 4);
 }
 
 void ARM64InstPrinter::printFPImmOperand(const MCInst *MI, unsigned OpNum,
