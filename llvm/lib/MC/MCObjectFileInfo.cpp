@@ -245,16 +245,22 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
 }
 
 void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
-  if (T.getArch() == Triple::mips ||
-      T.getArch() == Triple::mipsel)
+  switch (T.getArch()) {
+  case Triple::mips:
+  case Triple::mipsel:
     FDECFIEncoding = dwarf::DW_EH_PE_sdata4;
-  else if (T.getArch() == Triple::mips64 ||
-           T.getArch() == Triple::mips64el)
+    break;
+  case Triple::mips64:
+  case Triple::mips64el:
     FDECFIEncoding = dwarf::DW_EH_PE_sdata8;
-  else
+    break;
+  default:
     FDECFIEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+    break;
+  }
 
-  if (T.getArch() == Triple::x86) {
+  switch (T.getArch()) {
+  case Triple::x86:
     PersonalityEncoding = (RelocM == Reloc::PIC_)
      ? dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4
      : dwarf::DW_EH_PE_absptr;
@@ -267,7 +273,8 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
     TTypeEncoding = (RelocM == Reloc::PIC_)
      ? dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4
      : dwarf::DW_EH_PE_absptr;
-  } else if (T.getArch() == Triple::x86_64) {
+    break;
+  case Triple::x86_64:
     if (RelocM == Reloc::PIC_) {
       PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
         ((CMModel == CodeModel::Small || CMModel == CodeModel::Medium)
@@ -289,10 +296,11 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       TTypeEncoding = (CMModel == CodeModel::Small)
         ? dwarf::DW_EH_PE_udata4 : dwarf::DW_EH_PE_absptr;
     }
-  } else if (T.getArch() == Triple::aarch64 ||
-             T.getArch() == Triple::aarch64_be ||
-             T.getArch() == Triple::arm64 ||
-             T.getArch() == Triple::arm64_be) {
+    break;
+  case Triple::aarch64:
+  case Triple::aarch64_be:
+  case Triple::arm64:
+  case Triple::arm64_be:
     // The small model guarantees static code/data size < 4GB, but not where it
     // will be in memory. Most of these could end up >2GB away so even a signed
     // pc-relative 32-bit address is insufficient, theoretically.
@@ -309,14 +317,17 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       FDEEncoding = dwarf::DW_EH_PE_udata4;
       TTypeEncoding = dwarf::DW_EH_PE_absptr;
     }
-  } else if (T.getArch() == Triple::ppc64 || T.getArch() == Triple::ppc64le) {
+    break;
+  case Triple::ppc64:
+  case Triple::ppc64le:
     PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
       dwarf::DW_EH_PE_udata8;
     LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata8;
     FDEEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata8;
     TTypeEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
       dwarf::DW_EH_PE_udata8;
-  } else if (T.getArch() == Triple::sparc) {
+    break;
+  case Triple::sparc:
     if (RelocM == Reloc::PIC_) {
       LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
       PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
@@ -330,7 +341,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       FDEEncoding = dwarf::DW_EH_PE_udata4;
       TTypeEncoding = dwarf::DW_EH_PE_absptr;
     }
-  } else if (T.getArch() == Triple::sparcv9) {
+  case Triple::sparcv9:
     LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
     if (RelocM == Reloc::PIC_) {
       PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
@@ -343,7 +354,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       FDEEncoding = dwarf::DW_EH_PE_udata4;
       TTypeEncoding = dwarf::DW_EH_PE_absptr;
     }
-  } else if (T.getArch() == Triple::systemz) {
+  case Triple::systemz:
     // All currently-defined code models guarantee that 4-byte PC-relative
     // values will be in range.
     if (RelocM == Reloc::PIC_) {
@@ -359,6 +370,8 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       FDEEncoding = dwarf::DW_EH_PE_absptr;
       TTypeEncoding = dwarf::DW_EH_PE_absptr;
     }
+  default:
+    break;
   }
 
   // Solaris requires different flags for .eh_frame to seemingly every other
