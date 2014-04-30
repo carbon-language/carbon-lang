@@ -16,51 +16,13 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ELFYAML.h"
+#include "llvm/Object/StringTableBuilder.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
-
-// There is similar code in yaml2coff, but with some slight COFF-specific
-// variations like different initial state. Might be able to deduplicate
-// some day, but also want to make sure that the Mach-O use case is served.
-//
-// This class has a deliberately small interface, since a lot of
-// implementation variation is possible.
-//
-// TODO: Use the StringTable builder from lib/Object instead, since it
-// will deduplicate suffixes.
-namespace {
-class StringTableBuilder {
-  /// \brief Indices of strings currently present in `Buf`.
-  StringMap<unsigned> StringIndices;
-  /// \brief The contents of the string table as we build it.
-  std::string Buf;
-public:
-  StringTableBuilder() {
-    Buf.push_back('\0');
-  }
-  /// \returns Index of string in string table.
-  unsigned addString(StringRef S) {
-    StringMapEntry<unsigned> &Entry = StringIndices.GetOrCreateValue(S);
-    unsigned &I = Entry.getValue();
-    if (I != 0)
-      return I;
-    I = Buf.size();
-    Buf.append(S.begin(), S.end());
-    Buf.push_back('\0');
-    return I;
-  }
-  size_t size() const {
-    return Buf.size();
-  }
-  void writeToStream(raw_ostream &OS) {
-    OS.write(Buf.data(), Buf.size());
-  }
-};
-} // end anonymous namespace
 
 // This class is used to build up a contiguous binary blob while keeping
 // track of an offset in the output (which notionally begins at
@@ -226,9 +188,13 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
   zero(SHeader);
   SHeaders.push_back(SHeader);
 
+  for (const auto &Sec : Doc.Sections)
+    DotShStrtab.add(Sec->Name);
+  DotShStrtab.finalize();
+
   for (const auto &Sec : Doc.Sections) {
     zero(SHeader);
-    SHeader.sh_name = DotShStrtab.addString(Sec->Name);
+    SHeader.sh_name = DotShStrtab.getOffset(Sec->Name);
     SHeader.sh_type = Sec->Type;
     SHeader.sh_flags = Sec->Flags;
     SHeader.sh_addr = Sec->Address;
@@ -273,7 +239,7 @@ template <class ELFT>
 void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
                                              ContiguousBlobAccumulator &CBA) {
   zero(SHeader);
-  SHeader.sh_name = DotShStrtab.addString(StringRef(".symtab"));
+  SHeader.sh_name = DotShStrtab.getOffset(".symtab");
   SHeader.sh_type = ELF::SHT_SYMTAB;
   SHeader.sh_link = getDotStrTabSecNo();
   // One greater than symbol table index of the last local symbol.
@@ -287,6 +253,16 @@ void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
     zero(Sym);
     Syms.push_back(Sym);
   }
+
+  // Add symbol names to .strtab.
+  for (const auto &Sym : Doc.Symbols.Local)
+    DotStrtab.add(Sym.Name);
+  for (const auto &Sym : Doc.Symbols.Global)
+    DotStrtab.add(Sym.Name);
+  for (const auto &Sym : Doc.Symbols.Weak)
+    DotStrtab.add(Sym.Name);
+  DotStrtab.finalize();
+
   addSymbols(Doc.Symbols.Local, Syms, ELF::STB_LOCAL);
   addSymbols(Doc.Symbols.Global, Syms, ELF::STB_GLOBAL);
   addSymbols(Doc.Symbols.Weak, Syms, ELF::STB_WEAK);
@@ -301,10 +277,10 @@ void ELFState<ELFT>::initStrtabSectionHeader(Elf_Shdr &SHeader, StringRef Name,
                                              StringTableBuilder &STB,
                                              ContiguousBlobAccumulator &CBA) {
   zero(SHeader);
-  SHeader.sh_name = DotShStrtab.addString(Name);
+  SHeader.sh_name = DotShStrtab.getOffset(Name);
   SHeader.sh_type = ELF::SHT_STRTAB;
-  STB.writeToStream(CBA.getOSAndAlignedOffset(SHeader.sh_offset));
-  SHeader.sh_size = STB.size();
+  CBA.getOSAndAlignedOffset(SHeader.sh_offset) << STB.data();
+  SHeader.sh_size = STB.data().size();
   SHeader.sh_addralign = 1;
 }
 
@@ -316,7 +292,7 @@ void ELFState<ELFT>::addSymbols(const std::vector<ELFYAML::Symbol> &Symbols,
     Elf_Sym Symbol;
     zero(Symbol);
     if (!Sym.Name.empty())
-      Symbol.st_name = DotStrtab.addString(Sym.Name);
+      Symbol.st_name = DotStrtab.getOffset(Sym.Name);
     Symbol.setBindingAndType(SymbolBinding, Sym.Type);
     if (!Sym.Section.empty()) {
       unsigned Index;
@@ -444,6 +420,12 @@ int ELFState<ELFT>::writeELF(raw_ostream &OS, const ELFYAML::Object &Doc) {
   const size_t SectionContentBeginOffset =
       Header.e_ehsize + Header.e_shentsize * Header.e_shnum;
   ContiguousBlobAccumulator CBA(SectionContentBeginOffset);
+
+  // Doc might not contain .symtab, .strtab and .shstrtab sections,
+  // but we will emit them, so make sure to add them to ShStrTabSHeader.
+  State.DotShStrtab.add(".symtab");
+  State.DotShStrtab.add(".strtab");
+  State.DotShStrtab.add(".shstrtab");
 
   std::vector<Elf_Shdr> SHeaders;
   if(!State.initSectionHeaders(SHeaders, CBA))

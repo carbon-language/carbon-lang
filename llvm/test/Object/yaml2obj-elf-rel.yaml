@@ -66,11 +66,11 @@ Symbols:
 # CHECK:        }
 # CHECK:        Section {
 # CHECK-NEXT:     Index: 1
-# CHECK-NEXT:     Name: .text (1)
+# CHECK-NEXT:     Name: .text (16)
 # CHECK:        }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 2
-# CHECK-NEXT:     Name: .rel.text (7)
+# CHECK-NEXT:     Name: .rel.text (1)
 # CHECK-NEXT:     Type: SHT_REL (0x9)
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
@@ -84,7 +84,7 @@ Symbols:
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 3
-# CHECK-NEXT:     Name: .rela.text (17)
+# CHECK-NEXT:     Name: .rela.text (11)
 # CHECK-NEXT:     Type: SHT_RELA (0x4)
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
@@ -98,11 +98,11 @@ Symbols:
 # CHECK-NEXT:   }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 4
-# CHECK-NEXT:     Name: .symtab (28)
+# CHECK-NEXT:     Name: .symtab (40)
 # CHECK:        }
 # CHECK-NEXT:   Section {
 # CHECK-NEXT:     Index: 5
-# CHECK-NEXT:     Name: .strtab (36)
+# CHECK-NEXT:     Name: .strtab (32)
 # CHECK:        }
 # CHECK:        Relocations [
 # CHECK-NEXT:     Section (2) .rel.text {
