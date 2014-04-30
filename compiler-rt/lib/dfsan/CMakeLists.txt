@@ -34,7 +34,7 @@ endif()
 
 set(dfsan_abilist_filename ${COMPILER_RT_OUTPUT_DIR}/dfsan_abilist.txt)
 add_custom_target(dfsan_abilist ALL
-  SOURCES ${dfsan_abilist_filename})
+  DEPENDS ${dfsan_abilist_filename})
 add_custom_command(OUTPUT ${dfsan_abilist_filename}
                    VERBATIM
                    COMMAND
