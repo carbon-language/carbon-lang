@@ -368,7 +368,7 @@ class DwarfDebug : public AsmPrinterHandler {
   std::unique_ptr<DIE> constructScopeDIE(DwarfCompileUnit &TheCU,
                                          LexicalScope *Scope);
   void createAndAddScopeChildren(DwarfCompileUnit &TheCU, LexicalScope *Scope,
-                                 DISubprogram Sub, DIE &ScopeDIE);
+                                 DIE &ScopeDIE);
   /// \brief Construct a DIE for this abstract scope.
   void constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
                                            LexicalScope *Scope);

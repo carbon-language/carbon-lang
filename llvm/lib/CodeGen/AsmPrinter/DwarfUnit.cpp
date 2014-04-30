@@ -1164,8 +1164,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 }
 
 /// constructSubprogramArguments - Construct function argument DIEs.
-DIE *DwarfUnit::constructSubprogramArguments(DIE &Buffer, DIArray Args) {
-  DIE *ObjectPointer = nullptr;
+void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DIArray Args) {
   for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
     DIDescriptor Ty = Args.getElement(i);
     if (Ty.isUnspecifiedParameter()) {
@@ -1176,11 +1175,8 @@ DIE *DwarfUnit::constructSubprogramArguments(DIE &Buffer, DIArray Args) {
       addType(Arg, DIType(Ty));
       if (DIType(Ty).isArtificial())
         addFlag(Arg, dwarf::DW_AT_artificial);
-      if (DIType(Ty).isObjectPointer())
-        ObjectPointer = &Arg;
     }
   }
-  return ObjectPointer;
 }
 
 /// constructTypeDIE - Construct type DIE from DICompositeType.
@@ -1501,8 +1497,7 @@ DIE *DwarfUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
     // Add arguments. Do not add arguments for subprogram definition. They will
     // be handled while processing variables.
-    if (DIE *ObjectPointer = constructSubprogramArguments(SPDie, Args))
-      addDIEEntry(SPDie, dwarf::DW_AT_object_pointer, *ObjectPointer);
+    constructSubprogramArguments(SPDie, Args);
   }
 
   if (SP.isArtificial())

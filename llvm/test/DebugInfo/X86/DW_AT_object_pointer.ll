@@ -1,28 +1,13 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
-; Emit the DW_TAG_object_pointer on the declaration only, not the definition.
-; This seems the most correct thing - the DW_TAG_object_pointer is inherited
-; from the declaration to any (abstract or concrete) definitions and DWARF
-; consumers can use this information for callers that can only see the
-; declaration.
-; That said, it isn't very space efficient - making member function
-; declarations 11 bytes instead of 7 and I'm not sure which tools actually
-; use this information here (ObjC Blocks are a different story & most likely
-; require object_pointer) - perhaps we should omit it entirely for space.
-; No overall space impact study has been performed.
-
-; CHECK: [[DEFINITION:0x[0-9a-f]*]]: DW_TAG_subprogram
-; CHECK-NOT: DW_TAG
-; CHECK-NOT: DW_TAG_object_pointer
+; CHECK: DW_TAG_formal_parameter [
+; CHECK-NOT: ""
 ; CHECK: DW_TAG
-
 ; CHECK: DW_TAG_class_type
-; CHECK-NOT: NULL
-; CHECK: DW_TAG_subprogram
-; CHECK-NEXT: DW_AT_name {{.*}} "A"
 ; CHECK: DW_AT_object_pointer [DW_FORM_ref4]     (cu + 0x{{[0-9a-f]*}} => {[[PARAM:0x[0-9a-f]*]]})
 ; CHECK: [[PARAM]]:     DW_TAG_formal_parameter
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x{{[0-9a-f]*}}] = "this")
 
 %class.A = type { i32 }
 
