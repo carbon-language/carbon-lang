@@ -60,7 +60,7 @@ public:
   AMDGPUSubtarget(StringRef TT, StringRef CPU, StringRef FS);
 
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
-  virtual void ParseSubtargetFeatures(StringRef CPU, StringRef FS) final;
+  void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
 
   bool is64bit() const;
   bool hasVertexCache() const;

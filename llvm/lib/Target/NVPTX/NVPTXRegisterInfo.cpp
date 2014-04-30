@@ -84,13 +84,6 @@ NVPTXRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   return CalleeSavedRegs;
 }
 
-// NVPTX Callee Saved Reg Classes
-const TargetRegisterClass *const *
-NVPTXRegisterInfo::getCalleeSavedRegClasses(const MachineFunction *MF) const {
-  static const TargetRegisterClass *const CalleeSavedRegClasses[] = { nullptr };
-  return CalleeSavedRegClasses;
-}
-
 BitVector NVPTXRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   return Reserved;
@@ -113,12 +106,6 @@ void NVPTXRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MI.getOperand(FIOperandNum + 1).ChangeToImmediate(Offset);
 }
 
-int NVPTXRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
-  return 0;
-}
-
 unsigned NVPTXRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
   return NVPTX::VRFrame;
 }
-
-unsigned NVPTXRegisterInfo::getRARegister() const { return 0; }

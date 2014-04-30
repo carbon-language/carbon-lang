@@ -44,19 +44,13 @@ public:
   const MCPhysReg *
   getCalleeSavedRegs(const MachineFunction *MF = nullptr) const override;
 
-  // NVPTX callee saved register classes
-  virtual const TargetRegisterClass *const *
-  getCalleeSavedRegClasses(const MachineFunction *MF) const final;
-
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 
   void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
                            unsigned FIOperandNum,
                            RegScavenger *RS = nullptr) const override;
 
-  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const final;
   unsigned getFrameRegister(const MachineFunction &MF) const override;
-  virtual unsigned getRARegister() const final;
 
   ManagedStringPool *getStrPool() const {
     return const_cast<ManagedStringPool *>(&ManagedStrPool);

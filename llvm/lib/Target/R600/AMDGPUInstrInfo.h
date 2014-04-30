@@ -103,11 +103,11 @@ protected:
                                       MachineInstr *LoadMI) const override;
   /// \returns the smallest register index that will be accessed by an indirect
   /// read or write or -1 if indirect addressing is not used by this program.
-  virtual int getIndirectIndexBegin(const MachineFunction &MF) const final;
+  int getIndirectIndexBegin(const MachineFunction &MF) const;
 
   /// \returns the largest register index that will be accessed by an indirect
   /// read or write or -1 if indirect addressing is not used by this program.
-  virtual int getIndirectIndexEnd(const MachineFunction &MF) const final;
+  int getIndirectIndexEnd(const MachineFunction &MF) const;
 
 public:
   bool canFoldMemoryOperand(const MachineInstr *MI,
@@ -188,8 +188,7 @@ public:
 
   /// \brief Convert the AMDIL MachineInstr to a supported ISA
   /// MachineInstr
-  virtual void convertToISA(MachineInstr & MI, MachineFunction &MF,
-    DebugLoc DL) const final;
+  void convertToISA(MachineInstr & MI, MachineFunction &MF, DebugLoc DL) const;
 
   /// \brief Build a MOV instruction.
   virtual MachineInstr *buildMovInstr(MachineBasicBlock *MBB,
