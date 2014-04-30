@@ -152,7 +152,8 @@ LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
     D = DIDescriptor(Scope);
   }
 
-  auto IterBool = LexicalScopeMap.insert(std::make_pair(Scope, std::unique_ptr<LexicalScope>()));
+  auto IterBool = LexicalScopeMap.insert(
+      std::make_pair(Scope, std::unique_ptr<LexicalScope>()));
   auto &MapValue = *IterBool.first;
   if (!IterBool.second)
     return MapValue.second.get();
@@ -160,7 +161,8 @@ LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
   LexicalScope *Parent = nullptr;
   if (D.isLexicalBlock())
     Parent = getOrCreateLexicalScope(DebugLoc::getFromDILexicalBlock(Scope));
-  MapValue.second = make_unique<LexicalScope>(Parent, DIDescriptor(Scope), nullptr, false);
+  MapValue.second =
+      make_unique<LexicalScope>(Parent, DIDescriptor(Scope), nullptr, false);
   if (!Parent && DIDescriptor(Scope).isSubprogram() &&
       DISubprogram(Scope).describes(MF->getFunction()))
     CurrentFnLexicalScope = MapValue.second.get();
@@ -171,14 +173,16 @@ LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
 /// getOrCreateInlinedScope - Find or create an inlined lexical scope.
 LexicalScope *LexicalScopes::getOrCreateInlinedScope(MDNode *Scope,
                                                      MDNode *InlinedAt) {
-  auto IterBool = LexicalScopeMap.insert(std::make_pair(InlinedAt, std::unique_ptr<LexicalScope>()));
+  auto IterBool = LexicalScopeMap.insert(
+      std::make_pair(InlinedAt, std::unique_ptr<LexicalScope>()));
   auto &MapValue = *IterBool.first;
   if (!IterBool.second)
     return MapValue.second.get();
 
   DebugLoc InlinedLoc = DebugLoc::getFromDILocation(InlinedAt);
-  MapValue.second = make_unique<LexicalScope>(getOrCreateLexicalScope(InlinedLoc),
-                                  DIDescriptor(Scope), InlinedAt, false);
+  MapValue.second =
+      make_unique<LexicalScope>(getOrCreateLexicalScope(InlinedLoc),
+                                DIDescriptor(Scope), InlinedAt, false);
   InlinedLexicalScopeMap[InlinedLoc] = MapValue.second.get();
   return MapValue.second.get();
 }
