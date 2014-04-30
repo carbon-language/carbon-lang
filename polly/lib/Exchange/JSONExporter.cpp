@@ -18,6 +18,7 @@
 #include "polly/ScopPass.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/system_error.h"
