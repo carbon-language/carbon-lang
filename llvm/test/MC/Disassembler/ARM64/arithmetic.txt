@@ -368,21 +368,21 @@
 #==---------------------------------------------------------------------------==
 
   0x41 0x28 0xc3 0x1a
-# CHECK: asrv w1, w2, w3
+# CHECK: asr w1, w2, w3
   0x41 0x28 0xc3 0x9a
-# CHECK: asrv x1, x2, x3
+# CHECK: asr x1, x2, x3
   0x41 0x20 0xc3 0x1a
-# CHECK: lslv w1, w2, w3
+# CHECK: lsl w1, w2, w3
   0x41 0x20 0xc3 0x9a
-# CHECK: lslv x1, x2, x3
+# CHECK: lsl x1, x2, x3
   0x41 0x24 0xc3 0x1a
-# CHECK: lsrv w1, w2, w3
+# CHECK: lsr w1, w2, w3
   0x41 0x24 0xc3 0x9a
-# CHECK: lsrv x1, x2, x3
+# CHECK: lsr x1, x2, x3
   0x41 0x2c 0xc3 0x1a
-# CHECK: rorv w1, w2, w3
+# CHECK: ror w1, w2, w3
   0x41 0x2c 0xc3 0x9a
-# CHECK: rorv x1, x2, x3
+# CHECK: ror x1, x2, x3
 
 #==---------------------------------------------------------------------------==
 # One operand instructions

@@ -48,7 +48,7 @@ entry:
 define i32 @t6(i32 %a, i32 %b) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: t6:
-; CHECK: lslv w0, w0, w1
+; CHECK: lsl w0, w0, w1
 ; CHECK: ret
   %shl = shl i32 %a, %b
   ret i32 %shl
@@ -57,7 +57,7 @@ entry:
 define i64 @t7(i64 %a, i64 %b) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: t7:
-; CHECK: lslv x0, x0, x1
+; CHECK: lsl x0, x0, x1
 ; CHECK: ret
   %shl = shl i64 %a, %b
   ret i64 %shl
@@ -66,7 +66,7 @@ entry:
 define i32 @t8(i32 %a, i32 %b) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: t8:
-; CHECK: lsrv w0, w0, w1
+; CHECK: lsr w0, w0, w1
 ; CHECK: ret
   %lshr = lshr i32 %a, %b
   ret i32 %lshr
@@ -75,7 +75,7 @@ entry:
 define i64 @t9(i64 %a, i64 %b) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: t9:
-; CHECK: lsrv x0, x0, x1
+; CHECK: lsr x0, x0, x1
 ; CHECK: ret
   %lshr = lshr i64 %a, %b
   ret i64 %lshr
@@ -84,7 +84,7 @@ entry:
 define i32 @t10(i32 %a, i32 %b) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: t10:
-; CHECK: asrv w0, w0, w1
+; CHECK: asr w0, w0, w1
 ; CHECK: ret
   %ashr = ashr i32 %a, %b
   ret i32 %ashr
@@ -93,7 +93,7 @@ entry:
 define i64 @t11(i64 %a, i64 %b) nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: t11:
-; CHECK: asrv x0, x0, x1
+; CHECK: asr x0, x0, x1
 ; CHECK: ret
   %ashr = ashr i64 %a, %b
   ret i64 %ashr

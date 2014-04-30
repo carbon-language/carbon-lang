@@ -544,19 +544,19 @@ defm SDIV_Int : Div<1, "sdiv", int_arm64_sdiv>;
 }
 
 // Variable shift
-defm ASRV : Shift<0b10, "asrv", sra>;
-defm LSLV : Shift<0b00, "lslv", shl>;
-defm LSRV : Shift<0b01, "lsrv", srl>;
-defm RORV : Shift<0b11, "rorv", rotr>;
+defm ASRV : Shift<0b10, "asr", sra>;
+defm LSLV : Shift<0b00, "lsl", shl>;
+defm LSRV : Shift<0b01, "lsr", srl>;
+defm RORV : Shift<0b11, "ror", rotr>;
 
-def : ShiftAlias<"asr", ASRVWr, GPR32>;
-def : ShiftAlias<"asr", ASRVXr, GPR64>;
-def : ShiftAlias<"lsl", LSLVWr, GPR32>;
-def : ShiftAlias<"lsl", LSLVXr, GPR64>;
-def : ShiftAlias<"lsr", LSRVWr, GPR32>;
-def : ShiftAlias<"lsr", LSRVXr, GPR64>;
-def : ShiftAlias<"ror", RORVWr, GPR32>;
-def : ShiftAlias<"ror", RORVXr, GPR64>;
+def : ShiftAlias<"asrv", ASRVWr, GPR32>;
+def : ShiftAlias<"asrv", ASRVXr, GPR64>;
+def : ShiftAlias<"lslv", LSLVWr, GPR32>;
+def : ShiftAlias<"lslv", LSLVXr, GPR64>;
+def : ShiftAlias<"lsrv", LSRVWr, GPR32>;
+def : ShiftAlias<"lsrv", LSRVXr, GPR64>;
+def : ShiftAlias<"rorv", RORVWr, GPR32>;
+def : ShiftAlias<"rorv", RORVXr, GPR64>;
 
 // Multiply-add
 let AddedComplexity = 7 in {
