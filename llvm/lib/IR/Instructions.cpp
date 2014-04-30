@@ -3587,9 +3587,10 @@ InsertValueInst *InsertValueInst::clone_impl() const {
 }
 
 AllocaInst *AllocaInst::clone_impl() const {
-  return new AllocaInst(getAllocatedType(),
-                        (Value*)getOperand(0),
-                        getAlignment());
+  AllocaInst *Result = new AllocaInst(getAllocatedType(),
+                                      (Value *)getOperand(0), getAlignment());
+  Result->setUsedWithInAlloca(isUsedWithInAlloca());
+  return Result;
 }
 
 LoadInst *LoadInst::clone_impl() const {
