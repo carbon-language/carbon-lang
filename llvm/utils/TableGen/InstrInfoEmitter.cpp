@@ -523,20 +523,20 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   // Emit the implicit uses and defs lists...
   std::vector<Record*> UseList = Inst.TheDef->getValueAsListOfDefs("Uses");
   if (UseList.empty())
-    OS << "NULL, ";
+    OS << "nullptr, ";
   else
     OS << "ImplicitList" << EmittedLists[UseList] << ", ";
 
   std::vector<Record*> DefList = Inst.TheDef->getValueAsListOfDefs("Defs");
   if (DefList.empty())
-    OS << "NULL, ";
+    OS << "nullptr, ";
   else
     OS << "ImplicitList" << EmittedLists[DefList] << ", ";
 
   // Emit the operand info.
   std::vector<std::string> OperandInfo = GetOperandInfo(Inst);
   if (OperandInfo.empty())
-    OS << "0";
+    OS << "nullptr";
   else
     OS << "OperandInfo" << OpInfo.find(OperandInfo)->second;
 
@@ -548,10 +548,10 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   else if (!Inst.DeprecatedReason.empty())
     // Emit the Subtarget feature.
     OS << "," << Target.getInstNamespace() << "::" << Inst.DeprecatedReason
-       << ",0";
+       << ",nullptr";
   else
     // Instruction isn't deprecated.
-    OS << ",0,0";
+    OS << ",0,nullptr";
 
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }

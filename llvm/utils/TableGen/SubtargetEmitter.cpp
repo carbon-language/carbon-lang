@@ -578,7 +578,7 @@ EmitItineraries(raw_ostream &OS,
     OS << "\n";
     OS << "static const llvm::InstrItinerary ";
     if (ItinList.empty()) {
-      OS << '*' << Name << " = 0;\n";
+      OS << '*' << Name << " = nullptr;\n";
       continue;
     }
 

@@ -225,7 +225,7 @@ EmitRegUnitPressure(raw_ostream &OS, const CodeGenRegBank &RegBank,
   for (unsigned i = 0; i < NumSets; ++i ) {
     OS << "    \"" << RegBank.getRegSetAt(i).Name << "\",\n";
   }
-  OS << "    0 };\n"
+  OS << "    nullptr };\n"
      << "  return PressureNameTable[Idx];\n"
      << "}\n\n";
 
@@ -1068,7 +1068,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   // Now that all of the structs have been emitted, emit the instances.
   if (!RegisterClasses.empty()) {
     OS << "\nstatic const TargetRegisterClass *const "
-       << "NullRegClasses[] = { NULL };\n\n";
+       << "NullRegClasses[] = { nullptr };\n\n";
 
     // Emit register class bit mask tables. The first bit mask emitted for a
     // register class, RC, is the set of sub-classes, including RC itself.
@@ -1135,7 +1135,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
          << RC.getName() << "Superclasses[] = {\n";
       for (unsigned i = 0; i != Supers.size(); ++i)
         OS << "  &" << Supers[i]->getQualifiedName() << "RegClass,\n";
-      OS << "  NULL\n};\n\n";
+      OS << "  nullptr\n};\n\n";
     }
 
     // Emit methods.
@@ -1189,7 +1189,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
       else
         OS << RC.getName() << "Superclasses,\n    ";
       if (RC.AltOrderSelect.empty())
-        OS << "0\n";
+        OS << "nullptr\n";
       else
         OS << RC.getName() << "GetRawAllocationOrder\n";
       OS << "  };\n\n";
@@ -1258,7 +1258,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
        << "  if (!Idx) return RC;\n  --Idx;\n"
        << "  assert(Idx < " << SubRegIndices.size() << " && \"Bad subreg\");\n"
        << "  unsigned TV = Table[RC->getID()][Idx];\n"
-       << "  return TV ? getRegClass(TV - 1) : 0;\n}\n\n";
+       << "  return TV ? getRegClass(TV - 1) : nullptr;\n}\n\n";
   }
 
   EmitRegUnitPressure(OS, RegBank, ClassName);
