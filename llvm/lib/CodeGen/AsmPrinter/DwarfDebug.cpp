@@ -548,11 +548,16 @@ DIE *DwarfDebug::createScopeChildrenDIE(
 }
 
 void DwarfDebug::createAndAddScopeChildren(DwarfCompileUnit &TheCU,
-                                           LexicalScope *Scope, DIE &ScopeDIE) {
+                                           LexicalScope *Scope,
+                                           DISubprogram Sub, DIE &ScopeDIE) {
   // We create children when the scope DIE is not null.
   SmallVector<std::unique_ptr<DIE>, 8> Children;
   if (DIE *ObjectPointer = createScopeChildrenDIE(TheCU, Scope, Children))
-    TheCU.addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
+    // The declaration will have the object_pointer, otherwise put it on the
+    // definition. This happens with ObjC blocks that have object_pointer on
+    // non-member functions.
+    if (!Sub.getFunctionDeclaration())
+      TheCU.addDIEEntry(ScopeDIE, dwarf::DW_AT_object_pointer, *ObjectPointer);
 
   // Add children
   for (auto &I : Children)
@@ -571,7 +576,7 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   if (DIE *ScopeDIE = TheCU.getDIE(Sub)) {
     AbstractSPDies.insert(std::make_pair(Sub, ScopeDIE));
-    createAndAddScopeChildren(TheCU, Scope, *ScopeDIE);
+    createAndAddScopeChildren(TheCU, Scope, Sub, *ScopeDIE);
   }
 }
 
@@ -588,7 +593,7 @@ DIE &DwarfDebug::constructSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   DIE &ScopeDIE = updateSubprogramScopeDIE(TheCU, Sub);
 
-  createAndAddScopeChildren(TheCU, Scope, ScopeDIE);
+  createAndAddScopeChildren(TheCU, Scope, Sub, ScopeDIE);
 
   return ScopeDIE;
 }

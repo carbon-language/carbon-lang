@@ -416,7 +416,7 @@ public:
                                             bool isScopeAbstract);
 
   /// constructSubprogramArguments - Construct function argument DIEs.
-  void constructSubprogramArguments(DIE &Buffer, DIArray Args);
+  DIE *constructSubprogramArguments(DIE &Buffer, DIArray Args);
 
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.

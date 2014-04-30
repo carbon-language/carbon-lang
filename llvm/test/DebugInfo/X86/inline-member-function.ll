@@ -20,11 +20,20 @@
 ; CHECK-NOT: DW_AT_object_pointer
 ; CHECK: DW_TAG
 
-; But make sure we emit DW_AT_object_pointer on the abstract definition.
-; CHECK: [[ABSTRACT_ORIGIN]]: DW_TAG_subprogram
+; But make sure we emit DW_AT_object_pointer on the declaration.
+; CHECK: DW_TAG_structure_type
+; CHECK-NEXT: DW_AT_name {{.*}} "foo"
 ; CHECK-NOT: NULL
-; CHECK-NOT: TAG
+; CHECK: [[DECLARATION:0x[0-9a-e]*]]: DW_TAG_subprogram
+; CHECK-NOT: DW_TAG
 ; CHECK: DW_AT_object_pointer
+
+; But don't put it on the abstract definition, either.
+; CHECK: [[ABSTRACT_ORIGIN]]: DW_TAG_subprogram
+; CHECK-NEXT: DW_AT_specification {{.*}}{[[DECLARATION]]}
+; CHECK-NOT: NULL
+; CHECK-NOT: DW_AT_object_pointer
+; CHECK: DW_TAG_formal_parameter
 
 %struct.foo = type { i8 }
 
