@@ -42,7 +42,7 @@ define <16 x i8> @v_bicimmQ(<16 x i8>* %A) nounwind {
 
 define <2 x double> @foo(<2 x double> %bar) nounwind {
 ; CHECK: foo
-; CHECK: fmov.2d	v1, #1.000000e+00
+; CHECK: fmov.2d	v1, #1.0000000
   %add = fadd <2 x double> %bar, <double 1.0, double 1.0>
   ret <2 x double> %add
 }
@@ -122,13 +122,13 @@ ret <2 x i64> <i64 71777214294589695, i64 71777214294589695>
 define <4 x i32> @movi_4s_imm_t11() nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: movi_4s_imm_t11:
-; CHECK: fmov.4s v0, #-3.281250e-01
+; CHECK: fmov.4s v0, #-0.32812500
 ret <4 x i32> <i32 3198681088, i32 3198681088, i32 3198681088, i32 3198681088>
 }
 
 define <2 x i64> @movi_2d_imm_t12() nounwind readnone ssp {
 entry:
 ; CHECK-LABEL: movi_2d_imm_t12:
-; CHECK: fmov.2d v0, #-1.718750e-01
+; CHECK: fmov.2d v0, #-0.17187500
 ret <2 x i64> <i64 13818732506632945664, i64 13818732506632945664>
 }

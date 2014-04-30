@@ -1221,12 +1221,10 @@ void ARM64InstPrinter::printMemoryRegOffset(const MCInst *MI, unsigned OpNum,
 void ARM64InstPrinter::printFPImmOperand(const MCInst *MI, unsigned OpNum,
                                          raw_ostream &O) {
   const MCOperand &MO = MI->getOperand(OpNum);
-  O << '#';
-  if (MO.isFPImm())
-    // FIXME: Should this ever happen?
-    O << MO.getFPImm();
-  else
-    O << ARM64_AM::getFPImmFloat(MO.getImm());
+  float FPImm = MO.isFPImm() ? MO.getFPImm() : ARM64_AM::getFPImmFloat(MO.getImm());
+
+  // 8 decimal places are enough to perfectly represent permitted floats.
+  O << format("#%.8f", FPImm);
 }
 
 static unsigned getNextVectorRegister(unsigned Reg, unsigned Stride = 1) {

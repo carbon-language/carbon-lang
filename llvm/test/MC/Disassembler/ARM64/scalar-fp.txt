@@ -184,10 +184,10 @@
 0x01 0xf0 0x7b 0x1e
 0x01 0xf0 0x6b 0x1e
 
-# CHECK: fmov s1, #1.250000e-01
-# CHECK: fmov d1, #1.250000e-01
-# CHECK: fmov d1, #-4.843750e-01
-# CHECK: fmov d1, #4.843750e-01
+# CHECK: fmov s1, #0.12500000
+# CHECK: fmov d1, #0.12500000
+# CHECK: fmov d1, #-0.48437500
+# CHECK: fmov d1, #0.48437500
 
 0x41 0x40 0x20 0x1e
 0x41 0x40 0x60 0x1e

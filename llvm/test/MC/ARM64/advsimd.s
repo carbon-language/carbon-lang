@@ -816,13 +816,13 @@ foo:
 
   fmov.2d v0, #1.250000e-01
 
-; CHECK: fmov.2d v0, #1.250000e-01             ; encoding: [0x00,0xf4,0x02,0x6f]
+; CHECK: fmov.2d v0, #0.12500000             ; encoding: [0x00,0xf4,0x02,0x6f]
 
   fmov.2s v0, #1.250000e-01
   fmov.4s v0, #1.250000e-01
 
-; CHECK: fmov.2s v0, #1.250000e-01             ; encoding: [0x00,0xf4,0x02,0x0f]
-; CHECK: fmov.4s v0, #1.250000e-01             ; encoding: [0x00,0xf4,0x02,0x4f]
+; CHECK: fmov.2s v0, #0.12500000             ; encoding: [0x00,0xf4,0x02,0x0f]
+; CHECK: fmov.4s v0, #0.12500000             ; encoding: [0x00,0xf4,0x02,0x4f]
 
   orr.2s  v0, #1
   orr.2s  v0, #1, lsl #0

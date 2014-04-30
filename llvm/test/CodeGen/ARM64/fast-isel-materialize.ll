@@ -3,14 +3,14 @@
 ; Materialize using fmov
 define void @float_(float* %value) {
 ; CHECK: @float_
-; CHECK: fmov s0, #1.250000e+00
+; CHECK: fmov s0, #1.25000000
   store float 1.250000e+00, float* %value, align 4
   ret void
 }
 
 define void @double_(double* %value) {
 ; CHECK: @double_
-; CHECK: fmov d0, #1.250000e+00
+; CHECK: fmov d0, #1.25000000
   store double 1.250000e+00, double* %value, align 8
   ret void
 }
