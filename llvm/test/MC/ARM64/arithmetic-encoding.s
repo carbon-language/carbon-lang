@@ -47,11 +47,11 @@ foo:
   add x3, x4, #0, lsl #12
   add sp, sp, #32
 
-; CHECK: add w3, w4, #4194304        ; encoding: [0x83,0x00,0x50,0x11]
-; CHECK: add w3, w4, #4194304        ; encoding: [0x83,0x00,0x50,0x11]
+; CHECK: add w3, w4, #1024, lsl #12  ; encoding: [0x83,0x00,0x50,0x11]
+; CHECK: add w3, w4, #1024, lsl #12  ; encoding: [0x83,0x00,0x50,0x11]
 ; CHECK: add w3, w4, #0, lsl #12     ; encoding: [0x83,0x00,0x40,0x11]
-; CHECK: add x3, x4, #4194304        ; encoding: [0x83,0x00,0x50,0x91]
-; CHECK: add x3, x4, #4194304        ; encoding: [0x83,0x00,0x50,0x91]
+; CHECK: add x3, x4, #1024, lsl #12  ; encoding: [0x83,0x00,0x50,0x91]
+; CHECK: add x3, x4, #1024, lsl #12  ; encoding: [0x83,0x00,0x50,0x91]
 ; CHECK: add x3, x4, #0, lsl #12     ; encoding: [0x83,0x00,0x40,0x91]
 ; CHECK: add sp, sp, #32             ; encoding: [0xff,0x83,0x00,0x91]
 
@@ -64,10 +64,10 @@ foo:
 
 ; CHECK: adds w3, w4, #1024          ; encoding: [0x83,0x00,0x10,0x31]
 ; CHECK: adds w3, w4, #1024          ; encoding: [0x83,0x00,0x10,0x31]
-; CHECK: adds w3, w4, #4194304       ; encoding: [0x83,0x00,0x50,0x31]
+; CHECK: adds w3, w4, #1024, lsl #12 ; encoding: [0x83,0x00,0x50,0x31]
 ; CHECK: adds x3, x4, #1024          ; encoding: [0x83,0x00,0x10,0xb1]
 ; CHECK: adds x3, x4, #1024          ; encoding: [0x83,0x00,0x10,0xb1]
-; CHECK: adds x3, x4, #4194304       ; encoding: [0x83,0x00,0x50,0xb1]
+; CHECK: adds x3, x4, #1024, lsl #12 ; encoding: [0x83,0x00,0x50,0xb1]
 
   sub w3, w4, #1024
   sub w3, w4, #1024, lsl #0
@@ -79,10 +79,10 @@ foo:
 
 ; CHECK: sub w3, w4, #1024           ; encoding: [0x83,0x00,0x10,0x51]
 ; CHECK: sub w3, w4, #1024           ; encoding: [0x83,0x00,0x10,0x51]
-; CHECK: sub w3, w4, #4194304        ; encoding: [0x83,0x00,0x50,0x51]
+; CHECK: sub w3, w4, #1024, lsl #12  ; encoding: [0x83,0x00,0x50,0x51]
 ; CHECK: sub x3, x4, #1024           ; encoding: [0x83,0x00,0x10,0xd1]
 ; CHECK: sub x3, x4, #1024           ; encoding: [0x83,0x00,0x10,0xd1]
-; CHECK: sub x3, x4, #4194304        ; encoding: [0x83,0x00,0x50,0xd1]
+; CHECK: sub x3, x4, #1024, lsl #12  ; encoding: [0x83,0x00,0x50,0xd1]
 ; CHECK: sub sp, sp, #32             ; encoding: [0xff,0x83,0x00,0xd1]
 
   subs w3, w4, #1024
@@ -94,10 +94,10 @@ foo:
 
 ; CHECK: subs w3, w4, #1024          ; encoding: [0x83,0x00,0x10,0x71]
 ; CHECK: subs w3, w4, #1024          ; encoding: [0x83,0x00,0x10,0x71]
-; CHECK: subs w3, w4, #4194304       ; encoding: [0x83,0x00,0x50,0x71]
+; CHECK: subs w3, w4, #1024, lsl #12 ; encoding: [0x83,0x00,0x50,0x71]
 ; CHECK: subs x3, x4, #1024          ; encoding: [0x83,0x00,0x10,0xf1]
 ; CHECK: subs x3, x4, #1024          ; encoding: [0x83,0x00,0x10,0xf1]
-; CHECK: subs x3, x4, #4194304       ; encoding: [0x83,0x00,0x50,0xf1]
+; CHECK: subs x3, x4, #1024, lsl #12 ; encoding: [0x83,0x00,0x50,0xf1]
 
 ;==---------------------------------------------------------------------------==
 ; Add/Subtract register with (optional) shift

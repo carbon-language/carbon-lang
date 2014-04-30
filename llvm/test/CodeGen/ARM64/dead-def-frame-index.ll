@@ -13,6 +13,6 @@ define i32 @test1() #0 {
   ret i32 %tmp4
 
   ; CHECK-LABEL: test1
-  ; CHECK:   adds [[TEMP:[a-z0-9]+]], sp, #16384
+  ; CHECK:   adds [[TEMP:[a-z0-9]+]], sp, #4, lsl #12
   ; CHECK:   adds [[TEMP]], [[TEMP]], #15
 }

@@ -5,7 +5,7 @@
     add sp, sp, 32
 
 ; Optional shift
-; CHECK: adds x3, x4, #4194304       ; encoding: [0x83,0x00,0x50,0xb1]
+; CHECK: adds x3, x4, #1024, lsl #12 ; encoding: [0x83,0x00,0x50,0xb1]
 adds x3, x4, 1024, lsl 12
 
 ; Optional extend

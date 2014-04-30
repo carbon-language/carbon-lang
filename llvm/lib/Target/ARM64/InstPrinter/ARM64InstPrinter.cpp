@@ -1104,10 +1104,12 @@ void ARM64InstPrinter::printAddSubImm(const MCInst *MI, unsigned OpNum,
     assert(Val == MO.getImm() && "Add/sub immediate out of range!");
     unsigned Shift =
         ARM64_AM::getShiftValue(MI->getOperand(OpNum + 1).getImm());
-    O << '#' << (Val << Shift);
-    // Distinguish "0, lsl #12" from "0, lsl #0".
-    if (Val == 0 && Shift != 0)
+    O << '#' << Val;
+    if (Shift != 0)
       printShifter(MI, OpNum + 1, O);
+
+    if (CommentStream)
+      *CommentStream << "=#" << (Val << Shift) << '\n';
   } else {
     assert(MO.isExpr() && "Unexpected operand type!");
     O << *MO.getExpr();

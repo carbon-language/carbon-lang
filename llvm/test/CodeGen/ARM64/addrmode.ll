@@ -37,7 +37,7 @@ define void @t3() {
 
 ; base + unsigned offset (> imm12 * size of type in bytes)
 ; CHECK: @t4
-; CHECK: add [[ADDREG:x[0-9]+]], x{{[0-9]+}}, #32768
+; CHECK: add [[ADDREG:x[0-9]+]], x{{[0-9]+}}, #8, lsl #12
 ; CHECK: ldr xzr, [
 ; CHECK: [[ADDREG]]]
 ; CHECK: ret
@@ -60,7 +60,7 @@ define void @t5(i64 %a) {
 ; base + reg + imm
 ; CHECK: @t6
 ; CHECK: add [[ADDREG:x[0-9]+]], x{{[0-9]+}}, x{{[0-9]+}}, lsl #3
-; CHECK-NEXT: add [[ADDREG]], [[ADDREG]], #32768
+; CHECK-NEXT: add [[ADDREG]], [[ADDREG]], #8, lsl #12
 ; CHECK: ldr xzr, [
 ; CHECK: [[ADDREG]]]
 ; CHECK: ret

@@ -40,8 +40,8 @@
 0x83 0x00 0x40 0x91
 0xff 0x83 0x00 0x91
 
-# CHECK: add w3, w4, #4194304
-# CHECK: add x3, x4, #4194304
+# CHECK: add w3, w4, #1024, lsl #12
+# CHECK: add x3, x4, #1024, lsl #12
 # CHECK: add x3, x4, #0, lsl #12
 # CHECK: add sp, sp, #32
 
@@ -52,9 +52,9 @@
 0xff 0x83 0x00 0xb1
 
 # CHECK: adds w3, w4, #1024
-# CHECK: adds w3, w4, #4194304
+# CHECK: adds w3, w4, #1024, lsl #12
 # CHECK: adds x3, x4, #1024
-# CHECK: adds x3, x4, #4194304
+# CHECK: adds x3, x4, #1024, lsl #12
 # CHECK: cmn  sp, #32
 
 0x83 0x00 0x10 0x51
@@ -64,9 +64,9 @@
 0xff 0x83 0x00 0xd1
 
 # CHECK: sub w3, w4, #1024
-# CHECK: sub w3, w4, #4194304
+# CHECK: sub w3, w4, #1024, lsl #12
 # CHECK: sub x3, x4, #1024
-# CHECK: sub x3, x4, #4194304
+# CHECK: sub x3, x4, #1024, lsl #12
 # CHECK: sub sp, sp, #32
 
 0x83 0x00 0x10 0x71
@@ -76,9 +76,9 @@
 0xff 0x83 0x00 0xf1
 
 # CHECK: subs w3, w4, #1024
-# CHECK: subs w3, w4, #4194304
+# CHECK: subs w3, w4, #1024, lsl #12
 # CHECK: subs x3, x4, #1024
-# CHECK: subs x3, x4, #4194304
+# CHECK: subs x3, x4, #1024, lsl #12
 # CHECK: cmp  sp, #32
 
 #==---------------------------------------------------------------------------==

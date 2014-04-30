@@ -7,9 +7,9 @@ target triple = "arm64-apple-macosx10"
 ; shift left (up to 12). I.e., 16773120 is the biggest value.
 ; <rdar://12513931>
 ; CHECK-LABEL: foo:
-; CHECK: sub sp, sp, #16773120
-; CHECK: sub sp, sp, #16773120
-; CHECK: sub sp, sp, #8192
+; CHECK: sub sp, sp, #4095, lsl #12
+; CHECK: sub sp, sp, #4095, lsl #12
+; CHECK: sub sp, sp, #2, lsl #12
 define void @foo() nounwind ssp {
 entry:
   %buffer = alloca [33554432 x i8], align 1

@@ -136,7 +136,7 @@ define void @test_alloca_large_frame(i64 %n) {
 ; CHECK-ARM64: stp     x20, x19, [sp, #-32]!
 ; CHECK-ARM64: stp     x29, x30, [sp, #16]
 ; CHECK-ARM64: add     x29, sp, #16
-; CHECK-ARM64: sub     sp, sp, #7999488
+; CHECK-ARM64: sub     sp, sp, #1953, lsl #12
 ; CHECK-ARM64: sub     sp, sp, #512
 
   %addr1 = alloca i8, i64 %n

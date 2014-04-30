@@ -67,7 +67,7 @@ foo:
   cmn x4, x5, uxtx #1
 
 ; CHECK: cmn	w1, #3                  ; encoding: [0x3f,0x0c,0x00,0x31]
-; CHECK: cmn	x2, #4194304            ; encoding: [0x5f,0x00,0x50,0xb1]
+; CHECK: cmn	x2, #1024, lsl #12      ; encoding: [0x5f,0x00,0x50,0xb1]
 ; CHECK: cmn	w4, w5                  ; encoding: [0x9f,0x00,0x05,0x2b]
 ; CHECK: cmn	x6, x7                  ; encoding: [0xdf,0x00,0x07,0xab]
 ; CHECK: cmn	w8, w9, asr #3          ; encoding: [0x1f,0x0d,0x89,0x2b]
@@ -92,7 +92,7 @@ foo:
   cmp w9, w8, uxtw
   cmp wsp, w9, lsl #0
 
-; CHECK: cmp	w1, #4194304            ; encoding: [0x3f,0x00,0x50,0x71]
+; CHECK: cmp	w1, #1024, lsl #12      ; encoding: [0x3f,0x00,0x50,0x71]
 ; CHECK: cmp	x2, #1024               ; encoding: [0x5f,0x00,0x10,0xf1]
 ; CHECK: cmp	w4, w5                  ; encoding: [0x9f,0x00,0x05,0x6b]
 ; CHECK: cmp	x6, x7                  ; encoding: [0xdf,0x00,0x07,0xeb]

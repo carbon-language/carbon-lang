@@ -14,7 +14,7 @@ for.body:
 ; CHECK: for.body
 ; CHECK: ldr w{{[0-9]+}}, [x{{[0-9]+}}]
 ; CHECK: add x[[REG:[0-9]+]],
-; CHECK:                      x[[REG]], #4096
+; CHECK:                      x[[REG]], #1, lsl  #12
   %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
   %0 = shl nsw i64 %indvars.iv, 12
   %add = add nsw i64 %0, 34628173824

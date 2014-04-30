@@ -128,7 +128,7 @@ define i8 @atomic_load_relaxed_8(i8* %p, i32 %off32) {
   %ptr_random = getelementptr i8* %p, i32 1191936 ; 0x123000 (i.e. ADD imm)
   %val_random = load atomic i8* %ptr_random unordered, align 1
   %tot3 = add i8 %tot2, %val_random
-; CHECK: add x[[ADDR:[0-9]+]], x0, #1191936
+; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: ldrb {{w[0-9]+}}, [x[[ADDR]]]
 
   ret i8 %tot3
@@ -153,7 +153,7 @@ define i16 @atomic_load_relaxed_16(i16* %p, i32 %off32) {
   %ptr_random = getelementptr i16* %p, i32 595968 ; 0x123000/2 (i.e. ADD imm)
   %val_random = load atomic i16* %ptr_random unordered, align 2
   %tot3 = add i16 %tot2, %val_random
-; CHECK: add x[[ADDR:[0-9]+]], x0, #1191936
+; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: ldrh {{w[0-9]+}}, [x[[ADDR]]]
 
   ret i16 %tot3
@@ -178,7 +178,7 @@ define i32 @atomic_load_relaxed_32(i32* %p, i32 %off32) {
   %ptr_random = getelementptr i32* %p, i32 297984 ; 0x123000/4 (i.e. ADD imm)
   %val_random = load atomic i32* %ptr_random unordered, align 4
   %tot3 = add i32 %tot2, %val_random
-; CHECK: add x[[ADDR:[0-9]+]], x0, #1191936
+; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: ldr {{w[0-9]+}}, [x[[ADDR]]]
 
   ret i32 %tot3
@@ -203,7 +203,7 @@ define i64 @atomic_load_relaxed_64(i64* %p, i32 %off32) {
   %ptr_random = getelementptr i64* %p, i32 148992 ; 0x123000/8 (i.e. ADD imm)
   %val_random = load atomic i64* %ptr_random unordered, align 8
   %tot3 = add i64 %tot2, %val_random
-; CHECK: add x[[ADDR:[0-9]+]], x0, #1191936
+; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: ldr {{x[0-9]+}}, [x[[ADDR]]]
 
   ret i64 %tot3
@@ -233,7 +233,7 @@ define void @atomic_store_relaxed_8(i8* %p, i32 %off32, i8 %val) {
 
   %ptr_random = getelementptr i8* %p, i32 1191936 ; 0x123000 (i.e. ADD imm)
   store atomic i8 %val, i8* %ptr_random unordered, align 1
-; CHECK: add x[[ADDR:[0-9]+]], x0, #1191936
+; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: strb {{w[0-9]+}}, [x[[ADDR]]]
 
   ret void
@@ -255,7 +255,7 @@ define void @atomic_store_relaxed_16(i16* %p, i32 %off32, i16 %val) {
 
   %ptr_random = getelementptr i16* %p, i32 595968 ; 0x123000/2 (i.e. ADD imm)
   store atomic i16 %val, i16* %ptr_random unordered, align 2
-; CHECK: add x[[ADDR:[0-9]+]], x0, #1191936
+; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: strh {{w[0-9]+}}, [x[[ADDR]]]
 
   ret void
@@ -277,7 +277,7 @@ define void @atomic_store_relaxed_32(i32* %p, i32 %off32, i32 %val) {
 
   %ptr_random = getelementptr i32* %p, i32 297984 ; 0x123000/4 (i.e. ADD imm)
   store atomic i32 %val, i32* %ptr_random unordered, align 4
-; CHECK: add x[[ADDR:[0-9]+]], x0, #1191936
+; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: str {{w[0-9]+}}, [x[[ADDR]]]
 
   ret void
@@ -299,7 +299,7 @@ define void @atomic_store_relaxed_64(i64* %p, i32 %off32, i64 %val) {
 
   %ptr_random = getelementptr i64* %p, i32 148992 ; 0x123000/8 (i.e. ADD imm)
   store atomic i64 %val, i64* %ptr_random unordered, align 8
-; CHECK: add x[[ADDR:[0-9]+]], x0, #1191936
+; CHECK: add x[[ADDR:[0-9]+]], x0, #291, lsl #12
 ; CHECK: str {{x[0-9]+}}, [x[[ADDR]]]
 
   ret void
