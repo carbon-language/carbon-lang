@@ -117,36 +117,38 @@ uint64_t MCAsmLayout::getFragmentOffset(const MCFragment *F) const {
   return F->Offset;
 }
 
+// Simple getSymbolOffset helper for the non-varibale case.
+static uint64_t getLabelOffset(const MCAsmLayout &Layout,
+                               const MCSymbolData &SD) {
+  if (!SD.getFragment())
+    report_fatal_error("unable to evaluate offset to undefined symbol '" +
+                       SD.getSymbol().getName() + "'");
+  return Layout.getFragmentOffset(SD.getFragment()) + SD.getOffset();
+}
+
 uint64_t MCAsmLayout::getSymbolOffset(const MCSymbolData *SD) const {
   const MCSymbol &S = SD->getSymbol();
 
-  // If this is a variable, then recursively evaluate now.
-  if (S.isVariable()) {
-    MCValue Target;
-    if (!S.getVariableValue()->EvaluateAsRelocatable(Target, this))
-      report_fatal_error("unable to evaluate offset for variable '" +
-                         S.getName() + "'");
+  if (!S.isVariable())
+    return getLabelOffset(*this, *SD);
 
-    // Verify that any used symbols are defined.
-    if (Target.getSymA() && Target.getSymA()->getSymbol().isUndefined())
-      report_fatal_error("unable to evaluate offset to undefined symbol '" +
-                         Target.getSymA()->getSymbol().getName() + "'");
-    if (Target.getSymB() && Target.getSymB()->getSymbol().isUndefined())
-      report_fatal_error("unable to evaluate offset to undefined symbol '" +
-                         Target.getSymB()->getSymbol().getName() + "'");
+  // If SD is a variable, evaluate it.
+  MCValue Target;
+  if (!S.getVariableValue()->EvaluateAsValue(Target, this))
+    report_fatal_error("unable to evaluate offset for variable '" +
+                       S.getName() + "'");
 
-    uint64_t Offset = Target.getConstant();
-    if (Target.getSymA())
-      Offset += getSymbolOffset(&Assembler.getSymbolData(
-                                  Target.getSymA()->getSymbol()));
-    if (Target.getSymB())
-      Offset -= getSymbolOffset(&Assembler.getSymbolData(
-                                  Target.getSymB()->getSymbol()));
-    return Offset;
-  }
+  uint64_t Offset = Target.getConstant();
 
-  assert(SD->getFragment() && "Invalid getOffset() on undefined symbol!");
-  return getFragmentOffset(SD->getFragment()) + SD->getOffset();
+  const MCSymbolRefExpr *A = Target.getSymA();
+  if (A)
+    Offset += getLabelOffset(*this, Assembler.getSymbolData(A->getSymbol()));
+
+  const MCSymbolRefExpr *B = Target.getSymB();
+  if (B)
+    Offset -= getLabelOffset(*this, Assembler.getSymbolData(B->getSymbol()));
+
+  return Offset;
 }
 
 uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
