@@ -31,6 +31,8 @@ target triple = "i386-apple-macosx10.9"
 ; Function Attrs: nounwind optsize ssp
 define fastcc void @__XXX1(%struct.A* %ht) #0 {
 entry:
+  %const72 = bitcast i128 72 to i128
+  %const3 = bitcast i128 3 to i128
   switch i32 undef, label %if.end196 [
     i32 1, label %sw.bb.i
     i32 3, label %sw.bb2.i
@@ -39,13 +41,13 @@ entry:
 sw.bb.i:                                          ; preds = %entry
   %call.i.i.i = tail call i32 undef(%struct.A* %ht, i8 zeroext 22, i32 undef, i32 0, %struct.D* undef)
   %bf.load.i.i = load i128* undef, align 4
-  %bf.lshr.i.i = lshr i128 %bf.load.i.i, 72
+  %bf.lshr.i.i = lshr i128 %bf.load.i.i, %const72
   %shl1.i.i = shl nuw nsw i128 %bf.lshr.i.i, 8
   %shl.i.i = trunc i128 %shl1.i.i to i32
   br i1 undef, label %cond.false10.i.i, label %__XXX2.exit.i.i
 
 __XXX2.exit.i.i:                    ; preds = %sw.bb.i
-  %extract11.i.i.i = lshr i128 %bf.load.i.i, 3
+  %extract11.i.i.i = lshr i128 %bf.load.i.i, %const3
   %extract.t12.i.i.i = trunc i128 %extract11.i.i.i to i32
   %bf.cast7.i.i.i = and i32 %extract.t12.i.i.i, 3
   %arrayidx.i.i.i = getelementptr inbounds %struct.A* %ht, i32 0, i32 3, i32 %bf.cast7.i.i.i
@@ -69,11 +71,11 @@ for.body.i.i:                                     ; preds = %for.body.i.i, %cond
   br i1 %or.cond, label %for.body.i.i, label %if.end196
 
 sw.bb2.i:                                         ; preds = %entry
-  %bf.lshr.i85.i = lshr i128 undef, 72
+  %bf.lshr.i85.i = lshr i128 undef, %const72
   br i1 undef, label %if.end196, label %__XXX2.exit.i95.i
 
 __XXX2.exit.i95.i:                  ; preds = %sw.bb2.i
-  %extract11.i.i91.i = lshr i128 undef, 3
+  %extract11.i.i91.i = lshr i128 undef, %const3
   br label %if.end196
 
 if.end196:                                        ; preds = %__XXX2.exit.i95.i, %sw.bb2.i, %for.body.i.i, %cond.end12.i.i, %entry
