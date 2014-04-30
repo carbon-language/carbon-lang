@@ -290,7 +290,17 @@ TEST(LazyCallGraphTest, BasicGraphMutation) {
   CG.insertEdge(C, C.getFunction());
   EXPECT_EQ(2, std::distance(C.begin(), C.end()));
   EXPECT_EQ(&B, &*C.begin());
-  EXPECT_EQ(&C, &*(C.begin() + 1));
+  EXPECT_EQ(&C, &*std::next(C.begin()));
+
+  CG.removeEdge(C, B.getFunction());
+  EXPECT_EQ(1, std::distance(C.begin(), C.end()));
+  EXPECT_EQ(&C, &*C.begin());
+
+  CG.removeEdge(C, C.getFunction());
+  EXPECT_EQ(0, std::distance(C.begin(), C.end()));
+
+  CG.removeEdge(B, C.getFunction());
+  EXPECT_EQ(0, std::distance(B.begin(), B.end()));
 }
 
 TEST(LazyCallGraphTest, MultiArmSCC) {

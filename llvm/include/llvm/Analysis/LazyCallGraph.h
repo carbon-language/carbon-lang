@@ -115,7 +115,7 @@ public:
   /// the graph.
   class iterator
       : public iterator_adaptor_base<iterator, NodeVectorImplT::iterator,
-                                     std::random_access_iterator_tag, Node> {
+                                     std::bidirectional_iterator_tag, Node> {
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
 
@@ -124,10 +124,29 @@ public:
 
     // Build the iterator for a specific position in a node list.
     iterator(LazyCallGraph &G, NodeVectorImplT::iterator NI)
-        : iterator_adaptor_base(NI), G(&G) {}
+        : iterator_adaptor_base(NI), G(&G) {
+      while (I->isNull())
+        ++I;
+    }
 
   public:
     iterator() {}
+
+    using iterator_adaptor_base::operator++;
+    iterator &operator++() {
+      do {
+        ++I;
+      } while (I->isNull());
+      return *this;
+    }
+
+    using iterator_adaptor_base::operator--;
+    iterator &operator--() {
+      do {
+        --I;
+      } while (I->isNull());
+      return *this;
+    }
 
     reference operator*() const {
       if (I->is<Node *>())

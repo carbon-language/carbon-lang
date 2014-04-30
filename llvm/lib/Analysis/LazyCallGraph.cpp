@@ -88,7 +88,7 @@ void LazyCallGraph::Node::removeEdgeInternal(Function &Callee) {
   assert(IndexMapI != CalleeIndexMap.end() &&
          "Callee not in the callee set for this caller?");
 
-  Callees.erase(Callees.begin() + IndexMapI->second);
+  Callees[IndexMapI->second] = nullptr;
   CalleeIndexMap.erase(IndexMapI);
 }
 
@@ -115,11 +115,14 @@ LazyCallGraph::LazyCallGraph(Module &M) : NextDFSNumber(0) {
                   "entry set.\n");
   findCallees(Worklist, Visited, EntryNodes, EntryIndexMap);
 
-  for (auto &Entry : EntryNodes)
+  for (auto &Entry : EntryNodes) {
+    assert(!Entry.isNull() &&
+           "We can't have removed edges before we finish the constructor!");
     if (Function *F = Entry.dyn_cast<Function *>())
       SCCEntryNodes.push_back(F);
     else
       SCCEntryNodes.push_back(&Entry.get<Node *>()->getFunction());
+  }
 }
 
 LazyCallGraph::LazyCallGraph(LazyCallGraph &&G)
@@ -391,8 +394,9 @@ void LazyCallGraph::updateGraphPtrs() {
       Node *N = Worklist.pop_back_val();
       N->G = this;
       for (auto &Callee : N->Callees)
-        if (Node *CalleeN = Callee.dyn_cast<Node *>())
-          Worklist.push_back(CalleeN);
+        if (!Callee.isNull())
+          if (Node *CalleeN = Callee.dyn_cast<Node *>())
+            Worklist.push_back(CalleeN);
     }
   }
 
