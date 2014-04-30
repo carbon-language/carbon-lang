@@ -844,14 +844,14 @@ namespace dr474 { // dr474: yes
 
 // dr475 FIXME write a codegen test
 
-namespace dr477 { // dr477: no
+namespace dr477 { // dr477: 3.5
   struct A {
     explicit A();
     virtual void f();
   };
   struct B {
-    friend explicit A::A(); // FIXME: reject this
-    friend virtual void A::f(); // FIXME: reject this
+    friend explicit A::A(); // expected-error {{'explicit' is invalid in friend declarations}}
+    friend virtual void A::f(); // expected-error {{'virtual' is invalid in friend declarations}}
   };
   explicit A::A() {} // expected-error {{can only be specified inside the class definition}}
   virtual void A::f() {} // expected-error {{can only be specified inside the class definition}}

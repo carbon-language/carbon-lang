@@ -1125,14 +1125,41 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP, const PrintingPoli
       ThreadHint = FixItHint::CreateRemoval(SCLoc);
     }
 
-    Diag(D, SCLoc, diag::err_friend_storage_spec)
+    Diag(D, SCLoc, diag::err_friend_decl_spec)
       << SpecName << StorageHint << ThreadHint;
 
     ClearStorageClassSpecs();
   }
 
+  // C++11 [dcl.fct.spec]p5:
+  //   The virtual specifier shall be used only in the initial
+  //   declaration of a non-static class member function;
+  // C++11 [dcl.fct.spec]p6:
+  //   The explicit specifier shall be used only in the declaration of
+  //   a constructor or conversion function within its class
+  //   definition;
+  if (isFriendSpecified() && (isVirtualSpecified() || isExplicitSpecified())) {
+    StringRef Keyword;
+    SourceLocation SCLoc;
+
+    if (isVirtualSpecified()) {
+      Keyword = "virtual";
+      SCLoc = getVirtualSpecLoc();
+    } else {
+      Keyword = "explicit";
+      SCLoc = getExplicitSpecLoc();
+    }
+
+    FixItHint Hint = FixItHint::CreateRemoval(SCLoc);
+    Diag(D, SCLoc, diag::err_friend_decl_spec)
+      << Keyword << Hint;
+
+    FS_virtual_specified = FS_explicit_specified = false;
+    FS_virtualLoc = FS_explicitLoc = SourceLocation();
+  }
+
   assert(!TypeSpecOwned || isDeclRep((TST) TypeSpecType));
- 
+
   // Okay, now we can infer the real type.
 
   // TODO: return "auto function" and other bad things based on the real type.
