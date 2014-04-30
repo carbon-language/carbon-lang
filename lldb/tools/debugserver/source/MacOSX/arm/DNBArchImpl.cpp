@@ -1442,16 +1442,16 @@ const char *g_invalidate_q13[] { "q13",  "d26", "d27",  NULL };
 const char *g_invalidate_q14[] { "q14",  "d28", "d29",  NULL };
 const char *g_invalidate_q15[] { "q15",  "d30", "d31",  NULL };
 
-#define VFP_S_OFFSET_IDX(idx) (offsetof (DNBArchMachARM::FPU, __r[(idx)]) + offsetof (DNBArchMachARM::Context, vfp))
-#define VFP_D_OFFSET_IDX(idx) (VFP_S_OFFSET_IDX ((idx) * 2))
+#define VFP_S_OFFSET_IDX(idx) (((idx) % 4) * 4)  // offset into q reg: 0, 4, 8, 12
+#define VFP_D_OFFSET_IDX(idx) (((idx) % 2) * 8)  // offset into q reg: 0, 8
 #define VFP_Q_OFFSET_IDX(idx) (VFP_S_OFFSET_IDX ((idx) * 4))
 
 #define VFP_OFFSET_NAME(reg) (offsetof (DNBArchMachARM::FPU, __##reg) + offsetof (DNBArchMachARM::Context, vfp))
 
 #define FLOAT_FORMAT Float
 
-#define DEFINE_VFP_S_IDX(idx)  e_regSetVFP, vfp_s##idx, "s" #idx, NULL, IEEE754, FLOAT_FORMAT, 4, 0, INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
-#define DEFINE_VFP_D_IDX(idx)  e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, FLOAT_FORMAT, 8, 0, INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
+#define DEFINE_VFP_S_IDX(idx)  e_regSetVFP, vfp_s##idx, "s" #idx, NULL, IEEE754, FLOAT_FORMAT, 4, VFP_S_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
+#define DEFINE_VFP_D_IDX(idx)  e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, FLOAT_FORMAT, 8, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
 #define DEFINE_VFP_Q_IDX(idx)  e_regSetVFP, vfp_q##idx, "q" #idx, NULL, Vector, VectorOfUInt8, 16, VFP_Q_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_q##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM
 
 // Floating point registers
