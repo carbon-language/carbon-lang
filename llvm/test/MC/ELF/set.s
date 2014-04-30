@@ -5,7 +5,7 @@
 .set kernbase,0xffffffff80000000
 
 // CHECK:        Symbol {
-// CHECK:          Name: kernbase (1)
+// CHECK:          Name: kernbase
 // CHECK-NEXT:     Value: 0xFFFFFFFF80000000
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
@@ -26,7 +26,7 @@
 
 // Test that there is an undefined reference to bar
 // CHECK:        Symbol {
-// CHECK:          Name: bar (10)
+// CHECK:          Name: bar
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global

@@ -12,7 +12,7 @@
 
 
 // Test that both a and b show up in the correct section.
-// SYMBOLS:         Name: a (1)
+// SYMBOLS:         Name: a
 // SYMBOLS-NEXT:    Value: 0x0
 // SYMBOLS-NEXT:    Size: 0
 // SYMBOLS-NEXT:    Binding: Local (0x0)
@@ -21,7 +21,7 @@
 // SYMBOLS-NEXT:    Section: last (0xFF00)
 // SYMBOLS-NEXT:  }
 // SYMBOLS-NEXT:  Symbol {
-// SYMBOLS-NEXT:    Name: b (3)
+// SYMBOLS-NEXT:    Name: b
 // SYMBOLS-NEXT:    Value: 0x1
 // SYMBOLS-NEXT:    Size: 0
 // SYMBOLS-NEXT:    Binding: Local (0x0)
@@ -32,7 +32,7 @@
 
 
 // Test that this file has one section too many.
-// SYMBOLS:         Name: last (0)
+// SYMBOLS:         Name: last
 // SYMBOLS-NEXT:    Value: 0x0
 // SYMBOLS-NEXT:    Size: 0
 // SYMBOLS-NEXT:    Binding: Local (0x0)

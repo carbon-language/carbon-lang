@@ -80,7 +80,7 @@ bar15:
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar6 (21)
+// CHECK-NEXT:     Name: bar6
 // CHECK-NEXT:     Value: 0x18
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
@@ -89,7 +89,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar7 (26)
+// CHECK-NEXT:     Name: bar7
 // CHECK-NEXT:     Value: 0x18
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
@@ -98,7 +98,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar8 (31)
+// CHECK-NEXT:     Name: bar8
 // CHECK-NEXT:     Value: 0x1C
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
@@ -107,7 +107,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar9 (36)
+// CHECK-NEXT:     Name: bar9
 // CHECK-NEXT:     Value: 0x20
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
@@ -116,7 +116,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .text (0)
+// CHECK-NEXT:     Name: .text
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
@@ -125,7 +125,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .data (0)
+// CHECK-NEXT:     Name: .data
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
@@ -134,7 +134,7 @@ bar15:
 // CHECK-NEXT:     Section: .data (0x3)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .bss (0)
+// CHECK-NEXT:     Name: .bss
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
@@ -143,7 +143,7 @@ bar15:
 // CHECK-NEXT:     Section: .bss (0x4)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar10 (41)
+// CHECK-NEXT:     Name: bar10
 // CHECK-NEXT:     Value: 0x28
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
@@ -152,7 +152,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar11 (47)
+// CHECK-NEXT:     Name: bar11
 // CHECK-NEXT:     Value: 0x30
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
@@ -161,7 +161,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar12 (53)
+// CHECK-NEXT:     Name: bar12
 // CHECK-NEXT:     Value: 0x30
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
@@ -170,7 +170,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar13 (59)
+// CHECK-NEXT:     Name: bar13
 // CHECK-NEXT:     Value: 0x34
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
@@ -179,7 +179,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar14 (65)
+// CHECK-NEXT:     Name: bar14
 // CHECK-NEXT:     Value: 0x38
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
@@ -188,7 +188,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar15 (71)
+// CHECK-NEXT:     Name: bar15
 // CHECK-NEXT:     Value: 0x40
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
@@ -197,7 +197,7 @@ bar15:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar2 (1)
+// CHECK-NEXT:     Name: bar2
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
@@ -206,7 +206,7 @@ bar15:
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar3 (6)
+// CHECK-NEXT:     Name: bar3
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Weak
@@ -215,7 +215,7 @@ bar15:
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar4 (11)
+// CHECK-NEXT:     Name: bar4
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
@@ -224,7 +224,7 @@ bar15:
 // CHECK-NEXT:     Section: Undefined (0x0)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar5 (16)
+// CHECK-NEXT:     Name: bar5
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global

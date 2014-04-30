@@ -30,10 +30,8 @@ using namespace llvm;
 // This class has a deliberately small interface, since a lot of
 // implementation variation is possible.
 //
-// TODO: Use an ordered container with a suffix-based comparison in order
-// to deduplicate suffixes. std::map<> with a custom comparator is likely
-// to be the simplest implementation, but a suffix trie could be more
-// suitable for the job.
+// TODO: Use the StringTable builder from lib/Object instead, since it
+// will deduplicate suffixes.
 namespace {
 class StringTableBuilder {
   /// \brief Indices of strings currently present in `Buf`.

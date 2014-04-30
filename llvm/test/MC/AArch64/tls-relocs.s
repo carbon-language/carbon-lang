@@ -543,7 +543,7 @@
 
 // CHECK-ELF:      Symbols [
 // CHECK-ELF:        Symbol {
-// CHECK-ELF:          Name: var (6)
+// CHECK-ELF:          Name: var
 // CHECK-ELF-NEXT:     Value:
 // CHECK-ELF-NEXT:     Size:
 // CHECK-ELF-NEXT:     Binding: Global

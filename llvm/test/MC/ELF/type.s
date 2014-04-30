@@ -176,7 +176,7 @@ alias12:
 // CHECK-NEXT:     Section: .text (0x1)
 // CHECK-NEXT:   }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym1 (54)
+// CHECK-NEXT:    Name: sym1
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -185,7 +185,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym10 (162)
+// CHECK-NEXT:    Name: sym10
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -194,7 +194,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym11 (176)
+// CHECK-NEXT:    Name: sym11
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -203,7 +203,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym12 (190)
+// CHECK-NEXT:    Name: sym12
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -212,7 +212,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym2 (66)
+// CHECK-NEXT:    Name: sym2
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -221,7 +221,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym3 (78)
+// CHECK-NEXT:    Name: sym3
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -230,7 +230,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym4 (90)
+// CHECK-NEXT:    Name: sym4
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -239,7 +239,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym5 (102)
+// CHECK-NEXT:    Name: sym5
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -248,7 +248,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym6 (114)
+// CHECK-NEXT:    Name: sym6
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -257,7 +257,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym7 (126)
+// CHECK-NEXT:    Name: sym7
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -266,7 +266,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym8 (138)
+// CHECK-NEXT:    Name: sym8
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)
@@ -275,7 +275,7 @@ alias12:
 // CHECK-NEXT:    Section: .text (0x1)
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Symbol {
-// CHECK-NEXT:    Name: sym9 (150)
+// CHECK-NEXT:    Name: sym9
 // CHECK-NEXT:    Value: 0x0
 // CHECK-NEXT:    Size: 0
 // CHECK-NEXT:    Binding: Global (0x1)

@@ -49,7 +49,7 @@
 // Test that g1 and g2 are local, but g3 is an undefined global.
 
 // CHECK:        Symbol {
-// CHECK:          Name: g1 (1)
+// CHECK:          Name: g1
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
@@ -58,7 +58,7 @@
 // CHECK-NEXT:     Section: .foo (0x7)
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: g2 (4)
+// CHECK-NEXT:     Name: g2
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
@@ -68,7 +68,7 @@
 // CHECK-NEXT:   }
 
 // CHECK:        Symbol {
-// CHECK:          Name: g3 (7)
+// CHECK:          Name: g3
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global

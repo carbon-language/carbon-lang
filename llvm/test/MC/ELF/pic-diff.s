@@ -7,7 +7,7 @@
 // CHECK-NEXT: ]
 
 // CHECK:        Symbol {
-// CHECK:          Name: baz (5)
+// CHECK:          Name: baz
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
