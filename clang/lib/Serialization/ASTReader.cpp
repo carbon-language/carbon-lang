@@ -3430,6 +3430,9 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   llvm::SaveAndRestore<SourceLocation>
     SetCurImportLocRAII(CurrentImportLoc, ImportLoc);
 
+  // Defer any pending actions until we get to the end of reading the AST file.
+  Deserializing AnASTFile(this);
+
   // Bump the generation number.
   unsigned PreviousGeneration = CurrentGeneration++;
 
@@ -3741,24 +3744,6 @@ void ASTReader::InitializeContext() {
   if (DeserializationListener)
     DeserializationListener->DeclRead(PREDEF_DECL_TRANSLATION_UNIT_ID, 
                                       Context.getTranslationUnitDecl());
-
-  // For any declarations we have already loaded, load any update records.
-  {
-    // We're not back to a consistent state until all our pending update
-    // records have been loaded. There can be interdependencies between them.
-    Deserializing SomeUpdateRecords(this);
-    ReadingKindTracker ReadingKind(Read_Decl, *this);
-
-    // Make sure we load the declaration update records for the translation
-    // unit, if there are any.
-    // FIXME: Is this necessary any more?
-    loadDeclUpdateRecords(PREDEF_DECL_TRANSLATION_UNIT_ID,
-                          Context.getTranslationUnitDecl());
-
-    for (auto &Update : PendingUpdateRecords)
-      loadDeclUpdateRecords(Update.first, Update.second);
-    PendingUpdateRecords.clear();
-  }
 
   // FIXME: Find a better way to deal with collisions between these
   // built-in types. Right now, we just ignore the problem.
@@ -8055,6 +8040,13 @@ void ASTReader::finishPendingActions() {
       DeclContext *SemaDC = cast<DeclContext>(GetDecl(Info.SemaDC));
       DeclContext *LexicalDC = cast<DeclContext>(GetDecl(Info.LexicalDC));
       Info.D->setDeclContextsImpl(SemaDC, LexicalDC, getContext());
+    }
+
+    // Perform any pending declaration updates.
+    while (!PendingUpdateRecords.empty()) {
+      auto Update = PendingUpdateRecords.pop_back_val();
+      ReadingKindTracker ReadingKind(Read_Decl, *this);
+      loadDeclUpdateRecords(Update.first, Update.second);
     }
 
     // Trigger the import of the full definition of each class that had any

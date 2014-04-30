@@ -2801,7 +2801,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   assert(Idx == Record.size());
 
   // Load any relevant update records.
-  loadDeclUpdateRecords(ID, D);
+  PendingUpdateRecords.push_back(std::make_pair(ID, D));
 
   // Load the categories after recursive loading is finished.
   if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(D))

@@ -84,3 +84,5 @@ template<typename T> void MergePatternDecl<T>::f(Type type) {}
 // CHECK: define {{.*}}@_ZN21ExplicitInstantiationILb0ELb1EE1fEv(
 template struct ExplicitInstantiation<false, true>;
 template struct ExplicitInstantiation<true, true>;
+
+void testDelayUpdatesImpl() { testDelayUpdates<int>(); }
