@@ -332,7 +332,7 @@ bool MCAssembler::isThumbFunc(const MCSymbol *Symbol) const {
   if (!Symbol->isVariable())
     return false;
 
-  // FIXME: It looks like gas support some cases of the form "foo + 2". It
+  // FIXME: It looks like gas supports some cases of the form "foo + 2". It
   // is not clear if that is a bug or a feature.
   const MCExpr *Expr = Symbol->getVariableValue();
   const MCSymbolRefExpr *Ref = dyn_cast<MCSymbolRefExpr>(Expr);
