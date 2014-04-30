@@ -486,34 +486,16 @@ void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
     Write16(ShstrtabIndex);
 }
 
-uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
+uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &Data,
                                       const MCAsmLayout &Layout) {
-  MCSymbolData *Data = &OrigData;
-  if (Data->isCommon() && Data->isExternal())
-    return Data->getCommonAlignment();
+  if (Data.isCommon() && Data.isExternal())
+    return Data.getCommonAlignment();
 
-  const MCSymbol *Symbol = &Data->getSymbol();
-  MCAssembler &Asm = Layout.getAssembler();
-  bool IsThumb = Asm.isThumbFunc(Symbol);
-
-  // Given how we implement symver, we can end up with an symbol reference
-  // to an undefined symbol. Walk past it first.
-  if (Symbol->isVariable()) {
-    const MCExpr *Expr = Symbol->getVariableValue();
-    if (auto *Ref = dyn_cast<MCSymbolRefExpr>(Expr)) {
-      if (Ref->getKind() == MCSymbolRefExpr::VK_None) {
-        Symbol = &Ref->getSymbol();
-        Data = &Asm.getOrCreateSymbolData(*Symbol);
-      }
-    }
-  }
-
-  if (!Symbol->isVariable() && !Data->getFragment())
+  uint64_t Res;
+  if (!Layout.getSymbolOffset(&Data, Res))
     return 0;
 
-  uint64_t Res = Layout.getSymbolOffset(Data);
-
-  if (IsThumb)
+  if (Layout.getAssembler().isThumbFunc(&Data.getSymbol()))
     Res |= 1;
 
   return Res;
