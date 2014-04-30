@@ -57,7 +57,8 @@ entry:
 ; CHECK: uxth w0, w0
 ; CHECK: str w0, [sp, #8]
 ; CHECK: ldr w0, [sp, #8]
-; CHECK: ubfx x3, w0, #0, #32
+; CHECK: mov x3, x0
+; CHECK: ubfx x3, x3, #0, #32
 ; CHECK: str x3, [sp]
 ; CHECK: ldr x0, [sp], #16
 ; CHECK: ret
@@ -113,7 +114,8 @@ entry:
 ; CHECK: sxth w0, w0
 ; CHECK: str w0, [sp, #8]
 ; CHECK: ldr w0, [sp, #8]
-; CHECK: sxtw x3, w0
+; CHECK: mov x3, x0
+; CHECK: sxtw x3, w3
 ; CHECK: str x3, [sp]
 ; CHECK: ldr x0, [sp], #16
 ; CHECK: ret
@@ -139,12 +141,21 @@ entry:
 }
 
 ; Test sext i8 to i64
-define i64 @sext_2(i8 signext %a) nounwind ssp {
-entry:
-; CHECK: sext_2
-; CHECK: sxtb x0, w0
-  %conv = sext i8 %a to i64
-  ret i64 %conv
+
+define zeroext i64 @sext_i8_i64(i8 zeroext %in) {
+; CHECK-LABEL: sext_i8_i64:
+; CHECK: mov x[[TMP:[0-9]+]], x0
+; CHECK: sxtb x0, w[[TMP]]
+  %big = sext i8 %in to i64
+  ret i64 %big
+}
+
+define zeroext i64 @sext_i16_i64(i16 zeroext %in) {
+; CHECK-LABEL: sext_i16_i64:
+; CHECK: mov x[[TMP:[0-9]+]], x0
+; CHECK: sxth x0, w[[TMP]]
+  %big = sext i16 %in to i64
+  ret i64 %big
 }
 
 ; Test sext i1 to i32
@@ -413,4 +424,19 @@ define void @stack_trunc() nounwind {
   %d = trunc i64 %c to i8
   store i8 %d, i8* %a, align 1
   ret void
+}
+
+define zeroext i64 @zext_i8_i64(i8 zeroext %in) {
+; CHECK-LABEL: zext_i8_i64:
+; CHECK: mov x[[TMP:[0-9]+]], x0
+; CHECK: ubfx x0, x[[TMP]], #0, #8
+  %big = zext i8 %in to i64
+  ret i64 %big
+}
+define zeroext i64 @zext_i16_i64(i16 zeroext %in) {
+; CHECK-LABEL: zext_i16_i64:
+; CHECK: mov x[[TMP:[0-9]+]], x0
+; CHECK: ubfx x0, x[[TMP]], #0, #16
+  %big = zext i16 %in to i64
+  ret i64 %big
 }

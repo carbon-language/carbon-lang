@@ -1746,6 +1746,15 @@ unsigned ARM64FastISel::EmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
   // Handle i8 and i16 as i32.
   if (DestVT == MVT::i8 || DestVT == MVT::i16)
     DestVT = MVT::i32;
+  else if (DestVT == MVT::i64) {
+    unsigned Src64 = MRI.createVirtualRegister(&ARM64::GPR64RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(ARM64::SUBREG_TO_REG), Src64)
+        .addImm(0)
+        .addReg(SrcReg)
+        .addImm(ARM64::sub_32);
+    SrcReg = Src64;
+  }
 
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(DestVT));
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
