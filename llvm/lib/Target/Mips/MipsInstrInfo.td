@@ -1219,6 +1219,8 @@ def : InstAlias<"negu $rt, $rs",
                 (SUBu GPR32Opnd:$rt, ZERO, GPR32Opnd:$rs), 1>;
 def : InstAlias<"slt $rs, $rt, $imm",
                 (SLTi GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
+def : InstAlias<"sltu $rt, $rs, $imm",
+                (SLTiu GPR32Opnd:$rt, GPR32Opnd:$rs, simm16:$imm), 0>;
 def : InstAlias<"xor $rs, $rt, $imm",
                 (XORi GPR32Opnd:$rs, GPR32Opnd:$rt, uimm16:$imm), 0>;
 def : InstAlias<"or $rs, $rt, $imm",
