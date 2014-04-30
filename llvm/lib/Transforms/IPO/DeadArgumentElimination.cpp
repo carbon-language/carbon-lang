@@ -37,6 +37,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 #include <set>
+#include <tuple>
 using namespace llvm;
 
 #define DEBUG_TYPE "deadargelim"

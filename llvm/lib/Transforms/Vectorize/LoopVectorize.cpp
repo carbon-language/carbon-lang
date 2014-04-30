@@ -92,6 +92,7 @@
 #include "llvm/Transforms/Utils/VectorUtils.h"
 #include <algorithm>
 #include <map>
+#include <tuple>
 
 using namespace llvm;
 using namespace llvm::PatternMatch;
