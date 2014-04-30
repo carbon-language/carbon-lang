@@ -488,41 +488,33 @@ void ELFObjectWriter::WriteHeader(const MCAssembler &Asm,
 
 uint64_t ELFObjectWriter::SymbolValue(MCSymbolData &OrigData,
                                       const MCAsmLayout &Layout) {
-  const MCSymbol &OrigSymbol = OrigData.getSymbol();
   MCSymbolData *Data = &OrigData;
   if (Data->isCommon() && Data->isExternal())
     return Data->getCommonAlignment();
 
   const MCSymbol *Symbol = &Data->getSymbol();
+  MCAssembler &Asm = Layout.getAssembler();
+  bool IsThumb = Asm.isThumbFunc(Symbol);
 
-  uint64_t Res = 0;
+  // Given how we implement symver, we can end up with an symbol reference
+  // to an undefined symbol. Walk past it first.
   if (Symbol->isVariable()) {
     const MCExpr *Expr = Symbol->getVariableValue();
-    MCValue Value;
-    if (!Expr->EvaluateAsValue(Value, &Layout))
-      llvm_unreachable("Invalid expression");
-
-    assert(!Value.getSymB());
-
-    Res = Value.getConstant();
-
-    if (const MCSymbolRefExpr *A = Value.getSymA()) {
-      Symbol = &A->getSymbol();
-      Data = &Layout.getAssembler().getSymbolData(*Symbol);
-    } else {
-      Symbol = nullptr;
-      Data = nullptr;
+    if (auto *Ref = dyn_cast<MCSymbolRefExpr>(Expr)) {
+      if (Ref->getKind() == MCSymbolRefExpr::VK_None) {
+        Symbol = &Ref->getSymbol();
+        Data = &Asm.getOrCreateSymbolData(*Symbol);
+      }
     }
   }
 
-  const MCAssembler &Asm = Layout.getAssembler();
-  if (Asm.isThumbFunc(&OrigSymbol))
+  if (!Symbol->isVariable() && !Data->getFragment())
+    return 0;
+
+  uint64_t Res = Layout.getSymbolOffset(Data);
+
+  if (IsThumb)
     Res |= 1;
-
-  if (!Symbol || !Symbol->isInSection())
-    return Res;
-
-  Res += Layout.getSymbolOffset(Data);
 
   return Res;
 }
