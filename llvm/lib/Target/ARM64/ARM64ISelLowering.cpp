@@ -1678,13 +1678,9 @@ SDValue ARM64TargetLowering::LowerFormalArguments(
         RC = &ARM64::GPR64RegClass;
       else if (RegVT == MVT::f32)
         RC = &ARM64::FPR32RegClass;
-      else if (RegVT == MVT::f64 || RegVT == MVT::v1i64 ||
-               RegVT == MVT::v1f64 || RegVT == MVT::v2i32 ||
-               RegVT == MVT::v4i16 || RegVT == MVT::v8i8)
+      else if (RegVT == MVT::f64 || RegVT.is64BitVector())
         RC = &ARM64::FPR64RegClass;
-      else if (RegVT == MVT::f128 ||RegVT == MVT::v2i64 ||
-               RegVT == MVT::v4i32||RegVT == MVT::v8i16 ||
-               RegVT == MVT::v16i8)
+      else if (RegVT == MVT::f128 || RegVT.is128BitVector())
         RC = &ARM64::FPR128RegClass;
       else
         llvm_unreachable("RegVT not supported by FORMAL_ARGUMENTS Lowering");
