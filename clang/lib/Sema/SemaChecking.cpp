@@ -310,6 +310,7 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
           return ExprError();
         break;
       case llvm::Triple::arm64:
+      case llvm::Triple::arm64_be:
         if (CheckARM64BuiltinFunctionCall(BuiltinID, TheCall))
           return ExprError();
         break;

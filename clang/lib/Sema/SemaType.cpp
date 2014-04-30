@@ -4731,7 +4731,8 @@ static bool isPermittedNeonBaseType(QualType &Ty,
   // now.
   bool IsPolyUnsigned = Triple.getArch() == llvm::Triple::aarch64 ||
                         Triple.getArch() == llvm::Triple::aarch64_be ||
-                        Triple.getArch() == llvm::Triple::arm64;
+                        Triple.getArch() == llvm::Triple::arm64 ||
+                        Triple.getArch() == llvm::Triple::arm64_be;
   if (VecKind == VectorType::NeonPolyVector) {
     if (IsPolyUnsigned) {
       // AArch64 polynomial vectors are unsigned and support poly64.
@@ -4750,7 +4751,8 @@ static bool isPermittedNeonBaseType(QualType &Ty,
   // float64_t on AArch64.
   bool Is64Bit = Triple.getArch() == llvm::Triple::aarch64 ||
                  Triple.getArch() == llvm::Triple::aarch64_be ||
-                 Triple.getArch() == llvm::Triple::arm64;
+                 Triple.getArch() == llvm::Triple::arm64 ||
+                 Triple.getArch() == llvm::Triple::arm64_be;
 
   if (Is64Bit && BTy->getKind() == BuiltinType::Double)
     return true;
