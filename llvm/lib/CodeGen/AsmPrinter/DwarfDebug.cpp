@@ -1440,9 +1440,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   Asm->OutStreamer.EmitLabel(FunctionBeginSym);
 
   // Collect user variables, find the end of the prologue.
-  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
-       ++I) {
-    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
+  for (const auto &MBB : *MF) {
+    for (MachineBasicBlock::const_iterator II = MBB.begin(), IE = MBB.end();
          II != IE; ++II) {
       const MachineInstr *MI = II;
       if (MI->isDebugValue()) {
@@ -1454,12 +1453,11 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
             std::make_pair(Var, SmallVector<const MachineInstr *, 4>()));
         if (IterPair.second)
           UserVariables.push_back(Var);
-      } else {
+      } else if (!MI->getFlag(MachineInstr::FrameSetup) &&
+                 PrologEndLoc.isUnknown() && !MI->getDebugLoc().isUnknown()) {
         // First known non-DBG_VALUE and non-frame setup location marks
         // the beginning of the function body.
-        if (!MI->getFlag(MachineInstr::FrameSetup) &&
-            (PrologEndLoc.isUnknown() && !MI->getDebugLoc().isUnknown()))
-          PrologEndLoc = MI->getDebugLoc();
+        PrologEndLoc = MI->getDebugLoc();
       }
     }
   }
