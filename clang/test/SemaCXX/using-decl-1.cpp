@@ -207,7 +207,7 @@ struct Y : S {
   using S::S; // expected-error {{no member named 'S' in 'S'}}
 };
 
-// [namespace.udecl] Para3: In a using-declaration used as a member-declaration,
+// [namespace.udecl]p3: In a using-declaration used as a member-declaration,
 // the nested-name-specifier shall name a base class of the class being defined.
 // If such a using-declaration names a constructor, the nested-name-specifier
 // shall name a direct base class of the class being defined;
@@ -216,14 +216,11 @@ struct Y : S {
 struct PR19171_B { }; // expected-note {{'PR19171_B' declared here}}
 struct PR19171_C : PR19171_B { };
 struct PR19171_D : PR19171_C {
-	using PR19171_B::PR19171_C; // expected-error{{no member named 'PR19171_C' in 'PR19171_B'; did you mean 'PR19171_B'?}}
+  using PR19171_B::PR19171_C; // expected-error{{no member named 'PR19171_C' in 'PR19171_B'; did you mean 'PR19171_B'?}}
 };
 
-// FIXME: Typo correction should only consider member of base classes
 struct PR19171_E { };
-struct PR19171_EE { int EE; }; // expected-note {{'PR19171_EE::EE' declared here}} \
-                                // expected-note {{target of using declaration}}
+struct PR19171_EE { int EE; };
 struct PR19171_F : PR19171_E {
-	using PR19171_E::EE; // expected-error{{no member named 'EE' in 'PR19171_E'; did you mean 'PR19171_EE::EE'?}} \
-                          // expected-error{{using declaration refers into 'PR19171_E::', which is not a base class of 'PR19171_F'}}
+  using PR19171_E::EE; // expected-error-re{{no member named 'EE' in 'PR19171_E'{{$}}}}
 };

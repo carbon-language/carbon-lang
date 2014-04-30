@@ -7318,9 +7318,9 @@ namespace {
 class UsingValidatorCCC : public CorrectionCandidateCallback {
 public:
   UsingValidatorCCC(bool HasTypenameKeyword, bool IsInstantiation,
-                    bool RequireMember)
+                    CXXRecordDecl *RequireMemberOf)
       : HasTypenameKeyword(HasTypenameKeyword),
-        IsInstantiation(IsInstantiation), RequireMember(RequireMember) {}
+        IsInstantiation(IsInstantiation), RequireMemberOf(RequireMemberOf) {}
 
   bool ValidateCandidate(const TypoCorrection &Candidate) override {
     NamedDecl *ND = Candidate.getCorrectionDecl();
@@ -7329,13 +7329,14 @@ public:
     if (!ND || isa<NamespaceDecl>(ND))
       return false;
 
-    // FIXME: We should check if ND is member of base class of class having
-    // using declaration and direct base class in case using declaration names
-    // a constructor.
-    if (RequireMember && !ND->isCXXClassMember())
-      return false;
+    if (RequireMemberOf) {
+      auto *RD = dyn_cast<CXXRecordDecl>(ND->getDeclContext());
+      if (!RD || RequireMemberOf->isProvablyNotDerivedFrom(RD))
+        return false;
+      // FIXME: Check that the base class member is accessible?
+    }
 
-    if (RequireMember && !isa<FieldDecl>(ND) && !isa<CXXMethodDecl>(ND) &&
+    if (RequireMemberOf && !isa<FieldDecl>(ND) && !isa<CXXMethodDecl>(ND) &&
         !isa<TypeDecl>(ND))
       return false;
 
@@ -7352,7 +7353,7 @@ public:
 private:
   bool HasTypenameKeyword;
   bool IsInstantiation;
-  bool RequireMember;
+  CXXRecordDecl *RequireMemberOf;
 };
 } // end anonymous namespace
 
@@ -7476,7 +7477,7 @@ NamedDecl *Sema::BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
   // Try to correct typos if possible.
   if (R.empty()) {
     UsingValidatorCCC CCC(HasTypenameKeyword, IsInstantiation,
-                          CurContext->isRecord());
+                          dyn_cast<CXXRecordDecl>(CurContext));
     if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
                                                R.getLookupKind(), S, &SS, CCC,
                                                CTK_ErrorRecovery)){
