@@ -471,9 +471,9 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
 // MachTask::TaskPortForProcessID
 //----------------------------------------------------------------------
 task_t
-MachTask::TaskPortForProcessID (DNBError &err)
+MachTask::TaskPortForProcessID (DNBError &err, bool force)
 {
-    if (m_task == TASK_NULL && m_process != NULL)
+    if (((m_task == TASK_NULL) || force) && m_process != NULL)
         m_task = MachTask::TaskPortForProcessID(m_process->ProcessID(), err);
     return m_task;
 }
@@ -802,8 +802,9 @@ MachTask::ExceptionThread (void *arg)
                 num_exceptions_received = 0;
 
                 // Notify our main thread we have a complete exception message
-                // bundle available.
-                mach_proc->ExceptionMessageBundleComplete();
+                // bundle available and get the possibly updated task port back
+                // from the process in case we exec'ed and our task port changed
+                task = mach_proc->ExceptionMessageBundleComplete();
 
                 // in case we use a timeout value when getting exceptions...
                 // Make sure our task is still valid

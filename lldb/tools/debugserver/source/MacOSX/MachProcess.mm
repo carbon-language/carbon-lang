@@ -1180,7 +1180,7 @@ MachProcess::ExceptionMessageReceived (const MachException::Message& exceptionMe
     m_exception_messages.push_back(exceptionMessage);
 }
 
-void
+task_t
 MachProcess::ExceptionMessageBundleComplete()
 {
     // We have a complete bundle of exceptions for our child process.
@@ -1216,7 +1216,15 @@ MachProcess::ExceptionMessageBundleComplete()
                             if (m_task.ReadMemory(info_array_count_addr, 4, &info_array_count) == 4)
                             {
                                 if (info_array_count == 0)
+                                {
                                     m_did_exec = true;
+                                    // Force the task port to update itself in case the task port changed after exec
+                                    DNBError err;
+                                    const task_t old_task = m_task.TaskPort();
+                                    const task_t new_task = m_task.TaskPortForProcessID (err, true);
+                                    if (old_task != new_task)
+                                        DNBLogThreadedIf(LOG_PROCESS, "exec: task changed from 0x%4.4x to 0x%4.4x", old_task, new_task);
+                                }
                             }
                             else
                             {
@@ -1317,6 +1325,7 @@ MachProcess::ExceptionMessageBundleComplete()
     {
         DNBLogThreadedIf(LOG_EXCEPTIONS, "%s empty exception messages bundle (%llu exceptions).", __PRETTY_FUNCTION__, (uint64_t)m_exception_messages.size());
     }
+    return m_task.TaskPort();
 }
 
 nub_size_t
@@ -1336,6 +1345,21 @@ MachProcess::SharedLibrariesUpdated ( )
     m_events.SetEvents(event_bits);
     // Wait for the event bit to reset if a reset ACK is requested
     m_events.WaitForResetAck(event_bits);
+}
+
+void
+MachProcess::SetExitInfo (const char *info)
+{
+    if (info && info[0])
+    {
+        DNBLogThreadedIf(LOG_PROCESS, "MachProcess::%s(\"%s\")", __FUNCTION__, info);
+        m_exit_info.assign(info);
+    }
+    else
+    {
+        DNBLogThreadedIf(LOG_PROCESS, "MachProcess::%s(NULL)", __FUNCTION__);
+        m_exit_info.clear();
+    }
 }
 
 void

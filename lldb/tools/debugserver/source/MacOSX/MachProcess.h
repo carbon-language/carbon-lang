@@ -147,7 +147,7 @@ public:
     bool                    StartSTDIOThread ();
     static void *           STDIOThread (void *arg);
     void                    ExceptionMessageReceived (const MachException::Message& exceptionMessage);
-    void                    ExceptionMessageBundleComplete ();
+    task_t                  ExceptionMessageBundleComplete ();
     void                    SharedLibrariesUpdated ();
     nub_size_t              CopyImageInfos (struct DNBExecutableImageInfo **image_infos, bool only_changed);
     
@@ -227,10 +227,7 @@ public:
                                 return m_exit_info.c_str();
                             }
     
-    void                    SetExitInfo (const char *info)
-                            {
-                                m_exit_info.assign(info);
-                            }
+    void                    SetExitInfo (const char *info);
 
     uint32_t                StopCount() const { return m_stop_count; }
     void                    SetChildFileDescriptors (int stdin_fileno, int stdout_fileno, int stderr_fileno)
