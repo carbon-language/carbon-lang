@@ -114,7 +114,8 @@ bool PECOFFLinkingContext::createImplicitFiles(
   std::unique_ptr<SimpleFileNode> impFileNode(new SimpleFileNode("imp"));
   impFileNode->appendInputFile(
       std::unique_ptr<File>(new pecoff::LocallyImportedSymbolFile(*this)));
-  getLibraryGroup()->addFile(std::move(impFileNode));
+  getInputGraph().insertElementAt(std::move(impFileNode),
+                                  InputGraph::Position::END);
   return true;
 }
 
