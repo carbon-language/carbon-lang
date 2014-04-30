@@ -50,6 +50,14 @@ public:
 #pragma GCC system_header
 #endif
 
+#ifndef _LIBCPP___REFSTRING
+_LIBCPP_BEGIN_NAMESPACE_STD
+class _LIBCPP_HIDDEN __libcpp_refstring {
+    const char *__imp_;
+};
+_LIBCPP_END_NAMESPACE_STD
+#endif
+
 namespace std  // purposefully not using versioning namespace
 {
 
@@ -57,7 +65,7 @@ class _LIBCPP_EXCEPTION_ABI logic_error
     : public exception
 {
 private:
-    void* __imp_;
+    _VSTD::__libcpp_refstring __imp_;
 public:
     explicit logic_error(const string&);
     explicit logic_error(const char*);
@@ -74,7 +82,7 @@ class _LIBCPP_EXCEPTION_ABI runtime_error
     : public exception
 {
 private:
-    void* __imp_;
+    _VSTD::__libcpp_refstring __imp_;
 public:
     explicit runtime_error(const string&);
     explicit runtime_error(const char*);
