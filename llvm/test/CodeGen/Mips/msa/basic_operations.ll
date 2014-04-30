@@ -673,6 +673,129 @@ define void @insert_v2i64(i64 %a) nounwind {
   ; MIPS32-AE: .size insert_v2i64
 }
 
+define void @insert_v16i8_vidx(i32 %a) nounwind {
+  ; MIPS32-AE: insert_v16i8_vidx:
+
+  %1 = load <16 x i8>* @v16i8
+  ; MIPS32-AE-DAG: ld.b [[R1:\$w[0-9]+]],
+
+  %2 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %a2 = trunc i32 %a to i8
+  %a3 = sext i8 %a2 to i32
+  %a4 = trunc i32 %a3 to i8
+  ; MIPS32-AE-NOT: andi
+  ; MIPS32-AE-NOT: sra
+
+  %3 = insertelement <16 x i8> %1, i8 %a4, i32 %2
+  ; MIPS32-AE-DAG: sld.b [[R1]], [[R1]]{{\[}}[[IDX]]]
+  ; MIPS32-AE-DAG: insert.b [[R1]][0], $4
+  ; MIPS32-AE-DAG: neg [[NIDX:\$[0-9]+]], [[IDX]]
+  ; MIPS32-AE-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
+
+  store <16 x i8> %3, <16 x i8>* @v16i8
+  ; MIPS32-AE-DAG: st.b [[R1]]
+
+  ret void
+  ; MIPS32-AE: .size insert_v16i8_vidx
+}
+
+define void @insert_v8i16_vidx(i32 %a) nounwind {
+  ; MIPS32-AE: insert_v8i16_vidx:
+
+  %1 = load <8 x i16>* @v8i16
+  ; MIPS32-AE-DAG: ld.h [[R1:\$w[0-9]+]],
+
+  %2 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %a2 = trunc i32 %a to i16
+  %a3 = sext i16 %a2 to i32
+  %a4 = trunc i32 %a3 to i16
+  ; MIPS32-AE-NOT: andi
+  ; MIPS32-AE-NOT: sra
+
+  %3 = insertelement <8 x i16> %1, i16 %a4, i32 %2
+  ; MIPS32-AE-DAG: sll [[BIDX:\$[0-9]+]], [[IDX]], 1
+  ; MIPS32-AE-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
+  ; MIPS32-AE-DAG: insert.h [[R1]][0], $4
+  ; MIPS32-AE-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; MIPS32-AE-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
+
+  store <8 x i16> %3, <8 x i16>* @v8i16
+  ; MIPS32-AE-DAG: st.h [[R1]]
+
+  ret void
+  ; MIPS32-AE: .size insert_v8i16_vidx
+}
+
+define void @insert_v4i32_vidx(i32 %a) nounwind {
+  ; MIPS32-AE: insert_v4i32_vidx:
+
+  %1 = load <4 x i32>* @v4i32
+  ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]],
+
+  %2 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  ; MIPS32-AE-NOT: andi
+  ; MIPS32-AE-NOT: sra
+
+  %3 = insertelement <4 x i32> %1, i32 %a, i32 %2
+  ; MIPS32-AE-DAG: sll [[BIDX:\$[0-9]+]], [[IDX]], 2
+  ; MIPS32-AE-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
+  ; MIPS32-AE-DAG: insert.w [[R1]][0], $4
+  ; MIPS32-AE-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; MIPS32-AE-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
+
+  store <4 x i32> %3, <4 x i32>* @v4i32
+  ; MIPS32-AE-DAG: st.w [[R1]]
+
+  ret void
+  ; MIPS32-AE: .size insert_v4i32_vidx
+}
+
+define void @insert_v2i64_vidx(i64 %a) nounwind {
+  ; MIPS32-AE: insert_v2i64_vidx:
+
+  %1 = load <2 x i64>* @v2i64
+  ; MIPS32-AE-DAG: ld.w [[R1:\$w[0-9]+]],
+
+  %2 = load i32* @i32
+  ; MIPS32-AE-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-AE-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  ; MIPS32-AE-NOT: andi
+  ; MIPS32-AE-NOT: sra
+
+  %3 = insertelement <2 x i64> %1, i64 %a, i32 %2
+  ; TODO: This code could be a lot better but it works. The legalizer splits
+  ; 64-bit inserts into two 32-bit inserts because there is no i64 type on
+  ; MIPS32. The obvious optimisation is to perform both insert.w's at once while
+  ; the vector is rotated.
+  ; MIPS32-AE-DAG: sll [[BIDX:\$[0-9]+]], [[IDX]], 2
+  ; MIPS32-AE-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
+  ; MIPS32-AE-DAG: insert.w [[R1]][0], $4
+  ; MIPS32-AE-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; MIPS32-AE-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
+  ; MIPS32-AE-DAG: addiu [[IDX2:\$[0-9]+]], [[IDX]], 1
+  ; MIPS32-AE-DAG: sll [[BIDX:\$[0-9]+]], [[IDX2]], 2
+  ; MIPS32-AE-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
+  ; MIPS32-AE-DAG: insert.w [[R1]][0], $5
+  ; MIPS32-AE-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; MIPS32-AE-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
+
+  store <2 x i64> %3, <2 x i64>* @v2i64
+  ; MIPS32-AE-DAG: st.w [[R1]]
+
+  ret void
+  ; MIPS32-AE: .size insert_v2i64_vidx
+}
+
 define void @truncstore() nounwind {
   ; MIPS32-AE-LABEL: truncstore:
 

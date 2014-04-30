@@ -275,3 +275,55 @@ define void @insert_v2f64(double %a) nounwind {
   ret void
   ; MIPS32: .size insert_v2f64
 }
+
+define void @insert_v4f32_vidx(float %a) nounwind {
+  ; MIPS32-LABEL: insert_v4f32_vidx:
+
+  %1 = load <4 x float>* @v4f32
+  ; MIPS32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v4f32)(
+  ; MIPS32-DAG: ld.w [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = load i32* @i32
+  ; MIPS32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %3 = insertelement <4 x float> %1, float %a, i32 %2
+  ; float argument passed in $f12
+  ; MIPS32-DAG: sll [[BIDX:\$[0-9]+]], [[IDX]], 2
+  ; MIPS32-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
+  ; MIPS32-DAG: insve.w [[R1]][0], $w12[0]
+  ; MIPS32-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; MIPS32-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
+
+  store <4 x float> %3, <4 x float>* @v4f32
+  ; MIPS32-DAG: st.w [[R1]]
+
+  ret void
+  ; MIPS32: .size insert_v4f32_vidx
+}
+
+define void @insert_v2f64_vidx(double %a) nounwind {
+  ; MIPS32-LABEL: insert_v2f64_vidx:
+
+  %1 = load <2 x double>* @v2f64
+  ; MIPS32-DAG: lw [[PTR_V:\$[0-9]+]], %got(v2f64)(
+  ; MIPS32-DAG: ld.d [[R1:\$w[0-9]+]], 0([[PTR_V]])
+
+  %2 = load i32* @i32
+  ; MIPS32-DAG: lw [[PTR_I:\$[0-9]+]], %got(i32)(
+  ; MIPS32-DAG: lw [[IDX:\$[0-9]+]], 0([[PTR_I]])
+
+  %3 = insertelement <2 x double> %1, double %a, i32 %2
+  ; double argument passed in $f12
+  ; MIPS32-DAG: sll [[BIDX:\$[0-9]+]], [[IDX]], 3
+  ; MIPS32-DAG: sld.b [[R1]], [[R1]]{{\[}}[[BIDX]]]
+  ; MIPS32-DAG: insve.d [[R1]][0], $w12[0]
+  ; MIPS32-DAG: neg [[NIDX:\$[0-9]+]], [[BIDX]]
+  ; MIPS32-DAG: sld.b [[R1]], [[R1]]{{\[}}[[NIDX]]]
+
+  store <2 x double> %3, <2 x double>* @v2f64
+  ; MIPS32-DAG: st.d [[R1]]
+
+  ret void
+  ; MIPS32: .size insert_v2f64_vidx
+}
