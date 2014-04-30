@@ -509,6 +509,21 @@ DwarfDebug::constructInlinedScopeDIE(DwarfCompileUnit &TheCU,
   return ScopeDIE;
 }
 
+static std::unique_ptr<DIE> constructVariableDIE(DwarfCompileUnit &TheCU,
+                                                 DbgVariable &DV,
+                                                 const LexicalScope &Scope,
+                                                 DIE *&ObjectPointer) {
+  AbstractOrInlined AOI = AOI_None;
+  if (Scope.isAbstractScope())
+    AOI = AOI_Abstract;
+  else if (Scope.getInlinedAt())
+    AOI = AOI_Inlined;
+  auto Var = TheCU.constructVariableDIE(DV, AOI);
+  if (DV.isObjectPointer())
+    ObjectPointer = Var.get();
+  return Var;
+}
+
 DIE *DwarfDebug::createScopeChildrenDIE(
     DwarfCompileUnit &TheCU, LexicalScope *Scope,
     SmallVectorImpl<std::unique_ptr<DIE>> &Children) {
@@ -517,12 +532,9 @@ DIE *DwarfDebug::createScopeChildrenDIE(
   // Collect arguments for current function.
   if (LScopes.isCurrentFunctionScope(Scope)) {
     for (DbgVariable *ArgDV : CurrentFnArguments)
-      if (ArgDV) {
+      if (ArgDV)
         Children.push_back(
-            TheCU.constructVariableDIE(*ArgDV, Scope->isAbstractScope()));
-        if (ArgDV->isObjectPointer())
-          ObjectPointer = Children.back().get();
-      }
+            constructVariableDIE(TheCU, *ArgDV, *Scope, ObjectPointer));
 
     // If this is a variadic function, add an unspecified parameter.
     DISubprogram SP(Scope->getScopeNode());
@@ -535,12 +547,9 @@ DIE *DwarfDebug::createScopeChildrenDIE(
   }
 
   // Collect lexical scope children first.
-  for (DbgVariable *DV : ScopeVariables.lookup(Scope)) {
-    Children.push_back(
-        TheCU.constructVariableDIE(*DV, Scope->isAbstractScope()));
-    if (DV->isObjectPointer())
-      ObjectPointer = Children.back().get();
-  }
+  for (DbgVariable *DV : ScopeVariables.lookup(Scope))
+    Children.push_back(constructVariableDIE(TheCU, *DV, *Scope, ObjectPointer));
+
   for (LexicalScope *LS : Scope->getChildren())
     if (std::unique_ptr<DIE> Nested = constructScopeDIE(TheCU, LS))
       Children.push_back(std::move(Nested));
@@ -897,7 +906,7 @@ void DwarfDebug::collectDeadVariables() {
           if (!DV.isVariable())
             continue;
           DbgVariable NewVar(DV, nullptr, this);
-          SPDIE->addChild(SPCU->constructVariableDIE(NewVar, false));
+          SPDIE->addChild(SPCU->constructVariableDIE(NewVar));
         }
       }
     }

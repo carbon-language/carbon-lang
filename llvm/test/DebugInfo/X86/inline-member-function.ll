@@ -18,6 +18,8 @@
 ; CHECK-NEXT: DW_AT_abstract_origin {{.*}}{[[ABSTRACT_ORIGIN:0x[0-9a-e]*]]}
 ; CHECK-NOT: NULL
 ; CHECK-NOT: DW_AT_object_pointer
+; CHECK: DW_TAG_formal_parameter
+; CHECK-NOT: DW_AT_artificial
 ; CHECK: DW_TAG
 
 ; But make sure we emit DW_AT_object_pointer on the declaration.

@@ -1807,14 +1807,15 @@ void DwarfUnit::constructContainingTypeDIEs() {
 
 /// constructVariableDIE - Construct a DIE for the given DbgVariable.
 std::unique_ptr<DIE> DwarfUnit::constructVariableDIE(DbgVariable &DV,
-                                                     bool isScopeAbstract) {
-  auto D = constructVariableDIEImpl(DV, isScopeAbstract);
+                                                     AbstractOrInlined AbsIn) {
+  auto D = constructVariableDIEImpl(DV, AbsIn);
   DV.setDIE(*D);
   return D;
 }
 
-std::unique_ptr<DIE> DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
-                                                         bool isScopeAbstract) {
+std::unique_ptr<DIE>
+DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
+                                    AbstractOrInlined AbsIn) {
   StringRef Name = DV.getName();
 
   // Define variable debug information entry.
@@ -1830,10 +1831,10 @@ std::unique_ptr<DIE> DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
     addType(*VariableDie, DV.getType());
   }
 
-  if (DV.isArtificial())
+  if (AbsIn != AOI_Inlined && DV.isArtificial())
     addFlag(*VariableDie, dwarf::DW_AT_artificial);
 
-  if (isScopeAbstract)
+  if (AbsIn == AOI_Abstract)
     return VariableDie;
 
   // Add variable address.
