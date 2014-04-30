@@ -218,6 +218,9 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   }
 }
 
+// Define out of line so we don't have to include DwarfUnit.h in DwarfDebug.h.
+DwarfDebug::~DwarfDebug() { }
+
 // Switch to the specified MCSection and emit an assembler
 // temporary label to it if SymbolStem is specified.
 static MCSymbol *emitSectionSym(AsmPrinter *Asm, const MCSection *Section,

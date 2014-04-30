@@ -557,6 +557,8 @@ public:
   //
   DwarfDebug(AsmPrinter *A, Module *M);
 
+  ~DwarfDebug() override;
+
   void insertDIE(const MDNode *TypeMD, DIE *Die) {
     MDTypeNodeToDieMap.insert(std::make_pair(TypeMD, Die));
   }
