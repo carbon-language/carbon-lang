@@ -124,4 +124,115 @@ void ReportAtExitStatistics() {
   Printf("Stack depot mapped bytes: %zu\n", stack_depot_stats->mapped);
 }
 
+class OriginSet {
+ public:
+  OriginSet() : next_id_(0) {}
+  int insert(u32 o) {
+    // Scan from the end for better locality.
+    for (int i = next_id_ - 1; i >= 0; --i)
+      if (origins_[i] == o) return i;
+    if (next_id_ == kMaxSize_) return OVERFLOW;
+    int id = next_id_++;
+    origins_[id] = o;
+    return id;
+  }
+  int size() { return next_id_; }
+  u32 get(int id) { return origins_[id]; }
+  static char asChar(int id) {
+    switch (id) {
+      case MISSING:
+        return '.';
+      case OVERFLOW:
+        return '*';
+      default:
+        return 'A' + id;
+    }
+  }
+  static const int OVERFLOW = -1;
+  static const int MISSING = -2;
+
+ private:
+  static const int kMaxSize_ = 'Z' - 'A' + 1;
+  u32 origins_[kMaxSize_];
+  int next_id_;
+};
+
+void DescribeMemoryRange(const void *x, uptr size) {
+  // Real limits.
+  uptr start = MEM_TO_SHADOW(x);
+  uptr end = start + size;
+  // Scan limits: align start down to 4; align size up to 16.
+  uptr s = start & ~3UL;
+  size = end - s;
+  size = (size + 15) & ~15UL;
+  uptr e = s + size;
+
+  // Single letter names to origin id mapping.
+  OriginSet origin_set;
+
+  uptr pos = 0;  // Offset from aligned start.
+  bool with_origins = __msan_get_track_origins();
+  // True if there is at least 1 poisoned bit in the last 4-byte group.
+  bool last_quad_poisoned;
+  int origin_ids[4];  // Single letter origin ids for the current line.
+
+  Decorator d;
+  Printf("%s", d.Warning());
+  Printf("Shadow map of [%p, %p), %zu bytes:\n", start, end, end - start);
+  Printf("%s", d.End());
+  while (s < e) {
+    // Line start.
+    if (pos % 16 == 0) {
+      for (int i = 0; i < 4; ++i) origin_ids[i] = -1;
+      Printf("%p:", s);
+    }
+    // Group start.
+    if (pos % 4 == 0) {
+      Printf(" ");
+      last_quad_poisoned = false;
+    }
+    // Print shadow byte.
+    if (s < start || s >= end) {
+      Printf("..");
+    } else {
+      unsigned char v = *(unsigned char *)s;
+      if (v) last_quad_poisoned = true;
+      Printf("%02x", v);
+    }
+    // Group end.
+    if (pos % 4 == 3 && with_origins) {
+      int id = OriginSet::MISSING;
+      if (last_quad_poisoned) {
+        u32 o = *(u32 *)SHADOW_TO_ORIGIN(s - 3);
+        id = origin_set.insert(o);
+      }
+      origin_ids[(pos % 16) / 4] = id;
+    }
+    // Line end.
+    if (pos % 16 == 15) {
+      if (with_origins) {
+        Printf("  |");
+        for (int i = 0; i < 4; ++i) {
+          char c = OriginSet::asChar(origin_ids[i]);
+          Printf("%c", c);
+          if (i != 3) Printf(" ");
+        }
+        Printf("|");
+      }
+      Printf("\n");
+    }
+    size--;
+    s++;
+    pos++;
+  }
+
+  Printf("\n");
+
+  for (int i = 0; i < origin_set.size(); ++i) {
+    u32 o = origin_set.get(i);
+    Printf("Origin %c (origin_id %x):\n", OriginSet::asChar(i), o);
+    DescribeOrigin(o);
+  }
+}
+
 }  // namespace __msan

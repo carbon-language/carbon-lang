@@ -383,18 +383,21 @@ void __msan_print_shadow(const void *x, uptr size) {
     Printf("Not a valid application address: %p\n", x);
     return;
   }
+
+  DescribeMemoryRange(x, size);
+}
+
+void __msan_dump_shadow(const void *x, uptr size) {
+  if (!MEM_IS_APP(x)) {
+    Printf("Not a valid application address: %p\n", x);
+    return;
+  }
+
   unsigned char *s = (unsigned char*)MEM_TO_SHADOW(x);
-  u32 *o = (u32*)MEM_TO_ORIGIN(x);
   for (uptr i = 0; i < size; i++) {
     Printf("%x%x ", s[i] >> 4, s[i] & 0xf);
   }
   Printf("\n");
-  if (__msan_get_track_origins()) {
-    for (uptr i = 0; i < size / 4; i++) {
-      Printf(" o: %x ", o[i]);
-    }
-    Printf("\n");
-  }
 }
 
 sptr __msan_test_shadow(const void *x, uptr size) {

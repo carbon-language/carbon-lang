@@ -78,6 +78,10 @@ extern "C" {
      format. */
   void __msan_print_shadow(const volatile void *x, size_t size);
 
+  /* Print shadow for the memory range to stderr in a minimalistic
+     human-readable format. */
+  void __msan_dump_shadow(const volatile void *x, size_t size);
+
   /* Returns true if running under a dynamic tool (DynamoRio-based). */
   int  __msan_has_dynamic_component();
 
