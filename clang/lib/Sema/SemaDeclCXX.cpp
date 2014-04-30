@@ -7336,10 +7336,6 @@ public:
       // FIXME: Check that the base class member is accessible?
     }
 
-    if (RequireMemberOf && !isa<FieldDecl>(ND) && !isa<CXXMethodDecl>(ND) &&
-        !isa<TypeDecl>(ND))
-      return false;
-
     // Completely unqualified names are invalid for a 'using' declaration.
     if (Candidate.WillReplaceSpecifier() && !Candidate.getCorrectionSpecifier())
       return false;

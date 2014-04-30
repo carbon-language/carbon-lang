@@ -195,32 +195,43 @@ namespace UsingDeclVsHiddenName {
   }
 }
 
-struct Z {
-  Z();
-};
+namespace PR19171 {
+  struct Z {
+    Z();
+  };
 
-typedef struct {
-  Z i;
-} S;
+  typedef struct {
+    Z i;
+  } S;
 
-struct Y : S {
-  using S::S; // expected-error {{no member named 'S' in 'S'}}
-};
+  struct Y : S {
+    using S::S; // expected-error {{no member named 'S' in 'PR19171::S'}}
+  };
 
-// [namespace.udecl]p3: In a using-declaration used as a member-declaration,
-// the nested-name-specifier shall name a base class of the class being defined.
-// If such a using-declaration names a constructor, the nested-name-specifier
-// shall name a direct base class of the class being defined;
+  // [namespace.udecl]p3: In a using-declaration used as a member-declaration,
+  // the nested-name-specifier shall name a base class of the class being defined.
+  // If such a using-declaration names a constructor, the nested-name-specifier
+  // shall name a direct base class of the class being defined;
 
-// FIXME: For c++11, Typo correction should only consider constructor of direct base class
-struct PR19171_B { }; // expected-note {{'PR19171_B' declared here}}
-struct PR19171_C : PR19171_B { };
-struct PR19171_D : PR19171_C {
-  using PR19171_B::PR19171_C; // expected-error{{no member named 'PR19171_C' in 'PR19171_B'; did you mean 'PR19171_B'?}}
-};
+  // FIXME: For c++11, Typo correction should only consider constructor of direct base class
+  struct B_blah { }; // expected-note {{'B_blah' declared here}}
+  struct C_blah : B_blah { };
+  struct D : C_blah {
+    using B_blah::C_blah; // expected-error {{no member named 'C_blah' in 'PR19171::B_blah'; did you mean 'B_blah'?}}
+  };
 
-struct PR19171_E { };
-struct PR19171_EE { int EE; };
-struct PR19171_F : PR19171_E {
-  using PR19171_E::EE; // expected-error-re{{no member named 'EE' in 'PR19171_E'{{$}}}}
-};
+  struct E { };
+  struct EE { int EE; };
+  struct F : E {
+    using E::EE; // expected-error-re {{no member named 'EE' in 'PR19171::E'{{$}}}}
+  };
+}
+
+namespace TypoCorrectTemplateMember {
+  struct A {
+    template<typename T> void foobar(T); // expected-note {{'foobar' declared here}}
+  };
+  struct B : A {
+    using A::goobar; // expected-error {{no member named 'goobar' in 'TypoCorrectTemplateMember::A'; did you mean 'foobar'?}}
+  };
+}
