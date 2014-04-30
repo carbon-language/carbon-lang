@@ -4196,9 +4196,8 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       delete Op;
     }
   }
-  // FIXME: Likewise for [su]xt[bh] with a Xd dst operand
-  else if (NumOperands == 3 &&
-           (Tok == "sxtb" || Tok == "uxtb" || Tok == "sxth" || Tok == "uxth")) {
+  // FIXME: Likewise for sxt[bh] with a Xd dst operand
+  else if (NumOperands == 3 && (Tok == "sxtb" || Tok == "sxth")) {
     ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[1]);
     if (Op->isReg() &&
         ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(
@@ -4209,6 +4208,23 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
       if (Op->isReg()) {
         unsigned Reg = getXRegFromWReg(Op->getReg());
         Operands[2] = ARM64Operand::CreateReg(Reg, false, Op->getStartLoc(),
+                                              Op->getEndLoc(), getContext());
+        delete Op;
+      }
+    }
+  }
+  // FIXME: Likewise for uxt[bh] with a Xd dst operand
+  else if (NumOperands == 3 && (Tok == "uxtb" || Tok == "uxth")) {
+    ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[1]);
+    if (Op->isReg() &&
+        ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(
+            Op->getReg())) {
+      // The source register can be Wn here, but the matcher expects a
+      // GPR32. Twiddle it here if necessary.
+      ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[1]);
+      if (Op->isReg()) {
+        unsigned Reg = getWRegFromXReg(Op->getReg());
+        Operands[1] = ARM64Operand::CreateReg(Reg, false, Op->getStartLoc(),
                                               Op->getEndLoc(), getContext());
         delete Op;
       }

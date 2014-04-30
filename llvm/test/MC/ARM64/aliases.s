@@ -249,8 +249,8 @@ foo:
 ; CHECK: sxtb x1, w2
 ; CHECK: sxth x1, w2
 ; CHECK: sxtw x1, w2
-; CHECK: ubfx x1, x2, #0, #8
-; CHECK: ubfx x1, x2, #0, #16
+; CHECK: uxtb w1, w2
+; CHECK: uxth w1, w2
 ; CHECK: ubfx x1, x2, #0, #32
 
 ;-----------------------------------------------------------------------------
