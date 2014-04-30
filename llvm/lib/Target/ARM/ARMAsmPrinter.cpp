@@ -993,7 +993,8 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       RegList.push_back(SrcReg);
       break;
     }
-    ATS.emitRegSave(RegList, Opc == ARM::VSTMDDB_UPD);
+    if (MAI->getExceptionHandlingType() == ExceptionHandling::ARM)
+      ATS.emitRegSave(RegList, Opc == ARM::VSTMDDB_UPD);
   } else {
     // Changes of stack / frame pointer.
     if (SrcReg == ARM::SP) {
@@ -1038,18 +1039,20 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       }
       }
 
-      if (DstReg == FramePtr && FramePtr != ARM::SP)
-        // Set-up of the frame pointer. Positive values correspond to "add"
-        // instruction.
-        ATS.emitSetFP(FramePtr, ARM::SP, -Offset);
-      else if (DstReg == ARM::SP) {
-        // Change of SP by an offset. Positive values correspond to "sub"
-        // instruction.
-        ATS.emitPad(Offset);
-      } else {
-        // Move of SP to a register.  Positive values correspond to an "add"
-        // instruction.
-        ATS.emitMovSP(DstReg, -Offset);
+      if (MAI->getExceptionHandlingType() == ExceptionHandling::ARM) {
+        if (DstReg == FramePtr && FramePtr != ARM::SP)
+          // Set-up of the frame pointer. Positive values correspond to "add"
+          // instruction.
+          ATS.emitSetFP(FramePtr, ARM::SP, -Offset);
+        else if (DstReg == ARM::SP) {
+          // Change of SP by an offset. Positive values correspond to "sub"
+          // instruction.
+          ATS.emitPad(Offset);
+        } else {
+          // Move of SP to a register.  Positive values correspond to an "add"
+          // instruction.
+          ATS.emitMovSP(DstReg, -Offset);
+        }
       }
     } else if (DstReg == ARM::SP) {
       MI->dump();

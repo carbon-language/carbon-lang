@@ -57,7 +57,8 @@ void ARMException::endModule() {
 /// beginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
 void ARMException::beginFunction(const MachineFunction *MF) {
-  getTargetStreamer().emitFnStart();
+  if (Asm->MAI->getExceptionHandlingType() == ExceptionHandling::ARM)
+    getTargetStreamer().emitFnStart();
   if (Asm->MF->getFunction()->needsUnwindTableEntry())
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
                                                   Asm->getFunctionNumber()));
@@ -104,7 +105,8 @@ void ARMException::endFunction(const MachineFunction *) {
     }
   }
 
-  ATS.emitFnEnd();
+  if (Asm->MAI->getExceptionHandlingType() == ExceptionHandling::ARM)
+    ATS.emitFnEnd();
 }
 
 void ARMException::EmitTypeInfos(unsigned TTypeEncoding) {
