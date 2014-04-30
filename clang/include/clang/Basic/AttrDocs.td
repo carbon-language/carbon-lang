@@ -56,14 +56,14 @@ def CarriesDependencyDocs : Documentation {
 The ``carries_dependency`` attribute specifies dependency propagation into and
 out of functions.
 
-When specified on a function or Objective-C method, the ``carries_depedency``
+When specified on a function or Objective-C method, the ``carries_dependency``
 attribute means that the return value carries a dependency out of the function, 
 so that the implementation need not constrain ordering upon return from that
 function. Implementations of the function and its caller may choose to preserve
 dependencies instead of emitting memory ordering instructions such as fences.
 
 Note, this attribute does not change the meaning of the program, but may result
-in generatation of more efficient code.
+in generation of more efficient code.
   }];
 }
 
