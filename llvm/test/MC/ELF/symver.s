@@ -32,111 +32,111 @@ global1:
 // CHECK-NEXT: ]
 
 // CHECK:        Symbol {
-// CHECK:          Name: bar1@zed (19)
+// CHECK:          Name: bar1@zed
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar3@@zed (37)
+// CHECK-NEXT:     Name: bar3@@zed
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar5@@zed (47)
+// CHECK-NEXT:     Name: bar5@@zed
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: defined1 (1)
+// CHECK-NEXT:     Name: defined1
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: defined2 (10)
+// CHECK-NEXT:     Name: defined2
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .text (0)
+// CHECK-NEXT:     Name: .text
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Section
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .data (0)
+// CHECK-NEXT:     Name: .data
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Section
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .data (0x3)
+// CHECK-NEXT:     Section: .data
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .bss (0)
+// CHECK-NEXT:     Name: .bss
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Local
 // CHECK-NEXT:     Type: Section
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .bss (0x4)
+// CHECK-NEXT:     Section: .bss
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: g1@@zed (74)
+// CHECK-NEXT:     Name: g1@@zed
 // CHECK-NEXT:     Value: 0x14
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: global1 (66)
+// CHECK-NEXT:     Name: global1
 // CHECK-NEXT:     Value: 0x14
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text (0x1)
+// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar2@zed (28)
+// CHECK-NEXT:     Name: bar2@zed
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: Undefined (0x0)
+// CHECK-NEXT:     Section: Undefined
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: bar6@zed (57)
+// CHECK-NEXT:     Name: bar6@zed
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0
 // CHECK-NEXT:     Binding: Global
 // CHECK-NEXT:     Type: None
 // CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: Undefined (0x0)
+// CHECK-NEXT:     Section: Undefined
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
