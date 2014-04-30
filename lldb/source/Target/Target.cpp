@@ -2434,6 +2434,27 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
                     error = error2;
                 }
             }
+            else if (state == eStateExited)
+            {
+                bool with_shell = launch_info.GetShell();
+                const int exit_status = m_process_sp->GetExitStatus();
+                const char *exit_desc = m_process_sp->GetExitDescription();
+#define LAUNCH_SHELL_MESSAGE "\n'r' and 'run' are aliases that default to launching through a shell.\nTry launching without going through a shell by using 'process launch'."
+                if (exit_desc && exit_desc[0])
+                {
+                    if (with_shell)
+                        error.SetErrorStringWithFormat ("process exited with status %i (%s)" LAUNCH_SHELL_MESSAGE, exit_status, exit_desc);
+                    else
+                        error.SetErrorStringWithFormat ("process exited with status %i (%s)", exit_status, exit_desc);
+                }
+                else
+                {
+                    if (with_shell)
+                        error.SetErrorStringWithFormat ("process exited with status %i" LAUNCH_SHELL_MESSAGE, exit_status);
+                    else
+                        error.SetErrorStringWithFormat ("process exited with status %i", exit_status);
+                }
+            }
             else
             {
                 error.SetErrorStringWithFormat ("initial process state wasn't stopped: %s", StateAsCString(state));
