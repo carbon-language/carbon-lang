@@ -669,8 +669,8 @@ void CommentASTToXMLConverter::visitInlineCommandComment(
 void CommentASTToXMLConverter::visitHTMLStartTagComment(
     const HTMLStartTagComment *C) {
   Result << "<rawHTML";
-  if (C->isSafeToPassThrough())
-    Result << " isSafeToPassThrough=\"1\"";
+  if (C->isMalformed())
+    Result << " isMalformed=\"1\"";
   Result << ">";
   {
     SmallString<32> Tag;
@@ -686,8 +686,8 @@ void CommentASTToXMLConverter::visitHTMLStartTagComment(
 void
 CommentASTToXMLConverter::visitHTMLEndTagComment(const HTMLEndTagComment *C) {
   Result << "<rawHTML";
-  if (C->isSafeToPassThrough())
-    Result << " isSafeToPassThrough=\"1\"";
+  if (C->isMalformed())
+    Result << " isMalformed=\"1\"";
   Result << ">&lt;/" << C->getTagName() << "&gt;</rawHTML>";
 }
 

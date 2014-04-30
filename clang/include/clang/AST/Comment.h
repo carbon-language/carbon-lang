@@ -105,9 +105,8 @@ protected:
 
     unsigned : NumInlineContentCommentBits;
 
-    /// True if this tag is safe to pass through to HTML output even if the
-    /// comment comes from an untrusted source.
-    unsigned IsSafeToPassThrough : 1;
+    /// True if we found that this tag is malformed in some way.
+    unsigned IsMalformed : 1;
   };
   enum { NumHTMLTagCommentBits = NumInlineContentCommentBits + 1 };
 
@@ -388,7 +387,7 @@ protected:
       TagName(TagName),
       TagNameRange(TagNameBegin, TagNameEnd) {
     setLocation(TagNameBegin);
-    HTMLTagCommentBits.IsSafeToPassThrough = 1;
+    HTMLTagCommentBits.IsMalformed = 0;
   }
 
 public:
@@ -405,12 +404,12 @@ public:
                        L.getLocWithOffset(1 + TagName.size()));
   }
 
-  bool isSafeToPassThrough() const {
-    return HTMLTagCommentBits.IsSafeToPassThrough;
+  bool isMalformed() const {
+    return HTMLTagCommentBits.IsMalformed;
   }
 
-  void setUnsafeToPassThrough() {
-    HTMLTagCommentBits.IsSafeToPassThrough = 0;
+  void setIsMalformed() {
+    HTMLTagCommentBits.IsMalformed = 1;
   }
 };
 

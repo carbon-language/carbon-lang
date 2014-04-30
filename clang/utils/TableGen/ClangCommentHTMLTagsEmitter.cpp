@@ -61,21 +61,5 @@ void clang::EmitClangCommentHTMLTagsProperties(RecordKeeper &Records,
   StringMatcher("Name", MatchesEndTagForbidden, OS).Emit();
   OS << "  return false;\n"
      << "}\n\n";
-
-  std::vector<Record *> Attributes =
-      Records.getAllDerivedDefinitions("Attribute");
-  std::vector<StringMatcher::StringPair> Matches;
-  for (Record *Attribute : Attributes) {
-    std::string Spelling = Attribute->getValueAsString("Spelling");
-    if (!Attribute->getValueAsBit("IsSafeToPassThrough"))
-      Matches.push_back(StringMatcher::StringPair(Spelling, "return false;"));
-  }
-
-  emitSourceFileHeader("HTML attribute name matcher", OS);
-
-  OS << "bool isHTMLAttributeSafeToPassThrough(StringRef Name) {\n";
-  StringMatcher("Name", Matches, OS).Emit();
-  OS << "  return true;\n"
-     << "}\n\n";
 }
 

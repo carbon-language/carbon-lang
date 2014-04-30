@@ -7,8 +7,8 @@
     <monospaced>ccc</monospaced>
     <emphasized>ddd</emphasized>
     <rawHTML>&lt;eee&gt;</rawHTML>
-    <rawHTML isSafeToPassThrough="0">&lt;fff&gt;</rawHTML>
-    <rawHTML isSafeToPassThrough="1">&lt;ggg&gt;</rawHTML>.
+    <rawHTML isMalformed="0">&lt;fff&gt;</rawHTML>
+    <rawHTML isMalformed="1">&lt;ggg&gt;</rawHTML>.
   </Para>
 </Abstract>
 </Function>

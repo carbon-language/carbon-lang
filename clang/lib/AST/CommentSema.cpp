@@ -467,11 +467,6 @@ void Sema::actOnHTMLStartTagFinish(
                               SourceLocation GreaterLoc,
                               bool IsSelfClosing) {
   Tag->setAttrs(Attrs);
-  for (const auto &Attr : Attrs) {
-    if (!isHTMLAttributeSafeToPassThrough(Attr.Name))
-      Tag->setUnsafeToPassThrough();
-  }
-
   Tag->setGreaterLoc(GreaterLoc);
   if (IsSelfClosing)
     Tag->setSelfClosing();
@@ -487,7 +482,7 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
   if (isHTMLEndTagForbidden(TagName)) {
     Diag(HET->getLocation(), diag::warn_doc_html_end_forbidden)
       << TagName << HET->getSourceRange();
-    HET->setUnsafeToPassThrough();
+    HET->setIsMalformed();
     return HET;
   }
 
@@ -503,7 +498,7 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
   if (!FoundOpen) {
     Diag(HET->getLocation(), diag::warn_doc_html_end_unbalanced)
       << HET->getSourceRange();
-    HET->setUnsafeToPassThrough();
+    HET->setIsMalformed();
     return HET;
   }
 
@@ -511,9 +506,9 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
     HTMLStartTagComment *HST = HTMLOpenTags.pop_back_val();
     StringRef LastNotClosedTagName = HST->getTagName();
     if (LastNotClosedTagName == TagName) {
-      // If the start tag is unsafe, end tag is unsafe as well.
-      if (!HST->isSafeToPassThrough())
-        HET->setUnsafeToPassThrough();
+      // If the start tag is malformed, end tag is malformed as well.
+      if (HST->isMalformed())
+        HET->setIsMalformed();
       break;
     }
 
@@ -533,14 +528,14 @@ HTMLEndTagComment *Sema::actOnHTMLEndTag(SourceLocation LocBegin,
       Diag(HST->getLocation(), diag::warn_doc_html_start_end_mismatch)
         << HST->getTagName() << HET->getTagName()
         << HST->getSourceRange() << HET->getSourceRange();
-      HST->setUnsafeToPassThrough();
+      HST->setIsMalformed();
     } else {
       Diag(HST->getLocation(), diag::warn_doc_html_start_end_mismatch)
         << HST->getTagName() << HET->getTagName()
         << HST->getSourceRange();
       Diag(HET->getLocation(), diag::note_doc_html_end_tag)
         << HET->getSourceRange();
-      HST->setUnsafeToPassThrough();
+      HST->setIsMalformed();
     }
   }
 
@@ -560,7 +555,7 @@ FullComment *Sema::actOnFullComment(
 
     Diag(HST->getLocation(), diag::warn_doc_html_missing_end_tag)
       << HST->getTagName() << HST->getSourceRange();
-    HST->setUnsafeToPassThrough();
+    HST->setIsMalformed();
   }
 
   return FC;
