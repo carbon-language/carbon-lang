@@ -527,7 +527,7 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, const SDNode *N) {
   // Add the return value info.
   AddNodeIDValueTypes(ID, N->getVTList());
   // Add the operand info.
-  AddNodeIDOperands(ID, ArrayRef<SDUse>(N->op_begin(), N->op_end()));
+  AddNodeIDOperands(ID, makeArrayRef(N->op_begin(), N->op_end()));
 
   // Handle SDNode leafs with special info.
   AddNodeIDCustom(ID, N);

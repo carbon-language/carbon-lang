@@ -772,8 +772,8 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
       }
       // Join the stores, which are independent of one another.
       Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
-                          ArrayRef<SDValue>(&MemOps[NumFixedFPRs],
-                                            SystemZ::NumArgFPRs-NumFixedFPRs));
+                          makeArrayRef(&MemOps[NumFixedFPRs],
+                                       SystemZ::NumArgFPRs-NumFixedFPRs));
     }
   }
 

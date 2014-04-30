@@ -1745,7 +1745,7 @@ SDValue DAGTypeLegalizer::WidenVecRes_BinaryCanTrap(SDNode *N) {
       ConcatOps[j] = UndefVal;
   }
   return DAG.getNode(ISD::CONCAT_VECTORS, dl, WidenVT,
-                     ArrayRef<SDValue>(&ConcatOps[0], NumOps));
+                     makeArrayRef(ConcatOps.data(), NumOps));
 }
 
 SDValue DAGTypeLegalizer::WidenVecRes_Convert(SDNode *N) {
@@ -2724,8 +2724,7 @@ SDValue DAGTypeLegalizer::GenWidenVectorLoads(SmallVectorImpl<SDValue> &LdChain,
     if (NewLdTy != LdTy) {
       // Create a larger vector
       ConcatOps[End-1] = DAG.getNode(ISD::CONCAT_VECTORS, dl, NewLdTy,
-                                     ArrayRef<SDValue>(&ConcatOps[Idx],
-                                                       End - Idx));
+                                     makeArrayRef(&ConcatOps[Idx], End - Idx));
       Idx = End - 1;
       LdTy = NewLdTy;
     }
@@ -2734,7 +2733,7 @@ SDValue DAGTypeLegalizer::GenWidenVectorLoads(SmallVectorImpl<SDValue> &LdChain,
 
   if (WidenWidth == LdTy.getSizeInBits()*(End - Idx))
     return DAG.getNode(ISD::CONCAT_VECTORS, dl, WidenVT,
-                       ArrayRef<SDValue>(&ConcatOps[Idx], End - Idx));
+                       makeArrayRef(&ConcatOps[Idx], End - Idx));
 
   // We need to fill the rest with undefs to build the vector
   unsigned NumOps = WidenWidth / LdTy.getSizeInBits();

@@ -355,7 +355,7 @@ SDValue DAGTypeLegalizer::ExpandOp_BITCAST(SDNode *N) {
     IntegerToVector(N->getOperand(0), NumElts, Ops, NVT.getVectorElementType());
 
     SDValue Vec = DAG.getNode(ISD::BUILD_VECTOR, dl, NVT,
-                              ArrayRef<SDValue>(&Ops[0], NumElts));
+                              makeArrayRef(Ops.data(), NumElts));
     return DAG.getNode(ISD::BITCAST, dl, N->getValueType(0), Vec);
   }
 

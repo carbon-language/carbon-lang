@@ -85,8 +85,8 @@ static SDValue ExtractSubVector(SDValue Vec, unsigned IdxVal,
   // If the input is a buildvector just emit a smaller one.
   if (Vec.getOpcode() == ISD::BUILD_VECTOR)
     return DAG.getNode(ISD::BUILD_VECTOR, dl, ResultVT,
-                       ArrayRef<SDUse>(Vec->op_begin()+NormalizedIdxVal,
-                                       ElemsPerChunk));
+                       makeArrayRef(Vec->op_begin()+NormalizedIdxVal,
+                                    ElemsPerChunk));
 
   SDValue VecIdx = DAG.getIntPtrConstant(NormalizedIdxVal);
   SDValue Result = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ResultVT, Vec,
@@ -6140,10 +6140,9 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
     // Build both the lower and upper subvector.
     SDValue Lower = DAG.getNode(ISD::BUILD_VECTOR, dl, HVT,
-                                ArrayRef<SDValue>(&V[0], NumElems/2));
+                                makeArrayRef(&V[0], NumElems/2));
     SDValue Upper = DAG.getNode(ISD::BUILD_VECTOR, dl, HVT,
-                                ArrayRef<SDValue>(&V[NumElems / 2],
-                                                  NumElems/2));
+                                makeArrayRef(&V[NumElems / 2], NumElems/2));
 
     // Recreate the wider vector with the lower and upper part.
     if (VT.is256BitVector())

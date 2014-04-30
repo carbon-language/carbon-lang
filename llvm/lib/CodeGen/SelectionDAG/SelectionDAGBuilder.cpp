@@ -3480,7 +3480,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
     if (ChainI == MaxParallelChains) {
       assert(PendingLoads.empty() && "PendingLoads must be serialized first");
       SDValue Chain = DAG.getNode(ISD::TokenFactor, getCurSDLoc(), MVT::Other,
-                                  ArrayRef<SDValue>(Chains.data(), ChainI));
+                                  makeArrayRef(Chains.data(), ChainI));
       Root = Chain;
       ChainI = 0;
     }
@@ -3498,7 +3498,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
 
   if (!ConstantMemory) {
     SDValue Chain = DAG.getNode(ISD::TokenFactor, getCurSDLoc(), MVT::Other,
-                                ArrayRef<SDValue>(Chains.data(), ChainI));
+                                makeArrayRef(Chains.data(), ChainI));
     if (isVolatile)
       DAG.setRoot(Chain);
     else
@@ -3543,7 +3543,7 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
     // See visitLoad comments.
     if (ChainI == MaxParallelChains) {
       SDValue Chain = DAG.getNode(ISD::TokenFactor, getCurSDLoc(), MVT::Other,
-                                  ArrayRef<SDValue>(Chains.data(), ChainI));
+                                  makeArrayRef(Chains.data(), ChainI));
       Root = Chain;
       ChainI = 0;
     }
@@ -3557,7 +3557,7 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
   }
 
   SDValue StoreNode = DAG.getNode(ISD::TokenFactor, getCurSDLoc(), MVT::Other,
-                                  ArrayRef<SDValue>(Chains.data(), ChainI));
+                                  makeArrayRef(Chains.data(), ChainI));
   DAG.setRoot(StoreNode);
 }
 
@@ -7496,8 +7496,7 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
         dyn_cast<FrameIndexSDNode>(ArgValues[0].getNode()))
       FuncInfo->setArgumentFrameIndex(I, FI->getIndex());
 
-    SDValue Res = DAG.getMergeValues(ArrayRef<SDValue>(ArgValues.data(),
-                                                       NumValues),
+    SDValue Res = DAG.getMergeValues(makeArrayRef(ArgValues.data(), NumValues),
                                      SDB->getCurSDLoc());
 
     SDB->setValue(I, Res);

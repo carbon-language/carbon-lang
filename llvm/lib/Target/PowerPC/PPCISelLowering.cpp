@@ -3474,7 +3474,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
       // descriptor.
       SDVTList VTs = DAG.getVTList(MVT::i64, MVT::Other, MVT::Glue);
       SDValue LoadFuncPtr = DAG.getNode(PPCISD::LOAD, dl, VTs,
-                         ArrayRef<SDValue>(MTCTROps, InFlag.getNode() ? 3 : 2));
+                              makeArrayRef(MTCTROps, InFlag.getNode() ? 3 : 2));
       Chain = LoadFuncPtr.getValue(1);
       InFlag = LoadFuncPtr.getValue(2);
 
@@ -3511,7 +3511,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     }
 
     Chain = DAG.getNode(PPCISD::MTCTR, dl, NodeTys,
-                        ArrayRef<SDValue>(MTCTROps, InFlag.getNode() ? 3 : 2));
+                        makeArrayRef(MTCTROps, InFlag.getNode() ? 3 : 2));
     InFlag = Chain.getValue(1);
 
     NodeTys.clear();
@@ -3940,8 +3940,7 @@ PPCTargetLowering::LowerCall_32SVR4(SDValue Chain, SDValue Callee,
     SDValue Ops[] = { Chain, InFlag };
 
     Chain = DAG.getNode(seenFloatArg ? PPCISD::CR6SET : PPCISD::CR6UNSET,
-                        dl, VTs,
-                        ArrayRef<SDValue>(Ops, InFlag.getNode() ? 2 : 1));
+                        dl, VTs, makeArrayRef(Ops, InFlag.getNode() ? 2 : 1));
 
     InFlag = Chain.getValue(1);
   }
@@ -5282,7 +5281,7 @@ SDValue PPCTargetLowering::LowerFLT_ROUNDS_(SDValue Op,
     MVT::f64,    // return register
     MVT::Glue    // unused in this context
   };
-  SDValue Chain = DAG.getNode(PPCISD::MFFS, dl, NodeTys, ArrayRef<SDValue>());
+  SDValue Chain = DAG.getNode(PPCISD::MFFS, dl, NodeTys, None);
 
   // Save FP register to stack slot
   int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8, false);

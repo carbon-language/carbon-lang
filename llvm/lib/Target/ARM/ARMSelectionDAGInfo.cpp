@@ -73,7 +73,7 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
       SrcOff += VTSize;
     }
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                        ArrayRef<SDValue>(TFOps, i));
+                        makeArrayRef(TFOps, i));
 
     for (i = 0;
          i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
@@ -85,7 +85,7 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
       DstOff += VTSize;
     }
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                        ArrayRef<SDValue>(TFOps, i));
+                        makeArrayRef(TFOps, i));
 
     EmittedNumMemOps += i;
   }
@@ -116,7 +116,7 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
     BytesLeft -= VTSize;
   }
   Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                      ArrayRef<SDValue>(TFOps, i));
+                      makeArrayRef(TFOps, i));
 
   i = 0;
   BytesLeft = BytesLeftSave;
@@ -138,7 +138,7 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
     BytesLeft -= VTSize;
   }
   return DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
-                     ArrayRef<SDValue>(TFOps, i));
+                     makeArrayRef(TFOps, i));
 }
 
 // Adjust parameters for memset, EABI uses format (ptr, size, value),

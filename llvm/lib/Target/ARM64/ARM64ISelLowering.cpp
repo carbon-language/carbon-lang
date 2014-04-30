@@ -4358,7 +4358,7 @@ static SDValue GenerateTBL(SDValue Op, ArrayRef<int> ShuffleMask,
         ISD::INTRINSIC_WO_CHAIN, DL, IndexVT,
         DAG.getConstant(Intrinsic::arm64_neon_tbl1, MVT::i32), V1Cst,
         DAG.getNode(ISD::BUILD_VECTOR, DL, IndexVT,
-                    ArrayRef<SDValue>(TBLMask.data(), IndexLen)));
+                    makeArrayRef(TBLMask.data(), IndexLen)));
   } else {
     if (IndexLen == 8) {
       V1Cst = DAG.getNode(ISD::CONCAT_VECTORS, DL, MVT::v16i8, V1Cst, V2Cst);
@@ -4366,7 +4366,7 @@ static SDValue GenerateTBL(SDValue Op, ArrayRef<int> ShuffleMask,
           ISD::INTRINSIC_WO_CHAIN, DL, IndexVT,
           DAG.getConstant(Intrinsic::arm64_neon_tbl1, MVT::i32), V1Cst,
           DAG.getNode(ISD::BUILD_VECTOR, DL, IndexVT,
-                      ArrayRef<SDValue>(TBLMask.data(), IndexLen)));
+                      makeArrayRef(TBLMask.data(), IndexLen)));
     } else {
       // FIXME: We cannot, for the moment, emit a TBL2 instruction because we
       // cannot currently represent the register constraints on the input
@@ -4378,7 +4378,7 @@ static SDValue GenerateTBL(SDValue Op, ArrayRef<int> ShuffleMask,
           ISD::INTRINSIC_WO_CHAIN, DL, IndexVT,
           DAG.getConstant(Intrinsic::arm64_neon_tbl2, MVT::i32), V1Cst, V2Cst,
           DAG.getNode(ISD::BUILD_VECTOR, DL, IndexVT,
-                      ArrayRef<SDValue>(TBLMask.data(), IndexLen)));
+                      makeArrayRef(TBLMask.data(), IndexLen)));
     }
   }
   return DAG.getNode(ISD::BITCAST, DL, Op.getValueType(), Shuffle);

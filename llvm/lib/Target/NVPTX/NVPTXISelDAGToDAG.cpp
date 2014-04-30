@@ -1084,8 +1084,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDUVector(SDNode *N) {
     }
 
     SDValue Ops[] = { Addr, Chain };
-    LD = CurDAG->getMachineNode(Opcode, DL, N->getVTList(),
-                                ArrayRef<SDValue>(Ops, 2));
+    LD = CurDAG->getMachineNode(Opcode, DL, N->getVTList(), Ops);
   } else if (Subtarget.is64Bit()
                  ? SelectADDRri64(Op1.getNode(), Op1, Base, Offset)
                  : SelectADDRri(Op1.getNode(), Op1, Base, Offset)) {
@@ -1271,8 +1270,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDUVector(SDNode *N) {
 
     SDValue Ops[] = { Base, Offset, Chain };
 
-    LD = CurDAG->getMachineNode(Opcode, DL, N->getVTList(),
-                                ArrayRef<SDValue>(Ops, 3));
+    LD = CurDAG->getMachineNode(Opcode, DL, N->getVTList(), Ops);
   } else {
     if (Subtarget.is64Bit()) {
       switch (N->getOpcode()) {
@@ -1455,8 +1453,7 @@ SDNode *NVPTXDAGToDAGISel::SelectLDGLDUVector(SDNode *N) {
     }
 
     SDValue Ops[] = { Op1, Chain };
-    LD = CurDAG->getMachineNode(Opcode, DL, N->getVTList(),
-                                ArrayRef<SDValue>(Ops, 2));
+    LD = CurDAG->getMachineNode(Opcode, DL, N->getVTList(), Ops);
   }
 
   MachineSDNode::mmo_iterator MemRefs0 = MF->allocateMemRefsArray(1);

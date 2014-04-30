@@ -489,7 +489,7 @@ static SDValue performANDCombine(SDNode *N, SelectionDAG &DAG,
       SDValue Ops[] = { Op0->getOperand(0), Op0->getOperand(1), Op0Op2 };
       DAG.MorphNodeTo(Op0.getNode(), MipsISD::VEXTRACT_ZEXT_ELT,
                       Op0->getVTList(),
-                      ArrayRef<SDValue>(Ops, Op0->getNumOperands()));
+                      makeArrayRef(Ops, Op0->getNumOperands()));
       return Op0;
     }
   }
@@ -834,7 +834,7 @@ static SDValue performSRACombine(SDNode *N, SelectionDAG &DAG,
                           Op0Op0->getOperand(2) };
         DAG.MorphNodeTo(Op0Op0.getNode(), MipsISD::VEXTRACT_SEXT_ELT,
                         Op0Op0->getVTList(),
-                        ArrayRef<SDValue>(Ops, Op0Op0->getNumOperands()));
+                        makeArrayRef(Ops, Op0Op0->getNumOperands()));
         return Op0Op0;
       }
     }
@@ -1284,7 +1284,7 @@ static SDValue lowerMSASplatZExt(SDValue Op, unsigned OpNr, SelectionDAG &DAG) {
                       LaneA, LaneB, LaneA, LaneB, LaneA, LaneB, LaneA, LaneB };
 
   SDValue Result = DAG.getNode(ISD::BUILD_VECTOR, DL, ViaVecTy,
-                       ArrayRef<SDValue>(Ops, ViaVecTy.getVectorNumElements()));
+                       makeArrayRef(Ops, ViaVecTy.getVectorNumElements()));
 
   if (ViaVecTy != ResVecTy)
     Result = DAG.getNode(ISD::BITCAST, DL, ResVecTy, Result);
@@ -1324,7 +1324,7 @@ static SDValue getBuildVectorSplat(EVT VecTy, SDValue SplatValue,
                       SplatValueA, SplatValueB, SplatValueA, SplatValueB };
 
   SDValue Result = DAG.getNode(ISD::BUILD_VECTOR, DL, ViaVecTy,
-                       ArrayRef<SDValue>(Ops, ViaVecTy.getVectorNumElements()));
+                       makeArrayRef(Ops, ViaVecTy.getVectorNumElements()));
 
   if (VecTy != ViaVecTy)
     Result = DAG.getNode(ISD::BITCAST, DL, VecTy, Result);
