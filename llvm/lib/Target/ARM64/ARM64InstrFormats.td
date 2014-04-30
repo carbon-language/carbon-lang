@@ -4420,11 +4420,12 @@ multiclass SIMDMixedTwoVector<bit U, bits<5> opc, string asm,
 }
 
 class BaseSIMDCmpTwoVector<bit Q, bit U, bits<2> size, bits<5> opcode,
-                           RegisterOperand regtype, string asm, string kind,
+                           RegisterOperand regtype,
+                           string asm, string kind, string zero,
                            ValueType dty, ValueType sty, SDNode OpNode>
   : I<(outs regtype:$Rd), (ins regtype:$Rn), asm,
-      "{\t$Rd" # kind # ", $Rn" # kind # ", #0" #
-      "|" # kind # "\t$Rd, $Rn, #0}", "",
+      "{\t$Rd" # kind # ", $Rn" # kind # ", #" # zero #
+      "|" # kind # "\t$Rd, $Rn, #" # zero # "}", "",
       [(set (dty regtype:$Rd), (OpNode (sty regtype:$Rn)))]>,
     Sched<[WriteV]> {
   bits<5> Rd;
@@ -4445,25 +4446,25 @@ class BaseSIMDCmpTwoVector<bit Q, bit U, bits<2> size, bits<5> opcode,
 multiclass SIMDCmpTwoVector<bit U, bits<5> opc, string asm,
                             SDNode OpNode> {
   def v8i8rz  : BaseSIMDCmpTwoVector<0, U, 0b00, opc, V64,
-                                     asm, ".8b",
+                                     asm, ".8b", "0",
                                      v8i8, v8i8, OpNode>;
   def v16i8rz : BaseSIMDCmpTwoVector<1, U, 0b00, opc, V128,
-                                     asm, ".16b",
+                                     asm, ".16b", "0",
                                      v16i8, v16i8, OpNode>;
   def v4i16rz : BaseSIMDCmpTwoVector<0, U, 0b01, opc, V64,
-                                     asm, ".4h",
+                                     asm, ".4h", "0",
                                      v4i16, v4i16, OpNode>;
   def v8i16rz : BaseSIMDCmpTwoVector<1, U, 0b01, opc, V128,
-                                     asm, ".8h",
+                                     asm, ".8h", "0",
                                      v8i16, v8i16, OpNode>;
   def v2i32rz : BaseSIMDCmpTwoVector<0, U, 0b10, opc, V64,
-                                     asm, ".2s",
+                                     asm, ".2s", "0",
                                      v2i32, v2i32, OpNode>;
   def v4i32rz : BaseSIMDCmpTwoVector<1, U, 0b10, opc, V128,
-                                     asm, ".4s",
+                                     asm, ".4s", "0",
                                      v4i32, v4i32, OpNode>;
   def v2i64rz : BaseSIMDCmpTwoVector<1, U, 0b11, opc, V128,
-                                     asm, ".2d",
+                                     asm, ".2d", "0",
                                      v2i64, v2i64, OpNode>;
 }
 
@@ -4471,14 +4472,27 @@ multiclass SIMDCmpTwoVector<bit U, bits<5> opc, string asm,
 multiclass SIMDFPCmpTwoVector<bit U, bit S, bits<5> opc,
                               string asm, SDNode OpNode> {
   def v2i32rz : BaseSIMDCmpTwoVector<0, U, {S,0}, opc, V64,
-                                     asm, ".2s",
+                                     asm, ".2s", "0.0",
                                      v2i32, v2f32, OpNode>;
   def v4i32rz : BaseSIMDCmpTwoVector<1, U, {S,0}, opc, V128,
-                                     asm, ".4s",
+                                     asm, ".4s", "0.0",
                                      v4i32, v4f32, OpNode>;
   def v2i64rz : BaseSIMDCmpTwoVector<1, U, {S,1}, opc, V128,
-                                     asm, ".2d",
+                                     asm, ".2d", "0.0",
                                      v2i64, v2f64, OpNode>;
+
+  def : InstAlias<asm # " $Vd.2s, $Vn.2s, #0",
+                  (!cast<Instruction>(NAME # v2i32rz) V64:$Vd, V64:$Vn), 0>;
+  def : InstAlias<asm # " $Vd.4s, $Vn.4s, #0",
+                  (!cast<Instruction>(NAME # v4i32rz) V128:$Vd, V128:$Vn), 0>;
+  def : InstAlias<asm # " $Vd.2d, $Vn.2d, #0",
+                  (!cast<Instruction>(NAME # v2i64rz) V128:$Vd, V128:$Vn), 0>;
+  def : InstAlias<asm # ".2s $Vd, $Vn, #0",
+                  (!cast<Instruction>(NAME # v2i32rz) V64:$Vd, V64:$Vn), 0>;
+  def : InstAlias<asm # ".4s $Vd, $Vn, #0",
+                  (!cast<Instruction>(NAME # v4i32rz) V128:$Vd, V128:$Vn), 0>;
+  def : InstAlias<asm # ".2d $Vd, $Vn, #0",
+                  (!cast<Instruction>(NAME # v2i64rz) V128:$Vd, V128:$Vn), 0>;
 }
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
@@ -5187,9 +5201,9 @@ class BaseSIMDTwoScalarTied<bit U, bits<2> size, bits<5> opcode,
 
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
 class BaseSIMDCmpTwoScalar<bit U, bits<2> size, bits<5> opcode,
-                        RegisterClass regtype, string asm>
+                        RegisterClass regtype, string asm, string zero>
   : I<(outs regtype:$Rd), (ins regtype:$Rn), asm,
-      "\t$Rd, $Rn, #0", "", []>,
+      "\t$Rd, $Rn, #" # zero, "", []>,
     Sched<[WriteV]> {
   bits<5> Rd;
   bits<5> Rn;
@@ -5219,7 +5233,7 @@ class SIMDInexactCvtTwoScalar<bits<5> opcode, string asm>
 
 multiclass SIMDCmpTwoScalarD<bit U, bits<5> opc, string asm,
                              SDPatternOperator OpNode> {
-  def v1i64rz  : BaseSIMDCmpTwoScalar<U, 0b11, opc, FPR64, asm>;
+  def v1i64rz  : BaseSIMDCmpTwoScalar<U, 0b11, opc, FPR64, asm, "0">;
 
   def : Pat<(v1i64 (OpNode FPR64:$Rn)),
             (!cast<Instruction>(NAME # v1i64rz) FPR64:$Rn)>;
@@ -5227,8 +5241,13 @@ multiclass SIMDCmpTwoScalarD<bit U, bits<5> opc, string asm,
 
 multiclass SIMDCmpTwoScalarSD<bit U, bit S, bits<5> opc, string asm,
                               SDPatternOperator OpNode> {
-  def v1i64rz  : BaseSIMDCmpTwoScalar<U, {S,1}, opc, FPR64, asm>;
-  def v1i32rz  : BaseSIMDCmpTwoScalar<U, {S,0}, opc, FPR32, asm>;
+  def v1i64rz  : BaseSIMDCmpTwoScalar<U, {S,1}, opc, FPR64, asm, "0.0">;
+  def v1i32rz  : BaseSIMDCmpTwoScalar<U, {S,0}, opc, FPR32, asm, "0.0">;
+
+  def : InstAlias<asm # " $Rd, $Rn, #0",
+                  (!cast<Instruction>(NAME # v1i64rz) FPR64:$Rd, FPR64:$Rn)>;
+  def : InstAlias<asm # " $Rd, $Rn, #0",
+                  (!cast<Instruction>(NAME # v1i32rz) FPR32:$Rd, FPR32:$Rn)>;
 
   def : Pat<(v1i64 (OpNode (v1f64 FPR64:$Rn))),
             (!cast<Instruction>(NAME # v1i64rz) FPR64:$Rn)>;
