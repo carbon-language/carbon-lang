@@ -40,23 +40,31 @@
 #include "sanitizer_stacktrace.h"
 #include "sanitizer_flags.h"
 
-struct CovData {
-  BlockingMutex mu;
-  InternalMmapVector<uptr> v;
-  atomic_uint32_t guard;
-};
+atomic_uint32_t dump_once_guard;  // Ensure that CovDump runs only once.
 
-static uptr cov_data_placeholder[(sizeof(CovData) / sizeof(uptr)) + 1];
-COMPILER_CHECK(sizeof(cov_data_placeholder) >= sizeof(CovData));
-static CovData *cov_data = reinterpret_cast<CovData*>(cov_data_placeholder);
+// pc_array is the array containing the covered PCs.
+// To make the pc_array thread- and AS- safe it has to be large enough.
+// 128M counters "ought to be enough for anybody" (4M on 32-bit).
+// pc_array is allocated with MmapNoReserveOrDie and so it uses only as
+// much RAM as it really needs.
+static const uptr kPcArraySize = FIRST_32_SECOND_64(1 << 22, 1 << 27);
+static uptr *pc_array;
+static atomic_uintptr_t pc_array_index;
 
 namespace __sanitizer {
 
 // Simply add the pc into the vector under lock. If the function is called more
 // than once for a given PC it will be inserted multiple times, which is fine.
 static void CovAdd(uptr pc) {
-  BlockingMutexLock lock(&cov_data->mu);
-  cov_data->v.push_back(pc);
+  if (!pc_array) return;
+  uptr idx = atomic_fetch_add(&pc_array_index, 1, memory_order_relaxed);
+  CHECK_LT(idx, kPcArraySize);
+  pc_array[idx] = pc;
+}
+
+void CovInit() {
+  pc_array = reinterpret_cast<uptr *>(
+      MmapNoReserveOrDie(sizeof(uptr) * kPcArraySize, "CovInit"));
 }
 
 static inline bool CompareLess(const uptr &a, const uptr &b) {
@@ -66,13 +74,13 @@ static inline bool CompareLess(const uptr &a, const uptr &b) {
 // Dump the coverage on disk.
 void CovDump() {
 #if !SANITIZER_WINDOWS
-  if (atomic_fetch_add(&cov_data->guard, 1, memory_order_relaxed) != 0) return;
-  BlockingMutexLock lock(&cov_data->mu);
-  InternalMmapVector<uptr> &v = cov_data->v;
-  InternalSort(&v, v.size(), CompareLess);
-  InternalMmapVector<u32> offsets(v.size());
-  const uptr *vb = v.data();
-  const uptr *ve = vb + v.size();
+  if (atomic_fetch_add(&dump_once_guard, 1, memory_order_relaxed))
+    return;
+  uptr size = atomic_load(&pc_array_index, memory_order_relaxed);
+  InternalSort(&pc_array, size, CompareLess);
+  InternalMmapVector<u32> offsets(size);
+  const uptr *vb = pc_array;
+  const uptr *ve = vb + size;
   MemoryMappingLayout proc_maps(/*cache_enabled*/false);
   uptr mb, me, off, prot;
   InternalScopedBuffer<char> module(4096);
@@ -116,4 +124,5 @@ SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov() {
   CovAdd(StackTrace::GetPreviousInstructionPc(GET_CALLER_PC()));
 }
 SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_dump() { CovDump(); }
+SANITIZER_INTERFACE_ATTRIBUTE void __sanitizer_cov_init() { CovInit(); }
 }  // extern "C"

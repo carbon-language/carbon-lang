@@ -664,8 +664,10 @@ static void AsanInitInternal() {
   if (flags()->atexit)
     Atexit(asan_atexit);
 
-  if (flags()->coverage)
+  if (flags()->coverage) {
+    __sanitizer_cov_init();
     Atexit(__sanitizer_cov_dump);
+  }
 
   // interceptors
   InitTlsSize();
