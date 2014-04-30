@@ -59,7 +59,8 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
                                 uint64_t Value, uint32_t Type, int64_t Addend);
 
   unsigned getMaxStubSize() override {
-    if (Arch == Triple::aarch64)
+    if (Arch == Triple::aarch64 || Arch == Triple::arm64 ||
+        Arch == Triple::aarch64_be || Arch == Triple::arm64_be)
       return 20; // movz; movk; movk; movk; br
     if (Arch == Triple::arm || Arch == Triple::thumb)
       return 8; // 32-bit instruction and 32-bit address
