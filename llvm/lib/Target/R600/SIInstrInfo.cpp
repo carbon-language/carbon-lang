@@ -548,6 +548,9 @@ unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   case AMDGPU::S_CMP_GE_I32: return AMDGPU::V_CMP_GE_I32_e32;
   case AMDGPU::S_CMP_LT_I32: return AMDGPU::V_CMP_LT_I32_e32;
   case AMDGPU::S_CMP_LE_I32: return AMDGPU::V_CMP_LE_I32_e32;
+  case AMDGPU::S_LOAD_DWORD_SGPR: return AMDGPU::BUFFER_LOAD_DWORD_ADDR64;
+  case AMDGPU::S_LOAD_DWORDX2_SGPR: return AMDGPU::BUFFER_LOAD_DWORDX2_ADDR64;
+  case AMDGPU::S_LOAD_DWORDX4_SGPR: return AMDGPU::BUFFER_LOAD_DWORDX4_ADDR64;
   }
 }
 
@@ -910,6 +913,44 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
   }
 }
 
+void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) const {
+  MachineBasicBlock *MBB = MI->getParent();
+  switch (MI->getOpcode()) {
+    case AMDGPU::S_LOAD_DWORD_SGPR:
+    case AMDGPU::S_LOAD_DWORDX2_SGPR:
+    case AMDGPU::S_LOAD_DWORDX4_SGPR:
+      unsigned NewOpcode = getVALUOp(*MI);
+      unsigned Offset = MI->getOperand(2).getReg();
+
+
+      unsigned SRsrc = MRI.createVirtualRegister(&AMDGPU::SReg_128RegClass);
+      unsigned DWord0 = Offset;
+      unsigned DWord1 = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+      unsigned DWord2 = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+      unsigned DWord3 = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+
+      BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32), DWord1)
+              .addImm(0);
+      BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32), DWord2)
+              .addImm(AMDGPU::RSRC_DATA_FORMAT & 0xFFFFFFFF);
+      BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32), DWord3)
+              .addImm(AMDGPU::RSRC_DATA_FORMAT >> 32);
+      BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::REG_SEQUENCE), SRsrc)
+              .addReg(DWord0)
+              .addImm(AMDGPU::sub0)
+              .addReg(DWord1)
+              .addImm(AMDGPU::sub1)
+              .addReg(DWord2)
+              .addImm(AMDGPU::sub2)
+              .addReg(DWord3)
+              .addImm(AMDGPU::sub3);
+     MI->setDesc(get(NewOpcode));
+     MI->getOperand(2).setReg(MI->getOperand(1).getReg());
+     MI->getOperand(1).setReg(SRsrc);
+     MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(0));
+  }
+}
+
 void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
   SmallVector<MachineInstr *, 128> Worklist;
   Worklist.push_back(&TopInst);
@@ -920,9 +961,15 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
     MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
 
     unsigned Opcode = Inst->getOpcode();
+    unsigned NewOpcode = getVALUOp(*Inst);
 
     // Handle some special cases
     switch (Opcode) {
+    default:
+      if (isSMRD(Inst->getOpcode())) {
+        moveSMRDToVALU(Inst, MRI);
+      }
+      break;
     case AMDGPU::S_MOV_B64: {
       DebugLoc DL = Inst->getDebugLoc();
 
@@ -973,7 +1020,6 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       llvm_unreachable("Moving this op to VALU not implemented");
     }
 
-    unsigned NewOpcode = getVALUOp(*Inst);
     if (NewOpcode == AMDGPU::INSTRUCTION_LIST_END) {
       // We cannot move this instruction to the VALU, so we should try to
       // legalize its operands instead.

@@ -137,6 +137,8 @@ public:
   /// create new instruction and insert them before \p MI.
   void legalizeOperands(MachineInstr *MI) const;
 
+  void moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) const;
+
   /// \brief Replace this instruction's opcode with the equivalent VALU
   /// opcode.  This function will also move the users of \p MI to the
   /// VALU if necessary.
