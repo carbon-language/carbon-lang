@@ -8,6 +8,7 @@ def set_default(attr, value):
     
 # Generic config options for all compiler-rt lit tests.
 set_default("target_triple", "@TARGET_TRIPLE@")
+set_default("target_cflags", "@COMPILER_RT_TEST_COMPILER_FLAGS@")
 set_default("host_arch", "@HOST_ARCH@")
 set_default("target_arch", "@HOST_ARCH@")
 set_default("host_os", "@HOST_OS@")
@@ -22,6 +23,7 @@ set_default("compiler_rt_arch", "@COMPILER_RT_SUPPORTED_ARCH@")
 set_default("python_executable", "@PYTHON_EXECUTABLE@")
 set_default("compiler_rt_debug", @COMPILER_RT_DEBUG_PYBOOL@)
 set_default("compiler_rt_libdir", "@COMPILER_RT_LIBRARY_OUTPUT_DIR@")
+set_default("emulator", "@COMPILER_RT_EMULATOR@")
 
 # LLVM tools dir can be passed in lit parameters, so try to
 # apply substitution.
