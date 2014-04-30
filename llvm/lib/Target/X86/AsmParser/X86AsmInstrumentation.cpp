@@ -11,6 +11,7 @@
 #include "X86AsmInstrumentation.h"
 #include "X86Operand.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/IR/Function.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
@@ -207,9 +208,11 @@ void X86AsmInstrumentation::InstrumentInstruction(
     MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out) {}
 
 X86AsmInstrumentation *
-CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions, const MCContext &Ctx,
-                            const MCSubtargetInfo &STI) {
-  if (MCOptions.SanitizeAddress) {
+CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
+                            const MCContext &Ctx, const MCSubtargetInfo &STI) {
+  Triple T(STI.getTargetTriple());
+  const bool hasCompilerRTSupport = T.isOSLinux();
+  if (hasCompilerRTSupport && MCOptions.SanitizeAddress) {
     if ((STI.getFeatureBits() & X86::Mode32Bit) != 0)
       return new X86AddressSanitizer32(STI);
     if ((STI.getFeatureBits() & X86::Mode64Bit) != 0)
