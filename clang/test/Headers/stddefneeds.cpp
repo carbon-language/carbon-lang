@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wsentinel -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -triple x86_64-apple-macosx10.9.0 -verify -Wsentinel -std=c++11 %s
 
 ptrdiff_t p0; // expected-error{{unknown}}
 size_t s0; // expected-error{{unknown}}
