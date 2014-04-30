@@ -94,7 +94,8 @@ class ClangTidyCheckFactories;
 
 class ClangTidyASTConsumerFactory {
 public:
-  ClangTidyASTConsumerFactory(ClangTidyContext &Context);
+  ClangTidyASTConsumerFactory(ClangTidyContext &Context,
+                              const ClangTidyOptions &Options);
   ~ClangTidyASTConsumerFactory();
 
   /// \brief Returns an ASTConsumer that runs the specified clang-tidy checks.
@@ -112,6 +113,7 @@ private:
   ClangTidyContext &Context;
   ast_matchers::MatchFinder Finder;
   std::unique_ptr<ClangTidyCheckFactories> CheckFactories;
+  ClangTidyOptions Options;
 };
 
 /// \brief Fills the list of check names that are enabled when the provided

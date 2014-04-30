@@ -173,8 +173,9 @@ private:
 } // namespace
 
 ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
-    ClangTidyContext &Context)
-    : Context(Context), CheckFactories(new ClangTidyCheckFactories) {
+    ClangTidyContext &Context, const ClangTidyOptions &Options)
+    : Context(Context), CheckFactories(new ClangTidyCheckFactories),
+      Options(Options) {
   for (ClangTidyModuleRegistry::iterator I = ClangTidyModuleRegistry::begin(),
                                          E = ClangTidyModuleRegistry::end();
        I != E; ++I) {
@@ -207,16 +208,21 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
   if (!CheckFactories->empty())
     Consumers.push_back(Finder.newASTConsumer());
 
-  AnalyzerOptionsRef Options = Compiler.getAnalyzerOpts();
-  Options->CheckersControlList = getCheckersControlList();
-  if (!Options->CheckersControlList.empty()) {
-    Options->AnalysisStoreOpt = RegionStoreModel;
-    Options->AnalysisDiagOpt = PD_NONE;
-    Options->AnalyzeNestedBlocks = true;
-    Options->eagerlyAssumeBinOpBifurcation = true;
+  AnalyzerOptionsRef AnalyzerOptions = Compiler.getAnalyzerOpts();
+  // FIXME: Remove this option once clang's cfg-temporary-dtors option defaults
+  // to true.
+  AnalyzerOptions->Config["cfg-temporary-dtors"] =
+      Options.AnalyzeTemporaryDtors ? "true" : "false";
+
+  AnalyzerOptions->CheckersControlList = getCheckersControlList();
+  if (!AnalyzerOptions->CheckersControlList.empty()) {
+    AnalyzerOptions->AnalysisStoreOpt = RegionStoreModel;
+    AnalyzerOptions->AnalysisDiagOpt = PD_NONE;
+    AnalyzerOptions->AnalyzeNestedBlocks = true;
+    AnalyzerOptions->eagerlyAssumeBinOpBifurcation = true;
     ento::AnalysisASTConsumer *AnalysisConsumer = ento::CreateAnalysisConsumer(
         Compiler.getPreprocessor(), Compiler.getFrontendOpts().OutputFile,
-        Options, Compiler.getFrontendOpts().Plugins);
+        AnalyzerOptions, Compiler.getFrontendOpts().Plugins);
     AnalysisConsumer->AddDiagnosticConsumer(
         new AnalyzerDiagnosticConsumer(Context));
     Consumers.push_back(AnalysisConsumer);
@@ -288,7 +294,7 @@ void ClangTidyCheck::setName(StringRef Name) {
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
   SmallVector<ClangTidyError, 8> Errors;
   clang::tidy::ClangTidyContext Context(&Errors, Options);
-  ClangTidyASTConsumerFactory Factory(Context);
+  ClangTidyASTConsumerFactory Factory(Context, Options);
   return Factory.getCheckNames();
 }
 
@@ -326,7 +332,7 @@ void runClangTidy(const ClangTidyOptions &Options,
     ClangTidyASTConsumerFactory *ConsumerFactory;
   };
 
-  Tool.run(new ActionFactory(new ClangTidyASTConsumerFactory(Context)));
+  Tool.run(new ActionFactory(new ClangTidyASTConsumerFactory(Context, Options)));
 }
 
 void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {

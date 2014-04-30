@@ -46,12 +46,20 @@ static cl::opt<bool> ListChecks("list-checks",
                                 cl::desc("List all enabled checks and exit."),
                                 cl::init(false), cl::cat(ClangTidyCategory));
 
+static cl::opt<bool> AnalyzeTemporaryDtors(
+    "analyze-temporary-dtors",
+    cl::desc("Enable temporary destructor-aware analysis in clang-analyzer- "
+             "checks."),
+    cl::init(false),
+    cl::cat(ClangTidyCategory));
+
 int main(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
 
   clang::tidy::ClangTidyOptions Options;
   Options.EnableChecksRegex = Checks;
   Options.DisableChecksRegex = DisableChecks;
+  Options.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
 
   // FIXME: Allow using --list-checks without positional arguments.
   if (ListChecks) {

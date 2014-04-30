@@ -18,6 +18,7 @@ struct ClangTidyOptions {
   ClangTidyOptions() : EnableChecksRegex(".*") {}
   std::string EnableChecksRegex;
   std::string DisableChecksRegex;
+  bool AnalyzeTemporaryDtors;
 };
 
 } // end namespace tidy
