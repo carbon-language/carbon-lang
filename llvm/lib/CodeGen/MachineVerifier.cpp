@@ -470,18 +470,17 @@ void MachineVerifier::visitMachineFunctionBefore() {
 
   // Build a set of the basic blocks in the function.
   FunctionBlocks.clear();
-  for (MachineFunction::const_iterator
-       I = MF->begin(), E = MF->end(); I != E; ++I) {
-    FunctionBlocks.insert(I);
-    BBInfo &MInfo = MBBInfoMap[I];
+  for (const auto &MBB : *MF) {
+    FunctionBlocks.insert(&MBB);
+    BBInfo &MInfo = MBBInfoMap[&MBB];
 
-    MInfo.Preds.insert(I->pred_begin(), I->pred_end());
-    if (MInfo.Preds.size() != I->pred_size())
-      report("MBB has duplicate entries in its predecessor list.", I);
+    MInfo.Preds.insert(MBB.pred_begin(), MBB.pred_end());
+    if (MInfo.Preds.size() != MBB.pred_size())
+      report("MBB has duplicate entries in its predecessor list.", &MBB);
 
-    MInfo.Succs.insert(I->succ_begin(), I->succ_end());
-    if (MInfo.Succs.size() != I->succ_size())
-      report("MBB has duplicate entries in its successor list.", I);
+    MInfo.Succs.insert(MBB.succ_begin(), MBB.succ_end());
+    if (MInfo.Succs.size() != MBB.succ_size())
+      report("MBB has duplicate entries in its successor list.", &MBB);
   }
 
   // Check that the register use lists are sane.
@@ -1159,9 +1158,7 @@ void MachineVerifier::calcRegsPassed() {
   // First push live-out regs to successors' vregsPassed. Remember the MBBs that
   // have any vregsPassed.
   SmallPtrSet<const MachineBasicBlock*, 8> todo;
-  for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
-       MFI != MFE; ++MFI) {
-    const MachineBasicBlock &MBB(*MFI);
+  for (const auto &MBB : *MF) {
     BBInfo &MInfo = MBBInfoMap[&MBB];
     if (!MInfo.reachable)
       continue;
@@ -1196,9 +1193,7 @@ void MachineVerifier::calcRegsPassed() {
 void MachineVerifier::calcRegsRequired() {
   // First push live-in regs to predecessors' vregsRequired.
   SmallPtrSet<const MachineBasicBlock*, 8> todo;
-  for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
-       MFI != MFE; ++MFI) {
-    const MachineBasicBlock &MBB(*MFI);
+  for (const auto &MBB : *MF) {
     BBInfo &MInfo = MBBInfoMap[&MBB];
     for (MachineBasicBlock::const_pred_iterator PrI = MBB.pred_begin(),
            PrE = MBB.pred_end(); PrI != PrE; ++PrI) {
@@ -1260,29 +1255,27 @@ void MachineVerifier::checkPHIOps(const MachineBasicBlock *MBB) {
 void MachineVerifier::visitMachineFunctionAfter() {
   calcRegsPassed();
 
-  for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
-       MFI != MFE; ++MFI) {
-    BBInfo &MInfo = MBBInfoMap[MFI];
+  for (const auto &MBB : *MF) {
+    BBInfo &MInfo = MBBInfoMap[&MBB];
 
     // Skip unreachable MBBs.
     if (!MInfo.reachable)
       continue;
 
-    checkPHIOps(MFI);
+    checkPHIOps(&MBB);
   }
 
   // Now check liveness info if available
   calcRegsRequired();
 
   // Check for killed virtual registers that should be live out.
-  for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
-       MFI != MFE; ++MFI) {
-    BBInfo &MInfo = MBBInfoMap[MFI];
+  for (const auto &MBB : *MF) {
+    BBInfo &MInfo = MBBInfoMap[&MBB];
     for (RegSet::iterator
          I = MInfo.vregsRequired.begin(), E = MInfo.vregsRequired.end(); I != E;
          ++I)
       if (MInfo.regsKilled.count(*I)) {
-        report("Virtual register killed in block, but needed live out.", MFI);
+        report("Virtual register killed in block, but needed live out.", &MBB);
         *OS << "Virtual register " << PrintReg(*I)
             << " is used after the block.\n";
       }
@@ -1308,20 +1301,19 @@ void MachineVerifier::verifyLiveVariables() {
   for (unsigned i = 0, e = MRI->getNumVirtRegs(); i != e; ++i) {
     unsigned Reg = TargetRegisterInfo::index2VirtReg(i);
     LiveVariables::VarInfo &VI = LiveVars->getVarInfo(Reg);
-    for (MachineFunction::const_iterator MFI = MF->begin(), MFE = MF->end();
-         MFI != MFE; ++MFI) {
-      BBInfo &MInfo = MBBInfoMap[MFI];
+    for (const auto &MBB : *MF) {
+      BBInfo &MInfo = MBBInfoMap[&MBB];
 
       // Our vregsRequired should be identical to LiveVariables' AliveBlocks
       if (MInfo.vregsRequired.count(Reg)) {
-        if (!VI.AliveBlocks.test(MFI->getNumber())) {
-          report("LiveVariables: Block missing from AliveBlocks", MFI);
+        if (!VI.AliveBlocks.test(MBB.getNumber())) {
+          report("LiveVariables: Block missing from AliveBlocks", &MBB);
           *OS << "Virtual register " << PrintReg(Reg)
               << " must be live through the block.\n";
         }
       } else {
-        if (VI.AliveBlocks.test(MFI->getNumber())) {
-          report("LiveVariables: Block should not be in AliveBlocks", MFI);
+        if (VI.AliveBlocks.test(MBB.getNumber())) {
+          report("LiveVariables: Block should not be in AliveBlocks", &MBB);
           *OS << "Virtual register " << PrintReg(Reg)
               << " is not needed live through the block.\n";
         }

@@ -365,9 +365,9 @@ void MachineFunction::print(raw_ostream &OS, SlotIndexes *Indexes) const {
     OS << '\n';
   }
 
-  for (const_iterator BB = begin(), E = end(); BB != E; ++BB) {
+  for (const auto &BB : *this) {
     OS << '\n';
-    BB->print(OS, Indexes);
+    BB.print(OS, Indexes);
   }
 
   OS << "\n# End machine code for function " << getName() << ".\n\n";

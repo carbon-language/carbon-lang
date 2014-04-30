@@ -59,12 +59,11 @@ void LexicalScopes::extractLexicalScopes(
     DenseMap<const MachineInstr *, LexicalScope *> &MI2ScopeMap) {
 
   // Scan each instruction and create scopes. First build working set of scopes.
-  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
-       ++I) {
+  for (const auto &MBB : *MF) {
     const MachineInstr *RangeBeginMI = nullptr;
     const MachineInstr *PrevMI = nullptr;
     DebugLoc PrevDL;
-    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
+    for (MachineBasicBlock::const_iterator II = MBB.begin(), IE = MBB.end();
          II != IE; ++II) {
       const MachineInstr *MInsn = II;
 
@@ -274,9 +273,8 @@ void LexicalScopes::getMachineBasicBlocks(
     return;
 
   if (Scope == CurrentFnLexicalScope) {
-    for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
-         ++I)
-      MBBs.insert(I);
+    for (const auto &MBB : *MF)
+      MBBs.insert(&MBB);
     return;
   }
 

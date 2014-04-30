@@ -701,9 +701,8 @@ void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {
 /// which is used in a PHI node. We map that to the BB the vreg is coming from.
 ///
 void LiveVariables::analyzePHINodes(const MachineFunction& Fn) {
-  for (MachineFunction::const_iterator I = Fn.begin(), E = Fn.end();
-       I != E; ++I)
-    for (MachineBasicBlock::const_iterator BBI = I->begin(), BBE = I->end();
+  for (const auto &MBB : Fn)
+    for (MachineBasicBlock::const_iterator BBI = MBB.begin(), BBE = MBB.end();
          BBI != BBE && BBI->isPHI(); ++BBI)
       for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
         if (BBI->getOperand(i).readsReg())
