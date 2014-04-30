@@ -43,6 +43,7 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
+#include <tuple>
 
 using namespace llvm;
 
