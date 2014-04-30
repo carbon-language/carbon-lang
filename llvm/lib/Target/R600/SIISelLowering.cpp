@@ -29,7 +29,7 @@ using namespace llvm;
 
 SITargetLowering::SITargetLowering(TargetMachine &TM) :
     AMDGPUTargetLowering(TM) {
-  addRegisterClass(MVT::i1, &AMDGPU::SReg_64RegClass);
+  addRegisterClass(MVT::i1, &AMDGPU::VReg_1RegClass);
   addRegisterClass(MVT::i64, &AMDGPU::VSrc_64RegClass);
 
   addRegisterClass(MVT::v32i8, &AMDGPU::SReg_256RegClass);

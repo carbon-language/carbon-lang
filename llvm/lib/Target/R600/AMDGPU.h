@@ -37,10 +37,14 @@ FunctionPass *createAMDGPUCFGStructurizerPass();
 // SI Passes
 FunctionPass *createSITypeRewriter();
 FunctionPass *createSIAnnotateControlFlowPass();
+FunctionPass *createSILowerI1CopiesPass();
 FunctionPass *createSILowerControlFlowPass(TargetMachine &tm);
 FunctionPass *createSIFixSGPRCopiesPass(TargetMachine &tm);
 FunctionPass *createSICodeEmitterPass(formatted_raw_ostream &OS);
 FunctionPass *createSIInsertWaits(TargetMachine &tm);
+
+void initializeSILowerI1CopiesPass(PassRegistry &);
+extern char &SILowerI1CopiesID;
 
 // Passes common to R600 and SI
 Pass *createAMDGPUStructurizeCFGPass();

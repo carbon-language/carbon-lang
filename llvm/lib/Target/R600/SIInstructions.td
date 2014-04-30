@@ -1398,6 +1398,12 @@ def V_TRIG_PREOP_F64 : VOP3_64 <0x00000174, "V_TRIG_PREOP_F64", []>;
 
 let isCodeGenOnly = 1, isPseudo = 1 in {
 
+def V_MOV_I1 : InstSI <
+  (outs VReg_1:$dst),
+  (ins i1imm:$src),
+  "", [(set i1:$dst, (imm:$src))]
+>;
+
 def LOAD_CONST : AMDGPUShaderInst <
   (outs GPRF32:$dst),
   (ins i32imm:$src),
@@ -1978,11 +1984,6 @@ def : Pat <
 def : Pat <
   (f32 fpimm:$imm),
   (V_MOV_B32_e32 fpimm:$imm)
->;
-
-def : Pat <
-  (i1 imm:$imm),
-  (S_MOV_B64 imm:$imm)
 >;
 
 def : Pat <

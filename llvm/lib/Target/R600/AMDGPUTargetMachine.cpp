@@ -154,6 +154,7 @@ AMDGPUPassConfig::addPreISel() {
 
 bool AMDGPUPassConfig::addInstSelector() {
   addPass(createAMDGPUISelDag(getAMDGPUTargetMachine()));
+  addPass(createSILowerI1CopiesPass());
   return false;
 }
 
