@@ -34,3 +34,35 @@ define <2 x i64> @test_fptosi(<2 x double> %in) {
   %res = fptosi <2 x double> %in to <2 x i64>
   ret <2 x i64> %res
 }
+
+define fp128 @uitofp_i32_fp128(i32 %a) {
+entry:
+; CHECK-LABEL: uitofp_i32_fp128
+; CHECK: bl ___floatunsitf
+  %conv = uitofp i32 %a to fp128
+  ret fp128 %conv
+}
+
+define fp128 @uitofp_i64_fp128(i64 %a) {
+entry:
+; CHECK-LABEL: uitofp_i64_fp128
+; CHECK: bl ___floatunditf
+  %conv = uitofp i64 %a to fp128
+  ret fp128 %conv
+}
+
+define i32 @uitofp_fp128_i32(fp128 %a) {
+entry:
+; CHECK-LABEL: uitofp_fp128_i32
+; CHECK: ___fixunstfsi
+  %conv = fptoui fp128 %a to i32
+  ret i32 %conv
+}
+
+define i64 @uitofp_fp128_i64(fp128 %a) {
+entry:
+; CHECK-LABEL: uitofp_fp128_i64
+; CHECK: ___fixunstfdi
+  %conv = fptoui fp128 %a to i64
+  ret i64 %conv
+}

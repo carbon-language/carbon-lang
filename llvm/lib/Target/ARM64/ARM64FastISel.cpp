@@ -197,6 +197,9 @@ unsigned ARM64FastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
 }
 
 unsigned ARM64FastISel::ARM64MaterializeFP(const ConstantFP *CFP, MVT VT) {
+  if (VT != MVT::f32 && VT != MVT::f64)
+    return 0;
+
   const APFloat Val = CFP->getValueAPF();
   bool is64bit = (VT == MVT::f64);
 
@@ -418,7 +421,11 @@ bool ARM64FastISel::isTypeLegal(Type *Ty, MVT &VT) {
     return false;
   VT = evt.getSimpleVT();
 
-  // Handle all legal types, i.e. a register that will directly hold this
+  // This is a legal type, but it's not something we handle in fast-isel.
+  if (VT == MVT::f128)
+    return false;
+
+  // Handle all other legal types, i.e. a register that will directly hold this
   // value.
   return TLI.isTypeLegal(VT);
 }
@@ -1107,6 +1114,8 @@ bool ARM64FastISel::SelectFPToInt(const Instruction *I, bool Signed) {
     return false;
 
   EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType(), true);
+  if (SrcVT == MVT::f128)
+    return false;
 
   unsigned Opc;
   if (SrcVT == MVT::f64) {
@@ -1132,6 +1141,8 @@ bool ARM64FastISel::SelectIntToFP(const Instruction *I, bool Signed) {
   MVT DestVT;
   if (!isTypeLegal(I->getType(), DestVT) || DestVT.isVector())
     return false;
+  assert ((DestVT == MVT::f32 || DestVT == MVT::f64) &&
+          "Unexpected value type.");
 
   unsigned SrcReg = getRegForValue(I->getOperand(0));
   if (SrcReg == 0)
@@ -1578,6 +1589,8 @@ bool ARM64FastISel::SelectRet(const Instruction *I) {
     if (!RVEVT.isSimple())
       return false;
     MVT RVVT = RVEVT.getSimpleVT();
+    if (RVVT == MVT::f128)
+      return false;
     MVT DestVT = VA.getValVT();
     // Special handling for extended integers.
     if (RVVT != DestVT) {
