@@ -17,6 +17,7 @@
 #include "DwarfFile.h"
 #include "AsmPrinterHandler.h"
 #include "DIE.h"
+#include "DbgValueHistoryCalculator.h"
 #include "DebugLocEntry.h"
 #include "DebugLocList.h"
 #include "DwarfAccelTable.h"
@@ -222,11 +223,7 @@ class DwarfDebug : public AsmPrinterHandler {
   // appearance.
   SmallVector<const MDNode *, 8> UserVariables;
 
-  // For each user variable, keep a list of DBG_VALUE instructions in order.
-  // The list can also contain normal instructions that clobber the previous
-  // DBG_VALUE.
-  typedef DenseMap<const MDNode *, SmallVector<const MachineInstr *, 4> >
-  DbgValueHistoryMap;
+  // History of DBG_VALUE and clobber instructions for each user variable.
   DbgValueHistoryMap DbgValues;
 
   // Previous instruction's location information. This is used to determine

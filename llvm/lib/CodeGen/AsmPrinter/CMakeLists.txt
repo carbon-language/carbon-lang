@@ -4,6 +4,7 @@ add_llvm_library(LLVMAsmPrinter
   AsmPrinter.cpp
   AsmPrinterDwarf.cpp
   AsmPrinterInlineAsm.cpp
+  DbgValueHistoryCalculator.cpp
   DIE.cpp
   DIEHash.cpp
   DwarfAccelTable.cpp
