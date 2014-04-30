@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -142,6 +143,14 @@ static int sizeOfSPAdjustment(const MachineInstr *MI) {
   return count;
 }
 
+static bool WindowsRequiresStackProbe(const MachineFunction &MF,
+                                      size_t StackSizeInBytes) {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  if (MFI->getStackProtectorIndex() > 0)
+    return StackSizeInBytes >= 4080;
+  return StackSizeInBytes >= 4096;
+}
+
 void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator MBBI = MBB.begin();
@@ -149,15 +158,16 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   MachineModuleInfo &MMI = MF.getMMI();
   MCContext &Context = MMI.getContext();
+  const TargetMachine &TM = MF.getTarget();
   const MCRegisterInfo *MRI = Context.getRegisterInfo();
   const ARMBaseRegisterInfo *RegInfo =
-    static_cast<const ARMBaseRegisterInfo*>(MF.getTarget().getRegisterInfo());
+    static_cast<const ARMBaseRegisterInfo*>(TM.getRegisterInfo());
   const ARMBaseInstrInfo &TII =
-    *static_cast<const ARMBaseInstrInfo*>(MF.getTarget().getInstrInfo());
+    *static_cast<const ARMBaseInstrInfo*>(TM.getInstrInfo());
   assert(!AFI->isThumb1OnlyFunction() &&
          "This emitPrologue does not support Thumb1!");
   bool isARM = !AFI->isThumbFunction();
-  unsigned Align = MF.getTarget().getFrameLowering()->getStackAlignment();
+  unsigned Align = TM.getFrameLowering()->getStackAlignment();
   unsigned ArgRegsSaveSize = AFI->getArgRegsSaveSize(Align);
   unsigned NumBytes = MFI->getStackSize();
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
@@ -187,7 +197,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
         .addCFIIndex(CFIIndex);
   }
 
-  if (!AFI->hasStackFrame()) {
+  if (!AFI->hasStackFrame() &&
+      (!STI.isTargetWindows() || !WindowsRequiresStackProbe(MF, NumBytes))) {
     if (NumBytes - ArgRegsSaveSize != 0) {
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, -(NumBytes - ArgRegsSaveSize),
                    MachineInstr::FrameSetup);
@@ -283,6 +294,50 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
     NumBytes += MFI->getObjectOffset(D8SpillFI);
   } else
     NumBytes = DPRCSOffset;
+
+  if (STI.isTargetWindows() && WindowsRequiresStackProbe(MF, NumBytes)) {
+    uint32_t NumWords = NumBytes >> 2;
+
+    if (NumWords < 65536)
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVi16), ARM::R4)
+                     .addImm(NumWords));
+    else
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVi32imm), ARM::R4)
+        .addImm(NumWords);
+
+    switch (TM.getCodeModel()) {
+    case CodeModel::Small:
+    case CodeModel::Medium:
+    case CodeModel::Default:
+    case CodeModel::Kernel:
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tBL))
+        .addImm((unsigned)ARMCC::AL).addReg(0)
+        .addExternalSymbol("__chkstk")
+        .addReg(ARM::R4, RegState::Implicit);
+      break;
+    case CodeModel::Large:
+    case CodeModel::JITDefault: {
+      LLVMContext &Ctx = MF.getMMI().getModule()->getContext();
+      const GlobalValue *F =
+        Function::Create(FunctionType::get(Type::getVoidTy(Ctx), false),
+                         GlobalValue::AvailableExternallyLinkage, "__chkstk");
+
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVi32imm), ARM::R12)
+        .addGlobalAddress(F);
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::BLX))
+        .addReg(ARM::R12, RegState::Kill)
+        .addReg(ARM::R4, RegState::Implicit);
+      break;
+    }
+    }
+
+    AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::t2SUBrr),
+                                        ARM::SP)
+                                .addReg(ARM::SP, RegState::Define)
+                                .addReg(ARM::R4, RegState::Kill)
+                                .setMIFlags(MachineInstr::FrameSetup)));
+    NumBytes = 0;
+  }
 
   unsigned adjustedGPRCS1Size = GPRCS1Size;
   if (NumBytes) {

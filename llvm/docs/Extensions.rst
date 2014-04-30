@@ -159,3 +159,34 @@ different COMDATs:
   .globl Symbol2
   Symbol2:
   .long 1
+
+Target Specific Behaviour
+=========================
+
+Windows on ARM
+--------------
+
+Stack Probe Emission
+^^^^^^^^^^^^^^^^^^^^
+
+The reference implementation (Microsoft Visual Studio 2012) emits stack probes
+in the following fashion:
+
+.. code-block:: gas
+
+  movw r4, #constant
+  bl __chkstk
+  sub.w sp, sp, r4
+
+However, this has the limitation of 32 MiB (±16MiB).  In order to accomodate
+larger binaries, LLVM supports the use of ``-mcode-model=large`` to allow a 4GiB
+range via a slight deviation.  It will generate an indirect jump as follows:
+
+.. code-block:: gas
+
+  movw r4, #constant
+  movw r12, :lower16:__chkstk
+  movt r12, :upper16:__chkstk
+  blx r12
+  sub.w sp, sp, r4
+
