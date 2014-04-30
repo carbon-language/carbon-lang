@@ -25,6 +25,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/ValueHandle.h"
 #include <utility>
+#include <memory>
 namespace llvm {
 
 class MachineInstr;
@@ -100,7 +101,8 @@ public:
 
   /// findLexicalScope - Find regular lexical scope or return NULL.
   LexicalScope *findLexicalScope(const MDNode *N) {
-    return LexicalScopeMap.lookup(N);
+    auto I = LexicalScopeMap.find(N);
+    return I != LexicalScopeMap.end() ? I->second.get() : nullptr;
   }
 
   /// dump - Print data structures to dbgs().
@@ -134,7 +136,7 @@ private:
 
   /// LexicalScopeMap - Tracks the scopes in the current function.  Owns the
   /// contained LexicalScope*s.
-  DenseMap<const MDNode *, LexicalScope *> LexicalScopeMap;
+  DenseMap<const MDNode *, std::unique_ptr<LexicalScope>> LexicalScopeMap;
 
   /// InlinedLexicalScopeMap - Tracks inlined function scopes in current
   /// function.

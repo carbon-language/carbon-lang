@@ -33,7 +33,6 @@ LexicalScopes::~LexicalScopes() { reset(); }
 void LexicalScopes::reset() {
   MF = nullptr;
   CurrentFnLexicalScope = nullptr;
-  DeleteContainerSeconds(LexicalScopeMap);
   DeleteContainerSeconds(AbstractScopeMap);
   InlinedLexicalScopeMap.clear();
   AbstractScopesList.clear();
@@ -124,7 +123,8 @@ LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
 
   if (IA)
     return InlinedLexicalScopeMap.lookup(DebugLoc::getFromDILocation(IA));
-  return LexicalScopeMap.lookup(Scope);
+  auto I = LexicalScopeMap.find(Scope);
+  return I != LexicalScopeMap.end() ? I->second.get() : nullptr;
 }
 
 /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
@@ -152,35 +152,35 @@ LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
     D = DIDescriptor(Scope);
   }
 
-  LexicalScope *WScope = LexicalScopeMap.lookup(Scope);
-  if (WScope)
-    return WScope;
+  auto IterBool = LexicalScopeMap.insert(std::make_pair(Scope, std::unique_ptr<LexicalScope>()));
+  auto &MapValue = *IterBool.first;
+  if (!IterBool.second)
+    return MapValue.second.get();
 
   LexicalScope *Parent = nullptr;
   if (D.isLexicalBlock())
     Parent = getOrCreateLexicalScope(DebugLoc::getFromDILexicalBlock(Scope));
-  WScope = new LexicalScope(Parent, DIDescriptor(Scope), nullptr, false);
-  LexicalScopeMap.insert(std::make_pair(Scope, WScope));
+  MapValue.second = make_unique<LexicalScope>(Parent, DIDescriptor(Scope), nullptr, false);
   if (!Parent && DIDescriptor(Scope).isSubprogram() &&
       DISubprogram(Scope).describes(MF->getFunction()))
-    CurrentFnLexicalScope = WScope;
+    CurrentFnLexicalScope = MapValue.second.get();
 
-  return WScope;
+  return MapValue.second.get();
 }
 
 /// getOrCreateInlinedScope - Find or create an inlined lexical scope.
 LexicalScope *LexicalScopes::getOrCreateInlinedScope(MDNode *Scope,
                                                      MDNode *InlinedAt) {
-  LexicalScope *InlinedScope = LexicalScopeMap.lookup(InlinedAt);
-  if (InlinedScope)
-    return InlinedScope;
+  auto IterBool = LexicalScopeMap.insert(std::make_pair(InlinedAt, std::unique_ptr<LexicalScope>()));
+  auto &MapValue = *IterBool.first;
+  if (!IterBool.second)
+    return MapValue.second.get();
 
   DebugLoc InlinedLoc = DebugLoc::getFromDILocation(InlinedAt);
-  InlinedScope = new LexicalScope(getOrCreateLexicalScope(InlinedLoc),
+  MapValue.second = make_unique<LexicalScope>(getOrCreateLexicalScope(InlinedLoc),
                                   DIDescriptor(Scope), InlinedAt, false);
-  InlinedLexicalScopeMap[InlinedLoc] = InlinedScope;
-  LexicalScopeMap[InlinedAt] = InlinedScope;
-  return InlinedScope;
+  InlinedLexicalScopeMap[InlinedLoc] = MapValue.second.get();
+  return MapValue.second.get();
 }
 
 /// getOrCreateAbstractScope - Find or create an abstract lexical scope.
