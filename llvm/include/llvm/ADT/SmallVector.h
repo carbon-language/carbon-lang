@@ -805,7 +805,7 @@ SmallVectorImpl<T> &SmallVectorImpl<T>::operator=(SmallVectorImpl<T> &&RHS) {
     this->grow(RHSSize);
   } else if (CurSize) {
     // Otherwise, use assignment for the already-constructed elements.
-    this->move(RHS.begin(), RHS.end(), this->begin());
+    this->move(RHS.begin(), RHS.begin()+CurSize, this->begin());
   }
 
   // Move-construct the new elements in place.

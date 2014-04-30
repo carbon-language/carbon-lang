@@ -29,27 +29,43 @@ private:
   static int numDestructorCalls;
   static int numAssignmentCalls;
 
+  bool constructed;
   int value;
 
 public:
-  Constructable() : value(0) {
+  Constructable() : constructed(true), value(0) {
     ++numConstructorCalls;
   }
 
-  Constructable(int val) : value(val) {
+  Constructable(int val) : constructed(true), value(val) {
     ++numConstructorCalls;
   }
 
-  Constructable(const Constructable & src) {
+  Constructable(const Constructable & src) : constructed(true) {
+    value = src.value;
+    ++numConstructorCalls;
+  }
+
+  Constructable(Constructable && src) : constructed(true) {
     value = src.value;
     ++numConstructorCalls;
   }
 
   ~Constructable() {
+    EXPECT_TRUE(constructed);
     ++numDestructorCalls;
+    constructed = false;
   }
 
   Constructable & operator=(const Constructable & src) {
+    EXPECT_TRUE(constructed);
+    value = src.value;
+    ++numAssignmentCalls;
+    return *this;
+  }
+
+  Constructable & operator=(Constructable && src) {
+    EXPECT_TRUE(constructed);
     value = src.value;
     ++numAssignmentCalls;
     return *this;
@@ -338,6 +354,36 @@ TYPED_TEST(SmallVectorTest, AssignTest) {
   this->assertValuesInOrder(this->theVector, 2u, 77, 77);
 }
 
+// Move-assign test
+TYPED_TEST(SmallVectorTest, MoveAssignTest) {
+  SCOPED_TRACE("MoveAssignTest");
+
+  // Set up our vector with a single element, but enough capacity for 4.
+  this->theVector.reserve(4);
+  this->theVector.push_back(Constructable(1));
+  
+  // Set up the other vector with 2 elements.
+  this->otherVector.push_back(Constructable(2));
+  this->otherVector.push_back(Constructable(3));
+
+  // Move-assign from the other vector.
+  this->theVector = std::move(this->otherVector);
+
+  // Make sure we have the right result.
+  this->assertValuesInOrder(this->theVector, 2u, 2, 3);
+
+  // Make sure the # of constructor/destructor calls line up. There
+  // are two live objects after clearing the other vector.
+  this->otherVector.clear();
+  EXPECT_EQ(Constructable::getNumConstructorCalls()-2, 
+            Constructable::getNumDestructorCalls());
+
+  // There shouldn't be any live objects any more.
+  this->theVector.clear();
+  EXPECT_EQ(Constructable::getNumConstructorCalls(), 
+            Constructable::getNumDestructorCalls());
+}
+
 // Erase a single element
 TYPED_TEST(SmallVectorTest, EraseTest) {
   SCOPED_TRACE("EraseTest");
@@ -455,13 +501,12 @@ TYPED_TEST(SmallVectorTest, DirectVectorTest) {
   this->theVector.reserve(4);
   EXPECT_LE(4u, this->theVector.capacity());
   EXPECT_EQ(0, Constructable::getNumConstructorCalls());
-  this->theVector.end()[0] = 1;
-  this->theVector.end()[1] = 2;
-  this->theVector.end()[2] = 3;
-  this->theVector.end()[3] = 4;
-  this->theVector.set_size(4);
+  this->theVector.push_back(1);
+  this->theVector.push_back(2);
+  this->theVector.push_back(3);
+  this->theVector.push_back(4);
   EXPECT_EQ(4u, this->theVector.size());
-  EXPECT_EQ(4, Constructable::getNumConstructorCalls());
+  EXPECT_EQ(8, Constructable::getNumConstructorCalls());
   EXPECT_EQ(1, this->theVector[0].getValue());
   EXPECT_EQ(2, this->theVector[1].getValue());
   EXPECT_EQ(3, this->theVector[2].getValue());
