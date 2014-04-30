@@ -38,7 +38,6 @@ public:
   };
 
 private:
-  size_t DefaultSize[3];
   std::string DevName;
   bool Is64bit;
   bool Is32on64bit;
@@ -99,7 +98,6 @@ public:
   // Helper functions to simplify if statements
   bool isTargetELF() const;
   std::string getDeviceName() const;
-  virtual size_t getDefaultSize(uint32_t dim) const final;
   bool dumpCode() const { return DumpCode; }
   bool r600ALUEncoding() const { return R600ALUInst; }
 
