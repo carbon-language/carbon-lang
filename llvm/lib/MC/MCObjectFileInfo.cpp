@@ -291,7 +291,8 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
     }
   } else if (T.getArch() == Triple::aarch64 ||
              T.getArch() == Triple::aarch64_be ||
-             T.getArch() == Triple::arm64) {
+             T.getArch() == Triple::arm64 ||
+             T.getArch() == Triple::arm64_be) {
     // The small model guarantees static code/data size < 4GB, but not where it
     // will be in memory. Most of these could end up >2GB away so even a signed
     // pc-relative 32-bit address is insufficient, theoretically.
