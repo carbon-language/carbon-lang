@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -dM -E nul -o /dev/null
+// RUN: %clang_cc1 nul
 
 // REQUIRES: system-windows
 
