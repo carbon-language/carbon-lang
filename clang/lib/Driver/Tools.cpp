@@ -2370,6 +2370,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     case llvm::Triple::thumb:
     case llvm::Triple::thumbeb:
     case llvm::Triple::aarch64:
+    case llvm::Triple::arm64:
     case llvm::Triple::mips:
     case llvm::Triple::mipsel:
     case llvm::Triple::mips64:
