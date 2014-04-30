@@ -784,8 +784,23 @@ void MergeFunctions::writeThunkOrAlias(Function *F, Function *G) {
 // Helper for writeThunk,
 // Selects proper bitcast operation,
 // but a bit simpler then CastInst::getCastOpcode.
-static Value* createCast(IRBuilder<false> &Builder, Value *V, Type *DestTy) {
+static Value *createCast(IRBuilder<false> &Builder, Value *V, Type *DestTy) {
   Type *SrcTy = V->getType();
+  if (SrcTy->isStructTy()) {
+    assert(DestTy->isStructTy());
+    assert(SrcTy->getStructNumElements() == DestTy->getStructNumElements());
+    Value *Result = UndefValue::get(DestTy);
+    for (unsigned int I = 0, E = SrcTy->getStructNumElements(); I < E; ++I) {
+      Value *Element = createCast(
+          Builder, Builder.CreateExtractValue(V, ArrayRef<unsigned int>(I)),
+          DestTy->getStructElementType(I));
+
+      Result =
+          Builder.CreateInsertValue(Result, Element, ArrayRef<unsigned int>(I));
+    }
+    return Result;
+  }
+  assert(!DestTy->isStructTy());
   if (SrcTy->isIntegerTy() && DestTy->isPointerTy())
     return Builder.CreateIntToPtr(V, DestTy);
   else if (SrcTy->isPointerTy() && DestTy->isIntegerTy())
