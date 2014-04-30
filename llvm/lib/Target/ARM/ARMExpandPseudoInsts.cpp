@@ -620,7 +620,6 @@ static bool IsAnAddressOperand(const MachineOperand &MO) {
   // operand is not a symbol reference, we return that it is a symbol reference.
   // This is important as the load pair may not be split up Windows.
   switch (MO.getType()) {
-  default: llvm_unreachable("unhandled machine operand type");
   case MachineOperand::MO_Register:
   case MachineOperand::MO_Immediate:
   case MachineOperand::MO_CImmediate:
@@ -646,6 +645,7 @@ static bool IsAnAddressOperand(const MachineOperand &MO) {
   case MachineOperand::MO_CFIIndex:
     return false;
   }
+  llvm_unreachable("unhandled machine operand type");
 }
 
 void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
