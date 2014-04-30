@@ -265,7 +265,6 @@ inline uint64_t hash_short(const char *s, size_t length, uint64_t seed) {
 /// keeps 56 bytes of arbitrary state.
 struct hash_state {
   uint64_t h0, h1, h2, h3, h4, h5, h6;
-  uint64_t seed;
 
   /// \brief Create a new hash_state structure and initialize it based on the
   /// seed and the first 64-byte chunk.
@@ -273,7 +272,7 @@ struct hash_state {
   static hash_state create(const char *s, uint64_t seed) {
     hash_state state = {
       0, seed, hash_16_bytes(seed, k1), rotate(seed ^ k1, 49),
-      seed * k1, shift_mix(seed), 0, seed };
+      seed * k1, shift_mix(seed), 0 };
     state.h6 = hash_16_bytes(state.h4, state.h5);
     state.mix(s);
     return state;
