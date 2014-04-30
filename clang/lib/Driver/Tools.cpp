@@ -1733,19 +1733,6 @@ static bool ShouldDisableAutolink(const ArgList &Args,
                        Default);
 }
 
-static bool ShouldDisableCFI(const ArgList &Args,
-                             const ToolChain &TC) {
-  bool Default = true;
-  if (TC.getTriple().isOSDarwin()) {
-    // The native darwin assembler doesn't support cfi directives, so
-    // we disable them if we think the .s file will be passed to it.
-    Default = TC.useIntegratedAs();
-  }
-  return !Args.hasFlag(options::OPT_fdwarf2_cfi_asm,
-                       options::OPT_fno_dwarf2_cfi_asm,
-                       Default);
-}
-
 static bool ShouldDisableDwarfDirectory(const ArgList &Args,
                                         const ToolChain &TC) {
   bool UseDwarfDirectory = Args.hasFlag(options::OPT_fdwarf_directory_asm,
@@ -3137,9 +3124,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     else
       CmdArgs.push_back("-fno-gnu-keywords");
   }
-
-  if (ShouldDisableCFI(Args, getToolChain()))
-    CmdArgs.push_back("-fno-dwarf2-cfi-asm");
 
   if (ShouldDisableDwarfDirectory(Args, getToolChain()))
     CmdArgs.push_back("-fno-dwarf-directory-asm");
