@@ -215,6 +215,16 @@ ELFLinkingContext::create(llvm::Triple triple) {
   }
 }
 
+static void buildSearchPath(SmallString<128> &path, StringRef dir,
+                            StringRef sysRoot) {
+  if (!dir.startswith("=/"))
+    path.assign(dir);
+  else {
+    path.assign(sysRoot);
+    path.append(dir.substr(1));
+  }
+}
+
 ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
   bool foundFile = false;
   StringRef pathref;
@@ -222,13 +232,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
   for (StringRef dir : _inputSearchPaths) {
     // Search for dynamic library
     if (!_isStaticExecutable) {
-      path.clear();
-      if (dir.startswith("=/")) {
-        path.assign(_sysrootPath);
-        path.append(dir.substr(1));
-      } else {
-        path.assign(dir);
-      }
+      buildSearchPath(path, dir, _sysrootPath);
       llvm::sys::path::append(path, Twine("lib") + libName + ".so");
       pathref = path.str();
       if (llvm::sys::fs::exists(pathref)) {
@@ -237,13 +241,7 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
     }
     // Search for static libraries too
     if (!foundFile) {
-      path.clear();
-      if (dir.startswith("=/")) {
-        path.assign(_sysrootPath);
-        path.append(dir.substr(1));
-      } else {
-        path.assign(dir);
-      }
+      buildSearchPath(path, dir, _sysrootPath);
       llvm::sys::path::append(path, Twine("lib") + libName + ".a");
       pathref = path.str();
       if (llvm::sys::fs::exists(pathref)) {
