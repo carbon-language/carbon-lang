@@ -680,7 +680,7 @@ public:
 
     return IsKnownRegister;
   }
-  bool isSystemCPSRField() const {
+  bool isSystemPStateField() const {
     if (!isSysReg()) return false;
 
     bool IsKnownRegister;
@@ -1346,7 +1346,7 @@ public:
     Inst.addOperand(MCOperand::CreateImm(Bits));
   }
 
-  void addSystemCPSRFieldOperands(MCInst &Inst, unsigned N) const {
+  void addSystemPStateFieldOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
 
     bool Valid;

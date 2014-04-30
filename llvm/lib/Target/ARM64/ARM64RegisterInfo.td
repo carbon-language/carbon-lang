@@ -119,7 +119,7 @@ def XZR   : ARM64Reg<31, "xzr", [WZR]>, DwarfRegAlias<WSP>;
 }
 
 // Condition code register.
-def CPSR  : ARM64Reg<0, "cpsr">;
+def NZCV  : ARM64Reg<0, "nzcv">;
 
 // GPR register classes with the intersections of GPR32/GPR32sp and
 // GPR64/GPR64sp for use by the coalescer.
@@ -181,7 +181,7 @@ def GPR64pi48 : RegisterOperand<GPR64, "printPostIncOperand<48>">;
 def GPR64pi64 : RegisterOperand<GPR64, "printPostIncOperand<64>">;
 
 // Condition code regclass.
-def CCR : RegisterClass<"ARM64", [i32], 32, (add CPSR)> {
+def CCR : RegisterClass<"ARM64", [i32], 32, (add NZCV)> {
   let CopyCost = -1;  // Don't allow copying of status registers.
 
   // CCR is not allocatable.

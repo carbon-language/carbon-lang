@@ -136,7 +136,7 @@ ARM64RegisterInfo::getPointerRegClass(const MachineFunction &MF,
 const TargetRegisterClass *
 ARM64RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
   if (RC == &ARM64::CCRRegClass)
-    return nullptr; // Can't copy CPSR.
+    return nullptr; // Can't copy NZCV.
   return RC;
 }
 

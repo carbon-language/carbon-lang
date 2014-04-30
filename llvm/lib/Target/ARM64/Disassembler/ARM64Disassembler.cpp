@@ -137,9 +137,10 @@ static DecodeStatus DecodeBaseAddSubImm(llvm::MCInst &Inst, uint32_t insn,
 static DecodeStatus DecodeUnconditionalBranch(llvm::MCInst &Inst, uint32_t insn,
                                               uint64_t Address,
                                               const void *Decoder);
-static DecodeStatus DecodeSystemCPSRInstruction(llvm::MCInst &Inst,
-                                                uint32_t insn, uint64_t Address,
-                                                const void *Decoder);
+static DecodeStatus DecodeSystemPStateInstruction(llvm::MCInst &Inst,
+                                                  uint32_t insn,
+                                                  uint64_t Address,
+                                                  const void *Decoder);
 static DecodeStatus DecodeTestAndBranch(llvm::MCInst &Inst, uint32_t insn,
                                         uint64_t Address, const void *Decoder);
 static DecodeStatus DecodeSIMDLdStPost(llvm::MCInst &Inst, uint32_t insn,
@@ -1408,20 +1409,20 @@ static DecodeStatus DecodeUnconditionalBranch(llvm::MCInst &Inst, uint32_t insn,
   return Success;
 }
 
-static DecodeStatus DecodeSystemCPSRInstruction(llvm::MCInst &Inst,
-                                                uint32_t insn, uint64_t Addr,
-                                                const void *Decoder) {
+static DecodeStatus DecodeSystemPStateInstruction(llvm::MCInst &Inst,
+                                                  uint32_t insn, uint64_t Addr,
+                                                  const void *Decoder) {
   uint64_t op1 = fieldFromInstruction(insn, 16, 3);
   uint64_t op2 = fieldFromInstruction(insn, 5, 3);
   uint64_t crm = fieldFromInstruction(insn, 8, 4);
 
-  uint64_t cpsr_field = (op1 << 3) | op2;
+  uint64_t pstate_field = (op1 << 3) | op2;
 
-  Inst.addOperand(MCOperand::CreateImm(cpsr_field));
+  Inst.addOperand(MCOperand::CreateImm(pstate_field));
   Inst.addOperand(MCOperand::CreateImm(crm));
 
   bool ValidNamed;
-  (void)ARM64PState::PStateMapper().toString(cpsr_field, ValidNamed);
+  (void)ARM64PState::PStateMapper().toString(pstate_field, ValidNamed);
   
   return ValidNamed ? Success : Fail;
 }

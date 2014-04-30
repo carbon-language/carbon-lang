@@ -63,8 +63,8 @@ STATISTIC(NumCmpBranchRejs, "Number of ccmps rejected (CmpBB branch)");
 STATISTIC(NumCmpTermRejs, "Number of ccmps rejected (CmpBB is cbz...)");
 STATISTIC(NumImmRangeRejs, "Number of ccmps rejected (Imm out of range)");
 STATISTIC(NumLiveDstRejs, "Number of ccmps rejected (Cmp dest live)");
-STATISTIC(NumMultCPSRUses, "Number of ccmps rejected (CPSR used)");
-STATISTIC(NumUnknCPSRDefs, "Number of ccmps rejected (CPSR def unknown)");
+STATISTIC(NumMultNZCVUses, "Number of ccmps rejected (NZCV used)");
+STATISTIC(NumUnknNZCVDefs, "Number of ccmps rejected (NZCV def unknown)");
 
 STATISTIC(NumSpeculateRejs, "Number of ccmps rejected (Can't speculate)");
 
@@ -300,7 +300,7 @@ MachineInstr *SSACCmpConv::findConvertibleCompare(MachineBasicBlock *MBB) {
   if (I == MBB->end())
     return nullptr;
   // The terminator must be controlled by the flags.
-  if (!I->readsRegister(ARM64::CPSR)) {
+  if (!I->readsRegister(ARM64::NZCV)) {
     switch (I->getOpcode()) {
     case ARM64::CBZW:
     case ARM64::CBZX:
@@ -351,20 +351,20 @@ MachineInstr *SSACCmpConv::findConvertibleCompare(MachineBasicBlock *MBB) {
 
     // Check for flag reads and clobbers.
     MIOperands::PhysRegInfo PRI =
-        MIOperands(I).analyzePhysReg(ARM64::CPSR, TRI);
+        MIOperands(I).analyzePhysReg(ARM64::NZCV, TRI);
 
     if (PRI.Reads) {
       // The ccmp doesn't produce exactly the same flags as the original
       // compare, so reject the transform if there are uses of the flags
       // besides the terminators.
       DEBUG(dbgs() << "Can't create ccmp with multiple uses: " << *I);
-      ++NumMultCPSRUses;
+      ++NumMultNZCVUses;
       return nullptr;
     }
 
     if (PRI.Clobbers) {
       DEBUG(dbgs() << "Not convertible compare: " << *I);
-      ++NumUnknCPSRDefs;
+      ++NumUnknNZCVDefs;
       return nullptr;
     }
   }
@@ -379,7 +379,7 @@ MachineInstr *SSACCmpConv::findConvertibleCompare(MachineBasicBlock *MBB) {
 ///
 bool SSACCmpConv::canSpeculateInstrs(MachineBasicBlock *MBB,
                                      const MachineInstr *CmpMI) {
-  // Reject any live-in physregs. It's probably CPSR/EFLAGS, and very hard to
+  // Reject any live-in physregs. It's probably NZCV/EFLAGS, and very hard to
   // get right.
   if (!MBB->livein_empty()) {
     DEBUG(dbgs() << "BB#" << MBB->getNumber() << " has live-ins.\n");
@@ -422,7 +422,7 @@ bool SSACCmpConv::canSpeculateInstrs(MachineBasicBlock *MBB,
     }
 
     // Only CmpMI is allowed to clobber the flags.
-    if (&I != CmpMI && I.modifiesRegister(ARM64::CPSR, TRI)) {
+    if (&I != CmpMI && I.modifiesRegister(ARM64::NZCV, TRI)) {
       DEBUG(dbgs() << "Clobbers flags: " << I);
       return false;
     }

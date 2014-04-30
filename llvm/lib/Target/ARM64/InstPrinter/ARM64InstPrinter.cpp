@@ -1418,8 +1418,8 @@ void ARM64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
     O << StringRef(Name).upper();
 }
 
-void ARM64InstPrinter::printSystemCPSRField(const MCInst *MI, unsigned OpNo,
-                                            raw_ostream &O) {
+void ARM64InstPrinter::printSystemPStateField(const MCInst *MI, unsigned OpNo,
+                                              raw_ostream &O) {
   unsigned Val = MI->getOperand(OpNo).getImm();
 
   bool Valid;

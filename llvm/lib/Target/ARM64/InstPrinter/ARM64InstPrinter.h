@@ -119,7 +119,7 @@ protected:
   void printBarrierOption(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printMSRSystemRegister(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printMRSSystemRegister(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printSystemCPSRField(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printSystemPStateField(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printSIMDType10Operand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
 };
 

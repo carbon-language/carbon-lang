@@ -339,7 +339,7 @@ def : InstAlias<"isb", (ISB 0xf)>;
 
 def MRS    : MRSI;
 def MSR    : MSRI;
-def MSRcpsr: MSRcpsrI;
+def MSRpstate: MSRpstateI;
 
 // The thread pointer (on Linux, at least, where this has been implemented) is
 // TPIDR_EL0.
@@ -847,26 +847,26 @@ defm CSINC : CondSelectOp<0, 0b01, "csinc", inc>;
 defm CSINV : CondSelectOp<1, 0b00, "csinv", not>;
 defm CSNEG : CondSelectOp<1, 0b01, "csneg", ineg>;
 
-def : Pat<(ARM64csinv GPR32:$tval, GPR32:$fval, (i32 imm:$cc), CPSR),
+def : Pat<(ARM64csinv GPR32:$tval, GPR32:$fval, (i32 imm:$cc), NZCV),
           (CSINVWr GPR32:$tval, GPR32:$fval, (i32 imm:$cc))>;
-def : Pat<(ARM64csinv GPR64:$tval, GPR64:$fval, (i32 imm:$cc), CPSR),
+def : Pat<(ARM64csinv GPR64:$tval, GPR64:$fval, (i32 imm:$cc), NZCV),
           (CSINVXr GPR64:$tval, GPR64:$fval, (i32 imm:$cc))>;
-def : Pat<(ARM64csneg GPR32:$tval, GPR32:$fval, (i32 imm:$cc), CPSR),
+def : Pat<(ARM64csneg GPR32:$tval, GPR32:$fval, (i32 imm:$cc), NZCV),
           (CSNEGWr GPR32:$tval, GPR32:$fval, (i32 imm:$cc))>;
-def : Pat<(ARM64csneg GPR64:$tval, GPR64:$fval, (i32 imm:$cc), CPSR),
+def : Pat<(ARM64csneg GPR64:$tval, GPR64:$fval, (i32 imm:$cc), NZCV),
           (CSNEGXr GPR64:$tval, GPR64:$fval, (i32 imm:$cc))>;
-def : Pat<(ARM64csinc GPR32:$tval, GPR32:$fval, (i32 imm:$cc), CPSR),
+def : Pat<(ARM64csinc GPR32:$tval, GPR32:$fval, (i32 imm:$cc), NZCV),
           (CSINCWr GPR32:$tval, GPR32:$fval, (i32 imm:$cc))>;
-def : Pat<(ARM64csinc GPR64:$tval, GPR64:$fval, (i32 imm:$cc), CPSR),
+def : Pat<(ARM64csinc GPR64:$tval, GPR64:$fval, (i32 imm:$cc), NZCV),
           (CSINCXr GPR64:$tval, GPR64:$fval, (i32 imm:$cc))>;
 
-def : Pat<(ARM64csel (i32 0), (i32 1), (i32 imm:$cc), CPSR),
+def : Pat<(ARM64csel (i32 0), (i32 1), (i32 imm:$cc), NZCV),
           (CSINCWr WZR, WZR, (i32 imm:$cc))>;
-def : Pat<(ARM64csel (i64 0), (i64 1), (i32 imm:$cc), CPSR),
+def : Pat<(ARM64csel (i64 0), (i64 1), (i32 imm:$cc), NZCV),
           (CSINCXr XZR, XZR, (i32 imm:$cc))>;
-def : Pat<(ARM64csel (i32 0), (i32 -1), (i32 imm:$cc), CPSR),
+def : Pat<(ARM64csel (i32 0), (i32 -1), (i32 imm:$cc), NZCV),
           (CSINVWr WZR, WZR, (i32 imm:$cc))>;
-def : Pat<(ARM64csel (i64 0), (i64 -1), (i32 imm:$cc), CPSR),
+def : Pat<(ARM64csel (i64 0), (i64 -1), (i32 imm:$cc), NZCV),
           (CSINVXr XZR, XZR, (i32 imm:$cc))>;
 
 // The inverse of the condition code from the alias instruction is what is used
@@ -2115,8 +2115,8 @@ def F128CSEL : Pseudo<(outs FPR128:$Rd),
                       (ins FPR128:$Rn, FPR128:$Rm, ccode:$cond),
                       [(set (f128 FPR128:$Rd),
                             (ARM64csel FPR128:$Rn, FPR128:$Rm,
-                                       (i32 imm:$cond), CPSR))]> {
-  let Uses = [CPSR];
+                                       (i32 imm:$cond), NZCV))]> {
+  let Uses = [NZCV];
   let usesCustomInserter = 1;
 }
 

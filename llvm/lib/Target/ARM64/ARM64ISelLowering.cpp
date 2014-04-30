@@ -213,7 +213,7 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   // BlockAddress
   setOperationAction(ISD::BlockAddress, MVT::i64, Custom);
 
-  // Add/Sub overflow ops with MVT::Glues are lowered to CPSR dependences.
+  // Add/Sub overflow ops with MVT::Glues are lowered to NZCV dependences.
   setOperationAction(ISD::ADDC, MVT::i32, Custom);
   setOperationAction(ISD::ADDE, MVT::i32, Custom);
   setOperationAction(ISD::SUBC, MVT::i32, Custom);
@@ -738,7 +738,7 @@ ARM64TargetLowering::EmitF128CSEL(MachineInstr *MI,
   unsigned IfTrueReg = MI->getOperand(1).getReg();
   unsigned IfFalseReg = MI->getOperand(2).getReg();
   unsigned CondCode = MI->getOperand(3).getImm();
-  bool CPSRKilled = MI->getOperand(4).isKill();
+  bool NZCVKilled = MI->getOperand(4).isKill();
 
   MachineBasicBlock *TrueBB = MF->CreateMachineBasicBlock(LLVM_BB);
   MachineBasicBlock *EndBB = MF->CreateMachineBasicBlock(LLVM_BB);
@@ -758,9 +758,9 @@ ARM64TargetLowering::EmitF128CSEL(MachineInstr *MI,
   // TrueBB falls through to the end.
   TrueBB->addSuccessor(EndBB);
 
-  if (!CPSRKilled) {
-    TrueBB->addLiveIn(ARM64::CPSR);
-    EndBB->addLiveIn(ARM64::CPSR);
+  if (!NZCVKilled) {
+    TrueBB->addLiveIn(ARM64::NZCV);
+    EndBB->addLiveIn(ARM64::NZCV);
   }
 
   BuildMI(*EndBB, EndBB->begin(), DL, TII->get(ARM64::PHI), DestReg)
@@ -2350,7 +2350,7 @@ ARM64TargetLowering::LowerDarwinGlobalTLSAddress(SDValue Op,
   MFI->setAdjustsStack(true);
 
   // TLS calls preserve all registers except those that absolutely must be
-  // trashed: X0 (it takes an argument), LR (it's a call) and CPSR (let's not be
+  // trashed: X0 (it takes an argument), LR (it's a call) and NZCV (let's not be
   // silly).
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
   const ARM64RegisterInfo *ARI = static_cast<const ARM64RegisterInfo *>(TRI);
@@ -2371,7 +2371,7 @@ ARM64TargetLowering::LowerDarwinGlobalTLSAddress(SDValue Op,
 /// have a descriptor, accessible via a PC-relative ADRP, and whose first entry
 /// is a function pointer to carry out the resolution. This function takes the
 /// address of the descriptor in X0 and returns the TPIDR_EL0 offset in X0. All
-/// other registers (except LR, CPSR) are preserved.
+/// other registers (except LR, NZCV) are preserved.
 ///
 /// Thus, the ideal call sequence on AArch64 is:
 ///
@@ -2398,7 +2398,7 @@ SDValue ARM64TargetLowering::LowerELFTLSDescCall(SDValue SymAddr,
   SDValue Func = DAG.getNode(ARM64ISD::LOADgot, DL, PtrVT, SymAddr);
 
   // TLS calls preserve all registers except those that absolutely must be
-  // trashed: X0 (it takes an argument), LR (it's a call) and CPSR (let's not be
+  // trashed: X0 (it takes an argument), LR (it's a call) and NZCV (let's not be
   // silly).
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
   const ARM64RegisterInfo *ARI = static_cast<const ARM64RegisterInfo *>(TRI);
@@ -3602,7 +3602,7 @@ ARM64TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     }
   }
   if (StringRef("{cc}").equals_lower(Constraint))
-    return std::make_pair(unsigned(ARM64::CPSR), &ARM64::CCRRegClass);
+    return std::make_pair(unsigned(ARM64::NZCV), &ARM64::CCRRegClass);
 
   // Use the default implementation in TargetLowering to convert the register
   // constraint into a member of a register class.

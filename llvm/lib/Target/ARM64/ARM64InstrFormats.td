@@ -752,7 +752,7 @@ class MRSI : RtSystemI<1, (outs GPR64:$Rt), (ins mrs_sysreg_op:$systemreg),
   let Inst{19-5} = systemreg;
 }
 
-// FIXME: Some of these def CPSR, others don't. Best way to model that?
+// FIXME: Some of these def NZCV, others don't. Best way to model that?
 // Explicitly modeling each of the system register as a register class
 // would do it, but feels like overkill at this point.
 class MSRI : RtSystemI<0, (outs), (ins msr_sysreg_op:$systemreg, GPR64:$Rt),
@@ -762,28 +762,29 @@ class MSRI : RtSystemI<0, (outs), (ins msr_sysreg_op:$systemreg, GPR64:$Rt),
   let Inst{19-5} = systemreg;
 }
 
-def SystemCPSRFieldOperand : AsmOperandClass {
-  let Name = "SystemCPSRField";
+def SystemPStateFieldOperand : AsmOperandClass {
+  let Name = "SystemPStateField";
   let ParserMethod = "tryParseSysReg";
 }
-def cpsrfield_op : Operand<i32> {
-  let ParserMatchClass = SystemCPSRFieldOperand;
-  let PrintMethod = "printSystemCPSRField";
+def pstatefield_op : Operand<i32> {
+  let ParserMatchClass = SystemPStateFieldOperand;
+  let PrintMethod = "printSystemPStateField";
 }
 
-let Defs = [CPSR] in
-class MSRcpsrI : SimpleSystemI<0, (ins cpsrfield_op:$cpsr_field, imm0_15:$imm),
-                               "msr", "\t$cpsr_field, $imm">,
-                 Sched<[WriteSys]> {
-  bits<6> cpsrfield;
+let Defs = [NZCV] in
+class MSRpstateI
+  : SimpleSystemI<0, (ins pstatefield_op:$pstate_field, imm0_15:$imm),
+                  "msr", "\t$pstate_field, $imm">,
+    Sched<[WriteSys]> {
+  bits<6> pstatefield;
   bits<4> imm;
   let Inst{20-19} = 0b00;
-  let Inst{18-16} = cpsrfield{5-3};
+  let Inst{18-16} = pstatefield{5-3};
   let Inst{15-12} = 0b0100;
   let Inst{11-8} = imm;
-  let Inst{7-5} = cpsrfield{2-0};
+  let Inst{7-5} = pstatefield{2-0};
 
-  let DecoderMethod = "DecodeSystemCPSRInstruction";
+  let DecoderMethod = "DecodeSystemPStateInstruction";
 }
 
 // SYS and SYSL generic system instructions.
@@ -882,11 +883,11 @@ def am_brcond : Operand<OtherVT> {
 
 class BranchCond : I<(outs), (ins dotCcode:$cond, am_brcond:$target),
                      "b", "$cond\t$target", "",
-                     [(ARM64brcond bb:$target, imm:$cond, CPSR)]>,
+                     [(ARM64brcond bb:$target, imm:$cond, NZCV)]>,
                    Sched<[WriteBr]> {
   let isBranch = 1;
   let isTerminator = 1;
-  let Uses = [CPSR];
+  let Uses = [NZCV];
 
   bits<4> cond;
   bits<19> target;
@@ -1041,7 +1042,7 @@ class BaseBaseAddSubCarry<bit isSub, RegisterClass regtype, string asm,
     : I<(outs regtype:$Rd), (ins regtype:$Rn, regtype:$Rm),
         asm, "\t$Rd, $Rn, $Rm", "", pattern>,
       Sched<[WriteI]> {
-  let Uses = [CPSR];
+  let Uses = [NZCV];
   bits<5> Rd;
   bits<5> Rn;
   bits<5> Rm;
@@ -1056,14 +1057,14 @@ class BaseBaseAddSubCarry<bit isSub, RegisterClass regtype, string asm,
 class BaseAddSubCarry<bit isSub, RegisterClass regtype, string asm,
                       SDNode OpNode>
     : BaseBaseAddSubCarry<isSub, regtype, asm,
-        [(set regtype:$Rd, (OpNode regtype:$Rn, regtype:$Rm, CPSR))]>;
+        [(set regtype:$Rd, (OpNode regtype:$Rn, regtype:$Rm, NZCV))]>;
 
 class BaseAddSubCarrySetFlags<bit isSub, RegisterClass regtype, string asm,
                               SDNode OpNode>
     : BaseBaseAddSubCarry<isSub, regtype, asm,
-        [(set regtype:$Rd, (OpNode regtype:$Rn, regtype:$Rm, CPSR)),
-         (implicit CPSR)]> {
-  let Defs = [CPSR];
+        [(set regtype:$Rd, (OpNode regtype:$Rn, regtype:$Rm, NZCV)),
+         (implicit NZCV)]> {
+  let Defs = [NZCV];
 }
 
 multiclass AddSubCarry<bit isSub, string asm, string asm_setflags,
@@ -1522,7 +1523,7 @@ multiclass AddSub<bit isSub, string mnemonic,
 }
 
 multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode> {
-  let isCompare = 1, Defs = [CPSR] in {
+  let isCompare = 1, Defs = [NZCV] in {
   // Add/Subtract immediate
   def Wri  : BaseAddSubImm<isSub, 1, GPR32, GPR32sp, addsub_shifted_imm32,
                            mnemonic, OpNode> {
@@ -1565,7 +1566,7 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode> {
     let Inst{14-13} = 0b11;
     let Inst{31} = 1;
   }
-  } // Defs = [CPSR]
+  } // Defs = [NZCV]
 
   // Register/register aliases with no shift when SP is not used.
   def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrs"),
@@ -1770,7 +1771,7 @@ multiclass LogicalImm<bits<2> opc, string mnemonic, SDNode OpNode> {
 }
 
 multiclass LogicalImmS<bits<2> opc, string mnemonic, SDNode OpNode> {
-  let isCompare = 1, Defs = [CPSR] in {
+  let isCompare = 1, Defs = [NZCV] in {
   def Wri  : BaseLogicalImm<opc, GPR32, GPR32, logical_imm32, mnemonic,
       [(set GPR32:$Rd, (OpNode GPR32:$Rn, logical_imm32:$imm))]> {
     let Inst{31} = 0;
@@ -1780,7 +1781,7 @@ multiclass LogicalImmS<bits<2> opc, string mnemonic, SDNode OpNode> {
       [(set GPR64:$Rd, (OpNode GPR64:$Rn, logical_imm64:$imm))]> {
     let Inst{31} = 1;
   }
-  } // end Defs = [CPSR]
+  } // end Defs = [NZCV]
 }
 
 class BaseLogicalRegPseudo<RegisterClass regtype, SDPatternOperator OpNode>
@@ -1811,10 +1812,10 @@ multiclass LogicalReg<bits<2> opc, bit N, string mnemonic,
                         !cast<Instruction>(NAME#"Xrs"), GPR64>;
 }
 
-// Split from LogicalReg to allow setting CPSR Defs
+// Split from LogicalReg to allow setting NZCV Defs
 multiclass LogicalRegS<bits<2> opc, bit N, string mnemonic,
                        SDPatternOperator OpNode = null_frag> {
-  let Defs = [CPSR], mayLoad = 0, mayStore = 0, hasSideEffects = 0 in {
+  let Defs = [NZCV], mayLoad = 0, mayStore = 0, hasSideEffects = 0 in {
   def Wrr : BaseLogicalRegPseudo<GPR32, OpNode>;
   def Xrr : BaseLogicalRegPseudo<GPR64, OpNode>;
 
@@ -1826,7 +1827,7 @@ multiclass LogicalRegS<bits<2> opc, bit N, string mnemonic,
             [(set GPR64:$Rd, (OpNode GPR64:$Rn, logical_shifted_reg64:$Rm))]> {
     let Inst{31} = 1;
   }
-  } // Defs = [CPSR]
+  } // Defs = [NZCV]
 
   def : LogicalRegAlias<mnemonic,
                         !cast<Instruction>(NAME#"Wrs"), GPR32>;
@@ -1849,8 +1850,8 @@ class BaseCondSetFlagsImm<bit op, RegisterClass regtype, string asm>
     : I<(outs), (ins regtype:$Rn, imm0_31:$imm, imm0_15:$nzcv, ccode:$cond),
          asm, "\t$Rn, $imm, $nzcv, $cond", "", []>,
       Sched<[WriteI]> {
-  let Uses = [CPSR];
-  let Defs = [CPSR];
+  let Uses = [NZCV];
+  let Defs = [NZCV];
 
   bits<5> Rn;
   bits<5> imm;
@@ -1881,8 +1882,8 @@ class BaseCondSetFlagsReg<bit op, RegisterClass regtype, string asm>
     : I<(outs), (ins regtype:$Rn, regtype:$Rm, imm0_15:$nzcv, ccode:$cond),
          asm, "\t$Rn, $Rm, $nzcv, $cond", "", []>,
       Sched<[WriteI]> {
-  let Uses = [CPSR];
-  let Defs = [CPSR];
+  let Uses = [NZCV];
+  let Defs = [NZCV];
 
   bits<5> Rn;
   bits<5> Rm;
@@ -1916,9 +1917,9 @@ class BaseCondSelect<bit op, bits<2> op2, RegisterClass regtype, string asm>
     : I<(outs regtype:$Rd), (ins regtype:$Rn, regtype:$Rm, ccode:$cond),
          asm, "\t$Rd, $Rn, $Rm, $cond", "",
          [(set regtype:$Rd,
-               (ARM64csel regtype:$Rn, regtype:$Rm, (i32 imm:$cond), CPSR))]>,
+               (ARM64csel regtype:$Rn, regtype:$Rm, (i32 imm:$cond), NZCV))]>,
       Sched<[WriteI]> {
-  let Uses = [CPSR];
+  let Uses = [NZCV];
 
   bits<5> Rd;
   bits<5> Rn;
@@ -1949,9 +1950,9 @@ class BaseCondSelectOp<bit op, bits<2> op2, RegisterClass regtype, string asm,
          asm, "\t$Rd, $Rn, $Rm, $cond", "",
          [(set regtype:$Rd,
                (ARM64csel regtype:$Rn, (frag regtype:$Rm),
-               (i32 imm:$cond), CPSR))]>,
+               (i32 imm:$cond), NZCV))]>,
       Sched<[WriteI]> {
-  let Uses = [CPSR];
+  let Uses = [NZCV];
 
   bits<5> Rd;
   bits<5> Rn;
@@ -1980,11 +1981,11 @@ multiclass CondSelectOp<bit op, bits<2> op2, string asm, PatFrag frag> {
     let Inst{31} = 1;
   }
 
-  def : Pat<(ARM64csel (frag GPR32:$Rm), GPR32:$Rn, (i32 imm:$cond), CPSR),
+  def : Pat<(ARM64csel (frag GPR32:$Rm), GPR32:$Rn, (i32 imm:$cond), NZCV),
             (!cast<Instruction>(NAME # Wr) GPR32:$Rn, GPR32:$Rm,
                                            (inv_cond_XFORM imm:$cond))>;
 
-  def : Pat<(ARM64csel (frag GPR64:$Rm), GPR64:$Rn, (i32 imm:$cond), CPSR),
+  def : Pat<(ARM64csel (frag GPR64:$Rm), GPR64:$Rn, (i32 imm:$cond), NZCV),
             (!cast<Instruction>(NAME # Xr) GPR64:$Rn, GPR64:$Rm,
                                            (inv_cond_XFORM imm:$cond))>;
 }
@@ -3610,27 +3611,27 @@ class BaseTwoOperandFPComparison<bit signalAllNans, RegisterClass regtype,
 
 multiclass FPComparison<bit signalAllNans, string asm,
                         SDPatternOperator OpNode = null_frag> {
-  let Defs = [CPSR] in {
+  let Defs = [NZCV] in {
   def Srr : BaseTwoOperandFPComparison<signalAllNans, FPR32, asm,
-      [(OpNode FPR32:$Rn, (f32 FPR32:$Rm)), (implicit CPSR)]> {
+      [(OpNode FPR32:$Rn, (f32 FPR32:$Rm)), (implicit NZCV)]> {
     let Inst{22} = 0;
   }
 
   def Sri : BaseOneOperandFPComparison<signalAllNans, FPR32, asm,
-      [(OpNode (f32 FPR32:$Rn), fpimm0), (implicit CPSR)]> {
+      [(OpNode (f32 FPR32:$Rn), fpimm0), (implicit NZCV)]> {
     let Inst{22} = 0;
   }
 
   def Drr : BaseTwoOperandFPComparison<signalAllNans, FPR64, asm,
-      [(OpNode FPR64:$Rn, (f64 FPR64:$Rm)), (implicit CPSR)]> {
+      [(OpNode FPR64:$Rn, (f64 FPR64:$Rm)), (implicit NZCV)]> {
     let Inst{22} = 1;
   }
 
   def Dri : BaseOneOperandFPComparison<signalAllNans, FPR64, asm,
-      [(OpNode (f64 FPR64:$Rn), fpimm0), (implicit CPSR)]> {
+      [(OpNode (f64 FPR64:$Rn), fpimm0), (implicit NZCV)]> {
     let Inst{22} = 1;
   }
-  } // Defs = [CPSR]
+  } // Defs = [NZCV]
 }
 
 //---
@@ -3659,7 +3660,7 @@ class BaseFPCondComparison<bit signalAllNans,
 }
 
 multiclass FPCondComparison<bit signalAllNans, string asm> {
-  let Defs = [CPSR], Uses = [CPSR] in {
+  let Defs = [NZCV], Uses = [NZCV] in {
   def Srr : BaseFPCondComparison<signalAllNans, FPR32, asm> {
     let Inst{22} = 0;
   }
@@ -3667,7 +3668,7 @@ multiclass FPCondComparison<bit signalAllNans, string asm> {
   def Drr : BaseFPCondComparison<signalAllNans, FPR64, asm> {
     let Inst{22} = 1;
   }
-  } // Defs = [CPSR], Uses = [CPSR]
+  } // Defs = [NZCV], Uses = [NZCV]
 }
 
 //---
@@ -3679,7 +3680,7 @@ class BaseFPCondSelect<RegisterClass regtype, ValueType vt, string asm>
          asm, "\t$Rd, $Rn, $Rm, $cond", "",
          [(set regtype:$Rd,
                (ARM64csel (vt regtype:$Rn), regtype:$Rm,
-                          (i32 imm:$cond), CPSR))]>,
+                          (i32 imm:$cond), NZCV))]>,
       Sched<[WriteF]> {
   bits<5> Rd;
   bits<5> Rn;
@@ -3696,7 +3697,7 @@ class BaseFPCondSelect<RegisterClass regtype, ValueType vt, string asm>
 }
 
 multiclass FPCondSelect<string asm> {
-  let Uses = [CPSR] in {
+  let Uses = [NZCV] in {
   def Srrr : BaseFPCondSelect<FPR32, f32, asm> {
     let Inst{22} = 0;
   }
@@ -3704,7 +3705,7 @@ multiclass FPCondSelect<string asm> {
   def Drrr : BaseFPCondSelect<FPR64, f64, asm> {
     let Inst{22} = 1;
   }
-  } // Uses = [CPSR]
+  } // Uses = [NZCV]
 }
 
 //---
