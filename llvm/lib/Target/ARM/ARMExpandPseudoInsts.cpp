@@ -615,6 +615,39 @@ void ARMExpandPseudo::ExpandVTBL(MachineBasicBlock::iterator &MBBI,
   MI.eraseFromParent();
 }
 
+static bool IsAnAddressOperand(const MachineOperand &MO) {
+  // This check is overly conservative.  Unless we are certain that the machine
+  // operand is not a symbol reference, we return that it is a symbol reference.
+  // This is important as the load pair may not be split up Windows.
+  switch (MO.getType()) {
+  default: llvm_unreachable("unhandled machine operand type");
+  case MachineOperand::MO_Register:
+  case MachineOperand::MO_Immediate:
+  case MachineOperand::MO_CImmediate:
+  case MachineOperand::MO_FPImmediate:
+    return false;
+  case MachineOperand::MO_MachineBasicBlock:
+    return true;
+  case MachineOperand::MO_FrameIndex:
+    return false;
+  case MachineOperand::MO_ConstantPoolIndex:
+  case MachineOperand::MO_TargetIndex:
+  case MachineOperand::MO_JumpTableIndex:
+  case MachineOperand::MO_ExternalSymbol:
+  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_BlockAddress:
+    return true;
+  case MachineOperand::MO_RegisterMask:
+  case MachineOperand::MO_RegisterLiveOut:
+    return false;
+  case MachineOperand::MO_Metadata:
+  case MachineOperand::MO_MCSymbol:
+    return true;
+  case MachineOperand::MO_CFIIndex:
+    return false;
+  }
+}
+
 void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator &MBBI) {
   MachineInstr &MI = *MBBI;
@@ -625,10 +658,14 @@ void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
   bool DstIsDead = MI.getOperand(0).isDead();
   bool isCC = Opcode == ARM::MOVCCi32imm || Opcode == ARM::t2MOVCCi32imm;
   const MachineOperand &MO = MI.getOperand(isCC ? 2 : 1);
+  bool RequiresBundling = STI->isTargetWindows() && IsAnAddressOperand(MO);
   MachineInstrBuilder LO16, HI16;
 
   if (!STI->hasV6T2Ops() &&
       (Opcode == ARM::MOVi32imm || Opcode == ARM::MOVCCi32imm)) {
+    // FIXME Windows CE supports older ARM CPUs
+    assert(!STI->isTargetWindows() && "Windows on ARM requires ARMv7+");
+
     // Expand into a movi + orr.
     LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::MOVi), DstReg);
     HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(ARM::ORRri))
@@ -660,6 +697,9 @@ void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
     HI16Opc = ARM::MOVTi16;
   }
 
+  if (RequiresBundling)
+    BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(TargetOpcode::BUNDLE));
+
   LO16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(LO16Opc), DstReg);
   HI16 = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(HI16Opc))
     .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
@@ -682,6 +722,11 @@ void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
   HI16->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
   LO16.addImm(Pred).addReg(PredReg);
   HI16.addImm(Pred).addReg(PredReg);
+
+  if (RequiresBundling) {
+    LO16->bundleWithPred();
+    HI16->bundleWithPred();
+  }
 
   TransferImpOps(MI, LO16, HI16);
   MI.eraseFromParent();
