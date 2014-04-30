@@ -1441,23 +1441,21 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
 
   // Collect user variables, find the end of the prologue.
   for (const auto &MBB : *MF) {
-    for (MachineBasicBlock::const_iterator II = MBB.begin(), IE = MBB.end();
-         II != IE; ++II) {
-      const MachineInstr *MI = II;
-      if (MI->isDebugValue()) {
-        assert(MI->getNumOperands() > 1 && "Invalid machine instruction!");
+    for (const auto &MI : MBB) {
+      if (MI.isDebugValue()) {
+        assert(MI.getNumOperands() > 1 && "Invalid machine instruction!");
         // Keep track of user variables in order of appearance. Store the set
         // of variables we've already seen as a set of keys in DbgValues.
-        const MDNode *Var = MI->getDebugVariable();
+        const MDNode *Var = MI.getDebugVariable();
         auto IterPair = DbgValues.insert(
             std::make_pair(Var, SmallVector<const MachineInstr *, 4>()));
         if (IterPair.second)
           UserVariables.push_back(Var);
-      } else if (!MI->getFlag(MachineInstr::FrameSetup) &&
-                 PrologEndLoc.isUnknown() && !MI->getDebugLoc().isUnknown()) {
+      } else if (!MI.getFlag(MachineInstr::FrameSetup) &&
+                 PrologEndLoc.isUnknown() && !MI.getDebugLoc().isUnknown()) {
         // First known non-DBG_VALUE and non-frame setup location marks
         // the beginning of the function body.
-        PrologEndLoc = MI->getDebugLoc();
+        PrologEndLoc = MI.getDebugLoc();
       }
     }
   }

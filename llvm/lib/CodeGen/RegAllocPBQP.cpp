@@ -321,17 +321,9 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
 
   // Scan the machine function and add a coalescing cost whenever CoalescerPair
   // gives the Ok.
-  for (MachineFunction::const_iterator mbbItr = mf->begin(),
-                                       mbbEnd = mf->end();
-       mbbItr != mbbEnd; ++mbbItr) {
-    const MachineBasicBlock *mbb = &*mbbItr;
-
-    for (MachineBasicBlock::const_iterator miItr = mbb->begin(),
-                                           miEnd = mbb->end();
-         miItr != miEnd; ++miItr) {
-      const MachineInstr *mi = &*miItr;
-
-      if (!cp.setRegisters(mi)) {
+  for (const auto &mbb : *mf) {
+    for (const auto &mi : mbb) {
+      if (!cp.setRegisters(&mi)) {
         continue; // Not coalescable.
       }
 
@@ -346,7 +338,7 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
       // value plucked randomly out of the air.
 
       PBQP::PBQPNum cBenefit =
-        copyFactor * LiveIntervals::getSpillWeight(false, true, mbfi, mi);
+        copyFactor * LiveIntervals::getSpillWeight(false, true, mbfi, &mi);
 
       if (cp.isPhys()) {
         if (!mf->getRegInfo().isAllocatable(dst)) {

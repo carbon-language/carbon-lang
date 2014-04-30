@@ -702,12 +702,14 @@ void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {
 ///
 void LiveVariables::analyzePHINodes(const MachineFunction& Fn) {
   for (const auto &MBB : Fn)
-    for (MachineBasicBlock::const_iterator BBI = MBB.begin(), BBE = MBB.end();
-         BBI != BBE && BBI->isPHI(); ++BBI)
-      for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
-        if (BBI->getOperand(i).readsReg())
-          PHIVarInfo[BBI->getOperand(i + 1).getMBB()->getNumber()]
-            .push_back(BBI->getOperand(i).getReg());
+    for (const auto &BBI : MBB) {
+      if (!BBI.isPHI())
+        break;
+      for (unsigned i = 1, e = BBI.getNumOperands(); i != e; i += 2)
+        if (BBI.getOperand(i).readsReg())
+          PHIVarInfo[BBI.getOperand(i + 1).getMBB()->getNumber()]
+            .push_back(BBI.getOperand(i).getReg());
+    }
 }
 
 bool LiveVariables::VarInfo::isLiveIn(const MachineBasicBlock &MBB,

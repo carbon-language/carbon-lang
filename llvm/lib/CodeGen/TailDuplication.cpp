@@ -364,9 +364,7 @@ static unsigned getPHISrcRegOpIdx(MachineInstr *MI, MachineBasicBlock *SrcBB) {
 // block (which is why we need to copy the information).
 static void getRegsUsedByPHIs(const MachineBasicBlock &BB,
                               DenseSet<unsigned> *UsedByPhi) {
-  for(MachineBasicBlock::const_iterator I = BB.begin(), E = BB.end();
-      I != E; ++I) {
-    const MachineInstr &MI = *I;
+  for (const auto &MI : BB) {
     if (!MI.isPHI())
       break;
     for (unsigned i = 1, e = MI.getNumOperands(); i != e; i += 2) {

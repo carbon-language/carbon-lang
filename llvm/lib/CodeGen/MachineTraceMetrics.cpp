@@ -97,19 +97,17 @@ MachineTraceMetrics::getResources(const MachineBasicBlock *MBB) {
   unsigned PRKinds = SchedModel.getNumProcResourceKinds();
   SmallVector<unsigned, 32> PRCycles(PRKinds);
 
-  for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
-       I != E; ++I) {
-    const MachineInstr *MI = I;
-    if (MI->isTransient())
+  for (const auto &MI : *MBB) {
+    if (MI.isTransient())
       continue;
     ++InstrCount;
-    if (MI->isCall())
+    if (MI.isCall())
       FBI->HasCalls = true;
 
     // Count processor resources used.
     if (!SchedModel.hasInstrSchedModel())
       continue;
-    const MCSchedClassDesc *SC = SchedModel.resolveSchedClass(MI);
+    const MCSchedClassDesc *SC = SchedModel.resolveSchedClass(&MI);
     if (!SC->isValid())
       continue;
 
@@ -570,9 +568,8 @@ MachineTraceMetrics::Ensemble::invalidate(const MachineBasicBlock *BadMBB) {
   // invalidated, but their instructions will stay the same, so there is no
   // need to erase the Cycle entries. They will be overwritten when we
   // recompute.
-  for (MachineBasicBlock::const_iterator I = BadMBB->begin(), E = BadMBB->end();
-       I != E; ++I)
-    Cycles.erase(I);
+  for (const auto &I : *BadMBB)
+    Cycles.erase(&I);
 }
 
 void MachineTraceMetrics::Ensemble::verify() const {
@@ -830,16 +827,13 @@ computeInstrDepths(const MachineBasicBlock *MBB) {
     if (TBI.HasValidInstrHeights)
       TBI.CriticalPath = computeCrossBlockCriticalPath(TBI);
 
-    for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
-         I != E; ++I) {
-      const MachineInstr *UseMI = I;
-
+    for (const auto &UseMI : *MBB) {
       // Collect all data dependencies.
       Deps.clear();
-      if (UseMI->isPHI())
-        getPHIDeps(UseMI, Deps, TBI.Pred, MTM.MRI);
-      else if (getDataDeps(UseMI, Deps, MTM.MRI))
-        updatePhysDepsDownwards(UseMI, Deps, RegUnits, MTM.TRI);
+      if (UseMI.isPHI())
+        getPHIDeps(&UseMI, Deps, TBI.Pred, MTM.MRI);
+      else if (getDataDeps(&UseMI, Deps, MTM.MRI))
+        updatePhysDepsDownwards(&UseMI, Deps, RegUnits, MTM.TRI);
 
       // Filter and process dependencies, computing the earliest issue cycle.
       unsigned Cycle = 0;
@@ -855,20 +849,20 @@ computeInstrDepths(const MachineBasicBlock *MBB) {
         // Add latency if DefMI is a real instruction. Transients get latency 0.
         if (!Dep.DefMI->isTransient())
           DepCycle += MTM.SchedModel
-            .computeOperandLatency(Dep.DefMI, Dep.DefOp, UseMI, Dep.UseOp);
+            .computeOperandLatency(Dep.DefMI, Dep.DefOp, &UseMI, Dep.UseOp);
         Cycle = std::max(Cycle, DepCycle);
       }
       // Remember the instruction depth.
-      InstrCycles &MICycles = Cycles[UseMI];
+      InstrCycles &MICycles = Cycles[&UseMI];
       MICycles.Depth = Cycle;
 
       if (!TBI.HasValidInstrHeights) {
-        DEBUG(dbgs() << Cycle << '\t' << *UseMI);
+        DEBUG(dbgs() << Cycle << '\t' << UseMI);
         continue;
       }
       // Update critical path length.
       TBI.CriticalPath = std::max(TBI.CriticalPath, Cycle + MICycles.Height);
-      DEBUG(dbgs() << TBI.CriticalPath << '\t' << Cycle << '\t' << *UseMI);
+      DEBUG(dbgs() << TBI.CriticalPath << '\t' << Cycle << '\t' << UseMI);
     }
   }
 }
@@ -1057,16 +1051,16 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
           Succ = Loop->getHeader();
 
     if (Succ) {
-      for (MachineBasicBlock::const_iterator I = Succ->begin(), E = Succ->end();
-           I != E && I->isPHI(); ++I) {
-        const MachineInstr *PHI = I;
+      for (const auto &PHI : *Succ) {
+        if (!PHI.isPHI())
+          break;
         Deps.clear();
-        getPHIDeps(PHI, Deps, MBB, MTM.MRI);
+        getPHIDeps(&PHI, Deps, MBB, MTM.MRI);
         if (!Deps.empty()) {
           // Loop header PHI heights are all 0.
-          unsigned Height = TBI.Succ ? Cycles.lookup(PHI).Height : 0;
-          DEBUG(dbgs() << "pred\t" << Height << '\t' << *PHI);
-          if (pushDepHeight(Deps.front(), PHI, Height,
+          unsigned Height = TBI.Succ ? Cycles.lookup(&PHI).Height : 0;
+          DEBUG(dbgs() << "pred\t" << Height << '\t' << PHI);
+          if (pushDepHeight(Deps.front(), &PHI, Height,
                             Heights, MTM.SchedModel, MTM.TII))
             addLiveIns(Deps.front().DefMI, Deps.front().DefOp, Stack);
         }

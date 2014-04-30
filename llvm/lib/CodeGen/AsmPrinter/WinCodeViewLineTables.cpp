@@ -277,20 +277,19 @@ void WinCodeViewLineTables::beginFunction(const MachineFunction *MF) {
   // for the first instruction of the function, not the last of the prolog?
   DebugLoc PrologEndLoc;
   bool EmptyPrologue = true;
-  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
-       I != E && PrologEndLoc.isUnknown(); ++I) {
-    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
-         II != IE; ++II) {
-      const MachineInstr *MI = II;
-      if (MI->isDebugValue())
+  for (const auto &MBB : *MF) {
+    if (!PrologEndLoc.isUnknown())
+      break;
+    for (const auto &MI : MBB) {
+      if (MI.isDebugValue())
         continue;
 
       // First known non-DBG_VALUE and non-frame setup location marks
       // the beginning of the function body.
       // FIXME: do we need the first subcondition?
-      if (!MI->getFlag(MachineInstr::FrameSetup) &&
-          (!MI->getDebugLoc().isUnknown())) {
-        PrologEndLoc = MI->getDebugLoc();
+      if (!MI.getFlag(MachineInstr::FrameSetup) &&
+          (!MI.getDebugLoc().isUnknown())) {
+        PrologEndLoc = MI.getDebugLoc();
         break;
       }
       EmptyPrologue = false;

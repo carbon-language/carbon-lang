@@ -36,19 +36,16 @@ void calculateDbgValueHistory(const MachineFunction *MF,
   for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
        ++I) {
     bool AtBlockEntry = true;
-    for (MachineBasicBlock::const_iterator II = I->begin(), IE = I->end();
-         II != IE; ++II) {
-      const MachineInstr *MI = II;
-
-      if (MI->isDebugValue()) {
-        assert(MI->getNumOperands() > 1 && "Invalid machine instruction!");
+    for (const auto &MI : *I) {
+      if (MI.isDebugValue()) {
+        assert(MI.getNumOperands() > 1 && "Invalid machine instruction!");
 
         // Keep track of user variables.
-        const MDNode *Var = MI->getDebugVariable();
+        const MDNode *Var = MI.getDebugVariable();
 
         // Variable is in a register, we need to check for clobbers.
-        if (isDbgValueInDefinedReg(MI))
-          LiveUserVar[MI->getOperand(0).getReg()] = Var;
+        if (isDbgValueInDefinedReg(&MI))
+          LiveUserVar[MI.getOperand(0).getReg()] = Var;
 
         // Check the history of this variable.
         SmallVectorImpl<const MachineInstr *> &History = Result[Var];
@@ -84,14 +81,14 @@ void calculateDbgValueHistory(const MachineFunction *MF,
             }
           }
         }
-        History.push_back(MI);
+        History.push_back(&MI);
       } else {
         // Not a DBG_VALUE instruction.
-        if (!MI->isPosition())
+        if (!MI.isPosition())
           AtBlockEntry = false;
 
         // Check if the instruction clobbers any registers with debug vars.
-        for (const MachineOperand &MO : MI->operands()) {
+        for (const MachineOperand &MO : MI.operands()) {
           if (!MO.isReg() || !MO.isDef() || !MO.getReg())
             continue;
           for (MCRegAliasIterator AI(MO.getReg(), TRI, true); AI.isValid();
@@ -113,14 +110,14 @@ void calculateDbgValueHistory(const MachineFunction *MF,
             const MachineInstr *Prev = History.back();
             // Sanity-check: Register assignments are terminated at the end of
             // their block.
-            if (!Prev->isDebugValue() || Prev->getParent() != MI->getParent())
+            if (!Prev->isDebugValue() || Prev->getParent() != MI.getParent())
               continue;
             // Is the variable still in Reg?
             if (!isDbgValueInDefinedReg(Prev) ||
                 Prev->getOperand(0).getReg() != Reg)
               continue;
             // Var is clobbered. Make sure the next instruction gets a label.
-            History.push_back(MI);
+            History.push_back(&MI);
           }
         }
       }

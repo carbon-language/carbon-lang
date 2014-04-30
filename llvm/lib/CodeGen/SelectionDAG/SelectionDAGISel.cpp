@@ -510,21 +510,17 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
 
   // Determine if there are any calls in this machine function.
   MachineFrameInfo *MFI = MF->getFrameInfo();
-  for (MachineFunction::const_iterator I = MF->begin(), E = MF->end(); I != E;
-       ++I) {
-
+  for (const auto &MBB : *MF) {
     if (MFI->hasCalls() && MF->hasInlineAsm())
       break;
 
-    const MachineBasicBlock *MBB = I;
-    for (MachineBasicBlock::const_iterator II = MBB->begin(), IE = MBB->end();
-         II != IE; ++II) {
-      const MCInstrDesc &MCID = TM.getInstrInfo()->get(II->getOpcode());
+    for (const auto &MI : MBB) {
+      const MCInstrDesc &MCID = TM.getInstrInfo()->get(MI.getOpcode());
       if ((MCID.isCall() && !MCID.isReturn()) ||
-          II->isStackAligningInlineAsm()) {
+          MI.isStackAligningInlineAsm()) {
         MFI->setHasCalls(true);
       }
-      if (II->isInlineAsm()) {
+      if (MI.isInlineAsm()) {
         MF->setHasInlineAsm(true);
       }
     }

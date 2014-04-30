@@ -1224,27 +1224,28 @@ void MachineVerifier::calcRegsRequired() {
 // calcRegsPassed has been run so BBInfo::isLiveOut is valid.
 void MachineVerifier::checkPHIOps(const MachineBasicBlock *MBB) {
   SmallPtrSet<const MachineBasicBlock*, 8> seen;
-  for (MachineBasicBlock::const_iterator BBI = MBB->begin(), BBE = MBB->end();
-       BBI != BBE && BBI->isPHI(); ++BBI) {
+  for (const auto &BBI : *MBB) {
+    if (!BBI.isPHI())
+      break;
     seen.clear();
 
-    for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2) {
-      unsigned Reg = BBI->getOperand(i).getReg();
-      const MachineBasicBlock *Pre = BBI->getOperand(i + 1).getMBB();
+    for (unsigned i = 1, e = BBI.getNumOperands(); i != e; i += 2) {
+      unsigned Reg = BBI.getOperand(i).getReg();
+      const MachineBasicBlock *Pre = BBI.getOperand(i + 1).getMBB();
       if (!Pre->isSuccessor(MBB))
         continue;
       seen.insert(Pre);
       BBInfo &PrInfo = MBBInfoMap[Pre];
       if (PrInfo.reachable && !PrInfo.isLiveOut(Reg))
         report("PHI operand is not live-out from predecessor",
-               &BBI->getOperand(i), i);
+               &BBI.getOperand(i), i);
     }
 
     // Did we see all predecessors?
     for (MachineBasicBlock::const_pred_iterator PrI = MBB->pred_begin(),
            PrE = MBB->pred_end(); PrI != PrE; ++PrI) {
       if (!seen.count(*PrI)) {
-        report("Missing PHI operand", BBI);
+        report("Missing PHI operand", &BBI);
         *OS << "BB#" << (*PrI)->getNumber()
             << " is a predecessor according to the CFG.\n";
       }
@@ -1668,32 +1669,31 @@ void MachineVerifier::verifyStackFrame() {
     }
 
     // Update stack state by checking contents of MBB.
-    for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
-         I != E; ++I) {
-      if (I->getOpcode() == FrameSetupOpcode) {
+    for (const auto &I : *MBB) {
+      if (I.getOpcode() == FrameSetupOpcode) {
         // The first operand of a FrameOpcode should be i32.
-        int Size = I->getOperand(0).getImm();
+        int Size = I.getOperand(0).getImm();
         assert(Size >= 0 &&
           "Value should be non-negative in FrameSetup and FrameDestroy.\n");
 
         if (BBState.ExitIsSetup)
-          report("FrameSetup is after another FrameSetup", I); 
+          report("FrameSetup is after another FrameSetup", &I);
         BBState.ExitValue -= Size;
         BBState.ExitIsSetup = true;
       }
 
-      if (I->getOpcode() == FrameDestroyOpcode) {
+      if (I.getOpcode() == FrameDestroyOpcode) {
         // The first operand of a FrameOpcode should be i32.
-        int Size = I->getOperand(0).getImm();
+        int Size = I.getOperand(0).getImm();
         assert(Size >= 0 &&
           "Value should be non-negative in FrameSetup and FrameDestroy.\n");
 
         if (!BBState.ExitIsSetup)
-          report("FrameDestroy is not after a FrameSetup", I);
+          report("FrameDestroy is not after a FrameSetup", &I);
         int AbsSPAdj = BBState.ExitValue < 0 ? -BBState.ExitValue :
                                                BBState.ExitValue;
         if (BBState.ExitIsSetup && AbsSPAdj != Size) {
-          report("FrameDestroy <n> is after FrameSetup <m>", I);
+          report("FrameDestroy <n> is after FrameSetup <m>", &I);
           *OS << "FrameDestroy <" << Size << "> is after FrameSetup <"
               << AbsSPAdj << ">.\n";
         }

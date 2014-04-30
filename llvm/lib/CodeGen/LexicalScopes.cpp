@@ -63,25 +63,22 @@ void LexicalScopes::extractLexicalScopes(
     const MachineInstr *RangeBeginMI = nullptr;
     const MachineInstr *PrevMI = nullptr;
     DebugLoc PrevDL;
-    for (MachineBasicBlock::const_iterator II = MBB.begin(), IE = MBB.end();
-         II != IE; ++II) {
-      const MachineInstr *MInsn = II;
-
+    for (const auto &MInsn : MBB) {
       // Check if instruction has valid location information.
-      const DebugLoc MIDL = MInsn->getDebugLoc();
+      const DebugLoc MIDL = MInsn.getDebugLoc();
       if (MIDL.isUnknown()) {
-        PrevMI = MInsn;
+        PrevMI = &MInsn;
         continue;
       }
 
       // If scope has not changed then skip this instruction.
       if (MIDL == PrevDL) {
-        PrevMI = MInsn;
+        PrevMI = &MInsn;
         continue;
       }
 
       // Ignore DBG_VALUE. It does not contribute to any instruction in output.
-      if (MInsn->isDebugValue())
+      if (MInsn.isDebugValue())
         continue;
 
       if (RangeBeginMI) {
@@ -94,10 +91,10 @@ void LexicalScopes::extractLexicalScopes(
       }
 
       // This is a beginning of a new instruction range.
-      RangeBeginMI = MInsn;
+      RangeBeginMI = &MInsn;
 
       // Reset previous markers.
-      PrevMI = MInsn;
+      PrevMI = &MInsn;
       PrevDL = MIDL;
     }
 
