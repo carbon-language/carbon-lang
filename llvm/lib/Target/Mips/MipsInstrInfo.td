@@ -928,6 +928,18 @@ let isPseudo = 1, isCodeGenOnly = 1 in {
   def STORE_ACC64 : Store<"", ACC64>;
 }
 
+// We need these two pseudo instructions to avoid offset calculation for long
+// branches.  See the comment in file MipsLongBranch.cpp for detailed
+// explanation.
+
+// Expands to: lui $dst, %hi($tgt - $baltgt)
+def LONG_BRANCH_LUi : PseudoSE<(outs GPR32Opnd:$dst),
+  (ins brtarget:$tgt, brtarget:$baltgt), []>;
+
+// Expands to: addiu $dst, $src, %lo($tgt - $baltgt)
+def LONG_BRANCH_ADDiu : PseudoSE<(outs GPR32Opnd:$dst),
+  (ins GPR32Opnd:$src, brtarget:$tgt, brtarget:$baltgt), []>;
+
 //===----------------------------------------------------------------------===//
 // Instruction definition
 //===----------------------------------------------------------------------===//

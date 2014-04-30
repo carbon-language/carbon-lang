@@ -237,6 +237,20 @@ let isCodeGenOnly = 1, rs = 0, shamt = 0 in {
                     "sll\t$rd, $rt, 0", [], II_SLL>;
 }
 
+// We need the following two pseudo instructions to avoid offset calculation for
+// long branches.  See the comment in file MipsLongBranch.cpp for detailed
+// explanation.
+
+// Expands to: lui $dst, %highest($tgt - $baltgt)
+def LONG_BRANCH_LUi64 : PseudoSE<(outs GPR64Opnd:$dst),
+  (ins brtarget:$tgt, brtarget:$baltgt), []>;
+
+// Expands to: daddiu $dst, $src, %PART($tgt - $baltgt)
+// where %PART may be %higher, %hi or %lo, depending on the relocation kind
+// that $tgt is annotated with.
+def LONG_BRANCH_DADDiu : PseudoSE<(outs GPR64Opnd:$dst),
+  (ins GPR64Opnd:$src, brtarget:$tgt, brtarget:$baltgt), []>;
+
 // Cavium Octeon cmMIPS instructions
 let Predicates = [HasCnMips] in {
 

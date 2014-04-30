@@ -9,6 +9,10 @@
 //
 // This file contains the Mips implementation of the TargetInstrInfo class.
 //
+// FIXME: We need to override TargetInstrInfo::getInlineAsmLength method in
+// order for MipsLongBranch pass to work correctly when the code has inline
+// assembly.  The returned value doesn't have to be the asm instruction's exact
+// size in bytes; MipsLongBranch only expects it to be the correct upper bound.
 //===----------------------------------------------------------------------===//
 
 #ifndef MIPSINSTRUCTIONINFO_H

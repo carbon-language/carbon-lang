@@ -75,6 +75,8 @@ private:
 
   void NaClAlignIndirectJumpTargets(MachineFunction &MF);
 
+  bool isLongBranchPseudo(int Opcode) const;
+
 public:
 
   const MipsSubtarget *Subtarget;

@@ -10,10 +10,7 @@
 // This pass expands a branch or jump instruction into a long branch if its
 // offset is too large to fit into its immediate field.
 //
-// FIXME:
-// 1. Fix pc-region jump instructions which cross 256MB segment boundaries.
-// 2. If program has inline assembly statements whose size cannot be
-//    determined accurately, load branch target addresses from the GOT.
+// FIXME: Fix pc-region jump instructions which cross 256MB segment boundaries.
 //===----------------------------------------------------------------------===//
 
 #include "Mips.h"
@@ -267,20 +264,14 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
     LongBrMBB->addSuccessor(BalTgtMBB);
     BalTgtMBB->addSuccessor(TgtMBB);
 
-    int64_t TgtAddress = MBBInfos[TgtMBB->getNumber()].Address;
-    unsigned BalTgtMBBSize = 5;
-    int64_t Offset = TgtAddress - (I.Address + I.Size - BalTgtMBBSize * 4);
-    int64_t Lo = SignExtend64<16>(Offset & 0xffff);
-    int64_t Hi = SignExtend64<16>(((Offset + 0x8000) >> 16) & 0xffff);
-
     if (ABI != MipsSubtarget::N64) {
       // $longbr:
       //  addiu $sp, $sp, -8
       //  sw $ra, 0($sp)
-      //  bal $baltgt
       //  lui $at, %hi($tgt - $baltgt)
-      // $baltgt:
+      //  bal $baltgt
       //  addiu $at, $at, %lo($tgt - $baltgt)
+      // $baltgt:
       //  addu $at, $ra, $at
       //  lw $ra, 0($sp)
       //  jr $at
@@ -295,14 +286,31 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::SW)).addReg(Mips::RA)
         .addReg(Mips::SP).addImm(0);
 
+      // LUi and ADDiu instructions create 32-bit offset of the target basic
+      // block from the target of BAL instruction.  We cannot use immediate
+      // value for this offset because it cannot be determined accurately when
+      // the program has inline assembly statements.  We therefore use the
+      // relocation expressions %hi($tgt-$baltgt) and %lo($tgt-$baltgt) which
+      // are resolved during the fixup, so the values will always be correct.
+      //
+      // Since we cannot create %hi($tgt-$baltgt) and %lo($tgt-$baltgt)
+      // expressions at this point (it is possible only at the MC layer),
+      // we replace LUi and ADDiu with pseudo instructions
+      // LONG_BRANCH_LUi and LONG_BRANCH_ADDiu, and add both basic
+      // blocks as operands to these instructions.  When lowering these pseudo
+      // instructions to LUi and ADDiu in the MC layer, we will create
+      // %hi($tgt-$baltgt) and %lo($tgt-$baltgt) expressions and add them as
+      // operands to lowered instructions.
+
+      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LONG_BRANCH_LUi), Mips::AT)
+        .addMBB(TgtMBB).addMBB(BalTgtMBB);
       MIBundleBuilder(*LongBrMBB, Pos)
         .append(BuildMI(*MF, DL, TII->get(Mips::BAL_BR)).addMBB(BalTgtMBB))
-        .append(BuildMI(*MF, DL, TII->get(Mips::LUi), Mips::AT).addImm(Hi));
+        .append(BuildMI(*MF, DL, TII->get(Mips::LONG_BRANCH_ADDiu), Mips::AT)
+                  .addReg(Mips::AT).addMBB(TgtMBB).addMBB(BalTgtMBB));
 
       Pos = BalTgtMBB->begin();
 
-      BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::ADDiu), Mips::AT)
-        .addReg(Mips::AT).addImm(Lo);
       BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::ADDu), Mips::AT)
         .addReg(Mips::RA).addReg(Mips::AT);
       BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::LW), Mips::RA)
@@ -320,10 +328,10 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       //  daddiu $at, $at, %higher($tgt - $baltgt)
       //  dsll $at, $at, 16
       //  daddiu $at, $at, %hi($tgt - $baltgt)
-      //  bal $baltgt
       //  dsll $at, $at, 16
-      // $baltgt:
+      //  bal $baltgt
       //  daddiu $at, $at, %lo($tgt - $baltgt)
+      // $baltgt:
       //  daddu $at, $ra, $at
       //  ld $ra, 0($sp)
       //  jr64 $at
@@ -331,9 +339,10 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
       // $fallthrough:
       //
 
-      int64_t Higher = SignExtend64<16>(((Offset + 0x80008000) >> 32) & 0xffff);
-      int64_t Highest =
-        SignExtend64<16>(((Offset + 0x800080008000LL) >> 48) & 0xffff);
+      // TODO: %highest and %higher can have non-zero values only when the
+      // offset is greater than 4GB, which is highly unlikely.  Replace
+      // them (and the following instructon that shifts $at by 16) with the
+      // instruction that sets $at to zero.
 
       Pos = LongBrMBB->begin();
 
@@ -341,24 +350,28 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
         .addReg(Mips::SP_64).addImm(-16);
       BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::SD)).addReg(Mips::RA_64)
         .addReg(Mips::SP_64).addImm(0);
-      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LUi64), Mips::AT_64)
-        .addImm(Highest);
-      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::DADDiu), Mips::AT_64)
-        .addReg(Mips::AT_64).addImm(Higher);
+      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LONG_BRANCH_LUi64),
+              Mips::AT_64).addMBB(TgtMBB).addMBB(BalTgtMBB);
+      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LONG_BRANCH_DADDiu),
+              Mips::AT_64).addReg(Mips::AT_64).addMBB(TgtMBB, MipsII::MO_HIGHER)
+                          .addMBB(BalTgtMBB);
       BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::DSLL), Mips::AT_64)
         .addReg(Mips::AT_64).addImm(16);
-      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::DADDiu), Mips::AT_64)
-        .addReg(Mips::AT_64).addImm(Hi);
+      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LONG_BRANCH_DADDiu),
+              Mips::AT_64).addReg(Mips::AT_64).addMBB(TgtMBB, MipsII::MO_ABS_HI)
+                          .addMBB(BalTgtMBB);
+      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::DSLL), Mips::AT_64)
+        .addReg(Mips::AT_64).addImm(16);
 
       MIBundleBuilder(*LongBrMBB, Pos)
         .append(BuildMI(*MF, DL, TII->get(Mips::BAL_BR)).addMBB(BalTgtMBB))
-        .append(BuildMI(*MF, DL, TII->get(Mips::DSLL), Mips::AT_64)
-                .addReg(Mips::AT_64).addImm(16));
+        .append(BuildMI(*MF, DL, TII->get(Mips::LONG_BRANCH_DADDiu),
+                        Mips::AT_64).addReg(Mips::AT_64)
+                                    .addMBB(TgtMBB, MipsII::MO_ABS_LO)
+                                    .addMBB(BalTgtMBB));
 
       Pos = BalTgtMBB->begin();
 
-      BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::DADDiu), Mips::AT_64)
-        .addReg(Mips::AT_64).addImm(Lo);
       BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::DADDu), Mips::AT_64)
         .addReg(Mips::RA_64).addReg(Mips::AT_64);
       BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::LD), Mips::RA_64)
@@ -370,8 +383,7 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
                 .addReg(Mips::SP_64).addImm(16));
     }
 
-    assert(BalTgtMBBSize == BalTgtMBB->size());
-    assert(LongBrMBB->size() + BalTgtMBBSize == LongBranchSeqSize);
+    assert(LongBrMBB->size() + BalTgtMBB->size() == LongBranchSeqSize);
   } else {
     // $longbr:
     //  j $tgt

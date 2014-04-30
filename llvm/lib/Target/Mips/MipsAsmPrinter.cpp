@@ -148,7 +148,8 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // removing another test for this situation downstream in the
     // callchain.
     //
-    if (I->isPseudo() && !Subtarget->inMips16Mode())
+    if (I->isPseudo() && !Subtarget->inMips16Mode()
+        && !isLongBranchPseudo(I->getOpcode()))
       llvm_unreachable("Pseudo opcode found in EmitInstruction()");
 
     MCInst TmpInst0;
@@ -952,6 +953,13 @@ void MipsAsmPrinter::NaClAlignIndirectJumpTargets(MachineFunction &MF) {
     if (MBB->hasAddressTaken())
       MBB->setAlignment(MIPS_NACL_BUNDLE_ALIGN);
   }
+}
+
+bool MipsAsmPrinter::isLongBranchPseudo(int Opcode) const {
+  return (Opcode == Mips::LONG_BRANCH_LUi
+          || Opcode == Mips::LONG_BRANCH_ADDiu
+          || Opcode == Mips::LONG_BRANCH_LUi64
+          || Opcode == Mips::LONG_BRANCH_DADDiu);
 }
 
 // Force static initialization.
