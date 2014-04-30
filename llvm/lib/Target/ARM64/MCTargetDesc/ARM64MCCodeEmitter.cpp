@@ -288,7 +288,6 @@ ARM64MCCodeEmitter::getAddSubImmOpValue(const MCInst &MI, unsigned OpIdx,
     return MO.getImm() | (ShiftVal == 0 ? 0 : (1 << 12));
   assert(MO.isExpr() && "Unable to encode MCOperand!");
   const MCExpr *Expr = MO.getExpr();
-  assert(ShiftVal == 0 && "shift not allowed on add/sub immediate with fixup");
 
   // Encode the 12 bits of the fixup.
   MCFixupKind Kind = MCFixupKind(ARM64::fixup_arm64_add_imm12);

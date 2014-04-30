@@ -103,15 +103,19 @@ unsigned ARM64ELFObjectWriter::GetRelocType(const MCValue &Target,
     case FK_Data_8:
       return ELF::R_AARCH64_ABS64;
     case ARM64::fixup_arm64_add_imm12:
-      if (SymLoc == ARM64MCExpr::VK_DTPREL && IsNC)
+      if (RefKind == ARM64MCExpr::VK_DTPREL_HI12)
+        return ELF::R_AARCH64_TLSLD_ADD_DTPREL_HI12;
+      if (RefKind == ARM64MCExpr::VK_TPREL_HI12)
+        return ELF::R_AARCH64_TLSLE_ADD_TPREL_HI12;
+      if (RefKind == ARM64MCExpr::VK_DTPREL_LO12_NC)
         return ELF::R_AARCH64_TLSLD_ADD_DTPREL_LO12_NC;
-      if (SymLoc == ARM64MCExpr::VK_DTPREL && !IsNC)
+      if (RefKind == ARM64MCExpr::VK_DTPREL_LO12)
         return ELF::R_AARCH64_TLSLD_ADD_DTPREL_LO12;
-      if (SymLoc == ARM64MCExpr::VK_TPREL && IsNC)
+      if (RefKind == ARM64MCExpr::VK_TPREL_LO12_NC)
         return ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12_NC;
-      if (SymLoc == ARM64MCExpr::VK_TPREL && !IsNC)
+      if (RefKind == ARM64MCExpr::VK_TPREL_LO12)
         return ELF::R_AARCH64_TLSLE_ADD_TPREL_LO12;
-      if (SymLoc == ARM64MCExpr::VK_TLSDESC && IsNC)
+      if (RefKind == ARM64MCExpr::VK_TLSDESC_LO12)
         return ELF::R_AARCH64_TLSDESC_ADD_LO12_NC;
       if (SymLoc == ARM64MCExpr::VK_ABS && IsNC)
         return ELF::R_AARCH64_ADD_ABS_LO12_NC;

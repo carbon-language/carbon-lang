@@ -3017,6 +3017,7 @@ bool ARM64AsmParser::parseSymbolicImmVal(const MCExpr *&ImmVal) {
                   .Case("dtprel_g1_nc", ARM64MCExpr::VK_DTPREL_G1_NC)
                   .Case("dtprel_g0", ARM64MCExpr::VK_DTPREL_G0)
                   .Case("dtprel_g0_nc", ARM64MCExpr::VK_DTPREL_G0_NC)
+                  .Case("dtprel_hi12", ARM64MCExpr::VK_DTPREL_HI12)
                   .Case("dtprel_lo12", ARM64MCExpr::VK_DTPREL_LO12)
                   .Case("dtprel_lo12_nc", ARM64MCExpr::VK_DTPREL_LO12_NC)
                   .Case("tprel_g2", ARM64MCExpr::VK_TPREL_G2)
@@ -3024,6 +3025,7 @@ bool ARM64AsmParser::parseSymbolicImmVal(const MCExpr *&ImmVal) {
                   .Case("tprel_g1_nc", ARM64MCExpr::VK_TPREL_G1_NC)
                   .Case("tprel_g0", ARM64MCExpr::VK_TPREL_G0)
                   .Case("tprel_g0_nc", ARM64MCExpr::VK_TPREL_G0_NC)
+                  .Case("tprel_hi12", ARM64MCExpr::VK_TPREL_HI12)
                   .Case("tprel_lo12", ARM64MCExpr::VK_TPREL_LO12)
                   .Case("tprel_lo12_nc", ARM64MCExpr::VK_TPREL_LO12_NC)
                   .Case("tlsdesc_lo12", ARM64MCExpr::VK_TLSDESC_LO12)
@@ -3522,7 +3524,9 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
     // and resolve the value and validate the result at fixup time, but
     // that's hard as we have long since lost any source information we
     // need to generate good diagnostics by that point.
-    if (Inst.getOpcode() == ARM64::ADDXri && Inst.getOperand(2).isExpr()) {
+    if ((Inst.getOpcode() == ARM64::ADDXri ||
+         Inst.getOpcode() == ARM64::ADDWri) &&
+        Inst.getOperand(2).isExpr()) {
       const MCExpr *Expr = Inst.getOperand(2).getExpr();
       ARM64MCExpr::VariantKind ELFRefKind;
       MCSymbolRefExpr::VariantKind DarwinRefKind;
@@ -3531,18 +3535,22 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
         return Error(Loc[2], "invalid immediate expression");
       }
 
-      if (DarwinRefKind == MCSymbolRefExpr::VK_PAGEOFF ||
-          DarwinRefKind == MCSymbolRefExpr::VK_TLVPPAGEOFF ||
-          ELFRefKind == ARM64MCExpr::VK_LO12 ||
+      // Note that we don't range-check the addend. It's adjusted modulo page
+      // size when converted, so there is no "out of range" condition when using
+      // @pageoff. Any validity checking for the value was done in the is*()
+      // predicate function.
+      if ((DarwinRefKind == MCSymbolRefExpr::VK_PAGEOFF ||
+           DarwinRefKind == MCSymbolRefExpr::VK_TLVPPAGEOFF) &&
+          Inst.getOpcode() == ARM64::ADDXri)
+        return false;
+      if (ELFRefKind == ARM64MCExpr::VK_LO12 ||
+          ELFRefKind == ARM64MCExpr::VK_DTPREL_HI12 ||
           ELFRefKind == ARM64MCExpr::VK_DTPREL_LO12 ||
           ELFRefKind == ARM64MCExpr::VK_DTPREL_LO12_NC ||
+          ELFRefKind == ARM64MCExpr::VK_TPREL_HI12 ||
           ELFRefKind == ARM64MCExpr::VK_TPREL_LO12 ||
           ELFRefKind == ARM64MCExpr::VK_TPREL_LO12_NC ||
           ELFRefKind == ARM64MCExpr::VK_TLSDESC_LO12) {
-        // Note that we don't range-check the addend. It's adjusted
-        // modulo page size when converted, so there is no "out of range"
-        // condition when using @pageoff. Any validity checking for the value
-        // was done in the is*() predicate function.
         return false;
       } else if (DarwinRefKind == MCSymbolRefExpr::VK_GOTPAGEOFF) {
         // @gotpageoff can only be used directly, not with an addend.

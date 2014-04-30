@@ -49,6 +49,7 @@ StringRef ARM64MCExpr::getVariantKindName() const {
   case VK_DTPREL_G1_NC:        return ":dtprel_g1_nc:";
   case VK_DTPREL_G0:           return ":dtprel_g0:";
   case VK_DTPREL_G0_NC:        return ":dtprel_g0_nc:";
+  case VK_DTPREL_HI12:         return ":dtprel_hi12:";
   case VK_DTPREL_LO12:         return ":dtprel_lo12:";
   case VK_DTPREL_LO12_NC:      return ":dtprel_lo12_nc:";
   case VK_TPREL_G2:            return ":tprel_g2:";
@@ -56,6 +57,7 @@ StringRef ARM64MCExpr::getVariantKindName() const {
   case VK_TPREL_G1_NC:         return ":tprel_g1_nc:";
   case VK_TPREL_G0:            return ":tprel_g0:";
   case VK_TPREL_G0_NC:         return ":tprel_g0_nc:";
+  case VK_TPREL_HI12:          return ":tprel_hi12:";
   case VK_TPREL_LO12:          return ":tprel_lo12:";
   case VK_TPREL_LO12_NC:       return ":tprel_lo12_nc:";
   case VK_TLSDESC_LO12:        return ":tlsdesc_lo12:";

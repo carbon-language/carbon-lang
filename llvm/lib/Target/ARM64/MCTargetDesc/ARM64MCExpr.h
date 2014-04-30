@@ -42,10 +42,11 @@ public:
     // MOVZ/MOVK.
     VK_PAGE     = 0x010,
     VK_PAGEOFF  = 0x020,
-    VK_G0       = 0x030,
-    VK_G1       = 0x040,
-    VK_G2       = 0x050,
-    VK_G3       = 0x060,
+    VK_HI12     = 0x030,
+    VK_G0       = 0x040,
+    VK_G1       = 0x050,
+    VK_G2       = 0x060,
+    VK_G3       = 0x070,
     VK_AddressFragBits = 0x0f0,
 
     // Whether the final relocation is a checked one (where a linker should
@@ -79,6 +80,7 @@ public:
     VK_DTPREL_G1_NC      = VK_DTPREL   | VK_G1      | VK_NC,
     VK_DTPREL_G0         = VK_DTPREL   | VK_G0,
     VK_DTPREL_G0_NC      = VK_DTPREL   | VK_G0      | VK_NC,
+    VK_DTPREL_HI12       = VK_DTPREL   | VK_HI12,
     VK_DTPREL_LO12       = VK_DTPREL   | VK_PAGEOFF,
     VK_DTPREL_LO12_NC    = VK_DTPREL   | VK_PAGEOFF | VK_NC,
     VK_GOTTPREL_PAGE     = VK_GOTTPREL | VK_PAGE,
@@ -90,6 +92,7 @@ public:
     VK_TPREL_G1_NC       = VK_TPREL    | VK_G1      | VK_NC,
     VK_TPREL_G0          = VK_TPREL    | VK_G0,
     VK_TPREL_G0_NC       = VK_TPREL    | VK_G0      | VK_NC,
+    VK_TPREL_HI12        = VK_TPREL    | VK_HI12,
     VK_TPREL_LO12        = VK_TPREL    | VK_PAGEOFF,
     VK_TPREL_LO12_NC     = VK_TPREL    | VK_PAGEOFF | VK_NC,
     VK_TLSDESC_LO12      = VK_TLSDESC  | VK_PAGEOFF | VK_NC,
