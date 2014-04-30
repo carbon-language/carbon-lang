@@ -144,6 +144,11 @@ void MipsTargetAsmStreamer::emitFMask(unsigned FPUBitmask,
   OS << "," << FPUTopSavedRegOff << '\n';
 }
 
+void MipsTargetAsmStreamer::emitDirectiveCpload(unsigned RegNo) {
+  OS << "\t.cpload\t$"
+     << StringRef(MipsInstPrinter::getRegisterName(RegNo)).lower() << "\n";
+}
+
 // This part is for ELF object output.
 MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
                                              const MCSubtargetInfo &STI)
@@ -401,4 +406,53 @@ void MipsTargetELFStreamer::emitDirectiveSetMips64R2() {
 
 void MipsTargetELFStreamer::emitDirectiveSetDsp() {
   // No action required for ELF output.
+}
+
+void MipsTargetELFStreamer::emitDirectiveCpload(unsigned RegNo) {
+  // .cpload $reg
+  // This directive expands to:
+  // lui   $gp, %hi(_gp_disp)
+  // addui $gp, $gp, %lo(_gp_disp)
+  // addu  $gp, $gp, $reg
+  // when support for position independent code is enabled.
+  if (!Pic || (isN32() || isN64()))
+    return;
+
+  // There's a GNU extension controlled by -mno-shared that allows
+  // locally-binding symbols to be accessed using absolute addresses.
+  // This is currently not supported. When supported -mno-shared makes
+  // .cpload expand to:
+  //   lui     $gp, %hi(__gnu_local_gp)
+  //   addiu   $gp, $gp, %lo(__gnu_local_gp)
+
+  StringRef SymName("_gp_disp");
+  MCAssembler &MCA = getStreamer().getAssembler();
+  MCSymbol *GP_Disp = MCA.getContext().GetOrCreateSymbol(SymName);
+  MCA.getOrCreateSymbolData(*GP_Disp);
+
+  MCInst TmpInst;
+  TmpInst.setOpcode(Mips::LUi);
+  TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
+  const MCSymbolRefExpr *HiSym = MCSymbolRefExpr::Create(
+      "_gp_disp", MCSymbolRefExpr::VK_Mips_ABS_HI, MCA.getContext());
+  TmpInst.addOperand(MCOperand::CreateExpr(HiSym));
+  getStreamer().EmitInstruction(TmpInst, STI);
+
+  TmpInst.clear();
+
+  TmpInst.setOpcode(Mips::ADDiu);
+  TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
+  const MCSymbolRefExpr *LoSym = MCSymbolRefExpr::Create(
+      "_gp_disp", MCSymbolRefExpr::VK_Mips_ABS_LO, MCA.getContext());
+  TmpInst.addOperand(MCOperand::CreateExpr(LoSym));
+  getStreamer().EmitInstruction(TmpInst, STI);
+
+  TmpInst.clear();
+
+  TmpInst.setOpcode(Mips::ADDu);
+  TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
+  TmpInst.addOperand(MCOperand::CreateReg(RegNo));
+  getStreamer().EmitInstruction(TmpInst, STI);
 }

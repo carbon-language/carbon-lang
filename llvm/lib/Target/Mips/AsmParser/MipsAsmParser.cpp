@@ -137,6 +137,7 @@ class MipsAsmParser : public MCTargetAsmParser {
                      SmallVectorImpl<MCInst> &Instructions, bool isLoad,
                      bool isImmOpnd);
   bool reportParseError(StringRef ErrorMsg);
+  bool reportParseError(SMLoc Loc, StringRef ErrorMsg);
 
   bool parseMemOffset(const MCExpr *&Res, bool isParenExpr);
   bool parseRelocOperand(const MCExpr *&Res);
@@ -145,6 +146,7 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool isEvaluated(const MCExpr *Expr);
   bool parseSetFeature(uint64_t Feature);
+  bool parseDirectiveCPLoad(SMLoc Loc);
   bool parseDirectiveCPSetup();
   bool parseDirectiveNaN();
   bool parseDirectiveSet();
@@ -2083,6 +2085,10 @@ bool MipsAsmParser::reportParseError(StringRef ErrorMsg) {
   return Error(Loc, ErrorMsg);
 }
 
+bool MipsAsmParser::reportParseError(SMLoc Loc, StringRef ErrorMsg) {
+  return Error(Loc, ErrorMsg);
+}
+
 bool MipsAsmParser::parseSetNoAtDirective() {
   // Line should look like: ".set noat".
   // set at reg to 0.
@@ -2299,6 +2305,30 @@ bool MipsAsmParser::eatComma(StringRef ErrorStr) {
 
   Parser.Lex(); // Eat the comma.
   return true;
+}
+
+bool MipsAsmParser::parseDirectiveCPLoad(SMLoc Loc) {
+  if (Options.isReorder())
+    Warning(Loc, ".cpload in reorder section");
+
+  // FIXME: Warn if cpload is used in Mips16 mode.
+
+  SmallVector<MCParsedAsmOperand *, 1> Reg;
+  OperandMatchResultTy ResTy = ParseAnyRegister(Reg);
+  if (ResTy == MatchOperand_NoMatch || ResTy == MatchOperand_ParseFail) {
+    reportParseError("expected register containing function address");
+    return false;
+  }
+
+  MipsOperand *RegOpnd = static_cast<MipsOperand *>(Reg[0]);
+  if (!RegOpnd->isGPRAsmReg()) {
+    reportParseError(RegOpnd->getStartLoc(), "invalid register");
+    return false;
+  }
+
+  getTargetStreamer().emitDirectiveCpload(RegOpnd->getGPR32Reg());
+  delete RegOpnd;
+  return false;
 }
 
 bool MipsAsmParser::parseDirectiveCPSetup() {
@@ -2550,6 +2580,8 @@ bool MipsAsmParser::parseDirectiveOption() {
 bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getString();
 
+  if (IDVal == ".cpload")
+    return parseDirectiveCPLoad(DirectiveID.getLoc());
   if (IDVal == ".dword") {
     parseDataDirective(8, DirectiveID.getLoc());
     return false;

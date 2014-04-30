@@ -47,6 +47,9 @@ public:
   virtual void emitDirectiveSetMips64() = 0;
   virtual void emitDirectiveSetMips64R2() = 0;
   virtual void emitDirectiveSetDsp() = 0;
+
+  // PIC support
+  virtual void emitDirectiveCpload(unsigned RegNo) = 0;
 };
 
 // This part is for ascii assembly output
@@ -83,6 +86,9 @@ public:
   void emitDirectiveSetMips64() override;
   void emitDirectiveSetMips64R2() override;
   void emitDirectiveSetDsp() override;
+
+  // PIC support
+  virtual void emitDirectiveCpload(unsigned RegNo);
 };
 
 // This part is for ELF object output
@@ -128,6 +134,14 @@ public:
   void emitDirectiveSetMips64() override;
   void emitDirectiveSetMips64R2() override;
   void emitDirectiveSetDsp() override;
+
+  // PIC support
+  virtual void emitDirectiveCpload(unsigned RegNo);
+
+protected:
+  bool isO32() const { return STI.getFeatureBits() & Mips::FeatureO32; }
+  bool isN32() const { return STI.getFeatureBits() & Mips::FeatureN32; }
+  bool isN64() const { return STI.getFeatureBits() & Mips::FeatureN64; }
 };
 }
 #endif
