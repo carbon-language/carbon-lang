@@ -727,6 +727,7 @@ class CRmSystemI<Operand crmtype, bits<3> opc, string asm>
 def MRSSystemRegisterOperand : AsmOperandClass {
   let Name = "MRSSystemRegister";
   let ParserMethod = "tryParseSysReg";
+  let DiagnosticType = "MRS";
 }
 // concatenation of 1, op0, op1, CRn, CRm, op2. 16-bit immediate.
 def mrs_sysreg_op : Operand<i32> {
@@ -738,6 +739,7 @@ def mrs_sysreg_op : Operand<i32> {
 def MSRSystemRegisterOperand : AsmOperandClass {
   let Name = "MSRSystemRegister";
   let ParserMethod = "tryParseSysReg";
+  let DiagnosticType = "MSR";
 }
 def msr_sysreg_op : Operand<i32> {
   let ParserMatchClass = MSRSystemRegisterOperand;

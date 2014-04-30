@@ -3857,6 +3857,10 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
     return Error(Loc, "immediate must be an integer in range [1,64].");
   case Match_InvalidLabel:
     return Error(Loc, "expected label or encodable integer pc offset");
+  case Match_MRS:
+    return Error(Loc, "expected readable system register");
+  case Match_MSR:
+    return Error(Loc, "expected writable system register or pstate");
   case Match_MnemonicFail:
     return Error(Loc, "unrecognized instruction mnemonic");
   default:
@@ -4394,7 +4398,9 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidImm1_16:
   case Match_InvalidImm1_32:
   case Match_InvalidImm1_64:
-  case Match_InvalidLabel: {
+  case Match_InvalidLabel:
+  case Match_MSR:
+  case Match_MRS: {
     // Any time we get here, there's nothing fancy to do. Just get the
     // operand SMLoc and display the diagnostic.
     SMLoc ErrorLoc = ((ARM64Operand *)Operands[ErrorInfo])->getStartLoc();
