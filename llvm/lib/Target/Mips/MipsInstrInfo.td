@@ -1246,6 +1246,8 @@ def  : InstAlias<"tgeu $rs, $rt", (TGEU GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 def  : InstAlias<"tlt $rs, $rt", (TLT GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 def  : InstAlias<"tltu $rs, $rt", (TLTU GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
 def  : InstAlias<"tne $rs, $rt", (TNE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def  : InstAlias<"sll $rd, $rt, $rs",
+                 (SLLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
 def : InstAlias<"sub, $rd, $rs, $imm",
                 (ADDi GPR32Opnd:$rd, GPR32Opnd:$rs, InvertedImOperand:$imm)>;
 def : InstAlias<"sub $rs, $imm",
@@ -1256,6 +1258,8 @@ def : InstAlias<"subu, $rd, $rs, $imm",
 def : InstAlias<"subu $rs, $imm",
                 (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs, InvertedImOperand:$imm),
                 0>;
+def  : InstAlias<"srl $rd, $rt, $rs",
+                 (SRLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//
