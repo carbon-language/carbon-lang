@@ -1003,11 +1003,8 @@ ARMTargetELFStreamer::AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *S) {
 
 void ARMTargetELFStreamer::emitThumbSet(MCSymbol *Symbol, const MCExpr *Value) {
   if (const MCSymbolRefExpr *SRE = dyn_cast<MCSymbolRefExpr>(Value)) {
-    // FIXME: Doing a lookup in here is a hack.
-    MCSymbol *Sym =
-        getStreamer().getContext().LookupSymbol(SRE->getSymbol().getName());
-    if (!Sym->isDefined()) {
-      getStreamer().EmitSymbolAttribute(Sym, MCSA_Global);
+    const MCSymbol &Sym = SRE->getSymbol();
+    if (!Sym.isDefined()) {
       getStreamer().EmitAssignment(Symbol, Value);
       return;
     }

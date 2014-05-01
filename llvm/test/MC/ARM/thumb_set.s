@@ -59,8 +59,6 @@ beta:
 
 	.thumb_set beta, alpha
 
-	.thumb_set alias_undefined, undefined
-
 @ CHECK: Symbol {
 @ CHECK:   Name: alias_arm_func
 @ CHECK:   Value: 0x1
@@ -109,6 +107,16 @@ beta:
 @ CHECK:   Type: Function
 @ CHECK: }
 
+@ CHECK:      Symbol {
+@ CHECK:        Name: badblood
+@ CHECK-NEXT:   Value: 0x0
+@ CHECK-NEXT:   Size: 0
+@ CHECK-NEXT:   Binding: Local
+@ CHECK-NEXT:   Type: Object
+@ CHECK-NEXT:   Other: 0
+@ CHECK-NEXT:   Section: .data
+@ CHECK-NEXT: }
+
 @ CHECK: Symbol {
 @ CHECK:   Name: bedazzle
 @ CHECK:   Value: 0x4
@@ -144,16 +152,3 @@ beta:
 @ CHECK:   Value: 0x5
 @ CHECK:   Type: Function
 @ CHECK: }
-
-@ CHECK: Symbol {
-@ CHECK:   Name: badblood
-@ CHECK:   Value: 0x0
-@ CHECK:   Type: Object
-@ CHECK: }
-
-@ CHECK: Symbol {
-@ CHECK:   Name: undefined
-@ CHECK:   Value: 0x0
-@ CHECK:   Type: None
-@ CHECK: }
-
