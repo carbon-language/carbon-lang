@@ -64,6 +64,7 @@ void llvm::initializeScalarOpts(PassRegistry &Registry) {
   initializeStructurizeCFGPass(Registry);
   initializeSinkingPass(Registry);
   initializeTailCallElimPass(Registry);
+  initializeSeparateConstOffsetFromGEPPass(Registry);
 }
 
 void LLVMInitializeScalarOpts(LLVMPassRegistryRef R) {

@@ -377,6 +377,12 @@ FunctionPass *createScalarizerPass();
 // AddDiscriminators - Add DWARF path discriminators to the IR.
 FunctionPass *createAddDiscriminatorsPass();
 
+//===----------------------------------------------------------------------===//
+//
+// SeparateConstOffsetFromGEP - Split GEPs for better CSE
+//
+FunctionPass *createSeparateConstOffsetFromGEPPass();
+
 } // End llvm namespace
 
 #endif
