@@ -352,8 +352,11 @@ bool InclusionRewriter::Process(FileID FileId,
 
   StringRef EOL = DetectEOL(FromFile);
 
-  // Per the GNU docs: "1" indicates the start of a new file.
-  WriteLineInfo(FileName, 1, FileType, EOL, " 1");
+  // Per the GNU docs: "1" indicates entering a new file.
+  if (FileId == SM.getMainFileID())
+    WriteLineInfo(FileName, 1, FileType, EOL, "");
+  else
+    WriteLineInfo(FileName, 1, FileType, EOL, " 1");
 
   if (SM.getFileIDSize(FileId) == 0)
     return false;

@@ -21,6 +21,7 @@ A(1,2)
 #include "rewrite-includes7.h"
 #include "rewrite-includes8.h"
 // ENDCOMPARE
+// CHECK: {{^}}# 1 "{{.*}}rewrite-includes.c"{{$}}
 // CHECK: {{^}}// STARTCOMPARE{{$}}
 // CHECK-NEXT: {{^}}#define A(a,b) a ## b{{$}}
 // CHECK-NEXT: {{^}}A(1,2){{$}}
