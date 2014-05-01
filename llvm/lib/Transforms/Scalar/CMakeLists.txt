@@ -5,19 +5,19 @@ add_llvm_library(LLVMScalarOpts
   CorrelatedValuePropagation.cpp
   DCE.cpp
   DeadStoreElimination.cpp
-  Scalarizer.cpp
   EarlyCSE.cpp
-  GlobalMerge.cpp
+  FlattenCFGPass.cpp
   GVN.cpp
+  GlobalMerge.cpp
   IndVarSimplify.cpp
   JumpThreading.cpp
   LICM.cpp
   LoopDeletion.cpp
   LoopIdiomRecognize.cpp
   LoopInstSimplify.cpp
+  LoopRerollPass.cpp
   LoopRotation.cpp
   LoopStrengthReduce.cpp
-  LoopRerollPass.cpp
   LoopUnrollPass.cpp
   LoopUnswitch.cpp
   LowerAtomic.cpp
@@ -25,13 +25,14 @@ add_llvm_library(LLVMScalarOpts
   PartiallyInlineLibCalls.cpp
   Reassociate.cpp
   Reg2Mem.cpp
-  SampleProfile.cpp
   SCCP.cpp
   SROA.cpp
+  SampleProfile.cpp
   Scalar.cpp
   ScalarReplAggregates.cpp
+  Scalarizer.cpp
+  SeparateConstOffsetFromGEP.cpp
   SimplifyCFGPass.cpp
-  FlattenCFGPass.cpp
   Sink.cpp
   StructurizeCFG.cpp
   TailRecursionElimination.cpp
