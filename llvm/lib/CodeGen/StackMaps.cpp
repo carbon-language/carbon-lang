@@ -18,6 +18,7 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
@@ -28,6 +29,9 @@
 using namespace llvm;
 
 #define DEBUG_TYPE "stackmaps"
+
+static cl::opt<int> StackMapVersion("stackmap-version", cl::init(1),
+  cl::desc("Specify the stackmap encoding version (default = 1)"));
 
 PatchPointOpers::PatchPointOpers(const MachineInstr *MI)
   : MI(MI),
@@ -62,6 +66,11 @@ unsigned PatchPointOpers::getNextScratchIdx(unsigned StartIdx) const {
 
   assert(ScratchIdx != e && "No scratch register available");
   return ScratchIdx;
+}
+
+StackMaps::StackMaps(AsmPrinter &AP) : AP(AP) {
+  if (StackMapVersion != 1)
+    llvm_unreachable("Unsupported stackmap version!");
 }
 
 MachineInstr::const_mop_iterator
@@ -272,7 +281,7 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
 /// uint32 : NumRecords
 void StackMaps::emitStackmapHeader(MCStreamer &OS) {
   // Header.
-  OS.EmitIntValue(1, 1); // Version.
+  OS.EmitIntValue(StackMapVersion, 1); // Version.
   OS.EmitIntValue(0, 1); // Reserved.
   OS.EmitIntValue(0, 2); // Reserved.
 

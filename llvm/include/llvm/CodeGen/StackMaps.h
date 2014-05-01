@@ -116,7 +116,7 @@ public:
   // OpParser.
   typedef enum { DirectMemRefOp, IndirectMemRefOp, ConstantOp } OpType;
 
-  StackMaps(AsmPrinter &AP) : AP(AP) {}
+  StackMaps(AsmPrinter &AP);
 
   /// \brief Generate a stackmap record for a stackmap instruction.
   ///
