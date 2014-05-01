@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -fms-extensions -verify %s
+// RUN: %clang_cc1 -triple i686-pc-win32 -std=c++11 -fms-extensions -verify %s
 
 __thread __declspec(thread) int a; // expected-error {{already has a thread-local storage specifier}}
 __declspec(thread) __thread int b; // expected-error {{already has a thread-local storage specifier}}
