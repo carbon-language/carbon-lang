@@ -25,7 +25,6 @@
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/Module.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetOptions.h"
@@ -316,19 +315,14 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
         .addReg(ARM::R4, RegState::Implicit);
       break;
     case CodeModel::Large:
-    case CodeModel::JITDefault: {
-      LLVMContext &Ctx = MF.getMMI().getModule()->getContext();
-      const GlobalValue *F =
-        Function::Create(FunctionType::get(Type::getVoidTy(Ctx), false),
-                         GlobalValue::AvailableExternallyLinkage, "__chkstk");
-
+    case CodeModel::JITDefault:
       BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVi32imm), ARM::R12)
-        .addGlobalAddress(F);
+        .addExternalSymbol("__chkstk");
+
       BuildMI(MBB, MBBI, dl, TII.get(ARM::BLX))
         .addReg(ARM::R12, RegState::Kill)
         .addReg(ARM::R4, RegState::Implicit);
       break;
-    }
     }
 
     AddDefaultCC(AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::t2SUBrr),
