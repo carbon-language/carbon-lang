@@ -79,20 +79,6 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
     initAsmInfo();
 }
 
-// addPassesForOptimizations - Allow the backend (target) to add Target
-// Independent Optimization passes to the Pass Manager.
-bool HexagonTargetMachine::addPassesForOptimizations(PassManagerBase &PM) {
-  if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createConstantPropagationPass());
-    PM.add(createLoopSimplifyPass());
-    PM.add(createDeadCodeEliminationPass());
-    PM.add(createConstantPropagationPass());
-    PM.add(createLoopUnrollPass());
-    PM.add(createLoopStrengthReducePass());
-  }
-  return true;
-}
-
 namespace {
 /// Hexagon Code Generator Pass Configuration Options.
 class HexagonPassConfig : public TargetPassConfig {

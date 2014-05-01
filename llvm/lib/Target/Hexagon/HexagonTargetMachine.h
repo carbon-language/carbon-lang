@@ -71,8 +71,6 @@ public:
   const DataLayout       *getDataLayout() const override { return &DL; }
   static unsigned getModuleMatchQuality(const Module &M);
 
-  // Pass Pipeline Configuration.
-  virtual bool addPassesForOptimizations(PassManagerBase &PM) final;
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 };
 
