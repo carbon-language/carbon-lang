@@ -6,10 +6,10 @@
 ; typedef void x;
 ; x *y;
 
-; Check that a typedef with no DW_TAG_type is produced. The absence of a type is used to imply the 'void' type.
+; Check that a typedef with no DW_AT_type is produced. The absence of a type is used to imply the 'void' type.
 
 ; CHECK: DW_TAG_typedef
-; CHECK-NOT: DW_TAG_type
+; CHECK-NOT: DW_AT_type
 ; CHECK: {{DW_TAG|NULL}}
 
 @y = global i8* null, align 8
