@@ -9229,7 +9229,10 @@ static unsigned RankDeductionFailure(const DeductionFailureInfo &DFI) {
 
 struct CompareOverloadCandidatesForDisplay {
   Sema &S;
-  CompareOverloadCandidatesForDisplay(Sema &S) : S(S) {}
+  size_t NumArgs;
+
+  CompareOverloadCandidatesForDisplay(Sema &S, size_t nArgs)
+      : S(S), NumArgs(nArgs) {}
 
   bool operator()(const OverloadCandidate *L,
                   const OverloadCandidate *R) {
@@ -9254,8 +9257,18 @@ struct CompareOverloadCandidatesForDisplay {
     if (!L->Viable) {
       // 1. Arity mismatches come after other candidates.
       if (L->FailureKind == ovl_fail_too_many_arguments ||
-          L->FailureKind == ovl_fail_too_few_arguments)
+          L->FailureKind == ovl_fail_too_few_arguments) {
+        if (R->FailureKind == ovl_fail_too_many_arguments ||
+            R->FailureKind == ovl_fail_too_few_arguments) {
+          int LDist = abs(L->Function->getNumParams() - NumArgs);
+          int RDist = abs(R->Function->getNumParams() - NumArgs);
+          if (LDist == RDist)
+            return L->FailureKind == ovl_fail_too_many_arguments &&
+                   R->FailureKind == ovl_fail_too_few_arguments;
+          return LDist < RDist;
+        }
         return false;
+      }
       if (R->FailureKind == ovl_fail_too_many_arguments ||
           R->FailureKind == ovl_fail_too_few_arguments)
         return true;
@@ -9442,7 +9455,7 @@ void OverloadCandidateSet::NoteCandidates(Sema &S,
   }
 
   std::sort(Cands.begin(), Cands.end(),
-            CompareOverloadCandidatesForDisplay(S));
+            CompareOverloadCandidatesForDisplay(S, Args.size()));
 
   bool ReportedAmbiguousConversions = false;
 
