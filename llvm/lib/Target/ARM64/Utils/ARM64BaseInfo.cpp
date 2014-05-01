@@ -245,7 +245,8 @@ const ARM64NamedImmMapper::Mapping ARM64SysReg::MRSMapper::MRSPairs[] = {
   {"ich_elsr_el2", ICH_ELSR_EL2}
 };
 
-ARM64SysReg::MRSMapper::MRSMapper() {
+ARM64SysReg::MRSMapper::MRSMapper(uint64_t FeatureBits)
+  : SysRegMapper(FeatureBits) {
     InstPairs = &MRSPairs[0];
     NumInstPairs = llvm::array_lengthof(MRSPairs);
 }
@@ -268,7 +269,8 @@ const ARM64NamedImmMapper::Mapping ARM64SysReg::MSRMapper::MSRPairs[] = {
   {"icc_sgi0r_el1", ICC_SGI0R_EL1}
 };
 
-ARM64SysReg::MSRMapper::MSRMapper() {
+ARM64SysReg::MSRMapper::MSRMapper(uint64_t FeatureBits)
+  : SysRegMapper(FeatureBits) {
     InstPairs = &MSRPairs[0];
     NumInstPairs = llvm::array_lengthof(MSRPairs);
 }
@@ -750,18 +752,33 @@ const ARM64NamedImmMapper::Mapping ARM64SysReg::SysRegMapper::SysRegPairs[] = {
   {"ich_lr12_el2", ICH_LR12_EL2},
   {"ich_lr13_el2", ICH_LR13_EL2},
   {"ich_lr14_el2", ICH_LR14_EL2},
-  {"ich_lr15_el2", ICH_LR15_EL2},
+  {"ich_lr15_el2", ICH_LR15_EL2}
+};
+
+const ARM64NamedImmMapper::Mapping
+ARM64SysReg::SysRegMapper::CycloneSysRegPairs[] = {
   {"cpm_ioacc_ctl_el3", CPM_IOACC_CTL_EL3}
 };
 
 uint32_t
 ARM64SysReg::SysRegMapper::fromString(StringRef Name, bool &Valid) const {
-  // First search the registers shared by all
   std::string NameLower = Name.lower();
+
+  // First search the registers shared by all
   for (unsigned i = 0; i < array_lengthof(SysRegPairs); ++i) {
     if (SysRegPairs[i].Name == NameLower) {
       Valid = true;
       return SysRegPairs[i].Value;
+    }
+  }
+
+  // Next search for target specific registers
+  if (FeatureBits & ARM64::ProcCyclone) {
+    for (unsigned i = 0; i < array_lengthof(CycloneSysRegPairs); ++i) {
+      if (CycloneSysRegPairs[i].Name == NameLower) {
+        Valid = true;
+        return CycloneSysRegPairs[i].Value;
+      }
     }
   }
 
@@ -798,6 +815,7 @@ ARM64SysReg::SysRegMapper::fromString(StringRef Name, bool &Valid) const {
 
 std::string
 ARM64SysReg::SysRegMapper::toString(uint32_t Bits, bool &Valid) const {
+  // First search the registers shared by all
   for (unsigned i = 0; i < array_lengthof(SysRegPairs); ++i) {
     if (SysRegPairs[i].Value == Bits) {
       Valid = true;
@@ -805,6 +823,18 @@ ARM64SysReg::SysRegMapper::toString(uint32_t Bits, bool &Valid) const {
     }
   }
 
+  // Next search for target specific registers
+  if (FeatureBits & ARM64::ProcCyclone) {
+    for (unsigned i = 0; i < array_lengthof(CycloneSysRegPairs); ++i) {
+      if (CycloneSysRegPairs[i].Value == Bits) {
+        Valid = true;
+        return CycloneSysRegPairs[i].Name;
+      }
+    }
+  }
+
+  // Now try the instruction-specific registers (either read-only or
+  // write-only).
   for (unsigned i = 0; i < NumInstPairs; ++i) {
     if (InstPairs[i].Value == Bits) {
       Valid = true;

@@ -195,6 +195,9 @@ private:
   struct SysRegOp {
     const char *Data;
     unsigned Length;
+    uint64_t FeatureBits; // We need to pass through information about which
+                          // core we are compiling for so that the SysReg
+                          // Mappers can appropriately conditionalize.
   };
 
   struct SysCRImmOp {
@@ -349,6 +352,11 @@ public:
   StringRef getSysReg() const {
     assert(Kind == k_SysReg && "Invalid access!");
     return StringRef(SysReg.Data, SysReg.Length);
+  }
+
+  uint64_t getSysRegFeatureBits() const {
+    assert(Kind == k_SysReg && "Invalid access!");
+    return SysReg.FeatureBits;
   }
 
   unsigned getSysCR() const {
@@ -668,7 +676,8 @@ public:
     if (!isSysReg()) return false;
 
     bool IsKnownRegister;
-    ARM64SysReg::MRSMapper().fromString(getSysReg(), IsKnownRegister);
+    auto Mapper = ARM64SysReg::MRSMapper(getSysRegFeatureBits());
+    Mapper.fromString(getSysReg(), IsKnownRegister);
 
     return IsKnownRegister;
   }
@@ -676,7 +685,8 @@ public:
     if (!isSysReg()) return false;
 
     bool IsKnownRegister;
-    ARM64SysReg::MSRMapper().fromString(getSysReg(), IsKnownRegister);
+    auto Mapper = ARM64SysReg::MSRMapper(getSysRegFeatureBits());
+    Mapper.fromString(getSysReg(), IsKnownRegister);
 
     return IsKnownRegister;
   }
@@ -1332,7 +1342,8 @@ public:
     assert(N == 1 && "Invalid number of operands!");
 
     bool Valid;
-    uint32_t Bits = ARM64SysReg::MRSMapper().fromString(getSysReg(), Valid);
+    auto Mapper = ARM64SysReg::MRSMapper(getSysRegFeatureBits());
+    uint32_t Bits = Mapper.fromString(getSysReg(), Valid);
 
     Inst.addOperand(MCOperand::CreateImm(Bits));
   }
@@ -1341,7 +1352,8 @@ public:
     assert(N == 1 && "Invalid number of operands!");
 
     bool Valid;
-    uint32_t Bits = ARM64SysReg::MSRMapper().fromString(getSysReg(), Valid);
+    auto Mapper = ARM64SysReg::MSRMapper(getSysRegFeatureBits());
+    uint32_t Bits = Mapper.fromString(getSysReg(), Valid);
 
     Inst.addOperand(MCOperand::CreateImm(Bits));
   }
@@ -1666,10 +1678,12 @@ public:
     return Op;
   }
 
-  static ARM64Operand *CreateSysReg(StringRef Str, SMLoc S, MCContext &Ctx) {
+  static ARM64Operand *CreateSysReg(StringRef Str, SMLoc S,
+                                    uint64_t FeatureBits, MCContext &Ctx) {
     ARM64Operand *Op = new ARM64Operand(k_SysReg, Ctx);
     Op->SysReg.Data = Str.data();
     Op->SysReg.Length = Str.size();
+    Op->SysReg.FeatureBits = FeatureBits;
     Op->StartLoc = S;
     Op->EndLoc = S;
     return Op;
@@ -2682,7 +2696,7 @@ ARM64AsmParser::tryParseSysReg(OperandVector &Operands) {
     return MatchOperand_NoMatch;
 
   Operands.push_back(ARM64Operand::CreateSysReg(Tok.getString(), getLoc(),
-                     getContext()));
+                     STI.getFeatureBits(), getContext()));
   Parser.Lex(); // Eat identifier
 
   return MatchOperand_Success;

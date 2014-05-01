@@ -1397,7 +1397,7 @@ void ARM64InstPrinter::printMRSSystemRegister(const MCInst *MI, unsigned OpNo,
   unsigned Val = MI->getOperand(OpNo).getImm();
 
   bool Valid;
-  auto Mapper = ARM64SysReg::MRSMapper();
+  auto Mapper = ARM64SysReg::MRSMapper(getAvailableFeatures());
   std::string Name = Mapper.toString(Val, Valid);
 
   if (Valid)
@@ -1409,7 +1409,7 @@ void ARM64InstPrinter::printMSRSystemRegister(const MCInst *MI, unsigned OpNo,
   unsigned Val = MI->getOperand(OpNo).getImm();
 
   bool Valid;
-  auto Mapper = ARM64SysReg::MSRMapper();
+  auto Mapper = ARM64SysReg::MSRMapper(getAvailableFeatures());
   std::string Name = Mapper.toString(Val, Valid);
 
   if (Valid)

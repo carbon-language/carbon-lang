@@ -1136,8 +1136,10 @@ namespace ARM64SysReg {
     ICH_LR13_EL2      = 0xe66d, // 11  100  1100  1101  101
     ICH_LR14_EL2      = 0xe66e, // 11  100  1100  1101  110
     ICH_LR15_EL2      = 0xe66f, // 11  100  1100  1101  111
+  };
 
-    // Cyclone specific system registers
+  // Cyclone specific system registers
+  enum CycloneSysRegValues {
     CPM_IOACC_CTL_EL3 = 0xff90
   };
 
@@ -1147,23 +1149,25 @@ namespace ARM64SysReg {
   // this one case.
   struct SysRegMapper {
     static const ARM64NamedImmMapper::Mapping SysRegPairs[];
+    static const ARM64NamedImmMapper::Mapping CycloneSysRegPairs[];
 
     const ARM64NamedImmMapper::Mapping *InstPairs;
     size_t NumInstPairs;
+    uint64_t FeatureBits;
 
-    SysRegMapper() {}
+    SysRegMapper(uint64_t FeatureBits) : FeatureBits(FeatureBits) { }
     uint32_t fromString(StringRef Name, bool &Valid) const;
     std::string toString(uint32_t Bits, bool &Valid) const;
   };
 
   struct MSRMapper : SysRegMapper {
     static const ARM64NamedImmMapper::Mapping MSRPairs[];
-    MSRMapper();
+    MSRMapper(uint64_t FeatureBits);
   };
 
   struct MRSMapper : SysRegMapper {
     static const ARM64NamedImmMapper::Mapping MRSPairs[];
-    MRSMapper();
+    MRSMapper(uint64_t FeatureBits);
   };
 
   uint32_t ParseGenericRegister(StringRef Name, bool &Valid);

@@ -601,11 +601,15 @@ static DecodeStatus DecodePCRelLabel19(llvm::MCInst &Inst, unsigned Imm,
 static DecodeStatus DecodeMRSSystemRegister(llvm::MCInst &Inst, unsigned Imm,
                                             uint64_t Address,
                                             const void *Decoder) {
+  const ARM64Disassembler *Dis =
+      static_cast<const ARM64Disassembler *>(Decoder);
+  const MCSubtargetInfo &STI = Dis->getSubtargetInfo();
+
   Imm |= 0x8000;
   Inst.addOperand(MCOperand::CreateImm(Imm));
 
   bool ValidNamed;
-  (void)ARM64SysReg::MRSMapper().toString(Imm, ValidNamed);
+  (void)ARM64SysReg::MRSMapper(STI.getFeatureBits()).toString(Imm, ValidNamed);
 
   return ValidNamed ? Success : Fail;
 }
@@ -613,11 +617,15 @@ static DecodeStatus DecodeMRSSystemRegister(llvm::MCInst &Inst, unsigned Imm,
 static DecodeStatus DecodeMSRSystemRegister(llvm::MCInst &Inst, unsigned Imm,
                                             uint64_t Address,
                                             const void *Decoder) {
+  const ARM64Disassembler *Dis =
+      static_cast<const ARM64Disassembler *>(Decoder);
+  const MCSubtargetInfo &STI = Dis->getSubtargetInfo();
+
   Imm |= 0x8000;
   Inst.addOperand(MCOperand::CreateImm(Imm));
 
   bool ValidNamed;
-  (void)ARM64SysReg::MSRMapper().toString(Imm, ValidNamed);
+  (void)ARM64SysReg::MSRMapper(STI.getFeatureBits()).toString(Imm, ValidNamed);
 
   return ValidNamed ? Success : Fail;
 }
