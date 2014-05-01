@@ -21,8 +21,9 @@ x::bar<int> bi;
 x::bar<float> bf;
 
 using
-// metadata [[NARF:![0-9]*]], i32 0, i32 1, {{.*}} ; [ DW_TAG_variable ] [n]
-narf // [[NARF]] = {{.*}} ; [ DW_TAG_typedef ] [narf] [line [[@LINE]]
+// CHECK: metadata [[NARF:![0-9]*]], i32 0, i32 1, {{.*}} ; [ DW_TAG_variable ] [n]
+# 142
+narf // CHECK: [[NARF]] = {{.*}} ; [ DW_TAG_typedef ] [narf] [line 142
 = int;
 narf n;
 
