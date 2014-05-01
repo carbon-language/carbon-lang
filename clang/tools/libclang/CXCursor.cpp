@@ -50,6 +50,9 @@ static CXCursorKind GetCursorKind(const Attr *A) {
     case attr::Annotate: return CXCursor_AnnotateAttr;
     case attr::AsmLabel: return CXCursor_AsmLabelAttr;
     case attr::Packed: return CXCursor_PackedAttr;
+    case attr::Pure: return CXCursor_PureAttr;
+    case attr::Const: return CXCursor_ConstAttr;
+    case attr::NoDuplicate: return CXCursor_NoDuplicateAttr;
   }
 
   return CXCursor_UnexposedAttr;
