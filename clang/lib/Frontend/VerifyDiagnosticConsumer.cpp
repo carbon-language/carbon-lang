@@ -330,6 +330,8 @@ static bool ParseDirective(StringRef S, ExpectedData *ED, SourceManager &SM,
       DL = ED ? &ED->Errors : NULL;
     else if (PH.Next("warning"))
       DL = ED ? &ED->Warnings : NULL;
+    else if (PH.Next("remark"))
+      DL = ED ? &ED->Remarks : NULL;
     else if (PH.Next("note"))
       DL = ED ? &ED->Notes : NULL;
     else if (PH.Next("no-diagnostics")) {
@@ -736,6 +738,10 @@ static unsigned CheckResults(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
   // See if there are warning mismatches.
   NumProblems += CheckLists(Diags, SourceMgr, "warning", ED.Warnings,
                             Buffer.warn_begin(), Buffer.warn_end());
+
+  // See if there are remark mismatches.
+  NumProblems += CheckLists(Diags, SourceMgr, "remark", ED.Remarks,
+                            Buffer.remark_begin(), Buffer.remark_end());
 
   // See if there are note mismatches.
   NumProblems += CheckLists(Diags, SourceMgr, "note", ED.Notes,

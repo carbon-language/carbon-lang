@@ -34,12 +34,12 @@ class FileEntry;
 /// comment on the line that has the diagnostic, use:
 ///
 /// \code
-///   expected-{error,warning,note}
+///   expected-{error,warning,remark,note}
 /// \endcode
 ///
-/// to tag if it's an expected error or warning, and place the expected text
-/// between {{ and }} markers. The full text doesn't have to be included, only
-/// enough to ensure that the correct diagnostic was emitted.
+/// to tag if it's an expected error, remark or warning, and place the expected
+/// text between {{ and }} markers. The full text doesn't have to be included,
+/// only enough to ensure that the correct diagnostic was emitted.
 ///
 /// Here's an example:
 ///
@@ -184,11 +184,13 @@ public:
   struct ExpectedData {
     DirectiveList Errors;
     DirectiveList Warnings;
+    DirectiveList Remarks;
     DirectiveList Notes;
 
     void Reset() {
       llvm::DeleteContainerPointers(Errors);
       llvm::DeleteContainerPointers(Warnings);
+      llvm::DeleteContainerPointers(Remarks);
       llvm::DeleteContainerPointers(Notes);
     }
 

@@ -35,6 +35,9 @@ void TextDiagnosticBuffer::HandleDiagnostic(DiagnosticsEngine::Level Level,
   case DiagnosticsEngine::Warning:
     Warnings.push_back(std::make_pair(Info.getLocation(), Buf.str()));
     break;
+  case DiagnosticsEngine::Remark:
+    Remarks.push_back(std::make_pair(Info.getLocation(), Buf.str()));
+    break;
   case DiagnosticsEngine::Error:
   case DiagnosticsEngine::Fatal:
     Errors.push_back(std::make_pair(Info.getLocation(), Buf.str()));
@@ -49,6 +52,9 @@ void TextDiagnosticBuffer::FlushDiagnostics(DiagnosticsEngine &Diags) const {
         << it->second;
   for (const_iterator it = warn_begin(), ie = warn_end(); it != ie; ++it)
     Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Warning, "%0"))
+        << it->second;
+  for (const_iterator it = remark_begin(), ie = remark_end(); it != ie; ++it)
+    Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Remark, "%0"))
         << it->second;
   for (const_iterator it = note_begin(), ie = note_end(); it != ie; ++it)
     Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Note, "%0"))
