@@ -496,9 +496,7 @@ class shift_rotate_reg<string opstr, RegisterOperand RO, InstrItinClass itin,
   InstSE<(outs RO:$rd), (ins RO:$rt, GPR32Opnd:$rs),
          !strconcat(opstr, "\t$rd, $rt, $rs"),
          [(set RO:$rd, (OpNode RO:$rt, GPR32Opnd:$rs))], itin, FrmR,
-         opstr> {
-  let TwoOperandAliasConstraint = "$rt = $rd";
-}
+         opstr>;
 
 // Load Upper Imediate
 class LoadUpper<string opstr, RegisterOperand RO, Operand Imm>:
