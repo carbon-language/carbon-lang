@@ -53,13 +53,21 @@ static StringRef removeAtSignSuffix(StringRef sym) {
   return sym;
 }
 
-static bool getExportedAtoms(const PECOFFLinkingContext &ctx, MutableFile *file,
+static StringRef removeLeadingUnderscore(StringRef sym) {
+  if (sym.startswith("_"))
+    return sym.substr(1);
+  return sym;
+}
+
+static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
                              std::vector<TableEntry> &ret) {
   std::map<StringRef, const DefinedAtom *> definedAtoms;
   for (const DefinedAtom *atom : file->defined())
     definedAtoms[removeAtSignSuffix(atom->name())] = atom;
 
-  for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports()) {
+  std::set<PECOFFLinkingContext::ExportDesc> exports = ctx.getDllExports();
+  ctx.getDllExports().clear();
+  for (PECOFFLinkingContext::ExportDesc desc : exports) {
     auto it = definedAtoms.find(desc.name);
     if (it == definedAtoms.end()) {
       llvm::errs() << "Symbol <" << desc.name
@@ -68,6 +76,8 @@ static bool getExportedAtoms(const PECOFFLinkingContext &ctx, MutableFile *file,
     }
     const DefinedAtom *atom = it->second;
     ret.push_back(TableEntry(desc.name, desc.ordinal, atom, desc.noname));
+    desc.internalName = removeLeadingUnderscore(atom->name());
+    ctx.addDllExport(desc);
   }
   std::sort(ret.begin(), ret.end(), compare);
   return true;

@@ -7,4 +7,4 @@
 CHECK: LIBRARY "exportlib2.test.tmp.dll"
 CHECK: EXPORTS
 CHECK:   exportfn1 @1
-CHECK:   exportfn2 @2
+CHECK:   exportfn2@8 @2

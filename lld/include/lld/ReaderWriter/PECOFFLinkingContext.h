@@ -67,6 +67,7 @@ public:
     }
 
     std::string name;
+    std::string internalName;
     int ordinal;
     bool noname;
     bool isData;
