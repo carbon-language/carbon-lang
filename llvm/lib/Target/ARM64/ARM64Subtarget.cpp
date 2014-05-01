@@ -90,8 +90,11 @@ ARM64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
 /// memset with zero passed as the second argument. Otherwise it
 /// returns null.
 const char *ARM64Subtarget::getBZeroEntry() const {
-  // At the moment, always prefer bzero.
-  return "bzero";
+  // Prefer bzero on Darwin only.
+  if(isTargetDarwin())
+    return "bzero";
+
+  return nullptr;
 }
 
 void ARM64Subtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,

@@ -1,4 +1,7 @@
-; RUN: llc %s -march arm64 -o - | FileCheck %s
+; RUN: llc %s -mtriple=arm64-apple-darwin -o - | \
+; RUN:   FileCheck --check-prefix=CHECK-DARWIN --check-prefix=CHECK %s
+; RUN: llc %s -mtriple=arm64-linux-gnu -o - | \
+; RUN:   FileCheck --check-prefix=CHECK-LINUX --check-prefix=CHECK %s
 ; <rdar://problem/14199482> ARM64: Calls to bzero() replaced with calls to memset()
 
 ; CHECK: @fct1
@@ -14,7 +17,8 @@ declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1)
 
 ; CHECK: @fct2
 ; When the size is bigger than 256, change into bzero.
-; CHECK: bzero
+; CHECK-DARWIN: bzero
+; CHECK-LINUX: memset
 define void @fct2(i8* nocapture %ptr) {
 entry:
   tail call void @llvm.memset.p0i8.i64(i8* %ptr, i8 0, i64 257, i32 1, i1 false)
@@ -23,7 +27,8 @@ entry:
 
 ; CHECK: @fct3
 ; For unknown size, change to bzero.
-; CHECK: bzero
+; CHECK-DARWIN: bzero
+; CHECK-LINUX: memset
 define void @fct3(i8* nocapture %ptr, i32 %unknown) {
 entry:
   %conv = sext i32 %unknown to i64
@@ -47,7 +52,8 @@ declare i64 @llvm.objectsize.i64(i8*, i1)
 
 ; CHECK: @fct5
 ; Size > 256, change.
-; CHECK: bzero
+; CHECK-DARWIN: bzero
+; CHECK-LINUX: memset
 define void @fct5(i8* %ptr) {
 entry:
   %tmp = tail call i64 @llvm.objectsize.i64(i8* %ptr, i1 false)
@@ -57,7 +63,8 @@ entry:
 
 ; CHECK: @fct6
 ; Size = unknown, change.
-; CHECK: bzero
+; CHECK-DARWIN: bzero
+; CHECK-LINUX: memset
 define void @fct6(i8* %ptr, i32 %unknown) {
 entry:
   %conv = sext i32 %unknown to i64
