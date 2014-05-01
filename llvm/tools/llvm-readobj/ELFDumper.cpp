@@ -437,6 +437,27 @@ static const EnumEntry<unsigned> ElfSegmentFlags[] = {
   LLVM_READOBJ_ENUM_ENT(ELF, PF_R)
 };
 
+static const EnumEntry<unsigned> ElfHeaderMipsFlags[] = {
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_NOREORDER),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_PIC),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_CPIC),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ABI2),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_32BITMODE),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_NAN2008),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ABI_O32),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_MICROMIPS),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_ASE_M16),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_1),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_2),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_3),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_4),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_5),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_32),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_64),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_32R2),
+  LLVM_READOBJ_ENUM_ENT(ELF, EF_MIPS_ARCH_64R2)
+};
+
 template<class ELFT>
 void ELFDumper<ELFT>::printFileHeaders() {
   const typename ELFO::Elf_Ehdr *Header = Obj->getHeader();
@@ -464,7 +485,14 @@ void ELFDumper<ELFT>::printFileHeaders() {
     W.printHex   ("Entry", Header->e_entry);
     W.printHex   ("ProgramHeaderOffset", Header->e_phoff);
     W.printHex   ("SectionHeaderOffset", Header->e_shoff);
-    W.printFlags ("Flags", Header->e_flags);
+    switch (Header->e_machine) {
+    case EM_MIPS:
+      W.printFlags("Flags", Header->e_flags, makeArrayRef(ElfHeaderMipsFlags),
+                   unsigned(ELF::EF_MIPS_ARCH));
+      break;
+    default:
+      W.printFlags("Flags", Header->e_flags);
+    }
     W.printNumber("HeaderSize", Header->e_ehsize);
     W.printNumber("ProgramHeaderEntrySize", Header->e_phentsize);
     W.printNumber("ProgramHeaderCount", Header->e_phnum);
