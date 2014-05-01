@@ -2081,6 +2081,9 @@ def err_attribute_weak_static : Error<
   "weak declaration cannot have internal linkage">;
 def err_attribute_selectany_non_extern_data : Error<
   "'selectany' can only be applied to data items with external linkage">;
+def err_declspec_thread_on_thread_variable : Error<
+  "'__declspec(thread)' applied to variable that already has a "
+  "thread-local storage specifier">;
 def err_attribute_dll_not_extern : Error<
   "%q0 must have external linkage when declared %q1">;
 def warn_attribute_invalid_on_definition : Warning<
@@ -5996,6 +5999,8 @@ def err_thread_dynamic_init : Error<
   "initializer for thread-local variable must be a constant expression">;
 def err_thread_nontrivial_dtor : Error<
   "type of thread-local variable has non-trivial destruction">;
+def err_thread_nontrivial_ctor : Error<
+  "type of thread-local variable has non-trivial construction">;
 def note_use_thread_local : Note<
   "use 'thread_local' to allow this">;
 

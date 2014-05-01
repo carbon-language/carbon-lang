@@ -3697,6 +3697,25 @@ static void handleMSInheritanceAttr(Sema &S, Decl *D, const AttributeList &Attr)
     D->addAttr(IA);
 }
 
+static void handleDeclspecThreadAttr(Sema &S, Decl *D,
+                                     const AttributeList &Attr) {
+  VarDecl *VD = cast<VarDecl>(D);
+  if (!S.Context.getTargetInfo().isTLSSupported()) {
+    S.Diag(Attr.getLoc(), diag::err_thread_unsupported);
+    return;
+  }
+  if (VD->getTSCSpec() != TSCS_unspecified) {
+    S.Diag(Attr.getLoc(), diag::err_declspec_thread_on_thread_variable);
+    return;
+  }
+  if (VD->hasLocalStorage()) {
+    S.Diag(Attr.getLoc(), diag::err_thread_non_global) << "__declspec(thread)";
+    return;
+  }
+  VD->addAttr(::new (S.Context) ThreadAttr(
+      Attr.getRange(), S.Context, Attr.getAttributeSpellingListIndex()));
+}
+
 static void handleARMInterruptAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   // Check the attribute arguments.
@@ -4393,6 +4412,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_SelectAny:
     handleSimpleAttribute<SelectAnyAttr>(S, D, Attr);
+    break;
+  case AttributeList::AT_Thread:
+    handleDeclspecThreadAttr(S, D, Attr);
     break;
 
   // Thread safety attributes:

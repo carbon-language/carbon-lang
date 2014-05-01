@@ -808,22 +808,12 @@ public:
 
   void setTSCSpec(ThreadStorageClassSpecifier TSC) {
     VarDeclBits.TSCSpec = TSC;
+    assert(VarDeclBits.TSCSpec == TSC && "truncation");
   }
   ThreadStorageClassSpecifier getTSCSpec() const {
     return static_cast<ThreadStorageClassSpecifier>(VarDeclBits.TSCSpec);
   }
-  TLSKind getTLSKind() const {
-    switch (VarDeclBits.TSCSpec) {
-    case TSCS_unspecified:
-      return TLS_None;
-    case TSCS___thread: // Fall through.
-    case TSCS__Thread_local:
-      return TLS_Static;
-    case TSCS_thread_local:
-      return TLS_Dynamic;
-    }
-    llvm_unreachable("Unknown thread storage class specifier!");
-  }
+  TLSKind getTLSKind() const;
 
   /// hasLocalStorage - Returns true if a variable with function scope
   ///  is a non-static local variable.

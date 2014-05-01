@@ -1646,6 +1646,21 @@ void VarDecl::setStorageClass(StorageClass SC) {
   VarDeclBits.SClass = SC;
 }
 
+VarDecl::TLSKind VarDecl::getTLSKind() const {
+  switch (VarDeclBits.TSCSpec) {
+  case TSCS_unspecified:
+    if (hasAttr<ThreadAttr>())
+      return TLS_Static;
+    return TLS_None;
+  case TSCS___thread: // Fall through.
+  case TSCS__Thread_local:
+      return TLS_Static;
+  case TSCS_thread_local:
+    return TLS_Dynamic;
+  }
+  llvm_unreachable("Unknown thread storage class specifier!");
+}
+
 SourceRange VarDecl::getSourceRange() const {
   if (const Expr *Init = getInit()) {
     SourceLocation InitEnd = Init->getLocEnd();

@@ -1665,6 +1665,13 @@ def SelectAny : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def Thread : Attr {
+  let Spellings = [Declspec<"thread">];
+  let LangOpts = [MicrosoftExt];
+  let Documentation = [ThreadDocs];
+  let Subjects = SubjectList<[Var]>;
+}
+
 def Win64 : IgnoredAttr {
   let Spellings = [Keyword<"__w64">];
   let LangOpts = [MicrosoftExt];
