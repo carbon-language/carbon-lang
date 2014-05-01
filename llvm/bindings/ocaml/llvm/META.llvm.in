@@ -93,3 +93,11 @@ package "linker" (
     archive(byte) = "llvm_linker.cma"
     archive(native) = "llvm_linker.cmxa"
 )
+
+package "all_backends" (
+    requires = "llvm"
+    version  = "@PACKAGE_VERSION@"
+    description = "All backends for LLVM"
+    archive(byte) = "llvm_all_backends.cma"
+    archive(native) = "llvm_all_backends.cmxa"
+)

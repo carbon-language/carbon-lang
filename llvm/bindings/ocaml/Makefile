@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 DIRS = llvm bitreader bitwriter irreader analysis target executionengine \
-       transforms linker backends
+       transforms linker backends all_backends
 ExtraMakefiles = $(PROJ_OBJ_DIR)/Makefile.ocaml
 
 ocamldoc:
