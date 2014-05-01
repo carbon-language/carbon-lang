@@ -115,17 +115,18 @@ public:
   /// the graph.
   class iterator
       : public iterator_adaptor_base<iterator, NodeVectorImplT::iterator,
-                                     std::bidirectional_iterator_tag, Node> {
+                                     std::forward_iterator_tag, Node> {
     friend class LazyCallGraph;
     friend class LazyCallGraph::Node;
 
     LazyCallGraph *G;
-    NodeVectorImplT::iterator NI;
+    NodeVectorImplT::iterator E;
 
     // Build the iterator for a specific position in a node list.
-    iterator(LazyCallGraph &G, NodeVectorImplT::iterator NI)
-        : iterator_adaptor_base(NI), G(&G) {
-      while (I->isNull())
+    iterator(LazyCallGraph &G, NodeVectorImplT::iterator NI,
+             NodeVectorImplT::iterator E)
+        : iterator_adaptor_base(NI), G(&G), E(E) {
+      while (I != E && I->isNull())
         ++I;
     }
 
@@ -136,15 +137,7 @@ public:
     iterator &operator++() {
       do {
         ++I;
-      } while (I->isNull());
-      return *this;
-    }
-
-    using iterator_adaptor_base::operator--;
-    iterator &operator--() {
-      do {
-        --I;
-      } while (I->isNull());
+      } while (I != E && I->isNull());
       return *this;
     }
 
@@ -199,8 +192,10 @@ public:
       return F;
     };
 
-    iterator begin() const { return iterator(*G, Callees.begin()); }
-    iterator end() const { return iterator(*G, Callees.end()); }
+    iterator begin() const {
+      return iterator(*G, Callees.begin(), Callees.end());
+    }
+    iterator end() const { return iterator(*G, Callees.end(), Callees.end()); }
 
     /// Equality is defined as address equality.
     bool operator==(const Node &N) const { return this == &N; }
@@ -358,8 +353,10 @@ public:
   LazyCallGraph(LazyCallGraph &&G);
   LazyCallGraph &operator=(LazyCallGraph &&RHS);
 
-  iterator begin() { return iterator(*this, EntryNodes.begin()); }
-  iterator end() { return iterator(*this, EntryNodes.end()); }
+  iterator begin() {
+    return iterator(*this, EntryNodes.begin(), EntryNodes.end());
+  }
+  iterator end() { return iterator(*this, EntryNodes.end(), EntryNodes.end()); }
 
   postorder_scc_iterator postorder_scc_begin() {
     return postorder_scc_iterator(*this);
