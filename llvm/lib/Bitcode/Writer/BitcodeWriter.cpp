@@ -1087,12 +1087,14 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         Code = bitc::CST_CODE_CE_EXTRACTELT;
         Record.push_back(VE.getTypeID(C->getOperand(0)->getType()));
         Record.push_back(VE.getValueID(C->getOperand(0)));
+        Record.push_back(VE.getTypeID(C->getOperand(1)->getType()));
         Record.push_back(VE.getValueID(C->getOperand(1)));
         break;
       case Instruction::InsertElement:
         Code = bitc::CST_CODE_CE_INSERTELT;
         Record.push_back(VE.getValueID(C->getOperand(0)));
         Record.push_back(VE.getValueID(C->getOperand(1)));
+        Record.push_back(VE.getTypeID(C->getOperand(2)->getType()));
         Record.push_back(VE.getValueID(C->getOperand(2)));
         break;
       case Instruction::ShuffleVector:
@@ -1253,13 +1255,13 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
   case Instruction::ExtractElement:
     Code = bitc::FUNC_CODE_INST_EXTRACTELT;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
-    pushValue(I.getOperand(1), InstID, Vals, VE);
+    PushValueAndType(I.getOperand(1), InstID, Vals, VE);
     break;
   case Instruction::InsertElement:
     Code = bitc::FUNC_CODE_INST_INSERTELT;
     PushValueAndType(I.getOperand(0), InstID, Vals, VE);
     pushValue(I.getOperand(1), InstID, Vals, VE);
-    pushValue(I.getOperand(2), InstID, Vals, VE);
+    PushValueAndType(I.getOperand(2), InstID, Vals, VE);
     break;
   case Instruction::ShuffleVector:
     Code = bitc::FUNC_CODE_INST_SHUFFLEVEC;

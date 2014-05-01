@@ -4,11 +4,13 @@
 
 define i32 @test_extractelement(<4 x i32> %V) {
         %R = extractelement <4 x i32> %V, i32 1         ; <i32> [#uses=1]
+		%S = extractelement <4 x i32> %V, i64 1         ; <i32> [#uses=0]
         ret i32 %R
 }
 
 define <4 x i32> @test_insertelement(<4 x i32> %V) {
         %R = insertelement <4 x i32> %V, i32 0, i32 0           ; <<4 x i32>> [#uses=1]
+		%S = insertelement <4 x i32> %V, i32 0, i64 0           ; <<4 x i32>> [#uses=0]
         ret <4 x i32> %R
 }
 

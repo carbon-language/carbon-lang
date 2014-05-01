@@ -1937,8 +1937,8 @@ ConstantExpr::getFCmp(unsigned short pred, Constant *LHS, Constant *RHS) {
 Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
   assert(Val->getType()->isVectorTy() &&
          "Tried to create extractelement operation on non-vector type!");
-  assert(Idx->getType()->isIntegerTy(32) &&
-         "Extractelement index must be i32 type!");
+  assert(Idx->getType()->isIntegerTy() &&
+         "Extractelement index must be an integer type!");
 
   if (Constant *FC = ConstantFoldExtractElementInstruction(Val, Idx))
     return FC;          // Fold a few common cases.
@@ -1958,7 +1958,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
          "Tried to create insertelement operation on non-vector type!");
   assert(Elt->getType() == Val->getType()->getVectorElementType() &&
          "Insertelement types must match!");
-  assert(Idx->getType()->isIntegerTy(32) &&
+  assert(Idx->getType()->isIntegerTy() &&
          "Insertelement index must be i32 type!");
 
   if (Constant *FC = ConstantFoldInsertElementInstruction(Val, Elt, Idx))

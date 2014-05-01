@@ -4470,7 +4470,7 @@ Syntax:
 
 ::
 
-      <result> = extractelement <n x <ty>> <val>, i32 <idx>    ; yields <ty>
+      <result> = extractelement <n x <ty>> <val>, <ty2> <idx>  ; yields <ty>
 
 Overview:
 """""""""
@@ -4484,7 +4484,7 @@ Arguments:
 The first operand of an '``extractelement``' instruction is a value of
 :ref:`vector <t_vector>` type. The second operand is an index indicating
 the position from which to extract the element. The index may be a
-variable.
+variable of any integer type.
 
 Semantics:
 """"""""""
@@ -4510,7 +4510,7 @@ Syntax:
 
 ::
 
-      <result> = insertelement <n x <ty>> <val>, <ty> <elt>, i32 <idx>    ; yields <n x <ty>>
+      <result> = insertelement <n x <ty>> <val>, <ty> <elt>, <ty2> <idx>    ; yields <n x <ty>>
 
 Overview:
 """""""""
@@ -4525,7 +4525,7 @@ The first operand of an '``insertelement``' instruction is a value of
 :ref:`vector <t_vector>` type. The second operand is a scalar value whose
 type must equal the element type of the first operand. The third operand
 is an index indicating the position at which to insert the value. The
-index may be a variable.
+index may be a variable of any integer type.
 
 Semantics:
 """"""""""

@@ -1418,7 +1418,8 @@ error_code BitcodeReader::ParseConstants() {
                                   ValueList.getConstantFwdRef(Record[2],CurTy));
       break;
     }
-    case bitc::CST_CODE_CE_EXTRACTELT: { // CE_EXTRACTELT: [opty, opval, opval]
+    case bitc::CST_CODE_CE_EXTRACTELT
+        : { // CE_EXTRACTELT: [opty, opval, opty, opval]
       if (Record.size() < 3)
         return Error(InvalidRecord);
       VectorType *OpTy =
@@ -1426,20 +1427,37 @@ error_code BitcodeReader::ParseConstants() {
       if (!OpTy)
         return Error(InvalidRecord);
       Constant *Op0 = ValueList.getConstantFwdRef(Record[1], OpTy);
-      Constant *Op1 = ValueList.getConstantFwdRef(Record[2],
-                                                  Type::getInt32Ty(Context));
+      Constant *Op1 = nullptr;
+      if (Record.size() == 4) {
+        Type *IdxTy = getTypeByID(Record[2]);
+        if (!IdxTy)
+          return Error(InvalidRecord);
+        Op1 = ValueList.getConstantFwdRef(Record[3], IdxTy);
+      } else // TODO: Remove with llvm 4.0
+        Op1 = ValueList.getConstantFwdRef(Record[2], Type::getInt32Ty(Context));
+      if (!Op1)
+        return Error(InvalidRecord);
       V = ConstantExpr::getExtractElement(Op0, Op1);
       break;
     }
-    case bitc::CST_CODE_CE_INSERTELT: { // CE_INSERTELT: [opval, opval, opval]
+    case bitc::CST_CODE_CE_INSERTELT
+        : { // CE_INSERTELT: [opval, opval, opty, opval]
       VectorType *OpTy = dyn_cast<VectorType>(CurTy);
       if (Record.size() < 3 || !OpTy)
         return Error(InvalidRecord);
       Constant *Op0 = ValueList.getConstantFwdRef(Record[0], OpTy);
       Constant *Op1 = ValueList.getConstantFwdRef(Record[1],
                                                   OpTy->getElementType());
-      Constant *Op2 = ValueList.getConstantFwdRef(Record[2],
-                                                  Type::getInt32Ty(Context));
+      Constant *Op2 = nullptr;
+      if (Record.size() == 4) {
+        Type *IdxTy = getTypeByID(Record[2]);
+        if (!IdxTy)
+          return Error(InvalidRecord);
+        Op2 = ValueList.getConstantFwdRef(Record[3], IdxTy);
+      } else // TODO: Remove with llvm 4.0
+        Op2 = ValueList.getConstantFwdRef(Record[2], Type::getInt32Ty(Context));
+      if (!Op2)
+        return Error(InvalidRecord);
       V = ConstantExpr::getInsertElement(Op0, Op1, Op2);
       break;
     }
@@ -2460,7 +2478,7 @@ error_code BitcodeReader::ParseFunctionBody(Function *F) {
       unsigned OpNum = 0;
       Value *Vec, *Idx;
       if (getValueTypePair(Record, OpNum, NextValueNo, Vec) ||
-          popValue(Record, OpNum, NextValueNo, Type::getInt32Ty(Context), Idx))
+          getValueTypePair(Record, OpNum, NextValueNo, Idx))
         return Error(InvalidRecord);
       I = ExtractElementInst::Create(Vec, Idx);
       InstructionList.push_back(I);
@@ -2473,7 +2491,7 @@ error_code BitcodeReader::ParseFunctionBody(Function *F) {
       if (getValueTypePair(Record, OpNum, NextValueNo, Vec) ||
           popValue(Record, OpNum, NextValueNo,
                    cast<VectorType>(Vec->getType())->getElementType(), Elt) ||
-          popValue(Record, OpNum, NextValueNo, Type::getInt32Ty(Context), Idx))
+          getValueTypePair(Record, OpNum, NextValueNo, Idx))
         return Error(InvalidRecord);
       I = InsertElementInst::Create(Vec, Elt, Idx);
       InstructionList.push_back(I);
