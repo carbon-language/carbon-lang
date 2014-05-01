@@ -33,6 +33,8 @@ LexicalScopes::~LexicalScopes() { reset(); }
 void LexicalScopes::reset() {
   MF = nullptr;
   CurrentFnLexicalScope = nullptr;
+  DeleteContainerSeconds(LexicalScopeMap);
+  DeleteContainerSeconds(AbstractScopeMap);
   InlinedLexicalScopeMap.clear();
   AbstractScopesList.clear();
 }
@@ -122,8 +124,7 @@ LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
 
   if (IA)
     return InlinedLexicalScopeMap.lookup(DebugLoc::getFromDILocation(IA));
-  auto I = LexicalScopeMap.find(Scope);
-  return I != LexicalScopeMap.end() ? I->second.get() : nullptr;
+  return LexicalScopeMap.lookup(Scope);
 }
 
 /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
@@ -151,39 +152,35 @@ LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
     D = DIDescriptor(Scope);
   }
 
-  auto IterBool = LexicalScopeMap.insert(
-      std::make_pair(Scope, std::unique_ptr<LexicalScope>()));
-  auto &MapValue = *IterBool.first;
-  if (!IterBool.second)
-    return MapValue.second.get();
+  LexicalScope *WScope = LexicalScopeMap.lookup(Scope);
+  if (WScope)
+    return WScope;
 
   LexicalScope *Parent = nullptr;
   if (D.isLexicalBlock())
     Parent = getOrCreateLexicalScope(DebugLoc::getFromDILexicalBlock(Scope));
-  MapValue.second =
-      make_unique<LexicalScope>(Parent, DIDescriptor(Scope), nullptr, false);
+  WScope = new LexicalScope(Parent, DIDescriptor(Scope), nullptr, false);
+  LexicalScopeMap.insert(std::make_pair(Scope, WScope));
   if (!Parent && DIDescriptor(Scope).isSubprogram() &&
       DISubprogram(Scope).describes(MF->getFunction()))
-    CurrentFnLexicalScope = MapValue.second.get();
+    CurrentFnLexicalScope = WScope;
 
-  return MapValue.second.get();
+  return WScope;
 }
 
 /// getOrCreateInlinedScope - Find or create an inlined lexical scope.
 LexicalScope *LexicalScopes::getOrCreateInlinedScope(MDNode *Scope,
                                                      MDNode *InlinedAt) {
-  auto IterBool = LexicalScopeMap.insert(
-      std::make_pair(InlinedAt, std::unique_ptr<LexicalScope>()));
-  auto &MapValue = *IterBool.first;
-  if (!IterBool.second)
-    return MapValue.second.get();
+  LexicalScope *InlinedScope = LexicalScopeMap.lookup(InlinedAt);
+  if (InlinedScope)
+    return InlinedScope;
 
   DebugLoc InlinedLoc = DebugLoc::getFromDILocation(InlinedAt);
-  MapValue.second =
-      make_unique<LexicalScope>(getOrCreateLexicalScope(InlinedLoc),
-                                DIDescriptor(Scope), InlinedAt, false);
-  InlinedLexicalScopeMap[InlinedLoc] = MapValue.second.get();
-  return MapValue.second.get();
+  InlinedScope = new LexicalScope(getOrCreateLexicalScope(InlinedLoc),
+                                  DIDescriptor(Scope), InlinedAt, false);
+  InlinedLexicalScopeMap[InlinedLoc] = InlinedScope;
+  LexicalScopeMap[InlinedAt] = InlinedScope;
+  return InlinedScope;
 }
 
 /// getOrCreateAbstractScope - Find or create an abstract lexical scope.
@@ -193,11 +190,9 @@ LexicalScope *LexicalScopes::getOrCreateAbstractScope(const MDNode *N) {
   DIDescriptor Scope(N);
   if (Scope.isLexicalBlockFile())
     Scope = DILexicalBlockFile(Scope).getScope();
-  auto IterBool = AbstractScopeMap.insert(
-      std::make_pair(N, std::unique_ptr<LexicalScope>()));
-  auto &MapEntry = *IterBool.first;
-  if (!IterBool.second)
-    return MapEntry.second.get();
+  LexicalScope *AScope = AbstractScopeMap.lookup(N);
+  if (AScope)
+    return AScope;
 
   LexicalScope *Parent = nullptr;
   if (Scope.isLexicalBlock()) {
@@ -205,11 +200,11 @@ LexicalScope *LexicalScopes::getOrCreateAbstractScope(const MDNode *N) {
     DIDescriptor ParentDesc = DB.getContext();
     Parent = getOrCreateAbstractScope(ParentDesc);
   }
-  MapEntry.second =
-      make_unique<LexicalScope>(Parent, DIDescriptor(N), nullptr, true);
+  AScope = new LexicalScope(Parent, DIDescriptor(N), nullptr, true);
+  AbstractScopeMap[N] = AScope;
   if (DIDescriptor(N).isSubprogram())
-    AbstractScopesList.push_back(MapEntry.second.get());
-  return MapEntry.second.get();
+    AbstractScopesList.push_back(AScope);
+  return AScope;
 }
 
 /// constructScopeNest
