@@ -153,7 +153,7 @@ documentation <LibTooling.html>`_.
         CommonOptionsParser OptionsParser(argc, argv, MyToolCategory);
         ClangTool Tool(OptionsParser.getCompilations(),
                        OptionsParser.getSourcePathList());
-        return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>());
+        return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>().get());
       }
 
 And that's it! You can compile our new tool by running ninja from the
@@ -299,7 +299,7 @@ And change ``main()`` to:
         MatchFinder Finder;
         Finder.addMatcher(LoopMatcher, &Printer);
 
-        return Tool.run(newFrontendActionFactory(&Finder));
+        return Tool.run(newFrontendActionFactory(&Finder).get());
       }
 
 Now, you should be able to recompile and run the code to discover for

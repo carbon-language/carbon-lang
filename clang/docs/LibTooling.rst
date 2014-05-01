@@ -99,7 +99,7 @@ our ``FrontendAction`` over some code.  For example, to run the
   // on.  Thus, it takes a FrontendActionFactory as parameter.  To create a
   // FrontendActionFactory from a given FrontendAction type, we call
   // newFrontendActionFactory<clang::SyntaxOnlyAction>().
-  int result = Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>());
+  int result = Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>().get());
 
 Putting it together --- the first tool
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -136,7 +136,7 @@ version of this example tool is also checked into the clang tree at
     CommonOptionsParser OptionsParser(argc, argv, MyToolCategory);
     ClangTool Tool(OptionsParser.getCompilations(),
                    OptionsParser.getSourcePathList());
-    return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>());
+    return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>().get());
   }
 
 Running the tool on some code
