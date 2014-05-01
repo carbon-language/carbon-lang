@@ -187,6 +187,21 @@ void LazyCallGraph::SCC::insertIntraSCCEdge(Node &CallerN, Node &CalleeN) {
   // Nothing changes about this SCC or any other.
 }
 
+void LazyCallGraph::SCC::insertOutgoingEdge(Node &CallerN, Node &CalleeN) {
+  // First insert it into the caller.
+  CallerN.insertEdgeInternal(CalleeN);
+
+  assert(G->SCCMap.lookup(&CallerN) == this && "Caller must be in this SCC.");
+
+  SCC &CalleeC = *G->SCCMap.lookup(&CalleeN);
+  assert(&CalleeC != this && "Callee must not be in this SCC.");
+  assert(CalleeC.isDescendantOf(*this) &&
+         "Callee must be a descendant of the Caller.");
+
+  // The only change required is to add this SCC to the parent set of the callee.
+  CalleeC.ParentSCCs.insert(this);
+}
+
 void LazyCallGraph::SCC::removeInterSCCEdge(Node &CallerN, Node &CalleeN) {
   // First remove it from the node.
   CallerN.removeEdgeInternal(CalleeN.getFunction());

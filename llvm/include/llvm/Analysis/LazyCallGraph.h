@@ -267,6 +267,14 @@ public:
     /// of any SCCs.
     void insertIntraSCCEdge(Node &CallerN, Node &CalleeN);
 
+    /// \brief Insert an edge whose tail is in this SCC and head is in some
+    /// child SCC.
+    ///
+    /// There must be an existing path from the caller to the callee. This
+    /// operation is inexpensive and does not change the set of SCCs in the
+    /// graph.
+    void insertOutgoingEdge(Node &CallerN, Node &CalleeN);
+
     /// \brief Remove an edge whose source is in this SCC and target is *not*.
     ///
     /// This removes an inter-SCC edge. All inter-SCC edges originating from

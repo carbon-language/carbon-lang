@@ -452,6 +452,59 @@ TEST(LazyCallGraphTest, IntraSCCEdgeInsertion) {
   EXPECT_EQ(&SCC, CG1.lookupSCC(C));
 }
 
+TEST(LazyCallGraphTest, OutgoingSCCEdgeInsertion) {
+  std::unique_ptr<Module> M = parseAssembly(
+      "define void @a() {\n"
+      "entry:\n"
+      "  call void @b()\n"
+      "  call void @c()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @b() {\n"
+      "entry:\n"
+      "  call void @d()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @c() {\n"
+      "entry:\n"
+      "  call void @d()\n"
+      "  ret void\n"
+      "}\n"
+      "define void @d() {\n"
+      "entry:\n"
+      "  ret void\n"
+      "}\n");
+  LazyCallGraph CG(*M);
+
+  // Force the graph to be fully expanded.
+  for (LazyCallGraph::SCC &C : CG.postorder_sccs())
+    (void)C;
+
+  LazyCallGraph::Node &A = *CG.lookup(lookupFunction(*M, "a"));
+  LazyCallGraph::Node &B = *CG.lookup(lookupFunction(*M, "b"));
+  LazyCallGraph::Node &C = *CG.lookup(lookupFunction(*M, "c"));
+  LazyCallGraph::Node &D = *CG.lookup(lookupFunction(*M, "d"));
+  LazyCallGraph::SCC &AC = *CG.lookupSCC(A);
+  LazyCallGraph::SCC &BC = *CG.lookupSCC(B);
+  LazyCallGraph::SCC &CC = *CG.lookupSCC(C);
+  LazyCallGraph::SCC &DC = *CG.lookupSCC(D);
+  EXPECT_TRUE(AC.isAncestorOf(BC));
+  EXPECT_TRUE(AC.isAncestorOf(CC));
+  EXPECT_TRUE(AC.isAncestorOf(DC));
+  EXPECT_TRUE(DC.isDescendantOf(AC));
+  EXPECT_TRUE(DC.isDescendantOf(BC));
+  EXPECT_TRUE(DC.isDescendantOf(CC));
+
+  EXPECT_EQ(2, std::distance(A.begin(), A.end()));
+  AC.insertOutgoingEdge(A, D);
+  EXPECT_EQ(3, std::distance(A.begin(), A.end()));
+  EXPECT_TRUE(AC.isParentOf(DC));
+  EXPECT_EQ(&AC, CG.lookupSCC(A));
+  EXPECT_EQ(&BC, CG.lookupSCC(B));
+  EXPECT_EQ(&CC, CG.lookupSCC(C));
+  EXPECT_EQ(&DC, CG.lookupSCC(D));
+}
+
 TEST(LazyCallGraphTest, IntraSCCEdgeRemoval) {
   // A nice fully connected (including self-edges) SCC.
   std::unique_ptr<Module> M1 = parseAssembly(
