@@ -262,9 +262,10 @@ bool IndexedInstrProfReader::hasFormat(const MemoryBuffer &DataBuffer) {
 }
 
 error_code IndexedInstrProfReader::readHeader() {
-  const unsigned char *Start = (unsigned char *)DataBuffer->getBufferStart();
+  const unsigned char *Start =
+      (const unsigned char *)DataBuffer->getBufferStart();
   const unsigned char *Cur = Start;
-  if ((unsigned char *)DataBuffer->getBufferEnd() - Cur < 24)
+  if ((const unsigned char *)DataBuffer->getBufferEnd() - Cur < 24)
     return error(instrprof_error::truncated);
 
   using namespace support;
