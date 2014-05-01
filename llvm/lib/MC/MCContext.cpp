@@ -35,7 +35,7 @@ MCContext::MCContext(const MCAsmInfo *mai, const MCRegisterInfo *mri,
     : SrcMgr(mgr), MAI(mai), MRI(mri), MOFI(mofi), Allocator(),
       Symbols(Allocator), UsedNames(Allocator), NextUniqueID(0),
       CurrentDwarfLoc(0, 0, 0, DWARF2_FLAG_IS_STMT, 0, 0), DwarfLocSeen(false),
-      GenDwarfForAssembly(false), GenDwarfFileNumber(0),
+      GenDwarfForAssembly(false), GenDwarfFileNumber(0), DwarfVersion(4),
       AllowTemporaryLabels(true), DwarfCompileUnitID(0),
       AutoReset(DoAutoReset) {
 
