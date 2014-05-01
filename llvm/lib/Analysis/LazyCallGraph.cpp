@@ -162,6 +162,21 @@ void LazyCallGraph::SCC::insert(Node &N) {
   G->SCCMap[&N] = this;
 }
 
+bool LazyCallGraph::SCC::isDescendantOf(const SCC &C) const {
+  // Walk up the parents of this SCC and verify that we eventually find C.
+  SmallVector<const SCC *, 4> AncestorWorklist;
+  AncestorWorklist.push_back(this);
+  do {
+    const SCC *AncestorC = AncestorWorklist.pop_back_val();
+    if (AncestorC->isChildOf(C))
+      return true;
+    for (const SCC *ParentC : AncestorC->ParentSCCs)
+      AncestorWorklist.push_back(ParentC);
+  } while (!AncestorWorklist.empty());
+
+  return false;
+}
+
 void LazyCallGraph::SCC::insertIntraSCCEdge(Node &CallerN, Node &CalleeN) {
   // First insert it into the caller.
   CallerN.insertEdgeInternal(CalleeN);

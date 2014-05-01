@@ -214,6 +214,10 @@ TEST(LazyCallGraphTest, BasicGraphFormation) {
   EXPECT_EQ("d2", Nodes[1]);
   EXPECT_EQ("d3", Nodes[2]);
   Nodes.clear();
+  EXPECT_FALSE(D.isParentOf(D));
+  EXPECT_FALSE(D.isChildOf(D));
+  EXPECT_FALSE(D.isAncestorOf(D));
+  EXPECT_FALSE(D.isDescendantOf(D));
 
   LazyCallGraph::SCC &C = *SCCI++;
   for (LazyCallGraph::Node *N : C)
@@ -224,6 +228,10 @@ TEST(LazyCallGraphTest, BasicGraphFormation) {
   EXPECT_EQ("c2", Nodes[1]);
   EXPECT_EQ("c3", Nodes[2]);
   Nodes.clear();
+  EXPECT_TRUE(C.isParentOf(D));
+  EXPECT_FALSE(C.isChildOf(D));
+  EXPECT_TRUE(C.isAncestorOf(D));
+  EXPECT_FALSE(C.isDescendantOf(D));
 
   LazyCallGraph::SCC &B = *SCCI++;
   for (LazyCallGraph::Node *N : B)
@@ -234,6 +242,12 @@ TEST(LazyCallGraphTest, BasicGraphFormation) {
   EXPECT_EQ("b2", Nodes[1]);
   EXPECT_EQ("b3", Nodes[2]);
   Nodes.clear();
+  EXPECT_TRUE(B.isParentOf(D));
+  EXPECT_FALSE(B.isChildOf(D));
+  EXPECT_TRUE(B.isAncestorOf(D));
+  EXPECT_FALSE(B.isDescendantOf(D));
+  EXPECT_FALSE(B.isAncestorOf(C));
+  EXPECT_FALSE(C.isAncestorOf(B));
 
   LazyCallGraph::SCC &A = *SCCI++;
   for (LazyCallGraph::Node *N : A)
@@ -244,6 +258,12 @@ TEST(LazyCallGraphTest, BasicGraphFormation) {
   EXPECT_EQ("a2", Nodes[1]);
   EXPECT_EQ("a3", Nodes[2]);
   Nodes.clear();
+  EXPECT_TRUE(A.isParentOf(B));
+  EXPECT_TRUE(A.isParentOf(C));
+  EXPECT_FALSE(A.isParentOf(D));
+  EXPECT_TRUE(A.isAncestorOf(B));
+  EXPECT_TRUE(A.isAncestorOf(C));
+  EXPECT_TRUE(A.isAncestorOf(D));
 
   EXPECT_EQ(CG.postorder_scc_end(), SCCI);
 }

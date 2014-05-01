@@ -238,6 +238,20 @@ public:
       return iterator_range<parent_iterator>(parent_begin(), parent_end());
     }
 
+    /// \brief Test if this SCC is a parent of \a C.
+    bool isParentOf(const SCC &C) const { return C.isChildOf(*this); }
+
+    /// \brief Test if this SCC is an ancestor of \a C.
+    bool isAncestorOf(const SCC &C) const { return C.isDescendantOf(*this); }
+
+    /// \brief Test if this SCC is a child of \a C.
+    bool isChildOf(const SCC &C) const {
+      return ParentSCCs.count(const_cast<SCC *>(&C));
+    }
+
+    /// \brief Test if this SCC is a descendant of \a C.
+    bool isDescendantOf(const SCC &C) const;
+
     ///@{
     /// \name Mutation API
     ///
