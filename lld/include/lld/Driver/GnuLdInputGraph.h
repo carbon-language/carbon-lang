@@ -35,17 +35,20 @@ public:
   class Attributes {
   public:
     Attributes()
-        : _isWholeArchive(false), _asNeeded(false), _isDashlPrefix(false) {}
+        : _isWholeArchive(false), _asNeeded(false), _isDashlPrefix(false),
+          _isSysRooted(false) {}
     void setWholeArchive(bool isWholeArchive) {
       _isWholeArchive = isWholeArchive;
     }
     void setAsNeeded(bool asNeeded) { _asNeeded = asNeeded; }
     void setDashlPrefix(bool isDashlPrefix) { _isDashlPrefix = isDashlPrefix; }
+    void setSysRooted(bool isSysRooted) { _isSysRooted = isSysRooted; }
 
   public:
     bool _isWholeArchive;
     bool _asNeeded;
     bool _isDashlPrefix;
+    bool _isSysRooted;
   };
 
   ELFFileNode(ELFLinkingContext &ctx, StringRef path, Attributes &attributes)

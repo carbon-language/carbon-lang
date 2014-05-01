@@ -10,6 +10,9 @@
 #include "lld/Driver/GnuLdInputGraph.h"
 #include "lld/ReaderWriter/LinkerScript.h"
 
+#include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Path.h"
+
 using namespace lld;
 
 /// \brief Parse the input file to lld::File.
@@ -70,12 +73,27 @@ error_code GNULdScript::parse(const LinkingContext &ctx,
   return error_code::success();
 }
 
+static bool isPathUnderSysroot(StringRef sysroot, StringRef path) {
+  // TODO: Handle the case when 'sysroot' and/or 'path' are symlinks.
+  if (sysroot.empty() || sysroot.size() >= path.size())
+    return false;
+  if (llvm::sys::path::is_separator(sysroot.back()))
+    sysroot = sysroot.substr(0, sysroot.size() - 1);
+  if (!llvm::sys::path::is_separator(path[sysroot.size()]))
+    return false;
+
+  return llvm::sys::fs::equivalent(sysroot, path.substr(0, sysroot.size()));
+}
+
 /// \brief Handle GnuLD script for ELF.
 error_code ELFGNULdScript::parse(const LinkingContext &ctx,
                                  raw_ostream &diagnostics) {
   ELFFileNode::Attributes attributes;
   if (error_code ec = GNULdScript::parse(ctx, diagnostics))
     return ec;
+  StringRef sysRoot = _elfLinkingContext.getSysroot();
+  if (!sysRoot.empty() && isPathUnderSysroot(sysRoot, *getPath(ctx)))
+    attributes.setSysRooted(true);
   for (const script::Command *c : _linkerScript->_commands) {
     auto *group = dyn_cast<script::Group>(c);
     if (!group)

@@ -173,6 +173,13 @@ public:
   /// Searches directories for a match on the input File
   ErrorOr<StringRef> searchLibrary(StringRef libName) const;
 
+  /// \brief Searches directories for a match on the input file.
+  /// If \p fileName is an absolute path and \p isSysRooted is true, check
+  /// the file under sysroot directory. If \p fileName is a relative path
+  /// and is not in the current directory, search the file through library
+  /// search directories.
+  ErrorOr<StringRef> searchFile(StringRef fileName, bool isSysRooted) const;
+
   /// Get the entry symbol name
   StringRef entrySymbolName() const override;
 
@@ -206,6 +213,8 @@ public:
   }
 
   StringRef sharedObjectName() const { return _soname; }
+
+  StringRef getSysroot() const { return _sysrootPath; }
 
   /// \brief Set path to the system root
   void setSysroot(StringRef path) {

@@ -153,9 +153,9 @@ static bool parseDefsymAsAlias(StringRef opt, StringRef &sym,
 }
 
 llvm::ErrorOr<StringRef> ELFFileNode::getPath(const LinkingContext &) const {
-  if (!_attributes._isDashlPrefix)
-    return _path;
-  return _elfLinkingContext.searchLibrary(_path);
+  if (_attributes._isDashlPrefix)
+    return _elfLinkingContext.searchLibrary(_path);
+  return _elfLinkingContext.searchFile(_path, _attributes._isSysRooted);
 }
 
 std::string ELFFileNode::errStr(error_code errc) {

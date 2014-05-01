@@ -247,6 +247,29 @@ ErrorOr<StringRef> ELFLinkingContext::searchLibrary(StringRef libName) const {
   return libName;
 }
 
+ErrorOr<StringRef> ELFLinkingContext::searchFile(StringRef fileName,
+                                                 bool isSysRooted) const {
+  SmallString<128> path;
+  if (llvm::sys::path::is_absolute(fileName) && isSysRooted) {
+    path.assign(_sysrootPath);
+    path.append(fileName);
+    if (llvm::sys::fs::exists(path.str()))
+      return StringRef(*new (_allocator) std::string(path.str()));
+  } else if (llvm::sys::fs::exists(fileName))
+    return fileName;
+
+  if (llvm::sys::path::is_absolute(fileName))
+    return llvm::make_error_code(llvm::errc::no_such_file_or_directory);
+
+  for (StringRef dir : _inputSearchPaths) {
+    buildSearchPath(path, dir, _sysrootPath);
+    llvm::sys::path::append(path, fileName);
+    if (llvm::sys::fs::exists(path.str()))
+      return StringRef(*new (_allocator) std::string(path.str()));
+  }
+  return llvm::make_error_code(llvm::errc::no_such_file_or_directory);
+}
+
 void ELFLinkingContext::createInternalFiles(
     std::vector<std::unique_ptr<File>> &files) const {
   std::unique_ptr<SimpleFile> file(
