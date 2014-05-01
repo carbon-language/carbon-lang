@@ -149,6 +149,24 @@ void MipsTargetAsmStreamer::emitDirectiveCpload(unsigned RegNo) {
      << StringRef(MipsInstPrinter::getRegisterName(RegNo)).lower() << "\n";
 }
 
+void MipsTargetAsmStreamer::emitDirectiveCpsetup(unsigned RegNo,
+                                                 int RegOrOffset,
+                                                 const MCSymbol &Sym,
+                                                 bool IsReg) {
+  OS << "\t.cpsetup\t$"
+     << StringRef(MipsInstPrinter::getRegisterName(RegNo)).lower() << ", ";
+
+  if (IsReg)
+    OS << "$"
+       << StringRef(MipsInstPrinter::getRegisterName(RegOrOffset)).lower();
+  else
+    OS << RegOrOffset;
+
+  OS << ", ";
+
+  OS << Sym.getName() << "\n";
+}
+
 // This part is for ELF object output.
 MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
                                              const MCSubtargetInfo &STI)
@@ -455,4 +473,59 @@ void MipsTargetELFStreamer::emitDirectiveCpload(unsigned RegNo) {
   TmpInst.addOperand(MCOperand::CreateReg(Mips::GP));
   TmpInst.addOperand(MCOperand::CreateReg(RegNo));
   getStreamer().EmitInstruction(TmpInst, STI);
+}
+
+void MipsTargetELFStreamer::emitDirectiveCpsetup(unsigned RegNo,
+                                                 int RegOrOffset,
+                                                 const MCSymbol &Sym,
+                                                 bool IsReg) {
+  // Only N32 and N64 emit anything for .cpsetup iff PIC is set.
+  if (!Pic || !(isN32() || isN64()))
+    return;
+
+  MCAssembler &MCA = getStreamer().getAssembler();
+  MCInst Inst;
+
+  // Either store the old $gp in a register or on the stack
+  if (IsReg) {
+    // move $save, $gpreg
+    Inst.setOpcode(Mips::DADDu);
+    Inst.addOperand(MCOperand::CreateReg(RegOrOffset));
+    Inst.addOperand(MCOperand::CreateReg(Mips::GP));
+    Inst.addOperand(MCOperand::CreateReg(Mips::ZERO));
+  } else {
+    // sd $gpreg, offset($sp)
+    Inst.setOpcode(Mips::SD);
+    Inst.addOperand(MCOperand::CreateReg(Mips::GP));
+    Inst.addOperand(MCOperand::CreateReg(Mips::SP));
+    Inst.addOperand(MCOperand::CreateImm(RegOrOffset));
+  }
+  getStreamer().EmitInstruction(Inst, STI);
+  Inst.clear();
+
+  const MCSymbolRefExpr *HiExpr = MCSymbolRefExpr::Create(
+      Sym.getName(), MCSymbolRefExpr::VK_Mips_GPOFF_HI, MCA.getContext());
+  const MCSymbolRefExpr *LoExpr = MCSymbolRefExpr::Create(
+      Sym.getName(), MCSymbolRefExpr::VK_Mips_GPOFF_LO, MCA.getContext());
+  // lui $gp, %hi(%neg(%gp_rel(funcSym)))
+  Inst.setOpcode(Mips::LUi);
+  Inst.addOperand(MCOperand::CreateReg(Mips::GP));
+  Inst.addOperand(MCOperand::CreateExpr(HiExpr));
+  getStreamer().EmitInstruction(Inst, STI);
+  Inst.clear();
+
+  // addiu  $gp, $gp, %lo(%neg(%gp_rel(funcSym)))
+  Inst.setOpcode(Mips::ADDiu);
+  Inst.addOperand(MCOperand::CreateReg(Mips::GP));
+  Inst.addOperand(MCOperand::CreateReg(Mips::GP));
+  Inst.addOperand(MCOperand::CreateExpr(LoExpr));
+  getStreamer().EmitInstruction(Inst, STI);
+  Inst.clear();
+
+  // daddu  $gp, $gp, $funcreg
+  Inst.setOpcode(Mips::DADDu);
+  Inst.addOperand(MCOperand::CreateReg(Mips::GP));
+  Inst.addOperand(MCOperand::CreateReg(Mips::GP));
+  Inst.addOperand(MCOperand::CreateReg(RegNo));
+  getStreamer().EmitInstruction(Inst, STI);
 }

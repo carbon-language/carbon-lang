@@ -50,6 +50,8 @@ public:
 
   // PIC support
   virtual void emitDirectiveCpload(unsigned RegNo) = 0;
+  virtual void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
+                                    const MCSymbol &Sym, bool IsReg) = 0;
 };
 
 // This part is for ascii assembly output
@@ -89,6 +91,8 @@ public:
 
   // PIC support
   virtual void emitDirectiveCpload(unsigned RegNo);
+  void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
+                            const MCSymbol &Sym, bool IsReg) override;
 };
 
 // This part is for ELF object output
@@ -137,6 +141,8 @@ public:
 
   // PIC support
   virtual void emitDirectiveCpload(unsigned RegNo);
+  void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
+                            const MCSymbol &Sym, bool IsReg) override;
 
 protected:
   bool isO32() const { return STI.getFeatureBits() & Mips::FeatureO32; }
