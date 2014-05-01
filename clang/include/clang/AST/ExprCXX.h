@@ -3784,39 +3784,51 @@ public:
 /// temporary. When either happens, the expression will also track the
 /// declaration which is responsible for the lifetime extension.
 class MaterializeTemporaryExpr : public Expr {
-public:
-  /// \brief The temporary-generating expression whose value will be
-  /// materialized.
-  Stmt *Temporary;
+private:
+  struct ExtraState {
+    /// \brief The temporary-generating expression whose value will be
+    /// materialized.
+    Stmt *Temporary;
 
-  /// \brief The declaration which lifetime-extended this reference, if any.
-  /// Either a VarDecl, or (for a ctor-initializer) a FieldDecl.
-  const ValueDecl *ExtendingDecl;
+    /// \brief The declaration which lifetime-extended this reference, if any.
+    /// Either a VarDecl, or (for a ctor-initializer) a FieldDecl.
+    const ValueDecl *ExtendingDecl;
+
+    unsigned ManglingNumber;
+  };
+  llvm::PointerUnion<Stmt *, ExtraState *> State;
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
 
+  void initializeExtraState(const ValueDecl *ExtendedBy,
+                            unsigned ManglingNumber);
+
 public:
   MaterializeTemporaryExpr(QualType T, Expr *Temporary,
-                           bool BoundToLvalueReference,
-                           const ValueDecl *ExtendedBy)
+                           bool BoundToLvalueReference)
     : Expr(MaterializeTemporaryExprClass, T,
            BoundToLvalueReference? VK_LValue : VK_XValue, OK_Ordinary,
            Temporary->isTypeDependent(), Temporary->isValueDependent(),
            Temporary->isInstantiationDependent(),
            Temporary->containsUnexpandedParameterPack()),
-      Temporary(Temporary), ExtendingDecl(ExtendedBy) {
-  }
+        State(Temporary) {}
 
   MaterializeTemporaryExpr(EmptyShell Empty)
     : Expr(MaterializeTemporaryExprClass, Empty) { }
 
+  Stmt *getTemporary() const {
+    return State.is<Stmt *>() ? State.get<Stmt *>()
+                              : State.get<ExtraState *>()->Temporary;
+  }
+
   /// \brief Retrieve the temporary-generating subexpression whose value will
   /// be materialized into a glvalue.
-  Expr *GetTemporaryExpr() const { return static_cast<Expr *>(Temporary); }
+  Expr *GetTemporaryExpr() const { return static_cast<Expr *>(getTemporary()); }
 
   /// \brief Retrieve the storage duration for the materialized temporary.
   StorageDuration getStorageDuration() const {
+    const ValueDecl *ExtendingDecl = getExtendingDecl();
     if (!ExtendingDecl)
       return SD_FullExpression;
     // FIXME: This is not necessarily correct for a temporary materialized
@@ -3828,10 +3840,15 @@ public:
 
   /// \brief Get the declaration which triggered the lifetime-extension of this
   /// temporary, if any.
-  const ValueDecl *getExtendingDecl() const { return ExtendingDecl; }
+  const ValueDecl *getExtendingDecl() const {
+    return State.is<Stmt *>() ? nullptr
+                              : State.get<ExtraState *>()->ExtendingDecl;
+  }
 
-  void setExtendingDecl(const ValueDecl *ExtendedBy) {
-    ExtendingDecl = ExtendedBy;
+  void setExtendingDecl(const ValueDecl *ExtendedBy, unsigned ManglingNumber);
+
+  unsigned getManglingNumber() const {
+    return State.is<Stmt *>() ? 0 : State.get<ExtraState *>()->ManglingNumber;
   }
 
   /// \brief Determine whether this materialized temporary is bound to an
@@ -3841,10 +3858,10 @@ public:
   }
 
   SourceLocation getLocStart() const LLVM_READONLY {
-    return Temporary->getLocStart();
+    return getTemporary()->getLocStart();
   }
   SourceLocation getLocEnd() const LLVM_READONLY {
-    return Temporary->getLocEnd();
+    return getTemporary()->getLocEnd();
   }
 
   static bool classof(const Stmt *T) {
@@ -3852,7 +3869,13 @@ public:
   }
 
   // Iterators
-  child_range children() { return child_range(&Temporary, &Temporary + 1); }
+  child_range children() {
+    if (State.is<Stmt *>())
+      return child_range(State.getAddrOfPtr1(), State.getAddrOfPtr1() + 1);
+
+    auto ES = State.get<ExtraState *>();
+    return child_range(&ES->Temporary, &ES->Temporary + 1);
+  }
 };
 
 }  // end namespace clang

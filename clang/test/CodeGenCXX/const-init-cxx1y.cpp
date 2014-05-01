@@ -54,16 +54,16 @@ namespace HiddenVariableTemplateWithConstRef {
   const int &use = i<void>;
 }
 
-// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE = linkonce_odr constant i32 1
-// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE2 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE }
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE1 = linkonce_odr constant i32 1
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE0 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE1 }
 // CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE3 = linkonce_odr constant i32 2
-// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE4 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE3 }
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE2 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE3 }
 // CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE5 = linkonce_odr constant i32 3
-// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE6 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE5 }
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE4 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE5 }
 // CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE7 = linkonce_odr constant i32 4
-// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE8 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE7 }
-// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE9 = linkonce_odr global {{.*}} { {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE2, {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE4, {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE6, {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE8 }
-// CHECK: @_ZN24VariableTemplateWithPack1pE = global {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE9
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE6 = linkonce_odr global {{.*}} { i32* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE7 }
+// CHECK: @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE = linkonce_odr global %"struct.VariableTemplateWithPack::S" { {{.*}}* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE0, {{.*}}* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE2, {{.*}}* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE4, {{.*}}* @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE6 }
+// CHECK: @_ZN24VariableTemplateWithPack1pE = global {{.*}} @_ZGRN24VariableTemplateWithPack1sIJLi1ELi2ELi3ELi4EEEE
 namespace VariableTemplateWithPack {
   struct A {
     const int &r;

@@ -117,7 +117,8 @@ public:
                      raw_ostream &) override;
   void mangleCXXDtor(const CXXDestructorDecl *D, CXXDtorType Type,
                      raw_ostream &) override;
-  void mangleReferenceTemporary(const VarDecl *, raw_ostream &) override;
+  void mangleReferenceTemporary(const VarDecl *, unsigned ManglingNumber,
+                                raw_ostream &) override;
   void mangleStaticGuardVariable(const VarDecl *D, raw_ostream &Out) override;
   void mangleDynamicInitializer(const VarDecl *D, raw_ostream &Out) override;
   void mangleDynamicAtExitDestructor(const VarDecl *D,
@@ -2267,6 +2268,7 @@ void MicrosoftMangleContextImpl::mangleCXXDtor(const CXXDestructorDecl *D,
 }
 
 void MicrosoftMangleContextImpl::mangleReferenceTemporary(const VarDecl *VD,
+                                                          unsigned,
                                                           raw_ostream &) {
   unsigned DiagID = getDiags().getCustomDiagID(DiagnosticsEngine::Error,
     "cannot mangle this reference temporary yet");

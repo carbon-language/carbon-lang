@@ -103,6 +103,9 @@ private:
   /// \brief The type of the object or reference being initialized.
   QualType Type;
 
+  /// \brief The mangling number for the next reference temporary to be created.
+  mutable unsigned ManglingNumber;
+
   struct LN {
     /// \brief When Kind == EK_Result, EK_Exception, EK_New, the
     /// location of the 'return', 'throw', or 'new' keyword,
@@ -155,11 +158,11 @@ private:
     struct C Capture;
   };
 
-  InitializedEntity() { }
+  InitializedEntity() : ManglingNumber(0) {}
 
   /// \brief Create the initialization entity for a variable.
   InitializedEntity(VarDecl *Var)
-    : Kind(EK_Variable), Parent(0), Type(Var->getType()),
+    : Kind(EK_Variable), Parent(0), Type(Var->getType()), ManglingNumber(0),
       VariableOrMember(Var) { }
   
   /// \brief Create the initialization entity for the result of a
@@ -167,7 +170,7 @@ private:
   /// initializing a parameter for which there is no declaration.
   InitializedEntity(EntityKind Kind, SourceLocation Loc, QualType Type,
                     bool NRVO = false)
-    : Kind(Kind), Parent(0), Type(Type)
+    : Kind(Kind), Parent(0), Type(Type), ManglingNumber(0)
   {
     LocAndNRVO.Location = Loc.getRawEncoding();
     LocAndNRVO.NRVO = NRVO;
@@ -176,7 +179,7 @@ private:
   /// \brief Create the initialization entity for a member subobject.
   InitializedEntity(FieldDecl *Member, const InitializedEntity *Parent) 
     : Kind(EK_Member), Parent(Parent), Type(Member->getType()),
-      VariableOrMember(Member) { }
+      ManglingNumber(0), VariableOrMember(Member) { }
   
   /// \brief Create the initialization entity for an array element.
   InitializedEntity(ASTContext &Context, unsigned Index, 
@@ -184,7 +187,7 @@ private:
 
   /// \brief Create the initialization entity for a lambda capture.
   InitializedEntity(IdentifierInfo *VarID, QualType FieldType, SourceLocation Loc)
-    : Kind(EK_LambdaCapture), Parent(0), Type(FieldType) 
+    : Kind(EK_LambdaCapture), Parent(0), Type(FieldType), ManglingNumber(0)
   {
     Capture.VarID = VarID;
     Capture.Location = Loc.getRawEncoding();
@@ -417,6 +420,8 @@ public:
   void setParameterCFAudited() {
     Kind = EK_Parameter_CF_Audited;
   }
+
+  unsigned allocateManglingNumber() const { return ++ManglingNumber; }
 
   /// Dump a representation of the initialized entity to standard error,
   /// for debugging purposes.

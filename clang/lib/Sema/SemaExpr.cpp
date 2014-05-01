@@ -8885,7 +8885,7 @@ QualType Sema::CheckAddressOfOperand(ExprResult &OrigOp, SourceLocation OpLoc) {
       return QualType();
     // Materialize the temporary as an lvalue so that we can take its address.
     OrigOp = op = new (Context)
-        MaterializeTemporaryExpr(op->getType(), OrigOp.take(), true, 0);
+        MaterializeTemporaryExpr(op->getType(), OrigOp.take(), true);
   } else if (isa<ObjCSelectorExpr>(op)) {
     return Context.getPointerType(op->getType());
   } else if (lval == Expr::LV_MemberFunction) {

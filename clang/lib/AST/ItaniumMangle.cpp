@@ -136,7 +136,8 @@ public:
   void mangleCXXDtorThunk(const CXXDestructorDecl *DD, CXXDtorType Type,
                           const ThisAdjustment &ThisAdjustment,
                           raw_ostream &) override;
-  void mangleReferenceTemporary(const VarDecl *D, raw_ostream &) override;
+  void mangleReferenceTemporary(const VarDecl *D, unsigned ManglingNumber,
+                                raw_ostream &) override;
   void mangleCXXVTable(const CXXRecordDecl *RD, raw_ostream &) override;
   void mangleCXXVTT(const CXXRecordDecl *RD, raw_ostream &) override;
   void mangleCXXCtorVTable(const CXXRecordDecl *RD, int64_t Offset,
@@ -3782,12 +3783,16 @@ ItaniumMangleContextImpl::mangleItaniumThreadLocalWrapper(const VarDecl *D,
 }
 
 void ItaniumMangleContextImpl::mangleReferenceTemporary(const VarDecl *D,
+                                                        unsigned ManglingNumber,
                                                         raw_ostream &Out) {
   // We match the GCC mangling here.
   //  <special-name> ::= GR <object name>
   CXXNameMangler Mangler(*this, Out);
   Mangler.getStream() << "_ZGR";
   Mangler.mangleName(D);
+  assert(ManglingNumber > 0 && "Reference temporary mangling number is zero!");
+  if (ManglingNumber > 1)
+    Mangler.mangleNumber(ManglingNumber - 2);
 }
 
 void ItaniumMangleContextImpl::mangleCXXVTable(const CXXRecordDecl *RD,

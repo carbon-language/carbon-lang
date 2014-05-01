@@ -1572,8 +1572,10 @@ void ASTStmtReader::VisitFunctionParmPackExpr(FunctionParmPackExpr *E) {
 
 void ASTStmtReader::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E) {
   VisitExpr(E);
-  E->Temporary = Reader.ReadSubExpr();
-  E->ExtendingDecl = ReadDeclAs<ValueDecl>(Record, Idx);
+  E->State = Reader.ReadSubExpr();
+  auto VD = ReadDeclAs<ValueDecl>(Record, Idx);
+  unsigned ManglingNumber = Record[Idx++];
+  E->setExtendingDecl(VD, ManglingNumber);
 }
 
 void ASTStmtReader::VisitOpaqueValueExpr(OpaqueValueExpr *E) {

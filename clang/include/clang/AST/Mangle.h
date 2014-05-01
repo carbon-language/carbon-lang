@@ -130,6 +130,7 @@ public:
                                   const ThisAdjustment &ThisAdjustment,
                                   raw_ostream &) = 0;
   virtual void mangleReferenceTemporary(const VarDecl *D,
+                                        unsigned ManglingNumber,
                                         raw_ostream &) = 0;
   virtual void mangleCXXRTTI(QualType T, raw_ostream &) = 0;
   virtual void mangleCXXRTTIName(QualType T, raw_ostream &) = 0;

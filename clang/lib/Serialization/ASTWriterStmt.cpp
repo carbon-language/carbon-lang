@@ -1567,8 +1567,9 @@ void ASTStmtWriter::VisitFunctionParmPackExpr(FunctionParmPackExpr *E) {
 
 void ASTStmtWriter::VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E) {
   VisitExpr(E);
-  Writer.AddStmt(E->Temporary);
-  Writer.AddDeclRef(E->ExtendingDecl, Record);
+  Writer.AddStmt(E->getTemporary());
+  Writer.AddDeclRef(E->getExtendingDecl(), Record);
+  Record.push_back(E->getManglingNumber());
   Code = serialization::EXPR_MATERIALIZE_TEMPORARY;
 }
 

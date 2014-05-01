@@ -1584,8 +1584,7 @@ static TryCastResult TryConstCast(Sema &Self, ExprResult &SrcExpr,
     // This is a const_cast from a class prvalue to an rvalue reference type.
     // Materialize a temporary to store the result of the conversion.
     SrcExpr = new (Self.Context) MaterializeTemporaryExpr(
-        SrcType, SrcExpr.take(), /*IsLValueReference*/ false,
-        /*ExtendingDecl*/ 0);
+        SrcType, SrcExpr.take(), /*IsLValueReference*/ false);
 
   return TC_Success;
 }

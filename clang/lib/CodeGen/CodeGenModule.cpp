@@ -2828,7 +2828,8 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalTemporary(
   // we also need to make the temporaries externally-visible).
   SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
-  getCXXABI().getMangleContext().mangleReferenceTemporary(VD, Out);
+  getCXXABI().getMangleContext().mangleReferenceTemporary(
+      VD, E->getManglingNumber(), Out);
   Out.flush();
 
   APValue *Value = 0;
