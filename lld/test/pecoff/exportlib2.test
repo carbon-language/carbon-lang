@@ -1,0 +1,10 @@
+# RUN: yaml2obj %p/Inputs/export.obj.yaml > %t.obj
+#
+# RUN: lld -flavor link /out:%t.dll /dll /entry:init \
+# RUN:   /export:exportfn1 /export:exportfn2 /lldmoduledeffile:%t.def -- %t.obj
+# RUN: FileCheck %s < %t.def
+
+CHECK: LIBRARY "exportlib2.test.tmp.dll"
+CHECK: EXPORTS
+CHECK:   exportfn1 @1
+CHECK:   exportfn2 @2

@@ -1173,6 +1173,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       inputFiles.push_back(ctx.allocate(inputArg->getValue()));
       break;
 
+    case OPT_lldmoduledeffile:
+      ctx.setModuleDefinitionFile(inputArg->getValue());
+      break;
+
 #define DEFINE_BOOLEAN_FLAG(name, setter)       \
     case OPT_##name:                            \
       ctx.setter(true);                         \
