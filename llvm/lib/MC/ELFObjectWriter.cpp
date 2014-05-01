@@ -585,16 +585,18 @@ static const MCSymbol *getBaseSymbol(const MCAsmLayout &Layout,
   MCValue Value;
   if (!Expr->EvaluateAsValue(Value, &Layout))
     llvm_unreachable("Invalid Expression");
+
   const MCSymbolRefExpr *RefB = Value.getSymB();
-  if (RefB) {
+  if (RefB)
     Layout.getAssembler().getContext().FatalError(
         SMLoc(), Twine("symbol '") + RefB->getSymbol().getName() +
                      "' could not be evaluated in a subtraction expression");
-  }
+
   const MCSymbolRefExpr *A = Value.getSymA();
   if (!A)
     return nullptr;
-  return getBaseSymbol(Layout, A->getSymbol());
+
+  return &A->getSymbol();
 }
 
 void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
