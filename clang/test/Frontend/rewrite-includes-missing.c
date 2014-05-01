@@ -4,4 +4,5 @@
 // CHECK: {{^}}#if 0 /* expanded by -frewrite-includes */{{$}}
 // CHECK-NEXT: {{^}}#include "foobar.h"
 // CHECK-NEXT: {{^}}#endif /* expanded by -frewrite-includes */{{$}}
+// CHECK-NEXT: {{^}}# 3 "{{.*}}rewrite-includes-missing.c"{{$}}
 // CHECK-NEXT: {{^}}# 4 "{{.*}}rewrite-includes-missing.c"{{$}}

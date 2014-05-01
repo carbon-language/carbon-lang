@@ -390,6 +390,8 @@ bool InclusionRewriter::Process(FileID FileId,
           case tok::pp_import: {
             CommentOutDirective(RawLex, HashToken, FromFile, EOL, NextToWrite,
               Line);
+            if (FileId != PP.getPredefinesFileID())
+              WriteLineInfo(FileName, Line - 1, FileType, EOL, "");
             StringRef LineInfoExtra;
             if (const FileChange *Change = FindFileChangeLocation(
                 HashToken.getLocation())) {
