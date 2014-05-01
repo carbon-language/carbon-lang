@@ -645,8 +645,8 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   const MCExpr *Length = MakeStartMinusEndExpr(*MCOS, *InfoStart, *InfoEnd, 4);
   MCOS->EmitAbsValue(Length, 4);
 
-  // The 2 byte DWARF version, which is 2.
-  MCOS->EmitIntValue(2, 2);
+  // The 2 byte DWARF version.
+  MCOS->EmitIntValue(context.getDwarfVersion(), 2);
 
   // The 4 byte offset to the debug abbrevs from the start of the .debug_abbrev,
   // it is at the start of that section so this is zero.

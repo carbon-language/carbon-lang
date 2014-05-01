@@ -1,5 +1,9 @@
-// RUN: llvm-mc -g -triple  i686-pc-linux-gnu %s -filetype=obj -o - | llvm-readobj -r | FileCheck %s
-// RUN: llvm-mc -g -triple  i686-pc-linux-gnu %s -filetype=asm -o - | FileCheck --check-prefix=ASM %s
+// RUN: llvm-mc -g -dwarf-version 2 -triple  i686-pc-linux-gnu %s -filetype=obj -o - | llvm-readobj -r | FileCheck %s
+// RUN: not llvm-mc -g -dwarf-version 1  -triple  i686-pc-linux-gnu %s -filetype=asm -o - 2>&1 | FileCheck --check-prefix=DWARF1 %s
+// RUN: llvm-mc -g -dwarf-version 2 -triple  i686-pc-linux-gnu %s -filetype=asm -o - | FileCheck --check-prefix=ASM --check-prefix=DWARF2 %s
+// RUN: llvm-mc -g -dwarf-version 3 -triple  i686-pc-linux-gnu %s -filetype=asm -o - | FileCheck --check-prefix=ASM --check-prefix=DWARF3 %s
+// RUN: llvm-mc -g -triple  i686-pc-linux-gnu %s -filetype=asm -o - | FileCheck --check-prefix=ASM --check-prefix=DWARF4 %s
+// RUN: not llvm-mc -g -dwarf-version 5  -triple  i686-pc-linux-gnu %s -filetype=asm -o - 2>&1 | FileCheck --check-prefix=DWARF5 %s
 
 
 // Test that on ELF:
@@ -35,7 +39,9 @@ foo:
 // Second instance of the section has the CU
 // ASM: .section .debug_info
 // Dwarf version
-// ASM: .short 2
+// DWARF2: .short 2
+// DWARF3: .short 3
+// DWARF4: .short 4
 // ASM-NEXT: .long [[ABBREV_LABEL]]
 // First .byte 1 is the abbreviation number for the compile_unit abbrev
 // ASM: .byte 1
@@ -44,3 +50,5 @@ foo:
 // ASM: .section .debug_line
 // ASM-NEXT: [[LINE_LABEL]]
 
+// DWARF1: Dwarf version 1 is not supported.
+// DWARF5: Dwarf version 5 is not supported.

@@ -154,6 +154,9 @@ static cl::opt<bool>
 GenDwarfForAssembly("g", cl::desc("Generate dwarf debugging info for assembly "
                                   "source files"));
 
+static cl::opt<int>
+DwarfVersion("dwarf-version", cl::desc("Dwarf version"), cl::init(4));
+
 static cl::opt<std::string>
 DebugCompilationDir("fdebug-compilation-dir",
                     cl::desc("Specifies the debug info's compilation dir"));
@@ -406,6 +409,12 @@ int main(int argc, char **argv) {
     Ctx.setAllowTemporaryLabels(false);
 
   Ctx.setGenDwarfForAssembly(GenDwarfForAssembly);
+  if (DwarfVersion < 2 || DwarfVersion > 4) {
+    errs() << ProgName << ": Dwarf version " << DwarfVersion
+           << " is not supported." << '\n';
+    return 1;
+  }
+  Ctx.setDwarfVersion(DwarfVersion);
   if (!DwarfDebugFlags.empty())
     Ctx.setDwarfDebugFlags(StringRef(DwarfDebugFlags));
   if (!DwarfDebugProducer.empty())
