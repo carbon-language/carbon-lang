@@ -36,7 +36,9 @@ uptr GetMmapGranularity() {
 #if SANITIZER_WORDSIZE == 32
 // Take care of unusable kernel area in top gigabyte
 static uptr GetKernelStartAddress() {
-#if SANITIZER_LINUX
+#if 0  // SANITIZER_LINUX
+  // FIXME: this code is too naive. We have a situation where the machine is a
+  // true x8_64, but under schroot uname returns i686.
   // 64-bit Linux provides 32-bit apps with full address space
   struct utsname uname_info;
   return 0 == uname(&uname_info) && !internal_strstr(uname_info.machine, "64")
