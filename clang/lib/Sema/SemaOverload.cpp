@@ -9260,8 +9260,8 @@ struct CompareOverloadCandidatesForDisplay {
           L->FailureKind == ovl_fail_too_few_arguments) {
         if (R->FailureKind == ovl_fail_too_many_arguments ||
             R->FailureKind == ovl_fail_too_few_arguments) {
-          int LDist = abs(L->Function->getNumParams() - NumArgs);
-          int RDist = abs(R->Function->getNumParams() - NumArgs);
+          int LDist = abs((int)L->Function->getNumParams() - (int)NumArgs);
+          int RDist = abs((int)R->Function->getNumParams() - (int)NumArgs);
           if (LDist == RDist)
             return L->FailureKind == ovl_fail_too_many_arguments &&
                    R->FailureKind == ovl_fail_too_few_arguments;
