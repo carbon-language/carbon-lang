@@ -81,3 +81,10 @@ foo2:
 @ CHECK-ERRORS:                  ^
 @ CHECK-ERRORS: error: immediate expression for mov requires :lower16: or :upper16
 @ CHECK-ERRORS:                  ^
+
+        and sp, r1, #80008000
+        and pc, r1, #80008000
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
+
+

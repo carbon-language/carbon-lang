@@ -9487,8 +9487,8 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand *AsmOp,
       int64_t Value;
       if (!SOExpr->EvaluateAsAbsolute(Value))
         return Match_Success;
-      assert((Value >= INT32_MIN && Value <= INT32_MAX) &&
-             "expression value must be representiable in 32 bits");
+      assert((Value >= INT32_MIN && Value <= UINT32_MAX) &&
+             "expression value must be representable in 32 bits");
     }
     break;
   case MCK_GPRPair:
