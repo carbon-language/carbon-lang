@@ -39,7 +39,6 @@
 #include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
-#include "llvm/ADT/STLExtras.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -312,7 +311,8 @@ std::unique_ptr<FrontendActionFactory> newFrontendActionFactory() {
     clang::FrontendAction *create() override { return new T; }
   };
 
-  return llvm::make_unique<SimpleFrontendActionFactory>();
+  return std::unique_ptr<FrontendActionFactory>(
+      new SimpleFrontendActionFactory);
 }
 
 template <typename FactoryT>
@@ -363,8 +363,8 @@ inline std::unique_ptr<FrontendActionFactory> newFrontendActionFactory(
     SourceFileCallbacks *Callbacks;
   };
 
-  return llvm::make_unique<FrontendActionFactoryAdapter>(ConsumerFactory,
-                                                         Callbacks);
+  return std::unique_ptr<FrontendActionFactory>(
+      new FrontendActionFactoryAdapter(ConsumerFactory, Callbacks));
 }
 
 /// \brief Returns the absolute path of \c File, by prepending it with
