@@ -39,3 +39,4 @@ CHECK4:      DLL name: export.test.tmp4.dll
 CHECK4:       Ordinal      RVA  Name
 CHECK4-NEXT:        5   0x2008  exportfn1
 CHECK4-NEXT:        6   0x2010  exportfn2
+CHECK4-NEXT:        7   0x2010  exportfn3@256

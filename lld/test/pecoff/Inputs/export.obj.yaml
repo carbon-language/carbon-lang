@@ -7,6 +7,10 @@ sections:
     Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
     Alignment:       4
     SectionData:     B800000000506800000000680000000050E80000000050E800000000
+  - Name:            .drectve
+    Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
+    Alignment:       2147483648
+    SectionData:     2f6578706f72743a6578706f7274666e334032353600  # /export:exportfn3@256
 symbols:
   - Name:            .text
     Value:           0
@@ -33,6 +37,12 @@ symbols:
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
   - Name:            "_exportfn2@8"
+    Value:           16
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            exportfn3@256
     Value:           16
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL

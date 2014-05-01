@@ -46,7 +46,9 @@ static void assignOrdinals(PECOFFLinkingContext &ctx) {
   ctx.getDllExports().swap(exports);
 }
 
-static StringRef removeAtSignSuffix(StringRef sym) {
+static StringRef removeStdcallSuffix(StringRef sym) {
+  if (!sym.startswith("_"))
+    return sym;
   StringRef trimmed = sym.rtrim("0123456789");
   if (sym.size() != trimmed.size() && trimmed.endswith("@"))
     return trimmed.drop_back();
@@ -63,7 +65,7 @@ static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
                              std::vector<TableEntry> &ret) {
   std::map<StringRef, const DefinedAtom *> definedAtoms;
   for (const DefinedAtom *atom : file->defined())
-    definedAtoms[removeAtSignSuffix(atom->name())] = atom;
+    definedAtoms[removeStdcallSuffix(atom->name())] = atom;
 
   std::set<PECOFFLinkingContext::ExportDesc> exports;
   for (PECOFFLinkingContext::ExportDesc desc : ctx.getDllExports()) {
