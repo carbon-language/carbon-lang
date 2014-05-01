@@ -1738,15 +1738,11 @@ chain of ``F``:
 
   Function *F = ...;
 
-  for (Value::use_iterator i = F->use_begin(), e = F->use_end(); i != e; ++i)
-    if (Instruction *Inst = dyn_cast<Instruction>(*i)) {
+  for (User *U : GV->users()) {    
+    if (Instruction *Inst = dyn_cast<Instruction>(U)) {
       errs() << "F is used in instruction:\n";
       errs() << *Inst << "\n";
     }
-
-Note that dereferencing a ``Value::use_iterator`` is not a very cheap operation.
-Instead of performing ``*i`` above several times, consider doing it only once in
-the loop body and reusing its result.
 
 Alternatively, it's common to have an instance of the ``User`` Class (`doxygen
 <http://llvm.org/doxygen/classllvm_1_1User.html>`__) and need to know what
@@ -1759,8 +1755,8 @@ instruction uses (that is, the operands of the particular ``Instruction``):
 
   Instruction *pi = ...;
 
-  for (User::op_iterator i = pi->op_begin(), e = pi->op_end(); i != e; ++i) {
-    Value *v = *i;
+  for (Use& U : pi->operands()) {
+    Value *v = U.get();
     // ...
   }
 
