@@ -381,7 +381,9 @@ bool ModuleManager::lookupModuleFile(StringRef FileName,
                                      off_t ExpectedSize,
                                      time_t ExpectedModTime,
                                      const FileEntry *&File) {
-  File = FileMgr.getFile(FileName, /*openFile=*/false, /*cacheFailure=*/false);
+  // Open the file immediately to ensure there is no race between stat'ing and
+  // opening the file.
+  File = FileMgr.getFile(FileName, /*openFile=*/true, /*cacheFailure=*/false);
 
   if (!File && FileName != "-") {
     return false;
@@ -389,6 +391,8 @@ bool ModuleManager::lookupModuleFile(StringRef FileName,
 
   if ((ExpectedSize && ExpectedSize != File->getSize()) ||
       (ExpectedModTime && ExpectedModTime != File->getModificationTime())) {
+    FileMgr.invalidateCache(File);
+    File = nullptr;
     return true;
   }
 
