@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s --check-prefix=R600-CHECK --check-prefix=FUNC
-; RUN: llc < %s -march=r600 -mcpu=SI | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s --check-prefix=R600-CHECK --check-prefix=FUNC
+; RUN: llc -verify-machineinstrs -march=r600 -mcpu=SI < %s | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
 
 ; This test checks that uses and defs of the AR register happen in the same
 ; instruction clause.

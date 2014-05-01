@@ -137,7 +137,7 @@ class SGPRImm <dag frag> : PatLeaf<frag, [{
 }]>;
 
 def FRAMEri32 : Operand<iPTR> {
-  let MIOperandInfo = (ops SReg_32:$ptr, i32imm:$index);
+  let MIOperandInfo = (ops i32:$ptr, i32imm:$index);
 }
 
 //===----------------------------------------------------------------------===//
