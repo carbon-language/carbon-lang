@@ -5378,10 +5378,11 @@ ExprResult Sema::BuildPseudoDestructorExpr(Expr *Base,
       !ObjectType->isVectorType()) {
     if (getLangOpts().MSVCCompat && ObjectType->isVoidType())
       Diag(OpLoc, diag::ext_pseudo_dtor_on_void) << Base->getSourceRange();
-    else
+    else {
       Diag(OpLoc, diag::err_pseudo_dtor_base_not_scalar)
         << ObjectType << Base->getSourceRange();
-    return ExprError();
+      return ExprError();
+    }
   }
 
   // C++ [expr.pseudo]p2:
