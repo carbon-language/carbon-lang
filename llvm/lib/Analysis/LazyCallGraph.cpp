@@ -463,9 +463,9 @@ LazyCallGraph::SCC *LazyCallGraph::formSCC(Node *RootN,
   bool IsLeafSCC = true;
   for (Node *SCCN : NewSCC->Nodes)
     for (Node &SCCChildN : *SCCN) {
-      if (SCCMap.lookup(&SCCChildN) == NewSCC)
-        continue;
       SCC &ChildSCC = *SCCMap.lookup(&SCCChildN);
+      if (&ChildSCC == NewSCC)
+        continue;
       ChildSCC.ParentSCCs.insert(NewSCC);
       IsLeafSCC = false;
     }
