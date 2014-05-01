@@ -16,10 +16,10 @@ add_lld_library(lldDriver
   Driver.cpp
   GnuLdDriver.cpp
   GnuLdInputGraph.cpp
+  UniversalDriver.cpp
   WinLinkDriver.cpp
   WinLinkInputGraph.cpp
   WinLinkModuleDef.cpp
-  UniversalDriver.cpp
   )
 
 add_dependencies(lldDriver DriverOptionsTableGen)
