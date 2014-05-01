@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++98 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 extern "C" { void f(bool); }
 
@@ -205,7 +206,10 @@ namespace PR19171 {
   } S;
 
   struct Y : S {
-    using S::S; // expected-error {{no member named 'S' in 'PR19171::S'}}
+    using S::S;
+#if __cplusplus < 201103L
+    // expected-error@-2 {{no member named 'S' in 'PR19171::S'}}
+#endif
   };
 
   // [namespace.udecl]p3: In a using-declaration used as a member-declaration,
@@ -213,12 +217,28 @@ namespace PR19171 {
   // If such a using-declaration names a constructor, the nested-name-specifier
   // shall name a direct base class of the class being defined;
 
-  // FIXME: For c++11, Typo correction should only consider constructor of direct base class
-  struct B_blah { }; // expected-note {{'B_blah' declared here}}
-  struct C_blah : B_blah { };
-  struct D : C_blah {
-    using B_blah::C_blah; // expected-error {{no member named 'C_blah' in 'PR19171::B_blah'; did you mean 'B_blah'?}}
+  struct B_blah { };
+  struct C_blah : B_blah { C_blah(int); }; // expected-note 0-1{{declared here}}
+  struct D1 : C_blah {
+    // FIXME: We should be able to correct this in C++11 mode.
+    using B_blah::C_blah; // expected-error-re {{no member named 'C_blah' in 'PR19171::B_blah'{{$}}}}
   };
+  struct D2 : C_blah {
+    // Somewhat bizarrely, this names the injected-class-name of B_blah within
+    // C_blah, and is valid.
+    using C_blah::B_blah;
+  };
+  struct D3 : C_blah {
+    using C_blah::D_blah;
+#if __cplusplus < 201103L
+    // expected-error-re@-2 {{no member named 'D_blah' in 'PR19171::C_blah'{{$}}}}
+#else
+    // expected-error@-4 {{no member named 'D_blah' in 'PR19171::C_blah'; did you mean 'C_blah'?}}
+#endif
+  };
+#if __cplusplus >= 201103L
+  D3 d3(0); // ok
+#endif
 
   struct E { };
   struct EE { int EE; };

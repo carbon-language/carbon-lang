@@ -2182,8 +2182,7 @@ Decl *TemplateDeclInstantiator::VisitUsingDecl(UsingDecl *D) {
     return NewUD;
 
   if (NameInfo.getName().getNameKind() == DeclarationName::CXXConstructorName) {
-    if (SemaRef.CheckInheritingConstructorUsingDecl(NewUD))
-      NewUD->setInvalidDecl();
+    SemaRef.CheckInheritingConstructorUsingDecl(NewUD);
     return NewUD;
   }
 

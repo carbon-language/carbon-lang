@@ -3785,7 +3785,7 @@ public:
   NamedDecl *BuildUsingDeclaration(Scope *S, AccessSpecifier AS,
                                    SourceLocation UsingLoc,
                                    CXXScopeSpec &SS,
-                                   const DeclarationNameInfo &NameInfo,
+                                   DeclarationNameInfo NameInfo,
                                    AttributeList *AttrList,
                                    bool IsInstantiation,
                                    bool HasTypenameKeyword,
