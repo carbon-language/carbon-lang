@@ -38,7 +38,7 @@ namespace edata {
 struct TableEntry {
   TableEntry(StringRef exp, int ord, const DefinedAtom *a, bool n)
       : exportName(exp), ordinal(ord), atom(a), noname(n) {}
-  StringRef exportName;
+  std::string exportName;
   int ordinal;
   const DefinedAtom *atom;
   bool noname;
