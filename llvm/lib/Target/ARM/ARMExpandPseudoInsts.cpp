@@ -705,17 +705,29 @@ void ARMExpandPseudo::ExpandMOV32BitImm(MachineBasicBlock &MBB,
     .addReg(DstReg, RegState::Define | getDeadRegState(DstIsDead))
     .addReg(DstReg);
 
-  if (MO.isImm()) {
+  switch (MO.getType()) {
+  case MachineOperand::MO_Immediate: {
     unsigned Imm = MO.getImm();
     unsigned Lo16 = Imm & 0xffff;
     unsigned Hi16 = (Imm >> 16) & 0xffff;
     LO16 = LO16.addImm(Lo16);
     HI16 = HI16.addImm(Hi16);
-  } else {
+    break;
+  }
+  case MachineOperand::MO_ExternalSymbol: {
+    const char *ES = MO.getSymbolName();
+    unsigned TF = MO.getTargetFlags();
+    LO16 = LO16.addExternalSymbol(ES, TF | ARMII::MO_LO16);
+    HI16 = HI16.addExternalSymbol(ES, TF | ARMII::MO_HI16);
+    break;
+  }
+  default: {
     const GlobalValue *GV = MO.getGlobal();
     unsigned TF = MO.getTargetFlags();
     LO16 = LO16.addGlobalAddress(GV, MO.getOffset(), TF | ARMII::MO_LO16);
     HI16 = HI16.addGlobalAddress(GV, MO.getOffset(), TF | ARMII::MO_HI16);
+    break;
+  }
   }
 
   LO16->setMemRefs(MI.memoperands_begin(), MI.memoperands_end());
