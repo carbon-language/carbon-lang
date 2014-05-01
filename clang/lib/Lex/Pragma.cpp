@@ -1385,3 +1385,25 @@ void Preprocessor::RegisterBuiltinPragmas() {
     AddPragmaHandler(new PragmaRegionHandler("endregion"));
   }
 }
+
+/// Ignore all pragmas, useful for modes such as -Eonly which would otherwise
+/// warn about those pragmas being unknown.
+void Preprocessor::IgnorePragmas() {
+  AddPragmaHandler(new EmptyPragmaHandler());
+  // Also ignore all pragmas in all namespaces created
+  // in Preprocessor::RegisterBuiltinPragmas().
+  AddPragmaHandler("GCC", new EmptyPragmaHandler());
+  AddPragmaHandler("clang", new EmptyPragmaHandler());
+  if (PragmaHandler *NS = PragmaHandlers->FindHandler("STDC")) {
+    // Preprocessor::RegisterBuiltinPragmas() already registers
+    // PragmaSTDC_UnknownHandler as the empty handler, so remove it first,
+    // otherwise there will be an assert about a duplicate handler.
+    PragmaNamespace *STDCNamespace = NS->getIfNamespace();
+    assert(STDCNamespace &&
+           "Invalid namespace, registered as a regular pragma handler!");
+    if (PragmaHandler *Existing = STDCNamespace->FindHandler("", false)) {
+      RemovePragmaHandler("STDC", Existing);
+    }
+  }
+  AddPragmaHandler("STDC", new EmptyPragmaHandler());
+}
