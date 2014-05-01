@@ -133,6 +133,7 @@ public:
 private:
   typedef SmallVector<Location, 8> LocationVec;
   typedef SmallVector<LiveOutReg, 8> LiveOutVec;
+  typedef MapVector<int64_t, int64_t> ConstantPool;
   typedef MapVector<const MCSymbol *, uint64_t> FnStackSizeMap;
 
   struct CallsiteInfo {
@@ -148,26 +149,6 @@ private:
   };
 
   typedef std::vector<CallsiteInfo> CallsiteInfoList;
-
-  struct ConstantPool {
-  private:
-    typedef std::map<int64_t, size_t> ConstantsMap;
-    std::vector<int64_t> ConstantsList;
-    ConstantsMap ConstantIndexes;
-
-  public:
-    size_t getNumConstants() const { return ConstantsList.size(); }
-    int64_t getConstant(size_t Idx) const { return ConstantsList[Idx]; }
-    size_t getConstantIndex(int64_t ConstVal) {
-      size_t NextIdx = ConstantsList.size();
-      ConstantsMap::const_iterator I =
-        ConstantIndexes.insert(ConstantIndexes.end(),
-                               std::make_pair(ConstVal, NextIdx));
-      if (I->second == NextIdx)
-        ConstantsList.push_back(ConstVal);
-      return I->second;
-    }
-  };
 
   AsmPrinter &AP;
   CallsiteInfoList CSInfos;

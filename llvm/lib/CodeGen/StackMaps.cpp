@@ -209,7 +209,8 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
     if (I->LocType == Location::Constant &&
         ((I->Offset + (int64_t(1)<<31)) >> 32) != 0) {
       I->LocType = Location::ConstantIndex;
-      I->Offset = ConstPool.getConstantIndex(I->Offset);
+      auto Result = ConstPool.insert(std::make_pair(I->Offset, I->Offset));
+      I->Offset = Result.first - ConstPool.begin();
     }
   }
 
@@ -334,9 +335,9 @@ void StackMaps::serializeToStackMapSection() {
   DEBUG(dbgs() << WSMP << "#functions = " << FnStackSize.size() << '\n');
   AP.OutStreamer.EmitIntValue(FnStackSize.size(), 4);
   // Num constants.
-  DEBUG(dbgs() << WSMP << "#constants = " << ConstPool.getNumConstants()
+  DEBUG(dbgs() << WSMP << "#constants = " << ConstPool.size()
                << '\n');
-  AP.OutStreamer.EmitIntValue(ConstPool.getNumConstants(), 4);
+  AP.OutStreamer.EmitIntValue(ConstPool.size(), 4);
   // Num callsites.
   DEBUG(dbgs() << WSMP << "#callsites = " << CSInfos.size() << '\n');
   AP.OutStreamer.EmitIntValue(CSInfos.size(), 4);
@@ -349,8 +350,8 @@ void StackMaps::serializeToStackMapSection() {
   }
 
   // Constant pool entries.
-  for (unsigned i = 0; i < ConstPool.getNumConstants(); ++i)
-    AP.OutStreamer.EmitIntValue(ConstPool.getConstant(i), 8);
+  for (auto Constant : ConstPool)
+    AP.OutStreamer.EmitIntValue(Constant.second, 8);
 
   // Callsite entries.
   for (CallsiteInfoList::const_iterator CSII = CSInfos.begin(),
@@ -473,4 +474,5 @@ void StackMaps::serializeToStackMapSection() {
   AP.OutStreamer.AddBlankLine();
 
   CSInfos.clear();
+  ConstPool.clear();
 }
