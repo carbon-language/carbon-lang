@@ -11,7 +11,7 @@ test1_zed = test1_foo + 1
 // CHECK:      Symbol {
 // CHECK:        Name: test1_zed
 // CHECK-NEXT:   Value: 1
-// CHECK-NEXT:   Section:
+// CHECK-NEXT:   Section: .data
 // CHECK-NEXT:   BaseType: Null
 // CHECK-NEXT:   ComplexType: Null
 // CHECK-NEXT:   StorageClass: External

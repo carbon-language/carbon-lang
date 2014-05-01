@@ -441,6 +441,7 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
   } else {
     const MCSymbolData &ResSymData =
       Assembler.getSymbolData(Symbol.AliasedSymbol());
+    const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
     coff_symbol->Data.Value = getSymbolValue(ResSymData, Layout);
 
     coff_symbol->Data.Type         = (ResSymData.getFlags() & 0x0000FFFF) >>  0;
@@ -454,11 +455,14 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
        external ? COFF::IMAGE_SYM_CLASS_EXTERNAL : COFF::IMAGE_SYM_CLASS_STATIC;
     }
 
-    if (Symbol.isAbsolute() || Symbol.AliasedSymbol().isVariable())
+    if (!Base) {
       coff_symbol->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
-    else if (ResSymData.Fragment)
-      coff_symbol->Section =
-        SectionMap[&ResSymData.Fragment->getParent()->getSection()];
+    } else {
+      const MCSymbolData &BaseData = Assembler.getSymbolData(*Base);
+      if (BaseData.Fragment)
+        coff_symbol->Section =
+            SectionMap[&BaseData.Fragment->getParent()->getSection()];
+    }
 
     coff_symbol->MCData = &ResSymData;
   }
@@ -826,14 +830,9 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
   Header.NumberOfSymbols = 0;
 
   for (auto & Symbol : Symbols) {
-    MCSymbolData const *SymbolData = Symbol->MCData;
-
     // Update section number & offset for symbols that have them.
-    if (SymbolData && SymbolData->Fragment) {
-      assert(Symbol->Section != nullptr);
-
+    if (Symbol->Section)
       Symbol->Data.SectionNumber = Symbol->Section->Number;
-    }
 
     if (Symbol->should_keep()) {
       MakeSymbolReal(*Symbol, Header.NumberOfSymbols++);
