@@ -576,29 +576,6 @@ static uint8_t mergeTypeForSet(uint8_t origType, uint8_t newType) {
   return Type;
 }
 
-static const MCSymbol *getBaseSymbol(const MCAsmLayout &Layout,
-                                     const MCSymbol &Symbol) {
-  if (!Symbol.isVariable())
-    return &Symbol;
-
-  const MCExpr *Expr = Symbol.getVariableValue();
-  MCValue Value;
-  if (!Expr->EvaluateAsValue(Value, &Layout))
-    llvm_unreachable("Invalid Expression");
-
-  const MCSymbolRefExpr *RefB = Value.getSymB();
-  if (RefB)
-    Layout.getAssembler().getContext().FatalError(
-        SMLoc(), Twine("symbol '") + RefB->getSymbol().getName() +
-                     "' could not be evaluated in a subtraction expression");
-
-  const MCSymbolRefExpr *A = Value.getSymA();
-  if (!A)
-    return nullptr;
-
-  return &A->getSymbol();
-}
-
 void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   MCSymbolData &OrigData = *MSD.SymbolData;
@@ -606,7 +583,7 @@ void ELFObjectWriter::WriteSymbol(SymbolTableWriter &Writer, ELFSymbolData &MSD,
           (&OrigData.getFragment()->getParent()->getSection() ==
            &OrigData.getSymbol().getSection())) &&
          "The symbol's section doesn't match the fragment's symbol");
-  const MCSymbol *Base = getBaseSymbol(Layout, OrigData.getSymbol());
+  const MCSymbol *Base = Layout.getBaseSymbol(OrigData.getSymbol());
 
   // This has to be in sync with when computeSymbolTable uses SHN_ABS or
   // SHN_COMMON.
@@ -935,7 +912,7 @@ bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
     return true;
 
   if (Symbol.isVariable()) {
-    const MCSymbol *Base = getBaseSymbol(Layout, Symbol);
+    const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
     if (Base && Base->isUndefined())
       return false;
   }
@@ -1022,7 +999,7 @@ ELFObjectWriter::computeSymbolTable(MCAssembler &Asm, const MCAsmLayout &Layout,
 
     ELFSymbolData MSD;
     MSD.SymbolData = &SD;
-    const MCSymbol *BaseSymbol = getBaseSymbol(Layout, Symbol);
+    const MCSymbol *BaseSymbol = Layout.getBaseSymbol(Symbol);
 
     // Undefined symbols are global, but this is the first place we
     // are able to set it.

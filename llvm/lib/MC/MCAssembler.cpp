@@ -180,6 +180,28 @@ uint64_t MCAsmLayout::getSymbolOffset(const MCSymbolData *SD) const {
   return Val;
 }
 
+const MCSymbol *MCAsmLayout::getBaseSymbol(const MCSymbol &Symbol) const {
+  if (!Symbol.isVariable())
+    return &Symbol;
+
+  const MCExpr *Expr = Symbol.getVariableValue();
+  MCValue Value;
+  if (!Expr->EvaluateAsValue(Value, this))
+    llvm_unreachable("Invalid Expression");
+
+  const MCSymbolRefExpr *RefB = Value.getSymB();
+  if (RefB)
+    Assembler.getContext().FatalError(
+        SMLoc(), Twine("symbol '") + RefB->getSymbol().getName() +
+                     "' could not be evaluated in a subtraction expression");
+
+  const MCSymbolRefExpr *A = Value.getSymA();
+  if (!A)
+    return nullptr;
+
+  return &A->getSymbol();
+}
+
 uint64_t MCAsmLayout::getSectionAddressSize(const MCSectionData *SD) const {
   // The size is the last fragment's end offset.
   const MCFragment &F = SD->getFragmentList().back();
