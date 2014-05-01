@@ -537,9 +537,8 @@ namespace {
          << "A->" << getLowerName() << "_size()";
     }
     void writeCtorBody(raw_ostream &OS) const override {
-      // FIXME: memcpy is not safe on non-trivial types.
-      OS << "    std::memcpy(" << getLowerName() << ", " << getUpperName()
-         << ", " << getLowerName() << "Size * sizeof(" << getType() << "));\n";
+      OS << "    std::copy(" << getUpperName() << ", " << getUpperName()
+         << " + " << getLowerName() << "Size, " << getLowerName() << ");";
     }
     void writeCtorInitializers(raw_ostream &OS) const override {
       OS << getLowerName() << "Size(" << getUpperName() << "Size), "
