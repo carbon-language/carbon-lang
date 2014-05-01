@@ -485,14 +485,11 @@ void ELFDumper<ELFT>::printFileHeaders() {
     W.printHex   ("Entry", Header->e_entry);
     W.printHex   ("ProgramHeaderOffset", Header->e_phoff);
     W.printHex   ("SectionHeaderOffset", Header->e_shoff);
-    switch (Header->e_machine) {
-    case EM_MIPS:
+    if (Header->e_machine == EM_MIPS)
       W.printFlags("Flags", Header->e_flags, makeArrayRef(ElfHeaderMipsFlags),
                    unsigned(ELF::EF_MIPS_ARCH));
-      break;
-    default:
+    else
       W.printFlags("Flags", Header->e_flags);
-    }
     W.printNumber("HeaderSize", Header->e_ehsize);
     W.printNumber("ProgramHeaderEntrySize", Header->e_phentsize);
     W.printNumber("ProgramHeaderCount", Header->e_phnum);
