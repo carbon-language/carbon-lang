@@ -21,6 +21,7 @@ namespace llvm {
 
 class AsmPrinter;
 class MCExpr;
+class MCStreamer;
 
 /// \brief MI-level patchpoint operands.
 ///
@@ -131,6 +132,8 @@ public:
   void serializeToStackMapSection();
 
 private:
+  const char *WSMP = "Stack Maps: ";
+
   typedef SmallVector<Location, 8> LocationVec;
   typedef SmallVector<LiveOutReg, 8> LiveOutVec;
   typedef MapVector<int64_t, int64_t> ConstantPool;
@@ -177,6 +180,18 @@ private:
                            MachineInstr::const_mop_iterator MOI,
                            MachineInstr::const_mop_iterator MOE,
                            bool recordResult = false);
+
+  /// \brief Emit the stackmap header.
+  void emitStackmapHeader(MCStreamer &OS);
+
+  /// \brief Emit the function frame record for each function.
+  void emitFunctionFrameRecords(MCStreamer &OS);
+
+  /// \brief Emit the constant pool.
+  void emitConstantPoolEntries(MCStreamer &OS);
+
+  /// \brief Emit the callsite info for each stackmap/patchpoint intrinsic call.
+  void emitCallsiteEntries(MCStreamer &OS, const TargetRegisterInfo *TRI);
 };
 
 }
