@@ -27,3 +27,11 @@ narf // CHECK: [[NARF]] = {{.*}} ; [ DW_TAG_typedef ] [narf] [line 142
 = int;
 narf n;
 
+template <typename T>
+using tv = void;
+// CHECK: null} ; [ DW_TAG_typedef ] [tv<int>] {{.*}} [from ]
+tv<int> *tvp;
+
+using v = void;
+// CHECK: null} ; [ DW_TAG_typedef ] [v] {{.*}} [from ]
+v *vp;
