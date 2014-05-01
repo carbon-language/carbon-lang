@@ -61,7 +61,7 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type, bool all
         case clang::Type::IncompleteArray:
         case clang::Type::VariableArray:
         {
-            const clang::ArrayType *array_type =  llvm::dyn_cast<clang::ArrayType>(qual_type.getTypePtr());
+            const clang::ArrayType *array_type = llvm::dyn_cast<clang::ArrayType>(qual_type.getTypePtr());
             
             if (array_type)
                 return GetCompleteQualType (ast, array_type->getElementType(), allow_completion);
@@ -71,7 +71,7 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type, bool all
         case clang::Type::Record:
         case clang::Type::Enum:
         {
-            const clang::TagType *tag_type =  llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr());
+            const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr());
             if (tag_type)
             {
                 clang::TagDecl *tag_decl = tag_type->getDecl();
@@ -105,7 +105,7 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type, bool all
         case clang::Type::ObjCObject:
         case clang::Type::ObjCInterface:
         {
-            const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(qual_type);
+            const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type);
             if (objc_class_type)
             {
                 clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
@@ -506,7 +506,7 @@ ClangASTType::GetNumberOfFunctionArguments () const
     if (IsValid())
     {
         clang::QualType qual_type (GetCanonicalQualType());
-        const clang::FunctionProtoType* func =  llvm::dyn_cast<clang::FunctionProtoType>(qual_type.getTypePtr());
+        const clang::FunctionProtoType* func = llvm::dyn_cast<clang::FunctionProtoType>(qual_type.getTypePtr());
         if (func)
             return func->getNumParams();
     }
@@ -519,7 +519,7 @@ ClangASTType::GetFunctionArgumentAtIndex (const size_t index)
     if (IsValid())
     {
         clang::QualType qual_type (GetCanonicalQualType());
-        const clang::FunctionProtoType* func =  llvm::dyn_cast<clang::FunctionProtoType>(qual_type.getTypePtr());
+        const clang::FunctionProtoType* func = llvm::dyn_cast<clang::FunctionProtoType>(qual_type.getTypePtr());
         if (func)
         {
             if (index < func->getNumParams())
@@ -572,7 +572,7 @@ ClangASTType::IsIntegerType (bool &is_signed) const
         return false;
     
     clang::QualType qual_type (GetCanonicalQualType());
-    const clang::BuiltinType *builtin_type =  llvm::dyn_cast<clang::BuiltinType>(qual_type->getCanonicalTypeInternal());
+    const clang::BuiltinType *builtin_type = llvm::dyn_cast<clang::BuiltinType>(qual_type->getCanonicalTypeInternal());
     
     if (builtin_type)
     {
@@ -741,7 +741,7 @@ ClangASTType::IsFloatingPointType (uint32_t &count, bool &is_complex) const
     {
         clang::QualType qual_type (GetCanonicalQualType());
         
-        if (const clang::BuiltinType *BT =  llvm::dyn_cast<clang::BuiltinType>(qual_type->getCanonicalTypeInternal()))
+        if (const clang::BuiltinType *BT = llvm::dyn_cast<clang::BuiltinType>(qual_type->getCanonicalTypeInternal()))
         {
             clang::BuiltinType::Kind kind = BT->getKind();
             if (kind >= clang::BuiltinType::Float && kind <= clang::BuiltinType::LongDouble)
@@ -751,7 +751,7 @@ ClangASTType::IsFloatingPointType (uint32_t &count, bool &is_complex) const
                 return true;
             }
         }
-        else if (const clang::ComplexType *CT =  llvm::dyn_cast<clang::ComplexType>(qual_type->getCanonicalTypeInternal()))
+        else if (const clang::ComplexType *CT = llvm::dyn_cast<clang::ComplexType>(qual_type->getCanonicalTypeInternal()))
         {
             if (ClangASTType (m_ast, CT->getElementType()).IsFloatingPointType (count, is_complex))
             {
@@ -760,7 +760,7 @@ ClangASTType::IsFloatingPointType (uint32_t &count, bool &is_complex) const
                 return true;
             }
         }
-        else if (const clang::VectorType *VT =  llvm::dyn_cast<clang::VectorType>(qual_type->getCanonicalTypeInternal()))
+        else if (const clang::VectorType *VT = llvm::dyn_cast<clang::VectorType>(qual_type->getCanonicalTypeInternal()))
         {
             if (ClangASTType (m_ast, VT->getElementType()).IsFloatingPointType (count, is_complex))
             {
@@ -783,7 +783,7 @@ ClangASTType::IsDefined() const
         return false;
 
     clang::QualType qual_type(GetQualType());
-    const clang::TagType *tag_type =  llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr());
+    const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr());
     if (tag_type)
     {
         clang::TagDecl *tag_decl = tag_type->getDecl();
@@ -793,7 +793,7 @@ ClangASTType::IsDefined() const
     }
     else
     {
-        const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(qual_type);
+        const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type);
         if (objc_class_type)
         {
             clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
@@ -812,7 +812,7 @@ ClangASTType::IsObjCClassType () const
     {
         clang::QualType qual_type (GetCanonicalQualType());
     
-        const clang::ObjCObjectPointerType *obj_pointer_type =  llvm::dyn_cast<clang::ObjCObjectPointerType>(qual_type);
+        const clang::ObjCObjectPointerType *obj_pointer_type = llvm::dyn_cast<clang::ObjCObjectPointerType>(qual_type);
 
         if (obj_pointer_type)
             return obj_pointer_type->isObjCClassType();
@@ -844,7 +844,7 @@ ClangASTType::IsPolymorphicClass () const
                     const clang::RecordDecl *record_decl = record_type->getDecl();
                     if (record_decl)
                     {
-                        const clang::CXXRecordDecl *cxx_record_decl =  llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+                        const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
                         if (cxx_record_decl)
                             return cxx_record_decl->isPolymorphic();
                     }
@@ -1120,7 +1120,7 @@ ClangASTType::IsBeingDefined () const
     if (!IsValid())
         return false;
     clang::QualType qual_type (GetCanonicalQualType());
-    const clang::TagType *tag_type =  llvm::dyn_cast<clang::TagType>(qual_type);
+    const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type);
     if (tag_type)
         return tag_type->isBeingDefined();
     return false;
@@ -1141,7 +1141,7 @@ ClangASTType::IsObjCObjectPointerType (ClangASTType *class_type_ptr)
             if (!qual_type->isObjCClassType() &&
                 !qual_type->isObjCIdType())
             {
-                const clang::ObjCObjectPointerType *obj_pointer_type =  llvm::dyn_cast<clang::ObjCObjectPointerType>(qual_type);
+                const clang::ObjCObjectPointerType *obj_pointer_type = llvm::dyn_cast<clang::ObjCObjectPointerType>(qual_type);
                 if (obj_pointer_type == nullptr)
                     class_type_ptr->Clear();
                 else
@@ -1163,7 +1163,7 @@ ClangASTType::GetObjCClassName (std::string &class_name)
     
     clang::QualType qual_type (GetCanonicalQualType());
 
-    const clang::ObjCObjectType *object_type =  llvm::dyn_cast<clang::ObjCObjectType>(qual_type);
+    const clang::ObjCObjectType *object_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type);
     if (object_type)
     {
         const clang::ObjCInterfaceDecl *interface = object_type->getInterface();
@@ -1260,7 +1260,7 @@ ClangASTType::GetTypeInfo (ClangASTType *pointee_or_element_clang_type) const
     {
         case clang::Type::Builtin:
         {
-            const clang::BuiltinType *builtin_type =  llvm::dyn_cast<clang::BuiltinType>(qual_type->getCanonicalTypeInternal());
+            const clang::BuiltinType *builtin_type = llvm::dyn_cast<clang::BuiltinType>(qual_type->getCanonicalTypeInternal());
             
             uint32_t builtin_type_flags = eTypeIsBuiltIn | eTypeHasValue;
             switch (builtin_type->getKind())
@@ -1324,7 +1324,7 @@ ClangASTType::GetTypeInfo (ClangASTType *pointee_or_element_clang_type) const
         case clang::Type::Complex:
         {
             uint32_t complex_type_flags = eTypeIsBuiltIn | eTypeHasValue | eTypeIsComplex;
-            const clang::ComplexType *complex_type =  llvm::dyn_cast<clang::ComplexType>(qual_type->getCanonicalTypeInternal());
+            const clang::ComplexType *complex_type = llvm::dyn_cast<clang::ComplexType>(qual_type->getCanonicalTypeInternal());
             if (complex_type)
             {
                 clang::QualType complex_element_type (complex_type->getElementType());
@@ -1405,7 +1405,7 @@ ClangASTType::GetTypeInfo (ClangASTType *pointee_or_element_clang_type) const
         case clang::Type::Vector:
         {
             uint32_t vector_type_flags = eTypeHasChildren | eTypeIsVector;
-            const clang::VectorType *vector_type =  llvm::dyn_cast<clang::VectorType>(qual_type->getCanonicalTypeInternal());
+            const clang::VectorType *vector_type = llvm::dyn_cast<clang::VectorType>(qual_type->getCanonicalTypeInternal());
             if (vector_type)
             {
                 if (vector_type->isIntegerType())
@@ -1699,7 +1699,7 @@ ClangASTType::GetFunctionArgumentCount () const
 {
     if (IsValid())
     {
-        const clang::FunctionProtoType* func =  llvm::dyn_cast<clang::FunctionProtoType>(GetCanonicalQualType());
+        const clang::FunctionProtoType* func = llvm::dyn_cast<clang::FunctionProtoType>(GetCanonicalQualType());
         if (func)
             return func->getNumParams();
     }
@@ -1711,7 +1711,7 @@ ClangASTType::GetFunctionArgumentTypeAtIndex (size_t idx)
 {
     if (IsValid())
     {
-        const clang::FunctionProtoType* func =  llvm::dyn_cast<clang::FunctionProtoType>(GetCanonicalQualType());
+        const clang::FunctionProtoType* func = llvm::dyn_cast<clang::FunctionProtoType>(GetCanonicalQualType());
         if (func)
         {
             const uint32_t num_args = func->getNumParams();
@@ -1728,7 +1728,7 @@ ClangASTType::GetFunctionReturnType () const
     if (IsValid())
     {
         clang::QualType qual_type(GetCanonicalQualType());
-        const clang::FunctionProtoType* func =  llvm::dyn_cast<clang::FunctionProtoType>(qual_type.getTypePtr());
+        const clang::FunctionProtoType* func = llvm::dyn_cast<clang::FunctionProtoType>(qual_type.getTypePtr());
         if (func)
             return ClangASTType(m_ast, func->getReturnType());
     }
@@ -1826,7 +1826,7 @@ ClangASTType::GetTypedefedType () const
 {
     if (IsValid())
     {
-        const clang::TypedefType *typedef_type =  llvm::dyn_cast<clang::TypedefType>(GetQualType());
+        const clang::TypedefType *typedef_type = llvm::dyn_cast<clang::TypedefType>(GetQualType());
         if (typedef_type)
             return ClangASTType (m_ast, typedef_type->getDecl()->getUnderlyingType());
     }
@@ -2213,7 +2213,7 @@ ClangASTType::GetNumChildren (bool omit_empty_base_classes) const
                 const clang::RecordType *record_type = llvm::cast<clang::RecordType>(qual_type.getTypePtr());
                 const clang::RecordDecl *record_decl = record_type->getDecl();
                 assert(record_decl);
-                const clang::CXXRecordDecl *cxx_record_decl =  llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+                const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
                 if (cxx_record_decl)
                 {
                     if (omit_empty_base_classes)
@@ -2253,7 +2253,7 @@ ClangASTType::GetNumChildren (bool omit_empty_base_classes) const
         case clang::Type::ObjCInterface:
             if (GetCompleteQualType (m_ast, qual_type))
             {
-                const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+                const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
                 assert (objc_class_type);
                 if (objc_class_type)
                 {
@@ -2537,7 +2537,7 @@ ClangASTType::GetNumFields () const
         case clang::Type::Record:
             if (GetCompleteType())
             {
-                const clang::RecordType *record_type =  llvm::dyn_cast<clang::RecordType>(qual_type.getTypePtr());
+                const clang::RecordType *record_type = llvm::dyn_cast<clang::RecordType>(qual_type.getTypePtr());
                 if (record_type)
                 {
                     clang::RecordDecl *record_decl = record_type->getDecl();
@@ -2583,7 +2583,7 @@ ClangASTType::GetNumFields () const
         case clang::Type::ObjCInterface:
             if (GetCompleteType())
             {
-                const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+                const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
                 if (objc_class_type)
                 {
                     clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
@@ -2892,7 +2892,7 @@ ClangASTType::GetFieldAtIndex (size_t idx,
         case clang::Type::ObjCInterface:
             if (GetCompleteType())
             {
-                const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+                const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
                 assert (objc_class_type);
                 if (objc_class_type)
                 {
@@ -3115,7 +3115,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                 const clang::ASTRecordLayout &record_layout = m_ast->getASTRecordLayout(record_decl);
                 uint32_t child_idx = 0;
                 
-                const clang::CXXRecordDecl *cxx_record_decl =  llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+                const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
                 if (cxx_record_decl)
                 {
                     // We might have base classes to print out first
@@ -3195,7 +3195,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
         case clang::Type::ObjCInterface:
             if (idx_is_valid && GetCompleteType())
             {
-                const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(parent_qual_type.getTypePtr());
+                const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(parent_qual_type.getTypePtr());
                 assert (objc_class_type);
                 if (objc_class_type)
                 {
@@ -3561,7 +3561,7 @@ GetIndexForRecordBase
 {
     uint32_t child_idx = 0;
     
-    const clang::CXXRecordDecl *cxx_record_decl =  llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+    const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
     
     //    const char *super_name = record_decl->getNameAsCString();
     //    const char *base_name = base_spec->getType()->getAs<clang::RecordType>()->getDecl()->getNameAsCString();
@@ -3669,7 +3669,7 @@ ClangASTType::GetIndexOfChildMemberWithName (const char *name,
                     assert(record_decl);
                     uint32_t child_idx = 0;
                     
-                    const clang::CXXRecordDecl *cxx_record_decl =  llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+                    const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
                     
                     // Try and find a field that matches NAME
                     clang::RecordDecl::field_iterator field, field_end;
@@ -3758,7 +3758,7 @@ ClangASTType::GetIndexOfChildMemberWithName (const char *name,
                 if (GetCompleteType ())
                 {
                     llvm::StringRef name_sref(name);
-                    const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+                    const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
                     assert (objc_class_type);
                     if (objc_class_type)
                     {
@@ -3933,7 +3933,7 @@ ClangASTType::GetIndexOfChildWithName (const char *name, bool omit_empty_base_cl
                     assert(record_decl);
                     uint32_t child_idx = 0;
                     
-                    const clang::CXXRecordDecl *cxx_record_decl =  llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+                    const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
                     
                     if (cxx_record_decl)
                     {
@@ -3974,7 +3974,7 @@ ClangASTType::GetIndexOfChildWithName (const char *name, bool omit_empty_base_cl
                 if (GetCompleteType())
                 {
                     llvm::StringRef name_sref(name);
-                    const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+                    const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
                     assert (objc_class_type);
                     if (objc_class_type)
                     {
@@ -4128,7 +4128,7 @@ ClangASTType::GetNumTemplateArguments () const
                     const clang::CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
                     if (cxx_record_decl)
                     {
-                        const clang::ClassTemplateSpecializationDecl *template_decl =  llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxx_record_decl);
+                        const clang::ClassTemplateSpecializationDecl *template_decl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxx_record_decl);
                         if (template_decl)
                             return template_decl->getTemplateArgs().size();
                     }
@@ -4167,7 +4167,7 @@ ClangASTType::GetTemplateArgument (size_t arg_idx, lldb::TemplateArgumentKind &k
                     const clang::CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
                     if (cxx_record_decl)
                     {
-                        const clang::ClassTemplateSpecializationDecl *template_decl =  llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxx_record_decl);
+                        const clang::ClassTemplateSpecializationDecl *template_decl = llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(cxx_record_decl);
                         if (template_decl && arg_idx < template_decl->getTemplateArgs().size())
                         {
                             const clang::TemplateArgument &template_arg = template_decl->getTemplateArgs()[arg_idx];
@@ -4450,7 +4450,7 @@ IsOperator (const char *name, clang::OverloadedOperatorKind &op_kind)
 clang::RecordDecl *
 ClangASTType::GetAsRecordDecl () const
 {
-    const clang::RecordType *record_type =  llvm::dyn_cast<clang::RecordType>(GetCanonicalQualType());
+    const clang::RecordType *record_type = llvm::dyn_cast<clang::RecordType>(GetCanonicalQualType());
     if (record_type)
         return record_type->getDecl();
     return nullptr;
@@ -4465,7 +4465,7 @@ ClangASTType::GetAsCXXRecordDecl () const
 clang::ObjCInterfaceDecl *
 ClangASTType::GetAsObjCInterfaceDecl () const
 {
-    const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(GetCanonicalQualType());
+    const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(GetCanonicalQualType());
     if (objc_class_type)
         return objc_class_type->getInterface();
     return nullptr;
@@ -4508,7 +4508,7 @@ ClangASTType::AddFieldToRecordType (const char *name,
             // Determine whether this field corresponds to an anonymous
             // struct or union.
             if (const clang::TagType *TagT = field->getType()->getAs<clang::TagType>()) {
-                if (clang::RecordDecl *Rec =  llvm::dyn_cast<clang::RecordDecl>(TagT->getDecl()))
+                if (clang::RecordDecl *Rec = llvm::dyn_cast<clang::RecordDecl>(TagT->getDecl()))
                     if (!Rec->getDeclName()) {
                         Rec->setAnonymousStructOrUnion(true);
                         field->setImplicit();
@@ -4596,7 +4596,7 @@ ClangASTType::BuildIndirectFields ()
                  di != de;
                  ++di)
             {
-                if (clang::FieldDecl *nested_field_decl =  llvm::dyn_cast<clang::FieldDecl>(*di))
+                if (clang::FieldDecl *nested_field_decl = llvm::dyn_cast<clang::FieldDecl>(*di))
                 {
                     clang::NamedDecl **chain = new (*m_ast) clang::NamedDecl*[2];
                     chain[0] = *field_pos;
@@ -4616,7 +4616,7 @@ ClangASTType::BuildIndirectFields ()
                     
                     indirect_fields.push_back(indirect_field);
                 }
-                else if (clang::IndirectFieldDecl *nested_indirect_field_decl =  llvm::dyn_cast<clang::IndirectFieldDecl>(*di))
+                else if (clang::IndirectFieldDecl *nested_indirect_field_decl = llvm::dyn_cast<clang::IndirectFieldDecl>(*di))
                 {
                     int nested_chain_size = nested_indirect_field_decl->getChainingSize();
                     clang::NamedDecl **chain = new (*m_ast) clang::NamedDecl*[nested_chain_size + 1];
@@ -4729,7 +4729,7 @@ ClangASTType::AddMethodToCXXRecordType (const char *name,
     
     clang::DeclarationName decl_name (&m_ast->Idents.get(name));
     
-    const clang::FunctionType *function_type =  llvm::dyn_cast<clang::FunctionType>(method_qual_type.getTypePtr());
+    const clang::FunctionType *function_type = llvm::dyn_cast<clang::FunctionType>(method_qual_type.getTypePtr());
     
     if (function_type == nullptr)
         return nullptr;
@@ -5404,7 +5404,7 @@ ClangASTType::SetHasExternalStorage (bool has_extern)
         case clang::Type::ObjCObject:
         case clang::Type::ObjCInterface:
         {
-            const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+            const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
             assert (objc_class_type);
             if (objc_class_type)
             {
@@ -5444,10 +5444,10 @@ ClangASTType::SetTagTypeKind (int kind) const
         const clang::Type *clang_type = tag_qual_type.getTypePtr();
         if (clang_type)
         {
-            const clang::TagType *tag_type =  llvm::dyn_cast<clang::TagType>(clang_type);
+            const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(clang_type);
             if (tag_type)
             {
-                clang::TagDecl *tag_decl =  llvm::dyn_cast<clang::TagDecl>(tag_type->getDecl());
+                clang::TagDecl *tag_decl = llvm::dyn_cast<clang::TagDecl>(tag_type->getDecl());
                 if (tag_decl)
                 {
                     tag_decl->setTagKind ((clang::TagDecl::TagKind)kind);
@@ -5471,7 +5471,7 @@ ClangASTType::StartTagDeclarationDefinition ()
         const clang::Type *t = qual_type.getTypePtr();
         if (t)
         {
-            const clang::TagType *tag_type =  llvm::dyn_cast<clang::TagType>(t);
+            const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(t);
             if (tag_type)
             {
                 clang::TagDecl *tag_decl = tag_type->getDecl();
@@ -5482,7 +5482,7 @@ ClangASTType::StartTagDeclarationDefinition ()
                 }
             }
             
-            const clang::ObjCObjectType *object_type =  llvm::dyn_cast<clang::ObjCObjectType>(t);
+            const clang::ObjCObjectType *object_type = llvm::dyn_cast<clang::ObjCObjectType>(t);
             if (object_type)
             {
                 clang::ObjCInterfaceDecl *interface_decl = object_type->getInterface();
@@ -5513,7 +5513,7 @@ ClangASTType::CompleteTagDeclarationDefinition ()
             return true;
         }
         
-        const clang::EnumType *enum_type =  llvm::dyn_cast<clang::EnumType>(qual_type.getTypePtr());
+        const clang::EnumType *enum_type = llvm::dyn_cast<clang::EnumType>(qual_type.getTypePtr());
         
         if (enum_type)
         {
@@ -5569,7 +5569,7 @@ ClangASTType::AddEnumerationValueToEnumerationType (const ClangASTType &enumerat
         const clang::Type *clang_type = enum_qual_type.getTypePtr();
         if (clang_type)
         {
-            const clang::EnumType *enum_type =  llvm::dyn_cast<clang::EnumType>(clang_type);
+            const clang::EnumType *enum_type = llvm::dyn_cast<clang::EnumType>(clang_type);
             
             if (enum_type)
             {
@@ -5608,7 +5608,7 @@ ClangASTType::GetEnumerationIntegerType () const
     const clang::Type *clang_type = enum_qual_type.getTypePtr();
     if (clang_type)
     {
-        const clang::EnumType *enum_type =  llvm::dyn_cast<clang::EnumType>(clang_type);
+        const clang::EnumType *enum_type = llvm::dyn_cast<clang::EnumType>(clang_type);
         if (enum_type)
         {
             clang::EnumDecl *enum_decl = enum_type->getDecl();
@@ -5708,7 +5708,7 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
             const clang::ASTRecordLayout &record_layout = m_ast->getASTRecordLayout(record_decl);
             uint32_t child_idx = 0;
 
-            const clang::CXXRecordDecl *cxx_record_decl =  llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+            const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
             if (cxx_record_decl)
             {
                 // We might have base classes to print out first
@@ -6247,7 +6247,7 @@ ClangASTType::DumpTypeDescription (Stream *s) const
             {
                 GetCompleteType ();
                 
-                const clang::ObjCObjectType *objc_class_type =  llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
+                const clang::ObjCObjectType *objc_class_type = llvm::dyn_cast<clang::ObjCObjectType>(qual_type.getTypePtr());
                 assert (objc_class_type);
                 if (objc_class_type)
                 {
@@ -6291,7 +6291,7 @@ ClangASTType::DumpTypeDescription (Stream *s) const
                 
                 const clang::RecordType *record_type = llvm::cast<clang::RecordType>(qual_type.getTypePtr());
                 const clang::RecordDecl *record_decl = record_type->getDecl();
-                const clang::CXXRecordDecl *cxx_record_decl =  llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
+                const clang::CXXRecordDecl *cxx_record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(record_decl);
 
                 if (cxx_record_decl)
                     cxx_record_decl->print(llvm_ostrm, m_ast->getPrintingPolicy(), s->GetIndentLevel());
@@ -6302,7 +6302,7 @@ ClangASTType::DumpTypeDescription (Stream *s) const
 
         default:
             {
-                const clang::TagType *tag_type =  llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr());
+                const clang::TagType *tag_type = llvm::dyn_cast<clang::TagType>(qual_type.getTypePtr());
                 if (tag_type)
                 {
                     clang::TagDecl *tag_decl = tag_type->getDecl();
