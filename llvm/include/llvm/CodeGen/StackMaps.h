@@ -132,7 +132,7 @@ public:
   void serializeToStackMapSection();
 
 private:
-  const char *WSMP = "Stack Maps: ";
+  static const char *WSMP;
 
   typedef SmallVector<Location, 8> LocationVec;
   typedef SmallVector<LiveOutReg, 8> LiveOutVec;

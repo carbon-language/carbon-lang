@@ -33,6 +33,8 @@ using namespace llvm;
 static cl::opt<int> StackMapVersion("stackmap-version", cl::init(1),
   cl::desc("Specify the stackmap encoding version (default = 1)"));
 
+const char *StackMaps::WSMP = "Stack Maps: ";
+
 PatchPointOpers::PatchPointOpers(const MachineInstr *MI)
   : MI(MI),
     HasDef(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
@@ -472,6 +474,7 @@ void StackMaps::emitCallsiteEntries(MCStreamer &OS,
 
 /// Serialize the stackmap data.
 void StackMaps::serializeToStackMapSection() {
+  (void) WSMP;
   // Bail out if there's no stack map data.
   assert((!CSInfos.empty() || (CSInfos.empty() && ConstPool.empty())) &&
          "Expected empty constant pool too!");
