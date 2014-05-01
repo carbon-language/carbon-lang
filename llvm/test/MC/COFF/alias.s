@@ -68,7 +68,7 @@ weak_aliased_to_external = external2
 // CHECK-NEXT:     Section: .text (1)
 // CHECK-NEXT:     BaseType: Null (0x0)
 // CHECK-NEXT:     ComplexType: Null (0x0)
-// CHECK-NEXT:     StorageClass: Static (0x3)
+// CHECK-NEXT:     StorageClass: External (0x2)
 // CHECK-NEXT:     AuxSymbolCount: 0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {

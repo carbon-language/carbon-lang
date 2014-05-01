@@ -439,8 +439,7 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
 
     coff_symbol->MCData = &SymbolData;
   } else {
-    const MCSymbolData &ResSymData =
-      Assembler.getSymbolData(Symbol.AliasedSymbol());
+    const MCSymbolData &ResSymData = Assembler.getSymbolData(Symbol);
     const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
     coff_symbol->Data.Value = getSymbolValue(ResSymData, Layout);
 

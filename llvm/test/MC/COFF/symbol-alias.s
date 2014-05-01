@@ -51,7 +51,7 @@ _bar_alias = _bar
 // CHECK-NEXT: Value:               [[FOO_VALUE]]
 // CHECK-NEXT: Section:             [[FOO_SECTION_NUMBER]]
 // CHECK-NEXT: BaseType:            [[FOO_SIMPLE_TYPE]]
-// CHECK-NEXT: ComplexType:         [[FOO_COMPLEX_TYPE]]
+// CHECK-NEXT: ComplexType:         Null (0x0)
 // CHECK-NEXT: StorageClass:        [[FOO_STORAGE_CLASS]]
 // CHECK-NEXT: AuxSymbolCount:      [[FOO_NUMBER_OF_AUX_SYMBOLS]]
 
