@@ -186,12 +186,12 @@ foo:
   ubfx  w0, w0, #2, #3
   ubfx  x0, x0, #2, #3
 
-; CHECK: bfm   w0, w0, #31, #3
-; CHECK: bfm   x0, x0, #63, #3
-; CHECK: bfm   w0, w0, #0, #1
-; CHECK: bfm   x0, x0, #0, #1
-; CHECK: bfm   w0, w0, #2, #4
-; CHECK: bfm   x0, x0, #2, #4
+; CHECK: bfi   w0, w0, #1, #4
+; CHECK: bfi   x0, x0, #1, #4
+; CHECK: bfxil w0, w0, #0, #2
+; CHECK: bfxil x0, x0, #0, #2
+; CHECK: bfxil w0, w0, #2, #3
+; CHECK: bfxil x0, x0, #2, #3
 ; CHECK: sbfiz w0, w0, #1, #4
 ; CHECK: sbfiz x0, x0, #1, #4
 ; CHECK: sbfx  w0, w0, #2, #3

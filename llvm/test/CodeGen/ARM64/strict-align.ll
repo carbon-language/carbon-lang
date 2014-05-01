@@ -4,7 +4,7 @@
 define i32 @f0(i32* nocapture %p) nounwind {
 ; CHECK-STRICT: ldrh [[HIGH:w[0-9]+]], [x0, #2]
 ; CHECK-STRICT: ldrh [[LOW:w[0-9]+]], [x0]
-; CHECK-STRICT: bfm [[LOW]], [[HIGH]], #16, #15
+; CHECK-STRICT: bfi [[LOW]], [[HIGH]], #16, #16
 ; CHECK-STRICT: ret
 
 ; CHECK: ldr w0, [x0]
@@ -15,7 +15,7 @@ define i32 @f0(i32* nocapture %p) nounwind {
 
 define i64 @f1(i64* nocapture %p) nounwind {
 ; CHECK-STRICT:	ldp	w[[LOW:[0-9]+]], w[[HIGH:[0-9]+]], [x0]
-; CHECK-STRICT: bfm x[[LOW]], x[[HIGH]], #32, #31
+; CHECK-STRICT: bfi x[[LOW]], x[[HIGH]], #32, #32
 ; CHECK-STRICT:	ret
 
 ; CHECK: ldr x0, [x0]

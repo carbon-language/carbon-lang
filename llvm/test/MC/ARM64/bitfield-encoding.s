@@ -16,8 +16,8 @@ foo:
   ubfiz wzr, w0, #31, #1
   ubfiz xzr, x0, #31, #1
 
-; CHECK: bfm  w1, w2, #1, #15        ; encoding: [0x41,0x3c,0x01,0x33]
-; CHECK: bfm  x1, x2, #1, #15        ; encoding: [0x41,0x3c,0x41,0xb3]
+; CHECK: bfxil w1, w2, #1, #15       ; encoding: [0x41,0x3c,0x01,0x33]
+; CHECK: bfxil x1, x2, #1, #15       ; encoding: [0x41,0x3c,0x41,0xb3]
 ; CHECK: sbfx w1, w2, #1, #15        ; encoding: [0x41,0x3c,0x01,0x13]
 ; CHECK: sbfx x1, x2, #1, #15        ; encoding: [0x41,0x3c,0x41,0x93]
 ; CHECK: ubfx w1, w2, #1, #15        ; encoding: [0x41,0x3c,0x01,0x53]

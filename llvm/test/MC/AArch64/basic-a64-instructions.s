@@ -983,10 +983,15 @@ _func:
         bfm xzr, x4, #0, #0
         bfm x4, xzr, #63, #5
         bfm x5, x6, #12, #63
-// CHECK: bfm      x4, x5, #12, #10           // encoding: [0xa4,0x28,0x4c,0xb3]
-// CHECK: bfm      xzr, x4, #0, #0            // encoding: [0x9f,0x00,0x40,0xb3]
-// CHECK: bfm      x4, xzr, #63, #5            // encoding: [0xe4,0x17,0x7f,0xb3]
-// CHECK: bfm      x5, x6, #12, #63           // encoding: [0xc5,0xfc,0x4c,0xb3]
+// CHECK-AARCH64: bfm      x4, x5, #12, #10           // encoding: [0xa4,0x28,0x4c,0xb3]
+// CHECK-AARCH64: bfm      xzr, x4, #0, #0            // encoding: [0x9f,0x00,0x40,0xb3]
+// CHECK-AARCH64: bfm      x4, xzr, #63, #5            // encoding: [0xe4,0x17,0x7f,0xb3]
+// CHECK-AARCH64: bfm      x5, x6, #12, #63           // encoding: [0xc5,0xfc,0x4c,0xb3]
+// CHECK-ARM64: bfi      x4, x5, #52, #11           // encoding: [0xa4,0x28,0x4c,0xb3]
+// CHECK-ARM64: bfxil    xzr, x4, #0, #1            // encoding: [0x9f,0x00,0x40,0xb3]
+// CHECK-ARM64: bfi      x4, xzr, #1, #6            // encoding: [0xe4,0x17,0x7f,0xb3]
+// CHECK-ARM64: bfxil    x5, x6, #12, #52           // encoding: [0xc5,0xfc,0x4c,0xb3]
+
         sxtb w1, w2
         sxtb xzr, w3
         sxth w9, w10
@@ -1093,14 +1098,14 @@ _func:
 // CHECK-AARCH64: bfi      w13, w14, #29, #3          // encoding: [0xcd,0x09,0x03,0x33]
 // CHECK-AARCH64: bfi      xzr, xzr, #10, #11         // encoding: [0xff,0x2b,0x76,0xb3]
 
-// CHECK-ARM64: bfm    w9, w10, #0, #0         // encoding: [0x49,0x01,0x00,0x33]
-// CHECK-ARM64: bfm    x2, x3, #1, #0          // encoding: [0x62,0x00,0x41,0xb3]
-// CHECK-ARM64: bfm    x19, x20, #0, #63       // encoding: [0x93,0xfe,0x40,0xb3]
-// CHECK-ARM64: bfm    x9, x10, #59, #58       // encoding: [0x49,0xe9,0x7b,0xb3]
-// CHECK-ARM64: bfm    w9, w10, #0, #31        // encoding: [0x49,0x7d,0x00,0x33]
-// CHECK-ARM64: bfm    w11, w12, #1, #0        // encoding: [0x8b,0x01,0x01,0x33]
-// CHECK-ARM64: bfm    w13, w14, #3, #2        // encoding: [0xcd,0x09,0x03,0x33]
-// CHECK-ARM64: bfm    xzr, xzr, #54, #10      // encoding: [0xff,0x2b,0x76,0xb3]
+// CHECK-ARM64: bfxil    w9, w10, #0, #1            // encoding: [0x49,0x01,0x00,0x33]
+// CHECK-ARM64: bfi      x2, x3, #63, #1            // encoding: [0x62,0x00,0x41,0xb3]
+// CHECK-ARM64: bfxil    x19, x20, #0, #64          // encoding: [0x93,0xfe,0x40,0xb3]
+// CHECK-ARM64: bfi      x9, x10, #5, #59           // encoding: [0x49,0xe9,0x7b,0xb3]
+// CHECK-ARM64: bfxil    w9, w10, #0, #32           // encoding: [0x49,0x7d,0x00,0x33]
+// CHECK-ARM64: bfi      w11, w12, #31, #1          // encoding: [0x8b,0x01,0x01,0x33]
+// CHECK-ARM64: bfi      w13, w14, #29, #3          // encoding: [0xcd,0x09,0x03,0x33]
+// CHECK-ARM64: bfi      xzr, xzr, #10, #11         // encoding: [0xff,0x2b,0x76,0xb3]
 
         bfxil w9, w10, #0, #1
         bfxil x2, x3, #63, #1
@@ -1110,23 +1115,14 @@ _func:
         bfxil w11, w12, #31, #1
         bfxil w13, w14, #29, #3
         bfxil xzr, xzr, #10, #11
-// CHECK-AARCH64: bfxil    w9, w10, #0, #1            // encoding: [0x49,0x01,0x00,0x33]
-// CHECK-AARCH64: bfxil    x2, x3, #63, #1            // encoding: [0x62,0xfc,0x7f,0xb3]
-// CHECK-AARCH64: bfxil    x19, x20, #0, #64          // encoding: [0x93,0xfe,0x40,0xb3]
-// CHECK-AARCH64: bfxil    x9, x10, #5, #59           // encoding: [0x49,0xfd,0x45,0xb3]
-// CHECK-AARCH64: bfxil    w9, w10, #0, #32           // encoding: [0x49,0x7d,0x00,0x33]
-// CHECK-AARCH64: bfxil    w11, w12, #31, #1          // encoding: [0x8b,0x7d,0x1f,0x33]
-// CHECK-AARCH64: bfxil    w13, w14, #29, #3          // encoding: [0xcd,0x7d,0x1d,0x33]
-// CHECK-AARCH64: bfxil    xzr, xzr, #10, #11         // encoding: [0xff,0x53,0x4a,0xb3]
-
-// CHECK-ARM64: bfm    w9, w10, #0, #0         // encoding: [0x49,0x01,0x00,0x33]
-// CHECK-ARM64: bfm    x2, x3, #63, #63        // encoding: [0x62,0xfc,0x7f,0xb3]
-// CHECK-ARM64: bfm    x19, x20, #0, #63       // encoding: [0x93,0xfe,0x40,0xb3]
-// CHECK-ARM64: bfm    x9, x10, #5, #63        // encoding: [0x49,0xfd,0x45,0xb3]
-// CHECK-ARM64: bfm    w9, w10, #0, #31        // encoding: [0x49,0x7d,0x00,0x33]
-// CHECK-ARM64: bfm    w11, w12, #31, #31      // encoding: [0x8b,0x7d,0x1f,0x33]
-// CHECK-ARM64: bfm    w13, w14, #29, #31      // encoding: [0xcd,0x7d,0x1d,0x33]
-// CHECK-ARM64: bfm    xzr, xzr, #10, #20      // encoding: [0xff,0x53,0x4a,0xb3]
+// CHECK: bfxil    w9, w10, #0, #1            // encoding: [0x49,0x01,0x00,0x33]
+// CHECK: bfxil    x2, x3, #63, #1            // encoding: [0x62,0xfc,0x7f,0xb3]
+// CHECK: bfxil    x19, x20, #0, #64          // encoding: [0x93,0xfe,0x40,0xb3]
+// CHECK: bfxil    x9, x10, #5, #59           // encoding: [0x49,0xfd,0x45,0xb3]
+// CHECK: bfxil    w9, w10, #0, #32           // encoding: [0x49,0x7d,0x00,0x33]
+// CHECK: bfxil    w11, w12, #31, #1          // encoding: [0x8b,0x7d,0x1f,0x33]
+// CHECK: bfxil    w13, w14, #29, #3          // encoding: [0xcd,0x7d,0x1d,0x33]
+// CHECK: bfxil    xzr, xzr, #10, #11         // encoding: [0xff,0x53,0x4a,0xb3]
 
         ubfiz w9, w10, #0, #1
         ubfiz x2, x3, #63, #1

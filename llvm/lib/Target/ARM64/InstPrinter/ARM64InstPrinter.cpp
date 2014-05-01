@@ -171,6 +171,33 @@ void ARM64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     return;
   }
 
+  if (Opcode == ARM64::BFMXri || Opcode == ARM64::BFMWri) {
+    const MCOperand &Op0 = MI->getOperand(0); // Op1 == Op0
+    const MCOperand &Op2 = MI->getOperand(2);
+    int ImmR = MI->getOperand(3).getImm();
+    int ImmS = MI->getOperand(4).getImm();
+
+    // BFI alias
+    if (ImmS < ImmR) {
+      int BitWidth = Opcode == ARM64::BFMXri ? 64 : 32;
+      int LSB = (BitWidth - ImmR) % BitWidth;
+      int Width = ImmS + 1;
+      O << "\tbfi\t" << getRegisterName(Op0.getReg()) << ", "
+        << getRegisterName(Op2.getReg()) << ", #" << LSB << ", #" << Width;
+      printAnnotation(O, Annot);
+      return;
+    }
+
+    int LSB = ImmR;
+    int Width = ImmS - ImmR + 1;
+    // Otherwise BFXIL the prefered form
+    O << "\tbfxil\t"
+      << getRegisterName(Op0.getReg()) << ", " << getRegisterName(Op2.getReg())
+      << ", #" << LSB << ", #" << Width;
+    printAnnotation(O, Annot);
+    return;
+  }
+
   // Symbolic operands for MOVZ, MOVN and MOVK already imply a shift
   // (e.g. :gottprel_g1: is always going to be "lsl #16") so it should not be
   // printed.
