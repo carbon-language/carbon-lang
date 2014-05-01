@@ -385,6 +385,18 @@ void WinCOFFObjectWriter::DefineSection(MCSectionData const &SectionData) {
   SectionMap[&SectionData.getSection()] = coff_section;
 }
 
+static uint64_t getSymbolValue(const MCSymbolData &Data,
+                               const MCAsmLayout &Layout) {
+  if (Data.isCommon() && Data.isExternal())
+    return Data.getCommonSize();
+
+  uint64_t Res;
+  if (!Layout.getSymbolOffset(&Data, Res))
+    return 0;
+
+  return Res;
+}
+
 /// This function takes a symbol data object from the assembler
 /// and creates the associated COFF symbol staging object.
 void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
@@ -429,14 +441,7 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
   } else {
     const MCSymbolData &ResSymData =
       Assembler.getSymbolData(Symbol.AliasedSymbol());
-
-    if (Symbol.isVariable()) {
-      int64_t Addr;
-      if (Symbol.getVariableValue()->EvaluateAsAbsolute(Addr, Layout))
-        coff_symbol->Data.Value = Addr;
-    } else if (SymbolData.isExternal() && SymbolData.isCommon()) {
-      coff_symbol->Data.Value = SymbolData.getCommonSize();
-    }
+    coff_symbol->Data.Value = getSymbolValue(ResSymData, Layout);
 
     coff_symbol->Data.Type         = (ResSymData.getFlags() & 0x0000FFFF) >>  0;
     coff_symbol->Data.StorageClass = (ResSymData.getFlags() & 0x00FF0000) >> 16;
@@ -828,8 +833,6 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
       assert(Symbol->Section != nullptr);
 
       Symbol->Data.SectionNumber = Symbol->Section->Number;
-      Symbol->Data.Value = Layout.getFragmentOffset(SymbolData->Fragment)
-                         + SymbolData->Offset;
     }
 
     if (Symbol->should_keep()) {
