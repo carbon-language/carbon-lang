@@ -33,6 +33,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include <algorithm>
+#include <cstdlib>
 
 namespace clang {
 using namespace sema;
@@ -9260,8 +9261,8 @@ struct CompareOverloadCandidatesForDisplay {
           L->FailureKind == ovl_fail_too_few_arguments) {
         if (R->FailureKind == ovl_fail_too_many_arguments ||
             R->FailureKind == ovl_fail_too_few_arguments) {
-          int LDist = abs((int)L->Function->getNumParams() - (int)NumArgs);
-          int RDist = abs((int)R->Function->getNumParams() - (int)NumArgs);
+          int LDist = std::abs((int)L->Function->getNumParams() - (int)NumArgs);
+          int RDist = std::abs((int)R->Function->getNumParams() - (int)NumArgs);
           if (LDist == RDist)
             return L->FailureKind == ovl_fail_too_many_arguments &&
                    R->FailureKind == ovl_fail_too_few_arguments;
