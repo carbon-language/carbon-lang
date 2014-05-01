@@ -65,9 +65,8 @@ static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
   for (const DefinedAtom *atom : file->defined())
     definedAtoms[removeAtSignSuffix(atom->name())] = atom;
 
-  std::set<PECOFFLinkingContext::ExportDesc> exports = ctx.getDllExports();
-  ctx.getDllExports().clear();
-  for (PECOFFLinkingContext::ExportDesc desc : exports) {
+  std::set<PECOFFLinkingContext::ExportDesc> exports;
+  for (PECOFFLinkingContext::ExportDesc desc : ctx.getDllExports()) {
     auto it = definedAtoms.find(desc.name);
     if (it == definedAtoms.end()) {
       llvm::errs() << "Symbol <" << desc.name
@@ -77,8 +76,9 @@ static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
     const DefinedAtom *atom = it->second;
     ret.push_back(TableEntry(desc.name, desc.ordinal, atom, desc.noname));
     desc.internalName = removeLeadingUnderscore(atom->name());
-    ctx.addDllExport(desc);
+    exports.insert(desc);
   }
+  ctx.getDllExports().swap(exports);
   std::sort(ret.begin(), ret.end(), compare);
   return true;
 }
