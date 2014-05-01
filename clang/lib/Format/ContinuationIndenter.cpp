@@ -602,7 +602,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   // Insert scopes created by fake parenthesis.
   const FormatToken *Previous = Current.getPreviousNonComment();
   // Don't add extra indentation for the first fake parenthesis after
-  // 'return', assignements or opening <({[. The indentation for these cases
+  // 'return', assignments or opening <({[. The indentation for these cases
   // is special cased.
   bool SkipFirstExtraIndent =
       (Previous && (Previous->opensScope() || Previous->is(tok::kw_return) ||
