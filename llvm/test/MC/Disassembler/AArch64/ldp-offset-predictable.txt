@@ -1,4 +1,5 @@
 # RUN: llvm-mc -triple=aarch64 -disassemble < %s 2>&1 | FileCheck %s
+# RUN: llvm-mc -triple=arm64 -disassemble < %s 2>&1 | FileCheck %s
 
 # Stores are OK.
 0xe0 0x83 0x00 0xa9

@@ -1,4 +1,5 @@
 # RUN: llvm-mc -triple=aarch64 -mattr=+fp-armv8 -disassemble < %s | FileCheck %s
+# RUN: llvm-mc -triple=arm64 -mattr=+fp-armv8 -disassemble < %s | FileCheck %s
 
 #------------------------------------------------------------------------------
 # Add/sub (immediate)
@@ -187,7 +188,7 @@
 
 # CHECK: sub      w3, w5, w7
 # CHECK: sub      wzr, w3, w5
-# CHECK: sub      w20, wzr, w4
+# CHECK: {{sub      w20, wzr, w4|neg w20, w4}}
 # CHECK: sub      w4, w6, wzr
 # CHECK: sub      w11, w13, w15
 # CHECK: sub      w9, w3, wzr, lsl #10
@@ -214,7 +215,7 @@
 
 # CHECK: sub      x3, x5, x7
 # CHECK: sub      xzr, x3, x5
-# CHECK: sub      x20, xzr, x4
+# CHECK: {{sub      x20, xzr, x4|neg x20, x4}}
 # CHECK: sub      x4, x6, xzr
 # CHECK: sub      x11, x13, x15
 # CHECK: sub      x9, x3, xzr, lsl #10
@@ -241,7 +242,7 @@
 
 # CHECK: subs     w3, w5, w7
 # CHECK: cmp      w3, w5
-# CHECK: subs     w20, wzr, w4
+# CHECK: {{subs     w20, wzr, w4|negs w20, w4}}
 # CHECK: subs     w4, w6, wzr
 # CHECK: subs     w11, w13, w15
 # CHECK: subs     w9, w3, wzr, lsl #10
@@ -268,7 +269,7 @@
 
 # CHECK: subs     x3, x5, x7
 # CHECK: cmp      x3, x5
-# CHECK: subs     x20, xzr, x4
+# CHECK: {{subs     x20, xzr, x4|negs x20, x4}}
 # CHECK: subs     x4, x6, xzr
 # CHECK: subs     x11, x13, x15
 # CHECK: subs     x9, x3, xzr, lsl #10
@@ -393,18 +394,18 @@
 0x9f 0xde 0x95 0xeb
 0xdf 0xfe 0x97 0xeb
 
-# CHECK: sub      w29, wzr, w30
-# CHECK: sub      w30, wzr, wzr
-# CHECK: sub      wzr, wzr, w0
-# CHECK: sub      w28, wzr, w27
-# CHECK: sub      w26, wzr, w25, lsl #29
-# CHECK: sub      w24, wzr, w23, lsl #31
-# CHECK: sub      w22, wzr, w21, lsr #0
-# CHECK: sub      w20, wzr, w19, lsr #1
-# CHECK: sub      w18, wzr, w17, lsr #31
-# CHECK: sub      w16, wzr, w15, asr #0
-# CHECK: sub      w14, wzr, w13, asr #12
-# CHECK: sub      w12, wzr, w11, asr #31
+# CHECK: {{sub      w29, wzr|neg w29}}, w30
+# CHECK: {{sub      w30, wzr|neg w30}}, wzr
+# CHECK: {{sub      wzr, wzr|neg wzr}}, w0
+# CHECK: {{sub      w28, wzr|neg w28}}, w27
+# CHECK: {{sub      w26, wzr|neg w26}}, w25, lsl #29
+# CHECK: {{sub      w24, wzr|neg w24}}, w23, lsl #31
+# CHECK: {{sub      w22, wzr|neg w22}}, w21, lsr #0
+# CHECK: {{sub      w20, wzr|neg w20}}, w19, lsr #1
+# CHECK: {{sub      w18, wzr|neg w18}}, w17, lsr #31
+# CHECK: {{sub      w16, wzr|neg w16}}, w15, asr #0
+# CHECK: {{sub      w14, wzr|neg w14}}, w13, asr #12
+# CHECK: {{sub      w12, wzr|neg w12}}, w11, asr #31
 0xfd 0x3 0x1e 0x4b
 0xfe 0x3 0x1f 0x4b
 0xff 0x3 0x0 0x4b
@@ -418,18 +419,18 @@
 0xee 0x33 0x8d 0x4b
 0xec 0x7f 0x8b 0x4b
 
-# CHECK: sub      x29, xzr, x30
-# CHECK: sub      x30, xzr, xzr
-# CHECK: sub      xzr, xzr, x0
-# CHECK: sub      x28, xzr, x27
-# CHECK: sub      x26, xzr, x25, lsl #29
-# CHECK: sub      x24, xzr, x23, lsl #31
-# CHECK: sub      x22, xzr, x21, lsr #0
-# CHECK: sub      x20, xzr, x19, lsr #1
-# CHECK: sub      x18, xzr, x17, lsr #31
-# CHECK: sub      x16, xzr, x15, asr #0
-# CHECK: sub      x14, xzr, x13, asr #12
-# CHECK: sub      x12, xzr, x11, asr #31
+# CHECK: {{sub      x29, xzr|neg x29}}, x30
+# CHECK: {{sub      x30, xzr|neg x30}}, xzr
+# CHECK: {{sub      xzr, xzr|neg xzr}}, x0
+# CHECK: {{sub      x28, xzr|neg x28}}, x27
+# CHECK: {{sub      x26, xzr|neg x26}}, x25, lsl #29
+# CHECK: {{sub      x24, xzr|neg x24}}, x23, lsl #31
+# CHECK: {{sub      x22, xzr|neg x22}}, x21, lsr #0
+# CHECK: {{sub      x20, xzr|neg x20}}, x19, lsr #1
+# CHECK: {{sub      x18, xzr|neg x18}}, x17, lsr #31
+# CHECK: {{sub      x16, xzr|neg x16}}, x15, asr #0
+# CHECK: {{sub      x14, xzr|neg x14}}, x13, asr #12
+# CHECK: {{sub      x12, xzr|neg x12}}, x11, asr #31
 0xfd 0x3 0x1e 0xcb
 0xfe 0x3 0x1f 0xcb
 0xff 0x3 0x0 0xcb
@@ -443,18 +444,18 @@
 0xee 0x33 0x8d 0xcb
 0xec 0x7f 0x8b 0xcb
 
-# CHECK: subs     w29, wzr, w30
-# CHECK: subs     w30, wzr, wzr
+# CHECK: {{subs     w29, wzr|negs w29}}, w30
+# CHECK: {{subs     w30, wzr|negs w30}}, wzr
 # CHECK: cmp      wzr, w0
-# CHECK: subs     w28, wzr, w27
-# CHECK: subs     w26, wzr, w25, lsl #29
-# CHECK: subs     w24, wzr, w23, lsl #31
-# CHECK: subs     w22, wzr, w21, lsr #0
-# CHECK: subs     w20, wzr, w19, lsr #1
-# CHECK: subs     w18, wzr, w17, lsr #31
-# CHECK: subs     w16, wzr, w15, asr #0
-# CHECK: subs     w14, wzr, w13, asr #12
-# CHECK: subs     w12, wzr, w11, asr #31
+# CHECK: {{subs     w28, wzr|negs w28}}, w27
+# CHECK: {{subs     w26, wzr|negs w26}}, w25, lsl #29
+# CHECK: {{subs     w24, wzr|negs w24}}, w23, lsl #31
+# CHECK: {{subs     w22, wzr|negs w22}}, w21, lsr #0
+# CHECK: {{subs     w20, wzr|negs w20}}, w19, lsr #1
+# CHECK: {{subs     w18, wzr|negs w18}}, w17, lsr #31
+# CHECK: {{subs     w16, wzr|negs w16}}, w15, asr #0
+# CHECK: {{subs     w14, wzr|negs w14}}, w13, asr #12
+# CHECK: {{subs     w12, wzr|negs w12}}, w11, asr #31
 0xfd 0x3 0x1e 0x6b
 0xfe 0x3 0x1f 0x6b
 0xff 0x3 0x0 0x6b
@@ -468,18 +469,18 @@
 0xee 0x33 0x8d 0x6b
 0xec 0x7f 0x8b 0x6b
 
-# CHECK: subs     x29, xzr, x30
-# CHECK: subs     x30, xzr, xzr
+# CHECK: {{subs     x29, xzr|negs x29}}, x30
+# CHECK: {{subs     x30, xzr|negs x30}}, xzr
 # CHECK: cmp      xzr, x0
-# CHECK: subs     x28, xzr, x27
-# CHECK: subs     x26, xzr, x25, lsl #29
-# CHECK: subs     x24, xzr, x23, lsl #31
-# CHECK: subs     x22, xzr, x21, lsr #0
-# CHECK: subs     x20, xzr, x19, lsr #1
-# CHECK: subs     x18, xzr, x17, lsr #31
-# CHECK: subs     x16, xzr, x15, asr #0
-# CHECK: subs     x14, xzr, x13, asr #12
-# CHECK: subs     x12, xzr, x11, asr #31
+# CHECK: {{subs     x28, xzr|negs x28}}, x27
+# CHECK: {{subs     x26, xzr|negs x26}}, x25, lsl #29
+# CHECK: {{subs     x24, xzr|negs x24}}, x23, lsl #31
+# CHECK: {{subs     x22, xzr|negs x22}}, x21, lsr #0
+# CHECK: {{subs     x20, xzr|negs x20}}, x19, lsr #1
+# CHECK: {{subs     x18, xzr|negs x18}}, x17, lsr #31
+# CHECK: {{subs     x16, xzr|negs x16}}, x15, asr #0
+# CHECK: {{subs     x14, xzr|negs x14}}, x13, asr #12
+# CHECK: {{subs     x12, xzr|negs x12}}, x11, asr #31
 0xfd 0x3 0x1e 0xeb
 0xfe 0x3 0x1f 0xeb
 0xff 0x3 0x0 0xeb
@@ -1243,22 +1244,22 @@
 #------------------------------------------------------------------------------
 
 # CHECK: svc      #0
-# CHECK: svc      #65535
+# CHECK: svc      #{{65535|0xffff}}
 0x1 0x0 0x0 0xd4
 0xe1 0xff 0x1f 0xd4
 
-# CHECK: hvc      #1
-# CHECK: smc      #12000
-# CHECK: brk      #12
-# CHECK: hlt      #123
+# CHECK: hvc      #{{1|0x1}}
+# CHECK: smc      #{{12000|0x2ee0}}
+# CHECK: brk      #{{12|0xc}}
+# CHECK: hlt      #{{123|0x7b}}
 0x22 0x0 0x0 0xd4
 0x3 0xdc 0x5 0xd4
 0x80 0x1 0x20 0xd4
 0x60 0xf 0x40 0xd4
 
-# CHECK: dcps1    #42
-# CHECK: dcps2    #9
-# CHECK: dcps3    #1000
+# CHECK: dcps1    #{{42|0x2a}}
+# CHECK: dcps2    #{{9|0x9}}
+# CHECK: dcps3    #{{1000|0x3e8}}
 0x41 0x5 0xa0 0xd4
 0x22 0x1 0xa0 0xd4
 0x3 0x7d 0xa0 0xd4
@@ -2353,23 +2354,23 @@
 0xec 0xff 0xbf 0x3d
 
 # CHECK: prfm    pldl1keep, [sp, #8]
-# CHECK: prfm    pldl1strm, [x3, #0]
+# CHECK: prfm    pldl1strm, [x3{{(, #0)?}}]
 # CHECK: prfm    pldl2keep, [x5, #16]
-# CHECK: prfm    pldl2strm, [x2, #0]
-# CHECK: prfm    pldl3keep, [x5, #0]
-# CHECK: prfm    pldl3strm, [x6, #0]
+# CHECK: prfm    pldl2strm, [x2{{(, #0)?}}]
+# CHECK: prfm    pldl3keep, [x5{{(, #0)?}}]
+# CHECK: prfm    pldl3strm, [x6{{(, #0)?}}]
 # CHECK: prfm    plil1keep, [sp, #8]
-# CHECK: prfm    plil1strm, [x3, #0]
+# CHECK: prfm    plil1strm, [x3{{(, #0)?}}]
 # CHECK: prfm    plil2keep, [x5, #16]
-# CHECK: prfm    plil2strm, [x2, #0]
-# CHECK: prfm    plil3keep, [x5, #0]
-# CHECK: prfm    plil3strm, [x6, #0]
+# CHECK: prfm    plil2strm, [x2{{(, #0)?}}]
+# CHECK: prfm    plil3keep, [x5{{(, #0)?}}]
+# CHECK: prfm    plil3strm, [x6{{(, #0)?}}]
 # CHECK: prfm    pstl1keep, [sp, #8]
-# CHECK: prfm    pstl1strm, [x3, #0]
+# CHECK: prfm    pstl1strm, [x3{{(, #0)?}}]
 # CHECK: prfm    pstl2keep, [x5, #16]
-# CHECK: prfm    pstl2strm, [x2, #0]
-# CHECK: prfm    pstl3keep, [x5, #0]
-# CHECK: prfm    pstl3strm, [x6, #0]
+# CHECK: prfm    pstl2strm, [x2{{(, #0)?}}]
+# CHECK: prfm    pstl3keep, [x5{{(, #0)?}}]
+# CHECK: prfm    pstl3strm, [x6{{(, #0)?}}]
 0xe0 0x07 0x80 0xf9
 0x61 0x00 0x80 0xf9
 0xa2 0x08 0x80 0xf9
@@ -2722,15 +2723,15 @@
 0xff 0xc7 0x0 0x52
 0x30 0xc6 0x1 0x52
 
-# CHECK: ands     wzr, w18, #0xcccccccc
+# CHECK: {{ands     wzr,|tst}} w18, #0xcccccccc
 # CHECK: ands     w19, w20, #0x33333333
 # CHECK: ands     w21, w22, #0x99999999
 0x5f 0xe6 0x2 0x72
 0x93 0xe6 0x0 0x72
 0xd5 0xe6 0x1 0x72
 
-# CHECK: ands     wzr, w3, #0xaaaaaaaa
-# CHECK: ands     wzr, wzr, #0x55555555
+# CHECK: {{ands     wzr,|tst}} w3, #0xaaaaaaaa
+# CHECK: {{ands     wzr,|tst}} wzr, #0x55555555
 0x7f 0xf0 0x1 0x72
 0xff 0xf3 0x0 0x72
 
@@ -2762,15 +2763,15 @@
 0xff 0xc7 0x0 0xd2
 0x30 0xc6 0x1 0xd2
 
-# CHECK: ands     xzr, x18, #0xcccccccccccccccc
+# CHECK: {{ands     xzr,|tst}} x18, #0xcccccccccccccccc
 # CHECK: ands     x19, x20, #0x3333333333333333
 # CHECK: ands     x21, x22, #0x9999999999999999
 0x5f 0xe6 0x2 0xf2
 0x93 0xe6 0x0 0xf2
 0xd5 0xe6 0x1 0xf2
 
-# CHECK: ands     xzr, x3, #0xaaaaaaaaaaaaaaaa
-# CHECK: ands     xzr, xzr, #0x5555555555555555
+# CHECK: {{ands     xzr,|tst}} x3, #0xaaaaaaaaaaaaaaaa
+# CHECK: {{ands     xzr,|tst}} xzr, #0x5555555555555555
 0x7f 0xf0 0x1 0xf2
 0xff 0xf3 0x0 0xf2
 
@@ -2858,15 +2859,15 @@
 # limitation in InstAlias. Lots of the "mov[nz]" instructions should
 # be "mov".
 
-# CHECK: movz     w1, #65535
+# CHECK: movz     w1, #{{65535|0xffff}}
 # CHECK: movz     w2, #0, lsl #16
-# CHECK: movn     w2, #1234
+# CHECK: movn     w2, #{{1234|0x4d2}}
 0xe1 0xff 0x9f 0x52
 0x2 0x0 0xa0 0x52
 0x42 0x9a 0x80 0x12
 
-# CHECK: movz     x2, #1234, lsl #32
-# CHECK: movk     xzr, #4321, lsl #48
+# CHECK: movz     x2, #{{1234|0x4d2}}, lsl #32
+# CHECK: movk     xzr, #{{4321|0x10e1}}, lsl #48
 0x42 0x9a 0xc0 0xd2
 0x3f 0x1c 0xe2 0xf2
 
@@ -2906,7 +2907,7 @@
 #------------------------------------------------------------------------------
 
 # CHECK: nop
-# CHECK: hint     #127
+# CHECK: hint     #{{127|0x7f}}
 # CHECK: nop
 # CHECK: yield
 # CHECK: wfe
@@ -2998,9 +2999,9 @@
 0xdf 0x3f 0x3 0xd5
 0xdf 0x3c 0x3 0xd5
 
-# CHECK: msr      spsel, #0
-# CHECK: msr      daifset, #15
-# CHECK: msr      daifclr, #12
+# CHECK: msr      {{spsel|SPSEL}}, #0
+# CHECK: msr      {{daifset|DAIFSET}}, #15
+# CHECK: msr      {{daifclr|DAIFCLR}}, #12
 0xbf 0x40 0x0 0xd5
 0xdf 0x4f 0x3 0xd5
 0xff 0x4c 0x3 0xd5
@@ -3014,21 +3015,21 @@
 0xe9 0x59 0x2f 0xd5
 0x41 0xff 0x28 0xd5
 
-# CHECK: sys     #0, c7, c1, #0, xzr
-# CHECK: sys     #0, c7, c5, #0, xzr
-# CHECK: sys     #3, c7, c5, #1, x9
+# CHECK: {{sys     #0, c7, c1, #0, xzr|ic ialluis}}
+# CHECK: {{sys     #0, c7, c5, #0, xzr|ic iallu}}
+# CHECK: {{sys     #3, c7, c5, #1|ic ivau}}, x9
 0x1f 0x71 0x8 0xd5
 0x1f 0x75 0x8 0xd5
 0x29 0x75 0xb 0xd5
 
-# CHECK: sys     #3, c7, c4, #1, x12
-# CHECK: sys     #0, c7, c6, #1, xzr
-# CHECK: sys     #0, c7, c6, #2, x2
-# CHECK: sys     #3, c7, c10, #1, x9
-# CHECK: sys     #0, c7, c10, #2, x10
-# CHECK: sys     #3, c7, c11, #1, x0
-# CHECK: sys     #3, c7, c14, #1, x3
-# CHECK: sys     #0, c7, c14, #2, x30
+# CHECK: {{sys     #3, c7, c4, #1|dc zva}}, x12
+# CHECK: {{sys     #0, c7, c6, #1|dc ivac}}, xzr
+# CHECK: {{sys     #0, c7, c6, #2|dc isw}}, x2
+# CHECK: {{sys     #3, c7, c10, #1|dc cvac}}, x9
+# CHECK: {{sys     #0, c7, c10, #2|dc csw}}, x10
+# CHECK: {{sys     #3, c7, c11, #1|dc cvau}}, x0
+# CHECK: {{sys     #3, c7, c14, #1|dc civac}}, x3
+# CHECK: {{sys     #0, c7, c14, #2|dc cisw}}, x30
 0x2c 0x74 0xb 0xd5
 0x3f 0x76 0x8 0xd5
 0x42 0x76 0x8 0xd5
@@ -3039,559 +3040,559 @@
 0x5e 0x7e 0x8 0xd5
 
 
-# CHECK: msr      teecr32_el1, x12
-# CHECK: msr      osdtrrx_el1, x12
-# CHECK: msr      mdccint_el1, x12
-# CHECK: msr      mdscr_el1, x12
-# CHECK: msr      osdtrtx_el1, x12
-# CHECK: msr      dbgdtr_el0, x12
-# CHECK: msr      dbgdtrtx_el0, x12
-# CHECK: msr      oseccr_el1, x12
-# CHECK: msr      dbgvcr32_el2, x12
-# CHECK: msr      dbgbvr0_el1, x12
-# CHECK: msr      dbgbvr1_el1, x12
-# CHECK: msr      dbgbvr2_el1, x12
-# CHECK: msr      dbgbvr3_el1, x12
-# CHECK: msr      dbgbvr4_el1, x12
-# CHECK: msr      dbgbvr5_el1, x12
-# CHECK: msr      dbgbvr6_el1, x12
-# CHECK: msr      dbgbvr7_el1, x12
-# CHECK: msr      dbgbvr8_el1, x12
-# CHECK: msr      dbgbvr9_el1, x12
-# CHECK: msr      dbgbvr10_el1, x12
-# CHECK: msr      dbgbvr11_el1, x12
-# CHECK: msr      dbgbvr12_el1, x12
-# CHECK: msr      dbgbvr13_el1, x12
-# CHECK: msr      dbgbvr14_el1, x12
-# CHECK: msr      dbgbvr15_el1, x12
-# CHECK: msr      dbgbcr0_el1, x12
-# CHECK: msr      dbgbcr1_el1, x12
-# CHECK: msr      dbgbcr2_el1, x12
-# CHECK: msr      dbgbcr3_el1, x12
-# CHECK: msr      dbgbcr4_el1, x12
-# CHECK: msr      dbgbcr5_el1, x12
-# CHECK: msr      dbgbcr6_el1, x12
-# CHECK: msr      dbgbcr7_el1, x12
-# CHECK: msr      dbgbcr8_el1, x12
-# CHECK: msr      dbgbcr9_el1, x12
-# CHECK: msr      dbgbcr10_el1, x12
-# CHECK: msr      dbgbcr11_el1, x12
-# CHECK: msr      dbgbcr12_el1, x12
-# CHECK: msr      dbgbcr13_el1, x12
-# CHECK: msr      dbgbcr14_el1, x12
-# CHECK: msr      dbgbcr15_el1, x12
-# CHECK: msr      dbgwvr0_el1, x12
-# CHECK: msr      dbgwvr1_el1, x12
-# CHECK: msr      dbgwvr2_el1, x12
-# CHECK: msr      dbgwvr3_el1, x12
-# CHECK: msr      dbgwvr4_el1, x12
-# CHECK: msr      dbgwvr5_el1, x12
-# CHECK: msr      dbgwvr6_el1, x12
-# CHECK: msr      dbgwvr7_el1, x12
-# CHECK: msr      dbgwvr8_el1, x12
-# CHECK: msr      dbgwvr9_el1, x12
-# CHECK: msr      dbgwvr10_el1, x12
-# CHECK: msr      dbgwvr11_el1, x12
-# CHECK: msr      dbgwvr12_el1, x12
-# CHECK: msr      dbgwvr13_el1, x12
-# CHECK: msr      dbgwvr14_el1, x12
-# CHECK: msr      dbgwvr15_el1, x12
-# CHECK: msr      dbgwcr0_el1, x12
-# CHECK: msr      dbgwcr1_el1, x12
-# CHECK: msr      dbgwcr2_el1, x12
-# CHECK: msr      dbgwcr3_el1, x12
-# CHECK: msr      dbgwcr4_el1, x12
-# CHECK: msr      dbgwcr5_el1, x12
-# CHECK: msr      dbgwcr6_el1, x12
-# CHECK: msr      dbgwcr7_el1, x12
-# CHECK: msr      dbgwcr8_el1, x12
-# CHECK: msr      dbgwcr9_el1, x12
-# CHECK: msr      dbgwcr10_el1, x12
-# CHECK: msr      dbgwcr11_el1, x12
-# CHECK: msr      dbgwcr12_el1, x12
-# CHECK: msr      dbgwcr13_el1, x12
-# CHECK: msr      dbgwcr14_el1, x12
-# CHECK: msr      dbgwcr15_el1, x12
-# CHECK: msr      teehbr32_el1, x12
-# CHECK: msr      oslar_el1, x12
-# CHECK: msr      osdlr_el1, x12
-# CHECK: msr      dbgprcr_el1, x12
-# CHECK: msr      dbgclaimset_el1, x12
-# CHECK: msr      dbgclaimclr_el1, x12
-# CHECK: msr      csselr_el1, x12
-# CHECK: msr      vpidr_el2, x12
-# CHECK: msr      vmpidr_el2, x12
-# CHECK: msr      sctlr_el1, x12
-# CHECK: msr      sctlr_el2, x12
-# CHECK: msr      sctlr_el3, x12
-# CHECK: msr      actlr_el1, x12
-# CHECK: msr      actlr_el2, x12
-# CHECK: msr      actlr_el3, x12
-# CHECK: msr      cpacr_el1, x12
-# CHECK: msr      hcr_el2, x12
-# CHECK: msr      scr_el3, x12
-# CHECK: msr      mdcr_el2, x12
-# CHECK: msr      sder32_el3, x12
-# CHECK: msr      cptr_el2, x12
-# CHECK: msr      cptr_el3, x12
-# CHECK: msr      hstr_el2, x12
-# CHECK: msr      hacr_el2, x12
-# CHECK: msr      mdcr_el3, x12
-# CHECK: msr      ttbr0_el1, x12
-# CHECK: msr      ttbr0_el2, x12
-# CHECK: msr      ttbr0_el3, x12
-# CHECK: msr      ttbr1_el1, x12
-# CHECK: msr      tcr_el1, x12
-# CHECK: msr      tcr_el2, x12
-# CHECK: msr      tcr_el3, x12
-# CHECK: msr      vttbr_el2, x12
-# CHECK: msr      vtcr_el2, x12
-# CHECK: msr      dacr32_el2, x12
-# CHECK: msr      spsr_el1, x12
-# CHECK: msr      spsr_el2, x12
-# CHECK: msr      spsr_el3, x12
-# CHECK: msr      elr_el1, x12
-# CHECK: msr      elr_el2, x12
-# CHECK: msr      elr_el3, x12
-# CHECK: msr      sp_el0, x12
-# CHECK: msr      sp_el1, x12
-# CHECK: msr      sp_el2, x12
-# CHECK: msr      spsel, x12
-# CHECK: msr      nzcv, x12
-# CHECK: msr      daif, x12
-# CHECK: msr      currentel, x12
-# CHECK: msr      spsr_irq, x12
-# CHECK: msr      spsr_abt, x12
-# CHECK: msr      spsr_und, x12
-# CHECK: msr      spsr_fiq, x12
-# CHECK: msr      fpcr, x12
-# CHECK: msr      fpsr, x12
-# CHECK: msr      dspsr_el0, x12
-# CHECK: msr      dlr_el0, x12
-# CHECK: msr      ifsr32_el2, x12
-# CHECK: msr      afsr0_el1, x12
-# CHECK: msr      afsr0_el2, x12
-# CHECK: msr      afsr0_el3, x12
-# CHECK: msr      afsr1_el1, x12
-# CHECK: msr      afsr1_el2, x12
-# CHECK: msr      afsr1_el3, x12
-# CHECK: msr      esr_el1, x12
-# CHECK: msr      esr_el2, x12
-# CHECK: msr      esr_el3, x12
-# CHECK: msr      fpexc32_el2, x12
-# CHECK: msr      far_el1, x12
-# CHECK: msr      far_el2, x12
-# CHECK: msr      far_el3, x12
-# CHECK: msr      hpfar_el2, x12
-# CHECK: msr      par_el1, x12
-# CHECK: msr      pmcr_el0, x12
-# CHECK: msr      pmcntenset_el0, x12
-# CHECK: msr      pmcntenclr_el0, x12
-# CHECK: msr      pmovsclr_el0, x12
-# CHECK: msr      pmselr_el0, x12
-# CHECK: msr      pmccntr_el0, x12
-# CHECK: msr      pmxevtyper_el0, x12
-# CHECK: msr      pmxevcntr_el0, x12
-# CHECK: msr      pmuserenr_el0, x12
-# CHECK: msr      pmintenset_el1, x12
-# CHECK: msr      pmintenclr_el1, x12
-# CHECK: msr      pmovsset_el0, x12
-# CHECK: msr      mair_el1, x12
-# CHECK: msr      mair_el2, x12
-# CHECK: msr      mair_el3, x12
-# CHECK: msr      amair_el1, x12
-# CHECK: msr      amair_el2, x12
-# CHECK: msr      amair_el3, x12
-# CHECK: msr      vbar_el1, x12
-# CHECK: msr      vbar_el2, x12
-# CHECK: msr      vbar_el3, x12
-# CHECK: msr      rmr_el1, x12
-# CHECK: msr      rmr_el2, x12
-# CHECK: msr      rmr_el3, x12
-# CHECK: msr      tpidr_el0, x12
-# CHECK: msr      tpidr_el2, x12
-# CHECK: msr      tpidr_el3, x12
-# CHECK: msr      tpidrro_el0, x12
-# CHECK: msr      tpidr_el1, x12
-# CHECK: msr      cntfrq_el0, x12
-# CHECK: msr      cntvoff_el2, x12
-# CHECK: msr      cntkctl_el1, x12
-# CHECK: msr      cnthctl_el2, x12
-# CHECK: msr      cntp_tval_el0, x12
-# CHECK: msr      cnthp_tval_el2, x12
-# CHECK: msr      cntps_tval_el1, x12
-# CHECK: msr      cntp_ctl_el0, x12
-# CHECK: msr      cnthp_ctl_el2, x12
-# CHECK: msr      cntps_ctl_el1, x12
-# CHECK: msr      cntp_cval_el0, x12
-# CHECK: msr      cnthp_cval_el2, x12
-# CHECK: msr      cntps_cval_el1, x12
-# CHECK: msr      cntv_tval_el0, x12
-# CHECK: msr      cntv_ctl_el0, x12
-# CHECK: msr      cntv_cval_el0, x12
-# CHECK: msr      pmevcntr0_el0, x12
-# CHECK: msr      pmevcntr1_el0, x12
-# CHECK: msr      pmevcntr2_el0, x12
-# CHECK: msr      pmevcntr3_el0, x12
-# CHECK: msr      pmevcntr4_el0, x12
-# CHECK: msr      pmevcntr5_el0, x12
-# CHECK: msr      pmevcntr6_el0, x12
-# CHECK: msr      pmevcntr7_el0, x12
-# CHECK: msr      pmevcntr8_el0, x12
-# CHECK: msr      pmevcntr9_el0, x12
-# CHECK: msr      pmevcntr10_el0, x12
-# CHECK: msr      pmevcntr11_el0, x12
-# CHECK: msr      pmevcntr12_el0, x12
-# CHECK: msr      pmevcntr13_el0, x12
-# CHECK: msr      pmevcntr14_el0, x12
-# CHECK: msr      pmevcntr15_el0, x12
-# CHECK: msr      pmevcntr16_el0, x12
-# CHECK: msr      pmevcntr17_el0, x12
-# CHECK: msr      pmevcntr18_el0, x12
-# CHECK: msr      pmevcntr19_el0, x12
-# CHECK: msr      pmevcntr20_el0, x12
-# CHECK: msr      pmevcntr21_el0, x12
-# CHECK: msr      pmevcntr22_el0, x12
-# CHECK: msr      pmevcntr23_el0, x12
-# CHECK: msr      pmevcntr24_el0, x12
-# CHECK: msr      pmevcntr25_el0, x12
-# CHECK: msr      pmevcntr26_el0, x12
-# CHECK: msr      pmevcntr27_el0, x12
-# CHECK: msr      pmevcntr28_el0, x12
-# CHECK: msr      pmevcntr29_el0, x12
-# CHECK: msr      pmevcntr30_el0, x12
-# CHECK: msr      pmccfiltr_el0, x12
-# CHECK: msr      pmevtyper0_el0, x12
-# CHECK: msr      pmevtyper1_el0, x12
-# CHECK: msr      pmevtyper2_el0, x12
-# CHECK: msr      pmevtyper3_el0, x12
-# CHECK: msr      pmevtyper4_el0, x12
-# CHECK: msr      pmevtyper5_el0, x12
-# CHECK: msr      pmevtyper6_el0, x12
-# CHECK: msr      pmevtyper7_el0, x12
-# CHECK: msr      pmevtyper8_el0, x12
-# CHECK: msr      pmevtyper9_el0, x12
-# CHECK: msr      pmevtyper10_el0, x12
-# CHECK: msr      pmevtyper11_el0, x12
-# CHECK: msr      pmevtyper12_el0, x12
-# CHECK: msr      pmevtyper13_el0, x12
-# CHECK: msr      pmevtyper14_el0, x12
-# CHECK: msr      pmevtyper15_el0, x12
-# CHECK: msr      pmevtyper16_el0, x12
-# CHECK: msr      pmevtyper17_el0, x12
-# CHECK: msr      pmevtyper18_el0, x12
-# CHECK: msr      pmevtyper19_el0, x12
-# CHECK: msr      pmevtyper20_el0, x12
-# CHECK: msr      pmevtyper21_el0, x12
-# CHECK: msr      pmevtyper22_el0, x12
-# CHECK: msr      pmevtyper23_el0, x12
-# CHECK: msr      pmevtyper24_el0, x12
-# CHECK: msr      pmevtyper25_el0, x12
-# CHECK: msr      pmevtyper26_el0, x12
-# CHECK: msr      pmevtyper27_el0, x12
-# CHECK: msr      pmevtyper28_el0, x12
-# CHECK: msr      pmevtyper29_el0, x12
-# CHECK: msr      pmevtyper30_el0, x12
-# CHECK: mrs      x9, teecr32_el1
-# CHECK: mrs      x9, osdtrrx_el1
-# CHECK: mrs      x9, mdccsr_el0
-# CHECK: mrs      x9, mdccint_el1
-# CHECK: mrs      x9, mdscr_el1
-# CHECK: mrs      x9, osdtrtx_el1
-# CHECK: mrs      x9, dbgdtr_el0
-# CHECK: mrs      x9, dbgdtrrx_el0
-# CHECK: mrs      x9, oseccr_el1
-# CHECK: mrs      x9, dbgvcr32_el2
-# CHECK: mrs      x9, dbgbvr0_el1
-# CHECK: mrs      x9, dbgbvr1_el1
-# CHECK: mrs      x9, dbgbvr2_el1
-# CHECK: mrs      x9, dbgbvr3_el1
-# CHECK: mrs      x9, dbgbvr4_el1
-# CHECK: mrs      x9, dbgbvr5_el1
-# CHECK: mrs      x9, dbgbvr6_el1
-# CHECK: mrs      x9, dbgbvr7_el1
-# CHECK: mrs      x9, dbgbvr8_el1
-# CHECK: mrs      x9, dbgbvr9_el1
-# CHECK: mrs      x9, dbgbvr10_el1
-# CHECK: mrs      x9, dbgbvr11_el1
-# CHECK: mrs      x9, dbgbvr12_el1
-# CHECK: mrs      x9, dbgbvr13_el1
-# CHECK: mrs      x9, dbgbvr14_el1
-# CHECK: mrs      x9, dbgbvr15_el1
-# CHECK: mrs      x9, dbgbcr0_el1
-# CHECK: mrs      x9, dbgbcr1_el1
-# CHECK: mrs      x9, dbgbcr2_el1
-# CHECK: mrs      x9, dbgbcr3_el1
-# CHECK: mrs      x9, dbgbcr4_el1
-# CHECK: mrs      x9, dbgbcr5_el1
-# CHECK: mrs      x9, dbgbcr6_el1
-# CHECK: mrs      x9, dbgbcr7_el1
-# CHECK: mrs      x9, dbgbcr8_el1
-# CHECK: mrs      x9, dbgbcr9_el1
-# CHECK: mrs      x9, dbgbcr10_el1
-# CHECK: mrs      x9, dbgbcr11_el1
-# CHECK: mrs      x9, dbgbcr12_el1
-# CHECK: mrs      x9, dbgbcr13_el1
-# CHECK: mrs      x9, dbgbcr14_el1
-# CHECK: mrs      x9, dbgbcr15_el1
-# CHECK: mrs      x9, dbgwvr0_el1
-# CHECK: mrs      x9, dbgwvr1_el1
-# CHECK: mrs      x9, dbgwvr2_el1
-# CHECK: mrs      x9, dbgwvr3_el1
-# CHECK: mrs      x9, dbgwvr4_el1
-# CHECK: mrs      x9, dbgwvr5_el1
-# CHECK: mrs      x9, dbgwvr6_el1
-# CHECK: mrs      x9, dbgwvr7_el1
-# CHECK: mrs      x9, dbgwvr8_el1
-# CHECK: mrs      x9, dbgwvr9_el1
-# CHECK: mrs      x9, dbgwvr10_el1
-# CHECK: mrs      x9, dbgwvr11_el1
-# CHECK: mrs      x9, dbgwvr12_el1
-# CHECK: mrs      x9, dbgwvr13_el1
-# CHECK: mrs      x9, dbgwvr14_el1
-# CHECK: mrs      x9, dbgwvr15_el1
-# CHECK: mrs      x9, dbgwcr0_el1
-# CHECK: mrs      x9, dbgwcr1_el1
-# CHECK: mrs      x9, dbgwcr2_el1
-# CHECK: mrs      x9, dbgwcr3_el1
-# CHECK: mrs      x9, dbgwcr4_el1
-# CHECK: mrs      x9, dbgwcr5_el1
-# CHECK: mrs      x9, dbgwcr6_el1
-# CHECK: mrs      x9, dbgwcr7_el1
-# CHECK: mrs      x9, dbgwcr8_el1
-# CHECK: mrs      x9, dbgwcr9_el1
-# CHECK: mrs      x9, dbgwcr10_el1
-# CHECK: mrs      x9, dbgwcr11_el1
-# CHECK: mrs      x9, dbgwcr12_el1
-# CHECK: mrs      x9, dbgwcr13_el1
-# CHECK: mrs      x9, dbgwcr14_el1
-# CHECK: mrs      x9, dbgwcr15_el1
-# CHECK: mrs      x9, mdrar_el1
-# CHECK: mrs      x9, teehbr32_el1
-# CHECK: mrs      x9, oslsr_el1
-# CHECK: mrs      x9, osdlr_el1
-# CHECK: mrs      x9, dbgprcr_el1
-# CHECK: mrs      x9, dbgclaimset_el1
-# CHECK: mrs      x9, dbgclaimclr_el1
-# CHECK: mrs      x9, dbgauthstatus_el1
-# CHECK: mrs      x9, midr_el1
-# CHECK: mrs      x9, ccsidr_el1
-# CHECK: mrs      x9, csselr_el1
-# CHECK: mrs      x9, vpidr_el2
-# CHECK: mrs      x9, clidr_el1
-# CHECK: mrs      x9, ctr_el0
-# CHECK: mrs      x9, mpidr_el1
-# CHECK: mrs      x9, vmpidr_el2
-# CHECK: mrs      x9, revidr_el1
-# CHECK: mrs      x9, aidr_el1
-# CHECK: mrs      x9, dczid_el0
-# CHECK: mrs      x9, id_pfr0_el1
-# CHECK: mrs      x9, id_pfr1_el1
-# CHECK: mrs      x9, id_dfr0_el1
-# CHECK: mrs      x9, id_afr0_el1
-# CHECK: mrs      x9, id_mmfr0_el1
-# CHECK: mrs      x9, id_mmfr1_el1
-# CHECK: mrs      x9, id_mmfr2_el1
-# CHECK: mrs      x9, id_mmfr3_el1
-# CHECK: mrs      x9, id_isar0_el1
-# CHECK: mrs      x9, id_isar1_el1
-# CHECK: mrs      x9, id_isar2_el1
-# CHECK: mrs      x9, id_isar3_el1
-# CHECK: mrs      x9, id_isar4_el1
-# CHECK: mrs      x9, id_isar5_el1
-# CHECK: mrs      x9, mvfr0_el1
-# CHECK: mrs      x9, mvfr1_el1
-# CHECK: mrs      x9, mvfr2_el1
-# CHECK: mrs      x9, id_aa64pfr0_el1
-# CHECK: mrs      x9, id_aa64pfr1_el1
-# CHECK: mrs      x9, id_aa64dfr0_el1
-# CHECK: mrs      x9, id_aa64dfr1_el1
-# CHECK: mrs      x9, id_aa64afr0_el1
-# CHECK: mrs      x9, id_aa64afr1_el1
-# CHECK: mrs      x9, id_aa64isar0_el1
-# CHECK: mrs      x9, id_aa64isar1_el1
-# CHECK: mrs      x9, id_aa64mmfr0_el1
-# CHECK: mrs      x9, id_aa64mmfr1_el1
-# CHECK: mrs      x9, sctlr_el1
-# CHECK: mrs      x9, sctlr_el2
-# CHECK: mrs      x9, sctlr_el3
-# CHECK: mrs      x9, actlr_el1
-# CHECK: mrs      x9, actlr_el2
-# CHECK: mrs      x9, actlr_el3
-# CHECK: mrs      x9, cpacr_el1
-# CHECK: mrs      x9, hcr_el2
-# CHECK: mrs      x9, scr_el3
-# CHECK: mrs      x9, mdcr_el2
-# CHECK: mrs      x9, sder32_el3
-# CHECK: mrs      x9, cptr_el2
-# CHECK: mrs      x9, cptr_el3
-# CHECK: mrs      x9, hstr_el2
-# CHECK: mrs      x9, hacr_el2
-# CHECK: mrs      x9, mdcr_el3
-# CHECK: mrs      x9, ttbr0_el1
-# CHECK: mrs      x9, ttbr0_el2
-# CHECK: mrs      x9, ttbr0_el3
-# CHECK: mrs      x9, ttbr1_el1
-# CHECK: mrs      x9, tcr_el1
-# CHECK: mrs      x9, tcr_el2
-# CHECK: mrs      x9, tcr_el3
-# CHECK: mrs      x9, vttbr_el2
-# CHECK: mrs      x9, vtcr_el2
-# CHECK: mrs      x9, dacr32_el2
-# CHECK: mrs      x9, spsr_el1
-# CHECK: mrs      x9, spsr_el2
-# CHECK: mrs      x9, spsr_el3
-# CHECK: mrs      x9, elr_el1
-# CHECK: mrs      x9, elr_el2
-# CHECK: mrs      x9, elr_el3
-# CHECK: mrs      x9, sp_el0
-# CHECK: mrs      x9, sp_el1
-# CHECK: mrs      x9, sp_el2
-# CHECK: mrs      x9, spsel
-# CHECK: mrs      x9, nzcv
-# CHECK: mrs      x9, daif
-# CHECK: mrs      x9, currentel
-# CHECK: mrs      x9, spsr_irq
-# CHECK: mrs      x9, spsr_abt
-# CHECK: mrs      x9, spsr_und
-# CHECK: mrs      x9, spsr_fiq
-# CHECK: mrs      x9, fpcr
-# CHECK: mrs      x9, fpsr
-# CHECK: mrs      x9, dspsr_el0
-# CHECK: mrs      x9, dlr_el0
-# CHECK: mrs      x9, ifsr32_el2
-# CHECK: mrs      x9, afsr0_el1
-# CHECK: mrs      x9, afsr0_el2
-# CHECK: mrs      x9, afsr0_el3
-# CHECK: mrs      x9, afsr1_el1
-# CHECK: mrs      x9, afsr1_el2
-# CHECK: mrs      x9, afsr1_el3
-# CHECK: mrs      x9, esr_el1
-# CHECK: mrs      x9, esr_el2
-# CHECK: mrs      x9, esr_el3
-# CHECK: mrs      x9, fpexc32_el2
-# CHECK: mrs      x9, far_el1
-# CHECK: mrs      x9, far_el2
-# CHECK: mrs      x9, far_el3
-# CHECK: mrs      x9, hpfar_el2
-# CHECK: mrs      x9, par_el1
-# CHECK: mrs      x9, pmcr_el0
-# CHECK: mrs      x9, pmcntenset_el0
-# CHECK: mrs      x9, pmcntenclr_el0
-# CHECK: mrs      x9, pmovsclr_el0
-# CHECK: mrs      x9, pmselr_el0
-# CHECK: mrs      x9, pmceid0_el0
-# CHECK: mrs      x9, pmceid1_el0
-# CHECK: mrs      x9, pmccntr_el0
-# CHECK: mrs      x9, pmxevtyper_el0
-# CHECK: mrs      x9, pmxevcntr_el0
-# CHECK: mrs      x9, pmuserenr_el0
-# CHECK: mrs      x9, pmintenset_el1
-# CHECK: mrs      x9, pmintenclr_el1
-# CHECK: mrs      x9, pmovsset_el0
-# CHECK: mrs      x9, mair_el1
-# CHECK: mrs      x9, mair_el2
-# CHECK: mrs      x9, mair_el3
-# CHECK: mrs      x9, amair_el1
-# CHECK: mrs      x9, amair_el2
-# CHECK: mrs      x9, amair_el3
-# CHECK: mrs      x9, vbar_el1
-# CHECK: mrs      x9, vbar_el2
-# CHECK: mrs      x9, vbar_el3
-# CHECK: mrs      x9, rvbar_el1
-# CHECK: mrs      x9, rvbar_el2
-# CHECK: mrs      x9, rvbar_el3
-# CHECK: mrs      x9, rmr_el1
-# CHECK: mrs      x9, rmr_el2
-# CHECK: mrs      x9, rmr_el3
-# CHECK: mrs      x9, isr_el1
-# CHECK: mrs      x9, contextidr_el1
-# CHECK: mrs      x9, tpidr_el0
-# CHECK: mrs      x9, tpidr_el2
-# CHECK: mrs      x9, tpidr_el3
-# CHECK: mrs      x9, tpidrro_el0
-# CHECK: mrs      x9, tpidr_el1
-# CHECK: mrs      x9, cntfrq_el0
-# CHECK: mrs      x9, cntpct_el0
-# CHECK: mrs      x9, cntvct_el0
-# CHECK: mrs      x9, cntvoff_el2
-# CHECK: mrs      x9, cntkctl_el1
-# CHECK: mrs      x9, cnthctl_el2
-# CHECK: mrs      x9, cntp_tval_el0
-# CHECK: mrs      x9, cnthp_tval_el2
-# CHECK: mrs      x9, cntps_tval_el1
-# CHECK: mrs      x9, cntp_ctl_el0
-# CHECK: mrs      x9, cnthp_ctl_el2
-# CHECK: mrs      x9, cntps_ctl_el1
-# CHECK: mrs      x9, cntp_cval_el0
-# CHECK: mrs      x9, cnthp_cval_el2
-# CHECK: mrs      x9, cntps_cval_el1
-# CHECK: mrs      x9, cntv_tval_el0
-# CHECK: mrs      x9, cntv_ctl_el0
-# CHECK: mrs      x9, cntv_cval_el0
-# CHECK: mrs      x9, pmevcntr0_el0
-# CHECK: mrs      x9, pmevcntr1_el0
-# CHECK: mrs      x9, pmevcntr2_el0
-# CHECK: mrs      x9, pmevcntr3_el0
-# CHECK: mrs      x9, pmevcntr4_el0
-# CHECK: mrs      x9, pmevcntr5_el0
-# CHECK: mrs      x9, pmevcntr6_el0
-# CHECK: mrs      x9, pmevcntr7_el0
-# CHECK: mrs      x9, pmevcntr8_el0
-# CHECK: mrs      x9, pmevcntr9_el0
-# CHECK: mrs      x9, pmevcntr10_el0
-# CHECK: mrs      x9, pmevcntr11_el0
-# CHECK: mrs      x9, pmevcntr12_el0
-# CHECK: mrs      x9, pmevcntr13_el0
-# CHECK: mrs      x9, pmevcntr14_el0
-# CHECK: mrs      x9, pmevcntr15_el0
-# CHECK: mrs      x9, pmevcntr16_el0
-# CHECK: mrs      x9, pmevcntr17_el0
-# CHECK: mrs      x9, pmevcntr18_el0
-# CHECK: mrs      x9, pmevcntr19_el0
-# CHECK: mrs      x9, pmevcntr20_el0
-# CHECK: mrs      x9, pmevcntr21_el0
-# CHECK: mrs      x9, pmevcntr22_el0
-# CHECK: mrs      x9, pmevcntr23_el0
-# CHECK: mrs      x9, pmevcntr24_el0
-# CHECK: mrs      x9, pmevcntr25_el0
-# CHECK: mrs      x9, pmevcntr26_el0
-# CHECK: mrs      x9, pmevcntr27_el0
-# CHECK: mrs      x9, pmevcntr28_el0
-# CHECK: mrs      x9, pmevcntr29_el0
-# CHECK: mrs      x9, pmevcntr30_el0
-# CHECK: mrs      x9, pmccfiltr_el0
-# CHECK: mrs      x9, pmevtyper0_el0
-# CHECK: mrs      x9, pmevtyper1_el0
-# CHECK: mrs      x9, pmevtyper2_el0
-# CHECK: mrs      x9, pmevtyper3_el0
-# CHECK: mrs      x9, pmevtyper4_el0
-# CHECK: mrs      x9, pmevtyper5_el0
-# CHECK: mrs      x9, pmevtyper6_el0
-# CHECK: mrs      x9, pmevtyper7_el0
-# CHECK: mrs      x9, pmevtyper8_el0
-# CHECK: mrs      x9, pmevtyper9_el0
-# CHECK: mrs      x9, pmevtyper10_el0
-# CHECK: mrs      x9, pmevtyper11_el0
-# CHECK: mrs      x9, pmevtyper12_el0
-# CHECK: mrs      x9, pmevtyper13_el0
-# CHECK: mrs      x9, pmevtyper14_el0
-# CHECK: mrs      x9, pmevtyper15_el0
-# CHECK: mrs      x9, pmevtyper16_el0
-# CHECK: mrs      x9, pmevtyper17_el0
-# CHECK: mrs      x9, pmevtyper18_el0
-# CHECK: mrs      x9, pmevtyper19_el0
-# CHECK: mrs      x9, pmevtyper20_el0
-# CHECK: mrs      x9, pmevtyper21_el0
-# CHECK: mrs      x9, pmevtyper22_el0
-# CHECK: mrs      x9, pmevtyper23_el0
-# CHECK: mrs      x9, pmevtyper24_el0
-# CHECK: mrs      x9, pmevtyper25_el0
-# CHECK: mrs      x9, pmevtyper26_el0
-# CHECK: mrs      x9, pmevtyper27_el0
-# CHECK: mrs      x9, pmevtyper28_el0
-# CHECK: mrs      x9, pmevtyper29_el0
-# CHECK: mrs      x9, pmevtyper30_el0
+# CHECK: msr      {{teecr32_el1|TEECR32_EL1}}, x12
+# CHECK: msr      {{osdtrrx_el1|OSDTRRX_EL1}}, x12
+# CHECK: msr      {{mdccint_el1|MDCCINT_EL1}}, x12
+# CHECK: msr      {{mdscr_el1|MDSCR_EL1}}, x12
+# CHECK: msr      {{osdtrtx_el1|OSDTRTX_EL1}}, x12
+# CHECK: msr      {{dbgdtr_el0|DBGDTR_EL0}}, x12
+# CHECK: msr      {{dbgdtrtx_el0|DBGDTRTX_EL0}}, x12
+# CHECK: msr      {{oseccr_el1|OSECCR_EL1}}, x12
+# CHECK: msr      {{dbgvcr32_el2|DBGVCR32_EL2}}, x12
+# CHECK: msr      {{dbgbvr0_el1|DBGBVR0_EL1}}, x12
+# CHECK: msr      {{dbgbvr1_el1|DBGBVR1_EL1}}, x12
+# CHECK: msr      {{dbgbvr2_el1|DBGBVR2_EL1}}, x12
+# CHECK: msr      {{dbgbvr3_el1|DBGBVR3_EL1}}, x12
+# CHECK: msr      {{dbgbvr4_el1|DBGBVR4_EL1}}, x12
+# CHECK: msr      {{dbgbvr5_el1|DBGBVR5_EL1}}, x12
+# CHECK: msr      {{dbgbvr6_el1|DBGBVR6_EL1}}, x12
+# CHECK: msr      {{dbgbvr7_el1|DBGBVR7_EL1}}, x12
+# CHECK: msr      {{dbgbvr8_el1|DBGBVR8_EL1}}, x12
+# CHECK: msr      {{dbgbvr9_el1|DBGBVR9_EL1}}, x12
+# CHECK: msr      {{dbgbvr10_el1|DBGBVR10_EL1}}, x12
+# CHECK: msr      {{dbgbvr11_el1|DBGBVR11_EL1}}, x12
+# CHECK: msr      {{dbgbvr12_el1|DBGBVR12_EL1}}, x12
+# CHECK: msr      {{dbgbvr13_el1|DBGBVR13_EL1}}, x12
+# CHECK: msr      {{dbgbvr14_el1|DBGBVR14_EL1}}, x12
+# CHECK: msr      {{dbgbvr15_el1|DBGBVR15_EL1}}, x12
+# CHECK: msr      {{dbgbcr0_el1|DBGBCR0_EL1}}, x12
+# CHECK: msr      {{dbgbcr1_el1|DBGBCR1_EL1}}, x12
+# CHECK: msr      {{dbgbcr2_el1|DBGBCR2_EL1}}, x12
+# CHECK: msr      {{dbgbcr3_el1|DBGBCR3_EL1}}, x12
+# CHECK: msr      {{dbgbcr4_el1|DBGBCR4_EL1}}, x12
+# CHECK: msr      {{dbgbcr5_el1|DBGBCR5_EL1}}, x12
+# CHECK: msr      {{dbgbcr6_el1|DBGBCR6_EL1}}, x12
+# CHECK: msr      {{dbgbcr7_el1|DBGBCR7_EL1}}, x12
+# CHECK: msr      {{dbgbcr8_el1|DBGBCR8_EL1}}, x12
+# CHECK: msr      {{dbgbcr9_el1|DBGBCR9_EL1}}, x12
+# CHECK: msr      {{dbgbcr10_el1|DBGBCR10_EL1}}, x12
+# CHECK: msr      {{dbgbcr11_el1|DBGBCR11_EL1}}, x12
+# CHECK: msr      {{dbgbcr12_el1|DBGBCR12_EL1}}, x12
+# CHECK: msr      {{dbgbcr13_el1|DBGBCR13_EL1}}, x12
+# CHECK: msr      {{dbgbcr14_el1|DBGBCR14_EL1}}, x12
+# CHECK: msr      {{dbgbcr15_el1|DBGBCR15_EL1}}, x12
+# CHECK: msr      {{dbgwvr0_el1|DBGWVR0_EL1}}, x12
+# CHECK: msr      {{dbgwvr1_el1|DBGWVR1_EL1}}, x12
+# CHECK: msr      {{dbgwvr2_el1|DBGWVR2_EL1}}, x12
+# CHECK: msr      {{dbgwvr3_el1|DBGWVR3_EL1}}, x12
+# CHECK: msr      {{dbgwvr4_el1|DBGWVR4_EL1}}, x12
+# CHECK: msr      {{dbgwvr5_el1|DBGWVR5_EL1}}, x12
+# CHECK: msr      {{dbgwvr6_el1|DBGWVR6_EL1}}, x12
+# CHECK: msr      {{dbgwvr7_el1|DBGWVR7_EL1}}, x12
+# CHECK: msr      {{dbgwvr8_el1|DBGWVR8_EL1}}, x12
+# CHECK: msr      {{dbgwvr9_el1|DBGWVR9_EL1}}, x12
+# CHECK: msr      {{dbgwvr10_el1|DBGWVR10_EL1}}, x12
+# CHECK: msr      {{dbgwvr11_el1|DBGWVR11_EL1}}, x12
+# CHECK: msr      {{dbgwvr12_el1|DBGWVR12_EL1}}, x12
+# CHECK: msr      {{dbgwvr13_el1|DBGWVR13_EL1}}, x12
+# CHECK: msr      {{dbgwvr14_el1|DBGWVR14_EL1}}, x12
+# CHECK: msr      {{dbgwvr15_el1|DBGWVR15_EL1}}, x12
+# CHECK: msr      {{dbgwcr0_el1|DBGWCR0_EL1}}, x12
+# CHECK: msr      {{dbgwcr1_el1|DBGWCR1_EL1}}, x12
+# CHECK: msr      {{dbgwcr2_el1|DBGWCR2_EL1}}, x12
+# CHECK: msr      {{dbgwcr3_el1|DBGWCR3_EL1}}, x12
+# CHECK: msr      {{dbgwcr4_el1|DBGWCR4_EL1}}, x12
+# CHECK: msr      {{dbgwcr5_el1|DBGWCR5_EL1}}, x12
+# CHECK: msr      {{dbgwcr6_el1|DBGWCR6_EL1}}, x12
+# CHECK: msr      {{dbgwcr7_el1|DBGWCR7_EL1}}, x12
+# CHECK: msr      {{dbgwcr8_el1|DBGWCR8_EL1}}, x12
+# CHECK: msr      {{dbgwcr9_el1|DBGWCR9_EL1}}, x12
+# CHECK: msr      {{dbgwcr10_el1|DBGWCR10_EL1}}, x12
+# CHECK: msr      {{dbgwcr11_el1|DBGWCR11_EL1}}, x12
+# CHECK: msr      {{dbgwcr12_el1|DBGWCR12_EL1}}, x12
+# CHECK: msr      {{dbgwcr13_el1|DBGWCR13_EL1}}, x12
+# CHECK: msr      {{dbgwcr14_el1|DBGWCR14_EL1}}, x12
+# CHECK: msr      {{dbgwcr15_el1|DBGWCR15_EL1}}, x12
+# CHECK: msr      {{teehbr32_el1|TEEHBR32_EL1}}, x12
+# CHECK: msr      {{oslar_el1|OSLAR_EL1}}, x12
+# CHECK: msr      {{osdlr_el1|OSDLR_EL1}}, x12
+# CHECK: msr      {{dbgprcr_el1|DBGPRCR_EL1}}, x12
+# CHECK: msr      {{dbgclaimset_el1|DBGCLAIMSET_EL1}}, x12
+# CHECK: msr      {{dbgclaimclr_el1|DBGCLAIMCLR_EL1}}, x12
+# CHECK: msr      {{csselr_el1|CSSELR_EL1}}, x12
+# CHECK: msr      {{vpidr_el2|VPIDR_EL2}}, x12
+# CHECK: msr      {{vmpidr_el2|VMPIDR_EL2}}, x12
+# CHECK: msr      {{sctlr_el1|SCTLR_EL1}}, x12
+# CHECK: msr      {{sctlr_el2|SCTLR_EL2}}, x12
+# CHECK: msr      {{sctlr_el3|SCTLR_EL3}}, x12
+# CHECK: msr      {{actlr_el1|ACTLR_EL1}}, x12
+# CHECK: msr      {{actlr_el2|ACTLR_EL2}}, x12
+# CHECK: msr      {{actlr_el3|ACTLR_EL3}}, x12
+# CHECK: msr      {{cpacr_el1|CPACR_EL1}}, x12
+# CHECK: msr      {{hcr_el2|HCR_EL2}}, x12
+# CHECK: msr      {{scr_el3|SCR_EL3}}, x12
+# CHECK: msr      {{mdcr_el2|MDCR_EL2}}, x12
+# CHECK: msr      {{sder32_el3|SDER32_EL3}}, x12
+# CHECK: msr      {{cptr_el2|CPTR_EL2}}, x12
+# CHECK: msr      {{cptr_el3|CPTR_EL3}}, x12
+# CHECK: msr      {{hstr_el2|HSTR_EL2}}, x12
+# CHECK: msr      {{hacr_el2|HACR_EL2}}, x12
+# CHECK: msr      {{mdcr_el3|MDCR_EL3}}, x12
+# CHECK: msr      {{ttbr0_el1|TTBR0_EL1}}, x12
+# CHECK: msr      {{ttbr0_el2|TTBR0_EL2}}, x12
+# CHECK: msr      {{ttbr0_el3|TTBR0_EL3}}, x12
+# CHECK: msr      {{ttbr1_el1|TTBR1_EL1}}, x12
+# CHECK: msr      {{tcr_el1|TCR_EL1}}, x12
+# CHECK: msr      {{tcr_el2|TCR_EL2}}, x12
+# CHECK: msr      {{tcr_el3|TCR_EL3}}, x12
+# CHECK: msr      {{vttbr_el2|VTTBR_EL2}}, x12
+# CHECK: msr      {{vtcr_el2|VTCR_EL2}}, x12
+# CHECK: msr      {{dacr32_el2|DACR32_EL2}}, x12
+# CHECK: msr      {{spsr_el1|SPSR_EL1}}, x12
+# CHECK: msr      {{spsr_el2|SPSR_EL2}}, x12
+# CHECK: msr      {{spsr_el3|SPSR_EL3}}, x12
+# CHECK: msr      {{elr_el1|ELR_EL1}}, x12
+# CHECK: msr      {{elr_el2|ELR_EL2}}, x12
+# CHECK: msr      {{elr_el3|ELR_EL3}}, x12
+# CHECK: msr      {{sp_el0|SP_EL0}}, x12
+# CHECK: msr      {{sp_el1|SP_EL1}}, x12
+# CHECK: msr      {{sp_el2|SP_EL2}}, x12
+# CHECK: msr      {{spsel|SPSEL}}, x12
+# CHECK: msr      {{nzcv|NZCV}}, x12
+# CHECK: msr      {{daif|DAIF}}, x12
+# CHECK: msr      {{currentel|CURRENTEL}}, x12
+# CHECK: msr      {{spsr_irq|SPSR_IRQ}}, x12
+# CHECK: msr      {{spsr_abt|SPSR_ABT}}, x12
+# CHECK: msr      {{spsr_und|SPSR_UND}}, x12
+# CHECK: msr      {{spsr_fiq|SPSR_FIQ}}, x12
+# CHECK: msr      {{fpcr|FPCR}}, x12
+# CHECK: msr      {{fpsr|FPSR}}, x12
+# CHECK: msr      {{dspsr_el0|DSPSR_EL0}}, x12
+# CHECK: msr      {{dlr_el0|DLR_EL0}}, x12
+# CHECK: msr      {{ifsr32_el2|IFSR32_EL2}}, x12
+# CHECK: msr      {{afsr0_el1|AFSR0_EL1}}, x12
+# CHECK: msr      {{afsr0_el2|AFSR0_EL2}}, x12
+# CHECK: msr      {{afsr0_el3|AFSR0_EL3}}, x12
+# CHECK: msr      {{afsr1_el1|AFSR1_EL1}}, x12
+# CHECK: msr      {{afsr1_el2|AFSR1_EL2}}, x12
+# CHECK: msr      {{afsr1_el3|AFSR1_EL3}}, x12
+# CHECK: msr      {{esr_el1|ESR_EL1}}, x12
+# CHECK: msr      {{esr_el2|ESR_EL2}}, x12
+# CHECK: msr      {{esr_el3|ESR_EL3}}, x12
+# CHECK: msr      {{fpexc32_el2|FPEXC32_EL2}}, x12
+# CHECK: msr      {{far_el1|FAR_EL1}}, x12
+# CHECK: msr      {{far_el2|FAR_EL2}}, x12
+# CHECK: msr      {{far_el3|FAR_EL3}}, x12
+# CHECK: msr      {{hpfar_el2|HPFAR_EL2}}, x12
+# CHECK: msr      {{par_el1|PAR_EL1}}, x12
+# CHECK: msr      {{pmcr_el0|PMCR_EL0}}, x12
+# CHECK: msr      {{pmcntenset_el0|PMCNTENSET_EL0}}, x12
+# CHECK: msr      {{pmcntenclr_el0|PMCNTENCLR_EL0}}, x12
+# CHECK: msr      {{pmovsclr_el0|PMOVSCLR_EL0}}, x12
+# CHECK: msr      {{pmselr_el0|PMSELR_EL0}}, x12
+# CHECK: msr      {{pmccntr_el0|PMCCNTR_EL0}}, x12
+# CHECK: msr      {{pmxevtyper_el0|PMXEVTYPER_EL0}}, x12
+# CHECK: msr      {{pmxevcntr_el0|PMXEVCNTR_EL0}}, x12
+# CHECK: msr      {{pmuserenr_el0|PMUSERENR_EL0}}, x12
+# CHECK: msr      {{pmintenset_el1|PMINTENSET_EL1}}, x12
+# CHECK: msr      {{pmintenclr_el1|PMINTENCLR_EL1}}, x12
+# CHECK: msr      {{pmovsset_el0|PMOVSSET_EL0}}, x12
+# CHECK: msr      {{mair_el1|MAIR_EL1}}, x12
+# CHECK: msr      {{mair_el2|MAIR_EL2}}, x12
+# CHECK: msr      {{mair_el3|MAIR_EL3}}, x12
+# CHECK: msr      {{amair_el1|AMAIR_EL1}}, x12
+# CHECK: msr      {{amair_el2|AMAIR_EL2}}, x12
+# CHECK: msr      {{amair_el3|AMAIR_EL3}}, x12
+# CHECK: msr      {{vbar_el1|VBAR_EL1}}, x12
+# CHECK: msr      {{vbar_el2|VBAR_EL2}}, x12
+# CHECK: msr      {{vbar_el3|VBAR_EL3}}, x12
+# CHECK: msr      {{rmr_el1|RMR_EL1}}, x12
+# CHECK: msr      {{rmr_el2|RMR_EL2}}, x12
+# CHECK: msr      {{rmr_el3|RMR_EL3}}, x12
+# CHECK: msr      {{tpidr_el0|TPIDR_EL0}}, x12
+# CHECK: msr      {{tpidr_el2|TPIDR_EL2}}, x12
+# CHECK: msr      {{tpidr_el3|TPIDR_EL3}}, x12
+# CHECK: msr      {{tpidrro_el0|TPIDRRO_EL0}}, x12
+# CHECK: msr      {{tpidr_el1|TPIDR_EL1}}, x12
+# CHECK: msr      {{cntfrq_el0|CNTFRQ_EL0}}, x12
+# CHECK: msr      {{cntvoff_el2|CNTVOFF_EL2}}, x12
+# CHECK: msr      {{cntkctl_el1|CNTKCTL_EL1}}, x12
+# CHECK: msr      {{cnthctl_el2|CNTHCTL_EL2}}, x12
+# CHECK: msr      {{cntp_tval_el0|CNTP_TVAL_EL0}}, x12
+# CHECK: msr      {{cnthp_tval_el2|CNTHP_TVAL_EL2}}, x12
+# CHECK: msr      {{cntps_tval_el1|CNTPS_TVAL_EL1}}, x12
+# CHECK: msr      {{cntp_ctl_el0|CNTP_CTL_EL0}}, x12
+# CHECK: msr      {{cnthp_ctl_el2|CNTHP_CTL_EL2}}, x12
+# CHECK: msr      {{cntps_ctl_el1|CNTPS_CTL_EL1}}, x12
+# CHECK: msr      {{cntp_cval_el0|CNTP_CVAL_EL0}}, x12
+# CHECK: msr      {{cnthp_cval_el2|CNTHP_CVAL_EL2}}, x12
+# CHECK: msr      {{cntps_cval_el1|CNTPS_CVAL_EL1}}, x12
+# CHECK: msr      {{cntv_tval_el0|CNTV_TVAL_EL0}}, x12
+# CHECK: msr      {{cntv_ctl_el0|CNTV_CTL_EL0}}, x12
+# CHECK: msr      {{cntv_cval_el0|CNTV_CVAL_EL0}}, x12
+# CHECK: msr      {{pmevcntr0_el0|PMEVCNTR0_EL0}}, x12
+# CHECK: msr      {{pmevcntr1_el0|PMEVCNTR1_EL0}}, x12
+# CHECK: msr      {{pmevcntr2_el0|PMEVCNTR2_EL0}}, x12
+# CHECK: msr      {{pmevcntr3_el0|PMEVCNTR3_EL0}}, x12
+# CHECK: msr      {{pmevcntr4_el0|PMEVCNTR4_EL0}}, x12
+# CHECK: msr      {{pmevcntr5_el0|PMEVCNTR5_EL0}}, x12
+# CHECK: msr      {{pmevcntr6_el0|PMEVCNTR6_EL0}}, x12
+# CHECK: msr      {{pmevcntr7_el0|PMEVCNTR7_EL0}}, x12
+# CHECK: msr      {{pmevcntr8_el0|PMEVCNTR8_EL0}}, x12
+# CHECK: msr      {{pmevcntr9_el0|PMEVCNTR9_EL0}}, x12
+# CHECK: msr      {{pmevcntr10_el0|PMEVCNTR10_EL0}}, x12
+# CHECK: msr      {{pmevcntr11_el0|PMEVCNTR11_EL0}}, x12
+# CHECK: msr      {{pmevcntr12_el0|PMEVCNTR12_EL0}}, x12
+# CHECK: msr      {{pmevcntr13_el0|PMEVCNTR13_EL0}}, x12
+# CHECK: msr      {{pmevcntr14_el0|PMEVCNTR14_EL0}}, x12
+# CHECK: msr      {{pmevcntr15_el0|PMEVCNTR15_EL0}}, x12
+# CHECK: msr      {{pmevcntr16_el0|PMEVCNTR16_EL0}}, x12
+# CHECK: msr      {{pmevcntr17_el0|PMEVCNTR17_EL0}}, x12
+# CHECK: msr      {{pmevcntr18_el0|PMEVCNTR18_EL0}}, x12
+# CHECK: msr      {{pmevcntr19_el0|PMEVCNTR19_EL0}}, x12
+# CHECK: msr      {{pmevcntr20_el0|PMEVCNTR20_EL0}}, x12
+# CHECK: msr      {{pmevcntr21_el0|PMEVCNTR21_EL0}}, x12
+# CHECK: msr      {{pmevcntr22_el0|PMEVCNTR22_EL0}}, x12
+# CHECK: msr      {{pmevcntr23_el0|PMEVCNTR23_EL0}}, x12
+# CHECK: msr      {{pmevcntr24_el0|PMEVCNTR24_EL0}}, x12
+# CHECK: msr      {{pmevcntr25_el0|PMEVCNTR25_EL0}}, x12
+# CHECK: msr      {{pmevcntr26_el0|PMEVCNTR26_EL0}}, x12
+# CHECK: msr      {{pmevcntr27_el0|PMEVCNTR27_EL0}}, x12
+# CHECK: msr      {{pmevcntr28_el0|PMEVCNTR28_EL0}}, x12
+# CHECK: msr      {{pmevcntr29_el0|PMEVCNTR29_EL0}}, x12
+# CHECK: msr      {{pmevcntr30_el0|PMEVCNTR30_EL0}}, x12
+# CHECK: msr      {{pmccfiltr_el0|PMCCFILTR_EL0}}, x12
+# CHECK: msr      {{pmevtyper0_el0|PMEVTYPER0_EL0}}, x12
+# CHECK: msr      {{pmevtyper1_el0|PMEVTYPER1_EL0}}, x12
+# CHECK: msr      {{pmevtyper2_el0|PMEVTYPER2_EL0}}, x12
+# CHECK: msr      {{pmevtyper3_el0|PMEVTYPER3_EL0}}, x12
+# CHECK: msr      {{pmevtyper4_el0|PMEVTYPER4_EL0}}, x12
+# CHECK: msr      {{pmevtyper5_el0|PMEVTYPER5_EL0}}, x12
+# CHECK: msr      {{pmevtyper6_el0|PMEVTYPER6_EL0}}, x12
+# CHECK: msr      {{pmevtyper7_el0|PMEVTYPER7_EL0}}, x12
+# CHECK: msr      {{pmevtyper8_el0|PMEVTYPER8_EL0}}, x12
+# CHECK: msr      {{pmevtyper9_el0|PMEVTYPER9_EL0}}, x12
+# CHECK: msr      {{pmevtyper10_el0|PMEVTYPER10_EL0}}, x12
+# CHECK: msr      {{pmevtyper11_el0|PMEVTYPER11_EL0}}, x12
+# CHECK: msr      {{pmevtyper12_el0|PMEVTYPER12_EL0}}, x12
+# CHECK: msr      {{pmevtyper13_el0|PMEVTYPER13_EL0}}, x12
+# CHECK: msr      {{pmevtyper14_el0|PMEVTYPER14_EL0}}, x12
+# CHECK: msr      {{pmevtyper15_el0|PMEVTYPER15_EL0}}, x12
+# CHECK: msr      {{pmevtyper16_el0|PMEVTYPER16_EL0}}, x12
+# CHECK: msr      {{pmevtyper17_el0|PMEVTYPER17_EL0}}, x12
+# CHECK: msr      {{pmevtyper18_el0|PMEVTYPER18_EL0}}, x12
+# CHECK: msr      {{pmevtyper19_el0|PMEVTYPER19_EL0}}, x12
+# CHECK: msr      {{pmevtyper20_el0|PMEVTYPER20_EL0}}, x12
+# CHECK: msr      {{pmevtyper21_el0|PMEVTYPER21_EL0}}, x12
+# CHECK: msr      {{pmevtyper22_el0|PMEVTYPER22_EL0}}, x12
+# CHECK: msr      {{pmevtyper23_el0|PMEVTYPER23_EL0}}, x12
+# CHECK: msr      {{pmevtyper24_el0|PMEVTYPER24_EL0}}, x12
+# CHECK: msr      {{pmevtyper25_el0|PMEVTYPER25_EL0}}, x12
+# CHECK: msr      {{pmevtyper26_el0|PMEVTYPER26_EL0}}, x12
+# CHECK: msr      {{pmevtyper27_el0|PMEVTYPER27_EL0}}, x12
+# CHECK: msr      {{pmevtyper28_el0|PMEVTYPER28_EL0}}, x12
+# CHECK: msr      {{pmevtyper29_el0|PMEVTYPER29_EL0}}, x12
+# CHECK: msr      {{pmevtyper30_el0|PMEVTYPER30_EL0}}, x12
+# CHECK: mrs      x9, {{teecr32_el1|TEECR32_EL1}}
+# CHECK: mrs      x9, {{osdtrrx_el1|OSDTRRX_EL1}}
+# CHECK: mrs      x9, {{mdccsr_el0|MDCCSR_EL0}}
+# CHECK: mrs      x9, {{mdccint_el1|MDCCINT_EL1}}
+# CHECK: mrs      x9, {{mdscr_el1|MDSCR_EL1}}
+# CHECK: mrs      x9, {{osdtrtx_el1|OSDTRTX_EL1}}
+# CHECK: mrs      x9, {{dbgdtr_el0|DBGDTR_EL0}}
+# CHECK: mrs      x9, {{dbgdtrrx_el0|DBGDTRRX_EL0}}
+# CHECK: mrs      x9, {{oseccr_el1|OSECCR_EL1}}
+# CHECK: mrs      x9, {{dbgvcr32_el2|DBGVCR32_EL2}}
+# CHECK: mrs      x9, {{dbgbvr0_el1|DBGBVR0_EL1}}
+# CHECK: mrs      x9, {{dbgbvr1_el1|DBGBVR1_EL1}}
+# CHECK: mrs      x9, {{dbgbvr2_el1|DBGBVR2_EL1}}
+# CHECK: mrs      x9, {{dbgbvr3_el1|DBGBVR3_EL1}}
+# CHECK: mrs      x9, {{dbgbvr4_el1|DBGBVR4_EL1}}
+# CHECK: mrs      x9, {{dbgbvr5_el1|DBGBVR5_EL1}}
+# CHECK: mrs      x9, {{dbgbvr6_el1|DBGBVR6_EL1}}
+# CHECK: mrs      x9, {{dbgbvr7_el1|DBGBVR7_EL1}}
+# CHECK: mrs      x9, {{dbgbvr8_el1|DBGBVR8_EL1}}
+# CHECK: mrs      x9, {{dbgbvr9_el1|DBGBVR9_EL1}}
+# CHECK: mrs      x9, {{dbgbvr10_el1|DBGBVR10_EL1}}
+# CHECK: mrs      x9, {{dbgbvr11_el1|DBGBVR11_EL1}}
+# CHECK: mrs      x9, {{dbgbvr12_el1|DBGBVR12_EL1}}
+# CHECK: mrs      x9, {{dbgbvr13_el1|DBGBVR13_EL1}}
+# CHECK: mrs      x9, {{dbgbvr14_el1|DBGBVR14_EL1}}
+# CHECK: mrs      x9, {{dbgbvr15_el1|DBGBVR15_EL1}}
+# CHECK: mrs      x9, {{dbgbcr0_el1|DBGBCR0_EL1}}
+# CHECK: mrs      x9, {{dbgbcr1_el1|DBGBCR1_EL1}}
+# CHECK: mrs      x9, {{dbgbcr2_el1|DBGBCR2_EL1}}
+# CHECK: mrs      x9, {{dbgbcr3_el1|DBGBCR3_EL1}}
+# CHECK: mrs      x9, {{dbgbcr4_el1|DBGBCR4_EL1}}
+# CHECK: mrs      x9, {{dbgbcr5_el1|DBGBCR5_EL1}}
+# CHECK: mrs      x9, {{dbgbcr6_el1|DBGBCR6_EL1}}
+# CHECK: mrs      x9, {{dbgbcr7_el1|DBGBCR7_EL1}}
+# CHECK: mrs      x9, {{dbgbcr8_el1|DBGBCR8_EL1}}
+# CHECK: mrs      x9, {{dbgbcr9_el1|DBGBCR9_EL1}}
+# CHECK: mrs      x9, {{dbgbcr10_el1|DBGBCR10_EL1}}
+# CHECK: mrs      x9, {{dbgbcr11_el1|DBGBCR11_EL1}}
+# CHECK: mrs      x9, {{dbgbcr12_el1|DBGBCR12_EL1}}
+# CHECK: mrs      x9, {{dbgbcr13_el1|DBGBCR13_EL1}}
+# CHECK: mrs      x9, {{dbgbcr14_el1|DBGBCR14_EL1}}
+# CHECK: mrs      x9, {{dbgbcr15_el1|DBGBCR15_EL1}}
+# CHECK: mrs      x9, {{dbgwvr0_el1|DBGWVR0_EL1}}
+# CHECK: mrs      x9, {{dbgwvr1_el1|DBGWVR1_EL1}}
+# CHECK: mrs      x9, {{dbgwvr2_el1|DBGWVR2_EL1}}
+# CHECK: mrs      x9, {{dbgwvr3_el1|DBGWVR3_EL1}}
+# CHECK: mrs      x9, {{dbgwvr4_el1|DBGWVR4_EL1}}
+# CHECK: mrs      x9, {{dbgwvr5_el1|DBGWVR5_EL1}}
+# CHECK: mrs      x9, {{dbgwvr6_el1|DBGWVR6_EL1}}
+# CHECK: mrs      x9, {{dbgwvr7_el1|DBGWVR7_EL1}}
+# CHECK: mrs      x9, {{dbgwvr8_el1|DBGWVR8_EL1}}
+# CHECK: mrs      x9, {{dbgwvr9_el1|DBGWVR9_EL1}}
+# CHECK: mrs      x9, {{dbgwvr10_el1|DBGWVR10_EL1}}
+# CHECK: mrs      x9, {{dbgwvr11_el1|DBGWVR11_EL1}}
+# CHECK: mrs      x9, {{dbgwvr12_el1|DBGWVR12_EL1}}
+# CHECK: mrs      x9, {{dbgwvr13_el1|DBGWVR13_EL1}}
+# CHECK: mrs      x9, {{dbgwvr14_el1|DBGWVR14_EL1}}
+# CHECK: mrs      x9, {{dbgwvr15_el1|DBGWVR15_EL1}}
+# CHECK: mrs      x9, {{dbgwcr0_el1|DBGWCR0_EL1}}
+# CHECK: mrs      x9, {{dbgwcr1_el1|DBGWCR1_EL1}}
+# CHECK: mrs      x9, {{dbgwcr2_el1|DBGWCR2_EL1}}
+# CHECK: mrs      x9, {{dbgwcr3_el1|DBGWCR3_EL1}}
+# CHECK: mrs      x9, {{dbgwcr4_el1|DBGWCR4_EL1}}
+# CHECK: mrs      x9, {{dbgwcr5_el1|DBGWCR5_EL1}}
+# CHECK: mrs      x9, {{dbgwcr6_el1|DBGWCR6_EL1}}
+# CHECK: mrs      x9, {{dbgwcr7_el1|DBGWCR7_EL1}}
+# CHECK: mrs      x9, {{dbgwcr8_el1|DBGWCR8_EL1}}
+# CHECK: mrs      x9, {{dbgwcr9_el1|DBGWCR9_EL1}}
+# CHECK: mrs      x9, {{dbgwcr10_el1|DBGWCR10_EL1}}
+# CHECK: mrs      x9, {{dbgwcr11_el1|DBGWCR11_EL1}}
+# CHECK: mrs      x9, {{dbgwcr12_el1|DBGWCR12_EL1}}
+# CHECK: mrs      x9, {{dbgwcr13_el1|DBGWCR13_EL1}}
+# CHECK: mrs      x9, {{dbgwcr14_el1|DBGWCR14_EL1}}
+# CHECK: mrs      x9, {{dbgwcr15_el1|DBGWCR15_EL1}}
+# CHECK: mrs      x9, {{mdrar_el1|MDRAR_EL1}}
+# CHECK: mrs      x9, {{teehbr32_el1|TEEHBR32_EL1}}
+# CHECK: mrs      x9, {{oslsr_el1|OSLSR_EL1}}
+# CHECK: mrs      x9, {{osdlr_el1|OSDLR_EL1}}
+# CHECK: mrs      x9, {{dbgprcr_el1|DBGPRCR_EL1}}
+# CHECK: mrs      x9, {{dbgclaimset_el1|DBGCLAIMSET_EL1}}
+# CHECK: mrs      x9, {{dbgclaimclr_el1|DBGCLAIMCLR_EL1}}
+# CHECK: mrs      x9, {{dbgauthstatus_el1|DBGAUTHSTATUS_EL1}}
+# CHECK: mrs      x9, {{midr_el1|MIDR_EL1}}
+# CHECK: mrs      x9, {{ccsidr_el1|CCSIDR_EL1}}
+# CHECK: mrs      x9, {{csselr_el1|CSSELR_EL1}}
+# CHECK: mrs      x9, {{vpidr_el2|VPIDR_EL2}}
+# CHECK: mrs      x9, {{clidr_el1|CLIDR_EL1}}
+# CHECK: mrs      x9, {{ctr_el0|CTR_EL0}}
+# CHECK: mrs      x9, {{mpidr_el1|MPIDR_EL1}}
+# CHECK: mrs      x9, {{vmpidr_el2|VMPIDR_EL2}}
+# CHECK: mrs      x9, {{revidr_el1|REVIDR_EL1}}
+# CHECK: mrs      x9, {{aidr_el1|AIDR_EL1}}
+# CHECK: mrs      x9, {{dczid_el0|DCZID_EL0}}
+# CHECK: mrs      x9, {{id_pfr0_el1|ID_PFR0_EL1}}
+# CHECK: mrs      x9, {{id_pfr1_el1|ID_PFR1_EL1}}
+# CHECK: mrs      x9, {{id_dfr0_el1|ID_DFR0_EL1}}
+# CHECK: mrs      x9, {{id_afr0_el1|ID_AFR0_EL1}}
+# CHECK: mrs      x9, {{id_mmfr0_el1|ID_MMFR0_EL1}}
+# CHECK: mrs      x9, {{id_mmfr1_el1|ID_MMFR1_EL1}}
+# CHECK: mrs      x9, {{id_mmfr2_el1|ID_MMFR2_EL1}}
+# CHECK: mrs      x9, {{id_mmfr3_el1|ID_MMFR3_EL1}}
+# CHECK: mrs      x9, {{id_isar0_el1|ID_ISAR0_EL1}}
+# CHECK: mrs      x9, {{id_isar1_el1|ID_ISAR1_EL1}}
+# CHECK: mrs      x9, {{id_isar2_el1|ID_ISAR2_EL1}}
+# CHECK: mrs      x9, {{id_isar3_el1|ID_ISAR3_EL1}}
+# CHECK: mrs      x9, {{id_isar4_el1|ID_ISAR4_EL1}}
+# CHECK: mrs      x9, {{id_isar5_el1|ID_ISAR5_EL1}}
+# CHECK: mrs      x9, {{mvfr0_el1|MVFR0_EL1}}
+# CHECK: mrs      x9, {{mvfr1_el1|MVFR1_EL1}}
+# CHECK: mrs      x9, {{mvfr2_el1|MVFR2_EL1}}
+# CHECK: mrs      x9, {{id_aa64pfr0_el1|ID_AA64PFR0_EL1}}
+# CHECK: mrs      x9, {{id_aa64pfr1_el1|ID_AA64PFR1_EL1}}
+# CHECK: mrs      x9, {{id_aa64dfr0_el1|ID_AA64DFR0_EL1}}
+# CHECK: mrs      x9, {{id_aa64dfr1_el1|ID_AA64DFR1_EL1}}
+# CHECK: mrs      x9, {{id_aa64afr0_el1|ID_AA64AFR0_EL1}}
+# CHECK: mrs      x9, {{id_aa64afr1_el1|ID_AA64AFR1_EL1}}
+# CHECK: mrs      x9, {{id_aa64isar0_el1|ID_AA64ISAR0_EL1}}
+# CHECK: mrs      x9, {{id_aa64isar1_el1|ID_AA64ISAR1_EL1}}
+# CHECK: mrs      x9, {{id_aa64mmfr0_el1|ID_AA64MMFR0_EL1}}
+# CHECK: mrs      x9, {{id_aa64mmfr1_el1|ID_AA64MMFR1_EL1}}
+# CHECK: mrs      x9, {{sctlr_el1|SCTLR_EL1}}
+# CHECK: mrs      x9, {{sctlr_el2|SCTLR_EL2}}
+# CHECK: mrs      x9, {{sctlr_el3|SCTLR_EL3}}
+# CHECK: mrs      x9, {{actlr_el1|ACTLR_EL1}}
+# CHECK: mrs      x9, {{actlr_el2|ACTLR_EL2}}
+# CHECK: mrs      x9, {{actlr_el3|ACTLR_EL3}}
+# CHECK: mrs      x9, {{cpacr_el1|CPACR_EL1}}
+# CHECK: mrs      x9, {{hcr_el2|HCR_EL2}}
+# CHECK: mrs      x9, {{scr_el3|SCR_EL3}}
+# CHECK: mrs      x9, {{mdcr_el2|MDCR_EL2}}
+# CHECK: mrs      x9, {{sder32_el3|SDER32_EL3}}
+# CHECK: mrs      x9, {{cptr_el2|CPTR_EL2}}
+# CHECK: mrs      x9, {{cptr_el3|CPTR_EL3}}
+# CHECK: mrs      x9, {{hstr_el2|HSTR_EL2}}
+# CHECK: mrs      x9, {{hacr_el2|HACR_EL2}}
+# CHECK: mrs      x9, {{mdcr_el3|MDCR_EL3}}
+# CHECK: mrs      x9, {{ttbr0_el1|TTBR0_EL1}}
+# CHECK: mrs      x9, {{ttbr0_el2|TTBR0_EL2}}
+# CHECK: mrs      x9, {{ttbr0_el3|TTBR0_EL3}}
+# CHECK: mrs      x9, {{ttbr1_el1|TTBR1_EL1}}
+# CHECK: mrs      x9, {{tcr_el1|TCR_EL1}}
+# CHECK: mrs      x9, {{tcr_el2|TCR_EL2}}
+# CHECK: mrs      x9, {{tcr_el3|TCR_EL3}}
+# CHECK: mrs      x9, {{vttbr_el2|VTTBR_EL2}}
+# CHECK: mrs      x9, {{vtcr_el2|VTCR_EL2}}
+# CHECK: mrs      x9, {{dacr32_el2|DACR32_EL2}}
+# CHECK: mrs      x9, {{spsr_el1|SPSR_EL1}}
+# CHECK: mrs      x9, {{spsr_el2|SPSR_EL2}}
+# CHECK: mrs      x9, {{spsr_el3|SPSR_EL3}}
+# CHECK: mrs      x9, {{elr_el1|ELR_EL1}}
+# CHECK: mrs      x9, {{elr_el2|ELR_EL2}}
+# CHECK: mrs      x9, {{elr_el3|ELR_EL3}}
+# CHECK: mrs      x9, {{sp_el0|SP_EL0}}
+# CHECK: mrs      x9, {{sp_el1|SP_EL1}}
+# CHECK: mrs      x9, {{sp_el2|SP_EL2}}
+# CHECK: mrs      x9, {{spsel|SPSEL}}
+# CHECK: mrs      x9, {{nzcv|NZCV}}
+# CHECK: mrs      x9, {{daif|DAIF}}
+# CHECK: mrs      x9, {{currentel|CURRENTEL}}
+# CHECK: mrs      x9, {{spsr_irq|SPSR_IRQ}}
+# CHECK: mrs      x9, {{spsr_abt|SPSR_ABT}}
+# CHECK: mrs      x9, {{spsr_und|SPSR_UND}}
+# CHECK: mrs      x9, {{spsr_fiq|SPSR_FIQ}}
+# CHECK: mrs      x9, {{fpcr|FPCR}}
+# CHECK: mrs      x9, {{fpsr|FPSR}}
+# CHECK: mrs      x9, {{dspsr_el0|DSPSR_EL0}}
+# CHECK: mrs      x9, {{dlr_el0|DLR_EL0}}
+# CHECK: mrs      x9, {{ifsr32_el2|IFSR32_EL2}}
+# CHECK: mrs      x9, {{afsr0_el1|AFSR0_EL1}}
+# CHECK: mrs      x9, {{afsr0_el2|AFSR0_EL2}}
+# CHECK: mrs      x9, {{afsr0_el3|AFSR0_EL3}}
+# CHECK: mrs      x9, {{afsr1_el1|AFSR1_EL1}}
+# CHECK: mrs      x9, {{afsr1_el2|AFSR1_EL2}}
+# CHECK: mrs      x9, {{afsr1_el3|AFSR1_EL3}}
+# CHECK: mrs      x9, {{esr_el1|ESR_EL1}}
+# CHECK: mrs      x9, {{esr_el2|ESR_EL2}}
+# CHECK: mrs      x9, {{esr_el3|ESR_EL3}}
+# CHECK: mrs      x9, {{fpexc32_el2|FPEXC32_EL2}}
+# CHECK: mrs      x9, {{far_el1|FAR_EL1}}
+# CHECK: mrs      x9, {{far_el2|FAR_EL2}}
+# CHECK: mrs      x9, {{far_el3|FAR_EL3}}
+# CHECK: mrs      x9, {{hpfar_el2|HPFAR_EL2}}
+# CHECK: mrs      x9, {{par_el1|PAR_EL1}}
+# CHECK: mrs      x9, {{pmcr_el0|PMCR_EL0}}
+# CHECK: mrs      x9, {{pmcntenset_el0|PMCNTENSET_EL0}}
+# CHECK: mrs      x9, {{pmcntenclr_el0|PMCNTENCLR_EL0}}
+# CHECK: mrs      x9, {{pmovsclr_el0|PMOVSCLR_EL0}}
+# CHECK: mrs      x9, {{pmselr_el0|PMSELR_EL0}}
+# CHECK: mrs      x9, {{pmceid0_el0|PMCEID0_EL0}}
+# CHECK: mrs      x9, {{pmceid1_el0|PMCEID1_EL0}}
+# CHECK: mrs      x9, {{pmccntr_el0|PMCCNTR_EL0}}
+# CHECK: mrs      x9, {{pmxevtyper_el0|PMXEVTYPER_EL0}}
+# CHECK: mrs      x9, {{pmxevcntr_el0|PMXEVCNTR_EL0}}
+# CHECK: mrs      x9, {{pmuserenr_el0|PMUSERENR_EL0}}
+# CHECK: mrs      x9, {{pmintenset_el1|PMINTENSET_EL1}}
+# CHECK: mrs      x9, {{pmintenclr_el1|PMINTENCLR_EL1}}
+# CHECK: mrs      x9, {{pmovsset_el0|PMOVSSET_EL0}}
+# CHECK: mrs      x9, {{mair_el1|MAIR_EL1}}
+# CHECK: mrs      x9, {{mair_el2|MAIR_EL2}}
+# CHECK: mrs      x9, {{mair_el3|MAIR_EL3}}
+# CHECK: mrs      x9, {{amair_el1|AMAIR_EL1}}
+# CHECK: mrs      x9, {{amair_el2|AMAIR_EL2}}
+# CHECK: mrs      x9, {{amair_el3|AMAIR_EL3}}
+# CHECK: mrs      x9, {{vbar_el1|VBAR_EL1}}
+# CHECK: mrs      x9, {{vbar_el2|VBAR_EL2}}
+# CHECK: mrs      x9, {{vbar_el3|VBAR_EL3}}
+# CHECK: mrs      x9, {{rvbar_el1|RVBAR_EL1}}
+# CHECK: mrs      x9, {{rvbar_el2|RVBAR_EL2}}
+# CHECK: mrs      x9, {{rvbar_el3|RVBAR_EL3}}
+# CHECK: mrs      x9, {{rmr_el1|RMR_EL1}}
+# CHECK: mrs      x9, {{rmr_el2|RMR_EL2}}
+# CHECK: mrs      x9, {{rmr_el3|RMR_EL3}}
+# CHECK: mrs      x9, {{isr_el1|ISR_EL1}}
+# CHECK: mrs      x9, {{contextidr_el1|CONTEXTIDR_EL1}}
+# CHECK: mrs      x9, {{tpidr_el0|TPIDR_EL0}}
+# CHECK: mrs      x9, {{tpidr_el2|TPIDR_EL2}}
+# CHECK: mrs      x9, {{tpidr_el3|TPIDR_EL3}}
+# CHECK: mrs      x9, {{tpidrro_el0|TPIDRRO_EL0}}
+# CHECK: mrs      x9, {{tpidr_el1|TPIDR_EL1}}
+# CHECK: mrs      x9, {{cntfrq_el0|CNTFRQ_EL0}}
+# CHECK: mrs      x9, {{cntpct_el0|CNTPCT_EL0}}
+# CHECK: mrs      x9, {{cntvct_el0|CNTVCT_EL0}}
+# CHECK: mrs      x9, {{cntvoff_el2|CNTVOFF_EL2}}
+# CHECK: mrs      x9, {{cntkctl_el1|CNTKCTL_EL1}}
+# CHECK: mrs      x9, {{cnthctl_el2|CNTHCTL_EL2}}
+# CHECK: mrs      x9, {{cntp_tval_el0|CNTP_TVAL_EL0}}
+# CHECK: mrs      x9, {{cnthp_tval_el2|CNTHP_TVAL_EL2}}
+# CHECK: mrs      x9, {{cntps_tval_el1|CNTPS_TVAL_EL1}}
+# CHECK: mrs      x9, {{cntp_ctl_el0|CNTP_CTL_EL0}}
+# CHECK: mrs      x9, {{cnthp_ctl_el2|CNTHP_CTL_EL2}}
+# CHECK: mrs      x9, {{cntps_ctl_el1|CNTPS_CTL_EL1}}
+# CHECK: mrs      x9, {{cntp_cval_el0|CNTP_CVAL_EL0}}
+# CHECK: mrs      x9, {{cnthp_cval_el2|CNTHP_CVAL_EL2}}
+# CHECK: mrs      x9, {{cntps_cval_el1|CNTPS_CVAL_EL1}}
+# CHECK: mrs      x9, {{cntv_tval_el0|CNTV_TVAL_EL0}}
+# CHECK: mrs      x9, {{cntv_ctl_el0|CNTV_CTL_EL0}}
+# CHECK: mrs      x9, {{cntv_cval_el0|CNTV_CVAL_EL0}}
+# CHECK: mrs      x9, {{pmevcntr0_el0|PMEVCNTR0_EL0}}
+# CHECK: mrs      x9, {{pmevcntr1_el0|PMEVCNTR1_EL0}}
+# CHECK: mrs      x9, {{pmevcntr2_el0|PMEVCNTR2_EL0}}
+# CHECK: mrs      x9, {{pmevcntr3_el0|PMEVCNTR3_EL0}}
+# CHECK: mrs      x9, {{pmevcntr4_el0|PMEVCNTR4_EL0}}
+# CHECK: mrs      x9, {{pmevcntr5_el0|PMEVCNTR5_EL0}}
+# CHECK: mrs      x9, {{pmevcntr6_el0|PMEVCNTR6_EL0}}
+# CHECK: mrs      x9, {{pmevcntr7_el0|PMEVCNTR7_EL0}}
+# CHECK: mrs      x9, {{pmevcntr8_el0|PMEVCNTR8_EL0}}
+# CHECK: mrs      x9, {{pmevcntr9_el0|PMEVCNTR9_EL0}}
+# CHECK: mrs      x9, {{pmevcntr10_el0|PMEVCNTR10_EL0}}
+# CHECK: mrs      x9, {{pmevcntr11_el0|PMEVCNTR11_EL0}}
+# CHECK: mrs      x9, {{pmevcntr12_el0|PMEVCNTR12_EL0}}
+# CHECK: mrs      x9, {{pmevcntr13_el0|PMEVCNTR13_EL0}}
+# CHECK: mrs      x9, {{pmevcntr14_el0|PMEVCNTR14_EL0}}
+# CHECK: mrs      x9, {{pmevcntr15_el0|PMEVCNTR15_EL0}}
+# CHECK: mrs      x9, {{pmevcntr16_el0|PMEVCNTR16_EL0}}
+# CHECK: mrs      x9, {{pmevcntr17_el0|PMEVCNTR17_EL0}}
+# CHECK: mrs      x9, {{pmevcntr18_el0|PMEVCNTR18_EL0}}
+# CHECK: mrs      x9, {{pmevcntr19_el0|PMEVCNTR19_EL0}}
+# CHECK: mrs      x9, {{pmevcntr20_el0|PMEVCNTR20_EL0}}
+# CHECK: mrs      x9, {{pmevcntr21_el0|PMEVCNTR21_EL0}}
+# CHECK: mrs      x9, {{pmevcntr22_el0|PMEVCNTR22_EL0}}
+# CHECK: mrs      x9, {{pmevcntr23_el0|PMEVCNTR23_EL0}}
+# CHECK: mrs      x9, {{pmevcntr24_el0|PMEVCNTR24_EL0}}
+# CHECK: mrs      x9, {{pmevcntr25_el0|PMEVCNTR25_EL0}}
+# CHECK: mrs      x9, {{pmevcntr26_el0|PMEVCNTR26_EL0}}
+# CHECK: mrs      x9, {{pmevcntr27_el0|PMEVCNTR27_EL0}}
+# CHECK: mrs      x9, {{pmevcntr28_el0|PMEVCNTR28_EL0}}
+# CHECK: mrs      x9, {{pmevcntr29_el0|PMEVCNTR29_EL0}}
+# CHECK: mrs      x9, {{pmevcntr30_el0|PMEVCNTR30_EL0}}
+# CHECK: mrs      x9, {{pmccfiltr_el0|PMCCFILTR_EL0}}
+# CHECK: mrs      x9, {{pmevtyper0_el0|PMEVTYPER0_EL0}}
+# CHECK: mrs      x9, {{pmevtyper1_el0|PMEVTYPER1_EL0}}
+# CHECK: mrs      x9, {{pmevtyper2_el0|PMEVTYPER2_EL0}}
+# CHECK: mrs      x9, {{pmevtyper3_el0|PMEVTYPER3_EL0}}
+# CHECK: mrs      x9, {{pmevtyper4_el0|PMEVTYPER4_EL0}}
+# CHECK: mrs      x9, {{pmevtyper5_el0|PMEVTYPER5_EL0}}
+# CHECK: mrs      x9, {{pmevtyper6_el0|PMEVTYPER6_EL0}}
+# CHECK: mrs      x9, {{pmevtyper7_el0|PMEVTYPER7_EL0}}
+# CHECK: mrs      x9, {{pmevtyper8_el0|PMEVTYPER8_EL0}}
+# CHECK: mrs      x9, {{pmevtyper9_el0|PMEVTYPER9_EL0}}
+# CHECK: mrs      x9, {{pmevtyper10_el0|PMEVTYPER10_EL0}}
+# CHECK: mrs      x9, {{pmevtyper11_el0|PMEVTYPER11_EL0}}
+# CHECK: mrs      x9, {{pmevtyper12_el0|PMEVTYPER12_EL0}}
+# CHECK: mrs      x9, {{pmevtyper13_el0|PMEVTYPER13_EL0}}
+# CHECK: mrs      x9, {{pmevtyper14_el0|PMEVTYPER14_EL0}}
+# CHECK: mrs      x9, {{pmevtyper15_el0|PMEVTYPER15_EL0}}
+# CHECK: mrs      x9, {{pmevtyper16_el0|PMEVTYPER16_EL0}}
+# CHECK: mrs      x9, {{pmevtyper17_el0|PMEVTYPER17_EL0}}
+# CHECK: mrs      x9, {{pmevtyper18_el0|PMEVTYPER18_EL0}}
+# CHECK: mrs      x9, {{pmevtyper19_el0|PMEVTYPER19_EL0}}
+# CHECK: mrs      x9, {{pmevtyper20_el0|PMEVTYPER20_EL0}}
+# CHECK: mrs      x9, {{pmevtyper21_el0|PMEVTYPER21_EL0}}
+# CHECK: mrs      x9, {{pmevtyper22_el0|PMEVTYPER22_EL0}}
+# CHECK: mrs      x9, {{pmevtyper23_el0|PMEVTYPER23_EL0}}
+# CHECK: mrs      x9, {{pmevtyper24_el0|PMEVTYPER24_EL0}}
+# CHECK: mrs      x9, {{pmevtyper25_el0|PMEVTYPER25_EL0}}
+# CHECK: mrs      x9, {{pmevtyper26_el0|PMEVTYPER26_EL0}}
+# CHECK: mrs      x9, {{pmevtyper27_el0|PMEVTYPER27_EL0}}
+# CHECK: mrs      x9, {{pmevtyper28_el0|PMEVTYPER28_EL0}}
+# CHECK: mrs      x9, {{pmevtyper29_el0|PMEVTYPER29_EL0}}
+# CHECK: mrs      x9, {{pmevtyper30_el0|PMEVTYPER30_EL0}}
 
 0xc 0x0 0x12 0xd5
 0x4c 0x0 0x10 0xd5
@@ -4147,10 +4148,10 @@
 0xa9 0xef 0x3b 0xd5
 0xc9 0xef 0x3b 0xd5
 
-# CHECK: mrs     x12, s3_7_c15_c1_5
-# CHECK: mrs     x13, s3_2_c11_c15_7
-# CHECK: msr     s3_0_c15_c0_0, x12
-# CHECK: msr     s3_7_c11_c13_7, x5
+# CHECK: mrs     x12, {{s3_7_c15_c1_5|S3_7_C15_C1_5}}
+# CHECK: mrs     x13, {{s3_2_c11_c15_7|S3_2_C11_C15_7}}
+# CHECK: msr     {{s3_0_c15_c0_0|S3_0_C15_C0_0}}, x12
+# CHECK: msr     {{s3_7_c11_c13_7|S3_7_C11_C13_7}}, x5
 0xac 0xf1 0x3f 0xd5
 0xed 0xbf 0x3a 0xd5
 0x0c 0xf0 0x18 0xd5
