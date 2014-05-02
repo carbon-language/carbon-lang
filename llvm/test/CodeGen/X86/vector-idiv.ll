@@ -205,3 +205,13 @@ define <8 x i32> @test11(<8 x i32> %a) {
 ; AVX: vpadd
 ; AVX: vpmulld
 }
+
+define <2 x i16> @test12() {
+  %I8 = insertelement <2 x i16> zeroinitializer, i16 -1, i32 0
+  %I9 = insertelement <2 x i16> %I8, i16 -1, i32 1
+  %B9 = urem <2 x i16> %I9, %I9
+  ret <2 x i16> %B9
+
+; AVX-LABEL: test12:
+; AVX: xorps
+}

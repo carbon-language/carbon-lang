@@ -2924,11 +2924,17 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, EVT VT,
     }
   }
 
+  assert((Scalar1 && Scalar2) ||
+         VT.getVectorNumElements() == Outputs.size() && "No scalar or vector!");
+
   // Handle the scalar case first.
-  if (Scalar1 && Scalar2)
+  if (!VT.isVector())
     return Outputs.back();
 
-  // Otherwise build a big vector out of the scalar elements we generated.
+  // We may have a vector type but a scalar result. Create a splat.
+  Outputs.resize(VT.getVectorNumElements(), Outputs.back());
+
+  // Build a big vector out of the scalar elements we generated.
   return getNode(ISD::BUILD_VECTOR, SDLoc(), VT, Outputs);
 }
 
