@@ -716,12 +716,11 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   HeaderSearch &HeaderInfo = *AST->HeaderInfo.get();
   unsigned Counter;
 
-  AST->PP = new Preprocessor(PPOpts,
-                             AST->getDiagnostics(), AST->ASTFileLangOpts,
-                             AST->getSourceManager(), HeaderInfo,
-                             *AST, 
-                             /*IILookup=*/0,
-                             /*OwnsHeaderSearch=*/false);
+  AST->PP =
+      new Preprocessor(PPOpts, AST->getDiagnostics(), AST->ASTFileLangOpts,
+                       AST->getSourceManager(), HeaderInfo, *AST,
+                       /*IILookup=*/0,
+                       /*OwnsHeaderSearch=*/false);
   Preprocessor &PP = *AST->PP;
 
   AST->Ctx = new ASTContext(AST->ASTFileLangOpts,

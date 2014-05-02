@@ -80,9 +80,9 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnit) {
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
                           &*Target);
-  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts,
-                  SourceMgr, HeaderInfo, ModLoader,
-                  /*IILookup =*/ 0,
+  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, SourceMgr,
+                  HeaderInfo, ModLoader,
+                  /*IILookup =*/0,
                   /*OwnsHeaderSearch =*/false);
   PP.Initialize(*Target);
   PP.EnterMainSourceFile();
@@ -195,9 +195,9 @@ TEST_F(SourceManagerTest, getMacroArgExpandedLocation) {
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
                           &*Target);
-  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts,
-                  SourceMgr, HeaderInfo, ModLoader,
-                  /*IILookup =*/ 0,
+  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, SourceMgr,
+                  HeaderInfo, ModLoader,
+                  /*IILookup =*/0,
                   /*OwnsHeaderSearch =*/false);
   PP.Initialize(*Target);
   PP.EnterMainSourceFile();
@@ -293,9 +293,9 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnitWithMacroInInclude) {
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
                           &*Target);
-  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts,
-                  SourceMgr, HeaderInfo, ModLoader,
-                  /*IILookup =*/ 0,
+  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, SourceMgr,
+                  HeaderInfo, ModLoader,
+                  /*IILookup =*/0,
                   /*OwnsHeaderSearch =*/false);
   PP.Initialize(*Target);
 

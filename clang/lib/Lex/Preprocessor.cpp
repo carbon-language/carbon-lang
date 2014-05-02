@@ -56,20 +56,19 @@ ExternalPreprocessorSource::~ExternalPreprocessorSource() { }
 
 Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
                            DiagnosticsEngine &diags, LangOptions &opts,
-                           SourceManager &SM,
-                           HeaderSearch &Headers, ModuleLoader &TheModuleLoader,
+                           SourceManager &SM, HeaderSearch &Headers,
+                           ModuleLoader &TheModuleLoader,
                            IdentifierInfoLookup *IILookup, bool OwnsHeaders,
                            TranslationUnitKind TUKind)
     : PPOpts(PPOpts), Diags(&diags), LangOpts(opts), Target(0),
       FileMgr(Headers.getFileMgr()), SourceMgr(SM), HeaderInfo(Headers),
       TheModuleLoader(TheModuleLoader), ExternalSource(0),
-      Identifiers(opts, IILookup), IncrementalProcessing(false),
-      TUKind(TUKind),
+      Identifiers(opts, IILookup), IncrementalProcessing(false), TUKind(TUKind),
       CodeComplete(0), CodeCompletionFile(0), CodeCompletionOffset(0),
       LastTokenWasAt(false), ModuleImportExpectsIdentifier(false),
       CodeCompletionReached(0), SkipMainFilePreamble(0, true), CurPPLexer(0),
-      CurDirLookup(0), CurLexerKind(CLK_Lexer), CurSubmodule(0),
-      Callbacks(0), MacroArgCache(0), Record(0), MIChainHead(0), MICache(0),
+      CurDirLookup(0), CurLexerKind(CLK_Lexer), CurSubmodule(0), Callbacks(0),
+      MacroArgCache(0), Record(0), MIChainHead(0), MICache(0),
       DeserialMIChainHead(0) {
   OwnsHeaderSearch = OwnsHeaders;
   

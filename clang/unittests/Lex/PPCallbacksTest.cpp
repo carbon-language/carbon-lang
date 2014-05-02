@@ -172,10 +172,9 @@ protected:
     AddFakeHeader(HeaderInfo, HeaderPath, SystemHeader);
 
     IntrusiveRefCntPtr<PreprocessorOptions> PPOpts = new PreprocessorOptions();
-    Preprocessor PP(PPOpts, Diags, LangOpts,
-      SourceMgr, HeaderInfo, ModLoader,
-      /*IILookup =*/ 0,
-      /*OwnsHeaderSearch =*/false);
+    Preprocessor PP(PPOpts, Diags, LangOpts, SourceMgr, HeaderInfo, ModLoader,
+                    /*IILookup =*/0,
+                    /*OwnsHeaderSearch =*/false);
     PP.Initialize(*Target);
     InclusionDirectiveCallbacks* Callbacks = new InclusionDirectiveCallbacks;
     PP.addPPCallbacks(Callbacks); // Takes ownership.
@@ -206,9 +205,8 @@ protected:
     HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, 
                             OpenCLLangOpts, Target.getPtr());
 
-    Preprocessor PP(new PreprocessorOptions(), Diags, OpenCLLangOpts, 
-                    SourceMgr, HeaderInfo, ModLoader,
-                   /*IILookup =*/ 0,
+    Preprocessor PP(new PreprocessorOptions(), Diags, OpenCLLangOpts, SourceMgr,
+                    HeaderInfo, ModLoader, /*IILookup =*/0,
                     /*OwnsHeaderSearch =*/false);
     PP.Initialize(*Target);
 
