@@ -1,6 +1,7 @@
 // RUN: %clang -target xcore %s -g -Wl,L1Arg,L2Arg -Wa,A1Arg,A2Arg -fverbose-asm -v -### -o %t.o 2>&1 | FileCheck %s
 // RUN: %clang -target xcore -x c++ %s -g -Wl,L1Arg,L2Arg -Wa,A1Arg,A2Arg -fverbose-asm -v -### -o %t.o 2>&1 | FileCheck %s
 // RUN: %clang -target xcore -x c++ %s -fexceptions -### -o %t.o 2>&1 | FileCheck -check-prefix CHECK-EXCEP %s
+// RUN: %clang -target xcore %s -g0 -### -o %t.o 2>&1 | FileCheck -check-prefix CHECK-G0 %s
 
 // CHECK: "-nostdsysteminc"
 // CHECK: "-momit-leaf-frame-pointer"
@@ -26,4 +27,8 @@
 // CHECK-EXCEP-NOT: "-fexceptions"
 // CHECK-EXCEP: xcc" "-o"
 // CHECK-EXCEP: "-fexceptions"
+
+// CHECK-G0: xcc"
+// CHECK-G0-NOT: "-g"
+// CHECK-G0: xcc"
 
