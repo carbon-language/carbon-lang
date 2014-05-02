@@ -1718,7 +1718,7 @@ CommandObjectTypeSummaryAdd::CommandObjectTypeSummaryAdd (CommandInterpreter &in
                          "type summary add",
                          "Add a new summary style for a type.",
                          NULL),
-    IOHandlerDelegateMultiline ("DONE"),
+    IOHandlerDelegateMultiline ("DONE", true),
     m_options (interpreter)
 {
     CommandArgumentEntry type_arg;
@@ -3882,7 +3882,7 @@ CommandObjectTypeSynthAdd::CommandObjectTypeSynthAdd (CommandInterpreter &interp
                          "type synthetic add",
                          "Add a new synthetic provider for a type.",
                          NULL),
-    IOHandlerDelegateMultiline ("DONE"),
+    IOHandlerDelegateMultiline ("DONE", true),
     m_options (interpreter)
 {
     CommandArgumentEntry type_arg;
