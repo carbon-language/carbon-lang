@@ -1540,6 +1540,15 @@ static void getAArch64TargetFeatures(const Driver &D, const ArgList &Args,
     Features.push_back("-crypto");
     Features.push_back("-neon");
   }
+
+  // En/disable crc
+  if (Arg *A = Args.getLastArg(options::OPT_mcrc,
+                               options::OPT_mnocrc)) {
+    if (A->getOption().matches(options::OPT_mcrc))
+      Features.push_back("+crc");
+    else
+      Features.push_back("-crc");
+  }
 }
 
 static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,

@@ -3399,6 +3399,7 @@ class AArch64TargetInfo : public TargetInfo {
   };
 
   unsigned FPU;
+  unsigned CRC;
   unsigned Crypto;
   static const Builtin::Info BuiltinInfo[];
 
@@ -3475,6 +3476,9 @@ public:
       Builder.defineMacro("__ARM_NEON_FP", "7");
     }
 
+    if (CRC)
+      Builder.defineMacro("__ARM_FEATURE_CRC32");
+
     if (Crypto) {
       Builder.defineMacro("__ARM_FEATURE_CRYPTO");
     }
@@ -3498,10 +3502,13 @@ public:
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override {
     FPU = FPUMode;
+    CRC = 0;
     Crypto = 0;
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
       if (Features[i] == "+neon")
         FPU = NeonMode;
+      if (Features[i] == "+crc")
+        CRC = 1;
       if (Features[i] == "+crypto")
         Crypto = 1;
     }
@@ -4492,6 +4499,7 @@ class ARM64TargetInfo : public TargetInfo {
   };
 
   unsigned FPU;
+  unsigned CRC;
   unsigned Crypto;
 
   static const Builtin::Info BuiltinInfo[];
@@ -4589,6 +4597,9 @@ public:
       Builder.defineMacro("__ARM_NEON_FP", "7");
     }
 
+    if (CRC)
+      Builder.defineMacro("__ARM_FEATURE_CRC32");
+
     if (Crypto)
       Builder.defineMacro("__ARM_FEATURE_CRYPTO");
   }
@@ -4608,10 +4619,13 @@ public:
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override {
     FPU = FPUMode;
+    CRC = 0;
     Crypto = 0;
     for (unsigned i = 0, e = Features.size(); i != e; ++i) {
       if (Features[i] == "+neon")
         FPU = NeonMode;
+      if (Features[i] == "+crc")
+        CRC = 1;
       if (Features[i] == "+crypto")
         Crypto = 1;
     }

@@ -10,6 +10,7 @@
 // CHECK: __ARM_ARCH_PROFILE 'A'
 // CHECK-NOT: __ARM_FEATURE_BIG_ENDIAN
 // CHECK: __ARM_FEATURE_CLZ 1
+// CHECK-NOT: __ARM_FEATURE_CRC32 1
 // CHECK-NOT: __ARM_FEATURE_CRYPTO 1
 // CHECK: __ARM_FEATURE_DIV 1
 // CHECK: __ARM_FEATURE_FMA 1
@@ -26,6 +27,10 @@
 
 // RUN: %clang -target aarch64-none-linux-gnu -mfpu=crypto-neon-fp-armv8 -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-CRYPTO %s
 // CHECK-CRYPTO: __ARM_FEATURE_CRYPTO 1
+
+// RUN: %clang -target aarch64-none-linux-gnu -mcrc -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-CRC32 %s
+// RUN: %clang -target arm64-none-linux-gnu -mcrc -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-CRC32 %s
+// CHECK-CRC32: __ARM_FEATURE_CRC32 1
 
 // RUN: %clang -target aarch64-none-linux-gnu -ffast-math -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-FASTMATH %s
 // CHECK-FASTMATH: __ARM_FP_FAST 1
