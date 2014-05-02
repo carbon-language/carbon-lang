@@ -1421,8 +1421,7 @@ void GVN::AnalyzeLoadAvailability(LoadInst *LI, LoadDepVect &Deps,
         // If this is a clobber and L is the first instruction in its block, then
         // we have the first instruction in the entry block.
         if (DepLI != LI && Address && DL) {
-          int Offset = AnalyzeLoadFromClobberingLoad(LI->getType(),
-                                                     LI->getPointerOperand(),
+          int Offset = AnalyzeLoadFromClobberingLoad(LI->getType(), Address,
                                                      DepLI, *DL);
 
           if (Offset != -1) {
