@@ -1628,7 +1628,7 @@ MicrosoftCXXABI::EmitMemberPointerIsNotNull(CodeGenFunction &CGF,
   for (int I = 1, E = fields.size(); I < E; ++I) {
     llvm::Value *Field = Builder.CreateExtractValue(MemPtr, I);
     llvm::Value *Next = Builder.CreateICmpNE(Field, fields[I], "memptr.cmp");
-    Res = Builder.CreateAnd(Res, Next, "memptr.tobool");
+    Res = Builder.CreateOr(Res, Next, "memptr.tobool");
   }
   return Res;
 }

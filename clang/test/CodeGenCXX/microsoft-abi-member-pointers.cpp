@@ -229,10 +229,10 @@ bool nullTestDataUnspecified(int Unspecified::*mp) {
 // CHECK:   %[[cmp0:.*]] = icmp ne i32 %[[mp0]], 0
 // CHECK:   %[[mp1:.*]] = extractvalue { i32, i32, i32 } %[[mp]], 1
 // CHECK:   %[[cmp1:.*]] = icmp ne i32 %[[mp1]], 0
-// CHECK:   %[[and0:.*]] = and i1 %[[cmp0]], %[[cmp1]]
+// CHECK:   %[[and0:.*]] = or i1 %[[cmp0]], %[[cmp1]]
 // CHECK:   %[[mp2:.*]] = extractvalue { i32, i32, i32 } %[[mp]], 2
 // CHECK:   %[[cmp2:.*]] = icmp ne i32 %[[mp2]], -1
-// CHECK:   %[[and1:.*]] = and i1 %[[and0]], %[[cmp2]]
+// CHECK:   %[[and1:.*]] = or i1 %[[and0]], %[[cmp2]]
 // CHECK:   ret i1 %[[and1]]
 // CHECK: }
 }
