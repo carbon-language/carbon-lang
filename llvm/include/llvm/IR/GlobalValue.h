@@ -116,13 +116,6 @@ public:
     Section = S;
   }
 
-  /// If the usage is empty (except transitively dead constants), then this
-  /// global value can be safely deleted since the destructor will
-  /// delete the dead constants as well.
-  /// @brief Determine if the usage of this global value is empty except
-  /// for transitively dead constants.
-  bool use_empty_except_constants();
-
   /// getType - Global values are always pointers.
   inline PointerType *getType() const {
     return cast<PointerType>(User::getType());
