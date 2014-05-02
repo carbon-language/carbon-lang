@@ -1607,16 +1607,17 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
     if (getCXXABI().isInlineInitializedStaticDataMemberLinkOnce() &&
         isVarDeclInlineInitializedStaticDataMember(D))
       EmitGlobalVarDefinition(D);
+
+    // Handle XCore specific ABI requirements.
+    if (getTarget().getTriple().getArch() == llvm::Triple::xcore &&
+        D->getLanguageLinkage() == CLanguageLinkage &&
+        D->getType().isConstant(Context) &&
+        isExternallyVisible(D->getLinkageAndVisibility().getLinkage()))
+      GV->setSection(".cp.rodata");
   }
 
   if (AddrSpace != Ty->getAddressSpace())
     return llvm::ConstantExpr::getAddrSpaceCast(GV, Ty);
-
-  if (getTarget().getTriple().getArch() == llvm::Triple::xcore &&
-      D->getLanguageLinkage() == CLanguageLinkage &&
-      D->getType().isConstant(Context) &&
-      isExternallyVisible(D->getLinkageAndVisibility().getLinkage()))
-    GV->setSection(".cp.rodata");
 
   getTargetCodeGenInfo().emitTargetMD(D, GV, *this);
 
