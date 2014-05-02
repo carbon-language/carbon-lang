@@ -50,7 +50,7 @@ static bool ParseScanList(FormatStringHandler &H,
     }
   }
 
-  // Special case: "]^" are the first characters.
+  // Special case: "^]" are the first characters.
   if (I + 1 != E && I[0] == '^' && I[1] == ']') {
     I += 2;
     if (I == E) {
