@@ -888,39 +888,32 @@ private:
 
 /// Utility class for getting and setting loop vectorizer hints in the form
 /// of loop metadata.
-struct LoopVectorizeHints {
-  /// Vectorization width.
-  unsigned Width;
-  /// Vectorization unroll factor.
-  unsigned Unroll;
-  /// Vectorization forced
+class LoopVectorizeHints {
+public:
   enum ForceKind {
     FK_Undefined = -1, ///< Not selected.
     FK_Disabled = 0,   ///< Forcing disabled.
     FK_Enabled = 1,    ///< Forcing enabled.
-  } Force;
+  };
 
   LoopVectorizeHints(const Loop *L, bool DisableUnrolling)
-  : Width(VectorizationFactor)
-  , Unroll(DisableUnrolling ? 1 : VectorizationUnroll)
-  , Force(FK_Undefined)
-  , LoopID(L->getLoopID()) {
+      : Width(VectorizationFactor),
+        Unroll(DisableUnrolling),
+        Force(FK_Undefined),
+        LoopID(L->getLoopID()) {
     getHints(L);
-    // The command line options override any loop metadata except for when
-    // width == 1 which is used to indicate the loop is already vectorized.
-    if (VectorizationFactor.getNumOccurrences() > 0 && Width != 1)
-      Width = VectorizationFactor;
+    // force-vector-unroll overrides DisableUnrolling.
     if (VectorizationUnroll.getNumOccurrences() > 0)
       Unroll = VectorizationUnroll;
 
-    DEBUG(if (DisableUnrolling && Unroll == 1)
-            dbgs() << "LV: Unrolling disabled by the pass manager\n");
+    DEBUG(if (DisableUnrolling && Unroll == 1) dbgs()
+          << "LV: Unrolling disabled by the pass manager\n");
   }
 
   /// Return the loop vectorizer metadata prefix.
   static StringRef Prefix() { return "llvm.vectorizer."; }
 
-  MDNode *createHint(LLVMContext &Context, StringRef Name, unsigned V) {
+  MDNode *createHint(LLVMContext &Context, StringRef Name, unsigned V) const {
     SmallVector<Value*, 2> Vals;
     Vals.push_back(MDString::get(Context, Name));
     Vals.push_back(ConstantInt::get(Type::getInt32Ty(Context), V));
@@ -954,9 +947,12 @@ struct LoopVectorizeHints {
     LoopID = NewLoopID;
   }
 
-private:
-  MDNode *LoopID;
+  unsigned getWidth() const { return Width; }
+  unsigned getUnroll() const { return Unroll; }
+  enum ForceKind getForce() const { return Force; }
+  MDNode *getLoopID() const { return LoopID; }
 
+private:
   /// Find hints specified in the loop metadata.
   void getHints(const Loop *L) {
     if (!LoopID)
@@ -1024,6 +1020,15 @@ private:
       DEBUG(dbgs() << "LV: ignoring unknown hint " << Hint << '\n');
     }
   }
+
+  /// Vectorization width.
+  unsigned Width;
+  /// Vectorization unroll factor.
+  unsigned Unroll;
+  /// Vectorization forced
+  enum ForceKind Force;
+
+  MDNode *LoopID;
 };
 
 static void addInnerLoop(Loop &L, SmallVectorImpl<Loop *> &V) {
@@ -1114,24 +1119,24 @@ struct LoopVectorize : public FunctionPass {
 
     DEBUG(dbgs() << "LV: Loop hints:"
                  << " force="
-                 << (Hints.Force == LoopVectorizeHints::FK_Disabled
+                 << (Hints.getForce() == LoopVectorizeHints::FK_Disabled
                          ? "disabled"
-                         : (Hints.Force == LoopVectorizeHints::FK_Enabled
+                         : (Hints.getForce() == LoopVectorizeHints::FK_Enabled
                                 ? "enabled"
-                                : "?")) << " width=" << Hints.Width
-                 << " unroll=" << Hints.Unroll << "\n");
+                                : "?")) << " width=" << Hints.getWidth()
+                 << " unroll=" << Hints.getUnroll() << "\n");
 
-    if (Hints.Force == LoopVectorizeHints::FK_Disabled) {
+    if (Hints.getForce() == LoopVectorizeHints::FK_Disabled) {
       DEBUG(dbgs() << "LV: Not vectorizing: #pragma vectorize disable.\n");
       return false;
     }
 
-    if (!AlwaysVectorize && Hints.Force != LoopVectorizeHints::FK_Enabled) {
+    if (!AlwaysVectorize && Hints.getForce() != LoopVectorizeHints::FK_Enabled) {
       DEBUG(dbgs() << "LV: Not vectorizing: No #pragma vectorize enable.\n");
       return false;
     }
 
-    if (Hints.Width == 1 && Hints.Unroll == 1) {
+    if (Hints.getWidth() == 1 && Hints.getUnroll() == 1) {
       DEBUG(dbgs() << "LV: Not vectorizing: Disabled/already vectorized.\n");
       return false;
     }
@@ -1143,7 +1148,7 @@ struct LoopVectorize : public FunctionPass {
     if (TC > 0u && TC < TinyTripCountVectorThreshold) {
       DEBUG(dbgs() << "LV: Found a loop with a very small trip count. "
                    << "This loop is not worth vectorizing.");
-      if (Hints.Force == LoopVectorizeHints::FK_Enabled)
+      if (Hints.getForce() == LoopVectorizeHints::FK_Enabled)
         DEBUG(dbgs() << " But vectorizing was explicitly forced.\n");
       else {
         DEBUG(dbgs() << "\n");
@@ -1164,7 +1169,7 @@ struct LoopVectorize : public FunctionPass {
     // Check the function attributes to find out if this function should be
     // optimized for size.
     Function *F = L->getHeader()->getParent();
-    bool OptForSize = Hints.Force != LoopVectorizeHints::FK_Enabled &&
+    bool OptForSize = Hints.getForce() != LoopVectorizeHints::FK_Enabled &&
                       F->hasFnAttribute(Attribute::OptimizeForSize);
 
     // Compute the weighted frequency of this loop being executed and see if it
@@ -1174,7 +1179,7 @@ struct LoopVectorize : public FunctionPass {
     // exactly what block frequency models.
     if (LoopVectorizeWithBlockFrequency) {
       BlockFrequency LoopEntryFreq = BFI->getBlockFreq(L->getLoopPreheader());
-      if (Hints.Force != LoopVectorizeHints::FK_Enabled &&
+      if (Hints.getForce() != LoopVectorizeHints::FK_Enabled &&
           LoopEntryFreq < ColdEntryFreq)
         OptForSize = true;
     }
@@ -1191,13 +1196,13 @@ struct LoopVectorize : public FunctionPass {
 
     // Select the optimal vectorization factor.
     const LoopVectorizationCostModel::VectorizationFactor VF =
-        CM.selectVectorizationFactor(OptForSize, Hints.Width,
-                                     Hints.Force ==
+        CM.selectVectorizationFactor(OptForSize, Hints.getWidth(),
+                                     Hints.getForce() ==
                                          LoopVectorizeHints::FK_Enabled);
 
     // Select the unroll factor.
-    const unsigned UF = CM.selectUnrollFactor(OptForSize, Hints.Unroll, VF.Width,
-                                        VF.Cost);
+    const unsigned UF =
+        CM.selectUnrollFactor(OptForSize, Hints.getUnroll(), VF.Width, VF.Cost);
 
     DEBUG(dbgs() << "LV: Found a vectorizable loop ("
                  << VF.Width << ") in "
