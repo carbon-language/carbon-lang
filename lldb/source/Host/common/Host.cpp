@@ -39,7 +39,7 @@
 #include <AvailabilityMacros.h>
 #endif
 
-#if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__) || defined (__APPLE__)
+#if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__) || defined (__APPLE__) || defined(__NetBSD__)
 #include <spawn.h>
 #include <sys/wait.h>
 #include <sys/syscall.h>
@@ -1680,7 +1680,7 @@ Host::RunShellCommand (const char *command,
 // LaunchProcessPosixSpawn for Apple, Linux, FreeBSD and other GLIBC
 // systems
 
-#if defined (__APPLE__) || defined (__linux__) || defined (__FreeBSD__) || defined (__GLIBC__)
+#if defined (__APPLE__) || defined (__linux__) || defined (__FreeBSD__) || defined (__GLIBC__) || defined(__NetBSD__)
 
 // this method needs to be visible to macosx/Host.cpp and
 // common/Host.cpp.
@@ -1948,9 +1948,9 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
 #endif // LaunchProcedssPosixSpawn: Apple, Linux, FreeBSD and other GLIBC systems
 
 
-#if defined(__linux__) || defined(__FreeBSD__) || defined(__GLIBC__)
-// The functions below implement process launching via posix_spawn() for Linux
-// and FreeBSD.
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__GLIBC__) || defined(__NetBSD__)
+// The functions below implement process launching via posix_spawn() for Linux,
+// FreeBSD and NetBSD.
 
 Error
 Host::LaunchProcess (ProcessLaunchInfo &launch_info)
@@ -2030,7 +2030,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     return error;
 }
 
-#endif // defined(__linux__) or defined(__FreeBSD__)
+#endif // defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__)
 
 #ifndef _WIN32
 
