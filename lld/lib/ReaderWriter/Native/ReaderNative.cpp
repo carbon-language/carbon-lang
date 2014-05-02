@@ -98,6 +98,10 @@ public:
      return (DefinedAtom::ContentPermissions)(attributes().permissions);
   }
 
+  bool isAlias() const override {
+     return (attributes().alias != 0);
+  }
+
   ArrayRef<uint8_t> rawContent() const override;
 
   reference_iterator begin() const override;

@@ -892,6 +892,7 @@ template <> struct MappingTraits<const lld::DefinedAtom *> {
     DeadStripKind deadStrip() const override { return _deadStrip; }
     DynamicExport dynamicExport() const override { return _dynamicExport; }
     ContentPermissions permissions() const override { return _permissions; }
+    bool isAlias() const override { return false; }
     bool isGroupChild() const { return _isGroupChild; }
     ArrayRef<uint8_t> rawContent() const override {
       if (!occupiesDiskSpace())

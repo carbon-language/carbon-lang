@@ -381,6 +381,9 @@ public:
     }
   }
 
+  // FIXME: Not Sure if ELF supports alias atoms. Find out more.
+  bool isAlias() const override { return false; }
+
   ArrayRef<uint8_t> rawContent() const override { return _contentData; }
 
   DefinedAtom::reference_iterator begin() const override {
@@ -484,6 +487,8 @@ public:
 
   virtual bool isThumb() const { return false; }
 
+  bool isAlias() const override { return false; }
+
   ArrayRef<uint8_t> rawContent() const override { return _contentData; }
 
   DefinedAtom::reference_iterator begin() const override {
@@ -565,6 +570,8 @@ public:
   DeadStripKind deadStrip() const override { return deadStripNormal; }
 
   ContentPermissions permissions() const override { return permRW_; }
+
+  bool isAlias() const override { return false; }
 
   ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 

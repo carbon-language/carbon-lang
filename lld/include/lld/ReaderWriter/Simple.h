@@ -140,6 +140,8 @@ public:
     return DefinedAtom::deadStripNormal;
   }
 
+  bool isAlias() const override { return false; }
+
   DefinedAtom::reference_iterator begin() const override {
     uintptr_t index = 0;
     const void *it = reinterpret_cast<const void *>(index);
