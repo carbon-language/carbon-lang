@@ -794,7 +794,7 @@ Editline::GetCharFromInputFileCallback (EditLine *e, char *c)
                     }
                 }
             
-                if (ch == EOF)
+                if (status == eConnectionStatusEndOfFile)
                 {
                     editline->m_got_eof = true;
                     break;
