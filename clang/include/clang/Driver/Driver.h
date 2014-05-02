@@ -259,7 +259,7 @@ public:
   /// \param Args - The input arguments.
   /// \param Inputs - The list to store the resulting compilation 
   /// inputs onto.
-  void BuildInputs(const ToolChain &TC, const llvm::opt::DerivedArgList &Args,
+  void BuildInputs(const ToolChain &TC, llvm::opt::DerivedArgList &Args,
                    InputList &Inputs) const;
 
   /// BuildActions - Construct the list of actions to perform for the
