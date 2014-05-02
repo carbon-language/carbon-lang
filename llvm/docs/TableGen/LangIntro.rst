@@ -160,8 +160,10 @@ supported include:
     remaining elements in the list may be arbitrary other values, including
     nested ```dag``' values.
 
-``!strconcat(a, b)``
+``!strconcat(a, b, ...)``
     A string value that is the result of concatenating the 'a' and 'b' strings.
+    More than two arguments are accepted with the result being the concatenation
+    of all the strings given.
 
 ``str1#str2``
     "#" (paste) is a shorthand for !strconcat.  It may concatenate things that
