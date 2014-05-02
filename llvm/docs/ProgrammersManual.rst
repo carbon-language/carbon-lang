@@ -1755,7 +1755,7 @@ instruction uses (that is, the operands of the particular ``Instruction``):
 
   Instruction *pi = ...;
 
-  for (Use& U : pi->operands()) {
+  for (Use &U : pi->operands()) {
     Value *v = U.get();
     // ...
   }
