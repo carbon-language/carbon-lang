@@ -145,6 +145,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   // handle 64-bit stores.
   setTruncStoreAction(MVT::v4i32, MVT::v4i16, Expand);
 
+  setTruncStoreAction(MVT::i64, MVT::i16, Expand);
+  setTruncStoreAction(MVT::i64, MVT::i8, Expand);
   setTruncStoreAction(MVT::i64, MVT::i1, Expand);
   setTruncStoreAction(MVT::v2i64, MVT::v2i1, Expand);
   setTruncStoreAction(MVT::v4i64, MVT::v4i1, Expand);

@@ -177,6 +177,26 @@ entry:
   ret void
 }
 
+; FUNC-LABEL: @store_i64_i8
+; EG-CHECK: MEM_RAT MSKOR
+; SI-CHECK: BUFFER_STORE_BYTE
+define void @store_i64_i8(i8 addrspace(1)* %out, i64 %in) {
+entry:
+  %0 = trunc i64 %in to i8
+  store i8 %0, i8 addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: @store_i64_i16
+; EG-CHECK: MEM_RAT MSKOR
+; SI-CHECK: BUFFER_STORE_SHORT
+define void @store_i64_i16(i16 addrspace(1)* %out, i64 %in) {
+entry:
+  %0 = trunc i64 %in to i16
+  store i16 %0, i16 addrspace(1)* %out
+  ret void
+}
+
 ;===------------------------------------------------------------------------===;
 ; Local Address Space
 ;===------------------------------------------------------------------------===;
@@ -269,6 +289,26 @@ entry:
 define void @store_local_v4i32(<4 x i32> addrspace(3)* %out, <4 x i32> %in) {
 entry:
   store <4 x i32> %in, <4 x i32> addrspace(3)* %out
+  ret void
+}
+
+; FUNC-LABEL: @store_local_i64_i8
+; EG-CHECK: LDS_BYTE_WRITE
+; SI-CHECK: DS_WRITE_B8
+define void @store_local_i64_i8(i8 addrspace(3)* %out, i64 %in) {
+entry:
+  %0 = trunc i64 %in to i8
+  store i8 %0, i8 addrspace(3)* %out
+  ret void
+}
+
+; FUNC-LABEL: @store_local_i64_i16
+; EG-CHECK: LDS_SHORT_WRITE
+; SI-CHECK: DS_WRITE_B16
+define void @store_local_i64_i16(i16 addrspace(3)* %out, i64 %in) {
+entry:
+  %0 = trunc i64 %in to i16
+  store i16 %0, i16 addrspace(3)* %out
   ret void
 }
 
