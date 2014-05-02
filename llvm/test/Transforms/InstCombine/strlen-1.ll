@@ -5,6 +5,7 @@
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128"
 
 @hello = constant [6 x i8] c"hello\00"
+@longer = constant [7 x i8] c"longer\00"
 @null = constant [1 x i8] zeroinitializer
 @null_hello = constant [7 x i8] c"\00hello\00"
 @nullstring = constant i8 0
@@ -83,6 +84,17 @@ define i1 @test_simplify8() {
   %ne_null = icmp ne i32 %null_l, 0
   ret i1 %ne_null
 ; CHECK-NEXT: ret i1 false
+}
+
+define i32 @test_simplify9(i1 %x) {
+; CHECK-LABEL: @test_simplify9
+  %hello = getelementptr [6 x i8]* @hello, i32 0, i32 0
+  %longer = getelementptr [7 x i8]* @longer, i32 0, i32 0
+  %s = select i1 %x, i8* %hello, i8* %longer
+  %l = call i32 @strlen(i8* %s)
+; CHECK-NEXT: select i1 %x, i32 5, i32 6
+  ret i32 %l
+; CHECK-NEXT: ret
 }
 
 ; Check cases that shouldn't be simplified.

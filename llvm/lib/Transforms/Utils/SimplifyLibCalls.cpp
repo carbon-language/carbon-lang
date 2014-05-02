@@ -784,10 +784,25 @@ struct StrLenOpt : public LibCallOptimization {
     if (uint64_t Len = GetStringLength(Src))
       return ConstantInt::get(CI->getType(), Len-1);
 
+    // strlen(x?"foo":"bars") --> x ? 3 : 4
+    if (SelectInst *SI = dyn_cast<SelectInst>(Src)) {
+      uint64_t LenTrue = GetStringLength(SI->getTrueValue());
+      uint64_t LenFalse = GetStringLength(SI->getFalseValue());
+      if (LenTrue && LenFalse) {
+        Context->emitOptimizationRemark(
+            "simplify-libcalls", *Caller, SI->getDebugLoc(),
+            "folded strlen(select) to select of constants");
+        return B.CreateSelect(SI->getCondition(),
+                              ConstantInt::get(CI->getType(), LenTrue-1),
+                              ConstantInt::get(CI->getType(), LenFalse-1));
+      }
+    }
+
     // strlen(x) != 0 --> *x != 0
     // strlen(x) == 0 --> *x == 0
     if (isOnlyUsedInZeroEqualityComparison(CI))
       return B.CreateZExt(B.CreateLoad(Src, "strlenfirst"), CI->getType());
+
     return nullptr;
   }
 };
