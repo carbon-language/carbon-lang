@@ -105,7 +105,6 @@ public:
     return sectionPositionAny;
   }
   DeadStripKind deadStrip() const override { return deadStripNormal; }
-  bool isAlias() const override { return false; }
 
   Kind getKind() const { return _kind; }
 

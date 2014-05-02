@@ -431,7 +431,6 @@ private:
     attrs.deadStrip         = atom.deadStrip();
     attrs.dynamicExport     = atom.dynamicExport();
     attrs.permissions       = atom.permissions();
-    attrs.alias             = atom.isAlias();
     return attrs;
   }
 
