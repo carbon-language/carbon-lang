@@ -1291,9 +1291,12 @@ void UnwrappedLineParser::parseObjCInterfaceOrImplementation() {
   if (FormatTok->Tok.is(tok::less))
     parseObjCProtocolList();
 
-  // If instance variables are present, keep the '{' on the first line too.
-  if (FormatTok->Tok.is(tok::l_brace))
+  if (FormatTok->Tok.is(tok::l_brace)) {
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
+        Style.BreakBeforeBraces == FormatStyle::BS_GNU)
+      addUnwrappedLine();
     parseBlock(/*MustBeDeclaration=*/true);
+  }
 
   // With instance variables, this puts '}' on its own line.  Without instance
   // variables, this ends the @interface line.

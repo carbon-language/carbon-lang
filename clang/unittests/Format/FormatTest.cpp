@@ -7444,6 +7444,14 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                "}\n",
                BreakBeforeBrace);
 
+  verifyFormat("@interface BSApplicationController ()\n"
+               "{\n"
+               "@private\n"
+               "  id _extraIvar;\n"
+               "}\n"
+               "@end\n",
+               BreakBeforeBrace);
+
   BreakBeforeBrace.ColumnLimit = 19;
   verifyFormat("void f() { int i; }", BreakBeforeBrace);
   BreakBeforeBrace.ColumnLimit = 18;
@@ -7563,6 +7571,14 @@ TEST_F(FormatTest, GNUBraceBreaking) {
                "{\n"
                "  Y = 0,\n"
                "}\n",
+               GNUBraceStyle);
+
+  verifyFormat("@interface BSApplicationController ()\n"
+               "{\n"
+               "@private\n"
+               "  id _extraIvar;\n"
+               "}\n"
+               "@end\n",
                GNUBraceStyle);
 }
 TEST_F(FormatTest, CatchExceptionReferenceBinding) {
