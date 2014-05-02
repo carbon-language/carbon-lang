@@ -830,9 +830,8 @@ def NonNull : InheritableAttr {
   let Args = [VariadicUnsignedArgument<"Args">];
   let AdditionalMembers =
 [{bool isNonNull(unsigned idx) const {
-    for (args_iterator i = args_begin(), e = args_end();
-         i != e; ++i)
-      if (*i == idx)
+    for (const auto &V : args())
+      if (V == idx)
         return true;
     return false;
   } }];

@@ -717,11 +717,8 @@ static void CheckNonNullArguments(Sema &S,
                                   SourceLocation CallSiteLoc) {
   // Check the attributes attached to the method/function itself.
   for (const auto *NonNull : FDecl->specific_attrs<NonNullAttr>()) {
-    for (NonNullAttr::args_iterator i = NonNull->args_begin(),
-         e = NonNull->args_end();
-         i != e; ++i) {
-      CheckNonNullArgument(S, ExprArgs[*i], CallSiteLoc);
-    }
+    for (const auto &Val : NonNull->args())
+      CheckNonNullArgument(S, ExprArgs[Val], CallSiteLoc);
   }
 
   // Check the attributes on the parameters.

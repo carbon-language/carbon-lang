@@ -1478,12 +1478,12 @@ static const ValueDecl *getValueDecl(const Expr *Exp) {
 }
 
 template <typename Ty>
-class has_arg_iterator {
+class has_arg_iterator_range {
   typedef char yes[1];
   typedef char no[2];
 
   template <typename Inner>
-  static yes& test(Inner *I, decltype(I->args_begin()) * = nullptr);
+  static yes& test(Inner *I, decltype(I->args()) * = nullptr);
 
   template <typename>
   static no& test(...);
@@ -1522,7 +1522,7 @@ static StringRef ClassifyDiagnostic(const ValueDecl *VD) {
 }
 
 template <typename AttrTy>
-static typename std::enable_if<!has_arg_iterator<AttrTy>::value,
+static typename std::enable_if<!has_arg_iterator_range<AttrTy>::value,
                                StringRef>::type
 ClassifyDiagnostic(const AttrTy *A) {
   if (const ValueDecl *VD = getValueDecl(A->getArg()))
@@ -1531,11 +1531,11 @@ ClassifyDiagnostic(const AttrTy *A) {
 }
 
 template <typename AttrTy>
-static typename std::enable_if<has_arg_iterator<AttrTy>::value,
+static typename std::enable_if<has_arg_iterator_range<AttrTy>::value,
                                StringRef>::type
 ClassifyDiagnostic(const AttrTy *A) {
-  for (auto I = A->args_begin(), E = A->args_end(); I != E; ++I) {
-    if (const ValueDecl *VD = getValueDecl(*I))
+  for (const auto *Arg : A->args()) {
+    if (const ValueDecl *VD = getValueDecl(Arg))
       return ClassifyDiagnostic(VD);
   }
   return "mutex";
@@ -1624,10 +1624,10 @@ void ThreadSafetyAnalyzer::getMutexIDs(MutexIDList &Mtxs, AttrType *Attr,
     return;
   }
 
-  for (iterator_type I=Attr->args_begin(), E=Attr->args_end(); I != E; ++I) {
-    SExpr Mu(*I, Exp, D, SelfDecl);
+  for (const auto *Arg : Attr->args()) {
+    SExpr Mu(Arg, Exp, D, SelfDecl);
     if (!Mu.isValid())
-      SExpr::warnInvalidLock(Handler, *I, Exp, D, ClassifyDiagnostic(Attr));
+      SExpr::warnInvalidLock(Handler, Arg, Exp, D, ClassifyDiagnostic(Attr));
     else
       Mtxs.push_back_nodup(Mu);
   }
@@ -2058,21 +2058,16 @@ void BuildLockset::handleCall(Expr *Exp, const NamedDecl *D, VarDecl *VD) {
 
       case attr::RequiresCapability: {
         RequiresCapabilityAttr *A = cast<RequiresCapabilityAttr>(At);
-
-        for (RequiresCapabilityAttr::args_iterator I = A->args_begin(),
-             E = A->args_end(); I != E; ++I)
-          warnIfMutexNotHeld(D, Exp, A->isShared() ? AK_Read : AK_Written, *I,
+        for (auto *Arg : A->args())
+          warnIfMutexNotHeld(D, Exp, A->isShared() ? AK_Read : AK_Written, Arg,
                              POK_FunctionCall, ClassifyDiagnostic(A));
         break;
       }
 
       case attr::LocksExcluded: {
         LocksExcludedAttr *A = cast<LocksExcludedAttr>(At);
-
-        for (LocksExcludedAttr::args_iterator I = A->args_begin(),
-            E = A->args_end(); I != E; ++I) {
-          warnIfMutexHeld(D, Exp, *I, ClassifyDiagnostic(A));
-        }
+        for (auto *Arg : A->args())
+          warnIfMutexHeld(D, Exp, Arg, ClassifyDiagnostic(A));
         break;
       }
 

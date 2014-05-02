@@ -504,32 +504,33 @@ namespace {
   };
 
   class VariadicArgument : public Argument {
-    std::string type;
+    std::string Type, ArgName, ArgSizeName, RangeName;
 
   public:
     VariadicArgument(Record &Arg, StringRef Attr, std::string T)
-      : Argument(Arg, Attr), type(T)
-    {}
+        : Argument(Arg, Attr), Type(T), ArgName(getLowerName().str() + "_"),
+          ArgSizeName(ArgName + "Size"), RangeName(getLowerName()) {}
 
-    std::string getType() const { return type; }
+    std::string getType() const { return Type; }
 
     void writeAccessors(raw_ostream &OS) const override {
-      OS << "  typedef " << type << "* " << getLowerName() << "_iterator;\n";
-      OS << "  " << getLowerName() << "_iterator " << getLowerName()
-         << "_begin() const {\n";
-      OS << "    return " << getLowerName() << ";\n";
-      OS << "  }\n";
-      OS << "  " << getLowerName() << "_iterator " << getLowerName()
-         << "_end() const {\n";
-      OS << "    return " << getLowerName() << " + " << getLowerName()
-         << "Size;\n";
-      OS << "  }\n";
-      OS << "  unsigned " << getLowerName() << "_size() const {\n"
-         << "    return " << getLowerName() << "Size;\n";
-      OS << "  }";
+      std::string IteratorType = getLowerName().str() + "_iterator";
+      std::string BeginFn = getLowerName().str() + "_begin()";
+      std::string EndFn = getLowerName().str() + "_end()";
+      
+      OS << "  typedef " << Type << "* " << IteratorType << ";\n";
+      OS << "  " << IteratorType << " " << BeginFn << " const {"
+         << " return " << ArgName << "; }\n";
+      OS << "  " << IteratorType << " " << EndFn << " const {"
+         << " return " << ArgName << " + " << ArgSizeName << "; }\n";
+      OS << "  unsigned " << getLowerName() << "_size() const {"
+         << " return " << ArgSizeName << "; }\n";
+      OS << "  llvm::iterator_range<" << IteratorType << "> " << RangeName
+         << "() const { return llvm::make_range(" << BeginFn << ", " << EndFn
+         << "); }\n";
     }
     void writeCloneArgs(raw_ostream &OS) const override {
-      OS << getLowerName() << ", " << getLowerName() << "Size";
+      OS << ArgName << ", " << ArgSizeName;
     }
     void writeTemplateInstantiationArgs(raw_ostream &OS) const override {
       // This isn't elegant, but we have to go through public methods...
@@ -538,15 +539,15 @@ namespace {
     }
     void writeCtorBody(raw_ostream &OS) const override {
       OS << "    std::copy(" << getUpperName() << ", " << getUpperName()
-         << " + " << getLowerName() << "Size, " << getLowerName() << ");";
+         << " + " << ArgSizeName << ", " << ArgName << ");";
     }
     void writeCtorInitializers(raw_ostream &OS) const override {
-      OS << getLowerName() << "Size(" << getUpperName() << "Size), "
-         << getLowerName() << "(new (Ctx, 16) " << getType() << "["
-         << getLowerName() << "Size])";
+      OS << ArgSizeName << "(" << getUpperName() << "Size), "
+         << ArgName << "(new (Ctx, 16) " << getType() << "["
+         << ArgSizeName << "])";
     }
     void writeCtorDefaultInitializers(raw_ostream &OS) const override {
-      OS << getLowerName() << "Size(0), " << getLowerName() << "(0)";
+      OS << ArgSizeName << "(0), " << ArgName << "(nullptr)";
     }
     void writeCtorParameters(raw_ostream &OS) const override {
       OS << getType() << " *" << getUpperName() << ", unsigned "
@@ -556,18 +557,18 @@ namespace {
       OS << getUpperName() << ", " << getUpperName() << "Size";
     }
     void writeDeclarations(raw_ostream &OS) const override {
-      OS << "  unsigned " << getLowerName() << "Size;\n";
-      OS << "  " << getType() << " *" << getLowerName() << ";";
+      OS << "  unsigned " << ArgSizeName << ";\n";
+      OS << "  " << getType() << " *" << ArgName << ";";
     }
     void writePCHReadDecls(raw_ostream &OS) const override {
       OS << "  unsigned " << getLowerName() << "Size = Record[Idx++];\n";
-      OS << "  SmallVector<" << type << ", 4> " << getLowerName()
+      OS << "  SmallVector<" << Type << ", 4> " << getLowerName()
          << ";\n";
       OS << "  " << getLowerName() << ".reserve(" << getLowerName()
          << "Size);\n";
       OS << "    for (unsigned i = " << getLowerName() << "Size; i; --i)\n";
       
-      std::string read = ReadPCHRecord(type);
+      std::string read = ReadPCHRecord(Type);
       OS << "    " << getLowerName() << ".push_back(" << read << ");\n";
     }
     void writePCHReadArgs(raw_ostream &OS) const override {
@@ -575,28 +576,22 @@ namespace {
     }
     void writePCHWrite(raw_ostream &OS) const override {
       OS << "    Record.push_back(SA->" << getLowerName() << "_size());\n";
-      OS << "    for (" << getAttrName() << "Attr::" << getLowerName()
-         << "_iterator i = SA->" << getLowerName() << "_begin(), e = SA->"
-         << getLowerName() << "_end(); i != e; ++i)\n";
-      OS << "      " << WritePCHRecord(type, "(*i)");
+      OS << "    for (auto &Val : SA->" << RangeName << "())\n";
+      OS << "      " << WritePCHRecord(Type, "Val");
     }
     void writeValue(raw_ostream &OS) const override {
       OS << "\";\n";
       OS << "  bool isFirst = true;\n"
-         << "  for (" << getAttrName() << "Attr::" << getLowerName()
-         << "_iterator i = " << getLowerName() << "_begin(), e = "
-         << getLowerName() << "_end(); i != e; ++i) {\n"
+         << "  for (const auto &Val : " << RangeName << "()) {\n"
          << "    if (isFirst) isFirst = false;\n"
          << "    else OS << \", \";\n"
-         << "    OS << *i;\n"
+         << "    OS << Val;\n"
          << "  }\n";
       OS << "  OS << \"";
     }
     void writeDump(raw_ostream &OS) const override {
-      OS << "    for (" << getAttrName() << "Attr::" << getLowerName()
-         << "_iterator I = SA->" << getLowerName() << "_begin(), E = SA->"
-         << getLowerName() << "_end(); I != E; ++I)\n";
-      OS << "      OS << \" \" << *I;\n";
+      OS << "    for (const auto &Val : SA->" << RangeName << "())\n";
+      OS << "      OS << \" \" << Val;\n";
     }
   };
 

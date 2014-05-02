@@ -921,9 +921,8 @@ ProgramStateRef MallocChecker::FreeMemAttr(CheckerContext &C,
   ProgramStateRef State = C.getState();
   bool ReleasedAllocated = false;
 
-  for (OwnershipAttr::args_iterator I = Att->args_begin(), E = Att->args_end();
-       I != E; ++I) {
-    ProgramStateRef StateI = FreeMemAux(C, CE, State, *I,
+  for (const auto &Arg : Att->args()) {
+    ProgramStateRef StateI = FreeMemAux(C, CE, State, Arg,
                                Att->getOwnKind() == OwnershipAttr::Holds,
                                ReleasedAllocated);
     if (StateI)
