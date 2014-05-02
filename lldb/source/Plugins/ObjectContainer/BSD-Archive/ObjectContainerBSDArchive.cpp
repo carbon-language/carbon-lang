@@ -74,6 +74,25 @@ ObjectContainerBSDArchive::Object::Extract (const DataExtractor& data, lldb::off
     size_t ar_name_len = 0;
     std::string str;
     char *err;
+    
+    
+    // File header
+    //
+    // The common format is as follows.
+    //
+    //  Offset  Length	Name            Format
+    //  0       16      File name       ASCII right padded with spaces (no spaces allowed in file name)
+    //  16      12      File mod        Decimal as cstring right padded with spaces
+    //  28      6       Owner ID        Decimal as cstring right padded with spaces
+    //  34      6       Group ID        Decimal as cstring right padded with spaces
+    //  40      8       File mode       Octal   as cstring right padded with spaces
+    //  48      10      File byte size  Decimal as cstring right padded with spaces
+    //  58      2       File magic      0x60 0x0A
+
+    // Make sure there is enough data for the file header and bail if not
+    if (!data.ValidOffsetForDataOfSize(offset, 60))
+        return LLDB_INVALID_OFFSET;
+
     str.assign ((const char *)data.GetData(&offset, 16),    16);
     if (str.find("#1/") == 0)
     {
@@ -110,7 +129,11 @@ ObjectContainerBSDArchive::Object::Extract (const DataExtractor& data, lldb::off
     {
         if (ar_name_len > 0)
         {
-            str.assign ((const char *)data.GetData(&offset, ar_name_len), ar_name_len);
+            const void *ar_name_ptr = data.GetData(&offset, ar_name_len);
+            // Make sure there was enough data for the string value and bail if not
+            if (ar_name_ptr == NULL)
+                return LLDB_INVALID_OFFSET;
+            str.assign ((const char *)ar_name_ptr, ar_name_len);
             ar_name.SetCString (str.c_str());
         }
         ar_file_offset = offset;
