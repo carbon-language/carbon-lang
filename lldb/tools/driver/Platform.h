@@ -105,7 +105,7 @@
     #include <pthread.h>
     #include <sys/time.h>
 
-    #if defined(__FreeBSD__)
+    #if defined(__FreeBSD__) || defined(__NetBSD__)
         #include <readline/readline.h>
     #else
         #include <editline/readline.h>
