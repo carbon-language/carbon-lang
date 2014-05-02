@@ -356,12 +356,8 @@ void Verifier::visit(Instruction &I) {
 
 
 void Verifier::visitGlobalValue(const GlobalValue &GV) {
-  Assert1(!GV.isDeclaration() ||
-          GV.isMaterializable() ||
-          GV.hasExternalLinkage() ||
-          GV.hasExternalWeakLinkage() ||
-          (isa<GlobalAlias>(GV) &&
-           (GV.hasLocalLinkage() || GV.hasWeakLinkage())),
+  Assert1(!GV.isDeclaration() || GV.isMaterializable() ||
+              GV.hasExternalLinkage() || GV.hasExternalWeakLinkage(),
           "Global is external, but doesn't have external or weak linkage!",
           &GV);
 
