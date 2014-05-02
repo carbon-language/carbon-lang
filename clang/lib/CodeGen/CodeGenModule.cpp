@@ -1463,6 +1463,8 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
     }
   }
 
+  getTargetCodeGenInfo().emitTargetMD(D, F, *this);
+
   // Make sure the result is of the requested type.
   if (!IsIncompleteFunction) {
     assert(F->getType()->getElementType() == Ty);
@@ -1615,6 +1617,8 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
       D->getType().isConstant(Context) &&
       isExternallyVisible(D->getLinkageAndVisibility().getLinkage()))
     GV->setSection(".cp.rodata");
+
+  getTargetCodeGenInfo().emitTargetMD(D, GV, *this);
 
   return GV;
 }
