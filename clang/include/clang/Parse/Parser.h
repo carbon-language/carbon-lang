@@ -419,8 +419,9 @@ private:
 
   /// \brief Consume the current code-completion token.
   ///
-  /// This routine should be called to consume the code-completion token once
-  /// a code-completion action has already been invoked.
+  /// This routine can be called to consume the code-completion token and
+  /// continue processing in special cases where \c cutOffParsing() isn't
+  /// desired, such as token caching or completion with lookahead.
   SourceLocation ConsumeCodeCompletionToken() {
     assert(Tok.is(tok::code_completion));
     PrevTokLocation = Tok.getLocation();

@@ -767,7 +767,7 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro,
               !Intro.Captures.empty())) {
           Actions.CodeCompleteLambdaIntroducer(getCurScope(), Intro, 
                                                /*AfterAmpersand=*/false);
-          ConsumeCodeCompletionToken();
+          cutOffParsing();
           break;
         }
 
@@ -784,7 +784,7 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro,
       else
         Actions.CodeCompleteLambdaIntroducer(getCurScope(), Intro, 
                                              /*AfterAmpersand=*/false);
-      ConsumeCodeCompletionToken();
+      cutOffParsing();
       break;
     }
 
@@ -808,7 +808,7 @@ Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro,
         if (Tok.is(tok::code_completion)) {
           Actions.CodeCompleteLambdaIntroducer(getCurScope(), Intro, 
                                                /*AfterAmpersand=*/true);
-          ConsumeCodeCompletionToken();
+          cutOffParsing();
           break;
         }
       }
