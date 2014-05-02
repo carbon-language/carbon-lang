@@ -1437,6 +1437,76 @@
 // CHECK_BDVER3_M64: #define __tune_bdver3__ 1
 // CHECK_BDVER3_M64: #define __x86_64 1
 // CHECK_BDVER3_M64: #define __x86_64__ 1
+// RUN: %clang -march=bdver4 -m32 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_BDVER4_M32
+// CHECK_BDVER4_M32-NOT: #define __3dNOW_A__ 1
+// CHECK_BDVER4_M32-NOT: #define __3dNOW__ 1
+// CHECK_BDVER4_M32: #define __AES__ 1
+// CHECK_BDVER4_M32: #define __AVX2__ 1
+// CHECK_BDVER4_M32: #define __AVX__ 1
+// CHECK_BDVER4_M32: #define __BMI2__ 1
+// CHECK_BDVER4_M32: #define __BMI__ 1
+// CHECK_BDVER4_M32: #define __F16C__ 1
+// CHECK_BDVER4_M32: #define __FMA4__ 1
+// CHECK_BDVER4_M32: #define __FMA__ 1
+// CHECK_BDVER4_M32: #define __LZCNT__ 1
+// CHECK_BDVER4_M32: #define __MMX__ 1
+// CHECK_BDVER4_M32: #define __PCLMUL__ 1
+// CHECK_BDVER4_M32: #define __POPCNT__ 1
+// CHECK_BDVER4_M32: #define __PRFCHW__ 1
+// CHECK_BDVER4_M32: #define __SSE2_MATH__ 1
+// CHECK_BDVER4_M32: #define __SSE2__ 1
+// CHECK_BDVER4_M32: #define __SSE3__ 1
+// CHECK_BDVER4_M32: #define __SSE4A__ 1
+// CHECK_BDVER4_M32: #define __SSE4_1__ 1
+// CHECK_BDVER4_M32: #define __SSE4_2__ 1
+// CHECK_BDVER4_M32: #define __SSE_MATH__ 1
+// CHECK_BDVER4_M32: #define __SSE__ 1
+// CHECK_BDVER4_M32: #define __SSSE3__ 1
+// CHECK_BDVER4_M32: #define __TBM__ 1
+// CHECK_BDVER4_M32: #define __XOP__ 1
+// CHECK_BDVER4_M32: #define __bdver4 1
+// CHECK_BDVER4_M32: #define __bdver4__ 1
+// CHECK_BDVER4_M32: #define __i386 1
+// CHECK_BDVER4_M32: #define __i386__ 1
+// CHECK_BDVER4_M32: #define __tune_bdver4__ 1
+// RUN: %clang -march=bdver4 -m64 -E -dM %s -o - 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:   | FileCheck %s -check-prefix=CHECK_BDVER4_M64
+// CHECK_BDVER4_M64-NOT: #define __3dNOW_A__ 1
+// CHECK_BDVER4_M64-NOT: #define __3dNOW__ 1
+// CHECK_BDVER4_M64: #define __AES__ 1
+// CHECK_BDVER4_M64: #define __AVX2__ 1
+// CHECK_BDVER4_M64: #define __AVX__ 1
+// CHECK_BDVER4_M64: #define __BMI2__ 1
+// CHECK_BDVER4_M64: #define __BMI__ 1
+// CHECK_BDVER4_M64: #define __F16C__ 1
+// CHECK_BDVER4_M64: #define __FMA4__ 1
+// CHECK_BDVER4_M64: #define __FMA__ 1
+// CHECK_BDVER4_M64: #define __LZCNT__ 1
+// CHECK_BDVER4_M64: #define __MMX__ 1
+// CHECK_BDVER4_M64: #define __PCLMUL__ 1
+// CHECK_BDVER4_M64: #define __POPCNT__ 1
+// CHECK_BDVER4_M64: #define __PRFCHW__ 1
+// CHECK_BDVER4_M64: #define __SSE2_MATH__ 1
+// CHECK_BDVER4_M64: #define __SSE2__ 1
+// CHECK_BDVER4_M64: #define __SSE3__ 1
+// CHECK_BDVER4_M64: #define __SSE4A__ 1
+// CHECK_BDVER4_M64: #define __SSE4_1__ 1
+// CHECK_BDVER4_M64: #define __SSE4_2__ 1
+// CHECK_BDVER4_M64: #define __SSE_MATH__ 1
+// CHECK_BDVER4_M64: #define __SSE__ 1
+// CHECK_BDVER4_M64: #define __SSSE3__ 1
+// CHECK_BDVER4_M64: #define __TBM__ 1
+// CHECK_BDVER4_M64: #define __XOP__ 1
+// CHECK_BDVER4_M64: #define __amd64 1
+// CHECK_BDVER4_M64: #define __amd64__ 1
+// CHECK_BDVER4_M64: #define __bdver4 1
+// CHECK_BDVER4_M64: #define __bdver4__ 1
+// CHECK_BDVER4_M64: #define __tune_bdver4__ 1
+// CHECK_BDVER4_M64: #define __x86_64 1
+// CHECK_BDVER4_M64: #define __x86_64__ 1
 //
 // End X86/GCC/Linux tests ------------------
 
