@@ -1568,7 +1568,7 @@ def ConsumableSetOnRead : InheritableAttr {
 def CallableWhen : InheritableAttr {
   let Spellings = [GNU<"callable_when">];
   let Subjects = SubjectList<[CXXMethod]>;
-  let Args = [VariadicEnumArgument<"CallableState", "ConsumedState",
+  let Args = [VariadicEnumArgument<"CallableStates", "ConsumedState",
                                    ["unknown", "consumed", "unconsumed"],
                                    ["Unknown", "Consumed", "Unconsumed"]>];
   let Documentation = [CallableWhenDocs];

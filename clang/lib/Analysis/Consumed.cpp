@@ -113,8 +113,8 @@ static ConsumedState invertConsumedUnconsumed(ConsumedState State) {
 static bool isCallableInState(const CallableWhenAttr *CWAttr,
                               ConsumedState State) {
   
-  CallableWhenAttr::callableState_iterator I = CWAttr->callableState_begin(),
-                                           E = CWAttr->callableState_end();
+  CallableWhenAttr::callableStates_iterator I = CWAttr->callableStates_begin(),
+                                            E = CWAttr->callableStates_end();
   
   for (; I != E; ++I) {
     
