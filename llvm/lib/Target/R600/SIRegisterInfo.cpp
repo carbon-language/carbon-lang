@@ -129,3 +129,10 @@ const TargetRegisterClass *SIRegisterInfo::getSubRegClass(
     return &AMDGPU::VGPR_32RegClass;
   }
 }
+
+unsigned SIRegisterInfo::getPhysRegSubReg(unsigned Reg,
+                                          const TargetRegisterClass *SubRC,
+                                          unsigned Channel) const {
+  unsigned Index = getHWRegIndex(Reg);
+  return SubRC->getRegister(Index + Channel);
+}

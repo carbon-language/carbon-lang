@@ -63,6 +63,12 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   /// be returned.
   const TargetRegisterClass *getSubRegClass(const TargetRegisterClass *RC,
                                             unsigned SubIdx) const;
+
+  /// \p Channel This is the register channel (e.g. a value from 0-16), not the
+  ///            SubReg index.
+  /// \returns The sub-register of Reg that is in Channel.
+  unsigned getPhysRegSubReg(unsigned Reg, const TargetRegisterClass *SubRC,
+                            unsigned Channel) const;
 };
 
 } // End namespace llvm

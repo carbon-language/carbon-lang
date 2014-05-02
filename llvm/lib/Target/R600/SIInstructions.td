@@ -369,7 +369,7 @@ def S_GETREG_REGRD_B32 : SOPK_32 <0x00000014, "S_GETREG_REGRD_B32", []>;
 
 let Predicates = [isSI] in {
 
-//def S_NOP : SOPP_ <0x00000000, "S_NOP", []>;
+def S_NOP : SOPP <0x00000000, (ins i16imm:$SIMM16), "S_NOP $SIMM16", []>;
 
 let isTerminator = 1 in {
 
@@ -1573,6 +1573,27 @@ def V_SUB_F64 : InstSI <
 >;
 
 } // end usesCustomInserter
+
+multiclass SI_SPILL_SGPR <RegisterClass sgpr_class> {
+
+  def _SAVE : InstSI <
+    (outs VReg_32:$dst),
+    (ins sgpr_class:$src, i32imm:$frame_idx),
+    "", []
+  >;
+
+  def _RESTORE : InstSI <
+    (outs sgpr_class:$dst),
+    (ins VReg_32:$src, i32imm:$frame_idx),
+    "", []
+  >;
+
+}
+
+defm SI_SPILL_S64  : SI_SPILL_SGPR <SReg_64>;
+defm SI_SPILL_S128 : SI_SPILL_SGPR <SReg_128>;
+defm SI_SPILL_S256 : SI_SPILL_SGPR <SReg_256>;
+defm SI_SPILL_S512 : SI_SPILL_SGPR <SReg_512>;
 
 } // end IsCodeGenOnly, isPseudo
 

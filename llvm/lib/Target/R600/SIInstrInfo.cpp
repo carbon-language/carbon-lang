@@ -187,27 +187,45 @@ void SIInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                       int FrameIndex,
                                       const TargetRegisterClass *RC,
                                       const TargetRegisterInfo *TRI) const {
-  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
   SIMachineFunctionInfo *MFI = MBB.getParent()->getInfo<SIMachineFunctionInfo>();
   DebugLoc DL = MBB.findDebugLoc(MI);
   unsigned KillFlag = isKill ? RegState::Kill : 0;
+  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
 
   if (TRI->getCommonSubClass(RC, &AMDGPU::SGPR_32RegClass)) {
-    unsigned Lane = MFI->SpillTracker.getNextLane(MRI);
-    BuildMI(MBB, MI, DL, get(AMDGPU::V_WRITELANE_B32),
-            MFI->SpillTracker.LaneVGPR)
+    unsigned Lane = MFI->SpillTracker.reserveLanes(MRI, MBB.getParent());
+
+    BuildMI(MBB, MI, DL, get(AMDGPU::V_WRITELANE_B32), MFI->SpillTracker.LaneVGPR)
             .addReg(SrcReg, KillFlag)
             .addImm(Lane);
+    MFI->SpillTracker.addSpilledReg(FrameIndex, MFI->SpillTracker.LaneVGPR, Lane);
+  } else if (RI.isSGPRClass(RC)) {
+    // We are only allowed to create one new instruction when spilling
+    // registers, so we need to use pseudo instruction for vector
+    // registers.
+    //
+    // Reserve a spot in the spill tracker for each sub-register of
+    // the vector register.
+    unsigned NumSubRegs = RC->getSize() / 4;
+    unsigned FirstLane = MFI->SpillTracker.reserveLanes(MRI, MBB.getParent(),
+                                                        NumSubRegs);
     MFI->SpillTracker.addSpilledReg(FrameIndex, MFI->SpillTracker.LaneVGPR,
-                                    Lane);
-  } else {
-    for (unsigned i = 0, e = RC->getSize() / 4; i != e; ++i) {
-      unsigned SubReg = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
-      BuildMI(MBB, MI, MBB.findDebugLoc(MI), get(AMDGPU::COPY), SubReg)
-              .addReg(SrcReg, 0, RI.getSubRegFromChannel(i));
-      storeRegToStackSlot(MBB, MI, SubReg, isKill, FrameIndex + i,
-                          &AMDGPU::SReg_32RegClass, TRI);
+                                    FirstLane);
+
+    unsigned Opcode;
+    switch (RC->getSize() * 8) {
+    case 64:  Opcode = AMDGPU::SI_SPILL_S64_SAVE;  break;
+    case 128: Opcode = AMDGPU::SI_SPILL_S128_SAVE; break;
+    case 256: Opcode = AMDGPU::SI_SPILL_S256_SAVE; break;
+    case 512: Opcode = AMDGPU::SI_SPILL_S512_SAVE; break;
+    default: llvm_unreachable("Cannot spill register class");
     }
+
+    BuildMI(MBB, MI, DL, get(Opcode), MFI->SpillTracker.LaneVGPR)
+            .addReg(SrcReg)
+            .addImm(FrameIndex);
+  } else {
+    llvm_unreachable("VGPR spilling not supported");
   }
 }
 
@@ -216,30 +234,125 @@ void SIInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                        unsigned DestReg, int FrameIndex,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI) const {
-  MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
   SIMachineFunctionInfo *MFI = MBB.getParent()->getInfo<SIMachineFunctionInfo>();
   DebugLoc DL = MBB.findDebugLoc(MI);
   if (TRI->getCommonSubClass(RC, &AMDGPU::SReg_32RegClass)) {
-     SIMachineFunctionInfo::SpilledReg Spill =
+    SIMachineFunctionInfo::SpilledReg Spill =
         MFI->SpillTracker.getSpilledReg(FrameIndex);
     assert(Spill.VGPR);
     BuildMI(MBB, MI, DL, get(AMDGPU::V_READLANE_B32), DestReg)
             .addReg(Spill.VGPR)
             .addImm(Spill.Lane);
-  } else {
-    for (unsigned i = 0, e = RC->getSize() / 4; i != e; ++i) {
-      unsigned Flags = RegState::Define;
-      if (i == 0) {
-        Flags |= RegState::Undef;
-      }
-      unsigned SubReg = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
-      loadRegFromStackSlot(MBB, MI, SubReg, FrameIndex + i,
-                           &AMDGPU::SReg_32RegClass, TRI);
-      BuildMI(MBB, MI, DL, get(AMDGPU::COPY))
-              .addReg(DestReg, Flags, RI.getSubRegFromChannel(i))
-              .addReg(SubReg);
+    insertNOPs(MI, 3);
+  } else if (RI.isSGPRClass(RC)){
+    unsigned Opcode;
+    switch(RC->getSize() * 8) {
+    case 64:  Opcode = AMDGPU::SI_SPILL_S64_RESTORE;  break;
+    case 128: Opcode = AMDGPU::SI_SPILL_S128_RESTORE; break;
+    case 256: Opcode = AMDGPU::SI_SPILL_S256_RESTORE; break;
+    case 512: Opcode = AMDGPU::SI_SPILL_S512_RESTORE; break;
+    default: llvm_unreachable("Cannot spill register class");
     }
+
+    SIMachineFunctionInfo::SpilledReg Spill =
+        MFI->SpillTracker.getSpilledReg(FrameIndex);
+
+    BuildMI(MBB, MI, DL, get(Opcode), DestReg)
+            .addReg(Spill.VGPR)
+            .addImm(FrameIndex);
+    insertNOPs(MI, 3);
+  } else {
+    llvm_unreachable("VGPR spilling not supported");
   }
+}
+
+static unsigned getNumSubRegsForSpillOp(unsigned Op) {
+
+  switch (Op) {
+  case AMDGPU::SI_SPILL_S512_SAVE:
+  case AMDGPU::SI_SPILL_S512_RESTORE:
+    return 16;
+  case AMDGPU::SI_SPILL_S256_SAVE:
+  case AMDGPU::SI_SPILL_S256_RESTORE:
+    return 8;
+  case AMDGPU::SI_SPILL_S128_SAVE:
+  case AMDGPU::SI_SPILL_S128_RESTORE:
+    return 4;
+  case AMDGPU::SI_SPILL_S64_SAVE:
+  case AMDGPU::SI_SPILL_S64_RESTORE:
+    return 2;
+  default: llvm_unreachable("Invalid spill opcode");
+  }
+}
+
+void SIInstrInfo::insertNOPs(MachineBasicBlock::iterator MI,
+                             int Count) const {
+  while (Count > 0) {
+    int Arg;
+    if (Count >= 8)
+      Arg = 7;
+    else
+      Arg = Count - 1;
+    Count -= 8;
+    BuildMI(*MI->getParent(), MI, MI->getDebugLoc(), get(AMDGPU::S_NOP))
+            .addImm(Arg);
+  }
+}
+
+bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
+  SIMachineFunctionInfo *MFI =
+      MI->getParent()->getParent()->getInfo<SIMachineFunctionInfo>();
+  MachineBasicBlock &MBB = *MI->getParent();
+  DebugLoc DL = MBB.findDebugLoc(MI);
+  switch (MI->getOpcode()) {
+  default: return AMDGPUInstrInfo::expandPostRAPseudo(MI);
+
+  // SGPR register spill
+  case AMDGPU::SI_SPILL_S512_SAVE:
+  case AMDGPU::SI_SPILL_S256_SAVE:
+  case AMDGPU::SI_SPILL_S128_SAVE:
+  case AMDGPU::SI_SPILL_S64_SAVE: {
+    unsigned NumSubRegs = getNumSubRegsForSpillOp(MI->getOpcode());
+    unsigned FrameIndex = MI->getOperand(2).getImm();
+
+    for (unsigned i = 0, e = NumSubRegs; i < e; ++i) {
+      SIMachineFunctionInfo::SpilledReg Spill;
+      unsigned SubReg = RI.getPhysRegSubReg(MI->getOperand(1).getReg(),
+                                            &AMDGPU::SGPR_32RegClass, i);
+      Spill = MFI->SpillTracker.getSpilledReg(FrameIndex);
+
+      BuildMI(MBB, MI, DL, get(AMDGPU::V_WRITELANE_B32),
+              MI->getOperand(0).getReg())
+              .addReg(SubReg)
+              .addImm(Spill.Lane + i);
+    }
+    MI->eraseFromParent();
+    break;
+  }
+
+  // SGPR register restore
+  case AMDGPU::SI_SPILL_S512_RESTORE:
+  case AMDGPU::SI_SPILL_S256_RESTORE:
+  case AMDGPU::SI_SPILL_S128_RESTORE:
+  case AMDGPU::SI_SPILL_S64_RESTORE: {
+    unsigned NumSubRegs = getNumSubRegsForSpillOp(MI->getOpcode());
+
+    for (unsigned i = 0, e = NumSubRegs; i < e; ++i) {
+      SIMachineFunctionInfo::SpilledReg Spill;
+      unsigned FrameIndex = MI->getOperand(2).getImm();
+      unsigned SubReg = RI.getPhysRegSubReg(MI->getOperand(0).getReg(),
+                                   &AMDGPU::SGPR_32RegClass, i);
+      Spill = MFI->SpillTracker.getSpilledReg(FrameIndex);
+
+      BuildMI(MBB, MI, DL, get(AMDGPU::V_READLANE_B32), SubReg)
+              .addReg(MI->getOperand(1).getReg())
+              .addImm(Spill.Lane + i);
+    }
+    MI->eraseFromParent();
+    break;
+  }
+  }
+  return true;
 }
 
 MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,

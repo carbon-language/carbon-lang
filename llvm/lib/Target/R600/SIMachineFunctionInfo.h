@@ -43,7 +43,12 @@ public:
   public:
     unsigned LaneVGPR;
     RegSpillTracker() : CurrentLane(0), SpilledRegisters(), LaneVGPR(0) { }
-    unsigned getNextLane(MachineRegisterInfo &MRI);
+    /// \p NumRegs The number of consecutive registers what need to be spilled.
+    ///            This function will ensure that all registers are stored in
+    ///            the same VGPR.
+    /// \returns The lane to be used for storing the first register.
+    unsigned reserveLanes(MachineRegisterInfo &MRI, MachineFunction *MF,
+                          unsigned NumRegs = 1);
     void addSpilledReg(unsigned FrameIndex, unsigned Reg, int Lane = -1);
     const SpilledReg& getSpilledReg(unsigned FrameIndex);
     bool programSpillsRegisters() { return !SpilledRegisters.empty(); }
