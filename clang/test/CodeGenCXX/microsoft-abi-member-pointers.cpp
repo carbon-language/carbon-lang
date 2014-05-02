@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 | FileCheck %s
+// RUN: %clang_cc1 -fno-rtti -emit-llvm %s -o - -triple=x86_64-pc-win32 | FileCheck %s -check-prefix=X64
 // RUN: %clang_cc1 -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 -DINCOMPLETE_VIRTUAL -fms-extensions -verify
 // RUN: %clang_cc1 -fno-rtti -emit-llvm %s -o - -triple=i386-pc-win32 -DINCOMPLETE_VIRTUAL -DMEMFUN -fms-extensions -verify
 // FIXME: Test x86_64 member pointers when codegen no longer asserts on records
@@ -235,6 +236,10 @@ bool nullTestDataUnspecified(int Unspecified::*mp) {
 // CHECK:   %[[and1:.*]] = or i1 %[[and0]], %[[cmp2]]
 // CHECK:   ret i1 %[[and1]]
 // CHECK: }
+
+// Pass this large type indirectly.
+// X64-LABEL: define zeroext i1 @"\01?nullTestDataUnspecified@@
+// X64:             ({ i32, i32, i32 }*)
 }
 
 bool nullTestFunctionUnspecified(void (Unspecified::*mp)()) {
@@ -271,6 +276,11 @@ int loadDataMemberPointerVirtual(Virtual *o, int Virtual::*memptr) {
 // CHECK:   %[[v12:.*]] = load i32* %[[v11]]
 // CHECK:   ret i32 %[[v12]]
 // CHECK: }
+
+// A two-field data memptr on x64 gets coerced to i64 and is passed in a
+// register or memory.
+// X64-LABEL: define i32 @"\01?loadDataMemberPointerVirtual@@YAHPEAUVirtual@@PEQ1@H@Z"
+// X64:             (%struct.Virtual* %o, i64 %memptr.coerce)
 }
 
 int loadDataMemberPointerUnspecified(Unspecified *o, int Unspecified::*memptr) {
@@ -312,6 +322,11 @@ void callMemberPointerSingle(Single *o, void (Single::*memptr)()) {
 // CHECK:   call x86_thiscallcc void %{{.*}}(%{{.*}} %{{.*}})
 // CHECK:   ret void
 // CHECK: }
+
+// X64-LABEL: define void @"\01?callMemberPointerSingle@@
+// X64:           (%struct.Single* %o, i8* %memptr)
+// X64:   bitcast i8* %{{[^ ]*}} to void (%struct.Single*)*
+// X64:   ret void
 }
 
 void callMemberPointerMultiple(Multiple *o, void (Multiple::*memptr)()) {
@@ -358,6 +373,9 @@ bool compareSingleFunctionMemptr(void (Single::*l)(), void (Single::*r)()) {
 // CHECK-NOT: icmp
 // CHECK:   ret i1 %[[r]]
 // CHECK: }
+
+// X64-LABEL: define zeroext i1 @"\01?compareSingleFunctionMemptr@@
+// X64:             (i8* %{{[^,]*}}, i8* %{{[^)]*}})
 }
 
 bool compareNeqSingleFunctionMemptr(void (Single::*l)(), void (Single::*r)()) {
@@ -393,6 +411,9 @@ bool unspecFuncMemptrEq(void (Unspecified::*l)(), void (Unspecified::*r)()) {
 // CHECK:   %{{.*}} = and i1 %[[bits_or_null]], %[[cmp0]]
 // CHECK:   ret i1 %{{.*}}
 // CHECK: }
+
+// X64-LABEL: define zeroext i1 @"\01?unspecFuncMemptrEq@@
+// X64:             ({ i8*, i32, i32, i32 }*, { i8*, i32, i32, i32 }*)
 }
 
 bool unspecFuncMemptrNeq(void (Unspecified::*l)(), void (Unspecified::*r)()) {
@@ -435,6 +456,9 @@ bool unspecDataMemptrEq(int Unspecified::*l, int Unspecified::*r) {
 // CHECK:   and i1
 // CHECK:   ret i1
 // CHECK: }
+
+// X64-LABEL: define zeroext i1 @"\01?unspecDataMemptrEq@@
+// X64:             ({ i32, i32, i32 }*, { i32, i32, i32 }*)
 }
 
 void (Multiple::*convertB2FuncToMultiple(void (B2::*mp)()))() {

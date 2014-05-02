@@ -2717,7 +2717,8 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
 
   uint64_t Size = getContext().getTypeSize(Ty);
 
-  if (const RecordType *RT = Ty->getAs<RecordType>()) {
+  const RecordType *RT = Ty->getAs<RecordType>();
+  if (RT) {
     if (IsReturnType) {
       if (isRecordReturnIndirect(RT, getCXXABI()))
         return ABIArgInfo::getIndirect(0, false);
@@ -2733,15 +2734,31 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
     if (Size == 128 && getTarget().getTriple().isWindowsGNUEnvironment())
       return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
                                                           Size));
+  }
 
+  if (const auto *MPT = Ty->getAs<MemberPointerType>()) {
+    // If the member pointer is not an aggregate, pass it directly.
+    if (getTarget().getCXXABI().isMicrosoft()) {
+      // For Microsoft, check with the inheritance model.
+      const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
+      if (MSInheritanceAttr::hasOnlyOneField(MPT->isMemberFunctionPointer(),
+                                             RD->getMSInheritanceModel()))
+        return ABIArgInfo::getDirect();
+    } else {
+      // For Itanium, data pointers are simple and function pointers are big.
+      if (MPT->isMemberDataPointer())
+        return ABIArgInfo::getDirect();
+    }
+  }
+
+  if (RT || Ty->isMemberPointerType()) {
     // MS x64 ABI requirement: "Any argument that doesn't fit in 8 bytes, or is
     // not 1, 2, 4, or 8 bytes, must be passed by reference."
-    if (Size <= 64 &&
-        (Size & (Size - 1)) == 0)
-      return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(),
-                                                          Size));
+    if (Size > 64 || !llvm::isPowerOf2_64(Size))
+      return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
 
-    return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+    // Otherwise, coerce it to a small integer.
+    return ABIArgInfo::getDirect(llvm::IntegerType::get(getVMContext(), Size));
   }
 
   if (Ty->isPromotableIntegerType())
