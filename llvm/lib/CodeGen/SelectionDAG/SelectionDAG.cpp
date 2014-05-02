@@ -2924,8 +2924,8 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, EVT VT,
     }
   }
 
-  assert((Scalar1 && Scalar2) ||
-         VT.getVectorNumElements() == Outputs.size() && "No scalar or vector!");
+  assert((Scalar1 && Scalar2) || (VT.getVectorNumElements() == Outputs.size() &&
+                                  "Expected a scalar or vector!"));
 
   // Handle the scalar case first.
   if (!VT.isVector())
