@@ -259,6 +259,7 @@ CommunicationKDP::WaitForPacketWithTimeoutMicroSecondsNoLock (DataExtractor &pac
         {
             switch (status)
             {
+            case eConnectionStatusInterrupted:
             case eConnectionStatusTimedOut:
                 timed_out = true;
                 break;

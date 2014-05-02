@@ -321,6 +321,7 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
             switch (status)
             {
             case eConnectionStatusTimedOut:
+            case eConnectionStatusInterrupted:
                 timed_out = true;
                 break;
             case eConnectionStatusSuccess:

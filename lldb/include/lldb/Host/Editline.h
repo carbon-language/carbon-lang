@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Host/Condition.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
@@ -70,10 +71,13 @@ public:
     ~Editline();
 
     Error
-    GetLine (std::string &line);
+    GetLine (std::string &line,
+             bool &interrupted);
 
     Error
-    GetLines (const std::string &end_line, StringList &lines);
+    GetLines (const std::string &end_line,
+              StringList &lines,
+              bool &interrupted);
 
     bool
     LoadHistory ();
@@ -102,7 +106,7 @@ public:
     void
     Refresh();
 
-    void
+    bool
     Interrupt ();
 
     void
@@ -203,6 +207,7 @@ private:
     uint32_t m_line_offset;
     uint32_t m_lines_curr_line;
     uint32_t m_lines_max_line;
+    ConnectionFileDescriptor m_file;
     bool m_prompt_with_line_numbers;
     bool m_getting_line;
     bool m_got_eof;    // Set to true when we detect EOF

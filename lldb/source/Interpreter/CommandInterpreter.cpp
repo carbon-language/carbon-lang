@@ -44,6 +44,7 @@
 
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/Timer.h"
@@ -3049,6 +3050,24 @@ CommandInterpreter::IOHandlerInputComplete (IOHandler &io_handler, std::string &
             io_handler.SetIsDone(true);
             break;
     }
+}
+
+bool
+CommandInterpreter::IOHandlerInterrupt (IOHandler &io_handler)
+{
+    ExecutionContext exe_ctx (GetExecutionContext());
+    Process *process = exe_ctx.GetProcessPtr();
+    
+    if (process)
+    {
+        StateType state = process->GetState();
+        if (StateIsRunningState(state))
+        {
+            process->Halt();
+            return true; // Don't do any updating when we are running
+        }
+    }
+    return false;
 }
 
 void

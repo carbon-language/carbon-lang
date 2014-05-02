@@ -382,6 +382,8 @@ Communication::ReadThread (lldb::thread_arg_t p)
              break;
         case eConnectionStatusNoConnection:     // No connection
         case eConnectionStatusLostConnection:   // Lost connection while connected to a valid connection
+        case eConnectionStatusInterrupted:      // Interrupted
+
             done = true;
             // Fall through...
         case eConnectionStatusError:            // Check GetError() for details
@@ -433,6 +435,7 @@ Communication::ConnectionStatusAsCString (lldb::ConnectionStatus status)
     case eConnectionStatusNoConnection:   return "no connection";
     case eConnectionStatusLostConnection: return "lost connection";
     case eConnectionStatusEndOfFile:      return "end of file";
+    case eConnectionStatusInterrupted:    return "interrupted";
     }
 
     static char unknown_state_string[64];

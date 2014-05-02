@@ -209,7 +209,8 @@ namespace lldb {
         eConnectionStatusError,           // Check GetError() for details
         eConnectionStatusTimedOut,        // Request timed out
         eConnectionStatusNoConnection,    // No connection
-        eConnectionStatusLostConnection   // Lost connection while connected to a valid connection
+        eConnectionStatusLostConnection,  // Lost connection while connected to a valid connection
+        eConnectionStatusInterrupted      // Interrupted read
     } ConnectionStatus;
 
     typedef enum ErrorType

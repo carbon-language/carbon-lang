@@ -174,6 +174,7 @@ Editline::Editline (const char *prog,       // prog can't be NULL
     m_line_offset (0),
     m_lines_curr_line (0),
     m_lines_max_line (0),
+    m_file (fileno(fin), false),
     m_prompt_with_line_numbers (false),
     m_getting_line (false),
     m_got_eof (false),
@@ -190,6 +191,7 @@ Editline::Editline (const char *prog,       // prog can't be NULL
     {
         m_editline = ::el_init("lldb-tmp", fin, fout, ferr);
     }
+    
     if (prompt && prompt[0])
         SetPrompt (prompt);
 
@@ -324,7 +326,7 @@ Editline::PrivateGetLine(std::string &line)
             llvm::StringRef line_ref (line_cstr);
             line_ref = line_ref.rtrim("\n\r");
             
-            if (!line_ref.empty())
+            if (!line_ref.empty() && !m_interrupted)
             {
                 // We didn't strip the newlines, we just adjusted the length, and
                 // we want to add the history item with the newlines
@@ -345,9 +347,10 @@ Editline::PrivateGetLine(std::string &line)
 
 
 Error
-Editline::GetLine(std::string &line)
+Editline::GetLine(std::string &line, bool &interrupted)
 {
     Error error;
+    interrupted = false;
     line.clear();
 
     // Set arrow key bindings for up and down arrows for single line
@@ -370,6 +373,8 @@ Editline::GetLine(std::string &line)
         error = PrivateGetLine(line);
         m_getting_line = false;
     }
+
+    interrupted = m_interrupted;
 
     if (m_got_eof && line.empty())
     {
@@ -397,9 +402,10 @@ Editline::Push (const char *bytes, size_t len)
 
 
 Error
-Editline::GetLines(const std::string &end_line, StringList &lines)
+Editline::GetLines(const std::string &end_line, StringList &lines, bool &interrupted)
 {
     Error error;
+    interrupted = false;
     if (m_getting_line)
     {
         error.SetErrorString("already getting a line");
@@ -435,6 +441,11 @@ Editline::GetLines(const std::string &end_line, StringList &lines)
         if (error.Fail())
         {
             line_status = LineStatus::Error;
+        }
+        else if (m_interrupted)
+        {
+            interrupted = true;
+            line_status = LineStatus::Done;
         }
         else
         {
@@ -500,7 +511,7 @@ Editline::GetLines(const std::string &end_line, StringList &lines)
 
     // If we have a callback, call it one more time to let the
     // user know the lines are complete
-    if (m_line_complete_callback)
+    if (m_line_complete_callback && !interrupted)
         m_line_complete_callback (this,
                                   lines,
                                   UINT32_MAX,
@@ -755,39 +766,65 @@ Editline::GetCharFromInputFileCallback (EditLine *e, char *c)
     Editline *editline = GetClientData (e);
     if (editline && editline->m_got_eof == false)
     {
+        FILE *f = editline->GetInputFile();
+        if (f == NULL)
+        {
+            editline->m_got_eof = true;
+            return 0;
+        }
+        
+        
         while (1)
         {
-            errno = 0;
-            char ch = ::fgetc(editline->GetInputFile());
-            if (ch == '\x04')
+            lldb::ConnectionStatus status = eConnectionStatusSuccess;
+            char ch = 0;
+            if (editline->m_file.Read(&ch, 1, UINT32_MAX, status, NULL))
             {
-                // Only turn a CTRL+D into a EOF if we receive the
-                // CTRL+D an empty line, otherwise it will forward
-                // delete the character at the cursor
-                const LineInfo *line_info = ::el_line(e);
-                if (line_info != NULL &&
-                    line_info->buffer == line_info->cursor &&
-                    line_info->cursor == line_info->lastchar)
+                if (ch == '\x04')
                 {
-                    ch = EOF;
-                    errno = 0;
+                    // Only turn a CTRL+D into a EOF if we receive the
+                    // CTRL+D an empty line, otherwise it will forward
+                    // delete the character at the cursor
+                    const LineInfo *line_info = ::el_line(e);
+                    if (line_info != NULL &&
+                        line_info->buffer == line_info->cursor &&
+                        line_info->cursor == line_info->lastchar)
+                    {
+                        ch = EOF;
+                    }
                 }
-            }
-        
-            if (ch == EOF)
-            {
-                if (errno == EINTR)
-                    continue;
-                else
+            
+                if (ch == EOF)
                 {
                     editline->m_got_eof = true;
                     break;
                 }
+                else
+                {
+                    *c = ch;
+                    return 1;
+                }
             }
             else
             {
-                *c = ch;
-                return 1;
+                switch (status)
+                {
+                    case eConnectionStatusInterrupted:
+                        editline->m_interrupted = true;
+                        *c = '\n';
+                        return 1;
+
+                    case eConnectionStatusSuccess:         // Success
+                        break;
+                        
+                    case eConnectionStatusError:           // Check GetError() for details
+                    case eConnectionStatusTimedOut:        // Request timed out
+                    case eConnectionStatusEndOfFile:       // End-of-file encountered
+                    case eConnectionStatusNoConnection:    // No connection
+                    case eConnectionStatusLostConnection:  // Lost connection while connected to a valid connection
+                        editline->m_got_eof = true;
+                        break;
+                }
             }
         }
     }
@@ -813,10 +850,11 @@ Editline::Refresh()
     ::el_set (m_editline, EL_REFRESH);
 }
 
-void
+bool
 Editline::Interrupt ()
 {
     m_interrupted = true;
     if (m_getting_line || m_lines_curr_line > 0)
-        el_insertstr(m_editline, "\n"); // True to force the line to complete itself so we get exit from el_gets()
+        return m_file.InterruptRead();
+    return false; // Interrupt not handled as we weren't getting a line or lines
 }

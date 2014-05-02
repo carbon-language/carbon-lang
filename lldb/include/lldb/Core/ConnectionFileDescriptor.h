@@ -77,6 +77,12 @@ public:
     uint16_t
     GetBoundPort (uint32_t timeout_sec);
 
+    lldb::ConnectionStatus
+    BytesAvailable (uint32_t timeout_usec, Error *error_ptr);
+
+    bool
+    InterruptRead ();
+
 protected:
 
     typedef enum
@@ -91,9 +97,6 @@ protected:
     
     void
     CloseCommandPipe ();
-
-    lldb::ConnectionStatus
-    BytesAvailable (uint32_t timeout_usec, Error *error_ptr);
     
     lldb::ConnectionStatus
     SocketListen (const char *host_and_port, Error *error_ptr);

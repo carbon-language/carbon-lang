@@ -4935,7 +4935,7 @@ public:
         m_pipe_write.Write (&ch, n);
     }
 
-    virtual void
+    virtual bool
     Interrupt ()
     {
 #ifdef _MSC_VER
@@ -4953,6 +4953,7 @@ public:
         char ch = 'i'; // Send 'i' for interrupt
         m_pipe_write.Write (&ch, n);
 #endif
+        return true;
     }
     
     virtual void

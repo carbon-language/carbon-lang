@@ -73,7 +73,7 @@ namespace lldb_private {
         // Called when CTRL+C is pressed which usually causes
         // Debugger::DispatchInputInterrupt to be called.
         
-        virtual void
+        virtual bool
         Interrupt () = 0;
         
         virtual void
@@ -304,11 +304,22 @@ namespace lldb_private {
         
         
         virtual ConstString
-        GetControlSequence (char ch)
+        IOHandlerGetControlSequence (char ch)
         {
             return ConstString();
         }
         
+        //------------------------------------------------------------------
+        // Intercept the IOHandler::Interrupt() calls and do something.
+        //
+        // Return true if the interrupt was handled, false if the IOHandler
+        // should continue to try handle the interrupt itself.
+        //------------------------------------------------------------------
+        virtual bool
+        IOHandlerInterrupt (IOHandler &io_handler)
+        {
+            return false;
+        }
     protected:
         Completion m_completion; // Support for common builtin completions
         bool m_io_handler_done;
@@ -338,7 +349,7 @@ namespace lldb_private {
         }
         
         virtual ConstString
-        GetControlSequence (char ch)
+        IOHandlerGetControlSequence (char ch)
         {
             if (ch == 'd')
                 return ConstString (m_end_line + "\n");
@@ -409,7 +420,7 @@ namespace lldb_private {
         virtual void
         Cancel ();
 
-        virtual void
+        virtual bool
         Interrupt ();
         
         virtual void
@@ -425,7 +436,7 @@ namespace lldb_private {
         virtual ConstString
         GetControlSequence (char ch)
         {
-            return m_delegate.GetControlSequence (ch);
+            return m_delegate.IOHandlerGetControlSequence (ch);
         }
 
         virtual const char *
@@ -435,10 +446,10 @@ namespace lldb_private {
         SetPrompt (const char *prompt);
 
         bool
-        GetLine (std::string &line);
+        GetLine (std::string &line, bool &interrupted);
         
         bool
-        GetLines (StringList &lines);
+        GetLines (StringList &lines, bool &interrupted);
         
         void
         SetBaseLineNumber (uint32_t line);
@@ -523,7 +534,7 @@ namespace lldb_private {
         virtual void
         Cancel ();
 
-        virtual void
+        virtual bool
         Interrupt ();
         
         virtual void
@@ -557,8 +568,8 @@ namespace lldb_private {
         virtual void
         Refresh ();
         
-        virtual void
-        Interrupt ();
+        virtual bool
+        HandleInterrupt ();
         
         virtual void
         GotEOF();

@@ -361,6 +361,14 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
     return eConnectionStatusError;
 }
 
+bool
+ConnectionFileDescriptor::InterruptRead()
+{
+    if (m_pipe_write != -1 )
+        return write (m_pipe_write, "i", 1) == 1;
+    return false;
+}
+
 ConnectionStatus
 ConnectionFileDescriptor::Disconnect (Error *error_ptr)
 {
@@ -390,7 +398,7 @@ ConnectionFileDescriptor::Disconnect (Error *error_ptr)
     m_shutting_down = true;
 
     Mutex::Locker locker;
-    bool got_lock= locker.TryLock (m_mutex);
+    bool got_lock = locker.TryLock (m_mutex);
 
     if (!got_lock)
     {
@@ -839,14 +847,19 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
                     {
                         bytes_read = ::read (pipe_fd, buffer, sizeof(buffer));
                     } while (bytes_read < 0 && errno == EINTR);
-                    assert (bytes_read == 1 && buffer[0] == 'q');
-
-                    if (log)
-                        log->Printf("%p ConnectionFileDescriptor::BytesAvailable() got data: %*s from the command channel.",
-                                    static_cast<void*>(this),
-                                    static_cast<int>(bytes_read), buffer);
-
-                    return eConnectionStatusEndOfFile;
+                    
+                    switch (buffer[0])
+                    {
+                    case 'q':
+                        if (log)
+                            log->Printf("%p ConnectionFileDescriptor::BytesAvailable() got data: %*s from the command channel.",
+                                        static_cast<void*>(this),
+                                        static_cast<int>(bytes_read), buffer);
+                        return eConnectionStatusEndOfFile;
+                    case 'i':
+                        // Interrupt the current read
+                        return eConnectionStatusInterrupted;
+                    }
                 }
             }
         }
