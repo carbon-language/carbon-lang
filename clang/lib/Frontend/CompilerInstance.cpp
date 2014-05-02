@@ -244,7 +244,6 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
                         getSourceManager(), *HeaderInfo, *this, PTHMgr,
                         /*OwnsHeaderSearch=*/true,
                         /*DelayInitialization=*/false,
-                        /*IncrProcessing=*/false,
                         TUKind);
 
   // Note that this is different then passing PTHMgr to Preprocessor's ctor.

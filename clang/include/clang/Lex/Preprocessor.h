@@ -461,7 +461,6 @@ public:
                IdentifierInfoLookup *IILookup = 0,
                bool OwnsHeaderSearch = false,
                bool DelayInitialization = false,
-               bool IncrProcessing = false,
                TranslationUnitKind TUKind = TU_Complete);
 
   ~Preprocessor();
