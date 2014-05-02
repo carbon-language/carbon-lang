@@ -521,6 +521,14 @@ void ARM64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
 
   setOperationAction(ISD::FP_TO_SINT, VT.getSimpleVT(), Custom);
   setOperationAction(ISD::FP_TO_UINT, VT.getSimpleVT(), Custom);
+
+  if (Subtarget->isLittleEndian()) {
+    for (unsigned im = (unsigned)ISD::PRE_INC;
+         im != (unsigned)ISD::LAST_INDEXED_MODE; ++im) {
+      setIndexedLoadAction(im, VT.getSimpleVT(), Legal);
+      setIndexedStoreAction(im, VT.getSimpleVT(), Legal);
+    }
+  }
 }
 
 void ARM64TargetLowering::addDRTypeForNEON(MVT VT) {

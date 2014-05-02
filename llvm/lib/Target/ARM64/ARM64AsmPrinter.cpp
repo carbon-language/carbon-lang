@@ -427,6 +427,7 @@ static unsigned getRealIndexedOpcode(unsigned Opc) {
   switch (Opc) {
   case ARM64::LDRXpre_isel:    return ARM64::LDRXpre;
   case ARM64::LDRWpre_isel:    return ARM64::LDRWpre;
+  case ARM64::LDRQpre_isel:    return ARM64::LDRQpre;
   case ARM64::LDRDpre_isel:    return ARM64::LDRDpre;
   case ARM64::LDRSpre_isel:    return ARM64::LDRSpre;
   case ARM64::LDRBBpre_isel:   return ARM64::LDRBBpre;
@@ -437,6 +438,7 @@ static unsigned getRealIndexedOpcode(unsigned Opc) {
   case ARM64::LDRSHXpre_isel:  return ARM64::LDRSHXpre;
   case ARM64::LDRSWpre_isel:   return ARM64::LDRSWpre;
 
+  case ARM64::LDRQpost_isel:   return ARM64::LDRQpost;
   case ARM64::LDRDpost_isel:   return ARM64::LDRDpost;
   case ARM64::LDRSpost_isel:   return ARM64::LDRSpost;
   case ARM64::LDRXpost_isel:   return ARM64::LDRXpost;
@@ -453,6 +455,7 @@ static unsigned getRealIndexedOpcode(unsigned Opc) {
   case ARM64::STRWpre_isel:    return ARM64::STRWpre;
   case ARM64::STRHHpre_isel:   return ARM64::STRHHpre;
   case ARM64::STRBBpre_isel:   return ARM64::STRBBpre;
+  case ARM64::STRQpre_isel:    return ARM64::STRQpre;
   case ARM64::STRDpre_isel:    return ARM64::STRDpre;
   case ARM64::STRSpre_isel:    return ARM64::STRSpre;
   }
@@ -494,6 +497,7 @@ void ARM64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM64::LDRBBpre_isel:
   case ARM64::LDRXpre_isel:
   case ARM64::LDRWpre_isel:
+  case ARM64::LDRQpre_isel:
   case ARM64::LDRDpre_isel:
   case ARM64::LDRSpre_isel:
   case ARM64::LDRSBWpre_isel:
@@ -501,6 +505,7 @@ void ARM64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM64::LDRSHWpre_isel:
   case ARM64::LDRSHXpre_isel:
   case ARM64::LDRSWpre_isel:
+  case ARM64::LDRQpost_isel:
   case ARM64::LDRDpost_isel:
   case ARM64::LDRSpost_isel:
   case ARM64::LDRXpost_isel:
@@ -525,6 +530,7 @@ void ARM64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case ARM64::STRWpre_isel:
   case ARM64::STRHHpre_isel:
   case ARM64::STRBBpre_isel:
+  case ARM64::STRQpre_isel:
   case ARM64::STRDpre_isel:
   case ARM64::STRSpre_isel: {
     MCInst TmpInst;

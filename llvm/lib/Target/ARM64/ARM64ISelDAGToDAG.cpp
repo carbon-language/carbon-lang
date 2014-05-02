@@ -907,8 +907,10 @@ SDNode *ARM64DAGToDAGISel::SelectIndexedLoad(SDNode *N, bool &Done) {
     }
   } else if (VT == MVT::f32) {
     Opcode = IsPre ? ARM64::LDRSpre_isel : ARM64::LDRSpost_isel;
-  } else if (VT == MVT::f64) {
+  } else if (VT == MVT::f64 || VT.is64BitVector()) {
     Opcode = IsPre ? ARM64::LDRDpre_isel : ARM64::LDRDpost_isel;
+  } else if (VT.is128BitVector()) {
+    Opcode = IsPre ? ARM64::LDRQpre_isel : ARM64::LDRQpost_isel;
   } else
     return nullptr;
   SDValue Chain = LD->getChain();
