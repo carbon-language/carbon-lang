@@ -5980,47 +5980,55 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
   }
 }
 
-void Sema::ActOnReenterDeclaratorTemplateScope(Scope *S, DeclaratorDecl *D) {
+unsigned Sema::ActOnReenterTemplateScope(Scope *S, Decl *D) {
   if (!D)
-    return;
+    return 0;
 
-  int NumParamList = D->getNumTemplateParameterLists();
-  for (int i = 0; i < NumParamList; i++) {
-    TemplateParameterList* Params = D->getTemplateParameterList(i);
-    for (TemplateParameterList::iterator Param = Params->begin(),
-                                      ParamEnd = Params->end();
-          Param != ParamEnd; ++Param) {
-      NamedDecl *Named = cast<NamedDecl>(*Param);
-      if (Named->getDeclName()) {
-        S->AddDecl(Named);
-        IdResolver.AddDecl(Named);
+  // The order of template parameters is not important here. All names
+  // get added to the same scope.
+  SmallVector<TemplateParameterList *, 4> ParameterLists;
+
+  if (TemplateDecl *TD = dyn_cast<TemplateDecl>(D))
+    D = TD->getTemplatedDecl();
+
+  if (auto *PSD = dyn_cast<ClassTemplatePartialSpecializationDecl>(D))
+    ParameterLists.push_back(PSD->getTemplateParameters());
+
+  if (DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
+    for (unsigned i = 0; i < DD->getNumTemplateParameterLists(); ++i)
+      ParameterLists.push_back(DD->getTemplateParameterList(i));
+
+    if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+      if (FunctionTemplateDecl *FTD = FD->getDescribedFunctionTemplate())
+        ParameterLists.push_back(FTD->getTemplateParameters());
+    }
+  }
+
+  if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
+    for (unsigned i = 0; i < TD->getNumTemplateParameterLists(); ++i)
+      ParameterLists.push_back(TD->getTemplateParameterList(i));
+
+    if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(TD)) {
+      if (ClassTemplateDecl *CTD = RD->getDescribedClassTemplate())
+        ParameterLists.push_back(CTD->getTemplateParameters());
+    }
+  }
+
+  unsigned Count = 0;
+  for (TemplateParameterList *Params : ParameterLists) {
+    if (Params->size() > 0)
+      // Ignore explicit specializations; they don't contribute to the template
+      // depth.
+      ++Count;
+    for (NamedDecl *Param : *Params) {
+      if (Param->getDeclName()) {
+        S->AddDecl(Param);
+        IdResolver.AddDecl(Param);
       }
     }
   }
-}
 
-void Sema::ActOnReenterTemplateScope(Scope *S, Decl *D) {
-  if (!D)
-    return;
-  
-  TemplateParameterList *Params = 0;
-  if (TemplateDecl *Template = dyn_cast<TemplateDecl>(D))
-    Params = Template->getTemplateParameters();
-  else if (ClassTemplatePartialSpecializationDecl *PartialSpec
-           = dyn_cast<ClassTemplatePartialSpecializationDecl>(D))
-    Params = PartialSpec->getTemplateParameters();
-  else
-    return;
-
-  for (TemplateParameterList::iterator Param = Params->begin(),
-                                    ParamEnd = Params->end();
-       Param != ParamEnd; ++Param) {
-    NamedDecl *Named = cast<NamedDecl>(*Param);
-    if (Named->getDeclName()) {
-      S->AddDecl(Named);
-      IdResolver.AddDecl(Named);
-    }
-  }
+  return Count;
 }
 
 void Sema::ActOnStartDelayedMemberDeclarations(Scope *S, Decl *RecordD) {

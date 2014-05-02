@@ -1239,7 +1239,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
 
   // Get the list of DeclContexts to reenter.
   SmallVector<DeclContext*, 4> DeclContextsToReenter;
-  DeclContext *DD = FunD->getLexicalParent();
+  DeclContext *DD = FunD;
   while (DD && !DD->isTranslationUnit()) {
     DeclContextsToReenter.push_back(DD);
     DD = DD->getLexicalParent();
@@ -1249,37 +1249,16 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
   SmallVectorImpl<DeclContext *>::reverse_iterator II =
       DeclContextsToReenter.rbegin();
   for (; II != DeclContextsToReenter.rend(); ++II) {
-    if (ClassTemplatePartialSpecializationDecl *MD =
-            dyn_cast_or_null<ClassTemplatePartialSpecializationDecl>(*II)) {
-      TemplateParamScopeStack.push_back(
-          new ParseScope(this, Scope::TemplateParamScope));
-      Actions.ActOnReenterTemplateScope(getCurScope(), MD);
-      ++CurTemplateDepthTracker;
-    } else if (CXXRecordDecl *MD = dyn_cast_or_null<CXXRecordDecl>(*II)) {
-      bool IsClassTemplate = MD->getDescribedClassTemplate() != 0;
-      TemplateParamScopeStack.push_back(
-          new ParseScope(this, Scope::TemplateParamScope, 
-                        /*ManageScope*/IsClassTemplate));
-      Actions.ActOnReenterTemplateScope(getCurScope(),
-                                        MD->getDescribedClassTemplate());
-      if (IsClassTemplate) 
-        ++CurTemplateDepthTracker;
+    TemplateParamScopeStack.push_back(new ParseScope(this,
+          Scope::TemplateParamScope));
+    unsigned NumParamLists =
+      Actions.ActOnReenterTemplateScope(getCurScope(), cast<Decl>(*II));
+    CurTemplateDepthTracker.addDepth(NumParamLists);
+    if (*II != FunD) {
+      TemplateParamScopeStack.push_back(new ParseScope(this, Scope::DeclScope));
+      Actions.PushDeclContext(Actions.getCurScope(), *II);
     }
-    TemplateParamScopeStack.push_back(new ParseScope(this, Scope::DeclScope));
-    Actions.PushDeclContext(Actions.getCurScope(), *II);
   }
-  TemplateParamScopeStack.push_back(
-      new ParseScope(this, Scope::TemplateParamScope));
-
-  DeclaratorDecl *Declarator = dyn_cast<DeclaratorDecl>(FunD);
-  const unsigned DeclaratorNumTemplateParameterLists = 
-      (Declarator ? Declarator->getNumTemplateParameterLists() : 0);
-  if (Declarator && DeclaratorNumTemplateParameterLists != 0) {
-    Actions.ActOnReenterDeclaratorTemplateScope(getCurScope(), Declarator);
-    CurTemplateDepthTracker.addDepth(DeclaratorNumTemplateParameterLists);
-  }
-  Actions.ActOnReenterTemplateScope(getCurScope(), LPT.D);
-  ++CurTemplateDepthTracker;
 
   assert(!LPT.Toks.empty() && "Empty body!");
 
@@ -1314,7 +1293,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
       assert((!isa<FunctionTemplateDecl>(LPT.D) ||
               cast<FunctionTemplateDecl>(LPT.D)
                       ->getTemplateParameters()
-                      ->getDepth() < TemplateParameterDepth) &&
+                      ->getDepth() == TemplateParameterDepth - 1) &&
              "TemplateParameterDepth should be greater than the depth of "
              "current template being instantiated!");
       ParseFunctionStatementBody(LPT.D, FnScope);

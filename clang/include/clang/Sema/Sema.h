@@ -4884,8 +4884,7 @@ public:
   void ActOnFinishCXXMemberDecls();
 
   void ActOnReenterCXXMethodParameter(Scope *S, ParmVarDecl *Param);
-  void ActOnReenterTemplateScope(Scope *S, Decl *Template);
-  void ActOnReenterDeclaratorTemplateScope(Scope *S, DeclaratorDecl *D);
+  unsigned ActOnReenterTemplateScope(Scope *S, Decl *Template);
   void ActOnStartDelayedMemberDeclarations(Scope *S, Decl *Record);
   void ActOnStartDelayedCXXMethodDeclaration(Scope *S, Decl *Method);
   void ActOnDelayedCXXMethodParameter(Scope *S, Decl *Param);

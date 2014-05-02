@@ -123,3 +123,61 @@ constexpr int Var = Fun(20);
 
 template <typename T>
 auto invalidTrailingRetType() -> Bogus {} // expected-error {{unknown type name 'Bogus'}}
+
+namespace PR19613 {
+
+struct HeapTypeConfig {
+  static void from_bitset();
+};
+
+template <class Config>
+struct TypeImpl  {
+  struct BitsetType;
+
+  static void Any() {
+    BitsetType::New();
+  }
+};
+
+template<class Config>
+struct TypeImpl<Config>::BitsetType {
+  static void New() {
+    Config::from_bitset();
+  }
+};
+
+static void f() {
+  TypeImpl<HeapTypeConfig>::Any();
+}
+
+template<typename A> struct S {
+  template<typename B> struct T;
+};
+template<typename A> template<typename B> struct S<A>::T {
+  template<typename C, typename D> struct U;
+  template<typename C> struct U<C, C> {
+    template<typename E> static int f() {
+      return sizeof(A) + sizeof(B) + sizeof(C) + sizeof(E);
+    }
+  };
+};
+
+static void g() {
+  S<int>::T<int>::U<int,int>::f<int>();
+}
+
+template<typename T> struct SS {
+  template<typename U> struct X;
+  template<typename U> struct X<U*>;
+};
+template<typename T> template<typename U> struct SS<T>::X<U*> {
+  static int f() {
+    return sizeof(T) + sizeof(U);
+  }
+};
+
+static void h() {
+  SS<int>::X<int*>::f();
+}
+
+}
