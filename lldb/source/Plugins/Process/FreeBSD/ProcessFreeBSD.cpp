@@ -168,7 +168,7 @@ ProcessFreeBSD::DoResume()
     }
 
     if (log)
-        log->Printf("process %lu resuming (%s)", GetID(), do_step ? "step" : "continue");
+        log->Printf("process %" PRIu64 " resuming (%s)", GetID(), do_step ? "step" : "continue");
     if (do_step)
         m_monitor->SingleStep(GetID(), m_resume_signo);
     else
