@@ -180,11 +180,10 @@ public:
     for (auto i = _archive->symbol_begin(), e = _archive->symbol_end();
          i != e; ++i) {
       StringRef name;
-      error_code ec;
       Archive::child_iterator member;
-      if ((ec = i->getName(name)))
+      if (error_code ec = i->getName(name))
         return ec;
-      if ((ec = i->getMember(member)))
+      if (error_code ec = i->getMember(member))
         return ec;
       DEBUG_WITH_TYPE(
           "FileArchive",
@@ -240,5 +239,3 @@ void Registry::addSupportArchives(bool logLoading) {
 }
 
 } // end namespace lld
-
-
