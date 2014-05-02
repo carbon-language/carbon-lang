@@ -1612,8 +1612,6 @@ template <typename AttrType>
 void ThreadSafetyAnalyzer::getMutexIDs(MutexIDList &Mtxs, AttrType *Attr,
                                        Expr *Exp, const NamedDecl *D,
                                        VarDecl *SelfDecl) {
-  typedef typename AttrType::args_iterator iterator_type;
-
   if (Attr->args_size() == 0) {
     // The mutex held is the "this" object.
     SExpr Mu(0, Exp, D, SelfDecl);
