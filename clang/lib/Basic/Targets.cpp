@@ -3473,7 +3473,7 @@ public:
     if (FPU == NeonMode) {
       Builder.defineMacro("__ARM_NEON");
       // 64-bit NEON supports half, single and double precision operations.
-      Builder.defineMacro("__ARM_NEON_FP", "7");
+      Builder.defineMacro("__ARM_NEON_FP", "0xe");
     }
 
     if (CRC)
@@ -4594,7 +4594,7 @@ public:
     if (FPU == NeonMode) {
       Builder.defineMacro("__ARM_NEON");
       // 64-bit NEON supports half, single and double precision operations.
-      Builder.defineMacro("__ARM_NEON_FP", "7");
+      Builder.defineMacro("__ARM_NEON_FP", "0xe");
     }
 
     if (CRC)
