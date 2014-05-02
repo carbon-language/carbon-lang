@@ -162,9 +162,7 @@ bool Resolver::maybeAddSectionGroupOrGnuLinkOnce(const DefinedAtom &atom) {
            "Internal Error: The group atom could only be a defined atom");
     // The atoms should be of the same content type, reject invalid group
     // resolution behaviors.
-    if (atom.contentType() != prevGroup->contentType())
-      return false;
-    return true;
+    return atom.contentType() == prevGroup->contentType();
   }
 
   for (const Reference *r : atom) {
