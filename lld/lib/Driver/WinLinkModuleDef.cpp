@@ -195,6 +195,17 @@ bool Parser::parseExport(PECOFFLinkingContext::ExportDesc &result) {
   }
   result.name = _tok._range;
 
+  consumeToken();
+  if (_tok._kind == Kind::equal) {
+    consumeToken();
+    if (_tok._kind != Kind::identifier)
+      return false;
+    result.externalName = result.name;
+    result.name = _tok._range;
+  } else {
+    ungetToken();
+  }
+
   for (;;) {
     consumeToken();
     if (_tok._kind == Kind::identifier && _tok._range[0] == '@') {

@@ -77,7 +77,8 @@ static bool getExportedAtoms(PECOFFLinkingContext &ctx, MutableFile *file,
     }
     const DefinedAtom *atom = it->second;
     ret.push_back(TableEntry(desc.name, desc.ordinal, atom, desc.noname));
-    desc.internalName = removeLeadingUnderscore(atom->name());
+    if (desc.externalName.empty())
+      desc.externalName = removeLeadingUnderscore(atom->name());
     exports.insert(desc);
   }
   ctx.getDllExports().swap(exports);
