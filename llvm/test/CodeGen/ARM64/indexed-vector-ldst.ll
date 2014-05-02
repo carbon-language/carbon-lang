@@ -400,3 +400,214 @@ define void @test_v2f64_post_store(<2 x double> %in, <2 x double>* %addr) {
   store <2 x double>* %newaddr, <2 x double>** bitcast(i8** @ptr to <2 x double>**)
   ret void
 }
+
+define i8* @test_v16i8_post_imm_st1_lane(<16 x i8> %in, i8* %addr) {
+; CHECK-LABEL: test_v16i8_post_imm_st1_lane:
+; CHECK: st1.b { v0 }[3], [x0], #1
+  %elt = extractelement <16 x i8> %in, i32 3
+  store i8 %elt, i8* %addr
+
+  %newaddr = getelementptr i8* %addr, i32 1
+  ret i8* %newaddr
+}
+
+define i8* @test_v16i8_post_reg_st1_lane(<16 x i8> %in, i8* %addr) {
+; CHECK-LABEL: test_v16i8_post_reg_st1_lane:
+; CHECK: orr w[[OFFSET:[0-9]+]], wzr, #0x2
+; CHECK: st1.b { v0 }[3], [x0], x[[OFFSET]]
+  %elt = extractelement <16 x i8> %in, i32 3
+  store i8 %elt, i8* %addr
+
+  %newaddr = getelementptr i8* %addr, i32 2
+  ret i8* %newaddr
+}
+
+
+define i16* @test_v8i16_post_imm_st1_lane(<8 x i16> %in, i16* %addr) {
+; CHECK-LABEL: test_v8i16_post_imm_st1_lane:
+; CHECK: st1.h { v0 }[3], [x0], #2
+  %elt = extractelement <8 x i16> %in, i32 3
+  store i16 %elt, i16* %addr
+
+  %newaddr = getelementptr i16* %addr, i32 1
+  ret i16* %newaddr
+}
+
+define i16* @test_v8i16_post_reg_st1_lane(<8 x i16> %in, i16* %addr) {
+; CHECK-LABEL: test_v8i16_post_reg_st1_lane:
+; CHECK: orr w[[OFFSET:[0-9]+]], wzr, #0x4
+; CHECK: st1.h { v0 }[3], [x0], x[[OFFSET]]
+  %elt = extractelement <8 x i16> %in, i32 3
+  store i16 %elt, i16* %addr
+
+  %newaddr = getelementptr i16* %addr, i32 2
+  ret i16* %newaddr
+}
+
+define i32* @test_v4i32_post_imm_st1_lane(<4 x i32> %in, i32* %addr) {
+; CHECK-LABEL: test_v4i32_post_imm_st1_lane:
+; CHECK: st1.s { v0 }[3], [x0], #4
+  %elt = extractelement <4 x i32> %in, i32 3
+  store i32 %elt, i32* %addr
+
+  %newaddr = getelementptr i32* %addr, i32 1
+  ret i32* %newaddr
+}
+
+define i32* @test_v4i32_post_reg_st1_lane(<4 x i32> %in, i32* %addr) {
+; CHECK-LABEL: test_v4i32_post_reg_st1_lane:
+; CHECK: orr w[[OFFSET:[0-9]+]], wzr, #0x8
+; CHECK: st1.s { v0 }[3], [x0], x[[OFFSET]]
+  %elt = extractelement <4 x i32> %in, i32 3
+  store i32 %elt, i32* %addr
+
+  %newaddr = getelementptr i32* %addr, i32 2
+  ret i32* %newaddr
+}
+
+define float* @test_v4f32_post_imm_st1_lane(<4 x float> %in, float* %addr) {
+; CHECK-LABEL: test_v4f32_post_imm_st1_lane:
+; CHECK: st1.s { v0 }[3], [x0], #4
+  %elt = extractelement <4 x float> %in, i32 3
+  store float %elt, float* %addr
+
+  %newaddr = getelementptr float* %addr, i32 1
+  ret float* %newaddr
+}
+
+define float* @test_v4f32_post_reg_st1_lane(<4 x float> %in, float* %addr) {
+; CHECK-LABEL: test_v4f32_post_reg_st1_lane:
+; CHECK: orr w[[OFFSET:[0-9]+]], wzr, #0x8
+; CHECK: st1.s { v0 }[3], [x0], x[[OFFSET]]
+  %elt = extractelement <4 x float> %in, i32 3
+  store float %elt, float* %addr
+
+  %newaddr = getelementptr float* %addr, i32 2
+  ret float* %newaddr
+}
+
+define i64* @test_v2i64_post_imm_st1_lane(<2 x i64> %in, i64* %addr) {
+; CHECK-LABEL: test_v2i64_post_imm_st1_lane:
+; CHECK: st1.d { v0 }[1], [x0], #8
+  %elt = extractelement <2 x i64> %in, i64 1
+  store i64 %elt, i64* %addr
+
+  %newaddr = getelementptr i64* %addr, i64 1
+  ret i64* %newaddr
+}
+
+define i64* @test_v2i64_post_reg_st1_lane(<2 x i64> %in, i64* %addr) {
+; CHECK-LABEL: test_v2i64_post_reg_st1_lane:
+; CHECK: orr w[[OFFSET:[0-9]+]], wzr, #0x10
+; CHECK: st1.d { v0 }[1], [x0], x[[OFFSET]]
+  %elt = extractelement <2 x i64> %in, i64 1
+  store i64 %elt, i64* %addr
+
+  %newaddr = getelementptr i64* %addr, i64 2
+  ret i64* %newaddr
+}
+
+define double* @test_v2f64_post_imm_st1_lane(<2 x double> %in, double* %addr) {
+; CHECK-LABEL: test_v2f64_post_imm_st1_lane:
+; CHECK: st1.d { v0 }[1], [x0], #8
+  %elt = extractelement <2 x double> %in, i32 1
+  store double %elt, double* %addr
+
+  %newaddr = getelementptr double* %addr, i32 1
+  ret double* %newaddr
+}
+
+define double* @test_v2f64_post_reg_st1_lane(<2 x double> %in, double* %addr) {
+; CHECK-LABEL: test_v2f64_post_reg_st1_lane:
+; CHECK: orr w[[OFFSET:[0-9]+]], wzr, #0x10
+; CHECK: st1.d { v0 }[1], [x0], x[[OFFSET]]
+  %elt = extractelement <2 x double> %in, i32 1
+  store double %elt, double* %addr
+
+  %newaddr = getelementptr double* %addr, i32 2
+  ret double* %newaddr
+}
+
+define i8* @test_v8i8_post_imm_st1_lane(<8 x i8> %in, i8* %addr) {
+; CHECK-LABEL: test_v8i8_post_imm_st1_lane:
+; CHECK: st1.b { v0 }[3], [x0], #1
+  %elt = extractelement <8 x i8> %in, i32 3
+  store i8 %elt, i8* %addr
+
+  %newaddr = getelementptr i8* %addr, i32 1
+  ret i8* %newaddr
+}
+
+define i8* @test_v8i8_post_reg_st1_lane(<8 x i8> %in, i8* %addr) {
+; CHECK-LABEL: test_v8i8_post_reg_st1_lane:
+; CHECK: orr w[[OFFSET:[0-9]+]], wzr, #0x2
+; CHECK: st1.b { v0 }[3], [x0], x[[OFFSET]]
+  %elt = extractelement <8 x i8> %in, i32 3
+  store i8 %elt, i8* %addr
+
+  %newaddr = getelementptr i8* %addr, i32 2
+  ret i8* %newaddr
+}
+
+define i16* @test_v4i16_post_imm_st1_lane(<4 x i16> %in, i16* %addr) {
+; CHECK-LABEL: test_v4i16_post_imm_st1_lane:
+; CHECK: st1.h { v0 }[3], [x0], #2
+  %elt = extractelement <4 x i16> %in, i32 3
+  store i16 %elt, i16* %addr
+
+  %newaddr = getelementptr i16* %addr, i32 1
+  ret i16* %newaddr
+}
+
+define i16* @test_v4i16_post_reg_st1_lane(<4 x i16> %in, i16* %addr) {
+; CHECK-LABEL: test_v4i16_post_reg_st1_lane:
+; CHECK: orr w[[OFFSET:[0-9]+]], wzr, #0x4
+; CHECK: st1.h { v0 }[3], [x0], x[[OFFSET]]
+  %elt = extractelement <4 x i16> %in, i32 3
+  store i16 %elt, i16* %addr
+
+  %newaddr = getelementptr i16* %addr, i32 2
+  ret i16* %newaddr
+}
+
+define i32* @test_v2i32_post_imm_st1_lane(<2 x i32> %in, i32* %addr) {
+; CHECK-LABEL: test_v2i32_post_imm_st1_lane:
+; CHECK: st1.s { v0 }[1], [x0], #4
+  %elt = extractelement <2 x i32> %in, i32 1
+  store i32 %elt, i32* %addr
+
+  %newaddr = getelementptr i32* %addr, i32 1
+  ret i32* %newaddr
+}
+
+define i32* @test_v2i32_post_reg_st1_lane(<2 x i32> %in, i32* %addr) {
+; CHECK-LABEL: test_v2i32_post_reg_st1_lane:
+; CHECK: orr w[[OFFSET:[0-9]+]], wzr, #0x8
+; CHECK: st1.s { v0 }[1], [x0], x[[OFFSET]]
+  %elt = extractelement <2 x i32> %in, i32 1
+  store i32 %elt, i32* %addr
+
+  %newaddr = getelementptr i32* %addr, i32 2
+  ret i32* %newaddr
+}
+
+define float* @test_v2f32_post_imm_st1_lane(<2 x float> %in, float* %addr) {
+; CHECK-LABEL: test_v2f32_post_imm_st1_lane:
+; CHECK: st1.s { v0 }[1], [x0], #4
+  %elt = extractelement <2 x float> %in, i32 1
+  store float %elt, float* %addr
+
+  %newaddr = getelementptr float* %addr, i32 1
+  ret float* %newaddr
+}
+
+define float* @test_v2f32_post_reg_st1_lane(<2 x float> %in, float* %addr) {
+; CHECK-LABEL: test_v2f32_post_reg_st1_lane:
+; CHECK: orr w[[OFFSET:[0-9]+]], wzr, #0x8
+; CHECK: st1.s { v0 }[1], [x0], x[[OFFSET]]
+  %elt = extractelement <2 x float> %in, i32 1
+  store float %elt, float* %addr
+
+  %newaddr = getelementptr float* %addr, i32 2
+  ret float* %newaddr
+}
