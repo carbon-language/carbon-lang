@@ -65,9 +65,9 @@ LinkingContext::createUndefinedSymbolFile(StringRef filename) const {
   if (_initialUndefinedSymbols.empty())
     return nullptr;
   std::unique_ptr<SimpleFile> undefinedSymFile(new SimpleFile(filename));
-  for (auto undefSymStr : _initialUndefinedSymbols)
+  for (StringRef undefSym : _initialUndefinedSymbols)
     undefinedSymFile->addAtom(*(new (_allocator) SimpleUndefinedAtom(
-                                   *undefinedSymFile, undefSymStr)));
+                                   *undefinedSymFile, undefSym)));
   return std::move(undefinedSymFile);
 }
 
