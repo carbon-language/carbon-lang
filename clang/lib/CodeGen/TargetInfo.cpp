@@ -2737,18 +2737,11 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
   }
 
   if (const auto *MPT = Ty->getAs<MemberPointerType>()) {
-    // If the member pointer is not an aggregate, pass it directly.
-    if (getTarget().getCXXABI().isMicrosoft()) {
-      // For Microsoft, check with the inheritance model.
-      const CXXRecordDecl *RD = MPT->getClass()->getAsCXXRecordDecl();
-      if (MSInheritanceAttr::hasOnlyOneField(MPT->isMemberFunctionPointer(),
-                                             RD->getMSInheritanceModel()))
-        return ABIArgInfo::getDirect();
-    } else {
-      // For Itanium, data pointers are simple and function pointers are big.
-      if (MPT->isMemberDataPointer())
-        return ABIArgInfo::getDirect();
-    }
+    // If the member pointer is represented by an LLVM int or ptr, pass it
+    // directly.
+    llvm::Type *LLTy = CGT.ConvertType(Ty);
+    if (LLTy->isPointerTy() || LLTy->isIntegerTy())
+      return ABIArgInfo::getDirect();
   }
 
   if (RT || Ty->isMemberPointerType()) {

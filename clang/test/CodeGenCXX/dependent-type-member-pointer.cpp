@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm-only -verify %s
+// RUN: %clang_cc1 -triple x86_64-pc-windows-msvc -emit-llvm-only -verify %s
 // expected-no-diagnostics
 // PR7736
 
