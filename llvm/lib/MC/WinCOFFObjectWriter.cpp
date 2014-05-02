@@ -649,6 +649,7 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
     unsigned Count = (FI->size() + COFF::SymbolSize - 1) / COFF::SymbolSize;
 
     COFFSymbol *file = createSymbol(".file");
+    file->Data.SectionNumber = COFF::IMAGE_SYM_DEBUG;
     file->Data.StorageClass = COFF::IMAGE_SYM_CLASS_FILE;
     file->Aux.resize(Count);
 
