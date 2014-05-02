@@ -2736,7 +2736,7 @@ ABIArgInfo WinX86_64ABIInfo::classify(QualType Ty, bool IsReturnType) const {
                                                           Size));
   }
 
-  if (const auto *MPT = Ty->getAs<MemberPointerType>()) {
+  if (Ty->isMemberPointerType()) {
     // If the member pointer is represented by an LLVM int or ptr, pass it
     // directly.
     llvm::Type *LLTy = CGT.ConvertType(Ty);
