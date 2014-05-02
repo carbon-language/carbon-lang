@@ -59,7 +59,7 @@ BUILTIN(__builtin_arm_crc32d, "UiUiLLUi", "nc")
 BUILTIN(__builtin_arm_crc32cd, "UiUiLLUi", "nc")
 
 // HINT
-BUILTIN(__builtin_arm_sevl, "v", "")
+BUILTIN(__sevl, "v", "")
 
 // Data barrier
 BUILTIN(__builtin_arm_dmb, "vUi", "nc")

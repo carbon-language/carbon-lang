@@ -20,7 +20,7 @@ void test_eh_return_data_regno()
 }
 
 void sevl() {
-  __builtin_arm_sevl();
+  __sevl();
 }
 // CHECK: call {{.*}} @llvm.arm.hint(i32 5)
 
