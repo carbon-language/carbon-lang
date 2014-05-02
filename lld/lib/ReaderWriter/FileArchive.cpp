@@ -71,7 +71,7 @@ public:
   virtual bool isWholeArchive() const { return _isWholeArchive; }
 
   /// \brief parse each member
-  virtual error_code
+  error_code
   parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
     for (auto mf = _archive->child_begin(), me = _archive->child_end();
          mf != me; ++mf) {
@@ -200,12 +200,12 @@ class ArchiveReader : public Reader {
 public:
   ArchiveReader(bool logLoading) : _logLoading(logLoading) {}
 
-  virtual bool canParse(file_magic magic, StringRef,
-                        const MemoryBuffer &) const override {
+  bool canParse(file_magic magic, StringRef,
+                const MemoryBuffer &) const override {
     return (magic == llvm::sys::fs::file_magic::archive);
   }
 
-  virtual error_code
+  error_code
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &reg,
             std::vector<std::unique_ptr<File>> &result) const override {
     // Make Archive object which will be owned by FileArchive object.
