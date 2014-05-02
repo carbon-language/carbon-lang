@@ -444,6 +444,9 @@ void ASTDumper::dumpPointer(const void *Ptr) {
 }
 
 void ASTDumper::dumpLocation(SourceLocation Loc) {
+  if (!SM)
+    return;
+
   ColorScope Color(*this, LocationColor);
   SourceLocation SpellingLoc = SM->getSpellingLoc(Loc);
 
