@@ -329,6 +329,13 @@ def : Proc<"bdver3",          [FeatureXOP, FeatureFMA4, FeatureCMPXCHG16B,
                                FeaturePOPCNT, FeatureBMI,  FeatureTBM,
                                FeatureFMA, FeatureFSGSBase]>;
 
+// Excavator
+def : Proc<"bdver4",          [FeatureAVX2, FeatureXOP, FeatureFMA4,
+                               FeatureCMPXCHG16B, FeatureAES, FeaturePRFCHW,
+                               FeaturePCLMUL, FeatureF16C, FeatureLZCNT,
+                               FeaturePOPCNT, FeatureBMI, FeatureBMI2,
+                               FeatureTBM, FeatureFMA, FeatureFSGSBase]>;
+
 def : Proc<"geode",           [Feature3DNowA]>;
 
 def : Proc<"winchip-c6",      [FeatureMMX]>;
