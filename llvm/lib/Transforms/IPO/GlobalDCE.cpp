@@ -19,7 +19,9 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Transforms/Utils/CtorUtils.h"
 #include "llvm/Pass.h"
 using namespace llvm;
 
@@ -52,6 +54,15 @@ namespace {
 
     bool RemoveUnusedGlobalValue(GlobalValue &GV);
   };
+
+/// Returns true if F contains only a single "ret" instruction.
+bool isEmptyFunction(void *Context, Function *F) {
+  BasicBlock &Entry = F->getEntryBlock();
+  if (Entry.size() != 1 || !isa<ReturnInst>(Entry.front()))
+    return false;
+  ReturnInst &RI = cast<ReturnInst>(Entry.front());
+  return RI.getReturnValue() == NULL;
+}
 }
 
 char GlobalDCE::ID = 0;
@@ -62,7 +73,10 @@ ModulePass *llvm::createGlobalDCEPass() { return new GlobalDCE(); }
 
 bool GlobalDCE::runOnModule(Module &M) {
   bool Changed = false;
-  
+
+  // Remove empty functions from the global ctors list.
+  Changed |= optimizeGlobalCtorsList(M, isEmptyFunction, nullptr);
+
   // Loop over the module, adding globals which are obviously necessary.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     Changed |= RemoveUnusedGlobalValue(*I);
