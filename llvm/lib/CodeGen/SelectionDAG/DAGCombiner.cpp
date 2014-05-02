@@ -7181,11 +7181,16 @@ SDValue DAGCombiner::visitFNEG(SDNode *N) {
   // (fneg (fmul c, x)) -> (fmul -c, x)
   if (N0.getOpcode() == ISD::FMUL) {
     ConstantFPSDNode *CFP1 = dyn_cast<ConstantFPSDNode>(N0.getOperand(1));
-    if (CFP1)
-      return DAG.getNode(ISD::FMUL, SDLoc(N), VT,
-                         N0.getOperand(0),
-                         DAG.getNode(ISD::FNEG, SDLoc(N), VT,
-                                     N0.getOperand(1)));
+    if (CFP1) {
+      APFloat CVal = CFP1->getValueAPF();
+      CVal.changeSign();
+      if (Level >= AfterLegalizeDAG &&
+          (TLI.isFPImmLegal(CVal, N->getValueType(0)) ||
+           TLI.isOperationLegal(ISD::ConstantFP, N->getValueType(0))))
+        return DAG.getNode(
+            ISD::FMUL, SDLoc(N), VT, N0.getOperand(0),
+            DAG.getNode(ISD::FNEG, SDLoc(N), VT, N0.getOperand(1)));
+    }
   }
 
   return SDValue();
