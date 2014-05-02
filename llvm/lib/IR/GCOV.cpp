@@ -166,9 +166,11 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
   // read line table.
   while (Buff.readLineTag()) {
     uint32_t LineTableLength;
+    // Read the length of this line table.
     if (!Buff.readInt(LineTableLength)) return false;
     uint32_t EndPos = Buff.getCursor() + LineTableLength*4;
     uint32_t BlockNo;
+    // Read the block number this table is associated with.
     if (!Buff.readInt(BlockNo)) return false;
     if (BlockNo >= BlockCount) {
       errs() << "Unexpected block number: " << BlockNo << " (in " << Name
@@ -176,24 +178,34 @@ bool GCOVFunction::readGCNO(GCOVBuffer &Buff, GCOV::GCOVVersion Version) {
       return false;
     }
     GCOVBlock &Block = *Blocks[BlockNo];
-    if (!Buff.readInt(Dummy)) return false; // flag
-    while (Buff.getCursor() != (EndPos - 4)) {
+    // Read the word that pads the beginning of the line table. This may be a
+    // flag of some sort, but seems to always be zero.
+    if (!Buff.readInt(Dummy)) return false;
+
+    // Line information starts here and continues up until the last word.
+    if (Buff.getCursor() != (EndPos - sizeof(uint32_t))) {
       StringRef F;
+      // Read the source file name.
       if (!Buff.readString(F)) return false;
       if (Filename != F) {
         errs() << "Multiple sources for a single basic block: " << Filename
                << " != " << F << " (in " << Name << ").\n";
         return false;
       }
-      if (Buff.getCursor() == (EndPos - 4)) break;
-      while (true) {
+      // Read lines up to, but not including, the null terminator.
+      while (Buff.getCursor() < (EndPos - 2 * sizeof(uint32_t))) {
         uint32_t Line;
         if (!Buff.readInt(Line)) return false;
-        if (!Line) break;
+        // Line 0 means this instruction was injected by the compiler. Skip it.
+        if (!Line) continue;
         Block.addLine(Line);
       }
+      // Read the null terminator.
+      if (!Buff.readInt(Dummy)) return false;
     }
-    if (!Buff.readInt(Dummy)) return false; // flag
+    // The last word is either a flag or padding, it isn't clear which. Skip
+    // over it.
+    if (!Buff.readInt(Dummy)) return false;
   }
   return true;
 }
