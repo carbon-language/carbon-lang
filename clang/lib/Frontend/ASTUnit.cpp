@@ -718,11 +718,10 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
 
   AST->PP = new Preprocessor(PPOpts,
                              AST->getDiagnostics(), AST->ASTFileLangOpts,
-                             /*Target=*/0, AST->getSourceManager(), HeaderInfo, 
+                             AST->getSourceManager(), HeaderInfo,
                              *AST, 
                              /*IILookup=*/0,
-                             /*OwnsHeaderSearch=*/false,
-                             /*DelayInitialization=*/true);
+                             /*OwnsHeaderSearch=*/false);
   Preprocessor &PP = *AST->PP;
 
   AST->Ctx = new ASTContext(AST->ASTFileLangOpts,

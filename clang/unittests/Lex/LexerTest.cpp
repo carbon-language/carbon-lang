@@ -69,10 +69,10 @@ protected:
     VoidModuleLoader ModLoader;
     HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts,
                             Target.getPtr());
-    Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, Target.getPtr(),
+    Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts,
                     SourceMgr, HeaderInfo, ModLoader, /*IILookup =*/ 0,
-                    /*OwnsHeaderSearch =*/ false,
-                    /*DelayInitialization =*/ false);
+                    /*OwnsHeaderSearch =*/ false);
+    PP.Initialize(*Target);
     PP.EnterMainSourceFile();
 
     std::vector<Token> toks;

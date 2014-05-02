@@ -455,12 +455,10 @@ private:  // Cached tokens state.
 public:
   Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
                DiagnosticsEngine &diags, LangOptions &opts,
-               const TargetInfo *target,
                SourceManager &SM, HeaderSearch &Headers,
                ModuleLoader &TheModuleLoader,
                IdentifierInfoLookup *IILookup = 0,
                bool OwnsHeaderSearch = false,
-               bool DelayInitialization = false,
                TranslationUnitKind TUKind = TU_Complete);
 
   ~Preprocessor();

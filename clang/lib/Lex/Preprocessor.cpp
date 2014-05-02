@@ -56,11 +56,11 @@ ExternalPreprocessorSource::~ExternalPreprocessorSource() { }
 
 Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
                            DiagnosticsEngine &diags, LangOptions &opts,
-                           const TargetInfo *target, SourceManager &SM,
+                           SourceManager &SM,
                            HeaderSearch &Headers, ModuleLoader &TheModuleLoader,
                            IdentifierInfoLookup *IILookup, bool OwnsHeaders,
-                           bool DelayInitialization, TranslationUnitKind TUKind)
-    : PPOpts(PPOpts), Diags(&diags), LangOpts(opts), Target(target),
+                           TranslationUnitKind TUKind)
+    : PPOpts(PPOpts), Diags(&diags), LangOpts(opts), Target(0),
       FileMgr(Headers.getFileMgr()), SourceMgr(SM), HeaderInfo(Headers),
       TheModuleLoader(TheModuleLoader), ExternalSource(0),
       Identifiers(opts, IILookup), IncrementalProcessing(false),
@@ -131,11 +131,6 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
     Ident__exception_info = Ident__exception_code = Ident__abnormal_termination = 0;
     Ident___exception_info = Ident___exception_code = Ident___abnormal_termination = 0;
     Ident_GetExceptionInfo = Ident_GetExceptionCode = Ident_AbnormalTermination = 0;
-  }
-
-  if (!DelayInitialization) {
-    assert(Target && "Must provide target information for PP initialization");
-    Initialize(*Target);
   }
 }
 

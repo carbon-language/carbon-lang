@@ -80,11 +80,11 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnit) {
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
                           &*Target);
-  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, Target.getPtr(),
+  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts,
                   SourceMgr, HeaderInfo, ModLoader,
                   /*IILookup =*/ 0,
-                  /*OwnsHeaderSearch =*/false,
-                  /*DelayInitialization =*/ false);
+                  /*OwnsHeaderSearch =*/false);
+  PP.Initialize(*Target);
   PP.EnterMainSourceFile();
 
   std::vector<Token> toks;
@@ -195,11 +195,11 @@ TEST_F(SourceManagerTest, getMacroArgExpandedLocation) {
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
                           &*Target);
-  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, Target.getPtr(),
+  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts,
                   SourceMgr, HeaderInfo, ModLoader,
                   /*IILookup =*/ 0,
-                  /*OwnsHeaderSearch =*/false,
-                  /*DelayInitialization =*/ false);
+                  /*OwnsHeaderSearch =*/false);
+  PP.Initialize(*Target);
   PP.EnterMainSourceFile();
 
   std::vector<Token> toks;
@@ -293,11 +293,11 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnitWithMacroInInclude) {
   VoidModuleLoader ModLoader;
   HeaderSearch HeaderInfo(new HeaderSearchOptions, SourceMgr, Diags, LangOpts, 
                           &*Target);
-  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts, Target.getPtr(),
+  Preprocessor PP(new PreprocessorOptions(), Diags, LangOpts,
                   SourceMgr, HeaderInfo, ModLoader,
                   /*IILookup =*/ 0,
-                  /*OwnsHeaderSearch =*/false,
-                  /*DelayInitialization =*/ false);
+                  /*OwnsHeaderSearch =*/false);
+  PP.Initialize(*Target);
 
   std::vector<MacroAction> Macros;
   PP.addPPCallbacks(new MacroTracker(Macros));
