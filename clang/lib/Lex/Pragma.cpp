@@ -1403,6 +1403,7 @@ void Preprocessor::IgnorePragmas() {
            "Invalid namespace, registered as a regular pragma handler!");
     if (PragmaHandler *Existing = STDCNamespace->FindHandler("", false)) {
       RemovePragmaHandler("STDC", Existing);
+      delete Existing;
     }
   }
   AddPragmaHandler("STDC", new EmptyPragmaHandler());
