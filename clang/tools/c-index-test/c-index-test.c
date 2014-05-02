@@ -542,33 +542,23 @@ static void DumpCXComment(CXComment Comment) {
   printf("]");
 }
 
-typedef struct {
-  const char *CommentSchemaFile;
+static void ValidateCommentXML(const char *Str, const char *CommentSchemaFile) {
 #ifdef CLANG_HAVE_LIBXML
   xmlRelaxNGParserCtxtPtr RNGParser;
   xmlRelaxNGPtr Schema;
-#endif
-} CommentXMLValidationData;
-
-static void ValidateCommentXML(const char *Str,
-                               CommentXMLValidationData *ValidationData) {
-#ifdef CLANG_HAVE_LIBXML
   xmlDocPtr Doc;
   xmlRelaxNGValidCtxtPtr ValidationCtxt;
   int status;
 
-  if (!ValidationData || !ValidationData->CommentSchemaFile)
+  if (!CommentSchemaFile)
     return;
 
-  if (!ValidationData->RNGParser) {
-    ValidationData->RNGParser =
-        xmlRelaxNGNewParserCtxt(ValidationData->CommentSchemaFile);
-    ValidationData->Schema = xmlRelaxNGParse(ValidationData->RNGParser);
-  }
-  if (!ValidationData->RNGParser) {
+  RNGParser = xmlRelaxNGNewParserCtxt(CommentSchemaFile);
+  if (!RNGParser) {
     printf(" libXMLError");
     return;
   }
+  Schema = xmlRelaxNGParse(RNGParser);
 
   Doc = xmlParseDoc((const xmlChar *) Str);
 
@@ -578,7 +568,7 @@ static void ValidateCommentXML(const char *Str,
     return;
   }
 
-  ValidationCtxt = xmlRelaxNGNewValidCtxt(ValidationData->Schema);
+  ValidationCtxt = xmlRelaxNGNewValidCtxt(Schema);
   status = xmlRelaxNGValidateDoc(ValidationCtxt, Doc);
   if (!status)
     printf(" CommentXMLValid");
@@ -590,11 +580,13 @@ static void ValidateCommentXML(const char *Str,
 
   xmlRelaxNGFreeValidCtxt(ValidationCtxt);
   xmlFreeDoc(Doc);
+  xmlRelaxNGFree(Schema);
+  xmlRelaxNGFreeParserCtxt(RNGParser);
 #endif
 }
 
 static void PrintCursorComments(CXCursor Cursor,
-                                CommentXMLValidationData *ValidationData) {
+                                const char *CommentSchemaFile) {
   {
     CXString RawComment;
     const char *RawCommentCString;
@@ -625,7 +617,7 @@ static void PrintCursorComments(CXCursor Cursor,
         CXString XML;
         XML = clang_FullComment_getAsXML(Comment);
         PrintCXStringWithPrefix("FullCommentAsXML", XML);
-        ValidateCommentXML(clang_getCString(XML), ValidationData);
+        ValidateCommentXML(clang_getCString(XML), CommentSchemaFile);
         clang_disposeString(XML);
       }
 
@@ -647,8 +639,7 @@ static int lineCol_cmp(const void *p1, const void *p2) {
   return (int)lhs->col - (int)rhs->col;
 }
 
-static void PrintCursor(CXCursor Cursor,
-                        CommentXMLValidationData *ValidationData) {
+static void PrintCursor(CXCursor Cursor, const char *CommentSchemaFile) {
   CXTranslationUnit TU = clang_Cursor_getTranslationUnit(Cursor);
   if (clang_isInvalid(Cursor.kind)) {
     CXString ks = clang_getCursorKindSpelling(Cursor.kind);
@@ -869,7 +860,7 @@ static void PrintCursor(CXCursor Cursor,
         PrintRange(RefNameRange, "RefName");
     }
 
-    PrintCursorComments(Cursor, ValidationData);
+    PrintCursorComments(Cursor, CommentSchemaFile);
 
     {
       unsigned PropAttrs = clang_Cursor_getObjCPropertyAttributes(Cursor, 0);
@@ -1039,7 +1030,7 @@ static void PrintCursorExtent(CXCursor C) {
 typedef struct {
   CXTranslationUnit TU;
   enum CXCursorKind *Filter;
-  CommentXMLValidationData ValidationData;
+  const char *CommentSchemaFile;
 } VisitorData;
 
 
@@ -1053,7 +1044,7 @@ enum CXChildVisitResult FilteredPrintingVisitor(CXCursor Cursor,
     clang_getSpellingLocation(Loc, 0, &line, &column, 0);
     printf("// %s: %s:%d:%d: ", FileCheckPrefix,
            GetCursorSource(Cursor), line, column);
-    PrintCursor(Cursor, &Data->ValidationData);
+    PrintCursor(Cursor, Data->CommentSchemaFile);
     PrintCursorExtent(Cursor);
     if (clang_isDeclaration(Cursor.kind)) {
       enum CX_CXXAccessSpecifier access = clang_getCXXAccessSpecifier(Cursor);
@@ -1123,7 +1114,7 @@ static enum CXChildVisitResult FunctionScanVisitor(CXCursor Cursor,
       } else if (Ref.kind != CXCursor_FunctionDecl) {
         printf("// %s: %s:%d:%d: ", FileCheckPrefix, GetCursorSource(Ref),
                curLine, curColumn);
-        PrintCursor(Ref, &Data->ValidationData);
+        PrintCursor(Ref, Data->CommentSchemaFile);
         printf("\n");
       }
     }
@@ -1430,11 +1421,7 @@ static int perform_test_load(CXIndex Idx, CXTranslationUnit TU,
 
     Data.TU = TU;
     Data.Filter = ck;
-    Data.ValidationData.CommentSchemaFile = CommentSchemaFile;
-#ifdef CLANG_HAVE_LIBXML
-    Data.ValidationData.RNGParser = NULL;
-    Data.ValidationData.Schema = NULL;
-#endif
+    Data.CommentSchemaFile = CommentSchemaFile;
     clang_visitChildren(clang_getTranslationUnitCursor(TU), Visitor, &Data);
   }
 
