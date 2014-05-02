@@ -2582,7 +2582,7 @@ AppleObjCRuntimeV2::TaggedPointerVendorRuntimeAssisted::GetClassDescriptor (lldb
         uintptr_t slot_ptr = slot*process->GetAddressByteSize()+m_objc_debug_taggedpointer_classes;
         Error error;
         uintptr_t slot_data = process->ReadPointerFromMemory(slot_ptr, error);
-        if (error.Fail() || slot_data == 0 || slot_data == LLDB_INVALID_ADDRESS)
+        if (error.Fail() || slot_data == 0 || slot_data == uintptr_t(LLDB_INVALID_ADDRESS))
             return nullptr;
         actual_class_descriptor_sp = m_runtime.GetClassDescriptorFromISA((ObjCISA)slot_data);
         if (!actual_class_descriptor_sp)
