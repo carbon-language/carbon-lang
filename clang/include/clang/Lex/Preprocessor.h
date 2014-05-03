@@ -463,10 +463,10 @@ public:
 
   ~Preprocessor();
 
-  /// \brief Initialize the preprocessor, if the constructor did not already
-  /// perform the initialization.
+  /// \brief Initialize the preprocessor using information about the target.
   ///
-  /// \param Target Information about the target.
+  /// \param Target is owned by the caller and must remain valid for the
+  /// lifetime of the preprocessor.
   void Initialize(const TargetInfo &Target);
 
   /// \brief Retrieve the preprocessor options used to initialize this
