@@ -242,7 +242,7 @@ public:
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeSet> Attrs);
   static AttributeSet get(LLVMContext &C, unsigned Index,
                           ArrayRef<Attribute::AttrKind> Kind);
-  static AttributeSet get(LLVMContext &C, unsigned Index, AttrBuilder &B);
+  static AttributeSet get(LLVMContext &C, unsigned Index, const AttrBuilder &B);
 
   /// \brief Add an attribute to the attribute set at the given index. Since
   /// attribute sets are immutable, this returns a new set.
@@ -469,12 +469,19 @@ public:
   typedef std::pair<std::string, std::string>                td_type;
   typedef std::map<std::string, std::string>::iterator       td_iterator;
   typedef std::map<std::string, std::string>::const_iterator td_const_iterator;
+  typedef llvm::iterator_range<td_iterator>                  td_range;
+  typedef llvm::iterator_range<td_const_iterator>            td_const_range;
 
   td_iterator td_begin()             { return TargetDepAttrs.begin(); }
   td_iterator td_end()               { return TargetDepAttrs.end(); }
 
   td_const_iterator td_begin() const { return TargetDepAttrs.begin(); }
   td_const_iterator td_end() const   { return TargetDepAttrs.end(); }
+
+  td_range td_attrs() { return td_range(td_begin(), td_end()); }
+  td_const_range td_attrs() const {
+    return td_const_range(td_begin(), td_end());
+  }
 
   bool td_empty() const              { return TargetDepAttrs.empty(); }
 

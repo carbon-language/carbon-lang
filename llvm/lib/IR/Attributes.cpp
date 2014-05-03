@@ -596,7 +596,8 @@ AttributeSet AttributeSet::get(LLVMContext &C,
   return getImpl(C, Attrs);
 }
 
-AttributeSet AttributeSet::get(LLVMContext &C, unsigned Index, AttrBuilder &B) {
+AttributeSet AttributeSet::get(LLVMContext &C, unsigned Index,
+                               const AttrBuilder &B) {
   if (!B.hasAttributes())
     return AttributeSet();
 
@@ -618,9 +619,9 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Index, AttrBuilder &B) {
   }
 
   // Add target-dependent (string) attributes.
-  for (AttrBuilder::td_iterator I = B.td_begin(), E = B.td_end();
-       I != E; ++I)
-    Attrs.push_back(std::make_pair(Index, Attribute::get(C, I->first,I->second)));
+  for (const AttrBuilder::td_type &TDA : B.td_attrs())
+    Attrs.push_back(
+        std::make_pair(Index, Attribute::get(C, TDA.first, TDA.second)));
 
   return get(C, Attrs);
 }
