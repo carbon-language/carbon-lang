@@ -723,14 +723,9 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                        /*OwnsHeaderSearch=*/false);
   Preprocessor &PP = *AST->PP;
 
-  AST->Ctx = new ASTContext(AST->ASTFileLangOpts,
-                            AST->getSourceManager(),
-                            /*Target=*/0,
-                            PP.getIdentifierTable(),
-                            PP.getSelectorTable(),
-                            PP.getBuiltinInfo(),
-                            /* size_reserve = */0,
-                            /*DelayInitialization=*/true);
+  AST->Ctx = new ASTContext(AST->ASTFileLangOpts, AST->getSourceManager(),
+                            PP.getIdentifierTable(), PP.getSelectorTable(),
+                            PP.getBuiltinInfo());
   ASTContext &Context = *AST->Ctx;
 
   bool disableValid = false;

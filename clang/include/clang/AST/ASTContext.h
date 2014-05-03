@@ -799,11 +799,8 @@ public:
   // The type is built when constructing 'BuiltinVaListDecl'.
   mutable QualType VaListTagTy;
 
-  ASTContext(LangOptions& LOpts, SourceManager &SM, const TargetInfo *t,
-             IdentifierTable &idents, SelectorTable &sels,
-             Builtin::Context &builtins,
-             unsigned size_reserve,
-             bool DelayInitialization = false);
+  ASTContext(LangOptions &LOpts, SourceManager &SM, IdentifierTable &idents,
+             SelectorTable &sels, Builtin::Context &builtins);
 
   ~ASTContext();
 
@@ -2246,9 +2243,7 @@ public:
   /// \brief Initialize built-in types.
   ///
   /// This routine may only be invoked once for a given ASTContext object.
-  /// It is normally invoked by the ASTContext constructor. However, the
-  /// constructor can be asked to delay initialization, which places the burden
-  /// of calling this function on the user of that object.
+  /// It is normally invoked after ASTContext construction.
   ///
   /// \param Target The target 
   void InitBuiltinTypes(const TargetInfo &Target);

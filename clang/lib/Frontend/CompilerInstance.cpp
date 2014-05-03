@@ -300,9 +300,9 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
 void CompilerInstance::createASTContext() {
   Preprocessor &PP = getPreprocessor();
   Context = new ASTContext(getLangOpts(), PP.getSourceManager(),
-                           &getTarget(), PP.getIdentifierTable(),
-                           PP.getSelectorTable(), PP.getBuiltinInfo(),
-                           /*size_reserve=*/ 0);
+                           PP.getIdentifierTable(), PP.getSelectorTable(),
+                           PP.getBuiltinInfo());
+  Context->InitBuiltinTypes(getTarget());
 }
 
 // ExternalASTSource

@@ -724,11 +724,8 @@ static bool isAddrSpaceMapManglingEnabled(const TargetInfo &TI,
 }
 
 ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
-                       const TargetInfo *t,
                        IdentifierTable &idents, SelectorTable &sels,
-                       Builtin::Context &builtins,
-                       unsigned size_reserve,
-                       bool DelayInitialization) 
+                       Builtin::Context &builtins)
   : FunctionProtoTypes(this_()),
     TemplateSpecializationTypes(this_()),
     DependentTemplateSpecializationTypes(this_()),
@@ -746,7 +743,7 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     NullTypeSourceInfo(QualType()), 
     FirstLocalImport(), LastLocalImport(),
     SourceMgr(SM), LangOpts(LOpts), 
-    AddrSpaceMap(0), Target(t), PrintingPolicy(LOpts),
+    AddrSpaceMap(0), Target(0), PrintingPolicy(LOpts),
     Idents(idents), Selectors(sels),
     BuiltinInfo(builtins),
     DeclarationNames(*this),
@@ -755,13 +752,7 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     CommentCommandTraits(BumpAlloc, LOpts.CommentOpts),
     LastSDM(0, 0)
 {
-  if (size_reserve > 0) Types.reserve(size_reserve);
   TUDecl = TranslationUnitDecl::Create(*this);
-  
-  if (!DelayInitialization) {
-    assert(t && "No target supplied for ASTContext initialization");
-    InitBuiltinTypes(*t);
-  }
 }
 
 ASTContext::~ASTContext() {
