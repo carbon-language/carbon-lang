@@ -466,7 +466,7 @@ namespace dr243 { // dr243: yes
   A a2 = b; // expected-error {{ambiguous}}
 }
 
-namespace dr244 { // dr244: no
+namespace dr244 { // dr244: 3.5
   struct B {}; struct D : B {}; // expected-note {{here}}
 
   D D_object;
@@ -480,7 +480,7 @@ namespace dr244 { // dr244: no
     B_ptr->~B_alias();
     B_ptr->B_alias::~B();
     // This is valid under DR244.
-    B_ptr->B_alias::~B_alias(); // FIXME: expected-error {{expected the class name after '~' to name a destructor}}
+    B_ptr->B_alias::~B_alias();
     B_ptr->dr244::~B(); // expected-error {{refers to a member in namespace}}
     B_ptr->dr244::~B_alias(); // expected-error {{refers to a member in namespace}}
   }
@@ -1013,7 +1013,6 @@ namespace dr298 { // dr298: yes
 
   B::B() {} // expected-error {{requires a type specifier}}
   B::A() {} // ok
-  C::~C() {} // expected-error {{expected the class name}}
   C::~A() {} // ok
 
   typedef struct D E; // expected-note {{here}}

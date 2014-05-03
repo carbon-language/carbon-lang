@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
+// expected-no-diagnostics
 
 struct C { 
   typedef int I;
@@ -20,5 +21,5 @@ struct A {
 typedef A AB; 
 int main() {
   AB *p; 
-  p->AB::~AB(); // expected-error{{expected the class name after '~' to name a destructor}}
+  p->AB::~AB();
 }
