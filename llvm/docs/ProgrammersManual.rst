@@ -1559,14 +1559,14 @@ Iterating over the ``Instruction`` in a ``Function``
 If you're finding that you commonly iterate over a ``Function``'s
 ``BasicBlock``\ s and then that ``BasicBlock``'s ``Instruction``\ s,
 ``InstIterator`` should be used instead.  You'll need to include
-``llvm/Support/InstIterator.h`` (`doxygen
+``llvm/IR/InstIterator.h`` (`doxygen
 <http://llvm.org/doxygen/InstIterator_8h-source.html>`__) and then instantiate
 ``InstIterator``\ s explicitly in your code.  Here's a small example that shows
 how to dump all instructions in a function to the standard error stream:
 
 .. code-block:: c++
 
-  #include "llvm/Support/InstIterator.h"
+  #include "llvm/IR/InstIterator.h"
 
   // F is a pointer to a Function instance
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
