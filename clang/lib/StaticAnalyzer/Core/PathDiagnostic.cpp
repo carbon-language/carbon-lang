@@ -451,6 +451,11 @@ void PathDiagnosticConsumer::FlushDiagnostics(
   Diags.clear();
 }
 
+PathDiagnosticConsumer::FilesMade::~FilesMade() {
+  for (PDFileEntry &Entry : *this)
+    Entry.~PDFileEntry();
+}
+
 void PathDiagnosticConsumer::FilesMade::addDiagnostic(const PathDiagnostic &PD,
                                                       StringRef ConsumerName,
                                                       StringRef FileName) {

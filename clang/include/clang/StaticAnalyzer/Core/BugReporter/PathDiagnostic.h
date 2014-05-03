@@ -72,7 +72,9 @@ public:
   
   struct FilesMade : public llvm::FoldingSet<PDFileEntry> {
     llvm::BumpPtrAllocator Alloc;
-    
+
+    ~FilesMade();
+
     void addDiagnostic(const PathDiagnostic &PD,
                        StringRef ConsumerName,
                        StringRef fileName);
