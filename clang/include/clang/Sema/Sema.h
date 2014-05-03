@@ -26,11 +26,11 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/ExpressionTraits.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/Module.h"
 #include "clang/Basic/OpenMPKinds.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TypeTraits.h"
-#include "clang/Lex/ModuleLoader.h"
 #include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ExternalSemaSource.h"
@@ -124,6 +124,8 @@ namespace clang {
   class LocalInstantiationScope;
   class LookupResult;
   class MacroInfo;
+  typedef ArrayRef<std::pair<IdentifierInfo *, SourceLocation>> ModuleIdPath;
+  class ModuleLoader;
   class MultiLevelTemplateArgumentList;
   class NamedDecl;
   class NonNullAttr;
@@ -1021,6 +1023,12 @@ public:
   std::string
   getFixItZeroInitializerForType(QualType T, SourceLocation Loc) const;
   std::string getFixItZeroLiteralForType(QualType T, SourceLocation Loc) const;
+
+  /// \brief Calls \c Lexer::getLocForEndOfToken()
+  SourceLocation getLocForEndOfToken(SourceLocation Loc, unsigned Offset = 0);
+
+  /// \brief Retrieve the module loader associated with the preprocessor.
+  ModuleLoader &getModuleLoader() const;
 
   ExprResult Owned(Expr* E) { return E; }
   ExprResult Owned(ExprResult R) { return R; }

@@ -19,7 +19,6 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 
@@ -297,7 +296,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
   if (TypeSourceInfo *TSInfo = New->getTypeSourceInfo()) {
     TypeLoc TL = TSInfo->getTypeLoc().IgnoreParens();
     if (FunctionTypeLoc FTLoc = TL.getAs<FunctionTypeLoc>())
-      FixItLoc = PP.getLocForEndOfToken(FTLoc.getLocalRangeEnd());
+      FixItLoc = getLocForEndOfToken(FTLoc.getLocalRangeEnd());
   }
 
   if (FixItLoc.isInvalid())

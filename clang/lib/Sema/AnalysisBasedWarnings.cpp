@@ -89,8 +89,8 @@ namespace {
       
       SourceLocation Open = SilenceableCondVal.getBegin();
       if (Open.isValid()) {
-        SourceLocation Close = SilenceableCondVal.getEnd();        
-        Close = S.PP.getLocForEndOfToken(Close);
+        SourceLocation Close = SilenceableCondVal.getEnd();
+        Close = S.getLocForEndOfToken(Close);
         if (Close.isValid()) {
           S.Diag(Open, diag::note_unreachable_silence)
             << FixItHint::CreateInsertion(Open, "/* DISABLES CODE */ (")
@@ -617,7 +617,7 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
   if (VD->getLocEnd().isMacroID())
     return false;
 
-  SourceLocation Loc = S.PP.getLocForEndOfToken(VD->getLocEnd());
+  SourceLocation Loc = S.getLocForEndOfToken(VD->getLocEnd());
 
   // Suggest possible initialization (if any).
   std::string Init = S.getFixItZeroInitializerForType(VariableTy, Loc);

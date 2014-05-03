@@ -24,7 +24,6 @@
 #include "clang/AST/TypeLocVisitor.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/DelayedDiagnostic.h"
@@ -852,7 +851,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     break;
   }
   case DeclSpec::TST_int128:
-    if (!S.PP.getTargetInfo().hasInt128Type())
+    if (!S.Context.getTargetInfo().hasInt128Type())
       S.Diag(DS.getTypeSpecTypeLoc(), diag::err_int128_unsupported);
     if (DS.getTypeSpecSign() == DeclSpec::TSS_unsigned)
       Result = Context.UnsignedInt128Ty;
@@ -2396,7 +2395,7 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
     // declaration.
     SourceRange Range = FTI.Params[0].Param->getSourceRange();
     SourceLocation B = Range.getBegin();
-    SourceLocation E = S.PP.getLocForEndOfToken(Range.getEnd());
+    SourceLocation E = S.getLocForEndOfToken(Range.getEnd());
     // FIXME: Maybe we should suggest adding braces instead of parens
     // in C++11 for classes that don't have an initializer_list constructor.
     S.Diag(B, diag::note_additional_parens_for_variable_declaration)
@@ -2763,10 +2762,10 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         SourceLocation DiagLoc, FixitLoc;
         if (TInfo) {
           DiagLoc = TInfo->getTypeLoc().getLocStart();
-          FixitLoc = S.PP.getLocForEndOfToken(TInfo->getTypeLoc().getLocEnd());
+          FixitLoc = S.getLocForEndOfToken(TInfo->getTypeLoc().getLocEnd());
         } else {
           DiagLoc = D.getDeclSpec().getTypeSpecTypeLoc();
-          FixitLoc = S.PP.getLocForEndOfToken(D.getDeclSpec().getLocEnd());
+          FixitLoc = S.getLocForEndOfToken(D.getDeclSpec().getLocEnd());
         }
         S.Diag(DiagLoc, diag::err_object_cannot_be_passed_returned_by_value)
           << 0 << T

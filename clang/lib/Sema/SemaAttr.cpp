@@ -168,7 +168,7 @@ void Sema::ActOnPragmaOptionsAlign(PragmaOptionsAlignKind Kind,
 
   case POAK_Mac68k:
     // Check if the target supports this.
-    if (!PP.getTargetInfo().hasAlignMac68kSupport()) {
+    if (!this->Context.getTargetInfo().hasAlignMac68kSupport()) {
       Diag(PragmaLoc, diag::err_pragma_options_align_mac68k_target_unsupported);
       return;
     }

@@ -17,7 +17,6 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/TypeLoc.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Designator.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/SemaInternal.h"
@@ -654,13 +653,13 @@ void InitListChecker::CheckImplicitInitList(const InitializedEntity &Entity,
     if (T->isArrayType() || T->isRecordType()) {
       SemaRef.Diag(StructuredSubobjectInitList->getLocStart(),
                    diag::warn_missing_braces)
-        << StructuredSubobjectInitList->getSourceRange()
-        << FixItHint::CreateInsertion(
-              StructuredSubobjectInitList->getLocStart(), "{")
-        << FixItHint::CreateInsertion(
-              SemaRef.PP.getLocForEndOfToken(
-                                      StructuredSubobjectInitList->getLocEnd()),
-              "}");
+          << StructuredSubobjectInitList->getSourceRange()
+          << FixItHint::CreateInsertion(
+                 StructuredSubobjectInitList->getLocStart(), "{")
+          << FixItHint::CreateInsertion(
+                 SemaRef.getLocForEndOfToken(
+                     StructuredSubobjectInitList->getLocEnd()),
+                 "}");
     }
   }
 }
@@ -6513,7 +6512,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     else
       R = SourceRange(Args.front()->getLocEnd(), Args.back()->getLocEnd());
 
-    R.setBegin(S.PP.getLocForEndOfToken(R.getBegin()));
+    R.setBegin(S.getLocForEndOfToken(R.getBegin()));
     if (Kind.isCStyleOrFunctionalCast())
       S.Diag(Kind.getLocation(), diag::err_builtin_func_cast_more_than_one_arg)
         << R;
@@ -7056,10 +7055,10 @@ static void DiagnoseNarrowingInInitList(Sema &S,
   }
   OS << ">(";
   S.Diag(PostInit->getLocStart(), diag::note_init_list_narrowing_override)
-    << PostInit->getSourceRange()
-    << FixItHint::CreateInsertion(PostInit->getLocStart(), OS.str())
-    << FixItHint::CreateInsertion(
-      S.getPreprocessor().getLocForEndOfToken(PostInit->getLocEnd()), ")");
+      << PostInit->getSourceRange()
+      << FixItHint::CreateInsertion(PostInit->getLocStart(), OS.str())
+      << FixItHint::CreateInsertion(
+             S.getLocForEndOfToken(PostInit->getLocEnd()), ")");
 }
 
 //===----------------------------------------------------------------------===//

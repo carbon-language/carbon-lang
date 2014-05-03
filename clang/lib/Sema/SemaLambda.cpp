@@ -15,7 +15,6 @@
 #include "clang/AST/ASTLambda.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/TargetInfo.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
@@ -968,11 +967,10 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       //   An identifier or this shall not appear more than once in a 
       //   lambda-capture.
       if (LSI->isCXXThisCaptured()) {
-        Diag(C->Loc, diag::err_capture_more_than_once) 
-          << "'this'"
-          << SourceRange(LSI->getCXXThisCapture().getLocation())
-          << FixItHint::CreateRemoval(
-               SourceRange(PP.getLocForEndOfToken(PrevCaptureLoc), C->Loc));
+        Diag(C->Loc, diag::err_capture_more_than_once)
+            << "'this'" << SourceRange(LSI->getCXXThisCapture().getLocation())
+            << FixItHint::CreateRemoval(
+                   SourceRange(getLocForEndOfToken(PrevCaptureLoc), C->Loc));
         continue;
       }
 
@@ -981,8 +979,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       //   lambda-capture shall not contain this [...].
       if (Intro.Default == LCD_ByCopy) {
         Diag(C->Loc, diag::err_this_capture_with_copy_default)
-          << FixItHint::CreateRemoval(
-               SourceRange(PP.getLocForEndOfToken(PrevCaptureLoc), C->Loc));
+            << FixItHint::CreateRemoval(
+                SourceRange(getLocForEndOfToken(PrevCaptureLoc), C->Loc));
         continue;
       }
 
@@ -1035,13 +1033,13 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       //   each identifier it contains shall be preceded by &.
       if (C->Kind == LCK_ByRef && Intro.Default == LCD_ByRef) {
         Diag(C->Loc, diag::err_reference_capture_with_reference_default)
-          << FixItHint::CreateRemoval(
-               SourceRange(PP.getLocForEndOfToken(PrevCaptureLoc), C->Loc));
+            << FixItHint::CreateRemoval(
+                SourceRange(getLocForEndOfToken(PrevCaptureLoc), C->Loc));
         continue;
       } else if (C->Kind == LCK_ByCopy && Intro.Default == LCD_ByCopy) {
         Diag(C->Loc, diag::err_copy_capture_with_copy_default)
-          << FixItHint::CreateRemoval(
-               SourceRange(PP.getLocForEndOfToken(PrevCaptureLoc), C->Loc));
+            << FixItHint::CreateRemoval(
+                SourceRange(getLocForEndOfToken(PrevCaptureLoc), C->Loc));
         continue;
       }
 
@@ -1072,9 +1070,9 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     if (!CaptureNames.insert(C->Id)) {
       if (Var && LSI->isCaptured(Var)) {
         Diag(C->Loc, diag::err_capture_more_than_once)
-          << C->Id << SourceRange(LSI->getCapture(Var).getLocation())
-          << FixItHint::CreateRemoval(
-               SourceRange(PP.getLocForEndOfToken(PrevCaptureLoc), C->Loc));
+            << C->Id << SourceRange(LSI->getCapture(Var).getLocation())
+            << FixItHint::CreateRemoval(
+                   SourceRange(getLocForEndOfToken(PrevCaptureLoc), C->Loc));
       } else
         // Previous capture captured something different (one or both was
         // an init-cpature): no fixit.

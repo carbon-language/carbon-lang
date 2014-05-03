@@ -4215,10 +4215,9 @@ isNullPointerValueTemplateArgument(Sema &S, NonTypeTemplateParmDecl *Param,
   if (Arg->isNullPointerConstant(S.Context, Expr::NPC_NeverValueDependent)) {
     std::string Code = "static_cast<" + ParamType.getAsString() + ">(";
     S.Diag(Arg->getExprLoc(), diag::err_template_arg_untyped_null_constant)
-      << ParamType
-      << FixItHint::CreateInsertion(Arg->getLocStart(), Code)
-      << FixItHint::CreateInsertion(S.PP.getLocForEndOfToken(Arg->getLocEnd()),
-                                    ")");
+        << ParamType << FixItHint::CreateInsertion(Arg->getLocStart(), Code)
+        << FixItHint::CreateInsertion(S.getLocForEndOfToken(Arg->getLocEnd()),
+                                      ")");
     S.Diag(Param->getLocation(), diag::note_template_param_here);
     return NPV_NullPointer;
   }
