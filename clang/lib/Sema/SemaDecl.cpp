@@ -172,11 +172,9 @@ ParsedType Sema::getTypeName(const IdentifierInfo &II, SourceLocation NameLoc,
           return ActOnTypenameType(S, SourceLocation(), *SS, II, NameLoc).get();
         
         NestedNameSpecifierLoc QualifierLoc = SS->getWithLocInContext(Context);
-        QualType T =
-          CheckTypenameType(ETK_None, SourceLocation(), QualifierLoc,
-                            II, NameLoc);
-        
-          return ParsedType::make(T);
+        QualType T = CheckTypenameType(ETK_None, SourceLocation(), QualifierLoc,
+                                       II, NameLoc);
+        return ParsedType::make(T);
       }
       
       return ParsedType();
@@ -311,8 +309,7 @@ ParsedType Sema::getTypeName(const IdentifierInfo &II, SourceLocation NameLoc,
   if (TypeDecl *TD = dyn_cast<TypeDecl>(IIDecl)) {
     DiagnoseUseOfDecl(IIDecl, NameLoc);
 
-    if (T.isNull())
-      T = Context.getTypeDeclType(TD);
+    T = Context.getTypeDeclType(TD);
 
     // NOTE: avoid constructing an ElaboratedType(Loc) if this is a
     // constructor or destructor name (in such a case, the scope specifier
@@ -825,8 +822,8 @@ Corrected:
   ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(FirstDecl);
   if (!Class) {
     // FIXME: It's unfortunate that we don't have a Type node for handling this.
-    if (ObjCCompatibleAliasDecl *Alias 
-                                = dyn_cast<ObjCCompatibleAliasDecl>(FirstDecl))
+    if (ObjCCompatibleAliasDecl *Alias =
+            dyn_cast<ObjCCompatibleAliasDecl>(FirstDecl))
       Class = Alias->getClassInterface();
   }
   
@@ -1314,7 +1311,8 @@ static bool ShouldDiagnoseUnusedDecl(const NamedDecl *D) {
           return false;
 
         if (const Expr *Init = VD->getInit()) {
-          if (const ExprWithCleanups *Cleanups = dyn_cast<ExprWithCleanups>(Init))
+          if (const ExprWithCleanups *Cleanups =
+                  dyn_cast<ExprWithCleanups>(Init))
             Init = Cleanups->getSubExpr();
           const CXXConstructExpr *Construct =
             dyn_cast<CXXConstructExpr>(Init);
@@ -1349,10 +1347,10 @@ static void GenerateFixForUnusedDecl(const NamedDecl *D, ASTContext &Ctx,
 /// DiagnoseUnusedDecl - Emit warnings about declarations that are not used
 /// unless they are marked attr(unused).
 void Sema::DiagnoseUnusedDecl(const NamedDecl *D) {
-  FixItHint Hint;
   if (!ShouldDiagnoseUnusedDecl(D))
     return;
   
+  FixItHint Hint;
   GenerateFixForUnusedDecl(D, Context, Hint);
 
   unsigned DiagID;
