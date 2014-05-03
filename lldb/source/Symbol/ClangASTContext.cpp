@@ -381,11 +381,10 @@ ClangASTContext::getASTContext()
     {
         m_ast_ap.reset(new ASTContext (*getLanguageOptions(),
                                        *getSourceManager(),
-                                       getTargetInfo(),
                                        *getIdentifierTable(),
                                        *getSelectorTable(),
-                                       *getBuiltinContext(),
-                                       0));
+                                       *getBuiltinContext()));
+        m_ast_ap->InitBuiltinTypes(*getTargetInfo());
         
         if ((m_callback_tag_decl || m_callback_objc_decl) && m_callback_baton)
         {

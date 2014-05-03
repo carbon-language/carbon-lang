@@ -273,11 +273,10 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     
     std::unique_ptr<clang::ASTContext> ast_context(new ASTContext(m_compiler->getLangOpts(),
                                                                  m_compiler->getSourceManager(),
-                                                                 &m_compiler->getTarget(),
                                                                  m_compiler->getPreprocessor().getIdentifierTable(),
                                                                  *m_selector_table.get(),
-                                                                 *m_builtin_context.get(),
-                                                                 0));
+                                                                 *m_builtin_context.get()));
+    ast_context->InitBuiltinTypes(m_compiler->getTarget());
     
     ClangExpressionDeclMap *decl_map = m_expr.DeclMap();
     
