@@ -135,7 +135,7 @@ private:
   typedef StringMap<uint8_t> StringSet;
 
   LLVMContext &Context;
-  Linker Linker;
+  Linker IRLinker;
   TargetMachine *TargetMach;
   bool EmitDwarfDebugInfo;
   bool ScopeRestrictionsDone;
