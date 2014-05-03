@@ -65,7 +65,7 @@ class EmptySubobjectMap {
   const CXXRecordDecl *Class;
 
   /// EmptyClassOffsets - A map from offsets to empty record decls.
-  typedef SmallVector<const CXXRecordDecl *, 1> ClassVectorTy;
+  typedef llvm::TinyPtrVector<const CXXRecordDecl *> ClassVectorTy;
   typedef llvm::DenseMap<CharUnits, ClassVectorTy> EmptyClassOffsetsMapTy;
   EmptyClassOffsetsMapTy EmptyClassOffsets;
   

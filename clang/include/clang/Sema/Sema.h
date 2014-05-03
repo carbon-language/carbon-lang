@@ -47,6 +47,7 @@
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include <deque>
 #include <memory>
@@ -840,7 +841,7 @@ public:
   /// \brief The number of SFINAE diagnostics that have been trapped.
   unsigned NumSFINAEErrors;
 
-  typedef llvm::DenseMap<ParmVarDecl *, SmallVector<ParmVarDecl *, 1> >
+  typedef llvm::DenseMap<ParmVarDecl *, llvm::TinyPtrVector<ParmVarDecl *>>
     UnparsedDefaultArgInstantiationsMap;
 
   /// \brief A mapping from parameters with unparsed default arguments to the

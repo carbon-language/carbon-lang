@@ -34,12 +34,12 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/APSInt.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/DataTypes.h"
 #include <deque>
@@ -965,7 +965,7 @@ private:
   llvm::SmallVector<NamedDecl *, 16> PendingOdrMergeChecks;
 
   /// \brief Record definitions in which we found an ODR violation.
-  llvm::SmallDenseMap<CXXRecordDecl*, llvm::SmallVector<CXXRecordDecl*, 1>, 2>
+  llvm::SmallDenseMap<CXXRecordDecl *, llvm::TinyPtrVector<CXXRecordDecl *>, 2>
       PendingOdrMergeFailures;
 
   /// \brief DeclContexts in which we have diagnosed an ODR violation.
@@ -1826,7 +1826,7 @@ public:
   void installImportedMacro(IdentifierInfo *II, ModuleMacroInfo *MMI,
                             Module *Owner);
 
-  typedef llvm::SmallVector<DefMacroDirective*, 1> AmbiguousMacros;
+  typedef llvm::TinyPtrVector<DefMacroDirective *> AmbiguousMacros;
   llvm::DenseMap<IdentifierInfo*, AmbiguousMacros> AmbiguousMacroDefs;
 
   void

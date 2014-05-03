@@ -1915,7 +1915,7 @@ ASTReader::removeOverriddenMacros(IdentifierInfo *II,
     AmbiguousMacroDefs.erase(II);
   } else {
     // There's no ambiguity yet. Maybe we're introducing one.
-    llvm::SmallVector<DefMacroDirective*, 1> Ambig;
+    AmbiguousMacros Ambig;
     if (PrevDef)
       Ambig.push_back(PrevDef);
 
@@ -1923,7 +1923,7 @@ ASTReader::removeOverriddenMacros(IdentifierInfo *II,
 
     if (!Ambig.empty()) {
       AmbiguousMacros &Result = AmbiguousMacroDefs[II];
-      Result.swap(Ambig);
+      std::swap(Result, Ambig);
       return &Result;
     }
   }
@@ -1946,9 +1946,8 @@ void ASTReader::installImportedMacro(IdentifierInfo *II, ModuleMacroInfo *MMI,
     assert(ImportLoc.isValid() && "no import location for a visible macro?");
   }
 
-  llvm::SmallVectorImpl<DefMacroDirective*> *Prev =
+  AmbiguousMacros *Prev =
       removeOverriddenMacros(II, MMI->getOverriddenSubmodules());
-
 
   // Create a synthetic macro definition corresponding to the import (or null
   // if this was an undefinition of the macro).
