@@ -637,7 +637,8 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     // If this expression is limited to being a unary-expression, the parent can
     // not start a cast expression.
     ParenParseOption ParenExprType =
-      (isUnaryExpression && !getLangOpts().CPlusPlus)? CompoundLiteral : CastExpr;
+        (isUnaryExpression && !getLangOpts().CPlusPlus) ? CompoundLiteral
+                                                        : CastExpr;
     ParsedType CastTy;
     SourceLocation RParenLoc;
     
@@ -2078,7 +2079,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
           CastTy = Ty.get();
           return ExprResult();
         }
-        
+
         // Reject the cast of super idiom in ObjC.
         if (Tok.is(tok::identifier) && getLangOpts().ObjC1 &&
             Tok.getIdentifierInfo() == Ident_super && 
@@ -2125,7 +2126,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 
     // Don't build a paren expression unless we actually match a ')'.
     if (!Result.isInvalid() && Tok.is(tok::r_paren))
-      Result = Actions.ActOnParenExpr(OpenLoc, Tok.getLocation(), Result.take());
+      Result =
+          Actions.ActOnParenExpr(OpenLoc, Tok.getLocation(), Result.take());
   }
 
   // Match the ')'.

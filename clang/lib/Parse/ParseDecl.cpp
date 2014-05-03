@@ -3700,9 +3700,8 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       return;
     }
 
-    TypeResult Type = Actions.ActOnDependentTag(getCurScope(), DeclSpec::TST_enum,
-                                                TUK, SS, Name, StartLoc,
-                                                NameLoc);
+    TypeResult Type = Actions.ActOnDependentTag(
+        getCurScope(), DeclSpec::TST_enum, TUK, SS, Name, StartLoc, NameLoc);
     if (Type.isInvalid()) {
       DS.SetTypeSpecError();
       return;
