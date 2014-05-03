@@ -73,8 +73,6 @@ struct BlockNumbering {
 
   BlockNumbering(BasicBlock *Bb) : BB(Bb), Valid(false) {}
 
-  BlockNumbering() : BB(nullptr), Valid(false) {}
-
   void numberInstructions() {
     unsigned Loc = 0;
     InstrIdx.clear();
@@ -346,17 +344,10 @@ public:
   typedef SmallVector<StoreInst *, 8> StoreList;
 
   BoUpSLP(Function *Func, ScalarEvolution *Se, const DataLayout *Dl,
-          TargetTransformInfo *Tti, TargetLibraryInfo *TLi, AliasAnalysis *Aa, LoopInfo *Li,
-          DominatorTree *Dt) :
-      F(Func), SE(Se), DL(Dl), TTI(Tti), TLI(TLi), AA(Aa), LI(Li), DT(Dt),
-    Builder(Se->getContext()) {
-      // Setup the block numbering utility for all of the blocks in the
-      // function.
-      for (Function::iterator it = F->begin(), e = F->end(); it != e; ++it) {
-        BasicBlock *BB = it;
-        BlocksNumbers[BB] = BlockNumbering(BB);
-      }
-    }
+          TargetTransformInfo *Tti, TargetLibraryInfo *TLi, AliasAnalysis *Aa,
+          LoopInfo *Li, DominatorTree *Dt)
+      : F(Func), SE(Se), DL(Dl), TTI(Tti), TLI(TLi), AA(Aa), LI(Li), DT(Dt),
+        Builder(Se->getContext()) {}
 
   /// \brief Vectorize the tree that starts with the elements in \p VL.
   /// Returns the vectorized root.
@@ -527,6 +518,13 @@ private:
 
   /// Numbers instructions in different blocks.
   DenseMap<BasicBlock *, BlockNumbering> BlocksNumbers;
+
+  /// \brief Get the corresponding instruction numbering list for a given
+  /// BasicBlock. The list is allocated lazily.
+  BlockNumbering &getBlockNumbering(BasicBlock *BB) {
+    auto I = BlocksNumbers.insert(std::make_pair(BB, BlockNumbering(BB)));
+    return I.first->second;
+  }
 
   /// Reduction operators.
   ValueSet *RdxOps;
@@ -715,7 +713,7 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
         continue;
 
       // Make sure that we can schedule this unknown user.
-      BlockNumbering &BN = BlocksNumbers[BB];
+      BlockNumbering &BN = getBlockNumbering(BB);
       int UserIndex = BN.getIndex(UI);
       if (UserIndex < MyLastIndex) {
 
@@ -1328,8 +1326,8 @@ Value *BoUpSLP::getSinkBarrier(Instruction *Src, Instruction *Dst) {
 
 int BoUpSLP::getLastIndex(ArrayRef<Value *> VL) {
   BasicBlock *BB = cast<Instruction>(VL[0])->getParent();
-  assert(BB == getSameBlock(VL) && BlocksNumbers.count(BB) && "Invalid block");
-  BlockNumbering &BN = BlocksNumbers[BB];
+  assert(BB == getSameBlock(VL) && "Invalid block");
+  BlockNumbering &BN = getBlockNumbering(BB);
 
   int MaxIdx = BN.getIndex(BB->getFirstNonPHI());
   for (unsigned i = 0, e = VL.size(); i < e; ++i)
@@ -1339,8 +1337,8 @@ int BoUpSLP::getLastIndex(ArrayRef<Value *> VL) {
 
 Instruction *BoUpSLP::getLastInstruction(ArrayRef<Value *> VL) {
   BasicBlock *BB = cast<Instruction>(VL[0])->getParent();
-  assert(BB == getSameBlock(VL) && BlocksNumbers.count(BB) && "Invalid block");
-  BlockNumbering &BN = BlocksNumbers[BB];
+  assert(BB == getSameBlock(VL) && "Invalid block");
+  BlockNumbering &BN = getBlockNumbering(BB);
 
   int MaxIdx = BN.getIndex(cast<Instruction>(VL[0]));
   for (unsigned i = 1, e = VL.size(); i < e; ++i)
@@ -1762,9 +1760,9 @@ Value *BoUpSLP::vectorizeTree() {
     }
   }
 
-  for (Function::iterator it = F->begin(), e = F->end(); it != e; ++it) {
-    BlocksNumbers[it].forget();
-  }
+  for (auto &BN : BlocksNumbers)
+    BN.second.forget();
+
   Builder.ClearInsertionPoint();
 
   return VectorizableTree[0].VectorizedValue;

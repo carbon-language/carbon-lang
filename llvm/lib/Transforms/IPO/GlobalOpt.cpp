@@ -42,6 +42,7 @@
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <algorithm>
+#include <deque>
 using namespace llvm;
 
 #define DEBUG_TYPE "globalopt"
@@ -2166,7 +2167,7 @@ class Evaluator {
 public:
   Evaluator(const DataLayout *DL, const TargetLibraryInfo *TLI)
     : DL(DL), TLI(TLI) {
-    ValueStack.push_back(make_unique<DenseMap<Value*, Constant*>>());
+    ValueStack.emplace_back();
   }
 
   ~Evaluator() {
@@ -2191,13 +2192,13 @@ public:
 
   Constant *getVal(Value *V) {
     if (Constant *CV = dyn_cast<Constant>(V)) return CV;
-    Constant *R = ValueStack.back()->lookup(V);
+    Constant *R = ValueStack.back().lookup(V);
     assert(R && "Reference to an uncomputed value!");
     return R;
   }
 
   void setVal(Value *V, Constant *C) {
-    (*ValueStack.back())[V] = C;
+    ValueStack.back()[V] = C;
   }
 
   const DenseMap<Constant*, Constant*> &getMutatedMemory() const {
@@ -2212,9 +2213,9 @@ private:
   Constant *ComputeLoadResult(Constant *P);
 
   /// ValueStack - As we compute SSA register values, we store their contents
-  /// here. The back of the vector contains the current function and the stack
+  /// here. The back of the deque contains the current function and the stack
   /// contains the values in the calling frames.
-  SmallVector<std::unique_ptr<DenseMap<Value*, Constant*>>, 4> ValueStack;
+  std::deque<DenseMap<Value*, Constant*>> ValueStack;
 
   /// CallStack - This is used to detect recursion.  In pathological situations
   /// we could hit exponential behavior, but at least there is nothing
@@ -2526,7 +2527,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
 
         Constant *RetVal = nullptr;
         // Execute the call, if successful, use the return value.
-        ValueStack.push_back(make_unique<DenseMap<Value *, Constant *>>());
+        ValueStack.emplace_back();
         if (!EvaluateFunction(Callee, RetVal, Formals)) {
           DEBUG(dbgs() << "Failed to evaluate function.\n");
           return false;
