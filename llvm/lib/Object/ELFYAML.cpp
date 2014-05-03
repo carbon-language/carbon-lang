@@ -304,6 +304,23 @@ void ScalarEnumerationTraits<ELFYAML::ELF_SHT>::enumeration(
   ECase(SHT_PREINIT_ARRAY)
   ECase(SHT_GROUP)
   ECase(SHT_SYMTAB_SHNDX)
+  ECase(SHT_LOOS)
+  ECase(SHT_GNU_ATTRIBUTES)
+  ECase(SHT_GNU_HASH)
+  ECase(SHT_GNU_verdef)
+  ECase(SHT_GNU_verneed)
+  ECase(SHT_GNU_versym)
+  ECase(SHT_HIOS)
+  ECase(SHT_LOPROC)
+  ECase(SHT_ARM_EXIDX)
+  ECase(SHT_ARM_PREEMPTMAP)
+  ECase(SHT_ARM_ATTRIBUTES)
+  ECase(SHT_ARM_DEBUGOVERLAY)
+  ECase(SHT_ARM_OVERLAYSECTION)
+  ECase(SHT_HEX_ORDERED)
+  ECase(SHT_X86_64_UNWIND)
+  ECase(SHT_MIPS_REGINFO)
+  ECase(SHT_MIPS_OPTIONS)
 #undef ECase
 }
 
