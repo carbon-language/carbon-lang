@@ -403,8 +403,9 @@ lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
                                int nargs);
 
 /**
- * Tells LTO optimization passes that this symbol must be preserved
- * because it is referenced by native code or a command line option.
+ * Adds to a list of all global symbols that must exist in the final generated
+ * code. If a function is not listed there, it might be inlined into every usage
+ * and optimized away.
  *
  * \since prior to LTO_API_VERSION=3
  */
