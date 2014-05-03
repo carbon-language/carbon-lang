@@ -150,31 +150,27 @@
                    ninja on your system. To build using ninja:
                 </p>
                 <code>
-                  &gt; cmake .. -G Ninja -DLLVM_ENABLE_CXX11=ON
+                  &gt; cmake .. -G Ninja
                   <br>&gt; ninja lldb
                   <br>&gt; ninja check-lldb
                 </code>
                 <h3>Using CMake + Unix Makefiles</h3>
                 <p>If you do not have Ninja, you can still use CMake to generate Unix Makefiles that build LLDB:</p>
                 <code>
-                  &gt; cmake .. -DLLVM_ENABLE_CXX11=ON
+                  &gt; cmake ..
                   <br>&gt; make
                   <br>&gt; make check-lldb
                 </code>
                 <h2>To build with autoconf</h2>
                 <p>If you do not have CMake, it is still possible to build LLDB using the autoconf build system. If you are using
-                   Clang or GCC 4.7+, run:</p>
-                <code>
-                  &gt; $llvm/configure --enable-cxx11
-                  <br>&gt; make </code>
-                <p>Or, if you are using a version of GCC that does not support the <tt>-std=c++11</tt> option:</p>
+                   Clang or GCC 4.8+, run:</p>
                 <code>
                   &gt; $llvm/configure
-                  <br>&gt; make CXXFLAGS=-std=c++0x</code>
-                <p>If you are building with a GCC that isn't the default gcc/g++, like gcc-4.7/g++-4.7</p>
+                  <br>&gt; make </code>
+                <p>If you are building with a GCC that isn't the default gcc/g++, like gcc-4.9/g++-4.9</p>
                 <code>
-                  &gt; $llvm/configure --enable-cxx11 CC=gcc-4.7 CXX=g++-4.7
-                  <br>&gt; make CC=gcc-4.7 CXX=g++-4.7</code>
+                  &gt; $llvm/configure CC=gcc-4.9 CXX=g++-4.9
+                  <br>&gt; make CC=gcc-4.9 CXX=g++-4.9</code>
                 <p>If you are running in a system that doesn't have a lot of RAM (less than 4GB), you might want to disable
                     debug symbols by specifying DEBUG_SYMBOLS=0 when running make. You will know if you need to enable this
                     because you will fail to link clang (the linker will get a SIGKILL and exit with status 9).</p>
