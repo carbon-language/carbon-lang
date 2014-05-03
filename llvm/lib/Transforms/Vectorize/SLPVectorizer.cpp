@@ -346,9 +346,9 @@ public:
   typedef SmallVector<StoreInst *, 8> StoreList;
 
   BoUpSLP(Function *Func, ScalarEvolution *Se, const DataLayout *Dl,
-          TargetTransformInfo *Tti, AliasAnalysis *Aa, LoopInfo *Li,
+          TargetTransformInfo *Tti, TargetLibraryInfo *TLi, AliasAnalysis *Aa, LoopInfo *Li,
           DominatorTree *Dt) :
-    F(Func), SE(Se), DL(Dl), TTI(Tti), AA(Aa), LI(Li), DT(Dt),
+      F(Func), SE(Se), DL(Dl), TTI(Tti), TLI(TLi), AA(Aa), LI(Li), DT(Dt),
     Builder(Se->getContext()) {
       // Setup the block numbering utility for all of the blocks in the
       // function.
@@ -536,6 +536,7 @@ private:
   ScalarEvolution *SE;
   const DataLayout *DL;
   TargetTransformInfo *TTI;
+  TargetLibraryInfo *TLI;
   AliasAnalysis *AA;
   LoopInfo *LI;
   DominatorTree *DT;
@@ -949,34 +950,36 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
     }
     case Instruction::Call: {
       // Check if the calls are all to the same vectorizable intrinsic.
-      IntrinsicInst *II = dyn_cast<IntrinsicInst>(VL[0]);
-      Intrinsic::ID ID = II ? II->getIntrinsicID() : Intrinsic::not_intrinsic;
-
+      CallInst *CI = cast<CallInst>(VL[0]);
+      // Check if this is an Intrinsic call or something that can be
+      // represented by an intrinsic call
+      Intrinsic::ID ID = getIntrinsicIDForCall(CI, TLI);
       if (!isTriviallyVectorizable(ID)) {
         newTreeEntry(VL, false);
         DEBUG(dbgs() << "SLP: Non-vectorizable call.\n");
         return;
       }
 
-      Function *Int = II->getCalledFunction();
+      Function *Int = CI->getCalledFunction();
 
       for (unsigned i = 1, e = VL.size(); i != e; ++i) {
-        IntrinsicInst *II2 = dyn_cast<IntrinsicInst>(VL[i]);
-        if (!II2 || II2->getCalledFunction() != Int) {
+        CallInst *CI2 = dyn_cast<CallInst>(VL[i]);
+        if (!CI2 || CI2->getCalledFunction() != Int ||
+            getIntrinsicIDForCall(CI2, TLI) != ID) {
           newTreeEntry(VL, false);
-          DEBUG(dbgs() << "SLP: mismatched calls:" << *II << "!=" << *VL[i]
+          DEBUG(dbgs() << "SLP: mismatched calls:" << *CI << "!=" << *VL[i]
                        << "\n");
           return;
         }
       }
 
       newTreeEntry(VL, true);
-      for (unsigned i = 0, e = II->getNumArgOperands(); i != e; ++i) {
+      for (unsigned i = 0, e = CI->getNumArgOperands(); i != e; ++i) {
         ValueList Operands;
         // Prepare the operand vector.
         for (unsigned j = 0; j < VL.size(); ++j) {
-          IntrinsicInst *II2 = dyn_cast<IntrinsicInst>(VL[j]);
-          Operands.push_back(II2->getArgOperand(i));
+          CallInst *CI2 = dyn_cast<CallInst>(VL[j]);
+          Operands.push_back(CI2->getArgOperand(i));
         }
         buildTree_rec(Operands, Depth + 1);
       }
@@ -1132,12 +1135,11 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
     }
     case Instruction::Call: {
       CallInst *CI = cast<CallInst>(VL0);
-      IntrinsicInst *II = cast<IntrinsicInst>(CI);
-      Intrinsic::ID ID = II->getIntrinsicID();
+      Intrinsic::ID ID = getIntrinsicIDForCall(CI, TLI);
 
       // Calculate the cost of the scalar and vector calls.
       SmallVector<Type*, 4> ScalarTys, VecTys;
-      for (unsigned op = 0, opc = II->getNumArgOperands(); op!= opc; ++op) {
+      for (unsigned op = 0, opc = CI->getNumArgOperands(); op!= opc; ++op) {
         ScalarTys.push_back(CI->getArgOperand(op)->getType());
         VecTys.push_back(VectorType::get(CI->getArgOperand(op)->getType(),
                                          VecTy->getNumElements()));
@@ -1150,7 +1152,7 @@ int BoUpSLP::getEntryCost(TreeEntry *E) {
 
       DEBUG(dbgs() << "SLP: Call cost "<< VecCallCost - ScalarCallCost
             << " (" << VecCallCost  << "-" <<  ScalarCallCost << ")"
-            << " for " << *II << "\n");
+            << " for " << *CI << "\n");
 
       return VecCallCost - ScalarCallCost;
     }
@@ -1643,7 +1645,6 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     }
     case Instruction::Call: {
       CallInst *CI = cast<CallInst>(VL0);
-
       setInsertPointAfterBundle(E->Scalars);
       std::vector<Value *> OpVecs;
       for (int j = 0, e = CI->getNumArgOperands(); j < e; ++j) {
@@ -1659,8 +1660,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       }
 
       Module *M = F->getParent();
-      IntrinsicInst *II = cast<IntrinsicInst>(CI);
-      Intrinsic::ID ID = II->getIntrinsicID();
+      Intrinsic::ID ID = getIntrinsicIDForCall(CI, TLI);
       Type *Tys[] = { VectorType::get(CI->getType(), E->Scalars.size()) };
       Function *CF = Intrinsic::getDeclaration(M, ID, Tys);
       Value *V = Builder.CreateCall(CF, OpVecs);
@@ -1867,6 +1867,7 @@ struct SLPVectorizer : public FunctionPass {
   ScalarEvolution *SE;
   const DataLayout *DL;
   TargetTransformInfo *TTI;
+  TargetLibraryInfo *TLI;
   AliasAnalysis *AA;
   LoopInfo *LI;
   DominatorTree *DT;
@@ -1879,6 +1880,7 @@ struct SLPVectorizer : public FunctionPass {
     DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
     DL = DLP ? &DLP->getDataLayout() : nullptr;
     TTI = &getAnalysis<TargetTransformInfo>();
+    TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
     AA = &getAnalysis<AliasAnalysis>();
     LI = &getAnalysis<LoopInfo>();
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
@@ -1904,7 +1906,7 @@ struct SLPVectorizer : public FunctionPass {
 
     // Use the bottom up slp vectorizer to construct chains that start with
     // he store instructions.
-    BoUpSLP R(&F, SE, DL, TTI, AA, LI, DT);
+    BoUpSLP R(&F, SE, DL, TTI, TLI, AA, LI, DT);
 
     // Scan the blocks in the function in post order.
     for (po_iterator<BasicBlock*> it = po_begin(&F.getEntryBlock()),
