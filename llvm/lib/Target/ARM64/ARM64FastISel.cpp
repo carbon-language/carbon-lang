@@ -577,7 +577,8 @@ bool ARM64FastISel::EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
 
   // Loading an i1 requires special handling.
   if (VTIsi1) {
-    unsigned ANDReg = createResultReg(&ARM64::GPR32RegClass);
+    MRI.constrainRegClass(ResultReg, &ARM64::GPR32RegClass);
+    unsigned ANDReg = createResultReg(&ARM64::GPR32spRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::ANDWri),
             ANDReg)
         .addReg(ResultReg)
@@ -665,7 +666,8 @@ bool ARM64FastISel::EmitStore(MVT VT, unsigned SrcReg, Address Addr,
 
   // Storing an i1 requires special handling.
   if (VTIsi1) {
-    unsigned ANDReg = createResultReg(&ARM64::GPR32RegClass);
+    MRI.constrainRegClass(SrcReg, &ARM64::GPR32RegClass);
+    unsigned ANDReg = createResultReg(&ARM64::GPR32spRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::ANDWri),
             ANDReg)
         .addReg(SrcReg)
@@ -788,7 +790,8 @@ bool ARM64FastISel::SelectBranch(const Instruction *I) {
         CondReg = FastEmitInst_extractsubreg(MVT::i32, CondReg, /*Kill=*/true,
                                              ARM64::sub_32);
 
-      unsigned ANDReg = createResultReg(&ARM64::GPR32RegClass);
+      MRI.constrainRegClass(CondReg, &ARM64::GPR32RegClass);
+      unsigned ANDReg = createResultReg(&ARM64::GPR32spRegClass);
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::ANDWri),
               ANDReg)
           .addReg(CondReg)
@@ -1030,7 +1033,9 @@ bool ARM64FastISel::SelectSelect(const Instruction *I) {
   if (FalseReg == 0)
     return false;
 
-  unsigned ANDReg = createResultReg(&ARM64::GPR32RegClass);
+
+  MRI.constrainRegClass(CondReg, &ARM64::GPR32RegClass);
+  unsigned ANDReg = createResultReg(&ARM64::GPR32spRegClass);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::ANDWri),
           ANDReg)
       .addReg(CondReg)
@@ -1669,8 +1674,9 @@ bool ARM64FastISel::SelectTrunc(const Instruction *I) {
     // Issue an extract_subreg to get the lower 32-bits.
     unsigned Reg32 = FastEmitInst_extractsubreg(MVT::i32, SrcReg, /*Kill=*/true,
                                                 ARM64::sub_32);
+    MRI.constrainRegClass(Reg32, &ARM64::GPR32RegClass);
     // Create the AND instruction which performs the actual truncation.
-    unsigned ANDReg = createResultReg(&ARM64::GPR32RegClass);
+    unsigned ANDReg = createResultReg(&ARM64::GPR32spRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::ANDWri),
             ANDReg)
         .addReg(Reg32)
@@ -1691,7 +1697,8 @@ unsigned ARM64FastISel::Emiti1Ext(unsigned SrcReg, MVT DestVT, bool isZExt) {
     DestVT = MVT::i32;
 
   if (isZExt) {
-    unsigned ResultReg = createResultReg(&ARM64::GPR32RegClass);
+    MRI.constrainRegClass(SrcReg, &ARM64::GPR32RegClass);
+    unsigned ResultReg = createResultReg(&ARM64::GPR32spRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(ARM64::ANDWri),
             ResultReg)
         .addReg(SrcReg)
