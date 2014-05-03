@@ -16,7 +16,6 @@ add_llvm_library(LLVMMC
   MCELF.cpp
   MCELFObjectTargetWriter.cpp
   MCELFStreamer.cpp
-  MCFixup.cpp
   MCFunction.cpp
   MCExpr.cpp
   MCExternalSymbolizer.cpp

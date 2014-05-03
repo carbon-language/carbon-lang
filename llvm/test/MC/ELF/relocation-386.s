@@ -62,6 +62,7 @@
 // CHECK-NEXT:     0x9E         R_386_PC16       und_symbol 0x0
 // Relocation 28 (und_symbol-bar2) is of type R_386_PC8
 // CHECK-NEXT:     0xA0         R_386_PC8        und_symbol 0x0
+// CHECK-NEXT:     0xA3         R_386_GOTOFF     und_symbol 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
 
@@ -126,6 +127,8 @@ bar2:
         leal und_symbol-bar2(%edx),%ecx
         .word und_symbol-bar2
         .byte und_symbol-bar2
+
+        leal 1 + und_symbol@GOTOFF, %edi
 
         .section        zedsec,"awT",@progbits
 zed:

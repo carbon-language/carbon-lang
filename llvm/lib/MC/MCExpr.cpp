@@ -658,12 +658,11 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
 
   case SymbolRef: {
     const MCSymbolRefExpr *SRE = cast<MCSymbolRefExpr>(this);
-    bool IsWeakRef = SRE->getKind() == MCSymbolRefExpr::VK_WEAKREF;
     const MCSymbol &Sym = SRE->getSymbol();
     const MCAsmInfo &MCAsmInfo = SRE->getMCAsmInfo();
 
     // Evaluate recursively if this is a variable.
-    if (Sym.isVariable() && !IsWeakRef) {
+    if (Sym.isVariable() && SRE->getKind() == MCSymbolRefExpr::VK_None) {
       if (Sym.getVariableValue()->EvaluateAsRelocatableImpl(
               Res, Asm, Layout, Addrs, true, ForceVarExpansion)) {
         const MCSymbolRefExpr *A = Res.getSymA();

@@ -41,11 +41,12 @@ PPCELFObjectWriter::PPCELFObjectWriter(bool Is64Bit, uint8_t OSABI)
 PPCELFObjectWriter::~PPCELFObjectWriter() {
 }
 
-static MCSymbolRefExpr::VariantKind getAccessVariant(const MCFixup &Fixup) {
+static MCSymbolRefExpr::VariantKind getAccessVariant(const MCValue &Target,
+                                                     const MCFixup &Fixup) {
   const MCExpr *Expr = Fixup.getValue();
 
   if (Expr->getKind() != MCExpr::Target)
-    return Fixup.getAccessVariant();
+    return Target.getAccessVariant();
 
   switch (cast<PPCMCExpr>(Expr)->getKind()) {
   case PPCMCExpr::VK_PPC_None:
@@ -72,7 +73,7 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
                                                const MCFixup &Fixup,
                                                bool IsPCRel) const
 {
-  MCSymbolRefExpr::VariantKind Modifier = getAccessVariant(Fixup);
+  MCSymbolRefExpr::VariantKind Modifier = getAccessVariant(Target, Fixup);
 
   // determine the type of the relocation
   unsigned Type;

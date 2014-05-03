@@ -88,8 +88,6 @@ public:
 
   MCFixupKind getKind() const { return MCFixupKind(Kind); }
 
-  MCSymbolRefExpr::VariantKind getAccessVariant() const;
-
   uint32_t getOffset() const { return Offset; }
   void setOffset(uint32_t Value) { Offset = Value; }
 

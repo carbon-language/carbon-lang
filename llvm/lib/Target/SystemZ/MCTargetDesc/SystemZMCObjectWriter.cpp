@@ -82,7 +82,7 @@ static unsigned getPLTReloc(unsigned Kind) {
 unsigned SystemZObjectWriter::GetRelocType(const MCValue &Target,
                                            const MCFixup &Fixup,
                                            bool IsPCRel) const {
-  MCSymbolRefExpr::VariantKind Modifier = Fixup.getAccessVariant();
+  MCSymbolRefExpr::VariantKind Modifier = Target.getAccessVariant();
   unsigned Kind = Fixup.getKind();
   switch (Modifier) {
   case MCSymbolRefExpr::VK_None:
