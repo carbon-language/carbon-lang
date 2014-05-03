@@ -175,7 +175,10 @@ X test6() {
   // CHECK-NEXT: ret void
 }
 
+// CHECK-LABEL: define void @_Z5test7b
 X test7(bool b) {
+  // CHECK: tail call {{.*}} @_ZN1XC1Ev
+  // CHECK-NEXT: ret
   if (b) {
     X x;
     return x;
@@ -183,7 +186,10 @@ X test7(bool b) {
   return X();
 }
 
+// CHECK-LABEL: define void @_Z5test8b
 X test8(bool b) {
+  // CHECK: tail call {{.*}} @_ZN1XC1Ev
+  // CHECK-NEXT: ret
   if (b) {
     X x;
     return x;
