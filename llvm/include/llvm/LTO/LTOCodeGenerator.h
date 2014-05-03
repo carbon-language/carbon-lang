@@ -56,8 +56,7 @@ namespace llvm {
 }
 
 //===----------------------------------------------------------------------===//
-/// LTOCodeGenerator - C++ class which implements the opaque lto_code_gen_t
-/// type.
+/// C++ class which implements the opaque lto_code_gen_t type.
 ///
 struct LTOCodeGenerator {
   static const char *getVersionString();
