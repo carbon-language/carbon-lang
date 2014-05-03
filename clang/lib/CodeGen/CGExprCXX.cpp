@@ -814,20 +814,22 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
     explicitPtr = Builder.CreateBitCast(explicitPtr, beginPtr->getType());
   }
 
+  llvm::ConstantInt *constNum = dyn_cast<llvm::ConstantInt>(numElements);
+
+  // If all elements have already been initialized, skip the whole loop.
+  if (constNum && constNum->getZExtValue() <= initializerElements) {
+    // If there was a cleanup, deactivate it.
+    if (cleanupDominator)
+      DeactivateCleanupBlock(cleanup, cleanupDominator);
+    return;
+  }
+
   // Create the continuation block.
   llvm::BasicBlock *contBB = createBasicBlock("new.loop.end");
 
   // If the number of elements isn't constant, we have to now check if there is
   // anything left to initialize.
-  if (llvm::ConstantInt *constNum = dyn_cast<llvm::ConstantInt>(numElements)) {
-    // If all elements have already been initialized, skip the whole loop.
-    if (constNum->getZExtValue() <= initializerElements) {
-      // If there was a cleanup, deactivate it.
-      if (cleanupDominator)
-        DeactivateCleanupBlock(cleanup, cleanupDominator);
-      return;
-    }
-  } else {
+  if (!constNum) {
     llvm::BasicBlock *nonEmptyBB = createBasicBlock("new.loop.nonempty");
     llvm::Value *isEmpty = Builder.CreateICmpEQ(explicitPtr, endPtr,
                                                 "array.isempty");
