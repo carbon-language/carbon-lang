@@ -1560,7 +1560,7 @@ If you're finding that you commonly iterate over a ``Function``'s
 ``BasicBlock``\ s and then that ``BasicBlock``'s ``Instruction``\ s,
 ``InstIterator`` should be used instead.  You'll need to include
 ``llvm/IR/InstIterator.h`` (`doxygen
-<http://llvm.org/doxygen/InstIterator_8h-source.html>`__) and then instantiate
+<http://llvm.org/doxygen/InstIterator_8h.html>`__) and then instantiate
 ``InstIterator``\ s explicitly in your code.  Here's a small example that shows
 how to dump all instructions in a function to the standard error stream:
 
