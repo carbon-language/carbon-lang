@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/Scope.h"
+#include "clang/AST/Decl.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -77,6 +78,7 @@ void Scope::Init(Scope *parent, unsigned flags) {
   UsingDirectives.clear();
   Entity = 0;
   ErrorTrap.reset();
+  NRVO.setPointerAndInt(nullptr, 0);
 }
 
 bool Scope::containedInPrototypeScope() const {
@@ -101,6 +103,21 @@ void Scope::AddFlags(unsigned FlagsToSet) {
     ContinueParent = this;
   }
   Flags |= FlagsToSet;
+}
+
+void Scope::mergeNRVOIntoParent() {
+  if (VarDecl *Candidate = NRVO.getPointer()) {
+    if (isDeclScope(Candidate))
+      Candidate->setNRVOVariable(true);
+  }
+
+  if (getEntity())
+    return;
+
+  if (NRVO.getInt())
+    getParent()->setNoNRVO();
+  else if (NRVO.getPointer())
+    getParent()->addNRVOCandidate(NRVO.getPointer());
 }
 
 void Scope::dump() const { dumpImpl(llvm::errs()); }
@@ -176,4 +193,9 @@ void Scope::dumpImpl(raw_ostream &OS) const {
   OS << "MSLocalManglingNumber: " << getMSLocalManglingNumber() << '\n';
   if (const DeclContext *DC = getEntity())
     OS << "Entity : (clang::DeclContext*)" << DC << '\n';
+
+  if (NRVO.getInt())
+    OS << "NRVO not allowed";
+  else if (NRVO.getPointer())
+    OS << "NRVO candidate : (clang::VarDecl*)" << NRVO.getPointer() << '\n';
 }

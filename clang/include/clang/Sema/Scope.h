@@ -15,6 +15,7 @@
 #define LLVM_CLANG_SEMA_SCOPE_H
 
 #include "clang/Basic/Diagnostic.h"
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 
@@ -28,6 +29,7 @@ namespace clang {
 
 class Decl;
 class UsingDirectiveDecl;
+class VarDecl;
 
 /// Scope - A scope is a transient data structure that is used while parsing the
 /// program.  It assists with resolving identifiers to the appropriate
@@ -167,7 +169,11 @@ private:
 
   /// \brief Used to determine if errors occurred in this scope.
   DiagnosticErrorTrap ErrorTrap;
-  
+
+  /// A lattice consisting of undefined, a single NRVO candidate variable in
+  /// this scope, or over-defined. The bit is true when over-defined.
+  llvm::PointerIntPair<VarDecl *, 1, bool> NRVO;
+
 public:
   Scope(Scope *Parent, unsigned ScopeFlags, DiagnosticsEngine &Diag)
     : ErrorTrap(Diag) {
@@ -372,6 +378,24 @@ public:
     return using_directives_range(UsingDirectives.begin(),
                                   UsingDirectives.end());
   }
+
+  void addNRVOCandidate(VarDecl *VD) {
+    if (NRVO.getInt())
+      return;
+    if (NRVO.getPointer() == nullptr) {
+      NRVO.setPointer(VD);
+      return;
+    }
+    if (NRVO.getPointer() != VD)
+      setNoNRVO();
+  }
+
+  void setNoNRVO() {
+    NRVO.setInt(1);
+    NRVO.setPointer(nullptr);
+  }
+
+  void mergeNRVOIntoParent();
 
   /// Init - This is used by the parser to implement scope caching.
   ///

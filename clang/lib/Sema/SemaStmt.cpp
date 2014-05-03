@@ -2443,52 +2443,62 @@ Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
 ///
 /// \returns The NRVO candidate variable, if the return statement may use the
 /// NRVO, or NULL if there is no such candidate.
-const VarDecl *Sema::getCopyElisionCandidate(QualType ReturnType,
-                                             Expr *E,
-                                             bool AllowFunctionParameter) {
-  QualType ExprType = E->getType();
+VarDecl *Sema::getCopyElisionCandidate(QualType ReturnType,
+                                       Expr *E,
+                                       bool AllowFunctionParameter) {
+  if (!getLangOpts().CPlusPlus)
+    return nullptr;
+
+  // - in a return statement in a function [where] ...
+  // ... the expression is the name of a non-volatile automatic object ...
+  DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E->IgnoreParens());
+  if (!DR || DR->refersToEnclosingLocal())
+    return nullptr;
+  VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
+  if (!VD)
+    return nullptr;
+
+  if (isCopyElisionCandidate(ReturnType, VD, AllowFunctionParameter))
+    return VD;
+  return nullptr;
+}
+
+bool Sema::isCopyElisionCandidate(QualType ReturnType, const VarDecl *VD,
+                                  bool AllowFunctionParameter) {
+  QualType VDType = VD->getType();
   // - in a return statement in a function with ...
   // ... a class return type ...
-  if (!ReturnType.isNull()) {
+  if (!ReturnType.isNull() && !ReturnType->isDependentType()) {
     if (!ReturnType->isRecordType())
-      return 0;
+      return false;
     // ... the same cv-unqualified type as the function return type ...
-    if (!Context.hasSameUnqualifiedType(ReturnType, ExprType))
-      return 0;
+    if (!VDType->isDependentType() &&
+        !Context.hasSameUnqualifiedType(ReturnType, VDType))
+      return false;
   }
-
-  // ... the expression is the name of a non-volatile automatic object
-  // (other than a function or catch-clause parameter)) ...
-  const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(E->IgnoreParens());
-  if (!DR || DR->refersToEnclosingLocal())
-    return 0;
-  const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl());
-  if (!VD)
-    return 0;
 
   // ...object (other than a function or catch-clause parameter)...
   if (VD->getKind() != Decl::Var &&
       !(AllowFunctionParameter && VD->getKind() == Decl::ParmVar))
-    return 0;
-  if (VD->isExceptionVariable()) return 0;
+    return false;
+  if (VD->isExceptionVariable()) return false;
 
   // ...automatic...
-  if (!VD->hasLocalStorage()) return 0;
+  if (!VD->hasLocalStorage()) return false;
 
   // ...non-volatile...
-  if (VD->getType().isVolatileQualified()) return 0;
-  if (VD->getType()->isReferenceType()) return 0;
+  if (VD->getType().isVolatileQualified()) return false;
 
   // __block variables can't be allocated in a way that permits NRVO.
-  if (VD->hasAttr<BlocksAttr>()) return 0;
+  if (VD->hasAttr<BlocksAttr>()) return false;
 
   // Variables with higher required alignment than their type's ABI
   // alignment cannot use NRVO.
-  if (VD->hasAttr<AlignedAttr>() &&
+  if (!VD->getType()->isDependentType() && VD->hasAttr<AlignedAttr>() &&
       Context.getDeclAlign(VD) > Context.getTypeAlignInChars(VD->getType()))
-    return 0;
+    return false;
 
-  return VD;
+  return true;
 }
 
 /// \brief Perform the initialization of a potentially-movable value, which
@@ -2694,6 +2704,8 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     }
     RetValExp = Res.take();
     CheckReturnValExpr(RetValExp, FnRetType, ReturnLoc);
+  } else {
+    NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
   }
 
   if (RetValExp) {
@@ -2708,9 +2720,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // If we need to check for the named return value optimization,
   // or if we need to infer the return type,
   // save the return statement in our scope for later processing.
-  if (CurCap->HasImplicitReturnType ||
-      (getLangOpts().CPlusPlus && FnRetType->isRecordType() &&
-       !CurContext->isDependentContext()))
+  if (CurCap->HasImplicitReturnType || NRVOCandidate)
     FunctionScopes.back()->Returns.push_back(Result);
 
   return Owned(Result);
@@ -2807,7 +2817,24 @@ bool Sema::DeduceFunctionTypeFromReturnExpr(FunctionDecl *FD,
 }
 
 StmtResult
-Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
+Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp,
+                      Scope *CurScope) {
+  StmtResult R = BuildReturnStmt(ReturnLoc, RetValExp);
+  if (R.isInvalid()) {
+    return R;
+  }
+
+  if (VarDecl *VD =
+      const_cast<VarDecl*>(cast<ReturnStmt>(R.get())->getNRVOCandidate())) {
+    CurScope->addNRVOCandidate(VD);
+  } else {
+    CurScope->setNoNRVO();
+  }
+
+  return R;
+}
+
+StmtResult Sema::BuildReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   // Check for unexpanded parameter packs.
   if (RetValExp && DiagnoseUnexpandedParameterPack(RetValExp))
     return StmtError();
@@ -2948,18 +2975,19 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   } else {
     assert(RetValExp || HasDependentReturnType);
     const VarDecl *NRVOCandidate = 0;
+
+    QualType RetType = RelatedRetType.isNull() ? FnRetType : RelatedRetType;
+
+    // C99 6.8.6.4p3(136): The return statement is not an assignment. The
+    // overlap restriction of subclause 6.5.16.1 does not apply to the case of
+    // function return.
+
+    // In C++ the return statement is handled via a copy initialization,
+    // the C version of which boils down to CheckSingleAssignmentConstraints.
+    if (RetValExp)
+      NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
     if (!HasDependentReturnType && !RetValExp->isTypeDependent()) {
       // we have a non-void function with an expression, continue checking
-
-      QualType RetType = (RelatedRetType.isNull() ? FnRetType : RelatedRetType);
-
-      // C99 6.8.6.4p3(136): The return statement is not an assignment. The
-      // overlap restriction of subclause 6.5.16.1 does not apply to the case of
-      // function return.
-
-      // In C++ the return statement is handled via a copy initialization,
-      // the C version of which boils down to CheckSingleAssignmentConstraints.
-      NRVOCandidate = getCopyElisionCandidate(FnRetType, RetValExp, false);
       InitializedEntity Entity = InitializedEntity::InitializeResult(ReturnLoc,
                                                                      RetType,
                                                             NRVOCandidate != 0);
@@ -3001,8 +3029,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
 
   // If we need to check for the named return value optimization, save the
   // return statement in our scope for later processing.
-  if (getLangOpts().CPlusPlus && FnRetType->isRecordType() &&
-      !CurContext->isDependentContext())
+  if (Result->getNRVOCandidate())
     FunctionScopes.back()->Returns.push_back(Result);
 
   return Owned(Result);

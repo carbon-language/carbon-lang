@@ -9,6 +9,14 @@ public:
   ~X();
 };
 
+template<typename T> struct Y {
+  Y();
+  static Y f() {
+    Y y;
+    return y;
+  }
+};
+
 // CHECK-LABEL: define void @_Z5test0v
 // CHECK-EH-LABEL: define void @_Z5test0v
 X test0() {
@@ -108,12 +116,18 @@ X test2(bool B) {
 
 }
 
+// CHECK-LABEL: define void @_Z5test3b
 X test3(bool B) {
-  // FIXME: We don't manage to apply NRVO here, although we could.
-  {
+  // FIXME: llvm should apply tail here.
+  // CHECK: call {{.*}} @_ZN1XC1Ev
+  // CHECK-NOT: call {{.*}} @_ZN1XC1ERKS_
+  // CHECK: call {{.*}} @_ZN1XC1Ev
+  // CHECK: call {{.*}} @_ZN1XC1ERKS_
+  if (B) {
     X y;
     return y;
   }
+  // FIXME: we should NRVO this variable too.
   X x;
   return x;
 }
@@ -160,5 +174,30 @@ X test6() {
   // CHECK-NEXT: call {{.*}} @_ZN1XD1Ev([[X]]* [[A]])
   // CHECK-NEXT: ret void
 }
+
+X test7(bool b) {
+  if (b) {
+    X x;
+    return x;
+  }
+  return X();
+}
+
+X test8(bool b) {
+  if (b) {
+    X x;
+    return x;
+  } else {
+    X y;
+    return y;
+  }
+}
+
+Y<int> test9() {
+  Y<int>::f();
+}
+
+// CHECK-LABEL: define linkonce_odr void @_ZN1YIiE1fEv
+// CHECK: tail call {{.*}} @_ZN1YIiEC1Ev
 
 // CHECK-EH: attributes [[NR_NUW]] = { noreturn nounwind }
