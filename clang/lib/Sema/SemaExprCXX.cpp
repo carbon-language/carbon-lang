@@ -144,10 +144,8 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
       AlreadySearched = true;
       LookupCtx = DC;
       isDependent = false;
-    } else if (DC && isa<CXXRecordDecl>(DC)) {
+    } else if (DC && isa<CXXRecordDecl>(DC))
       LookAtPrefix = false;
-      LookInScope = true;
-    }
 
     // The second case from the C++03 rules quoted further above.
     NestedNameSpecifier *Prefix = 0;
@@ -165,6 +163,8 @@ ParsedType Sema::getDestructorName(SourceLocation TildeLoc,
       LookupCtx = computeDeclContext(SS, EnteringContext);
       isDependent = LookupCtx && LookupCtx->isDependentContext();
     }
+
+    LookInScope = false;
   } else if (ObjectTypePtr) {
     // C++ [basic.lookup.classref]p3:
     //   If the unqualified-id is ~type-name, the type-name is looked up
