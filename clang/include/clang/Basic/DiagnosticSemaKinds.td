@@ -2554,8 +2554,6 @@ def warn_objc_invalid_bridge : Warning<
   "%0 bridges to %1, not %2">, InGroup<ObjCBridge>;
 def warn_objc_invalid_bridge_to_cf : Warning<
   "%0 cannot bridge to %1">, InGroup<ObjCBridge>;
-def err_objc_invalid_bridge : Error<
-  "under ARC %0 bridges to %1, but it still requires an explicit bridge cast">;
 
 // objc_bridge_related attribute diagnostics.
 def err_objc_bridged_related_invalid_class : Error<
@@ -5999,8 +5997,6 @@ def err_thread_dynamic_init : Error<
   "initializer for thread-local variable must be a constant expression">;
 def err_thread_nontrivial_dtor : Error<
   "type of thread-local variable has non-trivial destruction">;
-def err_thread_nontrivial_ctor : Error<
-  "type of thread-local variable has non-trivial construction">;
 def note_use_thread_local : Note<
   "use 'thread_local' to allow this">;
 
