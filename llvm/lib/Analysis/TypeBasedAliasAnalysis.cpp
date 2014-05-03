@@ -339,7 +339,8 @@ static bool isStructPathTBAA(const MDNode *MD) {
 bool
 TypeBasedAliasAnalysis::Aliases(const MDNode *A,
                                 const MDNode *B) const {
-  if (isStructPathTBAA(A))
+  // Make sure that both MDNodes are struct-path aware.
+  if (isStructPathTBAA(A) && isStructPathTBAA(B))
     return PathAliases(A, B);
 
   // Keep track of the root node for A and B.
@@ -385,6 +386,10 @@ TypeBasedAliasAnalysis::Aliases(const MDNode *A,
 bool
 TypeBasedAliasAnalysis::PathAliases(const MDNode *A,
                                     const MDNode *B) const {
+  // Verify that both input nodes are struct-path aware.
+  assert(isStructPathTBAA(A) && "MDNode A is not struct-path aware.");
+  assert(isStructPathTBAA(B) && "MDNode B is not struct-path aware.");
+
   // Keep track of the root node for A and B.
   TBAAStructTypeNode RootA, RootB;
   TBAAStructTagNode TagA(A), TagB(B);
@@ -560,7 +565,7 @@ MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
     return A;
 
   // For struct-path aware TBAA, we use the access type of the tag.
-  bool StructPath = isStructPathTBAA(A);
+  bool StructPath = isStructPathTBAA(A) && isStructPathTBAA(B);
   if (StructPath) {
     A = cast_or_null<MDNode>(A->getOperand(1));
     if (!A) return nullptr;
