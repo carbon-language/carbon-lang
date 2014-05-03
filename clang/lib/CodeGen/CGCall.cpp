@@ -2289,20 +2289,25 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
   if (HasAggregateEvalKind &&
       CGM.getTarget().getCXXABI().areArgsDestroyedLeftToRightInCallee()) {
     // If we're using inalloca, use the argument memory.  Otherwise, use a
-    // temporary.  Either way, the aggregate is destroyed externally in the
-    // callee.
+    // temporary.
     AggValueSlot Slot;
     if (args.isUsingInAlloca())
       Slot = createPlaceholderSlot(*this, type);
     else
       Slot = CreateAggTemp(type, "agg.tmp");
-    Slot.setExternallyDestructed();
+
+    const CXXRecordDecl *RD = type->getAsCXXRecordDecl();
+    bool DestroyedInCallee =
+        RD && RD->hasNonTrivialDestructor() &&
+        CGM.getCXXABI().getRecordArgABI(RD) != CGCXXABI::RAA_Default;
+    if (DestroyedInCallee)
+      Slot.setExternallyDestructed();
+
     EmitAggExpr(E, Slot);
     RValue RV = Slot.asRValue();
     args.add(RV, type);
 
-    const CXXRecordDecl *RD = type->getAsCXXRecordDecl();
-    if (RD && RD->hasNonTrivialDestructor()) {
+    if (DestroyedInCallee) {
       // Create a no-op GEP between the placeholder and the cleanup so we can
       // RAUW it successfully.  It also serves as a marker of the first
       // instruction where the cleanup is active.

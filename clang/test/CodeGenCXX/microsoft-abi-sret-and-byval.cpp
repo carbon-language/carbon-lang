@@ -47,6 +47,12 @@ struct Big {
   int a, b, c, d, e, f;
 };
 
+struct BigWithDtor {
+  BigWithDtor();
+  ~BigWithDtor();
+  int a, b, c, d, e, f;
+};
+
 // WIN32: declare void @"{{.*take_bools_and_chars.*}}"
 // WIN32:       (<{ i8, [3 x i8], i8, [3 x i8], %struct.SmallWithDtor,
 // WIN32:           i8, [3 x i8], i8, [3 x i8], i32, i8, [3 x i8] }>* inalloca)
@@ -114,15 +120,43 @@ void small_arg_with_dtor(SmallWithDtor s) {}
 // WIN32: define void @"\01?small_arg_with_dtor@@YAXUSmallWithDtor@@@Z"(<{ %struct.SmallWithDtor }>* inalloca) {{.*}} {
 // WIN32:   call x86_thiscallcc void @"\01??1SmallWithDtor@@QAE@XZ"
 // WIN32: }
-// WIN64: define void @"\01?small_arg_with_dtor@@YAXUSmallWithDtor@@@Z"(%struct.SmallWithDtor* %s) {{.*}} {
+// WIN64: define void @"\01?small_arg_with_dtor@@YAXUSmallWithDtor@@@Z"(i32 %s.coerce) {{.*}} {
 // WIN64:   call void @"\01??1SmallWithDtor@@QEAA@XZ"
 // WIN64: }
+
+void call_small_arg_with_dtor() {
+  small_arg_with_dtor(SmallWithDtor());
+}
+// The temporary is copied, so it's destroyed in the caller as well as the
+// callee.
+// WIN64-LABEL: define void @"\01?call_small_arg_with_dtor@@YAXXZ"()
+// WIN64:   call %struct.SmallWithDtor* @"\01??0SmallWithDtor@@QEAA@XZ"
+// WIN64:   call void @"\01?small_arg_with_dtor@@YAXUSmallWithDtor@@@Z"(i32 %{{.*}})
+// WIN64:   call void @"\01??1SmallWithDtor@@QEAA@XZ"
+// WIN64:   ret void
 
 // Test that references aren't destroyed in the callee.
 void ref_small_arg_with_dtor(const SmallWithDtor &s) { }
 // WIN32: define void @"\01?ref_small_arg_with_dtor@@YAXABUSmallWithDtor@@@Z"(%struct.SmallWithDtor* %s) {{.*}} {
 // WIN32-NOT:   call x86_thiscallcc void @"\01??1SmallWithDtor@@QAE@XZ"
 // WIN32: }
+// WIN64-LABEL: define void @"\01?ref_small_arg_with_dtor@@YAXAEBUSmallWithDtor@@@Z"(%struct.SmallWithDtor* %s)
+
+void big_arg_with_dtor(BigWithDtor s) {}
+// WIN64-LABEL: define void @"\01?big_arg_with_dtor@@YAXUBigWithDtor@@@Z"(%struct.BigWithDtor* %s)
+// WIN64:   call void @"\01??1BigWithDtor@@QEAA@XZ"
+// WIN64: }
+
+void call_big_arg_with_dtor() {
+  big_arg_with_dtor(BigWithDtor());
+}
+// We can elide the copy of the temporary in the caller, because this object is
+// larger than 8 bytes and is passed indirectly.
+// WIN64-LABEL: define void @"\01?call_big_arg_with_dtor@@YAXXZ"()
+// WIN64:   call %struct.BigWithDtor* @"\01??0BigWithDtor@@QEAA@XZ"
+// WIN64:   call void @"\01?big_arg_with_dtor@@YAXUBigWithDtor@@@Z"(%struct.BigWithDtor* %{{.*}})
+// WIN64-NOT: call void @"\01??1BigWithDtor@@QEAA@XZ"
+// WIN64:   ret void
 
 // Test that temporaries passed by reference are destroyed in the caller.
 void temporary_ref_with_dtor() {

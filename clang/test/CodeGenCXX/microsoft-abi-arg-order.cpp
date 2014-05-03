@@ -3,6 +3,7 @@
 
 struct A {
   A(int a);
+  A(const A &o);
   ~A();
   int a;
 };
