@@ -31,25 +31,24 @@ namespace llvm {
   class MemoryBuffer;
   class TargetOptions;
   class Value;
-}
 
 //===----------------------------------------------------------------------===//
 /// C++ class which implements the opaque lto_module_t type.
 ///
 struct LTOModule {
 private:
-  typedef llvm::StringMap<uint8_t> StringSet;
+  typedef StringMap<uint8_t> StringSet;
 
   struct NameAndAttributes {
     const char        *name;
     uint32_t           attributes;
     bool               isFunction;
-    const llvm::GlobalValue *symbol;
+    const GlobalValue *symbol;
   };
 
-  std::unique_ptr<llvm::Module>           _module;
-  std::unique_ptr<llvm::TargetMachine>    _target;
-  llvm::MCObjectFileInfo ObjFileInfo;
+  std::unique_ptr<Module> _module;
+  std::unique_ptr<TargetMachine> _target;
+  MCObjectFileInfo ObjFileInfo;
   StringSet                               _linkeropt_strings;
   std::vector<const char *>               _deplibs;
   std::vector<const char *>               _linkeropts;
@@ -57,14 +56,15 @@ private:
 
   // _defines and _undefines only needed to disambiguate tentative definitions
   StringSet                               _defines;
-  llvm::StringMap<NameAndAttributes>      _undefines;
+  StringMap<NameAndAttributes> _undefines;
   std::vector<const char*>                _asm_undefines;
-  llvm::MCContext                         _context;
+  MCContext _context;
 
   // Use mangler to add GlobalPrefix to names to match linker names.
-  llvm::Mangler                           _mangler;
+  Mangler _mangler;
 
-  LTOModule(llvm::Module *m, llvm::TargetMachine *t);
+  LTOModule(Module *m, TargetMachine *t);
+
 public:
   /// Returns 'true' if the file or memory contents is LLVM bitcode.
   static bool isBitcodeFile(const void *mem, size_t length);
@@ -86,20 +86,16 @@ public:
   /// InitializeAllTargetMCs();
   /// InitializeAllAsmPrinters();
   /// InitializeAllAsmParsers();
-  static LTOModule *makeLTOModule(const char* path,
-                                  llvm::TargetOptions options,
+  static LTOModule *makeLTOModule(const char *path, TargetOptions options,
                                   std::string &errMsg);
-  static LTOModule *makeLTOModule(int fd, const char *path,
-                                  size_t size, llvm::TargetOptions options,
+  static LTOModule *makeLTOModule(int fd, const char *path, size_t size,
+                                  TargetOptions options, std::string &errMsg);
+  static LTOModule *makeLTOModule(int fd, const char *path, size_t map_size,
+                                  off_t offset, TargetOptions options,
                                   std::string &errMsg);
-  static LTOModule *makeLTOModule(int fd, const char *path,
-                                  size_t map_size,
-                                  off_t offset, llvm::TargetOptions options,
-                                  std::string& errMsg);
   static LTOModule *makeLTOModule(const void *mem, size_t length,
-                                  llvm::TargetOptions options,
-                                  std::string &errMsg,
-                                  llvm::StringRef path = "");
+                                  TargetOptions options, std::string &errMsg,
+                                  StringRef path = "");
 
   /// Return the Module's target triple.
   const char *getTargetTriple() {
@@ -155,7 +151,7 @@ public:
   }
 
   /// Return the Module.
-  llvm::Module *getLLVVMModule() { return _module.get(); }
+  Module *getLLVVMModule() { return _module.get(); }
 
   const std::vector<const char*> &getAsmUndefinedRefs() {
     return _asm_undefines;
@@ -171,16 +167,16 @@ private:
   bool parseSymbols(std::string &errMsg);
 
   /// Add a symbol which isn't defined just yet to a list to be resolved later.
-  void addPotentialUndefinedSymbol(const llvm::GlobalValue *dcl, bool isFunc);
+  void addPotentialUndefinedSymbol(const GlobalValue *dcl, bool isFunc);
 
   /// Add a defined symbol to the list.
-  void addDefinedSymbol(const llvm::GlobalValue *def, bool isFunction);
+  void addDefinedSymbol(const GlobalValue *def, bool isFunction);
 
   /// Add a function symbol as defined to the list.
-  void addDefinedFunctionSymbol(const llvm::Function *f);
+  void addDefinedFunctionSymbol(const Function *f);
 
   /// Add a data symbol as defined to the list.
-  void addDefinedDataSymbol(const llvm::GlobalValue *v);
+  void addDefinedDataSymbol(const GlobalValue *v);
 
   /// Add global symbols from module-level ASM to the defined or undefined
   /// lists.
@@ -193,30 +189,28 @@ private:
   void addAsmGlobalSymbolUndef(const char *);
 
   /// Parse i386/ppc ObjC class data structure.
-  void addObjCClass(const llvm::GlobalVariable *clgv);
+  void addObjCClass(const GlobalVariable *clgv);
 
   /// Parse i386/ppc ObjC category data structure.
-  void addObjCCategory(const llvm::GlobalVariable *clgv);
+  void addObjCCategory(const GlobalVariable *clgv);
 
   /// Parse i386/ppc ObjC class list data structure.
-  void addObjCClassRef(const llvm::GlobalVariable *clgv);
+  void addObjCClassRef(const GlobalVariable *clgv);
 
   /// Get string that the data pointer points to.
-  bool objcClassNameFromExpression(const llvm::Constant* c, std::string &name);
+  bool objcClassNameFromExpression(const Constant *c, std::string &name);
 
   /// Returns 'true' if the memory buffer is for the specified target triple.
-  static bool isTargetMatch(llvm::MemoryBuffer *memBuffer,
-                            const char *triplePrefix);
+  static bool isTargetMatch(MemoryBuffer *memBuffer, const char *triplePrefix);
 
   /// Create an LTOModule (private version). N.B. This method takes ownership of
   /// the buffer.
-  static LTOModule *makeLTOModule(llvm::MemoryBuffer *buffer,
-                                  llvm::TargetOptions options,
+  static LTOModule *makeLTOModule(MemoryBuffer *buffer, TargetOptions options,
                                   std::string &errMsg);
 
   /// Create a MemoryBuffer from a memory range with an optional name.
-  static llvm::MemoryBuffer *makeBuffer(const void *mem, size_t length,
-                                        llvm::StringRef name = "");
+  static MemoryBuffer *makeBuffer(const void *mem, size_t length,
+                                  StringRef name = "");
 };
-
+}
 #endif // LTO_MODULE_H

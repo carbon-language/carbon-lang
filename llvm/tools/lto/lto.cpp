@@ -56,8 +56,12 @@ static void lto_initialize() {
   }
 }
 
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LTOCodeGenerator, lto_code_gen_t);
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LTOModule, lto_module_t);
+
 // Convert the subtarget features into a string to pass to LTOCodeGenerator.
 static void lto_add_attrs(lto_code_gen_t cg) {
+  LTOCodeGenerator *CG = unwrap(cg);
   if (MAttrs.size()) {
     std::string attrs;
     for (unsigned i = 0; i < MAttrs.size(); ++i) {
@@ -66,7 +70,7 @@ static void lto_add_attrs(lto_code_gen_t cg) {
       attrs.append(MAttrs[i]);
     }
 
-    cg->setAttr(attrs.c_str());
+    CG->setAttr(attrs.c_str());
   }
 }
 
@@ -101,13 +105,14 @@ lto_module_is_object_file_in_memory_for_target(const void* mem,
 lto_module_t lto_module_create(const char* path) {
   lto_initialize();
   llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
-  return LTOModule::makeLTOModule(path, Options, sLastErrorString);
+  return wrap(LTOModule::makeLTOModule(path, Options, sLastErrorString));
 }
 
 lto_module_t lto_module_create_from_fd(int fd, const char *path, size_t size) {
   lto_initialize();
   llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
-  return LTOModule::makeLTOModule(fd, path, size, Options, sLastErrorString);
+  return wrap(
+      LTOModule::makeLTOModule(fd, path, size, Options, sLastErrorString));
 }
 
 lto_module_t lto_module_create_from_fd_at_offset(int fd, const char *path,
@@ -116,14 +121,14 @@ lto_module_t lto_module_create_from_fd_at_offset(int fd, const char *path,
                                                  off_t offset) {
   lto_initialize();
   llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
-  return LTOModule::makeLTOModule(fd, path, map_size, offset, Options,
-                                  sLastErrorString);
+  return wrap(LTOModule::makeLTOModule(fd, path, map_size, offset, Options,
+                                       sLastErrorString));
 }
 
 lto_module_t lto_module_create_from_memory(const void* mem, size_t length) {
   lto_initialize();
   llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
-  return LTOModule::makeLTOModule(mem, length, Options, sLastErrorString);
+  return wrap(LTOModule::makeLTOModule(mem, length, Options, sLastErrorString));
 }
 
 lto_module_t lto_module_create_from_memory_with_path(const void* mem,
@@ -131,54 +136,53 @@ lto_module_t lto_module_create_from_memory_with_path(const void* mem,
                                                      const char *path) {
   lto_initialize();
   llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
-  return LTOModule::makeLTOModule(mem, length, Options, sLastErrorString, path);
+  return wrap(
+      LTOModule::makeLTOModule(mem, length, Options, sLastErrorString, path));
 }
 
-void lto_module_dispose(lto_module_t mod) {
-  delete mod;
-}
+void lto_module_dispose(lto_module_t mod) { delete unwrap(mod); }
 
 const char* lto_module_get_target_triple(lto_module_t mod) {
-  return mod->getTargetTriple();
+  return unwrap(mod)->getTargetTriple();
 }
 
 void lto_module_set_target_triple(lto_module_t mod, const char *triple) {
-  return mod->setTargetTriple(triple);
+  return unwrap(mod)->setTargetTriple(triple);
 }
 
 unsigned int lto_module_get_num_symbols(lto_module_t mod) {
-  return mod->getSymbolCount();
+  return unwrap(mod)->getSymbolCount();
 }
 
 const char* lto_module_get_symbol_name(lto_module_t mod, unsigned int index) {
-  return mod->getSymbolName(index);
+  return unwrap(mod)->getSymbolName(index);
 }
 
 lto_symbol_attributes lto_module_get_symbol_attribute(lto_module_t mod,
                                                       unsigned int index) {
-  return mod->getSymbolAttributes(index);
+  return unwrap(mod)->getSymbolAttributes(index);
 }
 
 unsigned int lto_module_get_num_deplibs(lto_module_t mod) {
-  return mod->getDependentLibraryCount();
+  return unwrap(mod)->getDependentLibraryCount();
 }
 
 const char* lto_module_get_deplib(lto_module_t mod, unsigned int index) {
-  return mod->getDependentLibrary(index);
+  return unwrap(mod)->getDependentLibrary(index);
 }
 
 unsigned int lto_module_get_num_linkeropts(lto_module_t mod) {
-  return mod->getLinkerOptCount();
+  return unwrap(mod)->getLinkerOptCount();
 }
 
 const char* lto_module_get_linkeropt(lto_module_t mod, unsigned int index) {
-  return mod->getLinkerOpt(index);
+  return unwrap(mod)->getLinkerOpt(index);
 }
 
 void lto_codegen_set_diagnostic_handler(lto_code_gen_t cg,
                                         lto_diagnostic_handler_t diag_handler,
                                         void *ctxt) {
-  cg->setDiagnosticHandler(diag_handler, ctxt);
+  unwrap(cg)->setDiagnosticHandler(diag_handler, ctxt);
 }
 
 lto_code_gen_t lto_codegen_create(void) {
@@ -189,33 +193,31 @@ lto_code_gen_t lto_codegen_create(void) {
   LTOCodeGenerator *CodeGen = new LTOCodeGenerator();
   if (CodeGen)
     CodeGen->setTargetOptions(Options);
-  return CodeGen;
+  return wrap(CodeGen);
 }
 
-void lto_codegen_dispose(lto_code_gen_t cg) {
-  delete cg;
-}
+void lto_codegen_dispose(lto_code_gen_t cg) { delete unwrap(cg); }
 
 bool lto_codegen_add_module(lto_code_gen_t cg, lto_module_t mod) {
-  return !cg->addModule(mod, sLastErrorString);
+  return !unwrap(cg)->addModule(unwrap(mod), sLastErrorString);
 }
 
 bool lto_codegen_set_debug_model(lto_code_gen_t cg, lto_debug_model debug) {
-  cg->setDebugInfo(debug);
+  unwrap(cg)->setDebugInfo(debug);
   return false;
 }
 
 bool lto_codegen_set_pic_model(lto_code_gen_t cg, lto_codegen_model model) {
-  cg->setCodePICModel(model);
+  unwrap(cg)->setCodePICModel(model);
   return false;
 }
 
 void lto_codegen_set_cpu(lto_code_gen_t cg, const char *cpu) {
-  return cg->setCpu(cpu);
+  return unwrap(cg)->setCpu(cpu);
 }
 
 void lto_codegen_set_attr(lto_code_gen_t cg, const char *attr) {
-  return cg->setAttr(attr);
+  return unwrap(cg)->setAttr(attr);
 }
 
 void lto_codegen_set_assembler_path(lto_code_gen_t cg, const char *path) {
@@ -229,38 +231,38 @@ void lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
 
 void lto_codegen_add_must_preserve_symbol(lto_code_gen_t cg,
                                           const char *symbol) {
-  cg->addMustPreserveSymbol(symbol);
+  unwrap(cg)->addMustPreserveSymbol(symbol);
 }
 
 bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
   if (!parsedOptions) {
-    cg->parseCodeGenDebugOptions();
+    unwrap(cg)->parseCodeGenDebugOptions();
     lto_add_attrs(cg);
     parsedOptions = true;
   }
-  return !cg->writeMergedModules(path, sLastErrorString);
+  return !unwrap(cg)->writeMergedModules(path, sLastErrorString);
 }
 
 const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
   if (!parsedOptions) {
-    cg->parseCodeGenDebugOptions();
+    unwrap(cg)->parseCodeGenDebugOptions();
     lto_add_attrs(cg);
     parsedOptions = true;
   }
-  return cg->compile(length, DisableOpt, DisableInline, DisableGVNLoadPRE,
-                     sLastErrorString);
+  return unwrap(cg)->compile(length, DisableOpt, DisableInline,
+                             DisableGVNLoadPRE, sLastErrorString);
 }
 
 bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {
   if (!parsedOptions) {
-    cg->parseCodeGenDebugOptions();
+    unwrap(cg)->parseCodeGenDebugOptions();
     lto_add_attrs(cg);
     parsedOptions = true;
   }
-  return !cg->compile_to_file(name, DisableOpt, DisableInline, DisableGVNLoadPRE,
-                              sLastErrorString);
+  return !unwrap(cg)->compile_to_file(name, DisableOpt, DisableInline,
+                                      DisableGVNLoadPRE, sLastErrorString);
 }
 
 void lto_codegen_debug_options(lto_code_gen_t cg, const char *opt) {
-  cg->setCodeGenDebugOptions(opt);
+  unwrap(cg)->setCodeGenDebugOptions(opt);
 }

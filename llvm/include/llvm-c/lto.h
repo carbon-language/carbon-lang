@@ -84,10 +84,10 @@ typedef enum {
 } lto_codegen_model;
 
 /** opaque reference to a loaded object module */
-typedef struct LTOModule*         lto_module_t;
+typedef struct LLVMOpaqueLTOModule *lto_module_t;
 
 /** opaque reference to a code generator */
-typedef struct LTOCodeGenerator*  lto_code_gen_t;
+typedef struct LLVMOpaqueLTOCodeGenerator *lto_code_gen_t;
 
 #ifdef __cplusplus
 extern "C" {
