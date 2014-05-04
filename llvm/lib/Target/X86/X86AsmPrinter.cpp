@@ -553,13 +553,18 @@ emitNonLazySymbolPointer(MCStreamer &OutStreamer, MCSymbol *StubLabel,
 void X86AsmPrinter::GenerateExportDirective(const MCSymbol *Sym, bool IsData) {
   SmallString<128> Directive;
   raw_svector_ostream OS(Directive);
+  StringRef Name = Sym->getName();
 
   if (Subtarget->isTargetKnownWindowsMSVC())
     OS << " /EXPORT:";
   else
     OS << " -export:";
 
-  OS << Sym->getName();
+  if ((Subtarget->isTargetWindowsGNU() || Subtarget->isTargetWindowsCygwin()) &&
+      (Name[0] == getDataLayout().getGlobalPrefix()))
+    Name = Name.drop_front();
+
+  OS << Name;
 
   if (IsData) {
     if (Subtarget->isTargetKnownWindowsMSVC())
