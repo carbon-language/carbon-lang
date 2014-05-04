@@ -3784,11 +3784,18 @@ class ARMTargetInfo : public TargetInfo {
     else
       SizeType = UnsignedInt;
 
-    if (T.getOS() == llvm::Triple::NetBSD) {
+    switch (T.getOS()) {
+    case llvm::Triple::NetBSD:
       WCharType = SignedInt;
-    } else {
+      break;
+    case llvm::Triple::Win32:
+      WCharType = UnsignedShort;
+      break;
+    case llvm::Triple::Linux:
+    default:
       // AAPCS 7.1.1, ARM-Linux ABI 2.4: type of wchar_t is unsigned int.
       WCharType = UnsignedInt;
+      break;
     }
 
     UseBitFieldTypeAlignment = true;
