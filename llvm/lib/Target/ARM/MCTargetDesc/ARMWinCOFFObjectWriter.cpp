@@ -49,6 +49,8 @@ unsigned ARMWinCOFFObjectWriter::getRelocType(const MCValue &Target,
     default:
       return COFF::IMAGE_REL_ARM_ADDR32;
     }
+  case FK_SecRel_4:
+    return COFF::IMAGE_REL_ARM_SECREL;
   case ARM::fixup_t2_condbranch:
     return COFF::IMAGE_REL_ARM_BRANCH20T;
   case ARM::fixup_t2_uncondbranch:

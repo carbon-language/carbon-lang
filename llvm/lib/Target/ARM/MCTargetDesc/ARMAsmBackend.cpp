@@ -316,6 +316,8 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   case FK_Data_2:
   case FK_Data_4:
     return Value;
+  case FK_SecRel_4:
+    return Value;
   case ARM::fixup_arm_movt_hi16:
     if (!IsPCRel)
       Value >>= 16;
@@ -661,6 +663,9 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case ARM::fixup_arm_movw_lo16:
   case ARM::fixup_t2_movt_hi16:
   case ARM::fixup_t2_movw_lo16:
+    return 4;
+
+  case FK_SecRel_4:
     return 4;
   }
 }
