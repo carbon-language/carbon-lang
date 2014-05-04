@@ -202,6 +202,125 @@ void LazyCallGraph::SCC::insertOutgoingEdge(Node &CallerN, Node &CalleeN) {
   CalleeC.ParentSCCs.insert(this);
 }
 
+SmallVector<LazyCallGraph::SCC *, 1>
+LazyCallGraph::SCC::insertIncomingEdge(Node &CallerN, Node &CalleeN) {
+  // First insert it into the caller.
+  CallerN.insertEdgeInternal(CalleeN);
+
+  assert(G->SCCMap.lookup(&CalleeN) == this && "Callee must be in this SCC.");
+
+  SCC &CallerC = *G->SCCMap.lookup(&CallerN);
+  assert(&CallerC != this && "Caller must not be in this SCC.");
+  assert(CallerC.isDescendantOf(*this) &&
+         "Caller must be a descendant of the Callee.");
+
+  // The algorithm we use for merging SCCs based on the cycle introduced here
+  // is to walk the SCC inverted DAG formed by the parent SCC sets. The inverse
+  // graph has the same cycle properties as the actual DAG of the SCCs, and
+  // when forming SCCs lazily by a DFS, the bottom of the graph won't exist in
+  // many cases which should prune the search space.
+  //
+  // FIXME: We can get this pruning behavior even after the incremental SCC
+  // formation by leaving behind (conservative) DFS numberings in the nodes,
+  // and pruning the search with them. These would need to be cleverly updated
+  // during the removal of intra-SCC edges, but could be preserved
+  // conservatively.
+
+  // The set of SCCs that are connected to the caller, and thus will
+  // participate in the merged connected component.
+  SmallPtrSet<SCC *, 8> ConnectedSCCs;
+  ConnectedSCCs.insert(this);
+  ConnectedSCCs.insert(&CallerC);
+
+  // We build up a DFS stack of the parents chains.
+  SmallVector<std::pair<SCC *, SCC::parent_iterator>, 8> DFSSCCs;
+  SmallPtrSet<SCC *, 8> VisitedSCCs;
+  int ConnectedDepth = -1;
+  SCC *C = this;
+  parent_iterator I = parent_begin(), E = parent_end();
+  for (;;) {
+    while (I != E) {
+      SCC &ParentSCC = *I++;
+
+      // If we have already processed this parent SCC, skip it, and remember
+      // whether it was connected so we don't have to check the rest of the
+      // stack. This also handles when we reach a child of the 'this' SCC (the
+      // callee) which terminates the search.
+      if (ConnectedSCCs.count(&ParentSCC)) {
+        ConnectedDepth = std::max<int>(ConnectedDepth, DFSSCCs.size());
+        continue;
+      }
+      if (VisitedSCCs.count(&ParentSCC))
+        continue;
+
+      // We fully explore the depth-first space, adding nodes to the connected
+      // set only as we pop them off, so "recurse" by rotating to the parent.
+      DFSSCCs.push_back(std::make_pair(C, I));
+      C = &ParentSCC;
+      I = ParentSCC.parent_begin();
+      E = ParentSCC.parent_end();
+    }
+
+    // If we've found a connection anywhere below this point on the stack (and
+    // thus up the parent graph from the caller), the current node needs to be
+    // added to the connected set now that we've processed all of its parents.
+    if ((int)DFSSCCs.size() == ConnectedDepth) {
+      --ConnectedDepth; // We're finished with this connection.
+      ConnectedSCCs.insert(C);
+    } else {
+      // Otherwise remember that its parents don't ever connect.
+      assert(ConnectedDepth < (int)DFSSCCs.size() &&
+             "Cannot have a connected depth greater than the DFS depth!");
+      VisitedSCCs.insert(C);
+    }
+
+    if (DFSSCCs.empty())
+      break; // We've walked all the parents of the caller transitively.
+
+    // Pop off the prior node and position to unwind the depth first recursion.
+    std::tie(C, I) = DFSSCCs.pop_back_val();
+    E = C->parent_end();
+  }
+
+  // Now that we have identified all of the SCCs which need to be merged into
+  // a connected set with the inserted edge, merge all of them into this SCC.
+  // FIXME: This operation currently creates ordering stability problems
+  // because we don't use stably ordered containers for the parent SCCs or the
+  // connected SCCs.
+  unsigned NewNodeBeginIdx = Nodes.size();
+  for (SCC *C : ConnectedSCCs) {
+    if (C == this)
+      continue;
+    for (SCC *ParentC : C->ParentSCCs)
+      if (!ConnectedSCCs.count(ParentC))
+        ParentSCCs.insert(ParentC);
+    C->ParentSCCs.clear();
+
+    for (Node *N : *C) {
+      for (Node &ChildN : *N) {
+        SCC &ChildC = *G->SCCMap.lookup(&ChildN);
+        if (&ChildC != C)
+          ChildC.ParentSCCs.erase(C);
+      }
+      G->SCCMap[N] = this;
+      Nodes.push_back(N);
+    }
+    C->Nodes.clear();
+  }
+  for (auto I = Nodes.begin() + NewNodeBeginIdx, E = Nodes.end(); I != E; ++I)
+    for (Node &ChildN : **I) {
+      SCC &ChildC = *G->SCCMap.lookup(&ChildN);
+      if (&ChildC != this)
+        ChildC.ParentSCCs.insert(this);
+    }
+
+  // We return the list of SCCs which were merged so that callers can
+  // invalidate any data they have associated with those SCCs. Note that these
+  // SCCs are no longer in an interesting state (they are totally empty) but
+  // the pointers will remain stable for the life of the graph itself.
+  return SmallVector<SCC *, 1>(ConnectedSCCs.begin(), ConnectedSCCs.end());
+}
+
 void LazyCallGraph::SCC::removeInterSCCEdge(Node &CallerN, Node &CalleeN) {
   // First remove it from the node.
   CallerN.removeEdgeInternal(CalleeN.getFunction());

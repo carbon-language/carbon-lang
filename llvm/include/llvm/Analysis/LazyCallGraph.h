@@ -275,6 +275,22 @@ public:
     /// graph.
     void insertOutgoingEdge(Node &CallerN, Node &CalleeN);
 
+    /// \brief Insert an edge whose tail is in a descendant SCC and head is in
+    /// this SCC.
+    ///
+    /// There must be an existing path from the callee to the caller in this
+    /// case. NB! This is has the potential to be a very expensive function. It
+    /// inherently forms a cycle in the prior SCC DAG and we have to merge SCCs
+    /// to resolve that cycle. But finding all of the SCCs which participate in
+    /// the cycle can in the worst case require traversing every SCC in the
+    /// graph. Every attempt is made to avoid that, but passes must still
+    /// exercise caution calling this routine repeatedly.
+    ///
+    /// FIXME: We could possibly optimize this quite a bit for cases where the
+    /// caller and callee are very nearby in the graph. See comments in the
+    /// implementation for details, but that use case might impact users.
+    SmallVector<SCC *, 1> insertIncomingEdge(Node &CallerN, Node &CalleeN);
+
     /// \brief Remove an edge whose source is in this SCC and target is *not*.
     ///
     /// This removes an inter-SCC edge. All inter-SCC edges originating from
