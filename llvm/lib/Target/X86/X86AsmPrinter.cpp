@@ -15,7 +15,6 @@
 #include "X86AsmPrinter.h"
 #include "InstPrinter/X86ATTInstPrinter.h"
 #include "MCTargetDesc/X86BaseInfo.h"
-#include "X86COFFMachineModuleInfo.h"
 #include "X86InstrInfo.h"
 #include "X86MachineFunctionInfo.h"
 #include "llvm/ADT/SmallString.h"
@@ -659,21 +658,6 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
   }
 
   if (Subtarget->isTargetCOFF()) {
-    X86COFFMachineModuleInfo &COFFMMI =
-      MMI->getObjFileInfo<X86COFFMachineModuleInfo>();
-
-    // Emit type information for external functions
-    typedef X86COFFMachineModuleInfo::externals_iterator externals_iterator;
-    for (externals_iterator I = COFFMMI.externals_begin(),
-                            E = COFFMMI.externals_end();
-                            I != E; ++I) {
-      OutStreamer.BeginCOFFSymbolDef(CurrentFnSym);
-      OutStreamer.EmitCOFFSymbolStorageClass(COFF::IMAGE_SYM_CLASS_EXTERNAL);
-      OutStreamer.EmitCOFFSymbolType(COFF::IMAGE_SYM_DTYPE_FUNCTION
-                                               << COFF::SCT_COMPLEX_TYPE_SHIFT);
-      OutStreamer.EndCOFFSymbolDef();
-    }
-
     // Necessary for dllexport support
     std::vector<const MCSymbol*> DLLExportedFns, DLLExportedGlobals;
 
