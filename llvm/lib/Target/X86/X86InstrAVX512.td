@@ -1384,6 +1384,15 @@ def: Pat<(v8i64 (int_x86_avx512_mask_loadu_q_512 addr:$ptr,
                  (bc_v8i64 (v16i32 immAllZerosV)), GR8:$mask)),
        (VMOVDQU64rmkz (v8i1 (COPY_TO_REGCLASS GR8:$mask, VK8WM)), addr:$ptr)>;
 
+def: Pat<(int_x86_avx512_mask_storeu_d_512 addr:$ptr, (v16i32 VR512:$src),
+          GR16:$mask),
+         (VMOVDQU32mrk addr:$ptr, (v16i1 (COPY_TO_REGCLASS GR16:$mask, VK16WM)),
+            VR512:$src)>;
+def: Pat<(int_x86_avx512_mask_storeu_q_512 addr:$ptr, (v8i64 VR512:$src),
+          GR8:$mask),
+         (VMOVDQU64mrk addr:$ptr, (v8i1 (COPY_TO_REGCLASS GR8:$mask, VK8WM)),
+            VR512:$src)>;
+
 let AddedComplexity = 20 in {
 def : Pat<(v8i64 (vselect VK8WM:$mask, (v8i64 VR512:$src),
                            (bc_v8i64 (v16i32 immAllZerosV)))),
@@ -3754,7 +3763,7 @@ defm VRNDSCALEPSZ : avx512_rndscale<0x08, "vrndscaleps", f512mem, VR512,
                                 EVEX_CD8<32, CD8VF>;
 
 def : Pat<(v16f32 (int_x86_avx512_mask_rndscale_ps_512 (v16f32 VR512:$src1),
-                   imm:$src2, (bc_v16f32 (v16i32 immAllZerosV)), (i16 -1),
+                   imm:$src2, (v16f32 VR512:$src1), (i16 -1),
                    FROUND_CURRENT)),
                    (VRNDSCALEPSZr VR512:$src1, imm:$src2)>;
 
@@ -3764,7 +3773,7 @@ defm VRNDSCALEPDZ : avx512_rndscale<0x09, "vrndscalepd", f512mem, VR512,
                                 VEX_W, EVEX_CD8<64, CD8VF>;
 
 def : Pat<(v8f64 (int_x86_avx512_mask_rndscale_pd_512 (v8f64 VR512:$src1),
-                  imm:$src2, (bc_v8f64 (v16i32 immAllZerosV)), (i8 -1),
+                  imm:$src2, (v8f64 VR512:$src1), (i8 -1),
                   FROUND_CURRENT)),
                    (VRNDSCALEPDZr VR512:$src1, imm:$src2)>;
 
