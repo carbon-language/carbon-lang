@@ -390,11 +390,10 @@ bool ModuleManager::lookupModuleFile(StringRef FileName,
   }
 
   if ((ExpectedSize && ExpectedSize != File->getSize()) ||
-      (ExpectedModTime && ExpectedModTime != File->getModificationTime())) {
-    FileMgr.invalidateCache(File);
-    File = nullptr;
+      (ExpectedModTime && ExpectedModTime != File->getModificationTime()))
+    // Do not destroy File, as it may be referenced. If we need to rebuild it,
+    // it will be destroyed by removeModules.
     return true;
-  }
 
   return false;
 }
