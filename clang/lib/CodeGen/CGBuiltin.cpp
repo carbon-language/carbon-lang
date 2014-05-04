@@ -4327,14 +4327,29 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
 
 Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                            const CallExpr *E) {
-  if (BuiltinID == ARM::BI__yield) {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_hint);
-    return Builder.CreateCall(F, llvm::ConstantInt::get(Int32Ty, 1));
+  unsigned HintID = static_cast<unsigned>(-1);
+  switch (BuiltinID) {
+  default: break;
+  case ARM::BI__yield:
+    HintID = 1;
+    break;
+  case ARM::BI__wfe:
+    HintID = 2;
+    break;
+  case ARM::BI__wfi:
+    HintID = 3;
+    break;
+  case ARM::BI__sev:
+    HintID = 4;
+    break;
+  case ARM::BI__sevl:
+    HintID = 5;
+    break;
   }
 
-  if (BuiltinID == ARM::BI__sevl) {
+  if (HintID != static_cast<unsigned>(-1)) {
     Function *F = CGM.getIntrinsic(Intrinsic::arm_hint);
-    return Builder.CreateCall(F, llvm::ConstantInt::get(Int32Ty, 5));
+    return Builder.CreateCall(F, llvm::ConstantInt::get(Int32Ty, HintID));
   }
 
   if (BuiltinID == ARM::BI__clear_cache) {

@@ -60,6 +60,9 @@ BUILTIN(__builtin_arm_crc32cd, "UiUiLLUi", "nc")
 
 // HINT
 BUILTIN(__yield, "v", "")
+BUILTIN(__wfe, "v", "")
+BUILTIN(__wfi, "v", "")
+BUILTIN(__sev, "v", "")
 BUILTIN(__sevl, "v", "")
 
 // Data barrier

@@ -19,6 +19,30 @@ void test_eh_return_data_regno()
   res = __builtin_eh_return_data_regno(1);  // CHECK: store volatile i32 1
 }
 
+void yield() {
+  __yield();
+}
+
+// CHECK: call {{.*}} @llvm.arm.hint(i32 1)
+
+void wfe() {
+  __wfe();
+}
+
+// CHECK: call {{.*}} @llvm.arm.hint(i32 2)
+
+void wfi() {
+  __wfi();
+}
+
+// CHECK: call {{.*}} @llvm.arm.hint(i32 3)
+
+void sev() {
+  __sev();
+}
+
+// CHECK: call {{.*}} @llvm.arm.hint(i32 4)
+
 void sevl() {
   __sevl();
 }
