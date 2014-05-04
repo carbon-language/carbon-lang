@@ -595,11 +595,11 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
                                    5, SectionKind::getMetadata());
       OutStreamer.SwitchSection(TheSection);
 
-      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
+      for (const auto &Stub : Stubs) {
         // L_foo$stub:
-        OutStreamer.EmitLabel(Stubs[i].first);
+        OutStreamer.EmitLabel(Stub.first);
         //   .indirect_symbol _foo
-        OutStreamer.EmitSymbolAttribute(Stubs[i].second.getPointer(),
+        OutStreamer.EmitSymbolAttribute(Stub.second.getPointer(),
                                         MCSA_IndirectSymbol);
         // hlt; hlt; hlt; hlt; hlt     hlt = 0xf4.
         const char HltInsts[] = "\xf4\xf4\xf4\xf4\xf4";
@@ -661,18 +661,16 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     // Necessary for dllexport support
     std::vector<const MCSymbol*> DLLExportedFns, DLLExportedGlobals;
 
-    for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
-      if (I->hasDLLExportStorageClass())
-        DLLExportedFns.push_back(getSymbol(I));
+    for (const auto &Function : M)
+      if (Function.hasDLLExportStorageClass())
+        DLLExportedFns.push_back(getSymbol(&Function));
 
-    for (Module::const_global_iterator I = M.global_begin(),
-           E = M.global_end(); I != E; ++I)
-      if (I->hasDLLExportStorageClass())
-        DLLExportedGlobals.push_back(getSymbol(I));
+    for (const auto &Global : M.globals())
+      if (Global.hasDLLExportStorageClass())
+        DLLExportedGlobals.push_back(getSymbol(&Global));
 
-    for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
-                                      I != E; ++I) {
-      const GlobalValue *GV = I;
+    for (const auto &Alias : M.aliases()) {
+      const GlobalValue *GV = &Alias;
       if (!GV->hasDLLExportStorageClass())
         continue;
 
@@ -680,9 +678,9 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         GV = A->getAliasedGlobal();
 
       if (isa<Function>(GV))
-        DLLExportedFns.push_back(getSymbol(I));
+        DLLExportedFns.push_back(getSymbol(&Alias));
       else if (isa<GlobalVariable>(GV))
-        DLLExportedGlobals.push_back(getSymbol(I));
+        DLLExportedGlobals.push_back(getSymbol(&Alias));
     }
 
     // Output linker support code for dllexported globals on windows.
@@ -711,9 +709,9 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       OutStreamer.SwitchSection(TLOFELF.getDataRelSection());
       const DataLayout *TD = TM.getDataLayout();
 
-      for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
-        OutStreamer.EmitLabel(Stubs[i].first);
-        OutStreamer.EmitSymbolValue(Stubs[i].second.getPointer(),
+      for (const auto &Stub : Stubs) {
+        OutStreamer.EmitLabel(Stub.first);
+        OutStreamer.EmitSymbolValue(Stub.second.getPointer(),
                                     TD->getPointerSize());
       }
       Stubs.clear();
