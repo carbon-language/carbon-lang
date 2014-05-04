@@ -238,9 +238,12 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
       return false;
     }
     uint64_t Size = (uint64_t)LoopSize*Count;
-    if (TripCount != 1 && Size > Threshold) {
-      DEBUG(dbgs() << "  Too large to fully unroll with count: " << Count
-            << " because size: " << Size << ">" << Threshold << "\n");
+    if (TripCount != 1 &&
+        (Size > Threshold || (Count != TripCount && Size > PartialThreshold))) {
+      if (Size > Threshold)
+        DEBUG(dbgs() << "  Too large to fully unroll with count: " << Count
+                     << " because size: " << Size << ">" << Threshold << "\n");
+
       bool AllowPartial = UserAllowPartial ? CurrentAllowPartial : UP.Partial;
       if (!AllowPartial && !(Runtime && TripCount == 0)) {
         DEBUG(dbgs() << "  will not try to unroll partially because "
