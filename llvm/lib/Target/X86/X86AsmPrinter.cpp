@@ -550,7 +550,27 @@ emitNonLazySymbolPointer(MCStreamer &OutStreamer, MCSymbol *StubLabel,
         4 /*size*/);
 }
 
+void X86AsmPrinter::GenerateExportDirective(const MCSymbol *Sym, bool IsData) {
+  SmallString<128> Directive;
+  raw_svector_ostream OS(Directive);
 
+  if (Subtarget->isTargetKnownWindowsMSVC())
+    OS << " /EXPORT:";
+  else
+    OS << " -export:";
+
+  OS << Sym->getName();
+
+  if (IsData) {
+    if (Subtarget->isTargetKnownWindowsMSVC())
+      OS << ",DATA";
+    else
+      OS << ",data";
+  }
+
+  OS.flush();
+  OutStreamer.EmitBytes(Directive);
+}
 
 void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
   if (Subtarget->isTargetMacho()) {
@@ -682,28 +702,11 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         static_cast<const TargetLoweringObjectFileCOFF&>(getObjFileLowering());
 
       OutStreamer.SwitchSection(TLOFCOFF.getDrectveSection());
-      SmallString<128> name;
-      for (unsigned i = 0, e = DLLExportedGlobals.size(); i != e; ++i) {
-        if (Subtarget->isTargetKnownWindowsMSVC())
-          name = " /EXPORT:";
-        else
-          name = " -export:";
-        name += DLLExportedGlobals[i]->getName();
-        if (Subtarget->isTargetKnownWindowsMSVC())
-          name += ",DATA";
-        else
-        name += ",data";
-        OutStreamer.EmitBytes(name);
-      }
 
-      for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i) {
-        if (Subtarget->isTargetKnownWindowsMSVC())
-          name = " /EXPORT:";
-        else
-          name = " -export:";
-        name += DLLExportedFns[i]->getName();
-        OutStreamer.EmitBytes(name);
-      }
+      for (auto & Symbol : DLLExportedGlobals)
+        GenerateExportDirective(Symbol, /*IsData=*/true);
+      for (auto & Symbol : DLLExportedFns)
+        GenerateExportDirective(Symbol, /*IsData=*/false);
     }
   }
 

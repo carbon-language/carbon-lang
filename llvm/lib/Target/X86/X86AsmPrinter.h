@@ -16,12 +16,14 @@
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
-
 class MCStreamer;
+class MCSymbol;
 
 class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   const X86Subtarget *Subtarget;
   StackMaps SM;
+
+  void GenerateExportDirective(const MCSymbol *Sym, bool IsData);
 
  public:
   explicit X86AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
