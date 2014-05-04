@@ -1844,7 +1844,8 @@ std::string CompilerInvocation::getModuleHash() const {
   }
 
   // Extend the signature with the sysroot.
-  code = hash_combine(code, hsOpts.Sysroot, hsOpts.UseBuiltinIncludes,
+  code = hash_combine(code, hsOpts.Sysroot, hsOpts.ResourceDir,
+                      hsOpts.UseBuiltinIncludes,
                       hsOpts.UseStandardSystemIncludes,
                       hsOpts.UseStandardCXXIncludes,
                       hsOpts.UseLibcxx);
