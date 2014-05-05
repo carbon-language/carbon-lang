@@ -67,15 +67,21 @@ class CGDebugInfo {
   /// TypeCache - Cache of previously constructed Types.
   llvm::DenseMap<void *, llvm::WeakVH> TypeCache;
 
+  struct ObjCInterfaceCacheEntry {
+    const ObjCInterfaceType *Type;
+    llvm::DIType Decl;
+    llvm::DIFile Unit;
+    ObjCInterfaceCacheEntry(const ObjCInterfaceType *Type, llvm::DIType Decl,
+                            llvm::DIFile Unit)
+        : Type(Type), Decl(Decl), Unit(Unit) {}
+  };
+
   /// ObjCInterfaceCache - Cache of previously constructed interfaces
-  /// which may change. Storing a pair of DIType and checksum.
-  llvm::DenseMap<void *, std::pair<llvm::WeakVH, unsigned> > ObjCInterfaceCache;
+  /// which may change.
+  llvm::SmallVector<ObjCInterfaceCacheEntry, 32> ObjCInterfaceCache;
 
   /// RetainedTypes - list of interfaces we want to keep even if orphaned.
   std::vector<void *> RetainedTypes;
-
-  /// CompleteTypeCache - Cache of previously constructed complete RecordTypes.
-  llvm::DenseMap<void *, llvm::WeakVH> CompletedTypeCache;
 
   /// ReplaceMap - Cache of forward declared types to RAUW at the end of
   /// compilation.
@@ -120,6 +126,7 @@ class CGDebugInfo {
   llvm::DICompositeType CreateLimitedType(const RecordType *Ty);
   void CollectContainingType(const CXXRecordDecl *RD, llvm::DICompositeType CT);
   llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DIFile F);
+  llvm::DIType CreateTypeDefinition(const ObjCInterfaceType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ObjCObjectType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const VectorType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ArrayType *Ty, llvm::DIFile F);
@@ -130,7 +137,6 @@ class CGDebugInfo {
   llvm::DIType CreateEnumType(const EnumType *Ty);
   llvm::DIType CreateSelfType(const QualType &QualTy, llvm::DIType Ty);
   llvm::DIType getTypeOrNull(const QualType);
-  llvm::DIType getCompletedTypeOrNull(const QualType);
   llvm::DICompositeType getOrCreateMethodType(const CXXMethodDecl *Method,
                                               llvm::DIFile F);
   llvm::DICompositeType getOrCreateInstanceMethodType(
