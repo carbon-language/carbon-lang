@@ -118,13 +118,11 @@ namespace destructors {
     extern bool coin();
     extern bool check(const Dtor &);
 
-#ifndef TEMPORARY_DTORS
-    // FIXME: Don't assert here when tmp dtors are enabled.
+    // Regression test: we used to assert here when tmp dtors are enabled.
     // PR16664 and PR18159
     if (coin() && (coin() || coin() || check(Dtor()))) {
       Dtor();
     }
-#endif
   }
 
 #ifdef TEMPORARY_DTORS
@@ -170,17 +168,16 @@ namespace destructors {
     clang_analyzer_eval(true); // no warning, unreachable code
   }
 
-/*
+  // Regression test: we used to assert here.
   // PR16664 and PR18159
-  FIXME: Don't assert here.
   void testConsistencyNested(int i) {
     extern bool compute(bool);
-  
+
     if (i == 5 && (i == 4 || i == 5 || check(NoReturnDtor())))
-      clang_analyzer_eval(true); // expected TRUE
-  
+      clang_analyzer_eval(true);  // expected-warning{{TRUE}}
+
     if (i == 5 && (i == 4 || i == 5 || check(NoReturnDtor())))
-      clang_analyzer_eval(true);  // expected TRUE
+      clang_analyzer_eval(true);  // expected-warning{{TRUE}}
 
     if (i != 5)
       return;
@@ -189,17 +186,17 @@ namespace destructors {
                 (i == 4 || compute(true) ||
                  compute(i == 5 && (i == 4 || check(NoReturnDtor()))))) ||
         i != 4) {
-      clang_analyzer_eval(true); // expected TRUE
+      clang_analyzer_eval(true);  // expected-warning{{TRUE}}
     }
 
-    FIXME: This shouldn't cause a warning.
     if (compute(i == 5 &&
                 (i == 4 || i == 4 ||
                  compute(i == 5 && (i == 4 || check(NoReturnDtor()))))) ||
         i != 4) {
-      clang_analyzer_eval(true); // no warning, unreachable code
+      // FIXME: This shouldn't cause a warning.
+      clang_analyzer_eval(true);  // expected-warning{{TRUE}}
     }
-  }*/
+  }
 
   // PR16664 and PR18159
   void testConsistencyNestedSimple(bool value) {
@@ -225,6 +222,14 @@ namespace destructors {
     if (value) {
       if (!value || value || check(NoReturnDtor())) {
         clang_analyzer_eval(true); // expected-warning{{TRUE}}
+      }
+    }
+  }
+
+  void testBinaryOperatorShortcut(bool value) {
+    if (value) {
+      if (false && false && check(NoReturnDtor()) && true) {
+        clang_analyzer_eval(true);
       }
     }
   }

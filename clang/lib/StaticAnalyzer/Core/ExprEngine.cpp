@@ -1352,6 +1352,31 @@ static SVal RecoverCastedSymbol(ProgramStateManager& StateMgr,
   return state->getSVal(Ex, LCtx);
 }
 
+const Stmt *getRightmostLeaf(const Stmt *Condition) {
+  while (Condition) {
+    const BinaryOperator *BO = dyn_cast<BinaryOperator>(Condition);
+    if (!BO || !BO->isLogicalOp()) {
+      return Condition;
+    }
+    Condition = BO->getRHS()->IgnoreParens();
+  }
+  return nullptr;
+}
+
+// Returns the condition the branch at the end of 'B' depends on and whose value
+// has been evaluated within 'B'.
+// In most cases, the terminator condition of 'B' will be evaluated fully in
+// the last statement of 'B'; in those cases, the resolved condition is the
+// given 'Condition'.
+// If the condition of the branch is a logical binary operator tree, the CFG is
+// optimized: in that case, we know that the expression formed by all but the
+// rightmost leaf of the logical binary operator tree must be true, and thus
+// the branch condition is at this point equivalent to the truth value of that
+// rightmost leaf; the CFG block thus only evaluates this rightmost leaf
+// expression in its final statement. As the full condition in that case was
+// not evaluated, and is thus not in the SVal cache, we need to use that leaf
+// expression to evaluate the truth value of the condition in the current state
+// space.
 static const Stmt *ResolveCondition(const Stmt *Condition,
                                     const CFGBlock *B) {
   if (const Expr *Ex = dyn_cast<Expr>(Condition))
@@ -1360,6 +1385,12 @@ static const Stmt *ResolveCondition(const Stmt *Condition,
   const BinaryOperator *BO = dyn_cast<BinaryOperator>(Condition);
   if (!BO || !BO->isLogicalOp())
     return Condition;
+
+  // FIXME: This is a workaround until we handle temporary destructor branches
+  // correctly; currently, temporary destructor branches lead to blocks that
+  // only have a terminator (and no statements). These blocks violate the
+  // invariant this function assumes.
+  if (B->getTerminator().isTemporaryDtorsBranch()) return Condition;
 
   // For logical operations, we still have the case where some branches
   // use the traditional "merge" approach and others sink the branch
@@ -1375,18 +1406,9 @@ static const Stmt *ResolveCondition(const Stmt *Condition,
     Optional<CFGStmt> CS = Elem.getAs<CFGStmt>();
     if (!CS)
       continue;
-    if (CS->getStmt() != Condition)
-      break;
-    return Condition;
-  }
-
-  assert(I != E);
-
-  while (Condition) {
-    BO = dyn_cast<BinaryOperator>(Condition);
-    if (!BO || !BO->isLogicalOp())
-      return Condition;
-    Condition = BO->getRHS()->IgnoreParens();
+    const Stmt *LastStmt = CS->getStmt();
+    assert(LastStmt == Condition || LastStmt == getRightmostLeaf(Condition));
+    return LastStmt;
   }
   llvm_unreachable("could not resolve condition");
 }
