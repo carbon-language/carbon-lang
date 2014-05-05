@@ -2110,7 +2110,7 @@ static bool isMsLayout(const RecordDecl* D) {
 //   when used as a field or base, will not be aligned if #pragma pack is
 //   still active at the time of use.
 //
-// Known incompatiblities:
+// Known incompatibilities:
 // * all: #pragma pack between fields in a record
 // * 2010 and back: If the last field in a record is a bitfield, every object
 //   laid out after the record will have extra padding inserted before it.  The
@@ -2125,7 +2125,7 @@ static bool isMsLayout(const RecordDecl* D) {
 //   _every_ field getting padding put in front of it, potentially including the
 //   vfptr, leaving the vfprt at a non-zero location which results in a fault if
 //   anything tries to read the vftbl.  The second layout phase also treats
-//   bitfields as seperate entities and gives them each storage rather than
+//   bitfields as separate entities and gives them each storage rather than
 //   packing them.  Additionally, because this phase appears to perform a
 //   (an unstable) sort on the members before laying them out and because merged
 //   bitfields have the same address, the bitfields end up in whatever order

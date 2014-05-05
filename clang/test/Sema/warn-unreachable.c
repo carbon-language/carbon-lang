@@ -202,7 +202,7 @@ void trivial_dead_return_void() {
   return; // expected-warning {{'return' will never be executed}}
 }
 
-MyEnum trival_dead_return_enum() {
+MyEnum trivial_dead_return_enum() {
   raze();
   return Value1; // expected-warning {{'return' will never be executed}}
 }
@@ -333,7 +333,7 @@ void trivial_dead_return_void_SUPPRESSED() {
   return; // no-warning
 }
 
-MyEnum trival_dead_return_enum_SUPPRESSED() {
+MyEnum trivial_dead_return_enum_SUPPRESSED() {
   raze();
   return Value1; // no-warning
 }

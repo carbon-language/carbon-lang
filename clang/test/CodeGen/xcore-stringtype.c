@@ -5,8 +5,8 @@
 
 // In the tests below, some types are not supported by the ABI (_Complex,
 // variable length arrays) and will thus emit no meta data.
-// The 33 tests that do emit typstrings are gathered into '!xcore.typestrings'
-// Please see 'Tools Developement Guide' section 2.16.2 for format details:
+// The 33 tests that do emit typestrings are gathered into '!xcore.typestrings'
+// Please see 'Tools Development Guide' section 2.16.2 for format details:
 // <https://www.xmos.com/download/public/Tools-Development-Guide%28X9114A%29.pdf>
 
 // CHECK: !xcore.typestrings = !{!0, !1, !2, !3, !4, !5, !6, !7, !8, !9, !10,
