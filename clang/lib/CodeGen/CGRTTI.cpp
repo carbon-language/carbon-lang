@@ -678,17 +678,13 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
   // Give the type_info object and name the formal visibility of the
   // type itself.
-  Visibility formalVisibility = Ty->getVisibility();
-  llvm::GlobalValue::VisibilityTypes llvmVisibility =
-    CodeGenModule::GetLLVMVisibility(formalVisibility);
+  llvm::GlobalValue::VisibilityTypes llvmVisibility;
+  if (RTTIUniqueness == CGCXXABI::RUK_NonUniqueHidden)
+    llvmVisibility = llvm::GlobalValue::HiddenVisibility;
+  else
+    llvmVisibility = CodeGenModule::GetLLVMVisibility(Ty->getVisibility());
   TypeName->setVisibility(llvmVisibility);
   GV->setVisibility(llvmVisibility);
-
-  // FIXME: integrate this better into the above when we move to trunk
-  if (RTTIUniqueness == CGCXXABI::RUK_NonUniqueHidden) {
-    TypeName->setVisibility(llvm::GlobalValue::HiddenVisibility);
-    GV->setVisibility(llvm::GlobalValue::HiddenVisibility);
-  }
 
   return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
 }
