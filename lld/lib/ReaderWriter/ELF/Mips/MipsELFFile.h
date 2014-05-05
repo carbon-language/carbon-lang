@@ -136,13 +136,11 @@ private:
   error_code readRegInfo() {
     typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
 
-    for (auto sit = this->_objFile->begin_sections(),
-              sie = this->_objFile->end_sections();
-         sit != sie; ++sit) {
-      if (sit->sh_type != llvm::ELF::SHT_MIPS_REGINFO)
+    for (const Elf_Shdr &section : this->_objFile->sections()) {
+      if (section.sh_type != llvm::ELF::SHT_MIPS_REGINFO)
         continue;
 
-      auto contents = this->getSectionContents(&*sit);
+      auto contents = this->getSectionContents(&section);
       if (error_code ec = contents.getError())
         return ec;
 

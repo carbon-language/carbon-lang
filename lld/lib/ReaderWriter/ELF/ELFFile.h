@@ -465,47 +465,44 @@ template <class ELFT> error_code ELFFile<ELFT>::createAtomizableSections() {
   // the contents to the RelocationReferences map.
   // Record the number of relocs to guess at preallocating the buffer.
   uint64_t totalRelocs = 0;
-  for (auto sit = _objFile->begin_sections(), sie = _objFile->end_sections();
-       sit != sie; ++sit) {
-    const Elf_Shdr *section = &*sit;
-
-    if (isIgnoredSection(section))
+  for (const Elf_Shdr &section : _objFile->sections()) {
+    if (isIgnoredSection(&section))
       continue;
 
-    if (isMergeableStringSection(section)) {
-      _mergeStringSections.push_back(section);
+    if (isMergeableStringSection(&section)) {
+      _mergeStringSections.push_back(&section);
       continue;
     }
 
     // Create a sectionSymbols entry for every progbits section.
-    if ((section->sh_type == llvm::ELF::SHT_PROGBITS) ||
-        (section->sh_type == llvm::ELF::SHT_INIT_ARRAY) ||
-        (section->sh_type == llvm::ELF::SHT_FINI_ARRAY))
-      _sectionSymbols[section];
+    if ((section.sh_type == llvm::ELF::SHT_PROGBITS) ||
+        (section.sh_type == llvm::ELF::SHT_INIT_ARRAY) ||
+        (section.sh_type == llvm::ELF::SHT_FINI_ARRAY))
+      _sectionSymbols[&section];
 
-    if (section->sh_type == llvm::ELF::SHT_RELA) {
-      auto sHdr = _objFile->getSection(section->sh_info);
+    if (section.sh_type == llvm::ELF::SHT_RELA) {
+      auto sHdr = _objFile->getSection(section.sh_info);
 
       auto sectionName = _objFile->getSectionName(sHdr);
       if (error_code ec = sectionName.getError())
         return ec;
 
-      auto rai(_objFile->begin_rela(section));
-      auto rae(_objFile->end_rela(section));
+      auto rai(_objFile->begin_rela(&section));
+      auto rae(_objFile->end_rela(&section));
 
       _relocationAddendReferences[*sectionName] = make_range(rai, rae);
       totalRelocs += std::distance(rai, rae);
     }
 
-    if (section->sh_type == llvm::ELF::SHT_REL) {
-      auto sHdr = _objFile->getSection(section->sh_info);
+    if (section.sh_type == llvm::ELF::SHT_REL) {
+      auto sHdr = _objFile->getSection(section.sh_info);
 
       auto sectionName = _objFile->getSectionName(sHdr);
       if (error_code ec = sectionName.getError())
         return ec;
 
-      auto ri(_objFile->begin_rel(section));
-      auto re(_objFile->end_rel(section));
+      auto ri(_objFile->begin_rel(&section));
+      auto re(_objFile->end_rel(&section));
 
       _relocationReferences[*sectionName] = make_range(ri, re);
       totalRelocs += std::distance(ri, re);
