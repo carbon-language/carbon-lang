@@ -4928,6 +4928,11 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
   // Protocol buffer definition or missing "#".
   verifyFormat("import \"aaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaa\";",
                getLLVMStyleWithColumns(30));
+
+  FormatStyle Style = getLLVMStyle();
+  Style.AlwaysBreakBeforeMultilineStrings = true;
+  Style.ColumnLimit = 0;
+  verifyFormat("#import \"abc.h\"", Style);
 }
 
 //===----------------------------------------------------------------------===//
