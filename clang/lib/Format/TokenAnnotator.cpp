@@ -414,7 +414,9 @@ private:
       if (!parseParens())
         return false;
       if (Line.MustBeDeclaration && Contexts.size() == 1 &&
-          !Contexts.back().IsExpression && Line.First->Type != TT_ObjCProperty)
+          !Contexts.back().IsExpression &&
+          Line.First->Type != TT_ObjCProperty &&
+          (!Tok->Previous || Tok->Previous->isNot(tok::kw_decltype)))
         Line.MightBeFunctionDecl = true;
       break;
     case tok::l_square:
@@ -868,6 +870,11 @@ private:
       return PreviousNotConst && PreviousNotConst->MatchingParen &&
              PreviousNotConst->MatchingParen->Previous &&
              PreviousNotConst->MatchingParen->Previous->isNot(tok::kw_template);
+
+    if (PreviousNotConst->is(tok::r_paren) && PreviousNotConst->MatchingParen &&
+        PreviousNotConst->MatchingParen->Previous &&
+        PreviousNotConst->MatchingParen->Previous->is(tok::kw_decltype))
+      return true;
 
     return (!IsPPKeyword && PreviousNotConst->is(tok::identifier)) ||
            PreviousNotConst->Type == TT_PointerOrReference ||
