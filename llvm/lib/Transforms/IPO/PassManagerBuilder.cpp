@@ -341,6 +341,9 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   PM.add(createLoopDeletionPass());
   PM.add(createLoopVectorizePass(true, true));
 
+  // More scalar chains could be vectorized due to more alias information
+  PM.add(createSLPVectorizerPass()); // Vectorize parallel scalar chains.
+
   // Cleanup and simplify the code after the scalar optimizations.
   PM.add(createInstructionCombiningPass());
 
