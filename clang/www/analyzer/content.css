@@ -97,18 +97,3 @@ table.checkers div.functions { margin-top: 2px; font-style: italic; font-size: 9
 table.checkers pre { margin: 1px; font-size: 100%; word-wrap: break-word }
 table.checkers p { margin: 10px 0px 0px 0px; }
 
-/* Collapsing Trees: http://dbtree.megalingo.com/web/demo/simple-collapsible-tree.cfm  */
-#collapsetree, #collapsetree a:link, #collapsetree li a:link, #collapsetree a:visited, #collapsetree li a:visited{color:#000;text-decoration:none}
-#collapsetree,#collapsetree ul{list-style-type:none; width:auto; margin:0; padding:0}
-#collapsetree ul{padding-left:20px;display:none;overflow:auto}
-#collapsetree li ul{margin:0 auto}
-#collapsetree li{display:block;width:100%;line-height:20px;white-space:nowrap}
-#collapsetree li a{display:block;padding-left:20px;color:#000;text-decoration:none;background:url(images/tree/bullet.gif) center left no-repeat;white-space:nowrap}
-#collapsetree li a:hover{text-decoration:underline;background-color:transparent;color:#000}
-#collapsetree li ul.click{display:block}
-#collapsetree li.click a{background:url(images/tree/bullet.gif) center left no-repeat}
-#collapsetree ul li.click a{background:url(images/tree/bullet.gif) center left no-repeat}
-#collapsetree li a.subMenu,#collapsetree ul li a.subMenu{background:url(images/tree/plus.gif) center left no-repeat}
-#collapsetree li a.click{background:url(images/tree/minus.gif) center left no-repeat}
-#collapsetree ul li a.click{background:url(images/tree/minus.gif) center left no-repeat}
-
