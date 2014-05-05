@@ -26,9 +26,3 @@ hash_map<int, float> ints_to_floats; // expected-error{{declaration of 'hash_map
 @import std.hash_map;
 
 hash_map<int, float> ints_to_floats2;
-
-@import import_self.b;
-extern MyTypeA import_self_test_a; // expected-error {{must be imported from module 'import_self.a'}}
-// expected-note@import-self-a.h:1 {{here}}
-extern MyTypeC import_self_test_c;
-extern MyTypeD import_self_test_d;
