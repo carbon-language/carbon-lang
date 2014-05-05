@@ -1,8 +1,10 @@
 ; RUN: llc < %s -O3 -march=x86-64 |FileCheck %s
 define i64 @foo(i1 %z, i192* %p, i192* %q)
 {
-; CHECK: movq    16(%rsi), %rax
-; CHECK-NEXT: retq
+; If const 128 is hoisted to a variable, then in basic block L_val2 we would
+; have %lshr2 = lshr i192 %data2, %const, and the definition of %const would
+; be in another basic block. As a result, a very inefficient code might be
+; produced. Here we check that this doesn't occur.
 entry:
   %data1 = load i192* %p, align 8
   %lshr1 = lshr i192 %data1, 128
