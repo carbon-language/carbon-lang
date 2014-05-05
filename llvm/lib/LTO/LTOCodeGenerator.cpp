@@ -429,9 +429,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   if (!AsmUsed.empty()) {
     llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(Context);
     std::vector<Constant*> asmUsed2;
-    for (SmallPtrSet<GlobalValue*, 16>::const_iterator i = AsmUsed.begin(),
-           e = AsmUsed.end(); i !=e; ++i) {
-      GlobalValue *GV = *i;
+    for (auto *GV : AsmUsed) {
       Constant *c = ConstantExpr::getBitCast(GV, i8PTy);
       asmUsed2.push_back(c);
     }
