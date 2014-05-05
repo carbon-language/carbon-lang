@@ -167,6 +167,8 @@ def warn_module_config_macro_undef : Warning<
   InGroup<ConfigMacros>;
 def note_module_def_undef_here : Note<
   "macro was %select{defined|#undef'd}0 here">;
+def warn_module_build : Warning<"building module '%0' as '%1'">,
+  InGroup<DiagGroup<"module-build">>, DefaultIgnore;
 
 def err_missing_vfs_overlay_file : Error<
   "virtual filesystem overlay file '%0' not found">, DefaultFatal;
