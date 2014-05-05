@@ -16,6 +16,7 @@ extern void f1(void) __attribute((alias("f0")));
 // CHECKBASIC-DAG: @f1 = alias void ()* @f0
 // CHECKBASIC-DAG: @test8_foo = alias weak bitcast (void ()* @test8_bar to void (...)*)
 // CHECKBASIC-DAG: @test8_zed = alias bitcast (void ()* @test8_bar to void (...)*)
+// CHECKBASIC-DAG: @test9_zed = alias void ()* @test9_bar
 // CHECKBASIC: define void @f0() [[NUW:#[0-9]+]] {
 
 // Make sure that aliases cause referenced values to be emitted.
@@ -54,3 +55,7 @@ int outer_weak(int a) { return inner_weak_a(a); }
 void test8_bar() {}
 void test8_foo() __attribute__((weak, alias("test8_bar")));
 void test8_zed() __attribute__((alias("test8_foo")));
+
+void test9_bar(void) { }
+void test9_zed(void) __attribute__((section("test")));
+void test9_zed(void) __attribute__((alias("test9_bar")));
