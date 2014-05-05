@@ -418,6 +418,11 @@ llvm::Value *CodeGenFunction::getSelectorFromSlot() {
 
 void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E,
                                        bool KeepInsertionPoint) {
+  if (CGM.getTarget().getTriple().isWindowsMSVCEnvironment()) {
+    ErrorUnsupported(E, "throw expression");
+    return;
+  }
+
   if (!E->getSubExpr()) {
     EmitNoreturnRuntimeCallOrInvoke(getReThrowFn(CGM),
                                     ArrayRef<llvm::Value*>());
@@ -574,6 +579,11 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
 }
 
 void CodeGenFunction::EmitCXXTryStmt(const CXXTryStmt &S) {
+  if (CGM.getTarget().getTriple().isWindowsMSVCEnvironment()) {
+    ErrorUnsupported(&S, "try statement");
+    return;
+  }
+
   EnterCXXTryStmt(S);
   EmitStmt(S.getTryBlock());
   ExitCXXTryStmt(S);
