@@ -2020,7 +2020,7 @@ public:
   /// Return true if it is profitable to move a following shift through this
   //  node, adjusting any immediate operands as necessary to preserve semantics.
   //  This transformation may not be desirable if it disrupts a particularly
-  //  auspicious target-specific tree (e.g. bitfield extractionon in AArch64).
+  //  auspicious target-specific tree (e.g. bitfield extraction in AArch64).
   //  By default, it returns true.
   virtual bool isDesirableToCommuteWithShift(const SDNode *N /*Op*/) const {
     return true;
@@ -2448,8 +2448,8 @@ public:
   /// \returns true if the node has been expanded. false if it has not
   bool expandMUL(SDNode *N, SDValue &Lo, SDValue &Hi, EVT HiLoVT,
                  SelectionDAG &DAG, SDValue LL = SDValue(),
-		 SDValue LH = SDValue(), SDValue RL = SDValue(),
-		 SDValue RH = SDValue()) const;
+                 SDValue LH = SDValue(), SDValue RL = SDValue(),
+                 SDValue RH = SDValue()) const;
 
   //===--------------------------------------------------------------------===//
   // Instruction Emitting Hooks
