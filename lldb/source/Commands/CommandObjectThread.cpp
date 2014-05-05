@@ -1503,7 +1503,7 @@ protected:
             options.SetUnwindOnError(true);
             options.SetUseDynamic(eNoDynamicValues);
             
-            ExecutionResults exe_results = eExecutionSetupError;
+            ExpressionResults exe_results = eExecutionSetupError;
             exe_results = target->EvaluateExpression (command,
                                                       frame_sp.get(),
                                                       return_valobj_sp,

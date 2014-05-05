@@ -1846,7 +1846,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
         errors.Clear();
         
         // Run the function
-        ExecutionResults results = m_get_class_info_function->ExecuteFunction (exe_ctx,
+        ExpressionResults results = m_get_class_info_function->ExecuteFunction (exe_ctx,
                                                                                &m_get_class_info_args,
                                                                                options,
                                                                                errors,
@@ -2096,7 +2096,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         errors.Clear();
         
         // Run the function
-        ExecutionResults results = m_get_shared_cache_class_info_function->ExecuteFunction (exe_ctx,
+        ExpressionResults results = m_get_shared_cache_class_info_function->ExecuteFunction (exe_ctx,
                                                                                             &m_get_shared_cache_class_info_args,
                                                                                             options,
                                                                                             errors,

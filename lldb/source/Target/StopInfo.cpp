@@ -708,7 +708,7 @@ protected:
                 {
                     // We need to make sure the user sees any parse errors in their condition, so we'll hook the
                     // constructor errors up to the debugger's Async I/O.
-                    ExecutionResults result_code;
+                    ExpressionResults result_code;
                     EvaluateExpressionOptions expr_options;
                     expr_options.SetUnwindOnError(true);
                     expr_options.SetIgnoreBreakpoints(true);

@@ -144,7 +144,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     options.SetIgnoreBreakpoints(true);
     options.SetTimeoutUsec(PO_FUNCTION_TIMEOUT_USEC);
     
-    ExecutionResults results = func.ExecuteFunction (exe_ctx, 
+    ExpressionResults results = func.ExecuteFunction (exe_ctx, 
                                                      &wrapper_struct_addr,
                                                      options,
                                                      error_stream, 

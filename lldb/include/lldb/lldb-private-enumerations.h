@@ -123,22 +123,6 @@ typedef enum PathType
 } PathType;
 
 
-//----------------------------------------------------------------------
-// We can execute ThreadPlans on one thread with various fall-back modes 
-// (try other threads after timeout, etc.) This enum gives the result of 
-// thread plan executions.
-//----------------------------------------------------------------------
-typedef enum ExecutionResults
-{
-    eExecutionSetupError,
-    eExecutionCompleted,
-    eExecutionDiscarded,
-    eExecutionInterrupted,
-    eExecutionHitBreakpoint,
-    eExecutionTimedOut,
-    eExecutionStoppedForDebug
-} ExecutionResults;
-
 typedef enum ObjCRuntimeVersions {
     eObjC_VersionUnknown = 0,
     eAppleObjC_V1 = 1,

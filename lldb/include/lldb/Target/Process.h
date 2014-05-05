@@ -2566,14 +2566,14 @@ public:
     lldb::StateType
     GetState ();
     
-    ExecutionResults
+    lldb::ExpressionResults
     RunThreadPlan (ExecutionContext &exe_ctx,    
                     lldb::ThreadPlanSP &thread_plan_sp,
                     const EvaluateExpressionOptions &options,
                     Stream &errors);
 
     static const char *
-    ExecutionResultAsCString (ExecutionResults result);
+    ExecutionResultAsCString (lldb::ExpressionResults result);
 
     void
     GetStatus (Stream &ostrm);

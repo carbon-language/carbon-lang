@@ -86,6 +86,9 @@ public:
     
     void
     SetTrapExceptions (bool trap_exceptions = true);
+    
+    void
+    SetCancelCallback (lldb::ExpressionCancelCallback callback, void *baton);
 
 protected:
 

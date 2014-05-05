@@ -1456,7 +1456,7 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                     options.SetTryAllThreads(true);
                     options.SetTimeoutUsec(0);
                     
-                    ExecutionResults expr_result = target->EvaluateExpression (expr_str.c_str(), 
+                    ExpressionResults expr_result = target->EvaluateExpression (expr_str.c_str(), 
                                                                                exe_ctx.GetFramePtr(),
                                                                                expr_result_valobj_sp,
                                                                                options);
@@ -1499,6 +1499,11 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                                 case eExecutionSetupError: 
                                     error.SetErrorStringWithFormat("expression setup error for the expression '%s'", expr_str.c_str());
                                     break;
+                                case eExecutionParseError:
+                                    error.SetErrorStringWithFormat ("expression parse error for the expression '%s'", expr_str.c_str());
+                                    break;
+                                case eExecutionResultUnavailable:
+                                    error.SetErrorStringWithFormat ("expression error fetching result for the expression '%s'", expr_str.c_str());
                                 case eExecutionCompleted:
                                     break;
                                 case eExecutionDiscarded:

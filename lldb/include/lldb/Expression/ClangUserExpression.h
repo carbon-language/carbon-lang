@@ -144,7 +144,7 @@ public:
     /// @return
     ///     A Process::Execution results value.
     //------------------------------------------------------------------
-    ExecutionResults
+    lldb::ExpressionResults
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
              const EvaluateExpressionOptions& options,
@@ -296,9 +296,9 @@ public:
     ///     fails to parse, run, or evaluated.
     ///
     /// @result
-    ///      A Process::ExecutionResults value.  eExecutionCompleted for success.
+    ///      A Process::ExpressionResults value.  eExecutionCompleted for success.
     //------------------------------------------------------------------
-    static ExecutionResults
+    static lldb::ExpressionResults
     Evaluate (ExecutionContext &exe_ctx,
               const EvaluateExpressionOptions& options,
               const char *expr_cstr,

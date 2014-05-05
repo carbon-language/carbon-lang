@@ -200,6 +200,22 @@ namespace lldb {
 
 
     //----------------------------------------------------------------------
+    // The results of expression evaluation:
+    //----------------------------------------------------------------------
+    typedef enum ExpressionResults
+    {
+        eExecutionCompleted = 0,
+        eExecutionSetupError,
+        eExecutionParseError,
+        eExecutionDiscarded,
+        eExecutionInterrupted,
+        eExecutionHitBreakpoint,
+        eExecutionTimedOut,
+        eExecutionResultUnavailable,
+        eExecutionStoppedForDebug
+    } ExpressionResults;
+
+    //----------------------------------------------------------------------
     // Connection Status Types
     //----------------------------------------------------------------------
     typedef enum ConnectionStatus
@@ -218,7 +234,8 @@ namespace lldb {
         eErrorTypeInvalid,
         eErrorTypeGeneric,      ///< Generic errors that can be any value.
         eErrorTypeMachKernel,   ///< Mach kernel error codes.
-        eErrorTypePOSIX         ///< POSIX error codes.
+        eErrorTypePOSIX,        ///< POSIX error codes.
+        eErrorTypeExpression    ///< These are from the ExpressionResults enum.
     } ErrorType;
 
 
@@ -753,6 +770,21 @@ namespace lldb {
         eQueueKindSerial,
         eQueueKindConcurrent
     } QueueKind;
+    
+    //----------------------------------------------------------------------
+    // Expression Evaluation Stages
+    // These are the cancellable stages of expression evaluation, passed to the
+    // expression evaluation callback, so that you can interrupt expression
+    // evaluation at the various points in its lifecycle.
+    //----------------------------------------------------------------------
+    typedef enum ExpressionEvaluationPhase
+    {
+        eExpressionEvaluationParse = 0,
+        eExpressionEvaluationIRGen,
+        eExpressionEvaluationExecution,
+        eExpressionEvaluationComplete
+    } ExpressionEvaluationPhase;
+    
 
 } // namespace lldb
 

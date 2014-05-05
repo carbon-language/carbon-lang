@@ -1256,7 +1256,7 @@ protected:
         options.SetTryAllThreads(true);
         options.SetTimeoutUsec(0);
         
-        ExecutionResults expr_result = target->EvaluateExpression (expr, 
+        ExpressionResults expr_result = target->EvaluateExpression (expr, 
                                                                    frame, 
                                                                    valobj_sp,
                                                                    options);

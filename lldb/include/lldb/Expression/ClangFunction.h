@@ -253,9 +253,9 @@ public:
     ///     The result value will be put here after running the function.
     ///
     /// @return
-    ///     Returns one of the ExecutionResults enum indicating function call status.
+    ///     Returns one of the ExpressionResults enum indicating function call status.
     //------------------------------------------------------------------
-    ExecutionResults 
+    lldb::ExpressionResults
     ExecuteFunction(ExecutionContext &exe_ctx, 
                     lldb::addr_t *args_addr_ptr, 
                     const EvaluateExpressionOptions &options,

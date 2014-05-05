@@ -204,7 +204,9 @@ public:
         m_generate_debug_info(false),
         m_use_dynamic(lldb::eNoDynamicValues),
         m_timeout_usec(default_timeout),
-        m_one_thread_timeout_usec(0)
+        m_one_thread_timeout_usec(0),
+        m_cancel_callback (nullptr),
+        m_cancel_callback_baton (nullptr)
     {
     }
     
@@ -377,6 +379,22 @@ public:
     {
         m_trap_exceptions = b;
     }
+    
+    void
+    SetCancelCallback (lldb::ExpressionCancelCallback callback, void *baton)
+    {
+        m_cancel_callback_baton = baton;
+        m_cancel_callback = callback;
+    }
+    
+    bool
+    InvokeCancelCallback (lldb::ExpressionEvaluationPhase phase) const
+    {
+        if (m_cancel_callback == nullptr)
+            return false;
+        else
+            return m_cancel_callback (phase, m_cancel_callback_baton);
+    }
 
 private:
     ExecutionPolicy m_execution_policy;
@@ -393,6 +411,8 @@ private:
     lldb::DynamicValueType m_use_dynamic;
     uint32_t m_timeout_usec;
     uint32_t m_one_thread_timeout_usec;
+    lldb::ExpressionCancelCallback m_cancel_callback;
+    void *m_cancel_callback_baton;
 };
 
 //----------------------------------------------------------------------
@@ -1117,7 +1137,7 @@ public:
     // we provide a way for expressions to be evaluated from the Target itself.
     // If an expression is going to be run, then it should have a frame filled
     // in in th execution context. 
-    ExecutionResults
+    lldb::ExpressionResults
     EvaluateExpression (const char *expression,
                         StackFrame *frame,
                         lldb::ValueObjectSP &result_valobj_sp,

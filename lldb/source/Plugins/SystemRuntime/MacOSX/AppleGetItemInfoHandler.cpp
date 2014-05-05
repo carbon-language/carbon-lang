@@ -363,13 +363,13 @@ AppleGetItemInfoHandler::GetItemInfo (Thread &thread, uint64_t item, addr_t page
     }
 
 
-    ExecutionResults func_call_ret;
+    ExpressionResults func_call_ret;
     Value results;
     func_call_ret =  m_get_item_info_function->ExecuteFunction (exe_ctx, &args_addr, options, errors, results);
     if (func_call_ret != eExecutionCompleted || !error.Success())
     {
         if (log)
-            log->Printf ("Unable to call __introspection_dispatch_queue_item_get_info(), got ExecutionResults %d, error contains %s", func_call_ret, error.AsCString(""));
+            log->Printf ("Unable to call __introspection_dispatch_queue_item_get_info(), got ExpressionResults %d, error contains %s", func_call_ret, error.AsCString(""));
         error.SetErrorString ("Unable to call __introspection_dispatch_queue_get_item_info() for list of queues");
         return return_value;
     }

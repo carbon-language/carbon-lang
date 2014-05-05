@@ -1855,7 +1855,7 @@ Target::GetTargetFromContexts (const ExecutionContext *exe_ctx_ptr, const Symbol
     return target;
 }
 
-ExecutionResults
+ExpressionResults
 Target::EvaluateExpression
 (
     const char *expr_cstr,
@@ -1866,7 +1866,7 @@ Target::EvaluateExpression
 {
     result_valobj_sp.reset();
     
-    ExecutionResults execution_results = eExecutionSetupError;
+    ExpressionResults execution_results = eExecutionSetupError;
 
     if (expr_cstr == NULL || expr_cstr[0] == '\0')
         return execution_results;

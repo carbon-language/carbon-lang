@@ -367,13 +367,13 @@ AppleGetQueuesHandler::GetCurrentQueues (Thread &thread, addr_t page_to_free, ui
     options.SetTryAllThreads (false);
     thread.CalculateExecutionContext (exe_ctx);
 
-    ExecutionResults func_call_ret;
+    ExpressionResults func_call_ret;
     Value results;
     func_call_ret =  m_get_queues_function->ExecuteFunction (exe_ctx, &args_addr, options, errors, results);
     if (func_call_ret != eExecutionCompleted || !error.Success())
     {
         if (log)
-            log->Printf ("Unable to call introspection_get_dispatch_queues(), got ExecutionResults %d, error contains %s", func_call_ret, error.AsCString(""));
+            log->Printf ("Unable to call introspection_get_dispatch_queues(), got ExpressionResults %d, error contains %s", func_call_ret, error.AsCString(""));
         error.SetErrorString ("Unable to call introspection_get_dispatch_queues() for list of queues");
         return return_value;
     }

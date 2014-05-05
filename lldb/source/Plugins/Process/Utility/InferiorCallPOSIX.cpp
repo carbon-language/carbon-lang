@@ -117,7 +117,7 @@ lldb_private::InferiorCallMmap (Process *process,
                     {
                         ExecutionContext exe_ctx;
                         frame->CalculateExecutionContext (exe_ctx);
-                        ExecutionResults result = process->RunThreadPlan (exe_ctx,
+                        ExpressionResults result = process->RunThreadPlan (exe_ctx,
                                                                           call_plan_sp,
                                                                           options,
                                                                           error_strm);
@@ -202,7 +202,7 @@ lldb_private::InferiorCallMunmap (Process *process,
                     {
                         ExecutionContext exe_ctx;
                         frame->CalculateExecutionContext (exe_ctx);
-                        ExecutionResults result = process->RunThreadPlan (exe_ctx,
+                        ExpressionResults result = process->RunThreadPlan (exe_ctx,
                                                                           call_plan_sp,
                                                                           options,
                                                                           error_strm);
@@ -260,7 +260,7 @@ lldb_private::InferiorCall (Process *process,
         {
             ExecutionContext exe_ctx;
             frame->CalculateExecutionContext (exe_ctx);
-            ExecutionResults result = process->RunThreadPlan (exe_ctx,
+            ExpressionResults result = process->RunThreadPlan (exe_ctx,
                                                               call_plan_sp,
                                                               options,
                                                               error_strm);

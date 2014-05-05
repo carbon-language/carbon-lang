@@ -264,6 +264,35 @@ Error::SetMachError (uint32_t err)
     m_string.clear();
 }
 
+void
+Error::SetExpressionError (lldb::ExpressionResults result, const char *mssg)
+{
+    m_code = result;
+    m_type = eErrorTypeExpression;
+    m_string = mssg;
+}
+
+int
+Error::SetExpressionErrorWithFormat (lldb::ExpressionResults result, const char *format, ...)
+{
+    int length = 0;
+    
+    if (format && format[0])
+    {
+        va_list args;
+        va_start (args, format);
+        length = SetErrorStringWithVarArg (format, args);
+        va_end (args);
+    }
+    else
+    {
+        m_string.clear();
+    }
+    m_code = result;
+    m_type = eErrorTypeExpression;
+    return length;
+}
+
 //----------------------------------------------------------------------
 // Set accesssor for the error value and type.
 //----------------------------------------------------------------------

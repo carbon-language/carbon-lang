@@ -5037,13 +5037,13 @@ Process::SettingsTerminate ()
     Thread::SettingsTerminate ();
 }
 
-ExecutionResults
+ExpressionResults
 Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         lldb::ThreadPlanSP &thread_plan_sp,
                         const EvaluateExpressionOptions &options,
                         Stream &errors)
 {
-    ExecutionResults return_value = eExecutionSetupError;
+    ExpressionResults return_value = eExecutionSetupError;
 
     if (thread_plan_sp.get() == NULL)
     {
@@ -5939,7 +5939,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 }
 
 const char *
-Process::ExecutionResultAsCString (ExecutionResults result)
+Process::ExecutionResultAsCString (ExpressionResults result)
 {
     const char *result_name;
     
@@ -5959,6 +5959,12 @@ Process::ExecutionResultAsCString (ExecutionResults result)
             break;
         case eExecutionSetupError:
             result_name = "eExecutionSetupError";
+            break;
+        case eExecutionParseError:
+            result_name = "eExecutionParseError";
+            break;
+        case eExecutionResultUnavailable:
+            result_name = "eExecutionResultUnavailable";
             break;
         case eExecutionTimedOut:
             result_name = "eExecutionTimedOut";

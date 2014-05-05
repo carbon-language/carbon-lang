@@ -149,6 +149,12 @@ SBExpressionOptions::SetTrapExceptions (bool trap_exceptions)
     m_opaque_ap->SetTrapExceptions (trap_exceptions);
 }
 
+void
+SBExpressionOptions::SetCancelCallback (lldb::ExpressionCancelCallback callback, void *baton)
+{
+    m_opaque_ap->SetCancelCallback (callback, baton);
+}
+
 EvaluateExpressionOptions *
 SBExpressionOptions::get() const
 {

@@ -798,7 +798,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
     return true;
 }        
 
-ExecutionResults
+lldb::ExpressionResults
 ClangUserExpression::Execute (Stream &error_stream,
                               ExecutionContext &exe_ctx,
                               const EvaluateExpressionOptions& options,
@@ -819,7 +819,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         if (!PrepareToExecuteJITExpression (error_stream, exe_ctx, struct_address, object_ptr, cmd_ptr))
         {
             error_stream.Printf("Errored out in %s, couldn't PrepareToExecuteJITExpression", __FUNCTION__);
-            return eExecutionSetupError;
+            return lldb::eExecutionSetupError;
         }
         
         lldb::addr_t function_stack_bottom = LLDB_INVALID_ADDRESS;
@@ -833,7 +833,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             if (!module || !function)
             {
                 error_stream.Printf("Supposed to interpret, but nothing is there");
-                return eExecutionSetupError;
+                return lldb::eExecutionSetupError;
             }
 
             Error interpreter_error;
@@ -864,7 +864,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             if (!interpreter_error.Success())
             {
                 error_stream.Printf("Supposed to interpret, but failed: %s", interpreter_error.AsCString());
-                return eExecutionDiscarded;
+                return lldb::eExecutionDiscarded;
             }
         }
         else
@@ -872,7 +872,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             if (!exe_ctx.HasThreadScope())
             {
                 error_stream.Printf("ClangUserExpression::Execute called with no thread selected.");
-                return eExecutionSetupError;
+                return lldb::eExecutionSetupError;
             }
                 
             Address wrapper_address (m_jit_start_addr);
@@ -894,7 +894,7 @@ ClangUserExpression::Execute (Stream &error_stream,
                                                                               shared_ptr_to_me));
             
             if (!call_plan_sp || !call_plan_sp->ValidatePlan (&error_stream))
-                return eExecutionSetupError;
+                return lldb::eExecutionSetupError;
             
             lldb::addr_t function_stack_pointer = static_cast<ThreadPlanCallFunction *>(call_plan_sp.get())->GetFunctionStackPointer();
 
@@ -907,7 +907,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             if (exe_ctx.GetProcessPtr())
                 exe_ctx.GetProcessPtr()->SetRunningUserExpression(true);
                 
-            ExecutionResults execution_result = exe_ctx.GetProcessRef().RunThreadPlan (exe_ctx, 
+            lldb::ExpressionResults execution_result = exe_ctx.GetProcessRef().RunThreadPlan (exe_ctx,
                                                                                        call_plan_sp,
                                                                                        options,
                                                                                        error_stream);
@@ -918,7 +918,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             if (log)
                 log->Printf("-- [ClangUserExpression::Execute] Execution of expression completed --");
 
-            if (execution_result == eExecutionInterrupted || execution_result == eExecutionHitBreakpoint)
+            if (execution_result == lldb::eExecutionInterrupted || execution_result == lldb::eExecutionHitBreakpoint)
             {
                 const char *error_desc = NULL;
                 
@@ -933,21 +933,23 @@ ClangUserExpression::Execute (Stream &error_stream,
                 else
                     error_stream.PutCString ("Execution was interrupted.");
                     
-                if ((execution_result == eExecutionInterrupted && options.DoesUnwindOnError())
-                    || (execution_result == eExecutionHitBreakpoint && options.DoesIgnoreBreakpoints()))
+                if ((execution_result == lldb::eExecutionInterrupted && options.DoesUnwindOnError())
+                    || (execution_result == lldb::eExecutionHitBreakpoint && options.DoesIgnoreBreakpoints()))
                     error_stream.PutCString ("\nThe process has been returned to the state before expression evaluation.");
                 else
-                    error_stream.PutCString ("\nThe process has been left at the point where it was interrupted, use \"thread return -x\" to return to the state before expression evaluation.");
+                    error_stream.PutCString ("\nThe process has been left at the point where it was interrupted, "
+                                             "use \"thread return -x\" to return to the state before expression evaluation.");
 
                 return execution_result;
             }
-            else if (execution_result == eExecutionStoppedForDebug)
+            else if (execution_result == lldb::eExecutionStoppedForDebug)
             {
-                    error_stream.PutCString ("Execution was halted at the first instruction of the expression function because \"debug\" was requested.\n"
+                    error_stream.PutCString ("Execution was halted at the first instruction of the expression "
+                                             "function because \"debug\" was requested.\n"
                                              "Use \"thread return -x\" to return to the state before expression evaluation.");
                     return execution_result;
             }
-            else if (execution_result != eExecutionCompleted)
+            else if (execution_result != lldb::eExecutionCompleted)
             {
                 error_stream.Printf ("Couldn't execute function; result was %s\n", Process::ExecutionResultAsCString (execution_result));
                 return execution_result;
@@ -956,21 +958,21 @@ ClangUserExpression::Execute (Stream &error_stream,
         
         if  (FinalizeJITExecution (error_stream, exe_ctx, result, function_stack_bottom, function_stack_top))
         {
-            return eExecutionCompleted;
+            return lldb::eExecutionCompleted;
         }
         else
         {
-            return eExecutionSetupError;
+            return lldb::eExecutionResultUnavailable;
         }
     }
     else
     {
         error_stream.Printf("Expression can't be run, because there is no JIT compiled function");
-        return eExecutionSetupError;
+        return lldb::eExecutionSetupError;
     }
 }
 
-ExecutionResults
+lldb::ExpressionResults
 ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                const EvaluateExpressionOptions& options,
                                const char *expr_cstr,
@@ -983,7 +985,7 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     lldb_private::ExecutionPolicy execution_policy = options.GetExecutionPolicy();
     const lldb::LanguageType language = options.GetLanguage();
     const ResultType desired_type = options.DoesCoerceToId() ? ClangUserExpression::eResultTypeId : ClangUserExpression::eResultTypeAny;
-    ExecutionResults execution_results = eExecutionSetupError;
+    lldb::ExpressionResults execution_results = lldb::eExecutionSetupError;
     
     Process *process = exe_ctx.GetProcessPtr();
 
@@ -1013,6 +1015,13 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
     const bool keep_expression_in_memory = true;
     const bool generate_debug_info = options.GetGenerateDebugInfo();
     
+    if (options.InvokeCancelCallback (lldb::eExpressionEvaluationParse))
+    {
+        error.SetErrorString ("expression interrupted by callback before parse");
+        result_valobj_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(), error);
+        return lldb::eExecutionInterrupted;
+    }
+    
     if (!user_expression_sp->Parse (error_stream,
                                     exe_ctx,
                                     execution_policy,
@@ -1020,9 +1029,9 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                     generate_debug_info))
     {
         if (error_stream.GetString().empty())
-            error.SetErrorString ("expression failed to parse, unknown error");
+            error.SetExpressionError (lldb::eExecutionParseError, "expression failed to parse, unknown error");
         else
-            error.SetErrorString (error_stream.GetString().c_str());
+            error.SetExpressionError (lldb::eExecutionParseError, error_stream.GetString().c_str());
     }
     else
     {
@@ -1035,10 +1044,17 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                 log->Printf("== [ClangUserExpression::Evaluate] Expression may not run, but is not constant ==");
             
             if (error_stream.GetString().empty())
-                error.SetErrorString ("expression needed to run but couldn't");
+                error.SetExpressionError (lldb::eExecutionSetupError, "expression needed to run but couldn't");
         }
         else
-        {    
+        {
+            if (options.InvokeCancelCallback (lldb::eExpressionEvaluationExecution))
+            {
+                error.SetExpressionError (lldb::eExecutionInterrupted, "expression interrupted by callback before execution");
+                result_valobj_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(), error);
+                return lldb::eExecutionInterrupted;
+            }
+            
             error_stream.GetString().clear();
             
             if (log)
@@ -1050,15 +1066,15 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                                              user_expression_sp,
                                                              expr_result);
             
-            if (execution_results != eExecutionCompleted)
+            if (execution_results != lldb::eExecutionCompleted)
             {
                 if (log)
                     log->Printf("== [ClangUserExpression::Evaluate] Execution completed abnormally ==");
                 
                 if (error_stream.GetString().empty())
-                    error.SetErrorString ("expression failed to execute, unknown error");
+                    error.SetExpressionError (execution_results, "expression failed to execute, unknown error");
                 else
-                    error.SetErrorString (error_stream.GetString().c_str());
+                    error.SetExpressionError (execution_results, error_stream.GetString().c_str());
             }
             else 
             {
@@ -1067,7 +1083,8 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                     result_valobj_sp = expr_result->GetValueObject();
                     
                     if (log)
-                        log->Printf("== [ClangUserExpression::Evaluate] Execution completed normally with result %s ==", result_valobj_sp->GetValueAsCString());
+                        log->Printf("== [ClangUserExpression::Evaluate] Execution completed normally with result %s ==",
+                                    result_valobj_sp->GetValueAsCString());
                 }
                 else
                 {
@@ -1078,6 +1095,12 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                 }
             }
         }
+    }
+    
+    if (options.InvokeCancelCallback(lldb::eExpressionEvaluationComplete))
+    {
+        error.SetExpressionError (lldb::eExecutionInterrupted, "expression interrupted by callback after complete");
+        return lldb::eExecutionInterrupted;
     }
     
     if (result_valobj_sp.get() == NULL)
