@@ -7367,6 +7367,36 @@ TEST_F(FormatTest, StroustrupBraceBreaking) {
                "}\n"
                "}",
                BreakBeforeBrace);
+
+  verifyFormat("#ifdef _DEBUG\n"
+               "int foo(int i = 0)\n"
+               "#else\n"
+               "int foo(int i = 5)\n"
+               "#endif\n"
+               "{\n"
+               "  return i;\n"
+               "}",
+               BreakBeforeBrace);
+
+  verifyFormat("void foo() {}\n"
+               "void bar()\n"
+               "#ifdef _DEBUG\n"
+               "{\n"
+               "  foo();\n"
+               "}\n"
+               "#else\n"
+               "{\n"
+               "}\n"
+               "#endif",
+               BreakBeforeBrace);
+
+  verifyFormat("void foobar() { int i = 5; }\n"
+               "#ifdef _DEBUG\n"
+               "void bar() {}\n"
+               "#else\n"
+               "void bar() { foobar(); }\n"
+               "#endif",
+               BreakBeforeBrace);
 }
 
 TEST_F(FormatTest, AllmanBraceBreaking) {
@@ -7455,6 +7485,36 @@ TEST_F(FormatTest, AllmanBraceBreaking) {
                "  id _extraIvar;\n"
                "}\n"
                "@end\n",
+               BreakBeforeBrace);
+
+  verifyFormat("#ifdef _DEBUG\n"
+               "int foo(int i = 0)\n"
+               "#else\n"
+               "int foo(int i = 5)\n"
+               "#endif\n"
+               "{\n"
+               "  return i;\n"
+               "}",
+               BreakBeforeBrace);
+
+  verifyFormat("void foo() {}\n"
+               "void bar()\n"
+               "#ifdef _DEBUG\n"
+               "{\n"
+               "  foo();\n"
+               "}\n"
+               "#else\n"
+               "{\n"
+               "}\n"
+               "#endif",
+               BreakBeforeBrace);
+
+  verifyFormat("void foobar() { int i = 5; }\n"
+               "#ifdef _DEBUG\n"
+               "void bar() {}\n"
+               "#else\n"
+               "void bar() { foobar(); }\n"
+               "#endif",
                BreakBeforeBrace);
 
   BreakBeforeBrace.ColumnLimit = 19;
@@ -7584,6 +7644,36 @@ TEST_F(FormatTest, GNUBraceBreaking) {
                "  id _extraIvar;\n"
                "}\n"
                "@end\n",
+               GNUBraceStyle);
+
+  verifyFormat("#ifdef _DEBUG\n"
+               "int foo(int i = 0)\n"
+               "#else\n"
+               "int foo(int i = 5)\n"
+               "#endif\n"
+               "{\n"
+               "  return i;\n"
+               "}",
+               GNUBraceStyle);
+
+  verifyFormat("void foo() {}\n"
+               "void bar()\n"
+               "#ifdef _DEBUG\n"
+               "{\n"
+               "  foo();\n"
+               "}\n"
+               "#else\n"
+               "{\n"
+               "}\n"
+               "#endif",
+               GNUBraceStyle);
+
+  verifyFormat("void foobar() { int i = 5; }\n"
+               "#ifdef _DEBUG\n"
+               "void bar() {}\n"
+               "#else\n"
+               "void bar() { foobar(); }\n"
+               "#endif",
                GNUBraceStyle);
 }
 TEST_F(FormatTest, CatchExceptionReferenceBinding) {

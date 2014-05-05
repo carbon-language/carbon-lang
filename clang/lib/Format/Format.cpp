@@ -532,7 +532,7 @@ public:
                 ? 0
                 : Limit - TheLine->Last->TotalLength;
 
-    if (I + 1 == E || I[1]->Type == LT_Invalid)
+    if (I + 1 == E || I[1]->Type == LT_Invalid || I[1]->First->MustBreakBefore)
       return 0;
 
     // FIXME: TheLine->Level != 0 might or might not be the right check to do.
@@ -664,7 +664,7 @@ private:
 
       // Second, check that the next line does not contain any braces - if it
       // does, readability declines when putting it into a single line.
-      if (I[1]->Last->Type == TT_LineComment || Tok->MustBreakBefore)
+      if (I[1]->Last->Type == TT_LineComment)
         return 0;
       do {
         if (Tok->isOneOf(tok::l_brace, tok::r_brace))
@@ -674,8 +674,7 @@ private:
 
       // Last, check that the third line contains a single closing brace.
       Tok = I[2]->First;
-      if (Tok->getNextNonComment() != NULL || Tok->isNot(tok::r_brace) ||
-          Tok->MustBreakBefore)
+      if (Tok->getNextNonComment() != NULL || Tok->isNot(tok::r_brace))
         return 0;
 
       return 2;
@@ -698,6 +697,8 @@ private:
 
   bool nextTwoLinesFitInto(SmallVectorImpl<AnnotatedLine *>::const_iterator I,
                            unsigned Limit) {
+    if (I[1]->First->MustBreakBefore || I[2]->First->MustBreakBefore)
+      return false;
     return 1 + I[1]->Last->TotalLength + 1 + I[2]->Last->TotalLength <= Limit;
   }
 
