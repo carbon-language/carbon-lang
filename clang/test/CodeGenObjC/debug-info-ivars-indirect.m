@@ -29,4 +29,18 @@ void gorf (struct S* s) {
     int _b = s->i->b;
 }
 
-// CHECK: {{.*}} [ DW_TAG_member ] [b] [line 24, size 32, align 32, offset 0] [from int]
+// CHECK: ; [ DW_TAG_member ] [b]
+
+I *source();
+
+@interface I()
+{
+    @public int c;
+}
+@end
+
+// CHECK: ; [ DW_TAG_member ] [c]
+
+void use() {
+    int _c = source()->c;
+}
