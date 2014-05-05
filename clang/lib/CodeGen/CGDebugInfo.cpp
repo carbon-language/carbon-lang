@@ -2093,9 +2093,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
   // types. We should probably just pull that out as a special case for the
   // "else" block below & skip the otherwise needless lookup.
   llvm::DIType TC = getTypeOrNull(Ty);
-  if (TC && TC.isForwardDecl())
-    ReplaceMap.push_back(std::make_pair(TyPtr, static_cast<llvm::Value*>(TC)));
-  else if (ObjCInterfaceDecl* Decl = getObjCInterfaceDecl(Ty)) {
+  if (ObjCInterfaceDecl *Decl = getObjCInterfaceDecl(Ty)) {
     // Interface types may have elements added to them by a
     // subsequent implementation or extension, so we keep them in
     // the ObjCInterfaceCache together with a checksum. Instead of
@@ -3382,21 +3380,17 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl) {
 void CGDebugInfo::finalize() {
   for (std::vector<std::pair<void *, llvm::WeakVH> >::const_iterator VI
          = ReplaceMap.begin(), VE = ReplaceMap.end(); VI != VE; ++VI) {
-    llvm::DIType Ty, RepTy;
-    // Verify that the debug info still exists.
-    if (llvm::Value *V = VI->second)
-      Ty = llvm::DIType(cast<llvm::MDNode>(V));
+    assert(VI->second);
+    llvm::DIType Ty(cast<llvm::MDNode>(VI->second));
+    assert(Ty.isForwardDecl());
 
     llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
-      TypeCache.find(VI->first);
-    if (it != TypeCache.end()) {
-      // Verify that the debug info still exists.
-      if (llvm::Value *V = it->second)
-        RepTy = llvm::DIType(cast<llvm::MDNode>(V));
-    }
+        TypeCache.find(VI->first);
+    assert(it != TypeCache.end());
+    assert(it->second);
+    llvm::DIType RepTy(cast<llvm::MDNode>(it->second));
 
-    if (Ty && Ty.isForwardDecl() && RepTy)
-      Ty.replaceAllUsesWith(RepTy);
+    Ty.replaceAllUsesWith(RepTy);
   }
 
   // We keep our own list of retained types, because we need to look
