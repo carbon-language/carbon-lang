@@ -2107,14 +2107,11 @@ CFGBlock *CFGBuilder::VisitIfStmt(IfStmt *I) {
   // blocks will be pointed to be "Block".
   CFGBlock *LastBlock = addStmt(I->getCond());
 
-  // Finally, if the IfStmt contains a condition variable, add both the IfStmt
-  // and the condition variable initialization to the CFG.
-  if (VarDecl *VD = I->getConditionVariable()) {
-    if (Expr *Init = VD->getInit()) {
-      autoCreateBlock();
-      appendStmt(Block, I->getConditionVariableDeclStmt());
-      LastBlock = addStmt(Init);
-    }
+  // Finally, if the IfStmt contains a condition variable, add it and its
+  // initializer to the CFG.
+  if (const DeclStmt* DS = I->getConditionVariableDeclStmt()) {
+    autoCreateBlock();
+    LastBlock = addStmt(const_cast<DeclStmt *>(DS));
   }
 
   return LastBlock;

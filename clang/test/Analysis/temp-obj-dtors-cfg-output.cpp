@@ -611,18 +611,18 @@ int testConsistencyNestedNormalReturn(bool value) {
 // CHECK:   [B5 (ENTRY)]
 // CHECK:     Succs (1): B4
 // CHECK:   [B1]
-// CHECK:     1: [B4.7].~C() (Implicit destructor)
+// CHECK:     1: [B4.6].~C() (Implicit destructor)
 // CHECK:     Succs (1): B0
 // CHECK:   [B2]
 // CHECK:     1: 0
 // CHECK:     2: return [B2.1];
-// CHECK:     3: [B4.7].~C() (Implicit destructor)
+// CHECK:     3: [B4.6].~C() (Implicit destructor)
 // CHECK:     Preds (1): B4
 // CHECK:     Succs (1): B0
 // CHECK:   [B3]
 // CHECK:     1: 1
 // CHECK:     2: return [B3.1];
-// CHECK:     3: [B4.7].~C() (Implicit destructor)
+// CHECK:     3: [B4.6].~C() (Implicit destructor)
 // CHECK:     Preds (1): B4
 // CHECK:     Succs (1): B0
 // CHECK:   [B4]
@@ -631,8 +631,8 @@ int testConsistencyNestedNormalReturn(bool value) {
 // CHECK:     3: [B4.2] (ImplicitCastExpr, NoOp, const struct C)
 // CHECK:     4: [B4.3]
 // CHECK:     5: [B4.4] (CXXConstructExpr, struct C)
-// CHECK:     6: ~C() (Temporary object destructor)
-// CHECK:     7: C c = C();
+// CHECK:     6: C c = C();
+// CHECK:     7: ~C() (Temporary object destructor)
 // CHECK:     8: c
 // CHECK:     9: [B4.8].operator bool
 // CHECK:    10: [B4.8]
