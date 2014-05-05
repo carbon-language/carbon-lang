@@ -221,11 +221,3 @@ entry:
  %double2float.i = fptrunc <4 x double> %0 to <4 x float>
  ret <4 x float> %double2float.i
 }
-
-define <2 x i64> @test_insert_64_zext(<2 x i64> %i) {
-; CHECK-LABEL: test_insert_64_zext
-; CHECK-NOT: xor
-; CHECK: movq
-  %1 = shufflevector <2 x i64> %i, <2 x i64> <i64 0, i64 undef>, <2 x i32> <i32 0, i32 2>
-  ret <2 x i64> %1
-}
