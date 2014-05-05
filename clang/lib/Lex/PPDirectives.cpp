@@ -611,22 +611,32 @@ const FileEntry *Preprocessor::LookupFile(
   // to one of the headers on the #include stack.  Walk the list of the current
   // headers on the #include stack and pass them to HeaderInfo.
   if (IsFileLexer()) {
-    if ((CurFileEnt = SourceMgr.getFileEntryForID(CurPPLexer->getFileID())))
+    if ((CurFileEnt = SourceMgr.getFileEntryForID(CurPPLexer->getFileID()))) {
       if ((FE = HeaderInfo.LookupSubframeworkHeader(Filename, CurFileEnt,
                                                     SearchPath, RelativePath,
-                                                    SuggestedModule)))
+                                                    SuggestedModule))) {
+        if (SuggestedModule && !LangOpts.AsmPreprocessor)
+          HeaderInfo.getModuleMap().diagnoseHeaderInclusion(
+              getModuleForLocation(FilenameLoc), FilenameLoc, Filename, FE);
         return FE;
+      }
+    }
   }
 
   for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i) {
     IncludeStackInfo &ISEntry = IncludeMacroStack[e-i-1];
     if (IsFileLexer(ISEntry)) {
       if ((CurFileEnt =
-           SourceMgr.getFileEntryForID(ISEntry.ThePPLexer->getFileID())))
+           SourceMgr.getFileEntryForID(ISEntry.ThePPLexer->getFileID()))) {
         if ((FE = HeaderInfo.LookupSubframeworkHeader(
                 Filename, CurFileEnt, SearchPath, RelativePath,
-                SuggestedModule)))
+                SuggestedModule))) {
+          if (SuggestedModule && !LangOpts.AsmPreprocessor)
+            HeaderInfo.getModuleMap().diagnoseHeaderInclusion(
+                getModuleForLocation(FilenameLoc), FilenameLoc, Filename, FE);
           return FE;
+        }
+      }
     }
   }
 

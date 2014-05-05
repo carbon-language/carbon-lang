@@ -620,6 +620,14 @@ def error_use_of_private_header_outside_module : Error<
   "use of private header from outside its module: '%0'">;
 def error_undeclared_use_of_module : Error<
   "module %0 does not depend on a module exporting '%1'">;
+def warn_non_modular_include_in_framework_module : Warning<
+  "include of non-modular header inside framework module '%0'">,
+  InGroup<NonModularIncludeInFrameworkModule>, DefaultIgnore;
+def warn_non_modular_include_in_module : Warning<
+  "include of non-modular header inside module '%0'">,
+  InGroup<NonModularIncludeInModule>, DefaultIgnore;
+def warn_non_modular_include : Warning<
+  "include of non-modular header">, InGroup<NonModularInclude>, DefaultIgnore;
 
 def warn_header_guard : Warning<
   "%0 is used as a header guard here, followed by #define of a different macro">,

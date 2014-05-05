@@ -230,56 +230,57 @@ static bool violatesPrivateInclude(Module *RequestingModule,
          RequestedModule->getTopLevelModule() != RequestingModule;
 }
 
+static Module *getTopLevelOrNull(Module *M) {
+  return M ? M->getTopLevelModule() : nullptr;
+}
+
 void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
                                         SourceLocation FilenameLoc,
                                         StringRef Filename,
                                         const FileEntry *File) {
   // No errors for indirect modules. This may be a bit of a problem for modules
   // with no source files.
-  if (RequestingModule != SourceModule)
+  if (getTopLevelOrNull(RequestingModule) != getTopLevelOrNull(SourceModule))
     return;
 
   if (RequestingModule)
     resolveUses(RequestingModule, /*Complain=*/false);
 
-  HeadersMap::iterator Known = findKnownHeader(File);
-  if (Known == Headers.end()) {
-    if (LangOpts.ModulesStrictDeclUse)
-      Diags.Report(FilenameLoc, diag::error_undeclared_use_of_module)
-          << RequestingModule->getFullModuleName() << Filename;
-    return;
-  }
-
+  bool Excluded = false;
   Module *Private = NULL;
   Module *NotUsed = NULL;
-  for (SmallVectorImpl<KnownHeader>::iterator I = Known->second.begin(),
-                                              E = Known->second.end();
-       I != E; ++I) {
-    // Excluded headers don't really belong to a module.
-    if (I->getRole() == ModuleMap::ExcludedHeader)
-      continue;
 
-    // If 'File' is part of 'RequestingModule' we can definitely include it.
-    if (I->getModule() == RequestingModule)
+  HeadersMap::iterator Known = findKnownHeader(File);
+  if (Known != Headers.end()) {
+    for (const KnownHeader &Header : Known->second) {
+      // Excluded headers don't really belong to a module.
+      if (Header.getRole() == ModuleMap::ExcludedHeader) {
+        Excluded = true;
+        continue;
+      }
+
+      // If 'File' is part of 'RequestingModule' we can definitely include it.
+      if (Header.getModule() == RequestingModule)
+        return;
+
+      // Remember private headers for later printing of a diagnostic.
+      if (violatesPrivateInclude(RequestingModule, File, Header.getRole(),
+                                 Header.getModule())) {
+        Private = Header.getModule();
+        continue;
+      }
+
+      // If uses need to be specified explicitly, we are only allowed to return
+      // modules that are explicitly used by the requesting module.
+      if (RequestingModule && LangOpts.ModulesDeclUse &&
+          !directlyUses(RequestingModule, Header.getModule())) {
+        NotUsed = Header.getModule();
+        continue;
+      }
+
+      // We have found a module that we can happily use.
       return;
-
-    // Remember private headers for later printing of a diagnostic.
-    if (violatesPrivateInclude(RequestingModule, File, I->getRole(),
-                               I->getModule())) {
-      Private = I->getModule();
-      continue;
     }
-
-    // If uses need to be specified explicitly, we are only allowed to return
-    // modules that are explicitly used by the requesting module.
-    if (RequestingModule && LangOpts.ModulesDeclUse &&
-        !directlyUses(RequestingModule, I->getModule())) {
-      NotUsed = I->getModule();
-      continue;
-    }
-
-    // We have found a module that we can happily use.
-    return;
   }
 
   // We have found a header, but it is private.
@@ -296,7 +297,22 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
     return;
   }
 
-  // Headers for which we have not found a module are fine to include.
+  if (Excluded || isHeaderInUmbrellaDirs(File))
+    return;
+
+  // At this point, only non-modular includes remain.
+
+  if (LangOpts.ModulesStrictDeclUse) {
+    Diags.Report(FilenameLoc, diag::error_undeclared_use_of_module)
+        << RequestingModule->getFullModuleName() << Filename;
+  } else if (RequestingModule) {
+    diag::kind DiagID = RequestingModule->getTopLevelModule()->IsFramework ?
+        diag::warn_non_modular_include_in_framework_module :
+        diag::warn_non_modular_include_in_module;
+    Diags.Report(FilenameLoc, DiagID) << RequestingModule->getFullModuleName();
+  } else {
+    Diags.Report(FilenameLoc, diag::warn_non_modular_include);
+  }
 }
 
 ModuleMap::KnownHeader

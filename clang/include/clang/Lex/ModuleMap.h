@@ -195,6 +195,13 @@ private:
   KnownHeader findHeaderInUmbrellaDirs(const FileEntry *File,
                     SmallVectorImpl<const DirectoryEntry *> &IntermediateDirs);
 
+  /// \brief A convenience method to determine if \p File is (possibly nested)
+  /// in an umbrella directory.
+  bool isHeaderInUmbrellaDirs(const FileEntry *File) {
+    SmallVector<const DirectoryEntry *, 2> IntermediateDirs;
+    return static_cast<bool>(findHeaderInUmbrellaDirs(File, IntermediateDirs));
+  }
+
 public:
   /// \brief Construct a new module map.
   ///
