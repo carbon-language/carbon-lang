@@ -1372,7 +1372,7 @@ SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &option
 
     Log *expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
-    ExpressionResults exe_results = eExecutionSetupError;
+    ExpressionResults exe_results = eExpressionSetupError;
     SBValue expr_result;
 
     if (expr == NULL || expr[0] == '\0')

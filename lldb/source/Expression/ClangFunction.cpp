@@ -334,7 +334,7 @@ ClangFunction::WriteFunctionArguments (ExecutionContext &exe_ctx,
         
     Error error;
     using namespace clang;
-    lldb::ExpressionResults return_value = lldb::eExecutionSetupError;
+    lldb::ExpressionResults return_value = lldb::eExpressionSetupError;
 
     Process *process = exe_ctx.GetProcessPtr();
 
@@ -511,7 +511,7 @@ ClangFunction::ExecuteFunction(
         Value &results)
 {
     using namespace clang;
-    lldb::ExpressionResults return_value = lldb::eExecutionSetupError;
+    lldb::ExpressionResults return_value = lldb::eExpressionSetupError;
     
     // ClangFunction::ExecuteFunction execution is always just to get the result.  Do make sure we ignore
     // breakpoints, unwind on error, and don't try to debug it.
@@ -528,12 +528,12 @@ ClangFunction::ExecuteFunction(
         args_addr = LLDB_INVALID_ADDRESS;
         
     if (CompileFunction(errors) != 0)
-        return lldb::eExecutionSetupError;
+        return lldb::eExpressionSetupError;
     
     if (args_addr == LLDB_INVALID_ADDRESS)
     {
         if (!InsertFunction(exe_ctx, args_addr, errors))
-            return lldb::eExecutionSetupError;
+            return lldb::eExpressionSetupError;
     }
 
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_EXPRESSIONS | LIBLLDB_LOG_STEP));
@@ -546,7 +546,7 @@ ClangFunction::ExecuteFunction(
                                                                   real_options,
                                                                   errors));
     if (!call_plan_sp)
-        return lldb::eExecutionSetupError;
+        return lldb::eExpressionSetupError;
         
     // We need to make sure we record the fact that we are running an expression here
     // otherwise this fact will fail to be recorded when fetching an Objective-C object description
@@ -560,7 +560,7 @@ ClangFunction::ExecuteFunction(
     
     if (log)
     {
-        if (return_value != lldb::eExecutionCompleted)
+        if (return_value != lldb::eExpressionCompleted)
         {
             log->Printf("== [ClangFunction::ExecuteFunction] Execution of \"%s\" completed abnormally ==", m_name.c_str());
         }
@@ -576,7 +576,7 @@ ClangFunction::ExecuteFunction(
     if (args_addr_ptr != NULL)
         *args_addr_ptr = args_addr;
     
-    if (return_value != lldb::eExecutionCompleted)
+    if (return_value != lldb::eExpressionCompleted)
         return return_value;
 
     FetchFunctionResults(exe_ctx, args_addr, results);
@@ -584,7 +584,7 @@ ClangFunction::ExecuteFunction(
     if (args_addr_ptr == NULL)
         DeallocateFunctionResults(exe_ctx, args_addr);
         
-    return lldb::eExecutionCompleted;
+    return lldb::eExpressionCompleted;
 }
 
 clang::ASTConsumer *

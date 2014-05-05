@@ -1461,7 +1461,7 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                                                                                expr_result_valobj_sp,
                                                                                options);
                     
-                    if (expr_result == eExecutionCompleted)
+                    if (expr_result == eExpressionCompleted)
                     {
                         Scalar scalar;
                         if (expr_result_valobj_sp->ResolveValue (scalar))
@@ -1496,29 +1496,29 @@ CommandInterpreter::PreprocessCommand (std::string &command)
 
                             switch (expr_result)
                             {
-                                case eExecutionSetupError: 
+                                case eExpressionSetupError: 
                                     error.SetErrorStringWithFormat("expression setup error for the expression '%s'", expr_str.c_str());
                                     break;
-                                case eExecutionParseError:
+                                case eExpressionParseError:
                                     error.SetErrorStringWithFormat ("expression parse error for the expression '%s'", expr_str.c_str());
                                     break;
-                                case eExecutionResultUnavailable:
+                                case eExpressionResultUnavailable:
                                     error.SetErrorStringWithFormat ("expression error fetching result for the expression '%s'", expr_str.c_str());
-                                case eExecutionCompleted:
+                                case eExpressionCompleted:
                                     break;
-                                case eExecutionDiscarded:
+                                case eExpressionDiscarded:
                                     error.SetErrorStringWithFormat("expression discarded for the expression '%s'", expr_str.c_str());
                                     break;
-                                case eExecutionInterrupted:
+                                case eExpressionInterrupted:
                                     error.SetErrorStringWithFormat("expression interrupted for the expression '%s'", expr_str.c_str());
                                     break;
-                                case eExecutionHitBreakpoint:
+                                case eExpressionHitBreakpoint:
                                     error.SetErrorStringWithFormat("expression hit breakpoint for the expression '%s'", expr_str.c_str());
                                     break;
-                                case eExecutionTimedOut:
+                                case eExpressionTimedOut:
                                     error.SetErrorStringWithFormat("expression timed out for the expression '%s'", expr_str.c_str());
                                     break;
-                                case eExecutionStoppedForDebug:
+                                case eExpressionStoppedForDebug:
                                     error.SetErrorStringWithFormat("expression stop at entry point for debugging for the expression '%s'", expr_str.c_str());
                                     break;
                             }

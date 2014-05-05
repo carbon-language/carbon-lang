@@ -370,7 +370,7 @@ AppleGetQueuesHandler::GetCurrentQueues (Thread &thread, addr_t page_to_free, ui
     ExpressionResults func_call_ret;
     Value results;
     func_call_ret =  m_get_queues_function->ExecuteFunction (exe_ctx, &args_addr, options, errors, results);
-    if (func_call_ret != eExecutionCompleted || !error.Success())
+    if (func_call_ret != eExpressionCompleted || !error.Success())
     {
         if (log)
             log->Printf ("Unable to call introspection_get_dispatch_queues(), got ExpressionResults %d, error contains %s", func_call_ret, error.AsCString(""));

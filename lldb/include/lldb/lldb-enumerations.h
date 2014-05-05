@@ -204,15 +204,15 @@ namespace lldb {
     //----------------------------------------------------------------------
     typedef enum ExpressionResults
     {
-        eExecutionCompleted = 0,
-        eExecutionSetupError,
-        eExecutionParseError,
-        eExecutionDiscarded,
-        eExecutionInterrupted,
-        eExecutionHitBreakpoint,
-        eExecutionTimedOut,
-        eExecutionResultUnavailable,
-        eExecutionStoppedForDebug
+        eExpressionCompleted = 0,
+        eExpressionSetupError,
+        eExpressionParseError,
+        eExpressionDiscarded,
+        eExpressionInterrupted,
+        eExpressionHitBreakpoint,
+        eExpressionTimedOut,
+        eExpressionResultUnavailable,
+        eExpressionStoppedForDebug
     } ExpressionResults;
 
     //----------------------------------------------------------------------

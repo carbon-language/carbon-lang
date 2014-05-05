@@ -371,7 +371,7 @@ AppleGetPendingItemsHandler::GetPendingItems (Thread &thread, addr_t queue, addr
     ExpressionResults func_call_ret;
     Value results;
     func_call_ret =  m_get_pending_items_function->ExecuteFunction (exe_ctx, &args_addr, options, errors, results);
-    if (func_call_ret != eExecutionCompleted || !error.Success())
+    if (func_call_ret != eExpressionCompleted || !error.Success())
     {
         if (log)
             log->Printf ("Unable to call __introspection_dispatch_queue_get_pending_items(), got ExpressionResults %d, error contains %s", func_call_ret, error.AsCString(""));

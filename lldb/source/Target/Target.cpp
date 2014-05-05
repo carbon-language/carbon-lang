@@ -1866,7 +1866,7 @@ Target::EvaluateExpression
 {
     result_valobj_sp.reset();
     
-    ExpressionResults execution_results = eExecutionSetupError;
+    ExpressionResults execution_results = eExpressionSetupError;
 
     if (expr_cstr == NULL || expr_cstr[0] == '\0')
         return execution_results;
@@ -1901,7 +1901,7 @@ Target::EvaluateExpression
     if (persistent_var_sp)
     {
         result_valobj_sp = persistent_var_sp->GetValueObject ();
-        execution_results = eExecutionCompleted;
+        execution_results = eExpressionCompleted;
     }
     else
     {

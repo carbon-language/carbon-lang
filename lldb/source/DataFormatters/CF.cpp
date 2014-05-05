@@ -85,7 +85,7 @@ lldb_private::formatters::CFBagSummaryProvider (ValueObject& valobj, Stream& str
         ValueObjectSP count_sp;
         StreamString expr;
         expr.Printf("(int)CFBagGetCount((void*)0x%" PRIx64 ")",valobj.GetPointerValue());
-        if (process_sp->GetTarget().EvaluateExpression(expr.GetData(), frame_sp.get(), count_sp) != eExecutionCompleted)
+        if (process_sp->GetTarget().EvaluateExpression(expr.GetData(), frame_sp.get(), count_sp) != eExpressionCompleted)
             return false;
         if (!count_sp)
             return false;
@@ -279,7 +279,7 @@ lldb_private::formatters::CFBinaryHeapSummaryProvider (ValueObject& valobj, Stre
         ValueObjectSP count_sp;
         StreamString expr;
         expr.Printf("(int)CFBinaryHeapGetCount((void*)0x%" PRIx64 ")",valobj.GetPointerValue());
-        if (process_sp->GetTarget().EvaluateExpression(expr.GetData(), frame_sp.get(), count_sp) != eExecutionCompleted)
+        if (process_sp->GetTarget().EvaluateExpression(expr.GetData(), frame_sp.get(), count_sp) != eExpressionCompleted)
             return false;
         if (!count_sp)
             return false;

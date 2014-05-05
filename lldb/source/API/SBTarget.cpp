@@ -2611,7 +2611,7 @@ SBTarget::EvaluateExpression (const char *expr, const SBExpressionOptions &optio
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     Log * expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     SBValue expr_result;
-    ExpressionResults exe_results = eExecutionSetupError;
+    ExpressionResults exe_results = eExpressionSetupError;
     ValueObjectSP expr_value_sp;
     TargetSP target_sp(GetSP());
     StackFrame *frame = NULL;

@@ -1260,7 +1260,7 @@ protected:
                                                                    frame, 
                                                                    valobj_sp,
                                                                    options);
-        if (expr_result != eExecutionCompleted)
+        if (expr_result != eExpressionCompleted)
         {
             result.GetErrorStream().Printf("error: expression evaluation of address to watch failed\n");
             result.GetErrorStream().Printf("expression evaluated: %s\n", expr);

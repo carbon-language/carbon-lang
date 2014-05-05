@@ -1852,7 +1852,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapDynamic(RemoteNXMapTable &hash_table
                                                                                errors,
                                                                                return_value);
         
-        if (results == eExecutionCompleted)
+        if (results == eExpressionCompleted)
         {
             // The result is the number of ClassInfo structures that were filled in
             uint32_t num_class_infos = return_value.GetScalar().ULong();
@@ -2102,7 +2102,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
                                                                                             errors,
                                                                                             return_value);
         
-        if (results == eExecutionCompleted)
+        if (results == eExpressionCompleted)
         {
             // The result is the number of ClassInfo structures that were filled in
             uint32_t num_class_infos = return_value.GetScalar().ULong();

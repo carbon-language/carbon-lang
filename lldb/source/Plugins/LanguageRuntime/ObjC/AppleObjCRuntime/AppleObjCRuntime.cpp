@@ -149,7 +149,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
                                                      options,
                                                      error_stream, 
                                                      ret);
-    if (results != eExecutionCompleted)
+    if (results != eExpressionCompleted)
     {
         strm.Printf("Error evaluating Print Object function: %d.\n", results);
         return false;

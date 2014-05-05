@@ -296,7 +296,7 @@ public:
     ///     fails to parse, run, or evaluated.
     ///
     /// @result
-    ///      A Process::ExpressionResults value.  eExecutionCompleted for success.
+    ///      A Process::ExpressionResults value.  eExpressionCompleted for success.
     //------------------------------------------------------------------
     static lldb::ExpressionResults
     Evaluate (ExecutionContext &exe_ctx,

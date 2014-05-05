@@ -5043,31 +5043,31 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         const EvaluateExpressionOptions &options,
                         Stream &errors)
 {
-    ExpressionResults return_value = eExecutionSetupError;
+    ExpressionResults return_value = eExpressionSetupError;
 
     if (thread_plan_sp.get() == NULL)
     {
         errors.Printf("RunThreadPlan called with empty thread plan.");
-        return eExecutionSetupError;
+        return eExpressionSetupError;
     }
 
     if (!thread_plan_sp->ValidatePlan(NULL))
     {
         errors.Printf ("RunThreadPlan called with an invalid thread plan.");
-        return eExecutionSetupError;
+        return eExpressionSetupError;
     }
 
     if (exe_ctx.GetProcessPtr() != this)
     {
         errors.Printf("RunThreadPlan called on wrong process.");
-        return eExecutionSetupError;
+        return eExpressionSetupError;
     }
 
     Thread *thread = exe_ctx.GetThreadPtr();
     if (thread == NULL)
     {
         errors.Printf("RunThreadPlan called with invalid thread.");
-        return eExecutionSetupError;
+        return eExpressionSetupError;
     }
 
     // We rely on the thread plan we are running returning "PlanCompleted" if when it successfully completes.
@@ -5080,7 +5080,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
     if (m_private_state.GetValue() != eStateStopped)
     {
         errors.Printf ("RunThreadPlan called while the private state was not stopped.");
-        return eExecutionSetupError;
+        return eExpressionSetupError;
     }
 
     // Save the thread & frame from the exe_ctx for restoration after we run
@@ -5093,7 +5093,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         if (!selected_frame_sp)
         {
             errors.Printf("RunThreadPlan called without a selected frame on thread %d", thread_idx_id);
-            return eExecutionSetupError;
+            return eExpressionSetupError;
         }
     }
 
@@ -5158,7 +5158,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         // is only cosmetic, and this functionality is only of use to lldb developers who can
         // live with not pretty...
         thread->Flush();
-        return eExecutionStoppedForDebug;
+        return eExpressionStoppedForDebug;
     }
 
     Listener listener("lldb.process.listener.run-thread-plan");
@@ -5235,7 +5235,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     if (timeout_usec < option_one_thread_timeout)
                     {
                         errors.Printf("RunThreadPlan called without one thread timeout greater than total timeout");
-                        return eExecutionSetupError;
+                        return eExpressionSetupError;
                     }
                     computed_one_thread_timeout = option_one_thread_timeout;
                 }
@@ -5267,7 +5267,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         if (other_events != NULL)
         {
             errors.Printf("Calling RunThreadPlan with pending events on the queue.");
-            return eExecutionSetupError;
+            return eExpressionSetupError;
         }
 
         // We also need to make sure that the next event is delivered.  We might be calling a function as part of
@@ -5315,7 +5315,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         errors.Printf("Error resuming inferior the %d time: \"%s\".\n",
                                       num_resumes,
                                       resume_error.AsCString());
-                        return_value = eExecutionSetupError;
+                        return_value = eExpressionSetupError;
                         break;
                     }
                 }
@@ -5331,7 +5331,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                         num_resumes);
 
                     errors.Printf("Didn't get any event after resume %d, exiting.", num_resumes);
-                    return_value = eExecutionSetupError;
+                    return_value = eExpressionSetupError;
                     break;
                 }
 
@@ -5363,7 +5363,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 
                     errors.Printf("Didn't get running event after initial resume, got %s instead.",
                                   StateAsCString(stop_state));
-                    return_value = eExecutionSetupError;
+                    return_value = eExpressionSetupError;
                     break;
                 }
 
@@ -5453,7 +5453,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     if (event_sp->GetType() == eBroadcastBitInterrupt)
                     {
                         Halt();
-                        return_value = eExecutionInterrupted;
+                        return_value = eExpressionInterrupted;
                         errors.Printf ("Execution halted by user interrupt.");
                         if (log)
                             log->Printf ("Process::RunThreadPlan(): Got  interrupted by eBroadcastBitInterrupted, exiting.");
@@ -5476,7 +5476,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                     // Ooh, our thread has vanished.  Unlikely that this was successful execution...
                                     if (log)
                                         log->Printf ("Process::RunThreadPlan(): execution completed but our thread (index-id=%u) has vanished.", thread_idx_id);
-                                    return_value = eExecutionInterrupted;
+                                    return_value = eExpressionInterrupted;
                                 }
                                 else
                                 {
@@ -5509,7 +5509,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                             // after this point.  
                                             if (thread_plan_sp)
                                                 thread_plan_sp->SetPrivate (orig_plan_private);
-                                            return_value = eExecutionCompleted;
+                                            return_value = eExpressionCompleted;
                                         }
                                         else
                                         {
@@ -5518,7 +5518,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                             {
                                                 if (log)
                                                     log->Printf ("Process::RunThreadPlan() stopped for breakpoint: %s.", stop_info_sp->GetDescription());
-                                                return_value = eExecutionHitBreakpoint;
+                                                return_value = eExpressionHitBreakpoint;
                                                 if (!options.DoesIgnoreBreakpoints())
                                                 {
                                                     event_to_broadcast_sp = event_sp;
@@ -5530,7 +5530,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                                     log->PutCString ("Process::RunThreadPlan(): thread plan didn't successfully complete.");
                                                 if (!options.DoesUnwindOnError())
                                                     event_to_broadcast_sp = event_sp;
-                                                return_value = eExecutionInterrupted;
+                                                return_value = eExpressionInterrupted;
                                             }
                                         }
                                     }
@@ -5554,7 +5554,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                 event_to_broadcast_sp = event_sp;
 
                             errors.Printf ("Execution stopped with unexpected state.\n");
-                            return_value = eExecutionInterrupted;
+                            return_value = eExpressionInterrupted;
                             break;
                         }
                     }
@@ -5568,7 +5568,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 {
                     if (log)
                         log->PutCString ("Process::RunThreadPlan(): got_event was true, but the event pointer was null.  How odd...");
-                    return_value = eExecutionInterrupted;
+                    return_value = eExpressionInterrupted;
                     break;
                 }
             }
@@ -5656,7 +5656,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                     if (log)
                                         log->PutCString ("Process::RunThreadPlan(): Even though we timed out, the call plan was done.  "
                                                      "Exiting wait loop.");
-                                    return_value = eExecutionCompleted;
+                                    return_value = eExpressionCompleted;
                                     back_to_top = false;
                                     break;
                                 }
@@ -5675,7 +5675,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                 {
                                     if (log)
                                         log->PutCString ("Process::RunThreadPlan(): try_all_threads was false, we stopped so now we're quitting.");
-                                    return_value = eExecutionInterrupted;
+                                    return_value = eExpressionInterrupted;
                                     back_to_top = false;
                                     break;
                                 }
@@ -5696,7 +5696,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                     // Running all threads failed, so return Interrupted.
                                     if (log)
                                         log->PutCString("Process::RunThreadPlan(): running all threads timed out.");
-                                    return_value = eExecutionInterrupted;
+                                    return_value = eExpressionInterrupted;
                                     back_to_top = false;
                                     break;
                                 }
@@ -5706,7 +5706,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         {   if (log)
                                 log->PutCString("Process::RunThreadPlan(): halt said it succeeded, but I got no event.  "
                                         "I'm getting out of here passing Interrupted.");
-                            return_value = eExecutionInterrupted;
+                            return_value = eExpressionInterrupted;
                             back_to_top = false;
                             break;
                         }
@@ -5744,17 +5744,17 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         // 1) The execution successfully completed
         // 2) We hit a breakpoint, and ignore_breakpoints was true
         // 3) We got some other error, and discard_on_error was true
-        bool should_unwind = (return_value == eExecutionInterrupted && options.DoesUnwindOnError())
-                             || (return_value == eExecutionHitBreakpoint && options.DoesIgnoreBreakpoints());
+        bool should_unwind = (return_value == eExpressionInterrupted && options.DoesUnwindOnError())
+                             || (return_value == eExpressionHitBreakpoint && options.DoesIgnoreBreakpoints());
 
-        if (return_value == eExecutionCompleted
+        if (return_value == eExpressionCompleted
             || should_unwind)
         {
             thread_plan_sp->RestoreThreadState();
         }
 
         // Now do some processing on the results of the run:
-        if (return_value == eExecutionInterrupted || return_value == eExecutionHitBreakpoint)
+        if (return_value == eExpressionInterrupted || return_value == eExpressionHitBreakpoint)
         {
             if (log)
             {
@@ -5862,7 +5862,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                  static_cast<void*>(thread_plan_sp.get()));
             }
         }
-        else if (return_value == eExecutionSetupError)
+        else if (return_value == eExpressionSetupError)
         {
             if (log)
                 log->PutCString("Process::RunThreadPlan(): execution set up error.");
@@ -5879,13 +5879,13 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             {
                 if (log)
                     log->PutCString("Process::RunThreadPlan(): thread plan is done");
-                return_value = eExecutionCompleted;
+                return_value = eExpressionCompleted;
             }
             else if (thread->WasThreadPlanDiscarded (thread_plan_sp.get()))
             {
                 if (log)
                     log->PutCString("Process::RunThreadPlan(): thread plan was discarded");
-                return_value = eExecutionDiscarded;
+                return_value = eExpressionDiscarded;
             }
             else
             {
@@ -5945,32 +5945,32 @@ Process::ExecutionResultAsCString (ExpressionResults result)
     
     switch (result)
     {
-        case eExecutionCompleted:
-            result_name = "eExecutionCompleted";
+        case eExpressionCompleted:
+            result_name = "eExpressionCompleted";
             break;
-        case eExecutionDiscarded:
-            result_name = "eExecutionDiscarded";
+        case eExpressionDiscarded:
+            result_name = "eExpressionDiscarded";
             break;
-        case eExecutionInterrupted:
-            result_name = "eExecutionInterrupted";
+        case eExpressionInterrupted:
+            result_name = "eExpressionInterrupted";
             break;
-        case eExecutionHitBreakpoint:
-            result_name = "eExecutionHitBreakpoint";
+        case eExpressionHitBreakpoint:
+            result_name = "eExpressionHitBreakpoint";
             break;
-        case eExecutionSetupError:
-            result_name = "eExecutionSetupError";
+        case eExpressionSetupError:
+            result_name = "eExpressionSetupError";
             break;
-        case eExecutionParseError:
-            result_name = "eExecutionParseError";
+        case eExpressionParseError:
+            result_name = "eExpressionParseError";
             break;
-        case eExecutionResultUnavailable:
-            result_name = "eExecutionResultUnavailable";
+        case eExpressionResultUnavailable:
+            result_name = "eExpressionResultUnavailable";
             break;
-        case eExecutionTimedOut:
-            result_name = "eExecutionTimedOut";
+        case eExpressionTimedOut:
+            result_name = "eExpressionTimedOut";
             break;
-        case eExecutionStoppedForDebug:
-            result_name = "eExecutionStoppedForDebug";
+        case eExpressionStoppedForDebug:
+            result_name = "eExpressionStoppedForDebug";
             break;
     }
     return result_name;

@@ -720,7 +720,7 @@ protected:
                                                                  NULL,
                                                                  result_value_sp,
                                                                  error);
-                    if (result_code == eExecutionCompleted)
+                    if (result_code == eExpressionCompleted)
                     {
                         if (result_value_sp)
                         {

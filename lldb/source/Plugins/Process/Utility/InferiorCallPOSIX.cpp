@@ -121,7 +121,7 @@ lldb_private::InferiorCallMmap (Process *process,
                                                                           call_plan_sp,
                                                                           options,
                                                                           error_strm);
-                        if (result == eExecutionCompleted)
+                        if (result == eExpressionCompleted)
                         {
                             
                             allocated_addr = call_plan_sp->GetReturnValueObject()->GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
@@ -206,7 +206,7 @@ lldb_private::InferiorCallMunmap (Process *process,
                                                                           call_plan_sp,
                                                                           options,
                                                                           error_strm);
-                        if (result == eExecutionCompleted)
+                        if (result == eExpressionCompleted)
                         {
                             return true;
                         }
@@ -264,7 +264,7 @@ lldb_private::InferiorCall (Process *process,
                                                               call_plan_sp,
                                                               options,
                                                               error_strm);
-            if (result == eExecutionCompleted)
+            if (result == eExpressionCompleted)
             {
                 returned_func = call_plan_sp->GetReturnValueObject()->GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
 

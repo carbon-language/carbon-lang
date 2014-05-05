@@ -1503,12 +1503,12 @@ protected:
             options.SetUnwindOnError(true);
             options.SetUseDynamic(eNoDynamicValues);
             
-            ExpressionResults exe_results = eExecutionSetupError;
+            ExpressionResults exe_results = eExpressionSetupError;
             exe_results = target->EvaluateExpression (command,
                                                       frame_sp.get(),
                                                       return_valobj_sp,
                                                       options);
-            if (exe_results != eExecutionCompleted)
+            if (exe_results != eExpressionCompleted)
             {
                 if (return_valobj_sp)
                     result.AppendErrorWithFormat("Error evaluating result expression: %s", return_valobj_sp->GetError().AsCString());

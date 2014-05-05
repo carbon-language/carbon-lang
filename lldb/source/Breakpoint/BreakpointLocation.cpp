@@ -326,7 +326,7 @@ BreakpointLocation::ConditionSaysStop (ExecutionContext &exe_ctx, Error &error)
     
     bool ret;
     
-    if (result_code == eExecutionCompleted)
+    if (result_code == eExpressionCompleted)
     {
         if (!result_variable_sp)
         {
