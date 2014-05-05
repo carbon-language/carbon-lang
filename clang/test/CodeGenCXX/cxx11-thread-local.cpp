@@ -145,6 +145,14 @@ int PR19254::f() {
   return this->n;
 }
 
+namespace {
+thread_local int anon_i{1};
+}
+void set_anon_i() {
+  anon_i = 2;
+}
+// CHECK-LABEL: define internal hidden i32* @_ZTWN12_GLOBAL__N_16anon_iE()
+
 // CHECK: define {{.*}} @[[V_M_INIT:.*]]()
 // CHECK: load i8* bitcast (i64* @_ZGVN1VIiE1mE to i8*)
 // CHECK: %[[V_M_INITIALIZED:.*]] = icmp eq i8 %{{.*}}, 0
