@@ -223,6 +223,7 @@ StringRef sys::getHostCPUName() {
                  (EBX & 0x20);
   GetX86CpuIDAndInfo(0x80000001, &EAX, &EBX, &ECX, &EDX);
   bool Em64T = (EDX >> 29) & 0x1;
+  bool HasTBM = (ECX >> 21) & 0x1;
 
   if (memcmp(text.c, "GenuineIntel", 12) == 0) {
     switch (Family) {
@@ -439,7 +440,7 @@ StringRef sys::getHostCPUName() {
           return "bdver4"; // 50h-6Fh: Excavator
         if (Model >= 0x30)
           return "bdver3"; // 30h-3Fh: Steamroller
-        if (Model >= 0x10)
+        if (Model >= 0x10 || HasTBM)
           return "bdver2"; // 10h-1Fh: Piledriver
         return "bdver1";   // 00h-0Fh: Bulldozer
       case 22:
