@@ -34,7 +34,7 @@ def FeatureCRC : SubtargetFeature<"crc", "HasCRC", "true",
 
 /// Cyclone has register move instructions which are "free".
 def FeatureZCRegMove : SubtargetFeature<"zcm", "HasZeroCycleRegMove", "true",
-                                        "Has zereo-cycle register moves">;
+                                        "Has zero-cycle register moves">;
 
 /// Cyclone has instructions which zero registers for "free".
 def FeatureZCZeroing : SubtargetFeature<"zcz", "HasZeroCycleZeroing", "true",
