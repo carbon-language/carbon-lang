@@ -136,6 +136,7 @@ public:
   typedef ELFEntityIterator<const Elf_Rela> Elf_Rela_Iter;
   typedef ELFEntityIterator<const Elf_Rel> Elf_Rel_Iter;
   typedef ELFEntityIterator<const Elf_Shdr> Elf_Shdr_Iter;
+  typedef iterator_range<Elf_Shdr_Iter> Elf_Shdr_Range;
 
   /// \brief Archive files are 2 byte aligned, so we need this for
   ///     PointerIntPair to work.
@@ -330,6 +331,9 @@ public:
 
   Elf_Shdr_Iter begin_sections() const;
   Elf_Shdr_Iter end_sections() const;
+  Elf_Shdr_Range sections() const {
+    return make_range(begin_sections(), end_sections());
+  }
 
   Elf_Sym_Iter begin_symbols() const;
   Elf_Sym_Iter end_symbols() const;
@@ -652,30 +656,29 @@ ELFFile<ELFT>::ELFFile(MemoryBuffer *Object, error_code &ec)
 
   // Scan sections for special sections.
 
-  for (Elf_Shdr_Iter SecI = begin_sections(), SecE = end_sections();
-       SecI != SecE; ++SecI) {
-    switch (SecI->sh_type) {
+  for (const Elf_Shdr &Sec : sections()) {
+    switch (Sec.sh_type) {
     case ELF::SHT_SYMTAB_SHNDX:
       if (SymbolTableSectionHeaderIndex)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .symtab_shndx!");
-      SymbolTableSectionHeaderIndex = &*SecI;
+      SymbolTableSectionHeaderIndex = &Sec;
       break;
     case ELF::SHT_SYMTAB:
       if (dot_symtab_sec)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .symtab!");
-      dot_symtab_sec = &*SecI;
-      dot_strtab_sec = getSection(SecI->sh_link);
+      dot_symtab_sec = &Sec;
+      dot_strtab_sec = getSection(Sec.sh_link);
       break;
     case ELF::SHT_DYNSYM: {
       if (DynSymRegion.Addr)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .dynsym!");
-      DynSymRegion.Addr = base() + SecI->sh_offset;
-      DynSymRegion.Size = SecI->sh_size;
-      DynSymRegion.EntSize = SecI->sh_entsize;
-      const Elf_Shdr *DynStr = getSection(SecI->sh_link);
+      DynSymRegion.Addr = base() + Sec.sh_offset;
+      DynSymRegion.Size = Sec.sh_size;
+      DynSymRegion.EntSize = Sec.sh_entsize;
+      const Elf_Shdr *DynStr = getSection(Sec.sh_link);
       DynStrRegion.Addr = base() + DynStr->sh_offset;
       DynStrRegion.Size = DynStr->sh_size;
       DynStrRegion.EntSize = DynStr->sh_entsize;
@@ -685,27 +688,27 @@ ELFFile<ELFT>::ELFFile(MemoryBuffer *Object, error_code &ec)
       if (DynamicRegion.Addr)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .dynamic!");
-      DynamicRegion.Addr = base() + SecI->sh_offset;
-      DynamicRegion.Size = SecI->sh_size;
-      DynamicRegion.EntSize = SecI->sh_entsize;
+      DynamicRegion.Addr = base() + Sec.sh_offset;
+      DynamicRegion.Size = Sec.sh_size;
+      DynamicRegion.EntSize = Sec.sh_entsize;
       break;
     case ELF::SHT_GNU_versym:
       if (dot_gnu_version_sec != nullptr)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .gnu.version section!");
-      dot_gnu_version_sec = &*SecI;
+      dot_gnu_version_sec = &Sec;
       break;
     case ELF::SHT_GNU_verdef:
       if (dot_gnu_version_d_sec != nullptr)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .gnu.version_d section!");
-      dot_gnu_version_d_sec = &*SecI;
+      dot_gnu_version_d_sec = &Sec;
       break;
     case ELF::SHT_GNU_verneed:
       if (dot_gnu_version_r_sec != nullptr)
         // FIXME: Proper error handling.
         report_fatal_error("More than one .gnu.version_r section!");
-      dot_gnu_version_r_sec = &*SecI;
+      dot_gnu_version_r_sec = &Sec;
       break;
     }
   }
