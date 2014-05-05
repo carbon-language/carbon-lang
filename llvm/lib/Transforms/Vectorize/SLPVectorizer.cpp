@@ -1622,6 +1622,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
                                             VecTy->getPointerTo(AS));
       unsigned Alignment = LI->getAlignment();
       LI = Builder.CreateLoad(VecPtr);
+      if (!Alignment)
+        Alignment = DL->getABITypeAlignment(LI->getPointerOperand()->getType());
       LI->setAlignment(Alignment);
       E->VectorizedValue = LI;
       return propagateMetadata(LI, E->Scalars);
@@ -1641,6 +1643,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       Value *VecPtr = Builder.CreateBitCast(SI->getPointerOperand(),
                                             VecTy->getPointerTo(AS));
       StoreInst *S = Builder.CreateStore(VecValue, VecPtr);
+      if (!Alignment)
+        Alignment = DL->getABITypeAlignment(SI->getPointerOperand()->getType());
       S->setAlignment(Alignment);
       E->VectorizedValue = S;
       return propagateMetadata(S, E->Scalars);
