@@ -56,8 +56,8 @@ static void lto_initialize() {
   }
 }
 
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LTOCodeGenerator, lto_code_gen_t);
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LTOModule, lto_module_t);
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LTOCodeGenerator, lto_code_gen_t)
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LTOModule, lto_module_t)
 
 // Convert the subtarget features into a string to pass to LTOCodeGenerator.
 static void lto_add_attrs(lto_code_gen_t cg) {
