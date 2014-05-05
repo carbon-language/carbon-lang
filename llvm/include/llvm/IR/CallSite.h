@@ -166,6 +166,11 @@ public:
     return isCall() && cast<CallInst>(getInstruction())->isMustTailCall();
   }
 
+  /// \brief Tests if this call site is marked as a tail call.
+  bool isTailCall() const {
+    return isCall() && cast<CallInst>(getInstruction())->isTailCall();
+  }
+
 #define CALLSITE_DELEGATE_GETTER(METHOD) \
   InstrTy *II = getInstruction();    \
   return isCall()                        \
