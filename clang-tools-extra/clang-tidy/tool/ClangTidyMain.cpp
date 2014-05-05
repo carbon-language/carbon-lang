@@ -39,6 +39,12 @@ static cl::opt<std::string> DisableChecks(
              "|llvm-namespace-comment" // Not complete.
              "|google-.*)"),           // Doesn't apply to LLVM.
     cl::cat(ClangTidyCategory));
+static cl::opt<std::string> HeaderFilter(
+    "header-filter",
+    cl::desc("Regular expression matching the names of the headers to output\n"
+             "diagnostics from. Diagnostics from the main file of each\n"
+             "translation unit are always displayed."),
+    cl::init(""), cl::cat(ClangTidyCategory));
 static cl::opt<bool> Fix("fix", cl::desc("Fix detected errors if possible."),
                          cl::init(false), cl::cat(ClangTidyCategory));
 
@@ -59,6 +65,7 @@ int main(int argc, const char **argv) {
   clang::tidy::ClangTidyOptions Options;
   Options.EnableChecksRegex = Checks;
   Options.DisableChecksRegex = DisableChecks;
+  Options.HeaderFilterRegex = HeaderFilter;
   Options.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
 
   // FIXME: Allow using --list-checks without positional arguments.

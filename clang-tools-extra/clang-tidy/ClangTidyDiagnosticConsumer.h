@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_DIAGNOSTIC_CONSUMER_H
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_DIAGNOSTIC_CONSUMER_H
 
+#include "ClangTidyOptions.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Tooling/Refactoring.h"
@@ -27,8 +28,6 @@ class CompilationDatabase;
 }
 
 namespace tidy {
-
-struct ClangTidyOptions;
 
 /// \brief A message from a clang-tidy check.
 ///
@@ -108,6 +107,7 @@ public:
   StringRef getCheckName(unsigned DiagnosticID) const;
 
   ChecksFilter &getChecksFilter() { return Filter; }
+  const ClangTidyOptions &getOptions() const { return Options; }
 
 private:
   friend class ClangTidyDiagnosticConsumer; // Calls storeError().
@@ -117,6 +117,7 @@ private:
 
   SmallVectorImpl<ClangTidyError> *Errors;
   DiagnosticsEngine *DiagEngine;
+  ClangTidyOptions Options;
   ChecksFilter Filter;
 
   llvm::DenseMap<unsigned, std::string> CheckNamesByDiagnosticID;
@@ -142,8 +143,10 @@ public:
 
 private:
   void finalizeLastError();
+  bool relatesToUserCode(SourceLocation Location);
 
   ClangTidyContext &Context;
+  llvm::Regex HeaderFilter;
   std::unique_ptr<DiagnosticsEngine> Diags;
   SmallVector<ClangTidyError, 8> Errors;
   bool LastErrorRelatesToUserCode;

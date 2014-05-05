@@ -10,6 +10,8 @@
 #ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_OPTIONS_H
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANG_TIDY_OPTIONS_H
 
+#include <string>
+
 namespace clang {
 namespace tidy {
 
@@ -18,6 +20,9 @@ struct ClangTidyOptions {
   ClangTidyOptions() : EnableChecksRegex(".*"), AnalyzeTemporaryDtors(false) {}
   std::string EnableChecksRegex;
   std::string DisableChecksRegex;
+  // Output warnings from headers matching this filter. Warnings from main files
+  // will always be displayed.
+  std::string HeaderFilterRegex;
   bool AnalyzeTemporaryDtors;
 };
 

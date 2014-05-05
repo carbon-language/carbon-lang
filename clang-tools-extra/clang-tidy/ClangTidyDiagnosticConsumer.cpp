@@ -124,7 +124,7 @@ bool ChecksFilter::isCheckEnabled(StringRef Name) {
 
 ClangTidyContext::ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors,
                                    const ClangTidyOptions &Options)
-    : Errors(Errors), DiagEngine(nullptr), Filter(Options) {}
+    : Errors(Errors), DiagEngine(nullptr), Options(Options), Filter(Options) {}
 
 DiagnosticBuilder ClangTidyContext::diag(
     StringRef CheckName, SourceLocation Loc, StringRef Description,
@@ -171,7 +171,8 @@ StringRef ClangTidyContext::getCheckName(unsigned DiagnosticID) const {
 }
 
 ClangTidyDiagnosticConsumer::ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx)
-    : Context(Ctx), LastErrorRelatesToUserCode(false) {
+    : Context(Ctx), HeaderFilter(Ctx.getOptions().HeaderFilterRegex),
+      LastErrorRelatesToUserCode(false) {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   Diags.reset(new DiagnosticsEngine(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts, this,
@@ -217,10 +218,28 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
       Sources);
 
   // Let argument parsing-related warnings through.
-  if (!Info.getLocation().isValid() ||
-      !Diags->getSourceManager().isInSystemHeader(Info.getLocation())) {
+  if (relatesToUserCode(Info.getLocation())) {
     LastErrorRelatesToUserCode = true;
   }
+}
+
+bool ClangTidyDiagnosticConsumer::relatesToUserCode(SourceLocation Location) {
+  // Invalid location may mean a diagnostic in a command line, don't skip these.
+  if (!Location.isValid())
+    return true;
+
+  const SourceManager &Sources = Diags->getSourceManager();
+  if (Sources.isInSystemHeader(Location))
+    return false;
+
+  // FIXME: We start with a conservative approach here, but the actual type of
+  // location needed depends on the check (in particular, where this check wants
+  // to apply fixes).
+  FileID FID = Sources.getDecomposedExpansionLoc(Location).first;
+  if (FID == Sources.getMainFileID())
+    return true;
+
+  return HeaderFilter.match(Sources.getFileEntryForID(FID)->getName());
 }
 
 struct LessClangTidyError {
