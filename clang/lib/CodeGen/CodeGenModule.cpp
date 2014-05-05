@@ -220,6 +220,7 @@ void CodeGenModule::checkAliases() {
   // that we have to do this in CodeGen, but we only construct mangled names
   // and aliases during codegen.
   bool Error = false;
+  DiagnosticsEngine &Diags = getDiags();
   for (std::vector<GlobalDecl>::iterator I = Aliases.begin(),
          E = Aliases.end(); I != E; ++I) {
     const GlobalDecl &GD = *I;
@@ -231,10 +232,10 @@ void CodeGenModule::checkAliases() {
     llvm::GlobalValue *GV = Alias->getAliasedGlobal();
     if (!GV) {
       Error = true;
-      getDiags().Report(AA->getLocation(), diag::err_cyclic_alias);
+      Diags.Report(AA->getLocation(), diag::err_cyclic_alias);
     } else if (GV->isDeclaration()) {
       Error = true;
-      getDiags().Report(AA->getLocation(), diag::err_alias_to_undefined);
+      Diags.Report(AA->getLocation(), diag::err_alias_to_undefined);
     }
 
     // We have to handle alias to weak aliases in here. LLVM itself disallows
@@ -254,7 +255,7 @@ void CodeGenModule::checkAliases() {
     }
     if (auto GA = dyn_cast<llvm::GlobalAlias>(AliaseeGV)) {
       if (GA->mayBeOverridden()) {
-        getDiags().Report(AA->getLocation(), diag::warn_alias_to_weak_alias)
+        Diags.Report(AA->getLocation(), diag::warn_alias_to_weak_alias)
           << GA->getAliasedGlobal()->getName() << GA->getName();
         Aliasee = llvm::ConstantExpr::getPointerBitCastOrAddrSpaceCast(
             GA->getAliasee(), Alias->getType());
