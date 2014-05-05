@@ -87,9 +87,6 @@ FileType("filetype", cl::init(TargetMachine::CGFT_AssemblyFile),
                         "Emit nothing, for performance testing"),
              clEnumValEnd));
 
-cl::opt<bool> DisableCFI("disable-cfi", cl::Hidden,
-                         cl::desc("Do not use .cfi_* directives"));
-
 cl::opt<bool> EnableDwarfDirectory("enable-dwarf-directory", cl::Hidden,
                   cl::desc("Use .file directives with an explicit directory."));
 

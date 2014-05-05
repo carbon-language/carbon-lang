@@ -280,9 +280,6 @@ static int compileModule(char **argv, LLVMContext &Context) {
   assert(mod && "Should have exited after outputting help!");
   TargetMachine &Target = *target.get();
 
-  if (DisableCFI)
-    Target.setMCUseCFI(false);
-
   if (EnableDwarfDirectory)
     Target.setMCUseDwarfDirectory(true);
 

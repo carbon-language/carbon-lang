@@ -52,6 +52,8 @@ Non-comprehensive list of changes in this release
 * llvm-ar now handles IR files like regular object files. In particular, a
   regular symbol table is created for symbols defined in IR files.
 
+* llvm now requires assemblers that support cfi directives.
+
 .. NOTE
    For small 1-3 sentence descriptions, just add an entry at the end of
    this list. If your description won't fit comfortably in one bullet
