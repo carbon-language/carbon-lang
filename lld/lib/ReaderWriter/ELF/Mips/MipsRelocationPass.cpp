@@ -194,7 +194,7 @@ private:
   std::vector<LA25Atom *> _la25Vector;
 
   /// \brief Handle a specific reference.
-  void handleReference(Reference &ref);
+  void handleReference(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
 
   /// \brief Collect information about the reference to use it
   /// later in the handleReference() routine.
@@ -204,6 +204,7 @@ private:
   void handlePlain(Reference &ref);
   void handle26(Reference &ref);
   void handleGOT(Reference &ref);
+  void handleGPRel(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
 
   const GOTAtom *getLocalGOTEntry(const Reference &ref);
   const GOTAtom *getGlobalGOTEntry(const Atom *a);
@@ -243,7 +244,8 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
   // Process all references.
   for (const auto &atom : mf->defined())
     for (const auto &ref : *atom)
-      handleReference(const_cast<Reference &>(*ref));
+      handleReference(*cast<MipsELFDefinedAtom<ELFT>>(atom),
+                      const_cast<Reference &>(*ref));
 
   // Create R_MIPS_REL32 relocations.
   for (auto *ref : _rel32Candidates) {
@@ -298,7 +300,8 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<MutableFile> &mf) {
 }
 
 template <typename ELFT>
-void RelocationPass<ELFT>::handleReference(Reference &ref) {
+void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
+                                           Reference &ref) {
   if (!ref.target())
     return;
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
@@ -319,6 +322,23 @@ void RelocationPass<ELFT>::handleReference(Reference &ref) {
   case R_MIPS_CALL16:
     handleGOT(ref);
     break;
+  case R_MIPS_GPREL32:
+    handleGPRel(atom, ref);
+    break;
+  }
+}
+
+template <typename ELFT>
+static bool isConstrainSym(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref) {
+  if ((atom.section()->sh_flags & SHF_ALLOC) == 0)
+    return false;
+  switch (ref.kindValue()) {
+  case R_MIPS_NONE:
+  case R_MIPS_JALR:
+  case R_MIPS_GPREL32:
+    return false;
+  default:
+    return true;
   }
 }
 
@@ -330,7 +350,7 @@ RelocationPass<ELFT>::collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
     return;
   if (ref.kindNamespace() != lld::Reference::KindNamespace::ELF)
     return;
-  if ((atom.section()->sh_flags & SHF_ALLOC) == 0)
+  if (!isConstrainSym(atom, ref))
     return;
 
   if (mightBeDynamic(atom, ref))
@@ -478,6 +498,13 @@ template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
     ref.setTarget(getLocalGOTEntry(ref));
   else
     ref.setTarget(getGlobalGOTEntry(ref.target()));
+}
+
+template <typename ELFT>
+void RelocationPass<ELFT>::handleGPRel(const MipsELFDefinedAtom<ELFT> &atom,
+                                       Reference &ref) {
+  assert(ref.kindValue() == R_MIPS_GPREL32);
+  ref.setAddend(ref.addend() + atom.file().getGP0());
 }
 
 template <typename ELFT>

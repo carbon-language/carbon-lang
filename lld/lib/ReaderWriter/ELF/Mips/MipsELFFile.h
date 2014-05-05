@@ -12,6 +12,31 @@
 #include "ELFReader.h"
 #include "MipsLinkingContext.h"
 
+namespace llvm {
+namespace object {
+
+template <class ELFT>
+struct Elf_RegInfo;
+
+template <llvm::support::endianness TargetEndianness, std::size_t MaxAlign>
+struct Elf_RegInfo<ELFType<TargetEndianness, MaxAlign, false>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
+  Elf_Word ri_gprmask;     // bit-mask of used general registers
+  Elf_Word ri_cprmask[4];  // bit-mask of used co-processor registers
+  Elf_Sword ri_gp_value;   // gp register value
+};
+
+template <llvm::support::endianness TargetEndianness, std::size_t MaxAlign>
+struct Elf_RegInfo<ELFType<TargetEndianness, MaxAlign, true>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
+  Elf_Word ri_gprmask;     // bit-mask of used general registers
+  Elf_Word ri_cprmask[4];  // bit-mask of used co-processor registers
+  Elf_Sword ri_gp_value;   // gp register value
+};
+
+} // end namespace object.
+} // end namespace llvm.
+
 namespace lld {
 namespace elf {
 
@@ -44,7 +69,7 @@ public:
 
   MipsELFFile(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings,
               error_code &ec)
-      : ELFFile<ELFT>(std::move(mb), atomizeStrings, ec) {}
+      : ELFFile<ELFT>(std::move(mb), atomizeStrings, ec), _gp0(0) {}
 
   static ErrorOr<std::unique_ptr<MipsELFFile>>
   create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
@@ -76,6 +101,10 @@ public:
     if ((ec = file->createAtoms()))
       return ec;
 
+    // Retrieve registry usage descriptor and GP value.
+    if ((ec = file->readRegInfo()))
+      return ec;
+
     return std::move(file);
   }
 
@@ -83,11 +112,16 @@ public:
     return this->_objFile->getHeader()->e_flags & llvm::ELF::EF_MIPS_PIC;
   }
 
+  /// \brief gp register value stored in the .reginfo section.
+  int64_t getGP0() const { return _gp0; }
+
 private:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel_Iter Elf_Rel_Iter;
+
+  int64_t _gp0;
 
   ErrorOr<ELFDefinedAtom<ELFT> *> handleDefinedSymbol(
       StringRef symName, StringRef sectionName, const Elf_Sym *sym,
@@ -97,6 +131,30 @@ private:
     return new (this->_readerStorage) MipsELFDefinedAtom<ELFT>(
         *this, symName, sectionName, sym, sectionHdr, contentData,
         referenceStart, referenceEnd, referenceList);
+  }
+
+  error_code readRegInfo() {
+    typedef llvm::object::Elf_RegInfo<ELFT> Elf_RegInfo;
+
+    for (auto sit = this->_objFile->begin_sections(),
+              sie = this->_objFile->end_sections();
+         sit != sie; ++sit) {
+      if (sit->sh_type != llvm::ELF::SHT_MIPS_REGINFO)
+        continue;
+
+      auto contents = this->getSectionContents(&*sit);
+      if (error_code ec = contents.getError())
+        return ec;
+
+      // FIXME (simon): Show error in case of invalid section size.
+      if (contents.get().size() == sizeof(Elf_RegInfo)) {
+        const auto *regInfo =
+            reinterpret_cast<const Elf_RegInfo *>(contents.get().data());
+        _gp0 = regInfo->ri_gp_value;
+      }
+      break;
+    }
+    return error_code::success();
   }
 
   void createRelocationReferences(const Elf_Sym &symbol,
@@ -129,6 +187,7 @@ private:
     const uint8_t *ap = content.data() + ri.r_offset;
     switch (ri.getType(isMips64EL())) {
     case llvm::ELF::R_MIPS_32:
+    case llvm::ELF::R_MIPS_GPREL32:
     case llvm::ELF::R_MIPS_PC32:
       return *(int32_t *)ap;
     case llvm::ELF::R_MIPS_26:

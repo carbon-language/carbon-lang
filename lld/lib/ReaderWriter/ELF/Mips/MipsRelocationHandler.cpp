@@ -101,6 +101,14 @@ static void relocCall16(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
   applyReloc(location, G, 0xffff);
 }
 
+/// \brief R_MIPS_GPREL32
+/// local: rel32 A + S + GP0 – GP (truncate)
+static void relocGPRel32(uint8_t *location, uint64_t P, uint64_t S, int64_t A,
+                         uint64_t GP) {
+  int32_t result = A + S + 0 - GP;
+  applyReloc(location, result, 0xffffffff);
+}
+
 /// \brief LLD_R_MIPS_32_HI16
 static void reloc32hi16(uint8_t *location, uint64_t S, int64_t A) {
   applyReloc(location, (S + A) & 0xffff0000, 0xffffffff);
@@ -153,6 +161,9 @@ error_code MipsTargetRelocationHandler::applyRelocation(
     break;
   case R_MIPS_CALL16:
     relocCall16(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
+    break;
+  case R_MIPS_GPREL32:
+    relocGPRel32(location, relocVAddress, targetVAddress, ref.addend(), gpAddr);
     break;
   case R_MIPS_JALR:
     // We do not do JALR optimization now.
