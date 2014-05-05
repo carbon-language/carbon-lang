@@ -1939,8 +1939,7 @@ static void MlockIsUnsupported() {
   static atomic_uint8_t printed;
   if (atomic_exchange(&printed, 1, memory_order_relaxed))
     return;
-  if (flags()->verbosity > 0)
-    Printf("INFO: ThreadSanitizer ignores mlock/mlockall/munlock/munlockall\n");
+  VPrintf(1, "INFO: ThreadSanitizer ignores mlock/munlock[all]\n");
 }
 
 TSAN_INTERCEPTOR(int, mlock, const void *addr, uptr len) {
@@ -2124,12 +2123,12 @@ static void syscall_access_range(uptr pc, uptr p, uptr s, bool write) {
 static void syscall_acquire(uptr pc, uptr addr) {
   TSAN_SYSCALL();
   Acquire(thr, pc, addr);
-  Printf("syscall_acquire(%p)\n", addr);
+  DPrintf("syscall_acquire(%p)\n", addr);
 }
 
 static void syscall_release(uptr pc, uptr addr) {
   TSAN_SYSCALL();
-  Printf("syscall_release(%p)\n", addr);
+  DPrintf("syscall_release(%p)\n", addr);
   Release(thr, pc, addr);
 }
 
@@ -2141,12 +2140,12 @@ static void syscall_fd_close(uptr pc, int fd) {
 static USED void syscall_fd_acquire(uptr pc, int fd) {
   TSAN_SYSCALL();
   FdAcquire(thr, pc, fd);
-  Printf("syscall_fd_acquire(%p)\n", fd);
+  DPrintf("syscall_fd_acquire(%p)\n", fd);
 }
 
 static USED void syscall_fd_release(uptr pc, int fd) {
   TSAN_SYSCALL();
-  Printf("syscall_fd_release(%p)\n", fd);
+  DPrintf("syscall_fd_release(%p)\n", fd);
   FdRelease(thr, pc, fd);
 }
 
