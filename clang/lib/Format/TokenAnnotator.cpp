@@ -692,7 +692,8 @@ private:
     } else if (Current.isOneOf(tok::kw_return, tok::kw_throw)) {
       Contexts.back().IsExpression = true;
     } else if (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
-               !Line.InPPDirective) {
+               !Line.InPPDirective && Current.Previous &&
+               Current.Previous->isNot(tok::kw_decltype)) {
       bool ParametersOfFunctionType =
           Current.Previous && Current.Previous->is(tok::r_paren) &&
           Current.Previous->MatchingParen &&

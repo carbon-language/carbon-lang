@@ -8432,6 +8432,9 @@ TEST_F(FormatTest, FormatsLambdas) {
   verifyFormat("SomeFunction([]() { // A cool function...\n"
                "  return 43;\n"
                "});");
+  verifyFormat("void f() {\n"
+               "  SomeFunction([](decltype(x), A *a) {});\n"
+               "}");
 
   // Lambdas with return types.
   verifyFormat("int c = []() -> int { return 2; }();\n");
