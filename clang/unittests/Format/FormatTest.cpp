@@ -4741,12 +4741,18 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("#define x ((int)-1)");
   verifyFormat("#define p(q) ((int *)&q)");
 
-  // FIXME: Without type knowledge, this can still fall apart miserably.
-  verifyFormat("void f() { my_int a = (my_int) * b; }");
-  verifyFormat("void f() { return P ? (my_int) * P : (my_int)0; }");
-  verifyFormat("my_int a = (my_int) ~0;");
-  verifyFormat("my_int a = (my_int)++ a;");
-  verifyFormat("my_int a = (my_int) + 2;");
+  verifyFormat("void f() { my_int a = (my_int)*b; }");
+  verifyFormat("void f() { return P ? (my_int)*P : (my_int)0; }");
+  verifyFormat("my_int a = (my_int)~0;");
+  verifyFormat("my_int a = (my_int)++a;");
+  verifyFormat("my_int a = (my_int)+2;");
+  verifyFormat("my_int a = (my_int)1;");
+  verifyFormat("my_int a = (my_int *)1;");
+  verifyFormat("my_int a = (const my_int)-1;");
+  verifyFormat("my_int a = (const my_int *)-1;");
+
+  // FIXME: single value wrapped with paren will be treated as cast.
+  verifyFormat("void f(int i = (kValue)*kMask) {}");
 
   // Don't break after a cast's
   verifyFormat("int aaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
@@ -4767,7 +4773,6 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("void f(SmallVector<int>) {}");
   verifyFormat("void f(SmallVector<int>);");
   verifyFormat("void f(SmallVector<int>) = 0;");
-  verifyFormat("void f(int i = (kValue) * kMask) {}");
   verifyFormat("void f(int i = (kA * kB) & kMask) {}");
   verifyFormat("int a = sizeof(int) * b;");
   verifyFormat("int a = alignof(int) * b;", getGoogleStyle());
