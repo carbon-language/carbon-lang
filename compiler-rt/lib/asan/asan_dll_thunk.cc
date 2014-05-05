@@ -164,6 +164,9 @@ WRAP_V_WW(__asan_unpoison_stack_memory)
 WRAP_V_WW(__asan_poison_memory_region)
 WRAP_V_WW(__asan_unpoison_memory_region)
 
+WRAP_W_V(__asan_get_current_fake_stack)
+WRAP_W_WWWW(__asan_addr_is_in_fake_stack)
+
 WRAP_W_WW(__asan_stack_malloc_0)
 WRAP_W_WW(__asan_stack_malloc_1)
 WRAP_W_WW(__asan_stack_malloc_2)
