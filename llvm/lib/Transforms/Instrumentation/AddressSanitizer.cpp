@@ -906,8 +906,8 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
     // Ignore the globals from the __OBJC section. The ObjC runtime assumes
     // those conform to /usr/lib/objc/runtime.h, so we can't add redzones to
     // them.
-    if ((Section.find("__OBJC,") == 0) ||
-        (Section.find("__DATA, __objc_") == 0)) {
+    if (Section.startswith("__OBJC,") ||
+        Section.startswith("__DATA, __objc_")) {
       DEBUG(dbgs() << "Ignoring ObjC runtime global: " << *G << "\n");
       return false;
     }
@@ -919,16 +919,26 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
     //     is placed into __DATA,__cfstring
     // Therefore there's no point in placing redzones into __DATA,__cfstring.
     // Moreover, it causes the linker to crash on OS X 10.7
-    if (Section.find("__DATA,__cfstring") == 0) {
+    if (Section.startswith("__DATA,__cfstring")) {
       DEBUG(dbgs() << "Ignoring CFString: " << *G << "\n");
       return false;
     }
     // The linker merges the contents of cstring_literals and removes the
     // trailing zeroes.
-    if (Section.find("__TEXT,__cstring,cstring_literals") == 0) {
+    if (Section.startswith("__TEXT,__cstring,cstring_literals")) {
       DEBUG(dbgs() << "Ignoring a cstring literal: " << *G << "\n");
       return false;
     }
+
+    // Callbacks put into the CRT initializer/terminator sections
+    // should not be instrumented.
+    // See https://code.google.com/p/address-sanitizer/issues/detail?id=305
+    // and http://msdn.microsoft.com/en-US/en-en/library/bb918180(v=vs.120).aspx
+    if (Section.startswith(".CRT")) {
+      DEBUG(dbgs() << "Ignoring a global initializer callback: " << *G << "\n");
+      return false;
+    }
+
     // Globals from llvm.metadata aren't emitted, do not instrument them.
     if (Section == "llvm.metadata") return false;
   }
