@@ -391,7 +391,8 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
   const char *Filename = Entry->getName();
   // If the file is already open, use the open file descriptor.
   if (Entry->File) {
-    ec = Entry->File->getBuffer(Filename, Result, FileSize);
+    ec = Entry->File->getBuffer(Filename, Result, FileSize,
+                                /*RequiresNullTerminator=*/true, isVolatile);
     if (ErrorStr)
       *ErrorStr = ec.message();
     Entry->closeFile();
@@ -401,7 +402,8 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
   // Otherwise, open the file.
 
   if (FileSystemOpts.WorkingDir.empty()) {
-    ec = FS->getBufferForFile(Filename, Result, FileSize);
+    ec = FS->getBufferForFile(Filename, Result, FileSize,
+                              /*RequiresNullTerminator=*/true, isVolatile);
     if (ec && ErrorStr)
       *ErrorStr = ec.message();
     return Result.release();
@@ -409,7 +411,8 @@ getBufferForFile(const FileEntry *Entry, std::string *ErrorStr,
 
   SmallString<128> FilePath(Entry->getName());
   FixupRelativePath(FilePath);
-  ec = FS->getBufferForFile(FilePath.str(), Result, FileSize);
+  ec = FS->getBufferForFile(FilePath.str(), Result, FileSize,
+                            /*RequiresNullTerminator=*/true, isVolatile);
   if (ec && ErrorStr)
     *ErrorStr = ec.message();
   return Result.release();

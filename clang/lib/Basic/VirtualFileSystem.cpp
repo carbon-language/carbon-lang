@@ -67,12 +67,14 @@ FileSystem::~FileSystem() {}
 error_code FileSystem::getBufferForFile(const llvm::Twine &Name,
                                         std::unique_ptr<MemoryBuffer> &Result,
                                         int64_t FileSize,
-                                        bool RequiresNullTerminator) {
+                                        bool RequiresNullTerminator,
+                                        bool IsVolatile) {
   std::unique_ptr<File> F;
   if (error_code EC = openFileForRead(Name, F))
     return EC;
 
-  error_code EC = F->getBuffer(Name, Result, FileSize, RequiresNullTerminator);
+  error_code EC = F->getBuffer(Name, Result, FileSize, RequiresNullTerminator,
+                               IsVolatile);
   return EC;
 }
 
@@ -95,7 +97,8 @@ public:
   ErrorOr<Status> status() override;
   error_code getBuffer(const Twine &Name, std::unique_ptr<MemoryBuffer> &Result,
                        int64_t FileSize = -1,
-                       bool RequiresNullTerminator = true) override;
+                       bool RequiresNullTerminator = true,
+                       bool IsVolatile = false) override;
   error_code close() override;
   void setName(StringRef Name) override;
 };
@@ -117,10 +120,11 @@ ErrorOr<Status> RealFile::status() {
 
 error_code RealFile::getBuffer(const Twine &Name,
                                std::unique_ptr<MemoryBuffer> &Result,
-                               int64_t FileSize, bool RequiresNullTerminator) {
+                               int64_t FileSize, bool RequiresNullTerminator,
+                               bool IsVolatile) {
   assert(FD != -1 && "cannot get buffer for closed file");
   return MemoryBuffer::getOpenFile(FD, Name.str().c_str(), Result, FileSize,
-                                   RequiresNullTerminator);
+                                   RequiresNullTerminator, IsVolatile);
 }
 
 // FIXME: This is terrible, we need this for ::close.

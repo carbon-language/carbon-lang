@@ -86,7 +86,8 @@ public:
   /// \brief Get the contents of the file as a \p MemoryBuffer.
   virtual llvm::error_code
   getBuffer(const Twine &Name, std::unique_ptr<llvm::MemoryBuffer> &Result,
-            int64_t FileSize = -1, bool RequiresNullTerminator = true) = 0;
+            int64_t FileSize = -1, bool RequiresNullTerminator = true,
+            bool IsVolatile = false) = 0;
   /// \brief Closes the file.
   virtual llvm::error_code close() = 0;
   /// \brief Sets the name to use for this file.
@@ -109,7 +110,8 @@ public:
   llvm::error_code getBufferForFile(const Twine &Name,
                                     std::unique_ptr<llvm::MemoryBuffer> &Result,
                                     int64_t FileSize = -1,
-                                    bool RequiresNullTerminator = true);
+                                    bool RequiresNullTerminator = true,
+                                    bool IsVolatile = false);
 };
 
 /// \brief Gets an \p vfs::FileSystem for the 'real' file system, as seen by
