@@ -63,7 +63,7 @@ def main():
 
     parser = OptionParser("usage: %prog [options] {filename} [clang-args*]")
     parser.add_option("", "--show-ids", dest="showIDs",
-                      help="Don't compute cursor IDs (very slow)",
+                      help="Compute cursor IDs (very slow)",
                       action="store_true", default=False)
     parser.add_option("", "--max-depth", dest="maxDepth",
                       help="Limit cursor expansion to depth N",
