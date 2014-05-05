@@ -21,16 +21,16 @@ class LldbGdbServerTestCase(TestBase):
 
     _GDBREMOTE_KILL_PACKET = "$k#6b"
 
-    # _LOGGING_LEVEL = logging.WARNING
-    _LOGGING_LEVEL = logging.DEBUG
+    _LOGGING_LEVEL = logging.WARNING
+    # _LOGGING_LEVEL = logging.DEBUG
 
     def setUp(self):
         TestBase.setUp(self)
-
         FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
         logging.basicConfig(format=FORMAT)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(self._LOGGING_LEVEL)
+        self.test_sequence = GdbRemoteTestSequence(self.logger)
 
     def init_llgs_test(self):
         self.debug_monitor_exe = get_lldb_gdbserver_exe()
@@ -90,13 +90,17 @@ class LldbGdbServerTestCase(TestBase):
 
         return server
 
-    def create_no_ack_remote_stream(self):
-       return [
-            "lldb-gdbserver <  19> read packet: +",
-            "lldb-gdbserver <  19> read packet: $QStartNoAckMode#b0",
-            "lldb-gdbserver <   1> send packet: +",
-            "lldb-gdbserver <   6> send packet: $OK#9a",
-            "lldb-gdbserver <   1> read packet: +"]
+    def add_no_ack_remote_stream(self):
+        self.test_sequence.add_log_lines(
+            ["read packet: +",
+             "read packet: $QStartNoAckMode#b0",
+             "send packet: +",
+             "send packet: $OK#9a",
+             "read packet: +"],
+            True)
+
+    def expect_gdbremote_sequence(self):
+        expect_lldb_gdbserver_replay(self, self.sock, self.test_sequence, self._TIMEOUT_SECONDS, self.logger)
 
     @debugserver_test
     def test_exe_starts_debugserver(self):
@@ -112,10 +116,8 @@ class LldbGdbServerTestCase(TestBase):
         server = self.start_server()
         self.assertIsNotNone(server)
 
-        log_lines = self.create_no_ack_remote_stream()
-
-        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
-                                     self._TIMEOUT_SECONDS, self.logger)
+        self.add_no_ack_remote_stream()
+        self.expect_gdbremote_sequence()
 
     @debugserver_test
     def test_start_no_ack_mode_debugserver(self):
@@ -131,13 +133,13 @@ class LldbGdbServerTestCase(TestBase):
         server = self.start_server()
         self.assertIsNotNone(server)
 
-        log_lines = self.create_no_ack_remote_stream()
-        log_lines.extend([
-            "lldb-gdbserver <  26> read packet: $QThreadSuffixSupported#e4",
-            "lldb-gdbserver <   6> send packet: $OK#9a"])
+        self.add_no_ack_remote_stream()
+        self.test_sequence.add_log_lines(
+            ["lldb-gdbserver <  26> read packet: $QThreadSuffixSupported#e4",
+             "lldb-gdbserver <   6> send packet: $OK#9a"],
+            True)
 
-        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
-                                     self._TIMEOUT_SECONDS, self.logger)
+        self.expect_gdbremote_sequence()
 
     @debugserver_test
     def test_thread_suffix_supported_debugserver(self):
@@ -154,13 +156,12 @@ class LldbGdbServerTestCase(TestBase):
         server = self.start_server()
         self.assertIsNotNone(server)
 
-        log_lines = self.create_no_ack_remote_stream()
-        log_lines.extend([
-            "lldb-gdbserver <  27> read packet: $QListThreadsInStopReply#21",
-            "lldb-gdbserver <   6> send packet: $OK#9a"])
-
-        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
-                                     self._TIMEOUT_SECONDS, self.logger)
+        self.add_no_ack_remote_stream()
+        self.test_sequence.add_log_lines(
+            ["lldb-gdbserver <  27> read packet: $QListThreadsInStopReply#21",
+             "lldb-gdbserver <   6> send packet: $OK#9a"],
+            True)
+        self.expect_gdbremote_sequence()
 
     @debugserver_test
     def test_list_threads_in_stop_reply_supported_debugserver(self):
@@ -180,13 +181,12 @@ class LldbGdbServerTestCase(TestBase):
         # build launch args
         launch_args = [os.path.abspath('a.out')]
 
-        log_lines = self.create_no_ack_remote_stream()
-        log_lines.extend([
-            "lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
-            "lldb-gdbserver <   6> send packet: $OK#9a"])
-
-        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
-                                     self._TIMEOUT_SECONDS, self.logger)
+        self.add_no_ack_remote_stream()
+        self.test_sequence.add_log_lines(
+            ["read packet: %s" % build_gdbremote_A_packet(launch_args),
+             "send packet: $OK#9a"],
+            True)
+        self.expect_gdbremote_sequence()
 
     @debugserver_test
     @dsym_test
@@ -209,17 +209,16 @@ class LldbGdbServerTestCase(TestBase):
         # build launch args
         launch_args = [os.path.abspath('a.out')]
 
-        log_lines = self.create_no_ack_remote_stream()
-        log_lines.extend([
-            "lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
-            "lldb-gdbserver <   6> send packet: $OK#00",
-            "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
-            "lldb-gdbserver <   6> send packet: $OK#00",
-            "lldb-gdbserver <   5> read packet: $vCont;c#00",
-            "lldb-gdbserver <   7> send packet: $W00#00"])
-
-        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
-                                     self._TIMEOUT_SECONDS, self.logger)
+        self.add_no_ack_remote_stream()
+        self.test_sequence.add_log_lines(
+            ["read packet: %s" % build_gdbremote_A_packet(launch_args),
+             "send packet: $OK#00",
+             "read packet: $qLaunchSuccess#a5",
+             "send packet: $OK#00",
+             "read packet: $vCont;c#00",
+             "send packet: $W00#00"],
+            True)
+        self.expect_gdbremote_sequence()
 
     @debugserver_test
     @dsym_test
@@ -245,17 +244,16 @@ class LldbGdbServerTestCase(TestBase):
         # build launch args
         launch_args = [os.path.abspath('a.out'), "retval:%d" % RETVAL]
 
-        log_lines = self.create_no_ack_remote_stream()
-        log_lines.extend([
-            "lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
-            "lldb-gdbserver <   6> send packet: $OK#00",
-            "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
-            "lldb-gdbserver <   6> send packet: $OK#00",
-            "lldb-gdbserver <   5> read packet: $vCont;c#00",
-            "lldb-gdbserver <   7> send packet: $W{0:02x}#00".format(RETVAL)])
-
-        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
-                                     self._TIMEOUT_SECONDS, self.logger)
+        self.add_no_ack_remote_stream()
+        self.test_sequence.add_log_lines(
+            ["lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
+             "lldb-gdbserver <   6> send packet: $OK#00",
+             "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
+             "lldb-gdbserver <   6> send packet: $OK#00",
+             "lldb-gdbserver <   5> read packet: $vCont;c#00",
+             "lldb-gdbserver <   7> send packet: $W{0:02x}#00".format(RETVAL)],
+            True)
+        self.expect_gdbremote_sequence()
 
     @debugserver_test
     @dsym_test
@@ -279,18 +277,17 @@ class LldbGdbServerTestCase(TestBase):
         # build launch args
         launch_args = [os.path.abspath('a.out'), "hello, world"]
 
-        log_lines = self.create_no_ack_remote_stream()
-        log_lines.extend([
-            "lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
-            "lldb-gdbserver <   6> send packet: $OK#00",
-            "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
-            "lldb-gdbserver <   6> send packet: $OK#00",
-            "lldb-gdbserver <   5> read packet: $vCont;c#00",
-            "lldb-gdbserver <   7> send packet: $O{}#00".format(gdbremote_hex_encode_string("hello, world\r\n")),
-            "lldb-gdbserver <   7> send packet: $W00#00"])
-
-        expect_lldb_gdbserver_replay(self, self.sock, log_lines, True,
-                                     self._TIMEOUT_SECONDS, self.logger)
+        self.add_no_ack_remote_stream()
+        self.test_sequence.add_log_lines(
+            ["lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
+             "lldb-gdbserver <   6> send packet: $OK#00",
+             "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
+             "lldb-gdbserver <   6> send packet: $OK#00",
+             "lldb-gdbserver <   5> read packet: $vCont;c#00",
+             "lldb-gdbserver <   7> send packet: $O{}#00".format(gdbremote_hex_encode_string("hello, world\r\n")),
+             "lldb-gdbserver <   7> send packet: $W00#00"],
+            True)
+        self.expect_gdbremote_sequence()
 
     @debugserver_test
     @dsym_test
