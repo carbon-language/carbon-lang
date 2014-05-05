@@ -63,8 +63,6 @@ public:
     return DefinedAtom::permR_X;
   }
 
-  bool isAlias() const override { return false; }
-
   ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 
   reference_iterator begin() const override {
@@ -127,8 +125,6 @@ public:
   ContentPermissions permissions() const override {
     return DefinedAtom::permRW_;
   }
-
-  bool isAlias() const override { return false; }
 
   ArrayRef<uint8_t> rawContent() const override { return ArrayRef<uint8_t>(); }
 
@@ -273,4 +269,3 @@ void CoreLinkingContext::addPasses(PassManager &pm) {
 }
 
 Writer &CoreLinkingContext::writer() const { return *_writer; }
-

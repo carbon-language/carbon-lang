@@ -270,12 +270,6 @@ public:
   /// is R__.
   virtual ContentPermissions permissions() const;
 
-  /// \brief means this is a zero size atom that exists to provide an alternate
-  /// name for another atom.  Alias atoms must have a special Reference to the
-  /// atom they alias which the layout engine recognizes and forces the alias
-  /// atom to layout right before the target atom.
-  virtual bool isAlias() const = 0;
-
   /// \brief returns a reference to the raw (unrelocated) bytes of this Atom's
   /// content.
   virtual ArrayRef<uint8_t> rawContent() const = 0;
