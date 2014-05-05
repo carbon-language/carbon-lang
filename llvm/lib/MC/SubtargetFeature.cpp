@@ -109,12 +109,11 @@ static std::string Join(const std::vector<std::string> &V) {
 }
 
 /// Adding features.
-void SubtargetFeatures::AddFeature(const StringRef String,
-                                   bool IsEnabled) {
+void SubtargetFeatures::AddFeature(const StringRef String) {
   // Don't add empty features
   if (!String.empty()) {
     // Convert to lowercase, prepend flag and add to vector
-    Features.push_back(PrependFlag(String.lower(), IsEnabled));
+    Features.push_back(PrependFlag(String.lower(), true));
   }
 }
 
