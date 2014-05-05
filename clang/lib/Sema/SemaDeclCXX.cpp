@@ -11390,9 +11390,10 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation LocStart,
       // a tag in front.
       if (const RecordType *RT = T->getAs<RecordType>()) {
         RecordDecl *RD = RT->getDecl();
-      
-        std::string InsertionText = std::string(" ") + RD->getKindName();
-      
+
+        SmallString<16> InsertionText(" ");
+        InsertionText += RD->getKindName();
+
         Diag(TypeRange.getBegin(),
              getLangOpts().CPlusPlus11 ?
                diag::warn_cxx98_compat_unelaborated_friend_type :

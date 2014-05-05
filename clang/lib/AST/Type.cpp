@@ -1431,8 +1431,7 @@ TypeWithKeyword::KeywordIsTagTypeKind(ElaboratedTypeKeyword Keyword) {
   llvm_unreachable("Unknown elaborated type keyword.");
 }
 
-const char*
-TypeWithKeyword::getKeywordName(ElaboratedTypeKeyword Keyword) {
+StringRef TypeWithKeyword::getKeywordName(ElaboratedTypeKeyword Keyword) {
   switch (Keyword) {
   case ETK_None: return "";
   case ETK_Typename: return "typename";

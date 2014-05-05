@@ -3980,9 +3980,9 @@ public:
 
   static bool KeywordIsTagTypeKind(ElaboratedTypeKeyword Keyword);
 
-  static const char *getKeywordName(ElaboratedTypeKeyword Keyword);
+  static StringRef getKeywordName(ElaboratedTypeKeyword Keyword);
 
-  static const char *getTagTypeKindName(TagTypeKind Kind) {
+  static StringRef getTagTypeKindName(TagTypeKind Kind) {
     return getKeywordName(getKeywordForTagTypeKind(Kind));
   }
 

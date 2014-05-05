@@ -2693,8 +2693,7 @@ public:
     IsCompleteDefinitionRequired = V;
   }
 
-  // FIXME: Return StringRef;
-  const char *getKindName() const {
+  StringRef getKindName() const {
     return TypeWithKeyword::getTagTypeKindName(getTagKind());
   }
 
