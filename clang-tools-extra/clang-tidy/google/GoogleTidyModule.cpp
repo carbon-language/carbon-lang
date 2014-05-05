@@ -34,6 +34,8 @@ void ExplicitConstructorCheck::registerMatchers(MatchFinder *Finder) {
 SourceRange FindToken(const SourceManager &Sources, LangOptions LangOpts,
                       SourceLocation StartLoc, SourceLocation EndLoc,
                       bool (*Pred)(const Token &)) {
+  if (StartLoc.isMacroID() || EndLoc.isMacroID())
+    return SourceRange();
   FileID File = Sources.getFileID(Sources.getSpellingLoc(StartLoc));
   StringRef Buf = Sources.getBufferData(File);
   const char *StartChar = Sources.getCharacterData(StartLoc);
@@ -69,10 +71,10 @@ void ExplicitConstructorCheck::check(const MatchFinder::MatchResult &Result) {
     SourceRange ExplicitTokenRange =
         FindToken(*Result.SourceManager, Result.Context->getLangOpts(),
                   Ctor->getOuterLocStart(), Ctor->getLocEnd(), isKWExplicit);
+    DiagnosticBuilder Diag =
+        diag(Ctor->getLocation(), "%0 constructor declared explicit.")
+        << (Ctor->isMoveConstructor() ? "Move" : "Copy");
     if (ExplicitTokenRange.isValid()) {
-      DiagnosticBuilder Diag = diag(ExplicitTokenRange.getBegin(),
-                                    "%0 constructor declared explicit.")
-                               << (Ctor->isMoveConstructor() ? "Move" : "Copy");
       Diag << FixItHint::CreateRemoval(
           CharSourceRange::getCharRange(ExplicitTokenRange));
     }

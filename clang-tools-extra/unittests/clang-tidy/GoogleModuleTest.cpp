@@ -47,6 +47,15 @@ TEST(ExplicitConstructorCheckTest, RemoveExplicit) {
                 "class C { explicit/*asdf*/  C(const C&, int i = 0); };"));
 }
 
+TEST(ExplicitConstructorCheckTest, RemoveExplicitWithMacros) {
+  EXPECT_EQ(
+      "#define A(T) class T##Bar { explicit T##Bar(const T##Bar &b) {} };\n"
+      "A(Foo);",
+      runCheckOnCode<ExplicitConstructorCheck>(
+          "#define A(T) class T##Bar { explicit T##Bar(const T##Bar &b) {} };\n"
+          "A(Foo);"));
+}
+
 } // namespace test
 } // namespace tidy
 } // namespace clang
