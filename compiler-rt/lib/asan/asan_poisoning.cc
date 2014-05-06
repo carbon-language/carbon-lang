@@ -270,7 +270,7 @@ void __sanitizer_annotate_contiguous_container(const void *beg_p,
   VPrintf(2, "contiguous_container: %p %p %p %p\n", beg_p, end_p, old_mid_p,
           new_mid_p);
   uptr beg = reinterpret_cast<uptr>(beg_p);
-  uptr end= reinterpret_cast<uptr>(end_p);
+  uptr end = reinterpret_cast<uptr>(end_p);
   uptr old_mid = reinterpret_cast<uptr>(old_mid_p);
   uptr new_mid = reinterpret_cast<uptr>(new_mid_p);
   uptr granularity = SHADOW_GRANULARITY;
@@ -313,6 +313,38 @@ void __sanitizer_annotate_contiguous_container(const void *beg_p,
   }
 }
 
+int __sanitizer_verify_contiguous_container(const void *beg_p,
+                                            const void *mid_p,
+                                            const void *end_p) {
+  if (!flags()->detect_container_overflow) return 1;
+  uptr beg = reinterpret_cast<uptr>(beg_p);
+  uptr end = reinterpret_cast<uptr>(end_p);
+  uptr mid = reinterpret_cast<uptr>(mid_p);
+  CHECK_LE(beg, mid);
+  CHECK_LE(mid, end);
+  // Check some bytes starting from beg, some bytes around mid, and some bytes
+  // ending with end.
+  uptr kMaxRangeToCheck = 32;
+  uptr r1_beg = beg;
+  uptr r1_end = Min(end + kMaxRangeToCheck, mid);
+  uptr r2_beg = Max(beg, mid - kMaxRangeToCheck);
+  uptr r2_end = Min(end, mid + kMaxRangeToCheck);
+  uptr r3_beg = Max(end - kMaxRangeToCheck, mid);
+  uptr r3_end = end;
+  for (uptr i = r1_beg; i < r1_end; i++)
+    if (AddressIsPoisoned(i))
+      return 0;
+  for (uptr i = r2_beg; i < mid; i++)
+    if (AddressIsPoisoned(i))
+      return 0;
+  for (uptr i = mid; i < r2_end; i++)
+    if (!AddressIsPoisoned(i))
+      return 0;
+  for (uptr i = r3_beg; i < r3_end; i++)
+    if (!AddressIsPoisoned(i))
+      return 0;
+  return 1;
+}
 // --- Implementation of LSan-specific functions --- {{{1
 namespace __lsan {
 bool WordIsPoisoned(uptr addr) {

@@ -6,12 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-
-extern "C" {
-void __sanitizer_annotate_contiguous_container(void *beg, void *end,
-                                               void *old_mid, void *new_mid);
-bool __asan_address_is_poisoned(void *addr);
-}  // extern "C"
+#include <sanitizer/asan_interface.h>
 
 void TestContainer(size_t capacity) {
   char *beg = new char[capacity];
@@ -30,6 +25,11 @@ void TestContainer(size_t capacity) {
         assert(!__asan_address_is_poisoned(beg + idx));
     for (size_t idx = size; idx < capacity; idx++)
         assert(__asan_address_is_poisoned(beg + idx));
+    assert(__sanitizer_verify_contiguous_container(beg, mid, end));
+    if (mid != beg)
+      assert(!__sanitizer_verify_contiguous_container(beg, mid - 1, end));
+    if (mid != end)
+      assert(!__sanitizer_verify_contiguous_container(beg, mid + 1, end));
   }
 
   // Don't forget to unpoison the whole thing before destroing/reallocating.

@@ -111,6 +111,9 @@ extern "C" {
                                                  const void *end,
                                                  const void *old_mid,
                                                  const void *new_mid);
+  SANITIZER_INTERFACE_ATTRIBUTE
+  int __sanitizer_verify_contiguous_container(const void *beg, const void *mid,
+                                              const void *end);
 }  // extern "C"
 
 
