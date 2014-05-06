@@ -837,6 +837,40 @@ The lack of 'permissions:' indicates that none of read/write/execute are valid
 for this region.
 
 //----------------------------------------------------------------------
+// 'x' - Binary memory read
+//
+// Like the 'm' (read) and 'M' (write) packets, this is a partner to the
+// 'X' (write binary data) packet, 'x'.
+//
+// It is called like
+//
+// xADDRESS,LENGTH
+//
+// where both ADDRESS and LENGTH are big-endian base 16 values.
+//
+// To test if this packet is available, send a addr/len of 0:
+//
+// x0,0
+//
+// and you will get an "OK" response.
+//
+// The reply will be the data requested in 8-bit binary data format.
+// The standard quoting is applied to the payload -- characters
+//   }  #  $  *
+// will all be escaped with '}' (0x7d) character and then XOR'ed with 0x20.
+//
+// A typical use to read 512 bytes at 0x1000 would look like
+//
+// x0x1000,0x200
+//
+// The "0x" prefixes are optional - like most of the gdb-remote packets,
+// omitting them will work fine; these numbers are always base 16.
+// 
+// The length of the payload is not provided.  A reliable, 8-bit clean, 
+// transport layer is assumed.
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
 // Detach and stay stopped:
 //
 // We extended the "D" packet to specify that the monitor should keep the

@@ -67,6 +67,7 @@ public:
         vattachname,                    // 'vAttachName:XX...' where XX is one or more hex encoded process name ASCII bytes
         vcont,                          // 'vCont'
         vcont_list_actions,             // 'vCont?'
+        read_data_from_memory,          // 'x'
         write_data_to_memory,           // 'X'
         insert_mem_bp,                  // 'Z0'
         remove_mem_bp,                  // 'z0'
@@ -92,6 +93,7 @@ public:
         query_register_info,            // 'qRegisterInfo'
         query_shlib_notify_info_addr,   // 'qShlibInfoAddr'
         query_step_packet_supported,    // 'qStepPacketSupported'
+        query_supported_features,       // 'qSupported'
         query_vattachorwait_supported,  // 'qVAttachOrWaitSupported'
         query_sync_thread_state_supported,// 'QSyncThreadState'
         query_host_info,                // 'qHostInfo'
@@ -202,6 +204,7 @@ public:
     rnb_err_t HandlePacket_last_signal (const char *p);
     rnb_err_t HandlePacket_m (const char *p);
     rnb_err_t HandlePacket_M (const char *p);
+    rnb_err_t HandlePacket_x (const char *p);
     rnb_err_t HandlePacket_X (const char *p);
     rnb_err_t HandlePacket_g (const char *p);
     rnb_err_t HandlePacket_G (const char *p);
@@ -215,6 +218,7 @@ public:
     rnb_err_t HandlePacket_k (const char *p);
     rnb_err_t HandlePacket_s (const char *p);
     rnb_err_t HandlePacket_S (const char *p);
+    rnb_err_t HandlePacket_qSupported (const char *p);
     rnb_err_t HandlePacket_v (const char *p);
     rnb_err_t HandlePacket_UNIMPLEMENTED (const char *p);
     rnb_err_t HandlePacket_ILLFORMED (const char *file, int line, const char *p, const char *description);

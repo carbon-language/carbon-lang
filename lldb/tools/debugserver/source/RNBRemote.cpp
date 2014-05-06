@@ -136,14 +136,15 @@ RNBRemote::CreatePacketTable  ()
 //  t.push_back (Packet (restart,                       &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "R", "Restart inferior"));
 //  t.push_back (Packet (search_mem_backwards,          &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "t", "Search memory backwards"));
     t.push_back (Packet (thread_alive_p,                &RNBRemote::HandlePacket_T,             NULL, "T", "Is thread alive"));
+    t.push_back (Packet (query_supported_features,      &RNBRemote::HandlePacket_qSupported,    NULL, "qSupported", "Query about supported features"));
     t.push_back (Packet (vattach,                       &RNBRemote::HandlePacket_v,             NULL, "vAttach", "Attach to a new process"));
     t.push_back (Packet (vattachwait,                   &RNBRemote::HandlePacket_v,             NULL, "vAttachWait", "Wait for a process to start up then attach to it"));
     t.push_back (Packet (vattachorwait,                 &RNBRemote::HandlePacket_v,             NULL, "vAttachOrWait", "Attach to the process or if it doesn't exist, wait for the process to start up then attach to it"));
     t.push_back (Packet (vattachname,                   &RNBRemote::HandlePacket_v,             NULL, "vAttachName", "Attach to an existing process by name"));
     t.push_back (Packet (vcont_list_actions,            &RNBRemote::HandlePacket_v,             NULL, "vCont;", "Verbose resume with thread actions"));
     t.push_back (Packet (vcont_list_actions,            &RNBRemote::HandlePacket_v,             NULL, "vCont?", "List valid continue-with-thread-actions actions"));
-    // The X packet doesn't currently work. If/when it does, remove the line above and uncomment out the line below
-//  t.push_back (Packet (write_data_to_memory,          &RNBRemote::HandlePacket_X,             NULL, "X", "Write data to memory"));
+  t.push_back (Packet (read_data_from_memory,           &RNBRemote::HandlePacket_x,             NULL, "x", "Read data from memory"));
+  t.push_back (Packet (write_data_to_memory,            &RNBRemote::HandlePacket_X,             NULL, "X", "Write data to memory"));
 //  t.push_back (Packet (insert_hardware_bp,            &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "Z1", "Insert hardware breakpoint"));
 //  t.push_back (Packet (remove_hardware_bp,            &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "z1", "Remove hardware breakpoint"));
     t.push_back (Packet (insert_write_watch_bp,         &RNBRemote::HandlePacket_z,             NULL, "Z2", "Insert write watchpoint"));
@@ -817,10 +818,10 @@ best_guess_cpu_type ()
 
 /* Read the bytes in STR which are GDB Remote Protocol binary encoded bytes
  (8-bit bytes).
- This encoding uses 0x7d ('}') as an escape character for 0x7d ('}'),
- 0x23 ('#'), and 0x24 ('$').
+ This encoding uses 0x7d ('}') as an escape character for 
+ 0x7d ('}'), 0x23 ('#'), 0x24 ('$'), 0x2a ('*').
  LEN is the number of bytes to be processed.  If a character is escaped,
- it is 2 characters for LEN.  A LEN of -1 means encode-until-nul-byte
+ it is 2 characters for LEN.  A LEN of -1 means decode-until-nul-byte
  (end of string).  */
 
 std::vector<uint8_t>
@@ -841,7 +842,7 @@ decode_binary_data (const char *str, size_t len)
         {
             len--;
             str++;
-            c ^= 0x20;
+            c = *str ^ 0x20;
         }
         bytes.push_back (c);
     }
@@ -2537,6 +2538,89 @@ RNBRemote::HandlePacket_m (const char *p)
     return SendPacket (ostrm.str ());
 }
 
+// Read memory, sent it up as binary data.
+// Usage:  xADDR,LEN
+// ADDR and LEN are both base 16.
+
+// Responds with 'OK' for zero-length request
+// or 
+//
+// DATA
+//
+// where DATA is the binary data payload.
+
+rnb_err_t
+RNBRemote::HandlePacket_x (const char *p)
+{
+    if (p == NULL || p[0] == '\0' || strlen (p) < 3)
+    {
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Too short X packet");
+    }
+
+    char *c;
+    p++;
+    errno = 0;
+    nub_addr_t addr = strtoull (p, &c, 16);
+    if (errno != 0)
+    {
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid address in X packet");
+    }
+    if (*c != ',')
+    {
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Comma sep missing in X packet");
+    }
+
+    /* Advance 'p' to the number of bytes to be read.  */
+    p += (c - p) + 1;
+
+    errno = 0;
+    int length = strtoul (p, NULL, 16);
+    if (errno != 0)
+    {
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in x packet");
+    }
+
+    // zero length read means this is a test of whether that packet is implemented or not.
+    if (length == 0)
+    {
+        return SendPacket ("OK");
+    }
+
+    std::vector<uint8_t> buf (length);
+
+    if (buf.capacity() != length)
+    {
+        return SendPacket ("E79");
+    }
+    int bytes_read = DNBProcessMemoryRead (m_ctx.ProcessID(), addr, buf.size(), &buf[0]);
+    if (bytes_read == 0)
+    {
+        return SendPacket ("E80");
+    }
+
+    std::vector<uint8_t> buf_quoted;
+    buf_quoted.reserve (bytes_read + 30);
+    for (int i = 0; i < bytes_read; i++)
+    {
+        if (buf[i] == '#' || buf[i] == '$' || buf[i] == '}' || buf[i] == '*')
+        {
+            buf_quoted.push_back(0x7d);
+            buf_quoted.push_back(buf[i] ^ 0x20);
+        }
+        else
+        {
+            buf_quoted.push_back(buf[i]);
+        }
+    }
+    length = buf_quoted.size();
+
+    std::ostringstream ostrm;
+    for (int i = 0; i < length; i++)
+        ostrm << buf_quoted[i];
+
+    return SendPacket (ostrm.str ());
+}
+
 rnb_err_t
 RNBRemote::HandlePacket_X (const char *p)
 {
@@ -2558,14 +2642,16 @@ RNBRemote::HandlePacket_X (const char *p)
         return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Comma sep missing in X packet");
     }
 
-    /* Advance 'p' to the length part of the packet.  */
+    /* Advance 'p' to the length part of the packet.  NB this is the length of the packet
+       including any escaped chars.  The data payload may be a little bit smaller after
+       decoding.  */
     p += (c - p) + 1;
 
     errno = 0;
     int length = strtoul (p, NULL, 16);
     if (errno != 0 && length == 0)
     {
-        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in m packet");
+        return HandlePacket_ILLFORMED (__FILE__, __LINE__, p, "Invalid length in X packet");
     }
 
     // I think gdb sends a zero length write request to test whether this
@@ -2880,6 +2966,15 @@ GetProcessNameFrom_vAttach (const char *&p, std::string &attach_name)
         p += 2;
     }
     return return_val;
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_qSupported (const char *p)
+{
+    uint32_t max_packet_size = 128 * 1024;  // 128KBytes is a reasonable max packet size--debugger can always use less
+    char buf[64];
+    snprintf (buf, sizeof(buf), "PacketSize=%x", max_packet_size);
+    return SendPacket (buf);
 }
 
 /*
