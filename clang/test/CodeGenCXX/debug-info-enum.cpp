@@ -34,3 +34,12 @@ void func() {
   e x;
 }
 }
+
+namespace test4 {
+// Don't try to build debug info for a dependent enum.
+// CHECK-NOT: test4
+template <typename T>
+struct S {
+  enum e { E = T::v };
+};
+}

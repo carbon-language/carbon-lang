@@ -1427,6 +1427,21 @@ llvm::DIType CGDebugInfo::getOrCreateInterfaceType(QualType D,
   return T;
 }
 
+void CGDebugInfo::completeType(const EnumDecl *ED) {
+  if (DebugKind <= CodeGenOptions::DebugLineTablesOnly)
+    return;
+  QualType Ty = CGM.getContext().getEnumType(ED);
+  void* TyPtr = Ty.getAsOpaquePtr();
+  auto I = TypeCache.find(TyPtr);
+  if (I == TypeCache.end() ||
+      !llvm::DIType(cast<llvm::MDNode>(static_cast<llvm::Value *>(I->second)))
+           .isForwardDecl())
+    return;
+  llvm::DIType Res = CreateTypeDefinition(Ty->castAs<EnumType>());
+  assert(!Res.isForwardDecl());
+  TypeCache[TyPtr] = Res;
+}
+
 void CGDebugInfo::completeType(const RecordDecl *RD) {
   if (DebugKind > CodeGenOptions::LimitedDebugInfo ||
       !CGM.getLangOpts().CPlusPlus)
@@ -1914,6 +1929,20 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumType *Ty) {
     ReplaceMap.push_back(std::make_pair(Ty, static_cast<llvm::Value *>(RetTy)));
     return RetTy;
   }
+
+  return CreateTypeDefinition(Ty);
+}
+
+llvm::DIType CGDebugInfo::CreateTypeDefinition(const EnumType *Ty) {
+  const EnumDecl *ED = Ty->getDecl();
+  uint64_t Size = 0;
+  uint64_t Align = 0;
+  if (!ED->getTypeForDecl()->isIncompleteType()) {
+    Size = CGM.getContext().getTypeSize(ED->getTypeForDecl());
+    Align = CGM.getContext().getTypeAlign(ED->getTypeForDecl());
+  }
+
+  SmallString<256> FullName = getUniqueTagTypeName(Ty, CGM, TheCU);
 
   // Create DIEnumerator elements for each enumerator.
   SmallVector<llvm::Value *, 16> Enumerators;
