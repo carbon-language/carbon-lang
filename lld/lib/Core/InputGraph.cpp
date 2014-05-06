@@ -44,9 +44,8 @@ ErrorOr<File &> InputGraph::getNextFile() {
 
 void InputGraph::notifyProgress() { _currentInputElement->notifyProgress(); }
 
-bool InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {
+void InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {
   _inputArgs.push_back(std::move(ie));
-  return true;
 }
 
 bool InputGraph::dump(raw_ostream &diagnostics) {

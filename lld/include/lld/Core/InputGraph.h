@@ -68,7 +68,7 @@ public:
   void notifyProgress();
 
   /// \brief Adds a node into the InputGraph
-  bool addInputElement(std::unique_ptr<InputElement>);
+  void addInputElement(std::unique_ptr<InputElement>);
 
   /// Normalize the InputGraph. It visits all nodes in the tree to replace a
   /// node with its children if it's shouldExpand() returns true.
