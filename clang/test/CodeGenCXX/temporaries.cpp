@@ -3,8 +3,8 @@
 namespace PR16263 {
   const unsigned int n = 1234;
   extern const int &r = (const int&)n;
-  // CHECK: @_ZGRN7PR162631rE = private constant i32 1234,
-  // CHECK: @_ZN7PR162631rE = constant i32* @_ZGRN7PR162631rE,
+  // CHECK: @_ZGRN7PR162631rE_ = private constant i32 1234,
+  // CHECK: @_ZN7PR162631rE = constant i32* @_ZGRN7PR162631rE_,
 
   extern const int &s = reinterpret_cast<const int&>(n);
   // CHECK: @_ZN7PR16263L1nE = internal constant i32 1234, align 4
@@ -14,17 +14,17 @@ namespace PR16263 {
   struct B { int n; };
   struct C : A, B {};
   extern const A &&a = (A&&)(A&&)(C&&)(C{});
-  // CHECK: @_ZGRN7PR162631aE = private global {{.*}} zeroinitializer,
-  // CHECK: @_ZN7PR162631aE = constant {{.*}} bitcast ({{.*}}* @_ZGRN7PR162631aE to
+  // CHECK: @_ZGRN7PR162631aE_ = private global {{.*}} zeroinitializer,
+  // CHECK: @_ZN7PR162631aE = constant {{.*}} bitcast ({{.*}}* @_ZGRN7PR162631aE_ to
 
   extern const int &&t = ((B&&)C{}).n;
-  // CHECK: @_ZGRN7PR162631tE = private global {{.*}} zeroinitializer,
-  // CHECK: @_ZN7PR162631tE = constant i32* {{.*}}* @_ZGRN7PR162631tE {{.*}} 4
+  // CHECK: @_ZGRN7PR162631tE_ = private global {{.*}} zeroinitializer,
+  // CHECK: @_ZN7PR162631tE = constant i32* {{.*}}* @_ZGRN7PR162631tE_ {{.*}} 4
 
   struct D { double d; C c; };
   extern const int &&u = (123, static_cast<B&&>(0, ((D&&)D{}).*&D::c).n);
-  // CHECK: @_ZGRN7PR162631uE = private global {{.*}} zeroinitializer
-  // CHECK: @_ZN7PR162631uE = constant i32* {{.*}} @_ZGRN7PR162631uE {{.*}} 12
+  // CHECK: @_ZGRN7PR162631uE_ = private global {{.*}} zeroinitializer
+  // CHECK: @_ZN7PR162631uE = constant i32* {{.*}} @_ZGRN7PR162631uE_ {{.*}} 12
 }
 
 struct A {
@@ -596,23 +596,23 @@ namespace BindToSubobject {
 
   void f(), g();
 
-  // CHECK: call void @_ZN15BindToSubobject1AC1Ev({{.*}} @_ZGRN15BindToSubobject1aE)
-  // CHECK: call i32 @__cxa_atexit({{.*}} bitcast ({{.*}} @_ZN15BindToSubobject1AD1Ev to void (i8*)*), i8* bitcast ({{.*}} @_ZGRN15BindToSubobject1aE to i8*), i8* @__dso_handle)
-  // CHECK: store i32* getelementptr inbounds ({{.*}} @_ZGRN15BindToSubobject1aE, i32 0, i32 0), i32** @_ZN15BindToSubobject1aE, align 8
+  // CHECK: call void @_ZN15BindToSubobject1AC1Ev({{.*}} @_ZGRN15BindToSubobject1aE_)
+  // CHECK: call i32 @__cxa_atexit({{.*}} bitcast ({{.*}} @_ZN15BindToSubobject1AD1Ev to void (i8*)*), i8* bitcast ({{.*}} @_ZGRN15BindToSubobject1aE_ to i8*), i8* @__dso_handle)
+  // CHECK: store i32* getelementptr inbounds ({{.*}} @_ZGRN15BindToSubobject1aE_, i32 0, i32 0), i32** @_ZN15BindToSubobject1aE, align 8
   int &&a = A().a;
 
   // CHECK: call void @_ZN15BindToSubobject1fEv()
-  // CHECK: call void @_ZN15BindToSubobject1AC1Ev({{.*}} @_ZGRN15BindToSubobject1bE)
-  // CHECK: call i32 @__cxa_atexit({{.*}} bitcast ({{.*}} @_ZN15BindToSubobject1AD1Ev to void (i8*)*), i8* bitcast ({{.*}} @_ZGRN15BindToSubobject1bE to i8*), i8* @__dso_handle)
-  // CHECK: store i32* getelementptr inbounds ({{.*}} @_ZGRN15BindToSubobject1bE, i32 0, i32 0), i32** @_ZN15BindToSubobject1bE, align 8
+  // CHECK: call void @_ZN15BindToSubobject1AC1Ev({{.*}} @_ZGRN15BindToSubobject1bE_)
+  // CHECK: call i32 @__cxa_atexit({{.*}} bitcast ({{.*}} @_ZN15BindToSubobject1AD1Ev to void (i8*)*), i8* bitcast ({{.*}} @_ZGRN15BindToSubobject1bE_ to i8*), i8* @__dso_handle)
+  // CHECK: store i32* getelementptr inbounds ({{.*}} @_ZGRN15BindToSubobject1bE_, i32 0, i32 0), i32** @_ZN15BindToSubobject1bE, align 8
   int &&b = (f(), A().a);
 
   int A::*h();
 
   // CHECK: call void @_ZN15BindToSubobject1fEv()
   // CHECK: call void @_ZN15BindToSubobject1gEv()
-  // CHECK: call void @_ZN15BindToSubobject1AC1Ev({{.*}} @_ZGRN15BindToSubobject1cE)
-  // CHECK: call i32 @__cxa_atexit({{.*}} bitcast ({{.*}} @_ZN15BindToSubobject1AD1Ev to void (i8*)*), i8* bitcast ({{.*}} @_ZGRN15BindToSubobject1cE to i8*), i8* @__dso_handle)
+  // CHECK: call void @_ZN15BindToSubobject1AC1Ev({{.*}} @_ZGRN15BindToSubobject1cE_)
+  // CHECK: call i32 @__cxa_atexit({{.*}} bitcast ({{.*}} @_ZN15BindToSubobject1AD1Ev to void (i8*)*), i8* bitcast ({{.*}} @_ZGRN15BindToSubobject1cE_ to i8*), i8* @__dso_handle)
   // CHECK: call {{.*}} @_ZN15BindToSubobject1hE
   // CHECK: getelementptr
   // CHECK: store i32* {{.*}}, i32** @_ZN15BindToSubobject1cE, align 8
@@ -623,8 +623,8 @@ namespace BindToSubobject {
     A a;
   };
 
-  // CHECK: call void @_ZN15BindToSubobject1BC1Ev({{.*}} @_ZGRN15BindToSubobject1dE)
-  // CHECK: call i32 @__cxa_atexit({{.*}} bitcast ({{.*}} @_ZN15BindToSubobject1BD1Ev to void (i8*)*), i8* bitcast ({{.*}} @_ZGRN15BindToSubobject1dE to i8*), i8* @__dso_handle)
+  // CHECK: call void @_ZN15BindToSubobject1BC1Ev({{.*}} @_ZGRN15BindToSubobject1dE_)
+  // CHECK: call i32 @__cxa_atexit({{.*}} bitcast ({{.*}} @_ZN15BindToSubobject1BD1Ev to void (i8*)*), i8* bitcast ({{.*}} @_ZGRN15BindToSubobject1dE_ to i8*), i8* @__dso_handle)
   // CHECK: call {{.*}} @_ZN15BindToSubobject1hE
   // CHECK: getelementptr {{.*}} getelementptr
   // CHECK: store i32* {{.*}}, i32** @_ZN15BindToSubobject1dE, align 8
@@ -637,9 +637,9 @@ namespace Bitfield {
   // Do not lifetime extend the S() temporary here.
   // CHECK: alloca
   // CHECK: call {{.*}}memset
-  // CHECK: store i32 {{.*}}, i32* @_ZGRN8Bitfield1rE
+  // CHECK: store i32 {{.*}}, i32* @_ZGRN8Bitfield1rE_
   // CHECK: call void @_ZN8Bitfield1SD1
-  // CHECK: store i32* @_ZGRN8Bitfield1rE, i32** @_ZN8Bitfield1rE, align 8
+  // CHECK: store i32* @_ZGRN8Bitfield1rE_, i32** @_ZN8Bitfield1rE, align 8
   int &&r = S().a;
 }
 
@@ -652,14 +652,14 @@ namespace Vector {
   };
   // CHECK: alloca
   // CHECK: extractelement
-  // CHECK: store i32 {{.*}}, i32* @_ZGRN6Vector1rE
-  // CHECK: store i32* @_ZGRN6Vector1rE, i32** @_ZN6Vector1rE,
+  // CHECK: store i32 {{.*}}, i32* @_ZGRN6Vector1rE_
+  // CHECK: store i32* @_ZGRN6Vector1rE_, i32** @_ZN6Vector1rE,
   int &&r = S().v[1];
 
   // CHECK: alloca
   // CHECK: extractelement
-  // CHECK: store i32 {{.*}}, i32* @_ZGRN6Vector1sE
-  // CHECK: store i32* @_ZGRN6Vector1sE, i32** @_ZN6Vector1sE,
+  // CHECK: store i32 {{.*}}, i32* @_ZGRN6Vector1sE_
+  // CHECK: store i32* @_ZGRN6Vector1sE_, i32** @_ZN6Vector1sE,
   int &&s = S().w[1];
   // FIXME PR16204: The following code leads to an assertion in Sema.
   //int &&s = S().w.y;
@@ -761,8 +761,8 @@ namespace PR14130 {
   struct S { S(int); };
   struct U { S &&s; };
   U v { { 0 } };
-  // CHECK: call void @_ZN7PR141301SC1Ei({{.*}} @_ZGRN7PR141301vE, i32 0)
-  // CHECK: store {{.*}} @_ZGRN7PR141301vE, {{.*}} @_ZN7PR141301vE
+  // CHECK: call void @_ZN7PR141301SC1Ei({{.*}} @_ZGRN7PR141301vE_, i32 0)
+  // CHECK: store {{.*}} @_ZGRN7PR141301vE_, {{.*}} @_ZN7PR141301vE
 }
 
 namespace Ctor {

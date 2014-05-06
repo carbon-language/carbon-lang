@@ -56,7 +56,7 @@ using U = T[2][3];
 U &&u = U{ {{1.0, 2}, {3.0, 4}, {5.0, 6}}, {{7.0, 8}, {9.0, 10}, {11.0, 12}} };
 
 // CHECK: call {{.*}} @__cxa_atexit
-// CHECK: getelementptr inbounds ({{.*}}* getelementptr inbounds ([2 x [3 x {{.*}}]]* @_ZGR1u, i32 0, i32 0, i32 0), i64 6)
+// CHECK: getelementptr inbounds ({{.*}}* getelementptr inbounds ([2 x [3 x {{.*}}]]* @_ZGR1u_, i32 0, i32 0, i32 0), i64 6)
 // CHECK: call void @_ZN1TD1Ev
-// CHECK: icmp eq {{.*}} @_ZGR1u
+// CHECK: icmp eq {{.*}} @_ZGR1u_
 // CHECK: br i1 {{.*}}

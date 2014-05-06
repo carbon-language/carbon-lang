@@ -35,7 +35,7 @@ int e = V<int>::m;
 
 // CHECK: @_ZZ8tls_dtorvE1u = internal thread_local global
 // CHECK: @_ZGVZ8tls_dtorvE1u = internal thread_local global i8 0
-// CHECK: @_ZGRZ8tls_dtorvE1u = internal thread_local global
+// CHECK: @_ZGRZ8tls_dtorvE1u_ = internal thread_local global
 
 // CHECK: @_ZGVN1VIiE1mE = linkonce_odr thread_local global i64 0
 
@@ -120,8 +120,8 @@ void tls_dtor() {
   static thread_local T t;
 
   // CHECK: load i8* @_ZGVZ8tls_dtorvE1u
-  // CHECK: call void @_ZN1SC1Ev(%struct.S* @_ZGRZ8tls_dtorvE1u)
-  // CHECK: call i32 @__cxa_thread_atexit({{.*}}@_ZN1SD1Ev {{.*}} @_ZGRZ8tls_dtorvE1u{{.*}} @__dso_handle
+  // CHECK: call void @_ZN1SC1Ev(%struct.S* @_ZGRZ8tls_dtorvE1u_)
+  // CHECK: call i32 @__cxa_thread_atexit({{.*}}@_ZN1SD1Ev {{.*}} @_ZGRZ8tls_dtorvE1u_{{.*}} @__dso_handle
   // CHECK: store i8 1, i8* @_ZGVZ8tls_dtorvE1u
   static thread_local const S &u = S();
 }

@@ -382,22 +382,22 @@ namespace ArrayTemporary {
 namespace UnemittedTemporaryDecl {
   constexpr int &&ref = 0;
   extern constexpr int &ref2 = ref;
-  // CHECK: @_ZGRN22UnemittedTemporaryDecl3refE = private global i32 0
+  // CHECK: @_ZGRN22UnemittedTemporaryDecl3refE_ = private global i32 0
 
   // FIXME: This declaration should not be emitted -- it isn't odr-used.
   // CHECK: @_ZN22UnemittedTemporaryDecl3refE
 
-  // CHECK: @_ZN22UnemittedTemporaryDecl4ref2E = constant i32* @_ZGRN22UnemittedTemporaryDecl3refE
+  // CHECK: @_ZN22UnemittedTemporaryDecl4ref2E = constant i32* @_ZGRN22UnemittedTemporaryDecl3refE_
 }
 
 // CHECK: @_ZZN12LocalVarInit3aggEvE1a = internal constant {{.*}} i32 101
 // CHECK: @_ZZN12LocalVarInit4ctorEvE1a = internal constant {{.*}} i32 102
 // CHECK: @_ZZN12LocalVarInit8mutable_EvE1a = private unnamed_addr constant {{.*}} i32 103
-// CHECK: @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE = linkonce_odr constant i32 5
-// CHECK: @_ZN33ClassTemplateWithStaticDataMember3useE = constant i32* @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE
-// CHECK: @_ZGRN39ClassTemplateWithHiddenStaticDataMember1SIvE1aE = linkonce_odr hidden constant i32 5
-// CHECK: @_ZN39ClassTemplateWithHiddenStaticDataMember3useE = constant i32* @_ZGRN39ClassTemplateWithHiddenStaticDataMember1SIvE1aE
-// CHECK: @_ZGRZN20InlineStaticConstRef3funEvE1i = linkonce_odr constant i32 10
+// CHECK: @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE_ = linkonce_odr constant i32 5
+// CHECK: @_ZN33ClassTemplateWithStaticDataMember3useE = constant i32* @_ZGRN33ClassTemplateWithStaticDataMember1SIvE1aE_
+// CHECK: @_ZGRN39ClassTemplateWithHiddenStaticDataMember1SIvE1aE_ = linkonce_odr hidden constant i32 5
+// CHECK: @_ZN39ClassTemplateWithHiddenStaticDataMember3useE = constant i32* @_ZGRN39ClassTemplateWithHiddenStaticDataMember1SIvE1aE_
+// CHECK: @_ZGRZN20InlineStaticConstRef3funEvE1i_ = linkonce_odr constant i32 10
 
 // Constant initialization tests go before this point,
 // dynamic initialization tests go after.
@@ -562,7 +562,7 @@ namespace InlineStaticConstRef {
   inline const int &fun() {
     static const int &i = 10;
     return i;
-    // CHECK: ret i32* @_ZGRZN20InlineStaticConstRef3funEvE1i
+    // CHECK: ret i32* @_ZGRZN20InlineStaticConstRef3funEvE1i_
   }
   const int &use = fun();
 }
