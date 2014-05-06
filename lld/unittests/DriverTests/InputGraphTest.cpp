@@ -144,11 +144,19 @@ TEST_F(InputGraphTest, GroupIteration) {
 
   EXPECT_EQ("file1", getNext());
   EXPECT_EQ("file2", getNext());
+
   EXPECT_EQ("file3", getNext());
   EXPECT_EQ("file4", getNext());
   EXPECT_EQ("file5", getNext());
   EXPECT_EQ("file6", getNext());
   _graph->notifyProgress();
+
+  EXPECT_EQ("file3", getNext());
+  EXPECT_EQ("file4", getNext());
+  _graph->notifyProgress();
+  EXPECT_EQ("file5", getNext());
+  EXPECT_EQ("file6", getNext());
+
   EXPECT_EQ("file3", getNext());
   EXPECT_EQ("file4", getNext());
   EXPECT_EQ("file5", getNext());
