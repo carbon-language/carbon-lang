@@ -91,5 +91,12 @@ TEST_F(FormatTestJS, SingleQuoteStrings) {
   verifyFormat("this.function('', true);");
 }
 
+TEST_F(FormatTestJS, GoogScopes) {
+  verifyFormat("goog.scope(function() {\n"
+               "var x = a.b;\n"
+               "var y = c.d;\n"
+               "});  // goog.scope");
+}
+
 } // end namespace tooling
 } // end namespace clang
