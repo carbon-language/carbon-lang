@@ -2380,6 +2380,12 @@ bool DataRecursiveASTVisitor<Derived>::VisitOMPDefaultClause(OMPDefaultClause *C
 }
 
 template<typename Derived>
+bool
+DataRecursiveASTVisitor<Derived>::VisitOMPProcBindClause(OMPProcBindClause *C) {
+  return true;
+}
+
+template<typename Derived>
 template<typename T>
 void DataRecursiveASTVisitor<Derived>::VisitOMPClauseList(T *Node) {
   for (auto *I : Node->varlists())

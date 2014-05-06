@@ -1345,6 +1345,19 @@ public:
                                               StartLoc, LParenLoc, EndLoc);
   }
 
+  /// \brief Build a new OpenMP 'proc_bind' clause.
+  ///
+  /// By default, performs semantic analysis to build the new statement.
+  /// Subclasses may override this routine to provide different behavior.
+  OMPClause *RebuildOMPProcBindClause(OpenMPProcBindClauseKind Kind,
+                                      SourceLocation KindKwLoc,
+                                      SourceLocation StartLoc,
+                                      SourceLocation LParenLoc,
+                                      SourceLocation EndLoc) {
+    return getSema().ActOnOpenMPProcBindClause(Kind, KindKwLoc,
+                                               StartLoc, LParenLoc, EndLoc);
+  }
+
   /// \brief Build a new OpenMP 'private' clause.
   ///
   /// By default, performs semantic analysis to build the new statement.
@@ -6392,6 +6405,16 @@ TreeTransform<Derived>::TransformOMPDefaultClause(OMPDefaultClause *C) {
                                               C->getLocStart(),
                                               C->getLParenLoc(),
                                               C->getLocEnd());
+}
+
+template<typename Derived>
+OMPClause *
+TreeTransform<Derived>::TransformOMPProcBindClause(OMPProcBindClause *C) {
+  return getDerived().RebuildOMPProcBindClause(C->getProcBindKind(),
+                                               C->getProcBindKindKwLoc(),
+                                               C->getLocStart(),
+                                               C->getLParenLoc(),
+                                               C->getLocEnd());
 }
 
 template<typename Derived>

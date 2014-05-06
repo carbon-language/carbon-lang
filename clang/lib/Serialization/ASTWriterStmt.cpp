@@ -1696,6 +1696,12 @@ void OMPClauseWriter::VisitOMPDefaultClause(OMPDefaultClause *C) {
   Writer->Writer.AddSourceLocation(C->getDefaultKindKwLoc(), Record);
 }
 
+void OMPClauseWriter::VisitOMPProcBindClause(OMPProcBindClause *C) {
+  Record.push_back(C->getProcBindKind());
+  Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);
+  Writer->Writer.AddSourceLocation(C->getProcBindKindKwLoc(), Record);
+}
+
 void OMPClauseWriter::VisitOMPPrivateClause(OMPPrivateClause *C) {
   Record.push_back(C->varlist_size());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);

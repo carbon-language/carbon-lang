@@ -771,6 +771,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
     Res = ActOnOpenMPSafelenClause(Expr, StartLoc, LParenLoc, EndLoc);
     break;
   case OMPC_default:
+  case OMPC_proc_bind:
   case OMPC_private:
   case OMPC_firstprivate:
   case OMPC_shared:
@@ -924,6 +925,11 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(OpenMPClauseKind Kind,
       ActOnOpenMPDefaultClause(static_cast<OpenMPDefaultClauseKind>(Argument),
                                ArgumentLoc, StartLoc, LParenLoc, EndLoc);
     break;
+  case OMPC_proc_bind:
+    Res =
+      ActOnOpenMPProcBindClause(static_cast<OpenMPProcBindClauseKind>(Argument),
+                                ArgumentLoc, StartLoc, LParenLoc, EndLoc);
+    break;
   case OMPC_if:
   case OMPC_num_threads:
   case OMPC_safelen:
@@ -986,6 +992,37 @@ OMPClause *Sema::ActOnOpenMPDefaultClause(OpenMPDefaultClauseKind Kind,
                                         EndLoc);
 }
 
+OMPClause *Sema::ActOnOpenMPProcBindClause(OpenMPProcBindClauseKind Kind,
+                                           SourceLocation KindKwLoc,
+                                           SourceLocation StartLoc,
+                                           SourceLocation LParenLoc,
+                                           SourceLocation EndLoc) {
+  if (Kind == OMPC_PROC_BIND_unknown) {
+    std::string Values;
+    std::string Sep(", ");
+    for (unsigned i = 0; i < OMPC_PROC_BIND_unknown; ++i) {
+      Values += "'";
+      Values += getOpenMPSimpleClauseTypeName(OMPC_proc_bind, i);
+      Values += "'";
+      switch (i) {
+      case OMPC_PROC_BIND_unknown - 2:
+        Values += " or ";
+        break;
+      case OMPC_PROC_BIND_unknown - 1:
+        break;
+      default:
+        Values += Sep;
+        break;
+      }
+    }
+    Diag(KindKwLoc, diag::err_omp_unexpected_clause_value)
+      << Values << getOpenMPClauseName(OMPC_proc_bind);
+    return 0;
+  }
+  return new (Context) OMPProcBindClause(Kind, KindKwLoc, StartLoc, LParenLoc,
+                                         EndLoc);
+}
+
 OMPClause *Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
                                           ArrayRef<Expr *> VarList,
                                           Expr *TailExpr,
@@ -1015,6 +1052,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(OpenMPClauseKind Kind,
   case OMPC_num_threads:
   case OMPC_safelen:
   case OMPC_default:
+  case OMPC_proc_bind:
   case OMPC_threadprivate:
   case OMPC_unknown:
   case NUM_OPENMP_CLAUSES:

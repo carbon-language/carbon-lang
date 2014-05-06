@@ -47,6 +47,14 @@ enum OpenMPDefaultClauseKind {
   NUM_OPENMP_DEFAULT_KINDS
 };
 
+/// \brief OpenMP attributes for 'proc_bind' clause.
+enum OpenMPProcBindClauseKind {
+#define OPENMP_PROC_BIND_KIND(Name) \
+  OMPC_PROC_BIND_##Name,
+#include "clang/Basic/OpenMPKinds.def"
+  OMPC_PROC_BIND_unknown
+};
+
 OpenMPDirectiveKind getOpenMPDirectiveKind(llvm::StringRef Str);
 const char *getOpenMPDirectiveName(OpenMPDirectiveKind Kind);
 
