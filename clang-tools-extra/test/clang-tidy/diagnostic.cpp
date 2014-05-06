@@ -1,6 +1,7 @@
 // RUN: clang-tidy -disable-checks='' %s.nonexistent.cpp -- | FileCheck -check-prefix=CHECK1 %s
 // RUN: clang-tidy -disable-checks='' %s -- -fan-unknown-option | FileCheck -check-prefix=CHECK2 %s
 // RUN: clang-tidy -checks='(google-explicit-constructor|clang-diagnostic-literal-conversion)' -disable-checks='' %s -- -fan-unknown-option | FileCheck -check-prefix=CHECK3 %s
+// RUN: clang-tidy -checks='clang-diagnostic-macro-redefined' -disable-checks='' %s -- -DMACRO_FROM_COMMAND_LINE | FileCheck -check-prefix=CHECK4 %s
 
 // CHECK1-NOT: warning
 // CHECK2-NOT: warning
@@ -19,3 +20,6 @@ class A { A(int) {} };
 
 // CHECK2-NOT: warning:
 // CHECK3-NOT: warning:
+
+#define MACRO_FROM_COMMAND_LINE
+// CHECK4: :[[@LINE-1]]:9: warning: 'MACRO_FROM_COMMAND_LINE' macro redefined

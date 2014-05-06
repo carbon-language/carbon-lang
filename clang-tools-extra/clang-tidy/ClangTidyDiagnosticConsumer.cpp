@@ -239,7 +239,10 @@ bool ClangTidyDiagnosticConsumer::relatesToUserCode(SourceLocation Location) {
   if (FID == Sources.getMainFileID())
     return true;
 
-  return HeaderFilter.match(Sources.getFileEntryForID(FID)->getName());
+  const FileEntry *File = Sources.getFileEntryForID(FID);
+  // -DMACRO definitions on the command line have locations in a virtual buffer
+  // that doesn't have a FileEntry. Don't skip these as well.
+  return !File || HeaderFilter.match(File->getName());
 }
 
 struct LessClangTidyError {
