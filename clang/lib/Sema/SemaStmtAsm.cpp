@@ -441,8 +441,10 @@ bool Sema::LookupInlineAsmField(StringRef Base, StringRef Member,
   NamedDecl *FoundDecl = BaseResult.getFoundDecl();
   if (VarDecl *VD = dyn_cast<VarDecl>(FoundDecl))
     RT = VD->getType()->getAs<RecordType>();
-  else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(FoundDecl))
+  else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(FoundDecl))
     RT = TD->getUnderlyingType()->getAs<RecordType>();
+  else if (TypeDecl *TD = dyn_cast<TypeDecl>(FoundDecl))
+    RT = TD->getTypeForDecl()->getAs<RecordType>();
   if (!RT)
     return true;
 
