@@ -17,8 +17,8 @@ int main(void) {
   __msan_print_shadow(p+15, 1);
   __msan_print_shadow(p, 0);
   delete[] p;
-  const char *q = "abc";
-  __msan_print_shadow(q, 3);
+  int x = 0;
+  __msan_print_shadow(&x, 3);
   return 0;
 }
 
