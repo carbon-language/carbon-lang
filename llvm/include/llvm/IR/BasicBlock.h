@@ -174,14 +174,15 @@ public:
   void moveAfter(BasicBlock *MovePos);
 
 
-  /// \brief Return this block if it has a single predecessor block. Otherwise
-  /// return a null pointer.
+  /// \brief Return the predecessor of this block if it has a single predecessor
+  /// block. Otherwise return a null pointer.
   BasicBlock *getSinglePredecessor();
   const BasicBlock *getSinglePredecessor() const {
     return const_cast<BasicBlock*>(this)->getSinglePredecessor();
   }
 
-  /// \brief Return this block if it has a unique predecessor block. Otherwise return a null pointer.
+  /// \brief Return the predecessor of this block if it has a unique predecessor
+  /// block. Otherwise return a null pointer.
   ///
   /// Note that unique predecessor doesn't mean single edge, there can be
   /// multiple edges from the unique predecessor to this block (for example a
