@@ -305,7 +305,14 @@ static bool shouldUseMmap(int FD,
                           size_t MapSize,
                           off_t Offset,
                           bool RequiresNullTerminator,
-                          int PageSize) {
+                          int PageSize,
+                          bool IsVolatile) {
+  // mmap may leave the buffer without null terminator if the file size changed
+  // by the time the last page is mapped in, so avoid it if the file size is
+  // likely to change.
+  if (IsVolatile)
+    return false;
+
   // We don't use mmap for small files because this can severely fragment our
   // address space.
   if (MapSize < 4 * 4096 || MapSize < (unsigned)PageSize)
@@ -381,9 +388,8 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
     MapSize = FileSize;
   }
 
-  if (!IsVolatile &&
-      shouldUseMmap(FD, FileSize, MapSize, Offset, RequiresNullTerminator,
-                    PageSize)) {
+  if (shouldUseMmap(FD, FileSize, MapSize, Offset, RequiresNullTerminator,
+                    PageSize, IsVolatile)) {
     error_code EC;
     Result.reset(new (NamedBufferAlloc(Filename)) MemoryBufferMMapFile(
         RequiresNullTerminator, FD, MapSize, Offset, EC));
@@ -420,9 +426,9 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
       return error_code(errno, posix_category());
     }
     if (NumRead == 0) {
-      assert(0 && "We got inaccurate FileSize value or fstat reported an "
-                   "invalid file size.");
-      *BufPtr = '\0'; // null-terminate at the actual size.
+      assert(IsVolatile && "We got inaccurate FileSize value or fstat reported "
+                           "an invalid file size.");
+      memset(BufPtr, 0, BytesLeft); // zero-initialize rest of the buffer.
       break;
     }
     BytesLeft -= NumRead;
