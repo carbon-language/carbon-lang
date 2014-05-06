@@ -242,10 +242,6 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
       if (!ConvertType(ED->getIntegerType())->isIntegerTy(32))
         TypeCache.clear();
     }
-    // If necessary, provide the full definition of a type only used with a
-    // declaration so far.
-    if (CGDebugInfo *DI = CGM.getModuleDebugInfo())
-      DI->completeType(ED);
     return;
   }
   
