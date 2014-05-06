@@ -295,6 +295,17 @@ elseif( LLVM_COMPILER_IS_GCC_COMPATIBLE )
     append_if(USE_NO_MAYBE_UNINITIALIZED "-Wno-maybe-uninitialized" CMAKE_CXX_FLAGS)
     check_cxx_compiler_flag("-Werror -Wnon-virtual-dtor" CXX_SUPPORTS_NON_VIRTUAL_DTOR_FLAG)
     append_if(CXX_SUPPORTS_NON_VIRTUAL_DTOR_FLAG "-Wnon-virtual-dtor" CMAKE_CXX_FLAGS)
+
+    # Check if -Wcomment is OK with an // comment ending with '\' if the next
+    # line is also a // comment.
+    set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
+    set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} -Werror -Wcomment)
+    CHECK_C_SOURCE_COMPILES("// \\\\\\n//\\nint main() {return 0;}"
+                            C_WCOMMENT_ALLOWS_LINE_WRAP)
+    set(CMAKE_REQUIRED_FLAGS ${OLD_CMAKE_REQUIRED_FLAGS})
+    if (NOT C_WCOMMENT_ALLOWS_LINE_WRAP)
+      append("-Wno-comment" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
+    endif()
   endif (LLVM_ENABLE_WARNINGS)
   append_if(LLVM_ENABLE_WERROR "-Werror" CMAKE_C_FLAGS CMAKE_CXX_FLAGS)
   if (LLVM_ENABLE_CXX1Y)
