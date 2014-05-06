@@ -3735,10 +3735,15 @@ multiclass FPMoveImmediate<string asm> {
 // AdvSIMD
 //----------------------------------------------------------------------------
 
-def VectorIndexBOperand : AsmOperandClass { let Name = "VectorIndexB"; }
-def VectorIndexHOperand : AsmOperandClass { let Name = "VectorIndexH"; }
-def VectorIndexSOperand : AsmOperandClass { let Name = "VectorIndexS"; }
-def VectorIndexDOperand : AsmOperandClass { let Name = "VectorIndexD"; }
+class AsmVectorIndex<string Suffix> : AsmOperandClass {
+  let Name = "VectorIndex" # Suffix;
+  let DiagnosticType = "InvalidIndex" # Suffix;
+}
+def VectorIndexBOperand : AsmVectorIndex<"B">;
+def VectorIndexHOperand : AsmVectorIndex<"H">;
+def VectorIndexSOperand : AsmVectorIndex<"S">;
+def VectorIndexDOperand : AsmVectorIndex<"D">;
+
 def VectorIndexB : Operand<i64>, ImmLeaf<i64, [{
   return ((uint64_t)Imm) < 16;
 }]> {

@@ -3885,6 +3885,14 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
     return Error(Loc, "immediate must be an integer in range [1, 32].");
   case Match_InvalidImm1_64:
     return Error(Loc, "immediate must be an integer in range [1, 64].");
+  case Match_InvalidIndexB:
+    return Error(Loc, "vector lane must be an integer in range [0, 15].");
+  case Match_InvalidIndexH:
+    return Error(Loc, "vector lane must be an integer in range [0, 7].");
+  case Match_InvalidIndexS:
+    return Error(Loc, "vector lane must be an integer in range [0, 3].");
+  case Match_InvalidIndexD:
+    return Error(Loc, "vector lane must be an integer in range [0, 1].");
   case Match_InvalidLabel:
     return Error(Loc, "expected label or encodable integer pc offset");
   case Match_MRS:
@@ -4432,6 +4440,10 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidImm1_16:
   case Match_InvalidImm1_32:
   case Match_InvalidImm1_64:
+  case Match_InvalidIndexB:
+  case Match_InvalidIndexH:
+  case Match_InvalidIndexS:
+  case Match_InvalidIndexD:
   case Match_InvalidLabel:
   case Match_MSR:
   case Match_MRS: {
