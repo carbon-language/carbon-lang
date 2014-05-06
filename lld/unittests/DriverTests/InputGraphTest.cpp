@@ -38,12 +38,11 @@ class TestExpandFileNode : public SimpleFileNode {
 public:
   TestExpandFileNode(StringRef path) : SimpleFileNode(path) {}
 
-  /// Returns true as we want to expand this file
-  bool shouldExpand() const override { return true; }
-
   /// Returns the elements replacing this node
-  range<InputGraph::InputElementIterT> expandElements() override {
-    return make_range(_expandElements.begin(), _expandElements.end());
+  bool getReplacements(InputGraph::InputElementVectorT &result) override {
+    for (std::unique_ptr<InputElement> &elt : _expandElements)
+      result.push_back(std::move(elt));
+    return true;
   }
 
   void addElement(std::unique_ptr<InputElement> element) {
@@ -173,7 +172,15 @@ TEST_F(InputGraphTest, Normalize) {
   expandFile->addElement(createFile1("file3"));
   expandFile->addElement(createFile1("file4"));
   _graph->addInputElement(std::move(expandFile));
-  _graph->addInputElement(createFile2("file5", "file6"));
+
+  std::unique_ptr<Group> group(new Group());
+  std::unique_ptr<TestExpandFileNode> expandFile2(
+      new TestExpandFileNode("node"));
+  expandFile2->addElement(createFile1("file5"));
+  group->addFile(std::move(expandFile2));
+  _graph->addInputElement(std::move(group));
+
+  _graph->addInputElement(createFile1("file6"));
   _graph->normalize();
 
   EXPECT_EQ("file1", getNext());

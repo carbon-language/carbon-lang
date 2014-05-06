@@ -74,15 +74,13 @@ ErrorOr<InputElement *> InputGraph::getNextInputElement() {
 }
 
 void InputGraph::normalize() {
+  for (std::unique_ptr<InputElement> &elt : _inputArgs)
+    elt->expand();
   std::vector<std::unique_ptr<InputElement>> vec;
-  for (std::unique_ptr<InputElement> &ie : _inputArgs) {
-    if (!ie->shouldExpand()) {
-      vec.push_back(std::move(ie));
+  for (std::unique_ptr<InputElement> &elt : _inputArgs) {
+    if (elt->getReplacements(vec))
       continue;
-    }
-    range<InputElementIterT> expanded = ie->expandElements();
-    vec.insert(vec.end(), std::make_move_iterator(expanded.begin()),
-               std::make_move_iterator(expanded.end()));
+    vec.push_back(std::move(elt));
   }
   _inputArgs = std::move(vec);
 }

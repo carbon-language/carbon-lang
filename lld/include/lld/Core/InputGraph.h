@@ -70,8 +70,8 @@ public:
   /// \brief Adds a node into the InputGraph
   void addInputElement(std::unique_ptr<InputElement>);
 
-  /// Normalize the InputGraph. It visits all nodes in the tree to replace a
-  /// node with its children if it's shouldExpand() returns true.
+  /// Normalize the InputGraph. It calls expand() on each node and then replace
+  /// it with getReplacements() results.
   void normalize();
 
   range<InputElementIterT> inputElements() {
@@ -133,11 +133,11 @@ public:
   virtual void resetNextIndex() = 0;
 
   /// Returns true if we want to replace this node with children.
-  virtual bool shouldExpand() const { return false; }
+  virtual void expand() {}
 
-  /// \brief Get the elements that we want to expand with.
-  virtual range<InputGraph::InputElementIterT> expandElements() {
-    llvm_unreachable("no element to expand");
+  /// Get the elements that we want to expand with.
+  virtual bool getReplacements(InputGraph::InputElementVectorT &) {
+    return false;
   }
 
 protected:
@@ -193,6 +193,18 @@ public:
   }
 
   ErrorOr<File &> getNextFile() override;
+
+  void expand() override {
+    for (std::unique_ptr<InputElement> &elt : _elements)
+      elt->expand();
+    std::vector<std::unique_ptr<InputElement>> result;
+    for (std::unique_ptr<InputElement> &elt : _elements) {
+      if (elt->getReplacements(result))
+        continue;
+      result.push_back(std::move(elt));
+    }
+    _elements.swap(result);
+  }
 
 protected:
   InputGraph::InputElementVectorT _elements;

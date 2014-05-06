@@ -127,16 +127,15 @@ public:
 
   error_code parse(const LinkingContext &ctx, raw_ostream &diagnostics) override;
 
-  bool shouldExpand() const override { return true; }
+  bool getReplacements(InputGraph::InputElementVectorT &result) override {
+    for (std::unique_ptr<InputElement> &elt : _expandElements)
+      result.push_back(std::move(elt));
+    return true;
+  }
 
   /// Unused functions for ELFGNULdScript Nodes.
   ErrorOr<File &> getNextFile() override {
     return make_error_code(InputGraphError::no_more_files);
-  }
-
-  /// Return the elements that we would want to expand with.
-  range<InputGraph::InputElementIterT> expandElements() override {
-    return make_range(_expandElements.begin(), _expandElements.end());
   }
 
   // Linker Script will be expanded and replaced with other elements
