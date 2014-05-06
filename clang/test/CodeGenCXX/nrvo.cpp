@@ -118,8 +118,7 @@ X test2(bool B) {
 
 // CHECK-LABEL: define void @_Z5test3b
 X test3(bool B) {
-  // FIXME: llvm should apply tail here.
-  // CHECK: call {{.*}} @_ZN1XC1Ev
+  // CHECK: tail call {{.*}} @_ZN1XC1Ev
   // CHECK-NOT: call {{.*}} @_ZN1XC1ERKS_
   // CHECK: call {{.*}} @_ZN1XC1Ev
   // CHECK: call {{.*}} @_ZN1XC1ERKS_
