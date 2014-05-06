@@ -72,6 +72,11 @@ namespace ISD {
     /// the parent's frame or return address, and so on.
     FRAMEADDR, RETURNADDR,
 
+    /// READ_REGISTER, WRITE_REGISTER - This node represents llvm.register on
+    /// the DAG, which implements the named register global variables extension.
+    READ_REGISTER,
+    WRITE_REGISTER,
+
     /// FRAME_TO_ARGS_OFFSET - This node represents offset from frame pointer to
     /// first (possible) on-stack argument. This is needed for correct stack
     /// adjustment during unwind.

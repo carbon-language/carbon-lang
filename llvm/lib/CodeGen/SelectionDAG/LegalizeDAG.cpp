@@ -1265,6 +1265,13 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     if (Action == TargetLowering::Legal)
       Action = TargetLowering::Custom;
     break;
+  case ISD::READ_REGISTER:
+  case ISD::WRITE_REGISTER:
+    // Named register is legal in the DAG, but blocked by register name
+    // selection if not implemented by target (to chose the correct register)
+    // They'll be converted to Copy(To/From)Reg.
+    Action = TargetLowering::Legal;
+    break;
   case ISD::DEBUGTRAP:
     Action = TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0));
     if (Action == TargetLowering::Expand) {

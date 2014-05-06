@@ -350,6 +350,8 @@ public:
 
   SDValue PerformDAGCombine(SDNode *N,DAGCombinerInfo &DCI) const override;
 
+  unsigned getRegisterByName(const char* RegName) const;
+
   /// isFMAFasterThanFMulAndFAdd - Return true if an FMA operation is faster
   /// than a pair of fmul and fadd instructions. fmuladd intrinsics will be
   /// expanded to FMAs when this method returns true, otherwise fmuladd is

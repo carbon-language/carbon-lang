@@ -22,6 +22,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/VariadicFunction.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -12724,6 +12725,18 @@ SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
                             MachinePointerInfo(),
                             false, false, false, 0);
   return FrameAddr;
+}
+
+// FIXME? Maybe this could be a TableGen attribute on some registers and
+// this table could be generated automatically from RegInfo.
+unsigned X86TargetLowering::getRegisterByName(const char* RegName) const {
+  unsigned Reg = StringSwitch<unsigned>(RegName)
+                       .Case("esp", X86::ESP)
+                       .Case("rsp", X86::RSP)
+                       .Default(0);
+  if (Reg)
+    return Reg;
+  report_fatal_error("Invalid register name global variable");
 }
 
 SDValue X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDValue Op,

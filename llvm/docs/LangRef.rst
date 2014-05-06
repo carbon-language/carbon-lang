@@ -6804,6 +6804,51 @@ Note that calling this intrinsic does not prevent function inlining or
 other aggressive transformations, so the value returned may not be that
 of the obvious source-language caller.
 
+.. _int_read_register:
+.. _int_write_register:
+
+'``llvm.read_register``' and '``llvm.write_register``' Intrinsics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      declare i32 @llvm.read_register.i32(metadata)
+      declare i64 @llvm.read_register.i64(metadata)
+      declare void @llvm.write_register.i32(metadata, i32 @value)
+      declare void @llvm.write_register.i64(metadata, i64 @value)
+      !0 = metadata !{metadata !"sp\00"}
+
+Overview:
+"""""""""
+
+The '``llvm.read_register``' and '``llvm.write_register``' intrinsics
+provides access to the named register. The register must be valid on
+the architecture being compiled to. The type needs to be compatible
+with the register being read.
+
+Semantics:
+""""""""""
+
+The '``llvm.read_register``' intrinsic returns the current value of the
+register, where possible. The '``llvm.write_register``' intrinsic sets
+the current value of the register, where possible.
+
+This is useful to implement named register global variables that need
+to always be mapped to a specific register, as is common practice on
+bare-metal programs including OS kernels.
+
+The compiler doesn't check for register availability or use of the used
+register in surrounding code, including inline assembly. Because of that,
+allocatable registers are not supported.
+
+Warning: So far it only works with the stack pointer on selected
+architectures (ARM, ARM64, x86_64 and AArch64). Significant amount of
+work is needed to support other registers and even more so, allocatable
+registers.
+
 .. _int_stacksave:
 
 '``llvm.stacksave``' Intrinsic

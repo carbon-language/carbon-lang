@@ -3384,6 +3384,17 @@ SDValue ARM64TargetLowering::LowerFRAMEADDR(SDValue Op,
   return FrameAddr;
 }
 
+// FIXME? Maybe this could be a TableGen attribute on some registers and
+// this table could be generated automatically from RegInfo.
+unsigned ARM64TargetLowering::getRegisterByName(const char* RegName) const {
+  unsigned Reg = StringSwitch<unsigned>(RegName)
+                       .Case("sp", ARM64::SP)
+                       .Default(0);
+  if (Reg)
+    return Reg;
+  report_fatal_error("Invalid register name global variable");
+}
+
 SDValue ARM64TargetLowering::LowerRETURNADDR(SDValue Op,
                                              SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();

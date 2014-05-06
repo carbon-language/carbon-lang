@@ -2214,6 +2214,13 @@ public:
     return "__clear_cache";
   }
 
+  /// Return the register ID of the name passed in. Used by named register
+  /// global variables extension. There is no target-independent behaviour
+  /// so the default action is to bail.
+  virtual unsigned getRegisterByName(const char* RegName) const {
+    report_fatal_error("Named registers not implemented for this target");
+  }
+
   /// Return the type that should be used to zero or sign extend a
   /// zeroext/signext integer argument or return value.  FIXME: Most C calling
   /// convention requires the return type to be promoted, but this is not true

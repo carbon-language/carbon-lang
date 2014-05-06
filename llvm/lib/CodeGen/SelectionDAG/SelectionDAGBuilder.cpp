@@ -4627,6 +4627,22 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     setValue(&I, DAG.getNode(ISD::FRAMEADDR, sdl, TLI->getPointerTy(),
                              getValue(I.getArgOperand(0))));
     return nullptr;
+  case Intrinsic::read_register: {
+    Value *Reg = I.getArgOperand(0);
+    SDValue RegName = DAG.getMDNode(cast<MDNode>(Reg));
+    EVT VT = TM.getTargetLowering()->getValueType(I.getType());
+    setValue(&I, DAG.getNode(ISD::READ_REGISTER, sdl, VT, RegName));
+    return nullptr;
+  }
+  case Intrinsic::write_register: {
+    Value *Reg = I.getArgOperand(0);
+    Value *RegValue = I.getArgOperand(1);
+    SDValue Chain = getValue(RegValue).getOperand(0);
+    SDValue RegName = DAG.getMDNode(cast<MDNode>(Reg));
+    DAG.setRoot(DAG.getNode(ISD::WRITE_REGISTER, sdl, MVT::Other, Chain,
+                            RegName, getValue(RegValue)));
+    return nullptr;
+  }
   case Intrinsic::setjmp:
     return &"_setjmp"[!TLI->usesUnderscoreSetJmp()];
   case Intrinsic::longjmp:

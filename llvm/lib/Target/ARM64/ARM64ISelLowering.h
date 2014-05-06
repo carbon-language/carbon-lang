@@ -388,6 +388,7 @@ private:
 
   ConstraintType
   getConstraintType(const std::string &Constraint) const override;
+  unsigned getRegisterByName(const char* RegName) const;
 
   /// Examine constraint string and operand type and determine a weight value.
   /// The operand object must already have been set up with the operand type.

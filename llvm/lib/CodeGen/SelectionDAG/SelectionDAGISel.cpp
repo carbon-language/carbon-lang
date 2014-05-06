@@ -1807,6 +1807,34 @@ SDNode *SelectionDAGISel::Select_INLINEASM(SDNode *N) {
   return New.getNode();
 }
 
+SDNode
+*SelectionDAGISel::Select_READ_REGISTER(SDNode *Op) {
+  SDLoc dl(Op);
+  MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(Op->getOperand(0));
+  const MDString *RegStr = dyn_cast<MDString>(MD->getMD()->getOperand(0));
+  unsigned Reg = getTargetLowering()->getRegisterByName(
+                 RegStr->getString().data());
+  SDValue New = CurDAG->getCopyFromReg(
+                        CurDAG->getEntryNode(), dl, Reg, Op->getValueType(0));
+  New->setNodeId(-1);
+  return New.getNode();
+}
+
+SDNode
+*SelectionDAGISel::Select_WRITE_REGISTER(SDNode *Op) {
+  SDLoc dl(Op);
+  MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(Op->getOperand(1));
+  const MDString *RegStr = dyn_cast<MDString>(MD->getMD()->getOperand(0));
+  unsigned Reg = getTargetLowering()->getRegisterByName(
+                 RegStr->getString().data());
+  SDValue New = CurDAG->getCopyToReg(
+                        CurDAG->getEntryNode(), dl, Reg, Op->getOperand(2));
+  New->setNodeId(-1);
+  return New.getNode();
+}
+
+
+
 SDNode *SelectionDAGISel::Select_UNDEF(SDNode *N) {
   return CurDAG->SelectNodeTo(N, TargetOpcode::IMPLICIT_DEF,N->getValueType(0));
 }
@@ -2399,6 +2427,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
                                       NodeToMatch->getOperand(0));
     return nullptr;
   case ISD::INLINEASM: return Select_INLINEASM(NodeToMatch);
+  case ISD::READ_REGISTER: return Select_READ_REGISTER(NodeToMatch);
+  case ISD::WRITE_REGISTER: return Select_WRITE_REGISTER(NodeToMatch);
   case ISD::UNDEF:     return Select_UNDEF(NodeToMatch);
   }
 

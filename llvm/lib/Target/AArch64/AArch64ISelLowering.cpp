@@ -15,6 +15,7 @@
 #include "AArch64.h"
 #include "AArch64ISelLowering.h"
 #include "AArch64MachineFunctionInfo.h"
+#include "AArch64Subtarget.h"
 #include "AArch64TargetMachine.h"
 #include "AArch64TargetObjectFile.h"
 #include "Utils/AArch64BaseInfo.h"
@@ -2404,6 +2405,17 @@ SDValue AArch64TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG)
                             MachinePointerInfo(),
                             false, false, false, 0);
   return FrameAddr;
+}
+
+// FIXME? Maybe this could be a TableGen attribute on some registers and
+// this table could be generated automatically from RegInfo.
+unsigned AArch64TargetLowering::getRegisterByName(const char* RegName) const {
+  unsigned Reg = StringSwitch<unsigned>(RegName)
+                       .Case("sp", AArch64::XSP)
+                       .Default(0);
+  if (Reg)
+    return Reg;
+  report_fatal_error("Invalid register name global variable");
 }
 
 SDValue

@@ -461,6 +461,8 @@ namespace llvm {
     SDValue LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerDivRem(SDValue Op, SelectionDAG &DAG) const;
 
+    unsigned getRegisterByName(const char* RegName) const;
+
     /// isFMAFasterThanFMulAndFAdd - Return true if an FMA operation is faster
     /// than a pair of fmul and fadd instructions. fmuladd intrinsics will be
     /// expanded to FMAs when this method returns true, otherwise fmuladd is
