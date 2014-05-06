@@ -204,7 +204,7 @@ struct AllocaDerivedValueTracker {
         continue;
       }
       case Instruction::Store: {
-	if (U->getOperandNo() == 0)
+        if (U->getOperandNo() == 0)
           EscapePoints.insert(I);
         continue;  // Stores have no users to analyze.
       }
@@ -216,7 +216,7 @@ struct AllocaDerivedValueTracker {
         break;
       default:
         EscapePoints.insert(I);
-	break;
+        break;
       }
 
       AddUsesToWorklist(I);
