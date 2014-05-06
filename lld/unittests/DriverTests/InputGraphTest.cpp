@@ -49,9 +49,8 @@ public:
   }
 
   /// Process the input Elemenet
-  virtual bool addElement(std::unique_ptr<InputElement> element) {
+  void addElement(std::unique_ptr<InputElement> element) {
     _expandElements.push_back(std::move(element));
-    return true;
   }
 
 private:
