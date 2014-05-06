@@ -2,6 +2,9 @@
 // RUN: llvm-mc < %s -triple=aarch64-linux-gnueabi -mattr=+fp-armv8,+neon -filetype=obj -o - \
 // RUN: | llvm-objdump --disassemble -arch=aarch64 -mattr=+fp-armv8,+neon - | FileCheck %s
 
+// RUN: llvm-mc < %s -triple=arm64-linux-gnueabi -mattr=+fp-armv8,+neon -filetype=obj -o - \
+// RUN: | llvm-objdump --disassemble -arch=arm64 -mattr=+fp-armv8,+neon - | FileCheck %s
+
     .text
 // CHECK: cmp w0, #123
     cmp w0, 123
