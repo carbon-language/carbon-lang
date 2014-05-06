@@ -1457,6 +1457,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::colon))
     return Left.Type != TT_ObjCMethodExpr;
+  if (Left.Type == TT_BlockComment)
+    return !Left.TokenText.endswith("=*/");
   if (Right.is(tok::l_paren)) {
     if (Left.is(tok::r_paren) && Left.Type == TT_AttributeParen)
       return true;
@@ -1478,8 +1480,6 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
       (Right.is(tok::r_brace) && Right.MatchingParen &&
        Right.MatchingParen->BlockKind != BK_Block))
     return !Style.Cpp11BracedListStyle;
-  if (Left.Type == TT_BlockComment && Left.TokenText.endswith("=*/"))
-    return false;
   if (Right.Type == TT_UnaryOperator)
     return !Left.isOneOf(tok::l_paren, tok::l_square, tok::at) &&
            (Left.isNot(tok::colon) || Left.Type != TT_ObjCMethodExpr);

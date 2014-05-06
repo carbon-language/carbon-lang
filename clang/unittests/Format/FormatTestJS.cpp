@@ -102,5 +102,9 @@ TEST_F(FormatTestJS, ReturnStatements) {
   verifyFormat("function() { return [hello, world]; }");
 }
 
+TEST_F(FormatTestJS, ClosureStyleComments) {
+  verifyFormat("var x = /** @type {foo} */ (bar);");
+}
+
 } // end namespace tooling
 } // end namespace clang
