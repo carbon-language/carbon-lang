@@ -75,12 +75,13 @@
 ; CHECK-FP-ELIM: .cfi_startproc
 ; CHECK-FP-ELIM: sub    sp, sp, #16
 ; CHECK-FP-ELIM: .cfi_def_cfa_offset 16
-; CHECK-FP-ELIM: push   {r4, r11, lr}
-; CHECK-FP-ELIM: .cfi_def_cfa_offset 28
+; CHECK-FP-ELIM: push   {r4, r10, r11, lr}
+; CHECK-FP-ELIM: .cfi_def_cfa_offset 32
 ; CHECK-FP-ELIM: .cfi_offset lr, -20
 ; CHECK-FP-ELIM: .cfi_offset r11, -24
-; CHECK-FP-ELIM: .cfi_offset r4, -28
-; CHECK-FP-ELIM: add    r11, sp, #4
+; CHECK-FP-ELIM: .cfi_offset r10, -28
+; CHECK-FP-ELIM: .cfi_offset r4, -32
+; CHECK-FP-ELIM: add    r11, sp, #8
 ; CHECK-FP-ELIM: .cfi_def_cfa r11, 24
 
 ; CHECK-THUMB-FP-LABEL: sum

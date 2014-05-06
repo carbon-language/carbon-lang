@@ -1529,6 +1529,10 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
     if (hasFP(MF)) {
       MRI.setPhysRegUsed(FramePtr);
+      auto FPPos = std::find(UnspilledCS1GPRs.begin(), UnspilledCS1GPRs.end(),
+                             FramePtr);
+      if (FPPos != UnspilledCS1GPRs.end())
+        UnspilledCS1GPRs.erase(FPPos);
       NumGPRSpills++;
     }
 

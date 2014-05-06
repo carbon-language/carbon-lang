@@ -12,13 +12,13 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
 
   ; Also need special function return setting pc and CPSR simultaneously.
 ; CHECK-A-LABEL: irq_fn:
-; CHECK-A: push {r0, r1, r2, r3, r11, r12, lr}
-; CHECK-A: add r11, sp, #16
-; CHECK-A: sub sp, sp, #{{[0-9]+}}
+; CHECK-A: push {r0, r1, r2, r3, r10, r11, r12, lr}
+; CHECK-A: add r11, sp, #20
+; CHECK-A-NOT: sub sp, sp, #{{[0-9]+}}
 ; CHECK-A: bic sp, sp, #7
 ; CHECK-A: bl bar
-; CHECK-A: sub sp, r11, #16
-; CHECK-A: pop {r0, r1, r2, r3, r11, r12, lr}
+; CHECK-A: sub sp, r11, #20
+; CHECK-A: pop {r0, r1, r2, r3, r10, r11, r12, lr}
 ; CHECK-A: subs pc, lr, #4
 
 ; CHECK-A-THUMB-LABEL: irq_fn:
@@ -35,15 +35,15 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
   ; Normal AAPCS function (r0-r3 pushed onto stack by hardware, lr set to
   ; appropriate sentinel so no special return needed).
 ; CHECK-M-LABEL: irq_fn:
-; CHECK-M: push {r4, r7, lr}
-; CHECK-M: add r7, sp, #4
+; CHECK-M: push {r4, r6, r7, lr}
+; CHECK-M: add r7, sp, #8
 ; CHECK-M: mov r4, sp
 ; CHECK-M: bic r4, r4, #7
 ; CHECK-M: mov sp, r4
 ; CHECK-M: blx _bar
-; CHECK-M: subs r4, r7, #4
+; CHECK-M: sub.w r4, r7, #8
 ; CHECK-M: mov sp, r4
-; CHECK-M: pop {r4, r7, pc}
+; CHECK-M: pop {r4, r6, r7, pc}
 
   call arm_aapcscc void @bar()
   ret void
@@ -88,13 +88,13 @@ define arm_aapcscc void @swi_fn() alignstack(8) "interrupt"="SWI" {
 
 define arm_aapcscc void @undef_fn() alignstack(8) "interrupt"="UNDEF" {
 ; CHECK-A-LABEL: undef_fn:
-; CHECK-A: push {r0, r1, r2, r3, r11, r12, lr}
-; CHECK-A: add r11, sp, #16
-; CHECK-A: sub sp, sp, #{{[0-9]+}}
+; CHECK-A: push {r0, r1, r2, r3, r10, r11, r12, lr}
+; CHECK-A: add r11, sp, #20
+; CHECK-A-NOT: sub sp, sp, #{{[0-9]+}}
 ; CHECK-A: bic sp, sp, #7
 ; [...]
-; CHECK-A: sub sp, r11, #16
-; CHECK-A: pop {r0, r1, r2, r3, r11, r12, lr}
+; CHECK-A: sub sp, r11, #20
+; CHECK-A: pop {r0, r1, r2, r3, r10, r11, r12, lr}
 ; CHECK-A: subs pc, lr, #0
 
   call void @bar()
@@ -103,13 +103,13 @@ define arm_aapcscc void @undef_fn() alignstack(8) "interrupt"="UNDEF" {
 
 define arm_aapcscc void @abort_fn() alignstack(8) "interrupt"="ABORT" {
 ; CHECK-A-LABEL: abort_fn:
-; CHECK-A: push {r0, r1, r2, r3, r11, r12, lr}
-; CHECK-A: add r11, sp, #16
-; CHECK-A: sub sp, sp, #{{[0-9]+}}
+; CHECK-A: push {r0, r1, r2, r3, r10, r11, r12, lr}
+; CHECK-A: add r11, sp, #20
+; CHECK-A-NOT: sub sp, sp, #{{[0-9]+}}
 ; CHECK-A: bic sp, sp, #7
 ; [...]
-; CHECK-A: sub sp, r11, #16
-; CHECK-A: pop {r0, r1, r2, r3, r11, r12, lr}
+; CHECK-A: sub sp, r11, #20
+; CHECK-A: pop {r0, r1, r2, r3, r10, r11, r12, lr}
 ; CHECK-A: subs pc, lr, #4
 
   call void @bar()

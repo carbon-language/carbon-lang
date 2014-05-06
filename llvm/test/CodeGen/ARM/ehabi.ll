@@ -148,14 +148,14 @@ declare void @_ZSt9terminatev()
 
 ; CHECK-V7-FP-LABEL: _Z4testiiiiiddddd:
 ; CHECK-V7-FP:   .fnstart
-; CHECK-V7-FP:   .save  {r4, r11, lr}
-; CHECK-V7-FP:   push   {r4, r11, lr}
-; CHECK-V7-FP:   .setfp r11, sp, #4
-; CHECK-V7-FP:   add    r11, sp, #4
+; CHECK-V7-FP:   .save  {r4, r10, r11, lr}
+; CHECK-V7-FP:   push   {r4, r10, r11, lr}
+; CHECK-V7-FP:   .setfp r11, sp, #8
+; CHECK-V7-FP:   add    r11, sp, #8
 ; CHECK-V7-FP:   .vsave {d8, d9, d10, d11, d12}
 ; CHECK-V7-FP:   vpush  {d8, d9, d10, d11, d12}
-; CHECK-V7-FP:   .pad   #28
-; CHECK-V7-FP:   sub    sp, sp, #28
+; CHECK-V7-FP:   .pad   #24
+; CHECK-V7-FP:   sub    sp, sp, #24
 ; CHECK-V7-FP:   .personality __gxx_personality_v0
 ; CHECK-V7-FP:   .handlerdata
 ; CHECK-V7-FP:   .fnend

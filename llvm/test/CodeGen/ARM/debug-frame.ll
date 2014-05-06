@@ -201,12 +201,13 @@ declare void @_ZSt9terminatev()
 
 ; CHECK-V7-FP-LABEL: _Z4testiiiiiddddd:
 ; CHECK-V7-FP:   .cfi_startproc
-; CHECK-V7-FP:   push   {r4, r11, lr}
-; CHECK-V7-FP:   .cfi_def_cfa_offset 12
+; CHECK-V7-FP:   push   {r4, r10, r11, lr}
+; CHECK-V7-FP:   .cfi_def_cfa_offset 16
 ; CHECK-V7-FP:   .cfi_offset lr, -4
 ; CHECK-V7-FP:   .cfi_offset r11, -8
-; CHECK-V7-FP:   .cfi_offset r4, -12
-; CHECK-V7-FP:   add    r11, sp, #4
+; CHECK-V7-FP:   .cfi_offset r10, -12
+; CHECK-V7-FP:   .cfi_offset r4, -16
+; CHECK-V7-FP:   add    r11, sp, #8
 ; CHECK-V7-FP:   .cfi_def_cfa r11, 8
 ; CHECK-V7-FP:   vpush  {d8, d9, d10, d11, d12}
 ; CHECK-V7-FP:   .cfi_offset d12, -24
@@ -214,7 +215,7 @@ declare void @_ZSt9terminatev()
 ; CHECK-V7-FP:   .cfi_offset d10, -40
 ; CHECK-V7-FP:   .cfi_offset d9, -48
 ; CHECK-V7-FP:   .cfi_offset d8, -56
-; CHECK-V7-FP:   sub    sp, sp, #28
+; CHECK-V7-FP:   sub    sp, sp, #24
 ; CHECK-V7-FP:   .cfi_endproc
 
 ; CHECK-V7-FP-ELIM-LABEL: _Z4testiiiiiddddd:

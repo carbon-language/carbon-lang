@@ -29,7 +29,7 @@ false:
 ; ARM-linux-NEXT: cmp     r4, r5
 ; ARM-linux-NEXT: blo     .LBB0_2
 
-; ARM-linux:      mov     r4, #24
+; ARM-linux:      mov     r4, #16
 ; ARM-linux-NEXT: mov     r5, #0
 ; ARM-linux-NEXT: stmdb   sp!, {lr}
 ; ARM-linux-NEXT: bl      __morestack
@@ -49,7 +49,7 @@ false:
 ; ARM-android-NEXT: cmp     r4, r5
 ; ARM-android-NEXT: blo     .LBB0_2
 
-; ARM-android:      mov     r4, #24
+; ARM-android:      mov     r4, #16
 ; ARM-android-NEXT: mov     r5, #0
 ; ARM-android-NEXT: stmdb   sp!, {lr}
 ; ARM-android-NEXT: bl      __morestack
