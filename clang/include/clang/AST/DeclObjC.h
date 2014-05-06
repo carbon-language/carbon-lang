@@ -1976,11 +1976,14 @@ raw_ostream &operator<<(raw_ostream &OS, const ObjCCategoryImplDecl &CID);
 /// \@end
 /// @endcode
 ///
-/// Typically, instance variables are specified in the class interface,
-/// *not* in the implementation. Nevertheless (for legacy reasons), we
-/// allow instance variables to be specified in the implementation.  When
-/// specified, they need to be *identical* to the interface.
+/// In a non-fragile runtime, instance variables can appear in the class
+/// interface, class extensions (nameless categories), and in the implementation
+/// itself, as well as being synthesized as backing storage for properties.
 ///
+/// In a fragile runtime, instance variables are specified in the class
+/// interface, \em not in the implementation. Nevertheless (for legacy reasons),
+/// we allow instance variables to be specified in the implementation. When
+/// specified, they need to be \em identical to the interface.
 class ObjCImplementationDecl : public ObjCImplDecl {
   void anchor() override;
   /// Implementation Class's super class.
