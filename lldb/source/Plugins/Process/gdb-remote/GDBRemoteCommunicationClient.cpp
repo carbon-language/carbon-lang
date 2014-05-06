@@ -67,6 +67,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_attach_or_wait_reply(eLazyBoolCalculate),
     m_prepare_for_reg_writing_reply (eLazyBoolCalculate),
     m_supports_p (eLazyBoolCalculate),
+    m_supports_x (eLazyBoolCalculate),
     m_avoid_g_packets (eLazyBoolCalculate),
     m_supports_QSaveRegisterState (eLazyBoolCalculate),
     m_supports_qXfer_auxv_read (eLazyBoolCalculate),
@@ -304,6 +305,7 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_vCont_s = eLazyBoolCalculate;
     m_supports_vCont_S = eLazyBoolCalculate;
     m_supports_p = eLazyBoolCalculate;
+    m_supports_x = eLazyBoolCalculate;
     m_supports_QSaveRegisterState = eLazyBoolCalculate;
     m_qHostInfo_is_valid = eLazyBoolCalculate;
     m_qProcessInfo_is_valid = eLazyBoolCalculate;
@@ -488,6 +490,24 @@ GDBRemoteCommunicationClient::GetpPacketSupported (lldb::tid_t tid)
         }
     }
     return m_supports_p;
+}
+
+bool
+GDBRemoteCommunicationClient::GetxPacketSupported ()
+{
+    if (m_supports_x == eLazyBoolCalculate)
+    {
+        StringExtractorGDBRemote response;
+        m_supports_x = eLazyBoolNo;
+        char packet[256];
+        snprintf (packet, sizeof (packet), "x0,0");
+        if (SendPacketAndWaitForResponse(packet, response, false) == PacketResult::Success)
+        {
+            if (response.IsOKResponse())
+                m_supports_x = eLazyBoolYes;
+        }
+    }
+    return m_supports_x;
 }
 
 GDBRemoteCommunicationClient::PacketResult
