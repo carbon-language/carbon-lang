@@ -51,18 +51,6 @@ static inline bool isEnabled(const StringRef Feature) {
   return Ch == '+';
 }
 
-/// PrependFlag - Return a string with a prepended flag; '+' or '-'.
-///
-static inline std::string PrependFlag(const StringRef Feature,
-                                    bool IsEnabled) {
-  assert(!Feature.empty() && "Empty string");
-  if (hasFlag(Feature))
-    return Feature;
-  std::string Prefix = IsEnabled ? "+" : "-";
-  Prefix += Feature;
-  return Prefix;
-}
-
 /// Split - Splits a string of comma separated items in to a vector of strings.
 ///
 static void Split(std::vector<std::string> &V, const StringRef S) {
@@ -109,13 +97,11 @@ static std::string Join(const std::vector<std::string> &V) {
 }
 
 /// Adding features.
-void SubtargetFeatures::AddFeature(const StringRef String,
-                                   bool IsEnabled) {
-  // Don't add empty features
-  if (!String.empty()) {
-    // Convert to lowercase, prepend flag and add to vector
-    Features.push_back(PrependFlag(String.lower(), IsEnabled));
-  }
+void SubtargetFeatures::AddFeature(const StringRef String) {
+  // Don't add empty features or features we already have.
+  if (!String.empty())
+    // Convert to lowercase, prepend flag if we don't already have a flag.
+    Features.push_back(hasFlag(String) ? String.str() : "+" + String.lower());
 }
 
 /// Find KV in array using binary search.
