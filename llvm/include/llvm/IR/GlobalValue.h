@@ -106,8 +106,8 @@ public:
   }
   void setDLLStorageClass(DLLStorageClassTypes C) { DllStorageClass = C; }
 
-  bool hasSection() const { return !Section.empty(); }
-  const std::string &getSection() const { return Section; }
+  bool hasSection() const { return !getSection().empty(); }
+  const std::string &getSection() const;
   void setSection(StringRef S);
 
   /// getType - Global values are always pointers.

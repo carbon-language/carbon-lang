@@ -476,7 +476,6 @@ void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
   Assert1(GA.getType() == GA.getAliasee()->getType(),
           "Alias and aliasee types should match!", &GA);
   Assert1(!GA.hasUnnamedAddr(), "Alias cannot have unnamed_addr!", &GA);
-  Assert1(!GA.hasSection(), "Alias cannot have a section!", &GA);
 
   const Constant *Aliasee = GA.getAliasee();
   const GlobalValue *GV = dyn_cast<GlobalValue>(Aliasee);

@@ -80,6 +80,12 @@ void GlobalValue::setAlignment(unsigned Align) {
   assert(getAlignment() == Align && "Alignment representation error!");
 }
 
+const std::string &GlobalValue::getSection() const {
+  if (auto *GA = dyn_cast<GlobalAlias>(this))
+    return GA->getAliasedGlobal()->getSection();
+  return Section;
+}
+
 void GlobalValue::setSection(StringRef S) {
   assert(!isa<GlobalAlias>(this) && "GlobalAlias should not have a section!");
   Section = S;
