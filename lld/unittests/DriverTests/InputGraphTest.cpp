@@ -22,21 +22,21 @@ using namespace lld;
 
 namespace {
 
-class MyLinkingContext : public LinkingContext {
+class TestLinkingContext : public LinkingContext {
 public:
   Writer &writer() const override { llvm_unreachable("no writer!"); }
   bool validateImpl(raw_ostream &) override { return true; }
 };
 
-class MyFileNode : public SimpleFileNode {
+class TestFileNode : public SimpleFileNode {
 public:
-  MyFileNode(StringRef path) : SimpleFileNode(path) {}
+  TestFileNode(StringRef path) : SimpleFileNode(path) {}
   void resetNextIndex() override { FileNode::resetNextIndex(); }
 };
 
-class MyExpandFileNode : public SimpleFileNode {
+class TestExpandFileNode : public SimpleFileNode {
 public:
-  MyExpandFileNode(StringRef path) : SimpleFileNode(path) {}
+  TestExpandFileNode(StringRef path) : SimpleFileNode(path) {}
 
   /// Returns true as we want to expand this file
   bool shouldExpand() const override { return true; }
@@ -73,25 +73,26 @@ public:
   }
 
 protected:
-  MyLinkingContext _ctx;
+  TestLinkingContext _ctx;
   InputGraph *_graph;
 };
 
 } // end anonymous namespace
 
-static std::unique_ptr<MyFileNode> createFile1(StringRef name) {
+static std::unique_ptr<TestFileNode> createFile1(StringRef name) {
   std::vector<std::unique_ptr<File>> files;
   files.push_back(std::unique_ptr<SimpleFile>(new SimpleFile(name)));
-  std::unique_ptr<MyFileNode> file(new MyFileNode("filenode"));
+  std::unique_ptr<TestFileNode> file(new TestFileNode("filenode"));
   file->addFiles(std::move(files));
   return file;
 }
 
-static std::unique_ptr<MyFileNode> createFile2(StringRef name1, StringRef name2) {
+static std::unique_ptr<TestFileNode> createFile2(StringRef name1,
+                                                 StringRef name2) {
   std::vector<std::unique_ptr<File>> files;
   files.push_back(std::unique_ptr<SimpleFile>(new SimpleFile(name1)));
   files.push_back(std::unique_ptr<SimpleFile>(new SimpleFile(name2)));
-  std::unique_ptr<MyFileNode> file(new MyFileNode("filenode"));
+  std::unique_ptr<TestFileNode> file(new TestFileNode("filenode"));
   file->addFiles(std::move(files));
   return file;
 }
@@ -160,7 +161,8 @@ TEST_F(InputGraphTest, Normalize) {
   std::vector<std::unique_ptr<File>> objfiles;
   _graph->addInputElement(createFile2("file1", "file2"));
 
-  std::unique_ptr<MyExpandFileNode> expandFile(new MyExpandFileNode("node"));
+  std::unique_ptr<TestExpandFileNode> expandFile(
+      new TestExpandFileNode("node"));
   expandFile->addElement(createFile1("file3"));
   expandFile->addElement(createFile1("file4"));
   _graph->addInputElement(std::move(expandFile));
