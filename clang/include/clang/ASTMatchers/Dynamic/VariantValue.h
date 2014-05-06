@@ -174,7 +174,7 @@ private:
               Func, DynMatchers)));
     }
 
-    bool hasMatcher() const { return Out.get() != NULL; }
+    bool hasMatcher() const { return Out.get() != nullptr; }
     const MatcherT &matcher() const { return *Out; }
 
   private:

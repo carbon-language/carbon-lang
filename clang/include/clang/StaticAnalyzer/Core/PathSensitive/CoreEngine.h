@@ -324,13 +324,13 @@ public:
 
   ExplodedNode *generateNode(ProgramStateRef State,
                              ExplodedNode *Pred,
-                             const ProgramPointTag *Tag = 0) {
+                             const ProgramPointTag *Tag = nullptr) {
     const ProgramPoint &LocalLoc = (Tag ? Location.withTag(Tag) : Location);
     return NodeBuilder::generateNode(LocalLoc, State, Pred);
   }
 
   ExplodedNode *generateSink(ProgramStateRef State, ExplodedNode *Pred,
-                             const ProgramPointTag *Tag = 0) {
+                             const ProgramPointTag *Tag = nullptr) {
     const ProgramPoint &LocalLoc = (Tag ? Location.withTag(Tag) : Location);
     ExplodedNode *N = NodeBuilder::generateSink(LocalLoc, State, Pred);
     if (N && N->isSink())
@@ -355,14 +355,16 @@ public:
   /// nodes currently owned by another builder(with larger scope), use
   /// Enclosing builder to transfer ownership.
   StmtNodeBuilder(ExplodedNode *SrcNode, ExplodedNodeSet &DstSet,
-                      const NodeBuilderContext &Ctx, NodeBuilder *Enclosing = 0)
+                  const NodeBuilderContext &Ctx,
+                  NodeBuilder *Enclosing = nullptr)
     : NodeBuilder(SrcNode, DstSet, Ctx), EnclosingBldr(Enclosing) {
     if (EnclosingBldr)
       EnclosingBldr->takeNodes(SrcNode);
   }
 
   StmtNodeBuilder(ExplodedNodeSet &SrcSet, ExplodedNodeSet &DstSet,
-                      const NodeBuilderContext &Ctx, NodeBuilder *Enclosing = 0)
+                  const NodeBuilderContext &Ctx,
+                  NodeBuilder *Enclosing = nullptr)
     : NodeBuilder(SrcSet, DstSet, Ctx), EnclosingBldr(Enclosing) {
     if (EnclosingBldr)
       for (ExplodedNodeSet::iterator I = SrcSet.begin(),
@@ -378,7 +380,7 @@ public:
   ExplodedNode *generateNode(const Stmt *S,
                              ExplodedNode *Pred,
                              ProgramStateRef St,
-                             const ProgramPointTag *tag = 0,
+                             const ProgramPointTag *tag = nullptr,
                              ProgramPoint::Kind K = ProgramPoint::PostStmtKind){
     const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
                                   Pred->getLocationContext(), tag);
@@ -388,7 +390,7 @@ public:
   ExplodedNode *generateSink(const Stmt *S,
                              ExplodedNode *Pred,
                              ProgramStateRef St,
-                             const ProgramPointTag *tag = 0,
+                             const ProgramPointTag *tag = nullptr,
                              ProgramPoint::Kind K = ProgramPoint::PostStmtKind){
     const ProgramPoint &L = ProgramPoint::getProgramPoint(S, K,
                                   Pred->getLocationContext(), tag);

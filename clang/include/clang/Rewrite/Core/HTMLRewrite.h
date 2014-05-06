@@ -63,7 +63,7 @@ namespace html {
   void AddLineNumbers(Rewriter& R, FileID FID);
 
   void AddHeaderFooterInternalBuiltinCSS(Rewriter& R, FileID FID,
-                                         const char *title = NULL);
+                                         const char *title = nullptr);
 
   /// SyntaxHighlight - Relex the specified FileID and annotate the HTML with
   /// information about keywords, comments, etc.

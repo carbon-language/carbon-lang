@@ -36,7 +36,7 @@ namespace clang {
   void ParseAST(Preprocessor &pp, ASTConsumer *C,
                 ASTContext &Ctx, bool PrintStats = false,
                 TranslationUnitKind TUKind = TU_Complete,
-                CodeCompleteConsumer *CompletionConsumer = 0,
+                CodeCompleteConsumer *CompletionConsumer = nullptr,
                 bool SkipFunctionBodies = false);
 
   /// \brief Parse the main file known to the preprocessor, producing an 

@@ -33,7 +33,7 @@ protected:
   /// Create a new code generation action.  If the optional \p _VMContext
   /// parameter is supplied, the action uses it without taking ownership,
   /// otherwise it creates a fresh LLVM context and takes ownership.
-  CodeGenAction(unsigned _Act, llvm::LLVMContext *_VMContext = 0);
+  CodeGenAction(unsigned _Act, llvm::LLVMContext *_VMContext = nullptr);
 
   bool hasIRSupport() const override;
 
@@ -65,37 +65,37 @@ public:
 class EmitAssemblyAction : public CodeGenAction {
   virtual void anchor();
 public:
-  EmitAssemblyAction(llvm::LLVMContext *_VMContext = 0);
+  EmitAssemblyAction(llvm::LLVMContext *_VMContext = nullptr);
 };
 
 class EmitBCAction : public CodeGenAction {
   virtual void anchor();
 public:
-  EmitBCAction(llvm::LLVMContext *_VMContext = 0);
+  EmitBCAction(llvm::LLVMContext *_VMContext = nullptr);
 };
 
 class EmitLLVMAction : public CodeGenAction {
   virtual void anchor();
 public:
-  EmitLLVMAction(llvm::LLVMContext *_VMContext = 0);
+  EmitLLVMAction(llvm::LLVMContext *_VMContext = nullptr);
 };
 
 class EmitLLVMOnlyAction : public CodeGenAction {
   virtual void anchor();
 public:
-  EmitLLVMOnlyAction(llvm::LLVMContext *_VMContext = 0);
+  EmitLLVMOnlyAction(llvm::LLVMContext *_VMContext = nullptr);
 };
 
 class EmitCodeGenOnlyAction : public CodeGenAction {
   virtual void anchor();
 public:
-  EmitCodeGenOnlyAction(llvm::LLVMContext *_VMContext = 0);
+  EmitCodeGenOnlyAction(llvm::LLVMContext *_VMContext = nullptr);
 };
 
 class EmitObjAction : public CodeGenAction {
   virtual void anchor();
 public:
-  EmitObjAction(llvm::LLVMContext *_VMContext = 0);
+  EmitObjAction(llvm::LLVMContext *_VMContext = nullptr);
 };
 
 }

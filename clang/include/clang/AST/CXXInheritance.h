@@ -177,8 +177,8 @@ public:
                         bool RecordPaths = true,
                         bool DetectVirtual = true)
     : FindAmbiguities(FindAmbiguities), RecordPaths(RecordPaths),
-      DetectVirtual(DetectVirtual), DetectedVirtual(0), DeclsFound(0),
-      NumDeclsFound(0) { }
+      DetectVirtual(DetectVirtual), DetectedVirtual(nullptr),
+      DeclsFound(nullptr), NumDeclsFound(0) { }
   
   ~CXXBasePaths() { delete [] DeclsFound; }
   
@@ -232,7 +232,8 @@ public:
 /// \brief Uniquely identifies a virtual method within a class
 /// hierarchy by the method itself and a class subobject number.
 struct UniqueVirtualMethod {
-  UniqueVirtualMethod() : Method(0), Subobject(0), InVirtualSubobject(0) { }
+  UniqueVirtualMethod()
+    : Method(nullptr), Subobject(0), InVirtualSubobject(nullptr) { }
 
   UniqueVirtualMethod(CXXMethodDecl *Method, unsigned Subobject,
                       const CXXRecordDecl *InVirtualSubobject)

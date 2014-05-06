@@ -74,7 +74,7 @@ public:
   const T *getNodeAs(StringRef ID) const {
     IDToNodeMap::const_iterator It = NodeMap.find(ID);
     if (It == NodeMap.end()) {
-      return NULL;
+      return nullptr;
     }
     return It->second.get<T>();
   }
@@ -507,7 +507,7 @@ template <typename T> struct has_getDecl {
   static char (&f(CheckT<int Default::*, &C::getDecl>*))[1];
   template<typename C> static char (&f(...))[2];
 
-  static bool const value = sizeof(f<Derived>(0)) == 2;
+  static bool const value = sizeof(f<Derived>(nullptr)) == 2;
 };
 
 /// \brief Matches overloaded operators with a specific name.
@@ -626,7 +626,7 @@ private:
   bool matchesDecl(const Decl *Node,
                    ASTMatchFinder *Finder,
                    BoundNodesTreeBuilder *Builder) const {
-    return Node != NULL && InnerMatcher.matches(*Node, Finder, Builder);
+    return Node != nullptr && InnerMatcher.matches(*Node, Finder, Builder);
   }
 
   const Matcher<Decl> InnerMatcher;

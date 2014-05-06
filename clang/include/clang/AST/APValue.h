@@ -80,7 +80,7 @@ private:
   struct Vec {
     APValue *Elts;
     unsigned NumElts;
-    Vec() : Elts(0), NumElts(0) {}
+    Vec() : Elts(nullptr), NumElts(0) {}
     ~Vec() { delete[] Elts; }
   };
   struct Arr {

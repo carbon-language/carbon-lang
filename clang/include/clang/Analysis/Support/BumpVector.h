@@ -55,7 +55,7 @@ class BumpVector {
 public:
   // Default ctor - Initialize to empty.
   explicit BumpVector(BumpVectorContext &C, unsigned N)
-  : Begin(NULL), End(NULL), Capacity(NULL) {
+  : Begin(nullptr), End(nullptr), Capacity(nullptr) {
     reserve(C, N);
   }
   

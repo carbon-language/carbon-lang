@@ -47,7 +47,7 @@ public:
   StoredDeclsList() {}
 
   StoredDeclsList(StoredDeclsList &&RHS) : Data(RHS.Data) {
-    RHS.Data = (NamedDecl *)0;
+    RHS.Data = (NamedDecl *)nullptr;
   }
 
   ~StoredDeclsList() {
@@ -60,7 +60,7 @@ public:
     if (DeclsTy *Vector = getAsVector())
       delete Vector;
     Data = RHS.Data;
-    RHS.Data = (NamedDecl *)0;
+    RHS.Data = (NamedDecl *)nullptr;
     return *this;
   }
 
@@ -107,7 +107,7 @@ public:
     if (NamedDecl *Singleton = getAsDecl()) {
       assert(Singleton == D && "list is different singleton");
       (void)Singleton;
-      Data = (NamedDecl *)0;
+      Data = (NamedDecl *)nullptr;
       return;
     }
 
@@ -142,8 +142,8 @@ public:
   /// represents.
   DeclContext::lookup_result getLookupResult() {
     if (isNull())
-      return DeclContext::lookup_result(DeclContext::lookup_iterator(0),
-                                        DeclContext::lookup_iterator(0));
+      return DeclContext::lookup_result(DeclContext::lookup_iterator(nullptr),
+                                        DeclContext::lookup_iterator(nullptr));
 
     // If we have a single NamedDecl, return it.
     if (getAsDecl()) {
@@ -252,7 +252,7 @@ private:
 
 class DependentStoredDeclsMap : public StoredDeclsMap {
 public:
-  DependentStoredDeclsMap() : FirstDiagnostic(0) {}
+  DependentStoredDeclsMap() : FirstDiagnostic(nullptr) {}
 
 private:
   friend class DependentDiagnostic;

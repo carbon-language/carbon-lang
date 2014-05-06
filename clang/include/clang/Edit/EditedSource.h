@@ -45,7 +45,7 @@ class EditedSource {
 
 public:
   EditedSource(const SourceManager &SM, const LangOptions &LangOpts,
-               const PPConditionalDirectiveRecord *PPRec = 0)
+               const PPConditionalDirectiveRecord *PPRec = nullptr)
     : SourceMgr(SM), LangOpts(LangOpts), PPRec(PPRec),
       StrAlloc() { }
 

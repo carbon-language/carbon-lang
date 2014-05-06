@@ -123,7 +123,7 @@ private:
 /// An iterator over the dependent diagnostics in a dependent context.
 class DeclContext::ddiag_iterator {
 public:
-  ddiag_iterator() : Ptr(0) {}
+  ddiag_iterator() : Ptr(nullptr) {}
   explicit ddiag_iterator(DependentDiagnostic *Ptr) : Ptr(Ptr) {}
 
   typedef DependentDiagnostic *value_type;

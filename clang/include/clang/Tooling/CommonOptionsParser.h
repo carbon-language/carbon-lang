@@ -72,7 +72,7 @@ public:
   /// This constructor exits program in case of error.
   CommonOptionsParser(int &argc, const char **argv,
                       llvm::cl::OptionCategory &Category,
-                      const char *Overview = 0);
+                      const char *Overview = nullptr);
 
   /// Returns a reference to the loaded compilations database.
   CompilationDatabase &getCompilations() {

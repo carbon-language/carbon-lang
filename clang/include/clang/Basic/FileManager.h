@@ -49,7 +49,7 @@ class DirectoryEntry {
   const char *Name;   // Name of the directory.
   friend class FileManager;
 public:
-  DirectoryEntry() : Name(0) {}
+  DirectoryEntry() : Name(nullptr) {}
   const char *getName() const { return Name; }
 };
 
@@ -74,7 +74,7 @@ class FileEntry {
   friend class FileManager;
 
   void closeFile() const {
-    File.reset(0); // rely on destructor to close File
+    File.reset(nullptr); // rely on destructor to close File
   }
 
   void operator=(const FileEntry &) LLVM_DELETED_FUNCTION;
@@ -180,7 +180,7 @@ class FileManager : public RefCountedBase<FileManager> {
 
 public:
   FileManager(const FileSystemOptions &FileSystemOpts,
-              IntrusiveRefCntPtr<vfs::FileSystem> FS = 0);
+              IntrusiveRefCntPtr<vfs::FileSystem> FS = nullptr);
   ~FileManager();
 
   /// \brief Installs the provided FileSystemStatCache object within
@@ -241,10 +241,10 @@ public:
   /// \brief Open the specified file as a MemoryBuffer, returning a new
   /// MemoryBuffer if successful, otherwise returning null.
   llvm::MemoryBuffer *getBufferForFile(const FileEntry *Entry,
-                                       std::string *ErrorStr = 0,
+                                       std::string *ErrorStr = nullptr,
                                        bool isVolatile = false);
   llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
-                                       std::string *ErrorStr = 0);
+                                       std::string *ErrorStr = nullptr);
 
   /// \brief Get the 'stat' information for the given \p Path.
   ///

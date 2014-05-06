@@ -163,7 +163,7 @@ llvm::sys::fs::UniqueID getNextVirtualUniqueID();
 IntrusiveRefCntPtr<FileSystem>
 getVFSFromYAML(llvm::MemoryBuffer *Buffer,
                llvm::SourceMgr::DiagHandlerTy DiagHandler,
-               void *DiagContext = 0,
+               void *DiagContext = nullptr,
                IntrusiveRefCntPtr<FileSystem> ExternalFS = getRealFileSystem());
 
 } // end namespace vfs

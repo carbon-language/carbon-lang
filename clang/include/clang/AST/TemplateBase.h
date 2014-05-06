@@ -204,7 +204,7 @@ public:
   }
 
   static TemplateArgument getEmptyPack() {
-    return TemplateArgument((TemplateArgument*)0, 0);
+    return TemplateArgument((TemplateArgument*)nullptr, 0);
   }
 
   /// \brief Create a new template argument pack by copying the given set of

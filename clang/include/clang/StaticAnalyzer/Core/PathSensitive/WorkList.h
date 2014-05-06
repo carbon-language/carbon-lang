@@ -42,7 +42,7 @@ public:
   explicit WorkListUnit(ExplodedNode *N, BlockCounter C)
   : node(N),
     counter(C),
-    block(NULL),
+    block(nullptr),
     blockIdx(0) {}
 
   /// Returns the node associated with the worklist unit.

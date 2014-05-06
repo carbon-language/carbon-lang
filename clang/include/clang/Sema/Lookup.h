@@ -130,8 +130,8 @@ public:
                Sema::LookupNameKind LookupKind,
                Sema::RedeclarationKind Redecl = Sema::NotForRedeclaration)
     : ResultKind(NotFound),
-      Paths(0),
-      NamingClass(0),
+      Paths(nullptr),
+      NamingClass(nullptr),
       SemaRef(SemaRef),
       NameInfo(NameInfo),
       LookupKind(LookupKind),
@@ -152,8 +152,8 @@ public:
                SourceLocation NameLoc, Sema::LookupNameKind LookupKind,
                Sema::RedeclarationKind Redecl = Sema::NotForRedeclaration)
     : ResultKind(NotFound),
-      Paths(0),
-      NamingClass(0),
+      Paths(nullptr),
+      NamingClass(nullptr),
       SemaRef(SemaRef),
       NameInfo(Name, NameLoc),
       LookupKind(LookupKind),
@@ -172,8 +172,8 @@ public:
   /// disabled.
   LookupResult(TemporaryToken _, const LookupResult &Other)
     : ResultKind(NotFound),
-      Paths(0),
-      NamingClass(0),
+      Paths(nullptr),
+      NamingClass(nullptr),
       SemaRef(Other.SemaRef),
       NameInfo(Other.NameInfo),
       LookupKind(Other.LookupKind),
@@ -303,7 +303,7 @@ public:
   /// if there is one.
   NamedDecl *getAcceptableDecl(NamedDecl *D) const {
     if (!D->isInIdentifierNamespace(IDNS))
-      return 0;
+      return nullptr;
 
     if (isHiddenDeclarationVisible() || isVisible(SemaRef, D))
       return D;
@@ -324,7 +324,7 @@ public:
   /// \brief Returns whether these results arose from performing a
   /// lookup into a class.
   bool isClassLookup() const {
-    return NamingClass != 0;
+    return NamingClass != nullptr;
   }
 
   /// \brief Returns the 'naming class' for this lookup, i.e. the
@@ -421,7 +421,7 @@ public:
 
       if (Paths) {
         deletePaths(Paths);
-        Paths = 0;
+        Paths = nullptr;
       }
     } else {
       AmbiguityKind SavedAK = Ambiguity;
@@ -434,14 +434,14 @@ public:
         Ambiguity = SavedAK;
       } else if (Paths) {
         deletePaths(Paths);
-        Paths = 0;
+        Paths = nullptr;
       }
     }
   }
 
   template <class DeclClass>
   DeclClass *getAsSingle() const {
-    if (getResultKind() != Found) return 0;
+    if (getResultKind() != Found) return nullptr;
     return dyn_cast<DeclClass>(getFoundDecl());
   }
 
@@ -491,8 +491,8 @@ public:
     ResultKind = NotFound;
     Decls.clear();
     if (Paths) deletePaths(Paths);
-    Paths = NULL;
-    NamingClass = 0;
+    Paths = nullptr;
+    NamingClass = nullptr;
     Shadowed = false;
   }
 

@@ -63,11 +63,11 @@ protected:
   explicit SVal(const void *d, bool isLoc, unsigned ValKind)
   : Data(d), Kind((isLoc ? LocKind : NonLocKind) | (ValKind << BaseBits)) {}
 
-  explicit SVal(BaseKind k, const void *D = NULL)
+  explicit SVal(BaseKind k, const void *D = nullptr)
     : Data(D), Kind(k) {}
 
 public:
-  explicit SVal() : Data(0), Kind(0) {}
+  explicit SVal() : Data(nullptr), Kind(0) {}
 
   /// \brief Convert to the specified SVal type, asserting that this SVal is of
   /// the desired type.
@@ -211,7 +211,7 @@ protected:
   explicit DefinedOrUnknownSVal(const void *d, bool isLoc, unsigned ValKind)
     : SVal(d, isLoc, ValKind) {}
   
-  explicit DefinedOrUnknownSVal(BaseKind k, void *D = NULL)
+  explicit DefinedOrUnknownSVal(BaseKind k, void *D = nullptr)
     : SVal(k, D) {}
   
 private:

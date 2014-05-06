@@ -156,7 +156,7 @@ public:
   ///        template instantiation or specialization). In this case, a
   ///        declaration is in scope if it's in the inline namespace set of the
   ///        context.
-  bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = 0,
+  bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = nullptr,
                      bool AllowInlineNamespace = false) const;
 
   /// AddDecl - Link the decl to its shadowed decl chain.

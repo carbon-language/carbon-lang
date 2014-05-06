@@ -86,7 +86,7 @@ public:
     llvm::PointerIntPair<Module *, 2, ModuleHeaderRole> Storage;
 
   public:
-    KnownHeader() : Storage(0, NormalHeader) { }
+    KnownHeader() : Storage(nullptr, NormalHeader) { }
     KnownHeader(Module *M, ModuleHeaderRole Role) : Storage(M, Role) { }
 
     /// \brief Retrieve the module the header is stored in.
@@ -102,7 +102,9 @@ public:
 
     // \brief Whether this known header is valid (i.e., it has an
     // associated module).
-    LLVM_EXPLICIT operator bool() const { return Storage.getPointer() != 0; }
+    LLVM_EXPLICIT operator bool() const {
+      return Storage.getPointer() != nullptr;
+    }
   };
 
 private:
@@ -243,7 +245,7 @@ public:
   /// given header file.  The KnownHeader is default constructed to indicate
   /// that no module owns this header file.
   KnownHeader findModuleForHeader(const FileEntry *File,
-                                  Module *RequestingModule = NULL);
+                                  Module *RequestingModule = nullptr);
 
   /// \brief Reports errors if a module must not include a specific file.
   ///

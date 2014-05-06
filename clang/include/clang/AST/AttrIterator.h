@@ -98,7 +98,7 @@ public:
 
   friend bool operator==(specific_attr_iterator Left,
                          specific_attr_iterator Right) {
-    assert((Left.Current == 0) == (Right.Current == 0));
+    assert((Left.Current == nullptr) == (Right.Current == nullptr));
     if (Left.Current < Right.Current)
       Left.AdvanceToNext(Right.Current); 
     else
@@ -134,7 +134,7 @@ inline SpecificAttr *getSpecificAttr(const Container& container) {
   if (i != specific_attr_end<SpecificAttr>(container))
     return *i;
   else
-    return 0;
+    return nullptr;
 }
 
 }  // end namespace clang

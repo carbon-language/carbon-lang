@@ -397,7 +397,7 @@ public:
       CodeCompletionString *Optional;
     };
 
-    Chunk() : Kind(CK_Text), Text(0) { }
+    Chunk() : Kind(CK_Text), Text(nullptr) { }
 
     explicit Chunk(ChunkKind Kind, const char *Text = "");
 
@@ -575,14 +575,14 @@ public:
                         CodeCompletionTUInfo &CCTUInfo)
     : Allocator(Allocator), CCTUInfo(CCTUInfo),
       Priority(0), Availability(CXAvailability_Available),
-      BriefComment(NULL) { }
+      BriefComment(nullptr) { }
 
   CodeCompletionBuilder(CodeCompletionAllocator &Allocator,
                         CodeCompletionTUInfo &CCTUInfo,
                         unsigned Priority, CXAvailabilityKind Availability)
     : Allocator(Allocator), CCTUInfo(CCTUInfo),
       Priority(Priority), Availability(Availability),
-      BriefComment(NULL) { }
+      BriefComment(nullptr) { }
 
   /// \brief Retrieve the allocator into which the code completion
   /// strings should be allocated.
@@ -700,7 +700,7 @@ public:
   /// \brief Build a result that refers to a declaration.
   CodeCompletionResult(const NamedDecl *Declaration,
                        unsigned Priority,
-                       NestedNameSpecifier *Qualifier = 0,
+                       NestedNameSpecifier *Qualifier = nullptr,
                        bool QualifierIsInformative = false,
                        bool Accessible = true)
     : Declaration(Declaration), Priority(Priority),
@@ -714,36 +714,34 @@ public:
 
   /// \brief Build a result that refers to a keyword or symbol.
   CodeCompletionResult(const char *Keyword, unsigned Priority = CCP_Keyword)
-    : Declaration(0), Keyword(Keyword), Priority(Priority), StartParameter(0),
-      Kind(RK_Keyword), CursorKind(CXCursor_NotImplemented),
+    : Declaration(nullptr), Keyword(Keyword), Priority(Priority),
+      StartParameter(0), Kind(RK_Keyword), CursorKind(CXCursor_NotImplemented),
       Availability(CXAvailability_Available), Hidden(false),
       QualifierIsInformative(0), StartsNestedNameSpecifier(false),
-      AllParametersAreInformative(false), DeclaringEntity(false), Qualifier(0)
-  {
-  }
+      AllParametersAreInformative(false), DeclaringEntity(false),
+      Qualifier(nullptr) {}
 
   /// \brief Build a result that refers to a macro.
   CodeCompletionResult(const IdentifierInfo *Macro,
                        unsigned Priority = CCP_Macro)
-    : Declaration(0), Macro(Macro), Priority(Priority), StartParameter(0),
+    : Declaration(nullptr), Macro(Macro), Priority(Priority), StartParameter(0),
       Kind(RK_Macro), CursorKind(CXCursor_MacroDefinition),
       Availability(CXAvailability_Available), Hidden(false),
       QualifierIsInformative(0), StartsNestedNameSpecifier(false),
-      AllParametersAreInformative(false), DeclaringEntity(false), Qualifier(0)
-  {
-  }
+      AllParametersAreInformative(false), DeclaringEntity(false),
+      Qualifier(nullptr) {}
 
   /// \brief Build a result that refers to a pattern.
   CodeCompletionResult(CodeCompletionString *Pattern,
                        unsigned Priority = CCP_CodePattern,
                        CXCursorKind CursorKind = CXCursor_NotImplemented,
                    CXAvailabilityKind Availability = CXAvailability_Available,
-                       const NamedDecl *D = 0)
+                       const NamedDecl *D = nullptr)
     : Declaration(D), Pattern(Pattern), Priority(Priority), StartParameter(0),
       Kind(RK_Pattern), CursorKind(CursorKind), Availability(Availability),
       Hidden(false), QualifierIsInformative(0),
       StartsNestedNameSpecifier(false), AllParametersAreInformative(false),
-      DeclaringEntity(false), Qualifier(0)
+      DeclaringEntity(false), Qualifier(nullptr)
   {
   }
 
@@ -754,7 +752,8 @@ public:
     : Declaration(D), Pattern(Pattern), Priority(Priority), StartParameter(0),
       Kind(RK_Pattern), Availability(CXAvailability_Available), Hidden(false),
       QualifierIsInformative(false), StartsNestedNameSpecifier(false),
-      AllParametersAreInformative(false), DeclaringEntity(false), Qualifier(0) {
+      AllParametersAreInformative(false), DeclaringEntity(false),
+      Qualifier(nullptr) {
     computeCursorKindAndAvailability();
   }  
   

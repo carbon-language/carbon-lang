@@ -159,7 +159,7 @@ public:
   virtual void handleMutexNotHeld(StringRef Kind, const NamedDecl *D,
                                   ProtectedOperationKind POK, Name LockName,
                                   LockKind LK, SourceLocation Loc,
-                                  Name *PossibleMatch = 0) {}
+                                  Name *PossibleMatch = nullptr) {}
 
   /// Warn when a function is called while an excluded mutex is locked. For
   /// example, the mutex may be locked inside the function.

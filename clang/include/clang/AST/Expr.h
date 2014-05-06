@@ -293,8 +293,8 @@ public:
   /// \param Loc [in,out] - A source location which *may* be filled
   /// in with the location of the expression making this a
   /// non-modifiable lvalue, if specified.
-  isModifiableLvalueResult isModifiableLvalue(ASTContext &Ctx,
-                                              SourceLocation *Loc = 0) const;
+  isModifiableLvalueResult
+  isModifiableLvalue(ASTContext &Ctx, SourceLocation *Loc = nullptr) const;
 
   /// \brief The return type of classify(). Represents the C++11 expression
   ///        taxonomy.
@@ -372,7 +372,7 @@ public:
   /// lvalues and xvalues are collectively referred to as glvalues, while
   /// prvalues and xvalues together form rvalues.
   Classification Classify(ASTContext &Ctx) const {
-    return ClassifyImpl(Ctx, 0);
+    return ClassifyImpl(Ctx, nullptr);
   }
 
   /// \brief ClassifyModifiable - Classify this expression according to the
@@ -483,10 +483,10 @@ public:
   /// Note: This does not perform the implicit conversions required by C++11
   /// [expr.const]p5.
   bool isIntegerConstantExpr(llvm::APSInt &Result, const ASTContext &Ctx,
-                             SourceLocation *Loc = 0,
+                             SourceLocation *Loc = nullptr,
                              bool isEvaluated = true) const;
   bool isIntegerConstantExpr(const ASTContext &Ctx,
-                             SourceLocation *Loc = 0) const;
+                             SourceLocation *Loc = nullptr) const;
 
   /// isCXX98IntegralConstantExpr - Return true if this expression is an
   /// integral constant expression in C++98. Can only be used in C++.
@@ -497,8 +497,8 @@ public:
   ///
   /// Note: This does not perform the implicit conversions required by C++11
   /// [expr.const]p5.
-  bool isCXX11ConstantExpr(const ASTContext &Ctx, APValue *Result = 0,
-                           SourceLocation *Loc = 0) const;
+  bool isCXX11ConstantExpr(const ASTContext &Ctx, APValue *Result = nullptr,
+                           SourceLocation *Loc = nullptr) const;
 
   /// isPotentialConstantExpr - Return true if this function's definition
   /// might be usable in a constant expression in C++11, if it were marked
@@ -537,7 +537,7 @@ public:
     /// expression *is* a constant expression, no notes will be produced.
     SmallVectorImpl<PartialDiagnosticAt> *Diag;
 
-    EvalStatus() : HasSideEffects(false), Diag(0) {}
+    EvalStatus() : HasSideEffects(false), Diag(nullptr) {}
 
     // hasSideEffects - Return true if the evaluated expression has
     // side effects.
@@ -594,7 +594,7 @@ public:
   /// integer. This must be called on an expression that constant folds to an
   /// integer.
   llvm::APSInt EvaluateKnownConstInt(const ASTContext &Ctx,
-                          SmallVectorImpl<PartialDiagnosticAt> *Diag=0) const;
+                    SmallVectorImpl<PartialDiagnosticAt> *Diag = nullptr) const;
 
   void EvaluateForOverflow(const ASTContext &Ctx) const;
 
@@ -814,7 +814,7 @@ class OpaqueValueExpr : public Expr {
 public:
   OpaqueValueExpr(SourceLocation Loc, QualType T, ExprValueKind VK,
                   ExprObjectKind OK = OK_Ordinary,
-                  Expr *SourceExpr = 0)
+                  Expr *SourceExpr = nullptr)
     : Expr(OpaqueValueExprClass, T, VK, OK,
            T->isDependentType(), 
            T->isDependentType() || 
@@ -958,25 +958,19 @@ public:
     computeDependence(D->getASTContext());
   }
 
-  static DeclRefExpr *Create(const ASTContext &Context,
-                             NestedNameSpecifierLoc QualifierLoc,
-                             SourceLocation TemplateKWLoc,
-                             ValueDecl *D,
-                             bool isEnclosingLocal,
-                             SourceLocation NameLoc,
-                             QualType T, ExprValueKind VK,
-                             NamedDecl *FoundD = 0,
-                             const TemplateArgumentListInfo *TemplateArgs = 0);
+  static DeclRefExpr *
+  Create(const ASTContext &Context, NestedNameSpecifierLoc QualifierLoc,
+         SourceLocation TemplateKWLoc, ValueDecl *D, bool isEnclosingLocal,
+         SourceLocation NameLoc, QualType T, ExprValueKind VK,
+         NamedDecl *FoundD = nullptr,
+         const TemplateArgumentListInfo *TemplateArgs = nullptr);
 
-  static DeclRefExpr *Create(const ASTContext &Context,
-                             NestedNameSpecifierLoc QualifierLoc,
-                             SourceLocation TemplateKWLoc,
-                             ValueDecl *D,
-                             bool isEnclosingLocal,
-                             const DeclarationNameInfo &NameInfo,
-                             QualType T, ExprValueKind VK,
-                             NamedDecl *FoundD = 0,
-                             const TemplateArgumentListInfo *TemplateArgs = 0);
+  static DeclRefExpr *
+  Create(const ASTContext &Context, NestedNameSpecifierLoc QualifierLoc,
+         SourceLocation TemplateKWLoc, ValueDecl *D, bool isEnclosingLocal,
+         const DeclarationNameInfo &NameInfo, QualType T, ExprValueKind VK,
+         NamedDecl *FoundD = nullptr,
+         const TemplateArgumentListInfo *TemplateArgs = nullptr);
 
   /// \brief Construct an empty declaration reference expression.
   static DeclRefExpr *CreateEmpty(const ASTContext &Context,
@@ -1006,7 +1000,7 @@ public:
   /// that precedes the name. Otherwise, returns NULL.
   NestedNameSpecifier *getQualifier() const {
     if (!hasQualifier())
-      return 0;
+      return nullptr;
 
     return getInternalQualifierLoc().getNestedNameSpecifier();
   }
@@ -1042,7 +1036,7 @@ public:
   /// \brief Return the optional template keyword and arguments info.
   ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() {
     if (!hasTemplateKWAndArgsInfo())
-      return 0;
+      return nullptr;
 
     if (hasFoundDecl())
       return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
@@ -1106,7 +1100,7 @@ public:
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
   const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() const {
-    if (!hasExplicitTemplateArgs()) return 0;
+    if (!hasExplicitTemplateArgs()) return nullptr;
     return &getExplicitTemplateArgs();
   }
 
@@ -1121,7 +1115,7 @@ public:
   /// template-id.
   const TemplateArgumentLoc *getTemplateArgs() const {
     if (!hasExplicitTemplateArgs())
-      return 0;
+      return nullptr;
 
     return getExplicitTemplateArgs().getTemplateArgs();
   }
@@ -1884,7 +1878,7 @@ private:
 
   explicit OffsetOfExpr(unsigned numComps, unsigned numExprs)
     : Expr(OffsetOfExprClass, EmptyShell()),
-      TSInfo(0), NumComps(numComps), NumExprs(numExprs) {}
+      TSInfo(nullptr), NumComps(numComps), NumExprs(numExprs) {}
 
 public:
 
@@ -2421,14 +2415,14 @@ public:
   /// \brief Determines whether this member expression actually had
   /// a C++ nested-name-specifier prior to the name of the member, e.g.,
   /// x->Base::foo.
-  bool hasQualifier() const { return getQualifier() != 0; }
+  bool hasQualifier() const { return getQualifier() != nullptr; }
 
   /// \brief If the member name was qualified, retrieves the
   /// nested-name-specifier that precedes the member name. Otherwise, returns
   /// NULL.
   NestedNameSpecifier *getQualifier() const {
     if (!HasQualifierOrFoundDecl)
-      return 0;
+      return nullptr;
 
     return getMemberQualifier()->QualifierLoc.getNestedNameSpecifier();
   }
@@ -2446,7 +2440,7 @@ public:
   /// \brief Return the optional template keyword and arguments info.
   ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() {
     if (!HasTemplateKWAndArgsInfo)
-      return 0;
+      return nullptr;
 
     if (!HasQualifierOrFoundDecl)
       return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(this + 1);
@@ -2514,7 +2508,7 @@ public:
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
   const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() const {
-    if (!hasExplicitTemplateArgs()) return 0;
+    if (!hasExplicitTemplateArgs()) return nullptr;
     return &getExplicitTemplateArgs();
   }
 
@@ -2522,7 +2516,7 @@ public:
   /// template-id.
   const TemplateArgumentLoc *getTemplateArgs() const {
     if (!hasExplicitTemplateArgs())
-      return 0;
+      return nullptr;
 
     return getExplicitTemplateArgs().getTemplateArgs();
   }
@@ -3449,7 +3443,7 @@ public:
 
   /// \brief Build an empty vector-shuffle expression.
   explicit ShuffleVectorExpr(EmptyShell Empty)
-    : Expr(ShuffleVectorExprClass, Empty), SubExprs(0) { }
+    : Expr(ShuffleVectorExprClass, Empty), SubExprs(nullptr) { }
 
   SourceLocation getBuiltinLoc() const { return BuiltinLoc; }
   void setBuiltinLoc(SourceLocation L) { BuiltinLoc = L; }
@@ -3859,8 +3853,8 @@ public:
     return const_cast<InitListExpr *>(this)->getInitializedFieldInUnion();
   }
   void setInitializedFieldInUnion(FieldDecl *FD) {
-    assert((FD == 0
-            || getInitializedFieldInUnion() == 0
+    assert((FD == nullptr
+            || getInitializedFieldInUnion() == nullptr
             || getInitializedFieldInUnion() == FD)
            && "Only one field of a union may be initialized at a time!");
     ArrayFillerOrUnionFieldInit = FD;
@@ -3883,10 +3877,10 @@ public:
 
   bool isSemanticForm() const { return AltForm.getInt(); }
   InitListExpr *getSemanticForm() const {
-    return isSemanticForm() ? 0 : AltForm.getPointer();
+    return isSemanticForm() ? nullptr : AltForm.getPointer();
   }
   InitListExpr *getSyntacticForm() const {
-    return isSemanticForm() ? AltForm.getPointer() : 0;
+    return isSemanticForm() ? AltForm.getPointer() : nullptr;
   }
 
   void setSyntacticForm(InitListExpr *Init) {
@@ -3988,7 +3982,7 @@ private:
 
   explicit DesignatedInitExpr(unsigned NumSubExprs)
     : Expr(DesignatedInitExprClass, EmptyShell()),
-      NumDesignators(0), NumSubExprs(NumSubExprs), Designators(0) { }
+      NumDesignators(0), NumSubExprs(NumSubExprs), Designators(nullptr) { }
 
 public:
   /// A field designator, e.g., ".x".
@@ -4085,7 +4079,7 @@ public:
     FieldDecl *getField() const {
       assert(Kind == FieldDesignator && "Only valid on a field designator");
       if (Field.NameOrField & 0x01)
-        return 0;
+        return nullptr;
       else
         return reinterpret_cast<FieldDecl *>(Field.NameOrField);
     }
@@ -4677,7 +4671,7 @@ public:
   /// Return the result-bearing expression, or null if there is none.
   Expr *getResultExpr() {
     if (PseudoObjectExprBits.ResultIndex == 0)
-      return 0;
+      return nullptr;
     return getSubExprsBuffer()[PseudoObjectExprBits.ResultIndex];
   }
   const Expr *getResultExpr() const {

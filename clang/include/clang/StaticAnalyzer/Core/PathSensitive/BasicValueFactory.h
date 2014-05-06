@@ -79,9 +79,9 @@ class BasicValueFactory {
   const llvm::APSInt& getValue(uint64_t X, unsigned BitWidth, bool isUnsigned);
 
 public:
-  BasicValueFactory(ASTContext &ctx, llvm::BumpPtrAllocator& Alloc)
-  : Ctx(ctx), BPAlloc(Alloc), PersistentSVals(0), PersistentSValPairs(0),
-    SValListFactory(Alloc) {}
+  BasicValueFactory(ASTContext &ctx, llvm::BumpPtrAllocator &Alloc)
+    : Ctx(ctx), BPAlloc(Alloc), PersistentSVals(nullptr),
+      PersistentSValPairs(nullptr), SValListFactory(Alloc) {}
 
   ~BasicValueFactory();
 

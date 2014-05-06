@@ -59,7 +59,7 @@ public:
   /// \brief Returns \c true if \c this is a base kind of (or same as) \c Other.
   /// \param Distance If non-null, used to return the distance between \c this
   /// and \c Other in the class hierarchy.
-  bool isBaseOf(ASTNodeKind Other, unsigned *Distance = 0) const;
+  bool isBaseOf(ASTNodeKind Other, unsigned *Distance = nullptr) const;
 
   /// \brief String representation of the kind.
   StringRef asStringRef() const;
@@ -237,7 +237,7 @@ private:
     static const T *get(ASTNodeKind NodeKind, const char Storage[]) {
       if (ASTNodeKind::getFromNodeKind<BaseT>().isBaseOf(NodeKind))
         return dyn_cast<T>(*reinterpret_cast<BaseT *const *>(Storage));
-      return NULL;
+      return nullptr;
     }
     static DynTypedNode create(const BaseT &Node) {
       DynTypedNode Result;
@@ -252,7 +252,7 @@ private:
     static const T *get(ASTNodeKind NodeKind, const char Storage[]) {
       if (ASTNodeKind::getFromNodeKind<T>().isSame(NodeKind))
         return *reinterpret_cast<T *const *>(Storage);
-      return NULL;
+      return nullptr;
     }
     static DynTypedNode create(const T &Node) {
       DynTypedNode Result;
@@ -267,7 +267,7 @@ private:
     static const T *get(ASTNodeKind NodeKind, const char Storage[]) {
       if (ASTNodeKind::getFromNodeKind<T>().isSame(NodeKind))
         return reinterpret_cast<const T *>(Storage);
-      return NULL;
+      return nullptr;
     }
     static DynTypedNode create(const T &Node) {
       DynTypedNode Result;
@@ -355,7 +355,7 @@ inline const void *DynTypedNode::getMemoizationData() const {
   } else if (ASTNodeKind::getFromNodeKind<NestedNameSpecifier>().isBaseOf(NodeKind)) {
     return BaseConverter<NestedNameSpecifier>::get(NodeKind, Storage.buffer);
   }
-  return NULL;
+  return nullptr;
 }
 
 } // end namespace ast_type_traits

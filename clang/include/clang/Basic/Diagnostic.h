@@ -354,7 +354,7 @@ public:
   explicit DiagnosticsEngine(
                       const IntrusiveRefCntPtr<DiagnosticIDs> &Diags,
                       DiagnosticOptions *DiagOpts,
-                      DiagnosticConsumer *client = 0,
+                      DiagnosticConsumer *client = nullptr,
                       bool ShouldOwnClient = true);
   ~DiagnosticsEngine();
 
@@ -386,7 +386,7 @@ public:
     return Client;
   }
 
-  bool hasSourceManager() const { return SourceMgr != 0; }
+  bool hasSourceManager() const { return SourceMgr != nullptr; }
   SourceManager &getSourceManager() const {
     assert(SourceMgr && "SourceManager not set!");
     return *SourceMgr;
@@ -889,7 +889,7 @@ class DiagnosticBuilder {
   friend class DiagnosticsEngine;
   
   DiagnosticBuilder()
-    : DiagObj(0), NumArgs(0), NumRanges(0), NumFixits(0), IsActive(false),
+    : DiagObj(nullptr), NumArgs(0), NumRanges(0), NumFixits(0), IsActive(false),
       IsForceEmit(false) { }
 
   explicit DiagnosticBuilder(DiagnosticsEngine *diagObj)
@@ -909,7 +909,7 @@ protected:
 
   /// \brief Clear out the current diagnostic.
   void Clear() const {
-    DiagObj = 0;
+    DiagObj = nullptr;
     IsActive = false;
     IsForceEmit = false;
   }
@@ -1245,7 +1245,7 @@ public:
   }
 
   const FixItHint *getFixItHints() const {
-    return getNumFixItHints()? DiagObj->DiagFixItHints : 0;
+    return getNumFixItHints()? DiagObj->DiagFixItHints : nullptr;
   }
 
   /// \brief Format this diagnostic into a string, substituting the
@@ -1341,7 +1341,7 @@ public:
   /// \param PP The preprocessor object being used for the source; this is 
   /// optional, e.g., it may not be present when processing AST source files.
   virtual void BeginSourceFile(const LangOptions &LangOpts,
-                               const Preprocessor *PP = 0) {}
+                               const Preprocessor *PP = nullptr) {}
 
   /// \brief Callback to inform the diagnostic client that processing
   /// of a source file has ended.

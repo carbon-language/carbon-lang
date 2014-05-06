@@ -90,7 +90,7 @@ public:
 
   /// \brief Check whether there are modifications for a given file.
   bool IsModified(FileID ID) const {
-    return Rewrite.getRewriteBufferFor(ID) != NULL;
+    return Rewrite.getRewriteBufferFor(ID) != nullptr;
   }
 
   // Iteration over files with changes.
@@ -106,7 +106,7 @@ public:
   ///
   /// \returns true if there was an error, false otherwise.
   bool WriteFixedFiles(
-         std::vector<std::pair<std::string, std::string> > *RewrittenFiles = 0);
+     std::vector<std::pair<std::string, std::string> > *RewrittenFiles=nullptr);
 
   /// IncludeInDiagnosticCounts - This method (whose default implementation
   /// returns true) indicates whether the diagnostics handled by this

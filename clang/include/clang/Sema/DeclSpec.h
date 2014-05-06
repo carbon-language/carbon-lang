@@ -178,9 +178,9 @@ public:
   bool isNotEmpty() const { return !isEmpty(); }
 
   /// An error occurred during parsing of the scope specifier.
-  bool isInvalid() const { return isNotEmpty() && getScopeRep() == 0; }
+  bool isInvalid() const { return isNotEmpty() && getScopeRep() == nullptr; }
   /// A scope specifier is present, and it refers to a real scope.
-  bool isValid() const { return isNotEmpty() && getScopeRep() != 0; }
+  bool isValid() const { return isNotEmpty() && getScopeRep() != nullptr; }
 
   /// \brief Indicate that this nested-name-specifier is invalid.
   void SetInvalid(SourceRange R) { 
@@ -193,7 +193,7 @@ public:
   
   /// Deprecated.  Some call sites intend isNotEmpty() while others intend
   /// isValid().
-  bool isSet() const { return getScopeRep() != 0; }
+  bool isSet() const { return getScopeRep() != nullptr; }
 
   void clear() {
     Range = SourceRange();
@@ -420,11 +420,11 @@ public:
       Friend_specified(false),
       Constexpr_specified(false),
       Attrs(attrFactory),
-      ProtocolQualifiers(0),
+      ProtocolQualifiers(nullptr),
       NumProtocolQualifiers(0),
-      ProtocolLocs(0),
+      ProtocolLocs(nullptr),
       writtenBS(),
-      ObjCQualifiers(0) {
+      ObjCQualifiers(nullptr) {
   }
   ~DeclSpec() {
     delete [] ProtocolQualifiers;
@@ -791,7 +791,7 @@ public:
 
   ObjCDeclSpec()
     : objcDeclQualifier(DQ_None), PropertyAttributes(DQ_PR_noattr),
-      GetterName(0), SetterName(0) { }
+      GetterName(nullptr), SetterName(nullptr) { }
   ObjCDeclQualifier getObjCDeclQualifier() const { return objcDeclQualifier; }
   void setObjCDeclQualifier(ObjCDeclQualifier DQVal) {
     objcDeclQualifier = (ObjCDeclQualifier) (objcDeclQualifier | DQVal);
@@ -905,13 +905,13 @@ public:
   /// \brief The location of the last token that describes this unqualified-id.
   SourceLocation EndLocation;
   
-  UnqualifiedId() : Kind(IK_Identifier), Identifier(0) { }
+  UnqualifiedId() : Kind(IK_Identifier), Identifier(nullptr) { }
 
   /// \brief Clear out this unqualified-id, setting it to default (invalid) 
   /// state.
   void clear() {
     Kind = IK_Identifier;
-    Identifier = 0;
+    Identifier = nullptr;
     StartLocation = SourceLocation();
     EndLocation = SourceLocation();
   }
@@ -1126,7 +1126,7 @@ struct DeclaratorChunk {
     ParamInfo() {}
     ParamInfo(IdentifierInfo *ident, SourceLocation iloc,
               Decl *param,
-              CachedTokens *DefArgTokens = 0)
+              CachedTokens *DefArgTokens = nullptr)
       : Ident(ident), IdentLoc(iloc), Param(param),
         DefaultArgTokens(DefArgTokens) {}
   };
@@ -1380,7 +1380,7 @@ struct DeclaratorChunk {
     I.Ptr.ConstQualLoc    = ConstQualLoc.getRawEncoding();
     I.Ptr.VolatileQualLoc = VolatileQualLoc.getRawEncoding();
     I.Ptr.RestrictQualLoc = RestrictQualLoc.getRawEncoding();
-    I.Ptr.AttrList        = 0;
+    I.Ptr.AttrList        = nullptr;
     return I;
   }
 
@@ -1392,7 +1392,7 @@ struct DeclaratorChunk {
     I.Loc             = Loc;
     I.Ref.HasRestrict = (TypeQuals & DeclSpec::TQ_restrict) != 0;
     I.Ref.LValueRef   = lvalue;
-    I.Ref.AttrList    = 0;
+    I.Ref.AttrList    = nullptr;
     return I;
   }
 
@@ -1404,7 +1404,7 @@ struct DeclaratorChunk {
     I.Kind          = Array;
     I.Loc           = LBLoc;
     I.EndLoc        = RBLoc;
-    I.Arr.AttrList  = 0;
+    I.Arr.AttrList  = nullptr;
     I.Arr.TypeQuals = TypeQuals;
     I.Arr.hasStatic = isStatic;
     I.Arr.isStar    = isStar;
@@ -1445,7 +1445,7 @@ struct DeclaratorChunk {
     I.Kind          = BlockPointer;
     I.Loc           = Loc;
     I.Cls.TypeQuals = TypeQuals;
-    I.Cls.AttrList  = 0;
+    I.Cls.AttrList  = nullptr;
     return I;
   }
 
@@ -1456,7 +1456,7 @@ struct DeclaratorChunk {
     I.Kind          = MemberPointer;
     I.Loc           = Loc;
     I.Mem.TypeQuals = TypeQuals;
-    I.Mem.AttrList  = 0;
+    I.Mem.AttrList  = nullptr;
     new (I.Mem.ScopeMem.Mem) CXXScopeSpec(SS);
     return I;
   }
@@ -1468,7 +1468,7 @@ struct DeclaratorChunk {
     I.Kind          = Paren;
     I.Loc           = LParenLoc;
     I.EndLoc        = RParenLoc;
-    I.Common.AttrList = 0;
+    I.Common.AttrList = nullptr;
     return I;
   }
 
@@ -1586,7 +1586,7 @@ public:
       InvalidType(DS.getTypeSpecType() == DeclSpec::TST_error),
       GroupingParens(false), FunctionDefinition(FDK_Declaration), 
       Redeclaration(false),
-      Attrs(ds.getAttributePool().getFactory()), AsmLabel(0),
+      Attrs(ds.getAttributePool().getFactory()), AsmLabel(nullptr),
       InlineParamsUsed(false), Extension(false) {
   }
 
@@ -1663,7 +1663,7 @@ public:
       DeclTypeInfo[i].destroy();
     DeclTypeInfo.clear();
     Attrs.clear();
-    AsmLabel = 0;
+    AsmLabel = nullptr;
     InlineParamsUsed = false;
     CommaLoc = SourceLocation();
     EllipsisLoc = SourceLocation();
@@ -1836,7 +1836,7 @@ public:
     if (Name.getKind() == UnqualifiedId::IK_Identifier)
       return Name.Identifier;
     
-    return 0;
+    return nullptr;
   }
   SourceLocation getIdentifierLoc() const { return Name.StartLocation; }
 
@@ -1891,7 +1891,7 @@ public:
       if (!DeclTypeInfo[i].isParen())
         return &DeclTypeInfo[i];
     }
-    return 0;
+    return nullptr;
   }
 
   /// Return the outermost (furthest from the declarator) chunk of
@@ -1902,7 +1902,7 @@ public:
       if (!DeclTypeInfo[i-1].isParen())
         return &DeclTypeInfo[i-1];
     }
-    return 0;
+    return nullptr;
   }
 
   /// isArrayOfUnknownBound - This method returns true if the declarator
@@ -2113,7 +2113,7 @@ struct FieldDeclarator {
   Declarator D;
   Expr *BitfieldSize;
   explicit FieldDeclarator(const DeclSpec &DS)
-    : D(DS, Declarator::MemberContext), BitfieldSize(0) { }
+    : D(DS, Declarator::MemberContext), BitfieldSize(nullptr) { }
 };
 
 /// \brief Represents a C++11 virt-specifier-seq.

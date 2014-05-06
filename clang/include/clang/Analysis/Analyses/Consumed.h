@@ -142,7 +142,7 @@ namespace consumed {
     TmpMapType TmpMap;
     
   public:
-    ConsumedStateMap() : Reachable(true), From(NULL) {}
+    ConsumedStateMap() : Reachable(true), From(nullptr) {}
     ConsumedStateMap(const ConsumedStateMap &Other)
       : Reachable(Other.Reachable), From(Other.From), VarMap(Other.VarMap),
         TmpMap() {}
@@ -203,7 +203,7 @@ namespace consumed {
     ConsumedBlockInfo() { }
     
     ConsumedBlockInfo(unsigned int NumBlocks, PostOrderCFGView *SortedGraph)
-        : StateMapsArray(NumBlocks, 0), VisitOrder(NumBlocks, 0) {
+        : StateMapsArray(NumBlocks, nullptr), VisitOrder(NumBlocks, 0) {
       unsigned int VisitOrderCounter = 0;
       for (PostOrderCFGView::iterator BI = SortedGraph->begin(),
            BE = SortedGraph->end(); BI != BE; ++BI) {

@@ -147,7 +147,7 @@ public:
   virtual llvm::opt::DerivedArgList *
   TranslateArgs(const llvm::opt::DerivedArgList &Args,
                 const char *BoundArch) const {
-    return 0;
+    return nullptr;
   }
 
   /// Choose a tool to use to handle the action \p JA.

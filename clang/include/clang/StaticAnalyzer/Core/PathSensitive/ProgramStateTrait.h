@@ -64,7 +64,8 @@ namespace ento {
     typedef const value_type*                 lookup_type;
 
     static inline data_type MakeData(void *const* p) {
-      return p ? data_type((typename data_type::TreeTy*) *p) : data_type(0);
+      return p ? data_type((typename data_type::TreeTy*) *p)
+               : data_type(nullptr);
     }
     static inline void *MakeVoidPtr(data_type B) {
       return B.getRoot();
@@ -112,7 +113,8 @@ namespace ento {
     typedef Key                               key_type;
 
     static inline data_type MakeData(void *const* p) {
-      return p ? data_type((typename data_type::TreeTy*) *p) : data_type(0);
+      return p ? data_type((typename data_type::TreeTy*) *p)
+               : data_type(nullptr);
     }
 
     static inline void *MakeVoidPtr(data_type B) {
@@ -163,7 +165,7 @@ namespace ento {
 
     static inline data_type MakeData(void *const* p) {
       return p ? data_type((const llvm::ImmutableListImpl<T>*) *p)
-               : data_type(0);
+               : data_type(nullptr);
     }
 
     static inline void *MakeVoidPtr(data_type D) {

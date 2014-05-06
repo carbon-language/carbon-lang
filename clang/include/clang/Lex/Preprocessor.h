@@ -65,7 +65,7 @@ class TokenValue {
   IdentifierInfo *II;
 
 public:
-  TokenValue(tok::TokenKind Kind) : Kind(Kind), II(0) {
+  TokenValue(tok::TokenKind Kind) : Kind(Kind), II(nullptr) {
     assert(Kind != tok::raw_identifier && "Raw identifiers are not supported.");
     assert(Kind != tok::identifier &&
            "Identifiers should be created by TokenValue(IdentifierInfo *)");
@@ -457,7 +457,7 @@ public:
                DiagnosticsEngine &diags, LangOptions &opts,
                SourceManager &SM, HeaderSearch &Headers,
                ModuleLoader &TheModuleLoader,
-               IdentifierInfoLookup *IILookup = 0,
+               IdentifierInfoLookup *IILookup = nullptr,
                bool OwnsHeaderSearch = false,
                TranslationUnitKind TUKind = TU_Complete);
 
@@ -577,7 +577,7 @@ public:
   /// \#defined or null if it isn't \#define'd.
   MacroDirective *getMacroDirective(IdentifierInfo *II) const {
     if (!II->hasMacroDefinition())
-      return 0;
+      return nullptr;
 
     MacroDirective *MD = getMacroDirectiveHistory(II);
     assert(MD->isDefined() && "Macro is undefined!");
@@ -591,7 +591,7 @@ public:
   MacroInfo *getMacroInfo(IdentifierInfo *II) {
     if (MacroDirective *MD = getMacroDirective(II))
       return MD->getMacroInfo();
-    return 0;
+    return nullptr;
   }
 
   /// \brief Given an identifier, return the (probably #undef'd) MacroInfo
@@ -687,7 +687,7 @@ public:
 
   /// \brief Clear out the code completion handler.
   void clearCodeCompletionHandler() {
-    CodeComplete = 0;
+    CodeComplete = nullptr;
   }
 
   /// \brief Hook used by the lexer to invoke the "natural language" code
@@ -948,7 +948,7 @@ public:
                               unsigned Line, unsigned Column);
 
   /// \brief Determine if we are performing code completion.
-  bool isCodeCompletionEnabled() const { return CodeCompletionFile != 0; }
+  bool isCodeCompletionEnabled() const { return CodeCompletionFile != nullptr; }
 
   /// \brief Returns the location of the code-completion point.
   ///
@@ -1021,7 +1021,7 @@ public:
   /// \param invalid If non-null, will be set \c true if an error occurs.
   StringRef getSpelling(SourceLocation loc,
                         SmallVectorImpl<char> &buffer,
-                        bool *invalid = 0) const {
+                        bool *invalid = nullptr) const {
     return Lexer::getSpelling(loc, buffer, SourceMgr, LangOpts, invalid);
   }
 
@@ -1033,7 +1033,7 @@ public:
   /// things like digraphs, UCNs, etc.
   ///
   /// \param Invalid If non-null, will be set \c true if an error occurs.
-  std::string getSpelling(const Token &Tok, bool *Invalid = 0) const {
+  std::string getSpelling(const Token &Tok, bool *Invalid = nullptr) const {
     return Lexer::getSpelling(Tok, SourceMgr, LangOpts, Invalid);
   }
 
@@ -1050,7 +1050,7 @@ public:
   /// copy).  The caller is not allowed to modify the returned buffer pointer
   /// if an internal buffer is returned.
   unsigned getSpelling(const Token &Tok, const char *&Buffer,
-                       bool *Invalid = 0) const {
+                       bool *Invalid = nullptr) const {
     return Lexer::getSpelling(Tok, Buffer, SourceMgr, LangOpts, Invalid);
   }
 
@@ -1060,7 +1060,7 @@ public:
   /// supplied buffer if a copy can be avoided.
   StringRef getSpelling(const Token &Tok,
                         SmallVectorImpl<char> &Buffer,
-                        bool *Invalid = 0) const;
+                        bool *Invalid = nullptr) const;
 
   /// \brief Relex the token at the specified location.
   /// \returns true if there was a failure, false on success.
@@ -1071,8 +1071,9 @@ public:
 
   /// \brief Given a Token \p Tok that is a numeric constant with length 1,
   /// return the character.
-  char getSpellingOfSingleCharacterNumericConstant(const Token &Tok,
-                                                   bool *Invalid = 0) const {
+  char
+  getSpellingOfSingleCharacterNumericConstant(const Token &Tok,
+                                              bool *Invalid = nullptr) const {
     assert(Tok.is(tok::numeric_constant) &&
            Tok.getLength() == 1 && "Called on unsupported token");
     assert(!Tok.needsCleaning() && "Token can't need cleaning with length 1");
@@ -1132,7 +1133,7 @@ public:
   /// \param MacroBegin If non-null and function returns true, it is set to
   /// begin location of the macro.
   bool isAtStartOfMacroExpansion(SourceLocation loc,
-                                 SourceLocation *MacroBegin = 0) const {
+                                 SourceLocation *MacroBegin = nullptr) const {
     return Lexer::isAtStartOfMacroExpansion(loc, SourceMgr, LangOpts,
                                             MacroBegin);
   }
@@ -1143,7 +1144,7 @@ public:
   /// \param MacroEnd If non-null and function returns true, it is set to
   /// end location of the macro.
   bool isAtEndOfMacroExpansion(SourceLocation loc,
-                               SourceLocation *MacroEnd = 0) const {
+                               SourceLocation *MacroEnd = nullptr) const {
     return Lexer::isAtEndOfMacroExpansion(loc, SourceMgr, LangOpts, MacroEnd);
   }
 
@@ -1348,7 +1349,7 @@ private:
     IncludeMacroStack.push_back(IncludeStackInfo(
         CurLexerKind, CurSubmodule, std::move(CurLexer), std::move(CurPTHLexer),
         CurPPLexer, std::move(CurTokenLexer), CurDirLookup));
-    CurPPLexer = 0;
+    CurPPLexer = nullptr;
   }
 
   void PopIncludeMacroStack() {
@@ -1475,7 +1476,7 @@ private:
   /// \brief Returns true if we are lexing from a file and not a
   /// pragma or a macro.
   static bool IsFileLexer(const Lexer* L, const PreprocessorLexer* P) {
-    return L ? !L->isPragmaLexer() : P != 0;
+    return L ? !L->isPragmaLexer() : P != nullptr;
   }
 
   static bool IsFileLexer(const IncludeStackInfo& I) {
@@ -1517,7 +1518,7 @@ private:
   // File inclusion.
   void HandleIncludeDirective(SourceLocation HashLoc,
                               Token &Tok,
-                              const DirectoryLookup *LookupFrom = 0,
+                              const DirectoryLookup *LookupFrom = nullptr,
                               bool isImport = false);
   void HandleIncludeNextDirective(SourceLocation HashLoc, Token &Tok);
   void HandleIncludeMacrosDirective(SourceLocation HashLoc, Token &Tok);

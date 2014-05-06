@@ -268,7 +268,7 @@ class FullSourceLoc : public SourceLocation {
   const SourceManager *SrcMgr;
 public:
   /// \brief Creates a FullSourceLoc where isValid() returns \c false.
-  explicit FullSourceLoc() : SrcMgr(0) {}
+  explicit FullSourceLoc() : SrcMgr(nullptr) {}
 
   explicit FullSourceLoc(SourceLocation Loc, const SourceManager &SM)
     : SourceLocation(Loc), SrcMgr(&SM) {}
@@ -284,19 +284,19 @@ public:
   FullSourceLoc getExpansionLoc() const;
   FullSourceLoc getSpellingLoc() const;
 
-  unsigned getExpansionLineNumber(bool *Invalid = 0) const;
-  unsigned getExpansionColumnNumber(bool *Invalid = 0) const;
+  unsigned getExpansionLineNumber(bool *Invalid = nullptr) const;
+  unsigned getExpansionColumnNumber(bool *Invalid = nullptr) const;
 
-  unsigned getSpellingLineNumber(bool *Invalid = 0) const;
-  unsigned getSpellingColumnNumber(bool *Invalid = 0) const;
+  unsigned getSpellingLineNumber(bool *Invalid = nullptr) const;
+  unsigned getSpellingColumnNumber(bool *Invalid = nullptr) const;
 
-  const char *getCharacterData(bool *Invalid = 0) const;
+  const char *getCharacterData(bool *Invalid = nullptr) const;
 
-  const llvm::MemoryBuffer* getBuffer(bool *Invalid = 0) const;
+  const llvm::MemoryBuffer* getBuffer(bool *Invalid = nullptr) const;
 
   /// \brief Return a StringRef to the source buffer data for the
   /// specified FileID.
-  StringRef getBufferData(bool *Invalid = 0) const;
+  StringRef getBufferData(bool *Invalid = nullptr) const;
 
   /// \brief Decompose the specified location into a raw FileID + Offset pair.
   ///
@@ -358,7 +358,7 @@ class PresumedLoc {
   unsigned Line, Col;
   SourceLocation IncludeLoc;
 public:
-  PresumedLoc() : Filename(0) {}
+  PresumedLoc() : Filename(nullptr) {}
   PresumedLoc(const char *FN, unsigned Ln, unsigned Co, SourceLocation IL)
     : Filename(FN), Line(Ln), Col(Co), IncludeLoc(IL) {
   }
@@ -367,8 +367,8 @@ public:
   ///
   /// This occurs when created with invalid source locations or when walking
   /// off the top of a \#include stack.
-  bool isInvalid() const { return Filename == 0; }
-  bool isValid() const { return Filename != 0; }
+  bool isInvalid() const { return Filename == nullptr; }
+  bool isValid() const { return Filename != nullptr; }
 
   /// \brief Return the presumed filename of this location.
   ///

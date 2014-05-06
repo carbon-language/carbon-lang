@@ -403,7 +403,7 @@ namespace clang {
       typedef std::random_access_iterator_tag iterator_category;
       typedef int                 difference_type;
       
-      iterator() : Self(0), Position(0) { }
+      iterator() : Self(nullptr), Position(0) { }
       
       iterator(PreprocessingRecord *Self, int Position)
         : Self(Self), Position(Position) { }

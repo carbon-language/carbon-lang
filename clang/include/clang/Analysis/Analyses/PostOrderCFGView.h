@@ -52,7 +52,7 @@ public:
       // make sure that Block is non-null.  Moreover, the CFGBlock iterator will
       // occasionally hand out null pointers for pruned edges, so we catch those
       // here.
-      if (Block == 0)
+      if (!Block)
         return false;  // if an edge is trivially false.
       if (VisitedBlockIDs.test(Block->getBlockID()))
         return false;

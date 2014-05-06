@@ -54,7 +54,7 @@ public:
   // Visual Studio will only create enumerations of size int, not long long.
   static const int64_t Symbolic = INT64_MAX;
 
-  RegionOffset() : R(0) {}
+  RegionOffset() : R(nullptr) {}
   RegionOffset(const MemRegion *r, int64_t off) : R(r), Offset(off) {}
 
   const MemRegion *getRegion() const { return R; }
@@ -640,7 +640,7 @@ class BlockDataRegion : public TypedRegion {
                   unsigned count, const MemRegion *sreg)
   : TypedRegion(sreg, BlockDataRegionKind), BC(bc), LC(lc),
      BlockCount(count),
-    ReferencedVars(0), OriginalVars(0) {}
+    ReferencedVars(nullptr), OriginalVars(nullptr) {}
 
 public:
   const BlockTextRegion *getCodeRegion() const { return BC; }
@@ -665,11 +665,11 @@ public:
     }
 
     bool operator==(const referenced_vars_iterator &I) const {
-      assert((R == 0) == (I.R == 0));
+      assert((R == nullptr) == (I.R == nullptr));
       return I.R == R;
     }
     bool operator!=(const referenced_vars_iterator &I) const {
-      assert((R == 0) == (I.R == 0));
+      assert((R == nullptr) == (I.R == nullptr));
       return I.R != R;
     }
     referenced_vars_iterator &operator++() {
@@ -1111,7 +1111,7 @@ const RegionTy* MemRegion::getAs() const {
   if (const RegionTy* RT = dyn_cast<RegionTy>(this))
     return RT;
 
-  return NULL;
+  return nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -1140,9 +1140,10 @@ class MemRegionManager {
   MemSpaceRegion *code;
 
 public:
-  MemRegionManager(ASTContext &c, llvm::BumpPtrAllocator& a)
-    : C(c), A(a), InternalGlobals(0), SystemGlobals(0), ImmutableGlobals(0),
-      heap(0), unknown(0), code(0) {}
+  MemRegionManager(ASTContext &c, llvm::BumpPtrAllocator &a)
+    : C(c), A(a), InternalGlobals(nullptr), SystemGlobals(nullptr),
+      ImmutableGlobals(nullptr), heap(nullptr), unknown(nullptr),
+      code(nullptr) {}
 
   ~MemRegionManager();
 
@@ -1164,7 +1165,7 @@ public:
   ///  global variables.
   const GlobalsSpaceRegion *getGlobalsRegion(
       MemRegion::Kind K = MemRegion::GlobalInternalSpaceRegionKind,
-      const CodeTextRegion *R = 0);
+      const CodeTextRegion *R = nullptr);
 
   /// getHeapRegion - Retrieve the memory region associated with the
   ///  generic "heap".

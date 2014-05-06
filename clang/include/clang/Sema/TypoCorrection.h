@@ -39,7 +39,7 @@ public:
   static const unsigned CallbackDistanceWeight = 150U;
 
   TypoCorrection(const DeclarationName &Name, NamedDecl *NameDecl,
-                 NestedNameSpecifier *NNS = 0, unsigned CharDistance = 0,
+                 NestedNameSpecifier *NNS = nullptr, unsigned CharDistance = 0,
                  unsigned QualifierDistance = 0)
       : CorrectionName(Name), CorrectionNameSpec(NNS),
         CharDistance(CharDistance), QualifierDistance(QualifierDistance),
@@ -49,7 +49,7 @@ public:
       CorrectionDecls.push_back(NameDecl);
   }
 
-  TypoCorrection(NamedDecl *Name, NestedNameSpecifier *NNS = 0,
+  TypoCorrection(NamedDecl *Name, NestedNameSpecifier *NNS = nullptr,
                  unsigned CharDistance = 0)
       : CorrectionName(Name->getDeclName()), CorrectionNameSpec(NNS),
         CharDistance(CharDistance), QualifierDistance(0), CallbackDistance(0),
@@ -58,14 +58,14 @@ public:
       CorrectionDecls.push_back(Name);
   }
 
-  TypoCorrection(DeclarationName Name, NestedNameSpecifier *NNS = 0,
+  TypoCorrection(DeclarationName Name, NestedNameSpecifier *NNS = nullptr,
                  unsigned CharDistance = 0)
       : CorrectionName(Name), CorrectionNameSpec(NNS),
         CharDistance(CharDistance), QualifierDistance(0), CallbackDistance(0),
         ForceSpecifierReplacement(false), RequiresImport(false) {}
 
   TypoCorrection()
-      : CorrectionNameSpec(0), CharDistance(0), QualifierDistance(0),
+      : CorrectionNameSpec(nullptr), CharDistance(0), QualifierDistance(0),
         CallbackDistance(0), ForceSpecifierReplacement(false),
         RequiresImport(false) {}
 
@@ -81,7 +81,7 @@ public:
   }
   void setCorrectionSpecifier(NestedNameSpecifier* NNS) {
     CorrectionNameSpec = NNS;
-    ForceSpecifierReplacement = (NNS != 0);
+    ForceSpecifierReplacement = (NNS != nullptr);
   }
 
   void WillReplaceSpecifier(bool ForceReplacement) {
@@ -130,7 +130,7 @@ public:
 
   /// \brief Gets the pointer to the declaration of the typo correction
   NamedDecl *getCorrectionDecl() const {
-    return hasCorrectionDecl() ? *(CorrectionDecls.begin()) : 0;
+    return hasCorrectionDecl() ? *(CorrectionDecls.begin()) : nullptr;
   }
   template <class DeclClass>
   DeclClass *getCorrectionDeclAs() const {
@@ -172,7 +172,7 @@ public:
   /// as the only element in the list to mark this TypoCorrection as a keyword.
   void makeKeyword() {
     CorrectionDecls.clear();
-    CorrectionDecls.push_back(0);
+    CorrectionDecls.push_back(nullptr);
     ForceSpecifierReplacement = true;
   }
 
@@ -180,7 +180,7 @@ public:
   // item in CorrectionDecls is NULL.
   bool isKeyword() const {
     return !CorrectionDecls.empty() &&
-        CorrectionDecls.front() == 0;
+        CorrectionDecls.front() == nullptr;
   }
 
   // Check if this TypoCorrection is the given keyword.
@@ -306,7 +306,7 @@ class FunctionCallFilterCCC : public CorrectionCandidateCallback {
 public:
   FunctionCallFilterCCC(Sema &SemaRef, unsigned NumArgs,
                         bool HasExplicitTemplateArgs,
-                        MemberExpr *ME = 0);
+                        MemberExpr *ME = nullptr);
 
   bool ValidateCandidate(const TypoCorrection &candidate) override;
 

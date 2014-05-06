@@ -62,7 +62,7 @@ namespace clang {
     Stmt** I;
   public:
     ExprIterator(Stmt** i) : I(i) {}
-    ExprIterator() : I(0) {}
+    ExprIterator() : I(nullptr) {}
     ExprIterator& operator++() { ++I; return *this; }
     ExprIterator operator-(size_t i) { return I-i; }
     ExprIterator operator+(size_t i) { return I+i; }
@@ -81,7 +81,7 @@ namespace clang {
     const Stmt * const *I;
   public:
     ConstExprIterator(const Stmt * const *i) : I(i) {}
-    ConstExprIterator() : I(0) {}
+    ConstExprIterator() : I(nullptr) {}
     ConstExprIterator& operator++() { ++I; return *this; }
     ConstExprIterator operator+(size_t i) const { return I+i; }
     ConstExprIterator operator-(size_t i) const { return I-i; }
@@ -555,13 +555,13 @@ public:
 
   // \brief Build an empty compound statement with a location.
   explicit CompoundStmt(SourceLocation Loc)
-    : Stmt(CompoundStmtClass), Body(0), LBracLoc(Loc), RBracLoc(Loc) {
+    : Stmt(CompoundStmtClass), Body(nullptr), LBracLoc(Loc), RBracLoc(Loc) {
     CompoundStmtBits.NumStmts = 0;
   }
 
   // \brief Build an empty compound statement.
   explicit CompoundStmt(EmptyShell Empty)
-    : Stmt(CompoundStmtClass, Empty), Body(0) {
+    : Stmt(CompoundStmtClass, Empty), Body(nullptr) {
     CompoundStmtBits.NumStmts = 0;
   }
 
@@ -576,7 +576,7 @@ public:
   body_range body() { return body_range(body_begin(), body_end()); }
   body_iterator body_begin() { return Body; }
   body_iterator body_end() { return Body + size(); }
-  Stmt *body_back() { return !body_empty() ? Body[size()-1] : 0; }
+  Stmt *body_back() { return !body_empty() ? Body[size()-1] : nullptr; }
 
   void setLastStmt(Stmt *S) {
     assert(!body_empty() && "setLastStmt");
@@ -591,7 +591,9 @@ public:
   }
   const_body_iterator body_begin() const { return Body; }
   const_body_iterator body_end() const { return Body + size(); }
-  const Stmt *body_back() const { return !body_empty() ? Body[size()-1] : 0; }
+  const Stmt *body_back() const {
+    return !body_empty() ? Body[size() - 1] : nullptr;
+  }
 
   typedef std::reverse_iterator<body_iterator> reverse_body_iterator;
   reverse_body_iterator body_rbegin() {
@@ -644,10 +646,11 @@ protected:
   SourceLocation ColonLoc;
 
   SwitchCase(StmtClass SC, SourceLocation KWLoc, SourceLocation ColonLoc)
-    : Stmt(SC), NextSwitchCase(0), KeywordLoc(KWLoc), ColonLoc(ColonLoc) {}
+    : Stmt(SC), NextSwitchCase(nullptr), KeywordLoc(KWLoc), ColonLoc(ColonLoc) {
+  }
 
   SwitchCase(StmtClass SC, EmptyShell)
-    : Stmt(SC), NextSwitchCase(0) {}
+    : Stmt(SC), NextSwitchCase(nullptr) {}
 
 public:
   const SwitchCase *getNextSwitchCase() const { return NextSwitchCase; }
@@ -684,7 +687,7 @@ public:
   CaseStmt(Expr *lhs, Expr *rhs, SourceLocation caseLoc,
            SourceLocation ellipsisLoc, SourceLocation colonLoc)
     : SwitchCase(CaseStmtClass, caseLoc, colonLoc) {
-    SubExprs[SUBSTMT] = 0;
+    SubExprs[SUBSTMT] = nullptr;
     SubExprs[LHS] = reinterpret_cast<Stmt*>(lhs);
     SubExprs[RHS] = reinterpret_cast<Stmt*>(rhs);
     EllipsisLoc = ellipsisLoc;
@@ -866,7 +869,8 @@ class IfStmt : public Stmt {
 
 public:
   IfStmt(const ASTContext &C, SourceLocation IL, VarDecl *var, Expr *cond,
-         Stmt *then, SourceLocation EL = SourceLocation(), Stmt *elsev = 0);
+         Stmt *then, SourceLocation EL = SourceLocation(),
+         Stmt *elsev = nullptr);
 
   /// \brief Build an empty if/then/else statement
   explicit IfStmt(EmptyShell Empty) : Stmt(IfStmtClass, Empty) { }
@@ -1334,7 +1338,8 @@ class ReturnStmt : public Stmt {
 
 public:
   ReturnStmt(SourceLocation RL)
-    : Stmt(ReturnStmtClass), RetExpr(0), RetLoc(RL), NRVOCandidate(0) { }
+    : Stmt(ReturnStmtClass), RetExpr(nullptr), RetLoc(RL),
+      NRVOCandidate(nullptr) {}
 
   ReturnStmt(SourceLocation RL, Expr *E, const VarDecl *NRVOCandidate)
     : Stmt(ReturnStmtClass), RetExpr((Stmt*) E), RetLoc(RL),
@@ -1403,7 +1408,7 @@ protected:
 public:
   /// \brief Build an empty inline-assembly statement.
   explicit AsmStmt(StmtClass SC, EmptyShell Empty) :
-    Stmt(SC, Empty), Exprs(0) { }
+    Stmt(SC, Empty), Exprs(nullptr) { }
 
   SourceLocation getAsmLoc() const { return AsmLoc; }
   void setAsmLoc(SourceLocation L) { AsmLoc = L; }
@@ -1531,7 +1536,7 @@ public:
 
   /// \brief Build an empty inline-assembly statement.
   explicit GCCAsmStmt(EmptyShell Empty) : AsmStmt(GCCAsmStmtClass, Empty),
-    Constraints(0), Clobbers(0), Names(0) { }
+    Constraints(nullptr), Clobbers(nullptr), Names(nullptr) { }
 
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation L) { RParenLoc = L; }
@@ -1707,7 +1712,7 @@ public:
 
   /// \brief Build an empty MS-style inline-assembly statement.
   explicit MSAsmStmt(EmptyShell Empty) : AsmStmt(MSAsmStmtClass, Empty),
-    NumAsmToks(0), AsmToks(0), Constraints(0), Clobbers(0) { }
+    NumAsmToks(0), AsmToks(nullptr), Constraints(nullptr), Clobbers(nullptr) { }
 
   SourceLocation getLBraceLoc() const { return LBraceLoc; }
   void setLBraceLoc(SourceLocation L) { LBraceLoc = L; }
@@ -1942,11 +1947,12 @@ public:
     ///
     /// \param Var The variable being captured, or null if capturing this.
     ///
-    Capture(SourceLocation Loc, VariableCaptureKind Kind, VarDecl *Var = 0)
+    Capture(SourceLocation Loc, VariableCaptureKind Kind,
+            VarDecl *Var = nullptr)
       : VarAndKind(Var, Kind), Loc(Loc) {
       switch (Kind) {
       case VCK_This:
-        assert(Var == 0 && "'this' capture cannot have a variable!");
+        assert(!Var && "'this' capture cannot have a variable!");
         break;
       case VCK_ByRef:
         assert(Var && "capturing by reference must have a variable!");

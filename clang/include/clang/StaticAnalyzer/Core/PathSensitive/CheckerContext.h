@@ -183,7 +183,7 @@ public:
     ProgramPoint L = N->getLocation();
     if (Optional<PostStore> PSL = L.getAs<PostStore>())
       return reinterpret_cast<const MemRegion*>(PSL->getLocationValue());
-    return 0;
+    return nullptr;
   }
 
   /// \brief Get the value of arbitrary expressions at this point in the path.
@@ -200,9 +200,9 @@ public:
   ///        tag is specified, a default tag, unique to the given checker,
   ///        will be used. Tags are used to prevent states generated at
   ///        different sites from caching out.
-  ExplodedNode *addTransition(ProgramStateRef State = 0,
-                              const ProgramPointTag *Tag = 0) {
-    return addTransitionImpl(State ? State : getState(), false, 0, Tag);
+  ExplodedNode *addTransition(ProgramStateRef State = nullptr,
+                              const ProgramPointTag *Tag = nullptr) {
+    return addTransitionImpl(State ? State : getState(), false, nullptr, Tag);
   }
 
   /// \brief Generates a new transition with the given predecessor.
@@ -214,15 +214,15 @@ public:
   /// @param Tag The tag to uniquely identify the creation site.
   ExplodedNode *addTransition(ProgramStateRef State,
                               ExplodedNode *Pred,
-                              const ProgramPointTag *Tag = 0) {
+                              const ProgramPointTag *Tag = nullptr) {
     return addTransitionImpl(State, false, Pred, Tag);
   }
 
   /// \brief Generate a sink node. Generating a sink stops exploration of the
   /// given path.
-  ExplodedNode *generateSink(ProgramStateRef State = 0,
-                             ExplodedNode *Pred = 0,
-                             const ProgramPointTag *Tag = 0) {
+  ExplodedNode *generateSink(ProgramStateRef State = nullptr,
+                             ExplodedNode *Pred = nullptr,
+                             const ProgramPointTag *Tag = nullptr) {
     return addTransitionImpl(State ? State : getState(), true, Pred, Tag);
   }
 
@@ -244,7 +244,7 @@ public:
     if (FunDecl)
       return FunDecl->getIdentifier();
     else
-      return 0;
+      return nullptr;
   }
 
   /// \brief Get the name of the called function (path-sensitive).
@@ -280,8 +280,8 @@ public:
 private:
   ExplodedNode *addTransitionImpl(ProgramStateRef State,
                                  bool MarkAsSink,
-                                 ExplodedNode *P = 0,
-                                 const ProgramPointTag *Tag = 0) {
+                                 ExplodedNode *P = nullptr,
+                                 const ProgramPointTag *Tag = nullptr) {
     if (!State || (State == Pred->getState() && !Tag && !MarkAsSink))
       return Pred;
 

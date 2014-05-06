@@ -151,7 +151,7 @@ public:
 
   explicit Rewriter(SourceManager &SM, const LangOptions &LO)
     : SourceMgr(&SM), LangOpts(&LO) {}
-  explicit Rewriter() : SourceMgr(0), LangOpts(0) {}
+  explicit Rewriter() : SourceMgr(nullptr), LangOpts(nullptr) {}
 
   void setSourceMgr(SourceManager &SM, const LangOptions &LO) {
     SourceMgr = &SM;
@@ -275,7 +275,7 @@ public:
   const RewriteBuffer *getRewriteBufferFor(FileID FID) const {
     std::map<FileID, RewriteBuffer>::const_iterator I =
       RewriteBuffers.find(FID);
-    return I == RewriteBuffers.end() ? 0 : &I->second;
+    return I == RewriteBuffers.end() ? nullptr : &I->second;
   }
 
   // Iterators over rewrite buffers.

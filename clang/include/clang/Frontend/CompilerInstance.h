@@ -193,7 +193,7 @@ public:
   /// @name Compiler Invocation and Options
   /// {
 
-  bool hasInvocation() const { return Invocation != 0; }
+  bool hasInvocation() const { return Invocation != nullptr; }
 
   CompilerInvocation &getInvocation() {
     assert(Invocation && "Compiler instance has no invocation!");
@@ -291,7 +291,7 @@ public:
   /// @name Diagnostics Engine
   /// {
 
-  bool hasDiagnostics() const { return Diagnostics != 0; }
+  bool hasDiagnostics() const { return Diagnostics != nullptr; }
 
   /// Get the current diagnostics engine.
   DiagnosticsEngine &getDiagnostics() const {
@@ -312,7 +312,7 @@ public:
   /// @name Target Info
   /// {
 
-  bool hasTarget() const { return Target != 0; }
+  bool hasTarget() const { return Target != nullptr; }
 
   TargetInfo &getTarget() const {
     assert(Target && "Compiler instance has no target!");
@@ -326,7 +326,7 @@ public:
   /// @name Virtual File System
   /// {
 
-  bool hasVirtualFileSystem() const { return VirtualFileSystem != 0; }
+  bool hasVirtualFileSystem() const { return VirtualFileSystem != nullptr; }
 
   vfs::FileSystem &getVirtualFileSystem() const {
     assert(hasVirtualFileSystem() &&
@@ -346,7 +346,7 @@ public:
   /// @name File Manager
   /// {
 
-  bool hasFileManager() const { return FileMgr != 0; }
+  bool hasFileManager() const { return FileMgr != nullptr; }
 
   /// Return the current file manager to the caller.
   FileManager &getFileManager() const {
@@ -366,7 +366,7 @@ public:
   /// @name Source Manager
   /// {
 
-  bool hasSourceManager() const { return SourceMgr != 0; }
+  bool hasSourceManager() const { return SourceMgr != nullptr; }
 
   /// Return the current source manager.
   SourceManager &getSourceManager() const {
@@ -386,7 +386,7 @@ public:
   /// @name Preprocessor
   /// {
 
-  bool hasPreprocessor() const { return PP != 0; }
+  bool hasPreprocessor() const { return PP != nullptr; }
 
   /// Return the current preprocessor.
   Preprocessor &getPreprocessor() const {
@@ -406,7 +406,7 @@ public:
   /// @name ASTContext
   /// {
 
-  bool hasASTContext() const { return Context != 0; }
+  bool hasASTContext() const { return Context != nullptr; }
 
   ASTContext &getASTContext() const {
     assert(Context && "Compiler instance has no AST context!");
@@ -528,7 +528,7 @@ public:
   ///
   /// \param ShouldOwnClient If Client is non-NULL, specifies whether 
   /// the diagnostic object should take ownership of the client.
-  void createDiagnostics(DiagnosticConsumer *Client = 0,
+  void createDiagnostics(DiagnosticConsumer *Client = nullptr,
                          bool ShouldOwnClient = true);
 
   /// Create a DiagnosticsEngine object with a the TextDiagnosticPrinter.
@@ -551,9 +551,9 @@ public:
   /// \return The new object on success, or null on failure.
   static IntrusiveRefCntPtr<DiagnosticsEngine>
   createDiagnostics(DiagnosticOptions *Opts,
-                    DiagnosticConsumer *Client = 0,
+                    DiagnosticConsumer *Client = nullptr,
                     bool ShouldOwnClient = true,
-                    const CodeGenOptions *CodeGenOpts = 0);
+                    const CodeGenOptions *CodeGenOpts = nullptr);
 
   /// Create the file manager and replace any existing one with it.
   void createFileManager();

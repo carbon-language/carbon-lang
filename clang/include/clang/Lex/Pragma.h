@@ -69,7 +69,7 @@ public:
 
   /// getIfNamespace - If this is a namespace, return it.  This is equivalent to
   /// using a dynamic_cast, but doesn't require RTTI.
-  virtual PragmaNamespace *getIfNamespace() { return 0; }
+  virtual PragmaNamespace *getIfNamespace() { return nullptr; }
 };
 
 /// EmptyPragmaHandler - A pragma handler which takes no action, which can be

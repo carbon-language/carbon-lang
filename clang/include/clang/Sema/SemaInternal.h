@@ -29,7 +29,7 @@ inline PartialDiagnostic Sema::PDiag(unsigned DiagID) {
 // This requires the variable to be non-dependent and the initializer
 // to not be value dependent.
 inline bool IsVariableAConstantExpression(VarDecl *Var, ASTContext &Context) {
-  const VarDecl *DefVD = 0;
+  const VarDecl *DefVD = nullptr;
   return !isa<ParmVarDecl>(Var) &&
     Var->isUsableInConstantExpressions(Context) &&
     Var->getAnyInitializer(DefVD) && DefVD->checkInitIsICE(); 

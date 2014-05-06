@@ -85,7 +85,7 @@ public:
       // does not. Is there a good equivalent there?
       assert(assume(State, Cond, false) && "System is over constrained.");
 #endif
-      return ProgramStatePair((ProgramStateRef)NULL, State);
+      return ProgramStatePair((ProgramStateRef)nullptr, State);
     }
 
     ProgramStateRef StFalse = assume(State, Cond, false);
@@ -93,7 +93,7 @@ public:
       // We are careful to return the original state, /not/ StTrue,
       // because we want to avoid having callers generate a new node
       // in the ExplodedGraph.
-      return ProgramStatePair(State, (ProgramStateRef)NULL);
+      return ProgramStatePair(State, (ProgramStateRef)nullptr);
     }
 
     return ProgramStatePair(StTrue, StFalse);
@@ -106,7 +106,7 @@ public:
   /// value for a symbol, even if it is perfectly constrained.
   virtual const llvm::APSInt* getSymVal(ProgramStateRef state,
                                         SymbolRef sym) const {
-    return 0;
+    return nullptr;
   }
 
   virtual ProgramStateRef removeDeadBindings(ProgramStateRef state,

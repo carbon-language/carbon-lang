@@ -92,17 +92,21 @@ public:
 
   /// getDir - Return the directory that this entry refers to.
   ///
-  const DirectoryEntry *getDir() const { return isNormalDir() ? u.Dir : 0; }
+  const DirectoryEntry *getDir() const {
+    return isNormalDir() ? u.Dir : nullptr;
+  }
 
   /// getFrameworkDir - Return the directory that this framework refers to.
   ///
   const DirectoryEntry *getFrameworkDir() const {
-    return isFramework() ? u.Dir : 0;
+    return isFramework() ? u.Dir : nullptr;
   }
 
   /// getHeaderMap - Return the directory that this entry refers to.
   ///
-  const HeaderMap *getHeaderMap() const { return isHeaderMap() ? u.Map : 0; }
+  const HeaderMap *getHeaderMap() const {
+    return isHeaderMap() ? u.Map : nullptr;
+  }
 
   /// isNormalDir - Return true if this is a normal directory, not a header map.
   bool isNormalDir() const { return getLookupType() == LT_NormalDir; }

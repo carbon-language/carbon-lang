@@ -162,15 +162,15 @@ private:
 
   /// \brief Create the initialization entity for a variable.
   InitializedEntity(VarDecl *Var)
-    : Kind(EK_Variable), Parent(0), Type(Var->getType()), ManglingNumber(0),
-      VariableOrMember(Var) { }
+    : Kind(EK_Variable), Parent(nullptr), Type(Var->getType()),
+      ManglingNumber(0), VariableOrMember(Var) { }
   
   /// \brief Create the initialization entity for the result of a
   /// function, throwing an object, performing an explicit cast, or
   /// initializing a parameter for which there is no declaration.
   InitializedEntity(EntityKind Kind, SourceLocation Loc, QualType Type,
                     bool NRVO = false)
-    : Kind(Kind), Parent(0), Type(Type), ManglingNumber(0)
+    : Kind(Kind), Parent(nullptr), Type(Type), ManglingNumber(0)
   {
     LocAndNRVO.Location = Loc.getRawEncoding();
     LocAndNRVO.NRVO = NRVO;
@@ -187,7 +187,8 @@ private:
 
   /// \brief Create the initialization entity for a lambda capture.
   InitializedEntity(IdentifierInfo *VarID, QualType FieldType, SourceLocation Loc)
-    : Kind(EK_LambdaCapture), Parent(0), Type(FieldType), ManglingNumber(0)
+    : Kind(EK_LambdaCapture), Parent(nullptr), Type(FieldType),
+      ManglingNumber(0)
   {
     Capture.VarID = VarID;
     Capture.Location = Loc.getRawEncoding();
@@ -217,7 +218,7 @@ public:
     Entity.Kind = EK_Parameter;
     Entity.Type =
       Context.getVariableArrayDecayedType(Type.getUnqualifiedType());
-    Entity.Parent = 0;
+    Entity.Parent = nullptr;
     Entity.Parameter
       = (static_cast<uintptr_t>(Consumed) | reinterpret_cast<uintptr_t>(Parm));
     return Entity;
@@ -231,7 +232,7 @@ public:
     InitializedEntity Entity;
     Entity.Kind = EK_Parameter;
     Entity.Type = Context.getVariableArrayDecayedType(Type);
-    Entity.Parent = 0;
+    Entity.Parent = nullptr;
     Entity.Parameter = (Consumed);
     return Entity;
   }
@@ -261,7 +262,7 @@ public:
   /// \brief Create the initialization entity for a temporary.
   static InitializedEntity InitializeTemporary(QualType Type) {
     InitializedEntity Result(EK_Temporary, SourceLocation(), Type);
-    Result.TypeInfo = 0;
+    Result.TypeInfo = nullptr;
     return Result;
   }
 
@@ -293,14 +294,16 @@ public:
   }
   
   /// \brief Create the initialization entity for a member subobject.
-  static InitializedEntity InitializeMember(FieldDecl *Member,
-                                          const InitializedEntity *Parent = 0) {
+  static InitializedEntity
+  InitializeMember(FieldDecl *Member,
+                   const InitializedEntity *Parent = nullptr) {
     return InitializedEntity(Member, Parent);
   }
   
   /// \brief Create the initialization entity for a member subobject.
-  static InitializedEntity InitializeMember(IndirectFieldDecl *Member,
-                                      const InitializedEntity *Parent = 0) {
+  static InitializedEntity
+  InitializeMember(IndirectFieldDecl *Member,
+                   const InitializedEntity *Parent = nullptr) {
     return InitializedEntity(Member->getAnonField(), Parent);
   }
 
@@ -344,7 +347,7 @@ public:
     if (Kind == EK_Temporary || Kind == EK_CompoundLiteralInit)
       return TypeInfo;
     
-    return 0;
+    return nullptr;
   }
   
   /// \brief Retrieve the name of the entity being initialized.
@@ -887,7 +890,7 @@ public:
                      const InitializedEntity &Entity,
                      const InitializationKind &Kind,
                      MultiExprArg Args,
-                     QualType *ResultType = 0);
+                     QualType *ResultType = nullptr);
   
   /// \brief Diagnose an potentially-invalid initialization sequence.
   ///

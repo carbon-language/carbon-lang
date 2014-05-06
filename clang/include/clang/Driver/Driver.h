@@ -188,7 +188,7 @@ private:
   // getFinalPhase - Determine which compilation mode we are in and record 
   // which option we used to determine the final phase.
   phases::ID getFinalPhase(const llvm::opt::DerivedArgList &DAL,
-                           llvm::opt::Arg **FinalPhaseArg = 0) const;
+                           llvm::opt::Arg **FinalPhaseArg = nullptr) const;
 
 public:
   Driver(StringRef _ClangExecutable,

@@ -287,7 +287,7 @@ public:
   const CFGBlock *getCallSiteBlock() const { return Block; }
 
   /// Return true if the current LocationContext has no caller context.
-  bool inTopFrame() const override { return getParent() == 0;  }
+  bool inTopFrame() const override { return getParent() == nullptr;  }
 
   unsigned getIndex() const { return Index; }
 
@@ -438,7 +438,8 @@ public:
 
   // Get the top level stack frame.
   const StackFrameContext *getStackFrame(const Decl *D) {
-    return LocContexts.getStackFrame(getContext(D), 0, 0, 0, 0);
+    return LocContexts.getStackFrame(getContext(D), nullptr, nullptr, nullptr,
+                                     0);
   }
 
   // Get a stack frame with parent.

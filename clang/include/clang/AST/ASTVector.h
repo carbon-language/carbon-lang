@@ -45,16 +45,16 @@ protected:
 
 public:
   // Default ctor - Initialize to empty.
-  ASTVector() : Begin(0), End(0), Capacity(0, false) {}
+  ASTVector() : Begin(nullptr), End(nullptr), Capacity(nullptr, false) {}
 
   ASTVector(ASTVector &&O) : Begin(O.Begin), End(O.End), Capacity(O.Capacity) {
-    O.Begin = O.End = 0;
-    O.Capacity.setPointer(0);
+    O.Begin = O.End = nullptr;
+    O.Capacity.setPointer(nullptr);
     O.Capacity.setInt(false);
   }
 
   ASTVector(const ASTContext &C, unsigned N)
-      : Begin(0), End(0), Capacity(0, false) {
+      : Begin(nullptr), End(nullptr), Capacity(nullptr, false) {
     reserve(C, N);
   }
 

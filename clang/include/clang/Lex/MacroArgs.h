@@ -52,9 +52,10 @@ class MacroArgs {
   /// ArgCache - This is a linked list of MacroArgs objects that the
   /// Preprocessor owns which we use to avoid thrashing malloc/free.
   MacroArgs *ArgCache;
-  
+
   MacroArgs(unsigned NumToks, bool varargsElided)
-    : NumUnexpArgTokens(NumToks), VarargsElided(varargsElided), ArgCache(0) {}
+    : NumUnexpArgTokens(NumToks), VarargsElided(varargsElided),
+      ArgCache(nullptr) {}
   ~MacroArgs() {}
 public:
   /// MacroArgs ctor function - Create a new MacroArgs object with the specified

@@ -35,7 +35,7 @@ namespace clang {
     /// \brief Build an empty template argument. 
     ///
     /// This template argument is invalid.
-    ParsedTemplateArgument() : Kind(Type), Arg(0) { }
+    ParsedTemplateArgument() : Kind(Type), Arg(nullptr) { }
     
     /// \brief Create a template type argument or non-type template argument.
     ///
@@ -61,7 +61,7 @@ namespace clang {
         SS(SS), Loc(TemplateLoc), EllipsisLoc() { }
     
     /// \brief Determine whether the given template argument is invalid.
-    bool isInvalid() const { return Arg == 0; }
+    bool isInvalid() const { return Arg == nullptr; }
     
     /// \brief Determine what kind of template argument we have.
     KindType getKind() const { return Kind; }

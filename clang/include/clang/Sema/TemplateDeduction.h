@@ -48,7 +48,8 @@ class TemplateDeductionInfo {
 
 public:
   TemplateDeductionInfo(SourceLocation Loc)
-    : Deduced(0), Loc(Loc), HasSFINAEDiagnostic(false), Expression(0) { }
+    : Deduced(nullptr), Loc(Loc), HasSFINAEDiagnostic(false),
+      Expression(nullptr) {}
 
   /// \brief Returns the location at which template argument is
   /// occurring.
@@ -59,7 +60,7 @@ public:
   /// \brief Take ownership of the deduced template argument list.
   TemplateArgumentList *take() {
     TemplateArgumentList *Result = Deduced;
-    Deduced = 0;
+    Deduced = nullptr;
     return Result;
   }
 

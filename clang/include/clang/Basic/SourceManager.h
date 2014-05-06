@@ -143,16 +143,16 @@ namespace SrcMgr {
     /// file considered as a system one.
     unsigned IsSystemFile : 1;
     
-    ContentCache(const FileEntry *Ent = 0)
-      : Buffer(0, false), OrigEntry(Ent), ContentsEntry(Ent),
-        SourceLineCache(0), NumLines(0), BufferOverridden(false),
+    ContentCache(const FileEntry *Ent = nullptr)
+      : Buffer(nullptr, false), OrigEntry(Ent), ContentsEntry(Ent),
+        SourceLineCache(nullptr), NumLines(0), BufferOverridden(false),
         IsSystemFile(false) {
       (void)NonceAligner; // Silence warnings about unused member.
     }
     
     ContentCache(const FileEntry *Ent, const FileEntry *contentEnt)
-      : Buffer(0, false), OrigEntry(Ent), ContentsEntry(contentEnt),
-        SourceLineCache(0), NumLines(0), BufferOverridden(false),
+      : Buffer(nullptr, false), OrigEntry(Ent), ContentsEntry(contentEnt),
+        SourceLineCache(nullptr), NumLines(0), BufferOverridden(false),
         IsSystemFile(false) {}
     
     ~ContentCache();
@@ -161,15 +161,15 @@ namespace SrcMgr {
     /// a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
     /// is not transferred, so this is a logical error.
     ContentCache(const ContentCache &RHS)
-      : Buffer(0, false), SourceLineCache(0), BufferOverridden(false),
-        IsSystemFile(false)
-    {
+      : Buffer(nullptr, false), SourceLineCache(nullptr),
+        BufferOverridden(false), IsSystemFile(false) {
       OrigEntry = RHS.OrigEntry;
       ContentsEntry = RHS.ContentsEntry;
-      
-      assert (RHS.Buffer.getPointer() == 0 && RHS.SourceLineCache == 0 &&
-              "Passed ContentCache object cannot own a buffer.");
-      
+
+      assert(RHS.Buffer.getPointer() == nullptr &&
+             RHS.SourceLineCache == nullptr &&
+             "Passed ContentCache object cannot own a buffer.");
+
       NumLines = RHS.NumLines;
     }
 
@@ -185,7 +185,7 @@ namespace SrcMgr {
     const llvm::MemoryBuffer *getBuffer(DiagnosticsEngine &Diag,
                                         const SourceManager &SM,
                                         SourceLocation Loc = SourceLocation(),
-                                        bool *Invalid = 0) const;
+                                        bool *Invalid = nullptr) const;
 
     /// \brief Returns the size of the content encapsulated by this
     /// ContentCache.
@@ -841,7 +841,7 @@ public:
   /// \param Invalid If non-NULL, will be set \c true if an error
   /// occurs while retrieving the memory buffer.
   const llvm::MemoryBuffer *getMemoryBufferForFile(const FileEntry *File,
-                                                   bool *Invalid = 0);
+                                                   bool *Invalid = nullptr);
 
   /// \brief Override the contents of the given source file by providing an
   /// already-allocated buffer.
@@ -893,7 +893,7 @@ public:
   /// If there is an error opening this buffer the first time, this
   /// manufactures a temporary buffer and returns a non-empty error string.
   const llvm::MemoryBuffer *getBuffer(FileID FID, SourceLocation Loc,
-                                      bool *Invalid = 0) const {
+                                      bool *Invalid = nullptr) const {
     bool MyInvalid = false;
     const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &MyInvalid);
     if (MyInvalid || !Entry.isFile()) {
@@ -907,7 +907,8 @@ public:
                                                         Invalid);
   }
 
-  const llvm::MemoryBuffer *getBuffer(FileID FID, bool *Invalid = 0) const {
+  const llvm::MemoryBuffer *getBuffer(FileID FID,
+                                      bool *Invalid = nullptr) const {
     bool MyInvalid = false;
     const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &MyInvalid);
     if (MyInvalid || !Entry.isFile()) {
@@ -927,11 +928,11 @@ public:
     bool MyInvalid = false;
     const SrcMgr::SLocEntry &Entry = getSLocEntry(FID, &MyInvalid);
     if (MyInvalid || !Entry.isFile())
-      return 0;
+      return nullptr;
 
     const SrcMgr::ContentCache *Content = Entry.getFile().getContentCache();
     if (!Content)
-      return 0;
+      return nullptr;
     return Content->OrigEntry;
   }
 
@@ -940,7 +941,7 @@ public:
   {
     const SrcMgr::ContentCache *Content = sloc.getFile().getContentCache();
     if (!Content)
-      return 0;
+      return nullptr;
     return Content->OrigEntry;
   }
 
@@ -949,7 +950,7 @@ public:
   ///
   /// \param FID The file ID whose contents will be returned.
   /// \param Invalid If non-NULL, will be set true if an error occurred.
-  StringRef getBufferData(FileID FID, bool *Invalid = 0) const;
+  StringRef getBufferData(FileID FID, bool *Invalid = nullptr) const;
 
   /// \brief Get the number of FileIDs (files and macros) that were created
   /// during preprocessing of \p FID, including it.
@@ -1184,15 +1185,16 @@ public:
   /// \param MacroBegin If non-null and function returns true, it is set to the
   /// begin location of the immediate macro expansion.
   bool isAtStartOfImmediateMacroExpansion(SourceLocation Loc,
-                                          SourceLocation *MacroBegin = 0) const;
+                                    SourceLocation *MacroBegin = nullptr) const;
 
   /// \brief Returns true if the given MacroID location points at the character
   /// end of the immediate macro expansion.
   ///
   /// \param MacroEnd If non-null and function returns true, it is set to the
   /// character end location of the immediate macro expansion.
-  bool isAtEndOfImmediateMacroExpansion(SourceLocation Loc,
-                                        SourceLocation *MacroEnd = 0) const;
+  bool
+  isAtEndOfImmediateMacroExpansion(SourceLocation Loc,
+                                   SourceLocation *MacroEnd = nullptr) const;
 
   /// \brief Returns true if \p Loc is inside the [\p Start, +\p Length)
   /// chunk of the source location address space.
@@ -1201,7 +1203,7 @@ public:
   /// relative offset of \p Loc inside the chunk.
   bool isInSLocAddrSpace(SourceLocation Loc,
                          SourceLocation Start, unsigned Length,
-                         unsigned *RelativeOffset = 0) const {
+                         unsigned *RelativeOffset = nullptr) const {
     assert(((Start.getOffset() < NextLocalOffset &&
                Start.getOffset()+Length <= NextLocalOffset) ||
             (Start.getOffset() >= CurrentLoadedOffset &&
@@ -1247,7 +1249,8 @@ public:
   /// in the appropriate spelling MemoryBuffer.
   ///
   /// \param Invalid If non-NULL, will be set \c true if an error occurs.
-  const char *getCharacterData(SourceLocation SL, bool *Invalid = 0) const;
+  const char *getCharacterData(SourceLocation SL,
+                               bool *Invalid = nullptr) const;
 
   /// \brief Return the column # for the specified file position.
   ///
@@ -1256,12 +1259,13 @@ public:
   /// on a file sloc, so you must choose a spelling or expansion location
   /// before calling this method.
   unsigned getColumnNumber(FileID FID, unsigned FilePos,
-                           bool *Invalid = 0) const;
-  unsigned getSpellingColumnNumber(SourceLocation Loc, bool *Invalid = 0) const;
+                           bool *Invalid = nullptr) const;
+  unsigned getSpellingColumnNumber(SourceLocation Loc,
+                                   bool *Invalid = nullptr) const;
   unsigned getExpansionColumnNumber(SourceLocation Loc,
-                                    bool *Invalid = 0) const;
-  unsigned getPresumedColumnNumber(SourceLocation Loc, bool *Invalid = 0) const;
-
+                                    bool *Invalid = nullptr) const;
+  unsigned getPresumedColumnNumber(SourceLocation Loc,
+                                   bool *Invalid = nullptr) const;
 
   /// \brief Given a SourceLocation, return the spelling line number
   /// for the position indicated.
@@ -1269,17 +1273,17 @@ public:
   /// This requires building and caching a table of line offsets for the
   /// MemoryBuffer, so this is not cheap: use only when about to emit a
   /// diagnostic.
-  unsigned getLineNumber(FileID FID, unsigned FilePos, bool *Invalid = 0) const;
-  unsigned getSpellingLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
-  unsigned getExpansionLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
-  unsigned getPresumedLineNumber(SourceLocation Loc, bool *Invalid = 0) const;
+  unsigned getLineNumber(FileID FID, unsigned FilePos, bool *Invalid = nullptr) const;
+  unsigned getSpellingLineNumber(SourceLocation Loc, bool *Invalid = nullptr) const;
+  unsigned getExpansionLineNumber(SourceLocation Loc, bool *Invalid = nullptr) const;
+  unsigned getPresumedLineNumber(SourceLocation Loc, bool *Invalid = nullptr) const;
 
   /// \brief Return the filename or buffer identifier of the buffer the
   /// location is in.
   ///
   /// Note that this name does not respect \#line directives.  Use
   /// getPresumedLoc for normal clients.
-  const char *getBufferName(SourceLocation Loc, bool *Invalid = 0) const;
+  const char *getBufferName(SourceLocation Loc, bool *Invalid = nullptr) const;
 
   /// \brief Return the file characteristic of the specified source
   /// location, indicating whether this is a normal file, a system
@@ -1356,7 +1360,7 @@ public:
   /// FileID chunk and sets relative offset (offset of \p Loc from beginning
   /// of FileID) to \p relativeOffset.
   bool isInFileID(SourceLocation Loc, FileID FID,
-                  unsigned *RelativeOffset = 0) const {
+                  unsigned *RelativeOffset = nullptr) const {
     unsigned Offs = Loc.getOffset();
     if (isOffsetInFileID(FID, Offs)) {
       if (RelativeOffset)
@@ -1385,7 +1389,7 @@ public:
                    bool IsSystemHeader, bool IsExternCHeader);
 
   /// \brief Determine if the source manager has a line table.
-  bool hasLineTable() const { return LineTable != 0; }
+  bool hasLineTable() const { return LineTable != nullptr; }
 
   /// \brief Retrieve the stored line table.
   LineTableInfo &getLineTable();
@@ -1492,7 +1496,7 @@ public:
 
   /// \brief Get a local SLocEntry. This is exposed for indexing.
   const SrcMgr::SLocEntry &getLocalSLocEntry(unsigned Index,
-                                             bool *Invalid = 0) const {
+                                             bool *Invalid = nullptr) const {
     assert(Index < LocalSLocEntryTable.size() && "Invalid index");
     return LocalSLocEntryTable[Index];
   }
@@ -1502,14 +1506,15 @@ public:
 
   /// \brief Get a loaded SLocEntry. This is exposed for indexing.
   const SrcMgr::SLocEntry &getLoadedSLocEntry(unsigned Index,
-                                              bool *Invalid = 0) const {
+                                              bool *Invalid = nullptr) const {
     assert(Index < LoadedSLocEntryTable.size() && "Invalid index");
     if (SLocEntryLoaded[Index])
       return LoadedSLocEntryTable[Index];
     return loadSLocEntry(Index, Invalid);
   }
 
-  const SrcMgr::SLocEntry &getSLocEntry(FileID FID, bool *Invalid = 0) const {
+  const SrcMgr::SLocEntry &getSLocEntry(FileID FID,
+                                        bool *Invalid = nullptr) const {
     if (FID.ID == 0 || FID.ID == -1) {
       if (Invalid) *Invalid = true;
       return LocalSLocEntryTable[0];
@@ -1578,15 +1583,16 @@ private:
   const SrcMgr::SLocEntry &loadSLocEntry(unsigned Index, bool *Invalid) const;
 
   /// \brief Get the entry with the given unwrapped FileID.
-  const SrcMgr::SLocEntry &getSLocEntryByID(int ID, bool *Invalid = 0) const {
+  const SrcMgr::SLocEntry &getSLocEntryByID(int ID,
+                                            bool *Invalid = nullptr) const {
     assert(ID != -1 && "Using FileID sentinel value");
     if (ID < 0)
       return getLoadedSLocEntryByID(ID, Invalid);
     return getLocalSLocEntry(static_cast<unsigned>(ID), Invalid);
   }
 
-  const SrcMgr::SLocEntry &getLoadedSLocEntryByID(int ID,
-                                                  bool *Invalid = 0) const {
+  const SrcMgr::SLocEntry &
+  getLoadedSLocEntryByID(int ID, bool *Invalid = nullptr) const {
     return getLoadedSLocEntry(static_cast<unsigned>(-ID - 2), Invalid);
   }
 

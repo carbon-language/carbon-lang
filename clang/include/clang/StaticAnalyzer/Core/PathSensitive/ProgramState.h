@@ -237,16 +237,16 @@ public:
   ProgramStateRef
   invalidateRegions(ArrayRef<const MemRegion *> Regions, const Expr *E,
                     unsigned BlockCount, const LocationContext *LCtx,
-                    bool CausesPointerEscape, InvalidatedSymbols *IS = 0,
-                    const CallEvent *Call = 0,
-                    RegionAndSymbolInvalidationTraits *ITraits = 0) const;
+                    bool CausesPointerEscape, InvalidatedSymbols *IS = nullptr,
+                    const CallEvent *Call = nullptr,
+                    RegionAndSymbolInvalidationTraits *ITraits = nullptr) const;
 
   ProgramStateRef
   invalidateRegions(ArrayRef<SVal> Regions, const Expr *E,
                     unsigned BlockCount, const LocationContext *LCtx,
-                    bool CausesPointerEscape, InvalidatedSymbols *IS = 0,
-                    const CallEvent *Call = 0,
-                    RegionAndSymbolInvalidationTraits *ITraits = 0) const;
+                    bool CausesPointerEscape, InvalidatedSymbols *IS = nullptr,
+                    const CallEvent *Call = nullptr,
+                    RegionAndSymbolInvalidationTraits *ITraits = nullptr) const;
 
   /// enterStackFrame - Returns the state for entry to the given stack frame,
   ///  preserving the current state.

@@ -138,29 +138,29 @@ private:
 
   PathDiagnosticLocation(SourceLocation L, const SourceManager &sm,
                          Kind kind)
-    : K(kind), S(0), D(0), SM(&sm),
+    : K(kind), S(nullptr), D(nullptr), SM(&sm),
       Loc(genLocation(L)), Range(genRange()) {
   }
 
-  FullSourceLoc
-    genLocation(SourceLocation L = SourceLocation(),
-                LocationOrAnalysisDeclContext LAC = (AnalysisDeclContext*)0) const;
+  FullSourceLoc genLocation(
+      SourceLocation L = SourceLocation(),
+      LocationOrAnalysisDeclContext LAC = (AnalysisDeclContext *)nullptr) const;
 
-  PathDiagnosticRange
-    genRange(LocationOrAnalysisDeclContext LAC = (AnalysisDeclContext*)0) const;
+  PathDiagnosticRange genRange(
+      LocationOrAnalysisDeclContext LAC = (AnalysisDeclContext *)nullptr) const;
 
 public:
   /// Create an invalid location.
   PathDiagnosticLocation()
-    : K(SingleLocK), S(0), D(0), SM(0) {}
+    : K(SingleLocK), S(nullptr), D(nullptr), SM(nullptr) {}
 
   /// Create a location corresponding to the given statement.
   PathDiagnosticLocation(const Stmt *s,
                          const SourceManager &sm,
                          LocationOrAnalysisDeclContext lac)
     : K(s->getLocStart().isValid() ? StmtK : SingleLocK),
-      S(K == StmtK ? s : 0),
-      D(0), SM(&sm),
+      S(K == StmtK ? s : nullptr),
+      D(nullptr), SM(&sm),
       Loc(genLocation(SourceLocation(), lac)),
       Range(genRange(lac)) {
     assert(K == SingleLocK || S);
@@ -170,7 +170,7 @@ public:
 
   /// Create a location corresponding to the given declaration.
   PathDiagnosticLocation(const Decl *d, const SourceManager &sm)
-    : K(DeclK), S(0), D(d), SM(&sm),
+    : K(DeclK), S(nullptr), D(d), SM(&sm),
       Loc(genLocation()), Range(genRange()) {
     assert(D);
     assert(Loc.isValid());
@@ -181,7 +181,8 @@ public:
   ///
   /// This should only be used if there are no more appropriate constructors.
   PathDiagnosticLocation(SourceLocation loc, const SourceManager &sm)
-    : K(SingleLocK), S(0), D(0), SM(&sm), Loc(loc, sm), Range(genRange()) {
+    : K(SingleLocK), S(nullptr), D(nullptr), SM(&sm), Loc(loc, sm),
+      Range(genRange()) {
     assert(Loc.isValid());
     assert(Range.isValid());
   }
@@ -264,7 +265,7 @@ public:
   }
 
   bool isValid() const {
-    return SM != 0;
+    return SM != nullptr;
   }
 
   FullSourceLoc asLocation() const {
@@ -506,7 +507,7 @@ class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
 public:
   PathDiagnosticEventPiece(const PathDiagnosticLocation &pos,
                            StringRef s, bool addPosRange = true,
-                           StackHintGenerator *stackHint = 0)
+                           StackHintGenerator *stackHint = nullptr)
     : PathDiagnosticSpotPiece(pos, s, Event, addPosRange),
       CallStackHint(stackHint) {}
 
@@ -546,11 +547,11 @@ public:
 class PathDiagnosticCallPiece : public PathDiagnosticPiece {
   PathDiagnosticCallPiece(const Decl *callerD,
                           const PathDiagnosticLocation &callReturnPos)
-    : PathDiagnosticPiece(Call), Caller(callerD), Callee(0),
+    : PathDiagnosticPiece(Call), Caller(callerD), Callee(nullptr),
       NoExit(false), callReturn(callReturnPos) {}
 
   PathDiagnosticCallPiece(PathPieces &oldPath, const Decl *caller)
-    : PathDiagnosticPiece(Call), Caller(caller), Callee(0),
+    : PathDiagnosticPiece(Call), Caller(caller), Callee(nullptr),
       NoExit(true), path(oldPath) {}
   
   const Decl *Caller;

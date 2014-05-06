@@ -130,7 +130,7 @@ public:
 ///   newFrontendActionFactory(&Factory));
 template <typename FactoryT>
 inline std::unique_ptr<FrontendActionFactory> newFrontendActionFactory(
-    FactoryT *ConsumerFactory, SourceFileCallbacks *Callbacks = NULL);
+    FactoryT *ConsumerFactory, SourceFileCallbacks *Callbacks = nullptr);
 
 /// \brief Runs (and deletes) the tool on 'Code' with the -fsyntax-only flag.
 ///
@@ -345,12 +345,12 @@ inline std::unique_ptr<FrontendActionFactory> newFrontendActionFactory(
                                  StringRef Filename) override {
         if (!clang::ASTFrontendAction::BeginSourceFileAction(CI, Filename))
           return false;
-        if (Callbacks != NULL)
+        if (Callbacks)
           return Callbacks->handleBeginSource(CI, Filename);
         return true;
       }
       void EndSourceFileAction() override {
-        if (Callbacks != NULL)
+        if (Callbacks)
           Callbacks->handleEndSource();
         clang::ASTFrontendAction::EndSourceFileAction();
       }

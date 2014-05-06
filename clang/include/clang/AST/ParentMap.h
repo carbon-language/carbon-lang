@@ -53,7 +53,7 @@ public:
   }
 
   bool hasParent(Stmt* S) const {
-    return getParent(S) != 0;
+    return getParent(S) != nullptr;
   }
 
   bool isConsumedExpr(Expr *E) const;

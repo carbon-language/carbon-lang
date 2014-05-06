@@ -66,7 +66,7 @@ public:
   decl_type *getPreviousDecl() {
     if (RedeclLink.NextIsPrevious())
       return RedeclLink.getNext();
-    return 0;
+    return nullptr;
   }
   const decl_type *getPreviousDecl() const {
     return const_cast<decl_type *>(
@@ -122,7 +122,7 @@ public:
     typedef std::forward_iterator_tag iterator_category;
     typedef std::ptrdiff_t            difference_type;
 
-    redecl_iterator() : Current(0) { }
+    redecl_iterator() : Current(nullptr) { }
     explicit redecl_iterator(decl_type *C)
       : Current(C), Starter(C), PassedFirst(false) { }
 
@@ -135,7 +135,7 @@ public:
       if (Current->isFirstDecl()) {
         if (PassedFirst) {
           assert(0 && "Passed first decl twice, invalid redecl chain!");
-          Current = 0;
+          Current = nullptr;
           return *this;
         }
         PassedFirst = true;
@@ -143,7 +143,7 @@ public:
 
       // Get either previous decl or latest decl.
       decl_type *Next = Current->RedeclLink.getNext();
-      Current = (Next != Starter ? Next : 0);
+      Current = (Next != Starter) ? Next : nullptr;
       return *this;
     }
 

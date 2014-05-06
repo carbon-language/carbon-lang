@@ -278,9 +278,9 @@ public:
     return C->getCommentKind() == TextCommentKind;
   }
 
-  child_iterator child_begin() const { return NULL; }
+  child_iterator child_begin() const { return nullptr; }
 
-  child_iterator child_end() const { return NULL; }
+  child_iterator child_end() const { return nullptr; }
 
   StringRef getText() const LLVM_READONLY { return Text; }
 
@@ -336,9 +336,9 @@ public:
     return C->getCommentKind() == InlineCommandCommentKind;
   }
 
-  child_iterator child_begin() const { return NULL; }
+  child_iterator child_begin() const { return nullptr; }
 
-  child_iterator child_end() const { return NULL; }
+  child_iterator child_end() const { return nullptr; }
 
   unsigned getCommandID() const {
     return InlineCommandCommentBits.CommandID;
@@ -469,9 +469,9 @@ public:
     return C->getCommentKind() == HTMLStartTagCommentKind;
   }
 
-  child_iterator child_begin() const { return NULL; }
+  child_iterator child_begin() const { return nullptr; }
 
-  child_iterator child_end() const { return NULL; }
+  child_iterator child_end() const { return nullptr; }
 
   unsigned getNumAttrs() const {
     return Attributes.size();
@@ -524,9 +524,9 @@ public:
     return C->getCommentKind() == HTMLEndTagCommentKind;
   }
 
-  child_iterator child_begin() const { return NULL; }
+  child_iterator child_begin() const { return nullptr; }
 
-  child_iterator child_end() const { return NULL; }
+  child_iterator child_end() const { return nullptr; }
 };
 
 /// Block content (contains inline content).
@@ -620,7 +620,7 @@ protected:
                       unsigned CommandID,
                       CommandMarkerKind CommandMarker) :
       BlockContentComment(K, LocBegin, LocEnd),
-      Paragraph(NULL) {
+      Paragraph(nullptr) {
     setLocation(getCommandNameBeginLoc());
     BlockCommandCommentBits.CommandID = CommandID;
     BlockCommandCommentBits.CommandMarker = CommandMarker;
@@ -632,7 +632,7 @@ public:
                       unsigned CommandID,
                       CommandMarkerKind CommandMarker) :
       BlockContentComment(BlockCommandCommentKind, LocBegin, LocEnd),
-      Paragraph(NULL) {
+      Paragraph(nullptr) {
     setLocation(getCommandNameBeginLoc());
     BlockCommandCommentBits.CommandID = CommandID;
     BlockCommandCommentBits.CommandMarker = CommandMarker;
@@ -880,9 +880,9 @@ public:
     return C->getCommentKind() == VerbatimBlockLineCommentKind;
   }
 
-  child_iterator child_begin() const { return NULL; }
+  child_iterator child_begin() const { return nullptr; }
 
-  child_iterator child_end() const { return NULL; }
+  child_iterator child_end() const { return nullptr; }
 
   StringRef getText() const LLVM_READONLY {
     return Text;
@@ -967,9 +967,9 @@ public:
     return C->getCommentKind() == VerbatimLineCommentKind;
   }
 
-  child_iterator child_begin() const { return NULL; }
+  child_iterator child_begin() const { return nullptr; }
 
-  child_iterator child_end() const { return NULL; }
+  child_iterator child_end() const { return nullptr; }
 
   StringRef getText() const {
     return Text;

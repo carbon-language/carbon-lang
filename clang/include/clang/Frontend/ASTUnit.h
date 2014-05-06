@@ -189,7 +189,7 @@ public:
     mutable unsigned NumLines;
     
   public:
-    PreambleData() : File(0), NumLines(0) { }
+    PreambleData() : File(nullptr), NumLines(0) { }
     
     void assign(const FileEntry *F, const char *begin, const char *end) {
       File = F;
@@ -197,7 +197,7 @@ public:
       NumLines = 0;
     }
 
-    void clear() { Buffer.clear(); File = 0; NumLines = 0; }
+    void clear() { Buffer.clear(); File = nullptr; NumLines = 0; }
 
     size_t size() const { return Buffer.size(); }
     bool empty() const { return Buffer.empty(); }
@@ -685,7 +685,7 @@ public:
   bool isModuleFile();
 
   llvm::MemoryBuffer *getBufferForFile(StringRef Filename,
-                                       std::string *ErrorStr = 0);
+                                       std::string *ErrorStr = nullptr);
 
   /// \brief Determine what kind of translation unit this AST represents.
   TranslationUnitKind getTranslationUnitKind() const { return TUKind; }
@@ -757,12 +757,13 @@ public:
   ///
   static ASTUnit *LoadFromCompilerInvocationAction(
       CompilerInvocation *CI, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-      ASTFrontendAction *Action = 0, ASTUnit *Unit = 0, bool Persistent = true,
-      StringRef ResourceFilesPath = StringRef(), bool OnlyLocalDecls = false,
-      bool CaptureDiagnostics = false, bool PrecompilePreamble = false,
-      bool CacheCodeCompletionResults = false,
+      ASTFrontendAction *Action = nullptr, ASTUnit *Unit = nullptr,
+      bool Persistent = true, StringRef ResourceFilesPath = StringRef(),
+      bool OnlyLocalDecls = false, bool CaptureDiagnostics = false,
+      bool PrecompilePreamble = false, bool CacheCodeCompletionResults = false,
       bool IncludeBriefCommentsInCodeCompletion = false,
-      bool UserFilesAreVolatile = false, std::unique_ptr<ASTUnit> *ErrAST = 0);
+      bool UserFilesAreVolatile = false,
+      std::unique_ptr<ASTUnit> *ErrAST = nullptr);
 
   /// LoadFromCompilerInvocation - Create an ASTUnit from a source file, via a
   /// CompilerInvocation object.
@@ -812,7 +813,7 @@ public:
       bool IncludeBriefCommentsInCodeCompletion = false,
       bool AllowPCHWithCompilerErrors = false, bool SkipFunctionBodies = false,
       bool UserFilesAreVolatile = false, bool ForSerialization = false,
-      std::unique_ptr<ASTUnit> *ErrAST = 0);
+      std::unique_ptr<ASTUnit> *ErrAST = nullptr);
 
   /// \brief Reparse the source files using the same command-line options that
   /// were originally used to produce this translation unit.
@@ -873,7 +874,7 @@ public:
                          SourceLocation ImportLoc, bool Complain) override {}
 
   GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc) override
-    { return 0; }
+    { return nullptr; }
   bool lookupMissingImports(StringRef Name, SourceLocation TriggerLoc) override
     { return 0; };
 };

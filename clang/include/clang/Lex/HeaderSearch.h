@@ -106,7 +106,7 @@ struct HeaderFileInfo {
       External(false), isModuleHeader(false), isCompilingModuleHeader(false),
       HeaderRole(ModuleMap::NormalHeader),
       Resolved(false), IndexHeaderMapHeader(false), IsValid(0),
-      NumIncludes(0), ControllingMacroID(0), ControllingMacro(0)  {}
+      NumIncludes(0), ControllingMacroID(0), ControllingMacro(nullptr)  {}
 
   /// \brief Retrieve the controlling macro for this header file, if
   /// any.

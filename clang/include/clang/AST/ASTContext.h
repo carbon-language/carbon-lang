@@ -603,9 +603,9 @@ public:
   ///
   /// \param OriginalDecl if not NULL, is set to declaration AST node that had
   /// the comment, if the comment we found comes from a redeclaration.
-  const RawComment *getRawCommentForAnyRedecl(
-                                      const Decl *D,
-                                      const Decl **OriginalDecl = NULL) const;
+  const RawComment *
+  getRawCommentForAnyRedecl(const Decl *D,
+                            const Decl **OriginalDecl = nullptr) const;
 
   /// Return parsed documentation comment attached to a given declaration.
   /// Returns NULL if no comment is attached.
@@ -1058,7 +1058,7 @@ public:
   /// \brief Return the unique reference to the type for the specified type
   /// declaration.
   QualType getTypeDeclType(const TypeDecl *Decl,
-                           const TypeDecl *PrevDecl = 0) const {
+                           const TypeDecl *PrevDecl = nullptr) const {
     assert(Decl && "Passed null for Decl param");
     if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
 
@@ -1092,9 +1092,10 @@ public:
                                           const TemplateTypeParmType *Replaced,
                                             const TemplateArgument &ArgPack);
 
-  QualType getTemplateTypeParmType(unsigned Depth, unsigned Index,
-                                   bool ParameterPack,
-                                   TemplateTypeParmDecl *ParmDecl = 0) const;
+  QualType
+  getTemplateTypeParmType(unsigned Depth, unsigned Index,
+                          bool ParameterPack,
+                          TemplateTypeParmDecl *ParmDecl = nullptr) const;
 
   QualType getTemplateSpecializationType(TemplateName T,
                                          const TemplateArgument *Args,
@@ -1138,7 +1139,7 @@ public:
                                 Optional<unsigned> NumExpansions);
 
   QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
-                                ObjCInterfaceDecl *PrevDecl = 0) const;
+                                ObjCInterfaceDecl *PrevDecl = nullptr) const;
 
   QualType getObjCObjectType(QualType Base,
                              ObjCProtocolDecl * const *Protocols,
@@ -1368,7 +1369,7 @@ public:
   ///
   /// If \p Field is specified then record field names are also encoded.
   void getObjCEncodingForType(QualType T, std::string &S,
-                              const FieldDecl *Field=0) const;
+                              const FieldDecl *Field=nullptr) const;
 
   void getLegacyIntegralTypeEncoding(QualType &t) const;
 
@@ -1570,7 +1571,7 @@ public:
   /// arguments to the builtin that are required to be integer constant
   /// expressions.
   QualType GetBuiltinType(unsigned ID, GetBuiltinTypeError &Error,
-                          unsigned *IntegerConstantArgs = 0) const;
+                          unsigned *IntegerConstantArgs = nullptr) const;
 
 private:
   CanQualType getFromTargetType(unsigned Type) const;
@@ -2038,7 +2039,7 @@ public:
          const FunctionProtoType *ToFunctionType);
 
   void ResetObjCLayout(const ObjCContainerDecl *CD) {
-    ObjCLayouts[CD] = 0;
+    ObjCLayouts[CD] = nullptr;
   }
 
   //===--------------------------------------------------------------------===//

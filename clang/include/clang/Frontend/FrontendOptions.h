@@ -90,9 +90,9 @@ class FrontendInputFile {
   bool IsSystem;
 
 public:
-  FrontendInputFile() : Buffer(0), Kind(IK_None) { }
+  FrontendInputFile() : Buffer(nullptr), Kind(IK_None) { }
   FrontendInputFile(StringRef File, InputKind Kind, bool IsSystem = false)
-    : File(File.str()), Buffer(0), Kind(Kind), IsSystem(IsSystem) { }
+    : File(File.str()), Buffer(nullptr), Kind(Kind), IsSystem(IsSystem) { }
   FrontendInputFile(llvm::MemoryBuffer *buffer, InputKind Kind,
                     bool IsSystem = false)
     : Buffer(buffer), Kind(Kind), IsSystem(IsSystem) { }
@@ -100,9 +100,9 @@ public:
   InputKind getKind() const { return Kind; }
   bool isSystem() const { return IsSystem; }
 
-  bool isEmpty() const { return File.empty() && Buffer == 0; }
+  bool isEmpty() const { return File.empty() && Buffer == nullptr; }
   bool isFile() const { return !isBuffer(); }
-  bool isBuffer() const { return Buffer != 0; }
+  bool isBuffer() const { return Buffer != nullptr; }
 
   StringRef getFile() const {
     assert(isFile());

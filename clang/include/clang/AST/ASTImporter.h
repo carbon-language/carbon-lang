@@ -278,7 +278,7 @@ namespace clang {
     /// happens especially for anonymous structs.  If the original of the second
     /// RecordDecl can be found, we can complete it without the need for
     /// importation, eliminating this loop.
-    virtual Decl *GetOriginalDecl(Decl *To) { return NULL; }
+    virtual Decl *GetOriginalDecl(Decl *To) { return nullptr; }
     
     /// \brief Determine whether the given types are structurally
     /// equivalent.

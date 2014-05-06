@@ -427,7 +427,7 @@ private:
     uint64_t Offset;
     unsigned RawLoc;
 
-    ReplacedDeclInfo() : Mod(0), Offset(0), RawLoc(0) {}
+    ReplacedDeclInfo() : Mod(nullptr), Offset(0), RawLoc(0) {}
     ReplacedDeclInfo(ModuleFile *Mod, uint64_t Offset, unsigned RawLoc)
       : Mod(Mod), Offset(Offset), RawLoc(RawLoc) {}
   };
@@ -441,7 +441,7 @@ private:
     ModuleFile *Mod;
     ArrayRef<serialization::LocalDeclID> Decls;
 
-    FileDeclsInfo() : Mod(0) {}
+    FileDeclsInfo() : Mod(nullptr) {}
     FileDeclsInfo(ModuleFile *Mod, ArrayRef<serialization::LocalDeclID> Decls)
       : Mod(Mod), Decls(Decls) {}
   };
@@ -1192,7 +1192,7 @@ private:
     typedef value_type&         reference;
     typedef value_type*         pointer;
 
-    ModuleDeclIterator() : Reader(0), Mod(0), Pos(0) { }
+    ModuleDeclIterator() : Reader(nullptr), Mod(nullptr), Pos(nullptr) { }
 
     ModuleDeclIterator(ASTReader *Reader, ModuleFile *Mod,
                        const serialization::LocalDeclID *Pos)
@@ -1722,7 +1722,7 @@ public:
   void InitializeSema(Sema &S) override;
 
   /// \brief Inform the semantic consumer that Sema is no longer available.
-  void ForgetSema() override { SemaObj = 0; }
+  void ForgetSema() override { SemaObj = nullptr; }
 
   /// \brief Retrieve the IdentifierInfo for the named identifier.
   ///
@@ -1789,7 +1789,7 @@ public:
   void SetIdentifierInfo(unsigned ID, IdentifierInfo *II);
   void SetGloballyVisibleDecls(IdentifierInfo *II,
                                const SmallVectorImpl<uint32_t> &DeclIDs,
-                               SmallVectorImpl<Decl *> *Decls = 0);
+                               SmallVectorImpl<Decl *> *Decls = nullptr);
 
   /// \brief Report a diagnostic.
   DiagnosticBuilder Diag(unsigned DiagID);

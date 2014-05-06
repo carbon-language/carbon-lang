@@ -246,7 +246,7 @@ namespace clang {
     LocalInstantiationScope(Sema &SemaRef, bool CombineWithOuterScope = false)
       : SemaRef(SemaRef), Outer(SemaRef.CurrentInstantiationScope),
         Exited(false), CombineWithOuterScope(CombineWithOuterScope),
-        PartiallySubstitutedPack(0)
+        PartiallySubstitutedPack(nullptr)
     {
       SemaRef.CurrentInstantiationScope = this;
     }
@@ -276,7 +276,7 @@ namespace clang {
       LocalInstantiationScope *newScope =
         new LocalInstantiationScope(SemaRef, CombineWithOuterScope);
 
-      newScope->Outer = 0;
+      newScope->Outer = nullptr;
       if (Outer)
         newScope->Outer = Outer->cloneScopes(Outermost);
 
@@ -348,17 +348,17 @@ namespace clang {
     /// interest.
     void ResetPartiallySubstitutedPack() {
       assert(PartiallySubstitutedPack && "No partially-substituted pack");
-      PartiallySubstitutedPack = 0;
-      ArgsInPartiallySubstitutedPack = 0;
+      PartiallySubstitutedPack = nullptr;
+      ArgsInPartiallySubstitutedPack = nullptr;
       NumArgsInPartiallySubstitutedPack = 0;
     }
 
     /// \brief Retrieve the partially-substitued template parameter pack.
     ///
     /// If there is no partially-substituted parameter pack, returns NULL.
-    NamedDecl *getPartiallySubstitutedPack(
-                                      const TemplateArgument **ExplicitArgs = 0,
-                                           unsigned *NumExplicitArgs = 0) const;
+    NamedDecl *
+    getPartiallySubstitutedPack(const TemplateArgument **ExplicitArgs = nullptr,
+                                unsigned *NumExplicitArgs = nullptr) const;
   };
 
   class TemplateDeclInstantiator
@@ -391,8 +391,8 @@ namespace clang {
                              const MultiLevelTemplateArgumentList &TemplateArgs)
       : SemaRef(SemaRef),
         SubstIndex(SemaRef, SemaRef.ArgumentPackSubstitutionIndex),
-        Owner(Owner), TemplateArgs(TemplateArgs), LateAttrs(0), StartingScope(0)
-    { }
+        Owner(Owner), TemplateArgs(TemplateArgs), LateAttrs(nullptr),
+        StartingScope(nullptr) {}
 
 // Define all the decl visitors using DeclNodes.inc
 #define DECL(DERIVED, BASE) \
@@ -436,8 +436,8 @@ namespace clang {
 
     // Disable late instantiation of attributes.
     void disableLateAttributeInstantiation() {
-      LateAttrs = 0;
-      StartingScope = 0;
+      LateAttrs = nullptr;
+      StartingScope = nullptr;
     }
 
     LocalInstantiationScope *getStartingScope() const { return StartingScope; }

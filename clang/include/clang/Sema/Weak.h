@@ -28,7 +28,7 @@ class WeakInfo {
   bool used;              // identifier later declared?
 public:
   WeakInfo()
-    : alias(0), loc(SourceLocation()), used(false) {}
+    : alias(nullptr), loc(SourceLocation()), used(false) {}
   WeakInfo(IdentifierInfo *Alias, SourceLocation Loc)
     : alias(Alias), loc(Loc), used(false) {}
   inline IdentifierInfo * getAlias() const { return alias; }

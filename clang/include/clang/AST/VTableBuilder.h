@@ -297,7 +297,7 @@ public:
     ThunksMapTy::const_iterator I = Thunks.find(MD);
     if (I == Thunks.end()) {
       // We did not find a thunk for this method.
-      return 0;
+      return nullptr;
     }
 
     return &I->second;
@@ -419,7 +419,7 @@ struct VPtrInfo {
 
   /// The vptr is stored inside the non-virtual component of this virtual base.
   const CXXRecordDecl *getVBaseWithVPtr() const {
-    return ContainingVBases.empty() ? 0 : ContainingVBases.front();
+    return ContainingVBases.empty() ? nullptr : ContainingVBases.front();
   }
 };
 
@@ -458,7 +458,7 @@ public:
     uint64_t Index;
 
     MethodVFTableLocation()
-        : VBTableIndex(0), VBase(0), VFPtrOffset(CharUnits::Zero()),
+        : VBTableIndex(0), VBase(nullptr), VFPtrOffset(CharUnits::Zero()),
           Index(0) {}
 
     MethodVFTableLocation(uint64_t VBTableIndex, const CXXRecordDecl *VBase,
@@ -524,7 +524,7 @@ public:
     // Complete destructors don't have a slot in a vftable, so no thunks needed.
     if (isa<CXXDestructorDecl>(GD.getDecl()) &&
         GD.getDtorType() == Dtor_Complete)
-      return 0;
+      return nullptr;
     return VTableContextBase::getThunkInfo(GD);
   }
 

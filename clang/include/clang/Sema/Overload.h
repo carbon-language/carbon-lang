@@ -364,7 +364,7 @@ namespace clang {
     }
     void init(FailureKind K, QualType From, QualType To) {
       Kind = K;
-      FromExpr = 0;
+      FromExpr = nullptr;
       setFromType(From);
       setToType(To);
     }

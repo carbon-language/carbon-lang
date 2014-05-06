@@ -265,7 +265,7 @@ public:
                                  const ExplodedNode *Prev,
                                  BugReporterContext &BRC,
                                  BugReport &BR) override {
-    return 0;
+    return nullptr;
   }
 
   PathDiagnosticPiece *getEndPath(BugReporterContext &BRC,

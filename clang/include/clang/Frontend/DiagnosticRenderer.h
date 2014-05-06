@@ -144,7 +144,7 @@ public:
                       StringRef Message, ArrayRef<CharSourceRange> Ranges,
                       ArrayRef<FixItHint> FixItHints,
                       const SourceManager *SM,
-                      DiagOrStoredDiag D = (Diagnostic *)0);
+                      DiagOrStoredDiag D = (Diagnostic *)nullptr);
 
   void emitStoredDiagnostic(StoredDiagnostic &Diag);
 };

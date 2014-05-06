@@ -113,7 +113,7 @@ public:
     virtual void remove(CharSourceRange range) { }
   };
 
-  bool applyTransform(TransformFn trans, RewriteListener *listener = 0);
+  bool applyTransform(TransformFn trans, RewriteListener *listener = nullptr);
 
   FileRemapper &getRemapper() { return Remapper; }
 };

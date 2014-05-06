@@ -95,7 +95,7 @@ protected:
 
     // If we hit the end of the list of stat caches to try, just compute and
     // return it without a cache.
-    return get(Path, Data, isFile, F, 0, FS) ? CacheMissing : CacheExists;
+    return get(Path, Data, isFile, F, nullptr, FS) ? CacheMissing : CacheExists;
   }
 };
 

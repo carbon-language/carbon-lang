@@ -86,15 +86,15 @@ class RuntimeDefinition {
   const MemRegion *R;
 
 public:
-  RuntimeDefinition(): D(0), R(0) {}
-  RuntimeDefinition(const Decl *InD): D(InD), R(0) {}
+  RuntimeDefinition(): D(nullptr), R(nullptr) {}
+  RuntimeDefinition(const Decl *InD): D(InD), R(nullptr) {}
   RuntimeDefinition(const Decl *InD, const MemRegion *InR): D(InD), R(InR) {}
   const Decl *getDecl() { return D; }
     
   /// \brief Check if the definition we have is precise. 
   /// If not, it is possible that the call dispatches to another definition at 
   /// execution time.
-  bool mayHaveOtherDefinitions() { return R != 0; }
+  bool mayHaveOtherDefinitions() { return R != nullptr; }
   
   /// When other definitions are possible, returns the region whose runtime type 
   /// determines the method definition.
@@ -237,7 +237,7 @@ public:
 
   /// \brief Returns the expression associated with a given argument.
   /// May be null if this expression does not appear in the source.
-  virtual const Expr *getArgExpr(unsigned Index) const { return 0; }
+  virtual const Expr *getArgExpr(unsigned Index) const { return nullptr; }
 
   /// \brief Returns the source range for errors associated with this argument.
   ///
@@ -293,20 +293,20 @@ public:
   const IdentifierInfo *getCalleeIdentifier() const {
     const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(getDecl());
     if (!ND)
-      return 0;
+      return nullptr;
     return ND->getIdentifier();
   }
 
   /// \brief Returns an appropriate ProgramPoint for this call.
   ProgramPoint getProgramPoint(bool IsPreVisit = false,
-                               const ProgramPointTag *Tag = 0) const;
+                               const ProgramPointTag *Tag = nullptr) const;
 
   /// \brief Returns a new state with all argument regions invalidated.
   ///
   /// This accepts an alternate state in case some processing has already
   /// occurred.
   ProgramStateRef invalidateRegions(unsigned BlockCount,
-                                    ProgramStateRef Orig = 0) const;
+                                    ProgramStateRef Orig = nullptr) const;
 
   typedef std::pair<Loc, SVal> FrameBindingTy;
   typedef SmallVectorImpl<FrameBindingTy> BindingsTy;
@@ -493,7 +493,7 @@ public:
   const BlockDecl *getDecl() const override {
     const BlockDataRegion *BR = getBlockRegion();
     if (!BR)
-      return 0;
+      return nullptr;
     return BR->getDecl();
   }
 
@@ -535,7 +535,7 @@ protected:
 
 public:
   /// \brief Returns the expression representing the implicit 'this' object.
-  virtual const Expr *getCXXThisExpr() const { return 0; }
+  virtual const Expr *getCXXThisExpr() const { return nullptr; }
 
   /// \brief Returns the value of the implicit 'this' object.
   virtual SVal getCXXThisVal() const;
@@ -764,7 +764,7 @@ public:
   const Expr *getArgExpr(unsigned Index) const override {
     // The first argument of an allocator call is the size of the allocation.
     if (Index == 0)
-      return 0;
+      return nullptr;
     return getOriginExpr()->getPlacementArg(Index - 1);
   }
 
@@ -797,7 +797,7 @@ protected:
   ObjCMethodCall(const ObjCMessageExpr *Msg, ProgramStateRef St,
                  const LocationContext *LCtx)
     : CallEvent(Msg, St, LCtx) {
-    Data = 0;
+    Data = nullptr;
   }
 
   ObjCMethodCall(const ObjCMethodCall &Other) : CallEvent(Other) {}

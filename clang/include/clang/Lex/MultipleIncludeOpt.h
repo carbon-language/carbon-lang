@@ -60,8 +60,8 @@ public:
     ReadAnyTokens = false;
     ImmediatelyAfterTopLevelIfndef = false;
     DidMacroExpansion = false;
-    TheMacro = 0;
-    DefinedMacro = 0;
+    TheMacro = nullptr;
+    DefinedMacro = nullptr;
   }
 
   SourceLocation GetMacroLocation() const {
@@ -88,8 +88,8 @@ public:
     // below can never "accept".
     ReadAnyTokens = true;
     ImmediatelyAfterTopLevelIfndef = false;
-    DefinedMacro = 0;
-    TheMacro = 0;
+    DefinedMacro = nullptr;
+    TheMacro = nullptr;
   }
 
   /// getHasReadAnyTokensVal - This is used for the \#ifndef hande-shake at the
@@ -166,7 +166,7 @@ public:
     // macro if it's valid (if it isn't, it will be null).
     if (!ReadAnyTokens)
       return TheMacro;
-    return 0;
+    return nullptr;
   }
 
   /// \brief If the ControllingMacro is followed by a macro definition, return

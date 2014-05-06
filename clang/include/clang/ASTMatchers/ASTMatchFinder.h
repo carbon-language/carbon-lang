@@ -222,7 +222,7 @@ selectFirst(StringRef BoundTo, const SmallVectorImpl<BoundNodes> &Results) {
     if (NodeT *Node = I->getNodeAs<NodeT>(BoundTo))
       return Node;
   }
-  return NULL;
+  return nullptr;
 }
 
 namespace internal {

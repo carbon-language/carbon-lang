@@ -352,7 +352,7 @@ public:
 
   StringRef getSpelling(const Token &Tok,
                         const SourceManager &SourceMgr,
-                        bool *Invalid = NULL) const;
+                        bool *Invalid = nullptr) const;
 };
 
 } // end namespace comments

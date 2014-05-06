@@ -201,7 +201,7 @@ class PrintPreambleAction : public FrontendAction {
 protected:
   void ExecuteAction() override;
   ASTConsumer *CreateASTConsumer(CompilerInstance &, StringRef) override {
-    return 0;
+    return nullptr;
   }
 
   bool usesPreprocessorOnly() const override { return true; }

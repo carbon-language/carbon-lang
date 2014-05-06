@@ -346,7 +346,8 @@ private:
   }
   til::SExpr *getCurrentLVarDefinition(const ValueDecl *VD);
 
-  til::SExpr *addStatement(til::SExpr *E, const Stmt *S, const ValueDecl *VD=0);
+  til::SExpr *addStatement(til::SExpr *E, const Stmt *S,
+                           const ValueDecl *VD = nullptr);
   til::SExpr *lookupVarDecl(const ValueDecl *VD);
   til::SExpr *addVarDecl(const ValueDecl *VD, til::SExpr *E);
   til::SExpr *updateVarDecl(const ValueDecl *VD, til::SExpr *E);

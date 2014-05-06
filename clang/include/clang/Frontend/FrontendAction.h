@@ -148,7 +148,8 @@ public:
 
   ASTUnit *takeCurrentASTUnit() { return CurrentASTUnit.release(); }
 
-  void setCurrentInput(const FrontendInputFile &CurrentInput, ASTUnit *AST = 0);
+  void setCurrentInput(const FrontendInputFile &CurrentInput,
+                       ASTUnit *AST = nullptr);
 
   /// @}
   /// @name Supported Modes

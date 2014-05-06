@@ -189,7 +189,7 @@ public:
   }
 
   ExplodedNode *getFirstPred() {
-    return pred_empty() ? NULL : *(pred_begin());
+    return pred_empty() ? nullptr : *(pred_begin());
   }
 
   const ExplodedNode *getFirstPred() const {
@@ -197,7 +197,7 @@ public:
   }
 
   const ExplodedNode *getFirstSucc() const {
-    return succ_empty() ? NULL : *(succ_begin());
+    return succ_empty() ? nullptr : *(succ_begin());
   }
 
   // Iterators over successor and predecessor vertices.
@@ -295,7 +295,7 @@ public:
   ///  the node was freshly created.
   ExplodedNode *getNode(const ProgramPoint &L, ProgramStateRef State,
                         bool IsSink = false,
-                        bool* IsNew = 0);
+                        bool* IsNew = nullptr);
 
   ExplodedGraph* MakeEmptyGraph() const {
     return new ExplodedGraph();
@@ -373,8 +373,8 @@ public:
   ///                        nodes in this graph.
   /// \returns The trimmed graph
   ExplodedGraph *trim(ArrayRef<const NodeTy *> Nodes,
-                      InterExplodedGraphMap *ForwardMap = 0,
-                      InterExplodedGraphMap *InverseMap = 0) const;
+                      InterExplodedGraphMap *ForwardMap = nullptr,
+                      InterExplodedGraphMap *InverseMap = nullptr) const;
 
   /// Enable tracking of recently allocated nodes for potential reclamation
   /// when calling reclaimRecentlyAllocatedNodes().

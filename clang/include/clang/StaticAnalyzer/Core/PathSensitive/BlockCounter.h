@@ -33,7 +33,7 @@ class BlockCounter {
   BlockCounter(void *D) : Data(D) {}
 
 public:
-  BlockCounter() : Data(0) {}
+  BlockCounter() : Data(nullptr) {}
 
   unsigned getNumVisited(const StackFrameContext *CallSite, 
                          unsigned BlockID) const;

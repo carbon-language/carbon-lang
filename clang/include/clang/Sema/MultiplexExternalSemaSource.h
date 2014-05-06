@@ -109,7 +109,7 @@ public:
   /// \return true if an error occurred
   ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
                                 SmallVectorImpl<Decl*> &Result) {
-    return FindExternalLexicalDecls(DC, 0, Result);
+    return FindExternalLexicalDecls(DC, nullptr, Result);
   }
 
   template <typename DeclTy>

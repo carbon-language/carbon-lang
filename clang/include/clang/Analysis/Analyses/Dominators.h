@@ -153,7 +153,7 @@ public:
 
   /// \brief This method converts the dominator tree to human readable form.
   ///
-  virtual void print(raw_ostream &OS, const llvm::Module* M= 0) const {
+  virtual void print(raw_ostream &OS, const llvm::Module* M= nullptr) const {
     DT->print(OS);
   }
 

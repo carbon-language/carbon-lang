@@ -200,7 +200,8 @@ public:
                       Preprocessor &PP, bool Complain = true);
   StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                       const SourceManager &sm, const LangOptions &features,
-                      const TargetInfo &target, DiagnosticsEngine *diags = 0)
+                      const TargetInfo &target,
+                      DiagnosticsEngine *diags = nullptr)
     : SM(sm), Features(features), Target(target), Diags(diags),
       MaxTokenLength(0), SizeBound(0), CharByteWidth(0), Kind(tok::unknown),
       ResultPtr(ResultBuf.data()), hadError(false), Pascal(false) {

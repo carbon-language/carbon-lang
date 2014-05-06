@@ -138,7 +138,7 @@ public:
   virtual void completeVisibleDeclsMap(const DeclContext *DC);
 
   /// \brief Retrieve the module that corresponds to the given module ID.
-  virtual Module *getModule(unsigned ID) { return 0; }
+  virtual Module *getModule(unsigned ID) { return nullptr; }
 
   /// \brief Finds all declarations lexically contained within the given
   /// DeclContext, after applying an optional filter predicate.
@@ -160,7 +160,7 @@ public:
   /// \return true if an error occurred
   ExternalLoadResult FindExternalLexicalDecls(const DeclContext *DC,
                                 SmallVectorImpl<Decl*> &Result) {
-    return FindExternalLexicalDecls(DC, 0, Result);
+    return FindExternalLexicalDecls(DC, nullptr, Result);
   }
 
   template <typename DeclTy>
@@ -519,7 +519,7 @@ public:
     
     if (From.Position < 0) {
       Loaded.erase(Loaded.end() + From.Position, Loaded.end());
-      From = begin(0, true);
+      From = begin(nullptr, true);
     }
     
     Local.erase(Local.begin() + From.Position, Local.begin() + To.Position);

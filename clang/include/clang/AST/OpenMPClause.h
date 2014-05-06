@@ -179,7 +179,7 @@ public:
   ///
   OMPIfClause()
       : OMPClause(OMPC_if, SourceLocation(), SourceLocation()),
-        LParenLoc(SourceLocation()), Condition(0) {}
+        LParenLoc(SourceLocation()), Condition(nullptr) {}
 
   /// \brief Sets the location of '('.
   void setLParenLoc(SourceLocation Loc) { LParenLoc = Loc; }
@@ -233,7 +233,7 @@ public:
   ///
   OMPNumThreadsClause()
       : OMPClause(OMPC_num_threads, SourceLocation(), SourceLocation()),
-        LParenLoc(SourceLocation()), NumThreads(0) {}
+        LParenLoc(SourceLocation()), NumThreads(nullptr) {}
 
   /// \brief Sets the location of '('.
   void setLParenLoc(SourceLocation Loc) { LParenLoc = Loc; }
@@ -289,7 +289,7 @@ public:
   ///
   explicit OMPSafelenClause()
       : OMPClause(OMPC_safelen, SourceLocation(), SourceLocation()),
-        LParenLoc(SourceLocation()), Safelen(0) {}
+        LParenLoc(SourceLocation()), Safelen(nullptr) {}
 
   /// \brief Sets the location of '('.
   void setLParenLoc(SourceLocation Loc) { LParenLoc = Loc; }

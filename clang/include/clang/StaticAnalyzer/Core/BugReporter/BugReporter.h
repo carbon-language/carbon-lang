@@ -144,19 +144,18 @@ private:
 
 public:
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode)
-    : BT(bt), DeclWithIssue(0), Description(desc), ErrorNode(errornode),
+    : BT(bt), DeclWithIssue(nullptr), Description(desc), ErrorNode(errornode),
       ConfigurationChangeToken(0), DoNotPrunePath(false) {}
 
   BugReport(BugType& bt, StringRef shortDesc, StringRef desc,
             const ExplodedNode *errornode)
-    : BT(bt), DeclWithIssue(0), ShortDescription(shortDesc), Description(desc),
-      ErrorNode(errornode), ConfigurationChangeToken(0),
+    : BT(bt), DeclWithIssue(nullptr), ShortDescription(shortDesc),
+      Description(desc), ErrorNode(errornode), ConfigurationChangeToken(0),
       DoNotPrunePath(false) {}
 
-  BugReport(BugType& bt, StringRef desc, PathDiagnosticLocation l)
-    : BT(bt), DeclWithIssue(0), Description(desc), Location(l), ErrorNode(0),
-      ConfigurationChangeToken(0),
-      DoNotPrunePath(false) {}
+  BugReport(BugType &bt, StringRef desc, PathDiagnosticLocation l)
+    : BT(bt), DeclWithIssue(nullptr), Description(desc), Location(l),
+      ErrorNode(nullptr), ConfigurationChangeToken(0), DoNotPrunePath(false) {}
 
   /// \brief Create a BugReport with a custom uniqueing location.
   ///
@@ -167,7 +166,7 @@ public:
   /// the allocation site, rather then the location where the bug is reported.
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode,
             PathDiagnosticLocation LocationToUnique, const Decl *DeclToUnique)
-    : BT(bt), DeclWithIssue(0), Description(desc),
+    : BT(bt), DeclWithIssue(nullptr), Description(desc),
       UniqueingLocation(LocationToUnique),
       UniqueingDecl(DeclToUnique),
       ErrorNode(errornode), ConfigurationChangeToken(0),

@@ -428,7 +428,7 @@ public:
   /// \brief Create the identifier table, populating it with info about the
   /// language keywords for the language specified by \p LangOpts.
   IdentifierTable(const LangOptions &LangOpts,
-                  IdentifierInfoLookup* externalLookup = 0);
+                  IdentifierInfoLookup* externalLookup = nullptr);
 
   /// \brief Set the external identifier lookup mechanism.
   void setExternalIdentifierLookup(IdentifierInfoLookup *IILookup) {
@@ -625,7 +625,7 @@ class Selector {
   IdentifierInfo *getAsIdentifierInfo() const {
     if (getIdentifierInfoFlag() < MultiArg)
       return reinterpret_cast<IdentifierInfo *>(InfoPtr & ~ArgFlags);
-    return 0;
+    return nullptr;
   }
   MultiKeywordSelector *getMultiKeywordSelector() const {
     return reinterpret_cast<MultiKeywordSelector *>(InfoPtr & ~ArgFlags);

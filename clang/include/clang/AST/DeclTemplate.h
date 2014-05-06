@@ -232,13 +232,15 @@ protected:
   // This is probably never used.
   TemplateDecl(Kind DK, DeclContext *DC, SourceLocation L,
                DeclarationName Name)
-    : NamedDecl(DK, DC, L, Name), TemplatedDecl(0), TemplateParams(0) { }
+    : NamedDecl(DK, DC, L, Name), TemplatedDecl(nullptr),
+      TemplateParams(nullptr) {}
 
   // Construct a template decl with the given name and parameters.
   // Used when there is not templated element (tt-params, alias?).
   TemplateDecl(Kind DK, DeclContext *DC, SourceLocation L,
                DeclarationName Name, TemplateParameterList *Params)
-    : NamedDecl(DK, DC, L, Name), TemplatedDecl(0), TemplateParams(Params) { }
+    : NamedDecl(DK, DC, L, Name), TemplatedDecl(nullptr),
+      TemplateParams(Params) {}
 
   // Construct a template decl with name, parameters, and templated element.
   TemplateDecl(Kind DK, DeclContext *DC, SourceLocation L,
@@ -274,8 +276,8 @@ public:
   /// \brief Initialize the underlying templated declaration and
   /// template parameters.
   void init(NamedDecl *templatedDecl, TemplateParameterList* templateParams) {
-    assert(TemplatedDecl == 0 && "TemplatedDecl already set!");
-    assert(TemplateParams == 0 && "TemplateParams already set!");
+    assert(!TemplatedDecl && "TemplatedDecl already set!");
+    assert(!TemplateParams && "TemplateParams already set!");
     TemplatedDecl = templatedDecl;
     TemplateParams = templateParams;
   }
@@ -599,7 +601,7 @@ protected:
                          void *&InsertPos);
 
   struct CommonBase {
-    CommonBase() : InstantiatedFromMember(0, false) { }
+    CommonBase() : InstantiatedFromMember(nullptr, false) { }
 
     /// \brief The template from which this was most
     /// directly instantiated (or null).
@@ -972,7 +974,7 @@ public:
 
   /// \brief Determine whether this template parameter has a default
   /// argument.
-  bool hasDefaultArgument() const { return DefaultArgument != 0; }
+  bool hasDefaultArgument() const { return DefaultArgument != nullptr; }
 
   /// \brief Retrieve the default argument, if any.
   QualType getDefaultArgument() const { return DefaultArgument->getType(); }
@@ -997,7 +999,7 @@ public:
 
   /// \brief Removes the default argument of this template parameter.
   void removeDefaultArgument() {
-    DefaultArgument = 0;
+    DefaultArgument = nullptr;
     InheritedDefault = false;
   }
 
@@ -1051,7 +1053,7 @@ class NonTypeTemplateParmDecl
                           IdentifierInfo *Id, QualType T,
                           bool ParameterPack, TypeSourceInfo *TInfo)
     : DeclaratorDecl(NonTypeTemplateParm, DC, IdLoc, Id, T, TInfo, StartLoc),
-      TemplateParmPosition(D, P), DefaultArgumentAndInherited(0, false),
+      TemplateParmPosition(D, P), DefaultArgumentAndInherited(nullptr, false),
       ParameterPack(ParameterPack), ExpandedParameterPack(false),
       NumExpandedTypes(0)
   { }
@@ -1096,7 +1098,7 @@ public:
   /// \brief Determine whether this template parameter has a default
   /// argument.
   bool hasDefaultArgument() const {
-    return DefaultArgumentAndInherited.getPointer() != 0;
+    return DefaultArgumentAndInherited.getPointer() != nullptr;
   }
 
   /// \brief Retrieve the default argument, if any.
@@ -1123,7 +1125,7 @@ public:
 
   /// \brief Removes the default argument of this template parameter.
   void removeDefaultArgument() {
-    DefaultArgumentAndInherited.setPointer(0);
+    DefaultArgumentAndInherited.setPointer(nullptr);
     DefaultArgumentAndInherited.setInt(false);
   }
 
@@ -1410,7 +1412,7 @@ class ClassTemplateSpecializationDecl
     SourceLocation TemplateKeywordLoc;
 
     ExplicitSpecializationInfo()
-      : TypeAsWritten(0), ExternLoc(), TemplateKeywordLoc() {}
+      : TypeAsWritten(nullptr), ExternLoc(), TemplateKeywordLoc() {}
   };
 
   /// \brief Further info for explicit template specialization/instantiation.
@@ -1595,7 +1597,7 @@ public:
   /// \brief Gets the type of this specialization as it was written by
   /// the user, if it was so written.
   TypeSourceInfo *getTypeAsWritten() const {
-    return ExplicitInfo ? ExplicitInfo->TypeAsWritten : 0;
+    return ExplicitInfo ? ExplicitInfo->TypeAsWritten : nullptr;
   }
 
   /// \brief Gets the location of the extern keyword, if present.
@@ -1676,7 +1678,8 @@ class ClassTemplatePartialSpecializationDecl
 
   ClassTemplatePartialSpecializationDecl()
     : ClassTemplateSpecializationDecl(ClassTemplatePartialSpecialization),
-      TemplateParams(0), ArgsAsWritten(0), InstantiatedFromMember(0, false) { }
+      TemplateParams(nullptr), ArgsAsWritten(nullptr),
+      InstantiatedFromMember(nullptr, false) {}
 
 public:
   static ClassTemplatePartialSpecializationDecl *
@@ -1840,8 +1843,8 @@ protected:
     : RedeclarableTemplateDecl(ClassTemplate, DC, L, Name, Params, Decl) { }
 
   ClassTemplateDecl(EmptyShell Empty)
-    : RedeclarableTemplateDecl(ClassTemplate, 0, SourceLocation(),
-                               DeclarationName(), 0, 0) { }
+    : RedeclarableTemplateDecl(ClassTemplate, nullptr, SourceLocation(),
+                               DeclarationName(), nullptr, nullptr) { }
 
   CommonBase *newCommon(ASTContext &C) const override;
 
@@ -2042,7 +2045,7 @@ private:
   FriendTemplateDecl(EmptyShell Empty)
     : Decl(Decl::FriendTemplate, Empty),
       NumParams(0),
-      Params(0)
+      Params(nullptr)
   {}
 
 public:
@@ -2275,7 +2278,7 @@ class VarTemplateSpecializationDecl : public VarDecl,
     SourceLocation TemplateKeywordLoc;
 
     ExplicitSpecializationInfo()
-        : TypeAsWritten(0), ExternLoc(), TemplateKeywordLoc() {}
+        : TypeAsWritten(nullptr), ExternLoc(), TemplateKeywordLoc() {}
   };
 
   /// \brief Further info for explicit template specialization/instantiation.
@@ -2456,7 +2459,7 @@ public:
   /// \brief Gets the type of this specialization as it was written by
   /// the user, if it was so written.
   TypeSourceInfo *getTypeAsWritten() const {
-    return ExplicitInfo ? ExplicitInfo->TypeAsWritten : 0;
+    return ExplicitInfo ? ExplicitInfo->TypeAsWritten : nullptr;
   }
 
   /// \brief Gets the location of the extern keyword, if present.
@@ -2530,8 +2533,9 @@ class VarTemplatePartialSpecializationDecl
       const ASTTemplateArgumentListInfo *ArgInfos);
 
   VarTemplatePartialSpecializationDecl()
-      : VarTemplateSpecializationDecl(VarTemplatePartialSpecialization),
-        TemplateParams(0), ArgsAsWritten(0), InstantiatedFromMember(0, false) {}
+    : VarTemplateSpecializationDecl(VarTemplatePartialSpecialization),
+      TemplateParams(nullptr), ArgsAsWritten(nullptr),
+      InstantiatedFromMember(nullptr, false) {}
 
 public:
   static VarTemplatePartialSpecializationDecl *
@@ -2677,8 +2681,8 @@ protected:
       : RedeclarableTemplateDecl(VarTemplate, DC, L, Name, Params, Decl) {}
 
   VarTemplateDecl(EmptyShell Empty)
-      : RedeclarableTemplateDecl(VarTemplate, 0, SourceLocation(),
-                                 DeclarationName(), 0, 0) {}
+      : RedeclarableTemplateDecl(VarTemplate, nullptr, SourceLocation(),
+                                 DeclarationName(), nullptr, nullptr) {}
 
   CommonBase *newCommon(ASTContext &C) const override;
 

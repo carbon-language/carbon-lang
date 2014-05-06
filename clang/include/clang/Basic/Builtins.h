@@ -94,53 +94,53 @@ public:
   /// \brief Return true if this function has no side effects and doesn't
   /// read memory.
   bool isConst(unsigned ID) const {
-    return strchr(GetRecord(ID).Attributes, 'c') != 0;
+    return strchr(GetRecord(ID).Attributes, 'c') != nullptr;
   }
 
   /// \brief Return true if we know this builtin never throws an exception.
   bool isNoThrow(unsigned ID) const {
-    return strchr(GetRecord(ID).Attributes, 'n') != 0;
+    return strchr(GetRecord(ID).Attributes, 'n') != nullptr;
   }
 
   /// \brief Return true if we know this builtin never returns.
   bool isNoReturn(unsigned ID) const {
-    return strchr(GetRecord(ID).Attributes, 'r') != 0;
+    return strchr(GetRecord(ID).Attributes, 'r') != nullptr;
   }
 
   /// \brief Return true if we know this builtin can return twice.
   bool isReturnsTwice(unsigned ID) const {
-    return strchr(GetRecord(ID).Attributes, 'j') != 0;
+    return strchr(GetRecord(ID).Attributes, 'j') != nullptr;
   }
 
   /// \brief Returns true if this builtin does not perform the side-effects
   /// of its arguments.
   bool isUnevaluated(unsigned ID) const {
-    return strchr(GetRecord(ID).Attributes, 'u') != 0;
+    return strchr(GetRecord(ID).Attributes, 'u') != nullptr;
   }
 
   /// \brief Return true if this is a builtin for a libc/libm function,
   /// with a "__builtin_" prefix (e.g. __builtin_abs).
   bool isLibFunction(unsigned ID) const {
-    return strchr(GetRecord(ID).Attributes, 'F') != 0;
+    return strchr(GetRecord(ID).Attributes, 'F') != nullptr;
   }
 
   /// \brief Determines whether this builtin is a predefined libc/libm
   /// function, such as "malloc", where we know the signature a
   /// priori.
   bool isPredefinedLibFunction(unsigned ID) const {
-    return strchr(GetRecord(ID).Attributes, 'f') != 0;
+    return strchr(GetRecord(ID).Attributes, 'f') != nullptr;
   }
 
   /// \brief Determines whether this builtin is a predefined compiler-rt/libgcc
   /// function, such as "__clear_cache", where we know the signature a
   /// priori.
   bool isPredefinedRuntimeFunction(unsigned ID) const {
-    return strchr(GetRecord(ID).Attributes, 'i') != 0;
+    return strchr(GetRecord(ID).Attributes, 'i') != nullptr;
   }
 
   /// \brief Determines whether this builtin has custom typechecking.
   bool hasCustomTypechecking(unsigned ID) const {
-    return strchr(GetRecord(ID).Attributes, 't') != 0;
+    return strchr(GetRecord(ID).Attributes, 't') != nullptr;
   }
 
   /// \brief Completely forget that the given ID was ever considered a builtin,
@@ -168,7 +168,7 @@ public:
   ///
   /// Such functions can be const when the MathErrno lang option is disabled.
   bool isConstWithoutErrno(unsigned ID) const {
-    return strchr(GetRecord(ID).Attributes, 'e') != 0;
+    return strchr(GetRecord(ID).Attributes, 'e') != nullptr;
   }
 
 private:

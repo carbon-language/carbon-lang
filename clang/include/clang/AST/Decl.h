@@ -79,9 +79,9 @@ class TranslationUnitDecl : public Decl, public DeclContext {
   NamespaceDecl *AnonymousNamespace;
 
   explicit TranslationUnitDecl(ASTContext &ctx)
-    : Decl(TranslationUnit, 0, SourceLocation()),
+    : Decl(TranslationUnit, nullptr, SourceLocation()),
       DeclContext(TranslationUnit),
-      Ctx(ctx), AnonymousNamespace(0) {}
+      Ctx(ctx), AnonymousNamespace(nullptr) {}
 public:
   ASTContext &getASTContext() const { return Ctx; }
 
@@ -508,7 +508,8 @@ struct QualifierInfo {
   TemplateParameterList** TemplParamLists;
 
   /// Default constructor.
-  QualifierInfo() : QualifierLoc(), NumTemplParamLists(0), TemplParamLists(0) {}
+  QualifierInfo()
+    : QualifierLoc(), NumTemplParamLists(0), TemplParamLists(nullptr) {}
 
   /// setTemplateParameterListsInfo - Sets info about "outer" template
   /// parameter lists.
@@ -579,7 +580,7 @@ public:
   /// declaration, if it was present in the source.
   NestedNameSpecifier *getQualifier() const {
     return hasExtInfo() ? getExtInfo()->QualifierLoc.getNestedNameSpecifier()
-                        : 0;
+                        : nullptr;
   }
 
   /// \brief Retrieve the nested-name-specifier (with source-location
@@ -991,7 +992,7 @@ public:
   }
   const Expr *getInit() const {
     if (Init.isNull())
-      return 0;
+      return nullptr;
 
     const Stmt *S = Init.dyn_cast<Stmt *>();
     if (!S) {
@@ -1002,7 +1003,7 @@ public:
   }
   Expr *getInit() {
     if (Init.isNull())
-      return 0;
+      return nullptr;
 
     Stmt *S = Init.dyn_cast<Stmt *>();
     if (!S) {
@@ -1053,7 +1054,7 @@ public:
       if (Eval->WasEvaluated)
         return &Eval->Evaluated;
 
-    return 0;
+    return nullptr;
   }
 
   /// \brief Determines whether it is already known whether the
@@ -1214,7 +1215,7 @@ public:
   ImplicitParamDecl(DeclContext *DC, SourceLocation IdLoc,
                     IdentifierInfo *Id, QualType Type)
     : VarDecl(ImplicitParam, DC, IdLoc, IdLoc, Id, Type,
-              /*tinfo*/ 0, SC_None) {
+              /*tinfo*/ nullptr, SC_None) {
     setImplicit();
   }
 
@@ -1357,9 +1358,7 @@ public:
   /// real default argument via setDefaultArg when the class
   /// definition enclosing the function declaration that owns this
   /// default argument is completed.
-  void setUnparsedDefaultArg() {
-    Init = (UnparsedDefaultArgument *)0;
-  }
+  void setUnparsedDefaultArg() { Init = (UnparsedDefaultArgument *)nullptr; }
 
   bool hasInheritedDefaultArg() const {
     return ParmVarDeclBits.HasInheritedDefaultArg;
@@ -1541,7 +1540,7 @@ protected:
     : DeclaratorDecl(DK, DC, NameInfo.getLoc(), NameInfo.getName(), T, TInfo,
                      StartLoc),
       DeclContext(DK),
-      ParamInfo(0), Body(),
+      ParamInfo(nullptr), Body(),
       SClass(S),
       IsInline(isInlineSpecified), IsInlineSpecified(isInlineSpecified),
       IsVirtualAsWritten(false), IsPure(false), HasInheritedPrototype(false),
@@ -1997,7 +1996,7 @@ public:
   /// \brief Determine whether this function is a function template
   /// specialization.
   bool isFunctionTemplateSpecialization() const {
-    return getPrimaryTemplate() != 0;
+    return getPrimaryTemplate() != nullptr;
   }
 
   /// \brief Retrieve the class scope template pattern that this function
@@ -2070,11 +2069,11 @@ public:
   /// \param PointOfInstantiation point at which the function template
   /// specialization was first instantiated.
   void setFunctionTemplateSpecialization(FunctionTemplateDecl *Template,
-                                      const TemplateArgumentList *TemplateArgs,
-                                         void *InsertPos,
-                    TemplateSpecializationKind TSK = TSK_ImplicitInstantiation,
-                    const TemplateArgumentListInfo *TemplateArgsAsWritten = 0,
-                    SourceLocation PointOfInstantiation = SourceLocation()) {
+                const TemplateArgumentList *TemplateArgs,
+                void *InsertPos,
+                TemplateSpecializationKind TSK = TSK_ImplicitInstantiation,
+                const TemplateArgumentListInfo *TemplateArgsAsWritten = nullptr,
+                SourceLocation PointOfInstantiation = SourceLocation()) {
     setFunctionTemplateSpecialization(getASTContext(), Template, TemplateArgs,
                                       InsertPos, TSK, TemplateArgsAsWritten,
                                       PointOfInstantiation);
@@ -2197,7 +2196,7 @@ public:
   bool isAnonymousStructOrUnion() const;
 
   Expr *getBitWidth() const {
-    return isBitField() ? InitializerOrBitWidth.getPointer() : 0;
+    return isBitField() ? InitializerOrBitWidth.getPointer() : nullptr;
   }
   unsigned getBitWidthValue(const ASTContext &Ctx) const;
 
@@ -2208,7 +2207,7 @@ public:
   // Note: used by some clients (i.e., do not remove it).
   void removeBitWidth() {
     assert(isBitField() && "no bitfield width to remove");
-    InitializerOrBitWidth.setPointer(0);
+    InitializerOrBitWidth.setPointer(nullptr);
   }
 
   /// getInClassInitStyle - Get the kind of (C++11) in-class initializer which
@@ -2227,7 +2226,8 @@ public:
   /// in-class initializer, but this returns null, then we have not parsed and
   /// attached it yet.
   Expr *getInClassInitializer() const {
-    return hasInClassInitializer() ? InitializerOrBitWidth.getPointer() : 0;
+    return hasInClassInitializer() ? InitializerOrBitWidth.getPointer()
+                                   : nullptr;
   }
   /// setInClassInitializer - Set the C++11 in-class initializer for this
   /// member.
@@ -2236,7 +2236,7 @@ public:
   /// member.
   void removeInClassInitializer() {
     assert(hasInClassInitializer() && "no initializer to remove");
-    InitializerOrBitWidth.setPointer(0);
+    InitializerOrBitWidth.setPointer(nullptr);
     InitializerOrBitWidth.setInt(ICIS_NoInit);
   }
 
@@ -2368,7 +2368,7 @@ class TypeDecl : public NamedDecl {
 protected:
   TypeDecl(Kind DK, DeclContext *DC, SourceLocation L, IdentifierInfo *Id,
            SourceLocation StartL = SourceLocation())
-    : NamedDecl(DK, DC, L, Id), TypeForDecl(0), LocStart(StartL) {}
+    : NamedDecl(DK, DC, L, Id), TypeForDecl(nullptr), LocStart(StartL) {}
 
 public:
   // Low-level accessor. If you just want the type defined by this node,
@@ -2583,7 +2583,7 @@ protected:
         IsCompleteDefinition(false), IsBeingDefined(false),
         IsEmbeddedInDeclarator(false), IsFreeStanding(false),
         IsCompleteDefinitionRequired(false),
-        NamedDeclOrQualifier((NamedDecl *)0) {
+        NamedDeclOrQualifier((NamedDecl *)nullptr) {
     assert((DK != Enum || TK == TTK_Enum) &&
            "EnumDecl not matched with TTK_Enum");
     setPreviousDecl(PrevDecl);
@@ -2733,12 +2733,12 @@ public:
         NamedDeclOrQualifier.get<NamedDecl *>());
   }
   DeclaratorDecl *getDeclaratorForAnonDecl() const {
-    return hasExtInfo() ? 0 : dyn_cast_or_null<DeclaratorDecl>(
+    return hasExtInfo() ? nullptr : dyn_cast_or_null<DeclaratorDecl>(
                                   NamedDeclOrQualifier.get<NamedDecl *>());
   }
 
   TypedefNameDecl *getTypedefNameForAnonDecl() const {
-    return hasExtInfo() ? 0 : dyn_cast_or_null<TypedefNameDecl>(
+    return hasExtInfo() ? nullptr : dyn_cast_or_null<TypedefNameDecl>(
                                   NamedDeclOrQualifier.get<NamedDecl *>());
   }
 
@@ -2750,7 +2750,7 @@ public:
   /// declaration, if it was present in the source.
   NestedNameSpecifier *getQualifier() const {
     return hasExtInfo() ? getExtInfo()->QualifierLoc.getNestedNameSpecifier()
-                        : 0;
+                        : nullptr;
   }
 
   /// \brief Retrieve the nested-name-specifier (with source-location
@@ -2825,9 +2825,9 @@ class EnumDecl : public TagDecl {
            IdentifierInfo *Id, EnumDecl *PrevDecl,
            bool Scoped, bool ScopedUsingClassTag, bool Fixed)
     : TagDecl(Enum, TTK_Enum, DC, IdLoc, Id, PrevDecl, StartLoc),
-      SpecializationInfo(0) {
+      SpecializationInfo(nullptr) {
     assert(Scoped || !ScopedUsingClassTag);
-    IntegerType = (const Type*)0;
+    IntegerType = (const Type *)nullptr;
     NumNegativeBits = 0;
     NumPositiveBits = 0;
     IsScoped = Scoped;
@@ -3061,7 +3061,7 @@ protected:
 public:
   static RecordDecl *Create(const ASTContext &C, TagKind TK, DeclContext *DC,
                             SourceLocation StartLoc, SourceLocation IdLoc,
-                            IdentifierInfo *Id, RecordDecl* PrevDecl = 0);
+                            IdentifierInfo *Id, RecordDecl* PrevDecl = nullptr);
   static RecordDecl *CreateDeserialized(const ASTContext &C, unsigned ID);
 
   RecordDecl *getPreviousDecl() {
@@ -3238,7 +3238,7 @@ public:
     /// is not from outside the immediately enclosing function/block.
     bool isNested() const { return VariableAndFlags.getInt() & flag_isNested; }
 
-    bool hasCopyExpr() const { return CopyExpr != 0; }
+    bool hasCopyExpr() const { return CopyExpr != nullptr; }
     Expr *getCopyExpr() const { return CopyExpr; }
     void setCopyExpr(Expr *e) { CopyExpr = e; }
   };
@@ -3269,9 +3269,9 @@ protected:
     : Decl(Block, DC, CaretLoc), DeclContext(Block),
       IsVariadic(false), CapturesCXXThis(false),
       BlockMissingReturnType(true), IsConversionFromLambda(false),
-      ParamInfo(0), NumParams(0), Body(0),
-      SignatureAsWritten(0), Captures(0), NumCaptures(0),
-      ManglingNumber(0), ManglingContextDecl(0) {}
+      ParamInfo(nullptr), NumParams(0), Body(nullptr),
+      SignatureAsWritten(nullptr), Captures(nullptr), NumCaptures(0),
+      ManglingNumber(0), ManglingContextDecl(nullptr) {}
 
 public:
   static BlockDecl *Create(ASTContext &C, DeclContext *DC, SourceLocation L); 
@@ -3405,7 +3405,7 @@ private:
 
   explicit CapturedDecl(DeclContext *DC, unsigned NumParams)
     : Decl(Captured, DC, SourceLocation()), DeclContext(Captured),
-      NumParams(NumParams), Body(0) { }
+      NumParams(NumParams), Body(nullptr) { }
 
   ImplicitParamDecl **getParams() const {
     return reinterpret_cast<ImplicitParamDecl **>(

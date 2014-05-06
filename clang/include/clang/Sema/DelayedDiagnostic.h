@@ -248,7 +248,7 @@ public:
 
   /// Does this pool, or any of its ancestors, contain any diagnostics?
   bool empty() const {
-    return (Diagnostics.empty() && (Parent == NULL || Parent->empty()));
+    return (Diagnostics.empty() && (!Parent || Parent->empty()));
   }
 
   /// Add a diagnostic to this pool.
