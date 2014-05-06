@@ -758,64 +758,7 @@ private:
         else
           Current.Type = TT_BlockComment;
       } else if (Current.is(tok::r_paren)) {
-        // FIXME: Pull cast detection into its own function.
-        FormatToken *LeftOfParens = NULL;
-        if (Current.MatchingParen)
-          LeftOfParens = Current.MatchingParen->getPreviousNonComment();
-        bool IsCast = false;
-        bool ParensAreEmpty = Current.Previous == Current.MatchingParen;
-        bool ParensAreType = !Current.Previous ||
-                             Current.Previous->Type == TT_PointerOrReference ||
-                             Current.Previous->Type == TT_TemplateCloser ||
-                             Current.Previous->isSimpleTypeSpecifier();
-        bool ParensCouldEndDecl =
-            Current.Next &&
-            Current.Next->isOneOf(tok::equal, tok::semi, tok::l_brace);
-        bool IsSizeOfOrAlignOf =
-            LeftOfParens &&
-            LeftOfParens->isOneOf(tok::kw_sizeof, tok::kw_alignof);
-        if (ParensAreType && !ParensCouldEndDecl && !IsSizeOfOrAlignOf &&
-            ((Contexts.size() > 1 &&
-              Contexts[Contexts.size() - 2].IsExpression) ||
-             (Current.Next && Current.Next->isBinaryOperator())))
-          IsCast = true;
-        else if (Current.Next && Current.Next->isNot(tok::string_literal) &&
-                 (Current.Next->Tok.isLiteral() ||
-                  Current.Next->isOneOf(tok::kw_sizeof, tok::kw_alignof)))
-          IsCast = true;
-        // If there is an identifier after the (), it is likely a cast, unless
-        // there is also an identifier before the ().
-        else if (LeftOfParens &&
-                 (LeftOfParens->Tok.getIdentifierInfo() == NULL ||
-                  LeftOfParens->is(tok::kw_return)) &&
-                 LeftOfParens->Type != TT_OverloadedOperator &&
-                 LeftOfParens->isNot(tok::at) &&
-                 LeftOfParens->Type != TT_TemplateCloser && Current.Next) {
-          if (Current.Next->isOneOf(tok::identifier, tok::numeric_constant)) {
-            IsCast = true;
-          } else {
-            // Use heuristics to recognize c style casting.
-            FormatToken *Prev = Current.Previous;
-            if (Prev && Prev->isOneOf(tok::amp, tok::star))
-              Prev = Prev->Previous;
-
-            if (Prev && Current.Next && Current.Next->Next) {
-              bool NextIsUnary = Current.Next->isUnaryOperator() ||
-                                 Current.Next->isOneOf(tok::amp, tok::star);
-              IsCast = NextIsUnary &&
-                       Current.Next->Next->isOneOf(tok::identifier,
-                                                   tok::numeric_constant);
-            }
-
-            for (; Prev != Current.MatchingParen; Prev = Prev->Previous) {
-              if (!Prev || !Prev->isOneOf(tok::kw_const, tok::identifier)) {
-                IsCast = false;
-                break;
-              }
-            }
-          }
-        }
-        if (IsCast && !ParensAreEmpty)
+        if (rParenEndsCast(Current))
           Current.Type = TT_CastRParen;
       } else if (Current.is(tok::at) && Current.Next) {
         switch (Current.Next->Tok.getObjCKeywordID()) {
@@ -879,6 +822,63 @@ private:
     return (!IsPPKeyword && PreviousNotConst->is(tok::identifier)) ||
            PreviousNotConst->Type == TT_PointerOrReference ||
            PreviousNotConst->isSimpleTypeSpecifier();
+  }
+
+  /// \brief Determine whether ')' is ending a cast.
+  bool rParenEndsCast(const FormatToken &Tok) {
+    FormatToken *LeftOfParens = NULL;
+    if (Tok.MatchingParen)
+      LeftOfParens = Tok.MatchingParen->getPreviousNonComment();
+    bool IsCast = false;
+    bool ParensAreEmpty = Tok.Previous == Tok.MatchingParen;
+    bool ParensAreType = !Tok.Previous ||
+                         Tok.Previous->Type == TT_PointerOrReference ||
+                         Tok.Previous->Type == TT_TemplateCloser ||
+                         Tok.Previous->isSimpleTypeSpecifier();
+    bool ParensCouldEndDecl =
+        Tok.Next && Tok.Next->isOneOf(tok::equal, tok::semi, tok::l_brace);
+    bool IsSizeOfOrAlignOf =
+        LeftOfParens && LeftOfParens->isOneOf(tok::kw_sizeof, tok::kw_alignof);
+    if (ParensAreType && !ParensCouldEndDecl && !IsSizeOfOrAlignOf &&
+        ((Contexts.size() > 1 && Contexts[Contexts.size() - 2].IsExpression) ||
+         (Tok.Next && Tok.Next->isBinaryOperator())))
+      IsCast = true;
+    else if (Tok.Next && Tok.Next->isNot(tok::string_literal) &&
+             (Tok.Next->Tok.isLiteral() ||
+              Tok.Next->isOneOf(tok::kw_sizeof, tok::kw_alignof)))
+      IsCast = true;
+    // If there is an identifier after the (), it is likely a cast, unless
+    // there is also an identifier before the ().
+    else if (LeftOfParens && (LeftOfParens->Tok.getIdentifierInfo() == NULL ||
+                              LeftOfParens->is(tok::kw_return)) &&
+             LeftOfParens->Type != TT_OverloadedOperator &&
+             LeftOfParens->isNot(tok::at) &&
+             LeftOfParens->Type != TT_TemplateCloser && Tok.Next) {
+      if (Tok.Next->isOneOf(tok::identifier, tok::numeric_constant)) {
+        IsCast = true;
+      } else {
+        // Use heuristics to recognize c style casting.
+        FormatToken *Prev = Tok.Previous;
+        if (Prev && Prev->isOneOf(tok::amp, tok::star))
+          Prev = Prev->Previous;
+
+        if (Prev && Tok.Next && Tok.Next->Next) {
+          bool NextIsUnary = Tok.Next->isUnaryOperator() ||
+                             Tok.Next->isOneOf(tok::amp, tok::star);
+          IsCast =
+              NextIsUnary &&
+              Tok.Next->Next->isOneOf(tok::identifier, tok::numeric_constant);
+        }
+
+        for (; Prev != Tok.MatchingParen; Prev = Prev->Previous) {
+          if (!Prev || !Prev->isOneOf(tok::kw_const, tok::identifier)) {
+            IsCast = false;
+            break;
+          }
+        }
+      }
+    }
+    return IsCast && !ParensAreEmpty;
   }
 
   /// \brief Return the type of the given token assuming it is * or &.
