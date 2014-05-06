@@ -487,7 +487,7 @@ unsigned BasicTTI::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
   case Intrinsic::round:   ISD = ISD::FROUND; break;
   case Intrinsic::pow:     ISD = ISD::FPOW;   break;
   case Intrinsic::fma:     ISD = ISD::FMA;    break;
-  case Intrinsic::fmuladd: ISD = ISD::FMA;    break; // FIXME: mul + add?
+  case Intrinsic::fmuladd: ISD = ISD::FMA;    break;
   case Intrinsic::lifetime_start:
   case Intrinsic::lifetime_end:
     return 0;
@@ -511,6 +511,12 @@ unsigned BasicTTI::getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
     // thare the code is twice as expensive.
     return LT.first * 2;
   }
+
+  // If we can't lower fmuladd into an FMA estimate the cost as a floating
+  // point mul followed by an add.
+  if (IID == Intrinsic::fmuladd)
+    return TopTTI->getArithmeticInstrCost(BinaryOperator::FMul, RetTy) +
+           TopTTI->getArithmeticInstrCost(BinaryOperator::FAdd, RetTy);
 
   // Else, assume that we need to scalarize this intrinsic. For math builtins
   // this will emit a costly libcall, adding call overhead and spills. Make it
