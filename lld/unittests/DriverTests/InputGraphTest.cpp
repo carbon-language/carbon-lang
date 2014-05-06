@@ -175,5 +175,5 @@ TEST_F(InputGraphTest, Normalize) {
   EXPECT_EQ("file4", getNext());
   EXPECT_EQ("file5", getNext());
   EXPECT_EQ("file6", getNext());
-  _graph->notifyProgress();
+  expectEnd();
 }
