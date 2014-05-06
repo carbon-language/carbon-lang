@@ -63,6 +63,13 @@ void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
   setDLLStorageClass(Src->getDLLStorageClass());
 }
 
+unsigned GlobalValue::getAlignment() const {
+  if (auto *GA = dyn_cast<GlobalAlias>(this))
+    return GA->getAliasedGlobal()->getAlignment();
+
+  return (1u << Alignment) >> 1;
+}
+
 void GlobalValue::setAlignment(unsigned Align) {
   assert((!isa<GlobalAlias>(this)) &&
          "GlobalAlias should not have an alignment!");

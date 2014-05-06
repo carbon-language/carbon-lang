@@ -81,9 +81,7 @@ public:
     removeDeadConstantUsers();   // remove any dead constants using this.
   }
 
-  unsigned getAlignment() const {
-    return (1u << Alignment) >> 1;
-  }
+  unsigned getAlignment() const;
   void setAlignment(unsigned Align);
 
   bool hasUnnamedAddr() const { return UnnamedAddr; }

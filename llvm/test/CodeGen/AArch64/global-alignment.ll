@@ -4,6 +4,7 @@
 @var32 = global [3 x i32] zeroinitializer
 @var64 = global [3 x i64] zeroinitializer
 @var32_align64 = global [3 x i32] zeroinitializer, align 8
+@alias = alias [3 x i32]* @var32_align64
 
 define i64 @test_align32() {
 ; CHECK-LABEL: test_align32:
@@ -43,6 +44,19 @@ define i64 @test_var32_align64() {
 ; CHECK: adrp x[[HIBITS:[0-9]+]], var32_align64
 ; CHECK-NOT: add x[[HIBITS]]
 ; CHECK: ldr x0, [x[[HIBITS]], {{#?}}:lo12:var32_align64]
+
+  ret i64 %val
+}
+
+define i64 @test_var32_alias() {
+; CHECK-LABEL: test_var32_alias:
+  %addr = bitcast [3 x i32]* @alias to i64*
+
+  ; Test that we can find the alignment for aliases.
+  %val = load i64* %addr
+; CHECK: adrp x[[HIBITS:[0-9]+]], alias
+; CHECK-NOT: add x[[HIBITS]]
+; CHECK: ldr x0, [x[[HIBITS]], {{#?}}:lo12:alias]
 
   ret i64 %val
 }
