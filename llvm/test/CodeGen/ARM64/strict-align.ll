@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=arm64-apple-darwin | FileCheck %s
+; RUN: llc < %s -mtriple=arm64-apple-darwin -arm64-no-strict-align | FileCheck %s
 ; RUN: llc < %s -mtriple=arm64-apple-darwin -arm64-strict-align | FileCheck %s --check-prefix=CHECK-STRICT
 
 define i32 @f0(i32* nocapture %p) nounwind {

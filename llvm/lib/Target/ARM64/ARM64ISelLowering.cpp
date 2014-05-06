@@ -45,9 +45,20 @@ EnableARM64TailCalls("arm64-tail-calls", cl::Hidden,
                      cl::desc("Generate ARM64 tail calls (TEMPORARY OPTION)."),
                      cl::init(true));
 
-static cl::opt<bool>
-StrictAlign("arm64-strict-align", cl::Hidden,
-            cl::desc("Disallow all unaligned memory accesses"));
+enum AlignMode {
+  StrictAlign,
+  NoStrictAlign
+};
+
+static cl::opt<AlignMode>
+Align(cl::desc("Load/store alignment support"),
+      cl::Hidden, cl::init(NoStrictAlign),
+      cl::values(
+          clEnumValN(StrictAlign,   "arm64-strict-align",
+                     "Disallow all unaligned memory accesses"),
+          clEnumValN(NoStrictAlign, "arm64-no-strict-align",
+                     "Allow unaligned memory accesses"),
+          clEnumValEnd));
 
 // Place holder until extr generation is tested fully.
 static cl::opt<bool>
@@ -370,7 +381,7 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
 
   setMinFunctionAlignment(2);
 
-  RequireStrictAlign = StrictAlign;
+  RequireStrictAlign = (Align == StrictAlign);
 
   setHasExtractBitsInsn(true);
 
