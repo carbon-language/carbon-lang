@@ -256,7 +256,6 @@ protected:
   StringRef _path;                       // The path of the Input file
   InputGraph::FileVectorT _files;        // A vector of lld File objects
   std::unique_ptr<MemoryBuffer> _buffer; // Memory buffer to actual contents
-  uint32_t _resolveState;                // The resolve state of the file
 
   // The next file that would be processed by the resolver
   uint32_t _nextFileIndex;
