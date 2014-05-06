@@ -18,9 +18,9 @@
 #ifndef LLVM_MC_SUBTARGETFEATURE_H
 #define LLVM_MC_SUBTARGETFEATURE_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataTypes.h"
-#include <vector>
 
 namespace llvm {
   class raw_ostream;
@@ -83,15 +83,12 @@ public:
   /// ToggleFeature - Toggle a feature and returns the newly updated feature
   /// bits.
   uint64_t ToggleFeature(uint64_t Bits, const StringRef String,
-                         const SubtargetFeatureKV *FeatureTable,
-                         size_t FeatureTableSize);
+                         ArrayRef<SubtargetFeatureKV> FeatureTable);
 
   /// Get feature bits of a CPU.
   uint64_t getFeatureBits(const StringRef CPU,
-                          const SubtargetFeatureKV *CPUTable,
-                          size_t CPUTableSize,
-                          const SubtargetFeatureKV *FeatureTable,
-                          size_t FeatureTableSize);
+                          ArrayRef<SubtargetFeatureKV> CPUTable,
+                          ArrayRef<SubtargetFeatureKV> FeatureTable);
 
   /// Print feature string.
   void print(raw_ostream &OS) const;

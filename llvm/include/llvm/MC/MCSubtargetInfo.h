@@ -28,8 +28,8 @@ class StringRef;
 ///
 class MCSubtargetInfo {
   std::string TargetTriple;            // Target triple
-  const SubtargetFeatureKV *ProcFeatures;  // Processor feature list
-  const SubtargetFeatureKV *ProcDesc;  // Processor descriptions
+  ArrayRef<SubtargetFeatureKV> ProcFeatures;  // Processor feature list
+  ArrayRef<SubtargetFeatureKV> ProcDesc;  // Processor descriptions
 
   // Scheduler machine model
   const SubtargetInfoKV *ProcSchedModels;
@@ -41,21 +41,18 @@ class MCSubtargetInfo {
   const InstrStage *Stages;            // Instruction itinerary stages
   const unsigned *OperandCycles;       // Itinerary operand cycles
   const unsigned *ForwardingPaths;     // Forwarding paths
-  unsigned NumFeatures;                // Number of processor features
-  unsigned NumProcs;                   // Number of processors
   uint64_t FeatureBits;                // Feature bits for current CPU + FS
 
 public:
   void InitMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS,
-                           const SubtargetFeatureKV *PF,
-                           const SubtargetFeatureKV *PD,
+                           ArrayRef<SubtargetFeatureKV> PF,
+                           ArrayRef<SubtargetFeatureKV> PD,
                            const SubtargetInfoKV *ProcSched,
                            const MCWriteProcResEntry *WPR,
                            const MCWriteLatencyEntry *WL,
                            const MCReadAdvanceEntry *RA,
                            const InstrStage *IS,
-                           const unsigned *OC, const unsigned *FP,
-                           unsigned NF, unsigned NP);
+                           const unsigned *OC, const unsigned *FP);
 
   /// getTargetTriple - Return the target triple string.
   StringRef getTargetTriple() const {

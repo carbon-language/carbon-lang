@@ -105,49 +105,43 @@ void SubtargetFeatures::AddFeature(const StringRef String) {
 }
 
 /// Find KV in array using binary search.
-static const SubtargetFeatureKV *Find(StringRef S, const SubtargetFeatureKV *A,
-                                      size_t L) {
-  // Determine the end of the array
-  const SubtargetFeatureKV *Hi = A + L;
+static const SubtargetFeatureKV *Find(StringRef S,
+                                      ArrayRef<SubtargetFeatureKV> A) {
   // Binary search the array
-  const SubtargetFeatureKV *F = std::lower_bound(A, Hi, S);
+  auto F = std::lower_bound(A.begin(), A.end(), S);
   // If not found then return NULL
-  if (F == Hi || StringRef(F->Key) != S) return nullptr;
+  if (F == A.end() || StringRef(F->Key) != S) return nullptr;
   // Return the found array item
   return F;
 }
 
 /// getLongestEntryLength - Return the length of the longest entry in the table.
 ///
-static size_t getLongestEntryLength(const SubtargetFeatureKV *Table,
-                                    size_t Size) {
+static size_t getLongestEntryLength(ArrayRef<SubtargetFeatureKV> Table) {
   size_t MaxLen = 0;
-  for (size_t i = 0; i < Size; i++)
-    MaxLen = std::max(MaxLen, std::strlen(Table[i].Key));
+  for (auto &I : Table)
+    MaxLen = std::max(MaxLen, std::strlen(I.Key));
   return MaxLen;
 }
 
 /// Display help for feature choices.
 ///
-static void Help(const SubtargetFeatureKV *CPUTable, size_t CPUTableSize,
-                     const SubtargetFeatureKV *FeatTable,
-                     size_t FeatTableSize) {
+static void Help(ArrayRef<SubtargetFeatureKV> CPUTable,
+                 ArrayRef<SubtargetFeatureKV> FeatTable) {
   // Determine the length of the longest CPU and Feature entries.
-  unsigned MaxCPULen  = getLongestEntryLength(CPUTable, CPUTableSize);
-  unsigned MaxFeatLen = getLongestEntryLength(FeatTable, FeatTableSize);
+  unsigned MaxCPULen  = getLongestEntryLength(CPUTable);
+  unsigned MaxFeatLen = getLongestEntryLength(FeatTable);
 
   // Print the CPU table.
   errs() << "Available CPUs for this target:\n\n";
-  for (size_t i = 0; i != CPUTableSize; i++)
-    errs() << format("  %-*s - %s.\n",
-                     MaxCPULen, CPUTable[i].Key, CPUTable[i].Desc);
+  for (auto &CPU : CPUTable)
+    errs() << format("  %-*s - %s.\n", MaxCPULen, CPU.Key, CPU.Desc);
   errs() << '\n';
 
   // Print the Feature table.
   errs() << "Available features for this target:\n\n";
-  for (size_t i = 0; i != FeatTableSize; i++)
-    errs() << format("  %-*s - %s.\n",
-                     MaxFeatLen, FeatTable[i].Key, FeatTable[i].Desc);
+  for (auto &Feature : FeatTable)
+    errs() << format("  %-*s - %s.\n", MaxFeatLen, Feature.Key, Feature.Desc);
   errs() << '\n';
 
   errs() << "Use +feature to enable a feature, or -feature to disable it.\n"
@@ -173,16 +167,13 @@ std::string SubtargetFeatures::getString() const {
 ///
 static
 void SetImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
-                    const SubtargetFeatureKV *FeatureTable,
-                    size_t FeatureTableSize) {
-  for (size_t i = 0; i < FeatureTableSize; ++i) {
-    const SubtargetFeatureKV &FE = FeatureTable[i];
-
+                    ArrayRef<SubtargetFeatureKV> FeatureTable) {
+  for (auto &FE : FeatureTable) {
     if (FeatureEntry->Value == FE.Value) continue;
 
     if (FeatureEntry->Implies & FE.Value) {
       Bits |= FE.Value;
-      SetImpliedBits(Bits, &FE, FeatureTable, FeatureTableSize);
+      SetImpliedBits(Bits, &FE, FeatureTable);
     }
   }
 }
@@ -192,41 +183,38 @@ void SetImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
 ///
 static
 void ClearImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
-                      const SubtargetFeatureKV *FeatureTable,
-                      size_t FeatureTableSize) {
-  for (size_t i = 0; i < FeatureTableSize; ++i) {
-    const SubtargetFeatureKV &FE = FeatureTable[i];
-
+                      ArrayRef<SubtargetFeatureKV> FeatureTable) {
+  for (auto &FE : FeatureTable) {
     if (FeatureEntry->Value == FE.Value) continue;
 
     if (FE.Implies & FeatureEntry->Value) {
       Bits &= ~FE.Value;
-      ClearImpliedBits(Bits, &FE, FeatureTable, FeatureTableSize);
+      ClearImpliedBits(Bits, &FE, FeatureTable);
     }
   }
 }
 
 /// ToggleFeature - Toggle a feature and returns the newly updated feature
 /// bits.
-uint64_t
-SubtargetFeatures::ToggleFeature(uint64_t Bits, const StringRef Feature,
-                                 const SubtargetFeatureKV *FeatureTable,
-                                 size_t FeatureTableSize) {
+uint64_t SubtargetFeatures::ToggleFeature(
+    uint64_t Bits, const StringRef Feature,
+    ArrayRef<SubtargetFeatureKV> FeatureTable) {
+
   // Find feature in table.
   const SubtargetFeatureKV *FeatureEntry =
-    Find(StripFlag(Feature), FeatureTable, FeatureTableSize);
+      Find(StripFlag(Feature), FeatureTable);
   // If there is a match
   if (FeatureEntry) {
     if ((Bits & FeatureEntry->Value) == FeatureEntry->Value) {
       Bits &= ~FeatureEntry->Value;
 
       // For each feature that implies this, clear it.
-      ClearImpliedBits(Bits, FeatureEntry, FeatureTable, FeatureTableSize);
+      ClearImpliedBits(Bits, FeatureEntry, FeatureTable);
     } else {
       Bits |=  FeatureEntry->Value;
 
       // For each feature that this implies, set it.
-      SetImpliedBits(Bits, FeatureEntry, FeatureTable, FeatureTableSize);
+      SetImpliedBits(Bits, FeatureEntry, FeatureTable);
     }
   } else {
     errs() << "'" << Feature
@@ -240,20 +228,20 @@ SubtargetFeatures::ToggleFeature(uint64_t Bits, const StringRef Feature,
 
 /// getFeatureBits - Get feature bits a CPU.
 ///
-uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
-                                         const SubtargetFeatureKV *CPUTable,
-                                         size_t CPUTableSize,
-                                         const SubtargetFeatureKV *FeatureTable,
-                                         size_t FeatureTableSize) {
-  if (!FeatureTableSize || !CPUTableSize)
+uint64_t
+SubtargetFeatures::getFeatureBits(const StringRef CPU,
+                                  ArrayRef<SubtargetFeatureKV> CPUTable,
+                                  ArrayRef<SubtargetFeatureKV> FeatureTable) {
+
+  if (CPUTable.empty() || FeatureTable.empty())
     return 0;
 
 #ifndef NDEBUG
-  for (size_t i = 1; i < CPUTableSize; i++) {
+  for (size_t i = 1, e = CPUTable.size(); i != e; ++i) {
     assert(strcmp(CPUTable[i - 1].Key, CPUTable[i].Key) < 0 &&
            "CPU table is not sorted");
   }
-  for (size_t i = 1; i < FeatureTableSize; i++) {
+  for (size_t i = 1, e = FeatureTable.size(); i != e; ++i) {
     assert(strcmp(FeatureTable[i - 1].Key, FeatureTable[i].Key) < 0 &&
           "CPU features table is not sorted");
   }
@@ -262,21 +250,21 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
 
   // Check if help is needed
   if (CPU == "help")
-    Help(CPUTable, CPUTableSize, FeatureTable, FeatureTableSize);
+    Help(CPUTable, FeatureTable);
 
   // Find CPU entry if CPU name is specified.
   else if (!CPU.empty()) {
-    const SubtargetFeatureKV *CPUEntry = Find(CPU, CPUTable, CPUTableSize);
+    const SubtargetFeatureKV *CPUEntry = Find(CPU, CPUTable);
+
     // If there is a match
     if (CPUEntry) {
       // Set base feature bits
       Bits = CPUEntry->Value;
 
       // Set the feature implied by this CPU feature, if any.
-      for (size_t i = 0; i < FeatureTableSize; ++i) {
-        const SubtargetFeatureKV &FE = FeatureTable[i];
+      for (auto &FE : FeatureTable) {
         if (CPUEntry->Value & FE.Value)
-          SetImpliedBits(Bits, &FE, FeatureTable, FeatureTableSize);
+          SetImpliedBits(Bits, &FE, FeatureTable);
       }
     } else {
       errs() << "'" << CPU
@@ -286,16 +274,14 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
   }
 
   // Iterate through each feature
-  for (size_t i = 0, E = Features.size(); i < E; i++) {
-    const StringRef Feature = Features[i];
-
+  for (auto &Feature : Features) {
     // Check for help
     if (Feature == "+help")
-      Help(CPUTable, CPUTableSize, FeatureTable, FeatureTableSize);
+      Help(CPUTable, FeatureTable);
 
     // Find feature in table.
     const SubtargetFeatureKV *FeatureEntry =
-                       Find(StripFlag(Feature), FeatureTable, FeatureTableSize);
+        Find(StripFlag(Feature), FeatureTable);
     // If there is a match
     if (FeatureEntry) {
       // Enable/disable feature in bits
@@ -303,12 +289,12 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
         Bits |=  FeatureEntry->Value;
 
         // For each feature that this implies, set it.
-        SetImpliedBits(Bits, FeatureEntry, FeatureTable, FeatureTableSize);
+        SetImpliedBits(Bits, FeatureEntry, FeatureTable);
       } else {
         Bits &= ~FeatureEntry->Value;
 
         // For each feature that implies this, clear it.
-        ClearImpliedBits(Bits, FeatureEntry, FeatureTable, FeatureTableSize);
+        ClearImpliedBits(Bits, FeatureEntry, FeatureTable);
       }
     } else {
       errs() << "'" << Feature
