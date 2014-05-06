@@ -434,13 +434,19 @@ namespace llvm {
     /// flag set.
     DIType createObjectPointerType(DIType Ty);
 
-    /// createForwardDecl - Create a temporary forward-declared type.
+    /// \brief Create a permanent forward-declared type.
     DICompositeType createForwardDecl(unsigned Tag, StringRef Name,
                                       DIDescriptor Scope, DIFile F,
                                       unsigned Line, unsigned RuntimeLang = 0,
                                       uint64_t SizeInBits = 0,
                                       uint64_t AlignInBits = 0,
                                       StringRef UniqueIdentifier = StringRef());
+
+    /// \brief Create a temporary forward-declared type.
+    DICompositeType createReplaceableForwardDecl(
+        unsigned Tag, StringRef Name, DIDescriptor Scope, DIFile F,
+        unsigned Line, unsigned RuntimeLang = 0, uint64_t SizeInBits = 0,
+        uint64_t AlignInBits = 0, StringRef UniqueIdentifier = StringRef());
 
     /// retainType - Retain DIType in a module even if it is not referenced
     /// through debug info anchors.

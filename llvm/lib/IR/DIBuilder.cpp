@@ -901,6 +901,40 @@ DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIDescriptor Scope,
     UniqueIdentifier.empty() ? nullptr
                              : MDString::get(VMContext, UniqueIdentifier)
   };
+  MDNode *Node = MDNode::get(VMContext, Elts);
+  DICompositeType RetTy(Node);
+  assert(RetTy.isCompositeType() &&
+         "createForwardDecl result should be a DIType");
+  if (!UniqueIdentifier.empty())
+    retainType(RetTy);
+  return RetTy;
+}
+
+/// createForwardDecl - Create a temporary forward-declared type that
+/// can be RAUW'd if the full type is seen.
+DICompositeType DIBuilder::createReplaceableForwardDecl(
+    unsigned Tag, StringRef Name, DIDescriptor Scope, DIFile F, unsigned Line,
+    unsigned RuntimeLang, uint64_t SizeInBits, uint64_t AlignInBits,
+    StringRef UniqueIdentifier) {
+  // Create a temporary MDNode.
+  Value *Elts[] = {
+    GetTagConstant(VMContext, Tag),
+    F.getFileNode(),
+    DIScope(getNonCompileUnitScope(Scope)).getRef(),
+    MDString::get(VMContext, Name),
+    ConstantInt::get(Type::getInt32Ty(VMContext), Line),
+    ConstantInt::get(Type::getInt64Ty(VMContext), SizeInBits),
+    ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Offset
+    ConstantInt::get(Type::getInt32Ty(VMContext), DIDescriptor::FlagFwdDecl),
+    nullptr,
+    DIArray(),
+    ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang),
+    nullptr,
+    nullptr, //TemplateParams
+    UniqueIdentifier.empty() ? nullptr
+                             : MDString::get(VMContext, UniqueIdentifier)
+  };
   MDNode *Node = MDNode::getTemporary(VMContext, Elts);
   DICompositeType RetTy(Node);
   assert(RetTy.isCompositeType() &&

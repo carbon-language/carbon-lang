@@ -335,7 +335,7 @@ unsigned DIArray::getNumElements() const {
 
 /// replaceAllUsesWith - Replace all uses of the MDNode used by this
 /// type with the one in the passed descriptor.
-void DIType::replaceAllUsesWith(DIDescriptor &D) {
+void DIType::replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D) {
 
   assert(DbgNode && "Trying to replace an unverified type!");
 
@@ -344,13 +344,19 @@ void DIType::replaceAllUsesWith(DIDescriptor &D) {
   // which, due to uniquing, has merged with the source. We shield clients from
   // this detail by allowing a value to be replaced with replaceAllUsesWith()
   // itself.
-  if (DbgNode != D) {
-    MDNode *Node = const_cast<MDNode *>(DbgNode);
-    const MDNode *DN = D;
-    const Value *V = cast_or_null<Value>(DN);
-    Node->replaceAllUsesWith(const_cast<Value *>(V));
-    MDNode::deleteTemporary(Node);
+  const MDNode *DN = D;
+  if (DbgNode == DN) {
+    SmallVector<Value*, 10> Ops(DbgNode->getNumOperands());
+    for (size_t i = 0; i != Ops.size(); ++i)
+      Ops[i] = DbgNode->getOperand(i);
+    DN = MDNode::get(VMContext, Ops);
   }
+
+  MDNode *Node = const_cast<MDNode *>(DbgNode);
+  const Value *V = cast_or_null<Value>(DN);
+  Node->replaceAllUsesWith(const_cast<Value *>(V));
+  MDNode::deleteTemporary(Node);
+  DbgNode = D;
 }
 
 /// replaceAllUsesWith - Replace all uses of the MDNode used by this
@@ -358,19 +364,12 @@ void DIType::replaceAllUsesWith(DIDescriptor &D) {
 void DIType::replaceAllUsesWith(MDNode *D) {
 
   assert(DbgNode && "Trying to replace an unverified type!");
-
-  // Since we use a TrackingVH for the node, its easy for clients to manufacture
-  // legitimate situations where they want to replaceAllUsesWith() on something
-  // which, due to uniquing, has merged with the source. We shield clients from
-  // this detail by allowing a value to be replaced with replaceAllUsesWith()
-  // itself.
-  if (DbgNode != D) {
-    MDNode *Node = const_cast<MDNode *>(DbgNode);
-    const MDNode *DN = D;
-    const Value *V = cast_or_null<Value>(DN);
-    Node->replaceAllUsesWith(const_cast<Value *>(V));
-    MDNode::deleteTemporary(Node);
-  }
+  assert(DbgNode != D && "This replacement should always happen");
+  MDNode *Node = const_cast<MDNode *>(DbgNode);
+  const MDNode *DN = D;
+  const Value *V = cast_or_null<Value>(DN);
+  Node->replaceAllUsesWith(const_cast<Value *>(V));
+  MDNode::deleteTemporary(Node);
 }
 
 /// Verify - Verify that a compile unit is well formed.

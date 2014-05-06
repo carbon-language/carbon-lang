@@ -339,7 +339,7 @@ public:
 
   /// replaceAllUsesWith - Replace all uses of debug info referenced by
   /// this descriptor.
-  void replaceAllUsesWith(DIDescriptor &D);
+  void replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D);
   void replaceAllUsesWith(MDNode *D);
 };
 
