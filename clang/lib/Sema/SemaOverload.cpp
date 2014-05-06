@@ -9260,6 +9260,7 @@ struct CompareOverloadCandidatesForDisplay {
           L->FailureKind == ovl_fail_too_few_arguments) {
         if (R->FailureKind == ovl_fail_too_many_arguments ||
             R->FailureKind == ovl_fail_too_few_arguments) {
+          if (!L->Function || !R->Function) return !R->Function;
           int LDist = std::abs((int)L->Function->getNumParams() - (int)NumArgs);
           int RDist = std::abs((int)R->Function->getNumParams() - (int)NumArgs);
           if (LDist == RDist)
