@@ -3852,31 +3852,39 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
   case Match_InvalidSuffix:
     return Error(Loc, "invalid type suffix for instruction");
   case Match_InvalidMemoryIndexedSImm9:
-    return Error(Loc, "index must be an integer in range [-256,255].");
+    return Error(Loc, "index must be an integer in range [-256, 255].");
   case Match_InvalidMemoryIndexed32SImm7:
-    return Error(Loc, "index must be a multiple of 4 in range [-256,252].");
+    return Error(Loc, "index must be a multiple of 4 in range [-256, 252].");
   case Match_InvalidMemoryIndexed64SImm7:
-    return Error(Loc, "index must be a multiple of 8 in range [-512,504].");
+    return Error(Loc, "index must be a multiple of 8 in range [-512, 504].");
   case Match_InvalidMemoryIndexed128SImm7:
-    return Error(Loc, "index must be a multiple of 16 in range [-1024,1008].");
+    return Error(Loc, "index must be a multiple of 16 in range [-1024, 1008].");
   case Match_InvalidMemoryIndexed8:
-    return Error(Loc, "index must be an integer in range [0,4095].");
+    return Error(Loc, "index must be an integer in range [0, 4095].");
   case Match_InvalidMemoryIndexed16:
-    return Error(Loc, "index must be a multiple of 2 in range [0,8190].");
+    return Error(Loc, "index must be a multiple of 2 in range [0, 8190].");
   case Match_InvalidMemoryIndexed32:
-    return Error(Loc, "index must be a multiple of 4 in range [0,16380].");
+    return Error(Loc, "index must be a multiple of 4 in range [0, 16380].");
   case Match_InvalidMemoryIndexed64:
-    return Error(Loc, "index must be a multiple of 8 in range [0,32760].");
+    return Error(Loc, "index must be a multiple of 8 in range [0, 32760].");
   case Match_InvalidMemoryIndexed128:
-    return Error(Loc, "index must be a multiple of 16 in range [0,65520].");
+    return Error(Loc, "index must be a multiple of 16 in range [0, 65520].");
+  case Match_InvalidImm0_7:
+    return Error(Loc, "immediate must be an integer in range [0, 7].");
+  case Match_InvalidImm0_15:
+    return Error(Loc, "immediate must be an integer in range [0, 15].");
+  case Match_InvalidImm0_31:
+    return Error(Loc, "immediate must be an integer in range [0, 31].");
+  case Match_InvalidImm0_63:
+    return Error(Loc, "immediate must be an integer in range [0, 63].");
   case Match_InvalidImm1_8:
-    return Error(Loc, "immediate must be an integer in range [1,8].");
+    return Error(Loc, "immediate must be an integer in range [1, 8].");
   case Match_InvalidImm1_16:
-    return Error(Loc, "immediate must be an integer in range [1,16].");
+    return Error(Loc, "immediate must be an integer in range [1, 16].");
   case Match_InvalidImm1_32:
-    return Error(Loc, "immediate must be an integer in range [1,32].");
+    return Error(Loc, "immediate must be an integer in range [1, 32].");
   case Match_InvalidImm1_64:
-    return Error(Loc, "immediate must be an integer in range [1,64].");
+    return Error(Loc, "immediate must be an integer in range [1, 64].");
   case Match_InvalidLabel:
     return Error(Loc, "expected label or encodable integer pc offset");
   case Match_MRS:
@@ -4416,6 +4424,10 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_InvalidMemoryIndexed32SImm7:
   case Match_InvalidMemoryIndexed64SImm7:
   case Match_InvalidMemoryIndexed128SImm7:
+  case Match_InvalidImm0_7:
+  case Match_InvalidImm0_15:
+  case Match_InvalidImm0_31:
+  case Match_InvalidImm0_63:
   case Match_InvalidImm1_8:
   case Match_InvalidImm1_16:
   case Match_InvalidImm1_32:

@@ -225,22 +225,15 @@ def imm0_65535 : Operand<i32>, ImmLeaf<i32, [{
   let PrintMethod = "printHexImm";
 }
 
-def Imm1_8Operand : AsmOperandClass {
-  let Name = "Imm1_8";
-  let DiagnosticType = "InvalidImm1_8";
+class AsmImmRange<int Low, int High> : AsmOperandClass {
+  let Name = "Imm" # Low # "_" # High;
+  let DiagnosticType = "InvalidImm" # Low # "_" # High;
 }
-def Imm1_16Operand : AsmOperandClass {
-  let Name = "Imm1_16";
-  let DiagnosticType = "InvalidImm1_16";
-}
-def Imm1_32Operand : AsmOperandClass {
-  let Name = "Imm1_32";
-  let DiagnosticType = "InvalidImm1_32";
-}
-def Imm1_64Operand : AsmOperandClass {
-  let Name = "Imm1_64";
-  let DiagnosticType = "InvalidImm1_64";
-}
+
+def Imm1_8Operand : AsmImmRange<1, 8>;
+def Imm1_16Operand : AsmImmRange<1, 16>;
+def Imm1_32Operand : AsmImmRange<1, 32>;
+def Imm1_64Operand : AsmImmRange<1, 64>;
 
 def MovZSymbolG3AsmOperand : AsmOperandClass {
   let Name = "MovZSymbolG3";
@@ -386,10 +379,10 @@ def vecshiftR64Narrow : Operand<i32>, ImmLeaf<i32, [{
   let ParserMatchClass = Imm1_32Operand;
 }
 
-def Imm0_7Operand : AsmOperandClass { let Name = "Imm0_7"; }
-def Imm0_15Operand : AsmOperandClass { let Name = "Imm0_15"; }
-def Imm0_31Operand : AsmOperandClass { let Name = "Imm0_31"; }
-def Imm0_63Operand : AsmOperandClass { let Name = "Imm0_63"; }
+def Imm0_7Operand : AsmImmRange<0, 7>;
+def Imm0_15Operand : AsmImmRange<0, 15>;
+def Imm0_31Operand : AsmImmRange<0, 31>;
+def Imm0_63Operand : AsmImmRange<0, 63>;
 
 def vecshiftL8 : Operand<i32>, ImmLeaf<i32, [{
   return (((uint32_t)Imm) < 8);
@@ -4473,6 +4466,7 @@ multiclass SIMDCmpTwoVector<bit U, bits<5> opc, string asm,
 // FP Comparisons support only S and D element sizes.
 multiclass SIMDFPCmpTwoVector<bit U, bit S, bits<5> opc,
                               string asm, SDNode OpNode> {
+
   def v2i32rz : BaseSIMDCmpTwoVector<0, U, {S,0}, opc, V64,
                                      asm, ".2s", "0.0",
                                      v2i32, v2f32, OpNode>;
