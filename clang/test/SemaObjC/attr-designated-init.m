@@ -29,7 +29,7 @@ __attribute__((objc_root_class))
 +(id)init { return 0; }
 -(id)init3 { return 0; }
 -(id)init4 NS_DESIGNATED_INITIALIZER { return 0; } // expected-error {{only applies to init methods of interface or class extension declarations}} \
-									 			   // expected-warning {{secondary initializer missing a 'self' call to another initializer}}
+									 			   // expected-warning {{convenience initializer missing a 'self' call to another initializer}}
 @end
 
 __attribute__((objc_root_class))
@@ -44,7 +44,7 @@ __attribute__((objc_root_class))
 
 @implementation B1
 -(id)initB1 { return 0; }
--(id)initB2 { return 0; } // expected-warning {{secondary initializer missing a 'self' call to another initializer}}
+-(id)initB2 { return 0; } // expected-warning {{convenience initializer missing a 'self' call to another initializer}}
 -(id)initB3 { return 0; }
 @end
 
@@ -156,8 +156,8 @@ __attribute__((objc_root_class))
 -(id)initS1 {
   return [super initB1];
 }
--(id)initS2 { // expected-warning {{secondary initializer missing a 'self' call to another initializer}}
-  return [super initB1]; // expected-warning {{secondary initializer should not invoke an initializer on 'super'}}
+-(id)initS2 { // expected-warning {{convenience initializer missing a 'self' call to another initializer}}
+  return [super initB1]; // expected-warning {{convenience initializer should not invoke an initializer on 'super'}}
 }
 -(id)initS3 {
   return [self initB1];
@@ -166,13 +166,13 @@ __attribute__((objc_root_class))
   return [self initS1];
 }
 -(id)initS5 {
-  [super initB1]; // expected-warning {{secondary initializer should not invoke an initializer on 'super'}}
+  [super initB1]; // expected-warning {{convenience initializer should not invoke an initializer on 'super'}}
   void (^blk)(void) = ^{
-    [super initB1]; // expected-warning {{secondary initializer should not invoke an initializer on 'super'}}
+    [super initB1]; // expected-warning {{convenience initializer should not invoke an initializer on 'super'}}
   };
   return [self initS1];
 }
--(id)initS6 { // expected-warning {{secondary initializer missing a 'self' call to another initializer}}
+-(id)initS6 { // expected-warning {{convenience initializer missing a 'self' call to another initializer}}
   S6 *s;
   return [s initS1];
 }
