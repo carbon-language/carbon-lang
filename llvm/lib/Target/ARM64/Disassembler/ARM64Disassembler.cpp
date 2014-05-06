@@ -170,11 +170,27 @@ static DecodeStatus DecodeVecShiftL16Imm(llvm::MCInst &Inst, unsigned Imm,
 static DecodeStatus DecodeVecShiftL8Imm(llvm::MCInst &Inst, unsigned Imm,
                                         uint64_t Addr, const void *Decoder);
 
+static bool Check(DecodeStatus &Out, DecodeStatus In) {
+  switch (In) {
+    case MCDisassembler::Success:
+      // Out stays the same.
+      return true;
+    case MCDisassembler::SoftFail:
+      Out = In;
+      return true;
+    case MCDisassembler::Fail:
+      Out = In;
+      return false;
+  }
+  llvm_unreachable("Invalid DecodeStatus!");
+}
+
 #include "ARM64GenDisassemblerTables.inc"
 #include "ARM64GenInstrInfo.inc"
 
 #define Success llvm::MCDisassembler::Success
 #define Fail llvm::MCDisassembler::Fail
+#define SoftFail llvm::MCDisassembler::SoftFail
 
 static MCDisassembler *createARM64Disassembler(const Target &T,
                                                const MCSubtargetInfo &STI,
@@ -202,12 +218,7 @@ DecodeStatus ARM64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
       (bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | (bytes[0] << 0);
 
   // Calling the auto-generated decoder function.
-  DecodeStatus result =
-      decodeInstruction(DecoderTable32, MI, insn, Address, this, STI);
-  if (!result)
-    return Fail;
-
-  return Success;
+  return decodeInstruction(DecoderTable32, MI, insn, Address, this, STI);
 }
 
 static MCSymbolizer *
@@ -967,6 +978,15 @@ static DecodeStatus DecodeSignedLdStInstruction(llvm::MCInst &Inst,
 
   DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
   Inst.addOperand(MCOperand::CreateImm(offset));
+
+  bool IsLoad = fieldFromInstruction(insn, 22, 1);
+  bool IsIndexed = fieldFromInstruction(insn, 10, 2) != 0;
+  bool IsFP = fieldFromInstruction(insn, 26, 1);
+
+  // Cannot write back to a transfer register (but xzr != sp).
+  if (IsLoad && IsIndexed && !IsFP && Rn != 31 && Rt == Rn)
+    return SoftFail;
+
   return Success;
 }
 
@@ -978,7 +998,8 @@ static DecodeStatus DecodeExclusiveLdStInstruction(llvm::MCInst &Inst,
   unsigned Rt2 = fieldFromInstruction(insn, 10, 5);
   unsigned Rs = fieldFromInstruction(insn, 16, 5);
 
-  switch (Inst.getOpcode()) {
+  unsigned Opcode = Inst.getOpcode();
+  switch (Opcode) {
   default:
     return Fail;
   case ARM64::STLXRW:
@@ -1034,6 +1055,13 @@ static DecodeStatus DecodeExclusiveLdStInstruction(llvm::MCInst &Inst,
   }
 
   DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
+
+  // You shouldn't load to the same register twice in an instruction...
+  if ((Opcode == ARM64::LDAXPW || Opcode == ARM64::LDXPW ||
+       Opcode == ARM64::LDAXPX || Opcode == ARM64::LDXPX) &&
+      Rt == Rt2)
+    return SoftFail;
+
   return Success;
 }
 
@@ -1044,37 +1072,44 @@ static DecodeStatus DecodePairLdStInstruction(llvm::MCInst &Inst, uint32_t insn,
   unsigned Rn = fieldFromInstruction(insn, 5, 5);
   unsigned Rt2 = fieldFromInstruction(insn, 10, 5);
   int64_t offset = fieldFromInstruction(insn, 15, 7);
+  bool IsLoad = fieldFromInstruction(insn, 22, 1);
 
   // offset is a 7-bit signed immediate, so sign extend it to
   // fill the unsigned.
   if (offset & (1 << (7 - 1)))
     offset |= ~((1LL << 7) - 1);
 
-  switch (Inst.getOpcode()) {
+  unsigned Opcode = Inst.getOpcode();
+  bool NeedsDisjointWritebackTransfer = false;
+  switch (Opcode) {
   default:
     return Fail;
-  case ARM64::LDNPXi:
-  case ARM64::STNPXi:
   case ARM64::LDPXpost:
   case ARM64::STPXpost:
   case ARM64::LDPSWpost:
-  case ARM64::LDPXi:
-  case ARM64::STPXi:
-  case ARM64::LDPSWi:
   case ARM64::LDPXpre:
   case ARM64::STPXpre:
   case ARM64::LDPSWpre:
+    NeedsDisjointWritebackTransfer = true;
+    // Fallthrough
+  case ARM64::LDNPXi:
+  case ARM64::STNPXi:
+  case ARM64::LDPXi:
+  case ARM64::STPXi:
+  case ARM64::LDPSWi:
     DecodeGPR64RegisterClass(Inst, Rt, Addr, Decoder);
     DecodeGPR64RegisterClass(Inst, Rt2, Addr, Decoder);
     break;
-  case ARM64::LDNPWi:
-  case ARM64::STNPWi:
   case ARM64::LDPWpost:
   case ARM64::STPWpost:
-  case ARM64::LDPWi:
-  case ARM64::STPWi:
   case ARM64::LDPWpre:
   case ARM64::STPWpre:
+    NeedsDisjointWritebackTransfer = true;
+    // Fallthrough
+  case ARM64::LDNPWi:
+  case ARM64::STNPWi:
+  case ARM64::LDPWi:
+  case ARM64::STPWi:
     DecodeGPR32RegisterClass(Inst, Rt, Addr, Decoder);
     DecodeGPR32RegisterClass(Inst, Rt2, Addr, Decoder);
     break;
@@ -1115,6 +1150,16 @@ static DecodeStatus DecodePairLdStInstruction(llvm::MCInst &Inst, uint32_t insn,
 
   DecodeGPR64spRegisterClass(Inst, Rn, Addr, Decoder);
   Inst.addOperand(MCOperand::CreateImm(offset));
+
+  // You shouldn't load to the same register twice in an instruction...
+  if (IsLoad && Rt == Rt2)
+    return SoftFail;
+
+  // ... or do any operation that writes-back to a transfer register. But note
+  // that "stp xzr, xzr, [sp], #4" is fine because xzr and sp are different.
+  if (NeedsDisjointWritebackTransfer && Rn != 31 && (Rt == Rn || Rt2 == Rn))
+    return SoftFail;
+
   return Success;
 }
 
