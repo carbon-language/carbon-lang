@@ -185,7 +185,7 @@ void DumpProcessMap() {
 }
 
 void DisableCoreDumper() {
-  UNIMPLEMENTED();
+  // Do nothing.
 }
 
 void ReExec() {

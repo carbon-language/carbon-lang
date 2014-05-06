@@ -178,7 +178,8 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
 
   ParseFlag(str, &f->disable_core, "disable_core",
       "Disable core dumping. By default, disable_core=1 on 64-bit to avoid "
-      "dumping a 16T+ core file.");
+      "dumping a 16T+ core file. "
+      "Ignored on OSes that don't dump core by default.");
 
   ParseFlag(str, &f->allow_reexec, "allow_reexec",
       "Allow the tool to re-exec the program. This may interfere badly with "
