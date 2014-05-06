@@ -253,28 +253,28 @@ static error_code getFileAux(const char *Filename,
                              std::unique_ptr<MemoryBuffer> &Result,
                              int64_t FileSize,
                              bool RequiresNullTerminator,
-                             bool IsVolatile);
+                             bool IsVolatileSize);
 
 error_code MemoryBuffer::getFile(Twine Filename,
                                  std::unique_ptr<MemoryBuffer> &Result,
                                  int64_t FileSize,
                                  bool RequiresNullTerminator,
-                                 bool IsVolatile) {
+                                 bool IsVolatileSize) {
   // Ensure the path is null terminated.
   SmallString<256> PathBuf;
   StringRef NullTerminatedName = Filename.toNullTerminatedStringRef(PathBuf);
   return getFileAux(NullTerminatedName.data(), Result, FileSize,
-                    RequiresNullTerminator, IsVolatile);
+                    RequiresNullTerminator, IsVolatileSize);
 }
 
 error_code MemoryBuffer::getFile(Twine Filename,
                                  OwningPtr<MemoryBuffer> &Result,
                                  int64_t FileSize,
                                  bool RequiresNullTerminator,
-                                 bool IsVolatile) {
+                                 bool IsVolatileSize) {
   std::unique_ptr<MemoryBuffer> MB;
   error_code ec = getFile(Filename, MB, FileSize, RequiresNullTerminator,
-                          IsVolatile);
+                          IsVolatileSize);
   Result = std::move(MB);
   return ec;
 }
@@ -283,19 +283,19 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
                                   std::unique_ptr<MemoryBuffer> &Result,
                                   uint64_t FileSize, uint64_t MapSize,
                                   int64_t Offset, bool RequiresNullTerminator,
-                                  bool IsVolatile);
+                                  bool IsVolatileSize);
 
 static error_code getFileAux(const char *Filename,
                              std::unique_ptr<MemoryBuffer> &Result, int64_t FileSize,
                              bool RequiresNullTerminator,
-                             bool IsVolatile) {
+                             bool IsVolatileSize) {
   int FD;
   error_code EC = sys::fs::openFileForRead(Filename, FD);
   if (EC)
     return EC;
 
   error_code ret = getOpenFileImpl(FD, Filename, Result, FileSize, FileSize, 0,
-                                   RequiresNullTerminator, IsVolatile);
+                                   RequiresNullTerminator, IsVolatileSize);
   close(FD);
   return ret;
 }
@@ -306,11 +306,11 @@ static bool shouldUseMmap(int FD,
                           off_t Offset,
                           bool RequiresNullTerminator,
                           int PageSize,
-                          bool IsVolatile) {
+                          bool IsVolatileSize) {
   // mmap may leave the buffer without null terminator if the file size changed
   // by the time the last page is mapped in, so avoid it if the file size is
   // likely to change.
-  if (IsVolatile)
+  if (IsVolatileSize)
     return false;
 
   // We don't use mmap for small files because this can severely fragment our
@@ -362,7 +362,7 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
                                   std::unique_ptr<MemoryBuffer> &Result,
                                   uint64_t FileSize, uint64_t MapSize,
                                   int64_t Offset, bool RequiresNullTerminator,
-                                  bool IsVolatile) {
+                                  bool IsVolatileSize) {
   static int PageSize = sys::process::get_self()->page_size();
 
   // Default is to map the full file.
@@ -389,7 +389,7 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
   }
 
   if (shouldUseMmap(FD, FileSize, MapSize, Offset, RequiresNullTerminator,
-                    PageSize, IsVolatile)) {
+                    PageSize, IsVolatileSize)) {
     error_code EC;
     Result.reset(new (NamedBufferAlloc(Filename)) MemoryBufferMMapFile(
         RequiresNullTerminator, FD, MapSize, Offset, EC));
@@ -426,8 +426,9 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
       return error_code(errno, posix_category());
     }
     if (NumRead == 0) {
-      assert(IsVolatile && "We got inaccurate FileSize value or fstat reported "
-                           "an invalid file size.");
+      assert(IsVolatileSize &&
+             "We got inaccurate FileSize value or fstat reported an invalid "
+             "file size.");
       memset(BufPtr, 0, BytesLeft); // zero-initialize rest of the buffer.
       break;
     }
@@ -443,19 +444,19 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
                                      std::unique_ptr<MemoryBuffer> &Result,
                                      uint64_t FileSize,
                                      bool RequiresNullTerminator,
-                                     bool IsVolatile) {
+                                     bool IsVolatileSize) {
   return getOpenFileImpl(FD, Filename, Result, FileSize, FileSize, 0,
-                         RequiresNullTerminator, IsVolatile);
+                         RequiresNullTerminator, IsVolatileSize);
 }
 
 error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
                                      OwningPtr<MemoryBuffer> &Result,
                                      uint64_t FileSize,
                                      bool RequiresNullTerminator,
-                                     bool IsVolatile) {
+                                     bool IsVolatileSize) {
   std::unique_ptr<MemoryBuffer> MB;
   error_code ec = getOpenFileImpl(FD, Filename, MB, FileSize, FileSize, 0,
-                                  RequiresNullTerminator, IsVolatile);
+                                  RequiresNullTerminator, IsVolatileSize);
   Result = std::move(MB);
   return ec;
 }
@@ -463,18 +464,18 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
 error_code MemoryBuffer::getOpenFileSlice(int FD, const char *Filename,
                                           std::unique_ptr<MemoryBuffer> &Result,
                                           uint64_t MapSize, int64_t Offset,
-                                          bool IsVolatile) {
+                                          bool IsVolatileSize) {
   return getOpenFileImpl(FD, Filename, Result, -1, MapSize, Offset, false,
-                         IsVolatile);
+                         IsVolatileSize);
 }
 
 error_code MemoryBuffer::getOpenFileSlice(int FD, const char *Filename,
                                           OwningPtr<MemoryBuffer> &Result,
                                           uint64_t MapSize, int64_t Offset,
-                                          bool IsVolatile) {
+                                          bool IsVolatileSize) {
   std::unique_ptr<MemoryBuffer> MB;
   error_code ec = getOpenFileImpl(FD, Filename, MB, -1, MapSize, Offset, false,
-                                  IsVolatile);
+                                  IsVolatileSize);
   Result = std::move(MB);
   return ec;
 }
