@@ -216,10 +216,6 @@ public:
     return _path;
   }
 
-  // The saved input path thats used when a file is not found while
-  // trying to parse a file
-  StringRef getUserPath() const { return _path; }
-
   virtual ~FileNode() {}
 
   /// \brief Casting support
