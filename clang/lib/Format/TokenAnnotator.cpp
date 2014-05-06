@@ -1215,7 +1215,7 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
         }
       }
     } else if (Current->SpacesRequiredBefore == 0 &&
-             spaceRequiredBefore(Line, *Current)) {
+               spaceRequiredBefore(Line, *Current)) {
       Current->SpacesRequiredBefore = 1;
     }
 
@@ -1385,6 +1385,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
         (Left.TokenText == "returns" || Left.TokenText == "option"))
       return true;
   }
+  if (Left.is(tok::kw_return) && Right.isNot(tok::semi))
+    return true;
   if (Style.ObjCSpaceAfterProperty && Line.Type == LT_ObjCProperty &&
       Left.Tok.getObjCKeywordID() == tok::objc_property)
     return true;
@@ -1459,8 +1461,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     if (Left.is(tok::r_paren) && Left.Type == TT_AttributeParen)
       return true;
     return Line.Type == LT_ObjCDecl ||
-           Left.isOneOf(tok::kw_return, tok::kw_new, tok::kw_delete,
-                        tok::semi) ||
+           Left.isOneOf(tok::kw_new, tok::kw_delete, tok::semi) ||
            (Style.SpaceBeforeParens != FormatStyle::SBPO_Never &&
             (Left.isOneOf(tok::kw_if, tok::kw_for, tok::kw_while,
                           tok::kw_switch, tok::kw_catch, tok::kw_case) ||

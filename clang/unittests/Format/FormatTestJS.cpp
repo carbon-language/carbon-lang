@@ -98,5 +98,9 @@ TEST_F(FormatTestJS, GoogScopes) {
                "});  // goog.scope");
 }
 
+TEST_F(FormatTestJS, ReturnStatements) {
+  verifyFormat("function() { return [hello, world]; }");
+}
+
 } // end namespace tooling
 } // end namespace clang
