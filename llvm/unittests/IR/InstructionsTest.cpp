@@ -483,6 +483,39 @@ TEST(InstructionsTest, isEliminableCastPair) {
 
 }
 
+TEST(InstructionsTest, CloneCall) {
+  LLVMContext &C(getGlobalContext());
+  Type *Int32Ty = Type::getInt32Ty(C);
+  Type *ArgTys[] = {Int32Ty, Int32Ty, Int32Ty};
+  Type *FnTy = FunctionType::get(Int32Ty, ArgTys, /*isVarArg=*/false);
+  Value *Callee = Constant::getNullValue(FnTy->getPointerTo());
+  Value *Args[] = {
+    ConstantInt::get(Int32Ty, 1),
+    ConstantInt::get(Int32Ty, 2),
+    ConstantInt::get(Int32Ty, 3)
+  };
+  std::unique_ptr<CallInst> Call(CallInst::Create(Callee, Args, "result"));
+
+  // Test cloning the tail call kind.
+  CallInst::TailCallKind Kinds[] = {CallInst::TCK_None, CallInst::TCK_Tail,
+                                    CallInst::TCK_MustTail};
+  for (CallInst::TailCallKind TCK : Kinds) {
+    Call->setTailCallKind(TCK);
+    std::unique_ptr<CallInst> Clone(cast<CallInst>(Call->clone()));
+    EXPECT_EQ(Call->getTailCallKind(), Clone->getTailCallKind());
+  }
+  Call->setTailCallKind(CallInst::TCK_None);
+
+  // Test cloning an attribute.
+  {
+    AttrBuilder AB;
+    AB.addAttribute(Attribute::ReadOnly);
+    Call->setAttributes(AttributeSet::get(C, AttributeSet::FunctionIndex, AB));
+    std::unique_ptr<CallInst> Clone(cast<CallInst>(Call->clone()));
+    EXPECT_TRUE(Clone->onlyReadsMemory());
+  }
+}
+
 }  // end anonymous namespace
 }  // end namespace llvm
 

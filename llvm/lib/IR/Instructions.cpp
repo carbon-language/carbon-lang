@@ -324,7 +324,7 @@ CallInst::CallInst(const CallInst &CI)
                 OperandTraits<CallInst>::op_end(this) - CI.getNumOperands(),
                 CI.getNumOperands()) {
   setAttributes(CI.getAttributes());
-  setTailCall(CI.isTailCall());
+  setTailCallKind(CI.getTailCallKind());
   setCallingConv(CI.getCallingConv());
     
   std::copy(CI.op_begin(), CI.op_end(), op_begin());
