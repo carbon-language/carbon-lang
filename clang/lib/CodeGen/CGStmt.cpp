@@ -76,7 +76,6 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::SEHExceptStmtClass:
   case Stmt::SEHFinallyStmtClass:
   case Stmt::MSDependentExistsStmtClass:
-  case Stmt::OMPParallelDirectiveClass:
   case Stmt::OMPSimdDirectiveClass:
     llvm_unreachable("invalid statement class to emit generically");
   case Stmt::NullStmtClass:
@@ -173,6 +172,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
     break;
   case Stmt::SEHTryStmtClass:
     EmitSEHTryStmt(cast<SEHTryStmt>(*S));
+    break;
+  case Stmt::OMPParallelDirectiveClass:
+    EmitOMPParallelDirective(cast<OMPParallelDirective>(*S));
     break;
   }
 }
@@ -1919,6 +1921,12 @@ CodeGenFunction::EmitCapturedStmt(const CapturedStmt &S, CapturedRegionKind K) {
   EmitCallOrInvoke(F, CapStruct.getAddress());
 
   return F;
+}
+
+llvm::Value *
+CodeGenFunction::GenerateCapturedStmtArgument(const CapturedStmt &S) {
+  LValue CapStruct = InitCapturedStruct(*this, S);
+  return CapStruct.getAddress();
 }
 
 /// Creates the outlined function for a CapturedStmt.

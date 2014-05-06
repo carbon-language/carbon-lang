@@ -18,6 +18,7 @@
 #include "CGDebugInfo.h"
 #include "CGObjCRuntime.h"
 #include "CGOpenCLRuntime.h"
+#include "CGOpenMPRuntime.h"
 #include "CodeGenFunction.h"
 #include "CodeGenPGO.h"
 #include "CodeGenTBAA.h"
@@ -78,8 +79,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
       Diags(diags), TheDataLayout(TD), Target(C.getTargetInfo()),
       ABI(createCXXABI(*this)), VMContext(M.getContext()), TBAA(0),
       TheTargetCodeGenInfo(0), Types(*this), VTables(*this), ObjCRuntime(0),
-      OpenCLRuntime(0), CUDARuntime(0), DebugInfo(0), ARCData(0),
-      NoObjCARCExceptionsMetadata(0), RRData(0), PGOReader(nullptr),
+      OpenCLRuntime(0), OpenMPRuntime(nullptr), CUDARuntime(0), DebugInfo(0),
+      ARCData(0), NoObjCARCExceptionsMetadata(0), RRData(0), PGOReader(nullptr),
       CFConstantStringClassRef(0),
       ConstantStringClassRef(0), NSConstantStringType(0),
       NSConcreteGlobalBlock(0), NSConcreteStackBlock(0), BlockObjectAssign(0),
@@ -113,6 +114,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     createObjCRuntime();
   if (LangOpts.OpenCL)
     createOpenCLRuntime();
+  if (LangOpts.OpenMP)
+    createOpenMPRuntime();
   if (LangOpts.CUDA)
     createCUDARuntime();
 
@@ -148,6 +151,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
 CodeGenModule::~CodeGenModule() {
   delete ObjCRuntime;
   delete OpenCLRuntime;
+  delete OpenMPRuntime;
   delete CUDARuntime;
   delete TheTargetCodeGenInfo;
   delete TBAA;
@@ -177,6 +181,10 @@ void CodeGenModule::createObjCRuntime() {
 
 void CodeGenModule::createOpenCLRuntime() {
   OpenCLRuntime = new CGOpenCLRuntime(*this);
+}
+
+void CodeGenModule::createOpenMPRuntime() {
+  OpenMPRuntime = new CGOpenMPRuntime(*this);
 }
 
 void CodeGenModule::createCUDARuntime() {

@@ -3064,6 +3064,10 @@ public:
 
   void ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
                                 CapturedRegionKind Kind, unsigned NumParams);
+  typedef std::pair<StringRef, QualType> CapturedParamNameType;
+  void ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
+                                CapturedRegionKind Kind,
+                                ArrayRef<CapturedParamNameType> Params);
   StmtResult ActOnCapturedRegionEnd(Stmt *S);
   void ActOnCapturedRegionError();
   RecordDecl *CreateCapturedStmtRecordDecl(CapturedDecl *&CD,
@@ -7261,6 +7265,9 @@ public:
                                      SourceLocation Loc,
                                      ArrayRef<Expr *> VarList);
 
+  // brief Initialization of captured region for OpenMP parallel region.
+  void ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, SourceLocation Loc,
+                              Scope *CurScope);
   StmtResult ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
                                             ArrayRef<OMPClause *> Clauses,
                                             Stmt *AStmt,

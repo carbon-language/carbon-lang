@@ -3322,20 +3322,9 @@ Sema::CreateCapturedStmtRecordDecl(CapturedDecl *&CD, SourceLocation Loc,
   RD->setImplicit();
   RD->startDefinition();
 
+  assert(NumParams > 0 && "CapturedStmt requires context parameter");
   CD = CapturedDecl::Create(Context, CurContext, NumParams);
   DC->addDecl(CD);
-
-  // Build the context parameter
-  assert(NumParams > 0 && "CapturedStmt requires context parameter");
-  DC = CapturedDecl::castToDeclContext(CD);
-  IdentifierInfo *VarName = &Context.Idents.get("__context");
-  QualType ParamType = Context.getPointerType(Context.getTagDeclType(RD));
-  ImplicitParamDecl *Param
-    = ImplicitParamDecl::Create(Context, DC, Loc, VarName, ParamType);
-  DC->addDecl(Param);
-
-  CD->setContextParam(Param);
-
   return RD;
 }
 
@@ -3367,9 +3356,62 @@ static void buildCapturedStmtCaptureList(
 void Sema::ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
                                     CapturedRegionKind Kind,
                                     unsigned NumParams) {
-  CapturedDecl *CD = 0;
+  CapturedDecl *CD = nullptr;
   RecordDecl *RD = CreateCapturedStmtRecordDecl(CD, Loc, NumParams);
 
+  // Build the context parameter
+  DeclContext *DC = CapturedDecl::castToDeclContext(CD);
+  IdentifierInfo *ParamName = &Context.Idents.get("__context");
+  QualType ParamType = Context.getPointerType(Context.getTagDeclType(RD));
+  ImplicitParamDecl *Param
+    = ImplicitParamDecl::Create(Context, DC, Loc, ParamName, ParamType);
+  DC->addDecl(Param);
+
+  CD->setContextParam(0, Param);
+
+  // Enter the capturing scope for this captured region.
+  PushCapturedRegionScope(CurScope, CD, RD, Kind);
+
+  if (CurScope)
+    PushDeclContext(CurScope, CD);
+  else
+    CurContext = CD;
+
+  PushExpressionEvaluationContext(PotentiallyEvaluated);
+}
+
+void Sema::ActOnCapturedRegionStart(SourceLocation Loc, Scope *CurScope,
+                                    CapturedRegionKind Kind,
+                                    ArrayRef<CapturedParamNameType> Params) {
+  CapturedDecl *CD = nullptr;
+  RecordDecl *RD = CreateCapturedStmtRecordDecl(CD, Loc, Params.size());
+
+  // Build the context parameter
+  DeclContext *DC = CapturedDecl::castToDeclContext(CD);
+  bool ContextIsFound = false;
+  unsigned ParamNum = 0;
+  for (ArrayRef<CapturedParamNameType>::iterator I = Params.begin(),
+                                                 E = Params.end();
+       I != E; ++I, ++ParamNum) {
+    if (I->second.isNull()) {
+      assert(!ContextIsFound &&
+             "null type has been found already for '__context' parameter");
+      IdentifierInfo *ParamName = &Context.Idents.get("__context");
+      QualType ParamType = Context.getPointerType(Context.getTagDeclType(RD));
+      ImplicitParamDecl *Param
+        = ImplicitParamDecl::Create(Context, DC, Loc, ParamName, ParamType);
+      DC->addDecl(Param);
+      CD->setContextParam(ParamNum, Param);
+      ContextIsFound = true;
+    } else {
+      IdentifierInfo *ParamName = &Context.Idents.get(I->first);
+      ImplicitParamDecl *Param
+        = ImplicitParamDecl::Create(Context, DC, Loc, ParamName, I->second);
+      DC->addDecl(Param);
+      CD->setParam(ParamNum, Param);
+    }
+  }
+  assert(ContextIsFound && "no null type for '__context' parameter");
   // Enter the capturing scope for this captured region.
   PushCapturedRegionScope(CurScope, CD, RD, Kind);
 
@@ -3390,8 +3432,8 @@ void Sema::ActOnCapturedRegionError() {
   Record->setInvalidDecl();
 
   SmallVector<Decl*, 4> Fields(Record->fields());
-  ActOnFields(/*Scope=*/0, Record->getLocation(), Record, Fields,
-              SourceLocation(), SourceLocation(), /*AttributeList=*/0);
+  ActOnFields(/*Scope=*/nullptr, Record->getLocation(), Record, Fields,
+              SourceLocation(), SourceLocation(), /*AttributeList=*/nullptr);
 
   PopDeclContext();
   PopFunctionScopeInfo();

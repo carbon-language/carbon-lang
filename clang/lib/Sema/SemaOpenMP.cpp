@@ -1,4 +1,4 @@
-//===--- SemaOpenMP.cpp - Semantic Analysis for OpenMP constructs ----------===//
+//===--- SemaOpenMP.cpp - Semantic Analysis for OpenMP constructs ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,13 +12,15 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/OpenMPKinds.h"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclOpenMP.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/AST/StmtOpenMP.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/OpenMPKinds.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
@@ -669,6 +671,36 @@ public:
 };
 }
 
+void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, SourceLocation Loc,
+                                  Scope *CurScope) {
+  switch (DKind) {
+  case OMPD_parallel: {
+    QualType KmpInt32Ty = Context.getIntTypeForBitwidth(32, 1);
+    QualType KmpInt32PtrTy = Context.getPointerType(KmpInt32Ty);
+    Sema::CapturedParamNameType Params[3] = {
+      std::make_pair(".global_tid.", KmpInt32PtrTy),
+      std::make_pair(".bound_tid.", KmpInt32PtrTy),
+      std::make_pair(StringRef(), QualType()) // __context with shared vars
+    };
+    ActOnCapturedRegionStart(Loc, CurScope, CR_OpenMP, Params);
+    break;
+  }
+  case OMPD_simd: {
+    Sema::CapturedParamNameType Params[1] = {
+      std::make_pair(StringRef(), QualType()) // __context with shared vars
+    };
+    ActOnCapturedRegionStart(Loc, CurScope, CR_OpenMP, Params);
+    break;
+  }
+  case OMPD_threadprivate:
+  case OMPD_task:
+    llvm_unreachable("OpenMP Directive is not allowed");
+  case OMPD_unknown:
+  case NUM_OPENMP_DIRECTIVES:
+    llvm_unreachable("Unknown OpenMP directive");
+  }
+}
+
 StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
                                                 ArrayRef<OMPClause *> Clauses,
                                                 Stmt *AStmt,
@@ -725,6 +757,15 @@ StmtResult Sema::ActOnOpenMPParallelDirective(ArrayRef<OMPClause *> Clauses,
                                               Stmt *AStmt,
                                               SourceLocation StartLoc,
                                               SourceLocation EndLoc) {
+  assert(AStmt && isa<CapturedStmt>(AStmt) && "Captured statement expected");
+  CapturedStmt *CS = cast<CapturedStmt>(AStmt);
+  // 1.2.2 OpenMP Language Terminology
+  // Structured block - An executable statement with a single entry at the
+  // top and a single exit at the bottom.
+  // The point of exit cannot be a branch out of the structured block.
+  // longjmp() and throw() must not violate the entry/exit criteria.
+  CS->getCapturedDecl()->setNothrow();
+
   getCurFunction()->setHasBranchProtectedScope();
 
   return Owned(OMPParallelDirective::Create(Context, StartLoc, EndLoc,

@@ -3400,12 +3400,14 @@ class CapturedDecl : public Decl, public DeclContext {
 private:
   /// \brief The number of parameters to the outlined function.
   unsigned NumParams;
+  /// \brief The position of context parameter in list of parameters.
+  unsigned ContextParam;
   /// \brief The body of the outlined function.
-  Stmt *Body;
+  llvm::PointerIntPair<Stmt *, 1, bool> BodyAndNothrow;
 
   explicit CapturedDecl(DeclContext *DC, unsigned NumParams)
     : Decl(Captured, DC, SourceLocation()), DeclContext(Captured),
-      NumParams(NumParams), Body(nullptr) { }
+      NumParams(NumParams), ContextParam(0), BodyAndNothrow(nullptr, false) { }
 
   ImplicitParamDecl **getParams() const {
     return reinterpret_cast<ImplicitParamDecl **>(
@@ -3413,12 +3415,16 @@ private:
   }
 
 public:
-  static CapturedDecl *Create(ASTContext &C, DeclContext *DC, unsigned NumParams);
+  static CapturedDecl *Create(ASTContext &C, DeclContext *DC,
+                              unsigned NumParams);
   static CapturedDecl *CreateDeserialized(ASTContext &C, unsigned ID,
                                           unsigned NumParams);
 
-  Stmt *getBody() const override { return Body; }
-  void setBody(Stmt *B) { Body = B; }
+  Stmt *getBody() const override { return BodyAndNothrow.getPointer(); }
+  void setBody(Stmt *B) { BodyAndNothrow.setPointer(B); }
+
+  bool isNothrow() const { return BodyAndNothrow.getInt(); }
+  void setNothrow(bool Nothrow = true) { BodyAndNothrow.setInt(Nothrow); }
 
   unsigned getNumParams() const { return NumParams; }
 
@@ -3432,8 +3438,16 @@ public:
   }
 
   /// \brief Retrieve the parameter containing captured variables.
-  ImplicitParamDecl *getContextParam() const { return getParam(0); }
-  void setContextParam(ImplicitParamDecl *P) { setParam(0, P); }
+  ImplicitParamDecl *getContextParam() const {
+    assert(ContextParam < NumParams);
+    return getParam(ContextParam);
+  }
+  void setContextParam(unsigned i, ImplicitParamDecl *P) {
+    assert(i < NumParams);
+    ContextParam = i;
+    setParam(i, P);
+  }
+  unsigned getContextParamPosition() const { return ContextParam; }
 
   typedef ImplicitParamDecl **param_iterator;
   typedef llvm::iterator_range<param_iterator> param_range;

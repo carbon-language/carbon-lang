@@ -492,8 +492,14 @@ void CodeGenFunction::EmitStartEHSpec(const Decl *D) {
     return;
   
   const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
-  if (FD == 0)
+  if (FD == 0) {
+    // Check if CapturedDecl is nothrow and create terminate scope for it.
+    if (const CapturedDecl* CD = dyn_cast_or_null<CapturedDecl>(D)) {
+      if (CD->isNothrow())
+        EHStack.pushTerminate();
+    }
     return;
+  }
   const FunctionProtoType *Proto = FD->getType()->getAs<FunctionProtoType>();
   if (Proto == 0)
     return;
@@ -560,8 +566,14 @@ void CodeGenFunction::EmitEndEHSpec(const Decl *D) {
     return;
   
   const FunctionDecl* FD = dyn_cast_or_null<FunctionDecl>(D);
-  if (FD == 0)
+  if (FD == 0) {
+    // Check if CapturedDecl is nothrow and pop terminate scope for it.
+    if (const CapturedDecl* CD = dyn_cast_or_null<CapturedDecl>(D)) {
+      if (CD->isNothrow())
+        EHStack.popTerminate();
+    }
     return;
+  }
   const FunctionProtoType *Proto = FD->getType()->getAs<FunctionProtoType>();
   if (Proto == 0)
     return;
