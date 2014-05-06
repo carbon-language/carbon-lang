@@ -158,7 +158,6 @@ TEST_F(InputGraphTest, GroupIteration) {
 
 // Node expansion tests
 TEST_F(InputGraphTest, Normalize) {
-  std::vector<std::unique_ptr<File>> objfiles;
   _graph->addInputElement(createFile2("file1", "file2"));
 
   std::unique_ptr<TestExpandFileNode> expandFile(
