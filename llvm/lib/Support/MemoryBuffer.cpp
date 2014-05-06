@@ -426,9 +426,6 @@ static error_code getOpenFileImpl(int FD, const char *Filename,
       return error_code(errno, posix_category());
     }
     if (NumRead == 0) {
-      assert(IsVolatileSize &&
-             "We got inaccurate FileSize value or fstat reported an invalid "
-             "file size.");
       memset(BufPtr, 0, BytesLeft); // zero-initialize rest of the buffer.
       break;
     }
