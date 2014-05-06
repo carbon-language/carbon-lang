@@ -84,10 +84,6 @@ public:
   /// \brief Dump the input Graph
   bool dump(raw_ostream &diagnostics = llvm::errs());
 
-  InputElement &operator[](size_t index) const {
-    return *_inputArgs[index];
-  }
-
   /// \brief Insert an element into the input graph at position.
   void insertElementAt(std::unique_ptr<InputElement>, Position position);
 

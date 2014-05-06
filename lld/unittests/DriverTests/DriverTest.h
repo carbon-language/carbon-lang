@@ -33,7 +33,8 @@ protected:
 
   // Convenience method for getting i'th input files name.
   std::string inputFile(int index) {
-    const InputElement &inputElement = linkingContext()->getInputGraph()[index];
+    const InputElement &inputElement =
+        *linkingContext()->getInputGraph().inputElements()[index];
     if (inputElement.kind() == InputElement::Kind::File)
       return *cast<FileNode>(&inputElement)->getPath(*linkingContext());
     llvm_unreachable("not handling other types of input files");
@@ -41,7 +42,8 @@ protected:
 
   // Convenience method for getting i'th input files name.
   std::string inputFile(int index1, int index2) {
-    Group *group = dyn_cast<Group>(&linkingContext()->getInputGraph()[index1]);
+    Group *group = dyn_cast<Group>(
+        linkingContext()->getInputGraph().inputElements()[index1].get());
     if (!group)
       llvm_unreachable("not handling other types of input files");
     FileNode *file = dyn_cast<FileNode>(group->elements()[index2].get());
