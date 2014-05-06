@@ -8,8 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "abort_message.h"
+#include "config.h"
 
-#include <pthread.h>
+#if !LIBCXXABI_SINGLE_THREADED
+#  include <pthread.h>
+#endif
 #include <stdint.h>
 
 /*
@@ -59,8 +62,10 @@ void set_initialized(guard_type* guard_object) {
 
 #endif
 
+#if !LIBCXXABI_SINGLE_THREADED
 pthread_mutex_t guard_mut = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t  guard_cv  = PTHREAD_COND_INITIALIZER;
+#endif
 
 #if defined(__APPLE__) && !defined(__arm__)
 
@@ -161,9 +166,27 @@ set_lock(uint32_t& x, lock_type y)
 extern "C"
 {
 
+#if LIBCXXABI_SINGLE_THREADED
 int __cxa_guard_acquire(guard_type* guard_object)
 {
-    char* initialized = (char*)guard_object;
+    return !is_initialized(guard_object);
+}
+
+void __cxa_guard_release(guard_type* guard_object)
+{
+    *guard_object = 0;
+    set_initialized(guard_object);
+}
+
+void __cxa_guard_abort(guard_type* guard_object)
+{
+    *guard_object = 0;
+}
+
+#else // !LIBCXXABI_SINGLE_THREADED
+
+int __cxa_guard_acquire(guard_type* guard_object)
+{
     if (pthread_mutex_lock(&guard_mut))
         abort_message("__cxa_guard_acquire failed to acquire mutex");
     int result = *initialized == 0;
@@ -225,6 +248,8 @@ void __cxa_guard_abort(guard_type* guard_object)
     if (pthread_cond_broadcast(&guard_cv))
         abort_message("__cxa_guard_abort failed to broadcast condition variable");
 }
+
+#endif // !LIBCXXABI_SINGLE_THREADED
 
 }  // extern "C"
 

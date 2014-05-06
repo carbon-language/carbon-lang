@@ -7,10 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "../src/config.h"
+
 #include <cstdlib>
 #include <algorithm>
 #include <iostream>
-#include <pthread.h>
+#if !LIBCXXABI_SINGLE_THREADED
+#  include <pthread.h>
+#endif
 #include <unistd.h>
 
 #include "../src/cxa_exception.hpp"
@@ -34,10 +38,11 @@ void *thread_code (void *parm) {
     return parm;
     }
 
-
+#if !LIBCXXABI_SINGLE_THREADED
 #define NUMTHREADS  10
 size_t      thread_globals [ NUMTHREADS ] = { 0 };
 pthread_t   threads        [ NUMTHREADS ];
+#endif
 
 void print_sizes ( size_t *first, size_t *last ) {
     std::cout << "{ " << std::hex;
@@ -49,6 +54,10 @@ void print_sizes ( size_t *first, size_t *last ) {
 int main ( int argc, char *argv [] ) {
     int retVal = 0;
 
+#if LIBCXXABI_SINGLE_THREADED
+    size_t thread_globals;
+    retVal = thread_code(&thread_globals) != 0;
+#else
 //  Make the threads, let them run, and wait for them to finish
     for ( int i = 0; i < NUMTHREADS; ++i )
         pthread_create( threads + i, NULL, thread_code, (void *) (thread_globals + i));
@@ -69,6 +78,7 @@ int main ( int argc, char *argv [] ) {
             retVal = 2;
             }
 //  print_sizes ( thread_globals, thread_globals + NUMTHREADS );
-    
+
+#endif
     return retVal;
     }

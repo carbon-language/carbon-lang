@@ -11,13 +11,15 @@
 //  
 //===----------------------------------------------------------------------===//
 
+#include "config.h"
 #include "cxxabi.h"
 
 #include <exception>        // for std::terminate
 #include <cstdlib>          // for malloc, free
 #include <cstring>          // for memset
-#include <pthread.h>
-
+#if !LIBCXXABI_SINGLE_THREADED
+#  include <pthread.h>      // for fallback_malloc.ipp's mutexes
+#endif
 #include "cxa_exception.hpp"
 #include "cxa_handlers.hpp"
 
