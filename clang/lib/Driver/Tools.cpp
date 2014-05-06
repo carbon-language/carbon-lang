@@ -3391,10 +3391,18 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                  options::OPT_munaligned_access)) {
       if (A->getOption().matches(options::OPT_mno_unaligned_access)) {
         CmdArgs.push_back("-backend-option");
-        CmdArgs.push_back("-arm-strict-align");
+        if (getToolChain().getTriple().getArch() == llvm::Triple::arm64 ||
+            getToolChain().getTriple().getArch() == llvm::Triple::arm64_be)
+          CmdArgs.push_back("-arm64-strict-align");
+        else
+          CmdArgs.push_back("-arm-strict-align");
       } else {
         CmdArgs.push_back("-backend-option");
-        CmdArgs.push_back("-arm-no-strict-align");
+        if (getToolChain().getTriple().getArch() == llvm::Triple::arm64 ||
+            getToolChain().getTriple().getArch() == llvm::Triple::arm64_be)
+          CmdArgs.push_back("-arm64-no-strict-align");
+        else
+          CmdArgs.push_back("-arm-no-strict-align");
       }
     }
   }
