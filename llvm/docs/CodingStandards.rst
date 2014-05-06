@@ -108,6 +108,8 @@ unlikely to be supported by our host compilers.
 * Lambdas: N2927_
 
   * But *not* ``std::function``, until Clang implements `MSVC-compatible RTTI`_.
+    In many cases, you may be able to use ``llvm::function_ref`` instead, and it
+    is a superior choice in those cases.
   * And *not* lambdas with default arguments.
 
 * ``decltype``: N2343_

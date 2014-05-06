@@ -14,8 +14,7 @@
 #ifndef LLVM_TRANSFORMS_UTILS_CTOR_UTILS_H
 #define LLVM_TRANSFORMS_UTILS_CTOR_UTILS_H
 
-#include <functional>
-#include <vector>
+#include "llvm/ADT/STLExtras.h"
 
 namespace llvm {
 
@@ -23,12 +22,10 @@ class GlobalVariable;
 class Function;
 class Module;
 
-typedef bool (*ShouldRemoveCtor)(void *, Function *);
-
 /// Call "ShouldRemove" for every entry in M's global_ctor list and remove the
 /// entries for which it returns true.  Return true if anything changed.
-bool optimizeGlobalCtorsList(Module &M, ShouldRemoveCtor ShouldRemove,
-                             void *Context);
+bool optimizeGlobalCtorsList(Module &M,
+                             function_ref<bool(Function *)> ShouldRemove);
 
 } // End llvm namespace
 
