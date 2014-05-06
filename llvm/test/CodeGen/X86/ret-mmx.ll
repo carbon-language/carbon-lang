@@ -33,7 +33,8 @@ define <2 x i32> @t3() nounwind {
 define double @t4() nounwind {
 	ret double bitcast (<2 x i32> <i32 1, i32 0> to double)
 ; CHECK-LABEL: t4:
-; CHECK: movl $1
-; CHECK: movd {{.*}}, %xmm0
+; CHECK-NOT: movl $1
+; CHECK-NOT: pshufd
+; CHECK: movsd {{.*}}, %xmm0
 }
 
