@@ -106,7 +106,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  [[KMPC_DEFAULT_LOC_VOIDPTR:%.+]] = bitcast %ident_t* [[DEF_LOC_2]] to i8*
 // CHECK-DEBUG-NEXT:   call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[KMPC_LOC_VOIDPTR]], i8* [[KMPC_DEFAULT_LOC_VOIDPTR]], i64 ptrtoint (%ident_t* getelementptr (%ident_t* null, i32 1) to i64), i32 8, i1 false)
 // CHECK-DEBUG:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon.0* [[AGG_CAPTURED]], i32 0, i32 0
-// CHECK-DEBUG-NEXT:  store i8*** %.+, i8**** [[ARGC_REF]]
+// CHECK-DEBUG-NEXT:  store i8*** {{%[a-z0-9.]+}}, i8**** [[ARGC_REF]]
 // CHECK-DEBUG-NEXT:  [[KMPC_LOC_PSOURCE_REF:%.+]] = getelementptr inbounds %ident_t* [[LOC_2_ADDR]], i32 0, i32 4
 // CHECK-DEBUG-NEXT:  store i8* getelementptr inbounds ([{{.+}} x i8]* [[LOC2]], i32 0, i32 0), i8** [[KMPC_LOC_PSOURCE_REF]]
 // CHECK-DEBUG-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon.0* [[AGG_CAPTURED]] to i8*
