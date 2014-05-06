@@ -277,7 +277,14 @@ static int compileModule(char **argv, LLVMContext &Context) {
       TheTarget->createTargetMachine(TheTriple.getTriple(), MCPU, FeaturesStr,
                                      Options, RelocModel, CMModel, OLvl));
   assert(target.get() && "Could not allocate target machine!");
-  assert(mod && "Should have exited after outputting help!");
+
+  // If we don't have a module then just exit now. We do this down
+  // here since the CPU/Feature help is underneath the target machine
+  // creation.
+  if (SkipModule)
+    return 0;
+
+  assert(mod && "Should have exited if we didn't have a module!");
   TargetMachine &Target = *target.get();
 
   if (EnableDwarfDirectory)

@@ -129,7 +129,7 @@ static size_t getLongestEntryLength(const SubtargetFeatureKV *Table,
 
 /// Display help for feature choices.
 ///
-static uint64_t Help(const SubtargetFeatureKV *CPUTable, size_t CPUTableSize,
+static void Help(const SubtargetFeatureKV *CPUTable, size_t CPUTableSize,
                      const SubtargetFeatureKV *FeatTable,
                      size_t FeatTableSize) {
   // Determine the length of the longest CPU and Feature entries.
@@ -152,8 +152,6 @@ static uint64_t Help(const SubtargetFeatureKV *CPUTable, size_t CPUTableSize,
 
   errs() << "Use +feature to enable a feature, or -feature to disable it.\n"
             "For example, llc -mcpu=mycpu -mattr=+feature1,-feature2\n";
-
-  return 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -264,10 +262,10 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
 
   // Check if help is needed
   if (CPU == "help")
-    return Help(CPUTable, CPUTableSize, FeatureTable, FeatureTableSize);
+    Help(CPUTable, CPUTableSize, FeatureTable, FeatureTableSize);
 
   // Find CPU entry if CPU name is specified.
-  if (!CPU.empty()) {
+  else if (!CPU.empty()) {
     const SubtargetFeatureKV *CPUEntry = Find(CPU, CPUTable, CPUTableSize);
     // If there is a match
     if (CPUEntry) {
@@ -293,7 +291,7 @@ uint64_t SubtargetFeatures::getFeatureBits(const StringRef CPU,
 
     // Check for help
     if (Feature == "+help")
-      return Help(CPUTable, CPUTableSize, FeatureTable, FeatureTableSize);
+      Help(CPUTable, CPUTableSize, FeatureTable, FeatureTableSize);
 
     // Find feature in table.
     const SubtargetFeatureKV *FeatureEntry =
