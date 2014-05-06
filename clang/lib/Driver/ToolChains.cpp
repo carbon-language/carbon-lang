@@ -1320,10 +1320,11 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
   // Declare a bunch of static data sets that we'll select between below. These
   // are specifically designed to always refer to string literals to avoid any
   // lifetime or initialization issues.
-  static const char *const AArch64LibDirs[] = { "/lib" };
+  static const char *const AArch64LibDirs[] = { "/lib64", "/lib" };
   static const char *const AArch64Triples[] = { "aarch64-none-linux-gnu",
                                                 "aarch64-linux-gnu",
-                                                "aarch64-linux-android" };
+                                                "aarch64-linux-android",
+                                                "aarch64-redhat-linux" };
   static const char *const AArch64beLibDirs[] = { "/lib" };
   static const char *const AArch64beTriples[] = { "aarch64_be-none-linux-gnu",
                                                   "aarch64_be-linux-gnu" };
