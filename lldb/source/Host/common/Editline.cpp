@@ -790,7 +790,8 @@ Editline::GetCharFromInputFileCallback (EditLine *e, char *c)
                         line_info->buffer == line_info->cursor &&
                         line_info->cursor == line_info->lastchar)
                     {
-                        ch = EOF;
+                        editline->m_got_eof = true;
+                        break;
                     }
                 }
             
