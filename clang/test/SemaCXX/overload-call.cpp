@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -pedantic -verify %s
+// RUN: %clang_cc1 -pedantic -verify %s
 int* f(int) { return 0; }
 float* f(float) { return 0; }
 void f();
@@ -579,4 +579,14 @@ namespace PR12931 {
   void f(const int &, ...);
   void f(const volatile int &, int);
   void g() { f(0, 0); }
+}
+
+void test5() {
+  struct {
+    typedef void F1(int);
+    typedef void F2(double);
+    operator F1*();  // expected-note{{conversion candidate}}
+    operator F2*();  // expected-note{{conversion candidate}}
+  } callable;
+  callable();  // expected-error{{no matching function for call}}
 }
