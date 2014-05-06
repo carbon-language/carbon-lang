@@ -201,7 +201,8 @@ namespace consumed {
     
   public:
     ConsumedBlockInfo() { }
-    
+    ~ConsumedBlockInfo() { llvm::DeleteContainerPointers(StateMapsArray); }
+
     ConsumedBlockInfo(unsigned int NumBlocks, PostOrderCFGView *SortedGraph)
         : StateMapsArray(NumBlocks, nullptr), VisitOrder(NumBlocks, 0) {
       unsigned int VisitOrderCounter = 0;
