@@ -1520,6 +1520,15 @@ void X86TargetLowering::resetOperationActions() {
     }
   }
 
+  if (Subtarget->isTargetWin64()) {
+    setOperationAction(ISD::SDIV, MVT::i128, Custom);
+    setOperationAction(ISD::UDIV, MVT::i128, Custom);
+    setOperationAction(ISD::SREM, MVT::i128, Custom);
+    setOperationAction(ISD::UREM, MVT::i128, Custom);
+    setOperationAction(ISD::SDIVREM, MVT::i128, Custom);
+    setOperationAction(ISD::UDIVREM, MVT::i128, Custom);
+  }
+
   // We have target-specific dag combine patterns for the following nodes:
   setTargetDAGCombine(ISD::VECTOR_SHUFFLE);
   setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
@@ -13182,6 +13191,58 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
   return DAG.getNode(ISD::ADD, dl, VT, Res, AhiBlo);
 }
 
+SDValue X86TargetLowering::LowerWin64_i128OP(SDValue Op, SelectionDAG &DAG) const {
+  assert(Subtarget->isTargetWin64() && "Unexpected target");
+  EVT VT = Op.getValueType();
+  assert(VT.isInteger() && VT.getSizeInBits() == 128 &&
+         "Unexpected return type for lowering");
+
+  RTLIB::Libcall LC;
+  bool isSigned;
+  switch (Op->getOpcode()) {
+  default: llvm_unreachable("Unexpected request for libcall!");
+  case ISD::SDIV:      isSigned = true;  LC = RTLIB::SDIV_I128;    break;
+  case ISD::UDIV:      isSigned = false; LC = RTLIB::UDIV_I128;    break;
+  case ISD::SREM:      isSigned = true;  LC = RTLIB::SREM_I128;    break;
+  case ISD::UREM:      isSigned = false; LC = RTLIB::UREM_I128;    break;
+  case ISD::SDIVREM:   isSigned = true;  LC = RTLIB::SDIVREM_I128; break;
+  case ISD::UDIVREM:   isSigned = false; LC = RTLIB::UDIVREM_I128; break;
+  }
+
+  SDLoc dl(Op);
+  SDValue InChain = DAG.getEntryNode();
+
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  for (unsigned i = 0, e = Op->getNumOperands(); i != e; ++i) {
+    EVT ArgVT = Op->getOperand(i).getValueType();
+    assert(ArgVT.isInteger() && ArgVT.getSizeInBits() == 128 &&
+           "Unexpected argument type for lowering");
+    SDValue StackPtr = DAG.CreateStackTemporary(ArgVT, 16);
+    Entry.Node = StackPtr;
+    InChain = DAG.getStore(InChain, dl, Op->getOperand(i), StackPtr, MachinePointerInfo(),
+                           false, false, 16);
+    Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
+    Entry.Ty = PointerType::get(ArgTy,0);
+    Entry.isSExt = false;
+    Entry.isZExt = false;
+    Args.push_back(Entry);
+  }
+
+  SDValue Callee = DAG.getExternalSymbol(getLibcallName(LC),
+                                         getPointerTy());
+
+  TargetLowering::CallLoweringInfo CLI(
+      InChain, static_cast<EVT>(MVT::v2i64).getTypeForEVT(*DAG.getContext()),
+      isSigned, !isSigned, false, true, 0, getLibcallCallingConv(LC),
+      /*isTailCall=*/false,
+      /*doesNotReturn=*/false, /*isReturnValueUsed=*/true, Callee, Args, DAG,
+      dl);
+  std::pair<SDValue, SDValue> CallInfo = LowerCallTo(CLI);
+
+  return DAG.getNode(ISD::BITCAST, dl, VT, CallInfo.first);
+}
+
 static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
                              SelectionDAG &DAG) {
   SDValue Op0 = Op.getOperand(0), Op1 = Op.getOperand(1);
@@ -14302,6 +14363,16 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::SUBE:
     // We don't want to expand or promote these.
     return;
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::SREM:
+  case ISD::UREM:
+  case ISD::SDIVREM:
+  case ISD::UDIVREM: {
+    SDValue V = LowerWin64_i128OP(SDValue(N,0), DAG);
+    Results.push_back(V);
+    return;
+  }
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT: {
     bool IsSigned = N->getOpcode() == ISD::FP_TO_SINT;
