@@ -3131,9 +3131,12 @@ bool ARM64AsmParser::parseVectorList(OperandVector &Operands) {
     }
   }
 
-  if (Parser.getTok().is(AsmToken::EndOfStatement))
-    Error(getLoc(), "'}' expected");
+  if (Parser.getTok().isNot(AsmToken::RCurly))
+    return Error(getLoc(), "'}' expected");
   Parser.Lex(); // Eat the '}' token.
+
+  if (Count > 4)
+    return Error(S, "invalid number of vectors");
 
   unsigned NumElements = 0;
   char ElementKind = 0;

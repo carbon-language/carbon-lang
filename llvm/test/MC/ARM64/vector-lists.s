@@ -14,7 +14,7 @@
     ST4     {v0.8B-},[x0]
 
 // CHECK-ERRORS: error: invalid number of vectors
-// CHECK-ERRORS: error: unexpected token in argument list
+// CHECK-ERRORS: error: '}' expected
 // CHECK-ERRORS: error: mismatched register size suffix
 // CHECK-ERRORS: error: mismatched register size suffix
 // CHECK-ERRORS: error: vector register expected
