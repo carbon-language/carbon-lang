@@ -1513,12 +1513,14 @@ X86InstrInfo::isCoalescableExtInstr(const MachineInstr &MI,
 /// operand and follow operands form a reference to the stack frame.
 bool X86InstrInfo::isFrameOperand(const MachineInstr *MI, unsigned int Op,
                                   int &FrameIndex) const {
-  if (MI->getOperand(Op).isFI() && MI->getOperand(Op+1).isImm() &&
-      MI->getOperand(Op+2).isReg() && MI->getOperand(Op+3).isImm() &&
-      MI->getOperand(Op+1).getImm() == 1 &&
-      MI->getOperand(Op+2).getReg() == 0 &&
-      MI->getOperand(Op+3).getImm() == 0) {
-    FrameIndex = MI->getOperand(Op).getIndex();
+  if (MI->getOperand(Op+X86::AddrBaseReg).isFI() &&
+      MI->getOperand(Op+X86::AddrScaleAmt).isImm() &&
+      MI->getOperand(Op+X86::AddrIndexReg).isReg() &&
+      MI->getOperand(Op+X86::AddrDisp).isImm() &&
+      MI->getOperand(Op+X86::AddrScaleAmt).getImm() == 1 &&
+      MI->getOperand(Op+X86::AddrIndexReg).getReg() == 0 &&
+      MI->getOperand(Op+X86::AddrDisp).getImm() == 0) {
+    FrameIndex = MI->getOperand(Op+X86::AddrBaseReg).getIndex();
     return true;
   }
   return false;
@@ -1682,15 +1684,16 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
   case X86::FsMOVAPSrm:
   case X86::FsMOVAPDrm: {
     // Loads from constant pools are trivially rematerializable.
-    if (MI->getOperand(1).isReg() &&
-        MI->getOperand(2).isImm() &&
-        MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
+    if (MI->getOperand(1+X86::AddrBaseReg).isReg() &&
+        MI->getOperand(1+X86::AddrScaleAmt).isImm() &&
+        MI->getOperand(1+X86::AddrIndexReg).isReg() &&
+        MI->getOperand(1+X86::AddrIndexReg).getReg() == 0 &&
         MI->isInvariantLoad(AA)) {
-      unsigned BaseReg = MI->getOperand(1).getReg();
+      unsigned BaseReg = MI->getOperand(1+X86::AddrBaseReg).getReg();
       if (BaseReg == 0 || BaseReg == X86::RIP)
         return true;
       // Allow re-materialization of PIC load.
-      if (!ReMatPICStubLoad && MI->getOperand(4).isGlobal())
+      if (!ReMatPICStubLoad && MI->getOperand(1+X86::AddrDisp).isGlobal())
         return false;
       const MachineFunction &MF = *MI->getParent()->getParent();
       const MachineRegisterInfo &MRI = MF.getRegInfo();
@@ -1701,13 +1704,14 @@ X86InstrInfo::isReallyTriviallyReMaterializable(const MachineInstr *MI,
 
   case X86::LEA32r:
   case X86::LEA64r: {
-    if (MI->getOperand(2).isImm() &&
-        MI->getOperand(3).isReg() && MI->getOperand(3).getReg() == 0 &&
-        !MI->getOperand(4).isReg()) {
+    if (MI->getOperand(1+X86::AddrScaleAmt).isImm() &&
+        MI->getOperand(1+X86::AddrIndexReg).isReg() &&
+        MI->getOperand(1+X86::AddrIndexReg).getReg() == 0 &&
+        !MI->getOperand(1+X86::AddrDisp).isReg()) {
       // lea fi#, lea GV, etc. are all rematerializable.
-      if (!MI->getOperand(1).isReg())
+      if (!MI->getOperand(1+X86::AddrBaseReg).isReg())
         return true;
-      unsigned BaseReg = MI->getOperand(1).getReg();
+      unsigned BaseReg = MI->getOperand(1+X86::AddrBaseReg).getReg();
       if (BaseReg == 0)
         return true;
       // Allow re-materialization of lea PICBase + x.
