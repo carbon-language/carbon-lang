@@ -132,8 +132,8 @@ GlobalVariable *findGlobalCtors(Module &M) {
 
 /// Call "ShouldRemove" for every entry in M's global_ctor list and remove the
 /// entries for which it returns true.  Return true if anything changed.
-bool optimizeGlobalCtorsList(Module &M, ShouldRemoveCtor ShouldRemove,
-                             void *Context) {
+bool optimizeGlobalCtorsList(Module &M,
+                             function_ref<bool(Function *)> ShouldRemove) {
   GlobalVariable *GlobalCtors = findGlobalCtors(M);
   if (!GlobalCtors)
     return false;
@@ -163,7 +163,7 @@ bool optimizeGlobalCtorsList(Module &M, ShouldRemoveCtor ShouldRemove,
       continue;
 
     // If we can evaluate the ctor at compile time, do.
-    if (ShouldRemove(Context, F)) {
+    if (ShouldRemove(F)) {
       Ctors.erase(Ctors.begin() + i);
       MadeChange = true;
       --i;
