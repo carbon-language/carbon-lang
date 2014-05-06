@@ -196,9 +196,9 @@ void ClearImpliedBits(uint64_t &Bits, const SubtargetFeatureKV *FeatureEntry,
 
 /// ToggleFeature - Toggle a feature and returns the newly updated feature
 /// bits.
-uint64_t SubtargetFeatures::ToggleFeature(
-    uint64_t Bits, const StringRef Feature,
-    ArrayRef<SubtargetFeatureKV> FeatureTable) {
+uint64_t
+SubtargetFeatures::ToggleFeature(uint64_t Bits, const StringRef Feature,
+                                 ArrayRef<SubtargetFeatureKV> FeatureTable) {
 
   // Find feature in table.
   const SubtargetFeatureKV *FeatureEntry =
