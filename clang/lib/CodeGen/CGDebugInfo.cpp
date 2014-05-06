@@ -393,11 +393,10 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   case BuiltinType::Void:
     return llvm::DIType();
   case BuiltinType::ObjCClass:
-    if (ClassTy)
-      return ClassTy;
-    ClassTy = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-                                         "objc_class", TheCU,
-                                         getOrCreateMainFile(), 0);
+    if (!ClassTy)
+      ClassTy = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
+                                           "objc_class", TheCU,
+                                           getOrCreateMainFile(), 0);
     return ClassTy;
   case BuiltinType::ObjCId: {
     // typedef struct objc_class *Class;
@@ -426,12 +425,10 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     return ObjTy;
   }
   case BuiltinType::ObjCSel: {
-    if (SelTy)
-      return SelTy;
-    SelTy =
-      DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-                                 "objc_selector", TheCU, getOrCreateMainFile(),
-                                 0);
+    if (!SelTy)
+      SelTy = DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
+                                         "objc_selector", TheCU,
+                                         getOrCreateMainFile(), 0);
     return SelTy;
   }
 
@@ -623,8 +620,10 @@ CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
 
   // Create the type.
   SmallString<256> FullName = getUniqueTagTypeName(Ty, CGM, TheCU);
-  return DBuilder.createForwardDecl(Tag, RDName, Ctx, DefUnit, Line, 0, 0, 0,
-                                    FullName);
+  llvm::DICompositeType RetTy = DBuilder.createReplaceableForwardDecl(
+      Tag, RDName, Ctx, DefUnit, Line, 0, 0, 0, FullName);
+  ReplaceMap.push_back(std::make_pair(Ty, static_cast<llvm::Value *>(RetTy)));
+  return RetTy;
 }
 
 llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
@@ -1624,10 +1623,9 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // debug type since we won't be able to lay out the entire type.
   ObjCInterfaceDecl *Def = ID->getDefinition();
   if (!Def || !Def->getImplementation()) {
-    llvm::DIType FwdDecl =
-      DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-                                 ID->getName(), TheCU, DefUnit, Line,
-                                 RuntimeLang);
+    llvm::DIType FwdDecl = DBuilder.createReplaceableForwardDecl(
+        llvm::dwarf::DW_TAG_structure_type, ID->getName(), TheCU, DefUnit, Line,
+        RuntimeLang);
     ObjCInterfaceCache.push_back(ObjCInterfaceCacheEntry(Ty, FwdDecl, Unit));
     return FwdDecl;
   }
@@ -1910,9 +1908,11 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumType *Ty) {
     llvm::DIFile DefUnit = getOrCreateFile(ED->getLocation());
     unsigned Line = getLineNumber(ED->getLocation());
     StringRef EDName = ED->getName();
-    return DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_enumeration_type,
-                                      EDName, EDContext, DefUnit, Line, 0,
-                                      Size, Align, FullName);
+    llvm::DIType RetTy = DBuilder.createReplaceableForwardDecl(
+        llvm::dwarf::DW_TAG_enumeration_type, EDName, EDContext, DefUnit, Line,
+        0, Size, Align, FullName);
+    ReplaceMap.push_back(std::make_pair(Ty, static_cast<llvm::Value *>(RetTy)));
+    return RetTy;
   }
 
   // Create DIEnumerator elements for each enumerator.
@@ -2002,8 +2002,7 @@ llvm::DIType CGDebugInfo::getTypeOrNull(QualType Ty) {
   // Unwrap the type as needed for debug information.
   Ty = UnwrapTypeForDebugInfo(Ty, CGM.getContext());
 
-  llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
-    TypeCache.find(Ty.getAsOpaquePtr());
+  auto it = TypeCache.find(Ty.getAsOpaquePtr());
   if (it != TypeCache.end()) {
     // Verify that the debug info still exists.
     if (llvm::Value *V = it->second)
@@ -2182,10 +2181,6 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(const RecordType *Ty,
   // CreateType(const RecordType*) will overwrite this with the members in the
   // correct order if the full type is needed.
   Res.setTypeArray(T.getTypeArray());
-
-  if (T && T.isForwardDecl())
-    ReplaceMap.push_back(
-        std::make_pair(QTy.getAsOpaquePtr(), static_cast<llvm::Value *>(T)));
 
   // And update the type cache.
   TypeCache[QTy.getAsOpaquePtr()] = Res;
@@ -2662,7 +2657,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const VarDecl *VD,
   }
 
   FType = Type;
-  llvm::DIType FieldTy = CGDebugInfo::getOrCreateType(FType, Unit);
+  llvm::DIType FieldTy = getOrCreateType(FType, Unit);
   FieldSize = CGM.getContext().getTypeSize(FType);
   FieldAlign = CGM.getContext().toBits(Align);
 
@@ -3295,25 +3290,24 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl) {
 }
 
 void CGDebugInfo::finalize() {
-  for (std::vector<std::pair<void *, llvm::WeakVH> >::const_iterator VI
-         = ReplaceMap.begin(), VE = ReplaceMap.end(); VI != VE; ++VI) {
-    assert(VI->second);
-    llvm::DIType Ty(cast<llvm::MDNode>(VI->second));
+  for (auto p : ReplaceMap) {
+    assert(p.second);
+    llvm::DIType Ty(cast<llvm::MDNode>(p.second));
     assert(Ty.isForwardDecl());
 
-    llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
-        TypeCache.find(VI->first);
+    auto it = TypeCache.find(p.first);
     assert(it != TypeCache.end());
     assert(it->second);
-    llvm::DIType RepTy(cast<llvm::MDNode>(it->second));
 
-    Ty.replaceAllUsesWith(RepTy);
+    llvm::DIType RepTy(cast<llvm::MDNode>(it->second));
+    Ty.replaceAllUsesWith(CGM.getLLVMContext(), RepTy);
   }
 
   for (auto E : ObjCInterfaceCache)
-    E.Decl.replaceAllUsesWith(E.Type->getDecl()->getDefinition()
-                                ? CreateTypeDefinition(E.Type, E.Unit)
-                                : E.Decl);
+    E.Decl.replaceAllUsesWith(CGM.getLLVMContext(),
+                              E.Type->getDecl()->getDefinition()
+                                  ? CreateTypeDefinition(E.Type, E.Unit)
+                                  : E.Decl);
 
   // We keep our own list of retained types, because we need to look
   // up the final type in the type cache.

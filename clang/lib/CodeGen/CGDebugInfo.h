@@ -65,7 +65,7 @@ class CGDebugInfo {
   llvm::DIType BlockLiteralGeneric;
 
   /// TypeCache - Cache of previously constructed Types.
-  llvm::DenseMap<void *, llvm::WeakVH> TypeCache;
+  llvm::DenseMap<const void *, llvm::WeakVH> TypeCache;
 
   struct ObjCInterfaceCacheEntry {
     const ObjCInterfaceType *Type;
@@ -85,7 +85,7 @@ class CGDebugInfo {
 
   /// ReplaceMap - Cache of forward declared types to RAUW at the end of
   /// compilation.
-  std::vector<std::pair<void *, llvm::WeakVH> >ReplaceMap;
+  std::vector<std::pair<const TagType *, llvm::WeakVH>> ReplaceMap;
 
   // LexicalBlockStack - Keep track of our current nested lexical block.
   std::vector<llvm::TrackingVH<llvm::MDNode> > LexicalBlockStack;
