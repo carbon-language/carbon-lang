@@ -25,18 +25,133 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/ValueHandle.h"
 #include <utility>
-#include <unordered_map>
 namespace llvm {
 
 class MachineInstr;
 class MachineBasicBlock;
 class MachineFunction;
+class LexicalScope;
 
 //===----------------------------------------------------------------------===//
 /// InsnRange - This is used to track range of instructions with identical
 /// lexical scope.
 ///
 typedef std::pair<const MachineInstr *, const MachineInstr *> InsnRange;
+
+//===----------------------------------------------------------------------===//
+/// LexicalScopes -  This class provides interface to collect and use lexical
+/// scoping information from machine instruction.
+///
+class LexicalScopes {
+public:
+  LexicalScopes() : MF(nullptr), CurrentFnLexicalScope(nullptr) {}
+  ~LexicalScopes();
+
+  /// initialize - Scan machine function and constuct lexical scope nest, resets
+  /// the instance if necessary.
+  void initialize(const MachineFunction &);
+
+  /// releaseMemory - release memory.
+  void reset();
+
+  /// empty - Return true if there is any lexical scope information available.
+  bool empty() { return CurrentFnLexicalScope == nullptr; }
+
+  /// isCurrentFunctionScope - Return true if given lexical scope represents
+  /// current function.
+  bool isCurrentFunctionScope(const LexicalScope *LS) {
+    return LS == CurrentFnLexicalScope;
+  }
+
+  /// getCurrentFunctionScope - Return lexical scope for the current function.
+  LexicalScope *getCurrentFunctionScope() const {
+    return CurrentFnLexicalScope;
+  }
+
+  /// getMachineBasicBlocks - Populate given set using machine basic blocks
+  /// which have machine instructions that belong to lexical scope identified by
+  /// DebugLoc.
+  void getMachineBasicBlocks(DebugLoc DL,
+                             SmallPtrSet<const MachineBasicBlock *, 4> &MBBs);
+
+  /// dominates - Return true if DebugLoc's lexical scope dominates at least one
+  /// machine instruction's lexical scope in a given machine basic block.
+  bool dominates(DebugLoc DL, MachineBasicBlock *MBB);
+
+  /// findLexicalScope - Find lexical scope, either regular or inlined, for the
+  /// given DebugLoc. Return NULL if not found.
+  LexicalScope *findLexicalScope(DebugLoc DL);
+
+  /// getAbstractScopesList - Return a reference to list of abstract scopes.
+  ArrayRef<LexicalScope *> getAbstractScopesList() const {
+    return AbstractScopesList;
+  }
+
+  /// findAbstractScope - Find an abstract scope or return NULL.
+  LexicalScope *findAbstractScope(const MDNode *N) {
+    return AbstractScopeMap.lookup(N);
+  }
+
+  /// findInlinedScope - Find an inlined scope for the given DebugLoc or return
+  /// NULL.
+  LexicalScope *findInlinedScope(DebugLoc DL) {
+    return InlinedLexicalScopeMap.lookup(DL);
+  }
+
+  /// findLexicalScope - Find regular lexical scope or return NULL.
+  LexicalScope *findLexicalScope(const MDNode *N) {
+    return LexicalScopeMap.lookup(N);
+  }
+
+  /// dump - Print data structures to dbgs().
+  void dump();
+
+private:
+  /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
+  /// not available then create new lexical scope.
+  LexicalScope *getOrCreateLexicalScope(DebugLoc DL);
+
+  /// getOrCreateRegularScope - Find or create a regular lexical scope.
+  LexicalScope *getOrCreateRegularScope(MDNode *Scope);
+
+  /// getOrCreateInlinedScope - Find or create an inlined lexical scope.
+  LexicalScope *getOrCreateInlinedScope(MDNode *Scope, MDNode *InlinedAt);
+
+  /// getOrCreateAbstractScope - Find or create an abstract lexical scope.
+  LexicalScope *getOrCreateAbstractScope(const MDNode *N);
+
+  /// extractLexicalScopes - Extract instruction ranges for each lexical scopes
+  /// for the given machine function.
+  void extractLexicalScopes(SmallVectorImpl<InsnRange> &MIRanges,
+                            DenseMap<const MachineInstr *, LexicalScope *> &M);
+  void constructScopeNest(LexicalScope *Scope);
+  void
+  assignInstructionRanges(SmallVectorImpl<InsnRange> &MIRanges,
+                          DenseMap<const MachineInstr *, LexicalScope *> &M);
+
+private:
+  const MachineFunction *MF;
+
+  /// LexicalScopeMap - Tracks the scopes in the current function.  Owns the
+  /// contained LexicalScope*s.
+  DenseMap<const MDNode *, LexicalScope *> LexicalScopeMap;
+
+  /// InlinedLexicalScopeMap - Tracks inlined function scopes in current
+  /// function.
+  DenseMap<DebugLoc, LexicalScope *> InlinedLexicalScopeMap;
+
+  /// AbstractScopeMap - These scopes are  not included LexicalScopeMap.
+  /// AbstractScopes owns its LexicalScope*s.
+  DenseMap<const MDNode *, LexicalScope *> AbstractScopeMap;
+
+  /// AbstractScopesList - Tracks abstract scopes constructed while processing
+  /// a function.
+  SmallVector<LexicalScope *, 4> AbstractScopesList;
+
+  /// CurrentFnLexicalScope - Top level scope for the current function.
+  ///
+  LexicalScope *CurrentFnLexicalScope;
+};
 
 //===----------------------------------------------------------------------===//
 /// LexicalScope - This class is used to track scope information.
@@ -127,122 +242,6 @@ private:
   const MachineInstr *FirstInsn; // First instruction of this scope.
   unsigned DFSIn, DFSOut;        // In & Out Depth use to determine
                                  // scope nesting.
-};
-
-//===----------------------------------------------------------------------===//
-/// LexicalScopes -  This class provides interface to collect and use lexical
-/// scoping information from machine instruction.
-///
-class LexicalScopes {
-public:
-  LexicalScopes() : MF(nullptr), CurrentFnLexicalScope(nullptr) {}
-
-  /// initialize - Scan machine function and constuct lexical scope nest, resets
-  /// the instance if necessary.
-  void initialize(const MachineFunction &);
-
-  /// releaseMemory - release memory.
-  void reset();
-
-  /// empty - Return true if there is any lexical scope information available.
-  bool empty() { return CurrentFnLexicalScope == nullptr; }
-
-  /// isCurrentFunctionScope - Return true if given lexical scope represents
-  /// current function.
-  bool isCurrentFunctionScope(const LexicalScope *LS) {
-    return LS == CurrentFnLexicalScope;
-  }
-
-  /// getCurrentFunctionScope - Return lexical scope for the current function.
-  LexicalScope *getCurrentFunctionScope() const {
-    return CurrentFnLexicalScope;
-  }
-
-  /// getMachineBasicBlocks - Populate given set using machine basic blocks
-  /// which have machine instructions that belong to lexical scope identified by
-  /// DebugLoc.
-  void getMachineBasicBlocks(DebugLoc DL,
-                             SmallPtrSet<const MachineBasicBlock *, 4> &MBBs);
-
-  /// dominates - Return true if DebugLoc's lexical scope dominates at least one
-  /// machine instruction's lexical scope in a given machine basic block.
-  bool dominates(DebugLoc DL, MachineBasicBlock *MBB);
-
-  /// findLexicalScope - Find lexical scope, either regular or inlined, for the
-  /// given DebugLoc. Return NULL if not found.
-  LexicalScope *findLexicalScope(DebugLoc DL);
-
-  /// getAbstractScopesList - Return a reference to list of abstract scopes.
-  ArrayRef<LexicalScope *> getAbstractScopesList() const {
-    return AbstractScopesList;
-  }
-
-  /// findAbstractScope - Find an abstract scope or return null.
-  LexicalScope *findAbstractScope(const MDNode *N) {
-    auto I = AbstractScopeMap.find(N);
-    return I != AbstractScopeMap.end() ? &I->second : nullptr;
-  }
-
-  /// findInlinedScope - Find an inlined scope for the given DebugLoc or return
-  /// NULL.
-  LexicalScope *findInlinedScope(DebugLoc DL) {
-    return InlinedLexicalScopeMap.lookup(DL);
-  }
-
-  /// findLexicalScope - Find regular lexical scope or return null.
-  LexicalScope *findLexicalScope(const MDNode *N) {
-    auto I = LexicalScopeMap.find(N);
-    return I != LexicalScopeMap.end() ? &I->second : nullptr;
-  }
-
-  /// dump - Print data structures to dbgs().
-  void dump();
-
-private:
-  /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
-  /// not available then create new lexical scope.
-  LexicalScope *getOrCreateLexicalScope(DebugLoc DL);
-
-  /// getOrCreateRegularScope - Find or create a regular lexical scope.
-  LexicalScope *getOrCreateRegularScope(MDNode *Scope);
-
-  /// getOrCreateInlinedScope - Find or create an inlined lexical scope.
-  LexicalScope *getOrCreateInlinedScope(MDNode *Scope, MDNode *InlinedAt);
-
-  /// getOrCreateAbstractScope - Find or create an abstract lexical scope.
-  LexicalScope *getOrCreateAbstractScope(const MDNode *N);
-
-  /// extractLexicalScopes - Extract instruction ranges for each lexical scopes
-  /// for the given machine function.
-  void extractLexicalScopes(SmallVectorImpl<InsnRange> &MIRanges,
-                            DenseMap<const MachineInstr *, LexicalScope *> &M);
-  void constructScopeNest(LexicalScope *Scope);
-  void
-  assignInstructionRanges(SmallVectorImpl<InsnRange> &MIRanges,
-                          DenseMap<const MachineInstr *, LexicalScope *> &M);
-
-private:
-  const MachineFunction *MF;
-
-  /// LexicalScopeMap - Tracks the scopes in the current function.
-  // Use an unordered_map to ensure value pointer validity over insertion.
-  std::unordered_map<const MDNode *, LexicalScope> LexicalScopeMap;
-
-  /// InlinedLexicalScopeMap - Tracks inlined function scopes in current
-  /// function.
-  DenseMap<DebugLoc, LexicalScope *> InlinedLexicalScopeMap;
-
-  /// AbstractScopeMap - These scopes are  not included LexicalScopeMap.
-  // Use an unordered_map to ensure value pointer validity over insertion.
-  std::unordered_map<const MDNode *, LexicalScope> AbstractScopeMap;
-
-  /// AbstractScopesList - Tracks abstract scopes constructed while processing
-  /// a function.
-  SmallVector<LexicalScope *, 4> AbstractScopesList;
-
-  /// CurrentFnLexicalScope - Top level scope for the current function.
-  ///
-  LexicalScope *CurrentFnLexicalScope;
 };
 
 } // end llvm namespace
