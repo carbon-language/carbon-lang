@@ -25,14 +25,12 @@ namespace {
 class MyLinkingContext : public LinkingContext {
 public:
   Writer &writer() const override { llvm_unreachable("no writer!"); }
-
   bool validateImpl(raw_ostream &) override { return true; }
 };
 
 class MyFileNode : public SimpleFileNode {
 public:
   MyFileNode(StringRef path) : SimpleFileNode(path) {}
-
   void resetNextIndex() override { FileNode::resetNextIndex(); }
 };
 
@@ -40,15 +38,14 @@ class MyExpandFileNode : public SimpleFileNode {
 public:
   MyExpandFileNode(StringRef path) : SimpleFileNode(path) {}
 
-  /// \brief How do we want to expand the current node?
+  /// Returns true as we want to expand this file
   bool shouldExpand() const override { return true; }
 
-  /// \brief Get the elements that we want to expand with.
+  /// Returns the elements replacing this node
   range<InputGraph::InputElementIterT> expandElements() override {
     return make_range(_expandElements.begin(), _expandElements.end());
   }
 
-  /// Process the input Elemenet
   void addElement(std::unique_ptr<InputElement> element) {
     _expandElements.push_back(std::move(element));
   }
@@ -61,13 +58,23 @@ class InputGraphTest : public testing::Test {
 public:
   InputGraphTest() {
     _ctx.setInputGraph(std::unique_ptr<InputGraph>(new InputGraph()));
+    _graph = &_ctx.getInputGraph();
   }
 
-  InputGraph &getInputGraph() { return _ctx.getInputGraph(); }
-  int inputFileCount() { return _ctx.getInputGraph().size(); }
+  StringRef getNext() {
+    ErrorOr<File &> file = _graph->getNextFile();
+    EXPECT_TRUE(!file.getError());
+    return file.get().path();
+  }
+
+  void expectEnd() {
+    ErrorOr<File &> file = _graph->getNextFile();
+    EXPECT_EQ(InputGraphError::no_more_files, file.getError());
+  }
 
 protected:
   MyLinkingContext _ctx;
+  InputGraph *_graph;
 };
 
 } // end anonymous namespace
@@ -89,211 +96,82 @@ static std::unique_ptr<MyFileNode> createFile2(StringRef name1, StringRef name2)
   return file;
 }
 
-TEST_F(InputGraphTest, Basic) {
-  EXPECT_EQ(0, inputFileCount());
-  ErrorOr<InputElement *> nextElement = getInputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
+TEST_F(InputGraphTest, Empty) {
+  expectEnd();
 }
 
-TEST_F(InputGraphTest, AddAFile) {
-  std::unique_ptr<MyFileNode> myfile(new MyFileNode("file1"));
-  getInputGraph().addInputElement(std::move(myfile));
-  EXPECT_EQ(1, inputFileCount());
-  ErrorOr<InputElement *> nextElement = getInputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
-  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
-  nextElement = getInputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
+TEST_F(InputGraphTest, File) {
+  _graph->addInputElement(createFile1("file1"));
+  EXPECT_EQ("file1", getNext());
+  expectEnd();
 }
 
-TEST_F(InputGraphTest, AddAFileWithLLDFiles) {
-  _ctx.getInputGraph().addInputElement(createFile2("objfile1", "objfile2"));
-  EXPECT_EQ(1, inputFileCount());
-  ErrorOr<InputElement *> nextElement = getInputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
-  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
-  FileNode *fileNode = dyn_cast<FileNode>(*nextElement);
-
-  ErrorOr<File &> objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile1", (*objfile).path());
-
-  objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile2", (*objfile).path());
-
-  objfile = fileNode->getNextFile();
-  EXPECT_EQ(InputGraphError::no_more_files, objfile.getError());
-
-  fileNode->resetNextIndex();
-
-  objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile1", (*objfile).path());
-
-  nextElement = getInputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
+TEST_F(InputGraphTest, Files) {
+  _graph->addInputElement(createFile2("file1", "file2"));
+  EXPECT_EQ("file1", getNext());
+  EXPECT_EQ("file2", getNext());
+  expectEnd();
 }
 
-TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
-  _ctx.getInputGraph().addInputElement(createFile2("objfile1", "objfile2"));
+TEST_F(InputGraphTest, Group) {
+  _graph->addInputElement(createFile2("file1", "file2"));
 
-  // Create a group node with two elements
-  // an file node which looks like an archive and
-  // two file nodes
-  std::unique_ptr<Group> mygroup(new Group());
-  mygroup->addFile(createFile2("objfile_1", "objfile_2"));
-  mygroup->addFile(createFile1("group_objfile1"));
-  mygroup->addFile(createFile1("group_objfile2"));
-  getInputGraph().addInputElement(std::move(mygroup));
+  std::unique_ptr<Group> group(new Group());
+  group->addFile(createFile2("file3", "file4"));
+  group->addFile(createFile1("file5"));
+  group->addFile(createFile1("file6"));
+  _graph->addInputElement(std::move(group));
 
-  EXPECT_EQ(2, inputFileCount());
-
-  ErrorOr<InputElement *> nextElement = getInputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
-  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
-  FileNode *fileNode = dyn_cast<FileNode>(*nextElement);
-
-  ErrorOr<File &> objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile1", (*objfile).path());
-
-  objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile2", (*objfile).path());
-
-  objfile = fileNode->getNextFile();
-  EXPECT_EQ(InputGraphError::no_more_files, objfile.getError());
-
-  nextElement = getInputGraph().getNextInputElement();
-  Group *group = dyn_cast<Group>(*nextElement);
-  assert(group);
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile_1", (*objfile).path());
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile_2", (*objfile).path());
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("group_objfile1", (*objfile).path());
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("group_objfile2", (*objfile).path());
-
-  nextElement = getInputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
+  EXPECT_EQ("file1", getNext());
+  EXPECT_EQ("file2", getNext());
+  EXPECT_EQ("file3", getNext());
+  EXPECT_EQ("file4", getNext());
+  EXPECT_EQ("file5", getNext());
+  EXPECT_EQ("file6", getNext());
+  expectEnd();
 }
 
 // Iterate through the group
-TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
-  getInputGraph().addInputElement(createFile2("objfile1", "objfile2"));
+TEST_F(InputGraphTest, GroupIteration) {
+  _graph->addInputElement(createFile2("file1", "file2"));
 
-  // Create a group node with two elements
-  // an file node which looks like an archive and
-  // two file nodes
-  std::unique_ptr<Group> mygroup(new Group());
-  mygroup->addFile(createFile2("objfile_1", "objfile_2"));
-  mygroup->addFile(createFile1("group_objfile1"));
-  mygroup->addFile(createFile1("group_objfile2"));
-  getInputGraph().addInputElement(std::move(mygroup));
+  std::unique_ptr<Group> group(new Group());
+  group->addFile(createFile2("file3", "file4"));
+  group->addFile(createFile1("file5"));
+  group->addFile(createFile1("file6"));
+  _graph->addInputElement(std::move(group));
 
-  EXPECT_EQ(2, inputFileCount());
-
-  ErrorOr<InputElement *> nextElement = getInputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
-  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
-  FileNode *fileNode = dyn_cast<FileNode>(*nextElement);
-
-  ErrorOr<File &> objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile1", (*objfile).path());
-
-  objfile = fileNode->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile2", (*objfile).path());
-
-  objfile = fileNode->getNextFile();
-  EXPECT_EQ(InputGraphError::no_more_files, objfile.getError());
-
-  nextElement = getInputGraph().getNextInputElement();
-  Group *group = dyn_cast<Group>(*nextElement);
-  assert(group);
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile_1", (*objfile).path());
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile_2", (*objfile).path());
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("group_objfile1", (*objfile).path());
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("group_objfile2", (*objfile).path());
-
-  group->notifyProgress();
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile_1", (*objfile).path());
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("objfile_2", (*objfile).path());
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("group_objfile1", (*objfile).path());
-
-  objfile = group->getNextFile();
-  EXPECT_NE(InputGraphError::no_more_files, objfile.getError());
-  EXPECT_EQ("group_objfile2", (*objfile).path());
+  EXPECT_EQ("file1", getNext());
+  EXPECT_EQ("file2", getNext());
+  EXPECT_EQ("file3", getNext());
+  EXPECT_EQ("file4", getNext());
+  EXPECT_EQ("file5", getNext());
+  EXPECT_EQ("file6", getNext());
+  _graph->notifyProgress();
+  EXPECT_EQ("file3", getNext());
+  EXPECT_EQ("file4", getNext());
+  EXPECT_EQ("file5", getNext());
+  EXPECT_EQ("file6", getNext());
+  expectEnd();
 }
 
-// Node expansion tests.
-TEST_F(InputGraphTest, ExpandAndReplaceInputGraphNode) {
+// Node expansion tests
+TEST_F(InputGraphTest, Normalize) {
   std::vector<std::unique_ptr<File>> objfiles;
-  getInputGraph().addInputElement(createFile2("objfile1", "objfile2"));
+  _graph->addInputElement(createFile2("file1", "file2"));
 
-  std::unique_ptr<MyExpandFileNode> expandFile(
-      new MyExpandFileNode("expand_node"));
-  expandFile->addElement(createFile1("objfile3"));
-  expandFile->addElement(createFile1("objfile4"));
-  getInputGraph().addInputElement(std::move(expandFile));
+  std::unique_ptr<MyExpandFileNode> expandFile(new MyExpandFileNode("node"));
+  expandFile->addElement(createFile1("file3"));
+  expandFile->addElement(createFile1("file4"));
+  _graph->addInputElement(std::move(expandFile));
+  _graph->addInputElement(createFile2("file5", "file6"));
+  _graph->normalize();
 
-  // Add an extra obj after the expand node
-  getInputGraph().addInputElement(createFile2("objfile5", "objfile6"));
-  getInputGraph().normalize();
-
-  ErrorOr<InputElement *> nextElement = getInputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
-  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
-  FileNode *fileNode = dyn_cast<FileNode>(*nextElement);
-
-  nextElement = getInputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
-  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
-  fileNode = dyn_cast<FileNode>(*nextElement);
-
-  nextElement = getInputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
-  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
-  fileNode = dyn_cast<FileNode>(*nextElement);
-
-  nextElement = getInputGraph().getNextInputElement();
-  EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
-  EXPECT_EQ(InputElement::Kind::File, (*nextElement)->kind());
-  fileNode = dyn_cast<FileNode>(*nextElement);
-
-  nextElement = getInputGraph().getNextInputElement();
-  EXPECT_EQ(InputGraphError::no_more_elements, nextElement.getError());
+  EXPECT_EQ("file1", getNext());
+  EXPECT_EQ("file2", getNext());
+  EXPECT_EQ("file3", getNext());
+  EXPECT_EQ("file4", getNext());
+  EXPECT_EQ("file5", getNext());
+  EXPECT_EQ("file6", getNext());
+  _graph->notifyProgress();
 }
