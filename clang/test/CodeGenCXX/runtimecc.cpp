@@ -45,7 +45,7 @@ namespace test1 {
 
 // CHECK: declare arm_aapcscc void @__cxa_throw(i8*, i8*, i8*)
 
-// CHECK-LABEL: define internal arm_aapcscc void @_GLOBAL__I_a()
+// CHECK-LABEL: define internal arm_aapcscc void @_GLOBAL__sub_I_runtimecc.cpp()
 // CHECK:   call arm_aapcscc void @__cxx_global_var_init()
 
 

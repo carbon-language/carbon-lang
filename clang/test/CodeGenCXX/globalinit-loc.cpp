@@ -4,9 +4,9 @@
 // Verify that the global init helper function does not get associated
 // with any source location.
 //
-// CHECK: define internal void @_GLOBAL__I_a
+// CHECK: define internal void @_GLOBAL__sub_I_globalinit_loc.cpp
 // CHECK: !dbg ![[DBG:.*]]
-// CHECK: "_GLOBAL__I_a", i32 0, {{.*}}, i32 0} ; [ DW_TAG_subprogram ] [line 0] [local] [def]
+// CHECK: "_GLOBAL__sub_I_globalinit_loc.cpp", i32 0, {{.*}}, i32 0} ; [ DW_TAG_subprogram ] [line 0] [local] [def]
 // CHECK: ![[DBG]] = metadata !{i32 0, i32 0,
 # 99 "someheader.h"
 class A {

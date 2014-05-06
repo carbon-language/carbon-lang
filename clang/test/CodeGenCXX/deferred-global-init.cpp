@@ -11,6 +11,6 @@ void* bar() { return a; }
 // CHECK: load i8** @foo
 // CHECK: ret void
 
-// CHECK-LABEL: define internal void @_GLOBAL__I_a
+// CHECK-LABEL: define internal void @_GLOBAL__sub_I_deferred_global_init.cpp
 // CHECK: call void @__cxx_global_var_init()
 // CHECK: ret void

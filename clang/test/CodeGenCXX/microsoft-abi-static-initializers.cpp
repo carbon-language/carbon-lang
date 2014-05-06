@@ -2,7 +2,7 @@
 
 // CHECK: @llvm.global_ctors = appending global [2 x { i32, void ()* }]
 // CHECK: [{ i32, void ()* } { i32 65535, void ()* @"\01??__Efoo@?$B@H@@2VA@@A@YAXXZ"
-// CHECK:  { i32, void ()* } { i32 65535, void ()* @_GLOBAL__I_a }]
+// CHECK:  { i32, void ()* } { i32 65535, void ()* @_GLOBAL__sub_I_microsoft_abi_static_initializers.cpp }]
 
 struct S {
   S();
@@ -160,7 +160,7 @@ void force_usage() {
 // CHECK: call x86_thiscallcc void @"\01??1A@@QAE@XZ"{{.*}}foo
 // CHECK: ret void
 
-// CHECK: define internal void @_GLOBAL__I_a() [[NUW]] {
+// CHECK: define internal void @_GLOBAL__sub_I_microsoft_abi_static_initializers.cpp() [[NUW]] {
 // CHECK: call void @"\01??__Es@@YAXXZ"()
 // CHECK: ret void
 

@@ -195,11 +195,11 @@ namespace test7 {
 // CHECK-NEXT:   sub
 // CHECK-NEXT:   store i32 {{.*}}, i32* @_ZN5test1L1yE
 
-// CHECK: define internal void @_GLOBAL__I_a() section "__TEXT,__StaticInit,regular,pure_instructions" {
+// CHECK: define internal void @_GLOBAL__sub_I_global_init.cpp() section "__TEXT,__StaticInit,regular,pure_instructions" {
 // CHECK:   call void [[TEST1_Y_INIT]]
 // CHECK:   call void [[TEST1_Z_INIT]]
 
 // rdar://problem/8090834: this should be nounwind
-// CHECK-NOEXC: define internal void @_GLOBAL__I_a() [[NUW:#[0-9]+]] section "__TEXT,__StaticInit,regular,pure_instructions" {
+// CHECK-NOEXC: define internal void @_GLOBAL__sub_I_global_init.cpp() [[NUW:#[0-9]+]] section "__TEXT,__StaticInit,regular,pure_instructions" {
 
 // CHECK-NOEXC: attributes [[NUW]] = { nounwind }
