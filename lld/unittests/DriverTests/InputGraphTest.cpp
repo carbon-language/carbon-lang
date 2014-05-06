@@ -73,6 +73,23 @@ protected:
 
 } // end anonymous namespace
 
+static std::unique_ptr<MyFileNode> createFile1(StringRef name) {
+  std::vector<std::unique_ptr<File>> files;
+  files.push_back(std::unique_ptr<SimpleFile>(new SimpleFile(name)));
+  std::unique_ptr<MyFileNode> file(new MyFileNode("filenode"));
+  file->addFiles(std::move(files));
+  return file;
+}
+
+static std::unique_ptr<MyFileNode> createFile2(StringRef name1, StringRef name2) {
+  std::vector<std::unique_ptr<File>> files;
+  files.push_back(std::unique_ptr<SimpleFile>(new SimpleFile(name1)));
+  files.push_back(std::unique_ptr<SimpleFile>(new SimpleFile(name2)));
+  std::unique_ptr<MyFileNode> file(new MyFileNode("filenode"));
+  file->addFiles(std::move(files));
+  return file;
+}
+
 TEST_F(InputGraphTest, Basic) {
   EXPECT_EQ(0, inputFileCount());
   ErrorOr<InputElement *> nextElement = getInputGraph().getNextInputElement();
@@ -91,14 +108,7 @@ TEST_F(InputGraphTest, AddAFile) {
 }
 
 TEST_F(InputGraphTest, AddAFileWithLLDFiles) {
-  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files"));
-  std::vector<std::unique_ptr<File>> objfiles;
-  std::unique_ptr<SimpleFile> obj1(new SimpleFile("objfile1"));
-  std::unique_ptr<SimpleFile> obj2(new SimpleFile("objfile2"));
-  objfiles.push_back(std::move(obj1));
-  objfiles.push_back(std::move(obj2));
-  myfile->addFiles(std::move(objfiles));
-  getInputGraph().addInputElement(std::move(myfile));
+  _ctx.getInputGraph().addInputElement(createFile2("objfile1", "objfile2"));
   EXPECT_EQ(1, inputFileCount());
   ErrorOr<InputElement *> nextElement = getInputGraph().getNextInputElement();
   EXPECT_NE(InputGraphError::no_more_elements, nextElement.getError());
@@ -127,42 +137,19 @@ TEST_F(InputGraphTest, AddAFileWithLLDFiles) {
 }
 
 TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
-  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files1"));
-  std::vector<std::unique_ptr<File>> objfiles;
-  std::unique_ptr<SimpleFile> obj1(new SimpleFile("objfile1"));
-  std::unique_ptr<SimpleFile> obj2(new SimpleFile("objfile2"));
-  objfiles.push_back(std::move(obj1));
-  objfiles.push_back(std::move(obj2));
-  myfile->addFiles(std::move(objfiles));
-  getInputGraph().addInputElement(std::move(myfile));
+  _ctx.getInputGraph().addInputElement(createFile2("objfile1", "objfile2"));
 
   // Create a group node with two elements
   // an file node which looks like an archive and
   // two file nodes
   std::unique_ptr<Group> mygroup(new Group());
-  std::unique_ptr<MyFileNode> myarchive(new MyFileNode("archive_file"));
-  std::vector<std::unique_ptr<File>> objfiles_group;
-  std::unique_ptr<SimpleFile> obj_1(new SimpleFile("objfile_1"));
-  std::unique_ptr<SimpleFile> obj_2(new SimpleFile("objfile_2"));
-  objfiles_group.push_back(std::move(obj_1));
-  objfiles_group.push_back(std::move(obj_2));
-  myarchive->addFiles(std::move(objfiles_group));
+  std::unique_ptr<MyFileNode> myarchive = createFile2("objfile_1", "objfile_2");
   EXPECT_EQ(true, mygroup->addFile(std::move(myarchive)));
 
-  std::unique_ptr<MyFileNode> mygroupobjfile_1(
-      new MyFileNode("group_objfile1"));
-  std::vector<std::unique_ptr<File>> objfiles_group1;
-  std::unique_ptr<SimpleFile> mygroupobj1(new SimpleFile("group_objfile1"));
-  objfiles_group1.push_back(std::move(mygroupobj1));
-  mygroupobjfile_1->addFiles(std::move(objfiles_group1));
+  std::unique_ptr<MyFileNode> mygroupobjfile_1 = createFile1("group_objfile1");
   EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_1)));
 
-  std::unique_ptr<MyFileNode> mygroupobjfile_2(
-      new MyFileNode("group_objfile2"));
-  std::vector<std::unique_ptr<File>> objfiles_group2;
-  std::unique_ptr<SimpleFile> mygroupobj2(new SimpleFile("group_objfile2"));
-  objfiles_group2.push_back(std::move(mygroupobj2));
-  mygroupobjfile_2->addFiles(std::move(objfiles_group2));
+  std::unique_ptr<MyFileNode> mygroupobjfile_2 = createFile1("group_objfile2");
   EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_2)));
 
   // Add the group to the InputGraph.
@@ -212,42 +199,19 @@ TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
 
 // Iterate through the group
 TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
-  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files1"));
-  std::vector<std::unique_ptr<File>> objfiles;
-  std::unique_ptr<SimpleFile> obj1(new SimpleFile("objfile1"));
-  std::unique_ptr<SimpleFile> obj2(new SimpleFile("objfile2"));
-  objfiles.push_back(std::move(obj1));
-  objfiles.push_back(std::move(obj2));
-  myfile->addFiles(std::move(objfiles));
-  getInputGraph().addInputElement(std::move(myfile));
+  getInputGraph().addInputElement(createFile2("objfile1", "objfile2"));
 
   // Create a group node with two elements
   // an file node which looks like an archive and
   // two file nodes
   std::unique_ptr<Group> mygroup(new Group());
-  std::unique_ptr<MyFileNode> myarchive(new MyFileNode("archive_file"));
-  std::vector<std::unique_ptr<File>> objfiles_group;
-  std::unique_ptr<SimpleFile> obj_1(new SimpleFile("objfile_1"));
-  std::unique_ptr<SimpleFile> obj_2(new SimpleFile("objfile_2"));
-  objfiles_group.push_back(std::move(obj_1));
-  objfiles_group.push_back(std::move(obj_2));
-  myarchive->addFiles(std::move(objfiles_group));
+  std::unique_ptr<MyFileNode> myarchive = createFile2("objfile_1", "objfile_2");
   EXPECT_EQ(true, mygroup->addFile(std::move(myarchive)));
 
-  std::unique_ptr<MyFileNode> mygroupobjfile_1(
-      new MyFileNode("group_objfile1"));
-  std::vector<std::unique_ptr<File>> objfiles_group1;
-  std::unique_ptr<SimpleFile> mygroupobj1(new SimpleFile("group_objfile1"));
-  objfiles_group1.push_back(std::move(mygroupobj1));
-  mygroupobjfile_1->addFiles(std::move(objfiles_group1));
+  std::unique_ptr<MyFileNode> mygroupobjfile_1 = createFile1("group_objfile1");
   EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_1)));
 
-  std::unique_ptr<MyFileNode> mygroupobjfile_2(
-      new MyFileNode("group_objfile2"));
-  std::vector<std::unique_ptr<File>> objfiles_group2;
-  std::unique_ptr<SimpleFile> mygroupobj2(new SimpleFile("group_objfile2"));
-  objfiles_group2.push_back(std::move(mygroupobj2));
-  mygroupobjfile_2->addFiles(std::move(objfiles_group2));
+  std::unique_ptr<MyFileNode> mygroupobjfile_2 = createFile1("group_objfile2");
   EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_2)));
 
   // Add the group to the InputGraph.
@@ -312,46 +276,17 @@ TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
 
 // Node expansion tests.
 TEST_F(InputGraphTest, ExpandAndReplaceInputGraphNode) {
-  std::unique_ptr<MyFileNode> myfile(new MyFileNode("multi_files1"));
   std::vector<std::unique_ptr<File>> objfiles;
-  std::unique_ptr<SimpleFile> obj1(new SimpleFile("objfile1"));
-  std::unique_ptr<SimpleFile> obj2(new SimpleFile("objfile2"));
-  objfiles.push_back(std::move(obj1));
-  objfiles.push_back(std::move(obj2));
-  myfile->addFiles(std::move(objfiles));
-  getInputGraph().addInputElement(std::move(myfile));
-  objfiles.clear();
+  getInputGraph().addInputElement(createFile2("objfile1", "objfile2"));
 
   std::unique_ptr<MyExpandFileNode> expandFile(
       new MyExpandFileNode("expand_node"));
-
-  std::unique_ptr<MyFileNode> filenode1(new MyFileNode("expand_file1"));
-  std::unique_ptr<SimpleFile> obj3(new SimpleFile("objfile3"));
-  objfiles.push_back(std::move(obj3));
-  filenode1->addFiles(std::move(objfiles));
-  expandFile->addElement(std::move(filenode1));
-  objfiles.clear();
-
-  std::unique_ptr<MyFileNode> filenode2(new MyFileNode("expand_file2"));
-  std::unique_ptr<SimpleFile> obj4(new SimpleFile("objfile4"));
-  objfiles.push_back(std::move(obj4));
-  filenode2->addFiles(std::move(objfiles));
-  expandFile->addElement(std::move(filenode2));
-  objfiles.clear();
-
-  // Add expand file to InputGraph
+  expandFile->addElement(createFile1("objfile3"));
+  expandFile->addElement(createFile1("objfile4"));
   getInputGraph().addInputElement(std::move(expandFile));
 
-  std::unique_ptr<MyFileNode> filenode3(new MyFileNode("obj_after_expand"));
-  std::unique_ptr<SimpleFile> obj5(new SimpleFile("objfile5"));
-  std::unique_ptr<SimpleFile> obj6(new SimpleFile("objfile6"));
-  objfiles.push_back(std::move(obj5));
-  objfiles.push_back(std::move(obj6));
-  filenode3->addFiles(std::move(objfiles));
-
   // Add an extra obj after the expand node
-  getInputGraph().addInputElement(std::move(filenode3));
-
+  getInputGraph().addInputElement(createFile2("objfile5", "objfile6"));
   getInputGraph().normalize();
 
   ErrorOr<InputElement *> nextElement = getInputGraph().getNextInputElement();
