@@ -142,16 +142,9 @@ TEST_F(InputGraphTest, AddNodeWithFilesAndGroup) {
   // an file node which looks like an archive and
   // two file nodes
   std::unique_ptr<Group> mygroup(new Group());
-  std::unique_ptr<MyFileNode> myarchive = createFile2("objfile_1", "objfile_2");
-  EXPECT_EQ(true, mygroup->addFile(std::move(myarchive)));
-
-  std::unique_ptr<MyFileNode> mygroupobjfile_1 = createFile1("group_objfile1");
-  EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_1)));
-
-  std::unique_ptr<MyFileNode> mygroupobjfile_2 = createFile1("group_objfile2");
-  EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_2)));
-
-  // Add the group to the InputGraph.
+  mygroup->addFile(createFile2("objfile_1", "objfile_2"));
+  mygroup->addFile(createFile1("group_objfile1"));
+  mygroup->addFile(createFile1("group_objfile2"));
   getInputGraph().addInputElement(std::move(mygroup));
 
   EXPECT_EQ(2, inputFileCount());
@@ -204,16 +197,9 @@ TEST_F(InputGraphTest, AddNodeWithGroupIteration) {
   // an file node which looks like an archive and
   // two file nodes
   std::unique_ptr<Group> mygroup(new Group());
-  std::unique_ptr<MyFileNode> myarchive = createFile2("objfile_1", "objfile_2");
-  EXPECT_EQ(true, mygroup->addFile(std::move(myarchive)));
-
-  std::unique_ptr<MyFileNode> mygroupobjfile_1 = createFile1("group_objfile1");
-  EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_1)));
-
-  std::unique_ptr<MyFileNode> mygroupobjfile_2 = createFile1("group_objfile2");
-  EXPECT_EQ(true, mygroup->addFile(std::move(mygroupobjfile_2)));
-
-  // Add the group to the InputGraph.
+  mygroup->addFile(createFile2("objfile_1", "objfile_2"));
+  mygroup->addFile(createFile1("group_objfile1"));
+  mygroup->addFile(createFile1("group_objfile2"));
   getInputGraph().addInputElement(std::move(mygroup));
 
   EXPECT_EQ(2, inputFileCount());
