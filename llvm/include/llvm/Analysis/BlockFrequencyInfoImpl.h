@@ -17,7 +17,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PostOrderIterator.h"
-#include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/Support/BlockFrequency.h"
