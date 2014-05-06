@@ -71,7 +71,7 @@ public:
   bool addInputElement(std::unique_ptr<InputElement>);
 
   /// Normalize the InputGraph. It visits all nodes in the tree to replace a
-  /// node with its children if it's shouldExpand() returnst true.
+  /// node with its children if it's shouldExpand() returns true.
   void normalize();
 
   range<InputElementIterT> inputElements() {
