@@ -110,11 +110,7 @@ public:
 
   bool hasSection() const { return !Section.empty(); }
   const std::string &getSection() const { return Section; }
-  void setSection(StringRef S) {
-    assert((getValueID() != Value::GlobalAliasVal || S.empty()) &&
-           "GlobalAlias should not have a section!");
-    Section = S;
-  }
+  void setSection(StringRef S);
 
   /// getType - Global values are always pointers.
   inline PointerType *getType() const {

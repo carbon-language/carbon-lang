@@ -73,6 +73,11 @@ void GlobalValue::setAlignment(unsigned Align) {
   assert(getAlignment() == Align && "Alignment representation error!");
 }
 
+void GlobalValue::setSection(StringRef S) {
+  assert(!isa<GlobalAlias>(this) && "GlobalAlias should not have a section!");
+  Section = S;
+}
+
 bool GlobalValue::isDeclaration() const {
   // Globals are definitions if they have an initializer.
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(this))
