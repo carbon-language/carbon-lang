@@ -495,10 +495,16 @@ static void forceRenaming(GlobalValue *GV, StringRef Name) {
 /// a GlobalValue) from the SrcGV to the DestGV.
 static void copyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
   // Use the maximum alignment, rather than just copying the alignment of SrcGV.
-  unsigned Alignment = std::max(DestGV->getAlignment(), SrcGV->getAlignment());
+  unsigned Alignment;
+  bool IsAlias = isa<GlobalAlias>(DestGV);
+  if (!IsAlias)
+    Alignment = std::max(DestGV->getAlignment(), SrcGV->getAlignment());
+
   DestGV->copyAttributesFrom(SrcGV);
-  DestGV->setAlignment(Alignment);
-  
+
+  if (!IsAlias)
+    DestGV->setAlignment(Alignment);
+
   forceRenaming(DestGV, SrcGV->getName());
 }
 

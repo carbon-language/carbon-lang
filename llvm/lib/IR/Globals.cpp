@@ -53,15 +53,18 @@ void GlobalValue::destroyConstant() {
 /// copyAttributesFrom - copy all additional attributes (those not needed to
 /// create a GlobalValue) from the GlobalValue Src to this one.
 void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
-  setAlignment(Src->getAlignment());
-  setSection(Src->getSection());
+  if (!isa<GlobalAlias>(this)) {
+    setAlignment(Src->getAlignment());
+    setSection(Src->getSection());
+  }
+
   setVisibility(Src->getVisibility());
   setUnnamedAddr(Src->hasUnnamedAddr());
   setDLLStorageClass(Src->getDLLStorageClass());
 }
 
 void GlobalValue::setAlignment(unsigned Align) {
-  assert((!isa<GlobalAlias>(this) || !Align) &&
+  assert((!isa<GlobalAlias>(this)) &&
          "GlobalAlias should not have an alignment!");
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Align <= MaximumAlignment &&
