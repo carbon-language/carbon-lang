@@ -309,8 +309,8 @@ SubtargetFeatures::getFeatureBits(const StringRef CPU,
 /// print - Print feature string.
 ///
 void SubtargetFeatures::print(raw_ostream &OS) const {
-  for (size_t i = 0, e = Features.size(); i != e; ++i)
-    OS << Features[i] << "  ";
+  for (auto &F : Features)
+    OS << F << " ";
   OS << "\n";
 }
 
