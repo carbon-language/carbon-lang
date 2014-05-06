@@ -99,6 +99,14 @@ class LldbGdbServerTestCase(TestBase):
              "read packet: +"],
             True)
 
+    def add_verified_launch_packets(self, launch_args):
+        self.test_sequence.add_log_lines(
+            ["read packet: %s" % build_gdbremote_A_packet(launch_args),
+             "send packet: $OK#00",
+             "read packet: $qLaunchSuccess#a5",
+             "send packet: $OK#00"],
+            True)
+
     def expect_gdbremote_sequence(self):
         expect_lldb_gdbserver_replay(self, self.sock, self.test_sequence, self._TIMEOUT_SECONDS, self.logger)
 
@@ -210,14 +218,12 @@ class LldbGdbServerTestCase(TestBase):
         launch_args = [os.path.abspath('a.out')]
 
         self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
         self.test_sequence.add_log_lines(
-            ["read packet: %s" % build_gdbremote_A_packet(launch_args),
-             "send packet: $OK#00",
-             "read packet: $qLaunchSuccess#a5",
-             "send packet: $OK#00",
-             "read packet: $vCont;c#00",
+            ["read packet: $vCont;c#00",
              "send packet: $W00#00"],
             True)
+
         self.expect_gdbremote_sequence()
 
     @debugserver_test
@@ -245,14 +251,12 @@ class LldbGdbServerTestCase(TestBase):
         launch_args = [os.path.abspath('a.out'), "retval:%d" % RETVAL]
 
         self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
         self.test_sequence.add_log_lines(
-            ["lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
-             "lldb-gdbserver <   6> send packet: $OK#00",
-             "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
-             "lldb-gdbserver <   6> send packet: $OK#00",
-             "lldb-gdbserver <   5> read packet: $vCont;c#00",
-             "lldb-gdbserver <   7> send packet: $W{0:02x}#00".format(RETVAL)],
+            ["read packet: $vCont;c#00",
+             "send packet: $W{0:02x}#00".format(RETVAL)],
             True)
+
         self.expect_gdbremote_sequence()
 
     @debugserver_test
@@ -278,14 +282,11 @@ class LldbGdbServerTestCase(TestBase):
         launch_args = [os.path.abspath('a.out'), "hello, world"]
 
         self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
         self.test_sequence.add_log_lines(
-            ["lldb-gdbserver <   0> read packet: %s" % build_gdbremote_A_packet(launch_args),
-             "lldb-gdbserver <   6> send packet: $OK#00",
-             "lldb-gdbserver <  18> read packet: $qLaunchSuccess#a5",
-             "lldb-gdbserver <   6> send packet: $OK#00",
-             "lldb-gdbserver <   5> read packet: $vCont;c#00",
-             "lldb-gdbserver <   7> send packet: $O{}#00".format(gdbremote_hex_encode_string("hello, world\r\n")),
-             "lldb-gdbserver <   7> send packet: $W00#00"],
+            ["read packet: $vCont;c#00",
+             "send packet: $O{}#00".format(gdbremote_hex_encode_string("hello, world\r\n")),
+             "send packet: $W00#00"],
             True)
         self.expect_gdbremote_sequence()
 
@@ -303,6 +304,40 @@ class LldbGdbServerTestCase(TestBase):
         self.init_llgs_test()
         self.buildDwarf()
         self.inferior_print_exit()
+
+    def first_launch_stop_reply_thread_matches_first_qC(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
+
+        # build launch args
+        launch_args = [os.path.abspath('a.out'), "hello, world"]
+
+        self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
+        self.test_sequence.add_log_lines(
+            ["read packet: $qC#00",
+             { "direction":"send", "regex":r"^\$QC([0-9a-fA-F]+)#", "capture":{1:"thread_id"} },
+             "read packet: $?#00",
+             { "direction":"send", "regex":r"^\$T[0-9a-fA-F]{2}thread:([0-9a-fA-F]+)", "expect_captures":{1:"thread_id"} }],
+            True)
+        self.expect_gdbremote_sequence()
+
+    @debugserver_test
+    @dsym_test
+    @unittest2.expectedFailure() # Possible bug.
+    def test_first_launch_stop_reply_thread_matches_first_qC_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.first_launch_stop_reply_thread_matches_first_qC()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_first_launch_stop_reply_thread_matches_first_qC_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.first_launch_stop_reply_thread_matches_first_qC()
+
 
 
 if __name__ == '__main__':
