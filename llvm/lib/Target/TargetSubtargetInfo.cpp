@@ -24,11 +24,12 @@ TargetSubtargetInfo::TargetSubtargetInfo() {}
 TargetSubtargetInfo::~TargetSubtargetInfo() {}
 
 // Temporary option to compare overall performance change when moving from the
-// SD scheduler to the MachineScheduler pass pipeline. It should be removed
-// before 3.4. The normal way to enable/disable the MachineScheduling pass
-// itself is by using -enable-misched. For targets that already use MI sched
-// (via MySubTarget::enableMachineScheduler()) -misched-bench=false negates the
-// subtarget hook.
+// SD scheduler to the MachineScheduler pass pipeline. This is convenient for
+// benchmarking during the transition from SD to MI scheduling. Once armv7 makes
+// the switch, it should go away. The normal way to enable/disable the
+// MachineScheduling pass itself is by using -enable-misched. For targets that
+// already use MI sched (via MySubTarget::enableMachineScheduler())
+// -misched-bench=false negates the subtarget hook.
 static cl::opt<bool> BenchMachineSched("misched-bench", cl::Hidden,
     cl::desc("Migrate from the target's default SD scheduler to MI scheduler"));
 
