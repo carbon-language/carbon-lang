@@ -77,7 +77,6 @@ public:
   /// Sets the command line order of the file.
   void setOrdinal(uint64_t ordinal) const { _ordinal = ordinal; }
 
-public:
   template <typename T> class atom_iterator; // forward reference
 
   /// \brief For use interating over DefinedAtoms in this File.
