@@ -120,6 +120,19 @@ MemoryCache::Read (addr_t addr,
                    Error &error)
 {
     size_t bytes_left = dst_len;
+
+    // If this memory read request is larger than the cache line size, then 
+    // we (1) try to read as much of it at once as possible, and (2) don't
+    // add the data to the memory cache.  We don't want to split a big read
+    // up into more separate reads than necessary, and with a large memory read
+    // request, it is unlikely that the caller function will ask for the next
+    // 4 bytes after the large memory read - so there's little benefit to saving
+    // it in the cache.
+    if (dst && dst_len > m_cache_line_byte_size)
+    {
+        return m_process.ReadMemoryFromInferior (addr, dst, dst_len, error);
+    }
+
     if (dst && bytes_left > 0)
     {
         const uint32_t cache_line_byte_size = m_cache_line_byte_size;

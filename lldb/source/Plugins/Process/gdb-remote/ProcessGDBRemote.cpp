@@ -277,7 +277,8 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_continue_C_tids (),
     m_continue_s_tids (),
     m_continue_S_tids (),
-    m_max_memory_size (512),
+    m_max_memory_size (0),
+    m_remote_stub_max_memory_size (0),
     m_addr_to_mmap_size (),
     m_thread_create_bp_sp (),
     m_waiting_for_attach (false),
@@ -2122,6 +2123,7 @@ ProcessGDBRemote::GetImageInfoAddress()
 size_t
 ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &error)
 {
+    GetMaxMemorySize ();
     if (size > m_max_memory_size)
     {
         // Keep memory read sizes down to a sane limit. This function will be
@@ -2131,7 +2133,16 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
     }
 
     char packet[64];
-    const int packet_len = ::snprintf (packet, sizeof(packet), "m%" PRIx64 ",%" PRIx64, (uint64_t)addr, (uint64_t)size);
+    int packet_len;
+    bool binary_memory_read = m_gdb_comm.GetxPacketSupported();
+    if (binary_memory_read)
+    {
+        packet_len = ::snprintf (packet, sizeof(packet), "x0x%" PRIx64 ",0x%" PRIx64, (uint64_t)addr, (uint64_t)size);
+    }
+    else
+    {
+        packet_len = ::snprintf (packet, sizeof(packet), "m%" PRIx64 ",%" PRIx64, (uint64_t)addr, (uint64_t)size);
+    }
     assert (packet_len + 1 < (int)sizeof(packet));
     StringExtractorGDBRemote response;
     if (m_gdb_comm.SendPacketAndWaitForResponse(packet, packet_len, response, true) == GDBRemoteCommunication::PacketResult::Success)
@@ -2139,7 +2150,25 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
         if (response.IsNormalResponse())
         {
             error.Clear();
-            return response.GetHexBytes(buf, size, '\xdd');
+            if (binary_memory_read)
+            {
+                // The lower level GDBRemoteCommunication packet receive layer has already de-quoted any
+                // 0x7d character escaping that was present in the packet
+
+                size_t data_received_size = response.GetBytesLeft();
+                if (data_received_size > size)
+                {
+                    // Don't write past the end of BUF if the remote debug server gave us too
+                    // much data for some reason.
+                    data_received_size = size;
+                }
+                memcpy (buf, response.GetStringRef().data(), data_received_size);
+                return data_received_size;
+            }
+            else
+            {
+                return response.GetHexBytes(buf, size, '\xdd');
+            }
         }
         else if (response.IsErrorResponse())
             error.SetErrorStringWithFormat("memory read failed for 0x%" PRIx64, addr);
@@ -2158,6 +2187,7 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
 size_t
 ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Error &error)
 {
+    GetMaxMemorySize ();
     if (size > m_max_memory_size)
     {
         // Keep memory read sizes down to a sane limit. This function will be
@@ -3118,6 +3148,71 @@ ProcessGDBRemote::GetAuxvData()
     return buf;
 }
 
+// Establish the largest memory read/write payloads we should use.
+// If the remote stub has a max packet size, stay under that size.
+// 
+// If the remote stub's max packet size is crazy large, use a 
+// reasonable largeish default.
+//
+// If the remote stub doesn't advertise a max packet size, use a
+// conservative default.
+
+void
+ProcessGDBRemote::GetMaxMemorySize()
+{
+    const uint64_t reasonable_largeish_default = 128 * 1024;
+    const uint64_t conservative_default = 512;
+
+    if (m_max_memory_size == 0)
+    {
+        uint64_t stub_max_size = m_gdb_comm.GetRemoteMaxPacketSize();
+        if (stub_max_size != UINT64_MAX && stub_max_size != 0)
+        {
+            // Save the stub's claimed maximum packet size
+            m_remote_stub_max_memory_size = stub_max_size;
+
+            // Even if the stub says it can support ginormous packets,
+            // don't exceed our resonable largeish default packet size.
+            if (stub_max_size > reasonable_largeish_default)
+            {
+                stub_max_size = reasonable_largeish_default;
+            }
+
+            m_max_memory_size = stub_max_size;
+        }
+        else
+        {
+            m_max_memory_size = conservative_default;
+        }
+    }
+}
+
+void
+ProcessGDBRemote::SetUserSpecifiedMaxMemoryTransferSize (uint64_t user_specified_max)
+{
+    if (user_specified_max != 0)
+    {
+        GetMaxMemorySize ();
+
+        if (m_remote_stub_max_memory_size != 0)
+        {
+            if (m_remote_stub_max_memory_size < user_specified_max)
+            {
+                m_max_memory_size = m_remote_stub_max_memory_size;   // user specified a packet size too big, go as big
+                                                                     // as the remote stub says we can go.
+            }
+            else
+            {
+                m_max_memory_size = user_specified_max;             // user's packet size is good
+            }
+        }
+        else
+        {
+            m_max_memory_size = user_specified_max;                 // user's packet size is probably fine
+        }
+    }
+}
+
 class CommandObjectProcessGDBRemotePacketHistory : public CommandObjectParsed
 {
 private:
@@ -3157,6 +3252,53 @@ public:
         return false;
     }
 };
+
+class CommandObjectProcessGDBRemotePacketXferSize : public CommandObjectParsed
+{
+private:
+    
+public:
+    CommandObjectProcessGDBRemotePacketXferSize(CommandInterpreter &interpreter) :
+    CommandObjectParsed (interpreter,
+                         "process plugin packet xfer-size",
+                         "Maximum size that lldb will try to read/write one one chunk.",
+                         NULL)
+    {
+    }
+    
+    ~CommandObjectProcessGDBRemotePacketXferSize ()
+    {
+    }
+    
+    bool
+    DoExecute (Args& command, CommandReturnObject &result)
+    {
+        const size_t argc = command.GetArgumentCount();
+        if (argc == 0)
+        {
+            result.AppendErrorWithFormat ("'%s' takes an argument to specify the max amount to be transferred when reading/writing", m_cmd_name.c_str());
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+
+        ProcessGDBRemote *process = (ProcessGDBRemote *)m_interpreter.GetExecutionContext().GetProcessPtr();
+        if (process)
+        {
+            const char *packet_size = command.GetArgumentAtIndex(0);
+            errno = 0;
+            uint64_t user_specified_max = strtoul (packet_size, NULL, 10);
+            if (errno == 0 && user_specified_max != 0)
+            {
+                process->SetUserSpecifiedMaxMemoryTransferSize (user_specified_max);
+                result.SetStatus (eReturnStatusSuccessFinishResult);
+                return true;
+            }
+        }
+        result.SetStatus (eReturnStatusFailed);
+        return false;
+    }
+};
+
 
 class CommandObjectProcessGDBRemotePacketSend : public CommandObjectParsed
 {
@@ -3283,6 +3425,7 @@ public:
         LoadSubCommand ("history", CommandObjectSP (new CommandObjectProcessGDBRemotePacketHistory (interpreter)));
         LoadSubCommand ("send", CommandObjectSP (new CommandObjectProcessGDBRemotePacketSend (interpreter)));
         LoadSubCommand ("monitor", CommandObjectSP (new CommandObjectProcessGDBRemotePacketMonitor (interpreter)));
+        LoadSubCommand ("xfer-size", CommandObjectSP (new CommandObjectProcessGDBRemotePacketXferSize (interpreter)));
     }
     
     ~CommandObjectProcessGDBRemotePacket ()
