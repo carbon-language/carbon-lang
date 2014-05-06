@@ -3246,11 +3246,12 @@ bool ARM64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
     if (Tok.is(AsmToken::Real)) {
       APFloat RealVal(APFloat::IEEEdouble, Tok.getString());
       uint64_t IntVal = RealVal.bitcastToAPInt().getZExtValue();
-      if (IntVal != 0 ||
-          (Mnemonic != "fcmp" && Mnemonic != "fcmpe" && Mnemonic != "fcmeq" &&
-           Mnemonic != "fcmge" && Mnemonic != "fcmgt" && Mnemonic != "fcmle" &&
-           Mnemonic != "fcmlt"))
+      if (Mnemonic != "fcmp" && Mnemonic != "fcmpe" && Mnemonic != "fcmeq" &&
+          Mnemonic != "fcmge" && Mnemonic != "fcmgt" && Mnemonic != "fcmle" &&
+          Mnemonic != "fcmlt")
         return TokError("unexpected floating point literal");
+      else if (IntVal != 0)
+        return TokError("only valid floating-point immediate is #0.0");
       Parser.Lex(); // Eat the token.
 
       Operands.push_back(
