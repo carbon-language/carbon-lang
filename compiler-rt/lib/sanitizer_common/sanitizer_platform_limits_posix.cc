@@ -288,15 +288,20 @@ namespace __sanitizer {
   int ptrace_setfpregs = PTRACE_SETFPREGS;
   int ptrace_getfpxregs = PTRACE_GETFPXREGS;
   int ptrace_setfpxregs = PTRACE_SETFPXREGS;
+#if defined(PTRACE_GETSIGINFO) && defined(PTRACE_SETSIGINFO)
   int ptrace_getsiginfo = PTRACE_GETSIGINFO;
   int ptrace_setsiginfo = PTRACE_SETSIGINFO;
+#else
+  int ptrace_getsiginfo = -1;
+  int ptrace_setsiginfo = -1;
+#endif  // PTRACE_GETSIGINFO/PTRACE_SETSIGINFO
 #if defined(PTRACE_GETREGSET) && defined(PTRACE_SETREGSET)
   int ptrace_getregset = PTRACE_GETREGSET;
   int ptrace_setregset = PTRACE_SETREGSET;
 #else
   int ptrace_getregset = -1;
   int ptrace_setregset = -1;
-#endif
+#endif  // PTRACE_GETREGSET/PTRACE_SETREGSET
 #endif
 
   unsigned path_max = PATH_MAX;
