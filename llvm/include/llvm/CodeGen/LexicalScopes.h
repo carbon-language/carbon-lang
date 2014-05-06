@@ -224,8 +224,8 @@ private:
 private:
   const MachineFunction *MF;
 
-  /// LexicalScopeMap - Tracks the scopes in the current function.  Owns the
-  /// contained LexicalScope*s.
+  /// LexicalScopeMap - Tracks the scopes in the current function.
+  // Use an unordered_map to ensure value pointer validity over insertion.
   std::unordered_map<const MDNode *, LexicalScope> LexicalScopeMap;
 
   /// InlinedLexicalScopeMap - Tracks inlined function scopes in current
@@ -233,7 +233,7 @@ private:
   DenseMap<DebugLoc, LexicalScope *> InlinedLexicalScopeMap;
 
   /// AbstractScopeMap - These scopes are  not included LexicalScopeMap.
-  /// AbstractScopes owns its LexicalScope*s.
+  // Use an unordered_map to ensure value pointer validity over insertion.
   std::unordered_map<const MDNode *, LexicalScope> AbstractScopeMap;
 
   /// AbstractScopesList - Tracks abstract scopes constructed while processing
