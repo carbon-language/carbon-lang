@@ -87,15 +87,15 @@ public:
   /// \brief Insert an element into the input graph at position.
   void insertElementAt(std::unique_ptr<InputElement>, Position position);
 
-  /// \brief Helper functions for the resolver. Exposed for unit tests.
-  ErrorOr<InputElement *> getNextInputElement();
-
 protected:
   // Input arguments
   InputElementVectorT _inputArgs;
   // Index of the next element to be processed
   uint32_t _nextElementIndex;
   InputElement *_currentInputElement;
+
+private:
+  ErrorOr<InputElement *> getNextInputElement();
 };
 
 /// \brief This describes each element in the InputGraph. The Kind
