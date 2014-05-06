@@ -136,7 +136,7 @@ void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
   int reserrno;
   if (internal_iserror(p, &reserrno))
     Report("ERROR: %s failed to "
-           "allocate 0x%zx (%zd) bytes at address %zu (errno: %d)\n",
+           "allocate 0x%zx (%zd) bytes at address %zx (errno: %d)\n",
            SanitizerToolName, size, size, fixed_addr, reserrno);
   IncreaseTotalMmap(size);
   return (void *)p;
@@ -152,7 +152,7 @@ void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
   int reserrno;
   if (internal_iserror(p, &reserrno)) {
     Report("ERROR: %s failed to "
-           "allocate 0x%zx (%zd) bytes at address %zu (errno: %d)\n",
+           "allocate 0x%zx (%zd) bytes at address %zx (errno: %d)\n",
            SanitizerToolName, size, size, fixed_addr, reserrno);
     CHECK("unable to mmap" && 0);
   }
