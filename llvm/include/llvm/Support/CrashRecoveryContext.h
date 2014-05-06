@@ -12,13 +12,11 @@
 
 #include <string>
 
-#include "llvm/ADT/STLExtras.h"
-
 namespace llvm {
 class StringRef;
 
 class CrashRecoveryContextCleanup;
-
+  
 /// \brief Crash recovery helper object.
 ///
 /// This class implements support for running operations in a safe context so
@@ -48,10 +46,21 @@ class CrashRecoveryContext {
   void *Impl;
   CrashRecoveryContextCleanup *head;
 
+  /// An adaptor to convert an arbitrary functor into a void(void*), void* pair.
+  template<typename T> struct FunctorAdaptor {
+    T Fn;
+    static void invoke(void *Data) {
+      return static_cast<FunctorAdaptor<T>*>(Data)->Fn();
+    }
+    typedef void Callback(void*);
+    Callback *fn() { return &invoke; }
+    void *arg() { return this; }
+  };
+
 public:
   CrashRecoveryContext() : Impl(nullptr), head(nullptr) {}
   ~CrashRecoveryContext();
-
+  
   void registerCleanup(CrashRecoveryContextCleanup *cleanup);
   void unregisterCleanup(CrashRecoveryContextCleanup *cleanup);
 
@@ -77,9 +86,11 @@ public:
   /// make as little assumptions as possible about the program state when
   /// RunSafely has returned false. Clients can use getBacktrace() to retrieve
   /// the backtrace of the crash on failures.
-  bool RunSafely(function_ref<void()> Fn);
-  bool RunSafely(void (*Fn)(void*), void *UserData) {
-    return RunSafely([&]() { Fn(UserData); });
+  bool RunSafely(void (*Fn)(void*), void *UserData);
+  template<typename Functor>
+  bool RunSafely(Functor Fn) {
+    FunctorAdaptor<Functor> Adaptor = { Fn };
+    return RunSafely(Adaptor.fn(), Adaptor.arg());
   }
 
   /// \brief Execute the provide callback function (with the given arguments) in
@@ -87,10 +98,12 @@ public:
   /// requested stack size).
   ///
   /// See RunSafely() and llvm_execute_on_thread().
-  bool RunSafelyOnThread(function_ref<void()>, unsigned RequestedStackSize = 0);
   bool RunSafelyOnThread(void (*Fn)(void*), void *UserData,
-                         unsigned RequestedStackSize = 0) {
-    return RunSafelyOnThread([&]() { Fn(UserData); }, RequestedStackSize);
+                         unsigned RequestedStackSize = 0);
+  template<typename Functor>
+  bool RunSafelyOnThread(Functor Fn, unsigned RequestedStackSize = 0) {
+    FunctorAdaptor<Functor> Adaptor = { Fn };
+    return RunSafelyOnThread(Adaptor.fn(), Adaptor.arg(), RequestedStackSize);
   }
 
   /// \brief Explicitly trigger a crash recovery in the current process, and

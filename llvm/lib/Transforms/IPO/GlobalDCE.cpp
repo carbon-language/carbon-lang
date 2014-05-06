@@ -54,15 +54,15 @@ namespace {
 
     bool RemoveUnusedGlobalValue(GlobalValue &GV);
   };
-}
 
 /// Returns true if F contains only a single "ret" instruction.
-static bool isEmptyFunction(Function *F) {
+bool isEmptyFunction(void *Context, Function *F) {
   BasicBlock &Entry = F->getEntryBlock();
   if (Entry.size() != 1 || !isa<ReturnInst>(Entry.front()))
     return false;
   ReturnInst &RI = cast<ReturnInst>(Entry.front());
   return RI.getReturnValue() == NULL;
+}
 }
 
 char GlobalDCE::ID = 0;
@@ -75,7 +75,7 @@ bool GlobalDCE::runOnModule(Module &M) {
   bool Changed = false;
 
   // Remove empty functions from the global ctors list.
-  Changed |= optimizeGlobalCtorsList(M, isEmptyFunction);
+  Changed |= optimizeGlobalCtorsList(M, isEmptyFunction, nullptr);
 
   // Loop over the module, adding globals which are obviously necessary.
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {

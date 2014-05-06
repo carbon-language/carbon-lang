@@ -3022,9 +3022,10 @@ bool GlobalOpt::runOnModule(Module &M) {
     LocalChange |= OptimizeFunctions(M);
 
     // Optimize global_ctors list.
-    LocalChange |= optimizeGlobalCtorsList(M, [&](Function *F) {
-      return EvaluateStaticConstructor(F, DL, TLI);
-    });
+    LocalChange |= optimizeGlobalCtorsList(M, [](void *C, Function *F) -> bool {
+      GlobalOpt *self = static_cast<GlobalOpt *>(C);
+      return EvaluateStaticConstructor(F, self->DL, self->TLI);
+    }, this);
 
     // Optimize non-address-taken globals.
     LocalChange |= OptimizeGlobalVars(M);
