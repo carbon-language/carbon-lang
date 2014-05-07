@@ -622,6 +622,11 @@ bool LLParser::ParseStandaloneMetadata() {
   return false;
 }
 
+static bool isValidVisibilityForLinkage(unsigned V, unsigned L) {
+  return !GlobalValue::isLocalLinkage((GlobalValue::LinkageTypes)L) ||
+         (GlobalValue::VisibilityTypes)V == GlobalValue::DefaultVisibility;
+}
+
 /// ParseAlias:
 ///   ::= GlobalVar '=' OptionalVisibility OptionalDLLStorageClass 'alias'
 ///                     OptionalLinkage Aliasee
@@ -645,6 +650,10 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 
   if(!GlobalAlias::isValidLinkage(Linkage))
     return Error(LinkageLoc, "invalid linkage type for alias");
+
+  if (!isValidVisibilityForLinkage(Visibility, L))
+    return Error(LinkageLoc,
+                 "symbol with local linkage must have default visibility");
 
   Constant *Aliasee;
   LocTy AliaseeLoc = Lex.getLoc();
@@ -714,6 +723,10 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 bool LLParser::ParseGlobal(const std::string &Name, LocTy NameLoc,
                            unsigned Linkage, bool HasLinkage,
                            unsigned Visibility, unsigned DLLStorageClass) {
+  if (!isValidVisibilityForLinkage(Visibility, Linkage))
+    return Error(NameLoc,
+                 "symbol with local linkage must have default visibility");
+
   unsigned AddrSpace;
   bool IsConstant, UnnamedAddr, IsExternallyInitialized;
   GlobalVariable::ThreadLocalMode TLM;
@@ -3013,6 +3026,10 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   case GlobalValue::CommonLinkage:
     return Error(LinkageLoc, "invalid function linkage type");
   }
+
+  if (!isValidVisibilityForLinkage(Visibility, Linkage))
+    return Error(LinkageLoc,
+                 "symbol with local linkage must have default visibility");
 
   if (!FunctionType::isValidReturnType(RetType))
     return Error(RetTypeLoc, "invalid function return type");

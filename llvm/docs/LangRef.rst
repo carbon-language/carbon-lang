@@ -440,6 +440,9 @@ styles:
     defining module will bind to the local symbol. That is, the symbol
     cannot be overridden by another module.
 
+A symbol with ``internal`` or ``private`` linkage must have ``default``
+visibility.
+
 .. _namedtypes:
 
 DLL Storage Classes
