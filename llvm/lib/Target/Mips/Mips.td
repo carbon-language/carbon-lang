@@ -85,20 +85,34 @@ def FeatureBitCount    : SubtargetFeature<"bitcount", "HasBitCount", "true",
                                 "Enable 'count leading bits' instructions.">;
 def FeatureFPIdx       : SubtargetFeature<"fpidx", "HasFPIdx", "true",
                                 "Enable 'FP indexed load/store' instructions.">;
+def FeatureMips1       : SubtargetFeature<"mips1", "MipsArchVersion", "Mips1",
+                                "Mips I ISA Support [highly experimental]">;
+def FeatureMips2       : SubtargetFeature<"mips2", "MipsArchVersion", "Mips2",
+                                "Mips II ISA Support [highly experimental]",
+                                [FeatureMips1]>;
 def FeatureMips32      : SubtargetFeature<"mips32", "MipsArchVersion", "Mips32",
                                 "Mips32 ISA Support",
-                                [FeatureCondMov, FeatureBitCount]>;
+                                [FeatureMips2, FeatureCondMov,
+                                 FeatureBitCount]>;
 def FeatureMips32r2    : SubtargetFeature<"mips32r2", "MipsArchVersion",
                                 "Mips32r2", "Mips32r2 ISA Support",
                                 [FeatureMips32, FeatureSEInReg, FeatureSwap,
                                  FeatureFPIdx]>;
+// FIXME: Need to check whether FPIdx belongs in the MIPS-III or MIPS-IV Implies
+//        list but for now it doesn't matter since FPIdx isn't actually attached
+//        to any instructions.
+def FeatureMips3       : SubtargetFeature<"mips3", "MipsArchVersion", "Mips3",
+                                "MIPS III ISA Support [highly experimental]",
+                                [FeatureMips2, FeatureGP64Bit, FeatureFP64Bit]>;
 def FeatureMips4       : SubtargetFeature<"mips4", "MipsArchVersion",
                                 "Mips4", "MIPS IV ISA Support",
-                                [FeatureGP64Bit, FeatureFP64Bit, FeatureFPIdx,
-                                 FeatureCondMov]>;
+                                [FeatureMips3, FeatureFPIdx, FeatureCondMov]>;
+def FeatureMips5       : SubtargetFeature<"mips5", "MipsArchVersion", "Mips5",
+                                "MIPS V ISA Support [highly experimental]",
+                                [FeatureMips4]>;
 def FeatureMips64      : SubtargetFeature<"mips64", "MipsArchVersion",
                                 "Mips64", "Mips64 ISA Support",
-                                [FeatureMips4, FeatureMips32, FeatureFPIdx]>;
+                                [FeatureMips5, FeatureMips32, FeatureFPIdx]>;
 def FeatureMips64r2    : SubtargetFeature<"mips64r2", "MipsArchVersion",
                                 "Mips64r2", "Mips64r2 ISA Support",
                                 [FeatureMips64, FeatureMips32r2]>;
@@ -126,9 +140,14 @@ def FeatureCnMips     : SubtargetFeature<"cnmips", "HasCnMips",
 class Proc<string Name, list<SubtargetFeature> Features>
  : Processor<Name, MipsGenericItineraries, Features>;
 
+def : Proc<"mips1", [FeatureMips1, FeatureO32]>;
+def : Proc<"mips2", [FeatureMips2, FeatureO32]>;
 def : Proc<"mips32", [FeatureMips32, FeatureO32]>;
 def : Proc<"mips32r2", [FeatureMips32r2, FeatureO32]>;
+
+def : Proc<"mips3", [FeatureMips3, FeatureN64]>;
 def : Proc<"mips4", [FeatureMips4, FeatureN64]>;
+def : Proc<"mips5", [FeatureMips5, FeatureN64]>;
 def : Proc<"mips64", [FeatureMips64, FeatureN64]>;
 def : Proc<"mips64r2", [FeatureMips64r2, FeatureN64]>;
 def : Proc<"mips16", [FeatureMips16, FeatureO32]>;

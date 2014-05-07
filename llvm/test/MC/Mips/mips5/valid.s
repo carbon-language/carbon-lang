@@ -1,7 +1,6 @@
 # Instructions that are valid
 #
-# FIXME: Test MIPS-V instead of MIPS64
-# RUN: llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips64   | FileCheck %s
+# RUN: llvm-mc %s -triple=mips64-unknown-linux -show-encoding -mcpu=mips5   | FileCheck %s
 
         .set noat
 	abs.d	$f7,$f25 # CHECK: encoding

@@ -37,7 +37,8 @@ public:
   };
 
 protected:
-  enum MipsArchEnum { Mips32, Mips32r2, Mips4, Mips64, Mips64r2 };
+  enum MipsArchEnum { Mips1, Mips2, Mips32, Mips32r2, Mips3, Mips4, Mips5,
+                      Mips64, Mips64r2 };
 
   // Mips architecture version
   MipsArchEnum MipsArchVersion;

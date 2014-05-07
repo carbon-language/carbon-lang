@@ -107,6 +107,19 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
 
+  // Don't even attempt to generate code for MIPS-I, MIPS-II, MIPS-III, and
+  // MIPS-V. They have not been tested and currently exist for the integrated
+  // assembler only.
+  if (MipsArchVersion == Mips1)
+    report_fatal_error("Code generation for MIPS-I is not implemented", false);
+  if (MipsArchVersion == Mips2)
+    report_fatal_error("Code generation for MIPS-II is not implemented", false);
+  if (MipsArchVersion == Mips3)
+    report_fatal_error("Code generation for MIPS-III is not implemented",
+                       false);
+  if (MipsArchVersion == Mips5)
+    report_fatal_error("Code generation for MIPS-V is not implemented", false);
+
   // Assert exactly one ABI was chosen.
   assert(MipsABI != UnknownABI);
   assert((((getFeatureBits() & Mips::FeatureO32) != 0) +

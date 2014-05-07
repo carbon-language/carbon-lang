@@ -1,7 +1,6 @@
 # Instructions that are valid
 #
-# FIXME: Test MIPS-I instead of MIPS32
-# RUN: llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips32 | FileCheck %s
+# RUN: llvm-mc %s -triple=mips-unknown-linux -show-encoding -mcpu=mips1 | FileCheck %s
 
 	.set noat
 	abs.d	$f7,$f25          # CHECK: encoding:
