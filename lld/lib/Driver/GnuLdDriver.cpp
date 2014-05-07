@@ -567,13 +567,8 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   if (!ctx->validate(diagnostics))
     return false;
 
-  // Normalize the InputGraph.
-  inputGraph->normalize();
-
   ctx->setInputGraph(std::move(inputGraph));
-
   context.swap(ctx);
-
   return true;
 }
 
