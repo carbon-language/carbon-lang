@@ -344,7 +344,7 @@ void CGDebugInfo::CreateCompileUnit() {
   std::string SplitDwarfFile = CGM.getCodeGenOpts().SplitDwarfFile;
   StringRef SplitDwarfFilename = internString(SplitDwarfFile);
 
-  unsigned LangTag;
+  llvm::dwarf::SourceLanguage LangTag;
   const LangOptions &LO = CGM.getLangOpts();
   if (LO.CPlusPlus) {
     if (LO.ObjC1)
@@ -379,7 +379,7 @@ void CGDebugInfo::CreateCompileUnit() {
 /// CreateType - Get the Basic type from the cache or create a new
 /// one if necessary.
 llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
-  unsigned Encoding = 0;
+  llvm::dwarf::TypeKind Encoding;
   StringRef BTName;
   switch (BT->getKind()) {
 #define BUILTIN_TYPE(Id, SingletonId)
@@ -503,7 +503,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
 
 llvm::DIType CGDebugInfo::CreateType(const ComplexType *Ty) {
   // Bit size, align and offset of the type.
-  unsigned Encoding = llvm::dwarf::DW_ATE_complex_float;
+  llvm::dwarf::TypeKind Encoding = llvm::dwarf::DW_ATE_complex_float;
   if (Ty->isComplexIntegerType())
     Encoding = llvm::dwarf::DW_ATE_lo_user;
 
@@ -528,7 +528,7 @@ llvm::DIType CGDebugInfo::CreateQualifiedType(QualType Ty, llvm::DIFile Unit) {
 
   // We will create one Derived type for one qualifier and recurse to handle any
   // additional ones.
-  unsigned Tag;
+  llvm::dwarf::Tag Tag;
   if (Qc.hasConst()) {
     Tag = llvm::dwarf::DW_TAG_const_type;
     Qc.removeConst();
@@ -608,7 +608,7 @@ CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
   unsigned Line = getLineNumber(RD->getLocation());
   StringRef RDName = getClassName(RD);
 
-  unsigned Tag = 0;
+  llvm::dwarf::Tag Tag;
   if (RD->isStruct() || RD->isInterface())
     Tag = llvm::dwarf::DW_TAG_structure_type;
   else if (RD->isUnion())
@@ -626,7 +626,7 @@ CGDebugInfo::getOrCreateRecordFwdDecl(const RecordType *Ty,
   return RetTy;
 }
 
-llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
+llvm::DIType CGDebugInfo::CreatePointerLikeType(llvm::dwarf::Tag Tag,
                                                 const Type *Ty,
                                                 QualType PointeeTy,
                                                 llvm::DIFile Unit) {
@@ -1632,7 +1632,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   // Get overall information about the record type for the debug info.
   llvm::DIFile DefUnit = getOrCreateFile(ID->getLocation());
   unsigned Line = getLineNumber(ID->getLocation());
-  unsigned RuntimeLang = TheCU.getLanguage();
+  llvm::dwarf::SourceLanguage RuntimeLang = TheCU.getLanguage();
 
   // If this is just a forward declaration return a special forward-declaration
   // debug type since we won't be able to lay out the entire type.
@@ -2706,7 +2706,7 @@ llvm::DIType CGDebugInfo::EmitTypeForVarWithBlocksAttr(const VarDecl *VD,
 }
 
 /// EmitDeclare - Emit local variable declaration debug info.
-void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
+void CGDebugInfo::EmitDeclare(const VarDecl *VD, llvm::dwarf::LLVMConstants Tag,
                               llvm::Value *Storage,
                               unsigned ArgNo, CGBuilderTy &Builder) {
   assert(DebugKind >= CodeGenOptions::LimitedDebugInfo);

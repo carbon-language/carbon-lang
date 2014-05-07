@@ -147,7 +147,7 @@ class CGDebugInfo {
   llvm::DIType getOrCreateVTablePtrType(llvm::DIFile F);
   llvm::DINameSpace getOrCreateNameSpace(const NamespaceDecl *N);
   llvm::DIType getOrCreateTypeDeclaration(QualType PointeeTy, llvm::DIFile F);
-  llvm::DIType CreatePointerLikeType(unsigned Tag,
+  llvm::DIType CreatePointerLikeType(llvm::dwarf::Tag Tag,
                                      const Type *Ty, QualType PointeeTy,
                                      llvm::DIFile F);
 
@@ -305,8 +305,10 @@ public:
 
 private:
   /// EmitDeclare - Emit call to llvm.dbg.declare for a variable declaration.
-  void EmitDeclare(const VarDecl *decl, unsigned Tag, llvm::Value *AI,
-                   unsigned ArgNo, CGBuilderTy &Builder);
+  /// Tag accepts custom types DW_TAG_arg_variable and DW_TAG_auto_variable,
+  /// otherwise would be of type llvm::dwarf::Tag.
+  void EmitDeclare(const VarDecl *decl, llvm::dwarf::LLVMConstants Tag,
+                   llvm::Value *AI, unsigned ArgNo, CGBuilderTy &Builder);
 
   // EmitTypeForVarWithBlocksAttr - Build up structure info for the byref.
   // See BuildByRefType.
