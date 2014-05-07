@@ -9026,10 +9026,6 @@ static QualType CheckIndirectionOperand(Sema &S, Expr *Op, ExprValueKind &VK,
                                      Op->getSourceRange());
   }
 
-  // Note that per both C89 and C99, indirection is always legal, even if OpTy
-  // is an incomplete type or void.  It would be possible to warn about
-  // dereferencing a void pointer, but it's completely well-defined, and such a
-  // warning is unlikely to catch any mistakes.
   if (const PointerType *PT = OpTy->getAs<PointerType>())
     Result = PT->getPointeeType();
   else if (const ObjCObjectPointerType *OPT =
@@ -9047,6 +9043,19 @@ static QualType CheckIndirectionOperand(Sema &S, Expr *Op, ExprValueKind &VK,
       << OpTy << Op->getSourceRange();
     return QualType();
   }
+
+  // Note that per both C89 and C99, indirection is always legal, even if Result
+  // is an incomplete type or void.  It would be possible to warn about
+  // dereferencing a void pointer, but it's completely well-defined, and such a
+  // warning is unlikely to catch any mistakes. In C++, indirection is not valid
+  // for pointers to 'void' but is fine for any other pointer type:
+  //
+  // C++ [expr.unary.op]p1:
+  //   [...] the expression to which [the unary * operator] is applied shall
+  //   be a pointer to an object type, or a pointer to a function type
+  if (S.getLangOpts().CPlusPlus && Result->isVoidType())
+    S.Diag(OpLoc, diag::ext_typecheck_indirection_through_void_pointer)
+      << OpTy << Op->getSourceRange();
 
   // Dereferences are usually l-values...
   VK = VK_LValue;
