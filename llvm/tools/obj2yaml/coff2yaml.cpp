@@ -210,10 +210,7 @@ COFFYAML::Object &COFFDumper::getYAMLObj() {
   return YAMLObj;
 }
 
-error_code coff2yaml(raw_ostream &Out, MemoryBuffer *Buff) {
-  error_code ec;
-  object::COFFObjectFile Obj(Buff, ec);
-  check(ec);
+error_code coff2yaml(raw_ostream &Out, const object::COFFObjectFile &Obj) {
   COFFDumper Dumper(Obj);
 
   yaml::Output Yout(Out);

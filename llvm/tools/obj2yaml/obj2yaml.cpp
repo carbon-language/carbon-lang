@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Error.h"
 #include "obj2yaml.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
@@ -16,16 +17,30 @@
 #include "llvm/Support/Signals.h"
 
 using namespace llvm;
+using namespace llvm::object;
 
-namespace {
-enum ObjectFileType {
-  coff
-};
+static error_code dumpObject(const ObjectFile &Obj) {
+  if (Obj.isCOFF())
+    return coff2yaml(outs(), cast<COFFObjectFile>(Obj));
+
+  return obj2yaml_error::unsupported_obj_file_format;
 }
 
-cl::opt<ObjectFileType> InputFormat(
-    cl::desc("Choose input format"),
-    cl::values(clEnumVal(coff, "process COFF object files"), clEnumValEnd));
+static error_code dumpInput(StringRef File) {
+  if (File != "-" && !sys::fs::exists(File))
+    return obj2yaml_error::file_not_found;
+
+  ErrorOr<Binary *> BinaryOrErr = createBinary(File);
+  if (error_code EC = BinaryOrErr.getError())
+    return EC;
+
+  std::unique_ptr<Binary> Binary(BinaryOrErr.get());
+  // TODO: If this is an archive, then burst it and dump each entry
+  if (ObjectFile *Obj = dyn_cast<ObjectFile>(Binary.get()))
+    return dumpObject(*Obj);
+
+  return obj2yaml_error::unrecognized_file_format;
+}
 
 cl::opt<std::string> InputFilename(cl::Positional, cl::desc("<input file>"),
                                    cl::init("-"));
@@ -36,17 +51,9 @@ int main(int argc, char *argv[]) {
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
-  // Process the input file
-  std::unique_ptr<MemoryBuffer> buf;
-
-  // TODO: If this is an archive, then burst it and dump each entry
-  if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, buf)) {
-    errs() << "Error: '" << ec.message() << "' opening file '" << InputFilename
-           << "'\n";
-  } else {
-    ec = coff2yaml(outs(), buf.release());
-    if (ec)
-      errs() << "Error: " << ec.message() << " dumping COFF file\n";
+  if (error_code EC = dumpInput(InputFilename)) {
+    errs() << "Error: '" << EC.message() << "'\n";
+    return 1;
   }
 
   return 0;
