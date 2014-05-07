@@ -76,6 +76,9 @@ private:
   /// \brief Default const ident_t object used for initialization of all other
   /// ident_t objects.
   llvm::Constant *DefaultOpenMPPSource;
+  /// \brief Map of flags and corrsponding default locations.
+  typedef llvm::DenseMap<unsigned, llvm::Value *> OpenMPDefaultLocMapTy;
+  OpenMPDefaultLocMapTy OpenMPDefaultLocMap;
   llvm::Value *GetOrCreateDefaultOpenMPLocation(OpenMPLocationFlags Flags);
   /// \brief Describes ident structure that describes a source location.
   /// All descriptions are taken from

@@ -38,10 +38,7 @@ CGOpenMPRuntime::CGOpenMPRuntime(CodeGenModule &CGM)
 
 llvm::Value *
 CGOpenMPRuntime::GetOrCreateDefaultOpenMPLocation(OpenMPLocationFlags Flags) {
-  llvm::Twine OpenMPDefaultLocName =
-      ".kmpc_default_loc_" + llvm::Twine::utohexstr(Flags) + ".addr";
-  llvm::Value *Entry =
-      CGM.getModule().getNamedValue(OpenMPDefaultLocName.str());
+  llvm::Value *Entry = OpenMPDefaultLocMap.lookup(Flags);
   if (!Entry) {
     if (!DefaultOpenMPPSource) {
       // Initialize default location for psource field of ident_t structure of
@@ -54,7 +51,7 @@ CGOpenMPRuntime::GetOrCreateDefaultOpenMPLocation(OpenMPLocationFlags Flags) {
           llvm::ConstantExpr::getBitCast(DefaultOpenMPPSource, CGM.Int8PtrTy);
     }
     llvm::GlobalVariable *DefaultOpenMPLocation = cast<llvm::GlobalVariable>(
-        CGM.CreateRuntimeVariable(IdentTy, OpenMPDefaultLocName.str()));
+        CGM.CreateRuntimeVariable(IdentTy, ".kmpc_default_loc.addr"));
     DefaultOpenMPLocation->setUnnamedAddr(true);
     DefaultOpenMPLocation->setConstant(true);
     DefaultOpenMPLocation->setLinkage(llvm::GlobalValue::PrivateLinkage);
@@ -79,16 +76,13 @@ llvm::Value *CGOpenMPRuntime::EmitOpenMPUpdateLocation(
 
   assert(CGF.CurFn && "No function in current CodeGenFunction.");
 
-  llvm::Twine OpenMPLocName =
-      ".kmpc_loc_" + llvm::Twine::utohexstr(Flags) + ".addr";
-
   llvm::Value *LocValue = nullptr;
   OpenMPLocMapTy::iterator I = OpenMPLocMap.find(CGF.CurFn);
   if (I != OpenMPLocMap.end()) {
     LocValue = I->second;
   } else {
-    // Generate "ident_t .kmpc_loc_<flags>.addr;"
-    llvm::AllocaInst *AI = CGF.CreateTempAlloca(IdentTy, OpenMPLocName);
+    // Generate "ident_t .kmpc_loc.addr;"
+    llvm::AllocaInst *AI = CGF.CreateTempAlloca(IdentTy, ".kmpc_loc.addr");
     AI->setAlignment(CGM.getDataLayout().getPrefTypeAlignment(IdentTy));
     OpenMPLocMap[CGF.CurFn] = AI;
     LocValue = AI;
