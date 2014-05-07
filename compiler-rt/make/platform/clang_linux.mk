@@ -102,7 +102,7 @@ CFLAGS.ubsan-i386 := $(CFLAGS) -m32 $(SANITIZER_CFLAGS) -fno-rtti
 CFLAGS.ubsan-x86_64 := $(CFLAGS) -m64 $(SANITIZER_CFLAGS) -fno-rtti
 CFLAGS.ubsan_cxx-i386 := $(CFLAGS) -m32 $(SANITIZER_CFLAGS)
 CFLAGS.ubsan_cxx-x86_64 := $(CFLAGS) -m64 $(SANITIZER_CFLAGS)
-CFLAGS.dfsan-x86_64 := $(CFLAGS) -m64 $(SANITIZER_CFLAGS)
+CFLAGS.dfsan-x86_64 := $(CFLAGS) -m64 $(SANITIZER_CFLAGS) -fno-rtti
 CFLAGS.lsan-x86_64 := $(CFLAGS) -m64 $(SANITIZER_CFLAGS) -fno-rtti
 
 SHARED_LIBRARY.asan-arm-android := 1
@@ -141,7 +141,8 @@ FUNCTIONS.ubsan-i386 := $(UbsanFunctions)
 FUNCTIONS.ubsan-x86_64 := $(UbsanFunctions)
 FUNCTIONS.ubsan_cxx-i386 := $(UbsanCXXFunctions)
 FUNCTIONS.ubsan_cxx-x86_64 := $(UbsanCXXFunctions)
-FUNCTIONS.dfsan-x86_64 := $(DfsanFunctions) $(SanitizerCommonFunctions)
+FUNCTIONS.dfsan-x86_64 := $(DfsanFunctions) $(InterceptionFunctions) \
+                                            $(SanitizerCommonFunctions)
 FUNCTIONS.lsan-x86_64 := $(LsanFunctions) $(InterceptionFunctions) \
                                           $(SanitizerCommonFunctions)
 
