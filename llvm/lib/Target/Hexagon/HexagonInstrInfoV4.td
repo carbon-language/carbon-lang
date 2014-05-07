@@ -1004,13 +1004,13 @@ defm POST_STwri: ST_PostInc_nv <"memw", "STriw", IntRegs, s4_2Imm>, AddrModeRel;
 
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 11 in
 class NVJrr_template<string mnemonic, bits<3> majOp, bit NvOpNum,
-                      bit isNegCond, bit isTaken>
+                      bit isNegCond, bit isTak>
   : NVInst_V4<(outs),
     (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset),
     "if ("#!if(isNegCond, "!","")#mnemonic#
     "($src1"#!if(!eq(NvOpNum, 0),".new, ",", ")#
     "$src2"#!if(!eq(NvOpNum, 1),".new))","))")#" jump:"
-    #!if(isTaken, "t","nt")#" $offset",
+    #!if(isTak, "t","nt")#" $offset",
     []>, Requires<[HasV4T]> {
 
       bits<5> src1;
@@ -1019,6 +1019,7 @@ class NVJrr_template<string mnemonic, bits<3> majOp, bit NvOpNum,
       bits<5> RegOp; // Non-New-Value Operand
       bits<11> offset;
 
+      let isTaken = isTak;
       let isBrTaken = !if(isTaken, "true", "false");
       let isPredicatedFalse = isNegCond;
 
@@ -1030,7 +1031,7 @@ class NVJrr_template<string mnemonic, bits<3> majOp, bit NvOpNum,
       let Inst{25-23} = majOp;
       let Inst{22} = isNegCond;
       let Inst{18-16} = Ns;
-      let Inst{13} = isTaken;
+      let Inst{13} = isTak;
       let Inst{12-8} = RegOp;
       let Inst{21-20} = offset{10-9};
       let Inst{7-1} = offset{8-2};
@@ -1078,13 +1079,14 @@ let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
 
 let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 11 in
 class NVJri_template<string mnemonic, bits<3> majOp, bit isNegCond,
-                         bit isTaken>
+                         bit isTak>
   : NVInst_V4<(outs),
     (ins IntRegs:$src1, u5Imm:$src2, brtarget:$offset),
     "if ("#!if(isNegCond, "!","")#mnemonic#"($src1.new, #$src2)) jump:"
-    #!if(isTaken, "t","nt")#" $offset",
+    #!if(isTak, "t","nt")#" $offset",
     []>, Requires<[HasV4T]> {
 
+      let isTaken = isTak;
       let isPredicatedFalse = isNegCond;
       let isBrTaken = !if(isTaken, "true", "false");
 
@@ -1097,7 +1099,7 @@ class NVJri_template<string mnemonic, bits<3> majOp, bit isNegCond,
       let Inst{25-23} = majOp;
       let Inst{22} = isNegCond;
       let Inst{18-16} = src1;
-      let Inst{13} = isTaken;
+      let Inst{13} = isTak;
       let Inst{12-8} = src2;
       let Inst{21-20} = offset{10-9};
       let Inst{7-1} = offset{8-2};
@@ -1135,14 +1137,15 @@ let isPredicated = 1, isBranch = 1, isNewValue = 1, isTerminator = 1,
 
 let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 11 in
 class NVJ_ConstImm_template<string mnemonic, bits<3> majOp, string ImmVal,
-                            bit isNegCond, bit isTaken>
+                            bit isNegCond, bit isTak>
   : NVInst_V4<(outs),
     (ins IntRegs:$src1, brtarget:$offset),
     "if ("#!if(isNegCond, "!","")#mnemonic
     #"($src1.new, #"#ImmVal#")) jump:"
-    #!if(isTaken, "t","nt")#" $offset",
+    #!if(isTak, "t","nt")#" $offset",
     []>, Requires<[HasV4T]> {
 
+      let isTaken = isTak;
       let isPredicatedFalse = isNegCond;
       let isBrTaken = !if(isTaken, "true", "false");
 
@@ -1153,7 +1156,7 @@ class NVJ_ConstImm_template<string mnemonic, bits<3> majOp, string ImmVal,
       let Inst{25-23} = majOp;
       let Inst{22} = isNegCond;
       let Inst{18-16} = src1;
-      let Inst{13} = isTaken;
+      let Inst{13} = isTak;
       let Inst{21-20} = offset{10-9};
       let Inst{7-1} = offset{8-2};
 }

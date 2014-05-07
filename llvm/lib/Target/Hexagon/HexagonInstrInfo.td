@@ -768,12 +768,13 @@ class T_JMP <dag InsDag, list<dag> JumpList = []>
 
 let InputType = "imm", isExtendable = 1, opExtendable = 1, isExtentSigned = 1,
 Defs = [PC], isPredicated = 1, opExtentBits = 17 in
-class T_JMP_c <bit PredNot, bit isPredNew, bit isTaken>:
+class T_JMP_c <bit PredNot, bit isPredNew, bit isTak>:
             JInst<(outs ), (ins PredRegs:$src, brtarget:$dst),
             !if(PredNot, "if (!$src", "if ($src")#
             !if(isPredNew, ".new) ", ") ")#"jump"#
-            !if(isPredNew, !if(isTaken, ":t ", ":nt "), " ")#"$dst"> {
+            !if(isPredNew, !if(isTak, ":t ", ":nt "), " ")#"$dst"> {
 
+    let isTaken = isTak;
     let isBrTaken = !if(isPredNew, !if(isTaken, "true", "false"), "");
     let isPredicatedFalse = PredNot;
     let isPredicatedNew = isPredNew;
@@ -784,7 +785,7 @@ class T_JMP_c <bit PredNot, bit isPredNew, bit isTaken>:
 
     let Inst{27-24} = 0b1100;
     let Inst{21} = PredNot;
-    let Inst{12} = !if(isPredNew, isTaken, zero);
+    let Inst{12} = !if(isPredNew, isTak, zero);
     let Inst{11} = isPredNew;
     let Inst{9-8} = src;
     let Inst{23-22} = dst{16-15};
@@ -806,12 +807,13 @@ class T_JMPr<dag InsDag = (ins IntRegs:$dst)>
 }
 
 let Defs = [PC], isPredicated = 1, InputType = "reg" in
-class T_JMPr_c <bit PredNot, bit isPredNew, bit isTaken>:
+class T_JMPr_c <bit PredNot, bit isPredNew, bit isTak>:
             JRInst <(outs ), (ins PredRegs:$src, IntRegs:$dst),
             !if(PredNot, "if (!$src", "if ($src")#
             !if(isPredNew, ".new) ", ") ")#"jumpr"#
-            !if(isPredNew, !if(isTaken, ":t ", ":nt "), " ")#"$dst"> {
+            !if(isPredNew, !if(isTak, ":t ", ":nt "), " ")#"$dst"> {
 
+    let isTaken = isTak;
     let isBrTaken = !if(isPredNew, !if(isTaken, "true", "false"), "");
     let isPredicatedFalse = PredNot;
     let isPredicatedNew = isPredNew;
@@ -823,7 +825,7 @@ class T_JMPr_c <bit PredNot, bit isPredNew, bit isTaken>:
     let Inst{27-22} = 0b001101;
     let Inst{21} = PredNot;
     let Inst{20-16} = dst;
-    let Inst{12} = !if(isPredNew, isTaken, zero);
+    let Inst{12} = !if(isPredNew, isTak, zero);
     let Inst{11} = isPredNew;
     let Inst{9-8} = src;
     let Predicates = !if(isPredNew, [HasV3T], [HasV2T]);
