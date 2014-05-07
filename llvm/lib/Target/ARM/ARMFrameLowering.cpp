@@ -319,7 +319,8 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVi32imm), ARM::R12)
         .addExternalSymbol("__chkstk");
 
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::BLX))
+      BuildMI(MBB, MBBI, dl, TII.get(ARM::tBLXr))
+        .addImm((unsigned)ARMCC::AL).addReg(0)
         .addReg(ARM::R12, RegState::Kill)
         .addReg(ARM::R4, RegState::Implicit);
       break;
