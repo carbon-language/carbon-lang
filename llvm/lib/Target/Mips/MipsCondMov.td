@@ -141,23 +141,21 @@ let isCodeGenOnly = 1 in
 def MOVN_I64_S : CMov_I_F_FT<"movn.s", GPR64Opnd, FGR32Opnd, II_MOVN_S>,
                  CMov_I_F_FM<19, 16>, AdditionalRequires<[IsGP64bit]>;
 
-let FGRPredicates = [NotFP64bit] in {
-  def MOVZ_I_D32 : MMRel, CMov_I_F_FT<"movz.d", GPR32Opnd, AFGR64Opnd,
-                                      II_MOVZ_D>, CMov_I_F_FM<18, 17>;
-  def MOVN_I_D32 : MMRel, CMov_I_F_FT<"movn.d", GPR32Opnd, AFGR64Opnd,
-                                      II_MOVN_D>, CMov_I_F_FM<19, 17>;
-}
+def MOVZ_I_D32 : MMRel, CMov_I_F_FT<"movz.d", GPR32Opnd, AFGR64Opnd,
+                                    II_MOVZ_D>, CMov_I_F_FM<18, 17>, FGR_32;
+def MOVN_I_D32 : MMRel, CMov_I_F_FT<"movn.d", GPR32Opnd, AFGR64Opnd,
+                                    II_MOVN_D>, CMov_I_F_FM<19, 17>, FGR_32;
 
-let FGRPredicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
+let DecoderNamespace = "Mips64" in {
   def MOVZ_I_D64 : CMov_I_F_FT<"movz.d", GPR32Opnd, FGR64Opnd, II_MOVZ_D>,
-                   CMov_I_F_FM<18, 17>;
+                   CMov_I_F_FM<18, 17>, FGR_64;
   def MOVN_I_D64 : CMov_I_F_FT<"movn.d", GPR32Opnd, FGR64Opnd, II_MOVN_D>,
-                   CMov_I_F_FM<19, 17>;
+                   CMov_I_F_FM<19, 17>, FGR_64;
   let isCodeGenOnly = 1 in {
     def MOVZ_I64_D64 : CMov_I_F_FT<"movz.d", GPR64Opnd, FGR64Opnd,
-                                   II_MOVZ_D>, CMov_I_F_FM<18, 17>;
+                                   II_MOVZ_D>, CMov_I_F_FM<18, 17>, FGR_64;
     def MOVN_I64_D64 : CMov_I_F_FT<"movn.d", GPR64Opnd, FGR64Opnd,
-                                   II_MOVN_D>, CMov_I_F_FM<19, 17>;
+                                   II_MOVN_D>, CMov_I_F_FM<19, 17>, FGR_64;
   }
 }
 
@@ -180,65 +178,58 @@ def MOVT_S : MMRel, CMov_F_F_FT<"movt.s", FGR32Opnd, II_MOVT_S, MipsCMovFP_T>,
 def MOVF_S : MMRel, CMov_F_F_FT<"movf.s", FGR32Opnd, II_MOVF_S, MipsCMovFP_F>,
              CMov_F_F_FM<16, 0>;
 
-let FGRPredicates = [NotFP64bit] in {
-  def MOVT_D32 : MMRel, CMov_F_F_FT<"movt.d", AFGR64Opnd, II_MOVT_D,
-                                    MipsCMovFP_T>, CMov_F_F_FM<17, 1>;
-  def MOVF_D32 : MMRel, CMov_F_F_FT<"movf.d", AFGR64Opnd, II_MOVF_D,
-                                    MipsCMovFP_F>, CMov_F_F_FM<17, 0>;
-}
+def MOVT_D32 : MMRel, CMov_F_F_FT<"movt.d", AFGR64Opnd, II_MOVT_D,
+                                  MipsCMovFP_T>, CMov_F_F_FM<17, 1>, FGR_32;
+def MOVF_D32 : MMRel, CMov_F_F_FT<"movf.d", AFGR64Opnd, II_MOVF_D,
+                                  MipsCMovFP_F>, CMov_F_F_FM<17, 0>, FGR_32;
 
-let FGRPredicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
+let DecoderNamespace = "Mips64" in {
   def MOVT_D64 : CMov_F_F_FT<"movt.d", FGR64Opnd, II_MOVT_D, MipsCMovFP_T>,
-                 CMov_F_F_FM<17, 1>;
+                 CMov_F_F_FM<17, 1>, FGR_64;
   def MOVF_D64 : CMov_F_F_FT<"movf.d", FGR64Opnd, II_MOVF_D, MipsCMovFP_F>,
-                 CMov_F_F_FM<17, 0>;
+                 CMov_F_F_FM<17, 0>, FGR_64;
 }
 
 // Instantiation of conditional move patterns.
 defm : MovzPats0<GPR32, GPR32, MOVZ_I_I, SLT, SLTu, SLTi, SLTiu>;
 defm : MovzPats1<GPR32, GPR32, MOVZ_I_I, XOR>;
 defm : MovzPats2<GPR32, GPR32, MOVZ_I_I, XORi>;
-let GPRPredicates = [IsGP64bit] in {
-  defm : MovzPats0<GPR32, GPR64, MOVZ_I_I64, SLT, SLTu, SLTi, SLTiu>;
-  defm : MovzPats0<GPR64, GPR32, MOVZ_I_I, SLT64, SLTu64, SLTi64,
-                   SLTiu64>;
-  defm : MovzPats0<GPR64, GPR64, MOVZ_I_I64, SLT64, SLTu64, SLTi64,
-                   SLTiu64>;
-  defm : MovzPats1<GPR32, GPR64, MOVZ_I_I64, XOR>;
-  defm : MovzPats1<GPR64, GPR32, MOVZ_I64_I, XOR64>;
-  defm : MovzPats1<GPR64, GPR64, MOVZ_I64_I64, XOR64>;
-  defm : MovzPats2<GPR32, GPR64, MOVZ_I_I64, XORi>;
-  defm : MovzPats2<GPR64, GPR32, MOVZ_I64_I, XORi64>;
-  defm : MovzPats2<GPR64, GPR64, MOVZ_I64_I64, XORi64>;
-}
+
+defm : MovzPats0<GPR32, GPR64, MOVZ_I_I64, SLT, SLTu, SLTi, SLTiu>, GPR_64;
+defm : MovzPats0<GPR64, GPR32, MOVZ_I_I, SLT64, SLTu64, SLTi64, SLTiu64>,
+       GPR_64;
+defm : MovzPats0<GPR64, GPR64, MOVZ_I_I64, SLT64, SLTu64, SLTi64, SLTiu64>,
+       GPR_64;
+defm : MovzPats1<GPR32, GPR64, MOVZ_I_I64, XOR>, GPR_64;
+defm : MovzPats1<GPR64, GPR32, MOVZ_I64_I, XOR64>, GPR_64;
+defm : MovzPats1<GPR64, GPR64, MOVZ_I64_I64, XOR64>, GPR_64;
+defm : MovzPats2<GPR32, GPR64, MOVZ_I_I64, XORi>, GPR_64;
+defm : MovzPats2<GPR64, GPR32, MOVZ_I64_I, XORi64>, GPR_64;
+defm : MovzPats2<GPR64, GPR64, MOVZ_I64_I64, XORi64>, GPR_64;
 
 defm : MovnPats<GPR32, GPR32, MOVN_I_I, XOR>;
-let GPRPredicates = [IsGP64bit] in {
-  defm : MovnPats<GPR32, GPR64, MOVN_I_I64, XOR>;
-  defm : MovnPats<GPR64, GPR32, MOVN_I64_I, XOR64>;
-  defm : MovnPats<GPR64, GPR64, MOVN_I64_I64, XOR64>;
-}
+
+defm : MovnPats<GPR32, GPR64, MOVN_I_I64, XOR>, GPR_64;
+defm : MovnPats<GPR64, GPR32, MOVN_I64_I, XOR64>, GPR_64;
+defm : MovnPats<GPR64, GPR64, MOVN_I64_I64, XOR64>, GPR_64;
 
 defm : MovzPats0<GPR32, FGR32, MOVZ_I_S, SLT, SLTu, SLTi, SLTiu>;
 defm : MovzPats1<GPR32, FGR32, MOVZ_I_S, XOR>;
 defm : MovnPats<GPR32, FGR32, MOVN_I_S, XOR>;
-let GPRPredicates = [IsGP64bit] in {
-  defm : MovzPats0<GPR64, FGR32, MOVZ_I_S, SLT64, SLTu64, SLTi64, SLTiu64>;
-  defm : MovzPats1<GPR64, FGR32, MOVZ_I64_S, XOR64>;
-  defm : MovnPats<GPR64, FGR32, MOVN_I64_S, XOR64>;
-}
 
-let FGRPredicates = [NotFP64bit] in {
-  defm : MovzPats0<GPR32, AFGR64, MOVZ_I_D32, SLT, SLTu, SLTi, SLTiu>;
-  defm : MovzPats1<GPR32, AFGR64, MOVZ_I_D32, XOR>;
-  defm : MovnPats<GPR32, AFGR64, MOVN_I_D32, XOR>;
-}
-let FGRPredicates = [IsFP64bit] in {
-  defm : MovzPats0<GPR32, FGR64, MOVZ_I_D64, SLT, SLTu, SLTi, SLTiu>;
-  defm : MovzPats0<GPR64, FGR64, MOVZ_I_D64, SLT64, SLTu64, SLTi64,
-                   SLTiu64>;
-  defm : MovzPats1<GPR32, FGR64, MOVZ_I_D64, XOR>;
-  defm : MovzPats1<GPR64, FGR64, MOVZ_I64_D64, XOR64>;
-  defm : MovnPats<GPR32, FGR64, MOVN_I_D64, XOR>;
-  defm : MovnPats<GPR64, FGR64, MOVN_I64_D64, XOR64>;
-}
+defm : MovzPats0<GPR64, FGR32, MOVZ_I_S, SLT64, SLTu64, SLTi64, SLTiu64>,
+       GPR_64;
+defm : MovzPats1<GPR64, FGR32, MOVZ_I64_S, XOR64>, GPR_64;
+defm : MovnPats<GPR64, FGR32, MOVN_I64_S, XOR64>, GPR_64;
+
+defm : MovzPats0<GPR32, AFGR64, MOVZ_I_D32, SLT, SLTu, SLTi, SLTiu>, FGR_32;
+defm : MovzPats1<GPR32, AFGR64, MOVZ_I_D32, XOR>, FGR_32;
+defm : MovnPats<GPR32, AFGR64, MOVN_I_D32, XOR>, FGR_32;
+
+defm : MovzPats0<GPR32, FGR64, MOVZ_I_D64, SLT, SLTu, SLTi, SLTiu>, FGR_64;
+defm : MovzPats0<GPR64, FGR64, MOVZ_I_D64, SLT64, SLTu64, SLTi64, SLTiu64>,
+       FGR_64;
+defm : MovzPats1<GPR32, FGR64, MOVZ_I_D64, XOR>, FGR_64;
+defm : MovzPats1<GPR64, FGR64, MOVZ_I64_D64, XOR64>, FGR_64;
+defm : MovnPats<GPR32, FGR64, MOVN_I_D64, XOR>, FGR_64;
+defm : MovnPats<GPR64, FGR64, MOVN_I64_D64, XOR64>, FGR_64;

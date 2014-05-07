@@ -195,6 +195,13 @@ def IsBE           :  Predicate<"!Subtarget.isLittle()">;
 def IsNotNaCl    :    Predicate<"!Subtarget.isTargetNaCl()">;
 
 //===----------------------------------------------------------------------===//
+// Mips GPR size adjectives.
+// They are mutually exclusive.
+//===----------------------------------------------------------------------===//
+
+class GPR_64 { list<Predicate> GPRPredicates = [IsGP64bit]; }
+
+//===----------------------------------------------------------------------===//
 // Mips ISA/ASE membership and instruction group membership adjectives.
 // They are mutually exclusive.
 //===----------------------------------------------------------------------===//
