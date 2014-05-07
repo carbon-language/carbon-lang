@@ -3926,7 +3926,8 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
     if (!IsCPRC && PreAllocationGPRs < NumGPRs && AllocatedGPRs > NumGPRs && StackUsed) {
       llvm::Type *PaddingTy = llvm::ArrayType::get(
           llvm::Type::getInt32Ty(getVMContext()), NumGPRs - PreAllocationGPRs);
-      I.info = ABIArgInfo::getExpandWithPadding(false, PaddingTy);
+      I.info = ABIArgInfo::getDirect(nullptr /* type */, 0 /* offset */,
+                                     PaddingTy);
     }
   }
 
