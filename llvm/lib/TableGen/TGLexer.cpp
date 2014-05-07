@@ -478,6 +478,7 @@ tgtok::TokKind TGLexer::LexExclaim() {
     .Case("empty", tgtok::XEmpty)
     .Case("subst", tgtok::XSubst)
     .Case("foreach", tgtok::XForEach)
+    .Case("listconcat", tgtok::XListConcat)
     .Case("strconcat", tgtok::XStrConcat)
     .Default(tgtok::Error);
 

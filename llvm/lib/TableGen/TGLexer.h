@@ -47,7 +47,7 @@ namespace tgtok {
     MultiClass, String,
     
     // !keywords.
-    XConcat, XADD, XSRA, XSRL, XSHL, XStrConcat, XCast, XSubst,
+    XConcat, XADD, XSRA, XSRL, XSHL, XListConcat, XStrConcat, XCast, XSubst,
     XForEach, XHead, XTail, XEmpty, XIf, XEq,
 
     // Integer value.

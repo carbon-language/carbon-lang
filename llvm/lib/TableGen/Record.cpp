@@ -918,6 +918,18 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     }
     break;
   }
+  case LISTCONCAT: {
+    ListInit *LHSs = dyn_cast<ListInit>(LHS);
+    ListInit *RHSs = dyn_cast<ListInit>(RHS);
+    if (LHSs && RHSs) {
+      std::vector<Init *> Args;
+      Args.insert(Args.end(), LHSs->begin(), LHSs->end());
+      Args.insert(Args.end(), RHSs->begin(), RHSs->end());
+      return ListInit::get(
+          Args, static_cast<ListRecTy *>(LHSs->getType())->getElementType());
+    }
+    break;
+  }
   case STRCONCAT: {
     StringInit *LHSs = dyn_cast<StringInit>(LHS);
     StringInit *RHSs = dyn_cast<StringInit>(RHS);
@@ -987,6 +999,7 @@ std::string BinOpInit::getAsString() const {
   case SRA: Result = "!sra"; break;
   case SRL: Result = "!srl"; break;
   case EQ: Result = "!eq"; break;
+  case LISTCONCAT: Result = "!listconcat"; break;
   case STRCONCAT: Result = "!strconcat"; break;
   }
   return Result + "(" + LHS->getAsString() + ", " + RHS->getAsString() + ")";

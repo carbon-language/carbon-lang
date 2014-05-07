@@ -903,6 +903,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
   case tgtok::XSRL:
   case tgtok::XSHL:
   case tgtok::XEq:
+  case tgtok::XListConcat:
   case tgtok::XStrConcat: {  // Value ::= !binop '(' Value ',' Value ')'
     tgtok::TokKind OpTok = Lex.getCode();
     SMLoc OpLoc = Lex.getLoc();
@@ -919,6 +920,10 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     case tgtok::XSRL:    Code = BinOpInit::SRL;   Type = IntRecTy::get(); break;
     case tgtok::XSHL:    Code = BinOpInit::SHL;   Type = IntRecTy::get(); break;
     case tgtok::XEq:     Code = BinOpInit::EQ;    Type = BitRecTy::get(); break;
+    case tgtok::XListConcat:
+      Code = BinOpInit::LISTCONCAT;
+      // We don't know the list type until we parse the first argument
+      break;
     case tgtok::XStrConcat:
       Code = BinOpInit::STRCONCAT;
       Type = StringRecTy::get();
@@ -949,9 +954,22 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     }
     Lex.Lex();  // eat the ')'
 
+    // If we are doing !listconcat, we should know the type by now
+    if (OpTok == tgtok::XListConcat) {
+      if (VarInit *Arg0 = dyn_cast<VarInit>(InitList[0]))
+        Type = Arg0->getType();
+      else if (ListInit *Arg0 = dyn_cast<ListInit>(InitList[0]))
+        Type = Arg0->getType();
+      else {
+        InitList[0]->dump();
+        Error(OpLoc, "expected a list");
+        return nullptr;
+      }
+    }
+
     // We allow multiple operands to associative operators like !strconcat as
     // shorthand for nesting them.
-    if (Code == BinOpInit::STRCONCAT) {
+    if (Code == BinOpInit::STRCONCAT || Code == BinOpInit::LISTCONCAT) {
       while (InitList.size() > 2) {
         Init *RHS = InitList.pop_back_val();
         RHS = (BinOpInit::get(Code, InitList.back(), RHS, Type))
@@ -1134,6 +1152,7 @@ RecTy *TGParser::ParseOperatorType() {
 ///   SimpleValue ::= SHLTOK '(' Value ',' Value ')'
 ///   SimpleValue ::= SRATOK '(' Value ',' Value ')'
 ///   SimpleValue ::= SRLTOK '(' Value ',' Value ')'
+///   SimpleValue ::= LISTCONCATTOK '(' Value ',' Value ')'
 ///   SimpleValue ::= STRCONCATTOK '(' Value ',' Value ')'
 ///
 Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
@@ -1417,6 +1436,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
   case tgtok::XSRL:
   case tgtok::XSHL:
   case tgtok::XEq:
+  case tgtok::XListConcat:
   case tgtok::XStrConcat:   // Value ::= !binop '(' Value ',' Value ')'
   case tgtok::XIf:
   case tgtok::XForEach:
