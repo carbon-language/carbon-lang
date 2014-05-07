@@ -282,21 +282,21 @@ void DeclPrinter::VisitDeclContext(DeclContext *DC, bool Indent) {
     Visit(*D);
 
     // FIXME: Need to be able to tell the DeclPrinter when
-    const char *Terminator = 0;
+    const char *Terminator = nullptr;
     if (isa<OMPThreadPrivateDecl>(*D))
-      Terminator = 0;
+      Terminator = nullptr;
     else if (isa<FunctionDecl>(*D) &&
              cast<FunctionDecl>(*D)->isThisDeclarationADefinition())
-      Terminator = 0;
+      Terminator = nullptr;
     else if (isa<ObjCMethodDecl>(*D) && cast<ObjCMethodDecl>(*D)->getBody())
-      Terminator = 0;
+      Terminator = nullptr;
     else if (isa<NamespaceDecl>(*D) || isa<LinkageSpecDecl>(*D) ||
              isa<ObjCImplementationDecl>(*D) ||
              isa<ObjCInterfaceDecl>(*D) ||
              isa<ObjCProtocolDecl>(*D) ||
              isa<ObjCCategoryImplDecl>(*D) ||
              isa<ObjCCategoryDecl>(*D))
-      Terminator = 0;
+      Terminator = nullptr;
     else if (isa<EnumConstantDecl>(*D)) {
       DeclContext::decl_iterator Next = D;
       ++Next;
