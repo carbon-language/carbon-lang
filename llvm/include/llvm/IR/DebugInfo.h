@@ -427,7 +427,9 @@ class DICompileUnit : public DIScope {
 public:
   explicit DICompileUnit(const MDNode *N = nullptr) : DIScope(N) {}
 
-  unsigned getLanguage() const { return getUnsignedField(2); }
+  dwarf::SourceLanguage getLanguage() const {
+    return static_cast<dwarf::SourceLanguage>(getUnsignedField(2));
+  }
   StringRef getProducer() const { return getStringField(3); }
 
   bool isOptimized() const { return getUnsignedField(4) != 0; }
