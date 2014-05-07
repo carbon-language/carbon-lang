@@ -1382,10 +1382,14 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         EVT newVT = N0.getOperand(0).getValueType();
         if (DCI.isBeforeLegalizeOps() ||
             (isOperationLegal(ISD::SETCC, newVT) &&
-             getCondCodeAction(Cond, newVT.getSimpleVT())==Legal))
-          return DAG.getSetCC(dl, VT, N0.getOperand(0),
-                              DAG.getConstant(C1.trunc(InSize), newVT),
-                              Cond);
+             getCondCodeAction(Cond, newVT.getSimpleVT()) == Legal)) {
+          EVT NewSetCCVT = getSetCCResultType(*DAG.getContext(), newVT);
+          SDValue NewConst = DAG.getConstant(C1.trunc(InSize), newVT);
+
+          SDValue NewSetCC = DAG.getSetCC(dl, NewSetCCVT, N0.getOperand(0),
+                                          NewConst, Cond);
+          return DAG.getBoolExtOrTrunc(NewSetCC, dl, VT);
+        }
         break;
       }
       default:

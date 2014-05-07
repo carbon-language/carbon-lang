@@ -963,6 +963,14 @@ SDValue SelectionDAG::getZExtOrTrunc(SDValue Op, SDLoc DL, EVT VT) {
     getNode(ISD::TRUNCATE, DL, VT, Op);
 }
 
+SDValue SelectionDAG::getBoolExtOrTrunc(SDValue Op, SDLoc SL, EVT VT) {
+  if (VT.bitsLE(Op.getValueType()))
+    return getNode(ISD::TRUNCATE, SL, VT, Op);
+
+  TargetLowering::BooleanContent BType = TLI->getBooleanContents(VT.isVector());
+  return getNode(TLI->getExtendForContent(BType), SL, VT, Op);
+}
+
 SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, SDLoc DL, EVT VT) {
   assert(!VT.isVector() &&
          "getZeroExtendInReg should use the vector element type instead of "
