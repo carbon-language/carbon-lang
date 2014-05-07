@@ -114,8 +114,8 @@ public:
     return Result;
   }
   int stubsAllocated;
-  virtual uint8_t *allocateStub(const GlobalValue* F, unsigned StubSize,
-                                unsigned Alignment) {
+  uint8_t *allocateStub(const GlobalValue *F, unsigned StubSize,
+                        unsigned Alignment) override {
     stubsAllocated++;
     return Base->allocateStub(F, StubSize, Alignment);
   }
