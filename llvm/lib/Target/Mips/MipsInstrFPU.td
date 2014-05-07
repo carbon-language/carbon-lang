@@ -391,13 +391,13 @@ let AdditionalPredicates = [IsNotNaCl, HasFPIdx] in {
   def SWXC1 : MMRel, SWXC1_FT<"swxc1", FGR32Opnd, II_SWXC1, store>, SWXC1_FM<8>;
 }
 
-let AdditionalPredicates = [HasFPIdx, NotFP64bit, NotInMicroMips,
+let AdditionalPredicates = [NotFP64bit, HasFPIdx, NotInMicroMips,
                             IsNotNaCl] in {
   def LDXC1 : LWXC1_FT<"ldxc1", AFGR64Opnd, II_LDXC1, load>, LWXC1_FM<1>;
   def SDXC1 : SWXC1_FT<"sdxc1", AFGR64Opnd, II_SDXC1, store>, SWXC1_FM<9>;
 }
 
-let AdditionalPredicates = [HasFPIdx, IsFP64bit],
+let AdditionalPredicates = [IsFP64bit, HasFPIdx],
     DecoderNamespace="Mips64" in {
   def LDXC164 : LWXC1_FT<"ldxc1", FGR64Opnd, II_LDXC1, load>, LWXC1_FM<1>;
   def SDXC164 : SWXC1_FT<"sdxc1", FGR64Opnd, II_SDXC1, store>, SWXC1_FM<9>;
@@ -442,28 +442,28 @@ let AdditionalPredicates = [HasMips32r2, NoNaNsFPMath] in {
                 MADDS_FM<7, 0>;
 }
 
-let AdditionalPredicates = [HasMips32r2, NotFP64bit] in {
+let AdditionalPredicates = [NotFP64bit, HasMips32r2] in {
   def MADD_D32 : MMRel, MADDS_FT<"madd.d", AFGR64Opnd, II_MADD_D, fadd>,
                  MADDS_FM<4, 1>;
   def MSUB_D32 : MMRel, MADDS_FT<"msub.d", AFGR64Opnd, II_MSUB_D, fsub>,
                  MADDS_FM<5, 1>;
 }
 
-let AdditionalPredicates = [HasMips32r2, NotFP64bit, NoNaNsFPMath] in {
+let AdditionalPredicates = [NotFP64bit, HasMips32r2, NoNaNsFPMath] in {
   def NMADD_D32 : MMRel, NMADDS_FT<"nmadd.d", AFGR64Opnd, II_NMADD_D, fadd>,
                   MADDS_FM<6, 1>;
   def NMSUB_D32 : MMRel, NMADDS_FT<"nmsub.d", AFGR64Opnd, II_NMSUB_D, fsub>,
                   MADDS_FM<7, 1>;
 }
 
-let AdditionalPredicates = [HasMips32r2, IsFP64bit], isCodeGenOnly=1 in {
+let AdditionalPredicates = [IsFP64bit, HasMips32r2], isCodeGenOnly=1 in {
   def MADD_D64 : MADDS_FT<"madd.d", FGR64Opnd, II_MADD_D, fadd>,
                  MADDS_FM<4, 1>;
   def MSUB_D64 : MADDS_FT<"msub.d", FGR64Opnd, II_MSUB_D, fsub>,
                  MADDS_FM<5, 1>;
 }
 
-let AdditionalPredicates = [HasMips32r2, IsFP64bit, NoNaNsFPMath],
+let AdditionalPredicates = [IsFP64bit, HasMips32r2, NoNaNsFPMath],
     isCodeGenOnly=1 in {
   def NMADD_D64 : NMADDS_FT<"nmadd.d", FGR64Opnd, II_NMADD_D, fadd>,
                   MADDS_FM<6, 1>;
