@@ -9260,12 +9260,17 @@ struct CompareOverloadCandidatesForDisplay {
           L->FailureKind == ovl_fail_too_few_arguments) {
         if (R->FailureKind == ovl_fail_too_many_arguments ||
             R->FailureKind == ovl_fail_too_few_arguments) {
-          if (!L->Function || !R->Function) return !R->Function;
-          int LDist = std::abs((int)L->Function->getNumParams() - (int)NumArgs);
-          int RDist = std::abs((int)R->Function->getNumParams() - (int)NumArgs);
-          if (LDist == RDist)
-            return L->FailureKind == ovl_fail_too_many_arguments &&
-                   R->FailureKind == ovl_fail_too_few_arguments;
+          int LDist = std::abs((int)L->getNumParams() - (int)NumArgs);
+          int RDist = std::abs((int)R->getNumParams() - (int)NumArgs);
+          if (LDist == RDist) {
+            if (L->FailureKind == R->FailureKind)
+              // Sort non-surrogates before surrogates.
+              return !L->IsSurrogate && R->IsSurrogate;
+            // Sort candidates requiring fewer parameters than there were
+            // arguments given after candidates requiring more parameters
+            // than there were arguments given.
+            return L->FailureKind == ovl_fail_too_many_arguments;
+          }
           return LDist < RDist;
         }
         return false;

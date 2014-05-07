@@ -679,6 +679,18 @@ namespace clang {
 
       return CanFix;
     }
+
+    unsigned getNumParams() const {
+      if (IsSurrogate) {
+        auto STy = Surrogate->getConversionType();
+        while (STy->isPointerType() || STy->isReferenceType())
+          STy = STy->getPointeeType();
+        return STy->getAs<FunctionProtoType>()->getNumParams();
+      }
+      if (Function)
+        return Function->getNumParams();
+      return ExplicitCallArguments;
+    }
   };
 
   /// OverloadCandidateSet - A set of overload candidates, used in C++
