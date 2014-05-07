@@ -34,6 +34,12 @@ RUN: diff -aub test_objdir.h.gcov test.h.gcov
 # With gcov output disabled
 RUN: llvm-cov -n test.c | diff -u test_no_output.output -
 
+# Missing source files. This test is fragile, as it depends on being
+# run before we copy some sources into place in the next test.
+RUN: llvm-cov test_paths.cpp 2>/dev/null | diff -u test_missing.output -
+RUN: diff -aub test_missing.cpp.gcov test.cpp.gcov
+RUN: diff -aub test_missing.h.gcov test.h.gcov
+
 # Preserve paths. This mangles the output filenames.
 RUN: mkdir -p %t/srcdir/nested_dir
 RUN: cp test.cpp test.h %t/srcdir

@@ -356,8 +356,10 @@ class FileInfo {
   typedef DenseMap<uint32_t, BlockVector> BlockLines;
 
   struct LineData {
+    LineData() : LastLine(0) {}
     BlockLines Blocks;
     FunctionLines Functions;
+    uint32_t LastLine;
   };
 
   struct GCOVCoverage {
@@ -379,11 +381,15 @@ public:
     Options(Options), LineInfo(), RunCount(0), ProgramCount(0) {}
 
   void addBlockLine(StringRef Filename, uint32_t Line, const GCOVBlock *Block) {
+    if (Line > LineInfo[Filename].LastLine)
+      LineInfo[Filename].LastLine = Line;
     LineInfo[Filename].Blocks[Line-1].push_back(Block);
   }
   void addFunctionLine(StringRef Filename, uint32_t Line,
                        const GCOVFunction *Function) {
-    LineInfo[Filename].Functions[Line-1].push_back(Function);
+    if (Line > LineInfo[Filename].LastLine)
+      LineInfo[Filename].LastLine = Line;
+   LineInfo[Filename].Functions[Line-1].push_back(Function);
   }
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }

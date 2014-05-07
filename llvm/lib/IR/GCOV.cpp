@@ -432,6 +432,30 @@ static raw_ostream &operator<<(raw_ostream &OS, const formatBranchInfo &FBI) {
   return OS;
 }
 
+namespace {
+class LineConsumer {
+  std::unique_ptr<MemoryBuffer> Buffer;
+  StringRef Remaining;
+public:
+  LineConsumer(StringRef Filename) {
+    if (error_code EC = MemoryBuffer::getFileOrSTDIN(Filename, Buffer)) {
+      errs() << Filename << ": " << EC.message() << "\n";
+      Remaining = "";
+    } else
+      Remaining = Buffer->getBuffer();
+  }
+  bool empty() { return Remaining.empty(); }
+  void printNext(raw_ostream &OS, uint32_t LineNum) {
+    StringRef Line;
+    if (empty())
+      Line = "/*EOF*/";
+    else
+      std::tie(Line, Remaining) = Remaining.split("\n");
+    OS << format("%5u:", LineNum) << Line << "\n";
+  }
+};
+}
+
 /// Convert a path to a gcov filename. If PreservePaths is true, this
 /// translates "/" to "#", ".." to "^", and drops ".", to match gcov.
 static std::string mangleCoveragePath(StringRef Filename, bool PreservePaths) {
@@ -505,12 +529,7 @@ void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
   for (StringMap<LineData>::const_iterator I = LineInfo.begin(),
          E = LineInfo.end(); I != E; ++I) {
     StringRef Filename = I->first();
-    std::unique_ptr<MemoryBuffer> Buff;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
-      errs() << Filename << ": " << ec.message() << "\n";
-      return;
-    }
-    StringRef AllLines = Buff->getBuffer();
+    auto AllLines = LineConsumer(Filename);
 
     std::string CoveragePath = getCoveragePath(Filename, MainFilename);
     std::unique_ptr<raw_ostream> S = openCoveragePath(CoveragePath);
@@ -524,7 +543,8 @@ void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
 
     const LineData &Line = I->second;
     GCOVCoverage FileCoverage(Filename);
-    for (uint32_t LineIndex = 0; !AllLines.empty(); ++LineIndex) {
+    for (uint32_t LineIndex = 0;
+         LineIndex < Line.LastLine || !AllLines.empty(); ++LineIndex) {
       if (Options.BranchInfo) {
         FunctionLines::const_iterator FuncsIt = Line.Functions.find(LineIndex);
         if (FuncsIt != Line.Functions.end())
@@ -535,9 +555,7 @@ void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
       if (BlocksIt == Line.Blocks.end()) {
         // No basic blocks are on this line. Not an executable line of code.
         OS << "        -:";
-        std::pair<StringRef, StringRef> P = AllLines.split('\n');
-        OS << format("%5u:", LineIndex+1) << P.first << "\n";
-        AllLines = P.second;
+        AllLines.printNext(OS, LineIndex + 1);
       } else {
         const BlockVector &Blocks = BlocksIt->second;
 
@@ -599,9 +617,7 @@ void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
         }
         ++FileCoverage.LogicalLines;
 
-        std::pair<StringRef, StringRef> P = AllLines.split('\n');
-        OS << format("%5u:", LineIndex+1) << P.first << "\n";
-        AllLines = P.second;
+        AllLines.printNext(OS, LineIndex + 1);
 
         uint32_t BlockNo = 0;
         uint32_t EdgeNo = 0;
