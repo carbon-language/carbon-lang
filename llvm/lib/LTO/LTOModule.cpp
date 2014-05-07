@@ -418,17 +418,17 @@ void LTOModule::addDefinedSymbol(const GlobalValue *def, bool isFunction) {
     attr |= LTO_SYMBOL_DEFINITION_REGULAR;
 
   // set scope part
-  if (def->hasHiddenVisibility())
+  if (def->hasLocalLinkage())
+    // Ignore visibility if linkage is local.
+    attr |= LTO_SYMBOL_SCOPE_INTERNAL;
+  else if (def->hasHiddenVisibility())
     attr |= LTO_SYMBOL_SCOPE_HIDDEN;
   else if (def->hasProtectedVisibility())
     attr |= LTO_SYMBOL_SCOPE_PROTECTED;
   else if (canBeHidden(def))
     attr |= LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN;
-  else if (def->hasExternalLinkage() || def->hasWeakLinkage() ||
-           def->hasLinkOnceLinkage() || def->hasCommonLinkage())
-    attr |= LTO_SYMBOL_SCOPE_DEFAULT;
   else
-    attr |= LTO_SYMBOL_SCOPE_INTERNAL;
+    attr |= LTO_SYMBOL_SCOPE_DEFAULT;
 
   StringSet::value_type &entry = _defines.GetOrCreateValue(Buffer);
   entry.setValue(1);
