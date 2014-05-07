@@ -514,8 +514,10 @@ FileInfo::openCoveragePath(StringRef CoveragePath) {
     return make_unique<raw_null_ostream>();
 
   std::string ErrorInfo;
-  auto OS = make_unique<raw_fd_ostream>(CoveragePath.str().c_str(), ErrorInfo,
-                                        sys::fs::F_Text);
+  // FIXME: When using MSVS, we end up having both std::make_unique and
+  // llvm::make_unique which conflict.  Explicitly use the llvm:: version.
+  auto OS = llvm::make_unique<raw_fd_ostream>(CoveragePath.str().c_str(),
+                                              ErrorInfo, sys::fs::F_Text);
   if (!ErrorInfo.empty()) {
     errs() << ErrorInfo << "\n";
     return make_unique<raw_null_ostream>();
