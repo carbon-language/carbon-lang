@@ -176,14 +176,14 @@ bool X86Subtarget::IsLegalToCallImmediateAddr(const TargetMachine &TM) const {
 
 void X86Subtarget::resetSubtargetFeatures(const MachineFunction *MF) {
   AttributeSet FnAttrs = MF->getFunction()->getAttributes();
-  Attribute CPUAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
-                                           "target-cpu");
-  Attribute FSAttr = FnAttrs.getAttribute(AttributeSet::FunctionIndex,
-                                          "target-features");
+  Attribute CPUAttr =
+      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-cpu");
+  Attribute FSAttr =
+      FnAttrs.getAttribute(AttributeSet::FunctionIndex, "target-features");
   std::string CPU =
-    !CPUAttr.hasAttribute(Attribute::None) ?CPUAttr.getValueAsString() : "";
+      !CPUAttr.hasAttribute(Attribute::None) ? CPUAttr.getValueAsString() : "";
   std::string FS =
-    !FSAttr.hasAttribute(Attribute::None) ? FSAttr.getValueAsString() : "";
+      !FSAttr.hasAttribute(Attribute::None) ? FSAttr.getValueAsString() : "";
   if (!FS.empty()) {
     initializeEnvironment();
     resetSubtargetFeatures(CPU, FS);
@@ -288,26 +288,23 @@ void X86Subtarget::initializeEnvironment() {
 }
 
 X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
-                           const std::string &FS,
-                           unsigned StackAlignOverride)
-  : X86GenSubtargetInfo(TT, CPU, FS)
-  , X86ProcFamily(Others)
-  , PICStyle(PICStyles::None)
-  , TargetTriple(TT)
-  , StackAlignOverride(StackAlignOverride)
-  , In64BitMode(TargetTriple.getArch() == Triple::x86_64)
-  , In32BitMode(TargetTriple.getArch() == Triple::x86 &&
-                TargetTriple.getEnvironment() != Triple::CODE16)
-  , In16BitMode(TargetTriple.getArch() == Triple::x86 &&
-                TargetTriple.getEnvironment() == Triple::CODE16) {
+                           const std::string &FS, unsigned StackAlignOverride)
+    : X86GenSubtargetInfo(TT, CPU, FS), X86ProcFamily(Others),
+      PICStyle(PICStyles::None), TargetTriple(TT),
+      StackAlignOverride(StackAlignOverride),
+      In64BitMode(TargetTriple.getArch() == Triple::x86_64),
+      In32BitMode(TargetTriple.getArch() == Triple::x86 &&
+                  TargetTriple.getEnvironment() != Triple::CODE16),
+      In16BitMode(TargetTriple.getArch() == Triple::x86 &&
+                  TargetTriple.getEnvironment() == Triple::CODE16) {
   initializeEnvironment();
   resetSubtargetFeatures(CPU, FS);
 }
 
-bool X86Subtarget::enablePostRAScheduler(
-           CodeGenOpt::Level OptLevel,
-           TargetSubtargetInfo::AntiDepBreakMode& Mode,
-           RegClassVector& CriticalPathRCs) const {
+bool
+X86Subtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
+                                    TargetSubtargetInfo::AntiDepBreakMode &Mode,
+                                    RegClassVector &CriticalPathRCs) const {
   Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
   CriticalPathRCs.clear();
   return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
