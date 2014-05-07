@@ -1,8 +1,8 @@
 // RUN: rm -rf %t
-// RUN: not %clang_cc1 -x objective-c++ -fmodules -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump -ast-dump-lookups | FileCheck %s --check-prefix=CHECK-GLOBAL
-// RUN: not %clang_cc1 -x objective-c++ -fmodules -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump -ast-dump-lookups -ast-dump-filter N | FileCheck %s --check-prefix=CHECK-NAMESPACE-N
-// RUN: not %clang_cc1 -x objective-c++ -fmodules -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump | FileCheck %s --check-prefix=CHECK-DUMP
-// RUN: %clang_cc1 -x objective-c++ -fmodules -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11
+// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump -ast-dump-lookups | FileCheck %s --check-prefix=CHECK-GLOBAL
+// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump -ast-dump-lookups -ast-dump-filter N | FileCheck %s --check-prefix=CHECK-NAMESPACE-N
+// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump | FileCheck %s --check-prefix=CHECK-DUMP
+// RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11
 
 @import cxx_templates_a;
 @import cxx_templates_b;
@@ -71,8 +71,15 @@ void g() {
   // Trigger the instantiation of a template in 'a' that uses a type defined in
   // 'b_impl'. That type is not visible here, nor in 'a'. This fails; there is
   // no reason why DefinedInBImpl should be visible here.
+  //
+  // We turn off error recovery for modules in this test (so we don't get an
+  // implicit import of cxx_templates_b_impl), and that results in us producing
+  // a big spew of errors here.
+  //
   // expected-error@Inputs/cxx-templates-a.h:19 {{definition of 'DefinedInBImpl' must be imported}}
-  // expected-note@Inputs/cxx-templates-b-impl.h:1 {{definition is here}}
+  // expected-note@Inputs/cxx-templates-b-impl.h:1 +{{definition is here}}
+  // expected-error@Inputs/cxx-templates-a.h:19 +{{}}
+  // expected-error@Inputs/cxx-templates-a.h:20 +{{}}
   PerformDelayedLookup(defined_in_b_impl); // expected-note {{in instantiation of}}
 
   merge_templates_a = merge_templates_b; // ok, same type
@@ -89,6 +96,12 @@ void g() {
   static_assert(enum_c_from_a == enum_c_from_b, "");
   CommonTemplate<int> cti;
   CommonTemplate<int>::E eee = CommonTemplate<int>::c;
+
+  TemplateInstantiationVisibility<char[1]> tiv1;
+  TemplateInstantiationVisibility<char[2]> tiv2;
+  TemplateInstantiationVisibility<char[3]> tiv3; // expected-error {{must be imported from module 'cxx_templates_b_impl'}}
+  // expected-note@cxx-templates-b-impl.h:10 {{previous definition is here}}
+  TemplateInstantiationVisibility<char[4]> tiv4;
 }
 
 RedeclaredAsFriend<int> raf1;

@@ -5076,6 +5076,69 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
   return false;
 }
 
+/// \brief Determine whether there is any declaration of \p D that was ever a
+///        definition (perhaps before module merging) and is currently visible.
+/// \param D The definition of the entity.
+/// \param Suggested Filled in with the declaration that should be made visible
+///        in order to provide a definition of this entity.
+static bool hasVisibleDefinition(Sema &S, NamedDecl *D, NamedDecl **Suggested) {
+  // Easy case: if we don't have modules, all declarations are visible.
+  if (!S.getLangOpts().Modules)
+    return true;
+
+  // If this definition was instantiated from a template, map back to the
+  // pattern from which it was instantiated.
+  //
+  // FIXME: There must be a better place for this to live.
+  if (auto *RD = dyn_cast<CXXRecordDecl>(D)) {
+    if (auto *TD = dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
+      auto From = TD->getInstantiatedFrom();
+      if (auto *CTD = From.dyn_cast<ClassTemplateDecl*>()) {
+        while (auto *NewCTD = CTD->getInstantiatedFromMemberTemplate()) {
+          if (NewCTD->isMemberSpecialization())
+            break;
+          CTD = NewCTD;
+        }
+        RD = CTD->getTemplatedDecl();
+      } else if (auto *CTPSD = From.dyn_cast<
+                     ClassTemplatePartialSpecializationDecl *>()) {
+        while (auto *NewCTPSD = CTPSD->getInstantiatedFromMember()) {
+          if (NewCTPSD->isMemberSpecialization())
+            break;
+          CTPSD = NewCTPSD;
+        }
+        RD = CTPSD;
+      }
+    } else if (isTemplateInstantiation(RD->getTemplateSpecializationKind())) {
+      while (auto *NewRD = RD->getInstantiatedFromMemberClass())
+        RD = NewRD;
+    }
+    D = RD->getDefinition();
+  } else if (auto *ED = dyn_cast<EnumDecl>(D)) {
+    while (auto *NewED = ED->getInstantiatedFromMemberEnum())
+      ED = NewED;
+    if (ED->isFixed()) {
+      // If the enum has a fixed underlying type, any declaration of it will do.
+      *Suggested = 0;
+      for (auto *Redecl : ED->redecls()) {
+        if (LookupResult::isVisible(S, Redecl))
+          return true;
+        if (Redecl->isThisDeclarationADefinition() ||
+            (Redecl->isCanonicalDecl() && !*Suggested))
+          *Suggested = Redecl;
+      }
+      return false;
+    }
+    D = ED->getDefinition();
+  }
+  assert(D && "missing definition for pattern of instantiated definition");
+
+  // FIXME: If we merged any other decl into D, and that declaration is visible,
+  // then we should consider a definition to be visible.
+  *Suggested = D;
+  return LookupResult::isVisible(S, D);
+}
+
 /// \brief The implementation of RequireCompleteType
 bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
                                    TypeDiagnoser &Diagnoser) {
@@ -5091,21 +5154,21 @@ bool Sema::RequireCompleteTypeImpl(SourceLocation Loc, QualType T,
   NamedDecl *Def = 0;
   if (!T->isIncompleteType(&Def)) {
     // If we know about the definition but it is not visible, complain.
-    if (!Diagnoser.Suppressed && Def && !LookupResult::isVisible(*this, Def)) {
+    NamedDecl *SuggestedDef = 0;
+    if (!Diagnoser.Suppressed && Def &&
+        !hasVisibleDefinition(*this, Def, &SuggestedDef)) {
       // Suppress this error outside of a SFINAE context if we've already
       // emitted the error once for this type. There's no usefulness in
       // repeating the diagnostic.
       // FIXME: Add a Fix-It that imports the corresponding module or includes
       // the header.
-      Module *Owner = Def->getOwningModule();
+      Module *Owner = SuggestedDef->getOwningModule();
       Diag(Loc, diag::err_module_private_definition)
         << T << Owner->getFullModuleName();
-      Diag(Def->getLocation(), diag::note_previous_definition);
+      Diag(SuggestedDef->getLocation(), diag::note_previous_definition);
 
-      if (!isSFINAEContext()) {
-        // Recover by implicitly importing this module.
-        createImplicitModuleImport(Loc, Owner);
-      }
+      // Try to recover by implicitly importing this module.
+      createImplicitModuleImportForErrorRecovery(Loc, Owner);
     }
 
     // We lock in the inheritance model once somebody has asked us to ensure

@@ -4577,9 +4577,9 @@ void Sema::diagnoseTypo(const TypoCorrection &Correction,
     Diag(Def->getLocation(), diag::note_previous_declaration);
 
     // Recover by implicitly importing this module.
-    if (!isSFINAEContext() && ErrorRecovery)
-      createImplicitModuleImport(Correction.getCorrectionRange().getBegin(),
-                                 Owner);
+    if (ErrorRecovery)
+      createImplicitModuleImportForErrorRecovery(
+          Correction.getCorrectionRange().getBegin(), Owner);
     return;
   }
 

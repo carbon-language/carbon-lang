@@ -314,6 +314,8 @@ def ast_dump_lookups : Flag<["-"], "ast-dump-lookups">,
   HelpText<"Include name lookup table dumps in AST dumps">;
 def fno_modules_global_index : Flag<["-"], "fno-modules-global-index">,
   HelpText<"Do not automatically generate or update the global module index">;
+def fno_modules_error_recovery : Flag<["-"], "fno-modules-error-recovery">,
+  HelpText<"Do not automatically import modules for error recovery">;
 
 let Group = Action_Group in {
 

@@ -13177,7 +13177,12 @@ void Sema::ActOnModuleInclude(SourceLocation DirectiveLoc, Module *Mod) {
                                       /*Complain=*/true);
 }
 
-void Sema::createImplicitModuleImport(SourceLocation Loc, Module *Mod) {
+void Sema::createImplicitModuleImportForErrorRecovery(SourceLocation Loc,
+                                                      Module *Mod) {
+  // Bail if we're not allowed to implicitly import a module here.
+  if (isSFINAEContext() || !getLangOpts().ModulesErrorRecovery)
+    return;
+
   // Create the implicit import declaration.
   TranslationUnitDecl *TU = getASTContext().getTranslationUnitDecl();
   ImportDecl *ImportD = ImportDecl::CreateImplicit(getASTContext(), TU,

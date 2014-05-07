@@ -21,3 +21,5 @@ namespace Std {
     extern T g();
   }
 }
+
+template<typename T> struct TemplateInstantiationVisibility { typedef int type; };

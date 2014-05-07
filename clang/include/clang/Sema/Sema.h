@@ -1708,12 +1708,13 @@ public:
   void ActOnModuleInclude(SourceLocation DirectiveLoc, Module *Mod);
 
   /// \brief Create an implicit import of the given module at the given
-  /// source location.
+  /// source location, for error recovery, if possible.
   ///
-  /// This routine is typically used for error recovery, when the entity found
-  /// by name lookup is actually hidden within a module that we know about but
-  /// the user has forgotten to import.
-  void createImplicitModuleImport(SourceLocation Loc, Module *Mod);
+  /// This routine is typically used when an entity found by name lookup
+  /// is actually hidden within a module that we know about but the user
+  /// has forgotten to import.
+  void createImplicitModuleImportForErrorRecovery(SourceLocation Loc,
+                                                  Module *Mod);
 
   /// \brief Retrieve a suitable printing policy.
   PrintingPolicy getPrintingPolicy() const {
