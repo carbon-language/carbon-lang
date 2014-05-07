@@ -195,11 +195,15 @@ def IsBE           :  Predicate<"!Subtarget.isLittle()">;
 def IsNotNaCl    :    Predicate<"!Subtarget.isTargetNaCl()">;
 
 //===----------------------------------------------------------------------===//
-// Mips ISA membership adjectives.
+// Mips ISA/ASE membership and instruction group membership adjectives.
+// They are mutually exclusive.
 //===----------------------------------------------------------------------===//
 
 class ISA_MIPS32R2 { list<Predicate> InsnPredicates = [HasMips32r2]; }
 class ISA_MIPS64R2 { list<Predicate> InsnPredicates = [HasMips64r2]; }
+
+class INSN_SWAP { list<Predicate> InsnPredicates = [HasSwap]; }
+class INSN_SEINREG { list<Predicate> InsnPredicates = [HasSEInReg]; }
 
 //===----------------------------------------------------------------------===//
 
@@ -811,15 +815,13 @@ class CountLeading1<string opstr, RegisterOperand RO>:
 class SignExtInReg<string opstr, ValueType vt, RegisterOperand RO,
                    InstrItinClass itin> :
   InstSE<(outs RO:$rd), (ins RO:$rt), !strconcat(opstr, "\t$rd, $rt"),
-         [(set RO:$rd, (sext_inreg RO:$rt, vt))], itin, FrmR, opstr> {
-  let AdditionalPredicates = [HasSEInReg];
-}
+         [(set RO:$rd, (sext_inreg RO:$rt, vt))], itin, FrmR, opstr>,
+  INSN_SEINREG;
 
 // Subword Swap
 class SubwordSwap<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rt), !strconcat(opstr, "\t$rd, $rt"), [],
-         NoItinerary, FrmR, opstr> {
-  let AdditionalPredicates = [HasSwap];
+         NoItinerary, FrmR, opstr>, INSN_SWAP {
   let neverHasSideEffects = 1;
 }
 
