@@ -97,7 +97,7 @@ void PTXGenerator::createSubfunction(SetVector<Value *> &UsedValues,
     Value *BaseAddr = UsedValues[j];
     Type *ArrayTy = BaseAddr->getType();
     Value *Param = Builder.CreateBitCast(AI, ArrayTy);
-    VMap.insert(std::make_pair<Value *, Value *>(BaseAddr, Param));
+    VMap.insert(std::make_pair(BaseAddr, Param));
     AI++;
   }
 
@@ -185,8 +185,7 @@ void PTXGenerator::createSubfunction(SetVector<Value *> &UsedValues,
   assert(OriginalIVS.size() == Substitutions.size() &&
          "The size of IVS should be equal to the size of substitutions.");
   for (unsigned i = 0; i < OriginalIVS.size(); ++i) {
-    VMap.insert(
-        std::make_pair<Value *, Value *>(OriginalIVS[i], Substitutions[i]));
+    VMap.insert(std::make_pair(OriginalIVS[i], Substitutions[i]));
   }
 
   Builder.CreateBr(ExitBB);

@@ -785,7 +785,7 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
                     CmpInst::ICMP_SLE);
     const Value *OldIV_ = Statement->getInductionVariableForDimension(2);
     Value *OldIV = const_cast<Value *>(OldIV_);
-    VMap.insert(std::make_pair<Value *, Value *>(OldIV, IV));
+    VMap.insert(std::make_pair(OldIV, IV));
   }
 
   updateWithValueMap(VMap);
