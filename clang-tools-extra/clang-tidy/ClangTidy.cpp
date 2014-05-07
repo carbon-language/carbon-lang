@@ -298,10 +298,10 @@ std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
   return Factory.getCheckNames();
 }
 
-void runClangTidy(const ClangTidyOptions &Options,
-                  const tooling::CompilationDatabase &Compilations,
-                  ArrayRef<std::string> Ranges,
-                  SmallVectorImpl<ClangTidyError> *Errors) {
+ClangTidyStats runClangTidy(const ClangTidyOptions &Options,
+                            const tooling::CompilationDatabase &Compilations,
+                            ArrayRef<std::string> Ranges,
+                            SmallVectorImpl<ClangTidyError> *Errors) {
   // FIXME: Ranges are currently full files. Support selecting specific
   // (line-)ranges.
   ClangTool Tool(Compilations, Ranges);
@@ -333,6 +333,7 @@ void runClangTidy(const ClangTidyOptions &Options,
   };
 
   Tool.run(new ActionFactory(new ClangTidyASTConsumerFactory(Context, Options)));
+  return Context.getStats();
 }
 
 void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {

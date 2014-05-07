@@ -1,6 +1,6 @@
-// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' -header-filter='' %s -- -I %S/Inputs/file-filter | FileCheck %s
-// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' -header-filter='.*' %s -- -I %S/Inputs/file-filter | FileCheck --check-prefix=CHECK2 %s
-// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' -header-filter='header2\.h' %s -- -I %S/Inputs/file-filter | FileCheck --check-prefix=CHECK3 %s
+// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' -header-filter='' %s -- -I %S/Inputs/file-filter 2>&1 | FileCheck %s
+// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' -header-filter='.*' %s -- -I %S/Inputs/file-filter 2>&1 | FileCheck --check-prefix=CHECK2 %s
+// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' -header-filter='header2\.h' %s -- -I %S/Inputs/file-filter 2>&1 | FileCheck --check-prefix=CHECK3 %s
 
 #include "header1.h"
 // CHECK-NOT: warning:
@@ -20,3 +20,10 @@ class A { A(int); };
 // CHECK-NOT: warning:
 // CHECK2-NOT: warning:
 // CHECK3-NOT: warning:
+
+// CHECK: Suppressed 2 warnings (2 in non-user code)
+// CHECK: Use -header-filter='.*' to display errors from all non-system headers.
+// CHECK2-NOT: Suppressed {{.*}} warnings
+// CHECK2-NOT: Use -header-filter='.*' {{.*}}
+// CHECK3: Suppressed 1 warnings (1 in non-user code)
+// CHECK3: Use -header-filter='.*' {{.*}}

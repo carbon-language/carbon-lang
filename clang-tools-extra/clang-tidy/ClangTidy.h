@@ -121,10 +121,10 @@ private:
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options);
 
 /// \brief Run a set of clang-tidy checks on a set of files.
-void runClangTidy(const ClangTidyOptions &Options,
-                  const tooling::CompilationDatabase &Compilations,
-                  ArrayRef<std::string> Ranges,
-                  SmallVectorImpl<ClangTidyError> *Errors);
+ClangTidyStats runClangTidy(const ClangTidyOptions &Options,
+                            const tooling::CompilationDatabase &Compilations,
+                            ArrayRef<std::string> Ranges,
+                            SmallVectorImpl<ClangTidyError> *Errors);
 
 // FIXME: This interface will need to be significantly extended to be useful.
 // FIXME: Implement confidence levels for displaying/fixing errors.

@@ -1,4 +1,4 @@
-// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' %s -- | FileCheck %s
+// RUN: clang-tidy -checks=google-explicit-constructor -disable-checks='' %s -- 2>&1 | FileCheck %s
 
 class A { A(int i); };
 // CHECK: :[[@LINE-1]]:11: warning: Single-argument constructors must be explicit [google-explicit-constructor]
@@ -8,3 +8,4 @@ class B { B(int i); }; // NOLINT
 
 class C { C(int i); }; // NOLINT(we-dont-care-about-categories-yet)
 // CHECK-NOT: :[[@LINE-1]]:11: warning: Single-argument constructors must be explicit [google-explicit-constructor]
+// CHECK: Suppressed 2 warnings (2 NOLINT)

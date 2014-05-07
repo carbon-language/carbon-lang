@@ -78,7 +78,7 @@ void Positive() {
   // CHECK: nullptr != sp->get();
 }
 
-// CHECK-NOT: warning
+// CHECK-NOT: warning:
 
 void Negative() {
   struct NegPtr {

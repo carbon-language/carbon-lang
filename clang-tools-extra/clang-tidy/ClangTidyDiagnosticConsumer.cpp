@@ -41,8 +41,6 @@ protected:
                              ArrayRef<CharSourceRange> Ranges,
                              const SourceManager *SM,
                              DiagOrStoredDiag Info) override {
-    if (Level == DiagnosticsEngine::Ignored)
-      return;
     ClangTidyMessage TidyMessage = Loc.isValid()
                                        ? ClangTidyMessage(Message, *SM, Loc)
                                        : ClangTidyMessage(Message);
@@ -111,8 +109,7 @@ ClangTidyMessage::ClangTidyMessage(StringRef Message,
   FileOffset = Sources.getFileOffset(Loc);
 }
 
-ClangTidyError::ClangTidyError(StringRef CheckName)
-    : CheckName(CheckName) {}
+ClangTidyError::ClangTidyError(StringRef CheckName) : CheckName(CheckName) {}
 
 ChecksFilter::ChecksFilter(const ClangTidyOptions &Options)
     : EnableChecks(Options.EnableChecksRegex),
@@ -139,8 +136,10 @@ DiagnosticBuilder ClangTidyContext::diag(
       ++P;
     StringRef RestOfLine(CharacterData, P - CharacterData + 1);
     // FIXME: Handle /\bNOLINT\b(\([^)]*\))?/ as cpplint.py does.
-    if (RestOfLine.find("NOLINT") != StringRef::npos)
+    if (RestOfLine.find("NOLINT") != StringRef::npos) {
       Level = DiagnosticIDs::Ignored;
+      ++Stats.ErrorsIgnoredNOLINT;
+    }
   }
   unsigned ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(
       Level, (Description + " [" + CheckName + "]").str());
@@ -181,8 +180,18 @@ ClangTidyDiagnosticConsumer::ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx)
 }
 
 void ClangTidyDiagnosticConsumer::finalizeLastError() {
-  if (!LastErrorRelatesToUserCode && !Errors.empty())
-    Errors.pop_back();
+  if (!Errors.empty()) {
+    ClangTidyError &Error = Errors.back();
+    if (!Context.getChecksFilter().isCheckEnabled(Error.CheckName)) {
+      ++Context.Stats.ErrorsIgnoredCheckFilter;
+      Errors.pop_back();
+    } else if (!LastErrorRelatesToUserCode) {
+      ++Context.Stats.ErrorsIgnoredNonUserCode;
+      Errors.pop_back();
+    } else {
+      ++Context.Stats.ErrorsDisplayed;
+    }
+  }
   LastErrorRelatesToUserCode = false;
 }
 
@@ -259,10 +268,9 @@ struct LessClangTidyError {
 void ClangTidyDiagnosticConsumer::finish() {
   finalizeLastError();
   std::set<const ClangTidyError*, LessClangTidyError> UniqueErrors;
-  for (const ClangTidyError &Error : Errors) {
-    if (Context.getChecksFilter().isCheckEnabled(Error.CheckName))
-      UniqueErrors.insert(&Error);
-  }
+  for (const ClangTidyError &Error : Errors)
+    UniqueErrors.insert(&Error);
+
   for (const ClangTidyError *Error : UniqueErrors)
     Context.storeError(*Error);
   Errors.clear();

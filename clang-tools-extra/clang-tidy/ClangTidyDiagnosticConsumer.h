@@ -68,6 +68,17 @@ private:
   llvm::Regex DisableChecks;
 };
 
+struct ClangTidyStats {
+  ClangTidyStats()
+      : ErrorsDisplayed(0), ErrorsIgnoredCheckFilter(0), ErrorsIgnoredNOLINT(0),
+        ErrorsIgnoredNonUserCode(0) {}
+
+  unsigned ErrorsDisplayed;
+  unsigned ErrorsIgnoredCheckFilter;
+  unsigned ErrorsIgnoredNOLINT;
+  unsigned ErrorsIgnoredNonUserCode;
+};
+
 /// \brief Every \c ClangTidyCheck reports errors through a \c DiagnosticEngine
 /// provided by this context.
 ///
@@ -108,6 +119,7 @@ public:
 
   ChecksFilter &getChecksFilter() { return Filter; }
   const ClangTidyOptions &getOptions() const { return Options; }
+  const ClangTidyStats &getStats() const { return Stats; }
 
 private:
   friend class ClangTidyDiagnosticConsumer; // Calls storeError().
@@ -119,6 +131,7 @@ private:
   DiagnosticsEngine *DiagEngine;
   ClangTidyOptions Options;
   ChecksFilter Filter;
+  ClangTidyStats Stats;
 
   llvm::DenseMap<unsigned, std::string> CheckNamesByDiagnosticID;
 };

@@ -59,6 +59,31 @@ static cl::opt<bool> AnalyzeTemporaryDtors(
     cl::init(false),
     cl::cat(ClangTidyCategory));
 
+static void printStats(const clang::tidy::ClangTidyStats &Stats) {
+  unsigned ErrorsIgnored = Stats.ErrorsIgnoredNOLINT +
+                           Stats.ErrorsIgnoredCheckFilter +
+                           Stats.ErrorsIgnoredNonUserCode;
+  if (ErrorsIgnored) {
+    llvm::errs() << "Suppressed " << ErrorsIgnored << " warnings (";
+    StringRef Separator = "";
+    if (Stats.ErrorsIgnoredNonUserCode) {
+      llvm::errs() << Stats.ErrorsIgnoredNonUserCode << " in non-user code";
+      Separator = ", ";
+    }
+    if (Stats.ErrorsIgnoredNOLINT) {
+      llvm::errs() << Separator << Stats.ErrorsIgnoredNOLINT << " NOLINT";
+      Separator = ", ";
+    }
+    if (Stats.ErrorsIgnoredCheckFilter)
+      llvm::errs() << Separator << Stats.ErrorsIgnoredCheckFilter
+                   << " with check filters";
+    llvm::errs() << ").\n";
+    if (Stats.ErrorsIgnoredNonUserCode)
+      llvm::errs() << "Use -header-filter='.*' to display errors from all "
+                      "non-system headers.\n";
+  }
+}
+
 int main(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory);
 
@@ -78,10 +103,12 @@ int main(int argc, const char **argv) {
   }
 
   SmallVector<clang::tidy::ClangTidyError, 16> Errors;
-  clang::tidy::runClangTidy(Options, OptionsParser.getCompilations(),
-                            OptionsParser.getSourcePathList(), &Errors);
+  clang::tidy::ClangTidyStats Stats =
+      clang::tidy::runClangTidy(Options, OptionsParser.getCompilations(),
+                                OptionsParser.getSourcePathList(), &Errors);
   clang::tidy::handleErrors(Errors, Fix);
 
+  printStats(Stats);
   return 0;
 }
 
