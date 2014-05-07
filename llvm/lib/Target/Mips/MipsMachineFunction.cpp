@@ -65,9 +65,8 @@ MipsFunctionInfo::~MipsFunctionInfo() {
        ++I)
     delete I->getValue();
 
-  for (ValueMap<const GlobalValue *, const MipsCallEntry *>::iterator
-       I = GlobalCallEntries.begin(), E = GlobalCallEntries.end(); I != E; ++I)
-    delete I->second;
+  for (const auto &Entry : GlobalCallEntries)
+    delete Entry.second;
 }
 
 bool MipsFunctionInfo::globalBaseRegSet() const {
