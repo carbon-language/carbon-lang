@@ -23,33 +23,35 @@
 #define DEBUG_TYPE "instcombine"
 
 namespace llvm {
-  class CallSite;
-  class DataLayout;
-  class TargetLibraryInfo;
-  class DbgDeclareInst;
-  class MemIntrinsic;
-  class MemSetInst;
+class CallSite;
+class DataLayout;
+class TargetLibraryInfo;
+class DbgDeclareInst;
+class MemIntrinsic;
+class MemSetInst;
 
 /// SelectPatternFlavor - We can match a variety of different patterns for
 /// select operations.
 enum SelectPatternFlavor {
   SPF_UNKNOWN = 0,
-  SPF_SMIN, SPF_UMIN,
-  SPF_SMAX, SPF_UMAX
-  //SPF_ABS - TODO.
+  SPF_SMIN,
+  SPF_UMIN,
+  SPF_SMAX,
+  SPF_UMAX
+  // SPF_ABS - TODO.
 };
 
 /// getComplexity:  Assign a complexity or rank value to LLVM Values...
 ///   0 -> undef, 1 -> Const, 2 -> Other, 3 -> Arg, 3 -> Unary, 4 -> OtherInst
 static inline unsigned getComplexity(Value *V) {
   if (isa<Instruction>(V)) {
-    if (BinaryOperator::isNeg(V) ||
-        BinaryOperator::isFNeg(V) ||
+    if (BinaryOperator::isNeg(V) || BinaryOperator::isFNeg(V) ||
         BinaryOperator::isNot(V))
       return 3;
     return 4;
   }
-  if (isa<Argument>(V)) return 3;
+  if (isa<Argument>(V))
+    return 3;
   return isa<Constant>(V) ? (isa<UndefValue>(V) ? 0 : 1) : 2;
 }
 
@@ -62,18 +64,18 @@ static inline Constant *SubOne(Constant *C) {
   return ConstantExpr::getSub(C, ConstantInt::get(C->getType(), 1));
 }
 
-
 /// InstCombineIRInserter - This is an IRBuilder insertion helper that works
 /// just like the normal insertion helper, but also adds any new instructions
 /// to the instcombine worklist.
 class LLVM_LIBRARY_VISIBILITY InstCombineIRInserter
     : public IRBuilderDefaultInserter<true> {
   InstCombineWorklist &Worklist;
+
 public:
   InstCombineIRInserter(InstCombineWorklist &WL) : Worklist(WL) {}
 
-  void InsertHelper(Instruction *I, const Twine &Name,
-                    BasicBlock *BB, BasicBlock::iterator InsertPt) const {
+  void InsertHelper(Instruction *I, const Twine &Name, BasicBlock *BB,
+                    BasicBlock::iterator InsertPt) const {
     IRBuilderDefaultInserter<true>::InsertHelper(I, Name, BB, InsertPt);
     Worklist.Add(I);
   }
@@ -81,13 +83,14 @@ public:
 
 /// InstCombiner - The -instcombine pass.
 class LLVM_LIBRARY_VISIBILITY InstCombiner
-                             : public FunctionPass,
-                               public InstVisitor<InstCombiner, Instruction*> {
+    : public FunctionPass,
+      public InstVisitor<InstCombiner, Instruction *> {
   const DataLayout *DL;
   TargetLibraryInfo *TLI;
   bool MadeIRChange;
   LibCallSimplifier *Simplifier;
   bool MinimizeSize;
+
 public:
   /// Worklist - All of the instructions that need to be simplified.
   InstCombineWorklist Worklist;
@@ -146,9 +149,9 @@ public:
   Instruction *visitAnd(BinaryOperator &I);
   Value *FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS);
   Value *FoldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS);
-  Instruction *FoldOrWithConstants(BinaryOperator &I, Value *Op,
-                                   Value *A, Value *B, Value *C);
-  Instruction *visitOr (BinaryOperator &I);
+  Instruction *FoldOrWithConstants(BinaryOperator &I, Value *Op, Value *A,
+                                   Value *B, Value *C);
+  Instruction *visitOr(BinaryOperator &I);
   Instruction *visitXor(BinaryOperator &I);
   Instruction *visitShl(BinaryOperator &I);
   Instruction *visitAShr(BinaryOperator &I);
@@ -162,8 +165,7 @@ public:
   Instruction *visitFCmpInst(FCmpInst &I);
   Instruction *visitICmpInst(ICmpInst &I);
   Instruction *visitICmpInstWithCastAndCast(ICmpInst &ICI);
-  Instruction *visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
-                                              Instruction *LHS,
+  Instruction *visitICmpInstWithInstAndIntCst(ICmpInst &ICI, Instruction *LHS,
                                               ConstantInt *RHS);
   Instruction *FoldICmpDivCst(ICmpInst &ICI, BinaryOperator *DivI,
                               ConstantInt *DivRHS);
@@ -190,9 +192,8 @@ public:
   Instruction *visitIntToPtr(IntToPtrInst &CI);
   Instruction *visitBitCast(BitCastInst &CI);
   Instruction *visitAddrSpaceCast(AddrSpaceCastInst &CI);
-  Instruction *FoldSelectOpOp(SelectInst &SI, Instruction *TI,
-                              Instruction *FI);
-  Instruction *FoldSelectIntoOp(SelectInst &SI, Value*, Value*);
+  Instruction *FoldSelectOpOp(SelectInst &SI, Instruction *TI, Instruction *FI);
+  Instruction *FoldSelectIntoOp(SelectInst &SI, Value *, Value *);
   Instruction *FoldSPFofSPF(Instruction *Inner, SelectPatternFlavor SPF1,
                             Value *A, Value *B, Instruction &Outer,
                             SelectPatternFlavor SPF2, Value *C);
@@ -224,16 +225,16 @@ public:
 private:
   bool ShouldChangeType(Type *From, Type *To) const;
   Value *dyn_castNegVal(Value *V) const;
-  Value *dyn_castFNegVal(Value *V, bool NoSignedZero=false) const;
+  Value *dyn_castFNegVal(Value *V, bool NoSignedZero = false) const;
   Type *FindElementAtOffset(Type *PtrTy, int64_t Offset,
-                            SmallVectorImpl<Value*> &NewIndices);
+                            SmallVectorImpl<Value *> &NewIndices);
   Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI);
 
   /// ShouldOptimizeCast - Return true if the cast from "V to Ty" actually
   /// results in any code being generated and is interesting to optimize out. If
   /// the cast can be eliminated by some other simple transformation, we prefer
   /// to do the simplification first.
-  bool ShouldOptimizeCast(Instruction::CastOps opcode,const Value *V,
+  bool ShouldOptimizeCast(Instruction::CastOps opcode, const Value *V,
                           Type *Ty);
 
   Instruction *visitCallSite(CallSite CS);
@@ -257,7 +258,7 @@ public:
     assert(New && !New->getParent() &&
            "New instruction already inserted into a basic block!");
     BasicBlock *BB = Old.getParent();
-    BB->getInstList().insert(&Old, New);  // Insert inst
+    BB->getInstList().insert(&Old, New); // Insert inst
     Worklist.Add(New);
     return New;
   }
@@ -277,7 +278,7 @@ public:
   // modified.
   //
   Instruction *ReplaceInstUsesWith(Instruction &I, Value *V) {
-    Worklist.AddUsersToWorkList(I);   // Add all modified instrs to worklist.
+    Worklist.AddUsersToWorkList(I); // Add all modified instrs to worklist.
 
     // If we are replacing the instruction with itself, this must be in a
     // segment of unreachable code, so just clobber the instruction.
@@ -309,11 +310,11 @@ public:
     Worklist.Remove(&I);
     I.eraseFromParent();
     MadeIRChange = true;
-    return nullptr;  // Don't do anything with FI
+    return nullptr; // Don't do anything with FI
   }
 
-  void ComputeMaskedBits(Value *V, APInt &KnownZero,
-                         APInt &KnownOne, unsigned Depth = 0) const {
+  void ComputeMaskedBits(Value *V, APInt &KnownZero, APInt &KnownOne,
+                         unsigned Depth = 0) const {
     return llvm::ComputeMaskedBits(V, KnownZero, KnownOne, DL, Depth);
   }
 
@@ -326,7 +327,6 @@ public:
   }
 
 private:
-
   /// SimplifyAssociativeOrCommutative - This performs a few simplifications for
   /// operators which are associative or commutative.
   bool SimplifyAssociativeOrCommutative(BinaryOperator &I);
@@ -340,12 +340,10 @@ private:
 
   /// SimplifyDemandedUseBits - Attempts to replace V with a simpler value
   /// based on the demanded bits.
-  Value *SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
-                                 APInt& KnownZero, APInt& KnownOne,
-                                 unsigned Depth);
-  bool SimplifyDemandedBits(Use &U, APInt DemandedMask,
-                            APInt& KnownZero, APInt& KnownOne,
-                            unsigned Depth=0);
+  Value *SimplifyDemandedUseBits(Value *V, APInt DemandedMask, APInt &KnownZero,
+                                 APInt &KnownOne, unsigned Depth);
+  bool SimplifyDemandedBits(Use &U, APInt DemandedMask, APInt &KnownZero,
+                            APInt &KnownOne, unsigned Depth = 0);
   /// Helper routine of SimplifyDemandedUseBits. It tries to simplify demanded
   /// bit for "r1 = shr x, c1; r2 = shl r1, c2" instruction sequence.
   Value *SimplifyShrShlDemandedBits(Instruction *Lsr, Instruction *Sftl,
@@ -358,7 +356,7 @@ private:
   bool SimplifyDemandedInstructionBits(Instruction &Inst);
 
   Value *SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
-                                    APInt& UndefElts, unsigned Depth = 0);
+                                    APInt &UndefElts, unsigned Depth = 0);
 
   // FoldOpIntoPhi - Given a binary operator, cast instruction, or select
   // which has a PHI node as operand #0, see if we can fold the instruction
@@ -375,20 +373,18 @@ private:
   Instruction *FoldPHIArgGEPIntoPHI(PHINode &PN);
   Instruction *FoldPHIArgLoadIntoPHI(PHINode &PN);
 
-
   Instruction *OptAndOp(Instruction *Op, ConstantInt *OpRHS,
                         ConstantInt *AndRHS, BinaryOperator &TheAnd);
 
   Value *FoldLogicalPlusAnd(Value *LHS, Value *RHS, ConstantInt *Mask,
                             bool isSub, Instruction &I);
-  Value *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
-                         bool isSigned, bool Inside);
+  Value *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi, bool isSigned,
+                         bool Inside);
   Instruction *PromoteCastOfAllocation(BitCastInst &CI, AllocaInst &AI);
   Instruction *MatchBSwap(BinaryOperator &I);
   bool SimplifyStoreAtEndOfBlock(StoreInst &SI);
   Instruction *SimplifyMemTransfer(MemIntrinsic *MI);
   Instruction *SimplifyMemSet(MemSetInst *MI);
-
 
   Value *EvaluateInDifferentType(Value *V, Type *Ty, bool isSigned);
 
