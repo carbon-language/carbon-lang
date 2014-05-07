@@ -205,8 +205,8 @@ static void cleanupDeallocOrFinalize(MigrationPass &pass) {
     impl_iterator;
   for (impl_iterator I = impl_iterator(DC->decls_begin()),
                      E = impl_iterator(DC->decls_end()); I != E; ++I) {
-    ObjCMethodDecl *DeallocM = 0;
-    ObjCMethodDecl *FinalizeM = 0;
+    ObjCMethodDecl *DeallocM = nullptr;
+    ObjCMethodDecl *FinalizeM = nullptr;
     for (auto *MD : I->instance_methods()) {
       if (!MD->hasBody())
         continue;

@@ -216,9 +216,9 @@ bool DeltaTreeNode::DoInsertion(unsigned FileIndex, int Delta,
     DoSplit(*InsertRes);
 
     if (InsertRes->Split.FileLoc > FileIndex)
-      InsertRes->LHS->DoInsertion(FileIndex, Delta, 0 /*can't fail*/);
+      InsertRes->LHS->DoInsertion(FileIndex, Delta, nullptr /*can't fail*/);
     else
-      InsertRes->RHS->DoInsertion(FileIndex, Delta, 0 /*can't fail*/);
+      InsertRes->RHS->DoInsertion(FileIndex, Delta, nullptr /*can't fail*/);
     return true;
   }
 

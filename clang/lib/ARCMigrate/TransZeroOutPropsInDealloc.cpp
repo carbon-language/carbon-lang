@@ -35,7 +35,7 @@ class ZeroOutInDeallocRemover :
   Selector FinalizeSel;
 
 public:
-  ZeroOutInDeallocRemover(MigrationPass &pass) : Pass(pass), SelfD(0) {
+  ZeroOutInDeallocRemover(MigrationPass &pass) : Pass(pass), SelfD(nullptr) {
     FinalizeSel =
         Pass.Ctx.Selectors.getNullarySelector(&Pass.Ctx.Idents.get("finalize"));
   }
@@ -135,7 +135,7 @@ public:
 
     // clear out for next method.
     SynthesizedProperties.clear();
-    SelfD = 0;
+    SelfD = nullptr;
     Removables.clear();
     return true;
   }

@@ -189,7 +189,7 @@ class BodyTransform : public RecursiveASTVisitor<BodyTransform<BODY_TRANS> > {
 
   typedef RecursiveASTVisitor<BodyTransform<BODY_TRANS> > base;
 public:
-  BodyTransform(MigrationPass &pass) : Pass(pass), ParentD(0) { }
+  BodyTransform(MigrationPass &pass) : Pass(pass), ParentD(nullptr) { }
 
   bool TraverseStmt(Stmt *rootS) {
     if (rootS)

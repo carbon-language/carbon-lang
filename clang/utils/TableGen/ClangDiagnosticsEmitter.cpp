@@ -135,7 +135,7 @@ namespace {
 
     const Record *ExplicitDef;
 
-    GroupInfo() : ExplicitDef(0) {}
+    GroupInfo() : ExplicitDef(nullptr) {}
   };
 } // end anonymous namespace.
 
@@ -170,7 +170,8 @@ static void groupDiagnostics(const std::vector<Record*> &Diags,
   for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
     const Record *R = Diags[i];
     DefInit *DI = dyn_cast<DefInit>(R->getValueInit("Group"));
-    if (DI == 0) continue;
+    if (!DI)
+      continue;
     assert(R->getValueAsDef("Class")->getName() != "CLASS_NOTE" &&
            "Note can't be in a DiagGroup");
     std::string GroupName = DI->getDef()->getValueAsString("GroupName");
@@ -507,7 +508,7 @@ void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
   // Compute the set of diagnostics that are in -Wpedantic.
   RecordSet DiagsInPedantic;
   InferPedantic inferPedantic(DGParentMap, Diags, DiagGroups, DiagsInGroup);
-  inferPedantic.compute(&DiagsInPedantic, (RecordVec*)0);
+  inferPedantic.compute(&DiagsInPedantic, (RecordVec*)nullptr);
 
   for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
     const Record &R = *Diags[i];

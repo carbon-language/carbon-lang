@@ -2655,7 +2655,7 @@ void NeonEmitter::run(raw_ostream &OS) {
   std::string TypedefTypes(
       "cQcsQsiQilQlUcQUcUsQUsUiQUiUlQUlhQhfQfdQdPcQPcPsQPsPlQPl");
   SmallVector<StringRef, 24> TDTypeVec;
-  ParseTypes(0, TypedefTypes, TDTypeVec);
+  ParseTypes(nullptr, TypedefTypes, TDTypeVec);
 
   // Emit vector typedefs.
   bool isA64 = false;

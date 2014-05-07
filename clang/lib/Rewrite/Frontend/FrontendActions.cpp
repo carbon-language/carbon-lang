@@ -34,7 +34,7 @@ ASTConsumer *HTMLPrintAction::CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) {
   if (raw_ostream *OS = CI.createDefaultOutputFile(false, InFile))
     return CreateHTMLPrinter(OS, CI.getPreprocessor());
-  return 0;
+  return nullptr;
 }
 
 FixItAction::FixItAction() {}
@@ -127,8 +127,8 @@ bool FixItRecompile::BeginInvocation(CompilerInstance &CI) {
       err = Rewriter.WriteFixedFiles(&RewrittenFiles);
     
       FixAction->EndSourceFile();
-      CI.setSourceManager(0);
-      CI.setFileManager(0);
+      CI.setSourceManager(nullptr);
+      CI.setFileManager(nullptr);
     } else {
       err = true;
     }
@@ -163,7 +163,7 @@ ASTConsumer *RewriteObjCAction::CreateASTConsumer(CompilerInstance &CI,
                               CI.getDiagnostics(), CI.getLangOpts(),
                               CI.getDiagnosticOpts().NoRewriteMacros);
   }
-  return 0;
+  return nullptr;
 }
 
 void RewriteMacrosAction::ExecuteAction() {

@@ -88,7 +88,7 @@ private:
 /// Initializes an InclusionRewriter with a \p PP source and \p OS destination.
 InclusionRewriter::InclusionRewriter(Preprocessor &PP, raw_ostream &OS,
                                      bool ShowLineMarkers)
-    : PP(PP), SM(PP.getSourceManager()), OS(OS), PredefinesBuffer(0),
+  : PP(PP), SM(PP.getSourceManager()), OS(OS), PredefinesBuffer(nullptr),
     ShowLineMarkers(ShowLineMarkers),
     LastInsertedFileChange(FileChanges.end()) {
   // If we're in microsoft mode, use normal #line instead of line markers.
@@ -191,7 +191,7 @@ InclusionRewriter::FindFileChangeLocation(SourceLocation Loc) const {
   FileChangeMap::const_iterator I = FileChanges.find(Loc.getRawEncoding());
   if (I != FileChanges.end())
     return &I->second;
-  return NULL;
+  return nullptr;
 }
 
 /// Detect the likely line ending style of \p FromFile by examining the first
@@ -200,7 +200,7 @@ static StringRef DetectEOL(const MemoryBuffer &FromFile) {
   // detect what line endings the file uses, so that added content does not mix
   // the style
   const char *Pos = strchr(FromFile.getBufferStart(), '\n');
-  if (Pos == NULL)
+  if (!Pos)
     return "\n";
   if (Pos + 1 < FromFile.getBufferEnd() && Pos[1] == '\r')
     return "\n\r";
@@ -334,10 +334,11 @@ bool InclusionRewriter::HandleHasInclude(
   bool isAngled = PP.GetIncludeFilenameSpelling(Tok.getLocation(), Filename);
   const DirectoryLookup *CurDir;
   const FileEntry *File = PP.getHeaderSearchInfo().LookupFile(
-      Filename, SourceLocation(), isAngled, 0, CurDir,
-      PP.getSourceManager().getFileEntryForID(FileId), 0, 0, 0, false);
+      Filename, SourceLocation(), isAngled, nullptr, CurDir,
+      PP.getSourceManager().getFileEntryForID(FileId), nullptr, nullptr,
+      nullptr, false);
 
-  FileExists = File != 0;
+  FileExists = File != nullptr;
   return true;
 }
 
@@ -383,7 +384,7 @@ bool InclusionRewriter::Process(FileID FileId,
       RawLex.LexFromRawLexer(RawToken);
       if (RawToken.is(tok::raw_identifier))
         PP.LookUpIdentifierInfo(RawToken);
-      if (RawToken.getIdentifierInfo() != NULL) {
+      if (RawToken.getIdentifierInfo() != nullptr) {
         switch (RawToken.getIdentifierInfo()->getPPKeywordID()) {
           case tok::pp_include:
           case tok::pp_include_next:
@@ -448,7 +449,8 @@ bool InclusionRewriter::Process(FileID FileId,
 
                 // Rewrite __has_include(x)
                 if (RawToken.getIdentifierInfo()->isStr("__has_include")) {
-                  if (!HandleHasInclude(FileId, RawLex, 0, RawToken, HasFile))
+                  if (!HandleHasInclude(FileId, RawLex, nullptr, RawToken,
+                                        HasFile))
                     continue;
                   // Rewrite __has_include_next(x)
                 } else if (RawToken.getIdentifierInfo()->isStr(

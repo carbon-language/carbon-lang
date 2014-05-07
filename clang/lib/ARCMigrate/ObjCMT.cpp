@@ -109,7 +109,7 @@ public:
                          ArrayRef<std::string> WhiteList)
   : MigrateDir(migrateDir),
     ASTMigrateActions(astMigrateActions),
-    NSIntegerTypedefed(0), NSUIntegerTypedefed(0),
+    NSIntegerTypedefed(nullptr), NSUIntegerTypedefed(nullptr),
     Remapper(remapper), FileMgr(fileMgr), PPRec(PPRec), PP(PP),
     IsOutputFile(isOutputFile) {
 
@@ -180,7 +180,7 @@ ObjCMigrateAction::ObjCMigrateAction(FrontendAction *WrappedAction,
                                      unsigned migrateAction)
   : WrapperFrontendAction(WrappedAction), MigrateDir(migrateDir),
     ObjCMigAction(migrateAction),
-    CompInst(0) {
+    CompInst(nullptr) {
   if (MigrateDir.empty())
     MigrateDir = "."; // user current directory if none is given.
 }
@@ -344,7 +344,7 @@ static const char *PropertyMemoryAttribute(ASTContext &Context, QualType ArgType
     return "weak";
   else if (RetainableObject)
     return ArgType->isBlockPointerType() ? "copy" : "strong";
-  return 0;
+  return nullptr;
 }
 
 static void rewriteToObjCProperty(const ObjCMethodDecl *Getter,
@@ -773,11 +773,11 @@ bool ObjCMigrateASTConsumer::migrateNSEnumDecl(ASTContext &Ctx,
   if (!TypedefDcl) {
     if (NSIntegerTypedefed) {
       TypedefDcl = NSIntegerTypedefed;
-      NSIntegerTypedefed = 0;
+      NSIntegerTypedefed = nullptr;
     }
     else if (NSUIntegerTypedefed) {
       TypedefDcl = NSUIntegerTypedefed;
-      NSUIntegerTypedefed = 0;
+      NSUIntegerTypedefed = nullptr;
     }
     else
       return false;
@@ -1108,7 +1108,7 @@ bool ObjCMigrateASTConsumer::migrateProperty(ASTContext &Ctx,
     // Try a non-void method with no argument (and no setter or property of same name
     // as a 'readonly' property.
     edit::Commit commit(*Editor);
-    rewriteToObjCProperty(Method, 0 /*SetterMethod*/, *NSAPIObj, commit,
+    rewriteToObjCProperty(Method, nullptr /*SetterMethod*/, *NSAPIObj, commit,
                           LengthOfPrefix,
                           (ASTMigrateActions &
                            FrontendOptions::ObjCMT_AtomicProperty) != 0,
@@ -1334,7 +1334,7 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
   // Annotate function.
   if (!ResultAnnotated) {
     RetEffect Ret = CE.getReturnValue();
-    const char *AnnotationString = 0;
+    const char *AnnotationString = nullptr;
     if (Ret.getObjKind() == RetEffect::CF) {
       if (Ret.isOwned() &&
           Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
@@ -1451,7 +1451,7 @@ void ObjCMigrateASTConsumer::AddCFAnnotations(ASTContext &Ctx,
   // Annotate function.
   if (!ResultAnnotated) {
     RetEffect Ret = CE.getReturnValue();
-    const char *AnnotationString = 0;
+    const char *AnnotationString = nullptr;
     if (Ret.getObjKind() == RetEffect::CF) {
       if (Ret.isOwned() &&
           Ctx.Idents.get("CF_RETURNS_RETAINED").hasMacroDefinition())
@@ -1738,7 +1738,7 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
             D++;
         }
         else
-          migrateNSEnumDecl(Ctx, ED, /*TypedefDecl */0);
+          migrateNSEnumDecl(Ctx, ED, /*TypedefDecl */nullptr);
       }
       else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(*D)) {
         if (!(ASTMigrateActions & FrontendOptions::ObjCMT_NsMacros))

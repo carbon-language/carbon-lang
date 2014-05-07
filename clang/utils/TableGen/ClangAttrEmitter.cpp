@@ -132,7 +132,7 @@ static StringRef NormalizeAttrSpelling(StringRef AttrSpelling) {
 typedef std::vector<std::pair<std::string, Record *>> ParsedAttrMap;
 
 static ParsedAttrMap getParsedAttrList(const RecordKeeper &Records,
-                                       ParsedAttrMap *Dupes = 0) {
+                                       ParsedAttrMap *Dupes = nullptr) {
   std::vector<Record *> Attrs = Records.getAllDerivedDefinitions("Attr");
   std::set<std::string> Seen;
   ParsedAttrMap R;
@@ -959,11 +959,11 @@ namespace {
 }
 
 static std::unique_ptr<Argument> createArgument(Record &Arg, StringRef Attr,
-                                                Record *Search = 0) {
+                                                Record *Search = nullptr) {
   if (!Search)
     Search = &Arg;
 
-  Argument *Ptr = 0;
+  Argument *Ptr = nullptr;
   llvm::StringRef ArgName = Search->getName();
 
   if (ArgName == "AlignedArgument") Ptr = new AlignedArgument(Arg, Attr);
@@ -2503,7 +2503,7 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
       std::vector<FlattenedSpelling> Spellings = GetFlattenedSpellings(Attr);
       for (const auto &S : Spellings) {
         std::string RawSpelling = S.name();
-        std::vector<StringMatcher::StringPair> *Matches = 0;
+        std::vector<StringMatcher::StringPair> *Matches = nullptr;
         std::string Spelling, Variety = S.variety();
         if (Variety == "CXX11") {
           Matches = &CXX11;

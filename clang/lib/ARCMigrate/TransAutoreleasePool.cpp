@@ -70,7 +70,7 @@ class AutoreleasePoolRewriter
                          : public RecursiveASTVisitor<AutoreleasePoolRewriter> {
 public:
   AutoreleasePoolRewriter(MigrationPass &pass)
-    : Body(0), Pass(pass) {
+    : Body(nullptr), Pass(pass) {
     PoolII = &pass.Ctx.Idents.get("NSAutoreleasePool");
     DrainSel = pass.Ctx.Selectors.getNullarySelector(
                                                  &pass.Ctx.Idents.get("drain"));
@@ -230,7 +230,7 @@ private:
     bool IsFollowedBySimpleReturnStmt;
     SmallVector<ObjCMessageExpr *, 4> Releases;
 
-    PoolScope() : PoolVar(0), CompoundParent(0), Begin(), End(),
+    PoolScope() : PoolVar(nullptr), CompoundParent(nullptr), Begin(), End(),
                   IsFollowedBySimpleReturnStmt(false) { }
 
     SourceRange getIndentedRange() const {
@@ -305,7 +305,7 @@ private:
       // statement, in which case we will include the return in the scope.
       if (SI != SE)
         if (ReturnStmt *retS = dyn_cast<ReturnStmt>(*SI))
-          if ((retS->getRetValue() == 0 ||
+          if ((retS->getRetValue() == nullptr ||
                isa<DeclRefExpr>(retS->getRetValue()->IgnoreParenCasts())) &&
               findLocationAfterSemi(retS->getLocEnd(), Pass.Ctx).isValid()) {
             scope.IsFollowedBySimpleReturnStmt = true;
@@ -421,7 +421,7 @@ private:
     ExprSet Refs;
     SmallVector<PoolScope, 2> Scopes;
 
-    PoolVarInfo() : Dcl(0) { }
+    PoolVarInfo() : Dcl(nullptr) { }
   };
 
   std::map<VarDecl *, PoolVarInfo> PoolVars;

@@ -66,7 +66,8 @@ class UnbridgedCastRewriter : public RecursiveASTVisitor<UnbridgedCastRewriter>{
   mutable std::unique_ptr<ExprSet> Removables;
 
 public:
-  UnbridgedCastRewriter(MigrationPass &pass) : Pass(pass), ParentD(0), Body(0) {
+  UnbridgedCastRewriter(MigrationPass &pass)
+    : Pass(pass), ParentD(nullptr), Body(nullptr) {
     SelfII = &Pass.Ctx.Idents.get("self");
   }
 

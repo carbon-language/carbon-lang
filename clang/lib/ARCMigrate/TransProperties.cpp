@@ -61,7 +61,8 @@ class PropertiesRewriter {
     ObjCIvarDecl *IvarD;
     ObjCPropertyImplDecl *ImplD;
 
-    PropData(ObjCPropertyDecl *propD) : PropD(propD), IvarD(0), ImplD(0) { }
+    PropData(ObjCPropertyDecl *propD)
+      : PropD(propD), IvarD(nullptr), ImplD(nullptr) {}
   };
 
   typedef SmallVector<PropData, 2> PropsTy;
@@ -74,7 +75,7 @@ public:
     : MigrateCtx(MigrateCtx), Pass(MigrateCtx.Pass) { }
 
   static void collectProperties(ObjCContainerDecl *D, AtPropDeclsTy &AtProps,
-                                AtPropDeclsTy *PrevAtProps = 0) {
+                                AtPropDeclsTy *PrevAtProps = nullptr) {
     for (auto *Prop : D->properties()) {
       if (Prop->getAtLoc().isInvalid())
         continue;

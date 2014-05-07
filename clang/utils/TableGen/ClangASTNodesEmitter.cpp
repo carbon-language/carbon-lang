@@ -77,7 +77,7 @@ std::pair<Record *, Record *> ClangASTNodesEmitter::EmitNode(
 
   ChildIterator i = Tree.lower_bound(Base), e = Tree.upper_bound(Base);
 
-  Record *First = 0, *Last = 0;
+  Record *First = nullptr, *Last = nullptr;
   // This might be the pseudo-node for Stmt; don't assume it has an Abstract
   // bit
   if (Base->getValue("Abstract") && !Base->getValueAsBit("Abstract"))

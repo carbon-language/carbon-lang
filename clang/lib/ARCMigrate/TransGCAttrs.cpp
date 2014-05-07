@@ -80,7 +80,7 @@ public:
     }
   }
 
-  bool handleAttr(AttributedTypeLoc TL, Decl *D = 0) {
+  bool handleAttr(AttributedTypeLoc TL, Decl *D = nullptr) {
     if (TL.getAttrKind() != AttributedType::attr_objc_ownership)
       return false;
 
@@ -149,9 +149,9 @@ public:
       return false;
     if (ObjCContainerDecl *ContD = dyn_cast<ObjCContainerDecl>(D)) {
       if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(ContD))
-        return ID->getImplementation() != 0;
+        return ID->getImplementation() != nullptr;
       if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(ContD))
-        return CD->getImplementation() != 0;
+        return CD->getImplementation() != nullptr;
       if (isa<ObjCImplDecl>(ContD))
         return true;
       return false;

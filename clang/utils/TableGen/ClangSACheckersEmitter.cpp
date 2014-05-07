@@ -129,7 +129,7 @@ void EmitClangSACheckers(RecordKeeper &Records, raw_ostream &OS) {
 
   for (unsigned i = 0, e = checkers.size(); i != e; ++i) {
     Record *R = checkers[i];
-    Record *package = 0;
+    Record *package = nullptr;
     if (DefInit *
           DI = dyn_cast<DefInit>(R->getValueInit("ParentPackage")))
       package = DI->getDef();
