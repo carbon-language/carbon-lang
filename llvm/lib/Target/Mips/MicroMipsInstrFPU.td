@@ -95,7 +95,7 @@ def FNEG_MM : MMRel, ABSS_FT<"neg.d", AFGR64Opnd, AFGR64Opnd, II_NEG, fneg>,
               ABS_FM_MM<1, 0x2d>;
 
 def FMOV_D32_MM : MMRel, ABSS_FT<"mov.d", AFGR64Opnd, AFGR64Opnd, II_MOV_D>,
-                  ABS_FM_MM<1, 0x1>, Requires<[HasStdEnc, NotFP64bit]>;
+                  ABS_FM_MM<1, 0x1>, AdditionalRequires<[NotFP64bit]>;
 
 def MOVZ_I_S_MM : MMRel, CMov_I_F_FT<"movz.s", GPR32Opnd, FGR32Opnd,
                                      II_MOVZ_S>, CMov_I_F_FM_MM<0x78, 0>;

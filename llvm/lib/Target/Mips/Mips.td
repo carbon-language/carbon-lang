@@ -15,6 +15,24 @@
 
 include "llvm/Target/Target.td"
 
+// The overall idea of the PredicateControl class is to chop the Predicates list
+// into subsets that are usually overridden independently. This allows
+// subclasses to partially override the predicates of their superclasses without
+// having to re-add all the existing predicates.
+class PredicateControl {
+  // Predicates for the encoding scheme in use such as HasStdEnc
+  list<Predicate> EncodingPredicates = [];
+  // Predicates for anything else
+  list<Predicate> AdditionalPredicates = [];
+  list<Predicate> Predicates = !listconcat(EncodingPredicates,
+                                           AdditionalPredicates);
+}
+
+// Like Requires<> but for the AdditionalPredicates list
+class AdditionalRequires<list<Predicate> preds> {
+  list<Predicate> AdditionalPredicates = preds;
+}
+
 //===----------------------------------------------------------------------===//
 // Register File, Calling Conv, Instruction Descriptions
 //===----------------------------------------------------------------------===//

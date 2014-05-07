@@ -93,8 +93,8 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
 // Mips32/64 Instruction Format
 class InstSE<dag outs, dag ins, string asmstr, list<dag> pattern,
              InstrItinClass itin, Format f, string opstr = ""> :
-  MipsInst<outs, ins, asmstr, pattern, itin, f> {
-  let Predicates = [HasStdEnc];
+  MipsInst<outs, ins, asmstr, pattern, itin, f>, PredicateControl {
+  let EncodingPredicates = [HasStdEnc];
   string BaseOpcode = opstr;
   string Arch;
 }
@@ -109,9 +109,9 @@ class MipsPseudo<dag outs, dag ins, list<dag> pattern,
 
 // Mips32/64 Pseudo Instruction Format
 class PseudoSE<dag outs, dag ins, list<dag> pattern,
-               InstrItinClass itin = IIPseudo>:
-  MipsPseudo<outs, ins, pattern, itin> {
-  let Predicates = [HasStdEnc];
+               InstrItinClass itin = IIPseudo> :
+  MipsPseudo<outs, ins, pattern, itin>, PredicateControl {
+  let EncodingPredicates = [HasStdEnc];
 }
 
 // Pseudo-instructions for alternate assembly syntax (never used by codegen).

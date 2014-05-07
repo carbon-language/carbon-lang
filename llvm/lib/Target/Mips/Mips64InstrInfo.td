@@ -118,7 +118,7 @@ def DSRA32 : shift_rotate_imm<"dsra32", uimm5, GPR64Opnd, II_DSRA32>,
              SRA_FM<0x3f, 0>;
 
 // Rotate Instructions
-let Predicates = [HasStdEnc, HasMips64r2] in {
+let AdditionalPredicates = [HasMips64r2] in {
   def DROTR  : shift_rotate_imm<"drotr", uimm6, GPR64Opnd, II_DROTR, rotr,
                                 immZExt6>, SRA_FM<0x3a, 1>;
   def DROTRV : shift_rotate_reg<"drotrv", GPR64Opnd, II_DROTRV, rotr>,
@@ -252,7 +252,8 @@ def LONG_BRANCH_DADDiu : PseudoSE<(outs GPR64Opnd:$dst),
   (ins GPR64Opnd:$src, brtarget:$tgt, brtarget:$baltgt), []>;
 
 // Cavium Octeon cmMIPS instructions
-let Predicates = [HasCnMips] in {
+let EncodingPredicates = []<Predicate>, // FIXME: The lack of HasStdEnc is probably a bug
+    AdditionalPredicates = [HasCnMips] in {
 
 class Count1s<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
@@ -401,8 +402,7 @@ defm : SetgeImmPats<GPR64, SLTi64, SLTiu64>;
 
 // truncate
 def : MipsPat<(i32 (trunc GPR64:$src)),
-              (SLL (EXTRACT_SUBREG GPR64:$src, sub_32), 0)>,
-      Requires<[HasStdEnc]>;
+              (SLL (EXTRACT_SUBREG GPR64:$src, sub_32), 0)>;
 
 // 32-to-64-bit extension
 def : MipsPat<(i64 (anyext GPR32:$src)), (SLL64_32 GPR32:$src)>;
