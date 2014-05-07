@@ -28,6 +28,7 @@ bar baz;
 // CHECK:      call [[BAR:%.*]]* @_ZN3barC1Ev(
 // CHECK-NEXT: call i32 @atexit(void ()* @__dtor_baz)
 
+// CHECK-NOT: @_GLOBAL__D_a()
 // CHECK-LABEL: define internal void @__dtor_baz()
 // CHECK: call [[BAR]]* @_ZN3barD1Ev([[BAR]]* @baz)
 
@@ -416,6 +417,3 @@ namespace test9 {
   // CHECK-LABEL: define linkonce_odr void @_ZTv0_n12_N5test21CD0Ev(
   // CHECK:   call void @_ZN5test21CD0Ev(
   // CHECK:   ret void
-
-// CH_ECK: @_GLOBAL__D_a()
-// CH_ECK: call %class.bar* @_ZN3barD1Ev(%class.bar* @baz)
