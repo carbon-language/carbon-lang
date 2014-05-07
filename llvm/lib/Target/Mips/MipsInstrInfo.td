@@ -601,7 +601,7 @@ class UncondBranch<Instruction BEQInst> :
   let isTerminator = 1;
   let isBarrier = 1;
   let hasDelaySlot = 1;
-  let Predicates = [RelocPIC, HasStdEnc];
+  let Predicates = [HasStdEnc, RelocPIC];
   let Defs = [AT];
 }
 
@@ -791,26 +791,26 @@ class EffectiveAddress<string opstr, RegisterOperand RO> :
 class CountLeading0<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
          [(set RO:$rd, (ctlz RO:$rs))], II_CLZ, FrmR, opstr>,
-  Requires<[HasBitCount, HasStdEnc]>;
+  Requires<[HasStdEnc, HasBitCount]>;
 
 class CountLeading1<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
          [(set RO:$rd, (ctlz (not RO:$rs)))], II_CLO, FrmR, opstr>,
-  Requires<[HasBitCount, HasStdEnc]>;
+  Requires<[HasStdEnc, HasBitCount]>;
 
 // Sign Extend in Register.
 class SignExtInReg<string opstr, ValueType vt, RegisterOperand RO,
                    InstrItinClass itin> :
   InstSE<(outs RO:$rd), (ins RO:$rt), !strconcat(opstr, "\t$rd, $rt"),
          [(set RO:$rd, (sext_inreg RO:$rt, vt))], itin, FrmR, opstr> {
-  let Predicates = [HasSEInReg, HasStdEnc];
+  let Predicates = [HasStdEnc, HasSEInReg];
 }
 
 // Subword Swap
 class SubwordSwap<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rt), !strconcat(opstr, "\t$rd, $rt"), [],
          NoItinerary, FrmR, opstr> {
-  let Predicates = [HasSwap, HasStdEnc];
+  let Predicates = [HasStdEnc, HasSwap];
   let neverHasSideEffects = 1;
 }
 
@@ -826,7 +826,7 @@ class ExtBase<string opstr, RegisterOperand RO, Operand PosOpnd,
          !strconcat(opstr, " $rt, $rs, $pos, $size"),
          [(set RO:$rt, (Op RO:$rs, imm:$pos, imm:$size))], NoItinerary,
          FrmR, opstr> {
-  let Predicates = [HasMips32r2, HasStdEnc];
+  let Predicates = [HasStdEnc, HasMips32r2];
 }
 
 class InsBase<string opstr, RegisterOperand RO, Operand PosOpnd,
@@ -835,7 +835,7 @@ class InsBase<string opstr, RegisterOperand RO, Operand PosOpnd,
          !strconcat(opstr, " $rt, $rs, $pos, $size"),
          [(set RO:$rt, (Op RO:$rs, imm:$pos, imm:$size, RO:$src))],
          NoItinerary, FrmR, opstr> {
-  let Predicates = [HasMips32r2, HasStdEnc];
+  let Predicates = [HasStdEnc, HasMips32r2];
   let Constraints = "$src = $rt";
 }
 
@@ -1000,7 +1000,7 @@ def SRAV : MMRel, shift_rotate_reg<"srav", GPR32Opnd, II_SRAV, sra>,
            SRLV_FM<7, 0>;
 
 // Rotate Instructions
-let Predicates = [HasMips32r2, HasStdEnc] in {
+let Predicates = [HasStdEnc, HasMips32r2] in {
   def ROTR  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd, II_ROTR, rotr,
                                       immZExt5>, SRA_FM<2, 1>;
   def ROTRV : MMRel, shift_rotate_reg<"rotrv", GPR32Opnd, II_ROTRV, rotr>,
@@ -1064,7 +1064,7 @@ def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>;
 
 /// Jump and Branch Instructions
 def J       : MMRel, JumpFJ<jmptarget, "j", br, bb, "j">, FJ<2>,
-              Requires<[RelocStatic, HasStdEnc]>, IsBranch;
+              Requires<[HasStdEnc, RelocStatic]>, IsBranch;
 def JR      : MMRel, IndirectBranch<"jr", GPR32Opnd>, MTLO_FM<8>;
 def BEQ     : MMRel, CBranch<"beq", brtarget, seteq, GPR32Opnd>, BEQ_FM<4>;
 def BNE     : MMRel, CBranch<"bne", brtarget, setne, GPR32Opnd>, BEQ_FM<5>;
@@ -1079,7 +1079,7 @@ def BLTZ    : MMRel, CBranchZero<"bltz", brtarget, setlt, GPR32Opnd>,
 def B       : UncondBranch<BEQ>;
 
 def JAL  : MMRel, JumpLink<"jal", calltarget>, FJ<3>;
-let Predicates = [NotInMicroMips, HasStdEnc] in {
+let Predicates = [HasStdEnc, NotInMicroMips] in {
 def JALR : JumpLinkReg<"jalr", GPR32Opnd>, JALR_FM;
 def JALRPseudo : JumpLinkRegPseudo<GPR32Opnd, JALR, RA>;
 }

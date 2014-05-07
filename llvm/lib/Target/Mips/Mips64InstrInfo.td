@@ -118,7 +118,7 @@ def DSRA32 : shift_rotate_imm<"dsra32", uimm5, GPR64Opnd, II_DSRA32>,
              SRA_FM<0x3f, 0>;
 
 // Rotate Instructions
-let Predicates = [HasMips64r2, HasStdEnc] in {
+let Predicates = [HasStdEnc, HasMips64r2] in {
   def DROTR  : shift_rotate_imm<"drotr", uimm6, GPR64Opnd, II_DROTR, rotr,
                                 immZExt6>, SRA_FM<0x3a, 1>;
   def DROTRV : shift_rotate_reg<"drotrv", GPR64Opnd, II_DROTRV, rotr>,
