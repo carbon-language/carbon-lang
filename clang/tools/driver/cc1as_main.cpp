@@ -354,7 +354,6 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
       MAB = TheTarget->createMCAsmBackend(*MRI, Opts.Triple, Opts.CPU);
     }
     Str.reset(TheTarget->createAsmStreamer(Ctx, *Out, /*asmverbose*/true,
-                                           /*useCFI*/ true,
                                            /*useDwarfDirectory*/ true,
                                            IP, CE, MAB,
                                            Opts.ShowInst));
