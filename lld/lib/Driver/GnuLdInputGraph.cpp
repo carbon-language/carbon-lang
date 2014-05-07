@@ -21,17 +21,14 @@ error_code ELFFileNode::parse(const LinkingContext &ctx,
   ErrorOr<StringRef> filePath = getPath(ctx);
   if (error_code ec = filePath.getError())
     return ec;
-
   if (error_code ec = getBuffer(*filePath))
     return ec;
-
   if (ctx.logInputFiles())
     diagnostics << *filePath << "\n";
 
   if (_attributes._isWholeArchive) {
     std::vector<std::unique_ptr<File>> parsedFiles;
-    error_code ec = ctx.registry().parseFile(_buffer, parsedFiles);
-    if (ec)
+    if (error_code ec = ctx.registry().parseFile(_buffer, parsedFiles))
       return ec;
     assert(parsedFiles.size() == 1);
     std::unique_ptr<File> f(parsedFiles[0].release());
@@ -55,7 +52,6 @@ error_code GNULdScript::parse(const LinkingContext &ctx,
   ErrorOr<StringRef> filePath = getPath(ctx);
   if (error_code ec = filePath.getError())
     return ec;
-
   if (error_code ec = getBuffer(*filePath))
     return ec;
 
