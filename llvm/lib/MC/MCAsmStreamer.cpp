@@ -1468,10 +1468,9 @@ void MCAsmStreamer::FinishImpl() {
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
                                     formatted_raw_ostream &OS,
-                                    bool isVerboseAsm, bool useCFI,
-                                    bool useDwarfDirectory, MCInstPrinter *IP,
-                                    MCCodeEmitter *CE, MCAsmBackend *MAB,
-                                    bool ShowInst) {
-  return new MCAsmStreamer(Context, OS, isVerboseAsm, useCFI, useDwarfDirectory,
+                                    bool isVerboseAsm, bool useDwarfDirectory,
+                                    MCInstPrinter *IP, MCCodeEmitter *CE,
+                                    MCAsmBackend *MAB, bool ShowInst) {
+  return new MCAsmStreamer(Context, OS, isVerboseAsm, true, useDwarfDirectory,
                            IP, CE, MAB, ShowInst);
 }

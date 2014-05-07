@@ -758,10 +758,9 @@ MCStreamer *createNullStreamer(MCContext &Ctx);
 /// \param ShowInst - Whether to show the MCInst representation inline with
 /// the assembly.
 MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                              bool isVerboseAsm, bool useCFI,
-                              bool useDwarfDirectory, MCInstPrinter *InstPrint,
-                              MCCodeEmitter *CE, MCAsmBackend *TAB,
-                              bool ShowInst);
+                              bool isVerboseAsm, bool useDwarfDirectory,
+                              MCInstPrinter *InstPrint, MCCodeEmitter *CE,
+                              MCAsmBackend *TAB, bool ShowInst);
 
 /// createMachOStreamer - Create a machine code streamer which will generate
 /// Mach-O format object files.

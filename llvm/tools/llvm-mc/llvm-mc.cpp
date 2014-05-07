@@ -455,9 +455,8 @@ int main(int argc, char **argv) {
       MAB = TheTarget->createMCAsmBackend(*MRI, TripleName, MCPU);
     }
     Str.reset(TheTarget->createAsmStreamer(Ctx, FOS, /*asmverbose*/ true,
-                                           /*UseCFI*/ true,
-                                           /*useDwarfDirectory*/
-                                           true, IP, CE, MAB, ShowInst));
+                                           /*useDwarfDirectory*/ true, IP, CE,
+                                           MAB, ShowInst));
 
   } else if (FileType == OFT_Null) {
     Str.reset(createNullStreamer(Ctx));

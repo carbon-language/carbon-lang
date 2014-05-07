@@ -52,8 +52,7 @@ namespace llvm {
   class formatted_raw_ostream;
 
   MCStreamer *createAsmStreamer(MCContext &Ctx, formatted_raw_ostream &OS,
-                                bool isVerboseAsm, bool useCFI,
-                                bool useDwarfDirectory,
+                                bool isVerboseAsm, bool useDwarfDirectory,
                                 MCInstPrinter *InstPrint, MCCodeEmitter *CE,
                                 MCAsmBackend *TAB, bool ShowInst);
 
@@ -135,7 +134,6 @@ namespace llvm {
     typedef MCStreamer *(*AsmStreamerCtorTy)(MCContext &Ctx,
                                              formatted_raw_ostream &OS,
                                              bool isVerboseAsm,
-                                             bool useCFI,
                                              bool useDwarfDirectory,
                                              MCInstPrinter *InstPrint,
                                              MCCodeEmitter *CE,
@@ -437,19 +435,16 @@ namespace llvm {
     MCStreamer *createAsmStreamer(MCContext &Ctx,
                                   formatted_raw_ostream &OS,
                                   bool isVerboseAsm,
-                                  bool useCFI,
                                   bool useDwarfDirectory,
                                   MCInstPrinter *InstPrint,
                                   MCCodeEmitter *CE,
                                   MCAsmBackend *TAB,
                                   bool ShowInst) const {
       if (AsmStreamerCtorFn)
-        return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useCFI,
-                                 useDwarfDirectory, InstPrint, CE, TAB,
-                                 ShowInst);
-      return llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useCFI,
-                                     useDwarfDirectory, InstPrint, CE, TAB,
-                                     ShowInst);
+        return AsmStreamerCtorFn(Ctx, OS, isVerboseAsm, useDwarfDirectory,
+                                 InstPrint, CE, TAB, ShowInst);
+      return llvm::createAsmStreamer(Ctx, OS, isVerboseAsm, useDwarfDirectory,
+                                     InstPrint, CE, TAB, ShowInst);
     }
 
     /// createMCRelocationInfo - Create a target specific MCRelocationInfo.
