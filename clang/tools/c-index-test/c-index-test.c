@@ -1788,7 +1788,8 @@ static int checkForErrors(CXTranslationUnit TU) {
   return 0;
 }
 
-void print_completion_string(CXCompletionString completion_string, FILE *file) {
+static void print_completion_string(CXCompletionString completion_string,
+                                    FILE *file) {
   int I, N;
 
   N = clang_getNumCompletionChunks(completion_string);
@@ -1822,9 +1823,8 @@ void print_completion_string(CXCompletionString completion_string, FILE *file) {
 
 }
 
-void print_completion_result(CXCompletionResult *completion_result,
-                             CXClientData client_data) {
-  FILE *file = (FILE *)client_data;
+static void print_completion_result(CXCompletionResult *completion_result,
+                             FILE *file) {
   CXString ks = clang_getCursorKindSpelling(completion_result->CursorKind);
   unsigned annotationCount;
   enum CXCursorKind ParentKind;
@@ -2231,7 +2231,8 @@ static int inspect_cursor_at(int argc, const char **argv) {
         }
         clang_disposeString(Spelling);
         if (clang_Cursor_getObjCSelectorIndex(Cursor) != -1)
-          printf(" Selector index=%d",clang_Cursor_getObjCSelectorIndex(Cursor));
+          printf(" Selector index=%d",
+                 clang_Cursor_getObjCSelectorIndex(Cursor));
         if (clang_Cursor_isDynamicCall(Cursor))
           printf(" Dynamic-call");
         if (Cursor.kind == CXCursor_ObjCMessageExpr) {
@@ -2829,8 +2830,8 @@ static CXIdxClientFile index_importedASTFile(CXClientData client_data,
   return (CXIdxClientFile)info->file;
 }
 
-static CXIdxClientContainer index_startedTranslationUnit(CXClientData client_data,
-                                                   void *reserved) {
+static CXIdxClientContainer
+index_startedTranslationUnit(CXClientData client_data, void *reserved) {
   IndexData *index_data;
   index_data = (IndexData *)client_data;
   printCheck(index_data);
@@ -2931,13 +2932,15 @@ static void index_indexDeclaration(CXClientData client_data,
   }
 
   if (info->declAsContainer)
-    clang_index_setClientContainer(info->declAsContainer,
-                              makeClientContainer(info->entityInfo, info->loc));
+    clang_index_setClientContainer(
+        info->declAsContainer,
+        makeClientContainer(info->entityInfo, info->loc));
 }
 
 static void index_indexEntityReference(CXClientData client_data,
                                        const CXIdxEntityRefInfo *info) {
-  printEntityInfo("[indexEntityReference]", client_data, info->referencedEntity);
+  printEntityInfo("[indexEntityReference]", client_data,
+                  info->referencedEntity);
   printf(" | cursor: ");
   PrintCursor(info->cursor, NULL);
   printf(" | loc: ");
