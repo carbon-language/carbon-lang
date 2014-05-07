@@ -1453,25 +1453,7 @@ void MachineInstr::dump() const {
 static void printDebugLoc(DebugLoc DL, const MachineFunction *MF,
                          raw_ostream &CommentOS) {
   const LLVMContext &Ctx = MF->getFunction()->getContext();
-  if (!DL.isUnknown()) {          // Print source line info.
-    DIScope Scope(DL.getScope(Ctx));
-    assert((!Scope || Scope.isScope()) &&
-      "Scope of a DebugLoc should be null or a DIScope.");
-    // Omit the directory, because it's likely to be long and uninteresting.
-    if (Scope)
-      CommentOS << Scope.getFilename();
-    else
-      CommentOS << "<unknown>";
-    CommentOS << ':' << DL.getLine();
-    if (DL.getCol() != 0)
-      CommentOS << ':' << DL.getCol();
-    DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(DL.getInlinedAt(Ctx));
-    if (!InlinedAtDL.isUnknown()) {
-      CommentOS << " @[ ";
-      printDebugLoc(InlinedAtDL, MF, CommentOS);
-      CommentOS << " ]";
-    }
-  }
+  DL.print(Ctx, CommentOS);
 }
 
 void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
@@ -1684,7 +1666,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM,
     OS << " line no:" <<  DV.getLineNumber();
     if (MDNode *InlinedAt = DV.getInlinedAt()) {
       DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(InlinedAt);
-      if (!InlinedAtDL.isUnknown()) {
+      if (!InlinedAtDL.isUnknown() && MF) {
         OS << " inlined @[ ";
         printDebugLoc(InlinedAtDL, MF, OS);
         OS << " ]";

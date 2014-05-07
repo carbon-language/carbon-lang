@@ -21,6 +21,7 @@ namespace llvm {
   template <typename T> struct DenseMapInfo;
   class MDNode;
   class LLVMContext;
+  class raw_ostream;
 
   /// DebugLoc - Debug location id.  This is carried by Instruction, SDNode,
   /// and MachineInstr to compactly encode file/line/scope information for an
@@ -106,6 +107,8 @@ namespace llvm {
     bool operator!=(const DebugLoc &DL) const { return !(*this == DL); }
 
     void dump(const LLVMContext &Ctx) const;
+    /// \brief prints source location /path/to/file.exe:line:col @[inlined at]
+    void print(const LLVMContext &Ctx, raw_ostream &OS) const;
   };
 
   template <>

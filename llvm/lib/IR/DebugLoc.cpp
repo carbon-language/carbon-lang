@@ -167,6 +167,28 @@ void DebugLoc::dump(const LLVMContext &Ctx) const {
 #endif
 }
 
+void DebugLoc::print(const LLVMContext &Ctx, raw_ostream &OS) const {
+  if (!isUnknown()) {
+    // Print source line info.
+    DIScope Scope(getScope(Ctx));
+    assert((!Scope || Scope.isScope()) &&
+           "Scope of a DebugLoc should be null or a DIScope.");
+    if (Scope)
+      OS << Scope.getFilename();
+    else
+      OS << "<unknown>";
+    OS << ':' << getLine();
+    if (getCol() != 0)
+      OS << ':' << getCol();
+    DebugLoc InlinedAtDL = DebugLoc::getFromDILocation(getInlinedAt(Ctx));
+    if (!InlinedAtDL.isUnknown()) {
+      OS << " @[ ";
+      InlinedAtDL.print(Ctx, OS);
+      OS << " ]";
+    }
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // DenseMap specialization
 //===----------------------------------------------------------------------===//

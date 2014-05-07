@@ -83,7 +83,6 @@
 #include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
@@ -480,22 +479,19 @@ static void setDebugLocFromInst(IRBuilder<> &B, const Value *Ptr) {
 #ifndef NDEBUG
 /// \return string containing a file name and a line # for the given
 /// instruction.
-static format_object3<const char *, const char *, unsigned>
-getDebugLocString(const Instruction *I) {
-  if (!I)
-    return format<const char *, const char *, unsigned>("", "", "", 0U);
-  MDNode *N = I->getMetadata("dbg");
-  if (!N) {
-    const StringRef ModuleName =
-        I->getParent()->getParent()->getParent()->getModuleIdentifier();
-    return format<const char *, const char *, unsigned>("%s", ModuleName.data(),
-                                                        "", 0U);
+static std::string getDebugLocString(const Instruction *I) {
+  std::string Result;
+  if (I) {
+    raw_string_ostream OS(Result);
+    const DebugLoc &InstrDebugLoc = I->getDebugLoc();
+    if (!InstrDebugLoc.isUnknown())
+      InstrDebugLoc.print(I->getContext(), OS);
+    else
+      // Just print the module name.
+      OS << I->getParent()->getParent()->getParent()->getModuleIdentifier();
+    OS.flush();
   }
-  const DILocation Loc(N);
-  const unsigned LineNo = Loc.getLineNumber();
-  const char *DirName = Loc.getDirectory().data();
-  const char *FileName = Loc.getFilename().data();
-  return format("%s/%s:%u", DirName, FileName, LineNo);
+  return Result;
 }
 #endif
 
@@ -1109,10 +1105,15 @@ struct LoopVectorize : public FunctionPass {
 
   bool processLoop(Loop *L) {
     assert(L->empty() && "Only process inner loops.");
+
+#ifndef NDEBUG
+    const std::string DebugLocStr =
+        getDebugLocString(L->getHeader()->getFirstNonPHIOrDbgOrLifetime());
+#endif /* NDEBUG */
+
     DEBUG(dbgs() << "\nLV: Checking a loop in \""
                  << L->getHeader()->getParent()->getName() << "\" from "
-                 << getDebugLocString(L->getHeader()->getFirstNonPHIOrDbg())
-                 << "\n");
+                 << DebugLocStr << "\n");
 
     LoopVectorizeHints Hints(L, DisableUnrolling);
 
@@ -1203,10 +1204,8 @@ struct LoopVectorize : public FunctionPass {
     const unsigned UF =
         CM.selectUnrollFactor(OptForSize, Hints.getUnroll(), VF.Width, VF.Cost);
 
-    DEBUG(dbgs() << "LV: Found a vectorizable loop ("
-                 << VF.Width << ") in "
-                 << getDebugLocString(L->getHeader()->getFirstNonPHIOrDbg())
-                 << '\n');
+    DEBUG(dbgs() << "LV: Found a vectorizable loop (" << VF.Width << ") in "
+                 << DebugLocStr << '\n');
     DEBUG(dbgs() << "LV: Unroll Factor is " << UF << '\n');
 
     if (VF.Width == 1) {
