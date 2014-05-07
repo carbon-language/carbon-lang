@@ -1,4 +1,5 @@
 ; RUN: not llc < %s -mtriple=aarch64-linux-gnueabi 2>&1 | FileCheck %s
+; arm64 has separate copy of this test
 
 define i32 @get_stack() nounwind {
 entry:
