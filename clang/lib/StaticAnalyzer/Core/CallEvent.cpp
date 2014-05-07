@@ -139,6 +139,11 @@ ProgramStateRef CallEvent::invalidateRegions(unsigned BlockCount,
                                              ProgramStateRef Orig) const {
   ProgramStateRef Result = (Orig ? Orig : getState());
 
+  // Don't invalidate anything if the callee is marked pure/const.
+  if (const Decl *callee = getDecl())
+    if (callee->hasAttr<PureAttr>() || callee->hasAttr<ConstAttr>())
+      return Result;
+
   SmallVector<SVal, 8> ValuesToInvalidate;
   RegionAndSymbolInvalidationTraits ETraits;
 

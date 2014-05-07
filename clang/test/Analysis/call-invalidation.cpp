@@ -89,3 +89,32 @@ void testConstReferenceStruct() {
   clang_analyzer_eval(x == 42); // expected-warning{{UNKNOWN}}
 }
 
+
+void usePointerPure(int * const *) __attribute__((pure));
+void usePointerConst(int * const *) __attribute__((const));
+
+void testPureConst() {
+  extern int global;
+  int x;
+  int *p;
+
+  p = &x;
+  x = 42;
+  global = -5;
+  clang_analyzer_eval(x == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(global == -5); // expected-warning{{TRUE}}
+
+  usePointerPure(&p);
+  clang_analyzer_eval(x == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(global == -5); // expected-warning{{TRUE}}
+
+  usePointerConst(&p);
+  clang_analyzer_eval(x == 42); // expected-warning{{TRUE}}
+  clang_analyzer_eval(global == -5); // expected-warning{{TRUE}}
+
+  usePointer(&p);
+  clang_analyzer_eval(x == 42); // expected-warning{{UNKNOWN}}
+  clang_analyzer_eval(global == -5); // expected-warning{{UNKNOWN}}
+}
+
+
