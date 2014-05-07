@@ -49,10 +49,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "arm64-simd-scalar"
 
-static cl::opt<bool>
-AdvSIMDScalar("arm64-simd-scalar",
-              cl::desc("enable use of AdvSIMD scalar integer instructions"),
-              cl::init(false), cl::Hidden);
 // Allow forcing all i64 operations with equivalent SIMD instructions to use
 // them. For stress-testing the transformation function.
 static cl::opt<bool>
@@ -368,10 +364,6 @@ bool ARM64AdvSIMDScalar::processMachineBasicBlock(MachineBasicBlock *MBB) {
 
 // runOnMachineFunction - Pass entry point from PassManager.
 bool ARM64AdvSIMDScalar::runOnMachineFunction(MachineFunction &mf) {
-  // Early exit if pass disabled.
-  if (!AdvSIMDScalar)
-    return false;
-
   bool Changed = false;
   DEBUG(dbgs() << "***** ARM64AdvSIMDScalar *****\n");
 

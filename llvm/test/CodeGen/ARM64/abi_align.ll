@@ -490,7 +490,9 @@ entry:
 ; FAST: sub sp, sp, #48
 ; FAST: mov x[[ADDR:[0-9]+]], sp
 ; FAST: str {{w[0-9]+}}, [x[[ADDR]], #16]
-; FAST: stp {{x[0-9]+}}, {{x[0-9]+}}, [x[[ADDR]]]
+; Load/Store opt is disabled with -O0, so the i128 is split.
+; FAST: str {{x[0-9]+}}, [x[[ADDR]], #8]
+; FAST: str {{x[0-9]+}}, [x[[ADDR]]]
   %0 = load i128* bitcast (%struct.s41* @g41 to i128*), align 16
   %call = tail call i32 @callee_i128_split(i32 1, i32 2, i32 3, i32 4, i32 5,
                                            i32 6, i32 7, i128 %0, i32 8) #5

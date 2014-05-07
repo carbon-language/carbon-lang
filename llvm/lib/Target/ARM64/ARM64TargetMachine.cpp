@@ -20,24 +20,30 @@
 #include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
-static cl::opt<bool> EnableCCMP("arm64-ccmp",
-                                cl::desc("Enable the CCMP formation pass"),
-                                cl::init(true));
-
-static cl::opt<bool> EnableStPairSuppress("arm64-stp-suppress", cl::Hidden,
-                                          cl::desc("Suppress STP for ARM64"),
-                                          cl::init(true));
+static cl::opt<bool>
+EnableCCMP("arm64-ccmp", cl::desc("Enable the CCMP formation pass"),
+           cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
-EnablePromoteConstant("arm64-promote-const", cl::Hidden,
-                      cl::desc("Enable the promote constant pass"),
-                      cl::init(true));
+EnableEarlyIfConvert("arm64-early-ifcvt", cl::desc("Enable the early if "
+                     "converter pass"), cl::init(true), cl::Hidden);
 
 static cl::opt<bool>
-EnableCollectLOH("arm64-collect-loh", cl::Hidden,
-                 cl::desc("Enable the pass that emits the linker"
-                          " optimization hints (LOH)"),
-                 cl::init(true));
+EnableStPairSuppress("arm64-stp-suppress", cl::desc("Suppress STP for ARM64"),
+                     cl::init(true), cl::Hidden);
+
+static cl::opt<bool>
+EnableAdvSIMDScalar("arm64-simd-scalar", cl::desc("Enable use of AdvSIMD scalar"
+                    " integer instructions"), cl::init(false), cl::Hidden);
+
+static cl::opt<bool>
+EnablePromoteConstant("arm64-promote-const", cl::desc("Enable the promote "
+                      "constant pass"), cl::init(true), cl::Hidden);
+
+static cl::opt<bool>
+EnableCollectLOH("arm64-collect-loh", cl::desc("Enable the pass that emits the"
+                 " linker optimization hints (LOH)"), cl::init(true),
+                 cl::Hidden);
 
 static cl::opt<bool>
 EnableDeadRegisterElimination("arm64-dead-def-elimination", cl::Hidden,
@@ -46,6 +52,10 @@ EnableDeadRegisterElimination("arm64-dead-def-elimination", cl::Hidden,
                                        " them with stores to the zero"
                                        " register"),
                               cl::init(true));
+
+static cl::opt<bool>
+EnableLoadStoreOpt("arm64-load-store-opt", cl::desc("Enable the load/store pair"
+                   " optimization pass"), cl::init(true), cl::Hidden);
 
 extern "C" void LLVMInitializeARM64Target() {
   // Register the target.
@@ -159,7 +169,8 @@ bool ARM64PassConfig::addInstSelector() {
 bool ARM64PassConfig::addILPOpts() {
   if (EnableCCMP)
     addPass(createARM64ConditionalCompares());
-  addPass(&EarlyIfConverterID);
+  if (EnableEarlyIfConvert)
+    addPass(&EarlyIfConverterID);
   if (EnableStPairSuppress)
     addPass(createARM64StorePairSuppressPass());
   return true;
@@ -167,13 +178,14 @@ bool ARM64PassConfig::addILPOpts() {
 
 bool ARM64PassConfig::addPreRegAlloc() {
   // Use AdvSIMD scalar instructions whenever profitable.
-  addPass(createARM64AdvSIMDScalar());
+  if (TM->getOptLevel() != CodeGenOpt::None && EnableAdvSIMDScalar)
+    addPass(createARM64AdvSIMDScalar());
   return true;
 }
 
 bool ARM64PassConfig::addPostRegAlloc() {
   // Change dead register definitions to refer to the zero register.
-  if (EnableDeadRegisterElimination)
+  if (TM->getOptLevel() != CodeGenOpt::None && EnableDeadRegisterElimination)
     addPass(createARM64DeadRegisterDefinitions());
   return true;
 }
@@ -182,7 +194,8 @@ bool ARM64PassConfig::addPreSched2() {
   // Expand some pseudo instructions to allow proper scheduling.
   addPass(createARM64ExpandPseudoPass());
   // Use load/store pair instructions when possible.
-  addPass(createARM64LoadStoreOptimizationPass());
+  if (TM->getOptLevel() != CodeGenOpt::None && EnableLoadStoreOpt)
+    addPass(createARM64LoadStoreOptimizationPass());
   return true;
 }
 

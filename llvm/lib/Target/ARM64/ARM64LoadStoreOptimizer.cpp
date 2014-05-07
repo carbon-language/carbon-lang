@@ -40,8 +40,6 @@ STATISTIC(NumPreFolded, "Number of pre-index updates folded");
 STATISTIC(NumUnscaledPairCreated,
           "Number of load/store from unscaled generated");
 
-static cl::opt<bool> DoLoadStoreOpt("arm64-load-store-opt", cl::init(true),
-                                    cl::Hidden);
 static cl::opt<unsigned> ScanLimit("arm64-load-store-scan-limit", cl::init(20),
                                    cl::Hidden);
 
@@ -923,10 +921,6 @@ bool ARM64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
 }
 
 bool ARM64LoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
-  // Early exit if pass disabled.
-  if (!DoLoadStoreOpt)
-    return false;
-
   const TargetMachine &TM = Fn.getTarget();
   TII = static_cast<const ARM64InstrInfo *>(TM.getInstrInfo());
   TRI = TM.getRegisterInfo();

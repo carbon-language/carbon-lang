@@ -60,7 +60,7 @@ entry:
 ; CHECK: mov x3, x0
 ; CHECK: ubfx x3, x3, #0, #32
 ; CHECK: str x3, [sp]
-; CHECK: ldr x0, [sp], #16
+; CHECK: ldr x0, [sp]
 ; CHECK: ret
   %a.addr = alloca i8, align 1
   %b.addr = alloca i16, align 2
@@ -117,7 +117,7 @@ entry:
 ; CHECK: mov x3, x0
 ; CHECK: sxtw x3, w3
 ; CHECK: str x3, [sp]
-; CHECK: ldr x0, [sp], #16
+; CHECK: ldr x0, [sp]
 ; CHECK: ret
   %a.addr = alloca i8, align 1
   %b.addr = alloca i16, align 2
