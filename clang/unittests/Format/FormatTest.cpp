@@ -5093,6 +5093,7 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
   verifyFormat("Class::Class : member{1, 2, 3} {}");
   verifyFormat("new vector<int>{1, 2, 3};");
   verifyFormat("new int[3]{1, 2, 3};");
+  verifyFormat("new int{1};");
   verifyFormat("return {arg1, arg2};");
   verifyFormat("return {arg1, SomeType{parameter}};");
   verifyFormat("int count = set<int>{f(), g(), h()}.size();");
