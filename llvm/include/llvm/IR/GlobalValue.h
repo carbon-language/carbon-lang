@@ -93,7 +93,11 @@ public:
   bool hasProtectedVisibility() const {
     return Visibility == ProtectedVisibility;
   }
-  void setVisibility(VisibilityTypes V) { Visibility = V; }
+  void setVisibility(VisibilityTypes V) {
+    assert((!hasLocalLinkage() || V == DefaultVisibility) &&
+           "local linkage requires default visibility");
+    Visibility = V;
+  }
 
   DLLStorageClassTypes getDLLStorageClass() const {
     return DLLStorageClassTypes(DllStorageClass);
@@ -195,7 +199,11 @@ public:
   bool hasExternalWeakLinkage() const { return isExternalWeakLinkage(Linkage); }
   bool hasCommonLinkage() const { return isCommonLinkage(Linkage); }
 
-  void setLinkage(LinkageTypes LT) { Linkage = LT; }
+  void setLinkage(LinkageTypes LT) {
+    assert((!isLocalLinkage(LT) || hasDefaultVisibility()) &&
+           "local linkage requires default visibility");
+    Linkage = LT;
+  }
   LinkageTypes getLinkage() const { return Linkage; }
 
   bool isDiscardableIfUnused() const {

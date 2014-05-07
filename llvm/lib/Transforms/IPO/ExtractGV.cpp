@@ -27,11 +27,10 @@ using namespace llvm;
 /// the split module remain valid.
 static void makeVisible(GlobalValue &GV, bool Delete) {
   bool Local = GV.hasLocalLinkage();
-  if (Local)
-    GV.setVisibility(GlobalValue::HiddenVisibility);
-
   if (Local || Delete) {
     GV.setLinkage(GlobalValue::ExternalLinkage);
+    if (Local)
+      GV.setVisibility(GlobalValue::HiddenVisibility);
     return;
   }
 
