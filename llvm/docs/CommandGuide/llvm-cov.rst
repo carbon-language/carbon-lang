@@ -88,6 +88,11 @@ OPTIONS
  can be combined with the --preserve-paths option to use complete paths for
  both the main file and the included file.
 
+.. option:: -n, --no-output
+
+ Do not output any ``.gcov`` files. Summary information is still
+ displayed.
+
 .. option:: -o=<DIR|FILE>, --object-directory=<DIR>, --object-file=<FILE>
 
  Find objects in DIR or based on FILE's path. If you specify a particular
