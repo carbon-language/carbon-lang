@@ -13,11 +13,6 @@
 ; CHECK: ArrayDecl[UnknownSize][%m] with elements of sizeof(double) bytes.
 ; CHECK: ArrayRef[{0,+,1}<nuw><nsw><%for.i>][{0,+,1}<nuw><nsw><%for.j>]
 
-; AddRec: {(-8 + (8 * %m) + %A),+,(8 * %m)}<%for.i>
-; CHECK: Base offset: %A
-; CHECK: ArrayDecl[UnknownSize] with elements of sizeof(double) bytes.
-; CHECK: ArrayRef[{(-1 + %m),+,%m}<%for.i>]
-
 define void @foo(i64 %n, i64 %m, double* %A) {
 entry:
   br label %for.i

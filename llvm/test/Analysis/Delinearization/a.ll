@@ -12,17 +12,6 @@
 ; CHECK: ArrayDecl[UnknownSize][%m][%o] with elements of sizeof(i32) bytes.
 ; CHECK: ArrayRef[{3,+,2}<%for.i>][{-4,+,3}<%for.j>][{7,+,5}<%for.k>]
 
-; AddRec: {{(8 + ((4 + (12 * %m)) * %o) + %A),+,(8 * %m * %o)}<%for.i>,+,(12 * %o)}<%for.j>
-; CHECK: Base offset: %A
-; CHECK: ArrayDecl[UnknownSize][%o] with elements of sizeof(i32) bytes.
-; CHECK: ArrayRef[{(1 + (3 * %m)),+,(2 * %m)}<%for.i>][{2,+,(3 * %o)}<%for.j>]
-
-; AddRec: {(8 + ((-8 + (24 * %m)) * %o) + %A),+,(8 * %m * %o)}<%for.i>
-; CHECK: Base offset: %A
-; CHECK: ArrayDecl[UnknownSize] with elements of 2 bytes.
-; CHECK: ArrayRef[{((1 + ((-1 + (3 * %m)) * %o)) * sizeof(i32)),+,(%m * %o * sizeof(i32))}<%for.i>]
-
-; Function Attrs: nounwind uwtable
 define void @foo(i64 %n, i64 %m, i64 %o, i32* nocapture %A) #0 {
 entry:
   %cmp32 = icmp sgt i64 %n, 0

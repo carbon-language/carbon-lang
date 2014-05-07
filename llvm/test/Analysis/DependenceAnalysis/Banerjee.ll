@@ -24,7 +24,7 @@ entry:
 
 ; DELIN: 'Dependence Analysis' for function 'banerjee0':
 ; DELIN: da analyze - none!
-; DELIN: da analyze - consistent flow [0 1]!
+; DELIN: da analyze - flow [<= <>]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
 ; DELIN: da analyze - confused!
@@ -83,10 +83,10 @@ entry:
 ; CHECK: da analyze - output [* *]!
 
 ; DELIN: 'Dependence Analysis' for function 'banerjee1':
-; DELIN: da analyze - none
-; DELIN: da analyze - consistent flow [0 1]!
+; DELIN: da analyze - output [* *]!
+; DELIN: da analyze - flow [* <>]!
 ; DELIN: da analyze - confused!
-; DELIN: da analyze - none
+; DELIN: da analyze - input [* *]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - output [* *]!
 
@@ -218,7 +218,7 @@ entry:
 
 ; DELIN: 'Dependence Analysis' for function 'banerjee3':
 ; DELIN: da analyze - none!
-; DELIN: da analyze - consistent flow [-9 -9]!
+; DELIN: da analyze - flow [> >]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
 ; DELIN: da analyze - confused!
@@ -336,7 +336,7 @@ entry:
 
 ; DELIN: 'Dependence Analysis' for function 'banerjee5':
 ; DELIN: da analyze - none!
-; DELIN: da analyze - consistent flow [9 9]!
+; DELIN: da analyze - flow [< <]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
 ; DELIN: da analyze - confused!
@@ -395,7 +395,7 @@ entry:
 
 ; DELIN: 'Dependence Analysis' for function 'banerjee6':
 ; DELIN: da analyze - none!
-; DELIN: da analyze - consistent flow [0 -9]!
+; DELIN: da analyze - flow [=> <>]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
 ; DELIN: da analyze - confused!
@@ -454,7 +454,7 @@ entry:
 
 ; DELIN: 'Dependence Analysis' for function 'banerjee7':
 ; DELIN: da analyze - none!
-; DELIN: da analyze - consistent flow [-1 0]!
+; DELIN: da analyze - flow [> <=]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
 ; DELIN: da analyze - confused!
@@ -513,7 +513,7 @@ entry:
 
 ; DELIN: 'Dependence Analysis' for function 'banerjee8':
 ; DELIN: da analyze - none!
-; DELIN: da analyze - consistent flow [-1 -1]!
+; DELIN: da analyze - flow [> <>]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
 ; DELIN: da analyze - confused!
@@ -571,7 +571,7 @@ entry:
 ; CHECK: da analyze - none!
 
 ; DELIN: 'Dependence Analysis' for function 'banerjee9':
-; DELIN: da analyze - none!
+; DELIN: da analyze - output [* *]!
 ; DELIN: da analyze - flow [<= =|<]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
@@ -750,7 +750,7 @@ entry:
 
 ; DELIN: 'Dependence Analysis' for function 'banerjee12':
 ; DELIN: da analyze - none!
-; DELIN: da analyze - consistent flow [0 -11]!
+; DELIN: da analyze - flow [= <>]!
 ; DELIN: da analyze - confused!
 ; DELIN: da analyze - none!
 ; DELIN: da analyze - confused!

@@ -13,16 +13,6 @@
 ; CHECK: ArrayDecl[UnknownSize][%m][%o] with elements of sizeof(double) bytes.
 ; CHECK: ArrayRef[{3,+,1}<nw><%for.i>][{-4,+,1}<nw><%for.j>][{7,+,1}<nw><%for.k>]
 
-; AddRec: {{(48 + ((-24 + (24 * %m)) * %o) + %A),+,(8 * %m * %o)}<%for.i>,+,(8 * %o)}<%for.j>
-; CHECK: Base offset: %A
-; CHECK: ArrayDecl[UnknownSize][%o] with elements of sizeof(double) bytes.
-; CHECK: ArrayRef[{(-3 + (3 * %m)),+,%m}<%for.i>][{6,+,%o}<%for.j>]
-
-; AddRec: {(48 + ((-32 + (32 * %m)) * %o) + %A),+,(8 * %m * %o)}<%for.i>
-; CHECK: Base offset: %A
-; CHECK: ArrayDecl[UnknownSize] with elements of sizeof(double) bytes.
-; CHECK: ArrayRef[{(6 + ((-4 + (4 * %m)) * %o)),+,(%m * %o)}<%for.i>]
-
 define void @foo(i64 %n, i64 %m, i64 %o, double* %A) {
 entry:
   br label %for.i

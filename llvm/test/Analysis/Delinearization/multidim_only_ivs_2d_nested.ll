@@ -1,4 +1,6 @@
 ; RUN: opt < %s -analyze -delinearize | FileCheck %s
+; XFAIL: *
+; We do not recognize anymore variable size arrays.
 
 ; extern void bar(long n, long m, double A[n][m]);
 ;

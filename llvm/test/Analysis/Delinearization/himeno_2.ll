@@ -31,16 +31,6 @@
 ; CHECK: ArrayDecl[UnknownSize][(sext i32 %a.cols to i64)][(sext i32 %a.deps to i64)] with elements of sizeof(float) bytes.
 ; CHECK: ArrayRef[{1,+,1}<nuw><nsw><%for.i>][{1,+,1}<nuw><nsw><%for.j>][{1,+,1}<nuw><nsw><%for.k>]
 
-; AddRec: {{(-4 + (4 * (sext i32 (-1 + %p.deps) to i64)) + (4 * (sext i32 %a.deps to i64) * (1 + (sext i32 %a.cols to i64))) + %a.base),+,(4 * (sext i32 %a.deps to i64) * (sext i32 %a.cols to i64))}<%for.i>,+,(4 * (sext i32 %a.deps to i64))}<%for.j>
-; CHECK: Base offset: %a.base
-; CHECK: ArrayDecl[UnknownSize][(sext i32 %a.deps to i64)] with elements of sizeof(float) bytes.
-; CHECK: ArrayRef[{(1 + (sext i32 %a.cols to i64)),+,(sext i32 %a.cols to i64)}<%for.i>][{(-1 + (sext i32 (-1 + %p.deps) to i64)),+,(sext i32 %a.deps to i64)}<%for.j>]
-
-; AddRec: {(-4 + (4 * (sext i32 (-1 + %p.deps) to i64)) + ((sext i32 %a.deps to i64) * (-4 + (4 * (sext i32 (-1 + %p.cols) to i64)) + (4 * (sext i32 %a.cols to i64)))) + %a.base),+,(4 * (sext i32 %a.deps to i64) * (sext i32 %a.cols to i64))}<%for.i>
-; CHECK: Base offset: %a.base
-; CHECK: ArrayDecl[UnknownSize] with elements of sizeof(float) bytes.
-; CHECK: ArrayRef[{(-1 + (sext i32 (-1 + %p.deps) to i64) + ((sext i32 %a.deps to i64) * (-1 + (sext i32 (-1 + %p.cols) to i64) + (sext i32 %a.cols to i64)))),+,((sext i32 %a.deps to i64) * (sext i32 %a.cols to i64))}<%for.i>]
-
 %struct.Mat = type { float*, i32, i32, i32, i32 }
 
 define void @jacobi(i32 %nn, %struct.Mat* nocapture %a, %struct.Mat* nocapture %p) nounwind uwtable {

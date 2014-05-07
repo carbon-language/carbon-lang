@@ -13,16 +13,6 @@
 ; CHECK: ArrayDecl[UnknownSize][%m][(%o + %p)] with elements of sizeof(double) bytes.
 ; CHECK: ArrayRef[{3,+,1}<nw><%for.cond4.preheader.lr.ph.us>][{-4,+,1}<nw><%for.body6.lr.ph.us.us>][{7,+,1}<nw><%for.body6.us.us>]
 
-; AddRec: {{(48 + (8 * %o) + (8 * (-4 + (3 * %m)) * (%o + %p)) + %A),+,(8 * (%o + %p) * %m)}<%for.cond4.preheader.lr.ph.us>,+,(8 * (%o + %p))}<%for.body6.lr.ph.us.us>
-; CHECK: Base offset: %A
-; CHECK: ArrayDecl[UnknownSize][(%o + %p)] with elements of sizeof(double) bytes.
-; CHECK: ArrayRef[{(-4 + (3 * %m)),+,%m}<%for.cond4.preheader.lr.ph.us>][{(6 + %o),+,(%o + %p)}<%for.body6.lr.ph.us.us>]
-
-; AddRec: {(48 + (8 * %o) + ((-40 + (32 * %m)) * (%o + %p)) + %A),+,(8 * (%o + %p) * %m)}<%for.cond4.preheader.lr.ph.us>
-; CHECK: Base offset: %A
-; CHECK: ArrayDecl[UnknownSize] with elements of sizeof(double) bytes.
-; CHECK: ArrayRef[{(6 + ((-5 + (4 * %m)) * (%o + %p)) + %o),+,((%o + %p) * %m)}<%for.cond4.preheader.lr.ph.us>]
-
 define void @foo(i64 %n, i64 %m, i64 %o, i64 %p, double* nocapture %A) nounwind uwtable {
 entry:
   %add = add nsw i64 %p, %o
