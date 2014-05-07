@@ -195,8 +195,7 @@ def : Proc<"pentium3m",       [FeatureSSE1, FeatureSlowBTMem]>;
 def : Proc<"pentium-m",       [FeatureSSE2, FeatureSlowBTMem]>;
 def : Proc<"pentium4",        [FeatureSSE2]>;
 def : Proc<"pentium4m",       [FeatureSSE2, FeatureSlowBTMem]>;
-def : Proc<"x86-64",          [FeatureSSE2, Feature64Bit, FeatureSlowBTMem,
-                               FeatureFastUAMem]>;
+
 // Intel Core Duo.
 def : ProcessorModel<"yonah", SandyBridgeModel,
                      [FeatureSSE3, FeatureSlowBTMem]>;
@@ -342,6 +341,20 @@ def : Proc<"winchip-c6",      [FeatureMMX]>;
 def : Proc<"winchip2",        [Feature3DNow]>;
 def : Proc<"c3",              [Feature3DNow]>;
 def : Proc<"c3-2",            [FeatureSSE1]>;
+
+// We also provide a generic 64-bit specific x86 processor model which tries to
+// be good for modern chips without enabling instruction set encodings past the
+// basic SSE2 and 64-bit ones. It disables slow things from any mainstream and
+// modern 64-bit x86 chip, and enables features that are generally beneficial.
+// 
+// We currently use the Sandy Bridge model as the default scheduling model as
+// we use it across Nehalem, Westmere, Sandy Bridge, and Ivy Bridge which
+// covers a huge swath of x86 processors. If there are specific scheduling
+// knobs which need to be tuned differently for AMD chips, we might consider
+// forming a common base for them.
+def : ProcessorModel<"x86-64", SandyBridgeModel,
+                     [FeatureSSE2, Feature64Bit, FeatureSlowBTMem,
+                      FeatureFastUAMem]>;
 
 //===----------------------------------------------------------------------===//
 // Register File Description
