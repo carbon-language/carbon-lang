@@ -3332,11 +3332,15 @@ void CGDebugInfo::finalize() {
     Ty.replaceAllUsesWith(CGM.getLLVMContext(), RepTy);
   }
 
-  for (auto E : ObjCInterfaceCache)
+  // Creating types might create further types - invalidating the current
+  // element and the size(), so don't cache/reference them.
+  for (size_t i = 0; i != ObjCInterfaceCache.size(); ++i) {
+    ObjCInterfaceCacheEntry E = ObjCInterfaceCache[i];
     E.Decl.replaceAllUsesWith(CGM.getLLVMContext(),
                               E.Type->getDecl()->getDefinition()
                                   ? CreateTypeDefinition(E.Type, E.Unit)
                                   : E.Decl);
+  }
 
   // We keep our own list of retained types, because we need to look
   // up the final type in the type cache.
