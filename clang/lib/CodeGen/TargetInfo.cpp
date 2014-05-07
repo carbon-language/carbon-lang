@@ -3550,7 +3550,8 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
 
   const Type *Base = 0;
   uint64_t NumMembers;
-  if (isHomogeneousAggregate(Ty, Base, Ctx, &NumMembers) && NumMembers > 1) {
+  bool IsHFA = isHomogeneousAggregate(Ty, Base, Ctx, &NumMembers);
+  if (IsHFA && NumMembers > 1) {
     // Homogeneous aggregates passed in registers will have their elements split
     // and stored 16-bytes apart regardless of size (they're notionally in qN,
     // qN+1, ...). We reload and store into a temporary local variable
@@ -3579,7 +3580,8 @@ static llvm::Value *EmitAArch64VAArg(llvm::Value *VAListAddr, QualType Ty,
   } else {
     // Otherwise the object is contiguous in memory
     unsigned BeAlign = reg_top_index == 2 ? 16 : 8;
-    if (CGF.CGM.getDataLayout().isBigEndian() && !isAggregateTypeForABI(Ty) &&
+    if (CGF.CGM.getDataLayout().isBigEndian() &&
+        (IsHFA || !isAggregateTypeForABI(Ty)) &&
         Ctx.getTypeSize(Ty) < (BeAlign * 8)) {
       int Offset = BeAlign - Ctx.getTypeSize(Ty) / 8;
       BaseAddr = CGF.Builder.CreatePtrToInt(BaseAddr, CGF.Int64Ty);
