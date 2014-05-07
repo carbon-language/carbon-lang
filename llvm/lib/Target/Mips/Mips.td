@@ -22,9 +22,15 @@ include "llvm/Target/Target.td"
 class PredicateControl {
   // Predicates for the encoding scheme in use such as HasStdEnc
   list<Predicate> EncodingPredicates = [];
+  // Predicates for the GPR size such as IsGP64bit
+  list<Predicate> GPRPredicates = [];
+  // Predicates for the FGR size and layout such as IsFP64bit
+  list<Predicate> FGRPredicates = [];
   // Predicates for anything else
   list<Predicate> AdditionalPredicates = [];
   list<Predicate> Predicates = !listconcat(EncodingPredicates,
+                                           GPRPredicates,
+                                           FGRPredicates,
                                            AdditionalPredicates);
 }
 

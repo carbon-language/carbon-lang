@@ -266,7 +266,7 @@ defm CEIL_W  : ROUND_M<"ceil.w.d", II_CEIL>, ABSS_FM<0xe, 17>;
 defm FLOOR_W : ROUND_M<"floor.w.d", II_FLOOR>, ABSS_FM<0xf, 17>;
 defm CVT_W   : ROUND_M<"cvt.w.d", II_CVT>, ABSS_FM<0x24, 17>;
 
-let AdditionalPredicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
+let FGRPredicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
   def ROUND_L_S : ABSS_FT<"round.l.s", FGR64Opnd, FGR32Opnd, II_ROUND>,
                   ABSS_FM<0x8, 16>;
   def ROUND_L_D64 : ABSS_FT<"round.l.d", FGR64Opnd, FGR64Opnd, II_ROUND>,
@@ -292,7 +292,7 @@ def CVT_L_S : MMRel, ABSS_FT<"cvt.l.s", FGR64Opnd, FGR32Opnd, II_CVT>,
 def CVT_L_D64: MMRel, ABSS_FT<"cvt.l.d", FGR64Opnd, FGR64Opnd, II_CVT>,
                ABSS_FM<0x25, 17>;
 
-let AdditionalPredicates = [NotFP64bit] in {
+let FGRPredicates = [NotFP64bit] in {
   def CVT_S_D32 : MMRel, ABSS_FT<"cvt.s.d", FGR32Opnd, AFGR64Opnd, II_CVT>,
                   ABSS_FM<0x20, 17>;
   def CVT_D32_W : MMRel, ABSS_FT<"cvt.d.w", AFGR64Opnd, FGR32Opnd, II_CVT>,
@@ -301,7 +301,7 @@ let AdditionalPredicates = [NotFP64bit] in {
                   ABSS_FM<0x21, 16>;
 }
 
-let AdditionalPredicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
+let FGRPredicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
   def CVT_S_D64 : ABSS_FT<"cvt.s.d", FGR32Opnd, FGR64Opnd, II_CVT>,
                   ABSS_FM<0x20, 17>;
   def CVT_S_L   : ABSS_FT<"cvt.s.l", FGR32Opnd, FGR64Opnd, II_CVT>,
@@ -367,12 +367,12 @@ def FMOV_D64 : ABSS_FT<"mov.d", FGR64Opnd, FGR64Opnd, II_MOV_D>,
 def LWC1 : MMRel, LW_FT<"lwc1", FGR32Opnd, II_LWC1, load>, LW_FM<0x31>;
 def SWC1 : MMRel, SW_FT<"swc1", FGR32Opnd, II_SWC1, store>, LW_FM<0x39>;
 
-let AdditionalPredicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
+let FGRPredicates = [IsFP64bit], DecoderNamespace = "Mips64" in {
   def LDC164 : LW_FT<"ldc1", FGR64Opnd, II_LDC1, load>, LW_FM<0x35>;
   def SDC164 : SW_FT<"sdc1", FGR64Opnd, II_SDC1, store>, LW_FM<0x3d>;
 }
 
-let AdditionalPredicates = [NotFP64bit] in {
+let FGRPredicates = [NotFP64bit] in {
   def LDC1 : MMRel, LW_FT<"ldc1", AFGR64Opnd, II_LDC1, load>, LW_FM<0x35>;
   def SDC1 : MMRel, SW_FT<"sdc1", AFGR64Opnd, II_SDC1, store>, LW_FM<0x3d>;
 }
@@ -391,25 +391,26 @@ let AdditionalPredicates = [IsNotNaCl, HasFPIdx] in {
   def SWXC1 : MMRel, SWXC1_FT<"swxc1", FGR32Opnd, II_SWXC1, store>, SWXC1_FM<8>;
 }
 
-let AdditionalPredicates = [NotFP64bit, HasFPIdx, NotInMicroMips,
-                            IsNotNaCl] in {
+let FGRPredicates = [NotFP64bit],
+    AdditionalPredicates = [HasFPIdx, NotInMicroMips, IsNotNaCl] in {
   def LDXC1 : LWXC1_FT<"ldxc1", AFGR64Opnd, II_LDXC1, load>, LWXC1_FM<1>;
   def SDXC1 : SWXC1_FT<"sdxc1", AFGR64Opnd, II_SDXC1, store>, SWXC1_FM<9>;
 }
 
-let AdditionalPredicates = [IsFP64bit, HasFPIdx],
+let FGRPredicates = [IsFP64bit], AdditionalPredicates = [HasFPIdx],
     DecoderNamespace="Mips64" in {
   def LDXC164 : LWXC1_FT<"ldxc1", FGR64Opnd, II_LDXC1, load>, LWXC1_FM<1>;
   def SDXC164 : SWXC1_FT<"sdxc1", FGR64Opnd, II_SDXC1, store>, SWXC1_FM<9>;
 }
 
 // Load/store doubleword indexed unaligned.
-let AdditionalPredicates = [NotFP64bit, IsNotNaCl] in {
+let FGRPredicates = [NotFP64bit],
+    AdditionalPredicates = [IsNotNaCl] in {
   def LUXC1 : MMRel, LWXC1_FT<"luxc1", AFGR64Opnd, II_LUXC1>, LWXC1_FM<0x5>;
   def SUXC1 : MMRel, SWXC1_FT<"suxc1", AFGR64Opnd, II_SUXC1>, SWXC1_FM<0xd>;
 }
 
-let AdditionalPredicates = [IsFP64bit], DecoderNamespace="Mips64" in {
+let FGRPredicates = [IsFP64bit], DecoderNamespace="Mips64" in {
   def LUXC164 : LWXC1_FT<"luxc1", FGR64Opnd, II_LUXC1>, LWXC1_FM<0x5>;
   def SUXC164 : SWXC1_FT<"suxc1", FGR64Opnd, II_SUXC1>, SWXC1_FM<0xd>;
 }
@@ -442,28 +443,32 @@ let AdditionalPredicates = [HasMips32r2, NoNaNsFPMath] in {
                 MADDS_FM<7, 0>;
 }
 
-let AdditionalPredicates = [NotFP64bit, HasMips32r2] in {
+let FGRPredicates = [NotFP64bit],
+    AdditionalPredicates = [HasMips32r2] in {
   def MADD_D32 : MMRel, MADDS_FT<"madd.d", AFGR64Opnd, II_MADD_D, fadd>,
                  MADDS_FM<4, 1>;
   def MSUB_D32 : MMRel, MADDS_FT<"msub.d", AFGR64Opnd, II_MSUB_D, fsub>,
                  MADDS_FM<5, 1>;
 }
 
-let AdditionalPredicates = [NotFP64bit, HasMips32r2, NoNaNsFPMath] in {
+let FGRPredicates = [NotFP64bit],
+    AdditionalPredicates = [HasMips32r2, NoNaNsFPMath] in {
   def NMADD_D32 : MMRel, NMADDS_FT<"nmadd.d", AFGR64Opnd, II_NMADD_D, fadd>,
                   MADDS_FM<6, 1>;
   def NMSUB_D32 : MMRel, NMADDS_FT<"nmsub.d", AFGR64Opnd, II_NMSUB_D, fsub>,
                   MADDS_FM<7, 1>;
 }
 
-let AdditionalPredicates = [IsFP64bit, HasMips32r2], isCodeGenOnly=1 in {
+let FGRPredicates = [IsFP64bit],
+    AdditionalPredicates = [HasMips32r2], isCodeGenOnly=1 in {
   def MADD_D64 : MADDS_FT<"madd.d", FGR64Opnd, II_MADD_D, fadd>,
                  MADDS_FM<4, 1>;
   def MSUB_D64 : MADDS_FT<"msub.d", FGR64Opnd, II_MSUB_D, fsub>,
                  MADDS_FM<5, 1>;
 }
 
-let AdditionalPredicates = [IsFP64bit, HasMips32r2, NoNaNsFPMath],
+let FGRPredicates = [IsFP64bit],
+    AdditionalPredicates = [HasMips32r2, NoNaNsFPMath],
     isCodeGenOnly=1 in {
   def NMADD_D64 : NMADDS_FT<"nmadd.d", FGR64Opnd, II_NMADD_D, fadd>,
                   MADDS_FM<6, 1>;
@@ -559,7 +564,7 @@ def : MipsPat<(f32 (sint_to_fp GPR32Opnd:$src)),
 def : MipsPat<(MipsTruncIntFP FGR32Opnd:$src),
               (TRUNC_W_S FGR32Opnd:$src)>;
 
-let AdditionalPredicates = [NotFP64bit] in {
+let FGRPredicates = [NotFP64bit] in {
   def : MipsPat<(f64 (sint_to_fp GPR32Opnd:$src)),
                 (PseudoCVT_D32_W GPR32Opnd:$src)>;
   def : MipsPat<(MipsTruncIntFP AFGR64Opnd:$src),
@@ -570,7 +575,7 @@ let AdditionalPredicates = [NotFP64bit] in {
                 (CVT_D32_S FGR32Opnd:$src)>;
 }
 
-let AdditionalPredicates = [IsFP64bit] in {
+let FGRPredicates = [IsFP64bit] in {
   def : MipsPat<(f64 fpimm0), (DMTC1 ZERO_64)>;
   def : MipsPat<(f64 fpimm0neg), (FNEG_D64 (DMTC1 ZERO_64))>;
 
@@ -599,12 +604,12 @@ let AddedComplexity = 40 in {
   def : LoadRegImmPat<LWC1, f32, load>;
   def : StoreRegImmPat<SWC1, f32>;
 
-  let AdditionalPredicates = [IsFP64bit] in {
+  let FGRPredicates = [IsFP64bit] in {
     def : LoadRegImmPat<LDC164, f64, load>;
     def : StoreRegImmPat<SDC164, f64>;
   }
 
-  let AdditionalPredicates = [NotFP64bit] in {
+  let FGRPredicates = [NotFP64bit] in {
     def : LoadRegImmPat<LDC1, f64, load>;
     def : StoreRegImmPat<SDC1, f64>;
   }
