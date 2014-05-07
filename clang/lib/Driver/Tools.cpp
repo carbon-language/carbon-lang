@@ -1037,8 +1037,14 @@ static void getMIPSTargetFeatures(const Driver &D, const ArgList &Args,
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_mnan_EQ)) {
-    if (StringRef(A->getValue()) == "2008")
+    StringRef Val = StringRef(A->getValue());
+    if (Val == "2008")
       Features.push_back("+nan2008");
+    else if (Val == "legacy")
+      Features.push_back("-nan2008");
+    else
+      D.Diag(diag::err_drv_unsupported_option_argument)
+          << A->getOption().getName() << Val;
   }
 
   AddTargetFeature(Args, Features, options::OPT_msingle_float,

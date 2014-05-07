@@ -5669,9 +5669,6 @@ public:
       std::find(Features.begin(), Features.end(), "+soft-float");
     if (it != Features.end())
       Features.erase(it);
-    it = std::find(Features.begin(), Features.end(), "+nan2008");
-    if (it != Features.end())
-      Features.erase(it);
 
     setDescriptionString();
 

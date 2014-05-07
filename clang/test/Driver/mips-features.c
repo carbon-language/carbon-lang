@@ -72,6 +72,18 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NOMFP64 %s
 // CHECK-NOMFP64: "-target-feature" "-fp64"
 //
+// -mnan=2008
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:     -mnan=legacy -mnan=2008 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NAN2008 %s
+// CHECK-NAN2008: "-target-feature" "+nan2008"
+//
+// -mnan=legacy
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:     -mnan=2008 -mnan=legacy 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NANLEGACY %s
+// CHECK-NANLEGACY: "-target-feature" "-nan2008"
+//
 // -mxgot
 // RUN: %clang -target mips-linux-gnu -### -c %s \
 // RUN:     -mno-xgot -mxgot 2>&1 \
