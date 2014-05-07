@@ -26,11 +26,14 @@ class PredicateControl {
   list<Predicate> GPRPredicates = [];
   // Predicates for the FGR size and layout such as IsFP64bit
   list<Predicate> FGRPredicates = [];
+  // Predicates for the instruction group membership such as ISA's and ASE's
+  list<Predicate> InsnPredicates = [];
   // Predicates for anything else
   list<Predicate> AdditionalPredicates = [];
   list<Predicate> Predicates = !listconcat(EncodingPredicates,
                                            GPRPredicates,
                                            FGRPredicates,
+                                           InsnPredicates,
                                            AdditionalPredicates);
 }
 

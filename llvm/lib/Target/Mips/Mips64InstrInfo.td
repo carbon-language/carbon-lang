@@ -118,14 +118,13 @@ def DSRA32 : shift_rotate_imm<"dsra32", uimm5, GPR64Opnd, II_DSRA32>,
              SRA_FM<0x3f, 0>;
 
 // Rotate Instructions
-let AdditionalPredicates = [HasMips64r2] in {
-  def DROTR  : shift_rotate_imm<"drotr", uimm6, GPR64Opnd, II_DROTR, rotr,
-                                immZExt6>, SRA_FM<0x3a, 1>;
-  def DROTRV : shift_rotate_reg<"drotrv", GPR64Opnd, II_DROTRV, rotr>,
-               SRLV_FM<0x16, 1>;
-  def DROTR32 : shift_rotate_imm<"drotr32", uimm5, GPR64Opnd, II_DROTR32>,
-                SRA_FM<0x3e, 1>;
-}
+def DROTR  : shift_rotate_imm<"drotr", uimm6, GPR64Opnd, II_DROTR, rotr,
+                              immZExt6>,
+             SRA_FM<0x3a, 1>, ISA_MIPS64R2;
+def DROTRV : shift_rotate_reg<"drotrv", GPR64Opnd, II_DROTRV, rotr>,
+             SRLV_FM<0x16, 1>, ISA_MIPS64R2;
+def DROTR32 : shift_rotate_imm<"drotr32", uimm5, GPR64Opnd, II_DROTR32>,
+              SRA_FM<0x3e, 1>, ISA_MIPS64R2;
 
 /// Load and Store Instructions
 ///  aligned

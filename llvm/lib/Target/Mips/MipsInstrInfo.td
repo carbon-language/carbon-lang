@@ -194,6 +194,15 @@ def IsLE           :  Predicate<"Subtarget.isLittle()">;
 def IsBE           :  Predicate<"!Subtarget.isLittle()">;
 def IsNotNaCl    :    Predicate<"!Subtarget.isTargetNaCl()">;
 
+//===----------------------------------------------------------------------===//
+// Mips ISA membership adjectives.
+//===----------------------------------------------------------------------===//
+
+class ISA_MIPS32R2 { list<Predicate> InsnPredicates = [HasMips32r2]; }
+class ISA_MIPS64R2 { list<Predicate> InsnPredicates = [HasMips64r2]; }
+
+//===----------------------------------------------------------------------===//
+
 class MipsPat<dag pattern, dag result> : Pat<pattern, result>, PredicateControl {
   let EncodingPredicates = [HasStdEnc];
 }
@@ -825,17 +834,14 @@ class ExtBase<string opstr, RegisterOperand RO, Operand PosOpnd,
   InstSE<(outs RO:$rt), (ins RO:$rs, PosOpnd:$pos, size_ext:$size),
          !strconcat(opstr, " $rt, $rs, $pos, $size"),
          [(set RO:$rt, (Op RO:$rs, imm:$pos, imm:$size))], NoItinerary,
-         FrmR, opstr> {
-  let AdditionalPredicates = [HasMips32r2];
-}
+         FrmR, opstr>, ISA_MIPS32R2;
 
 class InsBase<string opstr, RegisterOperand RO, Operand PosOpnd,
               SDPatternOperator Op = null_frag>:
   InstSE<(outs RO:$rt), (ins RO:$rs, PosOpnd:$pos, size_ins:$size, RO:$src),
          !strconcat(opstr, " $rt, $rs, $pos, $size"),
          [(set RO:$rt, (Op RO:$rs, imm:$pos, imm:$size, RO:$src))],
-         NoItinerary, FrmR, opstr> {
-  let AdditionalPredicates = [HasMips32r2];
+         NoItinerary, FrmR, opstr>, ISA_MIPS32R2 {
   let Constraints = "$src = $rt";
 }
 
@@ -1000,12 +1006,11 @@ def SRAV : MMRel, shift_rotate_reg<"srav", GPR32Opnd, II_SRAV, sra>,
            SRLV_FM<7, 0>;
 
 // Rotate Instructions
-let AdditionalPredicates = [HasMips32r2] in {
-  def ROTR  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd, II_ROTR, rotr,
-                                      immZExt5>, SRA_FM<2, 1>;
-  def ROTRV : MMRel, shift_rotate_reg<"rotrv", GPR32Opnd, II_ROTRV, rotr>,
-              SRLV_FM<6, 1>;
-}
+def ROTR  : MMRel, shift_rotate_imm<"rotr", uimm5, GPR32Opnd, II_ROTR, rotr,
+                                    immZExt5>,
+            SRA_FM<2, 1>, ISA_MIPS32R2;
+def ROTRV : MMRel, shift_rotate_reg<"rotrv", GPR32Opnd, II_ROTRV, rotr>,
+            SRLV_FM<6, 1>, ISA_MIPS32R2;
 
 /// Load and Store Instructions
 ///  aligned
@@ -1191,7 +1196,7 @@ class Barrier<string asmstr> : InstSE<(outs), (ins), asmstr, [], NoItinerary,
                                       FrmOther>;
 def SSNOP : Barrier<"ssnop">, BARRIER_FM<1>;
 def EHB : Barrier<"ehb">, BARRIER_FM<3>;
-def PAUSE : Barrier<"pause">, BARRIER_FM<5>, Requires<[HasMips32r2]>;
+def PAUSE : Barrier<"pause">, BARRIER_FM<5>, ISA_MIPS32R2;
 
 //===----------------------------------------------------------------------===//
 // Instruction aliases
