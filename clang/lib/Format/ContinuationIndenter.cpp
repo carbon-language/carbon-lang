@@ -290,10 +290,11 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
     State.Stack.back().ContainsUnwrappedBuilder = true;
 
   State.Column += Spaces;
-  if (Current.is(tok::l_paren) && Previous.isOneOf(tok::kw_if, tok::kw_for))
+  if (Current.isNot(tok::comment) && Previous.is(tok::l_paren) &&
+      Previous.Previous && Previous.Previous->isOneOf(tok::kw_if, tok::kw_for))
     // Treat the condition inside an if as if it was a second function
     // parameter, i.e. let nested calls have a continuation indent.
-    State.Stack.back().LastSpace = State.Column + 1; // 1 is length of "(".
+    State.Stack.back().LastSpace = State.Column;
   else if (Current.isNot(tok::comment) &&
            (Previous.is(tok::comma) ||
             (Previous.is(tok::colon) && Previous.Type == TT_ObjCMethodExpr)))

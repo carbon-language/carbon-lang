@@ -1667,7 +1667,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     return false;
   if (Left.is(tok::l_paren) && Left.Previous &&
       (Left.Previous->Type == TT_BinaryOperator ||
-       Left.Previous->Type == TT_CastRParen))
+       Left.Previous->Type == TT_CastRParen || Left.Previous->is(tok::kw_if)))
     return false;
   if (Right.Type == TT_ImplicitStringLiteral)
     return false;
