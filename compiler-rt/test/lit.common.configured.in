@@ -8,7 +8,7 @@ def set_default(attr, value):
     
 # Generic config options for all compiler-rt lit tests.
 set_default("target_triple", "@TARGET_TRIPLE@")
-set_default("target_cflags", "@COMPILER_RT_TEST_COMPILER_FLAGS@")
+set_default("target_cflags", "@COMPILER_RT_TEST_COMPILER_CFLAGS@")
 set_default("host_arch", "@HOST_ARCH@")
 set_default("target_arch", "@HOST_ARCH@")
 set_default("host_os", "@HOST_OS@")

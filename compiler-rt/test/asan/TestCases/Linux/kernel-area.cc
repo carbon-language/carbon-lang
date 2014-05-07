@@ -12,7 +12,6 @@
 // CHECK-kernel-64-bits: || `[0x24000000, 0x27ffffff]` || ShadowGap  ||
 //
 // REQUIRES: asan-32-bits
-// XFAIL: *
 
 int main() {
   return 0;
