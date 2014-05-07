@@ -41,7 +41,7 @@ int main (int argc, char **argv) {
 // CHECK-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon* [[AGG_CAPTURED]] to i8*
 // CHECK-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%ident_t* [[DEF_LOC_2]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon*)* @__captured_stmt to void (i32*, i32*, ...)*), i8* [[BITCAST]])
 // CHECK-NEXT:  [[ARGV:%.+]] = load i8*** {{%[a-z0-9.]+}}
-// CHECK-NEXT:  [[RET:%.+]] = call i32 @_Z5tmainIPPcEiT_(i8** [[ARGV]])
+// CHECK-NEXT:  [[RET:%.+]] = call i32 [[TMAIN:@.+tmain.+]](i8** [[ARGV]])
 // CHECK-NEXT:  ret i32 [[RET]]
 // CHECK-NEXT:  }
 // CHECK-DEBUG-LABEL: define i32 @main(i32 %argc, i8** %argv)
@@ -57,7 +57,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon* [[AGG_CAPTURED]] to i8*
 // CHECK-DEBUG-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%ident_t* [[LOC_2_ADDR]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon*)* @__captured_stmt to void (i32*, i32*, ...)*), i8* [[BITCAST]])
 // CHECK-DEBUG-NEXT:  [[ARGV:%.+]] = load i8*** {{%[a-z0-9.]+}}
-// CHECK-DEBUG-NEXT:  [[RET:%.+]] = call i32 @_Z5tmainIPPcEiT_(i8** [[ARGV]])
+// CHECK-DEBUG-NEXT:  [[RET:%.+]] = call i32 [[TMAIN:@.+tmain.+]](i8** [[ARGV]])
 // CHECK-DEBUG-NEXT:  ret i32 [[RET]]
 // CHECK-DEBUG-NEXT:  }
 
@@ -68,7 +68,7 @@ int main (int argc, char **argv) {
 // CHECK-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-NEXT:  [[ARGC_REF:%.+]] = load i32** [[ARGC_PTR_REF]]
 // CHECK-NEXT:  [[ARGC:%.+]] = load i32* [[ARGC_REF]]
-// CHECK-NEXT:  invoke void @_Z3fooIiEvT_(i32 [[ARGC]])
+// CHECK-NEXT:  invoke void [[FOO:@.+foo.+]](i32 [[ARGC]])
 // CHECK:       ret void
 // CHECK:       call void @__clang_call_terminate(i8*
 // CHECK-NEXT:  unreachable
@@ -80,18 +80,18 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-DEBUG-NEXT:  [[ARGC_REF:%.+]] = load i32** [[ARGC_PTR_REF]]
 // CHECK-DEBUG-NEXT:  [[ARGC:%.+]] = load i32* [[ARGC_REF]]
-// CHECK-DEBUG-NEXT:  invoke void @_Z3fooIiEvT_(i32 [[ARGC]])
+// CHECK-DEBUG-NEXT:  invoke void [[FOO:@.+foo.+]](i32 [[ARGC]])
 // CHECK-DEBUG:       ret void
 // CHECK-DEBUG:       call void @__clang_call_terminate(i8*
 // CHECK-DEBUG-NEXT:  unreachable
 // CHECK-DEBUG-NEXT:  }
 
-// CHECK-DAG: define linkonce_odr void @_Z3fooIiEvT_(i32 %argc)
+// CHECK-DAG: define linkonce_odr void [[FOO]](i32 %argc)
 // CHECK-DAG: declare void @__kmpc_fork_call(%ident_t*, i32, void (i32*, i32*, ...)*, ...)
-// CHECK-DEBUG-DAG: define linkonce_odr void @_Z3fooIiEvT_(i32 %argc)
+// CHECK-DEBUG-DAG: define linkonce_odr void [[FOO]](i32 %argc)
 // CHECK-DEBUG-DAG: declare void @__kmpc_fork_call(%ident_t*, i32, void (i32*, i32*, ...)*, ...)
 
-// CHECK-LABEL: define linkonce_odr i32 @_Z5tmainIPPcEiT_(i8** %argc)
+// CHECK:       define linkonce_odr i32 [[TMAIN]](i8** %argc)
 // CHECK:       [[AGG_CAPTURED:%.+]] = alloca %struct.anon.0
 // CHECK:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon.0* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-NEXT:  store i8*** {{%[a-z0-9.]+}}, i8**** [[ARGC_REF]]
@@ -99,7 +99,7 @@ int main (int argc, char **argv) {
 // CHECK-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...)* @__kmpc_fork_call(%ident_t* [[DEF_LOC_2]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon.0*)* @__captured_stmt1 to void (i32*, i32*, ...)*), i8* [[BITCAST]])
 // CHECK-NEXT:  ret i32 0
 // CHECK-NEXT:  }
-// CHECK-DEBUG-LABEL: define linkonce_odr i32 @_Z5tmainIPPcEiT_(i8** %argc)
+// CHECK-DEBUG:       define linkonce_odr i32 [[TMAIN]](i8** %argc)
 // CHECK-DEBUG-DAG:   [[AGG_CAPTURED:%.+]] = alloca %struct.anon.0
 // CHECK-DEBUG-DAG:   [[LOC_2_ADDR:%.+]] = alloca %ident_t
 // CHECK-DEBUG:       [[KMPC_LOC_VOIDPTR:%.+]] = bitcast %ident_t* [[LOC_2_ADDR]] to i8*
@@ -121,7 +121,7 @@ int main (int argc, char **argv) {
 // CHECK-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon.0* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-NEXT:  [[ARGC_REF:%.+]] = load i8**** [[ARGC_PTR_REF]]
 // CHECK-NEXT:  [[ARGC:%.+]] = load i8*** [[ARGC_REF]]
-// CHECK-NEXT:  invoke void @_Z3fooIPPcEvT_(i8** [[ARGC]])
+// CHECK-NEXT:  invoke void [[FOO1:@.+foo.+]](i8** [[ARGC]])
 // CHECK:       ret void
 // CHECK:       call void @__clang_call_terminate(i8*
 // CHECK-NEXT:  unreachable
@@ -133,13 +133,13 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon.0* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-DEBUG-NEXT:  [[ARGC_REF:%.+]] = load i8**** [[ARGC_PTR_REF]]
 // CHECK-DEBUG-NEXT:  [[ARGC:%.+]] = load i8*** [[ARGC_REF]]
-// CHECK-DEBUG-NEXT:  invoke void @_Z3fooIPPcEvT_(i8** [[ARGC]])
+// CHECK-DEBUG-NEXT:  invoke void [[FOO1:@.+foo.+]](i8** [[ARGC]])
 // CHECK-DEBUG:       ret void
 // CHECK-DEBUG:       call void @__clang_call_terminate(i8*
 // CHECK-DEBUG-NEXT:  unreachable
 // CHECK-DEBUG-NEXT:  }
 
-// CHECK: define linkonce_odr void @_Z3fooIPPcEvT_(i8** %argc)
-// CHECK-DEBUG: define linkonce_odr void @_Z3fooIPPcEvT_(i8** %argc)
+// CHECK: define linkonce_odr void [[FOO1]](i8** %argc)
+// CHECK-DEBUG: define linkonce_odr void [[FOO1]](i8** %argc)
 
 #endif
