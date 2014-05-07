@@ -56,11 +56,6 @@ namespace llvm {
 /// };
 /// \endcode
 template <typename Info> class OnDiskChainedHashTableGenerator {
-  typedef typename Info::offset_type offset_type;
-  offset_type NumBuckets;
-  offset_type NumEntries;
-  llvm::BumpPtrAllocator BA;
-
   /// \brief A single item in the hash table.
   class Item {
   public:
@@ -73,6 +68,11 @@ template <typename Info> class OnDiskChainedHashTableGenerator {
          Info &InfoObj)
         : Key(Key), Data(Data), Next(nullptr), Hash(InfoObj.ComputeHash(Key)) {}
   };
+
+  typedef typename Info::offset_type offset_type;
+  offset_type NumBuckets;
+  offset_type NumEntries;
+  llvm::SpecificBumpPtrAllocator<Item> BA;
 
   /// \brief A linked list of values in a particular hash bucket.
   class Bucket {
@@ -129,8 +129,7 @@ public:
     ++NumEntries;
     if (4 * NumEntries >= 3 * NumBuckets)
       resize(NumBuckets * 2);
-    insert(Buckets, NumBuckets,
-           new (BA.Allocate<Item>()) Item(Key, Data, InfoObj));
+    insert(Buckets, NumBuckets, new (BA.Allocate()) Item(Key, Data, InfoObj));
   }
 
   /// \brief Emit the table to Out, which must not be at offset 0.
