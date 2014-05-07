@@ -6816,6 +6816,40 @@ const SCEV *SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range,
 }
 
 namespace {
+struct FindUndefs {
+  bool Found;
+  FindUndefs() : Found(false) {}
+
+  bool follow(const SCEV *S) {
+    if (const SCEVUnknown *C = dyn_cast<SCEVUnknown>(S)) {
+      if (isa<UndefValue>(C->getValue()))
+        Found = true;
+    } else if (const SCEVConstant *C = dyn_cast<SCEVConstant>(S)) {
+      if (isa<UndefValue>(C->getValue()))
+        Found = true;
+    }
+
+    // Keep looking if we haven't found it yet.
+    return !Found;
+  }
+  bool isDone() const {
+    // Stop recursion if we have found an undef.
+    return Found;
+  }
+};
+}
+
+// Return true when S contains at least an undef value.
+static inline bool
+containsUndefs(const SCEV *S) {
+  FindUndefs F;
+  SCEVTraversal<FindUndefs> ST(F);
+  ST.visitAll(S);
+
+  return F.Found;
+}
+
+namespace {
 // Collect all steps of SCEV expressions.
 struct SCEVCollectStrides {
   ScalarEvolution &SE;
@@ -6841,7 +6875,8 @@ struct SCEVCollectTerms {
 
   bool follow(const SCEV *S) {
     if (isa<SCEVUnknown>(S) || isa<SCEVConstant>(S) || isa<SCEVMulExpr>(S)) {
-      Terms.push_back(S);
+      if (!containsUndefs(S))
+        Terms.push_back(S);
 
       // Stop recursion: once we collected a term, do not walk its operands.
       return false;
