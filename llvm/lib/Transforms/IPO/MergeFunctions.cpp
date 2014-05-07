@@ -176,6 +176,110 @@ private:
   /// Test whether two basic blocks have equivalent behaviour.
   bool compare(const BasicBlock *BB1, const BasicBlock *BB2);
 
+  /// Constants comparison.
+  /// Its analog to lexicographical comparison between hypothetical numbers
+  /// of next format:
+  /// <bitcastability-trait><raw-bit-contents>
+  ///
+  /// 1. Bitcastability.
+  /// Check whether L's type could be losslessly bitcasted to R's type.
+  /// On this stage method, in case when lossless bitcast is not possible
+  /// method returns -1 or 1, thus also defining which type is greater in
+  /// context of bitcastability.
+  /// Stage 0: If types are equal in terms of cmpTypes, then we can go straight
+  ///          to the contents comparison.
+  ///          If types differ, remember types comparison result and check
+  ///          whether we still can bitcast types.
+  /// Stage 1: Types that satisfies isFirstClassType conditions are always
+  ///          greater then others.
+  /// Stage 2: Vector is greater then non-vector.
+  ///          If both types are vectors, then vector with greater bitwidth is
+  ///          greater.
+  ///          If both types are vectors with the same bitwidth, then types
+  ///          are bitcastable, and we can skip other stages, and go to contents
+  ///          comparison.
+  /// Stage 3: Pointer types are greater than non-pointers. If both types are
+  ///          pointers of the same address space - go to contents comparison.
+  ///          Different address spaces: pointer with greater address space is
+  ///          greater.
+  /// Stage 4: Types are neither vectors, nor pointers. And they differ.
+  ///          We don't know how to bitcast them. So, we better don't do it,
+  ///          and return types comparison result (so it determines the
+  ///          relationship among constants we don't know how to bitcast).
+  ///
+  /// Just for clearance, let's see how the set of constants could look
+  /// on single dimension axis:
+  ///
+  /// [NFCT], [FCT, "others"], [FCT, pointers], [FCT, vectors]
+  /// Where: NFCT - Not a FirstClassType
+  ///        FCT - FirstClassTyp:
+  ///
+  /// 2. Compare raw contents.
+  /// It ignores types on this stage and only compares bits from L and R.
+  /// Returns 0, if L and R has equivalent contents.
+  /// -1 or 1 if values are different.
+  /// Pretty trivial:
+  /// 2.1. If contents are numbers, compare numbers.
+  ///    Ints with greater bitwidth are greater. Ints with same bitwidths
+  ///    compared by their contents.
+  /// 2.2. "And so on". Just to avoid discrepancies with comments
+  /// perhaps it would be better to read the implementation itself.
+  /// 3. And again about overall picture. Let's look back at how the ordered set
+  /// of constants will look like:
+  /// [NFCT], [FCT, "others"], [FCT, pointers], [FCT, vectors]
+  ///
+  /// Now look, what could be inside [FCT, "others"], for example:
+  /// [FCT, "others"] =
+  /// [
+  ///   [double 0.1], [double 1.23],
+  ///   [i32 1], [i32 2],
+  ///   { double 1.0 },       ; StructTyID, NumElements = 1
+  ///   { i32 1 },            ; StructTyID, NumElements = 1
+  ///   { double 1, i32 1 },  ; StructTyID, NumElements = 2
+  ///   { i32 1, double 1 }   ; StructTyID, NumElements = 2
+  /// ]
+  ///
+  /// Let's explain the order. Float numbers will be less than integers, just
+  /// because of cmpType terms: FloatTyID < IntegerTyID.
+  /// Floats (with same fltSemantics) are sorted according to their value.
+  /// Then you can see integers, and they are, like a floats,
+  /// could be easy sorted among each others.
+  /// The structures. Structures are grouped at the tail, again because of their
+  /// TypeID: StructTyID > IntegerTyID > FloatTyID.
+  /// Structures with greater number of elements are greater. Structures with
+  /// greater elements going first are greater.
+  /// The same logic with vectors, arrays and other possible complex types.
+  ///
+  /// Bitcastable constants.
+  /// Let's assume, that some constant, belongs to some group of
+  /// "so-called-equal" values with different types, and at the same time
+  /// belongs to another group of constants with equal types
+  /// and "really" equal values.
+  ///
+  /// Now, prove that this is impossible:
+  ///
+  /// If constant A with type TyA is bitcastable to B with type TyB, then:
+  /// 1. All constants with equal types to TyA, are bitcastable to B. Since
+  ///    those should be vectors (if TyA is vector), pointers
+  ///    (if TyA is pointer), or else (if TyA equal to TyB), those types should
+  ///    be equal to TyB.
+  /// 2. All constants with non-equal, but bitcastable types to TyA, are
+  ///    bitcastable to B.
+  ///    Once again, just because we allow it to vectors and pointers only.
+  ///    This statement could be expanded as below:
+  /// 2.1. All vectors with equal bitwidth to vector A, has equal bitwidth to
+  ///      vector B, and thus bitcastable to B as well.
+  /// 2.2. All pointers of the same address space, no matter what they point to,
+  ///      bitcastable. So if C is pointer, it could be bitcasted to A and to B.
+  /// So any constant equal or bitcastable to A is equal or bitcastable to B.
+  /// QED.
+  ///
+  /// In another words, for pointers and vectors, we ignore top-level type and
+  /// look at their particular properties (bit-width for vectors, and
+  /// address space for pointers).
+  /// If these properties are equal - compare their contents.
+  int cmpConstants(const Constant *L, const Constant *R);
+
   /// Assign or look up previously assigned numbers for the two values, and
   /// return whether the numbers are equal. Numbers are assigned in the order
   /// visited.
@@ -242,6 +346,9 @@ private:
 
   int cmpNumbers(uint64_t L, uint64_t R) const;
 
+  int cmpAPInt(const APInt &L, const APInt &R) const;
+  int cmpAPFloat(const APFloat &L, const APFloat &R) const;
+
   // The two functions undergoing comparison.
   const Function *F1, *F2;
 
@@ -257,6 +364,172 @@ int FunctionComparator::cmpNumbers(uint64_t L, uint64_t R) const {
   if (L < R) return -1;
   if (L > R) return 1;
   return 0;
+}
+
+int FunctionComparator::cmpAPInt(const APInt &L, const APInt &R) const {
+  if (int Res = cmpNumbers(L.getBitWidth(), R.getBitWidth()))
+    return Res;
+  if (L.ugt(R)) return 1;
+  if (R.ugt(L)) return -1;
+  return 0;
+}
+
+int FunctionComparator::cmpAPFloat(const APFloat &L, const APFloat &R) const {
+  if (int Res = cmpNumbers((uint64_t)&L.getSemantics(),
+                           (uint64_t)&R.getSemantics()))
+    return Res;
+  return cmpAPInt(L.bitcastToAPInt(), R.bitcastToAPInt());
+}
+
+/// Constants comparison:
+/// 1. Check whether type of L constant could be losslessly bitcasted to R
+/// type.
+/// 2. Compare constant contents.
+/// For more details see declaration comments.
+int FunctionComparator::cmpConstants(const Constant *L, const Constant *R) {
+
+  Type *TyL = L->getType();
+  Type *TyR = R->getType();
+
+  // Check whether types are bitcastable. This part is just re-factored
+  // Type::canLosslesslyBitCastTo method, but instead of returning true/false,
+  // we also pack into result which type is "less" for us.
+  int TypesRes = cmpType(TyL, TyR);
+  if (TypesRes != 0) {
+    // Types are different, but check whether we can bitcast them.
+    if (!TyL->isFirstClassType()) {
+      if (TyR->isFirstClassType())
+        return -1;
+      // Neither TyL nor TyR are values of first class type. Return the result
+      // of comparing the types
+      return TypesRes;
+    }
+    if (!TyR->isFirstClassType()) {
+      if (TyL->isFirstClassType())
+        return 1;
+      return TypesRes;
+    }
+
+    // Vector -> Vector conversions are always lossless if the two vector types
+    // have the same size, otherwise not.
+    unsigned TyLWidth = 0;
+    unsigned TyRWidth = 0;
+
+    if (const VectorType *VecTyL = dyn_cast<VectorType>(TyL))
+      TyLWidth = VecTyL->getBitWidth();
+    if (const VectorType *VecTyR = dyn_cast<VectorType>(TyR))
+      TyRWidth = VecTyR->getBitWidth();
+
+    if (TyLWidth != TyRWidth)
+      return cmpNumbers(TyLWidth, TyRWidth);
+
+    // Zero bit-width means neither TyL nor TyR are vectors.
+    if (!TyLWidth) {
+      PointerType *PTyL = dyn_cast<PointerType>(TyL);
+      PointerType *PTyR = dyn_cast<PointerType>(TyR);
+      if (PTyL && PTyR) {
+        unsigned AddrSpaceL = PTyL->getAddressSpace();
+        unsigned AddrSpaceR = PTyR->getAddressSpace();
+        if (int Res = cmpNumbers(AddrSpaceL, AddrSpaceR))
+          return Res;
+      }
+      if (PTyL)
+        return 1;
+      if (PTyR)
+        return -1;
+
+      // TyL and TyR aren't vectors, nor pointers. We don't know how to
+      // bitcast them.
+      return TypesRes;
+    }
+  }
+
+  // OK, types are bitcastable, now check constant contents.
+
+  if (L->isNullValue() && R->isNullValue())
+    return TypesRes;
+  if (L->isNullValue() && !R->isNullValue())
+    return 1;
+  if (!L->isNullValue() && R->isNullValue())
+    return -1;
+
+  if (int Res = cmpNumbers(L->getValueID(), R->getValueID()))
+    return Res;
+
+  switch (L->getValueID()) {
+  case Value::UndefValueVal: return TypesRes;
+  case Value::ConstantIntVal: {
+    const APInt &LInt = cast<ConstantInt>(L)->getValue();
+    const APInt &RInt = cast<ConstantInt>(R)->getValue();
+    return cmpAPInt(LInt, RInt);
+  }
+  case Value::ConstantFPVal: {
+    const APFloat &LAPF = cast<ConstantFP>(L)->getValueAPF();
+    const APFloat &RAPF = cast<ConstantFP>(R)->getValueAPF();
+    return cmpAPFloat(LAPF, RAPF);
+  }
+  case Value::ConstantArrayVal: {
+    const ConstantArray *LA = cast<ConstantArray>(L);
+    const ConstantArray *RA = cast<ConstantArray>(R);
+    uint64_t NumElementsL = cast<ArrayType>(TyL)->getNumElements();
+    uint64_t NumElementsR = cast<ArrayType>(TyR)->getNumElements();
+    if (int Res = cmpNumbers(NumElementsL, NumElementsR))
+      return Res;
+    for (uint64_t i = 0; i < NumElementsL; ++i) {
+      if (int Res = cmpConstants(cast<Constant>(LA->getOperand(i)),
+                                 cast<Constant>(RA->getOperand(i))))
+        return Res;
+    }
+    return 0;
+  }
+  case Value::ConstantStructVal: {
+    const ConstantStruct *LS = cast<ConstantStruct>(L);
+    const ConstantStruct *RS = cast<ConstantStruct>(R);
+    unsigned NumElementsL = cast<StructType>(TyL)->getNumElements();
+    unsigned NumElementsR = cast<StructType>(TyR)->getNumElements();
+    if (int Res = cmpNumbers(NumElementsL, NumElementsR))
+      return Res;
+    for (unsigned i = 0; i != NumElementsL; ++i) {
+      if (int Res = cmpConstants(cast<Constant>(LS->getOperand(i)),
+                                 cast<Constant>(RS->getOperand(i))))
+        return Res;
+    }
+    return 0;
+  }
+  case Value::ConstantVectorVal: {
+    const ConstantVector *LV = cast<ConstantVector>(L);
+    const ConstantVector *RV = cast<ConstantVector>(R);
+    unsigned NumElementsL = cast<VectorType>(TyL)->getNumElements();
+    unsigned NumElementsR = cast<VectorType>(TyR)->getNumElements();
+    if (int Res = cmpNumbers(NumElementsL, NumElementsR))
+      return Res;
+    for (uint64_t i = 0; i < NumElementsL; ++i) {
+      if (int Res = cmpConstants(cast<Constant>(LV->getOperand(i)),
+                                 cast<Constant>(RV->getOperand(i))))
+        return Res;
+    }
+    return 0;
+  }
+  case Value::ConstantExprVal: {
+    const ConstantExpr *LE = cast<ConstantExpr>(L);
+    const ConstantExpr *RE = cast<ConstantExpr>(R);
+    unsigned NumOperandsL = LE->getNumOperands();
+    unsigned NumOperandsR = RE->getNumOperands();
+    if (int Res = cmpNumbers(NumOperandsL, NumOperandsR))
+      return Res;
+    for (unsigned i = 0; i < NumOperandsL; ++i) {
+      if (int Res = cmpConstants(cast<Constant>(LE->getOperand(i)),
+                                 cast<Constant>(RE->getOperand(i))))
+        return Res;
+    }
+    return 0;
+  }
+  case Value::FunctionVal:
+  case Value::GlobalVariableVal:
+  case Value::GlobalAliasVal:
+  default: // Unknown constant, cast L and R pointers to numbers and compare.
+    return cmpNumbers((uint64_t)L, (uint64_t)R);
+  }
 }
 
 /// cmpType - compares two types,
@@ -465,10 +738,11 @@ bool FunctionComparator::enumerate(const Value *V1, const Value *V2) {
     if (C1->isNullValue() && C2->isNullValue() &&
         isEquivalentType(C1->getType(), C2->getType()))
       return true;
-    // Try bitcasting C2 to C1's type. If the bitcast is legal and returns C1
-    // then they must have equal bit patterns.
-    return C1->getType()->canLosslesslyBitCastTo(C2->getType()) &&
-      C1 == ConstantExpr::getBitCast(const_cast<Constant*>(C2), C1->getType());
+
+    // Compare constants:
+    // Check whether type of C1 is bitcastable to C2's type.
+    // If the bitcast is possible then compare raw constants contents.
+    return cmpConstants(C1, C2) == 0;
   }
 
   if (isa<InlineAsm>(V1) || isa<InlineAsm>(V2))
