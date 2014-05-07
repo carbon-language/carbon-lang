@@ -1,6 +1,7 @@
 ; RUN: llc -mtriple=aarch64-linux-gnu %s -o - | FileCheck %s
 ; RUN: llc -mtriple=aarch64_be-linux-gnu %s -o - | FileCheck --check-prefix=CHECK-BE %s
 ; RUN: llc -mtriple=arm64-apple-ios7.0 %s -o - | FileCheck %s
+; RUN: llc -mtriple=arm64_be-linux-gnu %s -o - | FileCheck --check-prefix=CHECK-BE %s
 
 define i128 @test_128bitmul(i128 %lhs, i128 %rhs) {
 ; CHECK-LABEL: test_128bitmul:

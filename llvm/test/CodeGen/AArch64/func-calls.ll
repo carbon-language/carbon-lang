@@ -2,9 +2,11 @@
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=aarch64_be-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-BE --check-prefix=CHECK-NOFP %s
+
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-ARM64
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -mattr=-neon | FileCheck --check-prefix=CHECK --check-prefix=CHECK-ARM64-NONEON %s
 ; RUN: llc -verify-machineinstrs < %s -mtriple=arm64-none-linux-gnu -mattr=-fp-armv8 | FileCheck --check-prefix=CHECK-NOFP %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm64_be-none-linux-gnu | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
 
 %myStruct = type { i64 , i8, i32 }
 
@@ -149,9 +151,9 @@ define void @check_i128_align() {
 
   call void @check_i128_regalign(i32 0, i128 42)
 ; CHECK-NOT: mov x1
-; CHECK-LE: movz x2, #42
+; CHECK-LE: movz x2, #{{0x2a|42}}
 ; CHECK-LE: mov x3, xzr
-; CHECK-BE: movz x3, #42
+; CHECK-BE: movz {{x|w}}3, #{{0x2a|42}}
 ; CHECK-BE: mov x2, xzr
 ; CHECK: bl check_i128_regalign
 

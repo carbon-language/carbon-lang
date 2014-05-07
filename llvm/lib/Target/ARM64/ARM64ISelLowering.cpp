@@ -1678,8 +1678,10 @@ SDValue ARM64TargetLowering::LowerFormalArguments(
       int Size = Ins[i].Flags.getByValSize();
       unsigned NumRegs = (Size + 7) / 8;
 
+      // FIXME: This works on big-endian for composite byvals, which are the common
+      // case. It should also work for fundamental types too.
       unsigned FrameIdx =
-          MFI->CreateFixedObject(8 * NumRegs, VA.getLocMemOffset(), false);
+        MFI->CreateFixedObject(8 * NumRegs, VA.getLocMemOffset(), false);
       SDValue FrameIdxN = DAG.getFrameIndex(FrameIdx, PtrTy);
       InVals.push_back(FrameIdxN);
 
@@ -1737,13 +1739,33 @@ SDValue ARM64TargetLowering::LowerFormalArguments(
       assert(VA.isMemLoc() && "CCValAssign is neither reg nor mem");
       unsigned ArgOffset = VA.getLocMemOffset();
       unsigned ArgSize = VA.getLocVT().getSizeInBits() / 8;
-      int FI = MFI->CreateFixedObject(ArgSize, ArgOffset, true);
+
+      uint32_t BEAlign = 0;
+      if (ArgSize < 8 && !Subtarget->isLittleEndian())
+        BEAlign = 8 - ArgSize;
+
+      int FI = MFI->CreateFixedObject(ArgSize, ArgOffset + BEAlign, true);
 
       // Create load nodes to retrieve arguments from the stack.
       SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
-      InVals.push_back(DAG.getLoad(VA.getValVT(), DL, Chain, FIN,
-                                   MachinePointerInfo::getFixedStack(FI), false,
-                                   false, false, 0));
+      SDValue ArgValue;
+
+      // If the loc type and val type are not the same, create an anyext load.
+      if (VA.getLocVT().getSizeInBits() != VA.getValVT().getSizeInBits()) {
+        // We should only get here if this is a pure integer.
+        assert(!VA.getValVT().isVector() && VA.getValVT().isInteger() &&
+               "Only integer extension supported!");
+        ArgValue = DAG.getExtLoad(ISD::EXTLOAD, DL, VA.getValVT(), Chain, FIN,
+                                  MachinePointerInfo::getFixedStack(FI),
+                                  VA.getLocVT(),
+                                  false, false, false, 0);
+      } else {
+        ArgValue = DAG.getLoad(VA.getValVT(), DL, Chain, FIN,
+                               MachinePointerInfo::getFixedStack(FI), false,
+                               false, false, 0);
+      }
+
+      InVals.push_back(ArgValue);
     }
   }
 
@@ -2089,8 +2111,18 @@ SDValue ARM64TargetLowering::LowerCall(CallLoweringInfo &CLI,
       // There's no reason we can't support stack args w/ tailcall, but
       // we currently don't, so assert if we see one.
       assert(!IsTailCall && "stack argument with tail call!?");
+
+      // FIXME: This works on big-endian for composite byvals, which are the common
+      // case. It should also work for fundamental types too.
+      uint32_t BEAlign = 0;
+      if (!Subtarget->isLittleEndian() && !Flags.isByVal()) {
+        unsigned OpSize = (VA.getLocVT().getSizeInBits() + 7) / 8;
+        if (OpSize < 8)
+          BEAlign = 8 - OpSize;
+      }
+
       unsigned LocMemOffset = VA.getLocMemOffset();
-      SDValue PtrOff = DAG.getIntPtrConstant(LocMemOffset);
+      SDValue PtrOff = DAG.getIntPtrConstant(LocMemOffset + BEAlign);
       PtrOff = DAG.getNode(ISD::ADD, DL, getPointerTy(), StackPtr, PtrOff);
 
       if (Outs[i].Flags.isByVal()) {

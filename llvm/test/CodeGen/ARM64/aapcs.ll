@@ -21,7 +21,7 @@ define void @test_stack_slots([8 x i32], i1 %bool, i8 %char, i16 %short,
 
   %ext_bool = zext i1 %bool to i64
   store volatile i64 %ext_bool, i64* @var64, align 8
-; CHECK: ldr w[[EXT:[0-9]+]], [sp]
+; CHECK: ldrb w[[EXT:[0-9]+]], [sp]
 ; CHECK: and x[[EXTED:[0-9]+]], x[[EXT]], #0x1
 ; CHECK: str x[[EXTED]], [{{x[0-9]+}}, :lo12:var64]
 
@@ -37,7 +37,7 @@ define void @test_stack_slots([8 x i32], i1 %bool, i8 %char, i16 %short,
 
   %ext_int = zext i32 %int to i64
   store volatile i64 %ext_int, i64* @var64, align 8
-; CHECK: ldr w[[EXT:[0-9]+]], [sp, #24]
+; CHECK: ldr{{b?}} w[[EXT:[0-9]+]], [sp, #24]
 ; CHECK: str x[[EXT]], [{{x[0-9]+}}, :lo12:var64]
 
   store volatile i64 %long, i64* @var64, align 8
