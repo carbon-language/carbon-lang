@@ -490,6 +490,42 @@ static ShuffleOps CollectShuffleElements(Value *V,
   return std::make_pair(V, nullptr);
 }
 
+/// Try to find redundant insertvalue instructions, like the following ones:
+///  %0 = insertvalue { i8, i32 } undef, i8 %x, 0
+///  %1 = insertvalue { i8, i32 } %0,    i8 %y, 0
+/// Here the second instruction inserts values at the same indices, as the
+/// first one, making the first one redundant.
+/// It should be transformed to:
+///  %0 = insertvalue { i8, i32 } undef, i8 %y, 0
+Instruction *InstCombiner::visitInsertValueInst(InsertValueInst &I) {
+  bool IsRedundant = false;
+  ArrayRef<unsigned int> FirstIndices = I.getIndices();
+
+  // If there is a chain of insertvalue instructions (each of them except the
+  // last one has only one use and it's another insertvalue insn from this
+  // chain), check if any of the 'children' uses the same indices as the first
+  // instruction. In this case, the first one is redundant.
+  Value *V = &I;
+  unsigned int Depth = 0;
+  while (V->hasOneUse() && Depth < 10) {
+    User *U = V->user_back();
+    InsertValueInst *UserInsInst = dyn_cast<InsertValueInst>(U);
+    if (!UserInsInst || U->getType() != I.getType()) {
+      break;
+    }
+    if (UserInsInst->getIndices() == FirstIndices) {
+      IsRedundant = true;
+      break;
+    }
+    V = UserInsInst;
+    Depth++;
+  }
+
+  if (IsRedundant)
+    return ReplaceInstUsesWith(I, I.getOperand(0));
+  return nullptr;
+}
+
 Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
   Value *VecOp    = IE.getOperand(0);
   Value *ScalarOp = IE.getOperand(1);

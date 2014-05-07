@@ -211,6 +211,7 @@ public:
   Instruction *visitStoreInst(StoreInst &SI);
   Instruction *visitBranchInst(BranchInst &BI);
   Instruction *visitSwitchInst(SwitchInst &SI);
+  Instruction *visitInsertValueInst(InsertValueInst &IV);
   Instruction *visitInsertElementInst(InsertElementInst &IE);
   Instruction *visitExtractElementInst(ExtractElementInst &EI);
   Instruction *visitShuffleVectorInst(ShuffleVectorInst &SVI);
