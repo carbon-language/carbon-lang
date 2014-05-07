@@ -8,3 +8,6 @@
 # global:*global_with_bad_access_or_initialization*
 # global:*global_with_initialization_issues*=init
 # type:*Namespace::ClassName*=init
+
+# Stack buffer overflow in VC/INCLUDE/xlocnum, see http://goo.gl/L4qqUG
+fun:*_Find_elem@*@std*
