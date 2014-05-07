@@ -3697,27 +3697,28 @@ Decl *ASTNodeImporter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
     // Verify that the existing @implementation has the same superclass.
     if ((Super && !Impl->getSuperClass()) ||
         (!Super && Impl->getSuperClass()) ||
-        (Super && Impl->getSuperClass() && 
-         !declaresSameEntity(Super->getCanonicalDecl(), Impl->getSuperClass()))) {
-        Importer.ToDiag(Impl->getLocation(), 
-                        diag::err_odr_objc_superclass_inconsistent)
-          << Iface->getDeclName();
-        // FIXME: It would be nice to have the location of the superclass
-        // below.
-        if (Impl->getSuperClass())
-          Importer.ToDiag(Impl->getLocation(), 
+        (Super && Impl->getSuperClass() &&
+         !declaresSameEntity(Super->getCanonicalDecl(),
+                             Impl->getSuperClass()))) {
+      Importer.ToDiag(Impl->getLocation(),
+                      diag::err_odr_objc_superclass_inconsistent)
+        << Iface->getDeclName();
+      // FIXME: It would be nice to have the location of the superclass
+      // below.
+      if (Impl->getSuperClass())
+        Importer.ToDiag(Impl->getLocation(),
+                        diag::note_odr_objc_superclass)
+        << Impl->getSuperClass()->getDeclName();
+      else
+        Importer.ToDiag(Impl->getLocation(),
+                        diag::note_odr_objc_missing_superclass);
+      if (D->getSuperClass())
+        Importer.FromDiag(D->getLocation(),
                           diag::note_odr_objc_superclass)
-          << Impl->getSuperClass()->getDeclName();
-        else
-          Importer.ToDiag(Impl->getLocation(), 
+        << D->getSuperClass()->getDeclName();
+      else
+        Importer.FromDiag(D->getLocation(),
                           diag::note_odr_objc_missing_superclass);
-        if (D->getSuperClass())
-          Importer.FromDiag(D->getLocation(), 
-                            diag::note_odr_objc_superclass)
-          << D->getSuperClass()->getDeclName();
-        else
-          Importer.FromDiag(D->getLocation(), 
-                            diag::note_odr_objc_missing_superclass);
       return 0;
     }
   }
