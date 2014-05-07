@@ -153,6 +153,8 @@ class NSOrCFErrorDerefChecker
     : public Checker< check::Location,
                         check::Event<ImplicitNullDerefEvent> > {
   mutable IdentifierInfo *NSErrorII, *CFErrorII;
+  mutable std::unique_ptr<NSErrorDerefBug> NSBT;
+  mutable std::unique_ptr<CFErrorDerefBug> CFBT;
 public:
   bool ShouldCheckNSError, ShouldCheckCFError;
   NSOrCFErrorDerefChecker() : NSErrorII(0), CFErrorII(0),
@@ -263,10 +265,16 @@ void NSOrCFErrorDerefChecker::checkEvent(ImplicitNullDerefEvent event) const {
   os  << " may be null";
 
   BugType *bug = 0;
-  if (isNSError)
-    bug = new NSErrorDerefBug(this);
-  else
-    bug = new CFErrorDerefBug(this);
+  if (isNSError) {
+    if (!NSBT)
+      NSBT.reset(new NSErrorDerefBug(this));
+    bug = NSBT.get();
+  }
+  else {
+    if (!CFBT)
+      CFBT.reset(new CFErrorDerefBug(this));
+    bug = CFBT.get();
+  }
   BugReport *report = new BugReport(*bug, os.str(), event.SinkNode);
   BR.emitReport(report);
 }
