@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple arm64_be < %s -arm64-load-store-opt=false -o - | FileCheck %s
+; RUN: llc -mtriple arm64_be < %s -fast-isel=true -arm64-load-store-opt=false -o - | FileCheck %s
 
 ; CHECK-LABEL: test_i64_f64:
 define i64 @test_i64_f64(double %p) {

@@ -1,4 +1,5 @@
-; RUN: llc -mtriple arm64_be < %s -arm64-load-store-opt=false -o - | FileCheck %s
+; RUN: llc -mtriple arm64_be < %s -arm64-load-store-opt=false -O1 -o - | FileCheck %s
+; RUN: llc -mtriple arm64_be < %s -arm64-load-store-opt=false -O0 -fast-isel=true -o - | FileCheck %s
 
 ; CHECK-LABEL: test_i64_f64:
 define void @test_i64_f64(double* %p, i64* %q) {

@@ -1593,6 +1593,11 @@ bool ARM64FastISel::SelectRet(const Instruction *I) {
     EVT RVEVT = TLI.getValueType(RV->getType());
     if (!RVEVT.isSimple())
       return false;
+
+    // Vectors (of > 1 lane) in big endian need tricky handling.
+    if (RVEVT.isVector() && RVEVT.getVectorNumElements() > 1)
+      return false;
+
     MVT RVVT = RVEVT.getSimpleVT();
     if (RVVT == MVT::f128)
       return false;
