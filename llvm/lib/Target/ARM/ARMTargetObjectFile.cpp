@@ -11,6 +11,7 @@
 #include "ARMSubtarget.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/Mangler.h"
+#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSectionELF.h"
@@ -45,6 +46,10 @@ const MCExpr *ARMElfTargetObjectFile::getTTypeGlobalReference(
     const GlobalValue *GV, unsigned Encoding, Mangler &Mang,
     const TargetMachine &TM, MachineModuleInfo *MMI,
     MCStreamer &Streamer) const {
+  if (TM.getMCAsmInfo()->getExceptionHandlingType() != ExceptionHandling::ARM)
+    return TargetLoweringObjectFileELF::getTTypeGlobalReference(
+        GV, Encoding, Mang, TM, MMI, Streamer);
+
   assert(Encoding == DW_EH_PE_absptr && "Can handle absptr encoding only");
 
   return MCSymbolRefExpr::Create(TM.getSymbol(GV, Mang),

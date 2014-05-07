@@ -260,6 +260,10 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
   }
 
   switch (T.getArch()) {
+  case Triple::arm:
+  case Triple::armeb:
+  case Triple::thumb:
+  case Triple::thumbeb:
   case Triple::x86:
     PersonalityEncoding = (RelocM == Reloc::PIC_)
      ? dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4

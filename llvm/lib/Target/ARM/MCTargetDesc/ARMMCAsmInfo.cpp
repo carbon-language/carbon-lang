@@ -59,7 +59,14 @@ ARMELFMCAsmInfo::ARMELFMCAsmInfo(StringRef TT) {
   SupportsDebugInformation = true;
 
   // Exceptions handling
-  ExceptionsType = ExceptionHandling::ARM;
+  switch (TheTriple.getOS()) {
+  case Triple::NetBSD:
+    ExceptionsType = ExceptionHandling::DwarfCFI;
+    break;
+  default:
+    ExceptionsType = ExceptionHandling::ARM;
+    break;
+  }
 
   // foo(plt) instead of foo@plt
   UseParensForSymbolVariant = true;

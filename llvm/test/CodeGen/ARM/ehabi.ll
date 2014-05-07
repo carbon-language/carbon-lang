@@ -50,6 +50,22 @@
 ; RUN:     -filetype=asm -o - %s \
 ; RUN:   | FileCheck %s --check-prefix=CHECK-V7-FP-ELIM
 
+; RUN: llc -mtriple arm-unknown-netbsd-eabi \
+; RUN:     -disable-fp-elim -filetype=asm -o - %s \
+; RUN:   | FileCheck %s --check-prefix=DWARF-FP
+
+; RUN: llc -mtriple arm-unknown-netbsd-eabi \
+; RUN:     -filetype=asm -o - %s \
+; RUN:   | FileCheck %s --check-prefix=DWARF-FP-ELIM
+
+; RUN: llc -mtriple armv7-unknown-netbsd-eabi \
+; RUN:     -disable-fp-elim -filetype=asm -o - %s \
+; RUN:   | FileCheck %s --check-prefix=DWARF-V7-FP
+
+; RUN: llc -mtriple armv7-unknown-netbsd-eabi \
+; RUN:     -filetype=asm -o - %s \
+; RUN:   | FileCheck %s --check-prefix=DWARF-V7-FP-ELIM
+
 ;-------------------------------------------------------------------------------
 ; Test 1
 ;-------------------------------------------------------------------------------
@@ -172,6 +188,93 @@ declare void @_ZSt9terminatev()
 ; CHECK-V7-FP-ELIM:   .handlerdata
 ; CHECK-V7-FP-ELIM:   .fnend
 
+; DWARF-FP-LABEL: _Z4testiiiiiddddd:
+; DWARF-FP:    .cfi_startproc
+; DWARF-FP:    .cfi_personality 0, __gxx_personality_v0
+; DWARF-FP:    .cfi_lsda 0, .Lexception0
+; DWARF-FP:    push {r4, r5, r6, r7, r8, r9, r10, r11, lr}
+; DWARF-FP:    .cfi_def_cfa_offset 36
+; DWARF-FP:    .cfi_offset lr, -4
+; DWARF-FP:    .cfi_offset r11, -8
+; DWARF-FP:    .cfi_offset r10, -12
+; DWARF-FP:    .cfi_offset r9, -16
+; DWARF-FP:    .cfi_offset r8, -20
+; DWARF-FP:    .cfi_offset r7, -24
+; DWARF-FP:    .cfi_offset r6, -28
+; DWARF-FP:    .cfi_offset r5, -32
+; DWARF-FP:    .cfi_offset r4, -36
+; DWARF-FP:    add r11, sp, #28
+; DWARF-FP:    .cfi_def_cfa r11, 8
+; DWARF-FP:    sub sp, sp, #28
+; DWARF-FP:    sub sp, r11, #28
+; DWARF-FP:    pop {r4, r5, r6, r7, r8, r9, r10, r11, lr}
+; DWARF-FP:    mov pc, lr
+; DWARF-FP:    .cfi_endproc
+
+; DWARF-FP-ELIM-LABEL: _Z4testiiiiiddddd:
+; DWARF-FP-ELIM:    .cfi_startproc
+; DWARF-FP-ELIM:    .cfi_personality 0, __gxx_personality_v0
+; DWARF-FP-ELIM:    .cfi_lsda 0, .Lexception0
+; DWARF-FP-ELIM:    push {r4, r5, r6, r7, r8, r9, r10, r11, lr}
+; DWARF-FP-ELIM:    .cfi_def_cfa_offset 36
+; DWARF-FP-ELIM:    .cfi_offset lr, -4
+; DWARF-FP-ELIM:    .cfi_offset r11, -8
+; DWARF-FP-ELIM:    .cfi_offset r10, -12
+; DWARF-FP-ELIM:    .cfi_offset r9, -16
+; DWARF-FP-ELIM:    .cfi_offset r8, -20
+; DWARF-FP-ELIM:    .cfi_offset r7, -24
+; DWARF-FP-ELIM:    .cfi_offset r6, -28
+; DWARF-FP-ELIM:    .cfi_offset r5, -32
+; DWARF-FP-ELIM:    .cfi_offset r4, -36
+; DWARF-FP-ELIM:    sub sp, sp, #28
+; DWARF-FP-ELIM:    .cfi_def_cfa_offset 64
+; DWARF-FP-ELIM:    add sp, sp, #28
+; DWARF-FP-ELIM:    pop {r4, r5, r6, r7, r8, r9, r10, r11, lr}
+; DWARF-FP-ELIM:    mov pc, lr
+; DWARF-FP-ELIM:    .cfi_endproc
+
+; DWARF-V7-FP-LABEL: _Z4testiiiiiddddd:
+; DWARF-V7-FP:    .cfi_startproc
+; DWARF-V7-FP:    .cfi_personality 0, __gxx_personality_v0
+; DWARF-V7-FP:    .cfi_lsda 0, .Lexception0
+; DWARF-V7-FP:    push {r4, r10, r11, lr}
+; DWARF-V7-FP:    .cfi_def_cfa_offset 16
+; DWARF-V7-FP:    .cfi_offset lr, -4
+; DWARF-V7-FP:    .cfi_offset r11, -8
+; DWARF-V7-FP:    .cfi_offset r10, -12
+; DWARF-V7-FP:    .cfi_offset r4, -16
+; DWARF-V7-FP:    add r11, sp, #8
+; DWARF-V7-FP:    .cfi_def_cfa r11, 8
+; DWARF-V7-FP:    vpush {d8, d9, d10, d11, d12}
+; DWARF-V7-FP:    .cfi_offset d12, -24
+; DWARF-V7-FP:    .cfi_offset d11, -32
+; DWARF-V7-FP:    .cfi_offset d10, -40
+; DWARF-V7-FP:    .cfi_offset d9, -48
+; DWARF-V7-FP:    sub sp, sp, #24
+; DWARF-V7-FP:    sub sp, r11, #48
+; DWARF-V7-FP:    vpop {d8, d9, d10, d11, d12}
+; DWARF-V7-FP:    pop {r4, r10, r11, pc}
+; DWARF-V7-FP:    .cfi_endproc
+
+; DWARF-V7-FP-ELIM-LABEL: _Z4testiiiiiddddd:
+; DWARF-V7-FP-ELIM:    .cfi_startproc
+; DWARF-V7-FP-ELIM:    .cfi_personality 0, __gxx_personality_v0
+; DWARF-V7-FP-ELIM:    .cfi_lsda 0, .Lexception0
+; DWARF-V7-FP-ELIM:    push {r4, lr}
+; DWARF-V7-FP-ELIM:    .cfi_def_cfa_offset 8
+; DWARF-V7-FP-ELIM:    .cfi_offset lr, -4
+; DWARF-V7-FP-ELIM:    .cfi_offset r4, -8
+; DWARF-V7-FP-ELIM:    vpush {d8, d9, d10, d11, d12}
+; DWARF-V7-FP-ELIM:    .cfi_offset d12, -16
+; DWARF-V7-FP-ELIM:    .cfi_offset d11, -24
+; DWARF-V7-FP-ELIM:    .cfi_offset d10, -32
+; DWARF-V7-FP-ELIM:    .cfi_offset d9, -40
+; DWARF-V7-FP-ELIM:    sub sp, sp, #24
+; DWARF-V7-FP-ELIM:    .cfi_def_cfa_offset 72
+; DWARF-V7-FP-ELIM:    add sp, sp, #24
+; DWARF-V7-FP-ELIM:    vpop {d8, d9, d10, d11, d12}
+; DWARF-V7-FP-ELIM:    pop {r4, pc}
+; DWARF-V7-FP-ELIM:    .cfi_endproc
 
 ;-------------------------------------------------------------------------------
 ; Test 2
@@ -218,6 +321,48 @@ entry:
 ; CHECK-V7-FP-ELIM:   push  {r11, lr}
 ; CHECK-V7-FP-ELIM:   pop   {r11, pc}
 ; CHECK-V7-FP-ELIM:   .fnend
+
+; DWARF-FP-LABEL: test2:
+; DWARF-FP:    .cfi_startproc
+; DWARF-FP:    push {r11, lr}
+; DWARF-FP:    .cfi_def_cfa_offset 8
+; DWARF-FP:    .cfi_offset lr, -4
+; DWARF-FP:    .cfi_offset r11, -8
+; DWARF-FP:    mov  r11, sp
+; DWARF-FP:    .cfi_def_cfa_register r11
+; DWARF-FP:    pop  {r11, lr}
+; DWARF-FP:    mov  pc, lr
+; DWARF-FP:    .cfi_endproc
+
+; DWARF-FP-ELIM-LABEL: test2:
+; DWARF-FP-ELIM:    .cfi_startproc
+; DWARF-FP-ELIM:    push {r11, lr}
+; DWARF-FP-ELIM:    .cfi_def_cfa_offset 8
+; DWARF-FP-ELIM:    .cfi_offset lr, -4
+; DWARF-FP-ELIM:    .cfi_offset r11, -8
+; DWARF-FP-ELIM:    pop  {r11, lr}
+; DWARF-FP-ELIM:    mov  pc, lr
+; DWARF-FP-ELIM:    .cfi_endproc
+
+; DWARF-V7-FP-LABEL: test2:
+; DWARF-V7-FP:    .cfi_startproc
+; DWARF-V7-FP:    push {r11, lr}
+; DWARF-V7-FP:    .cfi_def_cfa_offset 8
+; DWARF-V7-FP:    .cfi_offset lr, -4
+; DWARF-V7-FP:    .cfi_offset r11, -8
+; DWARF-V7-FP:    mov  r11, sp
+; DWARF-V7-FP:    .cfi_def_cfa_register r11
+; DWARF-V7-FP:    pop  {r11, pc}
+; DWARF-V7-FP:    .cfi_endproc
+
+; DWARF-V7-FP-ELIM-LABEL: test2:
+; DWARF-V7-FP-ELIM:    .cfi_startproc
+; DWARF-V7-FP-ELIM:    push {r11, lr}
+; DWARF-V7-FP-ELIM:    .cfi_def_cfa_offset 8
+; DWARF-V7-FP-ELIM:    .cfi_offset lr, -4
+; DWARF-V7-FP-ELIM:    .cfi_offset r11, -8
+; DWARF-V7-FP-ELIM:    pop  {r11, pc}
+; DWARF-V7-FP-ELIM:    .cfi_endproc
 
 
 ;-------------------------------------------------------------------------------
@@ -275,6 +420,56 @@ entry:
 ; CHECK-V7-FP-ELIM:   pop   {r4, r5, r11, pc}
 ; CHECK-V7-FP-ELIM:   .fnend
 
+; DWARF-FP-LABEL: test3:
+; DWARF-FP:    .cfi_startproc
+; DWARF-FP:    push {r4, r5, r11, lr}
+; DWARF-FP:    .cfi_def_cfa_offset 16
+; DWARF-FP:    .cfi_offset lr, -4
+; DWARF-FP:    .cfi_offset r11, -8
+; DWARF-FP:    .cfi_offset r5, -12
+; DWARF-FP:    .cfi_offset r4, -16
+; DWARF-FP:    add  r11, sp, #8
+; DWARF-FP:    .cfi_def_cfa r11, 8
+; DWARF-FP:    pop  {r4, r5, r11, lr}
+; DWARF-FP:    mov  pc, lr
+; DWARF-FP:    .cfi_endproc
+
+; DWARF-FP-ELIM-LABEL: test3:
+; DWARF-FP-ELIM:    .cfi_startproc
+; DWARF-FP-ELIM:    push {r4, r5, r11, lr}
+; DWARF-FP-ELIM:    .cfi_def_cfa_offset 16
+; DWARF-FP-ELIM:    .cfi_offset lr, -4
+; DWARF-FP-ELIM:    .cfi_offset r11, -8
+; DWARF-FP-ELIM:    .cfi_offset r5, -12
+; DWARF-FP-ELIM:    .cfi_offset r4, -16
+; DWARF-FP-ELIM:    pop  {r4, r5, r11, lr}
+; DWARF-FP-ELIM:    mov  pc, lr
+; DWARF-FP-ELIM:    .cfi_endproc
+
+; DWARF-V7-FP-LABEL: test3:
+; DWARF-V7-FP:    .cfi_startproc
+; DWARF-V7-FP:    push {r4, r5, r11, lr}
+; DWARF-V7-FP:    .cfi_def_cfa_offset 16
+; DWARF-V7-FP:    .cfi_offset lr, -4
+; DWARF-V7-FP:    .cfi_offset r11, -8
+; DWARF-V7-FP:    .cfi_offset r5, -12
+; DWARF-V7-FP:    .cfi_offset r4, -16
+; DWARF-V7-FP:    add  r11, sp, #8
+; DWARF-V7-FP:    .cfi_def_cfa r11, 8
+; DWARF-V7-FP:    pop  {r4, r5, r11, pc}
+; DWARF-V7-FP:    .cfi_endproc
+
+; DWARF-V7-FP-ELIM-LABEL: test3:
+; DWARF-V7-FP-ELIM:    .cfi_startproc
+; DWARF-V7-FP-ELIM:    push {r4, r5, r11, lr}
+; DWARF-V7-FP-ELIM:    .cfi_def_cfa_offset 16
+; DWARF-V7-FP-ELIM:    .cfi_offset lr, -4
+; DWARF-V7-FP-ELIM:    .cfi_offset r11, -8
+; DWARF-V7-FP-ELIM:    .cfi_offset r5, -12
+; DWARF-V7-FP-ELIM:    .cfi_offset r4, -16
+; DWARF-V7-FP-ELIM:    pop  {r4, r5, r11, pc}
+; DWARF-V7-FP-ELIM:    .cfi_endproc
+
 
 ;-------------------------------------------------------------------------------
 ; Test 4
@@ -308,3 +503,27 @@ entry:
 ; CHECK-V7-FP-ELIM:   bx lr
 ; CHECK-V7-FP-ELIM:   .cantunwind
 ; CHECK-V7-FP-ELIM:   .fnend
+
+; DWARF-FP-LABEL: test4:
+; DWARF-FP-NOT: .cfi_startproc
+; DWARF-FP:    mov pc, lr
+; DWARF-FP-NOT: .cfi_endproc
+; DWARF-FP:    .size test4,
+
+; DWARF-FP-ELIM-LABEL: test4:
+; DWARF-FP-ELIM-NOT: .cfi_startproc
+; DWARF-FP-ELIM:     mov pc, lr
+; DWARF-FP-ELIM-NOT: .cfi_endproc
+; DWARF-FP-ELIM:     .size test4,
+
+; DWARF-V7-FP-LABEL: test4:
+; DWARF-V7-FP-NOT: .cfi_startproc
+; DWARF-V7-FP:    bx lr
+; DWARF-V7-FP-NOT: .cfi_endproc
+; DWARF-V7-FP:    .size test4,
+
+; DWARF-V7-FP-ELIM-LABEL: test4:
+; DWARF-V7-FP-ELIM-NOT: .cfi_startproc
+; DWARF-V7-FP-ELIM:     bx lr
+; DWARF-V7-FP-ELIM-NOT: .cfi_endproc
+; DWARF-V7-FP-ELIM:     .size test4,
