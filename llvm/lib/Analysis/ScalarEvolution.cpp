@@ -6975,8 +6975,7 @@ public:
   static void divide(ScalarEvolution &SE, const SCEV *Numerator,
                      const SCEV *Denominator, const SCEV **Quotient,
                      const SCEV **Remainder) {
-    assert(Numerator && Denominator && *Quotient && *Remainder &&
-           "Uninitialized SCEV");
+    assert(Numerator && Denominator && "Uninitialized SCEV");
 
     SCEVDivision D(SE, Numerator, Denominator);
 
