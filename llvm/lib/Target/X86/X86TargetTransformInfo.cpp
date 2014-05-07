@@ -41,10 +41,6 @@ UsePartialUnrolling("x86-use-partial-unrolling", cl::init(true),
 static cl::opt<unsigned>
 PartialUnrollingThreshold("x86-partial-unrolling-threshold", cl::init(0),
   cl::desc("Threshold for X86 partial unrolling"), cl::Hidden);
-static cl::opt<unsigned>
-PartialUnrollingMaxBranches("x86-partial-max-branches", cl::init(2),
-  cl::desc("Threshold for taken branches in X86 partial unrolling"),
-  cl::Hidden);
 
 namespace {
 
@@ -172,49 +168,38 @@ void X86TTI::getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const {
   //  - The loop must have fewer than 16 branches
   //  - The loop must have less than 40 uops in all executed loop branches
 
-  unsigned MaxBranches, MaxOps;
+  // The number of taken branches in a loop is hard to estimate here, and
+  // benchmarking has revealed that it is better not to be conservative when
+  // estimating the branch count. As a result, we'll ignore the branch limits
+  // until someone finds a case where it matters in practice.
+
+  unsigned MaxOps;
   if (PartialUnrollingThreshold.getNumOccurrences() > 0) {
-    MaxBranches = PartialUnrollingMaxBranches;
     MaxOps = PartialUnrollingThreshold;
   } else if (ST->isAtom()) {
     // On the Atom, the throughput for taken branches is 2 cycles. For small
     // simple loops, expand by a small factor to hide the backedge cost.
-    MaxBranches = 2;
     MaxOps = 10;
   } else if (ST->hasFSGSBase() && ST->hasXOP() /* Steamroller and later */) {
-    MaxBranches = 16;
     MaxOps = 40;
   } else if (ST->hasFMA4() /* Any other recent AMD */) {
     return;
   } else if (ST->hasAVX() || ST->hasSSE42() /* Nehalem and later */) {
-    MaxBranches = 8;
     MaxOps = 28;
   } else if (ST->hasSSSE3() /* Intel Core */) {
-    MaxBranches = 4;
     MaxOps = 18;
   } else {
     return;
   }
 
-  // Scan the loop: don't unroll loops with calls, and count the potential
-  // number of taken branches (this is somewhat conservative because we're
-  // counting all block transitions as potential branches while in reality some
-  // of these will become implicit via block placement).
-  unsigned MaxDepth = 0;
-  for (df_iterator<BasicBlock*> DI = df_begin(L->getHeader()),
-       DE = df_end(L->getHeader()); DI != DE;) {
-    if (!L->contains(*DI)) {
-      DI.skipChildren();
-      continue;
-    }
+  // Scan the loop: don't unroll loops with calls.
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
 
-    MaxDepth = std::max(MaxDepth, DI.getPathLength());
-    if (MaxDepth > MaxBranches)
-      return;
-
-    for (BasicBlock::iterator I = DI->begin(), IE = DI->end(); I != IE; ++I)
-      if (isa<CallInst>(I) || isa<InvokeInst>(I)) {
-        ImmutableCallSite CS(I);
+    for (BasicBlock::iterator J = BB->begin(), JE = BB->end(); J != JE; ++J)
+      if (isa<CallInst>(J) || isa<InvokeInst>(J)) {
+        ImmutableCallSite CS(J);
         if (const Function *F = CS.getCalledFunction()) {
           if (!isLoweredToCall(F))
             continue;
@@ -222,23 +207,11 @@ void X86TTI::getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const {
 
         return;
       }
-
-    ++DI;
   }
 
   // Enable runtime and partial unrolling up to the specified size.
   UP.Partial = UP.Runtime = true;
   UP.PartialThreshold = UP.PartialOptSizeThreshold = MaxOps;
-
-  // Set the maximum count based on the loop depth. The maximum number of
-  // branches taken in a loop (including the backedge) is equal to the maximum
-  // loop depth (the DFS path length from the loop header to any block in the
-  // loop). When the loop is unrolled, this depth (except for the backedge
-  // itself) is multiplied by the unrolling factor. This new unrolled depth
-  // must be less than the target-specific maximum branch count (which limits
-  // the number of taken branches in the uop buffer).
-  if (MaxDepth > 1)
-    UP.MaxCount = (MaxBranches-1)/(MaxDepth-1);
 }
 
 unsigned X86TTI::getNumberOfRegisters(bool Vector) const {
