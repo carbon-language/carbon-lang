@@ -16,7 +16,7 @@
 #include "polly/Config/config.h"
 
 #ifdef GPU_CODEGEN
-#include "llvm/IR/IRBuilder.h"
+#include "polly/CodeGen/IRBuilder.h"
 #include "llvm/ADT/SetVector.h"
 
 #include <map>
@@ -34,7 +34,7 @@ class PTXGenerator {
 public:
   typedef std::map<Value *, Value *> ValueToValueMapTy;
 
-  PTXGenerator(IRBuilder<> &Builder, Pass *P, const std::string &Triple);
+  PTXGenerator(PollyIRBuilder &Builder, Pass *P, const std::string &Triple);
 
   /// @brief Create a GPGPU parallel loop.
   ///
@@ -76,7 +76,7 @@ public:
   void setOutputBytes(unsigned Bytes) { OutputBytes = Bytes; }
 
 private:
-  IRBuilder<> &Builder;
+  PollyIRBuilder &Builder;
   Pass *P;
 
   /// @brief The target triple of the device.
