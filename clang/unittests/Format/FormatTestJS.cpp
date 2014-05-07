@@ -98,6 +98,11 @@ TEST_F(FormatTestJS, GoogScopes) {
                "});  // goog.scope");
 }
 
+TEST_F(FormatTestJS, Closures) {
+  verifyFormat("doFoo(function() { return 1; });");
+  verifyFormat("var func = function() { return 1; };");
+}
+
 TEST_F(FormatTestJS, ReturnStatements) {
   verifyFormat("function() { return [hello, world]; }");
 }

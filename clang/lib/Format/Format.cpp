@@ -654,6 +654,10 @@ private:
       Tok->CanBreakBefore = true;
       return 1;
     } else if (Limit != 0 && Line.First->isNot(tok::kw_namespace)) {
+      // We don't merge short records.
+      if (Line.First->isOneOf(tok::kw_class, tok::kw_union, tok::kw_struct))
+        return 0;
+
       // Check that we still have three lines and they fit into the limit.
       if (I + 2 == E || I[2]->Type == LT_Invalid)
         return 0;
@@ -672,9 +676,9 @@ private:
         Tok = Tok->Next;
       } while (Tok != NULL);
 
-      // Last, check that the third line contains a single closing brace.
+      // Last, check that the third line starts with a closing brace.
       Tok = I[2]->First;
-      if (Tok->getNextNonComment() != NULL || Tok->isNot(tok::r_brace))
+      if (Tok->isNot(tok::r_brace))
         return 0;
 
       return 2;
