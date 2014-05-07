@@ -251,7 +251,6 @@
 // S-ARM-7: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o"
 // S-ARM-7: "{{.*}}/usr/lib{{/|\\\\}}eabi{{/|\\\\}}crti.o"
 // S-ARM-7: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
-// S-ARM-7: "-lgcc_eh" "-lc" "-lgcc"
 // S-ARM-7: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
 // S-ARM-6: clang{{.*}}" "-cc1" "-triple" "armv5e--netbsd6.0.0-eabi"
