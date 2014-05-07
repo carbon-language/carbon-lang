@@ -14,6 +14,9 @@
 /// CCIfAlign - Match of the original alignment of the arg
 class CCIfAlign<string Align, CCAction A> :
   CCIf<!strconcat("ArgFlags.getOrigAlign() == ", Align), A>;
+/// CCIfBigEndian - Match only if we're in big endian mode.
+class CCIfBigEndian<CCAction A> :
+  CCIf<"State.getTarget().getDataLayout()->isBigEndian()", A>;
 
 //===----------------------------------------------------------------------===//
 // ARM AAPCS64 Calling Convention
@@ -22,6 +25,13 @@ class CCIfAlign<string Align, CCAction A> :
 def CC_ARM64_AAPCS : CallingConv<[
   CCIfType<[v2f32], CCBitConvertToType<v2i32>>,
   CCIfType<[v2f64, v4f32], CCBitConvertToType<v2i64>>,
+
+  // Big endian vectors must be passed as if they were 1-element vectors so that
+  // their lanes are in a consistent order.
+  CCIfBigEndian<CCIfType<[v2i32, v2f32, v4i16, v4f16, v8i8],
+                         CCBitConvertToType<f64>>>,
+  CCIfBigEndian<CCIfType<[v2i64, v2f64, v4i32, v4f32, v8i16, v8f16, v16i8],
+                         CCBitConvertToType<f128>>>,
 
   // An SRet is passed in X8, not X0 like a normal pointer parameter.
   CCIfSRet<CCIfType<[i64], CCAssignToRegWithShadow<[X8], [W8]>>>,
@@ -66,6 +76,13 @@ def CC_ARM64_AAPCS : CallingConv<[
 def RetCC_ARM64_AAPCS : CallingConv<[
   CCIfType<[v2f32], CCBitConvertToType<v2i32>>,
   CCIfType<[v2f64, v4f32], CCBitConvertToType<v2i64>>,
+
+  // Big endian vectors must be passed as if they were 1-element vectors so that
+  // their lanes are in a consistent order.
+  CCIfBigEndian<CCIfType<[v2i32, v2f32, v4i16, v4f16, v8i8],
+                         CCBitConvertToType<f64>>>,
+  CCIfBigEndian<CCIfType<[v2i64, v2f64, v4i32, v4f32, v8i16, v8f16, v16i8],
+                         CCBitConvertToType<f128>>>,
 
   CCIfType<[i32], CCAssignToRegWithShadow<[W0, W1, W2, W3, W4, W5, W6, W7],
                                           [X0, X1, X2, X3, X4, X5, X6, X7]>>,
