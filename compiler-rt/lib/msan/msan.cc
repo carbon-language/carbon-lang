@@ -411,12 +411,13 @@ sptr __msan_test_shadow(const void *x, uptr size) {
 
 void __msan_check_mem_is_initialized(const void *x, uptr size) {
   if (!__msan::flags()->report_umrs) return;
-  sptr offset = __msan_test_shadow(x, size) < 0;
+  sptr offset = __msan_test_shadow(x, size);
   if (offset < 0)
     return;
 
   GET_CALLER_PC_BP_SP;
   (void)sp;
+  ReportUMRInsideAddressRange(__func__, x, size, offset);
   __msan::PrintWarningWithOrigin(pc, bp,
                                  __msan_get_origin(((char *)x) + offset));
   if (__msan::flags()->halt_on_error) {

@@ -84,6 +84,8 @@ void ReportUMR(StackTrace *stack, u32 origin);
 void ReportExpectedUMRNotFound(StackTrace *stack);
 void ReportAtExitStatistics();
 void DescribeMemoryRange(const void *x, uptr size);
+void ReportUMRInsideAddressRange(const char *what, const void *start, uptr size,
+                                 uptr offset);
 
 // Unpoison first n function arguments.
 void UnpoisonParam(uptr n);

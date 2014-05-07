@@ -235,4 +235,15 @@ void DescribeMemoryRange(const void *x, uptr size) {
   }
 }
 
+void ReportUMRInsideAddressRange(const char *what, const void *start, uptr size,
+                                 uptr offset) {
+  Decorator d;
+  Printf("%s", d.Warning());
+  Printf("%sUninitialized bytes in %s%s%s at offset %zu inside [%p, %zu)%s\n",
+         d.Warning(), d.Name(), what, d.Warning(), offset, start, size,
+         d.End());
+  if (__sanitizer::common_flags()->verbosity > 0)
+    DescribeMemoryRange(start, size);
+}
+
 }  // namespace __msan

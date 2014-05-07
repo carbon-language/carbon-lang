@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
   ifc.ifc_len = sizeof(ifreqs);
 #endif
   int res = ioctl(fd, SIOCGIFCONF, (void *)&ifc);
-  // CHECK: UMR in ioctl{{.*}} at offset 0
+  // CHECK: Uninitialized bytes in ioctl{{.*}} at offset 0 inside [0x{{.*}}, 4)
   // CHECK: WARNING: MemorySanitizer: use-of-uninitialized-value
   // CHECK: #{{.*}} in main {{.*}}ioctl_custom.cc:[[@LINE-3]]
   assert(res == 0);
