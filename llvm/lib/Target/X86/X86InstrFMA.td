@@ -19,8 +19,9 @@ let Constraints = "$src1 = $dst" in {
 multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                     PatFrag MemFrag128, PatFrag MemFrag256,
                     ValueType OpVT128, ValueType OpVT256,
+                    bit IsRVariantCommutable = 0, bit IsMVariantCommutable = 0,
                     SDPatternOperator Op = null_frag> {
-  let usesCustomInserter = 1 in
+  let usesCustomInserter = 1, isCommutable = IsRVariantCommutable in
   def r     : FMA3<opc, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src1, VR128:$src2, VR128:$src3),
                    !strconcat(OpcodeStr,
@@ -28,7 +29,7 @@ multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                    [(set VR128:$dst, (OpVT128 (Op VR128:$src2,
                                                VR128:$src1, VR128:$src3)))]>;
 
-  let mayLoad = 1 in
+  let mayLoad = 1, isCommutable = IsMVariantCommutable in
   def m     : FMA3<opc, MRMSrcMem, (outs VR128:$dst),
                    (ins VR128:$src1, VR128:$src2, f128mem:$src3),
                    !strconcat(OpcodeStr,
@@ -36,7 +37,7 @@ multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                    [(set VR128:$dst, (OpVT128 (Op VR128:$src2, VR128:$src1,
                                                (MemFrag128 addr:$src3))))]>;
 
-  let usesCustomInserter = 1 in
+  let usesCustomInserter = 1, isCommutable = IsRVariantCommutable in
   def rY    : FMA3<opc, MRMSrcReg, (outs VR256:$dst),
                    (ins VR256:$src1, VR256:$src2, VR256:$src3),
                    !strconcat(OpcodeStr,
@@ -44,7 +45,7 @@ multiclass fma3p_rm<bits<8> opc, string OpcodeStr,
                    [(set VR256:$dst, (OpVT256 (Op VR256:$src2, VR256:$src1,
                                                VR256:$src3)))]>, VEX_L;
 
-  let mayLoad = 1 in
+  let mayLoad = 1, isCommutable = IsMVariantCommutable in
   def mY    : FMA3<opc, MRMSrcMem, (outs VR256:$dst),
                    (ins VR256:$src1, VR256:$src2, f256mem:$src3),
                    !strconcat(OpcodeStr,
@@ -59,18 +60,27 @@ multiclass fma3p_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
                        string OpcodeStr, string PackTy,
                        PatFrag MemFrag128, PatFrag MemFrag256,
                        SDNode Op, ValueType OpTy128, ValueType OpTy256> {
-  let isCommutable = 1 in
+  // For 213, both the register and memory variant are commutable.
+  // Indeed, the commutable operands are 1 and 2 and both live in registers
+  // for both variants.
   defm r213 : fma3p_rm<opc213,
                        !strconcat(OpcodeStr, "213", PackTy),
-                       MemFrag128, MemFrag256, OpTy128, OpTy256, Op>;
+                       MemFrag128, MemFrag256, OpTy128, OpTy256,
+                       /* IsRVariantCommutable */ 1,
+                       /* IsMVariantCommutable */ 1,
+                       Op>;
 let neverHasSideEffects = 1 in {
   defm r132 : fma3p_rm<opc132,
                        !strconcat(OpcodeStr, "132", PackTy),
                        MemFrag128, MemFrag256, OpTy128, OpTy256>;
-  let isCommutable = 1 in
+  // For 231, only the register variant is commutable.
+  // For the memory variant the folded operand must be in 3. Thus,
+  // in that case, it cannot be swapped with 2.
   defm r231 : fma3p_rm<opc231,
                        !strconcat(OpcodeStr, "231", PackTy),
-                       MemFrag128, MemFrag256, OpTy128, OpTy256>;
+                       MemFrag128, MemFrag256, OpTy128, OpTy256,
+                       /* IsRVariantCommutable */ 1,
+                       /* IsMVariantCommutable */ 0>;
 } // neverHasSideEffects = 1
 }
 
@@ -119,8 +129,9 @@ let ExeDomain = SSEPackedDouble in {
 let Constraints = "$src1 = $dst" in {
 multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
                     RegisterClass RC, ValueType OpVT, PatFrag mem_frag,
+                    bit IsRVariantCommutable = 0, bit IsMVariantCommutable = 0,
                     SDPatternOperator OpNode = null_frag> {
-  let usesCustomInserter = 1 in
+  let usesCustomInserter = 1, isCommutable = IsRVariantCommutable in
   def r     : FMA3<opc, MRMSrcReg, (outs RC:$dst),
                    (ins RC:$src1, RC:$src2, RC:$src3),
                    !strconcat(OpcodeStr,
@@ -128,7 +139,7 @@ multiclass fma3s_rm<bits<8> opc, string OpcodeStr, X86MemOperand x86memop,
                    [(set RC:$dst,
                      (OpVT (OpNode RC:$src2, RC:$src1, RC:$src3)))]>;
 
-  let mayLoad = 1 in
+  let mayLoad = 1, isCommutable = IsMVariantCommutable in
   def m     : FMA3<opc, MRMSrcMem, (outs RC:$dst),
                    (ins RC:$src1, RC:$src2, x86memop:$src3),
                    !strconcat(OpcodeStr,
@@ -147,14 +158,21 @@ multiclass fma3s_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
 let neverHasSideEffects = 1 in {
   defm r132 : fma3s_rm<opc132, !strconcat(OpStr, "132", PackTy),
                        x86memop, RC, OpVT, mem_frag>;
-  let isCommutable = 1 in
+  // See the other defm of r231 for the explanation regarding the
+  // commutable flags.
   defm r231 : fma3s_rm<opc231, !strconcat(OpStr, "231", PackTy),
-                       x86memop, RC, OpVT, mem_frag>;
+                       x86memop, RC, OpVT, mem_frag,
+                       /* IsRVariantCommutable */ 1,
+                       /* IsMVariantCommutable */ 0>;
 }
 
-let isCommutable = 1 in
+// See the other defm of r213 for the explanation regarding the
+// commutable flags.
 defm r213 : fma3s_rm<opc213, !strconcat(OpStr, "213", PackTy),
-                     x86memop, RC, OpVT, mem_frag, OpNode>;
+                     x86memop, RC, OpVT, mem_frag,
+                     /* IsRVariantCommutable */ 1,
+                     /* IsMVariantCommutable */ 1,
+                     OpNode>;
 }
 
 multiclass fma3s<bits<8> opc132, bits<8> opc213, bits<8> opc231,
