@@ -10,8 +10,10 @@
 ModuleName := asan
 SubDirs := 
 
-Sources := $(foreach file,$(wildcard $(Dir)/*.cc),$(notdir $(file)))
-ObjNames := $(Sources:%.cc=%.o)
+CCSources := $(foreach file,$(wildcard $(Dir)/*.cc),$(notdir $(file)))
+SSources := $(foreach file,$(wildcard $(Dir)/*.S),$(notdir $(file)))
+Sources := $(CCSources) $(SSources)
+ObjNames := $(CCSources:%.cc=%.o) $(SSources:%.S=%.o)
 
 Implementation := Generic
 
@@ -21,4 +23,4 @@ Dependencies += $(wildcard $(Dir)/../interception/*.h)
 Dependencies += $(wildcard $(Dir)/../sanitizer_common/*.h)
 
 # Define a convenience variable for all the asan functions.
-AsanFunctions := $(Sources:%.cc=%)
+AsanFunctions := $(CCSources:%.cc=%) $(SSources:%.S=%)
