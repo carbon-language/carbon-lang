@@ -467,6 +467,38 @@ static std::string mangleCoveragePath(StringRef Filename, bool PreservePaths) {
   return Result.str();
 }
 
+std::string FileInfo::getCoveragePath(StringRef Filename,
+                                      StringRef MainFilename) {
+  if (Options.NoOutput)
+    // This is probably a bug in gcov, but when -n is specified, paths aren't
+    // mangled at all, and the -l and -p options are ignored. Here, we do the
+    // same.
+    return Filename;
+
+  std::string CoveragePath;
+  if (Options.LongFileNames && !Filename.equals(MainFilename))
+    CoveragePath =
+        mangleCoveragePath(MainFilename, Options.PreservePaths) + "##";
+  CoveragePath +=
+      mangleCoveragePath(Filename, Options.PreservePaths) + ".gcov";
+  return CoveragePath;
+}
+
+std::unique_ptr<raw_ostream>
+FileInfo::openCoveragePath(StringRef CoveragePath) {
+  if (Options.NoOutput)
+    return make_unique<raw_null_ostream>();
+
+  std::string ErrorInfo;
+  auto OS = make_unique<raw_fd_ostream>(CoveragePath.str().c_str(), ErrorInfo,
+                                        sys::fs::F_Text);
+  if (!ErrorInfo.empty()) {
+    errs() << ErrorInfo << "\n";
+    return make_unique<raw_null_ostream>();
+  }
+  return std::move(OS);
+}
+
 /// print -  Print source files with collected line count information.
 void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
                      StringRef GCDAFile) {
@@ -480,16 +512,9 @@ void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
     }
     StringRef AllLines = Buff->getBuffer();
 
-    std::string CoveragePath;
-    if (Options.LongFileNames && !Filename.equals(MainFilename))
-      CoveragePath =
-          mangleCoveragePath(MainFilename, Options.PreservePaths) + "##";
-    CoveragePath +=
-        mangleCoveragePath(Filename, Options.PreservePaths) + ".gcov";
-    std::string ErrorInfo;
-    raw_fd_ostream OS(CoveragePath.c_str(), ErrorInfo, sys::fs::F_Text);
-    if (!ErrorInfo.empty())
-      errs() << ErrorInfo << "\n";
+    std::string CoveragePath = getCoveragePath(Filename, MainFilename);
+    std::unique_ptr<raw_ostream> S = openCoveragePath(CoveragePath);
+    raw_ostream &OS = *S;
 
     OS << "        -:    0:Source:" << Filename << "\n";
     OS << "        -:    0:Graph:" << GCNOFile << "\n";
@@ -606,10 +631,11 @@ void FileInfo::print(StringRef MainFilename, StringRef GCNOFile,
   if (Options.FuncCoverage)
     printFuncCoverage();
   printFileCoverage();
+  return;
 }
 
 /// printFunctionSummary - Print function and block summary.
-void FileInfo::printFunctionSummary(raw_fd_ostream &OS,
+void FileInfo::printFunctionSummary(raw_ostream &OS,
                                     const FunctionVector &Funcs) const {
   for (FunctionVector::const_iterator I = Funcs.begin(), E = Funcs.end();
          I != E; ++I) {
@@ -631,7 +657,7 @@ void FileInfo::printFunctionSummary(raw_fd_ostream &OS,
 }
 
 /// printBlockInfo - Output counts for each block.
-void FileInfo::printBlockInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
+void FileInfo::printBlockInfo(raw_ostream &OS, const GCOVBlock &Block,
                               uint32_t LineIndex, uint32_t &BlockNo) const {
   if (Block.getCount() == 0)
     OS << "    $$$$$:";
@@ -641,7 +667,7 @@ void FileInfo::printBlockInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
 }
 
 /// printBranchInfo - Print conditional branch probabilities.
-void FileInfo::printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
+void FileInfo::printBranchInfo(raw_ostream &OS, const GCOVBlock &Block,
                                GCOVCoverage &Coverage, uint32_t &EdgeNo) {
   SmallVector<uint64_t, 16> BranchCounts;
   uint64_t TotalCounts = 0;
@@ -671,7 +697,7 @@ void FileInfo::printBranchInfo(raw_fd_ostream &OS, const GCOVBlock &Block,
 }
 
 /// printUncondBranchInfo - Print unconditional branch probabilities.
-void FileInfo::printUncondBranchInfo(raw_fd_ostream &OS, uint32_t &EdgeNo,
+void FileInfo::printUncondBranchInfo(raw_ostream &OS, uint32_t &EdgeNo,
                                      uint64_t Count) const {
   OS << format("unconditional %2u ", EdgeNo++)
      << formatBranchInfo(Options, Count, Count) << "\n";
@@ -717,6 +743,8 @@ void FileInfo::printFileCoverage() const {
     const GCOVCoverage &Coverage = I->second;
     outs() << "File '" << Coverage.Name << "'\n";
     printCoverage(Coverage);
-    outs() << Coverage.Name << ":creating '" << Filename << "'\n\n";
+    if (!Options.NoOutput)
+      outs() << Coverage.Name << ":creating '" << Filename << "'\n";
+    outs() << "\n";
   }
 }

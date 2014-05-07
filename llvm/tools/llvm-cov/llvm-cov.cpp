@@ -47,6 +47,10 @@ static cl::opt<bool> FuncSummary("f", cl::Grouping, cl::init(false),
                                  cl::desc("Show coverage for each function"));
 static cl::alias FuncSummaryA("function-summaries", cl::aliasopt(FuncSummary));
 
+static cl::opt<bool> NoOutput("n", cl::Grouping, cl::init(false),
+                              cl::desc("Do not output any .gcov files"));
+static cl::alias NoOutputA("no-output", cl::aliasopt(NoOutput));
+
 static cl::opt<std::string>
 ObjectDir("o", cl::value_desc("DIR|FILE"), cl::init(""),
           cl::desc("Find objects in DIR or based on FILE's path"));
@@ -130,7 +134,7 @@ int main(int argc, char **argv) {
     GF.dump();
 
   GCOVOptions Options(AllBlocks, BranchProb, BranchCount, FuncSummary,
-                      PreservePaths, UncondBranch, LongNames);
+                      PreservePaths, UncondBranch, LongNames, NoOutput);
   FileInfo FI(Options);
   GF.collectLineCounts(FI);
   FI.print(SourceFile, InputGCNO, InputGCDA);
