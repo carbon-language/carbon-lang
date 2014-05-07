@@ -55,13 +55,6 @@ static bool isInitMessage(const ObjCMethodCall &Msg);
 static bool isSelfVar(SVal location, CheckerContext &C);
 
 namespace {
-class InitSelfBug : public BugType {
-public:
-  InitSelfBug(const CheckerBase *Checker)
-      : BugType(Checker, "Missing \"self = [(super or self) init...]\"",
-                categories::CoreFoundationObjectiveC) {}
-};
-
 class ObjCSelfInitChecker : public Checker<  check::PostObjCMessage,
                                              check::PostStmt<ObjCIvarRefExpr>,
                                              check::PreStmt<ReturnStmt>,
@@ -69,13 +62,13 @@ class ObjCSelfInitChecker : public Checker<  check::PostObjCMessage,
                                              check::PostCall,
                                              check::Location,
                                              check::Bind > {
-  mutable InitSelfBug InitSelfBugType;
+  mutable std::unique_ptr<BugType> BT;
 
   void checkForInvalidSelf(const Expr *E, CheckerContext &C,
                            const char *errorStr) const;
 
 public:
-  ObjCSelfInitChecker() : InitSelfBugType(this) {}
+  ObjCSelfInitChecker() {}
   void checkPostObjCMessage(const ObjCMethodCall &Msg, CheckerContext &C) const;
   void checkPostStmt(const ObjCIvarRefExpr *E, CheckerContext &C) const;
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
@@ -164,7 +157,10 @@ void ObjCSelfInitChecker::checkForInvalidSelf(const Expr *E, CheckerContext &C,
   if (!N)
     return;
 
-  BugReport *report = new BugReport(InitSelfBugType, errorStr, N);
+  if (!BT)
+    BT.reset(new BugType(this, "Missing \"self = [(super or self) init...]\"",
+                         categories::CoreFoundationObjectiveC));
+  BugReport *report = new BugReport(*BT, errorStr, N);
   C.emitReport(report);
 }
 
