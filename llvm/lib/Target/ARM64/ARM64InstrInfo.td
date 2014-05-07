@@ -22,6 +22,8 @@ def HasCrypto        : Predicate<"Subtarget->hasCrypto()">,
                                  AssemblerPredicate<"FeatureCrypto", "crypto">;
 def HasCRC           : Predicate<"Subtarget->hasCRC()">,
                                  AssemblerPredicate<"FeatureCRC", "crc">;
+def IsLE             : Predicate<"Subtarget->isLittleEndian()">;
+def IsBE             : Predicate<"!Subtarget->isLittleEndian()">;
 
 //===----------------------------------------------------------------------===//
 // ARM64-specific DAG Nodes.
@@ -1099,20 +1101,26 @@ def : Pat <(v2i64 (scalar_to_vector (i64 (load ro_indexed64:$addr)))),
                           (LDRDro ro_indexed64:$addr), dsub)>;
 
 // Match all load 64 bits width whose type is compatible with FPR64
-def : Pat<(v2f32 (load ro_indexed64:$addr)), (LDRDro ro_indexed64:$addr)>;
+let Predicates = [IsLE] in {
+  // We must do vector loads with LD1 in big-endian.
+  def : Pat<(v2f32 (load ro_indexed64:$addr)), (LDRDro ro_indexed64:$addr)>;
+  def : Pat<(v8i8  (load ro_indexed64:$addr)), (LDRDro ro_indexed64:$addr)>;
+  def : Pat<(v4i16 (load ro_indexed64:$addr)), (LDRDro ro_indexed64:$addr)>;
+  def : Pat<(v2i32 (load ro_indexed64:$addr)), (LDRDro ro_indexed64:$addr)>;
+}
 def : Pat<(v1f64 (load ro_indexed64:$addr)), (LDRDro ro_indexed64:$addr)>;
-def : Pat<(v8i8 (load ro_indexed64:$addr)), (LDRDro ro_indexed64:$addr)>;
-def : Pat<(v4i16 (load ro_indexed64:$addr)), (LDRDro ro_indexed64:$addr)>;
-def : Pat<(v2i32 (load ro_indexed64:$addr)), (LDRDro ro_indexed64:$addr)>;
 def : Pat<(v1i64 (load ro_indexed64:$addr)), (LDRDro ro_indexed64:$addr)>;
 
 // Match all load 128 bits width whose type is compatible with FPR128
-def : Pat<(v4f32 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
-def : Pat<(v2f64 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
-def : Pat<(v16i8 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
-def : Pat<(v8i16 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
-def : Pat<(v4i32 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
-def : Pat<(v2i64 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
+let Predicates = [IsLE] in {
+  // We must do vector loads with LD1 in big-endian.
+  def : Pat<(v4f32 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
+  def : Pat<(v2f64 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
+  def : Pat<(v16i8 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
+  def : Pat<(v8i16 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
+  def : Pat<(v4i32 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
+  def : Pat<(v2i64 (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
+}
 def : Pat<(f128  (load ro_indexed128:$addr)), (LDRQro ro_indexed128:$addr)>;
 
 // Load sign-extended half-word
@@ -1210,20 +1218,26 @@ def : Pat <(v2i64 (scalar_to_vector (i64 (load am_indexed64:$addr)))),
                           (LDRDui am_indexed64:$addr), dsub)>;
 
 // Match all load 64 bits width whose type is compatible with FPR64
-def : Pat<(v2f32 (load am_indexed64:$addr)), (LDRDui am_indexed64:$addr)>;
+let Predicates = [IsLE] in {
+  // We must use LD1 to perform vector loads in big-endian.
+  def : Pat<(v2f32 (load am_indexed64:$addr)), (LDRDui am_indexed64:$addr)>;
+  def : Pat<(v8i8 (load am_indexed64:$addr)), (LDRDui am_indexed64:$addr)>;
+  def : Pat<(v4i16 (load am_indexed64:$addr)), (LDRDui am_indexed64:$addr)>;
+  def : Pat<(v2i32 (load am_indexed64:$addr)), (LDRDui am_indexed64:$addr)>;
+}
 def : Pat<(v1f64 (load am_indexed64:$addr)), (LDRDui am_indexed64:$addr)>;
-def : Pat<(v8i8 (load am_indexed64:$addr)), (LDRDui am_indexed64:$addr)>;
-def : Pat<(v4i16 (load am_indexed64:$addr)), (LDRDui am_indexed64:$addr)>;
-def : Pat<(v2i32 (load am_indexed64:$addr)), (LDRDui am_indexed64:$addr)>;
 def : Pat<(v1i64 (load am_indexed64:$addr)), (LDRDui am_indexed64:$addr)>;
 
 // Match all load 128 bits width whose type is compatible with FPR128
-def : Pat<(v4f32 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
-def : Pat<(v2f64 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
-def : Pat<(v16i8 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
-def : Pat<(v8i16 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
-def : Pat<(v4i32 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
-def : Pat<(v2i64 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
+let Predicates = [IsLE] in {
+  // We must use LD1 to perform vector loads in big-endian.
+  def : Pat<(v4f32 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
+  def : Pat<(v2f64 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
+  def : Pat<(v16i8 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
+  def : Pat<(v8i16 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
+  def : Pat<(v4i32 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
+  def : Pat<(v2i64 (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
+}
 def : Pat<(f128  (load am_indexed128:$addr)), (LDRQui am_indexed128:$addr)>;
 
 def LDRHHui : LoadUI<0b01, 0, 0b01, GPR32, am_indexed16, "ldrh",
@@ -1308,7 +1322,7 @@ def LDURSi : LoadUnscaled<0b10, 1, 0b01, FPR32, am_unscaled32, "ldur",
 def LDURDi : LoadUnscaled<0b11, 1, 0b01, FPR64, am_unscaled64, "ldur",
                           [(set (f64 FPR64:$Rt), (load am_unscaled64:$addr))]>;
 def LDURQi : LoadUnscaled<0b00, 1, 0b11, FPR128, am_unscaled128, "ldur",
-                        [(set (v2f64 FPR128:$Rt), (load am_unscaled128:$addr))]>;
+                          [(set (f128 FPR128:$Rt), (load am_unscaled128:$addr))]>;
 
 def LDURHHi
     : LoadUnscaled<0b01, 0, 0b01, GPR32, am_unscaled16, "ldurh",
@@ -1318,21 +1332,25 @@ def LDURBBi
                    [(set GPR32:$Rt, (zextloadi8 am_unscaled8:$addr))]>;
 
 // Match all load 64 bits width whose type is compatible with FPR64
-def : Pat<(v2f32 (load am_unscaled64:$addr)), (LDURDi am_unscaled64:$addr)>;
+let Predicates = [IsLE] in {
+  def : Pat<(v2f32 (load am_unscaled64:$addr)), (LDURDi am_unscaled64:$addr)>;
+  def : Pat<(v8i8 (load am_unscaled64:$addr)), (LDURDi am_unscaled64:$addr)>;
+  def : Pat<(v4i16 (load am_unscaled64:$addr)), (LDURDi am_unscaled64:$addr)>;
+  def : Pat<(v2i32 (load am_unscaled64:$addr)), (LDURDi am_unscaled64:$addr)>;
+}
 def : Pat<(v1f64 (load am_unscaled64:$addr)), (LDURDi am_unscaled64:$addr)>;
-def : Pat<(v8i8 (load am_unscaled64:$addr)), (LDURDi am_unscaled64:$addr)>;
-def : Pat<(v4i16 (load am_unscaled64:$addr)), (LDURDi am_unscaled64:$addr)>;
-def : Pat<(v2i32 (load am_unscaled64:$addr)), (LDURDi am_unscaled64:$addr)>;
 def : Pat<(v1i64 (load am_unscaled64:$addr)), (LDURDi am_unscaled64:$addr)>;
 
 // Match all load 128 bits width whose type is compatible with FPR128
-def : Pat<(v4f32 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
-def : Pat<(v2f64 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
-def : Pat<(v16i8 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
-def : Pat<(v8i16 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
-def : Pat<(v4i32 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
-def : Pat<(v2i64 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
-def : Pat<(f128  (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
+let Predicates = [IsLE] in {
+  def : Pat<(v4f32 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
+  def : Pat<(v2f64 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
+  def : Pat<(v16i8 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
+  def : Pat<(v8i16 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
+  def : Pat<(v4i32 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
+  def : Pat<(v2i64 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
+  def : Pat<(v2f64 (load am_unscaled128:$addr)), (LDURQi am_unscaled128:$addr)>;
+}
 
 //  anyext -> zext
 def : Pat<(i32 (extloadi16 am_unscaled16:$addr)), (LDURHHi am_unscaled16:$addr)>;
@@ -1628,32 +1646,38 @@ def STRQro : Store128RO<0b00,   1, 0b10, FPR128, "str", []> {
 }
 
 // Match all store 64 bits width whose type is compatible with FPR64
-def : Pat<(store (v2f32 FPR64:$Rn), ro_indexed64:$addr),
-          (STRDro FPR64:$Rn, ro_indexed64:$addr)>;
+let Predicates = [IsLE] in {
+  // We must use ST1 to store vectors in big-endian.
+  def : Pat<(store (v2f32 FPR64:$Rn), ro_indexed64:$addr),
+            (STRDro FPR64:$Rn, ro_indexed64:$addr)>;
+  def : Pat<(store (v8i8 FPR64:$Rn), ro_indexed64:$addr),
+            (STRDro FPR64:$Rn, ro_indexed64:$addr)>;
+  def : Pat<(store (v4i16 FPR64:$Rn), ro_indexed64:$addr),
+            (STRDro FPR64:$Rn, ro_indexed64:$addr)>;
+  def : Pat<(store (v2i32 FPR64:$Rn), ro_indexed64:$addr),
+            (STRDro FPR64:$Rn, ro_indexed64:$addr)>;
+}
 def : Pat<(store (v1f64 FPR64:$Rn), ro_indexed64:$addr),
-          (STRDro FPR64:$Rn, ro_indexed64:$addr)>;
-def : Pat<(store (v8i8 FPR64:$Rn), ro_indexed64:$addr),
-          (STRDro FPR64:$Rn, ro_indexed64:$addr)>;
-def : Pat<(store (v4i16 FPR64:$Rn), ro_indexed64:$addr),
-          (STRDro FPR64:$Rn, ro_indexed64:$addr)>;
-def : Pat<(store (v2i32 FPR64:$Rn), ro_indexed64:$addr),
           (STRDro FPR64:$Rn, ro_indexed64:$addr)>;
 def : Pat<(store (v1i64 FPR64:$Rn), ro_indexed64:$addr),
           (STRDro FPR64:$Rn, ro_indexed64:$addr)>;
 
 // Match all store 128 bits width whose type is compatible with FPR128
-def : Pat<(store (v4f32 FPR128:$Rn), ro_indexed128:$addr),
-          (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
-def : Pat<(store (v2f64 FPR128:$Rn), ro_indexed128:$addr),
-          (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
-def : Pat<(store (v16i8 FPR128:$Rn), ro_indexed128:$addr),
-          (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
-def : Pat<(store (v8i16 FPR128:$Rn), ro_indexed128:$addr),
-          (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
-def : Pat<(store (v4i32 FPR128:$Rn), ro_indexed128:$addr),
-          (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
-def : Pat<(store (v2i64 FPR128:$Rn), ro_indexed128:$addr),
-          (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
+let Predicates = [IsLE] in {
+  // We must use ST1 to store vectors in big-endian.
+  def : Pat<(store (v4f32 FPR128:$Rn), ro_indexed128:$addr),
+            (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
+  def : Pat<(store (v2f64 FPR128:$Rn), ro_indexed128:$addr),
+            (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
+  def : Pat<(store (v16i8 FPR128:$Rn), ro_indexed128:$addr),
+            (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
+  def : Pat<(store (v8i16 FPR128:$Rn), ro_indexed128:$addr),
+            (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
+  def : Pat<(store (v4i32 FPR128:$Rn), ro_indexed128:$addr),
+            (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
+  def : Pat<(store (v2i64 FPR128:$Rn), ro_indexed128:$addr),
+            (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
+}
 def : Pat<(store (f128 FPR128:$Rn),  ro_indexed128:$addr),
           (STRQro FPR128:$Rn, ro_indexed128:$addr)>;
 
@@ -1676,32 +1700,38 @@ def STRQui : StoreUI<0b00, 1, 0b10, FPR128, am_indexed128, "str", []> {
 }
 
 // Match all store 64 bits width whose type is compatible with FPR64
-def : Pat<(store (v2f32 FPR64:$Rn), am_indexed64:$addr),
-          (STRDui FPR64:$Rn, am_indexed64:$addr)>;
+let Predicates = [IsLE] in {
+  // We must use ST1 to store vectors in big-endian.
+  def : Pat<(store (v2f32 FPR64:$Rn), am_indexed64:$addr),
+            (STRDui FPR64:$Rn, am_indexed64:$addr)>;
+  def : Pat<(store (v8i8 FPR64:$Rn), am_indexed64:$addr),
+            (STRDui FPR64:$Rn, am_indexed64:$addr)>;
+  def : Pat<(store (v4i16 FPR64:$Rn), am_indexed64:$addr),
+            (STRDui FPR64:$Rn, am_indexed64:$addr)>;
+  def : Pat<(store (v2i32 FPR64:$Rn), am_indexed64:$addr),
+            (STRDui FPR64:$Rn, am_indexed64:$addr)>;
+}
 def : Pat<(store (v1f64 FPR64:$Rn), am_indexed64:$addr),
-          (STRDui FPR64:$Rn, am_indexed64:$addr)>;
-def : Pat<(store (v8i8 FPR64:$Rn), am_indexed64:$addr),
-          (STRDui FPR64:$Rn, am_indexed64:$addr)>;
-def : Pat<(store (v4i16 FPR64:$Rn), am_indexed64:$addr),
-          (STRDui FPR64:$Rn, am_indexed64:$addr)>;
-def : Pat<(store (v2i32 FPR64:$Rn), am_indexed64:$addr),
           (STRDui FPR64:$Rn, am_indexed64:$addr)>;
 def : Pat<(store (v1i64 FPR64:$Rn), am_indexed64:$addr),
           (STRDui FPR64:$Rn, am_indexed64:$addr)>;
 
 // Match all store 128 bits width whose type is compatible with FPR128
-def : Pat<(store (v4f32 FPR128:$Rn), am_indexed128:$addr),
-          (STRQui FPR128:$Rn, am_indexed128:$addr)>;
-def : Pat<(store (v2f64 FPR128:$Rn), am_indexed128:$addr),
-          (STRQui FPR128:$Rn, am_indexed128:$addr)>;
-def : Pat<(store (v16i8 FPR128:$Rn), am_indexed128:$addr),
-          (STRQui FPR128:$Rn, am_indexed128:$addr)>;
-def : Pat<(store (v8i16 FPR128:$Rn), am_indexed128:$addr),
-          (STRQui FPR128:$Rn, am_indexed128:$addr)>;
-def : Pat<(store (v4i32 FPR128:$Rn), am_indexed128:$addr),
-          (STRQui FPR128:$Rn, am_indexed128:$addr)>;
-def : Pat<(store (v2i64 FPR128:$Rn), am_indexed128:$addr),
-          (STRQui FPR128:$Rn, am_indexed128:$addr)>;
+let Predicates = [IsLE] in {
+  // We must use ST1 to store vectors in big-endian.
+  def : Pat<(store (v4f32 FPR128:$Rn), am_indexed128:$addr),
+            (STRQui FPR128:$Rn, am_indexed128:$addr)>;
+  def : Pat<(store (v2f64 FPR128:$Rn), am_indexed128:$addr),
+            (STRQui FPR128:$Rn, am_indexed128:$addr)>;
+  def : Pat<(store (v16i8 FPR128:$Rn), am_indexed128:$addr),
+            (STRQui FPR128:$Rn, am_indexed128:$addr)>;
+  def : Pat<(store (v8i16 FPR128:$Rn), am_indexed128:$addr),
+            (STRQui FPR128:$Rn, am_indexed128:$addr)>;
+  def : Pat<(store (v4i32 FPR128:$Rn), am_indexed128:$addr),
+            (STRQui FPR128:$Rn, am_indexed128:$addr)>;
+  def : Pat<(store (v2i64 FPR128:$Rn), am_indexed128:$addr),
+            (STRQui FPR128:$Rn, am_indexed128:$addr)>;
+}
 def : Pat<(store (f128  FPR128:$Rn), am_indexed128:$addr),
           (STRQui FPR128:$Rn, am_indexed128:$addr)>;
 
@@ -1735,41 +1765,47 @@ def STURSi : StoreUnscaled<0b10, 1, 0b00, FPR32, am_unscaled32, "stur",
 def STURDi : StoreUnscaled<0b11, 1, 0b00, FPR64, am_unscaled64, "stur",
                            [(store (f64 FPR64:$Rt), am_unscaled64:$addr)]>;
 def STURQi : StoreUnscaled<0b00, 1, 0b10, FPR128, am_unscaled128, "stur",
-                           [(store (v2f64 FPR128:$Rt), am_unscaled128:$addr)]>;
+                           [(store (f128 FPR128:$Rt), am_unscaled128:$addr)]>;
 def STURHHi : StoreUnscaled<0b01, 0, 0b00, GPR32, am_unscaled16, "sturh",
                             [(truncstorei16 GPR32:$Rt, am_unscaled16:$addr)]>;
 def STURBBi : StoreUnscaled<0b00, 0, 0b00, GPR32, am_unscaled8, "sturb",
                             [(truncstorei8 GPR32:$Rt, am_unscaled8:$addr)]>;
 
 // Match all store 64 bits width whose type is compatible with FPR64
-def : Pat<(store (v2f32 FPR64:$Rn), am_unscaled64:$addr),
-          (STURDi FPR64:$Rn, am_unscaled64:$addr)>;
+let Predicates = [IsLE] in {
+  // We must use ST1 to store vectors in big-endian.
+  def : Pat<(store (v2f32 FPR64:$Rn), am_unscaled64:$addr),
+            (STURDi FPR64:$Rn, am_unscaled64:$addr)>;
+  def : Pat<(store (v8i8 FPR64:$Rn), am_unscaled64:$addr),
+            (STURDi FPR64:$Rn, am_unscaled64:$addr)>;
+  def : Pat<(store (v4i16 FPR64:$Rn), am_unscaled64:$addr),
+            (STURDi FPR64:$Rn, am_unscaled64:$addr)>;
+  def : Pat<(store (v2i32 FPR64:$Rn), am_unscaled64:$addr),
+            (STURDi FPR64:$Rn, am_unscaled64:$addr)>;
+}
 def : Pat<(store (v1f64 FPR64:$Rn), am_unscaled64:$addr),
-          (STURDi FPR64:$Rn, am_unscaled64:$addr)>;
-def : Pat<(store (v8i8 FPR64:$Rn), am_unscaled64:$addr),
-          (STURDi FPR64:$Rn, am_unscaled64:$addr)>;
-def : Pat<(store (v4i16 FPR64:$Rn), am_unscaled64:$addr),
-          (STURDi FPR64:$Rn, am_unscaled64:$addr)>;
-def : Pat<(store (v2i32 FPR64:$Rn), am_unscaled64:$addr),
           (STURDi FPR64:$Rn, am_unscaled64:$addr)>;
 def : Pat<(store (v1i64 FPR64:$Rn), am_unscaled64:$addr),
           (STURDi FPR64:$Rn, am_unscaled64:$addr)>;
 
 // Match all store 128 bits width whose type is compatible with FPR128
-def : Pat<(store (v4f32 FPR128:$Rn), am_unscaled128:$addr),
-          (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
-def : Pat<(store (v2f64 FPR128:$Rn), am_unscaled128:$addr),
-          (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
-def : Pat<(store (v16i8 FPR128:$Rn), am_unscaled128:$addr),
-          (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
-def : Pat<(store (v8i16 FPR128:$Rn), am_unscaled128:$addr),
-          (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
-def : Pat<(store (v4i32 FPR128:$Rn), am_unscaled128:$addr),
-          (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
-def : Pat<(store (v2i64 FPR128:$Rn), am_unscaled128:$addr),
-          (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
-def : Pat<(store (f128  FPR128:$Rn), am_unscaled128:$addr),
-          (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
+let Predicates = [IsLE] in {
+  // We must use ST1 to store vectors in big-endian.
+  def : Pat<(store (v4f32 FPR128:$Rn), am_unscaled128:$addr),
+            (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
+  def : Pat<(store (v2f64 FPR128:$Rn), am_unscaled128:$addr),
+            (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
+  def : Pat<(store (v16i8 FPR128:$Rn), am_unscaled128:$addr),
+            (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
+  def : Pat<(store (v8i16 FPR128:$Rn), am_unscaled128:$addr),
+            (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
+  def : Pat<(store (v4i32 FPR128:$Rn), am_unscaled128:$addr),
+            (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
+  def : Pat<(store (v2i64 FPR128:$Rn), am_unscaled128:$addr),
+            (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
+  def : Pat<(store (v2f64 FPR128:$Rn), am_unscaled128:$addr),
+            (STURQi FPR128:$Rn, am_unscaled128:$addr)>;
+}
 
 // unscaled i64 truncating stores
 def : Pat<(truncstorei32 GPR64:$Rt, am_unscaled32:$addr),
