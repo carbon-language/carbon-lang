@@ -620,6 +620,8 @@ void RuntimeDyldImpl::resolveRelocationList(const RelocationList &Relocs,
 }
 
 void RuntimeDyldImpl::resolveExternalSymbols() {
+  StringMap<RelocationList> ProcessedSymbols;
+
   while (!ExternalSymbolRelocations.empty()) {
     StringMap<RelocationList>::iterator i = ExternalSymbolRelocations.begin();
 
@@ -665,7 +667,19 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
       resolveRelocationList(Relocs, Addr);
     }
 
+    ProcessedSymbols[i->first()] = i->second;
     ExternalSymbolRelocations.erase(i);
+  }
+
+  // Restore the relocation entries that were consumed in the loop above:
+  //
+  // FIXME: Replace the following loop with:
+  //           std::swap(ProcessedSymbols, ExternalSymbolRelocations)
+  //        once StringMap has copy and move construction.
+  for (StringMap<RelocationList>::iterator I = ProcessedSymbols.begin(),
+                                           E = ProcessedSymbols.end();
+       I != E; ++I) {
+    ExternalSymbolRelocations[I->first()] = I->second;
   }
 }
 
