@@ -2238,7 +2238,7 @@ void InitializeInterceptors() {
   mallopt(1, 0);  // M_MXFAST
   mallopt(-3, 32*1024);  // M_MMAP_THRESHOLD
 
-  SANITIZER_COMMON_INTERCEPTORS_INIT;
+  InitializeCommonInterceptors();
 
   // We can not use TSAN_INTERCEPT to get setjmp addr,
   // because it does &setjmp and setjmp is not present in some versions of libc.

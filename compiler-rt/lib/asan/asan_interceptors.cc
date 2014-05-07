@@ -723,7 +723,7 @@ void InitializeAsanInterceptors() {
   static bool was_called_once;
   CHECK(was_called_once == false);
   was_called_once = true;
-  SANITIZER_COMMON_INTERCEPTORS_INIT;
+  InitializeCommonInterceptors();
 
   // Intercept mem* functions.
   ASAN_INTERCEPT_FUNC(memcmp);

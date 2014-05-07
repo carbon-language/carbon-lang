@@ -1487,7 +1487,7 @@ void CopyPoison(void *dst, const void *src, uptr size, StackTrace *stack) {
 void InitializeInterceptors() {
   static int inited = 0;
   CHECK_EQ(inited, 0);
-  SANITIZER_COMMON_INTERCEPTORS_INIT;
+  InitializeCommonInterceptors();
 
   INTERCEPT_FUNCTION(mmap);
   INTERCEPT_FUNCTION(mmap64);
