@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
 // CHECK: ; [ DW_TAG_structure_type ] [I] {{.*}} [def]
 //
 // CHECK: metadata !"_ZTS1D", {{.*}}, metadata [[D_FUNC_DECL:![0-9]*]], metadata {{![0-9]*}}, i32 {{[0-9]*}}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]
-// CHECK: [[D_FUNC_DECL]] = {{.*}}, metadata !"_ZTS1D", {{.*}}, i32 0, metadata {{![0-9]*}}, i32 {{[0-9]*}}} ; [ DW_TAG_subprogram ] {{.*}} [func]
+// CHECK: [[D_FUNC_DECL]] = {{.*}}, metadata !"_ZTS1D", {{.*}}, i32 0, null, i32 {{[0-9]*}}} ; [ DW_TAG_subprogram ] {{.*}} [func]
 
 // CHECK: [[F_I_DEF:![0-9]*]] = {{.*}}, metadata [[F_I:![0-9]*]]} ; [ DW_TAG_variable ] [i]
 

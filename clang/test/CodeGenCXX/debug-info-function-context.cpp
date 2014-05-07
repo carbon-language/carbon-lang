@@ -29,8 +29,8 @@ int global_namespace_variable = 1;
 
 // CHECK: metadata !"_ZTS1C", metadata !"static_member_function"{{.*}}  [ DW_TAG_subprogram ] [line 13] [def] [static_member_function]
 
-// CHECK: metadata !22, metadata !"global_function"{{.*}}  [ DW_TAG_subprogram ] [line 17] [def] [global_function]
-// CHECK: !22 = {{.*}} [ DW_TAG_file_type ]
+// CHECK: metadata [[FILE:![0-9]*]], metadata !"global_function"{{.*}}  [ DW_TAG_subprogram ] [line 17] [def] [global_function]
+// CHECK: [[FILE]] = {{.*}} [ DW_TAG_file_type ]
 
-// CHECK: metadata !24, metadata !"global_namespace_function"{{.*}} [ DW_TAG_subprogram ] [line 20] [def] [global_namespace_function]
-// CHECK: !24 = {{.*}} [ DW_TAG_namespace ] [ns] [line 19]
+// CHECK: metadata [[NS:![0-9]*]], metadata !"global_namespace_function"{{.*}} [ DW_TAG_subprogram ] [line 20] [def] [global_namespace_function]
+// CHECK: [[NS]] = {{.*}} [ DW_TAG_namespace ] [ns] [line 19]
