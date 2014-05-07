@@ -1,4 +1,4 @@
-# RUN: llvm-mc %s -x86-asm-syntax=intel -triple=x86_64-unknown-linux-gnu -asm-instrumentation=address | FileCheck %s
+# RUN: llvm-mc %s -x86-asm-syntax=intel -triple=x86_64-unknown-linux-gnu -asm-instrumentation=address -asan-instrument-assembly | FileCheck %s
 
 	.text
 	.globl	swap

@@ -21,9 +21,15 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCTargetOptions.h"
+#include "llvm/Support/CommandLine.h"
 
 namespace llvm {
 namespace {
+
+static cl::opt<bool> ClAsanInstrumentAssembly(
+    "asan-instrument-assembly",
+    cl::desc("instrument assembly with AddressSanitizer checks"), cl::Hidden,
+    cl::init(false));
 
 bool IsStackReg(unsigned Reg) {
   return Reg == X86::RSP || Reg == X86::ESP || Reg == X86::SP;
@@ -212,7 +218,8 @@ CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
                             const MCContext &Ctx, const MCSubtargetInfo &STI) {
   Triple T(STI.getTargetTriple());
   const bool hasCompilerRTSupport = T.isOSLinux();
-  if (hasCompilerRTSupport && MCOptions.SanitizeAddress) {
+  if (ClAsanInstrumentAssembly && hasCompilerRTSupport &&
+      MCOptions.SanitizeAddress) {
     if ((STI.getFeatureBits() & X86::Mode32Bit) != 0)
       return new X86AddressSanitizer32(STI);
     if ((STI.getFeatureBits() & X86::Mode64Bit) != 0)
