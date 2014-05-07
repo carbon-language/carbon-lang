@@ -82,8 +82,9 @@ DetectRegionsWithoutLoops("polly-detect-scops-in-regions-without-loops",
                           cl::cat(PollyCategory));
 
 static cl::opt<std::string>
-OnlyFunction("polly-only-func", cl::desc("Only run on a single function"),
-             cl::value_desc("function-name"), cl::ValueRequired, cl::init(""),
+OnlyFunction("polly-only-func",
+             cl::desc("Only run on functions that contain a certain string"),
+             cl::value_desc("string"), cl::ValueRequired, cl::init(""),
              cl::cat(PollyCategory));
 
 static cl::opt<std::string>
@@ -730,7 +731,7 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
 
   releaseMemory();
 
-  if (OnlyFunction != "" && F.getName() != OnlyFunction)
+  if (OnlyFunction != "" && !F.getName().count(OnlyFunction))
     return false;
 
   if (!isValidFunction(F))
