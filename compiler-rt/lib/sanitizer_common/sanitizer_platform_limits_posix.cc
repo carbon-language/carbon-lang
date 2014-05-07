@@ -115,6 +115,7 @@
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
 #include <glob.h>
+#include <obstack.h>
 #include <mqueue.h>
 #include <net/if_ppp.h>
 #include <netax25/ax25.h>
@@ -1148,6 +1149,17 @@ CHECK_SIZE_AND_OFFSET(FILE, _IO_save_end);
 CHECK_SIZE_AND_OFFSET(FILE, _markers);
 CHECK_SIZE_AND_OFFSET(FILE, _chain);
 CHECK_SIZE_AND_OFFSET(FILE, _fileno);
+#endif
+
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+COMPILER_CHECK(sizeof(__sanitizer__obstack_chunk) <= sizeof(_obstack_chunk));
+CHECK_SIZE_AND_OFFSET(_obstack_chunk, limit);
+CHECK_SIZE_AND_OFFSET(_obstack_chunk, prev);
+CHECK_TYPE_SIZE(obstack);
+CHECK_SIZE_AND_OFFSET(obstack, chunk_size);
+CHECK_SIZE_AND_OFFSET(obstack, chunk);
+CHECK_SIZE_AND_OFFSET(obstack, object_base);
+CHECK_SIZE_AND_OFFSET(obstack, next_free);
 #endif
 
 #endif  // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_MAC

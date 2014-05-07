@@ -3894,6 +3894,49 @@ INTERCEPTOR(__sanitizer_FILE *, fmemopen, void *buf, SIZE_T size,
 #define INIT_OPEN_MEMSTREAM
 #endif
 
+#if SANITIZER_INTERCEPT_OBSTACK
+static void initialize_obstack(__sanitizer_obstack *obstack) {
+  COMMON_INTERCEPTOR_INITIALIZE_RANGE(obstack, sizeof(*obstack));
+  if (obstack->chunk)
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(obstack->chunk,
+                                        sizeof(*obstack->chunk));
+}
+
+INTERCEPTOR(int, _obstack_begin_1, __sanitizer_obstack *obstack, int sz,
+            int align, void *(*alloc_fn)(uptr arg, uptr sz),
+            void (*free_fn)(uptr arg, void *p)) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, _obstack_begin_1, obstack, sz, align, alloc_fn,
+                           free_fn);
+  int res = REAL(_obstack_begin_1)(obstack, sz, align, alloc_fn, free_fn);
+  if (res) initialize_obstack(obstack);
+  return res;
+}
+INTERCEPTOR(int, _obstack_begin, __sanitizer_obstack *obstack, int sz,
+            int align, void *(*alloc_fn)(uptr sz), void (*free_fn)(void *p)) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, _obstack_begin, obstack, sz, align, alloc_fn,
+                           free_fn);
+  int res = REAL(_obstack_begin)(obstack, sz, align, alloc_fn, free_fn);
+  if (res) initialize_obstack(obstack);
+  return res;
+}
+INTERCEPTOR(void, _obstack_newchunk, __sanitizer_obstack *obstack, int length) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, _obstack_newchunk, obstack, length);
+  REAL(_obstack_newchunk)(obstack, length);
+  if (obstack->chunk)
+    COMMON_INTERCEPTOR_INITIALIZE_RANGE(
+        obstack->chunk, obstack->next_free - (char *)obstack->chunk);
+}
+#define INIT_OBSTACK                           \
+  COMMON_INTERCEPT_FUNCTION(_obstack_begin_1); \
+  COMMON_INTERCEPT_FUNCTION(_obstack_begin);   \
+  COMMON_INTERCEPT_FUNCTION(_obstack_newchunk);
+#else
+#define INIT_OBSTACK
+#endif
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_TEXTDOMAIN;                         \
   INIT_STRCMP;                             \
@@ -4027,5 +4070,6 @@ INTERCEPTOR(__sanitizer_FILE *, fmemopen, void *buf, SIZE_T size,
   INIT_TSEARCH;                            \
   INIT_LIBIO_INTERNALS;                    \
   INIT_FOPEN;                              \
-  INIT_OPEN_MEMSTREAM;
+  INIT_OPEN_MEMSTREAM;                     \
+  INIT_OBSTACK;
 /**/

@@ -694,6 +694,21 @@ namespace __sanitizer {
   };
 #endif
 
+#if SANITIZER_LINUX && !SANITIZER_ANDROID
+struct __sanitizer__obstack_chunk {
+  char *limit;
+  struct __sanitizer__obstack_chunk *prev;
+};
+
+struct __sanitizer_obstack {
+  long chunk_size;
+  struct __sanitizer__obstack_chunk *chunk;
+  char *object_base;
+  char *next_free;
+  uptr more_fields[7];
+};
+#endif
+
 #define IOC_NRBITS 8
 #define IOC_TYPEBITS 8
 #if defined(__powerpc__) || defined(__powerpc64__)
