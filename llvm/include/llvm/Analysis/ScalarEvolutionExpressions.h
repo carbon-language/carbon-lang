@@ -14,6 +14,7 @@
 #ifndef LLVM_ANALYSIS_SCALAREVOLUTIONEXPRESSIONS_H
 #define LLVM_ANALYSIS_SCALAREVOLUTIONEXPRESSIONS_H
 
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -151,8 +152,12 @@ namespace llvm {
     }
 
     typedef const SCEV *const *op_iterator;
+    typedef iterator_range<op_iterator> op_range;
     op_iterator op_begin() const { return Operands; }
     op_iterator op_end() const { return Operands + NumOperands; }
+    op_range operands() const {
+      return make_range(op_begin(), op_end());
+    }
 
     Type *getType() const { return getOperand(0)->getType(); }
 

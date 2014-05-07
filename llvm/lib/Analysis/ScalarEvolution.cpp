@@ -1098,11 +1098,10 @@ static const SCEV *getPreStartForSignExtend(const SCEVAddRecExpr *AR,
   // subtraction is expensive. For this purpose, perform a quick and dirty
   // difference, by checking for Step in the operand list.
   SmallVector<const SCEV *, 4> DiffOps;
-  for (SCEVAddExpr::op_iterator I = SA->op_begin(), E = SA->op_end();
-       I != E; ++I) {
-    if (*I != Step)
-      DiffOps.push_back(*I);
-  }
+  for (const SCEV *Op : SA->operands())
+    if (Op != Step)
+      DiffOps.push_back(Op);
+
   if (DiffOps.size() == SA->getNumOperands())
     return nullptr;
 
@@ -1341,9 +1340,8 @@ const SCEV *ScalarEvolution::getAnyExtendExpr(const SCEV *Op,
   // Force the cast to be folded into the operands of an addrec.
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Op)) {
     SmallVector<const SCEV *, 4> Ops;
-    for (SCEVAddRecExpr::op_iterator I = AR->op_begin(), E = AR->op_end();
-         I != E; ++I)
-      Ops.push_back(getAnyExtendExpr(*I, Ty));
+    for (const SCEV *Op : AR->operands())
+      Ops.push_back(getAnyExtendExpr(Op, Ty));
     return getAddRecExpr(Ops, AR->getLoop(), SCEV::FlagNW);
   }
 
