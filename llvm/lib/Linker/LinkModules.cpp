@@ -604,6 +604,8 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
 
   // Compute the visibility. We follow the rules in the System V Application
   // Binary Interface.
+  assert(!GlobalValue::isLocalLinkage(LT) &&
+         "Symbols with local linkage should not be merged");
   Vis = isLessConstraining(Src->getVisibility(), Dest->getVisibility()) ?
     Dest->getVisibility() : Src->getVisibility();
   return false;
