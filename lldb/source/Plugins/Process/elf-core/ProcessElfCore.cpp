@@ -63,7 +63,7 @@ ProcessElfCore::CreateInstance (Target &target, Listener &listener, const FileSp
         const size_t header_size = sizeof(llvm::ELF::Elf64_Ehdr);
 
         lldb::DataBufferSP data_sp (crash_file->ReadFileContents(0, header_size));
-        if (data_sp->GetByteSize() == header_size)
+        if (data_sp->GetByteSize() == header_size && elf::ELFHeader::MagicBytesMatch (data_sp->GetBytes()))
         {
             elf::ELFHeader elf_header;
             DataExtractor data(data_sp, lldb::eByteOrderLittle, 4);
