@@ -410,7 +410,7 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
         ClWrapIndirectCalls, AnyFunctionPtrTy, AnyFunctionPtrTy, NULL);
   }
 
-  if (ClWrapIndirectCallsFast) {
+  if (WrapIndirectCalls && ClWrapIndirectCallsFast) {
     MsandrModuleStart = new GlobalVariable(
         M, IRB.getInt32Ty(), false, GlobalValue::ExternalLinkage,
         nullptr, "__executable_start");
