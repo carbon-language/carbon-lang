@@ -1843,7 +1843,8 @@ void ARM64TargetLowering::saveVarArgRegisters(CCState &CCInfo,
 
       for (unsigned i = FirstVariadicFPR; i < NumFPRArgRegs; ++i) {
         unsigned VReg = MF.addLiveIn(FPRArgRegs[i], &ARM64::FPR128RegClass);
-        SDValue Val = DAG.getCopyFromReg(Chain, DL, VReg, MVT::v2i64);
+        SDValue Val = DAG.getCopyFromReg(Chain, DL, VReg, MVT::f128);
+
         SDValue Store =
             DAG.getStore(Val.getValue(1), DL, Val, FIN,
                          MachinePointerInfo::getStack(i * 16), false, false, 0);
