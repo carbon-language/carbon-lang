@@ -790,7 +790,7 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
 
   updateWithValueMap(VMap);
 
-  BlockGenerator::generate(Builder, *Statement, ValueMap, P);
+  BlockGenerator::generate(Builder, *Statement, ValueMap, LoopToScev, P);
 
   if (AfterBB)
     Builder.SetInsertPoint(AfterBB->begin());
