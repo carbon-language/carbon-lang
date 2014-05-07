@@ -389,7 +389,7 @@ public:
                        const GCOVFunction *Function) {
     if (Line > LineInfo[Filename].LastLine)
       LineInfo[Filename].LastLine = Line;
-   LineInfo[Filename].Functions[Line-1].push_back(Function);
+    LineInfo[Filename].Functions[Line-1].push_back(Function);
   }
   void setRunCount(uint32_t Runs) { RunCount = Runs; }
   void setProgramCount(uint32_t Programs) { ProgramCount = Programs; }
