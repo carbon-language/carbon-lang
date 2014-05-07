@@ -151,7 +151,7 @@ thread_local int anon_i{1};
 void set_anon_i() {
   anon_i = 2;
 }
-// CHECK-LABEL: define internal hidden i32* @_ZTWN12_GLOBAL__N_16anon_iE()
+// CHECK-LABEL: define internal i32* @_ZTWN12_GLOBAL__N_16anon_iE()
 
 // CHECK: define {{.*}} @[[V_M_INIT:.*]]()
 // CHECK: load i8* bitcast (i64* @_ZGVN1VIiE1mE to i8*)
@@ -189,7 +189,7 @@ void set_anon_i() {
 // CHECK: declare extern_weak void @_ZTH1b()
 
 
-// CHECK-LABEL: define internal hidden i32* @_ZTWL1d()
+// CHECK-LABEL: define internal i32* @_ZTWL1d()
 // CHECK: call void @_ZTHL1d()
 // CHECK: ret i32* @_ZL1d
 

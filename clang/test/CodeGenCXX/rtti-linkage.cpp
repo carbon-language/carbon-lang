@@ -1,7 +1,30 @@
-// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
-// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -fvisibility hidden -emit-llvm -o - | FileCheck -check-prefix=CHECK-WITH-HIDDEN %s
+// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-BOTH
+// RUN: %clang_cc1 %s -I%S -triple=x86_64-apple-darwin10 -fvisibility hidden -emit-llvm -o - | FileCheck -check-prefix=CHECK-WITH-HIDDEN -check-prefix=CHECK-BOTH %s
 
 #include <typeinfo>
+
+// CHECK-BOTH: _ZTSP1C = internal constant
+// CHECK-BOTH: _ZTS1C = internal constant
+// CHECK-BOTH: _ZTI1C = internal constant
+// CHECK-BOTH: _ZTIP1C = internal constant
+// CHECK-BOTH: _ZTSPP1C = internal constant
+// CHECK-BOTH: _ZTIPP1C = internal constant
+// CHECK-BOTH: _ZTSM1Ci = internal constant
+// CHECK-BOTH: _ZTIM1Ci = internal constant
+// CHECK-BOTH: _ZTSPM1Ci = internal constant
+// CHECK-BOTH: _ZTIPM1Ci = internal constant
+// CHECK-BOTH: _ZTSM1CS_ = internal constant
+// CHECK-BOTH: _ZTIM1CS_ = internal constant
+// CHECK-BOTH: _ZTSM1CPS_ = internal constant
+// CHECK-BOTH: _ZTIM1CPS_ = internal constant
+// CHECK-BOTH: _ZTSM1A1C = internal constant
+// CHECK: _ZTS1A = linkonce_odr constant
+// CHECK-WITH-HIDDEN: _ZTS1A = linkonce_odr hidden constant
+// CHECK: _ZTI1A = linkonce_odr constant
+// CHECK-WITH-HIDDEN: _ZTI1A = linkonce_odr hidden constant
+// CHECK-BOTH: _ZTIM1A1C = internal constant
+// CHECK-BOTH: _ZTSM1AP1C = internal constant
+// CHECK-BOTH: _ZTIM1AP1C = internal constant
 
 // CHECK-WITH-HIDDEN: _ZTSFN12_GLOBAL__N_11DEvE = internal constant
 // CHECK-WITH-HIDDEN: @_ZTSPK2T4 = linkonce_odr hidden constant 
@@ -17,26 +40,6 @@
 // CHECK-WITH-HIDDEN: @_ZTSZ2t6vE1A = linkonce_odr hidden constant
 // CHECK-WITH-HIDDEN: @_ZTIZ2t6vE1A = linkonce_odr hidden constant
 
-// CHECK: _ZTSP1C = internal constant
-// CHECK: _ZTS1C = internal constant
-// CHECK: _ZTI1C = internal constant
-// CHECK: _ZTIP1C = internal constant
-// CHECK: _ZTSPP1C = internal constant
-// CHECK: _ZTIPP1C = internal constant
-// CHECK: _ZTSM1Ci = internal constant
-// CHECK: _ZTIM1Ci = internal constant
-// CHECK: _ZTSPM1Ci = internal constant
-// CHECK: _ZTIPM1Ci = internal constant
-// CHECK: _ZTSM1CS_ = internal constant
-// CHECK: _ZTIM1CS_ = internal constant
-// CHECK: _ZTSM1CPS_ = internal constant
-// CHECK: _ZTIM1CPS_ = internal constant
-// CHECK: _ZTSM1A1C = internal constant
-// CHECK: _ZTS1A = linkonce_odr constant
-// CHECK: _ZTI1A = linkonce_odr constant
-// CHECK: _ZTIM1A1C = internal constant
-// CHECK: _ZTSM1AP1C = internal constant
-// CHECK: _ZTIM1AP1C = internal constant
 // CHECK: _ZTSN12_GLOBAL__N_11DE = internal constant
 // CHECK: _ZTIN12_GLOBAL__N_11DE = internal constant
 // CHECK: _ZTSPN12_GLOBAL__N_11DE = internal constant

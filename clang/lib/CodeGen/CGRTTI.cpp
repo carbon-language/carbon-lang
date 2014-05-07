@@ -679,7 +679,10 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   // Give the type_info object and name the formal visibility of the
   // type itself.
   llvm::GlobalValue::VisibilityTypes llvmVisibility;
-  if (RTTIUniqueness == CGCXXABI::RUK_NonUniqueHidden)
+  if (llvm::GlobalValue::isLocalLinkage(Linkage))
+    // If the linkage is local, only default visibility makes sense.
+    llvmVisibility = llvm::GlobalValue::DefaultVisibility;
+  else if (RTTIUniqueness == CGCXXABI::RUK_NonUniqueHidden)
     llvmVisibility = llvm::GlobalValue::HiddenVisibility;
   else
     llvmVisibility = CodeGenModule::GetLLVMVisibility(Ty->getVisibility());

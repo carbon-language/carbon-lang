@@ -1586,7 +1586,8 @@ ItaniumCXXABI::getOrCreateThreadLocalWrapper(const VarDecl *VD,
                 CGM.getLLVMLinkageVarDefinition(VD, /*isConstant=*/false)),
       WrapperName.str(), &CGM.getModule());
   // Always resolve references to the wrapper at link time.
-  Wrapper->setVisibility(llvm::GlobalValue::HiddenVisibility);
+  if (!Wrapper->hasLocalLinkage())
+    Wrapper->setVisibility(llvm::GlobalValue::HiddenVisibility);
   return Wrapper;
 }
 
