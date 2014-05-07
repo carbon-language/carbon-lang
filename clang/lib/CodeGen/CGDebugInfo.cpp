@@ -3319,6 +3319,16 @@ CGDebugInfo::getOrCreateNameSpace(const NamespaceDecl *NSDecl) {
 }
 
 void CGDebugInfo::finalize() {
+  // Creating types might create further types - invalidating the current
+  // element and the size(), so don't cache/reference them.
+  for (size_t i = 0; i != ObjCInterfaceCache.size(); ++i) {
+    ObjCInterfaceCacheEntry E = ObjCInterfaceCache[i];
+    E.Decl.replaceAllUsesWith(CGM.getLLVMContext(),
+                              E.Type->getDecl()->getDefinition()
+                                  ? CreateTypeDefinition(E.Type, E.Unit)
+                                  : E.Decl);
+  }
+
   for (auto p : ReplaceMap) {
     assert(p.second);
     llvm::DIType Ty(cast<llvm::MDNode>(p.second));
@@ -3330,16 +3340,6 @@ void CGDebugInfo::finalize() {
 
     llvm::DIType RepTy(cast<llvm::MDNode>(it->second));
     Ty.replaceAllUsesWith(CGM.getLLVMContext(), RepTy);
-  }
-
-  // Creating types might create further types - invalidating the current
-  // element and the size(), so don't cache/reference them.
-  for (size_t i = 0; i != ObjCInterfaceCache.size(); ++i) {
-    ObjCInterfaceCacheEntry E = ObjCInterfaceCache[i];
-    E.Decl.replaceAllUsesWith(CGM.getLLVMContext(),
-                              E.Type->getDecl()->getDefinition()
-                                  ? CreateTypeDefinition(E.Type, E.Unit)
-                                  : E.Decl);
   }
 
   // We keep our own list of retained types, because we need to look
