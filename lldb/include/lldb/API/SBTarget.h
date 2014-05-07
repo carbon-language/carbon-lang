@@ -47,6 +47,35 @@ public:
     void
     SetGroupID (uint32_t gid);
     
+    SBFileSpec
+    GetExecutableFile ();
+    
+    //----------------------------------------------------------------------
+    /// Set the executable file that will be used to launch the process and
+    /// optionally set it as the first argument in the argument vector.
+    ///
+    /// This only needs to be specified if clients wish to carefully control
+    /// the exact path will be used to launch a binary. If you create a
+    /// target with a symlink, that simlink will get resolved in the target
+    /// and the resolved path will get used to launch the process. Calling
+    /// this function can help you still launch your process using the
+    /// path of your choice.
+    ///
+    /// If this function is not called prior to launching with
+    /// SBTarget::Launch(...), the target will use the resolved executable
+    /// path that was used to create the target.
+    ///
+    /// @param[in] exe_file
+    ///     The override path to use when launching the executable.
+    ///
+    /// @param[in] add_as_first_arg
+    ///     If true, then the path will be inserted into the argument vector
+    ///     prior to launching. Otherwise the argument vector will be left
+    ///     alone.
+    //----------------------------------------------------------------------
+    void
+    SetExecutableFile (SBFileSpec exe_file, bool add_as_first_arg);
+    
     uint32_t
     GetNumArguments ();
     

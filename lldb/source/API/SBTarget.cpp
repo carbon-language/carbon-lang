@@ -120,6 +120,18 @@ SBLaunchInfo::SetGroupID (uint32_t gid)
     m_opaque_sp->SetGroupID (gid);
 }
 
+SBFileSpec
+SBLaunchInfo::GetExecutableFile ()
+{
+    return SBFileSpec (m_opaque_sp->GetExecutableFile());
+}
+
+void
+SBLaunchInfo::SetExecutableFile (SBFileSpec exe_file, bool add_as_first_arg)
+{
+    m_opaque_sp->SetExecutableFile(exe_file.ref(), add_as_first_arg);
+}
+
 uint32_t
 SBLaunchInfo::GetNumArguments ()
 {
@@ -747,27 +759,30 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
         StateType state = eStateInvalid;
         {
-        ProcessSP process_sp = target_sp->GetProcessSP();
-        if (process_sp)
-        {
-            state = process_sp->GetState();
-
-            if (process_sp->IsAlive() && state != eStateConnected)
+            ProcessSP process_sp = target_sp->GetProcessSP();
+            if (process_sp)
             {
-                if (state == eStateAttaching)
-                    error.SetErrorString ("process attach is in progress");
-                else
-                    error.SetErrorString ("a process is already being debugged");
-                return sb_process;
+                state = process_sp->GetState();
+                
+                if (process_sp->IsAlive() && state != eStateConnected)
+                {
+                    if (state == eStateAttaching)
+                        error.SetErrorString ("process attach is in progress");
+                    else
+                        error.SetErrorString ("a process is already being debugged");
+                    return sb_process;
+                }
             }
-        }
         }
 
         lldb_private::ProcessLaunchInfo &launch_info = sb_launch_info.ref();
 
-        Module *exe_module = target_sp->GetExecutableModulePointer();
-        if (exe_module)
-            launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);
+        if (!launch_info.GetExecutableFile())
+        {
+            Module *exe_module = target_sp->GetExecutableModulePointer();
+            if (exe_module)
+                launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);
+        }
 
         const ArchSpec &arch_spec = target_sp->GetArchitecture();
         if (arch_spec.IsValid())

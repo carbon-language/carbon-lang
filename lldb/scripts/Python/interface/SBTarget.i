@@ -32,6 +32,12 @@ public:
     void
     SetGroupID (uint32_t gid);
     
+    lldb::SBFileSpec
+    GetExecutableFile ();
+    
+    void
+    SetExecutableFile (lldb::SBFileSpec exe_file, bool add_as_first_arg);
+
     uint32_t
     GetNumArguments ();
     
