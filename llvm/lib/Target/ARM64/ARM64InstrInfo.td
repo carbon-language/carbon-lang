@@ -2037,40 +2037,6 @@ defm FMOV : UnscaledConversion<"fmov">;
 def : Pat<(f32 (fpimm0)), (FMOVWSr WZR)>, Requires<[NoZCZ]>;
 def : Pat<(f64 (fpimm0)), (FMOVXDr XZR)>, Requires<[NoZCZ]>;
 
-def : Pat<(v8i8  (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
-def : Pat<(v4i16 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
-def : Pat<(v2i32 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
-def : Pat<(v1i64 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
-def : Pat<(v2f32 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
-def : Pat<(v1f64 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
-def : Pat<(v1i64 (scalar_to_vector GPR64:$Xn)),
-          (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
-def : Pat<(v1f64 (scalar_to_vector GPR64:$Xn)),
-          (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
-def : Pat<(v1f64 (scalar_to_vector (f64 FPR64:$Xn))), (v1f64 FPR64:$Xn)>;
-
-def : Pat<(i64 (bitconvert (v8i8  V64:$Vn))),
-          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
-def : Pat<(i64 (bitconvert (v4i16 V64:$Vn))),
-          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
-def : Pat<(i64 (bitconvert (v2i32 V64:$Vn))),
-          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
-def : Pat<(i64 (bitconvert (v1i64 V64:$Vn))),
-          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
-def : Pat<(i64 (bitconvert (v2f32 V64:$Vn))),
-          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
-def : Pat<(i64 (bitconvert (v1f64 V64:$Vn))),
-          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
-
-def : Pat<(f32 (bitconvert (i32 GPR32:$Xn))),
-          (COPY_TO_REGCLASS GPR32:$Xn, FPR32)>;
-def : Pat<(i32 (bitconvert (f32 FPR32:$Xn))),
-          (COPY_TO_REGCLASS FPR32:$Xn, GPR32)>;
-def : Pat<(f64 (bitconvert (i64 GPR64:$Xn))),
-          (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
-def : Pat<(i64 (bitconvert (f64 FPR64:$Xn))),
-          (COPY_TO_REGCLASS FPR64:$Xn, GPR64)>;
-
 //===----------------------------------------------------------------------===//
 // Floating point conversion instruction.
 //===----------------------------------------------------------------------===//
@@ -4631,104 +4597,418 @@ def : Pat<(i32 (trunc GPR64sp:$src)),
 def : Pat<(trap), (BRK 1)>;
 
 // Conversions within AdvSIMD types in the same register size are free.
+// But because we need a consistent lane ordering, in big endian many
+// conversions require one or more REV instructions.
+//
+// Consider a simple memory load followed by a bitconvert then a store.
+//   v0 = load v2i32
+//   v1 = BITCAST v2i32 v0 to v4i16
+//        store v4i16 v2
+//
+// In big endian mode every memory access has an implicit byte swap. LDR and
+// STR do a 64-bit byte swap, whereas LD1/ST1 do a byte swap per lane - that
+// is, they treat the vector as a sequence of elements to be byte-swapped.
+// The two pairs of instructions are fundamentally incompatible. We've decided
+// to use LD1/ST1 only to simplify compiler implementation.
+//
+// LD1/ST1 perform the equivalent of a sequence of LDR/STR + REV. This makes
+// the original code sequence:
+//   v0 = load v2i32
+//   v1 = REV v2i32                  (implicit)
+//   v2 = BITCAST v2i32 v1 to v4i16
+//   v3 = REV v4i16 v2               (implicit)
+//        store v4i16 v3
+//
+// But this is now broken - the value stored is different to the value loaded
+// due to lane reordering. To fix this, on every BITCAST we must perform two
+// other REVs:
+//   v0 = load v2i32
+//   v1 = REV v2i32                  (implicit)
+//   v2 = REV v2i32
+//   v3 = BITCAST v2i32 v2 to v4i16
+//   v4 = REV v4i16
+//   v5 = REV v4i16 v4               (implicit)
+//        store v4i16 v5
+//
+// This means an extra two instructions, but actually in most cases the two REV
+// instructions can be combined into one. For example:
+//   (REV64_2s (REV64_4h X)) === (REV32_4h X)
+//
+// There is also no 128-bit REV instruction. This must be synthesized with an
+// EXT instruction.
+//
+// Most bitconverts require some sort of conversion. The only exceptions are:
+//   a) Identity conversions -  vNfX <-> vNiX
+//   b) Single-lane-to-scalar - v1fX <-> fX or v1iX <-> iX
+//
 
+let Predicates = [IsLE] in {
+def : Pat<(v8i8  (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v4i16 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v2i32 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v2f32 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+
+def : Pat<(i64 (bitconvert (v8i8  V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+def : Pat<(i64 (bitconvert (v4i16 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+def : Pat<(i64 (bitconvert (v2i32 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+def : Pat<(i64 (bitconvert (v2f32 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+def : Pat<(i64 (bitconvert (v1f64 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v8i8  (bitconvert GPR64:$Xn)),
+                 (REV64v8i8 (COPY_TO_REGCLASS GPR64:$Xn, FPR64))>;
+def : Pat<(v4i16 (bitconvert GPR64:$Xn)),
+                 (REV64v4i16 (COPY_TO_REGCLASS GPR64:$Xn, FPR64))>;
+def : Pat<(v2i32 (bitconvert GPR64:$Xn)),
+                 (REV64v2i32 (COPY_TO_REGCLASS GPR64:$Xn, FPR64))>;
+def : Pat<(v2f32 (bitconvert GPR64:$Xn)),
+                 (REV64v2i32 (COPY_TO_REGCLASS GPR64:$Xn, FPR64))>;
+
+def : Pat<(i64 (bitconvert (v8i8  V64:$Vn))),
+          (REV64v8i8 (COPY_TO_REGCLASS V64:$Vn, GPR64))>;
+def : Pat<(i64 (bitconvert (v4i16 V64:$Vn))),
+          (REV64v4i16 (COPY_TO_REGCLASS V64:$Vn, GPR64))>;
+def : Pat<(i64 (bitconvert (v2i32 V64:$Vn))),
+          (REV64v2i32 (COPY_TO_REGCLASS V64:$Vn, GPR64))>;
+def : Pat<(i64 (bitconvert (v2f32 V64:$Vn))),
+          (REV64v2i32 (COPY_TO_REGCLASS V64:$Vn, GPR64))>;
+}
+def : Pat<(v1i64 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v1f64 (bitconvert GPR64:$Xn)), (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(i64 (bitconvert (v1i64 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+def : Pat<(v1i64 (scalar_to_vector GPR64:$Xn)),
+          (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v1f64 (scalar_to_vector GPR64:$Xn)),
+          (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(v1f64 (scalar_to_vector (f64 FPR64:$Xn))), (v1f64 FPR64:$Xn)>;
+
+def : Pat<(f32 (bitconvert (i32 GPR32:$Xn))),
+          (COPY_TO_REGCLASS GPR32:$Xn, FPR32)>;
+def : Pat<(i32 (bitconvert (f32 FPR32:$Xn))),
+          (COPY_TO_REGCLASS FPR32:$Xn, GPR32)>;
+def : Pat<(f64 (bitconvert (i64 GPR64:$Xn))),
+          (COPY_TO_REGCLASS GPR64:$Xn, FPR64)>;
+def : Pat<(i64 (bitconvert (f64 FPR64:$Xn))),
+          (COPY_TO_REGCLASS FPR64:$Xn, GPR64)>;
+def : Pat<(i64 (bitconvert (v1f64 V64:$Vn))),
+          (COPY_TO_REGCLASS V64:$Vn, GPR64)>;
+
+let Predicates = [IsLE] in {
 def : Pat<(v1i64 (bitconvert (v2i32 FPR64:$src))), (v1i64 FPR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v4i16 FPR64:$src))), (v1i64 FPR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v8i8  FPR64:$src))), (v1i64 FPR64:$src)>;
-def : Pat<(v1i64 (bitconvert (f64   FPR64:$src))), (v1i64 FPR64:$src)>;
 def : Pat<(v1i64 (bitconvert (v2f32 FPR64:$src))), (v1i64 FPR64:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v1i64 (bitconvert (v2i32 FPR64:$src))),
+                             (v1i64 (REV64v2i32 FPR64:$src))>;
+def : Pat<(v1i64 (bitconvert (v4i16 FPR64:$src))),
+                             (v1i64 (REV64v4i16 FPR64:$src))>;
+def : Pat<(v1i64 (bitconvert (v8i8  FPR64:$src))),
+                             (v1i64 (REV64v8i8 FPR64:$src))>;
+def : Pat<(v1i64 (bitconvert (v2f32 FPR64:$src))),
+                             (v1i64 (REV64v2i32 FPR64:$src))>;
+}
 def : Pat<(v1i64 (bitconvert (v1f64 FPR64:$src))), (v1i64 FPR64:$src)>;
+def : Pat<(v1i64 (bitconvert (f64   FPR64:$src))), (v1i64 FPR64:$src)>;
 
+let Predicates = [IsLE] in {
 def : Pat<(v2i32 (bitconvert (v1i64 FPR64:$src))), (v2i32 FPR64:$src)>;
 def : Pat<(v2i32 (bitconvert (v4i16 FPR64:$src))), (v2i32 FPR64:$src)>;
 def : Pat<(v2i32 (bitconvert (v8i8  FPR64:$src))), (v2i32 FPR64:$src)>;
 def : Pat<(v2i32 (bitconvert (f64   FPR64:$src))), (v2i32 FPR64:$src)>;
-def : Pat<(v2i32 (bitconvert (v2f32 FPR64:$src))), (v2i32 FPR64:$src)>;
 def : Pat<(v2i32 (bitconvert (v1f64 FPR64:$src))), (v2i32 FPR64:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v2i32 (bitconvert (v1i64 FPR64:$src))),
+                             (v2i32 (REV64v2i32 FPR64:$src))>;
+def : Pat<(v2i32 (bitconvert (v4i16 FPR64:$src))),
+                             (v2i32 (REV32v4i16 FPR64:$src))>;
+def : Pat<(v2i32 (bitconvert (v8i8  FPR64:$src))),
+                             (v2i32 (REV32v8i8 FPR64:$src))>;
+def : Pat<(v2i32 (bitconvert (f64   FPR64:$src))),
+                             (v2i32 (REV64v2i32 FPR64:$src))>;
+def : Pat<(v2i32 (bitconvert (v1f64 FPR64:$src))),
+                             (v2i32 (REV64v2i32 FPR64:$src))>;
+}
+def : Pat<(v2i32 (bitconvert (v2f32 FPR64:$src))), (v2i32 FPR64:$src)>;
 
+let Predicates = [IsLE] in {
 def : Pat<(v4i16 (bitconvert (v1i64 FPR64:$src))), (v4i16 FPR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v2i32 FPR64:$src))), (v4i16 FPR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v8i8  FPR64:$src))), (v4i16 FPR64:$src)>;
 def : Pat<(v4i16 (bitconvert (f64   FPR64:$src))), (v4i16 FPR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v2f32 FPR64:$src))), (v4i16 FPR64:$src)>;
 def : Pat<(v4i16 (bitconvert (v1f64 FPR64:$src))), (v4i16 FPR64:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v4i16 (bitconvert (v1i64 FPR64:$src))),
+                             (v4i16 (REV64v4i16 FPR64:$src))>;
+def : Pat<(v4i16 (bitconvert (v2i32 FPR64:$src))),
+                             (v4i16 (REV32v4i16 FPR64:$src))>;
+def : Pat<(v4i16 (bitconvert (v8i8  FPR64:$src))),
+                             (v4i16 (REV16v8i8 FPR64:$src))>;
+def : Pat<(v4i16 (bitconvert (f64   FPR64:$src))),
+                             (v4i16 (REV64v4i16 FPR64:$src))>;
+def : Pat<(v4i16 (bitconvert (v2f32 FPR64:$src))),
+                             (v4i16 (REV32v4i16 FPR64:$src))>;
+def : Pat<(v4i16 (bitconvert (v1f64 FPR64:$src))),
+                             (v4i16 (REV64v4i16 FPR64:$src))>;
+}
 
+let Predicates = [IsLE] in {
 def : Pat<(v8i8  (bitconvert (v1i64 FPR64:$src))), (v8i8  FPR64:$src)>;
 def : Pat<(v8i8  (bitconvert (v2i32 FPR64:$src))), (v8i8  FPR64:$src)>;
 def : Pat<(v8i8  (bitconvert (v4i16 FPR64:$src))), (v8i8  FPR64:$src)>;
 def : Pat<(v8i8  (bitconvert (f64   FPR64:$src))), (v8i8  FPR64:$src)>;
 def : Pat<(v8i8  (bitconvert (v2f32 FPR64:$src))), (v8i8  FPR64:$src)>;
 def : Pat<(v8i8  (bitconvert (v1f64 FPR64:$src))), (v8i8  FPR64:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v8i8  (bitconvert (v1i64 FPR64:$src))),
+                             (v8i8 (REV64v8i8 FPR64:$src))>;
+def : Pat<(v8i8  (bitconvert (v2i32 FPR64:$src))),
+                             (v8i8 (REV32v8i8 FPR64:$src))>;
+def : Pat<(v8i8  (bitconvert (v4i16 FPR64:$src))),
+                             (v8i8 (REV16v8i8 FPR64:$src))>;
+def : Pat<(v8i8  (bitconvert (f64   FPR64:$src))),
+                             (v8i8 (REV64v8i8 FPR64:$src))>;
+def : Pat<(v8i8  (bitconvert (v2f32 FPR64:$src))),
+                             (v8i8 (REV32v8i8 FPR64:$src))>;
+def : Pat<(v8i8  (bitconvert (v1f64 FPR64:$src))),
+                             (v8i8 (REV64v8i8 FPR64:$src))>;
+}
 
-def : Pat<(f64   (bitconvert (v1i64 FPR64:$src))), (f64   FPR64:$src)>;
+let Predicates = [IsLE] in {
 def : Pat<(f64   (bitconvert (v2i32 FPR64:$src))), (f64   FPR64:$src)>;
 def : Pat<(f64   (bitconvert (v4i16 FPR64:$src))), (f64   FPR64:$src)>;
-def : Pat<(f64   (bitconvert (v8i8  FPR64:$src))), (f64   FPR64:$src)>;
 def : Pat<(f64   (bitconvert (v2f32 FPR64:$src))), (f64   FPR64:$src)>;
+def : Pat<(f64   (bitconvert (v8i8  FPR64:$src))), (f64   FPR64:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(f64   (bitconvert (v2i32 FPR64:$src))),
+                             (f64 (REV64v2i32 FPR64:$src))>;
+def : Pat<(f64   (bitconvert (v4i16 FPR64:$src))),
+                             (f64 (REV64v4i16 FPR64:$src))>;
+def : Pat<(f64   (bitconvert (v2f32 FPR64:$src))),
+                             (f64 (REV64v2i32 FPR64:$src))>;
+def : Pat<(f64   (bitconvert (v8i8  FPR64:$src))),
+                             (f64 (REV64v8i8 FPR64:$src))>;
+}
+def : Pat<(f64   (bitconvert (v1i64 FPR64:$src))), (f64   FPR64:$src)>;
 def : Pat<(f64   (bitconvert (v1f64 FPR64:$src))), (f64   FPR64:$src)>;
 
-def : Pat<(v1f64 (bitconvert (v1i64 FPR64:$src))), (v1f64 FPR64:$src)>;
+let Predicates = [IsLE] in {
 def : Pat<(v1f64 (bitconvert (v2i32 FPR64:$src))), (v1f64 FPR64:$src)>;
 def : Pat<(v1f64 (bitconvert (v4i16 FPR64:$src))), (v1f64 FPR64:$src)>;
 def : Pat<(v1f64 (bitconvert (v8i8  FPR64:$src))), (v1f64 FPR64:$src)>;
-def : Pat<(v1f64 (bitconvert (f64   FPR64:$src))), (v1f64 FPR64:$src)>;
 def : Pat<(v1f64 (bitconvert (v2f32 FPR64:$src))), (v1f64 FPR64:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v1f64 (bitconvert (v2i32 FPR64:$src))),
+                             (v1f64 (REV64v2i32 FPR64:$src))>;
+def : Pat<(v1f64 (bitconvert (v4i16 FPR64:$src))),
+                             (v1f64 (REV64v4i16 FPR64:$src))>;
+def : Pat<(v1f64 (bitconvert (v8i8  FPR64:$src))),
+                             (v1f64 (REV64v8i8 FPR64:$src))>;
+def : Pat<(v1f64 (bitconvert (v2f32 FPR64:$src))),
+                             (v1f64 (REV64v2i32 FPR64:$src))>;
+}
+def : Pat<(v1f64 (bitconvert (v1i64 FPR64:$src))), (v1f64 FPR64:$src)>;
+def : Pat<(v1f64 (bitconvert (f64   FPR64:$src))), (v1f64 FPR64:$src)>;
 
-def : Pat<(v2f32 (bitconvert (f64   FPR64:$src))), (v2f32 FPR64:$src)>;
+let Predicates = [IsLE] in {
 def : Pat<(v2f32 (bitconvert (v1i64 FPR64:$src))), (v2f32 FPR64:$src)>;
-def : Pat<(v2f32 (bitconvert (v2i32 FPR64:$src))), (v2f32 FPR64:$src)>;
 def : Pat<(v2f32 (bitconvert (v4i16 FPR64:$src))), (v2f32 FPR64:$src)>;
 def : Pat<(v2f32 (bitconvert (v8i8  FPR64:$src))), (v2f32 FPR64:$src)>;
 def : Pat<(v2f32 (bitconvert (v1f64 FPR64:$src))), (v2f32 FPR64:$src)>;
+def : Pat<(v2f32 (bitconvert (f64   FPR64:$src))), (v2f32 FPR64:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v2f32 (bitconvert (v1i64 FPR64:$src))),
+                             (v2f32 (REV64v2i32 FPR64:$src))>;
+def : Pat<(v2f32 (bitconvert (v4i16 FPR64:$src))),
+                             (v2f32 (REV32v4i16 FPR64:$src))>;
+def : Pat<(v2f32 (bitconvert (v8i8  FPR64:$src))),
+                             (v2f32 (REV32v8i8 FPR64:$src))>;
+def : Pat<(v2f32 (bitconvert (v1f64 FPR64:$src))),
+                             (v2f32 (REV64v2i32 FPR64:$src))>;
+def : Pat<(v2f32 (bitconvert (f64   FPR64:$src))),
+                             (v2f32 (REV64v2i32 FPR64:$src))>;
+}
+def : Pat<(v2f32 (bitconvert (v2i32 FPR64:$src))), (v2f32 FPR64:$src)>;
 
-
+let Predicates = [IsLE] in {
 def : Pat<(f128 (bitconvert (v2i64 FPR128:$src))), (f128 FPR128:$src)>;
 def : Pat<(f128 (bitconvert (v4i32 FPR128:$src))), (f128 FPR128:$src)>;
 def : Pat<(f128 (bitconvert (v8i16 FPR128:$src))), (f128 FPR128:$src)>;
 def : Pat<(f128 (bitconvert (v2f64 FPR128:$src))), (f128 FPR128:$src)>;
 def : Pat<(f128 (bitconvert (v4f32 FPR128:$src))), (f128 FPR128:$src)>;
+def : Pat<(f128 (bitconvert (v16i8 FPR128:$src))), (f128 FPR128:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(f128 (bitconvert (v2i64 FPR128:$src))),
+                            (f128 (EXTv16i8 FPR128:$src, FPR128:$src, (i32 8)))>;
+def : Pat<(f128 (bitconvert (v4i32 FPR128:$src))),
+                            (f128 (EXTv16i8 (REV64v4i32 FPR128:$src),
+                                            (REV64v4i32 FPR128:$src), (i32 8)))>;
+def : Pat<(f128 (bitconvert (v8i16 FPR128:$src))),
+                            (f128 (EXTv16i8 (REV64v8i16 FPR128:$src),
+                                            (REV64v8i16 FPR128:$src), (i32 8)))>;
+def : Pat<(f128 (bitconvert (v2f64 FPR128:$src))),
+                            (f128 (EXTv16i8 FPR128:$src, FPR128:$src, (i32 8)))>;
+def : Pat<(f128 (bitconvert (v4f32 FPR128:$src))),
+                            (f128 (EXTv16i8 (REV64v4i32 FPR128:$src),
+                                            (REV64v4i32 FPR128:$src), (i32 8)))>;
+def : Pat<(f128 (bitconvert (v16i8 FPR128:$src))),
+                            (f128 (EXTv16i8 (REV64v16i8 FPR128:$src),
+                                            (REV64v16i8 FPR128:$src), (i32 8)))>;
+}
 
+let Predicates = [IsLE] in {
 def : Pat<(v2f64 (bitconvert (f128  FPR128:$src))), (v2f64 FPR128:$src)>;
 def : Pat<(v2f64 (bitconvert (v4i32 FPR128:$src))), (v2f64 FPR128:$src)>;
 def : Pat<(v2f64 (bitconvert (v8i16 FPR128:$src))), (v2f64 FPR128:$src)>;
 def : Pat<(v2f64 (bitconvert (v16i8 FPR128:$src))), (v2f64 FPR128:$src)>;
-def : Pat<(v2f64 (bitconvert (v2i64 FPR128:$src))), (v2f64 FPR128:$src)>;
 def : Pat<(v2f64 (bitconvert (v4f32 FPR128:$src))), (v2f64 FPR128:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v2f64 (bitconvert (f128  FPR128:$src))),
+                             (v2f64 (EXTv16i8 FPR128:$src,
+                                              FPR128:$src, (i32 8)))>;
+def : Pat<(v2f64 (bitconvert (v4i32 FPR128:$src))),
+                             (v2f64 (REV64v4i32 FPR128:$src))>;
+def : Pat<(v2f64 (bitconvert (v8i16 FPR128:$src))),
+                             (v2f64 (REV64v8i16 FPR128:$src))>;
+def : Pat<(v2f64 (bitconvert (v16i8 FPR128:$src))),
+                             (v2f64 (REV64v16i8 FPR128:$src))>;
+def : Pat<(v2f64 (bitconvert (v4f32 FPR128:$src))),
+                             (v2f64 (REV64v4i32 FPR128:$src))>;
+}
+def : Pat<(v2f64 (bitconvert (v2i64 FPR128:$src))), (v2f64 FPR128:$src)>;
 
+let Predicates = [IsLE] in {
 def : Pat<(v4f32 (bitconvert (f128  FPR128:$src))), (v4f32 FPR128:$src)>;
-def : Pat<(v4f32 (bitconvert (v4i32 FPR128:$src))), (v4f32 FPR128:$src)>;
 def : Pat<(v4f32 (bitconvert (v8i16 FPR128:$src))), (v4f32 FPR128:$src)>;
 def : Pat<(v4f32 (bitconvert (v16i8 FPR128:$src))), (v4f32 FPR128:$src)>;
 def : Pat<(v4f32 (bitconvert (v2i64 FPR128:$src))), (v4f32 FPR128:$src)>;
 def : Pat<(v4f32 (bitconvert (v2f64 FPR128:$src))), (v4f32 FPR128:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v4f32 (bitconvert (f128  FPR128:$src))),
+                             (v4f32 (EXTv16i8 (REV64v4i32 FPR128:$src),
+                                    (REV64v4i32 FPR128:$src), (i32 8)))>;
+def : Pat<(v4f32 (bitconvert (v8i16 FPR128:$src))),
+                             (v4f32 (REV32v8i16 FPR128:$src))>;
+def : Pat<(v4f32 (bitconvert (v16i8 FPR128:$src))),
+                             (v4f32 (REV32v16i8 FPR128:$src))>;
+def : Pat<(v4f32 (bitconvert (v2i64 FPR128:$src))),
+                             (v4f32 (REV64v4i32 FPR128:$src))>;
+def : Pat<(v4f32 (bitconvert (v2f64 FPR128:$src))),
+                             (v4f32 (REV64v4i32 FPR128:$src))>;
+}
+def : Pat<(v4f32 (bitconvert (v4i32 FPR128:$src))), (v4f32 FPR128:$src)>;
 
+let Predicates = [IsLE] in {
 def : Pat<(v2i64 (bitconvert (f128  FPR128:$src))), (v2i64 FPR128:$src)>;
 def : Pat<(v2i64 (bitconvert (v4i32 FPR128:$src))), (v2i64 FPR128:$src)>;
 def : Pat<(v2i64 (bitconvert (v8i16 FPR128:$src))), (v2i64 FPR128:$src)>;
 def : Pat<(v2i64 (bitconvert (v16i8 FPR128:$src))), (v2i64 FPR128:$src)>;
-def : Pat<(v2i64 (bitconvert (v2f64 FPR128:$src))), (v2i64 FPR128:$src)>;
 def : Pat<(v2i64 (bitconvert (v4f32 FPR128:$src))), (v2i64 FPR128:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v2i64 (bitconvert (f128  FPR128:$src))),
+                             (v2i64 (EXTv16i8 FPR128:$src,
+                                              FPR128:$src, (i32 8)))>;
+def : Pat<(v2i64 (bitconvert (v4i32 FPR128:$src))),
+                             (v2i64 (REV64v4i32 FPR128:$src))>;
+def : Pat<(v2i64 (bitconvert (v8i16 FPR128:$src))),
+                             (v2i64 (REV64v8i16 FPR128:$src))>;
+def : Pat<(v2i64 (bitconvert (v16i8 FPR128:$src))),
+                             (v2i64 (REV64v16i8 FPR128:$src))>;
+def : Pat<(v2i64 (bitconvert (v4f32 FPR128:$src))),
+                             (v2i64 (REV64v4i32 FPR128:$src))>;
+}
+def : Pat<(v2i64 (bitconvert (v2f64 FPR128:$src))), (v2i64 FPR128:$src)>;
 
+let Predicates = [IsLE] in {
 def : Pat<(v4i32 (bitconvert (f128  FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v4i32 (bitconvert (v2i64 FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v4i32 (bitconvert (v8i16 FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v4i32 (bitconvert (v16i8 FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v4i32 (bitconvert (v2f64 FPR128:$src))), (v4i32 FPR128:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v4i32 (bitconvert (f128  FPR128:$src))),
+                             (v4i32 (EXTv16i8 (REV64v4i32 FPR128:$src),
+                                              (REV64v4i32 FPR128:$src),
+                                              (i32 8)))>;
+def : Pat<(v4i32 (bitconvert (v2i64 FPR128:$src))),
+                             (v4i32 (REV64v4i32 FPR128:$src))>;
+def : Pat<(v4i32 (bitconvert (v8i16 FPR128:$src))),
+                             (v4i32 (REV32v8i16 FPR128:$src))>;
+def : Pat<(v4i32 (bitconvert (v16i8 FPR128:$src))),
+                             (v4i32 (REV32v16i8 FPR128:$src))>;
+def : Pat<(v4i32 (bitconvert (v2f64 FPR128:$src))),
+                             (v4i32 (REV64v4i32 FPR128:$src))>;
+}
 def : Pat<(v4i32 (bitconvert (v4f32 FPR128:$src))), (v4i32 FPR128:$src)>;
 
+let Predicates = [IsLE] in {
 def : Pat<(v8i16 (bitconvert (f128  FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v8i16 (bitconvert (v2i64 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v8i16 (bitconvert (v4i32 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v8i16 (bitconvert (v16i8 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v8i16 (bitconvert (v2f64 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v8i16 (bitconvert (v4f32 FPR128:$src))), (v8i16 FPR128:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v8i16 (bitconvert (f128  FPR128:$src))),
+                             (v8i16 (EXTv16i8 (REV64v8i16 FPR128:$src),
+                                              (REV64v8i16 FPR128:$src),
+                                              (i32 8)))>;
+def : Pat<(v8i16 (bitconvert (v2i64 FPR128:$src))),
+                             (v8i16 (REV64v8i16 FPR128:$src))>;
+def : Pat<(v8i16 (bitconvert (v4i32 FPR128:$src))),
+                             (v8i16 (REV32v8i16 FPR128:$src))>;
+def : Pat<(v8i16 (bitconvert (v16i8 FPR128:$src))),
+                             (v8i16 (REV16v16i8 FPR128:$src))>;
+def : Pat<(v8i16 (bitconvert (v2f64 FPR128:$src))),
+                             (v8i16 (REV64v8i16 FPR128:$src))>;
+def : Pat<(v8i16 (bitconvert (v4f32 FPR128:$src))),
+                             (v8i16 (REV32v8i16 FPR128:$src))>;
+}
 
+let Predicates = [IsLE] in {
 def : Pat<(v16i8 (bitconvert (f128  FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v16i8 (bitconvert (v2i64 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v16i8 (bitconvert (v4i32 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v16i8 (bitconvert (v8i16 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v16i8 (bitconvert (v2f64 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v16i8 (bitconvert (v4f32 FPR128:$src))), (v16i8 FPR128:$src)>;
+}
+let Predicates = [IsBE] in {
+def : Pat<(v16i8 (bitconvert (f128  FPR128:$src))),
+                             (v16i8 (EXTv16i8 (REV64v16i8 FPR128:$src),
+                                              (REV64v16i8 FPR128:$src),
+                                              (i32 8)))>;
+def : Pat<(v16i8 (bitconvert (v2i64 FPR128:$src))),
+                             (v16i8 (REV64v16i8 FPR128:$src))>;
+def : Pat<(v16i8 (bitconvert (v4i32 FPR128:$src))),
+                             (v16i8 (REV32v16i8 FPR128:$src))>;
+def : Pat<(v16i8 (bitconvert (v8i16 FPR128:$src))),
+                             (v16i8 (REV16v16i8 FPR128:$src))>;
+def : Pat<(v16i8 (bitconvert (v2f64 FPR128:$src))),
+                             (v16i8 (REV64v16i8 FPR128:$src))>;
+def : Pat<(v16i8 (bitconvert (v4f32 FPR128:$src))),
+                             (v16i8 (REV32v16i8 FPR128:$src))>;
+}
 
 def : Pat<(v8i8 (extract_subvector (v16i8 FPR128:$Rn), (i64 1))),
           (EXTRACT_SUBREG (DUPv2i64lane FPR128:$Rn, 1), dsub)>;
