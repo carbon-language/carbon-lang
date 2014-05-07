@@ -299,10 +299,12 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
 
     if (NumWords < 65536)
       AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVi16), ARM::R4)
-                     .addImm(NumWords));
+                     .addImm(NumWords)
+                     .setMIFlags(MachineInstr::FrameSetup));
     else
       BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVi32imm), ARM::R4)
-        .addImm(NumWords);
+        .addImm(NumWords)
+        .setMIFlags(MachineInstr::FrameSetup);
 
     switch (TM.getCodeModel()) {
     case CodeModel::Small:
@@ -312,17 +314,20 @@ void ARMFrameLowering::emitPrologue(MachineFunction &MF) const {
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tBL))
         .addImm((unsigned)ARMCC::AL).addReg(0)
         .addExternalSymbol("__chkstk")
-        .addReg(ARM::R4, RegState::Implicit);
+        .addReg(ARM::R4, RegState::Implicit)
+        .setMIFlags(MachineInstr::FrameSetup);
       break;
     case CodeModel::Large:
     case CodeModel::JITDefault:
       BuildMI(MBB, MBBI, dl, TII.get(ARM::t2MOVi32imm), ARM::R12)
-        .addExternalSymbol("__chkstk");
+        .addExternalSymbol("__chkstk")
+        .setMIFlags(MachineInstr::FrameSetup);
 
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tBLXr))
         .addImm((unsigned)ARMCC::AL).addReg(0)
         .addReg(ARM::R12, RegState::Kill)
-        .addReg(ARM::R4, RegState::Implicit);
+        .addReg(ARM::R4, RegState::Implicit)
+        .setMIFlags(MachineInstr::FrameSetup);
       break;
     }
 
