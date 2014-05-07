@@ -283,7 +283,26 @@ private:
   /// Assign or look up previously assigned numbers for the two values, and
   /// return whether the numbers are equal. Numbers are assigned in the order
   /// visited.
-  bool enumerate(const Value *V1, const Value *V2);
+  /// Comparison order:
+  /// Stage 0: Value that is function itself is always greater then others.
+  ///          If left and right values are references to their functions, then
+  ///          they are equal.
+  /// Stage 1: Constants are greater than non-constants.
+  ///          If both left and right are constants, then the result of
+  ///          cmpConstants is used as cmpValues result.
+  /// Stage 2: InlineAsm instances are greater than others. If both left and
+  ///          right are InlineAsm instances, InlineAsm* pointers casted to
+  ///          integers and compared as numbers.
+  /// Stage 3: For all other cases we compare order we meet these values in
+  ///          their functions. If right value was met first during scanning,
+  ///          then left value is greater.
+  ///          In another words, we compare serial numbers, for more details
+  ///          see comments for sn_mapL and sn_mapR.
+  int cmpValues(const Value *L, const Value *R);
+
+  bool enumerate(const Value *V1, const Value *V2) {
+    return cmpValues(V1, V2) == 0;
+  }
 
   /// Compare two Instructions for equivalence, similar to
   /// Instruction::isSameOperationAs but with modifications to the type
@@ -354,8 +373,40 @@ private:
 
   const DataLayout *DL;
 
-  DenseMap<const Value *, const Value *> id_map;
-  DenseSet<const Value *> seen_values;
+  /// Assign serial numbers to values from left function, and values from
+  /// right function.
+  /// Explanation:
+  /// Being comparing functions we need to compare values we meet at left and
+  /// right sides.
+  /// Its easy to sort things out for external values. It just should be
+  /// the same value at left and right.
+  /// But for local values (those were introduced inside function body)
+  /// we have to ensure they were introduced at exactly the same place,
+  /// and plays the same role.
+  /// Let's assign serial number to each value when we meet it first time.
+  /// Values that were met at same place will be with same serial numbers.
+  /// In this case it would be good to explain few points about values assigned
+  /// to BBs and other ways of implementation (see below).
+  ///
+  /// 1. Safety of BB reordering.
+  /// It's safe to change the order of BasicBlocks in function.
+  /// Relationship with other functions and serial numbering will not be
+  /// changed in this case.
+  /// As follows from FunctionComparator::compare(), we do CFG walk: we start
+  /// from the entry, and then take each terminator. So it doesn't matter how in
+  /// fact BBs are ordered in function. And since cmpValues are called during
+  /// this walk, the numbering depends only on how BBs located inside the CFG.
+  /// So the answer is - yes. We will get the same numbering.
+  ///
+  /// 2. Impossibility to use dominance properties of values.
+  /// If we compare two instruction operands: first is usage of local
+  /// variable AL from function FL, and second is usage of local variable AR
+  /// from FR, we could compare their origins and check whether they are
+  /// defined at the same place.
+  /// But, we are still not able to compare operands of PHI nodes, since those
+  /// could be operands from further BBs we didn't scan yet.
+  /// So it's impossible to use dominance properties in general.
+  DenseMap<const Value*, int> sn_mapL, sn_mapR;
 };
 
 }
@@ -718,50 +769,51 @@ bool FunctionComparator::isEquivalentGEP(const GEPOperator *GEP1,
   return true;
 }
 
-// Compare two values used by the two functions under pair-wise comparison. If
-// this is the first time the values are seen, they're added to the mapping so
-// that we will detect mismatches on next use.
-bool FunctionComparator::enumerate(const Value *V1, const Value *V2) {
-  // Check for function @f1 referring to itself and function @f2 referring to
-  // itself, or referring to each other, or both referring to either of them.
-  // They're all equivalent if the two functions are otherwise equivalent.
-  if (V1 == F1 && V2 == F2)
-    return true;
-  if (V1 == F2 && V2 == F1)
-    return true;
-
-  if (const Constant *C1 = dyn_cast<Constant>(V1)) {
-    if (V1 == V2) return true;
-    const Constant *C2 = dyn_cast<Constant>(V2);
-    if (!C2) return false;
-    // TODO: constant expressions with GEP or references to F1 or F2.
-    if (C1->isNullValue() && C2->isNullValue() &&
-        isEquivalentType(C1->getType(), C2->getType()))
-      return true;
-
-    // Compare constants:
-    // Check whether type of C1 is bitcastable to C2's type.
-    // If the bitcast is possible then compare raw constants contents.
-    return cmpConstants(C1, C2) == 0;
+/// Compare two values used by the two functions under pair-wise comparison. If
+/// this is the first time the values are seen, they're added to the mapping so
+/// that we will detect mismatches on next use.
+/// See comments in declaration for more details.
+int FunctionComparator::cmpValues(const Value *L, const Value *R) {
+  // Catch self-reference case.
+  if (L == F1) {
+    if (R == F2)
+      return 0;
+    return -1;
+  }
+  if (R == F2) {
+    if (L == F1)
+      return 0;
+    return 1;
   }
 
-  if (isa<InlineAsm>(V1) || isa<InlineAsm>(V2))
-    return V1 == V2;
+  const Constant *ConstL = dyn_cast<Constant>(L);
+  const Constant *ConstR = dyn_cast<Constant>(R);
+  if (ConstL && ConstR) {
+    if (L == R)
+      return 0;
+    return cmpConstants(ConstL, ConstR);
+  }
 
-  // Check that V1 maps to V2. If we find a value that V1 maps to then we simply
-  // check whether it's equal to V2. When there is no mapping then we need to
-  // ensure that V2 isn't already equivalent to something else. For this
-  // purpose, we track the V2 values in a set.
+  if (ConstL)
+    return 1;
+  if (ConstR)
+    return -1;
 
-  const Value *&map_elem = id_map[V1];
-  if (map_elem)
-    return map_elem == V2;
-  if (!seen_values.insert(V2).second)
-    return false;
-  map_elem = V2;
-  return true;
+  const InlineAsm *InlineAsmL = dyn_cast<InlineAsm>(L);
+  const InlineAsm *InlineAsmR = dyn_cast<InlineAsm>(R);
+
+  if (InlineAsmL && InlineAsmR)
+    return cmpNumbers((uint64_t)L, (uint64_t)R);
+  if (InlineAsmL)
+    return 1;
+  if (InlineAsmR)
+    return -1;
+
+  auto LeftSN = sn_mapL.insert(std::make_pair(L, sn_mapL.size())),
+       RightSN = sn_mapR.insert(std::make_pair(R, sn_mapR.size()));
+
+  return cmpNumbers(LeftSN.first->second, RightSN.first->second);
 }
-
 // Test whether two basic blocks have equivalent behaviour.
 bool FunctionComparator::compare(const BasicBlock *BB1, const BasicBlock *BB2) {
   BasicBlock::const_iterator F1I = BB1->begin(), F1E = BB1->end();
@@ -809,6 +861,9 @@ bool FunctionComparator::compare(const BasicBlock *BB1, const BasicBlock *BB2) {
 bool FunctionComparator::compare() {
   // We need to recheck everything, but check the things that weren't included
   // in the hash first.
+
+  sn_mapL.clear();
+  sn_mapR.clear();
 
   if (F1->getAttributes() != F2->getAttributes())
     return false;
