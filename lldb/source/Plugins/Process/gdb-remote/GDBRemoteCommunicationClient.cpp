@@ -57,6 +57,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_vCont_s (eLazyBoolCalculate),
     m_supports_vCont_S (eLazyBoolCalculate),
     m_qHostInfo_is_valid (eLazyBoolCalculate),
+    m_curr_pid_is_valid (eLazyBoolCalculate),
     m_qProcessInfo_is_valid (eLazyBoolCalculate),
     m_qGDBServerVersion_is_valid (eLazyBoolCalculate),
     m_supports_alloc_dealloc_memory (eLazyBoolCalculate),
@@ -86,6 +87,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_z4 (true),
     m_supports_QEnvironment (true),
     m_supports_QEnvironmentHexEncoded (true),
+    m_curr_pid (LLDB_INVALID_PROCESS_ID),
     m_curr_tid (LLDB_INVALID_THREAD_ID),
     m_curr_tid_run (LLDB_INVALID_THREAD_ID),
     m_num_supported_hardware_watchpoints (0),
@@ -308,6 +310,7 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_x = eLazyBoolCalculate;
     m_supports_QSaveRegisterState = eLazyBoolCalculate;
     m_qHostInfo_is_valid = eLazyBoolCalculate;
+    m_curr_pid_is_valid = eLazyBoolCalculate;
     m_qProcessInfo_is_valid = eLazyBoolCalculate;
     m_qGDBServerVersion_is_valid = eLazyBoolCalculate;
     m_supports_alloc_dealloc_memory = eLazyBoolCalculate;
@@ -1178,13 +1181,43 @@ GDBRemoteCommunicationClient::SendInterrupt
 lldb::pid_t
 GDBRemoteCommunicationClient::GetCurrentProcessID ()
 {
-    StringExtractorGDBRemote response;
-    if (SendPacketAndWaitForResponse("qC", strlen("qC"), response, false) == PacketResult::Success)
+    if (m_curr_pid_is_valid == eLazyBoolYes)
+        return m_curr_pid;
+    
+    // First try to retrieve the pid via the qProcessInfo request.
+    GetCurrentProcessInfo ();
+    if (m_curr_pid_is_valid == eLazyBoolYes)
     {
-        if (response.GetChar() == 'Q')
-            if (response.GetChar() == 'C')
-                return response.GetHexMaxU32 (false, LLDB_INVALID_PROCESS_ID);
+        // We really got it.
+        return m_curr_pid;
     }
+    else
+    {
+        // For Apple iOS targets, go back and ask the qC packet for its result.  In earlier iterations of debugserver, $qC returned
+        // the process id of the current process.
+        const llvm::Triple &triple = GetProcessArchitecture().GetTriple();
+        if ((triple.getVendor() == llvm::Triple::Apple) &&
+            (triple.getOS() == llvm::Triple::IOS))
+        {
+            StringExtractorGDBRemote response;
+            if (SendPacketAndWaitForResponse("qC", strlen("qC"), response, false) == PacketResult::Success)
+            {
+                if (response.GetChar() == 'Q')
+                {
+                    if (response.GetChar() == 'C')
+                    {
+                        m_curr_pid = response.GetHexMaxU32 (false, LLDB_INVALID_PROCESS_ID);
+                        if (m_curr_pid != LLDB_INVALID_PROCESS_ID)
+                        {
+                            m_curr_pid_is_valid = eLazyBoolYes;
+                            return m_curr_pid;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     return LLDB_INVALID_PROCESS_ID;
 }
 
@@ -2346,6 +2379,7 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
             StringExtractor extractor;
             ByteOrder byte_order = eByteOrderInvalid;
             uint32_t num_keys_decoded = 0;
+            lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
             while (response.GetNameColonValue(name, value))
             {
                 if (name.compare("cputype") == 0)
@@ -2388,9 +2422,20 @@ GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
                     if (pointer_byte_size != 0)
                         ++num_keys_decoded;
                 }
+                else if (name.compare("pid") == 0)
+                {
+                    pid = Args::StringToUInt64(value.c_str(), 0, 16);
+                    if (pid != LLDB_INVALID_PROCESS_ID)
+                        ++num_keys_decoded;
+                }
             }
             if (num_keys_decoded > 0)
                 m_qProcessInfo_is_valid = eLazyBoolYes;
+            if (pid != LLDB_INVALID_PROCESS_ID)
+            {
+                m_curr_pid_is_valid = eLazyBoolYes;
+                m_curr_pid = pid;
+            }
             if (cpu != LLDB_INVALID_CPUTYPE && !os_name.empty() && !vendor_name.empty())
             {
                 m_process_arch.SetArchitecture (eArchTypeMachO, cpu, sub);

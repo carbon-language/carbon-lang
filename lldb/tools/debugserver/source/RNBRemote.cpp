@@ -1404,15 +1404,21 @@ RNBRemote::HandlePacket_qRcmd (const char *p)
 rnb_err_t
 RNBRemote::HandlePacket_qC (const char *p)
 {
-    nub_process_t pid;
+    nub_thread_t tid;
     std::ostringstream rep;
     // If we haven't run the process yet, we tell the debugger the
     // pid is 0.  That way it can know to tell use to run later on.
-    if (m_ctx.HasValidProcessID())
-        pid = m_ctx.ProcessID();
+    if (!m_ctx.HasValidProcessID())
+        tid = 0;
     else
-        pid = 0;
-    rep << "QC" << std::hex << pid;
+    {
+        // Grab the current thread.
+        tid = DNBProcessGetCurrentThread (m_ctx.ProcessID());
+        // Make sure we set the current thread so g and p packets return
+        // the data the gdb will expect.
+        SetCurrentThread (tid);
+    }
+    rep << "QC" << std::hex << tid;
     return SendPacket (rep.str());
 }
 

@@ -108,7 +108,7 @@ class LldbGdbServerTestCase(TestBase):
             True)
 
     def expect_gdbremote_sequence(self):
-        expect_lldb_gdbserver_replay(self, self.sock, self.test_sequence, self._TIMEOUT_SECONDS, self.logger)
+        return expect_lldb_gdbserver_replay(self, self.sock, self.test_sequence, self._TIMEOUT_SECONDS, self.logger)
 
     @debugserver_test
     def test_exe_starts_debugserver(self):
@@ -324,7 +324,6 @@ class LldbGdbServerTestCase(TestBase):
 
     @debugserver_test
     @dsym_test
-    @unittest2.expectedFailure() # Possible bug.
     def test_first_launch_stop_reply_thread_matches_first_qC_debugserver_dsym(self):
         self.init_debugserver_test()
         self.buildDsym()
@@ -338,7 +337,48 @@ class LldbGdbServerTestCase(TestBase):
         self.buildDwarf()
         self.first_launch_stop_reply_thread_matches_first_qC()
 
+    def qProcessInfo_returns_running_process(self):
+        server = self.start_server()
+        self.assertIsNotNone(server)
 
+        # Build launch args
+        launch_args = [os.path.abspath('a.out'), "hello, world"]
+
+        # Build the expected protocol stream
+        self.add_no_ack_remote_stream()
+        self.add_verified_launch_packets(launch_args)
+        self.test_sequence.add_log_lines(
+            ["read packet: $qProcessInfo#00",
+             { "direction":"send", "regex":r"^\$pid:([0-9a-fA-F]+);", "capture":{1:"pid"} }],
+            True)
+
+        # Run the stream
+        context = self.expect_gdbremote_sequence()
+        self.assertIsNotNone(context)
+
+        # Ensure the process id looks reasonable.
+        pid_text = context.get('pid', None)
+        self.assertIsNotNone(pid_text)
+        pid = int(pid_text, base=16)
+        self.assertNotEqual(0, pid)
+
+        # If possible, verify that the process is running.
+        self.assertTrue(process_is_running(pid, True))
+
+    @debugserver_test
+    @dsym_test
+    def test_qProcessInfo_returns_running_process_debugserver_dsym(self):
+        self.init_debugserver_test()
+        self.buildDsym()
+        self.qProcessInfo_returns_running_process()
+
+    @llgs_test
+    @dwarf_test
+    @unittest2.expectedFailure()
+    def test_qProcessInfo_returns_running_process_llgs_dwarf(self):
+        self.init_llgs_test()
+        self.buildDwarf()
+        self.qProcessInfo_returns_running_process()
 
 if __name__ == '__main__':
     unittest2.main()

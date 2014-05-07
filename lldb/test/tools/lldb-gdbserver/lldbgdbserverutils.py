@@ -3,8 +3,10 @@
 
 import os
 import os.path
+import platform
 import re
 import select
+import subprocess
 import time
 
 
@@ -142,9 +144,10 @@ def expect_lldb_gdbserver_replay(
         logger: a Python logger instance.
 
     Returns:
-        None if no issues.  Raises an exception if the expected communication does not
-        occur.
-
+        The context dictionary from running the given gdbremote
+        protocol sequence.  This will contain any of the capture
+        elements specified to any GdbRemoteEntry instances in
+        test_sequence.
     """
     received_lines = []
     receive_buffer = ''
@@ -205,7 +208,7 @@ def expect_lldb_gdbserver_replay(
             if len(received_lines) > 0:
                 received_packet = received_lines.pop(0)
                 context = sequence_entry.assert_match(asserter, received_packet, context=context)
-    return None
+    return context
 
 
 def gdbremote_hex_encode_string(str):
@@ -405,6 +408,45 @@ class GdbRemoteTestSequence(object):
                         self.logger.info("processed dict sequence to match receiving from remote")
                     self.entries.append(GdbRemoteEntry(is_send_to_remote=False, regex=regex, capture=capture, expect_captures=expect_captures))
 
+def process_is_running(pid, unknown_value=True):
+    """If possible, validate that the given pid represents a running process on the local system.
+
+    Args:
+
+        pid: an OS-specific representation of a process id.  Should be an integral value.
+
+        unknown_value: value used when we cannot determine how to check running local
+        processes on the OS.
+
+    Returns:
+
+        If we can figure out how to check running process ids on the given OS:
+        return True if the process is running, or False otherwise.
+
+        If we don't know how to check running process ids on the given OS:
+        return the value provided by the unknown_value arg.
+    """
+    if type(pid) != int:
+        raise Exception("pid must be of type int")
+
+    process_ids = []
+
+    if platform.system() in ['Darwin', 'Linux', 'FreeBSD', 'NetBSD']:
+        # Build the list of running process ids
+        output = subprocess.check_output("ps ax | awk '{ print $1; }'", shell=True)
+        text_process_ids = output.split('\n')[1:]
+        # Convert text pids to ints
+        process_ids = [int(text_pid) for text_pid in text_process_ids if text_pid != '']
+    # elif {your_platform_here}:
+    #   fill in process_ids as a list of int type process IDs running on
+    #   the local system.
+    else:
+        # Don't know how to get list of running process IDs on this
+        # OS, so return the "don't know" value.
+        return unknown_value
+
+    # Check if the pid is in the process_ids
+    return pid in process_ids
 
 if __name__ == '__main__':
     EXE_PATH = get_lldb_gdbserver_exe()
