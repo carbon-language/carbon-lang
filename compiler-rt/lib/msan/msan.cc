@@ -237,7 +237,8 @@ const char *GetOriginDescrIfStack(u32 id, uptr *pc) {
 }
 
 u32 ChainOrigin(u32 id, StackTrace *stack) {
-  if (GetCurrentThread()->InSignalHandler())
+  MsanThread *t = GetCurrentThread();
+  if (t && t->InSignalHandler())
     return id;
   uptr idx = Min(stack->size, kStackTraceMax - 1);
   stack->trace[idx] = TRACE_MAKE_CHAINED(id);

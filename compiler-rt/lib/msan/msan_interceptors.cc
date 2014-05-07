@@ -982,8 +982,14 @@ INTERCEPTOR(int, getrusage, int who, void *usage) {
 
 class SignalHandlerScope {
  public:
-  SignalHandlerScope() { GetCurrentThread()->EnterSignalHandler(); }
-  ~SignalHandlerScope() { GetCurrentThread()->LeaveSignalHandler(); }
+  SignalHandlerScope() {
+    if (MsanThread *t = GetCurrentThread())
+      t->EnterSignalHandler();
+  }
+  ~SignalHandlerScope() {
+    if (MsanThread *t = GetCurrentThread())
+      t->LeaveSignalHandler();
+  }
 };
 
 // sigactions_mu guarantees atomicity of sigaction() and signal() calls.
