@@ -700,8 +700,9 @@ static llvm::Value *CoerceIntOrPtrToIntOrPtr(llvm::Value *Val,
     if (DL.isBigEndian()) {
       // Preserve the high bits on big-endian targets.
       // That is what memory coercion does.
-      uint64_t SrcSize = DL.getTypeAllocSizeInBits(Val->getType());
-      uint64_t DstSize = DL.getTypeAllocSizeInBits(DestIntTy);
+      uint64_t SrcSize = DL.getTypeSizeInBits(Val->getType());
+      uint64_t DstSize = DL.getTypeSizeInBits(DestIntTy);
+
       if (SrcSize > DstSize) {
         Val = CGF.Builder.CreateLShr(Val, SrcSize - DstSize, "coerce.highbits");
         Val = CGF.Builder.CreateTrunc(Val, DestIntTy, "coerce.val.ii");
