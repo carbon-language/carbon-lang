@@ -185,8 +185,8 @@ namespace consumed {
     /// \brief Set the consumed state of a given temporary value.
     void setState(const CXXBindTemporaryExpr *Tmp, ConsumedState State);
     
-    /// \brief Remove the variable from our state map.
-    void remove(const VarDecl *Var);
+    /// \brief Remove the temporary value from our state map.
+    void remove(const CXXBindTemporaryExpr *Tmp);
     
     /// \brief Tests to see if there is a mismatch in the states stored in two
     /// maps.

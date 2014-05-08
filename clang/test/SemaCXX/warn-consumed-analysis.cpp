@@ -704,6 +704,8 @@ public:
   void clear() CALLABLE_WHEN("unknown", "consumed") SET_TYPESTATE(consumed);
 
   ~Status() CALLABLE_WHEN("unknown", "consumed");
+
+  operator bool() const; // Will not consume the object.
 };
 
 
@@ -734,6 +736,10 @@ void testSimpleTemporaries2() {
 void testSimpleTemporaries3() {
   Status s = doSomething();
 }  // expected-warning {{invalid invocation of method '~Status' on object 's' while it is in the 'unconsumed' state}}
+
+void testTemporariesWithControlFlow(bool a) {
+  bool b = false || doSomething(); // expected-warning {{invalid invocation of method '~Status' on a temporary object while it is in the 'unconsumed' state}}
+}
 
 Status testSimpleTemporariesReturn0() {
   return doSomething();

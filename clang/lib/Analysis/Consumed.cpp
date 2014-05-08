@@ -1233,8 +1233,8 @@ void ConsumedStateMap::setState(const CXXBindTemporaryExpr *Tmp,
   TmpMap[Tmp] = State;
 }
 
-void ConsumedStateMap::remove(const VarDecl *Var) {
-  VarMap.erase(Var);
+void ConsumedStateMap::remove(const CXXBindTemporaryExpr *Tmp) {
+  TmpMap.erase(Tmp);
 }
 
 bool ConsumedStateMap::operator!=(const ConsumedStateMap *Other) const {
@@ -1413,6 +1413,7 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
         Visitor.checkCallability(PropagationInfo(BTE),
                                  DTor.getDestructorDecl(AC.getASTContext()),
                                  BTE->getExprLoc());
+        CurrStates->remove(BTE);
         break;
       }
       
@@ -1431,8 +1432,6 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
         break;
       }
     }
-    
-    CurrStates->clearTemporaries();
     
     // TODO: Handle other forms of branching with precision, including while-
     //       and for-loops. (Deferred)
