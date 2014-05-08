@@ -107,16 +107,22 @@ TEST(AddressSanitizer, CallocReturnsZeroMem) {
       EXPECT_EQ(x[size / 4], 0);
       memset(x, 0x42, size);
       free(Ident(x));
+#if !defined(_WIN32)
+      // FIXME: OOM on Windows. We should just make this a lit test
+      // with quarantine size set to 1.
       free(Ident(malloc(Ident(1 << 27))));  // Try to drain the quarantine.
+#endif
     }
   }
 }
 
+#if !defined(_WIN32)  // No valloc on Windows.
 TEST(AddressSanitizer, VallocTest) {
   void *a = valloc(100);
   EXPECT_EQ(0U, (uintptr_t)a % kPageSize);
   free(a);
 }
+#endif
 
 #if SANITIZER_TEST_HAS_PVALLOC
 TEST(AddressSanitizer, PvallocTest) {
@@ -179,13 +185,22 @@ TEST(AddressSanitizer, UAF_long_double) {
   delete [] Ident(p);
 }
 
+#if !defined(_WIN32)
 struct Packed5 {
   int x;
   char c;
 } __attribute__((packed));
-
+#else
+# pragma pack(push, 1)
+struct Packed5 {
+  int x;
+  char c;
+};
+# pragma pack(pop)
+#endif
 
 TEST(AddressSanitizer, UAF_Packed5) {
+  static_assert(sizeof(Packed5) == 5, "Please check the keywords used");
   Packed5 *p = Ident(new Packed5[2]);
   EXPECT_DEATH(p[0] = p[3], "READ of size 5");
   EXPECT_DEATH(p[3] = p[0], "WRITE of size 5");
@@ -470,7 +485,8 @@ TEST(AddressSanitizer, ManyStackObjectsTest) {
   char ZZZ[30];
   Ident(XXX);
   Ident(YYY);
-  EXPECT_DEATH(Ident(ZZZ)[-1] = 0, ASAN_PCRE_DOTALL "XXX.*YYY.*ZZZ");
+  EXPECT_DEATH(Ident(ZZZ)[-1] = 0,
+               ASAN_PCRE_DOTALL "XXX.*\\n.*YYY.*\\n.*ZZZ");
 }
 
 #if 0  // This test requires online symbolizer.
@@ -524,6 +540,24 @@ NOINLINE void LongJmpFunc1(jmp_buf buf) {
   longjmp(buf, 1);
 }
 
+NOINLINE void TouchStackFunc() {
+  int a[100];  // long array will intersect with redzones from LongJmpFunc1.
+  int *A = Ident(a);
+  for (int i = 0; i < 100; i++)
+    A[i] = i*i;
+}
+
+// Test that we handle longjmp and do not report false positives on stack.
+TEST(AddressSanitizer, LongJmpTest) {
+  static jmp_buf buf;
+  if (!setjmp(buf)) {
+    LongJmpFunc1(buf);
+  } else {
+    TouchStackFunc();
+  }
+}
+
+#if !defined(_WIN32)  // Only basic longjmp is available on Windows.
 NOINLINE void BuiltinLongJmpFunc1(jmp_buf buf) {
   // create three red zones for these two stack objects.
   int a;
@@ -555,24 +589,6 @@ NOINLINE void SigLongJmpFunc1(sigjmp_buf buf) {
   int *B = Ident(&b);
   *A = *B;
   siglongjmp(buf, 1);
-}
-
-
-NOINLINE void TouchStackFunc() {
-  int a[100];  // long array will intersect with redzones from LongJmpFunc1.
-  int *A = Ident(a);
-  for (int i = 0; i < 100; i++)
-    A[i] = i*i;
-}
-
-// Test that we handle longjmp and do not report false positives on stack.
-TEST(AddressSanitizer, LongJmpTest) {
-  static jmp_buf buf;
-  if (!setjmp(buf)) {
-    LongJmpFunc1(buf);
-  } else {
-    TouchStackFunc();
-  }
 }
 
 #if !defined(__ANDROID__) && \
@@ -607,6 +623,7 @@ TEST(AddressSanitizer, SigLongJmpTest) {
     TouchStackFunc();
   }
 }
+#endif
 
 #ifdef __EXCEPTIONS
 NOINLINE void ThrowFunc() {
