@@ -127,10 +127,8 @@ MachineInstr *TargetInstrInfo::commuteInstruction(MachineInstr *MI,
     return nullptr;
   unsigned Idx1, Idx2;
   if (!findCommutedOpIndices(MI, Idx1, Idx2)) {
-    std::string msg;
-    raw_string_ostream Msg(msg);
-    Msg << "Don't know how to commute: " << *MI;
-    report_fatal_error(Msg.str());
+    assert(MI->isCommutable() && "Precondition violation: MI must be commutable.");
+    return nullptr;
   }
 
   assert(MI->getOperand(Idx1).isReg() && MI->getOperand(Idx2).isReg() &&
