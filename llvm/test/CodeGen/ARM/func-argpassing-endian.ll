@@ -1,5 +1,5 @@
-; RUN: llc -verify-machineinstrs < %s -march=arm -mattr=v7,neon | FileCheck --check-prefix=CHECK --check-prefix=CHECK-LE %s
-; RUN: llc -verify-machineinstrs < %s -march=armeb -mattr=v7,neon | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=arm-eabi -mattr=v7,neon | FileCheck --check-prefix=CHECK --check-prefix=CHECK-LE %s
+; RUN: llc -verify-machineinstrs < %s -mtriple=armeb-eabi -mattr=v7,neon | FileCheck --check-prefix=CHECK --check-prefix=CHECK-BE %s
 
 @var32 = global i32 0
 @vardouble = global double 0.0
@@ -120,5 +120,4 @@ define void @caller_return_v2f64() {
     store double %tmp, double* @vardouble
     ret void
 }
-
 
