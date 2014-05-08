@@ -27,6 +27,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/OptTable.h"
 #include "llvm/Option/Option.h"
+#include "llvm/Support/CodeGen.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -295,6 +296,17 @@ static void ParseCommentArgs(CommentOptions &Opts, ArgList &Args) {
   Opts.ParseAllComments = Args.hasArg(OPT_fparse_all_comments);
 }
 
+static StringRef getCodeModel(ArgList &Args, DiagnosticsEngine &Diags) {
+  if (Arg *A = Args.getLastArg(OPT_mcode_model)) {
+    StringRef Value = A->getValue();
+    if (Value == "small" || Value == "kernel" || Value == "medium" ||
+        Value == "large")
+      return Value;
+    Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Value;
+  }
+  return "default";
+}
+
 static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
                              DiagnosticsEngine &Diags,
                              const TargetOptions &TargetOpts) {
@@ -376,7 +388,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.CUDAIsDevice = Args.hasArg(OPT_fcuda_is_device);
   Opts.CXAAtExit = !Args.hasArg(OPT_fno_use_cxa_atexit);
   Opts.CXXCtorDtorAliases = Args.hasArg(OPT_mconstructor_aliases);
-  Opts.CodeModel = Args.getLastArgValue(OPT_mcode_model);
+  Opts.CodeModel = getCodeModel(Args, Diags);
   Opts.DebugPass = Args.getLastArgValue(OPT_mdebug_pass);
   Opts.DisableFPElim = Args.hasArg(OPT_mdisable_fp_elim);
   Opts.DisableFree = Args.hasArg(OPT_disable_free);

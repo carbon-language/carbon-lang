@@ -14,6 +14,7 @@
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
@@ -378,20 +379,16 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   TargetMachine::setFunctionSections(CodeGenOpts.FunctionSections);
   TargetMachine::setDataSections    (CodeGenOpts.DataSections);
 
-  // FIXME: Parse this earlier.
-  llvm::CodeModel::Model CM;
-  if (CodeGenOpts.CodeModel == "small") {
-    CM = llvm::CodeModel::Small;
-  } else if (CodeGenOpts.CodeModel == "kernel") {
-    CM = llvm::CodeModel::Kernel;
-  } else if (CodeGenOpts.CodeModel == "medium") {
-    CM = llvm::CodeModel::Medium;
-  } else if (CodeGenOpts.CodeModel == "large") {
-    CM = llvm::CodeModel::Large;
-  } else {
-    assert(CodeGenOpts.CodeModel.empty() && "Invalid code model!");
-    CM = llvm::CodeModel::Default;
-  }
+  unsigned CodeModel =
+    llvm::StringSwitch<unsigned>(CodeGenOpts.CodeModel)
+      .Case("small", llvm::CodeModel::Small)
+      .Case("kernel", llvm::CodeModel::Kernel)
+      .Case("medium", llvm::CodeModel::Medium)
+      .Case("large", llvm::CodeModel::Medium)
+      .Case("default", llvm::CodeModel::Default)
+      .Default(~0u);
+  assert(CodeModel != ~0u && "invalid code model!");
+  llvm::CodeModel::Model CM = static_cast<llvm::CodeModel::Model>(CodeModel);
 
   SmallVector<const char *, 16> BackendArgs;
   BackendArgs.push_back("clang"); // Fake program name.
