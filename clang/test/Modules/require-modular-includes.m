@@ -40,12 +40,6 @@
 // RUN:     -fmodules-cache-path=%t -I %S/Inputs/require-modular-includes \
 // RUN:     -Werror -fmodule-name=A -fsyntax-only -x objective-c -
 
-// Including a non-modular header (directly) with -Wnon-modular-include
-// RUN: echo '#include "NotInModule.h"' | \
-// RUN:   %clang_cc1 -Wnon-modular-include -fmodules \
-// RUN:     -fmodules-cache-path=%t -I %S/Inputs/require-modular-includes \
-// RUN:     -fmodule-name=A -fsyntax-only -x objective-c - 2>&1 | FileCheck %s
-
 // Including an excluded header
 // RUN: echo '@import IncludeExcluded;' | \
 // RUN:   %clang_cc1 -Wnon-modular-include-in-framework-module -fmodules \
@@ -85,11 +79,5 @@
 // RUN:   %clang_cc1 -Wnon-modular-include-in-framework-module -fmodules \
 // RUN:     -fmodules-cache-path=%t -I %S/Inputs/require-modular-includes \
 // RUN:     -Werror -fsyntax-only -x objective-c -
-
-// Non-framework module (fail)
-// RUN: echo '@import NotFramework;' | \
-// RUN:   not %clang_cc1 -Werror=non-modular-include -fmodules \
-// RUN:     -fmodules-cache-path=%t -I %S/Inputs/require-modular-includes \
-// RUN:     -fsyntax-only -x objective-c - 2>&1 | FileCheck %s
 
 // CHECK: include of non-modular header

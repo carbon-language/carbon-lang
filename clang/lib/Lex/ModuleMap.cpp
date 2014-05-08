@@ -310,8 +310,6 @@ void ModuleMap::diagnoseHeaderInclusion(Module *RequestingModule,
         diag::warn_non_modular_include_in_framework_module :
         diag::warn_non_modular_include_in_module;
     Diags.Report(FilenameLoc, DiagID) << RequestingModule->getFullModuleName();
-  } else {
-    Diags.Report(FilenameLoc, diag::warn_non_modular_include);
   }
 }
 
