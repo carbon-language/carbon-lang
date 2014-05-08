@@ -26,15 +26,12 @@ using namespace llvm;
 
 #define DEBUG_TYPE "lexicalscopes"
 
-/// ~LexicalScopes - final cleanup after ourselves.
-LexicalScopes::~LexicalScopes() { reset(); }
-
 /// reset - Reset the instance so that it's prepared for another function.
 void LexicalScopes::reset() {
   MF = nullptr;
   CurrentFnLexicalScope = nullptr;
-  DeleteContainerSeconds(LexicalScopeMap);
-  DeleteContainerSeconds(AbstractScopeMap);
+  LexicalScopeMap.clear();
+  AbstractScopeMap.clear();
   InlinedLexicalScopeMap.clear();
   AbstractScopesList.clear();
 }
@@ -124,7 +121,7 @@ LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
 
   if (IA)
     return InlinedLexicalScopeMap.lookup(DebugLoc::getFromDILocation(IA));
-  return LexicalScopeMap.lookup(Scope);
+  return findLexicalScope(Scope);
 }
 
 /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
@@ -152,35 +149,43 @@ LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
     D = DIDescriptor(Scope);
   }
 
-  LexicalScope *WScope = LexicalScopeMap.lookup(Scope);
-  if (WScope)
-    return WScope;
+  auto I = LexicalScopeMap.find(Scope);
+  if (I != LexicalScopeMap.end())
+    return &I->second;
 
   LexicalScope *Parent = nullptr;
   if (D.isLexicalBlock())
     Parent = getOrCreateLexicalScope(DebugLoc::getFromDILexicalBlock(Scope));
-  WScope = new LexicalScope(Parent, DIDescriptor(Scope), nullptr, false);
-  LexicalScopeMap.insert(std::make_pair(Scope, WScope));
+  // FIXME: Use forward_as_tuple instead of make_tuple, once MSVC2012
+  // compatibility is no longer required.
+  I = LexicalScopeMap.emplace(std::piecewise_construct, std::make_tuple(Scope),
+                              std::make_tuple(Parent, DIDescriptor(Scope),
+                                              nullptr, false)).first;
+
   if (!Parent && DIDescriptor(Scope).isSubprogram() &&
       DISubprogram(Scope).describes(MF->getFunction()))
-    CurrentFnLexicalScope = WScope;
+    CurrentFnLexicalScope = &I->second;
 
-  return WScope;
+  return &I->second;
 }
 
 /// getOrCreateInlinedScope - Find or create an inlined lexical scope.
 LexicalScope *LexicalScopes::getOrCreateInlinedScope(MDNode *Scope,
                                                      MDNode *InlinedAt) {
-  LexicalScope *InlinedScope = LexicalScopeMap.lookup(InlinedAt);
-  if (InlinedScope)
-    return InlinedScope;
+  auto I = LexicalScopeMap.find(InlinedAt);
+  if (I != LexicalScopeMap.end())
+    return &I->second;
 
   DebugLoc InlinedLoc = DebugLoc::getFromDILocation(InlinedAt);
-  InlinedScope = new LexicalScope(getOrCreateLexicalScope(InlinedLoc),
-                                  DIDescriptor(Scope), InlinedAt, false);
-  InlinedLexicalScopeMap[InlinedLoc] = InlinedScope;
-  LexicalScopeMap[InlinedAt] = InlinedScope;
-  return InlinedScope;
+  // FIXME: Use forward_as_tuple instead of make_tuple, once MSVC2012
+  // compatibility is no longer required.
+  I = LexicalScopeMap.emplace(
+                          std::piecewise_construct, std::make_tuple(InlinedAt),
+                          std::make_tuple(getOrCreateLexicalScope(InlinedLoc),
+                                          DIDescriptor(Scope), InlinedAt,
+                                          false)).first;
+  InlinedLexicalScopeMap[InlinedLoc] = &I->second;
+  return &I->second;
 }
 
 /// getOrCreateAbstractScope - Find or create an abstract lexical scope.
@@ -190,9 +195,9 @@ LexicalScope *LexicalScopes::getOrCreateAbstractScope(const MDNode *N) {
   DIDescriptor Scope(N);
   if (Scope.isLexicalBlockFile())
     Scope = DILexicalBlockFile(Scope).getScope();
-  LexicalScope *AScope = AbstractScopeMap.lookup(N);
-  if (AScope)
-    return AScope;
+  auto I = AbstractScopeMap.find(N);
+  if (I != AbstractScopeMap.end())
+    return &I->second;
 
   LexicalScope *Parent = nullptr;
   if (Scope.isLexicalBlock()) {
@@ -200,11 +205,13 @@ LexicalScope *LexicalScopes::getOrCreateAbstractScope(const MDNode *N) {
     DIDescriptor ParentDesc = DB.getContext();
     Parent = getOrCreateAbstractScope(ParentDesc);
   }
-  AScope = new LexicalScope(Parent, DIDescriptor(N), nullptr, true);
-  AbstractScopeMap[N] = AScope;
+  I = AbstractScopeMap.emplace(std::piecewise_construct,
+                               std::forward_as_tuple(N),
+                               std::forward_as_tuple(Parent, DIDescriptor(N),
+                                                     nullptr, true)).first;
   if (DIDescriptor(N).isSubprogram())
-    AbstractScopesList.push_back(AScope);
-  return AScope;
+    AbstractScopesList.push_back(&I->second);
+  return &I->second;
 }
 
 /// constructScopeNest
