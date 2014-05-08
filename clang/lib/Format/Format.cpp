@@ -1215,10 +1215,13 @@ private:
       return;
 
     if (Style.Language == FormatStyle::LK_JavaScript) {
-      static tok::TokenKind JSIdentity[] = { tok::equalequal, tok::equal };
-      static tok::TokenKind JSNotIdentity[] = { tok::exclaimequal, tok::equal };
-      static tok::TokenKind JSShiftEqual[] = { tok::greater, tok::greater,
-                                               tok::greaterequal };
+      if (tryMergeJSRegexLiteral())
+        return;
+
+      static tok::TokenKind JSIdentity[] = {tok::equalequal, tok::equal};
+      static tok::TokenKind JSNotIdentity[] = {tok::exclaimequal, tok::equal};
+      static tok::TokenKind JSShiftEqual[] = {tok::greater, tok::greater,
+                                              tok::greaterequal};
       // FIXME: We probably need to change token type to mimic operator with the
       // correct priority.
       if (tryMergeTokens(JSIdentity))
@@ -1250,6 +1253,38 @@ private:
                                     First[0]->TokenText.size() + AddLength);
     First[0]->ColumnWidth += AddLength;
     return true;
+  }
+
+  // Try to determine whether the current token ends a JavaScript regex literal.
+  // We heuristically assume that this is a regex literal if we find two
+  // unescaped slashes on a line and the token before the first slash is one of
+  // "(;,{}![:?" or a binary operator, as those cannot be followed by a
+  // division.
+  bool tryMergeJSRegexLiteral() {
+      if (Tokens.size() < 2 || Tokens.back()->isNot(tok::slash) ||
+          Tokens[Tokens.size() - 2]->is(tok::unknown))
+        return false;
+      unsigned TokenCount = 0;
+      unsigned LastColumn = Tokens.back()->OriginalColumn;
+      for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; ++I) {
+        ++TokenCount;
+        if (I[0]->is(tok::slash) && I + 1 != E &&
+            (I[1]->isOneOf(tok::l_paren, tok::semi, tok::l_brace,
+                           tok::r_brace, tok::exclaim, tok::l_square,
+                           tok::colon, tok::comma, tok::question) ||
+             I[1]->isBinaryOperator())) {
+          Tokens.resize(Tokens.size() - TokenCount);
+          Tokens.back()->Tok.setKind(tok::unknown);
+          Tokens.back()->Type = TT_RegexLiteral;
+          Tokens.back()->ColumnWidth += LastColumn - I[0]->OriginalColumn;
+          return true;
+        }
+
+        // There can't be a newline inside a regex literal.
+        if (I[0]->NewlinesBefore > 0)
+          return false;
+      }
+      return false;
   }
 
   bool tryMerge_TMacro() {

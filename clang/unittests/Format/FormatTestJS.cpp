@@ -111,5 +111,75 @@ TEST_F(FormatTestJS, ClosureStyleComments) {
   verifyFormat("var x = /** @type {foo} */ (bar);");
 }
 
+TEST_F(FormatTestJS, RegexLiteralClassification) {
+  // Regex literals.
+  verifyFormat("var regex = /abc/;");
+  verifyFormat("f(/abc/);");
+  verifyFormat("f(abc, /abc/);");
+  verifyFormat("some_map[/abc/];");
+  verifyFormat("var x = a ? /abc/ : /abc/;");
+  verifyFormat("for (var i = 0; /abc/.test(s[i]); i++) {\n}");
+  verifyFormat("var x = !/abc/.test(y);");
+  verifyFormat("var x = a && /abc/.test(y);");
+  verifyFormat("var x = a || /abc/.test(y);");
+  verifyFormat("var x = a + /abc/.search(y);");
+
+  // Not regex literals.
+  verifyFormat("var a = a / 2 + b / 3;");
+}
+
+TEST_F(FormatTestJS, RegexLiteralSpecialCharacters) {
+  verifyFormat("var regex = /a*/;");
+  verifyFormat("var regex = /a+/;");
+  verifyFormat("var regex = /a?/;");
+  verifyFormat("var regex = /.a./;");
+  verifyFormat("var regex = /a\\*/;");
+  verifyFormat("var regex = /^a$/;");
+  verifyFormat("var regex = /\\/a/;");
+  verifyFormat("var regex = /(?:x)/;");
+  verifyFormat("var regex = /x(?=y)/;");
+  verifyFormat("var regex = /x(?!y)/;");
+  verifyFormat("var regex = /x|y/;");
+  verifyFormat("var regex = /a{2}/;");
+  verifyFormat("var regex = /a{1,3}/;");
+  verifyFormat("var regex = /[abc]/;");
+  verifyFormat("var regex = /[^abc]/;");
+  verifyFormat("var regex = /[\\b]/;");
+  verifyFormat("var regex = /\\b/;");
+  verifyFormat("var regex = /\\B/;");
+  verifyFormat("var regex = /\\d/;");
+  verifyFormat("var regex = /\\D/;");
+  verifyFormat("var regex = /\\f/;");
+  verifyFormat("var regex = /\\n/;");
+  verifyFormat("var regex = /\\r/;");
+  verifyFormat("var regex = /\\s/;");
+  verifyFormat("var regex = /\\S/;");
+  verifyFormat("var regex = /\\t/;");
+  verifyFormat("var regex = /\\v/;");
+  verifyFormat("var regex = /\\w/;");
+  verifyFormat("var regex = /\\W/;");
+  verifyFormat("var regex = /a(a)\\1/;");
+  verifyFormat("var regex = /\\0/;");
+}
+
+TEST_F(FormatTestJS, RegexLiteralModifiers) {
+  verifyFormat("var regex = /abc/g;");
+  verifyFormat("var regex = /abc/i;");
+  verifyFormat("var regex = /abc/m;");
+  verifyFormat("var regex = /abc/y;");
+}
+
+TEST_F(FormatTestJS, RegexLiteralLength) {
+  verifyFormat("var regex = /aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/;",
+               getGoogleJSStyleWithColumns(60));
+  verifyFormat("var regex =\n"
+               "    /aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/;",
+               getGoogleJSStyleWithColumns(60));
+}
+
+TEST_F(FormatTestJS, RegexLiteralExamples) {
+  verifyFormat("var regex = search.match(/(?:\?|&)times=([^?&]+)/i);");
+}
+
 } // end namespace tooling
 } // end namespace clang

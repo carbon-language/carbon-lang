@@ -60,6 +60,7 @@ enum TokenType {
   TT_PointerOrReference,
   TT_PureVirtualSpecifier,
   TT_RangeBasedForLoopColon,
+  TT_RegexLiteral,
   TT_StartOfName,
   TT_TemplateCloser,
   TT_TemplateOpener,

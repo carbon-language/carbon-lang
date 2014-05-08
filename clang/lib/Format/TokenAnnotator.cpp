@@ -609,6 +609,7 @@ private:
     if (CurrentToken->Type != TT_LambdaLSquare &&
         CurrentToken->Type != TT_FunctionLBrace &&
         CurrentToken->Type != TT_ImplicitStringLiteral &&
+        CurrentToken->Type != TT_RegexLiteral &&
         CurrentToken->Type != TT_TrailingReturnArrow)
       CurrentToken->Type = TT_Unknown;
     if (CurrentToken->Role)
@@ -622,10 +623,8 @@ private:
       determineTokenType(*CurrentToken);
       CurrentToken->BindingStrength = Contexts.back().BindingStrength;
       CurrentToken->NestingLevel = Contexts.size() - 1;
-    }
-
-    if (CurrentToken != NULL)
       CurrentToken = CurrentToken->Next;
+    }
 
     resetTokenMetadata(CurrentToken);
   }
@@ -1554,6 +1553,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       Line.First->is(tok::hash))
     return true;
   if (Tok.Type == TT_TrailingUnaryOperator)
+    return false;
+  if (Tok.Previous->Type == TT_RegexLiteral)
     return false;
   return spaceRequiredBetween(Line, *Tok.Previous, Tok);
 }
