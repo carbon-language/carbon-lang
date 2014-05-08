@@ -83,7 +83,7 @@ void PTXGenerator::createSubfunction(SetVector<Value *> &UsedValues,
   BasicBlock *ExitBB = BasicBlock::Create(Context, "ptx.exit", FN);
   BasicBlock *BodyBB = BasicBlock::Create(Context, "ptx.loop_body", FN);
 
-  DominatorTree &DT = P->getAnalysis<DominatorTree>();
+  DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   DT.addNewBlock(HeaderBB, PrevBB);
   DT.addNewBlock(ExitBB, HeaderBB);
   DT.addNewBlock(BodyBB, HeaderBB);
