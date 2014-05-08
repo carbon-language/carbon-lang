@@ -15,21 +15,14 @@
 #ifndef SANITIZER_TEST_UTILS_H
 #define SANITIZER_TEST_UTILS_H
 
+#include <stdint.h>
+
 #if defined(_WIN32)
-typedef unsigned __int8  uint8_t;
-typedef unsigned __int16 uint16_t;
-typedef unsigned __int32 uint32_t;
-typedef unsigned __int64 uint64_t;
-typedef __int8           int8_t;
-typedef __int16          int16_t;
-typedef __int32          int32_t;
-typedef __int64          int64_t;
 # define NOINLINE __declspec(noinline)
 # define USED
 #else  // defined(_WIN32)
 # define NOINLINE __attribute__((noinline))
 # define USED __attribute__((used))
-#include <stdint.h>
 #endif  // defined(_WIN32)
 
 #if !defined(__has_feature)
@@ -53,7 +46,9 @@ typedef __int64          int64_t;
 
 // Make the compiler thinks that something is going on there.
 inline void break_optimization(void *arg) {
+#if !defined(_WIN32) || defined(__clang__)
   __asm__ __volatile__("" : : "r" (arg) : "memory");
+#endif
 }
 
 // This function returns its parameter but in such a way that compiler
@@ -80,13 +75,13 @@ static inline uint32_t my_rand() {
 
 // Set availability of platform-specific functions.
 
-#if !defined(__APPLE__) && !defined(ANDROID) && !defined(__ANDROID__)
+#if !defined(__APPLE__) && !defined(ANDROID) && !defined(__ANDROID__) && !defined(_WIN32)
 # define SANITIZER_TEST_HAS_POSIX_MEMALIGN 1
 #else
 # define SANITIZER_TEST_HAS_POSIX_MEMALIGN 0
 #endif
 
-#if !defined(__APPLE__) && !defined(__FreeBSD__)
+#if !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(_WIN32)
 # define SANITIZER_TEST_HAS_MEMALIGN 1
 # define SANITIZER_TEST_HAS_PVALLOC 1
 # define SANITIZER_TEST_HAS_MALLOC_USABLE_SIZE 1

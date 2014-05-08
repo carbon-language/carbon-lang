@@ -25,13 +25,16 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
-#include <pthread.h>
 #include <stdint.h>
-#include <setjmp.h>
 #include <assert.h>
 #include <algorithm>
+
+#if !defined(_WIN32)
+#include <strings.h>
+#include <pthread.h>
 #include <sys/mman.h>
+#include <setjmp.h>
+#endif
 
 #ifdef __linux__
 # include <sys/prctl.h>
