@@ -1556,6 +1556,7 @@ void X86TargetLowering::resetOperationActions() {
   setTargetDAGCombine(ISD::TRUNCATE);
   setTargetDAGCombine(ISD::SINT_TO_FP);
   setTargetDAGCombine(ISD::SETCC);
+  setTargetDAGCombine(ISD::INTRINSIC_WO_CHAIN);
   if (Subtarget->is64Bit())
     setTargetDAGCombine(ISD::MUL);
   setTargetDAGCombine(ISD::XOR);
@@ -11615,6 +11616,10 @@ static SDValue getTargetVShiftByConstNode(unsigned Opc, SDLoc dl, MVT VT,
                                           SelectionDAG &DAG) {
   MVT ElementType = VT.getVectorElementType();
 
+  // Fold this packed shift into its first operand if ShiftAmt is 0.
+  if (ShiftAmt == 0)
+    return SrcOp;
+
   // Check for ShiftAmt >= element width
   if (ShiftAmt >= ElementType.getSizeInBits()) {
     if (Opc == X86ISD::VSRAI)
@@ -18484,6 +18489,55 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+static SDValue PerformINTRINSIC_WO_CHAINCombine(SDNode *N, SelectionDAG &DAG) {
+  unsigned IntNo = cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
+  switch (IntNo) {
+  default: return SDValue();
+  // Packed SSE2/AVX2 arithmetic shift immediate intrinsics.
+  case Intrinsic::x86_sse2_psrai_w:
+  case Intrinsic::x86_sse2_psrai_d:
+  case Intrinsic::x86_avx2_psrai_w:
+  case Intrinsic::x86_avx2_psrai_d:
+  case Intrinsic::x86_sse2_psra_w:
+  case Intrinsic::x86_sse2_psra_d:
+  case Intrinsic::x86_avx2_psra_w:
+  case Intrinsic::x86_avx2_psra_d: {
+    SDValue Op0 = N->getOperand(1);
+    SDValue Op1 = N->getOperand(2);
+    EVT VT = Op0.getValueType();
+    assert(VT.isVector() && "Expected a vector type!");
+
+    if (isa<BuildVectorSDNode>(Op1))
+      Op1 = Op1.getOperand(0);
+
+    if (!isa<ConstantSDNode>(Op1))
+      return SDValue();
+
+    EVT SVT = VT.getVectorElementType();
+    unsigned SVTBits = SVT.getSizeInBits();
+
+    ConstantSDNode *CND = cast<ConstantSDNode>(Op1);
+    const APInt &C = APInt(SVTBits, CND->getAPIntValue().getZExtValue());
+    uint64_t ShAmt = C.getZExtValue();
+
+    // Don't try to convert this shift into a ISD::SRA if the shift
+    // count is bigger than or equal to the element size.
+    if (ShAmt >= SVTBits)
+      return SDValue();
+
+    // Trivial case: if the shift count is zero, then fold this
+    // into the first operand.
+    if (ShAmt == 0)
+      return Op0;
+
+    // Replace this packed shift intrinsic with a target independent
+    // shift dag node.
+    SDValue Splat = DAG.getConstant(C, VT);
+    return DAG.getNode(ISD::SRA, SDLoc(N), VT, Op0, Splat);
+  }
+  }
+}
+
 /// PerformMulCombine - Optimize a single multiply with constant into two
 /// in order to implement it with two cheaper instructions, e.g.
 /// LEA + SHL, LEA + LEA.
@@ -20304,6 +20358,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::VPERM2X128:
   case ISD::VECTOR_SHUFFLE: return PerformShuffleCombine(N, DAG, DCI,Subtarget);
   case ISD::FMA:            return PerformFMACombine(N, DAG, Subtarget);
+  case ISD::INTRINSIC_WO_CHAIN: return PerformINTRINSIC_WO_CHAINCombine(N, DAG);
   }
 
   return SDValue();
