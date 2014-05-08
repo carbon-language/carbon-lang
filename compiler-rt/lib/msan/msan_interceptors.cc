@@ -397,6 +397,23 @@ INTERCEPTOR(int, swprintf, void *str, uptr size, void *format, ...) {
   return res;
 }
 
+INTERCEPTOR(SIZE_T, strxfrm, char *dest, const char *src, SIZE_T n) {
+  ENSURE_MSAN_INITED();
+  CHECK_UNPOISONED(src, REAL(strlen)(src) + 1);
+  SIZE_T res = REAL(strxfrm)(dest, src, n);
+  if (res < n) __msan_unpoison(dest, res + 1);
+  return res;
+}
+
+INTERCEPTOR(SIZE_T, strxfrm_l, char *dest, const char *src, SIZE_T n,
+            void *loc) {
+  ENSURE_MSAN_INITED();
+  CHECK_UNPOISONED(src, REAL(strlen)(src) + 1);
+  SIZE_T res = REAL(strxfrm_l)(dest, src, n, loc);
+  if (res < n) __msan_unpoison(dest, res + 1);
+  return res;
+}
+
 #define INTERCEPTOR_STRFTIME_BODY(char_type, ret_type, func, s, ...) \
   ENSURE_MSAN_INITED();                                              \
   ret_type res = REAL(func)(s, __VA_ARGS__);                         \
@@ -1497,6 +1514,8 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(strtoull_l);
   INTERCEPT_FUNCTION(vswprintf);
   INTERCEPT_FUNCTION(swprintf);
+  INTERCEPT_FUNCTION(strxfrm);
+  INTERCEPT_FUNCTION(strxfrm_l);
   INTERCEPT_FUNCTION(strftime);
   INTERCEPT_FUNCTION(strftime_l);
   INTERCEPT_FUNCTION(__strftime_l);
