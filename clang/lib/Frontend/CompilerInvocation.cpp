@@ -337,9 +337,10 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   } else if (Args.hasArg(OPT_g_Flag) || Args.hasArg(OPT_gdwarf_2) ||
              Args.hasArg(OPT_gdwarf_3) || Args.hasArg(OPT_gdwarf_4)) {
     bool Default = false;
-    // Until dtrace (via CTF) can deal with distributed debug info,
-    // Darwin defaults to standalone/full debug info.
-    if (llvm::Triple(TargetOpts.Triple).isOSDarwin())
+    // Until dtrace (via CTF) and LLDB can deal with distributed debug info,
+    // Darwin and FreeBSD default to standalone/full debug info.
+    if (llvm::Triple(TargetOpts.Triple).isOSDarwin() ||
+        llvm::Triple(TargetOpts.Triple).isOSFreeBSD())
       Default = true;
 
     if (Args.hasFlag(OPT_fstandalone_debug, OPT_fno_standalone_debug, Default))
