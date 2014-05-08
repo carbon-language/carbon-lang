@@ -177,13 +177,26 @@ public:
                                         MCStreamer &Out) override;
 };
 
-void X86AddressSanitizer64::InstrumentMemOperandImpl(
-    X86Operand *Op, unsigned AccessSize, bool IsWrite, MCContext &Ctx,
-    MCStreamer &Out) {
+void X86AddressSanitizer64::InstrumentMemOperandImpl(X86Operand *Op,
+                                                     unsigned AccessSize,
+                                                     bool IsWrite,
+                                                     MCContext &Ctx,
+                                                     MCStreamer &Out) {
   // FIXME: emit .cfi directives for correct stack unwinding.
-  // Set %rsp below current red zone (128 bytes wide)
-  EmitInstruction(Out, MCInstBuilder(X86::SUB64ri32).addReg(X86::RSP)
-                           .addReg(X86::RSP).addImm(128));
+
+  // Set %rsp below current red zone (128 bytes wide) using LEA instruction to
+  // preserve flags.
+  {
+    MCInst Inst;
+    Inst.setOpcode(X86::LEA64r);
+    Inst.addOperand(MCOperand::CreateReg(X86::RSP));
+
+    const MCExpr *Disp = MCConstantExpr::Create(-128, Ctx);
+    X86Operand *Op =
+        X86Operand::CreateMem(0, Disp, X86::RSP, 0, 1, SMLoc(), SMLoc());
+    Op->addMemOperands(Inst, 5);
+    EmitInstruction(Out, Inst);
+  }
   EmitInstruction(Out, MCInstBuilder(X86::PUSH64r).addReg(X86::RDI));
   {
     MCInst Inst;
@@ -200,8 +213,19 @@ void X86AddressSanitizer64::InstrumentMemOperandImpl(
     EmitInstruction(Out, MCInstBuilder(X86::CALL64pcrel32).addExpr(FuncExpr));
   }
   EmitInstruction(Out, MCInstBuilder(X86::POP64r).addReg(X86::RDI));
-  EmitInstruction(Out, MCInstBuilder(X86::ADD64ri32).addReg(X86::RSP)
-                           .addReg(X86::RSP).addImm(128));
+
+  // Restore old %rsp value.
+  {
+    MCInst Inst;
+    Inst.setOpcode(X86::LEA64r);
+    Inst.addOperand(MCOperand::CreateReg(X86::RSP));
+
+    const MCExpr *Disp = MCConstantExpr::Create(128, Ctx);
+    X86Operand *Op =
+        X86Operand::CreateMem(0, Disp, X86::RSP, 0, 1, SMLoc(), SMLoc());
+    Op->addMemOperands(Inst, 5);
+    EmitInstruction(Out, Inst);
+  }
 }
 
 } // End anonymous namespace

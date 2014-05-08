@@ -6,39 +6,39 @@
 	.type	swap,@function
 # CHECK-LABEL: swap:
 #
-# CHECK: subq $128, %rsp
+# CHECK: leaq -128(%rsp), %rsp
 # CHECK-NEXT: pushq %rdi
 # CHECK-NEXT: leaq (%rcx), %rdi
 # CHECK-NEXT: callq __sanitizer_sanitize_load8@PLT
 # CHECK-NEXT: popq %rdi
-# CHECK-NEXT: addq $128, %rsp
+# CHECK-NEXT: leaq 128(%rsp), %rsp
 #
 # CHECK-NEXT: movq (%rcx), %rax
 #
-# CHECK-NEXT: subq $128, %rsp
+# CHECK-NEXT: leaq -128(%rsp), %rsp
 # CHECK-NEXT: pushq %rdi
 # CHECK-NEXT: leaq (%rdx), %rdi
 # CHECK-NEXT: callq __sanitizer_sanitize_load8@PLT
 # CHECK-NEXT: popq %rdi
-# CHECK-NEXT: addq $128, %rsp
+# CHECK-NEXT: leaq 128(%rsp), %rsp
 #
 # CHECK-NEXT: movq (%rdx), %rbx
 #
-# CHECK: subq $128, %rsp
+# CHECK: leaq -128(%rsp), %rsp
 # CHECK-NEXT: pushq %rdi
 # CHECK-NEXT: leaq (%rcx), %rdi
 # CHECK-NEXT: callq __sanitizer_sanitize_store8@PLT
 # CHECK-NEXT: popq %rdi
-# CHECK-NEXT: addq $128, %rsp
+# CHECK-NEXT: leaq 128(%rsp), %rsp
 #
 # CHECK-NEXT: movq %rbx, (%rcx)
 #
-# CHECK-NEXT: subq $128, %rsp
+# CHECK-NEXT: leaq -128(%rsp), %rsp
 # CHECK-NEXT: pushq %rdi
 # CHECK-NEXT: leaq (%rdx), %rdi
 # CHECK-NEXT: callq __sanitizer_sanitize_store8@PLT
 # CHECK-NEXT: popq %rdi
-# CHECK-NEXT: addq $128, %rsp
+# CHECK-NEXT: leaq 128(%rsp), %rsp
 #
 # CHECK-NEXT: movq %rax, (%rdx)
 swap:                                   # @swap

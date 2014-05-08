@@ -4,19 +4,19 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-unknown-linux-gnu"
 
 ; CHECK-LABEL: mov1b
-; CHECK: subq $128, %rsp
+; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: callq __sanitizer_sanitize_load1@PLT
 ; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: addq $128, %rsp
+; CHECK-NEXT: leaq 128(%rsp), %rsp
 
-; CHECK: subq $128, %rsp
+; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: callq __sanitizer_sanitize_store1@PLT
 ; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: addq $128, %rsp
+; CHECK-NEXT: leaq 128(%rsp), %rsp
 
 ; CHECK: movb {{.*}}, {{.*}}
 define void @mov1b(i8* %dst, i8* %src) #0 {
@@ -26,19 +26,19 @@ entry:
 }
 
 ; CHECK-LABEL: mov2b
-; CHECK: subq $128, %rsp
+; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: callq __sanitizer_sanitize_load2@PLT
 ; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: addq $128, %rsp
+; CHECK-NEXT: leaq 128(%rsp), %rsp
 
-; CHECK: subq $128, %rsp
+; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: callq __sanitizer_sanitize_store2@PLT
 ; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: addq $128, %rsp
+; CHECK-NEXT: leaq 128(%rsp), %rsp
 
 ; CHECK: movw {{.*}}, {{.*}}
 define void @mov2b(i16* %dst, i16* %src) #0 {
@@ -48,19 +48,19 @@ entry:
 }
 
 ; CHECK-LABEL: mov4b
-; CHECK: subq $128, %rsp
+; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: callq __sanitizer_sanitize_load4@PLT
 ; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: addq $128, %rsp
+; CHECK-NEXT: leaq 128(%rsp), %rsp
 
-; CHECK: subq $128, %rsp
+; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: callq __sanitizer_sanitize_store4@PLT
 ; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: addq $128, %rsp
+; CHECK-NEXT: leaq 128(%rsp), %rsp
 
 ; CHECK: movl {{.*}}, {{.*}}
 define void @mov4b(i32* %dst, i32* %src) #0 {
@@ -70,19 +70,19 @@ entry:
 }
 
 ; CHECK-LABEL: mov8b
-; CHECK: subq $128, %rsp
+; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: callq __sanitizer_sanitize_load8@PLT
 ; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: addq $128, %rsp
+; CHECK-NEXT: leaq 128(%rsp), %rsp
 
-; CHECK: subq $128, %rsp
+; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: callq __sanitizer_sanitize_store8@PLT
 ; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: addq $128, %rsp
+; CHECK-NEXT: leaq 128(%rsp), %rsp
 
 ; CHECK: movq {{.*}}, {{.*}}
 define void @mov8b(i64* %dst, i64* %src) #0 {
@@ -92,19 +92,19 @@ entry:
 }
 
 ; CHECK-LABEL: mov16b
-; CHECK: subq $128, %rsp
+; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: callq __sanitizer_sanitize_load16@PLT
 ; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: addq $128, %rsp
+; CHECK-NEXT: leaq 128(%rsp), %rsp
 
-; CHECK: subq $128, %rsp
+; CHECK: leaq -128(%rsp), %rsp
 ; CHECK-NEXT: pushq %rdi
 ; CHECK-NEXT: leaq {{.*}}, %rdi
 ; CHECK-NEXT: callq __sanitizer_sanitize_store16@PLT
 ; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: addq $128, %rsp
+; CHECK-NEXT: leaq 128(%rsp), %rsp
 
 ; CHECK: movaps {{.*}}, {{.*}}
 define void @mov16b(<2 x i64>* %dst, <2 x i64>* %src) #0 {

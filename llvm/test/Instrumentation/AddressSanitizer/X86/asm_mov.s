@@ -6,21 +6,21 @@
 	.type	mov1b,@function
 # CHECK-LABEL: mov1b:
 #
-# CHECK: subq $128, %rsp
+# CHECK: leaq -128(%rsp), %rsp
 # CHECK-NEXT: pushq %rdi
 # CHECK-NEXT: leaq (%rsi), %rdi
 # CHECK-NEXT: callq __sanitizer_sanitize_load1@PLT
 # CHECK-NEXT: popq %rdi
-# CHECK-NEXT: addq $128, %rsp
+# CHECK-NEXT: leaq 128(%rsp), %rsp
 #
 # CHECK-NEXT: movb (%rsi), %al
 #
-# CHECK-NEXT: subq $128, %rsp
+# CHECK-NEXT: leaq -128(%rsp), %rsp
 # CHECK-NEXT: pushq %rdi
 # CHECK-NEXT: leaq (%rdi), %rdi
 # CHECK-NEXT: callq __sanitizer_sanitize_store1@PLT
 # CHECK-NEXT: popq %rdi
-# CHECK-NEXT: addq $128, %rsp
+# CHECK-NEXT: leaq 128(%rsp), %rsp
 #
 # CHECK-NEXT: movb %al, (%rdi)
 mov1b:                                  # @mov1b
@@ -41,21 +41,21 @@ mov1b:                                  # @mov1b
 	.type	mov16b,@function
 # CHECK-LABEL: mov16b:
 #
-# CHECK: subq $128, %rsp
+# CHECK: leaq -128(%rsp), %rsp
 # CHECK-NEXT: pushq %rdi
 # CHECK-NEXT: leaq (%rsi), %rdi
 # CHECK-NEXT: callq __sanitizer_sanitize_load16@PLT
 # CHECK-NEXT: popq %rdi
-# CHECK-NEXT: addq $128, %rsp
+# CHECK-NEXT: leaq 128(%rsp), %rsp
 #
 # CHECK-NEXT: movaps (%rsi), %xmm0
 #
-# CHECK-NEXT: subq $128, %rsp
+# CHECK-NEXT: leaq -128(%rsp), %rsp
 # CHECK-NEXT: pushq %rdi
 # CHECK-NEXT: leaq (%rdi), %rdi
 # CHECK-NEXT: callq __sanitizer_sanitize_store16@PLT
 # CHECK-NEXT: popq %rdi
-# CHECK-NEXT: addq $128, %rsp
+# CHECK-NEXT: leaq 128(%rsp), %rsp
 #
 # CHECK-NEXT: movaps %xmm0, (%rdi)
 mov16b:                                 # @mov16b
