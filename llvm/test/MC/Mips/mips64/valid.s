@@ -191,6 +191,10 @@
 	teqi	$s5,-17504
 	tgei	$s1,5025
 	tgeiu	$sp,-28621
+	tlbp                       # CHECK: tlbp                   # encoding: [0x42,0x00,0x00,0x08]
+	tlbr                       # CHECK: tlbr                   # encoding: [0x42,0x00,0x00,0x01]
+	tlbwi                      # CHECK: tlbwi                  # encoding: [0x42,0x00,0x00,0x02]
+	tlbwr                      # CHECK: tlbwr                  # encoding: [0x42,0x00,0x00,0x06]
 	tlti	$t6,-21059
 	tltiu	$ra,-5076
 	tnei	$t4,-29647

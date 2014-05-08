@@ -47,7 +47,3 @@
 	recip.s	$f3,$f30
 	rsqrt.d	$f3,$f28
 	rsqrt.s	$f4,$f8
-	tlbp
-	tlbr
-	tlbwi
-	tlbwr

@@ -304,10 +304,6 @@
 	tlbgwr
 	tlbinv
 	tlbinvf
-	tlbp
-	tlbr
-	tlbwi
-	tlbwr
 	trunc.l.d	$f23,$f23
 	trunc.l.s	$f28,$f31
 	wrpgpr	$zero,$t5

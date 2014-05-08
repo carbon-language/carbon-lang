@@ -92,4 +92,8 @@
 	swc2	$25,24880($s0)
 	swl	$t7,13694($s3)
 	swr	$s1,-26590($t6)
+	tlbp                       # CHECK: tlbp                   # encoding: [0x42,0x00,0x00,0x08]
+	tlbr                       # CHECK: tlbr                   # encoding: [0x42,0x00,0x00,0x01]
+	tlbwi                      # CHECK: tlbwi                  # encoding: [0x42,0x00,0x00,0x02]
+	tlbwr                      # CHECK: tlbwr                  # encoding: [0x42,0x00,0x00,0x06]
 	xor	$s2,$a0,$s8

@@ -38,7 +38,3 @@
 	ldc3	$29,-28645($s1)
 	rorv	$t5,$a3,$s5
 	sdc3	$12,5835($t2)
-	tlbp
-	tlbr
-	tlbwi
-	tlbwr

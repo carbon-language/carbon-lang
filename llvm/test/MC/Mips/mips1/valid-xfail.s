@@ -7,10 +7,6 @@
 # XFAIL: *
 
 	.set noat
-	tlbp
-	tlbr
-	tlbwi
-	tlbwr
 	lwc0	c0_entrylo,-7321($s2)
 	lwc3	$10,-32265($k0)
 	swc0	c0_prid,18904($s3)

@@ -843,3 +843,12 @@ class BARRIER_FM<bits<5> op> : StdArch {
   let Inst{10-6} = op; // Operation
   let Inst{5-0} = 0;   // SLL
 }
+
+class COP0_TLB_FM<bits<6> op> : StdArch {
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x10; // COP0
+  let Inst{25} = 1;       // CO
+  let Inst{24-6} = 0;
+  let Inst{5-0} = op;     // Operation
+}

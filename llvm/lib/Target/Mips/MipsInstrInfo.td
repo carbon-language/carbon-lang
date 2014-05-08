@@ -1207,6 +1207,13 @@ def SSNOP : Barrier<"ssnop">, BARRIER_FM<1>;
 def EHB : Barrier<"ehb">, BARRIER_FM<3>;
 def PAUSE : Barrier<"pause">, BARRIER_FM<5>, ISA_MIPS32R2;
 
+class TLB<string asmstr> : InstSE<(outs), (ins), asmstr, [], NoItinerary,
+                                      FrmOther>;
+def TLBP : TLB<"tlbp">, COP0_TLB_FM<0x08>;
+def TLBR : TLB<"tlbr">, COP0_TLB_FM<0x01>;
+def TLBWI : TLB<"tlbwi">, COP0_TLB_FM<0x02>;
+def TLBWR : TLB<"tlbwr">, COP0_TLB_FM<0x06>;
+
 //===----------------------------------------------------------------------===//
 // Instruction aliases
 //===----------------------------------------------------------------------===//

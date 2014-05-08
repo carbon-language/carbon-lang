@@ -306,10 +306,6 @@
 	tlbgwr
 	tlbinv
 	tlbinvf
-	tlbp
-	tlbr
-	tlbwi
-	tlbwr
 	wrpgpr	$zero,$t5
 	xor.v	$w20,$w21,$w30
 	yield	$v1,$s0

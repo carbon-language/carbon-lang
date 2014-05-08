@@ -8,7 +8,3 @@
 
 	.set noat
 	lwc3	$10,-32265($k0)
-	tlbp
-	tlbr
-	tlbwi
-	tlbwr

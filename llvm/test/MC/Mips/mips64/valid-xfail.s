@@ -92,7 +92,3 @@
 	rsqrt.d	$f3,$f28
 	rsqrt.s	$f4,$f8
 	sub.ps	$f5,$f14,$f26
-	tlbp
-	tlbr
-	tlbwi
-	tlbwr
