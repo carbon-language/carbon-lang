@@ -1849,14 +1849,15 @@ bool ARM64FastISel::SelectRem(const Instruction *I, unsigned ISDOpcode) {
   if (!Src1Reg)
     return false;
 
-  unsigned ResultReg = createResultReg(TLI.getRegClassFor(DestVT));
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(DivOpc), ResultReg)
+  unsigned QuotReg = createResultReg(TLI.getRegClassFor(DestVT));
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(DivOpc), QuotReg)
       .addReg(Src0Reg)
       .addReg(Src1Reg);
   // The remainder is computed as numerator - (quotient * denominator) using the
   // MSUB instruction.
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(DestVT));
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(MSubOpc), ResultReg)
-      .addReg(ResultReg)
+      .addReg(QuotReg)
       .addReg(Src1Reg)
       .addReg(Src0Reg);
   UpdateValueMap(I, ResultReg);
