@@ -384,7 +384,7 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
       .Case("small", llvm::CodeModel::Small)
       .Case("kernel", llvm::CodeModel::Kernel)
       .Case("medium", llvm::CodeModel::Medium)
-      .Case("large", llvm::CodeModel::Medium)
+      .Case("large", llvm::CodeModel::Large)
       .Case("default", llvm::CodeModel::Default)
       .Default(~0u);
   assert(CodeModel != ~0u && "invalid code model!");
