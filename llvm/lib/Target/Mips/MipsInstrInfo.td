@@ -156,6 +156,8 @@ def HasCondMov  :     Predicate<"Subtarget.hasCondMov()">,
                       AssemblerPredicate<"FeatureCondMov">;
 def HasFPIdx    :     Predicate<"Subtarget.hasFPIdx()">,
                       AssemblerPredicate<"FeatureFPIdx">;
+def HasMips2     :    Predicate<"Subtarget.hasMips2()">,
+                      AssemblerPredicate<"FeatureMips2">;
 def HasMips32    :    Predicate<"Subtarget.hasMips32()">,
                       AssemblerPredicate<"FeatureMips32">;
 def HasMips32r2  :    Predicate<"Subtarget.hasMips32r2()">,
@@ -206,6 +208,7 @@ class GPR_64 { list<Predicate> GPRPredicates = [IsGP64bit]; }
 // They are mutually exclusive.
 //===----------------------------------------------------------------------===//
 
+class ISA_MIPS2    { list<Predicate> InsnPredicates = [HasMips2]; }
 class ISA_MIPS32R2 { list<Predicate> InsnPredicates = [HasMips32r2]; }
 class ISA_MIPS64R2 { list<Predicate> InsnPredicates = [HasMips64r2]; }
 
@@ -1052,12 +1055,12 @@ def TLT : MMRel, TEQ_FT<"tlt", GPR32Opnd>, TEQ_FM<0x32>;
 def TLTU : MMRel, TEQ_FT<"tltu", GPR32Opnd>, TEQ_FM<0x33>;
 def TNE : MMRel, TEQ_FT<"tne", GPR32Opnd>, TEQ_FM<0x36>;
 
-def TEQI : MMRel, TEQI_FT<"teqi", GPR32Opnd>, TEQI_FM<0xc>;
-def TGEI : MMRel, TEQI_FT<"tgei", GPR32Opnd>, TEQI_FM<0x8>;
-def TGEIU : MMRel, TEQI_FT<"tgeiu", GPR32Opnd>, TEQI_FM<0x9>;
-def TLTI : MMRel, TEQI_FT<"tlti", GPR32Opnd>, TEQI_FM<0xa>;
-def TTLTIU : MMRel, TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM<0xb>;
-def TNEI : MMRel, TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM<0xe>;
+def TEQI : MMRel, TEQI_FT<"teqi", GPR32Opnd>, TEQI_FM<0xc>, ISA_MIPS2;
+def TGEI : MMRel, TEQI_FT<"tgei", GPR32Opnd>, TEQI_FM<0x8>, ISA_MIPS2;
+def TGEIU : MMRel, TEQI_FT<"tgeiu", GPR32Opnd>, TEQI_FM<0x9>, ISA_MIPS2;
+def TLTI : MMRel, TEQI_FT<"tlti", GPR32Opnd>, TEQI_FM<0xa>, ISA_MIPS2;
+def TTLTIU : MMRel, TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM<0xb>, ISA_MIPS2;
+def TNEI : MMRel, TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM<0xe>, ISA_MIPS2;
 
 def BREAK : MMRel, BRK_FT<"break">, BRK_FM<0xd>;
 def SYSCALL : MMRel, SYS_FT<"syscall">, SYS_FM<0xc>;
@@ -1074,8 +1077,8 @@ let EncodingPredicates = []<Predicate>, // FIXME: Lack of HasStdEnc is probably 
 def WAIT : WAIT_FT<"wait">, WAIT_FM;
 
 /// Load-linked, Store-conditional
-def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>;
-def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>;
+def LL : LLBase<"ll", GPR32Opnd>, LW_FM<0x30>, ISA_MIPS2;
+def SC : SCBase<"sc", GPR32Opnd>, LW_FM<0x38>, ISA_MIPS2;
 }
 
 /// Jump and Branch Instructions

@@ -260,20 +260,20 @@ defm D64 : C_COND_M<"d", FGR64Opnd, 17, II_C_CC_D>,
 // Floating Point Instructions
 //===----------------------------------------------------------------------===//
 def ROUND_W_S  : MMRel, ABSS_FT<"round.w.s", FGR32Opnd, FGR32Opnd, II_ROUND>,
-                 ABSS_FM<0xc, 16>;
+                 ABSS_FM<0xc, 16>, ISA_MIPS2;
 def TRUNC_W_S  : MMRel, ABSS_FT<"trunc.w.s", FGR32Opnd, FGR32Opnd, II_TRUNC>,
-                 ABSS_FM<0xd, 16>;
+                 ABSS_FM<0xd, 16>, ISA_MIPS2;
 def CEIL_W_S   : MMRel, ABSS_FT<"ceil.w.s", FGR32Opnd, FGR32Opnd, II_CEIL>,
-                 ABSS_FM<0xe, 16>;
+                 ABSS_FM<0xe, 16>, ISA_MIPS2;
 def FLOOR_W_S  : MMRel, ABSS_FT<"floor.w.s", FGR32Opnd, FGR32Opnd, II_FLOOR>,
-                 ABSS_FM<0xf, 16>;
+                 ABSS_FM<0xf, 16>, ISA_MIPS2;
 def CVT_W_S    : MMRel, ABSS_FT<"cvt.w.s", FGR32Opnd, FGR32Opnd, II_CVT>,
                  ABSS_FM<0x24, 16>;
 
-defm ROUND_W : ROUND_M<"round.w.d", II_ROUND>, ABSS_FM<0xc, 17>;
-defm TRUNC_W : ROUND_M<"trunc.w.d", II_TRUNC>, ABSS_FM<0xd, 17>;
-defm CEIL_W  : ROUND_M<"ceil.w.d", II_CEIL>, ABSS_FM<0xe, 17>;
-defm FLOOR_W : ROUND_M<"floor.w.d", II_FLOOR>, ABSS_FM<0xf, 17>;
+defm ROUND_W : ROUND_M<"round.w.d", II_ROUND>, ABSS_FM<0xc, 17>, ISA_MIPS2;
+defm TRUNC_W : ROUND_M<"trunc.w.d", II_TRUNC>, ABSS_FM<0xd, 17>, ISA_MIPS2;
+defm CEIL_W  : ROUND_M<"ceil.w.d", II_CEIL>, ABSS_FM<0xe, 17>, ISA_MIPS2;
+defm FLOOR_W : ROUND_M<"floor.w.d", II_FLOOR>, ABSS_FM<0xf, 17>, ISA_MIPS2;
 defm CVT_W   : ROUND_M<"cvt.w.d", II_CVT>, ABSS_FM<0x24, 17>;
 
 let DecoderNamespace = "Mips64" in {
@@ -338,8 +338,8 @@ defm FABS : ABSS_M<"abs.d", II_ABS, fabs>, ABSS_FM<0x5, 17>;
 defm FNEG : ABSS_M<"neg.d", II_NEG, fneg>, ABSS_FM<0x7, 17>;
 
 def FSQRT_S : MMRel, ABSS_FT<"sqrt.s", FGR32Opnd, FGR32Opnd, II_SQRT_S, fsqrt>,
-              ABSS_FM<0x4, 16>;
-defm FSQRT : ABSS_M<"sqrt.d", II_SQRT_D, fsqrt>, ABSS_FM<0x4, 17>;
+              ABSS_FM<0x4, 16>, ISA_MIPS2;
+defm FSQRT : ABSS_M<"sqrt.d", II_SQRT_D, fsqrt>, ABSS_FM<0x4, 17>, ISA_MIPS2;
 
 // The odd-numbered registers are only referenced when doing loads,
 // stores, and moves between floating-point and integer registers.
@@ -376,19 +376,22 @@ def LWC1 : MMRel, LW_FT<"lwc1", FGR32Opnd, II_LWC1, load>, LW_FM<0x31>;
 def SWC1 : MMRel, SW_FT<"swc1", FGR32Opnd, II_SWC1, store>, LW_FM<0x39>;
 
 let DecoderNamespace = "Mips64" in {
-  def LDC164 : LW_FT<"ldc1", FGR64Opnd, II_LDC1, load>, LW_FM<0x35>, FGR_64;
-  def SDC164 : SW_FT<"sdc1", FGR64Opnd, II_SDC1, store>, LW_FM<0x3d>, FGR_64;
+  def LDC164 : LW_FT<"ldc1", FGR64Opnd, II_LDC1, load>, LW_FM<0x35>, ISA_MIPS2,
+               FGR_64;
+  def SDC164 : SW_FT<"sdc1", FGR64Opnd, II_SDC1, store>, LW_FM<0x3d>, ISA_MIPS2,
+               FGR_64;
 }
 
-def LDC1 : MMRel, LW_FT<"ldc1", AFGR64Opnd, II_LDC1, load>, LW_FM<0x35>, FGR_32;
+def LDC1 : MMRel, LW_FT<"ldc1", AFGR64Opnd, II_LDC1, load>, LW_FM<0x35>,
+           ISA_MIPS2, FGR_32;
 def SDC1 : MMRel, SW_FT<"sdc1", AFGR64Opnd, II_SDC1, store>, LW_FM<0x3d>,
-           FGR_32;
+           ISA_MIPS2, FGR_32;
 
 /// Cop2 Memory Instructions
 def LWC2 : LW_FT<"lwc2", COP2Opnd, NoItinerary, load>, LW_FM<0x32>;
 def SWC2 : SW_FT<"swc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3a>;
-def LDC2 : LW_FT<"ldc2", COP2Opnd, NoItinerary, load>, LW_FM<0x36>;
-def SDC2 : SW_FT<"sdc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3e>;
+def LDC2 : LW_FT<"ldc2", COP2Opnd, NoItinerary, load>, LW_FM<0x36>, ISA_MIPS2;
+def SDC2 : SW_FT<"sdc2", COP2Opnd, NoItinerary, store>, LW_FM<0x3e>, ISA_MIPS2;
 
 // Indexed loads and stores.
 // Base register + offset register addressing mode (indicated by "x" in the
