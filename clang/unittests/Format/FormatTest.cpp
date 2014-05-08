@@ -2000,30 +2000,79 @@ TEST_F(FormatTest, FormatsInlineASM) {
 }
 
 TEST_F(FormatTest, FormatTryCatch) {
-  // FIXME: Handle try-catch explicitly in the UnwrappedLineParser, then we'll
-  // also not create single-line-blocks.
   verifyFormat("try {\n"
                "  throw a * b;\n"
-               "}\n"
-               "catch (int a) {\n"
+               "} catch (int a) {\n"
                "  // Do nothing.\n"
-               "}\n"
-               "catch (...) {\n"
+               "} catch (...) {\n"
                "  exit(42);\n"
                "}");
 
   // Function-level try statements.
-  verifyFormat("int f() try { return 4; }\n"
-               "catch (...) {\n"
+  verifyFormat("int f() try { return 4; } catch (...) {\n"
                "  return 5;\n"
                "}");
   verifyFormat("class A {\n"
                "  int a;\n"
-               "  A() try : a(0) {}\n"
-               "  catch (...) {\n"
+               "  A() try : a(0) {\n"
+               "  } catch (...) {\n"
                "    throw;\n"
                "  }\n"
                "};\n");
+}
+
+TEST_F(FormatTest, IncompleteTryCatchBlocks) {
+  verifyFormat("try {\n"
+               "  f();\n"
+               "} catch {\n"
+               "  g();\n"
+               "}");
+  verifyFormat("try {\n"
+               "  f();\n"
+               "} catch (A a) MACRO(x) {\n"
+               "  g();\n"
+               "} catch (B b) MACRO(x) {\n"
+               "  g();\n"
+               "}");
+}
+
+TEST_F(FormatTest, FormatTryCatchBraceStyles) {
+  FormatStyle Style = getLLVMStyle();
+  Style.BreakBeforeBraces = FormatStyle::BS_Attach;
+  verifyFormat("try {\n"
+               "  // something\n"
+               "} catch (...) {\n"
+               "  // something\n"
+               "}",
+               Style);
+  Style.BreakBeforeBraces = FormatStyle::BS_Stroustrup;
+  verifyFormat("try {\n"
+               "  // something\n"
+               "}\n"
+               "catch (...) {\n"
+               "  // something\n"
+               "}",
+               Style);
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  verifyFormat("try\n"
+               "{\n"
+               "  // something\n"
+               "}\n"
+               "catch (...)\n"
+               "{\n"
+               "  // something\n"
+               "}",
+               Style);
+  Style.BreakBeforeBraces = FormatStyle::BS_GNU;
+  verifyFormat("try\n"
+               "  {\n"
+               "    // something\n"
+               "  }\n"
+               "catch (...)\n"
+               "  {\n"
+               "    // something\n"
+               "  }",
+               Style);
 }
 
 TEST_F(FormatTest, FormatObjCTryCatch) {
@@ -2453,8 +2502,7 @@ TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
             "  F(x)\n"
             "  try {\n"
             "    Q();\n"
-            "  }\n"
-            "  catch (...) {\n"
+            "  } catch (...) {\n"
             "  }\n"
             "}\n",
             format("int q() {\n"
@@ -2471,8 +2519,7 @@ TEST_F(FormatTest, MacroCallsWithoutTrailingSemicolon) {
             "  A() : t(0) {}\n"
             "  A(X x)\n" // FIXME: function-level try blocks are broken.
             "  try : t(0) {\n"
-            "  }\n"
-            "  catch (...) {\n"
+            "  } catch (...) {\n"
             "  }\n"
             "};",
             format("class A {\n"
@@ -7752,8 +7799,7 @@ TEST_F(FormatTest, GNUBraceBreaking) {
 TEST_F(FormatTest, CatchExceptionReferenceBinding) {
   verifyFormat("void f() {\n"
                "  try {\n"
-               "  }\n"
-               "  catch (const Exception &e) {\n"
+               "  } catch (const Exception &e) {\n"
                "  }\n"
                "}\n",
                getLLVMStyle());

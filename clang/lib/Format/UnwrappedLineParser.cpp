@@ -675,6 +675,9 @@ void UnwrappedLineParser::parseStructuralElement() {
   case tok::kw_case:
     parseCaseLabel();
     return;
+  case tok::kw_try:
+    parseTryCatch();
+    return;
   case tok::kw_extern:
     nextToken();
     if (FormatTok->Tok.is(tok::string_literal)) {
@@ -755,6 +758,10 @@ void UnwrappedLineParser::parseStructuralElement() {
       // Otherwise this was a braced init list, and the structural
       // element continues.
       break;
+    case tok::kw_try:
+      // We arrive here when parsing function-try blocks.
+      parseTryCatch();
+      return;
     case tok::identifier: {
       StringRef Text = FormatTok->TokenText;
       nextToken();
@@ -1067,6 +1074,72 @@ void UnwrappedLineParser::parseIfThenElse() {
       --Line->Level;
     }
   } else if (NeedsUnwrappedLine) {
+    addUnwrappedLine();
+  }
+}
+
+void UnwrappedLineParser::parseTryCatch() {
+  assert(FormatTok->is(tok::kw_try) && "'try' expected");
+  nextToken();
+  bool NeedsUnwrappedLine = false;
+  if (FormatTok->is(tok::colon)) {
+    // We are in a function try block, what comes is an initializer list.
+    nextToken();
+    while (FormatTok->is(tok::identifier)) {
+      nextToken();
+      if (FormatTok->is(tok::l_paren))
+        parseParens();
+      else
+        StructuralError = true;
+      if (FormatTok->is(tok::comma))
+        nextToken();
+    }
+  }
+  if (FormatTok->is(tok::l_brace)) {
+    CompoundStatementIndenter Indenter(this, Style, Line->Level);
+    parseBlock(/*MustBeDeclaration=*/false);
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
+        Style.BreakBeforeBraces == FormatStyle::BS_GNU ||
+        Style.BreakBeforeBraces == FormatStyle::BS_Stroustrup) {
+      addUnwrappedLine();
+    } else {
+      NeedsUnwrappedLine = true;
+    }
+  } else if (!FormatTok->is(tok::kw_catch)) {
+    // The C++ standard requires a compound-statement after a try.
+    // If there's none, we try to assume there's a structuralElement
+    // and try to continue.
+    StructuralError = true;
+    addUnwrappedLine();
+    ++Line->Level;
+    parseStructuralElement();
+    --Line->Level;
+  }
+  while (FormatTok->is(tok::kw_catch) ||
+         (Style.Language == FormatStyle::LK_JavaScript &&
+          FormatTok->TokenText == "finally")) {
+    nextToken();
+    while (FormatTok->isNot(tok::l_brace)) {
+      if (FormatTok->is(tok::l_paren)) {
+        parseParens();
+        continue;
+      }
+      if (FormatTok->isOneOf(tok::semi, tok::r_brace))
+        return;
+      nextToken();
+    }
+    NeedsUnwrappedLine = false;
+    CompoundStatementIndenter Indenter(this, Style, Line->Level);
+    parseBlock(/*MustBeDeclaration=*/false);
+    if (Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
+        Style.BreakBeforeBraces == FormatStyle::BS_GNU ||
+        Style.BreakBeforeBraces == FormatStyle::BS_Stroustrup) {
+      addUnwrappedLine();
+    } else {
+      NeedsUnwrappedLine = true;
+    }
+  }
+  if (NeedsUnwrappedLine) {
     addUnwrappedLine();
   }
 }

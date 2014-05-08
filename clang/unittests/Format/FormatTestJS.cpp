@@ -118,6 +118,16 @@ TEST_F(FormatTestJS, ClosureStyleComments) {
   verifyFormat("var x = /** @type {foo} */ (bar);");
 }
 
+TEST_F(FormatTestJS, TryCatch) {
+  verifyFormat("try {\n"
+               "  f();\n"
+               "} catch (e) {\n"
+               "  g();\n"
+               "} finally {\n"
+               "  h();\n"
+               "}");
+}
+
 TEST_F(FormatTestJS, RegexLiteralClassification) {
   // Regex literals.
   verifyFormat("var regex = /abc/;");

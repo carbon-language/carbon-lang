@@ -85,6 +85,7 @@ private:
   void parseParens();
   void parseSquare();
   void parseIfThenElse();
+  void parseTryCatch();
   void parseForOrWhileLoop();
   void parseDoWhile();
   void parseLabel();
