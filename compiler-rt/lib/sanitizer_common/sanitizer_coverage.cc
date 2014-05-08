@@ -90,8 +90,9 @@ void CovDump() {
        i++) {
     if ((prot & MemoryMappingLayout::kProtectionExecute) == 0)
       continue;
+    while (vb < ve && *vb < mb) vb++;
     if (vb >= ve) break;
-    if (mb <= *vb && *vb < me) {
+    if (*vb < me) {
       offsets.clear();
       const uptr *old_vb = vb;
       CHECK_LE(off, *vb);
