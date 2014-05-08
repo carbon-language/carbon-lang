@@ -623,9 +623,8 @@ static void ProfileListInit(FoldingSetNodeID &ID,
 ListInit *ListInit::get(ArrayRef<Init *> Range, RecTy *EltTy) {
   typedef FoldingSet<ListInit> Pool;
   static Pool ThePool;
+  static std::vector<std::unique_ptr<ListInit>> TheActualPool;
 
-  // Just use the FoldingSetNodeID to compute a hash.  Use a DenseMap
-  // for actual storage.
   FoldingSetNodeID ID;
   ProfileListInit(ID, Range, EltTy);
 
@@ -635,6 +634,7 @@ ListInit *ListInit::get(ArrayRef<Init *> Range, RecTy *EltTy) {
 
   ListInit *I = new ListInit(Range, EltTy);
   ThePool.InsertNode(I, IP);
+  TheActualPool.push_back(std::unique_ptr<ListInit>(I));
   return I;
 }
 
