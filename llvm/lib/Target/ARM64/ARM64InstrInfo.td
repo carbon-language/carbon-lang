@@ -512,9 +512,9 @@ def : Pat<(sub GPR64:$Rn, neg_addsub_shifted_imm64:$imm),
 def : InstAlias<"neg $dst, $src", (SUBWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
 def : InstAlias<"neg $dst, $src", (SUBXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
 def : InstAlias<"neg $dst, $src, $shift",
-                (SUBWrs GPR32:$dst, WZR, GPR32:$src, arith_shift:$shift)>;
+                (SUBWrs GPR32:$dst, WZR, GPR32:$src, arith_shift32:$shift)>;
 def : InstAlias<"neg $dst, $src, $shift",
-                (SUBXrs GPR64:$dst, XZR, GPR64:$src, arith_shift:$shift)>;
+                (SUBXrs GPR64:$dst, XZR, GPR64:$src, arith_shift64:$shift)>;
 
 // Because of the immediate format for add/sub-imm instructions, the
 // expression (add x, -1) must be transformed to (SUB{W,X}ri x, 1).
@@ -533,9 +533,9 @@ def : Pat<(ARM64sub_flag GPR64:$Rn, neg_addsub_shifted_imm64:$imm),
 def : InstAlias<"negs $dst, $src", (SUBSWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
 def : InstAlias<"negs $dst, $src", (SUBSXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
 def : InstAlias<"negs $dst, $src, $shift",
-                (SUBSWrs GPR32:$dst, WZR, GPR32:$src, arith_shift:$shift)>;
+                (SUBSWrs GPR32:$dst, WZR, GPR32:$src, arith_shift32:$shift)>;
 def : InstAlias<"negs $dst, $src, $shift",
-                (SUBSXrs GPR64:$dst, XZR, GPR64:$src, arith_shift:$shift)>;
+                (SUBSXrs GPR64:$dst, XZR, GPR64:$src, arith_shift64:$shift)>;
 
 // Unsigned/Signed divide
 defm UDIV : Div<0, "udiv", udiv>;

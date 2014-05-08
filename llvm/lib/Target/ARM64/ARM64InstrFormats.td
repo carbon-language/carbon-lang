@@ -97,10 +97,16 @@ def MovImm64ShifterOperand : AsmOperandClass {
 }
 
 // Shifter operand for arithmetic register shifted encodings.
-def ArithmeticShifterOperand : AsmOperandClass {
+class ArithmeticShifterOperand<int width> : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
-  let Name = "ArithmeticShifter";
+  let Name = "ArithmeticShifter" # width;
+  let PredicateMethod = "isArithmeticShifter";
+  let RenderMethod = "addArithmeticShifterOperands";
+  let DiagnosticType = "AddSubRegShift" # width;
 }
+
+def ArithmeticShifterOperand32 : ArithmeticShifterOperand<32>;
+def ArithmeticShifterOperand64 : ArithmeticShifterOperand<64>;
 
 // Shifter operand for logical vector 128/64-bit shifted encodings.
 def LogicalVecShifterOperand : AsmOperandClass {
@@ -491,20 +497,24 @@ def imm0_7 : Operand<i64>, ImmLeaf<i64, [{
 // An arithmetic shifter operand:
 //  {7-6} - shift type: 00 = lsl, 01 = lsr, 10 = asr
 //  {5-0} - imm6
-def arith_shift : Operand<i32> {
+class arith_shift<ValueType Ty, int width> : Operand<Ty> {
   let PrintMethod = "printShifter";
-  let ParserMatchClass = ArithmeticShifterOperand;
+  let ParserMatchClass = !cast<AsmOperandClass>(
+                         "ArithmeticShifterOperand" # width);
 }
 
-class arith_shifted_reg<ValueType Ty, RegisterClass regclass>
+def arith_shift32 : arith_shift<i32, 32>;
+def arith_shift64 : arith_shift<i64, 64>;
+
+class arith_shifted_reg<ValueType Ty, RegisterClass regclass, int width>
     : Operand<Ty>,
       ComplexPattern<Ty, 2, "SelectArithShiftedRegister", []> {
   let PrintMethod = "printShiftedRegister";
-  let MIOperandInfo = (ops regclass, arith_shift);
+  let MIOperandInfo = (ops regclass, !cast<Operand>("arith_shift" # width));
 }
 
-def arith_shifted_reg32 : arith_shifted_reg<i32, GPR32>;
-def arith_shifted_reg64 : arith_shifted_reg<i64, GPR64>;
+def arith_shifted_reg32 : arith_shifted_reg<i32, GPR32, 32>;
+def arith_shifted_reg64 : arith_shifted_reg<i64, GPR64, 64>;
 
 // An arithmetic shifter operand:
 //  {7-6} - shift type: 00 = lsl, 01 = lsr, 10 = asr, 11 = ror
@@ -1578,9 +1588,9 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp> {
   def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Xrx64")
                   XZR, GPR64sp:$src1, GPR64:$src2, arith_extendlsl64:$sh)>;
   def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Wrs")
-                  WZR, GPR32:$src1, GPR32:$src2, arith_shift:$sh)>;
+                  WZR, GPR32:$src1, GPR32:$src2, arith_shift32:$sh)>;
   def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Xrs")
-                  XZR, GPR64:$src1, GPR64:$src2, arith_shift:$sh)>;
+                  XZR, GPR64:$src1, GPR64:$src2, arith_shift64:$sh)>;
 
   // Compare shorthands
   def : InstAlias<cmp#" $src1, $src2", (!cast<Instruction>(NAME#"Wrs")

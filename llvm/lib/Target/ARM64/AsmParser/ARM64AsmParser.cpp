@@ -3999,6 +3999,12 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
   case Match_AddSubSecondSource:
     return Error(Loc,
       "expected compatible register, symbol or integer in range [0, 4095]");
+  case Match_AddSubRegShift32:
+    return Error(Loc,
+       "expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]");
+  case Match_AddSubRegShift64:
+    return Error(Loc,
+       "expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 63]");
   case Match_InvalidMemoryIndexedSImm9:
     return Error(Loc, "index must be an integer in range [-256, 255].");
   case Match_InvalidMemoryIndexed32SImm7:
@@ -4517,6 +4523,8 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_AddSubRegExtendSmall:
   case Match_AddSubRegExtendLarge:
   case Match_AddSubSecondSource:
+  case Match_AddSubRegShift32:
+  case Match_AddSubRegShift64:
   case Match_InvalidMemoryIndexed8:
   case Match_InvalidMemoryIndexed16:
   case Match_InvalidMemoryIndexed32SImm7:
