@@ -479,15 +479,18 @@ TEST(AddressSanitizer, SimpleStackTest) {
   SizedStackTest<128>();
 }
 
+#if !defined(_WIN32)
+// FIXME: It's a bit hard to write multi-line death test expectations
+// in a portable way.  Anyways, this should just be turned into a lit test.
 TEST(AddressSanitizer, ManyStackObjectsTest) {
   char XXX[10];
   char YYY[20];
   char ZZZ[30];
   Ident(XXX);
   Ident(YYY);
-  EXPECT_DEATH(Ident(ZZZ)[-1] = 0,
-               ASAN_PCRE_DOTALL "XXX.*\\n.*YYY.*\\n.*ZZZ");
+  EXPECT_DEATH(Ident(ZZZ)[-1] = 0, ASAN_PCRE_DOTALL "XXX.*YYY.*ZZZ");
 }
+#endif
 
 #if 0  // This test requires online symbolizer.
 // Moved to lit_tests/stack-oob-frames.cc.
