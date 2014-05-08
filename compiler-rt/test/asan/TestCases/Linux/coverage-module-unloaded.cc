@@ -23,15 +23,15 @@ void bar() { printf("bar\n"); }
 
 int main(int argc, char **argv) {
   fprintf(stderr, "PID: %d\n", getpid());
-  fprintf(stderr, "Opening %s\n", SO_DIR "/libcoverage_module_disappeared_test_1.so");
+  fprintf(stderr, "Opening %s\n", SO_DIR "/libcoverage_module_unloaded_test_1.so");
   void *handle1 =
-      dlopen(SO_DIR "/libcoverage_module_disappeared_test_1.so", RTLD_LAZY);
+      dlopen(SO_DIR "/libcoverage_module_unloaded_test_1.so", RTLD_LAZY);
   assert(handle1);
   void (*bar1)() = (void (*)())dlsym(handle1, "bar");
   assert(bar1);
   bar1();
   void *handle2 =
-      dlopen(SO_DIR "/libcoverage_module_disappeared_test_2.so", RTLD_LAZY);
+      dlopen(SO_DIR "/libcoverage_module_unloaded_test_2.so", RTLD_LAZY);
   assert(handle2);
   void (*bar2)() = (void (*)())dlsym(handle2, "bar");
   assert(bar2);
@@ -52,4 +52,4 @@ int main(int argc, char **argv) {
 // CHECK: .so.[[PID]]
 // If we get coverage for both DSOs, it means the module wasn't unloaded and
 // this test is useless.
-// CHECK-not: .so.[[PID]]
+// CHECK-NOT: .so.[[PID]]
