@@ -187,6 +187,7 @@ void __cxa_guard_abort(guard_type* guard_object)
 
 int __cxa_guard_acquire(guard_type* guard_object)
 {
+    char* initialized = (char*)guard_object;
     if (pthread_mutex_lock(&guard_mut))
         abort_message("__cxa_guard_acquire failed to acquire mutex");
     int result = *initialized == 0;
