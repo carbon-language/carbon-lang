@@ -976,8 +976,8 @@ public:
 
   llvm::GlobalVariable::LinkageTypes getFunctionLinkage(GlobalDecl GD);
 
-  void setFunctionLinkage(GlobalDecl GD, llvm::GlobalValue *V) {
-    V->setLinkage(getFunctionLinkage(GD));
+  void setFunctionLinkage(GlobalDecl GD, llvm::Function *F) {
+    F->setLinkage(getFunctionLinkage(GD));
   }
 
   /// getVTableLinkage - Return the appropriate linkage for the vtable, VTT,
