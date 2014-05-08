@@ -6,6 +6,6 @@
 # CHECK-NOT: encoding
 # XFAIL: *
 
-	.set noat
-	lwc0	c0_entrylo,-7321($s2)
-	swc0	c0_prid,18904($s3)
+        .set noat
+        lwc0    c0_entrylo,-7321($s2)
+        swc0    c0_prid,18904($s3)
