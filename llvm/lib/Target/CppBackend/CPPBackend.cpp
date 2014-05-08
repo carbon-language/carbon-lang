@@ -1690,9 +1690,8 @@ void CppWriter::printFunctionUses(const Function* F) {
 
   // Print the function declarations for any functions encountered
   nl(Out) << "// Function Declarations"; nl(Out);
-  for (SmallPtrSet<GlobalValue*,64>::iterator I = gvs.begin(), E = gvs.end();
-       I != E; ++I) {
-    if (Function* Fun = dyn_cast<Function>(*I)) {
+  for (auto *GV : gvs) {
+    if (Function *Fun = dyn_cast<Function>(GV)) {
       if (!is_inline || Fun != F)
         printFunctionHead(Fun);
     }
@@ -1700,17 +1699,15 @@ void CppWriter::printFunctionUses(const Function* F) {
 
   // Print the global variable declarations for any variables encountered
   nl(Out) << "// Global Variable Declarations"; nl(Out);
-  for (SmallPtrSet<GlobalValue*,64>::iterator I = gvs.begin(), E = gvs.end();
-       I != E; ++I) {
-    if (GlobalVariable* F = dyn_cast<GlobalVariable>(*I))
+  for (auto *GV : gvs) {
+    if (GlobalVariable *F = dyn_cast<GlobalVariable>(GV))
       printVariableHead(F);
   }
 
   // Print the constants found
   nl(Out) << "// Constant Definitions"; nl(Out);
-  for (SmallPtrSet<Constant*,64>::iterator I = consts.begin(),
-         E = consts.end(); I != E; ++I) {
-    printConstant(*I);
+  for (const auto *C : consts) {
+    printConstant(C);
   }
 
   // Process the global variables definitions now that all the constants have
@@ -1718,10 +1715,9 @@ void CppWriter::printFunctionUses(const Function* F) {
   // initializers.
   if (GenerationType != GenFunction) {
     nl(Out) << "// Global Variable Definitions"; nl(Out);
-    for (SmallPtrSet<GlobalValue*,64>::iterator I = gvs.begin(), E = gvs.end();
-         I != E; ++I) {
-      if (GlobalVariable* GV = dyn_cast<GlobalVariable>(*I))
-        printVariableBody(GV);
+    for (const auto &GV : gvs) {
+      if (GlobalVariable *Var = dyn_cast<GlobalVariable>(GV))
+        printVariableBody(Var);
     }
   }
 }
