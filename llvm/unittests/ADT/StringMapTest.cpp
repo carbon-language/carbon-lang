@@ -234,4 +234,71 @@ TEST_F(StringMapTest, MoveOnlyKey) {
   StringMapEntry<MoveOnly>::Create(Key.begin(), Key.end(), MoveOnly(42))->Destroy();
 }
 
+TEST_F(StringMapTest, MoveConstruct) {
+  StringMap<int> A;
+  A.GetOrCreateValue("x", 42);
+  StringMap<int> B = std::move(A);
+  ASSERT_EQ(A.size(), 0u);
+  ASSERT_EQ(B.size(), 1u);
+  ASSERT_EQ(B["x"], 42);
+  ASSERT_EQ(B.count("y"), 0u);
+}
+
+TEST_F(StringMapTest, MoveAssignment) {
+  StringMap<int> A;
+  A["x"] = 42;
+  StringMap<int> B;
+  B["y"] = 117;
+  A = std::move(B);
+  ASSERT_EQ(A.size(), 1u);
+  ASSERT_EQ(B.size(), 0u);
+  ASSERT_EQ(A["y"], 117);
+  ASSERT_EQ(B.count("x"), 0u);
+}
+
+struct Countable {
+  int &InstanceCount;
+  int Number;
+  Countable(int Number, int &InstanceCount) :InstanceCount(InstanceCount), Number(Number) {
+    ++InstanceCount;
+  }
+  Countable(Countable &&C) : InstanceCount(C.InstanceCount), Number(C.Number) {
+    ++InstanceCount;
+    C.Number = -1;
+  }
+  Countable(const Countable &C) : InstanceCount(C.InstanceCount), Number(C.Number) {
+    ++InstanceCount;
+  }
+  Countable &operator=(Countable C) {
+    Number = C.Number;
+    return *this;
+  }
+  ~Countable() {
+    --InstanceCount;
+  }
+
+};
+
+TEST_F(StringMapTest, MoveDtor) {
+  int InstanceCount = 0;
+  StringMap<Countable> A;
+  A.GetOrCreateValue("x", Countable(42, InstanceCount));
+  ASSERT_EQ(InstanceCount, 1);
+  auto I = A.find("x");
+  ASSERT_NE(I, A.end());
+  ASSERT_EQ(I->second.Number, 42);
+
+  StringMap<Countable> B;
+  B = std::move(A);
+  ASSERT_EQ(InstanceCount, 1);
+  ASSERT_TRUE(A.empty());
+  I = B.find("x");
+  ASSERT_NE(I, B.end());
+  ASSERT_EQ(I->second.Number, 42);
+
+  B = StringMap<Countable>();
+  ASSERT_EQ(InstanceCount, 0);
+  ASSERT_TRUE(B.empty());
+}
+
 } // end anonymous namespace

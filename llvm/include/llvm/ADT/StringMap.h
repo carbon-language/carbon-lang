@@ -53,6 +53,12 @@ protected:
       : TheTable(nullptr),
         // Initialize the map with zero buckets to allocation.
         NumBuckets(0), NumItems(0), NumTombstones(0), ItemSize(itemSize) {}
+  StringMapImpl(StringMapImpl &&RHS) : TheTable(RHS.TheTable), NumBuckets(RHS.NumBuckets), NumItems(RHS.NumItems), NumTombstones(RHS.NumTombstones), ItemSize(RHS.ItemSize) {
+    RHS.TheTable = nullptr;
+    RHS.NumBuckets = 0;
+    RHS.NumItems = 0;
+    RHS.NumTombstones = 0;
+  }
 
   StringMapImpl(unsigned InitSize, unsigned ItemSize);
   void RehashTable();
@@ -233,16 +239,15 @@ public:
       Allocator(A) {}
 
   StringMap(StringMap &&RHS)
-      : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))) {
-    assert(RHS.empty());
-  }
-  StringMap &operator=(StringMap &&RHS) {
-    assert(RHS.empty());
-    clear();
+      : StringMapImpl(std::move(RHS)), Allocator(std::move(RHS.Allocator)) {}
+
+  StringMap &operator=(StringMap RHS) {
+    StringMapImpl::swap(RHS);
+    std::swap(Allocator, RHS.Allocator);
     return *this;
   }
-  StringMap(const StringMap &RHS) LLVM_DELETED_FUNCTION;
-  void operator=(const StringMap &RHS) LLVM_DELETED_FUNCTION;
+
+  // FIXME: Implement copy operations if/when they're needed.
 
   AllocatorTy &getAllocator() { return Allocator; }
   const AllocatorTy &getAllocator() const { return Allocator; }
