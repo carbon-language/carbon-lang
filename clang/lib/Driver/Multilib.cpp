@@ -90,10 +90,9 @@ void Multilib::print(raw_ostream &OS) const {
     OS << StringRef(GCCSuffix).drop_front();
   }
   OS << ";";
-  for (flags_list::const_iterator I = Flags.begin(), E = Flags.end(); I != E;
-       ++I) {
-    if (StringRef(*I).front() == '+')
-      OS << "@" << I->substr(1);
+  for (StringRef Flag : Flags) {
+    if (Flag.front() == '+')
+      OS << "@" << Flag.substr(1);
   }
 }
 
@@ -117,16 +116,12 @@ bool Multilib::operator==(const Multilib &Other) const {
   // Check whether the flags sets match
   // allowing for the match to be order invariant
   llvm::StringSet<> MyFlags;
-  for (flags_list::const_iterator I = Flags.begin(), E = Flags.end(); I != E;
-       ++I) {
-    MyFlags.insert(*I);
-  }
-  for (flags_list::const_iterator I = Other.Flags.begin(),
-                                  E = Other.Flags.end();
-       I != E; ++I) {
-    if (MyFlags.find(*I) == MyFlags.end())
+  for (const auto &Flag : Flags)
+    MyFlags.insert(Flag);
+
+  for (const auto &Flag : Other.Flags)
+    if (MyFlags.find(Flag) == MyFlags.end())
       return false;
-  }
 
   if (osSuffix() != Other.osSuffix())
     return false;
@@ -148,10 +143,7 @@ raw_ostream &clang::driver::operator<<(raw_ostream &OS, const Multilib &M) {
 MultilibSet &MultilibSet::Maybe(const Multilib &M) {
   Multilib Opposite;
   // Negate any '+' flags
-  for (Multilib::flags_list::const_iterator I = M.flags().begin(),
-                                            E = M.flags().end();
-       I != E; ++I) {
-    StringRef Flag(*I);
+  for (StringRef Flag : M.flags()) {
     if (Flag.front() == '+')
       Opposite.flags().push_back(("-" + Flag.substr(1)).str());
   }
@@ -223,12 +215,9 @@ MultilibSet::Either(const std::vector<Multilib> &MultilibSegments) {
     Multilibs.insert(Multilibs.end(), MultilibSegments.begin(),
                      MultilibSegments.end());
   else {
-    for (std::vector<Multilib>::const_iterator NewI = MultilibSegments.begin(),
-                                               NewE = MultilibSegments.end();
-         NewI != NewE; ++NewI) {
-      for (const_iterator BaseI = begin(), BaseE = end(); BaseI != BaseE;
-           ++BaseI) {
-        Multilib MO = compose(*BaseI, *NewI);
+    for (const Multilib &New : MultilibSegments) {
+      for (const Multilib &Base : *this) {
+        Multilib MO = compose(Base, New);
         if (MO.isValid())
           Composed.push_back(MO);
       }
@@ -282,20 +271,14 @@ bool MultilibSet::select(const Multilib::flags_list &Flags, Multilib &M) const {
       // Stuff all of the flags into the FlagSet such that a true mappend
       // indicates the flag was enabled, and a false mappend indicates the
       // flag was disabled
-      for (Multilib::flags_list::const_iterator I = Flags.begin(),
-                                                E = Flags.end();
-           I != E; ++I) {
-        FlagSet[StringRef(*I).substr(1)] = isFlagEnabled(*I);
-      }
+      for (StringRef Flag : Flags)
+        FlagSet[Flag.substr(1)] = isFlagEnabled(Flag);
     }
     bool operator()(const Multilib &M) const override {
-      for (Multilib::flags_list::const_iterator I = M.flags().begin(),
-                                                E = M.flags().end();
-           I != E; ++I) {
-        StringRef Flag(*I);
+      for (StringRef Flag : M.flags()) {
         llvm::StringMap<bool>::const_iterator SI = FlagSet.find(Flag.substr(1));
         if (SI != FlagSet.end())
-          if ((*SI).getValue() != isFlagEnabled(Flag))
+          if (SI->getValue() != isFlagEnabled(Flag))
             return true;
       }
       return false;
@@ -326,8 +309,8 @@ bool MultilibSet::select(const Multilib::flags_list &Flags, Multilib &M) const {
 }
 
 void MultilibSet::print(raw_ostream &OS) const {
-  for (const_iterator I = begin(), E = end(); I != E; ++I)
-    OS << *I << "\n";
+  for (const Multilib &M : *this)
+    OS << M << "\n";
 }
 
 MultilibSet::multilib_list
