@@ -506,13 +506,12 @@ Instruction *InstCombiner::visitInsertValueInst(InsertValueInst &I) {
   // chain), check if any of the 'children' uses the same indices as the first
   // instruction. In this case, the first one is redundant.
   Value *V = &I;
-  unsigned int Depth = 0;
+  unsigned Depth = 0;
   while (V->hasOneUse() && Depth < 10) {
     User *U = V->user_back();
-    InsertValueInst *UserInsInst = dyn_cast<InsertValueInst>(U);
-    if (!UserInsInst || U->getType() != I.getType()) {
+    auto UserInsInst = dyn_cast<InsertValueInst>(U);
+    if (!UserInsInst || U->getOperand(0) != V)
       break;
-    }
     if (UserInsInst->getIndices() == FirstIndices) {
       IsRedundant = true;
       break;

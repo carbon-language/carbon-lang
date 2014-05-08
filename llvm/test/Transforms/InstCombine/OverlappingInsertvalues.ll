@@ -23,3 +23,14 @@ entry:
   %4 = insertvalue { i8*, i64, i32 } %3, i32 777, 2
   ret { i8*, i64, i32 } %4
 }
+; Check that we propagate insertvalues only if they are use as the first
+; operand (as initial value of aggregate)
+; CHECK-LABEL: foo_use_as_second_operand
+; CHECK: i16 %x, 0
+; CHECK: %0, 1
+define { i8, {i16, i32} } @foo_use_as_second_operand(i16 %x) nounwind {
+entry:
+  %0 = insertvalue { i16, i32 } undef, i16 %x, 0
+  %1 = insertvalue { i8, {i16, i32} } undef, { i16, i32 } %0, 1
+  ret { i8, {i16, i32} } %1
+}
