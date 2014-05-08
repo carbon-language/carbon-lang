@@ -2018,7 +2018,7 @@ static bool isValidAfterIdentifierInDeclarator(const Token &T) {
 ///
 bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
                               const ParsedTemplateInfo &TemplateInfo,
-                              AccessSpecifier AS, DeclSpecContext DSC, 
+                              AccessSpecifier AS, DeclSpecContext DSC,
                               ParsedAttributesWithRange &Attrs) {
   assert(Tok.is(tok::identifier) && "should have identifier");
 
@@ -2122,9 +2122,8 @@ bool Parser::ParseImplicitInt(DeclSpec &DS, CXXScopeSpec *SS,
       // x(int n);    // 'x' is not a type
       // x (*p)[];    // 'x' is a type
       //
-      // Since we're in an error case (or the rare 'implicit int in C++' MS
-      // extension), we can afford to perform a tentative parse to determine
-      // which case we're in.
+      // Since we're in an error case, we can afford to perform a tentative
+      // parse to determine which case we're in.
       TentativeParsingAction PA(*this);
       ConsumeToken();
       TPResult TPR = TryParseDeclarator(/*mayBeAbstract*/false);
