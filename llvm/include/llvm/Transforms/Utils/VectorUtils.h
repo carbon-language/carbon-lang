@@ -15,6 +15,7 @@
 #define LLVM_TRANSFORMS_UTILS_VECTORUTILS_H
 
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 
 namespace llvm {
