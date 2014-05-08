@@ -134,6 +134,8 @@ static void InitializeFlags(Flags *f, const char *options) {
   cf->external_symbolizer_path = GetEnv("MSAN_SYMBOLIZER_PATH");
   cf->malloc_context_size = 20;
   cf->handle_ioctl = true;
+  // FIXME: test and enable.
+  cf->check_printf = false;
 
   internal_memset(f, 0, sizeof(*f));
   f->poison_heap_with_zeroes = false;
