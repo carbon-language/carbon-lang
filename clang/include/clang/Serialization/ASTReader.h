@@ -340,6 +340,7 @@ private:
 
   /// \brief The receiver of deserialization events.
   ASTDeserializationListener *DeserializationListener;
+  bool OwnsDeserializationListener;
 
   SourceManager &SourceMgr;
   FileManager &FileMgr;
@@ -1382,7 +1383,8 @@ public:
   }
 
   /// \brief Set the AST deserialization listener.
-  void setDeserializationListener(ASTDeserializationListener *Listener);
+  void setDeserializationListener(ASTDeserializationListener *Listener,
+                                  bool TakeOwnership = false);
 
   /// \brief Determine whether this AST reader has a global index.
   bool hasGlobalIndex() const { return (bool)GlobalIndex; }

@@ -570,21 +570,19 @@ public:
 
   /// Create an external AST source to read a PCH file and attach it to the AST
   /// context.
-  void createPCHExternalASTSource(StringRef Path,
-                                  bool DisablePCHValidation,
+  void createPCHExternalASTSource(StringRef Path, bool DisablePCHValidation,
                                   bool AllowPCHWithCompilerErrors,
-                                  void *DeserializationListener);
+                                  void *DeserializationListener,
+                                  bool OwnDeserializationListener);
 
   /// Create an external AST source to read a PCH file.
   ///
   /// \return - The new object on success, or null on failure.
-  static ExternalASTSource *
-  createPCHExternalASTSource(StringRef Path, const std::string &Sysroot,
-                             bool DisablePCHValidation,
-                             bool AllowPCHWithCompilerErrors,
-                             Preprocessor &PP, ASTContext &Context,
-                             void *DeserializationListener, bool Preamble,
-                             bool UseGlobalModuleIndex);
+  static ExternalASTSource *createPCHExternalASTSource(
+      StringRef Path, const std::string &Sysroot, bool DisablePCHValidation,
+      bool AllowPCHWithCompilerErrors, Preprocessor &PP, ASTContext &Context,
+      void *DeserializationListener, bool OwnDeserializationListener,
+      bool Preamble, bool UseGlobalModuleIndex);
 
   /// Create a code completion consumer using the invocation; note that this
   /// will cause the source manager to truncate the input source file at the

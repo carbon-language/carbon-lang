@@ -307,33 +307,25 @@ void CompilerInstance::createASTContext() {
 
 // ExternalASTSource
 
-void CompilerInstance::createPCHExternalASTSource(StringRef Path,
-                                                  bool DisablePCHValidation,
-                                                bool AllowPCHWithCompilerErrors,
-                                                 void *DeserializationListener){
+void CompilerInstance::createPCHExternalASTSource(
+    StringRef Path, bool DisablePCHValidation, bool AllowPCHWithCompilerErrors,
+    void *DeserializationListener, bool OwnDeserializationListener) {
   IntrusiveRefCntPtr<ExternalASTSource> Source;
   bool Preamble = getPreprocessorOpts().PrecompiledPreambleBytes.first != 0;
-  Source = createPCHExternalASTSource(Path, getHeaderSearchOpts().Sysroot,
-                                          DisablePCHValidation,
-                                          AllowPCHWithCompilerErrors,
-                                          getPreprocessor(), getASTContext(),
-                                          DeserializationListener,
-                                          Preamble,
-                                       getFrontendOpts().UseGlobalModuleIndex);
+  Source = createPCHExternalASTSource(
+      Path, getHeaderSearchOpts().Sysroot, DisablePCHValidation,
+      AllowPCHWithCompilerErrors, getPreprocessor(), getASTContext(),
+      DeserializationListener, OwnDeserializationListener, Preamble,
+      getFrontendOpts().UseGlobalModuleIndex);
   ModuleManager = static_cast<ASTReader*>(Source.getPtr());
   getASTContext().setExternalSource(Source);
 }
 
-ExternalASTSource *
-CompilerInstance::createPCHExternalASTSource(StringRef Path,
-                                             const std::string &Sysroot,
-                                             bool DisablePCHValidation,
-                                             bool AllowPCHWithCompilerErrors,
-                                             Preprocessor &PP,
-                                             ASTContext &Context,
-                                             void *DeserializationListener,
-                                             bool Preamble,
-                                             bool UseGlobalModuleIndex) {
+ExternalASTSource *CompilerInstance::createPCHExternalASTSource(
+    StringRef Path, const std::string &Sysroot, bool DisablePCHValidation,
+    bool AllowPCHWithCompilerErrors, Preprocessor &PP, ASTContext &Context,
+    void *DeserializationListener, bool OwnDeserializationListener,
+    bool Preamble, bool UseGlobalModuleIndex) {
   HeaderSearchOptions &HSOpts = PP.getHeaderSearchInfo().getHeaderSearchOpts();
 
   std::unique_ptr<ASTReader> Reader;
@@ -346,7 +338,8 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
                              UseGlobalModuleIndex));
 
   Reader->setDeserializationListener(
-            static_cast<ASTDeserializationListener *>(DeserializationListener));
+      static_cast<ASTDeserializationListener *>(DeserializationListener),
+      /*TakeOwnership=*/OwnDeserializationListener);
   switch (Reader->ReadAST(Path,
                           Preamble ? serialization::MK_Preamble
                                    : serialization::MK_PCH,

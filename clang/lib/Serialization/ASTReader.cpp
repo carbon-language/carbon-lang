@@ -578,9 +578,10 @@ void PCHValidator::ReadCounter(const ModuleFile &M, unsigned Value) {
 // AST reader implementation
 //===----------------------------------------------------------------------===//
 
-void
-ASTReader::setDeserializationListener(ASTDeserializationListener *Listener) {
+void ASTReader::setDeserializationListener(ASTDeserializationListener *Listener,
+                                           bool TakeOwnership) {
   DeserializationListener = Listener;
+  OwnsDeserializationListener = TakeOwnership;
 }
 
 
@@ -8260,39 +8261,38 @@ void ASTReader::pushExternalDeclIntoScope(NamedDecl *D, DeclarationName Name) {
   }
 }
 
-ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
-                     StringRef isysroot, bool DisableValidation,
-                     bool AllowASTWithCompilerErrors,
-                     bool AllowConfigurationMismatch,
-                     bool ValidateSystemInputs,
+ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context, StringRef isysroot,
+                     bool DisableValidation, bool AllowASTWithCompilerErrors,
+                     bool AllowConfigurationMismatch, bool ValidateSystemInputs,
                      bool UseGlobalIndex)
-  : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
-    SourceMgr(PP.getSourceManager()), FileMgr(PP.getFileManager()),
-    Diags(PP.getDiagnostics()), SemaObj(0), PP(PP), Context(Context),
-    Consumer(0), ModuleMgr(PP.getFileManager()),
-    isysroot(isysroot), DisableValidation(DisableValidation),
-    AllowASTWithCompilerErrors(AllowASTWithCompilerErrors),
-    AllowConfigurationMismatch(AllowConfigurationMismatch),
-    ValidateSystemInputs(ValidateSystemInputs),
-    UseGlobalIndex(UseGlobalIndex), TriedLoadingGlobalIndex(false),
-    CurrentGeneration(0), CurrSwitchCaseStmts(&SwitchCaseStmts),
-    NumSLocEntriesRead(0), TotalNumSLocEntries(0), 
-    NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
-    TotalNumMacros(0), NumIdentifierLookups(0), NumIdentifierLookupHits(0),
-    NumSelectorsRead(0), NumMethodPoolEntriesRead(0),
-    NumMethodPoolLookups(0), NumMethodPoolHits(0),
-    NumMethodPoolTableLookups(0), NumMethodPoolTableHits(0),
-    TotalNumMethodPoolEntries(0),
-    NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0), 
-    NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
-    TotalModulesSizeInBits(0), NumCurrentElementsDeserializing(0),
-    PassingDeclsToConsumer(false),
-    NumCXXBaseSpecifiersLoaded(0), ReadingKind(Read_None)
-{
+    : Listener(new PCHValidator(PP, *this)), DeserializationListener(0),
+      OwnsDeserializationListener(false), SourceMgr(PP.getSourceManager()),
+      FileMgr(PP.getFileManager()), Diags(PP.getDiagnostics()), SemaObj(0),
+      PP(PP), Context(Context), Consumer(0), ModuleMgr(PP.getFileManager()),
+      isysroot(isysroot), DisableValidation(DisableValidation),
+      AllowASTWithCompilerErrors(AllowASTWithCompilerErrors),
+      AllowConfigurationMismatch(AllowConfigurationMismatch),
+      ValidateSystemInputs(ValidateSystemInputs),
+      UseGlobalIndex(UseGlobalIndex), TriedLoadingGlobalIndex(false),
+      CurrentGeneration(0), CurrSwitchCaseStmts(&SwitchCaseStmts),
+      NumSLocEntriesRead(0), TotalNumSLocEntries(0), NumStatementsRead(0),
+      TotalNumStatements(0), NumMacrosRead(0), TotalNumMacros(0),
+      NumIdentifierLookups(0), NumIdentifierLookupHits(0), NumSelectorsRead(0),
+      NumMethodPoolEntriesRead(0), NumMethodPoolLookups(0),
+      NumMethodPoolHits(0), NumMethodPoolTableLookups(0),
+      NumMethodPoolTableHits(0), TotalNumMethodPoolEntries(0),
+      NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0),
+      NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
+      TotalModulesSizeInBits(0), NumCurrentElementsDeserializing(0),
+      PassingDeclsToConsumer(false), NumCXXBaseSpecifiersLoaded(0),
+      ReadingKind(Read_None) {
   SourceMgr.setExternalSLocEntrySource(this);
 }
 
 ASTReader::~ASTReader() {
+  if (OwnsDeserializationListener)
+    delete DeserializationListener;
+
   for (DeclContextVisibleUpdatesPending::iterator
            I = PendingVisibleUpdates.begin(),
            E = PendingVisibleUpdates.end();

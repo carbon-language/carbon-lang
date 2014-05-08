@@ -37,11 +37,16 @@ namespace {
 
 class DelegatingDeserializationListener : public ASTDeserializationListener {
   ASTDeserializationListener *Previous;
+  bool DeletePrevious;
 
 public:
   explicit DelegatingDeserializationListener(
-                                           ASTDeserializationListener *Previous)
-    : Previous(Previous) { }
+      ASTDeserializationListener *Previous, bool DeletePrevious)
+      : Previous(Previous), DeletePrevious(DeletePrevious) {}
+  virtual ~DelegatingDeserializationListener() {
+    if (DeletePrevious)
+      delete Previous;
+  }
 
   void ReaderInitialized(ASTReader *Reader) override {
     if (Previous)
@@ -74,8 +79,9 @@ public:
 /// \brief Dumps deserialized declarations.
 class DeserializedDeclsDumper : public DelegatingDeserializationListener {
 public:
-  explicit DeserializedDeclsDumper(ASTDeserializationListener *Previous)
-    : DelegatingDeserializationListener(Previous) { }
+  explicit DeserializedDeclsDumper(ASTDeserializationListener *Previous,
+                                   bool DeletePrevious)
+      : DelegatingDeserializationListener(Previous, DeletePrevious) {}
 
   void DeclRead(serialization::DeclID ID, const Decl *D) override {
     llvm::outs() << "PCH DECL: " << D->getDeclKindName();
@@ -96,9 +102,10 @@ class DeserializedDeclsChecker : public DelegatingDeserializationListener {
 public:
   DeserializedDeclsChecker(ASTContext &Ctx,
                            const std::set<std::string> &NamesToCheck,
-                           ASTDeserializationListener *Previous)
-    : DelegatingDeserializationListener(Previous),
-      Ctx(Ctx), NamesToCheck(NamesToCheck) { }
+                           ASTDeserializationListener *Previous,
+                           bool DeletePrevious)
+      : DelegatingDeserializationListener(Previous, DeletePrevious), Ctx(Ctx),
+        NamesToCheck(NamesToCheck) {}
 
   void DeclRead(serialization::DeclID ID, const Decl *D) override {
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
@@ -320,17 +327,24 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       assert(hasPCHSupport() && "This action does not have PCH support!");
       ASTDeserializationListener *DeserialListener =
           Consumer->GetASTDeserializationListener();
-      if (CI.getPreprocessorOpts().DumpDeserializedPCHDecls)
-        DeserialListener = new DeserializedDeclsDumper(DeserialListener);
-      if (!CI.getPreprocessorOpts().DeserializedPCHDeclsToErrorOn.empty())
-        DeserialListener = new DeserializedDeclsChecker(CI.getASTContext(),
-                         CI.getPreprocessorOpts().DeserializedPCHDeclsToErrorOn,
-                                                        DeserialListener);
+      bool DeleteDeserialListener = false;
+      if (CI.getPreprocessorOpts().DumpDeserializedPCHDecls) {
+        DeserialListener = new DeserializedDeclsDumper(DeserialListener,
+                                                       DeleteDeserialListener);
+        DeleteDeserialListener = true;
+      }
+      if (!CI.getPreprocessorOpts().DeserializedPCHDeclsToErrorOn.empty()) {
+        DeserialListener = new DeserializedDeclsChecker(
+            CI.getASTContext(),
+            CI.getPreprocessorOpts().DeserializedPCHDeclsToErrorOn,
+            DeserialListener, DeleteDeserialListener);
+        DeleteDeserialListener = true;
+      }
       CI.createPCHExternalASTSource(
-                                CI.getPreprocessorOpts().ImplicitPCHInclude,
-                                CI.getPreprocessorOpts().DisablePCHValidation,
-                            CI.getPreprocessorOpts().AllowPCHWithCompilerErrors,
-                                DeserialListener);
+          CI.getPreprocessorOpts().ImplicitPCHInclude,
+          CI.getPreprocessorOpts().DisablePCHValidation,
+          CI.getPreprocessorOpts().AllowPCHWithCompilerErrors, DeserialListener,
+          DeleteDeserialListener);
       if (!CI.getASTContext().getExternalSource())
         goto failure;
     }

@@ -27,10 +27,8 @@ class MacroInfo;
 class Module;
   
 class ASTDeserializationListener {
-protected:
-  virtual ~ASTDeserializationListener();
-
 public:
+  virtual ~ASTDeserializationListener();
 
   /// \brief The ASTReader was initialized.
   virtual void ReaderInitialized(ASTReader *Reader) { }
