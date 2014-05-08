@@ -44,7 +44,11 @@ using std::map;
 #endif
 
 #ifndef ASAN_NEEDS_SEGV
-# error "please define ASAN_NEEDS_SEGV"
+# if defined(_WIN32)
+#  define ASAN_NEEDS_SEGV 0
+# else
+#  define ASAN_NEEDS_SEGV 1
+# endif
 #endif
 
 #ifndef ASAN_AVOID_EXPENSIVE_TESTS
