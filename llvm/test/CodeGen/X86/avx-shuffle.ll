@@ -306,3 +306,11 @@ define void @test20() {
   store <3 x double> %a1, <3 x double>* undef, align 1
   ret void
 }
+
+define <2 x i64> @test_insert_64_zext(<2 x i64> %i) {
+; CHECK-LABEL: test_insert_64_zext
+; CHECK-NOT: xor
+; CHECK: vmovq
+  %1 = shufflevector <2 x i64> %i, <2 x i64> <i64 0, i64 undef>, <2 x i32> <i32 0, i32 2>
+  ret <2 x i64> %1
+}

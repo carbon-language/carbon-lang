@@ -6956,6 +6956,9 @@ SDValue RewriteAsNarrowerShuffle(ShuffleVectorSDNode *SVOp,
   unsigned Scale;
   switch (VT.SimpleTy) {
   default: llvm_unreachable("Unexpected!");
+  case MVT::v2i64:
+  case MVT::v2f64:
+           return SDValue(SVOp, 0);
   case MVT::v4f32:  NewVT = MVT::v2f64; Scale = 2; break;
   case MVT::v4i32:  NewVT = MVT::v2i64; Scale = 2; break;
   case MVT::v8i16:  NewVT = MVT::v4i32; Scale = 2; break;
@@ -7557,9 +7560,8 @@ static SDValue LowerVectorIntExtend(SDValue Op, const X86Subtarget *Subtarget,
                      DAG.getNode(X86ISD::VZEXT, DL, NVT, V1));
 }
 
-static SDValue
-NormalizeVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
-                       SelectionDAG &DAG) {
+static SDValue NormalizeVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
+                                      SelectionDAG &DAG) {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   MVT VT = Op.getSimpleValueType();
   SDLoc dl(Op);
@@ -7584,31 +7586,29 @@ NormalizeVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
 
   // If the shuffle can be profitably rewritten as a narrower shuffle, then
   // do it!
-  if (VT == MVT::v8i16  || VT == MVT::v16i8 ||
-      VT == MVT::v16i16 || VT == MVT::v32i8) {
+  if (VT == MVT::v8i16 || VT == MVT::v16i8 || VT == MVT::v16i16 ||
+      VT == MVT::v32i8) {
     SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG);
     if (NewOp.getNode())
       return DAG.getNode(ISD::BITCAST, dl, VT, NewOp);
-  } else if ((VT == MVT::v4i32 ||
-             (VT == MVT::v4f32 && Subtarget->hasSSE2()))) {
+  } else if (VT.is128BitVector() && Subtarget->hasSSE2()) {
     // FIXME: Figure out a cleaner way to do this.
-    // Try to make use of movq to zero out the top part.
     if (ISD::isBuildVectorAllZeros(V2.getNode())) {
       SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG);
       if (NewOp.getNode()) {
         MVT NewVT = NewOp.getSimpleValueType();
         if (isCommutedMOVLMask(cast<ShuffleVectorSDNode>(NewOp)->getMask(),
                                NewVT, true, false))
-          return getVZextMovL(VT, NewVT, NewOp.getOperand(0),
-                              DAG, Subtarget, dl);
+          return getVZextMovL(VT, NewVT, NewOp.getOperand(0), DAG, Subtarget,
+                              dl);
       }
     } else if (ISD::isBuildVectorAllZeros(V1.getNode())) {
       SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG);
       if (NewOp.getNode()) {
         MVT NewVT = NewOp.getSimpleValueType();
         if (isMOVLMask(cast<ShuffleVectorSDNode>(NewOp)->getMask(), NewVT))
-          return getVZextMovL(VT, NewVT, NewOp.getOperand(1),
-                              DAG, Subtarget, dl);
+          return getVZextMovL(VT, NewVT, NewOp.getOperand(1), DAG, Subtarget,
+                              dl);
       }
     }
   }
