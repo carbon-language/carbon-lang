@@ -2,7 +2,7 @@
 ; RUN:     | llvm-readobj -r - | FileCheck %s -check-prefix CHECK-ITANIUM
 
 ; RUN: llc -mtriple thumbv7--windows-msvc -filetype obj -o - %s \
-; RUN:    | llvm-readobj -r - | Filecheck %s -check-prefix CHECK-MSVC
+; RUN:    | llvm-readobj -r - | FileCheck %s -check-prefix CHECK-MSVC
 
 ; ModuleID = '/Users/compnerd/work/llvm/test/MC/ARM/reduced.c'
 target datalayout = "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-v128:64:128-a:0:32-n32-S64"
