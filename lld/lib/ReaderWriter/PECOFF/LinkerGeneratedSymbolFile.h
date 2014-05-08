@@ -53,6 +53,39 @@ private:
   ImpPointerAtom _defined;
 };
 
+class VirtualArchiveLibraryFile : public ArchiveLibraryFile {
+public:
+  VirtualArchiveLibraryFile(StringRef filename)
+      : ArchiveLibraryFile(filename) {}
+
+  const atom_collection<DefinedAtom> &defined() const override {
+    return _definedAtoms;
+  }
+
+  const atom_collection<UndefinedAtom> &undefined() const override {
+    return _undefinedAtoms;
+  }
+
+  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
+    return _sharedLibraryAtoms;
+  }
+
+  const atom_collection<AbsoluteAtom> &absolute() const override {
+    return _absoluteAtoms;
+  }
+
+  error_code
+  parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
+    return error_code::success();
+  }
+
+private:
+  atom_collection_vector<DefinedAtom> _definedAtoms;
+  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
+  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
+  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
+};
+
 } // anonymous namespace
 
 // A virtual file containing absolute symbol __ImageBase. __ImageBase (or
@@ -89,11 +122,11 @@ private:
 //   }
 //
 // This odd feature is for the compatibility with MSVC link.exe.
-class LocallyImportedSymbolFile : public ArchiveLibraryFile {
+class LocallyImportedSymbolFile : public VirtualArchiveLibraryFile {
 public:
   LocallyImportedSymbolFile(const PECOFFLinkingContext &ctx)
-      : ArchiveLibraryFile("__imp_"), _prefix(ctx.decorateSymbol("_imp_")),
-        _ordinal(0) {}
+      : VirtualArchiveLibraryFile("__imp_"),
+        _prefix(ctx.decorateSymbol("_imp_")), _ordinal(0) {}
 
   const File *find(StringRef sym, bool dataSymbolOnly) const override {
     if (!sym.startswith(_prefix))
@@ -102,36 +135,10 @@ public:
     return new (_alloc) ImpSymbolFile(sym, undef, _ordinal++);
   }
 
-  const atom_collection<DefinedAtom> &defined() const override {
-    return _definedAtoms;
-  }
-
-  const atom_collection<UndefinedAtom> &undefined() const override {
-    return _undefinedAtoms;
-  }
-
-  const atom_collection<SharedLibraryAtom> &sharedLibrary() const override {
-    return _sharedLibraryAtoms;
-  }
-
-  const atom_collection<AbsoluteAtom> &absolute() const override {
-    return _absoluteAtoms;
-  }
-
-  error_code
-  parseAllMembers(std::vector<std::unique_ptr<File>> &result) const override {
-    return error_code::success();
-  }
-
 private:
   std::string _prefix;
   mutable uint64_t _ordinal;
   mutable llvm::BumpPtrAllocator _alloc;
-
-  atom_collection_vector<DefinedAtom> _definedAtoms;
-  atom_collection_vector<UndefinedAtom> _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
 
 } // end namespace pecoff
