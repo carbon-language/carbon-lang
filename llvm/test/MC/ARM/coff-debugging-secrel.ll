@@ -1,5 +1,8 @@
 ; RUN: llc -mtriple thumbv7--windows-itanium -filetype obj -o - %s \
-; RUN:     | llvm-readobj -r - | FileCheck %s
+; RUN:     | llvm-readobj -r - | FileCheck %s -check-prefix CHECK-ITANIUM
+
+; RUN: llc -mtriple thumbv7--windows-msvc -filetype obj -o - %s \
+; RUN:    | llvm-readobj -r - | Filecheck %s -check-prefix CHECK-MSVC
 
 ; ModuleID = '/Users/compnerd/work/llvm/test/MC/ARM/reduced.c'
 target datalayout = "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:64-v128:64:128-a:0:32-n32-S64"
@@ -25,17 +28,24 @@ entry:
 !9 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
 !10 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
 
-; CHECK: Relocations [
-; CHECK:   Section {{.*}} .debug_info {
-; CHECK:     0x6 IMAGE_REL_ARM_SECREL .debug_abbrev
-; CHECK:     0xC IMAGE_REL_ARM_SECREL .debug_str
-; CHECK:     0x12 IMAGE_REL_ARM_SECREL .debug_str
-; CHECK:     0x16 IMAGE_REL_ARM_SECREL .debug_line
-; CHECK:     0x1A IMAGE_REL_ARM_SECREL .debug_str
-; CHECK:     0x27 IMAGE_REL_ARM_SECREL .debug_str
-; CHECK:   }
-; CHECK:   Section {{.*}}.debug_pubnames {
-; CHECK:     0x6 IMAGE_REL_ARM_SECREL .debug_info
-; CHECK:   }
-; CHECK: ]
+; CHECK-ITANIUM: Relocations [
+; CHECK-ITANIUM:   Section {{.*}} .debug_info {
+; CHECK-ITANIUM:     0x6 IMAGE_REL_ARM_SECREL .debug_abbrev
+; CHECK-ITANIUM:     0xC IMAGE_REL_ARM_SECREL .debug_str
+; CHECK-ITANIUM:     0x12 IMAGE_REL_ARM_SECREL .debug_str
+; CHECK-ITANIUM:     0x16 IMAGE_REL_ARM_SECREL .debug_line
+; CHECK-ITANIUM:     0x1A IMAGE_REL_ARM_SECREL .debug_str
+; CHECK-ITANIUM:     0x27 IMAGE_REL_ARM_SECREL .debug_str
+; CHECK-ITANIUM:   }
+; CHECK-ITANIUM:   Section {{.*}}.debug_pubnames {
+; CHECK-ITANIUM:     0x6 IMAGE_REL_ARM_SECREL .debug_info
+; CHECK-ITANIUM:   }
+; CHECK-ITANIUM: ]
+
+; CHECK-MSVC: Relocations [
+; CHECK-MSVC:   Section {{.*}} .debug$S {
+; CHECK-MSVC:     0xC IMAGE_REL_ARM_SECREL function
+; CHECK-MSVC:     0x10 IMAGE_REL_ARM_SECTION function
+; CHECK-MSVC:   }
+; CHECK-MSVC: ]
 
