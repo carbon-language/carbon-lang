@@ -53,7 +53,10 @@ protected:
       : TheTable(nullptr),
         // Initialize the map with zero buckets to allocation.
         NumBuckets(0), NumItems(0), NumTombstones(0), ItemSize(itemSize) {}
-  StringMapImpl(StringMapImpl &&RHS) : TheTable(RHS.TheTable), NumBuckets(RHS.NumBuckets), NumItems(RHS.NumItems), NumTombstones(RHS.NumTombstones), ItemSize(RHS.ItemSize) {
+  StringMapImpl(StringMapImpl &&RHS)
+      : TheTable(RHS.TheTable), NumBuckets(RHS.NumBuckets),
+        NumItems(RHS.NumItems), NumTombstones(RHS.NumTombstones),
+        ItemSize(RHS.ItemSize) {
     RHS.TheTable = nullptr;
     RHS.NumBuckets = 0;
     RHS.NumItems = 0;
@@ -115,7 +118,7 @@ public:
   explicit StringMapEntry(unsigned strLen)
     : StringMapEntryBase(strLen), second() {}
   StringMapEntry(unsigned strLen, ValueTy V)
-    : StringMapEntryBase(strLen), second(std::move(V)) {}
+      : StringMapEntryBase(strLen), second(std::move(V)) {}
 
   StringRef getKey() const {
     return StringRef(getKeyData(), getKeyLength());
@@ -351,7 +354,7 @@ public:
       return *static_cast<MapEntryTy*>(Bucket);
 
     MapEntryTy *NewItem =
-      MapEntryTy::Create(Key.begin(), Key.end(), Allocator, std::move(Val));
+        MapEntryTy::Create(Key.begin(), Key.end(), Allocator, std::move(Val));
 
     if (Bucket == getTombstoneVal())
       --NumTombstones;
