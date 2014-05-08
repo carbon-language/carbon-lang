@@ -4,7 +4,7 @@
 # RUN:     2>%t1
 # RUN: FileCheck %s < %t1
 
-	.set noat
+        .set noat
         ceil.w.d  $f11,$f25       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         ceil.w.s  $f6,$f20        # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         floor.w.d $f14,$f11       # CHECK: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled

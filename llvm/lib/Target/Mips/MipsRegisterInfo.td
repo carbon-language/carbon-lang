@@ -205,6 +205,10 @@ let Namespace = "Mips" in {
   foreach I = 0-31 in
   def COP2#I : MipsReg<#I, ""#I>;
 
+  // COP3 registers.
+  foreach I = 0-31 in
+  def COP3#I : MipsReg<#I, ""#I>;
+
   // PC register
   def PC : Register<"pc">;
 
@@ -387,6 +391,10 @@ def DSPCC : RegisterClass<"Mips", [v4i8, v2i16], 32, (add DSPCCond)>;
 def COP2 : RegisterClass<"Mips", [i32], 32, (sequence "COP2%u", 0, 31)>,
            Unallocatable;
 
+// Coprocessor 3 registers.
+def COP3 : RegisterClass<"Mips", [i32], 32, (sequence "COP3%u", 0, 31)>,
+           Unallocatable;
+
 // Octeon multiplier and product registers
 def OCTEON_MPL : RegisterClass<"Mips", [i64], 64, (add MPL0, MPL1, MPL2)>,
                  Unallocatable;
@@ -484,6 +492,10 @@ def COP2AsmOperand : MipsAsmRegOperand {
   let Name = "COP2AsmReg";
 }
 
+def COP3AsmOperand : MipsAsmRegOperand {
+  let Name = "COP3AsmReg";
+}
+
 def HWRegsOpnd : RegisterOperand<HWRegs> {
   let ParserMatchClass = HWRegsAsmOperand;
 }
@@ -522,6 +534,10 @@ def ACC64DSPOpnd : RegisterOperand<ACC64DSP> {
 
 def COP2Opnd : RegisterOperand<COP2> {
   let ParserMatchClass = COP2AsmOperand;
+}
+
+def COP3Opnd : RegisterOperand<COP3> {
+  let ParserMatchClass = COP3AsmOperand;
 }
 
 def MSA128BOpnd : RegisterOperand<MSA128B> {

@@ -167,7 +167,6 @@
 	lbe	$t6,122($t1)
 	lbue	$t3,-108($t2)
 	lbux	$t1,$t6($v0)
-	ldc3	$29,-28645($s1)
 	lhe	$s6,219($v1)
 	lhue	$gp,118($t3)
 	lhx	$sp,$k0($t7)
@@ -263,7 +262,6 @@
 	rsqrt.s	$f4,$f8
 	sbe	$s7,33($s1)
 	sce	$sp,189($t2)
-	sdc3	$12,5835($t2)
 	she	$t8,105($v0)
 	shilo	$ac1,26
 	shilov	$ac2,$t2

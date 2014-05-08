@@ -272,11 +272,12 @@ public:
                           /// context).
     RegKind_CCR = 128,    /// CCR
     RegKind_HWRegs = 256, /// HWRegs
+    RegKind_COP3 = 512,   /// COP3
 
     /// Potentially any (e.g. $1)
     RegKind_Numeric = RegKind_GPR | RegKind_FGR | RegKind_FCC | RegKind_MSA128 |
                       RegKind_MSACtrl | RegKind_COP2 | RegKind_ACC |
-                      RegKind_CCR | RegKind_HWRegs
+                      RegKind_CCR | RegKind_HWRegs | RegKind_COP3
   };
 
 private:
@@ -428,6 +429,14 @@ private:
     return RegIdx.RegInfo->getRegClass(ClassID).getRegister(RegIdx.Index);
   }
 
+  /// Coerce the register to COP3 and return the real register for the
+  /// current target.
+  unsigned getCOP3Reg() const {
+    assert(isRegIdx() && (RegIdx.Kind & RegKind_COP3) && "Invalid access!");
+    unsigned ClassID = Mips::COP3RegClassID;
+    return RegIdx.RegInfo->getRegClass(ClassID).getRegister(RegIdx.Index);
+  }
+
   /// Coerce the register to ACC64DSP and return the real register for the
   /// current target.
   unsigned getACC64DSPReg() const {
@@ -537,6 +546,11 @@ public:
   void addCOP2AsmRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getCOP2Reg()));
+  }
+
+  void addCOP3AsmRegOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateReg(getCOP3Reg()));
   }
 
   void addACC64DSPAsmRegOperands(MCInst &Inst, unsigned N) const {
@@ -749,6 +763,9 @@ public:
   }
   bool isCOP2AsmReg() const {
     return isRegIdx() && RegIdx.Kind & RegKind_COP2 && RegIdx.Index <= 31;
+  }
+  bool isCOP3AsmReg() const {
+    return isRegIdx() && RegIdx.Kind & RegKind_COP3 && RegIdx.Index <= 31;
   }
   bool isMSA128AsmReg() const {
     return isRegIdx() && RegIdx.Kind & RegKind_MSA128 && RegIdx.Index <= 31;
