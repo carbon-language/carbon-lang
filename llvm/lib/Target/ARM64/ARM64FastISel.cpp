@@ -1250,10 +1250,16 @@ bool ARM64FastISel::ProcessCallArgs(SmallVectorImpl<Value *> &Args,
       assert(VA.isMemLoc() && "Assuming store on stack.");
 
       // Need to store on the stack.
+      unsigned ArgSize = VA.getLocVT().getSizeInBits() / 8;
+
+      unsigned BEAlign = 0;
+      if (ArgSize < 8 && !Subtarget->isLittleEndian())
+        BEAlign = 8 - ArgSize;
+
       Address Addr;
       Addr.setKind(Address::RegBase);
       Addr.setReg(ARM64::SP);
-      Addr.setOffset(VA.getLocMemOffset());
+      Addr.setOffset(VA.getLocMemOffset() + BEAlign);
 
       if (!EmitStore(ArgVT, Arg, Addr))
         return false;
