@@ -7223,9 +7223,12 @@ static void findArrayDimensionsRec(ScalarEvolution &SE,
     Terms[I] = Q;
   }
 
-  for (auto I = Terms.begin(), E = Terms.end(); I != E; I++)
-    if (isa<SCEVConstant>(*I))
-      I = Terms.erase(I);
+  // Remove all SCEVConstants.
+  for (unsigned I = 0; I < Terms.size();)
+    if (isa<SCEVConstant>(Terms[I]))
+      Terms.erase(Terms.begin() + I);
+    else
+      ++I;
 
   if (Terms.size() > 0)
     findArrayDimensionsRec(SE, Terms, Sizes, Zero, One);
