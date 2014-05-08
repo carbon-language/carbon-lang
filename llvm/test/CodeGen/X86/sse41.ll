@@ -320,3 +320,259 @@ define <4 x i32> @insertps_from_load_ins_elt_undef_i32(<4 x i32> %a, i32* %b) {
   %result = shufflevector <4 x i32> %a, <4 x i32> %2, <4 x i32> <i32 0, i32 1, i32 4, i32 3>
   ret <4 x i32> %result
 }
+
+;;;;;; Shuffles optimizable with a single insertps instruction
+define <4 x float> @shuf_XYZ0(<4 x float> %x, <4 x float> %a) {
+; CHECK-LABEL: shuf_XYZ0:
+; CHECK-NOT: pextrd
+; CHECK-NOT: punpckldq
+; CHECK: insertps    $8
+; CHECK: ret
+  %vecext = extractelement <4 x float> %x, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecext1 = extractelement <4 x float> %x, i32 1
+  %vecinit2 = insertelement <4 x float> %vecinit, float %vecext1, i32 1
+  %vecext3 = extractelement <4 x float> %x, i32 2
+  %vecinit4 = insertelement <4 x float> %vecinit2, float %vecext3, i32 2
+  %vecinit5 = insertelement <4 x float> %vecinit4, float 0.0, i32 3
+  ret <4 x float> %vecinit5
+}
+
+define <4 x float> @shuf_XY00(<4 x float> %x, <4 x float> %a) {
+; CHECK-LABEL: shuf_XY00:
+; CHECK-NOT: pextrd
+; CHECK-NOT: punpckldq
+; CHECK: insertps    $12
+; CHECK: ret
+  %vecext = extractelement <4 x float> %x, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecext1 = extractelement <4 x float> %x, i32 1
+  %vecinit2 = insertelement <4 x float> %vecinit, float %vecext1, i32 1
+  %vecinit3 = insertelement <4 x float> %vecinit2, float 0.0, i32 2
+  %vecinit4 = insertelement <4 x float> %vecinit3, float 0.0, i32 3
+  ret <4 x float> %vecinit4
+}
+
+define <4 x float> @shuf_XYY0(<4 x float> %x, <4 x float> %a) {
+; CHECK-LABEL: shuf_XYY0:
+; CHECK-NOT: pextrd
+; CHECK-NOT: punpckldq
+; CHECK: insertps    $104
+; CHECK: ret
+  %vecext = extractelement <4 x float> %x, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecext1 = extractelement <4 x float> %x, i32 1
+  %vecinit2 = insertelement <4 x float> %vecinit, float %vecext1, i32 1
+  %vecinit4 = insertelement <4 x float> %vecinit2, float %vecext1, i32 2
+  %vecinit5 = insertelement <4 x float> %vecinit4, float 0.0, i32 3
+  ret <4 x float> %vecinit5
+}
+
+define <4 x float> @shuf_XYW0(<4 x float> %x, <4 x float> %a) {
+; CHECK-LABEL: shuf_XYW0:
+; CHECK: insertps    $232
+; CHECK: ret
+  %vecext = extractelement <4 x float> %x, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecext1 = extractelement <4 x float> %x, i32 1
+  %vecinit2 = insertelement <4 x float> %vecinit, float %vecext1, i32 1
+  %vecext2 = extractelement <4 x float> %x, i32 3
+  %vecinit3 = insertelement <4 x float> %vecinit2, float %vecext2, i32 2
+  %vecinit4 = insertelement <4 x float> %vecinit3, float 0.0, i32 3
+  ret <4 x float> %vecinit4
+}
+
+define <4 x float> @shuf_W00W(<4 x float> %x, <4 x float> %a) {
+; CHECK-LABEL: shuf_W00W:
+; CHECK-NOT: pextrd
+; CHECK-NOT: punpckldq
+; CHECK: insertps    $198
+; CHECK: ret
+  %vecext = extractelement <4 x float> %x, i32 3
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecinit2 = insertelement <4 x float> %vecinit, float 0.0, i32 1
+  %vecinit3 = insertelement <4 x float> %vecinit2, float 0.0, i32 2
+  %vecinit4 = insertelement <4 x float> %vecinit3, float %vecext, i32 3
+  ret <4 x float> %vecinit4
+}
+
+define <4 x float> @shuf_X00A(<4 x float> %x, <4 x float> %a) {
+; CHECK-LABEL: shuf_X00A:
+; CHECK-NOT: movaps
+; CHECK-NOT: shufps
+; CHECK: insertps    $48
+; CHECK: ret
+  %vecext = extractelement <4 x float> %x, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecinit1 = insertelement <4 x float> %vecinit, float 0.0, i32 1
+  %vecinit2 = insertelement <4 x float> %vecinit1, float 0.0, i32 2
+  %vecinit4 = shufflevector <4 x float> %vecinit2, <4 x float> %a, <4 x i32> <i32 0, i32 1, i32 2, i32 4>
+  ret <4 x float> %vecinit4
+}
+
+define <4 x float> @shuf_X00X(<4 x float> %x, <4 x float> %a) {
+; CHECK-LABEL: shuf_X00X:
+; CHECK-NOT: movaps
+; CHECK-NOT: shufps
+; CHECK: insertps    $48
+; CHECK: ret
+  %vecext = extractelement <4 x float> %x, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecinit1 = insertelement <4 x float> %vecinit, float 0.0, i32 1
+  %vecinit2 = insertelement <4 x float> %vecinit1, float 0.0, i32 2
+  %vecinit4 = shufflevector <4 x float> %vecinit2, <4 x float> %x, <4 x i32> <i32 0, i32 1, i32 2, i32 4>
+  ret <4 x float> %vecinit4
+}
+
+define <4 x float> @shuf_X0YC(<4 x float> %x, <4 x float> %a) {
+; CHECK-LABEL: shuf_X0YC:
+; CHECK: shufps
+; CHECK-NOT: movhlps
+; CHECK-NOT: shufps
+; CHECK: insertps    $176
+; CHECK: ret
+  %vecext = extractelement <4 x float> %x, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecinit1 = insertelement <4 x float> %vecinit, float 0.0, i32 1
+  %vecinit3 = shufflevector <4 x float> %vecinit1, <4 x float> %x, <4 x i32> <i32 0, i32 1, i32 5, i32 undef>
+  %vecinit5 = shufflevector <4 x float> %vecinit3, <4 x float> %a, <4 x i32> <i32 0, i32 1, i32 2, i32 6>
+  ret <4 x float> %vecinit5
+}
+
+define <4 x i32> @i32_shuf_XYZ0(<4 x i32> %x, <4 x i32> %a) {
+; CHECK-LABEL: i32_shuf_XYZ0:
+; CHECK-NOT: pextrd
+; CHECK-NOT: punpckldq
+; CHECK: insertps    $8
+; CHECK: ret
+  %vecext = extractelement <4 x i32> %x, i32 0
+  %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
+  %vecext1 = extractelement <4 x i32> %x, i32 1
+  %vecinit2 = insertelement <4 x i32> %vecinit, i32 %vecext1, i32 1
+  %vecext3 = extractelement <4 x i32> %x, i32 2
+  %vecinit4 = insertelement <4 x i32> %vecinit2, i32 %vecext3, i32 2
+  %vecinit5 = insertelement <4 x i32> %vecinit4, i32 0, i32 3
+  ret <4 x i32> %vecinit5
+}
+
+define <4 x i32> @i32_shuf_XY00(<4 x i32> %x, <4 x i32> %a) {
+; CHECK-LABEL: i32_shuf_XY00:
+; CHECK-NOT: pextrd
+; CHECK-NOT: punpckldq
+; CHECK: insertps    $12
+; CHECK: ret
+  %vecext = extractelement <4 x i32> %x, i32 0
+  %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
+  %vecext1 = extractelement <4 x i32> %x, i32 1
+  %vecinit2 = insertelement <4 x i32> %vecinit, i32 %vecext1, i32 1
+  %vecinit3 = insertelement <4 x i32> %vecinit2, i32 0, i32 2
+  %vecinit4 = insertelement <4 x i32> %vecinit3, i32 0, i32 3
+  ret <4 x i32> %vecinit4
+}
+
+define <4 x i32> @i32_shuf_XYY0(<4 x i32> %x, <4 x i32> %a) {
+; CHECK-LABEL: i32_shuf_XYY0:
+; CHECK-NOT: pextrd
+; CHECK-NOT: punpckldq
+; CHECK: insertps    $104
+; CHECK: ret
+  %vecext = extractelement <4 x i32> %x, i32 0
+  %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
+  %vecext1 = extractelement <4 x i32> %x, i32 1
+  %vecinit2 = insertelement <4 x i32> %vecinit, i32 %vecext1, i32 1
+  %vecinit4 = insertelement <4 x i32> %vecinit2, i32 %vecext1, i32 2
+  %vecinit5 = insertelement <4 x i32> %vecinit4, i32 0, i32 3
+  ret <4 x i32> %vecinit5
+}
+
+define <4 x i32> @i32_shuf_XYW0(<4 x i32> %x, <4 x i32> %a) {
+; CHECK-LABEL: i32_shuf_XYW0:
+; CHECK-NOT: pextrd
+; CHECK-NOT: punpckldq
+; CHECK: insertps    $232
+; CHECK: ret
+  %vecext = extractelement <4 x i32> %x, i32 0
+  %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
+  %vecext1 = extractelement <4 x i32> %x, i32 1
+  %vecinit2 = insertelement <4 x i32> %vecinit, i32 %vecext1, i32 1
+  %vecext2 = extractelement <4 x i32> %x, i32 3
+  %vecinit3 = insertelement <4 x i32> %vecinit2, i32 %vecext2, i32 2
+  %vecinit4 = insertelement <4 x i32> %vecinit3, i32 0, i32 3
+  ret <4 x i32> %vecinit4
+}
+
+define <4 x i32> @i32_shuf_W00W(<4 x i32> %x, <4 x i32> %a) {
+; CHECK-LABEL: i32_shuf_W00W:
+; CHECK-NOT: pextrd
+; CHECK-NOT: punpckldq
+; CHECK: insertps    $198
+; CHECK: ret
+  %vecext = extractelement <4 x i32> %x, i32 3
+  %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
+  %vecinit2 = insertelement <4 x i32> %vecinit, i32 0, i32 1
+  %vecinit3 = insertelement <4 x i32> %vecinit2, i32 0, i32 2
+  %vecinit4 = insertelement <4 x i32> %vecinit3, i32 %vecext, i32 3
+  ret <4 x i32> %vecinit4
+}
+
+define <4 x i32> @i32_shuf_X00A(<4 x i32> %x, <4 x i32> %a) {
+; CHECK-LABEL: i32_shuf_X00A:
+; CHECK-NOT: movaps
+; CHECK-NOT: shufps
+; CHECK: insertps    $48
+; CHECK: ret
+  %vecext = extractelement <4 x i32> %x, i32 0
+  %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
+  %vecinit1 = insertelement <4 x i32> %vecinit, i32 0, i32 1
+  %vecinit2 = insertelement <4 x i32> %vecinit1, i32 0, i32 2
+  %vecinit4 = shufflevector <4 x i32> %vecinit2, <4 x i32> %a, <4 x i32> <i32 0, i32 1, i32 2, i32 4>
+  ret <4 x i32> %vecinit4
+}
+
+define <4 x i32> @i32_shuf_X00X(<4 x i32> %x, <4 x i32> %a) {
+; CHECK-LABEL: i32_shuf_X00X:
+; CHECK-NOT: movaps
+; CHECK-NOT: shufps
+; CHECK: insertps    $48
+; CHECK: ret
+  %vecext = extractelement <4 x i32> %x, i32 0
+  %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
+  %vecinit1 = insertelement <4 x i32> %vecinit, i32 0, i32 1
+  %vecinit2 = insertelement <4 x i32> %vecinit1, i32 0, i32 2
+  %vecinit4 = shufflevector <4 x i32> %vecinit2, <4 x i32> %x, <4 x i32> <i32 0, i32 1, i32 2, i32 4>
+  ret <4 x i32> %vecinit4
+}
+
+define <4 x i32> @i32_shuf_X0YC(<4 x i32> %x, <4 x i32> %a) {
+; CHECK-LABEL: i32_shuf_X0YC:
+; CHECK: shufps
+; CHECK-NOT: movhlps
+; CHECK-NOT: shufps
+; CHECK: insertps    $176
+; CHECK: ret
+  %vecext = extractelement <4 x i32> %x, i32 0
+  %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
+  %vecinit1 = insertelement <4 x i32> %vecinit, i32 0, i32 1
+  %vecinit3 = shufflevector <4 x i32> %vecinit1, <4 x i32> %x, <4 x i32> <i32 0, i32 1, i32 5, i32 undef>
+  %vecinit5 = shufflevector <4 x i32> %vecinit3, <4 x i32> %a, <4 x i32> <i32 0, i32 1, i32 2, i32 6>
+  ret <4 x i32> %vecinit5
+}
+
+;; Test for a bug in the first implementation of LowerBuildVectorv4x32
+define < 4 x float> @test_insertps_no_undef(<4 x float> %x) {
+; CHECK-LABEL: test_insertps_no_undef:
+; CHECK: movaps  %xmm0, %xmm1
+; CHECK-NEXT: insertps        $8, %xmm1, %xmm1
+; CHECK-NEXT: maxps   %xmm1, %xmm0
+; CHECK-NEXT: ret
+  %vecext = extractelement <4 x float> %x, i32 0
+  %vecinit = insertelement <4 x float> undef, float %vecext, i32 0
+  %vecext1 = extractelement <4 x float> %x, i32 1
+  %vecinit2 = insertelement <4 x float> %vecinit, float %vecext1, i32 1
+  %vecext3 = extractelement <4 x float> %x, i32 2
+  %vecinit4 = insertelement <4 x float> %vecinit2, float %vecext3, i32 2
+  %vecinit5 = insertelement <4 x float> %vecinit4, float 0.0, i32 3
+  %mask = fcmp olt <4 x float> %vecinit5, %x
+  %res = select  <4 x i1> %mask, <4 x float> %x, <4 x float>%vecinit5
+  ret <4 x float> %res
+}

@@ -5437,6 +5437,74 @@ static SDValue LowerBuildVectorv8i16(SDValue Op, unsigned NonZeros,
   return V;
 }
 
+/// LowerBuildVectorv4x32 - Custom lower build_vector of v4i32 or v4f32.
+static SDValue LowerBuildVectorv4x32(SDValue Op, unsigned NumElems,
+                                     unsigned NonZeros, unsigned NumNonZero,
+                                     unsigned NumZero, SelectionDAG &DAG,
+                                     const X86Subtarget *Subtarget,
+                                     const TargetLowering &TLI) {
+  // We know there's at least one non-zero element
+  unsigned FirstNonZeroIdx = 0;
+  SDValue FirstNonZero = Op->getOperand(FirstNonZeroIdx);
+  while (FirstNonZero.getOpcode() == ISD::UNDEF ||
+         X86::isZeroNode(FirstNonZero)) {
+    ++FirstNonZeroIdx;
+    FirstNonZero = Op->getOperand(FirstNonZeroIdx);
+  }
+
+  if (FirstNonZero.getOpcode() != ISD::EXTRACT_VECTOR_ELT ||
+      !isa<ConstantSDNode>(FirstNonZero.getOperand(1)))
+    return SDValue();
+
+  SDValue V = FirstNonZero.getOperand(0);
+  unsigned FirstNonZeroDst = cast<ConstantSDNode>(FirstNonZero.getOperand(1))->getZExtValue();
+  unsigned CorrectIdx = FirstNonZeroDst == FirstNonZeroIdx;
+  unsigned IncorrectIdx = CorrectIdx ? -1U : FirstNonZeroIdx;
+  unsigned IncorrectDst = CorrectIdx ? -1U : FirstNonZeroDst;
+
+  for (unsigned Idx = FirstNonZeroIdx + 1; Idx < NumElems; ++Idx) {
+    SDValue Elem = Op.getOperand(Idx);
+    if (Elem.getOpcode() == ISD::UNDEF || X86::isZeroNode(Elem))
+      continue;
+
+    // TODO: What else can be here? Deal with it.
+    if (Elem.getOpcode() != ISD::EXTRACT_VECTOR_ELT)
+      return SDValue();
+
+    // TODO: Some optimizations are still possible here
+    // ex: Getting one element from a vector, and the rest from another.
+    if (Elem.getOperand(0) != V)
+      return SDValue();
+
+    unsigned Dst = cast<ConstantSDNode>(Elem.getOperand(1))->getZExtValue();
+    if (Dst == Idx)
+      ++CorrectIdx;
+    else if (IncorrectIdx == -1U) {
+      IncorrectIdx = Idx;
+      IncorrectDst = Dst;
+    } else
+      // There was already one element with an incorrect index.
+      // We can't optimize this case to an insertps.
+      return SDValue();
+  }
+
+  if (NumNonZero == CorrectIdx || NumNonZero == CorrectIdx + 1) {
+    SDLoc dl(Op);
+    EVT VT = Op.getSimpleValueType();
+    unsigned ElementMoveMask = 0;
+    if (IncorrectIdx == -1U)
+      ElementMoveMask = FirstNonZeroIdx << 6 | FirstNonZeroIdx << 4;
+    else
+      ElementMoveMask = IncorrectDst << 6 | IncorrectIdx << 4;
+
+    SDValue InsertpsMask = DAG.getIntPtrConstant(
+        ElementMoveMask | (~NonZeros & 0xf));
+    return DAG.getNode(X86ISD::INSERTPS, dl, VT, V, V, InsertpsMask);
+  }
+
+  return SDValue();
+}
+
 /// getVShift - Return a vector logical shift node.
 ///
 static SDValue getVShift(bool isLeft, EVT VT, SDValue SrcOp,
@@ -6185,6 +6253,14 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     SDValue V = LowerBuildVectorv8i16(Op, NonZeros,NumNonZero,NumZero, DAG,
                                       Subtarget, *this);
     if (V.getNode()) return V;
+  }
+
+  // If element VT is == 32 bits and has 4 elems, try to generate an INSERTPS
+  if (EVTBits == 32 && NumElems == 4) {
+    SDValue V = LowerBuildVectorv4x32(Op, NumElems, NonZeros, NumNonZero,
+                                      NumZero, DAG, Subtarget, *this);
+    if (V.getNode())
+      return V;
   }
 
   // If element VT is == 32 bits, turn it into a number of shuffles.
