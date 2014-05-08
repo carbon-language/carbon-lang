@@ -70,7 +70,7 @@ int main (int argc, char **argv) {
 // CHECK-NEXT:  [[ARGC:%.+]] = load i32* [[ARGC_REF]]
 // CHECK-NEXT:  invoke void [[FOO:@.+foo.+]](i32 [[ARGC]])
 // CHECK:       ret void
-// CHECK:       call void @__clang_call_terminate(i8*
+// CHECK:       call void @{{.+terminate.*}}(
 // CHECK-NEXT:  unreachable
 // CHECK-NEXT:  }
 // CHECK-DEBUG-LABEL: define internal void @__captured_stmt(i32* %.global_tid., i32* %.bound_tid., %struct.anon* %__context)
@@ -82,7 +82,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  [[ARGC:%.+]] = load i32* [[ARGC_REF]]
 // CHECK-DEBUG-NEXT:  invoke void [[FOO:@.+foo.+]](i32 [[ARGC]])
 // CHECK-DEBUG:       ret void
-// CHECK-DEBUG:       call void @__clang_call_terminate(i8*
+// CHECK-DEBUG:       call void @{{.+terminate.*}}(
 // CHECK-DEBUG-NEXT:  unreachable
 // CHECK-DEBUG-NEXT:  }
 
@@ -123,7 +123,7 @@ int main (int argc, char **argv) {
 // CHECK-NEXT:  [[ARGC:%.+]] = load i8*** [[ARGC_REF]]
 // CHECK-NEXT:  invoke void [[FOO1:@.+foo.+]](i8** [[ARGC]])
 // CHECK:       ret void
-// CHECK:       call void @__clang_call_terminate(i8*
+// CHECK:       call void @{{.+terminate.*}}(
 // CHECK-NEXT:  unreachable
 // CHECK-NEXT:  }
 // CHECK-DEBUG-LABEL: define internal void @__captured_stmt1(i32* %.global_tid., i32* %.bound_tid., %struct.anon.0* %__context)
@@ -135,7 +135,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  [[ARGC:%.+]] = load i8*** [[ARGC_REF]]
 // CHECK-DEBUG-NEXT:  invoke void [[FOO1:@.+foo.+]](i8** [[ARGC]])
 // CHECK-DEBUG:       ret void
-// CHECK-DEBUG:       call void @__clang_call_terminate(i8*
+// CHECK-DEBUG:       call void @{{.+terminate.*}}(
 // CHECK-DEBUG-NEXT:  unreachable
 // CHECK-DEBUG-NEXT:  }
 
