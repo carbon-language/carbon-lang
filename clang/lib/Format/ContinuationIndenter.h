@@ -290,13 +290,10 @@ struct LineState {
   /// \brief \c true if this line contains a continued for-loop section.
   bool LineContainsContinuedForLoopSection;
 
-  /// \brief The level of nesting inside (), [], <> and {}.
-  unsigned ParenLevel;
-
-  /// \brief The \c ParenLevel at the start of this line.
+  /// \brief The \c NestingLevel at the start of this line.
   unsigned StartOfLineLevel;
 
-  /// \brief The lowest \c ParenLevel on the current line.
+  /// \brief The lowest \c NestingLevel on the current line.
   unsigned LowestLevelOnLine;
 
   /// \brief The start column of the string literal, if we're in a string
@@ -339,8 +336,6 @@ struct LineState {
     if (LineContainsContinuedForLoopSection !=
         Other.LineContainsContinuedForLoopSection)
       return LineContainsContinuedForLoopSection;
-    if (ParenLevel != Other.ParenLevel)
-      return ParenLevel < Other.ParenLevel;
     if (StartOfLineLevel != Other.StartOfLineLevel)
       return StartOfLineLevel < Other.StartOfLineLevel;
     if (LowestLevelOnLine != Other.LowestLevelOnLine)
