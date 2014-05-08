@@ -49,7 +49,7 @@
 +------------------+--+-----+-----+------------------------+--------------------------+
 | callSiteTableLength | (ULEB128) | Call Site Table length, used to find Action table |
 +---------------------+-----------+---------------------------------------------------+
-#if !__arm__
+#if !__USING_SJLJ_EXCEPTIONS__
 +---------------------+-----------+------------------------------------------------+
 | Beginning of Call Site Table            The current ip lies within the           |
 | ...                                     (start, length) range of one of these    |
@@ -63,7 +63,7 @@
 | +-------------+---------------------------------+------------------------------+ |
 | ...                                                                              |
 +----------------------------------------------------------------------------------+
-#else  // __arm_
+#else  // __USING_SJLJ_EXCEPTIONS__
 +---------------------+-----------+------------------------------------------------+
 | Beginning of Call Site Table            The current ip is a 1-based index into   |
 | ...                                     this table.  Or it is -1 meaning no      |
@@ -76,7 +76,7 @@
 | +-------------+---------------------------------+------------------------------+ |
 | ...                                                                              |
 +----------------------------------------------------------------------------------+
-#endif  // __arm_
+#endif  // __USING_SJLJ_EXCEPTIONS__
 +---------------------------------------------------------------------+
 | Beginning of Action Table       ttypeIndex == 0 : cleanup           |
 | ...                             ttypeIndex  > 0 : catch             |
@@ -511,7 +511,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
     // Get beginning current frame's code (as defined by the 
     // emitted dwarf code)
     uintptr_t funcStart = _Unwind_GetRegionStart(context);
-#if __arm__
+#if __USING_SJLJ_EXCEPTIONS__
     if (ip == uintptr_t(-1))
     {
         // no action
@@ -521,9 +521,9 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
     else if (ip == 0)
         call_terminate(native_exception, unwind_exception);
     // ip is 1-based index into call site table
-#else  // __arm__
+#else  // !__USING_SJLJ_EXCEPTIONS__
     uintptr_t ipOffset = ip - funcStart;
-#endif  // __arm__
+#endif  // !defined(_USING_SLJL_EXCEPTIONS__)
     const uint8_t* classInfo = NULL;
     // Note: See JITDwarfEmitter::EmitExceptionTable(...) for corresponding
     //       dwarf emission
@@ -544,8 +544,8 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
     // Walk call-site table looking for range that 
     // includes current PC. 
     uint8_t callSiteEncoding = *lsda++;
-#if __arm__
-    (void)callSiteEncoding;  // On arm callSiteEncoding is never used
+#if __USING_SJLJ_EXCEPTIONS__
+    (void)callSiteEncoding;  // When using SjLj exceptions, callSiteEncoding is never used
 #endif
     uint32_t callSiteTableLength = static_cast<uint32_t>(readULEB128(&lsda));
     const uint8_t* callSiteTableStart = lsda;
@@ -555,7 +555,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
     while (callSitePtr < callSiteTableEnd)
     {
         // There is one entry per call site.
-#if !__arm__
+#if !__USING_SJLJ_EXCEPTIONS__
         // The call sites are non-overlapping in [start, start+length)
         // The call sites are ordered in increasing value of start
         uintptr_t start = readEncodedPointer(&callSitePtr, callSiteEncoding);
@@ -563,15 +563,15 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
         uintptr_t landingPad = readEncodedPointer(&callSitePtr, callSiteEncoding);
         uintptr_t actionEntry = readULEB128(&callSitePtr);
         if ((start <= ipOffset) && (ipOffset < (start + length)))
-#else  // __arm__
+#else  // __USING_SJLJ_EXCEPTIONS__
         // ip is 1-based index into this table
         uintptr_t landingPad = readULEB128(&callSitePtr);
         uintptr_t actionEntry = readULEB128(&callSitePtr);
         if (--ip == 0)
-#endif  // __arm__
+#endif  // __USING_SJLJ_EXCEPTIONS__
         {
             // Found the call site containing ip.
-#if !__arm__
+#if !__USING_SJLJ_EXCEPTIONS__
             if (landingPad == 0)
             {
                 // No handler here
@@ -579,9 +579,9 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
                 return;
             }
             landingPad = (uintptr_t)lpStart + landingPad;
-#else  // __arm__
+#else  // __USING_SJLJ_EXCEPTIONS__
             ++landingPad;
-#endif  // __arm__
+#endif  // __USING_SJLJ_EXCEPTIONS__
             if (actionEntry == 0)
             {
                 // Found a cleanup
@@ -773,7 +773,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
                 action += actionOffset;
             }  // there is no break out of this loop, only return
         }
-#if !__arm__
+#if !__USING_SJLJ_EXCEPTIONS__
         else if (ipOffset < start)
         {
             // There is no call site for this ip
@@ -781,7 +781,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
             // Possible stack corruption.
             call_terminate(native_exception, unwind_exception);
         }
-#endif  // !__arm__
+#endif  // !__USING_SJLJ_EXCEPTIONS__
     }  // there might be some tricky cases which break out of this loop
 
     // It is possible that no eh table entry specify how to handle
