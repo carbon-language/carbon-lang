@@ -320,7 +320,7 @@ bool TailCallElim::markTails(Function &F, bool &AllCallsAreTailCalls) {
         if (SafeToTail) {
           F.getContext().emitOptimizationRemark(
               "tailcallelim", F, CI->getDebugLoc(),
-              "found readnone tail call candidate");
+              "marked this readnone call a tail call candidate");
           CI->setTailCall();
           Modified = true;
           continue;
@@ -366,7 +366,8 @@ bool TailCallElim::markTails(Function &F, bool &AllCallsAreTailCalls) {
       // If the escape point was part way through the block, calls after the
       // escape point wouldn't have been put into DeferredTails.
       F.getContext().emitOptimizationRemark(
-          "tailcallelim", F, CI->getDebugLoc(), "found tail call candidate");
+          "tailcallelim", F, CI->getDebugLoc(),
+          "marked this call a tail call candidate");
       CI->setTailCall();
       Modified = true;
     } else {
