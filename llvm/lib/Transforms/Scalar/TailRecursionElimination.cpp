@@ -136,18 +136,20 @@ void TailCallElim::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<TargetTransformInfo>();
 }
 
-/// CanTRE - Scan the specified basic block for alloca instructions.
-/// If it contains any that are variable-sized or not in the entry block,
-/// returns false.
-static bool CanTRE(AllocaInst *AI) {
-  // Because of PR962, we don't TRE allocas outside the entry block.
+/// \brief Scan the specified function for alloca instructions.
+/// If it contains any dynamic allocas, returns false.
+static bool CanTRE(Function &F) {
+  // Because of PR962, we don't TRE dynamic allocas.
+  for (auto &BB : F) {
+    for (auto &I : BB) {
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(&I)) {
+        if (!AI->isStaticAlloca())
+          return false;
+      }
+    }
+  }
 
-  // If this alloca is in the body of the function, or if it is a variable
-  // sized allocation, we cannot tail call eliminate calls marked 'tail'
-  // with this mechanism.
-  BasicBlock *BB = AI->getParent();
-  return BB == &BB->getParent()->getEntryBlock() &&
-         isa<ConstantInt>(AI->getArraySize());
+  return true;
 }
 
 bool TailCallElim::runOnFunction(Function &F) {
@@ -390,16 +392,7 @@ bool TailCallElim::runTRE(Function &F) {
   // marked with the 'tail' attribute, because doing so would cause the stack
   // size to increase (real TRE would deallocate variable sized allocas, TRE
   // doesn't).
-  bool CanTRETailMarkedCall = true;
-
-  // Find dynamic allocas.
-  for (Function::iterator BB = F.begin(), EE = F.end(); BB != EE; ++BB) {
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
-      if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
-        CanTRETailMarkedCall &= CanTRE(AI);
-      }
-    }
-  }
+  bool CanTRETailMarkedCall = CanTRE(F);
 
   // Change any tail recursive calls to loops.
   //
