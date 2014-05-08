@@ -560,7 +560,6 @@ IOHandlerEditline::GetLines (StringList &lines, bool &interrupted)
                 lines_status = LineStatus::Done;
             }
         }
-        m_curr_line_idx = UINT32_MAX;
         
         // Call the IOHandlerLinesUpdated function with UINT32_MAX as the line
         // number to indicate all lines are complete
