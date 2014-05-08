@@ -1258,8 +1258,8 @@ private:
   // Try to determine whether the current token ends a JavaScript regex literal.
   // We heuristically assume that this is a regex literal if we find two
   // unescaped slashes on a line and the token before the first slash is one of
-  // "(;,{}![:?" or a binary operator, as those cannot be followed by a
-  // division.
+  // "(;,{}![:?", a binary operator or 'return', as those cannot be followed by
+  // a division.
   bool tryMergeJSRegexLiteral() {
       if (Tokens.size() < 2 || Tokens.back()->isNot(tok::slash) ||
           Tokens[Tokens.size() - 2]->is(tok::unknown))
@@ -1269,9 +1269,9 @@ private:
       for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; ++I) {
         ++TokenCount;
         if (I[0]->is(tok::slash) && I + 1 != E &&
-            (I[1]->isOneOf(tok::l_paren, tok::semi, tok::l_brace,
-                           tok::r_brace, tok::exclaim, tok::l_square,
-                           tok::colon, tok::comma, tok::question) ||
+            (I[1]->isOneOf(tok::l_paren, tok::semi, tok::l_brace, tok::r_brace,
+                           tok::exclaim, tok::l_square, tok::colon, tok::comma,
+                           tok::question, tok::kw_return) ||
              I[1]->isBinaryOperator())) {
           Tokens.resize(Tokens.size() - TokenCount);
           Tokens.back()->Tok.setKind(tok::unknown);

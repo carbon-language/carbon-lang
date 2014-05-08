@@ -123,6 +123,8 @@ TEST_F(FormatTestJS, RegexLiteralClassification) {
   verifyFormat("var x = a && /abc/.test(y);");
   verifyFormat("var x = a || /abc/.test(y);");
   verifyFormat("var x = a + /abc/.search(y);");
+  verifyFormat("var regexs = {/abc/, /abc/};");
+  verifyFormat("return /abc/;");
 
   // Not regex literals.
   verifyFormat("var a = a / 2 + b / 3;");
