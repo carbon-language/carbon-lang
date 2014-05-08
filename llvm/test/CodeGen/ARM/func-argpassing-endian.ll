@@ -23,10 +23,10 @@ define void @arg_double( double %val ) {
 define void @arg_v4i32(<4 x i32> %vec ) {
 ; CHECK-LABEL: arg_v4i32:
 ; CHECK-LE: vmov {{d[0-9]+}}, r2, r3
-; CHECK-LE: vmov {{d[0-9]+}}, r0, r1
+; CHECK-LE: vmov [[ARG_V4I32_REG:d[0-9]+]], r0, r1
 ; CHECK-BE: vmov {{d[0-9]+}}, r3, r2
-; CHECK-BE: vmov {{d[0-9]+}}, r1, r0
-; CHECK: vst1.32 {{{d[0-9]+}}[0]}, [r0:32]
+; CHECK-BE: vmov [[ARG_V4I32_REG:d[0-9]+]], r1, r0
+; CHECK: vst1.32 {[[ARG_V4I32_REG]][0]}, [r0:32]
     %tmp = extractelement <4 x i32> %vec, i32 0
     store i32 %tmp, i32* @var32
     ret void
