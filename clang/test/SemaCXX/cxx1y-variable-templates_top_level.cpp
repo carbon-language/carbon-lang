@@ -448,3 +448,13 @@ namespace PR19152 {
   static_assert(x<int> == 1, "");
 #endif
 }
+
+namespace PR19169 {
+  template <typename T> int* f();
+  template <typename T> void f();
+  template<> int f<double>; // expected-error {{no variable template matches specialization; did you mean to use 'f' as function template instead?}}
+  
+  template <typename T> void g();
+  template<> int g<double>; // expected-error {{no variable template matches specialization; did you mean to use 'g' as function template instead?}}
+}
+
