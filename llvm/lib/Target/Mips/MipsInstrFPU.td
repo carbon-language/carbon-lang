@@ -565,8 +565,8 @@ def ExtractElementF64_64 : ExtractElementF64Base<FGR64Opnd>,
 //===----------------------------------------------------------------------===//
 // InstAliases.
 //===----------------------------------------------------------------------===//
-def : InstAlias<"bc1t $offset", (BC1T FCC0, brtarget:$offset)>;
-def : InstAlias<"bc1f $offset", (BC1F FCC0, brtarget:$offset)>;
+def : MipsInstAlias<"bc1t $offset", (BC1T FCC0, brtarget:$offset)>;
+def : MipsInstAlias<"bc1f $offset", (BC1F FCC0, brtarget:$offset)>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns

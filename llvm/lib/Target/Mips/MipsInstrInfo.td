@@ -221,6 +221,9 @@ class MipsPat<dag pattern, dag result> : Pat<pattern, result>, PredicateControl 
   let EncodingPredicates = [HasStdEnc];
 }
 
+class MipsInstAlias<string Asm, dag Result, bit Emit = 0b1> :
+  InstAlias<Asm, Result, Emit>, PredicateControl;
+
 class IsCommutable {
   bit isCommutable = 1;
 }
@@ -1220,75 +1223,78 @@ def TLBWR : TLB<"tlbwr">, COP0_TLB_FM<0x06>;
 //===----------------------------------------------------------------------===//
 // Instruction aliases
 //===----------------------------------------------------------------------===//
-def : InstAlias<"move $dst, $src",
-                (ADDu GPR32Opnd:$dst, GPR32Opnd:$src,ZERO), 1>,
+def : MipsInstAlias<"move $dst, $src",
+                    (ADDu GPR32Opnd:$dst, GPR32Opnd:$src,ZERO), 1>,
       Requires<[IsGP32, NotInMicroMips]>;
-def : InstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 0>;
-def : InstAlias<"addu $rs, $rt, $imm",
-                (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
-def : InstAlias<"add $rs, $rt, $imm",
-                (ADDi GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
-def : InstAlias<"and $rs, $rt, $imm",
-                (ANDi GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
-def : InstAlias<"j $rs", (JR GPR32Opnd:$rs), 0>;
+def : MipsInstAlias<"bal $offset", (BGEZAL ZERO, brtarget:$offset), 0>;
+def : MipsInstAlias<"addu $rs, $rt, $imm",
+                    (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
+def : MipsInstAlias<"add $rs, $rt, $imm",
+                    (ADDi GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
+def : MipsInstAlias<"and $rs, $rt, $imm",
+                    (ANDi GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
+def : MipsInstAlias<"j $rs", (JR GPR32Opnd:$rs), 0>;
 let Predicates = [NotInMicroMips] in {
-def : InstAlias<"jalr $rs", (JALR RA, GPR32Opnd:$rs), 0>;
+def : MipsInstAlias<"jalr $rs", (JALR RA, GPR32Opnd:$rs), 0>;
 }
-def : InstAlias<"jal $rs", (JALR RA, GPR32Opnd:$rs), 0>;
-def : InstAlias<"jal $rd,$rs", (JALR GPR32Opnd:$rd, GPR32Opnd:$rs), 0>;
-def : InstAlias<"not $rt, $rs",
-                (NOR GPR32Opnd:$rt, GPR32Opnd:$rs, ZERO), 0>;
-def : InstAlias<"neg $rt, $rs",
-                (SUB GPR32Opnd:$rt, ZERO, GPR32Opnd:$rs), 1>;
-def : InstAlias<"negu $rt",
-                (SUBu GPR32Opnd:$rt, ZERO, GPR32Opnd:$rt), 0>;
-def : InstAlias<"negu $rt, $rs",
-                (SUBu GPR32Opnd:$rt, ZERO, GPR32Opnd:$rs), 1>;
-def : InstAlias<"slt $rs, $rt, $imm",
-                (SLTi GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
-def : InstAlias<"sltu $rt, $rs, $imm",
-                (SLTiu GPR32Opnd:$rt, GPR32Opnd:$rs, simm16:$imm), 0>;
-def : InstAlias<"xor $rs, $rt, $imm",
-                (XORi GPR32Opnd:$rs, GPR32Opnd:$rt, uimm16:$imm), 0>;
-def : InstAlias<"or $rs, $rt, $imm",
-                (ORi GPR32Opnd:$rs, GPR32Opnd:$rt, uimm16:$imm), 0>;
-def : InstAlias<"nop", (SLL ZERO, ZERO, 0), 1>;
-def : InstAlias<"mfc0 $rt, $rd", (MFC0 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
-def : InstAlias<"mtc0 $rt, $rd", (MTC0 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
-def : InstAlias<"mfc2 $rt, $rd", (MFC2 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
-def : InstAlias<"mtc2 $rt, $rd", (MTC2 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
-def : InstAlias<"b $offset", (BEQ ZERO, ZERO, brtarget:$offset), 0>;
-def : InstAlias<"bnez $rs,$offset",
-                (BNE GPR32Opnd:$rs, ZERO, brtarget:$offset), 0>;
-def : InstAlias<"beqz $rs,$offset",
-                (BEQ GPR32Opnd:$rs, ZERO, brtarget:$offset), 0>;
-def : InstAlias<"syscall", (SYSCALL 0), 1>;
+def : MipsInstAlias<"jal $rs", (JALR RA, GPR32Opnd:$rs), 0>;
+def : MipsInstAlias<"jal $rd,$rs", (JALR GPR32Opnd:$rd, GPR32Opnd:$rs), 0>;
+def : MipsInstAlias<"not $rt, $rs",
+                    (NOR GPR32Opnd:$rt, GPR32Opnd:$rs, ZERO), 0>;
+def : MipsInstAlias<"neg $rt, $rs",
+                    (SUB GPR32Opnd:$rt, ZERO, GPR32Opnd:$rs), 1>;
+def : MipsInstAlias<"negu $rt",
+                    (SUBu GPR32Opnd:$rt, ZERO, GPR32Opnd:$rt), 0>;
+def : MipsInstAlias<"negu $rt, $rs",
+                    (SUBu GPR32Opnd:$rt, ZERO, GPR32Opnd:$rs), 1>;
+def : MipsInstAlias<"slt $rs, $rt, $imm",
+                    (SLTi GPR32Opnd:$rs, GPR32Opnd:$rt, simm16:$imm), 0>;
+def : MipsInstAlias<"sltu $rt, $rs, $imm",
+                    (SLTiu GPR32Opnd:$rt, GPR32Opnd:$rs, simm16:$imm), 0>;
+def : MipsInstAlias<"xor $rs, $rt, $imm",
+                    (XORi GPR32Opnd:$rs, GPR32Opnd:$rt, uimm16:$imm), 0>;
+def : MipsInstAlias<"or $rs, $rt, $imm",
+                    (ORi GPR32Opnd:$rs, GPR32Opnd:$rt, uimm16:$imm), 0>;
+def : MipsInstAlias<"nop", (SLL ZERO, ZERO, 0), 1>;
+def : MipsInstAlias<"mfc0 $rt, $rd", (MFC0 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
+def : MipsInstAlias<"mtc0 $rt, $rd", (MTC0 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
+def : MipsInstAlias<"mfc2 $rt, $rd", (MFC2 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
+def : MipsInstAlias<"mtc2 $rt, $rd", (MTC2 GPR32Opnd:$rt, GPR32Opnd:$rd, 0), 0>;
+def : MipsInstAlias<"b $offset", (BEQ ZERO, ZERO, brtarget:$offset), 0>;
+def : MipsInstAlias<"bnez $rs,$offset",
+                    (BNE GPR32Opnd:$rs, ZERO, brtarget:$offset), 0>;
+def : MipsInstAlias<"beqz $rs,$offset",
+                    (BEQ GPR32Opnd:$rs, ZERO, brtarget:$offset), 0>;
+def : MipsInstAlias<"syscall", (SYSCALL 0), 1>;
+    
+def : MipsInstAlias<"break $imm", (BREAK uimm10:$imm, 0), 1>;
+def : MipsInstAlias<"break", (BREAK 0, 0), 1>;
+def : MipsInstAlias<"ei", (EI ZERO), 1>;
+def : MipsInstAlias<"di", (DI ZERO), 1>;
 
-def : InstAlias<"break $imm", (BREAK uimm10:$imm, 0), 1>;
-def : InstAlias<"break", (BREAK 0, 0), 1>;
-def : InstAlias<"ei", (EI ZERO), 1>;
-def : InstAlias<"di", (DI ZERO), 1>;
-
-def  : InstAlias<"teq $rs, $rt", (TEQ GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
-def  : InstAlias<"tge $rs, $rt", (TGE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
-def  : InstAlias<"tgeu $rs, $rt", (TGEU GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
-def  : InstAlias<"tlt $rs, $rt", (TLT GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
-def  : InstAlias<"tltu $rs, $rt", (TLTU GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
-def  : InstAlias<"tne $rs, $rt", (TNE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
-def  : InstAlias<"sll $rd, $rt, $rs",
-                 (SLLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
-def : InstAlias<"sub, $rd, $rs, $imm",
-                (ADDi GPR32Opnd:$rd, GPR32Opnd:$rs, InvertedImOperand:$imm)>;
-def : InstAlias<"sub $rs, $imm",
-                (ADDi GPR32Opnd:$rs, GPR32Opnd:$rs, InvertedImOperand:$imm),
-                0>;
-def : InstAlias<"subu, $rd, $rs, $imm",
-                (ADDiu GPR32Opnd:$rd, GPR32Opnd:$rs, InvertedImOperand:$imm)>;
-def : InstAlias<"subu $rs, $imm",
-                (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs, InvertedImOperand:$imm),
-                0>;
-def  : InstAlias<"srl $rd, $rt, $rs",
-                 (SRLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
+def  : MipsInstAlias<"teq $rs, $rt", (TEQ GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def  : MipsInstAlias<"tge $rs, $rt", (TGE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def  : MipsInstAlias<"tgeu $rs, $rt", (TGEU GPR32Opnd:$rs, GPR32Opnd:$rt, 0),
+                     1>;
+def  : MipsInstAlias<"tlt $rs, $rt", (TLT GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def  : MipsInstAlias<"tltu $rs, $rt", (TLTU GPR32Opnd:$rs, GPR32Opnd:$rt, 0),
+                     1>;
+def  : MipsInstAlias<"tne $rs, $rt", (TNE GPR32Opnd:$rs, GPR32Opnd:$rt, 0), 1>;
+def  : MipsInstAlias<"sll $rd, $rt, $rs",
+                     (SLLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
+def : MipsInstAlias<"sub, $rd, $rs, $imm",
+                    (ADDi GPR32Opnd:$rd, GPR32Opnd:$rs,
+                          InvertedImOperand:$imm)>;
+def : MipsInstAlias<"sub $rs, $imm",
+                    (ADDi GPR32Opnd:$rs, GPR32Opnd:$rs, InvertedImOperand:$imm),
+                    0>;
+def : MipsInstAlias<"subu, $rd, $rs, $imm",
+                    (ADDiu GPR32Opnd:$rd, GPR32Opnd:$rs,
+                           InvertedImOperand:$imm)>;
+def : MipsInstAlias<"subu $rs, $imm", (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs,
+                                             InvertedImOperand:$imm), 0>;
+def  : MipsInstAlias<"srl $rd, $rt, $rs",
+                     (SRLV GPR32Opnd:$rd, GPR32Opnd:$rt, GPR32Opnd:$rs), 0>;
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//

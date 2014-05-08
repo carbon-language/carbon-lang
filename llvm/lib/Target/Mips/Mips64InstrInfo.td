@@ -418,40 +418,42 @@ def : MipsPat<(bswap GPR64:$rt), (DSHD (DSBH GPR64:$rt))>;
 //===----------------------------------------------------------------------===//
 // Instruction aliases
 //===----------------------------------------------------------------------===//
-def : InstAlias<"move $dst, $src",
-                (DADDu GPR64Opnd:$dst,  GPR64Opnd:$src, ZERO_64), 1>,
+def : MipsInstAlias<"move $dst, $src",
+                    (DADDu GPR64Opnd:$dst,  GPR64Opnd:$src, ZERO_64), 1>,
       Requires<[IsGP64]>;
-def : InstAlias<"daddu $rs, $rt, $imm",
-                (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rt, simm16_64:$imm),
-                0>;
-def : InstAlias<"dadd $rs, $rt, $imm",
-                (DADDi GPR64Opnd:$rs, GPR64Opnd:$rt, simm16_64:$imm),
-                0>;
-def : InstAlias<"daddu $rs, $imm",
-                (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
-                0>;
-def : InstAlias<"dadd $rs, $imm",
-                (DADDi GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
-                0>;
-def : InstAlias<"add $rs, $imm",
-                (ADDi GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
-                0>;
-def : InstAlias<"addu $rs, $imm",
-                (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
-                0>;
-def : InstAlias<"dsll $rd, $rt, $rs",
-                (DSLLV GPR64Opnd:$rd, GPR64Opnd:$rt, GPR32Opnd:$rs), 0>;
-def : InstAlias<"dsubu $rt, $rs, $imm",
-                (DADDiu GPR64Opnd:$rt, GPR64Opnd:$rs,
-                InvertedImOperand64: $imm),0>;
-def : InstAlias<"dsub $rs, $imm",
-                (DADDi GPR64Opnd:$rs, GPR64Opnd:$rs, InvertedImOperand64:$imm),
-                0>;
-def : InstAlias<"dsubu $rs, $imm",
-                (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs, InvertedImOperand64:$imm),
-                0>;
-def : InstAlias<"dsrl $rd, $rt, $rs",
-                (DSRLV GPR64Opnd:$rd, GPR64Opnd:$rt, GPR32Opnd:$rs), 0>;
+def : MipsInstAlias<"daddu $rs, $rt, $imm",
+                    (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rt, simm16_64:$imm),
+                    0>;
+def : MipsInstAlias<"dadd $rs, $rt, $imm",
+                    (DADDi GPR64Opnd:$rs, GPR64Opnd:$rt, simm16_64:$imm),
+                    0>;
+def : MipsInstAlias<"daddu $rs, $imm",
+                    (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
+                    0>;
+def : MipsInstAlias<"dadd $rs, $imm",
+                    (DADDi GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
+                    0>;
+def : MipsInstAlias<"add $rs, $imm",
+                    (ADDi GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
+                    0>;
+def : MipsInstAlias<"addu $rs, $imm",
+                    (ADDiu GPR32Opnd:$rs, GPR32Opnd:$rs, simm16:$imm),
+                    0>;
+def : MipsInstAlias<"dsll $rd, $rt, $rs",
+                    (DSLLV GPR64Opnd:$rd, GPR64Opnd:$rt, GPR32Opnd:$rs), 0>;
+def : MipsInstAlias<"dsubu $rt, $rs, $imm",
+                    (DADDiu GPR64Opnd:$rt, GPR64Opnd:$rs,
+                            InvertedImOperand64:$imm), 0>;
+def : MipsInstAlias<"dsub $rs, $imm",
+                    (DADDi GPR64Opnd:$rs, GPR64Opnd:$rs,
+                           InvertedImOperand64:$imm),
+                    0>;
+def : MipsInstAlias<"dsubu $rs, $imm",
+                    (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs,
+                            InvertedImOperand64:$imm),
+                    0>;
+def : MipsInstAlias<"dsrl $rd, $rt, $rs",
+                    (DSRLV GPR64Opnd:$rd, GPR64Opnd:$rt, GPR32Opnd:$rs), 0>;
 
 /// Move between CPU and coprocessor registers
 let DecoderNamespace = "Mips64", Predicates = [HasMips64] in {
@@ -462,8 +464,8 @@ def DMTC2 : MFC3OP<"dmtc2", GPR64Opnd>, MFC3OP_FM<0x12, 5>;
 }
 
 // Two operand (implicit 0 selector) versions:
-def : InstAlias<"dmfc0 $rt, $rd", (DMFC0 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0>;
-def : InstAlias<"dmtc0 $rt, $rd", (DMTC0 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0>;
-def : InstAlias<"dmfc2 $rt, $rd", (DMFC2 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0>;
-def : InstAlias<"dmtc2 $rt, $rd", (DMTC2 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0>;
+def : MipsInstAlias<"dmfc0 $rt, $rd", (DMFC0 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0>;
+def : MipsInstAlias<"dmtc0 $rt, $rd", (DMTC0 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0>;
+def : MipsInstAlias<"dmfc2 $rt, $rd", (DMFC2 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0>;
+def : MipsInstAlias<"dmtc2 $rt, $rd", (DMTC2 GPR64Opnd:$rt, GPR64Opnd:$rd, 0), 0>;
 

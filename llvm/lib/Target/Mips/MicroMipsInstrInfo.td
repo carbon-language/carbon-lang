@@ -296,5 +296,5 @@ let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
 //===----------------------------------------------------------------------===//
 
 let Predicates = [InMicroMips] in {
-  def : InstAlias<"wait", (WAIT_MM 0x0), 1>;
+  def : MipsInstAlias<"wait", (WAIT_MM 0x0), 1>;
 }
