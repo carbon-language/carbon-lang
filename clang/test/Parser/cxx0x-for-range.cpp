@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
+// RUN: not %clang_cc1 -fsyntax-only -fdiagnostics-parseable-fixits -std=c++11 %s 2>&1 | FileCheck %s
 
 template<typename T, typename U>
 struct pair {};
@@ -27,4 +27,36 @@ int foo(map<char*,int> &m) {
   }
 
   return n;
+}
+
+namespace PR19176 {
+struct Vector {
+  struct iterator {
+    int &operator*();
+    iterator &operator++();
+    iterator &operator++(int);
+    bool operator==(const iterator &) const;
+  };
+  iterator begin();
+  iterator end();
+};
+
+void f() {
+  Vector v;
+  int a[] = {1, 2, 3, 4};
+  for (auto foo   =     a) // expected-error {{range based for statement requires ':' after range declaration}}
+    // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:19-[[@LINE-1]]:20}:":"
+    (void)foo;
+  for (auto i
+      =
+      v) // expected-error@-1 {{range based for statement requires ':' after range declaration}}
+    // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:7-[[@LINE-2]]:8}:":"
+    (void)i;
+#define FORRANGE(v, a) for (DECLVARWITHINIT(v) a)  // expected-note {{expanded from macro}}
+#define DECLAUTOVAR(v) auto v
+#define DECLVARWITHINIT(v) DECLAUTOVAR(v) =  // expected-note {{expanded from macro}}
+  FORRANGE(i, a) {  // expected-error {{range based for statement requires ':' after range declaration}}
+
+  }
+}
 }

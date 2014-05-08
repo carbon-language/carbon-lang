@@ -1727,8 +1727,10 @@ private:
   Decl *ParseDeclarationAfterDeclarator(Declarator &D,
                const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
   bool ParseAsmAttributesAfterDeclarator(Declarator &D);
-  Decl *ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
-               const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo());
+  Decl *ParseDeclarationAfterDeclaratorAndAttributes(
+      Declarator &D,
+      const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
+      ForRangeInit *FRI = nullptr);
   Decl *ParseFunctionStatementBody(Decl *Decl, ParseScope &BodyScope);
   Decl *ParseFunctionTryBlock(Decl *Decl, ParseScope &BodyScope);
 

@@ -1620,7 +1620,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   }
 
   SmallVector<Decl *, 8> DeclsInGroup;
-  Decl *FirstDecl = ParseDeclarationAfterDeclaratorAndAttributes(D);
+  Decl *FirstDecl = ParseDeclarationAfterDeclaratorAndAttributes(
+      D, ParsedTemplateInfo(), FRI);
   if (LateParsedAttrs.size() > 0)
     ParseLexedAttributeList(LateParsedAttrs, FirstDecl, true, false);
   D.complete(FirstDecl);
@@ -1726,16 +1727,16 @@ bool Parser::ParseAsmAttributesAfterDeclarator(Declarator &D) {
 /// According to the standard grammar, =default and =delete are function
 /// definitions, but that definitely doesn't fit with the parser here.
 ///
-Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
-                                     const ParsedTemplateInfo &TemplateInfo) {
+Decl *Parser::ParseDeclarationAfterDeclarator(
+    Declarator &D, const ParsedTemplateInfo &TemplateInfo) {
   if (ParseAsmAttributesAfterDeclarator(D))
     return 0;
 
   return ParseDeclarationAfterDeclaratorAndAttributes(D, TemplateInfo);
 }
 
-Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
-                                     const ParsedTemplateInfo &TemplateInfo) {
+Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(
+    Declarator &D, const ParsedTemplateInfo &TemplateInfo, ForRangeInit *FRI) {
   // Inform the current actions module that we just parsed this declarator.
   Decl *ThisDecl = 0;
   switch (TemplateInfo.Kind) {
@@ -1800,7 +1801,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
   // Parse declarator '=' initializer.
   // If a '==' or '+=' is found, suggest a fixit to '='.
   if (isTokenEqualOrEqualTypo()) {
-    ConsumeToken();
+    SourceLocation EqualLoc = ConsumeToken();
 
     if (Tok.is(tok::kw_delete)) {
       if (D.isFunctionDeclarator())
@@ -1829,13 +1830,29 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
 
       ExprResult Init(ParseInitializer());
 
+      // If this is the only decl in (possibly) range based for statement,
+      // our best guess is that the user meant ':' instead of '='.
+      if (Tok.is(tok::r_paren) && FRI && D.isFirstDeclarator()) {
+        Diag(EqualLoc, diag::err_single_decl_assign_in_for_range)
+            << FixItHint::CreateReplacement(EqualLoc, ":");
+        // We are trying to stop parser from looking for ';' in this for
+        // statement, therefore preventing spurious errors to be issued.
+        FRI->ColonLoc = EqualLoc;
+        Init = ExprError();
+        FRI->RangeExpr = Init;
+      }
+
       if (getLangOpts().CPlusPlus && D.getCXXScopeSpec().isSet()) {
         Actions.ActOnCXXExitDeclInitializer(getCurScope(), ThisDecl);
         ExitScope();
       }
 
       if (Init.isInvalid()) {
-        SkipUntil(tok::comma, StopAtSemi | StopBeforeMatch);
+        SmallVector<tok::TokenKind, 2> StopTokens;
+        StopTokens.push_back(tok::comma);
+        if (D.getContext() == Declarator::ForContext)
+          StopTokens.push_back(tok::r_paren);
+        SkipUntil(StopTokens, StopAtSemi | StopBeforeMatch);
         Actions.ActOnInitializerError(ThisDecl);
       } else
         Actions.AddInitializerToDecl(ThisDecl, Init.take(),

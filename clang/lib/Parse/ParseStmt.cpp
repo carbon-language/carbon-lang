@@ -1479,12 +1479,10 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
 
     SourceLocation DeclStart = Tok.getLocation(), DeclEnd;
     StmtVector Stmts;
-    DeclGroupPtrTy DG = ParseSimpleDeclaration(Stmts, Declarator::ForContext,
-                                               DeclEnd, attrs, false,
-                                               MightBeForRangeStmt ?
-                                                 &ForRangeInit : 0);
+    DeclGroupPtrTy DG = ParseSimpleDeclaration(
+        Stmts, Declarator::ForContext, DeclEnd, attrs, false,
+        MightBeForRangeStmt ? &ForRangeInit : nullptr);
     FirstPart = Actions.ActOnDeclStmt(DG, DeclStart, Tok.getLocation());
-
     if (ForRangeInit.ParsedForRangeDecl()) {
       Diag(ForRangeInit.ColonLoc, getLangOpts().CPlusPlus11 ?
            diag::warn_cxx98_compat_for_range : diag::ext_for_range);
