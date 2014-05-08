@@ -34,7 +34,6 @@ int my_gettimeofday(struct timeval *p, void *q) {
 }
 
 double my_lgamma(double x) {
-  printf("zzz\n");
   return x;
 }
 
