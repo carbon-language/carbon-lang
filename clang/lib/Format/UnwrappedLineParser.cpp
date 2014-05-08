@@ -886,6 +886,22 @@ bool UnwrappedLineParser::tryToParseLambdaIntroducer() {
   return false;
 }
 
+void UnwrappedLineParser::tryToParseJSFunction() {
+  nextToken();
+  if (FormatTok->isNot(tok::l_paren))
+    return;
+  nextToken();
+  while (FormatTok->isNot(tok::l_brace)) {
+    // Err on the side of caution in order to avoid consuming the full file in
+    // case of incomplete code.
+    if (!FormatTok->isOneOf(tok::identifier, tok::comma, tok::r_paren,
+                            tok::comment))
+      return;
+    nextToken();
+  }
+  parseChildBlock();
+}
+
 bool UnwrappedLineParser::tryToParseBracedList() {
   if (FormatTok->BlockKind == BK_Unknown)
     calculateBraceTypes();
@@ -903,9 +919,11 @@ bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
   // FIXME: Once we have an expression parser in the UnwrappedLineParser,
   // replace this by using parseAssigmentExpression() inside.
   do {
-    // FIXME: When we start to support lambdas, we'll want to parse them away
-    // here, otherwise our bail-out scenarios below break. The better solution
-    // might be to just implement a more or less complete expression parser.
+    if (Style.Language == FormatStyle::LK_JavaScript &&
+        FormatTok->TokenText == "function") {
+      tryToParseJSFunction();
+      continue;
+    }
     switch (FormatTok->Tok.getKind()) {
     case tok::caret:
       nextToken();

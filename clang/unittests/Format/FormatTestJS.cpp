@@ -101,6 +101,13 @@ TEST_F(FormatTestJS, GoogScopes) {
 TEST_F(FormatTestJS, Closures) {
   verifyFormat("doFoo(function() { return 1; });");
   verifyFormat("var func = function() { return 1; };");
+  verifyFormat("return {\n"
+               "  body: {\n"
+               "    setAttribute: function(key, val) { this[key] = val; },\n"
+               "    getAttribute: function(key) { return this[key]; },\n"
+               "    style: {direction: ''}\n"
+               "  }\n"
+               "};");
 }
 
 TEST_F(FormatTestJS, ReturnStatements) {

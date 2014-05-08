@@ -100,6 +100,7 @@ private:
   void parseObjCProtocol();
   bool tryToParseLambda();
   bool tryToParseLambdaIntroducer();
+  void tryToParseJSFunction();
   void addUnwrappedLine();
   bool eof() const;
   void nextToken();
