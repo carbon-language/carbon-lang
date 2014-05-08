@@ -749,14 +749,15 @@ public:
       ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
       return ST == ARM64_AM::LSL;
     }
-    return Kind == k_Extend;
+    return Kind == k_Extend && ARM64_AM::getArithShiftValue(Shifter.Val) <= 4;
   }
   bool isExtend64() const {
     if (Kind != k_Extend)
       return false;
     // UXTX and SXTX require a 64-bit source register (the ExtendLSL64 class).
     ARM64_AM::ExtendType ET = ARM64_AM::getArithExtendType(Extend.Val);
-    return ET != ARM64_AM::UXTX && ET != ARM64_AM::SXTX;
+    return ET != ARM64_AM::UXTX && ET != ARM64_AM::SXTX &&
+           ARM64_AM::getArithShiftValue(Shifter.Val) <= 4;
   }
   bool isExtendLSL64() const {
     // lsl is an alias for UXTX but will be a parsed as a k_Shifter operand.
@@ -767,7 +768,8 @@ public:
     if (Kind != k_Extend)
       return false;
     ARM64_AM::ExtendType ET = ARM64_AM::getArithExtendType(Extend.Val);
-    return ET == ARM64_AM::UXTX || ET == ARM64_AM::SXTX;
+    return (ET == ARM64_AM::UXTX || ET == ARM64_AM::SXTX) &&
+           ARM64_AM::getArithShiftValue(Shifter.Val) <= 4;
   }
 
   bool isArithmeticShifter() const {
@@ -3871,6 +3873,12 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
     return Error(Loc, "invalid operand for instruction");
   case Match_InvalidSuffix:
     return Error(Loc, "invalid type suffix for instruction");
+  case Match_AddSubRegExtendSmall:
+    return Error(Loc,
+      "expected '[su]xt[bhw]' or 'lsl' with optional integer in range [0, 4]");
+  case Match_AddSubRegExtendLarge:
+    return Error(Loc,
+      "expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]");
   case Match_InvalidMemoryIndexedSImm9:
     return Error(Loc, "index must be an integer in range [-256, 255].");
   case Match_InvalidMemoryIndexed32SImm7:
@@ -4447,6 +4455,8 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         ((ARM64Operand *)Operands[ErrorInfo + 1])->isTokenEqual("!"))
       MatchResult = Match_InvalidMemoryIndexedSImm9;
   // FALL THROUGH
+  case Match_AddSubRegExtendSmall:
+  case Match_AddSubRegExtendLarge:
   case Match_InvalidMemoryIndexed8:
   case Match_InvalidMemoryIndexed16:
   case Match_InvalidMemoryIndexed32SImm7:

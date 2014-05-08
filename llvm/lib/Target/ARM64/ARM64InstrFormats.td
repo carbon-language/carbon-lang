@@ -125,15 +125,20 @@ def MoveVecShifterOperand : AsmOperandClass {
 }
 
 // Extend operand for arithmetic encodings.
-def ExtendOperand : AsmOperandClass { let Name = "Extend"; }
+def ExtendOperand : AsmOperandClass {
+  let Name = "Extend";
+  let DiagnosticType = "AddSubRegExtendLarge";
+}
 def ExtendOperand64 : AsmOperandClass {
   let SuperClasses = [ExtendOperand];
   let Name = "Extend64";
+  let DiagnosticType = "AddSubRegExtendSmall";
 }
 // 'extend' that's a lsl of a 64-bit register.
 def ExtendOperandLSL64 : AsmOperandClass {
   let SuperClasses = [ExtendOperand];
   let Name = "ExtendLSL64";
+  let DiagnosticType = "AddSubRegExtendLarge";
 }
 
 // 8-bit floating-point immediate encodings.
