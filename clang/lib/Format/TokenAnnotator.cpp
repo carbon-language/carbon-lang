@@ -904,7 +904,7 @@ private:
         PrevToken->Type == TT_UnaryOperator || PrevToken->Type == TT_CastRParen)
       return TT_UnaryOperator;
 
-    if (NextToken->is(tok::l_square))
+    if (NextToken->is(tok::l_square) && NextToken->Type != TT_LambdaLSquare)
       return TT_PointerOrReference;
 
     if (PrevToken->is(tok::r_paren) && PrevToken->MatchingParen &&

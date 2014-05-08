@@ -4612,6 +4612,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("void f(int *a = d * e, int *b = c * d);");
   verifyFormat("for (char **a = b; *a; ++a) {\n}");
   verifyFormat("for (; a && b;) {\n}");
+  verifyFormat("bool foo = true && [] { return false; }();");
 
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
