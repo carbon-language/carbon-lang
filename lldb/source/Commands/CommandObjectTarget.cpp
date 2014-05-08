@@ -4908,7 +4908,7 @@ public:
                              "target stop-hook add",
                              "Add a hook to be executed when the target stops.",
                              "target stop-hook add"),
-        IOHandlerDelegateMultiline ("DONE", true, IOHandlerDelegate::Completion::LLDBCommand),
+        IOHandlerDelegateMultiline ("DONE", IOHandlerDelegate::Completion::LLDBCommand),
         m_options (interpreter)
     {
     }

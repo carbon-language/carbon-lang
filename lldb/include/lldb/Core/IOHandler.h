@@ -337,11 +337,9 @@ namespace lldb_private {
     {
     public:
         IOHandlerDelegateMultiline (const char *end_line,
-                                    bool remove_end_line,
                                     Completion completion = Completion::None) :
             IOHandlerDelegate (completion),
-            m_end_line((end_line && end_line[0]) ? end_line : ""),
-            m_remove_end_line (remove_end_line)
+            m_end_line((end_line && end_line[0]) ? end_line : "")
         {
         }
         
@@ -378,8 +376,6 @@ namespace lldb_private {
                 // getting our multiple lines.
                 if (lines[line_idx] == m_end_line)
                 {
-                    if (m_remove_end_line)
-                        lines.PopBack();
                     return LineStatus::Done;
                 }
             }
@@ -387,7 +383,6 @@ namespace lldb_private {
         }
     protected:
         const std::string m_end_line;
-        const bool m_remove_end_line;
     };
     
     

@@ -46,7 +46,7 @@ public:
                              "add",
                              "Add a set of commands to a watchpoint, to be executed whenever the watchpoint is hit.",
                              NULL),
-        IOHandlerDelegateMultiline("DONE", true, IOHandlerDelegate::Completion::LLDBCommand),
+        IOHandlerDelegateMultiline("DONE", IOHandlerDelegate::Completion::LLDBCommand),
         m_options (interpreter)
     {
         SetHelpLong (

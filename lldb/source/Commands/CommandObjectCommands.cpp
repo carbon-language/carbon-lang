@@ -1567,7 +1567,7 @@ public:
                              "command script add",
                              "Add a scripted function as an LLDB command.",
                              NULL),
-        IOHandlerDelegateMultiline ("DONE", true),
+        IOHandlerDelegateMultiline ("DONE"),
         m_options (interpreter)
     {
         CommandArgumentEntry arg1;

@@ -140,7 +140,7 @@ ScriptInterpreterPython::Locker::~Locker()
 
 ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interpreter) :
     ScriptInterpreter (interpreter, eScriptLanguagePython),
-    IOHandlerDelegateMultiline("DONE", true),
+    IOHandlerDelegateMultiline("DONE"),
     m_saved_stdin (),
     m_saved_stdout (),
     m_saved_stderr (),

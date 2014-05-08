@@ -529,6 +529,7 @@ IOHandlerEditline::GetLines (StringList &lines, bool &interrupted)
     else
     {
         LineStatus lines_status = LineStatus::Success;
+        Error error;
 
         while (lines_status == LineStatus::Success)
         {
@@ -551,7 +552,6 @@ IOHandlerEditline::GetLines (StringList &lines, bool &interrupted)
                 else
                 {
                     lines.AppendString(line);
-                    Error error;
                     lines_status = m_delegate.IOHandlerLinesUpdated(*this, lines, lines.GetSize() - 1, error);
                 }
             }
@@ -560,6 +560,11 @@ IOHandlerEditline::GetLines (StringList &lines, bool &interrupted)
                 lines_status = LineStatus::Done;
             }
         }
+        
+        // Call the IOHandlerLinesUpdated function with UINT32_MAX as the line
+        // number to indicate all lines are complete
+        m_delegate.IOHandlerLinesUpdated(*this, lines, UINT32_MAX, error);
+
         success = lines.GetSize() > 0;
     }
     return success;

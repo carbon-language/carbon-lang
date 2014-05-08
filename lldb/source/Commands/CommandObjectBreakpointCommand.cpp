@@ -46,7 +46,7 @@ public:
                              "add",
                              "Add a set of commands to a breakpoint, to be executed whenever the breakpoint is hit.",
                              NULL),
-    IOHandlerDelegateMultiline ("DONE", true, IOHandlerDelegate::Completion::LLDBCommand),
+    IOHandlerDelegateMultiline ("DONE", IOHandlerDelegate::Completion::LLDBCommand),
         m_options (interpreter)
     {
         SetHelpLong (
