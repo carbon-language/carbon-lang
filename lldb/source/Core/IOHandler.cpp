@@ -618,7 +618,7 @@ IOHandlerEditline::Run ()
 void
 IOHandlerEditline::Hide ()
 {
-    if (m_editline_ap && m_editline_ap->GettingLine())
+    if (m_editline_ap)
         m_editline_ap->Hide();
 }
 
@@ -626,8 +626,10 @@ IOHandlerEditline::Hide ()
 void
 IOHandlerEditline::Refresh ()
 {
-    if (m_editline_ap && m_editline_ap->GettingLine())
+    if (m_editline_ap)
+    {
         m_editline_ap->Refresh();
+    }
     else
     {
         const char *prompt = GetPrompt();

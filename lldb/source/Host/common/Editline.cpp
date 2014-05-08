@@ -162,10 +162,7 @@ Editline::Editline (const char *prog,       // prog can't be NULL
     m_history_sp (),
     m_prompt (),
     m_lines_prompt (),
-    m_getc_buffer (),
-    m_getc_mutex (Mutex::eMutexTypeNormal),
-    m_getc_cond (),
-//    m_gets_mutex (Mutex::eMutexTypeNormal),
+    m_getting_char (false),
     m_completion_callback (NULL),
     m_completion_callback_baton (NULL),
     m_line_complete_callback (NULL),
@@ -725,41 +722,6 @@ Editline::GetPromptCallback (::EditLine *e)
     return "";
 }
 
-size_t
-Editline::SetInputBuffer (const char *c, size_t len)
-{
-    if (c && len > 0)
-    {
-        Mutex::Locker locker(m_getc_mutex);
-        SetGetCharCallback(GetCharInputBufferCallback);
-        m_getc_buffer.append(c, len);
-        m_getc_cond.Broadcast();
-    }
-    return len;
-}
-
-int
-Editline::GetChar (char *c)
-{
-    Mutex::Locker locker(m_getc_mutex);
-    if (m_getc_buffer.empty())
-        m_getc_cond.Wait(m_getc_mutex);
-    if (m_getc_buffer.empty())
-        return 0;
-    *c = m_getc_buffer[0];
-    m_getc_buffer.erase(0,1);
-    return 1;
-}
-
-int
-Editline::GetCharInputBufferCallback (EditLine *e, char *c)
-{
-    Editline *editline = GetClientData (e);
-    if (editline)
-        return editline->GetChar(c);
-    return 0;
-}
-
 int
 Editline::GetCharFromInputFileCallback (EditLine *e, char *c)
 {
@@ -778,7 +740,12 @@ Editline::GetCharFromInputFileCallback (EditLine *e, char *c)
         {
             lldb::ConnectionStatus status = eConnectionStatusSuccess;
             char ch = 0;
-            if (editline->m_file.Read(&ch, 1, UINT32_MAX, status, NULL))
+            // When we start to call el_gets() the editline library needs to
+            // output the prompt
+            editline->m_getting_char.SetValue(true, eBroadcastAlways);
+            const size_t n = editline->m_file.Read(&ch, 1, UINT32_MAX, status, NULL);
+            editline->m_getting_char.SetValue(false, eBroadcastAlways);
+            if (n)
             {
                 if (ch == '\x04')
                 {
@@ -835,12 +802,23 @@ Editline::GetCharFromInputFileCallback (EditLine *e, char *c)
 void
 Editline::Hide ()
 {
-    FILE *out_file = GetOutputFile();
-    if (out_file)
+    if (m_getting_line)
     {
-        const LineInfo *line_info  = ::el_line(m_editline);
-        if (line_info)
-            ::fprintf (out_file, "\033[%uD\033[K", (uint32_t)(strlen(GetPrompt()) + line_info->cursor - line_info->buffer));
+        // If we are getting a line, we might have started to call el_gets() and
+        // it might be printing the prompt. Here we make sure we are actually getting
+        // a character. This way we know the entire prompt has been printed.
+        TimeValue timeout = TimeValue::Now();
+        timeout.OffsetWithSeconds(1);
+        if (m_getting_char.WaitForValueEqualTo(true, &timeout))
+        {
+            FILE *out_file = GetOutputFile();
+            if (out_file)
+            {
+                const LineInfo *line_info  = ::el_line(m_editline);
+                if (line_info)
+                    ::fprintf (out_file, "\033[%uD\033[K", (uint32_t)(strlen(GetPrompt()) + line_info->cursor - line_info->buffer));
+            }
+        }
     }
 }
 
@@ -848,7 +826,18 @@ Editline::Hide ()
 void
 Editline::Refresh()
 {
-    ::el_set (m_editline, EL_REFRESH);
+    if (m_getting_line)
+    {
+        // If we are getting a line, we might have started to call el_gets() and
+        // it might be printing the prompt. Here we make sure we are actually getting
+        // a character. This way we know the entire prompt has been printed.
+        TimeValue timeout = TimeValue::Now();
+        timeout.OffsetWithSeconds(1);
+        if (m_getting_char.WaitForValueEqualTo(true, &timeout))
+        {
+            ::el_set (m_editline, EL_REFRESH);
+        }
+    }
 }
 
 bool

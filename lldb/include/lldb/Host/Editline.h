@@ -127,11 +127,6 @@ public:
 
     size_t
     Push (const char *bytes, size_t len);
-
-    // Cache bytes and use them for input without using a FILE. Calling this function
-    // will set the getc callback in the editline
-    size_t
-    SetInputBuffer (const char *c, size_t len);
     
     static int
     GetCharFromInputFileCallback (::EditLine *e, char *c);
@@ -159,10 +154,6 @@ private:
     
     unsigned char
     HandleCompletion (int ch);
-    
-    int
-    GetChar (char *c);
-
 
     static unsigned char
     CallbackEditPrevLine (::EditLine *e, int ch);
@@ -182,9 +173,6 @@ private:
     static FILE *
     GetFilePointer (::EditLine *e, int fd);
 
-    static int
-    GetCharInputBufferCallback (::EditLine *e, char *c);
-
     enum class Command
     {
         None = 0,
@@ -195,12 +183,9 @@ private:
     EditlineHistorySP m_history_sp;
     std::string m_prompt;
     std::string m_lines_prompt;
-    std::string m_getc_buffer;
-    Mutex m_getc_mutex;
-    Condition m_getc_cond;
+    lldb_private::Predicate<bool> m_getting_char;
     CompleteCallbackType m_completion_callback;
     void *m_completion_callback_baton;
-//    Mutex m_gets_mutex; // Make sure only one thread
     LineCompletedCallbackType m_line_complete_callback;
     void *m_line_complete_callback_baton;
     Command m_lines_command;
