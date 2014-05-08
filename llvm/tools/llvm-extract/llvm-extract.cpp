@@ -166,10 +166,9 @@ int main(int argc, char **argv) {
         "invalid regex: " << Error;
     }
     bool match = false;
-    for (Module::global_iterator GV = M->global_begin(),
-           E = M->global_end(); GV != E; GV++) {
-      if (RegEx.match(GV->getName())) {
-        GVs.insert(&*GV);
+    for (auto &GV : M->globals()) {
+      if (RegEx.match(GV.getName())) {
+        GVs.insert(&GV);
         match = true;
       }
     }
@@ -229,22 +228,19 @@ int main(int argc, char **argv) {
   else {
     // Deleting. Materialize every GV that's *not* in GVs.
     SmallPtrSet<GlobalValue *, 8> GVSet(GVs.begin(), GVs.end());
-    for (Module::global_iterator I = M->global_begin(), E = M->global_end();
-         I != E; ++I) {
-      GlobalVariable *G = I;
-      if (!GVSet.count(G) && G->isMaterializable()) {
+    for (auto &G : M->globals()) {
+      if (!GVSet.count(&G) && G.isMaterializable()) {
         std::string ErrInfo;
-        if (G->Materialize(&ErrInfo)) {
+        if (G.Materialize(&ErrInfo)) {
           errs() << argv[0] << ": error reading input: " << ErrInfo << "\n";
           return 1;
         }
       }
     }
-    for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I) {
-      Function *F = I;
-      if (!GVSet.count(F) && F->isMaterializable()) {
+    for (auto &F : *M) {
+      if (!GVSet.count(&F) && F.isMaterializable()) {
         std::string ErrInfo;
-        if (F->Materialize(&ErrInfo)) {
+        if (F.Materialize(&ErrInfo)) {
           errs() << argv[0] << ": error reading input: " << ErrInfo << "\n";
           return 1;
         }
