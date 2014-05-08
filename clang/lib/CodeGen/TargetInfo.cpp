@@ -6218,8 +6218,8 @@ class XCoreTargetCodeGenInfo : public TargetCodeGenInfo {
 public:
   XCoreTargetCodeGenInfo(CodeGenTypes &CGT)
     :TargetCodeGenInfo(new XCoreABIInfo(CGT)) {}
-  virtual void emitTargetMD(const Decl *D, llvm::GlobalValue *GV,
-                            CodeGen::CodeGenModule &M) const;
+  void emitTargetMD(const Decl *D, llvm::GlobalValue *GV,
+                    CodeGen::CodeGenModule &M) const override;
 };
 
 } // End anonymous namespace.
