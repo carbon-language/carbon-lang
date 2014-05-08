@@ -2182,27 +2182,27 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
   llvm::FunctionType *Ty = getTypes().GetFunctionType(FI);
 
   // Get or create the prototype for the function.
-  llvm::Constant *Entry =
-      GV ? GV
-         : GetAddrOfFunction(GD, Ty, /*ForVTable=*/false, /*DontDefer*/ true);
+  if (!GV) {
+    llvm::Constant *C =
+        GetAddrOfFunction(GD, Ty, /*ForVTable=*/false, /*DontDefer*/ true);
 
-  // Strip off a bitcast if we got one back.
-  if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(Entry)) {
-    assert(CE->getOpcode() == llvm::Instruction::BitCast);
-    Entry = CE->getOperand(0);
+    // Strip off a bitcast if we got one back.
+    if (llvm::ConstantExpr *CE = dyn_cast<llvm::ConstantExpr>(C)) {
+      assert(CE->getOpcode() == llvm::Instruction::BitCast);
+      GV = cast<llvm::GlobalValue>(CE->getOperand(0));
+    } else {
+      GV = cast<llvm::GlobalValue>(C);
+    }
   }
 
-  if (!cast<llvm::GlobalValue>(Entry)->isDeclaration()) {
+  if (!GV->isDeclaration()) {
     getDiags().Report(D->getLocation(), diag::err_duplicate_mangled_name);
     return;
   }
 
-  if (cast<llvm::GlobalValue>(Entry)->getType()->getElementType() != Ty) {
-    llvm::GlobalValue *OldFn = cast<llvm::GlobalValue>(Entry);
-
+  if (GV->getType()->getElementType() != Ty) {
     // If the types mismatch then we have to rewrite the definition.
-    assert(OldFn->isDeclaration() &&
-           "Shouldn't replace non-declaration");
+    assert(GV->isDeclaration() && "Shouldn't replace non-declaration");
 
     // F is the Function* for the one with the wrong type, we must make a new
     // Function* and update everything that used F (a declaration) with the new
@@ -2212,8 +2212,8 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
     // (e.g. "int f()") and then a definition of a different type
     // (e.g. "int f(int x)").  Move the old function aside so that it
     // doesn't interfere with GetAddrOfFunction.
-    OldFn->setName(StringRef());
-    llvm::Function *NewFn = cast<llvm::Function>(GetAddrOfFunction(GD, Ty));
+    GV->setName(StringRef());
+    auto *NewFn = cast<llvm::Function>(GetAddrOfFunction(GD, Ty));
 
     // This might be an implementation of a function without a
     // prototype, in which case, try to do special replacement of
@@ -2222,29 +2222,29 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
     // so as to make a direct call, which makes the inliner happier
     // and suppresses a number of optimizer warnings (!) about
     // dropping arguments.
-    if (!OldFn->use_empty()) {
-      ReplaceUsesOfNonProtoTypeWithRealFunction(OldFn, NewFn);
-      OldFn->removeDeadConstantUsers();
+    if (!GV->use_empty()) {
+      ReplaceUsesOfNonProtoTypeWithRealFunction(GV, NewFn);
+      GV->removeDeadConstantUsers();
     }
 
     // Replace uses of F with the Function we will endow with a body.
-    if (!Entry->use_empty()) {
+    if (!GV->use_empty()) {
       llvm::Constant *NewPtrForOldDecl =
-        llvm::ConstantExpr::getBitCast(NewFn, Entry->getType());
-      Entry->replaceAllUsesWith(NewPtrForOldDecl);
+          llvm::ConstantExpr::getBitCast(NewFn, GV->getType());
+      GV->replaceAllUsesWith(NewPtrForOldDecl);
     }
 
     // Ok, delete the old function now, which is dead.
-    OldFn->eraseFromParent();
+    GV->eraseFromParent();
 
-    Entry = NewFn;
+    GV = NewFn;
   }
 
   // We need to set linkage and visibility on the function before
   // generating code for it because various parts of IR generation
   // want to propagate this information down (e.g. to local static
   // declarations).
-  llvm::Function *Fn = cast<llvm::Function>(Entry);
+  llvm::Function *Fn = cast<llvm::Function>(GV);
   setFunctionLinkage(GD, Fn);
 
   // FIXME: this is redundant with part of SetFunctionDefinitionAttributes
