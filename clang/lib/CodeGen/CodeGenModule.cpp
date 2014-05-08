@@ -594,14 +594,9 @@ CodeGenModule::getFunctionLinkage(GlobalDecl GD) {
                                      UseThunkForDtorVariant);
 }
 
-
-/// SetFunctionDefinitionAttributes - Set attributes for a global.
-///
-/// FIXME: This is currently only done for aliases and functions, but not for
-/// variables (these details are set in EmitGlobalVarDefinition for variables).
-void CodeGenModule::SetFunctionDefinitionAttributes(const FunctionDecl *D,
-                                                    llvm::GlobalValue *GV) {
-  setNonAliasAttributes(D, GV);
+void CodeGenModule::setFunctionDefinitionAttributes(const FunctionDecl *D,
+                                                    llvm::Function *F) {
+  setNonAliasAttributes(D, F);
 }
 
 void CodeGenModule::SetLLVMFunctionAttributes(const Decl *D,
@@ -2247,14 +2242,14 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
   llvm::Function *Fn = cast<llvm::Function>(GV);
   setFunctionLinkage(GD, Fn);
 
-  // FIXME: this is redundant with part of SetFunctionDefinitionAttributes
+  // FIXME: this is redundant with part of setFunctionDefinitionAttributes
   setGlobalVisibility(Fn, D);
 
   MaybeHandleStaticInExternC(D, Fn);
 
   CodeGenFunction(*this).GenerateCode(D, Fn, FI);
 
-  SetFunctionDefinitionAttributes(D, Fn);
+  setFunctionDefinitionAttributes(D, Fn);
   SetLLVMFunctionAttributesForDefinition(D, Fn);
 
   if (const ConstructorAttr *CA = D->getAttr<ConstructorAttr>())

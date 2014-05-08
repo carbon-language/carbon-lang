@@ -1061,9 +1061,9 @@ private:
 
   void setNonAliasAttributes(const Decl *D, llvm::GlobalValue *GV);
 
-  /// SetFunctionDefinitionAttributes - Set attributes for a global definition.
-  void SetFunctionDefinitionAttributes(const FunctionDecl *D,
-                                       llvm::GlobalValue *GV);
+  /// Set attributes for a global definition.
+  void setFunctionDefinitionAttributes(const FunctionDecl *D,
+                                       llvm::Function *F);
 
   /// SetFunctionAttributes - Set function attributes for a function
   /// declaration.

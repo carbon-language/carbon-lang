@@ -217,7 +217,7 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *ctor,
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(ctor, ctorType), fn, fnInfo);
 
-  SetFunctionDefinitionAttributes(ctor, fn);
+  setFunctionDefinitionAttributes(ctor, fn);
   SetLLVMFunctionAttributesForDefinition(ctor, fn);
 }
 
@@ -274,7 +274,7 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *dtor,
 
   CodeGenFunction(*this).GenerateCode(GlobalDecl(dtor, dtorType), fn, fnInfo);
 
-  SetFunctionDefinitionAttributes(dtor, fn);
+  setFunctionDefinitionAttributes(dtor, fn);
   SetLLVMFunctionAttributesForDefinition(dtor, fn);
 }
 
