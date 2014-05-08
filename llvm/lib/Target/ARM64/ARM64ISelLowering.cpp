@@ -369,6 +369,9 @@ ARM64TargetLowering::ARM64TargetLowering(ARM64TargetMachine &TM)
   setTargetDAGCombine(ISD::SELECT);
   setTargetDAGCombine(ISD::VSELECT);
 
+  setTargetDAGCombine(ISD::INTRINSIC_VOID);
+  setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
+
   MaxStoresPerMemset = MaxStoresPerMemsetOptSize = 8;
   MaxStoresPerMemcpy = MaxStoresPerMemcpyOptSize = 4;
   MaxStoresPerMemmove = MaxStoresPerMemmoveOptSize = 4;
@@ -729,6 +732,27 @@ const char *ARM64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARM64ISD::URSHR_I:           return "ARM64ISD::URSHR_I";
   case ARM64ISD::SQSHLU_I:          return "ARM64ISD::SQSHLU_I";
   case ARM64ISD::WrapperLarge:      return "ARM64ISD::WrapperLarge";
+  case ARM64ISD::LD2post:           return "ARM64ISD::LD2post";
+  case ARM64ISD::LD3post:           return "ARM64ISD::LD3post";
+  case ARM64ISD::LD4post:           return "ARM64ISD::LD4post";
+  case ARM64ISD::ST2post:           return "ARM64ISD::ST2post";
+  case ARM64ISD::ST3post:           return "ARM64ISD::ST3post";
+  case ARM64ISD::ST4post:           return "ARM64ISD::ST4post";
+  case ARM64ISD::LD1x2post:         return "ARM64ISD::LD1x2post";
+  case ARM64ISD::LD1x3post:         return "ARM64ISD::LD1x3post";
+  case ARM64ISD::LD1x4post:         return "ARM64ISD::LD1x4post";
+  case ARM64ISD::ST1x2post:         return "ARM64ISD::ST1x2post";
+  case ARM64ISD::ST1x3post:         return "ARM64ISD::ST1x3post";
+  case ARM64ISD::ST1x4post:         return "ARM64ISD::ST1x4post";
+  case ARM64ISD::LD2DUPpost:        return "ARM64ISD::LD2DUPpost";
+  case ARM64ISD::LD3DUPpost:        return "ARM64ISD::LD3DUPpost";
+  case ARM64ISD::LD4DUPpost:        return "ARM64ISD::LD4DUPpost";
+  case ARM64ISD::LD2LANEpost:       return "ARM64ISD::LD2LANEpost";
+  case ARM64ISD::LD3LANEpost:       return "ARM64ISD::LD3LANEpost";
+  case ARM64ISD::LD4LANEpost:       return "ARM64ISD::LD4LANEpost";
+  case ARM64ISD::ST2LANEpost:       return "ARM64ISD::ST2LANEpost";
+  case ARM64ISD::ST3LANEpost:       return "ARM64ISD::ST3LANEpost";
+  case ARM64ISD::ST4LANEpost:       return "ARM64ISD::ST4LANEpost";
   }
 }
 
@@ -5683,6 +5707,9 @@ bool ARM64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::arm64_neon_ld2:
   case Intrinsic::arm64_neon_ld3:
   case Intrinsic::arm64_neon_ld4:
+  case Intrinsic::arm64_neon_ld1x2:
+  case Intrinsic::arm64_neon_ld1x3:
+  case Intrinsic::arm64_neon_ld1x4:
   case Intrinsic::arm64_neon_ld2lane:
   case Intrinsic::arm64_neon_ld3lane:
   case Intrinsic::arm64_neon_ld4lane:
@@ -5704,6 +5731,9 @@ bool ARM64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::arm64_neon_st2:
   case Intrinsic::arm64_neon_st3:
   case Intrinsic::arm64_neon_st4:
+  case Intrinsic::arm64_neon_st1x2:
+  case Intrinsic::arm64_neon_st1x3:
+  case Intrinsic::arm64_neon_st1x4:
   case Intrinsic::arm64_neon_st2lane:
   case Intrinsic::arm64_neon_st3lane:
   case Intrinsic::arm64_neon_st4lane: {
@@ -7038,6 +7068,138 @@ static SDValue performSTORECombine(SDNode *N,
                       S->getAlignment());
 }
 
+/// Target-specific DAG combine function for NEON load/store intrinsics
+/// to merge base address updates.
+static SDValue performNEONPostLDSTCombine(SDNode *N,
+                                          TargetLowering::DAGCombinerInfo &DCI,
+                                          SelectionDAG &DAG) {
+  if (DCI.isBeforeLegalize() || DCI.isCalledByLegalizer())
+    return SDValue();
+
+  unsigned AddrOpIdx = N->getNumOperands() - 1;
+  SDValue Addr = N->getOperand(AddrOpIdx);
+
+  // Search for a use of the address operand that is an increment.
+  for (SDNode::use_iterator UI = Addr.getNode()->use_begin(),
+       UE = Addr.getNode()->use_end(); UI != UE; ++UI) {
+    SDNode *User = *UI;
+    if (User->getOpcode() != ISD::ADD ||
+        UI.getUse().getResNo() != Addr.getResNo())
+      continue;
+
+    // Check that the add is independent of the load/store.  Otherwise, folding
+    // it would create a cycle.
+    if (User->isPredecessorOf(N) || N->isPredecessorOf(User))
+      continue;
+
+    // Find the new opcode for the updating load/store.
+    bool IsStore = false;
+    bool IsLaneOp = false;
+    bool IsDupOp = false;
+    unsigned NewOpc = 0;
+    unsigned NumVecs = 0;
+    unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
+    switch (IntNo) {
+    default: llvm_unreachable("unexpected intrinsic for Neon base update");
+    case Intrinsic::arm64_neon_ld2:       NewOpc = ARM64ISD::LD2post;
+      NumVecs = 2; break;
+    case Intrinsic::arm64_neon_ld3:       NewOpc = ARM64ISD::LD3post;
+      NumVecs = 3; break;
+    case Intrinsic::arm64_neon_ld4:       NewOpc = ARM64ISD::LD4post;
+      NumVecs = 4; break;
+    case Intrinsic::arm64_neon_st2:       NewOpc = ARM64ISD::ST2post;
+      NumVecs = 2; IsStore = true; break;
+    case Intrinsic::arm64_neon_st3:       NewOpc = ARM64ISD::ST3post;
+      NumVecs = 3; IsStore = true; break;
+    case Intrinsic::arm64_neon_st4:       NewOpc = ARM64ISD::ST4post;
+      NumVecs = 4; IsStore = true; break;
+    case Intrinsic::arm64_neon_ld1x2:     NewOpc = ARM64ISD::LD1x2post;
+      NumVecs = 2; break;
+    case Intrinsic::arm64_neon_ld1x3:     NewOpc = ARM64ISD::LD1x3post;
+      NumVecs = 3; break;
+    case Intrinsic::arm64_neon_ld1x4:     NewOpc = ARM64ISD::LD1x4post;
+      NumVecs = 4; break;
+    case Intrinsic::arm64_neon_st1x2:     NewOpc = ARM64ISD::ST1x2post;
+      NumVecs = 2; IsStore = true; break;
+    case Intrinsic::arm64_neon_st1x3:     NewOpc = ARM64ISD::ST1x3post;
+      NumVecs = 3; IsStore = true; break;
+    case Intrinsic::arm64_neon_st1x4:     NewOpc = ARM64ISD::ST1x4post;
+      NumVecs = 4; IsStore = true; break;
+    case Intrinsic::arm64_neon_ld2r:      NewOpc = ARM64ISD::LD2DUPpost;
+      NumVecs = 2; IsDupOp = true; break;
+    case Intrinsic::arm64_neon_ld3r:      NewOpc = ARM64ISD::LD3DUPpost;
+      NumVecs = 3; IsDupOp = true; break;
+    case Intrinsic::arm64_neon_ld4r:      NewOpc = ARM64ISD::LD4DUPpost;
+      NumVecs = 4; IsDupOp = true; break;
+    case Intrinsic::arm64_neon_ld2lane:   NewOpc = ARM64ISD::LD2LANEpost;
+      NumVecs = 2; IsLaneOp = true; break;
+    case Intrinsic::arm64_neon_ld3lane:   NewOpc = ARM64ISD::LD3LANEpost;
+      NumVecs = 3; IsLaneOp = true; break;
+    case Intrinsic::arm64_neon_ld4lane:   NewOpc = ARM64ISD::LD4LANEpost;
+      NumVecs = 4; IsLaneOp = true; break;
+    case Intrinsic::arm64_neon_st2lane:   NewOpc = ARM64ISD::ST2LANEpost;
+      NumVecs = 2; IsStore = true; IsLaneOp = true; break;
+    case Intrinsic::arm64_neon_st3lane:   NewOpc = ARM64ISD::ST3LANEpost;
+      NumVecs = 3; IsStore = true; IsLaneOp = true; break;
+    case Intrinsic::arm64_neon_st4lane:   NewOpc = ARM64ISD::ST4LANEpost;
+      NumVecs = 4; IsStore = true; IsLaneOp = true; break;
+    }
+
+    EVT VecTy;
+    if (IsStore)
+      VecTy = N->getOperand(2).getValueType();
+    else
+      VecTy = N->getValueType(0);
+
+    // If the increment is a constant, it must match the memory ref size.
+    SDValue Inc = User->getOperand(User->getOperand(0) == Addr ? 1 : 0);
+    if (ConstantSDNode *CInc = dyn_cast<ConstantSDNode>(Inc.getNode())) {
+      uint32_t IncVal = CInc->getZExtValue();
+      unsigned NumBytes = NumVecs * VecTy.getSizeInBits() / 8;
+      if (IsLaneOp || IsDupOp)
+        NumBytes /= VecTy.getVectorNumElements();
+      if (IncVal != NumBytes)
+        continue;
+      Inc = DAG.getRegister(ARM64::XZR, MVT::i64);
+    }
+    SmallVector<SDValue, 8> Ops;
+    Ops.push_back(N->getOperand(0)); // Incoming chain
+    // Load lane and store have vector list as input.
+    if (IsLaneOp || IsStore)
+      for (unsigned i = 2; i < AddrOpIdx; ++i)
+        Ops.push_back(N->getOperand(i));
+    Ops.push_back(N->getOperand(AddrOpIdx)); // Base register
+    Ops.push_back(Inc);
+
+    // Return Types.
+    EVT Tys[6];
+    unsigned NumResultVecs = (IsStore ? 0 : NumVecs);
+    unsigned n;
+    for (n = 0; n < NumResultVecs; ++n)
+      Tys[n] = VecTy;
+    Tys[n++] = MVT::i64;  // Type of write back register
+    Tys[n] = MVT::Other;  // Type of the chain
+    SDVTList SDTys = DAG.getVTList(ArrayRef<EVT>(Tys, NumResultVecs + 2));
+
+    MemIntrinsicSDNode *MemInt = cast<MemIntrinsicSDNode>(N);
+    SDValue UpdN = DAG.getMemIntrinsicNode(NewOpc, SDLoc(N), SDTys, Ops,
+                                           MemInt->getMemoryVT(),
+                                           MemInt->getMemOperand());
+
+    // Update the uses.
+    std::vector<SDValue> NewResults;
+    for (unsigned i = 0; i < NumResultVecs; ++i) {
+      NewResults.push_back(SDValue(UpdN.getNode(), i));
+    }
+    NewResults.push_back(SDValue(UpdN.getNode(), NumResultVecs + 1));
+    DCI.CombineTo(N, NewResults);
+    DCI.CombineTo(User, SDValue(UpdN.getNode(), NumResultVecs));
+
+    break;
+  }
+  return SDValue();
+}
+
 // Optimize compare with zero and branch.
 static SDValue performBRCONDCombine(SDNode *N,
                                     TargetLowering::DAGCombinerInfo &DCI,
@@ -7196,6 +7358,34 @@ SDValue ARM64TargetLowering::PerformDAGCombine(SDNode *N,
     return performSTORECombine(N, DCI, DAG, Subtarget);
   case ARM64ISD::BRCOND:
     return performBRCONDCombine(N, DCI, DAG);
+  case ISD::INTRINSIC_VOID:
+  case ISD::INTRINSIC_W_CHAIN:
+    switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {
+    case Intrinsic::arm64_neon_ld2:
+    case Intrinsic::arm64_neon_ld3:
+    case Intrinsic::arm64_neon_ld4:
+    case Intrinsic::arm64_neon_ld1x2:
+    case Intrinsic::arm64_neon_ld1x3:
+    case Intrinsic::arm64_neon_ld1x4:
+    case Intrinsic::arm64_neon_ld2lane:
+    case Intrinsic::arm64_neon_ld3lane:
+    case Intrinsic::arm64_neon_ld4lane:
+    case Intrinsic::arm64_neon_ld2r:
+    case Intrinsic::arm64_neon_ld3r:
+    case Intrinsic::arm64_neon_ld4r:
+    case Intrinsic::arm64_neon_st2:
+    case Intrinsic::arm64_neon_st3:
+    case Intrinsic::arm64_neon_st4:
+    case Intrinsic::arm64_neon_st1x2:
+    case Intrinsic::arm64_neon_st1x3:
+    case Intrinsic::arm64_neon_st1x4:
+    case Intrinsic::arm64_neon_st2lane:
+    case Intrinsic::arm64_neon_st3lane:
+    case Intrinsic::arm64_neon_st4lane:
+      return performNEONPostLDSTCombine(N, DCI, DAG);
+    default:
+      break;
+    }
   }
   return SDValue();
 }

@@ -160,7 +160,30 @@ enum {
 
   // {s|u}int to FP within a FP register.
   SITOF,
-  UITOF
+  UITOF,
+
+  // NEON Load/Store with post-increment base updates
+  LD2post = ISD::FIRST_TARGET_MEMORY_OPCODE,
+  LD3post,
+  LD4post,
+  ST2post,
+  ST3post,
+  ST4post,
+  LD1x2post,
+  LD1x3post,
+  LD1x4post,
+  ST1x2post,
+  ST1x3post,
+  ST1x4post,
+  LD2DUPpost,
+  LD3DUPpost,
+  LD4DUPpost,
+  LD2LANEpost,
+  LD3LANEpost,
+  LD4LANEpost,
+  ST2LANEpost,
+  ST3LANEpost,
+  ST4LANEpost
 };
 
 } // end namespace ARM64ISD

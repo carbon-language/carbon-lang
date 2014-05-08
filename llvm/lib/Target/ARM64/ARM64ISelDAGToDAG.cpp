@@ -150,10 +150,15 @@ public:
 
   SDNode *SelectLoad(SDNode *N, unsigned NumVecs, unsigned Opc,
                      unsigned SubRegIdx);
+  SDNode *SelectPostLoad(SDNode *N, unsigned NumVecs, unsigned Opc,
+                         unsigned SubRegIdx);
   SDNode *SelectLoadLane(SDNode *N, unsigned NumVecs, unsigned Opc);
+  SDNode *SelectPostLoadLane(SDNode *N, unsigned NumVecs, unsigned Opc);
 
   SDNode *SelectStore(SDNode *N, unsigned NumVecs, unsigned Opc);
+  SDNode *SelectPostStore(SDNode *N, unsigned NumVecs, unsigned Opc);
   SDNode *SelectStoreLane(SDNode *N, unsigned NumVecs, unsigned Opc);
+  SDNode *SelectPostStoreLane(SDNode *N, unsigned NumVecs, unsigned Opc);
 
   SDNode *SelectSIMDAddSubNarrowing(unsigned IntNo, SDNode *Node);
   SDNode *SelectSIMDXtnNarrowing(unsigned IntNo, SDNode *Node);
@@ -952,33 +957,43 @@ SDNode *ARM64DAGToDAGISel::SelectLoad(SDNode *N, unsigned NumVecs, unsigned Opc,
 
   SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
   SDValue SuperReg = SDValue(Ld, 0);
-
-  // MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
-  // MemOp[0] = cast<MemIntrinsicSDNode>(N)->getMemOperand();
-  // cast<MachineSDNode>(Ld)->setMemRefs(MemOp, MemOp + 1);
-
-  switch (NumVecs) {
-  case 4:
-    ReplaceUses(SDValue(N, 3), CurDAG->getTargetExtractSubreg(SubRegIdx + 3, dl,
-                                                              VT, SuperReg));
-  // FALLTHROUGH
-  case 3:
-    ReplaceUses(SDValue(N, 2), CurDAG->getTargetExtractSubreg(SubRegIdx + 2, dl,
-                                                              VT, SuperReg));
-  // FALLTHROUGH
-  case 2:
-    ReplaceUses(SDValue(N, 1), CurDAG->getTargetExtractSubreg(SubRegIdx + 1, dl,
-                                                              VT, SuperReg));
-    ReplaceUses(SDValue(N, 0),
-                CurDAG->getTargetExtractSubreg(SubRegIdx, dl, VT, SuperReg));
-    break;
-  case 1:
-    ReplaceUses(SDValue(N, 0), SuperReg);
-    break;
-  }
+  for (unsigned i = 0; i < NumVecs; ++i)
+    ReplaceUses(SDValue(N, i),
+        CurDAG->getTargetExtractSubreg(SubRegIdx + i, dl, VT, SuperReg));
 
   ReplaceUses(SDValue(N, NumVecs), SDValue(Ld, 1));
+  return nullptr;
+}
 
+SDNode *ARM64DAGToDAGISel::SelectPostLoad(SDNode *N, unsigned NumVecs,
+                                          unsigned Opc, unsigned SubRegIdx) {
+  SDLoc dl(N);
+  EVT VT = N->getValueType(0);
+  SDValue Chain = N->getOperand(0);
+
+  SmallVector<SDValue, 6> Ops;
+  Ops.push_back(N->getOperand(1)); // Mem operand
+  Ops.push_back(N->getOperand(2)); // Incremental
+  Ops.push_back(Chain);
+
+  std::vector<EVT> ResTys;
+  ResTys.push_back(MVT::i64); // Type of the write back register
+  ResTys.push_back(MVT::Untyped);
+  ResTys.push_back(MVT::Other);
+
+  SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
+
+  // Update uses of write back register
+  ReplaceUses(SDValue(N, NumVecs), SDValue(Ld, 0));
+
+  // Update uses of vector list
+  SDValue SuperReg = SDValue(Ld, 1);
+  for (unsigned i = 0; i < NumVecs; ++i)
+    ReplaceUses(SDValue(N, i),
+        CurDAG->getTargetExtractSubreg(SubRegIdx + i, dl, VT, SuperReg));
+
+  // Update the chain
+  ReplaceUses(SDValue(N, NumVecs + 1), SDValue(Ld, 2));
   return nullptr;
 }
 
@@ -997,6 +1012,29 @@ SDNode *ARM64DAGToDAGISel::SelectStore(SDNode *N, unsigned NumVecs,
   Ops.push_back(N->getOperand(NumVecs + 2));
   Ops.push_back(N->getOperand(0));
   SDNode *St = CurDAG->getMachineNode(Opc, dl, N->getValueType(0), Ops);
+
+  return St;
+}
+
+SDNode *ARM64DAGToDAGISel::SelectPostStore(SDNode *N, unsigned NumVecs,
+                                               unsigned Opc) {
+  SDLoc dl(N);
+  EVT VT = N->getOperand(2)->getValueType(0);
+  SmallVector<EVT, 2> ResTys;
+  ResTys.push_back(MVT::i64);   // Type of the write back register
+  ResTys.push_back(MVT::Other); // Type for the Chain
+
+  // Form a REG_SEQUENCE to force register allocation.
+  bool Is128Bit = VT.getSizeInBits() == 128;
+  SmallVector<SDValue, 4> Regs(N->op_begin() + 1, N->op_begin() + 1 + NumVecs);
+  SDValue RegSeq = Is128Bit ? createQTuple(Regs) : createDTuple(Regs);
+
+  SmallVector<SDValue, 6> Ops;
+  Ops.push_back(RegSeq);
+  Ops.push_back(N->getOperand(NumVecs + 1)); // base register
+  Ops.push_back(N->getOperand(NumVecs + 2)); // Incremental
+  Ops.push_back(N->getOperand(0)); // Chain
+  SDNode *St = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
 
   return St;
 }
@@ -1065,42 +1103,68 @@ SDNode *ARM64DAGToDAGISel::SelectLoadLane(SDNode *N, unsigned NumVecs,
   SDValue SuperReg = SDValue(Ld, 0);
 
   EVT WideVT = RegSeq.getOperand(1)->getValueType(0);
-  switch (NumVecs) {
-  case 4: {
-    SDValue NV3 =
-        CurDAG->getTargetExtractSubreg(ARM64::qsub3, dl, WideVT, SuperReg);
+  static unsigned QSubs[] = { ARM64::qsub0, ARM64::qsub1, ARM64::qsub2,
+                              ARM64::qsub3 };
+  for (unsigned i = 0; i < NumVecs; ++i) {
+    SDValue NV = CurDAG->getTargetExtractSubreg(QSubs[i], dl, WideVT, SuperReg);
     if (Narrow)
-      ReplaceUses(SDValue(N, 3), NarrowVector(NV3, *CurDAG));
-    else
-      ReplaceUses(SDValue(N, 3), NV3);
-  }
-  // FALLTHROUGH
-  case 3: {
-    SDValue NV2 =
-        CurDAG->getTargetExtractSubreg(ARM64::qsub2, dl, WideVT, SuperReg);
-    if (Narrow)
-      ReplaceUses(SDValue(N, 2), NarrowVector(NV2, *CurDAG));
-    else
-      ReplaceUses(SDValue(N, 2), NV2);
-  }
-  // FALLTHROUGH
-  case 2: {
-    SDValue NV1 =
-        CurDAG->getTargetExtractSubreg(ARM64::qsub1, dl, WideVT, SuperReg);
-    SDValue NV0 =
-        CurDAG->getTargetExtractSubreg(ARM64::qsub0, dl, WideVT, SuperReg);
-    if (Narrow) {
-      ReplaceUses(SDValue(N, 1), NarrowVector(NV1, *CurDAG));
-      ReplaceUses(SDValue(N, 0), NarrowVector(NV0, *CurDAG));
-    } else {
-      ReplaceUses(SDValue(N, 1), NV1);
-      ReplaceUses(SDValue(N, 0), NV0);
-    }
-    break;
-  }
+      NV = NarrowVector(NV, *CurDAG);
+    ReplaceUses(SDValue(N, i), NV);
   }
 
   ReplaceUses(SDValue(N, NumVecs), SDValue(Ld, 1));
+
+  return Ld;
+}
+
+SDNode *ARM64DAGToDAGISel::SelectPostLoadLane(SDNode *N, unsigned NumVecs,
+                                              unsigned Opc) {
+  SDLoc dl(N);
+  EVT VT = N->getValueType(0);
+  bool Narrow = VT.getSizeInBits() == 64;
+
+  // Form a REG_SEQUENCE to force register allocation.
+  SmallVector<SDValue, 4> Regs(N->op_begin() + 1, N->op_begin() + 1 + NumVecs);
+
+  if (Narrow)
+    std::transform(Regs.begin(), Regs.end(), Regs.begin(),
+                   WidenVector(*CurDAG));
+
+  SDValue RegSeq = createQTuple(Regs);
+
+  std::vector<EVT> ResTys;
+  ResTys.push_back(MVT::i64); // Type of the write back register
+  ResTys.push_back(MVT::Untyped);
+  ResTys.push_back(MVT::Other);
+
+  unsigned LaneNo =
+      cast<ConstantSDNode>(N->getOperand(NumVecs + 1))->getZExtValue();
+
+  SmallVector<SDValue, 6> Ops;
+  Ops.push_back(RegSeq);
+  Ops.push_back(CurDAG->getTargetConstant(LaneNo, MVT::i64)); // Lane Number
+  Ops.push_back(N->getOperand(NumVecs + 2)); // Base register
+  Ops.push_back(N->getOperand(NumVecs + 3)); // Incremental
+  Ops.push_back(N->getOperand(0));
+  SDNode *Ld = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
+
+  // Update uses of the write back register
+  ReplaceUses(SDValue(N, NumVecs), SDValue(Ld, 0));
+
+  // Update uses of the vector list
+  SDValue SuperReg = SDValue(Ld, 1);
+  EVT WideVT = RegSeq.getOperand(1)->getValueType(0);
+  static unsigned QSubs[] = { ARM64::qsub0, ARM64::qsub1, ARM64::qsub2,
+                              ARM64::qsub3 };
+  for (unsigned i = 0; i < NumVecs; ++i) {
+    SDValue NV = CurDAG->getTargetExtractSubreg(QSubs[i], dl, WideVT, SuperReg);
+    if (Narrow)
+      NV = NarrowVector(NV, *CurDAG);
+    ReplaceUses(SDValue(N, i), NV);
+  }
+
+  // Update the Chain
+  ReplaceUses(SDValue(N, NumVecs + 1), SDValue(Ld, 2));
 
   return Ld;
 }
@@ -1129,6 +1193,44 @@ SDNode *ARM64DAGToDAGISel::SelectStoreLane(SDNode *N, unsigned NumVecs,
   Ops.push_back(N->getOperand(NumVecs + 3));
   Ops.push_back(N->getOperand(0));
   SDNode *St = CurDAG->getMachineNode(Opc, dl, MVT::Other, Ops);
+
+  // Transfer memoperands.
+  MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
+  MemOp[0] = cast<MemIntrinsicSDNode>(N)->getMemOperand();
+  cast<MachineSDNode>(St)->setMemRefs(MemOp, MemOp + 1);
+
+  return St;
+}
+
+SDNode *ARM64DAGToDAGISel::SelectPostStoreLane(SDNode *N, unsigned NumVecs,
+                                               unsigned Opc) {
+  SDLoc dl(N);
+  EVT VT = N->getOperand(2)->getValueType(0);
+  bool Narrow = VT.getSizeInBits() == 64;
+
+  // Form a REG_SEQUENCE to force register allocation.
+  SmallVector<SDValue, 4> Regs(N->op_begin() + 1, N->op_begin() + 1 + NumVecs);
+
+  if (Narrow)
+    std::transform(Regs.begin(), Regs.end(), Regs.begin(),
+                   WidenVector(*CurDAG));
+
+  SDValue RegSeq = createQTuple(Regs);
+
+  SmallVector<EVT, 2> ResTys;
+  ResTys.push_back(MVT::i64);   // Type of the write back register
+  ResTys.push_back(MVT::Other);
+
+  unsigned LaneNo =
+      cast<ConstantSDNode>(N->getOperand(NumVecs + 1))->getZExtValue();
+
+  SmallVector<SDValue, 6> Ops;
+  Ops.push_back(RegSeq);
+  Ops.push_back(CurDAG->getTargetConstant(LaneNo, MVT::i64));
+  Ops.push_back(N->getOperand(NumVecs + 2)); // Base Register
+  Ops.push_back(N->getOperand(NumVecs + 3)); // Incremental
+  Ops.push_back(N->getOperand(0));
+  SDNode *St = CurDAG->getMachineNode(Opc, dl, ResTys, Ops);
 
   // Transfer memoperands.
   MachineSDNode::mmo_iterator MemOp = MF->allocateMemRefsArray(1);
@@ -2440,6 +2542,378 @@ SDNode *ARM64DAGToDAGISel::Select(SDNode *Node) {
       break;
     }
     }
+  }
+  case ARM64ISD::LD2post: {
+    if (VT == MVT::v8i8)
+      return SelectPostLoad(Node, 2, ARM64::LD2Twov8b_POST, ARM64::dsub0);
+    else if (VT == MVT::v16i8)
+      return SelectPostLoad(Node, 2, ARM64::LD2Twov16b_POST, ARM64::qsub0);
+    else if (VT == MVT::v4i16)
+      return SelectPostLoad(Node, 2, ARM64::LD2Twov4h_POST, ARM64::dsub0);
+    else if (VT == MVT::v8i16)
+      return SelectPostLoad(Node, 2, ARM64::LD2Twov8h_POST, ARM64::qsub0);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostLoad(Node, 2, ARM64::LD2Twov2s_POST, ARM64::dsub0);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostLoad(Node, 2, ARM64::LD2Twov4s_POST, ARM64::qsub0);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostLoad(Node, 2, ARM64::LD1Twov1d_POST, ARM64::dsub0);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostLoad(Node, 2, ARM64::LD2Twov2d_POST, ARM64::qsub0);
+    break;
+  }
+  case ARM64ISD::LD3post: {
+    if (VT == MVT::v8i8)
+      return SelectPostLoad(Node, 3, ARM64::LD3Threev8b_POST, ARM64::dsub0);
+    else if (VT == MVT::v16i8)
+      return SelectPostLoad(Node, 3, ARM64::LD3Threev16b_POST, ARM64::qsub0);
+    else if (VT == MVT::v4i16)
+      return SelectPostLoad(Node, 3, ARM64::LD3Threev4h_POST, ARM64::dsub0);
+    else if (VT == MVT::v8i16)
+      return SelectPostLoad(Node, 3, ARM64::LD3Threev8h_POST, ARM64::qsub0);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostLoad(Node, 3, ARM64::LD3Threev2s_POST, ARM64::dsub0);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostLoad(Node, 3, ARM64::LD3Threev4s_POST, ARM64::qsub0);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostLoad(Node, 3, ARM64::LD1Threev1d_POST, ARM64::dsub0);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostLoad(Node, 3, ARM64::LD3Threev2d_POST, ARM64::qsub0);
+    break;
+  }
+  case ARM64ISD::LD4post: {
+    if (VT == MVT::v8i8)
+      return SelectPostLoad(Node, 4, ARM64::LD4Fourv8b_POST, ARM64::dsub0);
+    else if (VT == MVT::v16i8)
+      return SelectPostLoad(Node, 4, ARM64::LD4Fourv16b_POST, ARM64::qsub0);
+    else if (VT == MVT::v4i16)
+      return SelectPostLoad(Node, 4, ARM64::LD4Fourv4h_POST, ARM64::dsub0);
+    else if (VT == MVT::v8i16)
+      return SelectPostLoad(Node, 4, ARM64::LD4Fourv8h_POST, ARM64::qsub0);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostLoad(Node, 4, ARM64::LD4Fourv2s_POST, ARM64::dsub0);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostLoad(Node, 4, ARM64::LD4Fourv4s_POST, ARM64::qsub0);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostLoad(Node, 4, ARM64::LD1Fourv1d_POST, ARM64::dsub0);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostLoad(Node, 4, ARM64::LD4Fourv2d_POST, ARM64::qsub0);
+    break;
+  }
+  case ARM64ISD::LD1x2post: {
+    if (VT == MVT::v8i8)
+      return SelectPostLoad(Node, 2, ARM64::LD1Twov8b_POST, ARM64::dsub0);
+    else if (VT == MVT::v16i8)
+      return SelectPostLoad(Node, 2, ARM64::LD1Twov16b_POST, ARM64::qsub0);
+    else if (VT == MVT::v4i16)
+      return SelectPostLoad(Node, 2, ARM64::LD1Twov4h_POST, ARM64::dsub0);
+    else if (VT == MVT::v8i16)
+      return SelectPostLoad(Node, 2, ARM64::LD1Twov8h_POST, ARM64::qsub0);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostLoad(Node, 2, ARM64::LD1Twov2s_POST, ARM64::dsub0);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostLoad(Node, 2, ARM64::LD1Twov4s_POST, ARM64::qsub0);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostLoad(Node, 2, ARM64::LD1Twov1d_POST, ARM64::dsub0);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostLoad(Node, 2, ARM64::LD1Twov2d_POST, ARM64::qsub0);
+    break;
+  }
+  case ARM64ISD::LD1x3post: {
+    if (VT == MVT::v8i8)
+      return SelectPostLoad(Node, 3, ARM64::LD1Threev8b_POST, ARM64::dsub0);
+    else if (VT == MVT::v16i8)
+      return SelectPostLoad(Node, 3, ARM64::LD1Threev16b_POST, ARM64::qsub0);
+    else if (VT == MVT::v4i16)
+      return SelectPostLoad(Node, 3, ARM64::LD1Threev4h_POST, ARM64::dsub0);
+    else if (VT == MVT::v8i16)
+      return SelectPostLoad(Node, 3, ARM64::LD1Threev8h_POST, ARM64::qsub0);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostLoad(Node, 3, ARM64::LD1Threev2s_POST, ARM64::dsub0);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostLoad(Node, 3, ARM64::LD1Threev4s_POST, ARM64::qsub0);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostLoad(Node, 3, ARM64::LD1Threev1d_POST, ARM64::dsub0);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostLoad(Node, 3, ARM64::LD1Threev2d_POST, ARM64::qsub0);
+    break;
+  }
+  case ARM64ISD::LD1x4post: {
+    if (VT == MVT::v8i8)
+      return SelectPostLoad(Node, 4, ARM64::LD1Fourv8b_POST, ARM64::dsub0);
+    else if (VT == MVT::v16i8)
+      return SelectPostLoad(Node, 4, ARM64::LD1Fourv16b_POST, ARM64::qsub0);
+    else if (VT == MVT::v4i16)
+      return SelectPostLoad(Node, 4, ARM64::LD1Fourv4h_POST, ARM64::dsub0);
+    else if (VT == MVT::v8i16)
+      return SelectPostLoad(Node, 4, ARM64::LD1Fourv8h_POST, ARM64::qsub0);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostLoad(Node, 4, ARM64::LD1Fourv2s_POST, ARM64::dsub0);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostLoad(Node, 4, ARM64::LD1Fourv4s_POST, ARM64::qsub0);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostLoad(Node, 4, ARM64::LD1Fourv1d_POST, ARM64::dsub0);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostLoad(Node, 4, ARM64::LD1Fourv2d_POST, ARM64::qsub0);
+    break;
+  }
+  case ARM64ISD::LD2DUPpost: {
+    if (VT == MVT::v8i8)
+      return SelectPostLoad(Node, 2, ARM64::LD2Rv8b_POST, ARM64::dsub0);
+    else if (VT == MVT::v16i8)
+      return SelectPostLoad(Node, 2, ARM64::LD2Rv16b_POST, ARM64::qsub0);
+    else if (VT == MVT::v4i16)
+      return SelectPostLoad(Node, 2, ARM64::LD2Rv4h_POST, ARM64::dsub0);
+    else if (VT == MVT::v8i16)
+      return SelectPostLoad(Node, 2, ARM64::LD2Rv8h_POST, ARM64::qsub0);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostLoad(Node, 2, ARM64::LD2Rv2s_POST, ARM64::dsub0);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostLoad(Node, 2, ARM64::LD2Rv4s_POST, ARM64::qsub0);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostLoad(Node, 2, ARM64::LD2Rv1d_POST, ARM64::dsub0);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostLoad(Node, 2, ARM64::LD2Rv2d_POST, ARM64::qsub0);
+    break;
+  }
+  case ARM64ISD::LD3DUPpost: {
+    if (VT == MVT::v8i8)
+      return SelectPostLoad(Node, 3, ARM64::LD3Rv8b_POST, ARM64::dsub0);
+    else if (VT == MVT::v16i8)
+      return SelectPostLoad(Node, 3, ARM64::LD3Rv16b_POST, ARM64::qsub0);
+    else if (VT == MVT::v4i16)
+      return SelectPostLoad(Node, 3, ARM64::LD3Rv4h_POST, ARM64::dsub0);
+    else if (VT == MVT::v8i16)
+      return SelectPostLoad(Node, 3, ARM64::LD3Rv8h_POST, ARM64::qsub0);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostLoad(Node, 3, ARM64::LD3Rv2s_POST, ARM64::dsub0);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostLoad(Node, 3, ARM64::LD3Rv4s_POST, ARM64::qsub0);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostLoad(Node, 3, ARM64::LD3Rv1d_POST, ARM64::dsub0);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostLoad(Node, 3, ARM64::LD3Rv2d_POST, ARM64::qsub0);
+    break;
+  }
+  case ARM64ISD::LD4DUPpost: {
+    if (VT == MVT::v8i8)
+      return SelectPostLoad(Node, 4, ARM64::LD4Rv8b_POST, ARM64::dsub0);
+    else if (VT == MVT::v16i8)
+      return SelectPostLoad(Node, 4, ARM64::LD4Rv16b_POST, ARM64::qsub0);
+    else if (VT == MVT::v4i16)
+      return SelectPostLoad(Node, 4, ARM64::LD4Rv4h_POST, ARM64::dsub0);
+    else if (VT == MVT::v8i16)
+      return SelectPostLoad(Node, 4, ARM64::LD4Rv8h_POST, ARM64::qsub0);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostLoad(Node, 4, ARM64::LD4Rv2s_POST, ARM64::dsub0);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostLoad(Node, 4, ARM64::LD4Rv4s_POST, ARM64::qsub0);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostLoad(Node, 4, ARM64::LD4Rv1d_POST, ARM64::dsub0);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostLoad(Node, 4, ARM64::LD4Rv2d_POST, ARM64::qsub0);
+    break;
+  }
+  case ARM64ISD::LD2LANEpost: {
+    if (VT == MVT::v16i8 || VT == MVT::v8i8)
+      return SelectPostLoadLane(Node, 2, ARM64::LD2i8_POST);
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      return SelectPostLoadLane(Node, 2, ARM64::LD2i16_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
+             VT == MVT::v2f32)
+      return SelectPostLoadLane(Node, 2, ARM64::LD2i32_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
+             VT == MVT::v1f64)
+      return SelectPostLoadLane(Node, 2, ARM64::LD2i64_POST);
+    break;
+  }
+  case ARM64ISD::LD3LANEpost: {
+    if (VT == MVT::v16i8 || VT == MVT::v8i8)
+      return SelectPostLoadLane(Node, 3, ARM64::LD3i8_POST);
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      return SelectPostLoadLane(Node, 3, ARM64::LD3i16_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
+             VT == MVT::v2f32)
+      return SelectPostLoadLane(Node, 3, ARM64::LD3i32_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
+             VT == MVT::v1f64)
+      return SelectPostLoadLane(Node, 3, ARM64::LD3i64_POST);
+    break;
+  }
+  case ARM64ISD::LD4LANEpost: {
+    if (VT == MVT::v16i8 || VT == MVT::v8i8)
+      return SelectPostLoadLane(Node, 4, ARM64::LD4i8_POST);
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      return SelectPostLoadLane(Node, 4, ARM64::LD4i16_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
+             VT == MVT::v2f32)
+      return SelectPostLoadLane(Node, 4, ARM64::LD4i32_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
+             VT == MVT::v1f64)
+      return SelectPostLoadLane(Node, 4, ARM64::LD4i64_POST);
+    break;
+  }
+  case ARM64ISD::ST2post: {
+    VT = Node->getOperand(1).getValueType();
+    if (VT == MVT::v8i8)
+      return SelectPostStore(Node, 2, ARM64::ST2Twov8b_POST);
+    else if (VT == MVT::v16i8)
+      return SelectPostStore(Node, 2, ARM64::ST2Twov16b_POST);
+    else if (VT == MVT::v4i16)
+      return SelectPostStore(Node, 2, ARM64::ST2Twov4h_POST);
+    else if (VT == MVT::v8i16)
+      return SelectPostStore(Node, 2, ARM64::ST2Twov8h_POST);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostStore(Node, 2, ARM64::ST2Twov2s_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostStore(Node, 2, ARM64::ST2Twov4s_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostStore(Node, 2, ARM64::ST2Twov2d_POST);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostStore(Node, 2, ARM64::ST1Twov1d_POST);
+    break;
+  }
+  case ARM64ISD::ST3post: {
+    VT = Node->getOperand(1).getValueType();
+    if (VT == MVT::v8i8)
+      return SelectPostStore(Node, 3, ARM64::ST3Threev8b_POST);
+    else if (VT == MVT::v16i8)
+      return SelectPostStore(Node, 3, ARM64::ST3Threev16b_POST);
+    else if (VT == MVT::v4i16)
+      return SelectPostStore(Node, 3, ARM64::ST3Threev4h_POST);
+    else if (VT == MVT::v8i16)
+      return SelectPostStore(Node, 3, ARM64::ST3Threev8h_POST);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostStore(Node, 3, ARM64::ST3Threev2s_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostStore(Node, 3, ARM64::ST3Threev4s_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostStore(Node, 3, ARM64::ST3Threev2d_POST);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostStore(Node, 3, ARM64::ST1Threev1d_POST);
+    break;
+  }
+  case ARM64ISD::ST4post: {
+    VT = Node->getOperand(1).getValueType();
+    if (VT == MVT::v8i8)
+      return SelectPostStore(Node, 4, ARM64::ST4Fourv8b_POST);
+    else if (VT == MVT::v16i8)
+      return SelectPostStore(Node, 4, ARM64::ST4Fourv16b_POST);
+    else if (VT == MVT::v4i16)
+      return SelectPostStore(Node, 4, ARM64::ST4Fourv4h_POST);
+    else if (VT == MVT::v8i16)
+      return SelectPostStore(Node, 4, ARM64::ST4Fourv8h_POST);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostStore(Node, 4, ARM64::ST4Fourv2s_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostStore(Node, 4, ARM64::ST4Fourv4s_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostStore(Node, 4, ARM64::ST4Fourv2d_POST);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostStore(Node, 4, ARM64::ST1Fourv1d_POST);
+    break;
+  }
+  case ARM64ISD::ST1x2post: {
+    VT = Node->getOperand(1).getValueType();
+    if (VT == MVT::v8i8)
+      return SelectPostStore(Node, 2, ARM64::ST1Twov8b_POST);
+    else if (VT == MVT::v16i8)
+      return SelectPostStore(Node, 2, ARM64::ST1Twov16b_POST);
+    else if (VT == MVT::v4i16)
+      return SelectPostStore(Node, 2, ARM64::ST1Twov4h_POST);
+    else if (VT == MVT::v8i16)
+      return SelectPostStore(Node, 2, ARM64::ST1Twov8h_POST);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostStore(Node, 2, ARM64::ST1Twov2s_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostStore(Node, 2, ARM64::ST1Twov4s_POST);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostStore(Node, 2, ARM64::ST1Twov1d_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostStore(Node, 2, ARM64::ST1Twov2d_POST);
+    break;
+  }
+  case ARM64ISD::ST1x3post: {
+    VT = Node->getOperand(1).getValueType();
+    if (VT == MVT::v8i8)
+      return SelectPostStore(Node, 3, ARM64::ST1Threev8b_POST);
+    else if (VT == MVT::v16i8)
+      return SelectPostStore(Node, 3, ARM64::ST1Threev16b_POST);
+    else if (VT == MVT::v4i16)
+      return SelectPostStore(Node, 3, ARM64::ST1Threev4h_POST);
+    else if (VT == MVT::v8i16)
+      return SelectPostStore(Node, 3, ARM64::ST1Threev8h_POST);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostStore(Node, 3, ARM64::ST1Threev2s_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostStore(Node, 3, ARM64::ST1Threev4s_POST);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostStore(Node, 3, ARM64::ST1Threev1d_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostStore(Node, 3, ARM64::ST1Threev2d_POST);
+    break;
+  }
+  case ARM64ISD::ST1x4post: {
+    VT = Node->getOperand(1).getValueType();
+    if (VT == MVT::v8i8)
+      return SelectPostStore(Node, 4, ARM64::ST1Fourv8b_POST);
+    else if (VT == MVT::v16i8)
+      return SelectPostStore(Node, 4, ARM64::ST1Fourv16b_POST);
+    else if (VT == MVT::v4i16)
+      return SelectPostStore(Node, 4, ARM64::ST1Fourv4h_POST);
+    else if (VT == MVT::v8i16)
+      return SelectPostStore(Node, 4, ARM64::ST1Fourv8h_POST);
+    else if (VT == MVT::v2i32 || VT == MVT::v2f32)
+      return SelectPostStore(Node, 4, ARM64::ST1Fourv2s_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v4f32)
+      return SelectPostStore(Node, 4, ARM64::ST1Fourv4s_POST);
+    else if (VT == MVT::v1i64 || VT == MVT::v1f64)
+      return SelectPostStore(Node, 4, ARM64::ST1Fourv1d_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v2f64)
+      return SelectPostStore(Node, 4, ARM64::ST1Fourv2d_POST);
+    break;
+  }
+  case ARM64ISD::ST2LANEpost: {
+    VT = Node->getOperand(1).getValueType();
+    if (VT == MVT::v16i8 || VT == MVT::v8i8)
+      return SelectPostStoreLane(Node, 2, ARM64::ST2i8_POST);
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      return SelectPostStoreLane(Node, 2, ARM64::ST2i16_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
+             VT == MVT::v2f32)
+      return SelectPostStoreLane(Node, 2, ARM64::ST2i32_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
+             VT == MVT::v1f64)
+      return SelectPostStoreLane(Node, 2, ARM64::ST2i64_POST);
+    break;
+  }
+  case ARM64ISD::ST3LANEpost: {
+    VT = Node->getOperand(1).getValueType();
+    if (VT == MVT::v16i8 || VT == MVT::v8i8)
+      return SelectPostStoreLane(Node, 3, ARM64::ST3i8_POST);
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      return SelectPostStoreLane(Node, 3, ARM64::ST3i16_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
+             VT == MVT::v2f32)
+      return SelectPostStoreLane(Node, 3, ARM64::ST3i32_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
+             VT == MVT::v1f64)
+      return SelectPostStoreLane(Node, 3, ARM64::ST3i64_POST);
+    break;
+  }
+  case ARM64ISD::ST4LANEpost: {
+    VT = Node->getOperand(1).getValueType();
+    if (VT == MVT::v16i8 || VT == MVT::v8i8)
+      return SelectPostStoreLane(Node, 4, ARM64::ST4i8_POST);
+    else if (VT == MVT::v8i16 || VT == MVT::v4i16)
+      return SelectPostStoreLane(Node, 4, ARM64::ST4i16_POST);
+    else if (VT == MVT::v4i32 || VT == MVT::v2i32 || VT == MVT::v4f32 ||
+             VT == MVT::v2f32)
+      return SelectPostStoreLane(Node, 4, ARM64::ST4i32_POST);
+    else if (VT == MVT::v2i64 || VT == MVT::v1i64 || VT == MVT::v2f64 ||
+             VT == MVT::v1f64)
+      return SelectPostStoreLane(Node, 4, ARM64::ST4i64_POST);
+    break;
   }
 
   case ISD::FCEIL:
