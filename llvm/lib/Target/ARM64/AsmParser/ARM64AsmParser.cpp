@@ -56,8 +56,6 @@ private:
   bool parseCondCode(OperandVector &Operands, bool invertCondCode);
   int tryParseRegister();
   int tryMatchVectorRegister(StringRef &Kind, bool expected);
-  bool parseOptionalShift(OperandVector &Operands);
-  bool parseOptionalExtend(OperandVector &Operands);
   bool parseRegister(OperandVector &Operands);
   bool parseMemory(OperandVector &Operands);
   bool parseSymbolicImmVal(const MCExpr *&ImmVal);
@@ -87,6 +85,8 @@ private:
 
   /// }
 
+  OperandMatchResultTy tryParseOptionalShift(OperandVector &Operands);
+  OperandMatchResultTy tryParseOptionalExtend(OperandVector &Operands);
   OperandMatchResultTy tryParseNoIndexMemory(OperandVector &Operands);
   OperandMatchResultTy tryParseBarrierOperand(OperandVector &Operands);
   OperandMatchResultTy tryParseMRSSystemRegister(OperandVector &Operands);
@@ -2277,60 +2277,72 @@ bool ARM64AsmParser::parseCondCode(OperandVector &Operands,
   return false;
 }
 
-/// ParseOptionalShift - Some operands take an optional shift argument. Parse
+/// tryParseOptionalShift - Some operands take an optional shift argument. Parse
 /// them if present.
-bool ARM64AsmParser::parseOptionalShift(OperandVector &Operands) {
+ARM64AsmParser::OperandMatchResultTy
+ARM64AsmParser::tryParseOptionalShift(OperandVector &Operands) {
   const AsmToken &Tok = Parser.getTok();
-  ARM64_AM::ShiftType ShOp = StringSwitch<ARM64_AM::ShiftType>(Tok.getString())
+  std::string LowerID = Tok.getString().lower();
+  ARM64_AM::ShiftType ShOp = StringSwitch<ARM64_AM::ShiftType>(LowerID)
                                  .Case("lsl", ARM64_AM::LSL)
                                  .Case("lsr", ARM64_AM::LSR)
                                  .Case("asr", ARM64_AM::ASR)
                                  .Case("ror", ARM64_AM::ROR)
                                  .Case("msl", ARM64_AM::MSL)
-                                 .Case("LSL", ARM64_AM::LSL)
-                                 .Case("LSR", ARM64_AM::LSR)
-                                 .Case("ASR", ARM64_AM::ASR)
-                                 .Case("ROR", ARM64_AM::ROR)
-                                 .Case("MSL", ARM64_AM::MSL)
                                  .Default(ARM64_AM::InvalidShift);
   if (ShOp == ARM64_AM::InvalidShift)
-    return true;
+    return MatchOperand_NoMatch;
 
   SMLoc S = Tok.getLoc();
   Parser.Lex();
 
   // We expect a number here.
   bool Hash = getLexer().is(AsmToken::Hash);
-  if (!Hash && getLexer().isNot(AsmToken::Integer))
-    return TokError("immediate value expected for shifter operand");
+  if (!Hash && getLexer().isNot(AsmToken::Integer)) {
+    TokError("immediate value expected for shifter operand");
+    return MatchOperand_ParseFail;
+  }
 
   if (Hash)
     Parser.Lex(); // Eat the '#'.
 
+  // Make sure we do actually have a number
+  if (!Parser.getTok().is(AsmToken::Integer)) {
+    Error(Parser.getTok().getLoc(),
+          "expected integer shift amount");
+    return MatchOperand_ParseFail;
+  }
+
   SMLoc ExprLoc = getLoc();
   const MCExpr *ImmVal;
   if (getParser().parseExpression(ImmVal))
-    return true;
+    return MatchOperand_ParseFail;
 
   const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
-  if (!MCE)
-    return TokError("immediate value expected for shifter operand");
+  if (!MCE) {
+    TokError("immediate value expected for shifter operand");
+    return MatchOperand_ParseFail;
+  }
 
-  if ((MCE->getValue() & 0x3f) != MCE->getValue())
-    return Error(ExprLoc, "immediate value too large for shifter operand");
+  if ((MCE->getValue() & 0x3f) != MCE->getValue()) {
+    Error(ExprLoc, "immediate value too large for shifter operand");
+    return MatchOperand_ParseFail;
+  }
 
   SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
   Operands.push_back(
       ARM64Operand::CreateShifter(ShOp, MCE->getValue(), S, E, getContext()));
-  return false;
+  return MatchOperand_Success;
 }
 
-/// parseOptionalExtend - Some operands take an optional extend argument. Parse
+/// tryParseOptionalExtend - Some operands take an optional extend argument. Parse
 /// them if present.
-bool ARM64AsmParser::parseOptionalExtend(OperandVector &Operands) {
+ARM64AsmParser::OperandMatchResultTy
+ARM64AsmParser::tryParseOptionalExtend(OperandVector &Operands) {
   const AsmToken &Tok = Parser.getTok();
+  std::string LowerID = Tok.getString().lower();
   ARM64_AM::ExtendType ExtOp =
-      StringSwitch<ARM64_AM::ExtendType>(Tok.getString())
+      StringSwitch<ARM64_AM::ExtendType>(LowerID)
           .Case("uxtb", ARM64_AM::UXTB)
           .Case("uxth", ARM64_AM::UXTH)
           .Case("uxtw", ARM64_AM::UXTW)
@@ -2340,18 +2352,9 @@ bool ARM64AsmParser::parseOptionalExtend(OperandVector &Operands) {
           .Case("sxth", ARM64_AM::SXTH)
           .Case("sxtw", ARM64_AM::SXTW)
           .Case("sxtx", ARM64_AM::SXTX)
-          .Case("UXTB", ARM64_AM::UXTB)
-          .Case("UXTH", ARM64_AM::UXTH)
-          .Case("UXTW", ARM64_AM::UXTW)
-          .Case("UXTX", ARM64_AM::UXTX)
-          .Case("LSL", ARM64_AM::UXTX) // Alias for UXTX
-          .Case("SXTB", ARM64_AM::SXTB)
-          .Case("SXTH", ARM64_AM::SXTH)
-          .Case("SXTW", ARM64_AM::SXTW)
-          .Case("SXTX", ARM64_AM::SXTX)
           .Default(ARM64_AM::InvalidExtend);
   if (ExtOp == ARM64_AM::InvalidExtend)
-    return true;
+    return MatchOperand_NoMatch;
 
   SMLoc S = Tok.getLoc();
   Parser.Lex();
@@ -2361,7 +2364,7 @@ bool ARM64AsmParser::parseOptionalExtend(OperandVector &Operands) {
     SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
     Operands.push_back(
         ARM64Operand::CreateExtend(ExtOp, 0, S, E, getContext()));
-    return false;
+    return MatchOperand_Success;
   }
 
   bool Hash = getLexer().is(AsmToken::Hash);
@@ -2369,24 +2372,33 @@ bool ARM64AsmParser::parseOptionalExtend(OperandVector &Operands) {
     SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
     Operands.push_back(
         ARM64Operand::CreateExtend(ExtOp, 0, S, E, getContext()));
-    return false;
+    return MatchOperand_Success;
   }
 
   if (Hash)
     Parser.Lex(); // Eat the '#'.
 
+  // Make sure we do actually have a number
+  if (!Parser.getTok().is(AsmToken::Integer)) {
+    Error(Parser.getTok().getLoc(),
+          "expected integer shift amount");
+    return MatchOperand_ParseFail;
+  }
+
   const MCExpr *ImmVal;
   if (getParser().parseExpression(ImmVal))
-    return true;
+    return MatchOperand_ParseFail;
 
   const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
-  if (!MCE)
-    return TokError("immediate value expected for extend operand");
+  if (!MCE) {
+    TokError("immediate value expected for extend operand");
+    return MatchOperand_ParseFail;
+  }
 
   SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
   Operands.push_back(
       ARM64Operand::CreateExtend(ExtOp, MCE->getValue(), S, E, getContext()));
-  return false;
+  return MatchOperand_Success;
 }
 
 /// parseSysAlias - The IC, DC, AT, and TLBI instructions are simple aliases for
@@ -3216,12 +3228,16 @@ bool ARM64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
       return false;
 
     // This could be an optional "shift" operand.
-    if (!parseOptionalShift(Operands))
-      return false;
+    OperandMatchResultTy GotShift = tryParseOptionalShift(Operands);
+    // We can only continue if no tokens were eaten.
+    if (GotShift != MatchOperand_NoMatch)
+      return GotShift;
 
     // Or maybe it could be an optional "extend" operand.
-    if (!parseOptionalExtend(Operands))
-      return false;
+    OperandMatchResultTy GotExtend = tryParseOptionalExtend(Operands);
+    // We can only continue if no tokens were eaten.
+    if (GotExtend != MatchOperand_NoMatch)
+      return GotExtend;
 
     // This was not a register so parse other operands that start with an
     // identifier (like labels) as expressions and create them as immediates.
