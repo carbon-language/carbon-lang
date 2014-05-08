@@ -102,12 +102,6 @@ def ArithmeticShifterOperand : AsmOperandClass {
   let Name = "ArithmeticShifter";
 }
 
-// Shifter operand for arithmetic shifted encodings for ADD/SUB instructions.
-def AddSubShifterOperand : AsmOperandClass {
-  let SuperClasses = [ArithmeticShifterOperand];
-  let Name = "AddSubShifter";
-}
-
 // Shifter operand for logical vector 128/64-bit shifted encodings.
 def LogicalVecShifterOperand : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
@@ -556,18 +550,21 @@ def move_vec_shift : Operand<i32> {
   let ParserMatchClass = MoveVecShifterOperand;
 }
 
+def AddSubImmOperand : AsmOperandClass {
+  let Name = "AddSubImm";
+  let ParserMethod = "tryParseAddSubImm";
+  let DiagnosticType = "AddSubSecondSource";
+}
 // An ADD/SUB immediate shifter operand:
+//  second operand:
 //  {7-6} - shift type: 00 = lsl
 //  {5-0} - imm6: #0 or #12
-def addsub_shift : Operand<i32> {
-  let ParserMatchClass = AddSubShifterOperand;
-}
-
 class addsub_shifted_imm<ValueType Ty>
     : Operand<Ty>, ComplexPattern<Ty, 2, "SelectArithImmed", [imm]> {
   let PrintMethod = "printAddSubImm";
   let EncoderMethod = "getAddSubImmOpValue";
-  let MIOperandInfo = (ops i32imm, addsub_shift);
+  let ParserMatchClass = AddSubImmOperand;
+  let MIOperandInfo = (ops i32imm, i32imm);
 }
 
 def addsub_shifted_imm32 : addsub_shifted_imm<i32>;
@@ -577,7 +574,8 @@ class neg_addsub_shifted_imm<ValueType Ty>
     : Operand<Ty>, ComplexPattern<Ty, 2, "SelectNegArithImmed", [imm]> {
   let PrintMethod = "printAddSubImm";
   let EncoderMethod = "getAddSubImmOpValue";
-  let MIOperandInfo = (ops i32imm, addsub_shift);
+  let ParserMatchClass = AddSubImmOperand;
+  let MIOperandInfo = (ops i32imm, i32imm);
 }
 
 def neg_addsub_shifted_imm32 : neg_addsub_shifted_imm<i32>;
@@ -1522,7 +1520,7 @@ multiclass AddSub<bit isSub, string mnemonic,
                        GPR64sp, GPR64sp, GPR64, 24>; // UXTX #0
 }
 
-multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode> {
+multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp> {
   let isCompare = 1, Defs = [NZCV] in {
   // Add/Subtract immediate
   def Wri  : BaseAddSubImm<isSub, 1, GPR32, GPR32sp, addsub_shifted_imm32,
@@ -1567,6 +1565,28 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode> {
     let Inst{31} = 1;
   }
   } // Defs = [NZCV]
+
+  // Compare aliases
+  def : InstAlias<cmp#" $src, $imm", (!cast<Instruction>(NAME#"Wri")
+                  WZR, GPR32sp:$src, addsub_shifted_imm32:$imm)>;
+  def : InstAlias<cmp#" $src, $imm", (!cast<Instruction>(NAME#"Xri")
+                  XZR, GPR64sp:$src, addsub_shifted_imm64:$imm)>;
+  def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Wrx")
+                  WZR, GPR32sp:$src1, GPR32:$src2, arith_extend:$sh)>;
+  def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Xrx")
+                  XZR, GPR64sp:$src1, GPR32:$src2, arith_extend:$sh)>;
+  def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Xrx64")
+                  XZR, GPR64sp:$src1, GPR64:$src2, arith_extendlsl64:$sh)>;
+  def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Wrs")
+                  WZR, GPR32:$src1, GPR32:$src2, arith_shift:$sh)>;
+  def : InstAlias<cmp#" $src1, $src2, $sh", (!cast<Instruction>(NAME#"Xrs")
+                  XZR, GPR64:$src1, GPR64:$src2, arith_shift:$sh)>;
+
+  // Compare shorthands
+  def : InstAlias<cmp#" $src1, $src2", (!cast<Instruction>(NAME#"Wrs")
+                  WZR, GPR32:$src1, GPR32:$src2, 0)>;
+  def : InstAlias<cmp#" $src1, $src2", (!cast<Instruction>(NAME#"Xrs")
+                  XZR, GPR64:$src1, GPR64:$src2, 0)>;
 
   // Register/register aliases with no shift when SP is not used.
   def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrs"),

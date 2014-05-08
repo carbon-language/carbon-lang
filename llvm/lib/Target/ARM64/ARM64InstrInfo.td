@@ -474,8 +474,8 @@ def : InstAlias<"ngcs $dst, $src", (SBCSXr GPR64:$dst, XZR, GPR64:$src)>;
 defm ADD : AddSub<0, "add", add>;
 defm SUB : AddSub<1, "sub">;
 
-defm ADDS : AddSubS<0, "adds", ARM64add_flag>;
-defm SUBS : AddSubS<1, "subs", ARM64sub_flag>;
+defm ADDS : AddSubS<0, "adds", ARM64add_flag, "cmn">;
+defm SUBS : AddSubS<1, "subs", ARM64sub_flag, "cmp">;
 
 // Use SUBS instead of SUB to enable CSE between SUBS and SUB.
 def : Pat<(sub GPR32sp:$Rn, addsub_shifted_imm32:$imm),
