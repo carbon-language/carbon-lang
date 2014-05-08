@@ -535,5 +535,9 @@ def AtomModel : SchedMachineModel {
   let LoadLatency = 3; // Expected cycles, may be overriden by OperandCycles.
   let HighLatency = 30;// Expected, may be overriden by OperandCycles.
 
+  // On the Atom, the throughput for taken branches is 2 cycles. For small
+  // simple loops, expand by a small factor to hide the backedge cost.
+  let LoopMicroOpBufferSize = 10;
+
   let Itineraries = AtomItineraries;
 }

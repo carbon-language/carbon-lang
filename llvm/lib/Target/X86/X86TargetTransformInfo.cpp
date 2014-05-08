@@ -16,11 +16,8 @@
 
 #include "X86.h"
 #include "X86TargetMachine.h"
-#include "llvm/ADT/DepthFirstIterator.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/IntrinsicInst.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/CostTable.h"
 #include "llvm/Target/TargetLowering.h"
@@ -34,13 +31,6 @@ using namespace llvm;
 namespace llvm {
 void initializeX86TTIPass(PassRegistry &);
 }
-
-static cl::opt<bool>
-UsePartialUnrolling("x86-use-partial-unrolling", cl::init(true),
-  cl::desc("Use partial unrolling for some X86 targets"), cl::Hidden);
-static cl::opt<unsigned>
-PartialUnrollingThreshold("x86-partial-unrolling-threshold", cl::init(0),
-  cl::desc("Threshold for X86 partial unrolling"), cl::Hidden);
 
 namespace {
 
@@ -84,8 +74,6 @@ public:
   /// \name Scalar TTI Implementations
   /// @{
   PopcntSupportKind getPopcntSupport(unsigned TyWidth) const override;
-  void getUnrollingPreferences(Loop *L,
-                               UnrollingPreferences &UP) const override;
 
   /// @}
 
@@ -148,70 +136,6 @@ X86TTI::PopcntSupportKind X86TTI::getPopcntSupport(unsigned TyWidth) const {
   //   instructions is inefficient. Once the problem is fixed, we should
   //   call ST->hasSSE3() instead of ST->hasPOPCNT().
   return ST->hasPOPCNT() ? PSK_FastHardware : PSK_Software;
-}
-
-void X86TTI::getUnrollingPreferences(Loop *L, UnrollingPreferences &UP) const {
-  if (!UsePartialUnrolling)
-    return;
-  // According to the Intel 64 and IA-32 Architectures Optimization Reference
-  // Manual, Intel Core models and later have a loop stream detector
-  // (and associated uop queue) that can benefit from partial unrolling.
-  // The relevant requirements are:
-  //  - The loop must have no more than 4 (8 for Nehalem and later) branches
-  //    taken, and none of them may be calls.
-  //  - The loop can have no more than 18 (28 for Nehalem and later) uops.
-
-  // According to the Software Optimization Guide for AMD Family 15h Processors,
-  // models 30h-4fh (Steamroller and later) have a loop predictor and loop
-  // buffer which can benefit from partial unrolling.
-  // The relevant requirements are:
-  //  - The loop must have fewer than 16 branches
-  //  - The loop must have less than 40 uops in all executed loop branches
-
-  // The number of taken branches in a loop is hard to estimate here, and
-  // benchmarking has revealed that it is better not to be conservative when
-  // estimating the branch count. As a result, we'll ignore the branch limits
-  // until someone finds a case where it matters in practice.
-
-  unsigned MaxOps;
-  if (PartialUnrollingThreshold.getNumOccurrences() > 0) {
-    MaxOps = PartialUnrollingThreshold;
-  } else if (ST->isAtom()) {
-    // On the Atom, the throughput for taken branches is 2 cycles. For small
-    // simple loops, expand by a small factor to hide the backedge cost.
-    MaxOps = 10;
-  } else if (ST->hasFSGSBase() && ST->hasXOP() /* Steamroller and later */) {
-    MaxOps = 40;
-  } else if (ST->hasFMA4() /* Any other recent AMD */) {
-    return;
-  } else if (ST->hasAVX() || ST->hasSSE42() /* Nehalem and later */) {
-    MaxOps = 28;
-  } else if (ST->hasSSSE3() /* Intel Core */) {
-    MaxOps = 18;
-  } else {
-    return;
-  }
-
-  // Scan the loop: don't unroll loops with calls.
-  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
-       I != E; ++I) {
-    BasicBlock *BB = *I;
-
-    for (BasicBlock::iterator J = BB->begin(), JE = BB->end(); J != JE; ++J)
-      if (isa<CallInst>(J) || isa<InvokeInst>(J)) {
-        ImmutableCallSite CS(J);
-        if (const Function *F = CS.getCalledFunction()) {
-          if (!isLoweredToCall(F))
-            continue;
-        }
-
-        return;
-      }
-  }
-
-  // Enable runtime and partial unrolling up to the specified size.
-  UP.Partial = UP.Runtime = true;
-  UP.PartialThreshold = UP.PartialOptSizeThreshold = MaxOps;
 }
 
 unsigned X86TTI::getNumberOfRegisters(bool Vector) const {
