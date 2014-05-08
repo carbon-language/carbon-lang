@@ -197,7 +197,7 @@ bool BasicTTI::haveFastSqrt(Type *Ty) const {
 void BasicTTI::getUnrollingPreferences(Loop *L,
                                        UnrollingPreferences &UP) const {
   // This unrolling functionality is target independent, but to provide some
-  // motivation for its indended use, for x86:
+  // motivation for its intended use, for x86:
 
   // According to the Intel 64 and IA-32 Architectures Optimization Reference
   // Manual, Intel Core models and later have a loop stream detector
