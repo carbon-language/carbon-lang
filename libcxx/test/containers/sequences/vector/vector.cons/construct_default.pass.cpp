@@ -18,6 +18,7 @@
 #include "../../../NotConstructible.h"
 #include "../../../stack_allocator.h"
 #include "min_allocator.h"
+#include "asan_testing.h"
 
 template <class C>
 void
@@ -27,11 +28,13 @@ test0()
     assert(c.__invariants());
     assert(c.empty());
     assert(c.get_allocator() == typename C::allocator_type());
+    assert(is_contiguous_container_asan_correct(c)); 
 #if __cplusplus >= 201103L
     C c1 = {};
     assert(c1.__invariants());
     assert(c1.empty());
     assert(c1.get_allocator() == typename C::allocator_type());
+    assert(is_contiguous_container_asan_correct(c1)); 
 #endif
 }
 
@@ -43,6 +46,7 @@ test1(const typename C::allocator_type& a)
     assert(c.__invariants());
     assert(c.empty());
     assert(c.get_allocator() == a);
+    assert(is_contiguous_container_asan_correct(c)); 
 }
 
 int main()

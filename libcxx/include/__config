@@ -629,6 +629,11 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_DEPRECATED_AFTER_CXX11 [[deprecated]]
 #endif
 
+#ifndef _LIBCPP_HAS_NO_ASAN
+extern "C" void __sanitizer_annotate_contiguous_container(
+  const void *, const void *, const void *, const void *);
+#endif
+
 // Try to find out if RTTI is disabled.
 // g++ and cl.exe have RTTI on by default and define a macro when it is.
 // g++ only defines the macro in 4.3.2 and onwards.

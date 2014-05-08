@@ -15,6 +15,7 @@
 #include <cassert>
 #include "test_allocator.h"
 #include "min_allocator.h"
+#include "asan_testing.h"
 
 template <class C>
 void
@@ -25,6 +26,7 @@ test(const C& x, const typename C::allocator_type& a)
     assert(c.__invariants());
     assert(c.size() == s);
     assert(c == x);
+    assert(is_contiguous_container_asan_correct(c)); 
 }
 
 int main()

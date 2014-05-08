@@ -17,6 +17,7 @@
 #include "test_iterators.h"
 #include "../../../stack_allocator.h"
 #include "min_allocator.h"
+#include "asan_testing.h"
 
 template <class C, class Iterator>
 void
@@ -25,6 +26,7 @@ test(Iterator first, Iterator last)
     C c(first, last);
     assert(c.__invariants());
     assert(c.size() == std::distance(first, last));
+    assert(is_contiguous_container_asan_correct(c)); 
     for (typename C::const_iterator i = c.cbegin(), e = c.cend(); i != e; ++i, ++first)
         assert(*i == *first);
 }
