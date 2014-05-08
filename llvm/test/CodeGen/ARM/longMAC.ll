@@ -1,5 +1,7 @@
-; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s
-; RUN: llc -mtriple=armv7-eabi %s -o - | FileCheck %s --check-prefix=CHECK-V7
+; RUN: llc -mtriple=arm-eabi %s -o - | FileCheck %s -check-prefix=CHECK --check-prefix=CHECK-LE
+; RUN: llc -mtriple=armv7-eabi %s -o - | FileCheck %s --check-prefix=CHECK-V7-LE
+; RUN: llc -mtriple=armeb-eabi %s -o - | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-BE
+; RUN: llc -mtriple=armebv7-eabi %s -o - | FileCheck %s -check-prefix=CHECK-V7-BE
 ; Check generated signed and unsigned multiply accumulate long.
 
 define i64 @MACLongTest1(i32 %a, i32 %b, i64 %c) {
@@ -53,13 +55,18 @@ define i64 @MACLongTest4(i32 %a, i32 %b, i32 %c) {
 ;      function, both after the umlal. With it, *some* move has to happen
 ;      before the umlal.
 define i64 @MACLongTest5(i64 %c, i32 %a, i32 %b) {
-; CHECK-V7-LABEL: MACLongTest5:
-; CHECK-V7-LABEL: umlal r0, r1, r0, r0
+; CHECK-V7-LE-LABEL: MACLongTest5:
+; CHECK-V7-LE-LABEL: umlal r0, r1, r0, r0
+; CHECK-V7-BE-LABEL: MACLongTest5:
+; CHECK-V7-BE-LABEL: umlal r1, r0, r1, r1
 
 ; CHECK-LABEL: MACLongTest5:
-; CHECK: mov [[RDLO:r[0-9]+]], r0
-; CHECK: umlal [[RDLO]], r1, r0, r0
-; CHECK: mov r0, [[RDLO]]
+; CHECK-LE: mov [[RDLO:r[0-9]+]], r0
+; CHECK-LE: umlal [[RDLO]], r1, r0, r0
+; CHECK-LE: mov r0, [[RDLO]]
+; CHECK-BE: mov [[RDLO:r[0-9]+]], r1
+; CHECK-BE: umlal [[RDLO]], r0, r1, r1
+; CHECK-BE: mov r1, [[RDLO]]
 
   %conv.trunc = trunc i64 %c to i32
   %conv = zext i32 %conv.trunc to i64

@@ -1,10 +1,13 @@
-; RUN: llc < %s -mtriple=thumbv7s-apple-ios3.0.0 -mcpu=generic | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7s-apple-ios3.0.0 -mcpu=generic | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-LE
+; RUN: llc < %s -mtriple=thumbeb -mattr=v7,neon | FileCheck %s -check-prefix=CHECK -check-prefix=CHECK-BE
 
 ; PR15525
 ; CHECK-LABEL: test1:
 ; CHECK: ldr.w	[[REG:r[0-9]+]], [sp]
-; CHECK-NEXT: vmov	{{d[0-9]+}}, r1, r2
-; CHECK-NEXT: vmov	{{d[0-9]+}}, r3, [[REG]]
+; CHECK-LE-NEXT: vmov	{{d[0-9]+}}, r1, r2
+; CHECK-LE-NEXT: vmov	{{d[0-9]+}}, r3, [[REG]]
+; CHECK-BE-NEXT: vmov	{{d[0-9]+}}, r2, r1
+; CHECK-BE-NEXT: vmov	{{d[0-9]+}}, [[REG]], r3
 ; CHECK-NEXT: vst1.8	{{{d[0-9]+}}, {{d[0-9]+}}}, [r0]
 ; CHECK-NEXT: bx	lr
 define void @test1(i8* %arg, [4 x i64] %vec.coerce) {
