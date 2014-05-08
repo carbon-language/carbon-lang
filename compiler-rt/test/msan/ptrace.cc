@@ -1,6 +1,7 @@
 // RUN: %clangxx_msan -m64 -O0 %s -o %t && %run %t
 
 #include <assert.h>
+#include <signal.h>
 #include <stdio.h>
 #include <sys/ptrace.h>
 #include <sys/types.h>
@@ -29,7 +30,13 @@ int main(void) {
     if (fpregs.mxcsr)
       printf("%x\n", fpregs.mxcsr);
 
+    siginfo_t siginfo;
+    res = ptrace(PTRACE_GETSIGINFO, pid, NULL, &siginfo);
+    assert(!res);
+    assert(siginfo.si_pid == pid);
+
     ptrace(PTRACE_CONT, pid, NULL, NULL);
+
     wait(NULL);
   }
   return 0;
