@@ -7224,11 +7224,10 @@ static void findArrayDimensionsRec(ScalarEvolution &SE,
   }
 
   // Remove all SCEVConstants.
-  for (unsigned I = 0; I < Terms.size();)
-    if (isa<SCEVConstant>(Terms[I]))
-      Terms.erase(Terms.begin() + I);
-    else
-      ++I;
+  Terms.erase(
+        std::remove_if(Terms.begin(), Terms.end(),
+                       [](const SCEV *E) { return isa<SCEVConstant>(E);}),
+            Terms.end());
 
   if (Terms.size() > 0)
     findArrayDimensionsRec(SE, Terms, Sizes, Zero, One);
