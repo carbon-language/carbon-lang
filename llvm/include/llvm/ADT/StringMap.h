@@ -109,8 +109,8 @@ public:
 
   explicit StringMapEntry(unsigned strLen)
     : StringMapEntryBase(strLen), second() {}
-  StringMapEntry(unsigned strLen, const ValueTy &V)
-    : StringMapEntryBase(strLen), second(V) {}
+  StringMapEntry(unsigned strLen, ValueTy V)
+    : StringMapEntryBase(strLen), second(std::move(V)) {}
 
   StringRef getKey() const {
     return StringRef(getKeyData(), getKeyLength());
@@ -146,7 +146,7 @@ public:
       static_cast<StringMapEntry*>(Allocator.Allocate(AllocSize,Alignment));
 
     // Default construct the value.
-    new (NewItem) StringMapEntry(KeyLength, InitVal);
+    new (NewItem) StringMapEntry(KeyLength, std::move(InitVal));
 
     // Copy the string information.
     char *StrBuffer = const_cast<char*>(NewItem->getKeyData());
@@ -166,7 +166,7 @@ public:
   static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
                                 InitType InitVal) {
     MallocAllocator A;
-    return Create(KeyStart, KeyEnd, A, InitVal);
+    return Create(KeyStart, KeyEnd, A, std::move(InitVal));
   }
 
   static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd) {
@@ -348,7 +348,7 @@ public:
       return *static_cast<MapEntryTy*>(Bucket);
 
     MapEntryTy *NewItem =
-      MapEntryTy::Create(Key.begin(), Key.end(), Allocator, Val);
+      MapEntryTy::Create(Key.begin(), Key.end(), Allocator, std::move(Val));
 
     if (Bucket == getTombstoneVal())
       --NumTombstones;

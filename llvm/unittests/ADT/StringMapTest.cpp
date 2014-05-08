@@ -218,4 +218,20 @@ TEST_F(StringMapTest, NonDefaultConstructable) {
   ASSERT_EQ(iter->second.i, 123);
 }
 
+struct MoveOnly {
+  int i;
+  MoveOnly(int i) : i(i) {}
+  MoveOnly(MoveOnly&&) = default;
+  MoveOnly(const MoveOnly&) = delete;
+  MoveOnly &operator=(MoveOnly&&) = default;
+  MoveOnly &operator=(const MoveOnly&) = delete;
+};
+
+TEST_F(StringMapTest, MoveOnlyKey) {
+  StringMap<MoveOnly> t;
+  t.GetOrCreateValue("Test", MoveOnly(42));
+  StringRef Key = "Test";
+  StringMapEntry<MoveOnly>::Create(Key.begin(), Key.end(), MoveOnly(42))->Destroy();
+}
+
 } // end anonymous namespace
