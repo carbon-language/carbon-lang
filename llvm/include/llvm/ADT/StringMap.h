@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include <cstring>
+#include <utility>
 
 namespace llvm {
   template<typename ValueT>
@@ -48,13 +49,11 @@ protected:
   unsigned NumTombstones;
   unsigned ItemSize;
 protected:
-  explicit StringMapImpl(unsigned itemSize) : ItemSize(itemSize) {
-    // Initialize the map with zero buckets to allocation.
-    TheTable = nullptr;
-    NumBuckets = 0;
-    NumItems = 0;
-    NumTombstones = 0;
-  }
+  explicit StringMapImpl(unsigned itemSize)
+      : TheTable(nullptr),
+        // Initialize the map with zero buckets to allocation.
+        NumBuckets(0), NumItems(0), NumTombstones(0), ItemSize(itemSize) {}
+
   StringMapImpl(unsigned InitSize, unsigned ItemSize);
   void RehashTable();
 
@@ -233,18 +232,17 @@ public:
     : StringMapImpl(InitialSize, static_cast<unsigned>(sizeof(MapEntryTy))),
       Allocator(A) {}
 
-  StringMap(const StringMap &RHS)
-    : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))) {
-    assert(RHS.empty() &&
-           "Copy ctor from non-empty stringmap not implemented yet!");
-    (void)RHS;
+  StringMap(StringMap &&RHS)
+      : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))) {
+    assert(RHS.empty());
   }
-  void operator=(const StringMap &RHS) {
-    assert(RHS.empty() &&
-           "assignment from non-empty stringmap not implemented yet!");
-    (void)RHS;
+  StringMap &operator=(StringMap &&RHS) {
+    assert(RHS.empty());
     clear();
+    return *this;
   }
+  StringMap(const StringMap &RHS) LLVM_DELETED_FUNCTION;
+  void operator=(const StringMap &RHS) LLVM_DELETED_FUNCTION;
 
   AllocatorTy &getAllocator() { return Allocator; }
   const AllocatorTy &getAllocator() const { return Allocator; }
