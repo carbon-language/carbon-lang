@@ -270,6 +270,17 @@ TEST_F(FormatTest, ReformatsMovedLines) {
           9, 5, getLLVMStyle()));
 }
 
+TEST_F(FormatTest, RecognizesBinaryOperatorKeywords) {
+    verifyFormat("x = (a) and (b);");
+    verifyFormat("x = (a) or (b);");
+    verifyFormat("x = (a) bitand (b);");
+    verifyFormat("x = (a) bitor (b);");
+    verifyFormat("x = (a) not_eq (b);");
+    verifyFormat("x = (a) and_eq (b);");
+    verifyFormat("x = (a) or_eq (b);");
+    verifyFormat("x = (a) xor (b);");
+}
+
 //===----------------------------------------------------------------------===//
 // Tests for control statements.
 //===----------------------------------------------------------------------===//
@@ -2861,9 +2872,21 @@ TEST_F(FormatTest, LineBreakingInBinaryExpressions) {
       "bool aaaaaaa =\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaa).aaaaaaaaaaaaaaaaaaa() ||\n"
       "    bbbbbbbb();");
+  verifyFormat(
+      "bool aaaaaaa =\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaa).aaaaaaaaaaaaaaaaaaa() or\n"
+      "    bbbbbbbb();");
+
   verifyFormat("bool aaaaaaaaaaaaaaaaaaaaa =\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa != bbbbbbbbbbbbbbbbbb &&\n"
                "    ccccccccc == ddddddddddd;");
+  verifyFormat("bool aaaaaaaaaaaaaaaaaaaaa =\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa != bbbbbbbbbbbbbbbbbb and\n"
+               "    ccccccccc == ddddddddddd;");
+  verifyFormat(
+      "bool aaaaaaaaaaaaaaaaaaaaa =\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa not_eq bbbbbbbbbbbbbbbbbb and\n"
+      "    ccccccccc == ddddddddddd;");
 
   verifyFormat("aaaaaa = aaaaaaa(aaaaaaa, // break\n"
                "                 aaaaaa) &&\n"
@@ -3609,19 +3632,41 @@ TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
   verifyFormat(
       "if (aaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
       "    bbbbbbbbbbbbbbbbbbbbbbbbb && ccccccccccccccccccccccccc) {\n}");
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaa or\n"
+      "    bbbbbbbbbbbbbbbbbbbbbbbbb and cccccccccccccccccccccccc) {\n}");
+
   verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaa && bbbbbbbbbbbbbbbbbbbbbbbbb ||\n"
                "    ccccccccccccccccccccccccc) {\n}");
+  verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaa and bbbbbbbbbbbbbbbbbbbbbbbb or\n"
+               "    ccccccccccccccccccccccccc) {\n}");
+
   verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaa || bbbbbbbbbbbbbbbbbbbbbbbbb ||\n"
                "    ccccccccccccccccccccccccc) {\n}");
+  verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaa or bbbbbbbbbbbbbbbbbbbbbbbbb or\n"
+               "    ccccccccccccccccccccccccc) {\n}");
+
   verifyFormat(
       "if ((aaaaaaaaaaaaaaaaaaaaaaaaa || bbbbbbbbbbbbbbbbbbbbbbbbb) &&\n"
       "    ccccccccccccccccccccccccc) {\n}");
+  verifyFormat(
+      "if ((aaaaaaaaaaaaaaaaaaaaaaaaa or bbbbbbbbbbbbbbbbbbbbbbbbb) and\n"
+      "    ccccccccccccccccccccccccc) {\n}");
+
   verifyFormat("return aaaa & AAAAAAAAAAAAAAAAAAAAAAAAAAAAA ||\n"
                "       bbbb & BBBBBBBBBBBBBBBBBBBBBBBBBBBBB ||\n"
                "       cccc & CCCCCCCCCCCCCCCCCCCCCCCCCC ||\n"
                "       dddd & DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD;");
+  verifyFormat("return aaaa & AAAAAAAAAAAAAAAAAAAAAAAAAAAAA or\n"
+               "       bbbb & BBBBBBBBBBBBBBBBBBBBBBBBBBBBB or\n"
+               "       cccc & CCCCCCCCCCCCCCCCCCCCCCCCCC or\n"
+               "       dddd & DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD;");
+
   verifyFormat("if ((aaaaaaaaaa != aaaaaaaaaaaaaaa ||\n"
                "     aaaaaaaaaaaaaaaaaaaaaaaa() >= aaaaaaaaaaaaaaaaaaaa) &&\n"
+               "    aaaaaaaaaaaaaaa != aa) {\n}");
+  verifyFormat("if ((aaaaaaaaaa != aaaaaaaaaaaaaaa or\n"
+               "     aaaaaaaaaaaaaaaaaaaaaaaa() >= aaaaaaaaaaaaaaaaaaaa) and\n"
                "    aaaaaaaaaaaaaaa != aa) {\n}");
 }
 

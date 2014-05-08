@@ -246,8 +246,8 @@ static bool format(StringRef FileName) {
         return true;
     } else {
       if (Cursor.getNumOccurrences() != 0)
-        outs() << "{ \"Cursor\": " << tooling::shiftedCodePosition(
-                                          Replaces, Cursor) << " }\n";
+        outs() << "{ \"Cursor\": "
+               << tooling::shiftedCodePosition(Replaces, Cursor) << " }\n";
       Rewrite.getEditBuffer(ID).write(outs());
     }
   }
