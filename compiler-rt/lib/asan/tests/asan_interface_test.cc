@@ -22,7 +22,7 @@ TEST(AddressSanitizerInterface, GetEstimatedAllocatedSize) {
 }
 
 static const char* kGetAllocatedSizeErrorMsg =
-  "attempting to call __asan_get_allocated_size()";
+  "attempting to call __asan_get_allocated_size";
 
 TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
   const size_t kArraySize = 100;
@@ -148,6 +148,7 @@ TEST(AddressSanitizerInterface, ExitCode) {
 
 static void MyDeathCallback() {
   fprintf(stderr, "MyDeathCallback\n");
+  fflush(0);  // On Windows, stderr doesn't flush on crash.
 }
 
 TEST(AddressSanitizerInterface, DeathCallbackTest) {
@@ -389,6 +390,7 @@ TEST(AddressSanitizerInterface, DISABLED_InvalidPoisonAndUnpoisonCallsTest) {
   free(array);
 }
 
+#if !defined(_WIN32)  // FIXME: This should really be a lit test.
 static void ErrorReportCallbackOneToZ(const char *report) {
   int report_len = strlen(report);
   ASSERT_EQ(6, write(2, "ABCDEF", 6));
@@ -403,6 +405,7 @@ TEST(AddressSanitizerInterface, SetErrorReportCallbackTest) {
                ASAN_PCRE_DOTALL "ABCDEF.*AddressSanitizer.*WRITE.*ABCDEF");
   __asan_set_error_report_callback(NULL);
 }
+#endif
 
 TEST(AddressSanitizerInterface, GetOwnershipStressTest) {
   std::vector<char *> pointers;
