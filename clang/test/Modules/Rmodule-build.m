@@ -9,8 +9,8 @@
 // RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -fsyntax-only %s -verify \
 // RUN:            -I %t -Wmodule-build
 
-@import A; // expected-warning{{building module 'A' as}}
-@import B; // expected-warning{{building module 'B' as}}
+@import A; // expected-remark{{building module 'A' as}}
+@import B; // expected-remark{{building module 'B' as}}
 @import A; // no diagnostic
 @import B; // no diagnostic
 

@@ -1212,7 +1212,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
         return ModuleLoadResult();
       }
 
-      getDiagnostics().Report(ImportLoc, diag::warn_module_build)
+      getDiagnostics().Report(ImportLoc, diag::remark_module_build)
           << ModuleName << ModuleFileName;
 
       // Check whether we have already attempted to build this module (but
