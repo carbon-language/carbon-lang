@@ -19,14 +19,14 @@ static const char * const TokNames[] = {
 #define TOK(X) #X,
 #define KEYWORD(X,Y) #X,
 #include "clang/Basic/TokenKinds.def"
-  0
+  nullptr
 };
 
 const char *tok::getTokenName(TokenKind Kind) {
   if (Kind < tok::NUM_TOKENS)
     return TokNames[Kind];
   llvm_unreachable("unknown TokenKind");
-  return 0;
+  return nullptr;
 }
 
 const char *tok::getPunctuatorSpelling(TokenKind Kind) {
@@ -35,7 +35,7 @@ const char *tok::getPunctuatorSpelling(TokenKind Kind) {
 #include "clang/Basic/TokenKinds.def"
   default: break;
   }
-  return 0;
+  return nullptr;
 }
 
 const char *tok::getKeywordSpelling(TokenKind Kind) {
@@ -44,5 +44,5 @@ const char *tok::getKeywordSpelling(TokenKind Kind) {
 #include "clang/Basic/TokenKinds.def"
     default: break;
   }
-  return 0;
+  return nullptr;
 }

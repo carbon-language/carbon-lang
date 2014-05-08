@@ -70,7 +70,7 @@ FileManager::~FileManager() {
 void FileManager::addStatCache(FileSystemStatCache *statCache,
                                bool AtBeginning) {
   assert(statCache && "No stat cache provided?");
-  if (AtBeginning || StatCache.get() == 0) {
+  if (AtBeginning || !StatCache.get()) {
     statCache->setNextStatCache(StatCache.release());
     StatCache.reset(statCache);
     return;
@@ -103,7 +103,7 @@ void FileManager::removeStatCache(FileSystemStatCache *statCache) {
 }
 
 void FileManager::clearStatCaches() {
-  StatCache.reset(0);
+  StatCache.reset(nullptr);
 }
 
 /// \brief Retrieve the directory that the given file name resides in.
@@ -112,10 +112,10 @@ static const DirectoryEntry *getDirectoryFromFile(FileManager &FileMgr,
                                                   StringRef Filename,
                                                   bool CacheFailure) {
   if (Filename.empty())
-    return NULL;
+    return nullptr;
 
   if (llvm::sys::path::is_separator(Filename[Filename.size() - 1]))
-    return NULL;  // If Filename is a directory.
+    return nullptr; // If Filename is a directory.
 
   StringRef DirName = llvm::sys::path::parent_path(Filename);
   // Use the current directory if file has no path component.
@@ -179,8 +179,8 @@ const DirectoryEntry *FileManager::getDirectory(StringRef DirName,
   // See if there was already an entry in the map.  Note that the map
   // contains both virtual and real directories.
   if (NamedDirEnt.getValue())
-    return NamedDirEnt.getValue() == NON_EXISTENT_DIR
-              ? 0 : NamedDirEnt.getValue();
+    return NamedDirEnt.getValue() == NON_EXISTENT_DIR ? nullptr
+                                                      : NamedDirEnt.getValue();
 
   ++NumDirCacheMisses;
 
@@ -193,11 +193,11 @@ const DirectoryEntry *FileManager::getDirectory(StringRef DirName,
 
   // Check to see if the directory exists.
   FileData Data;
-  if (getStatValue(InterndDirName, Data, false, 0 /*directory lookup*/)) {
+  if (getStatValue(InterndDirName, Data, false, nullptr /*directory lookup*/)) {
     // There's no real directory at the given path.
     if (!CacheFailure)
       SeenDirEntries.erase(DirName);
-    return 0;
+    return nullptr;
   }
 
   // It exists.  See if we have already opened a directory with the
@@ -227,7 +227,7 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   // See if there is already an entry in the map.
   if (NamedFileEnt.getValue())
     return NamedFileEnt.getValue() == NON_EXISTENT_FILE
-                 ? 0 : NamedFileEnt.getValue();
+                 ? nullptr : NamedFileEnt.getValue();
 
   ++NumFileCacheMisses;
 
@@ -245,25 +245,25 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   // without a 'sys' subdir will get a cached failure result.
   const DirectoryEntry *DirInfo = getDirectoryFromFile(*this, Filename,
                                                        CacheFailure);
-  if (DirInfo == 0) {  // Directory doesn't exist, file can't exist.
+  if (DirInfo == nullptr) { // Directory doesn't exist, file can't exist.
     if (!CacheFailure)
       SeenFileEntries.erase(Filename);
-    
-    return 0;
+
+    return nullptr;
   }
   
   // FIXME: Use the directory info to prune this, before doing the stat syscall.
   // FIXME: This will reduce the # syscalls.
 
   // Nope, there isn't.  Check to see if the file exists.
-  vfs::File *F = 0;
+  vfs::File *F = nullptr;
   FileData Data;
-  if (getStatValue(InterndFileName, Data, true, openFile ? &F : 0)) {
+  if (getStatValue(InterndFileName, Data, true, openFile ? &F : nullptr)) {
     // There's no real file at the given path.
     if (!CacheFailure)
       SeenFileEntries.erase(Filename);
-    
-    return 0;
+
+    return nullptr;
   }
 
   assert((openFile || !F) && "undesired open file");
@@ -314,7 +314,7 @@ FileManager::getVirtualFile(StringRef Filename, off_t Size,
   NamedFileEnt.setValue(NON_EXISTENT_FILE);
 
   addAncestorsAsVirtualDirs(Filename);
-  FileEntry *UFE = 0;
+  FileEntry *UFE = nullptr;
 
   // Now that all ancestors of Filename are in the cache, the
   // following call is guaranteed to find the DirectoryEntry from the
@@ -327,7 +327,7 @@ FileManager::getVirtualFile(StringRef Filename, off_t Size,
   // Check to see if the file exists. If so, drop the virtual file
   FileData Data;
   const char *InterndFileName = NamedFileEnt.getKeyData();
-  if (getStatValue(InterndFileName, Data, true, 0) == 0) {
+  if (getStatValue(InterndFileName, Data, true, nullptr) == 0) {
     Data.Size = Size;
     Data.ModTime = ModificationTime;
     UFE = &UniqueRealFiles[Data.UniqueID];

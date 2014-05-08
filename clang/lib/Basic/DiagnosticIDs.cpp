@@ -109,7 +109,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
   // Out of bounds diag. Can't be in the table.
   using namespace diag;
   if (DiagID >= DIAG_UPPER_LIMIT || DiagID <= DIAG_START_COMMON)
-    return 0;
+    return nullptr;
 
   // Compute the index of the requested diagnostic in the static table.
   // 1. Add the number of diagnostics in each category preceding the
@@ -139,7 +139,7 @@ CATEGORY(ANALYSIS, SEMA)
 
   // Avoid out of bounds reads.
   if (ID + Offset >= StaticDiagInfoSize)
-    return 0;
+    return nullptr;
 
   assert(ID < StaticDiagInfoSize && Offset < StaticDiagInfoSize);
 
@@ -148,7 +148,7 @@ CATEGORY(ANALYSIS, SEMA)
   // happen when this function is called with an ID that points into a hole in
   // the diagID space.
   if (Found->DiagID != DiagID)
-    return 0;
+    return nullptr;
   return Found;
 }
 
@@ -216,7 +216,7 @@ static const StaticDiagCategoryRec CategoryNameTable[] = {
 #define CATEGORY(X, ENUM) { X, STR_SIZE(X, uint8_t) },
 #include "clang/Basic/DiagnosticGroups.inc"
 #undef GET_CATEGORY_TABLE
-  { 0, 0 }
+  { nullptr, 0 }
 };
 
 /// getNumberOfCategories - Return the number of categories
@@ -301,9 +301,7 @@ namespace clang {
 // Common Diagnostic implementation
 //===----------------------------------------------------------------------===//
 
-DiagnosticIDs::DiagnosticIDs() {
-  CustomDiagInfo = 0;
-}
+DiagnosticIDs::DiagnosticIDs() { CustomDiagInfo = nullptr; }
 
 DiagnosticIDs::~DiagnosticIDs() {
   delete CustomDiagInfo;
@@ -316,7 +314,7 @@ DiagnosticIDs::~DiagnosticIDs() {
 /// \param FormatString A fixed diagnostic format string that will be hashed and
 /// mapped to a unique DiagID.
 unsigned DiagnosticIDs::getCustomDiagID(Level L, StringRef FormatString) {
-  if (CustomDiagInfo == 0)
+  if (!CustomDiagInfo)
     CustomDiagInfo = new diag::CustomDiagInfo();
   return CustomDiagInfo->getOrCreateDiagID(L, FormatString, *this);
 }

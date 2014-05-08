@@ -42,8 +42,8 @@ IdentifierInfo::IdentifierInfo() {
   RevertedTokenID = false;
   OutOfDate = false;
   IsModulesImport = false;
-  FETokenInfo = 0;
-  Entry = 0;
+  FETokenInfo = nullptr;
+  Entry = nullptr;
 }
 
 //===----------------------------------------------------------------------===//
@@ -527,7 +527,7 @@ Selector SelectorTable::getSelector(unsigned nKeys, IdentifierInfo **IIV) {
   llvm::FoldingSetNodeID ID;
   MultiKeywordSelector::Profile(ID, IIV, nKeys);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (MultiKeywordSelector *SI =
         SelTabImpl.Table.FindNodeOrInsertPos(ID, InsertPos))
     return Selector(SI);
@@ -555,7 +555,7 @@ const char *clang::getOperatorSpelling(OverloadedOperatorKind Operator) {
   switch (Operator) {
   case OO_None:
   case NUM_OVERLOADED_OPERATORS:
-    return 0;
+    return nullptr;
 
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
   case OO_##Name: return Spelling;

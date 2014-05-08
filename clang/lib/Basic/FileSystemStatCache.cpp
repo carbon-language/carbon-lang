@@ -96,7 +96,7 @@ bool FileSystemStatCache::get(const char *Path, FileData &Data, bool isFile,
         // fstat rarely fails.  If it does, claim the initial open didn't
         // succeed.
         R = CacheMissing;
-        *F = 0;
+        *F = nullptr;
       }
     }
   }
@@ -110,7 +110,7 @@ bool FileSystemStatCache::get(const char *Path, FileData &Data, bool isFile,
     // If not, close the file if opened.
     if (F && *F) {
       (*F)->close();
-      *F = 0;
+      *F = nullptr;
     }
     
     return true;

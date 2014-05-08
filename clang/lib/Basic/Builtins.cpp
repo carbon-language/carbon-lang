@@ -20,7 +20,7 @@
 using namespace clang;
 
 static const Builtin::Info BuiltinInfo[] = {
-  { "not a builtin function", 0, 0, 0, ALL_LANGUAGES },
+  { "not a builtin function", nullptr, nullptr, nullptr, ALL_LANGUAGES},
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
 #define LANGBUILTIN(ID, TYPE, ATTRS, BUILTIN_LANG) { #ID, TYPE, ATTRS, 0, BUILTIN_LANG },
 #define LIBBUILTIN(ID, TYPE, ATTRS, HEADER, BUILTIN_LANG) { #ID, TYPE, ATTRS, HEADER,\
@@ -37,7 +37,7 @@ const Builtin::Info &Builtin::Context::GetRecord(unsigned ID) const {
 
 Builtin::Context::Context() {
   // Get the target specific builtins from the target.
-  TSRecords = 0;
+  TSRecords = nullptr;
   NumTSRecords = 0;
 }
 
@@ -116,7 +116,7 @@ bool Builtin::Context::isLike(unsigned ID, unsigned &FormatIdx,
   ++Like;
 
   assert(::strchr(Like, ':') && "Format specifier must end with a ':'");
-  FormatIdx = ::strtol(Like, 0, 10);
+  FormatIdx = ::strtol(Like, nullptr, 10);
   return true;
 }
 

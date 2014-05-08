@@ -27,10 +27,10 @@ using namespace clang;
 Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
                const FileEntry *File, bool IsFramework, bool IsExplicit)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), ModuleMap(File),
-      Umbrella(), ASTFile(0), IsMissingRequirement(false), IsAvailable(true),
-      IsFromModuleFile(false), IsFramework(IsFramework), IsExplicit(IsExplicit),
-      IsSystem(false), IsExternC(false), IsInferred(false),
-      InferSubmodules(false), InferExplicitSubmodules(false),
+      Umbrella(), ASTFile(nullptr), IsMissingRequirement(false),
+      IsAvailable(true), IsFromModuleFile(false), IsFramework(IsFramework),
+      IsExplicit(IsExplicit), IsSystem(false), IsExternC(false),
+      IsInferred(false), InferSubmodules(false), InferExplicitSubmodules(false),
       InferExportWildcard(false), ConfigMacrosExhaustive(false),
       NameVisibility(Hidden) {
   if (Parent) {
@@ -192,8 +192,8 @@ void Module::markUnavailable(bool MissingRequirement) {
 Module *Module::findSubmodule(StringRef Name) const {
   llvm::StringMap<unsigned>::const_iterator Pos = SubModuleIndex.find(Name);
   if (Pos == SubModuleIndex.end())
-    return 0;
-  
+    return nullptr;
+
   return SubModules[Pos->getValue()];
 }
 

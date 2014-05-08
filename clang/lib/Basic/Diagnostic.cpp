@@ -41,9 +41,9 @@ DiagnosticsEngine::DiagnosticsEngine(
                        DiagnosticOptions *DiagOpts,       
                        DiagnosticConsumer *client, bool ShouldOwnClient)
   : Diags(diags), DiagOpts(DiagOpts), Client(client),
-    OwnsDiagClient(ShouldOwnClient), SourceMgr(0) {
+    OwnsDiagClient(ShouldOwnClient), SourceMgr(nullptr) {
   ArgToStringFn = DummyArgToStringFn;
-  ArgToStringCookie = 0;
+  ArgToStringCookie = nullptr;
 
   AllExtensionsSilenced = 0;
   IgnoreAllWarnings = false;
@@ -157,7 +157,7 @@ DiagnosticsEngine::GetDiagStatePointForLoc(SourceLocation L) const {
   if (LastStateChangePos.isValid() &&
       Loc.isBeforeInTranslationUnitThan(LastStateChangePos))
     Pos = std::upper_bound(DiagStatePoints.begin(), DiagStatePoints.end(),
-                           DiagStatePoint(0, Loc));
+                           DiagStatePoint(nullptr, Loc));
   --Pos;
   return Pos;
 }
@@ -612,7 +612,7 @@ static const char *getTokenDescForDiagnostic(tok::TokenKind Kind) {
   case tok::identifier:
     return "identifier";
   default:
-    return 0;
+    return nullptr;
   }
 }
 
@@ -672,7 +672,7 @@ FormatDiagnostic(const char *DiagStr, const char *DiagEnd,
     // The digit is a number from 0-9 indicating which argument this comes from.
     // The modifier is a string of digits from the set [-a-z]+, arguments is a
     // brace enclosed string.
-    const char *Modifier = 0, *Argument = 0;
+    const char *Modifier = nullptr, *Argument = nullptr;
     unsigned ModifierLen = 0, ArgumentLen = 0;
 
     // Check to see if we have a modifier.  If so eat it.

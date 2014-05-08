@@ -69,7 +69,7 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   FloatFormat = &llvm::APFloat::IEEEsingle;
   DoubleFormat = &llvm::APFloat::IEEEdouble;
   LongDoubleFormat = &llvm::APFloat::IEEEdouble;
-  DescriptionString = 0;
+  DescriptionString = nullptr;
   UserLabelPrefix = "_";
   MCountName = "mcount";
   RegParmMax = 0;

@@ -1345,7 +1345,7 @@ namespace {
     void getGCCRegAliases(const GCCRegAlias *&Aliases,
                                   unsigned &NumAliases) const override {
       // No aliases.
-      Aliases = 0;
+      Aliases = nullptr;
       NumAliases = 0;
     }
     bool validateAsmConstraint(const char *&Name,
@@ -1472,13 +1472,13 @@ public:
 
   void getGCCRegNames(const char * const *&Names,
                       unsigned &numNames) const override {
-    Names = NULL;
+    Names = nullptr;
     numNames = 0;
   }
 
   void getGCCRegAliases(const GCCRegAlias *&Aliases,
                         unsigned &NumAliases) const override {
-    Aliases = NULL;
+    Aliases = nullptr;
     NumAliases = 0;
   }
 
@@ -1489,7 +1489,7 @@ public:
 
   void getTargetBuiltins(const Builtin::Info *&Records,
                          unsigned &NumRecords) const override {
-    Records = NULL;
+    Records = nullptr;
     NumRecords = 0;
   }
 
@@ -1818,7 +1818,7 @@ public:
   }
   void getGCCRegAliases(const GCCRegAlias *&Aliases,
                         unsigned &NumAliases) const override {
-    Aliases = 0;
+    Aliases = nullptr;
     NumAliases = 0;
   }
   void getGCCAddlRegNames(const AddlRegName *&Names,
@@ -4092,7 +4092,7 @@ public:
       .Cases("cortex-m3", "cortex-m4", "7M")
       .Case("cortex-m0", "6M")
       .Cases("cortex-a53", "cortex-a57", "8A")
-      .Default(0);
+      .Default(nullptr);
   }
   static const char *getCPUProfile(StringRef Name) {
     return llvm::StringSwitch<const char*>(Name)
@@ -4895,7 +4895,7 @@ public:
     return llvm::StringSwitch<const char*>(Name)
       .Case("hexagonv4", "4")
       .Case("hexagonv5", "5")
-      .Default(0);
+      .Default(nullptr);
   }
 
   bool setCPU(const std::string &Name) override {
@@ -5227,7 +5227,7 @@ public:
   void getTargetBuiltins(const Builtin::Info *&Records,
                          unsigned &NumRecords) const override {
     // FIXME: Implement.
-    Records = 0;
+    Records = nullptr;
     NumRecords = 0;
   }
 
@@ -5236,7 +5236,7 @@ public:
   void getGCCRegAliases(const GCCRegAlias *&Aliases,
                         unsigned &NumAliases) const override {
     // No aliases.
-    Aliases = 0;
+    Aliases = nullptr;
     NumAliases = 0;
   }
   bool validateAsmConstraint(const char *&Name,
@@ -5333,7 +5333,7 @@ namespace {
     void getTargetBuiltins(const Builtin::Info *&Records,
                            unsigned &NumRecords) const override {
       // FIXME: Implement.
-      Records = 0;
+      Records = nullptr;
       NumRecords = 0;
     }
     bool hasFeature(StringRef Feature) const override {
@@ -5344,7 +5344,7 @@ namespace {
     void getGCCRegAliases(const GCCRegAlias *&Aliases,
                           unsigned &NumAliases) const override {
       // No aliases.
-      Aliases = 0;
+      Aliases = nullptr;
       NumAliases = 0;
     }
     bool validateAsmConstraint(const char *&Name,
@@ -6002,13 +6002,13 @@ public:
 
 void PNaClTargetInfo::getGCCRegNames(const char * const *&Names,
                                      unsigned &NumNames) const {
-  Names = NULL;
+  Names = nullptr;
   NumNames = 0;
 }
 
 void PNaClTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
                                        unsigned &NumAliases) const {
-  Aliases = NULL;
+  Aliases = nullptr;
   NumAliases = 0;
 }
 } // end anonymous namespace.
@@ -6142,7 +6142,7 @@ public:
   }
   void getGCCRegAliases(const GCCRegAlias *&Aliases,
                         unsigned &NumAliases) const override {
-    Aliases = NULL;
+    Aliases = nullptr;
     NumAliases = 0;
   }
   bool validateAsmConstraint(const char *&Name,
@@ -6173,7 +6173,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
 
   switch (Triple.getArch()) {
   default:
-    return NULL;
+    return nullptr;
 
   case llvm::Triple::arm64:
     if (Triple.isOSDarwin())
@@ -6351,7 +6351,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       case llvm::Triple::NaCl:
         return new NaClTargetInfo<PNaClTargetInfo>(Triple);
       default:
-        return NULL;
+        return nullptr;
     }
 
   case llvm::Triple::ppc:
@@ -6540,13 +6540,13 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
     case llvm::Triple::spir: {
       if (Triple.getOS() != llvm::Triple::UnknownOS ||
           Triple.getEnvironment() != llvm::Triple::UnknownEnvironment)
-        return NULL;
+        return nullptr;
       return new SPIR32TargetInfo(Triple);
     }
     case llvm::Triple::spir64: {
       if (Triple.getOS() != llvm::Triple::UnknownOS ||
           Triple.getEnvironment() != llvm::Triple::UnknownEnvironment)
-        return NULL;
+        return nullptr;
       return new SPIR64TargetInfo(Triple);
     }
   }
@@ -6562,26 +6562,26 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   std::unique_ptr<TargetInfo> Target(AllocateTarget(Triple));
   if (!Target) {
     Diags.Report(diag::err_target_unknown_triple) << Triple.str();
-    return 0;
+    return nullptr;
   }
   Target->setTargetOpts(Opts);
 
   // Set the target CPU if specified.
   if (!Opts->CPU.empty() && !Target->setCPU(Opts->CPU)) {
     Diags.Report(diag::err_target_unknown_cpu) << Opts->CPU;
-    return 0;
+    return nullptr;
   }
 
   // Set the target ABI if specified.
   if (!Opts->ABI.empty() && !Target->setABI(Opts->ABI)) {
     Diags.Report(diag::err_target_unknown_abi) << Opts->ABI;
-    return 0;
+    return nullptr;
   }
 
   // Set the fp math unit.
   if (!Opts->FPMath.empty() && !Target->setFPMath(Opts->FPMath)) {
     Diags.Report(diag::err_target_unknown_fpmath) << Opts->FPMath;
-    return 0;
+    return nullptr;
   }
 
   // Compute the default target features, we need the target to handle this
@@ -6607,7 +6607,7 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
          ie = Features.end(); it != ie; ++it)
     Opts->Features.push_back((it->second ? "+" : "-") + it->first().str());
   if (!Target->handleTargetFeatures(Opts->Features, Diags))
-    return 0;
+    return nullptr;
 
   return Target.release();
 }
