@@ -750,7 +750,7 @@ FORMAT_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
       printf_common(ctx, format, aq);                                          \
     }                                                                          \
     int res = REAL(vname)(str, __VA_ARGS__);                                   \
-    if (res >= 0 && common_flags()->check_printf) {                            \
+    if (res >= 0) {                                                            \
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, str, res + 1);                       \
     }                                                                          \
     VPRINTF_INTERCEPTOR_RETURN();                                              \
@@ -764,7 +764,7 @@ FORMAT_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
       printf_common(ctx, format, aq);                                          \
     }                                                                          \
     int res = REAL(vname)(str, size, __VA_ARGS__);                             \
-    if (res >= 0 && common_flags()->check_printf) {                            \
+    if (res >= 0) {                                                            \
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, str, Min(size, (SIZE_T)(res + 1)));  \
     }                                                                          \
     VPRINTF_INTERCEPTOR_RETURN();                                              \
@@ -774,12 +774,12 @@ FORMAT_INTERCEPTOR_IMPL(__isoc99_sscanf, __isoc99_vsscanf, str, format)
 #define VASPRINTF_INTERCEPTOR_IMPL(vname, strp, ...)                           \
   {                                                                            \
     VPRINTF_INTERCEPTOR_ENTER(vname, strp, __VA_ARGS__)                        \
+    COMMON_INTERCEPTOR_WRITE_RANGE(ctx, strp, sizeof(char *));                 \
     if (common_flags()->check_printf) {                                        \
-      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, strp, sizeof(char *));               \
       printf_common(ctx, format, aq);                                          \
     }                                                                          \
     int res = REAL(vname)(strp, __VA_ARGS__);                                  \
-    if (res >= 0 && common_flags()->check_printf) {                            \
+    if (res >= 0) {                                                            \
       COMMON_INTERCEPTOR_WRITE_RANGE(ctx, *strp, res + 1);                     \
     }                                                                          \
     VPRINTF_INTERCEPTOR_RETURN();                                              \
