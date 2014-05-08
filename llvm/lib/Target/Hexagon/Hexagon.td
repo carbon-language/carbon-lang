@@ -200,8 +200,6 @@ class Proc<string Name, SchedMachineModel Model,
            list<SubtargetFeature> Features>
  : ProcessorModel<Name, Model, Features>;
 
-def : Proc<"hexagonv2", HexagonModel,   [ArchV2]>;
-def : Proc<"hexagonv3", HexagonModel,   [ArchV2, ArchV3]>;
 def : Proc<"hexagonv4", HexagonModelV4, [ArchV2, ArchV3, ArchV4]>;
 def : Proc<"hexagonv5", HexagonModelV4, [ArchV2, ArchV3, ArchV4, ArchV5]>;
 
