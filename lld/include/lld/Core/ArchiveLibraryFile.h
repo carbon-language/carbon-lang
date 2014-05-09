@@ -12,8 +12,6 @@
 
 #include "lld/Core/File.h"
 
-#include <set>
-
 namespace lld {
 
 ///
@@ -37,10 +35,6 @@ public:
 
   virtual error_code
   parseAllMembers(std::vector<std::unique_ptr<File>> &result) const = 0;
-
-  virtual std::set<StringRef> getDefinedSymbols() const {
-    return std::set<StringRef>();
-  }
 
 protected:
   /// only subclasses of ArchiveLibraryFile can be instantiated

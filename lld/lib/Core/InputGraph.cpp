@@ -21,12 +21,9 @@ ErrorOr<File &> InputGraph::getNextFile() {
   // it will succeed. If not, try to get the next file in the input graph.
   for (;;) {
     if (_currentInputElement) {
-      ErrorOr<File &> next = _currentInputElement->getNextFile();
-      if (next.getError() != InputGraphError::no_more_files) {
-        for (std::function<void(File*)> &observer : _observers)
-          observer(&next.get());
-        return std::move(next);
-      }
+      ErrorOr<File &> nextFile = _currentInputElement->getNextFile();
+      if (nextFile.getError() != InputGraphError::no_more_files)
+        return std::move(nextFile);
     }
 
     ErrorOr<InputElement *> elt = getNextInputElement();
@@ -37,10 +34,6 @@ ErrorOr<File &> InputGraph::getNextFile() {
 }
 
 void InputGraph::notifyProgress() { _currentInputElement->notifyProgress(); }
-
-void InputGraph::registerObserver(std::function<void(File*)> &fn) {
-  _observers.push_back(fn);
-}
 
 void InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {
   _inputArgs.push_back(std::move(ie));

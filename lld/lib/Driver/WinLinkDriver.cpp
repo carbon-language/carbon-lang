@@ -13,12 +13,10 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Driver/Driver.h"
 #include "lld/Driver/WinLinkInputGraph.h"
 #include "lld/Driver/WinLinkModuleDef.h"
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
-#include "../ReaderWriter/PECOFF/LinkerGeneratedSymbolFile.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/Optional.h"
@@ -36,7 +34,6 @@
 
 #include <algorithm>
 #include <cctype>
-#include <functional>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -1294,19 +1291,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
           return false;
       ctx.getLibraryGroup()->addFile(std::move(lib));
     }
-  }
-
-  if (!isReadingDirectiveSection) {
-    std::unique_ptr<SimpleFileNode> node(new SimpleFileNode("<export>"));
-    pecoff::ExportedSymbolRenameFile *renameFile =
-        new pecoff::ExportedSymbolRenameFile(ctx);
-    node->appendInputFile(std::unique_ptr<File>(renameFile));
-    ctx.getLibraryGroup()->addFile(std::move(node));
-    std::function<void(File *)> observer = [=](File *file) {
-      if (auto *archive = dyn_cast<ArchiveLibraryFile>(file))
-        renameFile->addResolvableSymbols(archive);
-    };
-    ctx.getInputGraph().registerObserver(observer);
   }
 
   // Validate the combination of options used.

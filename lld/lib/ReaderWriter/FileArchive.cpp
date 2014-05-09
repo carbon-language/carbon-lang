@@ -97,16 +97,6 @@ public:
     return _absoluteAtoms;
   }
 
-  /// Returns a set of all defined symbols in the archive.
-  std::set<StringRef> getDefinedSymbols() const override {
-    std::set<StringRef> ret;
-    for (const auto &e : _symbolMemberMap) {
-      StringRef sym = e.first;
-      ret.insert(sym);
-    }
-    return ret;
-  }
-
 protected:
   error_code
   instantiateMember(Archive::child_iterator member,
