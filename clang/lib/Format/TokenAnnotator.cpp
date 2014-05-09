@@ -225,8 +225,10 @@ private:
     FormatToken *Parent = Left->getPreviousNonComment();
     bool StartsObjCMethodExpr =
         Contexts.back().CanBeExpression && Left->Type != TT_LambdaLSquare &&
-        (!Parent || Parent->isOneOf(tok::colon, tok::l_square, tok::l_paren,
-                                    tok::kw_return, tok::kw_throw) ||
+        CurrentToken->isNot(tok::l_brace) &&
+        (!Parent ||
+         Parent->isOneOf(tok::colon, tok::l_square, tok::l_paren,
+                         tok::kw_return, tok::kw_throw) ||
          Parent->isUnaryOperator() || Parent->Type == TT_ObjCForIn ||
          Parent->Type == TT_CastRParen ||
          getBinOpPrecedence(Parent->Tok.getKind(), true, true) > prec::Unknown);
@@ -1452,7 +1454,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
     return Right.MatchingParen && Style.SpacesInContainerLiterals &&
            Right.MatchingParen->Type == TT_ArrayInitializerLSquare;
   if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr &&
-      Right.Type != TT_LambdaLSquare && Left.isNot(tok::numeric_constant))
+      Right.Type != TT_LambdaLSquare && Left.isNot(tok::numeric_constant) &&
+      Left.Type != TT_DictLiteral)
     return false;
   if (Left.is(tok::colon))
     return Left.Type != TT_ObjCMethodExpr;
