@@ -213,6 +213,7 @@ static unsigned ComputeSpeculationCost(const User *I) {
     if (!cast<GEPOperator>(I)->hasAllConstantIndices())
       return UINT_MAX;
     return 1;
+  case Instruction::ExtractValue:
   case Instruction::Load:
   case Instruction::Add:
   case Instruction::Sub:
