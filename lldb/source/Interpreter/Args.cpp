@@ -1155,7 +1155,7 @@ Args::StringToGenericRegister (const char *s)
             return LLDB_REGNUM_GENERIC_SP;
         else if (strcmp(s, "fp") == 0)
             return LLDB_REGNUM_GENERIC_FP;
-        else if (strcmp(s, "ra") == 0)
+        else if (strcmp(s, "ra") == 0 || strcmp(s, "lr") == 0)
             return LLDB_REGNUM_GENERIC_RA;
         else if (strcmp(s, "flags") == 0)
             return LLDB_REGNUM_GENERIC_FLAGS;
