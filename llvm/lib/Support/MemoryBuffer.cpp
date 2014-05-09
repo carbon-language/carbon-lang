@@ -320,9 +320,8 @@ static bool shouldUseMmap(int FD,
   // RequiresNullTerminator = false and MapSize != -1.
   if (FileSize == size_t(-1)) {
     sys::fs::file_status Status;
-    error_code EC = sys::fs::status(FD, Status);
-    if (EC)
-      return EC;
+    if (sys::fs::status(FD, Status))
+      return false;
     FileSize = Status.getSize();
   }
 
