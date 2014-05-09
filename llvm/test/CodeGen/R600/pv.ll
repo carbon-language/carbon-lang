@@ -1,7 +1,7 @@
 ; RUN: llc < %s -march=r600 | FileCheck %s
 
 ;CHECK: DOT4 * T{{[0-9]\.W}} (MASKED)
-;CHECK: MAX T{{[0-9].[XYZW]}}, 0.0, PV.X
+;CHECK: MAX T{{[0-9].[XYZW]}}, PV.X, 0.0
 
 define void @main(<4 x float> inreg %reg0, <4 x float> inreg %reg1, <4 x float> inreg %reg2, <4 x float> inreg %reg3, <4 x float> inreg %reg4, <4 x float> inreg %reg5, <4 x float> inreg %reg6, <4 x float> inreg %reg7) #0 {
 main_body:

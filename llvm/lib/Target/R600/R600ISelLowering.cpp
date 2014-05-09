@@ -986,13 +986,6 @@ SDValue R600TargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const 
     return DAG.getNode(ISD::BITCAST, DL, VT, SelectNode);
   }
 
-
-  // Possible Min/Max pattern
-  SDValue MinMax = LowerMinMax(Op, DAG);
-  if (MinMax.getNode()) {
-    return MinMax;
-  }
-
   // If we make it this for it means we have no native instructions to handle
   // this SELECT_CC, so we must lower it.
   SDValue HWTrue, HWFalse;
@@ -1672,6 +1665,11 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
   }
 
   case ISD::SELECT_CC: {
+    // Try common optimizations
+    SDValue Ret = AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
+    if (Ret.getNode())
+      return Ret;
+
     // fold selectcc (selectcc x, y, a, b, cc), b, a, b, seteq ->
     //      selectcc x, y, a, b, inv(cc)
     //
