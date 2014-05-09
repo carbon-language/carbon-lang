@@ -90,10 +90,23 @@ def FeatureMips1       : SubtargetFeature<"mips1", "MipsArchVersion", "Mips1",
 def FeatureMips2       : SubtargetFeature<"mips2", "MipsArchVersion", "Mips2",
                                 "Mips II ISA Support [highly experimental]",
                                 [FeatureMips1]>;
+def FeatureMips3_32    : SubtargetFeature<"mips3_32", "HasMips3_32", "true",
+                                "Subset of MIPS-III that is also in MIPS32 "
+                                "[highly experimental]">;
+def FeatureMips3       : SubtargetFeature<"mips3", "MipsArchVersion", "Mips3",
+                                "MIPS III ISA Support [highly experimental]",
+                                [FeatureMips2, FeatureMips3_32,
+                                 FeatureGP64Bit, FeatureFP64Bit]>;
+def FeatureMips4       : SubtargetFeature<"mips4", "MipsArchVersion",
+                                "Mips4", "MIPS IV ISA Support",
+                                [FeatureMips3, FeatureFPIdx, FeatureCondMov]>;
+def FeatureMips5       : SubtargetFeature<"mips5", "MipsArchVersion", "Mips5",
+                                "MIPS V ISA Support [highly experimental]",
+                                [FeatureMips4]>;
 def FeatureMips32      : SubtargetFeature<"mips32", "MipsArchVersion", "Mips32",
                                 "Mips32 ISA Support",
-                                [FeatureMips2, FeatureCondMov,
-                                 FeatureBitCount]>;
+                                [FeatureMips2, FeatureMips3_32,
+                                 FeatureCondMov, FeatureBitCount]>;
 def FeatureMips32r2    : SubtargetFeature<"mips32r2", "MipsArchVersion",
                                 "Mips32r2", "Mips32r2 ISA Support",
                                 [FeatureMips32, FeatureSEInReg, FeatureSwap,
@@ -103,18 +116,6 @@ def FeatureMips32r6    : SubtargetFeature<"mips32r6", "MipsArchVersion",
                                 "Mips32r6 ISA Support [experimental]",
                                 [FeatureMips32r2, FeatureFP64Bit,
                                  FeatureNaN2008]>;
-// FIXME: Need to check whether FPIdx belongs in the MIPS-III or MIPS-IV Implies
-//        list but for now it doesn't matter since FPIdx isn't actually attached
-//        to any instructions.
-def FeatureMips3       : SubtargetFeature<"mips3", "MipsArchVersion", "Mips3",
-                                "MIPS III ISA Support [highly experimental]",
-                                [FeatureMips2, FeatureGP64Bit, FeatureFP64Bit]>;
-def FeatureMips4       : SubtargetFeature<"mips4", "MipsArchVersion",
-                                "Mips4", "MIPS IV ISA Support",
-                                [FeatureMips3, FeatureFPIdx, FeatureCondMov]>;
-def FeatureMips5       : SubtargetFeature<"mips5", "MipsArchVersion", "Mips5",
-                                "MIPS V ISA Support [highly experimental]",
-                                [FeatureMips4]>;
 def FeatureMips64      : SubtargetFeature<"mips64", "MipsArchVersion",
                                 "Mips64", "Mips64 ISA Support",
                                 [FeatureMips5, FeatureMips32, FeatureFPIdx]>;

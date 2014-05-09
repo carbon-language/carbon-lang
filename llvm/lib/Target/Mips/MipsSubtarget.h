@@ -79,6 +79,9 @@ protected:
 
   /// Features related to the presence of specific instructions.
 
+  // HasMips3_32 - The subset of MIPS-III instructions added to MIPS32
+  bool HasMips3_32;
+
   // HasSEInReg - SEB and SEH (signext in register) instructions.
   bool HasSEInReg;
 
@@ -155,6 +158,7 @@ public:
   void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
 
   bool hasMips2() const { return MipsArchVersion >= Mips2; }
+  bool hasMips3() const { return MipsArchVersion >= Mips3; }
   bool hasMips32() const { return MipsArchVersion >= Mips32; }
   bool hasMips32r2() const { return MipsArchVersion == Mips32r2 ||
                                    MipsArchVersion == Mips64r2; }

@@ -158,6 +158,10 @@ def HasFPIdx    :     Predicate<"Subtarget.hasFPIdx()">,
                       AssemblerPredicate<"FeatureFPIdx">;
 def HasMips2     :    Predicate<"Subtarget.hasMips2()">,
                       AssemblerPredicate<"FeatureMips2">;
+def HasMips3_32  :    Predicate<"Subtarget.hasMips3_32()">,
+                      AssemblerPredicate<"FeatureMips3_32">;
+def HasMips3     :    Predicate<"Subtarget.hasMips3()">,
+                      AssemblerPredicate<"FeatureMips3">;
 def HasMips32    :    Predicate<"Subtarget.hasMips32()">,
                       AssemblerPredicate<"FeatureMips32">;
 def HasMips32r2  :    Predicate<"Subtarget.hasMips32r2()">,
@@ -209,8 +213,12 @@ class GPR_64 { list<Predicate> GPRPredicates = [IsGP64bit]; }
 //===----------------------------------------------------------------------===//
 
 class ISA_MIPS2    { list<Predicate> InsnPredicates = [HasMips2]; }
+class ISA_MIPS3    { list<Predicate> InsnPredicates = [HasMips3]; }
 class ISA_MIPS32R2 { list<Predicate> InsnPredicates = [HasMips32r2]; }
 class ISA_MIPS64R2 { list<Predicate> InsnPredicates = [HasMips64r2]; }
+
+// The portions of MIPS-III that were also added to MIPS32
+class INSN_MIPS3_32 { list<Predicate> InsnPredicates = [HasMips3_32]; }
 
 class INSN_SWAP { list<Predicate> InsnPredicates = [HasSwap]; }
 class INSN_SEINREG { list<Predicate> InsnPredicates = [HasSEInReg]; }
@@ -1069,7 +1077,7 @@ def BREAK : MMRel, BRK_FT<"break">, BRK_FM<0xd>;
 def SYSCALL : MMRel, SYS_FT<"syscall">, SYS_FM<0xc>;
 def TRAP : TrapBase<BREAK>;
 
-def ERET : MMRel, ER_FT<"eret">, ER_FM<0x18>;
+def ERET : MMRel, ER_FT<"eret">, ER_FM<0x18>, INSN_MIPS3_32;
 def DERET : MMRel, ER_FT<"deret">, ER_FM<0x1f>;
 
 def EI : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM<1>;
