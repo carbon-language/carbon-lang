@@ -119,9 +119,8 @@ bool ChecksFilter::isCheckEnabled(StringRef Name) {
   return EnableChecks.match(Name) && !DisableChecks.match(Name);
 }
 
-ClangTidyContext::ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors,
-                                   const ClangTidyOptions &Options)
-    : Errors(Errors), DiagEngine(nullptr), Options(Options), Filter(Options) {}
+ClangTidyContext::ClangTidyContext(const ClangTidyOptions &Options)
+    : DiagEngine(nullptr), Options(Options), Filter(Options) {}
 
 DiagnosticBuilder ClangTidyContext::diag(
     StringRef CheckName, SourceLocation Loc, StringRef Description,
@@ -158,7 +157,7 @@ void ClangTidyContext::setSourceManager(SourceManager *SourceMgr) {
 
 /// \brief Store a \c ClangTidyError.
 void ClangTidyContext::storeError(const ClangTidyError &Error) {
-  Errors->push_back(Error);
+  Errors.push_back(Error);
 }
 
 StringRef ClangTidyContext::getCheckName(unsigned DiagnosticID) const {
@@ -201,6 +200,7 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
     assert(!Errors.empty() &&
            "A diagnostic note can only be appended to a message.");
   } else {
+    // FIXME: Pass all errors here regardless of filters and non-user code.
     finalizeLastError();
     StringRef WarningOption =
         Context.DiagEngine->getDiagnosticIDs()->getWarningOptionForDiag(

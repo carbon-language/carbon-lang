@@ -102,7 +102,7 @@ int main(int argc, const char **argv) {
     return 0;
   }
 
-  SmallVector<clang::tidy::ClangTidyError, 16> Errors;
+  std::vector<clang::tidy::ClangTidyError> Errors;
   clang::tidy::ClangTidyStats Stats =
       clang::tidy::runClangTidy(Options, OptionsParser.getCompilations(),
                                 OptionsParser.getSourcePathList(), &Errors);

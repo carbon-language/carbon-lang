@@ -20,8 +20,8 @@ public:
 };
 
 TEST(ClangTidyDiagnosticConsumer, SortsErrors) {
-  SmallVector<ClangTidyError, 8> Errors;
-  runCheckOnCode<TestCheck>("int a;", Errors);
+  std::vector<ClangTidyError> Errors;
+  runCheckOnCode<TestCheck>("int a;", &Errors);
   EXPECT_EQ(2ul, Errors.size());
   // FIXME: Remove " []" once the check name is removed from the message text.
   EXPECT_EQ("type specifier []", Errors[0].Message.Message);

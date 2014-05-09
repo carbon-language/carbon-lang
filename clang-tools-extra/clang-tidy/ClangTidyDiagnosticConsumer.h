@@ -90,8 +90,7 @@ struct ClangTidyStats {
 /// \endcode
 class ClangTidyContext {
 public:
-  ClangTidyContext(SmallVectorImpl<ClangTidyError> *Errors,
-                   const ClangTidyOptions &Options);
+  ClangTidyContext(const ClangTidyOptions &Options);
 
   /// \brief Report any errors detected using this method.
   ///
@@ -120,6 +119,7 @@ public:
   ChecksFilter &getChecksFilter() { return Filter; }
   const ClangTidyOptions &getOptions() const { return Options; }
   const ClangTidyStats &getStats() const { return Stats; }
+  const std::vector<ClangTidyError> &getErrors() const { return Errors; }
 
 private:
   friend class ClangTidyDiagnosticConsumer; // Calls storeError().
@@ -127,7 +127,7 @@ private:
   /// \brief Store a \c ClangTidyError.
   void storeError(const ClangTidyError &Error);
 
-  SmallVectorImpl<ClangTidyError> *Errors;
+  std::vector<ClangTidyError> Errors;
   DiagnosticsEngine *DiagEngine;
   ClangTidyOptions Options;
   ChecksFilter Filter;

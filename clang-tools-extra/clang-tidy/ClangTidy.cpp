@@ -40,7 +40,6 @@
 #include "llvm/Support/Signals.h"
 #include <algorithm>
 #include <utility>
-#include <vector>
 
 using namespace clang::ast_matchers;
 using namespace clang::driver;
@@ -292,8 +291,7 @@ void ClangTidyCheck::setName(StringRef Name) {
 }
 
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
-  SmallVector<ClangTidyError, 8> Errors;
-  clang::tidy::ClangTidyContext Context(&Errors, Options);
+  clang::tidy::ClangTidyContext Context(Options);
   ClangTidyASTConsumerFactory Factory(Context, Options);
   return Factory.getCheckNames();
 }
@@ -301,11 +299,11 @@ std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
 ClangTidyStats runClangTidy(const ClangTidyOptions &Options,
                             const tooling::CompilationDatabase &Compilations,
                             ArrayRef<std::string> Ranges,
-                            SmallVectorImpl<ClangTidyError> *Errors) {
+                            std::vector<ClangTidyError> *Errors) {
   // FIXME: Ranges are currently full files. Support selecting specific
   // (line-)ranges.
   ClangTool Tool(Compilations, Ranges);
-  clang::tidy::ClangTidyContext Context(Errors, Options);
+  clang::tidy::ClangTidyContext Context(Options);
   ClangTidyDiagnosticConsumer DiagConsumer(Context);
 
   Tool.setDiagnosticConsumer(&DiagConsumer);
@@ -333,10 +331,11 @@ ClangTidyStats runClangTidy(const ClangTidyOptions &Options,
   };
 
   Tool.run(new ActionFactory(new ClangTidyASTConsumerFactory(Context, Options)));
+  *Errors = Context.getErrors();
   return Context.getStats();
 }
 
-void handleErrors(SmallVectorImpl<ClangTidyError> &Errors, bool Fix) {
+void handleErrors(const std::vector<ClangTidyError> &Errors, bool Fix) {
   ErrorReporter Reporter(Fix);
   for (const ClangTidyError &Error : Errors) {
     Reporter.reportDiagnostic(Error.Message, DiagnosticsEngine::Warning,
