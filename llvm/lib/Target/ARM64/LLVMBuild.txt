@@ -31,5 +31,5 @@ has_jit = 1
 type = Library
 name = ARM64CodeGen
 parent = ARM64
-required_libraries = ARM64AsmPrinter ARM64Desc ARM64Info Analysis AsmPrinter CodeGen Core MC Scalar SelectionDAG Support Target
+required_libraries = ARM64AsmPrinter ARM64Desc ARM64Info ARM64Utils Analysis AsmPrinter CodeGen Core MC Scalar SelectionDAG Support Target
 add_to_library_groups = ARM64
