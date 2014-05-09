@@ -59,7 +59,7 @@ llvm::AllocaInst *CodeGenFunction::CreateTempAlloca(llvm::Type *Ty,
 
 void CodeGenFunction::InitTempAlloca(llvm::AllocaInst *Var,
                                      llvm::Value *Init) {
-  llvm::StoreInst *Store = new llvm::StoreInst(Init, Var);
+  auto *Store = new llvm::StoreInst(Init, Var);
   llvm::BasicBlock *Block = AllocaInsertPt->getParent();
   Block->getInstList().insertAfter(&*AllocaInsertPt, Store);
 }
@@ -245,7 +245,7 @@ pushTemporaryCleanup(CodeGenFunction &CGF, const MaterializeTemporaryExpr *M,
   if (const RecordType *RT =
           E->getType()->getBaseElementTypeUnsafe()->getAs<RecordType>()) {
     // Get the destructor for the reference temporary.
-    CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+    auto *ClassDecl = cast<CXXRecordDecl>(RT->getDecl());
     if (!ClassDecl->hasTrivialDestructor())
       ReferenceTemporaryDtor = ClassDecl->getDestructor();
   }
@@ -323,7 +323,7 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
     llvm::Value *Object = createReferenceTemporary(*this, M, E);
     LValue RefTempDst = MakeAddrLValue(Object, M->getType());
 
-    if (llvm::GlobalVariable *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
+    if (auto *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
       // We should not have emitted the initializer for this temporary as a
       // constant.
       assert(!Var->hasInitializer());
@@ -343,7 +343,7 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
   for (unsigned I = 0, N = CommaLHSs.size(); I != N; ++I)
     EmitIgnoredExpr(CommaLHSs[I]);
 
-  if (const OpaqueValueExpr *opaque = dyn_cast<OpaqueValueExpr>(E)) {
+  if (const auto *opaque = dyn_cast<OpaqueValueExpr>(E)) {
     if (opaque->getType()->isRecordType()) {
       assert(Adjustments.empty());
       return EmitOpaqueValueLValue(opaque);
@@ -352,7 +352,7 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
 
   // Create and initialize the reference temporary.
   llvm::Value *Object = createReferenceTemporary(*this, M, E);
-  if (llvm::GlobalVariable *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
+  if (auto *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
     // If the temporary is a global and has a constant initializer, we may
     // have already initialized it.
     if (!Var->hasInitializer()) {
@@ -590,7 +590,7 @@ static bool isFlexibleArrayMemberExpr(const Expr *E) {
   // For compatibility with existing code, we treat arrays of length 0 or
   // 1 as flexible array members.
   const ArrayType *AT = E->getType()->castAsArrayTypeUnsafe();
-  if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
+  if (const auto *CAT = dyn_cast<ConstantArrayType>(AT)) {
     if (CAT->getSize().ugt(1))
       return false;
   } else if (!isa<IncompleteArrayType>(AT))
@@ -599,10 +599,10 @@ static bool isFlexibleArrayMemberExpr(const Expr *E) {
   E = E->IgnoreParens();
 
   // A flexible array member must be the last member in the class.
-  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+  if (const auto *ME = dyn_cast<MemberExpr>(E)) {
     // FIXME: If the base type of the member expr is not FD->getParent(),
     // this should not be treated as a flexible array member access.
-    if (const FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
+    if (const auto *FD = dyn_cast<FieldDecl>(ME->getMemberDecl())) {
       RecordDecl::field_iterator FI(
           DeclContext::decl_iterator(const_cast<FieldDecl *>(FD)));
       return ++FI == FD->getParent()->field_end();
@@ -624,14 +624,14 @@ static llvm::Value *getArrayIndexingBound(
 
   Base = Base->IgnoreParens();
 
-  if (const CastExpr *CE = dyn_cast<CastExpr>(Base)) {
+  if (const auto *CE = dyn_cast<CastExpr>(Base)) {
     if (CE->getCastKind() == CK_ArrayToPointerDecay &&
         !isFlexibleArrayMemberExpr(CE->getSubExpr())) {
       IndexedType = CE->getSubExpr()->getType();
       const ArrayType *AT = IndexedType->castAsArrayTypeUnsafe();
-      if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
+      if (const auto *CAT = dyn_cast<ConstantArrayType>(AT))
         return CGF.Builder.getInt(CAT->getSize());
-      else if (const VariableArrayType *VAT = dyn_cast<VariableArrayType>(AT))
+      else if (const auto *VAT = dyn_cast<VariableArrayType>(AT))
         return CGF.getVLASize(VAT).first;
     }
   }
@@ -820,7 +820,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitLambdaLValue(cast<LambdaExpr>(E));
 
   case Expr::ExprWithCleanupsClass: {
-    const ExprWithCleanups *cleanups = cast<ExprWithCleanups>(E);
+    const auto *cleanups = cast<ExprWithCleanups>(E);
     enterFullExpression(cleanups);
     RunCleanupsScope Scope(*this);
     return EmitLValue(cleanups->getSubExpr());
@@ -888,8 +888,8 @@ static bool isConstantEmittableObjectType(QualType type) {
 
   // Otherwise, all object types satisfy this except C++ classes with
   // mutable subobjects or non-trivial copy/destroy behavior.
-  if (const RecordType *RT = dyn_cast<RecordType>(type))
-    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
+  if (const auto *RT = dyn_cast<RecordType>(type))
+    if (const auto *RD = dyn_cast<CXXRecordDecl>(RT->getDecl()))
       if (RD->hasMutableFields() || !RD->isTrivial())
         return false;
 
@@ -911,7 +911,7 @@ enum ConstantEmissionKind {
 };
 static ConstantEmissionKind checkVarTypeForConstantEmission(QualType type) {
   type = type.getCanonicalType();
-  if (const ReferenceType *ref = dyn_cast<ReferenceType>(type)) {
+  if (const auto *ref = dyn_cast<ReferenceType>(type)) {
     if (isConstantEmittableObjectType(ref->getPointeeType()))
       return CEK_AsValueOrReference;
     return CEK_AsReferenceOnly;
@@ -934,7 +934,7 @@ CodeGenFunction::tryEmitAsConstant(DeclRefExpr *refExpr) {
   ConstantEmissionKind CEK;
   if (isa<ParmVarDecl>(value)) {
     CEK = CEK_None;
-  } else if (VarDecl *var = dyn_cast<VarDecl>(value)) {
+  } else if (auto *var = dyn_cast<VarDecl>(value)) {
     CEK = checkVarTypeForConstantEmission(var->getType());
   } else if (isa<EnumConstantDecl>(value)) {
     CEK = CEK_AsValueOnly;
@@ -1065,7 +1065,7 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
     const llvm::Type *EltTy =
     cast<llvm::PointerType>(Addr->getType())->getElementType();
 
-    const llvm::VectorType *VTy = cast<llvm::VectorType>(EltTy);
+    const auto *VTy = cast<llvm::VectorType>(EltTy);
 
     // Handle vectors of size 3, like size 4 for better performance.
     if (VTy->getNumElements() == 3) {
@@ -1181,7 +1181,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
   // Handle vectors differently to get better performance.
   if (Ty->isVectorType()) {
     llvm::Type *SrcTy = Value->getType();
-    llvm::VectorType *VecTy = cast<llvm::VectorType>(SrcTy);
+    auto *VecTy = cast<llvm::VectorType>(SrcTy);
     // Handle vec3 special.
     if (VecTy->getNumElements() == 3) {
       llvm::LLVMContext &VMContext = getLLVMContext();
@@ -1202,7 +1202,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
                                           MaskV, "extractVec");
       SrcTy = llvm::VectorType::get(VecTy->getElementType(), 4);
     }
-    llvm::PointerType *DstPtr = cast<llvm::PointerType>(Addr->getType());
+    auto *DstPtr = cast<llvm::PointerType>(Addr->getType());
     if (DstPtr->getElementType() != SrcTy) {
       llvm::Type *MemTy =
       llvm::PointerType::get(SrcTy, DstPtr->getAddressSpace());
@@ -1603,14 +1603,14 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
       }
     }
     LV.setObjCIvar(true);
-    ObjCIvarRefExpr *Exp = cast<ObjCIvarRefExpr>(const_cast<Expr*>(E));
+    auto *Exp = cast<ObjCIvarRefExpr>(const_cast<Expr *>(E));
     LV.setBaseIvarExp(Exp->getBase());
     LV.setObjCArray(E->getType()->isArrayType());
     return;
   }
 
-  if (const DeclRefExpr *Exp = dyn_cast<DeclRefExpr>(E)) {
-    if (const VarDecl *VD = dyn_cast<VarDecl>(Exp->getDecl())) {
+  if (const auto *Exp = dyn_cast<DeclRefExpr>(E)) {
+    if (const auto *VD = dyn_cast<VarDecl>(Exp->getDecl())) {
       if (VD->hasGlobalStorage()) {
         LV.setGlobalObjCRef(true);
         LV.setThreadLocalRef(VD->getTLSKind() != VarDecl::TLS_None);
@@ -1620,12 +1620,12 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
     return;
   }
 
-  if (const UnaryOperator *Exp = dyn_cast<UnaryOperator>(E)) {
+  if (const auto *Exp = dyn_cast<UnaryOperator>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV, IsMemberAccess);
     return;
   }
 
-  if (const ParenExpr *Exp = dyn_cast<ParenExpr>(E)) {
+  if (const auto *Exp = dyn_cast<ParenExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV, IsMemberAccess);
     if (LV.isObjCIvar()) {
       // If cast is to a structure pointer, follow gcc's behavior and make it
@@ -1639,27 +1639,27 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
     return;
   }
 
-  if (const GenericSelectionExpr *Exp = dyn_cast<GenericSelectionExpr>(E)) {
+  if (const auto *Exp = dyn_cast<GenericSelectionExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getResultExpr(), LV);
     return;
   }
 
-  if (const ImplicitCastExpr *Exp = dyn_cast<ImplicitCastExpr>(E)) {
+  if (const auto *Exp = dyn_cast<ImplicitCastExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV, IsMemberAccess);
     return;
   }
 
-  if (const CStyleCastExpr *Exp = dyn_cast<CStyleCastExpr>(E)) {
+  if (const auto *Exp = dyn_cast<CStyleCastExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV, IsMemberAccess);
     return;
   }
 
-  if (const ObjCBridgedCastExpr *Exp = dyn_cast<ObjCBridgedCastExpr>(E)) {
+  if (const auto *Exp = dyn_cast<ObjCBridgedCastExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getSubExpr(), LV, IsMemberAccess);
     return;
   }
 
-  if (const ArraySubscriptExpr *Exp = dyn_cast<ArraySubscriptExpr>(E)) {
+  if (const auto *Exp = dyn_cast<ArraySubscriptExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getBase(), LV);
     if (LV.isObjCIvar() && !LV.isObjCArray())
       // Using array syntax to assigning to what an ivar points to is not
@@ -1672,7 +1672,7 @@ static void setObjCGCLValueClass(const ASTContext &Ctx, const Expr *E,
     return;
   }
 
-  if (const MemberExpr *Exp = dyn_cast<MemberExpr>(E)) {
+  if (const auto *Exp = dyn_cast<MemberExpr>(E)) {
     setObjCGCLValueClass(Ctx, Exp->getBase(), LV, true);
     // We don't know if member is an 'ivar', but this flag is looked at
     // only in the context of LV.isObjCIvar().
@@ -1747,7 +1747,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
 
   // A DeclRefExpr for a reference initialized by a constant expression can
   // appear without being odr-used. Directly emit the constant initializer.
-  if (const VarDecl *VD = dyn_cast<VarDecl>(ND)) {
+  if (const auto *VD = dyn_cast<VarDecl>(ND)) {
     const Expr *Init = VD->getAnyInitializer(VD);
     if (Init && !isa<ParmVarDecl>(VD) && VD->getType()->isReferenceType() &&
         VD->isUsableInConstantExpressions(getContext()) &&
@@ -1768,12 +1768,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
          "Should not use decl without marking it used!");
 
   if (ND->hasAttr<WeakRefAttr>()) {
-    const ValueDecl *VD = cast<ValueDecl>(ND);
+    const auto *VD = cast<ValueDecl>(ND);
     llvm::Constant *Aliasee = CGM.GetWeakRefReference(VD);
     return MakeAddrLValue(Aliasee, T, Alignment);
   }
 
-  if (const VarDecl *VD = dyn_cast<VarDecl>(ND)) {
+  if (const auto *VD = dyn_cast<VarDecl>(ND)) {
     // Check if this is a global variable.
     if (VD->hasLinkage() || VD->isStaticDataMember())
       return EmitGlobalVarDeclLValue(*this, E, VD);
@@ -1832,7 +1832,7 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     return LV;
   }
 
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
+  if (const auto *FD = dyn_cast<FunctionDecl>(ND))
     return EmitFunctionDeclLValue(*this, E, FD);
 
   llvm_unreachable("Unhandled DeclRefExpr");
@@ -1922,11 +1922,9 @@ GetAddrOfConstantWideString(StringRef Str,
                                             /*Pascal = */false,
                                             Ty, Loc);
   llvm::Constant *C = CGM.GetConstantArrayFromStringLiteral(SL);
-  llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(CGM.getModule(), C->getType(),
-                             !CGM.getLangOpts().WritableStrings,
-                             llvm::GlobalValue::PrivateLinkage,
-                             C, GlobalName);
+  auto *GV = new llvm::GlobalVariable(
+      CGM.getModule(), C->getType(), !CGM.getLangOpts().WritableStrings,
+      llvm::GlobalValue::PrivateLinkage, C, GlobalName);
   const unsigned WideAlignment =
     Context.getTypeAlignInChars(Ty).getQuantity();
   GV->setAlignment(WideAlignment);
@@ -2057,11 +2055,9 @@ llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
   };
   llvm::Constant *Descriptor = llvm::ConstantStruct::getAnon(Components);
 
-  llvm::GlobalVariable *GV =
-    new llvm::GlobalVariable(CGM.getModule(), Descriptor->getType(),
-                             /*isConstant=*/true,
-                             llvm::GlobalVariable::PrivateLinkage,
-                             Descriptor);
+  auto *GV = new llvm::GlobalVariable(
+      CGM.getModule(), Descriptor->getType(),
+      /*isConstant=*/true, llvm::GlobalVariable::PrivateLinkage, Descriptor);
   GV->setUnnamedAddr(true);
 
   // Remember the descriptor for this type.
@@ -2145,7 +2141,7 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
   EmitBlock(Handler);
 
   llvm::Constant *Info = llvm::ConstantStruct::getAnon(StaticArgs);
-  llvm::GlobalValue *InfoPtr =
+  auto *InfoPtr =
       new llvm::GlobalVariable(CGM.getModule(), Info->getType(), false,
                                llvm::GlobalVariable::PrivateLinkage, Info);
   InfoPtr->setUnnamedAddr(true);
@@ -2224,7 +2220,7 @@ void CodeGenFunction::EmitTrapCheck(llvm::Value *Checked) {
 /// array to pointer, return the array subexpression.
 static const Expr *isSimpleArrayDecayOperand(const Expr *E) {
   // If this isn't just an array->pointer decay, bail out.
-  const CastExpr *CE = dyn_cast<CastExpr>(E);
+  const auto *CE = dyn_cast<CastExpr>(E);
   if (CE == 0 || CE->getCastKind() != CK_ArrayToPointerDecay)
     return 0;
 
@@ -2309,7 +2305,7 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E,
     LValue ArrayLV;
     // For simple multidimensional array indexing, set the 'accessed' flag for
     // better bounds-checking of the base expression.
-    if (const ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(Array))
+    if (const auto *ASE = dyn_cast<ArraySubscriptExpr>(Array))
       ArrayLV = EmitArraySubscriptExpr(ASE, /*Accessed*/ true);
     else
       ArrayLV = EmitLValue(Array);
@@ -2436,16 +2432,16 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     BaseLV = EmitCheckedLValue(BaseExpr, TCK_MemberAccess);
 
   NamedDecl *ND = E->getMemberDecl();
-  if (FieldDecl *Field = dyn_cast<FieldDecl>(ND)) {
+  if (auto *Field = dyn_cast<FieldDecl>(ND)) {
     LValue LV = EmitLValueForField(BaseLV, Field);
     setObjCGCLValueClass(getContext(), E, LV);
     return LV;
   }
 
-  if (VarDecl *VD = dyn_cast<VarDecl>(ND))
+  if (auto *VD = dyn_cast<VarDecl>(ND))
     return EmitGlobalVarDeclLValue(*this, E, VD);
 
-  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(ND))
+  if (const auto *FD = dyn_cast<FunctionDecl>(ND))
     return EmitFunctionDeclLValue(*this, E, FD);
 
   llvm_unreachable("Unhandled member declaration!");
@@ -2761,7 +2757,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CK_Dynamic: {
     LValue LV = EmitLValue(E->getSubExpr());
     llvm::Value *V = LV.getAddress();
-    const CXXDynamicCastExpr *DCE = cast<CXXDynamicCastExpr>(E);
+    const auto *DCE = cast<CXXDynamicCastExpr>(E);
     return MakeAddrLValue(EmitDynamicCast(V, DCE), E->getType());
   }
 
@@ -2777,8 +2773,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   case CK_DerivedToBase: {
     const RecordType *DerivedClassTy =
       E->getSubExpr()->getType()->getAs<RecordType>();
-    CXXRecordDecl *DerivedClassDecl =
-      cast<CXXRecordDecl>(DerivedClassTy->getDecl());
+    auto *DerivedClassDecl = cast<CXXRecordDecl>(DerivedClassTy->getDecl());
 
     LValue LV = EmitLValue(E->getSubExpr());
     llvm::Value *This = LV.getAddress();
@@ -2795,8 +2790,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
     return EmitAggExprToLValue(E);
   case CK_BaseToDerived: {
     const RecordType *DerivedClassTy = E->getType()->getAs<RecordType>();
-    CXXRecordDecl *DerivedClassDecl =
-      cast<CXXRecordDecl>(DerivedClassTy->getDecl());
+    auto *DerivedClassDecl = cast<CXXRecordDecl>(DerivedClassTy->getDecl());
 
     LValue LV = EmitLValue(E->getSubExpr());
 
@@ -2816,7 +2810,7 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
   }
   case CK_LValueBitCast: {
     // This must be a reinterpret_cast (or c-style equivalent).
-    const ExplicitCastExpr *CE = cast<ExplicitCastExpr>(E);
+    const auto *CE = cast<ExplicitCastExpr>(E);
 
     LValue LV = EmitLValue(E->getSubExpr());
     llvm::Value *V = Builder.CreateBitCast(LV.getAddress(),
@@ -2877,10 +2871,10 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
   if (E->getCallee()->getType()->isBlockPointerType())
     return EmitBlockCallExpr(E, ReturnValue);
 
-  if (const CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(E))
+  if (const auto *CE = dyn_cast<CXXMemberCallExpr>(E))
     return EmitCXXMemberCallExpr(CE, ReturnValue);
 
-  if (const CUDAKernelCallExpr *CE = dyn_cast<CUDAKernelCallExpr>(E))
+  if (const auto *CE = dyn_cast<CUDAKernelCallExpr>(E))
     return EmitCUDAKernelCallExpr(CE, ReturnValue);
 
   const Decl *TargetDecl = E->getCalleeDecl();
@@ -2889,12 +2883,12 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
       return EmitBuiltinExpr(FD, builtinID, E);
   }
 
-  if (const CXXOperatorCallExpr *CE = dyn_cast<CXXOperatorCallExpr>(E))
+  if (const auto *CE = dyn_cast<CXXOperatorCallExpr>(E))
     if (const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(TargetDecl))
       return EmitCXXOperatorMemberCallExpr(CE, MD, ReturnValue);
 
-  if (const CXXPseudoDestructorExpr *PseudoDtor
-          = dyn_cast<CXXPseudoDestructorExpr>(E->getCallee()->IgnoreParens())) {
+  if (const auto *PseudoDtor =
+          dyn_cast<CXXPseudoDestructorExpr>(E->getCallee()->IgnoreParens())) {
     QualType DestroyedType = PseudoDtor->getDestroyedType();
     if (getLangOpts().ObjCAutoRefCount &&
         DestroyedType->isObjCLifetimeType() &&
@@ -3132,8 +3126,8 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
 
   CalleeType = getContext().getCanonicalType(CalleeType);
 
-  const FunctionType *FnType
-    = cast<FunctionType>(cast<PointerType>(CalleeType)->getPointeeType());
+  const auto *FnType =
+      cast<FunctionType>(cast<PointerType>(CalleeType)->getPointeeType());
 
   // Force column info to differentiate multiple inlined call sites on
   // the same line, analoguous to EmitCallExpr.
@@ -3289,7 +3283,7 @@ static LValueOrRValue emitPseudoObjectExpr(CodeGenFunction &CGF,
 
     // If this semantic expression is an opaque value, bind it
     // to the result of its source expression.
-    if (const OpaqueValueExpr *ov = dyn_cast<OpaqueValueExpr>(semantic)) {
+    if (const auto *ov = dyn_cast<OpaqueValueExpr>(semantic)) {
 
       // If this is the result expression, we may need to evaluate
       // directly into the slot.

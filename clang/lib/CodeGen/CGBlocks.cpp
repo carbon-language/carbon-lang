@@ -246,7 +246,7 @@ static bool isSafeForCXXConstantCapture(QualType type) {
   // Only records can be unsafe.
   if (!recordType) return true;
 
-  const CXXRecordDecl *record = cast<CXXRecordDecl>(recordType->getDecl());
+  const auto *record = cast<CXXRecordDecl>(recordType->getDecl());
 
   // Maintain semantics for classes with non-trivial dtors or copy ctors.
   if (!record->hasTrivialDestructor()) return false;
@@ -1093,7 +1093,7 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   // to be local to this function as well, in case they're directly
   // referenced in a block.
   for (DeclMapTy::const_iterator i = ldm.begin(), e = ldm.end(); i != e; ++i) {
-    const VarDecl *var = dyn_cast<VarDecl>(i->first);
+    const auto *var = dyn_cast<VarDecl>(i->first);
     if (var && !var->hasLocalStorage())
       LocalDeclMap[var] = i->second;
   }
@@ -1396,7 +1396,7 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
         // storeStrong doesn't over-release) and then call storeStrong.
         // This is a workaround to not having an initStrong call.
         if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
-          llvm::PointerType *ty = cast<llvm::PointerType>(srcValue->getType());
+          auto *ty = cast<llvm::PointerType>(srcValue->getType());
           llvm::Value *null = llvm::ConstantPointerNull::get(ty);
           Builder.CreateStore(null, dstField);
           EmitARCStoreStrongCall(dstField, srcValue, true);
@@ -2231,7 +2231,7 @@ static void configureBlocksRuntimeObject(CodeGenModule &CGM,
                                          llvm::Constant *C) {
   if (!CGM.getLangOpts().BlocksRuntimeOptional) return;
 
-  llvm::GlobalValue *GV = cast<llvm::GlobalValue>(C->stripPointerCasts());
+  auto *GV = cast<llvm::GlobalValue>(C->stripPointerCasts());
   if (GV->isDeclaration() && GV->hasExternalLinkage())
     GV->setLinkage(llvm::GlobalValue::ExternalWeakLinkage);
 }

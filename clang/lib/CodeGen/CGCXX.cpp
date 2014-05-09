@@ -68,8 +68,8 @@ bool CodeGenModule::TryEmitBaseDestructorAsAlias(const CXXDestructorDecl *D) {
     if (I.isVirtual()) continue;
 
     // Skip base classes with trivial destructors.
-    const CXXRecordDecl *Base
-      = cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
+    const auto *Base =
+        cast<CXXRecordDecl>(I.getType()->getAs<RecordType>()->getDecl());
     if (Base->hasTrivialDestructor()) continue;
 
     // If we've already found a base class with a non-trivial
@@ -137,7 +137,7 @@ bool CodeGenModule::TryEmitDefinitionAsAlias(GlobalDecl AliasDecl,
   // Find the referent.  Some aliases might require a bitcast, in
   // which case the caller is responsible for ensuring the soundness
   // of these semantics.
-  llvm::GlobalValue *Ref = cast<llvm::GlobalValue>(GetAddrOfGlobal(TargetDecl));
+  auto *Ref = cast<llvm::GlobalValue>(GetAddrOfGlobal(TargetDecl));
   llvm::Constant *Aliasee = Ref;
   if (Ref->getType() != AliasType)
     Aliasee = llvm::ConstantExpr::getBitCast(Ref, AliasType);
@@ -211,7 +211,7 @@ void CodeGenModule::EmitCXXConstructor(const CXXConstructorDecl *ctor,
   const CGFunctionInfo &fnInfo =
     getTypes().arrangeCXXConstructorDeclaration(ctor, ctorType);
 
-  llvm::Function *fn = cast<llvm::Function>(
+  auto *fn = cast<llvm::Function>(
       GetAddrOfCXXConstructor(ctor, ctorType, &fnInfo, true));
   setFunctionLinkage(GlobalDecl(ctor, ctorType), fn);
 
@@ -268,7 +268,7 @@ void CodeGenModule::EmitCXXDestructor(const CXXDestructorDecl *dtor,
   const CGFunctionInfo &fnInfo =
     getTypes().arrangeCXXDestructor(dtor, dtorType);
 
-  llvm::Function *fn = cast<llvm::Function>(
+  auto *fn = cast<llvm::Function>(
       GetAddrOfCXXDestructor(dtor, dtorType, &fnInfo, 0, true));
   setFunctionLinkage(GlobalDecl(dtor, dtorType), fn);
 
@@ -335,9 +335,9 @@ CodeGenFunction::BuildAppleKextVirtualCall(const CXXMethodDecl *MD,
   QualType T = QualType(QTy, 0);
   const RecordType *RT = T->getAs<RecordType>();
   assert(RT && "BuildAppleKextVirtualCall - Qual type must be record");
-  const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-  
-  if (const CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(MD))
+  const auto *RD = cast<CXXRecordDecl>(RT->getDecl());
+
+  if (const auto *DD = dyn_cast<CXXDestructorDecl>(MD))
     return BuildAppleKextVirtualDestructorCall(DD, Dtor_Complete, RD);
 
   return ::BuildAppleKextVirtualCall(*this, MD, Ty, RD);
@@ -350,7 +350,7 @@ CodeGenFunction::BuildAppleKextVirtualDestructorCall(
                                             const CXXDestructorDecl *DD,
                                             CXXDtorType Type,
                                             const CXXRecordDecl *RD) {
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(DD);
+  const auto *MD = cast<CXXMethodDecl>(DD);
   // FIXME. Dtor_Base dtor is always direct!!
   // It need be somehow inline expanded into the caller.
   // -O does that. But need to support -O0 as well.
