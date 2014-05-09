@@ -226,9 +226,8 @@ private:
     bool StartsObjCMethodExpr =
         Contexts.back().CanBeExpression && Left->Type != TT_LambdaLSquare &&
         CurrentToken->isNot(tok::l_brace) &&
-        (!Parent ||
-         Parent->isOneOf(tok::colon, tok::l_square, tok::l_paren,
-                         tok::kw_return, tok::kw_throw) ||
+        (!Parent || Parent->isOneOf(tok::colon, tok::l_square, tok::l_paren,
+                                    tok::kw_return, tok::kw_throw) ||
          Parent->isUnaryOperator() || Parent->Type == TT_ObjCForIn ||
          Parent->Type == TT_CastRParen ||
          getBinOpPrecedence(Parent->Tok.getKind(), true, true) > prec::Unknown);
@@ -389,8 +388,7 @@ private:
           Contexts.back().FirstObjCSelectorName = Tok->Previous;
       } else if (Contexts.back().ColonIsForRangeExpr) {
         Tok->Type = TT_RangeBasedForLoopColon;
-      } else if (CurrentToken &&
-                 CurrentToken->is(tok::numeric_constant)) {
+      } else if (CurrentToken && CurrentToken->is(tok::numeric_constant)) {
         Tok->Type = TT_BitFieldColon;
       } else if (Contexts.size() == 1 && Line.First->isNot(tok::kw_enum)) {
         Tok->Type = TT_InheritanceColon;
@@ -604,7 +602,8 @@ public:
 
 private:
   void resetTokenMetadata(FormatToken *Token) {
-    if (!Token) return;
+    if (!Token)
+      return;
 
     // Reset token type in case we have already looked at it and then
     // recovered from an error (e.g. failure to find the matching >).
@@ -867,9 +866,8 @@ private:
         if (Prev && Tok.Next && Tok.Next->Next) {
           bool NextIsUnary = Tok.Next->isUnaryOperator() ||
                              Tok.Next->isOneOf(tok::amp, tok::star);
-          IsCast =
-              NextIsUnary &&
-              Tok.Next->Next->isOneOf(tok::identifier, tok::numeric_constant);
+          IsCast = NextIsUnary && Tok.Next->Next->isOneOf(
+                                      tok::identifier, tok::numeric_constant);
         }
 
         for (; Prev != Tok.MatchingParen; Prev = Prev->Previous) {
@@ -963,7 +961,6 @@ private:
 
     return TT_UnaryOperator;
   }
-
 
   SmallVector<Context, 8> Contexts;
 
@@ -1331,8 +1328,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     // Use a slightly higher penalty after ")" so that annotations like
     // "const override" are kept together.
     bool is_short_annotation = Right.TokenText.size() < 10;
-    return (Left.is(tok::r_paren) ? 100 : 120) +
-           (is_short_annotation ? 50 : 0);
+    return (Left.is(tok::r_paren) ? 100 : 120) + (is_short_annotation ? 50 : 0);
   }
 
   // In for-loops, prefer breaking at ',' and ';'.
@@ -1529,8 +1525,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
     return false;
   if (Tok.is(tok::colon))
     return !Line.First->isOneOf(tok::kw_case, tok::kw_default) &&
-           Tok.getNextNonComment() &&
-           Tok.Type != TT_ObjCMethodExpr && !Tok.Previous->is(tok::question) &&
+           Tok.getNextNonComment() && Tok.Type != TT_ObjCMethodExpr &&
+           !Tok.Previous->is(tok::question) &&
            (Tok.Type != TT_DictLiteral || Style.SpacesInContainerLiterals);
   if (Tok.Previous->Type == TT_UnaryOperator ||
       Tok.Previous->Type == TT_CastRParen)
@@ -1737,7 +1733,7 @@ void TokenAnnotator::printDebugInfo(const AnnotatedLine &Line) {
     for (unsigned i = 0, e = Tok->FakeLParens.size(); i != e; ++i)
       llvm::errs() << Tok->FakeLParens[i] << "/";
     llvm::errs() << " FakeRParens=" << Tok->FakeRParens << "\n";
-    if (Tok->Next)
+    if (!Tok->Next)
       assert(Tok == Line.Last);
     Tok = Tok->Next;
   }

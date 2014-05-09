@@ -119,7 +119,7 @@ private:
   void conditionalCompilationAlternative();
   void conditionalCompilationEnd();
 
-  bool isOnNewLine(const FormatToken& FormatTok);
+  bool isOnNewLine(const FormatToken &FormatTok);
 
   // FIXME: We are constantly running into bugs where Line.Level is incorrectly
   // subtracted from beyond 0. Introduce a method to subtract from Line.Level

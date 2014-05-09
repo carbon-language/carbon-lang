@@ -98,8 +98,8 @@ bool ContinuationIndenter::canBreak(const LineState &State) {
   // The opening "{" of a braced list has to be on the same line as the first
   // element if it is nested in another braced init list or function call.
   if (!Current.MustBreakBefore && Previous.is(tok::l_brace) &&
-      Previous.Type != TT_DictLiteral &&
-      Previous.BlockKind == BK_BracedInit && Previous.Previous &&
+      Previous.Type != TT_DictLiteral && Previous.BlockKind == BK_BracedInit &&
+      Previous.Previous &&
       Previous.Previous->isOneOf(tok::l_brace, tok::l_paren, tok::comma))
     return false;
   // This prevents breaks like:
@@ -427,8 +427,7 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
       !PreviousNonComment->isOneOf(tok::comma, tok::semi) &&
       PreviousNonComment->Type != TT_TemplateCloser &&
       PreviousNonComment->Type != TT_BinaryOperator &&
-      Current.Type != TT_BinaryOperator &&
-      !PreviousNonComment->opensScope())
+      Current.Type != TT_BinaryOperator && !PreviousNonComment->opensScope())
     State.Stack.back().BreakBeforeParameter = true;
 
   // If we break after { or the [ of an array initializer, we should also break
@@ -462,8 +461,7 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
   const FormatToken *NextNonComment = Previous.getNextNonComment();
   if (!NextNonComment)
     NextNonComment = &Current;
-  if (NextNonComment->is(tok::l_brace) &&
-      NextNonComment->BlockKind == BK_Block)
+  if (NextNonComment->is(tok::l_brace) && NextNonComment->BlockKind == BK_Block)
     return Current.NestingLevel == 0 ? State.FirstIndent
                                      : State.Stack.back().Indent;
   if (Current.isOneOf(tok::r_brace, tok::r_square)) {
@@ -832,8 +830,7 @@ unsigned ContinuationIndenter::addMultilineToken(const FormatToken &Current,
   return 0;
 }
 
-static bool getRawStringLiteralPrefixPostfix(StringRef Text,
-                                             StringRef &Prefix,
+static bool getRawStringLiteralPrefixPostfix(StringRef Text, StringRef &Prefix,
                                              StringRef &Postfix) {
   if (Text.startswith(Prefix = "R\"") || Text.startswith(Prefix = "uR\"") ||
       Text.startswith(Prefix = "UR\"") || Text.startswith(Prefix = "u8R\"") ||

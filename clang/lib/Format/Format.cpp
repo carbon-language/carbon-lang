@@ -212,7 +212,7 @@ template <> struct MappingTraits<FormatStyle> {
                    Style.SpaceBeforeAssignmentOperators);
     IO.mapOptional("ContinuationIndentWidth", Style.ContinuationIndentWidth);
     IO.mapOptional("CommentPragmas", Style.CommentPragmas);
-    IO.mapOptional("ForEachMacros", Style.ForEachMacros); 
+    IO.mapOptional("ForEachMacros", Style.ForEachMacros);
 
     // For backward compatibility.
     if (!IO.outputting()) {
@@ -240,7 +240,7 @@ template <> struct DocumentListTraits<std::vector<FormatStyle> > {
       if (Seq.size() > 0 && Seq[0].Language == FormatStyle::LK_None) {
         Template = Seq[0];
       } else {
-        Template = *((const FormatStyle*)IO.getContext());
+        Template = *((const FormatStyle *)IO.getContext());
         Template.Language = FormatStyle::LK_None;
       }
       Seq.resize(Index + 1, Template);
@@ -1188,7 +1188,7 @@ public:
         FirstInLineIndex(0) {
     Lex.SetKeepWhitespaceMode(true);
 
-    for (const std::string& ForEachMacro : Style.ForEachMacros)
+    for (const std::string &ForEachMacro : Style.ForEachMacros)
       ForEachMacros.push_back(&IdentTable.get(ForEachMacro));
     std::sort(ForEachMacros.begin(), ForEachMacros.end());
   }
@@ -1218,10 +1218,10 @@ private:
       if (tryMergeJSRegexLiteral())
         return;
 
-      static tok::TokenKind JSIdentity[] = {tok::equalequal, tok::equal};
-      static tok::TokenKind JSNotIdentity[] = {tok::exclaimequal, tok::equal};
-      static tok::TokenKind JSShiftEqual[] = {tok::greater, tok::greater,
-                                              tok::greaterequal};
+      static tok::TokenKind JSIdentity[] = { tok::equalequal, tok::equal };
+      static tok::TokenKind JSNotIdentity[] = { tok::exclaimequal, tok::equal };
+      static tok::TokenKind JSShiftEqual[] = { tok::greater, tok::greater,
+                                               tok::greaterequal };
       // FIXME: We probably need to change token type to mimic operator with the
       // correct priority.
       if (tryMergeTokens(JSIdentity))
@@ -1261,30 +1261,30 @@ private:
   // "(;,{}![:?", a binary operator or 'return', as those cannot be followed by
   // a division.
   bool tryMergeJSRegexLiteral() {
-      if (Tokens.size() < 2 || Tokens.back()->isNot(tok::slash) ||
-          Tokens[Tokens.size() - 2]->is(tok::unknown))
-        return false;
-      unsigned TokenCount = 0;
-      unsigned LastColumn = Tokens.back()->OriginalColumn;
-      for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; ++I) {
-        ++TokenCount;
-        if (I[0]->is(tok::slash) && I + 1 != E &&
-            (I[1]->isOneOf(tok::l_paren, tok::semi, tok::l_brace, tok::r_brace,
-                           tok::exclaim, tok::l_square, tok::colon, tok::comma,
-                           tok::question, tok::kw_return) ||
-             I[1]->isBinaryOperator())) {
-          Tokens.resize(Tokens.size() - TokenCount);
-          Tokens.back()->Tok.setKind(tok::unknown);
-          Tokens.back()->Type = TT_RegexLiteral;
-          Tokens.back()->ColumnWidth += LastColumn - I[0]->OriginalColumn;
-          return true;
-        }
-
-        // There can't be a newline inside a regex literal.
-        if (I[0]->NewlinesBefore > 0)
-          return false;
-      }
+    if (Tokens.size() < 2 || Tokens.back()->isNot(tok::slash) ||
+        Tokens[Tokens.size() - 2]->is(tok::unknown))
       return false;
+    unsigned TokenCount = 0;
+    unsigned LastColumn = Tokens.back()->OriginalColumn;
+    for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; ++I) {
+      ++TokenCount;
+      if (I[0]->is(tok::slash) && I + 1 != E &&
+          (I[1]->isOneOf(tok::l_paren, tok::semi, tok::l_brace, tok::r_brace,
+                         tok::exclaim, tok::l_square, tok::colon, tok::comma,
+                         tok::question, tok::kw_return) ||
+           I[1]->isBinaryOperator())) {
+        Tokens.resize(Tokens.size() - TokenCount);
+        Tokens.back()->Tok.setKind(tok::unknown);
+        Tokens.back()->Type = TT_RegexLiteral;
+        Tokens.back()->ColumnWidth += LastColumn - I[0]->OriginalColumn;
+        return true;
+      }
+
+      // There can't be a newline inside a regex literal.
+      if (I[0]->NewlinesBefore > 0)
+        return false;
+    }
+    return false;
   }
 
   bool tryMerge_TMacro() {
@@ -1534,7 +1534,7 @@ private:
   // Index (in 'Tokens') of the last token that starts a new line.
   unsigned FirstInLineIndex;
   SmallVector<FormatToken *, 16> Tokens;
-  SmallVector<IdentifierInfo*, 8> ForEachMacros;
+  SmallVector<IdentifierInfo *, 8> ForEachMacros;
 
   void readRawToken(FormatToken &Tok) {
     Lex.LexFromRawLexer(Tok.Tok);
@@ -1713,12 +1713,10 @@ private:
     bool LineMoved = PreviousLine && PreviousLine->Affected &&
                      Line->First->NewlinesBefore == 0;
 
-    bool IsContinuedComment = Line->First->is(tok::comment) &&
-                              Line->First->Next == nullptr &&
-                              Line->First->NewlinesBefore < 2 &&
-                              PreviousLine &&
-                              PreviousLine->Affected &&
-                              PreviousLine->Last->is(tok::comment);
+    bool IsContinuedComment =
+        Line->First->is(tok::comment) && Line->First->Next == nullptr &&
+        Line->First->NewlinesBefore < 2 && PreviousLine &&
+        PreviousLine->Affected && PreviousLine->Last->is(tok::comment);
 
     if (SomeTokenAffected || SomeFirstChildAffected || LineMoved ||
         IsContinuedComment) {

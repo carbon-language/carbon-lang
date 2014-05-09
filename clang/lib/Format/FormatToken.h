@@ -455,7 +455,9 @@ public:
                            bool DryRun) override;
 
   /// \brief Adds \p Token as the next comma to the \c CommaSeparated list.
-  void CommaFound(const FormatToken *Token) override { Commas.push_back(Token);}
+  void CommaFound(const FormatToken *Token) override {
+    Commas.push_back(Token);
+  }
 
 private:
   /// \brief A struct that holds information on how to format a given list with

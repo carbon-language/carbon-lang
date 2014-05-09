@@ -164,9 +164,7 @@ public:
       ++LineLevel;
     }
   }
-  ~CompoundStatementIndenter() {
-    LineLevel = OldLineLevel;
-  }
+  ~CompoundStatementIndenter() { LineLevel = OldLineLevel; }
 
 private:
   unsigned &LineLevel;
@@ -207,9 +205,10 @@ private:
 UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          ArrayRef<FormatToken *> Tokens,
                                          UnwrappedLineConsumer &Callback)
-  : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
-    CurrentLines(&Lines), StructuralError(false), Style(Style), Tokens(nullptr),
-    Callback(Callback), AllTokens(Tokens), PPBranchLevel(-1) {}
+    : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
+      CurrentLines(&Lines), StructuralError(false), Style(Style),
+      Tokens(nullptr), Callback(Callback), AllTokens(Tokens),
+      PPBranchLevel(-1) {}
 
 void UnwrappedLineParser::reset() {
   PPBranchLevel = -1;
@@ -1279,9 +1278,8 @@ void UnwrappedLineParser::parseEnum() {
     nextToken();
   }
   // Eat up enum class ...
-  if (FormatTok->Tok.is(tok::kw_class) ||
-      FormatTok->Tok.is(tok::kw_struct))
-      nextToken();
+  if (FormatTok->Tok.is(tok::kw_class) || FormatTok->Tok.is(tok::kw_struct))
+    nextToken();
   while (FormatTok->Tok.getIdentifierInfo() ||
          FormatTok->isOneOf(tok::colon, tok::coloncolon)) {
     nextToken();
@@ -1476,7 +1474,7 @@ void UnwrappedLineParser::addUnwrappedLine() {
 
 bool UnwrappedLineParser::eof() const { return FormatTok->Tok.is(tok::eof); }
 
-bool UnwrappedLineParser::isOnNewLine(const FormatToken& FormatTok) {
+bool UnwrappedLineParser::isOnNewLine(const FormatToken &FormatTok) {
   return (Line->InPPDirective || FormatTok.HasUnescapedNewline) &&
          FormatTok.NewlinesBefore > 0;
 }
@@ -1531,7 +1529,7 @@ void UnwrappedLineParser::readToken() {
         conditionalCompilationStart(/*Unreachable=*/false);
       } else if (FormatTok->Type == TT_ConflictAlternative) {
         conditionalCompilationAlternative();
-      } else if(FormatTok->Type == TT_ConflictEnd) {
+      } else if (FormatTok->Type == TT_ConflictEnd) {
         conditionalCompilationEnd();
       }
       FormatTok = Tokens->getNextToken();
