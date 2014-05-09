@@ -68,8 +68,7 @@ private:
   mutable ilist_half_node<Argument> Sentinel;
 };
 
-class Function : public GlobalValue,
-                 public ilist_node<Function> {
+class Function : public GlobalValue, public ilist_node<Function> {
 public:
   typedef iplist<Argument> ArgumentListType;
   typedef iplist<BasicBlock> BasicBlockListType;

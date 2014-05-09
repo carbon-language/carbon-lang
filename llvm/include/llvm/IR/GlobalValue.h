@@ -61,9 +61,9 @@ public:
 protected:
   GlobalValue(Type *ty, ValueTy vty, Use *Ops, unsigned NumOps,
               LinkageTypes linkage, const Twine &Name)
-    : Constant(ty, vty, Ops, NumOps), Linkage(linkage),
-      Visibility(DefaultVisibility), Alignment(0), UnnamedAddr(0),
-      DllStorageClass(DefaultStorageClass), Parent(nullptr) {
+      : Constant(ty, vty, Ops, NumOps), Linkage(linkage),
+        Visibility(DefaultVisibility), Alignment(0), UnnamedAddr(0),
+        DllStorageClass(DefaultStorageClass), Parent(nullptr) {
     setName(Name);
   }
 

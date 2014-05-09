@@ -110,16 +110,14 @@ bool GlobalValue::isDeclaration() const {
 //===----------------------------------------------------------------------===//
 
 GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
-                               Constant *InitVal,
-                               const Twine &Name, ThreadLocalMode TLMode,
-                               unsigned AddressSpace,
+                               Constant *InitVal, const Twine &Name,
+                               ThreadLocalMode TLMode, unsigned AddressSpace,
                                bool isExternallyInitialized)
-  : GlobalValue(PointerType::get(Ty, AddressSpace),
-                Value::GlobalVariableVal,
-                OperandTraits<GlobalVariable>::op_begin(this),
-                InitVal != nullptr, Link, Name),
-    isConstantGlobal(constant), threadLocalMode(TLMode),
-    isExternallyInitializedConstant(isExternallyInitialized) {
+    : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
+                  OperandTraits<GlobalVariable>::op_begin(this),
+                  InitVal != nullptr, Link, Name),
+      isConstantGlobal(constant), threadLocalMode(TLMode),
+      isExternallyInitializedConstant(isExternallyInitialized) {
   if (InitVal) {
     assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");
@@ -131,16 +129,14 @@ GlobalVariable::GlobalVariable(Type *Ty, bool constant, LinkageTypes Link,
 
 GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
                                LinkageTypes Link, Constant *InitVal,
-                               const Twine &Name,
-                               GlobalVariable *Before, ThreadLocalMode TLMode,
-                               unsigned AddressSpace,
+                               const Twine &Name, GlobalVariable *Before,
+                               ThreadLocalMode TLMode, unsigned AddressSpace,
                                bool isExternallyInitialized)
-  : GlobalValue(PointerType::get(Ty, AddressSpace),
-                Value::GlobalVariableVal,
-                OperandTraits<GlobalVariable>::op_begin(this),
-                InitVal != nullptr, Link, Name),
-    isConstantGlobal(constant), threadLocalMode(TLMode),
-    isExternallyInitializedConstant(isExternallyInitialized) {
+    : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
+                  OperandTraits<GlobalVariable>::op_begin(this),
+                  InitVal != nullptr, Link, Name),
+      isConstantGlobal(constant), threadLocalMode(TLMode),
+      isExternallyInitializedConstant(isExternallyInitialized) {
   if (InitVal) {
     assert(InitVal->getType() == Ty &&
            "Initializer should be the same type as the GlobalVariable!");
