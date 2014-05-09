@@ -416,6 +416,7 @@ namespace llvm {
     void addTypeForNEON(MVT VT, MVT PromotedLdStVT, MVT PromotedBitwiseVT);
     void addDRTypeForNEON(MVT VT);
     void addQRTypeForNEON(MVT VT);
+    std::pair<SDValue, SDValue> getARMXALUOOp(SDValue Op, SelectionDAG &DAG, SDValue &ARMcc) const;
 
     typedef SmallVector<std::pair<unsigned, SDValue>, 8> RegsToPassVector;
     void PassF64ArgInRegs(SDLoc dl, SelectionDAG &DAG,
@@ -453,6 +454,7 @@ namespace llvm {
                                  TLSModel::Model model) const;
     SDValue LowerGLOBAL_OFFSET_TABLE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBR_JT(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerXALUO(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;

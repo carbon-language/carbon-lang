@@ -639,6 +639,11 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     }
   }
 
+  setOperationAction(ISD::SADDO, MVT::i32, Custom);
+  setOperationAction(ISD::UADDO, MVT::i32, Custom);
+  setOperationAction(ISD::SSUBO, MVT::i32, Custom);
+  setOperationAction(ISD::USUBO, MVT::i32, Custom);
+
   // i64 operation support.
   setOperationAction(ISD::MUL,     MVT::i64, Expand);
   setOperationAction(ISD::MULHU,   MVT::i32, Expand);
@@ -3222,11 +3227,96 @@ ARMTargetLowering::duplicateCmp(SDValue Cmp, SelectionDAG &DAG) const {
   return DAG.getNode(ARMISD::FMSTAT, DL, MVT::Glue, Cmp);
 }
 
+std::pair<SDValue, SDValue>
+ARMTargetLowering::getARMXALUOOp(SDValue Op, SelectionDAG &DAG,
+                                 SDValue &ARMcc) const {
+  assert(Op.getValueType() == MVT::i32 &&  "Unsupported value type");
+
+  SDValue Value, OverflowCmp;
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+
+
+  // FIXME: We are currently always generating CMPs because we don't support
+  // generating CMN through the backend. This is not as good as the natural
+  // CMP case because it causes a register dependency and cannot be folded
+  // later.
+
+  switch (Op.getOpcode()) {
+  default:
+    llvm_unreachable("Unknown overflow instruction!");
+  case ISD::SADDO:
+    ARMcc = DAG.getConstant(ARMCC::VC, MVT::i32);
+    Value = DAG.getNode(ISD::ADD, SDLoc(Op), Op.getValueType(), LHS, RHS);
+    OverflowCmp = DAG.getNode(ARMISD::CMP, SDLoc(Op), MVT::Glue, Value, LHS);
+    break;
+  case ISD::UADDO:
+    ARMcc = DAG.getConstant(ARMCC::HS, MVT::i32);
+    Value = DAG.getNode(ISD::ADD, SDLoc(Op), Op.getValueType(), LHS, RHS);
+    OverflowCmp = DAG.getNode(ARMISD::CMP, SDLoc(Op), MVT::Glue, Value, LHS);
+    break;
+  case ISD::SSUBO:
+    ARMcc = DAG.getConstant(ARMCC::VC, MVT::i32);
+    Value = DAG.getNode(ISD::SUB, SDLoc(Op), Op.getValueType(), LHS, RHS);
+    OverflowCmp = DAG.getNode(ARMISD::CMP, SDLoc(Op), MVT::Glue, LHS, RHS);
+    break;
+  case ISD::USUBO:
+    ARMcc = DAG.getConstant(ARMCC::HS, MVT::i32);
+    Value = DAG.getNode(ISD::SUB, SDLoc(Op), Op.getValueType(), LHS, RHS);
+    OverflowCmp = DAG.getNode(ARMISD::CMP, SDLoc(Op), MVT::Glue, LHS, RHS);
+    break;
+  } // switch (...)
+
+  return std::make_pair(Value, OverflowCmp);
+}
+
+
+SDValue
+ARMTargetLowering::LowerXALUO(SDValue Op, SelectionDAG &DAG) const {
+  // Let legalize expand this if it isn't a legal type yet.
+  if (!DAG.getTargetLoweringInfo().isTypeLegal(Op.getValueType()))
+    return SDValue();
+
+  SDValue Value, OverflowCmp;
+  SDValue ARMcc;
+  std::tie(Value, OverflowCmp) = getARMXALUOOp(Op, DAG, ARMcc);
+  SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
+  // We use 0 and 1 as false and true values.
+  SDValue TVal = DAG.getConstant(1, MVT::i32);
+  SDValue FVal = DAG.getConstant(0, MVT::i32);
+  EVT VT = Op.getValueType();
+
+  SDValue Overflow = DAG.getNode(ARMISD::CMOV, SDLoc(Op), VT, TVal, FVal,
+                                 ARMcc, CCR, OverflowCmp);
+
+  SDVTList VTs = DAG.getVTList(Op.getValueType(), MVT::i32);
+  return DAG.getNode(ISD::MERGE_VALUES, SDLoc(Op), VTs, Value, Overflow);
+}
+
+
 SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   SDValue Cond = Op.getOperand(0);
   SDValue SelectTrue = Op.getOperand(1);
   SDValue SelectFalse = Op.getOperand(2);
   SDLoc dl(Op);
+  unsigned Opc = Cond.getOpcode();
+
+  if (Cond.getResNo() == 1 &&
+      (Opc == ISD::SADDO || Opc == ISD::UADDO || Opc == ISD::SSUBO ||
+       Opc == ISD::USUBO)) {
+    if (!DAG.getTargetLoweringInfo().isTypeLegal(Cond->getValueType(0)))
+      return SDValue();
+
+    SDValue Value, OverflowCmp;
+    SDValue ARMcc;
+    std::tie(Value, OverflowCmp) = getARMXALUOOp(Cond, DAG, ARMcc);
+    SDValue CCR = DAG.getRegister(ARM::CPSR, MVT::i32);
+    EVT VT = Op.getValueType();
+
+    return DAG.getNode(ARMISD::CMOV, SDLoc(Op), VT, SelectTrue, SelectFalse,
+                       ARMcc, CCR, OverflowCmp);
+
+  }
 
   // Convert:
   //
@@ -6139,6 +6229,11 @@ SDValue ARMTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ADDE:
   case ISD::SUBC:
   case ISD::SUBE:          return LowerADDC_ADDE_SUBC_SUBE(Op, DAG);
+  case ISD::SADDO:
+  case ISD::UADDO:
+  case ISD::SSUBO:
+  case ISD::USUBO:
+    return LowerXALUO(Op, DAG);
   case ISD::ATOMIC_LOAD:
   case ISD::ATOMIC_STORE:  return LowerAtomicLoadStore(Op, DAG);
   case ISD::FSINCOS:       return LowerFSINCOS(Op, DAG);
