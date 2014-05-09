@@ -13,6 +13,9 @@
 #include "lld/ReaderWriter/PECOFFLinkingContext.h"
 #include "lld/ReaderWriter/Simple.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Debug.h"
+
+#include <mutex>
 
 namespace lld {
 namespace pecoff {
@@ -86,6 +89,18 @@ private:
   atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
 
+class SymbolRenameFile : public SimpleFile {
+public:
+  SymbolRenameFile(StringRef from, StringRef to)
+      : SimpleFile("<symbol-rename>"), _to(*this, to), _from(*this, from, &_to) {
+    addAtom(_from);
+  };
+
+private:
+  COFFUndefinedAtom _to;
+  COFFUndefinedAtom _from;
+};
+
 } // anonymous namespace
 
 // A virtual file containing absolute symbol __ImageBase. __ImageBase (or
@@ -138,6 +153,52 @@ public:
 private:
   std::string _prefix;
   mutable uint64_t _ordinal;
+  mutable llvm::BumpPtrAllocator _alloc;
+};
+
+class ExportedSymbolRenameFile : public VirtualArchiveLibraryFile {
+public:
+  ExportedSymbolRenameFile(const PECOFFLinkingContext &ctx)
+      : VirtualArchiveLibraryFile("<export>") {
+    for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
+      _exportedSyms.insert(desc.name);
+  }
+
+  void addResolvableSymbols(ArchiveLibraryFile *archive) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_seen.count(archive) > 0)
+      return;
+    _seen.insert(archive);
+    for (const std::string &sym : archive->getDefinedSymbols())
+      _resolvableSyms.insert(sym);
+  }
+
+  const File *find(StringRef sym, bool dataSymbolOnly) const override {
+    if (_exportedSyms.count(sym) == 0)
+      return nullptr;
+    std::string expsym = sym;
+    expsym.append("@");
+    auto it = _resolvableSyms.lower_bound(expsym);
+    for (auto e = _resolvableSyms.end(); it != e; ++it) {
+      if (!StringRef(*it).startswith(expsym))
+        return nullptr;
+      if (it->size() == expsym.size())
+        continue;
+      StringRef suffix = it->substr(expsym.size());
+      bool digitSuffix =
+          suffix.find_first_not_of("0123456789") == StringRef::npos;
+      if (digitSuffix) {
+        return new (_alloc) SymbolRenameFile(sym, *it);
+      }
+    }
+    return nullptr;
+  }
+
+private:
+  std::set<std::string> _exportedSyms;
+  std::set<std::string> _resolvableSyms;
+  std::set<ArchiveLibraryFile *> _seen;
+  mutable std::mutex _mutex;
   mutable llvm::BumpPtrAllocator _alloc;
 };
 
