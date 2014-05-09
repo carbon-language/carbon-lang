@@ -7447,8 +7447,8 @@ SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
       for (const SCEV *S : Sizes)
         dbgs() << "[" << *S << "]";
 
-      dbgs() << "ArrayRef";
-      for (const SCEV *S : Sizes)
+      dbgs() << "\nArrayRef";
+      for (const SCEV *S : Subscripts)
         dbgs() << "[" << *S << "]";
       dbgs() << "\n";
     });
