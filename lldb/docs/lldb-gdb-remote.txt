@@ -1195,3 +1195,58 @@ for this region.
 // send packet: $qProcessInfoPID:60050#00
 // read packet: $pid:60050;ppid:59948;uid:7746;gid:11;euid:7746;egid:11;name:6c6c6462;triple:7838365f36342d6170706c652d6d61636f7378;#00
 //----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// "vAttachName"
+//
+// BRIEF
+//  Same as vAttach, except instead of a "pid" you send a process name.
+//  
+// PRIORITY TO IMPLEMENT
+//  Low. Only needed for "process attach -n".  If the packet isn't supported
+//  then "process attach -n" will fail gracefully.  So you need only to support
+//  it if attaching to a process by name makes sense for your environment.
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// "vAttachWait"
+//
+// BRIEF
+//  Same as vAttachName, except that the stub should wait for the next instance
+//  of a process by that name to be launched and attach to that.
+//
+// PRIORITY TO IMPLEMENT
+//  Low. Only needed to support "process attach -w -n" which will fail
+//  gracefully if the packet is not supported.
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// "qAttachOrWaitSupported"
+//
+// BRIEF
+//  This is a binary "is it supported" query.  Return OK if you support
+//  vAttachOrWait
+//
+// PRIORITY TO IMPLEMENT
+//  Low. This is required if you support vAttachOrWait, otherwise no support
+//  is needed since the standard "I don't recognize this packet" response
+//  will do the right thing.
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// "vAttachOrWait"
+//
+// BRIEF
+//  Same as vAttachWait, except that the stub will attach to a process
+//  by name if it exists, and if it does not, it will wait for a process
+//  of that name to appear and attach to it.
+//
+// PRIORITY TO IMPLEMENT
+//  Low. Only needed to implement "process attach -w -i false -n".  If
+//  you don't implement it but do implement -n AND lldb can somehow get
+//  a process list from your device, it will fall back on scanning the
+//  process list, and sending vAttach or vAttachWait depending on
+//  whether the requested process exists already.  This is racy, 
+//  however, so if you want to support this behavior it is better to
+//  support this packet.
+//----------------------------------------------------------------------
