@@ -202,6 +202,8 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
 
   setOperationAction(ISD::BR_CC, MVT::i1, Expand);
 
+  setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
+
   setOperationAction(ISD::FNEG, MVT::v2f32, Expand);
   setOperationAction(ISD::FNEG, MVT::v4f32, Expand);
 
