@@ -201,7 +201,7 @@ private:
 };
 
 struct UnwrappedLineNode {
-  UnwrappedLineNode() : Tok(NULL) {}
+  UnwrappedLineNode() : Tok(nullptr) {}
   UnwrappedLineNode(FormatToken *Tok) : Tok(Tok) {}
 
   FormatToken *Tok;

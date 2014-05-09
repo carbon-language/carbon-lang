@@ -152,7 +152,7 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
     MustBreakBeforeItem.push_back(ItemBegin->MustBreakBefore);
     if (ItemBegin->is(tok::l_brace))
       HasNestedBracedList = true;
-    const FormatToken *ItemEnd = NULL;
+    const FormatToken *ItemEnd = nullptr;
     if (i == Commas.size()) {
       ItemEnd = Token->MatchingParen;
       const FormatToken *NonCommentEnd = ItemEnd->getPreviousNonComment();
@@ -232,7 +232,7 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
 
 const CommaSeparatedList::ColumnFormat *
 CommaSeparatedList::getColumnFormat(unsigned RemainingCharacters) const {
-  const ColumnFormat *BestFormat = NULL;
+  const ColumnFormat *BestFormat = nullptr;
   for (SmallVector<ColumnFormat, 4>::const_reverse_iterator
            I = Formats.rbegin(),
            E = Formats.rend();

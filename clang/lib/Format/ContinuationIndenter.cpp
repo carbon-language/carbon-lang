@@ -29,7 +29,7 @@ namespace format {
 // Returns the length of everything up to the first possible line break after
 // the ), ], } or > matching \c Tok.
 static unsigned getLengthToMatchingParen(const FormatToken &Tok) {
-  if (Tok.MatchingParen == NULL)
+  if (!Tok.MatchingParen)
     return 0;
   FormatToken *End = Tok.MatchingParen;
   while (End->Next && !End->Next->CanBreakBefore) {
@@ -220,7 +220,7 @@ unsigned ContinuationIndenter::addTokenToState(LineState &State, bool Newline,
 
   assert(!State.Stack.empty());
   if ((Current.Type == TT_ImplicitStringLiteral &&
-       (Current.Previous->Tok.getIdentifierInfo() == NULL ||
+       (Current.Previous->Tok.getIdentifierInfo() == nullptr ||
         Current.Previous->Tok.getIdentifierInfo()->getPPKeywordID() ==
             tok::pp_not_keyword))) {
     // FIXME: Is this correct?
@@ -916,7 +916,7 @@ unsigned ContinuationIndenter::breakProtrudingToken(const FormatToken &Current,
         Current, State.Line->Level, StartColumn, Current.OriginalColumn,
         !Current.Previous, State.Line->InPPDirective, Encoding, Style));
   } else if (Current.Type == TT_LineComment &&
-             (Current.Previous == NULL ||
+             (Current.Previous == nullptr ||
               Current.Previous->Type != TT_ImplicitStringLiteral)) {
     if (CommentPragmasRegex.match(Current.TokenText.substr(2)))
       return 0;

@@ -495,7 +495,7 @@ public:
   void format(unsigned FirstIndent, const AnnotatedLine *Line) {
     LineState State =
         Indenter->getInitialState(FirstIndent, Line, /*DryRun=*/false);
-    while (State.NextToken != NULL) {
+    while (State.NextToken) {
       bool Newline =
           Indenter->mustBreak(State) ||
           (Indenter->canBreak(State) && State.NextToken->NewlinesBefore > 0);
@@ -647,7 +647,7 @@ private:
 
     FormatToken *Tok = I[1]->First;
     if (Tok->is(tok::r_brace) && !Tok->MustBreakBefore &&
-        (Tok->getNextNonComment() == NULL ||
+        (Tok->getNextNonComment() == nullptr ||
          Tok->getNextNonComment()->is(tok::semi))) {
       // We merge empty blocks even if the line exceeds the column limit.
       Tok->SpacesRequiredBefore = 0;
@@ -674,7 +674,7 @@ private:
         if (Tok->isOneOf(tok::l_brace, tok::r_brace))
           return 0;
         Tok = Tok->Next;
-      } while (Tok != NULL);
+      } while (Tok);
 
       // Last, check that the third line starts with a closing brace.
       Tok = I[2]->First;
@@ -739,7 +739,7 @@ public:
     std::vector<int> IndentForLevel;
     for (unsigned i = 0, e = Lines[0]->Level; i != e; ++i)
       IndentForLevel.push_back(Style.IndentWidth * i + AdditionalIndent);
-    const AnnotatedLine *PreviousLine = NULL;
+    const AnnotatedLine *PreviousLine = nullptr;
     for (SmallVectorImpl<AnnotatedLine *>::const_iterator I = Lines.begin(),
                                                           E = Lines.end();
          I != E; ++I) {
@@ -808,7 +808,7 @@ public:
 
         if (TheLine.Last->TotalLength + Indent <= ColumnLimit) {
           LineState State = Indenter->getInitialState(Indent, &TheLine, DryRun);
-          while (State.NextToken != NULL)
+          while (State.NextToken)
             Indenter->addTokenToState(State, /*Newline=*/false, DryRun);
         } else if (Style.ColumnLimit == 0) {
           // FIXME: Implement nested blocks for ColumnLimit = 0.
@@ -826,7 +826,7 @@ public:
       } else {
         // Format the first token if necessary, and notify the WhitespaceManager
         // about the unchanged whitespace.
-        for (FormatToken *Tok = TheLine.First; Tok != NULL; Tok = Tok->Next) {
+        for (FormatToken *Tok = TheLine.First; Tok; Tok = Tok->Next) {
           if (Tok == TheLine.First &&
               (Tok->NewlinesBefore > 0 || Tok->IsFirst)) {
             unsigned LevelIndent = Tok->OriginalColumn;
@@ -851,7 +851,7 @@ public:
         }
       }
       if (!DryRun) {
-        for (FormatToken *Tok = TheLine.First; Tok != NULL; Tok = Tok->Next) {
+        for (FormatToken *Tok = TheLine.First; Tok; Tok = Tok->Next) {
           Tok->Finalized = true;
         }
       }
@@ -1001,7 +1001,7 @@ private:
 
     // Insert start element into queue.
     StateNode *Node =
-        new (Allocator.Allocate()) StateNode(InitialState, false, NULL);
+        new (Allocator.Allocate()) StateNode(InitialState, false, nullptr);
     Queue.push(QueueItem(OrderedPenalty(0, Count), Node));
     ++Count;
 
@@ -1011,7 +1011,7 @@ private:
     while (!Queue.empty()) {
       Penalty = Queue.top().first.first;
       StateNode *Node = Queue.top().second;
-      if (Node->State.NextToken == NULL) {
+      if (!Node->State.NextToken) {
         DEBUG(llvm::dbgs() << "\n---\nPenalty for line: " << Penalty << "\n");
         break;
       }
@@ -1182,9 +1182,9 @@ class FormatTokenLexer {
 public:
   FormatTokenLexer(Lexer &Lex, SourceManager &SourceMgr, FormatStyle &Style,
                    encoding::Encoding Encoding)
-      : FormatTok(NULL), IsFirstToken(true), GreaterStashed(false), Column(0),
-        TrailingWhitespace(0), Lex(Lex), SourceMgr(SourceMgr), Style(Style),
-        IdentTable(getFormattingLangOpts()), Encoding(Encoding),
+      : FormatTok(nullptr), IsFirstToken(true), GreaterStashed(false),
+        Column(0), TrailingWhitespace(0), Lex(Lex), SourceMgr(SourceMgr),
+        Style(Style), IdentTable(getFormattingLangOpts()), Encoding(Encoding),
         FirstInLineIndex(0) {
     Lex.SetKeepWhitespaceMode(true);
 
@@ -1643,7 +1643,7 @@ private:
   bool computeAffectedLines(SmallVectorImpl<AnnotatedLine *>::iterator I,
                             SmallVectorImpl<AnnotatedLine *>::iterator E) {
     bool SomeLineAffected = false;
-    const AnnotatedLine *PreviousLine = NULL;
+    const AnnotatedLine *PreviousLine = nullptr;
     while (I != E) {
       AnnotatedLine *Line = *I;
       Line->LeadingEmptyLinesAffected = affectsLeadingEmptyLines(*Line->First);
@@ -1714,8 +1714,9 @@ private:
                      Line->First->NewlinesBefore == 0;
 
     bool IsContinuedComment = Line->First->is(tok::comment) &&
-                              Line->First->Next == NULL &&
-                              Line->First->NewlinesBefore < 2 && PreviousLine &&
+                              Line->First->Next == nullptr &&
+                              Line->First->NewlinesBefore < 2 &&
+                              PreviousLine &&
                               PreviousLine->Affected &&
                               PreviousLine->Last->is(tok::comment);
 

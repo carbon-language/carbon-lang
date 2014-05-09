@@ -158,7 +158,7 @@ void EditedSource::commitRemove(SourceLocation OrigLoc,
   }
 
   FileOffset TopBegin, TopEnd;
-  FileEdit *TopFA = 0;
+  FileEdit *TopFA = nullptr;
 
   if (I == FileEdits.end()) {
     FileEditsTy::iterator

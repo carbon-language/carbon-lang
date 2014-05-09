@@ -60,7 +60,7 @@ public:
       : Line(Line), TokenSource(TokenSource), ResetToken(ResetToken),
         PreviousLineLevel(Line.Level), PreviousTokenSource(TokenSource),
         StructuralError(StructuralError),
-        PreviousStructuralError(StructuralError), Token(NULL) {
+        PreviousStructuralError(StructuralError), Token(nullptr) {
     TokenSource = this;
     Line.Level = 0;
     Line.InPPDirective = true;
@@ -207,15 +207,15 @@ private:
 UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          ArrayRef<FormatToken *> Tokens,
                                          UnwrappedLineConsumer &Callback)
-    : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
-      CurrentLines(&Lines), StructuralError(false), Style(Style), Tokens(NULL),
-      Callback(Callback), AllTokens(Tokens), PPBranchLevel(-1) {}
+  : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
+    CurrentLines(&Lines), StructuralError(false), Style(Style), Tokens(nullptr),
+    Callback(Callback), AllTokens(Tokens), PPBranchLevel(-1) {}
 
 void UnwrappedLineParser::reset() {
   PPBranchLevel = -1;
   Line.reset(new UnwrappedLine);
   CommentsBeforeNextToken.clear();
-  FormatTok = NULL;
+  FormatTok = nullptr;
   MustBreakBeforeNextToken = false;
   PreprocessorDirectives.clear();
   CurrentLines = &Lines;
@@ -452,7 +452,7 @@ void UnwrappedLineParser::parsePPDirective() {
   ScopedMacroState MacroState(*Line, Tokens, FormatTok, StructuralError);
   nextToken();
 
-  if (FormatTok->Tok.getIdentifierInfo() == NULL) {
+  if (!FormatTok->Tok.getIdentifierInfo()) {
     parsePPUnknown();
     return;
   }
