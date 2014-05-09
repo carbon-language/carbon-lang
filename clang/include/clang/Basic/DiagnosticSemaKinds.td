@@ -3396,6 +3396,9 @@ def err_nested_name_spec_non_tag : Error<
 // C++ Explicit Instantiation
 def err_explicit_instantiation_duplicate : Error<
     "duplicate explicit instantiation of %0">;
+def warn_explicit_instantiation_duplicate : ExtWarn<
+    "duplicate explicit instantiation of %0 ignored as a Microsoft extension">,
+    InGroup<Microsoft>;
 def note_previous_explicit_instantiation : Note<
     "previous explicit instantiation is here">;
 def ext_explicit_instantiation_after_specialization : Extension<

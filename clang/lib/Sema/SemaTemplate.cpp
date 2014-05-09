@@ -6526,8 +6526,12 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
       //   For a given template and a given set of template-arguments,
       //     - an explicit instantiation definition shall appear at most once
       //       in a program,
-      Diag(NewLoc, diag::err_explicit_instantiation_duplicate)
-        << PrevDecl;
+
+      // MSVCCompat: MSVC silently ignores duplicate explicit instantiations.
+      Diag(NewLoc, (getLangOpts().MSVCCompat)
+                       ? diag::warn_explicit_instantiation_duplicate
+                       : diag::err_explicit_instantiation_duplicate)
+          << PrevDecl;
       Diag(DiagLocForExplicitInstantiation(PrevDecl, PrevPointOfInstantiation),
            diag::note_previous_explicit_instantiation);
       HasNoEffect = true;
