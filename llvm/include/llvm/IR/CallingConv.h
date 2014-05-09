@@ -137,13 +137,7 @@ namespace CallingConv {
     /// convention differs from the more common \c X86_64_SysV convention
     /// in a number of ways, most notably in that XMM registers used to pass
     /// arguments are shadowed by GPRs, and vice versa.
-    X86_64_Win64 = 79,
-
-    /// \brief The calling convention used for __cdecl methods on win32.
-    /// Differs from the C calling convention only in that the order of the
-    /// first parameter and the sret parameter are swapped.
-    X86_CDeclMethod = 80
-
+    X86_64_Win64 = 79
   };
 } // End CallingConv namespace
 
