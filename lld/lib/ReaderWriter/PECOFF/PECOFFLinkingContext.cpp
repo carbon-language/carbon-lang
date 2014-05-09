@@ -262,6 +262,7 @@ static bool exportConflicts(const PECOFFLinkingContext::ExportDesc &a,
 }
 
 void PECOFFLinkingContext::addDllExport(ExportDesc &desc) {
+  addInitialUndefinedSymbol(allocate(desc.name));
   auto existing = _dllExports.insert(desc);
   if (existing.second)
     return;
