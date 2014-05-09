@@ -709,52 +709,6 @@ public:
   }
 };
 
-/// \brief Attempts to create an LExpr from a Clang Expr. If an LExpr cannot be
-/// constructed, returns a null pointer. Recursive function that terminates when
-/// the complete expression is handled, or when a failure to create an LExpr
-/// occurs.
-static clang::threadSafety::lexpr::LExpr *
-buildLExpr(threadSafety::til::MemRegionRef &Arena, const Expr *CurExpr) {
-  using namespace clang::threadSafety::lexpr;
-  using namespace clang::threadSafety::til;
-
-  if (const auto *DRE = dyn_cast<DeclRefExpr>(CurExpr)) {
-    // TODO: Construct the til::SExpr leaf properly.
-    return new Terminal(new (Arena) Variable());
-  } else if (const auto *ME = dyn_cast<MemberExpr>(CurExpr)) {
-    // TODO: Construct the til::SExpr leaf properly.
-    return new Terminal(new (Arena) Variable());
-  } else if (const auto *BOE = dyn_cast<BinaryOperator>(CurExpr)) {
-    switch (BOE->getOpcode()) {
-      case BO_LOr:
-      case BO_LAnd: {
-        auto *LHS = buildLExpr(Arena, BOE->getLHS());
-        auto *RHS = buildLExpr(Arena, BOE->getRHS());
-        if (!LHS || !RHS)
-          return nullptr;
-
-        if (BOE->getOpcode() == BO_LOr)
-          return new Or(LHS, RHS);
-        else
-          return new And(LHS, RHS);
-      }
-    default:
-      break;
-    }
-  } else if (const auto *UOE = dyn_cast<UnaryOperator>(CurExpr)) {
-    if (UOE->getOpcode() == UO_LNot) {
-      auto *E = buildLExpr(Arena, UOE->getSubExpr());
-      return new Not(E);
-    }
-  } else if (const auto *CE = dyn_cast<CastExpr>(CurExpr)) {
-    return buildLExpr(Arena, CE->getSubExpr());
-  } else if (const auto *PE = dyn_cast<ParenExpr>(CurExpr)) {
-    return buildLExpr(Arena, PE->getSubExpr());
-  }
-
-  return nullptr;
-}
-
 /// \brief A short list of SExprs
 class MutexIDList : public SmallVector<SExpr, 3> {
 public:
