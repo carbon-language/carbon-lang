@@ -48,7 +48,6 @@ int main(int argc, const char *argv[]) {
 }
 // CHECK: !1 = metadata !{metadata !"branch_weights", i32 1, i32 2}
 
-// CHECK-SYMBOLS-NOT: GLOBAL
 // CHECK-SYMBOLS-NOT: ___cxx_global_var_init
 // CHECK-SYMBOLS-NOT: ___llvm_profile_register_write_file_atexit
 // CHECK-SYMBOLS-NOT: ___llvm_profile_set_filename
