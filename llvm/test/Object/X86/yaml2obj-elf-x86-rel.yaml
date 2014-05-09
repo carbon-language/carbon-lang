@@ -1,5 +1,6 @@
 # RUN: yaml2obj -format=elf %s > %t
 # RUN: llvm-readobj -r %t | FileCheck %s
+# XFAIL: vg_leak
 
 # CHECK:      Relocations [
 # CHECK-NEXT:   Section (2) .rel.text {
