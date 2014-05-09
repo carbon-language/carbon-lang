@@ -104,7 +104,7 @@ bool GlobalValue::isDeclaration() const {
   assert(isa<GlobalAlias>(this));
   return false;
 }
-  
+
 //===----------------------------------------------------------------------===//
 // GlobalVariable Implementation
 //===----------------------------------------------------------------------===//
@@ -146,9 +146,9 @@ GlobalVariable::GlobalVariable(Module &M, Type *Ty, bool constant,
            "Initializer should be the same type as the GlobalVariable!");
     Op<0>() = InitVal;
   }
-  
+
   LeakDetector::addGarbageObject(this);
-  
+
   if (Before)
     Before->getParent()->getGlobalList().insert(Before, this);
   else
@@ -253,7 +253,7 @@ void GlobalAlias::eraseFromParent() {
 void GlobalAlias::setAliasee(Constant *Aliasee) {
   assert((!Aliasee || Aliasee->getType() == getType()) &&
          "Alias and aliasee types should match!");
-  
+
   setOperand(0, Aliasee);
 }
 
