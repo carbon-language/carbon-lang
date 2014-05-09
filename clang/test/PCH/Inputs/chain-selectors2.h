@@ -1,6 +1,8 @@
 @interface Y
   -(void)f;
   -(void)f2;
+  -(void)x;
+  -(void)y;
   -(void)e;
 @end
 

@@ -1049,8 +1049,9 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
   } else
     DiagnoseMismatchedSelectors(*this, AtLoc, Method);
   
-  if (!Method ||
-      Method->getImplementationControl() != ObjCMethodDecl::Optional) {
+  if (Method &&
+      Method->getImplementationControl() != ObjCMethodDecl::Optional &&
+      !getSourceManager().isInSystemHeader(Method->getLocation())) {
     llvm::DenseMap<Selector, SourceLocation>::iterator Pos
       = ReferencedSelectors.find(Sel);
     if (Pos == ReferencedSelectors.end())

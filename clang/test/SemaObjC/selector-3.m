@@ -14,7 +14,7 @@
 - (void) foo
 {
   SEL a,b,c;
-  a = @selector(b1ar);  // expected-warning {{no method with selector 'b1ar' is implemented in this translation unit}}
+  a = @selector(b1ar);
   b = @selector(bar);
 }
 @end
@@ -69,7 +69,7 @@ extern SEL MySelector(SEL s);
 
 @implementation INTF
 - (void) Meth {
-  if( [cnx respondsToSelector:MySelector(@selector( _setQueue: ))] ) // expected-warning {{no method with selector '_setQueue:' is implemented in this translation unit}}
+  if( [cnx respondsToSelector:MySelector(@selector( _setQueue: ))] )
   {
   }
 
