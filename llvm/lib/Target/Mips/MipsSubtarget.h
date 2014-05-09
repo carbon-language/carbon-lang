@@ -85,9 +85,6 @@ protected:
   // HasSEInReg - SEB and SEH (signext in register) instructions.
   bool HasSEInReg;
 
-  // HasCondMov - Conditional mov (MOVZ, MOVN) instructions.
-  bool HasCondMov;
-
   // HasSwap - Byte and half swap instructions.
   bool HasSwap;
 
@@ -213,7 +210,6 @@ public:
 
   /// Features related to the presence of specific instructions.
   bool hasSEInReg()   const { return HasSEInReg; }
-  bool hasCondMov()   const { return HasCondMov; }
   bool hasSwap()      const { return HasSwap; }
   bool hasBitCount()  const { return HasBitCount; }
   bool hasFPIdx()     const { return HasFPIdx; }

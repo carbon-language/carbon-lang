@@ -152,8 +152,6 @@ def HasBitCount :     Predicate<"Subtarget.hasBitCount()">,
                       AssemblerPredicate<"FeatureBitCount">;
 def HasSwap     :     Predicate<"Subtarget.hasSwap()">,
                       AssemblerPredicate<"FeatureSwap">;
-def HasCondMov  :     Predicate<"Subtarget.hasCondMov()">,
-                      AssemblerPredicate<"FeatureCondMov">;
 def HasFPIdx    :     Predicate<"Subtarget.hasFPIdx()">,
                       AssemblerPredicate<"FeatureFPIdx">;
 def HasMips2     :    Predicate<"Subtarget.hasMips2()">,
