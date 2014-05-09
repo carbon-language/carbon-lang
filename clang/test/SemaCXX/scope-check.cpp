@@ -1,6 +1,18 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions %s -Wno-unreachable-code
 // RUN: %clang_cc1 -fsyntax-only -verify -fblocks -fcxx-exceptions -std=gnu++11 %s -Wno-unreachable-code
 
+namespace testInvalid {
+Invalid inv; // expected-error {{unknown type name}}
+// Make sure this doesn't assert.
+void fn()
+{
+    int c = 0;
+    if (inv)
+Here: ;
+    goto Here;
+}
+}
+
 namespace test0 {
   struct D { ~D(); };
 
@@ -409,15 +421,23 @@ namespace PR18217 {
   }
 }
 
-// This test must be last, because the error prohibits further jump diagnostics.
-namespace testInvalid {
-Invalid inv; // expected-error {{unknown type name}}
-// Make sure this doesn't assert.
-void fn()
-{
-    int c = 0;
-    if (inv)
-Here: ;
-    goto Here;
-}
+namespace test_recovery {
+  // Test that jump scope checking recovers when there are unspecified errors
+  // in the function declaration or body.
+
+  void test(nexist, int c) { // expected-error {{}}
+    nexist_fn(); // expected-error {{}}
+    goto nexist_label; // expected-error {{use of undeclared label}}
+    goto a0; // expected-error {{goto into protected scope}}
+    int a = 0; // expected-note {{jump bypasses variable initialization}}
+    a0:;
+
+    switch (c) {
+    case $: // expected-error {{}}
+    case 0:
+      int x = 56; // expected-note {{jump bypasses variable initialization}}
+    case 1: // expected-error {{switch case is in protected scope}}
+      x = 10;
+    }
+  }
 }
