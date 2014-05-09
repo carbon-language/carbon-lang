@@ -221,10 +221,15 @@ TEST_F(StringMapTest, NonDefaultConstructable) {
 struct MoveOnly {
   int i;
   MoveOnly(int i) : i(i) {}
-  MoveOnly(MoveOnly &&) = default;
-  MoveOnly(const MoveOnly &) = delete;
-  MoveOnly &operator=(MoveOnly &&) = default;
-  MoveOnly &operator=(const MoveOnly &) = delete;
+  MoveOnly(MoveOnly &&RHS) : i(RHS.i) {}
+  MoveOnly &operator=(MoveOnly &&RHS) {
+    i = RHS.i;
+    return *this;
+  }
+
+private:
+  MoveOnly(const MoveOnly &);
+  MoveOnly &operator=(const MoveOnly &);
 };
 
 TEST_F(StringMapTest, MoveOnlyKey) {
