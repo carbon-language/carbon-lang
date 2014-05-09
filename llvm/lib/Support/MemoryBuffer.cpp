@@ -27,19 +27,11 @@
 #include <cstdio>
 #include <cstring>
 #include <new>
-#include <sys/stat.h>
 #include <sys/types.h>
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
 #else
 #include <io.h>
-// Simplistic definitinos of these macros for use in getOpenFile.
-#ifndef S_ISREG
-#define S_ISREG(x) (1)
-#endif
-#ifndef S_ISBLK
-#define S_ISBLK(x) (0)
-#endif
 #endif
 using namespace llvm;
 
