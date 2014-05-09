@@ -112,6 +112,23 @@ public:
     return Ret;
   }
 
+  // There is no need to differentiate between a pending CCValAssign and other
+  // kinds, as they are stored in a different list.
+  static CCValAssign getPending(unsigned ValNo, MVT ValVT, MVT LocVT,
+                                LocInfo HTP) {
+    return getReg(ValNo, ValVT, 0, LocVT, HTP);
+  }
+
+  void convertToReg(unsigned RegNo) {
+    Loc = RegNo;
+    isMem = false;
+  }
+
+  void convertToMem(unsigned Offset) {
+    Loc = Offset;
+    isMem = true;
+  }
+
   unsigned getValNo() const { return ValNo; }
   MVT getValVT() const { return ValVT; }
 
@@ -164,6 +181,7 @@ private:
 
   unsigned StackOffset;
   SmallVector<uint32_t, 16> UsedRegs;
+  SmallVector<CCValAssign, 4> PendingLocs;
 
   // ByValInfo and SmallVector<ByValInfo, 4> ByValRegs:
   //
@@ -317,6 +335,31 @@ public:
     return Reg;
   }
 
+  /// AllocateRegBlock - Attempt to allocate a block of RegsRequired consecutive
+  /// registers. If this is not possible, return zero. Otherwise, return the first
+  /// register of the block that were allocated, marking the entire block as allocated.
+  unsigned AllocateRegBlock(const uint16_t *Regs, unsigned NumRegs, unsigned RegsRequired) {
+    for (unsigned StartIdx = 0; StartIdx <= NumRegs - RegsRequired; ++StartIdx) {
+      bool BlockAvailable = true;
+      // Check for already-allocated regs in this block
+      for (unsigned BlockIdx = 0; BlockIdx < RegsRequired; ++BlockIdx) {
+        if (isAllocated(Regs[StartIdx + BlockIdx])) {
+          BlockAvailable = false;
+          break;
+        }
+      }
+      if (BlockAvailable) {
+        // Mark the entire block as allocated
+        for (unsigned BlockIdx = 0; BlockIdx < RegsRequired; ++BlockIdx) {
+          MarkAllocated(Regs[StartIdx + BlockIdx]);
+        }
+        return Regs[StartIdx];
+      }
+    }
+    // No block was available
+    return 0;
+  }
+
   /// Version of AllocateReg with list of registers to be shadowed.
   unsigned AllocateReg(const MCPhysReg *Regs, const MCPhysReg *ShadowRegs,
                        unsigned NumRegs) {
@@ -410,6 +453,11 @@ public:
   }
 
   ParmContext getCallOrPrologue() const { return CallOrPrologue; }
+
+  // Get list of pending assignments
+  SmallVectorImpl<llvm::CCValAssign> &getPendingLocs() {
+    return PendingLocs;
+  }
 
 private:
   /// MarkAllocated - Mark a register and all of its aliases as allocated.

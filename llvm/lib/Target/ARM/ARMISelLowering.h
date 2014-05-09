@@ -384,6 +384,11 @@ namespace llvm {
     bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                            Type *Ty) const override;
 
+    /// \brief Returns true if an argument of type Ty needs to be passed in a
+    /// contiguous block of registers in calling convention CallConv.
+    bool functionArgumentNeedsConsecutiveRegisters(
+        Type *Ty, CallingConv::ID CallConv, bool isVarArg) const override;
+
     Value *emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
                           AtomicOrdering Ord) const override;
     Value *emitStoreConditional(IRBuilder<> &Builder, Value *Val,
@@ -424,6 +429,8 @@ namespace llvm {
                                  SDValue &Root, SelectionDAG &DAG,
                                  SDLoc dl) const;
 
+    CallingConv::ID getEffectiveCallingConv(CallingConv::ID CC,
+                                            bool isVarArg) const;
     CCAssignFn *CCAssignFnForNode(CallingConv::ID CC, bool Return,
                                   bool isVarArg) const;
     SDValue LowerMemOpCallTo(SDValue Chain, SDValue StackPtr, SDValue Arg,
@@ -576,7 +583,6 @@ namespace llvm {
     VMVNModImm,
     OtherModImm
   };
-
 
   namespace ARM {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,

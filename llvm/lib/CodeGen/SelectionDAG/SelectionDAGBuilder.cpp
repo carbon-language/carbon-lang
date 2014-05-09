@@ -7128,8 +7128,13 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     SmallVector<EVT, 4> ValueVTs;
     ComputeValueVTs(*this, Args[i].Ty, ValueVTs);
-    for (unsigned Value = 0, NumValues = ValueVTs.size();
-         Value != NumValues; ++Value) {
+    Type *FinalType = Args[i].Ty;
+    if (Args[i].isByVal)
+      FinalType = cast<PointerType>(Args[i].Ty)->getElementType();
+    bool NeedsRegBlock = functionArgumentNeedsConsecutiveRegisters(
+        FinalType, CLI.CallConv, CLI.IsVarArg);
+    for (unsigned Value = 0, NumValues = ValueVTs.size(); Value != NumValues;
+         ++Value) {
       EVT VT = ValueVTs[Value];
       Type *ArgTy = VT.getTypeForEVT(CLI.RetTy->getContext());
       SDValue Op = SDValue(Args[i].Node.getNode(),
@@ -7171,6 +7176,11 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
       }
       if (Args[i].isNest)
         Flags.setNest();
+      if (NeedsRegBlock) {
+        Flags.setInConsecutiveRegs();
+        if (Value == NumValues - 1)
+          Flags.setInConsecutiveRegsLast();
+      }
       Flags.setOrigAlign(OriginalAlignment);
 
       MVT PartVT = getRegisterType(CLI.RetTy->getContext(), VT);
@@ -7356,6 +7366,11 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
     ComputeValueVTs(*TLI, I->getType(), ValueVTs);
     bool isArgValueUsed = !I->use_empty();
     unsigned PartBase = 0;
+    Type *FinalType = I->getType();
+    if (F.getAttributes().hasAttribute(Idx, Attribute::ByVal))
+      FinalType = cast<PointerType>(FinalType)->getElementType();
+    bool NeedsRegBlock = TLI->functionArgumentNeedsConsecutiveRegisters(
+        FinalType, F.getCallingConv(), F.isVarArg());
     for (unsigned Value = 0, NumValues = ValueVTs.size();
          Value != NumValues; ++Value) {
       EVT VT = ValueVTs[Value];
@@ -7397,6 +7412,11 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
       }
       if (F.getAttributes().hasAttribute(Idx, Attribute::Nest))
         Flags.setNest();
+      if (NeedsRegBlock) {
+        Flags.setInConsecutiveRegs();
+        if (Value == NumValues - 1)
+          Flags.setInConsecutiveRegsLast();
+      }
       Flags.setOrigAlign(OriginalAlignment);
 
       MVT RegisterVT = TLI->getRegisterType(*CurDAG->getContext(), VT);

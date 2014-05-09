@@ -42,6 +42,11 @@ class CCIf<string predicate, CCAction A> : CCPredicateAction<A> {
 class CCIfByVal<CCAction A> : CCIf<"ArgFlags.isByVal()", A> {
 }
 
+/// CCIfConsecutiveRegs - If the current argument has InConsecutiveRegs
+/// parameter attribute, apply Action A.
+class CCIfConsecutiveRegs<CCAction A> : CCIf<"ArgFlags.isInConsecutiveRegs()", A> {
+}
+
 /// CCIfCC - Match if the current calling convention is 'CC'.
 class CCIfCC<string CC, CCAction A>
   : CCIf<!strconcat("State.getCallingConv() == ", CC), A> {}

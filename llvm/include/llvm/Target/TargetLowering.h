@@ -2233,6 +2233,15 @@ public:
     return VT.bitsLT(MinVT) ? MinVT : VT;
   }
 
+  /// For some targets, an LLVM struct type must be broken down into multiple
+  /// simple types, but the calling convention specifies that the entire struct
+  /// must be passed in a block of consecutive registers.
+  virtual bool
+  functionArgumentNeedsConsecutiveRegisters(Type *Ty, CallingConv::ID CallConv,
+                                            bool isVarArg) const {
+    return false;
+  }
+
   /// Returns a 0 terminated array of registers that can be safely used as
   /// scratch registers.
   virtual const MCPhysReg *getScratchRegisters(CallingConv::ID CC) const {

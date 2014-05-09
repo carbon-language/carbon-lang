@@ -160,6 +160,96 @@ static bool RetCC_ARM_AAPCS_Custom_f64(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
                                    State);
 }
 
+static const uint16_t SRegList[] = { ARM::S0,  ARM::S1,  ARM::S2,  ARM::S3,
+                                     ARM::S4,  ARM::S5,  ARM::S6,  ARM::S7,
+                                     ARM::S8,  ARM::S9,  ARM::S10, ARM::S11,
+                                     ARM::S12, ARM::S13, ARM::S14,  ARM::S15 };
+static const uint16_t DRegList[] = { ARM::D0, ARM::D1, ARM::D2, ARM::D3,
+                                     ARM::D4, ARM::D5, ARM::D6, ARM::D7 };
+static const uint16_t QRegList[] = { ARM::Q0, ARM::Q1, ARM::Q2, ARM::Q3 };
+
+// Allocate part of an AAPCS HFA or HVA. We assume that each member of the HA
+// has InConsecutiveRegs set, and that the last member also has
+// InConsecutiveRegsLast set. We must process all members of the HA before
+// we can allocate it, as we need to know the total number of registers that
+// will be needed in order to (attempt to) allocate a contiguous block.
+static bool CC_ARM_AAPCS_Custom_HA(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
+                                   CCValAssign::LocInfo &LocInfo,
+                                   ISD::ArgFlagsTy &ArgFlags, CCState &State) {
+  SmallVectorImpl<CCValAssign> &PendingHAMembers = State.getPendingLocs();
+
+  // AAPCS HFAs must have 1-4 elements, all of the same type
+  assert(PendingHAMembers.size() < 4);
+  if (PendingHAMembers.size() > 0)
+    assert(PendingHAMembers[0].getLocVT() == LocVT);
+
+  // Add the argument to the list to be allocated once we know the size of the
+  // HA
+  PendingHAMembers.push_back(
+      CCValAssign::getPending(ValNo, ValVT, LocVT, LocInfo));
+
+  if (ArgFlags.isInConsecutiveRegsLast()) {
+    assert(PendingHAMembers.size() > 0 && PendingHAMembers.size() <= 4 &&
+           "Homogeneous aggregates must have between 1 and 4 members");
+
+    // Try to allocate a contiguous block of registers, each of the correct
+    // size to hold one member.
+    const uint16_t *RegList;
+    unsigned NumRegs;
+    switch (LocVT.SimpleTy) {
+    case MVT::f32:
+      RegList = SRegList;
+      NumRegs = 16;
+      break;
+    case MVT::f64:
+      RegList = DRegList;
+      NumRegs = 8;
+      break;
+    case MVT::v2f64:
+      RegList = QRegList;
+      NumRegs = 4;
+      break;
+    default:
+      llvm_unreachable("Unexpected member type for HA");
+      break;
+    }
+
+    unsigned RegResult =
+        State.AllocateRegBlock(RegList, NumRegs, PendingHAMembers.size());
+
+    if (RegResult) {
+      for (SmallVectorImpl<CCValAssign>::iterator It = PendingHAMembers.begin();
+           It != PendingHAMembers.end(); ++It) {
+        It->convertToReg(RegResult);
+        State.addLoc(*It);
+        ++RegResult;
+      }
+      PendingHAMembers.clear();
+      return true;
+    }
+
+    // Register allocation failed, fall back to the stack
+
+    // Mark all VFP regs as unavailable (AAPCS rule C.2.vfp)
+    for (unsigned regNo = 0; regNo < 16; ++regNo)
+      State.AllocateReg(SRegList[regNo]);
+
+    unsigned Size = LocVT.getSizeInBits() / 8;
+    unsigned Align = LocVT.SimpleTy == MVT::v2f64 ? 8 : Size;
+
+    for (auto It : PendingHAMembers) {
+      It.convertToMem(State.AllocateStack(Size, Align));
+      State.addLoc(It);
+    }
+
+    // All pending members have now been allocated
+    PendingHAMembers.clear();
+  }
+
+  // This will be allocated by the last member of the HA
+  return true;
+}
+
 } // End llvm namespace
 
 #endif

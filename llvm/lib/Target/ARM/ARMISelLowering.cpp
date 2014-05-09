@@ -43,6 +43,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetOptions.h"
@@ -1211,40 +1212,58 @@ static void FPCCToARMCC(ISD::CondCode CC, ARMCC::CondCodes &CondCode,
 
 #include "ARMGenCallingConv.inc"
 
-/// CCAssignFnForNode - Selects the correct CCAssignFn for a the
-/// given CallingConvention value.
-CCAssignFn *ARMTargetLowering::CCAssignFnForNode(CallingConv::ID CC,
-                                                 bool Return,
-                                                 bool isVarArg) const {
+/// getEffectiveCallingConv - Get the effective calling convention, taking into
+/// account presence of floating point hardware and calling convention
+/// limitations, such as support for variadic functions.
+CallingConv::ID
+ARMTargetLowering::getEffectiveCallingConv(CallingConv::ID CC,
+                                           bool isVarArg) const {
   switch (CC) {
   default:
     llvm_unreachable("Unsupported calling convention");
-  case CallingConv::Fast:
-    if (Subtarget->hasVFP2() && !isVarArg) {
-      if (!Subtarget->isAAPCS_ABI())
-        return (Return ? RetFastCC_ARM_APCS : FastCC_ARM_APCS);
-      // For AAPCS ABI targets, just use VFP variant of the calling convention.
-      return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
-    }
-    // Fallthrough
-  case CallingConv::C: {
-    // Use target triple & subtarget features to do actual dispatch.
+  case CallingConv::ARM_AAPCS:
+  case CallingConv::ARM_APCS:
+  case CallingConv::GHC:
+    return CC;
+  case CallingConv::ARM_AAPCS_VFP:
+    return isVarArg ? CallingConv::ARM_AAPCS : CallingConv::ARM_AAPCS_VFP;
+  case CallingConv::C:
     if (!Subtarget->isAAPCS_ABI())
-      return (Return ? RetCC_ARM_APCS : CC_ARM_APCS);
+      return CallingConv::ARM_APCS;
     else if (Subtarget->hasVFP2() &&
              getTargetMachine().Options.FloatABIType == FloatABI::Hard &&
              !isVarArg)
-      return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
-    return (Return ? RetCC_ARM_AAPCS : CC_ARM_AAPCS);
+      return CallingConv::ARM_AAPCS_VFP;
+    else
+      return CallingConv::ARM_AAPCS;
+  case CallingConv::Fast:
+    if (!Subtarget->isAAPCS_ABI()) {
+      if (Subtarget->hasVFP2() && !isVarArg)
+        return CallingConv::Fast;
+      return CallingConv::ARM_APCS;
+    } else if (Subtarget->hasVFP2() && !isVarArg)
+      return CallingConv::ARM_AAPCS_VFP;
+    else
+      return CallingConv::ARM_AAPCS;
   }
-  case CallingConv::ARM_AAPCS_VFP:
-    if (!isVarArg)
-      return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
-    // Fallthrough
-  case CallingConv::ARM_AAPCS:
-    return (Return ? RetCC_ARM_AAPCS : CC_ARM_AAPCS);
+}
+
+/// CCAssignFnForNode - Selects the correct CCAssignFn for the given
+/// CallingConvention.
+CCAssignFn *ARMTargetLowering::CCAssignFnForNode(CallingConv::ID CC,
+                                                 bool Return,
+                                                 bool isVarArg) const {
+  switch (getEffectiveCallingConv(CC, isVarArg)) {
+  default:
+    llvm_unreachable("Unsupported calling convention");
   case CallingConv::ARM_APCS:
     return (Return ? RetCC_ARM_APCS : CC_ARM_APCS);
+  case CallingConv::ARM_AAPCS:
+    return (Return ? RetCC_ARM_AAPCS : CC_ARM_AAPCS);
+  case CallingConv::ARM_AAPCS_VFP:
+    return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
+  case CallingConv::Fast:
+    return (Return ? RetFastCC_ARM_APCS : FastCC_ARM_APCS);
   case CallingConv::GHC:
     return (Return ? RetCC_ARM_APCS : CC_ARM_APCS_GHC);
   }
@@ -10627,4 +10646,78 @@ Value *ARMTargetLowering::emitStoreConditional(IRBuilder<> &Builder, Value *Val,
       Strex, Builder.CreateZExtOrBitCast(
                  Val, Strex->getFunctionType()->getParamType(0)),
       Addr);
+}
+
+enum HABaseType {
+  HA_UNKNOWN = 0,
+  HA_FLOAT,
+  HA_DOUBLE,
+  HA_VECT64,
+  HA_VECT128
+};
+
+static bool isHomogeneousAggregate(Type *Ty, HABaseType &Base,
+                                   uint64_t &Members) {
+  if (const StructType *ST = dyn_cast<StructType>(Ty)) {
+    for (unsigned i = 0; i < ST->getNumElements(); ++i) {
+      uint64_t SubMembers = 0;
+      if (!isHomogeneousAggregate(ST->getElementType(i), Base, SubMembers))
+        return false;
+      Members += SubMembers;
+    }
+  } else if (const ArrayType *AT = dyn_cast<ArrayType>(Ty)) {
+    uint64_t SubMembers = 0;
+    if (!isHomogeneousAggregate(AT->getElementType(), Base, SubMembers))
+      return false;
+    Members += SubMembers * AT->getNumElements();
+  } else if (Ty->isFloatTy()) {
+    if (Base != HA_UNKNOWN && Base != HA_FLOAT)
+      return false;
+    Members = 1;
+    Base = HA_FLOAT;
+  } else if (Ty->isDoubleTy()) {
+    if (Base != HA_UNKNOWN && Base != HA_DOUBLE)
+      return false;
+    Members = 1;
+    Base = HA_DOUBLE;
+  } else if (const VectorType *VT = dyn_cast<VectorType>(Ty)) {
+    Members = 1;
+    switch (Base) {
+    case HA_FLOAT:
+    case HA_DOUBLE:
+      return false;
+    case HA_VECT64:
+      return VT->getBitWidth() == 64;
+    case HA_VECT128:
+      return VT->getBitWidth() == 128;
+    case HA_UNKNOWN:
+      switch (VT->getBitWidth()) {
+      case 64:
+        Base = HA_VECT64;
+        return true;
+      case 128:
+        Base = HA_VECT128;
+        return true;
+      default:
+        return false;
+      }
+    }
+  }
+
+  return (Members > 0 && Members <= 4);
+}
+
+/// \brief Return true if a type is an AAPCS-VFP homogeneous aggregate.
+bool ARMTargetLowering::functionArgumentNeedsConsecutiveRegisters(
+    Type *Ty, CallingConv::ID CallConv, bool isVarArg) const {
+  if (getEffectiveCallingConv(CallConv, isVarArg) ==
+      CallingConv::ARM_AAPCS_VFP) {
+    HABaseType Base = HA_UNKNOWN;
+    uint64_t Members = 0;
+    bool result = isHomogeneousAggregate(Ty, Base, Members);
+    DEBUG(dbgs() << "isHA: " << result << " "; Ty->dump(); dbgs() << "\n");
+    return result;
+  } else {
+    return false;
+  }
 }
