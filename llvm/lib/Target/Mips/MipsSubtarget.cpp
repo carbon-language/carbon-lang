@@ -137,6 +137,15 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                        "See -mattr=+fp64.",
                        false);
 
+  if (hasMips32r6()) {
+    StringRef ISA = hasMips64r6() ? "MIPS64r6" : "MIPS32r6";
+
+    assert(isFP64bit());
+    assert(isNaN2008());
+    if (hasDSP())
+      report_fatal_error(ISA + " is not compatible with the DSP ASE", false);
+  }
+
   // Is the target system Linux ?
   if (TT.find("linux") == std::string::npos)
     IsLinux = false;

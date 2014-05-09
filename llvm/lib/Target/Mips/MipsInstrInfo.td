@@ -1522,6 +1522,9 @@ include "MipsInstrFPU.td"
 include "Mips64InstrInfo.td"
 include "MipsCondMov.td"
 
+include "Mips32r6InstrInfo.td"
+include "Mips64r6InstrInfo.td"
+
 //
 // Mips16
 

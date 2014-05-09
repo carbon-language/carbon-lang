@@ -1,0 +1,123 @@
+//=- Mips32r6InstrInfo.td - Mips32r6 Instruction Information -*- tablegen -*-=//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file describes Mips32r6 instructions.
+//
+//===----------------------------------------------------------------------===//
+
+// Notes about removals/changes from MIPS32r6:
+// Unclear: ssnop
+// Reencoded: cache, pref
+// Reencoded: clo, clz
+// Reencoded: jr -> jalr
+// Reencoded: jr.hb -> jalr.hb
+// Reencoded: ldc2
+// Reencoded: ll, sc
+// Reencoded: lwc2
+// Reencoded: sdbbp
+// Reencoded: sdc2
+// Reencoded: swc2
+// Removed: /.ps$/, cvt.ps.s, cvt.ps.pw
+// Removed: addi
+// Removed: bc1any2, bc1any4
+// Removed: bc2[ft]
+// Removed: bc2f, bc2t
+// Removed: bc[12][ft]l, bgezl, bgtzl, bgtzl, blezl, bltzall, bltzl, bnel, bgezall,
+// Removed: beql
+// Removed: bgezal
+// Removed: bltzal
+// Removed: c.cond.fmt, bc1[ft]
+// Removed: div, divu
+// Removed: jalx
+// Removed: ldxc1
+// Removed: luxc1
+// Removed: lwl, lwr, lwle, lwre, swl, swr, swle, swre
+// Removed: lwxc1
+// Removed: madd.[ds], nmadd.[ds], nmsub.[ds], sub.[ds]
+// Removed: mfhi, mflo, mthi, mtlo, madd, maddu, msub, msubu, mul
+// Removed: movf, movt
+// Removed: movf.fmt, movt.fmt, movn.fmt, movz.fmt
+// Removed: movn, movz
+// Removed: mult, multu
+// Removed: prefx
+// Removed: sdxc1
+// Removed: suxc1
+// Removed: swxc1
+// Removed: teqi, tgei, tgeiu, tlti, tltiu, tnei
+// Rencoded: [ls][wd]c2
+
+def ADDIUPC;
+def ALIGN; // Known as as BALIGN in DSP ASE
+def ALUIPC;
+def AUI;
+def AUIPC;
+def BALC;
+def BC1EQZ;
+def BC1NEZ;
+def BC2EQZ;
+def BC2NEZ;
+def BC;
+def BEQC;
+def BEQZALC;
+def BEQZC;
+def BGEC;  // Also aliased to blec with operands swapped
+def BGEUC; // Also aliased to bleuc with operands swapped
+def BGEZALC;
+def BGEZC;
+def BGTZALC;
+def BGTZC;
+def BITSWAP; // Known as BITREV in DSP ASE
+def BLEZALC;
+def BLEZC;
+def BLTC; // Also aliased to bgtc with operands swapped
+def BLTUC; // Also aliased to bgtuc with operands swapped
+def BLTZALC;
+def BLTZC;
+def BNEC;
+def BNEZALC;
+def BNEZC;
+def BNVC;
+def BOVC;
+def CLASS_D;
+def CLASS_S;
+def CMP_CC_D;
+def CMP_CC_S;
+def DIV;   // Not to be confused with the old div
+def DIVU;  // Not to be confused with the old div
+def JIALC;
+def JIC;
+// def LSA; // See MSA
+def LWPC;
+def LWUPC;
+def MADDF;
+def MAXA_D;
+def MAXA_S;
+def MAX_D;
+def MAX_S;
+def MINA_D;
+def MINA_S;
+def MIN_D;
+def MOD;
+def MODU;
+def MSUBF;
+def MUH;
+def MUHU;
+def MUL_R6; // Not to be confused with the old mul
+def MULU;
+def NAL; // BAL with rd=0
+def RINT_D;
+def RINT_S;
+def SELEQZ;
+def SELEQZ_D;
+def SELEQZ_S;
+def SELNEZ;
+def SELNEZ_D;
+def SELNEZ_S;
+def SEL_D;
+def SEL_S;

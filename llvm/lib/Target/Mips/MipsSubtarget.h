@@ -37,8 +37,10 @@ public:
   };
 
 protected:
-  enum MipsArchEnum { Mips1, Mips2, Mips32, Mips32r2, Mips3, Mips4, Mips5,
-                      Mips64, Mips64r2 };
+  enum MipsArchEnum {
+    Mips1, Mips2, Mips32, Mips32r2, Mips32r6, Mips3, Mips4, Mips5, Mips64,
+    Mips64r2, Mips64r6
+  };
 
   // Mips architecture version
   MipsArchEnum MipsArchVersion;
@@ -156,8 +158,11 @@ public:
   bool hasMips32() const { return MipsArchVersion >= Mips32; }
   bool hasMips32r2() const { return MipsArchVersion == Mips32r2 ||
                                    MipsArchVersion == Mips64r2; }
+  bool hasMips32r6() const { return MipsArchVersion == Mips32r6 ||
+                                   MipsArchVersion == Mips64r6; }
   bool hasMips64() const { return MipsArchVersion >= Mips64; }
   bool hasMips64r2() const { return MipsArchVersion == Mips64r2; }
+  bool hasMips64r6() const { return MipsArchVersion == Mips64r6; }
 
   bool hasCnMips() const { return HasCnMips; }
 
