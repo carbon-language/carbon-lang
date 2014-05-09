@@ -1,6 +1,5 @@
 # RUN: yaml2obj -format=elf %s > %t
 # RUN: llvm-readobj -r %t | FileCheck %s
-# XFAIL: vg_leak
 
 # CHECK:      Relocations [
 # CHECK-NEXT:   Section (2) .rel.text {
@@ -16,13 +15,11 @@ FileHeader:
 Sections:
   - Type:            SHT_PROGBITS
     Name:            .text
-    Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
     AddressAlign:    0x04
     Content:         0000000000000000
   - Type:            SHT_REL
     Name:            .rel.text
-    Type:            SHT_REL
     Link:            .symtab
     Info:            .text
     AddressAlign:    0x04
