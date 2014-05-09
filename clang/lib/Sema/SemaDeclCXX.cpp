@@ -4413,7 +4413,8 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   // Warn if the class has virtual methods but non-virtual public destructor.
   if (Record->isPolymorphic() && !Record->isDependentType()) {
     CXXDestructorDecl *dtor = Record->getDestructor();
-    if (!dtor || (!dtor->isVirtual() && dtor->getAccess() == AS_public))
+    if ((!dtor || (!dtor->isVirtual() && dtor->getAccess() == AS_public)) &&
+        !Record->hasAttr<FinalAttr>())
       Diag(dtor ? dtor->getLocation() : Record->getLocation(),
            diag::warn_non_virtual_dtor) << Context.getRecordType(Record);
   }

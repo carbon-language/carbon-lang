@@ -195,7 +195,7 @@ struct B { // expected-warning {{has virtual functions but non-virtual destructo
 
 struct D: B {}; // expected-warning {{has virtual functions but non-virtual destructor}}
 
-struct F final: B {}; // expected-warning {{has virtual functions but non-virtual destructor}}
+struct F final : B {};
 
 struct VB {
   virtual void foo();
