@@ -452,6 +452,8 @@ def : MipsInstAlias<"dsubu $rs, $imm",
                     (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs,
                             InvertedImOperand64:$imm),
                     0>;
+def : MipsInstAlias<"dsra $rd, $rt, $rs",
+                    (DSRAV GPR64Opnd:$rd, GPR64Opnd:$rt, GPR32Opnd:$rs), 0>;
 def : MipsInstAlias<"dsrl $rd, $rt, $rs",
                     (DSRLV GPR64Opnd:$rd, GPR64Opnd:$rt, GPR32Opnd:$rs), 0>;
 
