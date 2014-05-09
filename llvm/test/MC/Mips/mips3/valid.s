@@ -34,6 +34,7 @@
         dadd      $s3,$at,$ra
         daddi     $sp,$s4,-27705
         daddiu    $k0,$s6,-4586
+        daddu     $s3,$at,$ra
         ddiv      $zero,$k0,$s3
         ddivu     $zero,$s0,$s1
         div       $zero,$25,$11
