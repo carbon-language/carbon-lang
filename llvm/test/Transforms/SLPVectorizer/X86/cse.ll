@@ -217,3 +217,33 @@ return:                                           ; preds = %entry, %if.end
   ret i32 0
 }
 
+%class.B.53.55 = type { %class.A.52.54, double }
+%class.A.52.54 = type { double, double, double }
+
+@a = external global double, align 8
+
+define void @PR19646(%class.B.53.55* %this) {
+entry:
+  br i1 undef, label %if.end13, label %if.end13
+
+sw.epilog7:                                       ; No predecessors!
+  %.in = getelementptr inbounds %class.B.53.55* %this, i64 0, i32 0, i32 1
+  %0 = load double* %.in, align 8
+  %add = fadd double undef, 0.000000e+00
+  %add6 = fadd double %add, %0
+  %1 = load double* @a, align 8
+  %add8 = fadd double %1, 0.000000e+00
+  %_dy = getelementptr inbounds %class.B.53.55* %this, i64 0, i32 0, i32 2
+  %2 = load double* %_dy, align 8
+  %add10 = fadd double %add8, %2
+  br i1 undef, label %if.then12, label %if.end13
+
+if.then12:                                        ; preds = %sw.epilog7
+  %3 = load double* undef, align 8
+  br label %if.end13
+
+if.end13:                                         ; preds = %if.then12, %sw.epilog7, %entry
+  %x.1 = phi double [ 0.000000e+00, %if.then12 ], [ %add6, %sw.epilog7 ], [ undef, %entry ], [ undef, %entry ]
+  %b.0 = phi double [ %3, %if.then12 ], [ %add10, %sw.epilog7 ], [ undef, %entry], [ undef, %entry ]
+  unreachable
+}
