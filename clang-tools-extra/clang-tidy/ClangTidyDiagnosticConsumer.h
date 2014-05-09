@@ -120,6 +120,7 @@ public:
   const ClangTidyOptions &getOptions() const { return Options; }
   const ClangTidyStats &getStats() const { return Stats; }
   const std::vector<ClangTidyError> &getErrors() const { return Errors; }
+  void clearErrors() { Errors.clear(); }
 
 private:
   friend class ClangTidyDiagnosticConsumer; // Calls storeError().
