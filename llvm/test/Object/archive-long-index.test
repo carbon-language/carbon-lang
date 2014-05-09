@@ -17,24 +17,24 @@ CHECKIDX: b in abcdefghijklmnopqrstuvwxyz2.o
 CHECKIDX: bda in abcdefghijklmnopqrstuvwxyz2.o
 CHECKIDX: b in abcdefghijklmnopq.o
 CHECKIDX: 1.o:
-CHECKIDX: 00000000 D abcdefghijklmnopqrstuvwxyz12345678
-CHECKIDX:          U bda
-CHECKIDX: 00000000 T main
+CHECKIDX: 0000000000000000 D abcdefghijklmnopqrstuvwxyz12345678
+CHECKIDX:                  U bda
+CHECKIDX: 0000000000000000 T main
 CHECKIDX: 2.o:
-CHECKIDX: 00000000 T fn1
+CHECKIDX: 0000000000000000 T fn1
 CHECKIDX: 3.o:
-CHECKIDX: 0000000b T fn1
-CHECKIDX: 00000000 T fn3
+CHECKIDX: 000000000000000b T fn1
+CHECKIDX: 0000000000000000 T fn3
 CHECKIDX: 4.o:
-CHECKIDX:          C shankar
+CHECKIDX:                  C shankar
 CHECKIDX: 5.o:
-CHECKIDX:          C a
+CHECKIDX:                  C a
 CHECKIDX: 6.o:
-CHECKIDX:          C b
+CHECKIDX:                  C b
 CHECKIDX: abcdefghijklmnopqrstuvwxyz1.o:
-CHECKIDX:          C a
+CHECKIDX:                  C a
 CHECKIDX: abcdefghijklmnopqrstuvwxyz2.o:
-CHECKIDX:          C b
-CHECKIDX: 00000000 T bda
+CHECKIDX:                  C b
+CHECKIDX: 0000000000000000 T bda
 CHECKIDX: abcdefghijklmnopq.o:
-CHECKIDX:          C b
+CHECKIDX:                  C b

@@ -9,13 +9,13 @@ CHECK-NEXT: main in trivial-object-test2.elf-x86-64
 CHECK-NOT: bar
 
 CHECK: trivial-object-test.elf-x86-64:
-CHECK-NEXT:         U SomeOtherFunction
-CHECK-NEXT: 00000000 T main
-CHECK-NEXT:         U puts
+CHECK-NEXT:                  U SomeOtherFunction
+CHECK-NEXT: 0000000000000000 T main
+CHECK-NEXT:                  U puts
 CHECK-NEXT: trivial-object-test2.elf-x86-64:
-CHECK-NEXT: 00000000 t bar
-CHECK-NEXT: 00000006 T foo
-CHECK-NEXT: 00000016 T main
+CHECK-NEXT: 0000000000000000 t bar
+CHECK-NEXT: 0000000000000006 T foo
+CHECK-NEXT: 0000000000000016 T main
 
 RUN: rm -f %t.a
 RUN: llvm-ar rcS %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
@@ -37,13 +37,13 @@ CORRUPT-NEXT: foo in trivial-object-test2.elf-x86-64
 CORRUPT-NEXT: main in trivial-object-test2.elf-x86-64
 
 CORRUPT: trivial-object-test.elf-x86-64:
-CORRUPT-NEXT:         U SomeOtherFunction
-CORRUPT-NEXT: 00000000 T main
-CORRUPT-NEXT:         U puts
+CORRUPT-NEXT:                  U SomeOtherFunction
+CORRUPT-NEXT: 0000000000000000 T main
+CORRUPT-NEXT:                  U puts
 CORRUPT-NEXT: trivial-object-test2.elf-x86-64:
-CORRUPT-NEXT: 00000000 t bar
-CORRUPT-NEXT: 00000006 T foo
-CORRUPT-NEXT: 00000016 T main
+CORRUPT-NEXT: 0000000000000000 t bar
+CORRUPT-NEXT: 0000000000000006 T foo
+CORRUPT-NEXT: 0000000000000016 T main
 
 check that the we *don't* update the symbol table.
 RUN: llvm-ar s %t.a
