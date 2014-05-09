@@ -820,6 +820,7 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
 
   bool SawNest = false;
   bool SawReturned = false;
+  bool SawSRet = false;
 
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
     unsigned Idx = Attrs.getSlotIndex(i);
@@ -850,8 +851,12 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT, AttributeSet Attrs,
       SawReturned = true;
     }
 
-    if (Attrs.hasAttribute(Idx, Attribute::StructRet))
-      Assert1(Idx == 1, "Attribute sret is not on first parameter!", V);
+    if (Attrs.hasAttribute(Idx, Attribute::StructRet)) {
+      Assert1(!SawSRet, "Cannot have multiple 'sret' parameters!", V);
+      Assert1(Idx == 1 || Idx == 2,
+              "Attribute 'sret' is not on first or second parameter!", V);
+      SawSRet = true;
+    }
 
     if (Attrs.hasAttribute(Idx, Attribute::InAlloca)) {
       Assert1(Idx == FT->getNumParams(),

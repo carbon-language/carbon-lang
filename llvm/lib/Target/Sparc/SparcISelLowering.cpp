@@ -355,10 +355,13 @@ LowerFormalArguments_32(SDValue Chain,
 
   const unsigned StackOffset = 92;
 
-  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+  unsigned InIdx = 0;
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i, ++InIdx) {
     CCValAssign &VA = ArgLocs[i];
 
-    if (i == 0  && Ins[i].Flags.isSRet()) {
+    if (Ins[InIdx].Flags.isSRet()) {
+      if (InIdx != 0)
+        report_fatal_error("sparc only supports sret on the first parameter");
       // Get SRet from [%fp+64].
       int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, 64, true);
       SDValue FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);

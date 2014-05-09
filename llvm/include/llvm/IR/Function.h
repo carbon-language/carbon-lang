@@ -297,7 +297,8 @@ public:
   /// @brief Determine if the function returns a structure through first
   /// pointer argument.
   bool hasStructRetAttr() const {
-    return AttributeSets.hasAttribute(1, Attribute::StructRet);
+    return AttributeSets.hasAttribute(1, Attribute::StructRet) ||
+           AttributeSets.hasAttribute(2, Attribute::StructRet);
   }
 
   /// @brief Determine if the parameter does not alias other parameters.

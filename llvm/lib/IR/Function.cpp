@@ -207,10 +207,10 @@ void Function::eraseFromParent() {
 // Function Implementation
 //===----------------------------------------------------------------------===//
 
-Function::Function(FunctionType *Ty, LinkageTypes Linkage, const Twine &name,
-                   Module *ParentModule)
-    : GlobalValue(PointerType::getUnqual(Ty), Value::FunctionVal, nullptr, 0,
-                  Linkage, name) {
+Function::Function(FunctionType *Ty, LinkageTypes Linkage,
+                   const Twine &name, Module *ParentModule)
+  : GlobalValue(PointerType::getUnqual(Ty),
+                Value::FunctionVal, nullptr, 0, Linkage, name) {
   assert(FunctionType::isValidReturnType(getReturnType()) &&
          "invalid return type");
   SymTab = new ValueSymbolTable();

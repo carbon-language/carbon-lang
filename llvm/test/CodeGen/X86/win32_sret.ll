@@ -181,3 +181,63 @@ define void @test6_f(%struct.test6* %x) nounwind {
   ret void
 }
 declare x86_thiscallcc void @test6_g(%struct.test6* sret, %struct.test6*)
+
+; Flipping the parameters at the IR level generates the same code.
+%struct.test7 = type { i32, i32, i32 }
+define void @test7_f(%struct.test7* %x) nounwind {
+; WIN32-LABEL: _test7_f:
+; MINGW_X86-LABEL: _test7_f:
+; CYGWIN-LABEL: _test7_f:
+; LINUX-LABEL: test7_f:
+
+; The %x argument is moved to %ecx on all OSs. It will be the this pointer.
+; WIN32:      movl    8(%ebp), %ecx
+; MINGW_X86:  movl    8(%ebp), %ecx
+; CYGWIN:     movl    8(%ebp), %ecx
+
+; The sret pointer is (%esp)
+; WIN32:          leal    8(%esp), %[[REG:e[a-d]x]]
+; WIN32-NEXT:     movl    %[[REG]], (%e{{([a-d]x)|(sp)}})
+; MINGW_X86:      leal    8(%esp), %[[REG:e[a-d]x]]
+; MINGW_X86-NEXT: movl    %[[REG]], (%e{{([a-d]x)|(sp)}})
+; CYGWIN:         leal    8(%esp), %[[REG:e[a-d]x]]
+; CYGWIN-NEXT:    movl    %[[REG]], (%e{{([a-d]x)|(sp)}})
+
+  %tmp = alloca %struct.test7, align 4
+  call x86_thiscallcc void @test7_g(%struct.test7* %x, %struct.test7* sret %tmp)
+  ret void
+}
+
+define x86_thiscallcc void @test7_g(%struct.test7* %in, %struct.test7* sret %out) {
+  %s = getelementptr %struct.test7* %in, i32 0, i32 0
+  %d = getelementptr %struct.test7* %out, i32 0, i32 0
+  %v = load i32* %s
+  store i32 %v, i32* %d
+  call void @clobber_eax()
+  ret void
+
+; Make sure we return the second parameter in %eax.
+; WIN32-LABEL: _test7_g:
+; WIN32: calll _clobber_eax
+; WIN32: movl {{.*}}, %eax
+; WIN32: retl
+}
+
+declare void @clobber_eax()
+
+; Test what happens if the first parameter has to be split by codegen.
+; Realistically, no frontend will generate code like this, but here it is for
+; completeness.
+define void @test8_f(i64 inreg %a, i64* sret %out) {
+  store i64 %a, i64* %out
+  call void @clobber_eax()
+  ret void
+
+; WIN32-LABEL: _test8_f:
+; WIN32: movl {{[0-9]+}}(%esp), %[[out:[a-z]+]]
+; WIN32-DAG: movl %edx, 4(%[[out]])
+; WIN32-DAG: movl %eax, (%[[out]])
+; WIN32: calll _clobber_eax
+; WIN32: movl {{.*}}, %eax
+; WIN32: retl
+}

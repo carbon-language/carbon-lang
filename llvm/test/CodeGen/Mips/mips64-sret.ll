@@ -1,16 +1,23 @@
-; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 -O3 < %s | FileCheck %s
+; RUN: llc -march=mips64el -mcpu=mips64r2 -mattr=n64 < %s | FileCheck %s
 
-%struct.S = type { [8 x i32] }
-
-@g = common global %struct.S zeroinitializer, align 4
-
-define void @f(%struct.S* noalias sret %agg.result) nounwind {
+define void @foo(i32* noalias sret %agg.result) nounwind {
 entry:
-; CHECK: move $2, $4
+; CHECK-LABEL: foo:
+; CHECK: sw {{.*}}, 0($4)
+; CHECK: jr $ra
+; CHECK-NEXT: move $2, $4
 
-  %0 = bitcast %struct.S* %agg.result to i8*
-  call void @llvm.memcpy.p0i8.p0i8.i64(i8* %0, i8* bitcast (%struct.S* @g to i8*), i64 32, i32 4, i1 false)
+  store i32 42, i32* %agg.result
   ret void
 }
 
-declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, i1) nounwind
+define void @bar(i32 %v, i32* noalias sret %agg.result) nounwind {
+entry:
+; CHECK-LABEL: bar:
+; CHECK: sw $4, 0($5)
+; CHECK: jr $ra
+; CHECK-NEXT: move $2, $5
+
+  store i32 %v, i32* %agg.result
+  ret void
+}
