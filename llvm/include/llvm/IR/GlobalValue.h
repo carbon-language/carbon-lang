@@ -135,8 +135,14 @@ public:
   static bool isLinkOnceLinkage(LinkageTypes Linkage) {
     return Linkage == LinkOnceAnyLinkage || Linkage == LinkOnceODRLinkage;
   }
+  static bool isWeakAnyLinkage(LinkageTypes Linkage) {
+    return Linkage == WeakAnyLinkage;
+  }
+  static bool isWeakODRLinkage(LinkageTypes Linkage) {
+    return Linkage == WeakODRLinkage;
+  }
   static bool isWeakLinkage(LinkageTypes Linkage) {
-    return Linkage == WeakAnyLinkage || Linkage == WeakODRLinkage;
+    return isWeakAnyLinkage(Linkage) || isWeakODRLinkage(Linkage);
   }
   static bool isAppendingLinkage(LinkageTypes Linkage) {
     return Linkage == AppendingLinkage;
@@ -191,6 +197,12 @@ public:
   }
   bool hasWeakLinkage() const {
     return isWeakLinkage(Linkage);
+  }
+  bool hasWeakAnyLinkage() const {
+    return isWeakAnyLinkage(Linkage);
+  }
+  bool hasWeakODRLinkage() const {
+    return isWeakODRLinkage(Linkage);
   }
   bool hasAppendingLinkage() const { return isAppendingLinkage(Linkage); }
   bool hasInternalLinkage() const { return isInternalLinkage(Linkage); }
