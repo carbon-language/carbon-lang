@@ -25,22 +25,26 @@ using namespace llvm::object;
 
 namespace llvm {
 class RuntimeDyldMachO : public RuntimeDyldImpl {
-  bool resolveI386Relocation(uint8_t *LocalAddress, uint64_t FinalAddress,
-                             uint64_t Value, bool isPCRel, unsigned Type,
-                             unsigned Size, int64_t Addend);
-  bool resolveX86_64Relocation(uint8_t *LocalAddress, uint64_t FinalAddress,
-                               uint64_t Value, bool isPCRel, unsigned Type,
-                               unsigned Size, int64_t Addend);
-  bool resolveARMRelocation(uint8_t *LocalAddress, uint64_t FinalAddress,
-                            uint64_t Value, bool isPCRel, unsigned Type,
-                            unsigned Size, int64_t Addend);
-  bool resolveARM64Relocation(uint8_t *LocalAddress, uint64_t FinalAddress,
-                              uint64_t Value, bool IsPCRel, unsigned Type,
-                              unsigned Size, int64_t Addend);
+private:
 
-  void resolveRelocation(const SectionEntry &Section, uint64_t Offset,
-                         uint64_t Value, uint32_t Type, int64_t Addend,
-                         bool isPCRel, unsigned Size);
+  /// Write the least significant 'Size' bytes in 'Value' out at the address
+  /// pointed to by Addr. Check for overflow.
+  bool applyRelocationValue(uint8_t *Addr, uint64_t Value, unsigned Size) {
+    for (unsigned i = 0; i < Size; ++i) {
+      *Addr++ = (uint8_t)Value;
+      Value >>= 8;
+    }
+
+    if (Value) // Catch overflow
+      return Error("Relocation out of range.");
+
+    return false;
+  }
+
+  bool resolveI386Relocation(const RelocationEntry &RE, uint64_t Value);
+  bool resolveX86_64Relocation(const RelocationEntry &RE, uint64_t Value);
+  bool resolveARMRelocation(const RelocationEntry &RE, uint64_t Value);
+  bool resolveARM64Relocation(const RelocationEntry &RE, uint64_t Value);
 
   unsigned getMaxStubSize() override {
     if (Arch == Triple::arm || Arch == Triple::thumb)
