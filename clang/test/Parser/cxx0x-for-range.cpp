@@ -44,18 +44,18 @@ struct Vector {
 void f() {
   Vector v;
   int a[] = {1, 2, 3, 4};
-  for (auto foo   =     a) // expected-error {{range based for statement requires ':' after range declaration}}
+  for (auto foo   =     a) // expected-error {{range-based 'for' statement uses ':', not '='}}
     // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:19-[[@LINE-1]]:20}:":"
     (void)foo;
   for (auto i
       =
-      v) // expected-error@-1 {{range based for statement requires ':' after range declaration}}
+      v) // expected-error@-1 {{range-based 'for' statement uses ':', not '='}}
     // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:7-[[@LINE-2]]:8}:":"
     (void)i;
 #define FORRANGE(v, a) for (DECLVARWITHINIT(v) a)  // expected-note {{expanded from macro}}
 #define DECLAUTOVAR(v) auto v
 #define DECLVARWITHINIT(v) DECLAUTOVAR(v) =  // expected-note {{expanded from macro}}
-  FORRANGE(i, a) {  // expected-error {{range based for statement requires ':' after range declaration}}
+  FORRANGE(i, a) {  // expected-error {{range-based 'for' statement uses ':', not '='}}
 
   }
 }
