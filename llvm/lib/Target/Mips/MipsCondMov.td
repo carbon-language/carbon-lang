@@ -104,7 +104,7 @@ multiclass MovnPats<RegisterClass CRC, RegisterClass DRC, Instruction MOVNInst,
 
 // Instantiation of instructions.
 def MOVZ_I_I : MMRel, CMov_I_I_FT<"movz", GPR32Opnd, GPR32Opnd, II_MOVZ>,
-               ADD_FM<0, 0xa>;
+               ADD_FM<0, 0xa>, INSN_MIPS4_32;
 
 let isCodeGenOnly = 1 in {
   def MOVZ_I_I64   : CMov_I_I_FT<"movz", GPR32Opnd, GPR64Opnd, II_MOVZ>,
@@ -116,7 +116,7 @@ let isCodeGenOnly = 1 in {
 }
 
 def MOVN_I_I       : MMRel, CMov_I_I_FT<"movn", GPR32Opnd, GPR32Opnd, II_MOVN>,
-                     ADD_FM<0, 0xb>;
+                     ADD_FM<0, 0xb>, INSN_MIPS4_32;
 
 let isCodeGenOnly = 1 in {
   def MOVN_I_I64   : CMov_I_I_FT<"movn", GPR32Opnd, GPR64Opnd, II_MOVN>,
@@ -128,29 +128,31 @@ let isCodeGenOnly = 1 in {
 }
 
 def MOVZ_I_S : MMRel, CMov_I_F_FT<"movz.s", GPR32Opnd, FGR32Opnd, II_MOVZ_S>,
-               CMov_I_F_FM<18, 16>;
+               CMov_I_F_FM<18, 16>, INSN_MIPS4_32;
 
 let isCodeGenOnly = 1 in
 def MOVZ_I64_S : CMov_I_F_FT<"movz.s", GPR64Opnd, FGR32Opnd, II_MOVZ_S>,
                  CMov_I_F_FM<18, 16>, AdditionalRequires<[HasMips64]>;
 
 def MOVN_I_S : MMRel, CMov_I_F_FT<"movn.s", GPR32Opnd, FGR32Opnd, II_MOVN_S>,
-               CMov_I_F_FM<19, 16>;
+               CMov_I_F_FM<19, 16>, INSN_MIPS4_32;
 
 let isCodeGenOnly = 1 in
 def MOVN_I64_S : CMov_I_F_FT<"movn.s", GPR64Opnd, FGR32Opnd, II_MOVN_S>,
                  CMov_I_F_FM<19, 16>, AdditionalRequires<[IsGP64bit]>;
 
 def MOVZ_I_D32 : MMRel, CMov_I_F_FT<"movz.d", GPR32Opnd, AFGR64Opnd,
-                                    II_MOVZ_D>, CMov_I_F_FM<18, 17>, FGR_32;
+                                    II_MOVZ_D>, CMov_I_F_FM<18, 17>,
+                 INSN_MIPS4_32, FGR_32;
 def MOVN_I_D32 : MMRel, CMov_I_F_FT<"movn.d", GPR32Opnd, AFGR64Opnd,
-                                    II_MOVN_D>, CMov_I_F_FM<19, 17>, FGR_32;
+                                    II_MOVN_D>, CMov_I_F_FM<19, 17>,
+                 INSN_MIPS4_32, FGR_32;
 
 let DecoderNamespace = "Mips64" in {
   def MOVZ_I_D64 : CMov_I_F_FT<"movz.d", GPR32Opnd, FGR64Opnd, II_MOVZ_D>,
-                   CMov_I_F_FM<18, 17>, FGR_64;
+                   CMov_I_F_FM<18, 17>, INSN_MIPS4_32, FGR_64;
   def MOVN_I_D64 : CMov_I_F_FT<"movn.d", GPR32Opnd, FGR64Opnd, II_MOVN_D>,
-                   CMov_I_F_FM<19, 17>, FGR_64;
+                   CMov_I_F_FM<19, 17>, INSN_MIPS4_32, FGR_64;
   let isCodeGenOnly = 1 in {
     def MOVZ_I64_D64 : CMov_I_F_FT<"movz.d", GPR64Opnd, FGR64Opnd,
                                    II_MOVZ_D>, CMov_I_F_FM<18, 17>, FGR_64;
@@ -160,34 +162,36 @@ let DecoderNamespace = "Mips64" in {
 }
 
 def MOVT_I : MMRel, CMov_F_I_FT<"movt", GPR32Opnd, II_MOVT, MipsCMovFP_T>,
-             CMov_F_I_FM<1>;
+             CMov_F_I_FM<1>, INSN_MIPS4_32;
 
 let isCodeGenOnly = 1 in
 def MOVT_I64 : CMov_F_I_FT<"movt", GPR64Opnd, II_MOVT, MipsCMovFP_T>,
                CMov_F_I_FM<1>, AdditionalRequires<[IsGP64bit]>;
 
 def MOVF_I : MMRel, CMov_F_I_FT<"movf", GPR32Opnd, II_MOVF, MipsCMovFP_F>,
-             CMov_F_I_FM<0>;
+             CMov_F_I_FM<0>, INSN_MIPS4_32;
 
 let isCodeGenOnly = 1 in
 def MOVF_I64 : CMov_F_I_FT<"movf", GPR64Opnd, II_MOVF, MipsCMovFP_F>,
                CMov_F_I_FM<0>, AdditionalRequires<[IsGP64bit]>;
 
 def MOVT_S : MMRel, CMov_F_F_FT<"movt.s", FGR32Opnd, II_MOVT_S, MipsCMovFP_T>,
-             CMov_F_F_FM<16, 1>;
+             CMov_F_F_FM<16, 1>, INSN_MIPS4_32;
 def MOVF_S : MMRel, CMov_F_F_FT<"movf.s", FGR32Opnd, II_MOVF_S, MipsCMovFP_F>,
-             CMov_F_F_FM<16, 0>;
+             CMov_F_F_FM<16, 0>, INSN_MIPS4_32;
 
 def MOVT_D32 : MMRel, CMov_F_F_FT<"movt.d", AFGR64Opnd, II_MOVT_D,
-                                  MipsCMovFP_T>, CMov_F_F_FM<17, 1>, FGR_32;
+                                  MipsCMovFP_T>, CMov_F_F_FM<17, 1>,
+               INSN_MIPS4_32, FGR_32;
 def MOVF_D32 : MMRel, CMov_F_F_FT<"movf.d", AFGR64Opnd, II_MOVF_D,
-                                  MipsCMovFP_F>, CMov_F_F_FM<17, 0>, FGR_32;
+                                  MipsCMovFP_F>, CMov_F_F_FM<17, 0>,
+               INSN_MIPS4_32, FGR_32;
 
 let DecoderNamespace = "Mips64" in {
   def MOVT_D64 : CMov_F_F_FT<"movt.d", FGR64Opnd, II_MOVT_D, MipsCMovFP_T>,
-                 CMov_F_F_FM<17, 1>, FGR_64;
+                 CMov_F_F_FM<17, 1>, INSN_MIPS4_32, FGR_64;
   def MOVF_D64 : CMov_F_F_FT<"movf.d", FGR64Opnd, II_MOVF_D, MipsCMovFP_F>,
-                 CMov_F_F_FM<17, 0>, FGR_64;
+                 CMov_F_F_FM<17, 0>, INSN_MIPS4_32, FGR_64;
 }
 
 // Instantiation of conditional move patterns.

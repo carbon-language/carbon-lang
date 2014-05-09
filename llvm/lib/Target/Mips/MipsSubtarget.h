@@ -82,6 +82,9 @@ protected:
   // HasMips3_32 - The subset of MIPS-III instructions added to MIPS32
   bool HasMips3_32;
 
+  // HasMips4_32 - The subset of MIPS-IV instructions added to MIPS32
+  bool HasMips4_32;
+
   // HasSEInReg - SEB and SEH (signext in register) instructions.
   bool HasSEInReg;
 
@@ -156,6 +159,7 @@ public:
 
   bool hasMips2() const { return MipsArchVersion >= Mips2; }
   bool hasMips3() const { return MipsArchVersion >= Mips3; }
+  bool hasMips4_32() const { return HasMips4_32; }
   bool hasMips32() const { return MipsArchVersion >= Mips32; }
   bool hasMips32r2() const { return MipsArchVersion == Mips32r2 ||
                                    MipsArchVersion == Mips64r2; }

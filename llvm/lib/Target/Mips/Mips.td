@@ -95,16 +95,20 @@ def FeatureMips3       : SubtargetFeature<"mips3", "MipsArchVersion", "Mips3",
                                 "MIPS III ISA Support [highly experimental]",
                                 [FeatureMips2, FeatureMips3_32,
                                  FeatureGP64Bit, FeatureFP64Bit]>;
+def FeatureMips4_32    : SubtargetFeature<"mips4_32", "HasMips4_32", "true",
+                                "Subset of MIPS-IV that is also in MIPS32 "
+                                "[highly experimental]">;
 def FeatureMips4       : SubtargetFeature<"mips4", "MipsArchVersion",
                                 "Mips4", "MIPS IV ISA Support",
-                                [FeatureMips3, FeatureFPIdx]>;
+                                [FeatureMips3, FeatureMips4_32,
+                                 FeatureFPIdx]>;
 def FeatureMips5       : SubtargetFeature<"mips5", "MipsArchVersion", "Mips5",
                                 "MIPS V ISA Support [highly experimental]",
                                 [FeatureMips4]>;
 def FeatureMips32      : SubtargetFeature<"mips32", "MipsArchVersion", "Mips32",
                                 "Mips32 ISA Support",
                                 [FeatureMips2, FeatureMips3_32,
-                                 FeatureBitCount]>;
+                                 FeatureMips4_32, FeatureBitCount]>;
 def FeatureMips32r2    : SubtargetFeature<"mips32r2", "MipsArchVersion",
                                 "Mips32r2", "Mips32r2 ISA Support",
                                 [FeatureMips32, FeatureSEInReg, FeatureSwap,
