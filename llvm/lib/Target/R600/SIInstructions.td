@@ -1640,8 +1640,8 @@ multiclass SMRD_Pattern <SMRD Instr_IMM, SMRD Instr_SGPR, ValueType vt> {
 
   // 2. Offset loaded in an 32bit SGPR
   def : Pat <
-    (constant_load (SIadd64bit32bit i64:$sbase, imm:$offset)),
-    (vt (Instr_SGPR $sbase, (S_MOV_B32 imm:$offset)))
+    (constant_load (add i64:$sbase, (i64 IMM32bit:$offset))),
+    (vt (Instr_SGPR $sbase, (S_MOV_B32 (i32 (as_i32imm $offset)))))
   >;
 
   // 3. No offset at all

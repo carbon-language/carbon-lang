@@ -11,11 +11,6 @@
 // SI DAG Nodes
 //===----------------------------------------------------------------------===//
 
-// SMRD takes a 64bit memory address and can only add an 32bit offset
-def SIadd64bit32bit : SDNode<"ISD::ADD",
-  SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>, SDTCisVT<0, i64>, SDTCisVT<2, i32>]>
->;
-
 def SIload_constant : SDNode<"AMDGPUISD::LOAD_CONSTANT",
   SDTypeProfile<1, 2, [SDTCisVT<0, f32>, SDTCisVT<1, v4i32>, SDTCisVT<2, i32>]>,
                       [SDNPMayLoad, SDNPMemOperand]
@@ -109,6 +104,10 @@ def IMM12bit : PatLeaf <(imm),
 
 def IMM16bit : PatLeaf <(imm),
   [{return isUInt<16>(N->getZExtValue());}]
+>;
+
+def IMM32bit : PatLeaf <(imm),
+  [{return isUInt<32>(N->getZExtValue());}]
 >;
 
 def mubuf_vaddr_offset : PatFrag<
