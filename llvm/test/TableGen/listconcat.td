@@ -1,5 +1,4 @@
 // RUN: llvm-tblgen %s | FileCheck %s
-// XFAIL: vg_leak
 
 // CHECK: class Y<list<string> Y:S = ?> {
 // CHECK:   list<string> T1 = !listconcat(Y:S, ["foo"]);

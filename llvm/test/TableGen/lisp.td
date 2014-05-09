@@ -1,5 +1,4 @@
 // RUN: llvm-tblgen %s
-// XFAIL: vg_leak
 
 // CHECK:      def One {
 // CHECK-NEXT:   list<string> names = ["Jeffrey Sinclair"];
