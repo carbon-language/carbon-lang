@@ -17,6 +17,8 @@ append_if(COMPILER_RT_HAS_FPIE_FLAG -fPIE MSAN_RTL_CFLAGS)
 # Prevent clang from generating libc calls.
 append_if(COMPILER_RT_HAS_FFREESTANDING_FLAG -ffreestanding MSAN_RTL_CFLAGS)
 
+set(MSAN_RUNTIME_LIBRARIES)
+
 # Static runtime library.
 add_custom_target(msan)
 set(arch "x86_64")
@@ -28,6 +30,7 @@ if(CAN_TARGET_${arch})
             $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
     CFLAGS ${MSAN_RTL_CFLAGS})
   add_dependencies(msan clang_rt.msan-${arch})
+  list(APPEND MSAN_RUNTIME_LIBRARIES clang_rt.msan-${arch})
   if(UNIX)
     add_sanitizer_rt_symbols(clang_rt.msan-${arch} msan.syms.extra)
     add_dependencies(msan clang_rt.msan-${arch}-symbols)

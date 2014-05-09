@@ -1,4 +1,5 @@
 include(AddLLVM)
+include(ExternalProject)
 include(LLVMParseArguments)
 include(CompilerRTUtils)
 
@@ -167,3 +168,48 @@ macro(add_compiler_rt_script name)
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
     DESTINATION ${COMPILER_RT_INSTALL_PATH}/bin)
 endmacro(add_compiler_rt_script src name)
+
+# Builds custom version of libc++ and installs it in <prefix>.
+# Can be used to build sanitized versions of libc++ for running unit tests.
+# add_custom_libcxx(<name> <prefix>
+#                   DEPS <list of build deps>
+#                   CFLAGS <list of compile flags>)
+macro(add_custom_libcxx name prefix)
+  if(NOT COMPILER_RT_HAS_LIBCXX_SOURCES)
+    message(FATAL_ERROR "libcxx not found!")
+  endif()
+
+  parse_arguments(LIBCXX "DEPS;CFLAGS" "" ${ARGN})
+  foreach(flag ${LIBCXX_CFLAGS})
+    set(flagstr "${flagstr} ${flag}")
+  endforeach()
+  set(LIBCXX_CFLAGS ${flagstr})
+
+  if(NOT COMPILER_RT_STANDALONE_BUILD)
+    list(APPEND LIBCXX_DEPS clang)
+  endif()
+
+  ExternalProject_Add(${name}
+    PREFIX ${prefix}
+    SOURCE_DIR ${COMPILER_RT_LIBCXX_PATH}
+    CMAKE_ARGS -DCMAKE_C_COMPILER=${COMPILER_RT_TEST_COMPILER}
+               -DCMAKE_CXX_COMPILER=${COMPILER_RT_TEST_COMPILER}
+               -DCMAKE_C_FLAGS=${LIBCXX_CFLAGS}
+               -DCMAKE_CXX_FLAGS=${LIBCXX_CFLAGS}
+               -DCMAKE_BUILD_TYPE=Release
+               -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+    )
+
+  ExternalProject_Add_Step(${name} force-reconfigure
+    DEPENDERS configure
+    ALWAYS 1
+    )
+
+  ExternalProject_Add_Step(${name} clobber
+    COMMAND ${CMAKE_COMMAND} -E remove_directory <BINARY_DIR>
+    COMMAND ${CMAKE_COMMAND} -E make_directory <BINARY_DIR>
+    COMMENT "Clobberring ${name} build directory..."
+    DEPENDERS configure
+    DEPENDS ${LIBCXX_DEPS}
+    )
+endmacro()
