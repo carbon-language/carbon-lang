@@ -2670,7 +2670,7 @@ CodeGenModule::GetConstantArrayFromStringLiteral(const StringLiteral *E) {
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   CharUnits Align = getContext().getAlignOfGlobalVarInChars(S->getType());
-  Align = std::max(Align, getContext().);
+
   llvm::StringMapEntry<llvm::GlobalVariable *> *Entry = nullptr;
   llvm::GlobalVariable *GV = nullptr;
   if (!LangOpts.WritableStrings) {
