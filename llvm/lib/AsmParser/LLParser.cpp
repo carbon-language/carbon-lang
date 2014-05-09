@@ -673,9 +673,8 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
     return Error(AliaseeLoc, "alias must have pointer type");
 
   // Okay, create the alias but do not insert it into the module yet.
-  GlobalAlias* GA = new GlobalAlias(Aliasee->getType(),
-                                    (GlobalValue::LinkageTypes)Linkage, Name,
-                                    Aliasee);
+  std::unique_ptr<GlobalAlias> GA(new GlobalAlias(
+      Aliasee->getType(), (GlobalValue::LinkageTypes)Linkage, Name, Aliasee));
   GA->setVisibility((GlobalValue::VisibilityTypes)Visibility);
   GA->setDLLStorageClass((GlobalValue::DLLStorageClassTypes)DLLStorageClass);
 
@@ -697,14 +696,17 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc,
 
     // If they agree, just RAUW the old value with the alias and remove the
     // forward ref info.
-    Val->replaceAllUsesWith(GA);
+    Val->replaceAllUsesWith(GA.get());
     Val->eraseFromParent();
     ForwardRefVals.erase(I);
   }
 
   // Insert into the module, we know its name won't collide now.
-  M->getAliasList().push_back(GA);
+  M->getAliasList().push_back(GA.get());
   assert(GA->getName() == Name && "Should not be a name conflict!");
+
+  // The module owns this now
+  GA.release();
 
   return false;
 }
