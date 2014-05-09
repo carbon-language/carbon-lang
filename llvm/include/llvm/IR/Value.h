@@ -182,10 +182,6 @@ private:
   Value(const Value &) LLVM_DELETED_FUNCTION;
 
 protected:
-  /// printCustom - Value subclasses can override this to implement custom
-  /// printing behavior.
-  virtual void printCustom(raw_ostream &O) const;
-
   Value(Type *Ty, unsigned scid);
 public:
   virtual ~Value();

@@ -2206,9 +2206,7 @@ void Value::print(raw_ostream &ROS) const {
              isa<Argument>(this)) {
     this->printAsOperand(OS);
   } else {
-    // Otherwise we don't know what it is. Call the virtual function to
-    // allow a subclass to print itself.
-    printCustom(OS);
+    llvm_unreachable("Unknown value to print out!");
   }
 }
 
@@ -2234,11 +2232,6 @@ void Value::printAsOperand(raw_ostream &O, bool PrintType, const Module *M) cons
   }
 
   WriteAsOperandInternal(O, this, &TypePrinter, nullptr, M);
-}
-
-// Value::printCustom - subclasses should override this to implement printing.
-void Value::printCustom(raw_ostream &OS) const {
-  llvm_unreachable("Unknown value to print out!");
 }
 
 // Value::dump - allow easy printing of Values from the debugger.
