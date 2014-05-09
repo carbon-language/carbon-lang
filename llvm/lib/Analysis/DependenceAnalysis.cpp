@@ -3195,7 +3195,7 @@ DependenceAnalysis::tryDelinearize(const SCEV *SrcSCEV, const SCEV *DstSCEV,
 
   // Second step: find subscript sizes.
   SmallVector<const SCEV *, 4> Sizes;
-  SrcAR->findArrayDimensions(*SE, Terms, Sizes);
+  SE->findArrayDimensions(Terms, Sizes);
 
   // Third step: compute the access functions for each subscript.
   SmallVector<const SCEV *, 4> SrcSubscripts, DstSubscripts;

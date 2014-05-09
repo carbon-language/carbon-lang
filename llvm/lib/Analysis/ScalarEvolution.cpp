@@ -7195,8 +7195,7 @@ findGCD(ScalarEvolution &SE, SmallVectorImpl<const SCEV *> &Terms) {
 
 static void findArrayDimensionsRec(ScalarEvolution &SE,
                                    SmallVectorImpl<const SCEV *> &Terms,
-                                   SmallVectorImpl<const SCEV *> &Sizes,
-                                   const SCEV *Zero, const SCEV *One) {
+                                   SmallVectorImpl<const SCEV *> &Sizes) {
   // The GCD of all Terms is the dimension of the innermost dimension.
   const SCEV *GCD = findGCD(SE, Terms);
 
@@ -7215,6 +7214,8 @@ static void findArrayDimensionsRec(ScalarEvolution &SE,
     return;
   }
 
+  const SCEV *Zero = SE.getConstant(GCD->getType(), 0);
+
   for (unsigned I = 0; I < Terms.size(); ++I) {
     // Normalize the terms before the next call to findArrayDimensionsRec.
     const SCEV *Q, *R;
@@ -7230,7 +7231,7 @@ static void findArrayDimensionsRec(ScalarEvolution &SE,
               Terms.end());
 
   if (Terms.size() > 0)
-    findArrayDimensionsRec(SE, Terms, Sizes, Zero, One);
+    findArrayDimensionsRec(SE, Terms, Sizes);
   Sizes.push_back(GCD);
 }
 
@@ -7283,8 +7284,8 @@ static inline int numberOfTerms(const SCEV *S) {
 
 /// Second step of delinearization: compute the array dimensions Sizes from the
 /// set of Terms extracted from the memory access function of this SCEVAddRec.
-void SCEVAddRecExpr::findArrayDimensions(
-    ScalarEvolution &SE, SmallVectorImpl<const SCEV *> &Terms,
+void ScalarEvolution::findArrayDimensions(
+    SmallVectorImpl<const SCEV *> &Terms,
     SmallVectorImpl<const SCEV *> &Sizes) const {
 
   if (Terms.size() < 2)
@@ -7316,9 +7317,8 @@ void SCEVAddRecExpr::findArrayDimensions(
         dbgs() << *T << "\n";
     });
 
-  const SCEV *Zero = SE.getConstant(this->getType(), 0);
-  const SCEV *One = SE.getConstant(this->getType(), 1);
-  findArrayDimensionsRec(SE, Terms, Sizes, Zero, One);
+  ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
+  findArrayDimensionsRec(SE, Terms, Sizes);
 
   DEBUG({
       dbgs() << "Sizes:\n";
@@ -7436,7 +7436,7 @@ SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
   collectParametricTerms(SE, Terms);
 
   // Second step: find subscript sizes.
-  findArrayDimensions(SE, Terms, Sizes);
+  SE.findArrayDimensions(Terms, Sizes);
 
   // Third step: compute the access functions for each subscript.
   const SCEV *Remainder = computeAccessFunctions(SE, Subscripts, Sizes);

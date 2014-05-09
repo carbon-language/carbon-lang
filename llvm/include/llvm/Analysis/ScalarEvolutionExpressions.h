@@ -361,12 +361,6 @@ namespace llvm {
     void collectParametricTerms(ScalarEvolution &SE,
                                 SmallVectorImpl<const SCEV *> &Terms) const;
 
-    /// Compute the array dimensions Sizes from the set of Terms extracted from
-    /// the memory access function of this SCEVAddRecExpr.
-    void findArrayDimensions(ScalarEvolution &SE,
-                             SmallVectorImpl<const SCEV *> &Terms,
-                             SmallVectorImpl<const SCEV *> &Sizes) const;
-
     /// Return in Subscripts the access functions for each dimension in Sizes.
     const SCEV *
     computeAccessFunctions(ScalarEvolution &SE,
