@@ -19,23 +19,23 @@
 #include "clang/Basic/LLVM.h"
 
 namespace llvm {
-  class Constant;
-  class Type;
-  class Value;
+class Constant;
+class Type;
+class Value;
 }
 
 namespace clang {
-  class CastExpr;
-  class CXXConstructorDecl;
-  class CXXDestructorDecl;
-  class CXXMethodDecl;
-  class CXXRecordDecl;
-  class FieldDecl;
-  class MangleContext;
+class CastExpr;
+class CXXConstructorDecl;
+class CXXDestructorDecl;
+class CXXMethodDecl;
+class CXXRecordDecl;
+class FieldDecl;
+class MangleContext;
 
 namespace CodeGen {
-  class CodeGenFunction;
-  class CodeGenModule;
+class CodeGenFunction;
+class CodeGenModule;
 
 /// \brief Implements C++ ABI-specific code generation functions.
 class CGCXXABI {

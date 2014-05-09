@@ -28,15 +28,15 @@
 #include "llvm/IR/Module.h"
 
 namespace llvm {
-  class Module;
-  class Constant;
-  class Function;
-  class GlobalValue;
-  class DataLayout;
-  class FunctionType;
-  class PointerType;
-  class Value;
-  class LLVMContext;
+class Module;
+class Constant;
+class Function;
+class GlobalValue;
+class DataLayout;
+class FunctionType;
+class PointerType;
+class Value;
+class LLVMContext;
 }
 
 namespace clang {
