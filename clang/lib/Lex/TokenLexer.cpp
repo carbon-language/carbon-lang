@@ -121,10 +121,9 @@ void TokenLexer::destroy() {
   if (ActualArgs) ActualArgs->destroy(PP);
 }
 
-bool TokenLexer::MaybeRemoveCommaBeforeVaArgs(SmallVectorImpl<Token> &ResultToks,
-                                              bool HasPasteOperator,
-                                              MacroInfo *Macro, unsigned MacroArgNo,
-                                              Preprocessor &PP) {
+bool TokenLexer::MaybeRemoveCommaBeforeVaArgs(
+    SmallVectorImpl<Token> &ResultToks, bool HasPasteOperator, MacroInfo *Macro,
+    unsigned MacroArgNo, Preprocessor &PP) {
   // Is the macro argument __VA_ARGS__?
   if (!Macro->isVariadic() || MacroArgNo != Macro->getNumArgs()-1)
     return false;
