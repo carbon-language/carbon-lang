@@ -82,9 +82,10 @@ private:
   };
   Kind TheKind;
   bool PaddingInReg : 1;
-  bool InAllocaSRet : 1;    // isInAlloca
+  bool InAllocaSRet : 1;    // isInAlloca()
   bool IndirectByVal : 1;   // isIndirect()
   bool IndirectRealign : 1; // isIndirect()
+  bool SRetAfterThis : 1;   // isIndirect()
   bool InReg : 1;           // isDirect() || isExtend() || isIndirect()
 
   ABIArgInfo(Kind K)
@@ -129,6 +130,7 @@ public:
     AI.setIndirectAlign(Alignment);
     AI.setIndirectByVal(ByVal);
     AI.setIndirectRealign(Realign);
+    AI.setSRetAfterThis(false);
     AI.setPaddingType(Padding);
     return AI;
   }
@@ -231,6 +233,15 @@ public:
   void setIndirectRealign(bool IR) {
     assert(isIndirect() && "Invalid kind!");
     IndirectRealign = IR;
+  }
+
+  bool isSRetAfterThis() const {
+    assert(isIndirect() && "Invalid kind!");
+    return SRetAfterThis;
+  }
+  void setSRetAfterThis(bool AfterThis) {
+    assert(isIndirect() && "Invalid kind!");
+    SRetAfterThis = AfterThis;
   }
 
   unsigned getInAllocaFieldIndex() const {

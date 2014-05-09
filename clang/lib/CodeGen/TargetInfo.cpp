@@ -992,13 +992,13 @@ void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   FI.getReturnInfo() =
       classifyReturnType(FI.getReturnType(), State, FI.isInstanceMethod());
 
-  // On win32, use the x86_cdeclmethodcc convention for cdecl methods that use
-  // sret.  This convention swaps the order of the first two parameters behind
-  // the scenes to match MSVC.
+  // On win32, swap the order of the first two parameters for instance methods
+  // which are sret behind the scenes to match MSVC.
   if (IsWin32StructABI && FI.isInstanceMethod() &&
-      FI.getCallingConvention() == llvm::CallingConv::C &&
-      FI.getReturnInfo().isIndirect())
-    FI.setEffectiveCallingConvention(llvm::CallingConv::X86_CDeclMethod);
+      FI.getReturnInfo().isIndirect()) {
+    assert(FI.arg_size() >= 1 && "instance method should have this");
+    FI.getReturnInfo().setSRetAfterThis(true);
+  }
 
   bool UsedInAlloca = false;
   for (auto &I : FI.arguments()) {
@@ -2767,6 +2767,14 @@ void WinX86_64ABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
   QualType RetTy = FI.getReturnType();
   FI.getReturnInfo() = classify(RetTy, true);
+
+  // On win64, swap the order of the first two parameters for instance methods
+  // which are sret behind the scenes to match MSVC.
+  if (FI.getReturnInfo().isIndirect() && FI.isInstanceMethod() &&
+      getCXXABI().isSRetParameterAfterThis()) {
+    assert(FI.arg_size() >= 1 && "instance method should have this");
+    FI.getReturnInfo().setSRetAfterThis(true);
+  }
 
   for (auto &I : FI.arguments())
     I.info = classify(I.type, false);

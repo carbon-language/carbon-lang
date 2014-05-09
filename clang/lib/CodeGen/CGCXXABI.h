@@ -114,6 +114,10 @@ public:
   /// Returns how an argument of the given record type should be passed.
   virtual RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const = 0;
 
+  /// Returns true if the implicit 'sret' parameter comes after the implicit
+  /// 'this' parameter of C++ instance methods.
+  virtual bool isSRetParameterAfterThis() const { return false; }
+
   /// Find the LLVM type used to represent the given member pointer
   /// type.
   virtual llvm::Type *

@@ -46,6 +46,8 @@ public:
 
   RecordArgABI getRecordArgABI(const CXXRecordDecl *RD) const override;
 
+  bool isSRetParameterAfterThis() const override { return true; }
+
   StringRef GetPureVirtualCallName() override { return "_purecall"; }
   // No known support for deleted functions in MSVC yet, so this choice is
   // arbitrary.

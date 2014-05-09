@@ -940,6 +940,7 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
   bool Inserted = FunctionsBeingProcessed.insert(&FI); (void)Inserted;
   assert(Inserted && "Recursively being processed?");
   
+  bool SwapThisWithSRet = false;
   SmallVector<llvm::Type*, 8> argTypes;
   llvm::Type *resultType = 0;
 
@@ -973,6 +974,8 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
     llvm::Type *ty = ConvertType(ret);
     unsigned addressSpace = Context.getTargetAddressSpace(ret);
     argTypes.push_back(llvm::PointerType::get(ty, addressSpace));
+
+    SwapThisWithSRet = retAI.isSRetAfterThis();
     break;
   }
 
@@ -1034,6 +1037,9 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
   // Add the inalloca struct as the last parameter type.
   if (llvm::StructType *ArgStruct = FI.getArgStruct())
     argTypes.push_back(ArgStruct->getPointerTo());
+
+  if (SwapThisWithSRet)
+    std::swap(argTypes[0], argTypes[1]);
 
   bool Erased = FunctionsBeingProcessed.erase(&FI); (void)Erased;
   assert(Erased && "Not in set?");
@@ -1149,6 +1155,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
   QualType RetTy = FI.getReturnType();
   unsigned Index = 1;
+  bool SwapThisWithSRet = false;
   const ABIArgInfo &RetAI = FI.getReturnInfo();
   switch (RetAI.getKind()) {
   case ABIArgInfo::Extend:
@@ -1176,10 +1183,12 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     SRETAttrs.addAttribute(llvm::Attribute::StructRet);
     if (RetAI.getInReg())
       SRETAttrs.addAttribute(llvm::Attribute::InReg);
-    PAL.push_back(llvm::
-                  AttributeSet::get(getLLVMContext(), Index, SRETAttrs));
+    SwapThisWithSRet = RetAI.isSRetAfterThis();
+    PAL.push_back(llvm::AttributeSet::get(
+        getLLVMContext(), SwapThisWithSRet ? 2 : Index, SRETAttrs));
 
-    ++Index;
+    if (!SwapThisWithSRet)
+      ++Index;
     // sret disables readnone and readonly
     FuncAttrs.removeAttribute(llvm::Attribute::ReadOnly)
       .removeAttribute(llvm::Attribute::ReadNone);
@@ -1200,6 +1209,11 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     QualType ParamType = I.type;
     const ABIArgInfo &AI = I.info;
     llvm::AttrBuilder Attrs;
+
+    // Skip over the sret parameter when it comes second.  We already handled it
+    // above.
+    if (Index == 2 && SwapThisWithSRet)
+      ++Index;
 
     if (AI.getPaddingType()) {
       if (AI.getPaddingInReg())
@@ -1344,13 +1358,20 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     assert(ArgStruct->getType() == FI.getArgStruct()->getPointerTo());
   }
 
-  // Name the struct return argument.
-  if (CGM.ReturnTypeUsesSRet(FI)) {
+  // Name the struct return parameter, which can come first or second.
+  const ABIArgInfo &RetAI = FI.getReturnInfo();
+  bool SwapThisWithSRet = false;
+  if (RetAI.isIndirect()) {
+    SwapThisWithSRet = RetAI.isSRetAfterThis();
+    if (SwapThisWithSRet)
+      ++AI;
     AI->setName("agg.result");
-    AI->addAttr(llvm::AttributeSet::get(getLLVMContext(),
-                                        AI->getArgNo() + 1,
+    AI->addAttr(llvm::AttributeSet::get(getLLVMContext(), AI->getArgNo() + 1,
                                         llvm::Attribute::NoAlias));
-    ++AI;
+    if (SwapThisWithSRet)
+      --AI;  // Go back to the beginning for 'this'.
+    else
+      ++AI;  // Skip the sret parameter.
   }
 
   // Track if we received the parameter as a pointer (indirect, byval, or
@@ -1580,6 +1601,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
     }
 
     ++AI;
+
+    if (ArgNo == 1 && SwapThisWithSRet)
+      ++AI;  // Skip the sret parameter.
   }
 
   if (FI.usesInAlloca())
@@ -1822,13 +1846,15 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
     break;
 
   case ABIArgInfo::Indirect: {
+    auto AI = CurFn->arg_begin();
+    if (RetAI.isSRetAfterThis())
+      ++AI;
     switch (getEvaluationKind(RetTy)) {
     case TEK_Complex: {
       ComplexPairTy RT =
         EmitLoadOfComplex(MakeNaturalAlignAddrLValue(ReturnValue, RetTy),
                           EndLoc);
-      EmitStoreOfComplex(RT,
-                       MakeNaturalAlignAddrLValue(CurFn->arg_begin(), RetTy),
+      EmitStoreOfComplex(RT, MakeNaturalAlignAddrLValue(AI, RetTy),
                          /*isInit*/ true);
       break;
     }
@@ -1837,7 +1863,7 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
       break;
     case TEK_Scalar:
       EmitStoreOfScalar(Builder.CreateLoad(ReturnValue),
-                        MakeNaturalAlignAddrLValue(CurFn->arg_begin(), RetTy),
+                        MakeNaturalAlignAddrLValue(AI, RetTy),
                         /*isInit*/ true);
       break;
     }
@@ -2600,13 +2626,19 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
   // If the call returns a temporary with struct return, create a temporary
   // alloca to hold the result, unless one is given to us.
   llvm::Value *SRetPtr = 0;
-  if (CGM.ReturnTypeUsesSRet(CallInfo) || RetAI.isInAlloca()) {
+  bool SwapThisWithSRet = false;
+  if (RetAI.isIndirect() || RetAI.isInAlloca()) {
     SRetPtr = ReturnValue.getValue();
     if (!SRetPtr)
       SRetPtr = CreateMemTemp(RetTy);
-    if (CGM.ReturnTypeUsesSRet(CallInfo)) {
+    if (RetAI.isIndirect()) {
       Args.push_back(SRetPtr);
+      SwapThisWithSRet = RetAI.isSRetAfterThis();
+      if (SwapThisWithSRet)
+        IRArgNo = 1;
       checkArgMatches(SRetPtr, IRArgNo, IRFuncTy);
+      if (SwapThisWithSRet)
+        IRArgNo = 0;
     } else {
       llvm::Value *Addr =
           Builder.CreateStructGEP(ArgMemory, RetAI.getInAllocaFieldIndex());
@@ -2621,6 +2653,10 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
        I != E; ++I, ++info_it) {
     const ABIArgInfo &ArgInfo = info_it->info;
     RValue RV = I->RV;
+
+    // Skip 'sret' if it came second.
+    if (IRArgNo == 1 && SwapThisWithSRet)
+      ++IRArgNo;
 
     CharUnits TypeAlign = getContext().getTypeAlignInChars(I->Ty);
 
@@ -2810,6 +2846,9 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
       break;
     }
   }
+
+  if (SwapThisWithSRet)
+    std::swap(Args[0], Args[1]);
 
   if (ArgMemory) {
     llvm::Value *Arg = ArgMemory;

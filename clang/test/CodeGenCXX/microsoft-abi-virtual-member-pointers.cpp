@@ -34,14 +34,14 @@ void f() {
 // CHECK32-LABEL: define void @"\01?f@@YAXXZ"()
 // CHECK32: store i8* bitcast (void (%struct.C*)* @"\01??_9C@@$BA@AE" to i8*), i8** %ptr
 // CHECK32: store i8* bitcast (i32 (%struct.C*, i32, double)* @"\01??_9C@@$B3AE" to i8*), i8** %ptr2
-// CHECK32: store i8* bitcast (void (%struct.S*, %struct.C*, i32)* @"\01??_9C@@$B7AE" to i8*), i8** %ptr3
+// CHECK32: store i8* bitcast (void (%struct.C*, %struct.S*, i32)* @"\01??_9C@@$B7AE" to i8*), i8** %ptr3
 // CHECK32: store i8* bitcast (void (%"struct.(anonymous namespace)::D"*)* @"\01??_9D@?A@@$BA@AE" to i8*), i8** %ptr4
 // CHECK32: }
 //
 // CHECK64-LABEL: define void @"\01?f@@YAXXZ"()
 // CHECK64: store i8* bitcast (void (%struct.C*)* @"\01??_9C@@$BA@AA" to i8*), i8** %ptr
 // CHECK64: store i8* bitcast (i32 (%struct.C*, i32, double)* @"\01??_9C@@$B7AA" to i8*), i8** %ptr2
-// CHECK64: store i8* bitcast (void (%struct.S*, %struct.C*, i32)* @"\01??_9C@@$BBA@AA" to i8*), i8** %ptr3
+// CHECK64: store i8* bitcast (void (%struct.C*, %struct.S*, i32)* @"\01??_9C@@$BBA@AA" to i8*), i8** %ptr3
 // CHECK64: store i8* bitcast (void (%"struct.(anonymous namespace)::D"*)* @"\01??_9D@?A@@$BA@AA" to i8*), i8** %ptr
 // CHECK64: }
 }
@@ -78,17 +78,17 @@ void f() {
 // CHECK64: }
 
 // Thunk for calling the 3rd virtual function in C, taking an int parameter, returning a struct.
-// CHECK32-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_9C@@$B7AE"(%struct.S* noalias sret %agg.result, %struct.C* %this, i32) unnamed_addr
-// CHECK32: [[VPTR:%.*]] = getelementptr inbounds void (%struct.S*, %struct.C*, i32)** %{{.*}}, i64 2
-// CHECK32: [[CALLEE:%.*]] = load void (%struct.S*, %struct.C*, i32)** [[VPTR]]
-// CHECK32: call x86_thiscallcc void [[CALLEE]](%struct.S* sret %agg.result, %struct.C* %{{.*}}, i32 %{{.*}})
+// CHECK32-LABEL: define linkonce_odr x86_thiscallcc void @"\01??_9C@@$B7AE"(%struct.C* %this, %struct.S* noalias sret %agg.result, i32) unnamed_addr
+// CHECK32: [[VPTR:%.*]] = getelementptr inbounds void (%struct.C*, %struct.S*, i32)** %{{.*}}, i64 2
+// CHECK32: [[CALLEE:%.*]] = load void (%struct.C*, %struct.S*, i32)** [[VPTR]]
+// CHECK32: call x86_thiscallcc void [[CALLEE]](%struct.C* %{{.*}}, %struct.S* sret %agg.result, i32 %{{.*}})
 // CHECK32: ret void
 // CHECK32: }
 //
-// CHECK64-LABEL: define linkonce_odr void @"\01??_9C@@$BBA@AA"(%struct.S* noalias sret %agg.result, %struct.C* %this, i32) unnamed_addr
-// CHECK64: [[VPTR:%.*]] = getelementptr inbounds void (%struct.S*, %struct.C*, i32)** %{{.*}}, i64 2
-// CHECK64: [[CALLEE:%.*]] = load void (%struct.S*, %struct.C*, i32)** [[VPTR]]
-// CHECK64: call void [[CALLEE]](%struct.S* sret %agg.result, %struct.C* %{{.*}}, i32 %{{.*}})
+// CHECK64-LABEL: define linkonce_odr void @"\01??_9C@@$BBA@AA"(%struct.C* %this, %struct.S* noalias sret %agg.result, i32) unnamed_addr
+// CHECK64: [[VPTR:%.*]] = getelementptr inbounds void (%struct.C*, %struct.S*, i32)** %{{.*}}, i64 2
+// CHECK64: [[CALLEE:%.*]] = load void (%struct.C*, %struct.S*, i32)** [[VPTR]]
+// CHECK64: call void [[CALLEE]](%struct.C* %{{.*}}, %struct.S* sret %agg.result, i32 %{{.*}})
 // CHECK64: ret void
 // CHECK64: }
 

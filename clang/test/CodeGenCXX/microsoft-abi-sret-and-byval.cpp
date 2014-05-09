@@ -201,19 +201,19 @@ class Class {
  public:
   Small thiscall_method_small() { return Small(); }
   // LINUX: define {{.*}} void @_ZN5Class21thiscall_method_smallEv(%struct.Small* noalias sret %agg.result, %class.Class* %this)
-  // WIN32: define {{.*}} x86_thiscallcc void @"\01?thiscall_method_small@Class@@QAE?AUSmall@@XZ"(%struct.Small* noalias sret %agg.result, %class.Class* %this)
+  // WIN32: define {{.*}} x86_thiscallcc void @"\01?thiscall_method_small@Class@@QAE?AUSmall@@XZ"(%class.Class* %this, %struct.Small* noalias sret %agg.result)
 
   SmallWithCtor thiscall_method_small_with_ctor() { return SmallWithCtor(); }
   // LINUX: define {{.*}} void @_ZN5Class31thiscall_method_small_with_ctorEv(%struct.SmallWithCtor* noalias sret %agg.result, %class.Class* %this)
-  // WIN32: define {{.*}} x86_thiscallcc void @"\01?thiscall_method_small_with_ctor@Class@@QAE?AUSmallWithCtor@@XZ"(%struct.SmallWithCtor* noalias sret %agg.result, %class.Class* %this)
+  // WIN32: define {{.*}} x86_thiscallcc void @"\01?thiscall_method_small_with_ctor@Class@@QAE?AUSmallWithCtor@@XZ"(%class.Class* %this, %struct.SmallWithCtor* noalias sret %agg.result)
 
   Small __cdecl cdecl_method_small() { return Small(); }
   // LINUX: define {{.*}} void @_ZN5Class18cdecl_method_smallEv(%struct.Small* noalias sret %agg.result, %class.Class* %this)
-  // WIN32: define {{.*}} void @"\01?cdecl_method_small@Class@@QAA?AUSmall@@XZ"(%struct.Small* noalias sret %agg.result, %class.Class* %this)
+  // WIN32: define {{.*}} void @"\01?cdecl_method_small@Class@@QAA?AUSmall@@XZ"(%class.Class* %this, %struct.Small* noalias sret %agg.result)
 
   Big __cdecl cdecl_method_big() { return Big(); }
   // LINUX: define {{.*}} void @_ZN5Class16cdecl_method_bigEv(%struct.Big* noalias sret %agg.result, %class.Class* %this)
-  // WIN32: define {{.*}} void @"\01?cdecl_method_big@Class@@QAA?AUBig@@XZ"(%struct.Big* noalias sret %agg.result, %class.Class* %this)
+  // WIN32: define {{.*}} void @"\01?cdecl_method_big@Class@@QAA?AUBig@@XZ"(%class.Class* %this, %struct.Big* noalias sret %agg.result)
 
   void thiscall_method_arg(Empty s) {}
   // LINUX: define {{.*}} void @_ZN5Class19thiscall_method_argE5Empty(%class.Class* %this)
