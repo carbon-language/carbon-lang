@@ -34,124 +34,121 @@
 #include "llvm/Transforms/Utils/SpecialCaseList.h"
 
 namespace llvm {
-  class Module;
-  class Constant;
-  class ConstantInt;
-  class Function;
-  class GlobalValue;
-  class DataLayout;
-  class FunctionType;
-  class LLVMContext;
-  class IndexedInstrProfReader;
+class Module;
+class Constant;
+class ConstantInt;
+class Function;
+class GlobalValue;
+class DataLayout;
+class FunctionType;
+class LLVMContext;
+class IndexedInstrProfReader;
 }
 
 namespace clang {
-  class TargetCodeGenInfo;
-  class ASTContext;
-  class AtomicType;
-  class FunctionDecl;
-  class IdentifierInfo;
-  class ObjCMethodDecl;
-  class ObjCImplementationDecl;
-  class ObjCCategoryImplDecl;
-  class ObjCProtocolDecl;
-  class ObjCEncodeExpr;
-  class BlockExpr;
-  class CharUnits;
-  class Decl;
-  class Expr;
-  class Stmt;
-  class InitListExpr;
-  class StringLiteral;
-  class NamedDecl;
-  class ValueDecl;
-  class VarDecl;
-  class LangOptions;
-  class CodeGenOptions;
-  class DiagnosticsEngine;
-  class AnnotateAttr;
-  class CXXDestructorDecl;
-  class MangleBuffer;
-  class Module;
+class TargetCodeGenInfo;
+class ASTContext;
+class AtomicType;
+class FunctionDecl;
+class IdentifierInfo;
+class ObjCMethodDecl;
+class ObjCImplementationDecl;
+class ObjCCategoryImplDecl;
+class ObjCProtocolDecl;
+class ObjCEncodeExpr;
+class BlockExpr;
+class CharUnits;
+class Decl;
+class Expr;
+class Stmt;
+class InitListExpr;
+class StringLiteral;
+class NamedDecl;
+class ValueDecl;
+class VarDecl;
+class LangOptions;
+class CodeGenOptions;
+class DiagnosticsEngine;
+class AnnotateAttr;
+class CXXDestructorDecl;
+class MangleBuffer;
+class Module;
 
 namespace CodeGen {
 
-  class CallArgList;
-  class CodeGenFunction;
-  class CodeGenTBAA;
-  class CGCXXABI;
-  class CGDebugInfo;
-  class CGObjCRuntime;
-  class CGOpenCLRuntime;
-  class CGOpenMPRuntime;
-  class CGCUDARuntime;
-  class BlockFieldFlags;
-  class FunctionArgList;
+class CallArgList;
+class CodeGenFunction;
+class CodeGenTBAA;
+class CGCXXABI;
+class CGDebugInfo;
+class CGObjCRuntime;
+class CGOpenCLRuntime;
+class CGOpenMPRuntime;
+class CGCUDARuntime;
+class BlockFieldFlags;
+class FunctionArgList;
 
-  struct OrderGlobalInits {
-    unsigned int priority;
-    unsigned int lex_order;
-    OrderGlobalInits(unsigned int p, unsigned int l) 
+struct OrderGlobalInits {
+  unsigned int priority;
+  unsigned int lex_order;
+  OrderGlobalInits(unsigned int p, unsigned int l)
       : priority(p), lex_order(l) {}
-    
-    bool operator==(const OrderGlobalInits &RHS) const {
-      return priority == RHS.priority &&
-             lex_order == RHS.lex_order;
-    }
-    
-    bool operator<(const OrderGlobalInits &RHS) const {
-      return std::tie(priority, lex_order) <
-             std::tie(RHS.priority, RHS.lex_order);
-    }
+
+  bool operator==(const OrderGlobalInits &RHS) const {
+    return priority == RHS.priority && lex_order == RHS.lex_order;
+  }
+
+  bool operator<(const OrderGlobalInits &RHS) const {
+    return std::tie(priority, lex_order) <
+           std::tie(RHS.priority, RHS.lex_order);
+  }
+};
+
+struct CodeGenTypeCache {
+  /// void
+  llvm::Type *VoidTy;
+
+  /// i8, i16, i32, and i64
+  llvm::IntegerType *Int8Ty, *Int16Ty, *Int32Ty, *Int64Ty;
+  /// float, double
+  llvm::Type *FloatTy, *DoubleTy;
+
+  /// int
+  llvm::IntegerType *IntTy;
+
+  /// intptr_t, size_t, and ptrdiff_t, which we assume are the same size.
+  union {
+    llvm::IntegerType *IntPtrTy;
+    llvm::IntegerType *SizeTy;
+    llvm::IntegerType *PtrDiffTy;
   };
 
-  struct CodeGenTypeCache {
-    /// void
-    llvm::Type *VoidTy;
-
-    /// i8, i16, i32, and i64
-    llvm::IntegerType *Int8Ty, *Int16Ty, *Int32Ty, *Int64Ty;
-    /// float, double
-    llvm::Type *FloatTy, *DoubleTy;
-
-    /// int
-    llvm::IntegerType *IntTy;
-
-    /// intptr_t, size_t, and ptrdiff_t, which we assume are the same size.
-    union {
-      llvm::IntegerType *IntPtrTy;
-      llvm::IntegerType *SizeTy;
-      llvm::IntegerType *PtrDiffTy;
-    };
-
-    /// void* in address space 0
-    union {
-      llvm::PointerType *VoidPtrTy;
-      llvm::PointerType *Int8PtrTy;
-    };
-
-    /// void** in address space 0
-    union {
-      llvm::PointerType *VoidPtrPtrTy;
-      llvm::PointerType *Int8PtrPtrTy;
-    };
-
-    /// The width of a pointer into the generic address space.
-    unsigned char PointerWidthInBits;
-
-    /// The size and alignment of a pointer into the generic address
-    /// space.
-    union {
-      unsigned char PointerAlignInBytes;
-      unsigned char PointerSizeInBytes;
-      unsigned char SizeSizeInBytes;     // sizeof(size_t)
-    };
-
-    llvm::CallingConv::ID RuntimeCC;
-    llvm::CallingConv::ID getRuntimeCC() const {
-      return RuntimeCC;
-    }
+  /// void* in address space 0
+  union {
+    llvm::PointerType *VoidPtrTy;
+    llvm::PointerType *Int8PtrTy;
   };
+
+  /// void** in address space 0
+  union {
+    llvm::PointerType *VoidPtrPtrTy;
+    llvm::PointerType *Int8PtrPtrTy;
+  };
+
+  /// The width of a pointer into the generic address space.
+  unsigned char PointerWidthInBits;
+
+  /// The size and alignment of a pointer into the generic address
+  /// space.
+  union {
+    unsigned char PointerAlignInBytes;
+    unsigned char PointerSizeInBytes;
+    unsigned char SizeSizeInBytes; // sizeof(size_t)
+  };
+
+  llvm::CallingConv::ID RuntimeCC;
+  llvm::CallingConv::ID getRuntimeCC() const { return RuntimeCC; }
+};
 
 struct RREntrypoints {
   RREntrypoints() { memset(this, 0, sizeof(*this)); }
