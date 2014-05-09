@@ -192,8 +192,8 @@ void X86AddressSanitizer64::InstrumentMemOperandImpl(X86Operand *Op,
     Inst.addOperand(MCOperand::CreateReg(X86::RSP));
 
     const MCExpr *Disp = MCConstantExpr::Create(-128, Ctx);
-    X86Operand *Op =
-        X86Operand::CreateMem(0, Disp, X86::RSP, 0, 1, SMLoc(), SMLoc());
+    std::unique_ptr<X86Operand> Op(
+        X86Operand::CreateMem(0, Disp, X86::RSP, 0, 1, SMLoc(), SMLoc()));
     Op->addMemOperands(Inst, 5);
     EmitInstruction(Out, Inst);
   }
@@ -221,8 +221,8 @@ void X86AddressSanitizer64::InstrumentMemOperandImpl(X86Operand *Op,
     Inst.addOperand(MCOperand::CreateReg(X86::RSP));
 
     const MCExpr *Disp = MCConstantExpr::Create(128, Ctx);
-    X86Operand *Op =
-        X86Operand::CreateMem(0, Disp, X86::RSP, 0, 1, SMLoc(), SMLoc());
+    std::unique_ptr<X86Operand> Op(
+        X86Operand::CreateMem(0, Disp, X86::RSP, 0, 1, SMLoc(), SMLoc()));
     Op->addMemOperands(Inst, 5);
     EmitInstruction(Out, Inst);
   }
