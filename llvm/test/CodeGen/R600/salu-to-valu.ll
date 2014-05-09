@@ -74,3 +74,17 @@ endif:
   store i32 %6, i32 addrspace(1)* %out
   ret void
 }
+
+; Test moving ann SMRD with an immediate offset to the VALU
+
+; CHECK-LABEL: @smrd_valu2
+; CHECK: BUFFER_LOAD_DWORD
+define void @smrd_valu2(i32 addrspace(1)* %out, [8 x i32] addrspace(2)* %in) {
+entry:
+  %0 = call i32 @llvm.r600.read.tidig.x() nounwind readnone
+  %1 = add i32 %0, 4
+  %2 = getelementptr [8 x i32] addrspace(2)* %in, i32 %0, i32 4
+  %3 = load i32 addrspace(2)* %2
+  store i32 %3, i32 addrspace(1)* %out
+  ret void
+}

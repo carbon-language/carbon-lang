@@ -661,8 +661,11 @@ unsigned SIInstrInfo::getVALUOp(const MachineInstr &MI) {
   case AMDGPU::S_CMP_GE_I32: return AMDGPU::V_CMP_GE_I32_e32;
   case AMDGPU::S_CMP_LT_I32: return AMDGPU::V_CMP_LT_I32_e32;
   case AMDGPU::S_CMP_LE_I32: return AMDGPU::V_CMP_LE_I32_e32;
+  case AMDGPU::S_LOAD_DWORD_IMM:
   case AMDGPU::S_LOAD_DWORD_SGPR: return AMDGPU::BUFFER_LOAD_DWORD_ADDR64;
+  case AMDGPU::S_LOAD_DWORDX2_IMM:
   case AMDGPU::S_LOAD_DWORDX2_SGPR: return AMDGPU::BUFFER_LOAD_DWORDX2_ADDR64;
+  case AMDGPU::S_LOAD_DWORDX4_IMM:
   case AMDGPU::S_LOAD_DWORDX4_SGPR: return AMDGPU::BUFFER_LOAD_DWORDX4_ADDR64;
   }
 }
@@ -1029,15 +1032,39 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
 void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) const {
   MachineBasicBlock *MBB = MI->getParent();
   switch (MI->getOpcode()) {
+    case AMDGPU::S_LOAD_DWORD_IMM:
     case AMDGPU::S_LOAD_DWORD_SGPR:
+    case AMDGPU::S_LOAD_DWORDX2_IMM:
     case AMDGPU::S_LOAD_DWORDX2_SGPR:
+    case AMDGPU::S_LOAD_DWORDX4_IMM:
     case AMDGPU::S_LOAD_DWORDX4_SGPR:
       unsigned NewOpcode = getVALUOp(*MI);
-      unsigned Offset = MI->getOperand(2).getReg();
+      unsigned RegOffset;
+      unsigned ImmOffset;
 
+      if (MI->getOperand(2).isReg()) {
+        RegOffset = MI->getOperand(2).getReg();
+        ImmOffset = 0;
+      } else {
+        assert(MI->getOperand(2).isImm());
+        // SMRD instructions take a dword offsets and MUBUF instructions
+        // take a byte offset.
+        ImmOffset = MI->getOperand(2).getImm() << 2;
+        RegOffset = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+        if (isUInt<12>(ImmOffset)) {
+          BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32),
+                  RegOffset)
+                  .addImm(0);
+        } else {
+          BuildMI(*MBB, MI, MI->getDebugLoc(), get(AMDGPU::S_MOV_B32),
+                  RegOffset)
+                  .addImm(ImmOffset);
+          ImmOffset = 0;
+        }
+      }
 
       unsigned SRsrc = MRI.createVirtualRegister(&AMDGPU::SReg_128RegClass);
-      unsigned DWord0 = Offset;
+      unsigned DWord0 = RegOffset;
       unsigned DWord1 = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
       unsigned DWord2 = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
       unsigned DWord3 = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
@@ -1058,9 +1085,13 @@ void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) con
               .addReg(DWord3)
               .addImm(AMDGPU::sub3);
      MI->setDesc(get(NewOpcode));
-     MI->getOperand(2).setReg(MI->getOperand(1).getReg());
+     if (MI->getOperand(2).isReg()) {
+       MI->getOperand(2).setReg(MI->getOperand(1).getReg());
+     } else {
+       MI->getOperand(2).ChangeToRegister(MI->getOperand(1).getReg(), false);
+     }
      MI->getOperand(1).setReg(SRsrc);
-     MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(0));
+     MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(ImmOffset));
   }
 }
 
