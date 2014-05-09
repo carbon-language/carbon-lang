@@ -396,3 +396,23 @@ int no_init_captures();
 // CHECK-1Y: has_init_captures
 // CHECK-11: no_init_captures
 // CHECK-NO-11: no_init_captures
+
+#if __has_feature(cxx_decltype_auto)
+int has_decltype_auto();
+#else
+int no_decltype_auto();
+#endif
+
+// CHECK-1Y: has_decltype_auto
+// CHECK-11: no_decltype_auto
+// CHECK-NO-11: no_decltype_auto
+
+#if __has_feature(cxx_generic_lambdas)
+int has_generic_lambdas();
+#else
+int no_generic_lambdas();
+#endif
+
+// CHECK-1Y: has_generic_lambdas
+// CHECK-11: no_generic_lambdas
+// CHECK-NO-11: no_generic_lambdas

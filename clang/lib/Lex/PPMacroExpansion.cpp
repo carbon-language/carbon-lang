@@ -918,7 +918,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("c_atomic", LangOpts.C11)
            .Case("c_generic_selections", LangOpts.C11)
            .Case("c_static_assert", LangOpts.C11)
-           .Case("c_thread_local", 
+           .Case("c_thread_local",
                  LangOpts.C11 && PP.getTargetInfo().isTLSSupported())
            // C++11 features
            .Case("cxx_access_control_sfinae", LangOpts.CPlusPlus11)
@@ -962,12 +962,17 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_aggregate_nsdmi", LangOpts.CPlusPlus1y)
            .Case("cxx_binary_literals", LangOpts.CPlusPlus1y)
            .Case("cxx_contextual_conversions", LangOpts.CPlusPlus1y)
-           //.Case("cxx_generic_lambdas", LangOpts.CPlusPlus1y)
+           .Case("cxx_decltype_auto", LangOpts.CPlusPlus1y)
+           .Case("cxx_generic_lambdas", LangOpts.CPlusPlus1y)
            .Case("cxx_init_captures", LangOpts.CPlusPlus1y)
            .Case("cxx_relaxed_constexpr", LangOpts.CPlusPlus1y)
            .Case("cxx_return_type_deduction", LangOpts.CPlusPlus1y)
-           //.Case("cxx_runtime_arrays", LangOpts.CPlusPlus1y)
            .Case("cxx_variable_templates", LangOpts.CPlusPlus1y)
+           // C++ TSes
+           //.Case("cxx_runtime_arrays", LangOpts.CPlusPlusTSArrays)
+           //.Case("cxx_concepts", LangOpts.CPlusPlusTSConcepts)
+           // FIXME: Should this be __has_feature or __has_extension?
+           //.Case("raw_invocation_type", LangOpts.CPlusPlus)
            // Type traits
            .Case("has_nothrow_assign", LangOpts.CPlusPlus)
            .Case("has_nothrow_copy", LangOpts.CPlusPlus)
