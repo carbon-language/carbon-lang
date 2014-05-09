@@ -63,6 +63,7 @@ class Loop;
 class ScalarEvolution;
 class SCEV;
 class SCEVAddRecExpr;
+class SCEVUnknown;
 class CallInst;
 class Instruction;
 class AliasAnalysis;
@@ -71,6 +72,9 @@ class Value;
 
 namespace polly {
 typedef std::set<const SCEV *> ParamSetType;
+
+typedef std::vector<const SCEVAddRecExpr *> AFs;
+typedef std::map<const SCEVUnknown *, AFs> BaseToAFs;
 
 extern bool PollyTrackFailures;
 extern bool PollyDelinearize;
@@ -96,6 +100,10 @@ class ScopDetection : public FunctionPass {
     Region &CurRegion;   // The region to check.
     AliasSetTracker AST; // The AliasSetTracker to hold the alias information.
     bool Verifying;      // If we are in the verification phase?
+
+    // Map a base pointer to all access functions accessing it.
+    BaseToAFs NonAffineAccesses;
+
     DetectionContext(Region &R, AliasAnalysis &AA, bool Verify)
         : CurRegion(R), AST(AA), Verifying(Verify) {}
   };
@@ -111,6 +119,11 @@ class ScopDetection : public FunctionPass {
   typedef std::set<const Function *> FunctionSet;
   FunctionSet InvalidFunctions;
   mutable std::string LastFailure;
+
+  // Delinearize all non affine memory accesses and return true when there
+  // exists a non affine memory access that cannot be delinearized. Return
+  // false when all array accesses are affine after delinearization.
+  bool hasNonAffineMemoryAccesses(DetectionContext &Context) const;
 
   // Try to expand the region R. If R can be expanded return the expanded
   // region, NULL otherwise.

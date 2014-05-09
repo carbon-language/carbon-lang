@@ -337,6 +337,35 @@ bool ScopDetection::isInvariant(const Value &Val, const Region &Reg) const {
   return true;
 }
 
+bool
+ScopDetection::hasNonAffineMemoryAccesses(DetectionContext &Context) const {
+  for (auto P : Context.NonAffineAccesses) {
+    const SCEVUnknown *BasePointer = P.first;
+    Value *BaseValue = BasePointer->getValue();
+
+    // First step: collect parametric terms in all array references.
+    SmallVector<const SCEV *, 4> Terms;
+    for (const SCEVAddRecExpr *AF : Context.NonAffineAccesses[BasePointer])
+      AF->collectParametricTerms(*SE, Terms);
+
+    // Second step: find array shape.
+    SmallVector<const SCEV *, 4> Sizes;
+    SE->findArrayDimensions(Terms, Sizes);
+
+    // Third step: compute the access functions for each subscript.
+    for (const SCEVAddRecExpr *AF : Context.NonAffineAccesses[BasePointer]) {
+      SmallVector<const SCEV *, 4> Subscripts;
+      AF->computeAccessFunctions(*SE, Subscripts, Sizes);
+
+      // Check that the delinearized subscripts are affine.
+      for (const SCEV *S : Subscripts)
+        if (!isAffineExpr(&Context.CurRegion, S, *SE, BaseValue))
+          return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF);
+    }
+  }
+  return false;
+}
+
 bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
                                         DetectionContext &Context) const {
   Value *Ptr = getPointerOperand(Inst);
@@ -370,21 +399,17 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
   } else if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE,
                            BaseValue)) {
     const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(AccessFunction);
+
     if (!PollyDelinearize || !AF)
       return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
                                             AccessFunction);
 
-    // Try to delinearize AccessFunction only when the expression is known to
-    // not be affine: as all affine functions can be represented without
-    // problems in Polly, we do not have to delinearize them.
-    SmallVector<const SCEV *, 4> Subscripts, Sizes;
-    AF->delinearize(*SE, Subscripts, Sizes);
-    int size = Subscripts.size();
-
-    for (int i = 0; i < size; ++i)
-      if (!isAffineExpr(&Context.CurRegion, Subscripts[i], *SE, BaseValue))
-        return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
-                                              AccessFunction);
+    // Collect all non affine memory accesses, and check whether they are linear
+    // at the end of scop detection. That way we can delinearize all the memory
+    // accesses to the same array in a unique step.
+    if (Context.NonAffineAccesses[BasePointer].size() == 0)
+      Context.NonAffineAccesses[BasePointer] = AFs();
+    Context.NonAffineAccesses[BasePointer].push_back(AF);
   }
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
@@ -608,6 +633,9 @@ bool ScopDetection::allBlocksValid(DetectionContext &Context) const {
     for (BasicBlock::iterator I = BB->begin(), E = --BB->end(); I != E; ++I)
       if (!isValidInstruction(*I, Context))
         return false;
+
+  if (hasNonAffineMemoryAccesses(Context))
+    return false;
 
   return true;
 }
