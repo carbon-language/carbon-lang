@@ -193,8 +193,8 @@ public:
   const CFG *getGraph() const { return CFGraph; }
   CFG *getGraph() { return CFGraph; }
 
-  const FunctionDecl *getDecl() const {
-    return dyn_cast<FunctionDecl>(ACtx->getDecl());
+  const NamedDecl *getDecl() const {
+    return dyn_cast<NamedDecl>(ACtx->getDecl());
   }
 
   const PostOrderCFGView *getSortedGraph() const { return SortedGraph; }
@@ -326,7 +326,7 @@ private:
   // We implement the CFGVisitor API
   friend class CFGWalker;
 
-  void enterCFG(CFG *Cfg, const FunctionDecl *D, const CFGBlock *First);
+  void enterCFG(CFG *Cfg, const NamedDecl *D, const CFGBlock *First);
   void enterCFGBlock(const CFGBlock *B);
   bool visitPredecessors() { return true; }
   void handlePredecessor(const CFGBlock *Pred);

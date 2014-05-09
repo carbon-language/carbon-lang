@@ -14,6 +14,7 @@
 #include "clang/Analysis/Analyses/ThreadSafetyCommon.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/Analysis/Analyses/PostOrderCFGView.h"
@@ -634,8 +635,7 @@ void SExprBuilder::mergePhiNodesBackEdge(const CFGBlock *Blk) {
   }
 }
 
-
-void SExprBuilder::enterCFG(CFG *Cfg, const FunctionDecl *FD,
+void SExprBuilder::enterCFG(CFG *Cfg, const NamedDecl *D,
                             const CFGBlock *First) {
   // Perform initial setup operations.
   unsigned NBlocks = Cfg->getNumBlockIDs();
@@ -649,10 +649,12 @@ void SExprBuilder::enterCFG(CFG *Cfg, const FunctionDecl *FD,
     auto *BB = new (Arena) til::BasicBlock(Arena, 0, B->size());
     BlockMap[B->getBlockID()] = BB;
   }
-  CallCtx.reset(new SExprBuilder::CallingContext(FD));
+  CallCtx.reset(new SExprBuilder::CallingContext(D));
 
   CurrentBB = lookupBlock(&Cfg->getEntry());
-  for (auto *Pm : FD->parameters()) {
+  auto Parms = isa<ObjCMethodDecl>(D) ? cast<ObjCMethodDecl>(D)->parameters()
+                                      : cast<FunctionDecl>(D)->parameters();
+  for (auto *Pm : Parms) {
     QualType T = Pm->getType();
     if (!T.isTrivialType(Pm->getASTContext()))
       continue;
