@@ -143,14 +143,17 @@ Preprocessor::~Preprocessor() {
     I->MI.Destroy();
 
   // Free any cached macro expanders.
+  // This populates MacroArgCache, so all TokenLexers need to be destroyed
+  // before the code below that frees up the MacroArgCache list.
   for (unsigned i = 0, e = NumCachedTokenLexers; i != e; ++i)
     delete TokenLexerCache[i];
+  CurTokenLexer.reset();
 
   for (DeserializedMacroInfoChain *I = DeserialMIChainHead ; I ; I = I->Next)
     I->MI.Destroy();
 
   // Free any cached MacroArgs.
-  for (MacroArgs *ArgList = MacroArgCache; ArgList; )
+  for (MacroArgs *ArgList = MacroArgCache; ArgList;)
     ArgList = ArgList->deallocate();
 
   // Release pragma information.
