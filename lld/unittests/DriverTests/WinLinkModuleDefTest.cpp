@@ -144,7 +144,7 @@ TEST_F(ParserTest, Multiple) {
         "VERSION 12");
   EXPECT_EQ(3U, _dirs.size());
   auto *lib = cast<moduledef::Library>(_dirs[0]);
-  EXPECT_EQ("foo", lib->getName());
+  EXPECT_EQ("foo.dll", lib->getName());
 
   const std::vector<PECOFFLinkingContext::ExportDesc> &exports =
       cast<moduledef::Exports>(_dirs[1])->getExports();

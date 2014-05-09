@@ -153,6 +153,8 @@ bool Parser::parseOne(Directive *&ret) {
     uint64_t baseaddr;
     if (!parseName(name, baseaddr))
       return false;
+    if (!StringRef(name).endswith_lower(".dll"))
+      name.append(".dll");
     ret = new (_alloc) Library(name, baseaddr);
     return true;
   }
