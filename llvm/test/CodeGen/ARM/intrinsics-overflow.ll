@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -mcpu=generic | FileCheck %s
+; RUN: llc < %s -mtriple=arm-linux -mcpu=generic | FileCheck %s
 
 define i32 @uadd_overflow(i32 %a, i32 %b) #0 {
   %sadd = tail call { i32, i1 } @llvm.uadd.with.overflow.i32(i32 %a, i32 %b)
