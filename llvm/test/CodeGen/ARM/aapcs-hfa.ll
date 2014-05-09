@@ -1,5 +1,6 @@
 ; RUN: llc < %s -float-abi=hard -debug-only arm-isel 2>&1 | FileCheck %s
 ; RUN: llc < %s -float-abi=soft -debug-only arm-isel 2>&1 | FileCheck %s --check-prefix=SOFT
+; REQUIRES: asserts
 
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 target triple = "armv7-none--eabi"
