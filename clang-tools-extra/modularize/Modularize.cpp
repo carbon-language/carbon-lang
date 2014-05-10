@@ -522,7 +522,7 @@ public:
     return true;
   }
   bool TraverseConstructorInitializer(CXXCtorInitializer *Init) { return true; }
-  bool TraverseLambdaCapture(LambdaExpr::Capture C) { return true; }
+  bool TraverseLambdaCapture(LambdaCapture C) { return true; }
 
   // Check 'extern "*" {}' block for #include directives.
   bool VisitLinkageSpecDecl(LinkageSpecDecl *D) {

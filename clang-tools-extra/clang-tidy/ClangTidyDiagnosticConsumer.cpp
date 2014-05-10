@@ -17,17 +17,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangTidyDiagnosticConsumer.h"
-
 #include "ClangTidyOptions.h"
+#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Frontend/DiagnosticRenderer.h"
 #include "llvm/ADT/SmallString.h"
-
 #include <set>
 #include <tuple>
+using namespace clang;
+using namespace tidy;
 
-namespace clang {
-namespace tidy {
-
+namespace {
 class ClangTidyDiagnosticRenderer : public DiagnosticRenderer {
 public:
   ClangTidyDiagnosticRenderer(const LangOptions &LangOpts,
@@ -97,6 +96,7 @@ protected:
 private:
   ClangTidyError &Error;
 };
+} // end anonymous namespace
 
 ClangTidyMessage::ClangTidyMessage(StringRef Message) : Message(Message) {}
 
@@ -254,6 +254,7 @@ bool ClangTidyDiagnosticConsumer::relatesToUserCode(SourceLocation Location) {
   return !File || HeaderFilter.match(File->getName());
 }
 
+namespace {
 struct LessClangTidyError {
   bool operator()(const ClangTidyError *LHS, const ClangTidyError *RHS) const {
     const ClangTidyMessage &M1 = LHS->Message;
@@ -263,6 +264,7 @@ struct LessClangTidyError {
            std::tie(M2.FilePath, M2.FileOffset, M2.Message);
   }
 };
+} // end anonymous namespace
 
 // Flushes the internal diagnostics buffer to the ClangTidyContext.
 void ClangTidyDiagnosticConsumer::finish() {
@@ -275,6 +277,3 @@ void ClangTidyDiagnosticConsumer::finish() {
     Context.storeError(*Error);
   Errors.clear();
 }
-
-} // namespace tidy
-} // namespace clang
