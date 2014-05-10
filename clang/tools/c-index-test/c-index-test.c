@@ -977,7 +977,6 @@ void PrintDiagnostic(CXDiagnostic Diagnostic) {
         PrintExtent(out, start_line, start_column, end_line, end_column);
         fprintf(out, " with \"%s\"\n", clang_getCString(insertion_text));
       }
-      break;
     }
     clang_disposeString(insertion_text);
   }
