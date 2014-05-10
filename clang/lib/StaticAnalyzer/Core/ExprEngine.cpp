@@ -1352,7 +1352,7 @@ static SVal RecoverCastedSymbol(ProgramStateManager& StateMgr,
   return state->getSVal(Ex, LCtx);
 }
 
-const Stmt *getRightmostLeaf(const Stmt *Condition) {
+static const Stmt *getRightmostLeaf(const Stmt *Condition) {
   while (Condition) {
     const BinaryOperator *BO = dyn_cast<BinaryOperator>(Condition);
     if (!BO || !BO->isLogicalOp()) {
