@@ -1067,6 +1067,11 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
     Kind = CK_BitCast;
     return TC_Success;
   }
+  // Allow ns-pointer to cf-pointer conversion in either direction
+  // with static casts.
+  if (!CStyle &&
+      Self.CheckTollFreeBridgeStaticCast(DestType, SrcExpr.get(), Kind))
+    return TC_Success;
   
   // We tried everything. Everything! Nothing works! :-(
   return TC_NotApplicable;

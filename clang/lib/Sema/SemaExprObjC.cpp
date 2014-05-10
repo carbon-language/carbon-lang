@@ -3413,6 +3413,22 @@ void Sema::CheckTollFreeBridgeCast(QualType castType, Expr *castExpr) {
   }
 }
 
+bool Sema::CheckTollFreeBridgeStaticCast(QualType castType, Expr *castExpr,
+                                         CastKind &Kind) {
+  if (!getLangOpts().ObjC1)
+    return false;
+  ARCConversionTypeClass exprACTC =
+    classifyTypeForARCConversion(castExpr->getType());
+  ARCConversionTypeClass castACTC = classifyTypeForARCConversion(castType);
+  if ((castACTC == ACTC_retainable && exprACTC == ACTC_coreFoundation) ||
+      (castACTC == ACTC_coreFoundation && exprACTC == ACTC_retainable)) {
+    CheckTollFreeBridgeCast(castType, castExpr);
+    Kind = (castACTC == ACTC_coreFoundation) ? CK_BitCast
+                                             : CK_CPointerToObjCPointerCast;
+    return true;
+  }
+  return false;
+}
 
 bool Sema::checkObjCBridgeRelatedComponents(SourceLocation Loc,
                                             QualType DestType, QualType SrcType,

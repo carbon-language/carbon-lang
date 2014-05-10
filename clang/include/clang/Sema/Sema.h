@@ -7017,6 +7017,9 @@ public:
   
   void CheckTollFreeBridgeCast(QualType castType, Expr *castExpr);
   
+  bool CheckTollFreeBridgeStaticCast(QualType castType, Expr *castExpr,
+                                     CastKind &Kind);
+  
   bool checkObjCBridgeRelatedComponents(SourceLocation Loc,
                                         QualType DestType, QualType SrcType,
                                         ObjCInterfaceDecl *&RelatedClass,
