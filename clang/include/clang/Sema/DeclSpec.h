@@ -1231,6 +1231,10 @@ struct DeclaratorChunk {
     ///
     /// This is used in various places for error recovery.
     void freeParams() {
+      if (Params) {
+        delete Params->DefaultArgTokens;
+        Params->DefaultArgTokens = nullptr;
+      }
       if (DeleteParams) {
         delete[] Params;
         DeleteParams = false;
