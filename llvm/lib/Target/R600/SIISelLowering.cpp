@@ -1323,6 +1323,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
   // e64 version if available, -1 otherwise
   int OpcodeE64 = AMDGPU::getVOPe64(Opcode);
   const MCInstrDesc *DescE64 = OpcodeE64 == -1 ? nullptr : &TII->get(OpcodeE64);
+  int InputModifiers[3] = {0};
 
   assert(!DescE64 || DescE64->getNumDefs() == NumDefs);
 
@@ -1399,7 +1400,10 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
       }
     }
 
-    if (DescE64 && !Immediate) {
+    if (Immediate)
+      continue;
+
+    if (DescE64) {
 
       // Test if it makes sense to switch to e64 encoding
       unsigned OtherRegClass = DescE64->OpInfo[Op].RegClass;
@@ -1418,6 +1422,31 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
         DescE64 = nullptr;
       }
     }
+
+    if (!DescE64 && !Promote2e64)
+      continue;
+    if (!Operand.isMachineOpcode())
+      continue;
+    if (Operand.getMachineOpcode() == AMDGPU::FNEG_SI) {
+      Ops.pop_back();
+      Ops.push_back(Operand.getOperand(0));
+      InputModifiers[i] = 1;
+      Promote2e64 = true;
+      if (!DescE64)
+        continue;
+      Desc = DescE64;
+      DescE64 = 0;
+    }
+    else if (Operand.getMachineOpcode() == AMDGPU::FABS_SI) {
+      Ops.pop_back();
+      Ops.push_back(Operand.getOperand(0));
+      InputModifiers[i] = 2;
+      Promote2e64 = true;
+      if (!DescE64)
+        continue;
+      Desc = DescE64;
+      DescE64 = 0;
+    }
   }
 
   if (Promote2e64) {
@@ -1425,7 +1454,7 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
     Ops.clear();
     for (unsigned i = 0; i < OldOps.size(); ++i) {
       // src_modifier
-      Ops.push_back(DAG.getTargetConstant(0, MVT::i32));
+      Ops.push_back(DAG.getTargetConstant(InputModifiers[i], MVT::i32));
       Ops.push_back(OldOps[i]);
     }
     // Add the modifier flags while promoting

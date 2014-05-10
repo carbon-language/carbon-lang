@@ -59,3 +59,14 @@ entry:
   store float %1, float addrspace(1)* %out
   ret void
 }
+
+; SI-CHECK-LABEL: @fneg_fold
+; SI-CHECK-NOT: V_XOR_B32
+; SI-CHECK: V_MUL_F32_e64 v{{[0-9]+}}, s{{[0-9]+}}, -v{{[0-9]+}}
+define void @fneg_fold(float addrspace(1)* %out, float %in) {
+entry:
+  %0 = fsub float -0.0, %in
+  %1 = fmul float %0, %in
+  store float %1, float addrspace(1)* %out
+  ret void
+}
