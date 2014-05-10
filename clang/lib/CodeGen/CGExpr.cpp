@@ -2862,6 +2862,10 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E,
     SourceLocation Loc = E->getLocStart();
     // Force column info to be generated so we can differentiate
     // multiple call sites on the same line in the debug info.
+    // FIXME: This is insufficient. Two calls coming from the same macro
+    // expansion will still get the same line/column and break debug info. It's
+    // possible that LLVM can be fixed to not rely on this uniqueness, at which
+    // point this workaround can be removed.
     const FunctionDecl* Callee = E->getDirectCallee();
     bool ForceColumnInfo = Callee && Callee->isInlineSpecified();
     DI->EmitLocation(Builder, Loc, ForceColumnInfo);
@@ -3131,6 +3135,10 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
 
   // Force column info to differentiate multiple inlined call sites on
   // the same line, analoguous to EmitCallExpr.
+  // FIXME: This is insufficient. Two calls coming from the same macro expansion
+  // will still get the same line/column and break debug info. It's possible
+  // that LLVM can be fixed to not rely on this uniqueness, at which point this
+  // workaround can be removed.
   bool ForceColumnInfo = false;
   if (const FunctionDecl* FD = dyn_cast_or_null<const FunctionDecl>(TargetDecl))
     ForceColumnInfo = FD->isInlineSpecified();

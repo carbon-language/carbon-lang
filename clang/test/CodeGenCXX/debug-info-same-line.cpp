@@ -6,118 +6,59 @@
 
 #define INLINE inline __attribute__((always_inline))
 
-INLINE int
-product (int x, int y)
-{
-    int result = x * y;
-    return result;
+int i;
+
+INLINE void sum(int a, int b) {
+  i = a + b;
 }
 
-INLINE int
-sum (int a, int b)
-{
-    int result = a + b;
-    return result;
+void noinline(int x, int y) {
+  i = x + y;
 }
 
-int
-strange_max (int m, int n)
-{
-    if (m > n)
-        return m;
-    else if (n > m)
-        return n;
-    else
-        return 0;
+#define CALLS sum(9, 10), sum(11, 12)
+
+inline void inlsum(int t, int u) {
+  i = t + u;
 }
 
-int
-foo (int i, int j)
-{
-    if (strange_max (i, j) == i)
-        return product (i, j);
-    else if (strange_max  (i, j) == j)
-        return sum (i, j);
-    else
-        return product (sum (i, i), sum (j, j));
+int main() {
+  sum(1, 2), sum(3, 4);
+  noinline(5, 6), noinline(7, 8);
+  CALLS;
+  inlsum(13, 14), inlsum(15, 16);
 }
 
-int
-main(int argc, char const *argv[])
-{
+// CHECK-LABEL: @main
+// CHECK: = add {{.*}} !dbg [[FIRST_INLINE:![0-9]*]]
+// CHECK: = add {{.*}} !dbg [[SECOND_INLINE:![0-9]*]]
 
-    int array[3];
-    int n;
+// Check that we don't give column information (and thus end up with distinct
+// line entries) for two non-inlined calls on the same line.
+// CHECK: call {{.*}}noinline{{.*}}(i32 5, i32 6), !dbg [[NOINLINE:![0-9]*]]
+// CHECK: call {{.*}}noinline{{.*}}(i32 7, i32 8), !dbg [[NOINLINE]]
 
-    array[0] = foo (1238, 78392);
-    array[1] = foo (379265, 23674);
-    array[2] = foo (872934, 234);
+// FIXME: These should be separate locations but because the two calls have the
+// same line /and/ column, they get coalesced into a single inlined call by
+// accident. We need discriminators or some other changes to LLVM to cope with
+// this. (this is, unfortunately, an LLVM test disguised as a Clang test - since
+// inlining is forced to happen here). It's possible this could be fixed in
+// Clang, but I doubt it'll be the right place for the fix.
+// CHECK: = add {{.*}} !dbg [[FIRST_MACRO_INLINE:![0-9]*]]
+// CHECK: = add {{.*}} !dbg [[FIRST_MACRO_INLINE]]
 
-    n = strange_max(array[0], strange_max(array[1], array[2]));
+// Even if the functions are marked inline but do not get inlined, they
+// shouldn't use column information, and thus should be at the same debug
+// location.
+// CHECK: call {{.*}}inlsum{{.*}}(i32 13, i32 14), !dbg [[INL_FIRST:![0-9]*]]
+// CHECK: call {{.*}}inlsum{{.*}}(i32 15, i32 16), !dbg [[INL_SECOND:![0-9]*]]
 
-    return n & 0xf;
-}
+// [[FIRST_INLINE]] =
+// [[SECOND_INLINE]] =
 
-// CHECK: define {{.*}} @_Z3fooii
-// i
-// CHECK: call void @llvm.dbg.declare
-// j
-// CHECK: call void @llvm.dbg.declare
-// x
-// CHECK: call void @llvm.dbg.declare
-// y
-// CHECK: call void @llvm.dbg.declare
-// result
-// CHECK: call void @llvm.dbg.declare
-
-// CHECK: call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[A_MD:[0-9]+]]), !dbg ![[A_DI:[0-9]+]]
-// CHECK: call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[B_MD:[0-9]+]]), !dbg ![[B_DI:[0-9]+]]
-// result
-// CHECK: call void @llvm.dbg.declare
-
-// We want to see a distinct !dbg node.
-// CHECK-NOT: call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[A_MD]]), !dbg ![[A_DI]]
-// CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[A_MD]]), !dbg !{{.*}}
-// CHECK-NOT: call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[B_MD]]), !dbg ![[B_DI]]
-// CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[B_MD]]), !dbg !{{.*}}
-// result
-// CHECK: call void @llvm.dbg.declare
-
-// We want to see a distinct !dbg node.
-// CHECK-NOT: call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[A_MD]]), !dbg ![[A_DI]]
-// CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[A_MD]]), !dbg !{{.*}}
-// CHECK-NOT: call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[B_MD]]), !dbg ![[B_DI]]
-// CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[B_MD]]), !dbg !{{.*}}
-// result
-// CHECK: call void @llvm.dbg.declare
-
-// Again: we want to see a distinct !dbg node.
-// CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[X_MD:[0-9]+]]), !dbg ![[X_DI:[0-9]+]]
-// CHECK:     call void @llvm.dbg.declare(metadata !{i32* %{{.*}}}, metadata ![[Y_MD:[0-9]+]]), !dbg ![[Y_DI:[0-9]+]]
-// result
-// CHECK: call void @llvm.dbg.declare
-
-
-// CHECK: define {{.*}} @main
-// CHECK: call {{.*}} @_Z3fooii
-// CHECK: call {{.*}} @_Z3fooii
-// CHECK: call {{.*}} @_Z3fooii
-// CHECK: store
-// CHECK: getelementptr
-// We want to see the same !dbg node for non-inlined functions. 
-// Needed for GDB compatibility.
-// CHECK: load {{.*}} !dbg ![[DBG:.*]]
-// CHECK: load {{.*}} !dbg ![[DBG]]
-// CHECK: load {{.*}} !dbg ![[DBG]]
-// CHECK: call {{.*}} @_Z11strange_maxii(i32 {{.*}}, i32 {{.*}}), !dbg ![[DBG]]
-// CHECK: call {{.*}} @_Z11strange_maxii(i32 {{.*}}, i32 {{.*}}), !dbg ![[DBG]]
-
-
-// Verify that product() has its own inlined_at location at column 15.
-// CHECK-DAG: ![[A_MD]] = metadata{{.*}}[ DW_TAG_arg_variable ] [a]
-// CHECK-DAG: ![[B_MD]] = metadata{{.*}}[ DW_TAG_arg_variable ] [b]
-// CHECK-DAG: ![[X_MD]] = metadata{{.*}}[ DW_TAG_arg_variable ] [x]
-// CHECK-DAG: ![[Y_MD]] = metadata{{.*}}[ DW_TAG_arg_variable ] [y]
-// CHECK-DAG: ![[X_DI]] = metadata !{i32 {{[0-9]+}}, i32 {{[0-9]+}}, metadata !{{[0-9]+}}, metadata ![[PRODUCT:[0-9]+]]}
-// CHECK-DAG: [[PRODUCT]] = metadata !{i32 {{.*}}, i32 16, metadata !{{.*}}, null}
-// CHECK-DAG: ![[Y_DI]] = metadata !{i32 {{[0-9]+}}, i32 {{[0-9]+}}, metadata !{{[0-9]+}}, metadata ![[PRODUCT]]}
+// FIXME: These should be the same location since the functions appear on the
+// same line and were not inlined - they needlessly have column information
+// intended to disambiguate inlined calls, which is going to confuse GDB as it
+// doesn't cope well with column information.
+// [[INL_FIRST]] =
+// [[INL_SECOND]] =
