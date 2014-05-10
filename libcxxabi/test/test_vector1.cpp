@@ -49,7 +49,7 @@ int gDestructorThrowTarget;
 void throw_construct ( void *p ) { if ( gConstructorCounter   == gConstructorThrowTarget ) throw 1; ++gConstructorCounter; }
 void throw_destruct  ( void *p ) { if ( ++gDestructorCounter  == gDestructorThrowTarget  ) throw 2; }
 
-#if __has_feature(cxx_noexcept)
+#if __cplusplus >= 201103L
 #   define CAN_THROW noexcept(false)
 #else
 #   define CAN_THROW
