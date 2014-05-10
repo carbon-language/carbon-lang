@@ -61,10 +61,6 @@
   directory describes how to build the offload library.
   </p>
 
-  <p>We are, however, still missing test code. Any contributions in
-    that area would be greatly appreciated!
-  </p>
-
   <p>All of the code here is <a
      href="http://llvm.org/docs/DeveloperPolicy.html#license">dual licensed</a>
      under the MIT license and the UIUC License (a BSD-like license).
@@ -84,7 +80,10 @@
         <li>High performance.</li>
         <li>ABI compatibility with <a href="http://gcc.gnu.org">Gcc</a> and
         <a href="http://software.intel.com/en-us/intel-compilers">Intel's
-        existing OpenMP compilers.</a>
+        existing OpenMP compilers.</a> 
+        However, we are not currently (May 2014) compatible with gcc 4.9, since
+        it has introduced new entrypoints with which we have not yet
+        caught up... 
         </li>
     </ul>
 
@@ -114,10 +113,19 @@
   <h2 id="dir-structure">Status</h2>
   <!--=====================================================================-->
 
-   <p>Currently the runtime is built with either gcc or icc. Obviously
-   it would also be good to build with Clang.
+   <p>The runtime can be built with gcc, icc or clang. However, note
+   that a runtime built with clang cannot be guaranteed to work with
+   OpenMP code compiled by the other compilers, since clang does not support
+   a 128-bit float type, and cannot therefore generate the code used
+   for reductions of that type (which may occur in user code compiled
+   by the other compilers).
    </p>
  
+   <p>The University of Houston has kindly contributed their test
+   suite (in the "testsuite" directory). Integration and use of this
+   for automatic testing remain to be done, but now the code is here
+   work can begin.
+   </p>
 
   <!--=====================================================================-->
   <h2>Get it and get involved!</h2>

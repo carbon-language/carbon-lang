@@ -8,10 +8,33 @@ beautification by scripts.  The fields are: name (N), email (E), web-address
 (W), PGP key ID and fingerprint (P), description (D), and snail-mail address
 (S).
 
+N: Sunita Chandrasekaran
+D: Contributor to testsuite from OpenUH
+
+N: Barbara Chapman
+D: Contributor to testsuite from OpenUH
+
+N: University of Houston 
+W: http://web.cs.uh.edu/~openuh/download/
+D: OpenUH test suite
+
 N: Intel Corporation OpenMP runtime team
 W: http://openmprtl.org
 D: Created the runtime.
 
+N: Matthias Muller
+D: Contributor to testsuite from OpenUH
+
+N: Pavel Neytchev
+D: Contributor to testsuite from OpenUH
+
 N: Steven Noonan
 E: steven@uplinklabs.net
-D: Patches for the ARM architecture and several inconsistency removal.
+D: Patches for the ARM architecture and removal of several inconsistencies.
+
+N: Alp Toker
+E: alp@nuanti.com
+D: Making build work for FreeBSD.
+
+N: Cheng Wang 
+D: Contributor to testsuite from OpenUH
