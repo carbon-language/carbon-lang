@@ -245,6 +245,11 @@ class VOP2_REV <string revOp, bit isOrig> {
   bit IsOrig = isOrig;
 }
 
+// This must always be right before the operand being input modified.
+def InputMods : OperandWithDefaultOps <i32, (ops (i32 0))> {
+  let PrintMethod = "printOperandAndMods";
+}
+
 multiclass VOP1_Helper <bits<8> op, RegisterClass drc, RegisterClass src,
                         string opName, list<dag> pattern> {
 
@@ -256,10 +261,8 @@ multiclass VOP1_Helper <bits<8> op, RegisterClass drc, RegisterClass src,
   def _e64 : VOP3 <
     {1, 1, op{6}, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
     (outs drc:$dst),
-    (ins src:$src0,
-         i32imm:$abs, i32imm:$clamp,
-         i32imm:$omod, i32imm:$neg),
-    opName#"_e64 $dst, $src0, $abs, $clamp, $omod, $neg", []
+    (ins InputMods:$src0_modifiers, src:$src0, i32imm:$clamp, i32imm:$omod),
+    opName#"_e64 $dst, $src0_modifiers, $clamp, $omod", []
   >, VOP <opName> {
     let src1 = SIOperand.ZERO;
     let src2 = SIOperand.ZERO;
@@ -288,10 +291,10 @@ multiclass VOP2_Helper <bits<6> op, RegisterClass vrc, RegisterClass arc,
   def _e64 : VOP3 <
     {1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
     (outs vrc:$dst),
-    (ins arc:$src0, arc:$src1,
-         i32imm:$abs, i32imm:$clamp,
-         i32imm:$omod, i32imm:$neg),
-    opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg", []
+    (ins InputMods:$src0_modifiers, arc:$src0,
+         InputMods:$src1_modifiers, arc:$src1,
+         i32imm:$clamp, i32imm:$omod),
+    opName#"_e64 $dst, $src0_modifiers, $src1_modifiers, $clamp, $omod", []
   >, VOP <opName>, VOP2_REV<revOp#"_e64", !eq(revOp, opName)> {
     let src2 = SIOperand.ZERO;
   }
@@ -316,10 +319,10 @@ multiclass VOP2b_32 <bits<6> op, string opName, list<dag> pattern,
   def _e64 : VOP3b <
     {1, 0, 0, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
     (outs VReg_32:$dst),
-    (ins VSrc_32:$src0, VSrc_32:$src1,
-         i32imm:$abs, i32imm:$clamp,
-         i32imm:$omod, i32imm:$neg),
-    opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg", []
+    (ins InputMods: $src0_modifiers, VSrc_32:$src0,
+         InputMods:$src1_modifiers, VSrc_32:$src1,
+         i32imm:$clamp, i32imm:$omod),
+    opName#"_e64 $dst, $src0_modifiers, $src1_modifiers, $clamp, $omod", []
   >, VOP <opName>, VOP2_REV<revOp#"_e64", !eq(revOp, opName)> {
     let src2 = SIOperand.ZERO;
     /* the VOP2 variant puts the carry out into VCC, the VOP3 variant
@@ -340,15 +343,16 @@ multiclass VOPC_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
   def _e64 : VOP3 <
     {0, op{7}, op{6}, op{5}, op{4}, op{3}, op{2}, op{1}, op{0}},
     (outs SReg_64:$dst),
-    (ins arc:$src0, arc:$src1,
-         InstFlag:$abs, InstFlag:$clamp,
-         InstFlag:$omod, InstFlag:$neg),
-    opName#"_e64 $dst, $src0, $src1, $abs, $clamp, $omod, $neg",
+    (ins InputMods:$src0_modifiers, arc:$src0,
+         InputMods:$src1_modifiers, arc:$src1,
+         InstFlag:$clamp, InstFlag:$omod),
+    opName#"_e64 $dst, $src0_modifiers, $src1_modifiers, $clamp, $omod",
     !if(!eq(!cast<string>(cond), "COND_NULL"), []<dag>,
       [(set SReg_64:$dst, (i1 (setcc (vt arc:$src0), arc:$src1, cond)))]
     )
   >, VOP <opName> {
     let src2 = SIOperand.ZERO;
+    let src2_modifiers = 0;
   }
 }
 
@@ -362,9 +366,10 @@ multiclass VOPC_64 <bits<8> op, string opName,
 
 class VOP3_32 <bits<9> op, string opName, list<dag> pattern> : VOP3 <
   op, (outs VReg_32:$dst),
-  (ins VSrc_32:$src0, VSrc_32:$src1, VSrc_32:$src2,
-   InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
-  opName#" $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg", pattern
+  (ins InputMods: $src0_modifiers, VSrc_32:$src0, InputMods:$src1_modifiers,
+   VSrc_32:$src1, InputMods:$src2_modifiers, VSrc_32:$src2,
+   InstFlag:$clamp, InstFlag:$omod),
+  opName#" $dst, $src0_modifiers, $src1, $src2, $clamp, $omod", pattern
 >, VOP <opName>;
 
 class VOP3_64_Shift <bits <9> op, string opName, list<dag> pattern> : VOP3 <
@@ -374,10 +379,9 @@ class VOP3_64_Shift <bits <9> op, string opName, list<dag> pattern> : VOP3 <
 >, VOP <opName> {
 
   let src2 = SIOperand.ZERO;
-  let abs = 0;
+  let src0_modifiers = 0;
   let clamp = 0;
   let omod = 0;
-  let neg = 0;
 }
 
 class VOP3_64 <bits<9> op, string opName, list<dag> pattern> : VOP3 <

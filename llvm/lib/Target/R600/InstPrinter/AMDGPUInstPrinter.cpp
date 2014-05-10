@@ -158,6 +158,18 @@ void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
 }
 
+void AMDGPUInstPrinter::printOperandAndMods(const MCInst *MI, unsigned OpNo,
+                                            raw_ostream &O) {
+  unsigned InputModifiers = MI->getOperand(OpNo).getImm();
+  if (InputModifiers & 0x1)
+    O << "-";
+  if (InputModifiers & 0x2)
+    O << "|";
+  printOperand(MI, OpNo + 1, O);
+  if (InputModifiers & 0x2)
+    O << "|";
+}
+
 void AMDGPUInstPrinter::printInterpSlot(const MCInst *MI, unsigned OpNum,
                                         raw_ostream &O) {
   unsigned Imm = MI->getOperand(OpNum).getImm();

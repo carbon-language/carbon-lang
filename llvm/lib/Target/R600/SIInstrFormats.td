@@ -210,16 +210,19 @@ class VOP3 <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
     Enc64 <outs, ins, asm, pattern> {
 
   bits<8> dst;
+  bits<2> src0_modifiers;
   bits<9> src0;
+  bits<2> src1_modifiers;
   bits<9> src1;
+  bits<2> src2_modifiers;
   bits<9> src2;
-  bits<3> abs;
   bits<1> clamp;
   bits<2> omod;
-  bits<3> neg;
 
   let Inst{7-0} = dst;
-  let Inst{10-8} = abs;
+  let Inst{8} = src0_modifiers{1};
+  let Inst{9} = src1_modifiers{1};
+  let Inst{10} = src2_modifiers{1};
   let Inst{11} = clamp;
   let Inst{25-17} = op;
   let Inst{31-26} = 0x34; //encoding
@@ -227,7 +230,9 @@ class VOP3 <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{49-41} = src1;
   let Inst{58-50} = src2;
   let Inst{60-59} = omod;
-  let Inst{63-61} = neg;
+  let Inst{61} = src0_modifiers{0};
+  let Inst{62} = src1_modifiers{0};
+  let Inst{63} = src2_modifiers{0};
   
   let mayLoad = 0;
   let mayStore = 0;
@@ -240,12 +245,14 @@ class VOP3b <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
     Enc64 <outs, ins, asm, pattern> {
 
   bits<8> dst;
+  bits<2> src0_modifiers;
   bits<9> src0;
+  bits<2> src1_modifiers;
   bits<9> src1;
+  bits<2> src2_modifiers;
   bits<9> src2;
   bits<7> sdst;
   bits<2> omod;
-  bits<3> neg;
 
   let Inst{7-0} = dst;
   let Inst{14-8} = sdst;
@@ -255,7 +262,9 @@ class VOP3b <bits<9> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{49-41} = src1;
   let Inst{58-50} = src2;
   let Inst{60-59} = omod;
-  let Inst{63-61} = neg;
+  let Inst{61} = src0_modifiers{0};
+  let Inst{62} = src1_modifiers{0};
+  let Inst{63} = src2_modifiers{0};
 
   let mayLoad = 0;
   let mayStore = 0;

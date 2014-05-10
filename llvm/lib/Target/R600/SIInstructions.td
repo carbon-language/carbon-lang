@@ -1115,7 +1115,11 @@ def V_CNDMASK_B32_e64 : VOP3 <0x00000100, (outs VReg_32:$dst),
    InstFlag:$abs, InstFlag:$clamp, InstFlag:$omod, InstFlag:$neg),
   "V_CNDMASK_B32_e64 $dst, $src0, $src1, $src2, $abs, $clamp, $omod, $neg",
   [(set i32:$dst, (select i1:$src2, i32:$src1, i32:$src0))]
->;
+> {
+  let src0_modifiers = 0;
+  let src1_modifiers = 0;
+  let src2_modifiers = 0;
+}
 
 //f32 pattern for V_CNDMASK_B32_e64
 def : Pat <
@@ -2138,7 +2142,7 @@ def : Pat <
 def : Pat <
   (int_SI_tid),
   (V_MBCNT_HI_U32_B32_e32 0xffffffff,
-                          (V_MBCNT_LO_U32_B32_e64 0xffffffff, 0, 0, 0, 0, 0))
+                          (V_MBCNT_LO_U32_B32_e64 0xffffffff, 0, 0, 0))
 >;
 
 /********** ================== **********/

@@ -1188,13 +1188,15 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       // We are converting these to a BFE, so we need to add the missing
       // operands for the size and offset.
       unsigned Size = (Opcode == AMDGPU::S_SEXT_I32_I8) ? 8 : 16;
+      Inst->addOperand(Inst->getOperand(1));
+      Inst->getOperand(1).ChangeToImmediate(0);
+      Inst->addOperand(MachineOperand::CreateImm(0));
+      Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(Size));
 
       // XXX - Other pointless operands. There are 4, but it seems you only need
       // 3 to not hit an assertion later in MCInstLower.
-      Inst->addOperand(MachineOperand::CreateImm(0));
-      Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(0));
     }
@@ -1213,10 +1215,11 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       uint32_t BitWidth = (Imm & 0x7f0000) >> 16; // Extract bits [22:16].
 
       Inst->RemoveOperand(2); // Remove old immediate.
+      Inst->addOperand(Inst->getOperand(1));
+      Inst->getOperand(1).ChangeToImmediate(0);
       Inst->addOperand(MachineOperand::CreateImm(Offset));
-      Inst->addOperand(MachineOperand::CreateImm(BitWidth));
-
       Inst->addOperand(MachineOperand::CreateImm(0));
+      Inst->addOperand(MachineOperand::CreateImm(BitWidth));
       Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(0));

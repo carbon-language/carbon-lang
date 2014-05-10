@@ -1,6 +1,7 @@
 ;RUN: llc < %s -march=r600 -mcpu=verde -verify-machineinstrs | FileCheck %s
 
-;CHECK: V_CMP_U_F32_e64 s[0:1], {{[sv][0-9]+, [sv][0-9]+}}, 0, 0, 0, 0
+;CHECK-LABEL: @main
+;CHECK: V_CMP_U_F32_e64 s[0:1], {{[sv][0-9]+, [sv][0-9]+}}, 0, 0
 
 define void @main(float %p) {
 main_body:

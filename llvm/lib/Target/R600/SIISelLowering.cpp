@@ -576,12 +576,12 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
       static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
     BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_ADD_F32_e64),
             MI->getOperand(0).getReg())
+            .addImm(0) // SRC0 modifiers
             .addOperand(MI->getOperand(1))
+            .addImm(0) // SRC1 modifiers
             .addImm(0) // SRC1
-            .addImm(0) // ABS
             .addImm(1) // CLAMP
-            .addImm(0) // OMOD
-            .addImm(0); // NEG
+            .addImm(0); // OMOD
     MI->eraseFromParent();
   }
   }
@@ -1325,7 +1325,6 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
   const MCInstrDesc *DescE64 = OpcodeE64 == -1 ? nullptr : &TII->get(OpcodeE64);
 
   assert(!DescE64 || DescE64->getNumDefs() == NumDefs);
-  assert(!DescE64 || DescE64->getNumOperands() == (NumOps + 4));
 
   int32_t Immediate = Desc->getSize() == 4 ? 0 : -1;
   bool HaveVSrc = false, HaveSSrc = false;
@@ -1422,8 +1421,15 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
   }
 
   if (Promote2e64) {
+    std::vector<SDValue> OldOps(Ops);
+    Ops.clear();
+    for (unsigned i = 0; i < OldOps.size(); ++i) {
+      // src_modifier
+      Ops.push_back(DAG.getTargetConstant(0, MVT::i32));
+      Ops.push_back(OldOps[i]);
+    }
     // Add the modifier flags while promoting
-    for (unsigned i = 0; i < 4; ++i)
+    for (unsigned i = 0; i < 2; ++i)
       Ops.push_back(DAG.getTargetConstant(0, MVT::i32));
   }
 

@@ -38,6 +38,7 @@ private:
   void printRegOperand(unsigned RegNo, raw_ostream &O);
   void printImmediate(uint32_t Imm, raw_ostream &O);
   void printOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printOperandAndMods(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   static void printInterpSlot(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printMemOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   static void printIfSet(const MCInst *MI, unsigned OpNo, raw_ostream &O,
