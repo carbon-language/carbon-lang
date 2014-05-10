@@ -1951,10 +1951,18 @@ def : BitConvert <v16f32, v16i32, VReg_512>;
 /********** Src & Dst modifiers **********/
 /********** =================== **********/
 
+def FCLAMP_SI : AMDGPUShaderInst <
+  (outs VReg_32:$dst),
+  (ins VSrc_32:$src0),
+  "FCLAMP_SI $dst, $src0",
+  []
+> {
+  let usesCustomInserter = 1;
+}
+
 def : Pat <
   (int_AMDIL_clamp f32:$src, (f32 FP_ZERO), (f32 FP_ONE)),
-  (V_ADD_F32_e64 $src, (i32 0 /* SRC1 */),
-   0 /* ABS */, 1 /* CLAMP */, 0 /* OMOD */, 0 /* NEG */)
+  (FCLAMP_SI f32:$src)
 >;
 
 /********** ================================ **********/
@@ -1973,14 +1981,32 @@ def : Pat <
   (V_OR_B32_e32 $src, (V_MOV_B32_e32 0x80000000)) /* Set sign bit */
 >;
 
+def FABS_SI : AMDGPUShaderInst <
+  (outs VReg_32:$dst),
+  (ins VSrc_32:$src0),
+  "FABS_SI $dst, $src0",
+  []
+> {
+  let usesCustomInserter = 1;
+}
+
 def : Pat <
   (fabs f32:$src),
-  (V_AND_B32_e32 $src, (V_MOV_B32_e32 0x7fffffff)) /* Clear sign bit */
+  (FABS_SI f32:$src)
 >;
+
+def FNEG_SI : AMDGPUShaderInst <
+  (outs VReg_32:$dst),
+  (ins VSrc_32:$src0),
+  "FNEG_SI $dst, $src0",
+  []
+> {
+  let usesCustomInserter = 1;
+}
 
 def : Pat <
   (fneg f32:$src),
-  (V_XOR_B32_e32 $src, (V_MOV_B32_e32 0x80000000)) /* Toggle sign bit */
+  (FNEG_SI f32:$src)
 >;
 
 /********** ================== **********/
