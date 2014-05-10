@@ -1946,8 +1946,8 @@ NamespaceDecl *NamespaceDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
                                    0, 0);
 }
 
-NamespaceDecl *NamespaceDecl::getNextRedeclaration() {
-  return RedeclLink.getNext();
+NamespaceDecl *NamespaceDecl::getNextRedeclarationImpl() {
+  return getNextRedeclaration();
 }
 NamespaceDecl *NamespaceDecl::getPreviousDeclImpl() {
   return getPreviousDecl();

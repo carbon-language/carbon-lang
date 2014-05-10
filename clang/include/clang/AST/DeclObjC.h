@@ -247,7 +247,7 @@ private:
   /// \brief A definition will return its interface declaration.
   /// An interface declaration will return its definition.
   /// Otherwise it will return itself.
-  ObjCMethodDecl *getNextRedeclaration() override;
+  ObjCMethodDecl *getNextRedeclarationImpl() override;
 
 public:
   static ObjCMethodDecl *
@@ -756,8 +756,8 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
   void allocateDefinitionData();
   
   typedef Redeclarable<ObjCInterfaceDecl> redeclarable_base;
-  ObjCInterfaceDecl *getNextRedeclaration() override {
-    return RedeclLink.getNext();
+  ObjCInterfaceDecl *getNextRedeclarationImpl() override {
+    return getNextRedeclaration();
   }
   ObjCInterfaceDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
@@ -1531,8 +1531,8 @@ class ObjCProtocolDecl : public ObjCContainerDecl,
   void allocateDefinitionData();
 
   typedef Redeclarable<ObjCProtocolDecl> redeclarable_base;
-  ObjCProtocolDecl *getNextRedeclaration() override {
-    return RedeclLink.getNext(); 
+  ObjCProtocolDecl *getNextRedeclarationImpl() override {
+    return getNextRedeclaration();
   }
   ObjCProtocolDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();

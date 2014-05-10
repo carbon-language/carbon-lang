@@ -359,7 +359,7 @@ class NamespaceDecl : public NamedDecl, public DeclContext,
                 NamespaceDecl *PrevDecl);
 
   typedef Redeclarable<NamespaceDecl> redeclarable_base;
-  NamespaceDecl *getNextRedeclaration() override;
+  NamespaceDecl *getNextRedeclarationImpl() override;
   NamespaceDecl *getPreviousDeclImpl() override;
   NamespaceDecl *getMostRecentDeclImpl() override;
 
@@ -773,7 +773,9 @@ protected:
           TypeSourceInfo *TInfo, StorageClass SC);
 
   typedef Redeclarable<VarDecl> redeclarable_base;
-  VarDecl *getNextRedeclaration() override { return RedeclLink.getNext(); }
+  VarDecl *getNextRedeclarationImpl() override {
+    return getNextRedeclaration();
+  }
   VarDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
   }
@@ -1553,7 +1555,9 @@ protected:
       DNLoc(NameInfo.getInfo()) {}
 
   typedef Redeclarable<FunctionDecl> redeclarable_base;
-  FunctionDecl *getNextRedeclaration() override { return RedeclLink.getNext(); }
+  FunctionDecl *getNextRedeclarationImpl() override {
+    return getNextRedeclaration();
+  }
   FunctionDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
   }
@@ -2406,8 +2410,8 @@ protected:
     : TypeDecl(DK, DC, IdLoc, Id, StartLoc), MaybeModedTInfo(TInfo) {}
 
   typedef Redeclarable<TypedefNameDecl> redeclarable_base;
-  TypedefNameDecl *getNextRedeclaration() override {
-    return RedeclLink.getNext();
+  TypedefNameDecl *getNextRedeclarationImpl() override {
+    return getNextRedeclaration();
   }
   TypedefNameDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
@@ -2590,7 +2594,9 @@ protected:
   }
 
   typedef Redeclarable<TagDecl> redeclarable_base;
-  TagDecl *getNextRedeclaration() override { return RedeclLink.getNext(); }
+  TagDecl *getNextRedeclarationImpl() override {
+    return getNextRedeclaration();
+  }
   TagDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
   }

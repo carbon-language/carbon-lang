@@ -721,7 +721,7 @@ void ObjCMethodDecl::setMethodParams(ASTContext &C,
 /// \brief A definition will return its interface declaration.
 /// An interface declaration will return its definition.
 /// Otherwise it will return itself.
-ObjCMethodDecl *ObjCMethodDecl::getNextRedeclaration() {
+ObjCMethodDecl *ObjCMethodDecl::getNextRedeclarationImpl() {
   ASTContext &Ctx = getASTContext();
   ObjCMethodDecl *Redecl = 0;
   if (HasRedeclaration)

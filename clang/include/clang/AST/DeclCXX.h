@@ -2721,8 +2721,8 @@ class UsingShadowDecl : public NamedDecl, public Redeclarable<UsingShadowDecl> {
   }
 
   typedef Redeclarable<UsingShadowDecl> redeclarable_base;
-  UsingShadowDecl *getNextRedeclaration() override {
-    return RedeclLink.getNext();
+  UsingShadowDecl *getNextRedeclarationImpl() override {
+    return getNextRedeclaration();
   }
   UsingShadowDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();

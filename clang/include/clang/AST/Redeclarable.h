@@ -23,7 +23,6 @@ namespace clang {
 /// \brief Provides common interface for the Decls that can be redeclared.
 template<typename decl_type>
 class Redeclarable {
-
 protected:
   class DeclLink {
     llvm::PointerIntPair<decl_type *, 1, bool> NextAndIsPrevious;
@@ -58,6 +57,10 @@ protected:
   /// If there is only one declaration, it is <pointer to self, true>
   DeclLink RedeclLink;
 
+  decl_type *getNextRedeclaration() const {
+    return RedeclLink.getNext();
+  }
+
 public:
   Redeclarable() : RedeclLink(LatestDeclLink(static_cast<decl_type*>(this))) { }
 
@@ -65,7 +68,7 @@ public:
   /// is the first declaration.
   decl_type *getPreviousDecl() {
     if (RedeclLink.NextIsPrevious())
-      return RedeclLink.getNext();
+      return getNextRedeclaration();
     return nullptr;
   }
   const decl_type *getPreviousDecl() const {
@@ -96,12 +99,12 @@ public:
 
   /// \brief Returns the most recent (re)declaration of this declaration.
   decl_type *getMostRecentDecl() {
-    return getFirstDecl()->RedeclLink.getNext();
+    return getFirstDecl()->getNextRedeclaration();
   }
 
   /// \brief Returns the most recent (re)declaration of this declaration.
   const decl_type *getMostRecentDecl() const {
-    return getFirstDecl()->RedeclLink.getNext();
+    return getFirstDecl()->getNextRedeclaration();
   }
   
   /// \brief Set the previous declaration. If PrevDecl is NULL, set this as the
@@ -142,7 +145,7 @@ public:
       }
 
       // Get either previous decl or latest decl.
-      decl_type *Next = Current->RedeclLink.getNext();
+      decl_type *Next = Current->getNextRedeclaration();
       Current = (Next != Starter) ? Next : nullptr;
       return *this;
     }

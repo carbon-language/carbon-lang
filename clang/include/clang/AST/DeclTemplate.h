@@ -532,8 +532,8 @@ class RedeclarableTemplateDecl : public TemplateDecl,
                                  public Redeclarable<RedeclarableTemplateDecl> 
 {
   typedef Redeclarable<RedeclarableTemplateDecl> redeclarable_base;
-  RedeclarableTemplateDecl *getNextRedeclaration() override {
-    return RedeclLink.getNext();
+  RedeclarableTemplateDecl *getNextRedeclarationImpl() override {
+    return getNextRedeclaration();
   }
   RedeclarableTemplateDecl *getPreviousDeclImpl() override {
     return getPreviousDecl();
