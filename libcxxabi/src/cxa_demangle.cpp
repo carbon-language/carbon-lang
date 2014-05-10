@@ -155,7 +155,11 @@ constexpr const char* float_data<double>::spec;
 template <>
 struct float_data<long double>
 {
+#if defined(__arm__)
+    static const size_t mangled_size = 16;
+#else
     static const size_t mangled_size = 20;  // May need to be adjusted to 16 or 24 on other platforms
+#endif
     static const size_t max_demangled_size = 40;
     static constexpr const char* spec = "%LaL";
 };

@@ -27,7 +27,7 @@ static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC
 static const uint64_t get_vendor_and_language =     0xFFFFFFFFFFFFFF00; // mask for CLNGC++
                                                     
 struct __cxa_exception { 
-#if __LP64__
+#if __LP64__ || LIBCXXABI_ARM_EHABI
     // This is a new field to support C++ 0x exception_ptr.
     // For binary compatibility it is at the start of this
     // struct which is prepended to the object thrown in
@@ -45,7 +45,7 @@ struct __cxa_exception {
 
     int handlerCount;
 
-#ifdef __ARM_EABI_UNWINDER__
+#if LIBCXXABI_ARM_EHABI
     __cxa_exception* nextPropagatingException;
     int propagationCount;
 #else
@@ -56,7 +56,7 @@ struct __cxa_exception {
     void *adjustedPtr;
 #endif
 
-#if !__LP64__
+#if !__LP64__ && !LIBCXXABI_ARM_EHABI
     // This is a new field to support C++ 0x exception_ptr.
     // For binary compatibility it is placed where the compiler
     // previously adding padded to 64-bit align unwindHeader.
@@ -82,7 +82,7 @@ struct __cxa_dependent_exception {
 
     int handlerCount;
     
-#ifdef __ARM_EABI_UNWINDER__
+#if LIBCXXABI_ARM_EHABI
     __cxa_exception* nextPropagatingException;
     int propagationCount;
 #else
@@ -103,7 +103,7 @@ struct __cxa_dependent_exception {
 struct __cxa_eh_globals {
     __cxa_exception *   caughtExceptions;
     unsigned int        uncaughtExceptions;
-#ifdef __ARM_EABI_UNWINDER__
+#if LIBCXXABI_ARM_EHABI
     __cxa_exception* propagatingExceptions;
 #endif
 };

@@ -307,6 +307,33 @@ call_terminate(bool native_exception, _Unwind_Exception* unwind_exception)
     std::terminate();
 }
 
+#if LIBCXXABI_ARM_EHABI
+static const void* read_target2_value(const void* ptr)
+{
+    uintptr_t offset = *reinterpret_cast<const uintptr_t*>(ptr);
+    if (!offset)
+        return 0;
+    return *reinterpret_cast<const void**>(reinterpret_cast<uintptr_t>(ptr) + offset);
+}
+
+static const __shim_type_info*
+get_shim_type_info(uint64_t ttypeIndex, const uint8_t* classInfo,
+                   uint8_t ttypeEncoding, bool native_exception,
+                   _Unwind_Exception* unwind_exception)
+{
+    if (classInfo == 0)
+    {
+        // this should not happen.  Indicates corrupted eh_table.
+        call_terminate(native_exception, unwind_exception);
+    }
+
+    assert(ttypeEncoding == DW_EH_PE_absptr && "Unexpected TTypeEncoding");
+    (void)ttypeEncoding;
+
+    const uint8_t* ttypePtr = classInfo - ttypeIndex * sizeof(uintptr_t);
+    return reinterpret_cast<const __shim_type_info*>(read_target2_value(ttypePtr));
+}
+#else
 static
 const __shim_type_info*
 get_shim_type_info(uint64_t ttypeIndex, const uint8_t* classInfo,
@@ -342,6 +369,7 @@ get_shim_type_info(uint64_t ttypeIndex, const uint8_t* classInfo,
     classInfo -= ttypeIndex;
     return (const __shim_type_info*)readEncodedPointer(&classInfo, ttypeEncoding);
 }
+#endif
 
 /*
     This is checking a thrown exception type, excpType, against a possibly empty
@@ -352,6 +380,49 @@ get_shim_type_info(uint64_t ttypeIndex, const uint8_t* classInfo,
     the list will catch a excpType.  If any catchType in the list can catch an
     excpType, then this exception spec does not catch the excpType.
 */
+#if LIBCXXABI_ARM_EHABI
+static
+bool
+exception_spec_can_catch(int64_t specIndex, const uint8_t* classInfo,
+                         uint8_t ttypeEncoding, const __shim_type_info* excpType,
+                         void* adjustedPtr, _Unwind_Exception* unwind_exception)
+{
+    if (classInfo == 0)
+    {
+        // this should not happen.   Indicates corrupted eh_table.
+        call_terminate(false, unwind_exception);
+    }
+
+    assert(ttypeEncoding == DW_EH_PE_absptr && "Unexpected TTypeEncoding");
+    (void)ttypeEncoding;
+
+    // specIndex is negative of 1-based byte offset into classInfo;
+    specIndex = -specIndex;
+    --specIndex;
+    const void** temp = reinterpret_cast<const void**>(
+        reinterpret_cast<uintptr_t>(classInfo) +
+        static_cast<uintptr_t>(specIndex) * sizeof(uintptr_t));
+    // If any type in the spec list can catch excpType, return false, else return true
+    //    adjustments to adjustedPtr are ignored.
+    while (true)
+    {
+        // ARM EHABI exception specification table (filter table) consists of
+        // several pointers which will directly point to the type info object
+        // (instead of ttypeIndex).  The table will be terminated with 0.
+        const void** ttypePtr = temp++;
+        if (*ttypePtr == 0)
+            break;
+        // We can get the __shim_type_info simply by performing a
+        // R_ARM_TARGET2 relocation, and cast the result to __shim_type_info.
+        const __shim_type_info* catchType =
+            static_cast<const __shim_type_info*>(read_target2_value(ttypePtr));
+        void* tempPtr = adjustedPtr;
+        if (catchType->can_catch(excpType, tempPtr))
+            return false;
+    }
+    return true;
+}
+#else
 static
 bool
 exception_spec_can_catch(int64_t specIndex, const uint8_t* classInfo,
@@ -385,6 +456,7 @@ exception_spec_can_catch(int64_t specIndex, const uint8_t* classInfo,
     }
     return true;
 }
+#endif
 
 static
 void*
@@ -837,6 +909,7 @@ _UA_CLEANUP_PHASE
         Else a cleanup is not found: return _URC_CONTINUE_UNWIND
 */
 
+#if !LIBCXXABI_ARM_EHABI
 _Unwind_Reason_Code
 #if __USING_SJLJ_EXCEPTIONS__
 __gxx_personality_sj0
@@ -848,6 +921,7 @@ __gxx_personality_v0
 {
     if (version != 1 || unwind_exception == 0 || context == 0)
         return _URC_FATAL_PHASE1_ERROR;
+
     bool native_exception = (exceptionClass     & get_vendor_and_language) ==
                             (kOurExceptionClass & get_vendor_and_language);
     scan_results results;
@@ -924,6 +998,133 @@ __gxx_personality_v0
     // We were called improperly: neither a phase 1 or phase 2 search
     return _URC_FATAL_PHASE1_ERROR;
 }
+#else
+
+extern "C" _Unwind_Reason_Code __gnu_unwind_frame(_Unwind_Exception*, _Unwind_Context*);
+
+// Helper function to unwind one frame.
+// ARM EHABI 7.3 and 7.4: If the personality function returns _URC_CONTINUE_UNWIND, the
+// personality routine should update the virtual register set (VRS) according to the
+// corresponding frame unwinding instructions (ARM EHABI 9.3.)
+static _Unwind_Reason_Code continue_unwind(_Unwind_Exception* unwind_exception,
+                                           _Unwind_Context* context)
+{
+    if (__gnu_unwind_frame(unwind_exception, context) != _URC_OK)
+        return _URC_FAILURE;
+    return _URC_CONTINUE_UNWIND;
+}
+
+// ARM register names
+static const uint32_t REG_UCB = 12;  // Register to save _Unwind_Control_Block
+static const uint32_t REG_SP = 13;
+
+static void save_results_to_barrier_cache(_Unwind_Exception* unwind_exception,
+                                          const scan_results& results)
+{
+    unwind_exception->barrier_cache.bitpattern[0] = (uint32_t)results.adjustedPtr;
+    unwind_exception->barrier_cache.bitpattern[1] = (uint32_t)results.actionRecord;
+    unwind_exception->barrier_cache.bitpattern[2] = (uint32_t)results.languageSpecificData;
+    unwind_exception->barrier_cache.bitpattern[3] = (uint32_t)results.landingPad;
+    unwind_exception->barrier_cache.bitpattern[4] = (uint32_t)results.ttypeIndex;
+}
+
+static void load_results_from_barrier_cache(scan_results& results,
+                                            const _Unwind_Exception* unwind_exception)
+{
+    results.adjustedPtr = (void*)unwind_exception->barrier_cache.bitpattern[0];
+    results.actionRecord = (const uint8_t*)unwind_exception->barrier_cache.bitpattern[1];
+    results.languageSpecificData = (const uint8_t*)unwind_exception->barrier_cache.bitpattern[2];
+    results.landingPad = (uintptr_t)unwind_exception->barrier_cache.bitpattern[3];
+    results.ttypeIndex = (int64_t)(int32_t)unwind_exception->barrier_cache.bitpattern[4];
+}
+
+extern "C" _Unwind_Reason_Code
+__gxx_personality_v0(_Unwind_State state,
+                     _Unwind_Exception* unwind_exception,
+                     _Unwind_Context* context)
+{
+    if (unwind_exception == 0 || context == 0)
+        return _URC_FATAL_PHASE1_ERROR;
+
+    bool native_exception = (unwind_exception->exception_class & get_vendor_and_language) ==
+                            (kOurExceptionClass & get_vendor_and_language);
+
+    // Copy the address of _Unwind_Control_Block to r12 so that _Unwind_GetLangauageSpecificData()
+    // and _Unwind_GetRegionStart() can return correct address.
+    _Unwind_SetGR(context, REG_UCB, reinterpret_cast<uint32_t>(unwind_exception));
+
+    scan_results results;
+    switch (state) {
+    case _US_VIRTUAL_UNWIND_FRAME:
+        // Phase 1 search:  All we're looking for in phase 1 is a handler that halts unwinding
+        scan_eh_tab(results, _UA_SEARCH_PHASE, native_exception, unwind_exception, context);
+        if (results.reason == _URC_HANDLER_FOUND)
+        {
+            unwind_exception->barrier_cache.sp = _Unwind_GetGR(context, REG_SP);
+            if (native_exception)
+                save_results_to_barrier_cache(unwind_exception, results);
+            return _URC_HANDLER_FOUND;
+        }
+        // Did not find the catch handler
+        if (results.reason == _URC_CONTINUE_UNWIND)
+            return continue_unwind(unwind_exception, context);
+        return results.reason;
+
+    case _US_UNWIND_FRAME_STARTING:
+        // Phase 2 search
+        if (unwind_exception->barrier_cache.sp == _Unwind_GetGR(context, REG_SP))
+        {
+            // Found a catching handler in phase 1
+            if (native_exception)
+            {
+                // Load the result from the native exception barrier cache.
+                load_results_from_barrier_cache(results, unwind_exception);
+                results.reason = _URC_HANDLER_FOUND;
+            }
+            else
+            {
+                // Search for the catching handler again for the foreign exception.
+                scan_eh_tab(results, static_cast<_Unwind_Action>(_UA_CLEANUP_PHASE | _UA_HANDLER_FRAME),
+                            native_exception, unwind_exception, context);
+                if (results.reason != _URC_HANDLER_FOUND)  // phase1 search should guarantee to find one
+                    call_terminate(native_exception, unwind_exception);
+            }
+
+            // Install the context for the catching handler
+            set_registers(unwind_exception, context, results);
+            return _URC_INSTALL_CONTEXT;
+        }
+
+        // Search for a (non-catching) cleanup
+        scan_eh_tab(results, _UA_CLEANUP_PHASE, native_exception, unwind_exception, context);
+        if (results.reason == _URC_HANDLER_FOUND)
+        {
+            // Found a non-catching handler
+
+            // ARM EHABI 8.4.2: Before we can jump to the cleanup handler, we have to setup some
+            // internal data structures, so that __cxa_end_cleanup() can get unwind_exception from
+            // __cxa_get_globals().
+            __cxa_begin_cleanup(unwind_exception);
+
+            // Install the context for the cleanup handler
+            set_registers(unwind_exception, context, results);
+            return _URC_INSTALL_CONTEXT;
+        }
+
+        // Did not find any handler
+        if (results.reason == _URC_CONTINUE_UNWIND)
+            return continue_unwind(unwind_exception, context);
+        return results.reason;
+
+    case _US_UNWIND_FRAME_RESUME:
+        return continue_unwind(unwind_exception, context);
+    }
+
+    // We were called improperly: neither a phase 1 or phase 2 search
+    return _URC_FATAL_PHASE1_ERROR;
+}
+#endif
+
 
 __attribute__((noreturn))
 void
@@ -948,8 +1149,13 @@ __cxa_call_unexpected(void* arg)
         u_handler = old_exception_header->unexpectedHandler;
         // If std::__unexpected(u_handler) rethrows the same exception,
         //   these values get overwritten by the rethrow.  So save them now:
+#if LIBCXXABI_ARM_EHABI
+        ttypeIndex = (int64_t)(int32_t)unwind_exception->barrier_cache.bitpattern[4];
+        lsda = (const uint8_t*)unwind_exception->barrier_cache.bitpattern[2];
+#else
         ttypeIndex = old_exception_header->handlerSwitchValue;
         lsda = old_exception_header->languageSpecificData;
+#endif
     }
     else
     {

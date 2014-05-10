@@ -44,6 +44,10 @@ extern LIBCXXABI_NORETURN void __cxa_throw(void * thrown_exception,
 extern void * __cxa_get_exception_ptr(void * exceptionObject) throw();
 extern void * __cxa_begin_catch(void * exceptionObject) throw();
 extern void __cxa_end_catch();
+#if __arm__
+extern bool __cxa_begin_cleanup(void * exceptionObject) throw();
+extern void __cxa_end_cleanup();
+#endif
 extern std::type_info * __cxa_current_exception_type();
 
 // 2.5.4 Rethrowing Exceptions
