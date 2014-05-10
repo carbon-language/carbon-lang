@@ -3121,17 +3121,18 @@ SDValue ARM64TargetLowering::LowerSELECT_CC(SDValue Op,
 
   // Try to match this select into a max/min operation, which have dedicated
   // opcode in the instruction set.
-  // NOTE: This is not correct in the presence of NaNs, so we only enable this
+  // FIXME: This is not correct in the presence of NaNs, so we only enable this
   // in no-NaNs mode.
   if (getTargetMachine().Options.NoNaNsFPMath) {
-    if (selectCCOpsAreFMaxCompatible(LHS, FVal) &&
-        selectCCOpsAreFMaxCompatible(RHS, TVal)) {
+    SDValue MinMaxLHS = TVal, MinMaxRHS = FVal;
+    if (selectCCOpsAreFMaxCompatible(LHS, MinMaxRHS) &&
+        selectCCOpsAreFMaxCompatible(RHS, MinMaxLHS)) {
       CC = ISD::getSetCCSwappedOperands(CC);
-      std::swap(TVal, FVal);
+      std::swap(MinMaxLHS, MinMaxRHS);
     }
 
-    if (selectCCOpsAreFMaxCompatible(LHS, TVal) &&
-        selectCCOpsAreFMaxCompatible(RHS, FVal)) {
+    if (selectCCOpsAreFMaxCompatible(LHS, MinMaxLHS) &&
+        selectCCOpsAreFMaxCompatible(RHS, MinMaxRHS)) {
       switch (CC) {
       default:
         break;
@@ -3141,7 +3142,7 @@ SDValue ARM64TargetLowering::LowerSELECT_CC(SDValue Op,
       case ISD::SETUGE:
       case ISD::SETOGT:
       case ISD::SETOGE:
-        return DAG.getNode(ARM64ISD::FMAX, dl, VT, TVal, FVal);
+        return DAG.getNode(ARM64ISD::FMAX, dl, VT, MinMaxLHS, MinMaxRHS);
         break;
       case ISD::SETLT:
       case ISD::SETLE:
@@ -3149,7 +3150,7 @@ SDValue ARM64TargetLowering::LowerSELECT_CC(SDValue Op,
       case ISD::SETULE:
       case ISD::SETOLT:
       case ISD::SETOLE:
-        return DAG.getNode(ARM64ISD::FMIN, dl, VT, TVal, FVal);
+        return DAG.getNode(ARM64ISD::FMIN, dl, VT, MinMaxLHS, MinMaxRHS);
         break;
       }
     }
