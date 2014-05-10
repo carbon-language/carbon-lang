@@ -26,6 +26,9 @@ class Y {
 public:
   void operator bool(int, ...) const; // expected-error{{conversion function cannot have a return type}} \
   // expected-error{{conversion function cannot have any parameters}}
+
+  operator bool(int a = 4) const; // expected-error{{conversion function cannot have any parameters}}
+  
   
   operator float(...) const;  // expected-error{{conversion function cannot be variadic}}
   
