@@ -7214,14 +7214,12 @@ static void findArrayDimensionsRec(ScalarEvolution &SE,
     return;
   }
 
-  const SCEV *Zero = SE.getConstant(GCD->getType(), 0);
-
-  for (unsigned I = 0; I < Terms.size(); ++I) {
+  for (const SCEV *&Term : Terms) {
     // Normalize the terms before the next call to findArrayDimensionsRec.
     const SCEV *Q, *R;
-    SCEVDivision::divide(SE, Terms[I], GCD, &Q, &R);
-    assert(R == Zero && "GCD does not evenly divide one of the terms");
-    Terms[I] = Q;
+    SCEVDivision::divide(SE, Term, GCD, &Q, &R);
+    assert(R->isZero() && "GCD does not evenly divide one of the terms");
+    Term = Q;
   }
 
   // Remove all SCEVConstants.
