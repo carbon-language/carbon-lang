@@ -4327,15 +4327,13 @@ void Sema::CodeCompleteLambdaIntroducer(Scope *S, LambdaIntroducer &Intro,
   // Note what has already been captured.
   llvm::SmallPtrSet<IdentifierInfo *, 4> Known;
   bool IncludedThis = false;
-  for (SmallVectorImpl<LambdaCapture>::iterator C = Intro.Captures.begin(),
-                                             CEnd = Intro.Captures.end();
-       C != CEnd; ++C) {
-    if (C->Kind == LCK_This) {
+  for (const auto &C : Intro.Captures) {
+    if (C.Kind == LCK_This) {
       IncludedThis = true;
       continue;
     }
     
-    Known.insert(C->Id);
+    Known.insert(C.Id);
   }
   
   // Look for other capturable variables.

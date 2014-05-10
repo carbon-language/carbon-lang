@@ -149,7 +149,7 @@ public:
     return true;
   }
 
-  bool TraverseLambdaCapture(LambdaExpr::Capture C) {
+  bool TraverseLambdaCapture(LambdaCapture C) {
     if (C.capturesThis())
       return true;
 

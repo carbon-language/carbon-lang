@@ -16,7 +16,6 @@
 #define LLVM_CLANG_DIAGNOSTIC_H
 
 #include "clang/Basic/DiagnosticIDs.h"
-#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -26,14 +25,15 @@
 #include <vector>
 
 namespace clang {
-  class DiagnosticConsumer;
+  class DeclContext;
   class DiagnosticBuilder;
+  class DiagnosticConsumer;
+  class DiagnosticErrorTrap;
   class DiagnosticOptions;
   class IdentifierInfo;
-  class DeclContext;
   class LangOptions;
+  enum OverloadsShown : unsigned;
   class Preprocessor;
-  class DiagnosticErrorTrap;
   class StoredDiagnostic;
   namespace tok {
   enum TokenKind : unsigned short;

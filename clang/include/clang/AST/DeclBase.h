@@ -16,7 +16,6 @@
 
 #include "clang/AST/AttrIterator.h"
 #include "clang/AST/DeclarationName.h"
-#include "clang/Basic/Linkage.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/iterator_range.h"
@@ -34,6 +33,7 @@ class DependentDiagnostic;
 class EnumDecl;
 class FunctionDecl;
 class FunctionType;
+enum Linkage : unsigned char;
 class LinkageComputer;
 class LinkageSpecDecl;
 class Module;

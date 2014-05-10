@@ -884,7 +884,7 @@ CXXConstructExpr::CXXConstructExpr(const ASTContext &C, StmtClass SC,
   }
 }
 
-LambdaExpr::Capture::Capture(SourceLocation Loc, bool Implicit,
+LambdaCapture::LambdaCapture(SourceLocation Loc, bool Implicit,
                              LambdaCaptureKind Kind, VarDecl *Var,
                              SourceLocation EllipsisLoc)
   : DeclAndBits(Var, 0), Loc(Loc), EllipsisLoc(EllipsisLoc)
@@ -908,7 +908,7 @@ LambdaExpr::Capture::Capture(SourceLocation Loc, bool Implicit,
   DeclAndBits.setInt(Bits);
 }
 
-LambdaCaptureKind LambdaExpr::Capture::getCaptureKind() const {
+LambdaCaptureKind LambdaCapture::getCaptureKind() const {
   Decl *D = DeclAndBits.getPointer();
   if (!D)
     return LCK_This;

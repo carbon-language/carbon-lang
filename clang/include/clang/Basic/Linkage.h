@@ -18,7 +18,7 @@ namespace clang {
 
 /// \brief Describes the different kinds of linkage 
 /// (C++ [basic.link], C99 6.2.2) that an entity may have.
-enum Linkage {
+enum Linkage : unsigned char {
   /// \brief No linkage, which means that the entity is unique and
   /// can only be referred to from within its scope.
   NoLinkage = 0,

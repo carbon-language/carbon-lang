@@ -19,7 +19,7 @@ namespace clang {
 
 /// \brief Specifies which overload candidates to display when overload
 /// resolution fails.
-enum OverloadsShown {
+enum OverloadsShown : unsigned {
   Ovl_All,  ///< Show all overloads.
   Ovl_Best  ///< Show just the "best" overload candidates.
 };

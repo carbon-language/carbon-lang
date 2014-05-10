@@ -15,7 +15,6 @@
 #define LLVM_CLANG_AST_TEMPLATENAME_H
 
 #include "clang/Basic/LLVM.h"
-#include "clang/Basic/OperatorKinds.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerUnion.h"
 
@@ -25,13 +24,14 @@ class ASTContext;
 class DependentTemplateName;
 class DiagnosticBuilder;
 class IdentifierInfo;
+class NamedDecl;
 class NestedNameSpecifier;
+enum OverloadedOperatorKind : unsigned char;
 class OverloadedTemplateStorage;
 struct PrintingPolicy;
 class QualifiedTemplateName;
-class NamedDecl;
-class SubstTemplateTemplateParmStorage;
 class SubstTemplateTemplateParmPackStorage;
+class SubstTemplateTemplateParmStorage;
 class TemplateArgument;
 class TemplateDecl;
 class TemplateTemplateParmDecl;

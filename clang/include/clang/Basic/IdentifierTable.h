@@ -17,12 +17,9 @@
 #define LLVM_CLANG_BASIC_IDENTIFIERTABLE_H
 
 #include "clang/Basic/LLVM.h"
-#include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/TokenKinds.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/PointerLikeTypeTraits.h"
 #include <cassert>
 #include <string>
 
@@ -813,6 +810,8 @@ struct DenseMapInfo<clang::Selector> {
 
 template <>
 struct isPodLike<clang::Selector> { static const bool value = true; };
+
+template <typename T> class PointerLikeTypeTraits;
 
 template<>
 class PointerLikeTypeTraits<clang::Selector> {

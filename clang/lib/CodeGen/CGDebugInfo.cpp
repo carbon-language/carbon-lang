@@ -830,7 +830,7 @@ CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
   unsigned fieldno = 0;
   for (CXXRecordDecl::capture_const_iterator I = CXXDecl->captures_begin(),
          E = CXXDecl->captures_end(); I != E; ++I, ++Field, ++fieldno) {
-    const LambdaExpr::Capture C = *I;
+    const LambdaCapture &C = *I;
     if (C.capturesVariable()) {
       VarDecl *V = C.getCapturedVar();
       llvm::DIFile VUnit = getOrCreateFile(C.getLocation());

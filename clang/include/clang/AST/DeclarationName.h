@@ -29,6 +29,7 @@ namespace clang {
   class DeclarationNameExtra;
   class IdentifierInfo;
   class MultiKeywordSelector;
+  enum OverloadedOperatorKind : unsigned char;
   class QualType;
   class Type;
   class TypeSourceInfo;

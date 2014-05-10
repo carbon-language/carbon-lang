@@ -252,7 +252,7 @@ public:
   /// \brief Recursively visit a lambda capture.
   ///
   /// \returns false if the visitation was terminated early, true otherwise.
-  bool TraverseLambdaCapture(LambdaExpr *LE, const LambdaExpr::Capture *C);
+  bool TraverseLambdaCapture(LambdaExpr *LE, const LambdaCapture *C);
 
   /// \brief Recursively visit the body of a lambda expression.
   ///
@@ -856,7 +856,7 @@ bool RecursiveASTVisitor<Derived>::TraverseConstructorInitializer(
 
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseLambdaCapture(
-    LambdaExpr *LE, const LambdaExpr::Capture *C) {
+    LambdaExpr *LE, const LambdaCapture *C) {
   if (C->isInitCapture())
     TRY_TO(TraverseDecl(C->getCapturedVar()));
   return true;

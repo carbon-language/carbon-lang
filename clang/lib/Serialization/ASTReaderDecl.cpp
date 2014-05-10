@@ -1247,7 +1247,7 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Data.FirstFriend = ReadDeclID(Record, Idx);
 
   if (Data.IsLambda) {
-    typedef LambdaExpr::Capture Capture;
+    typedef LambdaCapture Capture;
     CXXRecordDecl::LambdaDefinitionData &Lambda
       = static_cast<CXXRecordDecl::LambdaDefinitionData &>(Data);
     Lambda.Dependent = Record[Idx++];
