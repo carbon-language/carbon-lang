@@ -19,7 +19,7 @@ namespace clang {
 
 /// \brief Enumeration specifying the different kinds of C++ overloaded
 /// operators.
-enum OverloadedOperatorKind : unsigned char {
+enum OverloadedOperatorKind : int {
   OO_None,                ///< Not an overloaded operator
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) \
   OO_##Name,

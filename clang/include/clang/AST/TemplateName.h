@@ -26,7 +26,7 @@ class DiagnosticBuilder;
 class IdentifierInfo;
 class NamedDecl;
 class NestedNameSpecifier;
-enum OverloadedOperatorKind : unsigned char;
+enum OverloadedOperatorKind : int;
 class OverloadedTemplateStorage;
 struct PrintingPolicy;
 class QualifiedTemplateName;
