@@ -748,12 +748,17 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 /// Return true if type encoding is unsigned.
 static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
   DIDerivedType DTy(Ty);
-  if (DTy.isDerivedType())
-    return isUnsignedDIType(DD, DD->resolve(DTy.getTypeDerivedFrom()));
+  if (DTy.isDerivedType()) {
+    if (DIType Deriv = DD->resolve(DTy.getTypeDerivedFrom()))
+      return isUnsignedDIType(DD, Deriv);
+    // FIXME: Enums without a fixed underlying type have unknown signedness
+    // here, leading to incorrectly emitted constants.
+    assert(DTy.getTag() == dwarf::DW_TAG_enumeration_type);
+    return false;
+  }
 
   DIBasicType BTy(Ty);
-  if (!BTy.isBasicType())
-    return false;
+  assert(BTy.isBasicType());
   unsigned Encoding = BTy.getEncoding();
   assert(Encoding == dwarf::DW_ATE_unsigned ||
          Encoding == dwarf::DW_ATE_unsigned_char ||
