@@ -104,6 +104,14 @@ void LexicalScopes::extractLexicalScopes(
   }
 }
 
+LexicalScope *LexicalScopes::findInlinedScope(DebugLoc DL) {
+  MDNode *Scope = nullptr;
+  MDNode *IA = nullptr;
+  DL.getScopeAndInlinedAt(Scope, IA, MF->getFunction()->getContext());
+  auto I = InlinedLexicalScopeMap.find(std::make_pair(Scope, IA));
+  return I != InlinedLexicalScopeMap.end() ? &I->second : nullptr;
+}
+
 /// findLexicalScope - Find lexical scope, either regular or inlined, for the
 /// given DebugLoc. Return NULL if not found.
 LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
@@ -119,8 +127,10 @@ LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
   if (D.isLexicalBlockFile())
     Scope = DILexicalBlockFile(Scope).getScope();
 
-  if (IA)
-    return InlinedLexicalScopeMap.lookup(DebugLoc::getFromDILocation(IA));
+  if (IA) {
+    auto I = InlinedLexicalScopeMap.find(std::make_pair(Scope, IA));
+    return I != InlinedLexicalScopeMap.end() ? &I->second : nullptr;
+  }
   return findLexicalScope(Scope);
 }
 
@@ -170,21 +180,27 @@ LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
 }
 
 /// getOrCreateInlinedScope - Find or create an inlined lexical scope.
-LexicalScope *LexicalScopes::getOrCreateInlinedScope(MDNode *Scope,
+LexicalScope *LexicalScopes::getOrCreateInlinedScope(MDNode *ScopeNode,
                                                      MDNode *InlinedAt) {
-  auto I = LexicalScopeMap.find(InlinedAt);
-  if (I != LexicalScopeMap.end())
+  std::pair<const MDNode*, const MDNode*> P(ScopeNode, InlinedAt);
+  auto I = InlinedLexicalScopeMap.find(P);
+  if (I != InlinedLexicalScopeMap.end())
     return &I->second;
 
-  DebugLoc InlinedLoc = DebugLoc::getFromDILocation(InlinedAt);
+  LexicalScope *Parent;
+  DILexicalBlock Scope(ScopeNode);
+  if (Scope.isLexicalBlock()) {
+    DILexicalBlock PB(Scope.getContext());
+    Parent = getOrCreateInlinedScope(PB, InlinedAt);
+  } else
+    Parent = getOrCreateLexicalScope(DebugLoc::getFromDILocation(InlinedAt));
+
   // FIXME: Use forward_as_tuple instead of make_tuple, once MSVC2012
   // compatibility is no longer required.
-  I = LexicalScopeMap.emplace(
-                          std::piecewise_construct, std::make_tuple(InlinedAt),
-                          std::make_tuple(getOrCreateLexicalScope(InlinedLoc),
-                                          DIDescriptor(Scope), InlinedAt,
-                                          false)).first;
-  InlinedLexicalScopeMap[InlinedLoc] = &I->second;
+  I = InlinedLexicalScopeMap.emplace(std::piecewise_construct,
+                                     std::make_tuple(P),
+                                     std::make_tuple(Parent, Scope, InlinedAt,
+                                                     false)).first;
   return &I->second;
 }
 
