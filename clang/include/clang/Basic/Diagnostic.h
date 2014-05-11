@@ -16,7 +16,6 @@
 #define LLVM_CLANG_DIAGNOSTIC_H
 
 #include "clang/Basic/DiagnosticIDs.h"
-#include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -33,6 +32,7 @@ namespace clang {
   class DiagnosticOptions;
   class IdentifierInfo;
   class LangOptions;
+  enum OverloadsShown : unsigned;
   class Preprocessor;
   class StoredDiagnostic;
   namespace tok {
