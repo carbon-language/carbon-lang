@@ -1231,9 +1231,9 @@ struct DeclaratorChunk {
     ///
     /// This is used in various places for error recovery.
     void freeParams() {
-      if (Params) {
-        delete Params->DefaultArgTokens;
-        Params->DefaultArgTokens = nullptr;
+      for (unsigned I = 0; I < NumParams; ++I) {
+        delete Params[I].DefaultArgTokens;
+        Params[I].DefaultArgTokens = nullptr;
       }
       if (DeleteParams) {
         delete[] Params;
