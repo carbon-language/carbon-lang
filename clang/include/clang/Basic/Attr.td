@@ -233,7 +233,7 @@ class TargetArch<list<string> arches> {
 def TargetARM : TargetArch<["arm", "thumb"]>;
 def TargetMSP430 : TargetArch<["msp430"]>;
 def TargetX86 : TargetArch<["x86"]>;
-def TargetX86Win : TargetArch<["x86", "x86_64"]> {
+def TargetWindows : TargetArch<["x86", "x86_64", "arm", "thumb"]> {
   let OSes = ["Win32"];
 }
 def TargetMips : TargetArch<["mips", "mipsel"]>;
@@ -1645,13 +1645,13 @@ def MsStruct : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
-def DLLExport : InheritableAttr, TargetSpecificAttr<TargetX86Win> {
+def DLLExport : InheritableAttr, TargetSpecificAttr<TargetWindows> {
   let Spellings = [Declspec<"dllexport">, GCC<"dllexport">];
   let Subjects = SubjectList<[Function, Var]>;
   let Documentation = [Undocumented];
 }
 
-def DLLImport : InheritableAttr, TargetSpecificAttr<TargetX86Win> {
+def DLLImport : InheritableAttr, TargetSpecificAttr<TargetWindows> {
   let Spellings = [Declspec<"dllimport">, GCC<"dllimport">];
   // Technically, the subjects for DllImport are Function and Var, but there is
   // custom semantic handling required when MicrosoftExt is true.
