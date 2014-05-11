@@ -6848,7 +6848,7 @@ register in surrounding code, including inline assembly. Because of that,
 allocatable registers are not supported.
 
 Warning: So far it only works with the stack pointer on selected
-architectures (ARM, ARM64, x86_64 and AArch64). Significant amount of
+architectures (ARM, ARM64, AArch64, PowerPC and x86_64). Significant amount of
 work is needed to support other registers and even more so, allocatable
 registers.
 

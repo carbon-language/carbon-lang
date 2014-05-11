@@ -398,6 +398,8 @@ namespace llvm {
 
     SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;
 
+    unsigned getRegisterByName(const char* RegName, EVT VT) const override;
+
     void computeMaskedBitsForTargetNode(const SDValue Op,
                                         APInt &KnownZero,
                                         APInt &KnownOne,

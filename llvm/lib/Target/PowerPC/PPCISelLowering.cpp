@@ -18,6 +18,7 @@
 #include "PPCTargetMachine.h"
 #include "PPCTargetObjectFile.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -8755,6 +8756,30 @@ SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op,
                             FrameAddr, MachinePointerInfo(), false, false,
                             false, 0);
   return FrameAddr;
+}
+
+// FIXME? Maybe this could be a TableGen attribute on some registers and
+// this table could be generated automatically from RegInfo.
+unsigned PPCTargetLowering::getRegisterByName(const char* RegName,
+                                              EVT VT) const {
+  bool isPPC64 = PPCSubTarget.isPPC64();
+  bool isDarwinABI = PPCSubTarget.isDarwinABI();
+
+  if ((isPPC64 && VT != MVT::i64 && VT != MVT::i32) ||
+      (!isPPC64 && VT != MVT::i32))
+    report_fatal_error("Invalid register global variable type");
+
+  bool is64Bit = isPPC64 && VT == MVT::i64;
+  unsigned Reg = StringSwitch<unsigned>(RegName)
+                   .Case("r1", is64Bit ? PPC::X1 : PPC::R1)
+                   .Case("r2", isDarwinABI ? 0 : (is64Bit ? PPC::X2 : PPC::R2))
+                   .Case("r13", (!isPPC64 && isDarwinABI) ? 0 :
+                                  (is64Bit ? PPC::X13 : PPC::R13))
+                   .Default(0);
+
+  if (Reg)
+    return Reg;
+  report_fatal_error("Invalid register name global variable");
 }
 
 bool
