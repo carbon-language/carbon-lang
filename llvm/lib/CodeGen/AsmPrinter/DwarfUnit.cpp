@@ -746,17 +746,14 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 }
 
 /// isTypeSigned - Return true if the type is signed.
-static bool isTypeSigned(DwarfDebug *DD, DIType Ty, int *SizeInBits) {
+static bool isTypeSigned(DwarfDebug *DD, DIType Ty) {
   if (Ty.isDerivedType())
-    return isTypeSigned(DD, DD->resolve(DIDerivedType(Ty).getTypeDerivedFrom()),
-                        SizeInBits);
-  if (Ty.isBasicType())
-    if (DIBasicType(Ty).getEncoding() == dwarf::DW_ATE_signed ||
-        DIBasicType(Ty).getEncoding() == dwarf::DW_ATE_signed_char) {
-      *SizeInBits = Ty.getSizeInBits();
-      return true;
-    }
-  return false;
+    return isTypeSigned(DD,
+                        DD->resolve(DIDerivedType(Ty).getTypeDerivedFrom()));
+
+  return Ty.isBasicType() &&
+         (DIBasicType(Ty).getEncoding() == dwarf::DW_ATE_signed ||
+          DIBasicType(Ty).getEncoding() == dwarf::DW_ATE_signed_char);
 }
 
 /// Return true if type encoding is unsigned.
@@ -809,39 +806,12 @@ static uint64_t getBaseTypeSize(DwarfDebug *DD, DIDerivedType Ty) {
 void DwarfUnit::addConstantValue(DIE &Die, const MachineOperand &MO,
                                  DIType Ty) {
   // FIXME: This is a bit conservative/simple - it emits negative values at
-  // their maximum bit width which is a bit unfortunate (& doesn't prefer
-  // udata/sdata over dataN as suggested by the DWARF spec)
+  // their maximum bit width which is a bit unfortunate.
   assert(MO.isImm() && "Invalid machine operand!");
-  int SizeInBits = -1;
-  bool SignedConstant = isTypeSigned(DD, Ty, &SizeInBits);
-  dwarf::Form Form;
 
-  // If we're a signed constant definitely use sdata.
-  if (SignedConstant) {
-    addSInt(Die, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, MO.getImm());
-    return;
-  }
-
-  // Else use data for now unless it's larger than we can deal with.
-  switch (SizeInBits) {
-  case 8:
-    Form = dwarf::DW_FORM_data1;
-    break;
-  case 16:
-    Form = dwarf::DW_FORM_data2;
-    break;
-  case 32:
-    Form = dwarf::DW_FORM_data4;
-    break;
-  case 64:
-    Form = dwarf::DW_FORM_data8;
-    break;
-  default:
-    Form = dwarf::DW_FORM_udata;
-    addUInt(Die, dwarf::DW_AT_const_value, Form, MO.getImm());
-    return;
-  }
-  addUInt(Die, dwarf::DW_AT_const_value, Form, MO.getImm());
+  addUInt(Die, dwarf::DW_AT_const_value,
+          isTypeSigned(DD, Ty) ? dwarf::DW_FORM_sdata : dwarf::DW_FORM_udata,
+          MO.getImm());
 }
 
 /// addConstantFPValue - Add constant value entry in variable DIE.
