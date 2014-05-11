@@ -1812,11 +1812,19 @@ void BoUpSLP::optimizeGatherSequence() {
     Insert->moveBefore(PreHeader->getTerminator());
   }
 
+  // Make a list of all reachable blocks in our CSE queue.
+  SmallVector<const DomTreeNode *, 8> CSEWorkList;
+  CSEWorkList.reserve(CSEBlocks.size());
+  for (BasicBlock *BB : CSEBlocks)
+    if (DomTreeNode *N = DT->getNode(BB)) {
+      assert(DT->isReachableFromEntry(N));
+      CSEWorkList.push_back(N);
+    }
+
   // Sort blocks by domination. This ensures we visit a block after all blocks
   // dominating it are visited.
-  SmallVector<BasicBlock *, 8> CSEWorkList(CSEBlocks.begin(), CSEBlocks.end());
   std::stable_sort(CSEWorkList.begin(), CSEWorkList.end(),
-                   [this](const BasicBlock *A, const BasicBlock *B) {
+                   [this](const DomTreeNode *A, const DomTreeNode *B) {
     return DT->properlyDominates(A, B);
   });
 
@@ -1824,13 +1832,10 @@ void BoUpSLP::optimizeGatherSequence() {
   // instructions. TODO: We can further optimize this scan if we split the
   // instructions into different buckets based on the insert lane.
   SmallVector<Instruction *, 16> Visited;
-  for (SmallVectorImpl<BasicBlock *>::iterator I = CSEWorkList.begin(),
-                                               E = CSEWorkList.end();
-       I != E; ++I) {
-    assert((I == CSEWorkList.begin() || !DT->isReachableFromEntry(*I) ||
-            !DT->dominates(*I, *std::prev(I))) &&
+  for (auto I = CSEWorkList.begin(), E = CSEWorkList.end(); I != E; ++I) {
+    assert((I == CSEWorkList.begin() || !DT->dominates(*I, *std::prev(I))) &&
            "Worklist not sorted properly!");
-    BasicBlock *BB = *I;
+    BasicBlock *BB = (*I)->getBlock();
     // For all instructions in blocks containing gather sequences:
     for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e;) {
       Instruction *In = it++;
