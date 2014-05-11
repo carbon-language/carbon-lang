@@ -898,10 +898,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
     ExplicitResultType = FTI.hasTrailingReturnType();
 
-    if (FTI.NumParams == 1 && !FTI.isVariadic && FTI.Params[0].Ident == 0 &&
-        cast<ParmVarDecl>(FTI.Params[0].Param)->getType()->isVoidType()) {
-      // Empty arg list, don't push any params.
-    } else {
+    if (FTIHasNonVoidParameters(FTI)) {
       Params.reserve(FTI.NumParams);
       for (unsigned i = 0, e = FTI.NumParams; i != e; ++i)
         Params.push_back(cast<ParmVarDecl>(FTI.Params[i].Param));

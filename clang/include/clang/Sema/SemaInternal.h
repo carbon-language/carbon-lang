@@ -25,6 +25,18 @@ inline PartialDiagnostic Sema::PDiag(unsigned DiagID) {
   return PartialDiagnostic(DiagID, Context.getDiagAllocator());
 }
 
+inline bool
+FTIHasSingleVoidParameter(const DeclaratorChunk::FunctionTypeInfo &FTI) {
+  return FTI.NumParams == 1 && !FTI.isVariadic && FTI.Params[0].Ident == 0 &&
+         FTI.Params[0].Param &&
+         cast<ParmVarDecl>(FTI.Params[0].Param)->getType()->isVoidType();
+}
+
+inline bool
+FTIHasNonVoidParameters(const DeclaratorChunk::FunctionTypeInfo &FTI) {
+  // Assume FTI is well-formed.
+  return FTI.NumParams && !FTIHasSingleVoidParameter(FTI);
+}
 
 // This requires the variable to be non-dependent and the initializer
 // to not be value dependent.

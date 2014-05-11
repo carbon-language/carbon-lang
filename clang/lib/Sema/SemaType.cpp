@@ -2330,7 +2330,7 @@ static void checkQualifiedFunction(Sema &S, QualType T,
     << getFunctionQualifiersAsString(T->castAs<FunctionProtoType>());
 }
 
-/// Produce an approprioate diagnostic for an ambiguity between a function
+/// Produce an appropriate diagnostic for an ambiguity between a function
 /// declarator and a C++ direct-initializer.
 static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
                                        DeclaratorChunk &DeclType, QualType RT) {

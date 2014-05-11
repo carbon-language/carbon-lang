@@ -6252,13 +6252,6 @@ bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
   return false;
 }
 
-static inline bool
-FTIHasSingleVoidArgument(DeclaratorChunk::FunctionTypeInfo &FTI) {
-  return (FTI.NumParams == 1 && !FTI.isVariadic && FTI.Params[0].Ident == 0 &&
-          FTI.Params[0].Param &&
-          cast<ParmVarDecl>(FTI.Params[0].Param)->getType()->isVoidType());
-}
-
 /// CheckDestructorDeclarator - Called by ActOnDeclarator to check
 /// the well-formednes of the destructor declarator @p D with type @p
 /// R. If there are any errors in the declarator, this routine will
@@ -6337,7 +6330,7 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
   }
   
   // Make sure we don't have any parameters.
-  if (FTI.NumParams > 0 && !FTIHasSingleVoidArgument(FTI)) {
+  if (FTIHasNonVoidParameters(FTI)) {
     Diag(D.getIdentifierLoc(), diag::err_destructor_with_params);
 
     // Delete the parameters.
