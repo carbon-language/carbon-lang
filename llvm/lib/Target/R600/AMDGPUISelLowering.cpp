@@ -531,13 +531,17 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
     return DAG.getStore(Chain, DL,  DAG.getConstant(*CI, VT), InitPtr,
                  MachinePointerInfo(UndefValue::get(PtrTy)), false, false,
                  TD->getPrefTypeAlignment(CI->getType()));
-  } else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(Init)) {
+  }
+
+  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(Init)) {
     EVT VT = EVT::getEVT(CFP->getType());
     PointerType *PtrTy = PointerType::get(CFP->getType(), 0);
     return DAG.getStore(Chain, DL, DAG.getConstantFP(*CFP, VT), InitPtr,
                  MachinePointerInfo(UndefValue::get(PtrTy)), false, false,
                  TD->getPrefTypeAlignment(CFP->getType()));
-  } else if (Init->getType()->isAggregateType()) {
+  }
+
+  if (Init->getType()->isAggregateType()) {
     EVT PtrVT = InitPtr.getValueType();
     unsigned NumElements = Init->getType()->getArrayNumElements();
     SmallVector<SDValue, 8> Chains;
@@ -548,11 +552,12 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
       Chains.push_back(LowerConstantInitializer(Init->getAggregateElement(i),
                        GV, Ptr, Chain, DAG));
     }
+
     return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Chains);
-  } else {
-    Init->dump();
-    llvm_unreachable("Unhandled constant initializer");
   }
+
+  Init->dump();
+  llvm_unreachable("Unhandled constant initializer");
 }
 
 SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
@@ -724,8 +729,7 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
 ///IABS(a) = SMAX(sub(0, a), a)
 SDValue AMDGPUTargetLowering::LowerIntrinsicIABS(SDValue Op,
-    SelectionDAG &DAG) const {
-
+                                                 SelectionDAG &DAG) const {
   SDLoc DL(Op);
   EVT VT = Op.getValueType();
   SDValue Neg = DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, VT),
@@ -737,7 +741,7 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicIABS(SDValue Op,
 /// Linear Interpolation
 /// LRP(a, b, c) = muladd(a,  b, (1 - a) * c)
 SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
-    SelectionDAG &DAG) const {
+                                                SelectionDAG &DAG) const {
   SDLoc DL(Op);
   EVT VT = Op.getValueType();
   SDValue OneSubA = DAG.getNode(ISD::FSUB, DL, VT,
@@ -752,7 +756,7 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicLRP(SDValue Op,
 
 /// \brief Generate Min/Max node
 SDValue AMDGPUTargetLowering::CombineMinMax(SDNode *N,
-    SelectionDAG &DAG) const {
+                                            SelectionDAG &DAG) const {
   SDLoc DL(N);
   EVT VT = N->getValueType(0);
 
@@ -788,10 +792,8 @@ SDValue AMDGPUTargetLowering::CombineMinMax(SDNode *N,
   case ISD::SETOLT:
   case ISD::SETLE:
   case ISD::SETLT: {
-    if (LHS == True)
-      return DAG.getNode(AMDGPUISD::FMIN, DL, VT, LHS, RHS);
-    else
-      return DAG.getNode(AMDGPUISD::FMAX, DL, VT, LHS, RHS);
+    unsigned Opc = (LHS == True) ? AMDGPUISD::FMIN : AMDGPUISD::FMAX;
+    return DAG.getNode(Opc, DL, VT, LHS, RHS);
   }
   case ISD::SETGT:
   case ISD::SETGE:
@@ -799,10 +801,8 @@ SDValue AMDGPUTargetLowering::CombineMinMax(SDNode *N,
   case ISD::SETOGE:
   case ISD::SETUGT:
   case ISD::SETOGT: {
-    if (LHS == True)
-      return DAG.getNode(AMDGPUISD::FMAX, DL, VT, LHS, RHS);
-    else
-      return DAG.getNode(AMDGPUISD::FMIN, DL, VT, LHS, RHS);
+    unsigned Opc = (LHS == True) ? AMDGPUISD::FMAX : AMDGPUISD::FMIN;
+    return DAG.getNode(Opc, DL, VT, LHS, RHS);
   }
   case ISD::SETCC_INVALID:
     llvm_unreachable("Invalid setcc condcode!");
@@ -1049,7 +1049,7 @@ SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
 }
 
 SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
-    SelectionDAG &DAG) const {
+                                           SelectionDAG &DAG) const {
   SDLoc DL(Op);
   EVT VT = Op.getValueType();
 
