@@ -832,9 +832,8 @@ void DwarfUnit::addConstantFPValue(DIE &Die, const ConstantFP *CFP) {
 }
 
 /// addConstantValue - Add constant value entry in variable DIE.
-void DwarfUnit::addConstantValue(DIE &Die, const ConstantInt *CI,
-                                 bool Unsigned) {
-  addConstantValue(Die, CI->getValue(), Unsigned);
+void DwarfUnit::addConstantValue(DIE &Die, const ConstantInt *CI, DIType Ty) {
+  addConstantValue(Die, CI->getValue(), Ty);
 }
 
 /// addConstantValue - Add constant value entry in variable DIE.
@@ -850,6 +849,10 @@ void DwarfUnit::addConstantValue(DIE &Die, bool Signed, uint64_t Val) {
   // sign extended to 64 bits rather than minimizing the number of bytes.
   addUInt(Die, dwarf::DW_AT_const_value,
           Signed ? dwarf::DW_FORM_sdata : dwarf::DW_FORM_udata, Val);
+}
+
+void DwarfUnit::addConstantValue(DIE &Die, const APInt &Val, DIType Ty) {
+  addConstantValue(Die, Val, isUnsignedDIType(DD, Ty));
 }
 
 // addConstantValue - Add constant value entry in variable DIE.
@@ -1310,8 +1313,7 @@ DwarfUnit::constructTemplateValueParameterDIE(DIE &Buffer,
     addString(ParamDIE, dwarf::DW_AT_name, VP.getName());
   if (Value *Val = VP.getValue()) {
     if (ConstantInt *CI = dyn_cast<ConstantInt>(Val))
-      addConstantValue(ParamDIE, CI,
-                       isUnsignedDIType(DD, resolve(VP.getType())));
+      addConstantValue(ParamDIE, CI, resolve(VP.getType()));
     else if (GlobalValue *GV = dyn_cast<GlobalValue>(Val)) {
       // For declaration non-type template parameters (such as global values and
       // functions)
@@ -1617,7 +1619,7 @@ void DwarfCompileUnit::createGlobalVariableDIE(DIGlobalVariable GV) {
     // emitting AT_const_value multiple times, we only add AT_const_value when
     // it is not a static member.
     if (!IsStaticMember)
-      addConstantValue(*VariableDIE, CI, isUnsignedDIType(DD, GTy));
+      addConstantValue(*VariableDIE, CI, GTy);
   } else if (const ConstantExpr *CE = getMergedGlobalExpr(GV->getOperand(11))) {
     addToAccelTable = true;
     // GV is a merged global.
@@ -1804,7 +1806,7 @@ DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
       addConstantFPValue(*VariableDie, DVInsn->getOperand(0));
     else if (DVInsn->getOperand(0).isCImm())
       addConstantValue(*VariableDie, DVInsn->getOperand(0).getCImm(),
-                       isUnsignedDIType(DD, DV.getType()));
+                       DV.getType());
 
     return VariableDie;
   }
@@ -1948,7 +1950,7 @@ DIE *DwarfUnit::getOrCreateStaticMemberDIE(DIDerivedType DT) {
             dwarf::DW_ACCESS_public);
 
   if (const ConstantInt *CI = dyn_cast_or_null<ConstantInt>(DT.getConstant()))
-    addConstantValue(StaticMemberDIE, CI, isUnsignedDIType(DD, Ty));
+    addConstantValue(StaticMemberDIE, CI, Ty);
   if (const ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(DT.getConstant()))
     addConstantFPValue(StaticMemberDIE, CFP);
 

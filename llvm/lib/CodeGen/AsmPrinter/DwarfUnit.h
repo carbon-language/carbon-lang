@@ -348,7 +348,8 @@ public:
 
   /// addConstantValue - Add constant value entry in variable DIE.
   void addConstantValue(DIE &Die, const MachineOperand &MO, DIType Ty);
-  void addConstantValue(DIE &Die, const ConstantInt *CI, bool Unsigned);
+  void addConstantValue(DIE &Die, const ConstantInt *CI, DIType Ty);
+  void addConstantValue(DIE &Die, const APInt &Val, DIType Ty);
   void addConstantValue(DIE &Die, const APInt &Val, bool Unsigned);
   void addConstantValue(DIE &Die, bool Signed, uint64_t Val);
 
