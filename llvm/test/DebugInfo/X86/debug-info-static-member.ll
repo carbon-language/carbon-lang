@@ -114,7 +114,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; PRESENT:      DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "const_b"
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x02)
-; PRESENT:      DW_AT_const_value {{.*}} (0x4048f5c3)
+; PRESENT:      DW_AT_const_value [DW_FORM_udata] (1078523331)
 ; PRESENT:      0x[[DECL_C:[0-9a-f]+]]: DW_TAG_member
 ; PRESENT-NEXT: DW_AT_name {{.*}} "c"
 ; PRESENT:      DW_AT_accessibility [DW_FORM_data1]   (0x01)
@@ -164,7 +164,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; DARWINP:      DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "const_b"
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x02)
-; DARWINP:      DW_AT_const_value {{.*}} (0x4048f5c3)
+; DARWINP:      DW_AT_const_value [DW_FORM_udata] (1078523331)
 ; DARWINP:      0x[[DECL_C:[0-9a-f]+]]: DW_TAG_member
 ; DARWINP-NEXT: DW_AT_name {{.*}} "c"
 ; DARWINP:      DW_AT_accessibility [DW_FORM_data1]   (0x01)

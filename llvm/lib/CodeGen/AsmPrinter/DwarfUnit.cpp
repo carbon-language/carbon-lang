@@ -802,18 +802,6 @@ static uint64_t getBaseTypeSize(DwarfDebug *DD, DIDerivedType Ty) {
   return BaseType.getSizeInBits();
 }
 
-/// addConstantValue - Add constant value entry in variable DIE.
-void DwarfUnit::addConstantValue(DIE &Die, const MachineOperand &MO,
-                                 DIType Ty) {
-  // FIXME: This is a bit conservative/simple - it emits negative values at
-  // their maximum bit width which is a bit unfortunate.
-  assert(MO.isImm() && "Invalid machine operand!");
-
-  addUInt(Die, dwarf::DW_AT_const_value,
-          isTypeSigned(DD, Ty) ? dwarf::DW_FORM_sdata : dwarf::DW_FORM_udata,
-          MO.getImm());
-}
-
 /// addConstantFPValue - Add constant value entry in variable DIE.
 void DwarfUnit::addConstantFPValue(DIE &Die, const MachineOperand &MO) {
   assert(MO.isFPImm() && "Invalid machine operand!");
@@ -849,38 +837,26 @@ void DwarfUnit::addConstantValue(DIE &Die, const ConstantInt *CI,
   addConstantValue(Die, CI->getValue(), Unsigned);
 }
 
+/// addConstantValue - Add constant value entry in variable DIE.
+void DwarfUnit::addConstantValue(DIE &Die, const MachineOperand &MO,
+                                 DIType Ty) {
+  assert(MO.isImm() && "Invalid machine operand!");
+
+  addConstantValue(Die, isTypeSigned(DD, Ty), MO.getImm());
+}
+
+void DwarfUnit::addConstantValue(DIE &Die, bool Signed, uint64_t Val) {
+  // FIXME: This is a bit conservative/simple - it emits negative values always
+  // sign extended to 64 bits rather than minimizing the number of bytes.
+  addUInt(Die, dwarf::DW_AT_const_value,
+          Signed ? dwarf::DW_FORM_sdata : dwarf::DW_FORM_udata, Val);
+}
+
 // addConstantValue - Add constant value entry in variable DIE.
 void DwarfUnit::addConstantValue(DIE &Die, const APInt &Val, bool Unsigned) {
   unsigned CIBitWidth = Val.getBitWidth();
   if (CIBitWidth <= 64) {
-    // If we're a signed constant definitely use sdata.
-    if (!Unsigned) {
-      addSInt(Die, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata,
-              Val.getSExtValue());
-      return;
-    }
-
-    // Else use data for now unless it's larger than we can deal with.
-    dwarf::Form Form;
-    switch (CIBitWidth) {
-    case 8:
-      Form = dwarf::DW_FORM_data1;
-      break;
-    case 16:
-      Form = dwarf::DW_FORM_data2;
-      break;
-    case 32:
-      Form = dwarf::DW_FORM_data4;
-      break;
-    case 64:
-      Form = dwarf::DW_FORM_data8;
-      break;
-    default:
-      addUInt(Die, dwarf::DW_AT_const_value, dwarf::DW_FORM_udata,
-              Val.getZExtValue());
-      return;
-    }
-    addUInt(Die, dwarf::DW_AT_const_value, Form, Val.getZExtValue());
+    addConstantValue(Die, !Unsigned, Unsigned ? Val.getZExtValue() : Val.getSExtValue());
     return;
   }
 
