@@ -21,7 +21,7 @@ ELF-MIPS:   0x00000011 REL                  0x518
 ELF-MIPS:   0x00000012 RELSZ                16 (bytes)
 ELF-MIPS:   0x00000013 RELENT               8 (bytes)
 ELF-MIPS:   0x70000001 MIPS_RLD_VERSION     1
-ELF-MIPS:   0x70000005 MIPS_FLAGS           0x2
+ELF-MIPS:   0x70000005 MIPS_FLAGS           NOTPOT
 ELF-MIPS:   0x70000006 MIPS_BASE_ADDRESS    0x0
 ELF-MIPS:   0x7000000A MIPS_LOCAL_GOTNO     10
 ELF-MIPS:   0x70000011 MIPS_SYMTABNO        19
@@ -55,7 +55,7 @@ ELF-MIPS-EXE:   0x70000016 MIPS_RLD_MAP         0x410880
 ELF-MIPS-EXE:   0x00000015 DEBUG                0x0
 ELF-MIPS-EXE:   0x00000003 PLTGOT               0x410890
 ELF-MIPS-EXE:   0x70000001 MIPS_RLD_VERSION     1
-ELF-MIPS-EXE:   0x70000005 MIPS_FLAGS           0x2
+ELF-MIPS-EXE:   0x70000005 MIPS_FLAGS           NOTPOT
 ELF-MIPS-EXE:   0x70000006 MIPS_BASE_ADDRESS    0x400000
 ELF-MIPS-EXE:   0x7000000A MIPS_LOCAL_GOTNO     5
 ELF-MIPS-EXE:   0x70000011 MIPS_SYMTABNO        8
@@ -70,3 +70,44 @@ ELF-MIPS-EXE:   0x6FFFFFFF VERNEEDNUM           1
 ELF-MIPS-EXE:   0x6FFFFFF0 VERSYM               0x4003D8
 ELF-MIPS-EXE:   0x00000000 NULL                 0x0
 ELF-MIPS-EXE: ]
+
+RUN: llvm-readobj -dynamic-table %p/Inputs/dynamic-table-exe.x86 \
+RUN:     | FileCheck %s -check-prefix ELF-X86-EXE
+
+ELF-X86-EXE: Format: ELF32-i386
+ELF-X86-EXE: Arch: i386
+ELF-X86-EXE: AddressSize: 32bit
+ELF-X86-EXE: LoadName:
+ELF-X86-EXE: DynamicSection [ (30 entries)
+ELF-X86-EXE:   Tag        Type                 Name/Value
+ELF-X86-EXE:   0x00000001 NEEDED               SharedLibrary (libstdc++.so.6)
+ELF-X86-EXE:   0x00000001 NEEDED               SharedLibrary (libgcc_s.so.1)
+ELF-X86-EXE:   0x00000001 NEEDED               SharedLibrary (libc.so.6)
+ELF-X86-EXE:   0x0000000C INIT                 0x62C
+ELF-X86-EXE:   0x0000000D FINI                 0x920
+ELF-X86-EXE:   0x00000019 INIT_ARRAY           0x19FC
+ELF-X86-EXE:   0x0000001B INIT_ARRAYSZ         4 (bytes)
+ELF-X86-EXE:   0x0000001A FINI_ARRAY           0x1A00
+ELF-X86-EXE:   0x0000001C FINI_ARRAYSZ         4 (bytes)
+ELF-X86-EXE:   0x00000004 HASH                 0x18C
+ELF-X86-EXE:   0x6FFFFEF5 GNU_HASH             0x1E4
+ELF-X86-EXE:   0x00000005 STRTAB               0x328
+ELF-X86-EXE:   0x00000006 SYMTAB               0x218
+ELF-X86-EXE:   0x0000000A STRSZ                408 (bytes)
+ELF-X86-EXE:   0x0000000B SYMENT               16 (bytes)
+ELF-X86-EXE:   0x00000015 DEBUG                0x0
+ELF-X86-EXE:   0x00000003 PLTGOT               0x1B30
+ELF-X86-EXE:   0x00000002 PLTRELSZ             64 (bytes)
+ELF-X86-EXE:   0x00000014 PLTREL               REL
+ELF-X86-EXE:   0x00000017 JMPREL               0x5EC
+ELF-X86-EXE:   0x00000011 REL                  0x564
+ELF-X86-EXE:   0x00000012 RELSZ                136 (bytes)
+ELF-X86-EXE:   0x00000013 RELENT               8 (bytes)
+ELF-X86-EXE:   0x00000016 TEXTREL
+ELF-X86-EXE:   0x0000001E FLAGS                TEXTREL
+ELF-X86-EXE:   0x6FFFFFFE VERNEED              0x4E4
+ELF-X86-EXE:   0x6FFFFFFF VERNEEDNUM           3
+ELF-X86-EXE:   0x6FFFFFF0 VERSYM               0x4C0
+ELF-X86-EXE:   0x6FFFFFFA RELCOUNT             6
+ELF-X86-EXE:   0x00000000 NULL                 0x0
+ELF-X86-EXE: ]

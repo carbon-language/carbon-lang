@@ -1666,6 +1666,7 @@ enum {
   DT_LOPROC       = 0x70000000, // Start of processor specific tags.
   DT_HIPROC       = 0x7FFFFFFF, // End of processor specific tags.
 
+  DT_GNU_HASH     = 0x6FFFFEF5, // Reference to the GNU hash table.
   DT_RELACOUNT    = 0x6FFFFFF9, // ELF32_Rela count.
   DT_RELCOUNT     = 0x6FFFFFFA, // ELF32_Rel count.
 
