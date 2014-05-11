@@ -5458,7 +5458,12 @@ static SDValue LowerBuildVectorv4x32(SDValue Op, unsigned NumElems,
     return SDValue();
 
   SDValue V = FirstNonZero.getOperand(0);
-  unsigned FirstNonZeroDst = cast<ConstantSDNode>(FirstNonZero.getOperand(1))->getZExtValue();
+  MVT VVT = V.getSimpleValueType();
+  if (VVT != MVT::v4f32 && VVT != MVT::v4i32)
+    return SDValue();
+
+  unsigned FirstNonZeroDst =
+      cast<ConstantSDNode>(FirstNonZero.getOperand(1))->getZExtValue();
   unsigned CorrectIdx = FirstNonZeroDst == FirstNonZeroIdx;
   unsigned IncorrectIdx = CorrectIdx ? -1U : FirstNonZeroIdx;
   unsigned IncorrectDst = CorrectIdx ? -1U : FirstNonZeroDst;
@@ -5498,8 +5503,8 @@ static SDValue LowerBuildVectorv4x32(SDValue Op, unsigned NumElems,
     else
       ElementMoveMask = IncorrectDst << 6 | IncorrectIdx << 4;
 
-    SDValue InsertpsMask = DAG.getIntPtrConstant(
-        ElementMoveMask | (~NonZeros & 0xf));
+    SDValue InsertpsMask =
+        DAG.getIntPtrConstant(ElementMoveMask | (~NonZeros & 0xf));
     return DAG.getNode(X86ISD::INSERTPS, dl, VT, V, V, InsertpsMask);
   }
 

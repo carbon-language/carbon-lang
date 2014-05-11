@@ -314,3 +314,21 @@ define <2 x i64> @test_insert_64_zext(<2 x i64> %i) {
   %1 = shufflevector <2 x i64> %i, <2 x i64> <i64 0, i64 undef>, <2 x i32> <i32 0, i32 2>
   ret <2 x i64> %1
 }
+
+;; Ensure we don't use insertps from non v4x32 vectors.
+;; On SSE4.1 it works because bigger vectors use more than 1 register.
+;; On AVX they get passed in a single register.
+;; FIXME: We could probably optimize this case, if we're only using the
+;; first 4 indices.
+define <4 x i32> @insert_from_diff_size(<8 x i32> %x) {
+; CHECK-LABEL: insert_from_diff_size:
+; CHECK-NOT: insertps
+; CHECK: ret
+  %vecext = extractelement <8 x i32> %x, i32 0
+  %vecinit = insertelement <4 x i32> undef, i32 %vecext, i32 0
+  %vecinit1 = insertelement <4 x i32> %vecinit, i32 0, i32 1
+  %vecinit2 = insertelement <4 x i32> %vecinit1, i32 0, i32 2
+  %a.0 = extractelement <8 x i32> %x, i32 0
+  %vecinit3 = insertelement <4 x i32> %vecinit2, i32 %a.0, i32 3
+  ret <4 x i32> %vecinit3
+}
