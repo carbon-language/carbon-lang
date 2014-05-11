@@ -745,17 +745,6 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
   addBlock(Die, Attribute, Loc);
 }
 
-/// isTypeSigned - Return true if the type is signed.
-static bool isTypeSigned(DwarfDebug *DD, DIType Ty) {
-  if (Ty.isDerivedType())
-    return isTypeSigned(DD,
-                        DD->resolve(DIDerivedType(Ty).getTypeDerivedFrom()));
-
-  return Ty.isBasicType() &&
-         (DIBasicType(Ty).getEncoding() == dwarf::DW_ATE_signed ||
-          DIBasicType(Ty).getEncoding() == dwarf::DW_ATE_signed_char);
-}
-
 /// Return true if type encoding is unsigned.
 static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
   DIDerivedType DTy(Ty);
@@ -763,14 +752,17 @@ static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
     return isUnsignedDIType(DD, DD->resolve(DTy.getTypeDerivedFrom()));
 
   DIBasicType BTy(Ty);
-  if (BTy.isBasicType()) {
-    unsigned Encoding = BTy.getEncoding();
-    if (Encoding == dwarf::DW_ATE_unsigned ||
-        Encoding == dwarf::DW_ATE_unsigned_char ||
-        Encoding == dwarf::DW_ATE_boolean)
-      return true;
-  }
-  return false;
+  if (!BTy.isBasicType())
+    return false;
+  unsigned Encoding = BTy.getEncoding();
+  assert(Encoding == dwarf::DW_ATE_unsigned ||
+         Encoding == dwarf::DW_ATE_unsigned_char ||
+         Encoding == dwarf::DW_ATE_signed ||
+         Encoding == dwarf::DW_ATE_signed_char ||
+         Encoding == dwarf::DW_ATE_boolean && "Unsupported encoding");
+  return (Encoding == dwarf::DW_ATE_unsigned ||
+          Encoding == dwarf::DW_ATE_unsigned_char ||
+          Encoding == dwarf::DW_ATE_boolean);
 }
 
 /// If this type is derived from a base type then return base type size.
@@ -841,14 +833,14 @@ void DwarfUnit::addConstantValue(DIE &Die, const MachineOperand &MO,
                                  DIType Ty) {
   assert(MO.isImm() && "Invalid machine operand!");
 
-  addConstantValue(Die, isTypeSigned(DD, Ty), MO.getImm());
+  addConstantValue(Die, isUnsignedDIType(DD, Ty), MO.getImm());
 }
 
-void DwarfUnit::addConstantValue(DIE &Die, bool Signed, uint64_t Val) {
+void DwarfUnit::addConstantValue(DIE &Die, bool Unsigned, uint64_t Val) {
   // FIXME: This is a bit conservative/simple - it emits negative values always
   // sign extended to 64 bits rather than minimizing the number of bytes.
   addUInt(Die, dwarf::DW_AT_const_value,
-          Signed ? dwarf::DW_FORM_sdata : dwarf::DW_FORM_udata, Val);
+          Unsigned ? dwarf::DW_FORM_udata : dwarf::DW_FORM_sdata, Val);
 }
 
 void DwarfUnit::addConstantValue(DIE &Die, const APInt &Val, DIType Ty) {
@@ -859,7 +851,8 @@ void DwarfUnit::addConstantValue(DIE &Die, const APInt &Val, DIType Ty) {
 void DwarfUnit::addConstantValue(DIE &Die, const APInt &Val, bool Unsigned) {
   unsigned CIBitWidth = Val.getBitWidth();
   if (CIBitWidth <= 64) {
-    addConstantValue(Die, !Unsigned, Unsigned ? Val.getZExtValue() : Val.getSExtValue());
+    addConstantValue(Die, Unsigned,
+                     Unsigned ? Val.getZExtValue() : Val.getSExtValue());
     return;
   }
 
