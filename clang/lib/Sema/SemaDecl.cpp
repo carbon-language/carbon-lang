@@ -1219,8 +1219,7 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
         return false;
     } else {
       // 'static inline' functions are defined in headers; don't warn.
-      if (FD->isInlineSpecified() &&
-          !isMainFileLoc(*this, FD->getLocation()))
+      if (FD->isInlined() && !isMainFileLoc(*this, FD->getLocation()))
         return false;
     }
 
@@ -1245,6 +1244,8 @@ bool Sema::ShouldWarnIfUnusedFileScopedDecl(const DeclaratorDecl *D) const {
   }
 
   // Only warn for unused decls internal to the translation unit.
+  // FIXME: This seems like a bogus check; it suppresses -Wunused-function
+  // for inline functions defined in the main source file, for instance.
   return mightHaveNonExternalLinkage(D);
 }
 

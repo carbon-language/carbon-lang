@@ -32,6 +32,13 @@ namespace test7
   inline void bar(int, int) { }
 };
 
+namespace pr19713 {
+#if __cplusplus >= 201103L
+  static constexpr int constexpr1() { return 1; }
+  constexpr int constexpr2() { return 2; }
+#endif
+}
+
 #else
 #define HEADER
 #include "warn-unused-filescoped.cpp"
@@ -191,6 +198,14 @@ namespace test8 {
 static void func();
 void bar() { void func() __attribute__((used)); }
 static void func() {}
+}
+
+namespace pr19713 {
+#if __cplusplus >= 201103L
+  // FIXME: We should warn on both of these.
+  static constexpr int constexpr3() { return 1; } // expected-warning {{unused}}
+  constexpr int constexpr4() { return 2; }
+#endif
 }
 
 #endif
