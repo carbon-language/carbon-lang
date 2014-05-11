@@ -694,7 +694,7 @@ DerivedArgList *MachO::TranslateArgs(const DerivedArgList &Args,
       Arg *OriginalArg = A;
       unsigned Index = Args.getBaseArgs().MakeIndex(A->getValue(1));
       unsigned Prev = Index;
-      Arg *XarchArg = Opts.ParseOneArg(Args, Index);
+      std::unique_ptr<Arg> XarchArg(Opts.ParseOneArg(Args, Index));
 
       // If the argument parsing failed or more than one argument was
       // consumed, the -Xarch_ argument's parameter tried to consume
@@ -715,8 +715,8 @@ DerivedArgList *MachO::TranslateArgs(const DerivedArgList &Args,
       }
 
       XarchArg->setBaseArg(A);
-      A = XarchArg;
 
+      A = XarchArg.release();
       DAL->AddSynthesizedArg(A);
 
       // Linker input arguments require custom handling. The problem is that we
