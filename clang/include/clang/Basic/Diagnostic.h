@@ -132,6 +132,9 @@ public:
 /// the user. DiagnosticsEngine is tied to one translation unit and one
 /// SourceManager.
 class DiagnosticsEngine : public RefCountedBase<DiagnosticsEngine> {
+  DiagnosticsEngine(const DiagnosticsEngine &) LLVM_DELETED_FUNCTION;
+  void operator=(const DiagnosticsEngine &) LLVM_DELETED_FUNCTION;
+
 public:
   /// \brief The level of the diagnostic, after it has been through mapping.
   enum Level {

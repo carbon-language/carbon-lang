@@ -791,7 +791,7 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
 
     case DeclarationName::CXXLiteralOperatorName: {
       // FIXME: Was this added in VS2010? Does MS even know how to mangle this?
-      DiagnosticsEngine Diags = Context.getDiags();
+      DiagnosticsEngine &Diags = Context.getDiags();
       unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
         "cannot mangle this literal operator yet");
       Diags.Report(ND->getLocation(), DiagID);
@@ -822,7 +822,7 @@ void MicrosoftCXXNameMangler::mangleNestedName(const NamedDecl *ND) {
     }
 
     if (const BlockDecl *BD = dyn_cast<BlockDecl>(DC)) {
-      DiagnosticsEngine Diags = Context.getDiags();
+      DiagnosticsEngine &Diags = Context.getDiags();
       unsigned DiagID =
           Diags.getCustomDiagID(DiagnosticsEngine::Error,
                                 "cannot mangle a local inside this block yet");
