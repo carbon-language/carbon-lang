@@ -920,6 +920,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
+  if (Value *V = SimplifyVectorOp(I))
+    return ReplaceInstUsesWith(I, V);
+
   if (Value *V = SimplifyAddInst(LHS, RHS, I.hasNoSignedWrap(),
                                  I.hasNoUnsignedWrap(), DL))
     return ReplaceInstUsesWith(I, V);
@@ -1195,6 +1198,9 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
+  if (Value *V = SimplifyVectorOp(I))
+    return ReplaceInstUsesWith(I, V);
+
   if (Value *V = SimplifyFAddInst(LHS, RHS, I.getFastMathFlags(), DL))
     return ReplaceInstUsesWith(I, V);
 
@@ -1370,6 +1376,9 @@ Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
 Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
+  if (Value *V = SimplifyVectorOp(I))
+    return ReplaceInstUsesWith(I, V);
+
   if (Value *V = SimplifySubInst(Op0, Op1, I.hasNoSignedWrap(),
                                  I.hasNoUnsignedWrap(), DL))
     return ReplaceInstUsesWith(I, V);
@@ -1539,6 +1548,9 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
 Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  if (Value *V = SimplifyVectorOp(I))
+    return ReplaceInstUsesWith(I, V);
 
   if (Value *V = SimplifyFSubInst(Op0, Op1, I.getFastMathFlags(), DL))
     return ReplaceInstUsesWith(I, V);

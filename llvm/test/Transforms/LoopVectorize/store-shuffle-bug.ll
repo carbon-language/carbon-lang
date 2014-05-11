@@ -19,18 +19,13 @@ entry:
 
 ; CHECK-LABEL: @t(
 ; CHECK: vector.body:
-; CHECK: load <4 x i32>
-; CHECK: [[VAR1:%[a-zA-Z0-9]+]] = shufflevector
-; CHECK: load <4 x i32>
-; CHECK: [[VAR2:%[a-zA-Z0-9]+]] = shufflevector
+; CHECK: [[VAR1:%[a-zA-Z0-9.]+]] = load <4 x i32>
+; CHECK: [[VAR2:%[a-zA-Z0-9.]+]] = load <4 x i32>
 ; CHECK: [[VAR3:%[a-zA-Z0-9]+]] = add nsw <4 x i32> [[VAR2]], [[VAR1]]
-; CHECK: [[VAR4:%[a-zA-Z0-9]+]] = shufflevector <4 x i32> [[VAR3]]
-; CHECK: store <4 x i32> [[VAR4]]
-; CHECK: load <4 x i32>
-; CHECK: [[VAR5:%[a-zA-Z0-9]+]] = shufflevector
-; CHECK-NOT: add nsw <4 x i32> [[VAR4]], [[VAR5]]
-; CHECK-NOT: add nsw <4 x i32> [[VAR5]], [[VAR4]]
-; CHECK: add nsw <4 x i32> [[VAR3]], [[VAR5]]
+; CHECK: store <4 x i32> [[VAR3]]
+; CHECK: [[VAR4:%[a-zA-Z0-9.]+]] = load <4 x i32>
+; CHECK: add nsw <4 x i32> [[VAR3]], [[VAR4]]
+; CHECK-NOT: shufflevector
 
 for.body:
   %indvars.iv = phi i64 [ 93, %entry ], [ %indvars.iv.next, %for.body ]

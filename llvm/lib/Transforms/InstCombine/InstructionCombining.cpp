@@ -1083,6 +1083,100 @@ Value *InstCombiner::Descale(Value *Val, APInt Scale, bool &NoSignedWrap) {
   } while (1);
 }
 
+/// \brief Creates node of binary operation with the same attributes as the
+/// specified one but with other operands.
+static BinaryOperator *CreateBinOpAsGiven(BinaryOperator &Inst, Value *LHS,
+                                          Value *RHS,
+                                          InstCombiner::BuilderTy *B) {
+  BinaryOperator *NewBO = cast<BinaryOperator>(B->CreateBinOp(Inst.getOpcode(),
+                                                              LHS, RHS));
+  if (isa<OverflowingBinaryOperator>(NewBO)) {
+    NewBO->setHasNoSignedWrap(Inst.hasNoSignedWrap());
+    NewBO->setHasNoUnsignedWrap(Inst.hasNoUnsignedWrap());
+  }
+  if (isa<PossiblyExactOperator>(NewBO))
+    NewBO->setIsExact(Inst.isExact());
+  return NewBO;
+}
+
+/// \brief Makes transformation of binary operation specific for vector types.
+/// \param Inst Binary operator to transform.
+/// \return Pointer to node that must replace the original binary operator, or
+///         null pointer if no transformation was made.
+Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
+  if (!Inst.getType()->isVectorTy()) return nullptr;
+
+  unsigned VWidth = cast<VectorType>(Inst.getType())->getNumElements();
+  Value *LHS = Inst.getOperand(0), *RHS = Inst.getOperand(1);
+  assert(cast<VectorType>(LHS->getType())->getNumElements() == VWidth);
+  assert(cast<VectorType>(RHS->getType())->getNumElements() == VWidth);
+
+  // If both arguments of binary operation are shuffles, which use the same
+  // mask and shuffle within a single vector, it is worthwhile to move the
+  // shuffle after binary operation:
+  //   Op(shuffle(v1, m), shuffle(v2, m)) -> shuffle(Op(v1, v2), m)
+  if (isa<ShuffleVectorInst>(LHS) && isa<ShuffleVectorInst>(RHS)) {
+    ShuffleVectorInst *LShuf = cast<ShuffleVectorInst>(LHS);
+    ShuffleVectorInst *RShuf = cast<ShuffleVectorInst>(RHS);
+    if (isa<UndefValue>(LShuf->getOperand(1)) &&
+        isa<UndefValue>(RShuf->getOperand(1)) &&
+        LShuf->getMask() == RShuf->getMask()) {
+      BinaryOperator *NewBO = CreateBinOpAsGiven(Inst, LShuf->getOperand(0),
+          RShuf->getOperand(0), Builder);
+      Value *Res = Builder->CreateShuffleVector(NewBO,
+          UndefValue::get(Inst.getType()), LShuf->getMask());
+      return Res;
+    }
+  }
+
+  // If one argument is a shuffle within one vector, the other is a constant,
+  // try moving the shuffle after the binary operation.
+  ShuffleVectorInst *Shuffle = nullptr;
+  Constant *C1 = nullptr;
+  if (isa<ShuffleVectorInst>(LHS)) Shuffle = cast<ShuffleVectorInst>(LHS);
+  if (isa<ShuffleVectorInst>(RHS)) Shuffle = cast<ShuffleVectorInst>(RHS);
+  if (isa<Constant>(LHS)) C1 = cast<Constant>(LHS);
+  if (isa<Constant>(RHS)) C1 = cast<Constant>(RHS);
+  if (Shuffle && C1 && isa<UndefValue>(Shuffle->getOperand(1)) &&
+      Shuffle->getType() == Shuffle->getOperand(0)->getType()) {
+    SmallVector<int, 16> ShMask = Shuffle->getShuffleMask();
+    // Find constant C2 that has property:
+    //   shuffle(C2, ShMask) = C1
+    // If such constant does not exist (example: ShMask=<0,0> and C1=<1,2>)
+    // reorder is not possible.
+    SmallVector<Constant*, 16> C2M(VWidth,
+                               UndefValue::get(C1->getType()->getScalarType()));
+    bool MayChange = true;
+    for (unsigned I = 0; I < VWidth; ++I) {
+      if (ShMask[I] >= 0) {
+        assert(ShMask[I] < (int)VWidth);
+        if (!isa<UndefValue>(C2M[ShMask[I]])) {
+          MayChange = false;
+          break;
+        }
+        C2M[ShMask[I]] = C1->getAggregateElement(I);
+      }
+    }
+    if (MayChange) {
+      Constant *C2 = ConstantVector::get(C2M);
+      Value *NewLHS, *NewRHS;
+      if (isa<Constant>(LHS)) {
+        NewLHS = C2;
+        NewRHS = Shuffle->getOperand(0);
+      } else {
+        NewLHS = Shuffle->getOperand(0);
+        NewRHS = C2;
+      }
+      BinaryOperator *NewBO = CreateBinOpAsGiven(Inst, NewLHS, NewRHS, Builder);
+      Value *Res = Builder->CreateShuffleVector(NewBO,
+          UndefValue::get(Inst.getType()), Shuffle->getMask());
+      return Res;
+    }
+  }
+
+  return nullptr;
+}
+
 Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   SmallVector<Value*, 8> Ops(GEP.op_begin(), GEP.op_end());
 
