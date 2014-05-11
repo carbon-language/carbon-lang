@@ -3445,7 +3445,8 @@ SDValue ARM64TargetLowering::LowerFRAMEADDR(SDValue Op,
 
 // FIXME? Maybe this could be a TableGen attribute on some registers and
 // this table could be generated automatically from RegInfo.
-unsigned ARM64TargetLowering::getRegisterByName(const char* RegName) const {
+unsigned ARM64TargetLowering::getRegisterByName(const char* RegName,
+                                                EVT VT) const {
   unsigned Reg = StringSwitch<unsigned>(RegName)
                        .Case("sp", ARM64::SP)
                        .Default(0);
