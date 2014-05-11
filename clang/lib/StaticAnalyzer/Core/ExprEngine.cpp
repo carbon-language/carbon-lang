@@ -1352,6 +1352,7 @@ static SVal RecoverCastedSymbol(ProgramStateManager& StateMgr,
   return state->getSVal(Ex, LCtx);
 }
 
+#ifndef NDEBUG
 static const Stmt *getRightmostLeaf(const Stmt *Condition) {
   while (Condition) {
     const BinaryOperator *BO = dyn_cast<BinaryOperator>(Condition);
@@ -1362,6 +1363,7 @@ static const Stmt *getRightmostLeaf(const Stmt *Condition) {
   }
   return nullptr;
 }
+#endif
 
 // Returns the condition the branch at the end of 'B' depends on and whose value
 // has been evaluated within 'B'.
