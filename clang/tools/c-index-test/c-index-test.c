@@ -3894,6 +3894,7 @@ static void printDiagnosticSet(CXDiagnosticSet Diags, unsigned indent) {
     clang_disposeString(FileName);
     clang_disposeString(DiagSpelling);
     clang_disposeString(DiagOption);
+    clang_disposeString(DiagCat);
   }  
 }
 
