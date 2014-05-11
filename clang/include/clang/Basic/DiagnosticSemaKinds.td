@@ -234,8 +234,8 @@ def ext_implicit_function_decl : ExtWarn<
   InGroup<ImplicitFunctionDeclare>;
 def note_function_suggestion : Note<"did you mean %0?">;
 
-def err_ellipsis_first_arg : Error<
-  "ISO C requires a named argument before '...'">;
+def err_ellipsis_first_param : Error<
+  "ISO C requires a named parameter before '...'">;
 def err_declarator_need_ident : Error<"declarator requires an identifier">;
 def err_language_linkage_spec_unknown : Error<"unknown linkage language">;
 def err_language_linkage_spec_not_ascii : Error<
@@ -498,8 +498,8 @@ def err_opencl_half_load_store : Error<
 def err_opencl_cast_to_half : Error<"casting to type %0 is not allowed">;
 def err_opencl_half_declaration : Error<
   "declaring variable of type %0 is not allowed">;
-def err_opencl_half_argument : Error<
-  "declaring function argument of type %0 is not allowed; did you forget * ?">;
+def err_opencl_half_param : Error<
+  "declaring function parameter of type %0 is not allowed; did you forget * ?">;
 def err_opencl_half_return : Error<
   "declaring function return value of type %0 is not allowed; did you forget * ?">;
 def warn_enum_value_overflow : Warning<"overflow in enumeration value">;

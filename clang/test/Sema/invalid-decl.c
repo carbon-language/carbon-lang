@@ -46,3 +46,5 @@ void test2() { }
 void test3();
 void test3; // expected-error {{incomplete type}}
 void test3() { }
+
+void ellipsis1(...); // expected-error {{ISO C requires a named parameter before '...'}}

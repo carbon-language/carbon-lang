@@ -2868,7 +2868,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
           }
 
           if (!Overloadable)
-            S.Diag(FTI.getEllipsisLoc(), diag::err_ellipsis_first_arg);
+            S.Diag(FTI.getEllipsisLoc(), diag::err_ellipsis_first_param);
         }
 
         if (FTI.NumParams && FTI.Params[0].Param == 0) {
@@ -2891,10 +2891,10 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                     : FTI.RefQualifierIsLValueRef? RQ_LValue
                     : RQ_RValue;
 
-        // Otherwise, we have a function with an argument list that is
+        // Otherwise, we have a function with a parameter list that is
         // potentially variadic.
-        SmallVector<QualType, 16> ArgTys;
-        ArgTys.reserve(FTI.NumParams);
+        SmallVector<QualType, 16> ParamTys;
+        ParamTys.reserve(FTI.NumParams);
 
         SmallVector<bool, 16> ConsumedParameters;
         ConsumedParameters.reserve(FTI.NumParams);
@@ -2902,40 +2902,40 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
         for (unsigned i = 0, e = FTI.NumParams; i != e; ++i) {
           ParmVarDecl *Param = cast<ParmVarDecl>(FTI.Params[i].Param);
-          QualType ArgTy = Param->getType();
-          assert(!ArgTy.isNull() && "Couldn't parse type?");
+          QualType ParamTy = Param->getType();
+          assert(!ParamTy.isNull() && "Couldn't parse type?");
 
-          // Look for 'void'.  void is allowed only as a single argument to a
+          // Look for 'void'.  void is allowed only as a single parameter to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
-          // int(void) as a FunctionProtoType with an empty argument list.
-          if (ArgTy->isVoidType()) {
+          // int(void) as a FunctionProtoType with an empty parameter list.
+          if (ParamTy->isVoidType()) {
             // If this is something like 'float(int, void)', reject it.  'void'
             // is an incomplete type (C99 6.2.5p19) and function decls cannot
-            // have arguments of incomplete type.
+            // have parameters of incomplete type.
             if (FTI.NumParams != 1 || FTI.isVariadic) {
               S.Diag(DeclType.Loc, diag::err_void_only_param);
-              ArgTy = Context.IntTy;
-              Param->setType(ArgTy);
+              ParamTy = Context.IntTy;
+              Param->setType(ParamTy);
             } else if (FTI.Params[i].Ident) {
               // Reject, but continue to parse 'int(void abc)'.
               S.Diag(FTI.Params[i].IdentLoc, diag::err_param_with_void_type);
-              ArgTy = Context.IntTy;
-              Param->setType(ArgTy);
+              ParamTy = Context.IntTy;
+              Param->setType(ParamTy);
             } else {
               // Reject, but continue to parse 'float(const void)'.
-              if (ArgTy.hasQualifiers())
+              if (ParamTy.hasQualifiers())
                 S.Diag(DeclType.Loc, diag::err_void_param_qualified);
 
-              // Do not add 'void' to the ArgTys list.
+              // Do not add 'void' to the list.
               break;
             }
-          } else if (ArgTy->isHalfType()) {
-            // Disallow half FP arguments.
+          } else if (ParamTy->isHalfType()) {
+            // Disallow half FP parameters.
             // FIXME: This really should be in BuildFunctionType.
             if (S.getLangOpts().OpenCL) {
               if (!S.getOpenCLOptions().cl_khr_fp16) {
                 S.Diag(Param->getLocation(),
-                  diag::err_opencl_half_argument) << ArgTy;
+                  diag::err_opencl_half_param) << ParamTy;
                 D.setInvalidType();
                 Param->setInvalidDecl();
               }
@@ -2945,12 +2945,12 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
               D.setInvalidType();
             }
           } else if (!FTI.hasPrototype) {
-            if (ArgTy->isPromotableIntegerType()) {
-              ArgTy = Context.getPromotedIntegerType(ArgTy);
+            if (ParamTy->isPromotableIntegerType()) {
+              ParamTy = Context.getPromotedIntegerType(ParamTy);
               Param->setKNRPromoted(true);
-            } else if (const BuiltinType* BTy = ArgTy->getAs<BuiltinType>()) {
+            } else if (const BuiltinType* BTy = ParamTy->getAs<BuiltinType>()) {
               if (BTy->getKind() == BuiltinType::Float) {
-                ArgTy = Context.DoubleTy;
+                ParamTy = Context.DoubleTy;
                 Param->setKNRPromoted(true);
               }
             }
@@ -2962,7 +2962,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
             HasAnyConsumedParameters |= Consumed;
           }
 
-          ArgTys.push_back(ArgTy);
+          ParamTys.push_back(ParamTy);
         }
 
         if (HasAnyConsumedParameters)
@@ -2994,7 +2994,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                                       Exceptions,
                                       EPI);
 
-        T = Context.getFunctionType(T, ArgTys, EPI);
+        T = Context.getFunctionType(T, ParamTys, EPI);
       }
 
       break;

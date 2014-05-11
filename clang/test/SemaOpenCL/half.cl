@@ -3,7 +3,7 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : disable
 
 half half_disabled(half *p, // expected-error{{declaring function return value of type 'half' is not allowed}}
-                   half h)  // expected-error{{declaring function argument of type 'half' is not allowed}} 
+                   half h)  // expected-error{{declaring function parameter of type 'half' is not allowed}}
 {
   half a[2]; // expected-error{{declaring variable of type 'half [2]' is not allowed}}
   half b;    // expected-error{{declaring variable of type 'half' is not allowed}}
