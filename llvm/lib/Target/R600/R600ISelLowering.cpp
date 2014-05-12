@@ -1822,8 +1822,8 @@ FoldOperand(SDNode *ParentNode, unsigned SrcIdx, SDValue &Src, SDValue &Neg,
       if (RegisterSDNode *Reg =
           dyn_cast<RegisterSDNode>(ParentNode->getOperand(OtherSrcIdx))) {
         if (Reg->getReg() == AMDGPU::ALU_CONST) {
-          ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(
-              ParentNode->getOperand(OtherSelIdx));
+          ConstantSDNode *Cst
+            = cast<ConstantSDNode>(ParentNode->getOperand(OtherSelIdx));
           Consts.push_back(Cst->getZExtValue());
         }
       }
