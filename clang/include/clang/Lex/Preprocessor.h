@@ -373,7 +373,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   llvm::DenseMap<IdentifierInfo*, std::vector<MacroInfo*> > PragmaPushMacroInfo;
 
   // Various statistics we track for performance analysis.
-  unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
+  unsigned NumDirectives, NumDefined, NumUndefined, NumPragma;
   unsigned NumIf, NumElse, NumEndif;
   unsigned NumEnteredSourceFiles, MaxIncludeStackDepth;
   unsigned NumMacroExpanded, NumFnMacroExpanded, NumBuiltinMacroExpanded;
