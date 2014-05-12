@@ -5459,7 +5459,7 @@ static SDValue LowerBuildVectorv4x32(SDValue Op, unsigned NumElems,
 
   SDValue V = FirstNonZero.getOperand(0);
   MVT VVT = V.getSimpleValueType();
-  if (VVT != MVT::v4f32 && VVT != MVT::v4i32)
+  if (!Subtarget->hasSSE41() || (VVT != MVT::v4f32 && VVT != MVT::v4i32))
     return SDValue();
 
   unsigned FirstNonZeroDst =
