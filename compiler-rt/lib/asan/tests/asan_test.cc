@@ -138,6 +138,8 @@ TEST(AddressSanitizer, PvallocTest) {
 }
 #endif  // SANITIZER_TEST_HAS_PVALLOC
 
+#if !defined(_WIN32)
+// FIXME: Use an equivalent of pthread_setspecific on Windows.
 void *TSDWorker(void *test_key) {
   if (test_key) {
     pthread_setspecific(*(pthread_key_t*)test_key, (void*)0xfeedface);
@@ -167,6 +169,7 @@ TEST(AddressSanitizer, DISABLED_TSDTest) {
   PTHREAD_JOIN(th, NULL);
   pthread_key_delete(test_key);
 }
+#endif
 
 TEST(AddressSanitizer, UAF_char) {
   const char *uaf_string = "AddressSanitizer:.*heap-use-after-free";
@@ -421,12 +424,14 @@ void WrongFree() {
   free(x + 1);
 }
 
+#if !defined(_WIN32)  // FIXME: This should be a lit test.
 TEST(AddressSanitizer, WrongFreeTest) {
   EXPECT_DEATH(WrongFree(), ASAN_PCRE_DOTALL
                "ERROR: AddressSanitizer: attempting free.*not malloc"
                ".*is located 4 bytes inside of 400-byte region"
                ".*allocated by thread");
 }
+#endif
 
 void DoubleFree() {
   int *x = (int*)malloc(100 * sizeof(int));
@@ -437,6 +442,7 @@ void DoubleFree() {
   abort();
 }
 
+#if !defined(_WIN32)  // FIXME: This should be a lit test.
 TEST(AddressSanitizer, DoubleFreeTest) {
   EXPECT_DEATH(DoubleFree(), ASAN_PCRE_DOTALL
                "ERROR: AddressSanitizer: attempting double-free"
@@ -444,6 +450,7 @@ TEST(AddressSanitizer, DoubleFreeTest) {
                ".*freed by thread T0 here"
                ".*previously allocated by thread T0 here");
 }
+#endif
 
 template<int kSize>
 NOINLINE void SizedStackTest() {
@@ -628,7 +635,8 @@ TEST(AddressSanitizer, SigLongJmpTest) {
 }
 #endif
 
-#ifdef __EXCEPTIONS
+// FIXME: Why does clang-cl define __EXCEPTIONS?
+#if defined(__EXCEPTIONS) && !defined(_WIN32)
 NOINLINE void ThrowFunc() {
   // create three red zones for these two stack objects.
   int a;
@@ -695,12 +703,19 @@ TEST(AddressSanitizer, Store128Test) {
 }
 #endif
 
+// FIXME: All tests that use this function should be turned into lit tests.
 string RightOOBErrorMessage(int oob_distance, bool is_write) {
   assert(oob_distance >= 0);
   char expected_str[100];
   sprintf(expected_str, ASAN_PCRE_DOTALL
-          "buffer-overflow.*%s.*located %d bytes to the right",
-          is_write ? "WRITE" : "READ", oob_distance);
+#if !GTEST_USES_SIMPLE_RE
+          "buffer-overflow.*%s.*"
+#endif
+          "located %d bytes to the right",
+#if !GTEST_USES_SIMPLE_RE
+          is_write ? "WRITE" : "READ",
+#endif
+          oob_distance);
   return string(expected_str);
 }
 
@@ -712,11 +727,19 @@ string RightOOBReadMessage(int oob_distance) {
   return RightOOBErrorMessage(oob_distance, /*is_write*/false);
 }
 
+// FIXME: All tests that use this function should be turned into lit tests.
 string LeftOOBErrorMessage(int oob_distance, bool is_write) {
   assert(oob_distance > 0);
   char expected_str[100];
-  sprintf(expected_str, ASAN_PCRE_DOTALL "%s.*located %d bytes to the left",
-          is_write ? "WRITE" : "READ", oob_distance);
+  sprintf(expected_str,
+#if !GTEST_USES_SIMPLE_RE
+          ASAN_PCRE_DOTALL "%s.*"
+#endif
+          "located %d bytes to the left",
+#if !GTEST_USES_SIMPLE_RE
+          is_write ? "WRITE" : "READ",
+#endif
+          oob_distance);
   return string(expected_str);
 }
 
@@ -870,6 +893,7 @@ void ThreadedTestSpawn() {
   PTHREAD_JOIN(t, 0);
 }
 
+#if !defined(_WIN32)  // FIXME: This should be a lit test.
 TEST(AddressSanitizer, ThreadedTest) {
   EXPECT_DEATH(ThreadedTestSpawn(),
                ASAN_PCRE_DOTALL
@@ -877,6 +901,7 @@ TEST(AddressSanitizer, ThreadedTest) {
                ".*Thread T.*created"
                ".*Thread T.*created");
 }
+#endif
 
 void *ThreadedTestFunc(void *unused) {
   // Check if prctl(PR_SET_NAME) is supported. Return if not.
@@ -1071,7 +1096,8 @@ TEST(AddressSanitizer, PthreadExitTest) {
   }
 }
 
-#ifdef __EXCEPTIONS
+// FIXME: Why does clang-cl define __EXCEPTIONS?
+#if defined(__EXCEPTIONS) && !defined(_WIN32)
 NOINLINE static void StackReuseAndException() {
   int large_stack[1000];
   Ident(large_stack);
@@ -1089,12 +1115,14 @@ TEST(AddressSanitizer, DISABLED_StressStackReuseAndExceptionsTest) {
 }
 #endif
 
+#if !defined(_WIN32)
 TEST(AddressSanitizer, MlockTest) {
   EXPECT_EQ(0, mlockall(MCL_CURRENT));
   EXPECT_EQ(0, mlock((void*)0x12345, 0x5678));
   EXPECT_EQ(0, munlockall());
   EXPECT_EQ(0, munlock((void*)0x987, 0x654));
 }
+#endif
 
 struct LargeStruct {
   int foo[100];
@@ -1118,10 +1146,15 @@ TEST(AddressSanitizer, AttributeNoSanitizeAddressTest) {
   Ident(NoSanitizeAddress)();
 }
 
-// It doesn't work on Android, as calls to new/delete go through malloc/free.
-// Neither it does on OS X, see
-// https://code.google.com/p/address-sanitizer/issues/detail?id=131.
-#if !defined(ANDROID) && !defined(__ANDROID__) && !defined(__APPLE__)
+// The new/delete/etc mismatch checks don't work on Android,
+//   as calls to new/delete go through malloc/free.
+// OS X support is tracked here:
+//   https://code.google.com/p/address-sanitizer/issues/detail?id=131
+// Windows support is tracked here:
+//   https://code.google.com/p/address-sanitizer/issues/detail?id=309
+#if !defined(ANDROID) && !defined(__ANDROID__) && \
+    !defined(__APPLE__) && \
+    !defined(_WIN32)
 static string MismatchStr(const string &str) {
   return string("AddressSanitizer: alloc-dealloc-mismatch \\(") + str;
 }
@@ -1236,6 +1269,7 @@ TEST(AddressSanitizer, LongDoubleNegativeTest) {
   memcpy(Ident(&c), Ident(&b), sizeof(long double));
 }
 
+#if !defined(_WIN32)
 TEST(AddressSanitizer, pthread_getschedparam) {
   int policy;
   struct sched_param param;
@@ -1248,3 +1282,4 @@ TEST(AddressSanitizer, pthread_getschedparam) {
   int res = pthread_getschedparam(pthread_self(), &policy, &param);
   ASSERT_EQ(0, res);
 }
+#endif
