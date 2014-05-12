@@ -337,8 +337,7 @@ bool ScopDetection::isInvariant(const Value &Val, const Region &Reg) const {
   return true;
 }
 
-bool
-ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
+bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
   for (auto P : Context.NonAffineAccesses) {
     const SCEVUnknown *BasePointer = P.first;
     Value *BaseValue = BasePointer->getValue();
