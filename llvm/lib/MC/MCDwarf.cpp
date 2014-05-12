@@ -114,7 +114,7 @@ static inline const MCExpr *MakeStartMinusEndExpr(const MCStreamer &MCOS,
 // in the LineSection.
 //
 static inline void
-EmitDwarfLineTable(MCStreamer *MCOS, const MCSection *Section,
+EmitDwarfLineTable(MCObjectStreamer *MCOS, const MCSection *Section,
                    const MCLineSection::MCLineEntryCollection &LineEntries) {
   unsigned FileNum = 1;
   unsigned LastLine = 1;
@@ -923,20 +923,20 @@ namespace {
     void EmitCompactUnwind(MCStreamer &streamer,
                            const MCDwarfFrameInfo &frame);
 
-    const MCSymbol &EmitCIE(MCStreamer &streamer,
+    const MCSymbol &EmitCIE(MCObjectStreamer &streamer,
                             const MCSymbol *personality,
                             unsigned personalityEncoding,
                             const MCSymbol *lsda,
                             bool IsSignalFrame,
                             unsigned lsdaEncoding,
                             bool IsSimple);
-    MCSymbol *EmitFDE(MCStreamer &streamer,
+    MCSymbol *EmitFDE(MCObjectStreamer &streamer,
                       const MCSymbol &cieStart,
                       const MCDwarfFrameInfo &frame);
-    void EmitCFIInstructions(MCStreamer &streamer,
+    void EmitCFIInstructions(MCObjectStreamer &streamer,
                              ArrayRef<MCCFIInstruction> Instrs,
                              MCSymbol *BaseLabel);
-    void EmitCFIInstruction(MCStreamer &Streamer,
+    void EmitCFIInstruction(MCObjectStreamer &Streamer,
                             const MCCFIInstruction &Instr);
   };
 
@@ -987,7 +987,7 @@ static void EmitEncodingByte(MCStreamer &Streamer, unsigned Encoding,
   Streamer.EmitIntValue(Encoding, 1);
 }
 
-void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
+void FrameEmitterImpl::EmitCFIInstruction(MCObjectStreamer &Streamer,
                                           const MCCFIInstruction &Instr) {
   int dataAlignmentFactor = getDataAlignmentFactor(Streamer);
   bool VerboseAsm = Streamer.isVerboseAsm();
@@ -1139,7 +1139,7 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
 
 /// EmitFrameMoves - Emit frame instructions to describe the layout of the
 /// frame.
-void FrameEmitterImpl::EmitCFIInstructions(MCStreamer &streamer,
+void FrameEmitterImpl::EmitCFIInstructions(MCObjectStreamer &streamer,
                                            ArrayRef<MCCFIInstruction> Instrs,
                                            MCSymbol *BaseLabel) {
   for (unsigned i = 0, N = Instrs.size(); i < N; ++i) {
@@ -1234,7 +1234,7 @@ void FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
     Streamer.EmitIntValue(0, Size); // No LSDA
 }
 
-const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
+const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
                                           const MCSymbol *personality,
                                           unsigned personalityEncoding,
                                           const MCSymbol *lsda,
@@ -1351,7 +1351,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
   return *sectionStart;
 }
 
-MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
+MCSymbol *FrameEmitterImpl::EmitFDE(MCObjectStreamer &streamer,
                                     const MCSymbol &cieStart,
                                     const MCDwarfFrameInfo &frame) {
   MCContext &context = streamer.getContext();
