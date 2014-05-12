@@ -154,9 +154,6 @@ class MCStreamer {
   MCStreamer(const MCStreamer &) LLVM_DELETED_FUNCTION;
   MCStreamer &operator=(const MCStreamer &) LLVM_DELETED_FUNCTION;
 
-  bool EmitEHFrame;
-  bool EmitDebugFrame;
-
   std::vector<MCDwarfFrameInfo> FrameInfos;
   MCDwarfFrameInfo *getCurrentFrameInfo();
   MCSymbol *EmitCFICommon();
@@ -189,7 +186,6 @@ protected:
   virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
   void RecordProcEnd(MCDwarfFrameInfo &Frame);
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &CurFrame);
-  void EmitFrames(MCAsmBackend *MAB);
 
   MCWin64EHUnwindInfo *getCurrentW64UnwindInfo() {
     return CurrentW64UnwindInfo;

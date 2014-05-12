@@ -37,8 +37,7 @@ void MCTargetStreamer::finish() {}
 void MCTargetStreamer::emitAssignment(MCSymbol *Symbol, const MCExpr *Value) {}
 
 MCStreamer::MCStreamer(MCContext &Ctx)
-    : Context(Ctx), EmitEHFrame(true), EmitDebugFrame(false),
-      CurrentW64UnwindInfo(nullptr), LastSymbol(nullptr) {
+    : Context(Ctx), CurrentW64UnwindInfo(nullptr), LastSymbol(nullptr) {
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
 
@@ -51,8 +50,6 @@ void MCStreamer::reset() {
   for (unsigned i = 0; i < getNumW64UnwindInfos(); ++i)
     delete W64UnwindInfos[i];
   W64UnwindInfos.clear();
-  EmitEHFrame = true;
-  EmitDebugFrame = false;
   CurrentW64UnwindInfo = nullptr;
   LastSymbol = nullptr;
   SectionStack.clear();
@@ -259,8 +256,6 @@ void MCStreamer::EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding) {
 
 void MCStreamer::EmitCFISections(bool EH, bool Debug) {
   assert(EH || Debug);
-  EmitEHFrame = EH;
-  EmitDebugFrame = Debug;
 }
 
 void MCStreamer::EmitCFIStartProc(bool IsSimple) {
@@ -613,17 +608,6 @@ void MCStreamer::EmitRawTextImpl(StringRef String) {
 void MCStreamer::EmitRawText(const Twine &T) {
   SmallString<128> Str;
   EmitRawTextImpl(T.toStringRef(Str));
-}
-
-void MCStreamer::EmitFrames(MCAsmBackend *MAB) {
-  if (!getNumFrameInfos())
-    return;
-
-  if (EmitEHFrame)
-    MCDwarfFrameEmitter::Emit(*this, MAB, true);
-
-  if (EmitDebugFrame)
-    MCDwarfFrameEmitter::Emit(*this, MAB, false);
 }
 
 void MCStreamer::EmitW64Tables() {

@@ -35,6 +35,8 @@ class MCObjectStreamer : public MCStreamer {
   MCAssembler *Assembler;
   MCSectionData *CurSectionData;
   MCSectionData::iterator CurInsertionPoint;
+  bool EmitEHFrame;
+  bool EmitDebugFrame;
 
   virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo&) = 0;
   void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) override;
@@ -57,6 +59,8 @@ public:
   MCSymbolData &getOrCreateSymbolData(const MCSymbol *Symbol) {
     return getAssembler().getOrCreateSymbolData(*Symbol);
   }
+  void EmitFrames(MCAsmBackend *MAB);
+  void EmitCFISections(bool EH, bool Debug) override;
 
 protected:
   MCSectionData *getCurrentSectionData() const {

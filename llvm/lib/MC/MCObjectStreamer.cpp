@@ -27,12 +27,13 @@ MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
     : MCStreamer(Context),
       Assembler(new MCAssembler(Context, TAB, *Emitter_,
                                 *TAB.createObjectWriter(OS), OS)),
-      CurSectionData(nullptr) {}
+      CurSectionData(nullptr), EmitEHFrame(true), EmitDebugFrame(false) {}
 
 MCObjectStreamer::MCObjectStreamer(MCContext &Context, MCAsmBackend &TAB,
                                    raw_ostream &OS, MCCodeEmitter *Emitter_,
                                    MCAssembler *_Assembler)
-    : MCStreamer(Context), Assembler(_Assembler), CurSectionData(nullptr) {}
+    : MCStreamer(Context), Assembler(_Assembler), CurSectionData(nullptr),
+      EmitEHFrame(true), EmitDebugFrame(false) {}
 
 MCObjectStreamer::~MCObjectStreamer() {
   delete &Assembler->getBackend();
@@ -46,7 +47,20 @@ void MCObjectStreamer::reset() {
     Assembler->reset();
   CurSectionData = nullptr;
   CurInsertionPoint = MCSectionData::iterator();
+  EmitEHFrame = true;
+  EmitDebugFrame = false;
   MCStreamer::reset();
+}
+
+void MCObjectStreamer::EmitFrames(MCAsmBackend *MAB) {
+  if (!getNumFrameInfos())
+    return;
+
+  if (EmitEHFrame)
+    MCDwarfFrameEmitter::Emit(*this, MAB, true);
+
+  if (EmitDebugFrame)
+    MCDwarfFrameEmitter::Emit(*this, MAB, false);
 }
 
 MCFragment *MCObjectStreamer::getCurrentFragment() const {
@@ -95,6 +109,12 @@ const MCExpr *MCObjectStreamer::AddValueSymbols(const MCExpr *Value) {
   }
 
   return Value;
+}
+
+void MCObjectStreamer::EmitCFISections(bool EH, bool Debug) {
+  MCStreamer::EmitCFISections(EH, Debug);
+  EmitEHFrame = EH;
+  EmitDebugFrame = Debug;
 }
 
 void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
