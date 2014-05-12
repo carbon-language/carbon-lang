@@ -724,6 +724,44 @@ public:
     return isMovWSymbol(Variants);
   }
 
+  template<int RegWidth, int Shift>
+  bool isMOVZMovAlias() const {
+    if (!isImm()) return false;
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    uint64_t Value = CE->getValue();
+
+    if (RegWidth == 32)
+      Value &= 0xffffffffULL;
+
+    // "lsl #0" takes precedence: in practice this only affects "#0, lsl #0".
+    if (Value == 0 && Shift != 0)
+      return false;
+
+    return (Value & ~(0xffffULL << Shift)) == 0;
+  }
+
+  template<int RegWidth, int Shift>
+  bool isMOVNMovAlias() const {
+    if (!isImm()) return false;
+
+    const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getImm());
+    if (!CE) return false;
+    uint64_t Value = CE->getValue();
+
+    // MOVZ takes precedence over MOVN.
+    for (int MOVZShift = 0; MOVZShift <= 48; MOVZShift += 16)
+      if ((Value & ~(0xffffULL << MOVZShift)) == 0)
+        return false;
+
+    Value = ~Value;
+    if (RegWidth == 32)
+      Value &= 0xffffffffULL;
+
+    return (Value & ~(0xffffULL << Shift)) == 0;
+  }
+
   bool isFPImm() const { return Kind == k_FPImm; }
   bool isBarrier() const { return Kind == k_Barrier; }
   bool isSysReg() const { return Kind == k_SysReg; }
@@ -1471,6 +1509,24 @@ public:
     if (ET == ARM64_AM::LSL) ET = ARM64_AM::UXTX;
     unsigned Imm = ARM64_AM::getArithExtendImm(ET, getShiftExtendAmount());
     Inst.addOperand(MCOperand::CreateImm(Imm));
+  }
+
+  template<int Shift>
+  void addMOVZMovAliasOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    const MCConstantExpr *CE = cast<MCConstantExpr>(getImm());
+    uint64_t Value = CE->getValue();
+    Inst.addOperand(MCOperand::CreateImm((Value >> Shift) & 0xffff));
+  }
+
+  template<int Shift>
+  void addMOVNMovAliasOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+
+    const MCConstantExpr *CE = cast<MCConstantExpr>(getImm());
+    uint64_t Value = CE->getValue();
+    Inst.addOperand(MCOperand::CreateImm((~Value >> Shift) & 0xffff));
   }
 
   void addMemoryRegisterOffsetOperands(MCInst &Inst, unsigned N, bool DoShift) {
@@ -3723,63 +3779,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   StringRef Tok = Op->getToken();
   unsigned NumOperands = Operands.size();
 
-  if (Tok == "mov" && NumOperands == 3) {
-    // The MOV mnemomic is aliased to movn/movz, depending on the value of
-    // the immediate being instantiated.
-    // FIXME: Catching this here is a total hack, and we should use tblgen
-    // support to implement this instead as soon as it is available.
-
-    ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
-    if (Op2->isImm()) {
-      if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op2->getImm())) {
-        uint64_t Val = CE->getValue();
-        uint64_t NVal = ~Val;
-
-        // If this is a 32-bit register and the value has none of the upper
-        // set, clear the complemented upper 32-bits so the logic below works
-        // for 32-bit registers too.
-        ARM64Operand *Op1 = static_cast<ARM64Operand *>(Operands[1]);
-        if (Op1->isReg() &&
-            ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(
-                Op1->getReg()) &&
-            (Val & 0xFFFFFFFFULL) == Val)
-          NVal &= 0x00000000FFFFFFFFULL;
-
-        // MOVK Rd, imm << 0
-        if ((Val & 0xFFFF) == Val)
-          rewriteMOVI(Operands, "movz", Val, 0, getContext());
-
-        // MOVK Rd, imm << 16
-        else if ((Val & 0xFFFF0000ULL) == Val)
-          rewriteMOVI(Operands, "movz", Val, 16, getContext());
-
-        // MOVK Rd, imm << 32
-        else if ((Val & 0xFFFF00000000ULL) == Val)
-          rewriteMOVI(Operands, "movz", Val, 32, getContext());
-
-        // MOVK Rd, imm << 48
-        else if ((Val & 0xFFFF000000000000ULL) == Val)
-          rewriteMOVI(Operands, "movz", Val, 48, getContext());
-
-        // MOVN Rd, (~imm << 0)
-        else if ((NVal & 0xFFFFULL) == NVal)
-          rewriteMOVI(Operands, "movn", NVal, 0, getContext());
-
-        // MOVN Rd, ~(imm << 16)
-        else if ((NVal & 0xFFFF0000ULL) == NVal)
-          rewriteMOVI(Operands, "movn", NVal, 16, getContext());
-
-        // MOVN Rd, ~(imm << 32)
-        else if ((NVal & 0xFFFF00000000ULL) == NVal)
-          rewriteMOVI(Operands, "movn", NVal, 32, getContext());
-
-        // MOVN Rd, ~(imm << 48)
-        else if ((NVal & 0xFFFF000000000000ULL) == NVal)
-          rewriteMOVI(Operands, "movn", NVal, 48, getContext());
-      }
-    }
-  } else if (NumOperands == 4) {
-    if (NumOperands == 4 && Tok == "lsl") {
+  if (NumOperands == 4 && Tok == "lsl") {
       ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
       ARM64Operand *Op3 = static_cast<ARM64Operand *>(Operands[3]);
       if (Op2->isReg() && Op3->isImm()) {
@@ -3812,7 +3812,6 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
           delete Op;
         }
       }
-
       // FIXME: Horrible hack to handle the optional LSL shift for vector
       //        instructions.
     } else if (NumOperands == 4 && (Tok == "bic" || Tok == "orr")) {

@@ -1322,6 +1322,7 @@ def movimm64_shift : Operand<i32> {
   let PrintMethod = "printShifter";
   let ParserMatchClass = MovImm64ShifterOperand;
 }
+
 let mayLoad = 0, mayStore = 0, hasSideEffects = 0 in
 class BaseMoveImmediate<bits<2> opc, RegisterClass regtype, Operand shifter,
                         string asm>

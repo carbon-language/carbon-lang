@@ -365,6 +365,7 @@ defm MOVN : MoveImmediate<0b00, "movn">;
 let PostEncoderMethod = "fixMOVZ" in
 defm MOVZ : MoveImmediate<0b10, "movz">;
 
+// First group of aliases covers an implicit "lsl #0".
 def : InstAlias<"movk $dst, $imm", (MOVKWi GPR32:$dst, imm0_65535:$imm, 0)>;
 def : InstAlias<"movk $dst, $imm", (MOVKXi GPR64:$dst, imm0_65535:$imm, 0)>;
 def : InstAlias<"movn $dst, $imm", (MOVNWi GPR32:$dst, imm0_65535:$imm, 0)>;
@@ -372,6 +373,7 @@ def : InstAlias<"movn $dst, $imm", (MOVNXi GPR64:$dst, imm0_65535:$imm, 0)>;
 def : InstAlias<"movz $dst, $imm", (MOVZWi GPR32:$dst, imm0_65535:$imm, 0)>;
 def : InstAlias<"movz $dst, $imm", (MOVZXi GPR64:$dst, imm0_65535:$imm, 0)>;
 
+// Next, we have various ELF relocations with the ":XYZ_g0:sym" syntax.
 def : InstAlias<"movz $Rd, $sym", (MOVZXi GPR64:$Rd, movz_symbol_g3:$sym, 48)>;
 def : InstAlias<"movz $Rd, $sym", (MOVZXi GPR64:$Rd, movz_symbol_g2:$sym, 32)>;
 def : InstAlias<"movz $Rd, $sym", (MOVZXi GPR64:$Rd, movz_symbol_g1:$sym, 16)>;
@@ -395,6 +397,40 @@ def : InstAlias<"movn $Rd, $sym", (MOVNWi GPR32:$Rd, movz_symbol_g0:$sym, 0)>;
 
 def : InstAlias<"movk $Rd, $sym", (MOVKWi GPR32:$Rd, movk_symbol_g1:$sym, 16)>;
 def : InstAlias<"movk $Rd, $sym", (MOVKWi GPR32:$Rd, movk_symbol_g0:$sym, 0)>;
+
+// Final group of aliases covers true "mov $Rd, $imm" cases.
+multiclass movw_mov_alias<string basename,Instruction INST, RegisterClass GPR,
+                          int width, int shift> {
+  def _asmoperand : AsmOperandClass {
+    let Name = basename # width # "_lsl" # shift # "MovAlias";
+    let PredicateMethod = "is" # basename # "MovAlias<" # width # ", "
+                               # shift # ">";
+    let RenderMethod = "add" # basename # "MovAliasOperands<" # shift # ">";
+  }
+
+  def _movimm : Operand<i32> {
+    let ParserMatchClass = !cast<AsmOperandClass>(NAME # "_asmoperand");
+  }
+
+  def : InstAlias<"mov $Rd, $imm",
+                  (INST GPR:$Rd, !cast<Operand>(NAME # "_movimm"):$imm, shift)>;
+}
+
+defm : movw_mov_alias<"MOVZ", MOVZWi, GPR32, 32, 0>;
+defm : movw_mov_alias<"MOVZ", MOVZWi, GPR32, 32, 16>;
+
+defm : movw_mov_alias<"MOVZ", MOVZXi, GPR64, 64, 0>;
+defm : movw_mov_alias<"MOVZ", MOVZXi, GPR64, 64, 16>;
+defm : movw_mov_alias<"MOVZ", MOVZXi, GPR64, 64, 32>;
+defm : movw_mov_alias<"MOVZ", MOVZXi, GPR64, 64, 48>;
+
+defm : movw_mov_alias<"MOVN", MOVNWi, GPR32, 32, 0>;
+defm : movw_mov_alias<"MOVN", MOVNWi, GPR32, 32, 16>;
+
+defm : movw_mov_alias<"MOVN", MOVNXi, GPR64, 64, 0>;
+defm : movw_mov_alias<"MOVN", MOVNXi, GPR64, 64, 16>;
+defm : movw_mov_alias<"MOVN", MOVNXi, GPR64, 64, 32>;
+defm : movw_mov_alias<"MOVN", MOVNXi, GPR64, 64, 48>;
 
 let isReMaterializable = 1, isCodeGenOnly = 1, isMoveImm = 1,
     isAsCheapAsAMove = 1 in {
