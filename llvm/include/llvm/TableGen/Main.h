@@ -23,7 +23,6 @@ class raw_ostream;
 typedef bool TableGenMainFn(raw_ostream &OS, RecordKeeper &Records);
 
 int TableGenMain(char *argv0, TableGenMainFn *MainFn);
-
 }
 
 #endif

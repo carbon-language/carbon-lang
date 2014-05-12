@@ -25,8 +25,8 @@ namespace llvm {
 class StringToOffsetTable {
   StringMap<unsigned> StringOffset;
   std::string AggregateString;
+
 public:
-  
   unsigned GetOrAddStringOffset(StringRef Str, bool appendZero = true) {
     StringMapEntry<unsigned> &Entry = StringOffset.GetOrCreateValue(Str, -1U);
     if (Entry.getValue() == -1U) {
@@ -36,10 +36,10 @@ public:
       if (appendZero)
         AggregateString += '\0';
     }
-    
+
     return Entry.getValue();
   }
-  
+
   void EmitString(raw_ostream &O) {
     // Escape the string.
     SmallString<256> Str;
@@ -55,11 +55,11 @@ public:
       }
       O << AggregateString[i];
       ++CharsPrinted;
-      
+
       // Print escape sequences all together.
       if (AggregateString[i] != '\\')
         continue;
-      
+
       assert(i+1 < AggregateString.size() && "Incomplete escape sequence!");
       if (isdigit(AggregateString[i+1])) {
         assert(isdigit(AggregateString[i+2]) && 

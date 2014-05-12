@@ -34,7 +34,6 @@ LLVM_ATTRIBUTE_NORETURN void PrintFatalError(ArrayRef<SMLoc> ErrorLoc,
 extern SourceMgr SrcMgr;
 extern unsigned ErrorsPrinted;
 
-
 } // end namespace "llvm"
 
 #endif
