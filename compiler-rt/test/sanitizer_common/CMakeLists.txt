@@ -3,8 +3,17 @@ set(SANITIZER_COMMON_LIT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(SANITIZER_COMMON_TEST_DEPS ${SANITIZER_COMMON_LIT_TEST_DEPS})
 set(SANITIZER_COMMON_TESTSUITES)
 
+set(SUPPORTED_TOOLS)
+if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux|FreeBSD" AND NOT ANDROID)
+  list(APPEND SUPPORTED_TOOLS asan)
+endif()
+if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND NOT ANDROID)
+  list(APPEND SUPPORTED_TOOLS tsan)
+  list(APPEND SUPPORTED_TOOLS msan)
+endif()
+
 # Create a separate config for each tool we support.
-foreach(tool asan tsan msan)
+foreach(tool ${SUPPORTED_TOOLS})
   string(TOUPPER ${tool} tool_toupper)
   if(${tool_toupper}_SUPPORTED_ARCH)
     set(SANITIZER_COMMON_LIT_TEST_MODE ${tool})
