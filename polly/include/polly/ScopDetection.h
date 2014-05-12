@@ -102,7 +102,7 @@ class ScopDetection : public FunctionPass {
     bool Verifying;      // If we are in the verification phase?
 
     // Map a base pointer to all access functions accessing it.
-    BaseToAFs NonAffineAccesses;
+    BaseToAFs NonAffineAccesses, AffineAccesses;
 
     DetectionContext(Region &R, AliasAnalysis &AA, bool Verify)
         : CurRegion(R), AST(AA), Verifying(Verify) {}
@@ -120,10 +120,10 @@ class ScopDetection : public FunctionPass {
   FunctionSet InvalidFunctions;
   mutable std::string LastFailure;
 
-  // Delinearize all non affine memory accesses and return true when there
-  // exists a non affine memory access that cannot be delinearized. Return
-  // false when all array accesses are affine after delinearization.
-  bool hasNonAffineMemoryAccesses(DetectionContext &Context) const;
+  // Delinearize all non affine memory accesses and return false when there
+  // exists a non affine memory access that cannot be delinearized. Return true
+  // when all array accesses are affine after delinearization.
+  bool hasAffineMemoryAccesses(DetectionContext &Context) const;
 
   // Try to expand the region R. If R can be expanded return the expanded
   // region, NULL otherwise.
