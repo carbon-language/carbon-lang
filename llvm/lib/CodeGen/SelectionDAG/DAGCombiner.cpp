@@ -167,6 +167,7 @@ namespace {
 
     bool CombineToPreIndexedLoadStore(SDNode *N);
     bool CombineToPostIndexedLoadStore(SDNode *N);
+    SDValue SplitIndexingFromLoad(LoadSDNode *LD);
     bool SliceUpLoad(SDNode *N);
 
     void ReplaceLoadWithPromotedLoad(SDNode *Load, SDNode *ExtLoad);
@@ -761,10 +762,14 @@ CommitTargetLoweringOpt(const TargetLowering::TargetLoweringOpt &TLO) {
 
     // If the operands of this node are only used by the node, they will now
     // be dead.  Make sure to visit them first to delete dead nodes early.
-    for (unsigned i = 0, e = TLO.Old.getNode()->getNumOperands(); i != e; ++i)
-      if (TLO.Old.getNode()->getOperand(i).getNode()->hasOneUse())
-        AddToWorkList(TLO.Old.getNode()->getOperand(i).getNode());
-
+    for (unsigned i = 0, e = TLO.Old.getNode()->getNumOperands(); i != e; ++i) {
+      SDNode *Op = TLO.Old.getNode()->getOperand(i).getNode();
+      // For an operand generating multiple values, one of the values may
+      // become dead allowing further simplification (e.g. split index
+      // arithmetic from an indexed load).
+      if (Op->hasOneUse() || Op->getNumValues() > 1)
+        AddToWorkList(Op);
+    }
     DAG.DeleteNode(TLO.Old.getNode());
   }
 }
@@ -7844,6 +7849,17 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
   return false;
 }
 
+/// \brief Return the base-pointer arithmetic from an indexed \p LD.
+SDValue DAGCombiner::SplitIndexingFromLoad(LoadSDNode *LD) {
+  ISD::MemIndexedMode AM = LD->getAddressingMode();
+  assert(AM != ISD::UNINDEXED);
+  SDValue BP = LD->getOperand(1);
+  SDValue Inc = LD->getOperand(2);
+  unsigned Opc =
+      (AM == ISD::PRE_INC || AM == ISD::POST_INC ? ISD::ADD : ISD::SUB);
+  return DAG.getNode(Opc, SDLoc(LD), BP.getSimpleValueType(), BP, Inc);
+}
+
 SDValue DAGCombiner::visitLOAD(SDNode *N) {
   LoadSDNode *LD  = cast<LoadSDNode>(N);
   SDValue Chain = LD->getChain();
@@ -7880,8 +7896,16 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
     } else {
       // Indexed loads.
       assert(N->getValueType(2) == MVT::Other && "Malformed indexed loads?");
-      if (!N->hasAnyUseOfValue(0) && !N->hasAnyUseOfValue(1)) {
+      if (!N->hasAnyUseOfValue(0)) {
         SDValue Undef = DAG.getUNDEF(N->getValueType(0));
+        SDValue Index;
+        if (N->hasAnyUseOfValue(1)) {
+          Index = SplitIndexingFromLoad(LD);
+          // Try to fold the base pointer arithmetic into subsequent loads and
+          // stores.
+          AddUsersToWorkList(N);
+        } else
+          Index = DAG.getUNDEF(N->getValueType(1));
         DEBUG(dbgs() << "\nReplacing.7 ";
               N->dump(&DAG);
               dbgs() << "\nWith: ";
@@ -7889,8 +7913,7 @@ SDValue DAGCombiner::visitLOAD(SDNode *N) {
               dbgs() << " and 2 other values\n");
         WorkListRemover DeadNodes(*this);
         DAG.ReplaceAllUsesOfValueWith(SDValue(N, 0), Undef);
-        DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1),
-                                      DAG.getUNDEF(N->getValueType(1)));
+        DAG.ReplaceAllUsesOfValueWith(SDValue(N, 1), Index);
         DAG.ReplaceAllUsesOfValueWith(SDValue(N, 2), Chain);
         removeFromWorkList(N);
         DAG.DeleteNode(N);
