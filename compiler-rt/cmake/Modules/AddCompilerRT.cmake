@@ -137,7 +137,9 @@ macro(add_compiler_rt_test test_suite test_name)
     list(APPEND TEST_DEPS clang)
   endif()
   add_custom_target(${test_name}
-    COMMAND ${COMPILER_RT_TEST_COMPILER} ${TEST_OBJECTS} -o "${output_bin}"
+    # MSVS CL doesn't allow a space between -Fe and the output file name.
+    COMMAND ${COMPILER_RT_TEST_COMPILER} ${TEST_OBJECTS}
+            ${COMPILER_RT_TEST_COMPILER_EXE}"${output_bin}"
             ${TEST_LINK_FLAGS}
     DEPENDS ${TEST_DEPS})
   # Make the test suite depend on the binary.

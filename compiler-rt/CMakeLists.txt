@@ -57,8 +57,17 @@ if (NOT COMPILER_RT_STANDALONE_BUILD)
          ${LLVM_INCLUDE_TESTS})
  option(COMPILER_RT_ENABLE_WERROR "Fail and stop if warning is triggered"
         ${LLVM_ENABLE_WERROR})
-  # Use just-built Clang to compile/link tests.
-  set(COMPILER_RT_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang)
+  # Use just-built Clang to compile/link tests on all platforms, except for
+  # Windows where we need to use clang-cl instead.
+  if(NOT MSVC)
+    set(COMPILER_RT_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang)
+    set(COMPILER_RT_TEST_COMPILER_EXE "-o")
+    set(COMPILER_RT_TEST_COMPILER_OBJ "-o")
+  else()
+    set(COMPILER_RT_TEST_COMPILER ${LLVM_RUNTIME_OUTPUT_INTDIR}/clang-cl.exe)
+    set(COMPILER_RT_TEST_COMPILER_EXE "-Fe")
+    set(COMPILER_RT_TEST_COMPILER_OBJ "-Fo")
+  endif()
 else()
   # Take output dir and install path from the user.
   set(COMPILER_RT_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH

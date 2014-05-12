@@ -23,7 +23,9 @@ macro(clang_compile object_file source)
   set(compile_flags ${global_flags} ${SOURCE_CFLAGS})
   add_custom_command(
     OUTPUT ${object_file}
-    COMMAND ${COMPILER_RT_TEST_COMPILER} ${compile_flags} -c -o "${object_file}"
+    # MSVS CL doesn't allow a space between -Fo and the object file name.
+    COMMAND ${COMPILER_RT_TEST_COMPILER} ${compile_flags} -c
+            ${COMPILER_RT_TEST_COMPILER_OBJ}"${object_file}"
             ${source_rpath}
     MAIN_DEPENDENCY ${source}
     DEPENDS ${SOURCE_DEPS})
