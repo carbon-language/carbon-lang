@@ -480,7 +480,7 @@ def fsanitize_EQ : CommaJoined<["-"], "fsanitize=">, Group<f_clang_Group>,
                             "undefined (miscellaneous undefined behavior)">;
 def fno_sanitize_EQ : CommaJoined<["-"], "fno-sanitize=">, Group<f_clang_Group>;
 def fsanitize_blacklist : Joined<["-"], "fsanitize-blacklist=">,
-                          Group<f_clang_Group>, Flags<[CC1Option]>,
+                          Group<f_clang_Group>, Flags<[CC1Option, CoreOption]>,
                           HelpText<"Path to blacklist file for sanitizers">;
 def fno_sanitize_blacklist : Flag<["-"], "fno-sanitize-blacklist">,
                              Group<f_clang_Group>,
@@ -1025,7 +1025,7 @@ def mios_simulator_version_min_EQ : Joined<["-"], "mios-simulator-version-min=">
 def mkernel : Flag<["-"], "mkernel">, Group<m_Group>;
 def mlinker_version_EQ : Joined<["-"], "mlinker-version=">,
   Flags<[DriverOption]>;
-def mllvm : Separate<["-"], "mllvm">, Flags<[CC1Option]>,
+def mllvm : Separate<["-"], "mllvm">, Flags<[CC1Option, CoreOption]>,
   HelpText<"Additional arguments to forward to LLVM's option processing">;
 def mmacosx_version_min_EQ : Joined<["-"], "mmacosx-version-min=">, Group<m_Group>;
 def mms_bitfields : Flag<["-"], "mms-bitfields">, Group<m_Group>, Flags<[CC1Option]>,
