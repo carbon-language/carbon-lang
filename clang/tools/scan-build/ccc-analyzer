@@ -353,6 +353,7 @@ my %CompilerLinkerOptionMap = (
   '-m32' => 0,
   '-m64' => 0,
   '-stdlib' => 0, # This is really a 1 argument, but always has '='
+  '--sysroot' => 1,
   '-target' => 1,
   '-v' => 0,
   '-mmacosx-version-min' => 0, # This is really a 1 argument, but always has '='
