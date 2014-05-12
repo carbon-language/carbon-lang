@@ -30,6 +30,7 @@
 namespace llvm {
 class MCAsmBackend;
 class MCContext;
+class MCObjectStreamer;
 class MCSection;
 class MCStreamer;
 class MCSymbol;
@@ -147,7 +148,7 @@ public:
   // This is called when an instruction is assembled into the specified
   // section and if there is information from the last .loc directive that
   // has yet to have a line entry made for it is made.
-  static void Make(MCStreamer *MCOS, const MCSection *Section);
+  static void Make(MCObjectStreamer *MCOS, const MCSection *Section);
 };
 
 /// MCLineSection - Instances of this class represent the line information
@@ -210,10 +211,10 @@ class MCDwarfLineTable {
 
 public:
   // This emits the Dwarf file and the line tables for all Compile Units.
-  static void Emit(MCStreamer *MCOS);
+  static void Emit(MCObjectStreamer *MCOS);
 
   // This emits the Dwarf file and the line tables for a given Compile Unit.
-  void EmitCU(MCStreamer *MCOS) const;
+  void EmitCU(MCObjectStreamer *MCOS) const;
 
   unsigned getFile(StringRef &Directory, StringRef &FileName,
                    unsigned FileNumber = 0);
@@ -485,8 +486,8 @@ public:
   //
   // This emits the frame info section.
   //
-  static void Emit(MCStreamer &streamer, MCAsmBackend *MAB, bool isEH);
-  static void EmitAdvanceLoc(MCStreamer &Streamer, uint64_t AddrDelta);
+  static void Emit(MCObjectStreamer &streamer, MCAsmBackend *MAB, bool isEH);
+  static void EmitAdvanceLoc(MCObjectStreamer &Streamer, uint64_t AddrDelta);
   static void EncodeAdvanceLoc(MCContext &Context, uint64_t AddrDelta,
                                raw_ostream &OS);
 };

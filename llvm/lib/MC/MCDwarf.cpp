@@ -17,8 +17,8 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCRegisterInfo.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -63,7 +63,7 @@ static inline uint64_t ScaleAddrDelta(MCContext &Context, uint64_t AddrDelta) {
 // and if there is information from the last .loc directive that has yet to have
 // a line entry made for it is made.
 //
-void MCLineEntry::Make(MCStreamer *MCOS, const MCSection *Section) {
+void MCLineEntry::Make(MCObjectStreamer *MCOS, const MCSection *Section) {
   if (!MCOS->getContext().getDwarfLocSeen())
     return;
 
@@ -205,7 +205,7 @@ EmitDwarfLineTable(MCStreamer *MCOS, const MCSection *Section,
 //
 // This emits the Dwarf file and the line tables.
 //
-void MCDwarfLineTable::Emit(MCStreamer *MCOS) {
+void MCDwarfLineTable::Emit(MCObjectStreamer *MCOS) {
   MCContext &context = MCOS->getContext();
 
   auto &LineTables = context.getMCDwarfLineTables();
@@ -319,7 +319,7 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS,
   return std::make_pair(LineStartSym, LineEndSym);
 }
 
-void MCDwarfLineTable::EmitCU(MCStreamer *MCOS) const {
+void MCDwarfLineTable::EmitCU(MCObjectStreamer *MCOS) const {
   MCSymbol *LineEndSym = Header.Emit(MCOS).second;
 
   // Put out the line tables.
@@ -1476,7 +1476,7 @@ namespace llvm {
   };
 }
 
-void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
+void MCDwarfFrameEmitter::Emit(MCObjectStreamer &Streamer, MCAsmBackend *MAB,
                                bool IsEH) {
   Streamer.generateCompactUnwindEncodings(MAB);
 
@@ -1553,7 +1553,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
     Streamer.EmitLabel(FDEEnd);
 }
 
-void MCDwarfFrameEmitter::EmitAdvanceLoc(MCStreamer &Streamer,
+void MCDwarfFrameEmitter::EmitAdvanceLoc(MCObjectStreamer &Streamer,
                                          uint64_t AddrDelta) {
   MCContext &Context = Streamer.getContext();
   SmallString<256> Tmp;
