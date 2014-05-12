@@ -146,8 +146,6 @@ def MipsSDR : SDNode<"MipsISD::SDR", SDTStore,
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def HasBitCount :     Predicate<"Subtarget.hasBitCount()">,
-                      AssemblerPredicate<"FeatureBitCount">;
 def HasMips2     :    Predicate<"Subtarget.hasMips2()">,
                       AssemblerPredicate<"FeatureMips2">;
 def HasMips3_32  :    Predicate<"Subtarget.hasMips3_32()">,
@@ -210,7 +208,9 @@ class GPR_64 { list<Predicate> GPRPredicates = [IsGP64bit]; }
 
 class ISA_MIPS2    { list<Predicate> InsnPredicates = [HasMips2]; }
 class ISA_MIPS3    { list<Predicate> InsnPredicates = [HasMips3]; }
+class ISA_MIPS32   { list<Predicate> InsnPredicates = [HasMips32]; }
 class ISA_MIPS32R2 { list<Predicate> InsnPredicates = [HasMips32r2]; }
+class ISA_MIPS64   { list<Predicate> InsnPredicates = [HasMips64]; }
 class ISA_MIPS64R2 { list<Predicate> InsnPredicates = [HasMips64r2]; }
 
 // The portions of MIPS-III that were also added to MIPS32
@@ -823,13 +823,11 @@ class EffectiveAddress<string opstr, RegisterOperand RO> :
 // Count Leading Ones/Zeros in Word
 class CountLeading0<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-         [(set RO:$rd, (ctlz RO:$rs))], II_CLZ, FrmR, opstr>,
-  AdditionalRequires<[HasBitCount]>;
+         [(set RO:$rd, (ctlz RO:$rs))], II_CLZ, FrmR, opstr>;
 
 class CountLeading1<string opstr, RegisterOperand RO>:
   InstSE<(outs RO:$rd), (ins RO:$rs), !strconcat(opstr, "\t$rd, $rs"),
-         [(set RO:$rd, (ctlz (not RO:$rs)))], II_CLO, FrmR, opstr>,
-  AdditionalRequires<[HasBitCount]>;
+         [(set RO:$rd, (ctlz (not RO:$rs)))], II_CLO, FrmR, opstr>;
 
 // Sign Extend in Register.
 class SignExtInReg<string opstr, ValueType vt, RegisterOperand RO,
@@ -1166,8 +1164,8 @@ def SEH : MMRel, SignExtInReg<"seh", i16, GPR32Opnd, II_SEH>,
           SEB_FM<0x18, 0x20>, ISA_MIPS32R2;
 
 /// Count Leading
-def CLZ : MMRel, CountLeading0<"clz", GPR32Opnd>, CLO_FM<0x20>;
-def CLO : MMRel, CountLeading1<"clo", GPR32Opnd>, CLO_FM<0x21>;
+def CLZ : MMRel, CountLeading0<"clz", GPR32Opnd>, CLO_FM<0x20>, ISA_MIPS32;
+def CLO : MMRel, CountLeading1<"clo", GPR32Opnd>, CLO_FM<0x21>, ISA_MIPS32;
 
 /// Word Swap Bytes Within Halfwords
 def WSBH : MMRel, SubwordSwap<"wsbh", GPR32Opnd>, SEB_FM<2, 0x20>, ISA_MIPS32R2;

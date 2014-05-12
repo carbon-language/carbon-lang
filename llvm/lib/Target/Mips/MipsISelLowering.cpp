@@ -357,10 +357,11 @@ MipsTargetLowering::MipsTargetLowering(MipsTargetMachine &TM)
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
   }
 
-  if (!Subtarget->hasBitCount()) {
+  // MIPS16 lacks MIPS32's clz and clo instructions.
+  if (!Subtarget->hasMips32() || Subtarget->inMips16Mode())
     setOperationAction(ISD::CTLZ, MVT::i32, Expand);
+  if (!Subtarget->hasMips64())
     setOperationAction(ISD::CTLZ, MVT::i64, Expand);
-  }
 
   if (!Subtarget->hasMips32r2())
     setOperationAction(ISD::BSWAP, MVT::i32, Expand);

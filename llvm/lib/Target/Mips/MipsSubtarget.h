@@ -88,9 +88,6 @@ protected:
   // HasMips4_32r2 - Has the subset of MIPS-IV present in MIPS32r2
   bool HasMips4_32r2;
 
-  // HasBitCount - Count leading '1' and '0' bits.
-  bool HasBitCount;
-
   // InMips16 -- can process Mips16 instructions
   bool InMips16Mode;
 
@@ -208,7 +205,6 @@ public:
   }
 
   /// Features related to the presence of specific instructions.
-  bool hasBitCount()  const { return HasBitCount; }
   bool hasExtractInsert() const { return !inMips16Mode() && hasMips32r2(); }
 
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }

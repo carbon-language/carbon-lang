@@ -81,7 +81,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
       MipsABI(UnknownABI), IsLittle(little), IsSingleFloat(false),
       IsFP64bit(false), IsNaN2008bit(false), IsGP64bit(false), HasVFPU(false),
       HasCnMips(false), IsLinux(true), HasMips3_32(false), HasMips4_32(false),
-      HasMips4_32r2(false), HasBitCount(false), InMips16Mode(false),
+      HasMips4_32r2(false), InMips16Mode(false),
       InMips16HardFloat(Mips16HardFloat), InMicroMipsMode(false), HasDSP(false),
       HasDSPR2(false), AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
       HasMSA(false), RM(_RM), OverrideMode(NoOverride), TM(_TM),
@@ -154,9 +154,6 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   // TODO: Investigate the IsLinux check. I suspect it's really checking for
   //       bare-metal.
   UseSmallSection = !IsLinux && (RM == Reloc::Static);
-  // set some subtarget specific features
-  if (inMips16Mode())
-    HasBitCount=false;
 }
 
 bool
