@@ -807,7 +807,8 @@ public:
     // lsl is an alias for UXTW but will be a parsed as a k_Shifter operand.
     if (isShifter()) {
       ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
-      return ST == ARM64_AM::LSL;
+      return ST == ARM64_AM::LSL &&
+             ARM64_AM::getShiftValue(Shifter.Val) <= 4;
     }
     return Kind == k_Extend && ARM64_AM::getArithShiftValue(Shifter.Val) <= 4;
   }
@@ -823,7 +824,8 @@ public:
     // lsl is an alias for UXTX but will be a parsed as a k_Shifter operand.
     if (isShifter()) {
       ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
-      return ST == ARM64_AM::LSL;
+      return ST == ARM64_AM::LSL &&
+             ARM64_AM::getShiftValue(Shifter.Val) <= 4;
     }
     if (Kind != k_Extend)
       return false;
@@ -832,13 +834,15 @@ public:
            ARM64_AM::getArithShiftValue(Shifter.Val) <= 4;
   }
 
+  template <unsigned width>
   bool isArithmeticShifter() const {
     if (!isShifter())
       return false;
 
     // An arithmetic shifter is LSL, LSR, or ASR.
     ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
-    return ST == ARM64_AM::LSL || ST == ARM64_AM::LSR || ST == ARM64_AM::ASR;
+    return (ST == ARM64_AM::LSL || ST == ARM64_AM::LSR ||
+           ST == ARM64_AM::ASR) && ARM64_AM::getShiftValue(Shifter.Val) < width;
   }
 
   bool isMovImm32Shifter() const {
@@ -2454,7 +2458,6 @@ ARM64AsmParser::tryParseOptionalShift(OperandVector &Operands) {
     return MatchOperand_ParseFail;
   }
 
-  SMLoc ExprLoc = getLoc();
   const MCExpr *ImmVal;
   if (getParser().parseExpression(ImmVal))
     return MatchOperand_ParseFail;
@@ -2465,14 +2468,19 @@ ARM64AsmParser::tryParseOptionalShift(OperandVector &Operands) {
     return MatchOperand_ParseFail;
   }
 
+  SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
+
+  // If we have an shift that is too large to encode then crudely pass it
+  // through as an invalid shift that is encodable so that we get consistant
+  // diagnostics rather than ones different from out of range 32-bit shifts.
   if ((MCE->getValue() & 0x3f) != MCE->getValue()) {
-    Error(ExprLoc, "immediate value too large for shifter operand");
-    return MatchOperand_ParseFail;
+    Operands.push_back(ARM64Operand::CreateShifter(ARM64_AM::InvalidShift, 0, S,
+                                                   E, getContext()));
+  } else {
+    Operands.push_back(ARM64Operand::CreateShifter(ShOp, MCE->getValue(), S,
+                                                   E, getContext()));
   }
 
-  SMLoc E = SMLoc::getFromPointer(getLoc().getPointer() - 1);
-  Operands.push_back(
-      ARM64Operand::CreateShifter(ShOp, MCE->getValue(), S, E, getContext()));
   return MatchOperand_Success;
 }
 

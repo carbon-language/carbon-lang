@@ -176,7 +176,7 @@ foo:
 ; Where the immediate is out of range.
   add w1, w2, w3, lsr #75
 
-; CHECK-ERRORS: error: immediate value too large for shifter operand
+; CHECK-ERRORS: error: expected 'sxtx' 'uxtx' or 'lsl' with optional integer in range [0, 4]
 ; CHECK-ERRORS: add w1, w2, w3, lsr #75
 ; CHECK-ERRORS:                      ^
 

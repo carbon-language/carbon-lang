@@ -107,72 +107,56 @@ foo:
   add x12, x13, x14
   add w12, w13, w14, lsl #12
   add x12, x13, x14, lsl #12
-  add w12, w13, w14, lsr #42
   add x12, x13, x14, lsr #42
-  add w12, w13, w14, asr #39
   add x12, x13, x14, asr #39
 
 ; CHECK: add w12, w13, w14           ; encoding: [0xac,0x01,0x0e,0x0b]
 ; CHECK: add x12, x13, x14           ; encoding: [0xac,0x01,0x0e,0x8b]
 ; CHECK: add w12, w13, w14, lsl #12  ; encoding: [0xac,0x31,0x0e,0x0b]
 ; CHECK: add x12, x13, x14, lsl #12  ; encoding: [0xac,0x31,0x0e,0x8b]
-; CHECK: add w12, w13, w14, lsr #42  ; encoding: [0xac,0xa9,0x4e,0x0b]
 ; CHECK: add x12, x13, x14, lsr #42  ; encoding: [0xac,0xa9,0x4e,0x8b]
-; CHECK: add w12, w13, w14, asr #39  ; encoding: [0xac,0x9d,0x8e,0x0b]
 ; CHECK: add x12, x13, x14, asr #39  ; encoding: [0xac,0x9d,0x8e,0x8b]
 
   sub w12, w13, w14
   sub x12, x13, x14
   sub w12, w13, w14, lsl #12
   sub x12, x13, x14, lsl #12
-  sub w12, w13, w14, lsr #42
   sub x12, x13, x14, lsr #42
-  sub w12, w13, w14, asr #39
   sub x12, x13, x14, asr #39
 
 ; CHECK: sub w12, w13, w14           ; encoding: [0xac,0x01,0x0e,0x4b]
 ; CHECK: sub x12, x13, x14           ; encoding: [0xac,0x01,0x0e,0xcb]
 ; CHECK: sub w12, w13, w14, lsl #12  ; encoding: [0xac,0x31,0x0e,0x4b]
 ; CHECK: sub x12, x13, x14, lsl #12  ; encoding: [0xac,0x31,0x0e,0xcb]
-; CHECK: sub w12, w13, w14, lsr #42  ; encoding: [0xac,0xa9,0x4e,0x4b]
 ; CHECK: sub x12, x13, x14, lsr #42  ; encoding: [0xac,0xa9,0x4e,0xcb]
-; CHECK: sub w12, w13, w14, asr #39  ; encoding: [0xac,0x9d,0x8e,0x4b]
 ; CHECK: sub x12, x13, x14, asr #39  ; encoding: [0xac,0x9d,0x8e,0xcb]
 
   adds w12, w13, w14
   adds x12, x13, x14
   adds w12, w13, w14, lsl #12
   adds x12, x13, x14, lsl #12
-  adds w12, w13, w14, lsr #42
   adds x12, x13, x14, lsr #42
-  adds w12, w13, w14, asr #39
   adds x12, x13, x14, asr #39
 
 ; CHECK: adds w12, w13, w14          ; encoding: [0xac,0x01,0x0e,0x2b]
 ; CHECK: adds x12, x13, x14          ; encoding: [0xac,0x01,0x0e,0xab]
 ; CHECK: adds w12, w13, w14, lsl #12 ; encoding: [0xac,0x31,0x0e,0x2b]
 ; CHECK: adds x12, x13, x14, lsl #12 ; encoding: [0xac,0x31,0x0e,0xab]
-; CHECK: adds w12, w13, w14, lsr #42 ; encoding: [0xac,0xa9,0x4e,0x2b]
 ; CHECK: adds x12, x13, x14, lsr #42 ; encoding: [0xac,0xa9,0x4e,0xab]
-; CHECK: adds w12, w13, w14, asr #39 ; encoding: [0xac,0x9d,0x8e,0x2b]
 ; CHECK: adds x12, x13, x14, asr #39 ; encoding: [0xac,0x9d,0x8e,0xab]
 
   subs w12, w13, w14
   subs x12, x13, x14
   subs w12, w13, w14, lsl #12
   subs x12, x13, x14, lsl #12
-  subs w12, w13, w14, lsr #42
   subs x12, x13, x14, lsr #42
-  subs w12, w13, w14, asr #39
   subs x12, x13, x14, asr #39
 
 ; CHECK: subs w12, w13, w14          ; encoding: [0xac,0x01,0x0e,0x6b]
 ; CHECK: subs x12, x13, x14          ; encoding: [0xac,0x01,0x0e,0xeb]
 ; CHECK: subs w12, w13, w14, lsl #12 ; encoding: [0xac,0x31,0x0e,0x6b]
 ; CHECK: subs x12, x13, x14, lsl #12 ; encoding: [0xac,0x31,0x0e,0xeb]
-; CHECK: subs w12, w13, w14, lsr #42 ; encoding: [0xac,0xa9,0x4e,0x6b]
 ; CHECK: subs x12, x13, x14, lsr #42 ; encoding: [0xac,0xa9,0x4e,0xeb]
-; CHECK: subs w12, w13, w14, asr #39 ; encoding: [0xac,0x9d,0x8e,0x6b]
 ; CHECK: subs x12, x13, x14, asr #39 ; encoding: [0xac,0x9d,0x8e,0xeb]
 
 ; Check use of upper case register names rdar://14354073

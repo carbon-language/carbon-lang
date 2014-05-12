@@ -100,7 +100,7 @@ def MovImm64ShifterOperand : AsmOperandClass {
 class ArithmeticShifterOperand<int width> : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
   let Name = "ArithmeticShifter" # width;
-  let PredicateMethod = "isArithmeticShifter";
+  let PredicateMethod = "isArithmeticShifter<" # width # ">";
   let RenderMethod = "addArithmeticShifterOperands";
   let DiagnosticType = "AddSubRegShift" # width;
 }
