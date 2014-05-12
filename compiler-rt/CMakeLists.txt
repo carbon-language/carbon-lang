@@ -80,6 +80,8 @@ else()
   option(COMPILER_RT_ENABLE_WERROR "Fail and stop if warning is triggered" OFF)
   # Use a host compiler to compile/link tests.
   set(COMPILER_RT_TEST_COMPILER ${CMAKE_C_COMPILER} CACHE PATH "Compiler to use for testing")
+  set(COMPILER_RT_TEST_COMPILER_EXE "-o")
+  set(COMPILER_RT_TEST_COMPILER_OBJ "-o")
 
   if (NOT LLVM_CONFIG_PATH)
     find_program(LLVM_CONFIG_PATH "llvm-config"
