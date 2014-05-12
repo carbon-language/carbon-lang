@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+include "Mips32r6InstrFormats.td"
+
 // Notes about removals/changes from MIPS32r6:
 // Unclear: ssnop
 // Reencoded: cache, pref
@@ -51,6 +53,41 @@
 // Removed: swxc1
 // Removed: teqi, tgei, tgeiu, tlti, tltiu, tnei
 // Rencoded: [ls][wd]c2
+
+//===----------------------------------------------------------------------===//
+//
+// Instruction Encodings
+//
+//===----------------------------------------------------------------------===//
+
+class MUH_ENC    : SPECIAL_3R_FM<0b00011, 0b011000>;
+class MUHU_ENC   : SPECIAL_3R_FM<0b00011, 0b011001>;
+class MUL_R6_ENC : SPECIAL_3R_FM<0b00010, 0b011000>;
+class MULU_ENC   : SPECIAL_3R_FM<0b00010, 0b011001>;
+
+//===----------------------------------------------------------------------===//
+//
+// Instruction Descriptions
+//
+//===----------------------------------------------------------------------===//
+
+class MUL_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+  dag OutOperandList = (outs GPROpnd:$rd);
+  dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt");
+  list<dag> Pattern = [];
+}
+
+class MUH_DESC    : MUL_R6_DESC_BASE<"muh", GPR32Opnd>;
+class MUHU_DESC   : MUL_R6_DESC_BASE<"muhu", GPR32Opnd>;
+class MUL_R6_DESC : MUL_R6_DESC_BASE<"mul", GPR32Opnd>;
+class MULU_DESC   : MUL_R6_DESC_BASE<"mulu", GPR32Opnd>;
+
+//===----------------------------------------------------------------------===//
+//
+// Instruction Definitions
+//
+//===----------------------------------------------------------------------===//
 
 def ADDIUPC;
 def ALIGN; // Known as as BALIGN in DSP ASE
@@ -106,10 +143,10 @@ def MIN_D;
 def MOD;
 def MODU;
 def MSUBF;
-def MUH;
-def MUHU;
-def MUL_R6; // Not to be confused with the old mul
-def MULU;
+def MUH    : MUH_ENC, MUH_DESC, ISA_MIPS32R6;
+def MUHU   : MUHU_ENC, MUHU_DESC, ISA_MIPS32R6;
+def MUL_R6 : MUL_R6_ENC, MUL_R6_DESC, ISA_MIPS32R6;
+def MULU   : MULU_ENC, MULU_DESC, ISA_MIPS32R6;
 def NAL; // BAL with rd=0
 def RINT_D;
 def RINT_S;

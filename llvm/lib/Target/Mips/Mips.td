@@ -125,7 +125,8 @@ def FeatureMips64r2    : SubtargetFeature<"mips64r2", "MipsArchVersion",
 def FeatureMips64r6    : SubtargetFeature<"mips64r6", "MipsArchVersion",
                                 "Mips64r6",
                                 "Mips64r6 ISA Support [experimental]",
-                                [FeatureMips64r2, FeatureNaN2008]>;
+                                [FeatureMips32r6, FeatureMips64r2,
+                                 FeatureNaN2008]>;
 
 def FeatureMips16  : SubtargetFeature<"mips16", "InMips16Mode", "true",
                                       "Mips16 mode">;

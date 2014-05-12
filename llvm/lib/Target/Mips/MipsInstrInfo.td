@@ -162,6 +162,8 @@ def HasMips32    :    Predicate<"Subtarget.hasMips32()">,
                       AssemblerPredicate<"FeatureMips32">;
 def HasMips32r2  :    Predicate<"Subtarget.hasMips32r2()">,
                       AssemblerPredicate<"FeatureMips32r2">;
+def HasMips32r6  :    Predicate<"Subtarget.hasMips32r6()">,
+                      AssemblerPredicate<"FeatureMips32r6">;
 def IsGP64bit    :    Predicate<"Subtarget.isGP64bit()">,
                       AssemblerPredicate<"FeatureGP64Bit">;
 def IsGP32bit    :    Predicate<"!Subtarget.isGP64bit()">,
@@ -174,6 +176,8 @@ def IsGP64       :    Predicate<"Subtarget.isGP64()">,
                       AssemblerPredicate<"FeatureGP64Bit">;
 def HasMips64r2  :    Predicate<"Subtarget.hasMips64r2()">,
                       AssemblerPredicate<"FeatureMips64r2">;
+def HasMips64r6  :    Predicate<"Subtarget.hasMips64r6()">,
+                      AssemblerPredicate<"FeatureMips64r6">;
 def IsN64       :     Predicate<"Subtarget.isABI_N64()">,
                       AssemblerPredicate<"FeatureN64">;
 def InMips16Mode :    Predicate<"Subtarget.inMips16Mode()">,
@@ -214,6 +218,8 @@ class ISA_MIPS32   { list<Predicate> InsnPredicates = [HasMips32]; }
 class ISA_MIPS32R2 { list<Predicate> InsnPredicates = [HasMips32r2]; }
 class ISA_MIPS64   { list<Predicate> InsnPredicates = [HasMips64]; }
 class ISA_MIPS64R2 { list<Predicate> InsnPredicates = [HasMips64r2]; }
+class ISA_MIPS32R6 { list<Predicate> InsnPredicates = [HasMips32r6]; }
+class ISA_MIPS64R6 { list<Predicate> InsnPredicates = [HasMips64r6]; }
 
 // The portions of MIPS-III that were also added to MIPS32
 class INSN_MIPS3_32 { list<Predicate> InsnPredicates = [HasMips3_32]; }
