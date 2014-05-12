@@ -225,10 +225,12 @@ bool Mips16DAGToDAGISel::selectAddr16(
     // If an indexed floating point load/store can be emitted, return false.
     const LSBaseSDNode *LS = dyn_cast<LSBaseSDNode>(Parent);
 
-    if (LS &&
-        (LS->getMemoryVT() == MVT::f32 || LS->getMemoryVT() == MVT::f64) &&
-        Subtarget.hasFPIdx())
-      return false;
+    if (LS) {
+      if (LS->getMemoryVT() == MVT::f32 && Subtarget.hasMips4_32r2())
+        return false;
+      if (LS->getMemoryVT() == MVT::f64 && Subtarget.hasMips4_32r2())
+        return false;
+    }
   }
   Base   = Addr;
   Offset = CurDAG->getTargetConstant(0, ValTy);

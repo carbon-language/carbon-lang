@@ -81,8 +81,6 @@ def FeatureSwap        : SubtargetFeature<"swap", "HasSwap", "true",
                                 "Enable 'byte/half swap' instructions.">;
 def FeatureBitCount    : SubtargetFeature<"bitcount", "HasBitCount", "true",
                                 "Enable 'count leading bits' instructions.">;
-def FeatureFPIdx       : SubtargetFeature<"fpidx", "HasFPIdx", "true",
-                                "Enable 'FP indexed load/store' instructions.">;
 def FeatureMips1       : SubtargetFeature<"mips1", "MipsArchVersion", "Mips1",
                                 "Mips I ISA Support [highly experimental]">;
 def FeatureMips2       : SubtargetFeature<"mips2", "MipsArchVersion", "Mips2",
@@ -98,10 +96,13 @@ def FeatureMips3       : SubtargetFeature<"mips3", "MipsArchVersion", "Mips3",
 def FeatureMips4_32    : SubtargetFeature<"mips4_32", "HasMips4_32", "true",
                                 "Subset of MIPS-IV that is also in MIPS32 "
                                 "[highly experimental]">;
+def FeatureMips4_32r2  : SubtargetFeature<"mips4_32r2", "HasMips4_32r2", "true",
+                                "Subset of MIPS-IV that is also in MIPS32r2 "
+                                "[highly experimental]">;
 def FeatureMips4       : SubtargetFeature<"mips4", "MipsArchVersion",
                                 "Mips4", "MIPS IV ISA Support",
                                 [FeatureMips3, FeatureMips4_32,
-                                 FeatureFPIdx]>;
+                                 FeatureMips4_32r2]>;
 def FeatureMips5       : SubtargetFeature<"mips5", "MipsArchVersion", "Mips5",
                                 "MIPS V ISA Support [highly experimental]",
                                 [FeatureMips4]>;
@@ -111,8 +112,8 @@ def FeatureMips32      : SubtargetFeature<"mips32", "MipsArchVersion", "Mips32",
                                  FeatureMips4_32, FeatureBitCount]>;
 def FeatureMips32r2    : SubtargetFeature<"mips32r2", "MipsArchVersion",
                                 "Mips32r2", "Mips32r2 ISA Support",
-                                [FeatureMips32, FeatureSEInReg, FeatureSwap,
-                                 FeatureFPIdx]>;
+                                [FeatureMips4_32r2, FeatureMips32,
+                                 FeatureSEInReg, FeatureSwap]>;
 def FeatureMips32r6    : SubtargetFeature<"mips32r6", "MipsArchVersion",
                                 "Mips32r6",
                                 "Mips32r6 ISA Support [experimental]",
@@ -120,7 +121,7 @@ def FeatureMips32r6    : SubtargetFeature<"mips32r6", "MipsArchVersion",
                                  FeatureNaN2008]>;
 def FeatureMips64      : SubtargetFeature<"mips64", "MipsArchVersion",
                                 "Mips64", "Mips64 ISA Support",
-                                [FeatureMips5, FeatureMips32, FeatureFPIdx]>;
+                                [FeatureMips5, FeatureMips32]>;
 def FeatureMips64r2    : SubtargetFeature<"mips64r2", "MipsArchVersion",
                                 "Mips64r2", "Mips64r2 ISA Support",
                                 [FeatureMips64, FeatureMips32r2]>;

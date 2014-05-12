@@ -82,8 +82,11 @@ protected:
   // HasMips3_32 - The subset of MIPS-III instructions added to MIPS32
   bool HasMips3_32;
 
-  // HasMips4_32 - The subset of MIPS-IV instructions added to MIPS32
+  // HasMips4_32 - Has the subset of MIPS-IV present in MIPS32
   bool HasMips4_32;
+
+  // HasMips4_32r2 - Has the subset of MIPS-IV present in MIPS32r2
+  bool HasMips4_32r2;
 
   // HasSEInReg - SEB and SEH (signext in register) instructions.
   bool HasSEInReg;
@@ -93,9 +96,6 @@ protected:
 
   // HasBitCount - Count leading '1' and '0' bits.
   bool HasBitCount;
-
-  // HasFPIdx -- Floating point indexed load/store instructions.
-  bool HasFPIdx;
 
   // InMips16 -- can process Mips16 instructions
   bool InMips16Mode;
@@ -160,6 +160,7 @@ public:
   bool hasMips2() const { return MipsArchVersion >= Mips2; }
   bool hasMips3() const { return MipsArchVersion >= Mips3; }
   bool hasMips4_32() const { return HasMips4_32; }
+  bool hasMips4_32r2() const { return HasMips4_32r2; }
   bool hasMips32() const { return MipsArchVersion >= Mips32; }
   bool hasMips32r2() const { return MipsArchVersion == Mips32r2 ||
                                    MipsArchVersion == Mips64r2; }
@@ -216,7 +217,6 @@ public:
   bool hasSEInReg()   const { return HasSEInReg; }
   bool hasSwap()      const { return HasSwap; }
   bool hasBitCount()  const { return HasBitCount; }
-  bool hasFPIdx()     const { return HasFPIdx; }
   bool hasExtractInsert() const { return !inMips16Mode() && hasMips32r2(); }
 
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }

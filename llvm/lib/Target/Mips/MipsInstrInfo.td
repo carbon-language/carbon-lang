@@ -152,8 +152,6 @@ def HasBitCount :     Predicate<"Subtarget.hasBitCount()">,
                       AssemblerPredicate<"FeatureBitCount">;
 def HasSwap     :     Predicate<"Subtarget.hasSwap()">,
                       AssemblerPredicate<"FeatureSwap">;
-def HasFPIdx    :     Predicate<"Subtarget.hasFPIdx()">,
-                      AssemblerPredicate<"FeatureFPIdx">;
 def HasMips2     :    Predicate<"Subtarget.hasMips2()">,
                       AssemblerPredicate<"FeatureMips2">;
 def HasMips3_32  :    Predicate<"Subtarget.hasMips3_32()">,
@@ -162,6 +160,8 @@ def HasMips3     :    Predicate<"Subtarget.hasMips3()">,
                       AssemblerPredicate<"FeatureMips3">;
 def HasMips4_32  :    Predicate<"Subtarget.hasMips4_32()">,
                       AssemblerPredicate<"FeatureMips4_32">;
+def HasMips4_32r2 :   Predicate<"Subtarget.hasMips4_32r2()">,
+                      AssemblerPredicate<"FeatureMips4_32r2">;
 def HasMips32    :    Predicate<"Subtarget.hasMips32()">,
                       AssemblerPredicate<"FeatureMips32">;
 def HasMips32r2  :    Predicate<"Subtarget.hasMips32r2()">,
@@ -222,6 +222,9 @@ class INSN_MIPS3_32 { list<Predicate> InsnPredicates = [HasMips3_32]; }
 
 // The portions of MIPS-IV that were also added to MIPS32
 class INSN_MIPS4_32 { list<Predicate> InsnPredicates = [HasMips4_32]; }
+
+// The portions of MIPS-IV that were also added to MIPS32R2
+class INSN_MIPS4_32R2 { list<Predicate> InsnPredicates = [HasMips4_32r2]; }
 
 class INSN_SWAP { list<Predicate> InsnPredicates = [HasSwap]; }
 class INSN_SEINREG { list<Predicate> InsnPredicates = [HasSEInReg]; }
