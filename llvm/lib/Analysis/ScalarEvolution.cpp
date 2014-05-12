@@ -6987,7 +6987,7 @@ public:
       return;
     }
 
-    if (Numerator == D.Zero) {
+    if (Numerator->isZero()) {
       *Quotient = D.Zero;
       *Remainder = D.Zero;
       return;
@@ -7003,7 +7003,7 @@ public:
 
         // Bail out when the Numerator is not divisible by one of the terms of
         // the Denominator.
-        if (R != D.Zero) {
+        if (!R->isZero()) {
           *Quotient = D.Zero;
           *Remainder = Numerator;
           return;
@@ -7091,7 +7091,7 @@ public:
       // Check whether Denominator divides one of the product operands.
       const SCEV *Q, *R;
       divide(SE, Op, Denominator, &Q, &R);
-      if (R != Zero) {
+      if (!R->isZero()) {
         Qs.push_back(Op);
         continue;
       }
@@ -7169,13 +7169,12 @@ findGCD(ScalarEvolution &SE, const SCEV *A, const SCEV *B) {
     return SE.getMulExpr(Qs);
   }
 
-  const SCEV *Zero = SE.getConstant(A->getType(), 0);
   SCEVDivision::divide(SE, A, B, &Q, &R);
-  if (R == Zero)
+  if (R->isZero())
     return B;
 
   SCEVDivision::divide(SE, B, A, &Q, &R);
-  if (R == Zero)
+  if (R->isZero())
     return A;
 
   return One;
