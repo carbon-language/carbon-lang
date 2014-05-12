@@ -48,7 +48,7 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
 )
 
 # Unit tests require libstdc++.
-set(ASAN_UNITTEST_COMMON_LINKFLAGS -lstdc++)
+set(ASAN_UNITTEST_COMMON_LINKFLAGS --driver-mode=g++ -lstdc++)
 # x86_64 FreeBSD 9.2 additionally requires libc++ to build the tests.
 if(CMAKE_SYSTEM MATCHES "FreeBSD-9.2-RELEASE")
   list(APPEND ASAN_UNITTEST_COMMON_LINKFLAGS "-lc++")
@@ -181,6 +181,7 @@ macro(add_asan_tests_for_arch_and_kind arch kind)
   else()
     set(ASAN_TEST_RUNTIME_OBJECTS
       $<TARGET_OBJECTS:RTAsan.${arch}>
+      $<TARGET_OBJECTS:RTAsan_cxx.${arch}>
       $<TARGET_OBJECTS:RTInterception.${arch}>
       $<TARGET_OBJECTS:RTLSanCommon.${arch}>
       $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>

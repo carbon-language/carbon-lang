@@ -227,11 +227,13 @@ FUNCTIONS.profile_osx := GCDAProfiling InstrProfiling InstrProfilingBuffer \
                          InstrProfilingRuntime
 FUNCTIONS.profile_ios := $(FUNCTIONS.profile_osx)
 
-FUNCTIONS.asan_osx_dynamic := $(AsanFunctions) $(InterceptionFunctions) \
+FUNCTIONS.asan_osx_dynamic := $(AsanFunctions) $(AsanCXXFunctions) \
+                              $(InterceptionFunctions) \
                               $(SanitizerCommonFunctions) \
 	                      $(AsanDynamicFunctions)
 
-FUNCTIONS.asan_iossim_dynamic := $(AsanFunctions) $(InterceptionFunctions) \
+FUNCTIONS.asan_iossim_dynamic := $(AsanFunctions) $(AsanCXXFunctions) \
+                                 $(InterceptionFunctions) \
                                  $(SanitizerCommonFunctions) \
 	                         $(AsanDynamicFunctions)
 

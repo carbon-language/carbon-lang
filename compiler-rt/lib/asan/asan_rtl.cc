@@ -595,7 +595,6 @@ static void AsanInitInternal() {
   InitializeAsanInterceptors();
 
   ReplaceSystemMalloc();
-  ReplaceOperatorsNewAndDelete();
 
   uptr shadow_start = kLowShadowBeg;
   if (kLowShadowBeg)

@@ -18,7 +18,6 @@ set(ASAN_SOURCES
   asan_malloc_linux.cc
   asan_malloc_mac.cc
   asan_malloc_win.cc
-  asan_new_delete.cc
   asan_poisoning.cc
   asan_posix.cc
   asan_report.cc
@@ -27,6 +26,9 @@ set(ASAN_SOURCES
   asan_stats.cc
   asan_thread.cc
   asan_win.cc)
+
+set(ASAN_CXX_SOURCES
+  asan_new_delete.cc)
 
 set(ASAN_PREINIT_SOURCES
   asan_preinit.cc)
@@ -70,12 +72,12 @@ if(APPLE)
   foreach(os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
     add_compiler_rt_darwin_object_library(RTAsan ${os}
       ARCH ${ASAN_SUPPORTED_ARCH}
-      SOURCES ${ASAN_SOURCES}
+      SOURCES ${ASAN_SOURCES} ${ASAN_CXX_SOURCES}
       CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS})
   endforeach()
 elseif(ANDROID)
-  add_library(RTAsan.arm.android OBJECT ${ASAN_SOURCES})
+  add_library(RTAsan.arm.android OBJECT ${ASAN_SOURCES} ${ASAN_CXX_SOURCES})
   set_target_compile_flags(RTAsan.arm.android ${ASAN_CFLAGS})
   set_property(TARGET RTAsan.arm.android APPEND PROPERTY
     COMPILE_DEFINITIONS ${ASAN_COMMON_DEFINITIONS})
@@ -84,12 +86,16 @@ else()
     add_compiler_rt_object_library(RTAsan ${arch}
       SOURCES ${ASAN_SOURCES} CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS})
+    add_compiler_rt_object_library(RTAsan_cxx ${arch}
+      SOURCES ${ASAN_CXX_SOURCES} CFLAGS ${ASAN_CFLAGS}
+      DEFS ${ASAN_COMMON_DEFINITIONS})
     add_compiler_rt_object_library(RTAsan_preinit ${arch}
       SOURCES ${ASAN_PREINIT_SOURCES} CFLAGS ${ASAN_CFLAGS}
       DEFS ${ASAN_COMMON_DEFINITIONS})
     if (COMPILER_RT_BUILD_SHARED_ASAN)
       add_compiler_rt_object_library(RTAsan_dynamic ${arch}
-        SOURCES ${ASAN_SOURCES} CFLAGS ${ASAN_DYNAMIC_CFLAGS}
+        SOURCES ${ASAN_SOURCES} ${ASAN_CXX_SOURCES}
+        CFLAGS ${ASAN_DYNAMIC_CFLAGS}
         DEFS ${ASAN_DYNAMIC_DEFINITIONS})
     endif()
   endforeach()
@@ -142,6 +148,12 @@ else()
       DEFS ${ASAN_COMMON_DEFINITIONS})
     add_dependencies(asan clang_rt.asan-${arch})
 
+    add_compiler_rt_runtime(clang_rt.asan_cxx-${arch} ${arch} STATIC
+      SOURCES $<TARGET_OBJECTS:RTAsan_cxx.${arch}>
+      CFLAGS ${ASAN_CFLAGS}
+      DEFS ${ASAN_COMMON_DEFINITIONS})
+    add_dependencies(asan clang_rt.asan_cxx-${arch})
+
     if (COMPILER_RT_BUILD_SHARED_ASAN)
       add_compiler_rt_runtime(clang_rt.asan-preinit-${arch} ${arch} STATIC
         SOURCES $<TARGET_OBJECTS:RTAsan_preinit.${arch}>
@@ -160,6 +172,8 @@ else()
     endif()
 
     if (UNIX AND NOT ${arch} STREQUAL "i386")
+      add_sanitizer_rt_symbols(clang_rt.asan_cxx-${arch})
+      add_dependencies(asan clang_rt.asan_cxx-${arch}-symbols)
       add_sanitizer_rt_symbols(clang_rt.asan-${arch} asan.syms.extra)
       add_dependencies(asan clang_rt.asan-${arch}-symbols)
     endif()

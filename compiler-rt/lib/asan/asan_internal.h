@@ -71,7 +71,6 @@ void AsanInitFromRtl();
 // asan_rtl.cc
 void NORETURN ShowStatsAndAbort();
 
-void ReplaceOperatorsNewAndDelete();
 // asan_malloc_linux.cc / asan_malloc_mac.cc
 void ReplaceSystemMalloc();
 

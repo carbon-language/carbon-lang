@@ -20,13 +20,6 @@
 
 #include <stddef.h>
 
-namespace __asan {
-// This function is a no-op. We need it to make sure that object file
-// with our replacements will actually be loaded from static ASan
-// run-time library at link-time.
-void ReplaceOperatorsNewAndDelete() { }
-}
-
 using namespace __asan;  // NOLINT
 
 // This code has issues on OSX.
