@@ -68,8 +68,6 @@ class MUH_ENC    : SPECIAL_3R_FM<0b00011, 0b011000>;
 class MUHU_ENC   : SPECIAL_3R_FM<0b00011, 0b011001>;
 class MUL_R6_ENC : SPECIAL_3R_FM<0b00010, 0b011000>;
 class MULU_ENC   : SPECIAL_3R_FM<0b00010, 0b011001>;
-class SEL_D_ENC  : COP1_SEL_FM<FIELD_FMT_D>;
-class SEL_S_ENC  : COP1_SEL_FM<FIELD_FMT_S>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -100,17 +98,6 @@ class MUH_DESC    : MUL_R6_DESC_BASE<"muh", GPR32Opnd>;
 class MUHU_DESC   : MUL_R6_DESC_BASE<"muhu", GPR32Opnd>;
 class MUL_R6_DESC : MUL_R6_DESC_BASE<"mul", GPR32Opnd>;
 class MULU_DESC   : MUL_R6_DESC_BASE<"mulu", GPR32Opnd>;
-
-class SEL_DESC_BASE<string instr_asm, RegisterOperand FGROpnd> {
-  dag OutOperandList = (outs FGROpnd:$fd);
-  dag InOperandList = (ins FGROpnd:$fd_in, FGROpnd:$fs, FGROpnd:$ft);
-  string AsmString = !strconcat(instr_asm, "\t$fd, $fs, $ft");
-  list<dag> Pattern = [];
-  string Constraints = "$fd_in = $fd";
-}
-
-class SEL_D_DESC : SEL_DESC_BASE<"sel.d", FGR64Opnd>;
-class SEL_S_DESC : SEL_DESC_BASE<"sel.s", FGR32Opnd>;
 
 //===----------------------------------------------------------------------===//
 //
@@ -185,5 +172,5 @@ def SELEQZ_S;
 def SELNEZ;
 def SELNEZ_D;
 def SELNEZ_S;
-def SEL_D : SEL_D_ENC, SEL_D_DESC, ISA_MIPS32R6;
-def SEL_S : SEL_S_ENC, SEL_S_DESC, ISA_MIPS32R6;
+def SEL_D;
+def SEL_S;
