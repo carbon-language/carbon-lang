@@ -565,6 +565,9 @@ public:
   /// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
   SDValue getNOT(SDLoc DL, SDValue Val, EVT VT);
 
+  /// \brief Create a logical NOT operation as (XOR Val, BooleanOne).
+  SDValue getLogicalNOT(SDLoc DL, SDValue Val, EVT VT);
+
   /// getCALLSEQ_START - Return a new CALLSEQ_START node, which always must have
   /// a glue result (to ensure it's not CSE'd).  CALLSEQ_START does not have a
   /// useful SDLoc.

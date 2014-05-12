@@ -992,6 +992,22 @@ SDValue SelectionDAG::getNOT(SDLoc DL, SDValue Val, EVT VT) {
   return getNode(ISD::XOR, DL, VT, Val, NegOne);
 }
 
+SDValue SelectionDAG::getLogicalNOT(SDLoc DL, SDValue Val, EVT VT) {
+  EVT EltVT = VT.getScalarType();
+  SDValue TrueValue;
+  switch (TLI->getBooleanContents(VT.isVector())) {
+    case TargetLowering::ZeroOrOneBooleanContent:
+    case TargetLowering::UndefinedBooleanContent:
+      TrueValue = getConstant(1, VT);
+      break;
+    case TargetLowering::ZeroOrNegativeOneBooleanContent:
+      TrueValue = getConstant(APInt::getAllOnesValue(EltVT.getSizeInBits()),
+                              VT);
+      break;
+  }
+  return getNode(ISD::XOR, DL, VT, Val, TrueValue);
+}
+
 SDValue SelectionDAG::getConstant(uint64_t Val, EVT VT, bool isT, bool isO) {
   EVT EltVT = VT.getScalarType();
   assert((EltVT.getSizeInBits() >= 64 ||

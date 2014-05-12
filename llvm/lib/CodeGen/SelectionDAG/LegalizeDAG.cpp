@@ -1652,8 +1652,8 @@ void SelectionDAGLegalize::ExpandDYNAMIC_STACKALLOC(SDNode* Node,
 /// If the SETCC has been legalized using the inverse condcode, then LHS and
 /// RHS will be unchanged, CC will set to the inverted condcode, and NeedInvert
 /// will be set to true. The caller must invert the result of the SETCC with
-/// SelectionDAG::getNOT() or take equivalent action to swap the effect of a
-/// true/false result.
+/// SelectionDAG::getLogicalNOT() or take equivalent action to swap the effect
+/// of a true/false result.
 ///
 /// \returns true if the SetCC has been legalized, false if it hasn't.
 bool SelectionDAGLegalize::LegalizeSetCCCondCode(EVT VT,
@@ -3876,7 +3876,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       // If we expanded the SETCC by inverting the condition code, then wrap
       // the existing SETCC in a NOT to restore the intended condition.
       if (NeedInvert)
-        Tmp1 = DAG.getNOT(dl, Tmp1, Tmp1->getValueType(0));
+        Tmp1 = DAG.getLogicalNOT(dl, Tmp1, Tmp1->getValueType(0));
 
       Results.push_back(Tmp1);
       break;
