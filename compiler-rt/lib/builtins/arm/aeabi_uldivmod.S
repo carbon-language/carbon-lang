@@ -17,7 +17,7 @@
 // }
 
         .syntax unified
-        .align 2
+        .p2align 2
 DEFINE_COMPILERRT_FUNCTION(__aeabi_uldivmod)
         push	{r11, lr}
         sub	sp, sp, #16

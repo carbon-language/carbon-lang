@@ -11,7 +11,7 @@
 
 //  void __aeabi_memmove(void *dest, void *src, size_t n) { memmove(dest, src, n); }
 
-        .align 2
+        .p2align 2
 DEFINE_COMPILERRT_FUNCTION(__aeabi_memmove)
         b       memmove
 END_COMPILERRT_FUNCTION(__aeabi_memmove)

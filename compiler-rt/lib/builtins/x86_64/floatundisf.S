@@ -15,7 +15,7 @@ two: .single 2.0
 #define REL_ADDR(_a)	(_a)(%rip)
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatundisf)
 	movq		$1,			%rsi
 	testq		%rdi,		%rdi

@@ -16,7 +16,7 @@
 	.syntax unified
 
 	.text
-	.align	2
+	.p2align	2
 DEFINE_COMPILERRT_FUNCTION(__clzsi2)
 #ifdef __ARM_FEATURE_CLZ
 	clz	r0, r0

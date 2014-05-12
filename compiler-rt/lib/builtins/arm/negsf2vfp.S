@@ -16,7 +16,7 @@
 // Darwin calling convention where single arguments are passsed like 32-bit ints
 //
 	.syntax unified
-	.align 2
+	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__negsf2vfp)
 	eor	r0, r0, #-2147483648	// flip sign bit on float in r0
 	bx	lr

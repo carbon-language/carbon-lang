@@ -16,7 +16,7 @@
 // }
 
         .syntax unified
-        .align 2
+        .p2align 2
 DEFINE_COMPILERRT_FUNCTION(__aeabi_idivmod)
         push    { lr }
         sub     sp, sp, #4

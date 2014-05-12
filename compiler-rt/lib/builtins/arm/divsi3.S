@@ -21,7 +21,7 @@
     pop    {r4, r7, pc}
 
 .syntax unified
-.align 3
+.p2align 3
 // Ok, APCS and AAPCS agree on 32 bit args, so it's safe to use the same routine.
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_idiv, __divsi3)
 DEFINE_COMPILERRT_FUNCTION(__divsi3)

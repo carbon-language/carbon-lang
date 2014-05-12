@@ -17,7 +17,7 @@
 // return in a GPR..
 //
 	.syntax unified
-	.align 2
+	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__floatsisfvfp)
 	vmov	s15, r0	       // move int to float register s15
 	vcvt.f32.s32 s15, s15  // convert 32-bit int in s15 to float in s15

@@ -17,7 +17,7 @@
 // return in GPR register pair.
 //
 	.syntax unified
-	.align 2
+	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__floatsidfvfp)
 	vmov	s15, r0        // move int to float register s15
 	vcvt.f64.s32 d7, s15   // convert 32-bit int in s15 to double in d7

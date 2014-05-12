@@ -8,7 +8,7 @@
 #ifdef __i386__
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__muldi3)
 	pushl	%ebx
 	movl  16(%esp),		%eax	// b.lo

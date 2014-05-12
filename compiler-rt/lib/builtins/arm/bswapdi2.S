@@ -14,7 +14,7 @@
 //
 // Reverse all the bytes in a 64-bit integer.
 //
-.align 2
+.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__bswapdi2)
 #if __ARM_ARCH < 6
     // before armv6 does not have "rev" instruction

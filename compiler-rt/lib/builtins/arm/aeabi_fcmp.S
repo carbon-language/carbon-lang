@@ -20,7 +20,7 @@
 
 #define DEFINE_AEABI_FCMP(cond)                            \
         .syntax unified                          SEPARATOR \
-        .align 2                                 SEPARATOR \
+        .p2align 2                               SEPARATOR \
 DEFINE_COMPILERRT_FUNCTION(__aeabi_fcmp ## cond)           \
         push      { r4, lr }                     SEPARATOR \
         bl        SYMBOL_NAME(__ ## cond ## sf2) SEPARATOR \

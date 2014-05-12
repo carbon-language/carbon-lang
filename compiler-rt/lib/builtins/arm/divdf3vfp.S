@@ -16,7 +16,7 @@
 // calling convention where double arguments are passsed in GPR pairs
 //
 	.syntax unified
-	.align 2
+	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__divdf3vfp)
 	vmov	d6, r0, r1		// move first param from r0/r1 pair into d6
 	vmov	d7, r2, r3		// move second param from r2/r3 pair into d7

@@ -17,7 +17,7 @@
 // like 32-bit ints
 //
 	.syntax unified
-	.align 2
+	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__gesf2vfp)
 	vmov	s14, r0	    // move from GPR 0 to float register
 	vmov	s15, r1	    // move from GPR 1 to float register

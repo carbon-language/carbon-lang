@@ -19,7 +19,7 @@
 #ifdef __i386__
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__udivdi3)
 
 	pushl		%ebx

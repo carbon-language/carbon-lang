@@ -19,7 +19,7 @@
 #ifdef __i386__
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__divdi3)
 
 /* This is currently implemented by wrapping the unsigned divide up in an absolute

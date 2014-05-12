@@ -19,7 +19,7 @@
 #ifdef __i386__
 
 .const
-.align 3
+.balign 3
 
 		.quad	0x43f0000000000000
 twop64:	.quad	0x0000000000000000
@@ -27,7 +27,7 @@ twop64:	.quad	0x0000000000000000
 #define			TWOp64			twop64-0b(%ecx,%eax,8)
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatundisf)
 	movl		8(%esp),		%eax
 	movd		8(%esp),		%xmm1
@@ -54,9 +54,9 @@ END_COMPILERRT_FUNCTION(__floatundisf)
 
 #ifndef __ELF__
 .const
-.align 3
+.balign 3
 #else
-.align 8
+.balign 8
 #endif
 twop52: .quad 0x4330000000000000
 		.quad 0x0000000000000fff
@@ -68,7 +68,7 @@ twelve:	.long 0x00000000
 #define			STICKY			sticky-0b(%ecx,%eax,8)
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatundisf)
 	movl		8(%esp),		%eax
 	movd		8(%esp),		%xmm1

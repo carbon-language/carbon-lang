@@ -10,14 +10,14 @@
 #ifndef __ELF__
 .const
 #endif
-.align 4
+.balign 4
 twop52: .quad 0x4330000000000000
 twop32: .quad 0x41f0000000000000
 
 #define REL_ADDR(_a)	(_a)-0b(%eax)
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatdidf)
 	cvtsi2sd	8(%esp),			%xmm1
 	movss		4(%esp),			%xmm0 // low 32 bits of a

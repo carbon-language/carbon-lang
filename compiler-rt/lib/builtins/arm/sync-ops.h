@@ -16,7 +16,7 @@
 #include "../assembly.h"
 
 #define SYNC_OP_4(op) \
-        .align 2 ; \
+        .p2align 2 ; \
         .thumb ; \
         DEFINE_COMPILERRT_FUNCTION(__sync_fetch_and_ ## op) \
         dmb ; \
@@ -30,7 +30,7 @@
         bx lr
 
 #define SYNC_OP_8(op) \
-        .align 2 ; \
+        .p2align 2 ; \
         .thumb ; \
         DEFINE_COMPILERRT_FUNCTION(__sync_fetch_and_ ## op) \
         push {r4, r5, r6, lr} ; \

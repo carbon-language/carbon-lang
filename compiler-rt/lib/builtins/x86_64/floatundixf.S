@@ -10,13 +10,13 @@
 #ifndef __ELF__
 .const
 #endif
-.align 4
+.balign 4
 twop64: .quad 0x43f0000000000000
 
 #define REL_ADDR(_a)	(_a)(%rip)
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatundixf)
 	movq	%rdi,	 -8(%rsp)
 	fildq	-8(%rsp)
@@ -36,7 +36,7 @@ END_COMPILERRT_FUNCTION(__floatundixf)
 #ifdef __x86_64__
 
 .const
-.align 4
+.balign 4
 twop52: .quad 0x4330000000000000
 twop84_plus_twop52_neg:
 		.quad 0xc530000000100000
@@ -45,7 +45,7 @@ twop84: .quad 0x4530000000000000
 #define REL_ADDR(_a)	(_a)(%rip)
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatundixf)
 	movl	%edi,				%esi			// low 32 bits of input
 	shrq	$32,				%rdi			// hi 32 bits of input

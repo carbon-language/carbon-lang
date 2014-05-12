@@ -15,7 +15,7 @@
 // It can be turned off by defining the TRUST_CALLERS_USE_64_BIT_STORES macro.
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatdixf)
 #ifndef TRUST_CALLERS_USE_64_BIT_STORES
 	movd		4(%esp),	%xmm0

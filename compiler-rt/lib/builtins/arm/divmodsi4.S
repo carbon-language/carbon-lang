@@ -22,7 +22,7 @@
     pop    {r4-r7, pc}
 
 .syntax unified
-.align 3
+.p2align 3
 DEFINE_COMPILERRT_FUNCTION(__divmodsi4)
 #if __ARM_ARCH_EXT_IDIV__
 	tst     r1, r1

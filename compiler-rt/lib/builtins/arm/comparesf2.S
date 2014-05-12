@@ -40,7 +40,7 @@
 #include "../assembly.h"
 .syntax unified
 
-.align 2
+.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__eqsf2)
     // Make copies of a and b with the sign bit shifted off the top.  These will
     // be used to detect zeros and NaNs.
@@ -105,7 +105,7 @@ DEFINE_COMPILERRT_FUNCTION_ALIAS(__lesf2, __eqsf2)
 DEFINE_COMPILERRT_FUNCTION_ALIAS(__ltsf2, __eqsf2)
 DEFINE_COMPILERRT_FUNCTION_ALIAS(__nesf2, __eqsf2)
 
-.align 2
+.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__gtsf2)
     // Identical to the preceeding except in that we return -1 for NaN values.
     // Given that the two paths share so much code, one might be tempted to 
@@ -132,7 +132,7 @@ DEFINE_COMPILERRT_FUNCTION(__gtsf2)
 END_COMPILERRT_FUNCTION(__gtsf2)
 DEFINE_COMPILERRT_FUNCTION_ALIAS(__gesf2, __gtsf2)
 
-.align 2
+.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__unordsf2)
     // Return 1 for NaN values, 0 otherwise.
     mov     r2,         r0, lsl #1

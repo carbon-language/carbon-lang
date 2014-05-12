@@ -15,7 +15,7 @@
 #ifdef __i386__
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatdisf)
 #ifndef TRUST_CALLERS_USE_64_BIT_STORES
 	movd		4(%esp),	%xmm0

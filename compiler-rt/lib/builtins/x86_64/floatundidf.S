@@ -20,7 +20,7 @@
 #ifndef __ELF__
 .const
 #endif
-.align 4
+.balign 4
 twop52: .quad 0x4330000000000000
 twop84_plus_twop52:
 		.quad 0x4530000000100000
@@ -29,7 +29,7 @@ twop84: .quad 0x4530000000000000
 #define REL_ADDR(_a)	(_a)(%rip)
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__floatundidf)
 	movd	%edi,							%xmm0 // low 32 bits of a
 	shrq	$32,							%rdi  // high 32 bits of a

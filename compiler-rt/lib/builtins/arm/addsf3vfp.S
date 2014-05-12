@@ -16,7 +16,7 @@
 // calling convention where single arguments are passsed in GPRs
 //
 	.syntax unified
-	.align 2
+	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__addsf3vfp)
 	vmov	s14, r0		// move first param from r0 into float register
 	vmov	s15, r1		// move second param from r1 into float register

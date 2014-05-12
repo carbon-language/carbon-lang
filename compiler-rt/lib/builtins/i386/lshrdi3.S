@@ -16,7 +16,7 @@
 #ifdef __SSE2__
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__lshrdi3)
 	movd	  12(%esp),		%xmm2	// Load count
 #ifndef TRUST_CALLERS_USE_64_BIT_STORES
@@ -36,7 +36,7 @@ END_COMPILERRT_FUNCTION(__lshrdi3)
 #else // Use GPRs instead of SSE2 instructions, if they aren't available.
 
 .text
-.align 4
+.balign 4
 DEFINE_COMPILERRT_FUNCTION(__lshrdi3)
 	movl	  12(%esp),		%ecx	// Load count
 	movl	   8(%esp),		%edx	// Load high

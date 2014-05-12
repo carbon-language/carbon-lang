@@ -29,7 +29,7 @@
 // The table contains unsigned byte sized elements which are 1/2 the distance
 // from lr to the target label.
 //
-	.align 2
+	.p2align 2
 DEFINE_COMPILERRT_PRIVATE_FUNCTION(__switchu8)
 	ldrb    ip, [lr, #-1]           // get first byte in table
 	cmp     r0, ip                  // compare with index

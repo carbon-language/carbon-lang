@@ -17,7 +17,7 @@
 // passed in a R0/R1 pair and a signle precision result is returned in R0.
 //
 	.syntax unified
-	.align 2
+	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__truncdfsf2vfp)
 	vmov 	d7, r0, r1   // load double from r0/r1 pair
 	vcvt.f32.f64 s15, d7 // convert double to single (trucate precision)

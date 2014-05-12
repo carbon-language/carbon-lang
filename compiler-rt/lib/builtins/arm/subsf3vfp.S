@@ -17,7 +17,7 @@
 // like 32-bit ints.
 //
 	.syntax unified
-	.align 2
+	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__subsf3vfp)
 	vmov	s14, r0		// move first param from r0 into float register
 	vmov	s15, r1		// move second param from r1 into float register

@@ -17,7 +17,7 @@
 // like in GPR pairs.
 //
 	.syntax unified
-	.align 2
+	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__nedf2vfp)
 	vmov 	d6, r0, r1	// load r0/r1 pair in double register
 	vmov 	d7, r2, r3	// load r2/r3 pair in double register

@@ -11,7 +11,7 @@
 
 //  void __aeabi_memcmp(void *dest, void *src, size_t n) { memcmp(dest, src, n); }
 
-        .align 2
+        .p2align 2
 DEFINE_COMPILERRT_FUNCTION(__aeabi_memcmp)
         b       memcmp
 END_COMPILERRT_FUNCTION(__aeabi_memcmp)
