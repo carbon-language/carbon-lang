@@ -1002,7 +1002,7 @@ def SUBu  : MMRel, ArithLogicR<"subu", GPR32Opnd, 0, II_SUBU, sub>,
             ADD_FM<0, 0x23>;
 let Defs = [HI0, LO0] in
 def MUL   : MMRel, ArithLogicR<"mul", GPR32Opnd, 1, II_MUL, mul>,
-            ADD_FM<0x1c, 2>;
+            ADD_FM<0x1c, 2>, ISA_MIPS32;
 def ADD   : MMRel, ArithLogicR<"add", GPR32Opnd>, ADD_FM<0, 0x20>;
 def SUB   : MMRel, ArithLogicR<"sub", GPR32Opnd>, ADD_FM<0, 0x22>;
 def SLT   : MMRel, SetCC_R<"slt", setlt, GPR32Opnd>, ADD_FM<0, 0x2a>;
@@ -1079,7 +1079,7 @@ def SYSCALL : MMRel, SYS_FT<"syscall">, SYS_FM<0xc>;
 def TRAP : TrapBase<BREAK>;
 
 def ERET : MMRel, ER_FT<"eret">, ER_FM<0x18>, INSN_MIPS3_32;
-def DERET : MMRel, ER_FT<"deret">, ER_FM<0x1f>;
+def DERET : MMRel, ER_FT<"deret">, ER_FM<0x1f>, ISA_MIPS32;
 
 def EI : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM<1>;
 def DI : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM<0>;
@@ -1185,10 +1185,10 @@ def NOP : PseudoSE<(outs), (ins), []>, PseudoInstExpansion<(SLL ZERO, ZERO, 0)>;
 def LEA_ADDiu : MMRel, EffectiveAddress<"addiu", GPR32Opnd>, LW_FM<9>;
 
 // MADD*/MSUB*
-def MADD  : MMRel, MArithR<"madd", II_MADD, 1>, MULT_FM<0x1c, 0>;
-def MADDU : MMRel, MArithR<"maddu", II_MADDU, 1>, MULT_FM<0x1c, 1>;
-def MSUB  : MMRel, MArithR<"msub", II_MSUB>, MULT_FM<0x1c, 4>;
-def MSUBU : MMRel, MArithR<"msubu", II_MSUBU>, MULT_FM<0x1c, 5>;
+def MADD  : MMRel, MArithR<"madd", II_MADD, 1>, MULT_FM<0x1c, 0>, ISA_MIPS32;
+def MADDU : MMRel, MArithR<"maddu", II_MADDU, 1>, MULT_FM<0x1c, 1>, ISA_MIPS32;
+def MSUB  : MMRel, MArithR<"msub", II_MSUB>, MULT_FM<0x1c, 4>, ISA_MIPS32;
+def MSUBU : MMRel, MArithR<"msubu", II_MSUBU>, MULT_FM<0x1c, 5>, ISA_MIPS32;
 
 let AdditionalPredicates = [NotDSP] in {
 def PseudoMULT  : MultDivPseudo<MULT, ACC64, GPR32Opnd, MipsMult, II_MULT>;
@@ -1213,8 +1213,8 @@ def EXT : MMRel, ExtBase<"ext", GPR32Opnd, uimm5, MipsExt>, EXT_FM<0>;
 def INS : MMRel, InsBase<"ins", GPR32Opnd, uimm5, MipsIns>, EXT_FM<4>;
 
 /// Move Control Registers From/To CPU Registers
-def MFC0 : MFC3OP<"mfc0", GPR32Opnd>, MFC3OP_FM<0x10, 0>;
-def MTC0 : MFC3OP<"mtc0", GPR32Opnd>, MFC3OP_FM<0x10, 4>;
+def MFC0 : MFC3OP<"mfc0", GPR32Opnd>, MFC3OP_FM<0x10, 0>, ISA_MIPS32;
+def MTC0 : MFC3OP<"mtc0", GPR32Opnd>, MFC3OP_FM<0x10, 4>, ISA_MIPS32;
 def MFC2 : MFC3OP<"mfc2", GPR32Opnd>, MFC3OP_FM<0x12, 0>;
 def MTC2 : MFC3OP<"mtc2", GPR32Opnd>, MFC3OP_FM<0x12, 4>;
 

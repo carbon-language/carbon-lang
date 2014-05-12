@@ -8,18 +8,8 @@
 
 # CHECK-NOT: error
         .set noat
-        deret
         di      $s8
         ei      $t6
-        madd    $s6,$t5
-        madd    $zero,$t1
-        maddu   $s3,$gp
-        maddu   $t8,$s2
-        mfc0    $a2,$14,1
         mfhc1   $s8,$f24
-        msub    $s7,$k1
-        msubu   $t7,$a1
-        mtc0    $t1,$29,3
         mthc1   $zero,$f16
-        mul     $s0,$s4,$at
         rdhwr   $sp,$11
