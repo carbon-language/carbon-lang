@@ -1200,7 +1200,7 @@ void FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
     Encoding |= 0x40000000;
 
   // Range Start
-  unsigned FDEEncoding = MOFI->getFDEEncoding(true);
+  unsigned FDEEncoding = MOFI->getFDEEncoding();
   unsigned Size = getSizeForEncoding(Streamer, FDEEncoding);
   if (VerboseAsm) Streamer.AddComment("Range Start");
   Streamer.EmitSymbolValue(Frame.Function, Size);
@@ -1332,7 +1332,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
       EmitEncodingByte(streamer, lsdaEncoding, "LSDA Encoding");
 
     // Encoding of the FDE pointers
-    EmitEncodingByte(streamer, MOFI->getFDEEncoding(true), "FDE Encoding");
+    EmitEncodingByte(streamer, MOFI->getFDEEncoding(), "FDE Encoding");
   }
 
   // Initial Instructions
@@ -1391,7 +1391,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
 
   // PC Begin
   unsigned PCEncoding =
-      IsEH ? MOFI->getFDEEncoding(true) : (unsigned)dwarf::DW_EH_PE_absptr;
+      IsEH ? MOFI->getFDEEncoding() : (unsigned)dwarf::DW_EH_PE_absptr;
   unsigned PCSize = getSizeForEncoding(streamer, PCEncoding);
   EmitFDESymbol(streamer, *frame.Begin, PCEncoding, IsEH, "FDE initial location");
 
