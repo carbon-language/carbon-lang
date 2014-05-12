@@ -60,6 +60,10 @@ include "Mips32r6InstrFormats.td"
 //
 //===----------------------------------------------------------------------===//
 
+class DIV_ENC    : SPECIAL_3R_FM<0b00010, 0b011010>;
+class DIVU_ENC   : SPECIAL_3R_FM<0b00010, 0b011011>;
+class MOD_ENC    : SPECIAL_3R_FM<0b00011, 0b011010>;
+class MODU_ENC   : SPECIAL_3R_FM<0b00011, 0b011011>;
 class MUH_ENC    : SPECIAL_3R_FM<0b00011, 0b011000>;
 class MUHU_ENC   : SPECIAL_3R_FM<0b00011, 0b011001>;
 class MUL_R6_ENC : SPECIAL_3R_FM<0b00010, 0b011000>;
@@ -70,6 +74,18 @@ class MULU_ENC   : SPECIAL_3R_FM<0b00010, 0b011001>;
 // Instruction Descriptions
 //
 //===----------------------------------------------------------------------===//
+
+class DIVMOD_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
+  dag OutOperandList = (outs GPROpnd:$rd);
+  dag InOperandList = (ins GPROpnd:$rs, GPROpnd:$rt);
+  string AsmString = !strconcat(instr_asm, "\t$rd, $rs, $rt");
+  list<dag> Pattern = [];
+}
+
+class DIV_DESC  : DIVMOD_DESC_BASE<"div", GPR32Opnd>;
+class DIVU_DESC : DIVMOD_DESC_BASE<"divu", GPR32Opnd>;
+class MOD_DESC  : DIVMOD_DESC_BASE<"mod", GPR32Opnd>;
+class MODU_DESC : DIVMOD_DESC_BASE<"modu", GPR32Opnd>;
 
 class MUL_R6_DESC_BASE<string instr_asm, RegisterOperand GPROpnd> {
   dag OutOperandList = (outs GPROpnd:$rd);
@@ -125,8 +141,8 @@ def CLASS_D;
 def CLASS_S;
 def CMP_CC_D;
 def CMP_CC_S;
-def DIV;   // Not to be confused with the old div
-def DIVU;  // Not to be confused with the old div
+def DIV : DIV_ENC, DIV_DESC, ISA_MIPS32R6;
+def DIVU : DIVU_ENC, DIVU_DESC, ISA_MIPS32R6;
 def JIALC;
 def JIC;
 // def LSA; // See MSA
@@ -140,8 +156,8 @@ def MAX_S;
 def MINA_D;
 def MINA_S;
 def MIN_D;
-def MOD;
-def MODU;
+def MOD : MOD_ENC, MOD_DESC, ISA_MIPS32R6;
+def MODU : MODU_ENC, MODU_DESC, ISA_MIPS32R6;
 def MSUBF;
 def MUH    : MUH_ENC, MUH_DESC, ISA_MIPS32R6;
 def MUHU   : MUHU_ENC, MUHU_DESC, ISA_MIPS32R6;
