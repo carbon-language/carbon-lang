@@ -186,7 +186,7 @@ TEST(AddressSanitizer, StrNCpyOOBTest) {
 typedef char*(*PointerToStrChr1)(const char*, int);
 typedef char*(*PointerToStrChr2)(char*, int);
 
-USED static void RunStrChrTest(PointerToStrChr1 StrChr) {
+UNUSED static void RunStrChrTest(PointerToStrChr1 StrChr) {
   size_t size = Ident(100);
   char *str = MallocAndMemsetString(size);
   str[10] = 'q';
@@ -202,7 +202,7 @@ USED static void RunStrChrTest(PointerToStrChr1 StrChr) {
   EXPECT_DEATH(Ident(StrChr(str, 'a')), RightOOBReadMessage(0));
   free(str);
 }
-USED static void RunStrChrTest(PointerToStrChr2 StrChr) {
+UNUSED static void RunStrChrTest(PointerToStrChr2 StrChr) {
   size_t size = Ident(100);
   char *str = MallocAndMemsetString(size);
   str[10] = 'q';

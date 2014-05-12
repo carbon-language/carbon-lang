@@ -17,13 +17,19 @@
 
 #include <stdint.h>
 
-#if defined(_WIN32)
+#if defined(_MSC_VER)
 # define NOINLINE __declspec(noinline)
-# define USED
 #else  // defined(_WIN32)
 # define NOINLINE __attribute__((noinline))
-# define USED __attribute__((used))
 #endif  // defined(_WIN32)
+
+#if !defined(_MSC_VER) || defined(__clang__)
+# define UNUSED __attribute__((unused))
+# define USED __attribute__((used))
+#else
+# define UNUSED
+# define USED
+#endif
 
 #if !defined(__has_feature)
 #define __has_feature(x) 0
