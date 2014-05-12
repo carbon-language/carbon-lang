@@ -53,6 +53,7 @@ struct CommonFlags {
   bool intercept_tls_get_addr;
   bool help;
   uptr mmap_limit_mb;
+  bool coverage;
 };
 
 inline CommonFlags *common_flags() {
