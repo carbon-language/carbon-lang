@@ -3665,24 +3665,6 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
   }
 }
 
-static void rewriteMOVI(ARM64AsmParser::OperandVector &Operands,
-                        StringRef mnemonic, uint64_t imm, unsigned shift,
-                        MCContext &Context) {
-  ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[0]);
-  ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
-  Operands[0] =
-      ARM64Operand::CreateToken(mnemonic, false, Op->getStartLoc(), Context);
-
-  const MCExpr *NewImm = MCConstantExpr::Create(imm >> shift, Context);
-  Operands[2] = ARM64Operand::CreateImm(NewImm, Op2->getStartLoc(),
-                                        Op2->getEndLoc(), Context);
-
-  Operands.push_back(ARM64Operand::CreateShiftExtend(
-      ARM64_AM::LSL, shift, Op2->getStartLoc(), Op2->getEndLoc(), Context));
-  delete Op2;
-  delete Op;
-}
-
 bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
   switch (ErrCode) {
   case Match_MissingFeature:
@@ -3780,62 +3762,34 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   unsigned NumOperands = Operands.size();
 
   if (NumOperands == 4 && Tok == "lsl") {
-      ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
-      ARM64Operand *Op3 = static_cast<ARM64Operand *>(Operands[3]);
-      if (Op2->isReg() && Op3->isImm()) {
-        const MCConstantExpr *Op3CE = dyn_cast<MCConstantExpr>(Op3->getImm());
-        if (Op3CE) {
-          uint64_t Op3Val = Op3CE->getValue();
-          uint64_t NewOp3Val = 0;
-          uint64_t NewOp4Val = 0;
-          if (ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(
-                  Op2->getReg())) {
-            NewOp3Val = (32 - Op3Val) & 0x1f;
-            NewOp4Val = 31 - Op3Val;
-          } else {
-            NewOp3Val = (64 - Op3Val) & 0x3f;
-            NewOp4Val = 63 - Op3Val;
-          }
-
-          const MCExpr *NewOp3 =
-              MCConstantExpr::Create(NewOp3Val, getContext());
-          const MCExpr *NewOp4 =
-              MCConstantExpr::Create(NewOp4Val, getContext());
-
-          Operands[0] = ARM64Operand::CreateToken(
-              "ubfm", false, Op->getStartLoc(), getContext());
-          Operands[3] = ARM64Operand::CreateImm(NewOp3, Op3->getStartLoc(),
-                                                Op3->getEndLoc(), getContext());
-          Operands.push_back(ARM64Operand::CreateImm(
-              NewOp4, Op3->getStartLoc(), Op3->getEndLoc(), getContext()));
-          delete Op3;
-          delete Op;
+    ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
+    ARM64Operand *Op3 = static_cast<ARM64Operand *>(Operands[3]);
+    if (Op2->isReg() && Op3->isImm()) {
+      const MCConstantExpr *Op3CE = dyn_cast<MCConstantExpr>(Op3->getImm());
+      if (Op3CE) {
+        uint64_t Op3Val = Op3CE->getValue();
+        uint64_t NewOp3Val = 0;
+        uint64_t NewOp4Val = 0;
+        if (ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(
+                Op2->getReg())) {
+          NewOp3Val = (32 - Op3Val) & 0x1f;
+          NewOp4Val = 31 - Op3Val;
+        } else {
+          NewOp3Val = (64 - Op3Val) & 0x3f;
+          NewOp4Val = 63 - Op3Val;
         }
-      }
-      // FIXME: Horrible hack to handle the optional LSL shift for vector
-      //        instructions.
-    } else if (NumOperands == 4 && (Tok == "bic" || Tok == "orr")) {
-      ARM64Operand *Op1 = static_cast<ARM64Operand *>(Operands[1]);
-      ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
-      ARM64Operand *Op3 = static_cast<ARM64Operand *>(Operands[3]);
-      if ((Op1->isToken() && Op2->isVectorReg() && Op3->isImm()) ||
-          (Op1->isVectorReg() && Op2->isToken() && Op3->isImm()))
-        Operands.push_back(ARM64Operand::CreateShiftExtend(
-            ARM64_AM::LSL, 0, IDLoc, IDLoc, getContext()));
-    } else if (NumOperands == 4 && (Tok == "movi" || Tok == "mvni")) {
-      ARM64Operand *Op1 = static_cast<ARM64Operand *>(Operands[1]);
-      ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
-      ARM64Operand *Op3 = static_cast<ARM64Operand *>(Operands[3]);
-      if ((Op1->isToken() && Op2->isVectorReg() && Op3->isImm()) ||
-          (Op1->isVectorReg() && Op2->isToken() && Op3->isImm())) {
-        StringRef Suffix = Op1->isToken() ? Op1->getToken() : Op2->getToken();
-        // Canonicalize on lower-case for ease of comparison.
-        std::string CanonicalSuffix = Suffix.lower();
-        if (Tok != "movi" ||
-            (CanonicalSuffix != ".1d" && CanonicalSuffix != ".2d" &&
-             CanonicalSuffix != ".8b" && CanonicalSuffix != ".16b"))
-          Operands.push_back(ARM64Operand::CreateShiftExtend(
-              ARM64_AM::LSL, 0, IDLoc, IDLoc, getContext()));
+
+        const MCExpr *NewOp3 = MCConstantExpr::Create(NewOp3Val, getContext());
+        const MCExpr *NewOp4 = MCConstantExpr::Create(NewOp4Val, getContext());
+
+        Operands[0] = ARM64Operand::CreateToken(
+            "ubfm", false, Op->getStartLoc(), getContext());
+        Operands[3] = ARM64Operand::CreateImm(NewOp3, Op3->getStartLoc(),
+                                              Op3->getEndLoc(), getContext());
+        Operands.push_back(ARM64Operand::CreateImm(
+            NewOp4, Op3->getStartLoc(), Op3->getEndLoc(), getContext()));
+        delete Op3;
+        delete Op;
       }
     }
   } else if (NumOperands == 5) {
