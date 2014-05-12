@@ -62,7 +62,7 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
 else (NOT DEFINED LLVM_MAIN_SRC_DIR)
 
   set(LLVM_LIT ${LLVM_TOOLS_BINARY_DIR}/llvm-lit)
-  set(POLLY_TEST_DEPS opt lli llc LLVMPolly FileCheck not)
+  set(POLLY_TEST_DEPS opt LLVMPolly FileCheck not)
 
   set(LLVM_BINARY_DIR "${LLVM_BINARY_DIR}")
   set(LLVM_TOOLS_DIR "${LLVM_TOOLS_BINARY_DIR}")
