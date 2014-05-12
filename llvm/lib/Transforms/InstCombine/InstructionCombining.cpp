@@ -1120,6 +1120,7 @@ Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
     ShuffleVectorInst *RShuf = cast<ShuffleVectorInst>(RHS);
     if (isa<UndefValue>(LShuf->getOperand(1)) &&
         isa<UndefValue>(RShuf->getOperand(1)) &&
+        LShuf->getOperand(0)->getType() == RShuf->getOperand(0)->getType() &&
         LShuf->getMask() == RShuf->getMask()) {
       BinaryOperator *NewBO = CreateBinOpAsGiven(Inst, LShuf->getOperand(0),
           RShuf->getOperand(0), Builder);

@@ -363,3 +363,15 @@ define <4 x i32> @shuffle_17mulsplat(<4 x i32> %v) {
                       <4 x i32> <i32 1, i32 1, i32 1, i32 1>
   ret <4 x i32> %s2
 }
+
+; Do not reorder shuffle and binop if LHS of shuffles are of different size
+define <2 x i32> @pr19717(<4 x i32> %in0, <2 x i32> %in1) {
+; CHECK-LABEL: @pr19717(
+; CHECK: shufflevector
+; CHECK: shufflevector
+; CHECK: mul
+  %shuffle = shufflevector <4 x i32> %in0, <4 x i32> %in0, <2 x i32> zeroinitializer
+  %shuffle4 = shufflevector <2 x i32> %in1, <2 x i32> %in1, <2 x i32> zeroinitializer
+  %mul = mul <2 x i32> %shuffle, %shuffle4
+  ret <2 x i32> %mul
+}
