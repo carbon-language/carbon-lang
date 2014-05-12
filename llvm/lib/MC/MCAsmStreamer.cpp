@@ -53,11 +53,6 @@ private:
   unsigned ShowInst : 1;
   unsigned UseDwarfDirectory : 1;
 
-  enum EHSymbolFlags { EHGlobal         = 1,
-                       EHWeakDefinition = 1 << 1,
-                       EHPrivateExtern  = 1 << 2 };
-  DenseMap<const MCSymbol*, unsigned> FlagMap;
-
   void EmitRegisterName(int64_t Register);
   void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) override;
   void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override;
@@ -466,7 +461,6 @@ bool MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     return true;
   case MCSA_Global: // .globl/.global
     OS << MAI->getGlobalDirective();
-    FlagMap[Symbol] |= EHGlobal;
     break;
   case MCSA_Hidden:         OS << "\t.hidden\t";          break;
   case MCSA_IndirectSymbol: OS << "\t.indirect_symbol\t"; break;
@@ -477,14 +471,12 @@ bool MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_SymbolResolver: OS << "\t.symbol_resolver\t"; break;
   case MCSA_PrivateExtern:
     OS << "\t.private_extern\t";
-    FlagMap[Symbol] |= EHPrivateExtern;
     break;
   case MCSA_Protected:      OS << "\t.protected\t";       break;
   case MCSA_Reference:      OS << "\t.reference\t";       break;
   case MCSA_Weak:           OS << "\t.weak\t";            break;
   case MCSA_WeakDefinition:
     OS << "\t.weak_definition\t";
-    FlagMap[Symbol] |= EHWeakDefinition;
     break;
       // .weak_reference
   case MCSA_WeakReference:  OS << MAI->getWeakRefDirective(); break;
