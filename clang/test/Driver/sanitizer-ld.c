@@ -57,7 +57,9 @@
 //
 // CHECK-ASAN-FREEBSD: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-ASAN-FREEBSD-NOT: "-lc"
+// CHECK-ASAN-FREEBSD-NOT: libclang_rt.asan_cxx
 // CHECK-ASAN-FREEBSD: freebsd{{/|\\+}}libclang_rt.asan-i386.a"
+// CHECK-ASAN-FREEBSD-NOT: libclang_rt.asan_cxx
 // CHECK-ASAN-FREEBSD: "-lpthread"
 // CHECK-ASAN-FREEBSD: "-lrt"
 // CHECK-ASAN-FREEBSD: "-export-dynamic"
@@ -80,6 +82,7 @@
 //
 // CHECK-ASAN-LINUX-CXX: "{{(.*[^-.0-9A-Z_a-z])?}}ld{{(.exe)?}}"
 // CHECK-ASAN-LINUX-CXX-NOT: "-lc"
+// CHECK-ASAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.asan_cxx-i386.a" "-no-whole-archive"
 // CHECK-ASAN-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.asan-i386.a" "-no-whole-archive"
 // CHECK-ASAN-LINUX-CXX: "-lpthread"
 // CHECK-ASAN-LINUX-CXX: "-lrt"

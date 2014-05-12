@@ -1972,7 +1972,7 @@ static void addSanitizerRTLinkFlags(const ToolChain &TC, const ArgList &Args,
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
 /// This needs to be called before we add the C run-time (malloc, etc).
 static void addAsanRT(const ToolChain &TC, const ArgList &Args,
-                      ArgStringList &CmdArgs, bool Shared) {
+                      ArgStringList &CmdArgs, bool Shared, bool IsCXX) {
   if (Shared) {
     // Link dynamic runtime if necessary.
     SmallString<128> LibSanitizer =
@@ -1985,10 +1985,15 @@ static void addAsanRT(const ToolChain &TC, const ArgList &Args,
       (TC.getTriple().getEnvironment() == llvm::Triple::Android))
     return;
 
-  const char *LibAsanStaticPart = Shared ? "asan-preinit" : "asan";
-  addSanitizerRTLinkFlags(TC, Args, CmdArgs, LibAsanStaticPart,
-                          /*BeforeLibStdCXX*/ true, /*ExportSymbols*/ !Shared,
-                          /*LinkDeps*/ !Shared);
+  if (Shared) {
+    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan-preinit",
+                            /*BeforeLibStdCXX*/ true, /*ExportSymbols*/ false,
+                            /*LinkDeps*/ false);
+  } else {
+    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan", true);
+    if (IsCXX)
+      addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan_cxx", true);
+  }
 }
 
 /// If ThreadSanitizer is enabled, add appropriate linker flags (Linux).
@@ -2049,7 +2054,7 @@ static void addSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
                     Sanitize.needsAsanRt() || Sanitize.needsTsanRt() ||
                     Sanitize.needsMsanRt() || Sanitize.needsLsanRt());
   if (Sanitize.needsAsanRt())
-    addAsanRT(TC, Args, CmdArgs, Sanitize.needsSharedAsanRt());
+    addAsanRT(TC, Args, CmdArgs, Sanitize.needsSharedAsanRt(), D.CCCIsCXX());
   if (Sanitize.needsTsanRt())
     addTsanRT(TC, Args, CmdArgs);
   if (Sanitize.needsMsanRt())
