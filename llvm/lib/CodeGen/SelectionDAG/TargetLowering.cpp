@@ -848,6 +848,31 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
     }
     break;
   }
+  case ISD::BUILD_PAIR: {
+    EVT HalfVT = Op.getOperand(0).getValueType();
+    unsigned HalfBitWidth = HalfVT.getScalarSizeInBits();
+
+    APInt MaskLo = NewMask.getLoBits(HalfBitWidth).trunc(HalfBitWidth);
+    APInt MaskHi = NewMask.getHiBits(HalfBitWidth).trunc(HalfBitWidth);
+
+    APInt KnownZeroLo, KnownOneLo;
+    APInt KnownZeroHi, KnownOneHi;
+
+    if (SimplifyDemandedBits(Op.getOperand(0), MaskLo, KnownZeroLo,
+                             KnownOneLo, TLO, Depth + 1))
+      return true;
+
+    if (SimplifyDemandedBits(Op.getOperand(1), MaskHi, KnownZeroHi,
+                             KnownOneHi, TLO, Depth + 1))
+      return true;
+
+    KnownZero = KnownZeroLo.zext(BitWidth) |
+                KnownZeroHi.zext(BitWidth).shl(HalfBitWidth);
+
+    KnownOne = KnownOneLo.zext(BitWidth) |
+               KnownOneHi.zext(BitWidth).shl(HalfBitWidth);
+    break;
+  }
   case ISD::ZERO_EXTEND: {
     unsigned OperandBitWidth =
       Op.getOperand(0).getValueType().getScalarType().getSizeInBits();
