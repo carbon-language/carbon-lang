@@ -1125,7 +1125,7 @@ Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
       BinaryOperator *NewBO = CreateBinOpAsGiven(Inst, LShuf->getOperand(0),
           RShuf->getOperand(0), Builder);
       Value *Res = Builder->CreateShuffleVector(NewBO,
-          UndefValue::get(Inst.getType()), LShuf->getMask());
+          UndefValue::get(NewBO->getType()), LShuf->getMask());
       return Res;
     }
   }

@@ -375,3 +375,14 @@ define <2 x i32> @pr19717(<4 x i32> %in0, <2 x i32> %in1) {
   %mul = mul <2 x i32> %shuffle, %shuffle4
   ret <2 x i32> %mul
 }
+
+define <4 x i16> @pr19717a(<8 x i16> %in0, <8 x i16> %in1) {
+; CHECK-LABEL: @pr19717a(
+; CHECK: [[VAR1:%[a-zA-Z0-9.]+]] = mul <8 x i16> %in0, %in1
+; CHECK: [[VAR2:%[a-zA-Z0-9.]+]] = shufflevector <8 x i16> [[VAR1]], <8 x i16> undef, <4 x i32> <i32 5, i32 5, i32 5, i32 5>
+; CHECK: ret <4 x i16> [[VAR2]]
+  %shuffle = shufflevector <8 x i16> %in0, <8 x i16> %in0, <4 x i32> <i32 5, i32 5, i32 5, i32 5>
+  %shuffle1 = shufflevector <8 x i16> %in1, <8 x i16> %in1, <4 x i32> <i32 5, i32 5, i32 5, i32 5>
+  %mul = mul <4 x i16> %shuffle, %shuffle1
+  ret <4 x i16> %mul
+}
