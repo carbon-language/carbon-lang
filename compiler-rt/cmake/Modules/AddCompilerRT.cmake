@@ -200,6 +200,9 @@ macro(add_custom_libcxx name prefix)
                -DCMAKE_CXX_FLAGS=${LIBCXX_CFLAGS}
                -DCMAKE_BUILD_TYPE=Release
                -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+    LOG_BUILD 1
+    LOG_CONFIGURE 1
+    LOG_INSTALL 1
     )
 
   ExternalProject_Add_Step(${name} force-reconfigure
