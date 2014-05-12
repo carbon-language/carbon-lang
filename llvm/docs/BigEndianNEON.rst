@@ -90,7 +90,7 @@ Considerations
 LLVM IR Lane ordering
 ---------------------
 
-LLVM IR has first class vector types. In LLVM IR, the zero'th element of a vector resides at the lowest memory address. The optimizer relies on this property in certain areas, for example when concatenating vectors together. The intention is for arrays and vectors to have identical memory layouts - ``[4 x i8]`` and ``<4 x i8>`` should be represented the same in memory. Without this property there would be many special cases that the optimizer would have the cleverly handle.
+LLVM IR has first class vector types. In LLVM IR, the zero'th element of a vector resides at the lowest memory address. The optimizer relies on this property in certain areas, for example when concatenating vectors together. The intention is for arrays and vectors to have identical memory layouts - ``[4 x i8]`` and ``<4 x i8>`` should be represented the same in memory. Without this property there would be many special cases that the optimizer would have to cleverly handle.
 
 Use of ``LDR`` would break this lane ordering property. This doesn't preclude the use of ``LDR``, but we would have to do one of two things:
 
