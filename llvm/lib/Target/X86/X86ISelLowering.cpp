@@ -12737,6 +12737,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                        Ret, SDValue(InTrans.getNode(), 1));
   }
   }
+  llvm_unreachable("Unknown Intrinsic Type");
 }
 
 SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op,
