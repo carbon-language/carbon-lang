@@ -485,8 +485,7 @@ public:
   //
   // This emits the frame info section.
   //
-  static void Emit(MCStreamer &streamer, MCAsmBackend *MAB,
-                   bool usingCFI, bool isEH);
+  static void Emit(MCStreamer &streamer, MCAsmBackend *MAB, bool isEH);
   static void EmitAdvanceLoc(MCStreamer &Streamer, uint64_t AddrDelta);
   static void EncodeAdvanceLoc(MCContext &Context, uint64_t AddrDelta,
                                raw_ostream &OS);

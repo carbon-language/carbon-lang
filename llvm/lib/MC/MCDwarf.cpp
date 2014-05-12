@@ -1480,12 +1480,12 @@ namespace llvm {
 }
 
 void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
-                               bool UsingCFI, bool IsEH) {
+                               bool IsEH) {
   Streamer.generateCompactUnwindEncodings(MAB);
 
   MCContext &Context = Streamer.getContext();
   const MCObjectFileInfo *MOFI = Context.getObjectFileInfo();
-  FrameEmitterImpl Emitter(UsingCFI, IsEH);
+  FrameEmitterImpl Emitter(true, IsEH);
   ArrayRef<MCDwarfFrameInfo> FrameArray = Streamer.getFrameInfos();
 
   // Emit the compact unwind info if available.

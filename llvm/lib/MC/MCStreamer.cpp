@@ -620,10 +620,10 @@ void MCStreamer::EmitFrames(MCAsmBackend *MAB) {
     return;
 
   if (EmitEHFrame)
-    MCDwarfFrameEmitter::Emit(*this, MAB, true, true);
+    MCDwarfFrameEmitter::Emit(*this, MAB, true);
 
   if (EmitDebugFrame)
-    MCDwarfFrameEmitter::Emit(*this, MAB, true, false);
+    MCDwarfFrameEmitter::Emit(*this, MAB, false);
 }
 
 void MCStreamer::EmitW64Tables() {
