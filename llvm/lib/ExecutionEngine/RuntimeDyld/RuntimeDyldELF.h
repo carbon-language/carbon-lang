@@ -116,7 +116,8 @@ public:
   bool isCompatibleFile(const object::ObjectFile *Buffer) const override;
   void registerEHFrames() override;
   void deregisterEHFrames() override;
-  void finalizeLoad(ObjSectionToIDMap &SectionMap) override;
+  void finalizeLoad(ObjectImage &ObjImg,
+                    ObjSectionToIDMap &SectionMap) override;
   virtual ~RuntimeDyldELF();
 
   static ObjectImage *createObjectImage(ObjectBuffer *InputBuffer);

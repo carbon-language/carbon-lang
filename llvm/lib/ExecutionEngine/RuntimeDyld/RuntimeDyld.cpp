@@ -144,12 +144,14 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
     bool IsCommon = Flags & SymbolRef::SF_Common;
     if (IsCommon) {
       // Add the common symbols to a list.  We'll allocate them all below.
-      uint32_t Align;
-      Check(I->getAlignment(Align));
-      uint64_t Size = 0;
-      Check(I->getSize(Size));
-      CommonSize += Size + Align;
-      CommonSymbols[*I] = CommonSymbolInfo(Size, Align);
+      if (!GlobalSymbolTable.count(Name)) {
+        uint32_t Align;
+        Check(I->getAlignment(Align));
+        uint64_t Size = 0;
+        Check(I->getSize(Size));
+        CommonSize += Size + Align;
+        CommonSymbols[*I] = CommonSymbolInfo(Size, Align);
+      }
     } else {
       if (SymType == object::SymbolRef::ST_Function ||
           SymType == object::SymbolRef::ST_Data ||
@@ -177,7 +179,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
 
   // Allocate common symbols
   if (CommonSize != 0)
-    emitCommonSymbols(*Obj, CommonSymbols, CommonSize, LocalSymbols);
+    emitCommonSymbols(*Obj, CommonSymbols, CommonSize, GlobalSymbolTable);
 
   // Parse and process relocations
   DEBUG(dbgs() << "Parse relocations:\n");
@@ -205,7 +207,7 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
   }
 
   // Give the subclasses a chance to tie-up any loose ends.
-  finalizeLoad(LocalSections);
+  finalizeLoad(*Obj, LocalSections);
 
   return Obj.release();
 }
@@ -587,6 +589,8 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
     *Addr      = 0xFF; // jmp
     *(Addr+1)  = 0x25; // rip
     // 32-bit PC-relative address of the GOT entry will be stored at Addr+2
+  } else if (Arch == Triple::x86) {
+    *Addr      = 0xE9; // 32-bit pc-relative jump.
   }
   return Addr;
 }

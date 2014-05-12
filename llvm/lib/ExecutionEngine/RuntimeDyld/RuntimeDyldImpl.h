@@ -90,9 +90,17 @@ public:
   /// used to make a relocation section relative instead of symbol relative.
   int64_t Addend;
 
+  struct SectionPair {
+      uint32_t SectionA;
+      uint32_t SectionB;
+  };
+
   /// SymOffset - Section offset of the relocation entry's symbol (used for GOT
   /// lookup).
-  uint64_t SymOffset;
+  union {
+    uint64_t SymOffset;
+    SectionPair Sections;
+  };
 
   /// True if this is a PCRel relocation (MachO specific).
   bool IsPCRel;
@@ -113,6 +121,16 @@ public:
                   bool IsPCRel, unsigned Size)
       : SectionID(id), Offset(offset), RelType(type), Addend(addend),
         SymOffset(0), IsPCRel(IsPCRel), Size(Size) {}
+
+  RelocationEntry(unsigned id, uint64_t offset, uint32_t type, int64_t addend,
+                  unsigned SectionA, uint64_t SectionAOffset, unsigned SectionB,
+                  uint64_t SectionBOffset, bool IsPCRel, unsigned Size)
+      : SectionID(id), Offset(offset), RelType(type),
+        Addend(SectionAOffset - SectionBOffset + addend), IsPCRel(IsPCRel),
+        Size(Size) {
+    Sections.SectionA = SectionA;
+    Sections.SectionB = SectionB;
+  }
 };
 
 class RelocationValueRef {
@@ -373,7 +391,7 @@ public:
 
   virtual void deregisterEHFrames();
 
-  virtual void finalizeLoad(ObjSectionToIDMap &SectionMap) {}
+  virtual void finalizeLoad(ObjectImage &ObjImg, ObjSectionToIDMap &SectionMap) {}
 };
 
 } // end namespace llvm

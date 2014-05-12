@@ -46,6 +46,14 @@ private:
   bool resolveARMRelocation(const RelocationEntry &RE, uint64_t Value);
   bool resolveARM64Relocation(const RelocationEntry &RE, uint64_t Value);
 
+  // Populate stubs in __jump_table section.
+  void populateJumpTable(MachOObjectFile &Obj, const SectionRef &JTSection,
+                         unsigned JTSectionID);
+
+  // Populate __pointers section.
+  void populatePointersSection(MachOObjectFile &Obj, const SectionRef &PTSection,
+                               unsigned PTSectionID);
+
   unsigned getMaxStubSize() override {
     if (Arch == Triple::arm || Arch == Triple::thumb)
       return 8; // 32-bit instruction and 32-bit address
@@ -56,6 +64,12 @@ private:
   }
 
   unsigned getStubAlignment() override { return 1; }
+
+  relocation_iterator processSECTDIFFRelocation(
+                                             unsigned SectionID,
+                                             relocation_iterator RelI,
+                                             ObjectImage &ObjImg,
+                                             ObjSectionToIDMap &ObjSectionToID);
 
   struct EHFrameRelatedSections {
     EHFrameRelatedSections()
@@ -85,7 +99,8 @@ public:
   bool isCompatibleFormat(const ObjectBuffer *Buffer) const override;
   bool isCompatibleFile(const object::ObjectFile *Obj) const override;
   void registerEHFrames() override;
-  void finalizeLoad(ObjSectionToIDMap &SectionMap) override;
+  void finalizeLoad(ObjectImage &ObjImg,
+                    ObjSectionToIDMap &SectionMap) override;
 
   static ObjectImage *createObjectImage(ObjectBuffer *InputBuffer) {
     return new ObjectImageCommon(InputBuffer);

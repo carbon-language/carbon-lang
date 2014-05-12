@@ -111,6 +111,9 @@ public:
   basic_symbol_iterator symbol_begin_impl() const override;
   basic_symbol_iterator symbol_end_impl() const override;
 
+  // MachO specific.
+  basic_symbol_iterator getSymbolByIndex(unsigned Index) const;
+
   section_iterator section_begin() const override;
   section_iterator section_end() const override;
 

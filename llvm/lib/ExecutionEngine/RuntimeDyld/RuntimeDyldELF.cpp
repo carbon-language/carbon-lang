@@ -1397,7 +1397,8 @@ uint64_t RuntimeDyldELF::findGOTEntry(uint64_t LoadAddress, uint64_t Offset) {
   return 0;
 }
 
-void RuntimeDyldELF::finalizeLoad(ObjSectionToIDMap &SectionMap) {
+void RuntimeDyldELF::finalizeLoad(ObjectImage &ObjImg,
+                                  ObjSectionToIDMap &SectionMap) {
   // If necessary, allocate the global offset table
   if (MemMgr) {
     // Allocate the GOT if necessary
