@@ -576,7 +576,8 @@ void DwarfDebug::constructAbstractSubprogramScopeDIE(DwarfCompileUnit &TheCU,
 
   DISubprogram Sub(Scope->getScopeNode());
 
-  ProcessedSPNodes.insert(Sub);
+  if (!ProcessedSPNodes.insert(Sub))
+    return;
 
   if (DIE *ScopeDIE = TheCU.getDIE(Sub)) {
     AbstractSPDies.insert(std::make_pair(Sub, ScopeDIE));
@@ -1575,25 +1576,25 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Construct abstract scopes.
   for (LexicalScope *AScope : LScopes.getAbstractScopesList()) {
     DISubprogram SP(AScope->getScopeNode());
-    if (SP.isSubprogram()) {
-      // Collect info for variables that were optimized out.
-      DIArray Variables = SP.getVariables();
-      for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
-        DIVariable DV(Variables.getElement(i));
-        if (!DV || !DV.isVariable() || !ProcessedVars.insert(DV))
-          continue;
-        // Check that DbgVariable for DV wasn't created earlier, when
-        // findAbstractVariable() was called for inlined instance of DV.
-        LLVMContext &Ctx = DV->getContext();
-        DIVariable CleanDV = cleanseInlinedVariable(DV, Ctx);
-        if (AbstractVariables.lookup(CleanDV))
-          continue;
-        if (LexicalScope *Scope = LScopes.findAbstractScope(DV.getContext()))
-          addScopeVariable(Scope, new DbgVariable(DV, nullptr, this));
-      }
+    if (!SP.isSubprogram())
+      continue;
+    // Collect info for variables that were optimized out.
+    DIArray Variables = SP.getVariables();
+    for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
+      DIVariable DV(Variables.getElement(i));
+      assert(DV && DV.isVariable());
+      if (!ProcessedVars.insert(DV))
+        continue;
+      // Check that DbgVariable for DV wasn't created earlier, when
+      // findAbstractVariable() was called for inlined instance of DV.
+      LLVMContext &Ctx = DV->getContext();
+      DIVariable CleanDV = cleanseInlinedVariable(DV, Ctx);
+      if (AbstractVariables.lookup(CleanDV))
+        continue;
+      if (LexicalScope *Scope = LScopes.findAbstractScope(DV.getContext()))
+        addScopeVariable(Scope, new DbgVariable(DV, nullptr, this));
     }
-    if (ProcessedSPNodes.count(AScope->getScopeNode()) == 0)
-      constructAbstractSubprogramScopeDIE(TheCU, AScope);
+    constructAbstractSubprogramScopeDIE(TheCU, AScope);
   }
 
   DIE &CurFnDIE = constructSubprogramScopeDIE(TheCU, FnScope);

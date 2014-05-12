@@ -30,8 +30,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !10 = metadata !{i32 786478, metadata !26, metadata !6, metadata !"f", metadata !"f", metadata !"_ZL1fi", i32 3, metadata !11, i1 true, i1 true, i32 0, i32 0, null, i32 256, i1 true, null, null, null, metadata !13, i32 3} ; [ DW_TAG_subprogram ]
 !11 = metadata !{i32 786453, null, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !12, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !12 = metadata !{metadata !9, metadata !9}
-!13 = metadata !{metadata !14}
-!14 = metadata !{metadata !15, metadata !16}
+!13 = metadata !{metadata !15, metadata !16}
 !15 = metadata !{i32 786689, metadata !10, metadata !"argument", metadata !6, i32 16777219, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ]
 
 ; Two DW_TAG_formal_parameter: one abstract and one inlined.
