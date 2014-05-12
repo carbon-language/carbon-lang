@@ -1,5 +1,5 @@
-; RUN: llc -march=arm  -mattr=v6 < %s | FileCheck %s
-; RUN: llc -march=thumb  -mattr=v6 < %s | FileCheck %s
+; RUN: llc -mtriple=arm-darwin  -mattr=v6 < %s | FileCheck %s
+; RUN: llc -mtriple=thumb-darwin  -mattr=v6 < %s | FileCheck %s
 
 
 define void @test1(i16* nocapture %data) {
