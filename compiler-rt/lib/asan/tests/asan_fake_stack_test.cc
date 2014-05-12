@@ -59,6 +59,7 @@ TEST(FakeStack, FlagsOffset) {
   }
 }
 
+#if !defined(_WIN32)  // FIXME: Fails due to OOM on Windows.
 TEST(FakeStack, CreateDestroy) {
   for (int i = 0; i < 1000; i++) {
     for (uptr stack_size_log = 20; stack_size_log <= 22; stack_size_log++) {
@@ -67,6 +68,7 @@ TEST(FakeStack, CreateDestroy) {
     }
   }
 }
+#endif
 
 TEST(FakeStack, ModuloNumberOfFrames) {
   EXPECT_EQ(FakeStack::ModuloNumberOfFrames(15, 0, 0), 0U);
