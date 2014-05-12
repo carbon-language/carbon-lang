@@ -54,10 +54,8 @@ END_COMPILERRT_FUNCTION(__floatundisf)
 
 #ifndef __ELF__
 .const
-.balign 3
-#else
-.balign 8
 #endif
+.balign 8
 twop52: .quad 0x4330000000000000
 		.quad 0x0000000000000fff
 sticky: .quad 0x0000000000000000
