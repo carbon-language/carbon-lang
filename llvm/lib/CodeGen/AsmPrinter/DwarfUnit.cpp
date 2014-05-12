@@ -760,11 +760,11 @@ static bool isUnsignedDIType(DwarfDebug *DD, DIType Ty) {
   DIBasicType BTy(Ty);
   assert(BTy.isBasicType());
   unsigned Encoding = BTy.getEncoding();
-  assert(Encoding == dwarf::DW_ATE_unsigned ||
-         Encoding == dwarf::DW_ATE_unsigned_char ||
-         Encoding == dwarf::DW_ATE_signed ||
-         Encoding == dwarf::DW_ATE_signed_char ||
-         Encoding == dwarf::DW_ATE_boolean && "Unsupported encoding");
+  assert((Encoding == dwarf::DW_ATE_unsigned ||
+          Encoding == dwarf::DW_ATE_unsigned_char ||
+          Encoding == dwarf::DW_ATE_signed ||
+          Encoding == dwarf::DW_ATE_signed_char ||
+          Encoding == dwarf::DW_ATE_boolean) && "Unsupported encoding");
   return (Encoding == dwarf::DW_ATE_unsigned ||
           Encoding == dwarf::DW_ATE_unsigned_char ||
           Encoding == dwarf::DW_ATE_boolean);
