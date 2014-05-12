@@ -4181,6 +4181,20 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
           uint64_t Op3Val = Op3CE->getValue();
           uint64_t Op4Val = Op4CE->getValue();
 
+          uint64_t RegWidth = 0;
+          if (ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(
+              Op1->getReg()))
+            RegWidth = 64;
+          else
+            RegWidth = 32;
+
+          if (Op3Val >= RegWidth)
+            return Error(Op3->getStartLoc(),
+                         "expected integer in range [0, 31]");
+          if (Op4Val < 1 || Op4Val > RegWidth)
+            return Error(Op4->getStartLoc(),
+                         "expected integer in range [1, 32]");
+
           uint64_t NewOp3Val = 0;
           if (ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(
                   Op1->getReg()))
@@ -4189,6 +4203,10 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
             NewOp3Val = (64 - Op3Val) & 0x3f;
 
           uint64_t NewOp4Val = Op4Val - 1;
+
+          if (NewOp3Val != 0 && NewOp4Val >= NewOp3Val)
+            return Error(Op4->getStartLoc(),
+                         "requested insert overflows register");
 
           const MCExpr *NewOp3 =
               MCConstantExpr::Create(NewOp3Val, getContext());
@@ -4231,28 +4249,45 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         if (Op3CE && Op4CE) {
           uint64_t Op3Val = Op3CE->getValue();
           uint64_t Op4Val = Op4CE->getValue();
+
+          uint64_t RegWidth = 0;
+          if (ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(
+              Op1->getReg()))
+            RegWidth = 64;
+          else
+            RegWidth = 32;
+
+          if (Op3Val >= RegWidth)
+            return Error(Op3->getStartLoc(),
+                         "expected integer in range [0, 31]");
+          if (Op4Val < 1 || Op4Val > RegWidth)
+            return Error(Op4->getStartLoc(),
+                         "expected integer in range [1, 32]");
+
           uint64_t NewOp4Val = Op3Val + Op4Val - 1;
 
-          if (NewOp4Val >= Op3Val) {
-            const MCExpr *NewOp4 =
-                MCConstantExpr::Create(NewOp4Val, getContext());
-            Operands[4] = ARM64Operand::CreateImm(
-                NewOp4, Op4->getStartLoc(), Op4->getEndLoc(), getContext());
-            if (Tok == "bfxil")
-              Operands[0] = ARM64Operand::CreateToken(
-                  "bfm", false, Op->getStartLoc(), getContext());
-            else if (Tok == "sbfx")
-              Operands[0] = ARM64Operand::CreateToken(
-                  "sbfm", false, Op->getStartLoc(), getContext());
-            else if (Tok == "ubfx")
-              Operands[0] = ARM64Operand::CreateToken(
-                  "ubfm", false, Op->getStartLoc(), getContext());
-            else
-              llvm_unreachable("No valid mnemonic for alias?");
+          if (NewOp4Val >= RegWidth || NewOp4Val < Op3Val)
+            return Error(Op4->getStartLoc(),
+                         "requested extract overflows register");
 
-            delete Op;
-            delete Op4;
-          }
+          const MCExpr *NewOp4 =
+              MCConstantExpr::Create(NewOp4Val, getContext());
+          Operands[4] = ARM64Operand::CreateImm(
+              NewOp4, Op4->getStartLoc(), Op4->getEndLoc(), getContext());
+          if (Tok == "bfxil")
+            Operands[0] = ARM64Operand::CreateToken(
+                "bfm", false, Op->getStartLoc(), getContext());
+          else if (Tok == "sbfx")
+            Operands[0] = ARM64Operand::CreateToken(
+                "sbfm", false, Op->getStartLoc(), getContext());
+          else if (Tok == "ubfx")
+            Operands[0] = ARM64Operand::CreateToken(
+                "ubfm", false, Op->getStartLoc(), getContext());
+          else
+            llvm_unreachable("No valid mnemonic for alias?");
+
+          delete Op;
+          delete Op4;
         }
       }
     }
