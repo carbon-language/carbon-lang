@@ -139,8 +139,6 @@ using namespace __sanitizer;  // NOLINT
 # define NOTHROW
 # define LIKELY(x) (x)
 # define UNLIKELY(x) (x)
-# define UNUSED
-# define USED
 # define PREFETCH(x) /* _mm_prefetch(x, _MM_HINT_NTA) */
 #else  // _MSC_VER
 # define ALWAYS_INLINE inline __attribute__((always_inline))
@@ -155,8 +153,6 @@ using namespace __sanitizer;  // NOLINT
 # define NOTHROW throw()
 # define LIKELY(x)     __builtin_expect(!!(x), 1)
 # define UNLIKELY(x)   __builtin_expect(!!(x), 0)
-# define UNUSED __attribute__((unused))
-# define USED __attribute__((used))
 # if defined(__i386__) || defined(__x86_64__)
 // __builtin_prefetch(x) generates prefetchnt0 on x86
 #  define PREFETCH(x) __asm__("prefetchnta (%0)" : : "r" (x))
@@ -164,6 +160,14 @@ using namespace __sanitizer;  // NOLINT
 #  define PREFETCH(x) __builtin_prefetch(x)
 # endif
 #endif  // _MSC_VER
+
+#if !defined(_MSC_VER) || defined(__clang__)
+# define UNUSED __attribute__((unused))
+# define USED __attribute__((used))
+#else
+# define UNUSED
+# define USED
+#endif
 
 // Unaligned versions of basic types.
 typedef ALIGNED(1) u16 uu16;
