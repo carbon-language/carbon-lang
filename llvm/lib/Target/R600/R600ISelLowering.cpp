@@ -1811,8 +1811,7 @@ FoldOperand(SDNode *ParentNode, unsigned SrcIdx, SDValue &Src, SDValue &Neg,
       TII->getOperandIdx(Opcode, AMDGPU::OpName::src1_W)
     };
     std::vector<unsigned> Consts;
-    for (unsigned i = 0; i < sizeof(SrcIndices) / sizeof(int); i++) {
-      int OtherSrcIdx = SrcIndices[i];
+    for (int OtherSrcIdx : SrcIndices) {
       int OtherSelIdx = TII->getSelIdx(Opcode, OtherSrcIdx);
       if (OtherSrcIdx < 0 || OtherSelIdx < 0)
         continue;

@@ -71,10 +71,9 @@ const TargetRegisterClass *SIRegisterInfo::getPhysRegClass(unsigned Reg) const {
     &AMDGPU::SReg_256RegClass
   };
 
-  for (unsigned i = 0, e = sizeof(BaseClasses) /
-                           sizeof(const TargetRegisterClass*); i != e; ++i) {
-    if (BaseClasses[i]->contains(Reg)) {
-      return BaseClasses[i];
+  for (const TargetRegisterClass *BaseClass : BaseClasses) {
+    if (BaseClass->contains(Reg)) {
+      return BaseClass;
     }
   }
   return nullptr;
