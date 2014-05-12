@@ -136,7 +136,7 @@ void DeclInfo::fill() {
   IsInstanceMethod = false;
   IsClassMethod = false;
   ParamVars = None;
-  TemplateParameters = NULL;
+  TemplateParameters = nullptr;
 
   if (!CommentDecl) {
     // If there is no declaration, the defaults is our only guess.

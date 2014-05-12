@@ -466,7 +466,7 @@ void TypePrinter::printVariableArrayAfter(const VariableArrayType *T,
     OS << '*';
 
   if (T->getSizeExpr())
-    T->getSizeExpr()->printPretty(OS, 0, Policy);
+    T->getSizeExpr()->printPretty(OS, nullptr, Policy);
   OS << ']';
 
   printAfter(T->getElementType(), OS);
@@ -501,7 +501,7 @@ void TypePrinter::printDependentSizedArrayAfter(
                                                raw_ostream &OS) {
   OS << '[';
   if (T->getSizeExpr())
-    T->getSizeExpr()->printPretty(OS, 0, Policy);
+    T->getSizeExpr()->printPretty(OS, nullptr, Policy);
   OS << ']';
   printAfter(T->getElementType(), OS);
 }
@@ -516,7 +516,7 @@ void TypePrinter::printDependentSizedExtVectorAfter(
                                           raw_ostream &OS) { 
   OS << " __attribute__((ext_vector_type(";
   if (T->getSizeExpr())
-    T->getSizeExpr()->printPretty(OS, 0, Policy);
+    T->getSizeExpr()->printPretty(OS, nullptr, Policy);
   OS << ")))";  
   printAfter(T->getElementType(), OS);
 }
@@ -593,7 +593,7 @@ FunctionProtoType::printExceptionSpecification(raw_ostream &OS,
     OS << " noexcept";
     if (getExceptionSpecType() == EST_ComputedNoexcept) {
       OS << '(';
-      getNoexceptExpr()->printPretty(OS, 0, Policy);
+      getNoexceptExpr()->printPretty(OS, nullptr, Policy);
       OS << ')';
     }
   }
@@ -761,7 +761,7 @@ void TypePrinter::printTypedefAfter(const TypedefType *T, raw_ostream &OS) { }
 void TypePrinter::printTypeOfExprBefore(const TypeOfExprType *T,
                                         raw_ostream &OS) {
   OS << "typeof ";
-  T->getUnderlyingExpr()->printPretty(OS, 0, Policy);
+  T->getUnderlyingExpr()->printPretty(OS, nullptr, Policy);
   spaceBeforePlaceHolder(OS);
 }
 void TypePrinter::printTypeOfExprAfter(const TypeOfExprType *T,
@@ -777,7 +777,7 @@ void TypePrinter::printTypeOfAfter(const TypeOfType *T, raw_ostream &OS) { }
 
 void TypePrinter::printDecltypeBefore(const DecltypeType *T, raw_ostream &OS) { 
   OS << "decltype(";
-  T->getUnderlyingExpr()->printPretty(OS, 0, Policy);
+  T->getUnderlyingExpr()->printPretty(OS, nullptr, Policy);
   OS << ')';
   spaceBeforePlaceHolder(OS);
 }
@@ -1424,7 +1424,7 @@ void QualType::dump(const char *msg) const {
   llvm::errs() << '\n';
 }
 
-LLVM_DUMP_METHOD void QualType::dump() const { dump(0); }
+LLVM_DUMP_METHOD void QualType::dump() const { dump(nullptr); }
 
 LLVM_DUMP_METHOD void Type::dump() const { QualType(this, 0).dump(); }
 

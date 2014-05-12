@@ -117,7 +117,7 @@ APValue::StructData::~StructData() {
   delete [] Elts;
 }
 
-APValue::UnionData::UnionData() : Field(0), Value(new APValue) {}
+APValue::UnionData::UnionData() : Field(nullptr), Value(new APValue) {}
 APValue::UnionData::~UnionData () {
   delete Value;
 }
@@ -404,7 +404,8 @@ void APValue::printPretty(raw_ostream &Out, ASTContext &Ctx, QualType Ty) const{
       if (const ValueDecl *VD = Base.dyn_cast<const ValueDecl*>())
         Out << *VD;
       else
-        Base.get<const Expr*>()->printPretty(Out, 0, Ctx.getPrintingPolicy());
+        Base.get<const Expr*>()->printPretty(Out, nullptr,
+                                             Ctx.getPrintingPolicy());
       if (!O.isZero()) {
         Out << " + " << (O / S);
         if (IsReference)
@@ -425,12 +426,12 @@ void APValue::printPretty(raw_ostream &Out, ASTContext &Ctx, QualType Ty) const{
       ElemTy = VD->getType();
     } else {
       const Expr *E = Base.get<const Expr*>();
-      E->printPretty(Out, 0, Ctx.getPrintingPolicy());
+      E->printPretty(Out, nullptr, Ctx.getPrintingPolicy());
       ElemTy = E->getType();
     }
 
     ArrayRef<LValuePathEntry> Path = getLValuePath();
-    const CXXRecordDecl *CastToBase = 0;
+    const CXXRecordDecl *CastToBase = nullptr;
     for (unsigned I = 0, N = Path.size(); I != N; ++I) {
       if (ElemTy->getAs<RecordType>()) {
         // The lvalue refers to a class type, so the next path entry is a base

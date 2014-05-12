@@ -40,7 +40,7 @@ OMPThreadPrivateDecl *OMPThreadPrivateDecl::CreateDeserialized(ASTContext &C,
                                                                unsigned ID,
                                                                unsigned N) {
   OMPThreadPrivateDecl *D = new (C, ID, N * sizeof(Expr *))
-      OMPThreadPrivateDecl(OMPThreadPrivate, 0, SourceLocation());
+      OMPThreadPrivateDecl(OMPThreadPrivate, nullptr, SourceLocation());
   D->NumVars = N;
   return D;
 }

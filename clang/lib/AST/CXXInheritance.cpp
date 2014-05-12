@@ -58,7 +58,7 @@ void CXXBasePaths::clear() {
   Paths.clear();
   ClassSubobjects.clear();
   ScratchPath.clear();
-  DetectedVirtual = 0;
+  DetectedVirtual = nullptr;
 }
 
 /// @brief Swaps the contents of this CXXBasePaths structure with the
@@ -203,7 +203,7 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
     if (BaseSpec.isVirtual()) {
       VisitBase = !Subobjects.first;
       Subobjects.first = true;
-      if (isDetectingVirtual() && DetectedVirtual == 0) {
+      if (isDetectingVirtual() && DetectedVirtual == nullptr) {
         // If this is the first virtual we find, remember it. If it turns out
         // there is no base path here, we'll reset it later.
         DetectedVirtual = BaseType->getAs<RecordType>();
@@ -286,7 +286,7 @@ bool CXXBasePaths::lookupInBases(ASTContext &Context,
 
     // If we set a virtual earlier, and this isn't a path, forget it again.
     if (SetVirtual && !FoundPathThroughBase) {
-      DetectedVirtual = 0;
+      DetectedVirtual = nullptr;
     }
   }
 
@@ -325,7 +325,7 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
     for (CXXBasePath::iterator PE = P->begin(), PEEnd = P->end();
          PE != PEEnd && !Hidden; ++PE) {
       if (PE->Base->isVirtual()) {
-        CXXRecordDecl *VBase = 0;
+        CXXRecordDecl *VBase = nullptr;
         if (const RecordType *Record = PE->Base->getType()->getAs<RecordType>())
           VBase = cast<CXXRecordDecl>(Record->getDecl());
         if (!VBase)
@@ -339,7 +339,7 @@ bool CXXRecordDecl::lookupInBases(BaseMatchesCallback *BaseMatches,
                                        HidingPEnd = Paths.end();
              HidingP != HidingPEnd;
              ++HidingP) {
-          CXXRecordDecl *HidingClass = 0;
+          CXXRecordDecl *HidingClass = nullptr;
           if (const RecordType *Record
                        = HidingP->back().Base->getType()->getAs<RecordType>())
             HidingClass = cast<CXXRecordDecl>(Record->getDecl());
@@ -625,7 +625,7 @@ FinalOverriderCollector::~FinalOverriderCollector() {
 void 
 CXXRecordDecl::getFinalOverriders(CXXFinalOverriderMap &FinalOverriders) const {
   FinalOverriderCollector Collector;
-  Collector.Collect(this, false, 0, FinalOverriders);
+  Collector.Collect(this, false, nullptr, FinalOverriders);
 
   // Weed out any final overriders that come from virtual base class
   // subobjects that were hidden by other subobjects along any path.

@@ -23,7 +23,7 @@ ExternalASTSource::~ExternalASTSource() { }
 void ExternalASTSource::PrintStats() { }
 
 Decl *ExternalASTSource::GetExternalDecl(uint32_t ID) {
-  return 0;
+  return nullptr;
 }
 
 Selector ExternalASTSource::GetExternalSelector(uint32_t ID) {
@@ -35,12 +35,12 @@ uint32_t ExternalASTSource::GetNumExternalSelectors() {
 }
 
 Stmt *ExternalASTSource::GetExternalDeclStmt(uint64_t Offset) {
-  return 0;
+  return nullptr;
 }
 
 CXXBaseSpecifier *
 ExternalASTSource::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
-  return 0;
+  return nullptr;
 }
 
 bool

@@ -62,5 +62,5 @@ FriendDecl *FriendDecl::CreateDeserialized(ASTContext &C, unsigned ID,
 FriendDecl *CXXRecordDecl::getFirstFriend() const {
   ExternalASTSource *Source = getParentASTContext().getExternalSource();
   Decl *First = data().FirstFriend.get(Source);
-  return First ? cast<FriendDecl>(First) : 0;
+  return First ? cast<FriendDecl>(First) : nullptr;
 }

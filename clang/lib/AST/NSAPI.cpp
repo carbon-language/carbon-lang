@@ -14,9 +14,9 @@
 using namespace clang;
 
 NSAPI::NSAPI(ASTContext &ctx)
-  : Ctx(ctx), ClassIds(), BOOLId(0), NSIntegerId(0), NSUIntegerId(0),
-    NSASCIIStringEncodingId(0), NSUTF8StringEncodingId(0) {
-}
+  : Ctx(ctx), ClassIds(), BOOLId(nullptr), NSIntegerId(nullptr),
+    NSUIntegerId(nullptr), NSASCIIStringEncodingId(nullptr),
+    NSUTF8StringEncodingId(nullptr) {}
 
 IdentifierInfo *NSAPI::getNSClassId(NSClassIdKindKind K) const {
   static const char *ClassName[NumClassIds] = {

@@ -37,7 +37,7 @@ static void BuildParentMap(MapTy& M, Stmt* S,
     // If we are rebuilding the map, clear out any existing state.
     if (M[POE->getSyntacticForm()])
       for (Stmt::child_range I = S->children(); I; ++I)
-        M[*I] = 0;
+        M[*I] = nullptr;
 
     M[POE->getSyntacticForm()] = S;
     BuildParentMap(M, POE->getSyntacticForm(), OV_Transparent);
@@ -92,7 +92,7 @@ static void BuildParentMap(MapTy& M, Stmt* S,
   }
 }
 
-ParentMap::ParentMap(Stmt* S) : Impl(0) {
+ParentMap::ParentMap(Stmt *S) : Impl(nullptr) {
   if (S) {
     MapTy *M = new MapTy();
     BuildParentMap(*M, S);
@@ -120,7 +120,7 @@ void ParentMap::setParent(const Stmt *S, const Stmt *Parent) {
 Stmt* ParentMap::getParent(Stmt* S) const {
   MapTy* M = (MapTy*) Impl;
   MapTy::iterator I = M->find(S);
-  return I == M->end() ? 0 : I->second;
+  return I == M->end() ? nullptr : I->second;
 }
 
 Stmt *ParentMap::getParentIgnoreParens(Stmt *S) const {
@@ -146,7 +146,7 @@ Stmt *ParentMap::getParentIgnoreParenImpCasts(Stmt *S) const {
 }
 
 Stmt *ParentMap::getOuterParenParent(Stmt *S) const {
-  Stmt *Paren = 0;
+  Stmt *Paren = nullptr;
   while (isa<ParenExpr>(S)) {
     Paren = S;
     S = getParent(S);

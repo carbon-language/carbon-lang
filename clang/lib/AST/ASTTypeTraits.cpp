@@ -77,7 +77,7 @@ void DynTypedNode::print(llvm::raw_ostream &OS,
   else if (const Decl *D = get<Decl>())
     D->print(OS, PP);
   else if (const Stmt *S = get<Stmt>())
-    S->printPretty(OS, 0, PP);
+    S->printPretty(OS, nullptr, PP);
   else if (const Type *T = get<Type>())
     QualType(T, 0).print(OS, PP);
   else

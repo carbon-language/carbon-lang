@@ -248,7 +248,7 @@ void TemplateArgument::Profile(llvm::FoldingSetNodeID &ID,
     break;
 
   case Declaration:
-    ID.AddPointer(getAsDecl()? getAsDecl()->getCanonicalDecl() : 0);
+    ID.AddPointer(getAsDecl()? getAsDecl()->getCanonicalDecl() : nullptr);
     break;
 
   case Template:
@@ -386,7 +386,7 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
   }
     
   case Expression:
-    getAsExpr()->printPretty(Out, 0, Policy);
+    getAsExpr()->printPretty(Out, nullptr, Policy);
     break;
     
   case Pack:
@@ -489,7 +489,7 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
     LangOptions LangOpts;
     LangOpts.CPlusPlus = true;
     PrintingPolicy Policy(LangOpts);
-    Arg.getAsExpr()->printPretty(OS, 0, Policy);
+    Arg.getAsExpr()->printPretty(OS, nullptr, Policy);
     return DB << OS.str();
   }
       

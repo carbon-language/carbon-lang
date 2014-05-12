@@ -88,7 +88,7 @@ static const RecordDecl *GetLocalClassDecl(const Decl *D) {
     D = cast<Decl>(DC);
     DC = getEffectiveDeclContext(D);
   }
-  return 0;
+  return nullptr;
 }
 
 static const FunctionDecl *getStructor(const FunctionDecl *fn) {
@@ -253,7 +253,7 @@ class CXXNameMangler {
 
 public:
   CXXNameMangler(ItaniumMangleContextImpl &C, raw_ostream &Out_,
-                 const NamedDecl *D = 0)
+                 const NamedDecl *D = nullptr)
     : Context(C), Out(Out_), Structor(getStructor(D)), StructorType(0),
       SeqID(0) {
     // These can't be mangled without a ctor type or dtor type.
@@ -559,7 +559,7 @@ isTemplate(const NamedDecl *ND, const TemplateArgumentList *&TemplateArgs) {
     return Spec->getSpecializedTemplate();
   }
 
-  return 0;
+  return nullptr;
 }
 
 void CXXNameMangler::mangleName(const NamedDecl *ND) {
@@ -586,7 +586,7 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
 
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
     // Check if we have a template.
-    const TemplateArgumentList *TemplateArgs = 0;
+    const TemplateArgumentList *TemplateArgs = nullptr;
     if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
       mangleUnscopedTemplateName(TD);
       mangleTemplateArgs(*TemplateArgs);
@@ -1000,26 +1000,27 @@ void CXXNameMangler::mangleUnresolvedPrefix(NestedNameSpecifier *qualifier,
 
         // Pretend we had a different nested name specifier.
         newQualifier = NestedNameSpecifier::Create(getASTContext(),
-                                                   /*prefix*/ 0,
+                                                   /*prefix*/ nullptr,
                                                    /*template*/ false,
                                                    type.getTypePtr());
       } else if (NamespaceDecl *nspace =
                    dyn_cast<NamespaceDecl>(firstQualifierLookup)) {
         newQualifier = NestedNameSpecifier::Create(getASTContext(),
-                                                   /*prefix*/ 0,
+                                                   /*prefix*/ nullptr,
                                                    nspace);
       } else if (NamespaceAliasDecl *alias =
                    dyn_cast<NamespaceAliasDecl>(firstQualifierLookup)) {
         newQualifier = NestedNameSpecifier::Create(getASTContext(),
-                                                   /*prefix*/ 0,
+                                                   /*prefix*/ nullptr,
                                                    alias);
       } else {
         // No sensible mangling to do here.
-        newQualifier = 0;
+        newQualifier = nullptr;
       }
 
       if (newQualifier)
-        return mangleUnresolvedPrefix(newQualifier, /*lookup*/ 0, recursive);
+        return mangleUnresolvedPrefix(newQualifier, /*lookup*/ nullptr,
+                                      recursive);
 
     } else {
       Out << "sr";
@@ -1042,7 +1043,7 @@ void CXXNameMangler::mangleUnresolvedName(NestedNameSpecifier *qualifier,
                                           DeclarationName name,
                                           unsigned knownArity) {
   if (qualifier) mangleUnresolvedPrefix(qualifier, firstQualifierLookup);
-  mangleUnqualifiedName(0, name, knownArity);
+  mangleUnqualifiedName(nullptr, name, knownArity);
 }
 
 static const FieldDecl *FindFirstNamedDataMember(const RecordDecl *RD) {
@@ -1057,10 +1058,10 @@ static const FieldDecl *FindFirstNamedDataMember(const RecordDecl *RD) {
       if (const FieldDecl *NamedDataMember = 
           FindFirstNamedDataMember(RT->getDecl()))
         return NamedDataMember;
-    }
+  }
 
   // We didn't find a named data member.
-  return 0;
+  return nullptr;
 }
 
 void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
@@ -1266,7 +1267,7 @@ void CXXNameMangler::mangleNestedName(const NamedDecl *ND,
   }
   
   // Check if we have a template.
-  const TemplateArgumentList *TemplateArgs = 0;
+  const TemplateArgumentList *TemplateArgs = nullptr;
   if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
     mangleTemplatePrefix(TD, NoFunction);
     mangleTemplateArgs(*TemplateArgs);
@@ -1506,7 +1507,7 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
     return;
   
   // Check if we have a template.
-  const TemplateArgumentList *TemplateArgs = 0;
+  const TemplateArgumentList *TemplateArgs = nullptr;
   if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
     mangleTemplatePrefix(TD);
     mangleTemplateArgs(*TemplateArgs);
@@ -1530,7 +1531,7 @@ void CXXNameMangler::mangleTemplatePrefix(TemplateName Template) {
   
   if (OverloadedTemplateStorage *Overloaded
                                       = Template.getAsOverloadedTemplate()) {
-    mangleUnqualifiedName(0, (*Overloaded->begin())->getDeclName(), 
+    mangleUnqualifiedName(nullptr, (*Overloaded->begin())->getDeclName(),
                           UnknownArity);
     return;
   }
@@ -1572,8 +1573,8 @@ void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND,
 void CXXNameMangler::mangleType(TemplateName TN) {
   if (mangleSubstitution(TN))
     return;
-      
-  TemplateDecl *TD = 0;
+
+  TemplateDecl *TD = nullptr;
 
   switch (TN.getKind()) {
   case TemplateName::QualifiedTemplate:
@@ -1600,7 +1601,7 @@ void CXXNameMangler::mangleType(TemplateName TN) {
 
     // <class-enum-type> ::= <name>
     // <name> ::= <nested-name>
-    mangleUnresolvedPrefix(Dependent->getQualifier(), 0);
+    mangleUnresolvedPrefix(Dependent->getQualifier(), nullptr);
     mangleSourceName(Dependent->getIdentifier());
     break;
   }
@@ -2172,7 +2173,7 @@ void CXXNameMangler::mangleType(const ComplexType *T) {
 void CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
   QualType EltType = T->getElementType();
   assert(EltType->isBuiltinType() && "Neon vector element not a BuiltinType");
-  const char *EltName = 0;
+  const char *EltName = nullptr;
   if (T->getVectorKind() == VectorType::NeonPolyVector) {
     switch (cast<BuiltinType>(EltType)->getKind()) {
     case BuiltinType::SChar:
@@ -2205,7 +2206,7 @@ void CXXNameMangler::mangleNeonVectorType(const VectorType *T) {
       llvm_unreachable("unexpected Neon vector element type");
     }
   }
-  const char *BaseName = 0;
+  const char *BaseName = nullptr;
   unsigned BitSize = (T->getNumElements() *
                       getASTContext().getTypeSize(EltType));
   if (BitSize == 64)
@@ -2769,15 +2770,15 @@ recurse:
   case Expr::MemberExprClass: {
     const MemberExpr *ME = cast<MemberExpr>(E);
     mangleMemberExpr(ME->getBase(), ME->isArrow(),
-                     ME->getQualifier(), 0, ME->getMemberDecl()->getDeclName(),
-                     Arity);
+                     ME->getQualifier(), nullptr,
+                     ME->getMemberDecl()->getDeclName(), Arity);
     break;
   }
 
   case Expr::UnresolvedMemberExprClass: {
     const UnresolvedMemberExpr *ME = cast<UnresolvedMemberExpr>(E);
     mangleMemberExpr(ME->getBase(), ME->isArrow(),
-                     ME->getQualifier(), 0, ME->getMemberName(),
+                     ME->getQualifier(), nullptr, ME->getMemberName(),
                      Arity);
     if (ME->hasExplicitTemplateArgs())
       mangleTemplateArgs(ME->getExplicitTemplateArgs());
@@ -2797,7 +2798,7 @@ recurse:
 
   case Expr::UnresolvedLookupExprClass: {
     const UnresolvedLookupExpr *ULE = cast<UnresolvedLookupExpr>(E);
-    mangleUnresolvedName(ULE->getQualifier(), 0, ULE->getName(), Arity);
+    mangleUnresolvedName(ULE->getQualifier(), nullptr, ULE->getName(), Arity);
 
     // All the <unresolved-name> productions end in a
     // base-unresolved-name, where <template-args> are just tacked
@@ -3060,7 +3061,8 @@ recurse:
 
   case Expr::DependentScopeDeclRefExprClass: {
     const DependentScopeDeclRefExpr *DRE = cast<DependentScopeDeclRefExpr>(E);
-    mangleUnresolvedName(DRE->getQualifier(), 0, DRE->getDeclName(), Arity);
+    mangleUnresolvedName(DRE->getQualifier(), nullptr, DRE->getDeclName(),
+                         Arity);
 
     // All the <unresolved-name> productions end in a
     // base-unresolved-name, where <template-args> are just tacked

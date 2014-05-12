@@ -549,8 +549,8 @@ static Cl::Kinds ClassifyConditional(ASTContext &Ctx, const Expr *True,
     // category of the other.
     bool TrueIsThrow = isa<CXXThrowExpr>(True->IgnoreParenImpCasts());
     bool FalseIsThrow = isa<CXXThrowExpr>(False->IgnoreParenImpCasts());
-    if (const Expr *NonThrow = TrueIsThrow ? (FalseIsThrow ? 0    : False)
-                                           : (FalseIsThrow ? True : 0))
+    if (const Expr *NonThrow = TrueIsThrow ? (FalseIsThrow ? nullptr : False)
+                                           : (FalseIsThrow ? True : nullptr))
       return ClassifyInternal(Ctx, NonThrow);
 
     //   [Otherwise] the result [...] is a prvalue.
@@ -593,7 +593,8 @@ static Cl::ModifiableType IsModifiable(ASTContext &Ctx, const Expr *E,
   // Assignment to a property in ObjC is an implicit setter access. But a
   // setter might not exist.
   if (const ObjCPropertyRefExpr *Expr = dyn_cast<ObjCPropertyRefExpr>(E)) {
-    if (Expr->isImplicitProperty() && Expr->getImplicitPropertySetter() == 0)
+    if (Expr->isImplicitProperty() &&
+        Expr->getImplicitPropertySetter() == nullptr)
       return Cl::CM_NoSetterProperty;
   }
 

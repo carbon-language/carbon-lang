@@ -29,7 +29,8 @@ Sema::Sema(llvm::BumpPtrAllocator &Allocator, const SourceManager &SourceMgr,
            DiagnosticsEngine &Diags, CommandTraits &Traits,
            const Preprocessor *PP) :
     Allocator(Allocator), SourceMgr(SourceMgr), Diags(Diags), Traits(Traits),
-    PP(PP), ThisDeclInfo(NULL), BriefCommand(NULL), HeaderfileCommand(NULL) {
+    PP(PP), ThisDeclInfo(nullptr), BriefCommand(nullptr),
+    HeaderfileCommand(nullptr) {
 }
 
 void Sema::setDecl(const Decl *D) {
@@ -623,7 +624,7 @@ void Sema::checkReturnsCommand(const BlockCommandComment *Command) {
 
 void Sema::checkBlockCommandDuplicate(const BlockCommandComment *Command) {
   const CommandInfo *Info = Traits.getCommandInfo(Command->getCommandID());
-  const BlockCommandComment *PrevCommand = NULL;
+  const BlockCommandComment *PrevCommand = nullptr;
   if (Info->IsBriefCommand) {
     if (!BriefCommand) {
       BriefCommand = Command;
@@ -723,7 +724,7 @@ void Sema::resolveParamCommandIndexes(const FullComment *FC) {
   SmallVector<ParamCommandComment *, 8> ParamVarDocs;
 
   ArrayRef<const ParmVarDecl *> ParamVars = getParamVars();
-  ParamVarDocs.resize(ParamVars.size(), NULL);
+  ParamVarDocs.resize(ParamVars.size(), nullptr);
 
   // First pass over all \\param commands: resolve all parameter names.
   for (Comment::child_iterator I = FC->child_begin(), E = FC->child_end();
@@ -962,7 +963,7 @@ class SimpleTypoCorrector {
 public:
   SimpleTypoCorrector(StringRef Typo) :
       Typo(Typo), MaxEditDistance((Typo.size() + 2) / 3),
-      BestDecl(NULL), BestEditDistance(MaxEditDistance + 1),
+      BestDecl(nullptr), BestEditDistance(MaxEditDistance + 1),
       BestIndex(0), NextIndex(0)
   { }
 
@@ -970,7 +971,7 @@ public:
 
   const NamedDecl *getBestDecl() const {
     if (BestEditDistance > MaxEditDistance)
-      return NULL;
+      return nullptr;
 
     return BestDecl;
   }

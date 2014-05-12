@@ -77,23 +77,23 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
 
   // User can not attach documentation to implicit declarations.
   if (D->isImplicit())
-    return NULL;
+    return nullptr;
 
   // User can not attach documentation to implicit instantiations.
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     if (FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
-      return NULL;
+      return nullptr;
   }
 
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (VD->isStaticDataMember() &&
         VD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
-      return NULL;
+      return nullptr;
   }
 
   if (const CXXRecordDecl *CRD = dyn_cast<CXXRecordDecl>(D)) {
     if (CRD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
-      return NULL;
+      return nullptr;
   }
 
   if (const ClassTemplateSpecializationDecl *CTSD =
@@ -101,35 +101,35 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
     TemplateSpecializationKind TSK = CTSD->getSpecializationKind();
     if (TSK == TSK_ImplicitInstantiation ||
         TSK == TSK_Undeclared)
-      return NULL;
+      return nullptr;
   }
 
   if (const EnumDecl *ED = dyn_cast<EnumDecl>(D)) {
     if (ED->getTemplateSpecializationKind() == TSK_ImplicitInstantiation)
-      return NULL;
+      return nullptr;
   }
   if (const TagDecl *TD = dyn_cast<TagDecl>(D)) {
     // When tag declaration (but not definition!) is part of the
     // decl-specifier-seq of some other declaration, it doesn't get comment
     if (TD->isEmbeddedInDeclarator() && !TD->isCompleteDefinition())
-      return NULL;
+      return nullptr;
   }
   // TODO: handle comments for function parameters properly.
   if (isa<ParmVarDecl>(D))
-    return NULL;
+    return nullptr;
 
   // TODO: we could look up template parameter documentation in the template
   // documentation.
   if (isa<TemplateTypeParmDecl>(D) ||
       isa<NonTypeTemplateParmDecl>(D) ||
       isa<TemplateTemplateParmDecl>(D))
-    return NULL;
+    return nullptr;
 
   ArrayRef<RawComment *> RawComments = Comments.getComments();
 
   // If there are no comments anywhere, we won't find anything.
   if (RawComments.empty())
-    return NULL;
+    return nullptr;
 
   // Find declaration location.
   // For Objective-C declarations we generally don't expect to have multiple
@@ -167,7 +167,7 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   // If the declaration doesn't map directly to a location in a file, we
   // can't find the comment.
   if (DeclLoc.isInvalid() || !DeclLoc.isFileID())
-    return NULL;
+    return nullptr;
 
   // Find the comment that occurs just after this declaration.
   ArrayRef<RawComment *>::iterator Comment;
@@ -221,12 +221,12 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   // The comment just after the declaration was not a trailing comment.
   // Let's look at the previous comment.
   if (Comment == RawComments.begin())
-    return NULL;
+    return nullptr;
   --Comment;
 
   // Check that we actually have a non-member Doxygen comment.
   if (!(*Comment)->isDocumentation() || (*Comment)->isTrailingComment())
-    return NULL;
+    return nullptr;
 
   // Decompose the end of the comment.
   std::pair<FileID, unsigned> CommentEndDecomp
@@ -235,14 +235,14 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   // If the comment and the declaration aren't in the same file, then they
   // aren't related.
   if (DeclLocDecomp.first != CommentEndDecomp.first)
-    return NULL;
+    return nullptr;
 
   // Get the corresponding buffer.
   bool Invalid = false;
   const char *Buffer = SourceMgr.getBufferData(DeclLocDecomp.first,
                                                &Invalid).data();
   if (Invalid)
-    return NULL;
+    return nullptr;
 
   // Extract text between the comment and declaration.
   StringRef Text(Buffer + CommentEndDecomp.second,
@@ -251,7 +251,7 @@ RawComment *ASTContext::getRawCommentForDeclNoCache(const Decl *D) const {
   // There should be no other declarations or preprocessor directives between
   // comment and declaration.
   if (Text.find_first_of(";{}#@") != StringRef::npos)
-    return NULL;
+    return nullptr;
 
   return *Comment;
 }
@@ -349,8 +349,8 @@ const RawComment *ASTContext::getRawCommentForAnyRedecl(
   }
 
   // Search for comments attached to declarations in the redeclaration chain.
-  const RawComment *RC = NULL;
-  const Decl *OriginalDeclForRC = NULL;
+  const RawComment *RC = nullptr;
+  const Decl *OriginalDeclForRC = nullptr;
   for (auto I : D->redecls()) {
     llvm::DenseMap<const Decl *, RawCommentAndCacheFlags>::iterator Pos =
         RedeclComments.find(I);
@@ -433,14 +433,14 @@ comments::FullComment *ASTContext::cloneFullComment(comments::FullComment *FC,
 
 comments::FullComment *ASTContext::getLocalCommentForDeclUncached(const Decl *D) const {
   const RawComment *RC = getRawCommentForDeclNoCache(D);
-  return RC ? RC->parse(*this, 0, D) : 0;
+  return RC ? RC->parse(*this, nullptr, D) : nullptr;
 }
 
 comments::FullComment *ASTContext::getCommentForDecl(
                                               const Decl *D,
                                               const Preprocessor *PP) const {
   if (D->isInvalidDecl())
-    return NULL;
+    return nullptr;
   D = adjustDeclToTemplate(D);
   
   const Decl *Canonical = D->getCanonicalDecl();
@@ -497,7 +497,7 @@ comments::FullComment *ASTContext::getCommentForDecl(
     }
     else if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
       if (!(RD = RD->getDefinition()))
-        return NULL;
+        return nullptr;
       // Check non-virtual bases.
       for (const auto &I : RD->bases()) {
         if (I.isVirtual() || (I.getAccessSpecifier() != AS_public))
@@ -528,7 +528,7 @@ comments::FullComment *ASTContext::getCommentForDecl(
         }
       }
     }
-    return NULL;
+    return nullptr;
   }
   
   // If the RawComment was attached to other redeclaration of this Decl, we
@@ -589,7 +589,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
   // Check if we already have a canonical template template parameter.
   llvm::FoldingSetNodeID ID;
   CanonicalTemplateTemplateParm::Profile(ID, TTP);
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   CanonicalTemplateTemplateParm *Canonical
     = CanonTemplateTemplateParms.FindNodeOrInsertPos(ID, InsertPos);
   if (Canonical)
@@ -608,7 +608,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
                                                SourceLocation(),
                                                SourceLocation(),
                                                TTP->getDepth(),
-                                               TTP->getIndex(), 0, false,
+                                               TTP->getIndex(), nullptr, false,
                                                TTP->isParameterPack()));
     else if (NonTypeTemplateParmDecl *NTTP
              = dyn_cast<NonTypeTemplateParmDecl>(*P)) {
@@ -628,7 +628,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
                                                 SourceLocation(),
                                                 SourceLocation(),
                                                 NTTP->getDepth(),
-                                                NTTP->getPosition(), 0, 
+                                                NTTP->getPosition(), nullptr,
                                                 T,
                                                 TInfo,
                                                 ExpandedTypes.data(),
@@ -639,7 +639,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
                                                 SourceLocation(),
                                                 SourceLocation(),
                                                 NTTP->getDepth(),
-                                                NTTP->getPosition(), 0, 
+                                                NTTP->getPosition(), nullptr,
                                                 T,
                                                 NTTP->isParameterPack(),
                                                 TInfo);
@@ -656,7 +656,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
                                        SourceLocation(), TTP->getDepth(),
                                        TTP->getPosition(), 
                                        TTP->isParameterPack(),
-                                       0,
+                                       nullptr,
                          TemplateParameterList::Create(*this, SourceLocation(),
                                                        SourceLocation(),
                                                        CanonParams.data(),
@@ -665,7 +665,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
 
   // Get the new insert position for the node we care about.
   Canonical = CanonTemplateTemplateParms.FindNodeOrInsertPos(ID, InsertPos);
-  assert(Canonical == 0 && "Shouldn't be in the map!");
+  assert(!Canonical && "Shouldn't be in the map!");
   (void)Canonical;
 
   // Create the canonical template template parameter entry.
@@ -675,7 +675,7 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
 }
 
 CXXABI *ASTContext::createCXXABI(const TargetInfo &T) {
-  if (!LangOpts.CPlusPlus) return 0;
+  if (!LangOpts.CPlusPlus) return nullptr;
 
   switch (T.getCXXABI().getKind()) {
   case TargetCXXABI::GenericARM:
@@ -730,27 +730,27 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     TemplateSpecializationTypes(this_()),
     DependentTemplateSpecializationTypes(this_()),
     SubstTemplateTemplateParmPacks(this_()),
-    GlobalNestedNameSpecifier(0), 
-    Int128Decl(0), UInt128Decl(0), Float128StubDecl(0),
-    BuiltinVaListDecl(0),
-    ObjCIdDecl(0), ObjCSelDecl(0), ObjCClassDecl(0), ObjCProtocolClassDecl(0),
-    BOOLDecl(0),
-    CFConstantStringTypeDecl(0), ObjCInstanceTypeDecl(0),
-    FILEDecl(0), 
-    jmp_bufDecl(0), sigjmp_bufDecl(0), ucontext_tDecl(0),
-    BlockDescriptorType(0), BlockDescriptorExtendedType(0),
-    cudaConfigureCallDecl(0),
+    GlobalNestedNameSpecifier(nullptr),
+    Int128Decl(nullptr), UInt128Decl(nullptr), Float128StubDecl(nullptr),
+    BuiltinVaListDecl(nullptr),
+    ObjCIdDecl(nullptr), ObjCSelDecl(nullptr), ObjCClassDecl(nullptr),
+    ObjCProtocolClassDecl(nullptr), BOOLDecl(nullptr),
+    CFConstantStringTypeDecl(nullptr), ObjCInstanceTypeDecl(nullptr),
+    FILEDecl(nullptr),
+    jmp_bufDecl(nullptr), sigjmp_bufDecl(nullptr), ucontext_tDecl(nullptr),
+    BlockDescriptorType(nullptr), BlockDescriptorExtendedType(nullptr),
+    cudaConfigureCallDecl(nullptr),
     NullTypeSourceInfo(QualType()), 
     FirstLocalImport(), LastLocalImport(),
     SourceMgr(SM), LangOpts(LOpts), 
-    AddrSpaceMap(0), Target(0), PrintingPolicy(LOpts),
+    AddrSpaceMap(nullptr), Target(nullptr), PrintingPolicy(LOpts),
     Idents(idents), Selectors(sels),
     BuiltinInfo(builtins),
     DeclarationNames(*this),
-    ExternalSource(0), Listener(0),
+    ExternalSource(nullptr), Listener(nullptr),
     Comments(SM), CommentsLoaded(false),
     CommentCommandTraits(BumpAlloc, LOpts.CommentOpts),
-    LastSDM(0, 0)
+    LastSDM(nullptr, 0)
 {
   TUDecl = TranslationUnitDecl::Create(*this);
 }
@@ -1109,7 +1109,7 @@ FunctionDecl *ASTContext::getClassScopeSpecializationPattern(
   llvm::DenseMap<const FunctionDecl*, FunctionDecl *>::const_iterator Pos
     = ClassScopeSpecializationPattern.find(FD);
   if (Pos == ClassScopeSpecializationPattern.end())
-    return 0;
+    return nullptr;
 
   return Pos->second;
 }
@@ -1126,7 +1126,7 @@ ASTContext::getInstantiatedFromUsingDecl(UsingDecl *UUD) {
   llvm::DenseMap<UsingDecl *, NamedDecl *>::const_iterator Pos
     = InstantiatedFromUsingDecl.find(UUD);
   if (Pos == InstantiatedFromUsingDecl.end())
-    return 0;
+    return nullptr;
 
   return Pos->second;
 }
@@ -1146,7 +1146,7 @@ ASTContext::getInstantiatedFromUsingShadowDecl(UsingShadowDecl *Inst) {
   llvm::DenseMap<UsingShadowDecl*, UsingShadowDecl*>::const_iterator Pos
     = InstantiatedFromUsingShadowDecl.find(Inst);
   if (Pos == InstantiatedFromUsingShadowDecl.end())
-    return 0;
+    return nullptr;
 
   return Pos->second;
 }
@@ -1162,7 +1162,7 @@ FieldDecl *ASTContext::getInstantiatedFromUnnamedFieldDecl(FieldDecl *Field) {
   llvm::DenseMap<FieldDecl *, FieldDecl *>::iterator Pos
     = InstantiatedFromUnnamedFieldDecl.find(Field);
   if (Pos == InstantiatedFromUnnamedFieldDecl.end())
-    return 0;
+    return nullptr;
 
   return Pos->second;
 }
@@ -1182,7 +1182,7 @@ ASTContext::overridden_methods_begin(const CXXMethodDecl *Method) const {
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::const_iterator Pos
     = OverriddenMethods.find(Method->getCanonicalDecl());
   if (Pos == OverriddenMethods.end())
-    return 0;
+    return nullptr;
 
   return Pos->second.begin();
 }
@@ -1192,7 +1192,7 @@ ASTContext::overridden_methods_end(const CXXMethodDecl *Method) const {
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector>::const_iterator Pos
     = OverriddenMethods.find(Method->getCanonicalDecl());
   if (Pos == OverriddenMethods.end())
-    return 0;
+    return nullptr;
 
   return Pos->second.end();
 }
@@ -1894,7 +1894,7 @@ ObjCImplementationDecl *ASTContext::getObjCImplementation(ObjCInterfaceDecl *D) 
     I = ObjCImpls.find(D);
   if (I != ObjCImpls.end())
     return cast<ObjCImplementationDecl>(I->second);
-  return 0;
+  return nullptr;
 }
 /// \brief Get the implementation of ObjCCategoryDecl, or NULL if none exists.
 ObjCCategoryImplDecl *ASTContext::getObjCImplementation(ObjCCategoryDecl *D) {
@@ -1902,7 +1902,7 @@ ObjCCategoryImplDecl *ASTContext::getObjCImplementation(ObjCCategoryDecl *D) {
     I = ObjCImpls.find(D);
   if (I != ObjCImpls.end())
     return cast<ObjCCategoryImplDecl>(I->second);
-  return 0;
+  return nullptr;
 }
 
 /// \brief Set the implementation of ObjCInterfaceDecl.
@@ -1930,7 +1930,7 @@ const ObjCInterfaceDecl *ASTContext::getObjContainingInterface(
           dyn_cast<ObjCImplDecl>(ND->getDeclContext()))
     return IMD->getClassInterface();
 
-  return 0;
+  return nullptr;
 }
 
 /// \brief Get the copy initialization expression of VarDecl,or NULL if 
@@ -1941,7 +1941,7 @@ Expr *ASTContext::getBlockVarCopyInits(const VarDecl*VD) {
          "getBlockVarCopyInits - not __block var");
   llvm::DenseMap<const VarDecl*, Expr*>::iterator
     I = BlockVarCopyInits.find(VD);
-  return (I != BlockVarCopyInits.end()) ? cast<Expr>(I->second) : 0;
+  return (I != BlockVarCopyInits.end()) ? cast<Expr>(I->second) : nullptr;
 }
 
 /// \brief Set the copy inialization expression of a block var decl.
@@ -1975,7 +1975,7 @@ TypeSourceInfo *ASTContext::getTrivialTypeSourceInfo(QualType T,
 
 const ASTRecordLayout &
 ASTContext::getASTObjCInterfaceLayout(const ObjCInterfaceDecl *D) const {
-  return getObjCLayout(D, 0);
+  return getObjCLayout(D, nullptr);
 }
 
 const ASTRecordLayout &
@@ -1996,7 +1996,7 @@ ASTContext::getExtQualType(const Type *baseType, Qualifiers quals) const {
   // Check if we've already instantiated this type.
   llvm::FoldingSetNodeID ID;
   ExtQuals::Profile(ID, baseType, quals);
-  void *insertPos = 0;
+  void *insertPos = nullptr;
   if (ExtQuals *eq = ExtQualNodes.FindNodeOrInsertPos(ID, insertPos)) {
     assert(eq->getQualifiers() == quals);
     return QualType(eq, fastQuals);
@@ -2108,7 +2108,7 @@ QualType ASTContext::getComplexType(QualType T) const {
   llvm::FoldingSetNodeID ID;
   ComplexType::Profile(ID, T);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (ComplexType *CT = ComplexTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(CT, 0);
 
@@ -2120,7 +2120,7 @@ QualType ASTContext::getComplexType(QualType T) const {
 
     // Get the new insert position for the node we care about.
     ComplexType *NewIP = ComplexTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
   ComplexType *New = new (*this, TypeAlignment) ComplexType(T, Canonical);
   Types.push_back(New);
@@ -2136,7 +2136,7 @@ QualType ASTContext::getPointerType(QualType T) const {
   llvm::FoldingSetNodeID ID;
   PointerType::Profile(ID, T);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (PointerType *PT = PointerTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(PT, 0);
 
@@ -2148,7 +2148,7 @@ QualType ASTContext::getPointerType(QualType T) const {
 
     // Get the new insert position for the node we care about.
     PointerType *NewIP = PointerTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
   PointerType *New = new (*this, TypeAlignment) PointerType(T, Canonical);
   Types.push_back(New);
@@ -2159,7 +2159,7 @@ QualType ASTContext::getPointerType(QualType T) const {
 QualType ASTContext::getAdjustedType(QualType Orig, QualType New) const {
   llvm::FoldingSetNodeID ID;
   AdjustedType::Profile(ID, Orig, New);
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   AdjustedType *AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (AT)
     return QualType(AT, 0);
@@ -2168,7 +2168,7 @@ QualType ASTContext::getAdjustedType(QualType Orig, QualType New) const {
 
   // Get the new insert position for the node we care about.
   AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
-  assert(AT == 0 && "Shouldn't be in the map!");
+  assert(!AT && "Shouldn't be in the map!");
 
   AT = new (*this, TypeAlignment)
       AdjustedType(Type::Adjusted, Orig, New, Canonical);
@@ -2199,7 +2199,7 @@ QualType ASTContext::getDecayedType(QualType T) const {
 
   llvm::FoldingSetNodeID ID;
   AdjustedType::Profile(ID, T, Decayed);
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   AdjustedType *AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (AT)
     return QualType(AT, 0);
@@ -2208,7 +2208,7 @@ QualType ASTContext::getDecayedType(QualType T) const {
 
   // Get the new insert position for the node we care about.
   AT = AdjustedTypes.FindNodeOrInsertPos(ID, InsertPos);
-  assert(AT == 0 && "Shouldn't be in the map!");
+  assert(!AT && "Shouldn't be in the map!");
 
   AT = new (*this, TypeAlignment) DecayedType(T, Decayed, Canonical);
   Types.push_back(AT);
@@ -2225,7 +2225,7 @@ QualType ASTContext::getBlockPointerType(QualType T) const {
   llvm::FoldingSetNodeID ID;
   BlockPointerType::Profile(ID, T);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (BlockPointerType *PT =
         BlockPointerTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(PT, 0);
@@ -2239,7 +2239,7 @@ QualType ASTContext::getBlockPointerType(QualType T) const {
     // Get the new insert position for the node we care about.
     BlockPointerType *NewIP =
       BlockPointerTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
   BlockPointerType *New
     = new (*this, TypeAlignment) BlockPointerType(T, Canonical);
@@ -2260,7 +2260,7 @@ ASTContext::getLValueReferenceType(QualType T, bool SpelledAsLValue) const {
   llvm::FoldingSetNodeID ID;
   ReferenceType::Profile(ID, T, SpelledAsLValue);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (LValueReferenceType *RT =
         LValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(RT, 0);
@@ -2277,7 +2277,7 @@ ASTContext::getLValueReferenceType(QualType T, bool SpelledAsLValue) const {
     // Get the new insert position for the node we care about.
     LValueReferenceType *NewIP =
       LValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   LValueReferenceType *New
@@ -2297,7 +2297,7 @@ QualType ASTContext::getRValueReferenceType(QualType T) const {
   llvm::FoldingSetNodeID ID;
   ReferenceType::Profile(ID, T, false);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (RValueReferenceType *RT =
         RValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(RT, 0);
@@ -2314,7 +2314,7 @@ QualType ASTContext::getRValueReferenceType(QualType T) const {
     // Get the new insert position for the node we care about.
     RValueReferenceType *NewIP =
       RValueReferenceTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   RValueReferenceType *New
@@ -2332,7 +2332,7 @@ QualType ASTContext::getMemberPointerType(QualType T, const Type *Cls) const {
   llvm::FoldingSetNodeID ID;
   MemberPointerType::Profile(ID, T, Cls);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (MemberPointerType *PT =
       MemberPointerTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(PT, 0);
@@ -2346,7 +2346,7 @@ QualType ASTContext::getMemberPointerType(QualType T, const Type *Cls) const {
     // Get the new insert position for the node we care about.
     MemberPointerType *NewIP =
       MemberPointerTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
   MemberPointerType *New
     = new (*this, TypeAlignment) MemberPointerType(T, Cls, Canonical);
@@ -2374,7 +2374,7 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   llvm::FoldingSetNodeID ID;
   ConstantArrayType::Profile(ID, EltTy, ArySize, ASM, IndexTypeQuals);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (ConstantArrayType *ATP =
       ConstantArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(ATP, 0);
@@ -2391,7 +2391,7 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
     // Get the new insert position for the node we care about.
     ConstantArrayType *NewIP =
       ConstantArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   ConstantArrayType *New = new(*this,TypeAlignment)
@@ -2509,7 +2509,7 @@ QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
     const IncompleteArrayType *iat = cast<IncompleteArrayType>(ty);
     result = getVariableArrayType(
                  getVariableArrayDecayedType(iat->getElementType()),
-                                  /*size*/ 0,
+                                  /*size*/ nullptr,
                                   ArrayType::Normal,
                                   iat->getIndexTypeCVRQualifiers(),
                                   SourceRange());
@@ -2521,7 +2521,7 @@ QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
     const VariableArrayType *vat = cast<VariableArrayType>(ty);
     result = getVariableArrayType(
                  getVariableArrayDecayedType(vat->getElementType()),
-                                  /*size*/ 0,
+                                  /*size*/ nullptr,
                                   ArrayType::Star,
                                   vat->getIndexTypeCVRQualifiers(),
                                   vat->getBracketsRange());
@@ -2591,7 +2591,7 @@ QualType ASTContext::getDependentSizedArrayType(QualType elementType,
 
   SplitQualType canonElementType = getCanonicalType(elementType).split();
 
-  void *insertPos = 0;
+  void *insertPos = nullptr;
   llvm::FoldingSetNodeID ID;
   DependentSizedArrayType::Profile(ID, *this,
                                    QualType(canonElementType.Ty, 0),
@@ -2636,7 +2636,7 @@ QualType ASTContext::getIncompleteArrayType(QualType elementType,
   llvm::FoldingSetNodeID ID;
   IncompleteArrayType::Profile(ID, elementType, ASM, elementTypeQuals);
 
-  void *insertPos = 0;
+  void *insertPos = nullptr;
   if (IncompleteArrayType *iat =
        IncompleteArrayTypes.FindNodeOrInsertPos(ID, insertPos))
     return QualType(iat, 0);
@@ -2676,7 +2676,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
   llvm::FoldingSetNodeID ID;
   VectorType::Profile(ID, vecType, NumElts, Type::Vector, VecKind);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (VectorType *VTP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(VTP, 0);
 
@@ -2688,7 +2688,7 @@ QualType ASTContext::getVectorType(QualType vecType, unsigned NumElts,
 
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
   VectorType *New = new (*this, TypeAlignment)
     VectorType(vecType, NumElts, Canonical, VecKind);
@@ -2707,7 +2707,7 @@ ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) const {
   llvm::FoldingSetNodeID ID;
   VectorType::Profile(ID, vecType, NumElts, Type::ExtVector,
                       VectorType::GenericVector);
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (VectorType *VTP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(VTP, 0);
 
@@ -2719,7 +2719,7 @@ ASTContext::getExtVectorType(QualType vecType, unsigned NumElts) const {
 
     // Get the new insert position for the node we care about.
     VectorType *NewIP = VectorTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
   ExtVectorType *New = new (*this, TypeAlignment)
     ExtVectorType(vecType, NumElts, Canonical);
@@ -2736,7 +2736,7 @@ ASTContext::getDependentSizedExtVectorType(QualType vecType,
   DependentSizedExtVectorType::Profile(ID, *this, getCanonicalType(vecType),
                                        SizeExpr);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   DependentSizedExtVectorType *Canon
     = DependentSizedExtVectorTypes.FindNodeOrInsertPos(ID, InsertPos);
   DependentSizedExtVectorType *New;
@@ -2782,7 +2782,7 @@ ASTContext::getFunctionNoProtoType(QualType ResultTy,
   llvm::FoldingSetNodeID ID;
   FunctionNoProtoType::Profile(ID, ResultTy, Info);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (FunctionNoProtoType *FT =
         FunctionNoProtoTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(FT, 0);
@@ -2794,7 +2794,7 @@ ASTContext::getFunctionNoProtoType(QualType ResultTy,
     // Get the new insert position for the node we care about.
     FunctionNoProtoType *NewIP =
       FunctionNoProtoTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   FunctionProtoType::ExtInfo newInfo = Info.withCallingConv(CallConv);
@@ -2823,7 +2823,7 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
   FunctionProtoType::Profile(ID, ResultTy, ArgArray.begin(), NumArgs, EPI,
                              *this);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (FunctionProtoType *FTP =
         FunctionProtoTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(FTP, 0);
@@ -2863,7 +2863,7 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
     // Get the new insert position for the node we care about.
     FunctionProtoType *NewIP =
       FunctionProtoTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
 
   // FunctionProtoType objects are allocated with extra bytes after
@@ -3007,7 +3007,7 @@ QualType ASTContext::getAttributedType(AttributedType::Kind attrKind,
   llvm::FoldingSetNodeID id;
   AttributedType::Profile(id, attrKind, modifiedType, equivalentType);
 
-  void *insertPos = 0;
+  void *insertPos = nullptr;
   AttributedType *type = AttributedTypes.FindNodeOrInsertPos(id, insertPos);
   if (type) return QualType(type, 0);
 
@@ -3031,7 +3031,7 @@ ASTContext::getSubstTemplateTypeParmType(const TemplateTypeParmType *Parm,
 
   llvm::FoldingSetNodeID ID;
   SubstTemplateTypeParmType::Profile(ID, Parm, Replacement);
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   SubstTemplateTypeParmType *SubstParm
     = SubstTemplateTypeParmTypes.FindNodeOrInsertPos(ID, InsertPos);
 
@@ -3060,7 +3060,7 @@ QualType ASTContext::getSubstTemplateTypeParmPackType(
   
   llvm::FoldingSetNodeID ID;
   SubstTemplateTypeParmPackType::Profile(ID, Parm, ArgPack);
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (SubstTemplateTypeParmPackType *SubstParm
         = SubstTemplateTypeParmPackTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(SubstParm, 0);
@@ -3089,7 +3089,7 @@ QualType ASTContext::getTemplateTypeParmType(unsigned Depth, unsigned Index,
                                              TemplateTypeParmDecl *TTPDecl) const {
   llvm::FoldingSetNodeID ID;
   TemplateTypeParmType::Profile(ID, Depth, Index, ParameterPack, TTPDecl);
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   TemplateTypeParmType *TypeParm
     = TemplateTypeParmTypes.FindNodeOrInsertPos(ID, InsertPos);
 
@@ -3230,7 +3230,7 @@ ASTContext::getCanonicalTemplateSpecializationType(TemplateName Template,
   TemplateSpecializationType::Profile(ID, CanonTemplate,
                                       CanonArgs.data(), NumArgs, *this);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   TemplateSpecializationType *Spec
     = TemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
 
@@ -3258,7 +3258,7 @@ ASTContext::getElaboratedType(ElaboratedTypeKeyword Keyword,
   llvm::FoldingSetNodeID ID;
   ElaboratedType::Profile(ID, Keyword, NNS, NamedType);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   ElaboratedType *T = ElaboratedTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (T)
     return QualType(T, 0);
@@ -3282,7 +3282,7 @@ ASTContext::getParenType(QualType InnerType) const {
   llvm::FoldingSetNodeID ID;
   ParenType::Profile(ID, InnerType);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   ParenType *T = ParenTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (T)
     return QualType(T, 0);
@@ -3320,7 +3320,7 @@ QualType ASTContext::getDependentNameType(ElaboratedTypeKeyword Keyword,
   llvm::FoldingSetNodeID ID;
   DependentNameType::Profile(ID, Keyword, NNS, Name);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   DependentNameType *T
     = DependentNameTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (T)
@@ -3361,7 +3361,7 @@ ASTContext::getDependentTemplateSpecializationType(
   DependentTemplateSpecializationType::Profile(ID, *this, Keyword, NNS,
                                                Name, NumArgs, Args);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   DependentTemplateSpecializationType *T
     = DependentTemplateSpecializationTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (T)
@@ -3407,7 +3407,7 @@ QualType ASTContext::getPackExpansionType(QualType Pattern,
 
   assert(Pattern->containsUnexpandedParameterPack() &&
          "Pack expansions must expand one or more parameter packs");
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   PackExpansionType *T
     = PackExpansionTypes.FindNodeOrInsertPos(ID, InsertPos);
   if (T)
@@ -3482,7 +3482,7 @@ QualType ASTContext::getObjCObjectType(QualType BaseType,
   // Look in the folding set for an existing type.
   llvm::FoldingSetNodeID ID;
   ObjCObjectTypeImpl::Profile(ID, BaseType, Protocols, NumProtocols);
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (ObjCObjectType *QT = ObjCObjectTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(QT, 0);
 
@@ -3591,7 +3591,7 @@ QualType ASTContext::getObjCObjectPointerType(QualType ObjectT) const {
   llvm::FoldingSetNodeID ID;
   ObjCObjectPointerType::Profile(ID, ObjectT);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (ObjCObjectPointerType *QT =
               ObjCObjectPointerTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(QT, 0);
@@ -3650,7 +3650,7 @@ QualType ASTContext::getTypeOfExprType(Expr *tofExpr) const {
     llvm::FoldingSetNodeID ID;
     DependentTypeOfExprType::Profile(ID, *this, tofExpr);
 
-    void *InsertPos = 0;
+    void *InsertPos = nullptr;
     DependentTypeOfExprType *Canon
       = DependentTypeOfExprTypes.FindNodeOrInsertPos(ID, InsertPos);
     if (Canon) {
@@ -3702,7 +3702,7 @@ QualType ASTContext::getDecltypeType(Expr *e, QualType UnderlyingType) const {
     llvm::FoldingSetNodeID ID;
     DependentDecltypeType::Profile(ID, *this, e);
 
-    void *InsertPos = 0;
+    void *InsertPos = nullptr;
     DependentDecltypeType *Canon
       = DependentDecltypeTypes.FindNodeOrInsertPos(ID, InsertPos);
     if (Canon) {
@@ -3748,7 +3748,7 @@ QualType ASTContext::getAutoType(QualType DeducedType, bool IsDecltypeAuto,
     return getAutoDeductType();
 
   // Look in the folding set for an existing type.
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   llvm::FoldingSetNodeID ID;
   AutoType::Profile(ID, DeducedType, IsDecltypeAuto, IsDependent);
   if (AutoType *AT = AutoTypes.FindNodeOrInsertPos(ID, InsertPos))
@@ -3771,7 +3771,7 @@ QualType ASTContext::getAtomicType(QualType T) const {
   llvm::FoldingSetNodeID ID;
   AtomicType::Profile(ID, T);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   if (AtomicType *AT = AtomicTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(AT, 0);
 
@@ -3783,7 +3783,7 @@ QualType ASTContext::getAtomicType(QualType T) const {
 
     // Get the new insert position for the node we care about.
     AtomicType *NewIP = AtomicTypes.FindNodeOrInsertPos(ID, InsertPos);
-    assert(NewIP == 0 && "Shouldn't be in the map!"); (void)NewIP;
+    assert(!NewIP && "Shouldn't be in the map!"); (void)NewIP;
   }
   AtomicType *New = new (*this, TypeAlignment) AtomicType(T, Canonical);
   Types.push_back(New);
@@ -4142,7 +4142,7 @@ ASTContext::getCanonicalTemplateArgument(const TemplateArgument &Arg) const {
 NestedNameSpecifier *
 ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) const {
   if (!NNS)
-    return 0;
+    return nullptr;
 
   switch (NNS->getKind()) {
   case NestedNameSpecifier::Identifier:
@@ -4154,13 +4154,13 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) const {
   case NestedNameSpecifier::Namespace:
     // A namespace is canonical; build a nested-name-specifier with
     // this namespace and no prefix.
-    return NestedNameSpecifier::Create(*this, 0, 
+    return NestedNameSpecifier::Create(*this, nullptr,
                                  NNS->getAsNamespace()->getOriginalNamespace());
 
   case NestedNameSpecifier::NamespaceAlias:
     // A namespace is canonical; build a nested-name-specifier with
     // this namespace and no prefix.
-    return NestedNameSpecifier::Create(*this, 0, 
+    return NestedNameSpecifier::Create(*this, nullptr,
                                     NNS->getAsNamespaceAlias()->getNamespace()
                                                       ->getOriginalNamespace());
 
@@ -4182,8 +4182,8 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) const {
     // Otherwise, just canonicalize the type, and force it to be a TypeSpec.
     // FIXME: Why are TypeSpec and TypeSpecWithTemplate distinct in the
     // first place?
-    return NestedNameSpecifier::Create(*this, 0, false,
-                                       const_cast<Type*>(T.getTypePtr()));
+    return NestedNameSpecifier::Create(*this, nullptr, false,
+                                       const_cast<Type *>(T.getTypePtr()));
   }
 
   case NestedNameSpecifier::Global:
@@ -4205,7 +4205,7 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) const {
 
   // Handle the common negative case fast.
   if (!isa<ArrayType>(T.getCanonicalType()))
-    return 0;
+    return nullptr;
 
   // Apply any qualifiers from the array type to the element type.  This
   // implements C99 6.7.3p8: "If the specification of an array type includes
@@ -4220,7 +4220,7 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) const {
 
   // If we have a simple case, just return now.
   const ArrayType *ATy = dyn_cast<ArrayType>(split.Ty);
-  if (ATy == 0 || qs.empty())
+  if (!ATy || qs.empty())
     return ATy;
 
   // Otherwise, we have an array and we have qualifiers on it.  Push the
@@ -4506,7 +4506,7 @@ static const Type *getIntegerTypeForEnum(const EnumType *ET) {
   // FIXME: In C++, enum types are never integer types.
   if (ET->getDecl()->isComplete() && !ET->getDecl()->isScoped())
     return ET->getDecl()->getIntegerType().getTypePtr();
-  return NULL;
+  return nullptr;
 }
 
 /// getIntegerTypeOrder - Returns the highest ranked integer type:
@@ -4578,9 +4578,9 @@ QualType ASTContext::getCFConstantStringType() const {
     for (unsigned i = 0; i < 4; ++i) {
       FieldDecl *Field = FieldDecl::Create(*this, CFConstantStringTypeDecl,
                                            SourceLocation(),
-                                           SourceLocation(), 0,
-                                           FieldTypes[i], /*TInfo=*/0,
-                                           /*BitWidth=*/0,
+                                           SourceLocation(), nullptr,
+                                           FieldTypes[i], /*TInfo=*/nullptr,
+                                           /*BitWidth=*/nullptr,
                                            /*Mutable=*/false,
                                            ICIS_NoInit);
       Field->setAccess(AS_public);
@@ -4630,8 +4630,8 @@ QualType ASTContext::getBlockDescriptorType() const {
   for (size_t i = 0; i < 2; ++i) {
     FieldDecl *Field = FieldDecl::Create(
         *this, RD, SourceLocation(), SourceLocation(),
-        &Idents.get(FieldNames[i]), FieldTypes[i], /*TInfo=*/0,
-        /*BitWidth=*/0, /*Mutable=*/false, ICIS_NoInit);
+        &Idents.get(FieldNames[i]), FieldTypes[i], /*TInfo=*/nullptr,
+        /*BitWidth=*/nullptr, /*Mutable=*/false, ICIS_NoInit);
     Field->setAccess(AS_public);
     RD->addDecl(Field);
   }
@@ -4669,8 +4669,8 @@ QualType ASTContext::getBlockDescriptorExtendedType() const {
   for (size_t i = 0; i < 4; ++i) {
     FieldDecl *Field = FieldDecl::Create(
         *this, RD, SourceLocation(), SourceLocation(),
-        &Idents.get(FieldNames[i]), FieldTypes[i], /*TInfo=*/0,
-        /*BitWidth=*/0,
+        &Idents.get(FieldNames[i]), FieldTypes[i], /*TInfo=*/nullptr,
+        /*BitWidth=*/nullptr,
         /*Mutable=*/false, ICIS_NoInit);
     Field->setAccess(AS_public);
     RD->addDecl(Field);
@@ -4890,7 +4890,7 @@ void ASTContext::getObjCEncodingForMethodParameter(Decl::ObjCDeclQualifier QT,
   // Encode type qualifer, 'in', 'inout', etc. for the parameter.
   getObjCEncodingForTypeQualifier(QT, S);
   // Encode parameter type.
-  getObjCEncodingForTypeImpl(T, S, true, true, 0,
+  getObjCEncodingForTypeImpl(T, S, true, true, nullptr,
                              true     /*OutermostType*/,
                              false    /*EncodingProperty*/, 
                              false    /*StructField*/, 
@@ -4958,19 +4958,19 @@ ASTContext::getObjCPropertyImplDeclForPropertyDecl(
                                       const ObjCPropertyDecl *PD,
                                       const Decl *Container) const {
   if (!Container)
-    return 0;
+    return nullptr;
   if (const ObjCCategoryImplDecl *CID =
       dyn_cast<ObjCCategoryImplDecl>(Container)) {
     for (auto *PID : CID->property_impls())
       if (PID->getPropertyDecl() == PD)
         return PID;
-    } else {
-      const ObjCImplementationDecl *OID=cast<ObjCImplementationDecl>(Container);
-      for (auto *PID : OID->property_impls())
-        if (PID->getPropertyDecl() == PD)
-          return PID;
-    }
-  return 0;
+  } else {
+    const ObjCImplementationDecl *OID=cast<ObjCImplementationDecl>(Container);
+    for (auto *PID : OID->property_impls())
+      if (PID->getPropertyDecl() == PD)
+        return PID;
+  }
+  return nullptr;
 }
 
 /// getObjCEncodingForPropertyDecl - Return the encoded type for this
@@ -5003,7 +5003,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
                                                 std::string& S) const {
   // Collect information from the property implementation decl(s).
   bool Dynamic = false;
-  ObjCPropertyImplDecl *SynthesizePID = 0;
+  ObjCPropertyImplDecl *SynthesizePID = nullptr;
 
   if (ObjCPropertyImplDecl *PropertyImpDecl =
       getObjCPropertyImplDeclForPropertyDecl(PD, Container)) {
@@ -5019,7 +5019,7 @@ void ASTContext::getObjCEncodingForPropertyDecl(const ObjCPropertyDecl *PD,
   // Encode result type.
   // GCC has some special rules regarding encoding of properties which
   // closely resembles encoding of ivars.
-  getObjCEncodingForTypeImpl(PD->getType(), S, true, true, 0,
+  getObjCEncodingForTypeImpl(PD->getType(), S, true, true, nullptr,
                              true /* outermost type */,
                              true /* encoding for property */);
 
@@ -5223,15 +5223,15 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   case Type::Complex: {
     const ComplexType *CT = T->castAs<ComplexType>();
     S += 'j';
-    getObjCEncodingForTypeImpl(CT->getElementType(), S, false, false, 0, false,
-                               false);
+    getObjCEncodingForTypeImpl(CT->getElementType(), S, false, false, nullptr,
+                               false, false);
     return;
   }
 
   case Type::Atomic: {
     const AtomicType *AT = T->castAs<AtomicType>();
     S += 'A';
-    getObjCEncodingForTypeImpl(AT->getValueType(), S, false, false, 0,
+    getObjCEncodingForTypeImpl(AT->getValueType(), S, false, false, nullptr,
                                false, false);
     return;
   }
@@ -5303,7 +5303,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
     getLegacyIntegralTypeEncoding(PointeeTy);
 
     getObjCEncodingForTypeImpl(PointeeTy, S, false, ExpandPointedToStructures,
-                               NULL);
+                               nullptr);
     return;
   }
 
@@ -5516,7 +5516,7 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
       }
       getObjCEncodingForTypeImpl(PointeeTy, S,
                                  false, ExpandPointedToStructures,
-                                 NULL,
+                                 nullptr,
                                  false, false, false, false, false,
                                  /*EncodePointerToObjCTypedef*/true);
       return;
@@ -5648,7 +5648,7 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
     // Mark the end of the structure.
     uint64_t offs = toBits(size);
     FieldOrBaseOffsets.insert(FieldOrBaseOffsets.upper_bound(offs),
-                              std::make_pair(offs, (NamedDecl*)0));
+                              std::make_pair(offs, nullptr));
   }
 
   for (; CurLayObj != FieldOrBaseOffsets.end(); ++CurLayObj) {
@@ -5668,7 +5668,7 @@ void ASTContext::getObjCEncodingForStructureImpl(RecordDecl *RDecl,
 #endif
 
     NamedDecl *dcl = CurLayObj->second;
-    if (dcl == 0)
+    if (!dcl)
       break; // reached end of structure.
 
     if (CXXRecordDecl *base = dyn_cast<CXXRecordDecl>(dcl)) {
@@ -5727,7 +5727,7 @@ void ASTContext::getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT,
 
 TypedefDecl *ASTContext::getObjCIdDecl() const {
   if (!ObjCIdDecl) {
-    QualType T = getObjCObjectType(ObjCBuiltinIdTy, 0, 0);
+    QualType T = getObjCObjectType(ObjCBuiltinIdTy, nullptr, 0);
     T = getObjCObjectPointerType(T);
     ObjCIdDecl = buildImplicitTypedef(T, "id");
   }
@@ -5744,7 +5744,7 @@ TypedefDecl *ASTContext::getObjCSelDecl() const {
 
 TypedefDecl *ASTContext::getObjCClassDecl() const {
   if (!ObjCClassDecl) {
-    QualType T = getObjCObjectType(ObjCBuiltinClassTy, 0, 0);
+    QualType T = getObjCObjectType(ObjCBuiltinClassTy, nullptr, 0);
     T = getObjCObjectPointerType(T);
     ObjCClassDecl = buildImplicitTypedef(T, "Class");
   }
@@ -5757,7 +5757,7 @@ ObjCInterfaceDecl *ASTContext::getObjCProtocolDecl() const {
       = ObjCInterfaceDecl::Create(*this, getTranslationUnitDecl(), 
                                   SourceLocation(),
                                   &Idents.get("Protocol"),
-                                  /*PrevDecl=*/0,
+                                  /*PrevDecl=*/nullptr,
                                   SourceLocation(), true);    
   }
   
@@ -5789,9 +5789,9 @@ CreateAArch64ABIBuiltinVaListDecl(const ASTContext *Context) {
     NamespaceDecl *NS;
     NS = NamespaceDecl::Create(const_cast<ASTContext &>(*Context),
                                Context->getTranslationUnitDecl(),
-                               /*Inline*/false, SourceLocation(),
+                               /*Inline*/ false, SourceLocation(),
                                SourceLocation(), &Context->Idents.get("std"),
-                               /*PrevDecl*/0);
+                               /*PrevDecl*/ nullptr);
     NS->setImplicit();
     VaListTagDecl->setDeclContext(NS);
   }
@@ -5829,8 +5829,8 @@ CreateAArch64ABIBuiltinVaListDecl(const ASTContext *Context) {
                                          SourceLocation(),
                                          SourceLocation(),
                                          &Context->Idents.get(FieldNames[i]),
-                                         FieldTypes[i], /*TInfo=*/0,
-                                         /*BitWidth=*/0,
+                                         FieldTypes[i], /*TInfo=*/nullptr,
+                                         /*BitWidth=*/nullptr,
                                          /*Mutable=*/false,
                                          ICIS_NoInit);
     Field->setAccess(AS_public);
@@ -5881,8 +5881,8 @@ static TypedefDecl *CreatePowerABIBuiltinVaListDecl(const ASTContext *Context) {
                                          SourceLocation(),
                                          SourceLocation(),
                                          &Context->Idents.get(FieldNames[i]),
-                                         FieldTypes[i], /*TInfo=*/0,
-                                         /*BitWidth=*/0,
+                                         FieldTypes[i], /*TInfo=*/nullptr,
+                                         /*BitWidth=*/nullptr,
                                          /*Mutable=*/false,
                                          ICIS_NoInit);
     Field->setAccess(AS_public);
@@ -5941,8 +5941,8 @@ CreateX86_64ABIBuiltinVaListDecl(const ASTContext *Context) {
                                          SourceLocation(),
                                          SourceLocation(),
                                          &Context->Idents.get(FieldNames[i]),
-                                         FieldTypes[i], /*TInfo=*/0,
-                                         /*BitWidth=*/0,
+                                         FieldTypes[i], /*TInfo=*/nullptr,
+                                         /*BitWidth=*/nullptr,
                                          /*Mutable=*/false,
                                          ICIS_NoInit);
     Field->setAccess(AS_public);
@@ -5987,7 +5987,7 @@ CreateAAPCSABIBuiltinVaListDecl(const ASTContext *Context) {
                                Context->getTranslationUnitDecl(),
                                /*Inline*/false, SourceLocation(),
                                SourceLocation(), &Context->Idents.get("std"),
-                               /*PrevDecl*/0);
+                               /*PrevDecl*/ nullptr);
     NS->setImplicit();
     VaListDecl->setDeclContext(NS);
   }
@@ -6001,8 +6001,8 @@ CreateAAPCSABIBuiltinVaListDecl(const ASTContext *Context) {
                                        SourceLocation(),
                                        &Context->Idents.get("__ap"),
                                        Context->getPointerType(Context->VoidTy),
-                                       /*TInfo=*/0,
-                                       /*BitWidth=*/0,
+                                       /*TInfo=*/nullptr,
+                                       /*BitWidth=*/nullptr,
                                        /*Mutable=*/false,
                                        ICIS_NoInit);
   Field->setAccess(AS_public);
@@ -6050,8 +6050,8 @@ CreateSystemZBuiltinVaListDecl(const ASTContext *Context) {
                                          SourceLocation(),
                                          SourceLocation(),
                                          &Context->Idents.get(FieldNames[i]),
-                                         FieldTypes[i], /*TInfo=*/0,
-                                         /*BitWidth=*/0,
+                                         FieldTypes[i], /*TInfo=*/nullptr,
+                                         /*BitWidth=*/nullptr,
                                          /*Mutable=*/false,
                                          ICIS_NoInit);
     Field->setAccess(AS_public);
@@ -6161,7 +6161,7 @@ ASTContext::getQualifiedTemplateName(NestedNameSpecifier *NNS,
   llvm::FoldingSetNodeID ID;
   QualifiedTemplateName::Profile(ID, NNS, TemplateKeyword, Template);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   QualifiedTemplateName *QTN =
     QualifiedTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
   if (!QTN) {
@@ -6184,7 +6184,7 @@ ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS,
   llvm::FoldingSetNodeID ID;
   DependentTemplateName::Profile(ID, NNS, Name);
 
-  void *InsertPos = 0;
+  void *InsertPos = nullptr;
   DependentTemplateName *QTN =
     DependentTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
 
@@ -6219,8 +6219,8 @@ ASTContext::getDependentTemplateName(NestedNameSpecifier *NNS,
   
   llvm::FoldingSetNodeID ID;
   DependentTemplateName::Profile(ID, NNS, Operator);
-  
-  void *InsertPos = 0;
+
+  void *InsertPos = nullptr;
   DependentTemplateName *QTN
     = DependentTemplateNames.FindNodeOrInsertPos(ID, InsertPos);
   
@@ -6251,8 +6251,8 @@ ASTContext::getSubstTemplateTemplateParm(TemplateTemplateParmDecl *param,
                                          TemplateName replacement) const {
   llvm::FoldingSetNodeID ID;
   SubstTemplateTemplateParmStorage::Profile(ID, param, replacement);
-  
-  void *insertPos = 0;
+
+  void *insertPos = nullptr;
   SubstTemplateTemplateParmStorage *subst
     = SubstTemplateTemplateParms.FindNodeOrInsertPos(ID, insertPos);
   
@@ -6270,8 +6270,8 @@ ASTContext::getSubstTemplateTemplateParmPack(TemplateTemplateParmDecl *Param,
   ASTContext &Self = const_cast<ASTContext &>(*this);
   llvm::FoldingSetNodeID ID;
   SubstTemplateTemplateParmPackStorage::Profile(ID, Self, Param, ArgPack);
-  
-  void *InsertPos = 0;
+
+  void *InsertPos = nullptr;
   SubstTemplateTemplateParmPackStorage *Subst
     = SubstTemplateTemplateParmPacks.FindNodeOrInsertPos(ID, InsertPos);
   
@@ -8070,7 +8070,7 @@ ASTContext::getMaterializedTemporaryValue(const MaterializeTemporaryExpr *E,
 
   llvm::DenseMap<const MaterializeTemporaryExpr *, APValue>::iterator I =
       MaterializedTemporaryValues.find(E);
-  return I == MaterializedTemporaryValues.end() ? 0 : &I->second;
+  return I == MaterializedTemporaryValues.end() ? nullptr : &I->second;
 }
 
 bool ASTContext::AtomicUsesUnsupportedLibcall(const AtomicExpr *E) const {
@@ -8133,7 +8133,7 @@ namespace {
 
     template <typename T>
     bool TraverseNode(T *Node, bool(VisitorBase:: *traverse) (T *)) {
-      if (Node == NULL)
+      if (!Node)
         return true;
       if (ParentStack.size() > 0)
         // FIXME: Currently we add the same parent multiple times, for example

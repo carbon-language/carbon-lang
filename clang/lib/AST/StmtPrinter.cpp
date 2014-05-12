@@ -603,19 +603,19 @@ public:
 
 void OMPClausePrinter::VisitOMPIfClause(OMPIfClause *Node) {
   OS << "if(";
-  Node->getCondition()->printPretty(OS, 0, Policy, 0);
+  Node->getCondition()->printPretty(OS, nullptr, Policy, 0);
   OS << ")";
 }
 
 void OMPClausePrinter::VisitOMPNumThreadsClause(OMPNumThreadsClause *Node) {
   OS << "num_threads(";
-  Node->getNumThreads()->printPretty(OS, 0, Policy, 0);
+  Node->getNumThreads()->printPretty(OS, nullptr, Policy, 0);
   OS << ")";
 }
 
 void OMPClausePrinter::VisitOMPSafelenClause(OMPSafelenClause *Node) {
   OS << "safelen(";
-  Node->getSafelen()->printPretty(OS, 0, Policy, 0);
+  Node->getSafelen()->printPretty(OS, nullptr, Policy, 0);
   OS << ")";
 }
 
@@ -641,7 +641,7 @@ void OMPClausePrinter::VisitOMPClauseList(T *Node, char StartSym) {
       cast<NamedDecl>(DRE->getDecl())->printQualifiedName(OS);
     } else {
       OS << (I == Node->varlist_begin() ? StartSym : ',');
-      (*I)->printPretty(OS, 0, Policy, 0);
+      (*I)->printPretty(OS, nullptr, Policy, 0);
     }
   }
 }
@@ -674,9 +674,9 @@ void OMPClausePrinter::VisitOMPLinearClause(OMPLinearClause *Node) {
   if (!Node->varlist_empty()) {
     OS << "linear";
     VisitOMPClauseList(Node, '(');
-    if (Node->getStep() != 0) {
+    if (Node->getStep() != nullptr) {
       OS << ": ";
-      Node->getStep()->printPretty(OS, 0, Policy, 0);
+      Node->getStep()->printPretty(OS, nullptr, Policy, 0);
     }
     OS << ")";
   }
@@ -1069,7 +1069,7 @@ void StmtPrinter::VisitMemberExpr(MemberExpr *Node) {
 
   MemberExpr *ParentMember = dyn_cast<MemberExpr>(Node->getBase());
   FieldDecl  *ParentDecl   = ParentMember
-    ? dyn_cast<FieldDecl>(ParentMember->getMemberDecl()) : NULL;
+    ? dyn_cast<FieldDecl>(ParentMember->getMemberDecl()) : nullptr;
 
   if (!ParentDecl || !ParentDecl->isAnonymousStructOrUnion())
     OS << (Node->isArrow() ? "->" : ".");
@@ -1261,7 +1261,7 @@ void StmtPrinter::VisitPseudoObjectExpr(PseudoObjectExpr *Node) {
 }
 
 void StmtPrinter::VisitAtomicExpr(AtomicExpr *Node) {
-  const char *Name = 0;
+  const char *Name = nullptr;
   switch (Node->getOp()) {
 #define BUILTIN(ID, TYPE, ATTRS)
 #define ATOMIC_BUILTIN(ID, TYPE, ATTRS) \
@@ -1473,7 +1473,7 @@ void StmtPrinter::VisitCXXThisExpr(CXXThisExpr *Node) {
 }
 
 void StmtPrinter::VisitCXXThrowExpr(CXXThrowExpr *Node) {
-  if (Node->getSubExpr() == 0)
+  if (!Node->getSubExpr())
     OS << "throw";
   else {
     OS << "throw ";
@@ -1989,14 +1989,14 @@ void StmtPrinter::VisitAsTypeExpr(AsTypeExpr *Node) {
 //===----------------------------------------------------------------------===//
 
 void Stmt::dumpPretty(const ASTContext &Context) const {
-  printPretty(llvm::errs(), 0, PrintingPolicy(Context.getLangOpts()));
+  printPretty(llvm::errs(), nullptr, PrintingPolicy(Context.getLangOpts()));
 }
 
 void Stmt::printPretty(raw_ostream &OS,
                        PrinterHelper *Helper,
                        const PrintingPolicy &Policy,
                        unsigned Indentation) const {
-  if (this == 0) {
+  if (this == nullptr) {
     OS << "<NULL>";
     return;
   }

@@ -113,7 +113,7 @@ const CommandInfo *CommandTraits::getBuiltinCommandInfo(
                                                   unsigned CommandID) {
   if (CommandID < llvm::array_lengthof(Commands))
     return &Commands[CommandID];
-  return NULL;
+  return nullptr;
 }
 
 const CommandInfo *CommandTraits::getRegisteredCommandInfo(
@@ -122,7 +122,7 @@ const CommandInfo *CommandTraits::getRegisteredCommandInfo(
     if (RegisteredCommands[i]->Name == Name)
       return RegisteredCommands[i];
   }
-  return NULL;
+  return nullptr;
 }
 
 const CommandInfo *CommandTraits::getRegisteredCommandInfo(

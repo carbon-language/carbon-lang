@@ -33,13 +33,13 @@ MangleNumberingContext::getManglingNumber(const CXXMethodDecl *CallOperator) {
 unsigned
 MangleNumberingContext::getManglingNumber(const BlockDecl *BD) {
   // FIXME: Compute a BlockPointerType?  Not obvious how.
-  const Type *Ty = 0;
+  const Type *Ty = nullptr;
   return ++ManglingNumbers[Ty];
 }
 
 unsigned
 MangleNumberingContext::getStaticLocalNumber(const VarDecl *VD) {
   // FIXME: Compute a BlockPointerType?  Not obvious how.
-  const Type *Ty = 0;
+  const Type *Ty = nullptr;
   return ++ManglingNumbers[Ty];
 }

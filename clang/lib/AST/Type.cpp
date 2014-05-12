@@ -45,7 +45,7 @@ bool Qualifiers::isStrictSupersetOf(Qualifiers Other) const {
 
 const IdentifierInfo* QualType::getBaseTypeIdentifier() const {
   const Type* ty = getTypePtr();
-  NamedDecl *ND = NULL;
+  NamedDecl *ND = nullptr;
   if (ty->isPointerType() || ty->isReferenceType())
     return ty->getPointeeType().getBaseTypeIdentifier();
   else if (ty->isRecordType())
@@ -60,7 +60,7 @@ const IdentifierInfo* QualType::getBaseTypeIdentifier() const {
 
   if (ND)
     return ND->getIdentifier();
-  return NULL;
+  return nullptr;
 }
 
 bool QualType::isConstant(QualType T, ASTContext &Ctx) {
@@ -202,7 +202,7 @@ const Type *Type::getArrayElementTypeNoTypeQual() const {
 
   // If the canonical form of this type isn't the right kind, reject it.
   if (!isa<ArrayType>(CanonicalType))
-    return 0;
+    return nullptr;
 
   // If this is a typedef for an array type, strip the typedef off without
   // losing all typedef information.
@@ -410,7 +410,7 @@ const ComplexType *Type::getAsComplexIntegerType() const {
   if (const ComplexType *Complex = getAs<ComplexType>())
     if (Complex->getElementType()->isIntegerType())
       return Complex;
-  return 0;
+  return nullptr;
 }
 
 QualType Type::getPointeeType() const {
@@ -439,13 +439,13 @@ const RecordType *Type::getAsStructureType() const {
   // If the canonical form of this type isn't the right kind, reject it.
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType)) {
     if (!RT->getDecl()->isStruct())
-      return 0;
+      return nullptr;
 
     // If this is a typedef for a structure type, strip the typedef off without
     // losing all typedef information.
     return cast<RecordType>(getUnqualifiedDesugaredType());
   }
-  return 0;
+  return nullptr;
 }
 
 const RecordType *Type::getAsUnionType() const {
@@ -458,14 +458,14 @@ const RecordType *Type::getAsUnionType() const {
   // If the canonical form of this type isn't the right kind, reject it.
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType)) {
     if (!RT->getDecl()->isUnion())
-      return 0;
+      return nullptr;
 
     // If this is a typedef for a union type, strip the typedef off without
     // losing all typedef information.
     return cast<RecordType>(getUnqualifiedDesugaredType());
   }
 
-  return 0;
+  return nullptr;
 }
 
 ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
@@ -489,11 +489,11 @@ const ObjCObjectType *Type::getAsObjCQualifiedInterfaceType() const {
   if (const ObjCObjectType *T = getAs<ObjCObjectType>())
     if (T->getNumProtocols() && T->getInterface())
       return T;
-  return 0;
+  return nullptr;
 }
 
 bool Type::isObjCQualifiedInterfaceType() const {
-  return getAsObjCQualifiedInterfaceType() != 0;
+  return getAsObjCQualifiedInterfaceType() != nullptr;
 }
 
 const ObjCObjectPointerType *Type::getAsObjCQualifiedIdType() const {
@@ -503,7 +503,7 @@ const ObjCObjectPointerType *Type::getAsObjCQualifiedIdType() const {
     if (OPT->isObjCQualifiedIdType())
       return OPT;
   }
-  return 0;
+  return nullptr;
 }
 
 const ObjCObjectPointerType *Type::getAsObjCQualifiedClassType() const {
@@ -513,7 +513,7 @@ const ObjCObjectPointerType *Type::getAsObjCQualifiedClassType() const {
     if (OPT->isObjCQualifiedClassType())
       return OPT;
   }
-  return 0;
+  return nullptr;
 }
 
 const ObjCObjectPointerType *Type::getAsObjCInterfacePointerType() const {
@@ -521,7 +521,7 @@ const ObjCObjectPointerType *Type::getAsObjCInterfacePointerType() const {
     if (OPT->getInterfaceType())
       return OPT;
   }
-  return 0;
+  return nullptr;
 }
 
 const CXXRecordDecl *Type::getPointeeCXXRecordDecl() const {
@@ -531,12 +531,12 @@ const CXXRecordDecl *Type::getPointeeCXXRecordDecl() const {
   else if (const ReferenceType *RT = getAs<ReferenceType>())
     PointeeType = RT->getPointeeType();
   else
-    return 0;
+    return nullptr;
 
   if (const RecordType *RT = PointeeType->getAs<RecordType>())
     return dyn_cast<CXXRecordDecl>(RT->getDecl());
 
-  return 0;
+  return nullptr;
 }
 
 CXXRecordDecl *Type::getAsCXXRecordDecl() const {
@@ -545,8 +545,8 @@ CXXRecordDecl *Type::getAsCXXRecordDecl() const {
   else if (const InjectedClassNameType *Injected
                                   = getAs<InjectedClassNameType>())
     return Injected->getDecl();
-  
-  return 0;
+
+  return nullptr;
 }
 
 namespace {
@@ -556,7 +556,7 @@ namespace {
     using TypeVisitor<GetContainedAutoVisitor, AutoType*>::Visit;
     AutoType *Visit(QualType T) {
       if (T.isNull())
-        return 0;
+        return nullptr;
       return Visit(T.getTypePtr());
     }
 
@@ -695,7 +695,7 @@ bool Type::isChar32Type() const {
 /// types.
 bool Type::isAnyCharacterType() const {
   const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType);
-  if (BT == 0) return false;
+  if (!BT) return false;
   switch (BT->getKind()) {
   default: return false;
   case BuiltinType::Char_U:
@@ -901,8 +901,8 @@ bool Type::isConstantSizeType() const {
 /// determine its size.
 bool Type::isIncompleteType(NamedDecl **Def) const {
   if (Def)
-    *Def = 0;
-  
+    *Def = nullptr;
+
   switch (CanonicalType->getTypeClass()) {
   default: return false;
   case Builtin:
@@ -1598,8 +1598,9 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
                    result->containsUnexpandedParameterPack(), epi.ExtInfo),
       NumParams(params.size()), NumExceptions(epi.NumExceptions),
       ExceptionSpecType(epi.ExceptionSpecType),
-      HasAnyConsumedParams(epi.ConsumedParameters != 0), Variadic(epi.Variadic),
-      HasTrailingReturn(epi.HasTrailingReturn), RefQualifier(epi.RefQualifier) {
+      HasAnyConsumedParams(epi.ConsumedParameters != nullptr),
+      Variadic(epi.Variadic), HasTrailingReturn(epi.HasTrailingReturn),
+      RefQualifier(epi.RefQualifier) {
   assert(NumParams == params.size() && "function has too many parameters");
 
   // Fill in the trailing argument array.
@@ -1682,7 +1683,7 @@ FunctionProtoType::getNoexceptSpec(const ASTContext &ctx) const {
     return NR_Dependent;
 
   llvm::APSInt value;
-  bool isICE = noexceptExpr->isIntegerConstantExpr(value, ctx, 0,
+  bool isICE = noexceptExpr->isIntegerConstantExpr(value, ctx, nullptr,
                                                    /*evaluated*/false);
   (void)isICE;
   assert(isICE && "AST should not contain bad noexcept expressions.");
@@ -1923,7 +1924,7 @@ CXXRecordDecl *InjectedClassNameType::getDecl() const {
 }
 
 IdentifierInfo *TemplateTypeParmType::getIdentifier() const {
-  return isCanonicalUnqualified() ? 0 : getDecl()->getIdentifier();
+  return isCanonicalUnqualified() ? nullptr : getDecl()->getIdentifier();
 }
 
 SubstTemplateTypeParmPackType::

@@ -44,9 +44,9 @@ struct BaseOffset {
   /// path from the derived class to the base class involves a virtual base
   /// class.
   CharUnits NonVirtualOffset;
-  
-  BaseOffset() : DerivedClass(0), VirtualBase(0), 
-    NonVirtualOffset(CharUnits::Zero()) { }
+
+  BaseOffset() : DerivedClass(nullptr), VirtualBase(nullptr),
+                 NonVirtualOffset(CharUnits::Zero()) { }
   BaseOffset(const CXXRecordDecl *DerivedClass,
              const CXXRecordDecl *VirtualBase, CharUnits NonVirtualOffset)
     : DerivedClass(DerivedClass), VirtualBase(VirtualBase), 
@@ -70,8 +70,9 @@ public:
 
     /// Offset - the base offset of the overrider's parent in the layout class.
     CharUnits Offset;
-    
-    OverriderInfo() : Method(0), VirtualBase(0), Offset(CharUnits::Zero()) { }
+
+    OverriderInfo() : Method(nullptr), VirtualBase(nullptr),
+                      Offset(CharUnits::Zero()) { }
   };
 
 private:
@@ -221,8 +222,8 @@ static BaseOffset ComputeBaseOffset(ASTContext &Context,
   CharUnits NonVirtualOffset = CharUnits::Zero();
 
   unsigned NonVirtualStart = 0;
-  const CXXRecordDecl *VirtualBase = 0;
-  
+  const CXXRecordDecl *VirtualBase = nullptr;
+
   // First, look for the virtual base class.
   for (int I = Path.size(), E = 0; I != E; --I) {
     const CXXBasePathElement &Element = Path[I - 1];
@@ -1295,7 +1296,7 @@ ThisAdjustment ItaniumVTableBuilder::ComputeThisAdjustment(
       // We don't have vcall offsets for this virtual base, go ahead and
       // build them.
       VCallAndVBaseOffsetBuilder Builder(MostDerivedClass, MostDerivedClass,
-                                         /*FinalOverriders=*/0,
+                                         /*FinalOverriders=*/nullptr,
                                          BaseSubobject(Offset.VirtualBase,
                                                        CharUnits::Zero()),
                                          /*BaseIsVirtual=*/true,
@@ -1449,8 +1450,8 @@ FindNearestOverriddenMethod(const CXXMethodDecl *MD,
         return OverriddenMD;
     }
   }
-  
-  return 0;
+
+  return nullptr;
 }
 
 void ItaniumVTableBuilder::AddMethods(
@@ -1504,7 +1505,7 @@ void ItaniumVTableBuilder::AddMethods(
       llvm_unreachable("Found a duplicate primary base!");
   }
 
-  const CXXDestructorDecl *ImplicitVirtualDtor = 0;
+  const CXXDestructorDecl *ImplicitVirtualDtor = nullptr;
 
   typedef llvm::SmallVector<const CXXMethodDecl *, 8> NewVirtualFunctionsTy;
   NewVirtualFunctionsTy NewVirtualFunctions;
@@ -2143,7 +2144,7 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
       ThunkInfoVectorTy ThunksVector = Thunks[MD];
       std::sort(ThunksVector.begin(), ThunksVector.end(),
                 [](const ThunkInfo &LHS, const ThunkInfo &RHS) {
-        assert(LHS.Method == 0 && RHS.Method == 0);
+        assert(LHS.Method == nullptr && RHS.Method == nullptr);
         return std::tie(LHS.This, LHS.Return) < std::tie(RHS.This, RHS.Return);
       });
 
@@ -2289,8 +2290,8 @@ ItaniumVTableContext::getVirtualBaseOffsetOffset(const CXXRecordDecl *RD,
     VirtualBaseClassOffsetOffsets.find(ClassPair);
   if (I != VirtualBaseClassOffsetOffsets.end())
     return I->second;
-  
-  VCallAndVBaseOffsetBuilder Builder(RD, RD, /*FinalOverriders=*/0,
+
+  VCallAndVBaseOffsetBuilder Builder(RD, RD, /*FinalOverriders=*/nullptr,
                                      BaseSubobject(RD, CharUnits::Zero()),
                                      /*BaseIsVirtual=*/false,
                                      /*OffsetInLayoutClass=*/CharUnits::Zero());
@@ -2534,7 +2535,7 @@ private:
     // pointing to the middle of a section.
 
     BasesSetVectorTy VisitedBases;
-    AddMethods(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 0, 0,
+    AddMethods(BaseSubobject(MostDerivedClass, CharUnits::Zero()), 0, nullptr,
                VisitedBases);
     assert(Components.size() && "vftable can't be empty");
 
@@ -2815,7 +2816,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
 
   // See if this class expands a vftable of the base we look at, which is either
   // the one defined by the vfptr base path or the primary base of the current class.
-  const CXXRecordDecl *NextBase = 0, *NextLastVBase = LastVBase;
+  const CXXRecordDecl *NextBase = nullptr, *NextLastVBase = LastVBase;
   CharUnits NextBaseOffset;
   if (BaseDepth < WhichVFPtr.PathToBaseWithVPtr.size()) {
     NextBase = WhichVFPtr.PathToBaseWithVPtr[BaseDepth];
@@ -2944,7 +2945,7 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
     }
 
     AddMethod(OverriderMD, ThunkInfo(ThisAdjustmentOffset, ReturnAdjustment,
-                                     ReturnAdjustingThunk ? MD : 0));
+                                     ReturnAdjustingThunk ? MD : nullptr));
   }
 }
 
@@ -3236,7 +3237,7 @@ void MicrosoftVTableContext::computeVTablePaths(bool ForVBTables,
 static bool extendPath(VPtrInfo *P) {
   if (P->NextBaseToMangle) {
     P->MangledPath.push_back(P->NextBaseToMangle);
-    P->NextBaseToMangle = 0;  // Prevent the path from being extended twice.
+    P->NextBaseToMangle = nullptr;// Prevent the path from being extended twice.
     return true;
   }
   return false;

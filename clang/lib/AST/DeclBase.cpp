@@ -164,7 +164,7 @@ FunctionDecl *Decl::getAsFunction() {
     return FD;
   if (const FunctionTemplateDecl *FTD = dyn_cast<FunctionTemplateDecl>(this))
     return FTD->getTemplatedDecl();
-  return 0;
+  return nullptr;
 }
 
 bool Decl::isTemplateDecl() const {
@@ -178,7 +178,7 @@ const DeclContext *Decl::getParentFunctionOrMethod() const {
     if (DC->isFunctionOrMethod())
       return DC;
 
-  return 0;
+  return nullptr;
 }
 
 
@@ -487,8 +487,8 @@ bool Decl::isWeakImported() const {
       return true;
 
     if (const auto *Availability = dyn_cast<AvailabilityAttr>(A)) {
-      if (CheckAvailability(getASTContext(), Availability, 0) 
-                                                         == AR_NotYetIntroduced)
+      if (CheckAvailability(getASTContext(), Availability,
+                            nullptr) == AR_NotYetIntroduced)
         return true;
     }
   }
@@ -709,7 +709,7 @@ const FunctionType *Decl::getFunctionType(bool BlocksToo) const {
   else if (const TypedefNameDecl *D = dyn_cast<TypedefNameDecl>(this))
     Ty = D->getUnderlyingType();
   else
-    return 0;
+    return nullptr;
 
   if (Ty->isFunctionPointerType())
     Ty = Ty->getAs<PointerType>()->getPointeeType();
@@ -738,7 +738,7 @@ template <class T> static Decl *getNonClosureContext(T *D) {
   } else if (CapturedDecl *CD = dyn_cast<CapturedDecl>(D)) {
     return getNonClosureContext(CD->getParent());
   } else {
-    return 0;
+    return nullptr;
   }
 }
 
@@ -943,8 +943,8 @@ std::pair<Decl *, Decl *>
 DeclContext::BuildDeclChain(ArrayRef<Decl*> Decls,
                             bool FieldsAlreadyLoaded) {
   // Build up a chain of declarations via the Decl::NextInContextAndBits field.
-  Decl *FirstNewDecl = 0;
-  Decl *PrevDecl = 0;
+  Decl *FirstNewDecl = nullptr;
+  Decl *PrevDecl = nullptr;
   for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
     if (FieldsAlreadyLoaded && isa<FieldDecl>(Decls[I]))
       continue;
@@ -1105,7 +1105,7 @@ void DeclContext::removeDecl(Decl *D) {
   // Remove D from the decl chain.  This is O(n) but hopefully rare.
   if (D == FirstDecl) {
     if (D == LastDecl)
-      FirstDecl = LastDecl = 0;
+      FirstDecl = LastDecl = nullptr;
     else
       FirstDecl = D->NextInContextAndBits.getPointer();
   } else {
@@ -1120,7 +1120,7 @@ void DeclContext::removeDecl(Decl *D) {
   }
   
   // Mark that D is no longer in the decl chain.
-  D->NextInContextAndBits.setPointer(0);
+  D->NextInContextAndBits.setPointer(nullptr);
 
   // Remove D from the lookup table if necessary.
   if (isa<NamedDecl>(D)) {
@@ -1303,7 +1303,7 @@ DeclContext::lookup(DeclarationName Name) {
       }
     }
 
-    return lookup_result(lookup_iterator(0), lookup_iterator(0));
+    return lookup_result(lookup_iterator(nullptr), lookup_iterator(nullptr));
   }
 
   StoredDeclsMap *Map = LookupPtr.getPointer();
@@ -1311,11 +1311,11 @@ DeclContext::lookup(DeclarationName Name) {
     Map = buildLookup();
 
   if (!Map)
-    return lookup_result(lookup_iterator(0), lookup_iterator(0));
+    return lookup_result(lookup_iterator(nullptr), lookup_iterator(nullptr));
 
   StoredDeclsMap::iterator I = Map->find(Name);
   if (I == Map->end())
-    return lookup_result(lookup_iterator(0), lookup_iterator(0));
+    return lookup_result(lookup_iterator(nullptr), lookup_iterator(nullptr));
 
   return I->second.getLookupResult();
 }
@@ -1352,12 +1352,12 @@ DeclContext::noload_lookup(DeclarationName Name) {
   }
 
   if (!Map)
-    return lookup_result(lookup_iterator(0), lookup_iterator(0));
+    return lookup_result(lookup_iterator(nullptr), lookup_iterator(nullptr));
 
   StoredDeclsMap::iterator I = Map->find(Name);
-  return I != Map->end()
-             ? I->second.getLookupResult()
-             : lookup_result(lookup_iterator(0), lookup_iterator(0));
+  return I != Map->end() ? I->second.getLookupResult()
+                         : lookup_result(lookup_iterator(nullptr),
+                                         lookup_iterator(nullptr));
 }
 
 void DeclContext::localUncachedLookup(DeclarationName Name,
@@ -1596,7 +1596,7 @@ DependentDiagnostic *DependentDiagnostic::Create(ASTContext &C,
 
   // Allocate the copy of the PartialDiagnostic via the ASTContext's
   // BumpPtrAllocator, rather than the ASTContext itself.
-  PartialDiagnostic::Storage *DiagStorage = 0;
+  PartialDiagnostic::Storage *DiagStorage = nullptr;
   if (PDiag.hasStorage())
     DiagStorage = new (C) PartialDiagnostic::Storage;
   

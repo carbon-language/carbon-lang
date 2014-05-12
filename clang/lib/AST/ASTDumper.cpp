@@ -155,11 +155,11 @@ namespace  {
       const Decl *Prev;
       bool PrevRef;
     public:
-      ChildDumper(ASTDumper &Dumper) : Dumper(Dumper), Prev(0) {}
+      ChildDumper(ASTDumper &Dumper) : Dumper(Dumper), Prev(nullptr) {}
       ~ChildDumper() {
         if (Prev) {
           Dumper.lastChild();
-          dump(0);
+          dump(nullptr);
         }
       }
 
@@ -178,14 +178,14 @@ namespace  {
 
       // Give up ownership of the children of the node. By calling this,
       // the caller takes back responsibility for calling lastChild().
-      void release() { dump(0); }
+      void release() { dump(nullptr); }
     };
 
   public:
     ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
               const SourceManager *SM)
       : OS(OS), Traits(Traits), SM(SM), IsFirstLine(true), MoreChildren(false),
-        LastLocFilename(""), LastLocLine(~0U), FC(0),
+        LastLocFilename(""), LastLocLine(~0U), FC(nullptr),
         ShowColors(SM && SM->getDiagnostics().getShowColors()) { }
 
     ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
@@ -216,7 +216,7 @@ namespace  {
     void dumpBareType(QualType T);
     void dumpType(QualType T);
     void dumpBareDeclRef(const Decl *Node);
-    void dumpDeclRef(const Decl *Node, const char *Label = 0);
+    void dumpDeclRef(const Decl *Node, const char *Label = nullptr);
     void dumpName(const NamedDecl *D);
     bool hasNodes(const DeclContext *DC);
     void dumpDeclContext(const DeclContext *DC);
@@ -1991,7 +1991,7 @@ void ASTDumper::dumpFullComment(const FullComment *C) {
 
   FC = C;
   dumpComment(C);
-  FC = 0;
+  FC = nullptr;
 }
 
 void ASTDumper::dumpComment(const Comment *C) {
@@ -2158,17 +2158,17 @@ LLVM_DUMP_METHOD void Stmt::dump(SourceManager &SM) const {
 }
 
 LLVM_DUMP_METHOD void Stmt::dump(raw_ostream &OS, SourceManager &SM) const {
-  ASTDumper P(OS, 0, &SM);
+  ASTDumper P(OS, nullptr, &SM);
   P.dumpStmt(this);
 }
 
 LLVM_DUMP_METHOD void Stmt::dump() const {
-  ASTDumper P(llvm::errs(), 0, 0);
+  ASTDumper P(llvm::errs(), nullptr, nullptr);
   P.dumpStmt(this);
 }
 
 LLVM_DUMP_METHOD void Stmt::dumpColor() const {
-  ASTDumper P(llvm::errs(), 0, 0, /*ShowColors*/true);
+  ASTDumper P(llvm::errs(), nullptr, nullptr, /*ShowColors*/true);
   P.dumpStmt(this);
 }
 
@@ -2176,7 +2176,9 @@ LLVM_DUMP_METHOD void Stmt::dumpColor() const {
 // Comment method implementations
 //===----------------------------------------------------------------------===//
 
-LLVM_DUMP_METHOD void Comment::dump() const { dump(llvm::errs(), 0, 0); }
+LLVM_DUMP_METHOD void Comment::dump() const {
+  dump(llvm::errs(), nullptr, nullptr);
+}
 
 LLVM_DUMP_METHOD void Comment::dump(const ASTContext &Context) const {
   dump(llvm::errs(), &Context.getCommentCommandTraits(),
@@ -2192,6 +2194,6 @@ void Comment::dump(raw_ostream &OS, const CommandTraits *Traits,
 
 LLVM_DUMP_METHOD void Comment::dumpColor() const {
   const FullComment *FC = dyn_cast<FullComment>(this);
-  ASTDumper D(llvm::errs(), 0, 0, /*ShowColors*/true);
+  ASTDumper D(llvm::errs(), nullptr, nullptr, /*ShowColors*/true);
   D.dumpFullComment(FC);
 }

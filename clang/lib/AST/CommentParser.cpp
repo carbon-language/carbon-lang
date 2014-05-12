@@ -311,9 +311,9 @@ void Parser::parseBlockCommandArgs(BlockCommandComment *BC,
 BlockCommandComment *Parser::parseBlockCommand() {
   assert(Tok.is(tok::backslash_command) || Tok.is(tok::at_command));
 
-  ParamCommandComment *PC = 0;
-  TParamCommandComment *TPC = 0;
-  BlockCommandComment *BC = 0;
+  ParamCommandComment *PC = nullptr;
+  TParamCommandComment *TPC = nullptr;
+  BlockCommandComment *BC = nullptr;
   const CommandInfo *Info = Traits.getCommandInfo(Tok.getCommandID());
   CommandMarkerKind CommandMarker =
       Tok.is(tok::backslash_command) ? CMK_Backslash : CMK_At;

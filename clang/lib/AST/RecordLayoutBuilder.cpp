@@ -634,9 +634,9 @@ protected:
       MaxFieldAlignment(CharUnits::Zero()), 
       DataSize(0), NonVirtualSize(CharUnits::Zero()), 
       NonVirtualAlignment(CharUnits::One()), 
-      PrimaryBase(0), PrimaryBaseIsVirtual(false),
+      PrimaryBase(nullptr), PrimaryBaseIsVirtual(false),
       HasOwnVFPtr(false),
-      FirstNearlyEmptyVBase(0) { }
+      FirstNearlyEmptyVBase(nullptr) {}
 
   /// Reset this RecordLayoutBuilder to a fresh state, using the given
   /// alignment as the initial alignment.  This is used for the
@@ -866,11 +866,11 @@ RecordLayoutBuilder::ComputeBaseSubobjectInfo(const CXXRecordDecl *RD,
   
   Info->Class = RD;
   Info->IsVirtual = IsVirtual;
-  Info->Derived = 0;
-  Info->PrimaryVirtualBaseInfo = 0;
-  
-  const CXXRecordDecl *PrimaryVirtualBase = 0;
-  BaseSubobjectInfo *PrimaryVirtualBaseInfo = 0;
+  Info->Derived = nullptr;
+  Info->PrimaryVirtualBaseInfo = nullptr;
+
+  const CXXRecordDecl *PrimaryVirtualBase = nullptr;
+  BaseSubobjectInfo *PrimaryVirtualBaseInfo = nullptr;
 
   // Check if this base has a primary virtual base.
   if (RD->getNumVBases()) {
@@ -887,8 +887,8 @@ RecordLayoutBuilder::ComputeBaseSubobjectInfo(const CXXRecordDecl *RD,
         if (PrimaryVirtualBaseInfo->Derived) {
           // We did have info about this primary base, and it turns out that it
           // has already been claimed as a primary virtual base for another
-          // base. 
-          PrimaryVirtualBase = 0;        
+          // base.
+          PrimaryVirtualBase = nullptr;
         } else {
           // We can claim this base as our primary base.
           Info->PrimaryVirtualBaseInfo = PrimaryVirtualBaseInfo;
@@ -929,7 +929,8 @@ void RecordLayoutBuilder::ComputeBaseSubobjectInfo(const CXXRecordDecl *RD) {
     const CXXRecordDecl *BaseDecl = I.getType()->getAsCXXRecordDecl();
 
     // Compute the base subobject info for this base.
-    BaseSubobjectInfo *Info = ComputeBaseSubobjectInfo(BaseDecl, IsVirtual, 0);
+    BaseSubobjectInfo *Info = ComputeBaseSubobjectInfo(BaseDecl, IsVirtual,
+                                                       nullptr);
 
     if (IsVirtual) {
       // ComputeBaseInfo has already added this base for us.
@@ -976,8 +977,8 @@ RecordLayoutBuilder::LayoutNonVirtualBases(const CXXRecordDecl *RD) {
       // If the primary virtual base was a primary virtual base of some other
       // base class we'll have to steal it.
       BaseSubobjectInfo *PrimaryBaseInfo = VirtualBaseInfo.lookup(PrimaryBase);
-      PrimaryBaseInfo->Derived = 0;
-      
+      PrimaryBaseInfo->Derived = nullptr;
+
       // We have a virtual primary base, insert it as an indirect primary base.
       IndirectPrimaryBases.insert(PrimaryBase);
 
@@ -1935,13 +1936,13 @@ static const CXXMethodDecl *computeKeyFunction(ASTContext &Context,
                                                const CXXRecordDecl *RD) {
   // If a class isn't polymorphic it doesn't have a key function.
   if (!RD->isPolymorphic())
-    return 0;
+    return nullptr;
 
   // A class that is not externally visible doesn't have a key function. (Or
   // at least, there's no point to assigning a key function to such a class;
   // this doesn't affect the ABI.)
   if (!RD->isExternallyVisible())
-    return 0;
+    return nullptr;
 
   // Template instantiations don't have key functions per Itanium C++ ABI 5.2.6.
   // Same behavior as GCC.
@@ -1949,7 +1950,7 @@ static const CXXMethodDecl *computeKeyFunction(ASTContext &Context,
   if (TSK == TSK_ImplicitInstantiation ||
       TSK == TSK_ExplicitInstantiationDeclaration ||
       TSK == TSK_ExplicitInstantiationDefinition)
-    return 0;
+    return nullptr;
 
   bool allowInlineFunctions =
     Context.getTargetInfo().getCXXABI().canKeyFunctionBeInline();
@@ -1987,7 +1988,7 @@ static const CXXMethodDecl *computeKeyFunction(ASTContext &Context,
     return MD;
   }
 
-  return 0;
+  return nullptr;
 }
 
 DiagnosticBuilder
@@ -2354,8 +2355,8 @@ MicrosoftRecordLayoutBuilder::initializeCXXLayout(const CXXRecordDecl *RD) {
   LeadsWithZeroSizedBase = false;
   HasOwnVFPtr = false;
   HasVBPtr = false;
-  PrimaryBase = 0;
-  SharedVBPtrBase = 0;
+  PrimaryBase = nullptr;
+  SharedVBPtrBase = nullptr;
   // Calculate pointer size and alignment.  These are used for vfptr and vbprt
   // injection.
   PointerInfo.Size =
@@ -2374,7 +2375,7 @@ MicrosoftRecordLayoutBuilder::layoutNonVirtualBases(const CXXRecordDecl *RD) {
   // first.  We use these passes to calculate some additional aggregated
   // information about the bases, such as reqruied alignment and the presence of
   // zero sized members.
-  const ASTRecordLayout* PreviousBaseLayout = 0;
+  const ASTRecordLayout *PreviousBaseLayout = nullptr;
   // Iterate through the bases and lay out the non-virtual ones.
   for (const auto &I : RD->bases()) {
     const CXXRecordDecl *BaseDecl = I.getType()->getAsCXXRecordDecl();
@@ -2611,7 +2612,7 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
   llvm::SmallPtrSet<const CXXRecordDecl *, 2> HasVtordispSet =
       computeVtorDispSet(RD);
   // Iterate through the virtual bases and lay them out.
-  const ASTRecordLayout* PreviousBaseLayout = 0;
+  const ASTRecordLayout *PreviousBaseLayout = nullptr;
   for (const auto &I : RD->vbases()) {
     const CXXRecordDecl *BaseDecl = I.getType()->getAsCXXRecordDecl();
     const ASTRecordLayout &BaseLayout = Context.getASTRecordLayout(BaseDecl);
@@ -2790,7 +2791,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
   const ASTRecordLayout *Entry = ASTRecordLayouts[D];
   if (Entry) return *Entry;
 
-  const ASTRecordLayout *NewEntry = 0;
+  const ASTRecordLayout *NewEntry = nullptr;
 
   if (isMsLayout(D) && !D->getASTContext().getExternalSource()) {
     NewEntry = BuildMicrosoftASTRecordLayout(D);
@@ -2826,10 +2827,10 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
                                   EmptySubobjects.SizeOfLargestEmptySubobject,
                                   Builder.PrimaryBase,
                                   Builder.PrimaryBaseIsVirtual,
-                                  0, false, false,
+                                  nullptr, false, false,
                                   Builder.Bases, Builder.VBases);
   } else {
-    RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
+    RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/nullptr);
     Builder.Layout(D);
 
     NewEntry =
@@ -2854,7 +2855,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
 
 const CXXMethodDecl *ASTContext::getCurrentKeyFunction(const CXXRecordDecl *RD) {
   if (!getTargetInfo().getCXXABI().hasKeyFunctions())
-    return 0;
+    return nullptr;
 
   assert(RD->getDefinition() && "Cannot get key function for forward decl!");
   RD = cast<CXXRecordDecl>(RD->getDefinition());
@@ -2935,10 +2936,10 @@ ASTContext::getObjCLayout(const ObjCInterfaceDecl *D,
     // entries later; however we shouldn't look up implementations
     // frequently.
     if (SynthCount == 0)
-      return getObjCLayout(D, 0);
+      return getObjCLayout(D, nullptr);
   }
 
-  RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/0);
+  RecordLayoutBuilder Builder(*this, /*EmptySubobjects=*/nullptr);
   Builder.Layout(D);
 
   const ASTRecordLayout *NewEntry =
@@ -3090,7 +3091,7 @@ void ASTContext::DumpRecordLayout(const RecordDecl *RD,
 
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
     if (!Simple)
-      return DumpCXXRecordLayout(OS, CXXRD, *this, CharUnits(), 0, 0,
+      return DumpCXXRecordLayout(OS, CXXRD, *this, CharUnits(), 0, nullptr,
                                  /*IncludeVirtualBases=*/true);
 
   OS << "Type: " << getTypeDeclType(RD).getAsString() << "\n";

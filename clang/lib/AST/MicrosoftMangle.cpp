@@ -196,7 +196,7 @@ public:
   enum QualifierMangleMode { QMM_Drop, QMM_Mangle, QMM_Escape, QMM_Result };
 
   MicrosoftCXXNameMangler(MicrosoftMangleContextImpl &C, raw_ostream &Out_)
-      : Context(C), Out(Out_), Structor(0), StructorType(-1),
+      : Context(C), Out(Out_), Structor(nullptr), StructorType(-1),
         UseNameBackReferences(true),
         PointersAre64Bit(C.getASTContext().getTargetInfo().getPointerWidth(0) ==
                          64) {}
@@ -223,7 +223,8 @@ public:
   void mangleNumber(int64_t Number);
   void mangleType(QualType T, SourceRange Range,
                   QualifierMangleMode QMM = QMM_Mangle);
-  void mangleFunctionType(const FunctionType *T, const FunctionDecl *D = 0,
+  void mangleFunctionType(const FunctionType *T,
+                          const FunctionDecl *D = nullptr,
                           bool ForceInstMethod = false);
   void mangleNestedName(const NamedDecl *ND);
 
@@ -415,7 +416,7 @@ void MicrosoftCXXNameMangler::mangleVariableEncoding(const VarDecl *VD) {
       Ty->isMemberPointerType()) {
     mangleType(Ty, TL.getSourceRange(), QMM_Drop);
     manglePointerExtQualifiers(
-        Ty.getDesugaredType(getASTContext()).getLocalQualifiers(), 0);
+        Ty.getDesugaredType(getASTContext()).getLocalQualifiers(), nullptr);
     if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>()) {
       mangleQualifiers(MPT->getPointeeType().getQualifiers(), true);
       // Member pointers are suffixed with a back reference to the member
@@ -621,7 +622,7 @@ isTemplate(const NamedDecl *ND, const TemplateArgumentList *&TemplateArgs) {
     return Spec->getSpecializedTemplate();
   }
 
-  return 0;
+  return nullptr;
 }
 
 void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
@@ -632,7 +633,7 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
   //                     ::= <template-name>
 
   // Check if we have a template.
-  const TemplateArgumentList *TemplateArgs = 0;
+  const TemplateArgumentList *TemplateArgs = nullptr;
   if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
     // Function templates aren't considered for name back referencing.  This
     // makes sense since function templates aren't likely to occur multiple
@@ -1063,7 +1064,7 @@ void MicrosoftCXXNameMangler::mangleExpression(const Expr *E) {
     return;
   }
 
-  const CXXUuidofExpr *UE = 0;
+  const CXXUuidofExpr *UE = nullptr;
   if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E)) {
     if (UO->getOpcode() == UO_AddrOf)
       UE = dyn_cast<CXXUuidofExpr>(UO->getSubExpr());
@@ -1153,9 +1154,9 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
     if (const MemberPointerType *MPT = T->getAs<MemberPointerType>()) {
       const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
       if (MPT->isMemberFunctionPointerType())
-        mangleMemberFunctionPointer(RD, 0);
+        mangleMemberFunctionPointer(RD, nullptr);
       else
-        mangleMemberDataPointer(RD, 0);
+        mangleMemberDataPointer(RD, nullptr);
     } else {
       Out << "$0A@";
     }
@@ -1538,7 +1539,7 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
   // this pointer.
   if (IsInstMethod) {
     Qualifiers Quals = Qualifiers::fromCVRMask(Proto->getTypeQuals());
-    manglePointerExtQualifiers(Quals, 0);
+    manglePointerExtQualifiers(Quals, nullptr);
     mangleRefQualifier(Proto->getRefQualifier());
     mangleQualifiers(Quals, false);
   }
@@ -1810,7 +1811,7 @@ void MicrosoftCXXNameMangler::mangleType(const MemberPointerType *T,
   if (const FunctionProtoType *FPT = PointeeType->getAs<FunctionProtoType>()) {
     Out << '8';
     mangleName(T->getClass()->castAs<RecordType>()->getDecl());
-    mangleFunctionType(FPT, 0, true);
+    mangleFunctionType(FPT, nullptr, true);
   } else {
     mangleQualifiers(PointeeType.getQualifiers(), true);
     mangleName(T->getClass()->castAs<RecordType>()->getDecl());
@@ -2176,7 +2177,8 @@ void MicrosoftMangleContextImpl::mangleThunk(const CXXMethodDecl *MD,
   Mangler.mangleName(MD);
   mangleThunkThisAdjustment(MD, Thunk.This, Mangler, Out);
   if (!Thunk.Return.isEmpty())
-    assert(Thunk.Method != 0 && "Thunk info should hold the overridee decl");
+    assert(Thunk.Method != nullptr &&
+           "Thunk info should hold the overridee decl");
 
   const CXXMethodDecl *DeclForFPT = Thunk.Method ? Thunk.Method : MD;
   Mangler.mangleFunctionType(

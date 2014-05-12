@@ -44,7 +44,7 @@ const CXXRecordDecl *Expr::getBestDynamicClassType() const {
     DerivedType = PTy->getPointeeType();
 
   if (DerivedType->isDependentType())
-    return NULL;
+    return nullptr;
 
   const RecordType *Ty = DerivedType->castAs<RecordType>();
   Decl *D = Ty->getDecl();
@@ -402,7 +402,7 @@ DeclRefExpr *DeclRefExpr::Create(const ASTContext &Context,
                                  const TemplateArgumentListInfo *TemplateArgs) {
   // Filter out cases where the found Decl is the same as the value refenenced.
   if (D == FoundD)
-    FoundD = 0;
+    FoundD = nullptr;
 
   std::size_t Size = sizeof(DeclRefExpr);
   if (QualifierLoc)
@@ -499,7 +499,7 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     if (const FunctionDecl* Pattern = FD->getTemplateInstantiationPattern())
       Decl = Pattern;
     const FunctionType *AFT = Decl->getType()->getAs<FunctionType>();
-    const FunctionProtoType *FT = 0;
+    const FunctionProtoType *FT = nullptr;
     if (FD->hasWrittenPrototype())
       FT = dyn_cast<FunctionProtoType>(AFT);
 
@@ -1132,7 +1132,7 @@ CallExpr::CallExpr(const ASTContext& C, Expr *fn, ArrayRef<Expr*> args,
 }
 
 CallExpr::CallExpr(const ASTContext &C, StmtClass SC, EmptyShell Empty)
-  : Expr(SC, Empty), SubExprs(0), NumArgs(0) {
+  : Expr(SC, Empty), SubExprs(nullptr), NumArgs(0) {
   // FIXME: Why do we allocate this?
   SubExprs = new (C) Stmt*[PREARGS_START];
   CallExprBits.NumPreArgs = 0;
@@ -1140,7 +1140,7 @@ CallExpr::CallExpr(const ASTContext &C, StmtClass SC, EmptyShell Empty)
 
 CallExpr::CallExpr(const ASTContext &C, StmtClass SC, unsigned NumPreArgs,
                    EmptyShell Empty)
-  : Expr(SC, Empty), SubExprs(0), NumArgs(0) {
+  : Expr(SC, Empty), SubExprs(nullptr), NumArgs(0) {
   // FIXME: Why do we allocate this?
   SubExprs = new (C) Stmt*[PREARGS_START+NumPreArgs];
   CallExprBits.NumPreArgs = NumPreArgs;
@@ -1167,7 +1167,7 @@ Decl *CallExpr::getCalleeDecl() {
   if (MemberExpr *ME = dyn_cast<MemberExpr>(CEE))
     return ME->getMemberDecl();
 
-  return 0;
+  return nullptr;
 }
 
 FunctionDecl *CallExpr::getDirectCallee() {
@@ -1196,7 +1196,7 @@ void CallExpr::setNumArgs(const ASTContext& C, unsigned NumArgs) {
   // Null out new args.
   for (unsigned i = getNumArgs()+PREARGS_START+NumPreArgs;
        i != NumArgs+PREARGS_START+NumPreArgs; ++i)
-    NewSubExprs[i] = 0;
+    NewSubExprs[i] = nullptr;
 
   if (SubExprs) C.Deallocate(SubExprs);
   SubExprs = NewSubExprs;
@@ -1638,7 +1638,7 @@ const char *CastExpr::getCastKindName() const {
 }
 
 Expr *CastExpr::getSubExprAsWritten() {
-  Expr *SubExpr = 0;
+  Expr *SubExpr = nullptr;
   CastExpr *E = this;
   do {
     SubExpr = E->getSubExpr();
@@ -1834,7 +1834,7 @@ InitListExpr::InitListExpr(const ASTContext &C, SourceLocation lbraceloc,
   : Expr(InitListExprClass, QualType(), VK_RValue, OK_Ordinary, false, false,
          false, false),
     InitExprs(C, initExprs.size()),
-    LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), AltForm(0, true)
+    LBraceLoc(lbraceloc), RBraceLoc(rbraceloc), AltForm(nullptr, true)
 {
   sawArrayRangeDesignator(false);
   for (unsigned I = 0; I != initExprs.size(); ++I) {
@@ -1857,14 +1857,14 @@ void InitListExpr::reserveInits(const ASTContext &C, unsigned NumInits) {
 }
 
 void InitListExpr::resizeInits(const ASTContext &C, unsigned NumInits) {
-  InitExprs.resize(C, NumInits, 0);
+  InitExprs.resize(C, NumInits, nullptr);
 }
 
 Expr *InitListExpr::updateInit(const ASTContext &C, unsigned Init, Expr *expr) {
   if (Init >= InitExprs.size()) {
-    InitExprs.insert(C, InitExprs.end(), Init - InitExprs.size() + 1, 0);
+    InitExprs.insert(C, InitExprs.end(), Init - InitExprs.size() + 1, nullptr);
     setInit(Init, expr);
-    return 0;
+    return nullptr;
   }
 
   Expr *Result = cast_or_null<Expr>(InitExprs[Init]);
@@ -1878,7 +1878,7 @@ void InitListExpr::setArrayFiller(Expr *filler) {
   // Fill out any "holes" in the array due to designated initializers.
   Expr **inits = getInits();
   for (unsigned i = 0, e = getNumInits(); i != e; ++i)
-    if (inits[i] == 0)
+    if (inits[i] == nullptr)
       inits[i] = filler;
 }
 
@@ -3258,7 +3258,7 @@ FieldDecl *Expr::getSourceBitField() {
       return BinOp->getRHS()->getSourceBitField();
   }
 
-  return 0;
+  return nullptr;
 }
 
 bool Expr::refersToVectorElement() const {
@@ -3364,8 +3364,9 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     Kind(IsInstanceSuper? SuperInstance : SuperClass),
-    HasMethod(Method != 0), IsDelegateInitCall(false), IsImplicit(isImplicit),
-    SuperLoc(SuperLoc), LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
+    HasMethod(Method != nullptr), IsDelegateInitCall(false),
+    IsImplicit(isImplicit), SuperLoc(SuperLoc), LBracLoc(LBracLoc),
+    RBracLoc(RBracLoc)
 {
   initArgsAndSelLocs(Args, SelLocs, SelLocsK);
   setReceiverPointer(SuperType.getAsOpaquePtr());
@@ -3388,8 +3389,8 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     Kind(Class),
-    HasMethod(Method != 0), IsDelegateInitCall(false), IsImplicit(isImplicit),
-    LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
+    HasMethod(Method != nullptr), IsDelegateInitCall(false),
+    IsImplicit(isImplicit), LBracLoc(LBracLoc), RBracLoc(RBracLoc)
 {
   initArgsAndSelLocs(Args, SelLocs, SelLocsK);
   setReceiverPointer(Receiver);
@@ -3413,8 +3414,8 @@ ObjCMessageExpr::ObjCMessageExpr(QualType T,
     SelectorOrMethod(reinterpret_cast<uintptr_t>(Method? Method
                                                        : Sel.getAsOpaquePtr())),
     Kind(Instance),
-    HasMethod(Method != 0), IsDelegateInitCall(false), IsImplicit(isImplicit),
-    LBracLoc(LBracLoc), RBracLoc(RBracLoc) 
+    HasMethod(Method != nullptr), IsDelegateInitCall(false),
+    IsImplicit(isImplicit), LBracLoc(LBracLoc), RBracLoc(RBracLoc)
 {
   initArgsAndSelLocs(Args, SelLocs, SelLocsK);
   setReceiverPointer(Receiver);
@@ -3596,7 +3597,7 @@ ObjCInterfaceDecl *ObjCMessageExpr::getReceiverInterface() const {
   if (const ObjCObjectType *Ty = T->getAs<ObjCObjectType>())
     return Ty->getInterface();
 
-  return 0;
+  return nullptr;
 }
 
 StringRef ObjCBridgedCastExpr::getBridgeKindName() const {
@@ -3969,7 +3970,7 @@ PseudoObjectExpr::PseudoObjectExpr(QualType type, ExprValueKind VK,
       ExprBits.ContainsUnexpandedParameterPack = true;
 
     if (isa<OpaqueValueExpr>(E))
-      assert(cast<OpaqueValueExpr>(E)->getSourceExpr() != 0 &&
+      assert(cast<OpaqueValueExpr>(E)->getSourceExpr() != nullptr &&
              "opaque-value semantic expressions for pseudo-object "
              "operations must have sources");
   }
