@@ -63,7 +63,6 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_parallel:
   case OMPD_simd:
   case OMPD_task:
-  case NUM_OPENMP_DIRECTIVES:
     Diag(Tok, diag::err_omp_unexpected_directive)
       << getOpenMPDirectiveName(DKind);
     break;
@@ -86,8 +85,8 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
   ParenBraceBracketBalancer BalancerRAIIObj(*this);
   SmallVector<Expr *, 5> Identifiers;
   SmallVector<OMPClause *, 5> Clauses;
-  SmallVector<llvm::PointerIntPair<OMPClause *, 1, bool>, NUM_OPENMP_CLAUSES>
-                                               FirstClauses(NUM_OPENMP_CLAUSES);
+  SmallVector<llvm::PointerIntPair<OMPClause *, 1, bool>, OMPC_unknown + 1>
+                                               FirstClauses(OMPC_unknown + 1);
   const unsigned ScopeFlags = Scope::FnScope | Scope::DeclScope |
                               Scope::OpenMPDirectiveScope;
   SourceLocation Loc = ConsumeToken(), EndLoc;
@@ -177,7 +176,6 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
     SkipUntil(tok::annot_pragma_openmp_end);
     break;
   case OMPD_task:
-  case NUM_OPENMP_DIRECTIVES:
     Diag(Tok, diag::err_omp_unexpected_directive)
       << getOpenMPDirectiveName(DKind);
     SkipUntil(tok::annot_pragma_openmp_end);
@@ -315,7 +313,6 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     SkipUntil(tok::annot_pragma_openmp_end, StopBeforeMatch);
     break;
   case OMPC_threadprivate:
-  case NUM_OPENMP_CLAUSES:
     Diag(Tok, diag::err_omp_unexpected_clause)
       << getOpenMPClauseName(CKind) << getOpenMPDirectiveName(DKind);
     SkipUntil(tok::comma, tok::annot_pragma_openmp_end, StopBeforeMatch);

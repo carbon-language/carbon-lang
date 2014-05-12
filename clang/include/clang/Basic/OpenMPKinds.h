@@ -21,30 +21,27 @@ namespace clang {
 
 /// \brief OpenMP directives.
 enum OpenMPDirectiveKind {
-  OMPD_unknown = 0,
 #define OPENMP_DIRECTIVE(Name) \
   OMPD_##Name,
 #include "clang/Basic/OpenMPKinds.def"
-  NUM_OPENMP_DIRECTIVES
+  OMPD_unknown
 };
 
 /// \brief OpenMP clauses.
 enum OpenMPClauseKind {
-  OMPC_unknown = 0,
 #define OPENMP_CLAUSE(Name, Class) \
   OMPC_##Name,
 #include "clang/Basic/OpenMPKinds.def"
   OMPC_threadprivate,
-  NUM_OPENMP_CLAUSES
+  OMPC_unknown
 };
 
 /// \brief OpenMP attributes for 'default' clause.
 enum OpenMPDefaultClauseKind {
-  OMPC_DEFAULT_unknown = 0,
 #define OPENMP_DEFAULT_KIND(Name) \
   OMPC_DEFAULT_##Name,
 #include "clang/Basic/OpenMPKinds.def"
-  NUM_OPENMP_DEFAULT_KINDS
+  OMPC_DEFAULT_unknown
 };
 
 /// \brief OpenMP attributes for 'proc_bind' clause.
