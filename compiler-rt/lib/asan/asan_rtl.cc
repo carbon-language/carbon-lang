@@ -270,6 +270,8 @@ void InitializeFlags(Flags *f, const char *env) {
   f->poison_heap = true;
   f->poison_partial = true;
   // Turn off alloc/dealloc mismatch checker on Mac and Windows for now.
+  // https://code.google.com/p/address-sanitizer/issues/detail?id=131
+  // https://code.google.com/p/address-sanitizer/issues/detail?id=309
   // TODO(glider,timurrrr): Fix known issues and enable this back.
   f->alloc_dealloc_mismatch = (SANITIZER_MAC == 0) && (SANITIZER_WINDOWS == 0);
   f->strict_memcmp = true;
