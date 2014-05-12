@@ -911,13 +911,11 @@ namespace {
   class FrameEmitterImpl {
     int CFAOffset;
     int CIENum;
-    bool UsingCFI;
     bool IsEH;
     const MCSymbol *SectionStart;
   public:
-    FrameEmitterImpl(bool usingCFI, bool isEH)
-      : CFAOffset(0), CIENum(0), UsingCFI(usingCFI), IsEH(isEH),
-        SectionStart(nullptr) {}
+    FrameEmitterImpl(bool isEH)
+        : CFAOffset(0), CIENum(0), IsEH(isEH), SectionStart(nullptr) {}
 
     void setSectionStart(const MCSymbol *Label) { SectionStart = Label; }
 
@@ -1202,7 +1200,7 @@ void FrameEmitterImpl::EmitCompactUnwind(MCStreamer &Streamer,
     Encoding |= 0x40000000;
 
   // Range Start
-  unsigned FDEEncoding = MOFI->getFDEEncoding(UsingCFI);
+  unsigned FDEEncoding = MOFI->getFDEEncoding(true);
   unsigned Size = getSizeForEncoding(Streamer, FDEEncoding);
   if (VerboseAsm) Streamer.AddComment("Range Start");
   Streamer.EmitSymbolValue(Frame.Function, Size);
@@ -1334,8 +1332,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
       EmitEncodingByte(streamer, lsdaEncoding, "LSDA Encoding");
 
     // Encoding of the FDE pointers
-    EmitEncodingByte(streamer, MOFI->getFDEEncoding(UsingCFI),
-                     "FDE Encoding");
+    EmitEncodingByte(streamer, MOFI->getFDEEncoding(true), "FDE Encoding");
   }
 
   // Initial Instructions
@@ -1393,8 +1390,8 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCStreamer &streamer,
   }
 
   // PC Begin
-  unsigned PCEncoding = IsEH ? MOFI->getFDEEncoding(UsingCFI)
-                             : (unsigned)dwarf::DW_EH_PE_absptr;
+  unsigned PCEncoding =
+      IsEH ? MOFI->getFDEEncoding(true) : (unsigned)dwarf::DW_EH_PE_absptr;
   unsigned PCSize = getSizeForEncoding(streamer, PCEncoding);
   EmitFDESymbol(streamer, *frame.Begin, PCEncoding, IsEH, "FDE initial location");
 
@@ -1485,7 +1482,7 @@ void MCDwarfFrameEmitter::Emit(MCStreamer &Streamer, MCAsmBackend *MAB,
 
   MCContext &Context = Streamer.getContext();
   const MCObjectFileInfo *MOFI = Context.getObjectFileInfo();
-  FrameEmitterImpl Emitter(true, IsEH);
+  FrameEmitterImpl Emitter(IsEH);
   ArrayRef<MCDwarfFrameInfo> FrameArray = Streamer.getFrameInfos();
 
   // Emit the compact unwind info if available.
