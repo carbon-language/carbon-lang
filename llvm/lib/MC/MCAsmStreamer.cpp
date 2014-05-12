@@ -51,7 +51,6 @@ private:
 
   unsigned IsVerboseAsm : 1;
   unsigned ShowInst : 1;
-  unsigned UseCFI : 1;
   unsigned UseDwarfDirectory : 1;
 
   enum EHSymbolFlags { EHGlobal         = 1,
@@ -71,7 +70,7 @@ public:
       : MCStreamer(Context), OS(os), MAI(Context.getAsmInfo()),
         InstPrinter(printer), Emitter(emitter), AsmBackend(asmbackend),
         CommentStream(CommentToEmit), IsVerboseAsm(isVerboseAsm),
-        ShowInst(showInst), UseCFI(true), UseDwarfDirectory(useDwarfDirectory) {
+        ShowInst(showInst), UseDwarfDirectory(useDwarfDirectory) {
     if (InstPrinter && IsVerboseAsm)
       InstPrinter->setCommentStream(CommentStream);
   }
@@ -320,17 +319,6 @@ void MCAsmStreamer::ChangeSection(const MCSection *Section,
 
 void MCAsmStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
                                         MCSymbol *EHSymbol) {
-  if (UseCFI)
-    return;
-
-  unsigned Flags = FlagMap.lookup(Symbol);
-
-  if (Flags & EHGlobal)
-    EmitSymbolAttribute(EHSymbol, MCSA_Global);
-  if (Flags & EHWeakDefinition)
-    EmitSymbolAttribute(EHSymbol, MCSA_WeakDefinition);
-  if (Flags & EHPrivateExtern)
-    EmitSymbolAttribute(EHSymbol, MCSA_PrivateExtern);
 }
 
 void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
@@ -971,10 +959,6 @@ void MCAsmStreamer::EmitIdent(StringRef IdentString) {
 
 void MCAsmStreamer::EmitCFISections(bool EH, bool Debug) {
   MCStreamer::EmitCFISections(EH, Debug);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_sections ";
   if (EH) {
     OS << ".eh_frame";
@@ -988,11 +972,6 @@ void MCAsmStreamer::EmitCFISections(bool EH, bool Debug) {
 }
 
 void MCAsmStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
-  if (!UseCFI) {
-    RecordProcStart(Frame);
-    return;
-  }
-
   OS << "\t.cfi_startproc";
   if (Frame.IsSimple)
     OS << " simple";
@@ -1000,11 +979,6 @@ void MCAsmStreamer::EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) {
 }
 
 void MCAsmStreamer::EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
-  if (!UseCFI) {
-    RecordProcEnd(Frame);
-    return;
-  }
-
   // Put a dummy non-null value in Frame.End to mark that this frame has been
   // closed.
   Frame.End = (MCSymbol *) 1;
@@ -1025,10 +999,6 @@ void MCAsmStreamer::EmitRegisterName(int64_t Register) {
 
 void MCAsmStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
   MCStreamer::EmitCFIDefCfa(Register, Offset);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_def_cfa ";
   EmitRegisterName(Register);
   OS << ", " << Offset;
@@ -1037,20 +1007,12 @@ void MCAsmStreamer::EmitCFIDefCfa(int64_t Register, int64_t Offset) {
 
 void MCAsmStreamer::EmitCFIDefCfaOffset(int64_t Offset) {
   MCStreamer::EmitCFIDefCfaOffset(Offset);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_def_cfa_offset " << Offset;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIDefCfaRegister(int64_t Register) {
   MCStreamer::EmitCFIDefCfaRegister(Register);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_def_cfa_register ";
   EmitRegisterName(Register);
   EmitEOL();
@@ -1058,10 +1020,6 @@ void MCAsmStreamer::EmitCFIDefCfaRegister(int64_t Register) {
 
 void MCAsmStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
   this->MCStreamer::EmitCFIOffset(Register, Offset);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_offset ";
   EmitRegisterName(Register);
   OS << ", " << Offset;
@@ -1071,50 +1029,30 @@ void MCAsmStreamer::EmitCFIOffset(int64_t Register, int64_t Offset) {
 void MCAsmStreamer::EmitCFIPersonality(const MCSymbol *Sym,
                                        unsigned Encoding) {
   MCStreamer::EmitCFIPersonality(Sym, Encoding);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_personality " << Encoding << ", " << *Sym;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFILsda(const MCSymbol *Sym, unsigned Encoding) {
   MCStreamer::EmitCFILsda(Sym, Encoding);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_lsda " << Encoding << ", " << *Sym;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIRememberState() {
   MCStreamer::EmitCFIRememberState();
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_remember_state";
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIRestoreState() {
   MCStreamer::EmitCFIRestoreState();
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_restore_state";
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFISameValue(int64_t Register) {
   MCStreamer::EmitCFISameValue(Register);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_same_value ";
   EmitRegisterName(Register);
   EmitEOL();
@@ -1122,10 +1060,6 @@ void MCAsmStreamer::EmitCFISameValue(int64_t Register) {
 
 void MCAsmStreamer::EmitCFIRelOffset(int64_t Register, int64_t Offset) {
   MCStreamer::EmitCFIRelOffset(Register, Offset);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_rel_offset ";
   EmitRegisterName(Register);
   OS << ", " << Offset;
@@ -1134,50 +1068,30 @@ void MCAsmStreamer::EmitCFIRelOffset(int64_t Register, int64_t Offset) {
 
 void MCAsmStreamer::EmitCFIAdjustCfaOffset(int64_t Adjustment) {
   MCStreamer::EmitCFIAdjustCfaOffset(Adjustment);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_adjust_cfa_offset " << Adjustment;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFISignalFrame() {
   MCStreamer::EmitCFISignalFrame();
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_signal_frame";
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIUndefined(int64_t Register) {
   MCStreamer::EmitCFIUndefined(Register);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_undefined " << Register;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIRegister(int64_t Register1, int64_t Register2) {
   MCStreamer::EmitCFIRegister(Register1, Register2);
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_register " << Register1 << ", " << Register2;
   EmitEOL();
 }
 
 void MCAsmStreamer::EmitCFIWindowSave() {
   MCStreamer::EmitCFIWindowSave();
-
-  if (!UseCFI)
-    return;
-
   OS << "\t.cfi_window_save";
   EmitEOL();
 }
@@ -1460,9 +1374,6 @@ void MCAsmStreamer::FinishImpl() {
       EmitLabel(Label);
     }
   }
-
-  if (!UseCFI)
-    EmitFrames(AsmBackend.get(), false);
 }
 
 MCStreamer *llvm::createAsmStreamer(MCContext &Context,
