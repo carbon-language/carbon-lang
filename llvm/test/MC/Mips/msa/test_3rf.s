@@ -1,9 +1,5 @@
 # RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -show-encoding | FileCheck %s
 #
-# RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -filetype=obj -o - | \
-# RUN: llvm-objdump -d -arch=mips -mattr=+msa - | \
-# RUN: FileCheck %s -check-prefix=CHECKOBJDUMP
-#
 # CHECK:        fadd.w          $w28, $w19, $w28        # encoding: [0x78,0x1c,0x9f,0x1b]
 # CHECK:        fadd.d          $w13, $w2, $w29         # encoding: [0x78,0x3d,0x13,0x5b]
 # CHECK:        fcaf.w          $w14, $w11, $w25        # encoding: [0x78,0x19,0x5b,0x9a]
@@ -86,89 +82,6 @@
 # CHECK:        mul_q.w         $w16, $w1, $w4          # encoding: [0x79,0x24,0x0c,0x1c]
 # CHECK:        mulr_q.h        $w6, $w20, $w19         # encoding: [0x7b,0x13,0xa1,0x9c]
 # CHECK:        mulr_q.w        $w27, $w1, $w20         # encoding: [0x7b,0x34,0x0e,0xdc]
-
-# CHECKOBJDUMP:        fadd.w          $w28, $w19, $w28
-# CHECKOBJDUMP:        fadd.d          $w13, $w2, $w29
-# CHECKOBJDUMP:        fcaf.w          $w14, $w11, $w25
-# CHECKOBJDUMP:        fcaf.d          $w1, $w1, $w19
-# CHECKOBJDUMP:        fceq.w          $w1, $w23, $w16
-# CHECKOBJDUMP:        fceq.d          $w0, $w8, $w16
-# CHECKOBJDUMP:        fcle.w          $w16, $w9, $w24
-# CHECKOBJDUMP:        fcle.d          $w27, $w14, $w1
-# CHECKOBJDUMP:        fclt.w          $w28, $w8, $w8
-# CHECKOBJDUMP:        fclt.d          $w30, $w25, $w11
-# CHECKOBJDUMP:        fcne.w          $w2, $w18, $w23
-# CHECKOBJDUMP:        fcne.d          $w14, $w20, $w15
-# CHECKOBJDUMP:        fcor.w          $w10, $w18, $w25
-# CHECKOBJDUMP:        fcor.d          $w17, $w25, $w11
-# CHECKOBJDUMP:        fcueq.w         $w14, $w2, $w21
-# CHECKOBJDUMP:        fcueq.d         $w29, $w3, $w7
-# CHECKOBJDUMP:        fcule.w         $w17, $w5, $w3
-# CHECKOBJDUMP:        fcule.d         $w31, $w1, $w30
-# CHECKOBJDUMP:        fcult.w         $w6, $w25, $w9
-# CHECKOBJDUMP:        fcult.d         $w27, $w8, $w17
-# CHECKOBJDUMP:        fcun.w          $w4, $w20, $w8
-# CHECKOBJDUMP:        fcun.d          $w29, $w11, $w3
-# CHECKOBJDUMP:        fcune.w         $w13, $w18, $w19
-# CHECKOBJDUMP:        fcune.d         $w16, $w26, $w21
-# CHECKOBJDUMP:        fdiv.w          $w13, $w24, $w2
-# CHECKOBJDUMP:        fdiv.d          $w19, $w4, $w25
-# CHECKOBJDUMP:        fexdo.h         $w8, $w0, $w16
-# CHECKOBJDUMP:        fexdo.w         $w0, $w13, $w27
-# CHECKOBJDUMP:        fexp2.w         $w17, $w0, $w3
-# CHECKOBJDUMP:        fexp2.d         $w22, $w0, $w10
-# CHECKOBJDUMP:        fmadd.w         $w29, $w6, $w23
-# CHECKOBJDUMP:        fmadd.d         $w11, $w28, $w21
-# CHECKOBJDUMP:        fmax.w          $w0, $w23, $w13
-# CHECKOBJDUMP:        fmax.d          $w26, $w18, $w8
-# CHECKOBJDUMP:        fmax_a.w        $w10, $w16, $w10
-# CHECKOBJDUMP:        fmax_a.d        $w30, $w9, $w22
-# CHECKOBJDUMP:        fmin.w          $w24, $w1, $w30
-# CHECKOBJDUMP:        fmin.d          $w27, $w27, $w10
-# CHECKOBJDUMP:        fmin_a.w        $w10, $w29, $w20
-# CHECKOBJDUMP:        fmin_a.d        $w13, $w30, $w24
-# CHECKOBJDUMP:        fmsub.w         $w17, $w25, $w0
-# CHECKOBJDUMP:        fmsub.d         $w8, $w18, $w16
-# CHECKOBJDUMP:        fmul.w          $w3, $w15, $w15
-# CHECKOBJDUMP:        fmul.d          $w9, $w30, $w10
-# CHECKOBJDUMP:        fsaf.w          $w25, $w5, $w10
-# CHECKOBJDUMP:        fsaf.d          $w25, $w3, $w29
-# CHECKOBJDUMP:        fseq.w          $w11, $w17, $w13
-# CHECKOBJDUMP:        fseq.d          $w29, $w0, $w31
-# CHECKOBJDUMP:        fsle.w          $w30, $w31, $w31
-# CHECKOBJDUMP:        fsle.d          $w18, $w23, $w24
-# CHECKOBJDUMP:        fslt.w          $w12, $w5, $w6
-# CHECKOBJDUMP:        fslt.d          $w16, $w26, $w21
-# CHECKOBJDUMP:        fsne.w          $w30, $w1, $w12
-# CHECKOBJDUMP:        fsne.d          $w14, $w13, $w23
-# CHECKOBJDUMP:        fsor.w          $w27, $w13, $w27
-# CHECKOBJDUMP:        fsor.d          $w12, $w24, $w11
-# CHECKOBJDUMP:        fsub.w          $w31, $w26, $w1
-# CHECKOBJDUMP:        fsub.d          $w19, $w17, $w27
-# CHECKOBJDUMP:        fsueq.w         $w16, $w24, $w25
-# CHECKOBJDUMP:        fsueq.d         $w18, $w14, $w14
-# CHECKOBJDUMP:        fsule.w         $w23, $w30, $w13
-# CHECKOBJDUMP:        fsule.d         $w2, $w11, $w26
-# CHECKOBJDUMP:        fsult.w         $w11, $w26, $w22
-# CHECKOBJDUMP:        fsult.d         $w6, $w23, $w30
-# CHECKOBJDUMP:        fsun.w          $w3, $w18, $w28
-# CHECKOBJDUMP:        fsun.d          $w18, $w11, $w19
-# CHECKOBJDUMP:        fsune.w         $w16, $w31, $w2
-# CHECKOBJDUMP:        fsune.d         $w3, $w26, $w17
-# CHECKOBJDUMP:        ftq.h           $w16, $w4, $w24
-# CHECKOBJDUMP:        ftq.w           $w5, $w5, $w25
-# CHECKOBJDUMP:        madd_q.h        $w16, $w20, $w10
-# CHECKOBJDUMP:        madd_q.w        $w28, $w2, $w9
-# CHECKOBJDUMP:        maddr_q.h       $w8, $w18, $w9
-# CHECKOBJDUMP:        maddr_q.w       $w29, $w12, $w16
-# CHECKOBJDUMP:        msub_q.h        $w24, $w26, $w10
-# CHECKOBJDUMP:        msub_q.w        $w13, $w30, $w28
-# CHECKOBJDUMP:        msubr_q.h       $w12, $w21, $w11
-# CHECKOBJDUMP:        msubr_q.w       $w1, $w14, $w20
-# CHECKOBJDUMP:        mul_q.h         $w6, $w16, $w30
-# CHECKOBJDUMP:        mul_q.w         $w16, $w1, $w4
-# CHECKOBJDUMP:        mulr_q.h        $w6, $w20, $w19
-# CHECKOBJDUMP:        mulr_q.w        $w27, $w1, $w20
 
                 fadd.w          $w28, $w19, $w28
                 fadd.d          $w13, $w2, $w29

@@ -1,9 +1,5 @@
 # RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -show-encoding | FileCheck %s
 #
-# RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -filetype=obj -o - | \
-# RUN: llvm-objdump -d -arch=mips -mattr=+msa - | \
-# RUN: FileCheck %s -check-prefix=CHECKOBJDUMP
-#
 # CHECK:        fill.b  $w30, $9                # encoding: [0x7b,0x00,0x4f,0x9e]
 # CHECK:        fill.h  $w31, $23               # encoding: [0x7b,0x01,0xbf,0xde]
 # CHECK:        fill.w  $w16, $24               # encoding: [0x7b,0x02,0xc4,0x1e]
@@ -19,22 +15,6 @@
 # CHECK:        pcnt.h  $w0, $w8                # encoding: [0x7b,0x05,0x40,0x1e]
 # CHECK:        pcnt.w  $w23, $w9               # encoding: [0x7b,0x06,0x4d,0xde]
 # CHECK:        pcnt.d  $w21, $w24              # encoding: [0x7b,0x07,0xc5,0x5e]
-
-# CHECKOBJDUMP:        fill.b  $w30, $9
-# CHECKOBJDUMP:        fill.h  $w31, $23
-# CHECKOBJDUMP:        fill.w  $w16, $24
-# CHECKOBJDUMP:        nloc.b  $w21, $w0
-# CHECKOBJDUMP:        nloc.h  $w18, $w31
-# CHECKOBJDUMP:        nloc.w  $w2, $w23
-# CHECKOBJDUMP:        nloc.d  $w4, $w10
-# CHECKOBJDUMP:        nlzc.b  $w31, $w2
-# CHECKOBJDUMP:        nlzc.h  $w27, $w22
-# CHECKOBJDUMP:        nlzc.w  $w10, $w29
-# CHECKOBJDUMP:        nlzc.d  $w25, $w9
-# CHECKOBJDUMP:        pcnt.b  $w20, $w18
-# CHECKOBJDUMP:        pcnt.h  $w0, $w8
-# CHECKOBJDUMP:        pcnt.w  $w23, $w9
-# CHECKOBJDUMP:        pcnt.d  $w21, $w24
 
                 fill.b  $w30, $9
                 fill.h  $w31, $23

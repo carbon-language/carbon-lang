@@ -1,9 +1,5 @@
 # RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -show-encoding | FileCheck %s
 #
-# RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -filetype=obj -o - | \
-# RUN: llvm-objdump -d -arch=mips -mattr=+msa - | \
-# RUN: FileCheck %s -check-prefix=CHECKOBJDUMP
-#
 # CHECK:        fclass.w        $w26, $w12              # encoding: [0x7b,0x20,0x66,0x9e]
 # CHECK:        fclass.d        $w24, $w17              # encoding: [0x7b,0x21,0x8e,0x1e]
 # CHECK:        fexupl.w        $w8, $w0                # encoding: [0x7b,0x30,0x02,0x1e]
@@ -36,39 +32,6 @@
 # CHECK:        ftrunc_s.d      $w12, $w27              # encoding: [0x7b,0x23,0xdb,0x1e]
 # CHECK:        ftrunc_u.w      $w17, $w15              # encoding: [0x7b,0x24,0x7c,0x5e]
 # CHECK:        ftrunc_u.d      $w5, $w27               # encoding: [0x7b,0x25,0xd9,0x5e]
-
-# CHECKOBJDUMP:        fclass.w        $w26, $w12
-# CHECKOBJDUMP:        fclass.d        $w24, $w17
-# CHECKOBJDUMP:        fexupl.w        $w8, $w0
-# CHECKOBJDUMP:        fexupl.d        $w17, $w29
-# CHECKOBJDUMP:        fexupr.w        $w13, $w4
-# CHECKOBJDUMP:        fexupr.d        $w5, $w2
-# CHECKOBJDUMP:        ffint_s.w       $w20, $w29
-# CHECKOBJDUMP:        ffint_s.d       $w12, $w15
-# CHECKOBJDUMP:        ffint_u.w       $w7, $w27
-# CHECKOBJDUMP:        ffint_u.d       $w19, $w16
-# CHECKOBJDUMP:        ffql.w          $w31, $w13
-# CHECKOBJDUMP:        ffql.d          $w12, $w13
-# CHECKOBJDUMP:        ffqr.w          $w27, $w30
-# CHECKOBJDUMP:        ffqr.d          $w30, $w15
-# CHECKOBJDUMP:        flog2.w         $w25, $w31
-# CHECKOBJDUMP:        flog2.d         $w18, $w10
-# CHECKOBJDUMP:        frint.w         $w7, $w15
-# CHECKOBJDUMP:        frint.d         $w21, $w22
-# CHECKOBJDUMP:        frcp.w          $w19, $w0
-# CHECKOBJDUMP:        frcp.d          $w4, $w14
-# CHECKOBJDUMP:        frsqrt.w        $w12, $w17
-# CHECKOBJDUMP:        frsqrt.d        $w23, $w11
-# CHECKOBJDUMP:        fsqrt.w         $w0, $w11
-# CHECKOBJDUMP:        fsqrt.d         $w15, $w12
-# CHECKOBJDUMP:        ftint_s.w       $w30, $w5
-# CHECKOBJDUMP:        ftint_s.d       $w5, $w23
-# CHECKOBJDUMP:        ftint_u.w       $w20, $w14
-# CHECKOBJDUMP:        ftint_u.d       $w23, $w21
-# CHECKOBJDUMP:        ftrunc_s.w      $w29, $w17
-# CHECKOBJDUMP:        ftrunc_s.d      $w12, $w27
-# CHECKOBJDUMP:        ftrunc_u.w      $w17, $w15
-# CHECKOBJDUMP:        ftrunc_u.d      $w5, $w27
 
                 fclass.w        $w26, $w12
                 fclass.d        $w24, $w17
