@@ -650,14 +650,6 @@ public:
                                      unsigned Isa, unsigned Discriminator,
                                      StringRef FileName);
 
-  virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
-                                        const MCSymbol *LastLabel,
-                                        const MCSymbol *Label,
-                                        unsigned PointerSize) = 0;
-
-  virtual void EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
-                                         const MCSymbol *Label) {}
-
   virtual MCSymbol *getDwarfLineTableSymbol(unsigned CUID);
 
   void EmitDwarfSetLineAddr(int64_t LineDelta, const MCSymbol *Label,

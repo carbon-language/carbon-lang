@@ -710,9 +710,6 @@ namespace {
     bool EmitValueToOffset(const MCExpr *Offset,
                            unsigned char Value) override { return false; }
     void EmitFileDirective(StringRef Filename) override {}
-    void EmitDwarfAdvanceLineAddr(int64_t LineDelta, const MCSymbol *LastLabel,
-                                  const MCSymbol *Label,
-                                  unsigned PointerSize) override {}
     void FinishImpl() override {}
     void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) override {
       RecordProcEnd(Frame);

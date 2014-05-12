@@ -131,12 +131,6 @@ public:
 
   void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) override;
   void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) override;
-  void EmitDwarfAdvanceLineAddr(int64_t LineDelta, const MCSymbol *LastLabel,
-                                const MCSymbol *Label,
-                                unsigned PointerSize) override;
-  void EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
-                                 const MCSymbol *Label) override;
-
   bool EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute) override;
 
   void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) override;
@@ -415,22 +409,6 @@ void MCAsmStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
   OS << ".weakref " << *Alias << ", " << *Symbol;
   EmitEOL();
 }
-
-void MCAsmStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
-                                             const MCSymbol *LastLabel,
-                                             const MCSymbol *Label,
-                                             unsigned PointerSize) {
-  EmitDwarfSetLineAddr(LineDelta, Label, PointerSize);
-}
-
-void MCAsmStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
-                                              const MCSymbol *Label) {
-  EmitIntValue(dwarf::DW_CFA_advance_loc4, 1);
-  const MCExpr *AddrDelta = BuildSymbolDiff(getContext(), Label, LastLabel);
-  AddrDelta = ForceExpAbs(AddrDelta);
-  EmitValue(AddrDelta, 4);
-}
-
 
 bool MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                         MCSymbolAttr Attribute) {
