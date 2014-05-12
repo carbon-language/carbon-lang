@@ -1428,6 +1428,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRM6r: case X86II::MRM7r: {
     if (HasVEX_4V) // Skip the register dst (which is encoded in VEX_VVVV).
       ++CurOp;
+    if (HasEVEX_K) // Skip writemask
+      ++CurOp;
     EmitByte(BaseOpcode, CurByte, OS);
     uint64_t Form = TSFlags & X86II::FormMask;
     EmitRegModRMByte(MI.getOperand(CurOp++),
@@ -1442,6 +1444,8 @@ EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   case X86II::MRM4m: case X86II::MRM5m:
   case X86II::MRM6m: case X86II::MRM7m: {
     if (HasVEX_4V) // Skip the register dst (which is encoded in VEX_VVVV).
+      ++CurOp;
+    if (HasEVEX_K) // Skip writemask
       ++CurOp;
     EmitByte(BaseOpcode, CurByte, OS);
     uint64_t Form = TSFlags & X86II::FormMask;

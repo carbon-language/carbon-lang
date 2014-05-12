@@ -643,6 +643,10 @@ namespace X86II {
   /// counted as one operand.
   ///
   inline int getMemoryOperandNo(uint64_t TSFlags, unsigned Opcode) {
+    bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
+    bool HasMemOp4 = (TSFlags >> X86II::VEXShift) & X86II::MemOp4;
+    bool HasEVEX_K = ((TSFlags >> X86II::VEXShift) & X86II::EVEX_K);
+    
     switch (TSFlags & X86II::FormMask) {
     default: llvm_unreachable("Unknown FormMask value in getMemoryOperandNo!");
     case X86II::Pseudo:
@@ -660,9 +664,6 @@ namespace X86II {
     case X86II::MRMDestMem:
       return 0;
     case X86II::MRMSrcMem: {
-      bool HasVEX_4V = (TSFlags >> X86II::VEXShift) & X86II::VEX_4V;
-      bool HasMemOp4 = (TSFlags >> X86II::VEXShift) & X86II::MemOp4;
-      bool HasEVEX_K = ((TSFlags >> X86II::VEXShift) & X86II::EVEX_K);
       unsigned FirstMemOp = 1;
       if (HasVEX_4V)
         ++FirstMemOp;// Skip the register source (which is encoded in VEX_VVVV).
@@ -690,6 +691,8 @@ namespace X86II {
       unsigned FirstMemOp = 0;
       if (HasVEX_4V)
         ++FirstMemOp;// Skip the register dest (which is encoded in VEX_VVVV).
+      if (HasEVEX_K)
+        ++FirstMemOp;// Skip the mask register
       return FirstMemOp;
     }
     case X86II::MRM_C0: case X86II::MRM_C1: case X86II::MRM_C2:
