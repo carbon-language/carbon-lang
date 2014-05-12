@@ -127,7 +127,6 @@ public:
   void EmitLabel(MCSymbol *Symbol) override;
   void EmitDebugLabel(MCSymbol *Symbol) override;
 
-  void EmitEHSymAttributes(const MCSymbol *Symbol, MCSymbol *EHSymbol) override;
   void EmitAssemblerFlag(MCAssemblerFlag Flag) override;
   void EmitLinkerOptions(ArrayRef<std::string> Options) override;
   void EmitDataRegion(MCDataRegionType Kind) override;
@@ -315,10 +314,6 @@ void MCAsmStreamer::ChangeSection(const MCSection *Section,
                                   const MCExpr *Subsection) {
   assert(Section && "Cannot switch to a null section!");
   Section->PrintSwitchToSection(*MAI, OS, Subsection);
-}
-
-void MCAsmStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
-                                        MCSymbol *EHSymbol) {
 }
 
 void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
