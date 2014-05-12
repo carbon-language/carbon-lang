@@ -50,7 +50,11 @@
 #endif
 
 #ifndef ASAN_DYNAMIC
-# define ASAN_DYNAMIC 0
+# ifdef PIC
+#  define ASAN_DYNAMIC 1
+# else
+#  define ASAN_DYNAMIC 0
+# endif
 #endif
 
 // All internal functions in asan reside inside the __asan namespace
