@@ -3945,42 +3945,6 @@ static void rewriteMOVI(ARM64AsmParser::OperandVector &Operands,
   delete Op;
 }
 
-static void rewriteMOVRSP(ARM64AsmParser::OperandVector &Operands,
-                        MCContext &Context) {
-  ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[0]);
-  ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
-  Operands[0] =
-    ARM64Operand::CreateToken("add", false, Op->getStartLoc(), Context);
-
-  const MCExpr *Imm = MCConstantExpr::Create(0, Context);
-  Operands.push_back(ARM64Operand::CreateShiftedImm(Imm, 0, Op2->getStartLoc(),
-                                             Op2->getEndLoc(), Context));
-
-  delete Op;
-}
-
-static void rewriteMOVR(ARM64AsmParser::OperandVector &Operands,
-                        MCContext &Context) {
-  ARM64Operand *Op = static_cast<ARM64Operand *>(Operands[0]);
-  ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
-  Operands[0] =
-    ARM64Operand::CreateToken("orr", false, Op->getStartLoc(), Context);
-
-  // Operands[2] becomes Operands[3].
-  Operands.push_back(Operands[2]);
-  // And Operands[2] becomes ZR.
-  unsigned ZeroReg = ARM64::XZR;
-  if (ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(
-          Operands[2]->getReg()))
-    ZeroReg = ARM64::WZR;
-
-  Operands[2] =
-    ARM64Operand::CreateReg(ZeroReg, false, Op2->getStartLoc(),
-                            Op2->getEndLoc(), Context);
-
-  delete Op;
-}
-
 bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
   switch (ErrCode) {
   case Match_MissingFeature:
@@ -3999,6 +3963,8 @@ bool ARM64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
   case Match_AddSubSecondSource:
     return Error(Loc,
       "expected compatible register, symbol or integer in range [0, 4095]");
+  case Match_LogicalSecondSource:
+    return Error(Loc, "expected compatible register or logical immediate");
   case Match_AddSubRegShift32:
     return Error(Loc,
        "expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]");
@@ -4081,7 +4047,6 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     // FIXME: Catching this here is a total hack, and we should use tblgen
     // support to implement this instead as soon as it is available.
 
-    ARM64Operand *Op1 = static_cast<ARM64Operand *>(Operands[1]);
     ARM64Operand *Op2 = static_cast<ARM64Operand *>(Operands[2]);
     if (Op2->isImm()) {
       if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Op2->getImm())) {
@@ -4130,21 +4095,6 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
         else if ((NVal & 0xFFFF000000000000ULL) == NVal)
           rewriteMOVI(Operands, "movn", NVal, 48, getContext());
       }
-    } else if (Op1->isReg() && Op2->isReg()) {
-      // reg->reg move.
-      unsigned Reg1 = Op1->getReg();
-      unsigned Reg2 = Op2->getReg();
-      if ((Reg1 == ARM64::SP &&
-           ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(Reg2)) ||
-          (Reg2 == ARM64::SP &&
-           ARM64MCRegisterClasses[ARM64::GPR64allRegClassID].contains(Reg1)) ||
-          (Reg1 == ARM64::WSP &&
-           ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(Reg2)) ||
-          (Reg2 == ARM64::WSP &&
-           ARM64MCRegisterClasses[ARM64::GPR32allRegClassID].contains(Reg1)))
-        rewriteMOVRSP(Operands, getContext());
-      else
-        rewriteMOVR(Operands, getContext());
     }
   } else if (NumOperands == 4) {
     if (NumOperands == 4 && Tok == "lsl") {
@@ -4523,6 +4473,7 @@ bool ARM64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_AddSubRegExtendSmall:
   case Match_AddSubRegExtendLarge:
   case Match_AddSubSecondSource:
+  case Match_LogicalSecondSource:
   case Match_AddSubRegShift32:
   case Match_AddSubRegShift64:
   case Match_InvalidMemoryIndexed8:

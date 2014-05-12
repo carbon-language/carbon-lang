@@ -152,6 +152,9 @@ def GPR64sp : RegisterClass<"ARM64", [i64], 64, (add GPR64common, SP)> {
   let AltOrderSelect = [{ return 1; }];
 }
 
+def GPR32sponly : RegisterClass<"ARM64", [i32], 32, (add WSP)>;
+def GPR64sponly : RegisterClass<"ARM64", [i64], 64, (add SP)>;
+
 // GPR register classes which include WZR/XZR AND SP/WSP. This is not a
 // constraint used by any instructions, it is used as a common super-class.
 def GPR32all : RegisterClass<"ARM64", [i32], 32, (add GPR32common, WZR, WSP)>;

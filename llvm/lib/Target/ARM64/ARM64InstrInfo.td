@@ -474,6 +474,15 @@ def : InstAlias<"ngcs $dst, $src", (SBCSXr GPR64:$dst, XZR, GPR64:$src)>;
 defm ADD : AddSub<0, "add", add>;
 defm SUB : AddSub<1, "sub">;
 
+def : InstAlias<"mov $dst, $src",
+                (ADDWri GPR32sponly:$dst, GPR32sp:$src, 0, 0)>;
+def : InstAlias<"mov $dst, $src",
+                (ADDWri GPR32sp:$dst, GPR32sponly:$src, 0, 0)>;
+def : InstAlias<"mov $dst, $src",
+                (ADDXri GPR64sponly:$dst, GPR64sp:$src, 0, 0)>;
+def : InstAlias<"mov $dst, $src",
+                (ADDXri GPR64sp:$dst, GPR64sponly:$src, 0, 0)>;
+
 defm ADDS : AddSubS<0, "adds", ARM64add_flag, "cmn">;
 defm SUBS : AddSubS<1, "subs", ARM64sub_flag, "cmp">;
 
@@ -647,6 +656,9 @@ defm EOR  : LogicalReg<0b10, 0, "eor", xor>;
 defm ORN  : LogicalReg<0b01, 1, "orn",
                        BinOpFrag<(or node:$LHS, (not node:$RHS))>>;
 defm ORR  : LogicalReg<0b01, 0, "orr", or>;
+
+def : InstAlias<"mov $dst, $src", (ORRWrs GPR32:$dst, WZR, GPR32:$src, 0)>;
+def : InstAlias<"mov $dst, $src", (ORRXrs GPR64:$dst, XZR, GPR64:$src, 0)>;
 
 def : InstAlias<"tst $src1, $src2",
                 (ANDSWri WZR, GPR32:$src1, logical_imm32:$src2)>;

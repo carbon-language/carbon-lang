@@ -430,8 +430,14 @@ def logical_imm64_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(enc, MVT::i32);
 }]>;
 
-def LogicalImm32Operand : AsmOperandClass { let Name = "LogicalImm32"; }
-def LogicalImm64Operand : AsmOperandClass { let Name = "LogicalImm64"; }
+def LogicalImm32Operand : AsmOperandClass {
+  let Name = "LogicalImm32";
+  let DiagnosticType = "LogicalSecondSource";
+}
+def LogicalImm64Operand : AsmOperandClass {
+  let Name = "LogicalImm64";
+  let DiagnosticType = "LogicalSecondSource";
+}
 def logical_imm32 : Operand<i32>, PatLeaf<(imm), [{
   return ARM64_AM::isLogicalImmediate(N->getZExtValue(), 32);
 }], logical_imm32_XFORM> {
