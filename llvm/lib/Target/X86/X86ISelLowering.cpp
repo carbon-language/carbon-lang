@@ -12664,9 +12664,6 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   SDLoc dl(Op);
   IntrinsicData Intr = itr->second;
   switch(Intr.Type) {
-  default:
-    llvm_unreachable("Unhandled intrinsic");
-    break;
   case RDSEED:
   case RDRAND: {
     // Emit the node with the right value type.
