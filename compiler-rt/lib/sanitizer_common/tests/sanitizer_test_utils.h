@@ -19,9 +19,9 @@
 
 #if defined(_MSC_VER)
 # define NOINLINE __declspec(noinline)
-#else  // defined(_WIN32)
+#else  // defined(_MSC_VER)
 # define NOINLINE __attribute__((noinline))
-#endif  // defined(_WIN32)
+#endif  // defined(_MSC_VER)
 
 #if !defined(_MSC_VER) || defined(__clang__)
 # define UNUSED __attribute__((unused))
