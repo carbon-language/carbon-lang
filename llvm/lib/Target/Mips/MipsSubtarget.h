@@ -88,9 +88,6 @@ protected:
   // HasMips4_32r2 - Has the subset of MIPS-IV present in MIPS32r2
   bool HasMips4_32r2;
 
-  // HasSEInReg - SEB and SEH (signext in register) instructions.
-  bool HasSEInReg;
-
   // HasBitCount - Count leading '1' and '0' bits.
   bool HasBitCount;
 
@@ -211,7 +208,6 @@ public:
   }
 
   /// Features related to the presence of specific instructions.
-  bool hasSEInReg()   const { return HasSEInReg; }
   bool hasBitCount()  const { return HasBitCount; }
   bool hasExtractInsert() const { return !inMips16Mode() && hasMips32r2(); }
 

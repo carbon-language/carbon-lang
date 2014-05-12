@@ -146,8 +146,6 @@ def MipsSDR : SDNode<"MipsISD::SDR", SDTStore,
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def HasSEInReg  :     Predicate<"Subtarget.hasSEInReg()">,
-                      AssemblerPredicate<"FeatureSEInReg">;
 def HasBitCount :     Predicate<"Subtarget.hasBitCount()">,
                       AssemblerPredicate<"FeatureBitCount">;
 def HasMips2     :    Predicate<"Subtarget.hasMips2()">,
@@ -223,8 +221,6 @@ class INSN_MIPS4_32 { list<Predicate> InsnPredicates = [HasMips4_32]; }
 
 // The portions of MIPS-IV that were also added to MIPS32R2
 class INSN_MIPS4_32R2 { list<Predicate> InsnPredicates = [HasMips4_32r2]; }
-
-class INSN_SEINREG { list<Predicate> InsnPredicates = [HasSEInReg]; }
 
 //===----------------------------------------------------------------------===//
 
@@ -839,8 +835,7 @@ class CountLeading1<string opstr, RegisterOperand RO>:
 class SignExtInReg<string opstr, ValueType vt, RegisterOperand RO,
                    InstrItinClass itin> :
   InstSE<(outs RO:$rd), (ins RO:$rt), !strconcat(opstr, "\t$rd, $rt"),
-         [(set RO:$rd, (sext_inreg RO:$rt, vt))], itin, FrmR, opstr>,
-  INSN_SEINREG;
+         [(set RO:$rd, (sext_inreg RO:$rt, vt))], itin, FrmR, opstr>;
 
 // Subword Swap
 class SubwordSwap<string opstr, RegisterOperand RO>:
@@ -1165,8 +1160,10 @@ def MFLO : MMRel, MoveFromLOHI<"mflo", GPR32Opnd, AC0>, MFLO_FM<0x12>;
 }
 
 /// Sign Ext In Register Instructions.
-def SEB : MMRel, SignExtInReg<"seb", i8, GPR32Opnd, II_SEB>, SEB_FM<0x10, 0x20>;
-def SEH : MMRel, SignExtInReg<"seh", i16, GPR32Opnd, II_SEH>, SEB_FM<0x18, 0x20>;
+def SEB : MMRel, SignExtInReg<"seb", i8, GPR32Opnd, II_SEB>,
+          SEB_FM<0x10, 0x20>, ISA_MIPS32R2;
+def SEH : MMRel, SignExtInReg<"seh", i16, GPR32Opnd, II_SEH>,
+          SEB_FM<0x18, 0x20>, ISA_MIPS32R2;
 
 /// Count Leading
 def CLZ : MMRel, CountLeading0<"clz", GPR32Opnd>, CLO_FM<0x20>;

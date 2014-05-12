@@ -352,7 +352,7 @@ MipsTargetLowering::MipsTargetLowering(MipsTargetMachine &TM)
 
   setInsertFencesForAtomic(true);
 
-  if (!Subtarget->hasSEInReg()) {
+  if (!Subtarget->hasMips32r2()) {
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8,  Expand);
     setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
   }

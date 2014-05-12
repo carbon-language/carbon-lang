@@ -209,8 +209,10 @@ def PseudoMFLO64 : PseudoMFLOHI<GPR64, ACC128, MipsMFLO>;
 def PseudoMTLOHI64 : PseudoMTLOHI<ACC128, GPR64>;
 
 /// Sign Ext In Register Instructions.
-def SEB64 : SignExtInReg<"seb", i8, GPR64Opnd, II_SEB>, SEB_FM<0x10, 0x20>;
-def SEH64 : SignExtInReg<"seh", i16, GPR64Opnd, II_SEH>, SEB_FM<0x18, 0x20>;
+def SEB64 : SignExtInReg<"seb", i8, GPR64Opnd, II_SEB>, SEB_FM<0x10, 0x20>,
+            ISA_MIPS32R2;
+def SEH64 : SignExtInReg<"seh", i16, GPR64Opnd, II_SEH>, SEB_FM<0x18, 0x20>,
+            ISA_MIPS32R2;
 }
 
 /// Count Leading
