@@ -7,8 +7,8 @@
 ; CHECK-LE-NEXT: vmov	{{d[0-9]+}}, r1, r2
 ; CHECK-LE-NEXT: vmov	{{d[0-9]+}}, r3, [[REG]]
 ; CHECK-BE-NEXT: vmov	{{d[0-9]+}}, r2, r1
-; CHECK-BE-NEXT: vmov	{{d[0-9]+}}, [[REG]], r3
-; CHECK-NEXT: vst1.8	{{{d[0-9]+}}, {{d[0-9]+}}}, [r0]
+; CHECK-BE: vmov	{{d[0-9]+}}, [[REG]], r3
+; CHECK: vst1.8	{{{d[0-9]+}}, {{d[0-9]+}}}, [r0]
 ; CHECK-NEXT: bx	lr
 define void @test1(i8* %arg, [4 x i64] %vec.coerce) {
 bb:
