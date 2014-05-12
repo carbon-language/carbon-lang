@@ -1829,7 +1829,7 @@ FoldOperand(SDNode *ParentNode, unsigned SrcIdx, SDValue &Src, SDValue &Neg,
       }
     }
 
-    ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(CstOffset);
+    ConstantSDNode *Cst = cast<ConstantSDNode>(CstOffset);
     Consts.push_back(Cst->getZExtValue());
     if (!TII->fitsConstReadLimitations(Consts)) {
       return false;
