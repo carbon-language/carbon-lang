@@ -180,6 +180,9 @@ TEST_F(FormatTestJS, RegexLiteralSpecialCharacters) {
   verifyFormat("var regex = /\\W/;");
   verifyFormat("var regex = /a(a)\\1/;");
   verifyFormat("var regex = /\\0/;");
+  verifyFormat("var regex = /\\\\/g;");
+  verifyFormat("var regex = /\\a\\\\/g;");
+  verifyFormat("var regex = /\a\\//g;");
 }
 
 TEST_F(FormatTestJS, RegexLiteralModifiers) {

@@ -1216,6 +1216,8 @@ private:
       return;
 
     if (Style.Language == FormatStyle::LK_JavaScript) {
+      if (tryMergeEscapeSequence())
+        return;
       if (tryMergeJSRegexLiteral())
         return;
 
@@ -1256,6 +1258,23 @@ private:
     return true;
   }
 
+  // Tries to merge an escape sequence, i.e. a "\\" and the following
+  // charachter. Use e.g. inside JavaScript regex literals.
+  bool tryMergeEscapeSequence() {
+    if (Tokens.size() < 2)
+      return false;
+    FormatToken *Previous = Tokens[Tokens.size() - 2];
+    if (Previous->isNot(tok::unknown) || Previous->TokenText != "\\" ||
+        Tokens.back()->NewlinesBefore != 0)
+      return false;
+    Previous->ColumnWidth += Tokens.back()->ColumnWidth;
+    StringRef Text = Previous->TokenText;
+    Previous->TokenText =
+        StringRef(Text.data(), Text.size() + Tokens.back()->TokenText.size());
+    Tokens.resize(Tokens.size() - 1);
+    return true;
+  }
+
   // Try to determine whether the current token ends a JavaScript regex literal.
   // We heuristically assume that this is a regex literal if we find two
   // unescaped slashes on a line and the token before the first slash is one of
@@ -1263,7 +1282,8 @@ private:
   // a division.
   bool tryMergeJSRegexLiteral() {
     if (Tokens.size() < 2 || Tokens.back()->isNot(tok::slash) ||
-        Tokens[Tokens.size() - 2]->is(tok::unknown))
+        (Tokens[Tokens.size() - 2]->is(tok::unknown) &&
+         Tokens[Tokens.size() - 2]->TokenText == "\\"))
       return false;
     unsigned TokenCount = 0;
     unsigned LastColumn = Tokens.back()->OriginalColumn;
