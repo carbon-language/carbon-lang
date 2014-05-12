@@ -21,7 +21,6 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/ValueHandle.h"
@@ -186,7 +185,9 @@ public:
 
   /// findInlinedScope - Find an inlined scope for the given DebugLoc or return
   /// NULL.
-  LexicalScope *findInlinedScope(DebugLoc DL);
+  LexicalScope *findInlinedScope(DebugLoc DL) {
+    return InlinedLexicalScopeMap.lookup(DL);
+  }
 
   /// findLexicalScope - Find regular lexical scope or return null.
   LexicalScope *findLexicalScope(const MDNode *N) {
@@ -229,9 +230,7 @@ private:
 
   /// InlinedLexicalScopeMap - Tracks inlined function scopes in current
   /// function.
-  std::unordered_map<std::pair<const MDNode *, const MDNode *>, LexicalScope,
-                     pair_hash<const MDNode *, const MDNode *>>
-  InlinedLexicalScopeMap;
+  DenseMap<DebugLoc, LexicalScope *> InlinedLexicalScopeMap;
 
   /// AbstractScopeMap - These scopes are  not included LexicalScopeMap.
   // Use an unordered_map to ensure value pointer validity over insertion.

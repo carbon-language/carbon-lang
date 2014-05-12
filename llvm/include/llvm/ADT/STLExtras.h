@@ -530,13 +530,6 @@ make_unique(size_t n) {
 
 #endif
 
-template<typename First, typename Second>
-struct pair_hash {
-  size_t operator()(const std::pair<First, Second> &P) const {
-    return std::hash<First>()(P.first) * 31 + std::hash<Second>()(P.second);
-  }
-};
-
 } // End llvm namespace
 
 #endif

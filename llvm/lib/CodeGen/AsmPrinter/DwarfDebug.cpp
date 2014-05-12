@@ -623,7 +623,7 @@ std::unique_ptr<DIE> DwarfDebug::constructScopeDIE(DwarfCompileUnit &TheCU,
   // avoid creating un-used children then removing them later when we find out
   // the scope DIE is null.
   std::unique_ptr<DIE> ScopeDIE;
-  if (DS.getContext() && DS.isSubprogram()) {
+  if (Scope->getInlinedAt()) {
     ScopeDIE = constructInlinedScopeDIE(TheCU, Scope);
     if (!ScopeDIE)
       return nullptr;
@@ -1210,12 +1210,10 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
     if (DV.getTag() == dwarf::DW_TAG_arg_variable &&
         DISubprogram(DV.getContext()).describes(CurFn->getFunction()))
       Scope = LScopes.getCurrentFunctionScope();
-    else if (MDNode *IA = DV.getInlinedAt()) {
-      DebugLoc DL = DebugLoc::getFromDILocation(IA);
-      Scope = LScopes.findInlinedScope(DebugLoc::get(
-          DL.getLine(), DL.getCol(), DV.getContext(), IA));
-    } else
-      Scope = LScopes.findLexicalScope(DV.getContext());
+    else if (MDNode *IA = DV.getInlinedAt())
+      Scope = LScopes.findInlinedScope(DebugLoc::getFromDILocation(IA));
+    else
+      Scope = LScopes.findLexicalScope(cast<MDNode>(DV->getOperand(1)));
     // If variable scope is not found then skip this variable.
     if (!Scope)
       continue;
