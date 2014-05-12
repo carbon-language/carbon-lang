@@ -7344,7 +7344,7 @@ const SCEV *SCEVAddRecExpr::computeAccessFunctions(
 
   // Early exit in case this SCEV is not an affine multivariate function.
   if (Sizes.empty() || !this->isAffine())
-    return NULL;
+    return nullptr;
 
   const SCEV *Zero = SE.getConstant(this->getType(), 0);
   const SCEV *Res = this, *Remainder = Zero;
@@ -7446,19 +7446,19 @@ SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
   collectParametricTerms(SE, Terms);
 
   if (Terms.empty())
-    return NULL;
+    return nullptr;
 
   // Second step: find subscript sizes.
   SE.findArrayDimensions(Terms, Sizes);
 
   if (Sizes.empty())
-    return NULL;
+    return nullptr;
 
   // Third step: compute the access functions for each subscript.
   const SCEV *Remainder = computeAccessFunctions(SE, Subscripts, Sizes);
 
   if (!Remainder || Subscripts.empty())
-    return NULL;
+    return nullptr;
 
   DEBUG({
       dbgs() << "succeeded to delinearize " << *this << "\n";
