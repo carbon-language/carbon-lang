@@ -557,6 +557,8 @@ class ScopedInErrorReport {
   NORETURN ~ScopedInErrorReport() {
     // Make sure the current thread is announced.
     DescribeThread(GetCurrentThread());
+    // We may want to grab this lock again when printing stats.
+    asanThreadRegistry().Unlock();
     // Print memory stats.
     if (flags()->print_stats)
       __asan_print_accumulated_stats();

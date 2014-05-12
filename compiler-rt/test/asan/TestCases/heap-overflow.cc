@@ -1,8 +1,8 @@
-// RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
-// RUN: %clangxx_asan -O1 %s -o %t && not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
-// RUN: %clangxx_asan -O2 %s -o %t && not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
-// RUN: %clangxx_asan -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
-
+// RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O1 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O2 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=print_stats=1 not %run %t 2>&1 | FileCheck %s
 #include <stdlib.h>
 #include <string.h>
 int main(int argc, char **argv) {
@@ -14,11 +14,7 @@ int main(int argc, char **argv) {
   // CHECK: {{0x.* is located 0 bytes to the right of 10-byte region}}
   // CHECK: {{allocated by thread T0 here:}}
 
-  // CHECK-Linux: {{    #0 0x.* in .*malloc}}
-  // CHECK-Linux: {{    #1 0x.* in main .*heap-overflow.cc:9}}
-
-  // CHECK-Darwin: {{    #0 0x.* in wrap_malloc.*}}
-  // CHECK-Darwin: {{    #1 0x.* in main .*heap-overflow.cc:9}}
+  // CHECK: {{    #0 0x.* in .*malloc}}
   free(x);
   return res;
 }
