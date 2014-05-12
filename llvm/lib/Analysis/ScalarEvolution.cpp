@@ -7192,7 +7192,7 @@ findGCD(ScalarEvolution &SE, SmallVectorImpl<const SCEV *> &Terms) {
   return GCD;
 }
 
-static void findArrayDimensionsRec(ScalarEvolution &SE,
+static bool findArrayDimensionsRec(ScalarEvolution &SE,
                                    SmallVectorImpl<const SCEV *> &Terms,
                                    SmallVectorImpl<const SCEV *> &Sizes) {
   // The GCD of all Terms is the dimension of the innermost dimension.
@@ -7210,14 +7210,18 @@ static void findArrayDimensionsRec(ScalarEvolution &SE,
     }
 
     Sizes.push_back(GCD);
-    return;
+    return true;
   }
 
   for (const SCEV *&Term : Terms) {
     // Normalize the terms before the next call to findArrayDimensionsRec.
     const SCEV *Q, *R;
     SCEVDivision::divide(SE, Term, GCD, &Q, &R);
-    assert(R->isZero() && "GCD does not evenly divide one of the terms");
+
+    // Bail out when GCD does not evenly divide one of the terms.
+    if (!R->isZero())
+      return false;
+
     Term = Q;
   }
 
@@ -7228,8 +7232,11 @@ static void findArrayDimensionsRec(ScalarEvolution &SE,
               Terms.end());
 
   if (Terms.size() > 0)
-    findArrayDimensionsRec(SE, Terms, Sizes);
+    if (!findArrayDimensionsRec(SE, Terms, Sizes))
+      return false;
+
   Sizes.push_back(GCD);
+  return true;
 }
 
 namespace {
@@ -7315,7 +7322,12 @@ void ScalarEvolution::findArrayDimensions(
     });
 
   ScalarEvolution &SE = *const_cast<ScalarEvolution *>(this);
-  findArrayDimensionsRec(SE, Terms, Sizes);
+  bool Res = findArrayDimensionsRec(SE, Terms, Sizes);
+
+  if (!Res) {
+    Sizes.clear();
+    return;
+  }
 
   DEBUG({
       dbgs() << "Sizes:\n";
@@ -7329,11 +7341,12 @@ void ScalarEvolution::findArrayDimensions(
 const SCEV *SCEVAddRecExpr::computeAccessFunctions(
     ScalarEvolution &SE, SmallVectorImpl<const SCEV *> &Subscripts,
     SmallVectorImpl<const SCEV *> &Sizes) const {
-  // Early exit in case this SCEV is not an affine multivariate function.
-  const SCEV *Zero = SE.getConstant(this->getType(), 0);
-  if (!this->isAffine())
-    return Zero;
 
+  // Early exit in case this SCEV is not an affine multivariate function.
+  if (Sizes.empty() || !this->isAffine())
+    return NULL;
+
+  const SCEV *Zero = SE.getConstant(this->getType(), 0);
   const SCEV *Res = this, *Remainder = Zero;
   int Last = Sizes.size() - 1;
   for (int i = Last; i >= 0; i--) {
@@ -7432,11 +7445,20 @@ SCEVAddRecExpr::delinearize(ScalarEvolution &SE,
   SmallVector<const SCEV *, 4> Terms;
   collectParametricTerms(SE, Terms);
 
+  if (Terms.empty())
+    return NULL;
+
   // Second step: find subscript sizes.
   SE.findArrayDimensions(Terms, Sizes);
 
+  if (Sizes.empty())
+    return NULL;
+
   // Third step: compute the access functions for each subscript.
   const SCEV *Remainder = computeAccessFunctions(SE, Subscripts, Sizes);
+
+  if (!Remainder || Subscripts.empty())
+    return NULL;
 
   DEBUG({
       dbgs() << "succeeded to delinearize " << *this << "\n";
