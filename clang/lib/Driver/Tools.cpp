@@ -7433,6 +7433,15 @@ void dragonfly::Link::ConstructJob(Compilation &C, const JobAction &JA,
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
+static void addSanitizerRTWindows(const ToolChain &TC, const ArgList &Args,
+                                  ArgStringList &CmdArgs,
+                                  const StringRef RTName) {
+  SmallString<128> LibSanitizer(getCompilerRTLibDir(TC));
+  llvm::sys::path::append(LibSanitizer,
+                          Twine("clang_rt.") + RTName + ".lib");
+  CmdArgs.push_back(Args.MakeArgString(LibSanitizer));
+}
+
 void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                       const InputInfo &Output,
                                       const InputInfoList &Inputs,
@@ -7473,15 +7482,14 @@ void visualstudio::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (getToolChain().getSanitizerArgs().needsAsanRt()) {
     CmdArgs.push_back(Args.MakeArgString("-debug"));
     CmdArgs.push_back(Args.MakeArgString("-incremental:no"));
-    SmallString<128> LibSanitizer(getToolChain().getDriver().ResourceDir);
-    llvm::sys::path::append(LibSanitizer, "lib", "windows");
-    if (DLL) {
-      llvm::sys::path::append(LibSanitizer, "clang_rt.asan_dll_thunk-i386.lib");
-    } else {
-      llvm::sys::path::append(LibSanitizer, "clang_rt.asan-i386.lib");
-    }
     // FIXME: Handle 64-bit.
-    CmdArgs.push_back(Args.MakeArgString(LibSanitizer));
+    if (DLL) {
+      addSanitizerRTWindows(getToolChain(), Args, CmdArgs,
+                            "asan_dll_thunk-i386");
+    } else {
+      addSanitizerRTWindows(getToolChain(), Args, CmdArgs, "asan-i386");
+      addSanitizerRTWindows(getToolChain(), Args, CmdArgs, "asan_cxx-i386");
+    }
   }
 
   Args.AddAllArgValues(CmdArgs, options::OPT_l);
