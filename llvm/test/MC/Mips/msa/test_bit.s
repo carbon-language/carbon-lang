@@ -1,9 +1,5 @@
 # RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -show-encoding | FileCheck %s
 #
-# RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -filetype=obj -o - | \
-# RUN: llvm-objdump -d -arch=mips -mattr=+msa - | \
-# RUN: FileCheck %s -check-prefix=CHECKOBJDUMP
-#
 # CHECK:        bclri.b         $w21, $w30, 2           # encoding: [0x79,0xf2,0xf5,0x49]
 # CHECK:        bclri.h         $w24, $w21, 0           # encoding: [0x79,0xe0,0xae,0x09]
 # CHECK:        bclri.w         $w23, $w30, 3           # encoding: [0x79,0xc3,0xf5,0xc9]
@@ -52,55 +48,6 @@
 # CHECK:        srlri.h         $w1, $w2, 3             # encoding: [0x79,0xe3,0x10,0x4a]
 # CHECK:        srlri.w         $w11, $w22, 2           # encoding: [0x79,0xc2,0xb2,0xca]
 # CHECK:        srlri.d         $w24, $w10, 6           # encoding: [0x79,0x86,0x56,0x0a]
-
-# CHECKOBJDUMP:        bclri.b         $w21, $w30, 2
-# CHECKOBJDUMP:        bclri.h         $w24, $w21, 0
-# CHECKOBJDUMP:        bclri.w         $w23, $w30, 3
-# CHECKOBJDUMP:        bclri.d         $w9, $w11, 0
-# CHECKOBJDUMP:        binsli.b        $w25, $w12, 1
-# CHECKOBJDUMP:        binsli.h        $w21, $w22, 0
-# CHECKOBJDUMP:        binsli.w        $w22, $w4, 0
-# CHECKOBJDUMP:        binsli.d        $w6, $w2, 6
-# CHECKOBJDUMP:        binsri.b        $w15, $w19, 0
-# CHECKOBJDUMP:        binsri.h        $w8, $w30, 1
-# CHECKOBJDUMP:        binsri.w        $w2, $w19, 5
-# CHECKOBJDUMP:        binsri.d        $w18, $w20, 1
-# CHECKOBJDUMP:        bnegi.b         $w24, $w19, 0
-# CHECKOBJDUMP:        bnegi.h         $w28, $w11, 3
-# CHECKOBJDUMP:        bnegi.w         $w1, $w27, 5
-# CHECKOBJDUMP:        bnegi.d         $w4, $w21, 1
-# CHECKOBJDUMP:        bseti.b         $w18, $w8, 0
-# CHECKOBJDUMP:        bseti.h         $w24, $w14, 2
-# CHECKOBJDUMP:        bseti.w         $w9, $w18, 4
-# CHECKOBJDUMP:        bseti.d         $w7, $w15, 1
-# CHECKOBJDUMP:        sat_s.b         $w31, $w31, 2
-# CHECKOBJDUMP:        sat_s.h         $w19, $w19, 0
-# CHECKOBJDUMP:        sat_s.w         $w19, $w29, 0
-# CHECKOBJDUMP:        sat_s.d         $w11, $w22, 0
-# CHECKOBJDUMP:        sat_u.b         $w1, $w13, 3
-# CHECKOBJDUMP:        sat_u.h         $w30, $w24, 4
-# CHECKOBJDUMP:        sat_u.w         $w31, $w13, 0
-# CHECKOBJDUMP:        sat_u.d         $w29, $w16, 5
-# CHECKOBJDUMP:        slli.b          $w23, $w10, 1
-# CHECKOBJDUMP:        slli.h          $w9, $w18, 1
-# CHECKOBJDUMP:        slli.w          $w11, $w29, 4
-# CHECKOBJDUMP:        slli.d          $w25, $w20, 1
-# CHECKOBJDUMP:        srai.b          $w24, $w29, 1
-# CHECKOBJDUMP:        srai.h          $w1, $w6, 0
-# CHECKOBJDUMP:        srai.w          $w7, $w26, 1
-# CHECKOBJDUMP:        srai.d          $w20, $w25, 3
-# CHECKOBJDUMP:        srari.b         $w5, $w25, 0
-# CHECKOBJDUMP:        srari.h         $w7, $w6, 4
-# CHECKOBJDUMP:        srari.w         $w17, $w11, 5
-# CHECKOBJDUMP:        srari.d         $w21, $w25, 5
-# CHECKOBJDUMP:        srli.b          $w2, $w0, 2
-# CHECKOBJDUMP:        srli.h          $w31, $w31, 2
-# CHECKOBJDUMP:        srli.w          $w5, $w9, 4
-# CHECKOBJDUMP:        srli.d          $w27, $w26, 5
-# CHECKOBJDUMP:        srlri.b         $w18, $w3, 0
-# CHECKOBJDUMP:        srlri.h         $w1, $w2, 3
-# CHECKOBJDUMP:        srlri.w         $w11, $w22, 2
-# CHECKOBJDUMP:        srlri.d         $w24, $w10, 6
 
                 bclri.b         $w21, $w30, 2
                 bclri.h         $w24, $w21, 0
