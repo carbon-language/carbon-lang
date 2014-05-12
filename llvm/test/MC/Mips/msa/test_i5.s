@@ -1,9 +1,5 @@
 # RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -show-encoding | FileCheck %s
 #
-# RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -filetype=obj -o - | \
-# RUN: llvm-objdump -d -arch=mips -mattr=+msa - | \
-# RUN: FileCheck %s -check-prefix=CHECKOBJDUMP
-#
 # CHECK:        addvi.b         $w3, $w31, 30           # encoding: [0x78,0x1e,0xf8,0xc6]
 # CHECK:        addvi.h         $w24, $w13, 26          # encoding: [0x78,0x3a,0x6e,0x06]
 # CHECK:        addvi.w         $w26, $w20, 26          # encoding: [0x78,0x5a,0xa6,0x86]
@@ -48,51 +44,6 @@
 # CHECK:        subvi.h         $w11, $w19, 4           # encoding: [0x78,0xa4,0x9a,0xc6]
 # CHECK:        subvi.w         $w12, $w10, 11          # encoding: [0x78,0xcb,0x53,0x06]
 # CHECK:        subvi.d         $w19, $w16, 7           # encoding: [0x78,0xe7,0x84,0xc6]
-
-# CHECKOBJDUMP:        addvi.b         $w3, $w31, 30
-# CHECKOBJDUMP:        addvi.h         $w24, $w13, 26
-# CHECKOBJDUMP:        addvi.w         $w26, $w20, 26
-# CHECKOBJDUMP:        addvi.d         $w16, $w1, 21
-# CHECKOBJDUMP:        ceqi.b          $w24, $w21, 24
-# CHECKOBJDUMP:        ceqi.h          $w31, $w15, 2
-# CHECKOBJDUMP:        ceqi.w          $w12, $w1, 31
-# CHECKOBJDUMP:        ceqi.d          $w24, $w22, 7
-# CHECKOBJDUMP:        clei_s.b        $w12, $w16, 1
-# CHECKOBJDUMP:        clei_s.h        $w2, $w10, 23
-# CHECKOBJDUMP:        clei_s.w        $w4, $w11, 22
-# CHECKOBJDUMP:        clei_s.d        $w0, $w29, 22
-# CHECKOBJDUMP:        clei_u.b        $w21, $w17, 3
-# CHECKOBJDUMP:        clei_u.h        $w29, $w7, 17
-# CHECKOBJDUMP:        clei_u.w        $w1, $w1, 2
-# CHECKOBJDUMP:        clei_u.d        $w27, $w27, 29
-# CHECKOBJDUMP:        clti_s.b        $w19, $w13, 25
-# CHECKOBJDUMP:        clti_s.h        $w15, $w10, 20
-# CHECKOBJDUMP:        clti_s.w        $w12, $w12, 11
-# CHECKOBJDUMP:        clti_s.d        $w29, $w20, 17
-# CHECKOBJDUMP:        clti_u.b        $w14, $w9, 29
-# CHECKOBJDUMP:        clti_u.h        $w24, $w25, 25
-# CHECKOBJDUMP:        clti_u.w        $w1, $w1, 22
-# CHECKOBJDUMP:        clti_u.d        $w21, $w25, 1
-# CHECKOBJDUMP:        maxi_s.b        $w22, $w21, 1
-# CHECKOBJDUMP:        maxi_s.h        $w29, $w5, 24
-# CHECKOBJDUMP:        maxi_s.w        $w1, $w10, 20
-# CHECKOBJDUMP:        maxi_s.d        $w13, $w29, 16
-# CHECKOBJDUMP:        maxi_u.b        $w20, $w0, 12
-# CHECKOBJDUMP:        maxi_u.h        $w1, $w14, 3
-# CHECKOBJDUMP:        maxi_u.w        $w27, $w22, 11
-# CHECKOBJDUMP:        maxi_u.d        $w26, $w6, 4
-# CHECKOBJDUMP:        mini_s.b        $w4, $w1, 1
-# CHECKOBJDUMP:        mini_s.h        $w27, $w27, 23
-# CHECKOBJDUMP:        mini_s.w        $w28, $w11, 9
-# CHECKOBJDUMP:        mini_s.d        $w11, $w10, 10
-# CHECKOBJDUMP:        mini_u.b        $w18, $w23, 27
-# CHECKOBJDUMP:        mini_u.h        $w7, $w26, 18
-# CHECKOBJDUMP:        mini_u.w        $w11, $w12, 26
-# CHECKOBJDUMP:        mini_u.d        $w11, $w15, 2
-# CHECKOBJDUMP:        subvi.b         $w24, $w20, 19
-# CHECKOBJDUMP:        subvi.h         $w11, $w19, 4
-# CHECKOBJDUMP:        subvi.w         $w12, $w10, 11
-# CHECKOBJDUMP:        subvi.d         $w19, $w16, 7
 
                 addvi.b         $w3, $w31, 30
                 addvi.h         $w24, $w13, 26

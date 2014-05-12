@@ -1,9 +1,5 @@
 # RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -show-encoding | FileCheck %s
 #
-# RUN: llvm-mc %s -arch=mips -mcpu=mips32r2 -mattr=+msa -filetype=obj -o - | \
-# RUN: llvm-objdump -d -arch=mips -mattr=+msa - | \
-# RUN: FileCheck %s -check-prefix=CHECKOBJDUMP
-#
 # CHECK:        ld.b $w0, -512($1)              # encoding: [0x7a,0x00,0x08,0x20]
 # CHECK:        ld.b $w1, 0($2)                 # encoding: [0x78,0x00,0x10,0x60]
 # CHECK:        ld.b $w2, 511($3)               # encoding: [0x79,0xff,0x18,0xa0]
@@ -30,33 +26,6 @@
 # CHECK:        ld.d $w20, 1024($21)            # encoding: [0x78,0x80,0xad,0x23]
 # CHECK:        ld.d $w21, 2048($22)            # encoding: [0x79,0x00,0xb5,0x63]
 # CHECK:        ld.d $w22, 4088($23)            # encoding: [0x79,0xff,0xbd,0xa3]
-
-# CHECKOBJDUMP:        ld.b $w0, -512($1)
-# CHECKOBJDUMP:        ld.b $w1, 0($2)
-# CHECKOBJDUMP:        ld.b $w2, 511($3)
-
-# CHECKOBJDUMP:        ld.h $w3, -1024($4)
-# CHECKOBJDUMP:        ld.h $w4, -512($5)
-# CHECKOBJDUMP:        ld.h $w5, 0($6)
-# CHECKOBJDUMP:        ld.h $w6, 512($7)
-# CHECKOBJDUMP:        ld.h $w7, 1022($8)
-
-# CHECKOBJDUMP:        ld.w $w8, -2048($9)
-# CHECKOBJDUMP:        ld.w $w9, -1024($10)
-# CHECKOBJDUMP:        ld.w $w10, -512($11)
-# CHECKOBJDUMP:        ld.w $w11, 512($12)
-# CHECKOBJDUMP:        ld.w $w12, 1024($13)
-# CHECKOBJDUMP:        ld.w $w13, 2044($14)
-
-# CHECKOBJDUMP:        ld.d $w14, -4096($15)
-# CHECKOBJDUMP:        ld.d $w15, -2048($16)
-# CHECKOBJDUMP:        ld.d $w16, -1024($17)
-# CHECKOBJDUMP:        ld.d $w17, -512($18)
-# CHECKOBJDUMP:        ld.d $w18, 0($19)
-# CHECKOBJDUMP:        ld.d $w19, 512($20)
-# CHECKOBJDUMP:        ld.d $w20, 1024($21)
-# CHECKOBJDUMP:        ld.d $w21, 2048($22)
-# CHECKOBJDUMP:        ld.d $w22, 4088($23)
 
         ld.b $w0, -512($1)
         ld.b $w1, 0($2)
