@@ -182,19 +182,19 @@ static bool compareSymbolName(const NMSymbol &A, const NMSymbol &B) {
 }
 
 static char isSymbolList64Bit(SymbolicFile *Obj) {
-  if (dyn_cast<IRObjectFile>(Obj))
+  if (isa<IRObjectFile>(Obj))
     return false;
-  else if (dyn_cast<COFFObjectFile>(Obj))
+  else if (isa<COFFObjectFile>(Obj))
     return false;
   else if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj))
     return MachO->is64Bit();
-  else if (dyn_cast<ELF32LEObjectFile>(Obj))
+  else if (isa<ELF32LEObjectFile>(Obj))
     return false;
-  else if (dyn_cast<ELF64LEObjectFile>(Obj))
+  else if (isa<ELF64LEObjectFile>(Obj))
     return true;
-  else if (dyn_cast<ELF32BEObjectFile>(Obj))
+  else if (isa<ELF32BEObjectFile>(Obj))
     return false;
-  else if(dyn_cast<ELF64BEObjectFile>(Obj))
+  else if(isa<ELF64BEObjectFile>(Obj))
     return true;
   else
     return false;
