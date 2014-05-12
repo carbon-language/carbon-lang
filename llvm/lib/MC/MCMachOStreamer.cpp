@@ -418,7 +418,7 @@ void MCMachOStreamer::EmitInstToData(const MCInst &Inst,
 }
 
 void MCMachOStreamer::FinishImpl() {
-  EmitFrames(&getAssembler().getBackend(), true);
+  EmitFrames(&getAssembler().getBackend());
 
   // We have to set the fragment atom associations so we can relax properly for
   // Mach-O.

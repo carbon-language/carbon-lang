@@ -32,7 +32,7 @@ void X86WinCOFFStreamer::EmitWin64EHHandlerData() {
 }
 
 void X86WinCOFFStreamer::FinishImpl() {
-  EmitFrames(nullptr, true);
+  EmitFrames(nullptr);
   EmitW64Tables();
 
   MCWinCOFFStreamer::FinishImpl();

@@ -615,15 +615,15 @@ void MCStreamer::EmitRawText(const Twine &T) {
   EmitRawTextImpl(T.toStringRef(Str));
 }
 
-void MCStreamer::EmitFrames(MCAsmBackend *MAB, bool usingCFI) {
+void MCStreamer::EmitFrames(MCAsmBackend *MAB) {
   if (!getNumFrameInfos())
     return;
 
   if (EmitEHFrame)
-    MCDwarfFrameEmitter::Emit(*this, MAB, usingCFI, true);
+    MCDwarfFrameEmitter::Emit(*this, MAB, true, true);
 
   if (EmitDebugFrame)
-    MCDwarfFrameEmitter::Emit(*this, MAB, usingCFI, false);
+    MCDwarfFrameEmitter::Emit(*this, MAB, true, false);
 }
 
 void MCStreamer::EmitW64Tables() {

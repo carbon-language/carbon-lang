@@ -189,7 +189,7 @@ protected:
   virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
   void RecordProcEnd(MCDwarfFrameInfo &Frame);
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &CurFrame);
-  void EmitFrames(MCAsmBackend *MAB, bool usingCFI);
+  void EmitFrames(MCAsmBackend *MAB);
 
   MCWin64EHUnwindInfo *getCurrentW64UnwindInfo() {
     return CurrentW64UnwindInfo;
