@@ -58,7 +58,6 @@ TargetMachine::TargetMachine(const Target &T,
     MCRelaxAll(false),
     MCNoExecStack(false),
     MCSaveTempLabels(false),
-    MCUseCFI(true),
     MCUseDwarfDirectory(false),
     RequireStructuredCFG(false),
     Options(Options) {

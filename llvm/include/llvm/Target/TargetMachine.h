@@ -87,7 +87,6 @@ protected: // Can only create subclasses.
   unsigned MCRelaxAll : 1;
   unsigned MCNoExecStack : 1;
   unsigned MCSaveTempLabels : 1;
-  unsigned MCUseCFI : 1;
   unsigned MCUseDwarfDirectory : 1;
   unsigned RequireStructuredCFG : 1;
 
@@ -188,12 +187,6 @@ public:
 
   /// setMCNoExecStack - Set whether an executabel stack is not needed.
   void setMCNoExecStack(bool Value) { MCNoExecStack = Value; }
-
-  /// hasMCUseCFI - Check whether we should use dwarf's .cfi_* directives.
-  bool hasMCUseCFI() const { return MCUseCFI; }
-
-  /// setMCUseCFI - Set whether we should use dwarf's .cfi_* directives.
-  void setMCUseCFI(bool Value) { MCUseCFI = Value; }
 
   /// hasMCUseDwarfDirectory - Check whether we should use .file directives with
   /// explicit directories.
