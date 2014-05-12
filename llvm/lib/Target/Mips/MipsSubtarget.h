@@ -88,6 +88,9 @@ protected:
   // HasMips4_32r2 - Has the subset of MIPS-IV present in MIPS32r2
   bool HasMips4_32r2;
 
+  // HasMips5_32r2 - Has the subset of MIPS-V present in MIPS32r2
+  bool HasMips5_32r2;
+
   // InMips16 -- can process Mips16 instructions
   bool InMips16Mode;
 

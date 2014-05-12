@@ -156,6 +156,8 @@ def HasMips4_32  :    Predicate<"Subtarget.hasMips4_32()">,
                       AssemblerPredicate<"FeatureMips4_32">;
 def HasMips4_32r2 :   Predicate<"Subtarget.hasMips4_32r2()">,
                       AssemblerPredicate<"FeatureMips4_32r2">;
+def HasMips5_32r2 :   Predicate<"Subtarget.hasMips5_32r2()">,
+                      AssemblerPredicate<"FeatureMips5_32r2">;
 def HasMips32    :    Predicate<"Subtarget.hasMips32()">,
                       AssemblerPredicate<"FeatureMips32">;
 def HasMips32r2  :    Predicate<"Subtarget.hasMips32r2()">,
@@ -221,6 +223,9 @@ class INSN_MIPS4_32 { list<Predicate> InsnPredicates = [HasMips4_32]; }
 
 // The portions of MIPS-IV that were also added to MIPS32R2
 class INSN_MIPS4_32R2 { list<Predicate> InsnPredicates = [HasMips4_32r2]; }
+
+// The portions of MIPS-V that were also added to MIPS32R2
+class INSN_MIPS5_32R2 { list<Predicate> InsnPredicates = [HasMips5_32r2]; }
 
 //===----------------------------------------------------------------------===//
 

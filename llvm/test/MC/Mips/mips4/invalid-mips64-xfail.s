@@ -9,7 +9,6 @@
 # CHECK-NOT: error
         .set noat
 	deret
-	luxc1	$f19,$s6($s5)
 	madd	$s6,$t5
 	madd	$zero,$t1
 	maddu	$s3,$gp
@@ -19,4 +18,3 @@
 	msubu	$t7,$a1
 	mtc0	$t1,$29,3
 	mul	$s0,$s4,$at
-	suxc1	$f12,$k1($t5)

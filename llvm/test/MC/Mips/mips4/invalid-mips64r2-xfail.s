@@ -11,7 +11,6 @@
         deret
         di      $s8
         ei      $t6
-        luxc1   $f19,$s6($s5)
         madd    $s6,$t5
         madd    $zero,$t1
         maddu   $s3,$gp
@@ -24,4 +23,3 @@
         mthc1   $zero,$f16
         mul     $s0,$s4,$at
         rdhwr   $sp,$11
-        suxc1   $f12,$k1($t5)

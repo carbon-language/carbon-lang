@@ -28,9 +28,9 @@ def LWXC1_MM : MMRel, LWXC1_FT<"lwxc1", FGR32Opnd, II_LWXC1, load>,
 def SWXC1_MM : MMRel, SWXC1_FT<"swxc1", FGR32Opnd, II_SWXC1, store>,
                SWXC1_FM_MM<0x88>;
 def LUXC1_MM : MMRel, LWXC1_FT<"luxc1", AFGR64Opnd, II_LUXC1>,
-               LWXC1_FM_MM<0x148>;
+               LWXC1_FM_MM<0x148>, INSN_MIPS5_32R2;
 def SUXC1_MM : MMRel, SWXC1_FT<"suxc1", AFGR64Opnd, II_SUXC1>,
-               SWXC1_FM_MM<0x188>;
+               SWXC1_FM_MM<0x188>, INSN_MIPS5_32R2;
 
 def FCMP_S32_MM : MMRel, CEQS_FT<"s", FGR32, II_C_CC_S, MipsFPCmp>,
                   CEQS_FM_MM<0>;

@@ -430,14 +430,16 @@ let DecoderNamespace="Mips64" in {
 // Load/store doubleword indexed unaligned.
 let AdditionalPredicates = [IsNotNaCl] in {
   def LUXC1 : MMRel, LWXC1_FT<"luxc1", AFGR64Opnd, II_LUXC1>, LWXC1_FM<0x5>,
-              FGR_32;
+              INSN_MIPS5_32R2, FGR_32;
   def SUXC1 : MMRel, SWXC1_FT<"suxc1", AFGR64Opnd, II_SUXC1>, SWXC1_FM<0xd>,
-              FGR_32;
+              INSN_MIPS5_32R2, FGR_32;
 }
 
 let DecoderNamespace="Mips64" in {
-  def LUXC164 : LWXC1_FT<"luxc1", FGR64Opnd, II_LUXC1>, LWXC1_FM<0x5>, FGR_64;
-  def SUXC164 : SWXC1_FT<"suxc1", FGR64Opnd, II_SUXC1>, SWXC1_FM<0xd>, FGR_64;
+  def LUXC164 : LWXC1_FT<"luxc1", FGR64Opnd, II_LUXC1>, LWXC1_FM<0x5>,
+                INSN_MIPS5_32R2, FGR_64;
+  def SUXC164 : SWXC1_FT<"suxc1", FGR64Opnd, II_SUXC1>, SWXC1_FM<0xd>,
+                INSN_MIPS5_32R2, FGR_64;
 }
 
 /// Floating-point Aritmetic
