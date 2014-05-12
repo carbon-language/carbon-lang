@@ -1308,6 +1308,18 @@ def : T1Pat<(addc   tGPR:$lhs, imm8_255_neg:$rhs),
 def : T1Pat<(subc   tGPR:$lhs, tGPR:$rhs),
             (tSUBrr tGPR:$lhs, tGPR:$rhs)>;
 
+// Bswap 16 with load/store
+def : T1Pat<(srl (bswap (extloadi16 t_addrmode_rrs2:$addr)), (i32 16)),
+            (tREV16 (tLDRHr t_addrmode_rrs2:$addr))>;
+def : T1Pat<(srl (bswap (extloadi16 t_addrmode_is2:$addr)), (i32 16)),
+            (tREV16 (tLDRHi t_addrmode_is2:$addr))>;
+def : T1Pat<(truncstorei16 (srl (bswap tGPR:$Rn), (i32 16)),
+                           t_addrmode_rrs2:$addr),
+            (tSTRHr (tREV16 tGPR:$Rn), t_addrmode_rrs2:$addr)>;
+def : T1Pat<(truncstorei16 (srl (bswap tGPR:$Rn), (i32 16)),
+                           t_addrmode_is2:$addr),
+            (tSTRHi(tREV16 tGPR:$Rn), t_addrmode_is2:$addr)>;
+
 // ConstantPool
 def : T1Pat<(ARMWrapper  tconstpool  :$dst), (tLEApcrel tconstpool  :$dst)>;
 
