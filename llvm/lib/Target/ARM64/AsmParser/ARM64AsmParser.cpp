@@ -845,6 +845,18 @@ public:
            ST == ARM64_AM::ASR) && ARM64_AM::getShiftValue(Shifter.Val) < width;
   }
 
+  template <unsigned width>
+  bool isLogicalShifter() const {
+    if (!isShifter())
+      return false;
+
+    // A logical shifter is LSL, LSR, ASR or ROR.
+    ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(Shifter.Val);
+    return (ST == ARM64_AM::LSL || ST == ARM64_AM::LSR ||
+           ST == ARM64_AM::ASR || ST == ARM64_AM::ROR) &&
+           ARM64_AM::getShiftValue(Shifter.Val) < width;
+  }
+
   bool isMovImm32Shifter() const {
     if (!isShifter())
       return false;
@@ -1449,6 +1461,11 @@ public:
   }
 
   void addArithmeticShifterOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::CreateImm(getShifter()));
+  }
+
+  void addLogicalShifterOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateImm(getShifter()));
   }
@@ -3677,18 +3694,6 @@ bool ARM64AsmParser::validateInstruction(MCInst &Inst,
   // in the instructions being checked and this keeps the nested conditionals
   // to a minimum.
   switch (Inst.getOpcode()) {
-  case ARM64::ANDWrs:
-  case ARM64::ANDSWrs:
-  case ARM64::EORWrs:
-  case ARM64::ORRWrs: {
-    if (!Inst.getOperand(3).isImm())
-      return Error(Loc[3], "immediate value expected");
-    int64_t shifter = Inst.getOperand(3).getImm();
-    ARM64_AM::ShiftType ST = ARM64_AM::getShiftType(shifter);
-    if (ST == ARM64_AM::LSL && shifter > 31)
-      return Error(Loc[3], "shift value out of range");
-    return false;
-  }
   case ARM64::ADDSWri:
   case ARM64::ADDSXri:
   case ARM64::ADDWri:

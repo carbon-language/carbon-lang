@@ -671,9 +671,9 @@ def : InstAlias<"tst $src1, $src2",
                 (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, 0)>;
 
 def : InstAlias<"tst $src1, $src2, $sh",
-                (ANDSWrs WZR, GPR32:$src1, GPR32:$src2, logical_shift:$sh)>;
+                (ANDSWrs WZR, GPR32:$src1, GPR32:$src2, logical_shift32:$sh)>;
 def : InstAlias<"tst $src1, $src2, $sh",
-                (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, logical_shift:$sh)>;
+                (ANDSXrs XZR, GPR64:$src1, GPR64:$src2, logical_shift64:$sh)>;
 
 def : InstAlias<"mvn $Wd, $Wm",
                 (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, 0)>;
@@ -681,9 +681,9 @@ def : InstAlias<"mvn $Xd, $Xm",
                 (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, 0)>;
 
 def : InstAlias<"mvn $Wd, $Wm, $sh",
-                (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, logical_shift:$sh)>;
+                (ORNWrs GPR32:$Wd, WZR, GPR32:$Wm, logical_shift32:$sh)>;
 def : InstAlias<"mvn $Xd, $Xm, $sh",
-                (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, logical_shift:$sh)>;
+                (ORNXrs GPR64:$Xd, XZR, GPR64:$Xm, logical_shift64:$sh)>;
 
 def : Pat<(not GPR32:$Wm), (ORNWrr WZR, GPR32:$Wm)>;
 def : Pat<(not GPR64:$Xm), (ORNXrr XZR, GPR64:$Xm)>;

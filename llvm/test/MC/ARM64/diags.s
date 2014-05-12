@@ -182,19 +182,19 @@ foo:
 
 ; logical instructions on 32-bit regs with shift > 31 is not legal
 orr w0, w0, w0, lsl #32
-; CHECK-ERRORS: error: shift value out of range
+; CHECK-ERRORS: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 ; CHECK-ERRORS:        orr w0, w0, w0, lsl #32
 ; CHECK-ERRORS:                        ^
 eor w0, w0, w0, lsl #32
-; CHECK-ERRORS: error: shift value out of range
+; CHECK-ERRORS: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 ; CHECK-ERRORS:        eor w0, w0, w0, lsl #32
 ; CHECK-ERRORS:                        ^
 and w0, w0, w0, lsl #32
-; CHECK-ERRORS: error: shift value out of range
+; CHECK-ERRORS: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 ; CHECK-ERRORS:        and w0, w0, w0, lsl #32
 ; CHECK-ERRORS:                        ^
 ands w0, w0, w0, lsl #32
-; CHECK-ERRORS: error: shift value out of range
+; CHECK-ERRORS: error: expected 'lsl', 'lsr' or 'asr' with optional integer in range [0, 31]
 ; CHECK-ERRORS:        ands w0, w0, w0, lsl #32
 ; CHECK-ERRORS:                        ^
 

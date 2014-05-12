@@ -108,6 +108,18 @@ class ArithmeticShifterOperand<int width> : AsmOperandClass {
 def ArithmeticShifterOperand32 : ArithmeticShifterOperand<32>;
 def ArithmeticShifterOperand64 : ArithmeticShifterOperand<64>;
 
+// Shifter operand for logical register shifted encodings.
+class LogicalShifterOperand<int width> : AsmOperandClass {
+  let SuperClasses = [ShifterOperand];
+  let Name = "LogicalShifter" # width;
+  let PredicateMethod = "isLogicalShifter<" # width # ">";
+  let RenderMethod = "addLogicalShifterOperands";
+  let DiagnosticType = "AddSubRegShift" # width;
+}
+
+def LogicalShifterOperand32 : LogicalShifterOperand<32>;
+def LogicalShifterOperand64 : LogicalShifterOperand<64>;
+
 // Shifter operand for logical vector 128/64-bit shifted encodings.
 def LogicalVecShifterOperand : AsmOperandClass {
   let SuperClasses = [ShifterOperand];
@@ -525,20 +537,24 @@ def arith_shifted_reg64 : arith_shifted_reg<i64, GPR64, 64>;
 // An arithmetic shifter operand:
 //  {7-6} - shift type: 00 = lsl, 01 = lsr, 10 = asr, 11 = ror
 //  {5-0} - imm6
-def logical_shift : Operand<i32> {
+class logical_shift<int width> : Operand<i32> {
   let PrintMethod = "printShifter";
-  let ParserMatchClass = ShifterOperand;
+  let ParserMatchClass = !cast<AsmOperandClass>(
+                         "LogicalShifterOperand" # width);
 }
 
-class logical_shifted_reg<ValueType Ty, RegisterClass regclass>
+def logical_shift32 : logical_shift<32>;
+def logical_shift64 : logical_shift<64>;
+
+class logical_shifted_reg<ValueType Ty, RegisterClass regclass, Operand shiftop>
     : Operand<Ty>,
       ComplexPattern<Ty, 2, "SelectLogicalShiftedRegister", []> {
   let PrintMethod = "printShiftedRegister";
-  let MIOperandInfo = (ops regclass, logical_shift);
+  let MIOperandInfo = (ops regclass, shiftop);
 }
 
-def logical_shifted_reg32 : logical_shifted_reg<i32, GPR32>;
-def logical_shifted_reg64 : logical_shifted_reg<i64, GPR64>;
+def logical_shifted_reg32 : logical_shifted_reg<i32, GPR32, logical_shift32>;
+def logical_shifted_reg64 : logical_shifted_reg<i64, GPR64, logical_shift64>;
 
 // A logical vector shifter operand:
 //  {7-6} - shift type: 00 = lsl
